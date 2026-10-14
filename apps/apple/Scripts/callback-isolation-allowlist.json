@@ -518,6 +518,13 @@
     "reason": "File-service completion is supplied by a nonisolated factory returning an explicit @Sendable closure. It hops to MainActor before accessing state and checks immutable account/thread scope."
   },
   {
+    "file": "apps/apple/iOS/PhoneWorkAndChat.swift",
+    "line": 137,
+    "api": "fileImporter",
+    "sha256": "201d4bf6c4cdaa1f9b6a7553e7147deeb873019d64e62845acf38f0b7ffaee26",
+    "reason": "Named nonisolated factory returns an explicit Sendable file-import callback. The callback hops to MainActor and checks the captured account epoch before updating the composer."
+  },
+  {
     "file": "apps/apple/iOS/PhoneReminderNotifications.swift",
     "line": 161,
     "api": "launch",

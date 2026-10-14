@@ -233,6 +233,16 @@ private struct SavedTaskResponse: Codable {
             await submit(key)
         } catch { RunLogRuntime.shared.failure(.approvalFailure, error: error, phase: "approval"); errors[key] = message(error) }
     }
+    func switchToWork(_ approval: SessionApproval, capabilities: ChatCapabilities, project: Project?, accept: Bool) async {
+        let key = "approval:" + approval.id
+        guard canRespond(key), approvals.contains(approval), let scope = try? scope() else { return }
+        do {
+            let intent = try WorkAndChat.switchDecision(scope: scope, approval: approval,
+                capabilities: capabilities, project: project, accept: accept, requestID: UUID().uuidString)
+            try save(SavedTaskResponse(approval: intent, question: nil))
+            await submit(key)
+        } catch { errors[key] = ProjectPresentation.error(error) }
+    }
     func answer(_ batch: SessionQuestionBatch, answers: [QuestionAnswerItem]) async {
         let key = "question:" + batch.id
         guard canRespond(key), batch.canAnswer, questions.contains(batch), let scope = try? scope() else { return }

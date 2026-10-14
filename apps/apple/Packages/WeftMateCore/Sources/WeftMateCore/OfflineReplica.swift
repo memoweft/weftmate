@@ -9,6 +9,7 @@ import Foundation
     private let vault: OfflineVault
     private let transport: any HTTPTransport
     private let allowLoopback: Bool
+    public var workAndChat = false
     private let phoneFirst: Bool
     private var modelTask: Task<HTTPResponse, any Error>?
     public init(vault: OfflineVault, transport: any HTTPTransport = URLSessionTransport(), allowLoopback: Bool = false, phoneFirst: Bool = false) throws {
@@ -58,11 +59,12 @@ import Foundation
         do {
             var request = OfflineSyncRequest(publicJwk: try vault.publicJwk(), generation: state.snapshot?.generation ?? 0, hashes: state.snapshot?.hashes ?? [:])
             request.phoneFirst=phoneFirst ? true : nil
+            request.taskSupport=workAndChat ? 1 : nil
             let envelope: OfflineEnvelope
             do { envelope=try await fetch(request) }
-            catch APIFailure.server(400,"INVALID_REQUEST") where phoneFirst {
+            catch APIFailure.server(400,"INVALID_REQUEST") where phoneFirst || workAndChat {
                 // The older M3-A host rejects unknown request fields; retry its original shape.
-                try valid(ticket);request.phoneFirst=nil;envelope=try await fetch(request)
+                try valid(ticket);request.phoneFirst=nil;request.taskSupport=nil;envelope=try await fetch(request)
             }
             try valid(ticket)
             let delta = try vault.open(envelope, identity: identity)
@@ -111,6 +113,20 @@ import Foundation
         var next = delta; next.items = items.values.sorted { $0.id < $1.id }
         guard try JSONEncoder().encode(next).count <= 2 * 1024 * 1024 else { throw OfflineFailure.invalid }
         state.snapshot = next
+    }
+    public func retainWorkTask(_ task: OfflineWorkTask) throws {
+        guard state.snapshot?.generation == task.generation, task.hostId == vault.identity.hostId else { throw OfflineFailure.identity }
+        var tasks=state.workTasks ?? []
+        if let prior=tasks.first(where: { $0.id == task.id }) {
+            guard prior.envelope.aad == task.envelope.aad && prior.envelope.ciphertext == task.envelope.ciphertext else { throw OfflineFailure.identity }
+        } else { tasks.append(task) }
+        state.workTasks=tasks; try vault.save(state)
+    }
+    public func acknowledgeWorkTask(_ receipt: OfflineTaskReceipt) throws {
+        guard let index=state.workTasks?.firstIndex(where: { $0.id == receipt.id && $0.hostId == receipt.hostId }) else { throw OfflineFailure.identity }
+        if receipt.state == "canceled" || receipt.state == "completed" { state.workTasks?.remove(at:index) }
+        else { state.workTasks?[index].state=receipt.state }
+        try vault.save(state)
     }
     /// Independent phone messages and any later computer-memory references; never computer tools.
     public func enqueuePhoneTurns(_ turns: [OfflineTurn], generation: Int) throws {

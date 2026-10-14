@@ -17,6 +17,12 @@ public struct LocalCachedConversationSummary: Codable, Equatable, Sendable, Iden
     public let projectNotice: String?
     public let updatedAt: String?
     public let taskAvailable: Bool?
+    public let mode: ConversationMode?
+    public let workHostId: String?
+    public let workDirectory: WorkDirectory?
+    public let logicalHistory: Bool?
+    public let chatId: String?
+    public let chatKind: String?
     public let originalModel: SharedOriginalModel?
     public var conversationKey: String {
         if let conversationId { return "conversation:" + conversationId }
@@ -24,9 +30,10 @@ public struct LocalCachedConversationSummary: Codable, Equatable, Sendable, Iden
     }
     public var conversation: ConversationSummary {
         .init(id: id, title: title, conversationId: conversationId, sessionId: sessionId,
-              running: false, sendAvailable: false, originalModelLabel: originalModelLabel, archived: archived ?? false, pinned: pinned ?? false, unread: unread ?? false, groupId: groupId, projectId: projectId, projectName: projectName, projectNotice: projectNotice, taskAvailable: taskAvailable, hostId: hostId, updatedAt: updatedAt)
+              running: false, sendAvailable: false, originalModelLabel: originalModelLabel, archived: archived ?? false, pinned: pinned ?? false, unread: unread ?? false, groupId: groupId, projectId: projectId, projectName: projectName, projectNotice: projectNotice, taskAvailable: taskAvailable, hostId: hostId, updatedAt: updatedAt, chatId: chatId, chatKind: chatKind, mode: mode, workHostId: workHostId, workDirectory: workDirectory, logicalHistory: logicalHistory)
     }
     public init(conversation: ConversationSummary, hostId: String, originalModel: SharedOriginalModel? = nil) throws {
+        mode = conversation.mode; workHostId = conversation.workHostId; workDirectory = conversation.workDirectory; logicalHistory = conversation.logicalHistory; chatId = conversation.chatId; chatKind = conversation.chatKind
         id = conversation.id; title = conversation.title; conversationId = conversation.conversationId
         sessionId = conversation.sessionId; self.hostId = hostId
         pinned = conversation.pinned; unread = conversation.unread; groupId = conversation.groupId

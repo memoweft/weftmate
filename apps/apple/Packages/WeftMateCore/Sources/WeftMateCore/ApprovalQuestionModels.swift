@@ -75,6 +75,8 @@ public struct SessionApproval: Codable, Equatable, Sendable, Identifiable {
     public let createdAt: String
     public let status: SessionInteractionStatus
     public let riskCategories: [String]?
+    public var intent: String? = nil
+    public var isWorkSwitch: Bool { intent == "work-switch" }
     public var secondOpinion: ApprovalSecondOpinion? = nil
     public var operationCategories: [String]? = nil
     public var canAlwaysAllow: Bool? = nil
@@ -141,29 +143,32 @@ public struct ApprovalDecisionIntent: Codable, Equatable, Sendable {
     public let decisionScope: ApprovalDecisionScope?
     public let requestId: String
     public let payload: Data
+    public let workProjectId: String?
     public var approvalId: String { approval.approvalId }
     public var sessionId: String { scope.sessionId }
     public var taskId: String { approval.taskId }
     public var sourceCommandId: String { approval.sourceCommandId }
     public var sourceReceiptId: String { approval.sourceReceiptId }
-    public init(scope: SessionInteractionScope, approval: SessionApproval, outcome: ApprovalDecisionOutcome, requestID: String, decisionScope: ApprovalDecisionScope? = nil) throws {
+    public init(scope: SessionInteractionScope, approval: SessionApproval, outcome: ApprovalDecisionOutcome, requestID: String, decisionScope: ApprovalDecisionScope? = nil, workProjectId: String? = nil) throws {
         try scope.validate(); try approval.validate(scope: scope)
         try SharedValidation.require(approval.canDecide && SharedValidation.request(requestID))
         try SharedValidation.require(decisionScope == nil || outcome == .allowedOnce)
         if decisionScope == .globalCategory { try SharedValidation.require(approval.offersAlwaysAllow) }
         if decisionScope == .conversationCategory { try SharedValidation.require(!(approval.riskCategories ?? []).isEmpty) }
+        self.workProjectId = workProjectId
         self.scope = scope; self.approval = approval; self.outcome = outcome; requestId = requestID
         self.decisionScope = decisionScope
-        struct Body: Encodable { let requestId: String; let outcome: ApprovalDecisionOutcome; let scope: ApprovalDecisionScope? }
-        payload = try InteractionValidation.encode(Body(requestId: requestID, outcome: outcome, scope: decisionScope))
+        struct Body: Encodable { let requestId: String; let outcome: ApprovalDecisionOutcome; let scope: ApprovalDecisionScope?; let workProjectId: String? }
+        payload = try InteractionValidation.encode(Body(requestId: requestID, outcome: outcome, scope: decisionScope, workProjectId: workProjectId))
     }
-    enum CodingKeys: String, CodingKey { case scope, approval, outcome, requestId, payload, decisionScope }
+    enum CodingKeys: String, CodingKey { case scope, approval, outcome, requestId, payload, decisionScope, workProjectId }
     public init(from decoder: any Decoder) throws {
         let box = try decoder.container(keyedBy: CodingKeys.self)
         try self.init(scope: box.decode(SessionInteractionScope.self, forKey: .scope),
             approval: box.decode(SessionApproval.self, forKey: .approval), outcome: box.decode(ApprovalDecisionOutcome.self, forKey: .outcome),
             requestID: box.decode(String.self, forKey: .requestId),
-            decisionScope: box.decodeIfPresent(ApprovalDecisionScope.self, forKey: .decisionScope))
+            decisionScope: box.decodeIfPresent(ApprovalDecisionScope.self, forKey: .decisionScope),
+            workProjectId: box.decodeIfPresent(String.self, forKey: .workProjectId))
         guard try box.decode(Data.self, forKey: .payload) == payload else { throw APIFailure.invalidResponse }
     }
 }

@@ -11,6 +11,7 @@ final class CloudLoginModel: ObservableObject {
     @Published private(set) var identityRestored=false
     @Published private(set) var email = ""
     @Published private(set) var devices: [CloudDirectoryDevice] = []
+    @Published private(set) var offlineWorkAuthorization: OfflineAuthorization?
     @Published private(set) var multiHost=false
     @Published private(set) var computerConversations: [ComputerConversation]=[]
     @Published var requestedComputerID: String?
@@ -194,9 +195,37 @@ final class CloudLoginModel: ObservableObject {
             }
         }
     }
+    #if DEBUG
+    private var mode2IOfflineFixture: Bool { ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--mode2i-offline") }
+    func seedMode2IOfflineAccount() { guard mode2IOfflineFixture else { return };subject="cloud-fixture";authenticated=true;identityRestored=true }
+    #endif
     func offlineAuthorization(hostID: String) async throws -> OfflineAuthorization {
-        try await accountClient().offlineStatus(hostID: hostID)
+        #if DEBUG
+        if mode2IOfflineFixture {
+            let result=try JSONDecoder().decode(OfflineAuthorization.self,from:Data("{\"hostId\":\"host-fixture\",\"accountId\":\"cloud-fixture\",\"generation\":3,\"authorized\":true,\"capabilities\":{\"offlineTasks\":1}}".utf8))
+            offlineWorkAuthorization=result;return result
+        }
+        #endif
+        let result=try await accountClient().offlineStatus(hostID: hostID)
+        offlineWorkAuthorization=result
+        return result
     }
+    func submitOfflineWork(_ task: OfflineWorkTask) async throws -> OfflineTaskReceipt {
+        let authorization=try await offlineAuthorization(hostID:task.hostId)
+        return try await accountClient().submitOfflineWork(task,authorization:authorization)
+    }
+    func listOfflineWork(hostID: String) async throws -> [OfflineTaskReceipt] {
+        #if DEBUG
+        if mode2IOfflineFixture { return [] }
+        #endif
+        let authorization=try await offlineAuthorization(hostID:hostID)
+        return try await accountClient().listOfflineWork(hostID:hostID,authorization:authorization)
+    }
+    func cancelOfflineWork(_ task: OfflineWorkTask) async throws -> OfflineTaskReceipt {
+        let authorization=try await offlineAuthorization(hostID:task.hostId)
+        return try await accountClient().cancelOfflineWork(task,authorization:authorization)
+    }
+    func offlineWorkDeviceID() async throws -> String { try await accountClient().deviceID }
     func refreshDirectory() async {
         guard authenticated else { return }
         let ticket=operation
@@ -275,6 +304,9 @@ final class CloudLoginModel: ObservableObject {
         return accountMessage(error)
     }
     func poll() async {
+        #if DEBUG
+        if mode2IOfflineFixture { return }
+        #endif
         await refreshDirectory()
         if waiting && authenticated && !busy { await retryConnection() }
     }
@@ -328,6 +360,14 @@ final class CloudLoginModel: ObservableObject {
         } catch { self.error="电脑没能移除，请重试。" }
     }
     #if DEBUG
+    func seedMode2IDirectory() throws {
+        let args=ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"),args.contains("--mode2i-fixture"),let app else { return }
+        let bytes=Data("{\"devices\":[],\"hosts\":[{\"id\":\"host-fixture\",\"hostId\":\"host-fixture\",\"name\":\"工作电脑\",\"type\":\"computer\",\"online\":true,\"isCurrent\":false},{\"id\":\"second-computer\",\"hostId\":\"second-computer\",\"name\":\"随身电脑\",\"type\":\"computer\",\"online\":true,\"isCurrent\":false},{\"id\":\"offline-computer\",\"hostId\":\"offline-computer\",\"name\":\"备用电脑\",\"type\":\"computer\",\"online\":false,\"isCurrent\":false}],\"capabilities\":{\"multiHost\":1}}".utf8)
+        let directory=try JSONDecoder().decode(CloudDirectory.self,from:bytes)
+        hosts=directory.hosts;multiHost=true;requestedComputerID="host-fixture"
+        computerConversations=app.conversations.map { ComputerConversation(hostId:"host-fixture",name:"工作电脑",online:true,conversation:$0) }
+    }
     func seedComputerScreenshot() throws {
         let args=ProcessInfo.processInfo.arguments
         guard args.contains("--ui-testing"),args.contains("--apple9-fixture") else { return }
@@ -447,7 +487,10 @@ final class CloudLoginModel: ObservableObject {
     func signOut() async throws {
         cancel()
         if let client {
-            if authenticated { try? await client.logout() }
+            if authenticated {
+                if offlineWorkAuthorization?.supportsTasks == true { try await client.logout() }
+                else { try? await client.logout() }
+            }
             try await client.forget()
         }
         else if let refData = try store.load(key: "trusted-host"),
@@ -455,6 +498,7 @@ final class CloudLoginModel: ObservableObject {
             let config = CloudConfiguration(server: try ServerConfiguration(input: cloud, allowLoopbackHTTP: allowLoopback))
             try store.delete(key: CloudAccountClient.credentialKey(configuration: config))
         }
+        offlineWorkAuthorization=nil
         subject = nil; identityRestored=true; waiting = false;multiHost=false;computerConversations=[];computerClients=[:];computerLists=[:];requestedComputerID=nil
         client = nil; key = nil; cloudSignedIn = false; authenticated = false; devices = []; hosts = []; email = ""; emailChangeChallenge = nil; selectedHost = nil; form.reset(to: .login)
         hostID = nil; newDeviceNotice = nil; directoryLoaded = false; seenDeviceIDs = []

@@ -44,6 +44,11 @@ struct OfflineWorkspace: View {
 struct OfflineChatView: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var model: OfflineChatModel
+    #if os(iOS)
+    @ObservedObject private var cloud: CloudLoginModel
+    @State private var offlineWorkOpen=false
+    init(app: AppleAppModel,model: OfflineChatModel) { self.app=app;self.model=model;cloud=app.cloudLogin }
+    #endif
     private var defaultConversationTitle: String {
         #if os(iOS)
         "手机对话"
@@ -75,6 +80,11 @@ struct OfflineChatView: View {
                 Text(OfflineChatModel.warning).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
                     .accessibilityIdentifier("offlineTopWarning")
             }
+            #if os(iOS)
+            if WorkAndChat.offlineWorkAvailable(snapshot:model.workSnapshot,authorization:cloud.offlineWorkAuthorization,authenticated:cloud.authenticated) {
+                Button("交给电脑，上线后做") { offlineWorkOpen=true }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("offlineWork.open")
+            }
+            #endif
             if model.truncated { Text("这里暂时只有部分记忆，电脑上线后会继续更新。") .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             ScrollView {
                 VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
@@ -112,6 +122,9 @@ struct OfflineChatView: View {
                 }.padding(AppleTokens.Space.p12).background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
             }
         }.padding(AppleTokens.Space.p20).background(Weave.canvas)
+            #if os(iOS)
+            .sheet(isPresented:$offlineWorkOpen) { PhoneOfflineWork(app:app).phoneSheet("离线交代",close:{offlineWorkOpen=false}) }
+            #endif
             .accessibilityElement(children: .contain).accessibilityIdentifier("offlineChat")
     }
 }
