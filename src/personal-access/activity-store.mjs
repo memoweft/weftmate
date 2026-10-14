@@ -31,7 +31,7 @@ export function nativeTaskActivity(account,sessionId,terminal){
   const source=activitySource(account,sessionId,{seq:terminal.seq,...(terminal.taskId?{taskId:terminal.taskId}:{})});
   const id=terminal.taskId&&chat?.kind==='side'?`activity-result-${digest(`${chat.chatId}/${terminal.taskId}`).slice(0,40)}`:undefined;
   return putActivity(account,terminal.taskId?`task:${terminal.taskId}`:`turn:${sessionId}:${terminal.turn??terminal.seq}`,{id,at:terminal.at,type:`task.${terminal.state}`,
-    title:{completed:'任务完成',failed:'任务失败',stopped:'任务已停止'}[terminal.state],summary:terminal.summary??'打开对话查看结果。',failureReason:terminal.failureReason,
+    title:{completed:'任务完成',failed:'任务失败',stopped:'任务已停止'}[terminal.state],summary:terminal.summary??'打开对话查看结果。',summaryFormat:terminal.summaryFormat,failureReason:terminal.failureReason,
     source,actions:[{kind:'open_chat',label:'打开对话',target:source}],level:terminal.state==='failed'?'important':'normal'});
 }
 export function putActivity(account, key, input) {
@@ -41,7 +41,7 @@ export function putActivity(account, key, input) {
   if(state.suppressed?.[id] || input.source?.taskId&&state.suppressed?.[`task:${input.source.taskId}`])return null;
   if(input.source?.sessionId&&state.erasedBefore?.[input.source.sessionId]&&input.at<=state.erasedBefore[input.source.sessionId])return null;
   const privateSource=input.source?.sessionId && hasPrivateContent(account.sessions[input.source.sessionId]);
-  const row={ id, at:previous?.at ?? input.at, type:input.type, title:short(input.title), summary:input.type==='task.completed'?completionActivitySummary(input.summary):short(input.summary), source:input.source ?? {},
+  const row={ id, at:previous?.at ?? input.at, type:input.type, title:short(input.title), summary:input.type==='task.completed'&&input.summaryFormat!=='plain'?completionActivitySummary(input.summary):short(input.summary), ...(input.type==='task.completed'?{summaryFormat:'plain'}:{}), source:input.source ?? {},
     actions:input.actions ?? [], state:input.state ?? 'completed', ...(input.memoryDigest?{memoryDigest:input.memoryDigest}:{}), ...(input.weeklyInsight?{weeklyInsight:input.weeklyInsight}:{}), notification:{level:input.level ?? 'normal',type:input.type,initiatedBy:input.initiatedBy ?? previous?.notification.initiatedBy ?? (['memory','system','companion'].includes(input.type.split('.')[0])?'assistant':'user'),...(input.test?{test:true}:{})},
     ...(privateSource ? {temporary:true}: {}) };
   if (privateSource) { row.title=input.type.startsWith('task.') ? '临时对话中的任务' : input.type==='approval.pending' ? '临时对话需要审批' : input.type==='question.pending' ? '临时对话需要回答' : '临时对话动态';
@@ -85,7 +85,7 @@ export function reconcileActivity(account) {
     const source=activitySource(account,result.sourceRef?.native?.sessionId??result.sourceRef?.sessionId,{chatId:result.sourceChatId,taskId:result.taskId,eventId:result.sourceEventId});
     if(!source.sessionId)delete source.sessionId;
     putActivity(account,`task:${result.taskId??result.resultId}`,{id:result.activityId,at:result.at,type:`task.${result.state}`,source,
-      title:{completed:'任务完成',failed:'任务失败',stopped:'任务已停止'}[result.state],summary:result.summary,failureReason:state.sources[source.sessionId]?.terminals?.[result.taskId]?.failureReason,actions:[{kind:'open_chat',label:'打开旁聊',target:source}]});
+      title:{completed:'任务完成',failed:'任务失败',stopped:'任务已停止'}[result.state],summary:result.summary,summaryFormat:result.summaryFormat,failureReason:state.sources[source.sessionId]?.terminals?.[result.taskId]?.failureReason,actions:[{kind:'open_chat',label:'打开旁聊',target:source}]});
   }
   for(const [sessionId,scan]of Object.entries(account.activity?.sources??{}))if(account.sessions[sessionId]&&!account.sessions[sessionId].deleting){
     for(const terminal of Object.values(scan.terminals??{}))if(!Object.values(account.chatResults??{}).some(result=>result.taskId===terminal.taskId))nativeTaskActivity(account,sessionId,terminal);
