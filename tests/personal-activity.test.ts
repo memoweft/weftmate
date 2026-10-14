@@ -7,6 +7,100 @@ import { startTimelineCandidate } from './integration/bl29-rework/fixture.mjs';
 import { activityState, putActivity, reconcileActivity, activityToken, readActivityToken, removeActivity } from '../src/personal-access/activity-store.mjs';
 import { observeActivityEvents } from '../src/personal-access/activity.mjs';
 import { eraseChatCopies } from '../src/personal-access/chat-erasure.mjs';
+import { completionActivitySummary, activitySummaryEvent } from '../src/personal-access/activity-copy.mjs';
+
+test('FIX-43 review preserves ratios and dates while shortening real file paths in completed activity',async t=>{
+  const f=await startTimelineCandidate({inlineProgress:true,historyCount:0});t.after(()=>f.close());
+  f.progress.call('write','fix43-ratios',{path:'C:/project/report.md'});f.progress.result('fix43-ratios','saved');
+  f.progress.text('测试结果：12/15 通过。日期：2026/10/14。代码示例：`12/15`、`2026/10/14`。保存 `C:/project/report.md`、`./reports/local.md`、`../reports/parent.md`、`~/reports/home.md` 和 reports/plain.md。');
+  f.progress.finish();
+  const row=(await f.request('/activity?type=task')).items.find((item:any)=>item.type==='task.completed');
+  assert.match(row.summary,/测试结果：12\/15 通过。/);assert.match(row.summary,/日期：2026\/10\/14。/);
+  assert.match(row.summary,/代码示例：12\/15、2026\/10\/14。/);
+  for(const name of ['report.md','local.md','parent.md','home.md','plain.md'])assert.ok(row.summary.includes(name),name);
+  assert.doesNotMatch(row.summary,/C:\/project|\.\/reports|~\/reports|reports\/plain/);
+});
+
+test('FIX-43 review preserves literal file names through native observation, persistence and all activity responses',async t=>{
+  const account:any={sessions:{s:{origin:'personal-remote'}},commands:{}};
+  observeActivityEvents(account,'s',[{seq:0,type:'turn.started',data:{turn:1}},{seq:1,type:'step.completed',data:{}},
+    {seq:2,type:'assistant.message',data:{text:'保存了 `C:/project/__init__.py` 和 `C:/project/_notes_.md`。'}},
+    {seq:3,type:'turn.ended',at:'2026-10-14T10:00:00Z',data:{reason:'completed'}}],3);
+  assert.equal((Object.values(account.activity.items)[0] as any).summary,'保存了 __init__.py 和 _notes_.md。');
+  const f=await startTimelineCandidate({inlineProgress:true,historyCount:0});t.after(()=>f.close());
+  f.progress.call('write','fix43-filename',{path:'C:/project/__init__.py'});f.progress.result('fix43-filename','saved');
+  f.progress.text('保存了 `C:/project/__init__.py` 和 `C:/project/_notes_.md`。');f.progress.finish();
+  const row=(await f.request('/activity?type=task')).items.find((item:any)=>item.type==='task.completed');
+  assert.equal(row.summary,'保存了 __init__.py 和 _notes_.md。');
+  assert.equal(Object.hasOwn(row,'summaryFormat'),false);
+  const stored=JSON.parse(await readFile(join(f.root,'store.json'),'utf8'));
+  assert.equal(Object.values(stored.accounts).flatMap((item:any)=>Object.values(item.activity.items)).find((item:any)=>item.id===row.id).summary,row.summary);
+  const delta=(await f.request('/activity/changes')).upserts.find((item:any)=>item.id===row.id);assert.equal(delta.summary,row.summary);
+  const read=await f.request(`/activity/${row.id}/read`,{requestId:'fix43-filename-read',read:true,attentionRevision:row.attentionRevision},'PATCH');assert.equal(read.item.summary,row.summary);
+});
+
+test('FIX-43 completion receipt becomes readable activity copy before truncation',async t=>{
+  const f=await startTimelineCandidate({goals:true,inlineProgress:true,historyCount:0});t.after(()=>f.close());
+  const created=await f.request('/goals',{requestId:'fix43-create',sessionId:f.sessionId,title:'整理周报'});
+  await f.request(`/goals/${f.sessionId}/complete`,{requestId:'fix43-complete',ref:created.ref});
+  const receipt='goal revision 2, phase: complete, disarmed';
+  f.progress.call('update_goal','fix43-goal',{id:created.ref.id,revision:1,phase:'complete'});
+  f.progress.result('fix43-goal',receipt);
+  f.progress.text(`${(receipt+'\n').repeat(110)}\n## 目标「整理周报」已完成\n- **核对了 3 份资料**\n- 保存了 [周报](file:///C:/Temp/weekly/report.md) 和 \`C:/Temp/weekly/summary.txt\`。`);
+  f.progress.finish();
+  const row=(await f.request('/activity?type=task')).items.find((item:any)=>item.type==='task.completed');
+  assert.ok(row);
+  assert.doesNotMatch(row.summary,/goal revision|phase\s*:|disarmed|\*\*|##|`|C:\\|file:\/\/|\[周报\]/i);
+  assert.match(row.summary,/目标「整理周报」已完成/);
+  assert.match(row.summary,/核对了 3 份资料/);
+  assert.match(row.summary,/report\.md/);
+  assert.match(row.summary,/summary\.txt/);
+  assert.equal((await f.request('/goals')).items[0].phase,'complete');
+  assert.equal(row.actions[0].kind,'open_chat');
+  const history=(await f.request(`/sessions/${f.sessionId}/events`)).events.findLast((event:any)=>event.type==='assistant.message');
+  const detail=await f.request(`/sessions/${f.sessionId}/events/${history.seq}/detail`);
+  assert.match(detail.text,/goal revision 2, phase: complete, disarmed/);
+  assert.match(detail.text,/C:\/Temp\/weekly\/summary.txt/);
+});
+
+test('FIX-43 plain completion copy preserves outcomes, file names and web sources across Markdown forms',()=>{
+  const raw='## 目标「整理报告」已完成（goal revision 2, phase: complete, disarmed）。\n'+
+    '```json\n{"goal":{"id":"native-goal","revision":2,"phase":"complete","activation":"disarmed"}}\n```\n'+
+    '- [x] **核对资料**\n- 保存 `C:\\Temp\\Weekly Report.md`、`\\\\host\\share\\notes.txt`、输出/report.csv 和 [报告](file:///tmp/report.md)。\n'+
+    '见 [资料](https://example.com/docs/phase)。';
+  const copy=completionActivitySummary(raw);
+  assert.match(copy,/目标「整理报告」已完成。/);assert.match(copy,/核对资料/);
+  for(const name of ['Weekly Report.md','notes.txt','report.csv','报告（report.md）','资料'])assert.ok(copy.includes(name),name);
+  assert.doesNotMatch(copy,/revision|phase:|activation|disarmed|native-goal|C:\\|host|share|输出\/|\*|`|\[x\]|```/);
+  assert.equal(completionActivitySummary('goal revision 2, phase: complete, disarmed'),'已完成，打开对话查看结果。');
+  assert.equal(completionActivitySummary('已保存报告。{"goal":{"id":"native-goal","revision":2,"phase":"complete","activation":"disarmed"}}'),'已保存报告。');
+  assert.equal(completionActivitySummary('修复了 phase parser，见 https://example.com/docs/phase。'),'修复了 phase parser，见 https://example.com/docs/phase。');
+});
+
+test('FIX-43 truncated summary uses existing details and skips private or forgotten events',async()=>{
+  let reads=0;const account:any={sessions:{s:{}}},event={seq:3,type:'assistant.message',data:{text:'保存 [local path]',truncated:true}};
+  const context:any={accountState:()=>account,callBackend:(work:any)=>work(),backend:{readEventDetail:async()=>{reads++;return {type:'assistant.message',text:'已保存 `C:/Temp/report.md`。'};}}};
+  const summary=await activitySummaryEvent(context,'owner','s',event);
+  assert.equal(summary.data.text,'已保存 `C:/Temp/report.md`。');
+  account.sessions.s.temporary=true;assert.equal(await activitySummaryEvent(context,'owner','s',event),event);
+  delete account.sessions.s.temporary;account.sessions.s.forgottenSeqs=[3];assert.equal(await activitySummaryEvent(context,'owner','s',event),event);
+  assert.equal(reads,1);
+});
+
+test('FIX-43 stored completion copy is cleaned in snapshot, delta and read response without changing receipts',async t=>{
+  const f=await startTimelineCandidate({inlineProgress:true,historyCount:0});t.after(()=>f.close());
+  const context=f.debug.service.__reviewContext,raw='**已完成**（goal revision 2, phase: complete, disarmed）：保存 `/tmp/work/report.md`。';
+  await context.serial(()=>context.mutate(f.debug.auth.account.ownerId,(account:any)=>{
+    const row=putActivity(account,'fix43-legacy',{type:'task.completed',title:'任务完成',summary:'占位',at:new Date().toISOString(),source:{sessionId:f.sessionId},actions:[]});
+    row.summary=raw;delete row.summaryFormat;
+  }));
+  const row=(await f.request('/activity?type=task')).items.find((item:any)=>item.summary.includes('report.md'));
+  assert.equal(row.summary,'已完成：保存 report.md。');
+  const delta=(await f.request('/activity/changes')).upserts.find((item:any)=>item.id===row.id);
+  assert.equal(delta.summary,row.summary);
+  const read=await f.request(`/activity/${row.id}/read`,{requestId:'fix43-read',read:true,attentionRevision:row.attentionRevision},'PATCH');
+  assert.equal(read.item.summary,row.summary);
+});
 
 test('activity uses stable native identities, redacts temporary task/approval/question content before persistence and prevents erasure replay',()=>{
   const account:any={sessions:{private:{origin:'personal-remote',temporary:true}},commands:{}};
