@@ -1434,7 +1434,7 @@ test('desktop model service form sends the typed secret only for draft discovery
   const secret = randomBytes(32).toString('hex'), services: any[] = [], catalog: any[] = [];
   const checks: any[] = [], writes: Array<{ url: string; method: string; body: any }> = [];
   const serviceId = 'model-service-00000000-0000-4000-8000-000000000001';
-  const models = [{ modelId: 'mimo-v2.6-flash', name: 'MiMo v2.6 Flash', enabled: true }, { modelId: 'mimo-v2.6-pro', name: 'MiMo v2.6 Pro', enabled: true }];
+  const models = [{ modelId: 'mimo-v2.6-pro', name: 'MiMo v2.6 Pro', enabled: true }, { modelId: 'mimo-v2.6-flash', name: 'MiMo v2.6 Flash', enabled: true }];
   const page = harness([], [], false, { modelServices: services, modelCatalog: catalog,
     modelServiceCheck: (_url, options) => { checks.push(JSON.parse(options.body)); return { status: 'available', models, message: '已读取两个模型' }; },
     modelServiceWrite: (url, options) => {
@@ -1443,7 +1443,7 @@ test('desktop model service form sends the typed secret only for draft discovery
       if (options.method === 'POST') {
         const installed = models.map((model, index) => ({ ...model, profileId: `private-model-${String(index + 1).repeat(40)}` }));
         services.push({ serviceId, name: body.name, baseUrl: body.baseUrl, interfaceType: body.interfaceType, revision: 1,
-          models: installed, selectedModelId: installed[0].modelId, catalog: { status: 'available', message: '已读取两个模型' } });
+          models: installed, selectedModelId: 'mimo-v2.6-flash', catalog: { status: 'available', message: '已读取两个模型' } });
         catalog.push(...installed.map(model => ({ id: model.profileId, model: model.modelId, name: model.name, configured: true })));
       } else { assert.equal(options.method, 'PATCH'); services[0] = { ...services[0], name: body.name, revision: services[0].revision + 1 }; }
       return { service: services[0] };
@@ -1458,11 +1458,12 @@ test('desktop model service form sends the typed secret only for draft discovery
   for (let attempt = 0; attempt < 30 && page.get('service-model-choices').querySelectorAll('input').length !== 2; attempt++) await flush();
   assert.equal(checks.length, 1); assert.equal(checks[0].apiKey === secret, true);
   assert.equal(checks[0].serviceId, undefined); assert.equal(page.get('service-model-choices').querySelectorAll('input').length, 2);
-  assert.match(visibleText(page.get('service-model-choices')), /MiMo v2\.6 Flash.*MiMo v2\.6 Pro/);
+  assert.match(visibleText(page.get('service-model-choices')), /MiMo v2\.6 Pro.*MiMo v2\.6 Flash/);
   assert.ok(page.get('account-model-form').listeners.get('submit')?.length);
   page.get('account-model-form').fire('submit');
   for (let attempt = 0; attempt < 40 && page.get('account-model-dialog').open; attempt++) await flush();
   assert.equal(page.get('account-model-dialog').open, false); assert.equal(page.get('account-model-key').value, '');
+  assert.equal(JSON.parse(page.requests.find(request => request.url.endsWith('/select'))!.options.body).modelId, 'mimo-v2.6-flash', 'settings preserves the server selection instead of catalog order');
   assert.equal(writes.length, 1); assert.equal(writes[0].method, 'POST'); assert.equal(writes[0].url, '/personal/v1/model-services');
   assert.equal(writes[0].body.apiKey === secret, true); assert.equal(writes[0].body.baseUrl, 'https://synthetic.example.test/v1');
   assert.equal(writes[0].body.interfaceType, 'openai-compatible'); assert.equal(typeof writes[0].body.requestId, 'string');
