@@ -113,6 +113,18 @@ import WeftMateCore
             }
         } catch { notice = (error as? LocalizedError)?.errorDescription ?? "离线副本无法读取。" }
     }
+    #if DEBUG
+    func seedMode2IOfflineFixture(disconnected: Bool = true) throws {
+        let args=ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"),args.contains("--mode2i-offline") else { return }
+        let identity=OfflineIdentity(ownerId:"owner-fixture",hostId:"host-fixture",deviceId:"device-fixture")
+        let keys=Mode2IOfflineFixtureKeys(),directory=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let vault=try OfflineVault(identity:identity,directory:directory,store:keys)
+        let data: [String:Any] = ["generation":3,"reset":false,"items":[],"remove":[],"hashes":[:],"truncated":false,"recent":[],"control":["accountId":"cloud-fixture","hostId":"host-fixture","generation":3],"taskRecipient":try vault.publicJwk(),"taskReferences":[["id":"session-work","title":"合成工作","projectId":"project-a"]]]
+        var state=OfflineState();state.snapshot=try JSONDecoder().decode(OfflineSnapshot.self,from:JSONSerialization.data(withJSONObject:data))
+        try vault.save(state);let engine=try OfflineReplica(vault:vault);replica=engine;self.identity=identity;hostOffline=disconnected;publish(engine)
+    }
+    #endif
     func retainWorkTask(_ task: OfflineWorkTask) throws {
         guard let replica,ready else { throw OfflineFailure.notReady }
         try replica.retainWorkTask(task);publish(replica)
@@ -138,3 +150,12 @@ import WeftMateCore
         guard replica === engine else { return }; publish(engine)
     }
 }
+
+#if DEBUG
+private final class Mode2IOfflineFixtureKeys: CredentialStore,@unchecked Sendable {
+    private let lock=NSLock();private var values:[String:Data]=[:]
+    func load(key:String)->Data?{lock.withLock{values[key]}}
+    func save(_ value:Data,key:String){lock.withLock{values[key]=value}}
+    func delete(key:String){lock.withLock{values[key]=nil}}
+}
+#endif

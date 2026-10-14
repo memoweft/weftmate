@@ -495,7 +495,7 @@ struct PhoneChatWorkspace: View {
                         }
                     }
                     else if id == "daily-review" { DailyReviewView(app: model) }
-                    else if id == "health" { HealthPageView(app:model,ask:{ text in model.mainChat.setDraft(text); path=[] }) }
+                    else if id == "health" { HealthPageView(app:model,ask:{ text in if modern { model.phoneNewConversationDraft=text;newMode = .chat } else { model.mainChat.setDraft(text) }; path=[] }) }
                     else if let conversation = model.conversations.first(where: { $0.id == id }) {
                         if conversation.isMainChat || modern && conversation.logicalHistory == true { MainChatView(app: model, chatID: modern ? conversation.chatId : nil).id(conversation.id) } else {
                         ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(conversation.chatContentRevision ?? 0))

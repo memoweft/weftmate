@@ -195,7 +195,17 @@ final class CloudLoginModel: ObservableObject {
             }
         }
     }
+    #if DEBUG
+    private var mode2IOfflineFixture: Bool { ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--mode2i-offline") }
+    func seedMode2IOfflineAccount() { guard mode2IOfflineFixture else { return };subject="cloud-fixture";authenticated=true;identityRestored=true }
+    #endif
     func offlineAuthorization(hostID: String) async throws -> OfflineAuthorization {
+        #if DEBUG
+        if mode2IOfflineFixture {
+            let result=try JSONDecoder().decode(OfflineAuthorization.self,from:Data("{\"hostId\":\"host-fixture\",\"accountId\":\"cloud-fixture\",\"generation\":3,\"authorized\":true,\"capabilities\":{\"offlineTasks\":1}}".utf8))
+            offlineWorkAuthorization=result;return result
+        }
+        #endif
         let result=try await accountClient().offlineStatus(hostID: hostID)
         offlineWorkAuthorization=result
         return result
@@ -205,6 +215,9 @@ final class CloudLoginModel: ObservableObject {
         return try await accountClient().submitOfflineWork(task,authorization:authorization)
     }
     func listOfflineWork(hostID: String) async throws -> [OfflineTaskReceipt] {
+        #if DEBUG
+        if mode2IOfflineFixture { return [] }
+        #endif
         let authorization=try await offlineAuthorization(hostID:hostID)
         return try await accountClient().listOfflineWork(hostID:hostID,authorization:authorization)
     }
@@ -291,6 +304,9 @@ final class CloudLoginModel: ObservableObject {
         return accountMessage(error)
     }
     func poll() async {
+        #if DEBUG
+        if mode2IOfflineFixture { return }
+        #endif
         await refreshDirectory()
         if waiting && authenticated && !busy { await retryConnection() }
     }

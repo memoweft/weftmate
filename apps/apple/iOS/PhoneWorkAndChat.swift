@@ -86,7 +86,10 @@ struct PhoneNewConversation: View {
     @State private var photoSelection: [PhotosPickerItem] = []
     @State private var importEpoch: UUID?
     @State private var dictation=false
-    @State private var text = ""
+    private var text: String {
+        get { app.phoneNewConversationDraft }
+        nonmutating set { app.phoneNewConversationDraft=newValue }
+    }
     @State private var projectID = ""
     @State private var modelsOpen = false
     @State private var busy = false
@@ -136,7 +139,7 @@ struct PhoneNewConversation: View {
                             ForEach(files) { file in PhoneAttachmentBlock(name:file.original.name,image:file.original.isImage ? file.file : nil,isImage:file.original.isImage,status:nil,remove:{ file.removeTemporaryFiles(); files.removeAll { $0.id == file.id } }) }
                         } }
                     }
-                    TextField(mode == .chat ? "聊一聊…" : "让电脑做什么…", text: $text, axis: .vertical)
+                    TextField(mode == .chat ? "聊一聊…" : "让电脑做什么…", text: $app.phoneNewConversationDraft, axis: .vertical)
                         .lineLimit(1...6).focused($focused).accessibilityIdentifier("phone.new.text")
                     composerTools
                 }.padding(AppleTokens.Space.p12).background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24)).padding(AppleTokens.Space.p12)

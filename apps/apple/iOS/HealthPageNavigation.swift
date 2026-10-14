@@ -58,7 +58,8 @@ struct PhoneWorkspace: View {
         if model.offline.hostOffline {
             model.offline.newConversation(recent: model.mainChat.chat?.id ?? model.conversations.first(where: \.isMainChat)?.id)
             model.offline.draft = text
-        } else { model.mainChat.setDraft(text) }
+        } else if model.mainChat.capabilities.supports("workAndChat") { model.phoneNewConversationDraft=text }
+        else { model.mainChat.setDraft(text) }
         chatRoot = UUID(); tab = .chat
     }
 }

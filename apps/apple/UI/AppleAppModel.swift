@@ -913,6 +913,7 @@ final class AppleAppModel: ObservableObject {
     }
     @Published var collapsedProjects = Set<String>()
     @Published var projectEditor: AppleProjectEditor?
+    @Published var phoneNewConversationDraft = ""
     @Published var phoneCreatingWork = false
     @Published var projectConversation: Project?
     @Published var projectModelID = ""
@@ -1543,6 +1544,12 @@ final class AppleAppModel: ObservableObject {
             await authenticate(username: "tester", password: "synthetic-only", displayName: nil, register: false)
             #if os(iOS)
             try? cloudLogin.seedMode2IDirectory()
+            if fixtureArguments.contains("--mode2i-offline") {
+                cloudLogin.seedMode2IOfflineAccount();_ = try? await cloudLogin.offlineAuthorization(hostID:"host-fixture")
+                try? offline.seedMode2IOfflineFixture(disconnected:false)
+                await phoneChat.synchronize(app:self)
+                try? offline.seedMode2IOfflineFixture()
+            }
             #endif
             return
         }
@@ -2025,6 +2032,10 @@ final class AppleAppModel: ObservableObject {
     }
 
     func confirmCreatedChat(_ row: ConversationSummary, profileID: String) { confirmedModels[Self.draftKey(for: row)] = profileID }
+    func retainLogicalAttachments(_ files: [ConversationAttachmentDraft], for row: ConversationSummary, accountEpoch: UUID) {
+        guard accountEpoch == epoch else { return }
+        attachmentDrafts[Self.draftKey(for:row)]=files
+    }
     func transferComposer(from source: ConversationSummary?, to target: ConversationSummary, text: String, files: [ConversationAttachmentDraft], epoch token: UUID) -> Bool {
         guard token == epoch, selectedConversation?.id == target.id else { return false }
         let existing = draftText(for: target, accountEpoch: token)
@@ -2269,6 +2280,7 @@ final class AppleAppModel: ObservableObject {
     }
 
     private func clearVisibleAccount(preserveComputerReplicas: Bool = false) {
+        phoneNewConversationDraft=""
         mainChat.clear(); sourceMessageTarget = nil
         if preserveComputerReplicas { offline.suspend() } else { offline.erase() }
         if !preserveComputerReplicas,let directory = timelineStateDirectory {

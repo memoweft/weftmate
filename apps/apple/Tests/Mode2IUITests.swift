@@ -6,17 +6,47 @@ final class Mode2IUITests: XCTestCase {
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = "mode2i-" + name; shot.lifetime = .keepAlways; add(shot)
     }
+    @MainActor private func openSidebar(_ app: XCUIApplication) throws {
+        let query=app.buttons.matching(identifier:"phone.sidebar")
+        let predicate=NSPredicate { _,_ in query.allElementsBoundByIndex.contains { $0.isHittable } }
+        XCTAssertEqual(XCTWaiter.wait(for:[XCTNSPredicateExpectation(predicate:predicate,object:app)],timeout:10),.completed)
+        let button=try XCTUnwrap(query.allElementsBoundByIndex.first { $0.isHittable })
+        button.tap()
+    }
     @MainActor private func connected(_ theme: String) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--apple-contract-fixture", "--mode2i-fixture", "--server-url", "https://a2-ui.unit.example",
                                "--ui-testing-namespace", "mode2i-" + UUID().uuidString, "--a5-theme", theme]
         app.launch(); return app
     }
+    @MainActor func testFix4ActualDisconnectedChatOffersOfflineWork() throws {
+        let app=XCUIApplication()
+        app.launchArguments=["--ui-testing","--apple-contract-fixture","--mode2i-fixture","--mode2i-offline","--server-url","https://a2-ui.unit.example","--ui-testing-namespace","mode2i-fix4-"+UUID().uuidString]
+        app.launch()
+        XCTAssertTrue(app.otherElements["offlineChat"].waitForExistence(timeout:30))
+        XCTAssertTrue(app.buttons["offlineWork.open"].waitForExistence(timeout:5))
+        app.buttons["offlineWork.open"].tap()
+        XCTAssertTrue(app.descendants(matching:.any).matching(identifier:"phone.work.offline").firstMatch.waitForExistence(timeout:5))
+        XCTAssertTrue(app.buttons["选择工作对话"].exists)
+        XCTAssertTrue(app.buttons["phoneSheet.close"].exists)
+        app.terminate()
+    }
+    @MainActor func testFix5HealthFollowupPopulatesNewChatInput() throws {
+        let app=connected("light")
+        XCTAssertTrue(app.descendants(matching:.any).matching(identifier:"phone.new.text").firstMatch.waitForExistence(timeout:30))
+        app.buttons["phone.tab.health"].tap()
+        XCTAssertTrue(app.buttons["health.ask"].waitForExistence(timeout:20))
+        app.buttons["health.ask"].tap()
+        let input=app.descendants(matching:.any).matching(identifier:"phone.new.text").firstMatch
+        XCTAssertTrue(input.waitForExistence(timeout:10))
+        XCTAssertEqual(input.value as? String,"合成健康追问内容")
+        app.terminate()
+    }
     @MainActor func testWorkSelectionNormalStateScreenshots() throws {
         for theme in ["light","dark"] {
             let app=connected(theme)
             XCTAssertTrue(app.buttons["phone.sidebar"].waitForExistence(timeout:30))
-            app.buttons["phone.sidebar"].tap();app.buttons["phone.mode.work"].tap();app.buttons["phone.sidebar.new"].tap()
+            try openSidebar(app);app.buttons["phone.mode.work"].tap();app.buttons["phone.sidebar.new"].tap()
             XCTAssertTrue(app.buttons["phone.work.project"].waitForExistence(timeout:5))
             let mode=app.buttons["defaultApprovalMode"]
             XCTAssertEqual(mode.value as? String,"每次询问")
@@ -35,7 +65,7 @@ final class Mode2IUITests: XCTestCase {
             let app = connected(theme)
             XCTAssertTrue(app.descendants(matching:.any).matching(identifier:"phone.new.text").firstMatch.waitForExistence(timeout: 30))
             capture(theme + "-new-chat")
-            app.buttons["phone.sidebar"].tap()
+            try openSidebar(app)
             XCTAssertTrue(app.buttons["phone.mode.chat"].waitForExistence(timeout: 5))
             app.buttons["phone.mode.chat"].tap()
             XCTAssertTrue(app.buttons["computer.conversation.host-fixture|main"].exists)
@@ -60,7 +90,7 @@ final class Mode2IUITests: XCTestCase {
             app.buttons["phone.new.send"].tap()
             XCTAssertTrue(app.descendants(matching:.any).matching(identifier:"mainChat.draft").firstMatch.waitForExistence(timeout: 20))
             capture(theme + "-created-work")
-            app.buttons["phone.sidebar"].tap(); app.buttons["phone.mode.chat"].tap()
+            try openSidebar(app); app.buttons["phone.mode.chat"].tap()
             app.buttons["computer.conversation.host-fixture|main"].tap()
             XCTAssertTrue(app.buttons["phone.work.accept"].waitForExistence(timeout: 20))
             XCTAssertFalse(app.buttons["phone.work.accept"].isEnabled)
@@ -68,7 +98,7 @@ final class Mode2IUITests: XCTestCase {
             app.buttons["phone.work.project"].firstMatch.tap(); app.buttons["phone.work.project.project-a"].tap()
             app.buttons["phone.work.accept"].tap()
             XCTAssertTrue(app.staticTexts["请整理这份合成资料"].waitForExistence(timeout: 10))
-            app.buttons["phone.sidebar"].tap()
+            try openSidebar(app)
             XCTAssertEqual(app.buttons["phone.mode.work"].value as? String, "已选择")
             XCTAssertTrue(app.buttons["computer.conversation.host-fixture|main"].waitForExistence(timeout: 5))
             capture(theme + "-converted-history-list")
@@ -76,11 +106,11 @@ final class Mode2IUITests: XCTestCase {
 
             let rejected = connected(theme)
             XCTAssertTrue(rejected.buttons["phone.sidebar"].waitForExistence(timeout: 30))
-            rejected.buttons["phone.sidebar"].tap(); rejected.buttons["phone.mode.chat"].tap()
+            try openSidebar(rejected); rejected.buttons["phone.mode.chat"].tap()
             rejected.buttons["computer.conversation.host-fixture|main"].tap()
             XCTAssertTrue(rejected.buttons["phone.work.reject"].waitForExistence(timeout: 20))
             rejected.buttons["phone.work.reject"].tap()
-            rejected.buttons["phone.sidebar"].tap()
+            try openSidebar(rejected)
             XCTAssertEqual(rejected.buttons["phone.mode.chat"].value as? String, "已选择")
             rejected.terminate()
 

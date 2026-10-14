@@ -22,6 +22,11 @@ public enum WorkAndChat {
     public static func canCreateWork(connected: Bool, taskAvailable: Bool?) -> Bool {
         connected && taskAvailable != false
     }
+    public static func offlineWorkAvailable(snapshot: OfflineSnapshot?, authorization: OfflineAuthorization?, authenticated: Bool) -> Bool {
+        guard authenticated,let snapshot,let authorization,snapshot.taskRecipient != nil else { return false }
+        return authorization.supportsTasks && authorization.authorized && authorization.hostId == snapshot.control.hostId &&
+            authorization.accountId == snapshot.control.accountId && authorization.generation == snapshot.generation
+    }
     public static func subtitle(_ row: ConversationSummary, computer: String) -> String {
         mode(row) == .work ? computer + " · " + (row.workDirectory?.name ?? row.projectName ?? "请选择项目或文件夹") : "由 " + computer + " 回答"
     }
