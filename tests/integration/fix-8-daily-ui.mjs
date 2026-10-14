@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -16,7 +17,7 @@ import { syntheticCloudBinding } from '../helpers/synthetic-cloud-binding.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 const before = process.argv.includes('--before');
 const baselineRevision = 'f787c3c';
-const root = resolve('.'), evidence = join(root, 'tests/evidence/fix-8');
+const root = resolve('.'), evidence = evidencePath('fix-8');
 mkdirSync(evidence, {recursive:true});
 const env = {...process.env}, checks = [], errors = [];
 function contrast(foreground,background){const luminance=color=>color.match(/\d+/g).slice(0,3).map(Number).map(n=>n/255).map(n=>n<=.04045?n/12.92:((n+.055)/1.055)**2.4).reduce((sum,n,index)=>sum+n*[.2126,.7152,.0722][index],0);const a=luminance(foreground),b=luminance(background);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);}

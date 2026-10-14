@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'node:url';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -11,7 +13,7 @@ import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { assertPublicText } from '../../scripts/review-gallery/common.mjs';
 
-const out=new URL('../evidence/and-1/',import.meta.url),records=[];
+const out=pathToFileURL(evidencePath('and-1/') + '/'),records=[];
 const browser=await chromium.launch({headless:true});
 try {
   for(const theme of ['light','dark']) {

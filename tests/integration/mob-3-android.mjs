@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /* Existing HybridActivity and native bridge; isolated synthetic package/account only. */
 import assert from 'node:assert/strict';
 import {execFileSync,spawn} from 'node:child_process';
@@ -10,7 +11,7 @@ import {readMuMuInfo,adbExecutable} from '../../scripts/nightly/mumu.mjs';
 import {systemBarDifference} from '../../scripts/nightly/system-bars.mjs';
 import {startAnd3Fixture} from './and-3-fixture.mjs';
 const {PNG}=createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
-const out=resolve('tests/evidence/mob-3');await mkdir(out,{recursive:true});
+const out=evidencePath('mob-3');await mkdir(out,{recursive:true});
 const pkg='com.memoweft.weftmate.mobile.and3qa',lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock';
 const report={synthetic:true,realNativeShell:true,modelRequests:0,packageName:pkg,settingsChanged:false,screenshots:[],errors:[]};
 let lease,serial,f,browser,forward,instrumentation,nativePage,installed=false;const reversed=[];

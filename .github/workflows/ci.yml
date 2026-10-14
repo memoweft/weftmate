@@ -20,6 +20,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     env:
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/evidence
       WEFTMATE_TEST_HOST_NAME: synthetic-host
       CI_TEST_OS: ${{ matrix.os }}
       PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.local/ci-browser-cache
@@ -88,7 +89,7 @@ jobs:
       - name: Public repository hygiene
         if: matrix.shard == 1
         run: |
-          node --test tests/public-hygiene.test.mjs
+          node --test tests/public-hygiene.test.mjs tests/evidence-path.test.mjs
           node .github/scripts/public-hygiene.mjs
 
       - name: Audit development dependencies
@@ -161,6 +162,15 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Upload generated unit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-${{ matrix.os }}-${{ matrix.shard }}
+          path: ${{ env.WEFTMATE_EVIDENCE_DIR }}
+          if-no-files-found: ignore
+          retention-days: 7
+
       # CI-2 retired 10 baseline exceptions. Only the two product failures
       # reproduced on Linux/macOS remain non-blocking; other cases stay required.
       - name: Known main failures (2 cases; CI-2 reverified)
@@ -227,3 +237,4 @@ jobs:
         run: node --test tests/personal-memory-observed.integration.test.ts tests/personal-memory-observed-outbox.test.ts tests/personal-memory-correction.integration.test.ts tests/personal-memory-freshness.integration.test.ts tests/personal-memory-confirmation.integration.test.ts tests/personal-memory-fx17.integration.test.ts tests/personal-memory-fx18.integration.test.ts
         env:
           WEFTMATE_TEST_MEMOWEFT_SOURCE: ${{ github.workspace }}/memoweft-core/py/src
+

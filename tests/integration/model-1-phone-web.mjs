@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Synthetic phone-only service journey; browser viewport evidence does not claim native system-bar coverage. */
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -6,7 +7,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, resolve } from 'node:path';
 import { chromium } from 'playwright';
 
-const root = resolve('apps/mobile-ui/www'), out = resolve('tests/evidence/model-1/phone-standalone');
+const root = resolve('apps/mobile-ui/www'), out = evidencePath('model-1/phone-standalone');
 const credential = randomBytes(24).toString('base64url'), modelsUsed = [];
 const colors = [];
 const server = createServer(async (request, response) => {

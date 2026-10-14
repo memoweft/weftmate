@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
@@ -12,7 +13,7 @@ import {fixture,EMAIL,PASSWORD} from '../../services/cloud/test/identity-helpers
 import {registration} from '../../services/cloud/test/app-helpers.mjs';
 import {PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT} from '../../src/host-mode.mjs';
 import {redactEvidenceText,cleanupOwnedProcesses,systemCommitMemory} from '../helpers/process-evidence.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/m3-2'),startedAt=Date.now();
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('m3-2'),startedAt=Date.now();
 const root=await mkdtemp(join(tmpdir(),'weftmate-m3-2-'));await mkdir(out,{recursive:true});
 const key=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"],{encoding:'utf8',windowsHide:true}).trim();assert.ok(key,'Machine model key required');
 const pause=ms=>new Promise(done=>setTimeout(done,ms)),apps=[],cleanups=[];

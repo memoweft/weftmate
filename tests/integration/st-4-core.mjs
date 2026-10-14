@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile, readFile, rm } from 'node:fs/promises';
@@ -9,7 +10,7 @@ import { createPersonalMemoryManager } from '../../src/personal-memory/index.mjs
 import { boundaryForCompletedTurn } from '../../src/plugins/weftmate-personal-memory.mjs';
 import { exportAccountFolder } from '../../src/personal-data/export.mjs';
 import { removeAccountPath } from '../../src/personal-data/paths.mjs';
-const root = await mkdtemp(join(tmpdir(),'weftmate-st4-core-')), evidence = resolve('tests/evidence/st-4'); await mkdir(evidence,{recursive:true});
+const root = await mkdtemp(join(tmpdir(),'weftmate-st4-core-')), evidence = evidencePath('st-4'); await mkdir(evidence,{recursive:true});
 const python='D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe', pythonPath='D:/AIProjects/MemoWeft/Core/py/src';
 const server=createServer((req,res)=>{res.writeHead(503);res.end('{}');});await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const baseUrl=`http://127.0.0.1:${server.address().port}/v1`, a='owner-00000000-0000-4000-8000-000000000041',b='owner-00000000-0000-4000-8000-000000000042';

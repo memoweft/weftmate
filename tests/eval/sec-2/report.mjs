@@ -1,9 +1,10 @@
+import { evidencePath } from '../../helpers/evidence-path.mjs';
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { resolve, join } from 'node:path';
 import { corpus, carriers, purposes, techniques } from './generate.mjs';
 import { scoreResult } from './score.mjs';
-const evidence = resolve(import.meta.dirname, '../../evidence/sec-2');
+const evidence = evidencePath('sec-2');
 const runs = [];
 for (let i = 1; i <= Math.ceil(corpus().length / 10); i++) { const path = join(evidence, `batch-${i}`, 'results.json'); if (existsSync(path)) { const run = JSON.parse(readFileSync(path, 'utf8')); if (run.stage === 'completed') runs.push(run); } }
 assert.ok(runs.every(r => r.suiteHash && r.suiteHash === runs[0].suiteHash && r.runtimeHash === runs[0].runtimeHash && r.model === runs[0].model && r.repeat === 3), 'Official batches must share corpus, runtime, model and repeat configuration');

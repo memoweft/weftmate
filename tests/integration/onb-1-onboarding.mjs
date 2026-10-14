@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -13,7 +14,7 @@ import { join, resolve } from 'node:path';
 
 import { randomUUID } from 'node:crypto';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
-const repository=resolve(import.meta.dirname,'../..'), evidence=join(repository,'tests/evidence/onb-1');
+const repository=resolve(import.meta.dirname,'../..'), evidence=evidencePath('onb-1');
 const profile=await mkdtemp(join(tmpdir(),'weftmate-onb-1-'));
 await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));await mkdir(evidence,{recursive:true});
 let cloud,cloudRoot,cloudData,mailDirectory,cloudProxy,application,browser,page,launchEnv,launchArgs;

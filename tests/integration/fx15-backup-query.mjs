@@ -1,3 +1,5 @@
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -11,6 +13,8 @@ import { join, resolve, basename } from 'node:path';
 import { hashPassword } from '../../src/personal-access/password.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { validateStore } from '../../src/personal-access/store.mjs';
+prepareEvidenceDirectory(evidencePath('fx-15'), { recursive: true });
+
 
 const repository = resolve(import.meta.dirname, '../..');
 const source = process.argv[2];
@@ -114,5 +118,5 @@ try {
   assert.ok(basename(root).startsWith('weftmate-fx15-backup-query-'));
   await rm(root, { recursive: true, force: true, maxRetries: 3 });
   report.backupCopyDeleted = true;
-  await writeFile(join(repository, 'tests/evidence/fx-15/backup-query.json'), JSON.stringify(report, null, 2));
+  await writeFile(evidencePath('fx-15/backup-query.json'), JSON.stringify(report, null, 2));
 }

@@ -1,9 +1,10 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import { readFile, mkdir, writeFile, rm } from 'node:fs/promises';
 
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-const repo=resolve(process.argv[2]??'.'), output=resolve(process.argv[3]??'tests/evidence/mem-d/queue-before-main.json');
+const repo=resolve(process.argv[2]??'.'), output=resolve(process.argv[3]??evidencePath('mem-d/queue-before-main.json'));
 const {createPersonalMemoryManager}=await import(pathToFileURL(join(repo,'src/personal-memory/index.mjs')));
 const {boundaryForCompletedTurn}=await import(pathToFileURL(join(repo,'src/plugins/weftmate-personal-memory.mjs')));
 const longEvents=[{seq:1,type:'turn/start',data:{turn:1}},{seq:2,type:'user/message',data:{source:{kind:'user'},content:[{type:'text',text:'合成原话'.repeat(5000)}]}},{seq:3,type:'turn/end',data:{turn:1,reason:{kind:'completed'}}}];
