@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { settledApprovalGeometry } from './settled-approval-geometry.mjs';
 
 // Answer the actual phone card, retaining the approval id and once-only scope.
 // Geometry and hit testing fail if the composer or another surface covers it.
@@ -22,11 +23,7 @@ export async function approvePhoneOperation(page, row, beforeSubmit = async () =
   }
   await action.waitFor();await action.scrollIntoViewIfNeeded();
   assert.equal(await action.isEnabled(),true);
-  const geometry=await action.evaluate(node=>{
-    const box=node.getBoundingClientRect(),scroll=node.closest('#chat-scroll').getBoundingClientRect(),composer=document.getElementById('message-form').getBoundingClientRect();
-    const hit=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
-    return {top:box.top,bottom:box.bottom,height:box.height,scrollTop:scroll.top,scrollBottom:scroll.bottom,composerTop:composer.top,uncovered:hit===node||node.contains(hit)};
-  });
+  const geometry=await action.evaluate(settledApprovalGeometry);
   assert.ok(geometry.height>=44,'phone approval action retains a 44px touch target');
   assert.ok(geometry.top>=geometry.scrollTop&&geometry.bottom<=geometry.scrollBottom&&geometry.bottom<=geometry.composerTop,'phone approval must be inside the conversation above the composer');
   assert.equal(geometry.uncovered,true,'phone approval action must not be covered');

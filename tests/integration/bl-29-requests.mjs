@@ -136,6 +136,9 @@ try {
       await p.evaluate(()=>{delete document.visibilityState;document.dispatchEvent(new Event('visibilitychange'));});
       await p.getByText('恢复到最新'+surface,{exact:true}).first().waitFor({state:'visible',timeout:1000});report.checks.push({name:'foreground-recovery',surface,ms:Date.now()-start});
       await p.evaluate(({surface})=>{const c=surface==='mobile'?uiCore:__streamCore;c.connectionNetwork(false);},{surface});
+      // connectionNetwork commits core state before its queued render. Read
+      // the rendered offline state before asserting the copy or timing recovery.
+      await p.waitForFunction(()=>document.querySelector('.presence-copy')?.textContent.includes('网络不可用'),{}, {timeout:2000});
       assert.match(await p.locator('.presence-copy').innerText(),/网络不可用/);start=Date.now();
       await p.evaluate(({surface})=>(surface==='mobile'?uiCore:__streamCore).connectionNetwork(true),{surface});
       await p.waitForFunction(({surface})=>(surface==='mobile'?uiCore:__streamCore).connectionView().kind==='online',{surface},{timeout:2000});report.checks.push({name:'connection-recovery',surface,ms:Date.now()-start});
