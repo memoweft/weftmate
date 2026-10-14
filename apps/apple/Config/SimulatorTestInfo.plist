@@ -27,7 +27,7 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-<key>BGTaskSchedulerPermittedIdentifiers</key><array><string>com.weftmate.apple.daily-health</string></array>
+<key>BGTaskSchedulerPermittedIdentifiers</key><array><string>com.weftmate.apple.daily-health</string><string>com.weftmate.apple.local-reminders</string></array>
 <key>UIBackgroundModes</key><array><string>fetch</string></array>
 </dict>
 </plist>
