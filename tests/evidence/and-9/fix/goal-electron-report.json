@@ -1,0 +1,12 @@
+{
+  "realWeftMateElectron": true,
+  "syntheticAccount": true,
+  "paidModelRequests": 0,
+  "startedAt": "2026-10-13T22:20:44.636Z",
+  "desktopCheckedShield": true,
+  "blockedExternalRequests": 0,
+  "remoteCheckedShield": true,
+  "remoteVerification": "Actual mounted navigation DOM before cloud sign-in; no production account validation",
+  "passed": true,
+  "releasedAt": "2026-10-13T22:21:03.100Z"
+}
