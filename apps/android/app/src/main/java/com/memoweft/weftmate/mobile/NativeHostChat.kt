@@ -2,8 +2,15 @@ package com.memoweft.weftmate.mobile
 
 import org.json.JSONObject
 
+internal fun checkedNativeDecisionRequest(checkCurrent: () -> Unit, request: () -> JSONObject): JSONObject {
+    checkCurrent()
+    val result = request()
+    checkCurrent()
+    return result
+}
+
 internal fun hostChatTitle(chat: JSONObject): String =
-    if (chat.optString("kind") == "main") "WeftMate" else chat.optString("title").takeIf { it.isNotBlank() && it != "null" } ?: "新对话"
+    chat.stringOrEmpty("displayTitle").ifEmpty { if (chat.optString("kind") == "main") "WeftMate" else chat.stringOrEmpty("title").ifEmpty { "新对话" } }
 
 internal suspend fun nativeMessageDetail(sessionId: String, seq: Long,
     request: suspend (String, JSONObject) -> JSONObject): JSONObject =
