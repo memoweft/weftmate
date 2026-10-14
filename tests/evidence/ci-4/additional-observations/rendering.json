@@ -36,7 +36,7 @@
       "generatedAt": "2026-10-14T00:10:14.513Z"
     }
   ],
-  "classification": "Unresolved: runScene discards the original locator and step; no phase/selection snapshot in the failed artifact.",
+  "classification": "Unresolved: repeated dark rendering cloud failure, narrow and full mobile sequence locally pass. Await fixed step evidence on the next cloud failure.",
   "inspected": [
     "full failed workflow log",
     "failed scene artifact",
@@ -49,5 +49,27 @@
     "selected session and source projection when the wait expired",
     "full-sequence reproduction"
   ],
-  "changes": "None; no assertion relaxation, skip, selector change, or scene retry."
+  "changes": "None; no assertion relaxation, skip, selector change, or scene retry.",
+  "postMainFailure": {
+    "conclusion": "failure",
+    "databaseId": 38505383963,
+    "headSha": "fe0ee01a3351fb349253a5eab4ce10ed06cd8770",
+    "status": "completed",
+    "url": "https://github.com/memoweft/weftmate/actions/runs/38505383963",
+    "branchHead": "fe0ee01a3351fb349253a5eab4ce10ed06cd8770"
+  },
+  "fullMobileSequence": {
+    "branchHead": "fe0ee01a3351fb349253a5eab4ce10ed06cd8770",
+    "records": 42,
+    "passed": 42,
+    "failed": 0,
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "heldHeavySlot": true,
+    "released": true,
+    "originalAssertions": true
+  },
+  "diagnosticChange": "Gallery failure records now include only a fixed phase name; no original locator/DOM/credential-bearing error text. Original wait deadlines and selectors unchanged."
 }

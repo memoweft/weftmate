@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-14T03:16:07.825Z",
+  "checkedAt": "2026-10-14T03:41:15.057Z",
   "forcedCleanupTotal": 3,
   "forcedCleanupBreakdown": {
     "initialOwnedTestProcesses": 2,
@@ -12,18 +12,18 @@
     "executable path verified",
     "command path belongs to w9 or its owned temporary root"
   ],
-  "normalExits": "Electron probes, Python shutdown worker, diagnostics and final cloud controller all completed; current CIM worktree census empty",
+  "normalExits": "Electron probes, Python shutdown worker, diagnostics and final cloud controller all completed; current CIM worktree census empty; post-main mobile sequence and gallery privacy regression also exited normally and released owned heavy locks.",
   "installation": "No test identity program installed; no registration created",
   "disk": {
     "own": {
-      "bytes": 124931615,
-      "megabytes": 119.1,
+      "bytes": 126563923,
+      "megabytes": 120.7,
       "linksExcluded": 0,
       "filesOver1GB": []
     },
     "entireLocal": {
-      "bytes": 245649695,
-      "megabytes": 234.3,
+      "bytes": 247282003,
+      "megabytes": 235.8,
       "linksExcluded": 0,
       "filesOver1GB": []
     },
