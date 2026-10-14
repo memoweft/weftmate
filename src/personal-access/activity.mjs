@@ -7,6 +7,7 @@ import { nativeFailureReason } from './notification-content.mjs';
 import { ACTIVITY_TYPES, activityState, activityCounts, activitySource, putActivity, activityToken, readActivityToken, activityMatches, nativeTaskActivity } from './activity-store.mjs';
 import { createDailyDigest } from './daily-digest.mjs';
 import { createMemoryDigest, confirmDigestMemory } from './memory-digest.mjs';
+import { completionActivitySummary, publicActivityCopy, activitySummaryEvent } from './activity-copy.mjs';
 
 export function observeActivityEvents(account,sessionId,events,nextSeq,observeReminders=true) {
   const state=activityState(account), session=account.sessions[sessionId];
@@ -31,11 +32,11 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
     }
     if(event.type.startsWith('step.')||event.type==='artifact.created')scan.executed=true;
     if(event.type==='step.failed'&&!hasPrivateContent(session))scan.failureReason=nativeFailureReason(data)||scan.failureReason;
-    if(event.type==='assistant.message'&&!hasPrivateContent(session))scan.summary=String(data.text??'').slice(0,160);
+    if(event.type==='assistant.message'&&!hasPrivateContent(session))scan.summary=String(data.text??'');
     if(event.type==='turn.ended' && (scan.executed||account.commands[scan.taskId]?.scheduleSourceId||account.commands[scan.taskId]?.offlineSource||['failed','error','blocked','aborted'].includes(data.reason))){
       const result={completed:'completed',failed:'failed',error:'failed',blocked:'failed',aborted:'stopped'}[data.reason];
       if(result){const failureReason=result==='failed'&&!hasPrivateContent(session)?nativeFailureReason(data)||scan.failureReason:undefined;
-        const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:scan.summary}:{}),...(failureReason?{failureReason}:{})};
+        const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:result==='completed'?completionActivitySummary(scan.summary):scan.summary.slice(0,160),...(result==='completed'?{summaryFormat:'plain'}:{})}:{}),...(failureReason?{failureReason}:{})};
         scan.terminals??={};scan.terminals[scan.taskId??event.seq]=terminal;
         if(!Object.values(account.chatResults??{}).some(row=>row.taskId===scan.taskId))nativeTaskActivity(account,sessionId,terminal);
       }
@@ -77,7 +78,8 @@ export function createActivity(context) {
           const afterSeq=context.accountState(ownerId).activity?.sources[sessionId]?.afterSeq??-1;
           const page=await context.callBackend(()=>context.backend.readEvents({ownerId,sessionId,afterSeq,limit:200}));
           if(!Array.isArray(page.events)||!Number.isSafeInteger(page.nextSeq)||page.nextSeq<afterSeq)throw failure('BACKEND_UNAVAILABLE',503);
-          if (page.nextSeq > afterSeq || page.events.length) await context.serial(()=>context.mutate(ownerId,next=>observeActivityEvents(next,sessionId,page.events.map(event=>context.publicHistoryEvent(ownerId,sessionId,event)),page.nextSeq,!context.backend.schedules),()=>{
+          const events=[];for(const event of page.events)events.push(await activitySummaryEvent(context,ownerId,sessionId,event));
+          if (page.nextSeq > afterSeq || page.events.length) await context.serial(()=>context.mutate(ownerId,next=>observeActivityEvents(next,sessionId,events.map(event=>context.publicHistoryEvent(ownerId,sessionId,event)),page.nextSeq,!context.backend.schedules),()=>{
             const live=context.accountState(ownerId);if(!live.sessions[sessionId]||live.sessions[sessionId].deleting||live.memoryCleanupPending||(live.activity?.generation??0)!==generation)throw failure('SOURCE_UNAVAILABLE',404);
           }));
           if(context.backend.schedules){const notices=await context.backend.schedules({ownerId,sessionId,action:'notifications'});
@@ -146,6 +148,8 @@ export function createActivity(context) {
     const path=url.pathname.slice('/personal/v1/activity'.length), account=context.accountState(ownerId),state=activityState(account);
     const reply=value=>{
       authorize();const computerName=context.cloudIdentity?.computerLabel(ownerId);
+      for(const field of ['items','upserts'])if(value[field])value[field]=value[field].map(publicActivityCopy);
+      if(value.item)value.item=publicActivityCopy(value.item);
       if(computerName)for(const field of ['items','upserts'])if(value[field])value[field]=value[field].map(row=>({...row,computerName,
         notification:{...row.notification,title:`${computerName} · ${row.notification.title}`}}));
       context.json(response,200,value);return true;
