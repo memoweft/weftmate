@@ -523,5 +523,26 @@
     "api": "fileImporter",
     "sha256": "201d4bf6c4cdaa1f9b6a7553e7147deeb873019d64e62845acf38f0b7ffaee26",
     "reason": "Named nonisolated factory returns an explicit Sendable file-import callback. The callback hops to MainActor and checks the captured account epoch before updating the composer."
+  },
+  {
+    "file": "apps/apple/iOS/PhoneReminderNotifications.swift",
+    "line": 161,
+    "api": "launch",
+    "sha256": "353b687a203e53c03f1b314ef49e8e478e54cf6103619656b387fed74c968b59",
+    "reason": "Nonisolated Sendable launch factory only captures a locked completion owner and explicitly starts reminder UI/storage work on MainActor."
+  },
+  {
+    "file": "apps/apple/iOS/PhoneReminderNotifications.swift",
+    "line": 168,
+    "api": "expiration",
+    "sha256": "b6616af4cb2ef27b389b10a62bf3db936179a8f65f37b5dd9e6ab856f04d7001",
+    "reason": "Nonisolated Sendable expiration factory only cancels a Sendable task and completes the locked SDK task once, without accessing UI state."
+  },
+  {
+    "file": "apps/apple/iOS/PhoneReminderNotifications.swift",
+    "line": 176,
+    "api": "register",
+    "sha256": "43613e8af4de66674ad5a7956675cdd35a7195818bdaa6f2ec50186e8e9c9c2c",
+    "reason": "MainActor startup registration runs once per process and installs only the reviewed nonisolated Sendable launch factory."
   }
 ]

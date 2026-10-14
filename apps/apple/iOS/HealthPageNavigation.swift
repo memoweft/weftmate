@@ -6,6 +6,7 @@ struct PhoneWorkspace: View {
     @ObservedObject private var cloud: CloudLoginModel
     @ObservedObject private var phone: PhoneStandaloneModel
     init(model: AppleAppModel) { self.model=model; cloud=model.cloudLogin;phone=model.phoneChat }
+    @ObservedObject private var reminders=PhoneReminderNotifications.shared
     @State private var tab: PhoneTab = .chat
     @State private var chatRoot = UUID()
     @State private var keyboardVisible = false
@@ -26,6 +27,8 @@ struct PhoneWorkspace: View {
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = false } }
         .onChange(of:cloud.subject) { _,_ in dismissPhonePreviewKeyboard(); keyboardVisible=false }
         .onChange(of:model.openedSessionID) { _,id in if id != nil { tab = .chat } }
+        .onChange(of:reminders.openedReminder) { _,route in navigateReminder(route) }
+        .onAppear { navigateReminder(reminders.openedReminder) }
         .onChange(of:model.phoneLibrarySelection) { _,id in if id != nil { tab = .resources } }
         .background(Weave.canvas).tint(Weave.accent).buttonStyle(PhoneActionStyle())
     }
@@ -39,9 +42,14 @@ struct PhoneWorkspace: View {
             }.id(chatRoot)
         case .activity: NavigationStack { if model.session == nil { PhoneComputerEmptyPage(app:model,title:"动态",explanation:"这里会显示提醒、任务进展和回顾。") } else { PhoneActivityView(app:model) } }
         case .health: NavigationStack { if model.session == nil { PhoneLocalHealthView(app:model) } else { HealthPageView(app:model,ask:{text in Task { await ask(text) }}).toolbar { PhoneAccountMenu(model:model) } } }
-        case .goals: NavigationStack { if model.session == nil { PhoneComputerEmptyPage(app:model,title:"目标",explanation:"这里会显示目标和定时安排。") } else { PhoneGoalsView(app:model) } }
+        case .goals: NavigationStack { PhoneGoalsView(app:model) }
         case .resources: if model.session == nil { NavigationStack { PhoneComputerEmptyPage(app:model,title:"成果库",explanation:"这里会保存电脑完成的文件。") } } else { PhoneLibraryView(app:model) }
         }
+    }
+    private func navigateReminder(_ route: ReminderRoute?) {
+        guard route != nil else { return }
+        tab=reminders.opensConversation ? .chat : .goals;visited.insert(tab)
+        if reminders.opensConversation { reminders.openedReminder=nil }
     }
     private func ask(_ text: String) async {
         let token = model.accountEpoch
