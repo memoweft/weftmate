@@ -1,4 +1,5 @@
 import { scheduledCommandSource } from './schedules-authorization.mjs';
+import { executionProject } from './work-and-chat.mjs';
 import { digest, failure, id, validId, withDeadline } from './common.mjs';
 import { artifactContentType, canonicalArtifact } from '../personal-artifacts/index.mjs';
 import { INTERNAL_ARTIFACT_KIND, MAX_COMMANDS, SNAPSHOT_ID, WEB_SNAPSHOT_ID } from './constants.mjs';
@@ -150,8 +151,8 @@ export function createArtifactOperations(context) {
           const grant = context.projectGrant(next, sessionId);
           if (grant.project.projectId !== projectSession.project.projectId ||
               grant.project.revision !== projectSession.project.revision ||
-              source.payload.projectId !== grant.project.projectId ||
-              source.payload.projectRevision !== grant.project.revision ||
+              executionProject(source).projectId !== grant.project.projectId ||
+              executionProject(source).projectRevision !== grant.project.revision ||
               citedSources.some((read) => next.projectSources?.[read.snapshotId]?.sourceCommandId !== source.commandId)) {
             throw failure('PROJECT_SOURCE_UNVERIFIED', 409);
           }
@@ -197,7 +198,7 @@ export function createArtifactOperations(context) {
           contentType: artifact.contentType, size: artifact.size, sha256: artifact.sha256,
           ...(projectSession || browserSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}),
           toolSource: { sessionId, turn, callId, sourceCommandId: source.commandId },
-          libraryProjectId: source.payload.projectId ?? null,
+          libraryProjectId: executionProject(source).projectId ?? null,
           libraryPrivate: !(next.sessions[sessionId]?.memoryTurns?.[turn]?.ingest ?? (next.sessions[sessionId]?.memoryMode !== 'off' && next.sessions[sessionId]?.temporary !== true)),
           state: 'dispatching', createdAt: now, updatedAt: now };
         return commandId;

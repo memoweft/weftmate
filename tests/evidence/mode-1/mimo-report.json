@@ -1,0 +1,9 @@
+{
+  "model": "mimo-v2.6-flash",
+  "realDsh": true,
+  "syntheticAccount": true,
+  "actualTool": "write",
+  "workCard": true,
+  "executed": false,
+  "executionRecords": 0
+}

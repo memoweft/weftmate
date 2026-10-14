@@ -39,6 +39,7 @@
         ui[mount]();
     ui.mountHelp();
     ui.mountComputers?.();
+    ui.mountWorkMode?.();
     ui.mountOnboarding();
     ui.mountMobileRefresh?.();
     globalThis.WeftPresenceView.mount({core, badgeTarget:ui.byId('assistant-connection'),

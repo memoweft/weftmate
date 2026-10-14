@@ -157,11 +157,18 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         finally { button.disabled = false; }
     }
     function renderSidebarProjects(list, query) {
-        const heading = ui.element('li', 'project-section-heading'); heading.append(ui.element('span', '', '项目'));
-        if (canManageProjectFolders()) { const add = ui.element('button', 'project-action'); add.type = 'button'; add.setAttribute('aria-label', '新建项目'); add.append(WeftIcons.create('plus', 16)); add.onclick = () => editProject(); heading.append(add); }
+        const heading = ui.element('li', 'project-section-heading'); heading.append(ui.element('span', '', '工作'));
+        const newWork = ui.element('button', 'project-action'); newWork.type='button';newWork.setAttribute('aria-label','新建工作');newWork.append(WeftIcons.create('plus',16));
+        newWork.disabled=core.supportsWorkModes?.()===false;newWork.onclick=()=>core.startNewWork();heading.append(newWork);
         list.append(heading);
+        for (const session of core.sessionList().filter(row => core.conversationMode?.(row) === 'work' && !row.projectId)) {
+            const row=ui.element('li','session-row');row.dataset.sessionId=session.sessionId;
+            const open=ui.element('button',core.state.selectedSessionId===session.sessionId?'is-current':'',session.title||'工作');open.type='button';open.onclick=()=>core.selectSession(session.sessionId);
+            const more=ui.element('button','session-more');more.type='button';more.setAttribute('aria-label',`更多操作 ${session.title||'工作'}`);more.append(WeftIcons.create('more',16));more.onclick=()=>sessionMenu(session,more);
+            row.append(open);appendStatus(row,session);row.append(more);bindRowActions(row,session,more);list.append(row);
+        }
         const projects = (core.state.projects || []).filter(project => !project.revoked); let projectMatches = 0;
-        if (!projects.length) list.append(ui.element('li', 'project-empty', core.state.projectsError || (core.state.projectCanManage ? '添加一个文件夹，开始项目对话。' : '在电脑上添加项目后，可在这里开始对话。')));
+        if (!projects.length) list.append(ui.element('li', 'project-empty', core.state.projectsError || (core.state.projectCanManage ? '添加一个文件夹，开始工作。' : '在电脑上添加项目后，可在这里开始工作。')));
         for (const project of projects) {
             const sessions = core.projectConversations(project.projectId);
             if (query && !project.name.toLocaleLowerCase().includes(query) && !sessions.some(session => (session.title || '新对话').toLocaleLowerCase().includes(query))) continue;
@@ -173,7 +180,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             toggle.onclick = () => { collapsedProjects.has(project.projectId) ? collapsedProjects.delete(project.projectId) : collapsedProjects.add(project.projectId); renderSessions(); };
             const add = ui.element('button', 'project-action'); add.type = 'button'; add.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); add.append(WeftIcons.create('plus', 16)); add.disabled = !core.state.models.length; add.onclick = () => newProjectConversation(project, add); title.append(toggle); if (collapsedProjects.has(project.projectId)) { title.dataset.statusKey = `project:${project.projectId}`; appendStatus(title, core.sidebarStatus('projects',project.projectId,sessions)); } title.append(add);
             const projectMenu = trigger => WeftPopover.openMenu(trigger, [
-                {name:'新建项目对话',icon:'compose',disabled:!core.state.models.length,action:()=>newProjectConversation(project, add)},
+                {name:'新建工作',icon:'compose',disabled:!core.state.models.length,action:()=>newProjectConversation(project, add)},
                 ...(canManageProjectFolders() ? [{name:'项目设置',icon:'settings',action:()=>editProject(project)},
                     {name:'移除项目',icon:'trash',danger:true,action:()=>confirmRemoveProject(project)}] : [])
             ], {label:'项目操作'});
@@ -203,7 +210,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                         [...list.querySelectorAll('.project-expand')].find(button => button.dataset.projectExpand === project.projectId)?.focus(); };
                     item.append(more); children.append(item);
                 }
-                if (!sessions.length) { const empty = ui.element('li', 'project-empty'); const button = ui.element('button', '', '新建项目对话'); button.type = 'button'; button.onclick = () => newProjectConversation(project, button); empty.append(button); children.append(empty); }
+                if (!sessions.length) { const empty = ui.element('li', 'project-empty'); const button = ui.element('button', '', '新建工作'); button.type = 'button'; button.onclick = () => newProjectConversation(project, button); empty.append(button); children.append(empty); }
                 row.append(children);
             }
             list.append(row);
@@ -380,7 +387,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         ui.byId('sessions-status').textContent = '';
         const query = ('' || '').normalize('NFKC').trim().toLocaleLowerCase();
         let currentGroup = null, matches = 0;
-        const sessions = core.sessionList().filter(session => !session.projectId);
+        const sessions = core.sessionList().filter(session => core.conversationMode?.(session) !== 'work' && !session.projectId);
         for (const session of globalThis.WeftUiCore.sortSessions(sessions).sort(globalThis.WeftUiCore.compareSessionGroups)) {
             if (!core.sessionIdPattern.test(session.sessionId) || linkedSessionIds.has(session.sessionId))
                 continue;
@@ -454,10 +461,11 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const create=ui.byId('new-session'),temporary=ui.byId('new-temporary-session'),group=ui.element('div','rail-new-group');create.before(group);group.append(create);
         const toggle=ui.element('button','rail-new-dropdown');toggle.type='button';toggle.setAttribute('aria-label','选择新对话类型');toggle.setAttribute('aria-haspopup','menu');toggle.setAttribute('aria-expanded','false');toggle.append(WeftIcons.create('chevron',16));group.append(toggle);
         const menu=ui.element('div','session-menu rail-new-menu');menu.setAttribute('role','menu');menu.setAttribute('aria-label','新对话类型');menu.hidden=true;
-        const normal=ui.element('button','session-menu-item','新旁聊');normal.type='button';normal.setAttribute('role','menuitem');normal.prepend(WeftIcons.create('compose',16));temporary.className='session-menu-item';temporary.setAttribute('role','menuitem');temporary.prepend(WeftIcons.create('clock',16));menu.append(normal,temporary);group.append(menu);
+        const normal=ui.element('button','session-menu-item','新对话');normal.type='button';normal.setAttribute('role','menuitem');normal.prepend(WeftIcons.create('compose',16));temporary.className='session-menu-item';temporary.setAttribute('role','menuitem');temporary.prepend(WeftIcons.create('clock',16));
+        const work=ui.element('button','session-menu-item','新建工作');work.type='button';work.setAttribute('role','menuitem');work.prepend(WeftIcons.create('folder',16));work.onclick=()=>{close();core.startNewWork();};menu.append(normal,work,temporary);group.append(menu);
         const close=()=>{menu.hidden=true;toggle.setAttribute('aria-expanded','false')};normal.onclick=()=>{close();create.click()};temporary.addEventListener('click',close);
         toggle.onclick=()=>{menu.hidden=!menu.hidden;toggle.setAttribute('aria-expanded',String(!menu.hidden));if(!menu.hidden){WeftPopover.position(menu,toggle,{side:'bottom'});normal.focus()}};
-        menu.onkeydown=event=>{if(event.key==='Escape'){event.stopPropagation();close();toggle.focus()}if(['ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();(document.activeElement===normal?temporary:normal).focus()}};
+        menu.onkeydown=event=>{if(event.key==='Escape'){event.stopPropagation();close();toggle.focus()}if(['ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();const items=[normal,work,temporary],at=items.indexOf(document.activeElement);items[(at+(event.key==='ArrowDown'?1:-1)+items.length)%items.length].focus()}};
         document.addEventListener('pointerdown',event=>{if(!group.contains(event.target))close()});
     }
     function showSettingsArchived(target) {

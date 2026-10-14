@@ -873,7 +873,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, {
           ...context.service.status(ownerId), hostName:hostName(),
           presence: presence(backendStatus),
-          personalCapabilities: { replyWait: typeof context.backend.waitForEvents === 'function' ? 1 : 0, replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1, modelServices: 1 },
+          personalCapabilities: { workAndChat: 1, replyWait: typeof context.backend.waitForEvents === 'function' ? 1 : 0, replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1, modelServices: 1 },
           executionAccount: context.hostOwner(ownerId),
           executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
@@ -1464,6 +1464,7 @@ export function createHttpHandler(context) {
         const ids = Object.keys(state.sessions).filter(id => chatForSession(state,id)?.kind !== 'main' &&
           (archived === 'all' || (state.sessions[id].archived === true) === (archived === 'true')) &&
           (!q || (state.sessions[id].title ?? searchDescriptions.get(id)?.title ?? '').normalize('NFKC').toLocaleLowerCase().includes(normalizedQuery)))
+          .filter(id => !chatForSession(state,id)?.wasMain || state.chatIdentity.segments[chatForSession(state,id).activeSegmentId]?.sessionId === id)
           .sort((a,b) => Number(state.sessions[b].pinned === true) - Number(state.sessions[a].pinned === true) ||
             context.sessionOperations.activityTime(ownerId,b).localeCompare(context.sessionOperations.activityTime(ownerId,a)) || a.localeCompare(b));
         const offset = cursor ? ids.indexOf(cursor) + 1 : 0;

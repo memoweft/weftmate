@@ -17,6 +17,7 @@ import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
 import PlanModeController, { foldPlanMode } from '@deepseek-ai/dsh-plan-mode';
 import { approvalRequired, approvalPrompt, classifyPersonalRisk, RISK_LABELS } from './personal-approval-policy.mjs';
 import { reviewSourceLocations } from './personal-review-sources.mjs';
+import { toolNeedsComputer, chatModePrompt, applyWorkDirectoryChoice, WORK_SWITCH_REASON } from './personal-work-mode.mjs';
 
 export const name = 'weftmate-personal-desktop';
 export const PERSONAL_DESKTOP_PROTOCOL = 'weftmate.personal-desktop.v1';
@@ -129,7 +130,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
         .every(key => current[key] === binding.payload[key]);
     } catch { return false; }
   };
-  disposers.push(ctx.on('tools/pre-execute', async (exec, next) => {
+  async function rememberCall(exec) {
     if (liveAgent(exec.agent)) {
       try {
         const identity = personalExecutionIdentity(exec);
@@ -138,6 +139,9 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
         const connector = connectorToolFor(exec.agent, exec.name);
         const call = { ...identity, toolName: exec.name, argumentsHash: executionHash(exec.arguments), types: connector ? [connector.category, ...(connector.network ? ['network'] : [])] : permissionCategories(exec.name, exec.arguments) };
         calls.set(exec.callId, call);
+        if ((await policyFor?.(exec.agent))?.conversationMode === 'chat') {
+          call.reviewArguments = structuredClone(exec.arguments);call.reviewRisks=[];call.outsideProjectWrite=false;return;
+        }
         try {
           const folder = executionDirectory(exec.agent.session) ?? process.cwd();
           const cwd = resolve(folder, exec.arguments?.workdir ?? '.');
@@ -151,13 +155,13 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
         } catch { /* Advisory evidence cannot break the original approval identity. */ }
       } catch { /* Missing real tool/receipt identity cannot become an approval request. */ }
     }
-    return next();
-  }));
+  }
+  disposers.push(ctx.on('tools/pre-execute', async (exec, next) => { await rememberCall(exec); return next(); }));
   disposers.push(ctx.on('approval/request', async (request, next) => {
     if (request.agent?.session?.header?.origin === 'subagent' ||
         request.agent?.session?.header?.agentPreset !== 'personal-remote') return next();
     if (closed || !liveAgent(request.agent)) return 'unavailable';
-    if (policyFor) {
+    if (policyFor && !request.reason?.startsWith('[weftmate:work-switch]')) {
       const policy = await policyFor(request.agent);
       const identity = callsByAgent.get(request.agent)?.get(request.callId);
       const risks = /\[weftmate:([^\]]+)\]/.exec(request.reason ?? '')?.[1].split(',') ?? [];
@@ -262,6 +266,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
   };
   bridge.transport?.once?.('disconnect', onDisconnect);
   return {
+    rememberCall,
     beforeExecution: awaitResolutions,
     afterExecution: awaitResolutions,
     markExecutionUncertain(exec) {
@@ -676,6 +681,24 @@ export function personalToolAvailability(tools, exec) {
     reason: `Unknown tool "${exec.name}". Use a tool name from the available tool definitions.` };
 }
 
+export async function requestPersonalWorkMode(ctx, exec, { policy, policyFor, approvals, declinedWork, delegated, connector }) {
+  if (!(policy.conversationMode === 'chat' || policy.conversationMode === 'work' && !policy.project) || !toolNeedsComputer(exec.name, exec.arguments, connector)) return { policy };
+  const owner = delegated?.agent ?? exec.agent, source = personalExecutionIdentity(delegated ?? exec);
+  if (declinedWork.get(owner) === source.receiptId) return { policy, decision: { kind: 'deny', reason: '本轮已经选择先不用。停止这件事，用一句话说明需要切换到工作，不要改用其他工具再次询问。' } };
+  const outcome = await ctx.approval.request({ agent: owner, toolName: delegated?.name ?? exec.name,
+    callId: delegated?.callId ?? exec.callId, reason: WORK_SWITCH_REASON, signal: exec.signal });
+  if (outcome !== 'allowed-once') {
+    declinedWork.set(owner, source.receiptId);
+    return { policy, decision: { kind: 'deny', reason: '用户选择先不用。这件事需要切换到工作才能做，本轮不再询问。' } };
+  }
+  await approvals.beforeExecution(delegated ?? exec); policy = await policyFor(owner);
+  if (policy.conversationMode !== 'work' || !policy.project) return { policy, decision: { kind: 'deny', reason: '请先选择电脑上的项目或文件夹，再切换到工作。' } };
+  const previousDirectory=executionDirectory(exec.agent.session);
+  await selectProjectContext(exec.agent, policy);applyWorkDirectoryChoice(exec,previousDirectory,policy.project.rootPath);routeProjectTool(exec);
+  const decision = await projectToolDecision(exec); if (decision) return { policy, decision };
+  await approvals.rememberCall(exec); return { policy };
+}
+
 export function apply(ctx) {
   const bridge = new PersonalDesktopBridge();
   const disposeProjectSandbox = installProjectSandbox(ctx.get('sandboxPolicy'));
@@ -685,6 +708,7 @@ export function apply(ctx) {
   installConversationReasoning(ctx, policyFor);
   installPersonalization(ctx, policyFor);
   const selectedModes = new WeakMap();
+  const declinedWork = new WeakMap();
   const webExecution = new AsyncLocalStorage();
   const delegatedExecutions = new WeakMap();
   const fileProvenance = createNativeFileProvenance(personalExecutionIdentity);
@@ -716,7 +740,9 @@ export function apply(ctx) {
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
-    return { ...decision, messages: [...decision.messages.filter(message => !['weftmate-approval-mode', 'weftmate-project'].includes(message.source?.plugin)),
+    return { ...decision, messages: [...decision.messages.filter(message => !['weftmate-approval-mode', 'weftmate-project', 'weftmate-work-mode'].includes(message.source?.plugin)),
+      ...(policy.conversationMode ? [createUserMessage({ content: [{ type: 'text', text: chatModePrompt(policy.conversationMode) }],
+        source: { kind: 'plugin', plugin: 'weftmate-work-mode' } })] : []),
       createUserMessage({ content: [{ type: 'text', text: approvalPrompt(policy.mode) }],
         source: { kind: 'plugin', plugin: 'weftmate-approval-mode' } }),
       ...(projectNotice ? [createUserMessage({ content: [{ type: 'text', text: projectNotice }],
@@ -751,18 +777,20 @@ export function apply(ctx) {
   }, { prepend: true });
   ctx.on('tools/pre-execute', async (exec, next) => {
     const decision = await next();
-    if (exec.agent?.session?.header?.agentPreset !== 'personal-remote' || decision.kind === 'deny' ||
-        NATIVE_SESSION_TOOLS.has(exec.name) || exec.name === 'exit_plan_mode' || exec.name === 'todo_write' || exec.name === 'run_code') return decision;
+    if (exec.agent?.session?.header?.agentPreset !== 'personal-remote' || decision.kind === 'deny') return decision;
     const unavailable = personalToolAvailability(ctx.tools, exec);
     if (unavailable) return unavailable;
     const delegated = delegatedExecutions.get(exec.agent);
     const owner = delegated?.agent ?? exec.agent;
-    const policy = await policyFor(owner);
+    let policy = await policyFor(owner);
+    const connector = connectorToolFor(exec.agent, exec.name);
+    const workMode = await requestPersonalWorkMode(ctx, exec, { policy, policyFor, approvals, declinedWork, delegated, connector });
+    policy = workMode.policy; if (workMode.decision) return workMode.decision;
+    if (NATIVE_SESSION_TOOLS.has(exec.name) || exec.name === 'exit_plan_mode' || exec.name === 'todo_write' || exec.name === 'run_code') return decision;
     const cwd = resolve(executionDirectory(exec.agent.session), exec.arguments?.workdir ?? '.');
     const operationTypes = new Set();
     const risks = classifyPersonalRisk(exec.name, exec.arguments, cwd, new Set(),
       { createdFiles: conversationCreatedFiles(exec.agent.session), operationTypes });
-    const connector = connectorToolFor(exec.agent, exec.name);
     const selected = connector ? connectorPermission(policy, connector) : decidePermission(policy, [...new Set([...permissionCategories(exec.name, exec.arguments, risks), ...operationTypes])], risks);
     const summary = connector ? connectorCallSummary(connector, exec.arguments) : permissionSummary(exec.name, exec.arguments);
     const metadata = { types: selected.types, decision: selected.decision, source: selected.source, summary };

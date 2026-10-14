@@ -457,6 +457,7 @@
     "tests/dsh-packaged-css-paths.test.ts",
     "tests/personal-connectors-native.test.ts",
     "tests/st-7b-native.test.ts",
-    "tests/personal-cloud-backup-snapshot-vendor.test.ts"
+    "tests/personal-cloud-backup-snapshot-vendor.test.ts",
+    "tests/work-and-chat-runtime.test.ts"
   ]
 }
