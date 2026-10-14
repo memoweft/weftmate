@@ -121,9 +121,10 @@
         const raw = [row.toolName, reason, detail || row.arguments || row.parameters]
             .filter(value => value != null && value !== '').map(value => typeof value === 'string' ? value : JSON.stringify(value,null,2)).join('\n');
         const explanation = humanReason.split('\n')[0].replace(/操作：.*$/, '').trim();
-        const plain = !Object.keys(args).length && !/\b(?:pwsh|powershell|shell|bash)\b|mcp__|weftmate:|[{}]|操作：|执行工具|调用工具/i.test(humanReason);
+        const command = /^(shell|bash|pwsh|powershell|exec_command|run_command|command)$/.test(toolName(row.toolName)) || /^运行命令[:：]/.test(humanReason);
+        const plain = !command && !Object.keys(args).length && !/\b(?:pwsh|powershell|shell|bash)\b|mcp__|weftmate:|[{}]|操作：|执行工具|调用工具/i.test(humanReason);
         return {summary: service && /· (?:收件人|日历)：/.test(service) ? service
-            : plain && humanReason && !row.toolName?.startsWith('mcp__') ? humanReason : approvalSummary(row.toolName,args), reason: !service && !row.toolName?.startsWith('mcp__') && offset >= 0 && explanation && !/mcp__|weftmate:|\b(?:pwsh|powershell|shell|bash)\b|[{}]/i.test(explanation) ? explanation : '',raw};
+            : plain && humanReason && !row.toolName?.startsWith('mcp__') ? humanReason : approvalSummary(command ? 'command' : row.toolName,args), reason: !service && !row.toolName?.startsWith('mcp__') && offset >= 0 && explanation && !/mcp__|weftmate:|\b(?:pwsh|powershell|shell|bash)\b|[{}]/i.test(explanation) ? explanation : '',raw};
     }
     function rejectedStep(step) { return step.approvalOutcome === 'rejected' || step.approvalText === '已拒绝'; }
     function toolActivity(name) {

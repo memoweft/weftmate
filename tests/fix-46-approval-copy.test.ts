@@ -26,6 +26,8 @@ test('FIX-46 common approvals explain the action and preserve originals in detai
   }
   const malformed=core.approvalPresentation({toolName:'pwsh',reason:'[weftmate:execute] pwsh\n{"command":"unfinished'});
   assert.equal(malformed.summary,'运行一条命令');assert.equal(malformed.reason,'');
+  const historical=core.approvalPresentation({toolName:'shell',reason:'运行命令：npm run release'});
+  assert.equal(historical.summary,'运行一条命令');assert.match(historical.raw,/npm run release/);
 });
 test('FIX-46 a rejected step is never a retry or a completed operation',()=>{
   const core:any=timelineCore(),events=progressEvents('failed');
