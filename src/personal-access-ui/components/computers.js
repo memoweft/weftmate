@@ -1,5 +1,4 @@
 globalThis.WeftUiComponents.factories.computers = (core,ui) => {
-  let button;
   async function openComputerChannel(connection) {
     const base=new URL(connection.baseUrl);
     if(base.username||base.password||base.search||base.hash||!(base.protocol==='https:'||base.protocol==='http:'&&['127.0.0.1','localhost'].includes(base.hostname)))throw {code:'HOST_TRUST_INVALID'};
@@ -23,19 +22,9 @@ globalThis.WeftUiComponents.factories.computers = (core,ui) => {
     return {request,close};
   }
   function paintComputers() {
-    if(!button)return;button.hidden=!core.canChooseExecutionComputer?.();
-    button.setAttribute('aria-label',`在哪台电脑上做：${core.computerName?.(core.currentExecutionComputer?.()) || '这台电脑'}`);
-    button.title=button.getAttribute('aria-label');button.setAttribute('aria-pressed',String(!button.hidden));
-    button.disabled=!!core.state.submitting;
+    ui.paintWorkMode?.();
   }
   function mountComputers() {
-    const target=ui.byId('model-picker')?.parentElement || ui.byId('model-trigger')?.parentElement;
-    if(!target)return;
-    button=ui.element('button','composer-icon computer-choice');button.type='button';button.hidden=true;button.id='computer-choice';
-    button.append(WeftIcons.create('desktop',18));button.setAttribute('aria-haspopup','menu');target.insertBefore(button,ui.byId('model-picker').nextSibling);
-    button.onclick=()=>WeftPopover.menu(button,(core.state.computers||[]).map(row=>({name:row.displayName||row.name,icon:'desktop',
-      checked:row.hostId===core.currentExecutionComputer(),description:row.online?'在线':'不在线',disabled:!row.online,
-      action:async()=>{const draft=ui.readMessageDraft();await core.selectExecutionComputer(row.hostId);await core.startNewConversation();ui.byId('message-text').value=draft;ui.updateAvailability();}})),error=>ui.toast(error.code==='COMPUTER_OFFLINE'?'这台电脑不在线，请稍后再试。':core.failureMessage(error)));
     document.addEventListener('click',async event=>{
       const link=event.target.closest?.('a[href]');if(!link||!core.remoteComputerSelected())return;
       const url=new URL(link.href,location.href);if(url.origin!==location.origin||!/^\/personal\/v1\/(?:artifacts|library|files|attachments)\//.test(url.pathname))return;

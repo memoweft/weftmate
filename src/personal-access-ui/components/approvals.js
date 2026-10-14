@@ -77,6 +77,10 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
                 continue;
             }
             card.className = 'phone-approval-card';
+            if (row.intent === 'work-switch' && ui.renderWorkSwitch) {
+                ui.renderWorkSwitch(context, row, card, !!operation || !!notice || !entry.authoritative);
+                continue;
+            }
             const title = ui.element('h3','phone-decision-title'), text = ui.element('strong');
             title.append(WeftIcons.create('approval',20),text);
             const reason = ui.element('p','approval-explanation'), details = ui.element('details','approval-detail'); details.open = expanded;
@@ -137,11 +141,21 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         bar.hidden = rows.length === 0;
         ui.byId('model-hint').hidden = !bar.hidden || core.state.sessions.some(session => session.sessionId === context.sessionId && session.running) || !ui.byId('model-hint').textContent;
         if (!rows.length) {
-            bar.replaceChildren(); delete bar.dataset.signature;
+            bar.replaceChildren(); delete bar.dataset.signature; delete bar.dataset.workSignature;
             if (hadFocus) ui.byId('message-text').focus({ preventScroll: true });
             ui.renderTimeline(); return;
         }
         const entry = rows[0], row = entry.row, marker = core.approvalMarker(context, row);
+        bar.classList.toggle('work-switch-host', row.intent === 'work-switch');
+        if (row.intent === 'work-switch' && ui.renderWorkSwitch) {
+            delete bar.dataset.signature;
+            if (bar.dataset.workSignature !== JSON.stringify([row, core.state.projects, core.state.computers, entry.notice, core.conversationApprovals.operations.has(row.approvalId)])) {
+                bar.dataset.workSignature = JSON.stringify([row, core.state.projects, core.state.computers, entry.notice, core.conversationApprovals.operations.has(row.approvalId)]);
+                ui.renderWorkSwitch(context, row, bar, !!entry.notice || !entry.authoritative || core.conversationApprovals.operations.has(row.approvalId));
+            }
+            return;
+        }
+        delete bar.dataset.workSignature;
         const review = core.approvalReview?.(row);
         bar.classList.toggle('is-review-warning', !!review?.warning);
         const operation = core.conversationApprovals.operations.get(row.approvalId);

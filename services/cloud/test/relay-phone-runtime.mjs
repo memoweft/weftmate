@@ -11,7 +11,7 @@ export function scenarioUserText(messages) {
     .findLast(text => /^CI_R1_(?:FIRST_INPUT_|FILE_TASK)/.test(text)) ?? '';
 }
 
-export async function phoneRuntime(root, logs) {
+export async function phoneRuntime(root, logs, options = {}) {
   const project = join(root, 'project'); await mkdir(project);
   const input = join(project, 'input.txt'), output = join(project, 'result.txt');
   const content = 'CI_R1_SYNTHETIC_FILE_CONTENT\n'; await writeFile(input, content);
@@ -22,6 +22,19 @@ export async function phoneRuntime(root, logs) {
     let raw = ''; req.on('data', chunk => raw += chunk);
     req.on('end', () => {
       const body = JSON.parse(raw);
+      if (options.respond) {
+        const answer = options.respond(body); requests.push(body);
+        const message = { role: 'assistant', ...answer };
+        if (body.stream) {
+          const delta = message.tool_calls?.length ? { tool_calls: message.tool_calls.map((call, index) => ({ index, ...call })) } : { content: message.content };
+          res.writeHead(200, { 'content-type': 'text/event-stream' });
+          res.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason: null }] })}\n\n`);
+          res.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: message.tool_calls?.length ? 'tool_calls' : 'stop' }], usage: { prompt_tokens: 30, completion_tokens: 15, total_tokens: 45 } })}\n\n`);
+          res.end('data: [DONE]\n\n'); return;
+        }
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ id: 'synthetic-mode', object: 'chat.completion', choices: [{ index: 0, message, finish_reason: message.tool_calls?.length ? 'tool_calls' : 'stop' }], usage: { prompt_tokens: 30, completion_tokens: 15, total_tokens: 45 } })); return;
+      }
       // Native title generation may share this provider. It is a separate,
       // non-tool request and must not advance the scripted task or send count.
       if (!body.tools?.length) {
@@ -56,16 +69,23 @@ export async function phoneRuntime(root, logs) {
   const home = join(root, 'dsh-home'); await mkdir(home);
   const patch = join(home, 'model.yml');
   await writeFile(patch, `- id: llm-pi-ai\n  config:\n    providers:\n      relay-fixture:\n        api: openai-completions\n        apiKeyEnv: FIXTURE_API_KEY\n        baseURL: http://127.0.0.1:${model.address().port}/v1\n        models:\n          - id: synthetic\n            contextWindow: 32768\n            maxTokens: 4096\n- id: credentials\n  disabled: true\n- insert:\n    - id: weftmate-safe-credentials\n      name: ./plugins/weftmate-credentials.mjs\n    - id: weftmate-personal-model-idle\n      name: ./plugins/weftmate-personal-model-idle.mjs\n- id: api-gateway\n  disabled: true\n- insert:\n    - id: weftmate-personal-api-gateway\n      name: ./plugins/weftmate-personal-api-proxy.mjs\n    - id: weftmate-personal-reply-evidence\n      name: ./plugins/weftmate-personal-reply-evidence.mjs\n`);
+  if (options.baseUrl || options.modelId) {
+    let configured = await readFile(patch, 'utf8');
+    if (options.baseUrl) configured = configured.replace(`http://127.0.0.1:${model.address().port}/v1`, options.baseUrl);
+    if (options.modelId) configured = configured.replace('id: synthetic\n', `id: ${options.modelId}\n`);
+    await writeFile(patch, configured);
+  }
   let host, origin;
   const runtime = new DshWebRuntime({ homeDir: home, workspaceDir: project,
     ...(process.env.WEFTMATE_DSH_CHECKOUT ? { checkoutPath: process.env.WEFTMATE_DSH_CHECKOUT } : { runtimePath: join(process.cwd(), 'vendor/dsh-runtime') }),
     personalHostApiProxy: true, patchFiles: [patch],
-    credentialRequestHandler: async ({ operation }) => operation === 'resolve' ? { value: 'synthetic-only-key' } : { configured: true, writable: true },
+    credentialRequestHandler: async ({ operation }) => operation === 'resolve' ? { value: options.apiKey || 'synthetic-only-key' } : { configured: true, writable: true },
     personalDesktopRequestHandler: async request => {
       if (request.action === 'approval_policy') return host.getApprovalPolicy(request);
       if (['register_approval', 'read_approval', 'resolve_approval'].includes(request.action)) return host.trackToolApproval(request);
       if (['authorize_execution', 'finish_execution', 'observe_execution_job'].includes(request.action)) return host.trackToolExecution(request);
       if (request.action === 'register_file') return host.registerNativeFile(request);
+      if (request.action === 'browse') return host.browse(request);
       throw new Error('Unexpected native action: ' + request.action);
     },
     personalConversationContextHandler: request => host.getConversationContext(request),
@@ -74,7 +94,7 @@ export async function phoneRuntime(root, logs) {
     log: line => logs.push(line),
   });
   const bindings = new Map();
-  const profile = { id: 'synthetic', name: '合成中继模型', model: 'synthetic', baseUrl: `http://127.0.0.1:${model.address().port}/v1`, provider: 'openai-compatible' };
+  const profile = { id: 'synthetic', name: '合成中继模型', model: options.modelId || 'synthetic', baseUrl: options.baseUrl || `http://127.0.0.1:${model.address().port}/v1`, provider: 'openai-compatible' };
   const gateway = async (path, options = {}) => {
     const response = await fetch(origin + '/weftmate/api/v1' + path, { headers: { 'content-type': 'application/json' }, ...options });
     const data = await response.json();

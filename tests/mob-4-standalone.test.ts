@@ -5,6 +5,41 @@ import { IDBFactory } from 'fake-indexeddb';
 import '../src/ui-core/offline.js';
 const W = (globalThis as any).WeftOffline;
 
+test('MODE-1 decline after encrypted-vault reopen updates displayed history and queued or already synced work',async t=>{
+  for(const synced of [false,true])await t.test(synced?'already synced':'pending sync',async()=>{
+    const db=new IDBFactory(),scope='decline-reopen';
+    let vault=await W.browserVault(scope,{indexedDB:db,crypto:webcrypto});
+    vault.complete=async()=>({choices:[{message:{content:'',tool_calls:[{function:{name:'computer_work',arguments:JSON.stringify({description:'合成电脑工作'})}}]}}]});
+    const options={identity:{},crypto:webcrypto,workRequests:true,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),host:()=>assert.fail('decline never executes a computer operation')};
+    let engine=await W.create({...options,vault});const sent=await engine.send('合成请求');engine.close();
+    vault=await W.browserVault(scope,{indexedDB:db,crypto:webcrypto});
+    if(synced){const saved=await vault.load();saved.turns=[];saved.conversations[0].turns[0].synced=true;await vault.save(saved);}
+    engine=await W.create({...options,vault});const turnId=engine.view().conversations[0].turns[0].id;
+    await engine.declineWork(turnId);
+    const shown=engine.view().conversations[0].turns[0];assert.equal(shown.workRequest.status,'declined');
+    assert.match(shown.messages.at(-1).text,/需要进入工作/);assert.equal(shown.conversationId,sent.conversationId);
+    assert.equal(engine.view().turns.length,synced?0:1);
+    if(!synced)assert.deepEqual(engine.view().turns[0].messages,shown.messages);
+    await engine.declineWork(turnId);assert.equal(shown.messages.filter((m:any)=>m.text.includes('需要进入工作')).length,1);
+    engine.close();vault=await W.browserVault(scope,{indexedDB:db,crypto:webcrypto});engine=await W.create({...options,vault});
+    assert.equal(engine.view().conversations[0].turns[0].workRequest.status,'declined');engine.close();
+  });
+});
+
+test('MODE-1 phone work is a real tool call that persists a card and never executes or queues a computer operation', async () => {
+  let saved: any = { snapshot: null, turns: [], conversations: [], tasks: [] }, requests = 0;
+  const engine = await W.create({ workRequests: true, crypto: webcrypto, identity: {}, phoneModel: () => ({ modelId: 'synthetic' }),
+    accountCheck: async () => ({}), host: () => assert.fail('no computer operation'),
+    vault: { load: async () => saved, save: async (value: any) => { saved = value; }, close() {},
+      complete: async (body: any) => { requests++; assert.equal(body.tools[0].function.name, 'computer_work');
+        return { choices: [{ message: { content: '', tool_calls: [{ function: { name: 'computer_work', arguments: JSON.stringify({ description: '合成文件工作' }) } }] } }] }; } } });
+  const first = await engine.send('合成请求'); assert.equal(first.workRequest.status, 'pending'); assert.equal(engine.view().tasks.length, 0);
+  const turn = engine.view().turns[0]; await engine.declineWork(turn.id); assert.equal(turn.workRequest.status, 'declined');
+  assert.match(turn.messages.at(-1).text, /需要进入工作/);
+  await engine.send('下一条合成请求', first.conversationId); assert.equal(requests, 2); assert.equal(engine.view().turns.at(-1).workRequest.status, 'pending');
+  engine.close();
+});
+
 test('MOB-4 starts without a computer or replica, streams, stops, regenerates, and persists encrypted account conversations', async () => {
   const db = new IDBFactory(); let model: any = null, requests = 0, authorized = true;
   const vault = await W.browserVault('phone:synthetic-a', { indexedDB: db, crypto: webcrypto });
