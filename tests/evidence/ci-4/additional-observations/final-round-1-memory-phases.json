@@ -1,0 +1,24 @@
+{
+  "run": 38498118822,
+  "round": 1,
+  "sha": "4e99bfeab2f53067bed1fc079dd2d679a1464c18",
+  "platform": "windows-latest",
+  "formation": [
+    {
+      "preparationMs": 938,
+      "recallMs": 1,
+      "jobReads": 0
+    },
+    {
+      "preparationMs": 910,
+      "recallMs": 46,
+      "jobReads": 1
+    }
+  ],
+  "shutdownPreparation": {
+    "phase": "preparation.worker-ready",
+    "milliseconds": 659.0972999999999
+  },
+  "shutdownMeasurementMs": 158.9613,
+  "historicalLimit": "No old worker-ready or request-stage timestamps; these measurements do not identify the historical scheduling cause."
+}

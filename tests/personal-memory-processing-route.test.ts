@@ -11,6 +11,36 @@ const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_bo
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup', 'query_jobs']
 
+test('fixed cold initialization alone can consume the old recall assertion while formation never blocks', async t => {
+  let clock = 0
+  t.mock.method(Date, 'now', () => clock)
+  for (const prepareFirst of [false, true]) {
+    const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-cold-proof-'))
+    let jobReads = 0
+    const manager = createPersonalMemoryManager({ root, enabled: true,
+      python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
+      baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'synthetic',
+      rpcFactory: () => ({ child: {}, async close() {}, async request(method, params = {}) {
+        if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods: required }
+        if (method === 'initialize') { clock += 2100; return {
+          runtime: { subject_id: ownerA, db_path: join(params.dsh_home, 'memoweft', 'memoweft.sqlite3') },
+          capabilities: { subject_id: ownerA, methods: required, services: { command: { operations: [] } } } } }
+        if (method === 'health') return { runtime: { subject_id: ownerA, route_ready: true } }
+        if (method === 'query_jobs') { jobReads++; return { jobs: [{ job_id: 'stalled', worker: { state: 'retry' } }] } }
+        if (method === 'preview_recall') return { world_revision: 2, preview: { selected_item_ids: [['cognition', 'existing']], rendered_recall: '记忆：已有的表达偏好' } }
+        if (method === 'query_interactions') return { rendered_context: '' }
+        return {}
+      } }) })
+    try {
+      if (prepareFirst) await manager.query(ownerA, 'query_world', { operation: 'revision' })
+      const started = Date.now()
+      const result = await manager.recall(ownerA, { query: 'cache', sessionId: 'new-session' })
+      assert.equal(result.state, 'ready'); assert.equal(result.sourceCount, 1); assert.equal(jobReads, 0)
+      assert.equal(Date.now() - started, prepareFirst ? 0 : 2100)
+    } finally { await manager.close(); rmSync(root, { recursive: true, force: true }) }
+  }
+})
+
 test('compound recall merges both cloud-permitted facts in one Core snapshot without unrestricted world reads',async t=>{
   const root=mkdtempSync(join(tmpdir(),'weftmate-memory-compound-')),methods=[...required,'preview_recall_batch'];let batches=0;
   const manager=createPersonalMemoryManager({root,enabled:true,python:join(root,'python.exe'),pythonPath:join(root,'py'),
@@ -36,7 +66,6 @@ test('compound recall merges both cloud-permitted facts in one Core snapshot wit
 
 for (const formationWaitMs of [undefined, 30]) test(`recall ${formationWaitMs === undefined ? 'does not wait by default' : 'honors an explicit formation deadline'} while a stuck job remains durable`, async t => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-stalled-'))
-  t.after(() => rmSync(root, { recursive: true, force: true }))
   let jobReads = 0, home = ''
   const manager = createPersonalMemoryManager({ root, enabled: true,
     python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
@@ -56,7 +85,12 @@ for (const formationWaitMs of [undefined, 30]) test(`recall ${formationWaitMs ==
       if (method === 'query_interactions') return { rendered_context: '' }
       return {}
     } }) })
-  t.after(() => manager.close())
+  t.after(async () => { await manager.close(); rmSync(root, { recursive: true, force: true }) })
+  // Private store creation and worker initialization are preparation, not the
+  // time spent waiting for a stuck formation job on an already ready worker.
+  const preparedAt = Date.now()
+  await manager.query(ownerA, 'query_world', { operation: 'revision' })
+  assert.equal(jobReads, 0)
   const started = Date.now()
   const recalled = await manager.recall(ownerA, { query: 'cache', sessionId: 'new-session' })
   assert.equal(recalled.state, 'ready')
@@ -65,6 +99,7 @@ for (const formationWaitMs of [undefined, 30]) test(`recall ${formationWaitMs ==
   if (formationWaitMs === undefined) assert.equal(jobReads, 0, 'ordinary chat recalls the current World without polling formation jobs')
   else assert.ok(jobReads > 0)
   assert.ok(Date.now() - started < 2000, 'stalled formation does not hold the foreground indefinitely')
+  t.diagnostic(JSON.stringify({ preparationMs: started - preparedAt, recallMs: Date.now() - started, jobReads }))
 })
 
 test('account memory workers follow only the owner session route and restart without losing the outbox', async t => {

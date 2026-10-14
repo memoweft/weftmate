@@ -27,7 +27,9 @@ export async function runScene({ page, out, platform, scene, theme, prepare, app
     if (page.isClosed() || !/TimeoutError|locator\.|getByRole\.|getByLabel\.|strict mode violation/.test(`${error.name} ${error.message}`)) throw Error('Scene infrastructure failed', { cause: error });
     const label = catalog.scenes.find(row => row.id === scene).label;
     const reason = error.name === 'TimeoutError' ? `等待「${label}」页面元素超时` : `「${label}」页面元素定位失败`;
-    const record = { platform, scene, theme, status: 'failed', reason, commit: commit(), generatedAt: new Date().toISOString(), synthetic: true };
+    // Only a caller's fixed step name, never the locator, DOM or error text.
+    const phase = /^[a-z-]{1,40}$/.test(error.scenePhase ?? '') ? error.scenePhase : 'prepare';
+    const record = { platform, scene, theme, status: 'failed', reason, phase, commit: commit(), generatedAt: new Date().toISOString(), synthetic: true };
     await writeFile(join(out, file.replace(/\.png$/, '.json')), JSON.stringify(record, null, 2) + '\n');
     console.log(`${platform}/${scene}/${theme}: 截图失败：${reason}`);
     return record;

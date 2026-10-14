@@ -1,0 +1,73 @@
+{
+  "run": 38502731168,
+  "round": 3,
+  "sha": "4e99bfeab2f53067bed1fc079dd2d679a1464c18",
+  "file": "tests/bl-29-account-changes.test.ts",
+  "name": "BL-29c N3 cancellation during shared catalog read removes each HTTP request listener",
+  "classification": "Unresolved cause in an additional file outside the ten requested targets",
+  "observed": "After aborting 20 fetch calls and a fixed 30ms wait, expected one closing listener but observed two.",
+  "inspected": [
+    "test cancellation sequence",
+    "HTTP response close and finally cleanup",
+    "shared catalog close listener ownership by account revision"
+  ],
+  "localFiveRuns": [
+    {
+      "passedCount": 1,
+      "failedCount": 0,
+      "listeners": {
+        "remaining": [
+          "() => finish(undefined)"
+        ],
+        "revision": 8
+      }
+    },
+    {
+      "passedCount": 1,
+      "failedCount": 0,
+      "listeners": {
+        "remaining": [
+          "() => finish(undefined)"
+        ],
+        "revision": 8
+      }
+    },
+    {
+      "passedCount": 1,
+      "failedCount": 0,
+      "listeners": {
+        "remaining": [
+          "() => finish(undefined)"
+        ],
+        "revision": 8
+      }
+    },
+    {
+      "passedCount": 1,
+      "failedCount": 0,
+      "listeners": {
+        "remaining": [
+          "() => finish(undefined)"
+        ],
+        "revision": 8
+      }
+    },
+    {
+      "passedCount": 1,
+      "failedCount": 0,
+      "listeners": {
+        "remaining": [
+          "() => finish(undefined)"
+        ],
+        "revision": 8
+      }
+    }
+  ],
+  "missing": [
+    "Functions owning the two listeners in the failing cloud attempt",
+    "Server-side cancellation completion timestamps",
+    "Account revision/shared read timeline"
+  ],
+  "treatment": "Retain original failure and assertions; no workflow rerun, skip, threshold relaxation or product change on unproven cause.",
+  "log": "2026-10-14T02:48:33.6457400Z not ok 5 - BL-29c N3 cancellation during shared catalog read removes each HTTP request listener\n2026-10-14T02:48:33.6559980Z   ---\n2026-10-14T02:48:33.6670240Z   duration_ms: 4120.944292\n2026-10-14T02:48:33.6887530Z   type: 'test'\n2026-10-14T02:48:33.6889800Z   location: '/Users/runner/work/weftmate/weftmate/tests/bl-29-account-changes.test.ts:70:1'\n2026-10-14T02:48:33.6991800Z   failureType: 'testCodeFailure'\n2026-10-14T02:48:33.7046820Z   error: |-\n2026-10-14T02:48:33.7047630Z     only the independent shared catalog owns a close listener\n2026-10-14T02:48:33.7048110Z     \n2026-10-14T02:48:33.7048400Z     2 !== 1\n2026-10-14T02:48:33.7048640Z     \n2026-10-14T02:48:33.7048900Z   code: 'ERR_ASSERTION'\n2026-10-14T02:48:33.7049250Z   name: 'AssertionError'\n2026-10-14T02:48:33.7049520Z   expected: 1\n2026-10-14T02:48:33.7049860Z   actual: 2\n2026-10-14T02:48:33.7050110Z   operator: 'strictEqual'\n2026-10-14T02:48:33.7050450Z   stack: |-\n2026-10-14T02:48:33.7051090Z     TestContext.<anonymous> (file:///Users/<user>/work/weftmate/weftmate/tests/bl-29-account-changes.test.ts:85:12)\n2026-10-14T02:48:33.7051790Z     async Test.run (node:internal/test_runner/test:1404:7)\n2026-10-14T02:48:33.7052390Z     async Test.processPendingSubtests (node:internal/test_runner/test:969:7)\n2026-10-14T02:48:33.7052840Z   ...\n2026-10-14T02:48:33.7053530Z # Subtest: BL-29c N3/mixed revision catalog failure preserves body and catalog snapshot keeps its starting revision\n2026-10-14T02:48:33.7054490Z ok 6 - BL-29c N3/mixed revision catalog failure preserves body and catalog snapshot keeps its starting revision\n2026-10-14T02:48:33.7055050Z   ---"
+}

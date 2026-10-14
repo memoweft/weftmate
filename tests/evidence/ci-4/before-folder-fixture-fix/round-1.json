@@ -1,0 +1,169 @@
+{
+  "sha": "fc75a5ba6bc799c7102a06f572519dee4a058996",
+  "excludedFromFinalRounds": true,
+  "reason": "Mac folder contract inspector deliberately rejected Darwin despite expecting 201. Old controller stopped; any cancellation is retained, not counted as success.",
+  "runs": [
+    {
+      "createdAt": "2026-10-13T23:00:58Z",
+      "databaseId": 38481563287,
+      "headSha": "fc75a5ba6bc799c7102a06f572519dee4a058996",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38481563287",
+      "workflow": "ci.yml",
+      "conclusion": "failure",
+      "jobs": [
+        {
+          "name": "Observed bridge (real MemoWeft Core)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest, shard 3/3)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest, shard 2/3)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest, shard 1/3)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest, shard 3/3)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest, shard 2/3)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest, shard 1/3)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (macos-latest, shard 1/1)",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "name": "Required unit tests (summary)",
+          "status": "completed",
+          "conclusion": "failure"
+        }
+      ],
+      "status": "completed"
+    },
+    {
+      "createdAt": "2026-10-13T23:01:02Z",
+      "databaseId": 38481572020,
+      "headSha": "fc75a5ba6bc799c7102a06f572519dee4a058996",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38481572020",
+      "workflow": "review-gallery.yml",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Synthetic multi-device review gallery",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed"
+    },
+    {
+      "createdAt": "2026-10-13T23:01:06Z",
+      "databaseId": 38481580370,
+      "headSha": "fc75a5ba6bc799c7102a06f572519dee4a058996",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38481580370",
+      "workflow": "windows-package.yml",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Windows package and startup smoke",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed"
+    },
+    {
+      "createdAt": "2026-10-13T23:01:11Z",
+      "databaseId": 38481589272,
+      "headSha": "fc75a5ba6bc799c7102a06f572519dee4a058996",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38481589272",
+      "workflow": "s1c-web.yml",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Android debug and JVM tests",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Web cloud login interactions",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed"
+    },
+    {
+      "createdAt": "2026-10-13T23:01:15Z",
+      "databaseId": 38481598005,
+      "headSha": "fc75a5ba6bc799c7102a06f572519dee4a058996",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38481598005",
+      "workflow": "relay.yml",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Relay full chain (443)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Relay phone first input and file task",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed"
+    },
+    {
+      "createdAt": "2026-10-13T23:01:20Z",
+      "databaseId": 38481606889,
+      "headSha": "fc75a5ba6bc799c7102a06f572519dee4a058996",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38481606889",
+      "workflow": "host-certs.yml",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Host certificates (Pebble DNS-01)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed"
+    },
+    {
+      "createdAt": "2026-10-13T23:01:24Z",
+      "databaseId": 38481614990,
+      "headSha": "fc75a5ba6bc799c7102a06f572519dee4a058996",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38481614990",
+      "workflow": "vendor-tests.yml",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Pinned DSH vendor unit tests",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "completed"
+    }
+  ]
+}

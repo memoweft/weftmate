@@ -72,6 +72,7 @@ test('BL-29c N3 cancellation during shared catalog read removes each HTTP reques
   let release;
   try {
     const c=f.debug.service.__reviewContext,chat=(await f.request('/chats/main')).chat;
+    const startingRevision=c.accountRevisionFor(f.debug.auth.account.ownerId);
     let entered=false;const gate=new Promise(resolve=>{release=resolve;});
     const original=f.debug.backend.listModels;
     f.debug.backend.listModels=async args=>{entered=true;await gate;return original(args);};
@@ -82,7 +83,9 @@ test('BL-29c N3 cancellation during shared catalog read removes each HTTP reques
     while(!entered)await new Promise(resolve=>setTimeout(resolve,1));
     await new Promise(resolve=>setTimeout(resolve,30));controllers.forEach(controller=>controller.abort());
     await Promise.all(pending);await new Promise(resolve=>setTimeout(resolve,30));
-    assert.equal(getEventListeners(c.closingSignal,'abort').length,1,'only the independent shared catalog owns a close listener');
+    const listeners=getEventListeners(c.closingSignal,'abort');
+    const listenerKinds=listeners.map(listener=>listener.toString().includes('controller.abort')?'http-reader':listener.toString().includes('finish(undefined)')?'shared-catalog':'other');
+    assert.equal(listeners.length,1,'only the independent shared catalog owns a close listener; '+JSON.stringify({startingRevision,endingRevision:c.accountRevisionFor(f.debug.auth.account.ownerId),listenerKinds}));
     release();await c.accountChanges(f.debug.auth.account.ownerId);
     assert.equal(getEventListeners(c.closingSignal,'abort').length,0);
   } finally {release?.();await f.close();rmSync(f.root,{recursive:true,force:true});}
