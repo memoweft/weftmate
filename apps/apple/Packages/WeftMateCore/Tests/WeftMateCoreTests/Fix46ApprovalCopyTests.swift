@@ -27,4 +27,42 @@ final class Fix46ApprovalCopyTests: XCTestCase {
         XCTAssertEqual(value.retries, 0)
         XCTAssertEqual(value.text, "你拒绝了写入 1 个文件：report.md，没有做")
     }
+    private func refusedReply(_ reason: String, endReasonKind: String? = nil, otherFailure: Bool = false) -> ReplyOutcome {
+        var events = [
+            TimelineEvent(seq: 1, type: "step.completed", data: .object(["taskId": .string("t1"), "stepId": .string("s1"),
+                "callId": .string("s1"), "toolName": .string("write"), "state": .string("failed"),
+                "arguments": .object(["file_path": .string("report.md")])])),
+            TimelineEvent(seq: 2, type: "approval.requested", data: .object(["approvalId": .string("a1"), "callId": .string("s1")])),
+            TimelineEvent(seq: 3, type: "approval.resolved", data: .object(["approvalId": .string("a1"), "outcome": .string("rejected")]))
+        ]
+        if otherFailure { events.append(TimelineEvent(seq: 4, type: "step.completed", data: .object([
+            "taskId": .string("t1"), "stepId": .string("s2"), "toolName": .string("web_fetch"), "state": .string("failed")]))) }
+        var end: [String: JSONValue] = ["taskId": .string("t1"), "reason": .string(reason)]
+        if let endReasonKind { end["endReasonKind"] = .string(endReasonKind) }
+        events.append(TimelineEvent(seq: 5, type: "task.ended", data: .object(end)))
+        return ReplyOutcome.classify(events: events, taskID: "t1")
+    }
+    func testRefusalPreservesModelError() {
+        let value = refusedReply("error")
+        XCTAssertTrue(value.text.contains("你拒绝了写入 1 个文件：report.md，没有做"))
+        XCTAssertTrue(value.text.contains("这轮未能完成")); XCTAssertTrue(value.prominent)
+        XCTAssertEqual(value.retries, 0)
+    }
+    func testRefusalPreservesOutputLimit() {
+        let value = refusedReply("error", endReasonKind: "max-tokens")
+        XCTAssertTrue(value.text.contains("你拒绝了写入 1 个文件：report.md，没有做"))
+        XCTAssertTrue(value.text.contains("内容超出了本次可回复的长度")); XCTAssertTrue(value.prominent)
+    }
+    func testRefusalPreservesUserStop() {
+        let value = refusedReply("aborted")
+        XCTAssertTrue(value.text.contains("你拒绝了写入 1 个文件：report.md，没有做"))
+        XCTAssertTrue(value.text.contains("已中断")); XCTAssertFalse(value.prominent)
+        XCTAssertEqual(value.state, .interrupted)
+    }
+    func testRefusalPreservesAnotherFailedStep() {
+        let value = refusedReply("error", otherFailure: true)
+        XCTAssertTrue(value.text.contains("你拒绝了写入 1 个文件：report.md，没有做"))
+        XCTAssertTrue(value.text.contains("这轮未能完成")); XCTAssertTrue(value.prominent)
+        XCTAssertEqual(value.retries, 1)
+    }
 }

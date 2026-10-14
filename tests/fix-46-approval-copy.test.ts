@@ -45,3 +45,30 @@ test('FIX-46 a rejected step is never a retry or a completed operation',()=>{
     {seq:101,type:'approval.resolved',data:{approvalId:row.approvalId,outcome:'rejected'}} as any);
   assert.match(core.nativeTimelineRows(events).find(r=>r.type==='native.progress').data.summary,/你拒绝了.*没有做/);
 });
+
+const refused = {toolName:'write',state:'failed',approvalOutcome:'rejected',arguments:{file_path:'report.md'}};
+for (const [name,outcome] of [
+  ['model error',{terminal:true,reason:'error'}],
+  ['output limit',{terminal:true,reason:'error',endReasonKind:'max-tokens'}],
+  ['user stop',{terminal:true,reason:'aborted'}],
+] as const) test(`FIX-46 refusal preserves the whole reply status: ${name}`,()=>{
+  const core:any=timelineCore(),baseline=core.progressText([],outcome),value=core.progressText([refused],outcome);
+  assert.match(value.text,/你拒绝了.*report.md.*没有做/);
+  assert.ok(value.text.includes(baseline.text),`missing reply status: ${baseline.text}`);
+  assert.equal(value.failed,baseline.failed);assert.equal(value.running,baseline.running);
+  if(outcome.reason==='error')assert.equal(value.failed,true);
+  const rows=core.nativeTimelineRows([
+    {seq:0,type:'turn.started',data:{turn:1}},
+    {seq:1,type:'step.completed',data:{...refused,taskId:'turn-1',stepId:'refused-1',callId:'refused-1'}},
+    {seq:2,type:'turn.ended',data:{turn:1,...outcome}},
+  ],[{approvalId:'refused-approval',callId:'refused-1',turn:1,status:'resolved',outcome:'rejected'}]);
+  const view=rows.find(row=>row.type==='native.progress').data;
+  assert.ok(view.summary.includes(baseline.text));assert.equal(view.failed,!!baseline.failed);
+});
+test('FIX-46 refusal keeps another failed step and the reply failure marker',()=>{
+  const core:any=timelineCore(),other={toolName:'web_fetch',state:'failed',summary:'读取网页'},outcome={terminal:true,reason:'error'};
+  const baseline=core.progressText([other],outcome),value=core.progressText([refused,other],outcome);
+  assert.match(value.text,/你拒绝了.*report.md.*没有做/);
+  assert.ok(value.text.includes(baseline.text));assert.equal(value.failed,true);
+  assert.equal(core.classifyProgress([refused,other],outcome).retries,1);
+});
