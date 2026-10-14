@@ -16,10 +16,14 @@ globalThis.WeftNativeChatRoute = function (entry) {
         if (entry.phone) {
           state.conversationId = entry.phoneId;
           state.chatSource = 'phone';
+        } else if (entry.kind === 'main') {
+          // Native has already observed the first main session. The covered web
+          // core may still hold null (or the previous session), so install that
+          // identity before the shared selector reads history and paints the page.
+          uiCore.state.mainChat = { ...uiCore.state.mainChat, kind: 'main', chatId: entry.chatId, activeSessionId: entry.sessionId || null };
+          await uiCore.selectMainChat();
         } else if (entry.sessionId) {
           await uiCore.selectLogicalSession(entry.sessionId);
-        } else if (entry.chatId && uiCore.state.mainChat?.chatId === entry.chatId) {
-          await uiCore.selectMainChat();
         } else {
           throw new Error('CHAT_UNAVAILABLE');
         }

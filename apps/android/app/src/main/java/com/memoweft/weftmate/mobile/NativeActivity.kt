@@ -130,6 +130,7 @@ class NativeActivity : HybridActivity() {
         val embedded=webEmbedded
         val entry = JSONObject().put("name", name).put("embedded", embedded)
             .put("phone", ::model.isInitialized && model.phone)
+            .put("kind", if (::model.isInitialized && !model.phone) model.chatKind else "")
             .put("phoneId", if (::model.isInitialized && model.phone) model.chatId.takeUnless { it == "phone-new" } ?: JSONObject.NULL else JSONObject.NULL)
             .put("sessionId", if (::model.isInitialized && !model.phone) model.sessionId else "")
             .put("chatId", if (::model.isInitialized && !model.phone) model.chatId else "")
