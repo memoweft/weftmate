@@ -1,7 +1,8 @@
+import { evidencePath } from '../../tests/helpers/evidence-path.mjs';
 import { survey } from './ci-failure-survey.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 const since = process.argv[2] || '2026-10-12T13:16:07Z';
-const destination = 'tests/evidence/ci-3';
+const destination = evidencePath('ci-3');
 const workflows = ['ci.yml', 'review-gallery.yml', 'windows-package.yml', 's1c-web.yml', 'relay.yml', 'host-certs.yml', 'vendor-tests.yml'];
 const results = [];
 for (const workflow of workflows) results.push(await survey({ workflow, since, limit: 1000, allJobs: true,

@@ -1,10 +1,11 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** D43 production phone pages, real HTTP transport, synthetic account and facts. */
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
-const out=resolve(import.meta.dirname,'../evidence/tb-4');await mkdir(out,{recursive:true});
+const out=evidencePath('tb-4');await mkdir(out,{recursive:true});
 const f=await startTimelineCandidate({daily:true,sidebar:true,logicalMobile:true,interactive:true,goals:true,historyCount:0});
 const browser=await chromium.launch({headless:true}),report={productionMobile:true,realHttp:true,synthetic:true,checks:[],errors:[]};
 try{

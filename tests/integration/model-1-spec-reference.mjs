@@ -1,9 +1,10 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Render the supplied controls preview and a side by side comparison. */
 import {chromium} from 'playwright';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 const spec=process.argv[2];if(!spec)throw Error('Pass the supplied controls specification directory.');
-const output=resolve(import.meta.dirname,'../evidence/model-1');await mkdir(output,{recursive:true});
+const output=evidencePath('model-1');await mkdir(output,{recursive:true});
 const tokens=JSON.parse(await readFile(join(spec,'tokens.json'),'utf8')),css=await readFile(join(spec,'components/bundle.css'),'utf8'),preview=await readFile(join(spec,'components/ModelPicker/preview.html'),'utf8');
 const base=[...tokens.spacing.tokens,...tokens.radius.tokens].map(t=>`--${t.name}:${t.value}`).join(';')+`;--font-sans:${tokens.type.families.sans};`;
 const themed=tokens.color.themes.map(theme=>`[data-theme="${theme.id}"]{${base}${[...tokens.color.tokens,...tokens.shadow.tokens].map(t=>`--${t.name}:${t.value[theme.id]}`).join(';')}}`).join('\n');

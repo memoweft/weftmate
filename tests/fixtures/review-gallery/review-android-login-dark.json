@@ -1,0 +1,9 @@
+{
+  "platform": "android",
+  "scene": "login",
+  "theme": "dark",
+  "commit": "d73e9646f6b477e8aba383928b64e9ee9f7b0683",
+  "generatedAt": "2026-10-08T12:37:42.632Z",
+  "synthetic": true,
+  "source": "tests/evidence/lg-1b/review-android-login-dark-20261008T123742Z.png"
+}

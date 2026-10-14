@@ -1,10 +1,11 @@
+import { evidencePath } from '../../helpers/evidence-path.mjs';
 /** Local required gates, one global heavy slot per invocation, released in finally. */
 import { openSync, closeSync, writeFileSync, unlinkSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { resolve, join } from 'node:path';
 import { hostname } from 'node:os';
-const repo = resolve(import.meta.dirname, '../../..'), evidence = join(repo, 'tests/evidence/sec-2');
+const repo = resolve(import.meta.dirname, '../../..'), evidence = evidencePath('sec-2');
 const modes = process.argv.slice(2).length ? process.argv.slice(2) : ['required', 'vendor'];
 for (const mode of modes) {
   if (!['required', 'vendor'].includes(mode)) throw Error('Use required or vendor');

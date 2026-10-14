@@ -1,5 +1,0 @@
-UI-1 light interactions passed.
-UI-1 dark interactions passed.
-UI-1 button stop passed.
-UI-1 escape stop passed.
-UI-1 Chromium interactions passed (semantic names/roles, isolated Electron).

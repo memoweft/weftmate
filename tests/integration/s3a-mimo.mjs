@@ -1,10 +1,11 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** One real MiMo → fixed DSH native reminder → Android system notification. */
 import assert from 'node:assert/strict';
 import { mkdir,writeFile,rm } from 'node:fs/promises';
 import { resolve,join } from 'node:path';
 import { harness,until } from './ia-2b-harness.mjs';
 import { phone,shell,shot,notifications,wait,pause,pkg } from './s3a-android.mjs';
-const out=resolve('tests/evidence/s3a');await mkdir(out,{recursive:true});
+const out=evidencePath('s3a');await mkdir(out,{recursive:true});
 const h=await harness('s3a-reminder',{memory:false,mainChat:true});let p;
 const report={realElectron:true,realAndroid:true,fixedDsh:true,model:'mimo-v2.6-flash',checks:[]};
 try{

@@ -1,8 +1,9 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Consolidate MF-1 observations; never rewrite the original scenario results. */
 import { readFileSync, writeFileSync, readdirSync, existsSync, lstatSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-const root = resolve('tests/evidence/mf-1');
+const root = evidencePath('mf-1');
 const json = file => JSON.parse(readFileSync(file, 'utf8'));
 const save = (name, value) => writeFileSync(join(root,name),JSON.stringify(value,null,2)+'\n');
 const totals = { requests:0,returnedUsage:0,missingUsage:0,input:0,cached:0,output:0 };

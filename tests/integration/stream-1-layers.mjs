@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -8,7 +9,7 @@ import { pathToFileURL } from 'node:url';
 import { DshWebRuntime } from '../../src/dsh-web-runtime.ts';
 import { routeForProfile, writeModelRoutesPatch } from '../../src/harness-model-routes.ts';
 
-const out=resolve('tests/evidence/stream-1');mkdirSync(out,{recursive:true});
+const out=evidencePath('stream-1');mkdirSync(out,{recursive:true});
 const root=mkdtempSync(join(tmpdir(),'weftmate-stream1-layers-')),home=join(root,'home');mkdirSync(home);
 const trace=join(root,'native.jsonl'),timeline=[],started=Date.now();
 const pause=ms=>new Promise(done=>setTimeout(done,ms));

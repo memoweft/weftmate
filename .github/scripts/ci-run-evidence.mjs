@@ -1,3 +1,4 @@
+import { evidencePath } from '../../tests/helpers/evidence-path.mjs';
 // Read-only capture for acceptance runs. No log or artifact contents are executed.
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -8,7 +9,7 @@ import { redactEvidenceText } from '../../tests/helpers/process-evidence.mjs';
 const execute = promisify(execFile);
 const gh = async args => (await execute('gh', args, {encoding:'utf8',windowsHide:true,maxBuffer:128*1024*1024})).stdout;
 
-export async function captureRun(id, label, directory = 'tests/evidence/ci-1/cloud') {
+export async function captureRun(id, label, directory = evidencePath('ci-1/cloud')) {
   const run = JSON.parse(await gh(['run','view',String(id),'--json','databaseId,headSha,status,conclusion,event,url,jobs']));
   if(run.status!=='completed')throw Error('Capture only a completed run');
   const cache=resolve('.local/ci-1/cloud-artifacts',String(id));mkdirSync(cache,{recursive:true});

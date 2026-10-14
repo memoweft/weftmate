@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {createHash,randomUUID} from 'node:crypto';
@@ -9,7 +10,7 @@ import {join,resolve} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {captureDailyDigestPhone} from '../helpers/daily-digest-phone.mjs';
 import {digestAuthFixture} from '../helpers/memory-digest-auth-fixture.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/data-1');await mkdir(out,{recursive:true});
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('data-1');await mkdir(out,{recursive:true});
 const authentication=await digestAuthFixture();let now=Date.now(),modelCalls=0;
 const fixture=await startTimelineCandidate({digest:true,daily:true,logicalMobile:true,inlineProgress:true,historyCount:0,s3a:true,clock:()=>now,cloudIdentity:authentication.cloudIdentity,authenticate:authentication.authenticate,
   digestModel:async input=>{if(input.priority!=='background')return new Response(JSON.stringify({choices:[{message:{content:'{"suggestions":[]}'}}]}));modelCalls++;assert.equal(input.priority,'background');assert.ok(!JSON.stringify(input).includes('PRIVATE-SYNTHETIC-BODY'));throw Error('Synthetic background model unavailable');}});

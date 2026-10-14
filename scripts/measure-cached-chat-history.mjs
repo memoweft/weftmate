@@ -1,3 +1,4 @@
+import { evidencePath } from '../tests/helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, stat, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -61,8 +62,8 @@ if (child) {
     }
     const report = { checkedAt: new Date().toISOString(), fixedDsh: true, synthetic: true, pageSize: 50, results,
       limitation: 'Pinned JSONL readFrom lacks loadStoredFrom and still decodes the entire prefix. A native revision-checked public projection cache provides bounded cold SQL pages after one native build; live idle boundaries update it incrementally. Index misses still require the native full decoder and are measured separately. No private decoder or vendor change.' };
-    await mkdir('tests/evidence/ia-2b', { recursive: true });
-    await writeFile('tests/evidence/ia-2b/history-native-after.json', JSON.stringify(report, null, 2)+'\n');
+    await mkdir(evidencePath('ia-2b'), { recursive: true });
+    await writeFile(evidencePath('ia-2b/history-native-after.json'), JSON.stringify(report, null, 2)+'\n');
     console.log(JSON.stringify(report, null, 2));
   } finally { await rm(root, { recursive: true, force: true }); }
 }

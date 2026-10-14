@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
@@ -6,7 +7,7 @@ import { resolve, join } from 'node:path';
 import { managedMkdtemp, managedTempRoot, disposeManagedTemp } from '../helpers/managed-temp.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const root = resolve(import.meta.dirname, '../..'), out = join(root, 'tests/evidence/ux-2');
+const root = resolve(import.meta.dirname, '../..'), out = evidencePath('ux-2');
 await mkdir(out, { recursive: true });
 let lock, fixture, profile, app;
 const checks = [], errors = [];

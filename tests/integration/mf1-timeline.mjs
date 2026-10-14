@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** MF-1: synthetic accounts, real Core, timestamped formation and immediate recall. */
 import assert from 'node:assert/strict';
@@ -13,7 +14,7 @@ import { boundaryForCompletedTurn } from '../../src/plugins/weftmate-personal-me
 import { createModelScheduler } from '../../src/model-scheduler.mjs';
 const arg = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name)+1] : fallback;
 const model = arg('--model','mimo'), single = process.argv.includes('--single-slot');
-const out = resolve(arg('--out',`tests/evidence/mf-1/before-${model}${single?'-single':''}`));
+const out = resolve(arg('--out',evidencePath(`mf-1/before-${model}${single?'-single':''}`)));
 const core = resolve(arg('--core-source','D:/AIProjects/MemoWeft/Worktrees/mf-1-memory-freshness/py/src'));
 const env = (name, scope) => execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',`[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','${scope}'))`],{encoding:'utf8',windowsHide:true}).trim();
 const key = model==='synthetic'?'synthetic-key':env(model==='mimo'?'MIMO_API_KEY':'WEFTMATE_LAN_MODEL_KEY',model==='mimo'?'Machine':'User');

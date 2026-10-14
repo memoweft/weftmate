@@ -1,7 +1,8 @@
-param([Parameter(Mandatory=$true)][string]$Installer,[string]$Out='tests/evidence/inst-1')
+param([Parameter(Mandatory=$true)][string]$Installer,[string]$Out=(Join-Path $(if ($env:WEFTMATE_EVIDENCE_DIR) { $env:WEFTMATE_EVIDENCE_DIR } else { '.local/evidence' }) 'inst-1'))
 $ErrorActionPreference='Stop';$started=Get-Date
 $Installer=(Resolve-Path -LiteralPath $Installer).Path;$workspace=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$Out=[IO.Path]::GetFullPath((Join-Path $workspace $Out))
+$Out=[IO.Path]::GetFullPath($(if ([IO.Path]::IsPathRooted($Out)) { $Out } else { Join-Path $workspace $Out }))
+[IO.Directory]::CreateDirectory($Out)|Out-Null
 Add-Type -Path (Join-Path $PSScriptRoot 'helpers/installer-window.cs') -ReferencedAssemblies System.Drawing
 $root=Join-Path ([IO.Path]::GetPathRoot($env:SystemRoot)) ('wi1-frame-'+[Guid]::NewGuid().ToString('N').Substring(0,12))
 $target=Join-Path $root 'WeftMate';[IO.Directory]::CreateDirectory($target)|Out-Null
