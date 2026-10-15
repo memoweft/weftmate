@@ -32,6 +32,11 @@ export function createMemoryActions({ root, manager, schedule }) {
   async function perform(owner, action) {
     const m = manager();
     if (action.name === 'memory_forget') {
+      // A pre-upgrade frozen plan has not passed whole-message/subject checks.
+      // Rebuild it from the original request before resuming any deletion.
+      if (action.plan && action.plan.authorization?.authorized !== true) {
+        await update(owner, data => { delete data.records[action.requestId].plan; }); delete action.plan;
+      }
       if (!action.plan) {
         const plan = await m.planForget(owner, action);
         await update(owner, data => { data.records[action.requestId].plan = plan; }); action.plan = plan;

@@ -231,7 +231,7 @@ for (const [name, input] of [
   assert.match(JSON.stringify(result.first.messages), /没有提交或排队/)
 })
 
-for (const [subject, misattribute] of [['我的', false], ['妈妈的', false], ['我的', true]] as const) test(`FIX-50 review real Core: forgetting ${subject} birthday preserves everyone else${misattribute ? ' even when the selector misattributes others' : ''}`, { skip }, async t => {
+for (const [subject, misattribute, legacyPlan] of [['我的', false, false], ['妈妈的', false, false], ['我的', true, false], ['我的', false, true]] as const) test(`FIX-50 review real Core: forgetting ${subject} birthday preserves everyone else${misattribute ? ' even when the selector misattributes others' : ''}${legacyPlan ? ' when resuming an old unscoped plan' : ''}`, { skip }, async t => {
   const f = await fixture(t, { misattribute, interpret: payload => {
     const e = payload.evidence[0]
     if (!e.text.includes('生日')) return null
@@ -244,8 +244,22 @@ for (const [subject, misattribute] of [['我的', false], ['妈妈的', false], 
   for (const [id, text] of [['self', '我的生日是五月一日。'], ['mother', '妈妈的生日是六月一日。'], ['coworker', '同事小王的生日是七月一日。']]) {
     await f.manager.ingest(owner, boundary(text, 'review-birthday-' + id)); await f.ready()
   }
-  assert.equal((await f.world()).items.filter((row: any) => row.value.content.includes('生日')).length, 3)
-  const result = await f.tool('memory_forget', { query: subject + '生日' }, 'review-subject', '忘掉' + subject + '生日')
+  const birthdays = (await f.world()).items.filter((row: any) => row.value.content.includes('生日'))
+  assert.equal(birthdays.length, 3)
+  if (legacyPlan) f.offline(true)
+  let result = await f.tool('memory_forget', { query: subject + '生日' }, 'review-subject', '忘掉' + subject + '生日')
+  if (legacyPlan) {
+    assert.equal(result.state, 'queued')
+    const file = path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json')
+    const state = JSON.parse(await readFile(file, 'utf8')), row: any = Object.values(state.records).find((row: any) => row.name === 'memory_forget')
+    delete row.scope
+    // The legacy topic matcher nominated all birthday sources, including others.
+    row.plan = { evidenceIds: [...new Set(birthdays.flatMap((row: any) => row.provenance.map((source: any) => source.evidence_id)))],
+      worldTargets: [], affectedIds: [], sourceTexts: [] }
+    await writeFile(file, JSON.stringify(state))
+    await f.restart(); f.offline(false)
+    result = await wait(async () => JSON.parse(await readFile(file, 'utf8')).records[row.requestId].result)
+  }
   assert.equal(result.state, 'applied')
   assert.match(result.message, /还有 2 条关于别人的没动/)
   const remaining = (await f.world()).items.map((row: any) => row.value.content).join('\n')
