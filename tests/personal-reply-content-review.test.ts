@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { cleanReplyStream, modelToolFailure } from '../src/plugins/personal-reply-content.mjs';
+import { cleanReplyStream, modelToolFailure, modelToolFailureValue } from '../src/plugins/personal-reply-content.mjs';
 
 async function collect(text, width=1) {
   async function* source() {
@@ -57,4 +57,14 @@ test('review 3: fenced and indented code blocks preserve all JSON and tool-tag e
     const surrounded=await collect('<tool_call>hide</tool_call>\n'+text+'\n<function=write>hide</function>',width);
     assert.equal(surrounded.live,'\n'+text+'\n');assert.equal(surrounded.text,surrounded.live);assert.deepEqual(surrounded.calls,[]);
   }
+});
+
+test('recall-disabled results retain the setting state and explanation without its internal code',()=>{
+  const value={state:'withheld',reasonCode:'RECALL_DISABLED',message:'这段对话没开记忆。'};
+  const result={isError:false,value,content:[{type:'text',text:JSON.stringify(value)}]};
+  const content=modelToolFailure('memory_query',result);
+  assert.equal(content[0].text,'这段对话没开记忆。');
+  const visible=modelToolFailureValue(result,content);
+  assert.equal(visible.state,'withheld');assert.equal(visible.message,value.message);
+  assert.doesNotMatch(JSON.stringify([visible,content]),/RECALL_DISABLED|稍后再试/);
 });

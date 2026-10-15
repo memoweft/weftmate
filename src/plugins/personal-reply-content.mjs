@@ -87,16 +87,19 @@ function memoryReceipt(result) {
     (typeof receipt.state === 'string' || receipt.available === false || receipt.error));
 }
 const CONFLICT_MESSAGE = '记忆刚被更新过，请重新查询后再改。';
-function conflictReceipt(result) {
+function memoryReceiptForModel(result) {
   const receipt = memoryReceipt(result);
-  if (receipt?.state !== 'revision_conflict') return;
+  const conflict = receipt?.state === 'revision_conflict';
+  const recallDisabled = receipt?.state === 'withheld' &&
+    (receipt.reasonCode === 'RECALL_DISABLED' || receipt.message === '这段对话没开记忆。');
+  if (!conflict && !recallDisabled) return;
   const {reasonCode,kind,error,...retryState} = receipt;
-  return {...retryState,message:CONFLICT_MESSAGE};
+  return {...retryState,message:conflict ? CONFLICT_MESSAGE : '这段对话没开记忆。'};
 }
 
-/** Preserve the existing conflict state/revision used by the model's query-and-submit flow. */
+/** Preserve outcome states used by the existing retry flow and recall setting. */
 export function modelToolFailureValue(result, content) {
-  const receipt = conflictReceipt(result);
+  const receipt = memoryReceiptForModel(result);
   if (receipt) {
     const {reasonCode,kind,error,...value} = result.value ?? {};
     return value.receipt ? {...value,receipt} : receipt;
@@ -114,8 +117,8 @@ export function modelToolFailure(name, result) {
   }
   const memory = name?.startsWith('memory_');
   const receipt = memory ? memoryReceipt(result) : undefined;
-  const conflict = memory ? conflictReceipt(result) : undefined;
-  if (conflict) return [{type:'text',text:CONFLICT_MESSAGE},{type:'text',text:JSON.stringify({receipt:conflict})}];
+  const status = memory ? memoryReceiptForModel(result) : undefined;
+  if (status) return [{type:'text',text:status.message},{type:'text',text:JSON.stringify({receipt:status})}];
   const failedReceipt = receipt && (receipt.available === false ||
     ['rejected','failed','unavailable','withheld'].includes(receipt.state) || Boolean(receipt.error));
   if (!result.isError && !failedReceipt) return;
