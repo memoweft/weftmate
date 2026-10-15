@@ -221,6 +221,7 @@ export function apply(ctx) {
   if (process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED !== '1') return;
   const bridge = new HostMemoryBridge();
   const actionReplies = new WeakMap();
+  const requestScopes = new WeakMap();
   const cleanupRequests = new Map();
   const cleanupFlights = new Set();
   ctx.on('agent/created', async ({ agent }) => {
@@ -249,15 +250,14 @@ export function apply(ctx) {
             requestId: `memory-tool:${digest(`${agent.id}|${turn}|${exec.callId}`)}` } }, exec.signal)
           .catch(() => ({ state: 'unavailable', message: tool.name === 'memory_query'
             ? '暂时查不到记忆。' : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。' }));
-        if (tool.name !== 'memory_query') actionReplies.set(agent, { turn, afterSeq: agent.session.events.at(-1)?.seq ?? -1,
-          message: result.message ?? (['applied', 'no_change'].includes(result.receipt?.state)
+        if (tool.name !== 'memory_query') {
+          const previous = actionReplies.get(agent);
+          const message = result.message ?? (['applied', 'no_change'].includes(result.receipt?.state)
             ? tool.name === 'memory_forget' ? '已忘掉这件事。' : '已按你刚才的说法更新记忆。'
-            : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。') });
-        // Native turn conclusion keeps the committed result authoritative. A
-        // second model request after the write can fail or return empty text;
-        // turn-stopping below publishes the receipt's plain-language outcome.
-        if (tool.name !== 'memory_query' && (['applied', 'queued'].includes(result.state) ||
-            ['applied', 'no_change'].includes(result.receipt?.state))) exec.concludeTurn();
+            : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。');
+          const messages = [...new Set([...(previous?.turn === turn ? previous.messages : []), message])];
+          actionReplies.set(agent, { turn, afterSeq: agent.session.events.at(-1)?.seq ?? -1, messages, message: messages.join('') });
+        }
         if (result.receipt?.storageCleanup?.state === 'pending') {
           let requests = cleanupRequests.get(agent.id);
           if (!requests) { requests = new Set(); cleanupRequests.set(agent.id, requests); }
@@ -268,6 +268,41 @@ export function apply(ctx) {
       presentCall: () => ({ card: 'generic', title: tool.title, kind: 'other' }),
     }));
   });
+  ctx.on('agent/request', async (payload, next) => {
+    const config = await next();
+    const action = actionReplies.get(payload.agent);
+    if (action?.turn === payload.turn) requestScopes.set(payload.signal, { agent: payload.agent, turn: payload.turn });
+    return config;
+  });
+  ctx.on('llm/stream', (options, next) => {
+    const scope = options.signal && requestScopes.get(options.signal);
+    const action = scope && actionReplies.get(scope.agent);
+    if (!action || action.turn !== scope.turn || options.sessionId !== scope.agent.id || options.purpose !== undefined) return next();
+    return (async function* () {
+      const { isAgentLoopRequest } = await import('@deepseek-ai/dsh-llm');
+      if (!isAgentLoopRequest(options)) { yield* next(); return; }
+      // Let the real model finish its remaining tools and answer. Buffer this
+      // continuation so a failed stream cannot publish half a tool call or a
+      // half-generated recommendation before the receipt-based fallback.
+      const chunks = []; let failure;
+      try { for await (const chunk of next()) chunks.push(chunk); }
+      catch (error) { if (options.signal?.aborted) throw error; failure = error; }
+      const finish = chunks.findLast(chunk => chunk.type === 'finish');
+      const usable = chunks.some(chunk => chunk.type === 'tool-call-delta' ||
+        chunk.type === 'text-delta' && chunk.text.trim() ||
+        chunk.type === 'block-end' && (chunk.block.type === 'tool-call' || chunk.block.type === 'text' && chunk.block.text.trim()));
+      if (!options.signal?.aborted && finish?.reason?.kind !== 'aborted' &&
+          (failure || finish?.reason?.kind === 'error' || !usable)) {
+        diagnostic('memory-final-fallback', failure ?? finish?.reason?.failure);
+        for (const chunk of chunks) if (chunk.type === 'usage') yield chunk;
+        const text = action.message + '后面的回复没能生成，请稍后再试。';
+        yield { type: 'block-start', index: 0, blockType: 'text' };
+        yield { type: 'text-delta', index: 0, text };
+        yield { type: 'block-end', index: 0, block: { type: 'text', text } };
+        yield { type: 'finish', reason: { kind: 'completed' } };
+      } else yield* chunks;
+    })();
+  }, { global: true });
   ctx.on('agent/turn-stopping', async ({ agent, turn, signal }) => {
     const action = actionReplies.get(agent);
     if (!action || action.turn !== turn || signal?.aborted) return;

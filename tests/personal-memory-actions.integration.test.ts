@@ -5,9 +5,11 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 import { createHash } from 'node:crypto'
+import { execFileSync } from 'node:child_process'
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs'
 import { MemoWeftRpc } from '../src/personal-memory/rpc.mjs'
 import { handlePersonalMemoryTool } from '../src/personal-access/memory-runtime.mjs'
+import { handlePersonalMemoryHttp } from '../src/personal-memory/http.mjs'
 import { boundaryForCompletedTurn } from '../src/plugins/weftmate-personal-memory.mjs'
 import { assertOwnerBoundBoundary } from '../src/personal-memory/boundary.mjs'
 
@@ -29,7 +31,7 @@ function boundary(text: string, sessionId: string) {
   ]
   return assertOwnerBoundBoundary(sessionId, boundaryForCompletedTurn({ id: sessionId, header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))
 }
-async function fixture(t: any) {
+async function fixture(t: any, { interpret = null }: { interpret?: ((payload: any) => any) | null } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
   let offline = false, reject = false, calls = 0, loseReceipt = false
   const errors: unknown[] = []
@@ -40,18 +42,18 @@ async function fixture(t: any) {
       const payload = JSON.parse(body).messages.map((m: any) => { try { return JSON.parse(m.content) } catch { return null } }).find((m: any) => m?.evidence)
       calls++
       const e = payload.evidence[0], correcting = /红茶/.test(e.text)
-      const content = reject ? { schema_version: 8, result: 'cognitions', cognitions: [{ invalid: true }] }
+      const content = interpret?.(payload) ?? (reject ? { schema_version: 8, result: 'cognitions', cognitions: [{ invalid: true }] }
         : { schema_version: 8, result: 'cognitions', cognitions: [{ action: correcting ? 'correct' : 'form', target: 'owner_self',
           statement_kind: 'preference', formed_by: 'stated', proposition: e.text,
           supports: e.segments.map((s: any) => ({ evidence_id: e.id, segment_id: s.id })),
-          ...(correcting ? { corrects_cognition_id: payload.current_cognitions[0].id } : {}) }] }
+          ...(correcting ? { corrects_cognition_id: payload.current_cognitions[0].id } : {}) }] })
       res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify(content) }, finish_reason: 'stop' }] }))
     } catch (e) { errors.push(e); res.writeHead(500).end('{}') }
   })
   await new Promise<void>(r => server.listen(0, '127.0.0.1', r))
   const baseUrl = `http://127.0.0.1:${(server.address() as any).port}/v1`
   const route = () => ({ profileId: 'synthetic', baseUrl, model: 'synthetic', credential: 'synthetic', routeFingerprint: null, modelTier: 'cloud' })
-  const create = () => createPersonalMemoryManager({ root, enabled: true, python, pythonPath, baseUrl, model: '@current', credential: () => 'synthetic',
+  const create = (dataRoot = root) => createPersonalMemoryManager({ root: dataRoot, enabled: true, python, pythonPath, baseUrl, model: '@current', credential: () => 'synthetic',
     processingRoute: route, defaultProcessingRoute: route, rpcFactory: options => {
       const rpc = new MemoWeftRpc(options), request = rpc.request.bind(rpc)
       rpc.request = async (...args: Parameters<MemoWeftRpc['request']>) => {
@@ -78,7 +80,7 @@ async function fixture(t: any) {
     { sessionId: id, modelTier: 'cloud', memoryPolicy: { recall: true } })
   await manager.ingest(owner, boundary('记住：我喜欢喝乌龙茶。', 'remember'))
   await ready()
-  return { root, world, ready, tool, get manager() { return manager }, errors,
+  return { root, world, ready, tool, fork: () => create(path.join(root, 'imported')), get manager() { return manager }, errors,
     offline: (value: boolean) => { offline = value }, reject: (value: boolean) => { reject = value }, loseReceipt: () => { loseReceipt = true },
     restart: async () => { await manager.close(); manager = create() }, get calls() { return calls } }
 }
@@ -89,7 +91,10 @@ test('real Core: explicit correction survives another session and forgetting era
   const sourceText = '纠正：我现在喜欢红茶，不是乌龙茶。'
   const corrected = await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我现在喜欢红茶。' }, 'correct', sourceText)
   assert.equal(corrected.state ?? corrected.receipt?.state, 'applied')
-  assert.equal((await f.manager.ingest(owner, boundary(sourceText, 'correct'))).jobState, 'handled_by_tool', 'do not reinterpret an already applied correction')
+  assert.equal((await f.manager.ingest(owner, boundary(sourceText, 'correct'))).state, 'accepted')
+  await f.ready()
+  assert.equal((await f.world()).items.filter((row: any) => row.current_state === 'current').length, 1,
+    'Core keeps one current understanding while retaining the complete original source')
   const recall = await f.manager.recall(owner, { query: '我喜欢喝什么茶？', sessionId: 'another-device', modelTier: 'cloud' })
   assert.match(recall.contextText, /红茶/); assert.doesNotMatch(recall.contextText, /喜欢喝乌龙茶/)
   const current = (await f.world()).items.find((row: any) => row.current_state === 'current')
@@ -197,4 +202,128 @@ test('real Core: erasing the account also cancels queued memory actions', { skip
   await f.restart()
   assert.equal((await f.world()).items.length, 0)
   await assert.rejects(readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json')), { code: 'ENOENT' })
+})
+
+test('review-1 real Core: missing corrections finish and cannot block later requests across restart', { skip }, async t => {
+  const f = await fixture(t), old = (await f.world()).items[0]
+  const missing = await f.tool('memory_correct', { query: '不存在的第47917种木星饮料', text: '不存在的饮料改成温水。' }, 'missing', '纠正那条不存在的记忆。')
+  const next = await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我喜欢喝红茶。' }, 'after-missing', '纠正我喜欢喝红茶。')
+  assert.deepEqual([missing.state, next.state], ['not_found', 'applied'])
+  assert.equal(missing.message, '没找到这条记忆。')
+  await f.restart()
+  const recall = await f.manager.recall(owner, { query: '我喜欢喝什么茶？', sessionId: 'after-restart', modelTier: 'cloud' })
+  assert.match(recall.contextText, /红茶/)
+})
+
+test('review-1 real Core: deletion ends a queued correction instead of blocking the next action', { skip }, async t => {
+  const f = await fixture(t), old = (await f.world()).items[0]
+  f.offline(true)
+  const pending = await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我喜欢喝红茶。' }, 'deleted-target', '纠正为红茶。')
+  assert.equal(pending.state, 'queued'); f.offline(false)
+  await f.manager.submitCommand(owner, { requestId: 'delete-before-retry', operation: 'delete_world_item', targetKind: 'cognition',
+    targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
+  await f.restart()
+  await f.manager.ingest(owner, boundary('记住：我每周五晚上锻炼。', 'after-deletion')); await f.ready()
+  const target = (await f.world()).items.find((row: any) => row.current_state === 'current')
+  const next = await f.tool('memory_correct', { kind: 'cognition', id: target.item_id, expectedWorldRevision: (await f.manager.status(owner)).worldRevision,
+    text: '我每周六晚上锻炼。' }, 'after-deleted-target', '纠正锻炼时间为每周六晚上。')
+  assert.equal(next.state, 'applied')
+  const state = JSON.parse(await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json'), 'utf8'))
+  assert.ok(Object.values(state.records).some((row: any) => row.result?.state === 'not_found'))
+})
+
+test('review-2 real Core: a corrected clause does not discard the birthday in the same message', { skip }, async t => {
+  const f = await fixture(t, { interpret: payload => {
+    const e = payload.evidence[0]
+    if (!e.text.includes('生日')) return null
+    return { schema_version: 8, result: 'cognitions', cognitions: [{ action: 'form', target: 'owner_self',
+      statement_kind: 'attribute', formed_by: 'stated', proposition: '我的生日是五月一日。',
+      supports: e.segments.filter((s: any) => s.text.includes('生日')).map((s: any) => ({ evidence_id: e.id, segment_id: s.id })) }] }
+  } })
+  const old = (await f.world()).items[0]
+  const source = '把喝茶偏好改成红茶，另外记住我的生日是五月一日。'
+  const result = await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我喜欢喝红茶。' }, 'mixed-source', source)
+  assert.equal(result.state, 'applied')
+  await f.manager.ingest(owner, boundary(source, 'mixed-source')); await f.ready()
+  const items = (await f.world()).items.filter((row: any) => row.current_state === 'current')
+  assert.ok(items.some((row: any) => /生日.*五月一日/.test(row.value.content)), 'the untouched birthday must be formed')
+  assert.equal(items.filter((row: any) => /喝.*红茶/.test(row.value.content)).length, 1)
+  const revision = (await f.manager.status(owner)).worldRevision
+  await f.manager.ingest(owner, boundary(source, 'mixed-source')); await f.ready()
+  assert.equal((await f.manager.status(owner)).worldRevision, revision, 'Core deduplicates the exact original boundary')
+  await f.restart()
+  assert.match((await f.manager.recall(owner, { query: '我的生日', sessionId: 'birthday-new-session', modelTier: 'cloud' })).contextText, /五月一日/)
+})
+
+test('review-2 real Core: queued correction retains the other fact while its source waits for recovery', { skip }, async t => {
+  const f = await fixture(t, { interpret: payload => {
+    const e = payload.evidence[0]
+    if (!e.text.includes('生日')) return null
+    return { schema_version: 8, result: 'cognitions', cognitions: [{ action: 'form', target: 'owner_self',
+      statement_kind: 'attribute', formed_by: 'stated', proposition: '我的生日是五月一日。',
+      supports: e.segments.filter((s: any) => s.text.includes('生日')).map((s: any) => ({ evidence_id: e.id, segment_id: s.id })) }] }
+  } })
+  const old = (await f.world()).items[0], source = '把喝茶偏好改成红茶，另外记住我的生日是五月一日。'
+  f.offline(true)
+  assert.equal((await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我喜欢喝红茶。' }, 'mixed-queued', source)).state, 'queued')
+  assert.equal((await f.manager.ingest(owner, boundary(source, 'mixed-queued'), { defer: true })).state, 'queued')
+  await f.restart(); f.offline(false)
+  await wait(async () => {
+    const items = (await f.world()).items.filter((row: any) => row.current_state === 'current')
+    return items.some((row: any) => /生日.*五月一日/.test(row.value.content)) && items.some((row: any) => /喝.*红茶/.test(row.value.content))
+  })
+})
+
+test('review-3 real Core: forgetting an implicitly formed person deletes indirect relationship sources', { skip }, async t => {
+  const f = await fixture(t, { interpret: payload => {
+    const e = payload.evidence[0]
+    if (!e.text.includes('林舟')) return null
+    return { schema_version: 8, result: 'cognitions', cognitions: [{ action: 'form', target: 'owner_self',
+      statement_kind: 'relationship', formed_by: 'stated', proposition: e.text, relation_type: '同事',
+      target_entity: { canonical_name: '林舟', kind: 'person' },
+      supports: e.segments.map((s: any) => ({ evidence_id: e.id, segment_id: s.id })) }] }
+  } })
+  await f.manager.ingest(owner, boundary('林舟是我的同事。', 'person-source')); await f.ready()
+  // Public Core Portable permits relationships without direct entity-evidence
+  // ledgers. Restore that legitimate older shape through Core's importer; do
+  // not edit SQLite or substitute the actual deletion/recall implementation.
+  const exported = await f.manager.portableExport(owner)
+  exported.data.entityEvidence = []; exported.metadata.counts.entityEvidence = 0
+  const bundle = JSON.parse(execFileSync(python!, ['-c',
+    'import sys,json; from memoweft.portable import derive_bundle_id; b=json.load(sys.stdin); b["bundleId"]=derive_bundle_id(b); print(json.dumps(b))'],
+    { input: JSON.stringify(exported), encoding: 'utf8', windowsHide: true, env: { ...process.env, PYTHONPATH: pythonPath! } }))
+  const restored = f.fork()
+  try {
+    const plan = await restored.query(owner, 'portable_plan', { bundle })
+    assert.equal(plan.valid, true, JSON.stringify(plan.errors))
+    await restored.query(owner, 'portable_import', { operation: 'apply', bundle, plan_hash: plan.plan_hash })
+    const entities = await restored.query(owner, 'query_world', { operation: 'list', object_kind: 'entity', include_history: true })
+    const person = entities.items.find((row: any) => row.value.canonical_name === '林舟')
+    assert.ok(person)
+    const direct = await restored.query(owner, 'query_provenance', { object_kind: 'entity', item_id: person.item_id, projection: 'history' })
+    assert.equal(direct.provenance.length, 0)
+    const result = await handlePersonalMemoryTool(restored, owner, { name: 'memory_forget',
+      requestId: 'memory-tool:' + createHash('sha256').update('forget-person').digest('hex'),
+      arguments: { kind: 'entity', id: person.item_id, expectedWorldRevision: entities.world_revision } },
+      { sessionId: 'forget-person', modelTier: 'cloud', memoryPolicy: { recall: true } })
+    assert.equal(result.state, 'applied')
+    const after = await restored.query(owner, 'query_world', { operation: 'list', object_kind: 'entity', include_history: true })
+    assert.equal(after.items.some((row: any) => row.item_id === person.item_id), false)
+    const recall = await restored.recall(owner, { query: '林舟是我的谁？', sessionId: 'person-new-session', modelTier: 'cloud' })
+    assert.doesNotMatch(recall.contextText, /林舟/)
+  } finally { await restored.close() }
+})
+
+test('review-4 real Core: deleting through the memory page also erases pending-action correction copies', { skip }, async t => {
+  const f = await fixture(t), old = (await f.world()).items[0]
+  await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我喜欢喝红茶。' }, 'page-copy', '纠正喝茶偏好为红茶。')
+  const current = (await f.world()).items.find((row: any) => row.current_state === 'current')
+  const pathname = `/personal/v1/memory/items/cognition/${current.item_id}`
+  const deleted = await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname, url: new URL(pathname, 'http://memory'),
+    request: { method: 'DELETE' }, readJson: async () => ({ requestId: 'page-delete', expectedWorldRevision: (await f.manager.status(owner)).worldRevision, deleteConversationSnippets: true }) })
+  assert.equal(deleted.body.receipt.state, 'applied')
+  const state = await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json'), 'utf8')
+  assert.doesNotMatch(state, /红茶/)
+  await f.restart()
+  assert.doesNotMatch(await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json'), 'utf8'), /红茶/)
 })
