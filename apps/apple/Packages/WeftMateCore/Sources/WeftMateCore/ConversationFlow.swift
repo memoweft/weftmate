@@ -52,6 +52,37 @@ public struct ConversationFollowState: Equatable, Sendable {
     public mutating func returnToBottom() { following = true; hasNewContent = false }
 }
 public enum ToolProgressSummary {
+    public static func approval(tool: String, raw: String) -> String {
+        let name = tool.replacingOccurrences(of: "^mcp__.+?__", with: "", options: .regularExpression)
+        let json = raw.range(of: "\n{").map { String(raw[raw.index(after: $0.lowerBound)...]) } ?? raw
+        var args: [String: Any] = [:]
+        if let bytes = json.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any] {
+            args = object["arguments"] as? [String: Any] ?? object["parameters"] as? [String: Any] ?? object
+            if let text = (object["arguments"] ?? object["parameters"]) as? String, let data = text.data(using: .utf8),
+               let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] { args = parsed }
+        }
+        if ["shell", "bash", "pwsh", "powershell", "exec_command", "run_command", "command"].contains(name) || args["command"] != nil || args["cmd"] != nil {
+            var description = (args["description"] as? String ?? "").components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }.joined(separator: " ")
+            let command = (args["command"] ?? args["cmd"] ?? args["script"]) as? String ?? ""
+            if description.isEmpty && command.range(of: "^\\s*(Get-ChildItem|ls|dir)(\\s|$)", options: [.regularExpression, .caseInsensitive]) != nil { description = "列出这个文件夹里的文件" }
+            return "运行一条命令" + (description.isEmpty || description.range(of: "[{}\\[\\]]|weftmate:|\\b(pwsh|powershell|Get-ChildItem)\\b", options: .regularExpression) != nil ? "" : "：" + String(description.prefix(180)))
+        }
+        if ["list_directory", "read_directory", "list_dir", "ls"].contains(name) {
+            let path = (args["path"] ?? args["directory"] ?? args["file_path"]) as? String ?? ""
+            let folder = path.replacingOccurrences(of: "\\", with: "/").split(separator: "/").last.map(String.init) ?? ""
+            return "读取文件夹" + (folder.isEmpty ? "" : "：" + folder)
+        }
+        if let url = args["url"] as? String { return "访问网页 " + (URL(string: url)?.host ?? "") }
+        if let path = (args["file_path"] ?? args["filePath"] ?? args["path"]) as? String {
+            let file = path.replacingOccurrences(of: "\\", with: "/").split(separator: "/").last.map(String.init) ?? ""
+            let verb = name.range(of: "write|save|create_file", options: .regularExpression) != nil ? "写入"
+                : name.range(of: "edit|patch|modify", options: .regularExpression) != nil ? "修改"
+                : name.range(of: "delete|remove", options: .regularExpression) != nil ? "删除" : "读取"
+            return verb + " 1 个文件：" + file
+        }
+        if !args.isEmpty { return readable(tool: name, raw: json) }
+        return OperationNames.tool(name)
+    }
     public static func readable(tool: String, raw: String) -> String {
         if tool == "health_query" { return "查询健康数据" }
         if ["load_tools", "ask_user_question", "get_goal", "create_goal", "update_goal", "run_code", "weftmod", "weftmod_script", "todo", "todo_write", "enter_plan_mode", "exit_plan_mode"].contains(tool) { return OperationNames.tool(tool) }
@@ -66,6 +97,8 @@ public enum ToolProgressSummary {
     }
 
     public static func text(_ entry: TimelineEntry) -> String {
+        let refused = entry.steps.filter { $0.decision == "已拒绝" }
+        if !refused.isEmpty { return refused.map { "你拒绝了" + OperationNames.tool($0.data["toolName"]?.string ?? "") + "，没有做" }.joined(separator: "；") }
         if let index = entry.steps.firstIndex(where: { $0.effectiveState == "failed" }) { return "第 \(entry.steps[index].ordinal) 步失败" }
         if entry.stopped || entry.steps.contains(where: { $0.effectiveState == "cancelled" }) { return "已停止 · " + counts(entry.steps) }
         if entry.running, let step = entry.steps.last(where: \.running) { return "正在" + step.summary + "…" }
@@ -73,7 +106,7 @@ public enum ToolProgressSummary {
     }
     public static func counts(_ steps: [TimelineStep]) -> String {
         var kinds: [String] = [], counts: [String: Int] = [:]
-        for step in steps {
+        for step in steps where step.decision != "已拒绝" {
             let tool = (step.data["toolName"]?.string ?? "").lowercased()
             let kind: String
             switch tool {
