@@ -173,5 +173,13 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
       callId: `deny-${name.replaceAll('_', '-')}`, signal: new AbortController().signal })
     assert.equal(result.isError, true, `${name} must not execute in a shared-account chat`)
   }
+  const memoryTools = ['memory_query', 'memory_forget', 'memory_correct'];
+  for (const name of memoryTools) scoped.ctx.get('tools').register(fakeTool(name));
+  assert.deepEqual(scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name).sort(), [...memoryTools].sort());
+  for (const name of memoryTools) {
+    const result = await ctx.get('tools').execute({ name, arguments: {}, agent,
+      callId: `own-${name}`, signal: new AbortController().signal });
+    assert.equal(result.isError, false, `${name} is an agent-local account operation`);
+  }
   await ctx.fiber.dispose()
 })

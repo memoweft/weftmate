@@ -104,6 +104,7 @@ import { createPersonalMemoryManager } from './personal-memory/index.mjs';
 import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
 import { parseWindowsSendTo, forwardWindowsSendTo } from './windows-system-integration.mjs';
 import { memoryRecallDestination, memoryRecallModelTier, memorySessionPolicy } from './personal-memory/policy.mjs';
+import { handlePersonalMemoryTool } from './personal-access/memory-runtime.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
@@ -1936,6 +1937,9 @@ async function bootstrap() {
         writeHostState();
         throw Object.assign(new Error('memory preset mismatch'), { code: 'MEMORY_OWNER_UNAVAILABLE' });
       }
+      if (request.action === 'tool' && request.tool?.name === 'memory_cleanup') {
+        return handlePersonalMemoryTool(personalMemoryManager, binding.ownerId, request.tool);
+      }
       const memoryPolicy = await personalAccessService.memoryTurnPolicy(binding.ownerId, request.sessionId, request.turn);
       if (request.action === 'ingest' && !memoryPolicy.ingest) return { state: 'skipped', reasonCode: 'TEMPORARY_TURN' };
       if (request.action === 'recall' && !memoryPolicy.recall) return { state: 'withheld', reasonCode: 'RECALL_DISABLED', memoryPolicy };
@@ -1953,9 +1957,11 @@ async function bootstrap() {
         writeHostState();
         return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED', memoryPolicy };
       }
-      personalMemoryIpc.recallRequests++;
       const foregroundProfile = settingsMod.listModelProfiles().profiles.find(profile =>
         profile.id === settingsMod.sessionModelBinding(request.sessionId));
+      if (request.action === 'tool') return handlePersonalMemoryTool(personalMemoryManager, binding.ownerId,
+        request.tool, { sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile), memoryPolicy });
+      personalMemoryIpc.recallRequests++;
       const finishMemory = modelScheduler.beginMemory(request.sessionId);
       const recalled = await personalMemoryManager.recall(binding.ownerId, { query: request.query,
         sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile) })
