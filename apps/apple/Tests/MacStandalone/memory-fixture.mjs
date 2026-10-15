@@ -29,7 +29,7 @@ const server=createServer(async(req,res)=>{
  }
  const system=body.messages[0].content,content=body.messages.at(-1).content,query=typeof content==='string'?content:content.filter(p=>p.type==='text').map(p=>p.text).join('\n');contexts.push(system);chatRequests.push(body.messages);
  const image=Array.isArray(content)&&content.some(p=>p.type==='image_url');
- const text=query.includes('12×13')?'重新计算：12×13 = 156。':query.includes('一周食谱')?'周一清淡蔬菜，周二豆腐，周三鱼，周四面条，周五鸡肉，周六米饭，周日汤；都不放辣。':query.includes('代码报错')?'missing 未定义，需要先声明变量。':image?'截图里有合成色块。':mode==='invent'?(system.includes('本机记忆里没有相关记录')?'没有相关记录':'记忆里还有虚构的名字小明。'):query.includes('是什么')?(system.includes('绿色纸鹤')?'绿色纸鹤':system.includes('蓝色纸鹤')?'蓝色纸鹤':'没有相关记录'):system.includes('尚未确认')?'收到，先处理当前消息。':'收到。';
+ const text=query.includes('12×13')?'重新计算：12×13 = 156。':query.includes('一周食谱')?'周一清淡蔬菜，周二豆腐，周三鱼，周四面条，周五鸡肉，周六米饭，周日汤；都不放辣。':query.includes('代码报错')?'missing 未定义，需要先声明变量。':image?'截图里有合成色块。':mode==='invent'?(system.includes('本机记忆里没有相关记录')&&system.includes('没有可调用的工具')?'没有相关记录':'<tool_call><function=check_memory></function></tool_call>'):query.includes('是什么')?(system.includes('绿色纸鹤')?'绿色纸鹤':system.includes('蓝色纸鹤')?'蓝色纸鹤':'没有相关记录'):system.includes('尚未确认')?'收到，先处理当前消息。':'收到。';
  res.writeHead(200,{'content-type':'text/event-stream'});res.end('data: '+JSON.stringify({choices:[{delta:{content:text}}]})+'\n\ndata: [DONE]\n\n');
 });
 server.listen(0,'127.0.0.1');await once(server,'listening');console.log(JSON.stringify({origin:`http://127.0.0.1:${server.address().port}`}));
