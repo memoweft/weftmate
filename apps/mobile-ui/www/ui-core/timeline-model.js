@@ -96,6 +96,37 @@
             return `交给子任务${args.description || args.prompt || args.task || args.message ? `：${short(args.description || args.prompt || args.task || args.message)}` : ''}`;
         return '使用扩展工具';
     }
+    function approvalSummary(tool, value) {
+        const args = toolArguments(value), name = toolName(tool);
+        const short = text => String(text || '').replace(/\s+/g, ' ').trim().slice(0, 180);
+        if (/^(shell|bash|pwsh|powershell|exec_command|run_command|command)$/.test(name) || args.command || args.cmd) {
+            const command = String(args.command || args.cmd || args.script || '');
+            const description = short(args.description) || (/^\s*(?:Get-ChildItem|ls|dir)(?:\s|$)/i.test(command) ? '列出这个文件夹里的文件' : '');
+            return `运行一条命令${description && !/[{}\[\]\n]|weftmate:|\b(?:pwsh|powershell|Get-ChildItem)\b/i.test(description) ? `：${description}` : ''}`;
+        }
+        if (/^(list_directory|read_directory|list_dir|ls)$/.test(name)) {
+            const folder = short(args.path || args.directory || args.file_path).split(/[\\/]/).filter(Boolean).at(-1);
+            return `读取文件夹${folder ? `：${folder}` : ''}`;
+        }
+        const summary = toolSummary(tool, args);
+        return summary;
+    }
+    function approvalCopy(row, detail) {
+        const reason = String(row.reason || '');
+        const offset = reason.indexOf('\n{');
+        const rawArgs = offset >= 0 ? reason.slice(offset + 1) : reason;
+        const args = toolArguments(detail || row.arguments || row.parameters || rawArgs);
+        const humanReason = reason.replace(/^\[weftmate:[a-z,\-]+\]\s*/, '').trim();
+        const service = /操作：((?:邮箱|日历) · [^\n]+)/.exec(humanReason)?.[1];
+        const raw = [row.toolName, reason, detail || row.arguments || row.parameters]
+            .filter(value => value != null && value !== '').map(value => typeof value === 'string' ? value : JSON.stringify(value,null,2)).join('\n');
+        const explanation = humanReason.split('\n')[0].replace(/操作：.*$/, '').trim();
+        const command = /^(shell|bash|pwsh|powershell|exec_command|run_command|command)$/.test(toolName(row.toolName)) || /^运行命令[:：]/.test(humanReason);
+        const plain = !command && !Object.keys(args).length && !/\b(?:pwsh|powershell|shell|bash)\b|mcp__|weftmate:|[{}]|操作：|执行工具|调用工具/i.test(humanReason);
+        return {summary: service && /· (?:收件人|日历)：/.test(service) ? service
+            : plain && humanReason && !row.toolName?.startsWith('mcp__') ? humanReason : approvalSummary(command ? 'command' : row.toolName,args), reason: !service && !row.toolName?.startsWith('mcp__') && offset >= 0 && explanation && !/mcp__|weftmate:|\b(?:pwsh|powershell|shell|bash)\b|[{}]/i.test(explanation) ? explanation : '',raw};
+    }
+    function rejectedStep(step) { return step.approvalOutcome === 'rejected' || step.approvalText === '已拒绝'; }
     function toolActivity(name) {
         name = toolName(name);
         if (name === 'health_query') return { summary: '查询健康数据', kind: 'health' };
@@ -172,10 +203,11 @@
         const failed = ['error','failed','blocked'].includes(reason);
         return { terminal: outcome.terminal === true || stopped || completed || failed,
             state: failed ? 'failed' : stopped ? 'stopped' : completed ? 'completed' : outcome.terminal ? 'ended' : 'running',
-            retries: steps.filter(step => executionState(step) === 'failed').length };
+            retries: steps.filter(step => executionState(step) === 'failed' && !rejectedStep(step)).length };
     }
     function stepPresentation(step, outcome) {
         const progress = classifyProgress([step], outcome), state = executionState(step);
+        if (rejectedStep(step)) return { ...step, state:'rejected', statusText:'你拒绝了，没有做' };
         if (state === 'cancelled' || progress.state === 'stopped' && ['running','pending','failed'].includes(state))
             return { ...step, state: 'cancelled', statusText: '已中断' };
         if (state === 'failed') return { ...step, state: progress.state === 'failed' ? 'failed' : 'issue',
@@ -184,6 +216,13 @@
     }
     function progressText(steps, outcome = false) {
         const progress = classifyProgress(steps, outcome);
+        const rejected = steps.filter(rejectedStep);
+        if (rejected.length) {
+            const remaining = steps.filter(step => !rejectedStep(step));
+            const other = progressText(remaining, outcome);
+            const refusal = rejected.map(step => `你拒绝了${(step.approvalSummary || approvalSummary(step.toolName,step.arguments))}，没有做`).join('；');
+            return {...other,text:[refusal,other.text === '已完成' || other.text === '工具已就绪' ? '' : other.text].filter(Boolean).join(' · ')};
+        }
         const failed = steps.find(step => executionState(step) === 'failed');
         if (progress.state === 'failed') {
             const problem = failed?.summary || '这次回复';
@@ -262,7 +301,7 @@
         for (const block of tasks.values()) {
             const outcome = turnOutcome(normalized,block.taskId), view = progressText(block.steps,outcome);
             const steps = block.steps.map(step => ({...stepPresentation(step,outcome),summary:toolSummary(step.toolName,step.arguments),
-                attention:executionState(step)==='failed' || step.approvalStatus==='pending'}));
+                attention:!rejectedStep(step) && executionState(step)==='failed' || step.approvalStatus==='pending'}));
             rows.push({eventId:`progress:${block.taskId || block.seq}`,type:'native.progress',at:normalized[block.seq]?.at,
                 sourceRef:normalized[block.seq]?.sourceRef,presentationSeq:progressPosition(normalized,block),
                 data:{taskId:block.taskId,summary:view.text || '回复已结束',running:view.running,failed:!!view.failed,steps}});
@@ -270,6 +309,12 @@
         for (const [decisions,family,id] of [[approvals,'approval','approvalId'],[questions,'question','questionRpcId']])
             for (const decision of decisions) if (!rows.some(row=>row.data?.[id]===decision[id]))
                 rows.push({eventId:`${family}:${decision[id]}`,type:`${family}.requested`,at:decision.createdAt,data:decision,presentationSeq:normalized.length});
+        for (const row of rows.filter(row => row.type === 'approval.requested')) {
+            const decision = approvals.find(value => value.approvalId === row.data?.approvalId) || row.data;
+            const step = normalized.filter(event=>event.type.startsWith('step.')).map(event=>event.data)
+                .find(step=>step?.detailRef && (step.callId === decision.callId || step.stepId === decision.callId));
+            if (decision.toolName) row.data = {...row.data,copy:approvalCopy(decision,step?.arguments)};
+        }
         return rows.sort((a,b)=>a.presentationSeq-b.presentationSeq);
     }
     Object.assign(globalThis.WeftUiCore, {progressPosition,nativeTimelineRows});
@@ -321,6 +366,8 @@
             const resolved = request && ordered.find(event => event.type === 'approval.resolved' && event.data?.approvalId === request.data.approvalId);
             const record = row || resolved?.data || request && { status: 'pending' };
             step.approvalText = approvalProgress(record);
+            step.approvalOutcome = record?.outcome || record?.decisionOutcome;
+            if (record?.reason) step.approvalSummary = approvalCopy({...record,toolName:step.toolName}).summary;
             step.approvalStatus = row?.status || (resolved ? 'resolved' : request ? 'pending' : undefined);
         }
         const cards = [], outputs = new Map();
@@ -406,6 +453,6 @@
         }
         return references;
     }
-    Object.assign(globalThis.WeftUiCore, { projectTimeline, executionState, executionPresentation, interruptionFromDetail, turnOutcome, classifyProgress, stepPresentation, finalArtifacts, artifactFamilies, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
-    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, executionState, executionPresentation, interruptionFromDetail, turnOutcome, classifyProgress, stepPresentation, finalArtifacts, artifactFamilies, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
+    Object.assign(globalThis.WeftUiCore, { projectTimeline, executionState, executionPresentation, interruptionFromDetail, turnOutcome, classifyProgress, stepPresentation, finalArtifacts, artifactFamilies, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, approvalSummary, approvalCopy, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
+    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, executionState, executionPresentation, interruptionFromDetail, turnOutcome, classifyProgress, stepPresentation, finalArtifacts, artifactFamilies, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, approvalSummary, approvalCopy, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
 })();
