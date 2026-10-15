@@ -27,6 +27,19 @@ export async function handlePersonalMemoryTool(manager, ownerId, tool, { session
       }))], contextText: recalled.contextText };
   }
   const correct = tool.name === 'memory_correct';
+  if (manager.mutateFromTool && ['memory_correct', 'memory_forget'].includes(tool.name)) {
+    const byQuery = typeof args.query === 'string' && args.query.trim() && args.query.length <= 500;
+    const byId = ['cognition', 'relationship', 'event', ...(correct ? [] : ['entity', 'evidence'])].includes(args.kind) &&
+      typeof args.id === 'string' && /^[A-Za-z0-9._:-]{1,512}$/.test(args.id) &&
+      Number.isSafeInteger(args.expectedWorldRevision) && args.expectedWorldRevision >= 0;
+    if ((!byQuery && !byId) || byQuery && (args.id !== undefined || args.kind !== undefined) ||
+        Object.keys(args).some(key => !['kind', 'id', 'expectedWorldRevision', 'query', ...(correct ? ['text'] : [])].includes(key)) ||
+        correct && (typeof args.text !== 'string' || !args.text.trim() || args.text.length > 16000) ||
+        typeof tool.requestId !== 'string' || !/^memory-tool:[a-f0-9]{64}$/.test(tool.requestId)) throw failure('MEMORY_REQUEST_INVALID');
+    if (byQuery && memoryPolicy?.recall !== true) return { state: 'withheld', message: '这段对话没开记忆，请先开启记忆再按内容查找。' };
+    return manager.mutateFromTool(ownerId, { requestId: tool.requestId, name: tool.name, arguments: args,
+      sessionId, modelTier, source: tool.source });
+  }
   if (!correct && tool.name !== 'memory_forget' ||
       !['cognition', 'entity', 'relationship', 'event', ...(correct ? [] : ['evidence'])].includes(args.kind) ||
       typeof args.id !== 'string' || !/^[A-Za-z0-9._:-]{1,512}$/.test(args.id) ||

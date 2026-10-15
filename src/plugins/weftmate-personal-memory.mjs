@@ -1,11 +1,46 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
+const opening = '<tool_call>', closing = '</tool_call>';
+const memoryCall = text => /\bmemory_(?:query|correct|forget)\b/.test(text);
+
+/** Only model-emitted memory call markup; native tool blocks stay executable. */
+export function withoutMemoryToolMarkup(text) {
+  const filtered = text.replace(/<tool_call>[\s\S]*?(?:<\/tool_call>|$)/g,
+    block => memoryCall(block) ? '' : block);
+  return filtered === text ? text : filtered.trim();
+}
+
+/** Hold a possibly split tag until its contents identify its kind. */
+export function memoryReplyStream() {
+  let pending = '';
+  return part => {
+    pending += part;
+    let output = '';
+    while (pending) {
+      const start = pending.indexOf(opening);
+      if (start < 0) {
+        let held = Math.min(pending.length, opening.length - 1);
+        while (held && !opening.startsWith(pending.slice(-held))) held--;
+        output += held ? pending.slice(0, -held) : pending;
+        pending = held ? pending.slice(-held) : ''; break;
+      }
+      output += pending.slice(0, start); pending = pending.slice(start);
+      const end = pending.indexOf(closing);
+      if (end < 0) break;
+      const block = pending.slice(0, end + closing.length);
+      if (!memoryCall(block)) output += block;
+      pending = pending.slice(end + closing.length);
+    }
+    return output;
+  };
+}
+
 
 export const personalMemoryGuidance = 'When the current user introduces a specific person with a useful ability or relationship, acknowledge briefly and make one opt-in proposal to remind the user to contact that person in a relevant future situation. This brief question in reply text is an exception to clarification-only guidance; do not call ask_user_question or block the conversation. 本轮用户新提供了具体人物的可用能力或有自然未来用途的关系，且还没有确认过相关决定时，即使当前没有在安排相关任务，也要简短提议一次。用一句简短问句，提议由你这个助手在以后相关情境提醒用户找这个人，并邀请用户确认；不需要用户先说“记住”。用户有具体任务或明确限定回复格式时先完成当前请求，不提新建议；没有持续用途的泛聊只简短回应。背景记忆本身不触发新提议。一次只提议一件相关的事；结合对话和当前记忆，同一事不重复提议，闲聊、拒绝或不回应时不坚持。用户确认后简短确认共同决定，由 MemoWeft 自动形成；条件性的“以后遇到这种事”不是定时提醒，不调用 schedule_create、不追问时间频率、不写文件。只有用户明确要求具体时间的通知或执行任务才使用调度工具。问历史人物、关系或决定时，若当前对话和背景记忆都没有可靠依据，直接说明目前不能确定，不为了猜出旧事实而查工作文件或发起阻塞的提问；用户明确要求查文件或复用当前对话经验时仍按该目标处理。纠正后采用最新理解；被取代的来源可用于解释以前为什么那样理解，不能当作当前事实。 本轮记忆在回复后异步形成，尚无成功回执；确认或纠正时应说“我记下了，稍后整理进记忆”，不得说“已记住／已纠正”。这不替代首次有用人物的一次提议和确认问句。';
 
 export const name = 'weftmate-personal-memory';
-export const personalMemoryToolsGuidance = 'In chat and work, explicit forgetting requires memory_query then memory_forget for matching memories/recent evidence, never file tools or a promise to organize later. Correct existing memories with memory_query then memory_correct. Confirm forgetting only on applied/no_change receipts, correction on applied; re-query revision_conflict, report failures honestly. When memory is unknown or forgotten, briefly say you do not know; do not guess, repeat old preferences, list examples, or print tool syntax in reply text.';
+export const personalMemoryToolsGuidance = 'In chat and work, explicit forgetting requires memory_forget and corrections require memory_correct, never file tools or a promise to organize later. Use query with the exact user topic, or memory_query then exact kind/id. If memory_query is unavailable, still submit the requested write by query so the host can retry it. The host durably retries queued writes; say its message plainly. Confirm only applied results. Always finish this turn with a brief user-facing reply; never print tool names, ids, item types or error codes. When memory is unknown or forgotten, briefly say you do not know; do not guess, repeat old preferences, list examples, or ask the user to repeat a forgotten fact. 不知道或已遗忘的偏好，只说目前不知道；不列举偏好选项，不邀请用户再说一次。';
 export const inject = ['tools'];
 export const PERSONAL_MEMORY_PROTOCOL = 'weftmate.personal-memory.v1';
 const PRESETS = new Set(['personal-remote', 'personal-shared-chat']);
@@ -125,7 +160,7 @@ export function boundaryForCompletedTurn(session, event) {
     payload_hash: payloadHash };
 }
 
-export function userForTurn(session, turn) {
+export function userForTurn(session, turn, maxChars = 500) {
   if (!PRESETS.has(session?.header?.agentPreset) || !Array.isArray(session.events) ||
       !Number.isSafeInteger(turn)) return null;
   const startIndex = session.events.findLastIndex((entry) => entry.type === 'turn/start' &&
@@ -137,7 +172,7 @@ export function userForTurn(session, turn) {
     contentText(entry.data?.content).trim());
   if (!event) return null;
   return { id: typeof event.data?.id === 'string' ? event.data.id : null,
-    seq: event.seq, text: contentText(event.data.content).trim().slice(0, 500) };
+    seq: event.seq, text: contentText(event.data.content).trim().slice(0, maxChars) };
 }
 
 /** DSH claims inbox messages before pre-step; it appends them to session.events afterward. */
@@ -185,20 +220,23 @@ export function ordinaryContextAfterTemporary(messages, events, firstTurn) {
 export function apply(ctx) {
   if (process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED !== '1') return;
   const bridge = new HostMemoryBridge();
+  const actionReplies = new WeakMap();
+  const requestScopes = new WeakMap();
   const cleanupRequests = new Map();
   const cleanupFlights = new Set();
   ctx.on('agent/created', async ({ agent }) => {
     if (!PRESETS.has(agent.session?.header?.agentPreset) || agent.session.header.origin === 'subagent') return;
     const { defineTool } = await import('@deepseek-ai/dsh-tools');
     const target = {
-      kind: { type: 'string', required: true, enum: ['cognition', 'entity', 'relationship', 'event', 'evidence'], description: 'Use the kind returned by memory_query.' },
-      id: { type: 'string', required: true, description: 'Exact item id returned by memory_query.' },
-      expectedWorldRevision: { type: 'integer', required: true, description: 'Latest worldRevision from memory_query; query again on revision_conflict.' },
+      query: { type: 'string', description: 'The exact topic the user asks to forget or correct. Use this OR kind/id/revision, never both. The host resolves and retries the action even when memory is temporarily unavailable.' },
+      kind: { type: 'string', enum: ['cognition', 'entity', 'relationship', 'event', 'evidence'], description: 'Use the kind returned by memory_query.' },
+      id: { type: 'string', description: 'Exact item id returned by memory_query.' },
+      expectedWorldRevision: { type: 'integer', description: 'Latest worldRevision from memory_query.' },
     };
     for (const tool of [
       { name: 'memory_query', title: '查找记忆', description: 'Find account memories matching a topic, with ids and worldRevision. Use before forgetting or correcting. This queries memory, never computer files.',
         parameters: { query: { type: 'string', required: true, description: 'A focused memory topic or question.' } } },
-      { name: 'memory_forget', title: '忘掉记忆', description: 'Forget a matching memory when the current user asks to forget it. Use exact kind/id and latest worldRevision from memory_query, including recent evidence if relevant. Only claim success for an applied or no_change receipt; report rejection/conflict honestly. Does not search or edit computer files.', parameters: target },
+      { name: 'memory_forget', title: '忘掉记忆', description: 'Forget the requested topic and its sources and correction history. Prefer query with the user topic; the host resolves matching records and durably retries outages. Only claim success for applied. Does not edit computer files.', parameters: target },
       { name: 'memory_correct', title: '纠正记忆', description: 'Correct a matching memory to the current user\'s new understanding. Use exact kind/id and latest worldRevision from memory_query. Only claim correction after an applied receipt.',
         parameters: { ...target, kind: { ...target.kind, enum: ['cognition', 'relationship', 'event'] },
           text: { type: 'string', required: true, description: 'The user\'s corrected fact, not the superseded value.' } } },
@@ -208,7 +246,18 @@ export function apply(ctx) {
         const turn = agent.session.events.findLast(event => event.type === 'turn/start').data.turn;
         const result = await bridge.request('tool', { sessionId: agent.id, turn,
           tool: { name: tool.name, arguments: args,
-            requestId: `memory-tool:${digest(`${agent.id}|${turn}|${exec.callId}`)}` } }, exec.signal);
+            source: userForTurn(agent.session, turn, 16000),
+            requestId: `memory-tool:${digest(`${agent.id}|${turn}|${exec.callId}`)}` } }, exec.signal)
+          .catch(() => ({ state: 'unavailable', message: tool.name === 'memory_query'
+            ? '暂时查不到记忆。' : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。' }));
+        if (tool.name !== 'memory_query') {
+          const previous = actionReplies.get(agent);
+          const message = result.message ?? (['applied', 'no_change'].includes(result.receipt?.state)
+            ? tool.name === 'memory_forget' ? '已忘掉这件事。' : '已按你刚才的说法更新记忆。'
+            : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。');
+          const messages = [...new Set([...(previous?.turn === turn ? previous.messages : []), message])];
+          actionReplies.set(agent, { turn, afterSeq: agent.session.events.at(-1)?.seq ?? -1, messages, message: messages.join('') });
+        }
         if (result.receipt?.storageCleanup?.state === 'pending') {
           let requests = cleanupRequests.get(agent.id);
           if (!requests) { requests = new Set(); cleanupRequests.set(agent.id, requests); }
@@ -218,6 +267,43 @@ export function apply(ctx) {
       },
       presentCall: () => ({ card: 'generic', title: tool.title, kind: 'other' }),
     }));
+  });
+  ctx.on('agent/request', async (payload, next) => {
+    const config = await next();
+    const action = actionReplies.get(payload.agent);
+    if (action?.turn === payload.turn) requestScopes.set(payload.signal, { agent: payload.agent, turn: payload.turn });
+    return config;
+  });
+  ctx.on('llm/stream', (options, next) => {
+    const scope = options.signal && requestScopes.get(options.signal);
+    const action = scope && actionReplies.get(scope.agent);
+    if (!action?.fallbackPending || action.turn !== scope.turn || options.sessionId !== scope.agent.id || options.purpose !== undefined) return next();
+    return (async function* () {
+      const { isAgentLoopRequest } = await import('@deepseek-ai/dsh-llm');
+      if (!isAgentLoopRequest(options)) { yield* next(); return; }
+      options.signal?.throwIfAborted();
+      action.fallbackPending = false;
+      const text = action.message + '后面的回复没能生成，请稍后再试。';
+      yield { type: 'block-start', index: 0, blockType: 'text' };
+      yield { type: 'text-delta', index: 0, text };
+      yield { type: 'block-end', index: 0, block: { type: 'text', text } };
+      yield { type: 'finish', reason: { kind: 'completed' } };
+    })();
+  }, { global: true });
+  ctx.on('agent/turn-stopping', async ({ agent, turn, signal }) => {
+    const action = actionReplies.get(agent);
+    if (!action || action.turn !== turn || signal?.aborted) return;
+    const events = agent.session.events;
+    if (events.some(event => event.seq > action.afterSeq && event.type === 'assistant/message' &&
+        contentText(event.data?.message?.content).trim())) return;
+    const { createAssistantMessage } = await import('@deepseek-ai/dsh-llm/message');
+    const source = events.findLast(event => event.type === 'assistant/message')?.data?.message?.source;
+    const step = (events.findLast(event => event.type === 'step/start')?.data.step ?? 0) + 1;
+    agent.session.append('step/start', { turn, step });
+    agent.session.append('assistant/message', { turn, step,
+      message: createAssistantMessage({ source: { provider: source.provider, model: source.model },
+        content: [{ type: 'text', text: action.message }] }) }, { surfaceOp: 'append' });
+    agent.session.append('step/end', { turn, step });
   });
   ctx.on('agent/status', ({ agent, status }) => {
     if (status !== 'idle' || !cleanupRequests.size) return;
@@ -287,10 +373,19 @@ export function apply(ctx) {
     diagnostic('prestep-message-created');
     return { ...clearedDecision, messages: backgroundBeforeUser(messages, [memoryMessage]) };
   }, { prepend: true });
-  ctx.on('agent/request-error', (payload, next) => {
+  ctx.on('agent/request-error', async (payload, next) => {
     diagnostic('model-request-error', payload?.failure);
-    return next();
-  });
+    const recovery = await next();
+    // Preserve DSH's existing compaction/retry recovery first. Only a terminal
+    // failed generation after a memory tool gets a native retry that streams
+    // the host's receipt summary, without another provider request.
+    if (recovery?.kind === 'retry' || payload.signal?.aborted) return recovery;
+    const action = actionReplies.get(payload.agent);
+    if (action?.turn !== payload.turn || action.fallbackUsed) return recovery;
+    action.fallbackUsed = true; action.fallbackPending = true;
+    diagnostic('memory-final-fallback', payload.failure);
+    return { kind: 'retry' };
+  }, { prepend: true });
   ctx.on('session/created', session => {
     if (!PRESETS.has(session.header?.agentPreset)) return;
     const deriveMessages = session.deriveMessages?.bind(session);
@@ -303,10 +398,19 @@ export function apply(ctx) {
       return backgroundBeforeUser(ordinary, memory);
     };
     const append = session.append.bind(session);
+    const streams = new Map();
     session.append = (type, data, ...rest) => {
+      const streamKey = `${data?.turn}:${data?.step}`;
+      if (type === 'assistant/chunk' && data.chunk?.type === 'text-delta') {
+        if (!streams.has(streamKey)) streams.set(streamKey, memoryReplyStream());
+        data = { ...data, chunk: { ...data.chunk, text: streams.get(streamKey)(data.chunk.text) } };
+      }
       if (type === 'assistant/message') {
+        streams.delete(streamKey);
         const recalled = session[Symbol.for('weftmate.memoryRecall')];
-        data = { ...data, memoryUsed: recalled?.turn === data.turn ? recalled.memories : [] };
+        data = { ...data, message: { ...data.message, content: data.message.content.map(part =>
+          part.type === 'text' ? { ...part, text: withoutMemoryToolMarkup(part.text) } : part) },
+          memoryUsed: recalled?.turn === data.turn ? recalled.memories : [] };
       }
       return append(type, data, ...rest);
     };
