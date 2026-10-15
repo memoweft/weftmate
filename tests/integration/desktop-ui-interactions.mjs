@@ -48,7 +48,9 @@ try {
     await page.getByRole('button', { name: '关闭设置', exact: true }).click()
     await page.getByRole('button', { name: '批准', exact: true }).waitFor({state:'visible'})
     assert.equal(await page.getByRole('button', { name: '批准', exact: true }).count(), 1)
-    await page.getByRole('region', { name: '待批准操作' }).getByText(/要运行命令/).click()
+    const approval = page.getByRole('region', { name: '待批准操作' });
+    await approval.getByText('要运行一条命令', {exact:true}).click()
+    assert.match(await approval.locator('pre').textContent(), /node scripts\/report\.mjs/)
     await page.getByRole('button', { name: '以后这类都允许', exact: true }).waitFor()
     await page.getByRole('button', { name: '拒绝', exact: true }).waitFor()
     async function selectMode(label) {

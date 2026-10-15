@@ -9,21 +9,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             ? '另一个模型看过：和你的要求一致' : `另一个模型暂时拿不准：${review.reason}` };
     }
     function approvalPresentation(row, detail) {
-        const fullReason = (row.reason || '').replace(/^\[weftmate:[a-z,\-]+\]\s*/, '').trim();
-        const offset = fullReason.indexOf('\n{');
-        const reason = offset >= 0 ? fullReason.slice(0, offset) : fullReason;
-        const rawArguments = offset >= 0 ? fullReason.slice(offset + 1) : fullReason;
-        const args = core.toolArguments(detail || row.arguments || row.parameters || rawArguments);
-        const hasArguments = Object.keys(args).length > 0;
-        const raw = detail || row.arguments || row.parameters || fullReason;
-        const rawText = typeof raw === 'string' ? raw : JSON.stringify(raw,null,2);
-        const connector = row.toolName?.startsWith('mcp__');
-        const detailText = connector ? `${row.toolName}\n${rawText}` : raw;
-        const service = /操作：((?:邮箱|日历) · [^\n]+)/.exec(reason)?.[1];
-        if (service && /· (?:收件人|日历)：/.test(service)) return { summary: service, reason: '', raw: detailText };
-        return { summary: connector || hasArguments ? core.toolSummary(row.toolName, args) : reason && !reason.startsWith('{') ? reason : core.toolSummary(row.toolName, args),
-            reason: !connector && hasArguments && !reason.startsWith('{') ? reason : '', raw: detailText };
-
+        return core.approvalCopy(row, detail);
     }
     async function readApprovalPresentation(row) {
         const step = core.timelineEventsForContext().filter(event => event.type.startsWith('step.') || event.data?.completedStep).map(event => event.data?.completedStep || event.data)

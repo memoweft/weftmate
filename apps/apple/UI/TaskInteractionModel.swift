@@ -100,8 +100,8 @@ private struct SavedTaskResponse: Codable {
         do {
             let detail = try await client.timelineDetail(sessionID: approval.sessionId, seq: seq)
             guard isCurrent, !Task.isCancelled else { return }
-            readableApprovals[approval.id] = "要" + ToolProgressSummary.readable(tool: approval.toolName, raw: detail.text)
-            approvalDetails[approval.id] = detail.text
+            readableApprovals[approval.id] = "要" + ToolProgressSummary.approval(tool: approval.toolName, raw: detail.text)
+            approvalDetails[approval.id] = approval.toolName + "\n" + approval.reason + "\n" + detail.text
         } catch { /* The authorized human reason remains available if detail cannot be read. */ }
     }
 
@@ -206,7 +206,7 @@ private struct SavedTaskResponse: Codable {
         guard let row = approvals.first(where: { $0.callId == step.data["callId"]?.string || $0.callId == step.data["stepId"]?.string }) else { return step.decision }
         let record = response("approval:" + row.id)
         let outcome = row.outcome?.rawValue ?? row.decisionOutcome?.rawValue ?? (record?.registered == true ? record?.approval?.outcome.rawValue : nil)
-        return outcome == "allowed-once" ? "已批准" : outcome == "rejected" ? "已拒绝" : step.decision
+        return outcome == "allowed-once" ? "已批准" : outcome == "rejected" ? "你拒绝了，没有做" : step.decision
     }
     @Published var questionDrafts: [String: QuestionBarDraft] = [:]
     var pendingQuestions: [SessionQuestionBatch] {

@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 export const WORK_SWITCH_REASON = '[weftmate:work-switch] 这件事需要在电脑上做。要切换到工作吗？';
 const dataTools = new Set(['load_tools', 'web_fetch', 'web_search', 'health_query', 'memory_query', 'memory_search', 'memory_recall',
+  'memory_forget', 'memory_correct',
   'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'exit_plan_mode', 'todo_write',
   'current_time', 'get_current_time', 'sleep', 'wait', 'run_code', 'schedule_list', 'schedule_delete']);
 

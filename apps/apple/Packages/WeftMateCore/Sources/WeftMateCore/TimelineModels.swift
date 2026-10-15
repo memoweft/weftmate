@@ -122,6 +122,7 @@ public struct TimelineStep: Equatable, Sendable, Identifiable {
     public var endAt: String?
     public var summary: String { OperationNames.text(data["summary"]?.string ?? OperationNames.tool(data["toolName"]?.string ?? "")) }
     public var effectiveState: String? {
+        if decision == "已拒绝" { return "rejected" }
         if data["state"]?.string == "failed" || data["jobState"]?.string == "failed" { return "failed" }
         if data["state"]?.string == "cancelled" || data["jobState"]?.string == "killed" { return "cancelled" }
         if ["running", "stopping"].contains(data["jobState"]?.string ?? "") { return "running" }
@@ -208,9 +209,12 @@ public enum TimelineProjection {
         for index in result.indices where !result[index].steps.isEmpty {
             for stepIndex in result[index].steps.indices {
                 let step = result[index].steps[stepIndex]
+                let request = ordered.first { $0.type == "approval.requested" &&
+                    ($0.data["callId"]?.string == step.data["callId"]?.string || $0.data["callId"]?.string == step.data["stepId"]?.string) && $0.data["callId"]?.string != nil }
                 let decision = ordered.last { $0.type == "approval.resolved" &&
                     (($0.data["stepId"]?.string != nil && $0.data["stepId"]?.string == step.data["stepId"]?.string) ||
-                     ($0.data["callId"]?.string != nil && $0.data["callId"]?.string == step.data["callId"]?.string)) }
+                     ($0.data["callId"]?.string != nil && $0.data["callId"]?.string == step.data["callId"]?.string) ||
+                     (request?.data["approvalId"] != nil && $0.data["approvalId"] == request?.data["approvalId"])) }
                 if let outcome = decision?.data["outcome"]?.string {
                     result[index].steps[stepIndex].decision = outcome == "rejected" ? "已拒绝" : outcome == "allowed-once" ? "已批准" : nil
                 }
