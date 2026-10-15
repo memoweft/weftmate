@@ -33,7 +33,7 @@ function boundary(text: string, sessionId: string) {
 }
 async function fixture(t: any, { interpret = null }: { interpret?: ((payload: any) => any) | null } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
-  let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false
+  let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false, unavailableText = ''
   const errors: unknown[] = []
   const coreTrace: any[] = []
   const server = createServer(async (req, res) => {
@@ -58,7 +58,8 @@ async function fixture(t: any, { interpret = null }: { interpret?: ((payload: an
       const rpc = new MemoWeftRpc(options), request = rpc.request.bind(rpc)
       rpc.request = async (...args: Parameters<MemoWeftRpc['request']>) => {
         if (offline && args[0] !== 'shutdown') throw Object.assign(Error('transport offline'), { code: 'MEMORY_PROCESS_UNAVAILABLE' })
-        if (correctionsUnavailable && args[0] === 'submit_command' && args[1]?.command?.operation === 'correct_world_item')
+        if ((correctionsUnavailable || unavailableText && args[1]?.command?.payload?.correction_text === unavailableText) &&
+            args[0] === 'submit_command' && args[1]?.command?.operation === 'correct_world_item')
           throw Object.assign(Error('correction write unavailable'), { code: 'MEMORY_BUSY' })
         const result = await request(...args)
         if (['ingest_boundary', 'submit_command', 'query_command_receipt', 'retry_formation', 'query_jobs', 'preview_recall'].includes(args[0]))
@@ -89,6 +90,7 @@ async function fixture(t: any, { interpret = null }: { interpret?: ((payload: an
   return { root, world, ready, tool, fork: () => create(path.join(root, 'imported')), get manager() { return manager }, errors,
     offline: (value: boolean) => { offline = value }, reject: (value: boolean) => { reject = value }, loseReceipt: () => { loseReceipt = true },
     holdCorrections: (value: boolean) => { correctionsUnavailable = value },
+    holdCorrectionText: (value: string) => { unavailableText = value },
     restart: async () => { await manager.close(); manager = create() }, get calls() { return calls } }
 }
 
@@ -241,6 +243,22 @@ test('review-1 real Core: deletion ends a queued correction instead of blocking 
   assert.equal(next.state, 'applied')
   const state = JSON.parse(await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json'), 'utf8'))
   assert.ok(Object.values(state.records).some((row: any) => row.result?.state === 'not_found'))
+})
+
+test('review-1 real Core: an older failed correction cannot undo the later successful preference', { skip }, async t => {
+  const f = await fixture(t), old = (await f.world()).items[0]
+  f.holdCorrectionText('我喜欢喝红茶。')
+  const first = await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我喜欢喝红茶。' }, 'older-pending', '纠正为红茶。')
+  assert.equal(first.state, 'queued')
+  const later = await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我喜欢喝普洱茶。' }, 'newer-success', '再纠正为普洱茶。')
+  assert.equal(later.state, 'applied')
+  f.holdCorrectionText(''); await f.restart(); await f.manager.flushPending(owner)
+  await wait(async () => {
+    const state = JSON.parse(await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json'), 'utf8'))
+    return Object.values(state.records).every((row: any) => row.result)
+  })
+  const recall = await f.manager.recall(owner, { query: '我喜欢喝什么茶？', sessionId: 'latest-preference', modelTier: 'cloud' })
+  assert.match(recall.contextText, /普洱茶/); assert.doesNotMatch(recall.contextText, /我喜欢喝红茶/)
 })
 
 test('review-2 real Core: a corrected clause does not discard the birthday in the same message', { skip }, async t => {

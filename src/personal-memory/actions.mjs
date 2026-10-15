@@ -162,6 +162,18 @@ export function createMemoryActions({ root, manager, schedule }) {
             if (row.result) return;
             row.result = result;
             if (affectedIds) row.affectedIds = affectedIds;
+            if (row.name === 'memory_correct' && result.state === 'applied') {
+              const replaced = new Set([row.arguments.id, row.target?.id, row.command?.targetId, ...(affectedIds ?? [])].filter(Boolean));
+              for (const prior of Object.values(data.records)) {
+                if (prior === row) break;
+                if (prior.result || prior.name !== 'memory_correct') continue;
+                if ([prior.arguments.id, prior.target?.id, prior.command?.targetId].some(id => replaced.has(id)) ||
+                    row.arguments.query && row.arguments.query === prior.arguments.query) {
+                  prior.result = { state: 'superseded', message: '已采用你后来提供的说法。' };
+                  prior.arguments = {}; delete prior.source; delete prior.target; delete prior.command;
+                }
+              }
+            }
             // Finished forgetting keeps no body copy in this recovery file.
             if (row.name === 'memory_forget') {
               row.arguments = {}; delete row.source; delete row.plan; delete row.finished; delete row.commands;
