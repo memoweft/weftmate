@@ -69,3 +69,8 @@ test('ordinary nested JSON is not mistaken for a call envelope', async () => {
   const text='{"example":{"name":"sample","arguments":{"value":2}},"description":"普通资料"}';
   assert.equal((await collect(text)).text,text);
 });
+
+test('fenced tool examples are hidden without executing an example', async () => {
+  const result=await collect('```json\n{"name":"write","arguments":{"content":"example"}}\n```');
+  assert.equal(result.live,'');assert.equal(result.text,'');assert.equal(result.calls.length,0);
+});
