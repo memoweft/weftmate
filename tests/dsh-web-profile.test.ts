@@ -21,6 +21,7 @@ import {
   PROFILE_PATCH_TEMPLATE_R13,
   PROFILE_PATCH_TEMPLATE_R16,
   PROFILE_PATCH_TEMPLATE_R17,
+  PROFILE_PATCH_TEMPLATE_R18,
   PROFILE_PATCH_TEMPLATE,
   parseWebUrlLine,
   writeWebProfile,
@@ -38,6 +39,9 @@ test('the previous managed personal profile upgrades to the tool-loop compositio
   assert.equal(await writeWebProfile(root), 'repaired');
   assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE);
   assert.equal(await writeWebProfile(root), 'unchanged');
+  await writeFile(patch, PROFILE_PATCH_TEMPLATE_R18);
+  assert.equal(await writeWebProfile(root), 'repaired');
+  assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE);
   await writeFile(patch, PROFILE_PATCH_TEMPLATE_R17);
   assert.equal(await writeWebProfile(root), 'repaired');
   assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE);
