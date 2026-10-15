@@ -26,7 +26,8 @@ export async function apply(ctx) {
     if (event !== 'tools/post-execute') return ctx.on(event, listener);
     return ctx.on(event, async (exec, result, next) => {
       const downstream = await next();
-      if (!personal(exec.agent) || waiting.has(exec.name)) return downstream;
+      if (!personal(exec.agent)) return listener(exec, result, () => Promise.resolve(downstream));
+      if (waiting.has(exec.name)) return downstream;
       const previous = new Set((downstream.additionalContexts ?? []).map(message => message.id));
       const outcome = downstream.kind === 'block' ? { isError: true, content: downstream.feedback }
         : { isError: result.isError, error: result.error, value: Object.hasOwn(downstream, 'value') ? downstream.value : result.value,
