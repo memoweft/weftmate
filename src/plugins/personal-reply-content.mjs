@@ -44,7 +44,8 @@ function scan(text, final) {
         const length = end < 0 ? text.length : end + 3;
         const body = text.slice(3, end < 0 ? undefined : end).replace(/^[^\r\n]*\r?\n/, '');
         const inner = scan(body, true);
-        if (inner.removed) { visible += inner.visible.trim(); calls.push(...inner.calls); removed = true; }
+        // Fenced snippets may be examples: hide raw syntax without executing it.
+        if (inner.removed) { visible += inner.visible.trim(); removed = true; }
         else visible += text.slice(0, length);
         text = text.slice(length); continue;
       }
