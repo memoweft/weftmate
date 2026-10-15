@@ -12,10 +12,12 @@ export async function apply(ctx) {
   // Code Mode throws error.message into user programs, so sanitize that channel too.
   ctx.on('tools/execute', async (exec, next) => {
     const result = await next();
-    if (!personal(exec.agent?.session) || !result.isError) return result;
+    if (!personal(exec.agent?.session)) return result;
     const content = modelToolFailure(exec.name, result);
+    if (!content) return result;
     ctx.logger?.warn?.(`tool failure code=${failureCodes(result)}`);
-    return {...result,content,error:{...result.error,message:content[0].text}};
+    return result.isError ? {...result,content,error:{...result.error,message:content[0].text}}
+      : {...result,value:{message:content[0].text}};
   }, { prepend:true });
   // Nested Code Mode calls also receive plain errors before their parent can quote them.
   ctx.on('tools/post-execute', async (exec, result, next) => {

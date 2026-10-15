@@ -49,6 +49,13 @@ test('production hooks sanitize real DSH outcomes, preserve diagnostics and exec
   assert.doesNotMatch(JSON.stringify(failure.content),/memory_correct|MEMORY_UNAVAILABLE|cognition/);
   assert.doesNotMatch(failure.error.message,/MEMORY_UNAVAILABLE|memory_correct|cognition/);
   assert.ok(diagnostics.some(line=>line.includes('MEMORY_UNAVAILABLE')));
+  ctx.tools.register(tools.defineTool({name:'memory_forget',description:'rejected receipt',parameters:{},
+    output:{schema:{type:'json'},render:(_:any,value:any)=>[{type:'text',text:JSON.stringify(value)}]},
+    execute:async()=>({receipt:{state:'rejected',reasonCode:'MEMORY_UNAVAILABLE',kind:'cognition'}})}));
+  const rejected=await ctx.tools.execute({name:'memory_forget',arguments:{},callId:'receipt',agent,signal:new AbortController().signal});
+  assert.equal(rejected.isError,false,'presentation does not change receipt dispatch semantics');
+  assert.deepEqual(rejected.value,{message:'这次没忘掉，稍后会再试。'});
+  assert.doesNotMatch(JSON.stringify([rejected.value,rejected.content]),/MEMORY_UNAVAILABLE|memory_forget|cognition/);
   session.append('tool/call',{turn:1,step:1,callId:'validation',name:'memory_correct',arguments:'{}'});
   session.append('tool/result',{turn:1,step:1,error:{code:'MEMORY_REQUEST_INVALID'},message:{source:{kind:'tool',callId:'validation'},content:[{type:'tool-result',toolCallId:'validation',isError:true,content:[{type:'text',text:'memory_correct MEMORY_REQUEST_INVALID cognition'}]}]}},{surfaceOp:'append',sourceEventSeqs:[session.events.at(-1).seq]});
   const logged=session.events.at(-1);
