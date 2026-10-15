@@ -95,7 +95,7 @@ globalThis.WeftUiCore.releaseNotes = [
       "批准前先用一句话说明要做什么，原始命令可展开详情查看；拒绝后会明确说明没有做，并保留失败或中断原因。"
     ],
     "audience": "mobile",
-    "version": "0.8.37"
+    "version": "0.8.38"
   },
   {
     "date": "2026-10-15",
@@ -192,6 +192,6 @@ globalThis.WeftUiCore.releaseNotes = [
       "批准前先用一句话说明要做什么，原始命令可展开详情查看；拒绝后会明确说明没有做，并保留失败或中断原因。"
     ],
     "audience": "desktop",
-    "version": "0.2.0-preview.9"
+    "version": "0.2.0-preview.10"
   }
 ];
