@@ -16,7 +16,7 @@
 | `weftmate-android` | `com.memoweft.weftmate:/oauth` |
 | `weftmate-desktop` | `http://127.0.0.1:18186/personal/v1/ui/` |
 
-桌面为 native（原生）公开客户端，Apple / Android 原配置保持不变；没有临时、虚构或通配回调。`/healthz`、OIDC（开放身份连接协议）discovery（发现文档）、JWKS（签名公钥集合）和桌面 `/auth/authorization` 均为 200，cloud/frps/nginx 均 active（运行中）。隔离真实 Electron（桌面程序框架）、复制的版本 2 本地密码账号与运维合成云账号验通桌面绑定及正式内容证书、中继、公网 443；验证账号经正式注销接口清理，临时宿主与数据目录关闭删除。证据见 [UP-2 验证](../../../tests/evidence/up-2/README.md)，日用程序与数据未动。
+桌面为 native（原生）公开客户端，Apple / Android 原配置保持不变；没有临时、虚构或通配回调。`/healthz`、OIDC（开放身份连接协议）discovery（发现文档）、JWKS（签名公钥集合）和桌面 `/auth/authorization` 均为 200，cloud/frps/nginx 均 active（运行中）。隔离真实 Electron（桌面程序框架）、复制的版本 2 本地密码账号与运维合成云账号验通桌面绑定及正式内容证书、中继、公网 443；验证账号经正式注销接口清理，临时宿主与数据目录关闭删除。证据见 [UP-2 验证](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/up-2/README.md)，日用程序与数据未动。
 
 配置文件回滚命令仅用于本次客户端配置引入的故障：
 
