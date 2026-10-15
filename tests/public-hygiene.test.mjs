@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { identityFindings } from '../.github/scripts/public-hygiene.mjs';
+import { identityFindings, brokenLinks, relativeLinks } from '../.github/scripts/public-hygiene.mjs';
 import { hostname, userInfo } from 'node:os';
 import { readFileSync } from 'node:fs';
 
@@ -17,6 +17,25 @@ test('public hygiene checks raw, forward-slash and JSON-escaped paths, with a na
   }
   for (const name of ['DESKTOP-' + 'AB12CD3', 'LAPTOP-' + 'AB12CD34']) assert.deepEqual(identityFindings(name), ['default machine name']);
   assert.deepEqual(identityFindings('desktop-actions laptop-settings'), []);
+});
+test('public hygiene finds macOS homes in text, JSON and file URLs, but not drives, web paths or patterns', () => {
+  const home = ['', 'Users', 'fictional', '.codex', 'image.png'].join('/');
+  for (const text of [home, JSON.stringify({source: home}), `cd ${home}`]) assert.deepEqual(identityFindings(text), ['macOS user directory']);
+  assert.ok(identityFindings(`file://${home}`).includes('macOS user directory'));
+  for (const name of ['<user>', 'Shared', 'runner']) assert.deepEqual(identityFindings(['', 'Users', name, 'x'].join('/')), []);
+  assert.deepEqual(identityFindings(['C:', 'Users', 'fictional', 'x'].join('/')), ['Windows user directory']);
+  assert.deepEqual(identityFindings(['https://example.test', 'Users', 'fictional'].join('/')), []);
+  assert.deepEqual(identityFindings('#"(?:/Users/|/home/)[^\\s]+"#'), []);
+});
+test('relative links ignore code, URLs and anchors, and resolve from the linking file', () => {
+  const page = ['[a](b.md) [up](../README.md#top) ![img](<img/one.png>) [dir](./sub/)', '[web](https://example.test/x) [mail](mailto:a@example.test) [here](#part) `[code](missing.md)`',
+    '```', '[fenced](missing.md)', '```', '[encoded](%E8%AF%B4%E6%98%8E.md "title")'].join('\n');
+  assert.deepEqual(relativeLinks(page), ['b.md', '../README.md#top', 'img/one.png', './sub/', '%E8%AF%B4%E6%98%8E.md']);
+  const present = new Set(['.', 'README.md', 'docs', 'docs/b.md', 'docs/img', 'docs/img/one.png', 'docs/sub', 'docs/sub/x.md', 'docs/说明.md']);
+  assert.deepEqual(brokenLinks('docs/a.md', page, present), []);
+  present.delete('docs/b.md'); present.delete('docs/说明.md');
+  assert.deepEqual(brokenLinks('docs/a.md', page, present), ['b.md', '%E8%AF%B4%E6%98%8E.md']);
+  assert.deepEqual(brokenLinks('README.md', '[escape](../outside.md)', present), ['../outside.md']);
 });
 test('CLI rejects a fake identity by file name without echoing the identity and ignores binary data', () => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-hygiene-'));
@@ -52,13 +71,13 @@ test('one-time cleaner reads runtime identity, preserves JSON and source escapin
   } finally { rmSync(root, {recursive:true, force:true}); }
 });
 
-test('CLI rejects tracked evidence even when ignored or absent, and oversized STATE; recovery passes', () => {
+test('CLI rejects tracked evidence even when ignored or absent, retired pages, oversized entry pages and broken links; recovery passes', () => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-governance-'));
   try {
     execFileSync('git', ['init', '-q', root]);
     const run = () => spawnSync(process.execPath, [resolve('.github/scripts/public-hygiene.mjs')], {cwd:root, encoding:'utf8'});
     mkdirSync(join(root, 'tests/evidence'), {recursive:true});
-    mkdirSync(join(root, 'docs'));
+    mkdirSync(join(root, 'docs/archive/2026-10-07'), {recursive:true});
     writeFileSync(join(root, '.gitignore'), 'tests/evidence/\n.local/\n');
     const evidence = join(root, 'tests/evidence/capture.png');
     writeFileSync(evidence, Buffer.from([0, 1]));
@@ -68,11 +87,20 @@ test('CLI rejects tracked evidence even when ignored or absent, and oversized ST
     rmSync(evidence);
     assert.equal(run().status, 1, 'missing working file is still tracked');
     execFileSync('git', ['rm', '--cached', '-f', 'tests/evidence/capture.png'], {cwd:root});
-    writeFileSync(join(root, 'docs/STATE.md'), '现'.repeat(6667));
-    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /STATE.md exceeds 20 KB/);
-    writeFileSync(join(root, 'docs/STATE.md'), 'a'.repeat(20_000));
+    for (const page of ['docs/STATE.md', 'docs/archive/2026-10-07/PLAN.md']) {
+      writeFileSync(join(root, page), '# Old rules\n');
+      result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /Retired path is back/);
+      rmSync(join(root, page));
+    }
+    writeFileSync(join(root, 'PROJECT-MAP.md'), '现'.repeat(5334));
+    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /PROJECT-MAP.md exceeds 16 KB/);
+    writeFileSync(join(root, 'PROJECT-MAP.md'), 'a'.repeat(16_000));
     assert.equal(run().status, 0, 'exact byte limit is allowed');
-    writeFileSync(join(root, 'docs/STATE.md'), '# Current capabilities\n');
-    assert.equal(run().status, 0, 'both violations recover without changing checks');
+    writeFileSync(join(root, 'AGENTS.md'), 'a'.repeat(8_001));
+    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /AGENTS.md exceeds 8 KB/);
+    writeFileSync(join(root, 'AGENTS.md'), '读 [地图](PROJECT-MAP.md)，决定见 [记录](docs/DECISIONS.md)。\n');
+    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /AGENTS.md: broken relative links.*docs\/DECISIONS.md/);
+    writeFileSync(join(root, 'docs/DECISIONS.md'), '# 决定\n');
+    assert.equal(run().status, 0, 'every violation recovers without changing checks');
   } finally { rmSync(root, {recursive:true, force:true}); }
 });

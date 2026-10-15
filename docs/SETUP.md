@@ -1,7 +1,5 @@
 # 开发环境与运行
 
-旧版（含历史候选环境说明）见 `archive/2026-10-07/SETUP.md`。
-
 ## 依赖
 
 测试与验收启动合成宿主时统一设置 `WEFTMATE_TEST_HOST_NAME=synthetic-host`，HTTP（网页传输协议）状态与 Electron（桌面程序框架）电脑身份均使用该名字；未设置时产品仍读取操作系统电脑名。CI（持续集成）单测、nightly（每夜回归）与共享合成夹具已注入，独立运行器也应传入这个环境变量，证据落盘前仍需清理本机用户路径。
@@ -49,7 +47,6 @@ node scripts/run-personal-host.mjs --user-data-dir C:\WeftMate-Test\profile --ac
 
 - Android：[apps/android/README](../apps/android/README.md)
 - Apple（macOS / iOS / watchOS）：[apps/apple/README](../apps/apple/README.md)
-- 设备与验证环境：[DEVELOPMENT_ENVIRONMENT](DEVELOPMENT_ENVIRONMENT.md)
 
 ### 日用 Windows 云账号（UP-2）
 
@@ -87,7 +84,7 @@ $adb = 'D:\Software\MuMuPlayer\nx_main\adb.exe'
 
 只启动隔离宿主与合成账号，监听本机回环 18187。ADB reverse（安卓端口反向映射）后，安卓壳填写 `http://127.0.0.1:18187`；不要把模拟器的回环地址当成 Windows 回环地址，也不要连接日用 Runtime（运行数据）。调试壳允许这一字面回环 HTTP（网页传输协议）地址，正式来源仍要求 HTTPS（加密连接）。
 
-模拟器已有调试应用时，使用独立测试包名保护原有数据，不覆盖或卸载原应用。UI-2v 的构建、真实 `HybridActivity` 操作、`adb exec-out screencap -p` 截图及清理步骤见 [MuMu 验收证据](../tests/evidence/ui-2v/README.md)。软键盘必须同时有实际图像和非零 IME（输入法）区域；MuMu 预装输入法返回零高度时，可使用仅在测试 APK（安卓安装包）中的真实系统输入法服务取证，结束恢复原输入法设置。只卸载本次安装的隔离包、停止隔离宿主，并执行 `reverse --remove tcp:18187`；不运行 `adb reverse --remove-all` 或清空本人应用数据。
+模拟器已有调试应用时，使用独立测试包名保护原有数据，不覆盖或卸载原应用。UI-2v 的构建、真实 `HybridActivity` 操作、`adb exec-out screencap -p` 截图及清理步骤见 [MuMu 验收证据](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ui-2v/README.md)。软键盘必须同时有实际图像和非零 IME（输入法）区域；MuMu 预装输入法返回零高度时，可使用仅在测试 APK（安卓安装包）中的真实系统输入法服务取证，结束恢复原输入法设置。只卸载本次安装的隔离包、停止隔离宿主，并执行 `reverse --remove tcp:18187`；不运行 `adb reverse --remove-all` 或清空本人应用数据。
 
 ## GitHub CI
 
@@ -114,7 +111,7 @@ npm run vendor:dsh
 npm run vendor:verify
 ```
 
-例外理由与追踪项见 [CI 例外清单](../.github/ci-test-exceptions.json)。`vendorTests` 已清空，原110项转为独立必过测试组；还保留一个读取仓库外 `Design/design-language/skeleton-v2.css` 的文件。完整 `test:contract` 仍为发布门，本包的 vendor 模式没有声称覆盖全部契约测试。 干净云端已实际运行这组测试，发现固定源码缺少本机预构建包里的首屏布局接缝，保持红灯交接，见 [可复现问题](../tests/evidence/test-1/cloud-hero-seam.md)。整文件覆盖还包含一条不在原110项内的真实MemoWeft Core（记忆核心）RPC（远程过程调用）兄弟用例；云端缺Python环境时沿用其既有条件跳过，结果会明确显示，本机该用例已通过。
+例外理由与追踪项见 [CI 例外清单](../.github/ci-test-exceptions.json)。`vendorTests` 已清空，原110项转为独立必过测试组；还保留一个读取仓库外 `Design/design-language/skeleton-v2.css` 的文件。完整 `test:contract` 仍为发布门，本包的 vendor 模式没有声称覆盖全部契约测试。 干净云端已实际运行这组测试，发现固定源码缺少本机预构建包里的首屏布局接缝，保持红灯交接，见 [可复现问题](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/test-1/cloud-hero-seam.md)。整文件覆盖还包含一条不在原110项内的真实MemoWeft Core（记忆核心）RPC（远程过程调用）兄弟用例；云端缺Python环境时沿用其既有条件跳过，结果会明确显示，本机该用例已通过。
 
 Linux/macOS 测试目录使用规范化的 `RUNNER_TEMP`；Windows 在系统盘 C: 创建隔离目录，运行后移除。普通 Linux / macOS 门仍保留 POSIX（类 Unix 系统）子进程树清理用例的真实产品缺口例外；外部平台 optional package（可选依赖包）缺失夹具在 Linux 仍不适用，macOS / Windows 验证。vendor 测试组不继承这些跳过项。
 

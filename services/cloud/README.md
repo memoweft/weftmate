@@ -65,7 +65,7 @@ npm start
 
 版式以表格和行内样式为基础；`<style>` 仅含深色与窄屏媒体查询，无外链样式、网页字体、脚本、表单、背景图、跟踪像素或第三方资源。不支持媒体查询的客户端保持完整浅色；支持 `prefers-color-scheme: dark`（跟随系统深色）时同时改变画布、卡片、文字和分隔线。未声明全局自动深色，避免只改变部分区域。经典 Outlook 使用条件表格固定最大阅读宽度，可能将圆角退化为直角。客户端强制反色、图片策略及预览提取由客户端控制，本包不声称浏览器截图等于实际送达验收。
 
-上线无需新增配置项或数据库迁移：按现有发布方式包含整个 `services/cloud/`（特别是 `assets/weftmate-mark.png` 与 `src/mail-tokens.mjs`），重启云服务即可；现有 nginx（反向代理）`location /` 会转发固定图片，不需修改它。上线后由本人授权验证固定图片和六种真实邮箱送达；MAIL-1 未连接服务器、未发真实邮件。完整合成截图、六种文案、选区／剪贴板断言和兼容性限制见 [邮件证据](../../tests/evidence/mail-1/README.md)。
+上线无需新增配置项或数据库迁移：按现有发布方式包含整个 `services/cloud/`（特别是 `assets/weftmate-mark.png` 与 `src/mail-tokens.mjs`），重启云服务即可；现有 nginx（反向代理）`location /` 会转发固定图片，不需修改它。上线后由本人授权验证固定图片和六种真实邮箱送达；MAIL-1 未连接服务器、未发真实邮件。完整合成截图、六种文案、选区／剪贴板断言和兼容性限制见 [邮件证据](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/mail-1/README.md)。
 
 ## OIDC、存储与密钥
 
