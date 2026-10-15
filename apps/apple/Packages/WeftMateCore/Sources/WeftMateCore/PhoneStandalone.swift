@@ -85,6 +85,7 @@ public struct PhoneChatMessage: Codable, Equatable, Identifiable, Sendable {
     /// Local-only recall dependencies; never sent as computer memory references on handoff.
     public var phoneMemoryIDs: [String]?
     public var dependencyComplete: Bool?
+    public var replyStatus: PhoneReplyStatus?
     public init(role: String, text: String) { self.role=role; self.text=text }
 }
 public struct PhoneChatThread: Codable, Equatable, Identifiable, Sendable {
@@ -232,4 +233,148 @@ extension PhoneChatState {
 
 public enum PhoneCurrencyText {
     public static func money(_ cost: Double) -> String { cost == 0 ? "¥0" : String(format:"¥%.2f",cost) }
+}
+
+
+public enum PhoneReplyStatus: String, Codable, Sendable {
+    case queued, replying, complete, failed
+    public var placeholder: String {
+        switch self {
+        case .queued: "等待回复…"
+        case .replying: "正在回复…"
+        case .failed: "这次没回复，可以重试。"
+        case .complete: ""
+        }
+    }
+}
+
+/// The sealed transcript is the queue: every accepted send owns a stable reply slot.
+public struct PhoneQueuedReply: Equatable, Sendable {
+    public let threadID: String
+    public let replyID: String
+}
+extension PhoneChatState {
+    @discardableResult public mutating func enqueueReply(text: String, attachments: [PhoneAttachment] = [], regenerate: Bool = false) -> PhoneQueuedReply? {
+        if selected == nil { let thread=PhoneChatThread();threads.append(thread);selected=thread.id }
+        guard let t=threads.firstIndex(where: { $0.id == selected }) else { return nil }
+        if regenerate {
+            if threads[t].messages.last?.role == "assistant" { threads[t].messages.removeLast() }
+            guard threads[t].messages.last?.role == "user" else { return nil }
+        } else {
+            var user=PhoneChatMessage(role:"user",text:text);user.attachments=attachments
+            threads[t].messages.append(user)
+        }
+        var reply=PhoneChatMessage(role:"assistant",text:"");reply.replyStatus = .queued
+        threads[t].messages.append(reply)
+        return .init(threadID:threads[t].id,replyID:reply.id)
+    }
+    public mutating func retryReply(_ id: String) -> PhoneQueuedReply? {
+        guard let t=threads.firstIndex(where: { $0.messages.contains(where: { $0.id == id && $0.replyStatus == .failed }) }) else { return nil }
+        let reply=PhoneQueuedReply(threadID:threads[t].id,replyID:id)
+        updateReply(reply,text:"",status:.queued);return reply
+    }
+    public var nextReply: PhoneQueuedReply? {
+        for thread in threads {
+            if let reply=thread.messages.first(where: { $0.replyStatus == .queued }) { return .init(threadID:thread.id,replyID:reply.id) }
+        }
+        return nil
+    }
+    public func replyHistory(_ reply: PhoneQueuedReply) -> [PhoneChatMessage] {
+        guard let thread=threads.first(where: { $0.id == reply.threadID }),let end=thread.messages.firstIndex(where: { $0.id == reply.replyID }) else { return [] }
+        // A future queued question must never leak into an earlier request.
+        return Array(thread.messages[..<end].filter { $0.role != "assistant" || !$0.text.isEmpty }.suffix(20))
+    }
+    public mutating func updateReply(_ reply: PhoneQueuedReply, text: String? = nil, status: PhoneReplyStatus) {
+        guard let t=threads.firstIndex(where: { $0.id == reply.threadID }),let m=threads[t].messages.firstIndex(where: { $0.id == reply.replyID }) else { return }
+        if let text { threads[t].messages[m].text=text };threads[t].messages[m].replyStatus=status
+    }
+    /// Never silently replay paid requests after a process exit or an explicit stop.
+    public mutating func interruptReplies() {
+        for t in threads.indices {
+            for m in threads[t].messages.indices where threads[t].messages[m].replyStatus == .queued || threads[t].messages[m].replyStatus == .replying {
+                threads[t].messages[m].replyStatus = .failed
+            }
+        }
+    }
+}
+
+extension PhoneModelConfiguration {
+    public func streamFinished(_ line: String) -> Bool {
+        guard line.hasPrefix("data:") else { return false }
+        let payload=line.dropFirst(5).trimmingCharacters(in:.whitespacesAndNewlines)
+        if payload == "[DONE]" { return true }
+        guard let object=(try? JSONSerialization.jsonObject(with:Data(payload.utf8))) as? [String:Any] else { return false }
+        if interfaceType == "anthropic" { return object["type"] as? String == "message_stop" }
+        return ((object["choices"] as? [[String:Any]])?.first?["finish_reason"] as? String) != nil
+    }
+}
+
+/// Owns the URL task so timeout/cancellation closes the socket even while no bytes arrive.
+/// Delegate parsing runs off the main actor; the deadline also bounds heartbeat-only streams.
+public final class PhoneReplyStream: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+    private let lock=NSRecursiveLock()
+    private var buffer=Data()
+    private var ended=false
+    private var session: URLSession?
+    private var task: URLSessionDataTask?
+    private var deadline: DispatchWorkItem?
+    private let continuation: AsyncThrowingStream<String,Error>.Continuation
+    private let model: PhoneModelConfiguration
+    private var status=0
+    private init(model: PhoneModelConfiguration, continuation: AsyncThrowingStream<String,Error>.Continuation) {
+        self.model=model;self.continuation=continuation
+    }
+    public static func lines(request: URLRequest, model: PhoneModelConfiguration, timeout: TimeInterval = 120, configuration: URLSessionConfiguration = .ephemeral) -> AsyncThrowingStream<String,Error> {
+        AsyncThrowingStream { continuation in
+            let driver=PhoneReplyStream(model:model,continuation:continuation)
+            continuation.onTermination={ @Sendable [weak driver] _ in driver?.finish(CancellationError()) }
+            driver.start(request,timeout:timeout,configuration:configuration)
+        }
+    }
+    private func start(_ source: URLRequest, timeout: TimeInterval, configuration: URLSessionConfiguration) {
+        lock.lock();defer { lock.unlock() }
+        let config=configuration
+        config.timeoutIntervalForRequest=45;config.timeoutIntervalForResource=timeout
+        session=URLSession(configuration:config,delegate:self,delegateQueue:nil)
+        var request=source;request.timeoutInterval=min(45,timeout)
+        task=session!.dataTask(with:request)
+        let work=DispatchWorkItem { [weak self] in self?.finish(URLError(.timedOut)) }
+        deadline=work;DispatchQueue.global().asyncAfter(deadline:.now()+timeout,execute:work)
+        task!.resume()
+    }
+    private func finish(_ error: (any Error)? = nil) {
+        lock.lock();defer { lock.unlock() }
+        guard !ended else { return };ended=true
+        deadline?.cancel();deadline=nil
+        if let error { continuation.finish(throwing:error) } else { continuation.finish() }
+        task?.cancel();task=nil;session?.invalidateAndCancel();session=nil
+    }
+    public func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) { completionHandler(nil) }
+    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping @Sendable (URLSession.ResponseDisposition) -> Void) {
+        lock.lock();status=(response as? HTTPURLResponse)?.statusCode ?? 0;lock.unlock()
+        completionHandler(.allow)
+    }
+    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        lock.lock();defer { lock.unlock() };guard !ended else { return }
+        buffer.append(data)
+        if !(200...299).contains(status) {
+            if buffer.count >= 8192 { rejectHTTP() };return
+        }
+        while let newline=buffer.firstIndex(of:10),!ended {
+            let line=String(decoding:buffer[..<newline],as:UTF8.self).trimmingCharacters(in:.newlines)
+            buffer.removeSubrange(...newline)
+            continuation.yield(line)
+            if model.streamFinished(line) { finish() }
+        }
+    }
+    private func rejectHTTP() {
+        let body=String(decoding:buffer,as:UTF8.self)
+        finish(PhoneAttachmentFailure.isVisionRejection(status:status,body:body) ? PhoneAttachmentFailure.vision : OfflineFailure.model)
+    }
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
+        lock.lock();defer { lock.unlock() };guard !ended else { return }
+        if let error { finish(error);return }
+        guard (200...299).contains(status) else { rejectHTTP();return }
+        if !buffer.isEmpty { continuation.yield(String(decoding:buffer,as:UTF8.self)) };finish()
+    }
 }

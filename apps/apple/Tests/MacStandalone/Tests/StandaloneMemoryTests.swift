@@ -144,4 +144,21 @@ import WeftMateCore
         let after=(try await s.report()["extractionSources"] as! [[String]]).filter { $0.contains(oldID) }.count
         #expect(after == before)
     }
+    @Test func queuedRepliesKeepTheirOwnMemoryResultsAndDoNotExtractFutureTurns() async throws {
+        let s=try Scenario();defer { s.close() };try await s.mode("slow")
+        for text in ["请记住，我的测试花名是蓝色纸鹤。","不对，是绿色纸鹤。","不对，请重新计算 12×13"] {
+            s.model.draft=text;s.model.send()
+        }
+        for _ in 0..<500 { if !s.model.busy && !s.model.memoryWorking { break };try await Task.sleep(for:.milliseconds(10)) }
+        let replies=s.model.messages.filter { $0.role == "assistant" }
+        #expect(s.model.messages.count == 6 && replies.count == 3)
+        #expect(replies.allSatisfy { $0.replyStatus == .complete })
+        #expect(replies[0].text.contains("已在这台设备上记住：测试花名是蓝色纸鹤"))
+        #expect(replies[1].text.contains("已在这台设备上记住：测试花名是绿色纸鹤"))
+        #expect(replies[2].text.contains("156") && !replies[2].text.contains("已在这台设备上记住"))
+        #expect(s.model.memory.items.map(\.text) == ["测试花名是绿色纸鹤"])
+        let report=try await s.report()
+        #expect((report["chatRequests"] as? [Any])?.count == 3)
+        #expect((report["extractionBackgrounds"] as? [[Any]])?.first?.isEmpty == true)
+    }
 }

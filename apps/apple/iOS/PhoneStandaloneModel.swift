@@ -13,17 +13,23 @@ import WeftMateCore
     var selectedServiceModel: ServiceModel? { services.flatMap(\.models).first { $0.matches(modelID) } }
     var conversationUsesImages: Bool { (messages.flatMap { $0.attachments ?? [] }+attachments).contains(where: \.isImage) }
     @Published var draft="" { didSet {
-        guard store != nil else { return }
-        if state.pending == nil { state.pending = .init() };state.pending?.text=draft
-        do { try persist() } catch { notice="草稿没能保存，请检查本机存储。" }
+        guard store != nil, draft != oldValue else { return }
+        draftTask?.cancel()
+        draftTask=Task { [weak self] in
+            do { try await Task.sleep(for:.milliseconds(300)) } catch { return }
+            do { try self?.persist() } catch { self?.notice="草稿没能保存，请检查本机存储。" }
+        }
     } }
+    private var draftTask: Task<Void,Never>?
+    private var queuedModels: [String:PhoneModelConfiguration]=[:]
+    private var replyTimeout: TimeInterval=120
     var attachments: [PhoneAttachment] { state.pending?.attachments ?? [] }
     var attachmentReason: String? { currentModel == nil ? "先配置模型，再添加图片或文件。" : busy ? "等回复结束后再添加附件。" : nil }
     func addAttachment(_ value: PhoneAttachment) {
         guard attachmentReason == nil else { notice=attachmentReason;return }
         if value.isImage && currentModel?.supportsImages == false { notice="当前模型看不了图片";return }
         guard attachments.filter({$0.isImage == value.isImage}).count < (value.isImage ? PhoneAttachment.imageCount : PhoneAttachment.fileCount) else { notice=PhoneAttachmentFailure.tooMany.message;return }
-        var next=state;if next.pending == nil { next.pending = .init() };next.pending?.attachments.append(value)
+        var next=state;if next.pending == nil { next.pending = .init() };next.pending?.attachments.append(value);next.pending?.text=draft
         do { try save(next);notice=nil } catch { notice="附件没能保存，请检查本机存储。" }
     }
     func removeAttachment(_ id: String) {
@@ -113,7 +119,7 @@ import WeftMateCore
     func handoffNow() { handoffDeferred=false;handoffApproved=true; if let app { Task { await synchronize(app:app) } } }
     func handoffLater() { handoffDeferred=true;handoffApproved=false }
     func finishConversation(_ id: String? = nil) {
-        guard !memoryWorking,memory.enabled,memory.computerHost == nil else { return }
+        guard !busy,!memoryWorking,memory.enabled,memory.computerHost == nil else { return }
         let requested=id ?? state.selected
         let candidate=state.threads.first { $0.id == requested && !memory.batch($0).isEmpty } ?? state.threads.first { !memory.batch($0).isEmpty }
         if let candidate { enqueueMemory(.init(threadID:candidate.id)) }
@@ -152,15 +158,20 @@ import WeftMateCore
         }
     }
     private func flushMemoryReceipts() {
-        guard !busy,!memoryReceipts.isEmpty else { return }
-        var next=state
+        guard !memoryReceipts.isEmpty else { return }
+        var next=state,consumed=Set<String>()
         for (replyID,receipt) in memoryReceipts {
-            guard let t=next.threads.firstIndex(where: { $0.messages.contains(where: { $0.id == replyID }) }),let m=next.threads[t].messages.firstIndex(where: { $0.id == replyID }),let note=receipt.note else { continue }
+            guard let t=next.threads.firstIndex(where: { $0.messages.contains(where: { $0.id == replyID }) }),let m=next.threads[t].messages.firstIndex(where: { $0.id == replyID }) else { consumed.insert(replyID);continue }
+            let status=next.threads[t].messages[m].replyStatus
+            guard status != .queued,status != .replying else { continue }
+            consumed.insert(replyID)
+            guard let note=receipt.note else { continue }
             next.threads[t].messages[m].text += (next.threads[t].messages[m].text.isEmpty ? "" : "\n\n")+note
             let refs=Set((next.threads[t].messages[m].phoneMemoryIDs ?? [])+receipt.savedIDs)
             next.threads[t].messages[m].phoneMemoryIDs=Array(refs).sorted()
         }
-        do { try save(next);memoryReceipts=[:] } catch { memoryNotice="记忆结果没能显示，聊天记录仍在本机。" }
+        guard !consumed.isEmpty else { return }
+        do { try save(next);for id in consumed { memoryReceipts.removeValue(forKey:id) } } catch { memoryNotice="记忆结果没能显示，聊天记录仍在本机。" }
     }
     func retryMemory() {
         var next=state;next.memory=memory;next.memory?.retry=nil
@@ -169,14 +180,17 @@ import WeftMateCore
     @discardableResult func extractMemory(threadID: String, sourceID: String? = nil) async -> PhoneMemoryReceipt? {
         guard !Task.isCancelled,!extracting,memory.enabled,memory.computerHost == nil,
               let config=currentModel,let thread=state.threads.first(where: { $0.id == threadID }) else { return nil }
-        var input=thread
-        if let sourceID { input.messages=thread.messages.filter { $0.id == sourceID } }
+        var input=thread,context=thread
+        if let sourceID,let end=thread.messages.firstIndex(where: { $0.id == sourceID }) {
+            input.messages=[thread.messages[end]]
+            context.messages=Array(thread.messages[...end])
+        }
         let batch=memory.batch(input);guard !batch.isEmpty else { return nil }
         let ticket=memoryEpoch,identity=account
         extracting=true
         defer { if ticket == memoryEpoch { extracting=false } }
         do {
-            let request=try PhoneMemoryExtraction.request(model:config,memory:memory,thread:thread,batch:batch,allowLoopback:allowLoopback)
+            let request=try PhoneMemoryExtraction.request(model:config,memory:memory,thread:context,batch:batch,allowLoopback:allowLoopback)
             let (responseData,response)=try await memoryNetwork.data(for:request)
             guard ticket == memoryEpoch,identity == account,app?.phoneAccountIdentity == identity,memory.enabled,memory.computerHost == nil,!Task.isCancelled else { return nil }
             guard let http=response as? HTTPURLResponse,(200...299).contains(http.statusCode) else { throw OfflineFailure.model }
@@ -210,7 +224,8 @@ import WeftMateCore
         thread.messages=[message,.init(role:"assistant",text:"这是一张合成色块图。虚构周报里完成了三件任务，下一步是整理资料。")]
         state.threads=[thread];state.selected=thread.id;state.pending = .init();draft="";try? persist()
     }
-    init(testCredentials: any CredentialStore, testLoopback: Bool, idleDelay: Duration = .seconds(1)) {
+    init(testCredentials: any CredentialStore, testLoopback: Bool, idleDelay: Duration = .seconds(1), replyTimeout: TimeInterval = 120) {
+        self.replyTimeout=replyTimeout
         self.idleDelay=idleDelay
         network=URLSession(configuration:.ephemeral,delegate:PhoneModelRedirectPolicy(),delegateQueue:nil)
         credentialsOverride=testCredentials;loopbackOverride=testLoopback
@@ -235,10 +250,10 @@ import WeftMateCore
         diagnose("activate");cancelExtraction();handoffCount=0;handoffBytes=0;handoffApproved=false;stop(); epoch=UUID(); account=identity; store=nil; state = .init(); library = .init(); models=[]; modelID=""; draft=""; notice=nil;memoryNotice=nil
         do {
             let next=try PhoneChatStore(account:identity,directory:app.healthStateDirectory.deletingLastPathComponent().appendingPathComponent("PhoneChats"),credentials:credentialsOverride ?? KeychainCredentialStore(service:app.phoneCredentialNamespace))
-            state=try next.load();store=next
+            state=try next.load();store=next;state.interruptReplies()
             do { library=try next.loadLibrary();models=library.services.flatMap(\.configurations);modelID=library.threadSelections?[state.selected ?? ""] ?? library.selectedProfileId ?? models.first?.id ?? "" }
             catch { models=try next.loadModels();library=(try? PhoneModelLibrary.migrate(models)) ?? .init();modelID=models.first?.id ?? "";notice="旧模型仍可使用，模型服务整理暂未完成，稍后再试。" }
-            draft=state.pending?.text ?? ""
+            draft=state.pending?.text ?? "";draftTask?.cancel();draftTask=nil;try persist()
         } catch { notice="本机内容暂时打不开，请重试。" }
     }
     func synchronize(app: AppleAppModel) async {
@@ -381,7 +396,13 @@ import WeftMateCore
             diagnose("test-success");notice="连接成功，可以保存并开始聊天。"; return true
         } catch { diagnose("test-failed");if ticket == epoch { notice="连接没成功，请核对地址、模型名称和密钥。" }; return false }
     }
-    private func persist() throws { guard let store else { throw APIFailure.credentialStorage }; try store.save(state) }
+    private func persist() throws {
+        guard let store else { throw APIFailure.credentialStorage }
+        if state.pending?.text != draft {
+            var next=state;if next.pending == nil { next.pending = .init() };next.pending?.text=draft;state=next
+        }
+        try store.save(state)
+    }
     func newThread() {
         guard !busy else { return };finishConversation()
         let thread=PhoneChatThread();state.threads.append(thread);state.selected=thread.id
@@ -396,7 +417,13 @@ import WeftMateCore
         modelID=library.threadSelections?[id] ?? library.selectedProfileId ?? models.first?.id ?? "";thinkingEnabled=false
         do { try persist() } catch { notice="对话没能保存，请重试。" }
     }
-    func stop() { cancelExtraction();let wasBusy=busy; epoch=UUID(); task?.cancel(); task=nil; busy=false; testing=false; if wasBusy { notice="已停止，已收到的内容保留。" } }
+    func stop() {
+        idleTask?.cancel();idleTask=nil;draftTask?.cancel();let wasBusy=busy,unsavedDraft=state.pending?.text != draft
+        epoch=UUID();task?.cancel();task=nil
+        state.interruptReplies();queuedModels=[:];busy=false;testing=false
+        if store != nil,wasBusy || unsavedDraft { try? persist() }
+        if wasBusy { notice="已停止，已收到的内容保留。" }
+    }
     var reminders: [LocalReminder] { state.reminders ?? [] }
     var allReminders: [LocalReminder] {
         let computers=state.computerReminders ?? [:]
@@ -457,88 +484,95 @@ import WeftMateCore
         return true
     }
     func send(regenerate: Bool = false) {
-        guard !busy else { return }
-        if !regenerate, draft.utf16.count <= 16384, attachments.isEmpty, sendReminderCommand(draft.trimmingCharacters(in:.whitespacesAndNewlines)) { return }
+        guard !regenerate || !busy else { return }
+        // Local reminder commands do not wait for the model or interrupt its active reply.
+        if !regenerate,draft.utf16.count <= 16384,attachments.isEmpty,sendReminderCommand(draft.trimmingCharacters(in:.whitespacesAndNewlines)) { return }
         guard let model=currentModel else { return }
-        idleTask?.cancel();idleTask=nil
-        let originalState=state
-        let text=draft.trimmingCharacters(in:.whitespacesAndNewlines)
-        let pendingAttachments=attachments
+        let text=draft.trimmingCharacters(in:.whitespacesAndNewlines),pendingAttachments=attachments
         if !regenerate,pendingAttachments.contains(where: \.isImage),model.supportsImages == false { notice="当前模型看不了图片";return }
         guard regenerate || !text.isEmpty || !pendingAttachments.isEmpty else { return }
         guard regenerate || text.utf16.count <= 16384 else { notice="消息太长，请分几次发送。";return }
-        if state.selected == nil { newThread() }
-        guard let index=state.threads.firstIndex(where: { $0.id == state.selected }) else { return }
-        if regenerate {
-            if state.threads[index].messages.last?.role == "assistant" { state.threads[index].messages.removeLast() }
-            guard state.threads[index].messages.last?.role == "user" else { return }
-        } else {
-            var message=PhoneChatMessage(role:"user",text:text);message.attachments=pendingAttachments
-            state.threads[index].messages.append(message)
-        }
-        let threadID=state.threads[index].id, ticket=epoch
-        let history=Array(state.threads[index].messages.suffix(20))
-        let hasImages=history.contains { ($0.attachments ?? []).contains(where: \.isImage) }
-        state.threads[index].messages.append(.init(role:"assistant",text:"")); let replyID=state.threads[index].messages.last!.id
-        do { try persist() } catch { state=originalState;notice="对话未保存，请检查本机存储后重试。"; return }
-        state.pending = .init();draft=""; busy=true; notice=nil
+        idleTask?.cancel();idleTask=nil;draftTask?.cancel()
+        let original=state
+        var next=state
+        guard let reply=next.enqueueReply(text:text,attachments:pendingAttachments,regenerate:regenerate) else { return }
+        next.pending = .init()
+        do { try save(next) } catch { state=original;notice="对话未保存，请检查本机存储后重试。";return }
+        queuedModels[reply.replyID]=model;draft="";notice=nil
+        startReplies(model:model)
+    }
+    func retryReply(_ id: String) {
+        guard !busy,let model=currentModel else { return }
+        var next=state;guard let reply=next.retryReply(id) else { return }
+        do { try save(next) } catch { notice="对话未保存，请检查本机存储后重试。";return }
+        queuedModels[reply.replyID]=model;notice=nil;startReplies(model:model)
+    }
+    private func startReplies(model: PhoneModelConfiguration) {
+        guard !busy else { return }
+        busy=true;let ticket=epoch
         task=Task {
-            defer { if ticket == epoch { busy=false;task=nil;flushMemoryReceipts();scheduleExtraction(threadID) } }
-            do {
-                try await authorizeTransferredHistory(ticket:ticket)
-                try Task.checkCancellation();guard ticket == epoch else { return }
-                let standaloneMemory=usesPhoneMemory && memory.computerHost == nil
-                if standaloneMemory,let source=history.last(where: { $0.role == "user" }),!regenerate {
-                    enqueueMemory(.init(threadID:threadID,sourceID:source.id,replyID:replyID))
-                }
-                state.memory=memory
-                let selected=usesPhoneMemory && memory.enabled ? state.memory!.select(query:text.isEmpty ? history.last?.text ?? "" : text) : []
-                try persist()
-                let computerItems=memory.handoffConfirmed ? OfflineReplica.recall(app?.offline.memoryItems ?? [],query:text) : []
-                if let t=state.threads.firstIndex(where: { $0.id == threadID }),let m=state.threads[t].messages.firstIndex(where: { $0.id == replyID }) {
-                    let refs=computerItems.map { OfflineMemoryRef(kind:$0.kind,id:$0.id) }
-                    if standaloneMemory { state.threads[t].messages[m].phoneMemoryIDs=selected.map(\.id) }
-                    // Prior replies can carry memory dependencies even when recall did not select them again.
-                    let inherited=state.threads[t].messages.suffix(21).flatMap { $0.memoryRefs ?? [] }
-                    let all=Set(refs+inherited).sorted { $0.kind+$0.id < $1.kind+$1.id }
-                    state.threads[t].messages[m].memoryRefs=Array(all.prefix(64))
-                    state.threads[t].messages[m].dependencyComplete=all.count <= 64 && state.threads[t].messages.suffix(21).allSatisfy { $0.dependencyComplete != false }
-                    try persist()
-                }
-                let context=usesPhoneMemory ? selected.map { ($0.text,Array($0.sourceIDs.sorted().prefix(3))) } : computerItems.map { ($0.text,$0.sources.map(\.id)) }
-                let facts=standaloneMemory ? "\n"+PhoneMemoryContext.localFacts(enabled:memory.enabled,hasMemory:!selected.isEmpty,receipt:memoryReceipts[replyID]) : ""
-                let system=PhoneMemoryContext.prompt(context,computerOffline:app?.offline.hostOffline == true)+facts
-                let replyHistory=standaloneMemory ? memory.replyHistory(history) : history
-                let request=try model.attachmentRequest(messages:replyHistory,system:system,stream:true,allowLoopback:allowLoopback)
-                let (bytes,response)=try await network.bytes(for:request)
-                guard let http=response as? HTTPURLResponse else { throw OfflineFailure.model }
-                if !(200...299).contains(http.statusCode) {
-                    var reason=""
-                    for try await line in bytes.lines { reason += line;if reason.utf8.count >= 8192 { break } }
-                    if hasImages,PhoneAttachmentFailure.isVisionRejection(status:http.statusCode,body:reason) { throw PhoneAttachmentFailure.vision }
-                    throw OfflineFailure.model
-                }
-                for try await line in bytes.lines {
-                    try Task.checkCancellation(); guard ticket == epoch else { return }
-                    if line.hasPrefix("data:"),line.dropFirst(5).trimmingCharacters(in:.whitespaces) == "[DONE]" { break }
-                    if hasImages,line.contains("\"error\""),PhoneAttachmentFailure.isVisionRejection(status:400,body:line) { throw PhoneAttachmentFailure.vision }
-                    if let delta=try model.streamText(line),let t=state.threads.firstIndex(where: { $0.id == threadID }),let m=state.threads[t].messages.firstIndex(where: { $0.id == replyID }) {
-                        state.threads[t].messages[m].text += delta; try persist()
-                    }
-                }
-                try await authorizeTransferredHistory(ticket:ticket)
-                if ticket == epoch, messages.last?.text.isEmpty == true { throw OfflineFailure.model }
-            } catch {
-                guard ticket == epoch else { return }
-                if !regenerate, !pendingAttachments.isEmpty,
-                   let t=state.threads.firstIndex(where: {$0.id == threadID}),
-                   state.threads[t].messages.last?.id == replyID, state.threads[t].messages.last?.text.isEmpty == true {
-                    state.threads[t].messages.removeLast();state.threads[t].messages.removeLast()
-                    state.pending = .init();state.pending?.attachments=pendingAttachments;draft=[text,draft].filter {!$0.isEmpty}.joined(separator:"\n")
-                    try? persist()
-                }
-                notice=(error as? PhoneAttachmentFailure)?.message ?? (Task.isCancelled ? "已停止，已收到的内容保留。" : "回复中断，已收到的内容保留，可以重新生成。")
+            defer { if ticket == epoch { busy=false;task=nil;flushMemoryReceipts();if let id=state.selected { scheduleExtraction(id) } } }
+            while ticket == epoch,!Task.isCancelled,let next=state.nextReply {
+                let config=queuedModels.removeValue(forKey:next.replyID) ?? model
+                await reply(to:next,model:config,ticket:ticket)
             }
+        }
+    }
+    private func reply(to reply: PhoneQueuedReply, model: PhoneModelConfiguration, ticket: UUID) async {
+        let history=state.replyHistory(reply),text=state.replyHistory(reply).last?.text ?? ""
+        var received="",publishedAt=Date.distantPast,savedAt=Date.distantPast
+        state.updateReply(reply,status:.replying)
+        do {
+            try persist();try await authorizeTransferredHistory(ticket:ticket)
+            try Task.checkCancellation();guard ticket == epoch else { return }
+            let standaloneMemory=usesPhoneMemory && memory.computerHost == nil
+            if standaloneMemory,let source=history.last(where: { $0.role == "user" }) {
+                enqueueMemory(.init(threadID:reply.threadID,sourceID:source.id,replyID:reply.replyID))
+            }
+            state.memory=memory
+            let selected=usesPhoneMemory && memory.enabled ? state.memory!.select(query:text) : []
+            let computerItems=memory.handoffConfirmed ? OfflineReplica.recall(app?.offline.memoryItems ?? [],query:text) : []
+            if let t=state.threads.firstIndex(where: { $0.id == reply.threadID }),let m=state.threads[t].messages.firstIndex(where: { $0.id == reply.replyID }) {
+                let refs=computerItems.map { OfflineMemoryRef(kind:$0.kind,id:$0.id) }
+                if standaloneMemory { state.threads[t].messages[m].phoneMemoryIDs=selected.map(\.id) }
+                let inherited=history.flatMap { $0.memoryRefs ?? [] }
+                let all=Set(refs+inherited).sorted { $0.kind+$0.id < $1.kind+$1.id }
+                state.threads[t].messages[m].memoryRefs=Array(all.prefix(64))
+                state.threads[t].messages[m].dependencyComplete=all.count <= 64 && history.allSatisfy { $0.dependencyComplete != false }
+            }
+            let context=usesPhoneMemory ? selected.map { ($0.text,Array($0.sourceIDs.sorted().prefix(3))) } : computerItems.map { ($0.text,$0.sources.map(\.id)) }
+            let facts=standaloneMemory ? "\n"+PhoneMemoryContext.localFacts(enabled:memory.enabled,hasMemory:!selected.isEmpty,receipt:memoryReceipts[reply.replyID]) : ""
+            let system=PhoneMemoryContext.prompt(context,computerOffline:app?.offline.hostOffline == true)+facts
+            let replyHistory=standaloneMemory ? memory.replyHistory(history) : history
+            let request=try model.attachmentRequest(messages:replyHistory,system:system,stream:true,allowLoopback:allowLoopback)
+            for try await line in PhoneReplyStream.lines(request:request,model:model,timeout:replyTimeout) {
+                try Task.checkCancellation();guard ticket == epoch else { return }
+                if history.contains(where: { ($0.attachments ?? []).contains(where: \.isImage) }),line.contains("\"error\""),PhoneAttachmentFailure.isVisionRejection(status:400,body:line) { throw PhoneAttachmentFailure.vision }
+                if let delta=try model.streamText(line) {
+                    received += delta
+                    let now=Date()
+                    if now.timeIntervalSince(publishedAt) >= 0.15 {
+                        state.updateReply(reply,text:received,status:.replying);publishedAt=now
+                    }
+                    if now.timeIntervalSince(savedAt) >= 0.75 { try persist();savedAt=now }
+                }
+                if model.streamFinished(line) { break }
+            }
+            try await authorizeTransferredHistory(ticket:ticket)
+            try Task.checkCancellation();guard ticket == epoch else { return }
+            guard !received.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty else { throw OfflineFailure.model }
+            state.updateReply(reply,text:received,status:.complete);try persist();flushMemoryReceipts()
+        } catch {
+            guard ticket == epoch else { return }
+            state.updateReply(reply,text:received,status:.failed)
+            if error as? PhoneAttachmentFailure == .vision,received.isEmpty,draft.isEmpty,
+               let t=state.threads.firstIndex(where: { $0.id == reply.threadID }),state.threads[t].messages.last?.id == reply.replyID,
+               let user=history.last,!(user.attachments ?? []).isEmpty {
+                state.threads[t].messages.removeLast(2)
+                state.pending = .init();state.pending?.attachments=user.attachments ?? [];draft=user.text
+            }
+            try? persist();flushMemoryReceipts()
+            notice=(error as? PhoneAttachmentFailure)?.message ?? "这次没回复，可以重试。"
         }
     }
 }

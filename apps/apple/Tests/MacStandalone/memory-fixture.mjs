@@ -1,16 +1,17 @@
 // Real HTTP/SSE transport with synthetic model decisions. Never a personal service.
 import {createServer} from 'node:http';
 import {once} from 'node:events';
-let mode='ok',contexts=[],extractions=0,chatRequests=[],extractionSources=[],held=[];
+let mode='ok',contexts=[],extractions=0,chatRequests=[],extractionSources=[],extractionBackgrounds=[],held=[];
 const server=createServer(async(req,res)=>{
  const chunks=[];for await(const c of req)chunks.push(c);
  if(req.url==='/mode'){mode=Buffer.concat(chunks).toString();if(mode!=='hold'){for(const resolve of held)resolve();held=[];}res.end();return;}
- if(req.url==='/report'){res.end(JSON.stringify({contexts,extractions,chatRequests,extractionSources}));return;}
+ if(req.url==='/report'){res.end(JSON.stringify({contexts,extractions,chatRequests,extractionSources,extractionBackgrounds}));return;}
  if(req.headers.authorization!=='Bearer synthetic-state-key'){res.writeHead(401);res.end();return;}
  const body=JSON.parse(Buffer.concat(chunks));
  if(!body.stream){
   extractions++;
   const input=JSON.parse(body.messages[1].content);extractionSources.push(input.原话.map(m=>m.id));
+  extractionBackgrounds.push(input.对话背景 ?? []);
   if(mode==='hold')await new Promise(resolve=>held.push(resolve));
   if(mode==='fail'){res.writeHead(503);res.end();return;}
   if(mode==='slow')await new Promise(r=>setTimeout(r,200));
