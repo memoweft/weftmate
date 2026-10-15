@@ -319,7 +319,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 when(type) {
                     "user.message","assistant.message","assistant.delta" -> NativeMessage(m,e,bubbleMaxWidth,onPreview)
                     "artifact.created" -> NativeArtifactFiles(e,m,onPreview)
-                    "approval.requested" -> m.approvals.find{it.optString("approvalId")==d.optString("approvalId")}?.let{ if(m.workAndChat && it.stringOrEmpty("intent")=="work-switch")NativeWorkSwitch(m,it) else NativeApproval(it){outcome,decisionScope->m.decide(it,outcome,decisionScope)} }
+                    "approval.requested" -> m.approvals.find{it.optString("approvalId")==d.optString("approvalId")}?.let{ if(m.workAndChat && it.stringOrEmpty("intent")=="work-switch")NativeWorkSwitch(m,it) else NativeApproval(it,d.optJSONObject("copy")){outcome,decisionScope->m.decide(it,outcome,decisionScope)} }
                     "question.requested" -> m.questions.find{it.optString("questionRpcId")==d.optString("questionRpcId")}?.let{ NativeQuestion(it){answers->m.answer(it,answers)} }
                     "native.progress" -> NativeProgress(e,progressState)
                 }
@@ -347,7 +347,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
         val steps=state.visibleSteps(row)
         if(steps.isNotEmpty()) Column(Modifier.fillMaxWidth().clip(card).border(1.dp,MaterialTheme.colorScheme.outline,card).padding(pad),verticalArrangement=Arrangement.spacedBy(gap)) {
             steps.forEach { step ->
-                var detail by remember(key,step.optString("stepId")) { mutableStateOf(step.optBoolean("attention")) }
+                var detail by remember(key,step.optString("stepId")) { mutableStateOf(step.optBoolean("attention") && step.optString("approvalStatus") != "pending") }
                 Column {
                     Row(Modifier.fillMaxWidth().clip(card).clickable(role=Role.Button){detail=!detail}.heightIn(min=DesignTokens.space44.dp),verticalAlignment=Alignment.CenterVertically) {
                         Icon(painterResource(if(step.optBoolean("attention"))R.drawable.wm_warning else R.drawable.wm_check),null,Modifier.size(DesignTokens.space16.dp),tint=if(step.optBoolean("attention"))MaterialTheme.colorScheme.error else color)
@@ -404,7 +404,7 @@ private fun inlineMarkdown(text:String):AnnotatedString=buildAnnotatedString {
     };append(text.substring(last))
 }
 
-@Composable internal fun NativeApproval(row:JSONObject,onDecide:(String,String)->Unit) {
+@Composable internal fun NativeApproval(row:JSONObject,copy:JSONObject?=null,onDecide:(String,String)->Unit) {
     val receipt=decisionReceipt(row)
     if(receipt!=null){Text(receipt,fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);return}
     row.optJSONObject("nativeDecision")?.let { request ->
@@ -418,10 +418,9 @@ private fun inlineMarkdown(text:String):AnnotatedString=buildAnnotatedString {
     var choice by remember(row.optString("approvalId")){mutableStateOf(0)}
     val always=row.optBoolean("canAlwaysAllow")
     Column(Modifier.fillMaxWidth().clip(card).background(MaterialTheme.colorScheme.surface).border(1.dp,MaterialTheme.colorScheme.outline,card).padding(pad),verticalArrangement=Arrangement.spacedBy(gap)) {
-        Row(verticalAlignment=Alignment.CenterVertically){Icon(painterResource(R.drawable.wm_check_circle),null,Modifier.size(DesignTokens.space24.dp));Text(row.optString("summary",row.optString("reason","需要你决定")),Modifier.padding(start=gap),fontWeight=FontWeight.SemiBold,fontSize=DesignTokens.font16.sp)}
-        if (!always) Text(row.optString("reason").ifBlank{"要允许这次操作吗？"},color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=DesignTokens.font14.sp)
-        Row(Modifier.fillMaxWidth().heightIn(min=touch).clickable{expanded=!expanded},verticalAlignment=Alignment.CenterVertically){Text("关键参数与详情",Modifier.weight(1f),color=MaterialTheme.colorScheme.onSurfaceVariant);Icon(painterResource(if(expanded)R.drawable.wm_down else R.drawable.wm_right),"展开详情",Modifier.size(DesignTokens.space20.dp))}
-        if(expanded) SelectionContainer{Text(row.optString("details",row.optJSONObject("arguments")?.toString() ?: row.optString("reason")),fontSize=DesignTokens.font13.sp)}
+        Row(verticalAlignment=Alignment.CenterVertically){Icon(painterResource(R.drawable.wm_check_circle),null,Modifier.size(DesignTokens.space24.dp));Text("要" + (copy?.optString("summary") ?: "进行这项操作"),Modifier.padding(start=gap),fontWeight=FontWeight.SemiBold,fontSize=DesignTokens.font16.sp)}
+        Row(Modifier.fillMaxWidth().heightIn(min=touch).clickable{expanded=!expanded},verticalAlignment=Alignment.CenterVertically){Text("查看详情",Modifier.weight(1f),color=MaterialTheme.colorScheme.onSurfaceVariant);Icon(painterResource(if(expanded)R.drawable.wm_down else R.drawable.wm_right),"展开详情",Modifier.size(DesignTokens.space20.dp))}
+        if(expanded) SelectionContainer{Text(copy?.optString("raw") ?: row.optString("reason"),fontSize=DesignTokens.font13.sp)}
         row.optJSONObject("secondOpinion")?.let{o->Text(if(o.optString("alignment")=="对得上"&&o.optString("externalInfluence")=="没有")"另一个模型看过：和你的要求一致" else "另一个模型提醒：${o.optString("reason")}",fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)}
         if(always) {
             listOf("仅这一次","以后这类都允许","拒绝").forEachIndexed{i,label->Row(Modifier.fillMaxWidth().heightIn(min=touch).clip(RoundedCornerShape(DesignTokens.radius12.dp)).background(if(choice==i)MaterialTheme.colorScheme.surfaceVariant else Color.Transparent).selectable(choice==i,onClick={choice=i},role=Role.RadioButton),verticalAlignment=Alignment.CenterVertically){RadioButton(choice==i,onClick=null,colors=nativeRadioColors());Text(label)}}

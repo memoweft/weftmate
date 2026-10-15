@@ -17,7 +17,7 @@ globalThis.fetch = async (input, options) => {
     try { const body = JSON.parse(options.body); requestChars = JSON.stringify(body.messages ?? []).length;
       requestedModel = body.model; stream = body.stream;
       if (process.env.WEFTMATE_BASELINE_MEMORY_TRACE) appendFileSync(process.env.WEFTMATE_BASELINE_MEMORY_TRACE,
-        JSON.stringify({ id, at: new Date().toISOString(), model: body.model, messages: body.messages }) + '\n'); templateThinking = body.chat_template_kwargs?.enable_thinking;
+        JSON.stringify({ id, at: new Date().toISOString(), model: body.model, messages: body.messages, tools: body.tools }) + '\n'); templateThinking = body.chat_template_kwargs?.enable_thinking;
       // Inspect the final wire request without retaining any prompt text.
       const messages = body.messages ?? [];
       const text = message => typeof message.content === 'string' ? message.content

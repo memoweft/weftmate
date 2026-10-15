@@ -4,12 +4,19 @@ public struct ReplyOutcome: Equatable, Sendable {
     public enum State: String, Sendable { case running, completed, interrupted, failed, ended }
     public let state: State
     public let retries: Int
+    public var rejectedSummaries: [String] = []
+    public var endReasonKind: String? = nil
     public var prominent: Bool { state == .failed }
     public var text: String {
+        guard !rejectedSummaries.isEmpty else { return statusText }
+        let refusal = rejectedSummaries.map { "你拒绝了" + $0 + "，没有做" }.joined(separator: "；")
+        return state == .completed && retries == 0 ? refusal : refusal + "。" + statusText
+    }
+    private var statusText: String {
         switch state {
         case .completed: retries > 0 ? "已完成 · 中途有 \(retries) 步重试" : "已完成"
         case .interrupted: "已中断"
-        case .failed: "这轮未能完成，可以让我重试或补充说明。"
+        case .failed: endReasonKind == "max-tokens" ? "回复未完成：内容超出了本次可回复的长度，可以让我接着做。" : "这轮未能完成，可以让我重试或补充说明。"
         case .running: retries > 0 ? "中途遇到问题，正在继续" : "正在处理…"
         case .ended: "已结束"
         }
@@ -17,9 +24,25 @@ public struct ReplyOutcome: Equatable, Sendable {
     public static func classify(events: [TimelineEvent], taskID: String) -> Self {
         let rows = events.filter { $0.data["taskId"]?.string == taskID || $0.data["completedStep"]?["taskId"]?.string == taskID || ($0.type == "turn.ended" && taskID == "turn-\($0.data["turn"]?.int ?? -1)") }
         let end = rows.last { $0.type == "task.ended" || $0.type == "turn.ended" }
+        let requests = events.filter { $0.type == "approval.requested" }
+        let refused = events.filter { $0.type == "approval.resolved" && $0.data["outcome"]?.string == "rejected" }.map { event -> [String: JSONValue] in
+            let request = requests.first { $0.data["approvalId"] == event.data["approvalId"] }
+            var fields: [String: JSONValue] = [:]
+            if let request, case .object(let values) = request.data { fields = values }
+            if case .object(let values) = event.data { fields.merge(values) { _, new in new } }
+            return fields
+        }
+        let rejected = rows.filter { row in
+            let data = row.data["completedStep"] ?? row.data
+            return row.type.hasPrefix("step.") && refused.contains { receipt in
+                let call = receipt["callId"]?.string ?? receipt["stepId"]?.string
+                return call != nil && (call == data["callId"]?.string || call == data["stepId"]?.string)
+            }
+        }
+        let rejectedIDs = Set(rejected.compactMap { ($0.data["completedStep"] ?? $0.data)["stepId"]?.string })
         let failures = Set(rows.filter { row in
             let data = row.data["completedStep"] ?? row.data
-            return data["state"]?.string == "failed" || data["jobState"]?.string == "failed" || row.type == "step.failed"
+            return !rejectedIDs.contains(data["stepId"]?.string ?? "") && (data["state"]?.string == "failed" || data["jobState"]?.string == "failed" || row.type == "step.failed")
         }.map { ($0.data["completedStep"] ?? $0.data)["stepId"]?.string ?? String($0.seq) })
         let reason = end?.data["reason"]?.string ?? end?.data["reason"]?["kind"]?.string
         let state: State
@@ -29,7 +52,15 @@ public struct ReplyOutcome: Equatable, Sendable {
         else if end != nil { state = .ended }
         else if rows.contains(where: { ["cancelled", "killed"].contains($0.data["state"]?.string ?? $0.data["jobState"]?.string ?? "") }) { state = .interrupted }
         else { state = .running }
-        return .init(state: state, retries: failures.count)
+        var summaries: [String] = []
+        for row in rejected {
+            let data = row.data["completedStep"] ?? row.data
+            let tool = data["toolName"]?.string ?? ""
+            let bytes = try? JSONEncoder().encode(data["arguments"] ?? .object([:]))
+            let summary = ToolProgressSummary.approval(tool: tool, raw: data["arguments"]?.string ?? bytes.flatMap { String(data: $0, encoding: .utf8) } ?? "")
+            if !summaries.contains(summary) { summaries.append(summary) }
+        }
+        return .init(state: state, retries: failures.count, rejectedSummaries: summaries, endReasonKind: end?.data["endReasonKind"]?.string)
     }
 }
 public struct ReplyArtifactBundle: Equatable, Sendable, Identifiable {

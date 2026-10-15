@@ -55,7 +55,7 @@ test('MODE-1 existing main and side chats stay chat, project and browser session
 test('MODE-1 every actual computer tool gates, while account data and code orchestration retain their data semantics', () => {
   for (const name of ['read', 'write', 'edit', 'glob', 'grep', 'pwsh', 'bash', 'shell', 'browser',
     'subagent', 'job_output', 'weftmod_script', 'new_valid_execution_tool']) assert.equal(toolNeedsComputer(name), true, name);
-  for (const name of ['load_tools', 'web_fetch', 'web_search', 'health_query', 'memory_query', 'current_time', 'sleep', 'todo_write', 'ask_user_question',
+  for (const name of ['load_tools', 'web_fetch', 'web_search', 'health_query', 'memory_query', 'memory_forget', 'memory_correct', 'current_time', 'sleep', 'todo_write', 'ask_user_question',
     'get_goal', 'create_goal', 'update_goal', 'run_code']) assert.equal(toolNeedsComputer(name), false, name);
   assert.equal(toolNeedsComputer('mcp__c_test', {}, { category: 'read' }), false);
   for (const category of ['write', 'delete', 'external', 'unknown']) assert.equal(toolNeedsComputer('mcp__c_test', {}, { category }), true);

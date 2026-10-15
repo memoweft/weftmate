@@ -5,7 +5,8 @@ import { join } from 'node:path';
 export const personalMemoryGuidance = 'When the current user introduces a specific person with a useful ability or relationship, acknowledge briefly and make one opt-in proposal to remind the user to contact that person in a relevant future situation. This brief question in reply text is an exception to clarification-only guidance; do not call ask_user_question or block the conversation. 本轮用户新提供了具体人物的可用能力或有自然未来用途的关系，且还没有确认过相关决定时，即使当前没有在安排相关任务，也要简短提议一次。用一句简短问句，提议由你这个助手在以后相关情境提醒用户找这个人，并邀请用户确认；不需要用户先说“记住”。用户有具体任务或明确限定回复格式时先完成当前请求，不提新建议；没有持续用途的泛聊只简短回应。背景记忆本身不触发新提议。一次只提议一件相关的事；结合对话和当前记忆，同一事不重复提议，闲聊、拒绝或不回应时不坚持。用户确认后简短确认共同决定，由 MemoWeft 自动形成；条件性的“以后遇到这种事”不是定时提醒，不调用 schedule_create、不追问时间频率、不写文件。只有用户明确要求具体时间的通知或执行任务才使用调度工具。问历史人物、关系或决定时，若当前对话和背景记忆都没有可靠依据，直接说明目前不能确定，不为了猜出旧事实而查工作文件或发起阻塞的提问；用户明确要求查文件或复用当前对话经验时仍按该目标处理。纠正后采用最新理解；被取代的来源可用于解释以前为什么那样理解，不能当作当前事实。 本轮记忆在回复后异步形成，尚无成功回执；确认或纠正时应说“我记下了，稍后整理进记忆”，不得说“已记住／已纠正”。这不替代首次有用人物的一次提议和确认问句。';
 
 export const name = 'weftmate-personal-memory';
-export const inject = [];
+export const personalMemoryToolsGuidance = 'In chat and work, explicit forgetting requires memory_query then memory_forget for matching memories/recent evidence, never file tools or a promise to organize later. Correct existing memories with memory_query then memory_correct. Confirm forgetting only on applied/no_change receipts, correction on applied; re-query revision_conflict, report failures honestly. When memory is unknown or forgotten, briefly say you do not know; do not guess, repeat old preferences, list examples, or print tool syntax in reply text.';
+export const inject = ['tools'];
 export const PERSONAL_MEMORY_PROTOCOL = 'weftmate.personal-memory.v1';
 const PRESETS = new Set(['personal-remote', 'personal-shared-chat']);
 const diagnosticClass = (failure) => {
@@ -184,6 +185,53 @@ export function ordinaryContextAfterTemporary(messages, events, firstTurn) {
 export function apply(ctx) {
   if (process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED !== '1') return;
   const bridge = new HostMemoryBridge();
+  const cleanupRequests = new Map();
+  const cleanupFlights = new Set();
+  ctx.on('agent/created', async ({ agent }) => {
+    if (!PRESETS.has(agent.session?.header?.agentPreset) || agent.session.header.origin === 'subagent') return;
+    const { defineTool } = await import('@deepseek-ai/dsh-tools');
+    const target = {
+      kind: { type: 'string', required: true, enum: ['cognition', 'entity', 'relationship', 'event', 'evidence'], description: 'Use the kind returned by memory_query.' },
+      id: { type: 'string', required: true, description: 'Exact item id returned by memory_query.' },
+      expectedWorldRevision: { type: 'integer', required: true, description: 'Latest worldRevision from memory_query; query again on revision_conflict.' },
+    };
+    for (const tool of [
+      { name: 'memory_query', title: '查找记忆', description: 'Find account memories matching a topic, with ids and worldRevision. Use before forgetting or correcting. This queries memory, never computer files.',
+        parameters: { query: { type: 'string', required: true, description: 'A focused memory topic or question.' } } },
+      { name: 'memory_forget', title: '忘掉记忆', description: 'Forget a matching memory when the current user asks to forget it. Use exact kind/id and latest worldRevision from memory_query, including recent evidence if relevant. Only claim success for an applied or no_change receipt; report rejection/conflict honestly. Does not search or edit computer files.', parameters: target },
+      { name: 'memory_correct', title: '纠正记忆', description: 'Correct a matching memory to the current user\'s new understanding. Use exact kind/id and latest worldRevision from memory_query. Only claim correction after an applied receipt.',
+        parameters: { ...target, kind: { ...target.kind, enum: ['cognition', 'relationship', 'event'] },
+          text: { type: 'string', required: true, description: 'The user\'s corrected fact, not the superseded value.' } } },
+    ]) agent.ctx.tools.register(defineTool({ ...tool,
+      output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
+      execute: async (args, exec) => {
+        const turn = agent.session.events.findLast(event => event.type === 'turn/start').data.turn;
+        const result = await bridge.request('tool', { sessionId: agent.id, turn,
+          tool: { name: tool.name, arguments: args,
+            requestId: `memory-tool:${digest(`${agent.id}|${turn}|${exec.callId}`)}` } }, exec.signal);
+        if (result.receipt?.storageCleanup?.state === 'pending') {
+          let requests = cleanupRequests.get(agent.id);
+          if (!requests) { requests = new Set(); cleanupRequests.set(agent.id, requests); }
+          requests.add(result.receipt.requestId);
+        }
+        return result;
+      },
+      presentCall: () => ({ card: 'generic', title: tool.title, kind: 'other' }),
+    }));
+  });
+  ctx.on('agent/status', ({ agent, status }) => {
+    if (status !== 'idle' || !cleanupRequests.size) return;
+    for (const [sessionId, requests] of cleanupRequests) for (const requestId of requests) {
+      if (cleanupFlights.has(requestId)) continue;
+      cleanupFlights.add(requestId);
+      void bridge.request('tool', { sessionId, turn: 0,
+        tool: { name: 'memory_cleanup', arguments: { requestId } } }).then(result => {
+        if (['applied', 'no_change'].includes(result.receipt?.state) && result.receipt.storageCleanup?.state !== 'pending') {
+          requests.delete(requestId); if (!requests.size) cleanupRequests.delete(sessionId);
+        }
+      }).catch(() => { /* Core's durable journal keeps the pending cleanup. */ }).finally(() => cleanupFlights.delete(requestId));
+    }
+  });
   ctx.on('agent/pre-step', async (payload, next) => {
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
