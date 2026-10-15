@@ -277,30 +277,17 @@ export function apply(ctx) {
   ctx.on('llm/stream', (options, next) => {
     const scope = options.signal && requestScopes.get(options.signal);
     const action = scope && actionReplies.get(scope.agent);
-    if (!action || action.turn !== scope.turn || options.sessionId !== scope.agent.id || options.purpose !== undefined) return next();
+    if (!action?.fallbackPending || action.turn !== scope.turn || options.sessionId !== scope.agent.id || options.purpose !== undefined) return next();
     return (async function* () {
       const { isAgentLoopRequest } = await import('@deepseek-ai/dsh-llm');
       if (!isAgentLoopRequest(options)) { yield* next(); return; }
-      // Let the real model finish its remaining tools and answer. Buffer this
-      // continuation so a failed stream cannot publish half a tool call or a
-      // half-generated recommendation before the receipt-based fallback.
-      const chunks = []; let failure;
-      try { for await (const chunk of next()) chunks.push(chunk); }
-      catch (error) { if (options.signal?.aborted) throw error; failure = error; }
-      const finish = chunks.findLast(chunk => chunk.type === 'finish');
-      const usable = chunks.some(chunk => chunk.type === 'tool-call-delta' ||
-        chunk.type === 'text-delta' && chunk.text.trim() ||
-        chunk.type === 'block-end' && (chunk.block.type === 'tool-call' || chunk.block.type === 'text' && chunk.block.text.trim()));
-      if (!options.signal?.aborted && finish?.reason?.kind !== 'aborted' &&
-          (failure || finish?.reason?.kind === 'error' || !usable)) {
-        diagnostic('memory-final-fallback', failure ?? finish?.reason?.failure);
-        for (const chunk of chunks) if (chunk.type === 'usage') yield chunk;
-        const text = action.message + '后面的回复没能生成，请稍后再试。';
-        yield { type: 'block-start', index: 0, blockType: 'text' };
-        yield { type: 'text-delta', index: 0, text };
-        yield { type: 'block-end', index: 0, block: { type: 'text', text } };
-        yield { type: 'finish', reason: { kind: 'completed' } };
-      } else yield* chunks;
+      options.signal?.throwIfAborted();
+      action.fallbackPending = false;
+      const text = action.message + '后面的回复没能生成，请稍后再试。';
+      yield { type: 'block-start', index: 0, blockType: 'text' };
+      yield { type: 'text-delta', index: 0, text };
+      yield { type: 'block-end', index: 0, block: { type: 'text', text } };
+      yield { type: 'finish', reason: { kind: 'completed' } };
     })();
   }, { global: true });
   ctx.on('agent/turn-stopping', async ({ agent, turn, signal }) => {
@@ -386,10 +373,19 @@ export function apply(ctx) {
     diagnostic('prestep-message-created');
     return { ...clearedDecision, messages: backgroundBeforeUser(messages, [memoryMessage]) };
   }, { prepend: true });
-  ctx.on('agent/request-error', (payload, next) => {
+  ctx.on('agent/request-error', async (payload, next) => {
     diagnostic('model-request-error', payload?.failure);
-    return next();
-  });
+    const recovery = await next();
+    // Preserve DSH's existing compaction/retry recovery first. Only a terminal
+    // failed generation after a memory tool gets a native retry that streams
+    // the host's receipt summary, without another provider request.
+    if (recovery?.kind === 'retry' || payload.signal?.aborted) return recovery;
+    const action = actionReplies.get(payload.agent);
+    if (action?.turn !== payload.turn || action.fallbackUsed) return recovery;
+    action.fallbackUsed = true; action.fallbackPending = true;
+    diagnostic('memory-final-fallback', payload.failure);
+    return { kind: 'retry' };
+  }, { prepend: true });
   ctx.on('session/created', session => {
     if (!PRESETS.has(session.header?.agentPreset)) return;
     const deriveMessages = session.deriveMessages?.bind(session);
