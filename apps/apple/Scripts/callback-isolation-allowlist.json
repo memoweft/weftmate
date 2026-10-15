@@ -551,5 +551,40 @@
     "api": "fileImporter",
     "sha256": "9c78a0e055ac1b7a4aee99fd068775345cb8b20d6b4b47f66cad634d3f341bc8",
     "reason": "Mac file importer uses a named nonisolated factory returning @Sendable, then explicitly hops to MainActor and verifies the captured account and conversation before UI access."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneStandalone.swift",
+    "line": 338,
+    "api": "dataTask",
+    "sha256": "18a3d343c7779a9dea36ff0e1e063f5688c9201541ed1c3aa35a3be2593fb23f",
+    "reason": "Creates the owned URLSessionDataTask without a completion closure under NSRecursiveLock. The non-actor delegate synchronizes its state and yields Sendable strings; no UI actor access."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneStandalone.swift",
+    "line": 350,
+    "api": "urlSession",
+    "sha256": "2b1ddc071884bd8eeb6bb21a7a0594e49f35167a91c9dbdb481b53499f75c3ed",
+    "reason": "Non-actor URLSession redirect delegate rejects redirection and invokes the Sendable completion exactly once. It touches no controller or UI actor state."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneStandalone.swift",
+    "line": 351,
+    "api": "urlSession",
+    "sha256": "dc69a48dcb223d97c33c94620d4e644e3b258e36567da0750d9da43f6df17f51",
+    "reason": "Non-actor URLSession response delegate updates status under NSRecursiveLock then invokes the Sendable response completion exactly once. It has no controller or UI actor access."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneStandalone.swift",
+    "line": 355,
+    "api": "urlSession",
+    "sha256": "0e18c3ae4fa62ad464ba851caf5187cda80b0df3eda074a0ef023cb22648e98f",
+    "reason": "Non-actor URLSession data delegate parses buffered bytes under NSRecursiveLock and yields immutable String values through AsyncThrowingStream. All UI updates occur in the consuming MainActor task."
+  },
+  {
+    "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneStandalone.swift",
+    "line": 372,
+    "api": "urlSession",
+    "sha256": "1960411c4a90d129f600348491cb80faaf99263d210a5d0416bf23db8290a0c5",
+    "reason": "Non-actor URLSession completion delegate takes NSRecursiveLock, finishes the Sendable stream once, and cancels the owned network task. It does not access the product controller or UI actor."
   }
 ]
