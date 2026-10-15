@@ -62,6 +62,23 @@ async function preStep(id, agent = { session: session(id) }, priorMessages = nul
       sourceFrozen: Object.isFrozen(injected.at(-1).source) } : null };
 }
 process.on('message', async (message) => {
+  if (message?.type === 'run-forget') {
+    try {
+      const value = session('session-explicit-forget');
+      const user = { ...userClaim('explicit'), content: [{ type: 'text', text: message.text }] };
+      const agent = { id: value.id, session: value };
+      const inputs = [user, { ...userClaim('calculation'), content: [{ type: 'text', text: '另外请计算12×13。' }] }];
+      const first = await preStep(value.id, agent, inputs, inputs);
+      value.append('user/message', user);
+      // A later step must not submit the same intent again.
+      const second = await preStep(value.id, agent, first.messages, []);
+      value.append('assistant/message', { turn: 1, message: { source: { provider: 'synthetic', model: 'synthetic' },
+        content: [{ type: 'text', text: '12×13＝156。' }] } });
+      await handlers.get('agent/turn-stopping')({ agent, turn: 1 });
+      process.send({ type: 'result', first, second, events: value.events });
+    } catch (error) { process.send({ type: 'failed', error: String(error.stack) }); }
+    return;
+  }
   if (message?.type === 'run-private') {
     try {
       const value = session('session-private');

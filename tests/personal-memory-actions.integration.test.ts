@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 import { createHash } from 'node:crypto'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, fork } from 'node:child_process'
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs'
 import { MemoWeftRpc } from '../src/personal-memory/rpc.mjs'
 import { handlePersonalMemoryTool } from '../src/personal-access/memory-runtime.mjs'
@@ -115,6 +115,74 @@ test('real Core: explicit correction survives another session and forgetting era
   assert.doesNotMatch(after.contextText, /乌龙茶|红茶/)
   assert.doesNotMatch(await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json'), 'utf8'), /我现在喜欢红茶/)
   assert.deepEqual(f.errors, [])
+})
+
+test('FIX-50 real Core: an explicit forget deletes correction history and source HTTP content without a model tool call', { skip }, async t => {
+  const f = await fixture(t)
+  const old = (await f.world()).items[0]
+  assert.equal((await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1,
+    text: '我喝茶的偏好是红茶。' }, 'fix50-correct', '纠正我喝茶的偏好为红茶。')).state, 'applied')
+  await f.ready()
+  const before = (await f.world()).items
+  assert.ok(before.length >= 2)
+  const sources = async (id: string) => {
+    const pathname = `/personal/v1/memory/items/cognition/${id}/sources`
+    return handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname,
+      url: new URL(pathname, 'http://memory'), request: { method: 'GET' }, readJson: async () => ({}) })
+  }
+  for (const row of before) assert.ok((await sources(row.item_id)).body.sources.some((s: any) => s.contentAvailable))
+  const child = fork(new URL('fixtures/personal-memory-plugin-child.mjs', import.meta.url), [], {
+    env: { ...process.env, WEFTMATE_PERSONAL_MEMORY_ENABLED: '1' }, stdio: ['ignore', 'ignore', 'ignore', 'ipc'], windowsHide: true,
+  })
+  const tools: any[] = []
+  try {
+    const result: any = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(Error('explicit forget hook timeout')), 30000)
+      child.on('message', async (message: any) => {
+        if (message.type === 'ready') child.send({ type: 'run-forget', text: '忘掉我喝茶的偏好，另外请计算12×13。' })
+        else if (message.type === 'result' || message.type === 'failed') {
+          clearTimeout(timer); message.type === 'result' ? resolve(message) : reject(Error(message.error))
+        } else if (message.protocol === 'weftmate.personal-memory.v1') {
+          try {
+            let value
+            if (message.action === 'tool') {
+              tools.push(message.tool)
+              value = await handlePersonalMemoryTool(f.manager, owner, message.tool,
+                { sessionId: message.sessionId, modelTier: 'cloud', memoryPolicy: { recall: true } })
+            } else value = await f.manager.recall(owner, { query: message.query, sessionId: message.sessionId, modelTier: 'cloud' })
+            child.send({ protocol: message.protocol, id: message.id, ok: true, result: value })
+          } catch { child.send({ protocol: message.protocol, id: message.id, ok: false, error: { code: 'MEMORY_UNAVAILABLE' } }) }
+        }
+      })
+      child.once('error', reject)
+    })
+    assert.equal(tools.length, 1, 'the host must execute forgetting once before inference, even with no model tool call')
+    assert.equal(tools[0].name, 'memory_forget')
+    assert.equal(tools[0].arguments.query, '我喝茶的偏好')
+    assert.equal((await f.world()).items.length, 0)
+    for (const row of before) await assert.rejects(sources(row.item_id), { code: 'NOT_FOUND', status: 404 })
+    const replies = result.events.filter((e: any) => e.type === 'assistant/message').map((e: any) =>
+      e.data.message.content.map((p: any) => p.text).join('')).join('\n')
+    assert.match(replies, /156/)
+    assert.match(replies, /已.*(?:删|忘).*喝茶/)
+    assert.match(JSON.stringify(result.first.messages), /已.*(?:删|忘)/, 'the model receives the actual deletion result')
+    await f.restart()
+    assert.doesNotMatch((await f.manager.recall(owner, { query: '我喜欢喝什么茶', sessionId: 'fix50-fresh', modelTier: 'cloud' })).contextText, /乌龙茶|红茶/)
+  } finally { child.kill() }
+})
+
+test('FIX-50 real Core: forgetting by topic also finds already non-current memories', { skip }, async t => {
+  const f = await fixture(t)
+  const old = (await f.world()).items[0]
+  assert.equal((await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1,
+    text: '我喝茶的偏好是红茶。' }, 'fix50-old-correct', '纠正我喝茶的偏好为红茶。')).state, 'applied')
+  const current = (await f.world()).items.find((row: any) => row.current_state === 'current')
+  await f.manager.submitCommand(owner, { requestId: 'fix50-retract', operation: 'retract_world_item', targetKind: 'cognition',
+    targetId: current.item_id, payload: {}, expectedWorldRevision: (await f.manager.status(owner)).worldRevision })
+  assert.ok((await f.world()).items.every((row: any) => row.current_state !== 'current'))
+  const result = await f.tool('memory_forget', { query: '我喝茶的偏好' }, 'fix50-legacy-forget', '忘掉我喝茶的偏好')
+  assert.equal(result.state, 'applied')
+  assert.equal((await f.world()).items.length, 0, 'non-current items must disappear from memory pages too')
 })
 
 for (const name of ['memory_correct', 'memory_forget']) test(`real Core: ${name} is queued during an outage and completed after host restart`, { skip }, async t => {

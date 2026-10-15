@@ -63,6 +63,29 @@ const diagnostic = (stage, failure) => {
 };
 
 const digest = (value) => createHash('sha256').update(value).digest('hex');
+
+/** Only direct, concrete deletion requests. Quotes, questions and vague references stay with the model. */
+export function explicitForgetTopics(text) {
+  const clauses = [], quotes = [], pairs = { '“': '”', '「': '」', '『': '』', '"': '"', '`': '`' };
+  let clause = '';
+  for (const char of text) {
+    if (quotes.at(-1) === char) quotes.pop();
+    else if (pairs[char]) quotes.push(pairs[char]);
+    if (!quotes.length && /[。；;！!？?\n]/u.test(char)) { clauses.push(clause + (/[？?]/u.test(char) ? char : '')); clause = ''; }
+    else clause += char;
+  }
+  clauses.push(clause);
+  return [...new Set(clauses.flatMap(value => {
+    const match = value.trim().match(/^(?:(?:另外|还有|然后)[，,\s]*)?(?:(?:请你?|麻烦你?|帮我)\s*)?(忘掉|忘记|别记住?|不要记住?|删掉|删除|清除)\s*(?:关于\s*)?(.+)$/u);
+    if (!match) return [];
+    let topic = match[2].split(/[，,]/u)[0].trim();
+    if (/^(?:删掉|删除|清除)$/u.test(match[1]) && !/(?:记忆|相关信息)$/u.test(topic)) return [];
+    if (/[？?]|(?:怎么|如何|是否|要不要|能不能|什么意思|或者|还是|如果)|[吗么]$/u.test(topic)) return [];
+    topic = topic.replace(/(?:的记忆|这条记忆|相关记忆|的相关信息|的信息)$/u, '').trim();
+    if (!topic || /^(?:(?:刚才|上面|之前|以前)?(?:这|那|它|所有|全部|一切)(?:个|些|件事|条记忆|记忆|说的|的事|的内容|的记忆)?|刚才|上面|之前|以前|偏好|习惯)$/u.test(topic)) return [];
+    return topic.length <= 500 ? [topic] : [];
+  }))];
+}
 const contentText = (parts) => Array.isArray(parts)
   ? parts.filter((part) => part?.type === 'text' && typeof part.text === 'string').map((part) => part.text).join('\n')
   : '';
@@ -221,9 +244,15 @@ export function apply(ctx) {
   if (process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED !== '1') return;
   const bridge = new HostMemoryBridge();
   const actionReplies = new WeakMap();
+  const explicitActions = new WeakMap();
   const requestScopes = new WeakMap();
   const cleanupRequests = new Map();
   const cleanupFlights = new Set();
+  function rememberReply(agent, turn, message) {
+    const previous = actionReplies.get(agent);
+    const messages = [...new Set([...(previous?.turn === turn ? previous.messages : []), message])];
+    actionReplies.set(agent, { turn, afterSeq: agent.session.events.at(-1)?.seq ?? -1, messages, message: messages.join('') });
+  }
   ctx.on('agent/created', async ({ agent }) => {
     if (!PRESETS.has(agent.session?.header?.agentPreset) || agent.session.header.origin === 'subagent') return;
     const { defineTool } = await import('@deepseek-ai/dsh-tools');
@@ -251,12 +280,10 @@ export function apply(ctx) {
           .catch(() => ({ state: 'unavailable', message: tool.name === 'memory_query'
             ? '暂时查不到记忆。' : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。' }));
         if (tool.name !== 'memory_query') {
-          const previous = actionReplies.get(agent);
           const message = result.message ?? (['applied', 'no_change'].includes(result.receipt?.state)
             ? tool.name === 'memory_forget' ? '已忘掉这件事。' : '已按你刚才的说法更新记忆。'
             : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。');
-          const messages = [...new Set([...(previous?.turn === turn ? previous.messages : []), message])];
-          actionReplies.set(agent, { turn, afterSeq: agent.session.events.at(-1)?.seq ?? -1, messages, message: messages.join('') });
+          rememberReply(agent, turn, message);
         }
         if (result.receipt?.storageCleanup?.state === 'pending') {
           let requests = cleanupRequests.get(agent.id);
@@ -294,16 +321,21 @@ export function apply(ctx) {
     const action = actionReplies.get(agent);
     if (!action || action.turn !== turn || signal?.aborted) return;
     const events = agent.session.events;
-    if (events.some(event => event.seq > action.afterSeq && event.type === 'assistant/message' &&
+    // Automatic deletion always has a factual receipt after the normal reply.
+    // Never conclude the turn or replace the model's answer to other requests.
+    const explicit = explicitActions.get(agent);
+    if (explicit?.turn === turn && explicit.reported) return;
+    if (explicit?.turn !== turn && events.some(event => event.seq > action.afterSeq && event.type === 'assistant/message' &&
         contentText(event.data?.message?.content).trim())) return;
     const { createAssistantMessage } = await import('@deepseek-ai/dsh-llm/message');
     const source = events.findLast(event => event.type === 'assistant/message')?.data?.message?.source;
     const step = (events.findLast(event => event.type === 'step/start')?.data.step ?? 0) + 1;
     agent.session.append('step/start', { turn, step });
     agent.session.append('assistant/message', { turn, step,
-      message: createAssistantMessage({ source: { provider: source.provider, model: source.model },
-        content: [{ type: 'text', text: action.message }] }) }, { surfaceOp: 'append' });
+      message: createAssistantMessage({ source: { provider: source?.provider ?? 'weftmate', model: source?.model ?? 'memory' },
+        content: [{ type: 'text', text: explicit?.turn === turn ? explicit.message : action.message }] }) }, { surfaceOp: 'append' });
     agent.session.append('step/end', { turn, step });
+    if (explicit?.turn === turn) explicit.reported = true;
   });
   ctx.on('agent/status', ({ agent, status }) => {
     if (status !== 'idle' || !cleanupRequests.size) return;
@@ -333,6 +365,34 @@ export function apply(ctx) {
     const turn = payload.turn;
     const user = userForPreStep(session, turn, payload.messages);
     if (!user) { delete session[Symbol.for('weftmate.memoryRecall')]; return clearedDecision; }
+    let explicit = explicitActions.get(payload.agent);
+    if (explicit?.turn !== turn) explicit = null;
+    // One inbox claim can contain several user messages; later tool steps may
+    // claim another message in the same turn. Deduplicate messages, not turns.
+    const claimed = (payload.messages ?? []).filter(message => message?.source?.kind === 'user');
+    const inputs = claimed.length ? claimed.map(message => ({ id: message.id, text: contentText(message.content).trim() })) : [user];
+    for (const input of inputs) {
+      const key = input.id ?? digest(input.text);
+      if (explicit?.seen.has(key)) continue;
+      const topics = explicitForgetTopics(input.text);
+      if (topics.length) {
+        explicit ??= { turn, message: '', reported: false, seen: new Set() };
+        explicit.seen.add(key); explicit.reported = false;
+        explicitActions.set(payload.agent, explicit);
+        for (const topic of topics) {
+          const result = await bridge.request('tool', { sessionId: session.id, turn,
+            tool: { name: 'memory_forget', arguments: { query: topic }, source: input,
+              requestId: `memory-tool:${digest(`${session.id}|${turn}|${key}|explicit-forget|${topic}`)}` } }, payload.signal)
+            .catch(() => ({ state: 'unavailable', message: '这次还没忘掉，请稍后再试。' }));
+          const message = result.state === 'applied'
+            ? `已删除关于“${topic}”的记忆，包括旧版本和来源原文。`
+            : result.state === 'not_found' ? `没找到关于“${topic}”的记忆。`
+              : `关于“${topic}”的记忆：${result.message ?? '这次还没忘掉，请稍后再试。'}`;
+          explicit.message += message;
+        }
+        rememberReply(payload.agent, turn, explicit.message);
+      }
+    }
     const query = user.text;
     let text = null;
     try {
@@ -360,6 +420,7 @@ export function apply(ctx) {
       // A failed bridge clears this step's memory rather than reusing prior data.
     }
     finally { delete payload.agent[Symbol.for('weftmate.memoryRecallPending')]; }
+    if (explicit?.turn === turn) text = `【本轮遗忘操作的实际结果】${explicit.message}\n这项操作已由宿主处理，无需重复调用；如实说明结果，并继续回答用户本轮其余请求。\n` + (text ?? '');
     if (text === null) return clearedDecision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
     diagnostic('prestep-factory-ready');
@@ -369,7 +430,7 @@ export function apply(ctx) {
       source: { kind: 'plugin', plugin: name, form: 'snapshot',
         sections: [{ name: 'weftmate-personal-memory', text: background }] },
     });
-    session[Symbol.for('weftmate.memoryRecall')].messageId = memoryMessage.id;
+    (session[Symbol.for('weftmate.memoryRecall')] ??= { turn, memories: [] }).messageId = memoryMessage.id;
     diagnostic('prestep-message-created');
     return { ...clearedDecision, messages: backgroundBeforeUser(messages, [memoryMessage]) };
   }, { prepend: true });

@@ -31,7 +31,7 @@ async function removeLinks(directory: string) {
 }
 
 /** Real HTTP host, managed DSH process, native tools and model requests. Only inference and Core replies are scripted. */
-async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = false } = {}) {
+async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = false, automaticForget = '' } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-fix45-'));
   const calls: any[] = [], commands: any[] = [], recallCalls: any[] = [], revisions = new Map<string, number>(), facts = new Map<string, string>();
   let progress = 0;
@@ -68,13 +68,20 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
     },
   };
   const tool = (name: string, args: any, count: number) => ({ content: '', tool_calls: [{ id: `fix45-${count}`, type: 'function', function: { name, arguments: JSON.stringify(args) } }] });
+  if (automaticForget) manager.mutateFromTool = async (owner: string, action: any) => {
+    assert.equal(owner, ownerId); commands.push(action);
+    assert.equal(action.name, 'memory_forget'); assert.deepEqual(action.arguments, { query: '我喝茶的偏好' });
+    if (automaticForget === 'applied') facts.delete(owner);
+    return { state: automaticForget, message: automaticForget === 'queued' ? '这次还没忘掉，稍后会再试。' : '已忘掉这件事。' };
+  };
   const runtime = await phoneRuntime(root, [], {
     respond(body: any) {
-      const index = body.messages.findLastIndex((m: any) => m.role === 'user' && /^(FIX45_|FIX47_)/.test(textOf(m)));
+      const index = body.messages.findLastIndex((m: any) => m.role === 'user' && /^(FIX45_|FIX47_|忘掉|不对，请重新计算)/.test(textOf(m)));
       const input = index < 0 ? '' : textOf(body.messages[index]);
       if (index < 0) return { content: '合成对话' };
       const prior = body.messages.slice(index + 1).flatMap((m: any) => m.tool_calls ?? []);
       const step = prior.length;
+      if (input.startsWith('忘掉') || input.startsWith('不对，请重新计算')) return { content: '12×13＝156。' };
       if (input.startsWith('FIX45_FOLLOWUP')) return { content: '排队的更正已处理。' };
       if (input.startsWith('FIX47_QUEUED_CONTINUE')) {
         if (step === 0) return tool('load_tools', { names: ['memory_correct'] }, step);
@@ -201,6 +208,29 @@ test('recall-disabled conversations do not read or send memory through tools, wh
   await f.complete(await f.send(session, 'FIX45_PRIVATE_WRITE 忘掉茶偏好'));
   assert.equal(f.facts.has(f.ownerId()), false);
   assert.deepEqual(f.commands.map(c => c.operation), ['correct_world_item', 'delete_world_item']);
+});
+
+for (const state of ['applied', 'queued', 'not_found']) test(`FIX-50 automatic forgetting ${state} keeps the native model reply and reports the actual outcome`, { timeout: 60000 }, async t => {
+  const f = await fixture(t, { automaticForget: state }), session = await f.create();
+  const result = await f.complete(await f.send(session, '忘掉我喝茶的偏好，另外请计算12×13。'));
+  assert.equal(result.terminal.data.reason, 'completed');
+  assert.equal(f.commands.length, 1);
+  assert.equal(f.facts.has(f.ownerId()), state !== 'applied');
+  assert.ok(f.runtime.requests.length > 0, 'normal model inference must run after the automatic operation');
+  assert.ok(f.runtime.requests.every((request: any) => request.messages.every((message: any) => !(message.tool_calls?.length))), 'the model never calls a tool');
+  const replies = (await f.api(`/sessions/${session}/events`)).events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
+  assert.match(replies, /156/);
+  if (state === 'applied') assert.match(replies, /已删除.*喝茶.*旧版本和来源原文/);
+  else { assert.match(replies, state === 'queued' ? /这次还没忘掉，稍后会再试/ : /没找到.*喝茶/); assert.doesNotMatch(replies, /已删除/); }
+});
+
+test('FIX-50 an ordinary arithmetic correction still receives the native model answer', { timeout: 60000 }, async t => {
+  const f = await fixture(t, { automaticForget: 'applied' }), session = await f.create();
+  await f.complete(await f.send(session, '不对，请重新计算12×13'));
+  assert.equal(f.commands.length, 0);
+  assert.ok(f.facts.has(f.ownerId()));
+  const replies = (await f.api(`/sessions/${session}/events`)).events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
+  assert.match(replies, /156/); assert.doesNotMatch(replies, /已删除|已忘掉/);
 });
 
 test('changing results reset repetition and the model consumes the completed result', { timeout: 60000 }, async t => {

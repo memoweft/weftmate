@@ -32,6 +32,7 @@ export function createMemoryActions({ root, manager, schedule }) {
   async function forgetSources(owner, action) {
     const m = manager(), args = action.arguments;
     let targets;
+    const worlds = new Map();
     if (args.query) {
       // Conversational recall also adds identity and standing style preferences.
       // A destructive topic lookup must use only this one Core query.
@@ -39,13 +40,26 @@ export function createMemoryActions({ root, manager, schedule }) {
       targets = (snapshot.preview?.selected_item_ids ?? []).map(([kind, id]) => ({ kind, id }));
       targets.push(...[...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? [])]
         .map(item => ({ id: item.id ?? item.evidence_id, kind: 'evidence' })));
+      // Recall deliberately omits invalidated items. A deletion must also find
+      // literal topic matches in the owner's retained history, without sending
+      // that unrestricted history to the model or guessing semantic synonyms.
+      const topic = args.query.normalize('NFKC').trim().replace(/^(?:关于|我的?|用户的?)/u, '')
+        .replace(/(?:的)?记忆$/u, '').replaceAll('的', '').trim();
+      if (topic) for (const kind of ['cognition', 'relationship', 'event', 'entity']) {
+        const world = await m.query(owner, 'query_world', { operation: 'list', object_kind: kind, include_history: true });
+        worlds.set(kind, world);
+        for (const row of world.items ?? []) {
+          const content = row.value.content ?? row.value.canonical_name ?? '';
+          if (content.normalize('NFKC').replaceAll('的', '').includes(topic)) targets.push({ kind, id: row.item_id });
+        }
+      }
     } else targets = [{ kind: args.kind, id: args.id }];
     const ids = new Set(), sources = new Set(), texts = new Set();
     const related = new Set(targets.map(item => item.id));
     // Capture the entire revision chain before deleting its first source: Core
     // removes transition links during deletion, so walking afterward is too late.
     for (const kind of new Set(targets.filter(item => item.kind !== 'evidence').map(item => item.kind))) {
-      const world = await m.query(owner, 'query_world', { operation: 'list', object_kind: kind, include_history: true });
+      const world = worlds.get(kind) ?? await m.query(owner, 'query_world', { operation: 'list', object_kind: kind, include_history: true });
       let changed;
       do {
         changed = false;
