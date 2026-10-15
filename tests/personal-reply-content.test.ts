@@ -62,4 +62,10 @@ test('tool errors and memory failure receipts become plain model-facing text', (
 test('nested code execution keeps the memory failure wording', () => {
   const content=modelToolFailure('run_code',{isError:true,error:{message:'memory_forget MEMORY_UNAVAILABLE'},content:[]});
   assert.equal(content[0].text,'这次没忘掉，稍后会再试。');
+  assert.equal(modelToolFailure('run_code',{isError:true,error:{message:content[0].text},content:[]})[0].text,content[0].text);
+});
+
+test('ordinary nested JSON is not mistaken for a call envelope', async () => {
+  const text='{"example":{"name":"sample","arguments":{"value":2}},"description":"普通资料"}';
+  assert.equal((await collect(text)).text,text);
 });
