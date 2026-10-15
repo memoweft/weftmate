@@ -791,10 +791,17 @@ final class AppleAppModel: ObservableObject {
     #if os(iOS)
     @Published var phonePreviewRequest=UUID()
     lazy var phoneChat = PhoneStandaloneModel()
-    var phoneCredentialNamespace: String { cloudNamespace + ".phone" }
-    var phoneAccountIdentity: String { cloudLogin.subject.map { cloudLogin.cloudAddress + "|" + $0 } ?? "device-local" }
     var phoneReminderAccountIdentity: String? { ReminderAccountIdentity.resolve(subject:cloudLogin.subject,issuer:cloudLogin.cloudAddress,restored:cloudLogin.identityRestored) }
     #endif
+    // Standalone storage uses the same account boundary on iPhone and Mac.
+    var phoneCredentialNamespace: String {
+        #if os(macOS)
+        cloudNamespace + ".mac"
+        #else
+        cloudNamespace + ".phone"
+        #endif
+    }
+    var phoneAccountIdentity: String { cloudLogin.subject.map { cloudLogin.cloudAddress + "|" + $0 } ?? "device-local" }
     lazy var cloudLogin = CloudLoginModel(app: self, namespace: cloudNamespace)
     @Published var timelineRootCommands: [TaskRootCommandMetadata] = []
     @Published var stoppingActiveTask = false
@@ -2433,5 +2440,19 @@ private final class CaptureCredentials: CredentialStore, @unchecked Sendable {
     func load(key: String) -> Data? { lock.withLock { values[key] } }
     func save(_ data: Data, key: String) { lock.withLock { values[key] = data } }
     func delete(key: String) { lock.withLock { values[key] = nil } }
+}
+#endif
+
+#if DEBUG && os(macOS)
+extension AppleAppModel {
+    /// A synthetic connection transition for the native regression driver; no account login or network.
+    func seedMacStandaloneConnectionReview() throws {
+        let args = ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"), args.contains("--apple12-fix1-connection") else { return }
+        let value: [String: Any] = ["server": ["origin": "https://connection.example.invalid"],
+            "account": ["ownerId": "synthetic-owner", "username": "synthetic", "displayName": "合成连接"],
+            "device": ["id": "synthetic-device", "name": "合成 Mac"], "hostId": "synthetic-computer", "verification": "verified"]
+        session = try JSONDecoder().decode(AccountSession.self, from: JSONSerialization.data(withJSONObject: value))
+    }
 }
 #endif

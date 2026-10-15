@@ -1,6 +1,21 @@
 import SwiftUI
 import WeftMateCore
 
+private var serviceControlHeight: CGFloat {
+    #if os(macOS)
+    AppleTokens.Space.p32
+    #else
+    AppleTokens.Space.p44
+    #endif
+}
+private var serviceControlRadius: CGFloat {
+    #if os(macOS)
+    AppleTokens.Radius.r8
+    #else
+    AppleTokens.Radius.r24
+    #endif
+}
+
 /// Scoped controls-spec palette from the generated, shared token source.
 struct ServiceControlPalette {
     let dark: Bool
@@ -17,13 +32,15 @@ struct ServiceControlPalette {
 }
 struct ServiceActionStyle: ButtonStyle {
     var primary=false
+    @Environment(\.isEnabled) private var enabled
     @Environment(\.colorScheme) private var scheme
     func makeBody(configuration: Configuration) -> some View {
         let colors=ServiceControlPalette(dark:scheme == .dark)
         configuration.label.font(.system(size:AppleTokens.FontSize.f15,weight:.medium)).foregroundStyle(primary ? colors.onAccent : colors.secondary)
-            .padding(.horizontal,AppleTokens.Space.p18).frame(minHeight:AppleTokens.Space.p44).frame(maxWidth:.infinity)
-            .background(primary ? colors.accent : configuration.isPressed ? colors.soft : colors.surface,in:Capsule())
-            .overlay(Capsule().stroke(primary ? .clear : colors.line,lineWidth:AppleTokens.Space.p1))
+            .padding(.horizontal,AppleTokens.Space.p18).frame(minHeight:serviceControlHeight).frame(maxWidth:.infinity)
+            .background(primary ? colors.accent : configuration.isPressed ? colors.soft : colors.surface,in:RoundedRectangle(cornerRadius:serviceControlRadius))
+            .overlay(RoundedRectangle(cornerRadius:serviceControlRadius).stroke(primary ? .clear : colors.line,lineWidth:AppleTokens.Space.p1))
+            .opacity(enabled ? 1 : AppleTokens.Opacity.disabled)
     }
 }
 struct ServiceSwitch: View {
@@ -37,7 +54,7 @@ struct ServiceSwitch: View {
                 Text(title).font(.system(size:AppleTokens.FontSize.f15,weight:.medium)).foregroundStyle(colors.ink);Spacer()
                 Capsule().fill(enabled ? colors.accent : colors.muted).frame(width:AppleTokens.Space.pcontrol_switch_width,height:AppleTokens.Space.p26)
                     .overlay(alignment:enabled ? .trailing : .leading) { Circle().fill(enabled ? colors.onAccent : colors.surface).frame(width:AppleTokens.Space.p20,height:AppleTokens.Space.p20).padding(AppleTokens.Space.p3) }
-            }.frame(minHeight:AppleTokens.Space.p44).contentShape(Rectangle())
+            }.frame(minHeight:serviceControlHeight).contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityLabel(title).accessibilityValue(enabled ? "已开启" : "已关闭").accessibilityAddTraits(.isButton)
     }
 }
@@ -56,7 +73,7 @@ struct ServiceMenuRow: View {
                     if let subtitle { Text(subtitle).font(.system(size:AppleTokens.FontSize.f12)).foregroundStyle(colors.muted) }
                 };Spacer(minLength:AppleTokens.Space.p8)
                 if selected { WeftIcon("allow",size:AppleTokens.Space.p18) }
-            }.foregroundStyle(colors.ink).frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p44,alignment:.leading).contentShape(Rectangle())
+            }.foregroundStyle(colors.ink).frame(maxWidth:.infinity,minHeight:serviceControlHeight,alignment:.leading).contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityValue(selected ? "当前选择" : "")
     }
 }
@@ -79,13 +96,13 @@ struct ServiceModelMenuButton: View {
     @Environment(\.colorScheme) private var scheme
     private var colors: ServiceControlPalette { .init(dark:scheme == .dark) }
     var body: some View {
-        Button { open.toggle();all=false;query="";refresh() } label: { WeftIcon("model",size:AppleTokens.Space.p22).frame(width:AppleTokens.Space.p44,height:AppleTokens.Space.p44).contentShape(Circle()) }
+        Button { open.toggle();all=false;query="";refresh() } label: { WeftIcon("model",size:serviceControlHeight == AppleTokens.Space.p32 ? AppleTokens.Space.p18 : AppleTokens.Space.p22).frame(width:serviceControlHeight,height:serviceControlHeight).contentShape(Circle()) }
             .buttonStyle(.plain).foregroundStyle(colors.secondary).accessibilityLabel("模型："+label).accessibilityIdentifier(identifier)
             .popover(isPresented:$open,arrowEdge:.bottom) { menuContent.presentationCompactAdaptation(.popover).presentationBackground(.clear).presentationCornerRadius(AppleTokens.Radius.r12) }
     }
     private var listHeight: CGFloat {
         let rows=services.reduce(0) { $0+ModelCatalog.menuModels($1.models,current:current,all:all,query:query).count }
-        return min(AppleTokens.Space.pmodel_menu_extent,CGFloat(rows)*AppleTokens.Space.p44+(services.count > 1 ? CGFloat(services.count)*AppleTokens.Space.p32 : AppleTokens.Space.p0))
+        return min(AppleTokens.Space.pmodel_menu_extent,CGFloat(rows)*serviceControlHeight+(services.count > 1 ? CGFloat(services.count)*AppleTokens.Space.p32 : AppleTokens.Space.p0))
     }
     private var menuContent: some View {
         VStack(alignment:.leading,spacing:AppleTokens.Space.p4) {
@@ -111,3 +128,25 @@ struct ServiceModelMenuButton: View {
             .accessibilityIdentifier("modelServices.choose."+item.modelId)
     }
 }
+
+extension View {
+    @ViewBuilder func modelServiceField() -> some View {
+        #if os(macOS)
+        self.modifier(MacModelServiceField())
+        #else
+        self.weaveField()
+        #endif
+    }
+}
+#if os(macOS)
+private struct MacModelServiceField: ViewModifier {
+    @Environment(\.colorScheme) private var scheme
+    func body(content: Content) -> some View {
+        let colors = ServiceControlPalette(dark: scheme == .dark)
+        content.textFieldStyle(.plain).font(AppleTokens.Fonts.body).foregroundStyle(colors.ink)
+            .padding(.horizontal, AppleTokens.Space.p12).frame(minHeight: AppleTokens.Space.p32)
+            .background(colors.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r8))
+            .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r8).strokeBorder(colors.line))
+    }
+}
+#endif

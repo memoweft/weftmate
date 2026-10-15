@@ -1,7 +1,7 @@
 import Foundation
 import WeftMateCore
 
-// Compiles the actual iPhone state model on macOS; UI, cloud and Keychain are absent.
+// Compiles the shared standalone product controller on macOS; UI, cloud and Keychain are absent.
 final class PhoneCheckCredentials: CredentialStore, @unchecked Sendable {
     private let lock=NSLock()
     private var data: [String:Data]=[:]

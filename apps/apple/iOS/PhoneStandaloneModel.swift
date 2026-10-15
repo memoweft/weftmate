@@ -15,16 +15,16 @@ import WeftMateCore
     @Published var draft="" { didSet {
         guard store != nil else { return }
         if state.pending == nil { state.pending = .init() };state.pending?.text=draft
-        do { try persist() } catch { notice="草稿没能保存，请检查手机存储。" }
+        do { try persist() } catch { notice="草稿没能保存，请检查本机存储。" }
     } }
     var attachments: [PhoneAttachment] { state.pending?.attachments ?? [] }
-    var attachmentReason: String? { currentModel == nil ? "先配置手机模型，再添加图片或文件。" : busy ? "等回复结束后再添加附件。" : nil }
+    var attachmentReason: String? { currentModel == nil ? "先配置模型，再添加图片或文件。" : busy ? "等回复结束后再添加附件。" : nil }
     func addAttachment(_ value: PhoneAttachment) {
         guard attachmentReason == nil else { notice=attachmentReason;return }
         if value.isImage && currentModel?.supportsImages == false { notice="当前模型看不了图片";return }
         guard attachments.filter({$0.isImage == value.isImage}).count < (value.isImage ? PhoneAttachment.imageCount : PhoneAttachment.fileCount) else { notice=PhoneAttachmentFailure.tooMany.message;return }
         var next=state;if next.pending == nil { next.pending = .init() };next.pending?.attachments.append(value)
-        do { try save(next);notice=nil } catch { notice="附件没能保存，请检查手机存储。" }
+        do { try save(next);notice=nil } catch { notice="附件没能保存，请检查本机存储。" }
     }
     func removeAttachment(_ id: String) {
         var next=state;next.pending?.attachments.removeAll {$0.id == id}
@@ -95,7 +95,7 @@ import WeftMateCore
     func clearLocalData() {
         cancelExtraction();stop()
         do { guard let store else { return };try store.clear();self.store=nil;app?.offline.erase();state = .init();library = .init();models=[];modelID="";draft="";self.store=store;state.cancelReminder(.account);try persist();notice=nil;handoffCount=0;handoffBytes=0 }
-        catch { notice="手机上的内容没能清除，请重试。" }
+        catch { notice="本机内容没能清除，请重试。" }
     }
     /// Called only after a successful authenticated account directory read, never on a network failure.
     func computerDirectoryChanged(hostIDs: Set<String>) {
@@ -186,7 +186,7 @@ import WeftMateCore
             do { library=try next.loadLibrary();models=library.services.flatMap(\.configurations);modelID=library.threadSelections?[state.selected ?? ""] ?? library.selectedProfileId ?? models.first?.id ?? "" }
             catch { models=try next.loadModels();library=(try? PhoneModelLibrary.migrate(models)) ?? .init();modelID=models.first?.id ?? "";notice="旧模型仍可使用，模型服务整理暂未完成，稍后再试。" }
             draft=state.pending?.text ?? ""
-        } catch { notice="手机上的内容暂时打不开，请重试。" }
+        } catch { notice="本机内容暂时打不开，请重试。" }
     }
     func synchronize(app: AppleAppModel) async {
         guard !transferring, !busy, app.session?.verification == .verified,
@@ -214,7 +214,7 @@ import WeftMateCore
                 notice="有一段对话比较长，电脑更新后会继续接过来。这里的对话和记住的事仍然保留。";return
             }
             if !pending.isEmpty { try app.offline.enqueuePhoneTurns(pending,generation:generation) }
-        } catch { if ticket == epoch { notice="手机上的对话仍在这里，电脑准备好后会自动同步。" } }
+        } catch { if ticket == epoch { notice="本机对话仍在这里，电脑准备好后会自动同步。" } }
     }
     private func authorizeTransferredHistory(ticket: UUID) async throws {
         guard let app else { return }
@@ -393,9 +393,14 @@ import WeftMateCore
             if next.reminders == nil { next.reminders=[] }
             next.reminders?.append(.init(text:command.text,fireAt:command.date,sessionID:next.selected))
             next.threads[index].messages.append(.init(role:"user",text:text))
-            next.threads[index].messages.append(.init(role:"assistant",text:"已记下："+command.text+"，"+command.date.formatted(date:.abbreviated,time:.shortened)+"提醒你。通知是否弹出，可在目标页查看。"))
+            #if os(macOS)
+            let confirmation = "已保存提醒：" + command.text + "，" + command.date.formatted(date: .abbreviated, time: .shortened) + "。允许 WeftMate 发送通知后，就能在到点时提醒你。"
+            #else
+            let confirmation = "已记下："+command.text+"，"+command.date.formatted(date:.abbreviated,time:.shortened)+"提醒你。通知是否弹出，可在目标页查看。"
+            #endif
+            next.threads[index].messages.append(.init(role:"assistant",text:confirmation))
             next.pending = .init();try save(next);draft="";notice=nil
-        } catch { state=original;try? persist();notice="提醒没能保存，请检查手机存储后重试。" }
+        } catch { state=original;try? persist();notice="提醒没能保存，请检查本机存储后重试。" }
         return true
     }
     func send(regenerate: Bool = false) {
@@ -422,7 +427,7 @@ import WeftMateCore
         let history=Array(state.threads[index].messages.suffix(20))
         let hasImages=history.contains { ($0.attachments ?? []).contains(where: \.isImage) }
         state.threads[index].messages.append(.init(role:"assistant",text:"")); let replyID=state.threads[index].messages.last!.id
-        do { try persist() } catch { state=originalState;notice="对话未保存，请检查手机存储后重试。"; return }
+        do { try persist() } catch { state=originalState;notice="对话未保存，请检查本机存储后重试。"; return }
         state.pending = .init();draft=""; busy=true; notice=nil
         task=Task {
             defer { if ticket == epoch { busy=false; task=nil;scheduleExtraction(threadID) } }
