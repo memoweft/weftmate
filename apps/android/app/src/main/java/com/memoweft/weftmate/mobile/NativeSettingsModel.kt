@@ -99,15 +99,9 @@ internal class SettingsConfirmation(val title:String,val message:String,val labe
     fun currentModel()=services.find{it.optString("serviceId")==selected.optString("serviceId")}?.optJSONArray("models")?.objects()?.find{it.optString("modelId")==selected.optString("modelId")}
     fun select(service:JSONObject,model:JSONObject,done:()->Unit) = run {chooseModel(service,model);done()}
     suspend fun chooseModel(service:JSONObject,model:JSONObject) {
-        val owner=chat.owner;val p=JSONObject().put("serviceId",service.getString("serviceId")).put("modelId",model.getString("modelId"))
-        if(chat.standalone)bridge.call("phoneService",JSONObject().put("action","select").put("body",p)) else {
-            val session=chat.sessionId.ifEmpty{if(chat.chatId.isNotBlank())chat.business("/chats/${chat.chatId}").optJSONObject("chat")?.stringOrEmpty("activeSessionId").orEmpty() else ""}
-            if(session.isNotBlank())p.put("sessionId",session)
-            val response=chat.business("/model-services/${service.getString("serviceId")}/select","POST",p.put("requestId",java.util.UUID.randomUUID().toString()))
-            if(owner==chat.owner)chat.modelId=response.getString("profileId")
-        }
-        if(owner!=chat.owner)return
-        selected=JSONObject(model.toString()).put("serviceId",service.getString("serviceId"));chat.modelLabel=model.optString("name",model.getString("modelId"))
+        chooseNativeServiceModel(chat,service,model) { p ->
+            bridge.call("phoneService",JSONObject().put("action","select").put("body",p))
+        }?.let{selected=it}
     }
     fun toggleThinking(enabled:Boolean)=run { if(chat.standalone)bridge.call("phoneService",JSONObject().put("action","update").put("body",JSONObject().put("serviceId",selected.getString("serviceId")).put("modelId",selected.getString("modelId")).put("deepThinkingEnabled",enabled))) else chat.business("/sessions/${chat.sessionId}/thinking","PATCH",JSONObject().put("enabled",enabled));thinking=enabled }
     suspend fun writeService(action:String,service:JSONObject?,body:JSONObject=JSONObject()):JSONObject {
