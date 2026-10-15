@@ -1,3 +1,14 @@
+globalThis.WeftUiCore.mergeHistoryMessage = (prior, event) => {
+    if (!event.data?.truncated || !prior || prior.type !== event.type ||
+        !['user.message', 'assistant.message'].includes(event.type) ||
+        event.revision !== prior.revision || typeof prior.data?.text !== 'string') return event;
+    if (!prior.data.truncated && !prior.data.live)
+        return { ...event, data: { ...event.data, text: prior.data.text, truncated: false } };
+    // Keep the stream's longer visible prefix until the authoritative full text arrives.
+    if (prior.data.live && prior.data.text.startsWith(event.data.text || ''))
+        return { ...event, data: { ...event.data, text: prior.data.text } };
+    return event;
+};
 /* Logical history model shared by desktop, remote web and mobile. No DOM. */
 (() => {
     const formatters = new Map();
@@ -38,7 +49,7 @@
             for (const removal of page.removals || []) state.events.delete(removal.eventId);
             for (const event of page.items || page.upserts || []) {
                 const prior = state.events.get(event.eventId);
-                if (!prior || event.revision >= prior.revision) state.events.set(event.eventId, event);
+                if (!prior || event.revision >= prior.revision) state.events.set(event.eventId, globalThis.WeftUiCore.mergeHistoryMessage(prior, event));
             }
             // Historical pages never replace the independently established live watermark.
             if (direction === 'changes') state.syncCursor = page.nextCursor;
