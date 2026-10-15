@@ -192,7 +192,7 @@ import WeftMateCore
             state=try next.load();store=next;state.interruptReplies()
             do { library=try next.loadLibrary();models=library.services.flatMap(\.configurations);modelID=library.threadSelections?[state.selected ?? ""] ?? library.selectedProfileId ?? models.first?.id ?? "" }
             catch { models=try next.loadModels();library=(try? PhoneModelLibrary.migrate(models)) ?? .init();modelID=models.first?.id ?? "";notice="旧模型仍可使用，模型服务整理暂未完成，稍后再试。" }
-            draft=state.pending?.text ?? "";try persist()
+            draft=state.pending?.text ?? "";draftTask?.cancel();draftTask=nil;try persist()
         } catch { notice="本机内容暂时打不开，请重试。" }
     }
     func synchronize(app: AppleAppModel) async {
@@ -357,9 +357,10 @@ import WeftMateCore
         do { try persist() } catch { notice="对话没能保存，请重试。" }
     }
     func stop() {
-        cancelExtraction();draftTask?.cancel();let wasBusy=busy;epoch=UUID();task?.cancel();task=nil
+        cancelExtraction();draftTask?.cancel();let wasBusy=busy,unsavedDraft=state.pending?.text != draft
+        epoch=UUID();task?.cancel();task=nil
         state.interruptReplies();queuedModels=[:];busy=false;testing=false
-        if store != nil { try? persist() }
+        if store != nil,wasBusy || unsavedDraft { try? persist() }
         if wasBusy { notice="已停止，已收到的内容保留。" }
     }
     var reminders: [LocalReminder] { state.reminders ?? [] }
