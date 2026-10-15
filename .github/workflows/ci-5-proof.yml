@@ -18,6 +18,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+      - name: Fetch the same fixed legacy fixtures as required CI
+        run: git fetch --no-tags --depth=1 origin 58589464caec02d651962e57e08a65453c59f6b1 8f1b5de54e15720271e49e9b0653cd06ece3b096
       - uses: actions/setup-node@v4
         with:
           node-version: 24
