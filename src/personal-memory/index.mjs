@@ -247,7 +247,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   }
   async function drainPending(ownerId) {
     const results = new Map();
-    if (closing) return results;
+    if (closing || erasingOwners.has(ownerId)) return results;
     clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
     let pending;
     try { pending = await queueOutbox(ownerId, () => readOutbox(ownerId)); }
@@ -300,26 +300,26 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     void actions.resume(ownerId).catch(() => scheduleRetry(ownerId));
     try {
       if (formationOwners.has(ownerId)) {
-      let pollingEntry;
-      const poll = withOwner(ownerId, async entry => {
-        pollingEntry = entry; entry.recoveryFlight = poll;
-        if (!entry.capabilities?.methods?.includes('query_jobs')) return;
-        const result = await entry.rpc.request('query_jobs', { operation: 'list' });
-        let pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
-        for (const item of result.formation_requests ?? []) if (['no_change', 'dead'].includes(item.state)) {
-          if (!entry.capabilities.methods.includes('retry_formation')) continue;
-          // An explicit retry owns its just-enqueued successor. Give it one
-          // normal recovery interval before creating another background replay.
-          if ((manualFormationUntil.get(ownerId) ?? 0) > Date.now()) { pending = true; continue; }
-          await entry.rpc.request('retry_formation', { job_id: item.job_id, request_id: `auto:${item.job_id}` });
-          pending = true;
-        }
-        if (pending || await actions.pending(ownerId)) {
-          retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1); scheduleRetry(ownerId);
-        } else { retryCounts.delete(ownerId); formationOwners.delete(ownerId); }
-      });
-      try { await poll; }
-      finally { if (pollingEntry?.recoveryFlight === poll) delete pollingEntry.recoveryFlight; }
+        let pollingEntry;
+        const poll = withOwner(ownerId, async entry => {
+          pollingEntry = entry; entry.recoveryFlight = poll;
+          if (!entry.capabilities?.methods?.includes('query_jobs')) return;
+          const result = await entry.rpc.request('query_jobs', { operation: 'list' });
+          let pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
+          for (const item of result.formation_requests ?? []) if (['no_change', 'dead'].includes(item.state)) {
+            if (!entry.capabilities.methods.includes('retry_formation')) continue;
+            // An explicit retry owns its just-enqueued successor. Give it one
+            // normal recovery interval before creating another background replay.
+            if ((manualFormationUntil.get(ownerId) ?? 0) > Date.now()) { pending = true; continue; }
+            await entry.rpc.request('retry_formation', { job_id: item.job_id, request_id: `auto:${item.job_id}` });
+            pending = true;
+          }
+          if (pending || await actions.pending(ownerId)) {
+            retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1); scheduleRetry(ownerId);
+          } else { retryCounts.delete(ownerId); formationOwners.delete(ownerId); }
+        });
+        try { await poll; }
+        finally { if (pollingEntry?.recoveryFlight === poll) delete pollingEntry.recoveryFlight; }
       }
     } catch { scheduleRetry(ownerId); }
     return results;
@@ -490,7 +490,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     enabled,
     mutateFromTool(ownerId, action) {
       owner(ownerId);
-      if (!enabled || closing) throw error('MEMORY_UNAVAILABLE');
+      if (!enabled || closing || erasingOwners.has(ownerId)) throw error('MEMORY_UNAVAILABLE');
       return actions.submit(ownerId, action);
     },
     async markAccountErased(ownerId) {
@@ -504,9 +504,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       owner(ownerId); await startup;
       erasingOwners.add(ownerId);
       try {
-      await this.invalidateOwnerRoute(ownerId);
       clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
       await flushFlights.get(ownerId)?.catch(() => {});
+      await actions.clear(ownerId);
+      await this.invalidateOwnerRoute(ownerId);
+      formationOwners.delete(ownerId);
       await queueOutbox(ownerId, async () => { const state = await readOutbox(ownerId); state.items = []; await writeOutbox(ownerId, state); });
       if (!enabled) return { erased: true, disabled: true };
       const eraseItem=async(kind,targetId)=>{

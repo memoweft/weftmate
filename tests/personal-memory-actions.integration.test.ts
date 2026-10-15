@@ -186,3 +186,15 @@ test('real Core: a queued correction follows a target already replaced by backgr
   const recall = await f.manager.recall(owner, { query: '我喜欢喝什么茶？', sessionId: 'later-device', modelTier: 'cloud' })
   assert.match(recall.contextText, /普洱茶/, JSON.stringify({ recall, world: (await f.world()).items })); assert.doesNotMatch(recall.contextText, /我喜欢红茶/)
 })
+
+test('real Core: erasing the account also cancels queued memory actions', { skip }, async t => {
+  const f = await fixture(t), old = (await f.world()).items[0]
+  f.offline(true)
+  const result = await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我喜欢喝红茶。' }, 'erase-pending', '纠正成红茶。')
+  assert.equal(result.state, 'queued')
+  f.offline(false)
+  await f.manager.eraseAccount(owner)
+  await f.restart()
+  assert.equal((await f.world()).items.length, 0)
+  await assert.rejects(readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json')), { code: 'ENOENT' })
+})
