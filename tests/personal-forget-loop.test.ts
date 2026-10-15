@@ -31,7 +31,7 @@ async function removeLinks(directory: string) {
 }
 
 /** Real HTTP host, managed DSH process, native tools and model requests. Only inference and Core replies are scripted. */
-async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = false, automaticForget = '' } = {}) {
+async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = false, automaticForget = '', forceForgetAfterDecline = false } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-fix45-'));
   const calls: any[] = [], nominations: any[] = [], commands: any[] = [], recallCalls: any[] = [], revisions = new Map<string, number>(), facts = new Map<string, string>();
   let progress = 0;
@@ -76,7 +76,8 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
       : automaticForget === 'not_found' ? '没找到关于“我喝茶的偏好”的记忆。' : '已删除关于“我喝茶的偏好”的记忆，包括旧版本和来源原文。' };
   };
   if (automaticForget) manager.forgetFromMessage = (owner: string, action: any) => automaticForget === 'no_action'
-    ? { state: 'no_action' } : manager.mutateFromTool(owner, { ...action, name: 'memory_forget', arguments: { query: '我喝茶的偏好' } });
+    ? { state: 'no_action', decision: { isForgetRequest: false, subject: 'self', topic: '我喝茶的偏好', conditionsOrQuestions: true, authorized: false } }
+    : manager.mutateFromTool(owner, { ...action, name: 'memory_forget', arguments: { query: '我喝茶的偏好' } });
   const runtime = await phoneRuntime(root, [], {
     respond(body: any) {
       const index = body.messages.findLastIndex((m: any) => m.role === 'user' && /^(FIX45_|FIX47_|忘掉|请把下面|不对，请重新计算)/.test(textOf(m)));
@@ -84,6 +85,11 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
       if (index < 0) return { content: '合成对话' };
       const prior = body.messages.slice(index + 1).flatMap((m: any) => m.tool_calls ?? []);
       const step = prior.length;
+      if (input.startsWith('忘掉') && forceForgetAfterDecline) {
+        if (step === 0) return tool('load_tools', { names: ['memory_forget'] }, step);
+        if (step === 1) return tool('memory_forget', { kind: 'cognition', id: 'tea-fact', expectedWorldRevision: 1 }, step);
+        return { content: '这次没有删除，也没有排队。先说明会删除哪些数据。' };
+      }
       if (input.startsWith('请把下面')) return { content: 'Forget my tea preference.' };
       if (input.startsWith('忘掉') || input.startsWith('不对，请重新计算')) return { content: '12×13＝156。' };
       if (input.startsWith('FIX45_FOLLOWUP')) return { content: '排队的更正已处理。' };
@@ -250,6 +256,16 @@ for (const input of ['忘掉我喝茶的偏好，如果会删除来源原文就�
   const replies = (await f.api(`/sessions/${session}/events`)).events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
   assert.match(replies, input.startsWith('请把下面') ? /Forget my tea preference/ : /156/);
   assert.doesNotMatch(replies, /已删除|已忘掉/);
+});
+
+test('FIX-50 a native model forget call cannot override the whole-message no-action decision', { timeout: 60000 }, async t => {
+  const f = await fixture(t, { automaticForget: 'no_action', forceForgetAfterDecline: true }), session = await f.create();
+  await f.complete(await f.send(session, '忘掉我喝茶的偏好，会删除哪些数据？'));
+  assert.equal(f.commands.length, 0); assert.ok(f.facts.has(f.ownerId()));
+  assert.equal(f.nominations.length, 1);
+  assert.equal(f.calls.some(call => call.name === 'memory_forget'), false, 'the declined decision blocks a later native deletion before host mutation');
+  const results = f.runtime.requests.flatMap((request: any) => request.messages.filter((message: any) => message.role === 'tool').map(textOf));
+  assert.ok(results.some((text: string) => text.includes('没有删除记忆，也没有排队重试')));
 });
 
 test('changing results reset repetition and the model consumes the completed result', { timeout: 60000 }, async t => {
