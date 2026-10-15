@@ -36,10 +36,13 @@ struct WeftMateRootView: View {
                         BrandMark(size: 48)
                         ProgressView("正在打开 WeftMate…").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).accessibilityLabel("正在打开 WeftMate…").accessibilityIdentifier("app.loading")
                     }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Weave.canvas)
-                } else if let session = model.session {
-                    OfflineWorkspace(app: model, model: model.offline).id(session.account.ownerId)
                 } else {
-                    AccountEntry(app: model, cloud: model.cloudLogin)
+                    #if os(macOS)
+                    MacRootWorkspace(app: model, cloud: model.cloudLogin)
+                    #else
+                    if let session = model.session { OfflineWorkspace(app: model, model: model.offline).id(session.account.ownerId) }
+                    else { AccountEntry(app: model, cloud: model.cloudLogin) }
+                    #endif
                 }
             }
         }
@@ -262,7 +265,7 @@ private struct AccountEntry: View {
             #endif
             #else
             if cloud.authenticated && !cloud.useLocalWorkspace { CloudAccountHome(app: app, cloud: cloud) }
-            else { LocalAccountWorkspace(app: app, cloud: cloud) }
+            else { MacRootWorkspace(app: app, cloud: cloud) }
             #endif
         }.task {
             while !Task.isCancelled {
