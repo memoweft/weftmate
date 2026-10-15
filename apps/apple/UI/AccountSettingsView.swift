@@ -118,10 +118,11 @@ struct CloudAccountHome: View {
 struct LocalAccountWorkspace: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var cloud: CloudLoginModel
+    var onHelp: ((String) -> Void)?
     @AppStorage private var draft: String
     @AppStorage private var notes: String
-    init(app: AppleAppModel, cloud: CloudLoginModel) {
-        self.app = app; self.cloud = cloud
+    init(app: AppleAppModel, cloud: CloudLoginModel, onHelp: ((String) -> Void)? = nil) {
+        self.app = app; self.cloud = cloud; self.onHelp = onHelp
         let args = ProcessInfo.processInfo.arguments
         let index = args.firstIndex(of: "--ui-testing-namespace")
         let suffix = index.flatMap { args.indices.contains($0 + 1) ? args[$0 + 1] : nil } ?? "local"
@@ -133,7 +134,7 @@ struct LocalAccountWorkspace: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
                 Text("本机笔记").font(AppleTokens.Fonts.title2)
-                Text("先记下想法，内容只保存在这台设备。需要电脑帮忙时再登录。")
+                Text("先记下想法，内容只保存在这台设备。也可以把想法带到聊天里。")
                     .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
                 ScrollView { Text(notes).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled) }
                     .accessibilityIdentifier("localSavedNotes")
@@ -143,7 +144,7 @@ struct LocalAccountWorkspace: View {
                         HStack {
                             Button("保存到本机") { if !draft.isEmpty { notes += (notes.isEmpty ? "" : "\n\n") + draft; draft = "" } }
                                 .buttonStyle(OutlineActionStyle()).accessibilityIdentifier("saveLocalNote")
-                            Button("让 WeftMate 帮忙") { cloud.requireLogin() }.buttonStyle(PrimaryActionStyle(fillsWidth: false))
+                            Button("让 WeftMate 帮忙") { if let onHelp { onHelp(draft) } else { cloud.requireLogin() } }.buttonStyle(PrimaryActionStyle(fillsWidth: false))
                                 .accessibilityIdentifier("requestServer")
                         }
                     }
