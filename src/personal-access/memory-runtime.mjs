@@ -6,6 +6,12 @@ const failure = code => Object.assign(new Error(code), { code });
 export async function handlePersonalMemoryTool(manager, ownerId, tool, { sessionId, modelTier, memoryPolicy } = {}) {
   const args = tool?.arguments;
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw failure('MEMORY_REQUEST_INVALID');
+  if (tool.name === 'memory_forget_request') {
+    if (Object.keys(args).length || typeof tool.source?.text !== 'string' || !tool.source.text.trim() ||
+        tool.source.text.length > 16000 || typeof tool.requestId !== 'string' || !/^memory-tool:[a-f0-9]{64}$/.test(tool.requestId)) throw failure('MEMORY_REQUEST_INVALID');
+    if (memoryPolicy?.recall !== true) return { state: 'withheld', message: '这段对话没开记忆，这次没有按内容删除。' };
+    return manager.forgetFromMessage(ownerId, { requestId: tool.requestId, source: tool.source, sessionId, modelTier });
+  }
   if (tool.name === 'memory_cleanup') {
     // Internal completion hook, not a registered model-facing tool. The durable
     // command journal already owns retrying cleanup after the active turn ends.
