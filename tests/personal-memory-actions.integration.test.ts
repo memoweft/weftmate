@@ -287,6 +287,23 @@ test('FIX-50 review real Core: an unstructured judge reply never deletes or queu
   assert.equal(Object.values(state.records).some((row: any) => row.name === 'memory_forget'), false)
 })
 
+test('FIX-50 review real Core: owner topic labels do not become other people or separate deletion targets', { skip }, async t => {
+  const f = await fixture(t, { interpret: payload => {
+    const e = payload.evidence[0]
+    return { schema_version: 8, result: 'cognitions', cognitions: [{ action: 'form', target: 'owner_self',
+      statement_kind: 'preference', formed_by: 'stated', proposition: e.text,
+      entity: { canonical_name: '茶', kind: 'topic', aliases: ['喝茶'] },
+      supports: e.segments.map((s: any) => ({ evidence_id: e.id, segment_id: s.id })) }] }
+  } })
+  const labels = await f.manager.query(owner, 'query_world', { operation: 'list', object_kind: 'entity', include_history: true })
+  assert.ok(labels.items.some((row: any) => row.value.kind === 'topic'))
+  const result = await f.tool('memory_forget', { query: '我喝茶的偏好' }, 'forget-topic-label', '忘掉我喝茶的偏好。')
+  assert.equal(result.state, 'applied')
+  assert.equal((await f.world()).items.length, 0)
+  const after = await f.manager.query(owner, 'query_world', { operation: 'list', object_kind: 'entity', include_history: true })
+  assert.equal(after.items.some((row: any) => row.value.kind === 'topic'), false)
+})
+
 for (const name of ['memory_correct', 'memory_forget']) test(`real Core: ${name} is queued during an outage and completed after host restart`, { skip }, async t => {
   const f = await fixture(t), old = (await f.world()).items[0]
   f.offline(true)

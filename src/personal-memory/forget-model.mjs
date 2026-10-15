@@ -33,7 +33,7 @@ export async function classifyForgetRequest(route, message) {
   const decision = await decide(route, 'classify_forget_request', 'Decide whether this entire message authorizes immediate memory deletion.',
     { type: 'object', additionalProperties: false, required: ['isForgetRequest', 'subject', 'topic', 'conditionsOrQuestions'], properties: {
       isForgetRequest: { type: 'boolean' }, subject: { type: 'string', description: 'self, other:<explicit person name>, or unknown' },
-      topic: { type: 'string', description: 'The complete requested topic, preserving whose memory it is, e.g. 我的生日 or 妈妈的生日. Empty if unclear.' },
+      topic: { type: 'string', description: 'The requested topic, preserving whose memory it is, e.g. 我的生日 or 妈妈的生日. Omit the forgotten value/date/address. Empty if unclear.' },
       conditionsOrQuestions: { type: 'boolean' },
     } },
     'You classify memory deletion intent; you do not execute anything. Read the ENTIRE user message as one task, including all lines and all text after commas. '
@@ -103,7 +103,7 @@ export async function scopedForgetPlan(manager, owner, action, route) {
   const candidateSources = row => row.object_kind === 'entity' && !row.provenance?.length
     ? rows.filter(other => other.object_kind !== 'entity' && Object.values(other.value).includes(row.item_id)).flatMap(other => other.provenance ?? [])
     : row.provenance ?? [];
-  const candidates = rows.filter(row => readable(candidateSources(row))).map(row => ({ key: `${row.object_kind}:${row.item_id}`,
+  const candidates = rows.filter(row => !(row.object_kind === 'entity' && row.value.kind === 'topic') && readable(candidateSources(row))).map(row => ({ key: `${row.object_kind}:${row.item_id}`,
     kind: row.object_kind, text: row.value.content ?? row.value.canonical_name, graphSubject: graphSubject(row),
     sourceTexts: [...new Set(candidateSources(row).map(source => source.evidence.raw_content).filter(Boolean))] }));
   const snapshot = await manager.query(owner, 'preview_recall', { query: request.topic, model_tier: route.modelTier });

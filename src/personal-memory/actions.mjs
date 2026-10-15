@@ -63,7 +63,9 @@ export function createMemoryActions({ root, manager, schedule }) {
         await update(owner, data => { (data.records[action.requestId].finished ??= []).push(id); });
         action.finished ??= []; action.finished.push(id);
       }
-      return { state: 'applied', message: (action.plan.topic ? `已删除关于“${action.plan.topic}”的记忆，包括旧版本和来源原文。` : '已忘掉这件事。') + retained };
+      // Persist only a generic receipt: the requested topic itself may contain
+      // the forgotten value. The current caller can label its transient reply.
+      return { state: 'applied', message: '已忘掉这件事。' + retained };
     }
     let target = action.arguments;
     if (target.query && !action.target) {
