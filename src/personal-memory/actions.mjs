@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { durableWrite } from '../personal-access/store.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
@@ -194,6 +194,10 @@ export function createMemoryActions({ root, manager, schedule }) {
           row.sessionId === boundary.parent_session_id && row.sourceId && row.sourceId === message.message_id));
     },
     async pending(owner) { return Object.values((await serial(owner, () => read(owner))).records).some(row => !row.result || row.cleanupPending?.length); },
+    async clear(owner) {
+      await flights.get(owner)?.catch(() => {});
+      await serial(owner, () => rm(file(owner), { force: true }));
+    },
     async close() { await Promise.allSettled([...flights.values(), ...queues.values()]); },
   };
 }
