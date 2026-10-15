@@ -9,6 +9,14 @@ export async function apply(ctx) {
   const { isAgentLoopRequest } = await import('@deepseek-ai/dsh-llm');
   ctx.on('llm/stream', (options, next) => isAgentLoopRequest(options) && personal(ctx.sessions.get(options.sessionId))
     ? cleanReplyStream(next(), options) : next(), { global:true });
+  // Code Mode throws error.message into user programs, so sanitize that channel too.
+  ctx.on('tools/execute', async (exec, next) => {
+    const result = await next();
+    if (!personal(exec.agent?.session) || !result.isError) return result;
+    const content = modelToolFailure(exec.name, result);
+    ctx.logger?.warn?.(`tool failure code=${failureCodes(result)}`);
+    return {...result,content,error:{...result.error,message:content[0].text}};
+  }, { prepend:true });
   // Nested Code Mode calls also receive plain errors before their parent can quote them.
   ctx.on('tools/post-execute', async (exec, result, next) => {
     const decision = await next();

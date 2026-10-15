@@ -70,7 +70,7 @@ function scan(text, final) {
       if (end < 0 && !final) break;
       const length = end < 0 ? text.length : end, raw = text.slice(0, length);
       const value = json(raw), candidate = value?.function ?? value;
-      if (callShape(candidate) || looksLikeCall(raw)) {
+      if (callShape(candidate) || value === undefined && looksLikeCall(raw)) {
         const call = recover(raw); if (call) calls.push(call);
         removed = true;
       } else visible += raw;
@@ -127,7 +127,8 @@ export async function* cleanReplyStream(source, options) {
 export function modelToolFailure(name, result) {
   if (name === 'run_code' && result.isError) {
     const detail = JSON.stringify([result.error, result.content]);
-    name = ['memory_forget','memory_correct','memory_query'].find(tool => detail.includes(tool)) ?? name;
+    name = detail.includes('这次没忘掉') ? 'memory_forget' : detail.includes('这次没记住') ? 'memory_correct'
+      : ['memory_forget','memory_correct','memory_query'].find(tool => detail.includes(tool)) ?? name;
   }
   const memory = name?.startsWith('memory_');
   const failedReceipt = memory && result.content?.some(part => {

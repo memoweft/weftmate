@@ -14,7 +14,8 @@ test('production hooks sanitize real DSH outcomes, preserve diagnostics and exec
   const [{Context},{default:SystemPrompt},{default:Sessions},tools,{default:Llm},{createScope},plugin] = await Promise.all([
     import(vendor('cordis')),import(vendor('dsh-system-prompt')),import(vendor('dsh-session')),import(vendor('dsh-tools')),
     import(vendor('dsh-llm')),import(vendor('dsh-scope')),import(pathToFileURL(staged.stageFile(resolve('src/plugins/weftmate-personal-reply-content.mjs'))).href)]);
-  const ctx = new Context();
+  const ctx = new Context(), diagnostics: string[] = [];
+  Object.defineProperty(ctx,'logger',{value:{warn:(line:string)=>diagnostics.push(line)},configurable:true});
   t.after(async()=>{await ctx.fiber.dispose();rmSync(root,{recursive:true,force:true});});
   await ctx.plugin(SystemPrompt,{}); await ctx.plugin(Sessions); await ctx.plugin(Llm); await ctx.plugin(tools.default,{mode:'native'});
   await ctx.plugin(plugin.default);
@@ -46,7 +47,8 @@ test('production hooks sanitize real DSH outcomes, preserve diagnostics and exec
   const failure=await ctx.tools.execute({name:'memory_correct',arguments:{},callId:'failure',agent,signal:new AbortController().signal});
   assert.equal(failure.isError,true);assert.match(failure.content[0].text,/这次没记住，稍后会再试/);
   assert.doesNotMatch(JSON.stringify(failure.content),/memory_correct|MEMORY_UNAVAILABLE|cognition/);
-  assert.match(failure.error.message,/MEMORY_UNAVAILABLE/);
+  assert.doesNotMatch(failure.error.message,/MEMORY_UNAVAILABLE|memory_correct|cognition/);
+  assert.ok(diagnostics.some(line=>line.includes('MEMORY_UNAVAILABLE')));
   session.append('tool/call',{turn:1,step:1,callId:'validation',name:'memory_correct',arguments:'{}'});
   session.append('tool/result',{turn:1,step:1,error:{code:'MEMORY_REQUEST_INVALID'},message:{source:{kind:'tool',callId:'validation'},content:[{type:'tool-result',toolCallId:'validation',isError:true,content:[{type:'text',text:'memory_correct MEMORY_REQUEST_INVALID cognition'}]}]}},{surfaceOp:'append',sourceEventSeqs:[session.events.at(-1).seq]});
   const logged=session.events.at(-1);
