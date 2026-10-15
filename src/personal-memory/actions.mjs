@@ -8,6 +8,7 @@ import { memorySuccessors } from './world-projection.mjs';
 const hash = value => createHash('sha256').update(value).digest('hex');
 const pendingMessage = name => name === 'memory_forget'
   ? '这次还没忘掉，稍后会再试。' : '这次还没记住，稍后会再试。';
+const notFound = () => ({ state: 'not_found', message: '没找到这条记忆。' });
 
 /** Durable user intents. Core remains the only authority for facts and receipts. */
 export function createMemoryActions({ root, manager, schedule }) {
@@ -76,7 +77,10 @@ export function createMemoryActions({ root, manager, schedule }) {
         if (texts.has(item.text) || /纠正|不对|不是|改为|改成/.test(item.text ?? '')) sources.add(item.id ?? item.evidence_id);
       }
     }
-    return { evidenceIds: [...sources], affectedIds: [...ids], sourceTexts: [...texts] };
+    // Core's world-item delete owns entity cascades, including relationships
+    // and cognitions whose implicitly-created person has no direct ledger.
+    const worldTargets = targets.filter(item => item.kind === 'entity');
+    return { evidenceIds: [...sources], worldTargets, affectedIds: [...ids], sourceTexts: [...texts] };
   }
   async function perform(owner, action) {
     const m = manager();
@@ -85,18 +89,23 @@ export function createMemoryActions({ root, manager, schedule }) {
         const plan = await forgetSources(owner, action);
         await update(owner, data => { data.records[action.requestId].plan = plan; }); action.plan = plan;
       }
-      for (const id of action.plan.evidenceIds) {
+      const deletions = [...(action.plan.worldTargets ?? []), ...action.plan.evidenceIds.map(id => ({ kind: 'evidence', id }))];
+      if (!deletions.length) return notFound();
+      for (const target of deletions) {
+        const id = target.kind === 'evidence' ? target.id : `${target.kind}:${target.id}`;
         if (action.finished?.includes(id)) continue;
         let command = action.commands?.[id];
         if (!command) {
           const revision = await m.query(owner, 'query_world', { operation: 'revision' });
           command = { requestId: `forget:${hash(`${action.requestId}|${id}|${revision.world_revision}`)}`,
-            operation: 'delete_evidence', targetKind: 'evidence', targetId: id, payload: {}, expectedWorldRevision: revision.world_revision };
+            operation: target.kind === 'evidence' ? 'delete_evidence' : 'delete_world_item',
+            targetKind: target.kind, targetId: target.id, payload: {}, expectedWorldRevision: revision.world_revision };
           await update(owner, data => { (data.records[action.requestId].commands ??= {})[id] = command; });
         }
         const result = await m.submitCommand(owner, command);
         const receipt = result.receipt ?? result;
         if (receipt.result_state === 'revision_conflict') await update(owner, data => { delete data.records[action.requestId].commands[id]; });
+        if (receipt.result_state === 'rejected') return { state: 'rejected', message: '这次还没能忘掉这条记忆。' };
         if (!['applied', 'no_change'].includes(receipt.result_state)) throw Error('MEMORY_ACTION_PENDING');
         if (receipt.storage_cleanup?.state === 'pending') await update(owner, data => {
           (data.records[action.requestId].cleanupPending ??= []).push(command.requestId);
@@ -111,7 +120,7 @@ export function createMemoryActions({ root, manager, schedule }) {
       const snapshot = await m.query(owner, 'preview_recall', { query: target.query, model_tier: action.modelTier ?? 'local' });
       target = (snapshot.preview?.selected_item_ids ?? []).map(([kind, id]) => ({ kind, id }))
         .find(item => ['cognition', 'relationship', 'event'].includes(item.kind));
-      if (!target) throw Error('MEMORY_ACTION_PENDING');
+      if (!target) return notFound();
       await update(owner, data => { data.records[action.requestId].target = target; });
     }
     target = action.target ?? target;
@@ -129,35 +138,42 @@ export function createMemoryActions({ root, manager, schedule }) {
     if (receipt.result_state === 'rejected') {
       const world = await m.query(owner, 'query_world', { operation: 'list', object_kind: target.kind, include_history: true });
       const successor = memorySuccessors(world.items ?? []).resolve(`${target.kind}:${target.id}`);
-      if (successor?.current_state === 'current' && successor.item_id !== target.id) await update(owner, data => {
+      if (!successor || successor.current_state !== 'current') return notFound();
+      if (successor.item_id !== target.id) await update(owner, data => {
         data.records[action.requestId].target = { kind: target.kind, id: successor.item_id };
         delete data.records[action.requestId].command;
       });
+      else return { state: 'rejected', message: '这次还没能更新这条记忆。' };
     }
     if (receipt.result_state !== 'applied') throw Error('MEMORY_ACTION_PENDING');
-    return { state: 'applied', message: '已按你刚才的说法更新记忆。' };
+    return { state: 'applied', message: '已按你刚才的说法更新记忆。', affectedIds: receipt.affected_ids ?? [] };
   }
   function resume(owner) {
     if (flights.has(owner)) return flights.get(owner);
     const work = (async () => {
       const actions = Object.values((await serial(owner, () => read(owner))).records);
-      for (const action of actions.filter(row => !row.result)) {
+      for (const previous of actions.filter(row => !row.result)) {
+        const action = (await serial(owner, () => read(owner))).records[previous.requestId];
+        if (!action || action.result) continue;
         try {
-          const result = await perform(owner, action);
+          const { affectedIds, ...result } = await perform(owner, action);
           await update(owner, data => {
-            const row = data.records[action.requestId]; row.result = result;
-            // Keep only the source identity for ingestion deduplication. Forgotten
-            // values must not remain in this host-owned recovery file.
+            const row = data.records[action.requestId];
+            if (row.result) return;
+            row.result = result;
+            if (affectedIds) row.affectedIds = affectedIds;
+            // Finished forgetting keeps no body copy in this recovery file.
             if (row.name === 'memory_forget') {
-              const forgotten = new Set(row.plan.affectedIds);
-              for (const prior of Object.values(data.records)) if (forgotten.has(prior.arguments.id) ||
-                  forgotten.has(prior.target?.id) || forgotten.has(prior.command?.targetId)) {
-                prior.arguments = {}; delete prior.source; delete prior.target; delete prior.command;
-              }
               row.arguments = {}; delete row.source; delete row.plan; delete row.finished; delete row.commands;
             }
           });
-        } catch { schedule(owner); break; }
+        } catch (error) {
+          if (['world_item_not_found', 'evidence_not_found'].includes(error?.code)) {
+            await update(owner, data => { data.records[action.requestId].result ??= notFound(); });
+          } else schedule(owner);
+          // A transient or permanent failure belongs to this request only.
+          // Other queued user requests must still get their own attempt.
+        }
       }
       const latest = Object.values((await serial(owner, () => read(owner))).records);
       for (const action of latest) for (const requestId of action.cleanupPending ?? []) {
@@ -174,9 +190,7 @@ export function createMemoryActions({ root, manager, schedule }) {
   }
   return {
     async submit(owner, action) {
-      await update(owner, data => { data.records[action.requestId] ??= { ...action,
-        sourceHash: action.source?.text ? hash(`${action.sessionId}|${action.source.text}`) : null,
-        sourceId: action.source?.id }; });
+      await update(owner, data => { data.records[action.requestId] ??= action; });
       schedule(owner);
       const work = resume(owner);
       let timer;
@@ -186,12 +200,22 @@ export function createMemoryActions({ root, manager, schedule }) {
       return row.result ?? { state: 'queued', message: pendingMessage(action.name) };
     },
     resume,
-    async handled(owner, boundary) {
-      const records = Object.values((await serial(owner, () => read(owner))).records);
-      const users = (boundary.source_messages ?? []).filter(message => message.role === 'user');
-      return users.length > 0 && users.every(message =>
-        records.some(row => row.sourceHash === hash(`${boundary.parent_session_id}|${message.content}`) ||
-          row.sessionId === boundary.parent_session_id && row.sourceId && row.sourceId === message.message_id));
+    async redact(owner, { affectedIds = [], sourceTexts = [] }) {
+      const forgotten = new Set(affectedIds);
+      const includesSource = value => typeof value === 'string' && value.length > 0 &&
+        sourceTexts.some(text => text && (value.includes(text) || text.includes(value)));
+      await serial(owner, async () => {
+        const data = await read(owner); let changed = false;
+        for (const row of Object.values(data.records)) {
+          if (![row.arguments?.id, row.target?.id, row.command?.targetId, ...(row.affectedIds ?? []), ...(row.plan?.affectedIds ?? [])].some(id => forgotten.has(id)) &&
+              ![row.arguments?.text, row.source?.text, row.command?.payload?.correction_text].some(includesSource)) continue;
+          changed = true;
+          row.arguments = {}; delete row.source; delete row.target; delete row.command;
+          if (row.name === 'memory_forget' && row.plan) row.plan.sourceTexts = [];
+          else row.result ??= notFound(); // A deleted target cannot be recreated by a queued correction.
+        }
+        if (changed) await durableWrite(file(owner), data);
+      });
     },
     async pending(owner) { return Object.values((await serial(owner, () => read(owner))).records).some(row => !row.result || row.cleanupPending?.length); },
     async clear(owner) {

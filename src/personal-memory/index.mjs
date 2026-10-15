@@ -464,6 +464,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     const ids = [command.target_id, ...(Array.isArray(receipt.affected_ids)
       ? receipt.affected_ids.filter((id) => typeof id === 'string' && id.length <= 512) : [])];
     try {
+      await actions.redact(ownerId, { affectedIds: ids, sourceTexts: marker?.cleanup?.sourceTexts ?? [] });
       if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids,
         sourceTexts: marker?.cleanup?.sourceTexts ?? [], deleteConversationSnippets: marker?.cleanup?.deleteConversationSnippets === true });
       await journal.redactTargets(ownerId, ids);
@@ -786,7 +787,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           typeof boundary.event_id !== 'string' || !/^[A-Za-z0-9._:-]{1,180}$/.test(boundary.event_id) ||
           Buffer.byteLength(JSON.stringify(boundary), 'utf8') > 4 * 1024 * 1024) throw error('MEMORY_REQUEST_INVALID');
       await privateHome(ownerId);
-      if (await actions.handled(ownerId, boundary)) return { state: 'accepted', jobState: 'handled_by_tool' };
+      // Preserve the complete source, including other facts in a mixed request.
+      // Core owns boundary idempotency and current/successor deduplication.
       await queueOutbox(ownerId, async () => {
         const state = await readOutbox(ownerId);
         const prior = state.items.find((item) => item.boundary.event_id === boundary.event_id);
