@@ -204,7 +204,7 @@ import WeftMateCore
             guard ticket == memoryEpoch,identity == account,!Task.isCancelled else { return nil }
             var next=state;next.memory=memory;next.memory?.recordFailure(batch)
             do { try save(next) } catch { memoryNotice="记忆的重试时间没能保存，请检查本机存储。" }
-            memoryNotice="这次没能保存记忆，稍后会重试；也可以在记忆页重试。"
+            memoryNotice="这次没能保存记忆，稍后会重试，聊天记录仍在本机。"
             return PhoneMemoryReceipt()
         }
     }

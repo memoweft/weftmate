@@ -224,7 +224,7 @@ public struct PhoneMemoryReceipt: Sendable {
         return "本轮本机加密保存已完成。记住或更新：\(saved.joined(separator:"；"))。忘掉条目数：\(removed)。只能据此确认记忆操作。"
     }
     public var note: String? {
-        guard succeeded else { return "这次没能保存记忆，聊天记录仍在本机；可到记忆页重试。" }
+        guard succeeded else { return "这次没能保存记忆，稍后会重试，聊天记录仍在本机。" }
         var facts: [String]=[]
         if !saved.isEmpty { facts.append("已在这台设备上记住："+saved.joined(separator:"；")) }
         if removed > 0 { facts.append("已从这台设备的记忆里忘掉，原对话仍然保留") }
