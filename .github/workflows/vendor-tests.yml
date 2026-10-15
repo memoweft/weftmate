@@ -76,3 +76,17 @@ jobs:
           name: vendor-test-results
           path: vendor-test-results.json
           if-no-files-found: warn
+      - name: CI-5 five strict config rounds with the pinned vendor
+        if: github.head_ref == 'wp/ci-5-flaky-timing'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for round in 1 2 3 4 5; do
+            echo "CI-5 pinned-vendor config round $round of 5"
+            dbus-run-session -- bash -euo pipefail -c '
+              eval "$(printf "%s" "synthetic-ci-keyring" | gnome-keyring-daemon --unlock --components=secrets)"
+              eval "$(gnome-keyring-daemon --start --components=secrets)"
+              xvfb-run --auto-servernum node --test tests/bl-29-timing-config.test.ts
+            '
+            echo "Pinned vendor config round $round passed" >> "$GITHUB_STEP_SUMMARY"
+          done
