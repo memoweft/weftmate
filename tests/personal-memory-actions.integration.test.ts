@@ -33,7 +33,7 @@ function boundary(text: string, sessionId: string) {
 }
 async function fixture(t: any, { interpret = null }: { interpret?: ((payload: any) => any) | null } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
-  let offline = false, reject = false, calls = 0, loseReceipt = false
+  let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false
   const errors: unknown[] = []
   const coreTrace: any[] = []
   const server = createServer(async (req, res) => {
@@ -58,6 +58,8 @@ async function fixture(t: any, { interpret = null }: { interpret?: ((payload: an
       const rpc = new MemoWeftRpc(options), request = rpc.request.bind(rpc)
       rpc.request = async (...args: Parameters<MemoWeftRpc['request']>) => {
         if (offline && args[0] !== 'shutdown') throw Object.assign(Error('transport offline'), { code: 'MEMORY_PROCESS_UNAVAILABLE' })
+        if (correctionsUnavailable && args[0] === 'submit_command' && args[1]?.command?.operation === 'correct_world_item')
+          throw Object.assign(Error('correction write unavailable'), { code: 'MEMORY_BUSY' })
         const result = await request(...args)
         if (['ingest_boundary', 'submit_command', 'query_command_receipt', 'retry_formation', 'query_jobs', 'preview_recall'].includes(args[0]))
           coreTrace.push({ method: args[0], params: args[1], result })
@@ -74,7 +76,11 @@ async function fixture(t: any, { interpret = null }: { interpret?: ((payload: an
     await rm(root, { recursive: true, force: true })
   })
   const world = () => manager.query(owner, 'query_world', { operation: 'list', object_kind: 'cognition', include_history: true })
-  const ready = () => wait(async () => (await manager.status(owner)).state === 'ready')
+  const ready = async () => {
+    let status
+    try { return await wait(async () => { status = await manager.status(owner); return status.state === 'ready' }) }
+    catch (error) { error.message += JSON.stringify({ status, jobs: await manager.query(owner, 'query_jobs', { operation: 'list' }) }); throw error }
+  }
   const tool = (name: string, args: any, id: string, sourceText: string) => handlePersonalMemoryTool(manager, owner,
     { name, arguments: args, requestId: 'memory-tool:' + createHash('sha256').update(id).digest('hex'), source: { id: id + '-user', text: sourceText } },
     { sessionId: id, modelTier: 'cloud', memoryPolicy: { recall: true } })
@@ -82,6 +88,7 @@ async function fixture(t: any, { interpret = null }: { interpret?: ((payload: an
   await ready()
   return { root, world, ready, tool, fork: () => create(path.join(root, 'imported')), get manager() { return manager }, errors,
     offline: (value: boolean) => { offline = value }, reject: (value: boolean) => { reject = value }, loseReceipt: () => { loseReceipt = true },
+    holdCorrections: (value: boolean) => { correctionsUnavailable = value },
     restart: async () => { await manager.close(); manager = create() }, get calls() { return calls } }
 }
 
@@ -219,10 +226,14 @@ test('review-1 real Core: deletion ends a queued correction instead of blocking 
   const f = await fixture(t), old = (await f.world()).items[0]
   f.offline(true)
   const pending = await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我喜欢喝红茶。' }, 'deleted-target', '纠正为红茶。')
-  assert.equal(pending.state, 'queued'); f.offline(false)
-  await f.manager.submitCommand(owner, { requestId: 'delete-before-retry', operation: 'delete_world_item', targetKind: 'cognition',
+  assert.equal(pending.state, 'queued')
+  // Keep this correction unavailable until the real page deletion commits;
+  // otherwise the recovery timer can win first on a fast CI machine.
+  f.holdCorrections(true); f.offline(false)
+  const deleted = await f.manager.submitCommand(owner, { requestId: 'delete-before-retry', operation: 'delete_world_item', targetKind: 'cognition',
     targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
-  await f.restart()
+  assert.equal(deleted.receipt.result_state, 'applied')
+  await f.restart(); f.holdCorrections(false)
   await f.manager.ingest(owner, boundary('记住：我每周五晚上锻炼。', 'after-deletion')); await f.ready()
   const target = (await f.world()).items.find((row: any) => row.current_state === 'current')
   const next = await f.tool('memory_correct', { kind: 'cognition', id: target.item_id, expectedWorldRevision: (await f.manager.status(owner)).worldRevision,
