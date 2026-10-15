@@ -299,7 +299,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     // both accepted jobs and durable user actions without requiring a UI read.
     void actions.resume(ownerId).catch(() => scheduleRetry(ownerId));
     try {
-      if (formationOwners.has(ownerId)) await withOwner(ownerId, async entry => {
+      if (formationOwners.has(ownerId)) {
+      let pollingEntry;
+      const poll = withOwner(ownerId, async entry => {
+        pollingEntry = entry; entry.recoveryFlight = poll;
         if (!entry.capabilities?.methods?.includes('query_jobs')) return;
         const result = await entry.rpc.request('query_jobs', { operation: 'list' });
         let pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
@@ -315,6 +318,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1); scheduleRetry(ownerId);
         } else { retryCounts.delete(ownerId); formationOwners.delete(ownerId); }
       });
+      try { await poll; }
+      finally { if (pollingEntry?.recoveryFlight === poll) delete pollingEntry.recoveryFlight; }
+      }
     } catch { scheduleRetry(ownerId); }
     return results;
   }
@@ -341,6 +347,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     if (existing?.ready && existing.rpc.child &&
         (selected === null || existing.routeKey === selected.key)) return existing;
     if (existing?.initializing) return existing.initializing;
+    // Background status/retry polling must not turn a foreground model-route
+    // switch into MEMORY_BUSY. It never calls DSH or changes the selected route.
+    if (existing?.recoveryFlight) await existing.recoveryFlight.catch(() => {});
     if (existing?.active > 0) throw error('MEMORY_BUSY');
     if (existing) { entries.delete(ownerId); await existing.rpc.close().catch(() => {}); }
     if (entries.size >= maxActiveOwners) {

@@ -120,9 +120,7 @@ export function createMemoryActions({ root, manager, schedule }) {
       const revision = await m.query(owner, 'query_world', { operation: 'revision' });
       command = { requestId: `correct:${hash(`${action.requestId}|${target.kind}|${target.id}|${revision.world_revision}`)}`,
         operation: 'correct_world_item', targetKind: target.kind, targetId: target.id,
-        // Keep the user's topic and negation together. A model paraphrase such
-        // as just "红茶" can drop the very topic needed by later retrieval.
-        payload: { correction_text: action.source?.text || action.arguments.text }, expectedWorldRevision: revision.world_revision };
+        payload: { correction_text: action.arguments.text }, expectedWorldRevision: revision.world_revision };
       await update(owner, data => { data.records[action.requestId].command = command; });
     }
     const result = await m.submitCommand(owner, command);

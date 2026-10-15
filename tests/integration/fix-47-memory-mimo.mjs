@@ -39,38 +39,58 @@ try {
     await h.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setFocusable(false));
     h.page.setDefaultTimeout(30000);
     const row = { mode, steps: [] }; report.modes.push(row);
+    const origin = new URL(h.page.url()).origin;
+    const login = await fetch(origin + '/personal/v1/auth/login', { method: 'POST', headers: { origin, 'content-type': 'application/json' },
+      body: JSON.stringify({ ...h.credentials, deviceName: 'Synthetic second client' }) });
+    assert.equal(login.status, 200);
+    const auth = await login.json(), cookie = login.headers.get('set-cookie').split(';')[0];
+    const secondApi = async (path, body) => {
+      const response = await fetch(origin + '/personal/v1' + path, { method: body === undefined ? 'GET' : 'POST',
+        headers: { origin, cookie, 'content-type': 'application/json', 'x-weftmate-csrf': auth.csrfToken },
+        body: body === undefined ? undefined : JSON.stringify(body) });
+      return { status: response.status, body: await response.json() };
+    };
     console.log(JSON.stringify({ stage: 'configured', mode, hostId: h.hostId, modelProfileId: h.modelProfileId }));
     let projectId;
     if (mode === 'work') {
       const rootPath = join(h.base, 'synthetic-work'); await mkdir(rootPath);
       projectId = (await h.api('/projects', { requestId: randomUUID(), name: '合成记忆验收', rootPath, permission: 'write' })).body.project.projectId;
     }
-    const create = async () => {
+    const create = async (remote = false) => {
+      const api = remote ? secondApi : h.api;
       if (projectId) {
         const input = { requestId: randomUUID(), modelProfileId: h.modelProfileId };
         const result = await until(async () => {
-          const response = await h.api(`/projects/${projectId}/sessions`, input);
+          const response = await api(`/projects/${projectId}/sessions`, input);
           return response.status === 409 && response.body.error?.code === 'SESSION_BUSY' ? null : response;
         }, 30000);
         assert.equal(result.status, 202, JSON.stringify(result.body));
-        return (await until(async () => { const c = (await h.api(`/commands/${result.body.command.commandId}`)).body.command; return c.state === 'accepted_by_dsh' && c; })).sessionId;
+        return (await until(async () => { const c = (await api(`/commands/${result.body.command.commandId}`)).body.command; return c.state === 'accepted_by_dsh' && c; })).sessionId;
       }
       const input = { requestId: randomUUID(), kind: 'session.create', targetDeviceId: h.hostId, modelProfileId: h.modelProfileId };
       const result = await until(async () => {
-        const response = await h.api('/commands', input);
+        const response = await api('/commands', input);
         if (response.status === 409 && response.body.error?.code === 'SESSION_BUSY') return null;
         assert.equal(response.status, 202, JSON.stringify(response.body)); return response.body;
       }, 30000);
-      return (await until(async () => { const c = (await h.api(`/commands/${result.command.commandId}`)).body.command; return c.state === 'accepted_by_dsh' && c; })).sessionId;
+      return (await until(async () => { const c = (await api(`/commands/${result.command.commandId}`)).body.command; return c.state === 'accepted_by_dsh' && c; })).sessionId;
     };
     let sessionId = await create();
     const inputs = ['记住：我喜欢喝乌龙茶', '我喜欢喝什么茶', '不对，纠正我喝茶的偏好：我现在喜欢红茶，不是乌龙茶。请更新这条记忆。', '我喜欢喝什么茶', '忘掉我喝茶的偏好', '我喜欢喝什么茶'];
     for (let i = 0; i < inputs.length; i++) {
-      if (i === 1 || i === 3 || i === 5) sessionId = await create();
+      const remote = i === 1 || i === 3 || i === 5;
+      if (remote) sessionId = await create(true);
       const prior = (await h.api(`/sessions/${sessionId}/events`)).body.events ?? [];
       const previousIds = new Set(prior.map(event => event.seq ?? event.eventId));
-      const command = await h.command({ requestId: randomUUID(), kind: 'session.message', targetDeviceId: h.hostId, sessionId, text: inputs[i] });
-      const step = { input: inputs[i], sessionId, commandId: command.commandId }; row.steps.push(step);
+      const message = { requestId: randomUUID(), kind: 'session.message', targetDeviceId: h.hostId, sessionId, text: inputs[i] };
+      const sent = remote ? await secondApi('/commands', message) : null;
+      if (sent) assert.equal(sent.status, 202, JSON.stringify(sent.body));
+      const command = remote ? await until(async () => {
+        const current = (await secondApi(`/commands/${sent.body.command.commandId}`)).body.command;
+        if (['rejected', 'uncertain'].includes(current.state)) throw Error(current.errorCode);
+        return current.state === 'accepted_by_dsh' && current;
+      }) : await h.command(message);
+      const step = { input: inputs[i], client: remote ? 'independent-http-client' : 'desktop', sessionId, commandId: command.commandId }; row.steps.push(step);
       const terminal = await until(async () => {
         const task = (await h.api(`/tasks/${command.commandId}`)).body;
         const approvals = (await h.api(`/sessions/${sessionId}/approvals`)).body.approvals;
@@ -90,6 +110,7 @@ try {
       step.reply = (detail.events ?? []).filter(e => e.type === 'assistant.message' && !previousIds.has(e.seq ?? e.eventId)).map(e => e.data?.text ?? '').join('\n');
       await h.page.evaluate(async id => {
         await fix45Core.refreshModels(); await fix45Core.refreshMemoryStatus();
+        await fix45Core.refreshLogicalSessions();
         await fix45Core.selectSession(id);
       }, sessionId);
       await h.page.waitForTimeout(400);
@@ -105,6 +126,7 @@ try {
       console.log(JSON.stringify({ mode, step: i + 1, status: step.status, pending: step.pending, reply: step.reply }));
       step.memoryStatus = (await h.api('/memory/status')).body;
       step.items = (await h.api('/memory/items?kind=all')).body;
+      step.coreJobs = await h.app.evaluate(async (_, ownerId) => ia2b.context.memoryManager.query(ownerId, 'query_jobs', { operation: 'list' }), h.ownerId);
       if ([0, 2, 4].includes(i)) step.settledStatus = await until(async () => {
         const status = (await h.api('/memory/status')).body;
         return !status.pendingFormationCount && !status.pendingBoundaryCount && status;
