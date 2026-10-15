@@ -76,8 +76,9 @@ async function fixture(t: any, { pendingCleanup = false } = {}) {
       const prior = body.messages.slice(index + 1).flatMap((m: any) => m.tool_calls ?? []);
       const step = prior.length;
       if (input.startsWith('FIX45_FOLLOWUP')) return { content: '排队的更正已处理。' };
-      if (input.startsWith('FIX47_EMPTY_FORGET')) {
-        if (step === 0) return tool('load_tools', { names: ['memory_forget'] }, step);
+      if (input.startsWith('FIX47_EMPTY_FORGET') || input.startsWith('FIX47_MARKUP_FORGET')) {
+        if (step === 0) return { ...tool('load_tools', { names: ['memory_forget'] }, step),
+          content: input.startsWith('FIX47_MARKUP') ? '<tool_call><function=load_tools><parameter.names>["memory_forget"]</parameter></function></tool_call>' : '' };
         if (step === 1) return tool('memory_forget', { kind: 'cognition', id: 'tea-fact', expectedWorldRevision: revisions.get(ownerId) ?? 1 }, step);
         return { content: '' };
       }
@@ -256,6 +257,15 @@ test('a completed memory action has a final reply even when the model returns em
   assert.equal(f.facts.has(f.ownerId()), false);
   const events = (await f.api(`/sessions/${session}/events`)).events;
   assert.match(events.filter((e: any) => e.type === 'assistant.message').at(-1)?.data.text ?? '', /已忘掉/);
+});
+
+test('memory call markup is hidden while the actual native memory tool still executes', { timeout: 60000 }, async t => {
+  const f = await fixture(t), session = await f.create();
+  const result = await f.complete(await f.send(session, 'FIX47_MARKUP_FORGET 忘掉我的喝茶偏好'));
+  assert.equal(result.terminal.data.reason, 'completed'); assert.equal(f.facts.has(f.ownerId()), false);
+  const events = (await f.api(`/sessions/${session}/events`)).events;
+  const replies = events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
+  assert.match(replies, /已忘掉/); assert.doesNotMatch(replies, /tool_call|memory_forget/);
 });
 
 for (const work of [false, true]) test(`forget uses Core commands and no file tools in ${work ? 'work' : 'chat'} mode`, { timeout: 60000 }, async t => {

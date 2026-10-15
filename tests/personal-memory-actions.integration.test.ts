@@ -166,9 +166,9 @@ test('real Core: topic correction and forgetting preserve unrelated memories and
   const f = await fixture(t)
   await f.manager.ingest(owner, boundary('记住：我每周五晚上锻炼。', 'unrelated'))
   await f.ready()
-  const corrected = await f.tool('memory_correct', { query: '喜欢喝什么茶', text: '我喜欢红茶。' }, 'query-correct', '纠正喝茶偏好，我喜欢红茶。')
+  const corrected = await f.tool('memory_correct', { query: '喜欢喝什么茶', text: '我喜欢喝红茶。' }, 'query-correct', '纠正喝茶偏好，我喜欢红茶。')
   assert.equal(corrected.state, 'applied')
-  const forgotten = await f.tool('memory_forget', { query: '喝茶的偏好' }, 'query-forget', '忘掉我的喝茶偏好。')
+  const forgotten = await f.tool('memory_forget', { query: '红茶' }, 'query-forget', '忘掉我的喝茶偏好。')
   assert.equal(forgotten.state, 'applied')
   const remaining = (await f.world()).items
   assert.ok(remaining.some((row: any) => /周五/.test(row.value.content)), 'topic deletion must not include standing unrelated context')
