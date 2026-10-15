@@ -19,7 +19,7 @@ import WeftMateCore
         var checks=0
         func require(_ value: Bool,_ name: String) throws { guard value else { throw NSError(domain:"PhoneStandalone:"+name,code:1) };checks+=1 }
         func wait(_ condition: () -> Bool,_ name: String) async throws {
-            for _ in 0..<200 { if condition() { return };try await Task.sleep(for:.milliseconds(20)) }
+            for _ in 0..<1000 { if condition() { return };try await Task.sleep(for:.milliseconds(20)) }
             throw NSError(domain:"PhoneStandaloneWait:"+name,code:1)
         }
         model.activate(app:app)
@@ -34,6 +34,23 @@ import WeftMateCore
         try await wait({!model.busy},"stream-completed")
         try require(model.messages.map(\.role)==["user","assistant"],"user-assistant-order")
         try require(model.messages.last?.text == "第一片、第二片，手机独立回复完成。","complete-stream-text")
+        model.draft="慢回复队列一";model.send()
+        try await wait({model.busy},"queue-first-started")
+        model.draft="队列二";model.send()
+        model.draft="队列三";model.send()
+        try require(model.messages.filter { $0.role == "user" }.suffix(3).map(\.text) == ["慢回复队列一","队列二","队列三"],"three-sends-are-retained-while-busy")
+        try await wait({!model.busy},"queue-drained")
+        try require(model.messages.suffix(6).map(\.role) == ["user","assistant","user","assistant","user","assistant"],"three-replies-in-order")
+        try require(model.messages.suffix(6).filter { $0.role == "assistant" }.allSatisfy { !$0.text.isEmpty },"three-replies-have-body")
+        model.newThread()
+        model.draft="手机独立问题";model.send();try await wait({!model.busy},"fresh-before-reopen")
+        let timeoutApp=AppleAppModel(directory:root.appendingPathComponent("timeout"))
+        let timeoutModel=PhoneStandaloneModel(testCredentials:keys,testLoopback:true,replyTimeout:0.4)
+        timeoutModel.activate(app:timeoutApp);try timeoutModel.saveModel(config)
+        timeoutModel.draft="超时后重试";timeoutModel.send();try await wait({!timeoutModel.busy},"timeout-unblocks-composer")
+        try require(timeoutModel.messages.last?.replyStatus == .failed && timeoutModel.notice == "这次没回复，可以重试。","timeout-is-recoverable")
+        timeoutModel.send(regenerate:true);try await wait({!timeoutModel.busy},"timeout-retry-completes")
+        try require(timeoutModel.messages.count == 2 && timeoutModel.messages.last?.replyStatus == .complete && !(timeoutModel.messages.last?.text.isEmpty ?? true),"retry-keeps-question-and-replaces-failure")
         let selected=model.state.selected
         let restored=PhoneStandaloneModel(testCredentials:keys,testLoopback:true);restored.activate(app:app)
         try require(restored.state.selected == selected && restored.messages == model.messages,"process-model-reopen-preserves-chat")

@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import XCTest
 @testable import WeftMateCore
 
 struct PhoneStandaloneTests {
@@ -137,4 +138,89 @@ struct PhoneStandaloneTests {
     #expect(JSONValue.number(2_147_483_648).int == 2_147_483_648)
     #endif
     #expect(JSONValue.number(9_007_199_254_740_992).int == nil)
+}
+
+
+@MainActor final class StandaloneSendTests: XCTestCase {
+    func testThreeSendsRetainOrderedRepliesAndHistory() throws {
+        var state=PhoneChatState()
+        let oneValue=state.enqueueReply(text:"一");let one=try XCTUnwrap(oneValue)
+        state.updateReply(one,text:"第一片",status:.replying)
+        let twoValue=state.enqueueReply(text:"二");let two=try XCTUnwrap(twoValue)
+        let threeValue=state.enqueueReply(text:"三");let three=try XCTUnwrap(threeValue)
+        XCTAssertTrue(state.threads[0].messages.map(\.role) == ["user","assistant","user","assistant","user","assistant"])
+        XCTAssertTrue(state.replyHistory(one).map(\.text) == ["一"])
+        state.updateReply(one,text:"答一",status:.complete)
+        XCTAssertTrue(state.nextReply == two)
+        XCTAssertTrue(state.replyHistory(two).map(\.text) == ["一","答一","二"])
+        state.updateReply(two,text:"答二",status:.complete)
+        XCTAssertTrue(state.nextReply == three)
+        XCTAssertTrue(state.replyHistory(three).map(\.text) == ["一","答一","二","答二","三"])
+        state.updateReply(three,text:"答三",status:.complete)
+        XCTAssertTrue(state.nextReply == nil)
+        XCTAssertTrue(state.threads[0].messages.map(\.text) == ["一","答一","二","答二","三","答三"])
+        let restored=try JSONDecoder().decode(PhoneChatState.self,from:JSONEncoder().encode(state))
+        XCTAssertTrue(restored.threads == state.threads)
+    }
+    func testInterruptedQueueKeepsQuestionsAndCanRegenerate() throws {
+        var state=PhoneChatState()
+        let firstValue=state.enqueueReply(text:"一");let first=try XCTUnwrap(firstValue)
+        state.updateReply(first,text:"部分正文",status:.replying)
+        _=state.enqueueReply(text:"二")
+        state.interruptReplies()
+        XCTAssertTrue(state.nextReply == nil)
+        XCTAssertTrue(state.threads[0].messages.map(\.text) == ["一","部分正文","二",""])
+        XCTAssertTrue(state.threads[0].messages.filter { $0.role == "assistant" }.allSatisfy { $0.replyStatus == .failed })
+        let retryValue=state.enqueueReply(text:"",regenerate:true);let retry=try XCTUnwrap(retryValue)
+        XCTAssertTrue(state.nextReply == retry)
+        XCTAssertTrue(state.replyHistory(retry).last?.text == "二")
+        XCTAssertTrue(state.threads[0].messages.count == 4)
+    }
+    func testStalledReplyTimesOutAndCanRetry() async throws {
+        let model=PhoneModelConfiguration(name:"fixture",baseURL:"https://model.example.com/v1",model:"test",apiKey:"synthetic-key")
+        let config=URLSessionConfiguration.ephemeral;config.protocolClasses=[StalledReplyProtocol.self]
+        var state=PhoneChatState();let replyValue=state.enqueueReply(text:"超时问题");let reply=try XCTUnwrap(replyValue)
+        state.updateReply(reply,status:.replying)
+        var request=try model.request(messages:[["role":"user","content":"超时问题"]],stream:true)
+        request.url=URL(string:"https://model.example.com/stall")!
+        let start=Date()
+        do {
+            for try await _ in PhoneReplyStream.lines(request:request,model:model,timeout:0.1,configuration:config) {}
+            XCTFail("A stalled stream must fail")
+        } catch {
+            XCTAssertTrue((error as? URLError)?.code == .timedOut)
+            state.updateReply(reply,status:.failed)
+        }
+        XCTAssertTrue(Date().timeIntervalSince(start) < 2)
+        XCTAssertTrue(PhoneReplyStatus.failed.placeholder == "这次没回复，可以重试。")
+        let retryValue=state.enqueueReply(text:"",regenerate:true);let retry=try XCTUnwrap(retryValue)
+        request.url=URL(string:"https://model.example.com/finish")!
+        var text=""
+        for try await line in PhoneReplyStream.lines(request:request,model:model,timeout:1,configuration:config) {
+            if let delta=try model.streamText(line) { text += delta }
+        }
+        state.updateReply(retry,text:text,status:.complete)
+        XCTAssertTrue(text == "重试成功")
+        XCTAssertTrue(state.threads[0].messages.map(\.text) == ["超时问题","重试成功"])
+    }
+    func testTerminalMarkersCloseStreamsWithoutWaitingForSocketEOF() throws {
+        var model=PhoneModelConfiguration(name:"fixture",baseURL:"https://model.example.com/v1",model:"test",apiKey:"synthetic-key")
+        XCTAssertTrue(model.streamFinished("data: [DONE]"))
+        XCTAssertTrue(model.streamFinished(#"data: {"choices":[{"delta":{},"finish_reason":"stop"}]}"#))
+        XCTAssertTrue(!model.streamFinished(#"data: {"choices":[{"delta":{"content":"正文"},"finish_reason":null}]}"#))
+        model.interfaceType="anthropic"
+        XCTAssertTrue(model.streamFinished(#"data: {"type":"message_stop"}"#))
+    }
+}
+private final class StalledReplyProtocol: URLProtocol, @unchecked Sendable {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        client?.urlProtocol(self,didReceive:HTTPURLResponse(url:request.url!,statusCode:200,httpVersion:nil,headerFields:["Content-Type":"text/event-stream"])!,cacheStoragePolicy:.notAllowed)
+        if request.url?.path == "/finish" {
+            client?.urlProtocol(self,didLoad:Data("data: {\"choices\":[{\"delta\":{\"content\":\"重试成功\"}}]}\n\ndata: {\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n".utf8))
+            // Deliberately leave the HTTP response open after finish_reason.
+        }
+    }
+    override func stopLoading() {}
 }

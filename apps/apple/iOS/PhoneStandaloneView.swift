@@ -62,7 +62,7 @@ struct PhoneStandaloneChat: View {
                                 ForEach(model.messages) { message in
                                     VStack(alignment:message.role == "user" ? .trailing : .leading,spacing:AppleTokens.Space.p8) {
                                         if message.role == "assistant" || !message.text.isEmpty {
-                                            Text(message.text.isEmpty ? (model.busy ? "正在回复…" : "还没有收到回复，可以重新生成。") : message.text).textSelection(.enabled).frame(maxWidth:.infinity,alignment:message.role == "user" ? .trailing : .leading)
+                                            Text(message.text.isEmpty ? (message.replyStatus?.placeholder ?? "这次没回复，可以重试。") : message.text).textSelection(.enabled).frame(maxWidth:.infinity,alignment:message.role == "user" ? .trailing : .leading).accessibilityIdentifier("phoneChat.message."+message.role+"."+message.id)
                                         }
                                         if let attachments=message.attachments,!attachments.isEmpty {
                                             attachmentRow(attachments,removable:false)
@@ -70,13 +70,19 @@ struct PhoneStandaloneChat: View {
                                         if message.role == "assistant" {
                                             HStack {
                                                 if !message.text.isEmpty { Button { UIPasteboard.general.string=message.text } label: { WeftIcon("copy") }.phoneIcon().accessibilityLabel("复制回复").accessibilityIdentifier("phoneChat.copy") }
-                                                if message.id == model.messages.last?.id { Button { model.send(regenerate:true) } label: { WeftIcon("sync") }.phoneIcon().disabled(model.busy).accessibilityLabel("重新生成").accessibilityIdentifier("phoneChat.regenerate") }
+                                                if message.replyStatus == .failed {
+                                                    Button { model.retryReply(message.id) } label: { WeftIcon("sync") }.phoneIcon().disabled(model.busy).accessibilityLabel("重试回复").accessibilityIdentifier("phoneChat.retry."+message.id)
+                                                } else if message.id == model.messages.last?.id { Button { model.send(regenerate:true) } label: { WeftIcon("sync") }.phoneIcon().disabled(model.busy).accessibilityLabel("重新生成").accessibilityIdentifier("phoneChat.regenerate") }
                                             }
                                         }
                                     }.id(message.id)
                                 }
                             }.padding(AppleTokens.Space.p20)
-                        }.onChange(of:model.messages.last?.text) { _,_ in if let id=model.messages.last?.id { proxy.scrollTo(id,anchor:.bottom) } }
+                        }.onChange(of:model.messages.last?.id) { _,_ in
+                            Task { @MainActor in await Task.yield();if let id=model.messages.last?.id { proxy.scrollTo(id,anchor:.bottom) } }
+                        }.onChange(of:model.busy) { _,busy in
+                            if !busy { Task { @MainActor in await Task.yield();if let id=model.messages.last?.id { proxy.scrollTo(id,anchor:.bottom) } } }
+                        }
                     }
                 }
                 if let notice=model.notice, !model.models.isEmpty || !model.messages.isEmpty { Text(notice).font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p16) }
@@ -85,7 +91,10 @@ struct PhoneStandaloneChat: View {
                         Text("手机上可以聊天和记住你说过的事；操作电脑，连上电脑后可用。")
                             .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         if !model.attachments.isEmpty { attachmentRow(model.attachments,removable:true) }
-                        TextField("聊一聊…",text:$model.draft,axis:.vertical).lineLimit(1...5).focused($focused).accessibilityIdentifier("phoneChat.draft")
+                        // A bounded editor keeps keyboard/focus layout independent of a growing reply.
+                        TextEditor(text:$model.draft).frame(height:76).scrollContentBackground(.hidden)
+                            .overlay(alignment:.topLeading) { if model.draft.isEmpty { Text("聊一聊…").foregroundStyle(Weave.muted).padding(.top,AppleTokens.Space.p8).padding(.leading,AppleTokens.Space.p4).allowsHitTesting(false) } }
+                            .focused($focused).accessibilityLabel("聊一聊…").accessibilityIdentifier("phoneChat.draft")
                         HStack(spacing:AppleTokens.Space.p4) {
                             plusMenu
                             Menu { Text("手机聊天没有电脑操作，无需审批。"); Text("连上电脑后可选择操作模式。") } label: { PhoneOperationModeIcon().phoneMenuLabel(circle:true,onCard:true) }.phoneIcon().accessibilityLabel("操作模式，手机聊天").accessibilityIdentifier("phoneChat.mode")
@@ -93,7 +102,8 @@ struct PhoneStandaloneChat: View {
 
                             Spacer(minLength:AppleTokens.Space.p4)
                             if focused { Button { focused=false } label: { WeftIcon("chevron") }.phoneIcon().accessibilityLabel("收起键盘") }
-                            Button { focused=false; model.busy ? model.stop() : model.send() } label: { WeftIcon(model.busy ? "stop" : "send") }.phoneIcon(primary:true).disabled(!model.busy && model.draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && model.attachments.isEmpty).accessibilityLabel(model.busy ? "停止回复" : "发送").accessibilityIdentifier("phoneChat.send")
+                            if model.busy { Button { model.stop() } label: { WeftIcon("stop") }.phoneIcon().accessibilityLabel("停止回复").accessibilityIdentifier("phoneChat.stop") }
+                            Button { model.send() } label: { WeftIcon("send") }.phoneIcon(primary:true).disabled(model.draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && model.attachments.isEmpty).accessibilityLabel(model.busy ? "排队发送" : "发送").accessibilityIdentifier("phoneChat.send")
                         }
                     }.padding(AppleTokens.Space.p12).background(Weave.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r24)).padding(AppleTokens.Space.p12)
                 }

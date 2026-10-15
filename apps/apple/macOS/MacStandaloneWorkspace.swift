@@ -108,14 +108,16 @@ struct MacStandaloneWorkspace: View {
                             ForEach(chat.messages) { message in
                                 VStack(alignment: message.role == "user" ? .trailing : .leading, spacing: AppleTokens.Space.p8) {
                                     Text(message.role == "user" ? "你" : "WeftMate").font(AppleTokens.Fonts.caption).foregroundStyle(colors.muted)
-                                    Text(message.text.isEmpty ? (chat.busy ? "正在回复…" : "还没有收到回复，可以重新生成。") : message.text)
+                                    Text(message.text.isEmpty ? (message.replyStatus?.placeholder ?? "这次没回复，可以重试。") : message.text)
                                         .textSelection(.enabled).accessibilityIdentifier("macChat.message." + message.id)
                                     ForEach(message.attachments ?? []) { attachment in Text(attachment.placeholder).font(AppleTokens.Fonts.caption).foregroundStyle(colors.muted) }
                                     if message.role == "assistant" {
                                         HStack {
                                             Button("复制回复") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(message.text, forType: .string) }
                                                 .buttonStyle(MacStandaloneActionStyle()).disabled(message.text.isEmpty)
-                                            if message.id == chat.messages.last?.id {
+                                            if message.replyStatus == .failed {
+                                                Button("重试回复") { chat.retryReply(message.id) }.buttonStyle(MacStandaloneActionStyle()).disabled(chat.busy)
+                                            } else if message.id == chat.messages.last?.id {
                                                 Button("重新生成") { chat.send(regenerate: true) }.buttonStyle(MacStandaloneActionStyle()).disabled(chat.busy)
                                             }
                                         }
@@ -124,7 +126,11 @@ struct MacStandaloneWorkspace: View {
                             }
                         }.padding(AppleTokens.Space.p24).frame(maxWidth: 800).frame(maxWidth: .infinity)
                     }
-                }.onChange(of: chat.messages.last?.text) { _, _ in if let id = chat.messages.last?.id { proxy.scrollTo(id, anchor: .bottom) } }
+                }.onChange(of: chat.messages.last?.id) { _, _ in
+                    Task { @MainActor in await Task.yield();if let id=chat.messages.last?.id { proxy.scrollTo(id,anchor:.bottom) } }
+                }.onChange(of: chat.busy) { _, busy in
+                    if !busy { Task { @MainActor in await Task.yield();if let id=chat.messages.last?.id { proxy.scrollTo(id,anchor:.bottom) } } }
+                }
             }
             if let notice = chat.notice { Text(notice).font(AppleTokens.Fonts.callout).foregroundStyle(colors.muted).padding(.horizontal, AppleTokens.Space.p16) }
             if !chat.models.isEmpty {
@@ -140,10 +146,11 @@ struct MacStandaloneWorkspace: View {
                         ServiceModelMenuButton(services: chat.services, current: chat.modelID, label: chat.selectedServiceModel?.name ?? chat.currentModel?.model ?? "尚未配置", usesImages: chat.conversationUsesImages, thinkingSupported: chat.selectedServiceModel?.deepThinking?.supported == true, thinking: $chat.thinkingEnabled, select: chat.selectServiceModel, add: { models = true }, refresh: { Task { for service in chat.services { await chat.refreshService(service) } } }, identifier: "macChat.model")
                         Text(chat.currentModel?.model ?? "").font(AppleTokens.Fonts.caption).foregroundStyle(colors.muted).lineLimit(1)
                         Spacer()
-                        Button { chat.busy ? chat.stop() : chat.send() } label: { WeftIcon(chat.busy ? "stop" : "send", size: 18) }
+                        if chat.busy { Button { chat.stop() } label: { WeftIcon("stop",size:18) }.buttonStyle(MacStandaloneActionStyle()).accessibilityLabel("停止回复").accessibilityIdentifier("macChat.stop") }
+                        Button { chat.send() } label: { WeftIcon("send", size: 18) }
                             .buttonStyle(MacStandaloneActionStyle(primary: true))
-                            .disabled(!chat.busy && chat.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && chat.attachments.isEmpty)
-                            .accessibilityLabel(chat.busy ? "停止回复" : "发送").accessibilityIdentifier("macChat.send")
+                            .disabled(chat.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && chat.attachments.isEmpty)
+                            .accessibilityLabel(chat.busy ? "排队发送" : "发送").accessibilityIdentifier("macChat.send")
                     }
                 }.padding(AppleTokens.Space.p16).background(colors.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r14))
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r14))
