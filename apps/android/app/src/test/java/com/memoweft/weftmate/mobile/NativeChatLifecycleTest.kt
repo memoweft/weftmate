@@ -50,13 +50,23 @@ class NativeChatLifecycleTest {
         var creations = 0
         var sent = 0
         var approval = "auto"
+        var selectedProfile = "test-model"
+        var selectionFailure: ApiFailure? = null
+        var selectionBody: JSONObject? = null
+        var selectionRead = false
+        var phoneHostChoice = ""
+        var createdProfile = ""
+        var boundSession = ""
+        var boundSessionProfile = "test-model"
+        var sentProfile = ""
         val approvalWrites = mutableListOf<String>()
         val project = JSONObject().put("projectId", "test-project").put("name", "测试文件夹")
         var workEntered: CompletableDeferred<Unit>? = null
         var workRelease: CompletableDeferred<Unit>? = null
         private var work = false
         private val identity = java.util.UUID.randomUUID().toString()
-        val model get() = JSONObject().put("profileId", "test-model").put("displayName", "测试模型").put("configured", true)
+        val model get() = JSONObject().put("profileId", phoneHostChoice.ifEmpty { "test-model" })
+            .put("displayName", if (phoneHostChoice.isEmpty()) "测试模型" else "MiMo v2.5").put("configured", true)
         private fun chat() = JSONObject().put("chatId", "test-chat-$identity-$creations").put("kind", "side")
             .put("activeSessionId", "test-session-$identity-$creations").put("mode", if (work) "work" else "chat")
             .put("sendAvailable", true).put("approvalMode", approval).apply { if (work) put("workDirectory", project) }
@@ -64,11 +74,27 @@ class NativeChatLifecycleTest {
             "app.bootstrap" -> JSONObject().put("owner", account).put("loggedIn", true).apply { if (configured) put("model", model) }
             "settings.appearance" -> JSONObject().put("value", "light")
             "models.host" -> JSONObject().put("models", if (configured) JSONArray().put(model) else JSONArray())
+            "models.selectHost" -> { phoneHostChoice = params.getString("profileId"); JSONObject().put("profileId", phoneHostChoice) }
+            "shared.conversations.get" -> JSONObject().put("status", if (boundSession.isEmpty()) "unbound" else "active")
+                .put("cached", false).put("binding", JSONObject().put("sessionId", boundSession))
             "host.business" -> {
                 if (!online) throw IOException("synthetic offline")
                 val path = params.getString("path").removePrefix("/personal/v1")
                 val body = params.optJSONObject("body")
                 when {
+                    path.startsWith("/model-services/") && path.endsWith("/select") -> {
+                        assertEquals("/model-services/model-service-00000000-0000-4000-8000-000000000048/select", path)
+                        selectionBody = body
+                        selectionFailure?.let { throw it }
+                        // The host rejects extra fields; serviceId belongs only in the route.
+                        if (body!!.keys().asSequence().any { it !in setOf("modelId", "sessionId", "requestId") }) throw ApiFailure(400, "INVALID_REQUEST")
+                        assertEquals("POST", params.getString("method"))
+                        assertEquals("mimo-v2.5", body.getString("modelId"))
+                        assertTrue(body.getString("requestId").isNotBlank())
+                        selectedProfile = "test-v25-profile"
+                        if (boundSession.isNotEmpty() && body.optString("sessionId") == boundSession) boundSessionProfile = selectedProfile
+                        JSONObject().put("profileId", selectedProfile).put("models", JSONArray().put(JSONObject().put("profileId", selectedProfile).put("configured", true)))
+                    }
                     path == "/status" -> JSONObject().put("hostId", "test-computer").put("personalCapabilities", JSONObject().put("workAndChat", 1))
                     path == "/projects" -> JSONObject().put("projects", JSONArray().put(project))
                     path == "/chats" -> JSONObject().put("items", JSONArray())
@@ -76,6 +102,7 @@ class NativeChatLifecycleTest {
                     path == "/commands" || path == "/projects/test-project/sessions" -> {
                         creations++
                         check(body!!.getString("modelProfileId").isNotBlank()) { "MODEL_REQUIRED" }
+                        createdProfile = body.getString("modelProfileId")
                         work = path.startsWith("/projects/")
                         if (work) { workEntered?.complete(Unit); workRelease?.await() }
                         JSONObject().put("command", JSONObject().put("state", "observed").put("sessionId", "test-session-$identity-$creations"))
@@ -86,14 +113,19 @@ class NativeChatLifecycleTest {
                     }
                     path.endsWith("/chat") -> JSONObject().put("chatId", "test-chat-$identity-$creations")
                     path.contains("/events?") || path.contains("/changes?") -> JSONObject().put("items", JSONArray())
-                    path.startsWith("/chats/") -> JSONObject().put("chat", chat())
+                    path.startsWith("/chats/") -> { selectionRead = true; JSONObject().put("chat", chat()) }
                     else -> JSONObject()
                 }
             }
             "shared.send" -> {
                 assertTrue(params.getString("sessionId").isNotBlank())
-                assertEquals("test-model", params.getString("modelProfileId"))
+                assertEquals(selectedProfile, params.getString("modelProfileId"))
                 sent++; JSONObject().put("state", "accepted")
+            }
+            "chat.send" -> {
+                assertEquals("phone-created-conversation", params.getString("conversationId"))
+                // Delegated turns follow the bound session, rather than the phone's saved default.
+                sentProfile = boundSessionProfile; sent++; JSONObject().put("state", "accepted")
             }
             else -> JSONObject()
         }
@@ -108,6 +140,158 @@ class NativeChatLifecycleTest {
         fun close() { chat.close(); scope.cancel() }
     }
     private suspend fun until(condition: () -> Boolean) { withTimeout(6000) { while (!condition()) delay(10) } }
+
+    private val service = JSONObject().put("serviceId", "model-service-00000000-0000-4000-8000-000000000048")
+    private val v25 = JSONObject().put("modelId", "mimo-v2.5").put("name", "MiMo v2.5")
+
+    @Test fun modelMenuSelectionSendsHostContractAndUsesItsReceiptForTheNextMessage() = runBlocking {
+        val e = Environment(); val f = Fixture(e)
+        try {
+            f.chat.bootstrap(); f.chat.hostModelServices = true
+            val selected = chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }!!
+            assertEquals(service.getString("serviceId"), selected.getString("serviceId"))
+            assertEquals("mimo-v2.5", selected.getString("modelId"))
+            assertEquals("test-v25-profile", f.chat.modelId)
+            assertEquals("MiMo v2.5", f.chat.modelLabel)
+            assertEquals(f.chat.sessionId, e.selectionBody!!.getString("sessionId"))
+            f.chat.edit("切换后发一句"); f.chat.send(); until { e.sent == 1 }
+        } finally { f.close() }
+    }
+
+    @Test fun modelMenuResolvesExistingChatSessionBeforeSelecting() = runBlocking {
+        val e = Environment(); val f = Fixture(e)
+        try {
+            f.chat.bootstrap(); f.chat.hostModelServices = true; f.chat.sessionId = ""; e.selectionRead = false
+            chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }
+            assertTrue(e.selectionRead)
+            assertTrue(e.selectionBody!!.getString("sessionId").startsWith("test-session-"))
+        } finally { f.close() }
+    }
+
+    @Test fun modelMenuOnNewChatOmitsSessionAndKeepsTheChosenProfile() = runBlocking {
+        val e = Environment(); val f = Fixture(e)
+        try {
+            f.chat.bootstrap(); f.chat.hostModelServices = true; f.chat.chatId = ""; f.chat.sessionId = ""
+            chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }
+            assertFalse(e.selectionBody!!.has("sessionId"))
+            assertEquals("test-v25-profile", f.chat.modelId)
+        } finally { f.close() }
+    }
+
+    @Test fun phoneCreatedConversationUsesTheExistingSavedComputerRouteAfterReconnect() = runBlocking {
+        val e = Environment(); val f = Fixture(e)
+        try {
+            f.chat.hostModelServices = true; f.chat.phone = true; f.chat.chatId = "phone-created-conversation"
+            chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }
+            assertFalse(e.selectionRead); assertFalse(e.selectionBody!!.has("sessionId"))
+            assertEquals("test-v25-profile", e.phoneHostChoice)
+            assertEquals("test-v25-profile", f.chat.modelId)
+        } finally { f.close() }
+    }
+
+    @Test fun newWorkModelSurvivesRefreshAndIsUsedToCreateAndSendTheWork() = runBlocking {
+        val e = Environment(); val f = Fixture(e)
+        try {
+            f.chat.bootstrap(); f.chat.hostModelServices = true; f.chat.newChat("work").join()
+            assertTrue(f.chat.newWork); assertEquals("", f.chat.chatId)
+            chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }
+            f.chat.refresh()
+            assertEquals("test-v25-profile", f.chat.modelId)
+            assertEquals("MiMo v2.5", f.chat.modelLabel)
+            f.chat.chooseWorkProject(e.project)
+            until { !f.chat.newWork && !f.chat.workBusy }
+            assertEquals("test-v25-profile", e.createdProfile)
+            f.chat.edit("用刚选的型号开始工作"); f.chat.send(); until { e.sent == 1 }
+        } finally { f.close() }
+    }
+
+    @Test fun handedOffPhoneConversationSelectsItsBoundSessionBeforeTheNextTurn() = runBlocking {
+        val e = Environment().apply { boundSession = "computer-bound-session" }; val f = Fixture(e)
+        try {
+            f.chat.bootstrap(); f.chat.hostModelServices = true
+            f.chat.select(JSONObject().put("id", "phone-created-conversation").put("source", "phone")
+                .put("binding", JSONObject().put("sessionId", e.boundSession)))
+            assertTrue(f.chat.phone)
+            chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }
+            assertEquals(e.boundSession, e.selectionBody!!.optString("sessionId"))
+            f.chat.edit("交给电脑以后换型号继续"); f.chat.send(); until { e.sent == 1 }
+            assertEquals("test-v25-profile", e.sentProfile)
+        } finally { f.close() }
+    }
+
+    @Test fun phoneModelMenuUpdatesTheComposerIdAsWellAsTheLabel() = runBlocking {
+        val f = Fixture(Environment())
+        try {
+            f.chat.standalone = true; f.chat.modelId = "mimo-v2.6-flash"
+            val selected = chooseNativeServiceModel(f.chat, service, v25) { body ->
+                assertEquals(setOf("serviceId", "modelId"), body.keys().asSequence().toSet())
+                JSONObject().put("model", JSONObject().put("modelId", body.getString("modelId")))
+            }!!
+            assertEquals("mimo-v2.5", f.chat.modelId)
+            assertEquals("MiMo v2.5", f.chat.modelLabel)
+            assertEquals("mimo-v2.5", selected.getString("modelId"))
+        } finally { f.close() }
+    }
+
+    @Test fun unsupportedSelectionExplainsHowToUpdateWithoutChangingTheComposer() = runBlocking {
+        for (failure in listOf(ApiFailure(405, "METHOD_NOT_ALLOWED"), ApiFailure(426, "COMPUTER_UPDATE_REQUIRED"))) {
+            val e = Environment(); e.selectionFailure = failure; val f = Fixture(e)
+            try {
+                f.chat.hostModelServices = true; f.chat.modelId = "original"; f.chat.modelLabel = "原型号"
+                try { chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }; fail("Must explain unsupported selection") }
+                catch (error: Exception) { assertEquals("电脑上的 WeftMate 版本太旧，到电脑上更新后就能切换模型。", error.message) }
+                assertEquals("original", f.chat.modelId); assertEquals("原型号", f.chat.modelLabel)
+            } finally { f.close() }
+        }
+    }
+
+    @Test fun undeclaredComputerSelectionDoesNotSendAnUnsupportedRequest() = runBlocking {
+        val e = Environment(); val f = Fixture(e)
+        try {
+            f.chat.modelId = "original"
+            try { chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }; fail("Must require an update") }
+            catch (error: Exception) { assertEquals("电脑上的 WeftMate 版本太旧，到电脑上更新后就能切换模型。", error.message) }
+            assertNull(e.selectionBody); assertEquals("original", f.chat.modelId)
+        } finally { f.close() }
+    }
+
+    @Test fun selectionErrorsExplainUnavailableModelAndExpiredLogin() = runBlocking {
+        for ((failure, message) in listOf(
+            ApiFailure(422, "MODEL_UNAVAILABLE") to "这个型号暂时不可用，请重新打开模型菜单，选择可用的型号。",
+            ApiFailure(401, "UNAUTHORIZED") to "登录已失效，请重新登录后切换模型。",
+            ApiFailure(404, "SESSION_UNAVAILABLE") to "这段对话暂时不可用，请重新打开对话后切换模型。",
+        )) {
+            val e = Environment(); e.selectionFailure = failure; val f = Fixture(e)
+            try {
+                f.chat.hostModelServices = true; f.chat.modelId = "original"
+                try { chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }; fail("Must explain failure") }
+                catch (error: Exception) { assertEquals(message, error.message) }
+                assertEquals("original", f.chat.modelId)
+            } finally { f.close() }
+        }
+    }
+
+    @Test fun missingSelectionReceiptDoesNotPublishAnOptimisticPhoneChoice() = runBlocking {
+        val f = Fixture(Environment())
+        try {
+            f.chat.standalone = true; f.chat.modelId = "original"
+            try { chooseNativeServiceModel(f.chat, service, v25) { JSONObject() }; fail("Missing receipt") }
+            catch (error: Exception) { assertTrue(error.message!!.contains("型号暂时不可用")) }
+            assertEquals("original", f.chat.modelId)
+        } finally { f.close() }
+    }
+
+    @Test fun lateSelectionReceiptCannotRenameAnotherConversation() = runBlocking {
+        val f = Fixture(Environment())
+        try {
+            f.chat.standalone = true; f.chat.modelId = "original"; f.chat.chatId = "first"
+            val selected = chooseNativeServiceModel(f.chat, service, v25) {
+                f.chat.chatId = "second"
+                JSONObject().put("model", JSONObject().put("modelId", "mimo-v2.5"))
+            }
+            assertNull(selected); assertEquals("original", f.chat.modelId)
+        } finally { f.close() }
+    }
 
     @Test fun workCreationSavesTheLatestApprovalChoiceAfterTheRequestReturns() = runBlocking {
         val e = Environment(); val f = Fixture(e)
