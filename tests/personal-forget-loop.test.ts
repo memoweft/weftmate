@@ -70,12 +70,17 @@ async function fixture(t: any, { pendingCleanup = false } = {}) {
   const tool = (name: string, args: any, count: number) => ({ content: '', tool_calls: [{ id: `fix45-${count}`, type: 'function', function: { name, arguments: JSON.stringify(args) } }] });
   const runtime = await phoneRuntime(root, [], {
     respond(body: any) {
-      const index = body.messages.findLastIndex((m: any) => m.role === 'user' && textOf(m).startsWith('FIX45_'));
+      const index = body.messages.findLastIndex((m: any) => m.role === 'user' && /^(FIX45_|FIX47_)/.test(textOf(m)));
       const input = index < 0 ? '' : textOf(body.messages[index]);
       if (index < 0) return { content: '合成对话' };
       const prior = body.messages.slice(index + 1).flatMap((m: any) => m.tool_calls ?? []);
       const step = prior.length;
       if (input.startsWith('FIX45_FOLLOWUP')) return { content: '排队的更正已处理。' };
+      if (input.startsWith('FIX47_EMPTY_FORGET')) {
+        if (step === 0) return tool('load_tools', { names: ['memory_forget'] }, step);
+        if (step === 1) return tool('memory_forget', { kind: 'cognition', id: 'tea-fact', expectedWorldRevision: revisions.get(ownerId) ?? 1 }, step);
+        return { content: '' };
+      }
       if (input.startsWith('FIX45_PRIVATE_QUERY')) {
         if (step === 0) return tool('load_tools', { names: ['memory_query'] }, step);
         if (step === 1) return tool('memory_query', { query: '茶' }, step);
@@ -242,6 +247,15 @@ test('native job_output waits are never stopped by counts, including constant pr
     }
     assert.equal(count, 12);
   }
+});
+
+test('a completed memory action has a final reply even when the model returns empty text', { timeout: 60000 }, async t => {
+  const f = await fixture(t), session = await f.create();
+  const result = await f.complete(await f.send(session, 'FIX47_EMPTY_FORGET 忘掉我的喝茶偏好'));
+  assert.equal(result.terminal.data.reason, 'completed');
+  assert.equal(f.facts.has(f.ownerId()), false);
+  const events = (await f.api(`/sessions/${session}/events`)).events;
+  assert.match(events.filter((e: any) => e.type === 'assistant.message').at(-1)?.data.text ?? '', /已忘掉/);
 });
 
 for (const work of [false, true]) test(`forget uses Core commands and no file tools in ${work ? 'work' : 'chat'} mode`, { timeout: 60000 }, async t => {
