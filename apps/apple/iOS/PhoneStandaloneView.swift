@@ -58,7 +58,7 @@ struct PhoneStandaloneChat: View {
                 } else {
                     ScrollViewReader { proxy in
                         ScrollView {
-                            LazyVStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
+                            VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
                                 ForEach(model.messages) { message in
                                     VStack(alignment:message.role == "user" ? .trailing : .leading,spacing:AppleTokens.Space.p8) {
                                         if message.role == "assistant" || !message.text.isEmpty {

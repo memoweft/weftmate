@@ -104,7 +104,7 @@ struct MacStandaloneWorkspace: View {
                             }
                         }.padding(AppleTokens.Space.p24).frame(maxWidth: 640).frame(maxWidth: .infinity)
                     } else {
-                        LazyVStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
                             ForEach(chat.messages) { message in
                                 VStack(alignment: message.role == "user" ? .trailing : .leading, spacing: AppleTokens.Space.p8) {
                                     Text(message.role == "user" ? "你" : "WeftMate").font(AppleTokens.Fonts.caption).foregroundStyle(colors.muted)
