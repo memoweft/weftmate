@@ -194,7 +194,8 @@ test('recall-disabled conversations do not read or send memory through tools, wh
   assert.equal(f.recallCalls.length, 0, 'neither automatic recall nor memory_query may read Core');
   assert.doesNotMatch(JSON.stringify(f.runtime.requests), /乌龙茶/, 'memory content must not enter model requests');
   const results = f.runtime.requests.flatMap((r: any) => r.messages.filter((m: any) => m.role === 'tool').map(textOf));
-  assert.ok(results.some((r: string) => r.includes('RECALL_DISABLED') && r.includes('这段对话没开记忆')));
+  assert.ok(results.some((r: string) => r.includes('withheld') && r.includes('这段对话没开记忆')));
+  assert.ok(results.every((r: string) => !r.includes('RECALL_DISABLED')), 'the setting state survives without exposing its internal reason code');
   await f.complete(await f.send(session, 'FIX45_PRIVATE_WRITE 纠正为红茶'));
   assert.equal(f.facts.get(f.ownerId()), '红茶');
   await f.complete(await f.send(session, 'FIX45_PRIVATE_WRITE 忘掉茶偏好'));

@@ -190,11 +190,13 @@ export const PROFILE_PATCH_TEMPLATE_R16 = PROFILE_PATCH_TEMPLATE_R15
   .replace('    - id: weftmate-personal-task-control', "    - id: weftmate-personal-schedules\n      name: ./plugins/weftmate-personal-schedules.mjs\n    - id: weftmate-personal-conversation-context\n      name: ./plugins/weftmate-personal-conversation-context.mjs\n    - id: weftmate-personal-task-control")
 export const PROFILE_PATCH_TEMPLATE_R17 = PROFILE_PATCH_TEMPLATE_R16
   .replace('    - id: weftmate-personal-memory', "    - id: weftmate-personal-tool-loop\n      name: ./plugins/weftmate-personal-tool-loop.mjs\n    - id: weftmate-personal-memory")
-export const PROFILE_PATCH_TEMPLATE = `${PROFILE_PATCH_TEMPLATE_R17}
+export const PROFILE_PATCH_TEMPLATE_R18 = `${PROFILE_PATCH_TEMPLATE_R17}
 # Personal tool-loop reuses the official detector with both arguments and results.
 - id: repeat-tool-reminder
   disabled: true
 `
+export const PROFILE_PATCH_TEMPLATE = PROFILE_PATCH_TEMPLATE_R18
+  .replace('    - id: weftmate-personal-memory', "    - id: weftmate-personal-reply-content\n      name: ./plugins/weftmate-personal-reply-content.mjs\n    - id: weftmate-personal-memory")
 
 export const PROFILE_PATCH_TEMPLATE_R3_PICKER = `# WeftMate 补丁层（R3）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
 # 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行）。
@@ -355,7 +357,7 @@ async function writeProfilePatch(patchPath: string): Promise<boolean> {
     return true
   }
   if (existing === PROFILE_PATCH_TEMPLATE) return false // 已是新模板
-  if (existing === PROFILE_PATCH_TEMPLATE_R17 || existing === PROFILE_PATCH_TEMPLATE_R16 || existing === PROFILE_PATCH_TEMPLATE_LEGACY || existing === PROFILE_PATCH_TEMPLATE_R3
+  if (existing === PROFILE_PATCH_TEMPLATE_R18 || existing === PROFILE_PATCH_TEMPLATE_R17 || existing === PROFILE_PATCH_TEMPLATE_R16 || existing === PROFILE_PATCH_TEMPLATE_LEGACY || existing === PROFILE_PATCH_TEMPLATE_R3
     || existing === PROFILE_PATCH_TEMPLATE_R3_PICKER || existing === PROFILE_PATCH_TEMPLATE_R7
     || existing === PROFILE_PATCH_TEMPLATE_R8 || existing === PROFILE_PATCH_TEMPLATE_R9 || existing === PROFILE_PATCH_TEMPLATE_R10 || existing === PROFILE_PATCH_TEMPLATE_R11 || existing === PROFILE_PATCH_TEMPLATE_R12 || existing === PROFILE_PATCH_TEMPLATE_R13 || existing === PROFILE_PATCH_TEMPLATE_R14 || existing === PROFILE_PATCH_TEMPLATE_R15) {
     await writeFile(patchPath, PROFILE_PATCH_TEMPLATE, 'utf8')
@@ -420,6 +422,8 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-desktop-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-memory.mjs'), join(dir, 'plugins', 'weftmate-personal-memory.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-tool-loop.mjs'), join(dir, 'plugins', 'weftmate-personal-tool-loop.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-reply-content.mjs'), join(dir, 'plugins', 'weftmate-personal-reply-content.mjs')],
+    [join(PLUGINS_DIR, 'personal-reply-content.mjs'), join(dir, 'plugins', 'personal-reply-content.mjs')],
     [join(PLUGINS_DIR, 'personal-prompt.mjs'), join(dir, 'plugins', 'personal-prompt.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-conversation-context.mjs'), join(dir, 'plugins', 'weftmate-personal-conversation-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-task-control.mjs'), join(dir, 'plugins', 'weftmate-personal-task-control.mjs')],
