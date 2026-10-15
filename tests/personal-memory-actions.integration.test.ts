@@ -131,7 +131,9 @@ test('FIX-50 real Core: an explicit forget deletes correction history and source
       url: new URL(pathname, 'http://memory'), request: { method: 'GET' }, readJson: async () => ({}) })
   }
   for (const row of before) assert.ok((await sources(row.item_id)).body.sources.some((s: any) => s.contentAvailable))
-  const child = fork(new URL('fixtures/personal-memory-plugin-child.mjs', import.meta.url), [], {
+  // The Core-only CI job has no DSH installation. Only message construction is
+  // a wire-shape fixture here; personal-forget-loop runs the native DSH loop.
+  const child = fork(new URL('fixtures/personal-memory-plugin-child.mjs', import.meta.url), ['--protocol-only'], {
     env: { ...process.env, WEFTMATE_PERSONAL_MEMORY_ENABLED: '1' }, stdio: ['ignore', 'ignore', 'ignore', 'ipc'], windowsHide: true,
   })
   const tools: any[] = []

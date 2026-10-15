@@ -8,12 +8,12 @@ import { registerHooks } from 'node:module';
 const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-plugin-'));
 const pluginPath = join(root, 'weftmate-personal-memory.mjs');
 copyFileSync(fileURLToPath(new URL('../../src/plugins/weftmate-personal-memory.mjs', import.meta.url)), pluginPath);
-if (process.argv.includes('--privacy-only')) {
+if (process.argv.includes('--privacy-only') || process.argv.includes('--protocol-only')) {
   // Portable contract test for the final derivation path. The real DSH factory
   // remains exercised by the existing vendor test and MEM-2 Electron evidence.
   registerHooks({ resolve(specifier, context, next) {
     if (specifier === '@deepseek-ai/dsh-llm/message') return { shortCircuit:true,
-      url:'data:text/javascript,'+encodeURIComponent('export const createUserMessage = input => ({id:crypto.randomUUID(),role:"user",...input});') };
+      url:'data:text/javascript,'+encodeURIComponent('const message = (role,input) => ({id:crypto.randomUUID(),role,...input}); export const createUserMessage = input => message("user",input); export const createAssistantMessage = input => message("assistant",input);') };
     return next(specifier, context);
   } });
 } else symlinkSync(fileURLToPath(new URL('../../vendor/dsh-runtime/node_modules', import.meta.url)),
