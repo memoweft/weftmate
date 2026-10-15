@@ -358,7 +358,8 @@ export function apply(ctx) {
     // One inbox claim can contain several user messages; later tool steps may
     // claim another message in the same turn. Deduplicate messages, not turns.
     const claimed = (payload.messages ?? []).filter(message => message?.source?.kind === 'user');
-    const inputs = claimed.length ? claimed.map(message => ({ id: message.id, text: contentText(message.content).trim() })) : [user];
+    const inputs = claimed.length ? claimed.map(message => ({ id: message.id, text: contentText(message.content).trim() }))
+      : [userForTurn(session, turn, 16000) ?? user];
     for (const input of inputs) {
       const key = input.id ?? digest(input.text);
       if (explicit?.seen.has(key)) continue;

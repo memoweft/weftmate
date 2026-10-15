@@ -68,8 +68,9 @@ process.on('message', async (message) => {
       const user = { ...userClaim('explicit'), content: [{ type: 'text', text: message.text }] };
       const agent = { id: value.id, session: value };
       const inputs = [user, { ...userClaim('calculation'), content: [{ type: 'text', text: '另外请计算12×13。' }] }];
-      const first = await preStep(value.id, agent, inputs, inputs);
-      value.append('user/message', user);
+      if (message.durableOnly) value.append('user/message', user);
+      const first = await preStep(value.id, agent, message.durableOnly ? [user] : inputs, message.durableOnly ? [] : inputs);
+      if (!message.durableOnly) value.append('user/message', user);
       // A later step must not submit the same intent again.
       const second = await preStep(value.id, agent, first.messages, []);
       value.append('assistant/message', { turn: 1, message: { source: { provider: 'synthetic', model: 'synthetic' },

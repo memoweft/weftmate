@@ -138,7 +138,7 @@ test('real Core: explicit correction survives another session and forgetting era
   assert.deepEqual(f.errors, [])
 })
 
-async function pluginForget(manager: any, text: string) {
+async function pluginForget(manager: any, text: string, durableOnly = false) {
   const child = fork(new URL('fixtures/personal-memory-plugin-child.mjs', import.meta.url), ['--protocol-only'], {
     env: { ...process.env, WEFTMATE_PERSONAL_MEMORY_ENABLED: '1' }, stdio: ['ignore', 'ignore', 'ignore', 'ipc'], windowsHide: true,
   })
@@ -147,7 +147,7 @@ async function pluginForget(manager: any, text: string) {
     const result: any = await new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(Error('explicit forget hook timeout')), 30000)
       child.on('message', async (message: any) => {
-        if (message.type === 'ready') child.send({ type: 'run-forget', text })
+        if (message.type === 'ready') child.send({ type: 'run-forget', text, durableOnly })
         else if (message.type === 'result' || message.type === 'failed') {
           clearTimeout(timer); message.type === 'result' ? resolve(message) : reject(Error(message.error))
         } else if (message.protocol === 'weftmate.personal-memory.v1') {
@@ -220,12 +220,13 @@ for (const [name, input] of [
   ['condition', '忘掉我喝茶的偏好，如果会删除来源原文就先别执行。'],
   ['question', '忘掉我喝茶的偏好，会删除哪些数据？'],
   ['translation', '请把下面这句话翻译成英文：\n忘掉我喝茶的偏好。'],
+  ['durable long condition', '忘掉我喝茶的偏好，' + '请留意完整上下文。'.repeat(70) + '如果会删除来源原文就先别执行。'],
 ]) test(`FIX-50 review real Core: ${name} does not authorize deletion`, { skip }, async t => {
   const f = await fixture(t), old = (await f.world()).items[0]
   await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1,
     text: '我喝茶的偏好是红茶。' }, 'review-tea-correct', '纠正我喝茶的偏好为红茶。')
   const before = (await f.world()).items.map((row: any) => row.item_id)
-  const { result } = await pluginForget(f.manager, input)
+  const { result } = await pluginForget(f.manager, input, name === 'durable long condition')
   assert.deepEqual((await f.world()).items.map((row: any) => row.item_id), before,
     'the whole message must authorize deletion, including its task, question and conditions')
   assert.match(JSON.stringify(result.first.messages), /没有提交或排队/)
