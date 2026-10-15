@@ -35,4 +35,4 @@ node tests/eval/sec-2/report.mjs
 node tests/eval/sec-2/run.mjs --smoke --repeat 1 --out tests/evidence/sec-2/smoke
 ```
 
-它覆盖网页、搜索摘要、文件、结构化标题、模拟邮件和授权读/删除，可在几分钟内发现基本链路损坏。夜间当前全部使用合成模型且不联网；建议保留现有阶段，另由 NIGHT-3a 决定是否加入显式开启、要求机器级密钥的 MiMo 可选阶段。默认不修改夜间脚本。每晚用量与实测结果、失败根因及建议见 [SEC-2 证据](../tests/evidence/sec-2/README.md)。
+它覆盖网页、搜索摘要、文件、结构化标题、模拟邮件和授权读/删除，可在几分钟内发现基本链路损坏。夜间当前全部使用合成模型且不联网；建议保留现有阶段，另由 NIGHT-3a 决定是否加入显式开启、要求机器级密钥的 MiMo 可选阶段。默认不修改夜间脚本。每晚用量与实测结果、失败根因及建议见 [SEC-2 证据](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/sec-2/README.md)。

@@ -4,7 +4,7 @@
 
 云端 `ci.yml` 的 Windows / Linux 按文件名 SHA-256（安全哈希算法）固定种子 `required-v5190` 分成三片，每片 `--test-concurrency=1`。新增文件不会移动已有文件。macOS 保留一片。两项较重的 BL-29 计时用例原样移入独立文件，避免一次重跑连带重复混合文件的其余用例；清单的 `evidenceFile` 保留历史位置用于核对取证。`--shard 1/3` 选择第一片；`--report <文件>` 输出结果与每次尝试。各片上传报告后，`Required unit tests (summary)` 汇总通过、失败、跳过与重跑恢复记录；报告缺失、重复或任何分片失败都会阻断。
 
-`.github/timing-sensitive-tests.json` 只登记 [CI-1 失败表](../tests/evidence/ci-1/flaky-table.md) 中实际失败过的墙上时钟或真实 Electron（桌面程序框架）预算用例。预算与断言不变，不删除或跳过用例。`CI === 'true'` 的 required 文件首次失败，且所有失败叶用例都在清单里时，整个文件只再跑一次。清单外失败、同文件混合功能失败、进程崩溃、文件期限或无法识别的失败都直接阻断。第二次失败仍红；通过则在步骤摘要的「本次重跑才通过的用例」列出全名与文件。计数采用文件最终尝试，保留两次尝试供取证，不重复计入通过数。
+`.github/timing-sensitive-tests.json` 只登记 [CI-1 失败表](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ci-1/flaky-table.md) 中实际失败过的墙上时钟或真实 Electron（桌面程序框架）预算用例。预算与断言不变，不删除或跳过用例。`CI === 'true'` 的 required 文件首次失败，且所有失败叶用例都在清单里时，整个文件只再跑一次。清单外失败、同文件混合功能失败、进程崩溃、文件期限或无法识别的失败都直接阻断。第二次失败仍红；通过则在步骤摘要的「本次重跑才通过的用例」列出全名与文件。计数采用文件最终尝试，保留两次尝试供取证，不重复计入通过数。
 
 本机、vendor、`schedule` 触发及 `CI_TEST_STRICT=true` 的运行保持单次严格执行。清单名称用 TypeScript（类型化 JavaScript）语法树与当前测试声明核对，写错或过期的名称会报错。
 
@@ -26,6 +26,6 @@
 
 `Required unit tests (summary)` 仍须等全部分片报告，缺失、重复或失败继续阻断；它仅移除没有依赖用途的 `npm ci`。无法在其它分片未结束时宣布整体通过。当前 CI 的 Observed bridge（记忆观察桥）任务比 Windows 三片快，vendor／打包／画廊已是独立工作流，继续拆这些任务不能缩短 `gh run rerun --failed` 对同一次运行结束的等待。保持全部检查标准；需要定位时查看已完成的失败 job（任务）日志，完整失败重跑等运行结束后执行。
 
-计时敏感清单沿用 CI-1 六项，本包不扩大重跑范围，不为功能失败登记计时例外。再次失败应继续查阶段耗时和真实条件，不能增加第二次自动重跑。固定复现、逐项定性和连续六轮同代码证据见 [CI-3](../tests/evidence/ci-3/README.md)。
+计时敏感清单沿用 CI-1 六项，本包不扩大重跑范围，不为功能失败登记计时例外。再次失败应继续查阶段耗时和真实条件，不能增加第二次自动重跑。固定复现、逐项定性和连续六轮同代码证据见 [CI-3](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ci-3/README.md)。
 
 同步探针后续采用相同 hooks（测试钩子）边界：合成身份、桌面／手机准备与退出在测量之外，原55秒／60秒及6秒／1秒／7秒断言不变。硬期限收集控制器时使用SIGKILL（强制终止信号），避免SIGTERM（终止信号）处理器让同步控制器一直不返回；失败保留每一步耗时，合成桌面验证正常退出0。该修复只在共享测试夹具，Apple（苹果端）工作流与原生检查不变。首次验收在macOS Node组600秒到期的失败与下一额外观察轮macOS组通过都保留在 before-sync-fix-cloud（同步修复前证据），不计入最终冻结代码六轮。
