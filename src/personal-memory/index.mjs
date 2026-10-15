@@ -11,6 +11,7 @@ import { semanticRecallStatus } from '../system-diagnostics.mjs';
 import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
 import { recallQuestions,recallEntries } from './recall-questions.mjs';
+import { createMemoryActions } from './actions.mjs';
 
 const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
@@ -54,10 +55,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const retryTimers = new Map();
   const retryCounts = new Map();
   const startupWorlds = new Set();
+  const formationOwners = new Set();
   const outboxQueues = new Map();
   const homePromises = new Map();
   const journal = createMemoryCommandJournal({ root });
   const commandFlights = new Map();
+  const manualFormationUntil = new Map();
+  const actions = createMemoryActions({ root, manager: () => manager, schedule: scheduleRetry });
   let closing = false;
   let startQueue = Promise.resolve();
   let sourceVersion;
@@ -265,6 +269,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       try {
         const result = await withOwner(ownerId, entry => entry.rpc.request('ingest_boundary', { boundary }),
           row.offline === true ? null : boundary.parent_session_id);
+        formationOwners.add(ownerId);
         await queueOutbox(ownerId, async () => {
           const latest = await readOutbox(ownerId);
           latest.items = latest.items.filter(item => item.boundary.event_id !== boundary.event_id);
@@ -290,6 +295,27 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
     if (!backlog.pendingBoundaryCount) boundaryFailures.delete(ownerId);
     else if (!backlog.blockedBoundaryCount) scheduleRetry(ownerId);
+    // A delivered boundary may still have a failed Core formation job. Resume
+    // both accepted jobs and durable user actions without requiring a UI read.
+    void actions.resume(ownerId).catch(() => scheduleRetry(ownerId));
+    try {
+      if (formationOwners.has(ownerId)) await withOwner(ownerId, async entry => {
+        if (!entry.capabilities?.methods?.includes('query_jobs')) return;
+        const result = await entry.rpc.request('query_jobs', { operation: 'list' });
+        let pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
+        for (const item of result.formation_requests ?? []) if (['no_change', 'dead'].includes(item.state)) {
+          if (!entry.capabilities.methods.includes('retry_formation')) continue;
+          // An explicit retry owns its just-enqueued successor. Give it one
+          // normal recovery interval before creating another background replay.
+          if ((manualFormationUntil.get(ownerId) ?? 0) > Date.now()) { pending = true; continue; }
+          await entry.rpc.request('retry_formation', { job_id: item.job_id, request_id: `auto:${item.job_id}` });
+          pending = true;
+        }
+        if (pending || await actions.pending(ownerId)) {
+          retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1); scheduleRetry(ownerId);
+        } else { retryCounts.delete(ownerId); formationOwners.delete(ownerId); }
+      });
+    } catch { scheduleRetry(ownerId); }
     return results;
   }
 
@@ -446,13 +472,18 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     for (const id of ids) if (OWNER.test(id)) {
       const file = path.join(root, 'accounts', id, 'memory-home', 'memoweft', 'memoweft.sqlite3');
       // Metadata only: Core remains the sole reader/writer of its database.
-      if (await lstat(file).catch(() => null)) startupWorlds.add(id);
+      if (await lstat(file).catch(() => null)) { startupWorlds.add(id); formationOwners.add(id); }
       scheduleRetry(id, true);
     }
   }).catch(() => {}) : Promise.resolve();
 
-  return {
+  const manager = {
     enabled,
+    mutateFromTool(ownerId, action) {
+      owner(ownerId);
+      if (!enabled || closing) throw error('MEMORY_UNAVAILABLE');
+      return actions.submit(ownerId, action);
+    },
     async markAccountErased(ownerId) {
       owner(ownerId); await ensurePrivateDirectory(path.join(root,'accounts',ownerId));
       const { durableWrite } = await import('../personal-access/store.mjs');
@@ -541,6 +572,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         ? 'connected' : 'unknown';
     },
     async retryFormation(ownerId, jobId, requestId) {
+      manualFormationUntil.set(ownerId, Date.now() + 30_000);
       return withOwner(ownerId, entry => entry.rpc.request('retry_formation', { job_id: jobId, request_id: requestId }));
     },
     async status(ownerId) {
@@ -743,6 +775,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           typeof boundary.event_id !== 'string' || !/^[A-Za-z0-9._:-]{1,180}$/.test(boundary.event_id) ||
           Buffer.byteLength(JSON.stringify(boundary), 'utf8') > 4 * 1024 * 1024) throw error('MEMORY_REQUEST_INVALID');
       await privateHome(ownerId);
+      if (await actions.handled(ownerId, boundary)) return { state: 'accepted', jobState: 'handled_by_tool' };
       await queueOutbox(ownerId, async () => {
         const state = await readOutbox(ownerId);
         const prior = state.items.find((item) => item.boundary.event_id === boundary.event_id);
@@ -876,9 +909,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       await startQueue.catch(() => {});
       await Promise.all([...outboxQueues.values()].map((pending) => pending.catch(() => {})));
       await Promise.all([...commandFlights.values()].map((pending) => pending.catch(() => {})));
+      await actions.close();
       await journal.close();
       await Promise.all([...entries.values()].map((entry) => entry.rpc.close().catch(() => {})));
       entries.clear();
     },
   };
+  return manager;
 }
