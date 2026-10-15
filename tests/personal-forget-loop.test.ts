@@ -31,7 +31,7 @@ async function removeLinks(directory: string) {
 }
 
 /** Real HTTP host, managed DSH process, native tools and model requests. Only inference and Core replies are scripted. */
-async function fixture(t: any, { pendingCleanup = false } = {}) {
+async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = false } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-fix45-'));
   const calls: any[] = [], commands: any[] = [], recallCalls: any[] = [], revisions = new Map<string, number>(), facts = new Map<string, string>();
   let progress = 0;
@@ -70,12 +70,29 @@ async function fixture(t: any, { pendingCleanup = false } = {}) {
   const tool = (name: string, args: any, count: number) => ({ content: '', tool_calls: [{ id: `fix45-${count}`, type: 'function', function: { name, arguments: JSON.stringify(args) } }] });
   const runtime = await phoneRuntime(root, [], {
     respond(body: any) {
-      const index = body.messages.findLastIndex((m: any) => m.role === 'user' && textOf(m).startsWith('FIX45_'));
+      const index = body.messages.findLastIndex((m: any) => m.role === 'user' && /^(FIX45_|FIX47_)/.test(textOf(m)));
       const input = index < 0 ? '' : textOf(body.messages[index]);
       if (index < 0) return { content: '合成对话' };
       const prior = body.messages.slice(index + 1).flatMap((m: any) => m.tool_calls ?? []);
       const step = prior.length;
       if (input.startsWith('FIX45_FOLLOWUP')) return { content: '排队的更正已处理。' };
+      if (input.startsWith('FIX47_QUEUED_CONTINUE')) {
+        if (step === 0) return tool('load_tools', { names: ['memory_correct'] }, step);
+        if (step === 1) return tool('memory_correct', { kind: 'cognition', id: 'tea-fact', expectedWorldRevision: 1, text: '红茶' }, step);
+        return { content: '更正还在排队。根据你刚说的新偏好，推荐红茶冷泡。' };
+      }
+      if (input.startsWith('FIX47_CONTINUE')) {
+        if (step === 0) return tool('load_tools', { names: ['memory_correct'] }, step);
+        if (step <= 2) return tool('memory_correct', { kind: 'cognition', id: 'tea-fact',
+          expectedWorldRevision: revisions.get(ownerId) ?? 1, text: step === 1 ? '红茶' : '普洱茶' }, step);
+        return { content: '两次纠正都已完成。根据最新偏好，推荐普洱冷泡饮品。' };
+      }
+      if (input.startsWith('FIX47_EMPTY_FORGET') || input.startsWith('FIX47_MARKUP_FORGET')) {
+        if (step === 0) return { ...tool('load_tools', { names: ['memory_forget'] }, step),
+          content: input.startsWith('FIX47_MARKUP') ? '<tool_call><function=load_tools><parameter.names>["memory_forget"]</parameter></function></tool_call>' : '' };
+        if (step === 1) return tool('memory_forget', { kind: 'cognition', id: 'tea-fact', expectedWorldRevision: revisions.get(ownerId) ?? 1 }, step);
+        return { content: '' };
+      }
       if (input.startsWith('FIX45_PRIVATE_QUERY')) {
         if (step === 0) return tool('load_tools', { names: ['memory_query'] }, step);
         if (step === 1) return tool('memory_query', { query: '茶' }, step);
@@ -129,6 +146,7 @@ async function fixture(t: any, { pendingCleanup = false } = {}) {
       if (request.action === 'recall') return memoryPolicy.recall ? manager.recall(binding.ownerId)
         : { state: 'withheld', reasonCode: 'RECALL_DISABLED', memoryPolicy };
       calls.push(request.tool);
+      if (queueMemoryAction && request.tool.name === 'memory_correct') return { state: 'queued', message: '这次还没记住，稍后会再试。' };
       if (request.tool.name === 'memory_query' && request.tool.arguments.query === '茶' &&
           calls.filter(c => c.name === 'memory_query' && c.arguments.query === '茶').length === 2) {
         repeatedStarted(); await repeatGate;
@@ -243,6 +261,44 @@ test('native job_output waits are never stopped by counts, including constant pr
     }
     assert.equal(count, 12);
   }
+});
+
+test('a completed memory action has a final reply even when the model returns empty text', { timeout: 60000 }, async t => {
+  const f = await fixture(t), session = await f.create();
+  const result = await f.complete(await f.send(session, 'FIX47_EMPTY_FORGET 忘掉我的喝茶偏好'));
+  assert.equal(result.terminal.data.reason, 'completed');
+  assert.equal(f.facts.has(f.ownerId()), false);
+  assert.ok(f.runtime.requests.some((request: any) => request.messages.some((message: any) =>
+    message.role === 'tool' && textOf(message).includes('applied'))), 'the model must get an actual continuation attempt before fallback');
+  const events = (await f.api(`/sessions/${session}/events`)).events;
+  assert.match(events.filter((e: any) => e.type === 'assistant.message').at(-1)?.data.text ?? '', /已忘掉/);
+});
+
+test('memory call markup is hidden while the actual native memory tool still executes', { timeout: 60000 }, async t => {
+  const f = await fixture(t), session = await f.create();
+  const result = await f.complete(await f.send(session, 'FIX47_MARKUP_FORGET 忘掉我的喝茶偏好'));
+  assert.equal(result.terminal.data.reason, 'completed'); assert.equal(f.facts.has(f.ownerId()), false);
+  const events = (await f.api(`/sessions/${session}/events`)).events;
+  const replies = events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
+  assert.match(replies, /已忘掉/); assert.doesNotMatch(replies, /tool_call|memory_forget/);
+});
+
+test('review-5 memory success lets the model finish later corrections and the requested recommendation', { timeout: 60000 }, async t => {
+  const f = await fixture(t), session = await f.create();
+  const result = await f.complete(await f.send(session, 'FIX47_CONTINUE 先纠正成红茶，再纠正成普洱茶，然后根据新偏好推荐饮品'));
+  assert.equal(result.terminal.data.reason, 'completed');
+  assert.equal(f.commands.length, 2, 'both requested corrections must execute before the turn ends');
+  assert.equal(f.facts.get(f.ownerId()), '普洱茶');
+  const replies = (await f.api(`/sessions/${session}/events`)).events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
+  assert.match(replies, /推荐普洱冷泡饮品/);
+});
+
+test('review-5 a queued memory update still allows the requested recommendation', { timeout: 60000 }, async t => {
+  const f = await fixture(t, { queueMemoryAction: true }), session = await f.create();
+  const result = await f.complete(await f.send(session, 'FIX47_QUEUED_CONTINUE 更正为红茶，然后按这个新偏好推荐饮品'));
+  assert.equal(result.terminal.data.reason, 'completed');
+  const replies = (await f.api(`/sessions/${session}/events`)).events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
+  assert.match(replies, /还在排队/); assert.match(replies, /推荐红茶冷泡/);
 });
 
 for (const work of [false, true]) test(`forget uses Core commands and no file tools in ${work ? 'work' : 'chat'} mode`, { timeout: 60000 }, async t => {
