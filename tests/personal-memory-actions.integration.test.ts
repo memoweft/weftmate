@@ -112,7 +112,8 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
     offline: (value: boolean) => { offline = value }, reject: (value: boolean) => { reject = value }, loseReceipt: () => { loseReceipt = true },
     holdCorrections: (value: boolean) => { correctionsUnavailable = value },
     holdCorrectionText: (value: string) => { unavailableText = value },
-    restart: async () => { await manager.close(); manager = create() }, get calls() { return calls } }
+    restart: async () => { await manager.close(); manager = create() }, get calls() { return calls },
+    get decisions() { return coreTrace.filter(row => row.modelDecision).length } }
 }
 
 test('real Core: explicit correction survives another session and forgetting erases revision sources', { skip }, async t => {
@@ -317,6 +318,23 @@ test('FIX-50 review real Core: owner topic labels do not become other people or 
   assert.equal((await f.world()).items.length, 0)
   const after = await f.manager.query(owner, 'query_world', { operation: 'list', object_kind: 'entity', include_history: true })
   assert.equal(after.items.some((row: any) => row.value.kind === 'topic'), false)
+})
+
+test('FIX-50 review real Core: exact ids cannot expose candidates when recall is off; owner page deletion remains available', { skip }, async t => {
+  const f = await fixture(t), target = (await f.world()).items[0]
+  const result = await handlePersonalMemoryTool(f.manager, owner, { name: 'memory_forget',
+    arguments: { kind: 'cognition', id: target.item_id, expectedWorldRevision: 1 },
+    requestId: 'memory-tool:' + createHash('sha256').update('no-recall-exact-id').digest('hex'),
+    source: { id: 'no-recall-user', text: '忘掉我喝茶的偏好。' } },
+    { sessionId: 'no-recall-session', modelTier: 'cloud', memoryPolicy: { recall: false } })
+  assert.equal(result.state, 'withheld'); assert.match(result.message, /没有删除.*记忆页/)
+  assert.equal(f.decisions, 0, 'no old fact may be sent to the judge when recall is disabled')
+  assert.equal((await f.world()).items[0].item_id, target.item_id)
+  const pathname = `/personal/v1/memory/items/cognition/${target.item_id}`
+  const deleted = await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname, url: new URL(pathname, 'http://memory'),
+    request: { method: 'DELETE' }, readJson: async () => ({ requestId: 'no-recall-page-delete', expectedWorldRevision: 1 }) })
+  assert.equal(deleted.body.receipt.state, 'applied')
+  assert.equal((await f.world()).items.length, 0)
 })
 
 for (const name of ['memory_correct', 'memory_forget']) test(`real Core: ${name} is queued during an outage and completed after host restart`, { skip }, async t => {
