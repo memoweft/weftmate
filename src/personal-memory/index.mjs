@@ -503,7 +503,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       if (!scope.authorized) return { state: 'no_action', decision: scope };
       const result = await this.mutateFromTool(ownerId, { ...action, name: 'memory_forget', scope, automatic: true,
         arguments: { query: scope.topic } });
-      return { ...result, decision: scope };
+      return { ...result, ...(result.state === 'applied' ? { message: result.message.replace('已忘掉这件事。',
+        `已删除关于“${scope.topic}”的记忆，包括旧版本和来源原文。`) } : {}), decision: scope };
     },
     async planForget(ownerId, action) {
       const route = await resolveProcessingRoute(ownerId, action.sessionId);
