@@ -2,7 +2,7 @@ import { cleanReplyStream, modelToolFailure, modelToolFailureValue } from './per
 
 export const name = 'weftmate-personal-reply-content';
 export const inject = ['llm', 'sessions', 'tools'];
-const failureCodes = result => [...new Set(JSON.stringify([result.error, result.content]).match(/\b(?:MEMORY|TOOL)_[A-Z0-9_]+\b/g) ?? [])].join(',') || 'TOOL_FAILED';
+const failureCodes = result => [...new Set(JSON.stringify([result.error, result.content]).match(/\b(?:MEMORY|TOOL|RECALL)_[A-Z0-9_]+\b/g) ?? [])].join(',') || 'TOOL_FAILED';
 const personal = session => ['personal-remote','personal-shared-chat'].includes(session?.header?.agentPreset);
 
 export async function apply(ctx) {
