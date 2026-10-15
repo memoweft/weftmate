@@ -17,7 +17,7 @@ export async function apply(ctx) {
     if (!content) return result;
     ctx.logger?.warn?.(`tool failure code=${failureCodes(result)}`);
     return result.isError ? {...result,content,error:{...result.error,message:content[0].text}}
-      : {...result,value:{message:content[0].text}};
+      : {...result,value:{message:content[0].text,...(content[1] ? {instruction:content[1].text} : {})}};
   }, { prepend:true });
   // Nested Code Mode calls also receive plain errors before their parent can quote them.
   ctx.on('tools/post-execute', async (exec, result, next) => {
