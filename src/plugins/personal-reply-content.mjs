@@ -1,6 +1,6 @@
 const json = value => { try { return JSON.parse(value); } catch { return undefined; } };
 const fencePrefix = /^(?: {0,3}> ?)* {0,3}(?:(?:[-+*]|\d+[.)]) +)?$/;
-const indented = line => /^(?: {0,3}> ?)*(?: {4}|\t)/.test(line);
+const indented = line => /^(?: {0,3}> ?)*(?: {4}| {0,3}\t)/.test(line);
 
 /** Track Markdown code before considering model-only tags; never infer calls from data. */
 function scan(text, final, state) {
