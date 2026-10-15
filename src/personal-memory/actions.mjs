@@ -29,82 +29,18 @@ export function createMemoryActions({ root, manager, schedule }) {
       await durableWrite(file(owner), data); return result;
     });
   }
-  async function forgetSources(owner, action) {
-    const m = manager(), args = action.arguments;
-    let targets;
-    const worlds = new Map();
-    if (args.query) {
-      // Conversational recall also adds identity and standing style preferences.
-      // A destructive topic lookup must use only this one Core query.
-      const snapshot = await m.query(owner, 'preview_recall', { query: args.query, model_tier: action.modelTier ?? 'local' });
-      targets = (snapshot.preview?.selected_item_ids ?? []).map(([kind, id]) => ({ kind, id }));
-      targets.push(...[...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? [])]
-        .map(item => ({ id: item.id ?? item.evidence_id, kind: 'evidence' })));
-      // Recall deliberately omits invalidated items. A deletion must also find
-      // literal topic matches in the owner's retained history, without sending
-      // that unrestricted history to the model or guessing semantic synonyms.
-      const topic = args.query.normalize('NFKC').trim().replace(/^(?:关于|我的?|用户的?)/u, '')
-        .replace(/(?:的)?记忆$/u, '').replaceAll('的', '').trim();
-      if (topic) for (const kind of ['cognition', 'relationship', 'event', 'entity']) {
-        const world = await m.query(owner, 'query_world', { operation: 'list', object_kind: kind, include_history: true });
-        worlds.set(kind, world);
-        for (const row of world.items ?? []) {
-          const content = row.value.content ?? row.value.canonical_name ?? '';
-          if (content.normalize('NFKC').replaceAll('的', '').includes(topic)) targets.push({ kind, id: row.item_id });
-        }
-      }
-    } else targets = [{ kind: args.kind, id: args.id }];
-    const ids = new Set(), sources = new Set(), texts = new Set();
-    const related = new Set(targets.map(item => item.id));
-    // Capture the entire revision chain before deleting its first source: Core
-    // removes transition links during deletion, so walking afterward is too late.
-    for (const kind of new Set(targets.filter(item => item.kind !== 'evidence').map(item => item.kind))) {
-      const world = worlds.get(kind) ?? await m.query(owner, 'query_world', { operation: 'list', object_kind: kind, include_history: true });
-      let changed;
-      do {
-        changed = false;
-        for (const row of world.items ?? []) for (const link of row.transition_history ?? []) {
-          if (related.has(link.prior_item_id) || related.has(link.replacement_item_id)) {
-            for (const id of [link.prior_item_id, link.replacement_item_id]) if (id && !related.has(id)) { related.add(id); changed = true; }
-          }
-        }
-      } while (changed);
-      for (const row of world.items ?? []) if (related.has(row.item_id)) {
-        ids.add(row.item_id);
-        const result = await m.query(owner, 'query_provenance', { object_kind: kind, item_id: row.item_id, projection: 'history' });
-        for (const source of result.provenance ?? []) {
-          sources.add(source.evidence_id); if (source.evidence.raw_content) texts.add(source.evidence.raw_content);
-        }
-      }
-    }
-    for (const target of targets) if (target.kind === 'evidence') sources.add(target.id);
-    // A successful explicit correction and its turn's later background capture
-    // used to create two independent sources. Include that still-provisional
-    // original utterance too, rather than relying on another model tool call.
-    const records = Object.values((await serial(owner, () => read(owner))).records);
-    for (const row of records) if (related.has(row.arguments.id) && row.source?.text) texts.add(row.source.text);
-    for (const text of texts) {
-      const snapshot = await m.query(owner, 'preview_recall', { query: text.slice(0, 500), model_tier: action.modelTier ?? 'local' });
-      for (const item of [...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? [])]) {
-        // Core supplies permission-filtered related source candidates. Questions
-        // and unrelated quotes must not expand an exact-id deletion.
-        if (texts.has(item.text) || /纠正|不对|不是|改为|改成/.test(item.text ?? '')) sources.add(item.id ?? item.evidence_id);
-      }
-    }
-    // Core's world-item delete owns entity cascades, including relationships
-    // and cognitions whose implicitly-created person has no direct ledger.
-    const worldTargets = targets.filter(item => item.kind === 'entity');
-    return { evidenceIds: [...sources], worldTargets, affectedIds: [...ids], sourceTexts: [...texts] };
-  }
   async function perform(owner, action) {
     const m = manager();
     if (action.name === 'memory_forget') {
       if (!action.plan) {
-        const plan = await forgetSources(owner, action);
+        const plan = await m.planForget(owner, action);
         await update(owner, data => { data.records[action.requestId].plan = plan; }); action.plan = plan;
       }
       const deletions = [...(action.plan.worldTargets ?? []), ...action.plan.evidenceIds.map(id => ({ kind: 'evidence', id }))];
-      if (!deletions.length) return notFound();
+      const retained = (action.plan.retainedOtherCount ? `还有 ${action.plan.retainedOtherCount} 条关于别人的没动。` : '') +
+        (action.plan.retainedUncertainCount ? `还有 ${action.plan.retainedUncertainCount} 条归属或共用来源不明确的没动。` : '');
+      if (!deletions.length) return action.plan.state ? { state: action.plan.state, message: action.plan.message }
+        : retained ? { state: 'withheld', message: '这次没有删除记忆。' + retained } : notFound();
       for (const target of deletions) {
         const id = target.kind === 'evidence' ? target.id : `${target.kind}:${target.id}`;
         if (action.finished?.includes(id)) continue;
@@ -127,7 +63,7 @@ export function createMemoryActions({ root, manager, schedule }) {
         await update(owner, data => { (data.records[action.requestId].finished ??= []).push(id); });
         action.finished ??= []; action.finished.push(id);
       }
-      return { state: 'applied', message: '已忘掉这件事。' };
+      return { state: 'applied', message: (action.plan.topic ? `已删除关于“${action.plan.topic}”的记忆，包括旧版本和来源原文。` : '已忘掉这件事。') + retained };
     }
     let target = action.arguments;
     if (target.query && !action.target) {
@@ -190,7 +126,7 @@ export function createMemoryActions({ root, manager, schedule }) {
             }
             // Finished forgetting keeps no body copy in this recovery file.
             if (row.name === 'memory_forget') {
-              row.arguments = {}; delete row.source; delete row.plan; delete row.finished; delete row.commands;
+              row.arguments = {}; delete row.source; delete row.plan; delete row.finished; delete row.commands; delete row.scope;
             }
           });
         } catch (error) {
@@ -220,7 +156,7 @@ export function createMemoryActions({ root, manager, schedule }) {
       schedule(owner);
       const work = resume(owner);
       let timer;
-      try { await Promise.race([work, new Promise(resolve => { timer = setTimeout(resolve, 8000); timer.unref?.(); })]); }
+      try { await Promise.race([work, new Promise(resolve => { timer = setTimeout(resolve, action.automatic ? 60000 : 8000); timer.unref?.(); })]); }
       finally { clearTimeout(timer); }
       const row = (await serial(owner, () => read(owner))).records[action.requestId];
       return row.result ?? { state: 'queued', message: pendingMessage(action.name) };

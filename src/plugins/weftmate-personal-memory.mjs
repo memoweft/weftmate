@@ -64,28 +64,8 @@ const diagnostic = (stage, failure) => {
 
 const digest = (value) => createHash('sha256').update(value).digest('hex');
 
-/** Only direct, concrete deletion requests. Quotes, questions and vague references stay with the model. */
-export function explicitForgetTopics(text) {
-  const clauses = [], quotes = [], pairs = { '“': '”', '「': '」', '『': '』', '"': '"', '`': '`' };
-  let clause = '';
-  for (const char of text) {
-    if (quotes.at(-1) === char) quotes.pop();
-    else if (pairs[char]) quotes.push(pairs[char]);
-    if (!quotes.length && /[。；;！!？?\n]/u.test(char)) { clauses.push(clause + (/[？?]/u.test(char) ? char : '')); clause = ''; }
-    else clause += char;
-  }
-  clauses.push(clause);
-  return [...new Set(clauses.flatMap(value => {
-    const match = value.trim().match(/^(?:(?:另外|还有|然后)[，,\s]*)?(?:(?:请你?|麻烦你?|帮我)\s*)?(忘掉|忘记|别记住?|不要记住?|删掉|删除|清除)\s*(?:关于\s*)?(.+)$/u);
-    if (!match) return [];
-    let topic = match[2].split(/[，,]/u)[0].trim();
-    if (/^(?:删掉|删除|清除)$/u.test(match[1]) && !/(?:记忆|相关信息)$/u.test(topic)) return [];
-    if (/[？?]|(?:怎么|如何|是否|要不要|能不能|什么意思|或者|还是|如果)|[吗么]$/u.test(topic)) return [];
-    topic = topic.replace(/(?:的记忆|这条记忆|相关记忆|的相关信息|的信息)$/u, '').trim();
-    if (!topic || /^(?:(?:刚才|上面|之前|以前)?(?:这|那|它|所有|全部|一切)(?:个|些|件事|条记忆|记忆|说的|的事|的内容|的记忆)?|刚才|上面|之前|以前|偏好|习惯)$/u.test(topic)) return [];
-    return topic.length <= 500 ? [topic] : [];
-  }))];
-}
+/** A coarse nomination only: the host model must read the whole message before any deletion. */
+export const possibleForgetRequest = text => /忘|别记|不要记|不再记|(?:删|清除).*记忆|forget|delete.*memor/iu.test(text);
 const contentText = (parts) => Array.isArray(parts)
   ? parts.filter((part) => part?.type === 'text' && typeof part.text === 'string').map((part) => part.text).join('\n')
   : '';
@@ -126,7 +106,7 @@ class HostMemoryBridge {
       const timer = setTimeout(() => {
         if (!this.pending.delete(id)) return;
         reject(new Error('MEMORY_TIMEOUT'));
-      }, action === 'recall' ? 360_000 : 18_000);
+      }, action === 'recall' || data.tool?.name === 'memory_forget_request' ? 360_000 : 18_000);
       const abort = () => {
         const entry = this.pending.get(id);
         if (!entry) return;
@@ -273,9 +253,16 @@ export function apply(ctx) {
       output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
       execute: async (args, exec) => {
         const turn = agent.session.events.findLast(event => event.type === 'turn/start').data.turn;
-        const result = await bridge.request('tool', { sessionId: agent.id, turn,
+        const source = userForTurn(agent.session, turn, 16000);
+        const verified = explicitActions.get(agent);
+        const previous = tool.name === 'memory_forget' && verified?.turn === turn &&
+          verified.results.get(source?.id ?? digest(source?.text ?? ''));
+        const existing = previous?.decision ? previous : null;
+        const result = existing ? existing.state === 'no_action'
+          ? { state: 'no_action', message: '本轮没有直接删除授权，这次没有删除记忆，也没有排队重试。请先回答问题或确认条件。' } : existing
+          : await bridge.request('tool', { sessionId: agent.id, turn,
           tool: { name: tool.name, arguments: args,
-            source: userForTurn(agent.session, turn, 16000),
+            source,
             requestId: `memory-tool:${digest(`${agent.id}|${turn}|${exec.callId}`)}` } }, exec.signal)
           .catch(() => ({ state: 'unavailable', message: tool.name === 'memory_query'
             ? '暂时查不到记忆。' : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。' }));
@@ -323,7 +310,8 @@ export function apply(ctx) {
     const events = agent.session.events;
     // Automatic deletion always has a factual receipt after the normal reply.
     // Never conclude the turn or replace the model's answer to other requests.
-    const explicit = explicitActions.get(agent);
+    const tracked = explicitActions.get(agent);
+    const explicit = tracked?.message ? tracked : null;
     if (explicit?.turn === turn && explicit.reported) return;
     if (explicit?.turn !== turn && events.some(event => event.seq > action.afterSeq && event.type === 'assistant/message' &&
         contentText(event.data?.message?.content).trim())) return;
@@ -374,24 +362,24 @@ export function apply(ctx) {
     for (const input of inputs) {
       const key = input.id ?? digest(input.text);
       if (explicit?.seen.has(key)) continue;
-      const topics = explicitForgetTopics(input.text);
-      if (topics.length) {
-        explicit ??= { turn, message: '', reported: false, seen: new Set() };
-        explicit.seen.add(key); explicit.reported = false;
-        explicitActions.set(payload.agent, explicit);
-        for (const topic of topics) {
-          const result = await bridge.request('tool', { sessionId: session.id, turn,
-            tool: { name: 'memory_forget', arguments: { query: topic }, source: input,
-              requestId: `memory-tool:${digest(`${session.id}|${turn}|${key}|explicit-forget|${topic}`)}` } }, payload.signal)
-            .catch(() => ({ state: 'unavailable', message: '这次还没忘掉，请稍后再试。' }));
-          const message = result.state === 'applied'
-            ? `已删除关于“${topic}”的记忆，包括旧版本和来源原文。`
-            : result.state === 'not_found' ? `没找到关于“${topic}”的记忆。`
-              : `关于“${topic}”的记忆：${result.message ?? '这次还没忘掉，请稍后再试。'}`;
-          explicit.message += message;
-        }
-        rememberReply(payload.agent, turn, explicit.message);
+      if (!possibleForgetRequest(input.text)) continue;
+      explicit ??= { turn, message: '', context: '', reported: false, seen: new Set(), results: new Map() };
+      explicit.seen.add(key);
+      explicitActions.set(payload.agent, explicit);
+      const result = await bridge.request('tool', { sessionId: session.id, turn,
+        tool: { name: 'memory_forget_request', arguments: {}, source: input,
+          requestId: `memory-tool:${digest(`${session.id}|${turn}|${key}|forget-request`)}` } }, payload.signal)
+        .catch(() => ({ state: 'unavailable', message: '这次还没忘掉，请稍后再试。' }));
+      explicit.results.set(key, result);
+      // A nomination can be a translation, quotation, condition or question.
+      // Such messages still receive the normal model reply, with no deletion receipt.
+      if (result.state === 'no_action') {
+        explicit.context += '【本轮删除授权核对】结合整条消息，当前没有直接、无条件的删除授权。没有删除，也没有提交或排队遗忘；不要调用遗忘工具或声称稍后会删除。请正常完成当前翻译、解释、提问或条件确认。\n';
+        continue;
       }
+      explicit.reported = false; explicit.message += result.message ?? '这次还没忘掉，请稍后再试。';
+      explicitActions.set(payload.agent, explicit);
+      rememberReply(payload.agent, turn, explicit.message);
     }
     const query = user.text;
     let text = null;
@@ -420,7 +408,8 @@ export function apply(ctx) {
       // A failed bridge clears this step's memory rather than reusing prior data.
     }
     finally { delete payload.agent[Symbol.for('weftmate.memoryRecallPending')]; }
-    if (explicit?.turn === turn) text = `【本轮遗忘操作的实际结果】${explicit.message}\n这项操作已由宿主处理，无需重复调用；如实说明结果，并继续回答用户本轮其余请求。\n` + (text ?? '');
+    if (explicit?.turn === turn && explicit.message) text = `【本轮遗忘操作的实际结果】${explicit.message}\n这项操作已由宿主核对处理，无需重复调用；如实说明结果，并继续回答用户本轮其余请求。\n` + (text ?? '');
+    if (explicit?.turn === turn && explicit.context) text = explicit.context + (text ?? '');
     if (text === null) return clearedDecision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
     diagnostic('prestep-factory-ready');

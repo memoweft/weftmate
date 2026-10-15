@@ -33,7 +33,7 @@ async function removeLinks(directory: string) {
 /** Real HTTP host, managed DSH process, native tools and model requests. Only inference and Core replies are scripted. */
 async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = false, automaticForget = '' } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-fix45-'));
-  const calls: any[] = [], commands: any[] = [], recallCalls: any[] = [], revisions = new Map<string, number>(), facts = new Map<string, string>();
+  const calls: any[] = [], nominations: any[] = [], commands: any[] = [], recallCalls: any[] = [], revisions = new Map<string, number>(), facts = new Map<string, string>();
   let progress = 0;
   let host: any, ownerId: string, releaseRepeat: () => void = () => {}, repeatedStarted: () => void = () => {};
   const repeatGate = new Promise<void>(r => { releaseRepeat = r; });
@@ -72,15 +72,19 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
     assert.equal(owner, ownerId); commands.push(action);
     assert.equal(action.name, 'memory_forget'); assert.deepEqual(action.arguments, { query: '我喝茶的偏好' });
     if (automaticForget === 'applied') facts.delete(owner);
-    return { state: automaticForget, message: automaticForget === 'queued' ? '这次还没忘掉，稍后会再试。' : '已忘掉这件事。' };
+    return { state: automaticForget, message: automaticForget === 'queued' ? '这次还没忘掉，稍后会再试。'
+      : automaticForget === 'not_found' ? '没找到关于“我喝茶的偏好”的记忆。' : '已删除关于“我喝茶的偏好”的记忆，包括旧版本和来源原文。' };
   };
+  if (automaticForget) manager.forgetFromMessage = (owner: string, action: any) => automaticForget === 'no_action'
+    ? { state: 'no_action' } : manager.mutateFromTool(owner, { ...action, name: 'memory_forget', arguments: { query: '我喝茶的偏好' } });
   const runtime = await phoneRuntime(root, [], {
     respond(body: any) {
-      const index = body.messages.findLastIndex((m: any) => m.role === 'user' && /^(FIX45_|FIX47_|忘掉|不对，请重新计算)/.test(textOf(m)));
+      const index = body.messages.findLastIndex((m: any) => m.role === 'user' && /^(FIX45_|FIX47_|忘掉|请把下面|不对，请重新计算)/.test(textOf(m)));
       const input = index < 0 ? '' : textOf(body.messages[index]);
       if (index < 0) return { content: '合成对话' };
       const prior = body.messages.slice(index + 1).flatMap((m: any) => m.tool_calls ?? []);
       const step = prior.length;
+      if (input.startsWith('请把下面')) return { content: 'Forget my tea preference.' };
       if (input.startsWith('忘掉') || input.startsWith('不对，请重新计算')) return { content: '12×13＝156。' };
       if (input.startsWith('FIX45_FOLLOWUP')) return { content: '排队的更正已处理。' };
       if (input.startsWith('FIX47_QUEUED_CONTINUE')) {
@@ -152,7 +156,10 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
       if (request.action === 'ingest') return { state: 'accepted' };
       if (request.action === 'recall') return memoryPolicy.recall ? manager.recall(binding.ownerId)
         : { state: 'withheld', reasonCode: 'RECALL_DISABLED', memoryPolicy };
-      calls.push(request.tool);
+      if (request.tool.name === 'memory_forget_request') {
+        nominations.push(request.tool);
+        if (!automaticForget) return { state: 'no_action' };
+      } else calls.push(request.tool);
       if (queueMemoryAction && request.tool.name === 'memory_correct') return { state: 'queued', message: '这次还没记住，稍后会再试。' };
       if (request.tool.name === 'memory_query' && request.tool.arguments.query === '茶' &&
           calls.filter(c => c.name === 'memory_query' && c.arguments.query === '茶').length === 2) {
@@ -192,7 +199,7 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
     catch { const task = await api(`/tasks/${command.commandId}`); const history = await api(`/sessions/${command.sessionId}/events`);
       throw Error(JSON.stringify({ evidence: task.replyEvidence, calls: calls.map(c => c.name), history: history.events?.slice(-5), taskKeys: Object.keys(task) })); }
   };
-  return { create, send, complete, api, facts, ownerId: () => ownerId, calls, commands, recallCalls, runtime, repeatReady, releaseRepeat };
+  return { create, send, complete, api, facts, ownerId: () => ownerId, calls, nominations, commands, recallCalls, runtime, repeatReady, releaseRepeat };
 }
 
 test('recall-disabled conversations do not read or send memory through tools, while writes remain available', { timeout: 60000 }, async t => {
@@ -231,6 +238,18 @@ test('FIX-50 an ordinary arithmetic correction still receives the native model a
   assert.ok(f.facts.has(f.ownerId()));
   const replies = (await f.api(`/sessions/${session}/events`)).events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
   assert.match(replies, /156/); assert.doesNotMatch(replies, /已删除|已忘掉/);
+});
+
+for (const input of ['忘掉我喝茶的偏好，如果会删除来源原文就先别执行。', '忘掉我喝茶的偏好，会删除哪些数据？',
+  '请把下面这句话翻译成英文：\n忘掉我喝茶的偏好。']) test(`FIX-50 a declined nomination leaves memory intact and continues the native reply: ${input}`, { timeout: 60000 }, async t => {
+  const f = await fixture(t, { automaticForget: 'no_action' }), session = await f.create();
+  await f.complete(await f.send(session, input));
+  assert.equal(f.commands.length, 0); assert.ok(f.facts.has(f.ownerId()));
+  assert.equal(f.nominations.length, 1);
+  assert.match(JSON.stringify(f.runtime.requests), /没有提交或排队/);
+  const replies = (await f.api(`/sessions/${session}/events`)).events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
+  assert.match(replies, input.startsWith('请把下面') ? /Forget my tea preference/ : /156/);
+  assert.doesNotMatch(replies, /已删除|已忘掉/);
 });
 
 test('changing results reset repetition and the model consumes the completed result', { timeout: 60000 }, async t => {
