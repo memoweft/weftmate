@@ -139,5 +139,6 @@ export function modelToolFailure(name, result) {
   if (!result.isError && !failedReceipt) return;
   return [{type:'text',text:memory
     ? name === 'memory_forget' ? '这次没忘掉，稍后会再试。' : '这次没记住，稍后会再试。'
-    : '这一步没能完成。请简短说明还有什么没完成，必要时换一种办法再试；不要在回复里提工具名称、错误码或内部条目类型。'}];
+    : '这一步没能完成。请简短说明还有什么没完成，必要时换一种办法再试；不要在回复里提工具名称、错误码或内部条目类型。'},
+    ...(memory ? [{type:'text',text:'请直接用上面这句话回复用户，不要解释处理过程。'}] : [])];
 }
