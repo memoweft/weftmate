@@ -10,6 +10,7 @@ internal fun nativeModelSelectionMessage(error: ApiFailure): String = when {
     error.safeCode == "ACCOUNT_MODEL_SECRET_REQUIRED" -> "这个模型服务还没有可用的密钥，请到模型设置里补上密钥。"
     error.safeCode in setOf("TURN_RUNNING", "ACCOUNT_MODEL_BUSY") -> "当前回复还在进行，请等回复结束后再切换模型。"
     error.safeCode in setOf("SESSION_UNAVAILABLE", "CHAT_UNAVAILABLE") -> "这段对话暂时不可用，请重新打开对话后切换模型。"
+    error.safeCode == "CONVERSATION_ROUTING_UNCONFIRMED" -> "暂时无法确认电脑接手这段对话的状态，请稍后重新选择型号。"
     error.status == 401 -> "登录已失效，请重新登录后切换模型。"
     error.status == 403 -> "这台手机暂时不能修改电脑上的模型，请到电脑上检查登录和连接。"
     error.safeCode == "INVALID_REQUEST" -> "电脑没有接受这次模型选择，请检查并更新电脑和手机上的 WeftMate 后再试。"
@@ -30,8 +31,19 @@ internal suspend fun chooseNativeServiceModel(
     val p = JSONObject().put("modelId", model.getString("modelId"))
     try {
         val response = if (standalone) phoneSelect(p.put("serviceId", serviceId)) else {
-            val session = if (phone) "" else chat.sessionId.ifEmpty {
-                if (!phone && chatId.isNotBlank()) chat.business("/chats/$chatId").optJSONObject("chat")?.let {
+            val session = if (phone) {
+                // Phone IDs stay stable after handoff. Resolve the same binding
+                // that routeNewUserTurn uses, rather than changing only a default.
+                val view = chat.call("shared.conversations.get", JSONObject().put("conversationId", chatId))
+                if (view.optBoolean("cached")) throw ApiFailure(409, "CONVERSATION_ROUTING_UNCONFIRMED")
+                when (view.stringOrEmpty("status")) {
+                    "unbound" -> ""
+                    "active" -> view.optJSONObject("binding")?.stringOrEmpty("sessionId")?.takeIf { it.isNotBlank() }
+                        ?: throw ApiFailure(502, "BINDING_RECEIPT_INVALID")
+                    else -> throw ApiFailure(409, "CONVERSATION_ROUTING_UNCONFIRMED")
+                }
+            } else chat.sessionId.ifEmpty {
+                if (chatId.isNotBlank()) chat.business("/chats/$chatId").optJSONObject("chat")?.let {
                     it.stringOrEmpty("activeSessionId").ifEmpty { it.stringOrEmpty("sessionId") }
                 }.orEmpty() else ""
             }
@@ -44,9 +56,9 @@ internal suspend fun chooseNativeServiceModel(
         if (!current()) return null
         val id = if (standalone) (response.optJSONObject("model") ?: response).stringOrEmpty("modelId") else response.stringOrEmpty("profileId")
         if (id.isBlank()) throw ApiFailure(502, "MODEL_UNAVAILABLE")
-        // A conversation created on the phone before the computer reconnected still
-        // sends through chat.send, whose existing routing reads the saved host choice.
-        if (phone && !standalone) {
+        // Phone sends and uncreated work drafts both reload this existing saved
+        // choice. Persist it before publishing success so refresh cannot undo it.
+        if (!standalone && (phone || chat.workAndChat && chatId.isBlank())) {
             chat.call("models.selectHost", JSONObject().put("profileId", id))
             if (!current()) return null
         }

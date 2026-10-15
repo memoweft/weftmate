@@ -55,13 +55,18 @@ class NativeChatLifecycleTest {
         var selectionBody: JSONObject? = null
         var selectionRead = false
         var phoneHostChoice = ""
+        var createdProfile = ""
+        var boundSession = ""
+        var boundSessionProfile = "test-model"
+        var sentProfile = ""
         val approvalWrites = mutableListOf<String>()
         val project = JSONObject().put("projectId", "test-project").put("name", "测试文件夹")
         var workEntered: CompletableDeferred<Unit>? = null
         var workRelease: CompletableDeferred<Unit>? = null
         private var work = false
         private val identity = java.util.UUID.randomUUID().toString()
-        val model get() = JSONObject().put("profileId", "test-model").put("displayName", "测试模型").put("configured", true)
+        val model get() = JSONObject().put("profileId", phoneHostChoice.ifEmpty { "test-model" })
+            .put("displayName", if (phoneHostChoice.isEmpty()) "测试模型" else "MiMo v2.5").put("configured", true)
         private fun chat() = JSONObject().put("chatId", "test-chat-$identity-$creations").put("kind", "side")
             .put("activeSessionId", "test-session-$identity-$creations").put("mode", if (work) "work" else "chat")
             .put("sendAvailable", true).put("approvalMode", approval).apply { if (work) put("workDirectory", project) }
@@ -70,6 +75,8 @@ class NativeChatLifecycleTest {
             "settings.appearance" -> JSONObject().put("value", "light")
             "models.host" -> JSONObject().put("models", if (configured) JSONArray().put(model) else JSONArray())
             "models.selectHost" -> { phoneHostChoice = params.getString("profileId"); JSONObject().put("profileId", phoneHostChoice) }
+            "shared.conversations.get" -> JSONObject().put("status", if (boundSession.isEmpty()) "unbound" else "active")
+                .put("cached", false).put("binding", JSONObject().put("sessionId", boundSession))
             "host.business" -> {
                 if (!online) throw IOException("synthetic offline")
                 val path = params.getString("path").removePrefix("/personal/v1")
@@ -85,6 +92,7 @@ class NativeChatLifecycleTest {
                         assertEquals("mimo-v2.5", body.getString("modelId"))
                         assertTrue(body.getString("requestId").isNotBlank())
                         selectedProfile = "test-v25-profile"
+                        if (boundSession.isNotEmpty() && body.optString("sessionId") == boundSession) boundSessionProfile = selectedProfile
                         JSONObject().put("profileId", selectedProfile).put("models", JSONArray().put(JSONObject().put("profileId", selectedProfile).put("configured", true)))
                     }
                     path == "/status" -> JSONObject().put("hostId", "test-computer").put("personalCapabilities", JSONObject().put("workAndChat", 1))
@@ -94,6 +102,7 @@ class NativeChatLifecycleTest {
                     path == "/commands" || path == "/projects/test-project/sessions" -> {
                         creations++
                         check(body!!.getString("modelProfileId").isNotBlank()) { "MODEL_REQUIRED" }
+                        createdProfile = body.getString("modelProfileId")
                         work = path.startsWith("/projects/")
                         if (work) { workEntered?.complete(Unit); workRelease?.await() }
                         JSONObject().put("command", JSONObject().put("state", "observed").put("sessionId", "test-session-$identity-$creations"))
@@ -112,6 +121,11 @@ class NativeChatLifecycleTest {
                 assertTrue(params.getString("sessionId").isNotBlank())
                 assertEquals(selectedProfile, params.getString("modelProfileId"))
                 sent++; JSONObject().put("state", "accepted")
+            }
+            "chat.send" -> {
+                assertEquals("phone-created-conversation", params.getString("conversationId"))
+                // Delegated turns follow the bound session, rather than the phone's saved default.
+                sentProfile = boundSessionProfile; sent++; JSONObject().put("state", "accepted")
             }
             else -> JSONObject()
         }
@@ -172,6 +186,36 @@ class NativeChatLifecycleTest {
             assertFalse(e.selectionRead); assertFalse(e.selectionBody!!.has("sessionId"))
             assertEquals("test-v25-profile", e.phoneHostChoice)
             assertEquals("test-v25-profile", f.chat.modelId)
+        } finally { f.close() }
+    }
+
+    @Test fun newWorkModelSurvivesRefreshAndIsUsedToCreateAndSendTheWork() = runBlocking {
+        val e = Environment(); val f = Fixture(e)
+        try {
+            f.chat.bootstrap(); f.chat.hostModelServices = true; f.chat.newChat("work").join()
+            assertTrue(f.chat.newWork); assertEquals("", f.chat.chatId)
+            chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }
+            f.chat.refresh()
+            assertEquals("test-v25-profile", f.chat.modelId)
+            assertEquals("MiMo v2.5", f.chat.modelLabel)
+            f.chat.chooseWorkProject(e.project)
+            until { !f.chat.newWork && !f.chat.workBusy }
+            assertEquals("test-v25-profile", e.createdProfile)
+            f.chat.edit("用刚选的型号开始工作"); f.chat.send(); until { e.sent == 1 }
+        } finally { f.close() }
+    }
+
+    @Test fun handedOffPhoneConversationSelectsItsBoundSessionBeforeTheNextTurn() = runBlocking {
+        val e = Environment().apply { boundSession = "computer-bound-session" }; val f = Fixture(e)
+        try {
+            f.chat.bootstrap(); f.chat.hostModelServices = true
+            f.chat.select(JSONObject().put("id", "phone-created-conversation").put("source", "phone")
+                .put("binding", JSONObject().put("sessionId", e.boundSession)))
+            assertTrue(f.chat.phone)
+            chooseNativeServiceModel(f.chat, service, v25) { error("Must use the computer") }
+            assertEquals(e.boundSession, e.selectionBody!!.optString("sessionId"))
+            f.chat.edit("交给电脑以后换型号继续"); f.chat.send(); until { e.sent == 1 }
+            assertEquals("test-v25-profile", e.sentProfile)
         } finally { f.close() }
     }
 
