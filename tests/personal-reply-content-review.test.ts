@@ -51,6 +51,8 @@ test('review 3: fenced and indented code blocks preserve all JSON and tool-tag e
     '````json\n```\n'+body+'\n```\n````',
     body.split('\n').map(line=>'    '+line).join('\n'),
     body.split('\n').map(line=>'\t'+line).join('\n'),
+    body.split('\n').map(line=>' \t'+line).join('\n'),
+    body.split('\n').map(line=>'   \t'+line).join('\n'),
     '> ```json\n'+body.split('\n').map(line=>'> '+line).join('\n')+'\n> ```'];
   for(const text of examples)for(const width of [1,3,1000]){
     const result=await collect(text,width);assert.equal(result.live,text);assert.equal(result.text,text);assert.deepEqual(result.calls,[]);
