@@ -42,6 +42,10 @@ export async function handlePersonalMemoryTool(manager, ownerId, tool, { session
         Object.keys(args).some(key => !['kind', 'id', 'expectedWorldRevision', 'query', ...(correct ? ['text'] : [])].includes(key)) ||
         correct && (typeof args.text !== 'string' || !args.text.trim() || args.text.length > 16000) ||
         typeof tool.requestId !== 'string' || !/^memory-tool:[a-f0-9]{64}$/.test(tool.requestId)) throw failure('MEMORY_REQUEST_INVALID');
+    // Subject classification reads candidates. An exact id must not bypass the
+    // conversation's no-recall choice and send those facts to a model either.
+    if (!correct && memoryPolicy?.recall !== true) return { state: 'withheld',
+      message: '这段对话没开记忆，这次没有删除；你可以到记忆页选择要删除的内容。' };
     if (byQuery && memoryPolicy?.recall !== true) return { state: 'withheld', message: '这段对话没开记忆，请先开启记忆再按内容查找。' };
     return manager.mutateFromTool(ownerId, { requestId: tool.requestId, name: tool.name, arguments: args,
       sessionId, modelTier, source: tool.source });
