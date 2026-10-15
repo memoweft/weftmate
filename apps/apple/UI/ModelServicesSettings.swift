@@ -8,22 +8,14 @@ import WeftMateCore
     @Published var busy=false
     @Published var notice: String?
     private weak var app: AppleAppModel?
-    #if os(iOS)
     private weak var phone: PhoneStandaloneModel?
     init(app: AppleAppModel?,phone: PhoneStandaloneModel? = nil) { self.app=app;self.phone=phone }
-    #else
-    init(app: AppleAppModel?) { self.app=app }
-    #endif
     var identity: String {
-        #if os(iOS)
         if phone != nil { return phone?.serviceIdentity ?? "" }
-        #endif
         return app?.accountEpoch.uuidString ?? ""
     }
     func load(force: Bool = false) async {
-        #if os(iOS)
         if let phone { services=phone.services;return }
-        #endif
         do {
             _ = try await app?.readModelCatalogue(force:force)
             services=app?.modelServices ?? [];supported=app?.modelServicesSupported == true;canManage=app?.modelServicesCanManage == true
@@ -31,12 +23,10 @@ import WeftMateCore
     }
     func check(existing: ModelService?,base: String,key: String,type: String) async -> ModelCatalogResult? {
         guard !busy else { return nil };busy=true;let ticket=identity;defer { busy=false }
-        #if os(iOS)
         if let phone {
             if key.isEmpty,let existing { await phone.refreshService(existing,force:true);services=phone.services;return services.first {$0.id == existing.id}?.catalog }
             let result=await phone.queryService(baseUrl:base,apiKey:key,interfaceType:type);return ticket == identity ? result : nil
         }
-        #endif
         do {
             let result=try await app?.assistantClient.checkModelService(baseUrl:key.isEmpty ? nil : base,apiKey:key.isEmpty ? nil : key,interfaceType:type,serviceId:existing?.id)
             return ticket == identity ? result : nil
@@ -45,9 +35,7 @@ import WeftMateCore
     func save(existing: ModelService?,name: String,base: String,key: String,type: String,result: ModelCatalogResult?,manual: String,selected: String?,enabled: Set<String>) async -> Bool {
         guard !busy else { return false };busy=true;let ticket=identity;defer { busy=false }
         do {
-            #if os(iOS)
             if let phone { try phone.saveService(existing:existing,name:name,baseUrl:base,apiKey:key,interfaceType:type,result:result,manual:manual,selected:selected,enabled:existing == nil ? nil : enabled);services=phone.services;return true }
-            #endif
             var value=ModelServiceWrite(name:name,baseUrl:base,apiKey:key.isEmpty ? nil : key,interfaceType:type,modelId:manual.isEmpty ? nil : manual,expectedRevision:existing?.revision)
             value.selectedModelId=selected
             if existing != nil { value.models=enabled.sorted().map { .init(modelId:$0,enabled:true) } + (existing?.models.filter {!enabled.contains($0.modelId)}.map { .init(modelId:$0.modelId,enabled:false) } ?? []) }
@@ -58,9 +46,7 @@ import WeftMateCore
     func remove(_ service: ModelService) async {
         let ticket=identity
         do {
-            #if os(iOS)
             if let phone { phone.removeService(service);services=phone.services;return }
-            #endif
             try await app?.assistantClient.removeModelService(service);guard ticket == identity else { return };await load(force:true)
         } catch { if ticket == identity { notice="模型服务没能删除，请重试。" } }
     }
@@ -96,6 +82,14 @@ struct ModelServiceEditor: View {
     @ObservedObject var store: ModelServiceSettingsModel
     var existing: ModelService?
     var onClose: () -> Void = {}
+    var embedded = false
+    private var editorCanvas: Color {
+        #if os(macOS)
+        AppleTokens.Colors.controlCanvas
+        #else
+        Weave.canvas
+        #endif
+    }
     @State private var name="MiMo"
     @State private var base="https://api.xiaomimimo.com/v1"
     @State private var type="openai-compatible"
@@ -124,21 +118,19 @@ struct ModelServiceEditor: View {
             VStack(alignment:.leading,spacing:AppleTokens.Space.p16) {
                 Button("选择预设或自定义") { presets.toggle() }.buttonStyle(ServiceActionStyle()).accessibilityIdentifier("modelServices.preset")
                 if presets {
-                    #if os(iOS)
                     ForEach(PhoneProviderPreset.values) { preset in ServiceMenuRow(title:preset.name) { name=preset.name;base=preset.baseURL;type="openai-compatible";key="";result=nil;presets=false } }
-                    #endif
                     ServiceMenuRow(title:"Claude") { name="Claude";base="https://api.anthropic.com/v1";type="anthropic";key="";result=nil;presets=false }
                     ServiceMenuRow(title:"自定义") { name="自定义服务";base="";type="openai-compatible";result=nil;presets=false }
                 }
-                TextField("服务名称",text:$name).weaveField().accessibilityIdentifier("modelServices.name")
-                TextField("服务地址",text:$base).accountInput().weaveField().autocorrectionDisabled().accessibilityIdentifier("modelServices.address")
-                SecureField(existing == nil ? "粘贴密钥" : "新密钥（留空保留原密钥）",text:$key).accountInput().weaveField().accessibilityIdentifier("modelServices.key")
+                TextField("服务名称",text:$name).modelServiceField().accessibilityIdentifier("modelServices.name")
+                TextField("服务地址",text:$base).accountInput().modelServiceField().autocorrectionDisabled().accessibilityIdentifier("modelServices.address")
+                SecureField(existing == nil ? "粘贴密钥" : "新密钥（留空保留原密钥）",text:$key).accountInput().modelServiceField().accessibilityIdentifier("modelServices.key")
                 Text("密钥保存在钥匙串或电脑的加密存储中。查询清单不会发送聊天消息。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                 Button(store.busy ? "正在查询…" : "查询模型清单") { Task { await queryModels() } }.buttonStyle(ServiceActionStyle()).disabled(store.busy || (key.isEmpty && (existing == nil || existing?.baseUrl != base)) || base.isEmpty).accessibilityIdentifier("modelServices.query")
                 if let result { Text(result.message).font(AppleTokens.Fonts.callout).accessibilityIdentifier("modelServices.queryResult") }
                 if !items.isEmpty {
                     Text("选择默认模型").font(AppleTokens.Fonts.headline)
-                    TextField("搜索型号",text:$query).weaveField()
+                    TextField("搜索型号",text:$query).modelServiceField()
                     ForEach(items.filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) || $0.modelId.localizedCaseInsensitiveContains(query) }) { item in
                         VStack(spacing:AppleTokens.Space.p0) {
                             ServiceMenuRow(title:item.name,selected:selected == item.modelId) { selected=item.modelId }.accessibilityIdentifier("modelServices.default."+item.modelId)
@@ -147,14 +139,14 @@ struct ModelServiceEditor: View {
                     }
                 }
                 if result?.status != "available" || existing != nil {
-                    TextField("手填一个型号",text:$manual).accountInput().weaveField().autocorrectionDisabled().accessibilityIdentifier("modelServices.manual")
+                    TextField("手填一个型号",text:$manual).accountInput().modelServiceField().autocorrectionDisabled().accessibilityIdentifier("modelServices.manual")
                 }
                 Button(existing == nil ? "完成并使用" : "保存") { Task { if await store.save(existing:existing,name:name,base:base,key:key,type:type,result:result,manual:manual,selected:selected,enabled:enabled) { key="";onClose() } } }.buttonStyle(ServiceActionStyle(primary:true)).disabled(!valid || store.busy).accessibilityIdentifier("modelServices.save")
                 if let notice=store.notice { Text(notice).foregroundStyle(Weave.muted) }
                 if existing != nil { Button("删除模型服务") { removing=true }.buttonStyle(ServiceActionStyle()).foregroundStyle(Weave.danger).accessibilityIdentifier("modelServices.delete") }
             }.padding(AppleTokens.Space.p20)
-        }.background(Weave.canvas).navigationTitle(existing == nil ? "添加模型服务" : "管理模型服务")
-            .toolbar { ToolbarItem(placement:.cancellationAction) { Button("关闭") { key="";onClose() }.foregroundStyle(Weave.secondary) } }
+        }.background(editorCanvas).navigationTitle(embedded ? "WeftMate" : existing == nil ? "添加模型服务" : "管理模型服务")
+            .toolbar { if !embedded { ToolbarItem(placement:.cancellationAction) { Button("关闭") { key="";onClose() }.foregroundStyle(Weave.secondary) } } }
             .onAppear { if let existing { name=existing.name;base=existing.baseUrl;type=existing.interfaceType;selected=existing.selectedModelId;enabled=Set(existing.models.filter(\.enabled).map(\.modelId)) } }
             #if DEBUG
             .onAppear {
