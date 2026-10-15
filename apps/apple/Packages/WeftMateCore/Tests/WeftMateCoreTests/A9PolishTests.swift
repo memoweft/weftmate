@@ -52,7 +52,9 @@ import Testing
     @Test func watchAndComposerApprovalShareToolAndObject() throws {
         let fields: [String: Any] = ["approvalId": "synthetic-approval", "sessionId": "synthetic-session", "taskId": "turn-1", "sourceCommandId": "synthetic-command", "sourceReceiptId": "synthetic-receipt", "turn": 1, "callId": "synthetic-call", "rootCallId": "synthetic-call", "toolName": "shell", "reason": "[weftmate:execute] 合成测试目录。\n{\"command\":\"npm test\"}", "createdAt": "2026-10-09T00:00:00Z", "status": "pending"]
         let approval = try JSONDecoder().decode(SessionApproval.self, from: JSONSerialization.data(withJSONObject: fields))
-        #expect(approval.actionHeadline == "要运行命令：npm test")
+        #expect(approval.actionHeadline == "要运行一条命令")
+        #expect(approval.reason.contains("npm test"))
+        #expect(approval.reason == fields["reason"] as? String)
         let watch = WatchApproval(id: approval.id, summary: approval.actionHeadline)
         #expect(watch.summary == approval.actionHeadline)
     }
