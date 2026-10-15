@@ -147,7 +147,7 @@ phone = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "iOS").rglob("*.swift")
 watch = ["UI/RunLogRuntime.swift"] + sorted(str(p.relative_to(ROOT)) for p in (ROOT / "watchOS").rglob("*.swift"))
 target("WeftMateWatch", "watchos", watch + ["UI/WeftIcon.swift", "../../design/tokens/generated/apple/DesignTokens.swift"])
 debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixture.swift", "Tests/HealthKitUIFixture.swift"]
-target("WeftMateMac", "macosx", ui + mac + debug_fixture + ["../../design/tokens/generated/apple/DesignTokens.swift"])
+target("WeftMateMac", "macosx", ui + mac + ["iOS/PhoneStandaloneModel.swift", "iOS/PhoneProviderPreset.swift", "iOS/PhoneAttachmentInput.swift"] + debug_fixture + ["../../design/tokens/generated/apple/DesignTokens.swift"])
 target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture + ["Packages/WeftMateCore/Tests/WeftMateCoreTests/Mode2IFixture.swift", "Tests/Health4Fixture.swift", "Tests/Apple3Fixture.swift", "Tests/Apple4Fixture.swift", "Tests/Apple5Fixture.swift", "Tests/Apple5AddendumFixture.swift"] + ["../../design/tokens/generated/apple/DesignTokens.swift"])
 target("WeftMateHealth4Seed", "iphoneos", ["Tests/HEALTH4SeedApp.swift"])
 target("WeftMateHealthSeedPhone", "iphoneos", ["Tests/HEALTH1SeedApp.swift"])
