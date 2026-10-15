@@ -14,7 +14,7 @@ R0-1 使用 electron-builder（桌面打包工具）的 NSIS（Windows 安装器
 
 交互式 NSIS 错误弹窗保留原来的重试／取消返回值，绘制层改为说明磁盘空间、占用与安全软件拦截的排查方法，不展示内部错误码。`/S /currentuser` 与 `/D=<安装目录>`、`--updated`、`/force-run`、签名清单、差分下载和监护进程协议保持原行为。Windows 自己的「未知发布者」与 SmartScreen（下载信誉保护）提示仍由系统显示，本包没有代码签名证书，也不替换或自动点击这些提示。
 
-验收见 [真实安装窗口与合成数据验证](../tests/evidence/inst-1/README.md)。`tests/inst-1b-interactive.ps1` 使用独立后台桌面，通过窗口句柄取图与向该测试窗口发送按钮消息，不切换本人桌面、不发送全局鼠标键盘。测试包的主题、渲染像素密度和文件夹选择返回值覆盖只在 `--test-identity` 构建中可用，正式包始终读取系统主题。
+验收见 [真实安装窗口与合成数据验证](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/inst-1/README.md)。`tests/inst-1b-interactive.ps1` 使用独立后台桌面，通过窗口句柄取图与向该测试窗口发送按钮消息，不切换本人桌面、不发送全局鼠标键盘。测试包的主题、渲染像素密度和文件夹选择返回值覆盖只在 `--test-identity` 构建中可用，正式包始终读取系统主题。
 
 追加验收还发现了三项现有应用边界，安装界面包未改对应应用文件：含空格的程序路径下，开机自启状态查询可能显示关闭，实际 HKCU（当前用户注册表）启动命令和启动记录正确；主进程正常退出后的短暂进程查询窗口可能让监护保护返回 `SYSTEM_QUERY_FAILED`，全部旧进程消失后重跑原监护脚本才能完成；监护重新启动的测试窗口起初隐藏，后台验收仅在隔离桌面显现它。不能把后两项称为正常更新一次成功。手动安装包覆盖升级仍使用本包的直接启动方式，自动打开由实际窗口验证。自启查询路径按命令行解析的实现见 [Electron Windows 源码](https://raw.githubusercontent.com/electron/electron/v43.7.8/shell/browser/browser_win.cc)，后续修复归应用启动／可靠性工作包。
 
@@ -122,7 +122,7 @@ $sourceTask = 'D:\AIProjects\WeftMate\Repository\scripts\run-personal-host-task.
 & $migration -Action Rollback
 ```
 
-演练命令与结果见 [R0-1 证据](../tests/evidence/r0-1/README.md)。正常启动会更新日志、设备会话、路由和窗口元数据，因此“逐文件哈希一致”在**演练副本恢复之后**验证；报告另列启动期间的新增 / 更改 / 删除数量，不把它写成运行期间零字节变化。原备份在演练前后逐文件一致。离线演练关闭公网来源、云连接、中继、ACME 与记忆推理；真实 Production 记忆桥、中继与证书链路须在迁移当天按第3步验收。
+演练命令与结果见 [R0-1 证据](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/r0-1/README.md)。正常启动会更新日志、设备会话、路由和窗口元数据，因此“逐文件哈希一致”在**演练副本恢复之后**验证；报告另列启动期间的新增 / 更改 / 删除数量，不把它写成运行期间零字节变化。原备份在演练前后逐文件一致。离线演练关闭公网来源、云连接、中继、ACME 与记忆推理；真实 Production 记忆桥、中继与证书链路须在迁移当天按第3步验收。
 
 自定义安装位置不改变数据目录。迁移脚本保持原样：已有自定义安装登记时，在 `Prepare`、`Apply`、`Verify`、`Finalize` 或 `Rollback` 的每次调用均传 `-InstalledExe <自定义位置\WeftMate.exe>`；不能只在 Prepare 指定一次。Apply 的静默安装沿用已有登记的位置，未登记的首次静默安装默认仍在用户程序目录。
 
@@ -130,7 +130,7 @@ $sourceTask = 'D:\AIProjects\WeftMate\Repository\scripts\run-personal-host-task.
 
 ### FX-15：迁移当天的记忆核对
 
-2026-10-10 的指定备份只读副本核对见 [FX-15 数量证据](../tests/evidence/fx-15/backup-inventory.json)：7 个 Core（记忆核心）SQLite（嵌入式数据库）文件均为 `user_version=20`，`entity / relationship / cognition / world_event` 均为 0 行。2 个账号有规范库，另 5 个文件是同一原账号目录内的非当前库；原账号规范库有 1 条 Evidence（原始证据）、1 条交互上下文、1 个作业及 1 条助手承诺，均不能当成正式记忆。规范路径由宿主确定为 `<dataDirectory>/personal-access/accounts/<ownerId>/memory-home/memoweft/memoweft.sqlite3`；记录的依据归属与账号一致。此结论只覆盖指定备份，未搜索本人其他运行目录。
+2026-10-10 的指定备份只读副本核对见 [FX-15 数量证据](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/fx-15/backup-inventory.json)：7 个 Core（记忆核心）SQLite（嵌入式数据库）文件均为 `user_version=20`，`entity / relationship / cognition / world_event` 均为 0 行。2 个账号有规范库，另 5 个文件是同一原账号目录内的非当前库；原账号规范库有 1 条 Evidence（原始证据）、1 条交互上下文、1 个作业及 1 条助手承诺，均不能当成正式记忆。规范路径由宿主确定为 `<dataDirectory>/personal-access/accounts/<ownerId>/memory-home/memoweft/memoweft.sqlite3`；记录的依据归属与账号一致。此结论只覆盖指定备份，未搜索本人其他运行目录。
 
 - 切换前，用当天备份运行 `python tests/integration/fx15-memory-inventory.py <备份路径> --output <私有数量报告路径>`，核对每个账号的规范库、表行数与归属布尔值；工具只读复制、排除依赖和密钥库，结束自动删除副本，不导出姓名、账号标识或原文。不要把本次 0 行当成迁移当天应有的固定值。
 - 指定备份没有可迁移的旧版正式记忆，也没有账号映射错位证据，因此 FX-15 不增加转换、清库或回填步骤，不改 `migrate-installed-desktop.ps1`。如果本人预期这里应有旧记忆，应先确认另一个明确授权的数据源；不要让安装程序凭猜测创建或合并记忆空间。

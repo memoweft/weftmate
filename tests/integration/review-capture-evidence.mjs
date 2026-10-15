@@ -29,7 +29,7 @@ test('choose newest timestamp independently of checkout mtime and retain origina
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 test('public text scan detects observed credential and personal-path formats', () => {
-  for (const value of ['D:\\AIProjects\\Example\\private', '/Users/person/private', 'Bearer synthetic-token', 'owner@private.test', 'sk-1234567890abcdef']) assert.throws(() => assertPublicText(value));
+  for (const value of ['D:\\AIProjects\\Example\\private', ['', 'Users', 'person', 'private'].join('/'), 'Bearer synthetic-token', 'owner@private.test', 'sk-1234567890abcdef']) assert.throws(() => assertPublicText(value));
   assert.doesNotThrow(() => assertPublicText('合成账号 review@example.test · notes.md · 42 项测试通过'));
 });
 
