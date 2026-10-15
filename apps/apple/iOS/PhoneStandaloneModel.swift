@@ -424,7 +424,8 @@ import WeftMateCore
     }
     func send(regenerate: Bool = false) {
         guard !regenerate || !busy else { return }
-        if !busy,!regenerate,draft.utf16.count <= 16384,attachments.isEmpty,sendReminderCommand(draft.trimmingCharacters(in:.whitespacesAndNewlines)) { return }
+        // Local reminder commands do not wait for the model or interrupt its active reply.
+        if !regenerate,draft.utf16.count <= 16384,attachments.isEmpty,sendReminderCommand(draft.trimmingCharacters(in:.whitespacesAndNewlines)) { return }
         guard let model=currentModel else { return }
         let text=draft.trimmingCharacters(in:.whitespacesAndNewlines),pendingAttachments=attachments
         if !regenerate,pendingAttachments.contains(where: \.isImage),model.supportsImages == false { notice="当前模型看不了图片";return }
