@@ -52,13 +52,17 @@ import WeftMateCore
     private var memoryEpoch=UUID()
     private var memoryTask: Task<Void,Never>?
     private var idleTask: Task<Void,Never>?
-    private var idleDelay: Duration = .seconds(20)
+    private var idleDelay: Duration = .seconds(1)
+    private struct MemoryJob { var threadID: String;var sourceID: String?;var replyID: String? }
+    private var memoryJobs: [MemoryJob]=[]
+    private var memoryReceipts: [String:PhoneMemoryReceipt]=[:]
+    var memoryWorking: Bool { memoryTask != nil || extracting }
     private var handoffApproved=false
     private var transferring=false
     var memory: PhoneMemoryState { state.memory ?? .init() }
     var usesPhoneMemory: Bool { !memory.handoffConfirmed }
     private func cancelExtraction() {
-        memoryEpoch=UUID();memoryTask?.cancel();memoryTask=nil;idleTask?.cancel();idleTask=nil;extracting=false
+        memoryEpoch=UUID();memoryTask?.cancel();memoryTask=nil;idleTask?.cancel();idleTask=nil;extracting=false;memoryJobs=[];memoryReceipts=[:]
     }
     func setMemoryEnabled(_ enabled: Bool) {
         cancelExtraction();var next=state;next.memory=memory;next.memory?.enabled=enabled
@@ -109,29 +113,71 @@ import WeftMateCore
     func handoffNow() { handoffDeferred=false;handoffApproved=true; if let app { Task { await synchronize(app:app) } } }
     func handoffLater() { handoffDeferred=true;handoffApproved=false }
     func finishConversation(_ id: String? = nil) {
-        guard !extracting else { return }
+        guard !memoryWorking,memory.enabled,memory.computerHost == nil else { return }
         let requested=id ?? state.selected
         let candidate=state.threads.first { $0.id == requested && !memory.batch($0).isEmpty } ?? state.threads.first { !memory.batch($0).isEmpty }
-        guard let candidate else { return }
-        idleTask?.cancel()
-        memoryTask=Task { await extractMemory(threadID:candidate.id) }
+        if let candidate { enqueueMemory(.init(threadID:candidate.id)) }
+        else { scheduleMemoryRetry() }
     }
-    private func scheduleExtraction(_ id: String) {
+    private func scheduleExtraction(_ id: String, delay: Duration? = nil) {
         idleTask?.cancel();idleTask=Task { [weak self] in
-            do { try await Task.sleep(for: self?.idleDelay ?? .seconds(20)) } catch { return }
+            do { try await Task.sleep(for:delay ?? self?.idleDelay ?? .seconds(1)) } catch { return }
             self?.finishConversation(id)
         }
     }
-    @discardableResult func extractMemory(threadID: String, duringReply: Bool = false) async -> PhoneMemoryReceipt? {
-        guard !Task.isCancelled,!extracting,(!busy || duringReply),memory.enabled,memory.computerHost == nil,
-              let config=currentModel, let thread=state.threads.first(where: { $0.id == threadID }) else { return nil }
-        let batch=memory.batch(thread);guard !batch.isEmpty else { return nil }
+    private func scheduleMemoryRetry() {
+        guard memory.enabled,memory.computerHost == nil,let date=memory.retry?.values.map(\.after).filter({$0 > Date()}).min() else { return }
+        scheduleExtraction(state.selected ?? "",delay:.seconds(max(1,date.timeIntervalSinceNow)))
+    }
+    private func enqueueMemory(_ job: MemoryJob) {
+        guard memory.enabled,memory.computerHost == nil,store != nil else { return }
+        guard !memoryJobs.contains(where: { $0.threadID == job.threadID && $0.sourceID == job.sourceID }) else { return }
+        memoryJobs.append(job)
+        guard memoryTask == nil else { return }
+        let ticket=memoryEpoch
+        memoryTask=Task {
+            defer {
+                if ticket == memoryEpoch {
+                    memoryTask=nil
+                    if let thread=state.threads.first(where: { !memory.batch($0).isEmpty }) { scheduleExtraction(thread.id) }
+                    else { scheduleMemoryRetry() }
+                }
+            }
+            while ticket == memoryEpoch,!Task.isCancelled,!memoryJobs.isEmpty {
+                let next=memoryJobs.removeFirst()
+                let receipt=await extractMemory(threadID:next.threadID,sourceID:next.sourceID)
+                guard ticket == memoryEpoch,!Task.isCancelled else { return }
+                if let id=next.replyID,let receipt { memoryReceipts[id]=receipt;flushMemoryReceipts() }
+            }
+        }
+    }
+    private func flushMemoryReceipts() {
+        guard !busy,!memoryReceipts.isEmpty else { return }
+        var next=state
+        for (replyID,receipt) in memoryReceipts {
+            guard let t=next.threads.firstIndex(where: { $0.messages.contains(where: { $0.id == replyID }) }),let m=next.threads[t].messages.firstIndex(where: { $0.id == replyID }),let note=receipt.note else { continue }
+            next.threads[t].messages[m].text += (next.threads[t].messages[m].text.isEmpty ? "" : "\n\n")+note
+            let refs=Set((next.threads[t].messages[m].phoneMemoryIDs ?? [])+receipt.savedIDs)
+            next.threads[t].messages[m].phoneMemoryIDs=Array(refs).sorted()
+        }
+        do { try save(next);memoryReceipts=[:] } catch { memoryNotice="记忆结果没能显示，聊天记录仍在本机。" }
+    }
+    func retryMemory() {
+        var next=state;next.memory=memory;next.memory?.retry=nil
+        do { try save(next);memoryNotice=nil;finishConversation() } catch { memoryNotice="暂时没能重试，请检查本机存储。" }
+    }
+    @discardableResult func extractMemory(threadID: String, sourceID: String? = nil) async -> PhoneMemoryReceipt? {
+        guard !Task.isCancelled,!extracting,memory.enabled,memory.computerHost == nil,
+              let config=currentModel,let thread=state.threads.first(where: { $0.id == threadID }) else { return nil }
+        var input=thread
+        if let sourceID { input.messages=thread.messages.filter { $0.id == sourceID } }
+        let batch=memory.batch(input);guard !batch.isEmpty else { return nil }
         let ticket=memoryEpoch,identity=account
         extracting=true
-        defer { if ticket == memoryEpoch { extracting=false;memoryTask=nil } }
+        defer { if ticket == memoryEpoch { extracting=false } }
         do {
             let request=try PhoneMemoryExtraction.request(model:config,memory:memory,thread:thread,batch:batch,allowLoopback:allowLoopback)
-            let (responseData,response)=try await network.data(for:request)
+            let (responseData,response)=try await memoryNetwork.data(for:request)
             guard ticket == memoryEpoch,identity == account,app?.phoneAccountIdentity == identity,memory.enabled,memory.computerHost == nil,!Task.isCancelled else { return nil }
             guard let http=response as? HTTPURLResponse,(200...299).contains(http.statusCode) else { throw OfflineFailure.model }
             let content=try PhoneMemoryExtraction.content(responseData,model:config)
@@ -141,26 +187,16 @@ import WeftMateCore
             try save(next);memoryNotice=nil
             return PhoneMemoryReceipt(before:before,after:memory)
         } catch {
-            if ticket == memoryEpoch,identity == account,!Task.isCancelled { memoryNotice="这次没能保存记忆，请稍后再试；聊天记录仍在本机。" }
-            // Failed extraction or persistence never advances the watermark or confirms a write.
-            return nil
+            guard ticket == memoryEpoch,identity == account,!Task.isCancelled else { return nil }
+            var next=state;next.memory=memory;next.memory?.recordFailure(batch)
+            do { try save(next) } catch { memoryNotice="记忆的重试时间没能保存，请检查本机存储。" }
+            memoryNotice="这次没能保存记忆，稍后会重试；也可以在记忆页重试。"
+            return PhoneMemoryReceipt()
         }
-    }
-    private func prepareMemoryForReply(threadID: String) async -> PhoneMemoryReceipt {
-        // A new conversation must wait for the previous conversation's pending write.
-        await memoryTask?.value
-        let before=memory
-        var currentSucceeded=false
-        let ids=state.threads.map(\.id).filter { $0 != threadID }+[threadID]
-        for id in ids {
-            while let thread=state.threads.first(where: { $0.id == id }),!memory.batch(thread).isEmpty {
-                guard !Task.isCancelled,let receipt=await extractMemory(threadID:id,duringReply:true) else { break }
-                if id == threadID { currentSucceeded=receipt.succeeded }
-            }
-        }
-        return currentSucceeded ? PhoneMemoryReceipt(before:before,after:memory) : PhoneMemoryReceipt()
     }
     private let network: URLSession
+    // Background extraction has its own transport lifetime alongside the live reply stream.
+    private let memoryNetwork=URLSession(configuration:.ephemeral,delegate:PhoneModelRedirectPolicy(),delegateQueue:nil)
     private let credentialsOverride: (any CredentialStore)?
     private let loopbackOverride: Bool
     init() {
@@ -174,7 +210,7 @@ import WeftMateCore
         thread.messages=[message,.init(role:"assistant",text:"这是一张合成色块图。虚构周报里完成了三件任务，下一步是整理资料。")]
         state.threads=[thread];state.selected=thread.id;state.pending = .init();draft="";try? persist()
     }
-    init(testCredentials: any CredentialStore, testLoopback: Bool, idleDelay: Duration = .seconds(20)) {
+    init(testCredentials: any CredentialStore, testLoopback: Bool, idleDelay: Duration = .seconds(1)) {
         self.idleDelay=idleDelay
         network=URLSession(configuration:.ephemeral,delegate:PhoneModelRedirectPolicy(),delegateQueue:nil)
         credentialsOverride=testCredentials;loopbackOverride=testLoopback
@@ -447,13 +483,14 @@ import WeftMateCore
         do { try persist() } catch { state=originalState;notice="对话未保存，请检查本机存储后重试。"; return }
         state.pending = .init();draft=""; busy=true; notice=nil
         task=Task {
-            defer { if ticket == epoch { busy=false; task=nil;scheduleExtraction(threadID) } }
+            defer { if ticket == epoch { busy=false;task=nil;flushMemoryReceipts();scheduleExtraction(threadID) } }
             do {
                 try await authorizeTransferredHistory(ticket:ticket)
                 try Task.checkCancellation();guard ticket == epoch else { return }
                 let standaloneMemory=usesPhoneMemory && memory.computerHost == nil
-                let receipt=standaloneMemory ? await prepareMemoryForReply(threadID:threadID) : nil
-                try Task.checkCancellation();guard ticket == epoch else { return }
+                if standaloneMemory,let source=history.last(where: { $0.role == "user" }),!regenerate {
+                    enqueueMemory(.init(threadID:threadID,sourceID:source.id,replyID:replyID))
+                }
                 state.memory=memory
                 let selected=usesPhoneMemory && memory.enabled ? state.memory!.select(query:text.isEmpty ? history.last?.text ?? "" : text) : []
                 try persist()
@@ -469,11 +506,8 @@ import WeftMateCore
                     try persist()
                 }
                 let context=usesPhoneMemory ? selected.map { ($0.text,Array($0.sourceIDs.sorted().prefix(3))) } : computerItems.map { ($0.text,$0.sources.map(\.id)) }
-                let confirmation=receipt?.confirmation(for:text) ?? (standaloneMemory ? PhoneMemoryContext.emptyRecallReply(query:text,hasMemory:!selected.isEmpty) : nil)
-                if let confirmation,let t=state.threads.firstIndex(where: { $0.id == threadID }),let m=state.threads[t].messages.firstIndex(where: { $0.id == replyID }) {
-                    state.threads[t].messages[m].text=confirmation;try persist();return
-                }
-                let system=PhoneMemoryContext.prompt(context,computerOffline:app?.offline.hostOffline == true)+(receipt.map { "\n"+$0.prompt } ?? "")
+                let facts=standaloneMemory ? "\n"+PhoneMemoryContext.localFacts(enabled:memory.enabled,hasMemory:!selected.isEmpty,receipt:memoryReceipts[replyID]) : ""
+                let system=PhoneMemoryContext.prompt(context,computerOffline:app?.offline.hostOffline == true)+facts
                 let replyHistory=standaloneMemory ? memory.replyHistory(history) : history
                 let request=try model.attachmentRequest(messages:replyHistory,system:system,stream:true,allowLoopback:allowLoopback)
                 let (bytes,response)=try await network.bytes(for:request)

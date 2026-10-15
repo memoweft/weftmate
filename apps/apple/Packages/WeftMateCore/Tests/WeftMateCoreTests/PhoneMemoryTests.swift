@@ -117,7 +117,7 @@ import Testing
             return PhoneMemoryReceipt(before:before,after:state.memory!)
         }
         let remembered=try turn("请记住，我的测试花名是蓝色纸鹤。") { user,_ in try patch(user,text:"测试花名是蓝色纸鹤") }
-        #expect(remembered.confirmation(for:"请记住")?.contains("蓝色纸鹤") == true)
+        #expect(remembered.note?.contains("蓝色纸鹤") == true)
         var memory=state.memory!
         #expect(PhoneMemoryContext.prompt(memory.select(query:"我的测试花名是什么").map { ($0.text,Array($0.sourceIDs)) },computerOffline:false).contains("蓝色纸鹤"))
         let corrected=try turn("不对，是绿色纸鹤。") { user,old in try patch(user,text:"测试花名是绿色纸鹤",id:old.items[0].id) }
@@ -152,11 +152,11 @@ import Testing
         ] { #expect(throws:(any Error).self) { try PhoneMemoryExtraction.content(Data(body.utf8),model:config) } }
         let failed=PhoneMemoryReceipt()
         #expect(failed.saved.isEmpty && !failed.succeeded)
-        #expect(failed.confirmation(for:"请记住花名")?.contains("没能保存") == true)
+        #expect(failed.note?.contains("没能保存") == true)
         let user=PhoneChatMessage(role:"user",text:"我的测试花名是蓝色纸鹤"),memory=PhoneMemoryState()
         var thread=PhoneChatThread();thread.messages=[user]
         #expect(memory.batch(thread) == [user])
-        #expect(PhoneMemoryReceipt(before:memory,after:memory).confirmation(for:"记住")?.contains("没有新增或改动") == true)
+        #expect(PhoneMemoryReceipt(before:memory,after:memory).note == nil)
     }
     @Test func forgottenFactsAreExcludedFromPromptHistoryAndLocalIDsNeverBecomeComputerReferences() throws {
         let source=PhoneChatMessage(role:"user",text:"测试花名是蓝色纸鹤")
@@ -203,11 +203,28 @@ import Testing
         try memory.apply(patch(correction,text:"测试花名是绿色纸鹤",id:"unknown-item"),batch:[correction],threadID:"t")
         #expect(memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
     }
-    @Test func emptyPersonalRecallIsHonestWithoutBlockingGeneralKnowledge() {
-        #expect(PhoneMemoryContext.emptyRecallReply(query:"我的饮食偏好是什么？",hasMemory:false) == "我现在不知道，本机记忆里没有相关记录。")
-        #expect(PhoneMemoryContext.emptyRecallReply(query:"我的饮食偏好是什么？",hasMemory:true) == nil)
-        #expect(PhoneMemoryContext.emptyRecallReply(query:"量子纠缠是什么？",hasMemory:false) == nil)
-        #expect(PhoneMemoryContext.emptyRecallReply(query:"请记住我喜欢清淡食物",hasMemory:false) == nil)
+    @Test func memoryFactsLeaveCurrentMessageAndAttachmentsAvailableToChat() {
+        let empty=PhoneMemoryContext.localFacts(enabled:true,hasMemory:false,receipt:nil)
+        #expect(empty.contains("没有相关记录") && empty.contains("当前消息") && empty.contains("附件"))
+        #expect(empty.contains("尚未确认") && empty.contains("不要声称"))
+        let disabled=PhoneMemoryContext.localFacts(enabled:false,hasMemory:false,receipt:nil)
+        #expect(disabled.contains("已关闭") && disabled.contains("完整处理当前消息"))
+    }
+    @Test func failedSourcesPersistBackoffWithoutAdvancingProcessed() throws {
+        var memory=PhoneMemoryState(),thread=PhoneChatThread()
+        let message=PhoneChatMessage(role:"user",text:"合成待整理的事实")
+        thread.messages=[message];let start=Date(timeIntervalSince1970:1000)
+        memory.recordFailure([message],now:start)
+        #expect(memory.processed.isEmpty)
+        #expect(memory.batch(thread,now:start.addingTimeInterval(29)).isEmpty)
+        #expect(memory.batch(thread,now:start.addingTimeInterval(31)) == [message])
+        memory=try JSONDecoder().decode(PhoneMemoryState.self,from:JSONEncoder().encode(memory))
+        #expect(memory.retry?[message.id]?.failures == 1)
+        memory.recordFailure([message],now:start.addingTimeInterval(31))
+        #expect(memory.batch(thread,now:start.addingTimeInterval(90)).isEmpty)
+        #expect(memory.batch(thread,now:start.addingTimeInterval(92)) == [message])
+        try memory.apply(patch(message,text:message.text),batch:[message],threadID:thread.id)
+        #expect(memory.retry?[message.id] == nil && memory.processed.contains(message.id))
     }
 }
 

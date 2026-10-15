@@ -5,6 +5,7 @@ const server=createServer(async(req,res)=>{
  if(req.headers.authorization!=='Bearer synthetic-state-key'){res.writeHead(401);res.end();return;}
  if(req.url==='/v1/models'){res.setHeader('content-type','application/json');res.end(JSON.stringify({data:[{id:'synthetic-stream'}]}));return;}
  const chunks=[];for await(const chunk of req)chunks.push(chunk);const body=JSON.parse(Buffer.concat(chunks));
+ if(!body.stream && body.messages[0]?.content.includes('轻量记忆')){res.end(JSON.stringify({choices:[{message:{content:'{"upsert":[],"invalidate":[]}'}}]}));return;}
  res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache'});
  res.write('data: '+JSON.stringify({choices:[{delta:{content:'',role:'assistant',tool_calls:null,reasoning_content:null}}]})+'\n\n');
  const slow=body.messages.some(row=>typeof row.content==='string'&&row.content.includes('慢回复'));

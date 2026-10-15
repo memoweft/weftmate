@@ -61,14 +61,14 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
         }
         func report() async throws -> [String:Any] { let (data,_)=try await URLSession.shared.data(from:URL(string:origin+"/report")!);return try JSONSerialization.jsonObject(with:data) as! [String:Any] }
         func mode(_ value: String) async throws { var req=URLRequest(url:URL(string:origin+"/mode")!);req.httpMethod="POST";req.httpBody=Data(value.utf8);_ = try await URLSession.shared.data(for:req) }
-        func chat(_ text: String) async throws { model.newThread();model.draft=text;model.send();try await wait({!model.busy}) }
+        func chat(_ text: String) async throws { model.newThread();model.draft=text;model.send();try await wait({!model.busy});try await wait({!model.memoryWorking}) }
         func pendingChat(_ text: String) async throws {
             model.setMemoryEnabled(false);try await chat(text);model.setMemoryEnabled(true)
         }
         func extract() async { await model.extractMemory(threadID:model.state.selected!) }
         model.activate(app:app)
         let config=PhoneModelConfiguration(name:"合成",baseURL:origin+"/v1",model:"synthetic",apiKey:"synthetic-state-key");try model.saveModel(config)
-        try await chat("我喜欢清淡的食物");try require(model.memory.items.count == 1,"saved-before-reply-completes")
+        try await chat("我喜欢清淡的食物");try require(model.memory.items.count == 1,"background-write-completes-and-persists")
         let before=try await report()["extractions"] as! Int
         model.finishConversation();try await wait({model.memory.items.count == 1})
         try require(model.memory.items.count == 1,"leave-conversation-triggers")
@@ -81,14 +81,14 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
         model.forgetMemory(id);await extract();try require(model.memory.items.isEmpty,"forget-does-not-reappear")
         try model.saveMemory(text:"固定绘画偏好",pinned:true)
         try await chat("关于绘画");let contexts=try await report()["contexts"] as! [String]
-        try require(contexts.last!.contains("记忆：固定绘画偏好") && contexts.last!.contains("没有相关记忆就直说不知道"),"same-system-message-memory-context")
+        try require(contexts.last!.contains("记忆：固定绘画偏好") && contexts.last!.contains("当前消息") && contexts.last!.contains("附件"),"same-system-message-memory-context")
         model.setMemoryEnabled(false);let offBefore=try await report()["extractions"] as! Int
         await extract();let offAfter=try await report()["extractions"] as! Int
         try require(offBefore == offAfter,"toggle-off-zero-extraction")
         model.setMemoryEnabled(true)
         try await mode("fail");let processed=model.memory.processed;try await chat("我在学日语");await extract()
         try require(model.memory.processed == processed && model.notice == nil && model.memoryNotice != nil,"failure-visible-no-watermark")
-        try await mode("ok");await extract();try require(model.memory.items.contains { $0.text == "我在学日语" },"retry-succeeds")
+        try await mode("ok");model.retryMemory();try await wait({!model.memoryWorking});try require(model.memory.items.contains { $0.text == "我在学日语" },"explicit-retry-succeeds")
         try await chat("坏输出");let badProcessed=model.memory.processed;await extract();try require(model.memory.processed == badProcessed,"malformed-output-retries")
         try await pendingChat("我正在学绘画");try await mode("slow")
         let pending=Task { await extract() };try await wait({model.extracting})
