@@ -82,6 +82,8 @@ public struct PhoneChatMessage: Codable, Equatable, Identifiable, Sendable {
     public var date: Date = Date()
     public var attachments: [PhoneAttachment]?
     public var memoryRefs: [OfflineMemoryRef]?
+    /// Local-only recall dependencies; never sent as computer memory references on handoff.
+    public var phoneMemoryIDs: [String]?
     public var dependencyComplete: Bool?
     public init(role: String, text: String) { self.role=role; self.text=text }
 }

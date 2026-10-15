@@ -40,6 +40,7 @@ struct PhoneMemoryListView: View {
                     }
                 }
                 if let notice=model.notice { InlineNotice(message:notice,isError:true) }
+                if let notice=model.memoryNotice { InlineNotice(message:notice,isError:true) }
                 HStack {
                     Button("加一条") { editor=Editor() }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("phoneMemory.add")
                     Spacer()

@@ -62,15 +62,18 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
         func report() async throws -> [String:Any] { let (data,_)=try await URLSession.shared.data(from:URL(string:origin+"/report")!);return try JSONSerialization.jsonObject(with:data) as! [String:Any] }
         func mode(_ value: String) async throws { var req=URLRequest(url:URL(string:origin+"/mode")!);req.httpMethod="POST";req.httpBody=Data(value.utf8);_ = try await URLSession.shared.data(for:req) }
         func chat(_ text: String) async throws { model.newThread();model.draft=text;model.send();try await wait({!model.busy}) }
+        func pendingChat(_ text: String) async throws {
+            model.setMemoryEnabled(false);try await chat(text);model.setMemoryEnabled(true)
+        }
         func extract() async { await model.extractMemory(threadID:model.state.selected!) }
         model.activate(app:app)
         let config=PhoneModelConfiguration(name:"合成",baseURL:origin+"/v1",model:"synthetic",apiKey:"synthetic-state-key");try model.saveModel(config)
-        try await chat("我喜欢清淡的食物");try require(model.memory.items.isEmpty,"no-request-every-turn")
+        try await chat("我喜欢清淡的食物");try require(model.memory.items.count == 1,"saved-before-reply-completes")
         let before=try await report()["extractions"] as! Int
         model.finishConversation();try await wait({model.memory.items.count == 1})
         try require(model.memory.items.count == 1,"leave-conversation-triggers")
         await extract();let after=try await report()["extractions"] as! Int
-        try require(after == before+1,"no-new-content-zero-repeat")
+        try require(after == before,"no-new-content-zero-repeat")
         try await chat("我喜欢清淡的食物，现在改成辣的食物");await extract()
         try require(model.memory.items.count == 1 && model.memory.items[0].text.contains("改成辣"),"updates-existing-item")
         let id=model.memory.items[0].id;try model.saveMemory(id:id,text:"我喜欢辣的食物",pinned:true)
@@ -83,22 +86,22 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
         await extract();let offAfter=try await report()["extractions"] as! Int
         try require(offBefore == offAfter,"toggle-off-zero-extraction")
         model.setMemoryEnabled(true)
-        try await chat("我在学日语");try await mode("fail");let processed=model.memory.processed;await extract()
-        try require(model.memory.processed == processed && model.notice == nil,"failure-quiet-no-watermark")
+        try await mode("fail");let processed=model.memory.processed;try await chat("我在学日语");await extract()
+        try require(model.memory.processed == processed && model.notice == nil && model.memoryNotice != nil,"failure-visible-no-watermark")
         try await mode("ok");await extract();try require(model.memory.items.contains { $0.text == "我在学日语" },"retry-succeeds")
         try await chat("坏输出");let badProcessed=model.memory.processed;await extract();try require(model.memory.processed == badProcessed,"malformed-output-retries")
-        try await chat("我正在学绘画");try await mode("slow")
+        try await pendingChat("我正在学绘画");try await mode("slow")
         let pending=Task { await extract() };try await wait({model.extracting})
         app.cloudLogin.subject="account-b";model.activate(app:app);await pending.value
         try require(model.memory.items.isEmpty && model.state.threads.isEmpty,"late-result-cannot-cross-account")
         app.cloudLogin.subject="account-a";model.activate(app:app);try await mode("ok")
         try require(!model.memory.items.isEmpty,"reopen-original-account")
-        try await mode("slow");try await chat("我希望留下事实");let forgetting=Task { await extract() };try await wait({model.extracting});model.forgetMemory();await forgetting.value
+        try await mode("slow");try await pendingChat("我希望留下事实");let forgetting=Task { await extract() };try await wait({model.extracting});model.forgetMemory();await forgetting.value
         try require(model.memory.items.isEmpty,"forget-all-discards-inflight-result")
         try model.saveMemory(text:"交接时仍能用",pinned:true)
         app.session=PhoneCheckSession();app.offline.ready=false;await model.synchronize(app:app)
         try require(model.memory.computerHost == nil && model.memory.items.count == 1,"unready-computer-keeps-phone-memory")
-        try await mode("slow");try await chat("我正在做项目");let takeover=Task { await extract() };try await wait({model.extracting})
+        try await mode("slow");try await pendingChat("我正在做项目");let takeover=Task { await extract() };try await wait({model.extracting})
         app.offline.ready=true;await model.synchronize(app:app);await takeover.value
         try require(!model.extracting && model.memory.computerHost != nil && model.memory.items.count == 1,"stop-before-enqueue-keep-memory-until-receipt")
         let original=app.offline.enqueued;let encoder=JSONEncoder();encoder.outputFormatting=[.sortedKeys];await model.synchronize(app:app)

@@ -45,6 +45,7 @@ import WeftMateCore
     private func diagnose(_ stage: String) {}
     #endif
     @Published private(set) var extracting=false
+    @Published private(set) var memoryNotice: String?
     @Published private(set) var handoffCount=0
     @Published private(set) var handoffBytes=0
     @Published private(set) var handoffDeferred=false
@@ -90,7 +91,7 @@ import WeftMateCore
         do { try save(next);notice=nil } catch { notice="没能忘掉，请重试。" }
     }
     func deactivate() {
-        stop();store=nil;account="";state = .init();library = .init();models=[];modelID="";draft="";queryingServices=[];notice=nil;handoffCount=0;handoffBytes=0
+        stop();store=nil;account="";state = .init();library = .init();models=[];modelID="";draft="";queryingServices=[];notice=nil;memoryNotice=nil;handoffCount=0;handoffBytes=0
     }
     func clearLocalData() {
         cancelExtraction();stop()
@@ -121,27 +122,43 @@ import WeftMateCore
             self?.finishConversation(id)
         }
     }
-    func extractMemory(threadID: String) async {
-        guard !Task.isCancelled,!extracting,!busy,memory.enabled,memory.computerHost == nil,
-              let config=currentModel, let thread=state.threads.first(where: { $0.id == threadID }) else { return }
-        let batch=memory.batch(thread);guard !batch.isEmpty else { return }
+    @discardableResult func extractMemory(threadID: String, duringReply: Bool = false) async -> PhoneMemoryReceipt? {
+        guard !Task.isCancelled,!extracting,(!busy || duringReply),memory.enabled,memory.computerHost == nil,
+              let config=currentModel, let thread=state.threads.first(where: { $0.id == threadID }) else { return nil }
+        let batch=memory.batch(thread);guard !batch.isEmpty else { return nil }
         let ticket=memoryEpoch,identity=account
         extracting=true
         defer { if ticket == memoryEpoch { extracting=false;memoryTask=nil } }
         do {
-            var selection=memory
-            let related=selection.select(query:batch.map(\.text).joined(separator:"\n"))
-            let input:[String:Any]=["原话":batch.map { ["id":$0.id,"text":$0.text] },"已有记忆":related.map { ["id":$0.id,"text":$0.text] }]
-            let data=try JSONSerialization.data(withJSONObject:input)
-            let request=try config.request(messages:[["role":"system","content":PhoneMemoryRules.extractionPrompt],["role":"user","content":String(decoding:data,as:UTF8.self)]],stream:false,allowLoopback:allowLoopback,maxTokens:1200)
+            let request=try PhoneMemoryExtraction.request(model:config,memory:memory,thread:thread,batch:batch,allowLoopback:allowLoopback)
             let (responseData,response)=try await network.data(for:request)
-            guard ticket == memoryEpoch,identity == account,app?.phoneAccountIdentity == identity,memory.enabled,memory.computerHost == nil,!Task.isCancelled else { return }
-            guard let http=response as? HTTPURLResponse,(200...299).contains(http.statusCode),
-                  let content=try config.responseText(responseData) else { throw OfflineFailure.model }
+            guard ticket == memoryEpoch,identity == account,app?.phoneAccountIdentity == identity,memory.enabled,memory.computerHost == nil,!Task.isCancelled else { return nil }
+            guard let http=response as? HTTPURLResponse,(200...299).contains(http.statusCode) else { throw OfflineFailure.model }
+            let content=try PhoneMemoryExtraction.content(responseData,model:config)
+            let before=memory
             var next=state;next.memory=memory
             try next.memory?.apply(content,batch:batch,threadID:threadID)
-            guard let store else { return };try store.save(next);state=next
-        } catch { /* Rebuildable memory must never interrupt chat. No watermark on failure. */ }
+            try save(next);memoryNotice=nil
+            return PhoneMemoryReceipt(before:before,after:memory)
+        } catch {
+            if ticket == memoryEpoch,identity == account,!Task.isCancelled { memoryNotice="这次没能保存记忆，请稍后再试；聊天记录仍在本机。" }
+            // Failed extraction or persistence never advances the watermark or confirms a write.
+            return nil
+        }
+    }
+    private func prepareMemoryForReply(threadID: String) async -> PhoneMemoryReceipt {
+        // A new conversation must wait for the previous conversation's pending write.
+        await memoryTask?.value
+        let before=memory
+        var currentSucceeded=false
+        let ids=state.threads.map(\.id).filter { $0 != threadID }+[threadID]
+        for id in ids {
+            while let thread=state.threads.first(where: { $0.id == id }),!memory.batch(thread).isEmpty {
+                guard !Task.isCancelled,let receipt=await extractMemory(threadID:id,duringReply:true) else { break }
+                if id == threadID { currentSucceeded=receipt.succeeded }
+            }
+        }
+        return currentSucceeded ? PhoneMemoryReceipt(before:before,after:memory) : PhoneMemoryReceipt()
     }
     private let network: URLSession
     private let credentialsOverride: (any CredentialStore)?
@@ -179,7 +196,7 @@ import WeftMateCore
         self.app=app
         let identity=app.phoneAccountIdentity
         guard account != identity || store == nil else { return }
-        diagnose("activate");cancelExtraction();handoffCount=0;handoffBytes=0;handoffApproved=false;stop(); epoch=UUID(); account=identity; store=nil; state = .init(); library = .init(); models=[]; modelID=""; draft=""; notice=nil
+        diagnose("activate");cancelExtraction();handoffCount=0;handoffBytes=0;handoffApproved=false;stop(); epoch=UUID(); account=identity; store=nil; state = .init(); library = .init(); models=[]; modelID=""; draft=""; notice=nil;memoryNotice=nil
         do {
             let next=try PhoneChatStore(account:identity,directory:app.healthStateDirectory.deletingLastPathComponent().appendingPathComponent("PhoneChats"),credentials:credentialsOverride ?? KeychainCredentialStore(service:app.phoneCredentialNamespace))
             state=try next.load();store=next
@@ -407,7 +424,7 @@ import WeftMateCore
         guard !busy else { return }
         if !regenerate, draft.utf16.count <= 16384, attachments.isEmpty, sendReminderCommand(draft.trimmingCharacters(in:.whitespacesAndNewlines)) { return }
         guard let model=currentModel else { return }
-        cancelExtraction()
+        idleTask?.cancel();idleTask=nil
         let originalState=state
         let text=draft.trimmingCharacters(in:.whitespacesAndNewlines)
         let pendingAttachments=attachments
@@ -434,12 +451,16 @@ import WeftMateCore
             do {
                 try await authorizeTransferredHistory(ticket:ticket)
                 try Task.checkCancellation();guard ticket == epoch else { return }
+                let standaloneMemory=usesPhoneMemory && memory.computerHost == nil
+                let receipt=standaloneMemory ? await prepareMemoryForReply(threadID:threadID) : nil
+                try Task.checkCancellation();guard ticket == epoch else { return }
                 state.memory=memory
-                let selected=usesPhoneMemory ? state.memory!.select(query:text.isEmpty ? history.last?.text ?? "" : text) : []
+                let selected=usesPhoneMemory && memory.enabled ? state.memory!.select(query:text.isEmpty ? history.last?.text ?? "" : text) : []
                 try persist()
                 let computerItems=memory.handoffConfirmed ? OfflineReplica.recall(app?.offline.memoryItems ?? [],query:text) : []
                 if let t=state.threads.firstIndex(where: { $0.id == threadID }),let m=state.threads[t].messages.firstIndex(where: { $0.id == replyID }) {
                     let refs=computerItems.map { OfflineMemoryRef(kind:$0.kind,id:$0.id) }
+                    if standaloneMemory { state.threads[t].messages[m].phoneMemoryIDs=selected.map(\.id) }
                     // Prior replies can carry memory dependencies even when recall did not select them again.
                     let inherited=state.threads[t].messages.suffix(21).flatMap { $0.memoryRefs ?? [] }
                     let all=Set(refs+inherited).sorted { $0.kind+$0.id < $1.kind+$1.id }
@@ -448,8 +469,13 @@ import WeftMateCore
                     try persist()
                 }
                 let context=usesPhoneMemory ? selected.map { ($0.text,Array($0.sourceIDs.sorted().prefix(3))) } : computerItems.map { ($0.text,$0.sources.map(\.id)) }
-                let system=PhoneMemoryContext.prompt(context,computerOffline:app?.offline.hostOffline == true)
-                let request=try model.attachmentRequest(messages:history,system:system,stream:true,allowLoopback:allowLoopback)
+                let confirmation=receipt?.confirmation(for:text) ?? (standaloneMemory ? PhoneMemoryContext.emptyRecallReply(query:text,hasMemory:!selected.isEmpty) : nil)
+                if let confirmation,let t=state.threads.firstIndex(where: { $0.id == threadID }),let m=state.threads[t].messages.firstIndex(where: { $0.id == replyID }) {
+                    state.threads[t].messages[m].text=confirmation;try persist();return
+                }
+                let system=PhoneMemoryContext.prompt(context,computerOffline:app?.offline.hostOffline == true)+(receipt.map { "\n"+$0.prompt } ?? "")
+                let replyHistory=standaloneMemory ? memory.replyHistory(history) : history
+                let request=try model.attachmentRequest(messages:replyHistory,system:system,stream:true,allowLoopback:allowLoopback)
                 let (bytes,response)=try await network.bytes(for:request)
                 guard let http=response as? HTTPURLResponse else { throw OfflineFailure.model }
                 if !(200...299).contains(http.statusCode) {
