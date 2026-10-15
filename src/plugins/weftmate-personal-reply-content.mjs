@@ -1,4 +1,4 @@
-import { cleanReplyStream, modelToolFailure } from './personal-reply-content.mjs';
+import { cleanReplyStream, modelToolFailure, modelToolFailureValue } from './personal-reply-content.mjs';
 
 export const name = 'weftmate-personal-reply-content';
 export const inject = ['llm', 'sessions', 'tools'];
@@ -8,7 +8,7 @@ const personal = session => ['personal-remote','personal-shared-chat'].includes(
 export async function apply(ctx) {
   const { isAgentLoopRequest } = await import('@deepseek-ai/dsh-llm');
   ctx.on('llm/stream', (options, next) => isAgentLoopRequest(options) && personal(ctx.sessions.get(options.sessionId))
-    ? cleanReplyStream(next(), options) : next(), { global:true });
+    ? cleanReplyStream(next()) : next(), { global:true });
   // Code Mode throws error.message into user programs, so sanitize that channel too.
   ctx.on('tools/execute', async (exec, next) => {
     const result = await next();
@@ -17,7 +17,7 @@ export async function apply(ctx) {
     if (!content) return result;
     ctx.logger?.warn?.(`tool failure code=${failureCodes(result)}`);
     return result.isError ? {...result,content,error:{...result.error,message:content[0].text}}
-      : {...result,value:{message:content[0].text,...(content[1] ? {instruction:content[1].text} : {})}};
+      : {...result,value:modelToolFailureValue(result,content)};
   }, { prepend:true });
   // Nested Code Mode calls also receive plain errors before their parent can quote them.
   ctx.on('tools/post-execute', async (exec, result, next) => {
