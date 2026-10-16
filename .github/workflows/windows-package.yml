@@ -10,10 +10,16 @@ concurrency:
 jobs:
   package:
     name: Windows package and startup smoke
+    strategy:
+      fail-fast: false
+      matrix:
+        memory-runtime: [base, full]
     runs-on: windows-latest
     timeout-minutes: 30
     env:
       WEFTMATE_TEST_HOST_NAME: synthetic-host
+      WEFTMATE_MEMORY_RUNTIME_MODE: ${{ matrix.memory-runtime }}
+      WEFTMATE_MEMORY_RUNTIME_DIR: ${{ github.workspace }}/.local/memory-runtime
     steps:
       # Upstream patchedDependencies hashes and carried git patches require LF.
       - name: Preserve source and patch line endings
@@ -27,6 +33,11 @@ jobs:
       - name: Read production DSH pin
         run: |
           node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('tests/contract/dsh-pin.json')); fs.appendFileSync(process.env.GITHUB_ENV, 'DSH_PIN='+p.commit+'\n');"
+      - name: Prepare pinned memory layer and run offline Core RPC
+        run: node scripts/memory-runtime/prepare.mjs --mode ${{ matrix.memory-runtime }} --output .local/memory-runtime --cache .local/memory-inputs
+      - name: Verify original publisher binary against the Windows runner identity
+        if: matrix.memory-runtime == 'full'
+        run: node --test tests/integration/memory-runtime-publisher-paths.mjs
       - uses: actions/checkout@v4
         with:
           repository: deepseek-ai/deepseek-harness
@@ -49,7 +60,7 @@ jobs:
         env:
           WEFTMATE_DSH_CHECKOUT: ${{ github.workspace }}/.local/package-dsh
       - name: Package policy regression tests
-        run: node --test tests/windows-package-policy.test.ts tests/verify-windows-package.test.ts
+        run: node --test tests/windows-package-policy.test.ts tests/verify-windows-package.test.ts tests/memory-runtime.test.ts
       # Builds NSIS + win-unpacked, verifies archive and loose resources, then
       # drives the real packaged Electron/main/DSH with synthetic local models.
       # No system install registration or published artifact; keys are temporary.
@@ -63,7 +74,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: windows-package-smoke
+          name: windows-package-smoke-${{ matrix.memory-runtime }}
           path: .local/package-smoke
           retention-days: 7
           if-no-files-found: warn

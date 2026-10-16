@@ -2,6 +2,8 @@ import { existsSync } from 'node:fs';
 
 // Keep the release verifier red while collecting independent synthetic app checks.
 // Only the completed unpacked test build may be used; never install a rejected build.
+// Forward selection unchanged. buildWindowsRelease and the shared before/after
+// pack hooks validate the selected memory layer (full by default), including diagnostic builds.
 export async function buildForSmoke(builder, options, executable, diagnostic = true) {
   try { const release=await builder(options); return {buildPassed:true,...(release?.packageCheck ? {packageCheck:release.packageCheck} : {})}; }
   catch (error) {

@@ -51,7 +51,7 @@ test('BL-29b M5/S2 gateway shutdown and runtime dispose respond SERVICE_CLOSING 
   }
 });
 
-test('BL-29b M5 host close revokes empty account waits before closing sockets', async () => {
+test('BL-29b M5 host close revokes empty account waits before closing sockets', async t => {
   const f = await startTimelineCandidate({interactive:true,daily:true,inlineProgress:true,historyCount:0});
   try {
     await f.progress.approve('bl29-close-approval','Write-Output synthetic');
@@ -63,13 +63,61 @@ test('BL-29b M5 host close revokes empty account waits before closing sockets', 
     assert.equal(f.debug.service.__reviewCounts().accountWaiters, 1);
     const before = f.debug.service.__reviewCounts().accountRevision;
     const at = Date.now(); await f.debug.service.close();
+    const closedAt = Date.now();
     const response = await pending;
     assert.equal(response.status, 503); assert.equal((await response.json()).error.code, 'SERVICE_CLOSING');
-    assert.ok(Date.now()-at<500);
+    assert.ok(Date.now()-at<500, JSON.stringify({closeMs:closedAt-at,totalMs:Date.now()-at}));
+    t.diagnostic(JSON.stringify({kind:'host-close-wait',closeMs:closedAt-at,totalMs:Date.now()-at}));
     assert.equal(f.debug.service.__reviewCounts().accountWaiters, 0);
     assert.equal(f.debug.eventWaiters.size, 0);
     assert.ok(f.debug.service.__reviewCounts().accountRevision>before, 'closing pending approvals publishes an account revision');
   } finally {await f.close();rmSync(f.root,{recursive:true,force:true});}
+});
+
+test('host close drains a registered wait whose response finishes after the idle socket sweep', async t => {
+  const f = await startTimelineCandidate({interactive:true,daily:true,inlineProgress:true,historyCount:0});
+  let finishResponse;
+  try {
+    await f.progress.approve('close-late-response','Write-Output synthetic');
+    const chat = (await f.request('/chats/main')).chat;
+    const page = await f.request(`/chats/${chat.chatId}/events`);
+    const server = f.debug.service.__reviewServer();
+    let listeningClosed = false;
+    server.once('close', () => { listeningClosed = true; });
+    let swept = false;
+    const sweep = server.closeIdleConnections.bind(server);
+    server.closeIdleConnections = () => {
+      sweep(); swept = true;
+      if (finishResponse) setImmediate(finishResponse);
+    };
+    // Hold only transport completion, after the real handler has revoked its
+    // registered account wait and selected SERVICE_CLOSING. Release it after
+    // close()'s idle sweep, the ordering that a slow transport can produce.
+    server.once('request', (_request, response) => {
+      const end = response.end.bind(response);
+      response.end = (...args) => {
+        let finished = false;
+        finishResponse = () => { if (finished) return; finished = true; finishResponse = undefined; end(...args); };
+        if (swept) setImmediate(finishResponse);
+        return response;
+      };
+    });
+    const pending = fetch(f.origin+`/personal/v1/chats/${chat.chatId}/changes?cursor=${page.syncCursor}&liveRevision=${page.liveRevision}&waitMs=30000`,
+      {headers:{cookie:f.debug.cookie}});
+    for (let i=0;i<100&&f.debug.service.__reviewCounts().accountWaiters===0;i++) await new Promise(r=>setTimeout(r,5));
+    assert.equal(f.debug.service.__reviewCounts().accountWaiters, 1);
+    const before = f.debug.service.__reviewCounts().accountRevision;
+    const at = Date.now(); await f.debug.service.close();
+    const response = await pending;
+    assert.equal(response.status, 503); assert.equal((await response.json()).error.code, 'SERVICE_CLOSING');
+    assert.ok(Date.now()-at<500, `close and response took ${Date.now()-at}ms`);
+    t.diagnostic(JSON.stringify({kind:'host-close-late-response',totalMs:Date.now()-at}));
+    assert.equal(listeningClosed, true, 'close waits for the actual HTTP server drain');
+    assert.equal(f.debug.service.__reviewCounts().accountWaiters, 0);
+    assert.equal(f.debug.eventWaiters.size, 0);
+    assert.equal(getEventListeners(f.debug.service.__reviewContext.closingSignal,'abort').length, 0);
+    assert.ok(f.debug.service.__reviewCounts().accountRevision>before);
+  } finally {finishResponse?.();await f.close();rmSync(f.root,{recursive:true,force:true});}
 });
 
 test('BL-29b M3/S2 native dispose removes listeners and wait reauthorization prevents logout leakage', () => {

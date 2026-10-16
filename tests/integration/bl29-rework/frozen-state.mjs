@@ -1,4 +1,5 @@
 import { outputPath } from './evidence.mjs';
+import { waitForFrozenSessionCreate } from './frozen-command-observation.mjs';
 import {startTimelineCandidate} from './fixture.mjs';import {rmSync,writeFileSync} from 'node:fs';
 const f=await startTimelineCandidate({daily:true,inlineProgress:true,sidebar:true,historyCount:0}),c=f.debug.service.__reviewContext,report=[];
 const freeze=o=>{if(o&&typeof o==='object'&&!Object.isFrozen(o)){for(const v of Object.values(o))freeze(v);Object.freeze(o);}return o;};
@@ -9,6 +10,6 @@ try{
  await step('personalization',()=>f.request('/settings/personalization',{nextSuggestionsEnabled:false},'PATCH'));
  await step('model settings',()=>f.request('/settings/models',{backgroundModelProfileId:'local'},'PATCH'));
  await step('device name',()=>f.request('/auth/devices/'+f.debug.auth.device.id,{name:'synthetic renamed'},'PATCH'));
- await step('new session',async()=>{const cmd=await f.request('/commands',{requestId:'frozen-create',kind:'session.create',modelProfileId:'local',targetDeviceId:(await f.request('/status')).hostId});for(let i=0;i<100;i++){const r=await f.request('/commands/'+cmd.command.commandId);if(r.command.state==='accepted_by_dsh')return;await new Promise(r=>setTimeout(r,5));}throw Error('create did not complete');});
+ await step('new session',async()=>{const cmd=await f.request('/commands',{requestId:'frozen-create',kind:'session.create',modelProfileId:'local',targetDeviceId:(await f.request('/status')).hostId});await waitForFrozenSessionCreate(()=>f.request('/commands/'+cmd.command.commandId));});
  await step('close',()=>f.debug.service.close());
 }finally{await f.close();rmSync(f.root,{recursive:true,force:true});writeFileSync(outputPath('frozen-state.json'),JSON.stringify(report,null,2));}console.log(report);
