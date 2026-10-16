@@ -12,6 +12,9 @@ test('BL-29b M5 real tray/update shutdown and both runtime orders drain protocol
     for (const row of rows) {
       assert.equal(row.error, undefined, JSON.stringify(row));
       assert.equal(row.exitCode, 0); assert.ok(row.ms<1000, JSON.stringify(row));
+      assert.deepEqual(row.shutdownStages.filter(stage=>stage.event==='host.failure'),[],JSON.stringify(row));
+      if(row.method==='update-restart')assert.deepEqual(row.teardownRequest,
+        {destroyed:true,callbackCompleted:true,desktopCapability:false},JSON.stringify(row));
       if (row.method.endsWith('first')) {
         assert.ok(row.accessCloseMs<500, JSON.stringify(row));assert.ok(row.runtimeCloseMs<1000, JSON.stringify(row));
         assert.equal(row.gatewayWait.status, 503, JSON.stringify(row));
