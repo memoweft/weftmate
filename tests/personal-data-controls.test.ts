@@ -9,6 +9,8 @@ import { scanStatistics } from '../src/personal-data/statistics.mjs';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
 import { createDataControls } from '../src/personal-data/index.mjs';
 import { utimes } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 test('account path assertion rejects lexical escape, another account and resolved junction before deletion', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'weftmate-st4-boundary-'));
@@ -79,6 +81,20 @@ test('real host requires owner permission and desktop confirmation, clears only 
     await host.close(); host = await createPersonalAccessService({ root, port: 0, backend }); await host.start();
     assert.equal(Object.keys(JSON.parse(await readFile(path.join(root, 'store.json'), 'utf8')).accounts[ownerA].sessions).length, 0);
   } finally { await host?.close(); await rm(root, { recursive: true, force: true }); }
+});
+
+test('owner erasure finishes within its original polling budget when redundant sync-file ACL results stall', () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, [
+    '--import', new URL('./helpers/data-delete-acl-barrier.mjs', import.meta.url).href,
+    '--test', '--test-name-pattern=^real host requires owner permission',
+    fileURLToPath(import.meta.url),
+  ], { encoding: 'utf8', windowsHide: true, timeout: 30_000, env });
+  const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  assert.ifError(result.error);
+  assert.match(output, /DATA_DELETE_435 barrier armed/, 'the actual desktop confirmation must arm the barrier');
+  assert.equal(result.status, 0, output);
 });
 
 test('cleanup retains originals, recent logs and unexpired replicas; scans change after cleanup', async () => {
