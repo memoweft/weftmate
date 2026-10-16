@@ -30,7 +30,7 @@ export function presentPersonalPrompt(assembly, selected = new Set()) {
       ? { ...tool, description: descriptions[tool.name] } : tool) };
     const toolNames = new Set([LOAD, ...selected]);
     const catalog = assembly.tools.filter(tool => tool.name !== LOAD).map(tool =>
-      `${tool.name}: ${tool.description.split(/[.\n]/)[0].slice(0, 45)}`).join('\n');
+      `${tool.name}: ${tool.description.split(/[.\n]/)[0].slice(0, 24)}`).join('\n');
     const sections = assembly.sections.filter(section => {
       if (['weftmate:tools-catalog', 'weftmate:memory-guidance', 'weftmate:shared-decisions',
         'weftmate:approval-guidance', 'weftmate:health-guidance', 'weftmate:delegation-guidance', 'weftmate:research-guidance'].includes(section.name)) return false;
@@ -40,7 +40,7 @@ export function presentPersonalPrompt(assembly, selected = new Set()) {
       return toolNames.has(name) || groups[name]?.some(tool => toolNames.has(tool));
     });
     return { ...assembly, sections: [...sections,
-      { name: 'weftmate:tools-catalog', text: `For actions, call load_tools with exact names from this catalog, then call the loaded tools. Load only what the goal needs. Ordinary replies need no tools.${assembly.tools.some(tool=>tool.name==='health_query')?' 健康提问必须先 load_tools 加载 health_query，查最新数据再回答；背景不能替代查询。':''}\n${catalog}` },
+      { name: 'weftmate:tools-catalog', text: `For actions, load only needed exact catalog names via load_tools({"names":["catalog_name"]}), then call loaded tools. Ordinary replies need none.${assembly.tools.some(tool=>tool.name==='health_query')?' 健康提问必须先 load_tools 加载 health_query，查最新数据再回答；背景不能替代查询。':''}\n${catalog}` },
       { name: 'weftmate:memory-guidance', text: memoryGuidance },
       { name: 'weftmate:shared-decisions', text: personalMemoryGuidance + ' ' + personalMemoryToolsGuidance },
       { name: 'weftmate:approval-guidance', text: approvalGuidance + ' Work only on this conversation\'s computer. If a location could mean another computer, ask which one in the conversation. Never broadcast.' },
