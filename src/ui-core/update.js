@@ -4,14 +4,15 @@ globalThis.WeftUiCore.factories.update = (core, effects, environment) => {
     const labels = { disabled: '尚未配置', idle: '尚未检查', checking: '检查中', downloading: '下载中',
         available: '下载中', downloaded: '已就绪，重启后完成更新', ready: '已就绪，下次打开窗口时更新',
         starting: '正在验证新界面', current: '已是最新版本', 'not-available': '已是最新版本',
-        failed: '更新失败', error: '更新失败', 'device-managed': '在手机上检查' };
+        failed: '更新失败', error: '更新失败', 'device-managed': '在手机上检查', 'source-unavailable': '连上电脑后可检查界面更新' };
     async function readUpdateState() {
         if (desktop?.updateState) return desktop.updateState();
         if (environment.mobileState && effects.nativeCall) {
             const details = await effects.nativeCall('updates.status');
             return { layers: [
                 { layer: 'mobile-ui', currentVersion: details.activeVersion, availableVersion: details.stagedVersion || null,
-                    status: details.lastError ? 'failed' : details.stagedVersion ? 'ready' : 'current', error: details.lastError || null },
+                    status: details.sourceAvailable === false ? 'source-unavailable' : details.lastError ? 'failed' : details.stagedVersion ? 'ready' : 'current',
+                    error: details.sourceAvailable === false ? null : details.lastError || null },
                 { layer: 'app', currentVersion: details.nativeVersion, availableVersion: null, status: 'device-managed' },
                 { layer: 'ui', currentVersion: null, availableVersion: null, status: 'device-managed' },
             ], canRestart: false };

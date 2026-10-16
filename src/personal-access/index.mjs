@@ -880,7 +880,12 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     async start() {
       if (closing) throw failure('SERVICE_CLOSING', 503);
       if (server) return { origin, hostId: rootState.hostId, ownerId: rootState.legacyOwnerId };
-      const candidate = createServer({ maxHeaderSize: 8192, requestTimeout: 0 }, handle);
+      const candidate = createServer({ maxHeaderSize: 8192, requestTimeout: 0 }, (request, response) => {
+        // An in-flight closing response may finish after close()'s first idle
+        // sweep. Drain that newly idle connection only after its body is sent.
+        response.once('finish', () => { if (closing) candidate.closeIdleConnections(); });
+        return handle(request, response);
+      });
       try {
         await new Promise((resolve, reject) => {
           candidate.once('error', reject);

@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import test from 'node:test'
 import { promisify } from 'node:util'
 import { durableWrite } from '../src/personal-access/store.mjs'
-import { ensurePrivateDirectory, ensurePrivateFile, openPrivateFile, forgetPrivateFile } from '../src/private-host-storage.mjs'
+import { ensurePrivateDirectory, ensurePrivateFile, openPrivateFile, renamePrivateFile, forgetPrivateFile } from '../src/private-host-storage.mjs'
 
 test('private directory and store file remain protected after repeated checks', async () => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-private-storage-'))
@@ -104,6 +104,24 @@ test('exclusive tmp and atomic store inherit exactly the original current-user-o
       assert.equal(statSync(file).mode & 0o777, 0o600)
     }
   } finally { forgetPrivateFile(tmp); rmSync(root, { recursive: true, force: true }) }
+})
+
+test('private rename preserves a rejected commit guard and leaves both files unchanged', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-private-commit-guard-'))
+  const source = join(root, 'replacement.tmp'), target = join(root, 'store.json')
+  try {
+    const handle = await openPrivateFile(source)
+    await handle.writeFile('replacement'); await handle.close()
+    writeFileSync(target, 'original')
+    const rejection = Object.assign(new Error('synthetic guard rejection'), { code: 'UNAUTHORIZED' })
+    let checks = 0
+    await assert.rejects(renamePrivateFile(source, target, () => { checks++; throw rejection }), error => error === rejection)
+    assert.equal(checks, 1)
+    assert.equal(readFileSync(target, 'utf8'), 'original')
+    assert.equal(readFileSync(source, 'utf8'), 'replacement')
+    assert.equal(await renamePrivateFile(source, target), undefined)
+    assert.equal(readFileSync(target, 'utf8'), 'replacement')
+  } finally { forgetPrivateFile(source); rmSync(root, { recursive: true, force: true }) }
 })
 
 test('pre-existing files and replacements are tightened instead of trusting directory inheritance', async () => {
