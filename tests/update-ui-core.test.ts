@@ -22,6 +22,17 @@ test('mobile About reads actual native installed/staged versions and invokes the
   assert.deepEqual(calls, ['updates.check', 'updates.status'])
   assert.equal((await core.restartForUpdate()).restarted, false)
 })
+test('phone without a computer reports unavailable update source rather than latest or login failure', async () => {
+  const calls: string[] = []
+  const core = factory()({}, { nativeCall: async (method: string) => { calls.push(method); return {
+    activeVersion: 'builtin', nativeVersion: '0.8.38', sourceAvailable: false, checked: false,
+  } } }, { mobileState: {} })
+  const state = await core.checkUpdates()
+  assert.equal(state.layers[0].status, 'source-unavailable')
+  assert.equal(core.updateStatusText(state.layers[0]), '连上电脑后可检查界面更新')
+  assert.equal(state.layers[0].error, null)
+  assert.deepEqual(calls, ['updates.check', 'updates.status'])
+})
 test('desktop and Android ship the same public trust anchor, with no private material', async () => {
   const desktop = await readFile(new URL('../src/personal-update/trusted-keys.json', import.meta.url), 'utf8')
   const android = await readFile(new URL('../apps/android/app/src/updateAssets/update-trusted-keys.json', import.meta.url), 'utf8')

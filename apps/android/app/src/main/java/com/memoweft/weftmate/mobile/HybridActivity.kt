@@ -475,9 +475,9 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                     if (closed.get()) { updateChecking.set(false); return@execute }
                     try {
                         val host = secrets.host() ?: throw ApiFailure(401, "LOGIN_REQUIRED")
-                        val checked = bundles.check(host)
-                        respond(reply, id, true, uiState(checked))
-                        if (checked.staged != null) maybeApplyStaged(host)
+                        val checked = if (host.phoneOnly) null else bundles.check(host)
+                        respond(reply, id, true, uiState(checked ?: bundles.state()).put("checked", checked != null))
+                        if (checked?.staged != null) maybeApplyStaged(host)
                     } catch (error: Exception) { respond(reply, id, false, JSONObject().put("code", safeCode(error))) }
                     finally { updateChecking.set(false) }
                 } } catch (_: RejectedExecutionException) { updateChecking.set(false) }
@@ -753,6 +753,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     }
 
     private fun uiState(state: UiBundleState) = JSONObject().put("activeVersion", state.version)
+        .put("sourceAvailable", secrets.host()?.phoneOnly == false)
         .put("stagedVersion", state.stagedVersion).put("previousAvailable", state.previous != null)
         .put("releaseNotes", state.releaseNotes ?: "").put("nativeVersion", BuildConfig.VERSION_NAME)
         .put("lastError", lastUiError ?: state.error ?: "")
@@ -1111,6 +1112,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 intent?.getStringExtra("conversationId") ?: "" else ""
             JSONObject().put("loggedIn", host != null).put("username", host?.username ?: "").put("cloudApp", true)
                 .put("authSource", host?.authSource ?: "")
+                .put("phoneOnly", host.phoneOnly)
                 .put("owner", scope.takeUnless { it == "local" } ?: "").put("model", modelStatus(host))
                 .put("deviceId", host?.deviceId ?: "")
                 .put("busy", busy.get() && host != null && activeTurnScope == scope)
@@ -1944,9 +1946,9 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         }
         "updates.check" -> {
             val host = secrets.host() ?: throw ApiFailure(401, "LOGIN_REQUIRED")
-            val checked = bundles.check(host)
-            if (checked.staged != null) scheduleStagedApply()
-            uiState(checked)
+            val checked = if (host.phoneOnly) null else bundles.check(host)
+            if (checked?.staged != null) scheduleStagedApply()
+            uiState(checked ?: bundles.state()).put("checked", checked != null)
         }
         "updates.apply" -> {
             if (busy.get() || uiHasDraft || params.optBoolean("hasDraft", false)) throw ApiFailure(409, "UPDATE_DEFERRED")
