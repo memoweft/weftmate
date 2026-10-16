@@ -41,7 +41,7 @@ try {
     const previous=process.env.WEFTMATE_UPDATE_PRIVATE_KEY_PATH;process.env.WEFTMATE_UPDATE_PRIVATE_KEY_PATH=privateFile;
     const releaseRoot=resolve(option('--build-root',join(temp,'release')));
     build=join(releaseRoot,'0.1.1-preview.21','build');
-    try{Object.assign(report,await buildForSmoke(buildWindowsRelease,{version:'0.1.1-preview.21',channel:'preview',output:releaseRoot,'trusted-keys':keys,'test-identity':testIdentity,'isolate-test-executable':'true',...(option('--prebuilt-stage')?{'prebuilt-stage':resolve(option('--prebuilt-stage'))}:{})},join(build,'win-unpacked',`WeftMate-${testIdentity}.exe`),!report.realInstall));report.buildSeconds=(Date.now()-started)/1000;}
+    try{Object.assign(report,await buildForSmoke(buildWindowsRelease,{version:'0.1.1-preview.21',channel:'preview',output:releaseRoot,'trusted-keys':keys,'test-identity':testIdentity,'isolate-test-executable':'true',...(option('--memory-runtime-mode')?{'memory-runtime-mode':option('--memory-runtime-mode')} : {}),...(option('--memory-runtime-dir')?{'memory-runtime-dir':resolve(option('--memory-runtime-dir'))}:{}),...(option('--prebuilt-stage')?{'prebuilt-stage':resolve(option('--prebuilt-stage'))}:{})},join(build,'win-unpacked',`WeftMate-${testIdentity}.exe`),!report.realInstall));report.buildSeconds=(Date.now()-started)/1000;}
 
     finally{if(previous===undefined)delete process.env.WEFTMATE_UPDATE_PRIVATE_KEY_PATH;else process.env.WEFTMATE_UPDATE_PRIVATE_KEY_PATH=previous;rmSync(signing,{recursive:true,force:true});}
     build=join(releaseRoot,'0.1.1-preview.21','build');
