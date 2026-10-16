@@ -21,7 +21,7 @@ const server=createServer(async(req,res)=>{
   for(const m of input.原话){
    if(m.text.includes('我长期学习日语'))upsert.push({id:mode==='unknown-item'?'unknown-item':null,text:'长期学习日语',sourceIDs:[m.id],evidence:'我长期学习日语'});
    if(m.text.includes('我不吃辣')){upsert.push({id:null,text:'用户不吃辣',sourceIDs:[m.id],evidence:m.text});continue;}
-   if(m.text.includes('忘掉')||m.text.includes('删除')){if(prior)invalidate.push({id:prior.id,sourceIDs:[m.id],evidence:m.text});}
+   if(m.text.includes('忘掉')||m.text.includes('删除')||/\b(?:forget|delete|remove)\b/i.test(m.text)){if(prior)invalidate.push({id:prior.id,sourceIDs:[m.id],evidence:m.text});}
    else if(m.text.includes('蓝色纸鹤')||m.text.includes('不对，是绿色纸鹤')){
     const change={id:prior?.id??null,text:'测试花名是'+(m.text.includes('绿色')?'绿色纸鹤':'蓝色纸鹤'),sourceIDs:[m.id],evidence:m.text};
     if(m.text.includes('不对，是绿色纸鹤')&&!prior&&mode!=='missing-link'){

@@ -191,6 +191,21 @@ import WeftMateCore
         #expect(s.model.memory.items.isEmpty)
         #expect(s.model.messages.last?.text.contains("已从这台设备的记忆里忘掉") == true)
     }
+    @Test func englishPastDeleteQuestionPreservesMemoryAndAPoliteCurrentRequestDeletes() async throws {
+        let s=try Scenario();defer { s.close() }
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。")
+        let question="Delete my nickname — was that what I asked earlier?"
+        try await s.send(question)
+        #expect(s.model.memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+        #expect(s.model.messages.last?.text.contains("已从这台设备的记忆里忘掉") == false)
+        let inputs=try await s.report()["extractionInputs"] as! [[String:Any]]
+        #expect((inputs.last?["原话"] as? [[String:String]])?.contains { $0["text"] == question } == true)
+        s.model.deactivate();s.model.activate(app:s.app)
+        #expect(s.model.memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+        try await s.send("Could you please delete my nickname from earlier?")
+        #expect(s.model.memory.items.isEmpty)
+        #expect(s.model.messages.last?.text.contains("已从这台设备的记忆里忘掉") == true)
+    }
     @Test func naturalExplicitForgettingRemovesTheActualSavedItem() async throws {
         for request in ["我希望你忘掉我的测试花名。","能不能忘掉我的测试花名？"] {
             let s=try Scenario();defer { s.close() }

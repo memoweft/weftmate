@@ -299,7 +299,7 @@ import Testing
         #expect(state.items.map(\.text) == [blue])
     }
 
-    @Test(arguments:["我希望你忘掉我的测试花名。","能不能忘掉我的测试花名？","可以请你删除我的测试花名吗？","Could you forget my test nickname?","I would like you to delete my test nickname.","我希望你忘掉“我的测试花名”这条记忆，但不要删除聊天原话。","Could you forget \"my test nickname\"?","能不能删除我之前记住的测试花名？"])
+    @Test(arguments:["我希望你忘掉我的测试花名。","能不能忘掉我的测试花名？","可以请你删除我的测试花名吗？","Could you forget my test nickname?","I would like you to delete my test nickname.","我希望你忘掉“我的测试花名”这条记忆，但不要删除聊天原话。","Could you forget \"my test nickname\"?","能不能删除我之前记住的测试花名？","Could you please delete my nickname from earlier?"])
     func naturalExplicitRequestsActuallyForget(_ text: String) throws {
         var state=try seeded()
         let source=message(text,at:1030)
@@ -309,7 +309,7 @@ import Testing
         #expect(state.processed.contains(source.id))
     }
 
-    @Test(arguments:["不要忘记我的测试花名。","请不要删除我的测试花名。","我不希望你忘掉我的测试花名。","她说：忘掉我的测试花名。","请解释“忘掉我的测试花名”的意思。","“忘掉我的测试花名。”","我希望你记住“忘掉我的测试花名”这句话。","Don't forget my test nickname.","Please do not delete my test nickname.","She said 'forget my test nickname'.","今天天气不错。","我的测试花名是什么？","我之前让你忘掉的是什么？","你还记得我说过“忘掉我的测试花名”吗？","Could you tell me whether I asked you to forget my nickname?","请把我的测试花名记好，别把它忘掉。"])
+    @Test(arguments:["不要忘记我的测试花名。","请不要删除我的测试花名。","我不希望你忘掉我的测试花名。","她说：忘掉我的测试花名。","请解释“忘掉我的测试花名”的意思。","“忘掉我的测试花名。”","我希望你记住“忘掉我的测试花名”这句话。","Don't forget my test nickname.","Please do not delete my test nickname.","She said 'forget my test nickname'.","今天天气不错。","我的测试花名是什么？","我之前让你忘掉的是什么？","你还记得我说过“忘掉我的测试花名”吗？","Could you tell me whether I asked you to forget my nickname?","请把我的测试花名记好，别把它忘掉。","Delete my nickname — was that what I asked earlier?","Remove my nickname; was this what I requested before?"])
     func negationQuotationAndUnrelatedSourcesCannotAuthorizeForgetting(_ text: String) throws {
         var state=try seeded()
         let source=message(text,at:1030)
@@ -369,5 +369,35 @@ import Testing
     let result=try state.apply(patch([change(newer,"my nickname is Green",link:["id":old.id,"quote":"my nickname is Blue. I study Japanese."])]),batch:[newer],threadID:"t",knownSources:[old,newer],referenceSources:[old])
     #expect(result.pendingSourceIDs == [newer.id])
     #expect(state.projectedText(old)?.contains("I study Japanese.") == true)
+  }
+}
+
+import Foundation
+import Testing
+@testable import WeftMateCore
+
+@Suite struct Independent8dabEnglishHistory {
+  func message(_ text: String, _ seconds: Double) -> PhoneChatMessage {
+    var result = PhoneChatMessage(role: "user", text: text)
+    result.date = Date(timeIntervalSince1970: seconds)
+    return result
+  }
+  func output(_ upsert: [[String: Any]], _ invalidate: [[String: Any]]) -> String {
+    String(decoding: try! JSONSerialization.data(withJSONObject: ["upsert": upsert, "invalidate": invalidate]), as: UTF8.self)
+  }
+  @Test func englishQuestionAboutAnEarlierDeleteRequestPreservesTheSavedItem() throws {
+    let first = message("Remember, my nickname is Blue.", 1000)
+    let question = message("Delete my nickname — was that what I asked earlier?", 2000)
+    var state = PhoneMemoryState()
+    try state.apply(output([["id": NSNull(), "text": "my nickname is Blue", "sourceIDs": [first.id], "evidence": first.text]], []), batch: [first], threadID: "synthetic")
+    let item = try #require(state.items.first)
+    #expect(item.text == "my nickname is Blue")
+    print("ENGLISH_HISTORY before=\(state.items.count) requestsForgetting=\(PhoneMemoryRules.requestsForgetting(question.text)) isRecallQuestion=\(PhoneMemoryRules.isRecallQuestion(question.text))")
+    // Simulate the same external-model invalidation error as the original
+    // Chinese history probe; the application must not accept past inquiry as
+    // present authorization to delete an actual saved item.
+    try state.apply(output([], [["id": item.id, "sourceIDs": [question.id], "evidence": question.text]]), batch: [question], threadID: "synthetic", knownSources: [first, question])
+    print("ENGLISH_HISTORY after=\(state.items.count) suppressedDigests=\(state.suppressedText.count)")
+    #expect(state.items.map(\.text) == ["my nickname is Blue"])
   }
 }

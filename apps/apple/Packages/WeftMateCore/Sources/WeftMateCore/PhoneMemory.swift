@@ -454,6 +454,7 @@ public enum PhoneMemoryRules {
         // Asking whether an action was an earlier request is not issuing that
         // action now. This does not reject polite current requests with 吗/？.
         value.range(of:#"(?:是|是不是|是否是).*(?:之前|以前|曾经|上次|刚才|当时).*(?:提过|说过|要求|请求).*(?:吗|么|[？?])\s*$"#,options:.regularExpression) != nil
+            || value.range(of:#"\bwas\s+(?:that|this)\s+what\s+i\s+(?:asked|requested)\s+(?:earlier|before|previously)\s*[?？]\s*$"#,options:.regularExpression) != nil
     }
     public static func requestsForgetting(_ text: String) -> Bool {
         // Quoted examples are data, while a quoted object after an actual
