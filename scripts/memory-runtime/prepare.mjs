@@ -7,6 +7,7 @@ import {dirname,join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {inventory,lock,lockDigest,lockText,modeOf,verifyMemoryRuntime,PTH} from './verify.mjs';
 import {assertUnlinkedPath,createRuntimeScratch} from '../dsh-runtime-storage.mjs';
+import {getPath7za} from 'app-builder-lib/out/toolsets/7zip.js';
 
 const repository=resolve(import.meta.dirname,'../..');
 const digest=b=>createHash('sha256').update(b).digest('hex');
@@ -18,17 +19,17 @@ function run(command,args){
 export function checkInput(bytes,input){
   if(digest(bytes)!==input.sha256 || (input.bytes && bytes.length!==input.bytes))throw Error(`memory runtime input hash/size mismatch: ${input.file}`);
 }
-export async function prepareMemoryRuntime({mode,output,cache,coreCheckout,offline=false}){
+export async function prepareMemoryRuntime({mode,output,cache,offline=false}){
   mode=modeOf(mode);
   if(process.platform!=='win32'||process.arch!=='x64')throw Error('memory runtime assembly requires Windows x64');
-  output=resolve(output);cache=resolve(cache);coreCheckout=resolve(coreCheckout);
+  output=resolve(output);cache=resolve(cache);
   await assertUnlinkedPath(output);await assertUnlinkedPath(cache);
   if(existsSync(output)&&(await readdir(output)).length)throw Error('memory runtime output must be empty');
   await mkdir(output,{recursive:true});await mkdir(cache,{recursive:true});
   const scratch=await createRuntimeScratch(cache);
   try {
-  const seven=join(repository,'node_modules/electron-winstaller/vendor/7z-x64.exe');
-  const extract=(file,to)=>{run(seven,['x','-y',`-o${to}`,file]);};
+  const seven=await getPath7za();
+  const extract=(file,to,entries=[])=>{run(seven,['x','-y',`-o${to}`,file,...entries]);};
   const input=async item=>{
     const file=join(cache,item.file);
     if(!existsSync(file)){
@@ -39,19 +40,18 @@ export async function prepareMemoryRuntime({mode,output,cache,coreCheckout,offli
     }
     checkInput(readFileSync(file),item);return file;
   };
-  const tree=run('git',['-C',coreCheckout,'rev-parse',`${lock.core.commit}:py/src`]);
-  if(tree!==lock.core.sourceTree)throw Error('memory runtime Core tree mismatch');
-  const coreLock=spawnSync('git',['-C',coreCheckout,'show',`${lock.core.commit}:py/uv.lock`],{windowsHide:true});
-  if(coreLock.status!==0||digest(coreLock.stdout)!==lock.core.lockSha256)throw Error('memory runtime Core dependency lock mismatch');
-  // Export Git objects, never the checkout's untracked files or working edits.
-  const archive=join(scratch.root,'core.zip');
-  run('git',['-C',coreCheckout,'archive','--format=zip',`--output=${archive}`,lock.core.commit,'py/src','py/LICENSE','py/pyproject.toml','py/uv.lock']);
+  // The official commit archive is itself a fixed, hash/size-checked input.
+  // No checkout, developer Core directory or old assembled payload is read.
+  const archive=await input(lock.core.archive);
   const source=join(scratch.root,'source');
-  extract(archive,source);
-  await cp(join(source,'py/src'),join(output,'core/src'),{recursive:true});
-  await copyFile(join(source,'py/pyproject.toml'),join(output,'core/pyproject.toml'));
+  const prefix=lock.core.archive.root+'/py/';
+  extract(archive,source,[prefix+'src/*',prefix+'LICENSE',prefix+'pyproject.toml',prefix+'uv.lock']);
+  const core=join(source,lock.core.archive.root,'py');
+  if(digest(readFileSync(join(core,'uv.lock')))!==lock.core.lockSha256)throw Error('memory runtime Core dependency lock mismatch');
+  await cp(join(core,'src'),join(output,'core/src'),{recursive:true});
+  await copyFile(join(core,'pyproject.toml'),join(output,'core/pyproject.toml'));
   await mkdir(join(output,'licenses'),{recursive:true});
-  await copyFile(join(source,'py/LICENSE'),join(output,'licenses/MemoWeft-LICENSE'));
+  await copyFile(join(core,'LICENSE'),join(output,'licenses/MemoWeft-LICENSE'));
   extract(await input(lock.python),join(output,'python'));
   await writeFile(join(output,'python/python313._pth'),PTH);
   const dependencies=lock.dependencies.filter(d=>d.layer==='base'||mode==='full');
@@ -89,5 +89,5 @@ export async function prepareMemoryRuntime({mode,output,cache,coreCheckout,offli
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   const option=name=>{const i=process.argv.indexOf(name);return i<0?undefined:process.argv[i+1];};
-  console.log(JSON.stringify(await prepareMemoryRuntime({mode:option('--mode'),output:option('--output'),cache:option('--cache'),coreCheckout:option('--core-checkout'),offline:process.argv.includes('--offline')}),null,2));
+  console.log(JSON.stringify(await prepareMemoryRuntime({mode:option('--mode'),output:option('--output'),cache:option('--cache'),offline:process.argv.includes('--offline')}),null,2));
 }

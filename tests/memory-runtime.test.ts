@@ -57,6 +57,13 @@ test('payload verification catches missing, corrupted, mixed-version and undecla
     await memoryRuntimeFixture(root);
     const verify=()=>verifyMemoryRuntime(root,{mode:'base'});
     assert.equal((await verify()).mode,'base');
+    // A payload/cache from before the accepted Core update cannot pass as
+    // either selected layer, even if its file inventory was resealed.
+    for(const mode of ['base','full']){
+      await sealMemoryRuntimeFixture(root,{mode,core:'e86b73ba9570a9bd490ef90bfb7059574de5e449'});
+      await assert.rejects(verifyMemoryRuntime(root,{mode}),/version\/platform\/layer mismatch/);
+    }
+    await sealMemoryRuntimeFixture(root);
     await assert.rejects(verifyMemoryRuntime(root,{mode:'full'}),/version\/platform\/layer mismatch/);
     const file=join(root,'python/python.exe'),original=await readFile(file);
     await writeFile(file,'changed');await assert.rejects(verify(),/hash-mismatched/);
