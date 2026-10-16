@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import asar from '@electron/asar';
 import { verifyWindowsPackage } from '../scripts/verify-windows-package.mjs';
+import {memoryRuntimeFixture} from './helpers/memory-runtime-fixture.mjs';
 
 test('package scanner distinguishes upstream paths and refuses synthetic build identity across archives and loose resources', async () => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-package-policy-'));
@@ -19,6 +20,8 @@ test('package scanner distinguishes upstream paths and refuses synthetic build i
     await writeFile(installer, 'synthetic installer');
     await writeFile(join(runtime, 'VENDOR-MANIFEST.json'), JSON.stringify({ webRuntimeEntry: 'node_modules/node-pty/src/example.test.ts', carriedButNotMounted: [], closure: [] }));
     await writeFile(join(source, 'src/main.mjs'), 'export const synthetic = true;');
+    await writeFile(join(source,'package.json'),JSON.stringify({memoryRuntimeMode:'base'}));
+    await memoryRuntimeFixture(join(resources,'memory-runtime'));
     const upstream = ['C:', 'Users', 'Upstream Example', 'Desktop', 'test script.bat'].join('\\');
     await mkdir(join(source, 'node_modules/upstream'), { recursive: true });
     await writeFile(join(source, 'node_modules/upstream/example.js'), upstream);
@@ -27,6 +30,10 @@ test('package scanner distinguishes upstream paths and refuses synthetic build i
     await pack();
     const verify = () => verifyWindowsPackage({ unpacked, installer, identity });
     assert.equal((await verify()).boundaries.buildMachineIdentityHits, 0);
+    // A package with its resource filter accidentally omitting memory fails.
+    await rm(join(resources,'memory-runtime/python/python.exe'));
+    await assert.rejects(verify(),/memory runtime/);
+    await memoryRuntimeFixture(join(resources,'memory-runtime'));
     for (const file of [dependency, own]) {
       await writeFile(file, identity.home + '/private');
       await assert.rejects(verify(), /build-machine-identity/);
