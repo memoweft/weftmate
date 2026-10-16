@@ -36,6 +36,22 @@ syncBuiltinESMExports();
 
 app.whenReady().then(async () => {
   const store = await import(pathToFileURL(moduleFile).href);
+  if (action === 'readiness-race') {
+    const assert = require('node:assert/strict');
+    const available = safeStorage.isEncryptionAvailable.bind(safeStorage);
+    let checks = 0;
+    // Deterministically reproduce a service that becomes available just after
+    // the first readiness check. No elapsed-time assumption is involved.
+    safeStorage.isEncryptionAvailable = () => ++checks === 1 ? false : available();
+    try {
+      await store.initializeCredentialStorage();
+      store.saveCredential('synthetic-model', 'synthetic-rob1-key');
+      assert.equal(store.getCredential('synthetic-model'), 'synthetic-rob1-key');
+      assert.ok(checks >= 2);
+      process.stdout.write(JSON.stringify({ stage: 'readiness-race', readable: true })+'\n');
+    } finally { safeStorage.isEncryptionAvailable = available; }
+    app.quit(); return;
+  }
   if (action === 'read') {
     let readable = false;
     let revision=null;
