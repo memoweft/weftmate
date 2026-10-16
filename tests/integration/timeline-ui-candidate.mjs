@@ -154,7 +154,8 @@ export async function startTimelineCandidate(options = {}) {
   const command = async (body, route = '/commands') => { const value = await request(route, body); return waitForCommand(async () => (await request(`/commands/${value.command.commandId}`)).command); }
   const created = await command({ requestId: 'timeline-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId })
   sessionId = created.sessionId
-  const source = await command({ requestId: 'timeline-message', kind: 'session.message', sessionId, targetDeviceId: hostId, text: goal }); taskId = source.commandId
+  // Catalog lifecycle tests need an idle session, without a running demo task.
+  const source = options.quietCatalog ? created : await command({ requestId: 'timeline-message', kind: 'session.message', sessionId, targetDeviceId: hostId, text: goal }); taskId = source.commandId
   if (!options.inlineProgress) artifact = await service.submitToolArtifact({ sessionId, turn: 1, callId: 'artifact-1', messageHash: hash(goal), fileName: '项目进度报告.md', content: '# 项目进度报告\n\n已读取 3 个文件。42 项测试通过。\n' })
   // Artifact submission queues a real host write. Do not expose a pending
   // approval to the UI while that same task still has unconfirmed effects.
