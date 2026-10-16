@@ -141,7 +141,14 @@
     choose.addEventListener('click', () => { page('devices'); }); byId('cloud-wait-view').append(choose);
     const redeem = core.cloudRedeemPairing; core.cloudRedeemPairing = async input => { const result = await redeem(input); core.state.cloudAuth.mode = 'authenticated'; return result; };
     core.resumePhoneComputer = () => core.resumeCloudComputer();
-    const logoutPhone=core.cloudLogout;core.cloudLogout=async (...args)=>{await globalThis.WeftPhone?.clear();return logoutPhone(...args);};
+    async function enterLocalPhone() {
+      const bootstrap = await call('app.bootstrap');
+      if (bootstrap.authSource !== 'phone-local') return false;
+      Object.assign(core.state.cloudAuth, { mode: 'offline', cachedSession: true, localPhone: true, modal: false, email: '', sub: null, cloudOnly: false });
+      await WeftPhone.start(await androidBridge.call('phone.identity'), client, false);
+      return true;
+    }
+    const logoutPhone=core.cloudLogout;core.cloudLogout=async (...args)=>{await globalThis.WeftPhone?.clear();const result=await logoutPhone(...args);if(native)await enterLocalPhone();return result;};
     globalThis.WeftMobileCloud.core = core;
     uiCore.probeCloudPresence=()=>core.probeCloudPresence();
     core.connectionView=()=>uiCore.connectionView();
@@ -153,6 +160,7 @@
       identity: async () => native ? call('offline.identity') : core.cloudOfflineIdentity(),
       host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });
     uiCore.openOfflineMode=()=>core.openOfflineMode?.();
+    if (native && await enterLocalPhone()) return;
     if (native && restoreNativeSession && (await call('app.bootstrap')).authSource !== 'phone') {
       // Kotlin owns the saved identity and cached content. Restore them before
       // requesting any server login; background reads never replace this view.
@@ -186,6 +194,7 @@
   }
   function route(name) {
     if (!core) return false;
+    if (state.profile?.localOnly && ['account', 'devices', 'connect', 'login'].includes(name)) { core.startCloudJourney(); return true; }
     if (['connect', 'login'].includes(name) && core.state.cloudAuth.mode !== 'authenticated') { core.startCloudJourney(); return true; }
     if (!['account', 'devices'].includes(name) || core.state.cloudAuth.mode !== 'authenticated') return false;
     document.body.classList.remove('cloud-auth-active');

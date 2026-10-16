@@ -5,17 +5,33 @@ import org.json.JSONObject
 import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.util.concurrent.atomic.AtomicReference
+import java.util.UUID
+
+internal val HostIdentity.phoneOnly: Boolean get() = authSource == "phone" || authSource == "phone-local"
 
 /** Account-owned phone content uses the M3 vault, independently of a computer cookie. */
 internal class PhoneAccount(private val context: Context, private val secrets: SecureSettings,
     private val catalogHttp: JsonTransport = JsonHttp()) {
+    /** A device-owned space is not a cloud account and carries no server authority. */
+    fun localIdentity(): HostIdentity = synchronized(secrets) {
+        val value = secrets.appValue("local-phone-account")?.let(::JSONObject) ?: JSONObject()
+            .put("accountId", "local-${UUID.randomUUID()}").put("deviceId", "phone-${UUID.randomUUID()}")
+            .also { secrets.saveAppValue("local-phone-account", it.toString()) }
+        HostIdentity("https://local.weftmate.invalid", "本机使用", value.getString("accountId"),
+            "unconnected", value.getString("deviceId"), "", "", "phone-local")
+    }
+    fun bootstrapIdentity(): HostIdentity = synchronized(secrets) {
+        secrets.host() ?: localIdentity().also(secrets::saveHost)
+    }
     fun storedIdentity(): HostIdentity {
+        secrets.host()?.takeIf { it.authSource == "phone-local" }?.let { return it }
         val value = JSONObject(secrets.appValue("phone-account") ?: throw ApiFailure(401, "LOGIN_REQUIRED"))
         return HostIdentity(value.getString("origin"), value.getString("email"), value.getString("accountId"),
             "unconnected", value.getString("deviceId"), "", "", "phone")
     }
     fun identity(): HostIdentity {
         val account = storedIdentity()
+        if (account.authSource == "phone-local") return account
         val credentials = JSONObject(secrets.appValue("credentials") ?: "{}")
         val subjects = credentials.keys().asSequence().filter { it.startsWith("app-tokens:") }
             .mapNotNull { credentials.optJSONObject(it)?.optString("sub") }.toList()
@@ -30,7 +46,7 @@ internal class PhoneAccount(private val context: Context, private val secrets: S
         val origin = Endpoints.hostOrigin(params.getString("origin"))
         val next = HostIdentity(origin, params.getString("email"), params.getString("accountId"),
             "unconnected", params.getString("deviceId"), "", "", "phone")
-        if (previous != null && (previous.ownerId != next.ownerId || previous.origin != next.origin)) OfflineVault(context, previous).clear()
+        if (previous != null && previous.authSource != "phone-local" && (previous.ownerId != next.ownerId || previous.origin != next.origin)) OfflineVault(context, previous).clear()
         secrets.saveAppValue("phone-account", JSONObject(params.toString()).put("origin", origin).toString())
         return next
     }
