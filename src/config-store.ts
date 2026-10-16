@@ -14,7 +14,7 @@ import { prepareLegacyVaultMigration, type LegacyVaultPayload } from './legacy-v
 import type { LegacyCompatibilityEvidence } from './legacy-compatibility-backfill.ts';
 import type { PublicModelProfile } from './stage2-config.ts';
 import { createEncryptedCredentialVaultStore, validateCredentialVaultDocument } from './credential-vault-document.ts';
-import { durableReplace, persistedWindowsStorageKey, cleanupVaultTemporaries } from './windows-vault-storage.mjs';
+import { durableReplace, persistedWindowsStorageKey, cleanupVaultTemporaries, type WindowsStorageReadinessDiagnostic } from './windows-vault-storage.mjs';
 
 export interface ModelGroup { baseUrl: string; apiKey: string; model: string; }
 export type LegacyPublicProfile = PublicModelProfile;
@@ -35,7 +35,7 @@ function noteUnreadable(): void {
     reportFailure(Object.assign(new Error('密钥暂时读不出，请重试或重新填写。'), { code }));
   }
 }
-export async function initializeCredentialStorage(onFailure: (error: Error) => void = () => {}): Promise<void> {
+export async function initializeCredentialStorage(onFailure: (error: Error) => void = () => {}, onReadinessDiagnostic?: (diagnostic: Readonly<WindowsStorageReadinessDiagnostic>)=>unknown): Promise<void> {
   reportFailure = onFailure;
   if (!cleanedTemporaries) { cleanupVaultTemporaries(app.getPath('userData')); cleanedTemporaries = true; }
   if (existsSync(configPath())) {
@@ -45,7 +45,7 @@ export async function initializeCredentialStorage(onFailure: (error: Error) => v
   if (storageReady) return;
   if (initialization) return initialization;
   initialization = (async () => {
-    await persistedWindowsStorageKey(safeStorage, app.getPath('sessionData'));
+    await persistedWindowsStorageKey(safeStorage, app.getPath('sessionData'), {onDiagnostic:onReadinessDiagnostic});
     storageReady = true; // No ciphertext can commit before Chromium's master is durable.
   })();
   try { await initialization; } finally { initialization = null; }
