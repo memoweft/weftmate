@@ -185,6 +185,25 @@ test('static DOM sampling distinguishes fallback, broken complete images, clip g
   assert.equal(sanitizeRenderingSnapshot(page.read()).blocks[0].cssVisible, false);
 });
 
+for (const boundary of [
+  { name: 'positive overlap control', clip: [20, 100, 300, 300], child: [30, 120, 100, 50], intersects: true },
+  { name: 'ancestor below viewport', clip: [0, 1000, 390, 100], child: [20, 800, 100, 400], intersects: false },
+  { name: 'zero-height ancestor', clip: [0, 300, 390, 0], child: [20, 250, 100, 100], intersects: false },
+  { name: 'ancestor right of viewport', clip: [500, 0, 100, 844], child: [350, 100, 200, 50], intersects: false },
+  { name: 'zero-width ancestor', clip: [100, 0, 0, 844], child: [50, 100, 100, 50], intersects: false },
+]) test(`cumulative clip boundary: ${boundary.name}`, () => {
+  const page = staticPage(), clip = page.first.parentElement;
+  const rectangle = ([x, y, width, height]) => ({ x, y, width, height, top: y, bottom: y + height, left: x, right: x + width });
+  clip.style.overflowX = clip.style.overflowY = 'hidden';
+  clip.getBoundingClientRect = () => rectangle(boundary.clip);
+  page.first.getBoundingClientRect = page.image.getBoundingClientRect = () => rectangle(boundary.child);
+  const first = sanitizeRenderingSnapshot(page.read()).blocks[0];
+  assert.equal(first.cssVisible, true);
+  assert.equal(first.imageCssVisible, true);
+  assert.equal(first.intersectsClip, boundary.intersects);
+  assert.equal(first.imageIntersectsClip, boundary.intersects);
+});
+
 test('placeholder is only status and missing resource capabilities remain unavailable', () => {
   const page = staticPage();
   page.first.querySelector = selector => selector === '.render-status' ? {} : null;
