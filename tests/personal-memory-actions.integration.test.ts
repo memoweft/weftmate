@@ -34,6 +34,7 @@ function boundary(text: string, sessionId: string) {
 async function fixture(t: any, { interpret = null }: { interpret?: ((payload: any) => any) | null } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
   let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false, unavailableText = ''
+  let recoveryGate: { entered: () => void, pending: Promise<void> } | null = null
   const errors: unknown[] = []
   const coreTrace: any[] = []
   const server = createServer(async (req, res) => {
@@ -57,6 +58,10 @@ async function fixture(t: any, { interpret = null }: { interpret?: ((payload: an
     processingRoute: route, defaultProcessingRoute: route, rpcFactory: options => {
       const rpc = new MemoWeftRpc(options), request = rpc.request.bind(rpc)
       rpc.request = async (...args: Parameters<MemoWeftRpc['request']>) => {
+        if (args[0] === 'query_jobs' && recoveryGate) {
+          const gate = recoveryGate; recoveryGate = null
+          gate.entered(); await gate.pending
+        }
         if (offline && args[0] !== 'shutdown') throw Object.assign(Error('transport offline'), { code: 'MEMORY_PROCESS_UNAVAILABLE' })
         if ((correctionsUnavailable || unavailableText && args[1]?.command?.payload?.correction_text === unavailableText) &&
             args[0] === 'submit_command' && args[1]?.command?.operation === 'correct_world_item')
@@ -91,6 +96,13 @@ async function fixture(t: any, { interpret = null }: { interpret?: ((payload: an
     offline: (value: boolean) => { offline = value }, reject: (value: boolean) => { reject = value }, loseReceipt: () => { loseReceipt = true },
     holdCorrections: (value: boolean) => { correctionsUnavailable = value },
     holdCorrectionText: (value: string) => { unavailableText = value },
+    pauseRecovery: () => {
+      let entered!: () => void, release!: () => void
+      const started = new Promise<void>(resolve => { entered = resolve })
+      const pending = new Promise<void>(resolve => { release = resolve })
+      recoveryGate = { entered, pending }
+      return { started, release }
+    },
     restart: async () => { await manager.close(); manager = create() }, get calls() { return calls } }
 }
 
@@ -236,13 +248,28 @@ test('review-1 real Core: deletion ends a queued correction instead of blocking 
     targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
   assert.equal(deleted.receipt.result_state, 'applied')
   await f.restart(); f.holdCorrections(false)
-  await f.manager.ingest(owner, boundary('记住：我每周五晚上锻炼。', 'after-deletion')); await f.ready()
+  // Startup has already read its empty outbox when it polls Core jobs. Enqueue
+  // the new turn there and let its immediate retry fire before startup finishes.
+  const recovery = f.pauseRecovery()
+  await recovery.started
+  const ingestion = f.manager.ingest(owner, boundary('记住：我每周五晚上锻炼。', 'after-deletion'))
+  try {
+    await wait(async () => (await f.manager.pendingStatus(owner)).pendingBoundaryCount === 1)
+    await new Promise(resolve => setTimeout(resolve, 0))
+  } finally { recovery.release() }
+  await ingestion; await f.ready()
   const target = (await f.world()).items.find((row: any) => row.current_state === 'current')
   const next = await f.tool('memory_correct', { kind: 'cognition', id: target.item_id, expectedWorldRevision: (await f.manager.status(owner)).worldRevision,
     text: '我每周六晚上锻炼。' }, 'after-deleted-target', '纠正锻炼时间为每周六晚上。')
   assert.equal(next.state, 'applied')
   const state = JSON.parse(await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json'), 'utf8'))
-  assert.ok(Object.values(state.records).some((row: any) => row.result?.state === 'not_found'))
+  const canceled = state.records['memory-tool:' + createHash('sha256').update('deleted-target').digest('hex')]
+  assert.equal(canceled.result.state, 'not_found')
+  assert.deepEqual(canceled.arguments, {})
+  assert.equal(canceled.command, undefined)
+  const recall = await f.manager.recall(owner, { query: '我喜欢喝什么茶？', sessionId: 'after-deleted-restart', modelTier: 'cloud' })
+  assert.doesNotMatch(recall.contextText, /乌龙茶|红茶/, 'the canceled correction must not restore forgotten content')
+  assert.deepEqual(f.errors, [])
 })
 
 test('review-1 real Core: an older failed correction cannot undo the later successful preference', { skip }, async t => {
