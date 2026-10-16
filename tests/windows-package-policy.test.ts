@@ -23,17 +23,23 @@ describe('Windows candidate package policy', () => {
     assert.equal(packagedTextViolation(text,'src/domain-copy.json',coincidental),'build-machine-identity');
     assert.equal(packagedTextViolation(text+'\n',file,coincidental),'build-machine-identity');
     assert.equal(packagedTextViolation(text,'node_modules/tlds/other.json',coincidental),'build-machine-identity');
+    for(const path of ['memory-runtime/models/tokenizer.json','memory-runtime/site-packages/sympy/polys/sqfreetools.py']){
+      assert.equal(packagedTextViolation(identity.username,path,identity),'build-machine-identity');
+      assert.equal(packagedTextViolation(identity.home+'/source',path,identity),'build-machine-identity');
+    }
   });
   it('allows upstream examples only in third-party files while rejecting local identity in every layer', () => {
     const upstream = ['C:', 'Users', 'Upstream Example', 'Desktop', 'test script.bat'].join('\\');
     const thirdParty = 'node_modules/node-pty/src/windowsPtyAgent.test.ts';
     assert.equal(packagedTextViolation(upstream, thirdParty, identity), null);
-    for (const file of [thirdParty, 'src/main.mjs', 'plugins/weftmate-tools/index.js', 'node_modules/@weftmate/tools/index.js', 'desktop-config.json', 'relay/config.ini']) {
+    const pythonWheel = 'memory-runtime/site-packages/tokenizers/tokenizers.pyd';
+    assert.equal(packagedTextViolation(upstream, pythonWheel, identity), null);
+    for (const file of [thirdParty, pythonWheel, 'src/main.mjs', 'plugins/weftmate-tools/index.js', 'node_modules/@weftmate/tools/index.js', 'desktop-config.json', 'relay/config.ini']) {
       for (const value of [identity.home + '/private', identity.home.replaceAll('/', '\\'), JSON.stringify(identity.home.replaceAll('/', '\\')), identity.username, identity.hostname, identity.roots[0] + '/source']) {
         assert.equal(packagedTextViolation(value, file, identity), 'build-machine-identity', file);
       }
     }
-    for (const file of ['src/main.mjs', 'plugins/weftmate-tools/index.js', 'node_modules/weftmate-tools/index.js', 'config.json']) {
+    for (const file of ['src/main.mjs', 'plugins/weftmate-tools/index.js', 'node_modules/weftmate-tools/index.js', 'memory-runtime/core/config.json', 'config.json']) {
       assert.equal(packagedTextViolation(upstream, file, identity), 'development-path', file);
     }
     assert.equal(packagedTextViolation('unrelated Synthetic BuilderExtended word', thirdParty, identity), null);

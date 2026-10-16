@@ -4,6 +4,7 @@ const {join,resolve} = require('node:path');
 const {spawnSync} = require('node:child_process');
 module.exports = async context => {
   if (context.electronPlatformName !== 'win32') return;
+  await (await import('../memory-runtime-package.mjs')).beforeWindowsMemoryPack(context);
   const root=context.packager.projectDir, out=join(root,'.local/installer-ui');
   mkdirSync(out,{recursive:true});
   const run=(cmd,args,options={})=>{
