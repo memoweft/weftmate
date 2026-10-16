@@ -12,6 +12,7 @@ import { mockUx7Requests, prepareUx7Suggestions, ux7Replies } from './ux-7-scene
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 import { observePageFailures, sceneFailureSummary } from '../../scripts/review-gallery/scene-diagnostics.mjs';
+import { renderingFailureSampler } from '../../scripts/review-gallery/rendering-snapshot.mjs';
 import { redactEvidenceText } from '../helpers/process-evidence.mjs';
 import { galleryBridge } from '../../scripts/nightly/gallery-bridge.mjs';
 import { startAndroid } from '../../scripts/nightly/android.mjs';
@@ -79,7 +80,8 @@ try {
       const conversation = title => button(new RegExp(`^${title} [0-9]`));
       const shot = async (scene, prepare, current = page) => {
         if ((onlyScene && scene !== onlyScene) || android && catalog.scenes.find(row => row.id === scene).unavailable?.includes('android')) return null;
-        const record = await runScene({ page:current, out, platform:android?'android':'mobile-web',scene,theme,prepare,screenshot:android?()=>android.screenshot(scene,theme):undefined,pageDiagnostics:scene==='rendering'?renderingDiagnostics:undefined });
+        const record = await runScene({ page:current, out, platform:android?'android':'mobile-web',scene,theme,prepare,screenshot:android?()=>android.screenshot(scene,theme):undefined,pageDiagnostics:scene==='rendering'?renderingDiagnostics:undefined,
+          failureSampler:scene==='rendering'?renderingFailureSampler(current,()=>android?android.entryUrl:renderingFixture?.mobileUrl):undefined });
         if (android && scene === 'next-suggestions' && record.status === 'failed') {
           const support = await current.evaluate(()=>({abortAny:typeof AbortSignal.any,webView:navigator.userAgent.match(/Chrome\/([0-9.]+)/)?.[1] || 'unknown'}));
           if (support.abortAny !== 'function') {

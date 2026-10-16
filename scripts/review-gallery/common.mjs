@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { readFile, mkdir, writeFile, rm } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { sceneFailureDetails, publishSceneFailure } from './scene-diagnostics.mjs';
+import { sampleFailureSnapshot } from './rendering-snapshot.mjs';
 export const repository = resolve(import.meta.dirname, '../..');
 export const catalog = JSON.parse(await readFile(join(import.meta.dirname, 'scenes.json'), 'utf8'));
 export const commit = () => execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim();
@@ -19,7 +20,7 @@ export function captureSummary(records) {
 }
 // Recover only scene navigation errors. Capture, privacy, provenance and process
 // failures remain fatal, with no DOM/credential-bearing diagnostics in public output.
-export async function runScene({ page, out, platform, scene, theme, prepare, application, screenshot, pageDiagnostics, publish }) {
+export async function runScene({ page, out, platform, scene, theme, prepare, application, screenshot, pageDiagnostics, publish, failureSampler }) {
   const file = `review-${platform}-${scene}-${theme}.png`;
   await mkdir(out, { recursive: true });
   await rm(join(out, file), { force: true });
@@ -32,6 +33,7 @@ export async function runScene({ page, out, platform, scene, theme, prepare, app
     // Only a caller's fixed step name, never the locator, DOM or error text.
     const details = sceneFailureDetails({ phase: error.scenePhase, ...pageDiagnostics?.snapshot() });
     const record = { platform, scene, theme, status: 'failed', reason, ...details, commit: commit(), generatedAt: new Date().toISOString(), synthetic: true };
+    if (scene === 'rendering' && typeof failureSampler === 'function') Object.assign(record, await sampleFailureSnapshot(failureSampler));
     await writeFile(join(out, file.replace(/\.png$/, '.json')), JSON.stringify(record, null, 2) + '\n');
     publishSceneFailure(record, publish);
     return record;
