@@ -236,6 +236,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     const attempt = retryCounts.get(ownerId) ?? 0;
     const timer = setTimeout(() => {
       retryTimers.delete(ownerId);
+      const active = flushFlights.get(ownerId);
+      if (active) {
+        // This wake-up may belong to a boundary queued after the active drain's
+        // snapshot. Keep it until that drain finishes instead of consuming it.
+        void active.finally(() => scheduleRetry(ownerId, true)).catch(() => {});
+        return;
+      }
       void flushPending(ownerId).catch(() => {});
     }, immediate ? 0 : Math.min(30_000, 1000 * 2 ** Math.min(attempt, 5)));
     timer.unref?.(); retryTimers.set(ownerId, timer);

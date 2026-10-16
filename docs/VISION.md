@@ -1,6 +1,6 @@
 # WeftMate 愿景
 
-> 本人确认的产品定义（2026-10-06，2026-10-07 补充）。原文与历史路线见 `archive/2026-10-07/PROJECT_DIRECTION.md`。
+> 本人确认的产品定义（2026-10-06，2026-10-07 补充）。原文与历史路线见[固定提交中的 PROJECT_DIRECTION.md](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/PROJECT_DIRECTION.md)。
 
 ## 一句话
 
