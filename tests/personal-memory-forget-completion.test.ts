@@ -31,7 +31,7 @@ async function fixture(t: any) {
     let text = ''; for await (const part of req) text += part;
     const body = JSON.parse(text), input = JSON.parse(body.messages.at(-1).content), name = body.tools[0].function.name;
     judgeInputs.push(input);
-    const items = input.candidates.map((row: any) => ({ key: row.key, subjects: ['self'],
+    const items = input.candidates.map((row: any) => ({ key: row.key, subjects: ['self'], targetSubjects: /红茶|绿茶/.test(row.text) ? ['self'] : [],
       matchesTopic: /红茶|绿茶/.test(row.text), hasTargetFact: /红茶|绿茶/.test(row.text),
       sourceFullyAuthorized: !row.sourceTexts.some((source: string) => source.includes('散步')) }));
     res.end(JSON.stringify({ choices: [{ finish_reason: 'tool_calls', message: { tool_calls: [{ function: { name, arguments: JSON.stringify({ items }) } }] } }] }));
@@ -114,7 +114,7 @@ test('an already applied legacy command is reported partial without another dele
   await mkdir(join(file, '..'), { recursive: true }); await writeFile(file, JSON.stringify({ records: { [request.requestId]: action } }));
   await f.actions.resume(owner);
   const result = await f.actions.submit(owner, request);
-  assert.equal(result.state, 'partial'); assert.match(result.message, /部分|还没完全|尚未完全/);
+  assert.equal(result.state, 'partial'); assert.match(result.message, /原请求已执行.*不能确认完全忘掉/);
   assert.doesNotMatch(result.message, /^已忘掉|已经忘了/);
   await f.actions.resume(owner);
   assert.equal(f.commands.length, 1); assert.equal(f.revision, 8);

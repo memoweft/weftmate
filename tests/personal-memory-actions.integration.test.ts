@@ -60,6 +60,7 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
           matchesTopic: wrongQuestionOnly ? /根据我的记忆/.test(candidate.text) : input.request.topic.includes('生日') ? candidate.text.includes('生日') : input.request.topic.includes('林舟') ? candidate.text.includes('林舟') : input.request.topic.includes('蓝色') ? candidate.text.includes('蓝色') : /茶|纠正/.test(candidate.text),
           ...(request.tools[0].function.parameters.properties.items.items.properties.hasTargetFact ? {
             hasTargetFact: !/根据我的记忆|什么茶|什么时候/.test(candidate.text),
+            targetSubjects: /根据我的记忆|什么茶|什么时候/.test(candidate.text) ? [] : [misattribute ? 'self' : candidate.text.includes('妈妈') ? 'other:妈妈' : candidate.text.includes('同事小王') ? 'other:同事小王' : candidate.text.includes('林舟') ? 'other:林舟' : 'self'],
             sourceFullyAuthorized: !candidate.sourceTexts.some((text: string) => /生日/.test(text) && /茶/.test(text) ||
               /散步/.test(text) && /红茶|绿茶/.test(text) && !input.request.topic.includes('散步')),
           } : {}),
