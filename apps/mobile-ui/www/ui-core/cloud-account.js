@@ -2,7 +2,7 @@
 globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   const auth = { mode: 'login', step: 'email', email: '', error: '', busy: false, resendAt: 0, retryAt: 0, deviceName: '这台设备', devices: [], hosts: [] };
   core.state.cloudAuth = auth;
-  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight, ownHost, bindingClaim, returnView;
+  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight, exchangeTicket, desktopRestore = 0, ownHost, bindingClaim, returnView;
   const now = () => environment.now?.() ?? Date.now();
   const paint = () => effects.paintCloudAuth?.(cloudAuthView());
   function cloudAuthView() {
@@ -81,12 +81,16 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   }
   async function localAccounts() { return core.api('/desktop'); }
   async function switchLocalAccount(ownerId) {
-    journey++; clearTimeout(renewalTimer); bindingClaim = null;
+    const ticket = ++journey; clearTimeout(renewalTimer); bindingClaim = null;
     // A cloud credential belongs to one local owner; switching requires a new
     // explicit cloud journey rather than carrying that authority to another.
+    if (auth.localDesktop && auth.restoreState === 'checking' && !client.tokenId) await client.configure();
+    if (ticket !== journey) return;
     await client.forget();
+    if (ticket !== journey) return;
     core.clearSession();
     const session = await core.api('/desktop', { method: 'POST', body: { ownerId, deviceName: auth.deviceName } });
+    if (ticket !== journey) return;
     core.acceptSession(session); auth.localSession = true; auth.mode = 'offline'; auth.modal = false;
     await core.enterAssistant(); paint();
   }
@@ -160,18 +164,20 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (cloudAuthView().retrySeconds) return;
     return run(() => beginCloudLogin(email, password));
   }
-  async function finishCloudLogin(ticket = journey) {
-    if (exchangeInFlight) return exchangeInFlight;
-    const current = applyCloudSession(ticket); exchangeInFlight = current;
+  async function finishCloudLogin(ticket = journey, restore = null) {
+    if (exchangeInFlight && exchangeTicket === ticket) return exchangeInFlight;
+    const current = applyCloudSession(ticket, restore); exchangeInFlight = current; exchangeTicket = ticket;
     try { return await current; } finally { if (exchangeInFlight === current) exchangeInFlight = null; }
   }
-  async function applyCloudSession(ticket) {
+  async function applyCloudSession(ticket, restore) {
+    const current = () => ticket === journey && (!restore || restore.current());
+    if (!current()) return;
     if (bindingClaim) {
       const claim = bindingClaim, token = await client.access();
-      if (ticket !== journey) return;
+      if (!current()) return;
       await core.accessApi('/cloud/binding', { method: 'POST', protectedWrite: true,
         body: { claimId: claim.claimId, accessToken: token } });
-      if (ticket !== journey) return;
+      if (!current()) return;
       bindingClaim = null;
       await client.forget();
       auth.mode = 'offline'; paint();
@@ -182,13 +188,17 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const pairing = environment.initialPairing ? parseCloudPairing(environment.initialPairing) : null;
     if (pairing && pairing.hostId !== client.config.hostId) throw { code: 'PAIRING_INVALID' };
     const result = await client.exchange(pairing ? false : environment.bindDesktop ?? environment.desktop, pairing);
-    if (ticket !== journey) return;
+    if (!current()) return;
+    if (restore) {
+      auth.restoreAccountMatched = result.account?.ownerId === restore.ownerId;
+      if (!auth.restoreAccountMatched) throw { code: 'CLOUD_BINDING_CONFLICT' };
+    }
     const saved = await client.saved();
-    if (ticket !== journey) return;
+    if (!current()) return;
     auth.sub = saved.sub; auth.email = saved.email || auth.email;
     // Offline account selection contains no credential and remains after cloud logout/deletion.
     await environment.cloudCredentials('offline-account', { sub: saved.sub, email: auth.email, deviceName: saved.deviceName }); auth.offlineKnown = true;
-    if (ticket !== journey) return;
+    if (!current()) return;
     if (result.status === 'pending_approval') throw { code: environment.deviceType === 'android' && !result.requestId ? 'NATIVE_LOGIN_UPGRADE_REQUIRED' : 'UPDATE_REQUIRED' };
     if (result.status === 'cloud_only') {
       auth.mode = 'authenticated'; auth.modal = false; auth.cloudOnly = true; paint();
@@ -197,14 +207,20 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     }
     auth.cloudOnly = false;
     await effects.preparePhoneAccount?.({ accountId: saved.sub, email: auth.email, deviceId: (await client.key()).deviceId, origin: new URL(client.config.issuer).origin });
+    if (!current()) return;
     clearTimeout(waitTimer); waitTimer = null;
     if (pairing) { await saveCloudPairingPin(pairing); environment.initialPairing = null; }
+    if (!current()) return;
     auth.mode = 'authenticated'; auth.modal = false; paint();
     if (!auth.localSession) { core.acceptSession(result); await core.enterAssistant(); }
     returnView = null;
-    await core.refreshPendingDevices(); scheduleRenewal();
+    await core.refreshPendingDevices();
+    if (!current()) return;
+    scheduleRenewal();
     await cloudDirectory().catch(() => {});
+    if (!current()) return;
     const draft = await environment.cloudCredentials('draft:' + saved.sub);
+    if (!current()) return;
     if (draft) { effects.restoreCloudDraft?.(draft); await environment.cloudCredentials('draft:' + saved.sub, undefined, true); }
   }
   async function resumeCloudComputer() { return finishCloudLogin(); }
@@ -353,6 +369,13 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   async function cloudEmailConfirm(code) { const result = await client.authorized('/auth/email/change/confirm', { method: 'POST', body: { challengeId: auth.emailChange.challengeId, code } }); auth.emailChange = null; await expireCloudSession(result.account.email, {retainCached:false}); return result; }
   async function cloudChangePassword(currentPassword, password, confirmation) { validPassword(password, confirmation); const result = await client.authorized('/auth/password/change', { method: 'POST', body: { currentPassword, password } }); await expireCloudSession(auth.email, {retainCached:false}); return result; }
   async function cloudLogout() {
+    const ticket = ++journey; // A pending restore cannot publish after explicit logout.
+    if (auth.localDesktop && auth.restoreState === 'checking' && !client.tokenId) {
+      // Resolve only local public configuration so forget knows the native key.
+      // Otherwise logout before configure completes leaves old tokens for next boot.
+      await client.configure();
+      if (ticket !== journey) return;
+    }
     if(auth.localSession&&auth.multiHostSupported&&auth.mode==='authenticated')await core.accessApi('/cloud/binding',{method:'DELETE',protectedWrite:true,body:{}});
     if (auth.mode !== 'offline') { await client.authorized('/auth/logout', { method: 'POST', body: {} }); await client.resetKey(); }
     await expireCloudSession(auth.email, {retainCached:false});
@@ -422,6 +445,41 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await core.decideDevice(auth.requestId, 'allow');
     return finishCloudLogin();
   }
+  async function restoreLocalDesktopCloud() {
+    const attempt = ++desktopRestore, ticket = journey;
+    const ownerId = core.state.account?.ownerId, generation = core.state.identityGeneration;
+    const current = () => attempt === desktopRestore && ticket === journey && auth.localSession &&
+      core.state.account?.ownerId === ownerId && core.state.identityGeneration === generation;
+    Object.assign(auth, { restoreState: 'checking', restoreAttempted: false, restoreAccountMatched: null });
+    try {
+      // Restore only an already bound owner. The desktop exchange retains the
+      // host's existing issuer/sub-to-owner check; it cannot claim another owner.
+      const binding = await core.accessApi('/cloud/binding');
+      if (!current()) return;
+      if (binding.status !== 'active') { auth.restoreState = 'unbound'; return; }
+      await client.configure();
+      if (!current()) return;
+      ownHost = { hostId: client.config.hostId, baseUrl: environment.hostOrigin };
+      const saved = await client.saved();
+      if (!current()) return;
+      if (!saved) { auth.restoreState = 'none'; return; }
+      auth.restoreAttempted = true;
+      await finishCloudLogin(ticket, { ownerId, current });
+      if (current()) auth.restoreState = auth.mode === 'authenticated' ? 'restored' : 'unavailable';
+    } catch (error) {
+      if (!current()) return;
+      if (auth.mode === 'authenticated') { auth.restoreState = 'restored'; return; }
+      if (error.status === 404) { auth.restoreState = 'unbound'; return; }
+      const unavailable = error.code === 'NETWORK' || error.status >= 500;
+      if (!unavailable) await client.forget();
+      if (!current()) return;
+      auth.restoreState = unavailable ? 'unavailable' : error.code === 'CLOUD_BINDING_CONFLICT' ? 'conflict' : 'expired';
+      auth.error = cloudError(error);
+    } finally {
+      if (attempt === desktopRestore && auth.restoreState === 'checking' && !current()) auth.restoreState = 'cancelled';
+      paint();
+    }
+  }
   function initializeCloudAccount() {
     client = new globalThis.WeftUiCore.CloudAuthClient({ fetch: environment.fetch, crypto: environment.crypto,
       credentials: environment.cloudCredentials, vendor: environment.cloudVendor, host: environment.hostOrigin, nativeKey: environment.nativeCloudKey,
@@ -447,8 +505,9 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
           const session = await core.api('/desktop', { method: 'POST', body: { deviceName: auth.deviceName } });
           core.state.setupGrant = null; core.acceptSession(session);
           Object.assign(auth, { localSession: true, mode: 'offline', modal: false, error: '' }); paint();
-          if (await effects.startOnboarding?.(before)) return;
-          await core.enterAssistant(); return;
+          if (await effects.startOnboarding?.(before)) { void restoreLocalDesktopCloud(); return; }
+          await core.enterAssistant();
+          void restoreLocalDesktopCloud(); return;
         } catch (error) { auth.error = cloudError(error); core.show('owner'); paint(); return; }
       }
       try { await client.configure(); } catch (error) {
