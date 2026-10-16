@@ -3,6 +3,7 @@ import {_electron,chromium} from 'playwright';import {createRequire} from 'node:
 import {startTimelineCandidate} from './fixture.mjs';import {initializeDesktopSession} from './auth.mjs';
 import {waitForCommand} from '../../helpers/wait-for-command.mjs';
 import {waitForPublishedText} from '../../helpers/wait-for-published-text.mjs';
+import {closeTestElectron} from '../../helpers/close-test-electron.mjs';
 const diagnosticStarted=Date.now(),phased=process.argv.includes('--phased');
 const checkpoint=stage=>console.log(`[ui-extra] ${stage} (${Date.now()-diagnosticStarted}ms)`);
 const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate({daily:true,inlineProgress:true,logicalMobile:true,cloudMobile:true,sidebar:true,historyCount:0,baseTime:Date.now()});let app,browser;const report={rows:[],errors:[]};const profile=mkdtempSync(join(tmpdir(),'weftmate-bl29-latency-')),startedAt=Date.now();
@@ -56,14 +57,12 @@ try{
  if(phased)process.send({phase:'measured',report});checkpoint('measurement completed');
 
 }catch(e){report.failure=e.message;if(app){const p=await app.firstWindow();report.desktopDebug=await p.evaluate(()=>({models:__revCore.state.models.map(m=>m.id),personalization:__revCore.state.personalization,revision:__revCore.state.accountRevision,result:__revCore.state.historyReadResult}));}if(browser){const p=browser.contexts()[0]?.pages()[0];report.mobileDebug=await p?.evaluate(()=>({models:uiCore.state.models.map(m=>m.id),personalization:uiCore.state.personalization,revision:uiCore.state.accountRevision,result:uiCore.state.historyReadResult,connection:uiCore.connectionView(),main:uiCore.inMainChat()}));}}finally{
- writeFileSync(outputPath('ui-extra.json'),JSON.stringify(report,null,2));checkpoint('teardown started');await browser?.close();
+ writeFileSync(outputPath('ui-extra.json'),JSON.stringify(report,null,2));checkpoint('teardown started');
+ if(browser)for(const p of browser.contexts().flatMap(c=>c.pages())){await p.evaluate(()=>uiCore.stopAssistantRefresh());await p.goto('about:blank');}
+ if(app)for(const p of app.windows()){await p.evaluate(()=>globalThis.__revCore?.stopAssistantRefresh());await p.goto('about:blank');}
+ await browser?.close();
  if(app) {
-  await app.evaluate(async()=>{await globalThis.__bl29ConfigDesktop.close();});
-  const child=app.process(),exited=child.exitCode!==null||child.signalCode!==null?Promise.resolve({code:child.exitCode,signal:child.signalCode}):new Promise(resolve=>child.once('exit',(code,signal)=>resolve({code,signal})));
-  const closed=app.waitForEvent('close',{timeout:30000});
-  const requestExit=app.evaluate(({app})=>app.exit(0)).catch(error=>{if(!/closed|destroyed/i.test(error.message))throw error;});
-  const [,,exit]=await Promise.all([requestExit,closed,exited]);
-  if(exit.code!==0||exit.signal)throw Error('Synthetic desktop exit failed: '+JSON.stringify(exit));
+  await closeTestElectron(app,async()=>{await globalThis.__bl29ConfigDesktop.close();});
  }
  await f.close();rmSync(f.root,{recursive:true,force:true});rmSync(profile,{recursive:true,force:true});checkpoint('teardown completed');if(phased)process.disconnect();
 }console.log(report);
