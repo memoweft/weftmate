@@ -1,6 +1,6 @@
-import {copyFile,mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {inventory,lock,lockDigest,PTH} from '../../scripts/memory-runtime/verify.mjs';
+import {inventory,lock,lockDigest,lockText,PTH} from '../../scripts/memory-runtime/verify.mjs';
 
 // File-boundary fixture; actual interpreter/RPC/encoding tests run on the
 // assembled upstream payload in the Windows package workflow.
@@ -15,7 +15,7 @@ export async function memoryRuntimeFixture(root){
   for(const [name,content] of Object.entries(files)){
     const file=join(root,name);await mkdir(join(file,'..'),{recursive:true});await writeFile(file,content);
   }
-  await copyFile(new URL('../../scripts/memory-runtime/lock.json',import.meta.url),join(root,'runtime-lock.json'));
+  await writeFile(join(root,'runtime-lock.json'),lockText);
   return sealMemoryRuntimeFixture(root);
 }
 export async function sealMemoryRuntimeFixture(root,changes={}){
