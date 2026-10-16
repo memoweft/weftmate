@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
+import { waitForCommand } from './helpers/wait-for-command.mjs'
 
 const makeBackend = () => {
   const calls = { open: 0 }
@@ -30,16 +31,7 @@ async function req(origin: string, token: string, method: string, path: string, 
   return { status: response.status, body: await response.json() }
 }
 
-async function commandState(origin: string, token: string, commandId: string, state: string) {
-  for (let index = 0; index < 100; index++) {
-    const value = await req(origin, token, 'GET', `/personal/v1/commands/${commandId}`)
-    if (value.body.command.state === state) return value.body.command
-    await new Promise((resolve) => setTimeout(resolve, 20))
-  }
-  throw new Error('command did not reach expected state')
-}
-
-test('notepad command is strictly bounded, deduplicated across devices, listed and recoverable by requestId', async () => {
+test('notepad command is strictly bounded, deduplicated across devices, listed and recoverable by requestId', { timeout: 30000 }, async t => {
   const root = mkdtempSync(join(tmpdir(), 'personal-desktop-command-'))
   const backend = makeBackend()
   const service = await createPersonalAccessService({ root, port: 0, backend })
@@ -59,7 +51,9 @@ test('notepad command is strictly bounded, deduplicated across devices, listed a
     assert.equal(first.status, 202)
     assert.equal(repeated.status, 202)
     assert.equal(first.body.command.commandId, repeated.body.command.commandId)
-    const observed = await commandState(origin, b.token, first.body.command.commandId, 'observed')
+    const observed = await waitForCommand(async () =>
+      (await req(origin, b.token, 'GET', `/personal/v1/commands/${first.body.command.commandId}`)).body.command,
+      { accepted: row => row.state === 'observed', label: 'notepad observation', signal: t.signal })
     assert.equal(backend.calls.open, 1)
     assert.deepEqual(observed.verification.status, 'observed')
     assert.deepEqual(observed.verification.method, 'visible_window')

@@ -39,12 +39,14 @@ function persistedKeyMatches(wrappedKey, probe, timeoutMs) {
 export async function persistedWindowsStorageKey(safeStorage, sessionDirectory, { timeoutMs=15000 }={}) {
   const deadline=Date.now()+timeoutMs;
   let probe;
-  try {probe=safeStorage.encryptString('weftmate-storage-persistence-check');} catch {throw failure();}
   try {
   while (Date.now()<deadline) {
+    // Windows can report unavailable briefly after app.whenReady(). Keep the
+    // same readiness budget, and never resolve initialization before the proof.
+    if (!probe && safeStorage.isEncryptionAvailable()) probe=safeStorage.encryptString('weftmate-storage-persistence-check');
     let key;
     try { key=JSON.parse(readFileSync(join(sessionDirectory,'Local State'),'utf8')).os_crypt?.encrypted_key; } catch {}
-    if (typeof key==='string' && persistedKeyMatches(key,probe,Math.max(1,deadline-Date.now()))) {
+    if (probe && typeof key==='string' && persistedKeyMatches(key,probe,Math.max(1,deadline-Date.now()))) {
       // Only Chromium writes Local State. We authenticate and flush its file;
       // no recovery material or unwrapped master is ever written by this module.
       const fd=openSync(join(sessionDirectory,'Local State'),'r+');
@@ -54,5 +56,5 @@ export async function persistedWindowsStorageKey(safeStorage, sessionDirectory, 
     if(Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,Math.min(100,deadline-Date.now())));
   }
   throw failure();
-  } catch { throw failure(); } finally { probe.fill(0); }
+  } catch { throw failure(); } finally { probe?.fill(0); }
 }

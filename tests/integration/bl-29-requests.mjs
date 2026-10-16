@@ -46,7 +46,7 @@ try {
   if(logical){
     const chat=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
     const created=await f.request('/commands',{requestId:'bl29-main-warm',kind:'chat.message',chatId:chat.chatId,modelProfileId:'local',targetDeviceId:host,text:'合成主对话'});
-    for(let n=0;n<100;n++){const command=(await f.request('/commands/'+created.command.commandId)).command;if(command.state==='accepted_by_dsh'){f.sessionId=command.sessionId;break;}await pause(20);}
+    f.sessionId=(await waitForCommand(async()=>(await f.request('/commands/'+created.command.commandId)).command)).sessionId;
   }
   f.progress.text('已完成的合成回复。'); f.progress.finish();
   checkpoint('main warmup ready');
@@ -85,17 +85,16 @@ try {
     writeFileSync(join(out,reportName+'.json'),JSON.stringify(report,null,2)+'\n');
   }
   if(latencyOnly){
+    await Promise.all(pages.map(([,p])=>p.getByText('已完成的合成回复。',{exact:true}).first().waitFor({state:'visible'})));
     if(phased){
       const start=new Promise(resolve=>process.once('message',resolve));
       process.send({phase:'ready'});await start;checkpoint('measurement started after preparation');
     }
-    await pause(1500);
     const host=(await f.request('/status')).hostId,chat=(await f.request('/chats/main')).chat;
     const send=async(text,requestId)=>{const value=await f.request('/commands',{requestId,kind:'chat.message',chatId:chat.chatId,modelProfileId:'local',targetDeviceId:host,text});
       const cmd=await waitForCommand(async()=>(await f.request('/commands/'+value.command.commandId)).command);f.sessionId=cmd.sessionId;return cmd;};
     const at=Date.now();await send('另一台设备的新消息','bl29-other-message');
     for(const [surface,p] of pages){await p.getByText('另一台设备的新消息',{exact:true}).first().waitFor({state:'visible',timeout:6000});report.checks.push({name:'other-device-message',surface,ms:Date.now()-at});}
-    await pause(300);
     if (process.argv.includes('--approval-commit-delay')) {
       const track=f.debug.service.trackToolApproval;
       f.debug.service.trackToolApproval=async input=>{
@@ -136,11 +135,10 @@ try {
       checkpoint(`${surface} foreground reply projection ready (${Date.now()-publishedAt}ms)`);start=Date.now();
       await p.evaluate(()=>{delete document.visibilityState;document.dispatchEvent(new Event('visibilitychange'));});
       await p.getByText('恢复到最新'+surface,{exact:true}).first().waitFor({state:'visible',timeout:1000});report.checks.push({name:'foreground-recovery',surface,ms:Date.now()-start});
-      await p.evaluate(({surface})=>{const c=surface==='mobile'?uiCore:__streamCore;c.connectionNetwork(false);},{surface});
-      // Capture the visible copy in the same observation that waits for it:
-      // an in-flight status probe can restore online between browser calls.
-      const offlineCopy=await p.waitForFunction(()=>{const text=document.querySelector('.presence-copy')?.innerText;return text?.includes('网络不可用')?text:null;},{}, {timeout:2000});
-      assert.match(await offlineCopy.jsonValue(),/网络不可用/);start=Date.now();
+      // Observe this synchronous notification in the same browser turn: an
+      // in-flight successful status probe may restore online immediately.
+      const offlineCopy=await p.evaluate(({surface})=>{const c=surface==='mobile'?uiCore:__streamCore;c.connectionNetwork(false);return document.querySelector('.presence-copy')?.innerText;},{surface});
+      assert.match(offlineCopy,/网络不可用/);start=Date.now();
       await p.evaluate(({surface})=>(surface==='mobile'?uiCore:__streamCore).connectionNetwork(true),{surface});
       await p.waitForFunction(({surface})=>(surface==='mobile'?uiCore:__streamCore).connectionView().kind==='online',{surface},{timeout:2000});report.checks.push({name:'connection-recovery',surface,ms:Date.now()-start});
       await p.screenshot({path:join(out,`${surface}-recovered.png`)});
