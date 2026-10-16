@@ -169,6 +169,28 @@ import WeftMateCore
         for _ in 0..<500 { if !s.model.memoryWorking { break };try await Task.sleep(for:.milliseconds(10)) }
         #expect(Set(s.model.memory.items.map(\.text)) == ["测试花名是绿色纸鹤","长期学习日语"])
     }
+    @Test func ordinaryBadItemIDRecoversWithTheCorrectRetryAndReceipt() async throws {
+        let s=try Scenario();defer { s.close() };try await s.mode("unknown-item")
+        try await s.send("我长期学习日语。")
+        let source=try #require(s.model.messages.first { $0.role == "user" })
+        #expect(s.model.memory.items.isEmpty && !s.model.memory.processed.contains(source.id))
+        #expect(s.model.memoryNotice != nil)
+        try await s.mode("ok");s.model.retryMemory()
+        for _ in 0..<500 { if !s.model.memoryWorking { break };try await Task.sleep(for:.milliseconds(10)) }
+        #expect(s.model.memory.items.map(\.text) == ["长期学习日语"])
+        #expect(s.model.memory.processed.contains(source.id) && s.model.memory.retry?[source.id] == nil)
+        #expect(s.model.memoryNotice == nil)
+    }
+    @Test func askingAboutAnEarlierDeleteRequestDoesNotDeleteButACurrentRequestDoes() async throws {
+        let s=try Scenario();defer { s.close() }
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。")
+        try await s.send("删除我的测试花名是我之前提过的要求吗？")
+        #expect(s.model.memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+        #expect(s.model.messages.last?.text.contains("已从这台设备的记忆里忘掉") == false)
+        try await s.send("能不能删除我之前记住的测试花名？")
+        #expect(s.model.memory.items.isEmpty)
+        #expect(s.model.messages.last?.text.contains("已从这台设备的记忆里忘掉") == true)
+    }
     @Test func naturalExplicitForgettingRemovesTheActualSavedItem() async throws {
         for request in ["我希望你忘掉我的测试花名。","能不能忘掉我的测试花名？"] {
             let s=try Scenario();defer { s.close() }

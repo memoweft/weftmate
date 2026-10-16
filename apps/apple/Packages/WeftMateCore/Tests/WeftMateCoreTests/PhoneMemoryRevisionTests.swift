@@ -165,6 +165,33 @@ import Testing
         try state.apply(output([change(stale,blue,id:id)]),batch:[stale],threadID:"same")
         #expect(state.items.map(\.text) == [green])
     }
+    @Test func englishDecimalsRemainWithinACompleteSentence() throws {
+        let old=message("Remember, my height is 1.75 m. I study Japanese.",at:1000),newer=message("Actually, my height is 1.76 m.",at:1020)
+        for quote in ["my height is 1.75 m.","my height is 1."] {
+            var state=PhoneMemoryState(),proposal=change(newer,"my height is 1.76 m")
+            proposal["replacesSource"]=["id":old.id,"quote":quote]
+            let result=try state.apply(output([proposal]),batch:[newer],threadID:"same",referenceSources:[old])
+            if quote == "my height is 1.75 m." {
+                #expect(result.pendingSourceIDs.isEmpty && state.items.map(\.text) == ["my height is 1.76 m"])
+                #expect(state.projectedText(old)?.contains("I study Japanese.") == true)
+            } else { #expect(result.pendingSourceIDs == [newer.id] && state.items.isEmpty) }
+        }
+    }
+    @Test func projectedAwaySourcesDoNotConsumeTheEightMessageBudget() throws {
+        var state=PhoneMemoryState(),retired: [PhoneChatMessage]=[]
+        for index in 0..<8 {
+            let old=message("我的旧编号为\(index)。",at:Double(1000+index)),newer=message("不对，是新编号\(index)。",at:Double(2000+index))
+            retired.append(old);state.recordFailure([old],now:Date(timeIntervalSince1970:1100))
+            var proposal=change(newer,"我的新编号为\(index)")
+            proposal["replacesSource"]=["id":old.id,"quote":"我的旧编号为\(index)"]
+            try state.apply(output([proposal]),batch:[newer],threadID:"same",referenceSources:[old])
+        }
+        let fresh=(0..<10).map { message("我正在学习独立项目\($0)。",at:Double(3000+$0)) }
+        var thread=PhoneChatThread();thread.messages=retired+fresh
+        let batch=state.batch(thread,now:Date(timeIntervalSince1970:5000))
+        #expect(batch.count == 8 && batch.map(\.id) == Array(fresh.prefix(8)).map(\.id))
+        #expect(thread.messages.map(\.text) == (retired+fresh).map(\.text))
+    }
     @Test func sourceCoordinatesAreDerivedFromTheExactUTF16Original() throws {
         let old=message("😀我的测试花名是蓝色纸鹤。我长期学习日语。",at:1000),newer=message("不对，是绿色纸鹤。",at:1020)
         var state=PhoneMemoryState(),correction=change(newer,green)
@@ -272,7 +299,7 @@ import Testing
         #expect(state.items.map(\.text) == [blue])
     }
 
-    @Test(arguments:["我希望你忘掉我的测试花名。","能不能忘掉我的测试花名？","可以请你删除我的测试花名吗？","Could you forget my test nickname?","I would like you to delete my test nickname.","我希望你忘掉“我的测试花名”这条记忆，但不要删除聊天原话。","Could you forget \"my test nickname\"?"])
+    @Test(arguments:["我希望你忘掉我的测试花名。","能不能忘掉我的测试花名？","可以请你删除我的测试花名吗？","Could you forget my test nickname?","I would like you to delete my test nickname.","我希望你忘掉“我的测试花名”这条记忆，但不要删除聊天原话。","Could you forget \"my test nickname\"?","能不能删除我之前记住的测试花名？"])
     func naturalExplicitRequestsActuallyForget(_ text: String) throws {
         var state=try seeded()
         let source=message(text,at:1030)
@@ -290,4 +317,57 @@ import Testing
         try state.apply(output(removals:[removal]),batch:[source],threadID:"unauthorized",now:Date(timeIntervalSince1970:2100))
         #expect(state.items.map(\.text) == [blue])
     }
+}
+
+import Foundation
+import Testing
+@testable import WeftMateCore
+
+@Suite struct IndependentD9Probes {
+  func message(_ text:String,_ seconds:Double)->PhoneChatMessage { var m=PhoneChatMessage(role:"user",text:text);m.date=Date(timeIntervalSince1970:seconds);return m }
+  func change(_ m:PhoneChatMessage,_ text:String,id:String?=nil,link:[String:String]?=nil)->[String:Any] { var c:[String:Any] = ["id":id as Any? ?? NSNull(),"text":text,"sourceIDs":[m.id],"evidence":m.text];if let link { c["replacesSource"]=link };return c }
+  func patch(_ changes:[[String:Any]]=[],_ removals:[[String:Any]]=[])->String { String(decoding:try! JSONSerialization.data(withJSONObject:["upsert":changes,"invalidate":removals]),as:UTF8.self) }
+  @Test func ordinaryUnknownIDCanRecoverOnAValidRetry() throws {
+    let m=message("我长期学习日语。",1000);var state=PhoneMemoryState()
+    let bad=try state.apply(patch([change(m,"长期学习日语",id:"unknown-id")]),batch:[m],threadID:"t",now:Date(timeIntervalSince1970:2000))
+    #expect(bad.pendingSourceIDs == [m.id])
+    let good=try state.apply(patch([change(m,"长期学习日语")]),batch:[m],threadID:"t",now:Date(timeIntervalSince1970:2100))
+    #expect(state.items.map(\.text) == ["长期学习日语"])
+    #expect(good.pendingSourceIDs.isEmpty)
+    #expect(state.processed.contains(m.id) && state.retry?[m.id] == nil)
+  }
+  @Test func eightFullyRetiredSourcesDoNotBlockTheNextPendingMessage() throws {
+    var state=PhoneMemoryState(),old:[PhoneChatMessage]=[]
+    for i in 0..<8 {
+      let m=message("我的旧编号为\(i)。",Double(1000+i)),n=message("不对，是新编号\(i)。",Double(2000+i));old.append(m)
+      state.recordFailure([m],now:Date(timeIntervalSince1970:1100))
+      let result=try state.apply(patch([change(n,"我的新编号为\(i)",link:["id":m.id,"quote":"我的旧编号为\(i)"])]),batch:[n],threadID:"t",knownSources:[m,n],referenceSources:[m])
+      #expect(result.pendingSourceIDs.isEmpty)
+      #expect(state.projectedText(m) == "")
+    }
+    let fresh=message("我长期学习日语。",3000);var thread=PhoneChatThread();thread.messages=old+[fresh]
+    #expect(state.batch(thread,now:Date(timeIntervalSince1970:5000)).contains { $0.id == fresh.id })
+  }
+  @Test func historicalDeletionQuestionCannotAuthorizeDeletion() throws {
+    let first=message("请记住，我的测试花名是蓝色纸鹤。",1000),question=message("删除我的测试花名是我之前提过的要求吗？",2000)
+    var state=PhoneMemoryState();try state.apply(patch([change(first,"测试花名是蓝色纸鹤")]),batch:[first],threadID:"t")
+    let removal:[String:Any] = ["id":state.items[0].id,"sourceIDs":[question.id],"evidence":question.text]
+    try state.apply(patch([], [removal]),batch:[question],threadID:"t",knownSources:[first,question])
+    #expect(state.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+  }
+  @Test func englishSentenceQuoteKeepsTheIndependentSentence() throws {
+    let old=message("Remember, my nickname is Blue. I study Japanese.",1000),newer=message("Actually, my nickname is Green.",2000)
+    var state=PhoneMemoryState()
+    let result=try state.apply(patch([change(newer,"my nickname is Green",link:["id":old.id,"quote":"my nickname is Blue."])]),batch:[newer],threadID:"t",knownSources:[old,newer],referenceSources:[old])
+    #expect(result.pendingSourceIDs.isEmpty)
+    #expect(state.items.map(\.text) == ["my nickname is Green"])
+    #expect(state.projectedText(old)?.contains("I study Japanese.") == true)
+  }
+  @Test func englishTwoSentenceQuoteCannotRetireAnIndependentFact() throws {
+    let old=message("Remember, my nickname is Blue. I study Japanese.",1000),newer=message("Actually, my nickname is Green.",2000)
+    var state=PhoneMemoryState()
+    let result=try state.apply(patch([change(newer,"my nickname is Green",link:["id":old.id,"quote":"my nickname is Blue. I study Japanese."])]),batch:[newer],threadID:"t",knownSources:[old,newer],referenceSources:[old])
+    #expect(result.pendingSourceIDs == [newer.id])
+    #expect(state.projectedText(old)?.contains("I study Japanese.") == true)
+  }
 }

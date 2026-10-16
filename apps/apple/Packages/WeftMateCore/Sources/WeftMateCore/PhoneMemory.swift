@@ -105,7 +105,8 @@ public struct PhoneMemoryState: Codable, Sendable {
     public func batch(_ thread: PhoneChatThread, now: Date = Date()) -> [PhoneChatMessage] {
         let pending=thread.messages.filter { $0.role == "user" && !$0.phoneMemoryText.isEmpty && !processed.contains($0.id) && retry?[$0.id]?.holdForgetting != true && (retry?[$0.id]?.after ?? .distantPast) <= now && !suppressedSources.contains($0.id) && (resumeAfter == nil || $0.date > resumeAfter!) }
         var result: [PhoneChatMessage]=[],characters=0
-        for original in pending.prefix(8) {
+        for original in pending {
+            guard result.count < 8 else { break }
             var message=original;message.text=projectedText(original) ?? "";message.attachments=nil
             guard !message.text.isEmpty else { continue }
             // Keep the whole original message; even a single long message must not lose its ending.
@@ -185,7 +186,7 @@ public struct PhoneMemoryState: Codable, Sendable {
         for source in referenceSources+batch where originals[source.id] == nil { originals[source.id]=source }
         let carried=Set(batch.filter { retry?[$0.id]?.needsSourceLink == true }.map(\.id))
         var pending=Set<String>()
-        var linked=Set<String>()
+        var resolved=Set<String>()
         func support(_ ids: [String], _ evidence: String) -> [PhoneChatMessage] {
             guard !ids.isEmpty,!evidence.isEmpty,PhoneMemoryRules.safe(evidence),ids.allSatisfy({ id in
                 batch.contains { $0.id == id && $0.role == "user" && PhoneMemoryRules.safe($0.text) && !PhoneMemoryRules.isRecallQuestion($0.text) } && !suppressedSources.contains(id)
@@ -267,7 +268,7 @@ public struct PhoneMemoryState: Codable, Sendable {
                     pending.formUnion(correcting.map(\.id));continue
                 }
                 target=target ?? owners.first ?? UUID().uuidString
-                linked.formUnion(correcting.map(\.id))
+                resolved.formUnion(correcting.map(\.id))
                 if let previous=matches.first {
                     guard let latest=revisionDate(previous) else { pending.formUnion(correcting.map(\.id));continue }
                     guard date > latest else { continue }
@@ -282,7 +283,7 @@ public struct PhoneMemoryState: Codable, Sendable {
                 }
                 retire([retired],ownerID:target!)
             } else if !correcting.isEmpty {
-                linked.formUnion(correcting.map(\.id))
+                resolved.formUnion(correcting.map(\.id))
             }
             if let target,let item=items.first(where: { $0.id == target }) {
                 if let latest=revisionDate(item) {
@@ -332,8 +333,14 @@ public struct PhoneMemoryState: Codable, Sendable {
                 var item=PhoneMemoryItem(id:plan.id ?? UUID().uuidString,text:plan.text,threadID:threadID,sourceIDs:ids,updatedAt:now,latestSourceDate:plan.date)
                 item.sourceSpans=plan.spans;items.append(item)
             }
+            if items.contains(where: { PhoneMemoryRules.digest($0.text) == digest }) {
+                // A valid ordinary formation can finish an earlier bad-ID
+                // attempt. An independent fact in an unresolved correction
+                // must not stand in for its missing source association.
+                resolved.formUnion(plan.sources.filter { !PhoneMemoryRules.requestsCorrection((originals[$0.id] ?? $0).phoneMemoryText) }.map(\.id))
+            }
         }
-        pending.formUnion(carried.subtracting(linked))
+        pending.formUnion(carried.subtracting(resolved))
         let completed=Set(batch.map(\.id)).subtracting(pending)
         processed.formUnion(completed)
         for id in completed { retry?.removeValue(forKey:id) }
@@ -379,7 +386,9 @@ public enum PhoneMemoryRules {
     }
     static func sourceUnits(_ text: String) -> [SourceUnit] {
         let original=text as NSString
-        let pattern=try! NSRegularExpression(pattern:#"[^，,。！？!?；;\n]+"#)
+        // An English full stop ends a sentence before whitespace/end, while
+        // an internal decimal point remains part of the complete clause.
+        let pattern=try! NSRegularExpression(pattern:#"(?:[^，,。！？!?；;\n.]|\.(?!\s|$))+"#)
         var units=pattern.matches(in:text,range:.init(location:0,length:original.length)).compactMap { match -> SourceUnit? in
             let quote=original.substring(with:match.range).trimmingCharacters(in:.whitespacesAndNewlines)
             guard !quote.isEmpty else { return nil }
@@ -389,7 +398,7 @@ public enum PhoneMemoryRules {
         for index in atoms.indices.dropLast() where bareInstruction(atoms[index].quote) {
             let first=atoms[index],next=atoms[index+1]
             let separator=original.substring(with:.init(location:NSMaxRange(first.range),length:next.range.location-NSMaxRange(first.range)))
-            guard separator.rangeOfCharacter(from:CharacterSet(charactersIn:"。！？!?；;\n")) == nil else { continue }
+            guard separator.rangeOfCharacter(from:CharacterSet(charactersIn:"。！？!?；;\n.")) == nil else { continue }
             let range=NSUnionRange(first.range,next.range)
             units.append(.init(range:range,quote:original.substring(with:range)))
         }
@@ -405,7 +414,7 @@ public enum PhoneMemoryRules {
     }
     static func quoteSpan(_ source: PhoneChatMessage, quote: String) -> PhoneMemorySourceSpan? {
         let text=source.phoneMemoryText
-        let value=quote.trimmingCharacters(in:.whitespacesAndNewlines.union(CharacterSet(charactersIn:"，,。！？!?；;")))
+        let value=quote.trimmingCharacters(in:.whitespacesAndNewlines.union(CharacterSet(charactersIn:"，,。！？!?；;.")))
         guard let range=uniqueRange(value,in:text),sourceUnits(text).contains(where: { $0.range == range }) else { return nil }
         let quotes=try! NSRegularExpression(pattern:quotedText)
         guard !quotes.matches(in:text,range:.init(location:0,length:(text as NSString).length)).contains(where: { NSIntersectionRange($0.range,range) == range }) else { return nil }
@@ -441,10 +450,16 @@ public enum PhoneMemoryRules {
         return value.range(of:#"^(?:(?:请(?:你|您)?|帮我|请帮我|我希望(?:你|您)|能不能|可以(?:请)?(?:你|您)?)\s*)?(?:重新|再)?记住"#,options:.regularExpression) != nil
             || value.range(of:#"^(?:please\s+)?(?:(?:can|could|would)\s+you\s+(?:please\s+)?|i\s+want\s+you\s+to\s+)?remember\b"#,options:.regularExpression) != nil
     }
+    private static func asksAboutPastRequest(_ value: String) -> Bool {
+        // Asking whether an action was an earlier request is not issuing that
+        // action now. This does not reject polite current requests with 吗/？.
+        value.range(of:#"(?:是|是不是|是否是).*(?:之前|以前|曾经|上次|刚才|当时).*(?:提过|说过|要求|请求).*(?:吗|么|[？?])\s*$"#,options:.regularExpression) != nil
+    }
     public static func requestsForgetting(_ text: String) -> Bool {
         // Quoted examples are data, while a quoted object after an actual
         // request (forget “this fact”) still leaves the request itself intact.
         let value=unquoted(text)
+        guard !asksAboutPastRequest(value) else { return false }
         let english = #"^(?:please\s+)?(?:(?:can|could|would|will)\s+you\s+(?:please\s+)?|i\s+(?:want|would\s+like)\s+you\s+to\s+|i['’]d\s+like\s+you\s+to\s+)?(?:forget|delete|remove)\b"#
         if value.range(of:english,options:.regularExpression) != nil { return true }
         let lead = #"^(?:(?:请(?:你|您)?|麻烦(?:你|您)?|劳烦(?:你|您)?|我(?:希望|想要|想|要求)(?:你|您)?|能不能|能否|可否|可以(?:请)?(?:你|您)?|请问(?:你|您)?(?:能不能|能否|可否|可以))\s*)?(?:(?:请(?:你|您)?|帮我|替我|能)\s*)?"#
@@ -461,6 +476,7 @@ public enum PhoneMemoryRules {
     }
     public static func isRecallQuestion(_ text: String) -> Bool {
         let value=text.trimmingCharacters(in:.whitespacesAndNewlines).lowercased()
+        if asksAboutPastRequest(unquoted(text)) { return true }
         guard !requestsForgetting(value),!["请记住","帮我记住","记住","不对","remember ","please remember "].contains(where:value.hasPrefix) else { return false }
         return ["是什么","叫什么","还记得","what is my","what's my","do you remember"].contains(where:value.contains)
     }
