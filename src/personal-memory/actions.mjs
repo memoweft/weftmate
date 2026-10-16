@@ -70,6 +70,32 @@ export function createMemoryActions({ root, manager, schedule }) {
       const deletions = [...(action.plan.worldTargets ?? []), ...action.plan.evidenceIds.map(id => ({ kind: 'evidence', id }))];
       const retained = (action.plan.retainedOtherCount ? `还有 ${action.plan.retainedOtherCount} 条关于别人的没动。` : '') +
         (action.plan.retainedUncertainCount ? `还有 ${action.plan.retainedUncertainCount} 条归属或共用来源不明确的没动。` : '');
+      if (action.plan.retainedUncertainCount > 0 || action.plan.state === 'withheld') {
+        // A completed target is not a completed topic when a known source must
+        // remain. Read an existing Core receipt; never replay to prove an effect.
+        let applied = false, uncertain = (action.finished ?? []).some(id => !action.commands?.[id]);
+        const commands = Object.entries(action.commands ?? {});
+        for (const [id, command] of commands) {
+          if (id !== (command.targetKind === 'evidence' ? command.targetId : `${command.targetKind}:${command.targetId}`)) { uncertain = true; continue; }
+          try {
+            const result = await m.receiptForAction(owner, command);
+            const state = (result?.receipt ?? result)?.result_state;
+            if (state === 'applied') applied = true;
+            else if (!['no_change', 'rejected', 'revision_conflict'].includes(state)) uncertain = true;
+          } catch { uncertain = true; }
+        }
+        if (uncertain) {
+          // A reserved/sent old command cannot be called unexecuted just because
+          // its receipt is unavailable. Keep the existing uncertainty/recovery
+          // identity; recovery only inspects receipts, never dispatches this plan.
+          action.commandDispatched = true;
+          throw Error('MEMORY_ACTION_PENDING');
+        }
+        return { state: applied ? 'partial' : 'withheld', message: applied
+          ? '部分记忆已删除，但仍不能确认已完全忘掉；包含其他独立内容的来源保留，没有继续删除。原聊天保留。'
+          : commands.length ? '原请求已核对，本次没有继续删除；仍未完整忘掉。独立记忆和原聊天保留。'
+            : action.plan.message ?? '这次没有执行遗忘：相关来源还包含需要保留的其他内容，尚不能完整忘掉。独立记忆和原聊天保留。' };
+      }
       if (!deletions.length) return action.plan.state ? { state: action.plan.state, message: action.plan.message }
         : retained ? { state: 'withheld', message: '这次没有删除记忆。' + retained } : notFound();
       if (!Number.isSafeInteger(action.plan.nextRevision ?? action.plan.worldRevision)) return changedScope(Boolean(action.finished?.length));
@@ -277,7 +303,9 @@ export function createMemoryActions({ root, manager, schedule }) {
         attempted: flight?.attempted.has(action.requestId) ?? false, elapsedMs: Math.round(performance.now() - started),
         reason: budgetExpired ? action.automatic ? '60s-budget' : '8s-budget'
           : row.result ? 'flight-settled-with-result' : 'flight-settled-still-pending', recoveryRequested: true });
-      return row.result ?? { state: 'queued', message: pendingMessage(action.name) };
+      const incomplete = row.name === 'memory_forget' && (row.plan?.retainedUncertainCount > 0 || row.plan?.state === 'withheld');
+      return row.result ?? { state: 'queued', message: incomplete
+        ? '上次遗忘结果还未能确认，本次没有继续删除；稍后只核对原请求结果。' : pendingMessage(action.name) };
     },
     resume,
     async redact(owner, { affectedIds = [], sourceTexts = [] }) {

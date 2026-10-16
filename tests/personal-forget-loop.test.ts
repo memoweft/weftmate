@@ -39,6 +39,7 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
   const repeatGate = new Promise<void>(r => { releaseRepeat = r; });
   const repeatReady = new Promise<void>(r => { repeatedStarted = r; });
   const manager: any = {
+    checkForgetCompletion: async (_owner: string, proposal: any) => ({ state: 'complete', worldRevision: proposal.expectedWorldRevision }),
     status: async () => ({ state: 'ready', capabilities: { correct: true, deleteWorldItem: true, deleteEvidence: true } }),
     recall: async (owner: string, input: any = {}) => {
       recallCalls.push(input);
@@ -74,6 +75,8 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
     assert.equal(action.name, 'memory_forget'); assert.deepEqual(action.arguments, { query: '我喝茶的偏好' });
     if (automaticForget === 'applied') facts.delete(owner);
     return { state: automaticForget, message: automaticForget === 'queued' ? '这次还没忘掉，稍后会再试。'
+      : automaticForget === 'withheld' ? '这次没有执行遗忘，独立记忆和原聊天保留。'
+        : automaticForget === 'partial' ? '部分记忆已删除，但尚未完全忘掉；独立记忆和原聊天保留。'
       : automaticForget === 'not_found' ? '没找到关于“我喝茶的偏好”的记忆。' : '已删除关于“我喝茶的偏好”的记忆，包括旧版本和来源原文。' };
   };
   if (automaticForget) manager.forgetFromMessage = (owner: string, action: any) => automaticForget === 'no_action'
@@ -224,7 +227,7 @@ test('recall-disabled conversations do not read or send memory through tools, wh
   assert.deepEqual(f.commands.map(c => c.operation), ['correct_world_item', 'delete_world_item']);
 });
 
-for (const state of ['applied', 'queued', 'not_found']) test(`FIX-50 automatic forgetting ${state} keeps the native model reply and reports the actual outcome`, { timeout: 60000 }, async t => {
+for (const state of ['applied', 'queued', 'not_found', 'withheld', 'partial']) test(`FIX-50 automatic forgetting ${state} keeps the native model reply and reports the actual outcome`, { timeout: 60000 }, async t => {
   const f = await fixture(t, { automaticForget: state }), session = await f.create();
   const result = await f.complete(await f.send(session, '忘掉我喝茶的偏好，另外请计算12×13。'));
   assert.equal(result.terminal.data.reason, 'completed');
@@ -235,6 +238,10 @@ for (const state of ['applied', 'queued', 'not_found']) test(`FIX-50 automatic f
   const replies = (await f.api(`/sessions/${session}/events`)).events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
   assert.match(replies, /156/);
   if (state === 'applied') assert.match(replies, /已删除.*喝茶.*旧版本和来源原文/);
+  else if (state === 'withheld' || state === 'partial') {
+    assert.match(replies, state === 'withheld' ? /没有执行遗忘/ : /部分记忆已删除，但尚未完全忘掉/);
+    assert.doesNotMatch(replies, /已忘掉|已删除关于.*旧版本和来源原文/);
+  }
   else { assert.match(replies, state === 'queued' ? /这次还没忘掉，稍后会再试/ : /没找到.*喝茶/); assert.doesNotMatch(replies, /已删除/); }
 });
 

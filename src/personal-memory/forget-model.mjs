@@ -118,12 +118,20 @@ export async function scopedForgetPlan(manager, owner, action, route) {
   const candidateSources = row => row.object_kind === 'entity' && !row.provenance?.length
     ? rows.filter(other => other.object_kind !== 'entity' && Object.values(other.value).includes(row.item_id)).flatMap(other => other.provenance ?? [])
     : row.provenance ?? [];
+  if (rows.some(row => row.object_kind !== 'entity' && candidateSources(row).length && !readable(candidateSources(row)))) return {
+    version: 2, worldRevision, authorization: request, evidenceIds: [], worldTargets: [], affectedIds: [], sourceTexts: [],
+    state: 'withheld', message: '无法在当前权限下确认完整遗忘范围，这次没有执行；独立记忆和原聊天保留。' };
   const candidates = rows.filter(row => !(row.object_kind === 'entity' && row.value.kind === 'topic') && readable(candidateSources(row))).map(row => ({ key: `${row.object_kind}:${row.item_id}`,
     kind: row.object_kind, text: row.value.content ?? row.value.canonical_name, graphSubject: graphSubject(row),
-    sourceTexts: [...new Set(candidateSources(row).map(source => source.evidence.raw_content).filter(Boolean))] }));
+    sourceTexts: [...new Set(candidateSources(row).flatMap(source => [source.evidence.raw_content, source.evidence.summary]).filter(Boolean))] }));
   const snapshot = await manager.query(owner, 'preview_recall', { query: request.topic, model_tier: route.modelTier });
   const jobs = await manager.query(owner, 'query_jobs', { operation: 'list' });
-  const provisional = [...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? []),
+  // A formed independent fact may keep a mixed source out of recent recall and
+  // out of the selected correction chain. Inspect its current permitted source
+  // too; this nominates a completion boundary, never extra deletion authority.
+  const knownSources = candidates.flatMap(candidate => candidateSources(byKey.get(candidate.key)))
+    .map(source => ({ id: source.evidence_id, text: source.evidence.raw_content ?? source.evidence.summary }));
+  const provisional = [...knownSources, ...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? []),
     ...(jobs.formation_requests ?? []).map(row => ({ id: row.evidence_id, text: row.text }))];
   for (const item of provisional) {
     const id = item.id ?? item.evidence_id, key = `evidence:${id}`;
@@ -132,7 +140,8 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     const evidence = result.evidence;
     if (!readable([{ evidence, permissions: evidence.permissions }])) continue;
     byKey.set(key, { item_id: id, object_kind: 'evidence', provenance: [{ evidence_id: id, evidence }], value: {} });
-    candidates.push({ key, kind: 'evidence', text: item.text ?? evidence.raw_content, sourceTexts: [evidence.raw_content], graphSubject: null });
+    candidates.push({ key, kind: 'evidence', text: [evidence.raw_content, evidence.summary].filter(Boolean).join('\n') || item.text,
+      sourceTexts: [evidence.raw_content, evidence.summary].filter(Boolean), graphSubject: null });
   }
   const decisions = await classifyForgetCandidates(route, request, candidates);
   const certain = key => {
@@ -203,4 +212,83 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     evidenceIds: [...evidence.keys()].filter(id => !coveredEvidence.has(id)), sourceTexts: [...evidence.values()].filter(Boolean),
     worldTargets,
     affectedIds: [...selected].map(key => byKey.get(key).item_id), authorization: request, retainedOtherCount, retainedUncertainCount };
+}
+
+/** Explicit page selection remains the only deletion scope. This model-assisted
+ * check can only withhold that command; it never supplies additional targets.
+ * GET preview stays read-only and never calls this processing route. */
+export async function checkForgetCompletion(manager, owner, proposal, route) {
+  const withheld = message => ({ state: 'withheld', message, worldRevision: proposal.expectedWorldRevision });
+  const unknown = () => withheld('无法确认相关来源已经全部覆盖，这次没有执行遗忘；独立记忆和原聊天保留。');
+  try {
+    const preview = await manager.query(owner, 'preview_forget', { target_kind: proposal.targetKind, target_id: proposal.targetId });
+    if (preview.world_revision !== proposal.expectedWorldRevision) return unknown();
+    const worlds = await Promise.all(['cognition', 'relationship', 'event', 'entity'].map(object_kind =>
+      manager.query(owner, 'query_world', { operation: 'list', object_kind, include_history: true })));
+    if (worlds.some(world => world.world_revision !== preview.world_revision)) return unknown();
+    const rows = worlds.flatMap(world => world.items ?? []), entities = new Map(rows.filter(row => row.object_kind === 'entity').map(row => [row.item_id, row.value]));
+    const sources = new Map();
+    for (const row of rows) for (const source of row.provenance ?? []) sources.set(source.evidence_id, source);
+    const deletedSources = new Set(preview.evidence_ids ?? []);
+    for (const id of deletedSources) {
+      const result = await manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: id });
+      if (result.world_revision !== preview.world_revision) return unknown();
+      sources.set(id, { evidence_id: id, evidence: result.evidence, permissions: result.evidence?.permissions });
+    }
+    if (!deletedSources.size || [...sources.values()].some(source => source.evidence?.content_available !== true ||
+      source.permissions?.allow_inference !== true || source.permissions?.[route.modelTier === 'cloud' ? 'allow_cloud_read' : 'allow_local_read'] !== true)) return unknown();
+    const chain = new Set([`${proposal.targetKind}:${proposal.targetId}`]);
+    if (proposal.targetKind !== 'evidence') {
+      let changed;
+      do {
+        changed = false;
+        for (const row of rows) for (const link of row.transition_history ?? []) {
+          if (!['corrects', 'supersedes'].includes(link.transition_kind)) continue;
+          const keys = [link.prior_item_id, link.replacement_item_id].map(id => `${row.object_kind}:${id}`);
+          if (keys.some(key => chain.has(key))) for (const key of keys) if (!chain.has(key)) { chain.add(key); changed = true; }
+        }
+      } while (changed);
+    }
+    const items = (preview.items ?? []).filter(item => item.object_kind !== 'entity' || item.item_type === 'person');
+    const targets = items.filter(item => proposal.targetKind === 'evidence' || chain.has(`${item.object_kind}:${item.item_id}`));
+    if (targets.some(item => !rows.some(row => row.object_kind === item.object_kind && row.item_id === item.item_id))) return unknown();
+    const candidates = items.map(item => {
+      const row = rows.find(row => row.object_kind === item.object_kind && row.item_id === item.item_id);
+      const entity = entities.get(row?.value?.target_entity_id);
+      const graphSubject = row?.object_kind === 'cognition' ? !row.value.target_entity_id || entity?.kind === 'topic' || entity?.canonical_name === '用户' ? 'self'
+        : entity?.kind === 'person' ? `other:${entity.canonical_name}` : 'unknown' : null;
+      return { key: `${targets.includes(item) ? 'target' : 'cascade'}:${item.object_kind}:${item.item_id}`, kind: item.object_kind, text: item.name, graphSubject,
+        sourceTexts: [...new Set((row?.provenance ?? []).flatMap(source => [source.evidence?.raw_content, source.evidence?.summary]).filter(Boolean))] };
+    });
+    // Selecting an entire Evidence authorizes that source, not every similarly
+    // named source. Its actual text anchors the read-only topic comparison.
+    const selectedSource = proposal.targetKind === 'evidence' ? sources.get(proposal.targetId)?.evidence : null;
+    const facts = [...targets.map(item => item.name), ...(selectedSource ? [selectedSource.raw_content, selectedSource.summary] : [])].filter(Boolean);
+    if (!facts.length || !candidates.length) return unknown();
+    for (const [id, source] of sources) candidates.push({ key: `evidence:${id}`, kind: 'evidence',
+      text: [source.evidence.raw_content, source.evidence.summary].filter(Boolean).join('\n'), graphSubject: null,
+      sourceTexts: [source.evidence.raw_content, source.evidence.summary].filter(Boolean) });
+    const decisions = await classifyForgetCandidates(route, { authorized: true, subject: 'unknown', topic: facts.join('\n') }, candidates);
+    const subjects = new Set();
+    for (const candidate of candidates.filter(row => row.key.startsWith('target:'))) {
+      const decision = decisions.get(candidate.key);
+      if (!decision || decision.subjects.includes('unknown') || !decision.subjects.length || !decision.sourceFullyAuthorized ||
+        candidate.graphSubject && !decision.subjects.includes(candidate.graphSubject)) return unknown();
+      for (const value of decision.subjects) subjects.add(value);
+    }
+    for (const candidate of candidates.filter(row => row.key.startsWith('cascade:'))) {
+      const decision = decisions.get(candidate.key);
+      if (!decision?.matchesTopic || !decision.hasTargetFact || !decision.sourceFullyAuthorized || !decision.subjects.length ||
+        decision.subjects.some(value => !subjects.has(value))) return unknown();
+    }
+    for (const [id] of sources) {
+      const decision = decisions.get(`evidence:${id}`);
+      if (deletedSources.has(id)) { if (!decision?.sourceFullyAuthorized) return unknown(); }
+      else if (decision?.matchesTopic && decision.hasTargetFact &&
+        (decision.subjects.includes('unknown') || !decision.subjects.length || decision.subjects.some(value => subjects.has(value)))) return unknown();
+    }
+    const latest = await manager.query(owner, 'query_world', { operation: 'revision' });
+    if (latest.world_revision !== proposal.expectedWorldRevision) return unknown();
+    return { state: 'complete', worldRevision: preview.world_revision };
+  } catch { return unknown(); }
 }
