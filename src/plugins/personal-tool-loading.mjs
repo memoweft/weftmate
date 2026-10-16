@@ -50,9 +50,11 @@ export function installToolLoadingRecovery(ctx) {
         const chunks = [];
         for await (const chunk of next()) chunks.push(chunk);
         options.signal.throwIfAborted();
-        // Request failures and cancellation belong to the native loop/retry policy.
-        if (chunks.some(chunk => chunk.type === 'finish' && ['error', 'aborted'].includes(chunk.reason.kind)
-          || chunk.type === 'block-end' && chunk.block.type === 'tool-call' && chunk.block.name === LOAD)) {
+        // Only normal completion may use the presentation fallback; preserve all
+        // other native outcomes (including output limits) and their partial reply.
+        const finish = chunks.findLast(chunk => chunk.type === 'finish')?.reason.kind;
+        if (!['stop', 'tool-calls', 'completed'].includes(finish)
+          || chunks.some(chunk => chunk.type === 'block-end' && chunk.block.type === 'tool-call' && chunk.block.name === LOAD)) {
           yield* chunks; return;
         }
       }

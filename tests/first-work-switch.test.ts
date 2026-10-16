@@ -19,7 +19,7 @@ async function removeLinks(root: string) {
   }
 }
 
-test('tool preparation correction preserves native request retries, failures and aborts', { timeout: 15000 }, async t => {
+test('tool preparation correction preserves native request retries and terminal outcomes', { timeout: 15000 }, async t => {
   const vendor = (name: string) => pathToFileURL(resolve('vendor/dsh-runtime/node_modules/@deepseek-ai', name, 'lib/index.js')).href;
   const [{ Context }, llm, { default: Sessions }, { default: SystemPrompt }, tools,
     { default: AgentRegistry }, { default: AgentLoop }, Retry] = await Promise.all([
@@ -27,7 +27,7 @@ test('tool preparation correction preserves native request retries, failures and
     import(vendor('dsh-system-prompt')), import(vendor('dsh-tools')),
     import(vendor('dsh-agent')), import(vendor('dsh-agent-loop')), import(vendor('dsh-llm-retry')),
   ]);
-  for (const scenario of ['RATE_LIMIT', 'TRANSPORT', 'EXHAUSTED', 'ABORTED', 'USER_STOP']) {
+  for (const scenario of ['RATE_LIMIT', 'TRANSPORT', 'EXHAUSTED', 'ABORTED', 'USER_STOP', 'MAX_TOKENS']) {
     await t.test(scenario, async () => {
       const root = await mkdtemp(join(tmpdir(), 'fix51-request-outcome-'));
       const ctx = new Context();
@@ -55,6 +55,11 @@ test('tool preparation correction preserves native request retries, failures and
             if (calls === 2 || scenario === 'EXHAUSTED' && calls === 3) {
               yield { type: 'block-start', index: 0, blockType: 'text' };
               yield { type: 'text-delta', index: 0, text: 'Synthetic partial response' };
+              if (scenario === 'MAX_TOKENS') {
+                yield { type: 'block-end', index: 0, block: { type: 'text', text: 'Synthetic partial response' } };
+                yield { type: 'finish', reason: { kind: 'max-tokens' } };
+                return;
+              }
               if (scenario === 'USER_STOP') {
                 handle.agent.cancel({ kind: 'user' });
                 options.signal.throwIfAborted();
@@ -79,8 +84,16 @@ test('tool preparation correction preserves native request retries, failures and
         const events = handle.agent.session.events;
         const chunks = events.filter((event: any) => event.type === 'assistant/chunk').map((event: any) => event.data.chunk);
         const end = events.findLast((event: any) => event.type === 'turn/end').data.reason;
-        assert.equal(JSON.stringify(chunks).includes('电脑暂时没准备好'), false, 'request errors and aborts must not become a successful fallback');
-        if (scenario === 'USER_STOP') {
+        assert.equal(JSON.stringify(chunks).includes('电脑暂时没准备好'), false, 'non-normal request outcomes must not become a successful fallback');
+        if (scenario === 'MAX_TOKENS') {
+          assert.equal(end.kind, 'max-tokens'); assert.equal(calls, 2); assert.equal(loaded, 0);
+          assert.deepEqual(chunks.at(-1), { type: 'finish', reason: { kind: 'max-tokens' } });
+          assert.equal(chunks.filter((chunk: any) => chunk.type === 'text-delta').map((chunk: any) => chunk.text).join(''), 'Synthetic partial response');
+          const reply = events.findLast((event: any) => event.type === 'assistant/message');
+          assert.deepEqual(reply.data.message.content, [{ type: 'text', text: 'Synthetic partial response' }]);
+          assert.equal(failures.length, 0);
+          assert.equal(events.filter((event: any) => event.type === 'llm/retry').length, 0, 'output limits do not schedule another request');
+        } else if (scenario === 'USER_STOP') {
           assert.equal(end.kind, 'aborted'); assert.equal(calls, 2); assert.equal(loaded, 0);
           assert.equal(events.filter((event: any) => event.type === 'llm/retry').length, 0);
         } else {
