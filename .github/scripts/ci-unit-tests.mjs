@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { assertRuntimeIdentity } from '../../scripts/dsh-runtime-identity.mjs';
 import { managedMkdtempSync, disposeManagedTemp, startManagedTempLease } from '../../tests/helpers/managed-temp.mjs';
 import { runManagedTestProcess } from '../../tests/helpers/managed-test-process.mjs';
-import { parseTap, recoveredSummary, runFileGate, selectShard, validateTimingTests } from './ci-test-policy.mjs';
+import { parseTap, recoveredSummary, runFileGate, selectShard, selectRequiredShard, validateTimingTests } from './ci-test-policy.mjs';
 
 const mode = process.argv[2];
 if (!['required', 'known', 'vendor'].includes(mode)) throw new Error('Use required, known or vendor');
@@ -29,7 +29,8 @@ const platformTests = exceptions.platformTests.filter(entry => entry.platforms.i
 const shardIndex = process.argv.indexOf('--shard');
 const shard = shardIndex >= 0 ? process.argv[shardIndex + 1] : undefined;
 if (shard && mode !== 'required') throw Error('Shards apply only to required mode');
-const selected = selectShard(files.filter(file => !unavailable.has(file) && (mode === 'vendor' ? vendorFiles.has(file) : !suite.files.includes(file) && (mode === 'required' || knownFiles.has(file)))), shard);
+const eligible = files.filter(file => !unavailable.has(file) && (mode === 'vendor' ? vendorFiles.has(file) : !suite.files.includes(file) && (mode === 'required' || knownFiles.has(file))));
+const selected = mode === 'required' ? selectRequiredShard(eligible, shard) : selectShard(eligible, shard);
 const timingTests = JSON.parse(readFileSync('.github/timing-sensitive-tests.json', 'utf8')).tests;
 validateTimingTests(timingTests);
 if (mode === 'known' && selected.length === 0) {
