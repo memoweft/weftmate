@@ -340,6 +340,14 @@ async function submit({ manager, ownerId, body, operation, targetKind, targetId,
     { operation: 'get', evidence_id: targetId });
   else await ownerQuery(manager, ownerId, 'query_world',
     { operation: 'get', object_kind: targetKind, item_id: targetId, include_history: true });
+  if (operation.startsWith('delete_')) {
+    let completion;
+    try { completion = await manager.checkForgetCompletion?.(ownerId, { targetKind, targetId, expectedWorldRevision: body.expectedWorldRevision }); }
+    catch { /* Missing processing configuration/permission cannot prove completion. */ }
+    if (completion?.state !== 'complete' || completion.worldRevision !== body.expectedWorldRevision) return {
+      status: 409, body: { state: 'withheld', error: { code: 'MEMORY_FORGET_INCOMPLETE' },
+        message: '这次没有执行遗忘：相关来源仍无法完整处理。独立记忆和原聊天保留。' } };
+  }
   let result;
   try {
     result = await manager.submitCommand(ownerId, { requestId: body.requestId,

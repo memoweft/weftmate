@@ -12,7 +12,7 @@ import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
 import { recallQuestions,recallEntries } from './recall-questions.mjs';
 import { createMemoryActions } from './actions.mjs';
-import { classifyForgetRequest, scopedForgetPlan } from './forget-model.mjs';
+import { classifyForgetRequest, scopedForgetPlan, checkForgetCompletion } from './forget-model.mjs';
 
 const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
@@ -519,6 +519,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       action.signal?.throwIfAborted();
       return scopedForgetPlan(this, ownerId, action, { ...route, signal: action.signal });
     },
+    async checkForgetCompletion(ownerId, proposal) {
+      const route = await resolveProcessingRoute(ownerId, null);
+      return checkForgetCompletion(this, ownerId, proposal, route);
+    },
     correctionSourceSupported(ownerId) {
       return withOwner(ownerId, entry => entry.capabilities?.services?.command?.correction_source === true);
     },
@@ -912,6 +916,18 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       })();
       commandFlights.set(key, work);
       try { return await work; } finally { commandFlights.delete(key); }
+    },
+    async receiptForAction(ownerId, proposal) {
+      owner(ownerId);
+      const marker = await journal.get(ownerId, proposal.requestId), command = marker?.command;
+      if (!command || !['delete_evidence', 'delete_world_item'].includes(command.operation) ||
+        command.operation !== proposal.operation || command.target_kind !== proposal.targetKind || command.target_id !== proposal.targetId ||
+        command.expected_world_revision !== proposal.expectedWorldRevision) throw error('MEMORY_REQUEST_CONFLICT');
+      // Completion inspection reads only the original Core receipt. Unlike the
+      // public receipt getter, it must not trigger another host cleanup attempt.
+      const result = await withOwner(ownerId, entry => entry.rpc.request('query_command_receipt', { command_id: command.command_id }));
+      if ((result?.receipt ?? result)?.command_id !== command.command_id) throw error('MEMORY_RESPONSE_INVALID');
+      return result;
     },
     async receiptByRequest(ownerId, requestId) {
       owner(ownerId);

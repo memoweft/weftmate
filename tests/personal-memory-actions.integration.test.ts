@@ -60,7 +60,8 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
           matchesTopic: wrongQuestionOnly ? /根据我的记忆/.test(candidate.text) : input.request.topic.includes('生日') ? candidate.text.includes('生日') : input.request.topic.includes('林舟') ? candidate.text.includes('林舟') : input.request.topic.includes('蓝色') ? candidate.text.includes('蓝色') : /茶|纠正/.test(candidate.text),
           ...(request.tools[0].function.parameters.properties.items.items.properties.hasTargetFact ? {
             hasTargetFact: !/根据我的记忆|什么茶|什么时候/.test(candidate.text),
-            sourceFullyAuthorized: !candidate.sourceTexts.some((text: string) => /生日/.test(text) && /茶/.test(text)),
+            sourceFullyAuthorized: !candidate.sourceTexts.some((text: string) => /生日/.test(text) && /茶/.test(text) ||
+              /散步/.test(text) && /红茶|绿茶/.test(text) && !input.request.topic.includes('散步')),
           } : {}),
           subjects: [misattribute ? 'self' : candidate.text.includes('妈妈') ? 'other:妈妈' : candidate.text.includes('同事小王') ? 'other:同事小王' : candidate.text.includes('林舟') ? 'other:林舟' : 'self'],
         })) }
@@ -200,6 +201,113 @@ test('FIX-50 G7 M7 real Core: forgetting blue preserves the independent walking 
   await f.restart()
   assert.ok((await f.world()).items.some((item: any) => item.item_id === walking.item_id))
   assert.equal((await f.world()).items.some((item: any) => item.item_id === blue.item_id), false)
+  assert.deepEqual(f.errors, [])
+})
+
+async function mixedCompletionFixture(t: any, walkingOnly = false) {
+  const mixed = '我喜欢喝红茶。另记一件独立的事：我周末喜欢散步。'
+  const f = await fixture(t, { seedText: '记住我喜欢喝红茶', interpret: payload => {
+    const evidence = payload.evidence[0], statements = evidence.text.includes('散步')
+      ? [...walkingOnly ? [] : ['用户喜欢喝红茶。'], '用户周末喜欢散步。'] : ['用户' + evidence.text]
+    return { schema_version: 8, result: 'cognitions', cognitions: statements.map(proposition => ({ action: 'form', target: 'owner_self',
+      statement_kind: 'preference', formed_by: 'stated', proposition,
+      supports: evidence.segments.map((segment: any) => ({ evidence_id: evidence.id, segment_id: segment.id })) })) }
+  } })
+  await f.manager.ingest(owner, boundary(mixed, 'm3-mixed-source')); await f.ready()
+  const before = await f.world(), old = before.items.find((row: any) => row.value.content.includes('记住'))
+  assert.ok(old)
+  const correction = await f.tool('memory_correct', { kind: 'cognition', id: old.item_id,
+    expectedWorldRevision: before.world_revision, text: '我其实更喜欢绿茶。', sourceQuote: '我其实更喜欢绿茶。' },
+  'm3-correct', '我其实更喜欢绿茶。')
+  assert.equal(correction.state, 'applied'); await f.ready()
+  const snapshot = await f.world(), current = snapshot.items.find((row: any) => row.current_state === 'current' && row.value.content.includes('绿茶'))
+  const walking = snapshot.items.find((row: any) => row.value.content.includes('散步'))
+  const evidence = await f.manager.query(owner, 'query_evidence', { operation: 'list' })
+  const source = evidence.evidence.find((row: any) => row.raw_content === mixed)
+  assert.ok(current); assert.ok(walking); assert.ok(source)
+  return { f, mixed, source, current, walking, snapshot }
+}
+
+test('FIX-50 M3 safe real Core: known mixed sources withhold page and topic deletion before any command', { skip }, async t => {
+  const { f, mixed, source, current, walking, snapshot } = await mixedCompletionFixture(t)
+  const path = `/personal/v1/memory/items/cognition/${current.item_id}`
+  const decisions = f.decisions
+  const preview = await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname: path + '/forget-preview',
+    url: new URL(path + '/forget-preview', 'http://memory'), request: { method: 'GET' } })
+  assert.equal(preview.status, 200); assert.equal(f.decisions, decisions, 'GET preview must not ask a model')
+  const topic = await f.tool('memory_forget', { query: '我喝茶的偏好' }, 'm3-safe-topic', '请忘掉我喝茶的偏好。')
+  assert.equal(topic.state, 'withheld'); assert.doesNotMatch(topic.message, /已忘掉|已删除关于/)
+  const response = await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname: path,
+    url: new URL(path, 'http://memory'), request: { method: 'DELETE' },
+    readJson: async () => ({ requestId: 'm3-safe-page', expectedWorldRevision: snapshot.world_revision }) })
+  assert.equal(response.status, 409); assert.equal(response.body.state, 'withheld'); assert.equal(response.body.receipt, undefined)
+  assert.equal(f.trace.filter((row: any) => row.method === 'submit_command' && row.params.command.operation.startsWith('delete_')).length, 0)
+  const after = await f.world(); assert.equal(after.world_revision, snapshot.world_revision)
+  assert.ok(after.items.some((row: any) => row.item_id === current.item_id)); assert.ok(after.items.some((row: any) => row.item_id === walking.item_id))
+  const retained = await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: source.evidence_id })
+  assert.equal(retained.evidence.raw_content, mixed); assert.equal(retained.evidence.summary, mixed)
+  const exported = JSON.stringify(await f.manager.portableExport(owner)); assert.match(exported, /红茶/); assert.match(exported, /散步/)
+  assert.deepEqual(f.errors, [])
+})
+
+test('FIX-50 M3 safe real Core: a legacy applied receipt stays partial and is never replayed', { skip }, async t => {
+  const { f, mixed, source, walking } = await mixedCompletionFixture(t)
+  const id = 'm3-legacy-partial', requestId = 'memory-tool:' + createHash('sha256').update(id).digest('hex')
+  const scope = { authorized: true, subject: 'self', topic: '我喝茶的偏好' }
+  const action: any = { requestId, name: 'memory_forget', arguments: { query: scope.topic }, scope,
+    sessionId: id, modelTier: 'cloud', source: { text: '请忘掉我喝茶的偏好。' } }
+  const plan = await f.manager.planForget(owner, action)
+  assert.ok(plan.retainedUncertainCount > 0); assert.equal(plan.worldTargets.length, 1)
+  const target = plan.worldTargets[0], key = `${target.kind}:${target.id}`
+  const command = { requestId: 'm3-already-applied', operation: 'delete_world_item', targetKind: target.kind,
+    targetId: target.id, expectedWorldRevision: plan.worldRevision, payload: {} }
+  const committed = await f.manager.submitCommand(owner, command), receipt = committed.receipt ?? committed
+  assert.equal(receipt.result_state, 'applied')
+  const originalReceipt = { commandId: receipt.command_id, state: receipt.result_state, revision: receipt.after_revision }
+  await f.manager.close()
+  const file = path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json')
+  const stored = JSON.parse(await readFile(file, 'utf8'))
+  stored.records[requestId] = { ...action, plan: { ...plan, nextRevision: receipt.after_revision },
+    finished: [key], commands: { [key]: command } }
+  await writeFile(file, JSON.stringify(stored)); await f.restart()
+  const result = await f.tool('memory_forget', { query: scope.topic }, id, '请忘掉我喝茶的偏好。')
+  assert.equal(result.state, 'partial'); assert.match(result.message, /部分|还没完全|尚未完全|不能确认已完全/)
+  assert.doesNotMatch(result.message, /^已忘掉|已删除关于/)
+  await f.restart(); await f.ready()
+  const replayed = await f.tool('memory_forget', { query: scope.topic }, id, '请忘掉我喝茶的偏好。')
+  assert.equal(replayed.state, 'partial')
+  const deletions = f.trace.filter((row: any) => row.method === 'submit_command' && row.params.command.operation.startsWith('delete_'))
+  assert.equal(deletions.length, 1)
+  const actual = await f.manager.receiptByRequest(owner, command.requestId), actualReceipt = actual.receipt ?? actual
+  assert.deepEqual({ commandId: actualReceipt.command_id, state: actualReceipt.result_state, revision: actualReceipt.after_revision }, originalReceipt)
+  const after = await f.world(); assert.equal(after.world_revision, receipt.after_revision)
+  assert.ok(after.items.some((row: any) => row.item_id === walking.item_id))
+  assert.equal((await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: source.evidence_id })).evidence.raw_content, mixed)
+  assert.match(JSON.stringify(await f.manager.portableExport(owner)), /红茶/)
+  assert.deepEqual(f.errors, [])
+})
+
+test('FIX-50 M3 safe real Core: summary-only source projection still prevents a complete forgetting claim', { skip }, async t => {
+  const { f, mixed, source, snapshot } = await mixedCompletionFixture(t, true)
+  const query = f.manager.query.bind(f.manager)
+  // Restrict only the read projection to isolate summary handling. The actual
+  // Core record is not edited; raw/summary/export are verified intact below.
+  f.manager.query = async (ownerId: string, method: string, params: any) => {
+    const result = await query(ownerId, method, params), projected = structuredClone(result)
+    if (method === 'query_world') for (const row of projected.items ?? []) for (const item of row.provenance ?? [])
+      if (item.evidence_id === source.evidence_id) item.evidence.raw_content = null
+    if (method === 'query_evidence' && params.evidence_id === source.evidence_id) projected.evidence.raw_content = null
+    if (method === 'preview_recall') { projected.preview.recent_evidence = []; projected.preview.pending_corrections = [] }
+    return projected
+  }
+  const result = await f.tool('memory_forget', { query: '我喝茶的偏好' }, 'm3-summary-only', '请忘掉我喝茶的偏好。')
+  assert.equal(result.state, 'withheld')
+  assert.ok(f.decisionInputs.some(input => input.candidates.some((row: any) => row.key === `evidence:${source.evidence_id}` && row.sourceTexts.includes(mixed))))
+  assert.equal(f.trace.filter((row: any) => row.method === 'submit_command' && row.params.command.operation.startsWith('delete_')).length, 0)
+  const retained = await query(owner, 'query_evidence', { operation: 'get', evidence_id: source.evidence_id })
+  assert.equal(retained.evidence.raw_content, mixed); assert.equal(retained.evidence.summary, mixed)
+  assert.equal((await f.world()).world_revision, snapshot.world_revision)
+  assert.match(JSON.stringify(await f.manager.portableExport(owner)), /红茶/)
   assert.deepEqual(f.errors, [])
 })
 

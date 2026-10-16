@@ -42,6 +42,9 @@ test('account memory routes keep health, list, source, search cursor and Trust r
     updated_at: '2026-09-27T00:00:00.000Z', lifecycle: { invalid_at: null, archived_at: null, muted_at: null },
     provenance: [{ evidence_id: `e-${ownerId}` }] })
   const memory = {
+    // Source completion is a separate production service, exercised directly in
+    // personal-memory-forget-completion; this fixture scripts its safe outcome.
+    checkForgetCompletion: async (_ownerId: string, proposal: any) => ({ state: 'complete', worldRevision: proposal.expectedWorldRevision }),
     peek: (ownerId: string) => ownerId === aOwner ? 'connected' : 'unknown',
     status: async (ownerId: string) => (ownerId === aOwner && !statusUnavailable) ||
       (ownerId === bOwner && bStatusReady)
