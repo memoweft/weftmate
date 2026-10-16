@@ -4,10 +4,10 @@ import {readFileSync} from 'node:fs';
 import {lstat,readdir,readFile} from 'node:fs/promises';
 import {join,relative,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-const lockBytes=readFileSync(new URL('./lock.json',import.meta.url));
-export const lock=JSON.parse(lockBytes);
+export const lock=JSON.parse(readFileSync(new URL('./lock.json',import.meta.url)));
+export const lockText=JSON.stringify(lock,null,2)+'\n';
 const sha=b=>createHash('sha256').update(b).digest('hex');
-export const lockDigest=sha(lockBytes);
+export const lockDigest=sha(lockText);
 export const PTH='python313.zip\n.\n../core/src\n../site-packages\n';
 export function modeOf(mode){
   if(!['base','full'].includes(mode))throw Error('Windows packaging requires explicit memory runtime mode: base or full');
