@@ -3,17 +3,27 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 let ts;
 
-export function shardForFile(file, count) {
+export const REQUIRED_SHARD_SEED = 'required-v5190';
+export const WINDOWS_REQUIRED_SHARD_SEED = 'required-windows-v10760';
+export const REQUIRED_SHARD_COUNTS = Object.freeze({ 'ubuntu-latest': 3, 'windows-latest': 5, 'macos-latest': 1 });
+export function requiredShardPlan({ includeMac = false } = {}) {
+  return Object.entries(REQUIRED_SHARD_COUNTS).filter(([os]) => includeMac || os !== 'macos-latest')
+    .flatMap(([os, count]) => Array.from({ length: count }, (_, i) => ({ os, shard: `${i + 1}/${count}` })));
+}
+export function shardForFile(file, count, seed = REQUIRED_SHARD_SEED) {
   if (!Number.isInteger(count) || count < 1) throw Error('Shard count must be a positive integer');
   // Fixed seed measured against CI-1's first complete cloud file reports; new files never move existing files.
-  return createHash('sha256').update('required-v5190\n' + file.replaceAll('\\', '/')).digest().readUInt32BE(0) % count;
+  return createHash('sha256').update(seed + '\n' + file.replaceAll('\\', '/')).digest().readUInt32BE(0) % count;
 }
-export function selectShard(files, value) {
+export function selectShard(files, value, seed = REQUIRED_SHARD_SEED) {
   if (!value) return files;
   const match = /^(\d+)\/(\d+)$/.exec(value);
   const index = Number(match?.[1]), count = Number(match?.[2]);
   if (!match || index < 1 || index > count || count < 1) throw Error('Use --shard <1-based index>/<count>');
-  return files.filter(file => shardForFile(file, count) === index - 1);
+  return files.filter(file => shardForFile(file, count, seed) === index - 1);
+}
+export function selectRequiredShard(files, value, platform = process.platform) {
+  return selectShard(files, value, platform === 'win32' ? WINDOWS_REQUIRED_SHARD_SEED : REQUIRED_SHARD_SEED);
 }
 export function declaredTests(source, file = 'test.ts') {
   ts ??= createRequire(import.meta.url)('typescript');
