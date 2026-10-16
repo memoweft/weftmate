@@ -1,0 +1,101 @@
+# Windows 记忆组件构建
+
+对应 PLAN 当前清单第 3 项、D106 和 #332 G8。只制备和分发 Windows x64
+组件；本包没有启用自动记忆。按本人 2026-10-16 确认的 D110，Windows
+构建默认 `full`；仍可显式选择 `base` 单独构建基础候选。出处见
+[#332 的总经理转达](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)。
+
+`lock.json` 固定官方 Python 3.13.16 嵌入 ZIP、Core 已合入并首轮通过的
+`52952ff0e896d745e3c6ec65579ea643f8b996fb` 提交及官方源归档 URL、大小与
+散列、Core `uv.lock` 散列、Windows CPython 3.13 对应 wheel、传递依赖、许可、模型
+修订及文件散列。基础层是 Python/Core 和 7 个基础依赖；完整层在同一
+基础上加入 17 个语义依赖、固定模型/分词器、微软两个必需运行库和许可。
+不带开发工具、pip、账户库或用户数据。wheel 的原有许可和元数据保留。
+
+## 制备两种载荷
+
+脚本读取并核对 `lock.json` 固定的官方 GitHub 源归档，再解包所需 Python
+源码和许可，不读取开发者 Core checkout 或它的未提交内容。构建工具为
+仓库锁定的 Node/npm 依赖；7-Zip 复用当前 electron-builder 的固定工具集，
+支持归档中的长路径。微软安装器只被解包，绝不执行。
+
+```powershell
+npm ci
+node scripts/memory-runtime/prepare.mjs --mode base --output .local/memory-base --cache .local/memory-inputs
+node scripts/memory-runtime/prepare.mjs --mode full --output .local/memory-full --cache .local/memory-inputs
+```
+
+`--output` 必须为空；缓存中的每个输入仍要核对固定散列。构建工具和全部
+固定输入已就绪时可加 `--offline`；不另做下载队列、重试或恢复。Core、Python 或
+依赖升级要同时更新清单并重新验收，不能只改清单里的显示版本。Core
+归档缓存名包含完整提交，命中后仍核对 SHA/大小；成品还核对 Core 提交
+和整个固定清单，因此 base/full 都拒绝复用旧 `e86b73ba` 载荷。随包版本
+与 `observed-core` 保持一致，版本升级遵守 MEMORY.md 的主线首绿规则。
+
+输出直接放入 `resources/memory-runtime/`：
+
+```text
+memory-runtime/
+  python/                  # 官方解释器、标准库、相对 python313._pth
+  core/src/memoweft/        # 固定 Git 源码
+  site-packages/           # 固定 wheel，保留许可
+  models/                 # 仅 full，Core 固定修订
+  licenses/               # Core、模型说明及微软原许可
+  runtime-lock.json
+  MEMORY-RUNTIME.json     # 平台、层、协议、启动参数、逐文件大小/散列
+```
+
+解释器的 `._pth` 只列出随包相对路径，不启用 `site`，忽略系统 Python、
+注册表、`PYTHONPATH` 和当前目录。清单中的调用参数为
+`python/python.exe -B -m memoweft.integrations.dsh_bridge`；`-B` 禁止在
+安装资源内写字节码。MEM-AUTO 必须遵守该调用参数，继续使用现有账户
+数据目录，且将 `MEMOWEFT_SEMANTIC_CACHE_DIR` 指向已核验的 `models/`。
+本包兼容边界精确固定为 Core 清单提交、`memoweft.dsh_rpc` v2、schema 1。
+
+## 打包入口
+
+候选入口支持独立参数：
+
+```powershell
+node scripts/build-windows-candidate.mjs --version 0.1.0-membase.1 --output-dir dist/membase --memory-runtime-mode base --memory-runtime-dir .local/memory-base
+node scripts/build-windows-candidate.mjs --version 0.1.0-memfull.1 --output-dir dist/memfull --memory-runtime-mode full --memory-runtime-dir .local/memory-full
+```
+
+正式发布入口 `scripts/release/windows.mjs` 和
+`scripts/nightly/installed-smoke.mjs` 也接受相同两个参数。现有
+`npm run dist`、`dist:win`、`dist:win:feed` 及直接 electron-builder 调用
+可通过 `WEFTMATE_MEMORY_RUNTIME_MODE` 与 `WEFTMATE_MEMORY_RUNTIME_DIR`
+提供选择和载荷目录。省略层选择时采用 `full`；制备脚本仍要求显式选择，
+并且打包时必须提供已制备的载荷目录。
+
+各入口共用 `memory-runtime-package.mjs`。现有 Windows `beforePack`
+在复制前核验并补入资源，`afterPack` 在最终资源目录重新核验和运行
+离线探针；包检查器再依据 app.asar 中的 `memoryRuntimeMode` 检查完整
+文件清单。遗漏目录、层不匹配、版本/散列错误、缺模型或必需 DLL 都失败。
+Linux/macOS 的原有打包行为不变。组件沿用本体安装、签名和更新机制。
+保留官方 Python 可执行文件的原签名与散列，签名配置只排除
+`python.exe` 和 `pythonw.exe`，WeftMate 本体和安装器仍按原流程签名。
+
+## 核验与限制
+
+```powershell
+node --test tests/memory-runtime.test.ts tests/windows-package-policy.test.ts tests/verify-windows-package.test.ts
+node scripts/memory-runtime/verify.mjs --root .local/memory-full --mode full --probe
+```
+
+探针用随包解释器真实导入依赖、核对版本，禁止网络连接；用合成目录
+通过独立 Core 进程执行 capabilities、initialize、health、shutdown，
+确认数据库实际建立。完整层还用固定模型真实编码出有限的 384 维向量，
+确认所需 VC DLL 从随包解释器目录加载。两层都检查不产生字节码。
+Windows 工作流分别构建和检查 base/full，并走原有真实程序启动冒烟。
+
+在开发机隔离 PATH/环境并不等于干净系统。发布前仍须在无 Python、
+开发工具或额外 VC 的干净 Windows 验证；本包不自动开启 Windows
+功能。签名安装、升级、覆盖修复、回滚、卸载保留数据及主路 M1–M7
+由后续安装验收包完成。携带组件并不表示全新安装已经启用记忆。
+
+许可原文及固定来源见 [NOTICE.md](NOTICE.md) 和 `lock.json`。微软允许
+程序目录内分发，但将再分发权限定于有相应 Visual Studio 许可的用户；
+发布者仍须确认自身权利。参见[微软官方条件](https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files)
+与[官方 REDIST 清单](https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution)。
+Python 的嵌入分发和模块查找行为见[官方说明](https://docs.python.org/3.13/using/windows.html#the-embeddable-package)。

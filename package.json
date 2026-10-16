@@ -22,6 +22,7 @@
     "test:contract": "node scripts/run-contract-tests.mjs",
     "vendor:dsh": "node scripts/vendor-dsh.mjs",
     "vendor:verify": "node scripts/verify-dsh-vendor.mjs",
+    "memory:prepare": "node scripts/memory-runtime/prepare.mjs",
     "dist": "npm run vendor:verify && node scripts/stage-dsh-runtime.mjs && electron-builder",
     "dist:win": "npm run vendor:verify && node scripts/stage-dsh-runtime.mjs && electron-builder --win",
     "dist:win:feed": "npm run vendor:verify && node scripts/stage-dsh-runtime.mjs && node scripts/electron-builder-feed.mjs",
@@ -39,6 +40,7 @@
     "asar": true,
     "npmRebuild": false,
     "beforePack": "scripts/release/installer-assets.cjs",
+    "afterPack": "scripts/release/memory-runtime-after-pack.cjs",
     "asarUnpack": [
       "node_modules/get-windows/**/*"
     ],
