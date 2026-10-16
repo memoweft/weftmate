@@ -94,7 +94,7 @@ test('AUTH-1 cancelling a desktop exchange during its nonce request cannot bind 
   assert.equal(f.records.has('trusted-host:host-test'), false)
 })
 
-test('AUTH-1 native startup never contacts cloud and optional login expiry keeps local account, content and settings', async () => {
+test('AUTH-1 unbound native startup never contacts cloud and optional login expiry keeps local account, content and settings', async () => {
   const f = await fixture(), projections: string[] = [], notices: string[] = []
   let cleared = 0, entered = 0
   const local = { account: { ownerId: 'original-local-owner', username: 'synthetic-local' }, device: { id: 'native-session', authKind: 'desktop' }, csrfToken: 'local-csrf', local: true }
@@ -102,7 +102,8 @@ test('AUTH-1 native startup never contacts cloud and optional login expiry keeps
     load: () => {}, clearSession: () => { cleared++; core.state.account = null }, sessionExpired: () => {},
     acceptSession: (payload: any) => { Object.assign(core.state, { account: payload.account, device: payload.device, csrfToken: payload.csrfToken }) },
     enterAssistant: async () => { entered++; core.state.currentView = 'assistant' }, refreshPendingDevices: async () => {},
-    api: async (path: string) => path === '/state' ? { configured: true } : path === '/desktop' ? local : assert.fail('Unexpected auth path ' + path) }
+    api: async (path: string) => path === '/state' ? { configured: true } : path === '/desktop' ? local : assert.fail('Unexpected auth path ' + path),
+    accessApi: async (path: string) => path === '/cloud/binding' ? { status: 'unbound' } : assert.fail('Unexpected business path ' + path) }
   Object.assign(f.environment, { desktop: true, nativeIdentity: async () => ({ localOrigin: f.environment.hostOrigin, deviceName: 'synthetic-host' }) })
   Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, { toast: (message: string) => notices.push(message) }, f.environment))
   const client = core.initializeCloudAccount(); f.useClient(client)
