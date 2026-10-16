@@ -1,8 +1,8 @@
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { createHash, randomUUID } from 'node:crypto';
-import { open, readFile, rename, rm } from 'node:fs/promises';
+import { open, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
+import { ensurePrivateDirectory, ensurePrivateFile, openPrivateFile, renamePrivateFile, forgetPrivateFile } from '../private-host-storage.mjs';
 import { canonicalAttachmentMetadata } from './attachments.mjs';
 
 const VERSION = 1;
@@ -151,7 +151,7 @@ async function atomicWrite(file, value, shouldCommit) {
   const temp = `${file}.${randomUUID()}.tmp`;
   let handle;
   try {
-    handle = await open(temp, 'wx', 0o600);
+    handle = await openPrivateFile(temp);
     await handle.writeFile(JSON.stringify(value), 'utf8');
     await handle.sync();
     await handle.close();
@@ -159,7 +159,7 @@ async function atomicWrite(file, value, shouldCommit) {
     await ensurePrivateFile(temp);
     for (let attempt = 0; ; attempt++) {
       if (!shouldCommit()) throw new PersonalSyncError('SERVICE_CLOSING', 503);
-      try { await rename(temp, file); break; }
+      try { await renamePrivateFile(temp, file); break; }
       catch (error) {
         if (process.platform !== 'win32' || !['EPERM', 'EACCES', 'EBUSY'].includes(error?.code) || attempt >= 3) throw error;
         await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
@@ -173,6 +173,7 @@ async function atomicWrite(file, value, shouldCommit) {
   } finally {
     await handle?.close().catch(() => {});
     await rm(temp, { force: true }).catch(() => {});
+    forgetPrivateFile(temp);
     releaseWrite();
   }
 }
