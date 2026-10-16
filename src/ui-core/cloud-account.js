@@ -469,9 +469,14 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     } catch (error) {
       if (!current()) return;
       if (auth.mode === 'authenticated') { auth.restoreState = 'restored'; return; }
-      if (error.status === 404) { auth.restoreState = 'unbound'; return; }
-      const unavailable = error.code === 'NETWORK' || error.status >= 500;
-      if (!unavailable) await client.forget();
+      if (error.status === 404 && !auth.restoreAttempted) { auth.restoreState = 'unbound'; return; }
+      const rejected = [401, 403, 409].includes(error.status) ||
+        ['CLOUD_TOKEN_INVALID', 'CLOUD_BINDING_CONFLICT', 'HOST_TRUST_INVALID', 'DEVICE_NOT_TRUSTED', 'CLOUD_DEVICE_VERIFICATION_REQUIRED'].includes(error.code);
+      let unavailable = !auth.restoreAttempted || error.code === 'NETWORK' || error.status >= 500 || !rejected;
+      if (!unavailable) {
+        try { await client.forget(); }
+        catch (failure) { error = failure; unavailable = true; }
+      }
       if (!current()) return;
       auth.restoreState = unavailable ? 'unavailable' : error.code === 'CLOUD_BINDING_CONFLICT' ? 'conflict' : 'expired';
       auth.error = cloudError(error);

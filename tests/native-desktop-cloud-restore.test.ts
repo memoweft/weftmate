@@ -26,8 +26,10 @@ async function fixture({ saved = true, coldOrigin = 'http://127.0.0.1:31001', na
     clear: async () => { events.push('key-cleared'); } };
   let owner = 'owner-a', authorization: any, now = Date.now(), networkFailure = false, serverUnavailable = false, invalidRefresh = false;
   let configureGate: ReturnType<typeof deferred> | undefined, exchangeGate: ReturnType<typeof deferred> | undefined;
-  let resultOwner: string | undefined;
+  let resultOwner: string | undefined, failCredentialRead = false, failCredentialRemoval = false;
   const credentials = async (key: string, value?: any, remove = false) => {
+    if (key.startsWith('app-tokens:') && (remove && failCredentialRemoval || value === undefined && !remove && failCredentialRead))
+      throw { code: 'STORAGE_UNAVAILABLE' };
     if (remove) records.delete(key); else if (value !== undefined) records.set(key, structuredClone(value));
     else { reads.push(key); return records.has(key) ? structuredClone(records.get(key)) : undefined; }
   };
@@ -116,7 +118,8 @@ async function fixture({ saved = true, coldOrigin = 'http://127.0.0.1:31001', na
     unavailable: () => { now += 400000; serverUnavailable = true; }, rejectRefresh: () => { now += 400000; invalidRefresh = true; },
     blockConfiguration: () => { configureGate = deferred(); return configureGate; },
     blockExchange: () => { exchangeGate = deferred(); return exchangeGate; },
-    selectOwner: (value: string) => { owner = value; }, returnedOwner: (value: string) => { resultOwner = value; } };
+    selectOwner: (value: string) => { owner = value; }, returnedOwner: (value: string) => { resultOwner = value; },
+    failCredentialRead: () => { failCredentialRead = true; }, failCredentialRemoval: () => { failCredentialRemoval = true; } };
 }
 
 test('native desktop cold start restores saved cloud login on both fixed and changed ports', async () => {
@@ -185,6 +188,24 @@ test('a rejected refresh drops cloud authority while preserving local contents a
   assert.equal(f.core.state.account.ownerId, 'owner-a');
   assert.equal(f.core.state.currentView, 'assistant');
   assert.equal(f.events.includes('clear-local'), false);
+});
+
+test('a native credential read failure preserves unread credentials and local usability', async () => {
+  const f = await fixture(); f.failCredentialRead();
+  await f.core.load(); await f.settle();
+  assert.equal(f.core.cloudAuthView().restoreState, 'unavailable');
+  assert.equal(f.records.has(f.tokenKey), true);
+  assert.equal(f.core.cloudAuthView().mode, 'offline');
+  assert.equal(f.core.state.account.ownerId, 'owner-a');
+});
+
+test('a credential cleanup failure remains an unavailable optional restore, not an unhandled task', async () => {
+  const f = await fixture(); f.rejectRefresh(); f.failCredentialRemoval();
+  await f.core.load(); await f.settle();
+  assert.equal(f.core.cloudAuthView().restoreState, 'unavailable');
+  assert.equal(f.core.cloudAuthView().mode, 'offline');
+  assert.equal(f.records.has(f.tokenKey), true);
+  assert.equal(f.core.state.currentView, 'assistant');
 });
 
 test('a saved cloud subject cannot bind itself to a different selected local owner', async () => {
