@@ -23,12 +23,6 @@
       "failureCount": 7
     },
     {
-      "file": "tests/bl-29-rework.test.ts",
-      "name": "BL-29b M5 host close revokes empty account waits before closing sockets",
-      "reason": "Observed failed wall-clock assertion Date.now()-at<500; shutdown status and waiter assertions remain unchanged.",
-      "failureCount": 1
-    },
-    {
       "file": "tests/bl-29-wait.test.ts",
       "name": "BL-29 empty main chat wait wakes when another device starts its first task",
       "reason": "Observed failed Date.now()-at<700 account mutation wake assertion.",
