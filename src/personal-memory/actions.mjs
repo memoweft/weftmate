@@ -56,10 +56,10 @@ export function createMemoryActions({ root, manager, schedule }) {
     if (action.name === 'memory_forget') {
       const frozen = action.plan;
       if (frozen && frozen.completionVersion !== forgetCompletionVersion) {
-        // Old v2 plans froze deletion authority, but did not inspect every known
-        // retained source. Upgrade proof only: never replace their commands,
+        // Earlier plans lack current completeness or retained-count proof.
+        // Upgrade proof only: never replace their commands,
         // targets, authorization or revision with a freshly nominated scope.
-        let complete = false;
+        let complete = false, retainedOtherCount;
         if (!Object.keys(action.commands ?? {}).length && !action.finished?.length &&
             frozen.version === 2 && Number.isSafeInteger(frozen.worldRevision) && frozen.authorization?.authorized === true) {
           const proof = await m.planForget(owner, { ...action, scope: frozen.authorization, signal });
@@ -71,8 +71,10 @@ export function createMemoryActions({ root, manager, schedule }) {
             proof.worldRevision === frozen.worldRevision && proof.authorization?.subject === frozen.authorization.subject &&
             proof.authorization?.topic === frozen.authorization.topic && JSON.stringify(targets(proof)) === JSON.stringify(targets(frozen)) &&
             (proof.authorizedEvidenceIds ?? proof.evidenceIds ?? []).every(id => evidence.has(id));
+          if (complete) retainedOtherCount = proof.retainedOtherCount;
         }
-        action.plan = { ...frozen, completionVersion: forgetCompletionVersion, completionState: complete ? 'complete' : 'withheld', completionUpgraded: true };
+        action.plan = { ...frozen, completionVersion: forgetCompletionVersion, completionState: complete ? 'complete' : 'withheld', completionUpgraded: true,
+          ...(complete ? { retainedOtherCount } : {}) };
         await update(owner, data => { data.records[action.requestId].plan = action.plan; });
       }
       // New requests still pass the original whole-message/subject checks.

@@ -13,6 +13,7 @@ import { handlePersonalMemoryTool } from '../src/personal-access/memory-runtime.
 import { handlePersonalMemoryHttp } from '../src/personal-memory/http.mjs'
 import { boundaryForCompletedTurn } from '../src/plugins/weftmate-personal-memory.mjs'
 import { assertOwnerBoundBoundary } from '../src/personal-memory/boundary.mjs'
+import { birthdayForgetDecisions } from './helpers/birthday-forget-decisions.mjs'
 
 const python = process.env.WEFTMATE_TEST_MEMOWEFT_PYTHON
 const pythonPath = process.env.WEFTMATE_TEST_MEMOWEFT_SOURCE
@@ -32,7 +33,7 @@ function boundary(text: string, sessionId: string) {
   ]
   return assertOwnerBoundBoundary(sessionId, boundaryForCompletedTurn({ id: sessionId, header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))
 }
-async function fixture(t: any, { interpret = null, misattribute = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。' }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string } = {}) {
+async function fixture(t: any, { interpret = null, misattribute = false, birthdayContract = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。' }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, birthdayContract?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
   let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false, unavailableText = ''
   let recoveryGate: { entered: () => void, pending: Promise<void> } | null = null
@@ -56,7 +57,7 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
           isForgetRequest: !/如果|哪些|翻译/.test(input.message), conditionsOrQuestions: /如果|哪些/.test(input.message),
           subject: input.message.includes('妈妈') ? 'other:妈妈' : input.message.includes('林舟') ? 'other:林舟' : 'self',
           topic: input.message.includes('生日') ? (input.message.includes('妈妈') ? '妈妈的生日' : '我的生日') : input.message.includes('林舟') ? '林舟' : input.message.includes('蓝色') ? '我喜欢蓝色的偏好' : '我喝茶的偏好',
-        } : { items: input.candidates.map((candidate: any) => ({ key: candidate.key,
+        } : { items: birthdayContract ? birthdayForgetDecisions(input, { misattribute }) : input.candidates.map((candidate: any) => ({ key: candidate.key,
           matchesTopic: wrongQuestionOnly ? /根据我的记忆/.test(candidate.text) : input.request.topic.includes('生日') ? candidate.text.includes('生日') : input.request.topic.includes('林舟') ? candidate.text.includes('林舟') : input.request.topic.includes('蓝色') ? candidate.text.includes('蓝色') : /茶|纠正/.test(candidate.text),
           ...(request.tools[0].function.parameters.properties.items.items.properties.hasTargetFact ? {
             hasTargetFact: !/根据我的记忆|什么茶|什么时候/.test(candidate.text),
@@ -515,7 +516,7 @@ for (const [name, input] of [
 })
 
 for (const [subject, misattribute, legacyPlan] of [['我的', false, false], ['妈妈的', false, false], ['我的', true, false], ['我的', false, true]] as const) test(`FIX-50 review real Core: forgetting ${subject} birthday preserves everyone else${misattribute ? ' even when the selector misattributes others' : ''}${legacyPlan ? ' when resuming an old unscoped plan' : ''}`, { skip }, async t => {
-  const f = await fixture(t, { misattribute, interpret: payload => {
+  const f = await fixture(t, { misattribute, birthdayContract: true, interpret: payload => {
     const e = payload.evidence[0]
     if (!e.text.includes('生日')) return null
     const person = e.text.startsWith('妈妈') ? '妈妈' : e.text.startsWith('同事') ? '同事小王' : null
@@ -529,6 +530,16 @@ for (const [subject, misattribute, legacyPlan] of [['我的', false, false], ['�
   }
   const birthdays = (await f.world()).items.filter((row: any) => row.value.content.includes('生日'))
   assert.equal(birthdays.length, 3)
+  const beforeWorld = (await f.world()).items
+  const beforeRevision = (await f.manager.query(owner, 'query_world', { operation: 'revision' })).world_revision
+  const sourceIds = [...new Set(birthdays.flatMap((row: any) => row.provenance.map((source: any) => source.evidence_id)))]
+  const sourceBodies = async () => Promise.all(sourceIds.map(async evidence_id => {
+    const { evidence } = await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id })
+    return { evidence_id, raw: evidence.raw_content, summary: evidence.summary, available: evidence.content_available, state: evidence.currentness_state }
+  }))
+  const beforeSources = await sourceBodies()
+  const deleteCount = () => f.trace.filter(row => row.method === 'submit_command' && row.params.command.operation.startsWith('delete_')).length
+  const beforeDeletes = deleteCount()
   if (legacyPlan) f.offline(true)
   let result = await f.tool('memory_forget', { query: subject + '生日' }, 'review-subject', '忘掉' + subject + '生日')
   if (legacyPlan) {
@@ -546,16 +557,40 @@ for (const [subject, misattribute, legacyPlan] of [['我的', false, false], ['�
     assert.equal((await f.world()).items.filter((row: any) => /生日/.test(row.value.content)).length, 3)
     result = await f.tool('memory_forget', { query: subject + '生日' }, 'review-subject-reconfirmed', '忘掉' + subject + '生日')
   }
+  if (misattribute) {
+    // Explicit safety-contract change from 84e: a valid-shaped model relation
+    // contradicting Core stops the whole action, rather than deleting anyway.
+    assert.equal(result.state, 'withheld')
+    assert.match(result.message, /归属.*不能确认.*没有执行遗忘/)
+    assert.equal(deleteCount(), beforeDeletes)
+    assert.equal((await f.manager.query(owner, 'query_world', { operation: 'revision' })).world_revision, beforeRevision)
+    assert.deepEqual((await f.world()).items, beforeWorld)
+    assert.deepEqual(await sourceBodies(), beforeSources)
+    const exchange = f.trace.find(row => row.modelDecision === 'classify_forget_candidates' && row.input.candidates.some((candidate: any) => candidate.graphSubject === 'other:妈妈'))
+    assert.ok(exchange)
+    const key = exchange.input.candidates.find((candidate: any) => candidate.graphSubject === 'other:妈妈').key
+    const wrong = exchange.result.items.find((item: any) => item.key === key)
+    assert.deepEqual(wrong.subjects, ['self']); assert.deepEqual(wrong.targetSubjects, ['self']); assert.equal(wrong.sourceFullyAuthorized, true)
+    return
+  }
   assert.equal(result.state, 'applied')
   assert.match(result.message, /还有 2 条关于别人的没动/)
   const remaining = (await f.world()).items.map((row: any) => row.value.content).join('\n')
   assert.doesNotMatch(remaining, subject === '我的' ? /五月一日/ : /六月一日/)
   assert.match(remaining, subject === '我的' ? /六月一日/ : /五月一日/)
   assert.match(remaining, /七月一日/)
+  const target = birthdays.find((row: any) => row.value.content.includes(subject === '我的' ? '五月一日' : '六月一日'))
+  const deletedSources = new Set(target.provenance.map((source: any) => source.evidence_id))
+  for (const retained of await sourceBodies()) {
+    if (deletedSources.has(retained.evidence_id)) {
+      assert.equal(retained.state, 'evidence_deleted'); assert.equal(retained.available, false)
+      assert.equal(retained.raw, null); assert.equal(retained.summary, null)
+    } else assert.deepEqual(retained, beforeSources.find(source => source.evidence_id === retained.evidence_id))
+  }
 })
 
 test('FIX-50 review real Core: a source shared with another person is retained with an honest explanation', { skip }, async t => {
-  const f = await fixture(t, { interpret: payload => {
+  const f = await fixture(t, { birthdayContract: true, interpret: payload => {
     const e = payload.evidence[0]
     if (!e.text.includes('生日')) return null
     return { schema_version: 8, result: 'cognitions', cognitions: [
@@ -569,10 +604,18 @@ test('FIX-50 review real Core: a source shared with another person is retained w
   await f.manager.ingest(owner, boundary('我的生日是五月一日。妈妈的生日是六月一日。', 'shared-subjects')); await f.ready()
   const before = (await f.world()).items
   assert.equal(before.filter((row: any) => row.value.content.includes('生日')).length, 2)
+  const revision = (await f.manager.query(owner, 'query_world', { operation: 'revision' })).world_revision
+  const evidenceId = before.find((row: any) => row.value.content.includes('五月一日')).provenance[0].evidence_id
+  const evidence = (await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: evidenceId })).evidence
+  const beforeDeletes = f.trace.filter(row => row.method === 'submit_command' && row.params.command.operation.startsWith('delete_')).length
   const result = await f.tool('memory_forget', { query: '我的生日' }, 'forget-shared-self', '忘掉我的生日')
   assert.equal(result.state, 'withheld')
-  assert.match(result.message, /没有删除.*关于别人的没动.*共用来源不明确的没动/)
+  assert.match(result.message, /没有执行遗忘.*独立记忆和原聊天保留/)
+  assert.equal(f.trace.filter(row => row.method === 'submit_command' && row.params.command.operation.startsWith('delete_')).length, beforeDeletes)
+  assert.equal((await f.manager.query(owner, 'query_world', { operation: 'revision' })).world_revision, revision)
   assert.deepEqual((await f.world()).items.map((row: any) => row.item_id), before.map((row: any) => row.item_id))
+  const retained = (await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: evidenceId })).evidence
+  assert.equal(retained.raw_content, evidence.raw_content); assert.equal(retained.summary, evidence.summary); assert.equal(retained.content_available, true)
 })
 
 test('FIX-50 review real Core: an unstructured judge reply never deletes or queues deletion', { skip }, async t => {

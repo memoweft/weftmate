@@ -1,5 +1,5 @@
 const invalid = () => Object.assign(Error('MEMORY_FORGET_DECISION_INVALID'), { code: 'MEMORY_FORGET_DECISION_INVALID' });
-export const forgetCompletionVersion = 2;
+export const forgetCompletionVersion = 3; // Includes the retained-record count projection.
 const subject = value => value === 'self' || typeof value === 'string' && /^other:.{1,120}$/u.test(value);
 const fields = (value, names) => value && typeof value === 'object' && !Array.isArray(value) &&
   Object.keys(value).length === names.length && names.every(name => Object.hasOwn(value, name));
@@ -210,7 +210,14 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     return subject(graph) && graph !== request.subject || subjects.length > 0 &&
       subjects.every(value => subject(value) && value !== request.subject);
   };
-  const retainedOtherCount = candidates.filter(row => row.kind !== 'entity' && decisions.get(row.key)?.hasTargetFact && decisions.get(row.key)?.matchesTopic && other(row.key)).length;
+  const retainedOthers = candidates.filter(row => row.kind !== 'entity' && decisions.get(row.key)?.hasTargetFact && decisions.get(row.key)?.matchesTopic && other(row.key));
+  // Count records, not both a World record and its represented Evidence. Keep
+  // independent Evidence and distinct World identities even when text is equal.
+  const retainedWorld = new Map(retainedOthers.filter(row => row.kind !== 'evidence').map(row => [row.key, row]));
+  const representedSources = new Set([...retainedWorld.values()].flatMap(row =>
+    candidateSources(byKey.get(row.key)).map(source => source.evidence_id)));
+  const retainedOtherCount = retainedWorld.size + retainedOthers.filter(row => row.kind === 'evidence' &&
+    !representedSources.has(byKey.get(row.key).item_id)).length;
   const retainedUncertainCount = initial - selected.size + candidates.filter(row => row.kind !== 'entity' && decisions.get(row.key)?.matchesTopic &&
     decisions.get(row.key)?.hasTargetFact && !eligible(row.key) && !other(row.key)).length;
   const evidence = new Map();
