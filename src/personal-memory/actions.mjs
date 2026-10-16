@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { channel } from 'node:diagnostics_channel';
 import { readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { durableWrite } from '../personal-access/store.mjs';
@@ -6,6 +7,20 @@ import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-stora
 import { memorySuccessors } from './world-projection.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
+const diagnostics = channel('weftmate.memory.actions');
+let nextFlightId = 0;
+const safeErrorCodes = new Set(['MEMORY_ACTION_PENDING', 'MEMORY_BUSY', 'MEMORY_PROCESS_UNAVAILABLE',
+  'MEMORY_RESPONSE_INVALID', 'MEMORY_TIMEOUT', 'MEMORY_MODEL_UNAVAILABLE', 'PRIVATE_STORAGE_UNAVAILABLE',
+  'MEMORY_CLOSING', 'MEMORY_PROTOCOL_ERROR', 'MEMORY_RPC_ERROR', 'MEMORY_RESPONSE_TOO_LARGE',
+  'EPERM', 'EACCES', 'ENOENT', 'EBUSY', 'EIO',
+  'invalid_correction_source', 'invalid_correction_source_quote', 'correction_source_conflict',
+  'world_item_not_found', 'evidence_not_found']);
+const errorCode = error => safeErrorCodes.has(error?.code) ? error.code
+  : error?.message === 'MEMORY_ACTION_PENDING' ? 'MEMORY_ACTION_PENDING'
+  : error?.name === 'AbortError' ? 'ABORT_ERR' : 'UNKNOWN';
+const trace = (owner, event, fields) => {
+  if (diagnostics.hasSubscribers) diagnostics.publish({ event, ownerId: hash(owner), ...fields });
+};
 const pendingMessage = name => name === 'memory_forget'
   ? '这次还没忘掉，稍后会再试。' : '这次还没记住，稍后会再试。';
 const notFound = () => ({ state: 'not_found', message: '没找到这条记忆。' });
@@ -130,77 +145,121 @@ export function createMemoryActions({ root, manager, schedule }) {
     if (receipt.result_state !== 'applied') throw Error('MEMORY_ACTION_PENDING');
     return { state: 'applied', message: '已按你刚才的说法更新记忆。', affectedIds: receipt.affected_ids ?? [] };
   }
-  function resume(owner) {
-    if (flights.has(owner)) return flights.get(owner);
+  function resume(owner, submittedRequestId = null) {
+    const active = flights.get(owner);
+    if (active) {
+      if (submittedRequestId) active.submitted.add(submittedRequestId);
+      trace(owner, 'flight-joined', { flightId: active.id,
+        requestId: submittedRequestId ? hash(submittedRequestId) : null,
+        snapshotIncludesRequest: submittedRequestId ? active.snapshot?.has(submittedRequestId) ?? null : null });
+      return active.work;
+    }
+    const flight = { id: ++nextFlightId, submitted: new Set(submittedRequestId ? [submittedRequestId] : []),
+      attempted: new Set(), cleanupAttempted: new Set(), snapshot: null, work: null };
     const work = (async () => {
-      const actions = Object.values((await serial(owner, () => read(owner))).records);
-      for (const previous of actions.filter(row => !row.result)) {
-        const action = (await serial(owner, () => read(owner))).records[previous.requestId];
-        if (!action || action.result) continue;
-        try {
-          const { affectedIds, ...result } = await perform(owner, action, liveSignals.get(`${owner}|${action.requestId}`));
-          await update(owner, data => {
-            const row = data.records[action.requestId];
-            if (row.result) return;
-            row.result = result;
-            if (affectedIds) row.affectedIds = affectedIds;
-            if (row.name === 'memory_correct' && result.state === 'applied') {
-              const replaced = new Set([row.arguments.id, row.target?.id, row.command?.targetId, ...(affectedIds ?? [])].filter(Boolean));
-              for (const prior of Object.values(data.records)) {
-                if (prior === row) break;
-                if (prior.result || prior.name !== 'memory_correct') continue;
-                if ([prior.arguments.id, prior.target?.id, prior.command?.targetId].some(id => replaced.has(id)) ||
-                    row.arguments.query && row.arguments.query === prior.arguments.query) {
-                  prior.result = { state: 'superseded', message: '已采用你后来提供的说法。' };
-                  prior.arguments = {}; delete prior.source; delete prior.target; delete prior.command;
-                }
-              }
-            }
-            // Finished forgetting keeps no body copy in this recovery file.
-            if (row.name === 'memory_forget') {
-              row.arguments = {}; delete row.source; delete row.plan; delete row.finished; delete row.commands; delete row.scope;
-            }
-          });
-        } catch (error) {
-          if (liveSignals.get(`${owner}|${action.requestId}`)?.aborted && !action.commandDispatched) {
+      let actions = Object.values((await serial(owner, () => read(owner))).records);
+      while (true) {
+        flight.snapshot = new Set(actions.map(row => row.requestId));
+        trace(owner, 'flight-snapshot', { flightId: flight.id, requestIds: [...flight.snapshot].map(hash) });
+        for (const previous of actions.filter(row => !row.result)) {
+          const action = (await serial(owner, () => read(owner))).records[previous.requestId];
+          if (!action || action.result || flight.attempted.has(action.requestId)) continue;
+          flight.attempted.add(action.requestId);
+          trace(owner, 'perform-enter', { flightId: flight.id, requestId: hash(action.requestId) });
+          try {
+            const { affectedIds, ...result } = await perform(owner, action, liveSignals.get(`${owner}|${action.requestId}`));
             await update(owner, data => {
               const row = data.records[action.requestId];
-              row.result = { state: row.finished?.length ? 'partial' : 'cancelled', message: row.finished?.length
-                ? '操作已停止；部分记忆已删除，其余没有继续删除。' : '操作已停止，没有删除记忆。' };
-              row.arguments = {}; delete row.source; delete row.plan; delete row.scope;
+              if (row.result) return;
+              row.result = result;
+              if (affectedIds) row.affectedIds = affectedIds;
+              if (row.name === 'memory_correct' && result.state === 'applied') {
+                const replaced = new Set([row.arguments.id, row.target?.id, row.command?.targetId, ...(affectedIds ?? [])].filter(Boolean));
+                for (const prior of Object.values(data.records)) {
+                  if (prior === row) break;
+                  if (prior.result || prior.name !== 'memory_correct') continue;
+                  if ([prior.arguments.id, prior.target?.id, prior.command?.targetId].some(id => replaced.has(id)) ||
+                      row.arguments.query && row.arguments.query === prior.arguments.query) {
+                    prior.result = { state: 'superseded', message: '已采用你后来提供的说法。' };
+                    prior.arguments = {}; delete prior.source; delete prior.target; delete prior.command;
+                  }
+                }
+              }
+              // Finished forgetting keeps no body copy in this recovery file.
+              if (row.name === 'memory_forget') {
+                row.arguments = {}; delete row.source; delete row.plan; delete row.finished; delete row.commands; delete row.scope;
+              }
             });
-          } else if (['invalid_correction_source', 'invalid_correction_source_quote', 'correction_source_conflict'].includes(error?.code)) {
-            await update(owner, data => { data.records[action.requestId].result ??= {
-              state: 'rejected', message: '这次纠正的原话不一致，没有修改记忆；请重新确认。' }; });
-          } else if (['world_item_not_found', 'evidence_not_found'].includes(error?.code)) {
-            await update(owner, data => { data.records[action.requestId].result ??= notFound(); });
-          } else schedule(owner);
-          // A transient or permanent failure belongs to this request only.
-          // Other queued user requests must still get their own attempt.
+            trace(owner, 'perform-return', { flightId: flight.id, requestId: hash(action.requestId) });
+          } catch (error) {
+            trace(owner, 'perform-error', { flightId: flight.id, requestId: hash(action.requestId), errorCode: errorCode(error) });
+            if (liveSignals.get(`${owner}|${action.requestId}`)?.aborted && !action.commandDispatched) {
+              await update(owner, data => {
+                const row = data.records[action.requestId];
+                row.result = { state: row.finished?.length ? 'partial' : 'cancelled', message: row.finished?.length
+                  ? '操作已停止；部分记忆已删除，其余没有继续删除。' : '操作已停止，没有删除记忆。' };
+                row.arguments = {}; delete row.source; delete row.plan; delete row.scope;
+              });
+            } else if (['invalid_correction_source', 'invalid_correction_source_quote', 'correction_source_conflict'].includes(error?.code)) {
+              await update(owner, data => { data.records[action.requestId].result ??= {
+                state: 'rejected', message: '这次纠正的原话不一致，没有修改记忆；请重新确认。' }; });
+            } else if (['world_item_not_found', 'evidence_not_found'].includes(error?.code)) {
+              await update(owner, data => { data.records[action.requestId].result ??= notFound(); });
+            } else schedule(owner);
+            // A transient or permanent failure belongs to this request only.
+            // Other queued user requests must still get their own attempt.
+          }
         }
+        const latest = Object.values((await serial(owner, () => read(owner))).records);
+        for (const action of latest) for (const requestId of action.cleanupPending ?? []) {
+          const cleanupKey = `${action.requestId}|${requestId}`;
+          if (flight.cleanupAttempted.has(cleanupKey)) continue;
+          flight.cleanupAttempted.add(cleanupKey);
+          try {
+            const result = await manager().retryCleanupByRequest(owner, requestId);
+            if ((result.receipt ?? result).storage_cleanup?.state !== 'pending') await update(owner, data => {
+              const row = data.records[action.requestId]; row.cleanupPending = row.cleanupPending.filter(id => id !== requestId);
+            });
+            else schedule(owner);
+          } catch { schedule(owner); }
+        }
+        // Only newly submitted work that this flight has not attempted is drained.
+        // Failed requests and cleanup keep their existing scheduled retry cadence.
+        // Withdraw the flight in this same serial section: a later persistence
+        // cannot join a snapshot that has already decided to finish.
+        actions = await serial(owner, async () => {
+          const records = Object.values((await read(owner)).records);
+          const next = records.filter(row => flight.submitted.has(row.requestId) && !row.result && !flight.attempted.has(row.requestId));
+          if (!next.length && flights.get(owner) === flight) flights.delete(owner);
+          return next;
+        });
+        if (!actions.length) break;
       }
-      const latest = Object.values((await serial(owner, () => read(owner))).records);
-      for (const action of latest) for (const requestId of action.cleanupPending ?? []) {
-        try {
-          const result = await manager().retryCleanupByRequest(owner, requestId);
-          if ((result.receipt ?? result).storage_cleanup?.state !== 'pending') await update(owner, data => {
-            const row = data.records[action.requestId]; row.cleanupPending = row.cleanupPending.filter(id => id !== requestId);
-          });
-          else schedule(owner);
-        } catch { schedule(owner); }
-      }
-    })().finally(() => flights.delete(owner));
-    flights.set(owner, work); return work;
+    })().finally(() => {
+      if (flights.get(owner) === flight) flights.delete(owner);
+      trace(owner, 'flight-finished', { flightId: flight.id, attemptedRequestIds: [...flight.attempted].map(hash) });
+    });
+    flight.work = work;
+    flights.set(owner, flight);
+    trace(owner, 'flight-started', { flightId: flight.id });
+    return work;
   }
   return {
     async submit(owner, action) {
+      const started = performance.now();
       const { signal, ...record } = action;
       const key = `${owner}|${action.requestId}`;
       if (signal) liveSignals.set(key, signal);
-      await update(owner, data => { data.records[action.requestId] ??= record; });
+      const created = await update(owner, data => {
+        if (data.records[action.requestId]) return false;
+        data.records[action.requestId] = record; return true;
+      });
+      trace(owner, 'submit-persisted', { requestId: hash(action.requestId), created,
+        activeFlightId: flights.get(owner)?.id ?? null });
       schedule(owner);
-      const work = resume(owner);
-      let timer;
+      const work = resume(owner, created ? action.requestId : undefined);
+      const flight = flights.get(owner);
+      let timer, budgetExpired = false;
       try {
         if (signal) {
           await work;
@@ -208,10 +267,16 @@ export function createMemoryActions({ root, manager, schedule }) {
             const row = data.records[action.requestId];
             if (!row.result && !row.commands) row.result = { state: 'cancelled', message: '操作已停止，没有删除记忆。' };
           });
-        } else await Promise.race([work, new Promise(resolve => { timer = setTimeout(resolve, action.automatic ? 60000 : 8000); timer.unref?.(); })]);
+        } else await Promise.race([work, new Promise(resolve => { timer = setTimeout(() => {
+          budgetExpired = true; resolve();
+        }, action.automatic ? 60000 : 8000); timer.unref?.(); })]);
       }
       finally { clearTimeout(timer); liveSignals.delete(key); }
       const row = (await serial(owner, () => read(owner))).records[action.requestId];
+      trace(owner, 'submit-return', { requestId: hash(action.requestId), flightId: flight?.id ?? null,
+        attempted: flight?.attempted.has(action.requestId) ?? false, elapsedMs: Math.round(performance.now() - started),
+        reason: budgetExpired ? action.automatic ? '60s-budget' : '8s-budget'
+          : row.result ? 'flight-settled-with-result' : 'flight-settled-still-pending', recoveryRequested: true });
       return row.result ?? { state: 'queued', message: pendingMessage(action.name) };
     },
     resume,
@@ -234,9 +299,12 @@ export function createMemoryActions({ root, manager, schedule }) {
     },
     async pending(owner) { return Object.values((await serial(owner, () => read(owner))).records).some(row => !row.result || row.cleanupPending?.length); },
     async clear(owner) {
-      await flights.get(owner)?.catch(() => {});
+      await flights.get(owner)?.work.catch(() => {});
       await serial(owner, () => rm(file(owner), { force: true }));
     },
-    async close() { await Promise.allSettled([...flights.values(), ...queues.values()]); },
+    async close() {
+      do { await Promise.allSettled([...flights.values()].map(flight => flight.work).concat([...queues.values()])); }
+      while (flights.size);
+    },
   };
 }
