@@ -65,7 +65,8 @@ export async function verifyMemoryRuntime(root,{mode,probe=false}={}){
     if(result.status!==0)throw Error(`memory runtime offline/RPC probe failed: ${result.stderr||result.stdout||result.error}`);
     check=JSON.parse(result.stdout);
   }
-  return {mode,platform:lock.platform,python:manifest.python,core:manifest.core,files:Object.keys(files).length,bytes:Object.values(files).reduce((n,f)=>n+f.bytes,0),manifestSha256:sha(await readFile(join(root,'MEMORY-RUNTIME.json'))),probe:check};
+  const manifestBytes=await readFile(join(root,'MEMORY-RUNTIME.json'));
+  return {mode,platform:lock.platform,python:manifest.python,core:manifest.core,files:Object.keys(files).length+1,bytes:Object.values(files).reduce((n,f)=>n+f.bytes,manifestBytes.length),manifestSha256:sha(manifestBytes),probe:check};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   const option=name=>process.argv[process.argv.indexOf(name)+1];
