@@ -41,7 +41,7 @@
 
 **记忆特别说明**（2026-10-15 读代码核实）：记忆要靠本机现成的 Python 和 MemoWeft 源码才能运行，安装包里不带这两样。本人从源码版迁移来的安装版，安装配置接上了本机这两样，所以可能是开着的；**全新安装的 Windows 版默认没有记忆**。细节和出处见 [docs/MEMORY.md](docs/MEMORY.md)。
 
-**记忆开发基线**（2026-10-16，`main bf0a9c4d6`、固定 Core `e86b73b`、真实 MiMo；[逐项证据与边界](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208869990)）：M1 形成与新对话召回、M2 纠正、M3 当前条目删除通过；M3 中另一来源的旧修订仍可读，遗忘范围待确认。M7 对话遗忘失败：报告成功却删错来源，当前偏好仍可读（[#334](https://github.com/memoweft/weftmate/issues/334)）。M4 缺第二真实型号，M5–M6 完整安卓链未验完。基础环境缺语义组件，本轮不证明语义召回；全新安装缺记忆组件仍为已知失败，实际安装场景待验。本轮只有开发宿主与隔离测试 APK 的结果，**不计入③**。
+**记忆开发基线**（2026-10-16，`main bf0a9c4d6`、固定 Core `e86b73b`、真实 MiMo；[逐项证据与边界](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208869990)）：M1 形成与新对话召回、M2 纠正通过。M3 记忆页遗忘失败：当前条目已删除，但另一来源的旧修订仍能从历史和导出读回；按[总经理对 D16、D33 的确认](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208935937)，整条修订链都要遗忘。M7 对话遗忘失败：报告成功却删错来源，当前偏好仍可读（两项均跟踪于 [#334](https://github.com/memoweft/weftmate/issues/334)）。M4 缺第二真实型号，M5–M6 完整安卓链未验完。基础环境缺语义组件，本轮不证明语义召回；全新安装缺记忆组件仍为已知失败，实际安装场景待验。本轮只有开发宿主与隔离测试 APK 的结果，**不计入③**。
 
 ## 5. 已知的大缺口
 
