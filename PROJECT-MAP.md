@@ -42,6 +42,8 @@
 
 **记忆特别说明**（2026-10-16）：Windows 构建已有固定 Python/Core 的基础与完整语义两层，默认完整语义层（D106、D110）；组件导入、真实进程协议及模型编码是组件核验，尚不等于安装版主路验收。自动配置尚未接通，**全新安装的 Windows 版默认仍未启用记忆**。原有显式配置继续依赖所指定的环境。干净 Windows 和安装升级场景仍待验收；方法见 [组件说明](scripts/memory-runtime/README.md)，现状见 [docs/MEMORY.md](docs/MEMORY.md)。
 
+**记忆开发基线**（2026-10-16，`main bf0a9c4d6`、固定 Core `e86b73b`、真实 MiMo；[逐项证据与边界](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208869990)）：M1 形成与新对话召回、M2 纠正通过。M3 记忆页遗忘失败：当前条目已删除，但另一来源的旧修订仍能从历史和导出读回；按[总经理对 D16、D33 的确认](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208935937)，整条修订链都要遗忘。M7 对话遗忘失败：报告成功却删错来源，当前偏好仍可读（两项均跟踪于 [#334](https://github.com/memoweft/weftmate/issues/334)）。M4 [本人决定本轮暂缓](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)，未测；M5–M6 完整安卓链未验完。基础环境缺语义组件，本轮不证明语义召回；全新安装缺记忆组件仍为已知失败，实际安装场景待验。本轮只有开发宿主与隔离测试 APK 的结果，**不计入③**。
+
 ## 5. 已知的大缺口
 
 - **记忆的自动接入和安装验收尚未完成**（见上）。内置组件及默认完整语义层已由本人确认，仍须在干净 Windows 验证和完成新装、升级、回滚的数据保留验收。
