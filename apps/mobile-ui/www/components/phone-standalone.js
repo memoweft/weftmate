@@ -217,7 +217,7 @@
     catch { if(!handoffNotice){handoffNotice=true;toast('手机对话仍在这里，连上电脑后会继续处理。');} }
   }
   async function routeCall(method, p) {
-    if(native&&(method.startsWith("voice.")||method.startsWith("diagnostics.")))return nativeCall(method,p);
+    if(native&&(method.startsWith("voice.")||method.startsWith("diagnostics.")||method.startsWith("updates.")))return nativeCall(method,p);
     if (method === 'conversations.list') return { conversations: state.conversations };
     if (method === 'attachments.list') return { attachments: [] };
     if (method === 'app.activity') return {};
