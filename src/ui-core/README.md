@@ -52,7 +52,7 @@ const core = globalThis.WeftUiCore.create({
 
 手机使用共享的历史分页、时间线投影、步骤合并、任务身份、审批 / 提问校验与提交、资源分页与调用去重。`adapters/mobile-decisions.js` 将共享快照投影为手机卡片所需的形状，并恢复旧请求标记与问题草稿。`mobile.js`、`mobile-host.js` 与 `mobile-settings.js` 保存手机原生本地对话、发送回执、离线缓存、记忆快照、模型保管库和项目恢复的适配动作；它们只处理普通数据，界面节点不进入功能层。手机原有记忆能力与路径限制、未知回执和修订检查均保留，没有把原生持久化重做成浏览器存储。
 
-`apps/mobile-ui/www/layout.js` 是手机容器与组件位置的唯一组装入口；`components/` 处理聊天、会话、记忆、设置、成果 / 来源和决策呈现，`timeline.js` 仅呈现共享投影。屏幕、抽屉、焦点、滚动、原生权限提示和图片选择由手机组件 / 壳管理。登录 / 注册页面保留既有流程，后续 LG-1b 再调整。相关纯逻辑和手机回归、390×844 Chromium（浏览器引擎）及 MuMu（安卓模拟器）真实屏幕前后证据见 [FE-1b](../../tests/evidence/fe-1b/README.md)。
+`apps/mobile-ui/www/layout.js` 是手机容器与组件位置的唯一组装入口；`components/` 处理聊天、会话、记忆、设置、成果 / 来源和决策呈现，`timeline.js` 仅呈现共享投影。屏幕、抽屉、焦点、滚动、原生权限提示和图片选择由手机组件 / 壳管理。登录 / 注册页面保留既有流程，后续 LG-1b 再调整。相关纯逻辑和手机回归、390×844 Chromium（浏览器引擎）及 MuMu（安卓模拟器）真实屏幕前后证据见 [FE-1b](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/fe-1b/README.md)。
 
 ## 验证
 

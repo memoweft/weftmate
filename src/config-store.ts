@@ -42,7 +42,7 @@ export async function initializeCredentialStorage(onFailure: (error: Error) => v
     try { const raw = decryptRaw(); if (!(raw && prepareLegacyVaultMigration(raw))) validateSecretDocument(raw); unreadable = false; }
     catch { noteUnreadable(); }
   }
-  if (storageReady || !safeStorage.isEncryptionAvailable()) return;
+  if (storageReady) return;
   if (initialization) return initialization;
   initialization = (async () => {
     await persistedWindowsStorageKey(safeStorage, app.getPath('sessionData'));

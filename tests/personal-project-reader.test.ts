@@ -2,8 +2,9 @@ import assert from 'node:assert/strict'
 import { linkSync, mkdtempSync, mkdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { spawn } from 'node:child_process'
 import test from 'node:test'
-import { inspectProjectRoot, listProjectFiles, readProjectFile } from '../src/personal-projects/index.mjs'
+import { inspectProjectRoot, invokeProjectReader, listProjectFiles, readProjectFile } from '../src/personal-projects/index.mjs'
 
 test('Windows project reader holds exact root and reads bounded UTF-8 source', { skip: process.platform !== 'win32' }, async () => {
   const root = mkdtempSync(join(tmpdir(), 'weft-project-reader-'))
@@ -28,6 +29,32 @@ test('Windows project reader holds exact root and reads bounded UTF-8 source', {
     assert.match(chinesePage.text, /来源行：中文内容/)
     assert.ok(Buffer.byteLength(chinesePage.text, 'utf8') <= 32 * 1024)
     assert.equal(chinesePage.hasMore, true)
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+test('Windows fixed project reader loads only its explicit dependency without global module discovery',
+  { skip: process.platform !== 'win32' }, async () => {
+  const root = mkdtempSync(join(tmpdir(), 'weft-project-explicit-module-'))
+  // Run the real immutable bootstrap and reader with implicit module discovery
+  // disabled in this child only. No parent or machine PowerShell setting changes.
+  const invoke = input => invokeProjectReader(input, { spawnProcess: (command, args, options) => {
+    const bootstrap = Buffer.from(args.at(-1), 'base64').toString('utf16le')
+    const encoded = Buffer.from("$PSModuleAutoLoadingPreference='None'; " + bootstrap, 'utf16le').toString('base64')
+    return spawn(command, [...args.slice(0, -1), encoded], options)
+  } })
+  try {
+    writeFileSync(join(root, 'source.md'), 'Exact synthetic project source\n', 'utf8')
+    const project = await invoke({ action: 'inspect', rootPath: root })
+    assert.equal(project.FinalPath, '\\\\?\\' + root)
+    const scope = { rootPath: root, expectedFinal: project.FinalPath, expectedIdentity: project.Identity }
+    const listing = await invoke({ action: 'list', ...scope })
+    assert.equal(listing.Files.length, 1)
+    const file = listing.Files[0]
+    const read = await invoke({ action: 'read', ...scope, relativePath: file.RelativePath,
+      fileIdentity: file.Identity, expectedSize: file.Size, expectedWriteTime: file.LastWriteTime, startLine: 1 })
+    assert.equal(read.Text, 'Exact synthetic project source\n')
+    assert.equal(read.Identity, file.Identity)
+    assert.match(read.FileSha256, /^[a-f0-9]{64}$/)
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 

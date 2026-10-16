@@ -158,6 +158,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unit-${{ matrix.os }}-${{ matrix.shard }}
+          overwrite: true
           path: unit-report.json
           if-no-files-found: error
           retention-days: 7
@@ -167,6 +168,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: evidence-${{ matrix.os }}-${{ matrix.shard }}
+          overwrite: true
           path: ${{ env.WEFTMATE_EVIDENCE_DIR }}
           if-no-files-found: ignore
           retention-days: 7
@@ -190,6 +192,9 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -201,9 +206,20 @@ jobs:
           path: unit-reports
       - name: Total passed, failed, skipped and retry recoveries
         run: node .github/scripts/ci-test-summary.mjs unit-reports
-      - name: Require every shard job to succeed
-        if: needs.test.result != 'success'
-        run: exit 1
+      # needs.test.result can retain the original matrix failure on a partial
+      # rerun. Reports are replaced per shard; also verify the latest real job,
+      # so a rerun failing before upload cannot reuse an older passing report.
+      - name: Require the latest attempt of every shard job to succeed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { pathToFileURL } = require('node:url');
+            const { requireLatestShardJobs } = await import(pathToFileURL(process.env.GITHUB_WORKSPACE + '/.github/scripts/ci-test-summary.mjs').href);
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              ...context.repo, run_id: context.runId, filter: 'all', per_page: 100,
+            });
+            const latest = requireLatestShardJobs(jobs, { includeMac: !['push', 'pull_request'].includes(context.eventName) });
+            core.info(JSON.stringify(latest.map(({ name, run_attempt, conclusion }) => ({ name, run_attempt, conclusion }))));
 
   observed-core:
     name: Observed bridge (real MemoWeft Core)

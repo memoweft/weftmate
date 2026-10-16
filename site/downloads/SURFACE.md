@@ -6,7 +6,7 @@
 
 用户从官网下载公开安装包；在设备上由用户自行更新，或通过官网二维码打开对应平台页面。Ubuntu（Linux 发行版）服务器继续提供现有静态官网。本页不承载应用内更新流程。
 
-没有根目录 `DESIGN.md`。`docs/PRODUCT.md` 明确是兼容跳转入口，完整产品方向与当前状态分别由 `docs/PROJECT_DIRECTION.md`、`docs/CURRENT_STATE.md` 维护。官网首页 `site/index.html` 是相邻视觉参考；本次页面沿用其中可见的黑色背景、蓝/青/紫品牌色、原 WeftMate glyph（图形标记）和系统字体栈，不能据此推导或授权全 App 换肤。下载页规则以 `site/downloads/styles.css` 实际定义为准。
+没有根目录 `DESIGN.md`。产品方向见 `docs/VISION.md`，当前状态见根目录 `PROJECT-MAP.md`。官网首页 `site/index.html` 是相邻视觉参考；本次页面沿用其中可见的黑色背景、蓝/青/紫品牌色、原 WeftMate glyph（图形标记）和系统字体栈，不能据此推导或授权全 App 换肤。下载页规则以 `site/downloads/styles.css` 实际定义为准。
 
 ## 页面结构
 
