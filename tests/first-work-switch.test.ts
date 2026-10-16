@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdtemp, readdir, lstat, unlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { phoneRuntime } from '../services/cloud/test/relay-phone-runtime.mjs';
 import { createPersonalAccessService } from './helpers/personal-access-test-service.mjs';
+import { stagePersonalPlugins } from './support/personal-plugins.ts';
 
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const text = (m: any) => typeof m.content === 'string' ? m.content : (m.content ?? []).map((p: any) => p.text ?? '').join('');
@@ -16,6 +18,93 @@ async function removeLinks(root: string) {
     else if (row.isDirectory()) await removeLinks(path);
   }
 }
+
+test('tool preparation correction preserves native request retries, failures and aborts', { timeout: 15000 }, async t => {
+  const vendor = (name: string) => pathToFileURL(resolve('vendor/dsh-runtime/node_modules/@deepseek-ai', name, 'lib/index.js')).href;
+  const [{ Context }, llm, { default: Sessions }, { default: SystemPrompt }, tools,
+    { default: AgentRegistry }, { default: AgentLoop }, Retry] = await Promise.all([
+    import(vendor('cordis')), import(vendor('dsh-llm')), import(vendor('dsh-session')),
+    import(vendor('dsh-system-prompt')), import(vendor('dsh-tools')),
+    import(vendor('dsh-agent')), import(vendor('dsh-agent-loop')), import(vendor('dsh-llm-retry')),
+  ]);
+  for (const scenario of ['RATE_LIMIT', 'TRANSPORT', 'EXHAUSTED', 'ABORTED', 'USER_STOP']) {
+    await t.test(scenario, async () => {
+      const root = await mkdtemp(join(tmpdir(), 'fix51-request-outcome-'));
+      const ctx = new Context();
+      let handle: any, calls = 0, loaded = 0;
+      const failures: any[] = [];
+      try {
+        const staged = stagePersonalPlugins(root);
+        const recovery = await import(pathToFileURL(staged.stageFile(resolve('src/plugins/personal-tool-loading.mjs'))).href);
+        await ctx.plugin(llm.default); await ctx.plugin(Sessions); await ctx.plugin(SystemPrompt);
+        await ctx.plugin(tools.default); await ctx.plugin(AgentRegistry); await ctx.plugin(AgentLoop, { agents: [] });
+        ctx.on('agent/request-error', (payload: any, next: any) => { failures.push(payload.failure); return next(); });
+        await ctx.plugin(Retry);
+        ctx.tools.register(tools.defineTool({ name: 'load_tools', description: 'Synthetic catalog loader',
+          parameters: { names: { type: 'array', items: { type: 'string' }, required: true } },
+          output: { schema: { type: 'json' }, render: (_args: any, value: any) => [{ type: 'text', text: JSON.stringify(value) }] },
+          execute: async () => { loaded++; return { loaded: ['write'] }; },
+        }));
+        class Adapter extends llm.LlmAdapter {
+          providerRetryPolicy() {
+            return llm.resolveRetryPolicy({ mode: 'normal', maxRetries: 1, retryableCodes: ['RATE_LIMIT', 'TRANSPORT'],
+              backoff: { initialDelayMs: 1, maxDelayMs: 1, jitterRatio: 0 } }, 'synthetic retry');
+          }
+          async *stream(options: any) {
+            calls++;
+            if (calls === 2 || scenario === 'EXHAUSTED' && calls === 3) {
+              yield { type: 'block-start', index: 0, blockType: 'text' };
+              yield { type: 'text-delta', index: 0, text: 'Synthetic partial response' };
+              if (scenario === 'USER_STOP') {
+                handle.agent.cancel({ kind: 'user' });
+                options.signal.throwIfAborted();
+              }
+              throw new llm.LlmError('Synthetic model request failure', scenario === 'EXHAUSTED' ? 'RATE_LIMIT' : scenario);
+            }
+            const block = calls === 1 || calls === 3
+              ? { type: 'tool-call', id: `load-${calls}`, name: 'load_tools', arguments: calls === 1 ? '{}' : '{"names":["write"]}' }
+              : { type: 'text', text: 'Synthetic preparation recovered' };
+            yield { type: 'block-start', index: 0, blockType: block.type };
+            yield { type: 'block-end', index: 0, block };
+            yield { type: 'finish', reason: { kind: 'stop' } };
+          }
+        }
+        ctx.llm.registerAdapter(['fix51-outcomes'], new Adapter());
+        handle = await ctx.agentLoop.createAgent(ctx, { sessionId: `fix51-${scenario}`,
+          meta: { agentPreset: 'personal-remote' }, agentOptions: { provider: 'fix51-outcomes', model: 'fixture' },
+          setup: async (agentCtx: any) => { await agentCtx.plugin({ name: 'fix51-recovery', apply: recovery.installToolLoadingRecovery }); },
+        });
+        handle.agent.followup(llm.createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: 'Synthetic first file request' }] }));
+        await handle.agent.whenIdle();
+        const events = handle.agent.session.events;
+        const chunks = events.filter((event: any) => event.type === 'assistant/chunk').map((event: any) => event.data.chunk);
+        const end = events.findLast((event: any) => event.type === 'turn/end').data.reason;
+        assert.equal(JSON.stringify(chunks).includes('电脑暂时没准备好'), false, 'request errors and aborts must not become a successful fallback');
+        if (scenario === 'USER_STOP') {
+          assert.equal(end.kind, 'aborted'); assert.equal(calls, 2); assert.equal(loaded, 0);
+          assert.equal(events.filter((event: any) => event.type === 'llm/retry').length, 0);
+        } else {
+          const code = scenario === 'EXHAUSTED' ? 'RATE_LIMIT' : scenario;
+          assert.equal(failures[0]?.code, code, 'the original failure must reach agent/request-error');
+          assert.equal(chunks.filter((chunk: any) => chunk.type === 'finish' && chunk.reason.kind === (scenario === 'ABORTED' ? 'aborted' : 'error')).length,
+            scenario === 'EXHAUSTED' ? 2 : 1);
+          assert.equal(events.filter((event: any) => event.type === 'llm/retry').length, scenario === 'ABORTED' ? 0 : 1, 'only the native retry policy schedules requests');
+          if (scenario === 'EXHAUSTED' || scenario === 'ABORTED') {
+            assert.equal(end.kind, 'error'); assert.equal(end.error.code, code); assert.equal(loaded, 0);
+            assert.equal(calls, scenario === 'EXHAUSTED' ? 3 : 2);
+          } else {
+            assert.equal(end.kind, 'completed'); assert.equal(calls, 4); assert.equal(loaded, 1);
+            assert.ok(events.some((event: any) => event.type === 'assistant/message' && event.data.message.content.some((block: any) => block.text === 'Synthetic preparation recovered')));
+          }
+        }
+      } finally {
+        await handle?.dispose(); await ctx.fiber.dispose();
+        await removeLinks(root); await rm(root, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
 test('cold chat first file request opens work card; failed preparation retries once or explains unavailability', { timeout: 90000 }, async () => {
   const root = await mkdtemp(join(tmpdir(), 'fix51-native-'));
   let host: any, runtime: any;
