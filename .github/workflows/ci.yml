@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   test:
-    name: test (${{ matrix.os }}, shard ${{ matrix.shard }}/${{ matrix.os == 'macos-latest' && 1 || 3 }})
+    name: test (${{ matrix.os }}, shard ${{ matrix.shard }}/${{ matrix.os == 'windows-latest' && 5 || matrix.os == 'macos-latest' && 1 || 3 }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     env:
@@ -28,12 +28,20 @@ jobs:
       fail-fast: false
       matrix:
         os: ${{ fromJSON((github.event_name == 'pull_request' || github.event_name == 'push') && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest","windows-latest","macos-latest"]') }}
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4, 5]
         exclude:
+          - os: ubuntu-latest
+            shard: 4
+          - os: ubuntu-latest
+            shard: 5
           - os: macos-latest
             shard: 2
           - os: macos-latest
             shard: 3
+          - os: macos-latest
+            shard: 4
+          - os: macos-latest
+            shard: 5
 
     steps:
       - name: Checkout
@@ -150,7 +158,7 @@ jobs:
           if [ "${{ runner.os }}" = "Linux" ]; then
             xvfb-run --auto-servernum node .github/scripts/ci-unit-tests.mjs required --shard ${{ matrix.shard }}/3 --report unit-report.json
           else
-            node .github/scripts/ci-unit-tests.mjs required --shard ${{ matrix.shard }}/${{ matrix.os == 'macos-latest' && 1 || 3 }} --report unit-report.json
+            node .github/scripts/ci-unit-tests.mjs required --shard ${{ matrix.shard }}/${{ matrix.os == 'windows-latest' && 5 || matrix.os == 'macos-latest' && 1 || 3 }} --report unit-report.json
           fi
 
       - name: Upload unit shard report
