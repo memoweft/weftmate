@@ -701,7 +701,7 @@ function appearancePage(target){target.append(heading('外观','保存到这台�
   });
 }
 
-async function updatesPage(target){target.append(heading('检查更新','页面会自动更新；应用有新版时，可到官网下载。'));
+async function updatesPage(target){target.append(heading('检查更新'));
   let details;try{details=await call('updates.status')}catch(e){target.append(notice(safeError(e)));return}
   target.append(group('版本',[row('当前界面',details.activeVersion,()=>{}),row('原生应用',details.nativeVersion,()=>{})]));
   const install=group('本设备安装',[]),installBody=install.querySelector('.group-body'),
@@ -712,6 +712,7 @@ async function updatesPage(target){target.append(heading('检查更新','页面�
   installBody.append(el('p','muted','当前是 Android 设备。原生更新需要从官网下载安装包并手动覆盖安装。'),link,qr,
     el('p','muted native-download-qr-note','也可以用另一台设备扫描二维码打开同一个安卓下载页面。'));
   target.append(install);
+  if(details.sourceAvailable===false){target.insertBefore(notice('连上电脑后可检查界面更新。当前没有独立的界面更新源，现有界面仍可使用；原生应用可从官网下载更新。'),install);return}
   if(!state.loggedIn){target.append(notice('登录账户后才会检查服务端界面；内置页面仍可打开登录与注册。'),
     action('连接账户',()=>page('connect')));return}
   target.append(group('更新方式',[row(`自动更新界面 · ${details.autoEnabled?'已开启':'已关闭'}`,
