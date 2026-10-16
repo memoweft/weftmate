@@ -270,6 +270,11 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     clientId: process.env.WEFTMATE_CLOUD_DESKTOP_CLIENT_ID || process.env.WEFTMATE_CLOUD_WEB_CLIENT_ID,
     redirectUri: process.env.WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI }));
   handle('wm:desktop:credentials', (key, value, remove) => authStore.credentials(key, value, remove));
+  handle('wm:desktop:cloud-credentials-present', async () => {
+    if (contentOrigin !== origin) throw new Error('LOCAL_HOST_REQUIRED');
+    const directory = await jsonLocal('/auth/desktop');
+    return authStore.cloudCredentialsPresent(directory.accounts.map(account => account.ownerId));
+  });
   handle('wm:desktop:key', scope => authStore.key(scope));
   handle('wm:desktop:proof', (scope, input) => authStore.sign(scope, input));
   handle('wm:desktop:key-reset', scope => authStore.resetKey(scope));

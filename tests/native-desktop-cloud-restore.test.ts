@@ -23,6 +23,7 @@ async function fixture({ saved = true, coldOrigin = 'http://127.0.0.1:31001', na
   const jwk = await webcrypto.subtle.exportKey('jwk', material.publicKey);
   const nativeKey = { get: async () => ({ deviceId: 'synthetic-desktop', publicJwk: jwk }),
     sign: async (_scope: string, input: string) => Buffer.from(await webcrypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, material.privateKey, new TextEncoder().encode(input))).toString('base64url'),
+    credentialsPresent: async () => [...records.keys()].some(key => key.startsWith('app-tokens:') || key.startsWith('tokens:')),
     clear: async () => { events.push('key-cleared'); } };
   let owner = 'owner-a', authorization: any, now = Date.now(), networkFailure = false, serverUnavailable = false, invalidRefresh = false;
   let configureGate: ReturnType<typeof deferred> | undefined, exchangeGate: ReturnType<typeof deferred> | undefined;
@@ -162,6 +163,39 @@ test('a desktop without cloud configuration can switch local accounts before or 
     assert.equal(f.records.has(f.tokenKey), false);
     assert.equal(f.calls.some(url => url.startsWith(base)), false);
   }
+});
+
+test('missing cloud routes do not let an unknown native credential scope escape cleanup', async () => {
+  const f = await fixture(), fetch = f.client.fetch;
+  f.client.fetch = (url: string, options: any) => url.endsWith('/cloud/config') ? reply({ error: { code: 'NOT_FOUND' } }, 404) : fetch(url, options);
+  f.core.accessApi = async () => { throw { code: 'NOT_FOUND', status: 404 }; };
+  await f.core.load(); await f.settle();
+  await assert.rejects(f.core.switchLocalAccount('owner-b'), (error: any) => error.code === 'CLOUD_CREDENTIAL_CLEANUP_REQUIRED');
+  assert.equal(f.core.state.account.ownerId, 'owner-a');
+  assert.equal(f.core.state.csrfToken, 'csrf:owner-a');
+  assert.equal(f.records.has(f.tokenKey), true);
+});
+
+test('missing or failed native credential presence checks cannot report a completed local switch', async () => {
+  for (const missing of [false, true]) {
+    const f = await fixture({ saved: false }), fetch = f.client.fetch;
+    f.client.fetch = (url: string, options: any) => url.endsWith('/cloud/config') ? reply({ error: { code: 'NOT_FOUND' } }, 404) : fetch(url, options);
+    f.core.accessApi = async () => { throw { code: 'NOT_FOUND', status: 404 }; };
+    f.client.nativeKey.credentialsPresent = missing ? undefined : async () => { throw { code: 'STORAGE_UNAVAILABLE' }; };
+    await f.core.load(); await f.settle();
+    await assert.rejects(f.core.switchLocalAccount('owner-b'), (error: any) => error.code === (missing ? 'NATIVE_CREDENTIAL_CHECK_REQUIRED' : 'STORAGE_UNAVAILABLE'));
+    assert.equal(f.core.state.account.ownerId, 'owner-a');
+    assert.equal(f.core.state.csrfToken, 'csrf:owner-a');
+    if (missing) assert.match(f.core.cloudError({ code: 'NATIVE_CREDENTIAL_CHECK_REQUIRED' }), /更新电脑上的 WeftMate/);
+  }
+});
+
+test('an older desktop bridge can still clear known cloud credentials without the new presence query', async () => {
+  const f = await fixture(); f.client.nativeKey.credentialsPresent = undefined; f.bindings.delete('owner-a');
+  await f.core.load(); await f.settle();
+  await f.core.switchLocalAccount('owner-b');
+  assert.equal(f.core.state.account.ownerId, 'owner-b');
+  assert.equal(f.records.has(f.tokenKey), false);
 });
 
 test('pending cloud configuration never delays local load or opens a login page', async () => {
