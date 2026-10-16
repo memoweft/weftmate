@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { request as httpRequest } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -12,6 +14,58 @@ const event = (n: number, clientSeq = n) => ({ eventId: `event-${uuid(n)}`,
   conversationId: `conversation-${uuid(100)}`, clientSeq, kind: 'message.created',
   occurredAt: '2026-09-26T13:00:00.000Z',
   payload: { messageId: `message-${uuid(n)}`, role: n % 2 ? 'user' : 'assistant', text: `synthetic ${n}` } })
+
+for (const variant of ['authorization', 'closed']) test(`sync commit guard rejects ${variant} changes during final private-file validation`, () => {
+  const env = { ...process.env }
+  delete env.NODE_TEST_CONTEXT
+  const output = execFileSync(process.execPath, [fileURLToPath(new URL('./helpers/sync-commit-guard.mjs', import.meta.url)), variant],
+    { encoding: 'utf8', windowsHide: true, env, timeout: 30_000 })
+  const result = JSON.parse(output)
+  assert.ok(result.stats >= 3, 'the actual final source validation must deliver the state change')
+  assert.equal(result.state, 'rejected', output)
+  assert.equal(result.error, variant === 'authorization' ? 'UNAUTHORIZED' : 'SERVICE_CLOSING', output)
+  assert.equal(result.diskEvents, 0, output)
+  assert.equal(result.memoryEvents, 0, output)
+  assert.equal(result.tempFiles, 0, output)
+})
+
+test('new and replaced sync files retain current-user-only permissions and survive cold reopen', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'personal-sync-private-'))
+  const file = join(root, 'events.json')
+  const verify = () => {
+    if (process.platform !== 'win32') {
+      assert.equal(statSync(root).mode & 0o777, 0o700)
+      assert.equal(statSync(file).mode & 0o777, 0o600)
+      return
+    }
+    const script = `$ErrorActionPreference='Stop'; Import-Module Microsoft.PowerShell.Security; $sid=[System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value; @(foreach ($file in (ConvertFrom-Json $env:DATA_DELETE_435_ACL_FILES)) { $acl=Get-Acl -LiteralPath $file; @{ protected=$acl.AreAccessRulesProtected; rules=@($acl.Access | ForEach-Object { @{ currentUser=($_.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value -eq $sid); type=$_.AccessControlType.ToString(); rights=$_.FileSystemRights.ToString(); flags=$_.InheritanceFlags.ToString() } }) } }) | ConvertTo-Json -Depth 5 -Compress`
+    const acl = JSON.parse(execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
+      encoding: 'utf8', windowsHide: true, env: { ...process.env,
+        PSModulePath: join(process.env.SystemRoot ?? 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/Modules'),
+        DATA_DELETE_435_ACL_FILES: JSON.stringify([root, file]) },
+    }))
+    assert.equal(acl[0].protected, true)
+    assert.match(acl[0].rules[0].flags, /ContainerInherit/)
+    assert.match(acl[0].rules[0].flags, /ObjectInherit/)
+    assert.equal(acl[1].rules[0].flags, 'None')
+    for (const item of acl) {
+      assert.equal(item.rules.length, 1)
+      assert.equal(item.rules[0].currentUser, true)
+      assert.equal(item.rules[0].type, 'Allow')
+      assert.equal(item.rules[0].rights, 'FullControl')
+    }
+  }
+  try {
+    const store = await createPersonalSyncStore({ root, ownerId: 'owner-test' })
+    verify()
+    await store.append({ events: [event(1)], sourceDeviceId: 'device-one' })
+    verify()
+    await store.close()
+    const restored = await createPersonalSyncStore({ root, ownerId: 'owner-test' })
+    assert.equal(restored.page().events[0].payload.text, 'synthetic 1')
+    await restored.close()
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
 
 test('offline events can attach later without reordering server seq; duplicates and conflicts survive restart', async () => {
   const root = mkdtempSync(join(tmpdir(), 'personal-sync-store-'))
