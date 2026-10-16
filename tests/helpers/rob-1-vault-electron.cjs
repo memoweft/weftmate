@@ -4,7 +4,9 @@ const fs = require('node:fs');
 const { join } = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { syncBuiltinESMExports } = require('node:module');
+const {safeReadiness,safeVersions,reportFixtureFailure}=require('./rob-1-safe-diagnostics.cjs');
 const [profile, action, timing, moduleFile] = process.argv.slice(2);
+let fixturePhase='app-ready',readiness=null;
 app.setPath('userData', profile);
 app.setPath('sessionData', profile);
 fs.mkdirSync(join(profile, 'Crashpad'), { recursive: true });
@@ -35,6 +37,7 @@ fs.renameSync = function(from, to) {
 syncBuiltinESMExports();
 
 app.whenReady().then(async () => {
+  fixturePhase='module-load';
   const store = await import(pathToFileURL(moduleFile).href);
   if (action === 'readiness-race') {
     const assert = require('node:assert/strict');
@@ -44,11 +47,16 @@ app.whenReady().then(async () => {
     // the first readiness check. No elapsed-time assumption is involved.
     safeStorage.isEncryptionAvailable = () => ++checks === 1 ? false : available();
     try {
-      await store.initializeCredentialStorage();
+      fixturePhase='initialize';
+      await store.initializeCredentialStorage(undefined,value=>{readiness=value;});
+      fixturePhase='save';
       store.saveCredential('synthetic-model', 'synthetic-rob1-key');
+      fixturePhase='read';
       assert.equal(store.getCredential('synthetic-model'), 'synthetic-rob1-key');
+      fixturePhase='assert';
       assert.ok(checks >= 2);
-      process.stdout.write(JSON.stringify({ stage: 'readiness-race', readable: true })+'\n');
+      fixturePhase='complete';
+      process.stdout.write(JSON.stringify({ stage: 'readiness-race', readable: true,readiness:safeReadiness(readiness),versions:safeVersions(process.versions) })+'\n');
     } finally { safeStorage.isEncryptionAvailable = available; }
     app.quit(); return;
   }
@@ -65,5 +73,4 @@ app.whenReady().then(async () => {
   if (store.initializeCredentialStorage) await store.initializeCredentialStorage();
   store.saveCredential('synthetic-model', action==='normal'?'synthetic-rob1-old-key':'synthetic-rob1-key');
   if (action === 'normal') app.quit();
-}).catch(error => { process.stdout.write(JSON.stringify({stage:'fixture-failure',action,timing,name:error?.name||'Error',code:error?.code||null,
-  encryptionAvailable:safeStorage.isEncryptionAvailable(),files:metadata()})+'\n'); app.exit(74); });
+}).catch(error => {reportFixtureFailure(error,{action,timing,fixturePhase,readiness,versions:process.versions},process.stdout);app.exit(74);});
