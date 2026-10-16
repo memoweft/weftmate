@@ -23,6 +23,13 @@ async function run(profile,action,timing,sourceModule=moduleFile) {
   finally {clearTimeout(timer);const c=await evidence.finalize();cleaned+=c.cleaned;safeToRemove&&=!c.stillRunning&&!c.preservationError;assert.equal(c.stillRunning,false);}
 }
 try {
+  if(phase==='after-fix') {
+    const profile=join(root,'readiness-race');mkdirSync(profile);
+    const readiness=await run(profile,'readiness-race','none');
+    assert.equal(readiness.exit,'0x00000000',JSON.stringify(readiness));
+    assert.equal(readiness.stages.find(row=>row.stage==='readiness-race')?.readable,true);
+    console.log('readiness-race: readable=true');
+  }
   for(const established of (phase==='after-fix'?[false,true,'legacy-upgrade']:[false,true])) for(const action of ['crash','kill','power-cut']) for(const timing of ['before','during','after']) {
     const category=typeof established==='string'?established:established?'existing':'new';
     const profile=join(root,`${category}-${action}-${timing}`);mkdirSync(profile);

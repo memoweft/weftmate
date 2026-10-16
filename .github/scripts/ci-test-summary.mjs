@@ -2,11 +2,27 @@ import { appendFileSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { recoveredSummary } from './ci-test-policy.mjs';
+import { recoveredSummary, requiredShardPlan } from './ci-test-policy.mjs';
+
+export function requireLatestShardJobs(jobs, { includeMac = false } = {}) {
+  const expected = requiredShardPlan({ includeMac }).map(({ os, shard }) => `test (${os}, shard ${shard})`);
+  const latest = new Map();
+  for (const job of jobs) {
+    if (!expected.includes(job.name)) continue;
+    const previous = latest.get(job.name);
+    if (!previous || job.run_attempt > previous.run_attempt || job.run_attempt === previous.run_attempt && job.id > previous.id)
+      latest.set(job.name, job);
+  }
+  for (const name of expected) {
+    const job = latest.get(name);
+    if (job?.status !== 'completed' || job.conclusion !== 'success')
+      throw Error(`Latest shard job did not succeed: ${name}; attempt ${job?.run_attempt ?? 'missing'}; ${job?.conclusion ?? job?.status ?? 'missing'}`);
+  }
+  return [...latest.values()];
+}
 
 export function aggregateReports(reports, { includeMac = false } = {}) {
-  const expected = ['ubuntu-latest', 'windows-latest'].flatMap(os => [1, 2, 3].map(shard => `${os}:${shard}/3`));
-  if (includeMac) expected.push('macos-latest:1/1');
+  const expected = requiredShardPlan({ includeMac }).map(({ os, shard }) => `${os}:${shard}`);
   const keys = reports.map(report => `${report.os}:${report.shard}`);
   if (new Set(keys).size !== keys.length || expected.some(key => !keys.includes(key)) || keys.some(key => !expected.includes(key))) throw Error(`Missing, duplicate or unexpected shard report: expected ${expected}; received ${keys}`);
   const counts = reports.reduce((total, row) => ({ passed: total.passed + row.passed, failed: total.failed + row.failed, skipped: total.skipped + row.skipped }), { passed: 0, failed: 0, skipped: 0 });

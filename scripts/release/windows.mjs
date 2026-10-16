@@ -9,6 +9,7 @@ import { downloadFrp } from '../download-frp.mjs';
 import { packageRelease } from './package.mjs';
 import { keyId, signingKeyFromEnvironment, compareVersions } from '../../src/personal-update/manifest.mjs';
 import { verifyWindowsPackage } from '../verify-windows-package.mjs';
+import { withMemoryRuntimeResources } from '../memory-runtime-package.mjs';
 
 export function assertReleaseVersion(version, channel) {
   compareVersions(version, '0.0.0');
@@ -47,12 +48,13 @@ export async function buildWindowsRelease(options) {
   const identity = options['test-identity'];
   if (identity && !/^[a-z0-9]+$/.test(identity)) throw new Error('Invalid test identity');
   if (options['isolate-test-executable'] === 'true' && !identity) throw new Error('An isolated test executable requires a test identity');
-  const config = { ...pkg.build, extraMetadata: { version, ...(identity ? { name: `weftmate-${identity}`, desktopAppId: `com.memoweft.weftmate.${identity}`, desktopIdentity: `WeftMate ${identity}` } : {}) },
+  const config = await withMemoryRuntimeResources({ ...pkg.build, extraMetadata: { version, ...(identity ? { name: `weftmate-${identity}`, desktopAppId: `com.memoweft.weftmate.${identity}`, desktopIdentity: `WeftMate ${identity}` } : {}) },
     extraResources: [{ from: stage, to: '', filter: ['dsh-runtime/**/*', 'relay/**/*'] }, { from: keysFile, to: 'update-trusted-keys.json' }],
     ...(identity ? { productName: `WeftMate ${identity}`, appId: `com.memoweft.weftmate.${identity}`, nsis: { ...pkg.build.nsis, shortcutName: `WeftMate ${identity}`, uninstallDisplayName: `WeftMate ${identity}`, createDesktopShortcut: options['test-desktop-shortcut'] === 'true' ? 'always' : false } } : {}),
     ...(options['isolate-test-executable'] === 'true' ? { executableName: `WeftMate-${identity}` } : {}),
     directories: { ...pkg.build.directories, output: join(output, 'build') },
-    publish: { provider: 'generic', url: `https://weftmate.com/updates/windows/x64/${channel}/`, channel: channel === 'stable' ? 'latest' : 'preview' } };
+    publish: { provider: 'generic', url: `https://weftmate.com/updates/windows/x64/${channel}/`, channel: channel === 'stable' ? 'latest' : 'preview' } },
+    {mode:options['memory-runtime-mode']??process.env.WEFTMATE_MEMORY_RUNTIME_MODE,source:options['memory-runtime-dir']??process.env.WEFTMATE_MEMORY_RUNTIME_DIR});
   if (options['test-bad-main'] === 'true') {
     if (!identity) throw new Error('An intentionally broken build requires a separate test identity');
     const badSource = join(output, 'bad-source'); await mkdir(badSource, { recursive: true });

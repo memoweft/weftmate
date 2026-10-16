@@ -6,6 +6,7 @@ import { mkdir, readdir } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { assertCandidateVersion, assertIsolatedOutput } from './windows-package-policy.mjs'
+import { withMemoryRuntimeResources } from './memory-runtime-package.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, '..')
@@ -64,14 +65,15 @@ console.log('[windows-candidate] verifying the existing vendor runtime; regenera
 run(process.execPath, ['scripts/verify-dsh-vendor.mjs'], 'vendor verification')
 run(process.execPath, ['scripts/stage-dsh-runtime.mjs', '--stage-root', stageRoot], 'vendor staging')
 
-const config = {
+const config = await withMemoryRuntimeResources({
   ...pkg.build,
   extraMetadata: { version },
   extraResources: [{ from: stageRoot, to: '', filter: ['dsh-runtime/**/*', 'relay/**/*'] },
     { from: join(repoRoot, 'src/personal-update/trusted-keys.json'), to: 'update-trusted-keys.json' }],
   directories: { ...(pkg.build?.directories ?? {}), output: outputDir },
   publish: null,
-}
+}, { mode: option('--memory-runtime-mode', false) ?? process.env.WEFTMATE_MEMORY_RUNTIME_MODE,
+  source: option('--memory-runtime-dir', false) ?? process.env.WEFTMATE_MEMORY_RUNTIME_DIR })
 const configPath = join(stageRoot, `electron-builder.${version}.json`)
 writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8')
 
@@ -123,6 +125,7 @@ const manifest = {
   publish: { uploaded: false, publicFeed: false },
   installer: verification.installer,
   vendor: verification.vendor,
+  memoryRuntime: verification.memoryRuntime,
   closureAudit: verification.boundaries,
   feed,
 }
