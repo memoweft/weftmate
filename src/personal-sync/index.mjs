@@ -158,8 +158,12 @@ async function atomicWrite(file, value, shouldCommit) {
     handle = undefined;
     await ensurePrivateFile(temp);
     for (let attempt = 0; ; attempt++) {
-      if (!shouldCommit()) throw new PersonalSyncError('SERVICE_CLOSING', 503);
-      try { await renamePrivateFile(temp, file); break; }
+      try {
+        await renamePrivateFile(temp, file, () => {
+          if (!shouldCommit()) throw new PersonalSyncError('SERVICE_CLOSING', 503);
+        });
+        break;
+      }
       catch (error) {
         if (process.platform !== 'win32' || !['EPERM', 'EACCES', 'EBUSY'].includes(error?.code) || attempt >= 3) throw error;
         await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
