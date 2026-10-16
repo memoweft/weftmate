@@ -69,6 +69,53 @@ import WeftMateCore
         #expect(s.model.memory.items.map(\.text) == ["测试花名是绿色纸鹤"])
         #expect(try await s.send("我的测试花名是什么？",fresh:true) == "绿色纸鹤")
     }
+    @Test func failedOlderSourceCannotUndoCorrectionAndStillKeepsIndependentFact() async throws {
+        let s=try Scenario();defer { s.close() }
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。")
+        try await s.mode("fail")
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。我长期学习日语。",fresh:true)
+        try await s.mode("ok")
+        try await s.send("不对，是绿色纸鹤。",fresh:true)
+        #expect(s.model.memory.items.map(\.text) == ["测试花名是绿色纸鹤"])
+        s.model.deactivate();s.model.activate(app:s.app)
+        s.model.retryMemory()
+        for _ in 0..<500 { if !s.model.memoryWorking { break };try await Task.sleep(for:.milliseconds(10)) }
+        #expect(Set(s.model.memory.items.map(\.text)) == ["测试花名是绿色纸鹤","长期学习日语"])
+    }
+    @Test func failedOlderSourceCannotRecreateForgottenRevisionAfterReopen() async throws {
+        let s=try Scenario();defer { s.close() }
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。")
+        try await s.mode("fail")
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。我长期学习日语。",fresh:true)
+        try await s.mode("ok")
+        try await s.send("不对，是绿色纸鹤。",fresh:true)
+        let id=try #require(s.model.memory.items.first?.id)
+        s.model.forgetMemory(id)
+        s.model.deactivate();s.model.activate(app:s.app)
+        s.model.retryMemory()
+        for _ in 0..<500 { if !s.model.memoryWorking { break };try await Task.sleep(for:.milliseconds(10)) }
+        #expect(s.model.memory.items.map(\.text) == ["长期学习日语"])
+    }
+    @Test func failedOlderSourceCannotUndoAManualEdit() async throws {
+        let s=try Scenario();defer { s.close() }
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。")
+        try await s.mode("fail")
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。我长期学习日语。",fresh:true)
+        try await s.mode("ok")
+        try s.model.saveMemory(id:try #require(s.model.memory.items.first?.id),text:"测试花名是绿色纸鹤",pinned:false)
+        s.model.retryMemory()
+        for _ in 0..<500 { if !s.model.memoryWorking { break };try await Task.sleep(for:.milliseconds(10)) }
+        #expect(Set(s.model.memory.items.map(\.text)) == ["测试花名是绿色纸鹤","长期学习日语"])
+    }
+    @Test func naturalExplicitForgettingRemovesTheActualSavedItem() async throws {
+        for request in ["我希望你忘掉我的测试花名。","能不能忘掉我的测试花名？"] {
+            let s=try Scenario();defer { s.close() }
+            try await s.send("请记住，我的测试花名是蓝色纸鹤。")
+            try await s.send(request,fresh:true)
+            #expect(s.model.memory.items.isEmpty)
+            #expect(s.model.messages.last?.text.contains("已从这台设备的记忆里忘掉") == true)
+        }
+    }
     @Test func forgetCannotReturnInNewConversationOrAfterReopen() async throws {
         let s=try Scenario();defer { s.close() }
         try await s.send("请记住，我的测试花名是蓝色纸鹤。")

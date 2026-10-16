@@ -87,7 +87,9 @@ import WeftMateCore
             next.memory?.suppressedSources.formUnion(sources)
             let oldDigest=PhoneMemoryRules.digest(next.memory!.items[index].text)
             next.memory?.suppressedText.insert(oldDigest)
-            next.memory?.items[index].text=text;next.memory?.items[index].pinned=pinned;next.memory?.items[index].updatedAt=Date()
+            let previousDigests=next.memory!.items[index].previousTextDigests ?? [],changedAt=Date()
+            next.memory?.items[index].previousTextDigests=previousDigests.union([oldDigest])
+            next.memory?.items[index].text=text;next.memory?.items[index].pinned=pinned;next.memory?.items[index].updatedAt=changedAt;next.memory?.items[index].latestSourceDate=changedAt
         } else {
             guard memory.items.count < 200 else { throw OfflineFailure.invalid }
             next.memory?.suppressedText.remove(PhoneMemoryRules.digest(text))

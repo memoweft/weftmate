@@ -8,10 +8,14 @@ public struct PhoneMemoryItem: Codable, Equatable, Identifiable, Sendable {
     public var threadID: String?
     public var sourceIDs: Set<String>
     public var updatedAt: Date
+    /// Original source time for the current revision, independent of extraction/retry time.
+    public var latestSourceDate: Date?
+    /// Only digests survive a changed value, so forgetting also blocks old revisions.
+    public var previousTextDigests: Set<String>?
     public var lastUsed: Date?
     public var pinned: Bool
-    public init(id: String = UUID().uuidString, text: String, threadID: String? = nil, sourceIDs: Set<String> = [], updatedAt: Date = Date(), pinned: Bool = false) {
-        self.id=id; self.text=text; self.threadID=threadID; self.sourceIDs=sourceIDs; self.updatedAt=updatedAt; self.pinned=pinned
+    public init(id: String = UUID().uuidString, text: String, threadID: String? = nil, sourceIDs: Set<String> = [], updatedAt: Date = Date(), pinned: Bool = false, latestSourceDate: Date? = nil) {
+        self.id=id; self.text=text; self.threadID=threadID; self.sourceIDs=sourceIDs; self.updatedAt=updatedAt; self.pinned=pinned;self.latestSourceDate=latestSourceDate
     }
 }
 public struct PhoneMemoryRetry: Codable, Equatable, Sendable {
@@ -33,10 +37,11 @@ public struct PhoneMemoryState: Codable, Sendable {
     public mutating func forget(_ id: String) {
         guard let item=items.first(where: { $0.id == id }) else { return }
         suppressedSources.formUnion(item.sourceIDs); suppressedText.insert(PhoneMemoryRules.digest(item.text))
+        suppressedText.formUnion(item.previousTextDigests ?? [])
         items.removeAll { $0.id == id }
     }
     public mutating func forgetAll(threads: [PhoneChatThread]) {
-        for item in items { suppressedText.insert(PhoneMemoryRules.digest(item.text)) }
+        for item in items { suppressedText.insert(PhoneMemoryRules.digest(item.text));suppressedText.formUnion(item.previousTextDigests ?? []) }
         suppressedSources.formUnion(threads.flatMap(\.messages).filter { $0.role == "user" }.map(\.id))
         items=[];retry=nil
     }
@@ -93,19 +98,34 @@ public struct PhoneMemoryState: Codable, Sendable {
     public mutating func apply(_ output: String, batch: [PhoneChatMessage], threadID: String, now: Date = Date()) throws {
         let patch=try PhoneMemoryPatch.parse(output)
         let sources=Dictionary(uniqueKeysWithValues:batch.map { ($0.id,$0.text) })
+        // Only the messages actually containing the quoted evidence establish
+        // its time; an unrelated newer source cannot lend its date to an old fact.
+        func sourceDate(_ ids: [String], _ evidence: String, forgetting: Bool = false) -> Date? {
+            batch.filter { ids.contains($0.id) && $0.text.contains(evidence) && (!forgetting || PhoneMemoryRules.requestsForgetting($0.text)) }.map(\.date).max()
+        }
         func valid(_ ids: [String], _ evidence: String) -> Bool {
             !ids.isEmpty && !evidence.isEmpty && ids.allSatisfy { sources[$0].map(PhoneMemoryRules.safe) == true && sources[$0].map(PhoneMemoryRules.isRecallQuestion) == false && !suppressedSources.contains($0) } && ids.contains { sources[$0]?.contains(evidence) == true } && PhoneMemoryRules.safe(evidence)
         }
-        for removal in patch.invalidate where valid(removal.sourceIDs,removal.evidence) && removal.sourceIDs.contains(where: { sources[$0].map(PhoneMemoryRules.requestsForgetting) == true }) { forget(removal.id) }
+        for removal in patch.invalidate where valid(removal.sourceIDs,removal.evidence) && removal.sourceIDs.contains(where: { sources[$0].map(PhoneMemoryRules.requestsForgetting) == true }) {
+            guard let item=items.first(where: { $0.id == removal.id }),let date=sourceDate(removal.sourceIDs,removal.evidence,forgetting:true),date > (item.latestSourceDate ?? item.updatedAt) else { continue }
+            forget(removal.id)
+        }
         for change in patch.upsert where valid(change.sourceIDs,change.evidence) && PhoneMemoryRules.safe(change.text) && !change.sourceIDs.contains(where: { sources[$0].map(PhoneMemoryRules.requestsForgetting) == true }) {
             let text=change.text.trimmingCharacters(in:.whitespacesAndNewlines)
-            guard !text.isEmpty, text.count <= 400, !suppressedText.contains(PhoneMemoryRules.digest(text)) else { continue }
+            let digest=PhoneMemoryRules.digest(text)
+            guard !text.isEmpty, text.count <= 400, !suppressedText.contains(digest),let date=sourceDate(change.sourceIDs,change.evidence) else { continue }
             let ids=Set(change.sourceIDs)
             if let id=change.id?.trimmingCharacters(in:.whitespacesAndNewlines),!id.isEmpty {
                 guard let index=items.firstIndex(where: { $0.id == id }) else { continue }
-                items[index].text=text;items[index].sourceIDs.formUnion(ids);items[index].updatedAt=now;items[index].threadID=threadID
+                let previous=items[index],latest=previous.latestSourceDate ?? previous.updatedAt
+                guard date > latest || (date == latest && text == previous.text) else { continue }
+                if text != previous.text {
+                    items[index].previousTextDigests=(previous.previousTextDigests ?? []).union([PhoneMemoryRules.digest(previous.text)])
+                }
+                items[index].text=text;items[index].sourceIDs.formUnion(ids);items[index].updatedAt=now;items[index].threadID=threadID;items[index].latestSourceDate=date
             } else if !items.contains(where: { PhoneMemoryRules.digest($0.text) == PhoneMemoryRules.digest(text) }), items.count < 200 {
-                items.append(.init(text:text,threadID:threadID,sourceIDs:ids,updatedAt:now))
+                guard !items.contains(where: { ($0.previousTextDigests ?? []).contains(digest) && date <= ($0.latestSourceDate ?? $0.updatedAt) }) else { continue }
+                items.append(.init(text:text,threadID:threadID,sourceIDs:ids,updatedAt:now,latestSourceDate:date))
             }
         }
         processed.formUnion(batch.map(\.id))
@@ -133,9 +153,20 @@ public struct PhoneMemoryPatch: Decodable, Sendable {
 }
 public enum PhoneMemoryRules {
     public static func requestsForgetting(_ text: String) -> Bool {
-        let value=text.trimmingCharacters(in:.whitespacesAndNewlines).lowercased()
-        let prefixes=["忘掉","忘记","请忘掉","请忘记","删掉","删除","请删掉","请删除","别再记","不要再记","forget ","please forget ","delete ","please delete ","remove ","please remove "]
-        return prefixes.contains(where:value.hasPrefix) || (["把","请把"].contains(where:value.hasPrefix) && ["忘掉","忘记","删掉","删除"].contains(where:value.contains))
+        // Quoted examples are data, while a quoted object after an actual
+        // request (forget “this fact”) still leaves the request itself intact.
+        let quotes = #"```[\s\S]*?```|`[^`]*`|“[^”]*”|「[^」]*」|『[^』]*』|"[^"]*"|(?<![A-Za-z])'[^']*'(?![A-Za-z])"#
+        let value=text.replacingOccurrences(of:quotes,with:" ",options:.regularExpression).trimmingCharacters(in:.whitespacesAndNewlines).lowercased()
+        let english = #"^(?:please\s+)?(?:(?:can|could|would|will)\s+you\s+(?:please\s+)?|i\s+(?:want|would\s+like)\s+you\s+to\s+|i['’]d\s+like\s+you\s+to\s+)?(?:forget|delete|remove)\b"#
+        if value.range(of:english,options:.regularExpression) != nil { return true }
+        let lead = #"^(?:(?:请(?:你|您)?|麻烦(?:你|您)?|劳烦(?:你|您)?|我(?:希望|想要|想|要求)(?:你|您)?|能不能|能否|可否|可以(?:请)?(?:你|您)?|请问(?:你|您)?(?:能不能|能否|可否|可以))\s*)?(?:(?:请(?:你|您)?|帮我|替我|能)\s*)?"#
+        let start=value.range(of:lead,options:.regularExpression)!.upperBound
+        let request=String(value[start...]).trimmingCharacters(in:.whitespacesAndNewlines)
+        let action = #"忘掉|忘记|删掉|删除|别再记(?:住)?|不要再记(?:住)?"#
+        if request.range(of:"^(?:"+action+")",options:.regularExpression) != nil { return true }
+        guard request.hasPrefix("把") || request.hasPrefix("将"),let verb=request.range(of:action,options:.regularExpression) else { return false }
+        let object=String(request[..<verb.lowerBound])
+        return object.range(of:#"[。！？!?；;\n]|(?:不要|别|不能|不用|无需|不必|不想|不希望)(?:再)?\s*$"#,options:.regularExpression) == nil
     }
     public static func isRecallQuestion(_ text: String) -> Bool {
         let value=text.trimmingCharacters(in:.whitespacesAndNewlines).lowercased()
