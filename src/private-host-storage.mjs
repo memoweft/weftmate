@@ -155,12 +155,16 @@ export async function openPrivateFile(target) {
   return handle;
 }
 
-/** Atomic replacement preserves the verified file identity and inherited ACL. */
-export async function renamePrivateFile(source, target) {
+/** Atomic replacement preserves the verified file identity and inherited ACL.
+ * The synchronous commit guard runs after all source validation, immediately
+ * before rename; it must throw to reject the replacement.
+ */
+export async function renamePrivateFile(source, target, commitGuard = () => {}) {
   const from = absolutePath(source), to = absolutePath(target);
   if (path.dirname(from) !== path.dirname(to)) throw privateFailure();
   await ensurePrivateFile(from);
   const verified = protectedPaths.get(`file:${from}`);
+  commitGuard();
   await rename(from, to);
   protectedPaths.delete(`file:${from}`);
   if (verified !== undefined) protectedPaths.set(`file:${to}`, verified);
