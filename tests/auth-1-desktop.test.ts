@@ -17,6 +17,14 @@ test('AUTH-1 only the native own main frame receives its capability; subframes a
     assert.equal(nativeWindowRequest({ ...details, ...changed }, window, origin), false)
 })
 
+test('native request queued during window teardown does not throw or receive a desktop capability', () => {
+  const origin = 'http://127.0.0.1:39111', frame = { url: origin + '/personal/v1/ui' }
+  const details = { webContentsId: 7, frame, initiatorOrigin: origin, url: origin + '/personal/v1/auth/desktop' }
+  // Electron keeps the session listener alive while app.exit() destroys the
+  // window. A request already queued by Chromium can then see null webContents.
+  assert.equal(nativeWindowRequest(details, { webContents: null }, origin), false)
+})
+
 const backend = { getStatus: async () => ({ runtime: 'ready' }), listModels: async () => [],
   preflight: async () => ({ ok: true }), createSession: async () => ({}), sendMessage: async () => ({}),
   cancelSession: async () => ({}), readEvents: async () => ({ events: [], nextSeq: -1, hasMore: false }),

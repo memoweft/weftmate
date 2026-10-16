@@ -1,4 +1,4 @@
-import {app,Tray} from 'electron';
+import {app,Tray,session,BrowserWindow} from 'electron';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import {registerHooks,syncBuiltinESMExports} from 'node:module';
@@ -15,6 +15,27 @@ if(process.env.BL29_OWNED_ROOT){
 }
 app.getAppPath=()=>process.cwd();
 const original=Tray.prototype.setContextMenu;Tray.prototype.setContextMenu=function(menu){globalThis.revTray=menu;return original.call(this,menu);};
+let nativeHeaders;
+app.once('ready',()=>{
+ const requests=session.fromPartition('persist:weftmate-desktop').webRequest;
+ const register=requests.onBeforeSendHeaders;
+ requests.onBeforeSendHeaders=function(filter,listener){nativeHeaders=listener;return register.call(this,filter,listener);};
+});
+globalThis.revQueueTeardownRequest=()=>{
+ const window=BrowserWindow.getAllWindows()[0],frame=window.webContents.mainFrame,origin=new URL(frame.url).origin;
+ const details={webContentsId:window.webContents.id,frame,initiatorOrigin:origin,url:origin+'/personal/v1/auth/me',requestHeaders:{}};
+ const exit=app.exit.bind(app);
+ app.exit=code=>{
+  // Deliver a previously queued session request after the real window has
+  // been destroyed, reproducing the ordering seen in the failed vendor job.
+  window.destroy();
+  const result={destroyed:window.isDestroyed(),callbackCompleted:false,desktopCapability:false};
+  try {nativeHeaders(details,response=>{result.callbackCompleted=true;result.desktopCapability=!!response.requestHeaders['X-WeftMate-Desktop'];});}
+  catch(error){result.error=error.message;}
+  fs.writeFileSync(join(process.env.BL29_EXIT_CASE_ROOT,'teardown-request.json'),JSON.stringify(result));
+  exit(code);
+ };
+};
 const baseline=process.env.REV_BASELINE==='1'?JSON.parse(fs.readFileSync(resolve(process.env.BL29_BASELINE_FILE),'utf8')):{};
 const key=p=>{try{return (p instanceof URL?fileURLToPath(p):String(p)).replaceAll('\\','/').replace(process.cwd().replaceAll('\\','/')+'/','');}catch{return '';}};
 const readSync=fs.readFileSync,readAsync=fsp.readFile;
