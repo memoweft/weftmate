@@ -22,6 +22,20 @@ test('unlisted and mixed functional failures never retry, even alongside a timin
     assert.equal(result.calls.length, 1); assert.equal(result.exitCode, 1); assert.deepEqual(result.recovered, []);
   }
 });
+
+test('the recurring host-close failure cannot be recovered by a second file attempt', async () => {
+  const file = 'tests/bl-29-rework.test.ts';
+  const closeFailure = 'BL-29b M5 host close revokes empty account waits before closing sockets';
+  const entries = JSON.parse(readFileSync('.github/timing-sensitive-tests.json', 'utf8')).tests;
+  const calls: number[] = [];
+  const result = await runFileGate([file], {entries, policy, execute: async (_file: string, attempt: number) => {
+    calls.push(attempt);
+    return attempt === 1 ? {...fail, failures: [closeFailure]} : pass;
+  }});
+  assert.deepEqual(calls, [1]);
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(result.recovered, []);
+});
 test('listed timing failure retries exactly its whole file once and summary names the recovery', async () => {
   const result = await gate([fail, pass]);
   assert.deepEqual(result.calls, [{file: entry.file, attempt: 1}, {file: entry.file, attempt: 2}]);
