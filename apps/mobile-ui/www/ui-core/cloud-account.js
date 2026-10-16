@@ -21,6 +21,8 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       CODE_INVALID: '验证码不对，请重新输入。', INVALID_LOGIN_CODE: '验证码不对或已失效，请重发后再试。', CHALLENGE_INVALID: '验证码已失效，请重新发送。', PASSWORD_TICKET_INVALID: '验证已失效，请重新发送验证码。',
       CLOUD_DEVICE_VERIFICATION_REQUIRED: '请重新登录并确认邮箱。', CLOUD_TOKEN_INVALID: '需要重新登录，电脑上的内容仍可继续使用。', UNAUTHORIZED: '登录已失效，请重新登录。', DEVICE_NOT_TRUSTED: '这台设备已下线，请联系账户所有者。',
       CLOUD_BINDING_CONFLICT: '这个云账号已绑定其他本地账户，请使用原账号或先解绑。',
+      CLOUD_CREDENTIAL_CLEANUP_REQUIRED: '暂时无法清理保存的登录信息，请恢复云服务后重试退出或切换。当前账户仍可使用。',
+      NATIVE_CREDENTIAL_CHECK_REQUIRED: '请更新电脑上的 WeftMate 后再退出或切换账户。当前账户仍可使用。',
       NETWORK: '网络不通，请检查连接后重试。', STORAGE_UNAVAILABLE: '无法安全记住本设备，请检查设备存储后重试。',
       CLOUD_RESPONSE_INVALID: '电脑连接暂时没有返回有效结果，请稍后重试。',
       CLOUD_REQUEST_INVALID: '连接电脑时未能完成请求，请稍后重试。',
@@ -86,9 +88,13 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (!desktopCloudObserved) {
       try { await core.accessApi('/cloud/binding'); desktopCloudObserved = true; }
       catch (error) {
-        // A desktop with no cloud feature has no current cloud credential scope
-        // to resolve. Do not make local account selection require cloud setup.
-        if (error.status === 404) return;
+        if (error.status === 404) {
+          // A missing cloud module cannot tell us whether an earlier run left
+          // native credentials. Only a trusted, read-only native check can.
+          if (!client.nativeKey?.credentialsPresent) throw { code: 'NATIVE_CREDENTIAL_CHECK_REQUIRED' };
+          if (await client.nativeKey.credentialsPresent() === false) return;
+          throw { code: 'CLOUD_CREDENTIAL_CLEANUP_REQUIRED' };
+        }
         throw error;
       }
     }
