@@ -14,10 +14,23 @@ if(process.env.BL29_OWNED_ROOT){
  fs.appendFileSync(join(process.env.BL29_OWNED_ROOT,'stages.jsonl'),JSON.stringify({at:new Date().toISOString(),stage:'launch',method:process.env.BL29_EXIT_METHOD,pid:process.pid,rss:process.memoryUsage().rss})+'\n');
 }
 app.getAppPath=()=>process.cwd();
+// Test-only metadata on the existing stdout pipe. Keep the measured trigger
+// and close endpoints unchanged; no disk flush is added to shutdown.
+const exitPhases=[];
+const exitPhase=name=>exitPhases.push({name,at:Date.now(),monotonicMs:performance.now()});
+globalThis.revExitPhase=exitPhase;
+const publishExitPhases=()=>{try{fs.writeSync(1,'BL29_EXIT_PHASES '+JSON.stringify(exitPhases)+'\n');}catch{/* Observation output must never block or replace native exit. */}};
+app.on('before-quit',()=>exitPhase('before-quit'));
+const actualExit=app.exit.bind(app);
+app.exit=(...args)=>{exitPhase('native-app-exit');publishExitPhases();return actualExit(...args);};
+process.on('exit',()=>{exitPhase('process-exit');publishExitPhases();});
 const original=Tray.prototype.setContextMenu;Tray.prototype.setContextMenu=function(menu){globalThis.revTray=menu;return original.call(this,menu);};
 let nativeHeaders;
 app.once('ready',()=>{
- const requests=session.fromPartition('persist:weftmate-desktop').webRequest;
+ const desktopSession=session.fromPartition('persist:weftmate-desktop');
+ const cookies=desktopSession.cookies,flushCookies=cookies.flushStore;
+ cookies.flushStore=function(...args){exitPhase('cookies-flush-start');return Reflect.apply(flushCookies,this,args).finally(()=>exitPhase('cookies-flush-end'));};
+ const requests=desktopSession.webRequest;
  const register=requests.onBeforeSendHeaders;
  requests.onBeforeSendHeaders=function(filter,listener){nativeHeaders=listener;return register.call(this,filter,listener);};
 });
@@ -28,11 +41,13 @@ globalThis.revQueueTeardownRequest=()=>{
  app.exit=code=>{
   // Deliver a previously queued session request after the real window has
   // been destroyed, reproducing the ordering seen in the failed vendor job.
-  window.destroy();
+  exitPhase('teardown-window-start');window.destroy();exitPhase('teardown-window-end');
   const result={destroyed:window.isDestroyed(),callbackCompleted:false,desktopCapability:false};
   try {nativeHeaders(details,response=>{result.callbackCompleted=true;result.desktopCapability=!!response.requestHeaders['X-WeftMate-Desktop'];});}
   catch(error){result.error=error.message;}
+  exitPhase('teardown-request-end');
   fs.writeFileSync(join(process.env.BL29_EXIT_CASE_ROOT,'teardown-request.json'),JSON.stringify(result));
+  exitPhase('teardown-file-end');
   exit(code);
  };
 };
@@ -50,7 +65,8 @@ fs.readFileSync=function(p,opt){const s=baseline[key(p)];return projectRead(p,op
 fsp.readFile=async function(p,opt){const s=baseline[key(p)];return projectRead(p,opt,s===undefined?await readAsync.call(this,p,opt):s);};syncBuiltinESMExports();
 registerHooks({load(url,context,nextLoad){const k=key(url.startsWith('file:')?new URL(url):url);let source=baseline[k];
  if(k==='src/main.mjs'){source??=readSync(new URL(url),'utf8');source+='\nglobalThis.revRuntimeOrigin=()=>runtimeOrigin;globalThis.revRuntimeClose=()=>webRuntime.close();globalThis.revAccessClose=()=>personalAccessService.close();\n';}
+ if(k==='src/host-diagnostics.mjs'){source??=readSync(new URL(url),'utf8');source+='\nconst revCreateHostDiagnostics=createHostDiagnostics;createHostDiagnostics=(...args)=>{const diagnostics=revCreateHostDiagnostics(...args),exit=diagnostics.exit;diagnostics.exit=(...values)=>{globalThis.revExitPhase("exit-log-start");try{return exit(...values);}finally{globalThis.revExitPhase("exit-log-end");}};return diagnostics;};\n';}
  if(k==='src/update.ts'){source??=readSync(new URL(url),'utf8');source+='\nexport function __revPrepareUpdate(){state.enabled=true;state.status="downloaded";autoUpdater={} as any;}\n';}
  if(source!==undefined)return {format:k.endsWith('.ts')?'module-typescript':'module',source,shortCircuit:true};return nextLoad(url,context);}});
-globalThis.revUpdate=async()=>{const m=await import(pathToFileURL(resolve('src/update.ts')).href);m.__revPrepareUpdate();return m.quitAndInstall();};
+globalThis.revUpdate=async()=>{exitPhase('update-trigger');const m=await import(pathToFileURL(resolve('src/update.ts')).href);exitPhase('update-module-ready');m.__revPrepareUpdate();return m.quitAndInstall();};
 await import(pathToFileURL(resolve('src/main.mjs')).href);
