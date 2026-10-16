@@ -42,6 +42,9 @@ jobs:
           persist-credentials: false
       - name: Prepare pinned memory layer and run offline Core RPC
         run: node scripts/memory-runtime/prepare.mjs --mode ${{ matrix.memory-runtime }} --output .local/memory-runtime --cache .local/memory-inputs --core-checkout .local/memory-core
+      - name: Verify original publisher binary against the Windows runner identity
+        if: matrix.memory-runtime == 'full'
+        run: node --test tests/integration/memory-runtime-publisher-paths.mjs
       - uses: actions/checkout@v4
         with:
           repository: deepseek-ai/deepseek-harness

@@ -63,3 +63,29 @@ test('package scanner distinguishes upstream paths and refuses synthetic build i
     await assert.rejects(verify(), /app.asar contains build-machine-identity/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+test('Mac trial reuse keeps archive and loose-resource checks without requiring Windows memory',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'weftmate-mac-package-policy-'));
+  const identity={home:['C:','Users','Fictional Builder'].join('/'),username:'Fictional Builder',hostname:'SYNTHETIC-BUILDER-HOST',roots:[]};
+  try{
+    const unpacked=join(root,'WeftMate.app'),resources=join(unpacked,'Contents/Resources'),installer=join(unpacked,'Contents/MacOS/WeftMate');
+    const source=join(root,'source'),runtime=join(resources,'dsh-runtime');
+    await mkdir(join(source,'src'),{recursive:true});await mkdir(runtime,{recursive:true});await mkdir(join(installer,'..'),{recursive:true});
+    await writeFile(installer,'synthetic Mac executable');await writeFile(join(source,'src/main.mjs'),'export const synthetic=true;');
+    await writeFile(join(source,'package.json'),JSON.stringify({macTrial:true}));
+    await writeFile(join(runtime,'main.mjs'),'export const synthetic=true;');
+    const manifest=join(runtime,'VENDOR-MANIFEST.json');
+    await writeFile(manifest,JSON.stringify({webRuntimeEntry:'main.mjs',carriedButNotMounted:[],closure:[]}));
+    const pack=()=>asar.createPackage(source,join(resources,'app.asar'));await pack();
+    // Match build-mac-trial's explicit target and actual .app resource layout.
+    const verify=()=>verifyWindowsPackage({unpacked,resourcesDirectory:resources,installer,identity,platform:'darwin'});
+    const result=await verify();assert.equal(result.memoryRuntime,null);assert.ok(result.appArchive.scannedTextFiles>0);assert.ok(result.vendor.scannedTextFiles>0);
+    // macTrial metadata alone must never exempt the default Windows target.
+    await assert.rejects(verifyWindowsPackage({unpacked,resourcesDirectory:resources,installer,identity}),/memory runtime mode/);
+    await writeFile(join(runtime,'main.mjs'),identity.home+'/private');await assert.rejects(verify(),/build-machine-identity/);
+    await writeFile(join(runtime,'main.mjs'),'export const synthetic=true;');
+    await writeFile(join(source,'src/main.mjs'),identity.hostname);await pack();await assert.rejects(verify(),/app.asar contains build-machine-identity/);
+    await writeFile(join(source,'src/main.mjs'),'export const synthetic=true;');await pack();
+    await rm(join(runtime,'main.mjs'));await assert.rejects(verify(),/runtime entry is missing/);
+  }finally{await rm(root,{recursive:true,force:true});}
+});
