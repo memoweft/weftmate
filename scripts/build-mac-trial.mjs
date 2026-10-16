@@ -41,7 +41,7 @@ try {
   const candidate = join(scratch, 'build/mac/WeftMate.app');
   execFileSync('/usr/bin/codesign', ['--force', '--deep', '--sign', '-', candidate], { stdio: 'inherit' });
   execFileSync('/usr/bin/codesign', ['--verify', '--deep', '--strict', candidate], { stdio: 'inherit' });
-  const audit = await verifyWindowsPackage({ unpacked: candidate, resourcesDirectory: join(candidate, 'Contents/Resources'), installer: join(candidate, 'Contents/MacOS/WeftMate') });
+  const audit = await verifyWindowsPackage({ unpacked: candidate, resourcesDirectory: join(candidate, 'Contents/Resources'), installer: join(candidate, 'Contents/MacOS/WeftMate'), platform: 'darwin' });
   const sizeKiB = Number(execFileSync('/usr/bin/du', ['-sk', candidate], { encoding: 'utf8' }).split(/\s/)[0]);
   await writeFile(evidencePath('m3-3b/package.json'), JSON.stringify({
     platform: 'darwin-x64', sizeKiB, signing: 'ad-hoc; no Developer ID; not notarized',
