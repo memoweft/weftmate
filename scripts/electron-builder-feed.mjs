@@ -21,13 +21,14 @@ import { spawnSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { withMemoryRuntimeResources } from './memory-runtime-package.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(here, '..')
 const pkg = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'))
 const feedUrl = process.env.WEFTMATE_UPDATE_URL || 'http://127.0.0.1:9000/feed'
 
-const config = { ...pkg.build, publish: { provider: 'generic', url: feedUrl } }
+const config = await withMemoryRuntimeResources({ ...pkg.build, publish: { provider: 'generic', url: feedUrl } })
 const configPath = join(repoRoot, '.stage', 'electron-builder.feed.json')
 mkdirSync(dirname(configPath), { recursive: true })
 writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8')

@@ -85,6 +85,11 @@ export function containsBuildMachineIdentity(text, identity = buildMachineIdenti
 
 export function isThirdPartyPackageFile(file) {
   const parts = String(file).replaceAll('\\', '/').replace(/^\/+/, '').split('/')
+  // Locked upstream Python wheels can contain their publisher's PDB paths,
+  // just as npm dependencies contain upstream source examples. The complete
+  // memory manifest is verified before scanning; local builder identity is
+  // still rejected by packagedTextViolation for every byte/file.
+  if (parts[0] === 'memory-runtime' && parts[1] === 'site-packages') return true
   const index = parts.lastIndexOf('node_modules')
   if (index < 0) return false
   // WeftMate plugins remain first party even when mounted as packages.
@@ -93,12 +98,16 @@ export function isThirdPartyPackageFile(file) {
 }
 
 export function packagedTextViolation(text, file, identity = buildMachineIdentity()) {
-  // mailparser's immutable public TLD data can contain a label equal to the
-  // builder's short account/host name. Only these exact upstream 1.261.0 bytes
-  // have public-data provenance; modified bytes and every other file retain
-  // all identity checks. Never change the domain list or exempt its directory.
-  if (String(file).replaceAll('\\','/').replace(/^\/+/, '') === 'node_modules/tlds/index.json' &&
-      createHash('sha256').update(text).digest('hex') === '39498bb22800167e8b6fa73740b2686decb4ffdbea3e8333f32020f5714938f2') {
+  // Public labels, tokenizer vocabulary and mathematical references may match
+  // a short builder name. Only these exact fixed publisher bytes have that
+  // provenance. Changed bytes and all paths retain full identity checks.
+  const publicNames = {
+    'node_modules/tlds/index.json': '39498bb22800167e8b6fa73740b2686decb4ffdbea3e8333f32020f5714938f2',
+    'memory-runtime/models/tokenizer.json': '0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39',
+    'memory-runtime/site-packages/sympy/polys/sqfreetools.py': 'a1116538b85c5f3e4e2a373d490b4eb8484cbda72f907c93484aa193a4a78756',
+  }
+  const publicHash = publicNames[String(file).replaceAll('\\','/').replace(/^\/+/, '')]
+  if (publicHash && publicHash === createHash('sha256').update(text).digest('hex')) {
     return containsBuildMachineIdentity(text, {...identity, username:null, hostname:null}) ? 'build-machine-identity' : null
   }
   if (containsBuildMachineIdentity(text, identity)) return 'build-machine-identity'

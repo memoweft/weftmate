@@ -11,7 +11,7 @@
 | 这个文件必须指向本机已有的 Python 解释器和 MemoWeft 源码目录（目录里要有 `memoweft/integrations/dsh_bridge/__main__.py`）；记忆处理用的模型入口只能是本机 `http://127.0.0.1:<端口>/v1` | `src/personal-memory/config.mjs` |
 | 安装版把安装配置 `desktop-config.json` 里的 `personalMemoryConfig` 转成上面的参数。全新安装时，Windows 默认配置没有这一项；macOS 只在配置旁边已有 `memory-config.json` 时才加 | `src/desktop-config.mjs` |
 | 本人从源码版迁移来的安装版，迁移脚本写入了这一项，所以它依赖本机现成的 Python 和 MemoWeft 源码 | `scripts/migrate-desktop-config.mjs` |
-| 安装包不带 Python 和 MemoWeft，**全新安装默认没有记忆** | `package.json` 的打包配置 |
+| Windows 构建已能随包携带固定 Python/Core；默认完整语义层，基础层可单独构建。自动配置尚未接通，**全新安装默认仍没有启用记忆** | `scripts/memory-runtime/README.md`、`scripts/memory-runtime-package.mjs`；D106 / D110，#332 G8 |
 | 手机单独聊天只有轻量记忆，不合并成第二套正式记忆；电脑接手后，原对话交给电脑摄取（D63） | [PHONE_MEMORY.md](PHONE_MEMORY.md)、`src/ui-core/phone-memory.js`、`apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneMemory.swift` |
 | 记忆页：桌面 `src/personal-access-ui/components/memory.js`，共用逻辑 `src/ui-core/memory.js`，手机网页 `apps/mobile-ui/www/components/memory.js` | — |
 | CI 里接真实 MemoWeft 的作业固定在一个候选提交上（注释写着待替换），测试文件名单写死在作业里 | `.github/workflows/ci.yml` 的 `observed-core` |
@@ -23,7 +23,7 @@
 1. **先验收，再动手。** 开工第一件事是按 PLAN 的记忆场景（M1–M5）跑一遍，结果记进地图第 4 节。两种环境都要跑：全新安装的 Windows 安装包（合成账号），以及开发模式下带记忆配置的宿主（合成数据）。本人自己的安装版只在本人在场时只读核对，不改它的数据。
 2. **不碰本人的日用数据。** 测试用独立的数据目录和合成账号。本人安装版用到的那份 MemoWeft 源码目录（位置见本机 `MACHINE.md`）不切分支、不改文件；改内核用单独的工作目录。
 3. **记忆内容不外露。** 日志、PR、截图和问题单里不出现真实的记忆内容，只写条数、状态和合成例子。
-4. **打包方式由本人定。** 先写一页方案比较交给本人，未定之前不改打包。可以比较的方向（不限于这些）：安装包里带 Python 和 MemoWeft；把 MemoWeft 打成单独的可执行程序随安装包发；把内核移植到 Node、和宿主在同一个进程；做成首次用到时才下载的可选组件。每个方案写清体积、怎么更新、失败时用户看到什么、工作量。
+4. **打包采用本人已定的内置 Python/Core（D106），默认完整语义层（D110）。** 两层仍能单独构建，固定版本、散列与许可；用户端不安装依赖。组件分发、自动接线、安装升级验收依次完成。构建方法和已知限制见 [组件说明](../scripts/memory-runtime/README.md)。本人决定由总经理在 [#332](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265) 转达。
 5. **可靠性放进内核，不在 WeftMate 这一侧再叠层。** 不再新增队列、日志、恢复补做这类层。遇到失败，先复现、先写一条会失败的测试，再判断原因在哪一层：内核缺原子性或幂等，就改 MemoWeft（在它自己的仓库，走它自己的 PR），WeftMate 这侧只做同步调用。确实要在 WeftMate 这侧加，在 PR 里写清复现步骤和为什么不能放进内核。
 6. **删除语义照 D16、D33。** 忘掉记忆和删除聊天原话是两件事；只有确认删除成功，才能对用户说「已经忘了」。
 7. **接口变化要同步。** 改 `/personal/v1/memory` 下的路由，同时改 [CLIENT_API.md](CLIENT_API.md) 和安卓白名单（`Network.kt::validBusinessPath`、`BusinessRouteUnitTest.kt`）。
@@ -35,7 +35,7 @@
 ## 3. 第一步
 
 1. 按规则 1 跑 M1–M5，写下每个场景在两种环境里的结果。
-2. 写打包方案比较（规则 4），交本人选。
+2. 按已确认的 D106 / D110 完成组件分发、自动接线和安装升级验收（规则 4）。
 3. 把失败的场景按根因归并成少数几个包，写进 PLAN 当前清单的记忆一项，然后一个一个修。
 4. 核实旧插件 `weftmate-memory.mjs` 是不是完全不起作用；是的话，连同 DSH 配置模板里的引用一起删（先查清 R7–R10 模板的升级兼容）。
 

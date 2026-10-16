@@ -6,6 +6,7 @@ import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import asarApi from '@electron/asar'
 import { buildMachineIdentity, containsDevelopmentPath, forbiddenArchiveEntry, packagedTextViolation } from './windows-package-policy.mjs'
+import { verifyMemoryRuntime, modeOf } from './memory-runtime/verify.mjs'
 
 const { extractFile, listPackage, statFile, uncache } = asarApi
 
@@ -130,6 +131,10 @@ export async function verifyWindowsPackage({ unpacked, installer, resourcesDirec
   }
 
   await assertNoReparsePoints(runtime)
+  const packageMetadata = JSON.parse(extractFile(asar, 'package.json', false).toString('utf8'))
+  const memoryRuntime = await verifyMemoryRuntime(join(resources, 'memory-runtime'), {
+    mode: modeOf(packageMetadata.memoryRuntimeMode),
+  })
   // Include unpacked app dependencies, relay configuration and all loose resources.
   const resourceScan = await scanTextTree(resources, identity)
 
@@ -155,6 +160,7 @@ export async function verifyWindowsPackage({ unpacked, installer, resourcesDirec
       reparsePoints: 0,
     },
     looseResources: { scannedTextFiles: resourceScan.scannedFiles, scannedBinaryFiles: resourceScan.binaryFiles },
+    memoryRuntime,
     boundaries: {
       developmentPaths: 0,
       buildMachineIdentityHits: 0,
