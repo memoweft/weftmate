@@ -103,21 +103,32 @@ class HostMemoryBridge {
     }
     const id = `memory-${randomUUID()}`;
     return new Promise((resolve, reject) => {
+      const cancel = () => {
+        try { process.send({ protocol: PERSONAL_MEMORY_PROTOCOL, id, action: 'cancel' }); }
+        catch { /* A disconnected child cannot cancel work in its parent. */ }
+      };
       const timer = setTimeout(() => {
+        if (action === 'tool') { cancel(); return; }
         if (!this.pending.delete(id)) return;
         reject(new Error('MEMORY_TIMEOUT'));
       }, action === 'recall' || data.tool?.name === 'memory_forget_request' ? 360_000 : 18_000);
       const abort = () => {
         const entry = this.pending.get(id);
         if (!entry) return;
+        if (action === 'tool') { cancel(); return; }
         this.pending.delete(id); clearTimeout(timer); reject(new Error('MEMORY_CANCELLED'));
       };
       this.pending.set(id, { resolve: (value) => { signal?.removeEventListener?.('abort', abort); resolve(value); },
         reject: (reason) => { signal?.removeEventListener?.('abort', abort); reject(reason); }, timer });
       signal?.addEventListener?.('abort', abort, { once: true });
+      const unavailable = () => {
+        const entry = this.pending.get(id);
+        if (!entry) return;
+        this.pending.delete(id); clearTimeout(timer); entry.reject(new Error('MEMORY_UNAVAILABLE'));
+      };
       try { process.send({ protocol: PERSONAL_MEMORY_PROTOCOL, id, action, ...data },
-        (error) => { if (error) abort(); }); }
-      catch { abort(); }
+        (error) => { if (error) unavailable(); }); }
+      catch { unavailable(); }
     });
   }
 
@@ -163,7 +174,7 @@ export function boundaryForCompletedTurn(session, event) {
     payload_hash: payloadHash };
 }
 
-export function userForTurn(session, turn, maxChars = 500) {
+export function userForTurn(session, turn, maxChars = 500, includeSource = false) {
   if (!PRESETS.has(session?.header?.agentPreset) || !Array.isArray(session.events) ||
       !Number.isSafeInteger(turn)) return null;
   const startIndex = session.events.findLastIndex((entry) => entry.type === 'turn/start' &&
@@ -174,8 +185,12 @@ export function userForTurn(session, turn, maxChars = 500) {
     entry.type === 'user/message' && entry.data?.source?.kind === 'user' &&
     contentText(entry.data?.content).trim());
   if (!event) return null;
+  const preceding = session.events.slice(startIndex + 1, session.events.indexOf(event)).findLast(entry => entry.type === 'assistant/message');
   return { id: typeof event.data?.id === 'string' ? event.data.id : null,
-    seq: event.seq, text: contentText(event.data.content).trim().slice(0, maxChars) };
+    seq: event.seq, text: contentText(event.data.content).trim().slice(0, maxChars),
+    ...(includeSource ? { message: { message_id: event.data.id, content: contentText(event.data.content),
+      preceding_ai_context: preceding ? contentText(preceding.data?.message?.content) : null,
+      ...(Number.isFinite(Number(event.time)) && Number(event.time) > 0 ? { timestamp: Math.floor(Number(event.time) / 1000) } : {}) } } : {}) };
 }
 
 /** DSH claims inbox messages before pre-step; it appends them to session.events afterward. */
@@ -248,12 +263,13 @@ export function apply(ctx) {
       { name: 'memory_forget', title: '忘掉记忆', description: 'Forget the requested topic and its sources and correction history. Prefer query with the user topic; the host resolves matching records and durably retries outages. Only claim success for applied. Does not edit computer files.', parameters: target },
       { name: 'memory_correct', title: '纠正记忆', description: 'Correct a matching memory to the current user\'s new understanding. Use exact kind/id and latest worldRevision from memory_query. Only claim correction after an applied receipt.',
         parameters: { ...target, kind: { ...target.kind, enum: ['cognition', 'relationship', 'event'] },
-          text: { type: 'string', required: true, description: 'The user\'s corrected fact, not the superseded value.' } } },
+          text: { type: 'string', required: true, description: 'The corrected fact. It is a proposal, never the original source.' },
+          sourceQuote: { type: 'string', required: true, description: 'One complete verbatim clause or sentence from the CURRENT user message that states the correction, including its punctuation. Preserve every word, number and name. Exclude independent other facts. The host supplies the real message identity.' } } },
     ]) agent.ctx.tools.register(defineTool({ ...tool,
       output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
       execute: async (args, exec) => {
         const turn = agent.session.events.findLast(event => event.type === 'turn/start').data.turn;
-        const source = userForTurn(agent.session, turn, 16000);
+        const source = userForTurn(agent.session, turn, 16000, true);
         const verified = explicitActions.get(agent);
         const previous = tool.name === 'memory_forget' && verified?.turn === turn &&
           verified.results.get(source?.id ?? digest(source?.text ?? ''));
@@ -360,33 +376,33 @@ export function apply(ctx) {
     const claimed = (payload.messages ?? []).filter(message => message?.source?.kind === 'user');
     const inputs = claimed.length ? claimed.map(message => ({ id: message.id, text: contentText(message.content).trim() }))
       : [userForTurn(session, turn, 16000) ?? user];
-    for (const input of inputs) {
-      const key = input.id ?? digest(input.text);
-      if (explicit?.seen.has(key)) continue;
-      if (!possibleForgetRequest(input.text)) continue;
-      explicit ??= { turn, message: '', context: '', reported: false, seen: new Set(), results: new Map() };
-      explicit.seen.add(key);
-      explicitActions.set(payload.agent, explicit);
-      const result = await bridge.request('tool', { sessionId: session.id, turn,
-        tool: { name: 'memory_forget_request', arguments: {}, source: input,
-          requestId: `memory-tool:${digest(`${session.id}|${turn}|${key}|forget-request`)}` } }, payload.signal)
-        .catch(() => ({ state: 'unavailable', message: '这次还没忘掉，请稍后再试。' }));
-      explicit.results.set(key, result);
-      // A nomination can be a translation, quotation, condition or question.
-      // Such messages still receive the normal model reply, with no deletion receipt.
-      if (result.state === 'no_action') {
-        explicit.context += '【本轮删除授权核对】结合整条消息，当前没有直接、无条件的删除授权。没有删除，也没有提交或排队遗忘；不要调用遗忘工具或声称稍后会删除。请正常完成当前翻译、解释、提问或条件确认。\n';
-        continue;
-      }
-      explicit.reported = false; explicit.message += result.message ?? '这次还没忘掉，请稍后再试。';
-      explicitActions.set(payload.agent, explicit);
-      rememberReply(payload.agent, turn, explicit.message);
-    }
     const query = user.text;
     let text = null;
     try {
-      diagnostic('prestep-send');
       payload.agent[Symbol.for('weftmate.memoryRecallPending')] = true;
+      const keys = inputs.map(input => input.id ?? digest(input.text));
+      if (keys.some(key => !explicit?.seen.has(key)) && inputs.some(input => possibleForgetRequest(input.text))) {
+        const input = { id: inputs.at(-1).id, text: inputs.map(input => input.text).join('\n') };
+        const key = digest(keys.join('|'));
+        explicit ??= { turn, message: '', context: '', reported: false, seen: new Set(), results: new Map() };
+        for (const id of keys) explicit.seen.add(id);
+        explicitActions.set(payload.agent, explicit);
+        const result = await bridge.request('tool', { sessionId: session.id, turn,
+          tool: { name: 'memory_forget_request', arguments: {}, source: input,
+            requestId: `memory-tool:${digest(`${session.id}|${turn}|${key}|forget-request`)}` } }, payload.signal)
+          .catch(() => ({ state: 'unavailable', message: '这次还没忘掉，请稍后再试。' }));
+        for (const id of keys) explicit.results.set(id, result);
+        // A nomination can be a translation, quotation, condition or question.
+        // Such messages still receive the normal model reply, with no deletion receipt.
+        if (result.state === 'no_action') {
+          explicit.context += '【本轮删除授权核对】结合整条消息，当前没有直接、无条件的删除授权。没有删除，也没有提交或排队遗忘；不要调用遗忘工具或声称稍后会删除。请正常完成当前翻译、解释、提问或条件确认。\n';
+        } else {
+          explicit.reported = false; explicit.message += result.message ?? '这次还没忘掉，请稍后再试。';
+          explicitActions.set(payload.agent, explicit);
+          rememberReply(payload.agent, turn, explicit.message);
+        }
+      }
+      diagnostic('prestep-send');
       const result = await bridge.request('recall', { sessionId: session.id, turn, query,
         userMessageId: user.id }, payload.signal);
       if (result.memoryPolicy?.resetContext) {

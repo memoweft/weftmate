@@ -67,7 +67,8 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
         storage_cleanup: { state: 'complete', detail_code: 'current_journal_committed' } } };
     },
   };
-  const tool = (name: string, args: any, count: number) => ({ content: '', tool_calls: [{ id: `fix45-${count}`, type: 'function', function: { name, arguments: JSON.stringify(args) } }] });
+  const tool = (name: string, args: any, count: number) => ({ content: '', tool_calls: [{ id: `fix45-${count}`, type: 'function', function: { name,
+    arguments: JSON.stringify(name === 'memory_correct' ? { ...args, sourceQuote: args.text } : args) } }] });
   if (automaticForget) manager.mutateFromTool = async (owner: string, action: any) => {
     assert.equal(owner, ownerId); commands.push(action);
     assert.equal(action.name, 'memory_forget'); assert.deepEqual(action.arguments, { query: '我喝茶的偏好' });
