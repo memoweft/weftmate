@@ -87,7 +87,13 @@ async function runCase(version,method){
   const waitReadyBy=Date.now()+2500;while(!pending.size&&Date.now()<waitReadyBy)await pause(25);
   row.pendingWaitRequests=pending.size;row.waitRequestCounts={...waitCounts};
   if(version==='head')row.beforeCloseReadiness=await nativeReadiness(p);
-  const child=app.process();const closed=new Promise(r=>child.once('close',()=>r()));
+  const child=app.process();let exitOutput='';
+  child.stdout?.on('data',chunk=>{
+   exitOutput+=chunk.toString();const lines=exitOutput.split('\n');exitOutput=lines.pop().slice(-4096);
+   for(const line of lines)if(line.startsWith('BL29_EXIT_PHASES '))row.exitPhases=JSON.parse(line.slice(17));
+  });
+  child.once('exit',()=>{row.childExitAt=Date.now();});
+  const closed=new Promise(r=>child.once('close',()=>{row.childCloseAt=Date.now();r();}));
   if(['runtime-first','access-first'].includes(method)){
    const origin=await app.evaluate(()=>globalThis.revRuntimeOrigin());if(!origin)throw Error('runtime origin unavailable');
    const created=await fetch(origin+'/weftmate/api/v1/sessions',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sessionId:'rev-runtime',agentPreset:'personal-remote'})});row.gatewayCreated=created.status;const data=await created.json();const id=data.sessionId||'rev-runtime';
@@ -100,7 +106,7 @@ async function runCase(version,method){
   if(method==='window-tray-exit'){await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].close());await pause(100);row.hidden=await app.evaluate(({BrowserWindow})=>!BrowserWindow.getAllWindows()[0].isVisible());}
   await app.evaluate(async()=>{for(let i=0;i<70&&!globalThis.revTray;i++)await new Promise(r=>setTimeout(r,100));if(!globalThis.revTray)throw Error('tray missing');});
   if(version==='head'&&method==='update-restart')await app.evaluate(()=>globalThis.revQueueTeardownRequest());
-  stage('quit-requested');const at=Date.now();if(method==='update-restart')await app.evaluate(()=>{setTimeout(()=>void globalThis.revUpdate(),0);});else await app.evaluate(()=>{setTimeout(()=>globalThis.revTray.items.find(i=>i.label==='退出').click(),0);});
+  stage('quit-requested');const at=Date.now();row.quitRequestedAt=at;if(method==='update-restart')await app.evaluate(()=>{setTimeout(()=>void globalThis.revUpdate(),0);});else await app.evaluate(()=>{setTimeout(()=>globalThis.revTray.items.find(i=>i.label==='退出').click(),0);});row.triggerSubmittedAt=Date.now();
   await closed;row.ms=Date.now()-at;row.exitCode=child.exitCode;stage('closed',{exitCode:child.exitCode});app=null;
  }catch(e){row.error=scrub(e.message);if(version==='head'&&app)row.failedReadiness=await app.firstWindow().then(nativeReadiness).catch(()=>null);process.exitCode=1;}finally{await app?.close();row.shutdownStages=shutdownStages(profile);if(existsSync(join(root,'teardown-request.json')))row.teardownRequest=JSON.parse(readFileSync(join(root,'teardown-request.json'),'utf8'));rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});writeFileSync(outputPath(process.argv.includes('--orders-only')?'orders.json':'exit.json'),JSON.stringify(report,null,2));console.log(row);}
 }
