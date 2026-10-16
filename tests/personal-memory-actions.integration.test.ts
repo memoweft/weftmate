@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 import { createHash } from 'node:crypto'
+import { channel } from 'node:diagnostics_channel'
 import { execFileSync, fork } from 'node:child_process'
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs'
 import { MemoWeftRpc } from '../src/personal-memory/rpc.mjs'
@@ -37,6 +38,9 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
   let recoveryGate: { entered: () => void, pending: Promise<void> } | null = null
   const errors: unknown[] = []
   const coreTrace: any[] = []
+  const actionDiagnostics = channel('weftmate.memory.actions')
+  const actionObserver = (value: unknown) => coreTrace.push({ actionTrace: value })
+  actionDiagnostics.subscribe(actionObserver)
   const server = createServer(async (req, res) => {
     try {
       let body = ''; for await (const part of req) body += part
@@ -104,6 +108,7 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
   let manager = create()
   t.after(async () => {
     await manager.close(); server.closeAllConnections(); await new Promise<void>(r => server.close(() => r()))
+    actionDiagnostics.unsubscribe(actionObserver)
     if (process.env.WEFTMATE_FIX47_CORE_EVIDENCE) await writeFile(path.join(process.env.WEFTMATE_FIX47_CORE_EVIDENCE,
       'core-' + createHash('sha256').update(t.name).digest('hex').slice(0, 12) + '.json'), JSON.stringify({ test: t.name, coreTrace }, null, 2))
     await rm(root, { recursive: true, force: true })
