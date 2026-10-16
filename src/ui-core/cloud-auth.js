@@ -182,9 +182,14 @@
       this.refreshing = current;
       try { await current; } finally { if (this.refreshing === current) this.refreshing = null; }
     }
-    async authorized(path, { method = 'GET', body } = {}) {
+    async authorized(path, { method = 'GET', body, current } = {}) {
+      const check = () => { if (current && !current()) fail('CLOUD_TOKEN_INVALID'); };
+      check();
       const token = await this.access(), url = this.base + path;
-      return this.request(url, { method, body, headers: { Authorization: 'DPoP ' + token, DPoP: await this.proof(url, { method, token }) } });
+      check();
+      const proof = await this.proof(url, { method, token });
+      check(); // In particular, native signing may finish after a newer login.
+      return this.request(url, { method, body, headers: { Authorization: 'DPoP ' + token, DPoP: proof } });
     }
     async channel(connection, request) {
       const generation = this.generation, saved = await this.saved();
