@@ -170,6 +170,11 @@
       };
       engine = await WeftOffline.create({ vault, identity: info, phoneModel: currentModel, workRequests: !native,
         accountCheck: async () => {
+          if (info.localOnly === true) {
+            const current = await nativeCall('phone.identity');
+            if (!current.localOnly || current.accountId !== info.accountId || current.origin !== info.origin) throw Error('ACCOUNT_SWITCHED');
+            return { devices: [], hosts: [] };
+          }
           const directory = await client.authorized('/devices');
           if (!directory.devices.some(d => d.isCurrent && !d.revoked)) { await engine.clear(); throw Error('DEVICE_NOT_TRUSTED'); }
           return directory;
@@ -178,8 +183,8 @@
         host: (path, body) => WeftMobileCloud.core.accessApi(path, { method: 'POST', body, protectedWrite: true }), notify: show });
     }
   }
-  async function start(info, client) {
-    await attachEngine(info,client);
+  async function start(info, client, adopt = true) {
+    await attachEngine(info,client,adopt);
     const next = `${info.origin}:${info.accountId}`;
     if (native) state.model = (await nativeCall('phone.models.list')).selected;
     else state.model = modelServices?.selectedView()||modelView(memoryModel);
@@ -187,21 +192,21 @@
     state.authEpoch++; state.loggedIn = true; state.owner = native ? (await nativeCall('app.bootstrap')).owner : next; state.username = info.email; state.deviceId = info.deviceId;
     state.connection = 'phone'; uiCore.phoneAccountConnection(true); state.transitionPending = false; state.chatSource = 'phone'; state.logicalChats = false;
     state.conversationId = engine.view().conversations.at(-1)?.id || null;
-    state.profile = { displayName: info.email, phoneOnly: true };
+    state.profile = { displayName: info.localOnly ? '本机使用' : info.email, phoneOnly: true, localOnly: info.localOnly === true };
     uiCore.stopConnection(); document.body.classList.remove('cloud-auth-active'); $('cloud-auth-page').classList.remove('active');
     showProfile(state.profile); page('chat'); show();
     if (native) { await syncAccountAppearance(); await nativeCall('app.ready', { owner: (await nativeCall('app.bootstrap')).owner, hasDraft: false }); }
-    clearInterval(poll); poll = setInterval(() => void connect().catch(() => {}), 15000);
+    clearInterval(poll); if (!info.localOnly) poll = setInterval(() => void connect().catch(() => {}), 15000);
   }
   async function connect() {
-    if (!state.loggedIn || engine?.view().running || document.visibilityState === 'hidden') return;
+    if (account?.localOnly || !state.loggedIn || engine?.view().running || document.visibilityState === 'hidden') return;
     const directory = await cloud.authorized('/devices');
     if(Array.isArray(directory.hosts)&&!directory.hosts.length&&engine?.view().phoneMemory?.handover){await engine.memoryChange('release-authority');if(!api.active)await start(account,cloud);return;}
     if (!api.active) { if (engine) await connected(); return; }
     if (directory.hosts?.some(h => h.status === 'online' || h.online === true)) await WeftMobileCloud.core.resumePhoneComputer();
   }
   async function connected() {
-    if (!engine || !account) return;
+    if (!engine || !account || account.localOnly) return;
     uiCore.phoneAccountConnection(false);
     const identity = await (native ? nativeCall('offline.identity') : WeftMobileCloud.core.cloudOfflineIdentity());
     if (!identity?.hostId || identity.hostId === 'unconnected') return;
@@ -212,7 +217,7 @@
     catch { if(!handoffNotice){handoffNotice=true;toast('手机对话仍在这里，连上电脑后会继续处理。');} }
   }
   async function routeCall(method, p) {
-    if(native&&(method.startsWith("voice.")||method.startsWith("diagnostics.")))return nativeCall(method,p);
+    if(native&&(method.startsWith("voice.")||method.startsWith("diagnostics.")||method.startsWith("updates.")))return nativeCall(method,p);
     if (method === 'conversations.list') return { conversations: state.conversations };
     if (method === 'attachments.list') return { attachments: [] };
     if (method === 'app.activity') return {};

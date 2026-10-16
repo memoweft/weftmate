@@ -630,7 +630,7 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 
-function renderPage(name){if(globalThis.WeftPhone?.active&&!['models','phoneModels','account','devices','settings','appearance','about','help','releases'].includes(name)){const target=$('page-content');target.className='';WeftPhone.empty(target,name);return;}if(['activity','health','goals','library'].includes(name))return renderMobileTab(name);const target=$('page-content');target.className='';clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+function renderPage(name){if(globalThis.WeftPhone?.active&&!['models','phoneModels','account','devices','settings','appearance','about','updates','help','releases'].includes(name)){const target=$('page-content');target.className='';WeftPhone.empty(target,name);return;}if(['activity','health','goals','library'].includes(name))return renderMobileTab(name);const target=$('page-content');target.className='';clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
   case 'help':return mobileHelpPage('help',target);
   case 'releases':return mobileHelpPage('releases',target);
   case 'library':return libraryPage(target);

@@ -96,7 +96,8 @@ private fun settingsName(s:NativeSettingsModel)=s.home.optJSONObject("profile")?
     SettingsGroup("外观") {SettingsTheme(s)}
     Spacer(Modifier.height(DesignTokens.space24.dp))
     var confirm by remember {mutableStateOf(false)}
-    FeedControlButton("退出登录",danger=true){confirm=true}
+    if(s.chat.localOnly)FeedControlButton("登录以使用云端功能",secondary=true){s.original("account")}
+    else FeedControlButton("退出登录",danger=true){confirm=true}
     if(confirm)SettingsConfirm(s,"退出登录？","这台手机需要重新登录，已有对话仍保留。","退出登录",{confirm=false}){confirm=false;s.run{s.bridge.call("logout");s.chat.bootstrap()}}
     }
 }
@@ -152,6 +153,10 @@ private fun settingsIcon(id:String)=when(id){"account"->R.drawable.wm_user;"desk
 }
 private fun saveAppearance(s:NativeSettingsModel,p:JSONObject)=s.run("已保存") {val result=s.bridge.call("appearance",p);s.home=JSONObject(s.home.toString()).put("appearance",result.getJSONObject("appearance"));val a=s.chat.call("settings.appearance");s.chat.dark=resolvedAppearanceDark(a.optString("value"),a.optBoolean("systemDark"));s.chat.textSize=result.getJSONObject("appearance").optString("fontSize","15").toFloat();s.chat.codeSize=result.getJSONObject("appearance").optString("codeFontSize","13").toFloat()}
 @Composable private fun SettingsAccount(s:NativeSettingsModel) {
+    if(s.chat.localOnly) {
+        SettingsGroup("本机使用") {SettingsNote("对话和模型设置保存在这台手机上。登录后可以连接其他设备，云账号的资料与本机资料分别保留。");FeedControlButton("登录以使用云端功能",primary=true){s.original("account")}}
+        return
+    }
     val cloud=s.home.optBoolean("cloud")
     var name by remember(s.chat.owner){mutableStateOf(s.home.optJSONObject("profile")?.optString("displayName").orEmpty())}
     if(s.accountFlow.isEmpty()) {
@@ -177,6 +182,10 @@ private fun saveAppearance(s:NativeSettingsModel,p:JSONObject)=s.run("已保存"
             if(editable)FeedControlButton("移除设备",danger=true,enabled=!s.busy){confirm=true}
         }
         if(confirm)SettingsConfirm(s,"移除 ${device.optString("name")}？","这台设备需要重新登录，本机内容保留。交给这台电脑的等待事项会取消；已经开始的操作会在电脑上收尾。","移除设备",{confirm=false}){confirm=false;s.run("设备已移除"){s.bridge.call("remove",JSONObject(device.toString()).put("current",device.optBoolean("isCurrent",device.optBoolean("current"))));s.device=null;s.refresh();s.chat.bootstrap()}}
+        return
+    }
+    if(s.chat.localOnly) {
+        SettingsGroup("连接自己的设备") {SettingsNote("登录同一账号后，可以连接电脑和其他设备。本机的对话和模型设置仍保留在这台手机上。");FeedControlButton("登录以连接设备",primary=true){s.original("devices")}}
         return
     }
     if(!s.home.optBoolean("cloud")) {
