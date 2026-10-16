@@ -3,6 +3,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   const auth = { mode: 'login', step: 'email', email: '', error: '', busy: false, resendAt: 0, retryAt: 0, deviceName: '这台设备', devices: [], hosts: [] };
   core.state.cloudAuth = auth;
   let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight, exchangeTicket, desktopRestore = 0, ownHost, bindingClaim, returnView;
+  let desktopCloudObserved = false;
   const now = () => environment.now?.() ?? Date.now();
   const paint = () => effects.paintCloudAuth?.(cloudAuthView());
   function cloudAuthView() {
@@ -80,11 +81,26 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     returnView = null;
   }
   async function localAccounts() { return core.api('/desktop'); }
+  async function prepareDesktopCredentialCleanup() {
+    if (!auth.localDesktop || client.tokenId) return;
+    if (!desktopCloudObserved) {
+      try { await core.accessApi('/cloud/binding'); desktopCloudObserved = true; }
+      catch (error) {
+        // A desktop with no cloud feature has no current cloud credential scope
+        // to resolve. Do not make local account selection require cloud setup.
+        if (error.status === 404) return;
+        throw error;
+      }
+    }
+    // Once a cloud scope has been observed, failed configuration is not proof
+    // that saved credentials are absent: resolve their identity or reject.
+    await client.configure();
+  }
   async function switchLocalAccount(ownerId) {
     const ticket = ++journey; clearTimeout(renewalTimer); bindingClaim = null;
     // A cloud credential belongs to one local owner; switching requires a new
     // explicit cloud journey rather than carrying that authority to another.
-    if (auth.localDesktop && !client.tokenId) await client.configure();
+    await prepareDesktopCredentialCleanup();
     if (ticket !== journey) return;
     await client.forget();
     if (ticket !== journey) return;
@@ -380,9 +396,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const ticket = ++journey, generation = core.state.identityGeneration;
     const current = () => ticket === journey && generation === core.state.identityGeneration;
     if (auth.localDesktop && !client.tokenId) {
-      // Resolve only local public configuration so forget knows the native key.
-      // Pending or failed configuration must not leave old tokens for next boot.
-      await client.configure();
+      await prepareDesktopCredentialCleanup();
       if (!current()) return;
     }
     if(auth.localSession&&auth.multiHostSupported&&auth.mode==='authenticated') {
@@ -390,7 +404,8 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       if (!current()) return;
     }
     if (auth.mode !== 'offline') {
-      await client.authorized('/auth/logout', { method: 'POST', body: {} });
+      try { await client.authorized('/auth/logout', { method: 'POST', body: {}, current }); }
+      catch (error) { if (!current()) return; throw error; }
       if (!current()) return;
       await client.resetKey();
       if (!current()) return;
@@ -473,6 +488,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       // host's existing issuer/sub-to-owner check; it cannot claim another owner.
       const binding = await core.accessApi('/cloud/binding');
       if (!current()) return;
+      desktopCloudObserved = true;
       if (binding.status !== 'active') { auth.restoreState = 'unbound'; return; }
       await client.configure();
       if (!current()) return;

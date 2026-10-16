@@ -149,6 +149,21 @@ test('unbound or unsaved native desktop remains local without an external cloud 
   }
 });
 
+test('a desktop without cloud configuration can switch local accounts before or after the optional restore settles', async () => {
+  for (const waitForRestore of [false, true]) {
+    const f = await fixture({ saved: false }), fetch = f.client.fetch;
+    f.client.fetch = (url: string, options: any) => url.endsWith('/cloud/config') ? reply({ error: { code: 'NOT_FOUND' } }, 404) : fetch(url, options);
+    f.core.accessApi = async () => { throw { code: 'NOT_FOUND', status: 404 }; };
+    await f.core.load(); if (waitForRestore) await f.settle();
+    await f.core.switchLocalAccount('owner-b');
+    assert.equal(f.core.state.account.ownerId, 'owner-b');
+    assert.equal(f.core.state.currentView, 'assistant');
+    assert.equal(f.core.cloudAuthView().mode, 'offline');
+    assert.equal(f.records.has(f.tokenKey), false);
+    assert.equal(f.calls.some(url => url.startsWith(base)), false);
+  }
+});
+
 test('pending cloud configuration never delays local load or opens a login page', async () => {
   const f = await fixture(), gate = f.blockConfiguration();
   await f.core.load();
@@ -291,6 +306,29 @@ test('switching away and back after a temporary configuration cache failure cann
   assert.equal(f.core.state.account.ownerId, 'owner-a');
 });
 
+test('an unbound owner on a cloud-configured desktop still clears saved credentials when switching', async () => {
+  const f = await fixture(); f.bindings.delete('owner-a');
+  await f.core.load(); await f.settle();
+  assert.equal(f.core.cloudAuthView().restoreState, 'unbound');
+  assert.equal(f.records.has(f.tokenKey), true);
+  await f.core.switchLocalAccount('owner-b');
+  assert.equal(f.core.state.account.ownerId, 'owner-b');
+  assert.equal(f.records.has(f.tokenKey), false);
+});
+
+test('a previously observed cloud scope cannot skip required cleanup when its local routes later disappear', async () => {
+  const f = await fixture(); failConfigurationCacheWrites(f);
+  await f.core.load(); await f.settle();
+  assert.equal(f.core.cloudAuthView().restoreState, 'unavailable');
+  const fetch = f.client.fetch;
+  f.client.fetch = (url: string, options: any) => url.endsWith('/cloud/config') ? reply({ error: { code: 'NOT_FOUND' } }, 404) : fetch(url, options);
+  f.core.accessApi = async () => { throw { code: 'NOT_FOUND', status: 404 }; };
+  await assert.rejects(f.core.switchLocalAccount('owner-b'), (error: any) => error.status === 404);
+  assert.equal(f.core.state.account.ownerId, 'owner-a');
+  assert.equal(f.core.state.csrfToken, 'csrf:owner-a');
+  assert.equal(f.records.has(f.tokenKey), true);
+});
+
 test('unavailable configuration prevents logout or switching from reporting credential cleanup as complete', async () => {
   for (const action of ['logout', 'switch']) {
     const f = await fixture(); failConfigurationCacheWrites(f, true);
@@ -318,6 +356,26 @@ test('a newer login survives the late response from an older logout request', as
   assert.equal(f.records.has(f.tokenKey), true);
   assert.equal(f.events.includes('key-cleared'), false);
   assert.equal(f.core.state.csrfToken, 'csrf:owner-a');
+});
+
+test('a superseded logout cannot transmit after waiting for its native proof signature', async () => {
+  const f = await fixture(); await f.core.load(); await f.settle();
+  const gate = deferred(), entered = deferred(), sign = f.client.nativeKey.sign;
+  let blocked = false;
+  f.client.nativeKey.sign = async (scope: string, input: string) => {
+    const payload = JSON.parse(Buffer.from(input.split('.')[1], 'base64url').toString());
+    if (!blocked && payload.htu.endsWith('/auth/logout')) { blocked = true; entered.resolve(); await gate.promise; }
+    return sign(scope, input);
+  };
+  const loggedOut = f.core.cloudLogout(); await entered.promise;
+  assert.equal(f.calls.some(url => url.endsWith('/auth/logout')), false);
+  f.core.startCloudJourney(); await f.core.cloudLogin({ email: 'synthetic@example.test', password: 'synthetic-password' });
+  assert.equal(f.core.cloudAuthView().mode, 'authenticated');
+  gate.resolve(); await loggedOut;
+  assert.equal(f.calls.some(url => url.endsWith('/auth/logout')), false, 'A stale logout must stop before any device-revoking HTTP request');
+  assert.equal(f.core.cloudAuthView().mode, 'authenticated');
+  assert.equal(f.records.has(f.tokenKey), true);
+  assert.equal(f.events.includes('key-cleared'), false);
 });
 
 test('a newer login supersedes logout while its local binding removal response is pending', async () => {
