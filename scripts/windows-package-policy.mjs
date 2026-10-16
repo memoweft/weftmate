@@ -97,7 +97,29 @@ export function isThirdPartyPackageFile(file) {
   return !/^(@weftmate|weftmate(?:-|$))/i.test(name)
 }
 
+function publisherIdentity(value, file, identity) {
+  // Original files from lock.json's tokenizers 0.22.2, hf-xet 1.7.0 and
+  // NumPy 2.4.3 Windows wheels carry their publisher's public GitHub runner
+  // HOME/account. Those can equal our builder. Match raw bytes and the full
+  // resource path; source roots and host names are never waived.
+  const publisherFiles = {
+    'memory-runtime/site-packages/tokenizers/tokenizers.pyd': '7acb83f5b89136597e0d14b788d82917bf2870df94575bf77e12731c4e49c4df',
+    'memory-runtime/site-packages/hf_xet/hf_xet.pyd': '246516c4a365fcd9befa6f901a82ec3478bcdf7952c04fba2d0926024711ccc2',
+    'memory-runtime/site-packages/numpy/__config__.py': '621939d2b6fcf0c162f654ea53a2deb8027a16ab2556c69ae4697679ae227df6',
+    'memory-runtime/site-packages/numpy-2.4.3.dist-info/DELVEWHEEL': 'f0b8626921a4df68c3b04c5968d0a5611c67b9fd15b30fddf10c319fdec18971',
+  }
+  const expected = publisherFiles[String(file).replaceAll('\\', '/').replace(/^\/+/, '')]
+  if (!expected) return identity
+  const bytes = typeof value === 'string' ? Buffer.from(value, 'utf8') : value
+  if (createHash('sha256').update(bytes).digest('hex') !== expected) return identity
+  return { ...identity,
+    home: normalizePackagedText(identity.home).replace(/\/$/, '') === 'c:/users/runneradmin' ? null : identity.home,
+    username: String(identity.username).toLowerCase() === 'runneradmin' ? null : identity.username,
+  }
+}
+
 export function packagedTextViolation(text, file, identity = buildMachineIdentity()) {
+  identity = publisherIdentity(text, file, identity)
   // Public labels, tokenizer vocabulary and mathematical references may match
   // a short builder name. Only these exact fixed publisher bytes have that
   // provenance. Changed bytes and all paths retain full identity checks.
@@ -112,6 +134,17 @@ export function packagedTextViolation(text, file, identity = buildMachineIdentit
   }
   if (containsBuildMachineIdentity(text, identity)) return 'build-machine-identity'
   if (!isThirdPartyPackageFile(file) && containsDevelopmentPath(text)) return 'development-path'
+  return null
+}
+
+export function packagedBinaryViolation(bytes, file, identity = buildMachineIdentity()) {
+  // Native binaries can carry PDB/source paths. Check paths and host names in
+  // UTF-8 and UTF-16 too; short bare usernames in random bytes are not text.
+  const binaryIdentity = publisherIdentity(bytes, file, { ...identity, username: null })
+  for (const value of [bytes.toString('utf8'), bytes.toString('utf16le')]) {
+    const violation = packagedTextViolation(value, file, binaryIdentity)
+    if (violation) return violation
+  }
   return null
 }
 

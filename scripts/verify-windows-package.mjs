@@ -5,7 +5,7 @@ import { lstat, readdir, readFile } from 'node:fs/promises'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import asarApi from '@electron/asar'
-import { buildMachineIdentity, containsDevelopmentPath, forbiddenArchiveEntry, packagedTextViolation } from './windows-package-policy.mjs'
+import { buildMachineIdentity, containsDevelopmentPath, forbiddenArchiveEntry, packagedTextViolation, packagedBinaryViolation } from './windows-package-policy.mjs'
 import { verifyMemoryRuntime, modeOf } from './memory-runtime/verify.mjs'
 
 const { extractFile, listPackage, statFile, uncache } = asarApi
@@ -40,16 +40,6 @@ function decodeText(bytes) {
   try { return new TextDecoder(utf16 ? (bytes[0] === 0xff ? 'utf-16le' : 'utf-16be') : 'utf-8', { fatal: true }).decode(bytes) }
   catch { return null }
 }
-function binaryViolation(bytes, file, identity) {
-  // Native binaries can carry PDB/source paths. Check paths and host names in
-  // UTF-8 and UTF-16 too; short bare usernames in random bytes are not text.
-  const binaryIdentity = { ...identity, username: null }
-  for (const value of [bytes.toString('utf8'), bytes.toString('utf16le')]) {
-    const violation = packagedTextViolation(value, file, binaryIdentity)
-    if (violation) return violation
-  }
-  return null
-}
 async function scanTextTree(root, identity) {
   const pending = [root]
   let scannedFiles = 0
@@ -66,7 +56,7 @@ async function scanTextTree(root, identity) {
     const bytes = await readFile(current)
     const text = decodeText(bytes)
     const file = relative(root, current)
-    const violation = text === null ? binaryViolation(bytes, file, identity) : packagedTextViolation(text, file, identity)
+    const violation = text === null ? packagedBinaryViolation(bytes, file, identity) : packagedTextViolation(text, file, identity)
     if (violation) throw new Error(`packaged text contains ${violation}: ${file}`)
     if (text !== null) {
       scannedFiles += 1
@@ -76,7 +66,7 @@ async function scanTextTree(root, identity) {
   return { scannedFiles, runtimeTextFiles, binaryFiles }
 }
 
-export async function verifyWindowsPackage({ unpacked, installer, resourcesDirectory = null, identity = buildMachineIdentity() }) {
+export async function verifyWindowsPackage({ unpacked, installer, resourcesDirectory = null, identity = buildMachineIdentity(), platform = 'win32' }) {
   unpacked = resolve(unpacked)
   installer = resolve(installer)
   identity = { ...identity, roots: [...(identity.roots ?? []), resolve(here, '..')] }
@@ -124,7 +114,7 @@ export async function verifyWindowsPackage({ unpacked, installer, resourcesDirec
     }
     const bytes = extractFile(asar, archivePath, false)
     const text = decodeText(bytes)
-    const violation = text === null ? binaryViolation(bytes, entry, identity) : packagedTextViolation(text, entry, identity)
+    const violation = text === null ? packagedBinaryViolation(bytes, entry, identity) : packagedTextViolation(text, entry, identity)
     if (violation) throw new Error(`app.asar contains ${violation}: ${entry}`)
     if (text !== null) asarTextFiles += 1
     else asarBinaryFiles += 1
@@ -132,7 +122,10 @@ export async function verifyWindowsPackage({ unpacked, installer, resourcesDirec
 
   await assertNoReparsePoints(runtime)
   const packageMetadata = JSON.parse(extractFile(asar, 'package.json', false).toString('utf8'))
-  const memoryRuntime = await verifyMemoryRuntime(join(resources, 'memory-runtime'), {
+  // The existing Mac trial reuses all archive/vendor/privacy checks. Its
+  // trusted build entry explicitly selects darwin; metadata cannot opt a
+  // Windows package out of the required Windows component checks.
+  const memoryRuntime = platform === 'darwin' ? null : await verifyMemoryRuntime(join(resources, 'memory-runtime'), {
     mode: modeOf(packageMetadata.memoryRuntimeMode),
   })
   // Include unpacked app dependencies, relay configuration and all loose resources.
