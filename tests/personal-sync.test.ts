@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { request as httpRequest } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -13,6 +14,20 @@ const event = (n: number, clientSeq = n) => ({ eventId: `event-${uuid(n)}`,
   conversationId: `conversation-${uuid(100)}`, clientSeq, kind: 'message.created',
   occurredAt: '2026-09-26T13:00:00.000Z',
   payload: { messageId: `message-${uuid(n)}`, role: n % 2 ? 'user' : 'assistant', text: `synthetic ${n}` } })
+
+for (const variant of ['authorization', 'closed']) test(`sync commit guard rejects ${variant} changes during final private-file validation`, () => {
+  const env = { ...process.env }
+  delete env.NODE_TEST_CONTEXT
+  const output = execFileSync(process.execPath, [fileURLToPath(new URL('./helpers/sync-commit-guard.mjs', import.meta.url)), variant],
+    { encoding: 'utf8', windowsHide: true, env, timeout: 30_000 })
+  const result = JSON.parse(output)
+  assert.ok(result.stats >= 3, 'the actual final source validation must deliver the state change')
+  assert.equal(result.state, 'rejected', output)
+  assert.equal(result.error, variant === 'authorization' ? 'UNAUTHORIZED' : 'SERVICE_CLOSING', output)
+  assert.equal(result.diskEvents, 0, output)
+  assert.equal(result.memoryEvents, 0, output)
+  assert.equal(result.tempFiles, 0, output)
+})
 
 test('new and replaced sync files retain current-user-only permissions and survive cold reopen', async () => {
   const root = mkdtempSync(join(tmpdir(), 'personal-sync-private-'))
