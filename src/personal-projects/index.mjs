@@ -7,7 +7,12 @@ import { readFileSync } from 'node:fs';
 // Capture the bundled program once and send it over the private stdin pipe.
 // No executable script is extracted to a writable application-data directory.
 const SCRIPT = readFileSync(fileURLToPath(new URL('./reader.ps1', import.meta.url))).toString('base64');
-const BOOTSTRAP = Buffer.from("[Console]::InputEncoding = [Text.Encoding]::UTF8; $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json; & ([ScriptBlock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload.script)))) -RequestJson $payload.request -ReportReady", 'utf16le').toString('base64');
+// This fixed program only needs Utility. Import it directly instead of making
+// its first JSON command discover/prepare the machine's unrelated modules.
+const BOOTSTRAP = Buffer.from([
+  "Import-Module ([IO.Path]::Combine($PSHOME,'Modules','Microsoft.PowerShell.Utility','Microsoft.PowerShell.Utility.psd1')) -ErrorAction Stop;",
+  "[Console]::InputEncoding = [Text.Encoding]::UTF8; $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json; & ([ScriptBlock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload.script)))) -RequestJson $payload.request -ReportReady",
+].join(' '), 'utf16le').toString('base64');
 const POWERSHELL = path.win32.join(process.env.SystemRoot ?? 'C:\\Windows',
   'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 const QUERY_BYTES = 200;

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { aggregateReports } from '../.github/scripts/ci-test-summary.mjs';
+import { aggregateReports, requireLatestShardJobs } from '../.github/scripts/ci-test-summary.mjs';
 import { parseFailures } from '../.github/scripts/ci-failure-survey.mjs';
 import { declaredTests, parseTap, recoveredSummary, runFileGate, selectShard, validateTimingTests } from '../.github/scripts/ci-test-policy.mjs';
 
@@ -92,6 +92,19 @@ test('all-shard totals reject missing or duplicate reports and preserve red stat
   assert.throws(()=>aggregateReports(reports.slice(1)),/Missing/);
   assert.throws(()=>aggregateReports([...reports,reports[0]]),/duplicate/);
   assert.equal(aggregateReports([{...reports[0],exitCode:1},...reports.slice(1)]).exitCode,1);
+});
+
+test('summary accepts a recovered shard and untouched successful shards from earlier attempts', () => {
+  const jobs=['ubuntu-latest','windows-latest'].flatMap(os=>[1,2,3].map(i=>({name:`test (${os}, shard ${i}/3)`,id:i,run_attempt:1,status:'completed',conclusion:'success'})));
+  const failed={...jobs[5],conclusion:'failure'};
+  assert.throws(()=>requireLatestShardJobs([...jobs.slice(0,5),failed]),/Latest shard/);
+  const recovered={...jobs[5],id:100,run_attempt:2};
+  assert.equal(requireLatestShardJobs([recovered,...jobs.slice(0,5),failed]).length,6);
+  for(const change of [{conclusion:'failure'},{conclusion:'cancelled'},{conclusion:'skipped'},{status:'in_progress',conclusion:null}])
+    assert.throws(()=>requireLatestShardJobs([...jobs,{...recovered,...change}]),/Latest shard/);
+  assert.throws(()=>requireLatestShardJobs(jobs.slice(1)),/missing/);
+  assert.throws(()=>requireLatestShardJobs(jobs,{includeMac:true}),/macos/);
+  assert.equal(requireLatestShardJobs([...jobs,{...jobs[0],name:'test (macos-latest, shard 1/1)'}],{includeMac:true}).length,7);
 });
 test('survey distinguishes assertion, timeout and process exit, and normalizes escaped Windows paths', () => {
   const block=(name:string,error:string)=>`test (windows-latest)\tstep\t2026-10-12T00:00:00Z not ok 1 - ${name}\n`+

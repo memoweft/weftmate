@@ -21,7 +21,7 @@ test('a valid DPAPI proof taking over 3s uses the remaining 15s readiness budget
     childProcess.spawnSync=((_cmd,_args,options:any)=>{calls++;clock+=3001;
       return options.timeout>=3001?{status:0,stdout:Buffer.from(key),stderr:Buffer.alloc(0)}:{status:null,stdout:Buffer.alloc(0),stderr:Buffer.alloc(0)};
     }) as any;syncBuiltinESMExports();
-    await persistedWindowsStorageKey({encryptString:()=>Buffer.from(probe)},root);
+    await persistedWindowsStorageKey({isEncryptionAvailable:()=>true,encryptString:()=>Buffer.from(probe)},root);
     assert.equal(calls,1,'the valid proof must complete once rather than being killed every 3 seconds');
     assert.equal(clock,3001);
   }finally{childProcess.spawnSync=spawn;Date.now=now;syncBuiltinESMExports();key.fill(0);fs.rmSync(root,{recursive:true,force:true});}
@@ -34,7 +34,7 @@ test('storage readiness timeout preserves Local State, ciphertext and residual o
     fs.writeFileSync(join(root,'weftmate-model.enc'), 'synthetic opaque bytes');
     fs.writeFileSync(join(root,'weftmate-storage-key.json'), '{"version":1,"wrappedKey":"old"}');
     const names=fs.readdirSync(root), before=names.map(name=>fs.readFileSync(join(root,name)));
-    await assert.rejects(persistedWindowsStorageKey({encryptString:()=>Buffer.from('v10synthetic')},root,{timeoutMs:25}),{code:'CREDENTIAL_STORAGE_NOT_READY'});
+    await assert.rejects(persistedWindowsStorageKey({isEncryptionAvailable:()=>true,encryptString:()=>Buffer.from('v10synthetic')},root,{timeoutMs:25}),{code:'CREDENTIAL_STORAGE_NOT_READY'});
     assert.deepEqual(fs.readdirSync(root),names);
     names.forEach((name,i)=>assert.deepEqual(fs.readFileSync(join(root,name)),before[i]));
   } finally {fs.rmSync(root,{recursive:true,force:true});}
