@@ -1,6 +1,6 @@
 # 记忆主路 · 现状与规则
 
-这一页给负责「记住我的事」的单独会话（D105）。开工前先读 [PROJECT-MAP.md](../PROJECT-MAP.md) 和 [AGENTS.md](../AGENTS.md)，再读这一页。这一页和 [DECISIONS.md](DECISIONS.md) 冲突时，以 DECISIONS 为准。
+这一页给做「记住我的事」这条主路的总代理和它派的包（D108）。开工前先读 [PROJECT-MAP.md](../PROJECT-MAP.md) 和 [AGENTS.md](../AGENTS.md)，再读这一页。这一页和 [DECISIONS.md](DECISIONS.md) 冲突时，以 DECISIONS 为准。
 
 ## 1. 现在是什么样（2026-10-15 读代码核实）
 
