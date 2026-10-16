@@ -12,7 +12,7 @@ export function readRenderingSnapshot({ resourceKeys }) {
     }
     const cssVisible = style.display !== 'none' && style.visibility !== 'hidden' && style.visibility !== 'collapse' && box.width > 0 && box.height > 0;
     return { rect: { x: box.x, y: box.y, width: box.width, height: box.height }, cssVisible,
-      intersectsClip: cssVisible && box.bottom > top && box.top < bottom && box.right > left && box.left < right };
+      intersectsClip: cssVisible && bottom > top && right > left && box.bottom > top && box.top < bottom && box.right > left && box.left < right };
   };
   const blocks = document.querySelectorAll('.render-mermaid');
   const block = index => {
