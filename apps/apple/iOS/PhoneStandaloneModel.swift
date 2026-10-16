@@ -83,13 +83,14 @@ import WeftMateCore
         cancelExtraction();var next=state;next.memory=memory
         if let id {
             guard let index=next.memory?.items.firstIndex(where: { $0.id == id }) else { throw OfflineFailure.invalid }
-            let sources=next.memory!.items[index].sourceIDs
-            next.memory?.suppressedSources.formUnion(sources)
-            let oldDigest=PhoneMemoryRules.digest(next.memory!.items[index].text)
-            next.memory?.suppressedText.insert(oldDigest)
-            let previousDigests=next.memory!.items[index].previousTextDigests ?? [],changedAt=Date()
-            next.memory?.items[index].previousTextDigests=previousDigests.union([oldDigest])
-            next.memory?.items[index].text=text;next.memory?.items[index].pinned=pinned;next.memory?.items[index].updatedAt=changedAt;next.memory?.items[index].latestSourceDate=changedAt
+            var item=next.memory!.items[index]
+            let changedAt=Date(),oldDigest=PhoneMemoryRules.digest(item.text)
+            let originals=state.threads.flatMap(\.messages).filter { $0.role == "user" }
+            next.memory?.forget(id,at:changedAt,sources:originals)
+            item.previousTextDigests=(item.previousTextDigests ?? []).union([oldDigest])
+            item.text=text;item.pinned=pinned;item.updatedAt=changedAt;item.latestSourceDate=changedAt;item.sourceSpans=[]
+            let insertion=min(index,next.memory?.items.count ?? 0)
+            next.memory?.items.insert(item,at:insertion)
         } else {
             guard memory.items.count < 200 else { throw OfflineFailure.invalid }
             next.memory?.suppressedText.remove(PhoneMemoryRules.digest(text))
@@ -99,8 +100,10 @@ import WeftMateCore
     }
     func forgetMemory(_ id: String? = nil) {
         cancelExtraction();var next=state;next.memory=memory
-        if let id { next.memory?.forget(id) } else { next.memory?.forgetAll(threads:state.threads) }
-        do { try save(next);notice=nil } catch { notice="没能忘掉，请重试。" }
+        let originals=state.threads.flatMap(\.messages).filter { $0.role == "user" }
+        let pending: Set<String>
+        if let id { pending=next.memory?.forget(id,sources:originals) ?? [] } else { next.memory?.forgetAll(threads:state.threads);pending=[] }
+        do { try save(next);notice=nil;memoryNotice=pending.isEmpty ? nil : "已移除这条记忆，部分旧来源还无法确认，暂不会用于记忆，聊天记录仍在本机。" } catch { notice="没能忘掉，请重试。" }
     }
     func deactivate() {
         stop();store=nil;account="";state = .init();library = .init();models=[];modelID="";draft="";queryingServices=[];notice=nil;memoryNotice=nil;handoffCount=0;handoffBytes=0
@@ -134,7 +137,7 @@ import WeftMateCore
         }
     }
     private func scheduleMemoryRetry() {
-        guard memory.enabled,memory.computerHost == nil,let date=memory.retry?.values.map(\.after).filter({$0 > Date()}).min() else { return }
+        guard memory.enabled,memory.computerHost == nil,let date=memory.retry?.values.filter({ $0.holdForgetting != true }).map(\.after).filter({$0 > Date()}).min() else { return }
         scheduleExtraction(state.selected ?? "",delay:.seconds(max(1,date.timeIntervalSinceNow)))
     }
     private func enqueueMemory(_ job: MemoryJob) {
@@ -176,7 +179,8 @@ import WeftMateCore
         do { try save(next);for id in consumed { memoryReceipts.removeValue(forKey:id) } } catch { memoryNotice="记忆结果没能显示，聊天记录仍在本机。" }
     }
     func retryMemory() {
-        var next=state;next.memory=memory;next.memory?.retry=nil
+        var next=state;next.memory=memory
+        for id in Array(next.memory?.retry?.keys ?? Dictionary<String,PhoneMemoryRetry>().keys) { next.memory?.retry?[id]?.after = .distantPast }
         do { try save(next);memoryNotice=nil;finishConversation() } catch { memoryNotice="暂时没能重试，请检查本机存储。" }
     }
     @discardableResult func extractMemory(threadID: String, sourceID: String? = nil) async -> PhoneMemoryReceipt? {
@@ -192,6 +196,7 @@ import WeftMateCore
         extracting=true
         defer { if ticket == memoryEpoch { extracting=false } }
         do {
+            let references=PhoneMemoryExtraction.referenceSources(memory:memory,thread:context,batch:batch)
             let request=try PhoneMemoryExtraction.request(model:config,memory:memory,thread:context,batch:batch,allowLoopback:allowLoopback)
             let (responseData,response)=try await memoryNetwork.data(for:request)
             guard ticket == memoryEpoch,identity == account,app?.phoneAccountIdentity == identity,memory.enabled,memory.computerHost == nil,!Task.isCancelled else { return nil }
@@ -199,9 +204,11 @@ import WeftMateCore
             let content=try PhoneMemoryExtraction.content(responseData,model:config)
             let before=memory
             var next=state;next.memory=memory
-            try next.memory?.apply(content,batch:batch,threadID:threadID)
-            try save(next);memoryNotice=nil
-            return PhoneMemoryReceipt(before:before,after:memory)
+            let originals=state.threads.flatMap(\.messages).filter { $0.role == "user" }
+            let result=try next.memory?.apply(content,batch:batch,threadID:threadID,knownSources:originals,referenceSources:references)
+            let pending=result?.pendingSourceIDs.isEmpty == false
+            try save(next);memoryNotice=pending ? "还有部分记忆没能确认，稍后会重试，聊天记录仍在本机。" : nil
+            return PhoneMemoryReceipt(before:before,after:memory,pending:pending)
         } catch {
             guard ticket == memoryEpoch,identity == account,!Task.isCancelled else { return nil }
             var next=state;next.memory=memory;next.memory?.recordFailure(batch)
@@ -253,6 +260,7 @@ import WeftMateCore
         do {
             let next=try PhoneChatStore(account:identity,directory:app.healthStateDirectory.deletingLastPathComponent().appendingPathComponent("PhoneChats"),credentials:credentialsOverride ?? KeychainCredentialStore(service:app.phoneCredentialNamespace))
             state=try next.load();store=next;state.interruptReplies()
+            state.memory?.prepareLegacySuppression(sourceIDs:Set(state.threads.flatMap(\.messages).filter { $0.role == "user" }.map(\.id)))
             do { library=try next.loadLibrary();models=library.services.flatMap(\.configurations);modelID=library.threadSelections?[state.selected ?? ""] ?? library.selectedProfileId ?? models.first?.id ?? "" }
             catch { models=try next.loadModels();library=(try? PhoneModelLibrary.migrate(models)) ?? .init();modelID=models.first?.id ?? "";notice="旧模型仍可使用，模型服务整理暂未完成，稍后再试。" }
             draft=state.pending?.text ?? "";draftTask?.cancel();draftTask=nil;try persist()

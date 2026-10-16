@@ -1,16 +1,16 @@
 // Real HTTP/SSE transport with synthetic model decisions. Never a personal service.
 import {createServer} from 'node:http';
 import {once} from 'node:events';
-let mode='ok',contexts=[],extractions=0,chatRequests=[],extractionSources=[],extractionBackgrounds=[],held=[];
+let mode='ok',contexts=[],extractions=0,chatRequests=[],extractionSources=[],extractionBackgrounds=[],extractionInputs=[],held=[];
 const server=createServer(async(req,res)=>{
  const chunks=[];for await(const c of req)chunks.push(c);
  if(req.url==='/mode'){mode=Buffer.concat(chunks).toString();if(mode!=='hold'){for(const resolve of held)resolve();held=[];}res.end();return;}
- if(req.url==='/report'){res.end(JSON.stringify({contexts,extractions,chatRequests,extractionSources,extractionBackgrounds}));return;}
+ if(req.url==='/report'){res.end(JSON.stringify({contexts,extractions,chatRequests,extractionSources,extractionBackgrounds,extractionInputs}));return;}
  if(req.headers.authorization!=='Bearer synthetic-state-key'){res.writeHead(401);res.end();return;}
  const body=JSON.parse(Buffer.concat(chunks));
  if(!body.stream){
   extractions++;
-  const input=JSON.parse(body.messages[1].content);extractionSources.push(input.原话.map(m=>m.id));
+  const input=JSON.parse(body.messages[1].content);extractionInputs.push(input);extractionSources.push(input.原话.map(m=>m.id));
   extractionBackgrounds.push(input.对话背景 ?? []);
   if(mode==='hold')await new Promise(resolve=>held.push(resolve));
   if(mode==='fail'){res.writeHead(503);res.end();return;}
@@ -23,7 +23,12 @@ const server=createServer(async(req,res)=>{
    if(m.text.includes('我不吃辣')){upsert.push({id:null,text:'用户不吃辣',sourceIDs:[m.id],evidence:m.text});continue;}
    if(m.text.includes('忘掉')){if(prior)invalidate.push({id:prior.id,sourceIDs:[m.id],evidence:m.text});}
    else if(m.text.includes('蓝色纸鹤')||m.text.includes('不对，是绿色纸鹤')){
-    upsert.push({id:prior?.id??null,text:'测试花名是'+(m.text.includes('绿色')?'绿色纸鹤':'蓝色纸鹤'),sourceIDs:[m.id],evidence:m.text});
+    const change={id:prior?.id??null,text:'测试花名是'+(m.text.includes('绿色')?'绿色纸鹤':'蓝色纸鹤'),sourceIDs:[m.id],evidence:m.text};
+    if(m.text.includes('不对，是绿色纸鹤')&&!prior&&mode!=='missing-link'){
+     const old=[...(input.对话背景??[]),...input.原话].find(x=>x.id!==m.id&&x.text.includes('我的测试花名是蓝色纸鹤'));
+     if(old)change.replacesSource={id:mode==='wrong-link'?'not-visible':old.id,quote:'我的测试花名是蓝色纸鹤'};
+    }
+    upsert.push(change);
    }
   }
   res.end(JSON.stringify({choices:[{finish_reason:'stop',message:{content:JSON.stringify({upsert,invalidate})}}]}));return;

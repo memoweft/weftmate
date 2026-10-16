@@ -31,6 +31,149 @@ import Testing
         try JSONDecoder().decode(PhoneMemoryState.self,from:JSONEncoder().encode(state))
     }
 
+    @Test func firstFailureHasAValidatedSourceLinkAndKeepsItsIndependentFact() throws {
+        let old=message("请记住，我的测试花名是蓝色纸鹤。我长期学习日语。",at:1000)
+        let newer=message("不对，是绿色纸鹤。",at:1020)
+        var state=PhoneMemoryState(),correction=change(newer,green)
+        state.recordFailure([old],now:Date(timeIntervalSince1970:1001))
+        correction["replacesSource"]=["id":old.id,"quote":"我的测试花名是蓝色纸鹤"]
+        let result=try state.apply(output([correction]),batch:[newer],threadID:"same",knownSources:[old,newer],referenceSources:[old])
+        #expect(result.pendingSourceIDs.isEmpty && state.items.map(\.text) == [green])
+        #expect(state.items[0].sourceIDs == [newer.id])
+        state.forget(state.items[0].id,at:Date(timeIntervalSince1970:1040),sources:[old,newer])
+        state=try reopened(state)
+        #expect(state.projectedText(old)?.contains("纸鹤") == false)
+        #expect(state.projectedText(old)?.contains("我长期学习日语") == true)
+        var retry=old;retry.text=try #require(state.projectedText(old))
+        try state.apply(output([change(retry,language,evidence:"我长期学习日语")]),batch:[retry],threadID:"same",knownSources:[old,newer])
+        #expect(state.items.map(\.text) == [language])
+        #expect(state.projectedText(old)?.contains("纸鹤") == false)
+        #expect(state.projectedText(old)?.contains("日语") == true)
+        #expect(!String(decoding:try JSONEncoder().encode(state),as:UTF8.self).contains("纸鹤"))
+    }
+    @Test(arguments:["missing","wrong-id","wrong-quote","repeated","broad","not-visible","future"])
+    func invalidSourceLinksStayPending(_ variant: String) throws {
+        let text=variant == "repeated" ? "我的测试花名是蓝色纸鹤。我的测试花名是蓝色纸鹤。我长期学习日语。" : "我的测试花名是蓝色纸鹤。我长期学习日语。"
+        let old=message(text,at:variant == "future" ? 1040 : 1000)
+        let newer=message("不对，是绿色纸鹤。我长期学习日语。",at:1020)
+        var state=PhoneMemoryState(),correction=change(newer,green,evidence:"是绿色纸鹤")
+        if variant != "missing" {
+            correction["replacesSource"]=["id":variant == "wrong-id" ? "other-account-source" : old.id,
+                "quote":variant == "wrong-quote" ? "不存在的原话" : variant == "broad" ? old.text : "我的测试花名是蓝色纸鹤"]
+        }
+        let result=try state.apply(output([correction,change(newer,language,evidence:"我长期学习日语")]),batch:[newer],threadID:"same",knownSources:[old,newer],referenceSources:variant == "not-visible" ? [] : [old])
+        #expect(result.pendingSourceIDs == [newer.id])
+        #expect(state.items.map(\.text) == [language])
+        #expect(!state.processed.contains(newer.id) && state.retry?[newer.id]?.needsSourceLink == true)
+        try state.apply(output(),batch:[newer],threadID:"same",knownSources:[old,newer],referenceSources:[old])
+        #expect(!state.processed.contains(newer.id))
+        let receipt=PhoneMemoryReceipt(before:.init(),after:state,pending:true)
+        #expect(receipt.note?.contains("还有部分记忆没能确认") == true)
+    }
+    @Test(arguments:["不要纠正成绿色纸鹤。","“不对，是绿色纸鹤。”","我之前说过“不对，是绿色纸鹤”吗？"])
+    func aReferenceAloneCannotAuthorizeCorrection(_ text: String) throws {
+        let old=message("我的测试花名是蓝色纸鹤。",at:1000),source=message(text,at:1020)
+        var state=PhoneMemoryState(),proposal=change(source,green)
+        proposal["replacesSource"]=["id":old.id,"quote":"我的测试花名是蓝色纸鹤"]
+        let result=try state.apply(output([proposal]),batch:[source],threadID:"same",referenceSources:[old])
+        #expect(state.items.isEmpty && state.retiredSpans == nil)
+        #expect(result.pendingSourceIDs == [source.id])
+    }
+    @Test func ambiguousExistingOwnersCannotBeCombinedByOneReference() throws {
+        let old=message("我的测试花名是蓝色纸鹤。",at:1000),source=message("不对，是绿色纸鹤。",at:1020)
+        var state=PhoneMemoryState(),proposal=change(source,green)
+        state.items=[.init(text:blue,sourceIDs:[old.id]),.init(text:blue,sourceIDs:[old.id])]
+        proposal["replacesSource"]=["id":old.id,"quote":"我的测试花名是蓝色纸鹤"]
+        let result=try state.apply(output([proposal]),batch:[source],threadID:"same",referenceSources:[old])
+        #expect(state.items.count == 2 && state.items.allSatisfy { $0.text == blue })
+        #expect(result.pendingSourceIDs == [source.id] && state.retiredSpans == nil)
+    }
+    @Test func retiredSourceCannotLaunderBlueThroughJapaneseEvidence() throws {
+        let old=message("我的测试花名是蓝色纸鹤。我长期学习日语。",at:1000),newer=message("不对，是绿色纸鹤。",at:1020)
+        var state=PhoneMemoryState(),correction=change(newer,green)
+        correction["replacesSource"]=["id":old.id,"quote":"我的测试花名是蓝色纸鹤"]
+        try state.apply(output([correction]),batch:[newer],threadID:"same",knownSources:[old],referenceSources:[old])
+        var retry=old;retry.text=try #require(state.projectedText(old))
+        try state.apply(output([change(retry,blue,evidence:"我长期学习日语"),change(retry,language,evidence:"我长期学习日语")]),batch:[retry],threadID:"same",knownSources:[old,newer])
+        #expect(Set(state.items.map(\.text)) == [green,language])
+        #expect(!state.processed.contains(old.id))
+    }
+    @Test func forgettingDoesNotPermanentlyBlockANewExplicitRemember() throws {
+        let old=message("请记住，我的测试花名是蓝色纸鹤。",at:1000),fresh=message("请记住，我的测试花名是蓝色纸鹤。",at:1050)
+        var state=PhoneMemoryState()
+        try state.apply(output([change(old,blue)]),batch:[old],threadID:"same")
+        state.forget(state.items[0].id,at:Date(timeIntervalSince1970:1040),sources:[old])
+        try state.apply(output([change(old,blue)]),batch:[old],threadID:"same",knownSources:[old])
+        #expect(state.items.isEmpty)
+        try state.apply(output([change(fresh,blue)]),batch:[fresh],threadID:"same",knownSources:[old,fresh])
+        #expect(state.items.map(\.text) == [blue])
+        #expect(state.projectedText(old) == "")
+    }
+    @Test func legacyDigestBoundaryUsesOldSourceIdentityAndAllowsNewRemember() throws {
+        let old=message("请记住，我的测试花名是蓝色纸鹤。",at:1000),fresh=message("请记住，我的测试花名是蓝色纸鹤。",at:1050)
+        var state=PhoneMemoryState();state.suppressedText=[PhoneMemoryRules.digest(blue)]
+        state.prepareLegacySuppression(sourceIDs:[old.id]);state=try reopened(state)
+        try state.apply(output([change(old,blue)]),batch:[old],threadID:"same")
+        #expect(state.items.isEmpty)
+        state.prepareLegacySuppression(sourceIDs:[old.id,fresh.id])
+        try state.apply(output([change(fresh,blue)]),batch:[fresh],threadID:"same")
+        #expect(state.items.map(\.text) == [blue])
+        #expect(state.suppressedTextBefore == nil)
+    }
+    @Test func legacyMissingOriginalCannotInventARevisionTimeOrClaimCompletion() throws {
+        let source=message("不对，是绿色纸鹤。",at:1020)
+        var state=PhoneMemoryState();state.items=[.init(text:blue,sourceIDs:["missing-original"],updatedAt:Date(timeIntervalSince1970:2000))]
+        let id=state.items[0].id
+        let result=try state.apply(output([change(source,green,id:id)]),batch:[source],threadID:"same")
+        #expect(result.pendingSourceIDs == [source.id] && !state.processed.contains(source.id))
+        #expect(state.items[0].text == blue && state.items[0].latestSourceDate == nil)
+        try state.apply(output(),batch:[source],threadID:"same")
+        #expect(!state.processed.contains(source.id))
+    }
+    @Test func legacyMissingOriginalDoesNotBlockANewExplicitMessage() throws {
+        let pending=message("不对，是绿色纸鹤。",at:1020),fresh=message("请记住，我的测试花名是绿色纸鹤。",at:1050)
+        var state=PhoneMemoryState();state.items=[.init(text:blue,sourceIDs:["missing-original"],updatedAt:Date(timeIntervalSince1970:2000))]
+        state.prepareLegacySuppression(sourceIDs:[pending.id]);state=try reopened(state)
+        let id=state.items[0].id
+        try state.apply(output([change(pending,green,id:id)]),batch:[pending],threadID:"same")
+        #expect(!state.processed.contains(pending.id) && state.items[0].text == blue)
+        let result=try state.apply(output([change(fresh,green,id:id)]),batch:[fresh],threadID:"same")
+        #expect(result.pendingSourceIDs.isEmpty && state.items[0].text == green)
+        #expect(state.items[0].latestSourceDate == fresh.date)
+    }
+    @Test func reverseModelOrderCannotRollBackTwoCorrectionsInOneBatch() throws {
+        let old=message("我的测试花名是蓝色纸鹤。",at:1000),middle=message("不对，是绿色纸鹤。",at:1020),newer=message("不对，是橙色纸鹤。",at:1030)
+        var state=PhoneMemoryState(),greenChange=change(middle,green),orangeChange=change(newer,"测试花名是橙色纸鹤")
+        let link=["id":old.id,"quote":"我的测试花名是蓝色纸鹤"]
+        greenChange["replacesSource"]=link;orangeChange["replacesSource"]=link
+        try state.apply(output([orangeChange,greenChange]),batch:[middle,newer],threadID:"same",referenceSources:[old])
+        #expect(state.items.map(\.text) == ["测试花名是橙色纸鹤"])
+        #expect(state.items.first?.latestSourceDate == newer.date)
+        #expect(state.projectedText(middle) == "")
+        let id=state.items[0].id
+        // Known IDs are also checked again at mutation time, after the first plan.
+        let later=message("现在改回蓝色纸鹤。",at:1050),earlier=message("现在改为绿色纸鹤。",at:1040)
+        try state.apply(output([change(later,blue,id:id),change(earlier,green,id:id)]),batch:[earlier,later],threadID:"same")
+        #expect(state.items.map(\.text) == [blue] && state.items.first?.latestSourceDate == later.date)
+    }
+    @Test func repeatedOlderSameValueCannotLowerTheRevisionBoundary() throws {
+        var state=try corrected(seeded())
+        let older=message("我的测试花名是绿色纸鹤。",at:1010),stale=message("我的测试花名是蓝色纸鹤。",at:1015)
+        let id=state.items[0].id
+        try state.apply(output([change(older,green,id:id)]),batch:[older],threadID:"same")
+        #expect(state.items[0].latestSourceDate == Date(timeIntervalSince1970:1020))
+        try state.apply(output([change(stale,blue,id:id)]),batch:[stale],threadID:"same")
+        #expect(state.items.map(\.text) == [green])
+    }
+    @Test func sourceCoordinatesAreDerivedFromTheExactUTF16Original() throws {
+        let old=message("😀我的测试花名是蓝色纸鹤。我长期学习日语。",at:1000),newer=message("不对，是绿色纸鹤。",at:1020)
+        var state=PhoneMemoryState(),correction=change(newer,green)
+        correction["replacesSource"]=["id":old.id,"quote":"😀我的测试花名是蓝色纸鹤"]
+        try state.apply(output([correction]),batch:[newer],threadID:"same",referenceSources:[old])
+        let span=try #require(state.retiredSpans?.first)
+        #expect(span.startUTF16 == 0 && span.lengthUTF16 == "😀我的测试花名是蓝色纸鹤".utf16.count)
+        #expect(state.projectedText(old) == "。我长期学习日语。")
+    }
     @Test func oldRetryCannotUndoCorrectionButItsIndependentFactIsKept() throws {
         var state=try seeded()
         let old=message("请记住，我的测试花名是蓝色纸鹤。我长期学习日语。",at:1010)
@@ -59,6 +202,8 @@ import Testing
             change(old,language,evidence:"我长期学习日语")
         ]),batch:[old],threadID:"old-retry",now:Date(timeIntervalSince1970:2100))
         #expect(state.items.map(\.text) == [language])
+        #expect(state.projectedText(old)?.contains("纸鹤") == false)
+        #expect(state.projectedText(old)?.contains("日语") == true)
         #expect(!String(decoding:try JSONEncoder().encode(state),as:UTF8.self).contains("纸鹤"))
     }
 
@@ -137,7 +282,7 @@ import Testing
         #expect(state.processed.contains(source.id))
     }
 
-    @Test(arguments:["不要忘记我的测试花名。","请不要删除我的测试花名。","我不希望你忘掉我的测试花名。","她说：忘掉我的测试花名。","请解释“忘掉我的测试花名”的意思。","“忘掉我的测试花名。”","我希望你记住“忘掉我的测试花名”这句话。","Don't forget my test nickname.","Please do not delete my test nickname.","She said 'forget my test nickname'.","今天天气不错。","我的测试花名是什么？","我之前让你忘掉的是什么？","你还记得我说过“忘掉我的测试花名”吗？","Could you tell me whether I asked you to forget my nickname?"])
+    @Test(arguments:["不要忘记我的测试花名。","请不要删除我的测试花名。","我不希望你忘掉我的测试花名。","她说：忘掉我的测试花名。","请解释“忘掉我的测试花名”的意思。","“忘掉我的测试花名。”","我希望你记住“忘掉我的测试花名”这句话。","Don't forget my test nickname.","Please do not delete my test nickname.","She said 'forget my test nickname'.","今天天气不错。","我的测试花名是什么？","我之前让你忘掉的是什么？","你还记得我说过“忘掉我的测试花名”吗？","Could you tell me whether I asked you to forget my nickname?","请把我的测试花名记好，别把它忘掉。"])
     func negationQuotationAndUnrelatedSourcesCannotAuthorizeForgetting(_ text: String) throws {
         var state=try seeded()
         let source=message(text,at:1030)

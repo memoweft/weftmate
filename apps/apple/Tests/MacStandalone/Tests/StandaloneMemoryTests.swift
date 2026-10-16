@@ -96,6 +96,68 @@ import WeftMateCore
         for _ in 0..<500 { if !s.model.memoryWorking { break };try await Task.sleep(for:.milliseconds(10)) }
         #expect(s.model.memory.items.map(\.text) == ["长期学习日语"])
     }
+    @Test func firstFailedSourceThenCorrectionAndForgetRetiresOnlyThatClause() async throws {
+        let s=try Scenario();defer { s.close() }
+        try await s.mode("fail")
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。我长期学习日语。")
+        let original=try #require(s.model.messages.first { $0.role == "user" })
+        try await s.mode("ok");try await s.send("不对，是绿色纸鹤。")
+        #expect(s.model.memory.items.map(\.text) == ["测试花名是绿色纸鹤"])
+        let report=try await s.report(),inputs=report["extractionInputs"] as! [[String:Any]]
+        let background=inputs.last?["对话背景"] as! [[String:String]]
+        #expect(background.contains { $0["id"] == original.id && $0["text"] == original.text })
+        s.model.forgetMemory(try #require(s.model.memory.items.first?.id))
+        s.model.deactivate();s.model.activate(app:s.app);s.model.retryMemory()
+        for _ in 0..<500 { if !s.model.memoryWorking { break };try await Task.sleep(for:.milliseconds(10)) }
+        #expect(s.model.memory.items.map(\.text) == ["长期学习日语"])
+        #expect(s.model.state.threads.flatMap(\.messages).contains { $0.id == original.id && $0.text == original.text })
+        let final=try await s.report()["extractionInputs"] as! [[String:Any]]
+        let retried=final.last?["原话"] as! [[String:String]]
+        #expect(retried.contains { $0["id"] == original.id && $0["text"]?.contains("日语") == true && $0["text"]?.contains("纸鹤") == false })
+        #expect(!s.model.memory.replyHistory(s.model.state.threads.flatMap(\.messages)).contains { $0.text.contains("纸鹤") })
+    }
+    @Test func pinnedItemsCannotMakeAnOldFailedSourceBecomeANewFact() async throws {
+        let s=try Scenario();defer { s.close() };try await s.mode("fail")
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。我长期学习日语。")
+        try await s.mode("ok");try await s.send("不对，是绿色纸鹤。")
+        for index in 0..<8 { try s.model.saveMemory(text:"固定项目\(index)",pinned:true) }
+        var selection=s.model.memory
+        #expect(!selection.select(query:"测试花名").contains { $0.text.contains("纸鹤") })
+        s.model.retryMemory()
+        for _ in 0..<500 { if !s.model.memoryWorking { break };try await Task.sleep(for:.milliseconds(10)) }
+        #expect(s.model.memory.items.count == 10)
+        #expect(s.model.memory.items.contains { $0.text == "测试花名是绿色纸鹤" })
+        #expect(s.model.memory.items.contains { $0.text == "长期学习日语" })
+        #expect(!s.model.memory.items.contains { $0.text.contains("蓝色") })
+    }
+    @Test func missingOrWrongSourceLinkStaysPendingAndDoesNotPretendSuccess() async throws {
+        for mode in ["missing-link","wrong-link"] {
+            let s=try Scenario();defer { s.close() };try await s.mode("fail")
+            try await s.send("请记住，我的测试花名是蓝色纸鹤。我长期学习日语。")
+            try await s.mode(mode);let reply=try await s.send("不对，是绿色纸鹤。我长期学习日语。")
+            let source=try #require(s.model.messages.last { $0.role == "user" })
+            #expect(s.model.memory.items.map(\.text) == ["长期学习日语"])
+            #expect(!s.model.memory.processed.contains(source.id) && s.model.memory.retry?[source.id]?.needsSourceLink == true)
+            #expect(reply.contains("还有部分记忆没能确认") && reply.contains("已在这台设备上记住：长期学习日语"))
+        }
+    }
+    @Test func aNewExplicitMessageCanRememberTheSameFactAfterForgetting() async throws {
+        let s=try Scenario();defer { s.close() }
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。")
+        let original=try #require(s.model.messages.first { $0.role == "user" })
+        s.model.forgetMemory(try #require(s.model.memory.items.first?.id))
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。")
+        #expect(s.model.memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+        #expect(s.model.memory.projectedText(original) == "")
+        #expect(s.model.memory.retiredSpans?.contains { $0.sourceID == original.id } == true)
+    }
+    @Test func keepingANicknameIsNotPermissionToForgetIt() async throws {
+        let s=try Scenario();defer { s.close() }
+        try await s.send("请记住，我的测试花名是蓝色纸鹤。")
+        try await s.send("请把我的测试花名记好，别把它忘掉。")
+        #expect(s.model.memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+        #expect(s.model.messages.last?.text.contains("已从这台设备的记忆里忘掉") == false)
+    }
     @Test func failedOlderSourceCannotUndoAManualEdit() async throws {
         let s=try Scenario();defer { s.close() }
         try await s.send("请记住，我的测试花名是蓝色纸鹤。")
@@ -115,6 +177,22 @@ import WeftMateCore
             #expect(s.model.memory.items.isEmpty)
             #expect(s.model.messages.last?.text.contains("已从这台设备的记忆里忘掉") == true)
         }
+    }
+    @Test func legacyDelayedFormationUsesTheRetainedOriginalSourceDates() async throws {
+        let s=try Scenario();defer { s.close() };s.model.deactivate()
+        var first=PhoneChatMessage(role:"user",text:"请记住，我的测试花名是蓝色纸鹤。")
+        first.date=Date(timeIntervalSince1970:1000)
+        var correction=PhoneChatMessage(role:"user",text:"不对，是绿色纸鹤。")
+        correction.date=Date(timeIntervalSince1970:1020)
+        var thread=PhoneChatThread();thread.messages=[first,correction]
+        var old=PhoneChatState();old.threads=[thread];old.selected=thread.id;old.memory = .init()
+        old.memory?.items=[.init(text:"测试花名是蓝色纸鹤",threadID:thread.id,sourceIDs:[first.id],updatedAt:Date(timeIntervalSince1970:2000))]
+        old.memory?.processed=[first.id]
+        let store=try PhoneChatStore(account:s.app.phoneAccountIdentity,directory:s.root.appendingPathComponent("PhoneChats"),credentials:s.keys)
+        try store.save(old);s.model.activate(app:s.app);s.model.retryMemory()
+        for _ in 0..<500 { if !s.model.memoryWorking { break };try await Task.sleep(for:.milliseconds(10)) }
+        #expect(s.model.memory.items.map(\.text) == ["测试花名是绿色纸鹤"])
+        #expect(s.model.memory.items.first?.latestSourceDate == correction.date)
     }
     @Test func forgetCannotReturnInNewConversationOrAfterReopen() async throws {
         let s=try Scenario();defer { s.close() }
