@@ -1,16 +1,21 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { posix, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 // Scan git-owned text only; ignored dependencies, private runtime data and
 // binary artifacts are outside the public tree. Never echo matched identities.
-export const publicUserNames = new Set(['<user>', 'runneradmin', 'runner', 'public', 'default', 'default user', 'all users']);
+export const publicUserNames = new Set(['<user>', 'runneradmin', 'runner', 'public', 'default', 'default user', 'all users', 'shared']);
 export function identityFindings(text) {
   const findings = [];
   const paths = /[A-Za-z]:[\\/]+Users[\\/]+(<[^>\r\n]+>|[^\\/\r\n"'`<>:]+)/gi;
   for (const match of text.matchAll(paths)) {
     if (!publicUserNames.has(match[1].trim().toLowerCase())) findings.push('Windows user directory');
+  }
+  // macOS homes; Windows drives and URL paths such as https://host/Users/... are not homes.
+  const macPaths = /(?<![A-Za-z]:|[\w.-])\/Users\/(<[^>\r\n]+>|[\w][^/\s"'`<>:\\|)]*)/g;
+  for (const match of text.matchAll(macPaths)) {
+    if (!publicUserNames.has(match[1].trim().toLowerCase())) findings.push('macOS user directory');
   }
   if (/\b(?:DESKTOP-[A-Z0-9]{7}|LAPTOP-[A-Z0-9]{8})\b/.test(text)) findings.push('default machine name');
   return [...new Set(findings)];
@@ -28,21 +33,58 @@ export function repositoryFiles() {
   return execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], {maxBuffer: 16 * 1024 * 1024})
     .toString('utf8').split('\0').filter(Boolean);
 }
+
+// Retired 2026-10-15. Git history keeps them; a stale branch must not bring them back.
+export const retiredPaths = ['docs/STATE.md', 'docs/DEVELOPMENT_ENVIRONMENT.md', 'docs/archive/', 'scripts/archive/'];
+// Every session starts by reading these pages, so they stay short.
+export const entryLimits = {'PROJECT-MAP.md': 16_000, 'AGENTS.md': 8_000};
+// Generated evidence keeps its own historical links.
+const linkExempt = ['apps/apple/Tests/Evidence/'];
+
+export function relativeLinks(markdown) {
+  const text = markdown.replace(/^(```|~~~)[^\n]*\n[\s\S]*?^\1[^\n]*$/gm, '').replace(/`[^`\n]*`/g, '');
+  const links = [];
+  for (const match of text.matchAll(/!?\[[^\]\n]*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g)) {
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(match[1]) && !match[1].startsWith('#')) links.push(match[1]);
+  }
+  return links;
+}
+export function brokenLinks(file, markdown, present) {
+  return relativeLinks(markdown).filter(target => {
+    let path = target.replace(/[?#].*$/, '');
+    try { path = decodeURIComponent(path); } catch { /* keep the raw target */ }
+    const joined = path.startsWith('/') ? path.slice(1) : posix.join(posix.dirname(file), path);
+    return !present.has(posix.normalize(joined).replace(/\/$/, ''));
+  });
+}
+
 export function checkRepository() {
   let checked = 0; const violations = [];
   const trackedEvidence = execFileSync('git', ['ls-files', '-z', '--', 'tests/evidence/'], {maxBuffer: 16 * 1024 * 1024})
     .toString('utf8').split('\0').filter(Boolean);
   if (trackedEvidence.length) violations.push({file: 'tests/evidence/', findings: ['Generated evidence is tracked. Run git rm -r tests/evidence; move required inputs to tests/fixtures and write outputs to WEFTMATE_EVIDENCE_DIR or ignored .local/evidence/.']});
-  try {
-    if (readFileSync('docs/STATE.md').length > 20_000) violations.push({file: 'docs/STATE.md', findings: ['STATE.md exceeds 20 KB. Rewrite it as one page of current capabilities, work and major gaps (target <= 6 KB); put package results outside the repository.']});
-  } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  const present = new Set(['.']), markdown = new Map();
   for (const file of new Set(repositoryFiles())) {
     let bytes;
     try { bytes = readFileSync(file); } catch (error) { if (error.code === 'ENOENT') continue; throw error; }
+    for (let path = file; path !== '.'; path = posix.dirname(path)) present.add(path);
     const text = textFile(bytes); if (text === null) continue;
     checked++;
     const findings = identityFindings(text);
     if (findings.length) violations.push({file, findings});
+    if (file.endsWith('.md') && !linkExempt.some(prefix => file.startsWith(prefix))) markdown.set(file, text);
+  }
+  for (const retired of retiredPaths) {
+    if (present.has(retired.replace(/\/$/, ''))) violations.push({file: retired, findings: ['Retired path is back; its history stays in Git. Current facts live in PROJECT-MAP.md and docs/DECISIONS.md. Remove it with git rm instead of restoring it.']});
+  }
+  for (const [file, limit] of Object.entries(entryLimits)) {
+    try {
+      if (readFileSync(file).length > limit) violations.push({file, findings: [`${file} exceeds ${limit / 1000} KB. Keep current judgments and pointers; move history and process out, Git keeps them.`]});
+    } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
+  for (const [file, text] of markdown) {
+    const broken = brokenLinks(file, text, present).map(target => identityFindings(target).length ? '<private path>' : target);
+    if (broken.length) violations.push({file, findings: [`broken relative links (point to a file in this checkout, or to a fixed-commit GitHub URL for history): ${broken.join(' ')}`]});
   }
   return {checked, violations};
 }

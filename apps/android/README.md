@@ -26,11 +26,11 @@ S3a 新增宿主决定驱动的系统通知、五类有声 / 静默渠道、原�
 
 ST-6 当前壳 **0.8.16 / code29**：新增通知设置与测试通知的业务路由（`/settings/notifications` 等），发布含通知设置页的界面包最低原生 code29。
 
-IA-4 当前壳 **0.8.15 / code28**：手机主对话复用 IA-3 母版，精确核对六项逻辑对话能力后接入；旧宿主保留会话列表。`chat.message` 使用现有原生请求账本，原件与可读附件按 `chatId` 暂存，原请求查询仍沿原编号；旁聊附件草稿受理后移动。日期选择使用系统选择器，日期键由 `formatToParts` 生成；输入区沿窗口键盘内缩，字号跟随系统 `fontScale`。发布本界面包最低 code28；证据与验证边界见 [IA-4](../../tests/evidence/ia-4/README.md)。TB-4 的底部四页容器先隐藏。
+IA-4 当前壳 **0.8.15 / code28**：手机主对话复用 IA-3 母版，精确核对六项逻辑对话能力后接入；旧宿主保留会话列表。`chat.message` 使用现有原生请求账本，原件与可读附件按 `chatId` 暂存，原请求查询仍沿原编号；旁聊附件草稿受理后移动。日期选择使用系统选择器，日期键由 `formatToParts` 生成；输入区沿窗口键盘内缩，字号跟随系统 `fontScale`。发布本界面包最低 code28；证据与验证边界见 [IA-4](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ia-4/README.md)。TB-4 的底部四页容器先隐藏。
 
-UX-4 当前壳 **0.8.14 / code27**：消息编辑 / 重生成的宿主原生分支路由与原命令发送接入业务桥；对话导出通过系统保存文件窗口写 Markdown（标记文本）或 PNG（图片文件），无需新增存储权限。手机本机消息也支持复制、反馈、引用与导出；编辑 / 重生成需先由电脑接续到 DSH（助手运行时），不另建手机分支执行器。界面发布最低 code27，见 [UX-4 验证与交接](../../tests/evidence/ux-4/README.md)。
+UX-4 当前壳 **0.8.14 / code27**：消息编辑 / 重生成的宿主原生分支路由与原命令发送接入业务桥；对话导出通过系统保存文件窗口写 Markdown（标记文本）或 PNG（图片文件），无需新增存储权限。手机本机消息也支持复制、反馈、引用与导出；编辑 / 重生成需先由电脑接续到 DSH（助手运行时），不另建手机分支执行器。界面发布最低 code27，见 [UX-4 验证与交接](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ux-4/README.md)。
 
-UX-3 当前壳 **0.8.12 / code25**：附件桥增加 `kind:"camera"`，通过系统相机与专用临时图片URI（资源标识）导入现有附件草稿；沿用已有相机权限，文件 / 照片仍用原生选择器。宿主对话推理偏好经 `/sessions/{id}/thinking` 业务桥，模型能力透传到共用输入区。发布此界面包需最低code25；取消 / 切账户 / 切对话结果隔离与原回执保持。构建与适用项证据见 [UX-3](../../tests/evidence/ux-3/README.md)。
+UX-3 当前壳 **0.8.12 / code25**：附件桥增加 `kind:"camera"`，通过系统相机与专用临时图片URI（资源标识）导入现有附件草稿；沿用已有相机权限，文件 / 照片仍用原生选择器。宿主对话推理偏好经 `/sessions/{id}/thinking` 业务桥，模型能力透传到共用输入区。发布此界面包需最低code25；取消 / 切账户 / 切对话结果隔离与原回执保持。构建与适用项证据见 [UX-3](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ux-3/README.md)。
 
 LG-1b 当前壳为 **0.8.8 / code21**：登录、注册、找回密码、等待批准和账户 / 设备设置复用 LG-1a 的共享业务。App 内的 `cloud.app.*` bridge（桥接）使用原生网络层的独立 Cookie jar（会话容器），只允许配置云 / 宿主的明确 `/personal/v1` 路由，不跳系统浏览器。`cloud.app.identity` 返回手机型号、`weftmate-android` 与登记的 `com.memoweft.weftmate:/oauth`；`configure` 返回云配置；`key` 只返回 P-256 `publicJwk` / `deviceId`；`sign` 返回 ES256 的 `signature`；`credentials` 返回非敏感展示数据与刷新令牌的不透明句柄；`request` 返回 `status/body/nonce/retryAfter`。私钥留在 Android Keystore（安卓密钥库），可用时优先 StrongBox（独立安全芯片），否则由 Keystore 的实现保存；签名始终在原生层完成。实际刷新令牌经 Keystore AES-GCM（认证加密）保存，WebView（网页视图）只得到随机 `wm-refresh:<uuid>`，旧 `cloud.tokens` 接口不能读取新存储。宿主 Cookie 与真实 CSRF（跨站请求伪造防护）也不进入页面；成功交换后沿用 `cloud.adopt` 的本机账户归属与同步。受信交付码 / 配对码建立 TLS pin（证书公钥固定）后才允许正式宿主内容交换；隔离 HTTP 回环调试仍可验收。
 
@@ -40,11 +40,11 @@ code21 同时退役旧刷新令牌桥：`cloud.request` 的旧 `/oidc/token` 路
 
 LG-1b 的独立验证包为 `com.memoweft.weftmate.mobile.lg1bqa`，通过 Gradle 参数 `-PweftmateApplicationId=com.memoweft.weftmate.mobile.lg1bqa` 构建。`Lg1bWebViewProbeTest` 只在该包及显式 `lg1bProbe=1` 时启动调试，`lg1bHostOrigin` 指向随机端口的隔离宿主，完成文件为 `files/lg1b-probe.done`。`CloudAppSecurityInstrumentedTest` 仅在同包及 `lg1bNativeSecurity=1` 下运行，用独立偏好设置 / 密钥和进程内随机凭据验证不可导出私钥、原生刷新轮换、不透明句柄及退出后清除；不读取本人账户。测试专用 `cloud.app.status` 仅在这个 debug（调试）包可用，返回 `credentialPresent/refreshCount`，不返回秘密。
 
-IC-1 当前壳为 **0.8.5 / code18**：C4 自适应启动图标、单色主题 / 通知图标与统一功能图标已接入；母版在 [design/icons](../../design/icons/README.md)，用 `npm run icons:generate` 生成。没有新增权限或原生接口，手机 UI（网页界面）的最低桥接版本仍为 code17。[真实 MuMu 验证与卸载](../../tests/evidence/ic-1/README.md)。
+IC-1 当前壳为 **0.8.5 / code18**：C4 自适应启动图标、单色主题 / 通知图标与统一功能图标已接入；母版在 [design/icons](../../design/icons/README.md)，用 `npm run icons:generate` 生成。没有新增权限或原生接口，手机 UI（网页界面）的最低桥接版本仍为 code17。[真实 MuMu 验证与卸载](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ic-1/README.md)。
 
-UI-2 当前壳为 **0.8.4 / code17**：内置与桌面统一的手机会话列表、主题与全屏「输出与来源」，新增精确 `GET /sessions/{sessionId}/resources?afterSeq` 原生连接路由，系统栏改为同一中性色；内置版本显示使用 BuildConfig。没有新增权限或数据库迁移。新版 UI（网页界面）发布最低 code17；本机 JVM（Java 虚拟机）27/27与调试包构建通过。UI-2v 已补齐 **MuMu Android 15 真实安卓壳**的列表、运行、审批、步骤、全屏成果/来源、真实系统输入法与深色验收，产品代码无修正、版本保持 code17；[安卓截图与输入法边界](../../tests/evidence/ui-2v/README.md)。原390×844 Chromium（浏览器引擎）验收保留在 [UI-2](../../tests/evidence/ui-2/README.md)。
+UI-2 当前壳为 **0.8.4 / code17**：内置与桌面统一的手机会话列表、主题与全屏「输出与来源」，新增精确 `GET /sessions/{sessionId}/resources?afterSeq` 原生连接路由，系统栏改为同一中性色；内置版本显示使用 BuildConfig。没有新增权限或数据库迁移。新版 UI（网页界面）发布最低 code17；本机 JVM（Java 虚拟机）27/27与调试包构建通过。UI-2v 已补齐 **MuMu Android 15 真实安卓壳**的列表、运行、审批、步骤、全屏成果/来源、真实系统输入法与深色验收，产品代码无修正、版本保持 code17；[安卓截图与输入法边界](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ui-2v/README.md)。原390×844 Chromium（浏览器引擎）验收保留在 [UI-2](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ui-2/README.md)。
 
-UI-2a 当前壳为 **0.8.3 / code16**：内置手机审批模式界面，新增精确 `/settings/approvals` 与 `/sessions/{sessionId}/approval-mode` 业务路由；审批决定可传 `scope: once / conversation-category`，拒绝不带 scope（授权范围）。继续使用原 Cookie（会话凭据）、CSRF（跨站请求伪造防护）和 TLS pin（证书公钥固定）连接，没有新增系统权限。发布新版手机 UI（网页界面）需 `--min-native-version-code 16`；合成截图与本机 JVM（Java 虚拟机）/调试包构建结果见 [UI-2a](../../tests/evidence/ui-2a/README.md)。
+UI-2a 当前壳为 **0.8.3 / code16**：内置手机审批模式界面，新增精确 `/settings/approvals` 与 `/sessions/{sessionId}/approval-mode` 业务路由；审批决定可传 `scope: once / conversation-category`，拒绝不带 scope（授权范围）。继续使用原 Cookie（会话凭据）、CSRF（跨站请求伪造防护）和 TLS pin（证书公钥固定）连接，没有新增系统权限。发布新版手机 UI（网页界面）需 `--min-native-version-code 16`；合成截图与本机 JVM（Java 虚拟机）/调试包构建结果见 [UI-2a](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ui-2a/README.md)。
 
 0.8.0/code13 采用 hybrid（混合式应用）：`HybridActivity` 用 WebView（网页视图）显示可由个人宿主更新的 Weave 页面，Kotlin（安卓语言）继续保存账户与模型凭据、SQLite（本地数据库）对话和待同步事件，并执行手机模型调用及受限 Android Intent（系统意图）。旧 `MainActivity` 原生 Views（原生视图）页保留作兼容入口。最低 Android 8（API 26），调试包名仍是 `com.memoweft.weftmate.mobile.debug`，更新时沿用原应用数据与签名。
 
@@ -87,9 +87,9 @@ gradle --offline :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAnd
 
 本机 ADB（安卓调试桥）：`D:\Software\MuMuPlayer\nx_main\adb.exe`；连接命令 `adb connect 127.0.0.1:7555`，后续明确 `-s 127.0.0.1:7555`。启动隔离个人宿主并创建合成账号，使用 `adb -s 127.0.0.1:7555 reverse tcp:18187 tcp:18187`，安卓壳服务地址填 `http://127.0.0.1:18187`，无需猜 MuMu 网关或开放宿主到局域网。
 
-如果模拟器已有 `com.memoweft.weftmate.mobile.debug`，通过 [UI-2v 初始化脚本](../../tests/evidence/ui-2v/isolate.gradle) 构建为独立 `com.memoweft.weftmate.mobile.ui2vqa`，不覆盖原应用。测试 APK（安卓安装包）内的 `Ui2vWebViewProbeTest` 仅在明确 `ui2vProbe=1` 且目标为这一隔离包时打开 WebView（安卓网页视图）调试；操作仍走产品原生连接层。测试包另含 `Ui2vTestIme`，用于预装输入法零高度时验证真实系统软键盘及 `InputConnection` 文字提交，不打入产品 APK。
+如果模拟器已有 `com.memoweft.weftmate.mobile.debug`，通过 [UI-2v 初始化脚本](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ui-2v/isolate.gradle) 构建为独立 `com.memoweft.weftmate.mobile.ui2vqa`，不覆盖原应用。测试 APK（安卓安装包）内的 `Ui2vWebViewProbeTest` 仅在明确 `ui2vProbe=1` 且目标为这一隔离包时打开 WebView（安卓网页视图）调试；操作仍走产品原生连接层。测试包另含 `Ui2vTestIme`，用于预装输入法零高度时验证真实系统软键盘及 `InputConnection` 文字提交，不打入产品 APK。
 
-完整构建、安装、合成宿主、输入法设置保存/恢复、真实截图与卸载步骤见 [UI-2v](../../tests/evidence/ui-2v/README.md)。结束只卸载本次两个隔离包、停止隔离服务并移除本次 ADB reverse（安卓端口反向映射）与 forward（调试端口转发）；不要卸载旧调试包、清除其资料或使用全局端口清理。
+完整构建、安装、合成宿主、输入法设置保存/恢复、真实截图与卸载步骤见 [UI-2v](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ui-2v/README.md)。结束只卸载本次两个隔离包、停止隔离服务并移除本次 ADB reverse（安卓端口反向映射）与 forward（调试端口转发）；不要卸载旧调试包、清除其资料或使用全局端口清理。
 
 ### 现有原生测试
 
@@ -150,7 +150,7 @@ MEM-2壳 **0.8.13 / code26** 增加临时对话业务路由 `/sessions/temporary
 
 `settings.appearance` 新增可选 `effectiveDark` 布尔报告；原偏好三态和账户存储方式继续使用。报告、偏好读取和保存均在界面线程完成，不排在网络请求之后。登录进入、注销、切号、系统外观变化和前台恢复读取实际页面偏好；栏图标跟随实际已绘制主题。`R.color.wm_web_surface_*` 和原生兼容页面的表面色都由手机表面令牌生成，不再保留手抄的网页表面色。
 
-夜间合成传输由测试 APK（安卓安装包）把页面实际主题送入同一个原生控制器；截屏前等待主题回执，检查整屏顶部色差。真实消息桥另由 AND-1 独立包验证。命令与覆盖限制见 [AND-1 证据](../../tests/evidence/and-1/README.md)。
+夜间合成传输由测试 APK（安卓安装包）把页面实际主题送入同一个原生控制器；截屏前等待主题回执，检查整屏顶部色差。真实消息桥另由 AND-1 独立包验证。命令与覆盖限制见 [AND-1 证据](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/and-1/README.md)。
 
 ## AND-2：本地登录恢复与原生发送回归
 
@@ -169,6 +169,6 @@ node tests/integration/and-2-android.mjs
 
 驱动使用仓库合成云身份服务、随机端口与临时目录，不需要真实模型或本人账号。覆盖两条登录路径的首次安装、杀进程重开、后台返回、真实宿主进程退出后重启，并检查配对表单和原生整屏。宿主业务请求经透明的本机传输门转发；停止真实宿主后，门仅将连接拒绝报告为 `HOST_UNAVAILABLE`，避免 Windows ADB reverse（安卓端口反向映射）在目标监听消失时卡住。身份、业务内容和持久回复全部来自实际宿主服务。
 
-可用 `AND2_ADB` 指定 SDK 的 `adb.exe`，用 `AND2_ADB_PORT` 指定本包独立 ADB server（调试桥服务）端口；整个运行须使用同一版本的 ADB。结束只卸载本驱动安装的包及移除自己的端口映射，不调整模拟器主题、导航或输入法设置。原始图、系统栏数值与限制见 [AND-2 证据](../../tests/evidence/and-2/README.md)。
+可用 `AND2_ADB` 指定 SDK 的 `adb.exe`，用 `AND2_ADB_PORT` 指定本包独立 ADB server（调试桥服务）端口；整个运行须使用同一版本的 ADB。结束只卸载本驱动安装的包及移除自己的端口映射，不调整模拟器主题、导航或输入法设置。原始图、系统栏数值与限制见 [AND-2 证据](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/and-2/README.md)。
 
 AND-4 续接：原生聊天直接复用 MOB-4 的手机独立引擎与加密保管库，注册后无需电脑即可配置模型、流式聊天、停止和重生成；退出／切号隔离原会话与草稿。后续电脑出现仍沿原同步动作，侧栏保留手机原对话查看。浅色保持现有手机网页，深色按控件规范改为中性灰磨砂；原生系统栏与旧兼容登录页跟随原生令牌，嵌入网页与回退入口保持各自网页外观。技术说明与迁移边界见 `docs/ANDROID_NATIVE.md`，续接证据见 `tests/evidence/and-4/standalone/`。

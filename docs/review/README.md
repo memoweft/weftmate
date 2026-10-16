@@ -19,7 +19,7 @@ node tests/integration/review-capture-gallery.mjs --out .local/review-gallery
 
 桌面脚本通过 Playwright（界面自动化工具）的 `_electron.launch` 启动生产 `createPersonalDesktop`，保留真实 Electron（桌面程序框架）窗口、原生主题与 preload（预加载桥），内容区域为 1200×800；用原生 `webContents.capturePage` 截图。隔离个人宿主复用 FE-1a 的 `startTimelineCandidate`，包含合成 DSH（智能体运行时）日志与合成模型目录；不用真实模型或完整 `src/main.mjs` 的运行时启动链，因此不需要仓库外 vendor（编译依赖产物）。这验证生产桌面窗口和界面，不宣称完整 DSH 执行或安装版验收。
 
-手机脚本用 Chromium（浏览器引擎）390×844、FE-1b 的真实本机账号认证与合成内容投影，原生桥适配器沿用 FE-1b；提问卡复用 FE-1a 的合成提问日志。导航按名称与角色定位，滚动到命名的步骤 / 卡片，不依赖坐标或组件位置。两端用随机回环端口和系统临时目录；不读取本人数据、环境凭据或真实模型。桌面登录按 LG-1a 的「登录 WeftMate」标题、「邮箱」和「离线使用这台电脑」定位，拍真实新登录组件。该 FE-1a 宿主未配置云服务，因此画面如实包含产品的「云服务尚未配置」提示；本工具不声称完成真实云注册验收，云子进程 / file transport（文件邮件传输）完整流程仍见 [LG-1a 验收](../../tests/evidence/lg-1a/README.md)。随后通过真实 `/auth/login`（本机账号认证接口）登录隔离合成账号，不让登录截图选择器成为其他场景的前置依赖。手机使用同一真实认证接口的桥接入口，认证信息只在闭包内。
+手机脚本用 Chromium（浏览器引擎）390×844、FE-1b 的真实本机账号认证与合成内容投影，原生桥适配器沿用 FE-1b；提问卡复用 FE-1a 的合成提问日志。导航按名称与角色定位，滚动到命名的步骤 / 卡片，不依赖坐标或组件位置。两端用随机回环端口和系统临时目录；不读取本人数据、环境凭据或真实模型。桌面登录按 LG-1a 的「登录 WeftMate」标题、「邮箱」和「离线使用这台电脑」定位，拍真实新登录组件。该 FE-1a 宿主未配置云服务，因此画面如实包含产品的「云服务尚未配置」提示；本工具不声称完成真实云注册验收，云子进程 / file transport（文件邮件传输）完整流程仍见 [LG-1a 验收](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/lg-1a/README.md)。随后通过真实 `/auth/login`（本机账号认证接口）登录隔离合成账号，不让登录截图选择器成为其他场景的前置依赖。手机使用同一真实认证接口的桥接入口，认证信息只在闭包内。
 
 手机登录当前仍拍既有「电脑账户与连接」。LG-1b 合并后，只需更新 [review-capture-mobile.mjs](../../tests/integration/review-capture-mobile.mjs) 的 `prepareLogin` 函数中入口按钮与标题的可见名称选择器；认证桥与其他场景无需随登录页重写。若新页尚未匹配，浅 / 深登录格优雅降级，其他十八个手机格继续生成。
 
