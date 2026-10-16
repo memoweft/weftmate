@@ -93,9 +93,6 @@ async function fixture(t: any, { interpret = null }: { interpret?: ((payload: an
   await manager.ingest(owner, boundary('记住：我喜欢喝乌龙茶。', 'remember'))
   await ready()
   return { root, world, ready, tool, fork: () => create(path.join(root, 'imported')), get manager() { return manager }, errors,
-    offline: (value: boolean) => { offline = value }, reject: (value: boolean) => { reject = value }, loseReceipt: () => { loseReceipt = true },
-    holdCorrections: (value: boolean) => { correctionsUnavailable = value },
-    holdCorrectionText: (value: string) => { unavailableText = value },
     pauseRecovery: () => {
       let entered!: () => void, release!: () => void
       const started = new Promise<void>(resolve => { entered = resolve })
@@ -103,6 +100,9 @@ async function fixture(t: any, { interpret = null }: { interpret?: ((payload: an
       recoveryGate = { entered, pending }
       return { started, release }
     },
+    offline: (value: boolean) => { offline = value }, reject: (value: boolean) => { reject = value }, loseReceipt: () => { loseReceipt = true },
+    holdCorrections: (value: boolean) => { correctionsUnavailable = value },
+    holdCorrectionText: (value: string) => { unavailableText = value },
     restart: async () => { await manager.close(); manager = create() }, get calls() { return calls } }
 }
 
