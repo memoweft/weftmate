@@ -5,6 +5,7 @@ import path from 'node:path';
 import { durableWrite } from '../personal-access/store.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 import { memorySuccessors } from './world-projection.mjs';
+import { forgetCompletionVersion } from './forget-model.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 const diagnostics = channel('weftmate.memory.actions');
@@ -54,7 +55,7 @@ export function createMemoryActions({ root, manager, schedule }) {
     signal?.throwIfAborted();
     if (action.name === 'memory_forget') {
       const frozen = action.plan;
-      if (frozen && frozen.completionVersion !== 1) {
+      if (frozen && frozen.completionVersion !== forgetCompletionVersion) {
         // Old v2 plans froze deletion authority, but did not inspect every known
         // retained source. Upgrade proof only: never replace their commands,
         // targets, authorization or revision with a freshly nominated scope.
@@ -66,12 +67,12 @@ export function createMemoryActions({ root, manager, schedule }) {
           const targets = plan => [...(plan.worldTargets ?? []).map(row => `${row.kind}:${row.id}`),
             ...(plan.evidenceIds ?? []).map(id => `evidence:${id}`)].sort();
           const evidence = new Set(frozen.authorizedEvidenceIds ?? frozen.evidenceIds ?? []);
-          complete = proof.completionVersion === 1 && proof.completionState === 'complete' &&
+          complete = proof.completionVersion === forgetCompletionVersion && proof.completionState === 'complete' &&
             proof.worldRevision === frozen.worldRevision && proof.authorization?.subject === frozen.authorization.subject &&
             proof.authorization?.topic === frozen.authorization.topic && JSON.stringify(targets(proof)) === JSON.stringify(targets(frozen)) &&
             (proof.authorizedEvidenceIds ?? proof.evidenceIds ?? []).every(id => evidence.has(id));
         }
-        action.plan = { ...frozen, completionVersion: 1, completionState: complete ? 'complete' : 'withheld', completionUpgraded: true };
+        action.plan = { ...frozen, completionVersion: forgetCompletionVersion, completionState: complete ? 'complete' : 'withheld', completionUpgraded: true };
         await update(owner, data => { data.records[action.requestId].plan = action.plan; });
       }
       // New requests still pass the original whole-message/subject checks.
