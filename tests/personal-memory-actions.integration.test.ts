@@ -31,7 +31,7 @@ function boundary(text: string, sessionId: string) {
   ]
   return assertOwnerBoundBoundary(sessionId, boundaryForCompletedTurn({ id: sessionId, header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))
 }
-async function fixture(t: any, { interpret = null, misattribute = false, malformedDecision = false }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, malformedDecision?: boolean } = {}) {
+async function fixture(t: any, { interpret = null, misattribute = false, malformedDecision = false, wrongQuestionOnly = false }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
   let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false, unavailableText = ''
   let recoveryGate: { entered: () => void, pending: Promise<void> } | null = null
@@ -53,7 +53,11 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
           subject: input.message.includes('妈妈') ? 'other:妈妈' : input.message.includes('林舟') ? 'other:林舟' : 'self',
           topic: input.message.includes('生日') ? (input.message.includes('妈妈') ? '妈妈的生日' : '我的生日') : input.message.includes('林舟') ? '林舟' : '我喝茶的偏好',
         } : { items: input.candidates.map((candidate: any) => ({ key: candidate.key,
-          matchesTopic: input.request.topic.includes('生日') ? candidate.text.includes('生日') : input.request.topic.includes('林舟') ? candidate.text.includes('林舟') : /茶|纠正/.test(candidate.text),
+          matchesTopic: wrongQuestionOnly ? /根据我的记忆/.test(candidate.text) : input.request.topic.includes('生日') ? candidate.text.includes('生日') : input.request.topic.includes('林舟') ? candidate.text.includes('林舟') : /茶|纠正/.test(candidate.text),
+          ...(request.tools[0].function.parameters.properties.items.items.properties.hasTargetFact ? {
+            hasTargetFact: !/根据我的记忆|什么茶|什么时候/.test(candidate.text),
+            sourceFullyAuthorized: !candidate.sourceTexts.some((text: string) => /生日/.test(text) && /茶/.test(text)),
+          } : {}),
           subjects: [misattribute ? 'self' : candidate.text.includes('妈妈') ? 'other:妈妈' : candidate.text.includes('同事小王') ? 'other:同事小王' : candidate.text.includes('林舟') ? 'other:林舟' : 'self'],
         })) }
         coreTrace.push({ modelDecision: decisionTool, input, result: value })
@@ -109,7 +113,9 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
     catch (error) { error.message += JSON.stringify({ status, jobs: await manager.query(owner, 'query_jobs', { operation: 'list' }) }); throw error }
   }
   const tool = (name: string, args: any, id: string, sourceText: string) => handlePersonalMemoryTool(manager, owner,
-    { name, arguments: args, requestId: 'memory-tool:' + createHash('sha256').update(id).digest('hex'), source: { id: id + '-user', text: sourceText } },
+    { name, arguments: name === 'memory_correct' ? { ...args, sourceQuote: args.sourceQuote ?? sourceText.match(/^.*?[\n，。！？；,!?;]/su)?.[0] ?? sourceText } : args,
+      requestId: 'memory-tool:' + createHash('sha256').update(id).digest('hex'), source: { id: id + '-user', text: sourceText,
+        message: { message_id: id + '-user', content: sourceText, preceding_ai_context: null } } },
     { sessionId: id, modelTier: 'cloud', memoryPolicy: { recall: true } })
   await manager.ingest(owner, boundary('记住：我喜欢喝乌龙茶。', 'remember'))
   await ready()
@@ -125,8 +131,45 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
     holdCorrections: (value: boolean) => { correctionsUnavailable = value },
     holdCorrectionText: (value: string) => { unavailableText = value },
     restart: async () => { await manager.close(); manager = create() }, get calls() { return calls },
-    get decisions() { return coreTrace.filter(row => row.modelDecision).length } }
+    get decisions() { return coreTrace.filter(row => row.modelDecision).length },
+    get decisionInputs() { return coreTrace.filter(row => row.modelDecision === 'classify_forget_candidates').map(row => row.input) } }
 }
+
+test('FIX-50 M7 real Core: a wrong question-only nomination cannot delete that question or report the preference forgotten', { skip }, async t => {
+  const f = await fixture(t, { wrongQuestionOnly: true })
+  f.reject(true)
+  await f.manager.ingest(owner, boundary('根据我的记忆，我喝茶的偏好是什么？', 'm7-prior-question'))
+  const question = await wait(async () => (await f.manager.query(owner, 'query_evidence', { operation: 'list' })).evidence
+    .find((row: any) => /根据我的记忆/.test(row.raw_content)))
+  // Freeze the observed wrong recall candidate while retaining the actual Core
+  // Evidence, deletion commands and receipts. The synthetic judge nominates only
+  // this question, so deleting it must never count as forgetting the preference.
+  const query = f.manager.query.bind(f.manager)
+  f.manager.query = async (ownerId: string, method: string, params: any) => {
+    const value = await query(ownerId, method, params)
+    if (method === 'preview_recall') value.preview.recent_evidence = [{ id: question.evidence_id, text: question.raw_content }]
+    return value
+  }
+  const result = await f.tool('memory_forget', { query: '喝茶的偏好' }, 'm7-wrong-candidate', '请忘掉我喝茶的偏好。')
+  assert.notEqual(result.state, 'applied')
+  assert.ok(f.decisionInputs.some(input => input.candidates.some((candidate: any) => /根据我的记忆/.test(candidate.text))), 'the fixed wrong candidate path must actually be exercised')
+  assert.ok((await f.world()).items.some((row: any) => /乌龙茶/.test(row.value.content)))
+  const kept = await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: question.evidence_id })
+  assert.match(kept.evidence.raw_content, /根据我的记忆/)
+})
+
+test('Core capability: source correction applies only with advertised support', { skip }, async t => {
+  const f = await fixture(t)
+  const supported = await f.manager.correctionSourceSupported(owner)
+  const before = (await f.world()).items[0]
+  const result = await f.tool('memory_correct', { kind: 'cognition', id: before.item_id,
+    expectedWorldRevision: 1, text: '模型改写的红茶偏好', sourceQuote: '我现在喜欢红茶。' }, 'source-capability', '我现在喜欢红茶。')
+  assert.equal(result.state, supported ? 'applied' : 'unsupported')
+  const after = (await f.world()).items
+  if (supported) assert.ok(after.some((row: any) => row.current_state === 'current' && row.value.content === '用户现在喜欢红茶。'))
+  else assert.equal(after.find((row: any) => row.item_id === before.item_id).current_state, 'current')
+  assert.equal((await f.manager.query(owner, 'query_evidence', { operation: 'list' })).evidence.some((row: any) => row.raw_content === '模型改写的红茶偏好'), false)
+})
 
 test('real Core: explicit correction survives another session and forgetting erases revision sources', { skip }, async t => {
   const f = await fixture(t)
@@ -149,6 +192,50 @@ test('real Core: explicit correction survives another session and forgetting era
   assert.doesNotMatch(after.contextText, /乌龙茶|红茶/)
   assert.doesNotMatch(await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json'), 'utf8'), /我现在喜欢红茶/)
   assert.deepEqual(f.errors, [])
+})
+
+test('FIX-50 M3 page: preview and one atomic command forget every revision and source while another topic survives', { skip }, async t => {
+  const f = await fixture(t)
+  const old = (await f.world()).items[0]
+  await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1, text: '我现在喜欢红茶。' }, 'm3-correct', '纠正我的喝茶偏好为红茶。')
+  await f.ready()
+  await f.manager.ingest(owner, boundary('我每周五去游泳。', 'm3-independent')); await f.ready()
+  const before = (await f.world()).items
+  const chain = before.filter((row: any) => /茶/.test(row.value.content))
+  const current = chain.find((row: any) => row.current_state === 'current')
+  assert.ok(chain.length >= 2)
+  const http = (pathname: string, method = 'GET', body: any = {}) => handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner,
+    pathname: new URL(pathname, 'http://memory').pathname, url: new URL(pathname, 'http://memory'), request: { method }, readJson: async () => body })
+  const path = `/personal/v1/memory/items/cognition/${current.item_id}`
+  const preview = (await http(path + '/forget-preview')).body
+  assert.ok(chain.every((row: any) => preview.items.some((item: any) => item.id === row.item_id)))
+  const forgotten = await http(path, 'DELETE', { requestId: 'm3-page-chain', expectedWorldRevision: preview.worldRevision })
+  assert.equal(forgotten.body.receipt.state, 'applied')
+  for (const row of chain) {
+    await assert.rejects(http(`/personal/v1/memory/items/cognition/${row.item_id}`), { status: 404 })
+    await assert.rejects(http(`/personal/v1/memory/items/cognition/${row.item_id}/sources`), { status: 404 })
+  }
+  assert.ok((await f.world()).items.some((row: any) => /游泳/.test(row.value.content)))
+  assert.doesNotMatch(JSON.stringify((await http('/personal/v1/memory/export?format=json')).body), /乌龙茶|红茶/)
+})
+
+test('FIX-50 real Core: a correction after authorization keeps the new revision and requires fresh confirmation', { skip }, async t => {
+  const f = await fixture(t)
+  const old = (await f.world()).items[0]
+  const planForget = f.manager.planForget.bind(f.manager)
+  f.manager.planForget = async (ownerId: string, action: any) => {
+    const plan = await planForget(ownerId, action)
+    const changed = await f.manager.submitCommand(ownerId, { requestId: 'after-forget-preview', expectedWorldRevision: plan.worldRevision,
+      operation: 'correct_world_item', targetKind: 'cognition', targetId: old.item_id, payload: { correction_text: '我现在喜欢红茶。' } })
+    assert.equal(changed.receipt.result_state, 'applied')
+    return plan
+  }
+  const result = await f.tool('memory_forget', { query: '我的喝茶偏好' }, 'stale-forget-preview', '忘掉我的喝茶偏好。')
+  assert.equal(result.state, 'withheld')
+  await f.ready()
+  const after = (await f.world()).items
+  assert.ok(after.some((row: any) => /红茶/.test(row.value.content) && row.current_state === 'current'))
+  assert.ok(after.some((row: any) => row.item_id === old.item_id), 'the old chain also remains intact after a stale authorization')
 })
 
 async function pluginForget(manager: any, text: string, durableOnly = false) {
@@ -202,7 +289,7 @@ test('FIX-50 real Core: an explicit forget deletes correction history and source
     assert.equal(tools.length, 1, 'the host must execute forgetting once before inference, even with no model tool call')
     assert.equal(tools[0].name, 'memory_forget_request')
     assert.deepEqual(tools[0].arguments, {})
-    assert.equal(tools[0].source.text, '忘掉我喝茶的偏好，另外请计算12×13。')
+    assert.equal(tools[0].source.text, '忘掉我喝茶的偏好，另外请计算12×13。\n另外请计算12×13。')
     assert.equal((await f.world()).items.length, 0)
     for (const row of before) await assert.rejects(sources(row.item_id), { code: 'NOT_FOUND', status: 404 })
     const replies = result.events.filter((e: any) => e.type === 'assistant/message').map((e: any) =>
@@ -273,6 +360,9 @@ for (const [subject, misattribute, legacyPlan] of [['我的', false, false], ['�
     await writeFile(file, JSON.stringify(state))
     await f.restart(); f.offline(false)
     result = await wait(async () => JSON.parse(await readFile(file, 'utf8')).records[row.requestId].result)
+    assert.equal(result.state, 'withheld', 'a pre-upgrade plan without frozen item identities requires a fresh confirmation')
+    assert.equal((await f.world()).items.filter((row: any) => /生日/.test(row.value.content)).length, 3)
+    result = await f.tool('memory_forget', { query: subject + '生日' }, 'review-subject-reconfirmed', '忘掉' + subject + '生日')
   }
   assert.equal(result.state, 'applied')
   assert.match(result.message, /还有 2 条关于别人的没动/)

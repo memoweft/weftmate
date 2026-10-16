@@ -502,8 +502,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       let scope;
       try {
         const route = await resolveProcessingRoute(ownerId, action.sessionId);
-        scope = await classifyForgetRequest(route, action.source.text);
+        scope = await classifyForgetRequest({ ...route, signal: action.signal }, action.source.text);
       } catch {
+        if (action.signal?.aborted) return { state: 'cancelled', message: '操作已停止，没有删除记忆。' };
         return { state: 'no_action', decision: { isForgetRequest: false, subject: 'unknown', topic: '',
           conditionsOrQuestions: false, authorized: false, reason: 'unavailable' } };
       }
@@ -515,7 +516,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     },
     async planForget(ownerId, action) {
       const route = await resolveProcessingRoute(ownerId, action.sessionId);
-      return scopedForgetPlan(this, ownerId, action, route);
+      action.signal?.throwIfAborted();
+      return scopedForgetPlan(this, ownerId, action, { ...route, signal: action.signal });
+    },
+    correctionSourceSupported(ownerId) {
+      return withOwner(ownerId, entry => entry.capabilities?.services?.command?.correction_source === true);
     },
     async mutateFromTool(ownerId, action) {
       owner(ownerId);
@@ -524,8 +529,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         let scope;
         try {
           const route = await resolveProcessingRoute(ownerId, action.sessionId);
-          scope = await classifyForgetRequest(route, action.source?.text ?? '');
-        } catch { return { state: 'no_action', message: '这次还没确认要删除哪些记忆，没有删除，也没有排队重试。' }; }
+          scope = await classifyForgetRequest({ ...route, signal: action.signal }, action.source?.text ?? '');
+        } catch { return action.signal?.aborted
+          ? { state: 'cancelled', message: '操作已停止，没有删除记忆。' }
+          : { state: 'no_action', message: '这次还没确认要删除哪些记忆，没有删除，也没有排队重试。' }; }
         if (!scope.authorized) return { state: 'no_action', message: '这次没有删除记忆，也没有排队重试；请先说清要直接忘掉哪件事。' };
         return this.mutateFromTool(ownerId, { ...action, scope });
       }
