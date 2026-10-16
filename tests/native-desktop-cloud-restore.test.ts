@@ -248,6 +248,128 @@ test('explicit logout cannot be undone by a later load', async () => {
   assert.equal(f.core.state.account.ownerId, 'owner-a');
 });
 
+function failConfigurationCacheWrites(f: any, persistent = false) {
+  const credentials = f.client.credentials; let failed = false;
+  f.client.credentials = async (key: string, value: any, remove: boolean) => {
+    if (key.startsWith('offline-config:') && value !== undefined && (persistent || !failed)) {
+      failed = true; throw { code: 'STORAGE_UNAVAILABLE' };
+    }
+    return credentials(key, value, remove);
+  };
+}
+
+test('saved credential lookup retries configuration after its cache write failed', async () => {
+  const f = await fixture(); failConfigurationCacheWrites(f);
+  await f.core.load(); await f.settle();
+  assert.equal(f.core.cloudAuthView().restoreState, 'unavailable');
+  assert.ok(await f.client.saved(), 'An incomplete configuration must not read an undefined storage key');
+  assert.equal(f.calls.filter(url => url.endsWith('/cloud/config')).length, 2);
+  assert.ok(f.reads.includes(f.tokenKey));
+});
+
+test('logout retries incomplete configuration after a temporary cache write failure and cannot revive the login', async () => {
+  const f = await fixture(); failConfigurationCacheWrites(f);
+  await f.core.load(); await f.settle();
+  assert.equal(f.core.cloudAuthView().restoreState, 'unavailable');
+  assert.equal(f.records.has(f.tokenKey), true);
+  await f.core.cloudLogout();
+  assert.equal(f.records.has(f.tokenKey), false, 'Completed logout must remove the saved native credential');
+  await f.core.load(); await f.settle();
+  assert.equal(f.core.cloudAuthView().mode, 'offline');
+  assert.equal(f.core.state.account.ownerId, 'owner-a');
+});
+
+test('switching away and back after a temporary configuration cache failure cannot restore the old login', async () => {
+  const f = await fixture(); failConfigurationCacheWrites(f);
+  await f.core.load(); await f.settle();
+  assert.equal(f.core.cloudAuthView().restoreState, 'unavailable');
+  await f.core.switchLocalAccount('owner-b');
+  assert.equal(f.core.state.account.ownerId, 'owner-b');
+  assert.equal(f.records.has(f.tokenKey), false, 'Completed owner switch must remove the previous cloud credential');
+  await f.core.switchLocalAccount('owner-a'); await f.core.load(); await f.settle();
+  assert.equal(f.core.cloudAuthView().mode, 'offline');
+  assert.equal(f.core.state.account.ownerId, 'owner-a');
+});
+
+test('unavailable configuration prevents logout or switching from reporting credential cleanup as complete', async () => {
+  for (const action of ['logout', 'switch']) {
+    const f = await fixture(); failConfigurationCacheWrites(f, true);
+    await f.core.load(); await f.settle();
+    await assert.rejects(action === 'logout' ? f.core.cloudLogout() : f.core.switchLocalAccount('owner-b'),
+      (error: any) => error.code === 'STORAGE_UNAVAILABLE');
+    assert.equal(f.records.has(f.tokenKey), true);
+    assert.equal(f.core.state.account.ownerId, 'owner-a');
+    assert.equal(f.core.state.csrfToken, 'csrf:owner-a');
+  }
+});
+
+test('a newer login survives the late response from an older logout request', async () => {
+  const f = await fixture(); await f.core.load(); await f.settle();
+  const gate = deferred(), entered = deferred(), fetch = f.client.fetch;
+  f.client.fetch = async (url: string, options: any) => {
+    if (url.endsWith('/auth/logout')) { entered.resolve(); await gate.promise; }
+    return fetch(url, options);
+  };
+  const loggedOut = f.core.cloudLogout(); await entered.promise;
+  f.core.startCloudJourney(); await f.core.cloudLogin({ email: 'synthetic@example.test', password: 'synthetic-password' });
+  assert.equal(f.core.cloudAuthView().mode, 'authenticated');
+  gate.resolve(); await loggedOut;
+  assert.equal(f.core.cloudAuthView().mode, 'authenticated');
+  assert.equal(f.records.has(f.tokenKey), true);
+  assert.equal(f.events.includes('key-cleared'), false);
+  assert.equal(f.core.state.csrfToken, 'csrf:owner-a');
+});
+
+test('a newer login supersedes logout while its local binding removal response is pending', async () => {
+  const f = await fixture(); await f.core.load(); await f.settle();
+  f.core.state.cloudAuth.multiHostSupported = true;
+  const gate = deferred(), entered = deferred(), accessApi = f.core.accessApi;
+  f.core.accessApi = async (path: string, options: any) => {
+    const result = await accessApi(path, options);
+    if (path === '/cloud/binding' && options?.method === 'DELETE') { entered.resolve(); await gate.promise; }
+    return result;
+  };
+  const loggedOut = f.core.cloudLogout(); await entered.promise;
+  f.core.startCloudJourney(); await f.core.cloudLogin({ email: 'synthetic@example.test', password: 'synthetic-password' });
+  gate.resolve(); await loggedOut;
+  assert.equal(f.core.cloudAuthView().mode, 'authenticated');
+  assert.equal(f.records.has(f.tokenKey), true);
+  assert.equal(f.events.includes('key-cleared'), false);
+  assert.equal(f.calls.some(url => url.endsWith('/auth/logout')), false);
+});
+
+test('a changed local session generation supersedes an older logout response', async () => {
+  const f = await fixture(); await f.core.load(); await f.settle();
+  const gate = deferred(), entered = deferred(), fetch = f.client.fetch;
+  f.client.fetch = async (url: string, options: any) => {
+    if (url.endsWith('/auth/logout')) { entered.resolve(); await gate.promise; }
+    return fetch(url, options);
+  };
+  const loggedOut = f.core.cloudLogout(); await entered.promise;
+  f.core.acceptSession({ account: { ownerId: 'owner-a' }, device: { id: 'new-local-session' }, csrfToken: 'new-local-csrf' });
+  gate.resolve(); await loggedOut;
+  assert.equal(f.core.cloudAuthView().mode, 'authenticated');
+  assert.equal(f.records.has(f.tokenKey), true);
+  assert.equal(f.events.includes('key-cleared'), false);
+  assert.equal(f.core.state.device.id, 'new-local-session');
+  assert.equal(f.core.state.csrfToken, 'new-local-csrf');
+});
+
+test('a newer login survives a late native key reset or credential removal acknowledgement', async () => {
+  for (const stage of ['resetKey', 'forget']) {
+    const f = await fixture(); await f.core.load(); await f.settle();
+    const gate = deferred(), entered = deferred(), original = f.client[stage];
+    f.client[stage] = async () => { await original.call(f.client); entered.resolve(); await gate.promise; };
+    const loggedOut = f.core.cloudLogout(); await entered.promise;
+    f.core.startCloudJourney(); await f.core.cloudLogin({ email: 'synthetic@example.test', password: 'synthetic-password' });
+    assert.equal(f.core.cloudAuthView().mode, 'authenticated');
+    gate.resolve(); await loggedOut;
+    assert.equal(f.core.cloudAuthView().mode, 'authenticated', 'An old cleanup acknowledgement must not publish offline');
+    assert.equal(f.records.has(f.tokenKey), true);
+    assert.equal(f.core.state.csrfToken, 'csrf:owner-a');
+  }
+});
+
 test('logout during initial configuration removes the saved native credential before resolving', async () => {
   const f = await fixture(), gate = f.blockConfiguration(); await f.core.load();
   const loggedOut = f.core.cloudLogout(); gate.resolve(); await loggedOut; await f.settle();

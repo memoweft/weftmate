@@ -84,7 +84,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const ticket = ++journey; clearTimeout(renewalTimer); bindingClaim = null;
     // A cloud credential belongs to one local owner; switching requires a new
     // explicit cloud journey rather than carrying that authority to another.
-    if (auth.localDesktop && auth.restoreState === 'checking' && !client.tokenId) await client.configure();
+    if (auth.localDesktop && !client.tokenId) await client.configure();
     if (ticket !== journey) return;
     await client.forget();
     if (ticket !== journey) return;
@@ -240,24 +240,32 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     catch (error) { if (error.code === 'NETWORK') { scheduleRenewal(); return; } await expireCloudSession(); }
   }
   async function expireCloudSession(email = auth.email, { retainCached = true } = {}) {
+    const ticket = ++journey, generation = core.state.identityGeneration;
+    const current = () => ticket === journey && generation === core.state.identityGeneration;
     if (retainCached && environment.retainNativeCache && auth.cachedSession) {
-      clearTimeout(renewalTimer); clearTimeout(waitTimer); journey++; await client.forget();
+      clearTimeout(renewalTimer); clearTimeout(waitTimer); await client.forget();
+      if (!current()) return;
       Object.assign(auth, { mode: 'offline', modal: false, busy: false, email, error: '', cloudExpired: true });
       effects.nativeSessionExpired?.(); paint(); return;
     }
     if (auth.localSession) {
       core.updateComputerDirectory?.({hosts:[]});
-      clearTimeout(renewalTimer); clearTimeout(waitTimer); journey++; await client.forget();
+      clearTimeout(renewalTimer); clearTimeout(waitTimer); await client.forget();
+      if (!current()) return;
       Object.assign(auth, { mode: 'offline', modal: false, busy: false, email, error: '需要重新登录', cloudExpired: true });
       paint(); effects.toast('需要重新登录，电脑上的内容仍可继续使用。'); return;
     }
     const draft = effects.readMessageDraft?.() || core.state.desktopDraft;
     if (draft && auth.sub) await environment.cloudCredentials('draft:' + auth.sub, draft);
-    clearTimeout(renewalTimer); clearTimeout(waitTimer); journey++;
+    if (!current()) return;
+    clearTimeout(renewalTimer); clearTimeout(waitTimer);
     await client.forget();
+    if (!current()) return;
     // Clear the host cookie as well as the in-memory projection.
     try { await core.api('/logout', { method: 'POST', protectedWrite: true, body: {} }); } catch { /* revoked cookies are already unusable */ }
+    if (!current()) return;
     await effects.clearNativeHostSessions?.();
+    if (!current()) return;
     auth.cachedSession = false; core.clearSession(); auth.email = email; startCloudJourney();
   }
   async function cancelCloudJourney() { if (auth.localSession) { dismissCloudLogin(); return; } bindingClaim = null; await client.forget(); await client.resetKey(); startCloudJourney(); }
@@ -369,15 +377,24 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   async function cloudEmailConfirm(code) { const result = await client.authorized('/auth/email/change/confirm', { method: 'POST', body: { challengeId: auth.emailChange.challengeId, code } }); auth.emailChange = null; await expireCloudSession(result.account.email, {retainCached:false}); return result; }
   async function cloudChangePassword(currentPassword, password, confirmation) { validPassword(password, confirmation); const result = await client.authorized('/auth/password/change', { method: 'POST', body: { currentPassword, password } }); await expireCloudSession(auth.email, {retainCached:false}); return result; }
   async function cloudLogout() {
-    const ticket = ++journey; // A pending restore cannot publish after explicit logout.
-    if (auth.localDesktop && auth.restoreState === 'checking' && !client.tokenId) {
+    const ticket = ++journey, generation = core.state.identityGeneration;
+    const current = () => ticket === journey && generation === core.state.identityGeneration;
+    if (auth.localDesktop && !client.tokenId) {
       // Resolve only local public configuration so forget knows the native key.
-      // Otherwise logout before configure completes leaves old tokens for next boot.
+      // Pending or failed configuration must not leave old tokens for next boot.
       await client.configure();
-      if (ticket !== journey) return;
+      if (!current()) return;
     }
-    if(auth.localSession&&auth.multiHostSupported&&auth.mode==='authenticated')await core.accessApi('/cloud/binding',{method:'DELETE',protectedWrite:true,body:{}});
-    if (auth.mode !== 'offline') { await client.authorized('/auth/logout', { method: 'POST', body: {} }); await client.resetKey(); }
+    if(auth.localSession&&auth.multiHostSupported&&auth.mode==='authenticated') {
+      await core.accessApi('/cloud/binding',{method:'DELETE',protectedWrite:true,body:{}});
+      if (!current()) return;
+    }
+    if (auth.mode !== 'offline') {
+      await client.authorized('/auth/logout', { method: 'POST', body: {} });
+      if (!current()) return;
+      await client.resetKey();
+      if (!current()) return;
+    }
     await expireCloudSession(auth.email, {retainCached:false});
   }
   async function cloudLogoutOthers() { return client.authorized('/auth/logout/others', { method: 'POST', body: {} }); }
