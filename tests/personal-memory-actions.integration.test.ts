@@ -31,7 +31,7 @@ function boundary(text: string, sessionId: string) {
   ]
   return assertOwnerBoundBoundary(sessionId, boundaryForCompletedTurn({ id: sessionId, header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))
 }
-async function fixture(t: any, { interpret = null, misattribute = false, malformedDecision = false, wrongQuestionOnly = false }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean } = {}) {
+async function fixture(t: any, { interpret = null, misattribute = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。' }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
   let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false, unavailableText = ''
   let recoveryGate: { entered: () => void, pending: Promise<void> } | null = null
@@ -51,9 +51,9 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
         const value = decisionTool === 'classify_forget_request' ? {
           isForgetRequest: !/如果|哪些|翻译/.test(input.message), conditionsOrQuestions: /如果|哪些/.test(input.message),
           subject: input.message.includes('妈妈') ? 'other:妈妈' : input.message.includes('林舟') ? 'other:林舟' : 'self',
-          topic: input.message.includes('生日') ? (input.message.includes('妈妈') ? '妈妈的生日' : '我的生日') : input.message.includes('林舟') ? '林舟' : '我喝茶的偏好',
+          topic: input.message.includes('生日') ? (input.message.includes('妈妈') ? '妈妈的生日' : '我的生日') : input.message.includes('林舟') ? '林舟' : input.message.includes('蓝色') ? '我喜欢蓝色的偏好' : '我喝茶的偏好',
         } : { items: input.candidates.map((candidate: any) => ({ key: candidate.key,
-          matchesTopic: wrongQuestionOnly ? /根据我的记忆/.test(candidate.text) : input.request.topic.includes('生日') ? candidate.text.includes('生日') : input.request.topic.includes('林舟') ? candidate.text.includes('林舟') : /茶|纠正/.test(candidate.text),
+          matchesTopic: wrongQuestionOnly ? /根据我的记忆/.test(candidate.text) : input.request.topic.includes('生日') ? candidate.text.includes('生日') : input.request.topic.includes('林舟') ? candidate.text.includes('林舟') : input.request.topic.includes('蓝色') ? candidate.text.includes('蓝色') : /茶|纠正/.test(candidate.text),
           ...(request.tools[0].function.parameters.properties.items.items.properties.hasTargetFact ? {
             hasTargetFact: !/根据我的记忆|什么茶|什么时候/.test(candidate.text),
             sourceFullyAuthorized: !candidate.sourceTexts.some((text: string) => /生日/.test(text) && /茶/.test(text)),
@@ -91,7 +91,9 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
         if ((correctionsUnavailable || unavailableText && args[1]?.command?.payload?.correction_text === unavailableText) &&
             args[0] === 'submit_command' && args[1]?.command?.operation === 'correct_world_item')
           throw Object.assign(Error('correction write unavailable'), { code: 'MEMORY_BUSY' })
-        const result = await request(...args)
+        let result
+        try { result = await request(...args) }
+        catch (error: any) { coreTrace.push({ method: args[0], params: args[1], error: { code: error.code, message: error.message } }); throw error }
         if (['ingest_boundary', 'submit_command', 'query_command_receipt', 'retry_formation', 'query_jobs', 'preview_recall', 'query_world'].includes(args[0]))
           coreTrace.push({ method: args[0], params: args[1], result })
         if (loseReceipt && args[0] === 'submit_command') { loseReceipt = false; throw Object.assign(Error('receipt lost after commit'), { code: 'MEMORY_PROCESS_UNAVAILABLE' }) }
@@ -117,7 +119,7 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
       requestId: 'memory-tool:' + createHash('sha256').update(id).digest('hex'), source: { id: id + '-user', text: sourceText,
         message: { message_id: id + '-user', content: sourceText, preceding_ai_context: null } } },
     { sessionId: id, modelTier: 'cloud', memoryPolicy: { recall: true } })
-  await manager.ingest(owner, boundary('记住：我喜欢喝乌龙茶。', 'remember'))
+  await manager.ingest(owner, boundary(seedText, 'remember'))
   await ready()
   return { root, world, ready, tool, fork: () => create(path.join(root, 'imported')), get manager() { return manager }, errors,
     pauseRecovery: () => {
@@ -131,9 +133,70 @@ async function fixture(t: any, { interpret = null, misattribute = false, malform
     holdCorrections: (value: boolean) => { correctionsUnavailable = value },
     holdCorrectionText: (value: string) => { unavailableText = value },
     restart: async () => { await manager.close(); manager = create() }, get calls() { return calls },
+    get trace() { return coreTrace },
     get decisions() { return coreTrace.filter(row => row.modelDecision).length },
     get decisionInputs() { return coreTrace.filter(row => row.modelDecision === 'classify_forget_candidates').map(row => row.input) } }
 }
+
+test('FIX-50 G7 M7 real Core: forgetting blue preserves the independent walking source in the same recall candidates', { skip }, async t => {
+  const walkingText = '我喜欢喝红茶。另记一件独立的事：我周末喜欢散步。'
+  const blueText = '记住我喜欢蓝色'
+  const f = await fixture(t, { seedText: walkingText, interpret: payload => {
+    const evidence = payload.evidence[0]
+    return { schema_version: 8, result: 'cognitions', cognitions: [{ action: 'form', target: 'owner_self',
+      statement_kind: 'preference', formed_by: 'stated', proposition: evidence.text.includes('散步') ? '用户周末喜欢散步。' : '用户记住我喜欢蓝色',
+      supports: evidence.segments.map((segment: any) => ({ evidence_id: evidence.id, segment_id: segment.id })) }] }
+  } })
+  await f.manager.ingest(owner, boundary(blueText, 'g7-blue'))
+  await f.ready()
+  const before = (await f.world()).items
+  const walking = before.find((item: any) => item.value.content.includes('散步'))
+  const blue = before.find((item: any) => item.value.content.includes('蓝色'))
+  assert.ok(walking); assert.ok(blue)
+  const sources = await f.manager.query(owner, 'query_evidence', { operation: 'list' })
+  const walkingSource = sources.evidence.find((item: any) => item.raw_content === walkingText)
+  const blueSource = sources.evidence.find((item: any) => item.raw_content === blueText)
+  assert.ok(walkingSource); assert.ok(blueSource)
+  // Fix the observed G7 recall projection, keeping actual World, provenance,
+  // commands, receipts and persistence in the real Core. Recall may nominate
+  // both topics; that nomination is never deletion authorization.
+  const query = f.manager.query.bind(f.manager)
+  f.manager.query = async (ownerId: string, method: string, params: any) => {
+    const value = await query(ownerId, method, params)
+    if (method === 'preview_recall') {
+      value.preview.selected_item_ids = [['cognition', walking.item_id], ['cognition', blue.item_id]]
+      value.preview.recent_evidence = [walkingSource, blueSource].map((source: any) => ({ id: source.evidence_id, text: source.raw_content }))
+      value.preview.pending_corrections = []
+    }
+    return value
+  }
+  const result = await f.tool('memory_forget', { query: '我喜欢蓝色' }, 'g7-blue-forget', '请忘掉我喜欢蓝色这件事')
+  assert.equal(result.state, 'applied')
+  const deletions = f.trace.filter((row: any) => row.method === 'submit_command' && row.params.command.operation.startsWith('delete_'))
+  assert.equal(deletions.length, 1)
+  assert.equal(deletions[0].params.command.operation, 'delete_world_item')
+  assert.equal(deletions[0].params.command.target_id, blue.item_id)
+  assert.equal(deletions[0].result.receipt.result_state, 'applied')
+  const after = (await f.world()).items
+  assert.ok(after.some((item: any) => item.item_id === walking.item_id), 'forgetting blue must preserve the independent walking item')
+  assert.equal(after.some((item: any) => item.item_id === blue.item_id), false)
+  const retained = await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: walkingSource.evidence_id })
+  assert.equal(retained.evidence.raw_content, walkingText, 'the independent walking source stays intact')
+  const removed = await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: blueSource.evidence_id })
+  assert.equal(removed.evidence.currentness_state, 'evidence_deleted')
+  assert.equal(removed.evidence.content_available, false)
+  assert.equal(removed.evidence.raw_content, null)
+  assert.equal(removed.evidence.summary, null)
+  const deletedPath = `/personal/v1/memory/items/cognition/${blue.item_id}/sources`
+  await assert.rejects(handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname: deletedPath,
+    url: new URL(deletedPath, 'http://memory'), request: { method: 'GET' }, readJson: async () => ({}) }), { code: 'NOT_FOUND' })
+  const exported = JSON.stringify(await f.manager.portableExport(owner))
+  assert.match(exported, /散步/); assert.doesNotMatch(exported, /蓝色/)
+  await f.restart()
+  assert.ok((await f.world()).items.some((item: any) => item.item_id === walking.item_id))
+  assert.equal((await f.world()).items.some((item: any) => item.item_id === blue.item_id), false)
+  assert.deepEqual(f.errors, [])
+})
 
 test('FIX-50 M7 real Core: a wrong question-only nomination cannot delete that question or report the preference forgotten', { skip }, async t => {
   const f = await fixture(t, { wrongQuestionOnly: true })
@@ -304,6 +367,11 @@ test('FIX-50 real Core: an explicit forget deletes correction history and source
 
 test('FIX-50 real Core: forgetting by topic also finds already non-current memories', { skip }, async t => {
   const f = await fixture(t)
+  const plan = f.manager.planForget.bind(f.manager)
+  f.manager.planForget = async (...args: any[]) => {
+    try { return await plan(...args) }
+    catch (error: any) { f.trace.push({ phase: 'non-current-forget-plan', error: { code: error.code, message: error.message } }); throw error }
+  }
   const old = (await f.world()).items[0]
   assert.equal((await f.tool('memory_correct', { kind: 'cognition', id: old.item_id, expectedWorldRevision: 1,
     text: '我喝茶的偏好是红茶。' }, 'fix50-old-correct', '纠正我喝茶的偏好为红茶。')).state, 'applied')
