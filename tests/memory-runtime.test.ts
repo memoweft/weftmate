@@ -5,7 +5,7 @@ import {join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import 'app-builder-lib';
 const {WinPackager}=await import('app-builder-lib/out/winPackager.js');
-import {modeOf,verifyMemoryRuntime} from '../scripts/memory-runtime/verify.mjs';
+import {modeOf,verifyMemoryRuntime,lock} from '../scripts/memory-runtime/verify.mjs';
 import {checkInput} from '../scripts/memory-runtime/prepare.mjs';
 import {withMemoryRuntimeResources,beforeWindowsMemoryPack,afterWindowsMemoryPack} from '../scripts/memory-runtime-package.mjs';
 import {memoryRuntimeFixture,sealMemoryRuntimeFixture} from './helpers/memory-runtime-fixture.mjs';
@@ -99,6 +99,26 @@ test('shared packaging resource retains explicit choice and refuses omitted or w
     await assert.rejects(withMemoryRuntimeResources(config,{mode:'full',source:root},verify),/layer mismatch/);
     await rm(join(root,'python/python313.dll'));
     await assert.rejects(withMemoryRuntimeResources(config,{mode:'base',source:root},verify),/hash-mismatched/);
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('full layer individually requires both app-local DLLs, the model and tokenizer',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'memory-runtime-full-missing-'));
+  try{
+    await memoryRuntimeFixture(root);
+    const artifacts=['licenses/E5-MODEL-CARD.md','licenses/VC-LICENSE.rtf',...lock.vc.files.map(d=>'python/'+d.name),...lock.model.files.map(d=>'models/'+d.file)];
+    for(const name of artifacts){await mkdir(join(root,name,'..'),{recursive:true});await writeFile(join(root,name),'synthetic fixed-asset substitute');}
+    for(const d of lock.dependencies.filter(d=>d.layer==='semantic')){
+      const file=join(root,`site-packages/${d.name}-${d.version}.dist-info/METADATA`);
+      await mkdir(join(file,'..'),{recursive:true});await writeFile(file,`Name: ${d.name}\nVersion: ${d.version}\n`);
+    }
+    await sealMemoryRuntimeFixture(root,{mode:'full'});
+    await assert.rejects(verifyMemoryRuntime(root,{mode:'full'}),/pinned semantic file mismatch/);
+    for(const name of [...lock.vc.files.map(d=>'python/'+d.name),...lock.model.files.map(d=>'models/'+d.file)]){
+      await rm(join(root,name));await sealMemoryRuntimeFixture(root,{mode:'full'});
+      await assert.rejects(verifyMemoryRuntime(root,{mode:'full'}),error=>error.message===`memory runtime required file missing: ${name}`);
+      await writeFile(join(root,name),'synthetic fixed-asset substitute');
+    }
   }finally{await rm(root,{recursive:true,force:true});}
 });
 
