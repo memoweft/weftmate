@@ -51,7 +51,7 @@ async function runCase(version,method){
  stage('prepare',{profile});
  const prep=await createPersonalAccessService({root:join(profile,'personal-access'),port:0,hostName:'synthetic-host',backend:Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(k=>[k,async()=>k==='listModels'?[]:{}]))});
  const info=await prep.start(),grant=await prep.issueSetupGrant();await fetch(info.origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin:info.origin,'content-type':'application/json'},body:JSON.stringify({...credentials,grant:grant.grant})});await prep.close();writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
- const env={...process.env,BL29_EXIT_METHOD:method};for(const k of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(k))delete env[k];env.WEFTMATE_TEST_HOST_NAME='synthetic-host';env.REV_BASELINE=version==='main'?'1':'0';
+ const env={...process.env,BL29_EXIT_METHOD:method,BL29_EXIT_CASE_ROOT:root};for(const k of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(k))delete env[k];env.WEFTMATE_TEST_HOST_NAME='synthetic-host';env.REV_BASELINE=version==='main'?'1':'0';
  let app;const row={version,method};report.push(row);console.log('START',version,method);
  try{
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['tests/integration/bl29-rework/exit-entry.mjs',`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],env,timeout:90000});
@@ -74,7 +74,7 @@ async function runCase(version,method){
    assert.equal(row.nativeSession.status,200);assert.equal(row.nativeSession.authKind,'desktop');assert.equal(row.nativeSession.local,true);
    // The first window may still be hidden. Initial native reads honor the
    // foreground gate, so establish visibility before waiting for those reads.
-   await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.restore();w.show();});
+   await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.restore();w.show();w.focus();});
    await p.waitForFunction(()=>document.visibilityState==='visible'&&globalThis.__revExitCore.foreground());
    await p.waitForFunction(()=>{const core=globalThis.__revExitCore;return core?.state.mainChat&&core.state.modelsKnown&&
     !core.state.refreshing&&!core.state.sessionSelecting;});
@@ -99,9 +99,10 @@ async function runCase(version,method){
   }
   if(method==='window-tray-exit'){await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].close());await pause(100);row.hidden=await app.evaluate(({BrowserWindow})=>!BrowserWindow.getAllWindows()[0].isVisible());}
   await app.evaluate(async()=>{for(let i=0;i<70&&!globalThis.revTray;i++)await new Promise(r=>setTimeout(r,100));if(!globalThis.revTray)throw Error('tray missing');});
+  if(version==='head'&&method==='update-restart')await app.evaluate(()=>globalThis.revQueueTeardownRequest());
   stage('quit-requested');const at=Date.now();if(method==='update-restart')await app.evaluate(()=>{setTimeout(()=>void globalThis.revUpdate(),0);});else await app.evaluate(()=>{setTimeout(()=>globalThis.revTray.items.find(i=>i.label==='退出').click(),0);});
   await closed;row.ms=Date.now()-at;row.exitCode=child.exitCode;stage('closed',{exitCode:child.exitCode});app=null;
- }catch(e){row.error=scrub(e.message);if(version==='head'&&app)row.failedReadiness=await app.firstWindow().then(nativeReadiness).catch(()=>null);process.exitCode=1;}finally{await app?.close();row.shutdownStages=shutdownStages(profile);rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});writeFileSync(outputPath(process.argv.includes('--orders-only')?'orders.json':'exit.json'),JSON.stringify(report,null,2));console.log(row);}
+ }catch(e){row.error=scrub(e.message);if(version==='head'&&app)row.failedReadiness=await app.firstWindow().then(nativeReadiness).catch(()=>null);process.exitCode=1;}finally{await app?.close();row.shutdownStages=shutdownStages(profile);if(existsSync(join(root,'teardown-request.json')))row.teardownRequest=JSON.parse(readFileSync(join(root,'teardown-request.json'),'utf8'));rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});writeFileSync(outputPath(process.argv.includes('--orders-only')?'orders.json':'exit.json'),JSON.stringify(report,null,2));console.log(row);}
 }
 const cases=(process.argv.includes('--head-only')?['head']:['main','head']).flatMap(version=>methods.map(method=>({version,method})));
 // Each case has its own profile, cookies and runtime. Two independent launches
