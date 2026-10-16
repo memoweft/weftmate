@@ -53,9 +53,30 @@ export function createMemoryActions({ root, manager, schedule }) {
     const m = manager();
     signal?.throwIfAborted();
     if (action.name === 'memory_forget') {
-      // A pre-upgrade frozen plan has not passed whole-message/subject checks.
-      // Rebuild it from the original request before resuming any deletion.
-      if (!action.plan || action.plan.version !== 2 || !Number.isSafeInteger(action.plan.worldRevision) || action.plan.authorization?.authorized !== true) {
+      const frozen = action.plan;
+      if (frozen && frozen.completionVersion !== 1) {
+        // Old v2 plans froze deletion authority, but did not inspect every known
+        // retained source. Upgrade proof only: never replace their commands,
+        // targets, authorization or revision with a freshly nominated scope.
+        let complete = false;
+        if (!Object.keys(action.commands ?? {}).length && !action.finished?.length &&
+            frozen.version === 2 && Number.isSafeInteger(frozen.worldRevision) && frozen.authorization?.authorized === true) {
+          const proof = await m.planForget(owner, { ...action, scope: frozen.authorization, signal });
+          signal?.throwIfAborted();
+          const targets = plan => [...(plan.worldTargets ?? []).map(row => `${row.kind}:${row.id}`),
+            ...(plan.evidenceIds ?? []).map(id => `evidence:${id}`)].sort();
+          const evidence = new Set(frozen.authorizedEvidenceIds ?? frozen.evidenceIds ?? []);
+          complete = proof.completionVersion === 1 && proof.completionState === 'complete' &&
+            proof.worldRevision === frozen.worldRevision && proof.authorization?.subject === frozen.authorization.subject &&
+            proof.authorization?.topic === frozen.authorization.topic && JSON.stringify(targets(proof)) === JSON.stringify(targets(frozen)) &&
+            (proof.authorizedEvidenceIds ?? proof.evidenceIds ?? []).every(id => evidence.has(id));
+        }
+        action.plan = { ...frozen, completionVersion: 1, completionState: complete ? 'complete' : 'withheld', completionUpgraded: true };
+        await update(owner, data => { data.records[action.requestId].plan = action.plan; });
+      }
+      // New requests still pass the original whole-message/subject checks.
+      if (!action.plan || (action.plan.completionState !== 'withheld' &&
+          (action.plan.version !== 2 || !Number.isSafeInteger(action.plan.worldRevision) || action.plan.authorization?.authorized !== true))) {
         const previous = action.plan;
         const plan = await m.planForget(owner, { ...action, signal });
         signal?.throwIfAborted();
@@ -67,10 +88,10 @@ export function createMemoryActions({ root, manager, schedule }) {
         }
         await update(owner, data => { data.records[action.requestId].plan = plan; }); action.plan = plan;
       }
-      const deletions = [...(action.plan.worldTargets ?? []), ...action.plan.evidenceIds.map(id => ({ kind: 'evidence', id }))];
+      const deletions = [...(action.plan.worldTargets ?? []), ...(action.plan.evidenceIds ?? []).map(id => ({ kind: 'evidence', id }))];
       const retained = (action.plan.retainedOtherCount ? `还有 ${action.plan.retainedOtherCount} 条关于别人的没动。` : '') +
         (action.plan.retainedUncertainCount ? `还有 ${action.plan.retainedUncertainCount} 条归属或共用来源不明确的没动。` : '');
-      if (action.plan.retainedUncertainCount > 0 || action.plan.state === 'withheld') {
+      if (action.plan.retainedUncertainCount > 0 || action.plan.state === 'withheld' || action.plan.completionState === 'withheld') {
         // A completed target is not a completed topic when a known source must
         // remain. Read an existing Core receipt; never replay to prove an effect.
         let applied = false, uncertain = (action.finished ?? []).some(id => !action.commands?.[id]);
@@ -92,9 +113,12 @@ export function createMemoryActions({ root, manager, schedule }) {
           throw Error('MEMORY_ACTION_PENDING');
         }
         return { state: applied ? 'partial' : 'withheld', message: applied
-          ? '部分记忆已删除，但仍不能确认已完全忘掉；包含其他独立内容的来源保留，没有继续删除。原聊天保留。'
+          ? action.plan.completionUpgraded
+            ? '原请求已执行，但还不能确认完全忘掉，本次没有继续删除。原聊天保留。'
+            : '部分记忆已删除，但仍不能确认已完全忘掉；包含其他独立内容的来源保留，没有继续删除。原聊天保留。'
           : commands.length ? '原请求已核对，本次没有继续删除；仍未完整忘掉。独立记忆和原聊天保留。'
-            : action.plan.message ?? '这次没有执行遗忘：相关来源还包含需要保留的其他内容，尚不能完整忘掉。独立记忆和原聊天保留。' };
+            : action.plan.completionUpgraded ? '尚不能确认完整遗忘范围，这次没有执行遗忘；请重新确认要忘掉的内容。独立记忆和原聊天保留。'
+              : action.plan.message ?? '这次没有执行遗忘：相关来源还包含需要保留的其他内容，尚不能完整忘掉。独立记忆和原聊天保留。' };
       }
       if (!deletions.length) return action.plan.state ? { state: action.plan.state, message: action.plan.message }
         : retained ? { state: 'withheld', message: '这次没有删除记忆。' + retained } : notFound();
@@ -303,7 +327,7 @@ export function createMemoryActions({ root, manager, schedule }) {
         attempted: flight?.attempted.has(action.requestId) ?? false, elapsedMs: Math.round(performance.now() - started),
         reason: budgetExpired ? action.automatic ? '60s-budget' : '8s-budget'
           : row.result ? 'flight-settled-with-result' : 'flight-settled-still-pending', recoveryRequested: true });
-      const incomplete = row.name === 'memory_forget' && (row.plan?.retainedUncertainCount > 0 || row.plan?.state === 'withheld');
+      const incomplete = row.name === 'memory_forget' && (row.plan?.retainedUncertainCount > 0 || row.plan?.state === 'withheld' || row.plan?.completionState === 'withheld');
       return row.result ?? { state: 'queued', message: incomplete
         ? '上次遗忘结果还未能确认，本次没有继续删除；稍后只核对原请求结果。' : pendingMessage(action.name) };
     },

@@ -80,7 +80,8 @@ test('FIX-50 R2/M7: a topic match cannot erase a mixed source or a question with
     const input = JSON.parse(body.messages.at(-1).content)
     const enhanced = body.tools[0].function.parameters.properties.items.items.properties.sourceFullyAuthorized
     const items = input.candidates.map((row: any) => ({ key: row.key, matchesTopic: true, subjects: ['self'],
-      ...(enhanced ? { sourceFullyAuthorized: row.key === 'cognition:old' ? false : sourceFullyAuthorized, hasTargetFact } : {}) }))
+      ...(enhanced ? { sourceFullyAuthorized: row.key === 'cognition:old' ? false : sourceFullyAuthorized, hasTargetFact,
+        targetSubjects: hasTargetFact ? ['self'] : [] } : {}) }))
     res.end(JSON.stringify({ choices: [{ finish_reason: 'tool_calls', message: { tool_calls: [{ function: { name, arguments: JSON.stringify({ items }) } }] } }] }))
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
