@@ -255,6 +255,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         sharedChat = SharedChat(store, api, attachments)
         conversationHandoff = ConversationHandoff(store, api, attachments)
         secrets = SecureSettings(this)
+        PhoneAccount(this, secrets).bootstrapIdentity()
         secrets.cloudValue("login")?.let { value ->
             val saved = JSONObject(value)
             if (saved.has("pin")) CloudPins.install(saved.getString("host"), saved.getString("pin"))
@@ -270,7 +271,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             if (!closed.get()) try {
                 synchronized(syncRegistrationLock) {
                     if (!closed.get()) {
-                        if (secrets.host() != null) SyncJobService.schedule(this)
+                        if (secrets.host()?.phoneOnly == false) SyncJobService.schedule(this)
                         else SyncJobService.cancel(this)
                     }
                 }
@@ -474,9 +475,9 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                     if (closed.get()) { updateChecking.set(false); return@execute }
                     try {
                         val host = secrets.host() ?: throw ApiFailure(401, "LOGIN_REQUIRED")
-                        val checked = bundles.check(host)
-                        respond(reply, id, true, uiState(checked))
-                        if (checked.staged != null) maybeApplyStaged(host)
+                        val checked = if (host.phoneOnly) null else bundles.check(host)
+                        respond(reply, id, true, uiState(checked ?: bundles.state()).put("checked", checked != null))
+                        if (checked?.staged != null) maybeApplyStaged(host)
                     } catch (error: Exception) { respond(reply, id, false, JSONObject().put("code", safeCode(error))) }
                     finally { updateChecking.set(false) }
                 } } catch (_: RejectedExecutionException) { updateChecking.set(false) }
@@ -639,7 +640,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         try { updateWorker.execute {
             if (closed.get()) { updateChecking.set(false); return@execute }
             try {
-                val host = secrets.host() ?: return@execute
+                val host = secrets.host()?.takeUnless { it.phoneOnly } ?: return@execute
                 val outcome = bundles.check(host)
                 if (outcome.staged != null) {
                     emit("update.staged", uiState(outcome))
@@ -665,7 +666,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             try {
                 while (foreground && !isDestroyed && !closed.get() &&
                     subscription == updateSubscriptionEpoch.get()) {
-                    val host = try { secrets.host() } catch (_: Exception) { null } ?: break
+                    val host = try { secrets.host()?.takeUnless { it.phoneOnly } } catch (_: Exception) { null } ?: break
                     val connection = URL("${host.origin}/personal/v1/app/updates").openPinnedConnection()
                     updateConnection.set(connection)
                     if (subscription != updateSubscriptionEpoch.get() || !foreground || closed.get()) {
@@ -752,6 +753,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     }
 
     private fun uiState(state: UiBundleState) = JSONObject().put("activeVersion", state.version)
+        .put("sourceAvailable", secrets.host()?.phoneOnly == false)
         .put("stagedVersion", state.stagedVersion).put("previousAvailable", state.previous != null)
         .put("releaseNotes", state.releaseNotes ?: "").put("nativeVersion", BuildConfig.VERSION_NAME)
         .put("lastError", lastUiError ?: state.error ?: "")
@@ -899,7 +901,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         return view
     }
     private fun profileFor(host: HostIdentity): JSONObject {
-        if (host.authSource == "phone") return JSONObject().put("loggedIn", true).put("username", host.username).put("displayName", host.username).put("connectionVerified", false).put("phoneOnly", true)
+        if (host.phoneOnly) return JSONObject().put("loggedIn", true).put("username", host.username).put("displayName", host.username).put("connectionVerified", false).put("phoneOnly", true).put("localOnly", host.authSource == "phone-local")
         val remote = try { api.me(host) } catch (error: Exception) {
             RunDiagnostics.connection(false, error)
             if (error is ApiFailure && (error.status == 401 || error.safeCode == "ACCOUNT_IDENTITY_MISMATCH"))
@@ -953,7 +955,9 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         } finally { original.recycle() }
     }
 
-    private fun handle(method: String, params: JSONObject, requestEpoch: Long, requestHost: HostIdentity?, readActive: AtomicReference<HttpURLConnection?>? = null): JSONObject = when (method) {
+    private fun handle(method: String, params: JSONObject, requestEpoch: Long, requestHost: HostIdentity?, readActive: AtomicReference<HttpURLConnection?>? = null): JSONObject {
+        requireLocalPhoneAccess(method, secrets.host())
+        return when (method) {
         "native.conversation" -> { activeConversation = params.optString("id").takeIf { it.isNotEmpty() }; JSONObject() }
         "native.preference" -> JSONObject().put("enabled", BuildConfig.NATIVE_UI)
         "native.draft" -> {
@@ -1004,7 +1008,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             failure.get()?.let { throw it }
             JSONObject().put("opened", true)
         }
-        "phone.identity" -> PhoneAccount(this, secrets).identity().let { identity -> JSONObject().put("origin",identity.origin).put("accountId",identity.ownerId).put("email",identity.username).put("deviceId",identity.deviceId) }
+        "phone.identity" -> PhoneAccount(this, secrets).identity().let { identity -> JSONObject().put("origin",identity.origin).put("accountId",identity.ownerId).put("email",identity.username).put("deviceId",identity.deviceId).put("localOnly",identity.authSource == "phone-local") }
         "phone.adopt" -> {
             val identity = PhoneAccount(this, secrets).adopt(params)
             SyncJobService.cancel(this)
@@ -1035,7 +1039,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             }
             }
         }
-        "offline.identity" -> secrets.host()?.takeIf { it.authSource != "phone" }?.let { host -> JSONObject().put("ownerId", host.ownerId).put("hostId", host.hostId)
+        "offline.identity" -> secrets.host()?.takeUnless { it.phoneOnly }?.let { host -> JSONObject().put("ownerId", host.ownerId).put("hostId", host.hostId)
             .put("deviceId", host.deviceId).put("origin", host.origin) } ?: JSONObject()
         "offline.key", "offline.load", "offline.save", "offline.open", "offline.complete", "offline.clear" -> {
             val host = requireHost()
@@ -1100,7 +1104,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             JSONObject().put("reported", true)
         }
         "app.bootstrap" -> {
-            val host = secrets.host()
+            val host = PhoneAccount(this, secrets).bootstrapIdentity()
             ensureOpen()
             useScope(host)
             val scope = owner(host) ?: "local"
@@ -1108,6 +1112,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 intent?.getStringExtra("conversationId") ?: "" else ""
             JSONObject().put("loggedIn", host != null).put("username", host?.username ?: "").put("cloudApp", true)
                 .put("authSource", host?.authSource ?: "")
+                .put("phoneOnly", host.phoneOnly)
                 .put("owner", scope.takeUnless { it == "local" } ?: "").put("model", modelStatus(host))
                 .put("deviceId", host?.deviceId ?: "")
                 .put("busy", busy.get() && host != null && activeTurnScope == scope)
@@ -1709,7 +1714,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             synchronized(syncRegistrationLock) {
                 ensureOpen()
                 if (previous != null) SyncJobService.cancel(this)
-                if (previous != null && (previous.ownerId != identity.ownerId || previous.origin != identity.origin)) OfflineVault(this, previous).clear()
+                if (previous != null && previous.authSource != "phone-local" && (previous.ownerId != identity.ownerId || previous.origin != identity.origin)) OfflineVault(this, previous).clear()
                 secrets.saveHost(identity)
                 SyncJobService.schedule(this)
             }
@@ -1871,10 +1876,10 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 .put("backgroundSync", SyncJobService.status(this))
         }
         "auth.logout" -> {
-            secrets.host()?.let { OfflineVault(this, it).clear() }
+            secrets.host()?.takeUnless { it.authSource == "phone-local" }?.let { OfflineVault(this, it).clear() }
             val identity = secrets.host()
             var revoked = true
-            if (identity != null) try { api.logout(identity) } catch (_: Exception) { revoked = false }
+            if (identity != null && !identity.phoneOnly) try { api.logout(identity) } catch (_: Exception) { revoked = false }
             ensureOpen()
             synchronized(syncRegistrationLock) { ensureOpen(); secrets.clearHost(); SyncJobService.cancel(this) }
             useScope(null)
@@ -1917,12 +1922,12 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             }finally{image.recycle()}
         }
         "native.library.close" -> { webPdfFile=null;runOnUiThread { if(this is NativeActivity)closeOriginalLibrary() else if(intent.getBooleanExtra("openLibraryPage",false))finish() };JSONObject() }
-        "host.status" -> { val host = requireHost(); if (host.authSource == "phone") throw ApiFailure(503, "HOST_UNAVAILABLE"); api.status(host) }
+        "host.status" -> { val host = requireHost(); if (host.phoneOnly) throw ApiFailure(503, "HOST_UNAVAILABLE"); api.status(host) }
         "host.business" -> {
             if (params.getString("path").substringBefore('?').endsWith("/resources"))
                 require(params.optString("method", "GET") == "GET")
             val host = secrets.host() ?: throw ApiFailure(401, "LOGIN_REQUIRED")
-            if (host.authSource == "phone") throw ApiFailure(503, "HOST_UNAVAILABLE")
+            if (host.phoneOnly) throw ApiFailure(503, "HOST_UNAVAILABLE")
             val result = api.business(host, params.getString("path"), params.optString("method", "GET"),
                 params.optJSONObject("body"), readActive)
             require(result.toString().length <= nativeBusinessResponseLimit(params.getString("path")))
@@ -1941,9 +1946,9 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         }
         "updates.check" -> {
             val host = secrets.host() ?: throw ApiFailure(401, "LOGIN_REQUIRED")
-            val checked = bundles.check(host)
-            if (checked.staged != null) scheduleStagedApply()
-            uiState(checked)
+            val checked = if (host.phoneOnly) null else bundles.check(host)
+            if (checked?.staged != null) scheduleStagedApply()
+            uiState(checked ?: bundles.state()).put("checked", checked != null)
         }
         "updates.apply" -> {
             if (busy.get() || uiHasDraft || params.optBoolean("hasDraft", false)) throw ApiFailure(409, "UPDATE_DEFERRED")
@@ -1963,6 +1968,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         }
         "compat.openNative" -> { runOnUiThread { startActivity(Intent(this, MainActivity::class.java)) }; JSONObject() }
         else -> throw ApiFailure(404, "METHOD_UNKNOWN")
+        }
     }
 
     private fun modelView(profile: ModelSettings, selected: Boolean? = null) = JSONObject().put("source", "phone")
@@ -2288,7 +2294,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     }
 
     private fun queueSync(host: HostIdentity, epoch: Long, conversationId: String?) {
-        if (host.authSource == "phone") return
+        if (host.phoneOnly) return
         try { syncWorker.execute {
             try { val result = SyncManager(store, api, attachments).syncOnce(host,
                 { !closed.get() && !accountTransition.get() && accountEpoch.get() == epoch &&
@@ -2311,7 +2317,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         if (closed.get() || accountTransition.get() || !notificationPolling.compareAndSet(false, true)) return
         try { syncWorker.execute {
             try {
-                val host = secrets.host() ?: return@execute
+                val host = secrets.host()?.takeUnless { it.phoneOnly } ?: return@execute
                 val notices = ActivityNotifications(this)
                 val needed = notices.poll(host, api) { !closed.get() && !accountTransition.get() && secrets.host() == host }
                 if (needed && foreground && currentPageReady && secrets.host() == host && !notices.state().optBoolean("permissionAsked")) {

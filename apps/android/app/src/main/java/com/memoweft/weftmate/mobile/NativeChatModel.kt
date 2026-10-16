@@ -28,6 +28,7 @@ internal suspend fun saveNativeApprovalMode(selected: String, local: Boolean, sa
 internal class NativeChatModel(private val environment: NativeChatEnvironment, val scope: CoroutineScope) {
     constructor(activity: NativeActivity, scope: CoroutineScope) : this(ActivityNativeChatEnvironment(activity), scope)
     var loggedIn by mutableStateOf(false)
+    var localOnly by mutableStateOf(false)
     var owner by mutableStateOf("")
     var tab by mutableStateOf("chat")
     var title by mutableStateOf("小纬")
@@ -149,7 +150,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         val b = call("app.bootstrap")
         val nextOwner = b.optString("owner")
         if (owner != nextOwner) { workAndChat=false; newWork=false; conversationMode="chat"; loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
-        owner = nextOwner; loggedIn = b.optBoolean("loggedIn"); standalone = b.optString("authSource") == "phone"
+        owner = nextOwner; loggedIn = b.optBoolean("loggedIn"); localOnly = b.optString("authSource") == "phone-local"; standalone = b.optString("authSource") in setOf("phone", "phone-local")
         sidebarMode = prefs.getString("conversation-mode:$owner", "chat").let { if (it == "work") "work" else "chat" }
         val appearance = call("settings.appearance")
         dark = resolvedAppearanceDark(appearance.optString("value"), appearance.optBoolean("systemDark"))
