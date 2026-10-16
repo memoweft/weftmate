@@ -5,28 +5,32 @@
 构建默认 `full`；仍可显式选择 `base` 单独构建基础候选。出处见
 [#332 的总经理转达](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)。
 
-`lock.json` 固定官方 Python 3.13.16 嵌入 ZIP、Core 提交与源码树、Core
-`uv.lock` 散列、Windows CPython 3.13 对应 wheel、传递依赖、许可、模型
+`lock.json` 固定官方 Python 3.13.16 嵌入 ZIP、Core 已合入并首轮通过的
+`52952ff0e896d745e3c6ec65579ea643f8b996fb` 提交及官方源归档 URL、大小与
+散列、Core `uv.lock` 散列、Windows CPython 3.13 对应 wheel、传递依赖、许可、模型
 修订及文件散列。基础层是 Python/Core 和 7 个基础依赖；完整层在同一
 基础上加入 17 个语义依赖、固定模型/分词器、微软两个必需运行库和许可。
 不带开发工具、pip、账户库或用户数据。wheel 的原有许可和元数据保留。
 
 ## 制备两种载荷
 
-先在隔离的 Core checkout 中准备 `lock.json` 指定的提交。脚本只读 Git
-对象并导出固定源码，不安装依赖、不运行 checkout 中的代码、不使用其
-未提交内容。构建工具为仓库锁定的 Node/npm 依赖及 Windows Git；7-Zip
-来自现有 `electron-winstaller` 依赖。微软安装器只被解包，绝不执行。
+脚本读取并核对 `lock.json` 固定的官方 GitHub 源归档，再解包所需 Python
+源码和许可，不读取开发者 Core checkout 或它的未提交内容。构建工具为
+仓库锁定的 Node/npm 依赖；7-Zip 复用当前 electron-builder 的固定工具集，
+支持归档中的长路径。微软安装器只被解包，绝不执行。
 
 ```powershell
 npm ci
-node scripts/memory-runtime/prepare.mjs --mode base --output .local/memory-base --cache .local/memory-inputs --core-checkout <isolated-core-checkout>
-node scripts/memory-runtime/prepare.mjs --mode full --output .local/memory-full --cache .local/memory-inputs --core-checkout <isolated-core-checkout>
+node scripts/memory-runtime/prepare.mjs --mode base --output .local/memory-base --cache .local/memory-inputs
+node scripts/memory-runtime/prepare.mjs --mode full --output .local/memory-full --cache .local/memory-inputs
 ```
 
-`--output` 必须为空；缓存中的每个输入仍要核对固定散列。已有全部固定
-输入时可加 `--offline`；不另做下载队列、重试或恢复。Core、Python 或
-依赖升级要同时更新清单并重新验收，不能只改清单里的显示版本。
+`--output` 必须为空；缓存中的每个输入仍要核对固定散列。构建工具和全部
+固定输入已就绪时可加 `--offline`；不另做下载队列、重试或恢复。Core、Python 或
+依赖升级要同时更新清单并重新验收，不能只改清单里的显示版本。Core
+归档缓存名包含完整提交，命中后仍核对 SHA/大小；成品还核对 Core 提交
+和整个固定清单，因此 base/full 都拒绝复用旧 `e86b73ba` 载荷。随包版本
+与 `observed-core` 保持一致，版本升级遵守 MEMORY.md 的主线首绿规则。
 
 输出直接放入 `resources/memory-runtime/`：
 

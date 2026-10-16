@@ -33,15 +33,8 @@ jobs:
       - name: Read production DSH pin
         run: |
           node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('tests/contract/dsh-pin.json')); fs.appendFileSync(process.env.GITHUB_ENV, 'DSH_PIN='+p.commit+'\n');"
-          node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('scripts/memory-runtime/lock.json')); fs.appendFileSync(process.env.GITHUB_ENV, 'MEMORY_CORE_PIN='+p.core.commit+'\n');"
-      - uses: actions/checkout@v4
-        with:
-          repository: memoweft/memoweft
-          ref: ${{ env.MEMORY_CORE_PIN }}
-          path: .local/memory-core
-          persist-credentials: false
       - name: Prepare pinned memory layer and run offline Core RPC
-        run: node scripts/memory-runtime/prepare.mjs --mode ${{ matrix.memory-runtime }} --output .local/memory-runtime --cache .local/memory-inputs --core-checkout .local/memory-core
+        run: node scripts/memory-runtime/prepare.mjs --mode ${{ matrix.memory-runtime }} --output .local/memory-runtime --cache .local/memory-inputs
       - name: Verify original publisher binary against the Windows runner identity
         if: matrix.memory-runtime == 'full'
         run: node --test tests/integration/memory-runtime-publisher-paths.mjs
