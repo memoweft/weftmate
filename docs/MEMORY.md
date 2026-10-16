@@ -14,7 +14,7 @@
 | 安装包不带 Python 和 MemoWeft，**全新安装默认没有记忆** | `package.json` 的打包配置 |
 | 手机单独聊天只有轻量记忆，不合并成第二套正式记忆；电脑接手后，原对话交给电脑摄取（D63） | [PHONE_MEMORY.md](PHONE_MEMORY.md)、`src/ui-core/phone-memory.js`、`apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneMemory.swift` |
 | 记忆页：桌面 `src/personal-access-ui/components/memory.js`，共用逻辑 `src/ui-core/memory.js`，手机网页 `apps/mobile-ui/www/components/memory.js` | — |
-| CI 里接真实 MemoWeft 的作业固定在一个候选提交上（注释写着待替换），测试文件名单写死在作业里 | `.github/workflows/ci.yml` 的 `observed-core` |
+| CI 里接真实 MemoWeft 的作业固定到 Core 已合入主线并通过主线检查的提交；版本更新走独立 PR，真实集成测试的文件名单保留在作业里 | `.github/workflows/ci.yml` 的 `observed-core` |
 | 旧插件 `src/plugins/weftmate-memory.mjs`（约 1240 行）仍写在 DSH 配置模板 R7–R10 里。按文件头注释，它只在 `WEFTMATE_MEMOWEFT_ENABLED=1` 时工作；个人宿主模式下设这个变量，程序会拒绝启动。默认路径写死了一个本机目录 | `src/dsh-web-runtime.ts`、`src/main.mjs` 约第 172 行 |
 | WeftMate 这一侧的记忆代码约 5400 行，含命令日志、待发队列和恢复补做。2026-10-14、15 两天连着修了遗忘循环（FIX-45）、纠正与遗忘的中断恢复（FIX-47），遗忘由宿主执行（FIX-50）还在做 | 上面这些文件；GitHub 上对应的 PR |
 
@@ -27,7 +27,7 @@
 5. **可靠性放进内核，不在 WeftMate 这一侧再叠层。** 不再新增队列、日志、恢复补做这类层。遇到失败，先复现、先写一条会失败的测试，再判断原因在哪一层：内核缺原子性或幂等，就改 MemoWeft（在它自己的仓库，走它自己的 PR），WeftMate 这侧只做同步调用。确实要在 WeftMate 这侧加，在 PR 里写清复现步骤和为什么不能放进内核。
 6. **删除语义照 D16、D33。** 忘掉记忆和删除聊天原话是两件事；只有确认删除成功，才能对用户说「已经忘了」。
 7. **接口变化要同步。** 改 `/personal/v1/memory` 下的路由，同时改 [CLIENT_API.md](CLIENT_API.md) 和安卓白名单（`Network.kt::validBusinessPath`、`BusinessRouteUnitTest.kt`）。
-8. **真实内核的测试进 CI 名单。** 新增接真实 MemoWeft 的测试，加进 `observed-core` 的文件名单；换内核的固定版本时，同时改那里的 `ref`，并在 PR 里说明。
+8. **真实内核的测试进 CI 名单。** 新增接真实 MemoWeft 的测试，加进 `observed-core` 的文件名单。内核修复先在 Core 合入主线并通过主线检查，再用独立 PR 更新这里的 `ref`，按当前名单复验；已有的随包运行时固定版本须同时保持一致，并在 PR 里说明。
 9. **范围。** 只改上表里的记忆文件和 MemoWeft 仓库，界面只改记忆页。别的端、别的功能有问题，记下来交给总代理。
 10. **先看在途的工作。** 开工前查 GitHub 上打开的、动到记忆的 PR，不要并行重写同一块。2026-10-15 在途的有 FIX-50（遗忘）和 APPLE-14（iPhone 单机记忆）；APPLE-14 属于后续平台（D101），不在这条轨道里。
 11. **收尾时落盘。** 新结论写进这一页或 DECISIONS，不留在对话里；地图第 4 节记忆那一行同步更新。
