@@ -31,7 +31,7 @@
 
 层级：**① 代码已合并** → **② 在 CI 上通过** → **③ 候选安装包按 PLAN 的场景验收通过** → **④ 本人日用认可**。写法是「层级 + 证据（PR、安装包版本或本人原话）+ 日期」，结果分通过、失败、阻塞、未测、未实现、不适用。
 
-截至 2026-10-15：四条主路在 Windows 和安卓上都到了 ①、②。2026-10-14 起本机做过主路基线走查（Windows 和安卓是 BASE-W，苹果端是 BASE-A）和出包走查（REL-3 起），找到的问题已经拆成 FIX 系列修过一轮，但这些走查的结论都在本机包目录里，**仓库里还没有一条按场景记录的 ③**。按 PLAN 的场景跑一轮、把结论记到这里，是 PLAN 当前清单的第 2 项。
+截至 2026-10-16：四条主路在 Windows 和安卓上都到了 ①、②。首轮安装候选已有下表的逐项结果；**整轮仍有失败、阻塞和未测，尚未达到完整③，也没有④本人日用认可**。开发宿主、组件探针及某个候选的单项通过均不替代整轮安装验收。
 
 代码层面已经有的（未按安装版逐项验收）：
 
@@ -43,6 +43,19 @@
 **记忆特别说明**（2026-10-16）：Windows 构建已有固定 Python/Core 的基础与完整语义两层，默认完整语义层（D106、D110）；组件导入、真实进程协议及模型编码是组件核验，尚不等于安装版主路验收。自动配置尚未接通，**全新安装的 Windows 版默认仍未启用记忆**。原有显式配置继续依赖所指定的环境。干净 Windows 和安装升级场景仍待验收；方法见 [组件说明](scripts/memory-runtime/README.md)，现状见 [docs/MEMORY.md](docs/MEMORY.md)。
 
 **记忆开发基线**（2026-10-16，`main bf0a9c4d6`、固定 Core `e86b73b`、真实 MiMo；[逐项证据与边界](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208869990)）：M1 形成与新对话召回、M2 纠正通过。M3 记忆页遗忘失败：当前条目已删除，但另一来源的旧修订仍能从历史和导出读回；按[总经理对 D16、D33 的确认](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208935937)，整条修订链都要遗忘。M7 对话遗忘失败：报告成功却删错来源，当前偏好仍可读（两项均跟踪于 [#334](https://github.com/memoweft/weftmate/issues/334)）。M4 [本人决定本轮暂缓](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)，未测；M5–M6 完整安卓链未验完。基础环境缺语义组件，本轮不证明语义召回；全新安装缺记忆组件仍为已知失败，实际安装场景待验。本轮只有开发宿主与隔离测试 APK 的结果，**不计入③**。
+
+**第一轮安装候选**（2026-10-16）：两端均冻结 `cbc435a7`；Windows `0.1.1-preview.701`，独立安装身份，含干净经典沙盒；安卓 `0.8.38/code51`，Android 15全新模拟器。云实际部署版本未知。原始[分项回报](https://github.com/memoweft/weftmate/issues/332#issuecomment-6214881354)、[沙盒与记忆补验](https://github.com/memoweft/weftmate/issues/332#issuecomment-6218305168)保留候选与环境边界，后续修复不能改写本轮原结果。
+
+| 场景/环境 | 本轮结果 |
+|---|---|
+| Windows C1 | 本机及干净沙盒通过：实际安装、填MiMo、查询5模型并首次收到42；隔离候选默认路径过长，选择沙盒短目录后安装。指定测试收件箱的验证码登录通过；已有账号，未完成新注册 |
+| Windows C3/C4/C5/C6/C7 | 本机子项通过：停止与排队、1000条真实分页、冷启恢复、流式切页完整、约1.5秒三连发；C5云登录冷启后丢失，失败[#440](https://github.com/memoweft/weftmate/issues/440) |
+| Windows C2/C10/W1/W2 | 已测子项通过：错误配置及本次断连恢复、同语言标题与步骤展开、可写目录整理及成果预览、批准删除/拒绝保留；不代表生产流式断网或所有步骤内容正确 |
+| Windows W3/H3/U1 | 失败：切工作误答旧输入[#431](https://github.com/memoweft/weftmate/issues/431)；有睡眠时长却称无记录[#429](https://github.com/memoweft/weftmate/issues/429)；内部术语[#433](https://github.com/memoweft/weftmate/issues/433)。跨对话提醒范围另见[#434](https://github.com/memoweft/weftmate/issues/434) |
+| Windows H1/H5 | H1真实到点通知通过。H5保存/查看、删除另一条、目标两轮进展通过；原约定10月17日09:00到达未测 |
+| Windows M，全新/人工配置 | 全新记忆未启用，失败。人工接Core529：M1/M2通过；M3关联链删除子项通过，但保留独立来源的记忆导出仍带回被忘句；M7误删独立主题，均跟踪[#334](https://github.com/memoweft/weftmate/issues/334)。不是新随包组件或自动接线验收 |
+| 安卓 C1 | 失败：全新安装只有云登录入口[#428](https://github.com/memoweft/weftmate/issues/428)。其余聊天、健康、提醒、页面及手机记忆场景被入口阻塞；安卓H5未设置，不据此判漏提醒 |
+| 跨端与其余 | C8/W4–W6/M5–M6阻塞；C9需真机，未通过。M4按本人决定暂缓；H4不属当前Windows/安卓轮。M3旧修订另有第二support来源变体尚未覆盖 |
 
 ## 5. 已知的大缺口
 
