@@ -11,13 +11,15 @@ const failed = (code) => Object.assign(new Error(code), { code });
 
 /** One official MemoWeft RPC v2 stdio transport for one account. */
 export class MemoWeftRpc {
-  constructor({ python, pythonPath, env = {}, requestTimeoutMs = 15_000 }) {
+  constructor({ python, pythonPath, env = {}, requestTimeoutMs = 15_000,
+    pythonArgs = ['-m', 'memoweft.integrations.dsh_bridge'] }) {
     if (typeof python !== 'string' || !python || typeof pythonPath !== 'string' || !pythonPath ||
         !Number.isInteger(requestTimeoutMs) || requestTimeoutMs < 1_000 || requestTimeoutMs > 60_000) {
       throw failed('MEMORY_CONFIGURATION_INVALID');
     }
     this.python = python;
     this.pythonPath = pythonPath;
+    this.pythonArgs = pythonArgs;
     this.env = env;
     this.requestTimeoutMs = requestTimeoutMs;
     this.child = null;
@@ -29,7 +31,7 @@ export class MemoWeftRpc {
   start() {
     if (this.closed) throw failed('MEMORY_CLOSING');
     if (this.child) return;
-    const child = spawn(this.python, ['-m', 'memoweft.integrations.dsh_bridge'], {
+    const child = spawn(this.python, this.pythonArgs, {
       env: { ...process.env, ...this.env, PYTHONPATH: this.pythonPath },
       stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true,
     });

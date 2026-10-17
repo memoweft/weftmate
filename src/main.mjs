@@ -99,7 +99,8 @@ import { FORMAL_LOCAL_BASE_URL, OCCAMY_VISION_PROFILE_ID, listFormalLocalModels,
   readUserModelSwitcherKey } from './local-model-config.mjs';
 import { servePersonalAccessUi } from './personal-access-ui/index.mjs';
 import { createPersonalDesktop } from './personal-desktop.mjs';
-import { loadPersonalMemoryConfig } from './personal-memory/config.mjs';
+import { loadDesktopMemoryConfig } from './personal-memory/config.mjs';
+import { bundledMemoryRpcFactory } from './personal-memory/bundled-runtime.mjs';
 import { createPersonalMemoryManager } from './personal-memory/index.mjs';
 import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
 import { parseWindowsSendTo, forwardWindowsSendTo } from './windows-system-integration.mjs';
@@ -218,6 +219,7 @@ if (memoryArgs.length) {
   }
   personalMemoryConfigPath = resolve(value);
 }
+const personalMemoryRequested = personalMemoryConfigPath !== null || !!installedDesktopConfig?.memoryRuntimeDirectory;
 let personalHostUserData = null;
 const profileArgument = process.argv.find(arg => arg.startsWith('--user-data-dir='))?.slice('--user-data-dir='.length);
 if (profileArgument) process.env.WEFTMATE_USER_DATA = profileArgument;
@@ -317,7 +319,7 @@ if (!app.requestSingleInstanceLock()) {
   } else app.quit();
 } else {
   hostLog.begin({ mode: personalHostMode ? 'personal-host' : 'desktop', pid: process.pid,
-    version: app.getVersion(), headless, memoryEnabled: !!personalMemoryConfigPath,
+    version: app.getVersion(), headless, memoryEnabled: personalMemoryRequested,
     localModelConfigured: process.argv.some(arg => arg.startsWith('--local-model-config=')) });
   try {
     mkdirSync(hostLog.crashDirectory, { recursive: true });
@@ -1572,7 +1574,7 @@ async function bootstrap() {
     WEFTMATE_DSH_HOME: dshHome,
     WEFTMATE_WORKSPACE: workspaceDir,
     WEFTMATE_MEMOWEFT_ENABLED: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' ? '1' : '0',
-    WEFTMATE_PERSONAL_MEMORY_ENABLED: personalMemoryConfigPath ? '1' : '0',
+    WEFTMATE_PERSONAL_MEMORY_ENABLED: personalMemoryRequested ? '1' : '0',
   });
   const writeHostSnapshot = createLatestFileWriter(HOST_STATE_FILE);
   function writeHostState() {
@@ -1606,7 +1608,7 @@ async function bootstrap() {
         memoweft: { enabled: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' },
         ...(personalHostMode && accessPort !== null
           ? { accountModelRouteGate: { ...accountModelRouteGate } } : {}),
-        ...(personalHostMode && personalMemoryConfigPath ? { accountMemoryIpc: { ...personalMemoryIpc } } : {}),
+        ...(personalHostMode && personalMemoryRequested ? { accountMemoryIpc: { ...personalMemoryIpc } } : {}),
         aiGame: (() => {
           const state = aiGameRuntime?.diagnostics?.() ?? { managed: true, state: 'not_installed', reasonCode: 'runtime_not_installed', runtimeVersion: null, apiVersion: null, retryable: false };
           return { managed: state.managed === true, state: state.state, reasonCode: state.reasonCode, runtimeVersion: state.runtimeVersion, apiVersion: state.apiVersion, retryable: state.retryable === true };
@@ -1921,7 +1923,7 @@ async function bootstrap() {
     personalApprovalRuntimeClosedHandler: personalHostMode ? ({ runtimeId }) =>
       personalAccessService?.invalidateToolApprovals({ runtimeId, outcome: 'unavailable',
         reasonCode: 'RUNTIME_UNAVAILABLE' }) : undefined,
-    personalMemoryRequestHandler: personalHostMode && personalMemoryConfigPath ? async (request) => {
+    personalMemoryRequestHandler: personalHostMode && personalMemoryRequested ? async (request) => {
       if (request.action === 'recall') personalMemoryIpc.recallAttempts++;
       writeHostState();
       if (!personalAccessService || !personalMemoryManager || isQuitting || !runtimeOrigin) {
@@ -3149,12 +3151,17 @@ async function bootstrap() {
   win.webContents.on('did-finish-load', () => { try { win.webContents.send('wm:maximized', win.isMaximized()); } catch { /* 窗口已关忽略 */ } });
   }
 
-  if (personalMemoryConfigPath !== null) {
-    const memoryConfig = await loadPersonalMemoryConfig(personalMemoryConfigPath);
+  if (personalMemoryRequested) {
+    const { config: memoryConfig, failureCode } = await loadDesktopMemoryConfig({ explicitPath: personalMemoryConfigPath,
+      directory: installedDesktopConfig?.memoryRuntimeDirectory, mode: packageInfo.memoryRuntimeMode,
+      manifestSha256: packageInfo.memoryRuntimeManifestSha256 });
     personalMemoryRuntimeConfig = memoryConfig;
+    if (memoryConfig) {
     hostLog.write('memory.bridge', { phase: 'configured', configured: true });
     personalMemoryManager = createPersonalMemoryManager({
       root: join(userDataDir, 'personal-access'), enabled: true,
+      ...(!personalMemoryConfigPath ? { rpcFactory: bundledMemoryRpcFactory(memoryConfig,
+        code => hostLog.write('memory.bridge', { phase: 'failed', code })) } : {}),
       cleanupDeletedMemory: (ownerId, options) => personalAccessService.cleanupMemoryCopies(ownerId, options),
       python: memoryConfig.python, pythonPath: memoryConfig.pythonPath,
       baseUrl: modelScheduler.memoryBaseUrl(memoryConfig.authRef), model: memoryConfig.model,
@@ -3175,6 +3182,13 @@ async function bootstrap() {
           onUnavailable: result => personalAccessService.reportBackgroundModel(ownerId, profile.id, result) }) ? 'ready' : 'waiting';
       },
     });
+    } else {
+      try { hostLog.write('memory.bridge', { phase: 'failed', configured: false, code: failureCode }); } catch { /* Observation only. */ }
+      personalMemoryManager = createPersonalMemoryManager({ root: join(userDataDir, 'personal-access') });
+      const disabledStatus = personalMemoryManager.status.bind(personalMemoryManager);
+      personalMemoryManager.status = async ownerId => ({ ...await disabledStatus(ownerId),
+        state: 'unavailable', reasonCode: failureCode, lastFailureCode: failureCode });
+    }
   }
   const personalDesktopTask = accessPort === null ? null : createPersonalDesktopTask();
   personalBrowserReader = accessPort === null ? null :
