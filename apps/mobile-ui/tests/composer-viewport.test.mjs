@@ -7,6 +7,7 @@ import {startMainChatCandidate} from '../../../tests/integration/main-chat-candi
 import {localUiSession} from '../../../tests/helpers/local-ui-session.mjs';
 import {healthPageSynthetic} from '../../../tests/helpers/health-page-synthetic.mjs';
 import {observedRoutes} from './observed-routes.mjs';
+import {withTestCleanup} from './test-cleanup.mjs';
 
 test('remote phone composer remains inside the visual viewport with folders, suggestions, connection bar and keyboard',async()=>{
   const f=await startMainChatCandidate(10),browser=await chromium.launch({headless:true});
@@ -78,9 +79,11 @@ test('mobile bundle keeps the composer and bottom tabs inside safe areas and abo
 });
 
 test('the fifth mobile tab opens health, keeps other tabs reachable and quotes without sending',async t=>{
-  const f=await startMainChatCandidate(10,{logicalMobile:true}),browser=await chromium.launch({headless:true}),health=healthPageSynthetic();let reminders=0;
-  let routes;
-  try{
+  const health=healthPageSynthetic();let reminders=0;
+  let f,browser,routes;
+  await withTestCleanup(async()=>{
+    f=await startMainChatCandidate(10,{logicalMobile:true});
+    browser=await chromium.launch({headless:true});
     const page=await browser.newPage({viewport:{width:360,height:780},isMobile:true,hasTouch:true});
     routes=observedRoutes(page);
     await routes.route('**/bridge.js','bridge',r=>r.fulfill({contentType:'text/javascript',body:'// authenticated HTTP test'}));
@@ -93,5 +96,5 @@ test('the fifth mobile tab opens health, keeps other tabs reachable and quotes w
     await page.getByRole('button',{name:'提醒我',exact:true}).click();await page.getByRole('button',{name:'已设提醒',exact:true}).waitFor();assert.equal(reminders,1);
     await page.getByRole('button',{name:'接着问它',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#draft').value.includes('把今天的节奏放轻松'));assert.match(await page.locator('#draft').inputValue(),/^> /);
     await page.getByRole('tab',{name:'健康',exact:true}).click();await page.getByRole('button',{name:'恢复，查看详情',exact:true}).click();await page.locator('.health-detail').waitFor();await page.getByRole('button',{name:'返回今日',exact:true}).click();await page.getByRole('tab',{name:'健康',exact:true}).focus();await page.keyboard.press('End');assert.equal(await page.getByRole('tab',{name:'成果库',exact:true}).getAttribute('aria-selected'),'true');
-  }finally{try{await routes?.close();}finally{t.diagnostic('route lifecycle='+JSON.stringify(routes?.events??[]));try{await browser.close();}finally{await f.close();}}}
+  },[()=>routes?.close(),()=>t.diagnostic('route lifecycle='+JSON.stringify(routes?.events??[])),()=>browser?.close(),()=>f?.close()]);
 });
