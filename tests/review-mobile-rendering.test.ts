@@ -3,9 +3,67 @@ import { test } from 'node:test';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
+import vm from 'node:vm';
 import { chromium } from 'playwright';
 import { renderingSample } from './helpers/rendering-sample.mjs';
 import { prepareMobileRendering } from '../scripts/review-gallery/mobile-rendering.mjs';
+
+test('queued bottom scroll cannot re-enable following between cancelling and moving to the diagram', async () => {
+  const frames:Function[]=[], events=new Map<string,Function>();
+  const box:any={scrollTop:1900,scrollHeight:2500,clientHeight:600,
+    addEventListener(name:string,fn:Function){events.set(name,fn);},
+    dispatchEvent(event:any){events.get(event.type)?.(event);return true;}};
+  const content={addEventListener(){}}, button={hidden:true,textContent:'',setAttribute(){},addEventListener(){}};
+  const context:any={document:{hidden:false},matchMedia:()=>({matches:true}),
+    requestAnimationFrame:(fn:Function)=>{frames.push(fn);return fn;},cancelAnimationFrame(){} };
+  vm.runInNewContext(await readFile(new URL('../src/personal-access-ui/conversation-scroll.js',import.meta.url),'utf8'),context);
+  const scroll=context.WeftConversationScroll(box,content,button);
+  scroll.latest();
+  let queuedScroll=true, cancelled=false;
+  const deliveries:any[]=[];
+  const wheel=events.get('wheel')!;
+  events.set('wheel',event=>{wheel(event);cancelled=true;});
+  // Each Playwright operation is an asynchronous boundary. Deliver the already
+  // queued bottom scroll at the first such boundary after upward-input handling.
+  const step=async (work:Function=()=>{})=>{
+    const result=work();
+    if(queuedScroll&&cancelled){
+      const before=scroll.pinned;
+      box.dispatchEvent({type:'scroll'});queuedScroll=false;
+      deliveries.push({before,after:scroll.pinned,top:box.scrollTop});
+    }
+    return result;
+  };
+  const heading={scrollIntoView(){box.scrollTop=900;},closest(){return box;}};
+  const page:any={
+    getByRole(){return {
+      waitFor:()=>step(),
+      scrollIntoViewIfNeeded:()=>step(()=>heading.scrollIntoView()),
+      evaluate:(callback:Function)=>step(()=>{
+        // Run the actual preparation callback in the page realm, with DOM
+        // primitives supplied by this controlled-layout fixture.
+        const realm=vm.createContext({heading,WheelEvent:class{type:string;deltaY:number;constructor(type:string,init:any){this.type=type;this.deltaY=init.deltaY;}}});
+        return vm.runInContext(`(${callback.toString()})(heading)`,realm);
+      }),
+    };},
+    locator(selector:string){
+      if(selector==='#chat-scroll')return {dispatchEvent:(type:string,init:any)=>step(()=>box.dispatchEvent({type,...init}))};
+      if(selector==='.render-mermaid')return {first:()=>({scrollIntoViewIfNeeded:()=>step(()=>{box.scrollTop=900;})})};
+      assert.equal(selector,'.render-diagram img');
+      return {waitFor:()=>step(()=>{
+        // The pending content-change follow runs as image readiness is awaited.
+        scroll.changed();while(frames.length)frames.shift()!();
+      })};
+    },
+  };
+  await prepareMobileRendering(page);
+  const afterPreparation={pinned:scroll.pinned,top:box.scrollTop};
+  // Later image/content growth and its scroll notification must remain held.
+  box.scrollHeight+=200;box.dispatchEvent({type:'scroll'});
+  scroll.changed();while(frames.length)frames.shift()!();
+  assert.deepEqual({deliveries,afterPreparation,afterGrowth:{pinned:scroll.pinned,top:box.scrollTop}},
+    {deliveries:[{before:false,after:false,top:900}],afterPreparation:{pinned:false,top:900},afterGrowth:{pinned:false,top:900}});
+});
 
 test('mobile gallery preparation holds the diagram against a later follow-to-bottom', async t => {
   const root = resolve('.');
@@ -54,8 +112,14 @@ test('mobile gallery preparation holds the diagram against a later follow-to-bot
       else {
         // Normal upward touch intent cancels following, then revisiting the
         // previously skipped block must trigger the native observer and paint.
-        await page.locator('#chat-scroll').dispatchEvent('touchstart', {touches:[{identifier:0,clientY:100}]});
-        await page.locator('#chat-scroll').dispatchEvent('touchmove', {touches:[{identifier:0,clientY:120}]});
+        await page.locator('#chat-scroll').evaluate(box => {
+          const touch=(clientY:number)=>new Touch({identifier:0,target:box,clientY});
+          box.dispatchEvent(new TouchEvent('touchstart',{touches:[touch(100)]}));
+          box.dispatchEvent(new TouchEvent('touchmove',{touches:[touch(120)]}));
+          // Synthetic events have no default scrolling action. Model the
+          // gesture's actual movement before queued scroll events can arrive.
+          box.scrollTop-=20;
+        });
         await page.locator('.render-mermaid').first().scrollIntoViewIfNeeded();
         await page.locator('.render-diagram img').waitFor();
       }
