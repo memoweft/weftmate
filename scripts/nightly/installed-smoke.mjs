@@ -11,6 +11,7 @@ import {keyId} from '../../src/personal-update/manifest.mjs';
 import {migrationHost,until} from '../../tests/helpers/migration-host.mjs';
 import {redactBuildMachineIdentity} from '../windows-package-policy.mjs';
 import {createProcessEvidence} from '../../tests/helpers/process-evidence.mjs';
+import {installedSmokeFailureSummary} from './installed-smoke-diagnostics.mjs';
 const option=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
 const testIdentity=option('--test-identity','fx21qa');assert.match(testIdentity,/^[a-z0-9]+$/);
 const out=resolve(option('--out','.local/installed-smoke'));mkdirSync(out,{recursive:true});
@@ -146,7 +147,9 @@ try {
     selectedSessions:[...document.querySelectorAll('.session-row > button.is-current')].map(row=>row.parentElement.dataset.sessionId),
     messageDisabled:document.querySelector('#message-text')?.disabled,transcript:document.querySelector('#transcript')?.innerText,
     approvalCards:[...document.querySelectorAll('[data-conversation-approval]')].map(row=>({id:row.dataset.conversationApproval,text:row.innerText}))})).catch(()=>null);
-  console.error('Packaged smoke failure:',redactBuildMachineIdentity(JSON.stringify({error:report.error,failureView:report.failureView})).replaceAll(temp,'%TEMP%'));
+  const failureSummary=installedSmokeFailureSummary({error:report.error,failureView:report.failureView,stderr:h?.stderr,firstWindowDiagnostics:error.firstWindowDiagnostics});
+  Object.assign(report,failureSummary);
+  console.error('Packaged smoke failure:',redactBuildMachineIdentity(JSON.stringify(failureSummary)).replaceAll(temp,'%TEMP%'));
 }
 finally{
   if(h)report.modelCalls=h.requests.map(r=>({stream:r.stream,toolResponses:r.messages?.filter(m=>m.role==='tool').map(m=>({name:m.name,content:String(m.content).slice(0,1000)}))}));

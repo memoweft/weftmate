@@ -425,6 +425,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-reply-content.mjs'), join(dir, 'plugins', 'weftmate-personal-reply-content.mjs')],
     [join(PLUGINS_DIR, 'personal-reply-content.mjs'), join(dir, 'plugins', 'personal-reply-content.mjs')],
     [join(PLUGINS_DIR, 'personal-prompt.mjs'), join(dir, 'plugins', 'personal-prompt.mjs')],
+    [join(PLUGINS_DIR, 'personal-tool-loading.mjs'), join(dir, 'plugins', 'personal-tool-loading.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-conversation-context.mjs'), join(dir, 'plugins', 'weftmate-personal-conversation-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-task-control.mjs'), join(dir, 'plugins', 'weftmate-personal-task-control.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-schedules.mjs'), join(dir, 'plugins', 'weftmate-personal-schedules.mjs')],

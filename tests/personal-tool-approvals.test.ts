@@ -472,6 +472,9 @@ test('close and crash recovery invalidate unanswered or answered rows; historica
 test('current-turn evidence is bounded, caches polling only, and user answering rechecks native terminal state', async () => {
   const now = Date.now(), f = await fixture({ clockFn: () => now })
   try {
+    // Activity's task-detail reader independently requests the same native
+    // evidence. Drain it before counting only approval-cache polling below.
+    await f.service.__stopBackgroundActivity()
     let proofReads = 0, historyReads = 0
     const read = f.backend.getTaskReplyEvidence
     f.backend.getTaskReplyEvidence = (input: any) => { proofReads++; return read(input) }
@@ -486,6 +489,30 @@ test('current-turn evidence is bounded, caches polling only, and user answering 
     assert.equal((await f.read()).status, 'unavailable')
     assert.equal(proofReads, 2)
   } finally { await f.close() }
+})
+
+test('approval cache measurements wait for an in-flight activity task-detail reader to drain', async () => {
+  const now=Date.now(),f=await fixture({clockFn:()=>now})
+  const statusEntered=deferred(),statusRelease=deferred(),proofEntered=deferred(),proofRelease=deferred()
+  let refresh,draining
+  try {
+    await f.service.__stopBackgroundActivity()
+    const status=f.backend.getStatus,read=f.backend.getTaskReplyEvidence
+    f.backend.getStatus=async()=>{statusEntered.resolve();await statusRelease.promise;return status()}
+    f.backend.getTaskReplyEvidence=async input=>{proofEntered.resolve();await proofRelease.promise;return read(input)}
+    // This real HTTP route invokes the same production activity refresh as its
+    // background timer, without relying on when a two-second timer fires.
+    refresh=f.request('activity');await statusEntered.promise
+    let drained=false
+    draining=f.service.__stopBackgroundActivity().then(()=>{drained=true})
+    statusRelease.resolve();await proofEntered.promise
+    assert.equal(drained,false,'stopping observation must wait for the actual task-detail proof')
+    proofRelease.resolve();assert.equal((await refresh).status,200);await draining
+    assert.equal(drained,true)
+  } finally {
+    statusRelease.resolve();proofRelease.resolve()
+    try {await Promise.all([refresh,draining])} finally {await f.close()}
+  }
 })
 
 test('legacy history without receipt metadata does not claim or invalidate the current precise source', async () => {
