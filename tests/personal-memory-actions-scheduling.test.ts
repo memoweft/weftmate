@@ -17,6 +17,7 @@ const deferred = () => {
   return { promise, resolve }
 }
 async function fixture(t: any, manager: any) {
+  manager = { revalidateForget: async (_owner: string, action: any) => action.scope ?? action.plan?.authorization ?? { authorized: true }, ...manager }
   const root = await mkdtemp(join(tmpdir(), 'weftmate-action-scheduling-'))
   const rows: any[] = [], diagnostics = channel('weftmate.memory.actions')
   const persistedWaiters = new Map<string, () => void>()
@@ -46,6 +47,7 @@ test('FIX-50 #438: a new submission gets an attempt when it joins an empty recov
   const root = await mkdtemp(join(tmpdir(), 'weftmate-action-scheduling-'))
   let plans = 0, commands = 0
   const actions = createMemoryActions({ root, schedule() {}, manager: () => ({
+    async revalidateForget(_owner: string, action: any) { return action.scope ?? action.plan?.authorization ?? { authorized: true } },
     async planForget() { plans++; return plan() },
     async submitCommand() { commands++; return { result_state: 'applied', after_revision: 2 } },
   }) })

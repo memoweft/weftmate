@@ -1,5 +1,16 @@
 const invalid = () => Object.assign(Error('MEMORY_FORGET_DECISION_INVALID'), { code: 'MEMORY_FORGET_DECISION_INVALID' });
 export const forgetCompletionVersion = 3; // Includes the retained-record count projection.
+// A recovered record needs the retained original, not just an old excerpt.
+// Fresh host inputs may have only text; the manager preserves it before queuing.
+export function forgetSourceText(source, requireOriginal = false) {
+  if (typeof source?.text !== 'string' || !source.text.trim() || source.text.length > 16000) return null;
+  const original = source.message?.content;
+  if (requireOriginal || source.message) {
+    if (typeof original !== 'string' || original.length > 16000 || original.trim() !== source.text.trim()) return null;
+    return original;
+  }
+  return source.text;
+}
 const subject = value => value === 'self' || typeof value === 'string' && /^other:.{1,120}$/u.test(value);
 const fields = (value, names) => value && typeof value === 'object' && !Array.isArray(value) &&
   Object.keys(value).length === names.length && names.every(name => Object.hasOwn(value, name));
@@ -107,6 +118,8 @@ export async function classifyForgetCandidates(route, request, candidates) {
 
 /** Core owns the graph and sources. Model decisions only narrow this frozen owner-scoped snapshot. */
 export async function scopedForgetPlan(manager, owner, action, route) {
+  if (forgetSourceText(action.source) === null) return { evidenceIds: [], worldTargets: [], affectedIds: [], sourceTexts: [],
+    state: 'withheld', message: '无法完整核对原来的遗忘请求，这次没有执行；请重新确认。' };
   const request = action.scope ?? await classifyForgetRequest(route, action.source?.text ?? '');
   if (!request.authorized) return { evidenceIds: [], worldTargets: [], affectedIds: [], sourceTexts: [],
     state: 'no_action', message: '这次没有删除记忆；你的话里有待确认的意思，请先说清要直接忘掉哪件事。' };

@@ -12,7 +12,7 @@ import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
 import { recallQuestions,recallEntries } from './recall-questions.mjs';
 import { createMemoryActions } from './actions.mjs';
-import { classifyForgetRequest, scopedForgetPlan, checkForgetCompletion } from './forget-model.mjs';
+import { classifyForgetRequest, scopedForgetPlan, checkForgetCompletion, forgetSourceText } from './forget-model.mjs';
 
 const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
@@ -519,6 +519,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       action.signal?.throwIfAborted();
       return scopedForgetPlan(this, ownerId, action, { ...route, signal: action.signal });
     },
+    async revalidateForget(ownerId, action, signal) {
+      const text = forgetSourceText(action.source, true);
+      if (text === null) return { authorized: false };
+      try {
+        const route = await resolveProcessingRoute(ownerId, action.sessionId);
+        return await classifyForgetRequest({ ...route, signal }, text);
+      } catch {
+        signal?.throwIfAborted();
+        return { authorized: false };
+      }
+    },
     async checkForgetCompletion(ownerId, proposal) {
       const route = await resolveProcessingRoute(ownerId, null);
       return checkForgetCompletion(this, ownerId, proposal, route);
@@ -529,6 +540,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     async mutateFromTool(ownerId, action) {
       owner(ownerId);
       if (!enabled || closing || erasingOwners.has(ownerId)) throw error('MEMORY_UNAVAILABLE');
+      if (action.name === 'memory_forget') {
+        const text = forgetSourceText(action.source);
+        if (text === null) return { state: 'withheld', message: '无法完整核对遗忘请求，这次没有执行；请重新确认。' };
+        // Only new host input enters here. submit() never overwrites an existing
+        // record, so resubmission cannot manufacture an original for old work.
+        action = { ...action, source: { ...action.source, message: action.source.message ?? { content: text } } };
+      }
       if (action.name === 'memory_forget' && !action.scope) {
         let scope;
         try {

@@ -50,10 +50,32 @@ export function createMemoryActions({ root, manager, schedule }) {
       await durableWrite(file(owner), data); return result;
     });
   }
-  async function perform(owner, action, signal) {
+  async function perform(owner, action, signal, recovering) {
     const m = manager();
     signal?.throwIfAborted();
     if (action.name === 'memory_forget') {
+      if (recovering) {
+        // All recovery entrances share this fence, including frozen v2 plans.
+        // Reserved/sent identities are receipt-only: never replay a deletion to
+        // establish whether it happened, or infer nonexecution from no receipt.
+        const dispatched = Object.keys(action.commands ?? {}).length || action.finished?.length;
+        let scope;
+        if (!dispatched) {
+          try { scope = await m.revalidateForget?.(owner, action, signal); }
+          catch { signal?.throwIfAborted(); }
+        }
+        signal?.throwIfAborted();
+        const prior = [action.scope, action.plan?.authorization].filter(Boolean);
+        if (dispatched || scope?.authorized !== true || prior.some(value => value.authorized !== true ||
+            value.subject !== scope.subject || value.topic !== scope.topic)) {
+          // Preserve an existing incomplete proof and its explanation. It
+          // already takes the receipt-only path below, including old upgrades.
+          if (!dispatched || action.plan?.completionState !== 'withheld') {
+            action.plan = { ...action.plan, completionVersion: forgetCompletionVersion, completionState: 'withheld', completionUpgraded: true };
+            await update(owner, data => { data.records[action.requestId].plan = action.plan; });
+          }
+        } else action = { ...action, scope };
+      }
       const frozen = action.plan;
       if (frozen && frozen.completionVersion !== forgetCompletionVersion) {
         // Earlier plans lack current completeness or retained-count proof.
@@ -220,7 +242,8 @@ export function createMemoryActions({ root, manager, schedule }) {
           flight.attempted.add(action.requestId);
           trace(owner, 'perform-enter', { flightId: flight.id, requestId: hash(action.requestId) });
           try {
-            const { affectedIds, ...result } = await perform(owner, action, liveSignals.get(`${owner}|${action.requestId}`));
+            const { affectedIds, ...result } = await perform(owner, action, liveSignals.get(`${owner}|${action.requestId}`),
+              !flight.submitted.has(action.requestId));
             await update(owner, data => {
               const row = data.records[action.requestId];
               if (row.result) return;
