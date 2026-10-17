@@ -367,9 +367,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       recordRuntimeFailure(ownerId, existing, error('MEMORY_PROCESS_UNAVAILABLE'));
       if (runtimeStopped(ownerId)) throw Object.assign(error(runtimeFailures.get(ownerId).code), { memoryRuntimeFailure: true });
     }
+    let runtimeValidated = false;
     if (!existing?.ready || !existing.rpc.child) {
       try { await rpcFactory.validate?.(); }
       catch (cause) { recordRuntimeFailure(ownerId, {}, cause, true); throw cause; }
+      runtimeValidated = true;
     }
     let selected = null;
     if (sessionId !== null || !existing?.ready || !existing.rpc.child) {
@@ -401,6 +403,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       if (!idle) throw error('MEMORY_BUSY');
       entries.delete(idle[0]);
       await idle[1].rpc.close();
+    }
+    if (!runtimeValidated) {
+      try { await rpcFactory.validate?.(); }
+      catch (cause) { recordRuntimeFailure(ownerId, {}, cause, true); throw cause; }
     }
     const home = await privateHome(ownerId);
     const rpc = rpcFactory({ python, pythonPath,

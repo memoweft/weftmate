@@ -16,7 +16,7 @@ import { memoryRuntimeFixture } from './helpers/memory-runtime-fixture.mjs';
 const owner = 'owner-00000000-0000-4000-8000-000000000001';
 const fixture = fileURLToPath(new URL('./fixtures/memory-startup-failure.mjs', import.meta.url));
 
-async function harness(t, mode, configure = async root => ({ semanticCacheDirectory: null })) {
+async function harness(t, mode, configure = async root => ({ semanticCacheDirectory: null }), managerOptions = {}) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-mem-auto-failure-'));
   const spawn = childProcess.spawn;
   let starts = 0;
@@ -38,7 +38,7 @@ async function harness(t, mode, configure = async root => ({ semanticCacheDirect
   const createManager = () => createPersonalMemoryManager({ root, enabled: true,
     python: process.execPath, pythonPath: root, baseUrl: 'http://127.0.0.1:1/v1',
     model: '@current', credential: () => 'synthetic',
-    rpcFactory });
+    rpcFactory, ...managerOptions });
   let manager = createManager();
   return { root, config, get manager() { return manager; }, starts: () => starts, setMode: value => { mode = value; },
     async restart() { await manager.close(); manager = createManager(); }, async close() {
@@ -205,5 +205,27 @@ test('disconnects between requests also consume the same finite retry budget', a
     await delay(2500); assert.equal(h.starts(), 3);
     h.setMode('ready'); await h.manager.repairRuntime(owner);
     assert.equal((await h.manager.status(owner)).state, 'ready'); assert.equal(h.starts(), 4);
+  } finally { await h.close(); }
+});
+
+test('switching a ready model route revalidates components before replacing its process', async t => {
+  let profileId = 'synthetic-route-a', component, original;
+  const route = () => ({ profileId, baseUrl: 'http://127.0.0.1:1/v1', model: '@current',
+    credential: 'synthetic', routeFingerprint: null, modelTier: 'local' });
+  const h = await harness(t, 'ready', async root => {
+    const directory = join(root, 'resources/memory-runtime'); await memoryRuntimeFixture(directory);
+    const config = bundledMemoryConfiguration({ directory, mode: 'base', manifestSha256:
+      createHash('sha256').update(await readFile(join(directory, 'MEMORY-RUNTIME.json'))).digest('hex') });
+    component = config.python; original = await readFile(component); return config;
+  }, { processingRoute: route, defaultProcessingRoute: route });
+  try {
+    assert.equal((await h.manager.status(owner)).state, 'ready'); assert.equal(h.starts(), 1);
+    profileId = 'synthetic-route-b'; await writeFile(component, 'broken');
+    await h.manager.ingest(owner, source);
+    assert.equal(h.starts(), 1, 'a route switch cannot execute changed components');
+    assert.equal((await h.manager.status(owner)).reasonCode, 'MEMORY_COMPONENT_INVALID');
+    assert.equal((await h.manager.pendingStatus(owner)).pendingBoundaryCount, 1);
+    await writeFile(component, original); await h.manager.repairRuntime(owner); await assertDelivered(h);
+    assert.equal(h.starts(), 2);
   } finally { await h.close(); }
 });
