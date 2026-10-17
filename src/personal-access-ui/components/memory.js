@@ -54,10 +54,39 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     function memoryStatus(message, error = false) {
         const node = ui.byId('memory-status');
         ui.paintMemoryHealth?.(core.memory.status);
+        if (['unavailable', 'degraded'].includes(core.memory.status?.state) &&
+            core.memory.status.reasonCode === 'MEMORY_MODEL_UNAVAILABLE') {
+            node.textContent = '记忆要用的模型还没设置好或暂时连不上，请检查模型设置。';
+            const setup = ui.element('button', 'button secondary small', '设置模型');
+            setup.type = 'button';
+            setup.addEventListener('click', () => ui.openSettings('models'));
+            node.append(setup);
+            node.classList.toggle('is-error', true);
+            return;
+        }
+        if (core.memory.status?.state === 'unavailable') {
+            node.textContent = '记忆暂时没开，聊天仍可用；请';
+            const repair = ui.element('a', '', '下载并重新安装');
+            repair.href = 'https://weftmate.com/downloads/';
+            repair.target = '_blank'; repair.rel = 'noopener noreferrer';
+            node.append(repair, '，已有记忆会保留。');
+            if (globalThis.weftmateDesktop?.repairSystem) {
+                const retry = ui.element('button', 'button secondary small', '修复记忆');
+                retry.type = 'button';
+                retry.addEventListener('click', async () => {
+                    retry.disabled = true;
+                    try { await globalThis.weftmateDesktop.repairSystem('memory'); }
+                    catch { /* Keep the download repair action available on failure. */ }
+                    finally { retry.disabled = false; await core.openMemory(); }
+                });
+                node.append(retry);
+            }
+            node.classList.toggle('is-error', true);
+            return;
+        }
         const degraded = core.memory.status?.state === 'degraded';
         const modelNote = degraded && core.memory.status?.capabilities?.inject === false
-            ? (core.memory.status?.reasonCode === 'MEMORY_MODEL_UNAVAILABLE'
-                ? '模型路线暂不可用，当前记忆未用于模型回复。 ' : '当前记忆未用于模型回复。 ')
+            ? '当前记忆未用于模型回复。 '
             : '';
         const processingNote = core.memory.status?.blockedBoundaryCount > 0
             ? '部分来源已阻断，当前不会自动重试。 '

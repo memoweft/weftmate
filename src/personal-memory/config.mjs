@@ -1,9 +1,18 @@
 import { lstat, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
+import { loadBundledMemoryConfig } from './bundled-runtime.mjs';
 
 const invalid = () => Object.assign(new Error('MEMORY_CONFIGURATION_INVALID'), {
   code: 'MEMORY_CONFIGURATION_INVALID',
 });
+
+/** Explicit deployments keep their existing strict startup behavior. Automatic
+ * installation failures disable only memory, never ordinary chat or its data. */
+export async function loadDesktopMemoryConfig({ explicitPath, directory, manifestSha256, mode }) {
+  if (explicitPath) return { config: await loadPersonalMemoryConfig(explicitPath) };
+  try { return { config: await loadBundledMemoryConfig({ directory, manifestSha256, mode }) }; }
+  catch (cause) { return { config: null, failureCode: cause.code }; }
+}
 
 /** Session usage attribution is not a change of the processing model. */
 export function processingRouteIdentity(baseUrl) {

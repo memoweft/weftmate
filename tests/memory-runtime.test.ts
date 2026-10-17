@@ -22,13 +22,14 @@ test('fixed inputs reject altered archives and preparation requires an explicit 
 
 test('packaging defaults to the approved full layer and preserves official Python bytes during signing',async()=>{
   const calls=[];
-  const verify=async(source,options)=>{calls.push({source,...options});};
+  const verify=async(source,options)=>{calls.push({source,...options});return {manifestSha256:'a'.repeat(64)};};
   const previous=process.env.WEFTMATE_MEMORY_RUNTIME_MODE;
   delete process.env.WEFTMATE_MEMORY_RUNTIME_MODE;
   let config;
   try{config=await withMemoryRuntimeResources({}, {source:'synthetic-payload'},verify);}
   finally{if(previous===undefined)delete process.env.WEFTMATE_MEMORY_RUNTIME_MODE;else process.env.WEFTMATE_MEMORY_RUNTIME_MODE=previous;}
   assert.equal(config.extraMetadata.memoryRuntimeMode,'full');
+  assert.equal(config.extraMetadata.memoryRuntimeManifestSha256,'a'.repeat(64));
   assert.equal(calls[0].mode,'full');
   const packager={platformSpecificBuildOptions:config.win};
   const sign=file=>WinPackager.prototype.shouldSignFile.call(packager,file);

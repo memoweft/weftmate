@@ -6,8 +6,9 @@ export async function withMemoryRuntimeResources(config,{mode=process.env.WEFTMA
   mode=modeOf(mode);
   if(!source)throw Error('Windows packaging requires a prepared memory runtime directory');
   source=resolve(source);
-  await verify(source,{mode,probe:true});
-  return {...config,extraMetadata:{...config.extraMetadata,memoryRuntimeMode:mode},
+  const verified=await verify(source,{mode,probe:true});
+  return {...config,extraMetadata:{...config.extraMetadata,memoryRuntimeMode:mode,
+    memoryRuntimeManifestSha256:verified?.manifestSha256},
     // electron-builder 26.17.0 tests the source filename with endsWith before
     // copying/signing. Exact absolute filenames preserve only these two
     // upstream signed executables, including when direct CLI uses the hook.

@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import asar from '@electron/asar';
 import { verifyWindowsPackage } from '../scripts/verify-windows-package.mjs';
 import {memoryRuntimeFixture} from './helpers/memory-runtime-fixture.mjs';
+import {verifyMemoryRuntime} from '../scripts/memory-runtime/verify.mjs';
 
 test('package scanner distinguishes upstream paths and refuses synthetic build identity across archives and loose resources', async () => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-package-policy-'));
@@ -20,8 +21,10 @@ test('package scanner distinguishes upstream paths and refuses synthetic build i
     await writeFile(installer, 'synthetic installer');
     await writeFile(join(runtime, 'VENDOR-MANIFEST.json'), JSON.stringify({ webRuntimeEntry: 'node_modules/node-pty/src/example.test.ts', carriedButNotMounted: [], closure: [] }));
     await writeFile(join(source, 'src/main.mjs'), 'export const synthetic = true;');
-    await writeFile(join(source,'package.json'),JSON.stringify({memoryRuntimeMode:'base'}));
     await memoryRuntimeFixture(join(resources,'memory-runtime'));
+    const memoryMetadata = { memoryRuntimeMode: 'base', memoryRuntimeManifestSha256:
+      (await verifyMemoryRuntime(join(resources,'memory-runtime'), {mode:'base'})).manifestSha256 };
+    await writeFile(join(source,'package.json'),JSON.stringify(memoryMetadata));
     const upstream = ['C:', 'Users', 'Upstream Example', 'Desktop', 'test script.bat'].join('\\');
     await mkdir(join(source, 'node_modules/upstream'), { recursive: true });
     await writeFile(join(source, 'node_modules/upstream/example.js'), upstream);
@@ -30,6 +33,9 @@ test('package scanner distinguishes upstream paths and refuses synthetic build i
     await pack();
     const verify = () => verifyWindowsPackage({ unpacked, installer, identity });
     assert.equal((await verify()).boundaries.buildMachineIdentityHits, 0);
+    await writeFile(join(source,'package.json'),JSON.stringify({...memoryMetadata,memoryRuntimeManifestSha256:'0'.repeat(64)}));
+    await pack(); await assert.rejects(verify(),/manifest does not match/);
+    await writeFile(join(source,'package.json'),JSON.stringify(memoryMetadata)); await pack();
     // A package with its resource filter accidentally omitting memory fails.
     await rm(join(resources,'memory-runtime/python/python.exe'));
     await assert.rejects(verify(),/memory runtime/);
