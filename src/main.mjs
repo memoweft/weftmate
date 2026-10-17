@@ -336,6 +336,7 @@ if (!app.requestSingleInstanceLock()) {
     });
   });
   app.on('browser-window-created', (_event, window) => {
+    hostLog.write('host.startup', { phase: 'window-created' });
     window.on('session-end', () => {
       hostExitReason = 'system-shutdown';
       hostLog.write('host.session_end', { reason: hostExitReason });
@@ -1333,6 +1334,7 @@ async function loadCompanion() {
 }
 
 async function bootstrap() {
+  hostLog.write('host.startup', { phase: 'bootstrap' });
   // ── R1 · 官方 DSH web 基座：产品面全部经官方 web（子进程托管 127.0.0.1 前端）──
   // A crash journal must be restored before *any* config/vault import, legacy
   // migration, patch read, or runtime construction.  Those modules may
@@ -3455,8 +3457,13 @@ async function bootstrap() {
 
   try {
     if (personalHostMode) {
+      hostLog.write('host.startup', { phase: 'runtime-start' });
       await startPersonalHost({
-        startRuntime: () => ensureSharedRuntime({ reload: true }),
+        startRuntime: async () => {
+          const origin = await ensureSharedRuntime({ reload: true });
+          hostLog.write('host.startup', { phase: 'runtime-ready' });
+          return origin;
+        },
         migrateRoutes: migrateLegacyRoutesToOfficialSettings,
         hydrateBindings: async () => {
           await hydrateLegacySessionBindings();
@@ -3600,14 +3607,18 @@ async function bootstrap() {
            },
           ...(personalPublicOrigin ? { allowedOrigins: [personalPublicOrigin], trustedProxy: true } : {}),
         });
+        hostLog.write('host.startup', { phase: 'personal-access-start' });
         const started = await personalAccessService.start();
+        hostLog.write('host.startup', { phase: 'personal-access-ready' });
         personalAccessOrigin = assertLoopbackOrigin(started.origin);
         writeHostState();
         console.log(`[weftmate] ✓ personal-access listening origin=${personalAccessOrigin}`);
         if (desktopRequested) {
           // Explicit legacy setup links remain valid; the default first page is account login.
           const setupGrant = null;
+          hostLog.write('host.startup', { phase: 'window-prepare' });
           await desktopUpdates.prepareWindow();
+          hostLog.write('host.startup', { phase: 'window-create' });
           personalDesktop = createPersonalDesktop({ computerUsageService: personalAccessService, systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
             startInTray: process.argv.includes('--start-in-tray') || process.platform === 'darwin' && app.isPackaged && app.getLoginItemSettings().wasOpenedAtLogin,
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
