@@ -92,6 +92,7 @@ export async function phoneRuntime(root, logs, options = {}) {
     personalConversationContextHandler: request => host.getConversationContext(request),
     personalScheduleHandler: request => host.handleScheduleRuntime(request),
     personalApprovalRuntimeClosedHandler: ({ runtimeId }) => host?.invalidateToolApprovals({ runtimeId, outcome: 'unavailable', reasonCode: 'RUNTIME_UNAVAILABLE' }),
+    onProcessEvent: options.onProcessEvent,
     log: line => logs.push(line),
   });
   const bindings = new Map();
