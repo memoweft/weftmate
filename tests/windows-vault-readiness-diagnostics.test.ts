@@ -6,11 +6,12 @@ import {syncBuiltinESMExports} from 'node:module';
 import {createCipheriv} from 'node:crypto';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
+import {EventEmitter} from 'node:events';
 import {persistedWindowsStorageKey} from '../src/windows-vault-storage.mjs';
 
 async function scenario(mode:'child-timeout'|'fsync-denied'|'success'|'first-false',body:(value:any)=>Promise<void>){
   const root=fs.mkdtempSync(join(tmpdir(),'weftmate-readiness-diagnostic-')),file=join(root,'Local State');
-  const spawn=childProcess.spawnSync,fsync=fs.fsyncSync,now=Date.now;
+  const exec=childProcess.execFile,fsync=fs.fsyncSync,now=Date.now;
   const key=Buffer.alloc(32,7),iv=Buffer.alloc(12,9),cipher=createCipheriv('aes-256-gcm',key,iv);
   const probe=Buffer.concat([Buffer.from('v10'),iv,cipher.update('weftmate-storage-persistence-check'),cipher.final(),cipher.getAuthTag()]);
   const wrapped='synthetic-private-wrapped-material',childText='synthetic-private-child-text';
@@ -18,20 +19,23 @@ async function scenario(mode:'child-timeout'|'fsync-denied'|'success'|'first-fal
   const counts={available:0,encrypt:0,child:0,fsync:0},records:any[]=[];let clock=0,childTimeout=0;
   try{
     fs.writeFileSync(file,original);Date.now=()=>clock;
-    childProcess.spawnSync=((_command,_args,options:any)=>{
+    childProcess.execFile=((_command,_args,options:any,callback:any)=>{
       counts.child++;childTimeout=options.timeout;
-      if(mode==='child-timeout'){
-        clock+=options.timeout;
-        return {status:null,signal:'SIGTERM',error:Object.assign(new Error(childText),{code:'ETIMEDOUT'}),stdout:Buffer.alloc(0),stderr:Buffer.from(childText)};
-      }
-      return {status:0,signal:null,stdout:Buffer.from(key),stderr:Buffer.from(childText)};
+      const child:any=new EventEmitter();child.stdin=new EventEmitter();child.kill=()=>true;
+      child.stdin.end=()=>queueMicrotask(()=>{
+        if(mode==='child-timeout'){
+          clock+=options.timeout;
+          callback(Object.assign(new Error(childText),{killed:true,signal:'SIGTERM'}),Buffer.alloc(0),Buffer.from(childText));
+        }else callback(null,Buffer.from(key),Buffer.from(childText));
+      });
+      return child;
     }) as any;
     fs.fsyncSync=((fd:number)=>{counts.fsync++;if(mode==='fsync-denied')throw Object.assign(new Error(childText),{code:'EACCES'});return fsync(fd);}) as any;
     syncBuiltinESMExports();
     const storage={isEncryptionAvailable:()=>{counts.available++;return mode!=='first-false'||counts.available>1;},encryptString:()=>{counts.encrypt++;return Buffer.from(probe);}};
     await body({run:(onDiagnostic=(value:any)=>records.push(value))=>persistedWindowsStorageKey(storage,root,{onDiagnostic} as any),records,counts,get childTimeout(){return childTimeout;},wrapped,childText});
     assert.equal(fs.readFileSync(file).equals(original),true,'readiness must not change Local State');
-  }finally{childProcess.spawnSync=spawn;fs.fsyncSync=fsync;Date.now=now;syncBuiltinESMExports();key.fill(0);probe.fill(0);fs.rmSync(root,{recursive:true,force:true});}
+  }finally{childProcess.execFile=exec;fs.fsyncSync=fsync;Date.now=now;syncBuiltinESMExports();key.fill(0);probe.fill(0);fs.rmSync(root,{recursive:true,force:true});}
 }
 
 test('readiness diagnostics identify a child timeout without exposing child text',async()=>{
