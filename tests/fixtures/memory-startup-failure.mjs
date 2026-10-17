@@ -5,6 +5,7 @@ import { join } from 'node:path';
 // A real child process with the Core stdio protocol, never a Python/Core install.
 const mode = process.argv[2];
 if (mode === 'exit') process.exit(2);
+if (mode === 'exit-75') process.exit(75);
 let owner, home;
 const methods = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',

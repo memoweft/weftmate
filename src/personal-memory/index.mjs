@@ -238,16 +238,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   function runtimeStopped(ownerId) { return runtimeFailures.get(ownerId)?.stopped === true; }
   function recordRuntimeFailure(ownerId, entry, cause, initializing = false) {
     if (!rpcFactory.managedRuntime || closing) return;
-    const startupExit = initializing && entry.runtimePhase === 'capabilities' &&
-      Number.isInteger(cause?.processExitCode) && cause.processExitCode !== 0 && !cause.processSignal;
-    const transient = cause?.code === 'MEMORY_TIMEOUT' ||
-      cause?.code === 'MEMORY_PROCESS_UNAVAILABLE' && !cause.executionFailure && !startupExit;
-    if (!initializing && !transient && cause?.code !== 'MEMORY_PROTOCOL_ERROR') return;
+    const confirmed = ['MEMORY_COMPONENT_MISSING', 'MEMORY_COMPONENT_INVALID'].includes(cause?.code) ||
+      cause?.executionFailure === true || initializing && cause?.coreError === true;
+    // A nonzero exit (even before capabilities) gives no cause. Unknown startup
+    // failures share the same finite budget as disconnects and timeouts.
+    if (!initializing && !confirmed &&
+        !['MEMORY_PROCESS_UNAVAILABLE', 'MEMORY_TIMEOUT', 'MEMORY_PROTOCOL_ERROR'].includes(cause?.code)) return;
     cause.memoryRuntimeFailure = true;
     if (entry.runtimeFailure) return;
     entry.runtimeFailure = true;
     const attempts = (runtimeFailures.get(ownerId)?.attempts ?? 0) + 1;
-    runtimeFailures.set(ownerId, { attempts, stopped: !transient || attempts >= 3,
+    runtimeFailures.set(ownerId, { attempts, stopped: confirmed || attempts >= 3,
       code: cause?.code ?? 'MEMORY_UNAVAILABLE' });
     failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
     clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
@@ -417,14 +418,12 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       routeKey: selected.key, modelTier: selected.modelTier };
     entries.set(ownerId, entry);
     entry.initializing = (async () => {
-      entry.runtimePhase = 'capabilities';
       const before = await rpc.request('capabilities');
       if (before?.protocol !== 'memoweft.dsh_rpc' || before?.protocol_version !== 2 ||
           before?.schema_version !== 1 || !Array.isArray(before?.methods) ||
           REQUIRED_METHODS.some((name) => !before.methods.includes(name))) {
         throw error('MEMORY_PROTOCOL_INCOMPATIBLE');
       }
-      entry.runtimePhase = 'initialize';
       const initialized = await rpc.request('initialize', {
         session_id: 'weftmate-personal-host', dsh_home: home, subject_id: ownerId,
         platform: 'dsh', model_tier: selected.modelTier, lang: 'zh', auto_route: !selected.readOnly,
@@ -440,7 +439,6 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         throw error('MEMORY_PROTOCOL_INCOMPATIBLE');
       }
       entry.capabilities = capabilities;
-      entry.runtimePhase = 'health';
       const health = await rpc.request('health');
       if (health?.runtime?.subject_id !== ownerId) throw error('MEMORY_IDENTITY_MISMATCH');
       entry.routeReady = health.runtime.route_ready === true;

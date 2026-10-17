@@ -8,6 +8,10 @@ const MAX_FRAME_BYTES = 8 * 1024 * 1024;
 const MAX_PENDING = 32;
 
 const failed = (code) => Object.assign(new Error(code), { code });
+// Only structural/permission errors prove the configured interpreter cannot
+// execute. Resource exhaustion (for example EAGAIN) is not such evidence.
+const executionFailure = cause => ({ executionFailure:
+  ['ENOENT', 'ENOTDIR', 'EACCES', 'EPERM', 'ENOEXEC', 'EISDIR'].includes(cause?.code) });
 
 /** One official MemoWeft RPC v2 stdio transport for one account. */
 export class MemoWeftRpc {
@@ -40,7 +44,7 @@ export class MemoWeftRpc {
     child.stdout.on('data', (part) => this.consume(String(part)));
     // RPC stderr may contain private source text. It is never forwarded to HTTP or logs.
     child.stderr.resume();
-    child.on('error', () => this.failAll('MEMORY_PROCESS_UNAVAILABLE', { executionFailure: true }));
+    child.on('error', cause => this.failAll('MEMORY_PROCESS_UNAVAILABLE', executionFailure(cause)));
     child.on('close', (exitCode, signal) => {
       if (this.child === child) this.child = null;
       this.failAll('MEMORY_PROCESS_UNAVAILABLE', { processExitCode: exitCode, processSignal: signal });
@@ -74,8 +78,10 @@ export class MemoWeftRpc {
       if (frame.protocol !== PROTOCOL || frame.protocol_version !== VERSION || frame.schema_version !== SCHEMA) {
         entry.reject(failed('MEMORY_PROTOCOL_ERROR'));
       } else if (frame.ok === true) entry.resolve(frame.result);
-      else entry.reject(failed(typeof frame.error?.code === 'string' && /^[a-z_]{2,80}$/.test(frame.error.code)
-        ? frame.error.code : 'MEMORY_RPC_ERROR'));
+      else {
+        const coreError = frame.ok === false && typeof frame.error?.code === 'string' && /^[a-z_]{2,80}$/.test(frame.error.code);
+        entry.reject(Object.assign(failed(coreError ? frame.error.code : 'MEMORY_RPC_ERROR'), { coreError }));
+      }
     }
   }
 
@@ -94,7 +100,7 @@ export class MemoWeftRpc {
       return Promise.reject(failed('MEMORY_CONFIGURATION_INVALID'));
     }
     if (this.pending.size >= MAX_PENDING) return Promise.reject(failed('MEMORY_BUSY'));
-    try { this.start(); } catch { return Promise.reject(Object.assign(failed('MEMORY_PROCESS_UNAVAILABLE'), { executionFailure: true })); }
+    try { this.start(); } catch (cause) { return Promise.reject(Object.assign(failed('MEMORY_PROCESS_UNAVAILABLE'), executionFailure(cause))); }
     const requestId = `weftmate-${randomUUID()}`;
     const frame = { protocol: PROTOCOL, protocol_version: VERSION, schema_version: SCHEMA,
       request_id: requestId, method, params };
