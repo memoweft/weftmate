@@ -1,6 +1,7 @@
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { writeSync } from 'node:fs';
 import { mkdtemp, mkdir, readFile, realpath, rm, readdir, unlink, lstat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -8,11 +9,17 @@ import { randomUUID, createHash } from 'node:crypto';
 import { phoneRuntime } from '../services/cloud/test/relay-phone-runtime.mjs';
 import { createPersonalAccessService } from './helpers/personal-access-test-service.mjs';
 import { sessionWorkspace } from '../src/personal-access/session-workspace.mjs';
+import { createRuntimePhaseDiagnostics } from './helpers/runtime-phase-diagnostics.mjs';
 
 const text = (m: any) => typeof m.content === 'string' ? m.content : (m.content || []).filter((p: any) => p.type === 'text').map((p: any) => p.text).join('');
 async function links(directory: string) { for (const row of await readdir(directory, { withFileTypes: true })) { const path = join(directory, row.name);
   if ((await lstat(path)).isSymbolicLink()) await unlink(path); else if (row.isDirectory()) await links(path); } }
 test('MODE-1 pinned runtime preserves the entire logical main while switching, resumes original write with normal approval and never executes a declined call', { timeout: 90000 }, async () => {
+  const diagnostic=createRuntimePhaseDiagnostics({publish:(record: unknown)=>writeSync(1,'MODE_RUNTIME '+JSON.stringify(record)+'\n')});
+  let phase: string|null=null;
+  const mark=(next: string)=>{if(phase)diagnostic.phase(phase,'complete');phase=next;diagnostic.phase(next,'start');};
+  const failed=(error: unknown)=>{diagnostic.phase(phase,'failed',error);phase=null;};
+  mark('fixture-setup');
   const root = await mkdtemp(join(tmpdir(), 'mode1-native-')), logs: string[] = [];
   let host: any, runtime: any;
   let mainDefaultFile='';
@@ -32,39 +39,49 @@ test('MODE-1 pinned runtime preserves the entire logical main while switching, r
   };
   const wait = async (read: () => Promise<any>, label: string) => { const end = Date.now() + 30000; while (Date.now() < end) { const value = await read(); if (value) return value; await new Promise(r => setTimeout(r, 80)); } throw Error('Timed out: ' + label); };
   try {
-    runtime = await phoneRuntime(root, logs, { respond });
+    mark('runtime-create');
+    runtime = await phoneRuntime(root, logs, { respond, onProcessEvent:diagnostic.processEvent });
     let publicReads = 0;
     const browserReader = {status:()=>({available:true}),canonicalUrl:(url:string)=>new URL(url).href,cancelTask(){},close:async()=>{},
       read:async({url}:any)=>{publicReads++;return {url,requestedUrl:url,title:'合成公开资料',capturedText:'PUBLIC_QUERY_FACT',text:'PUBLIC_QUERY_FACT',outline:'',links:[],segmentCount:1,captureTruncated:false,truncated:false,httpStatus:200};}};
+    mark('runtime-start');
     host = await createPersonalAccessService({ root: join(root, 'account'), port: 0, backend: runtime.backend, browserReader }); runtime.setHost(host); await runtime.start();
+    mark('host-start');
     const { origin, hostId } = await host.start(), grant = await host.issueSetupGrant();
+    mark('account-setup');
     const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: grant.grant, username: 'SyntheticNativeMode', password: 'Synthetic native mode password', deviceName: 'synthetic-phone' }) });
     const auth: any = await setup.json(), cookie = setup.headers.get('set-cookie')!.split(';')[0]; assert.equal(setup.status, 201);
     const api = async (path: string, body?: any, method = body ? 'POST' : 'GET') => { const res = await fetch(origin + '/personal/v1' + path, { method,
       headers: { origin, cookie, 'x-weftmate-csrf': auth.csrfToken, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); const value: any = await res.json(); assert.ok(res.ok, JSON.stringify({ path, status: res.status, error: value.error })); return value; };
+    mark('project-create');
     const folder = join(root, 'SyntheticProject'); await mkdir(folder);
     const project = (await api('/projects', { requestId: randomUUID(), name: '合成工作', rootPath: await realpath(folder), permission: 'write' })).project;
     const workCreate=(await api(`/projects/${project.projectId}/sessions`,{requestId:randomUUID(),modelProfileId:'synthetic'})).command;
     const workSession=await wait(async()=>{const command=(await api('/commands/'+workCreate.commandId)).command;if(command.state==='rejected')throw Error(command.errorCode);return command.state==='accepted_by_dsh'&&command;},'direct project creation');
+    mark('direct-write');
     await api('/commands',{requestId:randomUUID(),kind:'session.message',targetDeviceId:hostId,sessionId:workSession.sessionId,text:'MODE1_WRITE_DIRECT',intent:'queue'});
     await wait(()=>readFile(join(folder,'direct.txt'),'utf8').catch(()=>null),'direct project write');
     assert.equal(await readFile(join(folder,'direct.txt'),'utf8'),'native-work-proof');
+    mark('main-reply');
     const originalChat = (await api('/chats/main')).chat.chatId;
     await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'chat.message', chatId: originalChat, modelProfileId: 'synthetic', text: 'MODE1_HELLO', intent: 'queue' });
     const main = await wait(async () => { const chat = (await api('/chats/main')).chat; return chat.activeSessionId && !chat.running && chat; }, 'first main reply');
     const sessionId = main.activeSessionId;
     mainDefaultFile=join(sessionWorkspace(join(root,'workspaces'),auth.account.ownerId,originalChat),'main.txt');
+    mark('work-switch');
     await api(`/sessions/${sessionId}/approval-mode`, { mode: 'ask' }, 'PATCH');
     await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'chat.message', chatId: originalChat, text: 'MODE1_WRITE_MAIN', intent: 'queue' });
     const card = await wait(async () => (await api(`/sessions/${sessionId}/approvals`)).approvals.find((r: any) => r.status === 'pending' && r.intent === 'work-switch'), 'main work card');
     await assert.rejects(readFile(join(folder, 'main.txt')));
     await api(`/sessions/${sessionId}/approvals/${card.approvalId}`, { requestId: randomUUID(), outcome: 'allowed-once', workProjectId: project.projectId });
+    mark('normal-approval');
     const risk = await wait(async () => (await api(`/sessions/${sessionId}/approvals`)).approvals.find((r: any) => r.status === 'pending' && r.intent !== 'work-switch'), 'normal write approval');
     await assert.rejects(readFile(join(folder, 'main.txt')));
     await api(`/sessions/${sessionId}/approvals/${risk.approvalId}`, { requestId: randomUUID(), outcome: 'allowed-once' });
     await wait(() => readFile(join(folder, 'main.txt'), 'utf8').catch(() => null), 'file written');
     assert.equal(await readFile(join(folder, 'main.txt'), 'utf8'), 'native-work-proof');
     await assert.rejects(readFile(mainDefaultFile));
+    mark('history-check');
     const moved = (await api('/chats/' + originalChat)).chat;
     assert.equal(moved.kind, 'main'); assert.equal(moved.mode, 'work'); assert.equal(moved.logicalHistory, true); assert.equal(moved.activeSessionId, sessionId);
     assert.equal((await api('/chats/main')).chat.chatId, originalChat);
@@ -72,9 +89,11 @@ test('MODE-1 pinned runtime preserves the entire logical main while switching, r
     assert.ok(history.items.some((e: any) => e.type === 'user.message' && e.data.text === 'MODE1_HELLO'));
     assert.ok(history.items.some((e: any) => e.type === 'user.message' && e.data.text === 'MODE1_WRITE_MAIN'));
     await wait(async () => !(await api('/chats/main')).chat.running, 'work turn ends');
+    mark('background-route');
     const reminder = (await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'chat.message', chatId: originalChat, text: 'MODE1_BACKGROUND_REMINDER', intent: 'queue' })).command;
     await wait(async () => { const command=(await api('/commands/'+reminder.commandId)).command; if(command.state==='rejected') throw Error(command.errorCode);
       return (await api(`/chats/${originalChat}/events?limit=200`)).items.some((e: any) => e.type === 'user.message' && e.data.text === 'MODE1_BACKGROUND_REMINDER'); }, 'legacy background route remains the same history');
+    mark('decline');
     const create = (await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'session.create', modelProfileId: 'synthetic' })).command;
     const accepted = await wait(async () => { const command = (await api('/commands/' + create.commandId)).command; return command.state === 'accepted_by_dsh' && command; }, 'ordinary new chat');
     const next = { activeSessionId: accepted.sessionId };
@@ -86,12 +105,14 @@ test('MODE-1 pinned runtime preserves the entire logical main while switching, r
     assert.equal((await api('/chats/main')).chat.mode, 'work');
     assert.equal((await api('/sessions')).sessions.find((row: any) => row.sessionId === next.activeSessionId).mode, 'chat');
     await assert.rejects(readFile(join(folder, 'declined.txt')));
+    mark('public-query');
     await api('/commands',{requestId:randomUUID(),targetDeviceId:hostId,kind:'session.message',sessionId:next.activeSessionId,text:'MODE1_FETCH_PUBLIC',intent:'queue'});
     const queried = await wait(async()=>{const events=(await api(`/sessions/${next.activeSessionId}/events?limit=100`)).events;return events.find((event:any)=>event.type==='assistant.message'&&event.data?.text?.includes('MODE1_QUERY_'));},'public query answer');
     assert.match(queried.data.text,/MODE1_QUERY_OK/); assert.equal(publicReads,1);
     const queryApprovals=(await api(`/sessions/${next.activeSessionId}/approvals`)).approvals;
     assert.equal(queryApprovals.filter((row:any)=>row.status==='pending').length,0);
     assert.equal((await api('/sessions')).sessions.find((row:any)=>row.sessionId===next.activeSessionId).mode,'chat');
+    mark('overwrite');
     const overwriteCreate = (await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'session.create', modelProfileId:'synthetic' })).command;
     const overwriteSession = await wait(async()=>{const command=(await api('/commands/'+overwriteCreate.commandId)).command;return command.state==='accepted_by_dsh'&&command.sessionId;},'overwrite chat created');
     await api('/commands',{requestId:randomUUID(),targetDeviceId:hostId,kind:'session.message',sessionId:overwriteSession,text:'MODE1_WRITE_OVERWRITE',intent:'queue'});
@@ -101,5 +122,14 @@ test('MODE-1 pinned runtime preserves the entire logical main while switching, r
     const overwriteRisk = await wait(async()=> (await api(`/sessions/${overwriteSession}/approvals`)).approvals.find((row:any)=>row.status==='pending'&&row.intent!=='work-switch'),'existing file still requires original approval');
     await api(`/sessions/${overwriteSession}/approvals/${overwriteRisk.approvalId}`,{requestId:randomUUID(),outcome:'rejected'});
     assert.equal(await readFile(join(folder,'main.txt'),'utf8'),'native-work-proof');
-  } finally { await runtime?.close(); await host?.close(); await links(root); await rm(root, { recursive: true, force: true }); }
+  } catch(error) { failed(error);throw error; }
+  finally {
+    try {
+      mark('finally-runtime-close');await runtime?.close();
+      mark('finally-host-close');await host?.close();
+      mark('finally-links');await links(root);
+      mark('finally-remove');await rm(root, { recursive: true, force: true });
+      diagnostic.phase(phase,'complete');phase=null;
+    } catch(error) {failed(error);throw error;}
+  }
 });
