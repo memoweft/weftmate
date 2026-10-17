@@ -69,11 +69,6 @@
 
 ## 4. 待清理
 
-- `docs/IA_MAIN_CHAT.md`：主对话置顶入口和开旁聊入口已按 D92 取消；执行接力、分页和四页信息结构仍描述现有实现。删掉取消了的部分，留下还有效的。
-- `docs/UI_SPEC.md`：「主对话与旁聊（IA-3 / D42）」一节和侧栏里的主对话描述按 D92 改；再核对 D36、D49。
-- `docs/ARCHITECTURE.md`：去掉九月的逐日补充，按实际的加载链重写。
-- `docs/CLIENT_API.md`：去掉写在接口文档里的包内进展措辞。
-- `site/CLAIMS.md`：它引用的是旧 STATE 里的行和已经迁走的证据。
 - `apps/apple/Tests/Evidence/`（约 300MB）：先把 `scripts/review-gallery/evidence.mjs` 和 `apps/apple/Scripts/check_ui_copy.mjs` 读的输入迁到 `tests/fixtures/` 或证据目录，再删掉这个目录，并加进检查脚本的禁止名单。
 - `tests/` 里按包号命名的测试文件（如 `bl-29-*`、`fix-34`）：改成按行为命名；`tests/integration/` 里只给已删工作流用的脚本，确认没人用就删。
 - 本机（本人或本机编排者做）：删除编排目录 `_archive/2026-10-14/`；清除 PLAYBOOK 与各助手记忆中失效的入口和重复规矩；合并脚本在同步主线时删除退役的状态文件。验收场景已归入第 2 节，本机不再维护另一份清单。

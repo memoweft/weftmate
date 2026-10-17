@@ -1,13 +1,12 @@
 # 客户端契约：`/personal/v1`
 
-> M0-5 基线：`main` 提交 `28b5d36`，按当前服务端行为整理；以后拆文件不改变这里的路径与语义。M0-5 首次建立文档基线；M0-3 / M1-0a 更新历史与时间线实现，不修改 Swift。实现核对来源：`src/personal-access/`、`src/personal-access-backend.mjs`、`src/personal-memory/http.mjs`、`src/personal-sync/`；客户端来源见下表。
-> M0-3 / M1-0a 已实现：历史尾页、向前翻页、正向增量与对话时间线；Apple 保留旧正向读取，待 A1 / M1-0d 接入。产品决定见 [PLAN.md](PLAN.md) D5–D8、M0-5、M1-0；呈现规则见 [UI_SPEC.md](UI_SPEC.md)。
+> 契约依据：`src/personal-access/`、`src/personal-access-backend.mjs`、`src/personal-memory/http.mjs` 与 `src/personal-sync/`。产品规则见 [DECISIONS](DECISIONS.md)，呈现规则见 [UI_SPEC](UI_SPEC.md)，能力层级与验收结论见 [项目地图](../PROJECT-MAP.md) 第 4 节。
 
 ## 1. 范围与通用约定
 
-第 3、6 节覆盖 **90 个本机业务方法/路径组合**（第 3 节 86 项 + 第 6 节健康 4 项）与 **12 个桌面 UI 静态路径**；第 7 节另列云账号、宿主身份与中继。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
+表中路径均省略 `/personal/v1` 前缀（云接口另有完整路径），`{id}` 为资源标识。示例用短 ID 与示意哈希，真实请求须满足格式约束；响应示例仅保留关键字段。未写查询参数的接口不要加查询串。接口是否可用以实际宿主能力声明、权限和对应契约为准，不从旧包号或接口总数推断。
 
-| 客户端标记 | 本次核对来源与含义 |
+| 客户端标记 | 来源与含义 |
 |---|---|
 | 桌 | `src/personal-access-ui/app.js`，桌面/浏览器 Web UI |
 | 手 | `apps/mobile-ui/www/app.js`，通过 Android 原生 bridge 间接调用；不是独立浏览器 HTTP 客户端 |
@@ -126,11 +125,11 @@ Windows程序、远程网页、手机网页与安卓界面包共用同一策略�
 
 重连复用原会话的 `afterSeq` 或逻辑对话的 `syncCursor/nextCursor`，原生事件按`seq`、逻辑条目按`eventId/revision`合并；同步日志与原生日志水位不得混用。工具／审批／提问重读当前原生状态，保留已展开详情。409 `CURSOR_RESET_REQUIRED`走原尾页重置，不发送新的模型请求。已受理消息只核对原`requestId`／`commandId`／`receiptId`，不重新生成。未收到受理回执显示「待确认」；只有原编号查询404后显示「未送达，重试」，用户重试前再查一次，再原样重放同编号、文字与附件元数据。重复点击共用同一次核对，已受理不再重放；原编号异体仍返回`REQUEST_CONFLICT`。正文与附件在现有草稿／原生发件箱保存，网页重放正文只留当前会话内存，不将敏感正文新增到标记存储。
 
-传输断线只补读已由DSH（助手运行时）产生的事件；它不能复原执行进程被强制终止时尚未生成或持久化的内容。进程重启后按原回执与游标重置核对已有记录，不为缺少结束事件自动重新生成；不能把仍待核对的任务说成已完成。D40加密电脑任务暂存仍属于S7，离线聊天入口不伪装为电脑任务已经排队。
+传输断线只补读已由DSH（助手运行时）产生的事件；它不能复原执行进程被强制终止时尚未生成或持久化的内容。进程重启后按原回执与游标重置核对已有记录，不为缺少结束事件自动重新生成；不能把仍待核对的任务说成已完成。D40加密电脑任务暂存沿第3.20节，离线聊天入口不伪装为电脑任务已经排队。
 
 ### 3.3 会话列表与管理（12）
 
-#### MODE-1 对话与工作（加法字段，2026-10-14）
+#### 对话与工作（D92，加法字段）
 
 `GET /status` 的 `personalCapabilities.workAndChat:1` 表示电脑支持模式与原生工具暂停。缺失或未知版本沿旧项目接口，不发送下面的新答复字段，也不能向用户宣称旧电脑已有对话工具保护。
 
@@ -150,9 +149,9 @@ Windows程序、远程网页、手机网页与安卓界面包共用同一策略�
 
 转换在同一次持久更新中记会话模式、电脑、项目和原回合的内部执行上下文；不改原命令正文、摘要、来源与幂等编号。原调用随后继续，重新按所选文件夹解析相对路径。`chatId/sessionId`、历史与记忆来源保留。原主对话转换时原逻辑聊天成为工作，不生成空“小纬”，原 `mainChatId/kind:main` 与 `/chats/main` 保留兼容读取／后台投递；界面将原历史显示为普通列表项。原聊天可选 `logicalHistory:true`，新版客户端继续用原 `/chats/{chatId}/events|changes|dates|search` 读取全部历史段，列表只投影一个当前入口。
 
-本轮既有聊天转换沿用回答它的电脑，其他电脑需新建工作；跨电脑搬运原段与记忆不在本轮。新建工作可通过既有多电脑内容通道选择在线电脑。无在线电脑卡片接 S7（离线任务）明确入口，不自动执行或排队；无电脑账号给出现有添加电脑说明。手机独立网页模型的 `computer_work` 只生成设备内卡片，元数据不随 `/offline/turns` 上传，不新增电脑授权；旧原生手机不发送这个工具定义。
+既有聊天转换沿用回答它的电脑，其他电脑需新建工作；不支持跨电脑搬运原段与记忆。新建工作可通过既有多电脑内容通道选择在线电脑。无在线电脑卡片接 S7（离线任务）明确入口，不自动执行或排队；无电脑账号给出现有添加电脑说明。手机独立网页模型的 `computer_work` 只生成设备内卡片，元数据不随 `/offline/turns` 上传，不新增电脑授权；旧原生手机不发送这个工具定义。
 
-安卓精确业务白名单路径无需增加，本包添加现有项目、会话与逻辑历史路径的允许 / 拒绝用例，并核对已有审批专用路径构造器；审批继续走 `shared.approvals.list/decide`，不放宽 `host.business`。安卓原生与 iPhone 后续接模式字段、两格切换与同一列表、输入区选择行、卡片答复和副标题，并移除输入区电脑按钮；当前已发布项目会话、普通审批与历史接口形状兼容。
+审批继续走 `shared.approvals.list/decide`，不放宽 `host.business`；新模式字段以 `personalCapabilities.workAndChat:1` 为前提，旧项目会话、普通审批与历史请求／响应形状保持兼容。
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
@@ -160,18 +159,18 @@ Windows程序、远程网页、手机网页与安卓界面包共用同一策略�
 | PATCH `/sessions/{sessionId}/metadata` | `pinned?,unread?,title?,groupId?,projectId?`，至少一项；布尔值、非空标题≤256字符；groupId为本账号分组ID或null | 200 `{sessionId,pinned?,unread?,title?,groupId?,readMessageSeq?}`；原生 `sessionTitle.rename` 写用户标题，停止自动标题覆盖；手动已读记录最新助手消息水位 | 400 INVALID_REQUEST；404 SESSION_UNAVAILABLE / NOT_FOUND；409 SESSION_BUSY | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/fork` | 空对象 `{}`；原对话须空闲 | 201 `{sessionId,title}`；原生 DSH（助手运行时）事件种子及 parentSession 分叉谱系创建可继续的独立对话，标题加「（分叉）」；复制独立工作目录与经验，继承模型、分组或项目绑定；项目文件夹不复制，普通对话复制独立工作目录；不复制 MemoWeft（记忆核心）的记忆来源/绑定，原对话不变 | 404 SESSION_UNAVAILABLE；409 SESSION_BUSY；503 BACKEND_UNAVAILABLE | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/message-branches` | `{requestId,seq,action:"edit"\|"regenerate",modelProfileId?}`；`seq` 是原生用户 / 助手消息锚点；仅本人可写的空闲旁聊 | 201 `{sessionId,title,modelProfileId,sendRequestId,text,groupId,action,sourceSessionId,sourceSeq,inputSourceSessionId,userSeq,seedThroughSeq,attachments?,originalAttachments?,attachmentMessageId?}`；原生事件种子在对应用户消息的回合开始前截断，旧回复及后续回合不进入新版本；`text` 是原始用户输入，编辑时由客户端替换。仅创建分支，尚未发起推理 | 409 SESSION_BUSY / SESSION_READ_ONLY / MAIN_CHAT_PROTECTED / REQUEST_CONFLICT；404 SOURCE_UNAVAILABLE / SESSION_UNAVAILABLE；422 MODEL_UNAVAILABLE | 桌、手、安、苹（重新生成） |
-| GET `/sessions/{sessionId}/message-branches` | 无 | 200 `{groups:[{groupId,action,sourceSessionId,sourceSeq,versions:[{sessionId,anchorSeq? ,afterSeq?}]}]}`；第一项为原版，其余按创建顺序；原版用 `anchorSeq`，新版本用 `afterSeq` 后第一条同角色消息定位 | 404 SESSION_UNAVAILABLE；409 SESSION_READ_ONLY | 桌、手、安；苹待接 |
+| GET `/sessions/{sessionId}/message-branches` | 无 | 200 `{groups:[{groupId,action,sourceSessionId,sourceSeq,versions:[{sessionId,anchorSeq? ,afterSeq?}]}]}`；第一项为原版，其余按创建顺序；原版用 `anchorSeq`，新版本用 `afterSeq` 后第一条同角色消息定位 | 404 SESSION_UNAVAILABLE；409 SESSION_READ_ONLY | 桌、手、安；苹（依客户端能力） |
 
 UX-4：创建分支后，通过原有 `/commands` 发送 `kind:"session.message",targetDeviceId,sessionId,text,mode:"queue"`，**必须使用返回的 `sendRequestId`**，并带回返回的附件字段。宿主复制已上传原件与模型原先读取的材料，不从用户文件夹重新读取附件；图片材料从原生历史附件取回，文字材料按原暂存大小及哈希核对。本人用户消息通过原生回执与输入哈希核对后恢复本人原文，编辑读取原生锚点，避免历史摘要 / 旧缓存改变输入。分支继承模型（可显式换模型）、项目 / 分组、审批模式、临时记忆设置和深入思考；已有对话的模型不改变。分支 `requestId` 同体重试复用同一分支，异体返回 REQUEST_CONFLICT；消息送达不确定时先查 `/commands/by-request/{sendRequestId}` 再重放同一消息体。原分支及后续历史保留，切版只是打开另一个 `sessionId`。删除来源 / 版本或遗忘时清除对应派生分支回执，不用旧回执还原原话。
 
-D49 更新：模型已处理的本人消息不提供编辑 / 重发入口，只有尚未处理的排队消息沿原队列接口编辑 / 撤回。主对话遵循 D42 / IA，助手回复的重新生成开旁聊。使用既有 `session.side.create`，`originChatId/originEventId` 指向所选消息，父级为本账户主对话；原主对话保留，以来源引用带上下文，不做整条主对话分叉，也不创建主对话版本切换。重新生成先按逻辑历史找到锚点前的用户消息，支持跨执行段。新旁聊创建回执被受理后再发原始用户输入。
+D49 更新：模型已处理的本人消息不提供编辑 / 重发入口，只有尚未处理的排队消息沿原队列接口编辑 / 撤回。兼容主聊天保留原逻辑身份（D92），助手回复的重新生成开旁聊。使用既有 `session.side.create`，`originChatId/originEventId` 指向所选消息，父级为本账户主对话；原主对话保留，以来源引用带上下文，不做整条主对话分叉，也不创建主对话版本切换。重新生成先按逻辑历史找到锚点前的用户消息，支持跨执行段。新旁聊创建回执被受理后再发原始用户输入。
 
 UX-4 的有用 / 没用反馈仅存当前设备、当前账号的本机记录（`version,sessionId,seq,rating,reason,note,at`；手机本机记录用 `source:"phone",conversationId,messageId` 代替宿主锚点）；没有上传反馈的 HTTP 路由。Windows（视窗系统）通过已有原生加密偏好存储持久化反馈，避免程序随机端口变化丢记录；网页 / 安卓在设备存储保存。导出复用完整历史分页，主对话用跨段 `/chats/{id}/events`；客户端脱敏后预览并保存 Markdown（标记文本）/ PNG（图片文件），工具步骤默认不含，附件仅列名称。安卓新增系统保存文件桥，界面包最低原生 code27。Apple（苹果端）须用相同消息锚点、回执与版本关系，反馈留设备端，导出前沿用凭据 / 本机路径脱敏与预览边界。
 | GET `/session-groups` | 无查询 | 200 `{groups:[{id,name}]}`，仅当前账号 | — | 桌、手、安、苹 |
 | POST `/session-groups` | `{name}`，去首尾空白、非空、≤256字符 | 201 `{group:{id,name}}` | 400 INVALID_REQUEST | 桌、手、安、苹 |
 | PATCH `/session-groups/{id}` | `{name}`，同上 | 200 `{group:{id,name}}` | 404 NOT_FOUND | 桌、手、安、苹 |
 | DELETE `/session-groups/{id}` | 空对象 `{}` | 200 `{deleted:true,id}`；成员会话移至未分组，保留全部内容 | 404 NOT_FOUND | 桌、手、安、苹 |
-| POST `/sessions/{sessionId}/archive` | 空对象 `{}` | 200 `{sessionId,archived:true}`；幂等归档，保留历史、经验与工作目录 | 404 `SESSION_UNAVAILABLE` | 桌、手、安、苹（A7 已接入） |
+| POST `/sessions/{sessionId}/archive` | 空对象 `{}` | 200 `{sessionId,archived:true}`；幂等归档，保留历史、经验与工作目录 | 404 `SESSION_UNAVAILABLE` | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/unarchive` | 空对象 `{}` | 200 `{sessionId,archived:false}`；幂等恢复 | 404 `SESSION_UNAVAILABLE` | 同上 |
 | GET `/sessions/{sessionId}/forget-preview` | 无；Cookie 与 `account:manage` | 200 `{ownerId,worldRevision,itemCount,evidenceCount,evidenceIds,items:[{id,kind,text,itemType}]}`；只读，预览该对话全部来源遗忘的级联范围 | 404 `SESSION_UNAVAILABLE`；503记忆不可用 | 同上 |
 | DELETE `/sessions/{sessionId}` | `{forgetMemories:false}`（默认，可省略）；勾选遗忘可另传 `deleteConversationSnippets:false`（默认）及预览的 `memoryWorldRevision` | 200 `{sessionId,deleted:true,forgetMemories,forgottenEvidenceCount}`；永久删除对话日志、宿主记录、生成成果及专属工作目录，运行中先停止 | 409 `SESSION_BUSY`（执行或回执尚未确认，稍后重试）；503 `BACKEND_UNAVAILABLE`；勾选遗忘还可返回503 `MEMORY_DELETE_UNAVAILABLE`、409 `MEMORY_DELETE_CONFLICT` | 同上 |
@@ -186,7 +185,7 @@ UX-2：`GET /sessions` 的可用会话另返回执行电脑的 `hostId`，以及
 
 普通对话以 DSH（助手运行时）原生 `cwd` 绑定宿主数据目录内按账号散列 / 会话 ID 隔离的工作目录。脚本与笔记默认在这里，回到原会话沿用同一目录及原生上下文；`经验.md` 存在时作为本对话资料读取。压缩仍由既有原生摘要保留方法、脚本路径、命令与踩坑记录。项目的用户目录不属于对话删除范围。
 
-项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，移动或移除后可带 `projectNotice`（可显示的目录变更提示），浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表置顶项优先，同层按既有会话顺序；客户端按分组折叠显示，未分组在下。列表响应增加 `groups:[{id,name}]`，每会话增加 `pinned,unread,groupId` 及可选 `parentSessionId`；旧客户端可忽略。FX-16 列表响应增加 `hasMore,nextCursor`，页内保持置顶优先和最近已观察到的活动顺序；会话无数量限制，客户端以每页100项浏览并向宿主搜索全部标题。游标锚点被删除时返回 `CURSOR_RESET_REQUIRED`。助手新消息水位超过已读水位时自动未读，打开对话由客户端 PATCH（部分更新）`unread:false` 自动已读；手动 `unread:true` 保留到下次打开/手动已读。分组与元数据持久保存且账号隔离，所有写操作沿用现有 `commands:write`、Cookie（会话凭据）/设备授权与 CSRF（跨站请求伪造防护）；已归档列表只在设置 → 已归档呈现，支持客户端标题搜索、恢复和既有删除确认。FX-16 的分页 / 全量标题搜索沿既有 `host.business` 接口，需要同步更新原生壳的 `/sessions` 查询路径校验；本包不递增版本号，由合并发布统一调整界面包最低壳版本。Android（安卓）原生 code23 起支持本节新增元数据、分组与分叉路由；新版界面包最低原生 code23，旧壳保留原版界面。创建走 `/commands`，没有 POST `/sessions`。FX-9 会话增加可选 `taskAvailable:boolean`；`false` 表示受限聊天会话不提供任务详情、任务控制与执行审批，客户端不轮询其 `/tasks/{id}`。发送是否已受理仍以原 `/commands/by-request/{requestId}` 回执和匹配 `receiptId` 的会话记录判定，与任务详情读取分开。缺字段沿用旧行为。
+项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，移动或移除后可带 `projectNotice`（可显示的目录变更提示），浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表置顶项优先，同层按既有会话顺序；客户端按分组折叠显示，未分组在下。列表响应增加 `groups:[{id,name}]`，每会话增加 `pinned,unread,groupId` 及可选 `parentSessionId`；旧客户端可忽略。FX-16 列表响应增加 `hasMore,nextCursor`，页内保持置顶优先和最近已观察到的活动顺序；会话无数量限制，客户端以每页100项浏览并向宿主搜索全部标题。游标锚点被删除时返回 `CURSOR_RESET_REQUIRED`。助手新消息水位超过已读水位时自动未读，打开对话由客户端 PATCH（部分更新）`unread:false` 自动已读；手动 `unread:true` 保留到下次打开/手动已读。分组与元数据持久保存且账号隔离，所有写操作沿用现有 `commands:write`、Cookie（会话凭据）/设备授权与 CSRF（跨站请求伪造防护）；已归档列表只在设置 → 已归档呈现，支持客户端标题搜索、恢复和既有删除确认。分页／全量标题搜索沿既有 `host.business` 接口，调用前需原生壳支持 `/sessions` 的精确查询路径。Android（安卓）原生 code23 起支持本节新增元数据、分组与分叉路由；新版界面包最低原生 code23，旧壳保留原版界面。创建走 `/commands`，没有 POST `/sessions`。FX-9 会话增加可选 `taskAvailable:boolean`；`false` 表示受限聊天会话不提供任务详情、任务控制与执行审批，客户端不轮询其 `/tasks/{id}`。发送是否已受理仍以原 `/commands/by-request/{requestId}` 回执和匹配 `receiptId` 的会话记录判定，与任务详情读取分开。缺字段沿用旧行为。
 
 UI-P4：每会话可选只读 `contextUsage:{usedTokens,contextWindow}`。`usedTokens` 是 DSH（助手运行时）原生 `contextPressure.projectedTokens`（缺失时用 `pressureTokens`）的当前上下文占用，会随压缩及有效上下文增减；不是请求用量的累加。`contextWindow` 来自原生最新 `request/context` 上限，缺失为 `null`。宿主未提供有效占用时省略整个字段，旧客户端可忽略；客户端未知上限不计算比例，不能用计费用量或默认模型容量伪造圆环。Android（安卓）现有宿主会话透传保留此字段，不新增原生业务路径。
 
@@ -227,7 +226,7 @@ BL-29c 在既有 `events|changes` 响应保留可选 `accountChanges:{revision,m
 
 M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在上下文中的 MemoWeft Recall（记忆召回）依据，数组项为 `{"id":"cognition-…","kind":"cognition","summary":"偏好用中文和买菜例子解释技术"}`。`kind` 为 `cognition/entity/relationship/event`，`summary` 最多240个 UTF-16 单元，取自目标模型权限过滤后的召回文本。后台形成走既有模型排队与账户后台模型配置；每轮按当前消息召回，并用 MemoWeft 的称呼/表达方式查询补充持续适用的对话偏好，结果去重；下一轮召回等待已接受的 Core（记忆核心）形成工作完成，普通对话在服务不可用或等待到期时继续。
 
-新宿主在未命中、不可用或预算移除记忆时返回 `memoryUsed:[]`；旧宿主可省略此字段。它证明此回复请求采用了这些上下文依据，不声称能读取模型内部推理或证明每一条都改变了输出。客户端可用 `GET /memory/items/{kind}/{id}/sources`（3.9）打开当前来源；记忆后来删除或权限改变时，历史摘要仍是当时的回复依据，当前来源可返回不可读/404，不能用历史标签恢复已忘掉的原文。桌面在回复下显示「用到了 N 条记忆」，点击在既有右侧面板查看来源；手机/Apple（苹果客户端）标签另包。评测器 `memory_used` 检查指定回合的回复数组是否非空，空数组为失败、字段缺失为不支持；不以记忆服务状态代替采用证据。
+新宿主在未命中、不可用或预算移除记忆时返回 `memoryUsed:[]`；旧宿主可省略此字段。它证明此回复请求采用了这些上下文依据，不声称能读取模型内部推理或证明每一条都改变了输出。客户端可用 `GET /memory/items/{kind}/{id}/sources`（3.9）打开当前来源；记忆后来删除或权限改变时，历史摘要仍是当时的回复依据，当前来源可返回不可读/404，不能用历史标签恢复已忘掉的原文。
 
 ### 3.5 发送消息与附件（5）
 
@@ -252,7 +251,7 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 `Command.intent` 返回已解析的意图。当前任务中生效的插话命令另有 `rootTaskId` 与 `taskAction:"supplement"`，不生成独立目标；按原生入队时的当前回合回执关联，即使尚未持久化 user.message 也可以绑定。重试沿用原 `requestId` 与原体；`intent` 与同值旧 `mode` 归一为同一请求。显式 `mode:"queue"` 的旧客户端仍会排队；完全不传两者的旧客户端采用 D9 默认插话。
 
-客户端接入：运行中输入默认发 `intent:"steer"`；用户选择「新任务」时发 `intent:"queue"`。收到 task.queued 在原对话显示排队卡，task.started 将其转为运行状态，task.ended 将其结束；取消按钮调用 3.6 的 `/tasks/{taskId}/cancel`，停止按钮继续调用 `/stop`。界面接入另包，本包只交付后端与契约。
+客户端运行中发送按 D36 的账户设置选择 `intent:"queue"`（默认排队）或 `intent:"steer"`（引导）；不改变旧请求省略字段时的兼容行为。收到 task.queued 显示排队卡，task.started 转运行，task.ended 结束；取消调用 3.6 的 `/tasks/{taskId}/cancel`，停止调用 `/stop`。
 
 会话暂存附件 ID 必须 `attachment-<uuid>`，`requestId` 与后续消息相同；`attachments` 元数据五字段必须齐全：`attachmentId,name,contentType,size,sha256`。最多4个，图像单个≤5 MiB，文本单个/合计≤16 KiB，总计≤10 MiB；文本 MIME 支持 `text/plain,text/markdown,text/csv,application/json,application/x-ndjson`。GET 会话附件当前只读持久图片，不能用它下载所有暂存文本。
 
@@ -268,7 +267,7 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 | GET `/tasks/{taskId}` | 无；根命令 ID | 200 `Task`（无 `task` 外壳） | 404 `NOT_FOUND` | 桌、手、安、苹 |
 | GET `/tasks/{taskId}/sources/{snapshotId}` | 无；只读该任务引用的项目/网页快照 | 200 `{"source":{"snapshotId":"snapshot-…","relativePath":"README.md","lineStart":1,"lineEnd":10,"fileSha256":"…","text":"…"}}` | 404 `NOT_FOUND`；快照校验失败 | 桌、手、安、苹 |
 | POST `/tasks/{taskId}/stop` | `{"requestId":"stop-1"}` | 202 `{"task":Task}`；重放同请求不重复发起 | 409 `TASK_NOT_READY / REQUEST_CONFLICT`；404 `NOT_FOUND` | 桌、手、安、苹 |
-| POST `/tasks/{taskId}/cancel` | `{"requestId":"cancel-1"}`；只取消尚未开始的根任务 | 202 `{"task":Task}`；原请求可重放，`control.stopStatus:"stopped"` 表示原生队列移除已确认 | 409 `TASK_NOT_READY`（已开始/已结束/回执不确定，不会改为停止当前执行）、`REQUEST_CONFLICT`；404 `NOT_FOUND` | 后端可用，各端界面另包 |
+| POST `/tasks/{taskId}/cancel` | `{"requestId":"cancel-1"}`；只取消尚未开始的根任务 | 202 `{"task":Task}`；原请求可重放，`control.stopStatus:"stopped"` 表示原生队列移除已确认 | 409 `TASK_NOT_READY`（已开始/已结束/回执不确定，不会改为停止当前执行）、`REQUEST_CONFLICT`；404 `NOT_FOUND` | 沿原任务控制接口 |
 | POST `/tasks/{taskId}/supplements` | `requestId,text`（沿用消息上限） | 202 `{"task":Task,"command":Command}`，子命令 `taskAction:"supplement"`，使用原生 steer | 409 `TASK_NOT_READY / REQUEST_CONFLICT` | 桌、手、安 |
 | POST `/tasks/{taskId}/resume` | `requestId,text`；停止已确认且 `canResume` | 202 `{"task":Task,"command":Command}`，子命令 `taskAction:"resume"` | 409 `TASK_NOT_READY / REQUEST_CONFLICT` | 桌、手、安 |
 
@@ -287,7 +286,7 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 | GET `/sessions/{sessionId}/questions` | `before=<questionRpcId>`；`limit` 默认50、1–100 | 200 `{"questions":[{"questionRpcId":"<uuid>","status":"pending","questions":[{"id":"destination","question":"保存到哪里？","options":[{"label":"Downloads"}]}],"createdAt":"…"}],"nextBefore":null,"hasMore":false}` | 404 `SESSION_UNAVAILABLE / NOT_FOUND` | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/questions/{questionRpcId}` | `{"requestId":"answer-1","answer":{"answers":[{"id":"destination","selected":["Downloads"]}]}}` | 200 `{"question":{"questionRpcId":"<uuid>","status":"answered","answer":{…},"answerRequestId":"answer-1","answeredAt":"…"},"requestId":"answer-1"}` | 409 `QUESTION_NOT_PENDING / REQUEST_CONFLICT`；404 `NOT_FOUND` | 桌、手、安、苹 |
 
-| GET `/sessions/{sessionId}/approval-mode` | 无 | 200 `{"mode":"auto","allowedCategories":[]}` | 404 `SESSION_UNAVAILABLE` | 桌；手机/Android/Apple 菜单另包，接口可用 |
+| GET `/sessions/{sessionId}/approval-mode` | 无 | 200 `{"mode":"auto","allowedCategories":[]}` | 404 `SESSION_UNAVAILABLE` | 依客户端入口 |
 | PATCH `/sessions/{sessionId}/approval-mode` | `{"mode":"ask"}` | 200 同上；对话内持久保存，下次工具调用采用最新值 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE` | 桌 |
 | GET `/settings/approvals` | 无 | 200 `{mode,rules,types,secondOpinionEnabled}`；复核默认开启；`rules` 为账户自定义规则，缺项沿用当前模式；`types` 含九类及默认说明 | — | 桌 / 手机网页 |
 | PATCH `/settings/approvals` | `{mode?,rules?:{[type]:allow/ask/deny/null},secondOpinionEnabled?:boolean}`，至少一项 | 200 同上；`mode` 只改新对话，`rules` 下次工具调用生效，`null` 恢复默认；关闭复核后不再发起新的复核请求 | 400 `INVALID_REQUEST` | 桌 / 手机网页 |
@@ -314,7 +313,7 @@ SEC-1：审批行可含 `secondOpinion:{alignment:"对得上"|"对不上"|"拿�
 
 记录字段：`id,at,sessionId,conversationId,conversationName,projectId,projectName,types,summary,result,executionState`，自动操作另有 `ruleSource:default/global/project`。`result` 为 `allowed/rejected/automatic/blocked/pending/unavailable`；允许表示许可，失败等实际执行状态由 `executionState` 提供。投影来自原命令的审批 / 工具记录；同一次操作有审批时只显示该审批，保留与删除沿用原会话 / 命令数据，不另建存储。身份验证为 `sessions:read`；规则写入沿用 `commands:write` 与 CSRF（跨站请求伪造）验证。旧客户端可忽略新增字段。
 
-手机网页可查看与修改全局规则，项目单独设置沿用电脑上的项目设置；安卓新增路由需要白名单放行 `/personal/v1/execution-records`（含以上查询）并支持审批 `global-category`，本包按边界未改原生壳。Apple（苹果客户端）需接九类设置、项目 `permissionRules`、审批快捷操作与执行记录入口。
+全局规则与项目 `permissionRules` 使用同一操作类型和审批契约。客户端读取执行记录需支持 `/personal/v1/execution-records` 的上述精确查询；类型级长期答复使用 `global-category`，不能替代连接器一次性审批。
 
 ### 3.8 成果下载（3）
 
@@ -424,7 +423,7 @@ MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 
 
 旧 Apple 模型读取已有 500 项上限，`/models` 继续提供最多 500 个已登记或已选用的兼容型号，优先保留当前对话、新对话默认、后台、迁移前配置与最近使用的标识；`/model-services` 完整保留服务目录，长目录全部可搜索、选择。初次登记在这一既有预算内一次批量写入并重启；隐藏的型号不登记，预算外型号在选择时登记，不按目录大小限制用户的菜单选择。旧字段 `profileId / modelProfileId` 仍对应每个具体型号，服务的 `serviceId` 不能作为发送消息的模型标识。
 
-Android（安卓）业务白名单已精确加入本节路径与允许／拒绝用例。新版界面调用这些路径**需要新壳版本**，版本号由合并发布统一调整；Apple 原生菜单另包接入。原生客户端菜单采用星芒 `model` 图标、无文字按钮、读屏名带当前模型；按服务分组，单服务省略标题，当前项打勾，长清单在同一菜单中搜索，支持时才显示深度思考开关，底部保留「添加模型服务…」。
+客户端调用本节模型服务路径需具备对应原生业务路径支持；能力缺失时沿旧模型接口，不由网页绕过原生限制。
 
 模型代理是受限 OpenAI 兼容体：`model` 必须对应所选profile；messages 1–40条、文字≤16,384 UTF-16，角色 `system/user/assistant/tool`；最多8个function工具，`tool_choice` 仅 `auto/none/required`；`max_tokens` 1–8192，temperature 0–2。它是手机本地循环的模型请求通道，不是宿主DSH办事消息接口。`verify` 明确没有验证实际推理。
 
@@ -539,7 +538,7 @@ UPD-1 / D32：新版 `/app/manifest` 在上述兼容字段上增加统一签名�
 
 `nativeMinimumVersions` 为宿主原生协议兼容要求，键使用 ApplePlatform wire 名 `iOS / macOS / watchOS`，值使用 UPD-1 SemVer 边界。缺字段 / 空表表示未声明；无效要求不默认为兼容。登录、云宿主兑换、恢复、离线验证遇到最低版本高于本机时返回客户端 `NATIVE_UPDATE_REQUIRED` 提示，不发布已连接会话；关于页读到要求后阻止后续宿主操作。Android 手机界面清单的 `minNativeVersion` / `minNativeVersionCode` 不作为 Apple 原生协议要求。平台最低版本尚未在正式宿主配置。
 
-Mac 最小口子使用 UPD-1 `layer=app` 整体 Ed25519 签名清单，增加签名扩展 `nativePlatform:"macOS"/nativeBuild/downloadPage`，来源与原始32字节公钥由构建配置提供，默认未配置。只检测并打开下载页，不下载或执行更新包；iPhone 保持 TestFlight / App Store 更新。发布接线与 Sparkle 沙盒阻碍见 [发布说明](../scripts/release/README.md)。
+Mac 最小口子使用 UPD-1 `layer=app` 整体 Ed25519 签名清单，增加签名扩展 `nativePlatform:"macOS"/nativeBuild/downloadPage`，来源与原始32字节公钥由构建配置提供，默认未配置。只检测并打开下载页，不下载或执行更新包；iPhone 不使用此 Mac 更新入口；免费签名阶段按 D38 重新签名，不据此声明已有 TestFlight／App Store 发布。发布接线与 Sparkle 沙盒阻碍见 [发布说明](../scripts/release/README.md)。
 
 ### 3.14 桌面 UI 静态资源（12个 GET 路径，不计入89业务接口）
 
@@ -601,7 +600,7 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 
 新建对话读取 `defaultDeepThinking`，仍沿 UX-3 的模型目录能力和 `/sessions/{id}/thinking`，不支持的模型以普通方式回答；既有对话保持自己的偏好。`assistant.message.data.modelThinking` 是可选的模型返回思考内容（最多 4,000 字，沿历史正文的安全投影），只用于展示三档，不作为回复正文、上下文交接或记忆输入；模型不提供时没有空思考块。原生来源接口与工具详情仍不返回此内容。
 
-`POST /offline/sync` 的加密副本追加 `personalization`，只携带上述账户设置，沿用既有记忆、副本权限和删除代次；离线直连共用系统提示组装函数，没有新增记忆／文件导出。离线模型没有会话级原生推理能力时不承诺默认深入思考。Android（安卓）原生 code27 开放上述两个设置路径；发布此界面包须声明最低原生 code27，旧壳保留兼容界面。Apple（苹果端）接线清单见 ST-1 证据。
+`POST /offline/sync` 的加密副本追加 `personalization`，只携带上述账户设置，沿用既有记忆、副本权限和删除代次；离线直连共用系统提示组装函数，没有新增记忆／文件导出。离线模型没有会话级原生推理能力时不承诺默认深入思考。Android（安卓）原生 code27 开放上述两个设置路径；发布此界面包须声明最低原生 code27，旧壳保留兼容界面。
 
 ### 3.16 对话输出与来源（UI-1b，1）
 
@@ -650,7 +649,7 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 | POST `/schedules/{sessionId}/{id}/resume` | `{}` | 200 `{ok:true}`；暂停项重新交给 DSH，重复恢复幂等；周期项从下一次当地日历/间隔时间继续，已过期的一次性项恢复后立即提醒 |
 | DELETE `/schedules/{sessionId}/{id}` | 无请求体 | 200 `{ok:true}`；删除未来派发与管理项，保留历史提醒和已启动的对话任务；不存在项404 |
 | POST `/schedules/{sessionId}/{id}/run` | `{}` | 200 `{ok:true}`；立即提醒或将工作排入原对话，暂停状态与原下次时间保持；每次请求代表一次独立手动运行，客户端不得在响应不确定时自动重发 |
-| GET `/notifications` | 无查询参数 | 200 `{items:Notification[]}`；持久提醒/定时执行通知列表，手机可读取；S3 远程推送另包接入 |
+| GET `/notifications` | 无查询参数 | 200 `{items:Notification[]}`；持久提醒/定时执行通知列表，手机可读取；远程推送登记与送达契约见9.8.2 |
 
 `Schedule`：`{id,nativeId,sessionId,text,kind,timeZone,repeat,state,nextRunAt,lastRunAt,approvalMode}`。`id` 是对话内稳定管理标识；日历续期或恢复时 `nativeId` 可变，客户端只使用 `sessionId/id` 管理。`kind=reminder|task`；`repeat=null|{kind:interval,seconds}|{kind:daily,time}|{kind:weekly,time,weekday}|{kind:monthly,time,day}`，`time` 为 `HH:mm:ss`，`weekday` 为0–6（周日0、周一1），`day` 为1–31，不存在的月内日期跳过。`state=scheduled|paused|completed`；暂停/完成时 `nextRunAt=null`；时间戳为 UTC（协调世界时）ISO 字符串。`approvalMode` 记录建立时模式；实际执行读取原对话当时的模式和分类授权，沿用原用户回执建立的账号意图；建立时登录凭据到期不取消长期任务，设备撤销、账号授权、当前认证版本及原对话审批仍有效。
 
@@ -661,7 +660,7 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 
 ### 3.19 手机离线记忆副本（M3-A / S6）
 
-仅已批准内容设备的 Cookie（会话凭据）＋CSRF（跨站请求防护）会话可调用，需要 `account:manage`。内容仍经既有宿主中继，云端只持有删除代次。Android（安卓）最低原生版本 code24；网页使用 WebCrypto（浏览器密码接口）；A14 的 iPhone / Mac 原生端已接相同契约。细节见 [M3_OFFLINE.md](M3_OFFLINE.md)。
+仅已批准内容设备的 Cookie（会话凭据）＋CSRF（跨站请求防护）会话可调用，需要 `account:manage`。内容仍经既有宿主中继，云端只持有删除代次。Android（安卓）最低原生版本 code24；网页使用 WebCrypto（浏览器密码接口）；iPhone／Mac 原生副本沿相同契约。细节见 [M3_OFFLINE.md](M3_OFFLINE.md)。
 
 | 方法与路径 | 请求 | 响应 |
 |---|---|---|
@@ -678,7 +677,7 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 
 云端 `POST /personal/v1/cloud/hosts/offline/status`：请求 `{hostId}`，使用既有云 DPoP（设备密钥持有证明）授权。只有同账户宿主成员的已批准设备能取得 `{hostId,accountId,generation,authorized:true}`。手机每次读取副本用于模型请求前及模型响应落盘前都核对，失败不调用模型；401／403／404 或代次不一致立即清理本地钥匙、密文、内存与待补交内容。离线期间仍能接收云端撤权，不能宣称完全断网的设备已收到清理。
 
-宿主通过既有安装签名 `POST /personal/v1/cloud/hosts/offline/publish` 发送 `{hostId,proof}`，签名载荷带 `action,sub,generation`；云只单调递增保存 `offline_controls`，不保存正文、模型密钥或设备解密私钥。云数据库 schema（结构版本）7，账号／宿主删除级联清除此表；本包未部署。
+宿主通过既有安装签名 `POST /personal/v1/cloud/hosts/offline/publish` 发送 `{hostId,proof}`，签名载荷带 `action,sub,generation`；云只单调递增保存 `offline_controls`，不保存正文、模型密钥或设备解密私钥。云数据库 schema（结构版本）7，账号／宿主删除级联清除此表。
 
 ### 3.20 电脑离线时交代任务（S7 / D17 / D40）
 
@@ -703,9 +702,9 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 
 `Command` 兼容增加 `offlineSource:{id,submittedAt,receivedAt,startedAt?}`，不含密钥或领取凭据。电脑消息按 `receiptId` 关联此来源，执行记录沿旧接口；`Activity.type` 增加 `task.started`，类别仍为 `task`，终态仅为 `task.completed/failed/stopped`。离线任务的 `notification.title/body` 为固定文案「你交代的一件事」及「电脑已开始／做完了／没做成／需要你批准」，点击沿原对话来源。云与提供方只收 `{eventId,type}`，现有未配置推送提供方不代表可唤醒系统。
 
-Android（安卓）四条云路径已按 `cloud-account`（云账号原生通道）精确放行 POST，沿 `CloudAppCrypto.kt` 的固定云来源和原生身份签名，不进入 `Network.kt` 的电脑业务通道；电脑专用 `claim/ack/result` 仍拒绝。需要新壳版本，由编排统一升号。保管库 `offline.seal` 加密调用、多电脑读取／清理及原生任务界面仍待跟进。iPhone（苹果手机）同样增加设备保管库加密、四条云接口、菜单／目标组／取消确认／状态与固定通知文案。没有原生 `seal` 能力时隐藏任务入口，旧离线聊天仍可用。部署前仅在本地合成云验证，生产服务由编排部署。
+Android（安卓）四条云路径使用 `cloud-account`（云账号原生通道）的精确 POST，沿 `CloudAppCrypto.kt` 的固定云来源和原生身份签名，不进入 `Network.kt` 的电脑业务通道；电脑专用 `claim/ack/result` 仍拒绝。客户端只有具备设备保管库 `offline.seal` 加密、按电脑读取／清理、四条云接口与任务状态处理能力时才启用任务入口，缺少 `seal` 时隐藏入口，旧离线聊天仍可用。
 
-原生跟进的方法形状：`offline.seal({payload:{text,sessionId,projectId,createdAt},recipient:taskRecipient,identity:{purpose:"offline-task",accountId,hostId,deviceId,generation,id}})` 返回本节信封；原生补齐 `version/keyId` 并按本节算法处理，不能返回私钥或内容钥匙。多电脑保管库 `offline.targets({accountId})` 只返回 `[{control,generation,taskRecipient}]`，`offline.clearAccount({accountId,hostId?,keepGeneration?})` 清除此账号各电脑的加密记录与本地内容钥匙；指定 `hostId` 时只清该电脑，`keepGeneration` 保留其当前有效代次。`offline.load/save` 的原对象兼容保存 `tasks`。这些是跟进接口，本包的旧 `nativeVault` 不声称已经实现。原生任务入口启用后才发送 `taskSupport:1`，同时处理 `model:null`、`taskReferences`、断网重试和退出先删除云记录的顺序。Android 后台补发及 Apple（苹果端）本地通知沿原动态决定消费，`task.started` 与终态使用不同事件身份；云推送仅作唤醒提示，再从电脑读取通知决定，不将云的事项身份当成对话正文或直接深链。
+原生加密方法形状：`offline.seal({payload:{text,sessionId,projectId,createdAt},recipient:taskRecipient,identity:{purpose:"offline-task",accountId,hostId,deviceId,generation,id}})` 返回本节信封；原生补齐 `version/keyId` 并按本节算法处理，不能返回私钥或内容钥匙。多电脑保管库 `offline.targets({accountId})` 只返回 `[{control,generation,taskRecipient}]`，`offline.clearAccount({accountId,hostId?,keepGeneration?})` 清除此账号各电脑的加密记录与本地内容钥匙；指定 `hostId` 时只清该电脑，`keepGeneration` 保留其当前有效代次。`offline.load/save` 的原对象兼容保存 `tasks`。旧 `nativeVault` 缺少这些方法时不能声明任务支持。原生任务入口启用后才发送 `taskSupport:1`，同时处理 `model:null`、`taskReferences`、断网重试和退出先删除云记录的顺序。Android 后台补发及 Apple（苹果端）本地通知沿原动态决定消费，`task.started` 与终态使用不同事件身份；云推送仅作唤醒提示，再从电脑读取通知决定，不将云的事项身份当成对话正文或直接深链。
 
 ## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
@@ -740,73 +739,20 @@ M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows �
 
 桌面运行块默认展开，手机默认收起。完成或该任务结束后自动收为「执行了 N 步 · 用时 X」；可以再次展开。步骤详情再次点开才请求原始参数 / 输出，并提供复制。审批 / 提问卡使用原有账号、来源、回执检查和操作接口，已处理记录保留在原位置；不新增「总是允许此类」权限。
 
-成果通过桌面右侧面板 / 手机全屏页打开，关闭回到原对话，可下载 / 保存。来源、成果及原有任务停止控制位于对话内；独立任务页、任务详情弹窗和侧栏入口已删除，运行会话显示状态点。输入区停止保持既有语义；M1-0b 排队和插话后端契约见 3.5 / 3.6，界面接入另包。
+成果通过桌面右侧面板 / 手机全屏页打开，关闭回到原对话，可下载 / 保存。来源、成果及原有任务停止控制位于对话内；独立任务页、任务详情弹窗和侧栏入口已删除，运行会话显示状态点。输入区停止保持既有语义；排队与引导契约见 3.5 / 3.6。
 
-## 5. 客户端差异（Apple逐项对照）
+## 5. 客户端兼容边界
 
-以下结论来自当前 `PersonalClient.swift` 和相关Codable/intent模型与上述服务端路径/字段对照；A2/A3 已同步修复 Swift 客户端；S1c-Apple 已加入云账号与内容设备客户端（云浏览器接线缺口见 5.2）。表中的「一致」只确认静态请求/响应契约，不代表真机/部署连通性已验收。
-
-### 5.1 已调用接口的逐项核对
-
-| Apple调用的方法与路径（前缀同上） | 路径/字段/错误处理结论 |
-|---|---|
-| POST `/auth/register`；POST `/auth/login` | 请求 `username,password,deviceName,displayName?` 与服务端一致；读取Cookie/CSRF再用status核对owner/host |
-| GET `/auth/me`；GET `/status` | `account.ownerId,device.id,csrfToken` 与 `ownerId,hostId` 一致；身份不匹配或401清凭据，5xx/超时保留离线身份便于恢复 |
-| POST `/auth/logout`；GET `/auth/devices` | `{}`注销体、Cookie/Origin/CSRF一致；设备createdAt/lastSeenAt等可选字段兼容；云内容会话增加可选 cloudDeviceId，限定当前 owner，用现有 DELETE 即时下线该云设备全部宿主会话。注销先清本地身份，服务端失败仍报告未确认 |
-| 云 OIDC discovery/auth/token/jwks（7.2） | S1c-Apple：系统 ASWebAuthenticationSession；Code + PKCE S256、精确 callback/state、ID token nonce/issuer/aud/RS256/exp 验证，JOSESwift 3.0.0 签验 JWS。按 7.7 发送 `wm_device_id=apple-<公钥指纹>`、`wm_public_jwk`，云浏览器隐藏字段仍需邮件确认；公开 client `weftmate-apple`、redirect `com.weftmate.apple:/oauth/callback` 须在云端登记；无 client secret。轮换 refresh token 存 ThisDeviceOnly Keychain，恢复时取新 access token |
-| POST `/auth/cloud-nonce`；POST `/auth/cloud-session`；POST `/cloud/pairings/redeem` | S1c-Apple：host:session resource + 设备 P-256 DPoP；每次新 nonce/jti/ath/精确 htu，无 Authorization；202 保持等待，不建立内容 session，允许/拒绝与重试/取消有明确界面；200 Cookie/CSRF 后再核对 status 的 ownerId/hostId |
-| GET `/cloud/devices/pending`；POST `/cloud/devices/{id}/decision` | S1c-Apple：已登录前台读取，显示设备名、平台（官方客户端在 deviceName 中带 Mac/iPhone）、请求时间，允许/拒绝使用当前 Cookie/CSRF；现有响应无独立 platform 字段，其他名称显示「平台未提供」 |
-| POST 云 `/personal/v1/cloud/hosts/relay/discover` | S1c-Apple：cloud:account Bearer + hostId 取得 relay base URL；offline/revoked/网络断流显示连接不可用，保留云登录。目录不含 pin；HTTPS 用系统 CA/域名验证再比较当面配对得到的 P-256 SPKI，上传/下载沿用同一验证；不接受目录覆盖旧 pin |
-| PATCH `/sessions/{id}/metadata`；POST `/sessions/{id}/fork`；`/session-groups` | A7 接入置顶 / 未读 / 用户标题 / 分组与分叉；已归档迁入设置；UI-5 既有契约不变 |
-| GET `…/forget-preview`；记忆 / 会话 DELETE | A7 接入只读级联名称 / 类型 / 数量、默认不勾原话删除与预览修订核对；记忆选项随不可变原请求保存；FG-1 既有契约不变 |
-| GET `/sessions`；GET `/models` | A5 已接入 `archived`、归档 / 恢复 / 删除（默认不勾 `forgetMemories`）；会话 `running,sendAvailable,unavailable?,conversationId?,modelProfileId?` 与模型 `id,name,model,configured,routeFingerprint` 一致；Apple限制会话≤20,000、模型≤500 |
-| GET `/sessions/{id}/events` | 已在 A3 修复：无游标尾页、beforeSeq 上翻、afterSeq 增量；上翻不覆盖正向水位，按 seq 去重。公开事件 data（含 endReasonKind）完整缓存/投影；步骤详情走按 seq 详情接口，historyLimit 枚举与全量扫描路径已移除 |
-| GET `/commands` | before/limit/nextBefore一致；服务端按账号列全部命令，Apple读一页后过滤选中会话根任务，不是服务端按session过滤；可能需继续翻页才找到当前会话任务 |
-| GET `/commands/by-request/{id}`；POST `/commands` | 404且code为NOT_FOUND才认定未登记；持久requestId与原体核对一致。A5 新消息发显式 `intent:steer|queue`，省略默认插话；旧已保存 `mode:queue` 请求沿用原体重放，读取 `rootTaskId/taskAction` 并在消息旁标注插话。消息与附件上限已在 A2 对齐 |
-| GET `/tasks/{id}`；POST `/tasks/{id}/stop|cancel` | GET裸Task、POST202的task外壳、requestId一致；停止先查canStop，仅把匹配202当登记证据，后续Task状态不伪称该请求已确认。A5 接入按回执关联的排队取消 / 编辑重排、409 竞争提示、停止保留队列；任务控制不再依赖 `desktopOpenApp`，由任务响应的 `control` 决定。插话走新消息 `intent:steer`；独立续做入口另包 |
-| GET `/tasks/{id}/sources/{snapshotId}` | 项目/网页来源字段与文本响应一致；区分项目原文件hash与网页文本hash |
-| GET `/sessions/{id}/approvals`；POST `/sessions/{id}/approvals/{approvalId}` | A4a：接入可选 riskCategories / decisionScope 与允许 scope；允许一次 / 本对话总是允许此类 / 拒绝，分类 scope 保存在原请求中用于重试；旧记录省略 scope 保持 once。POST200为answered登记，resolved才显示已允许/已拒绝；Watch仍只允许一次/拒绝 |
-| GET/PATCH `/sessions/{id}/approval-mode`；GET/PATCH `/settings/approvals` | A4a：macOS / iOS 输入区五种模式菜单、全部允许风险提示与账户默认；按对话保存，默认只影响新对话。分类授权仅本对话；风险类别用于显示后果，接口没有独立撤销能力字段 |
-| GET `/sessions/{id}/questions`；POST `/sessions/{id}/questions/{questionRpcId}` | questions数组、answer.answers中的id/selected/custom、多选与plan-review字段一致；以answerAcceptedAt区分登记与消费；已在 A3 修复：按 approvalId 或同 turn 内不晚于 observedSeq 的最后一次提问定位时间线卡；200 登记与原生消费保持区分 |
-| GET `/artifacts/{id}`；GET `/artifacts/{id}/preview`；GET `/artifacts/{id}/download` | 元数据、preview.text、download字节一致；Apple核对task绑定、size/sha256与UTF-8，符合当前≤128KiB文本成果范围；不可据此认为支持未来任意二进制成果 |
-| GET `/memory/status`；GET `/memory/items`；GET `/memory/items/{kind}/{id}`；GET `/memory/items/{kind}/{id}/sources` | kind/query/after游标、owner/worldRevision与availableActions一致；详情/来源可由Apple额外传本地expectedWorldRevision校验，未将其臆造为HTTP查询字段 |
-| POST `/memory/items/{kind}/{id}/correct`；POST `…/mute`；DELETE `/memory/items/{kind}/{id}`；DELETE `/memory/evidence/{id}` | requestId/expectedWorldRevision/text一致；允许读取409 receipt并区分error外壳；同requestID原体重放。纠正体字节上限不一致（见下） |
-| GET `/memory/commands/by-request/{id}`；POST `…/retry-cleanup` | receipt/空体与清理状态一致；先查原删除回执再重试底层清理，NOT_FOUND/脱敏重放分别处理 |
-| GET `/sync/events`；POST `/sync/events` | GET默认从0每页100，sourceDeviceId/eventId/seq一致；POST仅验收SPI提交隔离测试记录，四类kind与字段在此验收范围一致，不是Apple日常离线发消息接口 |
-| POST `/sync/capabilities` | platform+sharedConversations一致，只声明共享，不声明accountModelTransfer；严格校验三个响应键，未来增加字段需评估兼容 |
-| GET `/sync/conversations/{id}/shared`；POST `/sync/conversations/{id}/shared` | GET binding/切换水位与POST独立requestId/modelProfileId/expectedSyncSeq一致，POST202读取command+共享投影；没有表达acknowledgeUncertainLocalTurn的字段（见下） |
-
-Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code回退 `HTTP_<status>`，响应>1 MiB或3xx会拒绝；读取通常接受全部2xx，不自动轮询到任务完成。记忆变更显式接受409并解析回执；其他领域409作为APIFailure返回上层。这些处理符合现有接口；不是所有409都应转成重新登录，也不能因5xx换新requestId重发。
-
-### 5.2 明确不一致与后续缺口
-
-差异列保留 M0-5 核对时的现象；「已在 A2 / A3 修复」标注当前 Apple 客户端结果。服务端接口未变。
-
-| 分类 | 差异 / 可观察后果 | 对应工作 |
-|---|---|---|
-| 请求上限不一致 | Apple消息校验允许≤16,384 UTF-16，服务端只允许≤8,192；超出服务端上限会400 INVALID_REQUEST。Apple命令总bytes允许262,144，服务端通常12KiB；即使字符数合法，高字节文字/JSON转义也可能413 BODY_TOO_LARGE | 已在 A2 修复：消息 ≤8,192 UTF-16；原发送 JSON ≤12 KiB，上传前校验并在输入处提示，保留草稿 |
-| 请求上限不一致 | Apple纠正文本≤4,000 UTF-16一致，但intent允许纠正JSON体16KiB，服务端读取≤12KiB；长多字节/转义文本可能413 | 已在 A2 修复：纠正 JSON ≤12 KiB；输入处提示，保留原 requestId/请求体重放 |
-| 名称计数不一致 | Apple认证时deviceName用Swift字符串count≤128（扩展字素），服务端按UTF-16长度≤128；含emoji/组合字符的长名称可通过Apple本地检查后400 INVALID_REQUEST | 已在 A2 修复：deviceName 按 UTF-16 ≤128 校验，超限不发送认证请求 |
-| 接管字段缺口 | 服务端允许 `acknowledgeUncertainLocalTurn:true`；Apple接管intent没有该字段，并要求canAdopt。已有uncertain本地turn无法在Apple确认后接管，返回/显示LOCAL_TURN_UNCONFIRMED | 已在 A2 修复：仅用户明确点击「确认并继续」后发送该字段；普通接管省略，确认写入原 intent 供重放 |
-| 任务适用范围 | Apple可给任何列出的会话查询根任务，但服务端/tasks只接受personal-remote；接管后shared-chat的任务详情/停止会404 NOT_FOUND。应按实际可用范围呈现，不能推定所有可发送会话都有任务控制 | 已在 A2 修复：结合账号桌面能力与实时会话可发送状态确认 personal-remote；shared-chat 隐藏任务详情/停止，不请求 /tasks；范围不明时隐藏 |
-| 历史与时间线 | Apple从头全量读历史，未实现M0-3尾页/上滑更早；只转文字消息。共享HistoryData忽略endReasonKind及新工具/审批/成果data，即使未来服务端添加字段也不会自动渲染 | 已在 A3 修复：在线/离线尾页与上翻、增量合并；可折叠执行块、按 seq 详情、审批/提问/成果卡；来源/停止回到原对话，独立任务目录/详情页面已删除 |
-| 附件 | Apple能解码原件元数据并计数，但没有上述四个附件PUT/GET；SharedCommandPayload无attachments、originalAttachments、attachmentMessageId，无法从该client上传/发送/下载附件或仅发附件 | 已在 A2 修复：四个 PUT/GET 与显示版、附件引用/仅附件发送、历史原件及旧图片下载接入；Mac/iPhone「+」、缩略图、侧栏/全屏 Quick Look、保存/分享；原件大小/hash 校验 |
-| 任务输入 | Apple message mode固定queue，无steer；无supplements/resume；Task读取未呈现executionSteps/background job全部字段。不能把现有session.cancel当可取消排队卡片 | M1-0b/M1-0d/M1-4 |
-| 账号/设备 | 无auth/state/setup/profile/change-password、设备PATCH/DELETE；登录/注册/列设备已有能力 | Apple账号设置接入（setup仍是宿主专属流程） |
-| 云账号页/目录（剩余缺口） | S1c-Web 已正式提供 7.7 原生 deviceId/JWK 浏览器 bootstrap，Apple 已接入；注册/找回密码尚无云浏览器页面。discover 必须传 hostId，尚无账号宿主列表；已有设备批准也没有原生可信 pin 转交接口。首次无配对材料的云登录仍不能自动发现宿主并固定可信 pin | 云轨道补账号页与账号宿主目录/已有信任通道的 pin 交付；部署登记 Apple client 并更新 S1c-Web 服务。Apple 不猜造接口、不信云目录替换 pin；系统浏览器与已取得配对信息的登录按现有正式契约实现 |
-| Apple 配对/密钥 | iPhone 相机或图片二维码读取 7.7 标准 URL `#pair=<base64url JSON>`、`wm1.` 复制码，兼容 7.4/7.6 裸 pairing JSON；Mac 粘贴电脑配对信息或在另一设备批准。P-256 优先 Secure Enclave，不可用用 Keychain；不跨设备同步。二维码过期/已用由宿主最终拒绝，重试不隐式允许 | S1c-Apple 已接入；真机 Secure Enclave/相机、可信 pin 转交与生产内容证书仍待对应轨道验证；电脑 QR 展示已由 S1c-Web 实现。Watch 无变更 |
-| 模型 | 有GET models与create选择modelProfileId；无verify、模型代理chat/completions、account/models九项管理/转移接口。未声明密钥转移，符合当前权限范围 | Apple模型设置/手机独立对话后续包 |
-| 项目 / 浏览器 | A11 已接项目列表 / 项目内新对话（原回执恢复）/ 移动 / 说明与权限设置 / 移除；Mac 系统选择框仅在 canManage + 可信本机 hostId 匹配时启用，普通 Mac 远程连接只显示项目名；当前目录检查后端仍仅 Windows。浏览器工作区新建尚未接 | Mac 执行宿主 / 浏览器工作区后续包 |
-| 日常同步/本地turn | GET sync/events与共享接管已有；日常POST sync/events只有验收SPI，local-turns创建/查/续租/finish四项未接入 | M3离线对话与跨端合并 |
-| 分发更新 | 无认证app/native/downloads六项请求；Apple公开更新另有PublicUpdates，不能宣称缺所有更新能力 | 当前保持已有公开分发；本契约只记录认证入口 |
-| Watch | 旧首页没有任务进度、审批或完成触感 | 已在 A3 修复：通过 iPhone WatchConnectivity 读取一行进度、允许一次/拒绝、最近回复；前台/刷新观察到新完成才触感提醒。尚无远程推送，审批须手机可达，未验收真机配对 |
-| 五端共同待实现 | M1-2 已有分类授权接口，Apple 在 A4a 接入（Watch保持允许一次）；消息 chunk（文本片段）流仍待实现；排队取消与 D9 插话已在 A5 接入，使用既有原生生命周期和根命令 / 回执关联，不建立客户端执行调度器 | A5 已接入；真实 DSH 引擎 / 真机仍按各自环境验收 |
-
-本包未覆盖：内部 `/weftmate/api/v1` 网关、Electron IPC/Android全部bridge、公开官网分发、DSH原始完整事件schema、真实Windows宿主及Apple真机端到端场景。上述接口清单和使用标记来自本地源码对照，独立部署可能落后于此基线；M0-3/M1-0a已更新此文档与STATE契约栏。
+- 客户端依实际宿主声明选择原会话或逻辑聊天接口；缺失、未知版本和不支持的子能力不能由新界面自行补造。原生业务路径限制与服务端权限分别核对。
+- 401 清除失效的内容凭据；5xx／超时保留仍有效的离线身份。云账号与电脑内容会话独立，电脑接口失败不能清除有效云账号。
+- 原请求查询只有 404 且 `code:NOT_FOUND` 才表示未登记；重试保留原 `requestId` 和请求体。202 只证明受理，任务终态按原回执核对。
+- 历史尾页、向前页和增量使用各自水位，按原生 `seq` 或逻辑 `eventId/revision` 合并；工具详情按原来源读取。附件保存与下载核对大小和哈希。
+- 配对与内容连接校验宿主身份和既有可信证书材料；云目录不能替换旧 pin（证书公钥指纹）。Apple（苹果端）本机钥匙不跨设备同步，Watch 通过 iPhone 沿原账户权限处理。
+- 接口字段不代表所有平台页面均有入口，也不代表真实设备或部署已验收；验收层级统一见项目地图第 4 节。
 
 ## 6. 健康摘要（H2 正式接口）
 
-> **H2 / MW-2 已接通服务端摘要与 MemoWeft observed。** 遵循 `COMPANION.md` 第 4、5、11 节；原始样本只在设备内计算。依赖支持 observed v1 的 MemoWeft Core；已交付/待交付与撤回状态由回执明确区分。模型目的地按来源过滤健康与衍生项，其他记忆照常召回。
+> 健康摘要遵循 `COMPANION.md` 第 4、5、11 节，使用 MemoWeft observed（观察来源）契约；原始样本只在设备内计算。依赖支持 observed v1 的 MemoWeft Core；已交付/待交付与撤回状态由回执明确区分。模型目的地按来源过滤健康与衍生项，其他记忆照常召回。
 
 ### 6.1 上传与幂等
 
@@ -843,11 +789,11 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 }
 ```
 
-`metrics` 仅包含有数据且用户启用的项目；缺数据不写 0。心率、静息心率、HRV、呼吸频率为当日样本算术均值；步数/活动能量用 HealthKit 原生累计统计处理手机与 Watch 重叠来源。睡眠仅算 asleep 阶段（不含 inBed/awake），重叠区间取并集；间隔不超过 2 小时的睡眠段作为一次睡眠，以最后起床的本地日期归属，间隔不计时长；同日起床的夜间睡眠和小睡合计。`fellAsleepAt/wokeAt` 是当日睡眠最早入睡与最后起床，不表示中间连续睡着。锻炼按开始日期计次，时长使用 HealthKit workout 的活动 duration（排除暂停），来源为 HealthKit 中已有锻炼；本包不启动实时锻炼或原始传感器采集。
+`metrics` 仅包含有数据且用户启用的项目；缺数据不写 0。心率、静息心率、HRV、呼吸频率为当日样本算术均值；步数/活动能量用 HealthKit 原生累计统计处理手机与 Watch 重叠来源。睡眠仅算 asleep 阶段（不含 inBed/awake），重叠区间取并集；间隔不超过 2 小时的睡眠段作为一次睡眠，以最后起床的本地日期归属，间隔不计时长；同日起床的夜间睡眠和小睡合计。`fellAsleepAt/wokeAt` 是当日睡眠最早入睡与最后起床，不表示中间连续睡着。锻炼按开始日期计次，时长使用 HealthKit workout 的活动 duration（排除暂停），来源为 HealthKit 中已有锻炼；接口不启动实时锻炼或原始传感器采集。
 
 基线为当前日期**之前 14 个本地日历日**内有数据日期的均值，排除当日及缺数据日，`baselineDays` 表示实际天数（首次回填的较早日期可能不足 14 天）。偏离为 `(value / baselineMean - 1) * 100`；无基线或均值为 0 时省略 `baselineMean/deviationPercent` 中无法计算的字段。H1 仅提供日统计；H3 的可选本地估算分数见 6.4，不用于医疗诊断。`sourceDevices` 是去重的 HealthKit 来源应用/设备描述，统计来源未提供硬件名时使用来源应用名；不是原始样本 ID、设备序列号或样本时间线。
 
-`cloudModelAllowed` 必传，默认 false；首次请求健康授权前询问，设置可随时改。true 只允许云端使用摘要，不扩大原始数据权限；false 要从云端召回、提示词与后续云端模型请求中排除这些摘要，仍可供本地模型使用。已上传的摘要在使用选择改变时重新上传替换；服务端应把最新明确选择用于账号已有健康证据，并确保旧索引/衍生记忆不绕过该选择。用户离线改为 false 后，本地即采用新选择，服务器只能在联网提交成功后生效。`selfAssessmentFrequency` 为 `off / low / moderate`，省略时为 low；服务端按账号最新汇总时间将选择与频率应用到全部摘要/待写证据（相同时间 false 优先），旧回填和幂等重试不能覆盖更新的选择。本包只保存频率，不上传自评答案、不实现询问界面。
+`cloudModelAllowed` 必传，默认 false；首次请求健康授权前询问，设置可随时改。true 只允许云端使用摘要，不扩大原始数据权限；false 要从云端召回、提示词与后续云端模型请求中排除这些摘要，仍可供本地模型使用。已上传的摘要在使用选择改变时重新上传替换；服务端应把最新明确选择用于账号已有健康证据，并确保旧索引/衍生记忆不绕过该选择。用户离线改为 false 后，本地即采用新选择，服务器只能在联网提交成功后生效。`selfAssessmentFrequency` 为 `off / low / moderate`，省略时为 low；服务端按账号最新汇总时间将选择与频率应用到全部摘要/待写证据（相同时间 false 优先），旧回填和幂等重试不能覆盖更新的选择。接口只保存频率，不接收自评答案。
 
 `readStates` 为 `disabled / notRequested / dataAvailable / noDataOrReadDenied / unavailable / failed`。Apple 不公开读取授权是否被拒绝/撤销，空结果不能据此断言拒绝；`dataAvailable` 只代表此次读到数据。应用内逐类关闭会停止该类查询、移除本地与排队摘要的指标并重新上传替换。系统撤权后再次读取为空，会更新近期摘要，既有摘要不会因此自动等同用户要求全部删除；删除需明确操作。查询失败保留此前已读取数值并标注 failed。
 
@@ -860,7 +806,7 @@ POST 返回 200：`{"summary":{…当前持久化版本…},"duplicate":false,"m
 | DELETE `/personal/v1/health/daily-summaries/{date}` | `{}`；删除账号该日期的所有来源摘要及 observed，并级联撤回 Core 衍生项与索引；200 `{"deleted":true,"date":"2026-10-06"}` （另含 deletedCount、memory；empty 表示 Core 撤回及清理已确认，queued 表示待重试） | 幂等，无记录也成功；Core 有按日期调用方法，H1 设置页只提供全部删除 |
 | DELETE `/personal/v1/health/daily-summaries` | `{}`；删除账号全部健康摘要及 observed，并级联撤回 Core 衍生项与索引；200 `{"deleted":true,"scope":"all"}` （另含 deletedCount、memory；empty 表示 Core 撤回及清理已确认，queued 表示待重试） | 设置中明确点击后删除本地摘要、清空上传队列并关闭所有读取类别；先持久化删除待办，成功前保留重试；用户重新开启读取时先完成删除，再上传新摘要 |
 
-撤销系统读取权限在 Apple “健康”应用完成；WeftMate 不写/删 HealthKit 原始记录。关闭读取和删除已上传证据分别表达；服务器删除不是移除用户对话或非健康记忆。服务端原子移除摘要及其 observed 待写内容，只留无健康内容的日期/全部删除时间水位（服务器删除时间与已知汇总时间的较大值）。旧汇总时间不大于水位时 POST 返回 409，重新读取生成的较新摘要可上传；全部删除合并各日期水位。DELETE 同样要求 application/json `{}`、同源 Origin 和 CSRF，JSON ≤12 KiB。当前没有本包写入的 Core 证据，因而不宣称已完成真实 Core 撤回。
+撤销系统读取权限在 Apple “健康”应用完成；WeftMate 不写/删 HealthKit 原始记录。关闭读取和删除已上传证据分别表达；服务器删除不是移除用户对话或非健康记忆。服务端原子移除摘要及其 observed 待写内容，只留无健康内容的日期/全部删除时间水位（服务器删除时间与已知汇总时间的较大值）。旧汇总时间不大于水位时 POST 返回 409，重新读取生成的较新摘要可上传；全部删除合并各日期水位。DELETE 同样要求 application/json `{}`、同源 Origin 和 CSRF，JSON ≤12 KiB。Core 证据的交付与撤回状态以对应回执为准，不能由删除摘要的成功响应推断。
 
 ### 6.3 错误与重试
 
@@ -873,7 +819,7 @@ POST 返回 200：`{"summary":{…当前持久化版本…},"duplicate":false,"m
 | 413 `BODY_TOO_LARGE`；415 `UNSUPPORTED_MEDIA_TYPE` | 沿用通用约定；不丢摘要、不截断健康内容 |
 | 429 `RATE_LIMITED`；503 `STORAGE_UNAVAILABLE` / `SERVICE_UNAVAILABLE`；网络错误 | 安静保留队列，下一次运行重试；不阻塞聊天 |
 
-H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重读最近 15 天，处理迟到 Watch 同步；不承诺后台定时唤醒。每次先落本地摘要，再尝试队列；404/501 结束本轮，无忙循环。不使用真实宿主进行本包验证。H2 验证客户端 HTTP 边界；MW-2 已用真实 Python Core 与隔离账号通过 observed 写入、目的地过滤、权限变更、衍生项删除/导出/重启集成验收。真实日用宿主与跨设备上传仍未验证。
+客户端在进入前台、打开健康设置、手动更新及前台每 15 分钟重读最近 15 天，处理迟到 Watch 同步；不承诺后台定时唤醒。每次先落本地摘要，再尝试队列；404/501 结束当次尝试，不忙循环。
 
 
 ### 6.4 读取与记忆使用状态
@@ -929,7 +875,7 @@ H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重�
 
 ## 7. 云端账号与宿主云身份（S1a / S1b / S1c-Web / S1d）
 
-7.1–7.3 由独立 `services/cloud/` 提供；7.4 是电脑宿主接口。桌面/手机浏览器与 Android 壳已接入 S1c-Web；Apple 客户端另包。AUTH-1 起，本机原生窗口直接进入已有账户；远程设备须完成云登录与设备邮箱核对，再由宿主验证绑定和 DPoP 后授予该账户内容会话。备份仍按恢复材料解密；S1b 的验签、认领与撤销保护保留。现有本地 `/auth/login(username)`、Cookie、ownerId 和数据不变。本节路径使用完整前缀，不计入第 1 节原宿主 81 项基线。
+7.1–7.3 由独立 `services/cloud/` 提供；7.4 是电脑宿主接口。本机原生窗口直接进入已有账户；远程设备完成云登录与设备邮箱核对，再由宿主验证绑定和 DPoP 后授予该账户内容会话。备份按恢复材料解密；宿主验签、认领与撤销保护保留。本地 `/auth/login(username)`、Cookie、ownerId 和数据语义不变。本节路径使用完整前缀。
 
 ### 7.1 账号交互接口
 
@@ -990,7 +936,7 @@ issuer 示例 `https://api.example.com/personal/v1/cloud/oidc`；账号接口 or
 
 六位验证码有效 10 分钟、单次使用、每 challenge 最多 5 次错误。失败按账号和来源分别计数，跨接口共享小时窗口，第 5 次起 1 秒指数退避、最多 1 小时；验证码与登录均覆盖。邮件请求另按账号/来源限制，第 5 次后 10 分钟退避。限速状态重开保留，来源地址只存 HMAC 桶，默认不信调用方 X-Forwarded-For；部署时由显式回环代理设置真实来源。
 
-file 开发传输只写专属私有 JSON outbox；Resend 要显式环境变量密钥与发件人。模板含注册验证码、找回、新设备确认、新邮箱验证、密码已更改；provider 接受不等于邮箱已送达。本包只验 file 与 Resend mock，无真实发信、客户端/宿主或公网验收。
+file 开发传输只写专属私有 JSON outbox；Resend 要显式环境变量密钥与发件人。模板含注册验证码、找回、新设备确认、新邮箱验证、密码已更改；provider 接受不等于邮箱已送达。
 
 
 ### 7.4 宿主认领、会话交换与内容设备（S1b）
@@ -1015,7 +961,7 @@ DPoP proof 是 ES256 `typ=dpop+jwt`、仅公钥 `jwk`；含随机 `jti`、±60 �
 
 AUTH-1 新界面不读取批准队列或展示配对/可信码。登录后的设置列设备名称、首次登录、最近使用，逐个下线。首次新设备登录产生 `system.device.signed_in` 动态，动作 `view_settings` 指向 `devices`；其它同账户会话和本机窗口可查看。旧批准/配对接口仅保留兼容，不能恢复 denied/revoked 设备。
 
-AND-3：Android（安卓）原生 `cloud.app.configure` 与 `cloud.app.identity` 声明 `nativeEmailCodeLogin:true`，放行7.8的两个纯邮箱验证码路径；首次内容登录以正常 CA（证书机构）／域名验证取得并验证上述 `hostTrust`，再保存原有 pin（证书固定），无需先配对。同账户电脑自动连接；本机缓存身份与内容先恢复，过期认证保留阅读与草稿，需要发送时使用可关闭的登录弹层。旧缓存界面首次切回内置新登录，缓存文件不删除。没有新增服务器接口或原生权限；需要新壳版本，由编排递增。
+AND-3：Android（安卓）原生 `cloud.app.configure` 与 `cloud.app.identity` 声明 `nativeEmailCodeLogin:true`，放行7.8的两个纯邮箱验证码路径；首次内容登录以正常 CA（证书机构）／域名验证取得并验证上述 `hostTrust`，再保存原有 pin（证书固定），无需先配对。同账户电脑自动连接；本机缓存身份与内容先恢复，过期认证保留阅读与草稿，需要发送时使用可关闭的登录弹层。旧缓存界面首次切回内置新登录，缓存文件不删除。客户端须支持相应原生方法与能力字段，不扩大服务器权限。
 
 新增宿主业务码：401 `CLOUD_TOKEN_INVALID / DPOP_INVALID / DPOP_REPLAY / PAIRING_INVALID`；403 `LOCAL_SESSION_REQUIRED / CLOUD_NOT_BOUND / DEVICE_NOT_TRUSTED`；400 `CLAIM_INVALID`；409 `CLOUD_BINDING_CONFLICT / DEVICE_DECISION_CONFLICT`；503 `CLOUD_UNAVAILABLE / STORAGE_UNAVAILABLE`。Origin、CSRF、媒体类型、大小与原宿主约定一致。新登录不产生等待批准。拒绝/撤销返回 403，重新登录、换公钥或旧配对接口均不能恢复已下线的宿主信任记录。
 
@@ -1051,13 +997,13 @@ AND-3：Android（安卓）原生 `cloud.app.configure` 与 `cloud.app.identity`
 | 宿主 GET `/personal/v1/status` | 原宿主 Cookie / 合法 Bearer | 新增 `relay:{state:"disabled"\|"stopped"\|"connecting"\|"online"\|"offline",baseUrl:string\|null,errorCode?:"RELAY_UNAVAILABLE"\|"FRPC_START_FAILED",certificateExpiresAt?:string\|null,certificateErrorCode?:string\|null}`；来自私有 frpc 代理状态；到期为 UTC ISO8601，最近签发错误为 DNS_NOT_CONFIGURED / DNS_PROVIDER_ERROR / DNS_PROPAGATION_TIMEOUT / DNS_ZONE_MISMATCH / CLOUD_UNAVAILABLE / CERTIFICATE_KEY_DOMAIN_MISMATCH / CERTIFICATE_INVALID_DATES / CERTIFICATE_ISSUANCE_FAILED 或 null；未启用中继时证书字段可省略，不含秘密 |
 | 宿主 POST `/personal/v1/cloud/pairings` | 沿用 7.4 的**已认证直接地址**本地密码或自动绑定电脑的受信 Cookie/CSRF | 原响应额外含 `relay`（同上状态/baseUrl）；`tlsSpki` 是实际 TLS listener 同一把内容公钥的 DER SPKI SHA256、base64url 无 padding。已有信任/当面配对通道是 pin 来源 |
 
-安装请求仍要求有效 60 秒、允许 30 秒偏差、云持久防重放 jti 与同源 Origin；不得把凭据取回接口当作公开目录。新增云错误：503 `RELAY_NOT_CONFIGURED / DNS_NOT_CONFIGURED`，403 `HOST_NOT_CLAIMED / RELAY_REVOKED`。最初认领的成员只具有宿主**传输**管理权；不会获得其他本地账号内容权限；既有 S1b 宿主迁移保留其原首个 membership 作为 transport owner。最后一个成员解绑也撤销中继。重新启用已撤销宿主的管理/客户端流程留给后续包，本包不自动复活凭据。
+安装请求仍要求有效 60 秒、允许 30 秒偏差、云持久防重放 jti 与同源 Origin；不得把凭据取回接口当作公开目录。新增云错误：503 `RELAY_NOT_CONFIGURED / DNS_NOT_CONFIGURED`，403 `HOST_NOT_CLAIMED / RELAY_REVOKED`。最初认领的成员只具有宿主**传输**管理权；不会获得其他本地账号内容权限；既有 S1b 宿主迁移保留其原首个 membership 作为 transport owner。最后一个成员解绑也撤销中继。已撤销宿主的凭据不自动复活。
 
 浏览器同源写入必须带该宿主 public `Origin`、JSON 与原 `X-WeftMate-CSRF`；Cookie host-only/HttpOnly/SameSite=Strict/HTTPS Secure。adapter 拒绝客户端 Forwarded/X-Forwarded-*，覆盖宿主可信转发头；Host/SNI 必须是认领域名。`auth/setup`、认领/绑定/解绑/生成当面配对仍只允许电脑直接地址，不通过中继执行。DPoP 的 htu 使用本次实际宿主 HTTPS origin + 完整入口路径；既有配对、nonce 与 CSRF 规则不变。
 
 **离线与断流不是云伪造的宿主响应**：透传入口无法在不终止内容 TLS 的情况下保证返回宿主 JSON。离线/撤销/未就绪时可能 TLS 握手失败、EOF/连接重置、超时；已开始的 SSE/下载会直接断流。客户端将这些网络错误呈现为「宿主离线 / 连接不可用」，结合 discover 的 offline/revoked 状态；不可当作正常 200 或自动退出云账号。若 TLS adapter 已收到请求但本机 HTTP 入口不可用，可返回 HTTP 502（空体）。请求到达宿主后的 401/403/503 仍按原契约；云接口自身不可用为 503，和内容路径网络失败区分。online 仅为最近 15 秒连接/心跳指示，不是请求完成证明。
 
-重连后继续使用未过期宿主 Cookie，历史用 beforeSeq/afterSeq 与原水位，SSE 重新订阅；附件断流须按大小/SHA256 重取，未见终止标记不得认定已完成。原生端先执行标准 CA/域名验证，再比较配对得到的 SPKI；错误 pin 或同域另一合法证书均拒绝，不能以云目录覆盖 pin。证书续期使用同一内容 key；换 key 的可信更新另包。普通浏览器远程访问已由 D24 允许，接受云/DNS 完全主动控制时可被冒充的边界。
+重连后继续使用未过期宿主 Cookie，历史用 beforeSeq/afterSeq 与原水位，SSE 重新订阅；附件断流须按大小/SHA256 重取，未见终止标记不得认定已完成。原生端先执行标准 CA/域名验证，再比较配对得到的 SPKI；错误 pin 或同域另一合法证书均拒绝，不能以云目录覆盖 pin。证书续期使用同一内容 key；不接受未经可信核对的 key 更换。普通浏览器远程访问已由 D24 允许，接受云/DNS 完全主动控制时可被冒充的边界。
 
 
 ### 7.7 浏览器与 Android 云登录（S1c-Web）
@@ -1075,7 +1021,7 @@ WebCrypto 生成不可导出的 P-256 私钥，CryptoKey 与公开设备标识�
 
 桌面「添加新设备」二维码是 `<relay.baseUrl 或直接 origin>/personal/v1/ui/#pair=<base64url 配对 JSON>`；可复制码为 `wm1.<同一 base64url>`。内容完全来自 7.4/7.6 配对响应（包括 challenge、hostId、origin、tlsSpki、publicJwk、relay），两分钟单次使用，消费仍走 `/cloud/pairings/redeem` 与原 DPoP 验证。二维码持有者仍需登录同一云账号；短码不是独立认证。浏览器遵循 D24，不能在 WebCrypto 中声称实现 TLS pin。
 
-Android 0.8.2 / native code 15 的 WebView 保持本地界面，OIDC 在系统认证浏览器打开，经自定义 scheme 回到同一 Activity；只接收匹配原 state 的回调。首次云登录用输入配对码取得宿主 pin，无相机权限；密钥仍由 WebCrypto/IndexedDB 保存，刷新凭据与宿主 Cookie 存原生 Keystore 加密设置。原生所有宿主 HTTP/SSE/下载/更新连接先完成系统 CA/域名验证，再比较当面配对的 SPKI；不接受云目录替换已有 pin。电脑 key 轮换、相机扫描、Android 真机往返与 Apple 接入另包。此版手机 UI 发布时需 `--min-native-version-code 15`，旧壳保留原本地登录。此段描述已交付的 S1c 兼容路径；D29 的新页面改走下节 App 内接口，由 LG-1 / LG-2 接线。
+Android 0.8.2 / native code 15 的 WebView 保持本地界面，OIDC 在系统认证浏览器打开，经自定义 scheme 回到同一 Activity；只接收匹配原 state 的回调。首次云登录用输入配对码取得宿主 pin，无相机权限；密钥仍由 WebCrypto/IndexedDB 保存，刷新凭据与宿主 Cookie 存原生 Keystore 加密设置。原生所有宿主 HTTP/SSE/下载/更新连接先完成系统 CA/域名验证，再比较当面配对的 SPKI；不接受云目录替换已有 pin。此兼容路径要求最低原生 code15，旧壳保留原本地登录；D29 的 App 内账号接口见下节。
 
 Windows（视窗系统）日用桌面部署使用 `weftmate-desktop`、`application_type=native`（原生客户端），预登记 `http://127.0.0.1:18186/personal/v1/ui/`。宿主的 `WEFTMATE_CLOUD_WEB_CLIENT_ID` 在此部署也设为 `weftmate-desktop`，使 `/cloud/config` 的默认客户端与桌面一致；桌面另设 `WEFTMATE_CLOUD_DESKTOP_CLIENT_ID` / `WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI`。旧本地账号从「离线使用这台电脑」以本地账户名和原密码登录，设置中的绑定使用 7.8 App（应用）内云账号页及原生凭据桥：先 `/cloud/claims`，再将云控制面令牌提交 `/cloud/binding`。保留原本地 Cookie（会话凭据）、ownerId、密码和数据，不调用 `/auth/cloud-desktop` 创建另一个账号。注册、找回或绑定失败重试仍保留同一认领；取消结束本次绑定。成功后清除仅供绑定使用的云令牌，继续原本地会话。远程浏览器的 HTTPS（加密连接）登录须另行登记真实来源，不能复用桌面回环回调。
 
@@ -1129,9 +1075,9 @@ devices 的 online 指最近60秒云 API（接口）/登录/刷新活动；hosts
 
 成功交换的 `hostTrust` 含宿主安装公钥、TLS SPKI（证书公钥指纹）、连接信息及 120 秒宿主签名。普通网页在已有 D24 的内容 TLS（加密传输）边界内获取并校验收件设备号、公钥指纹、云主体、宿主号和签名；后续公钥变化拒绝覆盖。原生客户端仍先核对 CA（证书机构）与域名，再保存并使用 pin（证书公钥固定）。首次浏览器材料经本次认证宿主连接交付，不再需要另一个设备传码；接受的边界仍是 D24，不宣称能抵抗被完全控制的内容域名/浏览器代码。离线端到端内容密钥仍走既有 `/offline/device-key` 的设备 RSA-OAEP（公钥封装）流程，云不获得明文钥匙。旧 trust/配对/应急密码接口保留，新的登录与设置界面不用它们。
 
-宿主安装签名新增 `/personal/v1/cloud/hosts/status`（签入 action/sub/name）和 `/hosts/devices/status`（签入 action/sub/deviceId/jkt/status、可选 isHost=true）；沿用 7.5 的 `{hostId,proof}`、60 秒期限/jti 防重放/member 检查，只收名称、活动与内容信任元数据，不收 pin 交付材料或内容。云 schema（存储结构）8 沿用现有表，无结构迁移；新字段由现有设备时间与已核对记录投影。跨账号共享只有 `sharing.supported=false` 接口位置；本包所有连接/配对/信任交付都拒绝越权，S5 再实现主账号扫码确认。
+宿主安装签名新增 `/personal/v1/cloud/hosts/status`（签入 action/sub/name）和 `/hosts/devices/status`（签入 action/sub/deviceId/jkt/status、可选 isHost=true）；沿用 7.5 的 `{hostId,proof}`、60 秒期限/jti 防重放/member 检查，只收名称、活动与内容信任元数据，不收 pin 交付材料或内容。云 schema（存储结构）8 沿用现有表，无结构迁移；新字段由现有设备时间与已核对记录投影。跨账号共享只有 `sharing.supported=false` 接口位置；连接／配对／信任交付均拒绝跨账号越权，不能将该占位字段解释为可共享。
 
-新增业务码：400 `PASSWORD_TICKET_INVALID`（过期/错用途/已用/旧 epoch）、401 `DPOP_INVALID`、403 `APP_LOGIN_REQUIRED`；账号密码/验证码限速与 7.3 相同。接口必须来自固定配置的云/宿主 origin，不以邮箱或目录 pin 推断本地 owner 或宿主信任。S1d 不部署；本节服务端已交付，客户端完整页面与真机扫码由 LG-1 / LG-2 验收。
+新增业务码：400 `PASSWORD_TICKET_INVALID`（过期/错用途/已用/旧 epoch）、401 `DPOP_INVALID`、403 `APP_LOGIN_REQUIRED`；账号密码/验证码限速与 7.3 相同。接口必须来自固定配置的云/宿主 origin，不以邮箱或目录 pin 推断本地 owner 或宿主信任。
 
 **Apple 实现备注（LG-2）**：iPhone / Mac 账号页面在 App 内走本节 JSON 接口，使用独立内存 Cookie 容器。`/auth/authorization/resume` 是 provider 恢复路由的 JSON 包装：原生网络层须同时取本 App 接口路径与返回的固定 issuer `/oidc/auth/{uid}` 路径对应的交互 / resume Cookie；仅按包装接口路径筛选会漏掉 provider 的 resume Cookie。Cookie 只发往已配置的云 origin，不跨宿主传送。代码 / 刷新均发送 DPoP，同一 single-use refresh family 的消费在模型网络层串行；没有新增服务端路径或第二种登录协议。
 
@@ -1145,11 +1091,11 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 沿用已有 `failure_limits` 表作账户限频：最多连续5次代发尝试，之后至少等待10分钟；一小时窗口重置，无新增表或反馈内容持久化。429 `RATE_LIMITED` 附 `Retry-After`（重试等待秒数）。其他错误：401 `UNAUTHORIZED`；400 `FEEDBACK_INVALID` / `FEEDBACK_UNSAFE_TEXT`；413 `FEEDBACK_TOO_LARGE` / `BODY_TOO_LARGE`；503 `FEEDBACK_NOT_CONFIGURED` 明确表示暂未开通；502 `FEEDBACK_GITHUB_<HTTP状态码>` / `FEEDBACK_NETWORK_FAILED` / `FEEDBACK_INVALID_RECEIPT` 如实表示代发失败。失败不产生本机成功记录；客户端保留完整预览及「复制内容」。本机未登录云账号直接提供同一复制路径，不伪装成功。
 
-原生配合：Android（安卓）`CloudAppCrypto.kt::cloudAppRouteAllowed` 需要允许云来源的精确 `/feedback` POST（提交请求）并加允许／拒绝测试；本包按任务边界不改壳，现有安卓发送会失败并保留复制路径，需要后续新壳。Apple（苹果端）需接本机评价、相同预览与确认、此云接口和本机元数据记录；本包不改 Apple。
+Android（安卓）云来源的 `/feedback` POST（提交请求）受 `CloudAppCrypto.kt::cloudAppRouteAllowed` 精确路径限制；不支持时保留预览和复制入口，不能把请求失败显示为反馈成功。客户端发送前必须预览并明确确认，本机记录仅保存反馈元数据。
 
 ### 7.9 账号生命周期（S1e / D30）
 
-本节接口由云提供，使用 **7.8 云 DPoP（设备密钥持有证明）授权**：`Authorization: DPoP <cloud audience access token>` + 本次精确 URL/方法/令牌摘要对应的 `DPoP` proof（证明）。不接受宿主 Cookie（会话凭据）、ID token（身份令牌）或无 proof 的 Bearer（未绑定设备密钥的令牌）。所有写操作要求已登记 Origin（来源地址）、JSON ≤16 KiB、无 query（查询参数）/多余字段；响应 `Cache-Control: no-store`。页面与确认文案由 LG-1 / LG-2 接线，本包不改界面。
+本节接口由云提供，使用 **7.8 云 DPoP（设备密钥持有证明）授权**：`Authorization: DPoP <cloud audience access token>` + 本次精确 URL/方法/令牌摘要对应的 `DPoP` proof（证明）。不接受宿主 Cookie（会话凭据）、ID token（身份令牌）或无 proof 的 Bearer（未绑定设备密钥的令牌）。所有写操作要求已登记 Origin（来源地址）、JSON ≤16 KiB、无 query（查询参数）/多余字段；响应 `Cache-Control: no-store`。
 
 | 方法与完整路径 | 请求 | 响应 / 语义 |
 |---|---|---|
@@ -1188,7 +1134,7 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 ### 8.1 云端备份（S4，仅电脑）
 
-采用 [CLOUD_BACKUP.md](CLOUD_BACKUP.md) 的恢复码与密文协议。以下电脑接口要求当前本机账户、账号管理权限、直接环回来源和原有 CSRF（跨站请求伪造防护），只有整机备份管理者可操作。Android（安卓）与 Apple（苹果端）本包不调用，归入 `specialized-or-desktop`（专用或电脑通道），不加入手机业务白名单。设置在已有备份分类，新电脑登录后进入应用再显示可关闭的恢复提示。
+采用 [CLOUD_BACKUP.md](CLOUD_BACKUP.md) 的恢复码与密文协议。以下电脑接口要求当前本机账户、账号管理权限、直接环回来源和原有 CSRF（跨站请求伪造防护），只有整机备份管理者可操作。接口归入 `specialized-or-desktop`（专用或电脑通道），不加入手机业务白名单。设置在已有备份分类，新电脑登录后进入应用再显示可关闭的恢复提示。
 
 | 方法与完整路径 | 请求／响应 |
 |---|---|
@@ -1223,11 +1169,13 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 宿主用 `{hostId,proof}` 包住业务载荷，沿 `wm-host-request+jwt`（既有安装签名格式），action 为上述 `/backups/` 后缀的完整路径。云 schema（结构版本）10，`healthz`、签名撤权和离线控制回执兼容增加 `capabilities.cloudBackup:1`；客户端仅信已有签名回执，缺字段不发新请求、不按未找到探测，刷新重新判断。默认每账号 300 MiB（兆字节）、全站 6 GiB（吉字节），最多 512 块，每块 1 MiB + 16 字节认证值；元数据 120／分钟、块 600／分钟，保留最近 3 份完整包，七天待传包清理并释放额度。遗忘／删除副本沿现有清理代次删除旧云包和待传包，旧代次不能接续；包裹钥匙保留，下一份只捕获当前数据。
 
-## 9. 逻辑主对话与旁聊（IA-2）
+## 9. 逻辑聊天与兼容主聊天
+
+D92 取消特殊主对话与开旁聊界面入口；本节的 `kind:main|side`、来源、后台投递及生命周期保护为底层兼容契约，不要求客户端恢复旧入口。
 
 ### 9.1 身份与能力（IA-2.1 正式）
 
-`GET /status` 增加 `personalCapabilities:{chats:1}`。只有精确支持的数字版本才可使用；缺失、0 或未知版本均退回原会话接口，不由客户端自行创建主对话。`chats:1` 在本步仅声明本节身份读取、列表和主对话已读偏好；不代表逻辑发送、跨段历史、搜索、旁聊创建、接力、动态或离线主对话可用。子能力分别见9.3/9.4/9.6/9.7；声明 `chatSend:1` 的空主对话可通过首次发送选模型并创建首段，未声明的旧宿主仍不可逻辑发送。
+`GET /status` 增加 `personalCapabilities:{chats:1}`。只有精确支持的数字版本才可使用；缺失、0 或未知版本均退回原会话接口，不由客户端自行创建主对话。`chats:1` 仅声明本节身份读取、列表和主对话已读偏好；不代表逻辑发送、跨段历史、搜索、旁聊创建、接力、动态或离线主对话可用。子能力分别见9.3/9.4/9.6/9.7；声明 `chatSend:1` 的空主对话可通过首次发送选模型并创建首段，未声明的旧宿主仍不可逻辑发送。
 
 `chatId` 是账户内稳定逻辑身份，与 DSH（助手运行时）的 `sessionId`、同步 / 共享的 `conversationId` 分开。每账户恰有一个 `kind:main`；空主对话不创建原生会话，旧会话不作为主对话或复制到主对话。用户可见旧会话一对一映射为 `kind:side`，内部子任务不登记为旁聊。账户绑定云身份仍保留原本地账户的逻辑身份。
 
@@ -1239,7 +1187,7 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 | GET `/chats` | 可选 `kind=side,parentKind=main\|project,parentId,archived=false\|true\|all,q,cursor,limit` | 200 `{items,nextCursor,hasMore,groups,indexState:"ready"}`；默认活动旁聊 50 条，`limit` 1–200；`q` 最多 256 字符，仅搜标题，不搜全文 |
 | PATCH `/chats/{chatId}/metadata` | 主对话 `{requestId,expectedRevision,unread:boolean}` | 200 `{chat}`；同请求重放返回原结果，异体 409 `REQUEST_CONFLICT`，旧修订 409 `REVISION_CHANGED`。旁聊逻辑元数据见9.7，原会话接口兼容 |
 
-`Chat` 含 `{chatId,kind,title,parent,pinned,archived,unread,groupId,projectId,memoryMode,activeSegmentId,activeSessionId,revision,contentRevision,timeZone,running,sendAvailable,taskAvailable}`，按原事实附 `modelProfileId,projectName,projectRevoked,projectNotice,parentSessionId,conversationId,workspaceKind,processing,contextUsage`。主对话 `parent:null,title:"WeftMate",pinned:true,archived:false,groupId:null,projectId:null`；未建执行段时 active 字段为 `null`。普通旁聊父级为 `{kind:"main",id:mainChatId}`，项目旁聊为 `{kind:"project",id:projectId}`。标题、项目、分组、归档、模型、已读水位与发送权限继续投影原会话事实，不另建可独立修改的副本。`revision` 随会话元数据变更增加；`contentRevision` 留作原话删除后缓存失效水位。`timeZone` 在迁移 / 账户创建时固定为宿主实际时区并返回，客户端不自行猜测。
+`Chat` 含 `{chatId,kind,title,parent,pinned,archived,unread,groupId,projectId,memoryMode,activeSegmentId,activeSessionId,revision,contentRevision,timeZone,running,sendAvailable,taskAvailable}`，按原事实附 `modelProfileId,projectName,projectRevoked,projectNotice,parentSessionId,conversationId,workspaceKind,processing,contextUsage`。兼容主聊天保留 `parent:null,title:"WeftMate",pinned:true`；`displayTitle` 提供历史标题，`mode/projectId` 按实际会话投影，工作绑定见3.3。空主聊天 `archived:false,groupId:null,projectId:null`，active 字段为 `null`；界面不据 `pinned` 恢复特殊置顶入口（D92）。普通旁聊父级为 `{kind:"main",id:mainChatId}`，项目旁聊为 `{kind:"project",id:projectId}`。标题、项目、分组、归档、模型、已读水位与发送权限继续投影原会话事实，不另建可独立修改的副本。`revision` 随会话元数据变更增加；`contentRevision` 留作原话删除后缓存失效水位。`timeZone` 在迁移 / 账户创建时固定为宿主实际时区并返回，客户端不自行猜测。
 
 旁聊列表置顶优先，再按最近宿主命令活动时间、创建时间和稳定 ID 排序。游标是 opaque cursor（不透明游标），固定本次列表的 ID 顺序与过滤条件；客户端原样续传同一过滤和页大小。后续新旁聊不会插入已开始的分页，已删除对象不返回。重启后或换账户 / 过滤的游标返回 409 `CURSOR_RESET_REQUIRED`，重新取第一页。每个页面的元数据取当前事实，游标不授予跨账户访问。
 
@@ -1251,7 +1199,7 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 升级沿第 8 节 BK-1（本地备份）完整快照；本功能另在首次迁移前保存私有 `personal-access/chat-identity-v1.before.json` 原始接入存储，覆盖应用版本未变的开发升级。原始副本只供停写后的演练 / 人工恢复，不自动读入，发生遗忘时移除；其中有原设备凭据校验值，因此不进入可携带备份，备份仍只保存撤销设备凭据后的当前接入存储。迁移提交失败保留旧存储；修复后可重跑。界面回退仍可使用旧旁聊，新逻辑元数据保留。
 
-新版产生数据后不能用旧副本覆盖正在使用的数据目录。需要宿主降级时先停写、保留新版完整快照，再把旧完整快照恢复至独立目录；只运行一份任务。单独的接入存储副本不能代替 DSH、记忆及成果完整备份。已经发生的遗忘 / 撤权必须按原清理水位前向恢复，不从备份自动重新摄取。本步不提供主对话区间归档或清空；D42-A 的全部历史保留政策不变。
+新版产生数据后不能用旧副本覆盖正在使用的数据目录。需要宿主降级时先停写、保留新版完整快照，再把旧完整快照恢复至独立目录；只运行一份任务。单独的接入存储副本不能代替 DSH、记忆及成果完整备份。已经发生的遗忘 / 撤权必须按原清理水位前向恢复，不从备份自动重新摄取。不提供主对话区间归档或清空；保留全部原始历史。
 
 ### 9.3 跨段历史、日期与搜索（IA-2.2 正式）
 
@@ -1269,15 +1217,15 @@ UX-6 / D53：既有 `GET /chats` 支持 `scope=search`，用于当前账户统�
 | `/chats/{chatId}/locate` | 必填 `date`，本地 `YYYY-MM-DD` | `{date,eventId,previousDate,nextDate,...}`；当天无记录为 `eventId:null` |
 | `/chats/{chatId}/search` | `q` 非空≤256字符；可选 `from,to,role=user\|assistant,hasArtifact=true\|false,cursor,limit` | `{hits:[{eventId,sourceRef,at,snippet,highlights:[{start,end}]}],nextCursor,hasMore,...}`；中文字面子串、不区分大小写；范围为可见消息与结果摘要，工具输出和隐藏推理不索引 |
 
-共同字段为 `{contentRevision,chatRevision,unread,indexState,timeZone}`。`indexState=building|ready|failed`；首次返回可读尾页后逐页整理早期索引，整理中搜索/日期只是部分结果，不能解释为没有历史。失败可重新打开重建；本步索引只在宿主内存中存必要检索文本与原文定位，宿主重启后渐进重建，不持久复制原生日志。日期使用账户用量设置中的时区，未设置沿宿主时区；修改时区重新分日，事件身份和顺序不变。`hasArtifact` 检查该公开消息上的附件/成果引用，不推测另一条工具输出属于哪条回复。
+共同字段为 `{contentRevision,chatRevision,unread,indexState,timeZone}`。`indexState=building|ready|failed`；首次返回可读尾页后逐页整理早期索引，整理中搜索/日期只是部分结果，不能解释为没有历史。失败可重新打开重建；逻辑索引只在宿主内存中存必要检索文本与原文定位，宿主重启后渐进重建，不持久复制原生日志。日期使用账户用量设置中的时区，未设置沿宿主时区；修改时区重新分日，事件身份和顺序不变。`hasArtifact` 检查该公开消息上的附件/成果引用，不推测另一条工具输出属于哪条回复。
 
 `items` 为 `{eventId,chatId,orderKey,revision,type,at,sourceRef,data}`。原生 `sourceRef={kind:"native",hostId,sessionId,seq}`，正文通过原历史公开投影读取；`eventId` 从原身份确定，索引重建不变。`orderKey` 按宿主段序及原生序号分配，与设备时钟无关；旧段迟到信息保留原段顺序。客户端遵从服务端顺序，不将 `orderKey` 当同步水位。展开、高度、焦点、选择以 `eventId` 保存；上翻后保留首个可见 ID 与像素偏移，不全量挂载历史。工具详情继续原 `sessionId/seq` 接口。
 
 游标绑定账户、对话、索引代次、用途及搜索过滤；不透明且经宿主签名，客户端不能解码、拼接、加一或混用。历史页的 `syncCursor` 不覆盖已建立的增量水位；增量只续传 `nextCursor`。逐步索引早期内容也可能在增量出现，以 `eventId` 去重即可。搜索游标保持过滤/时区，新增匹配可在重新搜索时出现。重启、内容代次变化或不合法游标返回409 `CURSOR_RESET_REQUIRED`，客户端清理旧缓存再取尾页或保存的锚点。
 
-`removals=[{eventId,revision,reason:"deleted"|"forgotten"}]` 不带正文；`removeEvents` 为 IA-2b 的持久原文清理完成后通知接缝，跨重启清理由 `contentRevision` 提升触发全缓存失效。D33 多段清理见9.5；接力见9.6。D42-A 保留全部原始历史，不增加区间归档或清空。固定 DSH 的原生冷 `inspect` 仍物化整个日志，测量脚本分别记录逻辑页与冷进程读取；不能把逻辑页的有界返回声称为原生磁盘读取已经有界。宿主公开投影缓存及首次未命中边界见9.7。
+`removals=[{eventId,revision,reason:"deleted"|"forgotten"}]` 不带正文；`removeEvents` 为持久原文清理完成后的通知接缝，跨重启清理由 `contentRevision` 提升触发全缓存失效。D33 多段清理见9.5；接力见9.6。保留全部原始历史，不增加区间归档或清空。固定 DSH 的原生冷 `inspect` 仍物化整个日志；不能把逻辑页的有界返回声称为原生磁盘读取已经有界。宿主公开投影缓存及首次未命中边界见9.7。
 
-### 9.4 开旁聊与结果回写（IA-2.3 正式）
+### 9.4 兼容旁聊创建与结果回写
 
 能力增加 `sideChats:1`。沿用原 `/commands` 的 `commands:write`、设备归属、模型/项目权限、Cookie（会话凭据）/CSRF（跨站请求伪造防护）及原命令查询回执，不增加执行器或新的模型授权。
 
@@ -1306,7 +1254,7 @@ UX-6 / D53：既有 `GET /chats` 支持 `scope=search`，用于当前账户统�
 FX-19：`GET /status.personalCapabilities.creationReceipt=1` 表示 `POST /commands` 的 `session.create` / `session.side.create` 可附 `waitForReceipt:true`。宿主先持久受理、沿原串行调度创建并持久提交最终回执，再返回同一202 `{command}`；响应可能为 `accepted_by_dsh`、失败或 `uncertain`，只有前者允许继续使用新会话。省略或false保留原快速受理响应；其他命令或非布尔值返回400。该选项不计入幂等请求身份，同一requestId切换等待方式不重复创建。等待在状态写入队列之外进行，仍沿既有30秒调度期限；客户端请求超时45秒。断线或超时不取消已持久的命令，须用原 `/commands/by-request/{requestId}` 核对，不能换编号重发；重启后原有pending恢复、dispatching转uncertain规则不变。客户端保持创建及选择期间禁用，读回已接受的单条聊天实体、恢复草稿后解锁，不全量刷新列表。安卓已有 `/commands` 及原请求查询白名单覆盖此选项，无新路由、无新壳要求；Apple（苹果端）可按精确能力版本选择等待，原轮询保持兼容。
 
 
-本步 `contextTransfer={state:"references_only",sourceRefs:[{chatId,eventId,kind:"native",hostId,sessionId,seq,contentRevision}],truncated:false}`，`Chat` 同时返回 `originRefs` 与 `contextTransfer`。**尚未接入原生摘要转移**；采用 IA_MAIN_CHAT 3.1 允许的仅引用回退，界面必须提示“相关上下文尚未带入”，允许用户编辑首句继续。不能把引用就绪显示为完整上下文已转移；不把客户端摘要当事实，也不复制整条历史或注入伪造真人消息。来源删除后原链接返回不可用，引用不能恢复正文。原 D34 分叉继续完整事件种子语义，本接口不等同分叉。临时来源409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，共享来源409 `SHARED_CONTEXT_UNAVAILABLE`；未实现绕过提示的确认布尔开关。
+`contextTransfer={state:"references_only",sourceRefs:[{chatId,eventId,kind:"native",hostId,sessionId,seq,contentRevision}],truncated:false}`，`Chat` 同时返回 `originRefs` 与 `contextTransfer`。不转移原生摘要，仅返回引用，界面必须提示“相关上下文尚未带入”，允许用户编辑首句继续。不能把引用就绪显示为完整上下文已转移；不把客户端摘要当事实，也不复制整条历史或注入伪造真人消息。来源删除后原链接返回不可用，引用不能恢复正文。原 D34 分叉继续完整事件种子语义，本接口不等同分叉。临时来源409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，共享来源409 `SHARED_CONTEXT_UNAVAILABLE`；不接受绕过提示的确认布尔开关。
 
 | 接口 | 请求 | 响应与规则 |
 |---|---|---|
@@ -1349,7 +1297,7 @@ IA-3 补齐原件的同一逻辑暂存：`PUT /sync/attachments/{id}` 的 `conve
 
 ### 9.7 逻辑生命周期、资源与历史读取边界（IA-2b / 2.6）
 
-能力增加 `chatLifecycle:1,chatResources:1`。所有路径仍以 `/personal/v1` 开头，账户和原来源授权保持。旁聊当前只有一个原生段；本包不启用旁聊自动接力，也不提供主对话整段删除/归档入口。
+能力增加 `chatLifecycle:1,chatResources:1`。所有路径仍以 `/personal/v1` 开头，账户和原来源授权保持。旁聊当前只有一个原生段；不启用旁聊自动接力，也不提供主对话整段删除/归档入口。
 
 | 接口 | 请求 | 响应与语义 |
 |---|---|---|
@@ -1365,9 +1313,9 @@ IA-3 补齐原件的同一逻辑暂存：`PUT /sync/attachments/{id}` 的 `conve
 
 固定DSH的JSONL（逐行结构化日志）后端未实现 `loadStoredFrom` 物理范围读取接缝；`readFrom` 虽返回后缀，仍解码完整前缀。宿主在 `dsh-home/weftmate-history.sqlite` 保存可重建的**公开历史投影缓存**，不解析原生物理日志、不保存隐藏推理或原始工具输出。每次读取通过DSH `listSnapshots` 的原生修订号核对；正常空闲边界增量维护，冷页命中只读SQL（结构化查询语言）范围。原工具详情仍按需读原日志，源日志更改/缓存缺失时仍通过原生解码重建，不宣称原生范围解码已经具备。
 
-同一固定日志、50条尾页、各30个新进程：十万条改前冷p95（第95百分位）531.94ms，缓存命中后7.59ms（原生日志事件读取0）；万条78.96ms→7.81ms。**首次未命中仍需一次全量建缓存**：本次万条224.78ms、十万条1539.38ms，不纳入缓存命中成绩，也不声称达到200ms。未来DSH需提供原生修订绑定的前/后范围、稳定水位及压缩帧索引，使旧日志首次无缓存打开也有物理范围保证。
+首次未命中公开历史缓存仍需一次原生全量解码建缓存；缓存命中的范围查询不能作为首次冷读耗时或原生物理范围读取的保证。
 
-D33与删除会话清理同一缓存，SQLite使用安全删除及VACUUM（数据库重整），清理前后均失效并等待在途缓存工作；不会从新的备份或缓存重建恢复被忘内容。真实Electron（桌面程序框架）/Core（记忆核心）复验的新备份110文件、缓存2表与Core36表、全部日志帧均0命中。逻辑搜索索引仍为9.3的渐进内存索引；不把公开投影缓存当作另一份记忆来源。
+D33 与删除会话清理同一缓存，SQLite 使用安全删除及 VACUUM（数据库重整），清理前后均失效并等待在途缓存工作；不从新备份或缓存重建恢复被忘内容。逻辑搜索仍为 9.3 的渐进内存索引，公开投影缓存不作为另一份记忆来源。
 
 
 ## 10. 临时对话（MEM-2）
@@ -1391,7 +1339,7 @@ D33与删除会话清理同一缓存，SQLite使用安全删除及VACUUM（数�
 
 临时内容不自动回写主对话、不进入动态正文、全局成果库、近期对话离线副本。分叉、引用开旁聊、发布结果对 `hasTemporaryContent` 会话返回409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，直到显式分享功能提供确认与预览。TB-1/TB-3未来的全局列表必须排除该标记；对话内自己的输出与来源仍可查看。MEM-2没有新增全局列表接口。
 
-Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/标题/输入区显示状态；菜单分别接记忆与召回开关和四档期限；切换说明之前形成的保留；主对话导向临时旁聊。持久化模型添加本节公开字段，`cacheAllowed:false` 的历史不写离线缓存，离线副本继续消费宿主过滤结果；到期404移除本机展示缓存。原生界面与Watch（手表）实机验收由Apple工作包完成。
+临时历史 `cacheAllowed:false` 时不写离线缓存，离线副本继续消费宿主过滤结果；到期 404 后移除本机展示缓存。新建、记忆／召回开关与删除期限使用本节公开字段，不因兼容主聊天身份而扩大临时内容范围。
 
 ### 9.8 动态与通知（TB-1 正式，D19 / D35 / D41 / D43）
 
@@ -1468,7 +1416,7 @@ MEM-3 新增 `memoryDigestEnabled:true,memoryDigestWeekday:0,memoryDigestTime:"2
 - 重复观察、读取 / 已读、内容修订与重启保留首次决定与额度；待办处理后改为静默。设置保存影响之后的新事实，不补弹旧条目。
 - 勿扰压下的条目ID进入账户持久汇总队列，无正文副本；离开时段（或关闭勿扰）由既有动态观察轮次生成一条 `system.dnd.summary`，内容「勿扰期间有 N 件事」。删掉的动态不计入，原条目保持 `notify:false`，不会逐条补响。汇总包含本人任务结果 / 提醒时 initiatedBy=user，不计主动额度；纯主动事件汇总 initiatedBy=assistant，仍按全局声音与当日上限决定（0条时仅动态），防止汇总绕过主动上限。汇总是时段结束回执，不受更新通知类型开关影响。宿主重启后仍只汇总一次。
 
-桌面主进程、S3a 安卓后台与 Apple 本地通知消费同一 `Activity.notification`（转发载荷也保留全部决定字段），以账户 + activityId 去重；sound=false 时使用静默系统通知，notify=false 时只保留动态。Windows（微软桌面系统）页提供系统权限检查、`ms-settings:notifications` 深链和手动开启说明；未知权限不得声称已允许。Android（安卓）业务桥新增本节两条精确路径，需要新壳版本，由编排统一递增；本包不改版本号。S3a 的后台约15分钟以上延迟与 D41 边界不变；Apple D38 的 App（应用）连接 + 本地通知仍不代表 APNs（苹果推送服务）已接入。
+桌面主进程、S3a 安卓后台与 Apple 本地通知消费同一 `Activity.notification`（转发载荷也保留全部决定字段），以账户 + activityId 去重；sound=false 时使用静默系统通知，notify=false 时只保留动态。Windows（微软桌面系统）页提供系统权限检查、`ms-settings:notifications` 深链和手动开启说明；未知权限不得声称已允许。Android（安卓）业务桥须支持本节两条精确路径，旧壳不得绕过限制。S3a 的后台约15分钟以上延迟与 D41 边界不变；Apple D38 的 App（应用）连接 + 本地通知仍不代表 APNs（苹果推送服务）已接入。
 
 ### 9.8.2 设备推送登记与 Android 本地送达（S3a，D25 / D41）
 
@@ -1488,7 +1436,7 @@ Android（安卓）存活时沿现有认证轮询读取 `/activity/changes`，�
 
 Android 13+ 首次实际需要通知时解释用途并请求系统权限；拒绝后动态仍可读，在「设置 → 通知」显示手动开启路径。此页读取本机权限、各渠道状态与后台限制，提供系统通知设置和应用后台设置跳转。测试按钮沿 POST `/settings/notifications/test` 生成宿主事实，再交真实 Android 通知通道；宿主成功回执仍不保证系统权限或实际显示成功。
 
-Apple（苹果端）交接：iPhone / Mac 订阅同一动态增量和宿主决定，Watch（手表）通过 iPhone 传递最小事件身份并在可认证时读取；`notify:false` 仅动态、`sound:false` 不附系统声音，不能按重要等级越过勿扰。以账户 + ID 持久去重 / 取消已读与删除项，点击定位动态或原对话；审批使用原目标、原请求与回执，锁定设备先解锁。iPhone / Mac 首次需求才申请本地通知权限，通知设置页显示本机系统状态；Watch 跟随 iPhone，不增加独立账号 / 设置。D38 免费签名阶段仅 App（应用）存活连接 + 本地通知，iOS 后台期限由系统决定，不宣称 APNs（苹果推送服务）或被杀后及时唤醒；付费计划后再实现提供方与 APNs 能力。本包未修改 `apps/apple`。
+Apple（苹果端）通知契约：iPhone / Mac 订阅同一动态增量和宿主决定，Watch（手表）通过 iPhone 传递最小事件身份并在可认证时读取；`notify:false` 仅动态、`sound:false` 不附系统声音，不能按重要等级越过勿扰。以账户 + ID 持久去重 / 取消已读与删除项，点击定位动态或原对话；审批使用原目标、原请求与回执，锁定设备先解锁。iPhone / Mac 首次需求才申请本地通知权限，通知设置页显示本机系统状态；Watch 跟随 iPhone，不增加独立账号 / 设置。D38 免费签名阶段仅 App（应用）存活连接 + 本地通知，iOS 后台期限由系统决定，不宣称 APNs（苹果推送服务）或被杀后及时唤醒。
 
 ## 11. 记忆摄取健康与历史补整理（MEM-D）
 
@@ -1507,7 +1455,7 @@ FX-18：`GET /memory/status` 和 `GET /system.memory` 增加可选 `recoveringFo
 
 补整理按原回合时间顺序进行，每步重核对会话及来源；临时对话、当前关闭记忆的对话、回合冻结策略禁止摄取的内容和已遗忘来源均排除。排除已确认投递的回合及Core已接受的边界；事件标识沿实时摄取算法保持一致，重复确认、重启与未知回执不会重复形成。历史回合默认不自动运行；升级后新完成的普通回合由持久日志恢复漏掉的IPC（进程间通信），先写outbox再尝试投递，忙／路由不可用／子进程离线均退避重试。宿主重启恢复outbox和已确认的补整理进度，暂停状态也持久保留。
 
-Windows（视窗系统）程序与远程手机网页、Android（安卓）界面包已接入。安卓现有 `host.business` 记忆路由支持这些接口，无需新增权限；Apple（苹果端）需接记忆页健康、预览／确认、暂停／继续／取消及进度，旧客户端可忽略新增字段。确认与溯源语义未改变，不把助手提议当作用户事实。
+这些接口沿现有 `host.business` 记忆路径及权限；客户端依能力读取状态、预览／确认、暂停／继续／取消及进度，旧客户端可忽略新增字段。确认与溯源语义未改变，不把助手提议当作用户事实。
 
 
 ### 9.9 目标总览、定时编辑与原生长期目标（TB-2）
@@ -1574,7 +1522,7 @@ MEM-2以执行回合冻结的记忆策略排除临时产出，混合旧来源无
 
 桌面操作复用 `wm:desktop:artifact`，渲染器只传ID与library-open / library-show。主进程核对登录并用宿主进程私有的 `X-WeftMate-Desktop` 标记及CSRF（跨站请求伪造防护）调用上述POST，再次核对账户、索引和文件存在状态；标记不发给网页、不持久保存。网页 / 手机即使有正常Cookie（会话凭据）和CSRF也返回403 `FORBIDDEN`，没有任意路径或任意程序启动口子。
 
-TB-4复用手机菜单 `page('library')` 与ui-core模型，不另建索引。安卓业务桥只加入成果列表 / 详情 / 预览的精确路径，拒绝open / show；需要新壳版本，由编排统一递增。本包不改变安卓版本号。Apple（苹果端）按上述能力和模型接线，Mac用本机原生动作，iPhone沿全屏预览与来源定位。
+安卓业务桥只允许成果列表／详情／预览的精确路径，拒绝 `open/show`；客户端缺少对应路径支持时不能由网页绕过。Mac 本机动作仍需可信桌面授权，iPhone 沿全屏预览与来源定位。
 
 
 ### FX-17：纠正形成状态与重试
@@ -1598,11 +1546,11 @@ Windows（视窗系统）与远程网页已有健康、动态、对应回合提�
 
 同一账户 / 会话的新建议请求替换旧请求，没有持久回执或重试语义。断开HTTP（超文本传输协议）响应也真实中止模型请求；客户端开始输入、发送、切换时立即终止当前fetch（网络请求）并按原ID取消。宿主新消息与账户开关变更会同步取消，原生会话运行状态变化也取消。回复建议只接受最新正常完成的回合，运行中 / 已停止 / 出错 / 无模型均为空；输入补全350ms防抖，输入法组合时不生成。
 
-生成跟随当前会话模型，不用账户另选的记忆后台模型。回复建议的短上下文为最近六条可见用户 / 助手消息，用户最多600码点、助手最多1,000码点摘要片段；输入补全只取最近两条，用户200码点、助手320码点，并取草稿末尾400码点。遗忘原话、工具、隐藏思考不入输入。回复建议输出160词元；补全请求上游流式纯短语，输出24词元，最多40码点，只返回下一小段，不额外等待JSON包装。两类均保留5秒总超时；已声明的提供方思考模式降为最轻。OpenAI推理格式沿现有声明用low（低强度）、不发temperature（采样温度），优先读取原生精确模型声明：没有low而只允许更强思考时直接放弃，明确无思考模型不传effort（推理强度）；总completion（完成）预算1,024词元包含隐藏推理；仍只接受短JSON（结构化数据）结果，不保证每个推理模型都在5秒内给出建议。单槽走机会式租约：忙 / 有任务等待 / 正在切换立即放弃，无排队和重试；前台到来立即中止真实上游。本机建议另读ModelSwitcher（本机模型代理）的活动 / 排队 / 维护计数，旧代理或直接llama服务用同址`/slots?fail_on_no_slot=1`确认唯一槽空闲；忙、503或状态不明确均不给建议。宿主内部预留为原子操作；独立外部客户端在状态读完后抢先请求仍存在竞争窗口，旧ModelSwitcher没有原子机会式入口，本包没有修改日用代理，因此不能保证这类跨客户端竞争永不进入上游代理队列。失败返回空结果，不影响连接状态和正常对话。
+生成跟随当前会话模型，不用账户另选的记忆后台模型。回复建议的短上下文为最近六条可见用户 / 助手消息，用户最多600码点、助手最多1,000码点摘要片段；输入补全只取最近两条，用户200码点、助手320码点，并取草稿末尾400码点。遗忘原话、工具、隐藏思考不入输入。回复建议输出160词元；补全请求上游流式纯短语，输出24词元，最多40码点，只返回下一小段，不额外等待JSON包装。两类均保留5秒总超时；已声明的提供方思考模式降为最轻。OpenAI推理格式沿现有声明用low（低强度）、不发temperature（采样温度），优先读取原生精确模型声明：没有low而只允许更强思考时直接放弃，明确无思考模型不传effort（推理强度）；总completion（完成）预算1,024词元包含隐藏推理；仍只接受短JSON（结构化数据）结果，不保证每个推理模型都在5秒内给出建议。单槽走机会式租约：忙 / 有任务等待 / 正在切换立即放弃，无排队和重试；前台到来立即中止真实上游。本机建议另读ModelSwitcher（本机模型代理）的活动 / 排队 / 维护计数，旧代理或直接llama服务用同址`/slots?fail_on_no_slot=1`确认唯一槽空闲；忙、503或状态不明确均不给建议。宿主内部预留为原子操作；独立外部客户端在状态读完后抢先请求仍存在竞争窗口，旧ModelSwitcher没有原子机会式入口，不能保证这类跨客户端竞争永不进入上游代理队列。失败返回空结果，不影响连接状态和正常对话。
 
 建议正文与请求草稿仅在请求和界面内存中，不写command（命令）、历史、MemoWeft evidence（记忆证据）、导出或离线副本。临时对话正常可用；真正接受后仍只是草稿，用户发送后才成为用户消息。用量沿数值账本计入总额并新增 `/usage.categories:[{category,...total}]`；`category="next-suggestions"`单列两类建议，旧账本默认`conversation`。仅成功取得空闲租约、即将发真实请求才开始计数；取消且提供方不返回用量时沿既有unknownRequests（未知用量请求）报告，不编造词元。
 
-Android（安卓）精确业务路由已登记，**需要新壳版本**，由编排统一递增；本包不更改版本号。Apple（苹果端）新增以上POST / DELETE、能力版本、账户开关与用量类别，保持同样优先级、键盘 / 触屏接受、真实取消和暂态边界；Watch（手表）不增加建议输入界面。
+客户端须支持本节精确 POST／DELETE 路径、能力版本、账户开关与用量类别，遵守真实取消和暂态内容边界；Watch（手表）不提供建议输入接口。
 
 ## 9.14 对话行状态（D55 / UX-10）
 
@@ -1642,7 +1590,7 @@ Android（安卓）精确业务路由已登记，**需要新壳版本**，由编
 
 注销在本机删除之上清本机账户与本账户云绑定。已登录云账户的电脑确认页收当次密码；本机没有其他注册账户时用既有7.9云接口删除云身份。该接口也移除本账户拥有的宿主路由／成员连接；本机仍有其他账户时保留云身份并明确说明，避免更改其他账户连接；密码只留当次页面内存，失败明确保留邮箱／云身份并提供重试。本机应急登录没有云授权时须在账户页重新登录云身份完成7.9，不能把本机解绑称为云端注销。桌面原生桥保留该操作的内容无关回执供注销后的进度读取；其他账号不能读取。动态新增`system.data.operation`，只记类别、结果与操作入口。
 
-Android（安卓）白名单与JVM（Java虚拟机）测试同步上述精确路径；需要新壳版本，由编排统一版本号。Apple（苹果端）接线清单：设置注册表增加同序分类；接全部路径与后台轮询／取消；Mac系统保存框与完成定位；iPhone远程发起并等待Mac／电脑确认；输入账户名与最后确认、云密码仅当次内存；删除／注销清当前账户本机缓存及加密离线副本，Watch随iPhone撤销；跨账号迟到响应丢弃；浅深／窄窗／系统栏及读屏确认。Apple源码本包未改。
+客户端读取／取消操作沿上述精确路径与原操作身份；远程文件导出须等待电脑确认。账户名、最终确认与当次云密码不得持久保存；删除／注销清理本账户本机缓存及加密离线副本，Watch 随 iPhone 撤销，跨账号迟到响应丢弃。
 
 
 ## 15. 每日摘要与每周回顾（DATA-1）
@@ -1676,13 +1624,13 @@ Android（安卓）白名单与JVM（Java虚拟机）测试同步上述精确路
 }
 ```
 
-回执为 `{day,health}`。四项数值可以为 `null`（未授权／无测量）；`steps` 为非负整数，其余非负有限数值，睡眠／运动分钟最多1440；`workouts` 每项只有短类型与分钟。`status:"unavailable"` 必须四项 `null`、`workouts:[]`。无权限时仍可聊天；Apple（苹果端）后续包负责 HealthKit（苹果健康数据接口）授权、按同一账户时区聚合并发送，失败不阻止使用。
+回执为 `{day,health}`。四项数值可以为 `null`（未授权／无测量）；`steps` 为非负整数，其余非负有限数值，睡眠／运动分钟最多1440；`workouts` 每项只有短类型与分钟。`status:"unavailable"` 必须四项 `null`、`workouts:[]`。无权限时仍可聊天；Apple（苹果端）上传需 HealthKit（苹果健康数据接口）授权，并按同一账户时区聚合，失败不阻止使用。
 
 既有 `GET/PATCH /personal/v1/settings/notifications` 增加 `reviewEnabled:true`、`reviewRetentionDays:90`（7–365整数）；界面提供7／30／90／180／365天。`PATCH {reviewClear:true}` 是一次性动作，不保存为偏好；删除所有使用摘要、周回顾和使用背景，从下一完整自然日重新整理；HEALTH-2独立健康库保留，清空健康须用16.3设置。关闭后停止采集与背景注入，仍按保留期清理。摘要保存在本机私有账户存储，账号隔离。设置位于「通知 → 回顾与洞察」，没有首次提示。
 
 动态仍使用已有 `/activity` 路由和 `type:"memory.report"`，增加可选 `weeklyInsight:{from,to,timeZone,text,mode,sources}`；`mode` 为 `statistics` 或 `model`，来源包含短标题、会话引用与可选 `artifactId`，可点回原对话／成果来源。默认静默、不弹系统通知。后台模型仅获最近完整七天的结构化摘要，调用现有后台优先级；无配置、请求失败或重启中断均保留统计版，周内不重试生成。摘要本机持久化；使用用户配置的云模型整理周回顾／聊天时，相关摘要随模型输入发送到该模型提供方，与正常聊天相同。
 
-助手通过现有会话上下文 IPC（进程间通信）获得最近七天最多3600字符的背景，每轮更新，与记忆召回并列；无关问题仍回答当前问题。引用使用 `#weftmate:session:<id>` 或 `#weftmate:library:<id>`，共用内容呈现器在两端打开来源。后台错误不阻塞本机聊天；关闭／清空后下一轮立即停止引用。安卓网页读取和设置沿用已允许的路由；健康新路由用于后续原生接线，本包按边界不改安卓壳。苹果原生需消费 `weeklyInsight` 展示与健康 PUT 接口。
+助手通过现有会话上下文 IPC（进程间通信）获得最近七天最多3600字符的背景，每轮更新，与记忆召回并列；无关问题仍回答当前问题。引用使用 `#weftmate:session:<id>` 或 `#weftmate:library:<id>`，共用内容呈现器在两端打开来源。后台错误不阻塞本机聊天；关闭／清空后下一轮立即停止引用。客户端读取 `weeklyInsight` 与上传健康 PUT 时仍需对应权限和原生路径支持。
 
 ### 15.1 这台电脑的使用时段（DATA-2）
 
@@ -1748,7 +1696,7 @@ v2 是 v1 的超集：原来的七个字段仍必填，`version:2`；下面新�
 
 设置放在「回顾与洞察」旁边，无弹窗引导。开关说明：「会把每天的汇总数字发给你设置的模型，不发明细」。助手工具 `health_query` 参数 `{metric:"overview"|指标id,from?:YYYY-MM-DD,to?:YYYY-MM-DD}`，默认最近7天、最大90天；只返回精简汇总／基线对比及使用分钟，无记录返回「还没接上」。DATA-1七天背景补三个分数与状态，仍≤3600字符；周回顾补健康概况与最多一条有依据的使用观察。
 
-Android（安卓）须同步上述精确业务路径与拒绝用例，需要新壳版本；Apple（苹果端）继续原v1上传也可用，v2按本节补字段／批量入口，读取／设置／提醒接上述路由，不上传原始样本。HEALTH-3页面按本节接线；健康授权和手机采集由 HEALTH-4处理。
+客户端须支持上述精确业务路径；Apple（苹果端）可继续原 v1 上传，v2 采用本节字段与批量入口，读取／设置／提醒沿上述路由。上传需对应系统授权，不上传原始样本。
 
 ### 16.4 v3、个人资料与按需各项分析（HEALTH-5）
 
@@ -1836,7 +1784,7 @@ DATA-2原生查询补充：未接入身体测量、但查询范围（含目标�
 
 `estimate` 为 `{characters,modelName,profileId,local,approximate:true,inputTokens:[low,high],outputTokens:[low,high],cost:[low,high]|null,seconds:[low,high],price}`。价格来自现有账户用量设置；下界计入重复提示可能享受的输入优惠，上界按未优惠输入估算。没有单价时费用未知，不能显示为免费。本机／局域网模型费用为零，耗时以约每秒50个输出词元与提示处理余量估算。实际请求包括核心形成步骤和失败重试，不是价格承诺。真实用量沿用账户用量账本，`category:"import"`、`sessionId:"import-<jobId>"`；未知用量明确保留，没有单价时 cost 为 null、unpricedRequests 大于零，界面显示费用未知。
 
-来源详情增加可选 `importSource:{kind:"import",app,appName,conversationId,originalAt,importId}`；带 `includeSources=true` 的列表可含与单条来源相同结构的 `importSources` 数组，导入编号不会被当作可继续聊天的 WeftMate 对话。核心聊天入口当前仍记录 `source_kind=spoken`，来源应用与原日期通过有日期前缀的正文、原始 `timestamp`、宿主回执映射提供，未更改记忆核心仓库。未来核心应增加正式导入来源类型和整批撤回接口。
+来源详情增加可选 `importSource:{kind:"import",app,appName,conversationId,originalAt,importId}`；带 `includeSources=true` 的列表可含与单条来源相同结构的 `importSources` 数组，导入编号不会被当作可继续聊天的 WeftMate 对话。核心聊天入口当前仍记录 `source_kind=spoken`，来源应用与原日期通过有日期前缀的正文、原始 `timestamp`、宿主回执映射提供；不以此字段声明核心已有正式导入来源类型。
 
 错误：`IMPORT_FORMAT_UNKNOWN`（这个文件的格式认不出）、`IMPORT_SOURCE_UNAVAILABLE`、`IMPORT_SOURCE_CHANGED`、`IMPORT_NATIVE_SELECTION_REQUIRED`、`IMPORT_MODEL_CHANGED`、`IMPORT_JOB_ACTIVE`、`IMPORT_PAUSE_REQUIRED`。账号之间不共享预览、进度、文件引用、用量或核心回执。运行记录只保存本机源引用、对话编号、日期、数量、指纹、游标与回执；不另存对话全文。
 
@@ -1889,7 +1837,7 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 
 手机浏览器的自填模型密钥只留在当前页面内存；刷新／关闭／退出清空，不写入 IndexedDB（浏览器结构化存储）、localStorage（网页键值存储）、日志或缓存。对话仍经 M3-A 的不可导出 WebCrypto（浏览器密码接口）钥匙加密保存；该边界不承诺同源恶意脚本隔离。提供方必须允许浏览器直连。
 
-上传回执目前只有轮次 `state:"synced"`，没有电脑可继续发送的普通会话标识。MOB-4 保留原手机对话可读；原会话自动接力到电脑仍需后续契约支持，不声称已形成记忆。
+`state:"synced"` 表示轮次已接收，不代表记忆已形成；可选稳定历史标识、分片与手机交接的增量契约见下节。客户端保留原手机对话可读，不把只读历史标识当作可发送的原生会话。
 
 
 ### MEM-7：手机原对话交给电脑（D63，与APPLE-7共用）
@@ -1912,4 +1860,4 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 
 **手机发起删除**：同路径可带 `{generation,turns:[],forgetConversations:[原conversationId]}`（每次最多50个）。仅提交过或部分提交过该对话的受信物理手机可请求；电脑先持久登记墓碑并禁止重交，再用MEM-1来源遗忘任务清原来源／派生记忆和电脑历史，推进原清理代次。回 `{generation:新代次,receipts:[],forgottenConversations:[id]}` 只表示删除请求持久接受，真正清完的导入记录才为forgotten。客户端更新代次、重新取副本；未交独立原对话不受派生删除影响。重发被删对话的轮次回state:forgotten，不能复活来源。
 
-Android（安卓）白名单继续精确使用 `/offline/sync`、`/offline/turns`、`/memory/status`、`/memory/backfill`，允许／拒绝用例已同步。需要新壳版本：原生队列／解码接memoryAuthority、稳定历史回执、长消息分片及删除方向；本包不自行递增版本。旧网页壳的原生加密容器也须保留手机原始对话和未确认轻量内容：接收电脑的reset不能先清空手机容器，普通电脑副本仍按原删除合同清空。Apple（苹果端）清单：上述四条既有路径的新字段，原RSA（非对称加密）信封／账号授权／删除代次不变；iPhone APPLE-7已有phoneFirst/model:null及冻结队列，后续加handover与turnFragments／forgetConversations，不能把fragmentReceipts当确认。
+原生业务路径限定为 `/offline/sync`、`/offline/turns`、`/memory/status`、`/memory/backfill`。客户端须分别处理 `memoryAuthority`、稳定历史回执、长消息分片和删除方向；`fragmentReceipts` 不能当整轮确认。原生加密容器保留手机原始对话与未确认轻量内容，接收电脑 `reset` 不先清空手机原始容器，普通电脑副本仍按原删除合同清空。上述新字段沿原 RSA（非对称加密）信封、账号授权与删除代次，不授予额外权限。
