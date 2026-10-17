@@ -12,6 +12,7 @@ import { pathToFileURL } from 'node:url';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { localUiSession } from './local-ui-session.mjs';
+import { waitForFirstWindow } from './first-window-diagnostics.mjs';
 
 export async function until(fn, timeout = 45000) {
   const end = Date.now() + timeout;
@@ -67,7 +68,7 @@ export async function migrationHost({ nativeSession = false, executable, source 
     h.app = await _electron.launch({executablePath:h.executable || createRequire(import.meta.url)('electron'),args:h.executable?[...passwordStore,`--desktop-config=${config}`]:[h.source,...passwordStore,`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],cwd:h.source,env,timeout:90000});
     evidence?.track(h.app.process(), { executable: h.executable || createRequire(import.meta.url)('electron'), label: 'installed-electron' });
     h.stderr = []; h.app.process().stderr?.on('data', chunk => { h.stderr.push(String(chunk)); if (h.stderr.length > 200) h.stderr.shift(); });
-    h.page = await h.app.firstWindow(); h.page.setDefaultTimeout(15000);
+    h.page = await waitForFirstWindow({ app: h.app, profile, stderr: h.stderr }); h.page.setDefaultTimeout(15000);
     await h.page.waitForURL('**/personal/v1/ui*');
     if (nativeSession) await nativeOwnerSession(h.page);
     else await localUiSession(h.page,h.credentials,'FX21',{mainChat:!h.old});

@@ -6,7 +6,7 @@
 [#332 的总经理转达](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)。
 
 `lock.json` 固定官方 Python 3.13.16 嵌入 ZIP、Core 已合入并首轮通过的
-`52952ff0e896d745e3c6ec65579ea643f8b996fb` 提交及官方源归档 URL、大小与
+`2112aa8be54ae2e2ab1c5ce53f1552a374a2ab70` 提交及官方源归档 URL、大小与
 散列、Core `uv.lock` 散列、Windows CPython 3.13 对应 wheel、传递依赖、许可、模型
 修订及文件散列。基础层是 Python/Core 和 7 个基础依赖；完整层在同一
 基础上加入 17 个语义依赖、固定模型/分词器、微软两个必需运行库和许可。
@@ -29,7 +29,7 @@ node scripts/memory-runtime/prepare.mjs --mode full --output .local/memory-full 
 固定输入已就绪时可加 `--offline`；不另做下载队列、重试或恢复。Core、Python 或
 依赖升级要同时更新清单并重新验收，不能只改清单里的显示版本。Core
 归档缓存名包含完整提交，命中后仍核对 SHA/大小；成品还核对 Core 提交
-和整个固定清单，因此 base/full 都拒绝复用旧 `e86b73ba` 载荷。随包版本
+和整个固定清单，因此 base/full 都拒绝复用旧 `e86b73ba`、`52952ff0` 载荷。随包版本
 与 `observed-core` 保持一致，版本升级遵守 MEMORY.md 的主线首绿规则。
 
 输出直接放入 `resources/memory-runtime/`：
