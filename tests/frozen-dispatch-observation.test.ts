@@ -96,3 +96,65 @@ test('dispatch observation filters unrelated commands and unknown phases without
   assert.equal(JSON.stringify(snapshot).includes('private'), false);
   observer.close(); assert.equal(c.__reviewCommandPhase, undefined);
 });
+
+function observerContext() {
+  return { accountState: () => ({ commands: { command: { requestId: 'frozen-create', state: 'dispatching' } } }),
+    scheduled: new Set(), activeByCommand: new Map(), closing: false, storageFault: false, __reviewCommandPhase: null as any };
+}
+
+test('a phase clock exception cannot escape the dispatcher hook or leave observation waiters stuck', async () => {
+  const c = observerContext(); let clockCalls = 0;
+  const observer = observeFrozenCommand(c, 'frozen-create', { now: () => {
+    if (++clockCalls > 1) throw Error('synthetic-private-clock-detail'); return 0;
+  } });
+  try {
+    const waiting = assert.rejects(observer.waitFor('backend.await'), error => {
+      assert.equal(error.code, 'OBSERVER_EXCEPTION'); return true;
+    });
+    assert.doesNotThrow(() => c.__reviewCommandPhase('owner', 'command', 'backend.await'));
+    await waiting;
+    const snapshot = observer.snapshot();
+    assert.equal(snapshot.observationFailed, true); assert.equal(snapshot.observationError, 'OBSERVER_EXCEPTION');
+    assert.equal(JSON.stringify(snapshot).includes('synthetic-private'), false);
+  } finally { observer.close(); }
+});
+
+test('initial observation clock failure is retained as fixed metadata', () => {
+  const c = observerContext();
+  const observer = observeFrozenCommand(c, 'frozen-create', { now: () => { throw Error('synthetic-private-initial-clock'); } });
+  try {
+    assert.doesNotThrow(() => c.__reviewCommandPhase('owner', 'command', 'schedule'));
+    const snapshot = observer.snapshot();
+    assert.equal(snapshot.observationFailed, true); assert.equal(snapshot.observationError, 'OBSERVER_EXCEPTION');
+    assert.equal(JSON.stringify(snapshot).includes('synthetic-private'), false);
+  } finally { observer.close(); }
+});
+
+test('snapshot context getter failure preserves previously captured phases and fixed failure metadata', () => {
+  const c = observerContext(), observer = observeFrozenCommand(c, 'frozen-create', { now: () => 0 });
+  c.__reviewCommandPhase('owner', 'command', 'backend.await');
+  Object.defineProperty(c, 'scheduled', { get() { throw Error('synthetic-private-snapshot-detail'); } });
+  try {
+    const snapshot = observer.snapshot();
+    assert.equal(snapshot.events[0].phase, 'backend.await');
+    assert.equal(snapshot.observationFailed, true); assert.equal(snapshot.observationError, 'OBSERVER_EXCEPTION');
+    assert.equal(JSON.stringify(snapshot).includes('synthetic-private'), false);
+  } finally { observer.close(); }
+});
+
+test('a real session create still commits acceptance when phase observation fails', { timeout: 15000 }, async () => {
+  const f = await startTimelineCandidate({ daily: true, inlineProgress: true, historyCount: 0 });
+  const c = f.debug.service.__reviewContext; let clockCalls = 0;
+  const observer = observeFrozenCommand(c, 'frozen-create', { now: () => {
+    if (++clockCalls === 3) throw Error('synthetic-private-phase-detail'); return clockCalls;
+  } });
+  try {
+    const host = (await f.request('/status')).hostId;
+    const posted = await f.request('/commands', { requestId: 'frozen-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: host });
+    await waitForFrozenSessionCreate(() => f.request('/commands/' + posted.command.commandId));
+    assert.equal((await f.request('/commands/' + posted.command.commandId)).command.state, 'accepted_by_dsh');
+    const snapshot = observer.snapshot();
+    assert.equal(snapshot.observationFailed, true); assert.equal(snapshot.observationError, 'OBSERVER_EXCEPTION');
+    assert.equal(JSON.stringify(snapshot).includes('synthetic-private'), false);
+  } finally { observer.close(); await f.close(); rmSync(f.root, { recursive: true, force: true }); }
+});
