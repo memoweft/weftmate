@@ -30,10 +30,10 @@ export async function nativeOwnerSession(page) {
   assert.ok(me.account?.ownerId);
   return me;
 }
-export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir(), processEvidence, cloudIdentity } = {}) {
+export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir(), processEvidence, cloudIdentity, respond } = {}) {
   const root = realpathSync.native(mkdtempSync(join(tempRoot, 'weftmate-fx21-'))), profile = join(root, 'profile');
   mkdirSync(profile); writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
-  const h = { root, profile, app: null, requests: [], source, executable, old };
+  const h = { root, profile, app: null, requests: [], source, executable, old, respond };
   const evidence = processEvidence?.({ root, profile, executable: executable || createRequire(import.meta.url)('electron') });
   const server = createServer(async (req, res) => {
     if (req.url.endsWith('/models')) return res.writeHead(200, {'content-type':'application/json'}).end(JSON.stringify({data:[{id:'synthetic-fx21',context_window:32768}]}));
