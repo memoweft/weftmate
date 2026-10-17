@@ -27,7 +27,7 @@ function processSnapshot(child) {
   return { state, exitCode, signal };
 }
 
-function hostLogSnapshot(profile, pid) {
+function hostLogSnapshot(profile, processIds, launchStartedAt) {
   if (!profile) return { status: 'unavailable' };
   let names;
   try { names = readdirSync(join(profile, 'logs')).filter(name => /^host-\d{4}-\d\d-\d\d(?:-\d+)?\.jsonl$/.test(name))
@@ -39,7 +39,16 @@ function hostLogSnapshot(profile, pid) {
       try { const row = JSON.parse(line); if (row && typeof row === 'object') rows.push(row); } catch { /* Interrupted final write. */ }
     }
   } catch { return { status: 'unavailable' }; }
-  const start = rows.findLast(row => row.event === 'host.start' && row.pid === pid);
+  const sampledAt = Date.now();
+  if (!Number.isFinite(launchStartedAt) || launchStartedAt <= 0 || launchStartedAt > sampledAt)
+    return { status: 'no-current-run' };
+  // The launcher and host log share the machine's millisecond wall clock.
+  // Do not admit pre-launch records: a live descendant may have reused a PID.
+  // Missing/invalid times or a backward clock change leave attribution unknown.
+  const start = rows.findLast(row => {
+    const at = typeof row.at === 'string' ? Date.parse(row.at) : NaN;
+    return row.event === 'host.start' && processIds.has(row.pid) && at >= launchStartedAt && at <= sampledAt;
+  });
   if (!start || typeof start.runId !== 'string') return { status: 'no-current-run' };
   const current = rows.filter(row => row.runId === start.runId && events.has(row.event))
     .sort((a, b) => a.recordIndex - b.recordIndex);
@@ -60,13 +69,18 @@ function hostLogSnapshot(profile, pid) {
     ...(typeof start.memoryEnabled === 'boolean' ? { memoryEnabled: start.memoryEnabled } : {}), tail };
 }
 
-/** Process names and command lines are used only in memory, never returned. */
-export function summarizeDescendants(rows, parentPid) {
+function descendantIds(rows, parentPid) {
   const descendants = new Set([parentPid]);
   for (let previous = 0; previous !== descendants.size;) {
     previous = descendants.size;
     for (const row of rows) if (integer(row.ProcessId) && descendants.has(row.ParentProcessId)) descendants.add(row.ProcessId);
   }
+  return descendants;
+}
+
+/** Process names and command lines are used only in memory, never returned. */
+export function summarizeDescendants(rows, parentPid) {
+  const descendants = descendantIds(rows, parentPid);
   const children = rows.filter(row => row.ProcessId !== parentPid && descendants.has(row.ProcessId));
   return { status: 'ok', total: children.length,
     python: children.filter(row => /^python(?:w|\d+(?:\.\d+)*)?(?:\.exe)?$/i.test(row.Name)).length,
@@ -75,16 +89,18 @@ export function summarizeDescendants(rows, parentPid) {
 }
 
 async function childSnapshot(pid, state) {
-  if (state === 'exited' || state === 'not-running') return { status: 'parent-exited' };
-  if (state !== 'alive' || process.platform !== 'win32') return { status: 'unavailable' };
+  const unavailable = status => ({ summary: { status }, processIds: new Set([pid]) });
+  if (state === 'exited' || state === 'not-running') return unavailable('parent-exited');
+  if (state !== 'alive' || process.platform !== 'win32') return unavailable('unavailable');
   try {
     const rows = await new Promise((resolve, reject) => execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
       'Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,CommandLine | ConvertTo-Json -Compress'],
     { windowsHide: true, encoding: 'utf8', timeout: 3000, maxBuffer: 8 * 1024 * 1024 }, (error, stdout) => {
       if (error) reject(error); else { try { resolve(JSON.parse(stdout)); } catch (error) { reject(error); } }
     }));
-    return summarizeDescendants(Array.isArray(rows) ? rows : [rows], pid);
-  } catch { return { status: 'unavailable' }; }
+    const processes = Array.isArray(rows) ? rows : [rows];
+    return { summary: summarizeDescendants(processes, pid), processIds: descendantIds(processes, pid) };
+  } catch { return unavailable('unavailable'); }
 }
 
 function stderrSnapshot(stderr) {
@@ -100,13 +116,16 @@ function stderrSnapshot(stderr) {
 
 /** Sample only after the unchanged firstWindow call fails, before host cleanup.
  * No Electron IPC: the main thread may be stalled. Publication is best effort. */
-export async function waitForFirstWindow({ app, profile, stderr = [], publish = message => console.error(message) }) {
+export async function waitForFirstWindow({ app, profile, launchStartedAt = NaN, stderr = [], publish = message => console.error(message) }) {
   try { return await app.firstWindow(); }
   catch (error) {
     try {
       const child = app.process(), main = processSnapshot(child);
-      const hostLog = hostLogSnapshot(profile, child?.pid), stderrTail = stderrSnapshot(stderr);
-      const snapshot = { process: main, hostLog, children: await childSnapshot(child?.pid, main.state), stderrTail };
+      // Playwright's Windows launcher is cmd.exe. Match the host only inside
+      // that live process tree; never fall back to an unrelated/stale log run.
+      const children = await childSnapshot(child?.pid, main.state);
+      const hostLog = hostLogSnapshot(profile, children.processIds, launchStartedAt), stderrTail = stderrSnapshot(stderr);
+      const snapshot = { process: main, hostLog, children: children.summary, stderrTail };
       try { error.firstWindowDiagnostics = snapshot; } catch { /* Preserve frozen errors too. */ }
       try { Promise.resolve(publish(`First window failure: ${JSON.stringify(snapshot)}`)).catch(() => {}); } catch {}
     } catch { /* Observation must never replace the original failure. */ }
