@@ -1,6 +1,8 @@
 import { evidencePath } from '../../../tests/helpers/evidence-path.mjs';
 import './fix-32-pointer.test.mjs';
 import './composer-viewport.test.mjs';
+import './route-ownership.test.mjs';
+import './composer-cleanup.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
