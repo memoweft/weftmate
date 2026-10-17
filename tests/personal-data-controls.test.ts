@@ -11,6 +11,7 @@ import { createDataControls } from '../src/personal-data/index.mjs';
 import { utimes } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { observeErasure } from './helpers/data-delete-diagnostics.mjs';
 
 test('account path assertion rejects lexical escape, another account and resolved junction before deletion', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'weftmate-st4-boundary-'));
@@ -51,6 +52,7 @@ test('export publishes complete hashes, lists all exclusions and cancellation le
 });
 
 test('real host requires owner permission and desktop confirmation, clears only A, and cold restart stays empty', async () => {
+  const diagnostics = observeErasure();
   const root = await mkdtemp(path.join(tmpdir(), 'weftmate-st4-host-'));
   const backend = { getStatus: async () => ({}), listModels: async () => [], preflight: async () => ({}), createSession: async () => ({}), sendMessage: async () => ({}), cancelSession: async () => ({}), readEvents: async () => ({ events: [], hasMore: false }), describeSession: async () => ({ running: false }), deleteSession: async () => ({ deleted: true }) };
   let host;
@@ -73,14 +75,19 @@ test('real host requires owner permission and desktop confirmation, clears only 
     assert.equal(await readFile(path.join(root, 'accounts', ownerA, 'cache', 'thumb'), 'utf8'), 'cache');
     const refused = await request('/data/confirm', 'POST', { id: remote.value.operation.id, accountName: 'Synthetic-A', confirm: true }, creds); assert.equal(refused.status, 403);
     const confirmed = await request('/data/confirm', 'POST', { id: remote.value.operation.id, accountName: 'Synthetic-A', confirm: true }, desktop); assert.equal(confirmed.status, 202);
-    let result;
-    for (let i = 0; i < 200; i++) { result = (await request('/data/operations', 'GET', undefined, creds)).value.operation; if (!['running','pending_confirmation'].includes(result.state)) break; await new Promise(resolve => setTimeout(resolve, 20)); }
-    assert.equal(result.state, 'completed', JSON.stringify(result));
+    let result, lastDiagnostics;
+    for (let i = 0; i < 200; i++) {
+      result = (await request('/data/operations', 'GET', undefined, creds)).value.operation;
+      if (i === 199 || !['running','pending_confirmation'].includes(result.state)) lastDiagnostics = diagnostics.snapshot(result.id);
+      if (!['running','pending_confirmation'].includes(result.state)) break;
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    assert.equal(result.state, 'completed', JSON.stringify({ operation: result, diagnostics: lastDiagnostics }));
     assert.equal(await readFile(path.join(root, 'accounts', ownerB, 'keep'), 'utf8'), 'B');
     assert.deepEqual((await request('/sessions', 'GET', undefined, creds)).value.sessions, []);
     await host.close(); host = await createPersonalAccessService({ root, port: 0, backend }); await host.start();
     assert.equal(Object.keys(JSON.parse(await readFile(path.join(root, 'store.json'), 'utf8')).accounts[ownerA].sessions).length, 0);
-  } finally { await host?.close(); await rm(root, { recursive: true, force: true }); }
+  } finally { diagnostics.close(); await host?.close(); await rm(root, { recursive: true, force: true }); }
 });
 
 test('owner erasure finishes within its original polling budget when redundant sync-file ACL results stall', () => {
