@@ -5,7 +5,7 @@ const STAGES = new Set(['bootstrap_started', 'utility_imported', 'payload_read',
 const integer = value => Number.isSafeInteger(value) && value >= 0;
 /** Original failure stays intact. Only fixed codes, enums and numeric metadata
  * are projected from process stderr; no arbitrary stderr or object is returned. */
-export function installedSmokeFailureSummary({ error, failureView, stderr = [] }) {
+export function installedSmokeFailureSummary({ error, failureView, stderr = [], firstWindowDiagnostics }) {
   const errorCodes = new Set(), readerFailures = [];
   for (const line of stderr.join('').split(/\r?\n/)) {
     const native = /handler for 'wm:desktop:project-create': Error: (PROJECT_[A-Z_]+)\b/.exec(line);
@@ -21,6 +21,6 @@ export function installedSmokeFailureSummary({ error, failureView, stderr = [] }
     if (value.lastChildStage === null || STAGES.has(value.lastChildStage)) row.lastChildStage = value.lastChildStage;
     readerFailures.push(row);
   }
-  return { error, failureView, ...(errorCodes.size || readerFailures.length ? { nativeProjectDiagnostics: {
+  return { error, failureView, ...(firstWindowDiagnostics ? { firstWindowDiagnostics } : {}), ...(errorCodes.size || readerFailures.length ? { nativeProjectDiagnostics: {
     errorCodes: [...errorCodes], readerFailures: readerFailures.slice(-8) } } : {}) };
 }

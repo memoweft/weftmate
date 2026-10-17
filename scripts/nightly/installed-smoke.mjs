@@ -147,7 +147,7 @@ try {
     selectedSessions:[...document.querySelectorAll('.session-row > button.is-current')].map(row=>row.parentElement.dataset.sessionId),
     messageDisabled:document.querySelector('#message-text')?.disabled,transcript:document.querySelector('#transcript')?.innerText,
     approvalCards:[...document.querySelectorAll('[data-conversation-approval]')].map(row=>({id:row.dataset.conversationApproval,text:row.innerText}))})).catch(()=>null);
-  const failureSummary=installedSmokeFailureSummary({error:report.error,failureView:report.failureView,stderr:h?.stderr});
+  const failureSummary=installedSmokeFailureSummary({error:report.error,failureView:report.failureView,stderr:h?.stderr,firstWindowDiagnostics:error.firstWindowDiagnostics});
   Object.assign(report,failureSummary);
   console.error('Packaged smoke failure:',redactBuildMachineIdentity(JSON.stringify(failureSummary)).replaceAll(temp,'%TEMP%'));
 }
