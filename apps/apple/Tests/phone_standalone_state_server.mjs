@@ -6,7 +6,7 @@ const server=createServer(async(req,res)=>{
  if(req.url==='/report'){res.setHeader('content-type','application/json');res.end(JSON.stringify({requests,streams}));return;}
  if(req.headers.authorization!=='Bearer synthetic-state-key'){res.writeHead(401);res.end();return;}
  const chunks=[];for await(const c of req)chunks.push(c);const body=JSON.parse(Buffer.concat(chunks));requests++;
- if(!body.stream){res.setHeader('content-type','application/json');res.end(JSON.stringify({choices:[{message:{content:'你好。'}}]}));return;}
+ if(!body.stream){const content=body.messages[0]?.content.includes('轻量记忆')?'{"upsert":[],"invalidate":[]}':'你好。';res.setHeader('content-type','application/json');res.end(JSON.stringify({choices:[{message:{content}}]}));return;}
  streams++;res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache'});
  const last=body.messages.filter(m=>m.role==='user').at(-1)?.content ?? '';
  if(last==='超时后重试' && !stalled){stalled=true;res.flushHeaders();return;}

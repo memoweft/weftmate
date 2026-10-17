@@ -29,19 +29,22 @@ import Testing
         #expect(memory.items.isEmpty)
         let fresh=PhoneChatMessage(role:"user",text:"我正在学绘画")
         try memory.apply(patch(fresh,text:fresh.text),batch:[fresh],threadID:thread.id)
-        let removal=String(decoding:try JSONSerialization.data(withJSONObject:["upsert":[],"invalidate":[["id":memory.items[0].id,"sourceIDs":[repeatMessage.id],"evidence":repeatMessage.text]]]),as:UTF8.self)
-        try memory.apply(removal,batch:[repeatMessage],threadID:thread.id)
+        let forgetting=PhoneChatMessage(role:"user",text:"忘掉我正在学绘画这件事")
+        let removal=String(decoding:try JSONSerialization.data(withJSONObject:["upsert":[],"invalidate":[["id":memory.items[0].id,"sourceIDs":[forgetting.id],"evidence":forgetting.text]]]),as:UTF8.self)
+        try memory.apply(removal,batch:[forgetting],threadID:thread.id)
         #expect(memory.items.isEmpty)
     }
     @Test func parseFailureKeepsWatermarkAndRejectsUnsupportedSources() throws {
         let message=PhoneChatMessage(role:"user",text:"我在学日语")
         var memory=PhoneMemoryState()
-        for bad in ["解释不是JSON","{\"upsert\":[]}","{\"upsert\":{},\"invalidate\":[]}"] {
+        for bad in ["解释不是JSON","{}","{\"upsert\":{},\"invalidate\":[]}","{\"upsert\":null}"] {
             #expect(throws:(any Error).self) { try memory.apply(bad,batch:[message],threadID:"t") }
             #expect(memory.processed.isEmpty)
         }
         try memory.apply("```json\n"+patch(message,text:message.text)+"\n```",batch:[message],threadID:"t")
         #expect(memory.items.count == 1)
+        let empty=try PhoneMemoryPatch.parse("{\"upsert\":[]}")
+        #expect(empty.upsert.isEmpty && empty.invalidate.isEmpty)
         let unsupported=PhoneChatMessage(role:"user",text:"假造原话")
         try memory.apply(patch(unsupported,text:"住在北京"),batch:[message],threadID:"t")
         try memory.apply(patch(message,text:"住在北京",evidence:"助手猜住北京"),batch:[message],threadID:"t")
@@ -100,6 +103,128 @@ import Testing
         #expect(try a.load().memory?.items.first?.text == "encrypted-unique-memory")
         #expect(try b.load().memory == nil)
         #expect(try dir.resourceValues(forKeys:[.isExcludedFromBackupKey]).isExcludedFromBackup == true)
+    }
+    @Test func standaloneRememberCorrectForgetAcrossSealedReloads() throws {
+        let dir=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at:dir) }
+        let store=try PhoneChatStore(account:"synthetic-local",directory:dir,credentials:PhoneMemoryTestKeys())
+        var state=PhoneChatState();state.memory = .init()
+        func turn(_ text: String, output: (PhoneChatMessage,PhoneMemoryState) throws -> String) throws -> PhoneMemoryReceipt {
+            var thread=PhoneChatThread();let user=PhoneChatMessage(role:"user",text:text);thread.messages=[user]
+            let before=state.memory!
+            try state.memory?.apply(output(user,before),batch:before.batch(thread),threadID:thread.id)
+            state.threads.append(thread);try store.save(state);state=try store.load()
+            return PhoneMemoryReceipt(before:before,after:state.memory!)
+        }
+        let remembered=try turn("请记住，我的测试花名是蓝色纸鹤。") { user,_ in try patch(user,text:"测试花名是蓝色纸鹤") }
+        #expect(remembered.note?.contains("蓝色纸鹤") == true)
+        var memory=state.memory!
+        #expect(PhoneMemoryContext.prompt(memory.select(query:"我的测试花名是什么").map { ($0.text,Array($0.sourceIDs)) },computerOffline:false).contains("蓝色纸鹤"))
+        let corrected=try turn("不对，是绿色纸鹤。") { user,old in try patch(user,text:"测试花名是绿色纸鹤",id:old.items[0].id) }
+        #expect(corrected.saved == ["测试花名是绿色纸鹤"])
+        memory=state.memory!
+        #expect(memory.select(query:"测试花名").map(\.text) == ["测试花名是绿色纸鹤"])
+        let forgotten=try turn("忘掉我的测试花名。") { user,old in
+            String(decoding:try JSONSerialization.data(withJSONObject:["upsert":[],"invalidate":[["id":old.items[0].id,"sourceIDs":[user.id],"evidence":user.text]]]),as:UTF8.self)
+        }
+        #expect(forgotten.removed == 1)
+        memory=state.memory!;#expect(memory.select(query:"测试花名").isEmpty)
+        #expect(memory.batch(state.threads[0]).isEmpty)
+    }
+    @Test func extractionRequestCarriesCorrectionContextAndDisablesMimoReasoning() throws {
+        var memory=PhoneMemoryState();memory.items=[.init(text:"测试花名是蓝色纸鹤")]
+        var thread=PhoneChatThread();thread.messages=[.init(role:"user",text:"我的测试花名是什么？"),.init(role:"assistant",text:"蓝色纸鹤"),.init(role:"user",text:"不对，是绿色纸鹤。")]
+        let request=try PhoneMemoryExtraction.request(model:.init(name:"MiMo",baseURL:"https://api.xiaomimimo.com/v1",model:"mimo-v2.6-flash",apiKey:"synthetic-only"),memory:memory,thread:thread,batch:[thread.messages[2]])
+        let body=try #require(JSONSerialization.jsonObject(with:request.httpBody!) as? [String:Any])
+        #expect((body["thinking"] as? [String:String])?["type"] == "disabled")
+        let messages=try #require(body["messages"] as? [[String:String]])
+        let input=try #require(JSONSerialization.jsonObject(with:Data(messages[1]["content"]!.utf8)) as? [String:Any])
+        #expect((input["原话"] as? [[String:String]])?.map { $0["id"] } == [thread.messages[2].id])
+        #expect((input["对话背景"] as? [[String:String]])?.map { $0["text"] } == ["我的测试花名是什么？"])
+        #expect((input["已有记忆"] as? [[String:String]])?.first?["id"] == memory.items[0].id)
+    }
+    @Test func incompleteExtractionHasNoReceiptAndCanBeRetried() throws {
+        let config=PhoneModelConfiguration(name:"Synthetic",baseURL:"https://model.example.com/v1",model:"synthetic",apiKey:"synthetic-only")
+        for body in [
+            "{\"choices\":[{\"finish_reason\":\"length\",\"message\":{\"content\":\"{\\\"upsert\\\":[],\\\"invalidate\\\":[]}\"}}]}",
+            "{\"choices\":[{\"message\":{\"content\":\"\"}}]}",
+            "{\"choices\":[{\"message\":{\"content\":\"{broken\"}}]}"
+        ] { #expect(throws:(any Error).self) { try PhoneMemoryExtraction.content(Data(body.utf8),model:config) } }
+        let failed=PhoneMemoryReceipt()
+        #expect(failed.saved.isEmpty && !failed.succeeded)
+        #expect(failed.note?.contains("没能保存") == true)
+        let user=PhoneChatMessage(role:"user",text:"我的测试花名是蓝色纸鹤"),memory=PhoneMemoryState()
+        var thread=PhoneChatThread();thread.messages=[user]
+        #expect(memory.batch(thread) == [user])
+        #expect(PhoneMemoryReceipt(before:memory,after:memory).note == nil)
+    }
+    @Test func forgottenFactsAreExcludedFromPromptHistoryAndLocalIDsNeverBecomeComputerReferences() throws {
+        let source=PhoneChatMessage(role:"user",text:"测试花名是蓝色纸鹤")
+        var memory=PhoneMemoryState();try memory.apply(patch(source,text:source.text),batch:[source],threadID:"t")
+        let id=memory.items[0].id
+        var reply=PhoneChatMessage(role:"assistant",text:"蓝色纸鹤");reply.phoneMemoryIDs=[id]
+        let question=PhoneChatMessage(role:"user",text:"测试花名是什么？")
+        let history=[source,question,reply]
+        #expect(memory.replyHistory(history) == history)
+        memory.forget(id)
+        #expect(memory.replyHistory(history) == [question])
+        var thread=PhoneChatThread();thread.messages=[source,reply]
+        var state=PhoneChatState();state.threads=[thread]
+        #expect(state.prepareMigration(host:"synthetic-computer",generation:1).first?.memoryRefs.isEmpty == true)
+    }
+    @Test func mimoMayOmitEmptyMutationArrays() throws {
+        let user=PhoneChatMessage(role:"user",text:"请记住，测试花名是蓝色纸鹤")
+        var memory=PhoneMemoryState()
+        let full=try JSONSerialization.jsonObject(with:Data(patch(user,text:"测试花名是蓝色纸鹤").utf8)) as! [String:Any]
+        let upsertOnly=String(decoding:try JSONSerialization.data(withJSONObject:["upsert":full["upsert"]!]),as:UTF8.self)
+        try memory.apply(upsertOnly,batch:[user],threadID:"new-conversation")
+        #expect(memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+        let forget=PhoneChatMessage(role:"user",text:"忘掉我的测试花名")
+        let removeOnly=String(decoding:try JSONSerialization.data(withJSONObject:["invalidate":[["id":memory.items[0].id,"sourceIDs":[forget.id],"evidence":forget.text]]]),as:UTF8.self)
+        try memory.apply(removeOnly,batch:[forget],threadID:"another-conversation")
+        #expect(memory.items.isEmpty && memory.processed.contains(forget.id))
+    }
+    @Test func recallQuestionCannotAuthorizeModelToDeleteOrRewriteMemory() throws {
+        let first=PhoneChatMessage(role:"user",text:"请记住，测试花名是蓝色纸鹤")
+        var memory=PhoneMemoryState();try memory.apply(patch(first,text:"测试花名是蓝色纸鹤"),batch:[first],threadID:"t")
+        let question=PhoneChatMessage(role:"user",text:"我的测试花名是什么？"),id=memory.items[0].id
+        let hallucinatedDelete=String(decoding:try JSONSerialization.data(withJSONObject:["invalidate":[["id":id,"sourceIDs":[question.id],"evidence":question.text]]]),as:UTF8.self)
+        try memory.apply(hallucinatedDelete,batch:[question],threadID:"another")
+        #expect(memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+        try memory.apply(patch(question,text:"测试花名是橙色纸鹤",id:id),batch:[question],threadID:"another")
+        #expect(memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+    }
+    @Test func mimoEmptyNewIDIsNotAnUpdateToAnUnknownItem() throws {
+        let user=PhoneChatMessage(role:"user",text:"请记住，测试花名是蓝色纸鹤")
+        var memory=PhoneMemoryState()
+        try memory.apply(patch(user,text:"测试花名是蓝色纸鹤",id:""),batch:[user],threadID:"t")
+        #expect(memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+        let correction=PhoneChatMessage(role:"user",text:"不对，是绿色纸鹤")
+        try memory.apply(patch(correction,text:"测试花名是绿色纸鹤",id:"unknown-item"),batch:[correction],threadID:"t")
+        #expect(memory.items.map(\.text) == ["测试花名是蓝色纸鹤"])
+    }
+    @Test func memoryFactsLeaveCurrentMessageAndAttachmentsAvailableToChat() {
+        let empty=PhoneMemoryContext.localFacts(enabled:true,hasMemory:false,receipt:nil)
+        #expect(empty.contains("没有相关记录") && empty.contains("当前消息") && empty.contains("附件"))
+        #expect(empty.contains("尚未确认") && empty.contains("不要声称"))
+        let disabled=PhoneMemoryContext.localFacts(enabled:false,hasMemory:false,receipt:nil)
+        #expect(disabled.contains("已关闭") && disabled.contains("完整处理当前消息"))
+    }
+    @Test func failedSourcesPersistBackoffWithoutAdvancingProcessed() throws {
+        var memory=PhoneMemoryState(),thread=PhoneChatThread()
+        let message=PhoneChatMessage(role:"user",text:"合成待整理的事实")
+        thread.messages=[message];let start=Date(timeIntervalSince1970:1000)
+        memory.recordFailure([message],now:start)
+        #expect(memory.processed.isEmpty)
+        #expect(memory.batch(thread,now:start.addingTimeInterval(29)).isEmpty)
+        #expect(memory.batch(thread,now:start.addingTimeInterval(31)) == [message])
+        memory=try JSONDecoder().decode(PhoneMemoryState.self,from:JSONEncoder().encode(memory))
+        #expect(memory.retry?[message.id]?.failures == 1)
+        memory.recordFailure([message],now:start.addingTimeInterval(31))
+        #expect(memory.batch(thread,now:start.addingTimeInterval(90)).isEmpty)
+        #expect(memory.batch(thread,now:start.addingTimeInterval(92)) == [message])
+        try memory.apply(patch(message,text:message.text),batch:[message],threadID:thread.id)
+        #expect(memory.retry?[message.id] == nil && memory.processed.contains(message.id))
     }
 }
 
