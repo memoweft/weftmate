@@ -13,6 +13,7 @@ import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 import { observePageFailures, sceneFailureSummary } from '../../scripts/review-gallery/scene-diagnostics.mjs';
 import { renderingFailureSampler } from '../../scripts/review-gallery/rendering-snapshot.mjs';
+import { prepareMobileRendering } from '../../scripts/review-gallery/mobile-rendering.mjs';
 import { redactEvidenceText } from '../helpers/process-evidence.mjs';
 import { galleryBridge } from '../../scripts/nightly/gallery-bridge.mjs';
 import { startAndroid } from '../../scripts/nightly/android.mjs';
@@ -141,8 +142,7 @@ try {
           phase='session-list';await questionPage.evaluate(()=>listSharedSessions());
           phase='drawer-open';await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();
           phase='session-select';await questionPage.getByRole('button',{name:'渲染样张',exact:true}).click();
-          phase='heading-scroll';await questionPage.getByRole('heading',{name:'公式与图表',exact:true}).scrollIntoViewIfNeeded();
-          phase='diagram-ready';await questionPage.locator('.render-diagram img').waitFor();
+          await prepareMobileRendering(questionPage, next => { phase=next; });
         } catch(error) {error.scenePhase=phase;throw error;}
       },questionPage);
       await shot('library', async () => { await navigate(questionPage, candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^成果库(?:，|$)/}).click();await questionPage.getByRole('button',{name:'预览 项目进度报告.md',exact:true}).waitFor(); },questionPage);
