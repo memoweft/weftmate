@@ -13,6 +13,7 @@ import { createPersonalSyncStore } from '../personal-sync/index.mjs';
 import { createAttachmentStore } from '../personal-sync/attachments.mjs';
 import { createSharedAttachmentStore } from '../personal-access/shared-attachments.mjs';
 import { durableWrite } from '../personal-access/store.mjs';
+import { traceErasure, erasureTraceId, erasurePhase, erasureCheck } from './diagnostics.mjs';
 
 const TTL = 5 * 60 * 1000;
 export function createDataControls(context) {
@@ -26,7 +27,7 @@ export function createDataControls(context) {
   const current = owner => operations.get(owner);
   function start(owner, kind, work, { pending = false, fields = {} } = {}) {
     if (['running','pending_confirmation'].includes(current(owner)?.state)) throw failure('CONFLICT', 409);
-    const op = { id: randomUUID(), kind, state: pending ? 'pending_confirmation' : 'running', controller: new AbortController(), createdAt: new Date(context.timestamp()).toISOString(), ...fields };
+    const op = { id: erasureTraceId() ?? randomUUID(), kind, state: pending ? 'pending_confirmation' : 'running', controller: new AbortController(), createdAt: new Date(context.timestamp()).toISOString(), ...fields };
     operations.set(owner, op);
     if (pending) void event(owner, '请在电脑确认数据操作', null, '等待电脑确认').catch(() => {});
     if (work) execute(owner, op, work);
@@ -36,13 +37,14 @@ export function createDataControls(context) {
     op.state = 'running';
     op.flight = (async () => {
       try {
-        op.result = await work(op, op.controller.signal);
-        if (['clean','delete'].includes(op.kind)) await scan(owner, op.controller.signal);
-        if (context.rootState.accounts[owner]?.account && op.kind !== 'scan') await event(owner, op.kind === 'export' ? '全部数据已导出' : op.kind === 'delete' ? '本账户数据已删除' : op.kind === 'close-account' ? '本机账户已移除' : '数据操作已完成', op.category, '完成');
+        op.result = await erasurePhase('erase', () => work(op, op.controller.signal));
+        if (['clean','delete'].includes(op.kind)) await erasurePhase('statistics', () => scan(owner, op.controller.signal));
+        if (context.rootState.accounts[owner]?.account && op.kind !== 'scan') await erasurePhase('completion_activity', () => event(owner, op.kind === 'export' ? '全部数据已导出' : op.kind === 'delete' ? '本账户数据已删除' : op.kind === 'close-account' ? '本机账户已移除' : '数据操作已完成', op.category, '完成'));
         erasing.delete(owner);op.state = 'completed';
+        erasureCheck('completed', () => {});
       } catch (error) {
         op.state = op.controller.signal.aborted ? 'cancelled' : 'failed'; op.error = { code: error.code || 'STORAGE_UNAVAILABLE', category: op.category };
-        if (context.rootState.accounts[owner]) await event(owner, '数据操作未完成', op.category, op.state === 'cancelled' ? '已取消' : '可重试').catch(() => {});
+        if (context.rootState.accounts[owner]) await erasurePhase('failure_activity', () => event(owner, '数据操作未完成', op.category, op.state === 'cancelled' ? '已取消' : '可重试')).catch(() => {});
       } finally { erasing.delete(owner); }
     })();
   }
@@ -181,49 +183,59 @@ export function createDataControls(context) {
       }});
   }
   async function erase(owner, kind, op, signal) {
-    let state = context.accountState(owner);const inventory = await sources(owner,{signal});
-    for (const source of inventory) if (source.path) {op.category=source.category;await accountFiles(source.accountRoot, source.path, signal);}
-    const hasMemoryFile=await lstat(path.join(accountRoot(owner),'memory-home','memoweft','memoweft.sqlite3')).catch(error=>{if(error.code==='ENOENT')return null;throw error;});
-    if(hasMemoryFile && (!context.memoryManager?.enabled || typeof context.memoryManager.eraseAccount!=='function')){op.category='memory';throw failure('MEMORY_DELETE_UNAVAILABLE',503);}
+    let state = context.accountState(owner);const inventory = await erasurePhase('inventory', () => sources(owner,{signal}));
+    await erasurePhase('path_validation', async () => {
+      for (const source of inventory) if (source.path) {op.category=source.category;await accountFiles(source.accountRoot, source.path, signal);}
+    });
+    await erasurePhase('memory_preflight', async () => {
+      const hasMemoryFile=await lstat(path.join(accountRoot(owner),'memory-home','memoweft','memoweft.sqlite3')).catch(error=>{if(error.code==='ENOENT')return null;throw error;});
+      if(hasMemoryFile && (!context.memoryManager?.enabled || typeof context.memoryManager.eraseAccount!=='function')){op.category='memory';throw failure('MEMORY_DELETE_UNAVAILABLE',503);}
+    });
     signal.throwIfAborted(); op.committed=true;erasing.add(owner);
-    await context.healthInsights?.drain(owner);
-    await context.serial(() => context.mutate(owner, next => {
+    await erasurePhase('health_drain', () => context.healthInsights?.drain(owner), { skip: !context.healthInsights });
+    await erasurePhase('state_commit', () => context.serial(() => context.mutate(owner, next => {
       next.dataErasure = { operationId: op.id, kind, startedAt: new Date(context.timestamp()).toISOString() };
       if (next.memoryBackfillJob) next.memoryBackfillJob.state = 'cancelled';
       for (const command of Object.values(next.commands)) if (command.state==='pending') {command.state='rejected';command.errorCode='SESSION_UNAVAILABLE';command.updatedAt=new Date(context.timestamp()).toISOString();}
-    }));
-    await Promise.allSettled([...context.activeByCommand].filter(([key])=>key.startsWith(`${owner}|`)).map(([,flight])=>flight));
-    await Promise.allSettled([...context.activeModelOperations].filter(([key])=>key.startsWith(`${owner}|`)).map(([,flight])=>flight));
+    })));
+    await erasurePhase('commands_drain', () => Promise.allSettled([...context.activeByCommand].filter(([key])=>key.startsWith(`${owner}|`)).map(([,flight])=>flight)));
+    await erasurePhase('models_drain', () => Promise.allSettled([...context.activeModelOperations].filter(([key])=>key.startsWith(`${owner}|`)).map(([,flight])=>flight)));
     state=context.accountState(owner);
     // From here cancellation stops after a category, never reports partial erasure as success.
     op.committed = true; op.category = 'conversations';
-    await event(owner,'开始删除',op.category,'处理中');
-    for (const sessionId of Object.keys(state.sessions)) {
+    await erasurePhase('conversations_activity', () => event(owner,'开始删除',op.category,'处理中'));
+    await erasurePhase('conversations_erase', async () => { for (const sessionId of Object.keys(state.sessions)) {
       await context.sessionOperations.deleteSession(owner, sessionId, { accountErasure: true }); op.completed++;
-    }
+    } });
     op.category = 'memory';
-    await event(owner,'开始删除',op.category,'处理中');
-    await context.memoryManager?.healthStore?.delete(owner);
-    await context.memoryManager?.eraseAccount(owner, value => { op.completed += value.completed; });
-    await context.offline.invalidate(owner);
+    await erasurePhase('memory_activity', () => event(owner,'开始删除',op.category,'处理中'));
+    await erasurePhase('memory_health_erase', () => context.memoryManager?.healthStore?.delete(owner), { skip: !context.memoryManager?.healthStore });
+    await erasurePhase('memory_core', () => context.memoryManager?.eraseAccount(owner, value => { op.completed += value.completed; }), { skip: !context.memoryManager });
+    await erasurePhase('offline_invalidate', () => context.offline.invalidate(owner));
     op.category = 'files';
-    await event(owner,'开始删除',op.category,'处理中');
-    await context.syncStores.get(owner)?.close();
-    for (const source of inventory) if (source.path && !source.native) await removeAccountPath(source.accountRoot, source.path);
+    await erasurePhase('files_activity', () => event(owner,'开始删除',op.category,'处理中'));
+    await erasurePhase('sync_close', () => context.syncStores.get(owner)?.close(), { skip: !context.syncStores.get(owner) });
+    await erasurePhase('files_erase', async () => {
+      for (const source of inventory) if (source.path && !source.native) await removeAccountPath(source.accountRoot, source.path);
+    });
     // Revoke before resetting content. Offline generation is retained as a purge tombstone.
-    for (const deviceId of Object.keys(state.devices)) if (deviceId !== op.deviceId) await context.cloudIdentity?.revokeLocalDevice(owner, deviceId);
-    await context.cloudIdentity?.eraseLocalAccount?.(owner, kind === 'close-account', op.deviceId);
-    op.category = 'memory'; await context.usage.eraseAccount(owner);
-    await context.memoryManager?.markAccountErased(owner);
+    await erasurePhase('devices_revoke', async () => {
+      for (const deviceId of Object.keys(state.devices)) if (deviceId !== op.deviceId) await context.cloudIdentity?.revokeLocalDevice(owner, deviceId);
+      await context.cloudIdentity?.eraseLocalAccount?.(owner, kind === 'close-account', op.deviceId);
+    });
+    op.category = 'memory'; await erasurePhase('usage_erase', () => context.usage.eraseAccount(owner));
+    await erasurePhase('memory_mark_erased', () => context.memoryManager?.markAccountErased(owner), { skip: !context.memoryManager });
     const profileIds = Object.values(state.accountModels ?? {}).flatMap(row => Object.values(row.revisions ?? {}).map(revision => revision.profileId));
     const stageRefs=Object.values(state.modelOperations ?? {}).map(row=>row.stageRef).filter(Boolean);
-    if (profileIds.length || stageRefs.length) await context.accountModelManager.disable({ownerId:owner,profileIds,stageRefs});
+    if (profileIds.length || stageRefs.length) await erasurePhase('models_disable', () => context.accountModelManager.disable({ownerId:owner,profileIds,stageRefs}));
     // Shared migration preimages are rewritten by owner, never removed wholesale.
     const preimageFile=path.join(context.root,'chat-identity-v1.before.json');
-    const preimage=await readFile(preimageFile,'utf8').then(JSON.parse).catch(error=>{if(error.code==='ENOENT')return null;throw error;});
-    if(preimage?.accounts?.[owner]) {preimage.accounts[owner]={account:null,devices:{},sessions:{},commands:{},setupGrant:null,authLimits:{failures:0,lastFailureAt:0,lockUntil:0}};await durableWrite(preimageFile,preimage);}
-    await context.clearRestoredCloudOwner(owner);
-    await context.serial(() => context.mutateRoot(nextRoot => {
+    await erasurePhase('preimage_reset', async () => {
+      const preimage=await readFile(preimageFile,'utf8').then(JSON.parse).catch(error=>{if(error.code==='ENOENT')return null;throw error;});
+      if(preimage?.accounts?.[owner]) {preimage.accounts[owner]={account:null,devices:{},sessions:{},commands:{},setupGrant:null,authLimits:{failures:0,lastFailureAt:0,lockUntil:0}};await durableWrite(preimageFile,preimage);}
+    });
+    await erasurePhase('cloud_owner_reset', () => context.clearRestoredCloudOwner(owner));
+    await erasurePhase('state_reset', () => context.serial(() => context.mutateRoot(nextRoot => {
       if (kind === 'close-account') {
         delete nextRoot.accounts[owner];
         if (nextRoot.executionOwnerId === owner) delete nextRoot.executionOwnerId;
@@ -236,12 +248,12 @@ export function createDataControls(context) {
         reconcileChatIdentity(nextRoot.accounts[owner], nextRoot.hostId, new Date(context.timestamp()).toISOString()); activityState(nextRoot.accounts[owner]);
       }
       nextRoot.onboarding = { step: 'welcome', completed: false, started: false, ...(kind === 'close-account' ? {} : {ownerId:owner}) };
-    }));
+    })));
     if (kind !== 'close-account') {
-      await context.memoryManager?.markAccountErased(owner);
-      context.syncStores.set(owner, await createPersonalSyncStore({ root: context.syncRoot(owner), ownerId: owner }));
-      context.attachmentStores.set(owner, await createAttachmentStore({ root: path.join(context.syncRoot(owner), 'attachments') }));
-      context.sharedAttachmentStores.set(owner, await createSharedAttachmentStore({ root: path.join(context.syncRoot(owner), 'shared-attachments') }));
+      await erasurePhase('memory_mark_reset', () => context.memoryManager?.markAccountErased(owner), { skip: !context.memoryManager });
+      context.syncStores.set(owner, await erasurePhase('sync_rebuild', () => createPersonalSyncStore({ root: context.syncRoot(owner), ownerId: owner })));
+      context.attachmentStores.set(owner, await erasurePhase('attachments_rebuild', () => createAttachmentStore({ root: path.join(context.syncRoot(owner), 'attachments') })));
+      context.sharedAttachmentStores.set(owner, await erasurePhase('shared_attachments_rebuild', () => createSharedAttachmentStore({ root: path.join(context.syncRoot(owner), 'shared-attachments') })));
     }
     return { deleted: true, requiresLogin: kind === 'close-account', onboarding: true,
       cloudDeletionSafe: !!context.cloudIdentity && !Object.entries(context.rootState.accounts).some(([id,row])=>id!==owner&&row.account!==null),
@@ -249,8 +261,15 @@ export function createDataControls(context) {
       external: '程序、其他账户、项目原件、整机备份及已经导出的外部文件保留。其他设备下次连接时清理离线副本。' };
   }
   async function handle(request, response, url, owner) {
+    if (request.method === 'POST' && /^\/personal\/v1\/data\/(?:delete|close-account|confirm)$/.test(url.pathname)) {
+      return traceErasure(current(owner)?.state === 'pending_confirmation' ? current(owner).id : randomUUID(),
+        () => handleRequest(request, response, url, owner));
+    }
+    return handleRequest(request, response, url, owner);
+  }
+  async function handleRequest(request, response, url, owner) {
     if (!/^\/personal\/v1\/data(?:\/|$)/.test(url.pathname)) return false;
-    const auth = context.authenticate(request, request.method === 'GET' ? 'sessions:read' : 'account:manage');
+    const auth = erasureCheck('permission_authenticate', () => context.authenticate(request, request.method === 'GET' ? 'sessions:read' : 'account:manage'));
     const desktop = request.headers['x-weftmate-desktop'] === context.libraryDesktopToken;
     if (url.search) throw failure('INVALID_REQUEST');
     const canManage = context.hostOwner(owner) && auth.via === 'cookie' && auth.device.scopes.includes('account:manage');
@@ -264,7 +283,7 @@ export function createDataControls(context) {
     if (request.method === 'GET' && route === '/operations') return reply(200, { operation: publicOperation(current(owner)), statistics: cached.get(owner) ?? null });
     if (request.method !== 'POST') throw failure('NOT_FOUND', 404);
     const body = await context.readJson(request);
-    if (!canManage) throw failure('FORBIDDEN', 403);
+    erasureCheck('permission_owner', () => { if (!canManage) throw failure('FORBIDDEN', 403); });
     if (route === '/cancel') {
       exactKeys(body, ['id'], ['id']); const op = current(owner);
       if (!op || op.id !== body.id || op.committed) throw failure('CONFLICT', 409);
@@ -277,7 +296,8 @@ export function createDataControls(context) {
       return reply(202, { operation: start(owner, 'clean', (op, signal) => clean(owner, body.category, signal), { fields: { category: body.category } }) }); }
     if (['/export','/delete','/close-account'].includes(route)) {
       const kind = route.slice(1); exactKeys(body, ['accountName','confirm','destination'], kind === 'export' ? [] : ['accountName','confirm']);
-      if (kind !== 'export' && (body.confirm !== true || body.accountName !== context.accountState(owner).account?.username)) throw failure('INVALID_REQUEST');
+      erasureCheck('confirmation_account', () => { if (kind !== 'export' && (body.confirm !== true || body.accountName !== context.accountState(owner).account?.username)) throw failure('INVALID_REQUEST'); });
+      erasureCheck('confirmation_desktop', () => {}, { result: desktop ? 'ok' : 'pending' });
       if (!desktop) { if(body.destination!==undefined)throw failure('FORBIDDEN',403);return reply(202, { operation: start(owner, kind, null, { pending: true, fields: { deviceId: auth.deviceId } }) }); }
       const work = kind === 'export' ? (op, signal) => exportWork(owner,op,signal,body.destination,()=>context.authenticate(request,'account:manage'))
         : (op, signal) => erase(owner, kind, op, signal);
@@ -286,8 +306,8 @@ export function createDataControls(context) {
     if (route === '/confirm') {
       exactKeys(body, ['id','accountName','confirm','destination'], ['id','confirm']);
       const op = current(owner);
-      if (!desktop || !op || op.id !== body.id || op.state !== 'pending_confirmation' || body.confirm !== true) throw failure('FORBIDDEN',403);
-      if (op.kind !== 'export' && body.accountName !== context.accountState(owner).account?.username) throw failure('INVALID_REQUEST');
+      erasureCheck('confirmation_desktop', () => { if (!desktop || !op || op.id !== body.id || op.state !== 'pending_confirmation' || body.confirm !== true) throw failure('FORBIDDEN',403); });
+      erasureCheck('confirmation_account', () => { if (op.kind !== 'export' && body.accountName !== context.accountState(owner).account?.username) throw failure('INVALID_REQUEST'); });
       op.deviceId = auth.deviceId; op.bytes = 0; op.destination = body.destination;
       execute(owner, op, op.kind === 'export' ? (job, signal) => exportWork(owner,job,signal,body.destination,()=>context.authenticate(request,'account:manage')) : (job, signal) => erase(owner, op.kind, job, signal));
       return reply(202, { operation: publicOperation(op) });
