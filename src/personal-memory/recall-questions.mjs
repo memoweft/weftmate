@@ -7,14 +7,26 @@ export function recallQuestions(query, maxItems = 6) {
   return parts.length > 1 ? parts.filter(part => part !== query).slice(0, Math.min(5, maxItems)) : [];
 }
 
-// The first line chooses the grammar; never infer it from counts or dates.
-// Legacy Chinese is unchanged. New English uses LF between entries and quotes
+// Only an explicit first-line English header selects the new grammar.
+// Every other input keeps main's original parser. New English quotes
 // every body line starting with a reserved header or backslash with one '\'.
 const legacyHeader = /^记忆(?:（过往）)?：/u;
-const legacySeparator = /\n(?=记忆(?:（过往）)?：)/u;
 const englishHeader = /^Memory(?: \(past\))?:/u;
 const englishSeparator = /\n(?=Memory(?: \(past\))?:)/u;
 const reservedBodyLine = /^(?:记忆(?:（过往）)?：|Memory(?: \(past\))?:|\\)/u;
+
+export function isEnglishRecall(rendered) {
+  return englishHeader.test(rendered);
+}
+
+// Original main parser, including unheaded, empty and leading-comment inputs.
+function legacyRecallEntries(snapshots) {
+  const groups=snapshots.map(snapshot=>{
+    const claims=(snapshot?.preview?.rendered_recall??'').split(/\n(?=记忆(?:（过往）)?：)/);
+    return (snapshot?.preview?.selected_item_ids??[]).map((pair,index)=>({snapshot,pair,claim:claims[index]?.trim()}));
+  });
+  return [...groups.flatMap(group=>group.slice(0,1)),...groups.flatMap(group=>group.slice(1))];
+}
 
 function decodeEnglishClaim(claim) {
   const prefix = claim.match(englishHeader)[0];
@@ -35,19 +47,15 @@ export function recallEntries(snapshots) {
   const groups=snapshots.map(snapshot=>{
     const rendered=snapshot?.preview?.rendered_recall??'';
     const pairs=snapshot?.preview?.selected_item_ids??[];
-    if (legacyHeader.test(rendered)) {
-      const claims=rendered.split(legacySeparator);
-      return pairs.map((pair,index)=>({snapshot,pair,claim:claims[index]?.trim(),header:legacyHeader}));
+    if (!isEnglishRecall(rendered)) {
+      return legacyRecallEntries([snapshot]).map(entry=>({...entry,header:legacyHeader}));
     }
-    if (englishHeader.test(rendered)) {
-      const claims=rendered.split(englishSeparator).map(decodeEnglishClaim);
-      if (claims.length===pairs.length && claims.every(claim=>claim!==undefined)) {
-        return pairs.map((pair,index)=>({snapshot,pair,claim:claims[index],header:englishHeader}));
-      }
-      return [{snapshot,pair:null,claim:rendered,header:englishHeader}];
+    const claims=rendered.split(englishSeparator).map(decodeEnglishClaim);
+    if (claims.length===pairs.length && claims.every(claim=>claim!==undefined)) {
+      return pairs.map((pair,index)=>({snapshot,pair,claim:claims[index],header:englishHeader}));
     }
-    // Unknown or malformed new format remains complete and never gains IDs.
-    return [{snapshot,pair:null,claim:rendered,header:legacyHeader}];
+    // Malformed new English format remains complete and never gains IDs.
+    return [{snapshot,pair:null,claim:rendered,header:englishHeader}];
   });
   return [...groups.flatMap(group=>group.slice(0,1)),...groups.flatMap(group=>group.slice(1))];
 }
