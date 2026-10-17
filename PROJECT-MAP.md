@@ -66,7 +66,7 @@
 | Windows W3/H3/U1 | 失败 | 换工作误答旧输入[#431](https://github.com/memoweft/weftmate/issues/431)；有睡眠时长却称无记录[#429](https://github.com/memoweft/weftmate/issues/429)；内部术语[#433](https://github.com/memoweft/weftmate/issues/433) |
 | Windows H1 | 通过 | 真实到点通知与原生显示 |
 | Windows H5保存/查看/删除/目标进展 | 通过 | 删除另一条提醒，长期目标有两轮进展 |
-| Windows H5到点通知 | 未测 | 原约定2026-10-17 09:00尚未验到达 |
+| Windows H5到点通知 | 通过 | 2026-10-17 09:00原提醒按时投递、原生通知显示；候选`0.1.1-preview.701`，[回报](https://github.com/memoweft/weftmate/issues/332#issuecomment-6227712772) |
 | Windows全新记忆 | 失败 | 未启用；不是新随包组件或自动接线验收 |
 | Windows人工接Core529，M1/M2 | 通过 | 形成、新对话召回、纠正；不代表全新安装 |
 | Windows人工接Core529，M3/M7 | 失败 | 保留独立来源的导出残留、误删独立主题[#334](https://github.com/memoweft/weftmate/issues/334)；关联链删除成功不能抵消残留 |
