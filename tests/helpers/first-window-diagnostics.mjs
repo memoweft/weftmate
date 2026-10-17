@@ -27,7 +27,7 @@ function processSnapshot(child) {
   return { state, exitCode, signal };
 }
 
-function hostLogSnapshot(profile, processIds) {
+function hostLogSnapshot(profile, processIds, launchStartedAt) {
   if (!profile) return { status: 'unavailable' };
   let names;
   try { names = readdirSync(join(profile, 'logs')).filter(name => /^host-\d{4}-\d\d-\d\d(?:-\d+)?\.jsonl$/.test(name))
@@ -39,7 +39,16 @@ function hostLogSnapshot(profile, processIds) {
       try { const row = JSON.parse(line); if (row && typeof row === 'object') rows.push(row); } catch { /* Interrupted final write. */ }
     }
   } catch { return { status: 'unavailable' }; }
-  const start = rows.findLast(row => row.event === 'host.start' && processIds.has(row.pid));
+  const sampledAt = Date.now();
+  if (!Number.isFinite(launchStartedAt) || launchStartedAt <= 0 || launchStartedAt > sampledAt)
+    return { status: 'no-current-run' };
+  // The launcher and host log share the machine's millisecond wall clock.
+  // Do not admit pre-launch records: a live descendant may have reused a PID.
+  // Missing/invalid times or a backward clock change leave attribution unknown.
+  const start = rows.findLast(row => {
+    const at = typeof row.at === 'string' ? Date.parse(row.at) : NaN;
+    return row.event === 'host.start' && processIds.has(row.pid) && at >= launchStartedAt && at <= sampledAt;
+  });
   if (!start || typeof start.runId !== 'string') return { status: 'no-current-run' };
   const current = rows.filter(row => row.runId === start.runId && events.has(row.event))
     .sort((a, b) => a.recordIndex - b.recordIndex);
@@ -107,7 +116,7 @@ function stderrSnapshot(stderr) {
 
 /** Sample only after the unchanged firstWindow call fails, before host cleanup.
  * No Electron IPC: the main thread may be stalled. Publication is best effort. */
-export async function waitForFirstWindow({ app, profile, stderr = [], publish = message => console.error(message) }) {
+export async function waitForFirstWindow({ app, profile, launchStartedAt = NaN, stderr = [], publish = message => console.error(message) }) {
   try { return await app.firstWindow(); }
   catch (error) {
     try {
@@ -115,7 +124,7 @@ export async function waitForFirstWindow({ app, profile, stderr = [], publish = 
       // Playwright's Windows launcher is cmd.exe. Match the host only inside
       // that live process tree; never fall back to an unrelated/stale log run.
       const children = await childSnapshot(child?.pid, main.state);
-      const hostLog = hostLogSnapshot(profile, children.processIds), stderrTail = stderrSnapshot(stderr);
+      const hostLog = hostLogSnapshot(profile, children.processIds, launchStartedAt), stderrTail = stderrSnapshot(stderr);
       const snapshot = { process: main, hostLog, children: children.summary, stderrTail };
       try { error.firstWindowDiagnostics = snapshot; } catch { /* Preserve frozen errors too. */ }
       try { Promise.resolve(publish(`First window failure: ${JSON.stringify(snapshot)}`)).catch(() => {}); } catch {}
