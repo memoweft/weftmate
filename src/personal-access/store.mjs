@@ -11,6 +11,7 @@ import { open, rm } from 'node:fs/promises';
 import { ensurePrivateFile, forgetPrivateFile, openPrivateFile, renamePrivateFile } from '../private-host-storage.mjs';
 import { canonicalAccountBaseUrl, digest, failure, plainObject, validId, validProjectName, validTime } from './common.mjs';
 import path from 'node:path';
+import { erasurePhase } from '../personal-data/diagnostics.mjs';
 import {
   CONVERSATION_ID,
   FILE_ID,
@@ -52,6 +53,10 @@ import { APPROVAL_MODES, RISK_CATEGORIES } from '../plugins/personal-approval-po
 import { artifactContentType } from '../personal-artifacts/index.mjs';
 
 export async function durableWrite(file, state, shouldCommit = () => true) {
+  return erasurePhase('state_write', () => durableWriteImpl(file, state, shouldCommit));
+}
+
+async function durableWriteImpl(file, state, shouldCommit) {
   const releaseWrite = await enterProfileWrite(file);
   const tmp = `${file}.${randomUUID()}.tmp`;
   let handle;
