@@ -85,7 +85,7 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
       const domain = new URL(publicOrigin).hostname, tls = identity.tls();
       if (options.acme && !options.developmentTls) {
         certificates ??= await createCertificateManager({ root, domain, identity, certFile: options.certFile,
-          ...options.acme, onInstalled: async () => { await adapter?.reload(); } });
+          ...options.acme, diagnostic: options.diagnostic, onInstalled: async () => { await adapter?.reload(); } });
         if (closed) { await certificates.close(); return; }
         certificates.start();
         await certificates.check();

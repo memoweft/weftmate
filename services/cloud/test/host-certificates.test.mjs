@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, createHash, createPublicKey } from 'node:crypto';
-import { mkdtemp, readFile, writeFile, rm, stat, realpath } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile, rm, stat, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createCertificateManager } from '../../../src/personal-relay/certificates.mjs';
+import { createCertificateManager, issueHostCertificate } from '../../../src/personal-relay/certificates.mjs';
 import { developmentCertificate } from '../../../src/personal-relay/tls.mjs';
 const DAY = 86_400_000, domain = `h-${'b'.repeat(32)}.hosts.example.com`;
 function identity() {
@@ -13,6 +13,159 @@ function identity() {
   const spki = createHash('sha256').update(createPublicKey(privateKey).export({format:'der',type:'spki'})).digest('base64url');
   return {tls:()=>({privateJwk,spki}),relayRequest:async()=>{}};
 }
+
+// Run the real ACME client/signing/CSR against fixed RFC8555 responses. Pebble
+// rejects a second acceptance of a valid challenge, but permits POST-as-GET.
+function acmeFixture({ reused = false, processing = false, fail = () => {} } = {}) {
+  const base = 'https://acme.example.com', calls = [];
+  const nonces = new Set();
+  let validated = reused, polls = 0;
+  const order = () => ({ status: validated ? 'ready' : 'pending',
+    authorizations: [`${base}/authorization`], finalize: `${base}/finalize` });
+  const fetcher = async (url, options) => {
+    const route = new URL(url).pathname;
+    const payload = options.body ? JSON.parse(options.body).payload : undefined;
+    if (options.body) {
+      const { nonce } = JSON.parse(Buffer.from(JSON.parse(options.body).protected, 'base64url'));
+      assert.ok(nonce && !nonces.has(nonce), 'each sent JWS consumes a fresh nonce');
+      nonces.add(nonce);
+    }
+    calls.push({ route, payload });
+    const overridden = await fail(route, options);
+    if (overridden) return overridden;
+    let body, status = 200, location;
+    if (route === '/directory') body = { newNonce: `${base}/nonce`, newAccount: `${base}/account`,
+      newOrder: `${base}/order`, meta: { termsOfService: `${base}/terms` } };
+    else if (route === '/nonce') body = '';
+    else if (route === '/account') { body = { status: 'valid' }; location = `${base}/account/1`; }
+    else if (route === '/order') { body = order(); location = `${base}/order/1`; }
+    else if (route === '/authorization') body = { status: validated ? 'valid' : 'pending', identifier: { type: 'dns', value: domain },
+      challenges: [{ type: 'dns-01', status: validated ? 'valid' : 'pending', url: `${base}/challenge`, token: 'synthetic-challenge-token' }] };
+    else if (route === '/challenge') {
+      if (validated && payload) { status = 400; body = { type: 'urn:ietf:params:acme:error:malformed',
+        detail: 'Cannot update challenge with status valid, only status pending' }; }
+      else { validated = true; body = { type: 'dns-01', status: 'valid' }; }
+    } else if (route === '/finalize') body = { ...order(), status: processing ? 'processing' : 'valid',
+      ...(processing ? {} : { certificate: `${base}/certificate` }) };
+    else if (route === '/order/1') body = { ...order(), status: ++polls === 1 ? 'processing' : 'valid',
+      ...(polls === 1 ? {} : { certificate: `${base}/certificate` }) };
+    else if (route === '/certificate') body = '-----BEGIN CERTIFICATE-----\nsynthetic-certificate\n-----END CERTIFICATE-----';
+    else throw new Error('Unexpected fixture route');
+    return new Response(typeof body === 'string' ? body : JSON.stringify(body), { status,
+      headers: { 'content-type': typeof body === 'string' ? 'application/pem-certificate-chain' : 'application/json',
+        ...(route !== '/directory' ? { 'replay-nonce': `synthetic-nonce-${calls.length}` } : {}),
+        ...(location ? { location } : {}) } });
+  };
+  return { fetcher, calls, directoryUrl: `${base}/directory` };
+}
+
+test('renewal reuses a valid authorization without accepting its completed challenge or publishing TXT again', async () => {
+  const ca = acmeFixture({ reused: true }), dns = [];
+  const certificate = await issueHostCertificate({ ...ca, domain, accountKey: identity().tls().privateJwk,
+    privateJwk: identity().tls().privateJwk, signal: new AbortController().signal,
+    relayRequest: async route => { dns.push(route); } });
+  assert.ok(certificate.includes('synthetic-certificate'));
+  assert.deepEqual(dns, [], 'valid authorization needs no TXT publication/cleanup');
+  assert.equal(ca.calls.filter(c => c.route === '/challenge' && c.payload).length, 0, 'never accept a completed challenge again');
+  assert.equal(ca.calls.filter(c => c.route === '/finalize').length, 1);
+  assert.equal(ca.calls.filter(c => c.route === '/certificate').length, 1);
+});
+
+test('fresh DNS authorization and processing orders preserve publication, signed polling, download and cleanup', async () => {
+  const ca = acmeFixture({ processing: true }), dns = [];
+  const certificate = await issueHostCertificate({ ...ca, domain, accountKey: identity().tls().privateJwk,
+    privateJwk: identity().tls().privateJwk, signal: new AbortController().signal,
+    relayRequest: async route => { dns.push(route); } });
+  assert.ok(certificate.includes('synthetic-certificate'));
+  assert.deepEqual(dns, ['/hosts/relay/dns/present', '/hosts/relay/dns/cleanup']);
+  assert.equal(ca.calls.filter(c => c.route === '/finalize').length, 1);
+  const polls = ca.calls.filter(c => c.route === '/order/1');
+  assert.equal(polls.length, 2);
+  assert.ok(polls.every(c => c.payload === ''), 'order polling uses signed POST-as-GET');
+});
+
+test('issuance diagnostics identify ACME and DNS failure stages without reflecting secrets', async t => {
+  const secret = 'synthetic-private-data';
+  const response = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  const cases = [
+    { route: '/directory', stage: 'directory', error: Object.assign(new TypeError(secret), { cause: { code: 'ECONNREFUSED', address: secret } }), causeCode: 'ECONNREFUSED' },
+    { route: '/nonce', stage: 'nonce', status: 503 },
+    { route: '/account', stage: 'account', status: 403 },
+    { route: '/order', stage: 'order', status: 429 },
+    { route: '/authorization', stage: 'authorization', status: 500 },
+    { route: '/challenge', stage: 'validation', status: 400 },
+    { route: '/finalize', stage: 'finalize', status: 503 },
+    { route: '/order/1', stage: 'order_poll', status: 502, processing: true },
+    { route: '/certificate', stage: 'download', status: 502 },
+    { route: '/directory', stage: 'directory', status: 200, invalidJson: true },
+    { dns: true, stage: 'dns_publish', code: 'DNS_PROVIDER_ERROR' },
+    { dns: true, stage: 'dns_propagation', code: 'DNS_PROPAGATION_TIMEOUT' },
+    { cleanup: true, stage: 'dns_cleanup', code: 'CLOUD_UNAVAILABLE' },
+  ];
+  for (const entry of cases) await t.test(entry.stage + (entry.invalidJson ? ' invalid JSON' : ''), async () => {
+    const diagnostics = [], dns = [];
+    const ca = acmeFixture({ processing: entry.processing, fail: route => {
+      if (route !== entry.route) return;
+      if (entry.error) throw entry.error;
+      if (entry.invalidJson) return new Response(secret, { headers: { 'content-type': 'application/json' } });
+      return response(entry.status, { type: 'urn:ietf:params:acme:error:malformed', detail: secret,
+        token: secret, privateJwk: { d: secret }, url: `https://example.com/${secret}` });
+    } });
+    await assert.rejects(issueHostCertificate({ ...ca, domain, accountKey: identity().tls().privateJwk,
+      privateJwk: identity().tls().privateJwk, signal: new AbortController().signal,
+      diagnostic: error => diagnostics.push(error), relayRequest: async route => {
+        dns.push(route);
+        if (entry.dns && route.endsWith('/present') || entry.cleanup && route.endsWith('/cleanup'))
+          throw Object.assign(new Error(secret), { code: entry.code, cause: { code: secret } });
+      } }));
+    assert.equal(diagnostics.length, 1);
+    const diagnostic = diagnostics[0];
+    assert.equal(diagnostic.code, 'CERTIFICATE_ISSUANCE_FAILED');
+    assert.equal(diagnostic.stage, entry.stage);
+    assert.equal(diagnostic.target, entry.dns || entry.cleanup ? 'cloud_dns' : 'acme');
+    assert.equal(diagnostic.httpStatus, entry.status);
+    assert.equal(diagnostic.causeCode, entry.causeCode);
+    if (entry.code) assert.equal(diagnostic.errorCode, entry.code);
+    if (entry.status && !entry.invalidJson) assert.equal(diagnostic.acmeProblem, 'malformed');
+    assert.ok(!JSON.stringify(diagnostic).includes(secret));
+    assert.ok(!diagnostic.message.includes(secret));
+    assert.ok(!diagnostic.stack.includes(secret));
+    if (entry.dns) assert.deepEqual(dns, ['/hosts/relay/dns/present', '/hosts/relay/dns/cleanup']);
+  });
+});
+
+test('certificate validation and hot reload failures emit safe local diagnostics and preserve public error codes', async t => {
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), 'wm-cert-diagnostic-')));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const host = identity(), files = await developmentCertificate({ root, domain, ...host.tls() });
+  const good = await readFile(files.certFile), diagnostics = [];
+  let clock = Date.now();
+  const options = { root, domain, identity: host, now: () => clock, diagnostic: error => diagnostics.push(error) };
+  const malformed = await createCertificateManager({ ...options, issue: async () => 'synthetic-invalid-certificate' });
+  await malformed.check();
+  assert.equal(malformed.status().certificateErrorCode, 'CERTIFICATE_ISSUANCE_FAILED');
+  assert.equal(diagnostics[0].stage, 'validate_certificate');
+  await malformed.close();
+  clock += DAY;
+  const manager = await createCertificateManager({ ...options, issue: async () => good,
+    onInstalled: async () => { throw Object.assign(new Error('synthetic-private-data'), { code: 'EACCES' }); } });
+  await manager.check();
+  assert.equal(manager.status().certificateErrorCode, 'CERTIFICATE_ISSUANCE_FAILED');
+  assert.equal(diagnostics[1].stage, 'reload');
+  assert.equal(diagnostics[1].errorCode, 'EACCES');
+  assert.ok(!JSON.stringify(diagnostics).includes('synthetic-private-data'));
+  await manager.close();
+  clock += DAY;
+  const blocked = await createCertificateManager({ ...options, issue: async () => {
+    // Inspect succeeds first; a directory at the destination then makes the
+    // real atomic rename fail deterministically on both Windows and Linux.
+    await rm(manager.certFile); await mkdir(manager.certFile); return good;
+  } });
+  await blocked.check();
+  assert.equal(blocked.status().certificateErrorCode, 'CERTIFICATE_ISSUANCE_FAILED');
+  assert.equal(diagnostics[2].stage, 'install');
+  await blocked.close();
+});
 
 test('certificate failures keep the last good cert; retry once a day survives restart, and mismatched key is refused before install', async t => {
   const root = await realpath(await mkdtemp(path.join(tmpdir(),'wm-cert-test-')));t.after(()=>rm(root,{recursive:true,force:true}));
