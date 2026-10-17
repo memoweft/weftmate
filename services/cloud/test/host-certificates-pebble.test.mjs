@@ -9,13 +9,14 @@ import { request as httpsRequest } from 'node:https';
 import { Resolver } from 'node:dns/promises';
 import { X509Certificate } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
+import { FlattenedSign, importJWK } from 'jose';
 import { fixture } from './identity-helpers.mjs';
 import { appDevice, control, refresh, proof } from './app-helpers.mjs';
 import { createAliyunDns, waitForAuthoritativeTxt } from '../src/dns-aliyun.mjs';
 import { fakeAliyun, TEST_ACCESS_KEY_ID as accessKeyId, TEST_ACCESS_KEY_SECRET as accessKeySecret } from './dns-aliyun-helpers.mjs';
 import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
 import { createHostCloudIdentity } from '../../../src/personal-cloud/index.mjs';
-import { createCertificateManager } from '../../../src/personal-relay/certificates.mjs';
+import { createCertificateManager, issueHostCertificate } from '../../../src/personal-relay/certificates.mjs';
 import { tlsSpki } from '../../../src/personal-relay/tls.mjs';
 
 async function port() {
@@ -36,7 +37,12 @@ function child(binary, args, env) {
   }) };
 }
 
-test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → installed TLS/pairing pin → daily renewal without adapter restart',
+// Pebble 2.10.1 uses rand.Intn(100) > reusePercent, so even 0 permits
+// reuse 1% of the time. Exercise both paths deliberately, keeping all original
+// fresh-DNS assertions: deactivate the first authz only in that scenario.
+const reports = [];
+for (const reuseAuthorization of [false, true])
+test(`Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → installed TLS/pairing pin → daily renewal without adapter restart (${reuseAuthorization ? 'reused authorization' : 'fresh authorization'})`,
   { skip: process.env.WEFTMATE_PEBBLE_E2E !== 'true', timeout: 120_000 }, async t => {
     const root = await realpath(await mkdtemp(path.join(tmpdir(), 'wm-pebble-')));
     const tools = path.resolve('.local/pebble');
@@ -52,7 +58,7 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
     const dns = child(path.join(tools,'bin/pebble-challtestsrv'), ['-dnsserver', `127.0.0.1:${dnsPort}`, '-management', `127.0.0.1:${dnsManagementPort}`,
       '-http01','','-https01','','-tlsalpn01','','-doh','']);
     const pebble = child(path.join(tools,'bin/pebble'), ['-config', config, '-dnsserver', `127.0.0.1:${dnsPort}`],
-      { PEBBLE_VA_NOSLEEP: '1', PEBBLE_AUTHZREUSE: '0', PEBBLE_WFE_NONCEREJECT: '0' });
+      { PEBBLE_VA_NOSLEEP: '1', PEBBLE_AUTHZREUSE: '100', PEBBLE_WFE_NONCEREJECT: '0' });
     t.after(async () => { await pebble.close(); await dns.close(); await rm(root,{recursive:true,force:true}); });
     await waitFor(async () => { try { return (await fetch(directoryUrl)).ok; } catch { return false; } }, 'Pebble directory');
     const resolver = new Resolver({ timeout: 1000, tries: 1 }); resolver.setServers([`127.0.0.1:${dnsPort}`]);
@@ -69,6 +75,28 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
     t.after(() => clearInterval(clockTimer));
     await f.verified(); const logged = await f.signedIn();
     let host, renewal;
+    const diagnostic = error => t.diagnostic(JSON.stringify(error.stage ? error : { code: error.code ?? 'RELAY_UNAVAILABLE' }));
+    async function initialIssuance(options) {
+      let directory, accountUrl, authorizationUrl;
+      const certificate = await issueHostCertificate({ ...options, fetcher: async (url, init) => {
+        const response = await fetch(url, init);
+        if (url === directoryUrl) directory = await response.clone().json();
+        if (url === directory?.newAccount) accountUrl = response.headers.get('location');
+        if (url === directory?.newOrder) authorizationUrl = (await response.clone().json()).authorizations[0];
+        return response;
+      } });
+      if (!reuseAuthorization) {
+        const nonce = await fetch(directory.newNonce, { method: 'HEAD' });
+        const proof = await new FlattenedSign(Buffer.from(JSON.stringify({ status: 'deactivated' })))
+          .setProtectedHeader({ alg: 'ES256', kid: accountUrl, nonce: nonce.headers.get('replay-nonce'), url: authorizationUrl })
+          .sign(await importJWK(options.accountKey, 'ES256'));
+        const response = await fetch(authorizationUrl, { method: 'POST',
+          headers: { 'content-type': 'application/jose+json', 'user-agent': 'weftmate-test/0.1.0' }, body: JSON.stringify(proof) });
+        assert.ok(response.ok, 'fixture deactivates the first authorization before fresh-DNS renewal');
+        assert.equal((await response.json()).status, 'deactivated');
+      }
+      return certificate;
+    }
     try {
       const hostRoot = path.join(root,'host');
       const backend = { getStatus:async()=>({runtime:'ready'}),listModels:async()=>[],preflight:async()=>({ok:true}),
@@ -76,7 +104,7 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
       host = await createPersonalAccessService({ root:hostRoot,port:0,backend,
         cloudIdentity:{issuer:f.config.issuer,allowInsecureLoopback:true},
         relay:{binary:process.env.WEFTMATE_FRPC_FILE,transportCaFile:path.join(tools,'certs/pebble.minica.pem'),
-          connectAddress:'127.0.0.1',connectPort:unusedRelayPort,acme:{directoryUrl},diagnostic:error=>t.diagnostic(error.code??error.message)} });
+          connectAddress:'127.0.0.1',connectPort:unusedRelayPort,acme:{directoryUrl,issue:initialIssuance},diagnostic} });
       const started = await host.start();
       async function direct(route, body, auth) {
         const response = await fetch(`${started.origin}/personal/v1${route}`, { method:body!==undefined?'POST':'GET',headers:{
@@ -145,7 +173,7 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
         {issuer:f.config.issuer,allowInsecureLoopback:true});
       const identityBefore = JSON.parse(await readFile(path.join(hostRoot,'cloud-identity/identity.json'),'utf8'));
       let clock = Date.parse(new X509Certificate(original).validTo) - 29*86_400_000;
-      renewal = await createCertificateManager({root:hostRoot,domain,identity,directoryUrl,now:()=>clock,
+      renewal = await createCertificateManager({root:hostRoot,domain,identity,directoryUrl,now:()=>clock,diagnostic,
         onInstalled:()=>host.reloadRelayCertificate()});
       await renewal.check(); assert.equal(renewal.status().certificateErrorCode,null);
       const renewed = await tlsStatus(); assert.equal(renewed.status,200); assert.equal(tlsSpki(renewed.cert),pairing.tlsSpki);
@@ -161,12 +189,18 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
       assert.ok(isDeepStrictEqual(identityAfter.installation.privateJwk,identityBefore.installation.privateJwk),'installation private key unchanged');
       assert.ok(isDeepStrictEqual(identityAfter.installation.publicJwk,identityBefore.installation.publicJwk),'installation public key unchanged');
       assert.equal(identityAfter.hostId,identityBefore.hostId,'installation host identity unchanged');
-      assert.equal(fake.calls.filter(c=>c.action==='AddDomainRecord').length,2);
-      await renewal.check(); assert.equal(fake.calls.filter(c=>c.action==='AddDomainRecord').length,2,'no retry before tomorrow');
+      if (reuseAuthorization) {
+        assert.equal(fake.calls.filter(c=>c.action==='AddDomainRecord').length,1,'reused valid authorization needs no new TXT');
+        await renewal.check(); assert.equal(fake.calls.filter(c=>c.action==='AddDomainRecord').length,1,'no retry before tomorrow');
+      } else {
+        assert.equal(fake.calls.filter(c=>c.action==='AddDomainRecord').length,2);
+        await renewal.check(); assert.equal(fake.calls.filter(c=>c.action==='AddDomainRecord').length,2,'no retry before tomorrow');
+      }
       assert.equal(fake.records.size,1);
-      const report={ca:'Pebble 2.10.1',signedHostDns:true,aliDnsV3:true,dns01:true,hotReload:true,pairingPinUnchanged:true,
+      const report={ca:'Pebble 2.10.1',authorization:reuseAuthorization?'reused':'fresh',signedHostDns:true,aliDnsV3:true,dns01:true,hotReload:true,pairingPinUnchanged:true,
         renewal:true,liveConnectionPreserved:true,ownedTxtCleaned:true,cloudVerifiedDpop:true,localCookieReplayRejected:true};
-      if(process.env.WEFTMATE_PEBBLE_REPORT)await writeFile(process.env.WEFTMATE_PEBBLE_REPORT,JSON.stringify(report,null,2)+'\n');
+      reports.push(report);
+      if(process.env.WEFTMATE_PEBBLE_REPORT)await writeFile(process.env.WEFTMATE_PEBBLE_REPORT,JSON.stringify({scenarios:reports},null,2)+'\n');
       t.diagnostic(JSON.stringify(report));
     } catch(error) { t.diagnostic(pebble.output());t.diagnostic(dns.output());t.diagnostic(JSON.stringify(host?.relayStatus()));throw error; }
     finally { await renewal?.close();await host?.close(); }
