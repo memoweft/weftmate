@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtempSync, appendFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, appendFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -24,6 +24,33 @@ function application(child: any, error: any) {
   const calls: any[] = [];
   return { calls, process: () => child, firstWindow(...args: any[]) { calls.push(args); return Promise.reject(error); } };
 }
+
+test('first-window failure finds the live host log behind the real Windows shell launcher', { timeout: 15000 }, async t => {
+  const f = fixture(t, -1), entry = join(f.profile, 'host.mjs');
+  const moduleUrl = new URL('../src/host-log.mjs', import.meta.url).href;
+  writeFileSync(entry, `
+    import { createHostLog } from ${JSON.stringify(moduleUrl)};
+    const log = createHostLog(${JSON.stringify(f.profile)});
+    log.write('host.start', { pid: process.pid });
+    log.write('host.startup', { phase: 'window-prepare' });
+    process.stdout.write('ready\\n');
+    process.stdin.resume();
+  `);
+  const child = process.platform === 'win32'
+    ? spawn(`"${process.execPath}" "${entry}"`, { shell: true, windowsHide: true })
+    : spawn(process.execPath, [entry]);
+  t.after(async () => { if (child.exitCode === null) { const closed = once(child, 'close'); child.stdin.end(); await closed; } });
+  await once(child.stdout, 'data');
+  // A newer run outside the launcher's tree must not replace the real host.
+  const unrelated = createHostLog(f.profile);
+  unrelated.write('host.start', { pid: process.pid });
+  unrelated.write('host.startup', { phase: 'window-created' });
+  const error: any = timeout();
+  await assert.rejects(waitForFirstWindow({ app: application(child, error), profile: f.profile, publish() {} }), value => value === error);
+  assert.equal(error.firstWindowDiagnostics.hostLog.status, 'ok');
+  assert.equal(error.firstWindowDiagnostics.hostLog.lastStartupPhase, 'window-prepare');
+  assert.doesNotMatch(JSON.stringify(error.firstWindowDiagnostics), /host\.mjs|first-window-|runId/);
+});
 
 test('first-window failure samples a live real process before cleanup and keeps error identity and deadline', async t => {
   const child = spawn(process.execPath, ['-e', `
