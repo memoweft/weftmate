@@ -12,6 +12,7 @@ import { createOfflineService } from '../src/personal-offline/index.mjs';
 import { recallEntries } from '../src/personal-memory/recall-questions.mjs';
 import { recallDateCases } from './fixtures/recall-date-contract.ts';
 import legacyRecall from './fixtures/legacy-recall-output.json' with { type: 'json' };
+import unheadedRecall from './fixtures/legacy-unheaded-output.json' with { type: 'json' };
 import escapeCases from './fixtures/recall-escape-contract.json' with { type: 'json' };
 import { renderRecallReference } from './fixtures/recall-escape-reference.mjs';
 import { ACTIVITY_TYPES } from '../src/personal-access/activity-store.mjs';
@@ -76,6 +77,11 @@ for (const lang of ['en', 'zh'] as const) for (const dated of [false, true]) {
 for (const fixture of legacyRecall.cases.filter(item=>!item.pending&&item.budget===1200)) test(`G9 legacy parser matches main output: ${fixture.name}`,()=>{
  const snapshot={preview:{selected_item_ids:[['cognition','first'],['event','second']],rendered_recall:fixture.renderedRecall}};
  assert.deepEqual(recallEntries([snapshot]).map(({pair,claim})=>({pair,claim})),fixture.entries);
+});
+for(const fixture of unheadedRecall.cases.filter(item=>!item.pending&&item.budget===1200)) test(`G9 all non-English parser inputs match main: ${fixture.name}`,()=>{
+ const snapshot={preview:{selected_item_ids:fixture.pairs,rendered_recall:fixture.renderedRecall}};
+ assert.deepEqual(recallEntries([snapshot]).map(({pair,claim})=>({pair,claim})),
+  fixture.entries.map(({pair,claim})=>({pair,claim:claim===null?undefined:claim})));
 });
 test('G9 first-line format never crosses languages and malformed new headers retain unpaired original text',()=>{
  const claims=['Memory: [2026-01-06] A literal Memory: is part of this sentence.\n  Memory (past): quoted continuation.\n记忆力是另一个词。',

@@ -10,7 +10,7 @@ import { createPersonalHealthStore, OBSERVED_PENDING } from '../personal-health/
 import { semanticRecallStatus } from '../system-diagnostics.mjs';
 import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
-import { recallQuestions,recallEntries } from './recall-questions.mjs';
+import { recallQuestions,recallEntries,isEnglishRecall } from './recall-questions.mjs';
 import { createMemoryActions } from './actions.mjs';
 import { classifyForgetRequest, scopedForgetPlan, checkForgetCompletion, forgetSourceText } from './forget-model.mjs';
 
@@ -813,9 +813,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         for (const snapshot of snapshots) {
           const rendered = snapshot?.preview?.rendered_recall ?? '';
           const pairs = snapshot?.preview?.selected_item_ids ?? [];
-          // Keep main's no-ID projection only for the unchanged legacy format;
-          // new and unknown formats are handled without trimming by recallEntries.
-          if (!pairs.length && /^记忆(?:（过往）)?：/u.test(rendered) && rendered.trim() &&
+          // Only explicit new English framing opts out of main's projection.
+          if (!pairs.length && !isEnglishRecall(rendered) && rendered.trim() &&
               fragments.join('\n\n').length + rendered.length + 2 <= formalBudget && !fragments.includes(rendered.trim())) fragments.push(rendered.trim());
         }
         for (const entry of recallEntries(snapshots)) {

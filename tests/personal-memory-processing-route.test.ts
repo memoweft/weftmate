@@ -6,6 +6,7 @@ import test from 'node:test'
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs'
 import { recallDateCases } from './fixtures/recall-date-contract.ts'
 import legacyRecall from './fixtures/legacy-recall-output.json' with { type: 'json' }
+import unheadedRecall from './fixtures/legacy-unheaded-output.json' with { type: 'json' }
 import escapeCases from './fixtures/recall-escape-contract.json' with { type: 'json' }
 import { renderRecallReference } from './fixtures/recall-escape-reference.mjs'
 
@@ -44,6 +45,16 @@ for (const fixture of legacyRecall.cases) test(`G9 legacy manager matches main o
   }, fixture.budget)
   const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
   assert.deepEqual(result, fixture.expected, `must exactly match original main ${legacyRecall.baseline}`)
+})
+
+for (const fixture of unheadedRecall.cases) test(`G9 all non-English manager inputs match main: ${fixture.name}`, async t => {
+  const manager = recallContractManager(t, {
+    selected_item_ids: fixture.pairs, rendered_recall: fixture.renderedRecall,
+    pending_corrections: fixture.pending ? [{ evidence_id: 'synthetic-correction',
+      text: 'Synthetic correction. '.repeat(80), created_at: '2026-10-17T00:00:00Z' }] : [],
+  }, fixture.budget)
+  const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+  assert.deepEqual(result, fixture.expected, `must exactly match original main ${unheadedRecall.baseline}`)
 })
 
 const formatCases = [
@@ -96,9 +107,8 @@ for (const fixture of escapeCases) {
   })
 }
 
-for (const rendered of ['', '\nMemory: not the first line', ' Memory: indented first line',
-  'Plain preface\nMemory: first\n记忆：second', 'Memory: first\n\\unescaped backslash\nMemory: second']) {
-  test(`G9 non-header first lines or malformed new escapes stay unpaired: ${JSON.stringify(rendered)}`, async t => {
+for (const rendered of ['Memory: first\n\\unescaped backslash\nMemory: second']) {
+  test(`G9 malformed new English escapes stay unpaired: ${JSON.stringify(rendered)}`, async t => {
     const manager = recallContractManager(t, { selected_item_ids: [['cognition', 'first'], ['event', 'second']], rendered_recall: rendered })
     const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
     assert.equal(result.sourceCount, 0)
