@@ -7,6 +7,16 @@ const fail = code => Object.assign(new Error(code), { code });
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const invocation = ['-B', '-m', 'memoweft.integrations.dsh_bridge'];
 
+// An unavailable installation still needs the same manager/outbox so repair
+// can resume it. The factory validates these paths before any process starts.
+export function bundledMemoryConfiguration({ directory, manifestSha256, mode }) {
+  const root = resolve(directory);
+  return Object.freeze({ python: join(root, 'python', 'python.exe'), pythonPath: join(root, 'core', 'src'),
+    baseUrl: 'http://127.0.0.1:1/v1', model: '@current', authRef: 'bundled-current',
+    semanticCacheDirectory: mode === 'full' ? join(root, 'models') : null,
+    verification: { directory: root, manifestSha256, mode } });
+}
+
 /** The application metadata pins the manifest verified by the package builder.
  * Nothing in this check executes Python, downloads files or writes user data. */
 export async function loadBundledMemoryConfig({ directory, manifestSha256, mode }) {
@@ -44,9 +54,7 @@ export async function loadBundledMemoryConfig({ directory, manifestSha256, mode 
     if (found.size !== Object.keys(manifest.files ?? {}).length ||
         !found.has('python/python.exe') || !found.has('core/src/memoweft/integrations/dsh_bridge/__main__.py'))
       throw fail('MEMORY_COMPONENT_INVALID');
-    return Object.freeze({ python: join(root, 'python', 'python.exe'), pythonPath: join(root, 'core', 'src'),
-      baseUrl: 'http://127.0.0.1:1/v1', model: '@current', authRef: 'bundled-current',
-      semanticCacheDirectory: mode === 'full' ? join(root, 'models') : null });
+    return bundledMemoryConfiguration({ directory: root, manifestSha256, mode });
   } catch (cause) {
     throw fail(cause?.code === 'ENOENT' ? 'MEMORY_COMPONENT_MISSING' : 'MEMORY_COMPONENT_INVALID');
   }
@@ -54,7 +62,7 @@ export async function loadBundledMemoryConfig({ directory, manifestSha256, mode 
 
 /** Use the manager's existing factory seam; preserve explicit configurations. */
 export function bundledMemoryRpcFactory(config, onFailure = () => {}) {
-  return options => {
+  const factory = options => {
     const rpc = new MemoWeftRpc({ ...options, pythonArgs: invocation,
       env: { ...options.env, MEMOWEFT_SEMANTIC_CACHE_DIR: config.semanticCacheDirectory ?? '' } });
     const request = rpc.request.bind(rpc);
@@ -67,4 +75,9 @@ export function bundledMemoryRpcFactory(config, onFailure = () => {}) {
     };
     return rpc;
   };
+  // The manager owns the retry budget and durable pending sources. Explicit
+  // deployments retain their existing lifecycle without this opt-in.
+  factory.managedRuntime = true;
+  factory.validate = config.verification ? () => loadBundledMemoryConfig(config.verification) : null;
+  return factory;
 }

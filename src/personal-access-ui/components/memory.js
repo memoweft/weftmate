@@ -54,15 +54,23 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     function memoryStatus(message, error = false) {
         const node = ui.byId('memory-status');
         ui.paintMemoryHealth?.(core.memory.status);
-        if (core.memory.status?.state === 'unavailable' && [
-            'MEMORY_COMPONENT_MISSING', 'MEMORY_COMPONENT_INVALID', 'MEMORY_PROCESS_UNAVAILABLE',
-            'MEMORY_PROTOCOL_INCOMPATIBLE', 'MEMORY_PROTOCOL_ERROR', 'MEMORY_TIMEOUT',
-        ].includes(core.memory.status.reasonCode)) {
+        if (core.memory.status?.state === 'unavailable') {
             node.textContent = '记忆暂时没开，聊天仍可用；请';
             const repair = ui.element('a', '', '下载并重新安装');
             repair.href = 'https://weftmate.com/downloads/';
             repair.target = '_blank'; repair.rel = 'noopener noreferrer';
             node.append(repair, '，已有记忆会保留。');
+            if (globalThis.weftmateDesktop?.repairSystem) {
+                const retry = ui.element('button', 'button secondary small', '修复记忆');
+                retry.type = 'button';
+                retry.addEventListener('click', async () => {
+                    retry.disabled = true;
+                    try { await globalThis.weftmateDesktop.repairSystem('memory'); }
+                    catch { /* Keep the download repair action available on failure. */ }
+                    finally { retry.disabled = false; await core.openMemory(); }
+                });
+                node.append(retry);
+            }
             node.classList.toggle('is-error', true);
             return;
         }

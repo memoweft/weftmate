@@ -40,10 +40,10 @@ export class MemoWeftRpc {
     child.stdout.on('data', (part) => this.consume(String(part)));
     // RPC stderr may contain private source text. It is never forwarded to HTTP or logs.
     child.stderr.resume();
-    child.on('error', () => this.failAll('MEMORY_PROCESS_UNAVAILABLE'));
-    child.on('close', () => {
+    child.on('error', () => this.failAll('MEMORY_PROCESS_UNAVAILABLE', { executionFailure: true }));
+    child.on('close', (exitCode, signal) => {
       if (this.child === child) this.child = null;
-      this.failAll('MEMORY_PROCESS_UNAVAILABLE');
+      this.failAll('MEMORY_PROCESS_UNAVAILABLE', { processExitCode: exitCode, processSignal: signal });
     });
   }
 
@@ -79,10 +79,10 @@ export class MemoWeftRpc {
     }
   }
 
-  failAll(code) {
+  failAll(code, details = {}) {
     for (const entry of this.pending.values()) {
       clearTimeout(entry.timer);
-      entry.reject(failed(code));
+      entry.reject(Object.assign(failed(code), details));
     }
     this.pending.clear();
   }
@@ -94,7 +94,7 @@ export class MemoWeftRpc {
       return Promise.reject(failed('MEMORY_CONFIGURATION_INVALID'));
     }
     if (this.pending.size >= MAX_PENDING) return Promise.reject(failed('MEMORY_BUSY'));
-    try { this.start(); } catch { return Promise.reject(failed('MEMORY_PROCESS_UNAVAILABLE')); }
+    try { this.start(); } catch { return Promise.reject(Object.assign(failed('MEMORY_PROCESS_UNAVAILABLE'), { executionFailure: true })); }
     const requestId = `weftmate-${randomUUID()}`;
     const frame = { protocol: PROTOCOL, protocol_version: VERSION, schema_version: SCHEMA,
       request_id: requestId, method, params };

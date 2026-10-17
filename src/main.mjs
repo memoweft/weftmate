@@ -100,7 +100,7 @@ import { FORMAL_LOCAL_BASE_URL, OCCAMY_VISION_PROFILE_ID, listFormalLocalModels,
 import { servePersonalAccessUi } from './personal-access-ui/index.mjs';
 import { createPersonalDesktop } from './personal-desktop.mjs';
 import { loadDesktopMemoryConfig } from './personal-memory/config.mjs';
-import { bundledMemoryRpcFactory } from './personal-memory/bundled-runtime.mjs';
+import { bundledMemoryConfiguration, bundledMemoryRpcFactory } from './personal-memory/bundled-runtime.mjs';
 import { createPersonalMemoryManager } from './personal-memory/index.mjs';
 import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
 import { parseWindowsSendTo, forwardWindowsSendTo } from './windows-system-integration.mjs';
@@ -3152,12 +3152,15 @@ async function bootstrap() {
   }
 
   if (personalMemoryRequested) {
-    const { config: memoryConfig, failureCode } = await loadDesktopMemoryConfig({ explicitPath: personalMemoryConfigPath,
+    const runtimeOptions = { directory: installedDesktopConfig?.memoryRuntimeDirectory,
+      mode: packageInfo.memoryRuntimeMode, manifestSha256: packageInfo.memoryRuntimeManifestSha256 };
+    const { config: loadedMemoryConfig, failureCode } = await loadDesktopMemoryConfig({ explicitPath: personalMemoryConfigPath,
       directory: installedDesktopConfig?.memoryRuntimeDirectory, mode: packageInfo.memoryRuntimeMode,
       manifestSha256: packageInfo.memoryRuntimeManifestSha256 });
+    const memoryConfig = loadedMemoryConfig ?? bundledMemoryConfiguration(runtimeOptions);
     personalMemoryRuntimeConfig = memoryConfig;
-    if (memoryConfig) {
-    hostLog.write('memory.bridge', { phase: 'configured', configured: true });
+    try { hostLog.write('memory.bridge', { phase: failureCode ? 'failed' : 'configured', configured: !failureCode,
+      ...(failureCode ? { code: failureCode } : {}) }); } catch { /* Observation only. */ }
     personalMemoryManager = createPersonalMemoryManager({
       root: join(userDataDir, 'personal-access'), enabled: true,
       ...(!personalMemoryConfigPath ? { rpcFactory: bundledMemoryRpcFactory(memoryConfig,
@@ -3182,13 +3185,6 @@ async function bootstrap() {
           onUnavailable: result => personalAccessService.reportBackgroundModel(ownerId, profile.id, result) }) ? 'ready' : 'waiting';
       },
     });
-    } else {
-      try { hostLog.write('memory.bridge', { phase: 'failed', configured: false, code: failureCode }); } catch { /* Observation only. */ }
-      personalMemoryManager = createPersonalMemoryManager({ root: join(userDataDir, 'personal-access') });
-      const disabledStatus = personalMemoryManager.status.bind(personalMemoryManager);
-      personalMemoryManager.status = async ownerId => ({ ...await disabledStatus(ownerId),
-        state: 'unavailable', reasonCode: failureCode, lastFailureCode: failureCode });
-    }
   }
   const personalDesktopTask = accessPort === null ? null : createPersonalDesktopTask();
   personalBrowserReader = accessPort === null ? null :
@@ -3550,7 +3546,8 @@ async function bootstrap() {
             host: () => enqueueRouteMutation(() => replaceSharedRuntime()),
             memory: ownerId => {
               if (!personalMemoryManager) throw Object.assign(new Error('MEMORY_DISABLED'), { code: 'CAPABILITY_UNAVAILABLE' });
-              return personalMemoryManager.invalidateOwnerRoute(ownerId);
+              return personalMemoryConfigPath ? personalMemoryManager.invalidateOwnerRoute(ownerId)
+                : personalMemoryManager.repairRuntime(ownerId);
             },
             model: async ownerId => {
               const profile = systemModelProfile(ownerId);
