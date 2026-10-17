@@ -77,3 +77,32 @@ test('a wait exception is still the identical exception and starts no further re
     { pause: async () => { throw original; }, now: () => 0 }));
   assert.equal(error, original); assert.equal(reads, 1);
 });
+
+test('an observation exception preserves the original final-state diagnostic after all 100 waits', async () => {
+  let reads = 0, waits = 0, clock = 20;
+  const privateDetail = 'synthetic-private-observation-detail';
+  const error = await failureOf(() => waitForFrozenSessionCreate(async () => {
+    reads++; clock += 2;
+    return { command: { state: 'dispatching', errorCode: 'BACKEND_UNAVAILABLE' } };
+  }, {
+    pause: async ms => { assert.equal(ms, 5); waits++; clock += ms; }, now: () => clock,
+    observe: () => { throw Error(privateDetail); },
+  }));
+  const diagnostic = details(error);
+  assert.deepEqual(diagnostic, { polls: 100, lastState: 'dispatching', errorCode: 'BACKEND_UNAVAILABLE', elapsedMs: 700,
+    interval: 'first-poll-start-to-final-wait-end', observationFailed: true, observationError: 'OBSERVER_EXCEPTION' });
+  assert.equal(reads, 100); assert.equal(waits, 100);
+  assert.equal(error.message.includes(privateDetail), false);
+});
+
+test('observer exceptions are classified without reading or serializing arbitrary thrown values', async () => {
+  const forbidden = { get name() { throw Error('Do not read error names'); },
+    toJSON() { throw Error('Do not serialize errors'); }, toString() { throw Error('Do not coerce errors'); } };
+  for (const thrown of [undefined, forbidden, 'synthetic-private-error-text']) {
+    const error = await failureOf(() => waitForFrozenSessionCreate(async () => ({ command: { state: 'uncertain', errorCode: 'RECEIPT_TIMEOUT' } }),
+      { pause: async () => {}, now: () => 0, observe: () => { throw thrown; } }));
+    assert.deepEqual(details(error), { polls: 100, lastState: 'uncertain', errorCode: 'RECEIPT_TIMEOUT', elapsedMs: 0,
+      interval: 'first-poll-start-to-final-wait-end', observationFailed: true, observationError: 'OBSERVER_EXCEPTION' });
+    assert.equal(error.message.includes('synthetic-private-error-text'), false);
+  }
+});
