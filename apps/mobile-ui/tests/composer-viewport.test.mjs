@@ -6,6 +6,8 @@ import {resolve} from 'node:path';
 import {startMainChatCandidate} from '../../../tests/integration/main-chat-candidate.mjs';
 import {localUiSession} from '../../../tests/helpers/local-ui-session.mjs';
 import {healthPageSynthetic} from '../../../tests/helpers/health-page-synthetic.mjs';
+import {observedRoutes} from './observed-routes.mjs';
+import {withTestCleanup} from './test-cleanup.mjs';
 
 test('remote phone composer remains inside the visual viewport with folders, suggestions, connection bar and keyboard',async()=>{
   const f=await startMainChatCandidate(10),browser=await chromium.launch({headless:true});
@@ -76,12 +78,16 @@ test('mobile bundle keeps the composer and bottom tabs inside safe areas and abo
   }finally{await browser.close();await f.close();}
 });
 
-test('the fifth mobile tab opens health, keeps other tabs reachable and quotes without sending',async()=>{
-  const f=await startMainChatCandidate(10,{logicalMobile:true}),browser=await chromium.launch({headless:true}),health=healthPageSynthetic();let reminders=0;
-  try{
+test('the fifth mobile tab opens health, keeps other tabs reachable and quotes without sending',async t=>{
+  const health=healthPageSynthetic();let reminders=0;
+  let f,browser,routes;
+  await withTestCleanup(async()=>{
+    f=await startMainChatCandidate(10,{logicalMobile:true});
+    browser=await chromium.launch({headless:true});
     const page=await browser.newPage({viewport:{width:360,height:780},isMobile:true,hasTouch:true});
-    await page.route('**/bridge.js',r=>r.fulfill({contentType:'text/javascript',body:'// authenticated HTTP test'}));
-    await page.route('**/personal/v1/**',async r=>{const u=new URL(r.request().url());if(/\/health\/(?:overview|calendar)$|\/health\/metrics\/|\/remind$/.test(u.pathname)){if(r.request().method()==='POST')reminders++;return r.fulfill({json:health.reply(u.href)});}const response=await r.fetch({url:f.origin+u.pathname+u.search,headers:{...r.request().headers(),origin:f.origin}});await r.fulfill({response});});
+    routes=observedRoutes(page);
+    await routes.route('**/bridge.js','bridge',r=>r.fulfill({contentType:'text/javascript',body:'// authenticated HTTP test'}));
+    await routes.route('**/personal/v1/**','business',async r=>{const u=new URL(r.request().url());if(/\/health\/(?:overview|calendar)$|\/health\/metrics\/|\/remind$/.test(u.pathname)){if(r.request().method()==='POST')reminders++;return r.fulfill({json:health.reply(u.href)});}const response=await r.fetch({url:f.origin+u.pathname+u.search,headers:{...r.request().headers(),origin:f.origin}});await r.fulfill({response});});
     await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);
     const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}});assert.equal(login.status(),200);
     await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await uiCore.selectMainChat();},await login.json());
@@ -90,5 +96,5 @@ test('the fifth mobile tab opens health, keeps other tabs reachable and quotes w
     await page.getByRole('button',{name:'提醒我',exact:true}).click();await page.getByRole('button',{name:'已设提醒',exact:true}).waitFor();assert.equal(reminders,1);
     await page.getByRole('button',{name:'接着问它',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#draft').value.includes('把今天的节奏放轻松'));assert.match(await page.locator('#draft').inputValue(),/^> /);
     await page.getByRole('tab',{name:'健康',exact:true}).click();await page.getByRole('button',{name:'恢复，查看详情',exact:true}).click();await page.locator('.health-detail').waitFor();await page.getByRole('button',{name:'返回今日',exact:true}).click();await page.getByRole('tab',{name:'健康',exact:true}).focus();await page.keyboard.press('End');assert.equal(await page.getByRole('tab',{name:'成果库',exact:true}).getAttribute('aria-selected'),'true');
-  }finally{await Promise.all(browser.contexts().flatMap(context=>context.pages()).map(page=>page.unrouteAll({behavior:'wait'})));await browser.close();await f.close();}
+  },[()=>routes?.close(),()=>t.diagnostic('route lifecycle='+JSON.stringify(routes?.events??[])),()=>browser?.close(),()=>f?.close()]);
 });
