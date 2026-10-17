@@ -148,7 +148,7 @@ async function fixture(t: any, { interpret = null, misattribute = false, birthda
 
 // Exercise the actual plugin and host tool entry against Core. Only DSH message
 // construction/tool registration and the transport failure are synthetic seams.
-for (const scenario of ['long conditional', 'long unconditional', 'history fallback', 'without pre-step', 'failed authorization'] as const)
+for (const scenario of ['long conditional', 'long unconditional', 'history fallback', 'without pre-step', 'failed authorization', '15999', '16000', '16001'] as const)
 test(`FIX-50 full review real Core: ${scenario} never reauthorizes incomplete forgetting`, { skip }, async t => {
   const f = await fixture(t)
   const before = await f.world()
@@ -184,9 +184,12 @@ test(`FIX-50 full review real Core: ${scenario} never reauthorizes incomplete fo
   }
   try {
     apply({ on: (name: string, fn: any) => handlers.set(name, fn), effect: (fn: any) => disposals.push(fn()) })
-    const text = '忘掉我喝茶的偏好。' + (scenario === 'failed authorization' ? '' : '附加说明。'.repeat(3300))
+    const boundaryLength = Number(scenario), leading = '忘掉我喝茶的偏好。', ending = '如果会删除来源原文就先别执行。'
+    const text = Number.isFinite(boundaryLength) ? leading + '附'.repeat(boundaryLength - leading.length - ending.length) + ending
+      : '忘掉我喝茶的偏好。' + (scenario === 'failed authorization' ? '' : '附加说明。'.repeat(3300))
       + (scenario === 'long unconditional' || scenario === 'failed authorization' ? '' : '如果会删除来源原文就先别执行。')
-    if (scenario !== 'failed authorization') assert.ok(text.length > 16000)
+    if (Number.isFinite(boundaryLength)) assert.equal(text.length, boundaryLength)
+    else if (scenario !== 'failed authorization') assert.ok(text.length > 16000)
     const user = { id: 'full-review-user', source: { kind: 'user' }, content: [{ type: 'text', text }] }
     const events: any[] = [{ seq: 1, type: 'turn/start', data: { turn: 1 } }, { seq: 2, type: 'user/message', data: user }]
     const agent: any = { id: 'full-review', status: 'running', ctx: { tools: { register: (tool: any) => tools.set(tool.name, tool) } },
@@ -204,6 +207,7 @@ test(`FIX-50 full review real Core: ${scenario} never reauthorizes incomplete fo
     assert.equal(after.world_revision, before.world_revision)
     assert.equal(commands.length, 0)
     assert.ok(['unavailable', 'withheld', 'no_action'].includes(result.state))
+    if (Number.isFinite(boundaryLength)) assert.equal(result.state, boundaryLength <= 16000 ? 'no_action' : 'unavailable')
     assert.match(result.message, /没有.*(?:删|执行)|还没忘掉/)
     const reply = events.filter(event => event.type === 'assistant/message').flatMap(event => event.data.message.content).map(part => part.text).join('')
     assert.match(reply, /没有.*(?:删|执行)|还没忘掉/)
@@ -244,6 +248,113 @@ test('FIX-50 full review real Core: the memory page deletes a standalone failed 
     provenance: row.provenance.map(source => ({ ...source, evidence: { ...source.evidence, world_revision: revision + 1 } })) })),
     'The independent memory and its source must survive unchanged at the new global revision')
   assert.equal(f.trace.filter(row => row.method === 'submit_command').length, 1)
+})
+
+test('FIX-50 recovery real Core: an old queued truncated authorization cannot survive host restart', { skip }, async t => {
+  const f = await fixture(t), before = await f.world()
+  const full = '忘掉我喝茶的偏好。' + '附加说明。'.repeat(3300) + '如果会删除来源原文就先别执行。'
+  const requestId = 'memory-tool:' + createHash('sha256').update('old-queued-prefix').digest('hex')
+  // Exact persisted record shape produced by 9e869a97's host tool + actions
+  // after classification succeeds and planning throws MEMORY_BUSY. No plan or
+  // command was persisted; the original message survived beside its prefix.
+  const record = { requestId, name: 'memory_forget', arguments: { query: '我喝茶的偏好' }, sessionId: 'old-queued-prefix', modelTier: 'cloud',
+    source: { id: 'old-prefix-user', text: full.slice(0, 16000),
+      message: { message_id: 'old-prefix-user', content: full, preceding_ai_context: null } },
+    scope: { isForgetRequest: true, subject: 'self', topic: '我喝茶的偏好', conditionsOrQuestions: false, authorized: true } }
+  await f.manager.close()
+  const file = path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json')
+  await writeFile(file, JSON.stringify({ records: { [requestId]: record } }))
+  await f.restart(); await f.ready()
+  const result = await wait(async () => JSON.parse(await readFile(file, 'utf8')).records[requestId].result)
+  const after = await f.world(), commands = f.trace.filter(row => row.method === 'submit_command')
+  console.log('recovery authorization', JSON.stringify({ before: before.items.length, after: after.items.length,
+    commands: commands.length, state: result.state }))
+  assert.deepEqual(after.items, before.items)
+  assert.equal(after.world_revision, before.world_revision)
+  assert.equal(commands.length, 0)
+  assert.equal(result.state, 'withheld'); assert.match(result.message, /重新确认/)
+  assert.doesNotMatch(result.message, /已忘掉|已删除/)
+  assert.equal(JSON.parse(await readFile(file, 'utf8')).records[requestId].source, undefined)
+  await f.restart(); await f.ready()
+  assert.equal(f.trace.filter(row => row.method === 'submit_command').length, 0)
+  assert.deepEqual((await f.world()).items, before.items)
+})
+
+for (const scenario of ['missing original', 'conditional original', 'judge unavailable', 'current frozen prefix', 'legacy frozen prefix', 'valid original'] as const)
+test(`FIX-50 recovery real Core: ${scenario} is checked again before any saved deletion`, { skip }, async t => {
+  const f = await fixture(t, { malformedDecision: scenario === 'judge unavailable' }), before = await f.world()
+  const safe = '忘掉我喝茶的偏好。', full = scenario.includes('prefix') ? safe + '附加说明。'.repeat(3300) + '如果会删除来源原文就先别执行。'
+    : scenario === 'conditional original' ? safe + '如果会删除来源原文就先别执行。' : safe
+  const requestId = 'memory-tool:' + createHash('sha256').update(scenario).digest('hex')
+  const record: any = { requestId, name: 'memory_forget', arguments: { query: '我喝茶的偏好' }, sessionId: 'old-saved', modelTier: 'cloud',
+    source: { text: full.slice(0, 16000), ...(scenario === 'missing original' ? {} : { message: { content: full } }) },
+    scope: { isForgetRequest: true, subject: 'self', topic: '我喝茶的偏好', conditionsOrQuestions: false, authorized: true } }
+  if (scenario.includes('frozen')) {
+    record.plan = await f.manager.planForget(owner, { ...record, source: { text: safe, message: { content: safe } } })
+    assert.equal(record.plan.completionState, 'complete')
+    if (scenario === 'legacy frozen prefix') delete record.plan.completionVersion
+  }
+  await f.manager.close()
+  const file = path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json')
+  await writeFile(file, JSON.stringify({ records: { [requestId]: record } }))
+  const decisionsBefore = f.trace.filter(row => row.modelDecision === 'classify_forget_request').length
+  await f.restart(); await f.ready()
+  const result = await wait(async () => JSON.parse(await readFile(file, 'utf8')).records[requestId].result)
+  const after = await f.world(), valid = scenario === 'valid original'
+  assert.equal(result.state, valid ? 'applied' : 'withheld')
+  assert.equal(f.trace.filter(row => row.method === 'submit_command').length, valid ? 1 : 0)
+  if (valid) {
+    assert.equal(after.items.length, 0)
+    assert.equal(f.trace.filter(row => row.modelDecision === 'classify_forget_request').length, decisionsBefore + 1)
+  } else {
+    assert.deepEqual(after.items, before.items); assert.equal(after.world_revision, before.world_revision)
+    assert.match(result.message, /重新确认/); assert.doesNotMatch(result.message, /已忘掉|已删除/)
+  }
+  const saved = JSON.parse(await readFile(file, 'utf8')).records[requestId]
+  assert.equal(saved.source, undefined); assert.equal(saved.scope, undefined)
+  if (!valid) {
+    const repeated = await f.manager.mutateFromTool(owner, { ...record, source: { text: safe, message: { content: safe } } })
+    assert.equal(repeated.state, 'withheld', 'A new body under an old identity cannot replace the saved rejection')
+    assert.equal(f.trace.filter(row => row.method === 'submit_command').length, 0)
+  }
+})
+
+for (const committed of [true, false]) test(`FIX-50 recovery real Core: a ${committed ? 'committed' : 'unconfirmed'} frozen command is checked by receipt without replay`, { skip }, async t => {
+  const f = await fixture(t), safe = '忘掉我喝茶的偏好。'
+  const record: any = { requestId: 'memory-tool:' + createHash('sha256').update('committed-old').digest('hex'), name: 'memory_forget',
+    arguments: { query: '我喝茶的偏好' }, source: { text: safe, message: { content: safe } }, sessionId: 'old-committed', modelTier: 'cloud',
+    scope: { authorized: true, subject: 'self', topic: '我喝茶的偏好' } }
+  record.plan = await f.manager.planForget(owner, record)
+  const target = record.plan.worldTargets[0], key = `${target.kind}:${target.id}`
+  const command = { requestId: 'old-committed-command', operation: 'delete_world_item', targetKind: target.kind, targetId: target.id,
+    expectedWorldRevision: record.plan.worldRevision, payload: {} }
+  if (committed) {
+    const receipt = await f.manager.submitCommand(owner, command)
+    assert.equal(receipt.receipt.result_state, 'applied')
+  }
+  record.commands = { [key]: command }
+  await f.manager.close()
+  const file = path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json')
+  await writeFile(file, JSON.stringify({ records: { [record.requestId]: record } }))
+  const decisions = f.decisions
+  await f.restart(); await f.ready()
+  if (!committed) {
+    const pending = await f.manager.mutateFromTool(owner, record)
+    assert.equal(pending.state, 'queued'); assert.match(pending.message, /未能确认/)
+    assert.doesNotMatch(pending.message, /没有执行遗忘|没有删除记忆/)
+    assert.equal(f.trace.filter(row => row.method === 'submit_command').length, 0)
+    const saved = JSON.parse(await readFile(file, 'utf8')).records[record.requestId]
+    assert.deepEqual(saved.commands, record.commands); assert.equal(saved.result, undefined)
+    // Simulate the original in-flight command's late commit. Recovery itself
+    // must only query this identity, not dispatch it to discover its outcome.
+    await f.manager.submitCommand(owner, command)
+    assert.equal((await f.manager.mutateFromTool(owner, record)).state, 'partial')
+  }
+  const result = await wait(async () => JSON.parse(await readFile(file, 'utf8')).records[record.requestId].result)
+  assert.equal(result.state, 'partial'); assert.match(result.message, /原请求已执行.*没有继续删除/)
+  assert.equal(f.trace.filter(row => row.method === 'submit_command').length, 1)
+  assert.equal(f.decisions, decisions, 'An existing command is settled from its receipt, not a new authorization')
+  assert.equal((await f.world()).items.length, 0)
 })
 
 test('FIX-50 G7 M7 real Core: forgetting blue preserves the independent walking source in the same recall candidates', { skip }, async t => {

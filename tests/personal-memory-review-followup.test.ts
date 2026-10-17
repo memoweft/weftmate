@@ -170,6 +170,7 @@ test('FIX-50 R4: cancellation during selection leaves no command and no retryabl
   const gate = new Promise<void>(resolve => { release = resolve })
   const controller = new AbortController()
   const actions = createMemoryActions({ root, schedule() {}, manager: () => ({
+    async revalidateForget(_owner: string, action: any) { return action.scope ?? action.plan?.authorization ?? { authorized: true } },
     async planForget() { entered(); await gate; return { evidenceIds: ['synthetic-source'], authorization: { authorized: true } } },
     async query() { return { world_revision: 1 } },
     async submitCommand() { commands++; return { result_state: 'applied' } },
@@ -188,6 +189,7 @@ test('FIX-50 R4: cancellation after dispatch cannot turn a lost receipt into a c
   const root = await mkdtemp(join(tmpdir(), 'weftmate-cancel-receipt-'))
   const controller = new AbortController()
   const actions = createMemoryActions({ root, schedule() {}, manager: () => ({
+    async revalidateForget(_owner: string, action: any) { return action.scope ?? action.plan?.authorization ?? { authorized: true } },
     async planForget() { return { version: 2, worldRevision: 1, evidenceIds: ['synthetic-source'], authorization: { authorized: true } } },
     async query() { return { world_revision: 1 } },
     async submitCommand() { controller.abort(); throw Error('transport lost after Core commit') },
@@ -204,6 +206,7 @@ for (const legacy of [false, true]) test(`FIX-50 authorization fence: ${legacy ?
   let deleted = false, expected: number | undefined
   const action = { requestId: 'frozen-authorization', name: 'memory_forget', arguments: {}, source: { text: '忘掉我的生日' } }
   const actions = createMemoryActions({ root, schedule() {}, manager: () => ({
+    async revalidateForget(_owner: string, action: any) { return action.scope ?? action.plan?.authorization ?? { authorized: true } },
     async planForget() { return { version: 2, worldRevision: 7, authorization: { authorized: true },
       evidenceIds: [], authorizedEvidenceIds: legacy ? ['old-source', 'new-source'] : ['old-source'],
       affectedIds: legacy ? ['old-item', 'new-item'] : ['old-item'], worldTargets: [{ kind: 'cognition', id: 'old-item' }] } },

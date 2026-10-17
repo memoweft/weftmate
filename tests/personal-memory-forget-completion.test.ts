@@ -39,6 +39,7 @@ async function fixture(t: any) {
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const route = { baseUrl: `http://127.0.0.1:${(server.address() as any).port}`, model: 'synthetic', credential: 'synthetic', modelTier: 'cloud' };
   const manager: any = {
+    async revalidateForget(_owner: string, action: any) { return action.scope ?? action.plan?.authorization; },
     status: async () => ({ state: 'ready', capabilities: { deleteWorldItem: true, deleteEvidence: true } }),
     async query(_owner: string, method: string, params: any) {
       assert.equal(_owner, owner);

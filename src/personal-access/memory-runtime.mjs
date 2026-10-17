@@ -1,4 +1,5 @@
 import { handlePersonalMemoryHttp } from '../personal-memory/http.mjs';
+import { forgetSourceText } from '../personal-memory/forget-model.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
 
@@ -48,8 +49,7 @@ export async function handlePersonalMemoryTool(manager, ownerId, tool, { session
     if (!correct && memoryPolicy?.recall !== true) return { state: 'withheld',
       message: '这段对话没开记忆，这次没有删除；你可以到记忆页选择要删除的内容。' };
     if (byQuery && memoryPolicy?.recall !== true) return { state: 'withheld', message: '这段对话没开记忆，请先开启记忆再按内容查找。' };
-    if (!correct && (typeof tool.source?.text !== 'string' || !tool.source.text.trim() || tool.source.text.length > 16000 ||
-        tool.source.message && (typeof tool.source.message.content !== 'string' || tool.source.message.content.trim() !== tool.source.text.trim())))
+    if (!correct && forgetSourceText(tool.source) === null)
       return { state: 'withheld', message: '无法完整核对这条消息，这次没有执行遗忘；请单独发一条简短、明确的遗忘请求。' };
     return manager.mutateFromTool(ownerId, { requestId: tool.requestId, name: tool.name, arguments: args,
       sessionId, modelTier, source: tool.source, signal });
