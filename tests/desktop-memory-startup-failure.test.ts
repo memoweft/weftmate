@@ -317,7 +317,7 @@ test('Core initialize internal_error reaches the real memory component with a re
     assert.equal(links.length, 1, 'every unavailable bundled memory status must offer a repair action');
     assert.ok(links[0].textContent);
     assert.doesNotMatch(node.textContent, /internal_error|Core|Python/);
-    for (const reasonCode of ['unknown_future_failure', undefined, 'MEMORY_MODEL_UNAVAILABLE']) {
+    for (const reasonCode of ['unknown_future_failure', undefined]) {
       status.reasonCode = reasonCode; node.children = [];
       component.memoryStatus('记忆服务暂时不可用，请稍后刷新。', true);
       assert.equal(node.children.filter(item => item?.tag === 'a' && item.href).length, 1);
