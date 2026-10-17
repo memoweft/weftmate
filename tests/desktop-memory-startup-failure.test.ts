@@ -22,8 +22,10 @@ async function harness(t, mode, configure = async root => ({ semanticCacheDirect
   let starts = 0;
   const mocked = t.mock.method(childProcess, 'spawn', () => {
     starts++;
-    return spawn(mode === 'execution-error' ? join(root, 'missing-python.exe') : process.execPath,
-      mode === 'execution-error' ? [] : [fixture, mode], {
+    const selectedMode = typeof mode === 'function' ? mode(starts) : mode;
+    if (selectedMode === 'spawn-eagain') throw Object.assign(new Error('Synthetic temporary process resource failure'), { code: 'EAGAIN' });
+    return spawn(selectedMode === 'execution-error' ? join(root, 'missing-python.exe') : process.execPath,
+      selectedMode === 'execution-error' ? [] : [fixture, selectedMode], {
       stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true,
     });
   });
@@ -48,7 +50,8 @@ async function harness(t, mode, configure = async root => ({ semanticCacheDirect
 }
 
 test('a deterministic bundled startup failure stops automatic process starts and retains its source', async t => {
-  const h = await harness(t, 'exit');
+  // A validated Core rejection proves the cause; a bare nonzero exit does not.
+  const h = await harness(t, 'initialize-error');
   try {
     await h.manager.ingest(owner, { event_id: 'synthetic-startup-source',
       parent_session_id: 'synthetic-session', source_messages: [{ role: 'user', content: 'Synthetic source retained for repair.' }] });
@@ -64,6 +67,45 @@ test('a deterministic bundled startup failure stops automatic process starts and
 
 const source = { event_id: 'synthetic-recovery-source', parent_session_id: 'synthetic-session',
   source_messages: [{ role: 'user', content: 'Keep the entire synthetic source after repair.' }] };
+
+test('two unknown early exits with code 75 recover on the third start and deliver one source', async t => {
+  const h = await harness(t, attempt => attempt <= 2 ? 'exit-75' : 'ready');
+  try {
+    await h.manager.ingest(owner, source);
+    await delay(9500);
+    const pending = await h.manager.pendingStatus(owner);
+    console.log(JSON.stringify({ reproduction: 'two-exit-75-then-ready', starts: h.starts(), pending: pending.pendingBoundaryCount }));
+    assert.equal(h.starts(), 3);
+    await assertDelivered(h);
+    assert.equal((await h.manager.status(owner)).state, 'ready');
+    console.log(JSON.stringify({ reproduction: 'two-exit-75-then-ready', delivered: 1 }));
+  } finally { await h.close(); }
+});
+
+test('persistent unknown early exits with code 75 stop after exactly three starts', async t => {
+  const h = await harness(t, 'exit-75');
+  try {
+    await h.manager.ingest(owner, source);
+    await delay(9500);
+    assert.equal(h.starts(), 3);
+    assert.equal((await h.manager.status(owner)).state, 'unavailable');
+    await h.manager.flushPending(owner); await delay(4500);
+    assert.equal(h.starts(), 3);
+    const pending = await h.manager.pendingStatus(owner);
+    assert.equal(pending.pendingBoundaryCount, 1); assert.equal(pending.blockedBoundaryCount, 0);
+    assert.equal(pending.discardedBoundaryCount, 0);
+    console.log(JSON.stringify({ reproduction: 'persistent-exit-75', starts: h.starts(), pending: pending.pendingBoundaryCount }));
+  } finally { await h.close(); }
+});
+
+test('temporary spawn EAGAIN is not evidence of an invalid interpreter', async t => {
+  const h = await harness(t, attempt => attempt <= 2 ? 'spawn-eagain' : 'ready');
+  try {
+    await h.manager.ingest(owner, source); await delay(9500);
+    assert.equal(h.starts(), 3); await assertDelivered(h);
+    assert.equal((await h.manager.status(owner)).state, 'ready');
+  } finally { await h.close(); }
+});
 async function until(check, timeout = 20000) {
   const end = Date.now() + timeout;
   while (Date.now() < end) { if (await check()) return; await delay(25); }
