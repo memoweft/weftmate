@@ -27,6 +27,9 @@ export class MemoWeftRpc {
     this.env = env;
     this.requestTimeoutMs = requestTimeoutMs;
     this.child = null;
+    this.started = false;
+    this.closing = false;
+    this.closeFlight = null;
     this.closed = false;
     this.pending = new Map();
     this.buffer = '';
@@ -35,6 +38,11 @@ export class MemoWeftRpc {
   start() {
     if (this.closed) throw failed('MEMORY_CLOSING');
     if (this.child) return;
+    if (this.closing) throw failed('MEMORY_CLOSING');
+    // One transport owns exactly one process. Only the manager may replace a
+    // disconnected worker, after charging its retry budget and initializing it.
+    if (this.started) throw failed('MEMORY_PROCESS_UNAVAILABLE');
+    this.started = true;
     const child = spawn(this.python, this.pythonArgs, {
       env: { ...process.env, ...this.env, PYTHONPATH: this.pythonPath },
       stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true,
@@ -94,7 +102,7 @@ export class MemoWeftRpc {
   }
 
   request(method, params = {}, timeoutMs = this.requestTimeoutMs) {
-    if (this.closed) return Promise.reject(failed('MEMORY_CLOSING'));
+    if (this.closed || this.closing && method !== 'shutdown') return Promise.reject(failed('MEMORY_CLOSING'));
     if (!/^[a-z_]{2,80}$/.test(method) || !params || typeof params !== 'object' || Array.isArray(params) ||
         !Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 60_000) {
       return Promise.reject(failed('MEMORY_CONFIGURATION_INVALID'));
@@ -123,7 +131,14 @@ export class MemoWeftRpc {
     });
   }
 
-  async close() {
+  close() {
+    if (this.closeFlight) return this.closeFlight;
+    this.closing = true;
+    this.closeFlight = this.finishClose();
+    return this.closeFlight;
+  }
+
+  async finishClose() {
     if (this.closed) return;
     try { if (this.child) await this.request('shutdown', {}, 3_000); } catch { /* Bounded shutdown. */ }
     this.closed = true;

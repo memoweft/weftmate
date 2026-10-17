@@ -56,6 +56,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const retryTimers = new Map();
   const retryCounts = new Map();
   const runtimeFailures = new Map();
+  const runtimeGenerations = new Map();
+  const repairingOwners = new Set();
+  const repairFlights = new Map();
   const startupWorlds = new Set();
   const formationOwners = new Set();
   const outboxQueues = new Map();
@@ -199,11 +202,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     }
     return 'MEMORY_BOUNDARY_FAILED';
   };
-  async function noteBoundaryFailure(ownerId, eventId, cause) {
+  async function noteBoundaryFailure(ownerId, eventId, cause, generation = runtimeGeneration(ownerId)) {
+    if (!runtimeCurrent(ownerId, generation)) return null;
     const code = boundaryFailureCode(cause);
     boundaryFailures.set(ownerId, code);
     await queueOutbox(ownerId, async () => {
       const latest = await readOutbox(ownerId);
+      if (!runtimeCurrent(ownerId, generation)) return;
       const row = latest.items.find((item) => item.boundary.event_id === eventId);
       if (!row) return;
       if (code === 'MEMORY_SOURCE_DELETED') {
@@ -220,6 +225,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       await writeOutbox(ownerId, latest);
     });
     const backlog = await outboxStatus(ownerId);
+    if (!runtimeCurrent(ownerId, generation)) return code;
     const entry = entries.get(ownerId);
     if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
     if (code === 'MEMORY_SOURCE_DELETED' && backlog.pendingBoundaryCount === 0) {
@@ -236,8 +242,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         state.lastFailureCode };
   }
   function runtimeStopped(ownerId) { return runtimeFailures.get(ownerId)?.stopped === true; }
+  function runtimeGeneration(ownerId) { return runtimeGenerations.get(ownerId) ?? 0; }
+  function runtimeCurrent(ownerId, generation) { return generation === runtimeGeneration(ownerId) && !repairingOwners.has(ownerId); }
+  function assertRuntimeCurrent(ownerId, generation) {
+    if (!runtimeCurrent(ownerId, generation)) throw Object.assign(error('MEMORY_CLOSING'), { runtimeCancelled: true });
+  }
   function recordRuntimeFailure(ownerId, entry, cause, initializing = false) {
-    if (!rpcFactory.managedRuntime || closing) return;
+    if (!rpcFactory.managedRuntime || closing || !runtimeCurrent(ownerId, entry.generation)) return;
     // Core 2112aa8 protocol_v2.py:134-140,334-336 validates this immutable
     // initialization argument; 813-825 shows why internal_error is NOT safe here.
     const confirmed = ['MEMORY_COMPONENT_MISSING', 'MEMORY_COMPONENT_HASH_MISMATCH'].includes(cause?.code) ||
@@ -259,81 +270,92 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     startupWorlds.add(ownerId);
     scheduleRetry(ownerId);
   }
-  function scheduleRetry(ownerId, immediate = false) {
-    if (closing || runtimeStopped(ownerId) || retryTimers.has(ownerId)) return;
+  function scheduleRetry(ownerId, immediate = false, generation = runtimeGeneration(ownerId)) {
+    if (closing || !runtimeCurrent(ownerId, generation) || runtimeStopped(ownerId) || retryTimers.has(ownerId)) return;
     const attempt = retryCounts.get(ownerId) ?? 0;
     const timer = setTimeout(() => {
+      if (!runtimeCurrent(ownerId, generation) || retryTimers.get(ownerId) !== timer) return;
       retryTimers.delete(ownerId);
       const active = flushFlights.get(ownerId);
       if (active) {
         // This wake-up may belong to a boundary queued after the active drain's
         // snapshot. Keep it until that drain finishes instead of consuming it.
-        void active.finally(() => scheduleRetry(ownerId, true)).catch(() => {});
+        void active.finally(() => scheduleRetry(ownerId, true, generation)).catch(() => {});
         return;
       }
-      void flushPending(ownerId).catch(() => {});
+      void flushPending(ownerId, generation).catch(() => {});
     }, immediate ? 0 : Math.min(30_000, 1000 * 2 ** Math.min(attempt, 5)));
     timer.unref?.(); retryTimers.set(ownerId, timer);
   }
-  function flushPending(ownerId) {
+  function flushPending(ownerId, generation = runtimeGeneration(ownerId)) {
+    if (!runtimeCurrent(ownerId, generation)) return Promise.resolve(new Map());
     if (flushFlights.has(ownerId)) return flushFlights.get(ownerId);
-    const work = drainPending(ownerId).finally(() => flushFlights.delete(ownerId));
+    const work = drainPending(ownerId, generation).finally(() => { if (flushFlights.get(ownerId) === work) flushFlights.delete(ownerId); });
     flushFlights.set(ownerId, work);
     return work;
   }
-  async function drainPending(ownerId) {
+  async function drainPending(ownerId, generation) {
     const results = new Map();
-    if (closing || runtimeStopped(ownerId) || erasingOwners.has(ownerId)) return results;
+    if (closing || !runtimeCurrent(ownerId, generation) || runtimeStopped(ownerId) || erasingOwners.has(ownerId)) return results;
+    const retry = immediate => scheduleRetry(ownerId, immediate, generation);
     clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
     let pending;
     try { pending = await queueOutbox(ownerId, () => readOutbox(ownerId)); }
-    catch { failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); return results; }
+    catch { if (runtimeCurrent(ownerId, generation)) failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); return results; }
+    if (!runtimeCurrent(ownerId, generation)) return results;
     // An empty host outbox does not mean Core has finished formation. Open
     // existing worlds on startup even without a UI/status request, and use
     // the existing retry schedule if the model route is not yet available.
     if (!pending.items.length && startupWorlds.has(ownerId)) {
       try { await withOwner(ownerId, () => {}); }
       catch (cause) {
+        if (!runtimeCurrent(ownerId, generation)) return results;
         failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
-        scheduleRetry(ownerId);
+        retry();
         retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1);
       }
     }
     for (const row of pending.items) {
-      if (closing || row.blocked) break;
+      if (closing || !runtimeCurrent(ownerId, generation) || row.blocked) break;
       const boundary = row.boundary;
       try {
         const result = await withOwner(ownerId, entry => entry.rpc.request('ingest_boundary', { boundary }),
           row.offline === true ? null : boundary.parent_session_id);
+        if (!runtimeCurrent(ownerId, generation)) return results;
         formationOwners.add(ownerId);
         await queueOutbox(ownerId, async () => {
           const latest = await readOutbox(ownerId);
+          if (!runtimeCurrent(ownerId, generation)) return;
           latest.items = latest.items.filter(item => item.boundary.event_id !== boundary.event_id);
           await writeOutbox(ownerId, latest);
         });
+        if (!runtimeCurrent(ownerId, generation)) return results;
         results.set(boundary.event_id, { state: 'accepted', jobState: result?.job_state ?? 'unknown' });
         retryCounts.delete(ownerId);
       } catch (cause) {
+        if (!runtimeCurrent(ownerId, generation)) return results;
         let code;
-        try { code = await noteBoundaryFailure(ownerId, boundary.event_id, cause); }
-        catch { code = 'MEMORY_OUTBOX_CORRUPT'; failures.set(ownerId, code); }
+        try { code = await noteBoundaryFailure(ownerId, boundary.event_id, cause, generation); }
+        catch { code = 'MEMORY_OUTBOX_CORRUPT'; if (runtimeCurrent(ownerId, generation)) failures.set(ownerId, code); }
+        if (!runtimeCurrent(ownerId, generation)) return results;
         results.set(boundary.event_id, { state: code === 'MEMORY_SOURCE_DELETED' ? 'discarded'
           : ['MEMORY_BOUNDARY_BLOCKED', 'MEMORY_OUTBOX_CORRUPT'].includes(code) ? 'blocked' : 'queued', reasonCode: code });
         if (code === 'MEMORY_SOURCE_DELETED') continue;
         if (!['MEMORY_BOUNDARY_BLOCKED', 'MEMORY_OUTBOX_CORRUPT'].includes(code)) {
-          scheduleRetry(ownerId); retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1);
+          retry(); retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1);
         }
         break;
       }
     }
     const backlog = await outboxStatus(ownerId);
+    if (!runtimeCurrent(ownerId, generation)) return results;
     const entry = entries.get(ownerId);
     if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
     if (!backlog.pendingBoundaryCount) boundaryFailures.delete(ownerId);
-    else if (!backlog.blockedBoundaryCount) scheduleRetry(ownerId);
+    else if (!backlog.blockedBoundaryCount) retry();
     // A delivered boundary may still have a failed Core formation job. Resume
     // both accepted jobs and durable user actions without requiring a UI read.
-    void actions.resume(ownerId).catch(() => scheduleRetry(ownerId));
+    void actions.resume(ownerId).catch(() => retry());
     try {
       if (formationOwners.has(ownerId)) {
         let pollingEntry;
@@ -341,8 +363,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           pollingEntry = entry; entry.recoveryFlight = poll;
           if (!entry.capabilities?.methods?.includes('query_jobs')) return;
           const result = await entry.rpc.request('query_jobs', { operation: 'list' });
+          if (!runtimeCurrent(ownerId, generation)) return;
           let pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
           for (const item of result.formation_requests ?? []) if (['no_change', 'dead'].includes(item.state)) {
+            if (!runtimeCurrent(ownerId, generation)) return;
             if (!entry.capabilities.methods.includes('retry_formation')) continue;
             // An explicit retry owns its just-enqueued successor. Give it one
             // normal recovery interval before creating another background replay.
@@ -351,18 +375,20 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             pending = true;
           }
           if (pending || await actions.pending(ownerId)) {
-            retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1); scheduleRetry(ownerId);
-          } else { retryCounts.delete(ownerId); formationOwners.delete(ownerId); }
+            if (!runtimeCurrent(ownerId, generation)) return;
+            retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1); retry();
+          } else if (runtimeCurrent(ownerId, generation)) { retryCounts.delete(ownerId); formationOwners.delete(ownerId); }
         });
         try { await poll; }
         finally { if (pollingEntry?.recoveryFlight === poll) delete pollingEntry.recoveryFlight; }
       }
-    } catch { scheduleRetry(ownerId); }
+    } catch { retry(); }
     return results;
   }
 
-  async function prepare(ownerId, sessionId = null) {
+  async function prepare(ownerId, sessionId = null, generation = runtimeGeneration(ownerId)) {
     if (closing) throw error('MEMORY_CLOSING');
+    assertRuntimeCurrent(ownerId, generation);
     if (runtimeStopped(ownerId)) throw Object.assign(error(runtimeFailures.get(ownerId).code), { memoryRuntimeFailure: true });
     const existing = entries.get(ownerId);
     // A worker can disconnect between requests, with no pending RPC to reject.
@@ -374,7 +400,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     let runtimeValidated = false;
     if (!existing?.ready || !existing.rpc.child) {
       try { await rpcFactory.validate?.(); }
-      catch (cause) { recordRuntimeFailure(ownerId, {}, cause, true); throw cause; }
+      catch (cause) { recordRuntimeFailure(ownerId, { generation }, cause, true); throw cause; }
+      assertRuntimeCurrent(ownerId, generation);
       runtimeValidated = true;
     }
     let selected = null;
@@ -393,14 +420,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         }
       }
     }
+    assertRuntimeCurrent(ownerId, generation);
     if (existing?.ready && existing.rpc.child &&
         (selected === null || existing.routeKey === selected.key)) return existing;
     if (existing?.initializing) return existing.initializing;
     // Background status/retry polling must not turn a foreground model-route
     // switch into MEMORY_BUSY. It never calls DSH or changes the selected route.
     if (existing?.recoveryFlight) await existing.recoveryFlight.catch(() => {});
+    assertRuntimeCurrent(ownerId, generation);
     if (existing?.active > 0) throw error('MEMORY_BUSY');
     if (existing) { entries.delete(ownerId); await existing.rpc.close().catch(() => {}); }
+    assertRuntimeCurrent(ownerId, generation);
     if (entries.size >= maxActiveOwners) {
       const idle = [...entries.entries()].filter(([, entry]) => entry.active === 0 && !entry.initializing)
         .sort((a, b) => a[1].lastUsed - b[1].lastUsed)[0];
@@ -408,20 +438,25 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       entries.delete(idle[0]);
       await idle[1].rpc.close();
     }
+    assertRuntimeCurrent(ownerId, generation);
     if (!runtimeValidated) {
       try { await rpcFactory.validate?.(); }
-      catch (cause) { recordRuntimeFailure(ownerId, {}, cause, true); throw cause; }
+      catch (cause) { recordRuntimeFailure(ownerId, { generation }, cause, true); throw cause; }
+      assertRuntimeCurrent(ownerId, generation);
     }
     const home = await privateHome(ownerId);
+    assertRuntimeCurrent(ownerId, generation);
+    if (closing) throw error('MEMORY_CLOSING');
     const rpc = rpcFactory({ python, pythonPath,
       env: { MEMOWEFT_BASE_URL: selected.baseUrl, MEMOWEFT_WORLD_MODEL: selected.model,
         MEMOWEFT_DSH_SESSION_SCOPE: selected.sessionScoped ? '1' : '0' } });
-    const entry = { rpc, ready: false, active: 0, lastUsed: Date.now(),
+    const entry = { rpc, generation, ready: false, active: 0, lastUsed: Date.now(),
       capabilities: null, routeReady: false, backlogCount: null, initializing: null,
       routeKey: selected.key, modelTier: selected.modelTier };
     entries.set(ownerId, entry);
     entry.initializing = (async () => {
       const before = await rpc.request('capabilities');
+      assertRuntimeCurrent(ownerId, generation);
       if (before?.protocol !== 'memoweft.dsh_rpc' || before?.protocol_version !== 2 ||
           before?.schema_version !== 1 || !Array.isArray(before?.methods) ||
           REQUIRED_METHODS.some((name) => !before.methods.includes(name))) {
@@ -432,6 +467,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         platform: 'dsh', model_tier: selected.modelTier, lang: 'zh', auto_route: !selected.readOnly,
         model_api_key: selected.credential,
       });
+      assertRuntimeCurrent(ownerId, generation);
       if (initialized?.runtime?.subject_id !== ownerId ||
           path.resolve(initialized.runtime.db_path ?? '') !== path.join(home, 'memoweft', 'memoweft.sqlite3')) {
         throw error('MEMORY_IDENTITY_MISMATCH');
@@ -443,9 +479,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       }
       entry.capabilities = capabilities;
       const health = await rpc.request('health');
+      assertRuntimeCurrent(ownerId, generation);
       if (health?.runtime?.subject_id !== ownerId) throw error('MEMORY_IDENTITY_MISMATCH');
       entry.routeReady = health.runtime.route_ready === true;
       const backlog = await outboxStatus(ownerId);
+      assertRuntimeCurrent(ownerId, generation);
       entry.backlogCount = backlog.pendingBoundaryCount;
       if (backlog.pendingBoundaryCount > 0) boundaryFailures.set(ownerId,
         backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED' ? 'MEMORY_BOUNDARY_PENDING'
@@ -454,15 +492,18 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       startupWorlds.delete(ownerId);
       entry.initializing = null;
       failures.delete(ownerId);
-      scheduleRetry(ownerId, true);
+      scheduleRetry(ownerId, true, generation);
       return entry;
     })().catch(async (cause) => {
       entry.initializing = null;
       entry.ready = false;
-      entries.delete(ownerId);
-      failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
-      recordRuntimeFailure(ownerId, entry, cause, true);
+      if (entries.get(ownerId) === entry) entries.delete(ownerId);
+      if (runtimeCurrent(ownerId, generation)) {
+        failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
+        recordRuntimeFailure(ownerId, entry, cause, true);
+      }
       await rpc.close().catch(() => {});
+      assertRuntimeCurrent(ownerId, generation);
       throw cause;
     });
     return entry.initializing;
@@ -472,17 +513,25 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     owner(ownerId);
     if (!enabled) throw error('MEMORY_DISABLED');
     if (closing) throw error('MEMORY_CLOSING');
-    const work = startQueue.then(() => prepare(ownerId, sessionId));
+    const generation = runtimeGeneration(ownerId);
+    assertRuntimeCurrent(ownerId, generation);
+    const work = startQueue.then(() => prepare(ownerId, sessionId, generation));
     startQueue = work.catch(() => {});
     return work;
   }
 
   async function withOwner(ownerId, work, sessionId = null) {
     const entry = await acquire(ownerId, sessionId);
+    assertRuntimeCurrent(ownerId, entry.generation);
     entry.active++;
     entry.lastUsed = Date.now();
-    try { return await work(entry); }
+    try {
+      const result = await work(entry);
+      assertRuntimeCurrent(ownerId, entry.generation);
+      return result;
+    }
     catch (cause) {
+      assertRuntimeCurrent(ownerId, entry.generation);
       recordRuntimeFailure(ownerId, entry, cause);
       if (cause?.code === 'MEMORY_PROCESS_UNAVAILABLE' || cause?.code === 'MEMORY_TIMEOUT' ||
           cause?.code === 'MEMORY_PROTOCOL_ERROR') {
@@ -544,14 +593,32 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
 
   const manager = {
     enabled,
-    async repairRuntime(ownerId) {
+    repairRuntime(ownerId) {
       owner(ownerId);
-      await startup;
-      await flushFlights.get(ownerId)?.catch(() => {});
-      await this.invalidateOwnerRoute(ownerId);
-      runtimeFailures.delete(ownerId); retryCounts.delete(ownerId); failures.delete(ownerId);
-      scheduleRetry(ownerId, true);
-      return this.status(ownerId);
+      if (repairFlights.has(ownerId)) return repairFlights.get(ownerId);
+      if (closing) return Promise.reject(error('MEMORY_CLOSING'));
+      // Invalidate first, before waiting: old timers, queued starts and active
+      // callbacks must never borrow the fresh budget during this asynchronous gap.
+      runtimeGenerations.set(ownerId, runtimeGeneration(ownerId) + 1);
+      repairingOwners.add(ownerId);
+      clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
+      const previous = entries.get(ownerId);
+      entries.delete(ownerId);
+      const oldStarts = startQueue, oldDrain = flushFlights.get(ownerId);
+      const work = (async () => {
+        await Promise.allSettled([startup, oldStarts, oldDrain,
+          Promise.resolve().then(() => previous?.rpc.close())].filter(Boolean));
+        if (closing) throw error('MEMORY_CLOSING');
+        runtimeFailures.delete(ownerId); retryCounts.delete(ownerId); failures.delete(ownerId);
+        repairingOwners.delete(ownerId);
+        scheduleRetry(ownerId, true);
+        return this.status(ownerId);
+      })().finally(() => {
+        repairingOwners.delete(ownerId);
+        if (repairFlights.get(ownerId) === work) repairFlights.delete(ownerId);
+      });
+      repairFlights.set(ownerId, work);
+      return work;
     },
     async forgetFromMessage(ownerId, action) {
       owner(ownerId);
@@ -1074,6 +1141,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       retryTimers.clear();
       await Promise.allSettled([...flushFlights.values()]);
       await startQueue.catch(() => {});
+      await Promise.allSettled([...repairFlights.values()]);
       await Promise.all([...outboxQueues.values()].map((pending) => pending.catch(() => {})));
       await Promise.all([...commandFlights.values()].map((pending) => pending.catch(() => {})));
       await actions.close();
