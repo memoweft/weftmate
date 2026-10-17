@@ -1,0 +1,1489 @@
+{
+  "baseline": "578c3f745930dfa48f0e1bc54f8f74a1eaa1ad0c",
+  "description": "Captured by executing original main parser and manager; null claim in JSON represents an original undefined claim.",
+  "cases": [
+    {
+      "name": "unheaded single preference / current / budget 1200",
+      "pending": false,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "偏好：回答使用中文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "偏好：回答使用中文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "偏好：回答使用中文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "偏好：回答使用中文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "unheaded single preference / current / budget 48",
+      "pending": false,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "偏好：回答使用中文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "偏好：回答使用中文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "偏好：回答使用中文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "偏好：回答使用中文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "unheaded single preference / pending / budget 1200",
+      "pending": true,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "偏好：回答使用中文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "偏好：回答使用中文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。偏好：回答使用中文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。偏好：回答使用中文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "unheaded single preference / pending / budget 48",
+      "pending": true,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "偏好：回答使用中文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "偏好：回答使用中文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。偏好：回答使用中文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。偏好：回答使用中文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "unheaded multiline with more IDs than entries / current / budget 1200",
+      "pending": false,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "偏好：回答使用中文\nMemory: literal heading\n\\original line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "偏好：回答使用中文\nMemory: literal heading\n\\original line"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": null
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "偏好：回答使用中文\nMemory: literal heading\n\\original line",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "偏好：回答使用中文\nMemory: literal heading\n\\original line"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "unheaded multiline with more IDs than entries / current / budget 48",
+      "pending": false,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "偏好：回答使用中文\nMemory: literal heading\n\\original line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "偏好：回答使用中文\nMemory: literal heading\n\\original line"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": null
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "unheaded multiline with more IDs than entries / pending / budget 1200",
+      "pending": true,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "偏好：回答使用中文\nMemory: literal heading\n\\original line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "偏好：回答使用中文\nMemory: literal heading\n\\original line"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": null
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。偏好：回答使用中文\nMemory: literal heading\n\\original line",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。偏好：回答使用中文\nMemory: literal heading\n\\original line"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "unheaded multiline with more IDs than entries / pending / budget 48",
+      "pending": true,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "偏好：回答使用中文\nMemory: literal heading\n\\original line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "偏好：回答使用中文\nMemory: literal heading\n\\original line"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": null
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "leading explanation before Chinese entries / current / budget 1200",
+      "pending": false,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ],
+        [
+          "entity",
+          "third"
+        ]
+      ],
+      "renderedRecall": "说明：只读召回\n记忆：第一条正文\n记忆（过往）：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "说明：只读召回"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：第一条正文"
+        },
+        {
+          "pair": [
+            "entity",
+            "third"
+          ],
+          "claim": "记忆（过往）：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "说明：只读召回\n\n记忆：第一条正文\n\n记忆（过往）：第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "说明：只读召回"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "第一条正文"
+          },
+          {
+            "id": "third",
+            "kind": "entity",
+            "summary": "第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 3
+      }
+    },
+    {
+      "name": "leading explanation before Chinese entries / current / budget 48",
+      "pending": false,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ],
+        [
+          "entity",
+          "third"
+        ]
+      ],
+      "renderedRecall": "说明：只读召回\n记忆：第一条正文\n记忆（过往）：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "说明：只读召回"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：第一条正文"
+        },
+        {
+          "pair": [
+            "entity",
+            "third"
+          ],
+          "claim": "记忆（过往）：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "说明：只读召回\n\n记忆：第一条正文\n\n记忆（过往）：第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "说明：只读召回"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "第一条正文"
+          },
+          {
+            "id": "third",
+            "kind": "entity",
+            "summary": "第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 3
+      }
+    },
+    {
+      "name": "leading explanation before Chinese entries / pending / budget 1200",
+      "pending": true,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ],
+        [
+          "entity",
+          "third"
+        ]
+      ],
+      "renderedRecall": "说明：只读召回\n记忆：第一条正文\n记忆（过往）：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "说明：只读召回"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：第一条正文"
+        },
+        {
+          "pair": [
+            "entity",
+            "third"
+          ],
+          "claim": "记忆（过往）：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。说明：只读召回\n\n记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第一条正文\n\n记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。说明：只读召回"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第一条正文"
+          },
+          {
+            "id": "third",
+            "kind": "entity",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 3
+      }
+    },
+    {
+      "name": "leading explanation before Chinese entries / pending / budget 48",
+      "pending": true,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ],
+        [
+          "entity",
+          "third"
+        ]
+      ],
+      "renderedRecall": "说明：只读召回\n记忆：第一条正文\n记忆（过往）：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "说明：只读召回"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：第一条正文"
+        },
+        {
+          "pair": [
+            "entity",
+            "third"
+          ],
+          "claim": "记忆（过往）：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。说明：只读召回",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。说明：只读召回"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "past Chinese entry only / current / budget 1200",
+      "pending": false,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "记忆（过往）：旧正文\nMemory (past): literal heading",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆（过往）：旧正文\nMemory (past): literal heading"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆（过往）：旧正文\nMemory (past): literal heading",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "旧正文\nMemory (past): literal heading"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "past Chinese entry only / current / budget 48",
+      "pending": false,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "记忆（过往）：旧正文\nMemory (past): literal heading",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆（过往）：旧正文\nMemory (past): literal heading"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆（过往）：旧正文\nMemory (past): literal heading",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "旧正文\nMemory (past): literal heading"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "past Chinese entry only / pending / budget 1200",
+      "pending": true,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "记忆（过往）：旧正文\nMemory (past): literal heading",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆（过往）：旧正文\nMemory (past): literal heading"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。旧正文\nMemory (past): literal heading",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。旧正文\nMemory (past): literal heading"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "past Chinese entry only / pending / budget 48",
+      "pending": true,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "记忆（过往）：旧正文\nMemory (past): literal heading",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆（过往）：旧正文\nMemory (past): literal heading"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "past Chinese header without body / current / budget 1200",
+      "pending": false,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "记忆（过往）：",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆（过往）："
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "past Chinese header without body / current / budget 48",
+      "pending": false,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "记忆（过往）：",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆（过往）："
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "past Chinese header without body / pending / budget 1200",
+      "pending": true,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "记忆（过往）：",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆（过往）："
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "past Chinese header without body / pending / budget 48",
+      "pending": true,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "记忆（过往）：",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆（过往）："
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "empty text with IDs / current / budget 1200",
+      "pending": false,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": ""
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": null
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "empty text with IDs / current / budget 48",
+      "pending": false,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": ""
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": null
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "empty text with IDs / pending / budget 1200",
+      "pending": true,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": ""
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": null
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "empty text with IDs / pending / budget 48",
+      "pending": true,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": ""
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": null
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "leading blank before English literal / current / budget 1200",
+      "pending": false,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "\nMemory: not the first line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Memory: not the first line"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "Memory: not the first line",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "Memory: not the first line"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "leading blank before English literal / current / budget 48",
+      "pending": false,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "\nMemory: not the first line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Memory: not the first line"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "Memory: not the first line",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "Memory: not the first line"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "leading blank before English literal / pending / budget 1200",
+      "pending": true,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "\nMemory: not the first line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Memory: not the first line"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。Memory: not the first line",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。Memory: not the first line"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "leading blank before English literal / pending / budget 48",
+      "pending": true,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": "\nMemory: not the first line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Memory: not the first line"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "leading space before English literal / current / budget 1200",
+      "pending": false,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": " Memory: indented first line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Memory: indented first line"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "Memory: indented first line",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "Memory: indented first line"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "leading space before English literal / current / budget 48",
+      "pending": false,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": " Memory: indented first line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Memory: indented first line"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "Memory: indented first line",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "Memory: indented first line"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "leading space before English literal / pending / budget 1200",
+      "pending": true,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": " Memory: indented first line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Memory: indented first line"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。Memory: indented first line",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。Memory: indented first line"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "leading space before English literal / pending / budget 48",
+      "pending": true,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ]
+      ],
+      "renderedRecall": " Memory: indented first line",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Memory: indented first line"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "unheaded no-ID projection preserves legacy trimming / current / budget 1200",
+      "pending": false,
+      "budget": 1200,
+      "pairs": [],
+      "renderedRecall": "  偏好：回答使用中文\n原样的下一行  ",
+      "entries": [],
+      "expected": {
+        "state": "ready",
+        "contextText": "偏好：回答使用中文\n原样的下一行",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "unheaded no-ID projection preserves legacy trimming / current / budget 48",
+      "pending": false,
+      "budget": 48,
+      "pairs": [],
+      "renderedRecall": "  偏好：回答使用中文\n原样的下一行  ",
+      "entries": [],
+      "expected": {
+        "state": "ready",
+        "contextText": "偏好：回答使用中文\n原样的下一行",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "unheaded no-ID projection preserves legacy trimming / pending / budget 1200",
+      "pending": true,
+      "budget": 1200,
+      "pairs": [],
+      "renderedRecall": "  偏好：回答使用中文\n原样的下一行  ",
+      "entries": [],
+      "expected": {
+        "state": "ready",
+        "contextText": "偏好：回答使用中文\n原样的下一行",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "unheaded no-ID projection preserves legacy trimming / pending / budget 48",
+      "pending": true,
+      "budget": 48,
+      "pairs": [],
+      "renderedRecall": "  偏好：回答使用中文\n原样的下一行  ",
+      "entries": [],
+      "expected": {
+        "state": "ready",
+        "contextText": "偏好：回答使用中文\n原样的下一行",
+        "memories": [],
+        "worldRevision": 8,
+        "sourceCount": 0
+      }
+    },
+    {
+      "name": "unheaded mixed-language explanation / current / budget 1200",
+      "pending": false,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "Plain preface\nMemory: first\n记忆：second",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Plain preface\nMemory: first"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：second"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "Plain preface\nMemory: first\n\n记忆：second",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "Plain preface\nMemory: first"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "second"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "unheaded mixed-language explanation / current / budget 48",
+      "pending": false,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "Plain preface\nMemory: first\n记忆：second",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Plain preface\nMemory: first"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：second"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "Plain preface\nMemory: first\n\n记忆：second",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "Plain preface\nMemory: first"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "second"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "unheaded mixed-language explanation / pending / budget 1200",
+      "pending": true,
+      "budget": 1200,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "Plain preface\nMemory: first\n记忆：second",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Plain preface\nMemory: first"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：second"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。Plain preface\nMemory: first\n\n记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。second",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。Plain preface\nMemory: first"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。second"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "unheaded mixed-language explanation / pending / budget 48",
+      "pending": true,
+      "budget": 48,
+      "pairs": [
+        [
+          "cognition",
+          "first"
+        ],
+        [
+          "event",
+          "second"
+        ]
+      ],
+      "renderedRecall": "Plain preface\nMemory: first\n记忆：second",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "Plain preface\nMemory: first"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：second"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。second",
+        "memories": [
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。second"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    }
+  ]
+}
