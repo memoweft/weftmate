@@ -39,7 +39,7 @@ export function saveDesktopConfig(file, value) {
   writeFileSync(temp, JSON.stringify(value, null, 2) + '\n', { mode: 0o600, flag: 'wx' });
   renameSync(temp, file);
 }
-export function applyDesktopConfig({ appData, argv = process.argv, env = process.env, packaged = false, platform = process.platform }) {
+export function applyDesktopConfig({ appData, argv = process.argv, env = process.env, packaged = false, platform = process.platform, resourcesPath = process.resourcesPath }) {
   const explicit = argv.find(arg => arg.startsWith('--desktop-config='))?.slice('--desktop-config='.length);
   const file = resolve(explicit || desktopConfigPath(appData, platform));
   if (!explicit && (!packaged || platform === 'darwin' && (argv.some(arg => arg.startsWith('--user-data-dir=')) || env.WEFTMATE_USER_DATA))) return null;
@@ -71,7 +71,12 @@ export function applyDesktopConfig({ appData, argv = process.argv, env = process
   if (explicit === undefined) argv.push(`--desktop-config=${file}`);
   for (const [key, name] of Object.entries(productionEnvironment)) if (config.production?.[key] !== undefined) env[name] = String(config.production[key]);
   configureUpdateEnvironment(config, env);
-  return { file, config };
+  // Recompute from this installation on every launch. Do not persist an
+  // automatic path as an explicit user configuration across upgrades.
+  const memoryRuntimeDirectory = packaged && platform === 'win32' && resourcesPath &&
+    !argv.some(arg => arg.startsWith('--personal-memory-config'))
+    ? join(resourcesPath, 'memory-runtime') : null;
+  return { file, config, memoryRuntimeDirectory };
 }
 export function configureUpdateEnvironment(config, env = process.env) {
   env.WEFTMATE_UPDATE_CHANNEL = config.updates.channel;

@@ -54,6 +54,18 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     function memoryStatus(message, error = false) {
         const node = ui.byId('memory-status');
         ui.paintMemoryHealth?.(core.memory.status);
+        if (core.memory.status?.state === 'unavailable' && [
+            'MEMORY_COMPONENT_MISSING', 'MEMORY_COMPONENT_INVALID', 'MEMORY_PROCESS_UNAVAILABLE',
+            'MEMORY_PROTOCOL_INCOMPATIBLE', 'MEMORY_PROTOCOL_ERROR', 'MEMORY_TIMEOUT',
+        ].includes(core.memory.status.reasonCode)) {
+            node.textContent = '记忆暂时没开，聊天仍可用；请';
+            const repair = ui.element('a', '', '下载并重新安装');
+            repair.href = 'https://weftmate.com/downloads/';
+            repair.target = '_blank'; repair.rel = 'noopener noreferrer';
+            node.append(repair, '，已有记忆会保留。');
+            node.classList.toggle('is-error', true);
+            return;
+        }
         const degraded = core.memory.status?.state === 'degraded';
         const modelNote = degraded && core.memory.status?.capabilities?.inject === false
             ? (core.memory.status?.reasonCode === 'MEMORY_MODEL_UNAVAILABLE'
