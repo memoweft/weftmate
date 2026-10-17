@@ -238,8 +238,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   function runtimeStopped(ownerId) { return runtimeFailures.get(ownerId)?.stopped === true; }
   function recordRuntimeFailure(ownerId, entry, cause, initializing = false) {
     if (!rpcFactory.managedRuntime || closing) return;
-    const confirmed = ['MEMORY_COMPONENT_MISSING', 'MEMORY_COMPONENT_INVALID'].includes(cause?.code) ||
-      cause?.executionFailure === true || initializing && cause?.coreError === true;
+    // Core 2112aa8 protocol_v2.py:134-140,334-336 validates this immutable
+    // initialization argument; 813-825 shows why internal_error is NOT safe here.
+    const confirmed = ['MEMORY_COMPONENT_MISSING', 'MEMORY_COMPONENT_HASH_MISMATCH'].includes(cause?.code) ||
+      cause?.executionFailure === true || initializing && cause?.coreError === true &&
+      cause.requestMethod === 'initialize' && ['invalid_subject_id'].includes(cause.code);
     // A nonzero exit (even before capabilities) gives no cause. Unknown startup
     // failures share the same finite budget as disconnects and timeouts.
     if (!initializing && !confirmed &&

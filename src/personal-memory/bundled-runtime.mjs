@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { lstat, readdir, readFile } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { MemoWeftRpc } from './rpc.mjs';
 
 const fail = code => Object.assign(new Error(code), { code });
@@ -30,7 +30,7 @@ export async function loadBundledMemoryConfig({ directory, manifestSha256, mode 
     const manifestInfo = await lstat(manifestPath);
     if (!manifestInfo.isFile() || manifestInfo.isSymbolicLink()) throw fail('MEMORY_COMPONENT_INVALID');
     const bytes = await readFile(manifestPath);
-    if (digest(bytes) !== manifestSha256) throw fail('MEMORY_COMPONENT_INVALID');
+    if (digest(bytes) !== manifestSha256) throw fail('MEMORY_COMPONENT_HASH_MISMATCH');
     const manifest = JSON.parse(bytes);
     if (manifest.schemaVersion !== 1 || manifest.platform !== 'win32-x64' || manifest.mode !== mode ||
         manifest.invocation?.executable !== 'python/python.exe' ||
@@ -45,23 +45,36 @@ export async function loadBundledMemoryConfig({ directory, manifestSha256, mode 
         const name = relative(root, file).replaceAll('\\', '/');
         if (name === 'MEMORY-RUNTIME.json') continue;
         const expected = manifest.files?.[name];
-        if (!info.isFile() || !expected || expected.bytes !== info.size ||
-            digest(await readFile(file)) !== expected.sha256) throw fail('MEMORY_COMPONENT_INVALID');
+        if (!info.isFile() || !expected) throw fail('MEMORY_COMPONENT_INVALID');
+        const content = await readFile(file);
+        if (digest(content) !== expected.sha256) throw fail('MEMORY_COMPONENT_HASH_MISMATCH');
+        if (expected.bytes !== info.size) throw fail('MEMORY_COMPONENT_INVALID');
         found.add(name);
       }
     }
     await visit(root);
+    for (const name of Object.keys(manifest.files ?? {})) if (!found.has(name)) {
+      if (isAbsolute(name) || name.includes('\\') || name.split('/').includes('..')) throw fail('MEMORY_COMPONENT_INVALID');
+      // Obtain ENOENT from the filesystem; a list/metadata discrepancy alone
+      // is not sufficient evidence to disable retries permanently.
+      await lstat(join(root, name));
+    }
     if (found.size !== Object.keys(manifest.files ?? {}).length ||
         !found.has('python/python.exe') || !found.has('core/src/memoweft/integrations/dsh_bridge/__main__.py'))
       throw fail('MEMORY_COMPONENT_INVALID');
     return bundledMemoryConfiguration({ directory: root, manifestSha256, mode });
   } catch (cause) {
-    throw fail(cause?.code === 'ENOENT' ? 'MEMORY_COMPONENT_MISSING' : 'MEMORY_COMPONENT_INVALID');
+    if (cause?.code === 'ENOENT') throw fail('MEMORY_COMPONENT_MISSING');
+    if (['MEMORY_COMPONENT_HASH_MISMATCH', 'MEMORY_COMPONENT_INVALID'].includes(cause?.code)) throw cause;
+    throw fail('MEMORY_COMPONENT_CHECK_UNAVAILABLE');
   }
 }
 
 /** Use the manager's existing factory seam; preserve explicit configurations. */
 export function bundledMemoryRpcFactory(config, onFailure = () => {}) {
+  const observe = cause => {
+    try { onFailure(/^[A-Za-z_]{2,80}$/.test(cause?.code ?? '') ? cause.code : 'MEMORY_UNAVAILABLE'); } catch { /* Observation only. */ }
+  };
   const factory = options => {
     const rpc = new MemoWeftRpc({ ...options, pythonArgs: invocation,
       env: { ...options.env, MEMOWEFT_SEMANTIC_CACHE_DIR: config.semanticCacheDirectory ?? '' } });
@@ -69,7 +82,7 @@ export function bundledMemoryRpcFactory(config, onFailure = () => {}) {
     rpc.request = async (...args) => {
       try { return await request(...args); }
       catch (cause) {
-        try { onFailure(/^[A-Z_]{2,80}$/.test(cause?.code ?? '') ? cause.code : 'MEMORY_UNAVAILABLE'); } catch { /* Observation only. */ }
+        observe(cause);
         throw cause;
       }
     };
@@ -78,6 +91,9 @@ export function bundledMemoryRpcFactory(config, onFailure = () => {}) {
   // The manager owns the retry budget and durable pending sources. Explicit
   // deployments retain their existing lifecycle without this opt-in.
   factory.managedRuntime = true;
-  factory.validate = config.verification ? () => loadBundledMemoryConfig(config.verification) : null;
+  factory.validate = config.verification ? async () => {
+    try { return await loadBundledMemoryConfig(config.verification); }
+    catch (cause) { observe(cause); throw cause; }
+  } : null;
   return factory;
 }

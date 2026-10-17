@@ -8,6 +8,7 @@ import { applyDesktopConfig, saveDesktopConfig, desktopConfigPath } from '../src
 import { memoryRuntimeFixture } from './helpers/memory-runtime-fixture.mjs';
 import { loadDesktopMemoryConfig } from '../src/personal-memory/config.mjs';
 import { bundledMemoryRpcFactory } from '../src/personal-memory/bundled-runtime.mjs';
+import { bundledMemoryConfiguration } from '../src/personal-memory/bundled-runtime.mjs';
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs';
 
 const owner = 'owner-00000000-0000-4000-8000-000000000001';
@@ -98,10 +99,10 @@ test('missing, altered and replaced components fail closed without changing user
     const options = await metadata(runtime), retained = join(root, 'user-memory');
     await writeFile(retained, 'synthetic retained fact');
     await writeFile(join(runtime, 'python/python.exe'), 'corrupt');
-    assert.deepEqual(await loadDesktopMemoryConfig(options), { config: null, failureCode: 'MEMORY_COMPONENT_INVALID' });
+    assert.deepEqual(await loadDesktopMemoryConfig(options), { config: null, failureCode: 'MEMORY_COMPONENT_HASH_MISMATCH' });
     await memoryRuntimeFixture(runtime);
     await writeFile(join(runtime, 'MEMORY-RUNTIME.json'), '{}');
-    assert.equal((await loadDesktopMemoryConfig(options)).failureCode, 'MEMORY_COMPONENT_INVALID');
+    assert.equal((await loadDesktopMemoryConfig(options)).failureCode, 'MEMORY_COMPONENT_HASH_MISMATCH');
     assert.equal((await loadDesktopMemoryConfig({ ...options, directory: join(root, 'absent') })).failureCode, 'MEMORY_COMPONENT_MISSING');
     assert.equal(await readFile(retained, 'utf8'), 'synthetic retained fact');
   } finally { await rm(root, { recursive: true, force: true }); }
@@ -119,5 +120,26 @@ test('Python launch failure is observed without leaking content or changing its 
     finally { await rpc.close(); }
     assert.deepEqual(events, ['MEMORY_PROCESS_UNAVAILABLE', 'MEMORY_PROCESS_UNAVAILABLE'],
       'capabilities and the existing close/shutdown attempt retain their failure');
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('automatic configuration defers its first component check to the manager budget and observes failures safely', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-memory-first-check-'));
+  try {
+    const config = bundledMemoryConfiguration({ directory: join(root, 'absent'), mode: 'base', manifestSha256: 'a'.repeat(64) });
+    const observed = [];
+    const factory = bundledMemoryRpcFactory(config, code => { observed.push(code); throw Error('Synthetic observer failure'); });
+    let checks = 0;
+    const validate = factory.validate;
+    factory.validate = async () => { checks++; return validate(); };
+    assert.equal(checks, 0); assert.deepEqual(observed, []);
+    const manager = createPersonalMemoryManager({ ...config, root: join(root, 'data'), enabled: true,
+      credential: () => 'synthetic', rpcFactory: factory });
+    try {
+      await manager.ingest(owner, { event_id: 'synthetic-missing-component', parent_session_id: 'synthetic' });
+      for (let i = 0; i < 4; i++) await manager.status(owner);
+      assert.equal(checks, 1); assert.deepEqual(observed, ['MEMORY_COMPONENT_MISSING']);
+      assert.equal((await manager.pendingStatus(owner)).pendingBoundaryCount, 1);
+    } finally { await manager.close(); }
   } finally { await rm(root, { recursive: true, force: true }); }
 });
