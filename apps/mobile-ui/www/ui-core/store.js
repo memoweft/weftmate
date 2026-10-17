@@ -37,7 +37,7 @@
             const memoryBase = `${accessBase}/memory`;
             const memoryKinds = { cognition: '理解', entity: '人物与事物', relationship: '关系', event: '经历' };
             const memoryPreDispatchCodes = new Set(['UNAUTHORIZED', 'FORBIDDEN', 'INVALID_REQUEST', 'NOT_FOUND', 'MEMORY_DISABLED',
-                'MEMORY_UNAVAILABLE', 'MEMORY_ACTION_UNSUPPORTED', 'MEMORY_DELETE_UNAVAILABLE']);
+                'MEMORY_UNAVAILABLE', 'MEMORY_ACTION_UNSUPPORTED', 'MEMORY_DELETE_UNAVAILABLE', 'MEMORY_FORGET_INCOMPLETE']);
             const memoryItemId = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
             const memoryPathId = (id) => typeof id === 'string' && memoryItemId.test(id) ? id : null;
             const markerId = /^[A-Za-z0-9_.:-]{1,128}$/;
