@@ -813,7 +813,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         for (const snapshot of snapshots) {
           const rendered = snapshot?.preview?.rendered_recall ?? '';
           const pairs = snapshot?.preview?.selected_item_ids ?? [];
-          if (!pairs.length && rendered.trim() &&
+          // Keep main's no-ID projection only for the unchanged legacy format;
+          // new and unknown formats are handled without trimming by recallEntries.
+          if (!pairs.length && /^记忆(?:（过往）)?：/u.test(rendered) && rendered.trim() &&
               fragments.join('\n\n').length + rendered.length + 2 <= formalBudget && !fragments.includes(rendered.trim())) fragments.push(rendered.trim());
         }
         for (const entry of recallEntries(snapshots)) {

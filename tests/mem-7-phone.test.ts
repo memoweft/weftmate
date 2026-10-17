@@ -12,6 +12,8 @@ import { createOfflineService } from '../src/personal-offline/index.mjs';
 import { recallEntries } from '../src/personal-memory/recall-questions.mjs';
 import { recallDateCases } from './fixtures/recall-date-contract.ts';
 import legacyRecall from './fixtures/legacy-recall-output.json' with { type: 'json' };
+import escapeCases from './fixtures/recall-escape-contract.json' with { type: 'json' };
+import { renderRecallReference } from './fixtures/recall-escape-reference.mjs';
 import { ACTIVITY_TYPES } from '../src/personal-access/activity-store.mjs';
 import '../src/ui-core/phone-memory.js';
 import '../src/ui-core/offline.js';
@@ -63,7 +65,7 @@ for (const lang of ['en', 'zh'] as const) for (const dated of [false, true]) {
   const headers=lang==='en'?['Memory:', 'Memory (past):']:['记忆：', '记忆（过往）：'];
   const claims=recallDateCases.map((item,index)=>`${headers[index%2]}${dated?` [${item.date}] `:''}${item[lang]}\n${lang==='en'?'Continuation kept verbatim.':'逐字保留的下一行。'}`);
   const pairs=[['cognition','pet'],['event','games'],['cognition','travel']];
-  const snapshots=[{preview:{selected_item_ids:pairs,rendered_recall:claims.join('\r\n')}},
+  const snapshots=[{preview:{selected_item_ids:pairs,rendered_recall:claims.join(lang==='en'?'\n':'\r\n')}},
    {preview:{selected_item_ids:[['entity','second-topic']],rendered_recall:`${headers[0]}second topic`}}];
   const entries=recallEntries(snapshots);
   assert.deepEqual(entries.map(e=>e.pair),[pairs[0],['entity','second-topic'],pairs[1],pairs[2]]);
@@ -75,23 +77,33 @@ for (const fixture of legacyRecall.cases.filter(item=>!item.pending&&item.budget
  const snapshot={preview:{selected_item_ids:[['cognition','first'],['event','second']],rendered_recall:fixture.renderedRecall}};
  assert.deepEqual(recallEntries([snapshot]).map(({pair,claim})=>({pair,claim})),fixture.entries);
 });
-test('G9 recall boundaries preserve literal headers and fall back to legacy parsing or unpaired original text',()=>{
+test('G9 first-line format never crosses languages and malformed new headers retain unpaired original text',()=>{
  const claims=['Memory: [2026-01-06] A literal Memory: is part of this sentence.\n  Memory (past): quoted continuation.\n记忆力是另一个词。',
   '记忆（过往）：[2026-07-14] 下一条\n  记忆：缩进的原话。'];
  const snapshot={preview:{selected_item_ids:[['cognition','first'],['event','second']],rendered_recall:claims.join('\n')}};
- assert.deepEqual(recallEntries([snapshot]).map(e=>e.claim),claims);
+ assert.deepEqual(recallEntries([snapshot]).map(({pair,claim})=>({pair,claim})),[{pair:null,claim:claims.join('\n')}]);
  for(const header of ['Memory:', 'Memory (past):', '记忆：', '记忆（过往）：']) {
   const ambiguous={preview:{selected_item_ids:snapshot.preview.selected_item_ids,
    rendered_recall:`Memory: first body\n${header}literal body line\nMemory: second body`}};
   const rendered=ambiguous.preview.rendered_recall;
-  const expected=header.startsWith('记忆')
-   ? [{pair:snapshot.preview.selected_item_ids[0],claim:`Memory: first body\n${header}literal body line`},
-      {pair:snapshot.preview.selected_item_ids[1],claim:'Memory: second body'}]
-   : [{pair:null,claim:rendered}];
-  assert.deepEqual(recallEntries([ambiguous]).map(({pair,claim})=>({pair,claim})),expected,
-   'legacy-compatible pairs survive; otherwise the complete original remains without IDs');
+  assert.deepEqual(recallEntries([ambiguous]).map(({pair,claim})=>({pair,claim})),[{pair:null,claim:rendered}],
+   'new format rejects unescaped Chinese body headers and never falls back to Chinese pairing');
  }
 });
+for(const fixture of escapeCases) {
+ if(fixture.unescaped) test(`G9 review red case stays unpaired: ${fixture.name}`,()=>{
+  const snapshot={preview:{selected_item_ids:fixture.items.map(item=>[item.kind,item.id]),rendered_recall:fixture.unescaped}};
+  assert.deepEqual(recallEntries([snapshot]).map(({pair,claim})=>({pair,claim})),[{pair:null,claim:fixture.unescaped}]);
+ });
+ test(`G9 producer reference round trip preserves exact bodies and IDs: ${fixture.name}`,()=>{
+  const rendered=renderRecallReference(fixture.items);
+  assert.equal(rendered,fixture.rendered,'the shared JSON fixes the exact wire output for the Python producer');
+  const snapshot={preview:{selected_item_ids:fixture.items.map(item=>[item.kind,item.id]),rendered_recall:rendered}};
+  const entries=recallEntries([snapshot]);
+  assert.deepEqual(entries.map(entry=>entry.pair),fixture.items.map(item=>[item.kind,item.id]));
+  assert.deepEqual(entries.map(entry=>entry.claim),fixture.items.map(item=>`${item.past?'Memory (past):':'Memory:'}${item.body}`));
+ });
+}
 test('MEM-7 ordinary backend replacements and receiver binding remain live through phone history',async()=>{
  const native={label:'old',async listModels(){return [this.label];}},context:any={accountState:()=>({phoneHistory:{}})};
  const backend=createPhoneHistory(context,native).backend;assert.deepEqual(await backend.listModels(),['old']);
