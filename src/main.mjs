@@ -3154,13 +3154,13 @@ async function bootstrap() {
   if (personalMemoryRequested) {
     const runtimeOptions = { directory: installedDesktopConfig?.memoryRuntimeDirectory,
       mode: packageInfo.memoryRuntimeMode, manifestSha256: packageInfo.memoryRuntimeManifestSha256 };
-    const { config: loadedMemoryConfig, failureCode } = await loadDesktopMemoryConfig({ explicitPath: personalMemoryConfigPath,
-      directory: installedDesktopConfig?.memoryRuntimeDirectory, mode: packageInfo.memoryRuntimeMode,
-      manifestSha256: packageInfo.memoryRuntimeManifestSha256 });
-    const memoryConfig = loadedMemoryConfig ?? bundledMemoryConfiguration(runtimeOptions);
+    // Automatic checks belong to the manager's attempt budget, including the
+    // first check. Do not perform an extra uncounted preflight here.
+    const memoryConfig = personalMemoryConfigPath
+      ? (await loadDesktopMemoryConfig({ explicitPath: personalMemoryConfigPath })).config
+      : bundledMemoryConfiguration(runtimeOptions);
     personalMemoryRuntimeConfig = memoryConfig;
-    try { hostLog.write('memory.bridge', { phase: failureCode ? 'failed' : 'configured', configured: !failureCode,
-      ...(failureCode ? { code: failureCode } : {}) }); } catch { /* Observation only. */ }
+    try { hostLog.write('memory.bridge', { phase: 'configured', configured: true }); } catch { /* Observation only. */ }
     personalMemoryManager = createPersonalMemoryManager({
       root: join(userDataDir, 'personal-access'), enabled: true,
       ...(!personalMemoryConfigPath ? { rpcFactory: bundledMemoryRpcFactory(memoryConfig,

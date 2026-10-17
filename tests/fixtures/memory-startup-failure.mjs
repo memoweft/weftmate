@@ -26,8 +26,9 @@ for await (const line of createInterface({ input: process.stdin })) {
     : frame.method === 'health' ? { runtime: { subject_id: owner, route_ready: true } }
     : frame.method === 'query_world' ? { world_revision: 0 }
     : frame.method === 'ingest_boundary' ? { job_state: 'pending' } : {};
-  const reply = frame.method === 'initialize' && mode === 'initialize-error'
-    ? { ...envelope, ok: false, error: { code: 'internal_error' } }
+  const initError = mode === 'initialize-error' ? 'internal_error' : mode.startsWith('initialize-code:') ? mode.slice('initialize-code:'.length) : null;
+  const reply = frame.method === 'initialize' && initError !== null
+    ? { ...envelope, ok: false, error: initError ? { code: initError } : {} }
     : { ...envelope, ok: true, result };
   process.stdout.write(JSON.stringify(reply) + '\n');
   if (mode === 'idle-disconnect' && frame.method === 'health') setTimeout(() => process.exit(2), 20);

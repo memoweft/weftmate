@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import childProcess from 'node:child_process';
+import fsPromises from 'node:fs/promises';
 import { syncBuiltinESMExports } from 'node:module';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -19,11 +20,12 @@ const fixture = fileURLToPath(new URL('./fixtures/memory-startup-failure.mjs', i
 async function harness(t, mode, configure = async root => ({ semanticCacheDirectory: null }), managerOptions = {}) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-mem-auto-failure-'));
   const spawn = childProcess.spawn;
-  let starts = 0;
+  let starts = 0, validationCalls = 0;
   const mocked = t.mock.method(childProcess, 'spawn', () => {
     starts++;
     const selectedMode = typeof mode === 'function' ? mode(starts) : mode;
     if (selectedMode === 'spawn-eagain') throw Object.assign(new Error('Synthetic temporary process resource failure'), { code: 'EAGAIN' });
+    if (selectedMode.startsWith('spawn-code:')) throw Object.assign(new Error('Synthetic OS spawn error'), { code: selectedMode.slice('spawn-code:'.length) });
     return spawn(selectedMode === 'execution-error' ? join(root, 'missing-python.exe') : process.execPath,
       selectedMode === 'execution-error' ? [] : [fixture, selectedMode], {
       stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true,
@@ -36,13 +38,15 @@ async function harness(t, mode, configure = async root => ({ semanticCacheDirect
     const rpc = factory(options);
     rpc.requestTimeoutMs = 1000;
     return rpc;
-  }, { managedRuntime: factory.managedRuntime, validate: factory.validate });
+  }, { managedRuntime: factory.managedRuntime, validate: factory.validate ? async () => {
+    validationCalls++; return factory.validate();
+  } : null });
   const createManager = () => createPersonalMemoryManager({ root, enabled: true,
     python: process.execPath, pythonPath: root, baseUrl: 'http://127.0.0.1:1/v1',
     model: '@current', credential: () => 'synthetic',
     rpcFactory, ...managerOptions });
   let manager = createManager();
-  return { root, config, get manager() { return manager; }, starts: () => starts, setMode: value => { mode = value; },
+  return { root, config, get manager() { return manager; }, starts: () => starts, checks: () => validationCalls, setMode: value => { mode = value; },
     async restart() { await manager.close(); manager = createManager(); }, async close() {
     try { await manager.close(); }
     finally { mocked.mock.restore(); syncBuiltinESMExports(); await rm(root, { recursive: true, force: true }); }
@@ -50,8 +54,8 @@ async function harness(t, mode, configure = async root => ({ semanticCacheDirect
 }
 
 test('a deterministic bundled startup failure stops automatic process starts and retains its source', async t => {
-  // A validated Core rejection proves the cause; a bare nonzero exit does not.
-  const h = await harness(t, 'initialize-error');
+  // Only the verified invalid-subject contract proves this initialization cause.
+  const h = await harness(t, 'initialize-code:invalid_subject_id');
   try {
     await h.manager.ingest(owner, { event_id: 'synthetic-startup-source',
       parent_session_id: 'synthetic-session', source_messages: [{ role: 'user', content: 'Synthetic source retained for repair.' }] });
@@ -67,6 +71,38 @@ test('a deterministic bundled startup failure stops automatic process starts and
 
 const source = { event_id: 'synthetic-recovery-source', parent_session_id: 'synthetic-session',
   source_messages: [{ role: 'user', content: 'Keep the entire synthetic source after repair.' }] };
+
+test('two Core internal_error initialization responses recover on the third start', async t => {
+  const h = await harness(t, attempt => attempt <= 2 ? 'initialize-error' : 'ready');
+  try {
+    await h.manager.ingest(owner, source); await delay(9500);
+    console.log(JSON.stringify({ reproduction: 'internal-error-twice', starts: h.starts(), pending: (await h.manager.pendingStatus(owner)).pendingBoundaryCount }));
+    assert.equal(h.starts(), 3); await assertDelivered(h);
+    assert.equal((await h.manager.status(owner)).state, 'ready');
+  } finally { await h.close(); }
+});
+
+async function checkedFixture(root) {
+  const directory = join(root, 'resources/memory-runtime'); await memoryRuntimeFixture(directory);
+  return bundledMemoryConfiguration({ directory, mode: 'base', manifestSha256:
+    createHash('sha256').update(await readFile(join(directory, 'MEMORY-RUNTIME.json'))).digest('hex') });
+}
+
+test('temporary EMFILE while reading a valid interpreter retries validation and delivers its source', async t => {
+  const h = await harness(t, 'ready', checkedFixture);
+  const originalRead = fsPromises.readFile;
+  let checks = 0;
+  const mockedRead = t.mock.method(fsPromises, 'readFile', (file, ...args) => {
+    if (String(file) === h.config.python && ++checks <= 2) return Promise.reject(Object.assign(new Error('Synthetic read resource shortage'), { code: 'EMFILE' }));
+    return originalRead(file, ...args);
+  });
+  syncBuiltinESMExports();
+  try {
+    await h.manager.ingest(owner, source); await delay(9500);
+    console.log(JSON.stringify({ reproduction: 'read-emfile-twice', checks, starts: h.starts(), pending: (await h.manager.pendingStatus(owner)).pendingBoundaryCount }));
+    assert.equal(checks, 3); assert.equal(h.starts(), 1); await assertDelivered(h);
+  } finally { try { await h.close(); } finally { mockedRead.mock.restore(); syncBuiltinESMExports(); } }
+});
 
 test('two unknown early exits with code 75 recover on the third start and deliver one source', async t => {
   const h = await harness(t, attempt => attempt <= 2 ? 'exit-75' : 'ready');
@@ -133,15 +169,17 @@ for (const fault of ['missing', 'hash']) test(`${fault} component never executes
     await h.manager.ingest(owner, source);
     for (let i = 0; i < 4; i++) { assert.equal((await h.manager.status(owner)).state, 'unavailable'); await h.manager.flushPending(owner); }
     assert.equal(h.starts(), 0);
+    assert.equal(h.checks(), 1, 'confirmed missing/hash failure is checked once with zero automatic retries');
     assert.equal((await h.manager.pendingStatus(owner)).pendingBoundaryCount, 1);
     await writeFile(component, original);
     await h.manager.repairRuntime(owner); await assertDelivered(h);
     assert.equal(h.starts(), 1);
+    assert.equal(h.checks(), 2, 'only explicit repair permits another component check');
   } finally { await h.close(); }
 });
 
 test('the real repair control resets the stopped manager through the existing system repair action', async t => {
-  const h = await harness(t, 'initialize-error');
+  const h = await harness(t, 'initialize-code:invalid_subject_id');
   try {
     await h.manager.ingest(owner, source);
     const status = await h.manager.status(owner);
@@ -163,7 +201,7 @@ test('the real repair control resets the stopped manager through the existing sy
 });
 
 for (const recovery of ['repair', 'restart']) test(`initialization rejection keeps a replayable source for ${recovery}`, async t => {
-  const h = await harness(t, 'initialize-error');
+  const h = await harness(t, 'initialize-code:invalid_subject_id');
   try {
     await h.manager.ingest(owner, source);
     const pending = await h.manager.pendingStatus(owner);
@@ -187,6 +225,55 @@ test('an interpreter execution error is permanent until explicit repair', async 
     h.setMode('ready'); await h.manager.repairRuntime(owner); await assertDelivered(h);
     assert.equal(h.starts(), 2);
   } finally { await h.close(); }
+});
+
+test('confirmed ENOEXEC permits zero automatic retries', async t => {
+  const h = await harness(t, 'spawn-code:ENOEXEC');
+  try {
+    await h.manager.ingest(owner, source); await delay(4500);
+    for (let i = 0; i < 3; i++) { await h.manager.status(owner); await h.manager.flushPending(owner); }
+    assert.equal(h.starts(), 1); assert.equal((await h.manager.pendingStatus(owner)).pendingBoundaryCount, 1);
+  } finally { await h.close(); }
+});
+
+for (const code of ['internal_error', 'dsh_boundary_error', 'unknown_error', '']) test(`Core error outside the allowlist (${code || 'no code'}) stops after three attempts`, async t => {
+  const h = await harness(t, `initialize-code:${code}`);
+  try {
+    await h.manager.ingest(owner, source); await until(async () => h.starts() >= 3);
+    assert.equal((await h.manager.status(owner)).state, 'unavailable'); await delay(4500);
+    assert.equal(h.starts(), 3);
+    const pending = await h.manager.pendingStatus(owner);
+    assert.equal(pending.pendingBoundaryCount, 1); assert.equal(pending.blockedBoundaryCount, 0); assert.equal(pending.discardedBoundaryCount, 0);
+  } finally { await h.close(); }
+});
+
+for (const code of ['EACCES', 'EPERM', 'UNKNOWN']) test(`OS ${code} is not proof of a permanently unusable interpreter`, async t => {
+  const h = await harness(t, `spawn-code:${code}`);
+  try {
+    await h.manager.ingest(owner, source); await until(async () => h.starts() >= 3);
+    assert.equal((await h.manager.status(owner)).state, 'unavailable'); await delay(4500);
+    assert.equal(h.starts(), 3); assert.equal((await h.manager.pendingStatus(owner)).pendingBoundaryCount, 1);
+  } finally { await h.close(); }
+});
+
+for (const [operation, code] of [['readFile', 'EMFILE'], ['readFile', 'EACCES'], ['lstat', 'EPERM'], ['readdir', 'EBUSY']])
+test(`${operation} ${code} is a temporary check failure and stops after three checks`, async t => {
+  const h = await harness(t, 'ready', checkedFixture);
+  const original = fsPromises[operation]; let checks = 0;
+  const target = operation === 'readdir' ? h.config.verification.directory : h.config.python;
+  const mocked = t.mock.method(fsPromises, operation, (file, ...args) => {
+    if (String(file) === target) { checks++; return Promise.reject(Object.assign(new Error('Synthetic component check failure'), { code })); }
+    return original(file, ...args);
+  });
+  syncBuiltinESMExports();
+  try {
+    await h.manager.ingest(owner, source); await until(async () => checks >= 3);
+    const status = await h.manager.status(owner);
+    assert.equal(status.state, 'unavailable'); assert.equal(status.reasonCode, 'MEMORY_COMPONENT_CHECK_UNAVAILABLE');
+    await delay(4500); assert.equal(checks, 3); assert.equal(h.starts(), 0);
+    const pending = await h.manager.pendingStatus(owner);
+    assert.equal(pending.pendingBoundaryCount, 1); assert.equal(pending.blockedBoundaryCount, 0); assert.equal(pending.discardedBoundaryCount, 0);
+  } finally { try { await h.close(); } finally { mocked.mock.restore(); syncBuiltinESMExports(); } }
 });
 
 for (const mode of ['disconnect', 'initialize-disconnect', 'timeout']) test(`${mode} permits only two automatic retries and repair clears the budget`, async t => {
@@ -265,7 +352,7 @@ test('switching a ready model route revalidates components before replacing its 
     profileId = 'synthetic-route-b'; await writeFile(component, 'broken');
     await h.manager.ingest(owner, source);
     assert.equal(h.starts(), 1, 'a route switch cannot execute changed components');
-    assert.equal((await h.manager.status(owner)).reasonCode, 'MEMORY_COMPONENT_INVALID');
+    assert.equal((await h.manager.status(owner)).reasonCode, 'MEMORY_COMPONENT_HASH_MISMATCH');
     assert.equal((await h.manager.pendingStatus(owner)).pendingBoundaryCount, 1);
     await writeFile(component, original); await h.manager.repairRuntime(owner); await assertDelivered(h);
     assert.equal(h.starts(), 2);

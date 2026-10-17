@@ -8,10 +8,10 @@ const MAX_FRAME_BYTES = 8 * 1024 * 1024;
 const MAX_PENDING = 32;
 
 const failed = (code) => Object.assign(new Error(code), { code });
-// Only structural/permission errors prove the configured interpreter cannot
-// execute. Resource exhaustion (for example EAGAIN) is not such evidence.
+// Permission/resource errors may be temporary. Do not interpret Windows'
+// generic UNKNOWN as a native bad-executable code that Node did not expose.
 const executionFailure = cause => ({ executionFailure:
-  ['ENOENT', 'ENOTDIR', 'EACCES', 'EPERM', 'ENOEXEC', 'EISDIR'].includes(cause?.code) });
+  ['ENOENT', 'ENOEXEC'].includes(cause?.code) });
 
 /** One official MemoWeft RPC v2 stdio transport for one account. */
 export class MemoWeftRpc {
@@ -80,7 +80,7 @@ export class MemoWeftRpc {
       } else if (frame.ok === true) entry.resolve(frame.result);
       else {
         const coreError = frame.ok === false && typeof frame.error?.code === 'string' && /^[a-z_]{2,80}$/.test(frame.error.code);
-        entry.reject(Object.assign(failed(coreError ? frame.error.code : 'MEMORY_RPC_ERROR'), { coreError }));
+        entry.reject(Object.assign(failed(coreError ? frame.error.code : 'MEMORY_RPC_ERROR'), { coreError, requestMethod: entry.method }));
       }
     }
   }
@@ -117,7 +117,7 @@ export class MemoWeftRpc {
           requestPhase: 'awaiting-worker-response',
         }));
       }, timeoutMs);
-      this.pending.set(requestId, { resolve, reject, timer });
+      this.pending.set(requestId, { resolve, reject, timer, method });
       try { this.child.stdin.write(data, 'utf8'); }
       catch { clearTimeout(timer); this.pending.delete(requestId); reject(failed('MEMORY_PROCESS_UNAVAILABLE')); }
     });
