@@ -55,6 +55,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const flushFlights = new Map();
   const retryTimers = new Map();
   const retryCounts = new Map();
+  const runtimeFailures = new Map();
   const startupWorlds = new Set();
   const formationOwners = new Set();
   const outboxQueues = new Map();
@@ -187,6 +188,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   }
 
   const boundaryFailureCode = (cause) => {
+    // Initialization failure is not a conflict in the source. Keep its existing
+    // outbox row replayable after repair/restart, including Core internal_error.
+    if (cause?.memoryRuntimeFailure) return 'MEMORY_PROCESS_UNAVAILABLE';
     if (cause?.code === 'hard_deleted_source') return 'MEMORY_SOURCE_DELETED';
     if (cause?.code === 'internal_error') return 'MEMORY_BOUNDARY_BLOCKED';
     if (['MEMORY_PROCESS_UNAVAILABLE', 'MEMORY_TIMEOUT', 'MEMORY_BUSY', 'MEMORY_CLOSING',
@@ -231,8 +235,28 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       lastFailureCode: state.items.findLast((item) => item.lastFailureCode)?.lastFailureCode ??
         state.lastFailureCode };
   }
+  function runtimeStopped(ownerId) { return runtimeFailures.get(ownerId)?.stopped === true; }
+  function recordRuntimeFailure(ownerId, entry, cause, initializing = false) {
+    if (!rpcFactory.managedRuntime || closing) return;
+    const startupExit = initializing && entry.runtimePhase === 'capabilities' &&
+      Number.isInteger(cause?.processExitCode) && cause.processExitCode !== 0 && !cause.processSignal;
+    const transient = cause?.code === 'MEMORY_TIMEOUT' ||
+      cause?.code === 'MEMORY_PROCESS_UNAVAILABLE' && !cause.executionFailure && !startupExit;
+    if (!initializing && !transient && cause?.code !== 'MEMORY_PROTOCOL_ERROR') return;
+    cause.memoryRuntimeFailure = true;
+    if (entry.runtimeFailure) return;
+    entry.runtimeFailure = true;
+    const attempts = (runtimeFailures.get(ownerId)?.attempts ?? 0) + 1;
+    runtimeFailures.set(ownerId, { attempts, stopped: !transient || attempts >= 3,
+      code: cause?.code ?? 'MEMORY_UNAVAILABLE' });
+    failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
+    clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
+    // Reuse the startup/recovery path; no additional queue or timer.
+    startupWorlds.add(ownerId);
+    scheduleRetry(ownerId);
+  }
   function scheduleRetry(ownerId, immediate = false) {
-    if (closing || retryTimers.has(ownerId)) return;
+    if (closing || runtimeStopped(ownerId) || retryTimers.has(ownerId)) return;
     const attempt = retryCounts.get(ownerId) ?? 0;
     const timer = setTimeout(() => {
       retryTimers.delete(ownerId);
@@ -255,7 +279,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   }
   async function drainPending(ownerId) {
     const results = new Map();
-    if (closing || erasingOwners.has(ownerId)) return results;
+    if (closing || runtimeStopped(ownerId) || erasingOwners.has(ownerId)) return results;
     clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
     let pending;
     try { pending = await queueOutbox(ownerId, () => readOutbox(ownerId)); }
@@ -335,7 +359,18 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
 
   async function prepare(ownerId, sessionId = null) {
     if (closing) throw error('MEMORY_CLOSING');
+    if (runtimeStopped(ownerId)) throw Object.assign(error(runtimeFailures.get(ownerId).code), { memoryRuntimeFailure: true });
     const existing = entries.get(ownerId);
+    // A worker can disconnect between requests, with no pending RPC to reject.
+    if (rpcFactory.managedRuntime && existing?.ready && !existing.rpc.child) {
+      existing.ready = false;
+      recordRuntimeFailure(ownerId, existing, error('MEMORY_PROCESS_UNAVAILABLE'));
+      if (runtimeStopped(ownerId)) throw Object.assign(error(runtimeFailures.get(ownerId).code), { memoryRuntimeFailure: true });
+    }
+    if (!existing?.ready || !existing.rpc.child) {
+      try { await rpcFactory.validate?.(); }
+      catch (cause) { recordRuntimeFailure(ownerId, {}, cause, true); throw cause; }
+    }
     let selected = null;
     if (sessionId !== null || !existing?.ready || !existing.rpc.child) {
       try { selected = erasingOwners.has(ownerId) ? {baseUrl,model:'@current',credential:null,modelTier:'local',sessionScoped:false,key:'erased-read-only',readOnly:true} : await resolveProcessingRoute(ownerId, sessionId); }
@@ -376,12 +411,14 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       routeKey: selected.key, modelTier: selected.modelTier };
     entries.set(ownerId, entry);
     entry.initializing = (async () => {
+      entry.runtimePhase = 'capabilities';
       const before = await rpc.request('capabilities');
       if (before?.protocol !== 'memoweft.dsh_rpc' || before?.protocol_version !== 2 ||
           before?.schema_version !== 1 || !Array.isArray(before?.methods) ||
           REQUIRED_METHODS.some((name) => !before.methods.includes(name))) {
         throw error('MEMORY_PROTOCOL_INCOMPATIBLE');
       }
+      entry.runtimePhase = 'initialize';
       const initialized = await rpc.request('initialize', {
         session_id: 'weftmate-personal-host', dsh_home: home, subject_id: ownerId,
         platform: 'dsh', model_tier: selected.modelTier, lang: 'zh', auto_route: !selected.readOnly,
@@ -397,6 +434,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         throw error('MEMORY_PROTOCOL_INCOMPATIBLE');
       }
       entry.capabilities = capabilities;
+      entry.runtimePhase = 'health';
       const health = await rpc.request('health');
       if (health?.runtime?.subject_id !== ownerId) throw error('MEMORY_IDENTITY_MISMATCH');
       entry.routeReady = health.runtime.route_ready === true;
@@ -416,6 +454,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       entry.ready = false;
       entries.delete(ownerId);
       failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
+      recordRuntimeFailure(ownerId, entry, cause, true);
       await rpc.close().catch(() => {});
       throw cause;
     });
@@ -437,6 +476,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     entry.lastUsed = Date.now();
     try { return await work(entry); }
     catch (cause) {
+      recordRuntimeFailure(ownerId, entry, cause);
       if (cause?.code === 'MEMORY_PROCESS_UNAVAILABLE' || cause?.code === 'MEMORY_TIMEOUT' ||
           cause?.code === 'MEMORY_PROTOCOL_ERROR') {
         entry.ready = false;
@@ -497,6 +537,15 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
 
   const manager = {
     enabled,
+    async repairRuntime(ownerId) {
+      owner(ownerId);
+      await startup;
+      await flushFlights.get(ownerId)?.catch(() => {});
+      await this.invalidateOwnerRoute(ownerId);
+      runtimeFailures.delete(ownerId); retryCounts.delete(ownerId); failures.delete(ownerId);
+      scheduleRetry(ownerId, true);
+      return this.status(ownerId);
+    },
     async forgetFromMessage(ownerId, action) {
       owner(ownerId);
       let scope;
