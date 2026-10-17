@@ -17,7 +17,7 @@ import { memoryRuntimeFixture } from './helpers/memory-runtime-fixture.mjs';
 const owner = 'owner-00000000-0000-4000-8000-000000000001';
 const fixture = fileURLToPath(new URL('./fixtures/memory-startup-failure.mjs', import.meta.url));
 
-async function harness(t, mode, configure = async root => ({ semanticCacheDirectory: null }), managerOptions = {}) {
+async function harness(t, mode, configure = async root => ({ semanticCacheDirectory: null }), managerOptions = {}, hooks = {}) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-mem-auto-failure-'));
   const spawn = childProcess.spawn;
   let starts = 0, validationCalls = 0;
@@ -37,6 +37,7 @@ async function harness(t, mode, configure = async root => ({ semanticCacheDirect
   const rpcFactory = Object.assign(options => {
     const rpc = factory(options);
     rpc.requestTimeoutMs = 1000;
+    hooks.rpc?.(rpc);
     return rpc;
   }, { managedRuntime: factory.managedRuntime, validate: factory.validate ? async () => {
     validationCalls++; return factory.validate();
@@ -67,6 +68,101 @@ test('a deterministic bundled startup failure stops automatic process starts and
       pending: pending.pendingBoundaryCount, discarded: pending.discardedBoundaryCount }));
     assert.equal(h.starts(), 1, 'deterministic startup failure must not spawn automatic replacements');
   } finally { await h.close(); }
+});
+
+test('repair invalidates a delayed request from the previous worker without an unbudgeted restart', { timeout: 30000 }, async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const gate = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
+  const ingestEntered = gate(), releaseIngest = gate(), healthEntered = gate(), releaseHealth = gate();
+  const closeEntered = gate(), releaseClose = gate();
+  let workers = 0;
+  const trace = [];
+  const h = await harness(t, 'disconnect', undefined, {}, { rpc(rpc) {
+    const worker = ++workers, request = rpc.request.bind(rpc), close = rpc.close.bind(rpc);
+    let healthCalls = 0;
+    rpc.request = async (method, ...args) => {
+      if (worker === 3 && method === 'ingest_boundary') { ingestEntered.resolve(); await releaseIngest.promise; }
+      if (worker === 3 && method === 'health' && ++healthCalls === 2) { healthEntered.resolve(); await releaseHealth.promise; }
+      const before = h.starts();
+      const result = request(method, ...args);
+      if (h.starts() !== before) trace.push({ worker, method, start: h.starts() });
+      return result;
+    };
+    rpc.close = async () => {
+      if (worker === 3) { closeEntered.resolve(); await releaseClose.promise; }
+      return close();
+    };
+  } });
+  let draining, staleStatus, repair;
+  try {
+    await h.manager.ingest(owner, source); // Failure 1.
+    await h.manager.flushPending(owner); // Failure 2; fake clock holds all automatic wake-ups.
+    draining = h.manager.flushPending(owner); // Hold the third worker before its failing ingest.
+    await ingestEntered.promise;
+    staleStatus = h.manager.status(owner);
+    await healthEntered.promise; // It already acquired worker 3, but has not sent health yet.
+    releaseIngest.resolve(); await draining;
+    assert.equal(h.starts(), 3);
+    repair = h.manager.repairRuntime(owner);
+    await closeEntered.promise; // Repair is disposing worker 3; delay its close completion.
+    releaseHealth.resolve(); await staleStatus; // The old request must not respawn that dead worker.
+    releaseClose.resolve(); await repair;
+    for (let i = 0; i < 4; i++) await h.manager.flushPending(owner);
+    console.log(JSON.stringify({ reproduction: 'old-health-during-repair', starts: h.starts(), workers, trace }));
+    assert.equal(h.starts(), 6, 'repair must have exactly three new starts, with no transport-owned replacement');
+    assert.equal((await h.manager.pendingStatus(owner)).pendingBoundaryCount, 1);
+  } finally {
+    releaseIngest.resolve(); releaseHealth.resolve(); releaseClose.resolve();
+    await Promise.allSettled([draining, staleStatus, repair].filter(Boolean));
+    await h.close();
+  }
+});
+
+test('repair invalidates an in-progress validation before it can start an old worker', { timeout: 30000 }, async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let entered, release;
+  const enteredPromise = new Promise(resolve => { entered = resolve; });
+  const releasePromise = new Promise(resolve => { release = resolve; });
+  let checks = 0;
+  const h = await harness(t, 'ready', undefined, {}, { rpc() {} });
+  // Use the existing factory validation seam, with no process until it returns.
+  const factory = bundledMemoryRpcFactory({ semanticCacheDirectory: null });
+  factory.validate = async () => { if (++checks === 1) { entered(); await releasePromise; } };
+  const manager = createPersonalMemoryManager({ root: join(h.root, 'held-validation'), enabled: true,
+    python: process.execPath, pythonPath: h.root, baseUrl: 'http://127.0.0.1:1/v1',
+    model: '@current', credential: () => 'synthetic', rpcFactory: factory });
+  let previous, repair, concurrentRepair;
+  try {
+    previous = manager.status(owner); await enteredPromise;
+    repair = manager.repairRuntime(owner); concurrentRepair = manager.repairRuntime(owner);
+    release(); await Promise.all([previous, repair, concurrentRepair]);
+    assert.equal(h.starts(), 1, 'the pre-repair validation must not create a worker; concurrent repairs share one start');
+    assert.equal((await manager.status(owner)).state, 'ready');
+  } finally { release(); await Promise.allSettled([previous, repair, concurrentRepair].filter(Boolean)); await manager.close(); await h.close(); }
+});
+
+test('a pre-repair timer callback cannot drain sources or replace the new timer', { timeout: 30000 }, async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const setTimer = globalThis.setTimeout, callbacks = [];
+  t.mock.method(globalThis, 'setTimeout', (callback, ms, ...args) => {
+    if (ms === 0) callbacks.push(callback);
+    return setTimer(callback, ms, ...args);
+  });
+  const h = await harness(t, 'ready');
+  let reads = 0;
+  const originalRead = fsPromises.lstat;
+  const mockedRead = t.mock.method(fsPromises, 'lstat', (file, ...args) => {
+    if (String(file).endsWith('boundary-outbox.json')) reads++;
+    return originalRead(file, ...args);
+  });
+  syncBuiltinESMExports();
+  try {
+    await h.manager.status(owner); const oldWake = callbacks[0]; assert.equal(typeof oldWake, 'function');
+    await h.manager.repairRuntime(owner);
+    reads = 0; oldWake();
+    await h.manager.pendingStatus(owner); // Joins the existing outbox serialization; no elapsed-time guess.
+    assert.equal(reads, 1, 'only the explicit pending-status read may run; the old callback is invalid');
+  } finally { try { await h.close(); } finally { mockedRead.mock.restore(); syncBuiltinESMExports(); } }
 });
 
 const source = { event_id: 'synthetic-recovery-source', parent_session_id: 'synthetic-session',
