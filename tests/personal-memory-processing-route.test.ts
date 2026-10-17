@@ -6,6 +6,8 @@ import test from 'node:test'
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs'
 import { recallDateCases } from './fixtures/recall-date-contract.ts'
 import legacyRecall from './fixtures/legacy-recall-output.json' with { type: 'json' }
+import escapeCases from './fixtures/recall-escape-contract.json' with { type: 'json' }
+import { renderRecallReference } from './fixtures/recall-escape-reference.mjs'
 
 const ownerA = 'owner-00000000-0000-4000-8000-000000000001'
 const ownerB = 'owner-00000000-0000-4000-8000-000000000002'
@@ -45,9 +47,9 @@ for (const fixture of legacyRecall.cases) test(`G9 legacy manager matches main o
 })
 
 const formatCases = [
-  { name: 'English bodies retain Chinese headers',
+  { name: 'English first line rejects unescaped Chinese body headers even when the English count matches',
     claims: ['Memory: [2026-01-06] First body.\n记忆：正文中的中文标题', 'Memory (past): [Jan 06, 2026] Second body.'],
-    summaries: ['[2026-01-06] First body.\n记忆：正文中的中文标题', '[Jan 06, 2026] Second body.'] },
+    summaries: null },
   { name: 'another date style in a new-format body stays literal',
     claims: ['Memory: [2026-01-06] First body.\n[January 6, 2026] A quoted date.\n2026-07-14: Another date line.',
       'Memory (past): [recorded at: 2026-10-16] Second body.'],
@@ -56,11 +58,12 @@ const formatCases = [
   { name: 'unescaped English header with another date style preserves unpaired original',
     claims: ['Memory: [2026-01-06] First body.\nMemory: [January 6, 2026] Quoted heading.', 'Memory (past): Second body.'],
     summaries: null },
-  { name: 'ambiguous new parsing falls back to exactly the legacy pairs and prefix handling',
+  { name: 'ambiguous new parsing never crosses into the Chinese grammar',
     claims: ['Memory: First body.\nMemory: Quoted heading.\nMemory (past): Another quoted heading.', '记忆：Second body.'],
-    summaries: ['Memory: First body.\nMemory: Quoted heading.\nMemory (past): Another quoted heading.', 'Second body.'] },
-  { name: 'unmatched legacy boundaries preserve the entire original without inventing IDs',
-    claims: ['记忆：First body.\n记忆：Quoted heading.', '记忆：Second body.'], summaries: null },
+    summaries: null },
+  { name: 'legacy first line keeps main positional behavior without new validation or unescaping',
+    claims: ['记忆：First body.\n记忆：Quoted heading.', '记忆：Second body.'],
+    summaries: ['First body.', 'Quoted heading.'], contextText: '记忆：First body.\n\n记忆：Quoted heading.' },
 ]
 for (const fixture of formatCases) test(`G9 format choice: ${fixture.name}`, async t => {
   const rendered = fixture.claims.join('\n')
@@ -69,8 +72,40 @@ for (const fixture of formatCases) test(`G9 format choice: ${fixture.name}`, asy
   const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
   assert.equal(result.sourceCount, fixture.summaries ? 2 : 0)
   assert.deepEqual(result.memories, fixture.summaries ? pairs.map(([kind, id], index) => ({ kind, id, summary: fixture.summaries![index] })) : [])
-  assert.equal(result.contextText, fixture.summaries ? fixture.claims.join('\n\n') : rendered)
+  assert.equal(result.contextText, fixture.contextText ?? (fixture.summaries ? fixture.claims.join('\n\n') : rendered))
 })
+
+for (const fixture of escapeCases) {
+  if (fixture.unescaped) test(`G9 review manager preserves unpaired original: ${fixture.name}`, async t => {
+    const manager = recallContractManager(t, { selected_item_ids: fixture.items.map(item => [item.kind, item.id]),
+      rendered_recall: fixture.unescaped })
+    const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    assert.equal(result.sourceCount, 0)
+    assert.deepEqual(result.memories, [])
+    assert.equal(result.contextText, fixture.unescaped)
+  })
+  for (const pending of [false, true]) test(`G9 reference-rendered manager keeps decoded bodies (${pending ? 'pending' : 'current'}): ${fixture.name}`, async t => {
+    const manager = recallContractManager(t, { selected_item_ids: fixture.items.map(item => [item.kind, item.id]),
+      rendered_recall: renderRecallReference(fixture.items), pending_corrections: pending ? [{ evidence_id: 'synthetic-correction',
+        text: 'Synthetic correction. '.repeat(80), created_at: '2026-10-17T00:00:00Z' }] : [] })
+    const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    const warning = pending ? 'Already corrected by the user; pending update. The following old content must not be used as a current fact. ' : ''
+    assert.equal(result.sourceCount, fixture.items.length)
+    assert.deepEqual(result.memories, fixture.items.map(item => ({ kind: item.kind, id: item.id, summary: `${warning}${item.body}`.trim().slice(0, 240) })))
+    assert.equal(result.contextText, fixture.items.map(item => `${item.past ? 'Memory (past):' : 'Memory:'}${warning}${item.body}`).join('\n\n'))
+  })
+}
+
+for (const rendered of ['', '\nMemory: not the first line', ' Memory: indented first line',
+  'Plain preface\nMemory: first\n记忆：second', 'Memory: first\n\\unescaped backslash\nMemory: second']) {
+  test(`G9 non-header first lines or malformed new escapes stay unpaired: ${JSON.stringify(rendered)}`, async t => {
+    const manager = recallContractManager(t, { selected_item_ids: [['cognition', 'first'], ['event', 'second']], rendered_recall: rendered })
+    const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    assert.equal(result.sourceCount, 0)
+    assert.deepEqual(result.memories, [])
+    assert.equal(result.contextText, rendered)
+  })
+}
 
 for (const budgetDelta of [1, 2]) test(`G9 unpaired original obeys the unchanged fragment budget (${budgetDelta})`, async t => {
   const rendered = 'Memory: first\nMemory: quoted heading\nMemory: second'
@@ -137,7 +172,7 @@ for (const lang of ['en', 'zh'] as const) for (const dated of [false, true]) for
       assert.equal(fallback.sourceCount, 0)
       assert.deepEqual(fallback.memories, [])
       assert.equal(fallback.contextText, `${pending ? `Memory:${warning}` : ''}${original}`,
-        'when neither parser can align the IDs, preserve the original text and the correction warning')
+        'when the English format cannot align the IDs, preserve the original text and the correction warning without changing grammar')
     }
   })
 }

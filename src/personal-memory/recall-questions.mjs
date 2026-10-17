@@ -7,12 +7,27 @@ export function recallQuestions(query, maxItems = 6) {
   return parts.length > 1 ? parts.filter(part => part !== query).slice(0, Math.min(5, maxItems)) : [];
 }
 
-// Preserve the old Core grammar exactly. English titles in a Chinese entry
-// are ordinary body text; dates never determine boundaries or get rewritten.
+// The first line chooses the grammar; never infer it from counts or dates.
+// Legacy Chinese is unchanged. New English uses LF between entries and quotes
+// every body line starting with a reserved header or backslash with one '\'.
 const legacyHeader = /^记忆(?:（过往）)?：/u;
 const legacySeparator = /\n(?=记忆(?:（过往）)?：)/u;
 const englishHeader = /^Memory(?: \(past\))?:/u;
-const englishSeparator = /\r?\n(?=Memory(?: \(past\))?:)/u;
+const englishSeparator = /\n(?=Memory(?: \(past\))?:)/u;
+const reservedBodyLine = /^(?:记忆(?:（过往）)?：|Memory(?: \(past\))?:|\\)/u;
+
+function decodeEnglishClaim(claim) {
+  const prefix = claim.match(englishHeader)[0];
+  const lines = claim.slice(prefix.length).split('\n');
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
+    if (line.startsWith('\\')) {
+      if (!reservedBodyLine.test(line.slice(1))) return undefined;
+      lines[index] = line.slice(1);
+    } else if (reservedBodyLine.test(line)) return undefined;
+  }
+  return prefix + lines.join('\n');
+}
 
 /** One permission-filtered result per question before filling the shared budget.
  * References and text still come solely from Core's original batch snapshot. */
@@ -20,19 +35,19 @@ export function recallEntries(snapshots) {
   const groups=snapshots.map(snapshot=>{
     const rendered=snapshot?.preview?.rendered_recall??'';
     const pairs=snapshot?.preview?.selected_item_ids??[];
-    if (!pairs.length) return [];
-    let claims=rendered.split(legacySeparator), header=legacyHeader;
-    // Select one grammar for the entire snapshot. Only accept English when
-    // its leading header and complete entry count agree with Core's IDs.
-    if (englishHeader.test(rendered.trimStart())) {
-      const englishClaims=rendered.split(englishSeparator);
-      if (englishClaims.length===pairs.length) { claims=englishClaims; header=englishHeader; }
+    if (legacyHeader.test(rendered)) {
+      const claims=rendered.split(legacySeparator);
+      return pairs.map((pair,index)=>({snapshot,pair,claim:claims[index]?.trim(),header:legacyHeader}));
     }
-    // If new parsing is ambiguous, the old grammar above gets first refusal.
-    // If neither can pair safely, keep the complete text without invented IDs.
-    if (claims.length!==pairs.length) return [{snapshot,pair:null,claim:rendered,
-      header:englishHeader.test(rendered.trimStart())?englishHeader:legacyHeader}];
-    return pairs.map((pair,index)=>({snapshot,pair,claim:claims[index]?.trim(),header}));
+    if (englishHeader.test(rendered)) {
+      const claims=rendered.split(englishSeparator).map(decodeEnglishClaim);
+      if (claims.length===pairs.length && claims.every(claim=>claim!==undefined)) {
+        return pairs.map((pair,index)=>({snapshot,pair,claim:claims[index],header:englishHeader}));
+      }
+      return [{snapshot,pair:null,claim:rendered,header:englishHeader}];
+    }
+    // Unknown or malformed new format remains complete and never gains IDs.
+    return [{snapshot,pair:null,claim:rendered,header:legacyHeader}];
   });
   return [...groups.flatMap(group=>group.slice(0,1)),...groups.flatMap(group=>group.slice(1))];
 }
