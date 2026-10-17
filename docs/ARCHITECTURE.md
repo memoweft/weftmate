@@ -1,113 +1,83 @@
-# 架构与正式契约索引（当前有效）
+# 架构与加载链
 
-接口字段、调用和事件只以下列实现/协议为依据；本文件不复制 schema（数据结构），不从前端效果、旧 TypeScript 或历史图谱猜测字段。
+本文按源码说明启动、请求、运行时和数据的连接关系。产品决定见 [DECISIONS](DECISIONS.md)，客户端字段与错误见 [CLIENT_API](CLIENT_API.md)；代码、CI、安装验收与日用认可的层级见 [项目地图](../PROJECT-MAP.md) 第 4 节。源码存在不等于安装版或线上部署已验收。
 
-| 范围 | 正式依据 |
-| --- | --- |
-| 个人宿主有窗口/无窗口模式（隔离候选） | [main.mjs](../src/main.mjs)、[host-mode.mjs](../src/host-mode.mjs)；同一宿主的生命周期、隔离目录验证、启动/停止状态与会话引用扫描降级 |
-| 个人宿主隔离启动与按账户记忆配置 | [run-personal-host.mjs](../scripts/run-personal-host.mjs)、[personal-memory/config.mjs](../src/personal-memory/config.mjs)；仅显式的`--personal-memory-config`启用按账户记忆，旧`--memoweft-config`在个人宿主仍被拒绝 |
-| 账户与设备身份、受控接入及持久请求 | [personal-access/index.mjs](../src/personal-access/index.mjs)；v3按账户保存设备/会话/命令，鉴权后携带不可变owner上下文、账户内请求去重及容量/存储故障边界；正式运行状态见CURRENT_STATE |
-| Apple 与旧安卓设备能力兼容 | [声明路由](../src/personal-access/index.mjs)、[采用验证](../tests/personal-conversation-adoption.test.ts)、[模型转移验证](../tests/personal-account-model-service.test.ts)；Apple公开功能声明不借安卓构建号，既有持久层保存服务端11/12兼容级别；串行内重认证及按最新状态判断重复/降级，旧安卓请求/响应与旧存储可读性保持，认证/账户/设备归属仍为独立守卫；实际发布进度见CURRENT_STATE |
-| 官网公开安装分发与平台二维码 | [静态发布器](../scripts/prepare-public-downloads.mjs)、[发布核验](../tests/public-downloads.test.ts)、[下载页与渲染](../site/downloads/app.js)、[配置及部署说明](../site/downloads/README.md)；真实安装包按显式字节数/摘要核验后形成公开清单和按SHA命名文件，平台稳定页面与标准二维码独立于安装版本；未分发平台无安装包字段，Windows提供既有网页入口。官网部署、平台安装与设备更新完成度看CURRENT_STATE，不复制schema |
-| Mac原生公共检查更新 | [公共解析/数字版本及网络边界](../apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PublicUpdates.swift)、[Core边界测试](../apps/apple/Packages/WeftMateCore/Tests/WeftMateCoreTests/PublicUpdatesTests.swift)、[唯一更新状态](../apps/apple/macOS/MacUpdateModel.swift)、[更新窗口](../apps/apple/macOS/MacUpdateView.swift)、[菜单入口](../apps/apple/macOS/WeftMateMacApp.swift)；登录前菜单与登录后设置共用本机Bundle版本/进程ABI，独立无个人认证的官网清单请求；按营销版本/数字构建判定有新版/最新/本机较新，未知与不匹配/失败不冒成功，下载链接回已核官网，用户手动安装。实际构建与跨版本资料保留看CURRENT_STATE/APPLE_CLIENTS_02 |
-| 旧账户认证安装下载兼容 | [发布目录读取](../src/personal-access/native-downloads.mjs)、[认证路由](../src/personal-access/index.mjs)、[真实文件与旧安卓回归](../tests/personal-native-downloads.test.ts)；保留旧客户端认证native清单和按SHA寻址macOS DMG下载，服务root固定native-downloads目录；同一已打开文件核大小/摘要后流式发送，再核认证。当前安装发现入口转官网，旧安卓、账户存储与启动参数保持；实际发布看CURRENT_STATE |
-| 账户云模型配置、不可变修订与两端副本 | [模型账本与投影](../src/personal-account-models/index.mjs)、[账户接口/操作](../src/personal-access/index.mjs)、[正式路线管理](../src/main.mjs)、[宿主回调](../src/personal-access-backend.mjs)、[原生发布/另存](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/AccountModels.kt)、[原生密钥库](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/SecureSettings.kt)；稳定账户模型身份、独立运行时修订、操作去重/未知核对、当前目录与旧绑定分别核归属；普通目录无密钥，账户本人显式取回由实际App原生保存，本机同地址凭据冲突需明确选择；接口/原生兼容与可信进程边界见任务13 |
-| 个人宿主会话选模与模型维护空闲检查 | [唯一ApiProxy薄服务](../src/plugins/weftmate-personal-api-proxy.mjs)、[只读收件队列插件](../src/plugins/weftmate-personal-model-idle.mjs)、[受管组合/IPC](../src/dsh-web-runtime.ts)、[宿主模型事务](../src/main.mjs)、[空默认规范化](../src/stage2-config.ts)；个人组合复用公开工厂且不写全局默认，维护同时核原生队列/活动回合/待派发，查询不明先等待；当前固定依赖不改，正式实例与两层默认验证见任务13 |
-| 账户云模型记忆目的地与按原会话处理 | [目的地政策](../src/personal-memory/policy.mjs)、[私有修订证明](../src/personal-access/index.mjs)、[宿主原绑定与凭据核对](../src/main.mjs)、[按账户处理器及待处理队列](../src/personal-memory/index.mjs)、[路由隔离验证](../tests/personal-memory-processing-route.test.ts)、[真实形成验收](../tests/integration/personal-memory-real-cloud-formation.mjs)；账户、原会话、模型档案、不可变修订、实际配置指纹和凭据同时核对；旧有效绑定可继续，停用/删除关闭该账户处理器。处理模型按原会话解析，换路线时串行复用原账户资料，待处理队列不存密钥；召回 preStep 不回查 DSH。实际部署与整体验收以 CURRENT_STATE 为准 |
-| 共享普通原件与模型有界输入 | [原件流式存储](../src/personal-sync/attachments.mjs)、[暂存输入](../src/personal-access/shared-attachments.mjs)、[持久引用/下载及来源哈希](../src/personal-access/index.mjs)、[历史投影](../src/runtime/dsh-adapter/sessions.mjs)、[安卓保存](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt)、[原件边界验证](../tests/personal-sync-attachments.test.ts)、[共享引用验证](../tests/personal-shared-attachments.test.ts)、[实际 SDK 验收](../tests/integration/personal-stage15-attachment-model-electron.mjs)；原件沿既有同步引用或持久命令的精确账户/会话/消息关联读取。单件原件至多 1GiB，支持文本的模型输入总预算为 16KiB，不支持的类型仅提供原件元信息；图片沿已有有界输入。公有历史在受理回执与首次模型输入哈希确切匹配时恢复原用户正文和附件引用，内部哈希与资料包装不进入聊天气泡。两端选择/保存与正式版本见任务 15 |
-| 个人项目登记、共享会话绑定与来源快照 | [personal-access/index.mjs](../src/personal-access/index.mjs)；原电脑账户网页登录登记只读目录，手机列/选已登记项目；项目及登记修订绑定新共享会话，根任务与补充冻结同一绑定，模型只给不透明文件身份；来源按账户/项目/根任务/回合/确切消息回执关联 |
-| Windows 项目资料读取 | [personal-projects/index.mjs](../src/personal-projects/index.mjs)、[reader.ps1](../src/personal-projects/reader.ps1)；固定读取器使用Windows（视窗系统）文件句柄核根身份、路径与文件版本，保持只读并拒绝链接或变化；UTF-8（统一字符编码）Markdown/纯文本分行有界读取，不修改用户目录权限 |
-| 项目摘要来源证明与安卓入口 | [个人工具](../src/plugins/weftmate-personal-desktop.mjs)、[父子桥](../src/dsh-web-runtime.ts)、[宿主回调](../src/personal-access-backend.mjs)、[安卓有限桥](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt)；成功读取须在物理持久DSH历史中早于同回合保存调用，宿主生成来源清单；手机项目列表、按原请求创建会话及完整有界来源正文分别有有限动作 |
-| 公共网页阅读、已观察链接与来源摘要 | [浏览器读取器](../src/personal-browser/index.mjs)、[网络连接](../src/personal-browser/network.mjs)、[账户任务与快照](../src/personal-access/index.mjs)、[个人工具](../src/plugins/weftmate-personal-desktop.mjs)；独立临时浏览会话取得渲染后的可见正文，初始网址由用户目标冻结，继续导航使用同任务确切回执的已观察链接身份；网页快照与原生持久工具证明关联，摘要附实际地址/时间/正文哈希，双端沿既有任务来源与成果接口呈现 |
-| 冻结网页捕获、按需段与引用覆盖 | [读取器及UTF-8分段](../src/personal-browser/index.mjs)、[私有捕获与来源账本](../src/personal-access/index.mjs)、[实际工具证明](../src/plugins/weftmate-personal-desktop.mjs)、[当前子进程桥](../src/dsh-web-runtime.ts)；捕获最多256KiB、段最多8KiB/32段，两块隐藏成果存储绑定同账户/任务/回合/回执；后段从原版本取回且需实际持久工具结果，只有已读段能引用；旧来源保持无版本兼容，容量和实际验证边界见任务14 |
-| 任务回复证据与保存后提示 | [原生记录投影](../src/personal-reply-evidence/index.mjs)、[只读插件及下一步提示](../src/plugins/weftmate-personal-reply-evidence.mjs)、[父子通信](../src/dsh-web-runtime.ts)、[账户任务投影](../src/personal-access/index.mjs)；只认确切回执落在开始/唯一匹配结束之间，迟到/冲突或重启缺活跃证据保持未知；文件核验独立，物理保存后只追加一次插件来源提示；不把网页渲染、保存文件或首个流式片段当作模型正常结束 |
-| 隔离模型请求观测与低档试验 | [启用范围](../src/personal-model-observation/policy.mjs)、[白名单记录](../src/personal-model-observation/record.mjs)、[不透明代理](../src/personal-model-observation/proxy.mjs)、[语义观察](../src/personal-model-observation/semantic.mjs)、[公开SDK插件](../src/plugins/weftmate-personal-model-observer.mjs)、[宿主接线](../src/main.mjs)；显式测试开关及隔离profile才启用，网络与确切步骤之间不猜关联，不记录正文/头值/密钥；低档独立route经官方能力声明及实际header/wire验证，不修改旧共享route，正式采用尚未成立，见任务14第二轮 |
-| 账户密码、注册、资料、设备登录与存储迁移 | [personal-access/index.mjs](../src/personal-access/index.mjs)、[password.mjs](../src/personal-access/password.mjs)；异步 scrypt（密码派生算法）、限速、会话撤销、改密保留当前设备并拒绝旧待派发命令；来源/CSRF（跨站请求伪造防护）与可信代理检查；v2→v3须保留已知原账户，公开注册建立独立新账户 |
-| 电脑网页对话、事情、账户与记忆页面 | [personal-access-ui/index.mjs](../src/personal-access-ui/index.mjs)、[app.js](../src/personal-access-ui/app.js)；固定静态路径、同源表单、按requestId恢复、非终态动作锁、历史游标/视图代数；记忆详情、来源、纠正、停用与删除回执按当前登录账户呈现；资料按版本保存，头像解码与资料响应按账户/设备/视图代次核对 |
-| 手机来源事件与账户内同步 | [personal-sync/index.mjs](../src/personal-sync/index.mjs)、[接入与鉴权](../src/personal-access/index.mjs)；持久事件身份、账户/设备来源、同内容重试去重、不同内容冲突、有界分页、写入前重新鉴权；只同步记录，不重新派发动作 |
-| 原手机对话采用与电脑历史接续 | [账户绑定/占用与接口](../src/personal-access/index.mjs)、[历史上下文](../src/personal-conversations/context.mjs)、[模型扩展点](../src/plugins/weftmate-personal-conversation-context.mjs)、[父子桥](../src/dsh-web-runtime.ts)、[原生交接](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/ConversationHandoff.kt)、[缓存](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/LocalStore.kt)；原产品对话身份一对一关联电脑会话，已确认同步段与真实DSH后段按身份合并；原生11能力协商、联网手机回合占用、采用与发送仲裁、确切回执上下文及有界离线历史缓存；原请求恢复和模型/设备实际状态见任务12 |
-| 跨端原模型身份与预选 | [手机终态事件](../src/personal-sync/index.mjs)、[账户模型/原对话投影](../src/personal-access/index.mjs)、[电脑实际路线指纹](../src/model-route-fingerprint.mjs)、[原生实际路线指纹](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/ModelRouteFingerprint.kt)；新终态可选非秘密模型身份，同设备按其事件序号、多设备一致性及采用截点判断；仅确切唯一现有配置可预选，旧记录/缺配置/冲突保持未知，不传密钥或原地址；私有配置同步待后续接通 |
-| 手机图片跨端引用与读取 | [二进制存储](../src/personal-sync/attachments.mjs)、[事件契约](../src/personal-sync/index.mjs)、[个人接入路由](../src/personal-access/index.mjs)、[安卓本机账本](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/LocalStore.kt)、[附件副本](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/AttachmentStore.kt)；原图按账户/会话/消息独立上传，事件只保存引用；电脑与安卓按账户和消息关联读取，新旧历史边界及验收见任务07 |
-| 电脑DSH会话图片与双端预览 | [共享暂存](../src/personal-access/shared-attachments.mjs)、[命令/读取路由](../src/personal-access/index.mjs)、[宿主回调](../src/personal-access-backend.mjs)、[Gateway](../src/runtime/gateway/routes/v1.mjs)、[DSH适配器](../src/runtime/dsh-adapter/sessions.mjs)、[安卓共享出站](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/SharedChat.kt)；草稿UUID与DSH持久`sha256:`身份分开，按同一requestId受理/核对，正式会话历史投影图片引用与受控原图读取；模型是否实际回答另验 |
-| 安卓本机记录、模型与设备动作 | [LocalStore.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/LocalStore.kt)、[ModelClient.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/ModelClient.kt)、[DeviceTools.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DeviceTools.kt)；本机先落库、明确关联账户、可取消模型循环、工具派发与观察结果分别记录 |
-| 安卓凭据、连接与后台同步 | [SecureSettings.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/SecureSettings.kt)、[Network.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt)、[SyncJobService.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/SyncJobService.kt)、[SyncJobLease.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/SyncJobLease.kt)；系统密钥库、正常HTTPS证书检查、账户来源隔离和记录补传；后台Job（系统任务）的调度代次与账户/设备/凭据共同守卫，停止时断开网络，旧回执不取消新任务；调试回环例外不扩展到任意明文地址 |
-| 安卓原生Weave界面与可用能力 | [MainActivity.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MainActivity.kt)、[WeaveViews.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/WeaveViews.kt)；会话/只读历史分离、异步视图代次、账户与模型设置；功能状态来自实际配置，完整产品路线见PROJECT_DIRECTION |
-| 安卓可更新界面与原生连接层 | [HybridActivity.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt)、[app.js](../apps/mobile-ui/www/app.js)、[styles.css](../apps/mobile-ui/www/styles.css)；原生账户/记录/模型能力与共用页面分工、按账户交付异步结果；现行发布版本与真机待验层次见CURRENT_STATE及任务07 |
-| 界面版本、资产、更新事件与回退 | [mobile-ui-release.mjs](../src/personal-access/mobile-ui-release.mjs)、[build-mobile-ui.mjs](../scripts/build-mobile-ui.mjs)、[MobileUiBundles.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MobileUiBundles.kt)；既有账户鉴权、固定资产哈希与兼容声明、完整下载后切换、草稿/生成中暂缓、上一版本/内置页恢复；新增原生能力仍需APK |
-| 安卓账户通知 | [MobileNotifications.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MobileNotifications.kt)、[HybridActivity.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt)；当前账户收件箱、系统通知和回到原会话的归属；退出/切换时撤掉旧账户可见通知 |
-| 受保护的安卓候选下载 | [personal-access/index.mjs](../src/personal-access/index.mjs)、[宿主启动器](../scripts/run-personal-host.mjs)；仅显式配置的固定APK文件、既有账户鉴权、固定下载路由和禁止缓存；文件不存在时不宣传为可下载 |
-| 受限远端预设与模型桌面工具 | [personal-desktop插件](../src/plugins/weftmate-personal-desktop.mjs)、[专用预设限制](../src/plugins/weftmate-personal-desktop-preset.mjs)、[DSH宿主接线](../src/dsh-web-runtime.ts)；正式工具范围限制、确切子进程IPC、turn/call/原消息来源与设备授权校验 |
-| 记事本动作与窗口核验 | [personal-desktop-task.mjs](../src/personal-desktop-task.mjs)、[命令账本](../src/personal-access/index.mjs)；固定应用路径、持久受理/去重、可见窗口证据与结果不明不重放 |
-| 受控文档成果与跨端任务详情 | [personal-artifacts/index.mjs](../src/personal-artifacts/index.mjs)、[个人接入路由](../src/personal-access/index.mjs)、[电脑工具](../src/plugins/weftmate-personal-desktop.mjs)、[安卓网络层](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt)；仅原owner受限会话的可信工具来源写入账户/任务隔离的`.md/.txt`成果，写后读回并核哈希，详情/预览/下载重新鉴权；现行候选与任务控制边界见[任务08](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/tasks/UNIFIED_ASSISTANT_08.md) |
-| 同一任务的补充、准确停止、恢复与执行步骤 | [个人任务账本/路由](../src/personal-access/index.mjs)、[同进程停止插件](../src/plugins/weftmate-personal-task-control.mjs)、[宿主IPC](../src/dsh-web-runtime.ts)、[历史身份投影](../src/runtime/dsh-adapter/sessions.mjs)、[手机界面](../apps/mobile-ui/www/app.js)、[电脑界面](../src/personal-access-ui/app.js)；冻结根任务命令/receiptId，同进程核source.rpcId和当前回合后取消，精确队列删除及持久终态分别证明；恢复须已核对前态/副作用并明确下一步，旧/混合身份保留未知，验证见[任务09](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/tasks/UNIFIED_ASSISTANT_09.md) |
-| 原宿主通用工具与执行记录 | [自有预设](../src/plugins/weftmate-personal-desktop-preset.mjs)、[生命周期桥](../src/plugins/weftmate-personal-desktop.mjs)、[可信账户/原请求账本](../src/personal-access/index.mjs)、[停止与原生后台工作](../src/plugins/weftmate-personal-task-control.mjs)、[官方工具挂载](../src/dsh-web-runtime.ts)；复用官方命令/文件/搜索/工作工具与WeftMod，模型按目标自主执行，执行记录由宿主关联原会话/回执，不按应用名写规则。`executionSteps`仅表示工具/后台工作的观测状态，与业务核验分开；原owner与其他账户既有边界保留。当前接线与真实验证回任务15/当前状态 |
-| 个人宿主独立监督入口 | [run-personal-host-task.ps1](../scripts/run-personal-host-task.ps1)、[原启动器](../scripts/run-personal-host.mjs)；当前Windows登录用户的计划任务以前台进程监督宿主，异常退出按退避重启，隔离故障恢复已验；停计划任务后子进程清理仍需按profile核实，正式运行状态见CURRENT_STATE |
-| 本机模型目录与正式DSH路由 | [local-model-config.mjs](../src/local-model-config.mjs)、[main.mjs](../src/main.mjs)、[dsh-settings-migration.ts](../src/dsh-settings-migration.ts)；只从本机正式Config取模型限制，仅查目录的配置、系统加密凭据、官方user layer及持久归属标记、版本校验的窄修复；已核实的Occamy路由通过官方设置修订接口幂等补图片输入，不按显示名扩给其他模型 |
-| 个人接入的宿主模型归属与管理接线 | [personal-access-backend.mjs](../src/personal-access-backend.mjs)、[main.mjs](../src/main.mjs)、[启动器](../scripts/run-personal-host.mjs)；网络命令复用宿主归属判断，本机管理仅走父子进程 IPC（进程间通信） |
-| 按账户记忆的身份、目的地与服务接口 | [personal-memory/index.mjs](../src/personal-memory/index.mjs)、[boundary.mjs](../src/personal-memory/boundary.mjs)、[policy.mjs](../src/personal-memory/policy.mjs)、[http.mjs](../src/personal-memory/http.mjs)、[journal.mjs](../src/personal-memory/journal.mjs)、[main.mjs](../src/main.mjs)；已鉴权的 ownerId 决定独立数据根、Core 进程及写入/查询上下文；会话归属与目的地分别核对，允许正式共享本地模型或具有本人账户确切修订证明的云模型；网页接口提供列表、详情、来源、纠正、停用、真删除、回执与显式清理重试 |
-| DSH 按账户记忆注入与回合来源 | [weftmate-personal-memory.mjs](../src/plugins/weftmate-personal-memory.mjs)、[dsh-web-runtime.ts](../src/dsh-web-runtime.ts)、[目的地政策](../src/personal-memory/policy.mjs)；首步从已领取的用户消息读取请求，经宿主 IPC 取得账户召回，失败清除旧快照；完成回合的原生来源交给该账户 Core。本人账户云模型须同时证明原绑定、归属、修订、配置指纹与凭据；不满足目的地政策时不注入 |
-| 持久历史投影与续接 | [sessions.mjs](../src/runtime/dsh-adapter/sessions.mjs)、[内部历史路由](../src/runtime/gateway/routes/v1.mjs)；原生 beforeSeq 回溯、扫描水位、受限投影与显式截断；图片只投影持久引用，二进制需按原会话鉴权读取 |
-| Windows 私有数据与令牌文件 | [private-host-storage.mjs](../src/private-host-storage.mjs)；先保护目录，核实实际 ACL（访问控制列表），拒绝链接逃逸，权限设置失败拒绝继续 |
-| Mod 项目/SDK 参数、同源路由、能力状态 | [weftmate-mod-projects.mjs](../src/plugins/weftmate-mod-projects.mjs)；当前检查参数为明确数组及类型联合，具体字段以该正式定义为准 |
-| 项目清单/来源校验、生命周期、持久项目 | [validate.mjs](../src/runtime/mod-projects/validate.mjs)、[index.mjs](../src/runtime/mod-projects/index.mjs)、[store.mjs](../src/runtime/mod-projects/store.mjs) |
-| 开发预设与工具约束 | [weftmate-mod-development.mjs](../src/plugins/weftmate-mod-development.mjs) |
-| Mod 独立窗口与最小安全桥（候选，待真实运行验证） | [mod-window-manager.mjs](../src/mod-window-manager.mjs)、[mod-window-preload.cjs](../src/mod-window-preload.cjs)、[托管页资源](../src/plugins/weftmate-client/mod-window/assets.mjs)；九态单一派生源 [mod-state.mjs](../src/plugins/weftmate-client/mod-state.mjs) |
-| 官方对话载体探针（未选为生产载体） | [dsh-view-carrier.mjs](../src/dsh-view-carrier.mjs)、[dsh-carrier-preload.cjs](../src/dsh-carrier-preload.cjs)；只用固定 DSH 正式 sessions/theme 服务，未复制聊天运行基础 |
-| MemoWeft 旧全局宿主协议/路由 | [weftmate-memory.mjs](../src/plugins/weftmate-memory.mjs)；个人宿主不启用此无账户通道 |
-| MemoWeft Core RPC v2 | [protocol_v2.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/dsh_bridge/protocol_v2.py)、[query_service.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/trust/query_service.py)、[command_service.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/trust/command_service.py) |
-| MemoWeft 真删除与来源失效 | [true_delete.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/trust/true_delete.py)、[command_service.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/trust/command_service.py)；删除当前证据/理解正文及相关索引、派生内容，保留无正文来源标记防旧来源重放；共享或来源不明时原子拒绝，底层清理未完成有显式重试回执 |
-| MemoWeft 模型记忆与历史查看边界 | [正式理解召回匹配](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/hermes/recall.py)、[依赖校验](D:/AIProjects/MemoWeft/Core/py/src/memoweft/model_context_dependencies.py)、[交互投影](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/dsh_bridge/interactions.py)、[来源查询与权限](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/trust/query_service.py)、[精确依赖补链](D:/AIProjects/MemoWeft/Core/py/src/memoweft/store/interaction_context.py) |
-| MemoWeft 备份的规范化、校验与恢复 | [portable/model.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/portable/model.py)、[portable/validate.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/portable/validate.py)、[portable/importer.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/portable/importer.py) |
+## 1. 桌面与个人宿主启动
 
-2026-09-26：第二段的独立 `/personal/v1` 接入已在本机隔离验证，公网配置未应用。发送回调经过宿主模型归属判断；内部 [Gateway 消息路径](../src/runtime/gateway/routes/v1.mjs) 仍只供本机使用。请求记录先持久写入，DSH 受理与最终结果分别记录，回执不明不自动重放。历史补读使用原生分页和持久序号，不能以尾页冒充全部历史。详情和未验证边界见 [UNIFIED_ASSISTANT_02](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/tasks/UNIFIED_ASSISTANT_02.md)。第一段无窗口/降级启动结果保留在 [UNIFIED_ASSISTANT_01](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/tasks/UNIFIED_ASSISTANT_01.md)。
+入口是 [src/main.mjs](../src/main.mjs) 的 `bootstrap()`。它组装配置、凭据、模型调度、运行时、个人访问服务、记忆、更新与窗口；不是所有请求都直接由这个文件处理。
 
-2026-09-23：记忆交互与来源查询已按 model/history projection（模型输入与历史查看投影）划分；该语义用于当前性、依赖失效和权限控制，不是旧星球图谱或向量相似度接口。模型消费者必须显式选择模型投影，历史管理界面保留原话及来源状态。该记录发生时云模型目的地尚未定义；现行账户云模型政策以本表及 `personal-memory/policy.mjs` 为准。
+1. [desktop-config.mjs](../src/desktop-config.mjs) 处理安装版配置，[host-mode.mjs](../src/host-mode.mjs) 解析个人宿主、桌面窗口、监听端口和隔离目录条件。
+2. 主进程创建 `DshWebRuntime`，明确使用产品固定的 DSH（助手运行时）产物。开发树与安装包的产物来源不同，固定依赖身份由 [dsh-pin.json](../tests/contract/dsh-pin.json) 与构建产物清单约束；不能借用本机另一份源码判断安装版能力。
+3. 个人宿主通过 `startPersonalHost()` 启动运行时，迁移模型路由并恢复会话绑定。`ensureSharedRuntime()` 管理同一运行时实例，不为每个模型另起一套 DSH。
+4. 主进程用 `createPersonalAccessBackend()` 组装运行时回调，用 `createPersonalAccessService()` 恢复账户私有存储并组装业务服务。工厂恢复存储，`start()` 才开始监听环回地址。
+5. 个人服务就绪后，桌面模式由 [personal-desktop.mjs](../src/personal-desktop.mjs) 创建窗口，加载个人网页；无窗口模式保留同一宿主服务。非个人宿主分支加载 DSH 自身界面，不能把两种界面入口混为一谈。
+6. 退出由 `before-quit` 复用同一个异步收尾过程，关闭个人服务、后台工作、记忆与运行时后才放行；运行日志由 [host-log.mjs](../src/host-log.mjs) 记录生命周期与安全诊断。
 
-Mod SDK 的 settings/contributes 与 `ui.shared` 仍不是已交付能力；图谱、embedding（向量嵌入）和 similarity（相似度）也不能凭本轮投影命名视为已实现。当前状态见 `PROJECT-MAP.md`。更新接口须先读正式文件和 `collab/BACKEND.md`，由既有负责人在唯一协作通道协调。
+安装包的运行时组件、记忆启用条件和验收缺口分别见 [记忆运行时说明](../scripts/memory-runtime/README.md) 与 [MEMORY](MEMORY.md)。内置组件不等于全新安装已自动启用记忆。
 
-2026-09-26 账户补充：`/personal/v1/ui` 与 `/personal/v1/auth/*` 的账户验证见 [UNIFIED_ASSISTANT_03](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/tasks/UNIFIED_ASSISTANT_03.md)。现main/启动器支持显式公开HTTPS来源与可信回环代理；用户处理系统拦截后，正式Caddy已将`/personal/v1/*`转发至回环18186，本机正式HTTPS检查通过，真实手机登录与按钮任务已核实，手机对话反馈与来源核对边界见 [UNIFIED_ASSISTANT_04](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/tasks/UNIFIED_ASSISTANT_04.md)。修改密码保留当前设备ID，轮换其会话并拒绝旧待派发命令；已开始派发的状态如实保留。
+## 2. 客户端请求到原生执行
 
-2026-09-26 任务补充：命令列表、按requestId找回、受限`personal-remote`会话、实际MiniPlus工具调用和Notepad窗口已完成本机真实验证，准确范围见 [UNIFIED_ASSISTANT_04](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/tasks/UNIFIED_ASSISTANT_04.md)。旧本机接管会话保持历史可读，远端发送须核实际受限预设；只读模型查询不依赖Gateway重启后丢失的内存记录。正式消息历史兼容固定rc.5的直接消息结构，不以旧嵌套测试形态代替。
+```mermaid
+flowchart TD
+    UI[桌面网页／手机网页／原生客户端] --> HTTP[personal-access/http.mjs]
+    HTTP --> OPS[账户范围业务操作]
+    OPS --> BACKEND[personal-access-backend.mjs]
+    BACKEND --> GW[runtime/gateway/routes/v1.mjs]
+    GW --> ADAPTER[runtime/dsh-adapter/]
+    ADAPTER --> DSH[DSH 原生会话与服务]
+    DSH --> PLUGINS[WeftMate 插件]
+    PLUGINS --> IPC[主进程回调]
+    IPC --> OPS
+```
 
-2026-09-26 安卓与同步补充：原生客户端位于主仓`apps/android`，正式契约定位如上；电脑页面以明确的手机来源展示同步历史，目前为只读，不等同于跨端继续同一个DSH会话。个人受限预设已在正式回合生命周期增加重复工具收敛；历史投影跳过页面未使用的逐字增量但保留原生序号水位，追尾后显示持久终态。构建、真实MuMu运行、公网下载与未验层次分别见 [UNIFIED_ASSISTANT_05](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/tasks/UNIFIED_ASSISTANT_05.md) 和当前状态。
+| 层 | 实际职责与入口 |
+|---|---|
+| 个人 HTTP（网页传输协议）服务 | [personal-access/index.mjs](../src/personal-access/index.mjs) 组合存储、鉴权和操作模块；[http.mjs](../src/personal-access/http.mjs) 分发 `/personal/v1` 请求；记忆与健康另有专用处理模块 |
+| 账户业务 | `authentication.mjs`、`sessions.mjs`、`commands.mjs`、`approvals.mjs`、`user-questions.mjs`、`tasks.mjs` 等在原账户范围内处理授权、持久请求与结果投影；命令受理不代表执行完成 |
+| 宿主回调 | [personal-access-backend.mjs](../src/personal-access-backend.mjs) 检查模型、原会话和预设，使用主进程传入的 `stageOneGateway` 访问运行时；保持原 `requestId`、`receiptId` 和会话绑定 |
+| 内部网关 | [weftmate-host.mjs](../src/plugins/weftmate-host.mjs) 挂载 [gateway/index.mjs](../src/runtime/gateway/index.mjs)，由 [routes/v1.mjs](../src/runtime/gateway/routes/v1.mjs) 处理 `/weftmate/api/v1`；旧 `/weftmate/*` 接缝由 `legacy/` 保留 |
+| DSH 适配 | [sessions.mjs](../src/runtime/dsh-adapter/sessions.mjs) 投影历史，[session-lifecycle.mjs](../src/runtime/dsh-adapter/session-lifecycle.mjs) 管理原生创建／恢复／分叉／交接；任务、审批、目标和工具仍使用 DSH 服务 |
+| 插件到主进程 | [dsh-web-runtime.ts](../src/dsh-web-runtime.ts) 提供 IPC（进程间通信）回调，传递凭据请求、个人工具、记忆与来源核对；不是另一个客户端公开接口 |
 
-## 现用补充定位
+`/personal/v1` 是账户业务边界，`/weftmate/api/v1` 是内部运行时边界，两者不能互换。客户端通过原请求身份核对不确定结果；断流、超时或进程结束不能自动解释为任务成功，也不能自动重发有副作用的命令。
 
-2026-09-27 多账户与记忆边界：公开注册建立独立 owner（账户归属标识），已配置 v2 原账户无损迁移；未知归属的旧资料不能由公开首注册认领。宿主模型只允许明确登记且当前配置仍一致的本机目录共享，新账户不继承宿主文件、桌面执行权或私人云模型配置。个人宿主通过 `--personal-memory-config` 启用账户化 MemoWeft：每个 owner 有独立数据目录、Core 进程、作业与来源账本；认证、会话归属及实际模型目的地一起核对。目的地可为正式共享本地模型或具有本人账户确切修订证明的云模型，归属/路由/凭据不明、停用或删除时关闭对应处理与召回。`forget_evidence` 仍是软删除；账户页面的删除走真删除命令。成功真删后清除当前 Core 数据库、索引和作业结果的正文；原始 WeftMate 聊天、Core 交互归档及既存独立备份不在该操作的清理范围。早期验证见[任务 06](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/tasks/UNIFIED_ASSISTANT_06.md)，账户云模型实际形成、采用与管理证据见[任务 15](https://github.com/memoweft/weftmate/blob/ef262dfedcae82dfbcf904c3c9a350a261734466/docs/archive/2026-10-07/tasks/UNIFIED_ASSISTANT_15.md)和 CURRENT_STATE。
+## 3. DSH 产物、配置与工具
 
-方向见 [VISION.md](VISION.md)，当前状态见 [PROJECT-MAP.md](../PROJECT-MAP.md)。本文件保留既有源码注释与契约测试引用路径；旧章节编号和旧阶段描述已退役。
+[dsh-web-runtime.ts](../src/dsh-web-runtime.ts) 负责生成或修复运行档案、复制插件与适配模块、叠加模型路由及安全配置、启动子进程、读取就绪地址、管理退出和恢复。`writePluginAssets()` 将 `src/plugins/` 以及 `src/runtime/gateway/`、`dsh-adapter/` 等复制进运行档案；插件实际从该副本加载，修改源文件后必须通过已有构建／启动链交付。
 
-| 现有路径 | 定位 |
-| --- | --- |
-| src/main.mjs | Electron（桌面应用框架）主入口 |
-| src/dsh-web-runtime.ts | DSH 网页运行集成 |
-| src/plugins/weftmate-client/client.js | 现有客户端扩展 |
-| src/plugins/weftmate-memory.mjs | 记忆宿主接入 |
-| src/plugins/weftmate-aigame-host.mjs | 手机任务宿主接入 |
-| src/runtime/ai-game/ | 手机接入组件 |
-| scripts/vendor-dsh.mjs | 固定 DSH 生成依赖的构建入口 |
-| tests/contract/dsh-pin.json | 固定依赖身份声明 |
+个人宿主组合使用产品自己的预设及插件；普通命令、文件、搜索、浏览器、上下文压缩、子任务、调度与审批优先沿 DSH 原生能力（D2、D87）。WeftMate 增加账户、设备、项目、模式、记忆和产品呈现，不另造一套通用执行器。
 
-WeftMod 与 MemoWeft 各在独立仓库；不将它们整包嵌入主仓库。权限、来源、凭据及任务状态边界按当前代码核实，不从旧文档推定已实现。本文只是定位资料，未证明功能闭环或设备可用。
+- [weftmate-personal-desktop.mjs](../src/plugins/weftmate-personal-desktop.mjs) 把工具生命周期接到账户与项目策略；[personal-work-mode.mjs](../src/plugins/personal-work-mode.mjs) 判断对话能否执行该工具；[personal-approval-policy.mjs](../src/plugins/personal-approval-policy.mjs) 处理原风险与审批规则。
+- [work-and-chat.mjs](../src/personal-access/work-and-chat.mjs) 保存模式与项目绑定。D92 只允许工作操作电脑；切换卡片确认工作范围，不能代替具体工具批准。
+- 模型配置和凭据由主进程管理；运行时通过专用 IPC 获取所需秘密。模型服务与按会话选模见 [model-services.mjs](../src/personal-access/model-services.mjs)、[account-models.mjs](../src/personal-access/account-models.mjs) 与 CLIENT_API 第 3.10 节。
 
-## 连接器与安全凭证库（ST-7a）
+## 4. 逻辑对话、历史与记忆
 
-连接器使用固定 DSH 的 `@deepseek-ai/dsh-mcp-client`，由它处理 MCP（模型上下文协议）的命令与 HTTP（网页传输协议）连接、工具发现与调用、名称规范化、输出校验和有限次重连。WeftMate 的 `src/personal-connectors/` 只适配程序生命周期、账号归属与设置：每个连接器一个隔离进程，启动最多等待 6 秒、调用 8 秒、空闲 2 分钟回收，崩溃最多重试 2 次，停用／移除／退出收掉整棵进程树。发现失败不会阻塞聊天；目录读取触发后台连接。默认每个连接器提供前 16 个工具，继续沿 DSH 的 `load_tools` 与 Code Mode（代码模式）发现能力呈现，不另建模型工具调度。
+逻辑对话链为 [chat-identity.mjs](../src/personal-access/chat-identity.mjs) → [chats.mjs](../src/personal-access/chats.mjs)／[chat-timeline.mjs](../src/personal-access/chat-timeline.mjs) → 原生历史投影。`chatId` 聚合执行段，`sessionId` 仍是原执行与记忆来源。原主聊天入口按 D92 取消，底层 `kind:main`、接力、生命周期保护与默认后台投递为兼容保留；细节见 [IA_MAIN_CHAT](IA_MAIN_CHAT.md)。
 
-原生插件当前没有公开启动超时，也未在登记定义中保留 `annotations`（工具标注）。隔离进程通过同一个 SDK（开发工具包）请求的只读观察保留发现回执里的标注；请求、回执和原生调用行为均不修改，并有固定版本集成用例。危险名称／说明优先于自称只读；没有可靠只读依据按修改处理。操作类型、每次审批、第二模型复核及执行记录复用现有 ST-2／SEC-1。单工具规则使用现有账号 `permissionRules`，键是原生限定工具名；移除按连接器名称空间清除规则。连接器副作用默认询问，即使对话选择全部允许或保存过操作类型放行；本人明确保存单工具「总是允许」后才长期放行，类型／项目的禁止仍优先。宿主调用再次校验原生执行记录、参数摘要和已批准回执。返回值按外部资料标注；资料中的要求不取得用户指令地位。
+历史分三层：DSH 原生日志是执行来源；宿主公开历史缓存可重建；逻辑时间线建立渐进内存索引并提供签名分页。缓存命中不代表首次无缓存读取已有物理范围保证。工具原始详情仍从原日志按需读取。
 
-第三方凭据与模型密钥共用 `weftmate-model.enc` 和现有 Electron（桌面程序框架）`safeStorage` 本机加密；Windows 的持久加密钥匙沿既有 DPAPI（Windows 用户数据保护）检查。`createConnectorVault` 以账号＋连接器摘要构造独立名称空间，提供 `save / get / rotate / remove / removeConnector / list`。列举只返回凭据项名称、保存状态、末四位；账号不同不能读取另一账号的项。密文损坏沿现有不可写语义处理，不用空库覆盖。连接器配置只存非秘密连接信息、凭据项名称和脱敏工具定义；真实值仅经本机进程通信送进原生插件，命令式连接再按明确名称传给程序，HTTP 连接作为请求头。原生子进程仍使用 DSH 的父环境清理。原始服务器错误和标准错误不进入程序日志，已知凭据从工具元数据与返回资料里移除，明文备份沿现有规则排除凭证库。
+记忆调用链为 [weftmate-personal-memory.mjs](../src/plugins/weftmate-personal-memory.mjs) → 运行时 IPC／主进程回调 → [memory-ingestion.mjs](../src/personal-access/memory-ingestion.mjs) 与 [personal-memory/](../src/personal-memory/) → 独立 MemoWeft Core（记忆核心）进程。形成、召回和管理分别走对应入口，不能把插件注入当成真人原话重新形成。
 
-退出收口也等待已经开始的空闲回收完成。管理进程意外结束时，隔离进程收到通信断开后收掉自己的完整服务进程树；用正在等待慢工具的合成服务验证，正常与强制退出均不留下服务进程。
+记忆管理器按账户隔离目录、Core 进程、来源与处理队列，模型目的地按账户及原会话配置核对；配置缺失时不能宣称记忆就绪。删除契约覆盖修订链、来源与派生副本，聊天原话默认保留（D16、D33）；当前实现与安装验收边界以 MEMORY 和项目地图为准。
 
-ST-7b 通过 `builtinConnectors()` 登记稳定标识、使用者名称／说明、`fields` 添加表单定义及 `configure(fields, credentials)` 内存配置函数。秘密表单字段用 `secret: true`，只进入凭证库；普通字段才进入配置。无表单字段的内置项一键测试并添加；「本机时间」是无外部服务的最小例子。邮件授权码、日历凭据和将来的 OAuth（授权协议）刷新凭据都用同一存取／轮换接口，不把它们写进表单定义、配置或工具参数。
+## 5. 客户端共用与跨端
 
-### 邮箱与日历（ST-7b）
+| 客户端／服务 | 加载入口与分工 |
+|---|---|
+| 桌面与远程网页 | [personal-access-ui/index.mjs](../src/personal-access-ui/index.mjs) 提供固定静态资源；`personal-access-ui/` 管呈现，[ui-core/](../src/ui-core/) 管共用状态、请求、历史与动作 |
+| 手机网页与安卓内置网页 | [apps/mobile-ui/www/](../apps/mobile-ui/www/) 保留页面母版；共用功能副本由 [build-ui-core.mjs](../apps/mobile-ui/src/build-ui-core.mjs) 从 `src/ui-core/` 生成，修改源头后生成 |
+| 安卓原生 | [NativeActivity.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/NativeActivity.kt) 继承 [HybridActivity.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt) 的现役接线；[Network.kt](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt) 限定业务路径，原生聊天由 `NativeChatModel` 管理 |
+| 苹果三端 | [apps/apple/UI/](../apps/apple/UI/) 共用呈现与模型，[WeftMateCore](../apps/apple/Packages/WeftMateCore/) 共用协议、存储与逻辑；`iOS/`、`macOS/`、`watchOS/` 承担平台行为 |
+| 同步与离线 | [personal-sync/](../src/personal-sync/) 保存账户与设备来源事件；[personal-offline/](../src/personal-offline/) 管加密副本、删除代次与补交。同步事实不重新派发电脑动作 |
+| 云与中继 | [personal-cloud/](../src/personal-cloud/)、[personal-relay/](../src/personal-relay/) 接 [services/cloud/](../services/cloud/)；账号、设备目录、连接、密文暂存与备份按各自协议工作。源码与实际部署须分别核验 |
 
-程序自带 `mail`、`calendar`、`calendar-ics` 三项。`service-server.mjs` 由原连接器进程管理器启动，通过固定 DSH 的发现与调用链路登记工具；首次发现即实际测试登录，两端邮件验证均成功才提供工具。`mail.mjs` 使用 ImapFlow／Nodemailer／Mailparser，`calendar.mjs` 使用 tsdav／ical.js，详见 [依赖与许可](ST7B_DEPENDENCIES.md)。授权码只经原凭据接口与内存启动环境交付，服务取得后清除环境副本；连接配置无授权码，订阅地址整体作为秘密保存。没有证书跳过开关，所有连接必须加密且校验证书；测试只信任临时合成证书。
+手机不连电脑的聊天与轻量记忆沿其独立路径；电脑任务仍绑定确定电脑及项目，不因另一台在线自动迁移。协议见 CLIENT_API、[CLOUD](CLOUD.md) 与 [CLOUD_BACKUP](CLOUD_BACKUP.md)。
 
-邮件按调用打开文件夹，不后台同步；列表每次至多 30 封，正文至多 12000 字／下载 64 KiB，附件仅列前 30 个名字与估计大小。发件人固定为登记邮箱，至多 10 个收件人，附件发送不提供。读邮件不自动标已读；删除只移动到可识别的废纸篓。回复收件人须匹配原邮件的回复地址。发／回／转、标记、移动及移入废纸篓复用默认逐次审批，审批显示收件人、主题与正文开头。
+## 6. 连接器与其他账户服务
 
-日历按账号时区显示与解释无时差的输入，已有跨时区日程保留原时区；重复日程读取支持规则、排除日期与改期例外，重复修改／删除明确只读。查询一次至多 93 天和 100 条，不完整的空闲判断返回未知并提示缩小范围。日程编号为资源地址摘要，不公开服务器地址；修改／删除先读取并使用版本条件，核对审批中的日历名、原标题与原时间，避免覆盖远程改动。订阅只提供查询与空闲工具。所有内容经原连接器统一外部资料标注，外部文本不取得发送或删除授权；执行入口仍要求匹配的原生审批回执。
+[personal-connectors/](../src/personal-connectors/) 使用固定 DSH 的 MCP（模型上下文协议）客户端处理连接、发现与调用；WeftMate 负责隔离进程、账户配置、凭据与审批。`load_tools` 仍由 DSH 提供，不另建模型工具调度。内置邮件与日历入口见 [service-server.mjs](../src/personal-connectors/service-server.mjs)，依赖和许可见 [ST7B_DEPENDENCIES](ST7B_DEPENDENCIES.md)。
 
-业务拒绝（例如邮件已不存在、重复日程暂不能修改）返回 `ok:false` 与固定安全原因，保持连接可用；原生传输错误仍沿连接器故障恢复。这样不会把可恢复的业务原因折成笼统的连接故障。内置审批摘要用中文事实，正文换行折成空格，日期显示月／日和小时／分钟，完整参数仅留在展开详情中；自定义连接器保持原有参数展示。
+第三方凭据与模型密钥复用主进程加密库；[vault.mjs](../src/personal-connectors/vault.mjs) 按账户与连接器划分名称空间，配置和列表不返回真实值。工具结果是外部资料，不能取得用户指令或执行授权。具体请求、默认审批和错误边界见 CLIENT_API 连接器一节。
+
+健康、备份与更新分别由 [personal-health/](../src/personal-health/)、[personal-backup/](../src/personal-backup/)、[personal-cloud-backup/](../src/personal-cloud-backup/)、[personal-update/](../src/personal-update/) 承担，个人服务只组合其账户接口。设计母版在 `design/tokens/`、`design/icons/`，发布入口在 `scripts/release/`；完整源码入口表见项目地图第 7 节。
