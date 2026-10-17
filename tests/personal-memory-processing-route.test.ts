@@ -4,12 +4,62 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs'
+import { recallDateCases } from './fixtures/recall-date-contract.ts'
 
 const ownerA = 'owner-00000000-0000-4000-8000-000000000001'
 const ownerB = 'owner-00000000-0000-4000-8000-000000000002'
 const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup', 'query_jobs']
+
+for (const lang of ['en', 'zh'] as const) for (const dated of [false, true]) for (const pending of [false, true]) {
+  test(`G9 manager preserves ${lang} IDs, dates and bodies (${dated ? 'dated' : 'undated'}, ${pending ? 'pending correction' : 'current snapshot'})`, async t => {
+    const root = mkdtempSync(join(tmpdir(), 'weftmate-recall-format-'))
+    const headers = lang === 'en' ? ['Memory:', 'Memory (past):'] : ['记忆：', '记忆（过往）：']
+    const bodies = recallDateCases.map(item => `${dated ? `[${item.date}] ` : ''}${item[lang]}\n${lang === 'en' ? 'Exact continuation.' : '逐字保留的下一行。'}`)
+    const claims = bodies.map((body, index) => `${headers[index % 2]}${body}`)
+    const pairs = [['cognition', 'pet'], ['event', 'games'], ['cognition', 'travel']]
+    let ambiguous = false
+    const manager = createPersonalMemoryManager({ root, enabled: true,
+      python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
+      baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'synthetic',
+      recallMaxItems: 5, recallMaxChars: 1200,
+      rpcFactory: () => ({ child: {}, async close() {}, async request(method, params = {}) {
+        if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods: required }
+        if (method === 'initialize') return {
+          runtime: { subject_id: ownerA, db_path: join(params.dsh_home, 'memoweft', 'memoweft.sqlite3') },
+          capabilities: { subject_id: ownerA, methods: required, services: { command: { operations: [] } } } }
+        if (method === 'health') return { runtime: { subject_id: ownerA, route_ready: true } }
+        if (method === 'query_world') { assert.equal(params.operation, 'revision'); return { world_revision: 8 } }
+        if (method === 'preview_recall') return { world_revision: 8, preview: {
+          selected_item_ids: pairs,
+          rendered_recall: ambiguous ? `${claims[0]}\nMemory: unescaped literal line\n${claims.slice(1).join('\n')}` : claims.join('\n'),
+          // This synthetic source exceeds the separate recent-evidence budget;
+          // the formal claims must still carry their pending-correction warning.
+          pending_corrections: pending ? [{ evidence_id: 'synthetic-correction',
+            text: 'Synthetic correction. '.repeat(80), created_at: '2026-10-17T00:00:00Z' }] : [],
+        } }
+        if (method === 'query_interactions') return { rendered_context: '' }
+        return {}
+      } }) })
+    t.after(async () => { await manager.close(); rmSync(root, { recursive: true, force: true }) })
+    const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    const warning = lang === 'en'
+      ? 'Already corrected by the user; pending update. The following old content must not be used as a current fact. '
+      : '已被用户纠正，待更新；以下旧内容不能作为当前事实。'
+    const expectedClaims = pending ? bodies.map((body, index) => `${lang === 'en' ? headers[index % 2] : '记忆：'}${warning}${body}`) : claims
+    assert.equal(result.sourceCount, 3, 'all original IDs must survive the new English format')
+    assert.deepEqual(result.memories, pairs.map(([kind, id], index) => ({ kind, id,
+      summary: `${pending ? warning : ''}${bodies[index]}`.trim().slice(0, 240) })))
+    assert.equal(result.contextText, expectedClaims.join('\n\n'), 'no fact, date or source wording may be invented or rewritten')
+    if (lang === 'en') assert.doesNotMatch(result.contextText, /记忆[：（]/)
+    assert.ok(result.contextText.length <= 1200)
+    ambiguous = true
+    const withheld = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    assert.equal(withheld.sourceCount, 0, 'ambiguous headers cannot associate literal text with a different Core ID')
+    assert.equal(withheld.contextText, '')
+  })
+}
 
 test('fixed cold initialization alone can consume the old recall assertion while formation never blocks', async t => {
   let clock = 0
