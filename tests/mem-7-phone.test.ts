@@ -10,6 +10,7 @@ import { createPhoneHistory } from '../src/personal-access/phone-history.mjs';
 import { reconcileChatIdentity } from '../src/personal-access/chat-identity.mjs';
 import { createOfflineService } from '../src/personal-offline/index.mjs';
 import { recallEntries } from '../src/personal-memory/recall-questions.mjs';
+import { recallDateCases } from './fixtures/recall-date-contract.ts';
 import { ACTIVITY_TYPES } from '../src/personal-access/activity-store.mjs';
 import '../src/ui-core/phone-memory.js';
 import '../src/ui-core/offline.js';
@@ -55,6 +56,30 @@ test('MEM-7 compound recall keeps each filtered topic before extra claims and re
  const snapshots=[{preview:{rendered_recall:'记忆：主题甲\n记忆：甲的补充',selected_item_ids:[['cognition','a'],['entity','a-extra']]}},{preview:{rendered_recall:'记忆：姓名',selected_item_ids:[['cognition','name']]}}];
  const entries=recallEntries(snapshots);assert.deepEqual(entries.slice(0,2).map(e=>e.pair),[['cognition','a'],['cognition','name']]);
  assert.equal(entries[1].claim,'记忆：姓名');assert.equal(entries[2].claim,'记忆：甲的补充');assert.equal(entries[1].snapshot,snapshots[1]);
+});
+for (const lang of ['en', 'zh'] as const) for (const dated of [false, true]) {
+ test(`G9 recall entries retain ${lang} current/past ID order, exact dates and multiline bodies (${dated ? 'dated' : 'undated'})`,()=>{
+  const headers=lang==='en'?['Memory:', 'Memory (past):']:['记忆：', '记忆（过往）：'];
+  const claims=recallDateCases.map((item,index)=>`${headers[index%2]}${dated?` [${item.date}] `:''}${item[lang]}\n${lang==='en'?'Continuation kept verbatim.':'逐字保留的下一行。'}`);
+  const pairs=[['cognition','pet'],['event','games'],['cognition','travel']];
+  const snapshots=[{preview:{selected_item_ids:pairs,rendered_recall:claims.join('\r\n')}},
+   {preview:{selected_item_ids:[['entity','second-topic']],rendered_recall:`${headers[0]}second topic`}}];
+  const entries=recallEntries(snapshots);
+  assert.deepEqual(entries.map(e=>e.pair),[pairs[0],['entity','second-topic'],pairs[1],pairs[2]]);
+  assert.deepEqual(entries.map(e=>e.claim),[claims[0],`${headers[0]}second topic`,claims[1],claims[2]]);
+  assert.equal(entries[2].snapshot,snapshots[0]);
+ });
+}
+test('G9 recall boundaries preserve inline and indented literal headers; ambiguous unescaped headers never acquire IDs',()=>{
+ const claims=['Memory: [2026-01-06] A literal Memory: is part of this sentence.\n  Memory (past): quoted continuation.\n记忆力是另一个词。',
+  '记忆（过往）：[2026-07-14] 下一条\n  记忆：缩进的原话。'];
+ const snapshot={preview:{selected_item_ids:[['cognition','first'],['event','second']],rendered_recall:claims.join('\n')}};
+ assert.deepEqual(recallEntries([snapshot]).map(e=>e.claim),claims);
+ for(const header of ['Memory:', 'Memory (past):', '记忆：', '记忆（过往）：']) {
+  const ambiguous={preview:{selected_item_ids:snapshot.preview.selected_item_ids,
+   rendered_recall:`Memory: first body\n${header}literal body line\nMemory: second body`}};
+  assert.ok(recallEntries([ambiguous]).every(e=>!e.claim),'extra reserved lines cannot shift text onto another ID');
+ }
 });
 test('MEM-7 ordinary backend replacements and receiver binding remain live through phone history',async()=>{
  const native={label:'old',async listModels(){return [this.label];}},context:any={accountState:()=>({phoneHistory:{}})};
