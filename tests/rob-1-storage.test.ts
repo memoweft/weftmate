@@ -7,24 +7,29 @@ import { createCipheriv } from 'node:crypto';
 import childProcess from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { EventEmitter } from 'node:events';
 import { durableReplace, persistedWindowsStorageKey, cleanupVaultTemporaries } from '../src/windows-vault-storage.mjs';
 
 test('a valid DPAPI proof taking over 3s uses the remaining 15s readiness budget once',async()=>{
   const root=fs.mkdtempSync(join(tmpdir(),'weftmate-rob1-slow-proof-'));
-  const spawn=childProcess.spawnSync,now=Date.now,key=Buffer.alloc(32,7),iv=Buffer.alloc(12,9);
+  const exec=childProcess.execFile,now=Date.now,key=Buffer.alloc(32,7),iv=Buffer.alloc(12,9);
   const cipher=createCipheriv('aes-256-gcm',key,iv);
   const probe=Buffer.concat([Buffer.from('v10'),iv,cipher.update('weftmate-storage-persistence-check'),cipher.final(),cipher.getAuthTag()]);
   let clock=0,calls=0;
   try{
     fs.writeFileSync(join(root,'Local State'),JSON.stringify({os_crypt:{encrypted_key:'synthetic-wrapped-key'}}));
     Date.now=()=>clock;
-    childProcess.spawnSync=((_cmd,_args,options:any)=>{calls++;clock+=3001;
-      return options.timeout>=3001?{status:0,stdout:Buffer.from(key),stderr:Buffer.alloc(0)}:{status:null,stdout:Buffer.alloc(0),stderr:Buffer.alloc(0)};
+    childProcess.execFile=((_cmd,_args,options:any,callback:any)=>{calls++;
+      const child:any=new EventEmitter();child.stdin=new EventEmitter();child.kill=()=>true;
+      child.stdin.end=()=>queueMicrotask(()=>{clock+=3001;
+        callback(options.timeout>=3001?null:Object.assign(Error(),{killed:true,signal:'SIGTERM'}),Buffer.from(key),Buffer.alloc(0));
+      });
+      return child;
     }) as any;syncBuiltinESMExports();
     await persistedWindowsStorageKey({isEncryptionAvailable:()=>true,encryptString:()=>Buffer.from(probe)},root);
     assert.equal(calls,1,'the valid proof must complete once rather than being killed every 3 seconds');
     assert.equal(clock,3001);
-  }finally{childProcess.spawnSync=spawn;Date.now=now;syncBuiltinESMExports();key.fill(0);fs.rmSync(root,{recursive:true,force:true});}
+  }finally{childProcess.execFile=exec;Date.now=now;syncBuiltinESMExports();key.fill(0);fs.rmSync(root,{recursive:true,force:true});}
 });
 test('storage readiness timeout preserves Local State, ciphertext and residual old recovery files', async () => {
   const root=fs.mkdtempSync(join(tmpdir(),'weftmate-rob1-state-'));
