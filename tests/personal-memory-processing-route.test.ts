@@ -5,12 +5,82 @@ import { join } from 'node:path'
 import test from 'node:test'
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs'
 import { recallDateCases } from './fixtures/recall-date-contract.ts'
+import legacyRecall from './fixtures/legacy-recall-output.json' with { type: 'json' }
 
 const ownerA = 'owner-00000000-0000-4000-8000-000000000001'
 const ownerB = 'owner-00000000-0000-4000-8000-000000000002'
 const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup', 'query_jobs']
+
+function recallContractManager(t: any, preview: any, recallMaxChars = 1200) {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-recall-format-'))
+  const manager = createPersonalMemoryManager({ root, enabled: true,
+    python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
+    baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'synthetic',
+    recallMaxItems: 5, recallMaxChars,
+    rpcFactory: () => ({ child: {}, async close() {}, async request(method, params = {}) {
+      if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods: required }
+      if (method === 'initialize') return {
+        runtime: { subject_id: ownerA, db_path: join(params.dsh_home, 'memoweft', 'memoweft.sqlite3') },
+        capabilities: { subject_id: ownerA, methods: required, services: { command: { operations: [] } } } }
+      if (method === 'health') return { runtime: { subject_id: ownerA, route_ready: true } }
+      if (method === 'query_world') { assert.equal(params.operation, 'revision'); return { world_revision: 8 } }
+      if (method === 'preview_recall') return { world_revision: 8, preview }
+      if (method === 'query_interactions') return { rendered_context: '' }
+      return {}
+    } }) })
+  t.after(async () => { await manager.close(); rmSync(root, { recursive: true, force: true }) })
+  return manager
+}
+
+for (const fixture of legacyRecall.cases) test(`G9 legacy manager matches main output: ${fixture.name}`, async t => {
+  const manager = recallContractManager(t, {
+    selected_item_ids: [['cognition', 'first'], ['event', 'second']], rendered_recall: fixture.renderedRecall,
+    pending_corrections: fixture.pending ? [{ evidence_id: 'synthetic-correction',
+      text: 'Synthetic correction. '.repeat(80), created_at: '2026-10-17T00:00:00Z' }] : [],
+  }, fixture.budget)
+  const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+  assert.deepEqual(result, fixture.expected, `must exactly match original main ${legacyRecall.baseline}`)
+})
+
+const formatCases = [
+  { name: 'English bodies retain Chinese headers',
+    claims: ['Memory: [2026-01-06] First body.\n记忆：正文中的中文标题', 'Memory (past): [Jan 06, 2026] Second body.'],
+    summaries: ['[2026-01-06] First body.\n记忆：正文中的中文标题', '[Jan 06, 2026] Second body.'] },
+  { name: 'another date style in a new-format body stays literal',
+    claims: ['Memory: [2026-01-06] First body.\n[January 6, 2026] A quoted date.\n2026-07-14: Another date line.',
+      'Memory (past): [recorded at: 2026-10-16] Second body.'],
+    summaries: ['[2026-01-06] First body.\n[January 6, 2026] A quoted date.\n2026-07-14: Another date line.',
+      '[recorded at: 2026-10-16] Second body.'] },
+  { name: 'unescaped English header with another date style preserves unpaired original',
+    claims: ['Memory: [2026-01-06] First body.\nMemory: [January 6, 2026] Quoted heading.', 'Memory (past): Second body.'],
+    summaries: null },
+  { name: 'ambiguous new parsing falls back to exactly the legacy pairs and prefix handling',
+    claims: ['Memory: First body.\nMemory: Quoted heading.\nMemory (past): Another quoted heading.', '记忆：Second body.'],
+    summaries: ['Memory: First body.\nMemory: Quoted heading.\nMemory (past): Another quoted heading.', 'Second body.'] },
+  { name: 'unmatched legacy boundaries preserve the entire original without inventing IDs',
+    claims: ['记忆：First body.\n记忆：Quoted heading.', '记忆：Second body.'], summaries: null },
+]
+for (const fixture of formatCases) test(`G9 format choice: ${fixture.name}`, async t => {
+  const rendered = fixture.claims.join('\n')
+  const pairs = [['cognition', 'first'], ['event', 'second']]
+  const manager = recallContractManager(t, { selected_item_ids: pairs, rendered_recall: rendered })
+  const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+  assert.equal(result.sourceCount, fixture.summaries ? 2 : 0)
+  assert.deepEqual(result.memories, fixture.summaries ? pairs.map(([kind, id], index) => ({ kind, id, summary: fixture.summaries![index] })) : [])
+  assert.equal(result.contextText, fixture.summaries ? fixture.claims.join('\n\n') : rendered)
+})
+
+for (const budgetDelta of [1, 2]) test(`G9 unpaired original obeys the unchanged fragment budget (${budgetDelta})`, async t => {
+  const rendered = 'Memory: first\nMemory: quoted heading\nMemory: second'
+  const manager = recallContractManager(t, { selected_item_ids: [['cognition', 'first'], ['event', 'second']],
+    rendered_recall: rendered }, rendered.length + budgetDelta)
+  const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+  assert.equal(result.sourceCount, 0)
+  assert.deepEqual(result.memories, [])
+  assert.equal(result.contextText, budgetDelta === 2 ? rendered : '', 'keep whole fragments with the same two-character budget allowance as main')
+})
 
 for (const lang of ['en', 'zh'] as const) for (const dated of [false, true]) for (const pending of [false, true]) {
   test(`G9 manager preserves ${lang} IDs, dates and bodies (${dated ? 'dated' : 'undated'}, ${pending ? 'pending correction' : 'current snapshot'})`, async t => {
@@ -55,9 +125,20 @@ for (const lang of ['en', 'zh'] as const) for (const dated of [false, true]) for
     if (lang === 'en') assert.doesNotMatch(result.contextText, /记忆[：（]/)
     assert.ok(result.contextText.length <= 1200)
     ambiguous = true
-    const withheld = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
-    assert.equal(withheld.sourceCount, 0, 'ambiguous headers cannot associate literal text with a different Core ID')
-    assert.equal(withheld.contextText, '')
+    const fallback = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    if (lang === 'zh') {
+      const fallbackClaims = [...expectedClaims]
+      fallbackClaims[0] += '\nMemory: unescaped literal line'
+      assert.equal(fallback.sourceCount, 3, 'legacy Chinese parsing keeps the embedded English title in its original body')
+      assert.equal(fallback.contextText, fallbackClaims.join('\n\n'))
+      assert.deepEqual(fallback.memories.map(m => m.id), pairs.map(pair => pair[1]))
+    } else {
+      const original = `${claims[0]}\nMemory: unescaped literal line\n${claims.slice(1).join('\n')}`
+      assert.equal(fallback.sourceCount, 0)
+      assert.deepEqual(fallback.memories, [])
+      assert.equal(fallback.contextText, `${pending ? `Memory:${warning}` : ''}${original}`,
+        'when neither parser can align the IDs, preserve the original text and the correction warning')
+    }
   })
 }
 

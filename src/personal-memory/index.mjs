@@ -10,7 +10,7 @@ import { createPersonalHealthStore, OBSERVED_PENDING } from '../personal-health/
 import { semanticRecallStatus } from '../system-diagnostics.mjs';
 import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
-import { recallQuestions,recallEntries,recallHeader } from './recall-questions.mjs';
+import { recallQuestions,recallEntries } from './recall-questions.mjs';
 import { createMemoryActions } from './actions.mjs';
 import { classifyForgetRequest, scopedForgetPlan, checkForgetCompletion, forgetSourceText } from './forget-model.mjs';
 
@@ -817,14 +817,20 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
               fragments.join('\n\n').length + rendered.length + 2 <= formalBudget && !fragments.includes(rendered.trim())) fragments.push(rendered.trim());
         }
         for (const entry of recallEntries(snapshots)) {
-          const {snapshot,pair}=entry;
+          const {snapshot,pair,header:recallHeader}=entry;
           const [kind, id] = Array.isArray(pair) ? pair : [];
           let claim = entry.claim;
           if (claim && (snapshot?.preview?.pending_corrections ?? []).length) {
-            const header = claim.match(recallHeader)?.[0];
+            const header = claim.trimStart().match(recallHeader)?.[0];
+            const body = pair === null ? claim : claim.replace(recallHeader, '');
             claim = header?.startsWith('Memory')
-              ? `${header}Already corrected by the user; pending update. The following old content must not be used as a current fact. ${claim.replace(recallHeader, '')}`
-              : '记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。' + claim.replace(recallHeader, '');
+              ? `${header}Already corrected by the user; pending update. The following old content must not be used as a current fact. ${body}`
+              : '记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。' + body;
+          }
+          if (pair === null) {
+            if (claim?.trim() && fragments.join('\n\n').length + claim.length + 2 <= formalBudget &&
+                !fragments.includes(claim)) fragments.push(claim);
+            continue;
           }
           const summary = claim?.replace(recallHeader, '').trim().slice(0, 240);
           if (!['cognition', 'entity', 'relationship', 'event'].includes(kind) ||
