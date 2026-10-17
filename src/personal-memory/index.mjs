@@ -203,12 +203,12 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     return 'MEMORY_BOUNDARY_FAILED';
   };
   async function noteBoundaryFailure(ownerId, eventId, cause, generation = runtimeGeneration(ownerId)) {
-    if (!runtimeCurrent(ownerId, generation)) return null;
     const code = boundaryFailureCode(cause);
-    boundaryFailures.set(ownerId, code);
+    if (runtimeCurrent(ownerId, generation)) boundaryFailures.set(ownerId, code);
+    // A received failure still owns its durable source bookkeeping, even if
+    // repair has retired the worker. Only live runtime state is generation-bound.
     await queueOutbox(ownerId, async () => {
       const latest = await readOutbox(ownerId);
-      if (!runtimeCurrent(ownerId, generation)) return;
       const row = latest.items.find((item) => item.boundary.event_id === eventId);
       if (!row) return;
       if (code === 'MEMORY_SOURCE_DELETED') {
@@ -321,25 +321,26 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       try {
         const result = await withOwner(ownerId, entry => entry.rpc.request('ingest_boundary', { boundary }),
           row.offline === true ? null : boundary.parent_session_id);
-        if (!runtimeCurrent(ownerId, generation)) return results;
+        // Finish the issued delivery before retiring this drain. Its Core
+        // acknowledgement must remove the existing row and reach the caller.
         formationOwners.add(ownerId);
         await queueOutbox(ownerId, async () => {
           const latest = await readOutbox(ownerId);
-          if (!runtimeCurrent(ownerId, generation)) return;
           latest.items = latest.items.filter(item => item.boundary.event_id !== boundary.event_id);
           await writeOutbox(ownerId, latest);
         });
-        if (!runtimeCurrent(ownerId, generation)) return results;
         results.set(boundary.event_id, { state: 'accepted', jobState: result?.job_state ?? 'unknown' });
+        if (!runtimeCurrent(ownerId, generation)) return results;
         retryCounts.delete(ownerId);
       } catch (cause) {
-        if (!runtimeCurrent(ownerId, generation)) return results;
+        // Cancellation before admission has no Core outcome to acknowledge.
+        if (cause?.runtimeCancelled) return results;
         let code;
         try { code = await noteBoundaryFailure(ownerId, boundary.event_id, cause, generation); }
         catch { code = 'MEMORY_OUTBOX_CORRUPT'; if (runtimeCurrent(ownerId, generation)) failures.set(ownerId, code); }
-        if (!runtimeCurrent(ownerId, generation)) return results;
         results.set(boundary.event_id, { state: code === 'MEMORY_SOURCE_DELETED' ? 'discarded'
           : ['MEMORY_BOUNDARY_BLOCKED', 'MEMORY_OUTBOX_CORRUPT'].includes(code) ? 'blocked' : 'queued', reasonCode: code });
+        if (!runtimeCurrent(ownerId, generation)) return results;
         if (code === 'MEMORY_SOURCE_DELETED') continue;
         if (!['MEMORY_BOUNDARY_BLOCKED', 'MEMORY_OUTBOX_CORRUPT'].includes(code)) {
           retry(); retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1);
@@ -453,6 +454,15 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     const entry = { rpc, generation, ready: false, active: 0, lastUsed: Date.now(),
       capabilities: null, routeReady: false, backlogCount: null, initializing: null,
       routeKey: selected.key, modelTier: selected.modelTier };
+    const request = rpc.request.bind(rpc);
+    rpc.request = (method, ...args) => {
+      // Admission only: old entries cannot issue the next RPC in a multi-step
+      // action. An already-issued promise is never replaced or post-filtered;
+      // its caller must receive the outcome and finish redaction/acknowledgement.
+      // shutdown belongs to disposal, which must also work for retired entries.
+      if (method !== 'shutdown') assertRuntimeCurrent(ownerId, generation);
+      return request(method, ...args);
+    };
     entries.set(ownerId, entry);
     entry.initializing = (async () => {
       const before = await rpc.request('capabilities');
@@ -498,12 +508,14 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       entry.initializing = null;
       entry.ready = false;
       if (entries.get(ownerId) === entry) entries.delete(ownerId);
+      // Preserve initialization provenance even after retirement. It describes
+      // this failure, not a conflict in a boundary that has not been sent yet.
+      if (rpcFactory.managedRuntime) cause.memoryRuntimeFailure = true;
       if (runtimeCurrent(ownerId, generation)) {
         failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
         recordRuntimeFailure(ownerId, entry, cause, true);
       }
       await rpc.close().catch(() => {});
-      assertRuntimeCurrent(ownerId, generation);
       throw cause;
     });
     return entry.initializing;
@@ -525,18 +537,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     assertRuntimeCurrent(ownerId, entry.generation);
     entry.active++;
     entry.lastUsed = Date.now();
-    try {
-      const result = await work(entry);
-      assertRuntimeCurrent(ownerId, entry.generation);
-      return result;
-    }
+    try { return await work(entry); }
     catch (cause) {
-      assertRuntimeCurrent(ownerId, entry.generation);
-      recordRuntimeFailure(ownerId, entry, cause);
-      if (cause?.code === 'MEMORY_PROCESS_UNAVAILABLE' || cause?.code === 'MEMORY_TIMEOUT' ||
-          cause?.code === 'MEMORY_PROTOCOL_ERROR') {
-        entry.ready = false;
-        failures.set(ownerId, cause.code);
+      // Preserve the original error too. A retired request cannot charge the
+      // replacement's budget or overwrite its status, but still owns its result.
+      if (runtimeCurrent(ownerId, entry.generation)) {
+        recordRuntimeFailure(ownerId, entry, cause);
+        if (cause?.code === 'MEMORY_PROCESS_UNAVAILABLE' || cause?.code === 'MEMORY_TIMEOUT' ||
+            cause?.code === 'MEMORY_PROTOCOL_ERROR') {
+          entry.ready = false;
+          failures.set(ownerId, cause.code);
+        }
       }
       throw cause;
     } finally { entry.active--; entry.lastUsed = Date.now(); }
@@ -801,9 +812,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           const failedFormationCount = jobs.filter(job => ['failed', 'blocked', 'uncertain', 'dead'].includes(job.worker?.state)).length;
           const routeState = processingHealth ? await processingHealth(ownerId).catch(() => 'unavailable') : 'ready';
           const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount && !formationIssues.length;
-          if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
-          else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
-            ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
+          if (runtimeCurrent(ownerId, entry.generation)) {
+            if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
+            else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
+              ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
+          }
           const recovering = recoveringFormationCount > 0 && entry.routeReady && routeState === 'ready'
             && !backlog.pendingBoundaryCount && !failedFormationCount && !formationIssues.length;
           return { state: ready ? 'ready' : recovering ? 'recovering' : 'degraded',

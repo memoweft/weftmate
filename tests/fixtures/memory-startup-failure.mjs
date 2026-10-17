@@ -18,6 +18,15 @@ for await (const line of createInterface({ input: process.stdin })) {
   const envelope = { protocol: 'memoweft.dsh_rpc', protocol_version: 2,
     schema_version: 1, request_id: frame.request_id };
   if (frame.method === 'initialize') { owner = frame.params.subject_id; home = frame.params.dsh_home; }
+  const [, failedMethod, failureCode] = mode.split(':');
+  if (mode.startsWith('reply-error:') && frame.method === failedMethod) {
+    process.stdout.write(JSON.stringify({ ...envelope, ok: false, error: { code: failureCode } }) + '\n');
+    continue;
+  }
+  if (mode === 'commands' && frame.method === 'query_command_receipt') {
+    process.stdout.write(JSON.stringify({ ...envelope, ok: false, error: { code: 'command_receipt_not_found' } }) + '\n');
+    continue;
+  }
   if (frame.method === 'ingest_boundary') appendFileSync(join(home, 'synthetic-delivered.jsonl'), JSON.stringify(frame.params.boundary) + '\n');
   const result = frame.method === 'capabilities'
     ? { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods }
@@ -25,6 +34,8 @@ for await (const line of createInterface({ input: process.stdin })) {
       capabilities: { subject_id: owner, methods, services: { command: { operations: [] } } } }
     : frame.method === 'health' ? { runtime: { subject_id: owner, route_ready: true } }
     : frame.method === 'query_world' ? { world_revision: 0 }
+    : frame.method === 'erase_conversation_context' ? { result_state: 'applied', affected_ids: ['synthetic-forgotten-item'], storage_cleanup: { state: 'complete' } }
+    : frame.method === 'submit_command' ? { receipt: { command_id: frame.params.command.command_id, result_state: 'applied', affected_ids: [frame.params.command.target_id], storage_cleanup: { state: 'complete' } } }
     : frame.method === 'ingest_boundary' ? { job_state: 'pending' } : {};
   const initError = mode === 'initialize-error' ? 'internal_error' : mode.startsWith('initialize-code:') ? mode.slice('initialize-code:'.length) : null;
   const reply = frame.method === 'initialize' && initError !== null

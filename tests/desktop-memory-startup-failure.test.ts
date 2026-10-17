@@ -13,6 +13,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs';
 import { bundledMemoryConfiguration, bundledMemoryRpcFactory } from '../src/personal-memory/bundled-runtime.mjs';
 import { memoryRuntimeFixture } from './helpers/memory-runtime-fixture.mjs';
+import { createMemoryCommandJournal } from '../src/personal-memory/journal.mjs';
 
 const owner = 'owner-00000000-0000-4000-8000-000000000001';
 const fixture = fileURLToPath(new URL('./fixtures/memory-startup-failure.mjs', import.meta.url));
@@ -163,6 +164,128 @@ test('a pre-repair timer callback cannot drain sources or replace the new timer'
     await h.manager.pendingStatus(owner); // Joins the existing outbox serialization; no elapsed-time guess.
     assert.equal(reads, 1, 'only the explicit pending-status read may run; the old callback is invalid');
   } finally { try { await h.close(); } finally { mockedRead.mock.restore(); syncBuiltinESMExports(); } }
+});
+
+// Hold a real protocol reply after it has arrived, and hold the old worker's
+// close while repair changes its generation. No sleeps decide this ordering.
+async function repairWhileReplyHeld(t, method, invoke, verify, { mode = 'ready', occurrence = 1, releaseCloseBeforeVerify = false, cleanupDeletedMemory = null, setup = async h => {} } = {}) {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const gate = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
+  const replyEntered = gate(), releaseReply = gate(), closeEntered = gate(), releaseClose = gate();
+  let workers = 0, original;
+  const issued = [];
+  const h = await harness(t, mode, undefined, { cleanupDeletedMemory }, { rpc(rpc) {
+    const worker = ++workers, request = rpc.request.bind(rpc), close = rpc.close.bind(rpc);
+    let seen = 0;
+    rpc.request = async (name, ...args) => {
+      issued.push({ worker, method: name });
+      if (worker !== 1 || name !== method || ++seen !== occurrence) return request(name, ...args);
+      original = await request(name, ...args).then(value => ({ value }), cause => ({ cause }));
+      replyEntered.resolve(); await releaseReply.promise;
+      if (original.cause) throw original.cause;
+      return original.value;
+    };
+    rpc.close = async () => {
+      if (worker === 1) { closeEntered.resolve(); await releaseClose.promise; }
+      return close();
+    };
+  } });
+  let pending, repair;
+  try {
+    await setup(h);
+    pending = invoke(h.manager).then(value => ({ value }), cause => ({ cause }));
+    await replyEntered.promise;
+    repair = h.manager.repairRuntime(owner); await closeEntered.promise;
+    releaseReply.resolve();
+    if (releaseCloseBeforeVerify) releaseClose.resolve();
+    await verify(h, await pending, original, issued);
+  } finally {
+    releaseReply.resolve(); releaseClose.resolve();
+    await Promise.allSettled([pending, repair].filter(Boolean)); await h.close();
+  }
+}
+
+test('repair preserves an issued erase reply and completes host redaction and deletion once', { timeout: 30000 }, async t => {
+  const cleanups = [];
+  let journal;
+  await repairWhileReplyHeld(t, 'erase_conversation_context', manager => manager.eraseConversationContext(owner, 'synthetic-session'),
+    async (h, outcome, original) => {
+      console.log(JSON.stringify({ reproduction: 'erase-reply-during-repair', cleanups: cleanups.length, code: outcome.cause?.code }));
+      assert.equal(cleanups.length, 1);
+      assert.equal(outcome.cause, undefined);
+      assert.strictEqual(outcome.value, original.value, 'the original Core result must reach the caller unchanged');
+      assert.deepEqual(cleanups[0], { ownerId: owner, affectedIds: ['synthetic-forgotten-item'], sourceTexts: [], deleteConversationSnippets: false });
+      const record = await journal.get(owner, 'synthetic-correction');
+      assert.equal(record.redacted, true); assert.deepEqual(record.command.payload, {});
+    }, { cleanupDeletedMemory: async (ownerId, details) => { cleanups.push({ ownerId, ...details }); },
+      setup: async h => {
+        journal = createMemoryCommandJournal({ root: h.root });
+        await journal.reserve({ ownerId: owner, requestId: 'synthetic-correction', operation: 'correct_world_item',
+          targetKind: 'cognition', targetId: 'synthetic-forgotten-item', payload: { text: 'Synthetic private correction' }, expectedWorldRevision: 0 });
+      } });
+});
+
+test('repair preserves the exact error of an issued erase request', { timeout: 30000 }, async t => {
+  let cleanups = 0;
+  await repairWhileReplyHeld(t, 'erase_conversation_context', manager => manager.eraseConversationContext(owner, 'synthetic-session'),
+    async (h, outcome, original) => {
+      assert.equal(original.cause.code, 'synthetic_erase_failure');
+      assert.strictEqual(outcome.cause, original.cause); assert.equal(cleanups, 0);
+    }, { mode: 'reply-error:erase_conversation_context:synthetic_erase_failure', cleanupDeletedMemory: async () => { cleanups++; } });
+});
+
+test('a received health reply cannot admit the next query on a retired entry', { timeout: 30000 }, async t => {
+  await repairWhileReplyHeld(t, 'health', manager => manager.status(owner), async (h, outcome, original, issued) => {
+    assert.equal(original.value.runtime.route_ready, true);
+    assert.equal(outcome.value.state, 'unavailable');
+    assert.equal(outcome.value.reasonCode, 'MEMORY_CLOSING');
+    assert.equal(issued.filter(item => item.method === 'query_world').length, 0, 'only the unsent next action is cancelled');
+    assert.equal(h.starts(), 1);
+  }, { occurrence: 2 });
+});
+
+for (const operation of ['correct_world_item', 'delete_world_item']) test(`repair preserves issued ${operation} receipt and its journal cleanup`, { timeout: 30000 }, async t => {
+  let journal, cleanups = 0;
+  const proposal = { requestId: 'synthetic-command', operation, targetKind: 'cognition', targetId: 'synthetic-forgotten-item',
+    payload: operation === 'correct_world_item' ? { text: 'Synthetic correction' } : {}, expectedWorldRevision: 0 };
+  await repairWhileReplyHeld(t, 'submit_command', manager => manager.submitCommand(owner, proposal), async (h, outcome, original) => {
+    assert.equal(outcome.cause, undefined);
+    assert.strictEqual(outcome.value.receipt, original.value.receipt);
+    assert.equal(outcome.value.operation, operation);
+    assert.equal(cleanups, operation === 'delete_world_item' ? 1 : 0);
+    const correction = await journal.get(owner, 'synthetic-prior-correction');
+    assert.equal(correction.redacted === true, operation === 'delete_world_item');
+    assert.deepEqual(correction.command.payload, operation === 'delete_world_item' ? {} : { text: 'Synthetic prior correction' });
+    assert.equal((await journal.get(owner, proposal.requestId)).cleanup, undefined);
+  }, { mode: 'commands', cleanupDeletedMemory: async () => { cleanups++; }, setup: async h => {
+    journal = createMemoryCommandJournal({ root: h.root });
+    await journal.reserve({ ownerId: owner, ...proposal, requestId: 'synthetic-prior-correction', operation: 'correct_world_item', payload: { text: 'Synthetic prior correction' } });
+    await journal.reserve({ ownerId: owner, ...proposal, ...(operation === 'delete_world_item' ? { cleanup: { sourceTexts: ['Synthetic prior correction'] } } : {}) });
+  } });
+});
+
+for (const code of [null, 'hard_deleted_source', 'internal_error']) test(`repair completes issued boundary bookkeeping for ${code ?? 'success'}`, { timeout: 30000 }, async t => {
+  await repairWhileReplyHeld(t, 'ingest_boundary', manager => manager.ingest(owner, source),
+    async (h, outcome) => {
+      assert.equal(outcome.cause, undefined);
+      assert.equal(outcome.value.state, code === null ? 'accepted' : code === 'hard_deleted_source' ? 'discarded' : 'blocked');
+      const pending = await h.manager.pendingStatus(owner);
+      assert.equal(pending.pendingBoundaryCount, code === 'internal_error' ? 1 : 0);
+      assert.equal(pending.blockedBoundaryCount, code === 'internal_error' ? 1 : 0);
+      assert.equal(pending.discardedBoundaryCount, code === 'hard_deleted_source' ? 1 : 0);
+      assert.equal(h.starts(), 1, 'reply bookkeeping cannot start another worker during repair');
+      if (code === null) await assertDelivered(h);
+    }, { mode: code === null ? 'ready' : `reply-error:ingest_boundary:${code}` });
+});
+
+test('an initialization error received during repair does not become a source conflict', { timeout: 30000 }, async t => {
+  await repairWhileReplyHeld(t, 'initialize', manager => manager.ingest(owner, source), async (h, outcome, original) => {
+    assert.equal(original.cause.code, 'internal_error');
+    assert.equal(outcome.value.state, 'queued');
+    assert.equal(outcome.value.reasonCode, 'MEMORY_PROCESS_UNAVAILABLE');
+    const pending = await h.manager.pendingStatus(owner);
+    assert.equal(pending.pendingBoundaryCount, 1); assert.equal(pending.blockedBoundaryCount, 0);
+  }, { mode: attempt => attempt === 1 ? 'initialize-error' : 'ready', releaseCloseBeforeVerify: true });
 });
 
 const source = { event_id: 'synthetic-recovery-source', parent_session_id: 'synthetic-session',
