@@ -10,7 +10,7 @@ import { createPersonalHealthStore, OBSERVED_PENDING } from '../personal-health/
 import { semanticRecallStatus } from '../system-diagnostics.mjs';
 import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
-import { recallQuestions,recallEntries } from './recall-questions.mjs';
+import { recallQuestions,recallEntries,recallHeader } from './recall-questions.mjs';
 import { createMemoryActions } from './actions.mjs';
 import { classifyForgetRequest, scopedForgetPlan, checkForgetCompletion, forgetSourceText } from './forget-model.mjs';
 
@@ -820,8 +820,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           const {snapshot,pair}=entry;
           const [kind, id] = Array.isArray(pair) ? pair : [];
           let claim = entry.claim;
-          if (claim && (snapshot?.preview?.pending_corrections ?? []).length) claim = '记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。' + claim.replace(/^记忆(?:（过往）)?：/, '');
-          const summary = claim?.replace(/^记忆(?:（过往）)?：/, '').trim().slice(0, 240);
+          if (claim && (snapshot?.preview?.pending_corrections ?? []).length) {
+            const header = claim.match(recallHeader)?.[0];
+            claim = header?.startsWith('Memory')
+              ? `${header}Already corrected by the user; pending update. The following old content must not be used as a current fact. ${claim.replace(recallHeader, '')}`
+              : '记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。' + claim.replace(recallHeader, '');
+          }
+          const summary = claim?.replace(recallHeader, '').trim().slice(0, 240);
           if (!['cognition', 'entity', 'relationship', 'event'].includes(kind) ||
               typeof id !== 'string' || !summary || seen.has(`${kind}:${id}`) ||
               memories.length + recentEvidence.length >= recallMaxItems || fragments.join('\n\n').length + claim.length + 2 > formalBudget) continue;

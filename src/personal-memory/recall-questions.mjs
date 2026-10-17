@@ -7,12 +7,22 @@ export function recallQuestions(query, maxItems = 6) {
   return parts.length > 1 ? parts.filter(part => part !== query).slice(0, Math.min(5, maxItems)) : [];
 }
 
+// Only column-zero headers delimit entries. Dates belong to the body and are
+// preserved verbatim; this compatibility reader does not infer their meaning.
+const RECALL_HEADER = '(?:记忆(?:（过往）)?：|Memory(?: \\(past\\))?:)';
+export const recallHeader = new RegExp(`^${RECALL_HEADER}`, 'u');
+const recallSeparator = new RegExp(`\\r?\\n(?=${RECALL_HEADER})`, 'u');
+
 /** One permission-filtered result per question before filling the shared budget.
  * References and text still come solely from Core's original batch snapshot. */
 export function recallEntries(snapshots) {
   const groups=snapshots.map(snapshot=>{
-    const claims=(snapshot?.preview?.rendered_recall??'').split(/\n(?=记忆(?:（过往）)?：)/);
-    return (snapshot?.preview?.selected_item_ids??[]).map((pair,index)=>({snapshot,pair,claim:claims[index]?.trim()}));
+    const claims=(snapshot?.preview?.rendered_recall??'').split(recallSeparator);
+    const pairs=snapshot?.preview?.selected_item_ids??[];
+    // A literal unescaped header inside a body is indistinguishable from an
+    // entry boundary. Never shift that text onto a different Core reference.
+    const aligned=claims.length===pairs.length;
+    return pairs.map((pair,index)=>({snapshot,pair,claim:aligned?claims[index]?.trim():undefined}));
   });
   return [...groups.flatMap(group=>group.slice(0,1)),...groups.flatMap(group=>group.slice(1))];
 }
