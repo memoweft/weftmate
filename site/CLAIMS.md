@@ -1,61 +1,53 @@
-# 已实现说法的依据
+# 官网说法的依据与边界
 
-本表覆盖中文与英文共用文案中的已实现说法。演示里的 213 个文件、38 个移动文件、5 个文件夹、12 KB / 8 KB、20 / 30 公里都是合成场景数值，不是产品统计。本站不把演示当作真实模型成功率或生产环境验收。
+本表用于核对中英文共用文案。能力层级以 [项目地图第 4 节](../PROJECT-MAP.md#4-各项做到哪一层) 为准：合并 PR（拉取请求）只能证明代码交付，不能替代候选安装包场景验收或本人日用认可。PR 正文中的旧证据路径不作为当前可打开的证据入口，直接查 PR 结论及地图链接的问题与验收回报。
 
-| 官网上的说法 | 依据 | 措辞边界 |
+## 有现行出处的说法
+
+| 官网上的说法／现行口径 | 出处 | 可使用的边界 |
 |---|---|---|
-| Windows 安装版程序 | STATE 的 INST-1、SYS-3 行；`tests/evidence/inst-1/`、`sys-3/`；更新记录 2026-10-10 improved 安装条目 | 已有安装版；尚无公开下载与代码签名 |
-| 一个主对话，也能开旁聊 | STATE 契约 IA-3、IA-2a 2.1 / 2.3、A16；`tests/evidence/mob-2/after/` | 没有声称所有任务在任意端离线执行 |
-| 在电脑读写文件、运行命令，目标自主规划 | VISION 核心第 2 项；STATE M1-2 / M0-7c；`tests/evidence/qa-7/`、`qa-7/` | 能力已接入；模型与复杂任务仍有成功率边界，不许诺每次都成功 |
-| 过程在对话可见，可以停止、排队 | STATE 契约 M1-0b；`tests/evidence/ux-3/quieter-replies/`；UI_SPEC 第 1 节 | 不声称任意应用均可自动控制 |
-| 风险步骤审批，允许一次或以后同类 | 2026-10-10 added 第 2 项；STATE ST-2、M1-2；`tests/evidence/st-2/` | 默认风险识别没有绝对保证；不写“绝对安全” |
-| 已有各类操作设置与执行记录 | 同上 | 官网只说眼前的动作，不给陌生人讲规则配置 |
-| 做完得到成果清单与成果库 | STATE UX-3、TB-3；2026-10-10 improved 最后项；`tests/evidence/ux-3/quieter-replies/`、`tb-3/` | 清单文件均合成；不假造用户成果 |
-| 从日常对话自动记住，不用另做笔记 | VISION 核心第 3 项；STATE M2c、MEM-D；`tests/evidence/m2c/` | 正常形成已实现；记忆仍可能不准确，旁边明确可更正 |
-| 跨对话用相关记忆，按意思寻找 | STATE M2c、M2a；`src/personal-memory/` 的召回接缝；`tests/evidence/m2c/` | 不声称记得全部，也不声称百分百召回 |
-| 看得见来源，可更正、彻底忘掉 | STATE MEM-3、M2-4 / D16、MEM-2；`tests/evidence/mem-3/`；privacy 第 4 节 | 网站演示仅修改本次合成状态，页面清空后不留下记忆 |
-| 每周“这周我记住了什么” | STATE MEM-3 行；2026-10-10 added 最后项；`tests/evidence/mem-3/` | 记忆周报已实现；每日摘要与每周回顾见下方 DATA-1 行 |
-| 临时对话不记忆 | STATE MEM-2、A16；`tests/evidence/mem-2/`；CLIENT_API 第 10 节 | 没有升级为“什么痕迹都不存在”的安全承诺 |
-| Windows / Mac / 安卓 / iPhone / Apple Watch 客户端 | STATE MOB-2、A16、A15、A13；`tests/evidence/qa-3/apple/`、`mob-2/after/` | 官网只展示界面示意与设备说明，已撤下全部验收夹具图；未说公开可安装 |
-| 手机看电脑进度，手表可审批 | STATE A13、A3、UI-2v；`tests/evidence/qa-3/apple/watch/`、`qa-7/` | 未声称任意电脑离线时还能执行电脑任务 |
-| 通知中直接批准 | STATE SYS-3；2026-10-10 added 第 1 项；`tests/evidence/sys-3/` | 普通操作有直接动作；高风险通知查看后处理 |
-| 换设备、换对话、换模型仍是同一个助手 | VISION 一句话、核心第 1 / 4 项、模型；STATE M2c、A16；`tests/evidence/qa-7/` | 描述连续身份与记忆，未承诺所有平台能力完全相等 |
-| 对话、附件、记忆主要保存在自己的电脑 | privacy 第 1 节表格；VISION “数据在哪里” | 保留“主要”，不写数据永不离设备 |
-| 云负责账号、连接与通知，不保存正文与记忆 | privacy 第 1 / 2 节；VISION “数据在哪里” | 只描述政策范围；不编造认证或安全等级 |
-| 自己选择 API 或本机模型 | VISION “模型”；privacy 第 3 节；terms 第 2.2 项 | 不提供或转售模型 |
-| 第三方模型接收消息和选出的相关记忆 | privacy 第 3 节“你选择的模型服务” | 明确直接发送、适用第三方隐私政策 |
-| 不出售个人信息，不用内容训练模型 | privacy 第 3 节最后一段 | 原意转述，无进一步安全承诺 |
-| 不登录即可本机用，需要远程才登录 | STATE AUTH-1 行；2026-10-10 improved 第 1 项 | 属于已实现使用流程，放获取区，未当作隐私政策原文 |
-| 目前不卖模型、无需会员，第三方费用自己承担 | VISION “模型”和“尚未决定”会员条目；terms 第 5 节；package.json private 专有产品边界 | “目前”；不许诺永久免费。放获取区，不混入数据政策段落 |
-| 动态、目标、定时任务 | STATE TB-1 / TB-2；CLIENT_API 9.8 / 9.9；`tests/evidence/tb-2/polish/` | 存在产品入口与定时能力，不许诺持续电脑离线执行 |
-| 一个搜索找到对话、记忆、成果、定时任务 | STATE UX-6 / D53；2026-10-10 added 搜索条目；`tests/evidence/ux-6/` | 沿已有类型，不扩成“电脑一切文件” |
-| Windows 右键发送文件与文件夹 | STATE SYS-3 行；2026-10-10 added 第 1 项；`tests/evidence/sys-3/` | Windows 专属措辞 |
-| 回复显示代码、表格、公式、图表 | 2026-10-10 added 第 5 项；`tests/evidence/ux-5/` | 没有夸大成任意文档渲染 |
-| 下一步建议 | STATE UX-7；2026-10-10 added 第 6 项；`tests/evidence/ux-7/` | 不把默认关闭的灰色补全写成默认提供 |
-| 系统状态、电脑一键修复 | STATE R0-2 行；2026-10-10 added 第 3 项；`tests/evidence/r0-2/` | 电脑修复出问题的连接；手机只读 |
-| 应用内反馈 | STATE R0-4 行；2026-10-10 added 第 4 项；terms / privacy 第 9 节 | 不编造公开联系邮箱 |
-| 浅深色与强调色 | STATE ST-5；2026-10-10 improved 外观条目 | 官网只提供浅深与系统选择，产品强调色属已实现能力，未在官网夸大 |
+| Windows 有安装版程序 | [项目地图第 4 节](../PROJECT-MAP.md#4-各项做到哪一层)、[首轮安装验收 #441](https://github.com/memoweft/weftmate/pull/441) | 有候选安装结果；默认安装与冷启仍有失败记录，不据此声称已完整验收或已公开发布 |
+| 对话聊天问事，工作让电脑动手 | [D92](../docs/DECISIONS.md)、[模式实现 #299](https://github.com/memoweft/weftmate/pull/299)、[WORK_AND_CHAT](../docs/WORK_AND_CHAT.md) | 取代「一个置顶主对话，也能开旁聊」；工作先选电脑与文件夹，底层旧主聊天仅为兼容保留 |
+| 在电脑读写文件、运行命令，按目标执行 | [项目地图第 4 节](../PROJECT-MAP.md#4-各项做到哪一层) 的 Windows 能力与 W1/W2 结果、[审批修复 #307](https://github.com/memoweft/weftmate/pull/307) | 只在工作模式；复杂任务与真实模型表现仍有限制，不承诺每次成功或控制任意应用 |
+| 过程在对话可见，可以停止、排队 | [项目地图 C3/C4/C6/C7](../PROJECT-MAP.md#4-各项做到哪一层)、[回复进展 #303](https://github.com/memoweft/weftmate/pull/303)、[UI_SPEC](../docs/UI_SPEC.md) | 保留原任务与回执，停止受理不等于所有副作用已经停止；排队默认按 D36 |
+| 操作按权限审批，支持一次性答复和规则设置 | [D12](../docs/DECISIONS.md)、[审批修复 #307](https://github.com/memoweft/weftmate/pull/307)、[CLIENT_API 第 3.7 节](../docs/CLIENT_API.md) | 连接器等具体操作有自己的限制，不把「以后同类」承诺为每个动作都有；不写绝对安全 |
+| 得到成果清单并在成果库查看 | [成果库 #172](https://github.com/memoweft/weftmate/pull/172)、[安卓原生成果库 #280](https://github.com/memoweft/weftmate/pull/280)、[地图 W1](../PROJECT-MAP.md#4-各项做到哪一层) | 沿实际成果与来源授权；不保证任意格式都可完美预览或转换 |
+| 对话可形成记忆，新对话可用相关记忆并纠正 | [地图的记忆基线与 M1/M2](../PROJECT-MAP.md#4-各项做到哪一层)、[MEMORY](../docs/MEMORY.md) | 人工接 Core 的场景有通过证据；全新 Windows 安装默认启用尚未通过，不可把「装好即自动记住」算作已实现主路；不承诺全部记住或百分百召回 |
+| 查看记忆来源、请求纠正与遗忘 | [CLIENT_API 第 3.9 节](../docs/CLIENT_API.md)、[遗忘问题 #334](https://github.com/memoweft/weftmate/issues/334)、[地图 M3/M7](../PROJECT-MAP.md#4-各项做到哪一层) | 有操作接口，彻底遗忘仍有失败记录；不得写成已验证彻底删除，聊天原话默认保留（D16、D33） |
+| 每周查看「这周我记住了什么」 | [记忆周报 #224](https://github.com/memoweft/weftmate/pull/224)、[CLIENT_API 的记忆周报契约](../docs/CLIENT_API.md) | 代码有周报投影及纠正入口；不据此承诺记忆无误或五端安装场景均已通过 |
+| 临时对话不形成新记忆 | [临时对话 #155](https://github.com/memoweft/weftmate/pull/155)、[CLIENT_API 第 10 节](../docs/CLIENT_API.md) | 已有记忆召回开关独立，不升级为「不留任何痕迹」的承诺 |
+| Windows／Mac／安卓／iPhone／Apple Watch 有客户端代码 | [项目地图第 4 节](../PROJECT-MAP.md#4-各项做到哪一层)、[苹果客户端说明](../apps/apple/README.md) | 界面示意不等于五端可公开安装、真机验收或本人日用认可；苹果签名与推送有明确边界 |
+| 手机可查看电脑进度、处理审批与查看成果 | [地图安卓能力与 W4–W6 边界](../PROJECT-MAP.md#4-各项做到哪一层)、[安卓工作模式 #311](https://github.com/memoweft/weftmate/pull/311) | 电脑离线不继续执行电脑动作；完整跨端安装主路仍须按地图结果解释 |
+| 手表有审批、进度与提醒接口 | [地图苹果端说明](../PROJECT-MAP.md#4-各项做到哪一层)、[iPhone 本地提醒与 Watch 转发 #310](https://github.com/memoweft/weftmate/pull/310) | 依赖 iPhone 与可用连接，不声称已有 APNs（苹果推送服务）或已在本人手表安装验收 |
+| Windows 通知可处理普通审批，右键可发送文件／文件夹 | [系统集成 #230](https://github.com/memoweft/weftmate/pull/230) | Windows 专属；高风险通知只打开原审批，原生横幅与实际系统动作的验收范围以该 PR 说明为准 |
+| 换设备、换对话、换模型仍是同一个助手 | [VISION](../docs/VISION.md)、[D4、D80](../docs/DECISIONS.md)、[地图的跨端／记忆结果](../PROJECT-MAP.md#4-各项做到哪一层) | 是产品目标与身份规则，不承诺平台能力完全相等或完整跨端安装主路已验收 |
+| 对话、附件、记忆主要留在个人设备，云提供账号与连接 | [VISION 的数据边界](../docs/VISION.md)、[隐私政策](../docs/legal/privacy-zh.md)、[D20、D25](../docs/DECISIONS.md) | 云有密文暂存与加密备份；模型请求会发给所选提供方，不写「数据永不离设备」或「云不保存任何数据」 |
+| 自己选择模型，第三方模型接收消息与选出的相关记忆 | [VISION](../docs/VISION.md)、[隐私政策](../docs/legal/privacy-zh.md)、[使用条款](../docs/legal/terms-zh.md) | 不提供或转售模型，第三方适用其隐私政策；不伪造认证、安全等级或隐私保证 |
+| 不出售个人信息、不用内容训练模型 | [隐私政策](../docs/legal/privacy-zh.md) | 政策承诺，不作为安全技术已验收的证据，也不扩大到第三方模型的政策 |
+| 本机使用不强制云登录，需要云功能时登录 | [D93](../docs/DECISIONS.md)、[地图 C1](../PROJECT-MAP.md#4-各项做到哪一层)、[安卓入口修复 #436](https://github.com/memoweft/weftmate/pull/436) | Windows 与安卓分别看安装结果；安卓后续单端补验不改写首轮失败，也不代表云注册与跨端已测 |
+| 目前不卖模型、无需会员，第三方费用自行承担 | [D45](../docs/DECISIONS.md)、[使用条款](../docs/legal/terms-zh.md) | 当前产品边界，不许诺永久免费，不与数据政策混写 |
+| 动态、目标、定时任务 | [动态 #159](https://github.com/memoweft/weftmate/pull/159)、[目标 #165](https://github.com/memoweft/weftmate/pull/165)、[地图 H1/H5](../PROJECT-MAP.md#4-各项做到哪一层) | 有入口与原生调度；保存成功不替代到点通知，不承诺离线电脑继续执行 |
+| 搜索对话、记忆、成果、定时任务 | [统一搜索 #186](https://github.com/memoweft/weftmate/pull/186)、[D53](../docs/DECISIONS.md) | 只覆盖既有授权类型，不扩成搜索电脑一切文件；部分索引结果不冒充完整历史 |
+| 回复显示代码、表格、公式、图表 | [消息呈现 #182](https://github.com/memoweft/weftmate/pull/182) | 只覆盖支持的渲染类型，不承诺任意文档渲染或格式转换 |
+| 下一步建议 | [建议与补全 #185](https://github.com/memoweft/weftmate/pull/185)、[D51](../docs/DECISIONS.md) | 建议填草稿后由用户发送；默认关闭的灰字补全不写成默认开启 |
+| 系统状态与单组件修复 | [诊断与修复 #229](https://github.com/memoweft/weftmate/pull/229) | 电脑操作、手机只读；不保证一键修复所有错误 |
+| 应用内反馈 | [反馈 #227](https://github.com/memoweft/weftmate/pull/227)、[CLIENT_API 第 7.9a 节](../docs/CLIENT_API.md) | 预览与确认后才提交；云部署未核实，不能声称线上提交一定可用；未开通时可复制 |
+| 浅深主题与强调色 | [外观设置 #222](https://github.com/memoweft/weftmate/pull/222)、[D65](../docs/DECISIONS.md) | 界面示意不作为各端实机验收；深色遵守中性灰规则 |
+| 每日摘要与每周回顾 | [摘要与回顾 #236](https://github.com/memoweft/weftmate/pull/236)、[CLIENT_API 第 15 节](../docs/CLIENT_API.md) | 可关闭、调整保留时间或清空；模型失败可退回统计版，不能把估计活动分钟写成精确屏幕时间 |
+| 高风险审批前可由另一模型核对 | [独立复核 #238](https://github.com/memoweft/weftmate/pull/238)、[CLIENT_API 第 3.7 节](../docs/CLIENT_API.md) | 只是提示，不替代用户批准；超时或不可用沿原审批。PR 有误标及无意见记录，不声称已证明更可靠或免疫注入 |
 
-## 即将推出
+## 待验证或已取代的说法
 
-iPhone / 手表健康数据、精灵与陪伴、日历与邮件连接器、导入 ChatGPT / Claude 历史、公开下载都明确标注“即将推出”。具体发布渠道仍按后续公告；没有伪造日期、用户数、评价、媒体报道、安全认证或奖项。
+- 「一个置顶主对话，也能开旁聊」已被 D92 取代，不作为现行产品卖点。
+- 「全新安装即可自动记住」「可以彻底忘掉」不能作为已验收结论：分别受地图的自动接入缺口与 #334 限制。
+- 「五端均可安装并无缝接续」「手表后台总能及时收到通知」待验证；地图未给出完整安装验收或本人日用认可。
+- 公开下载、代码签名、线上反馈可用性和生产云部署须以实际发布或部署证据确认，不能用源码、旧截图或健康响应代替。
+- iPhone／手表健康、邮件／日历连接器、外部聊天历史导入已有部分代码，不能继续统一归为未实现；分别查 [地图](../PROJECT-MAP.md#4-各项做到哪一层)、[健康接入 #243](https://github.com/memoweft/weftmate/pull/243)、[连接器 #274](https://github.com/memoweft/weftmate/pull/274)、[手机交接 #289](https://github.com/memoweft/weftmate/pull/289) 与 [CLIENT_API](../docs/CLIENT_API.md)。当前发布范围和设备闭环待验证；精灵陪伴、共同空间与公开发布按 [PLAN](../docs/PLAN.md) 暂缓，不承诺日期。
 
-## 2026-10-12 上线前更新
+## 演示边界
 
-| 官网上的说法 | 依据 | 措辞边界 |
-|---|---|---|
-| 每天自动整理最近在忙的事，每周回顾成果与待办 | STATE 的 DATA-1 行；更新记录 2026-10-10 added 的每日整理条目 | 可在设置中关闭、调整保留时间或清空；健康数据接入仍是即将推出 |
-| 有风险的操作先由另一个模型核对，疑问写在审批旁 | STATE 的 SEC-1 行与契约变更 SEC-1 条 | 只是提醒，不替代本人批准；模型不可用或超时会回到原有审批 |
+官网画面是界面示意；213 个文件、38 个移动文件、5 个目录、6 个重复、12 页、3 张图、12 KB／8 KB、20／30 公里，以及人物、报销、来源日期均为虚构合成内容，不是产品统计、真实用户成果或模型成功率。
 
-## 返工一新增说明
+点开报告、导出 PDF（便携文档格式）、设置每周任务和手机批准覆盖文件是演示情节，不在访客电脑创建任务，不承诺任意文档都可完美转换。三屏由共用演示组件绘制，不能标成实拍；不展示私人资料、程序调试入口或苹果验收夹具。演示页的本次合成状态变化不能证明真实记忆的纠正、遗忘或跨端同步。
 
-| 新增画面或说法 | 依据与边界 |
-|---|---|
-| 首屏三句话：记得、不止说还会做、不绑模型不收会员 | 沿上表 M2c、M1-0b、VISION 模型与 terms 第5节；不许诺任务百分百成功或永久免费 |
-| 点成果打开报告预览，点建议设定每周五任务 | STATE TB-3、UX-7、TB-2；更新记录2026-10-10的成果／建议条目；演示文件与计划均是虚构，不在访客电脑创建任务 |
-| 季度总结导出PDF，在手机上批准覆盖原文件 | VISION 自主办事、STATE M1-2与A13、SYS-3审批；展示通用文件能力的虚构场景，不承诺任意文档都可完美转换 |
-| 213个文件、38个移动、5个目录、6个重复、12页与3张图 | 虚构演示的情节数值，不是产品统计或真实用户成果 |
-| 阿青、小满、十月报销与记忆卡来源日期 | 全是虚构示例身份与内容，没有私人截图或日用资料 |
-| 三屏同一现场 | 用同一演示组件绘制，标注界面示意；不冒称实拍，不展示Apple夹具或程序调试入口 |
-
-获取区保留仍在预览、尚未对外发布和即将开放，去掉代码签名实现说法。版权为©2026 WeftMate。真实程序实拍是本次可选项：采用当前组件一致的示意画面，未启动Electron或新增任何真实界面截图。
+不伪造发布日期、用户数、评价、媒体报道、安全认证、奖项或公开联系邮箱。获取区的发布说法须按实际发布清单核对，不能从本表的代码交付推断已对外开放。
