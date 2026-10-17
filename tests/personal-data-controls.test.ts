@@ -11,7 +11,7 @@ import { createDataControls } from '../src/personal-data/index.mjs';
 import { utimes } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { observeErasure } from './helpers/data-delete-diagnostics.mjs';
+import { observeErasure, erasureFailureMessage } from './helpers/data-delete-diagnostics.mjs';
 
 test('account path assertion rejects lexical escape, another account and resolved junction before deletion', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'weftmate-st4-boundary-'));
@@ -82,7 +82,7 @@ test('real host requires owner permission and desktop confirmation, clears only 
       if (!['running','pending_confirmation'].includes(result.state)) break;
       await new Promise(resolve => setTimeout(resolve, 20));
     }
-    assert.equal(result.state, 'completed', JSON.stringify({ operation: result, diagnostics: lastDiagnostics }));
+    assert.equal(result.state, 'completed', erasureFailureMessage(result, lastDiagnostics));
     assert.equal(await readFile(path.join(root, 'accounts', ownerB, 'keep'), 'utf8'), 'B');
     assert.deepEqual((await request('/sessions', 'GET', undefined, creds)).value.sessions, []);
     await host.close(); host = await createPersonalAccessService({ root, port: 0, backend }); await host.start();
