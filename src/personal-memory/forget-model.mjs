@@ -294,6 +294,12 @@ export async function checkForgetCompletion(manager, owner, proposal, route) {
     // named source. Its actual text anchors the read-only topic comparison.
     const selectedSource = proposal.targetKind === 'evidence' ? sources.get(proposal.targetId)?.evidence : null;
     const facts = [...targets.map(item => item.name), ...(selectedSource ? [selectedSource.raw_content, selectedSource.summary] : [])].filter(Boolean);
+    // Formation can fail before any World item exists. The explicitly selected
+    // source is then the target fact, subject to the same classification and
+    // completion checks; it grants no authority over other sources or items.
+    if (selectedSource && !(preview.items ?? []).length) candidates.push({ key: `target:evidence:${proposal.targetId}`,
+      kind: 'evidence', text: [selectedSource.raw_content, selectedSource.summary].filter(Boolean).join('\n'), graphSubject: null,
+      sourceTexts: [selectedSource.raw_content, selectedSource.summary].filter(Boolean) });
     if (!facts.length || !candidates.length) return unknown();
     // Other World facts can disprove completion or a model subject relation.
     // They are witnesses only, never additions to the selected preview/scope.

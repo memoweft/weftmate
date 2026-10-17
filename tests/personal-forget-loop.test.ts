@@ -31,7 +31,7 @@ async function removeLinks(directory: string) {
 }
 
 /** Real HTTP host, managed DSH process, native tools and model requests. Only inference and Core replies are scripted. */
-async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = false, automaticForget = '', forceForgetAfterDecline = false } = {}) {
+async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = false, automaticForget = '', forceForgetAfterDecline = false, omitDecision = false } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-fix45-'));
   const calls: any[] = [], nominations: any[] = [], commands: any[] = [], recallCalls: any[] = [], revisions = new Map<string, number>(), facts = new Map<string, string>();
   let progress = 0;
@@ -80,7 +80,7 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
       : automaticForget === 'not_found' ? '没找到关于“我喝茶的偏好”的记忆。' : '已删除关于“我喝茶的偏好”的记忆，包括旧版本和来源原文。' };
   };
   if (automaticForget) manager.forgetFromMessage = (owner: string, action: any) => automaticForget === 'no_action'
-    ? { state: 'no_action', decision: { isForgetRequest: false, subject: 'self', topic: '我喝茶的偏好', conditionsOrQuestions: true, authorized: false } }
+    ? { state: 'no_action', ...(omitDecision ? {} : { decision: { isForgetRequest: false, subject: 'self', topic: '我喝茶的偏好', conditionsOrQuestions: true, authorized: false } }) }
     : manager.mutateFromTool(owner, { ...action, name: 'memory_forget', arguments: { query: '我喝茶的偏好' } });
   const runtime = await phoneRuntime(root, [], {
     respond(body: any) {
@@ -108,7 +108,7 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
           expectedWorldRevision: revisions.get(ownerId) ?? 1, text: step === 1 ? '红茶' : '普洱茶' }, step);
         return { content: '两次纠正都已完成。根据最新偏好，推荐普洱冷泡饮品。' };
       }
-      if (input.startsWith('FIX47_EMPTY_FORGET') || input.startsWith('FIX47_MARKUP_FORGET')) {
+      if (input.startsWith('FIX47_EMPTY_REMOVE') || input.startsWith('FIX47_MARKUP_REMOVE')) {
         if (step === 0) return { ...tool('load_tools', { names: ['memory_forget'] }, step),
           content: input.startsWith('FIX47_MARKUP') ? '<tool_call><function=load_tools><parameter.names>["memory_forget"]</parameter></function></tool_call>' : '' };
         if (step === 1) return tool('memory_forget', { kind: 'cognition', id: 'tea-fact', expectedWorldRevision: revisions.get(ownerId) ?? 1 }, step);
@@ -149,7 +149,7 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
         if (step >= REPEAT_TOOL_LIMIT + 2) throw Error('repeat limit was bypassed');
         return tool('memory_query', { query: '茶' }, step);
       }
-      if (input.startsWith('FIX45_FORGET') || input.startsWith('FIX45_CORRECT') || input.startsWith('FIX45_CONFLICT')) {
+      if (input.startsWith('FIX45_REMOVE') || input.startsWith('FIX45_CORRECT') || input.startsWith('FIX45_CONFLICT')) {
         const action = input.startsWith('FIX45_CORRECT') ? 'memory_correct' : 'memory_forget';
         if (step === 0) return tool('load_tools', { names: ['memory_query', action] }, step);
         if (step === 1) return tool('memory_query', { query: '茶的偏好' }, step);
@@ -222,7 +222,7 @@ test('recall-disabled conversations do not read or send memory through tools, wh
   assert.ok(results.every((r: string) => !r.includes('RECALL_DISABLED')), 'the setting state survives without exposing its internal reason code');
   await f.complete(await f.send(session, 'FIX45_PRIVATE_WRITE 纠正为红茶'));
   assert.equal(f.facts.get(f.ownerId()), '红茶');
-  await f.complete(await f.send(session, 'FIX45_PRIVATE_WRITE 忘掉茶偏好'));
+  await f.complete(await f.send(session, 'FIX45_PRIVATE_WRITE 移除茶偏好'));
   assert.equal(f.facts.has(f.ownerId()), false);
   assert.deepEqual(f.commands.map(c => c.operation), ['correct_world_item', 'delete_world_item']);
 });
@@ -266,8 +266,8 @@ for (const input of ['忘掉我喝茶的偏好，如果会删除来源原文就�
   assert.doesNotMatch(replies, /已删除|已忘掉/);
 });
 
-test('FIX-50 a native model forget call cannot override the whole-message no-action decision', { timeout: 60000 }, async t => {
-  const f = await fixture(t, { automaticForget: 'no_action', forceForgetAfterDecline: true }), session = await f.create();
+for (const omitDecision of [false, true]) test(`FIX-50 a native model forget call cannot override whole-message no-action${omitDecision ? ' without decision metadata' : ''}`, { timeout: 60000 }, async t => {
+  const f = await fixture(t, { automaticForget: 'no_action', forceForgetAfterDecline: true, omitDecision }), session = await f.create();
   await f.complete(await f.send(session, '忘掉我喝茶的偏好，会删除哪些数据？'));
   assert.equal(f.commands.length, 0); assert.ok(f.facts.has(f.ownerId()));
   assert.equal(f.nominations.length, 1);
@@ -338,7 +338,9 @@ test('native job_output waits are never stopped by counts, including constant pr
 
 test('a completed memory action has a final reply even when the model returns empty text', { timeout: 60000 }, async t => {
   const f = await fixture(t), session = await f.create();
-  const result = await f.complete(await f.send(session, 'FIX47_EMPTY_FORGET 忘掉我的喝茶偏好'));
+  // These tool-path fixtures deliberately do not nominate automatic forgetting.
+  // A synthetic no_action is a veto, never permission for a later tool call.
+  const result = await f.complete(await f.send(session, 'FIX47_EMPTY_REMOVE 移除我的喝茶偏好'));
   assert.equal(result.terminal.data.reason, 'completed');
   assert.equal(f.facts.has(f.ownerId()), false);
   assert.ok(f.runtime.requests.some((request: any) => request.messages.some((message: any) =>
@@ -349,7 +351,7 @@ test('a completed memory action has a final reply even when the model returns em
 
 test('memory call markup is hidden while the actual native memory tool still executes', { timeout: 60000 }, async t => {
   const f = await fixture(t), session = await f.create();
-  const result = await f.complete(await f.send(session, 'FIX47_MARKUP_FORGET 忘掉我的喝茶偏好'));
+  const result = await f.complete(await f.send(session, 'FIX47_MARKUP_REMOVE 移除我的喝茶偏好'));
   assert.equal(result.terminal.data.reason, 'completed'); assert.equal(f.facts.has(f.ownerId()), false);
   const events = (await f.api(`/sessions/${session}/events`)).events;
   const replies = events.filter((e: any) => e.type === 'assistant.message').map((e: any) => e.data.text).join('\n');
@@ -376,7 +378,7 @@ test('review-5 a queued memory update still allows the requested recommendation'
 
 for (const work of [false, true]) test(`forget uses Core commands and no file tools in ${work ? 'work' : 'chat'} mode`, { timeout: 60000 }, async t => {
   const f = await fixture(t), session = await f.create(work);
-  const forgotten = await f.complete(await f.send(session, 'FIX45_FORGET 忘掉我喝茶的偏好'));
+  const forgotten = await f.complete(await f.send(session, 'FIX45_REMOVE 移除我喝茶的偏好'));
   assert.equal(forgotten.terminal.data.reason, 'completed');
   assert.deepEqual(f.calls.map(c => c.name), ['memory_query', 'memory_forget']);
   assert.equal(f.commands[0].operation, 'delete_world_item');
@@ -393,7 +395,7 @@ test('correction uses the latest Core revision and conflict does not claim forge
   const f = await fixture(t), session = await f.create();
   await f.complete(await f.send(session, 'FIX45_CORRECT 纠正：我现在喜欢红茶'));
   assert.equal(f.commands[0].operation, 'correct_world_item'); assert.equal(f.facts.get(f.ownerId()), '红茶');
-  const conflict = await f.complete(await f.send(session, 'FIX45_CONFLICT 忘掉茶偏好'));
+  const conflict = await f.complete(await f.send(session, 'FIX45_CONFLICT 移除茶偏好'));
   assert.equal(conflict.terminal.data.reason, 'completed'); assert.equal(f.facts.get(f.ownerId()), '红茶');
   const events = (await f.api(`/sessions/${session}/events`)).events;
   assert.match(events.filter((e: any) => e.type === 'assistant.message').at(-1).data.text, /还没忘掉/);
@@ -426,7 +428,7 @@ test('DSH stops actual glob repeats even when model argument keys change order',
 
 test('pending Core deletion cleanup retries on native idle and does not keep repeating', { timeout: 60000 }, async t => {
   const f = await fixture(t, { pendingCleanup: true }), session = await f.create();
-  await f.complete(await f.send(session, 'FIX45_FORGET 忘掉茶偏好'));
+  await f.complete(await f.send(session, 'FIX45_REMOVE 移除茶偏好'));
   await until(async () => f.calls.some(c => c.name === 'memory_cleanup'));
   const fresh = await f.create(); await f.complete(await f.send(fresh, 'FIX45_QUERY 我喜欢什么茶'));
   assert.equal(f.calls.filter(c => c.name === 'memory_cleanup').length, 1);
