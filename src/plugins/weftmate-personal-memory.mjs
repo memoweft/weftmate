@@ -187,7 +187,7 @@ export function userForTurn(session, turn, maxChars = 500, includeSource = false
   if (!event) return null;
   const preceding = session.events.slice(startIndex + 1, session.events.indexOf(event)).findLast(entry => entry.type === 'assistant/message');
   return { id: typeof event.data?.id === 'string' ? event.data.id : null,
-    seq: event.seq, text: contentText(event.data.content).trim().slice(0, maxChars),
+    seq: event.seq, text: maxChars === null ? contentText(event.data.content).trim() : contentText(event.data.content).trim().slice(0, maxChars),
     ...(includeSource ? { message: { message_id: event.data.id, content: contentText(event.data.content),
       preceding_ai_context: preceding ? contentText(preceding.data?.message?.content) : null,
       ...(Number.isFinite(Number(event.time)) && Number(event.time) > 0 ? { timestamp: Math.floor(Number(event.time) / 1000) } : {}) } } : {}) };
@@ -269,11 +269,15 @@ export function apply(ctx) {
       output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
       execute: async (args, exec) => {
         const turn = agent.session.events.findLast(event => event.type === 'turn/start').data.turn;
-        const source = userForTurn(agent.session, turn, 16000, true);
+        // Recall may use an excerpt; deletion must submit the whole message or
+        // fail the host's existing size check, never authorize from a prefix.
+        const source = userForTurn(agent.session, turn, tool.name === 'memory_forget' ? null : 16000, true);
         const verified = explicitActions.get(agent);
         const previous = tool.name === 'memory_forget' && verified?.turn === turn &&
           verified.results.get(source?.id ?? digest(source?.text ?? ''));
-        const existing = previous?.decision ? previous : null;
+        // A failed check is still the result for this input. Missing decision
+        // metadata is not permission to try again through the model tool.
+        const existing = previous ?? null;
         const result = existing ? existing.state === 'no_action'
           ? { state: 'no_action', message: '本轮没有直接删除授权，这次没有删除记忆，也没有排队重试。请先回答问题或确认条件。' } : existing
           : await bridge.request('tool', { sessionId: agent.id, turn,
@@ -375,7 +379,7 @@ export function apply(ctx) {
     // claim another message in the same turn. Deduplicate messages, not turns.
     const claimed = (payload.messages ?? []).filter(message => message?.source?.kind === 'user');
     const inputs = claimed.length ? claimed.map(message => ({ id: message.id, text: contentText(message.content).trim() }))
-      : [userForTurn(session, turn, 16000) ?? user];
+      : [userForTurn(session, turn, null) ?? user];
     const query = user.text;
     let text = null;
     try {

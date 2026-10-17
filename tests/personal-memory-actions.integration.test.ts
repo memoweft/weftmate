@@ -58,7 +58,7 @@ async function fixture(t: any, { interpret = null, misattribute = false, birthda
           subject: input.message.includes('妈妈') ? 'other:妈妈' : input.message.includes('林舟') ? 'other:林舟' : 'self',
           topic: input.message.includes('生日') ? (input.message.includes('妈妈') ? '妈妈的生日' : '我的生日') : input.message.includes('林舟') ? '林舟' : input.message.includes('蓝色') ? '我喜欢蓝色的偏好' : '我喝茶的偏好',
         } : { items: birthdayContract ? birthdayForgetDecisions(input, { misattribute }) : input.candidates.map((candidate: any) => ({ key: candidate.key,
-          matchesTopic: wrongQuestionOnly ? /根据我的记忆/.test(candidate.text) : input.request.topic.includes('生日') ? candidate.text.includes('生日') : input.request.topic.includes('林舟') ? candidate.text.includes('林舟') : input.request.topic.includes('蓝色') ? candidate.text.includes('蓝色') : /茶|纠正/.test(candidate.text),
+          matchesTopic: wrongQuestionOnly ? /根据我的记忆/.test(candidate.text) : input.request.topic.includes('收藏编号') ? candidate.text.includes('收藏编号') : input.request.topic.includes('生日') ? candidate.text.includes('生日') : input.request.topic.includes('林舟') ? candidate.text.includes('林舟') : input.request.topic.includes('蓝色') ? candidate.text.includes('蓝色') : /茶|纠正/.test(candidate.text),
           ...(request.tools[0].function.parameters.properties.items.items.properties.hasTargetFact ? {
             hasTargetFact: !/根据我的记忆|什么茶|什么时候/.test(candidate.text),
             targetSubjects: /根据我的记忆|什么茶|什么时候/.test(candidate.text) ? [] : [misattribute ? 'self' : candidate.text.includes('妈妈') ? 'other:妈妈' : candidate.text.includes('同事小王') ? 'other:同事小王' : candidate.text.includes('林舟') ? 'other:林舟' : 'self'],
@@ -145,6 +145,106 @@ async function fixture(t: any, { interpret = null, misattribute = false, birthda
     get decisions() { return coreTrace.filter(row => row.modelDecision).length },
     get decisionInputs() { return coreTrace.filter(row => row.modelDecision === 'classify_forget_candidates').map(row => row.input) } }
 }
+
+// Exercise the actual plugin and host tool entry against Core. Only DSH message
+// construction/tool registration and the transport failure are synthetic seams.
+for (const scenario of ['long conditional', 'long unconditional', 'history fallback', 'without pre-step', 'failed authorization'] as const)
+test(`FIX-50 full review real Core: ${scenario} never reauthorizes incomplete forgetting`, { skip }, async t => {
+  const f = await fixture(t)
+  const before = await f.world()
+  assert.equal(before.items.length, 1)
+  const { apply } = await import('../src/plugins/weftmate-personal-memory.mjs')
+  const { registerHooks } = await import('node:module')
+  const hooks = registerHooks({ resolve(specifier, context, next) {
+    if (specifier === '@deepseek-ai/dsh-tools') return { shortCircuit: true, url: 'data:text/javascript,export const defineTool = input => input' }
+    if (specifier === '@deepseek-ai/dsh-llm/message') return { shortCircuit: true,
+      url: 'data:text/javascript,export const createUserMessage = input => ({id:crypto.randomUUID(),role:"user",...input}); export const createAssistantMessage = input => ({role:"assistant",...input})' }
+    return next(specifier, context)
+  } })
+  const originalSend = process.send, connected = Object.getOwnPropertyDescriptor(process, 'connected')
+  const enabled = process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED
+  const handlers = new Map(), disposals: (() => void)[] = [], tools = new Map(), seen: any[] = []
+  process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED = '1'
+  Object.defineProperty(process, 'connected', { configurable: true, value: true })
+  ;(process as any).send = (frame: any, callback: any) => {
+    void (async () => {
+      try {
+        if (frame.action === 'tool' && scenario === 'failed authorization' && frame.tool.name === 'memory_forget_request')
+          throw Object.assign(Error('synthetic transport failure before authorization'), { code: 'MEMORY_UNAVAILABLE' })
+        const result = frame.action === 'tool' ? await handlePersonalMemoryTool(f.manager, owner, frame.tool,
+          { sessionId: frame.sessionId, modelTier: 'cloud', memoryPolicy: { recall: true } }) : { state: 'ready', contextText: '' }
+        if (frame.action === 'tool') seen.push({ name: frame.tool.name, length: frame.tool.source.text.length, state: result.state })
+        process.emit('message', { protocol: frame.protocol, id: frame.id, ok: true, result })
+      } catch (error: any) {
+        seen.push({ name: frame.tool?.name, length: frame.tool?.source?.text.length, error: error.code })
+        process.emit('message', { protocol: frame.protocol, id: frame.id, ok: false, error: error.code })
+      }
+    })()
+    callback?.(); return true
+  }
+  try {
+    apply({ on: (name: string, fn: any) => handlers.set(name, fn), effect: (fn: any) => disposals.push(fn()) })
+    const text = '忘掉我喝茶的偏好。' + (scenario === 'failed authorization' ? '' : '附加说明。'.repeat(3300))
+      + (scenario === 'long unconditional' || scenario === 'failed authorization' ? '' : '如果会删除来源原文就先别执行。')
+    if (scenario !== 'failed authorization') assert.ok(text.length > 16000)
+    const user = { id: 'full-review-user', source: { kind: 'user' }, content: [{ type: 'text', text }] }
+    const events: any[] = [{ seq: 1, type: 'turn/start', data: { turn: 1 } }, { seq: 2, type: 'user/message', data: user }]
+    const agent: any = { id: 'full-review', status: 'running', ctx: { tools: { register: (tool: any) => tools.set(tool.name, tool) } },
+      session: { id: 'full-review', header: { agentPreset: 'personal-shared-chat' }, events,
+        append: (type: string, data: any) => events.push({ seq: events.length + 1, type, data }) } }
+    await handlers.get('agent/created')({ agent })
+    if (scenario !== 'without pre-step') await handlers.get('agent/pre-step')({ agent, turn: 1,
+      messages: scenario === 'history fallback' ? [] : [user] }, async () => ({ kind: 'enter', messages: [user] }))
+    const result = await tools.get('memory_forget').execute({ query: '我喝茶的偏好' }, { callId: 'full-review-call' })
+    await handlers.get('agent/turn-stopping')({ agent, turn: 1 })
+    const after = await f.world(), commands = f.trace.filter(row => row.method === 'submit_command')
+    console.log('full-review authorization', JSON.stringify({ scenario, seen, state: result.state,
+      before: before.items.length, after: after.items.length, commands: commands.length }))
+    assert.deepEqual(after.items, before.items, 'Incomplete authorization must preserve the actual Core memory')
+    assert.equal(after.world_revision, before.world_revision)
+    assert.equal(commands.length, 0)
+    assert.ok(['unavailable', 'withheld', 'no_action'].includes(result.state))
+    assert.match(result.message, /没有.*(?:删|执行)|还没忘掉/)
+    const reply = events.filter(event => event.type === 'assistant/message').flatMap(event => event.data.message.content).map(part => part.text).join('')
+    assert.match(reply, /没有.*(?:删|执行)|还没忘掉/)
+    assert.doesNotMatch(reply, /已忘掉|已删除|已经忘/)
+    assert.equal(seen.length, 1, 'A failed whole-message check must not start a second authorization')
+    if (scenario !== 'failed authorization') assert.equal(seen[0].length, text.length, 'Deletion authorization never receives a truncated message')
+  } finally {
+    disposals.forEach(fn => fn()); hooks.deregister(); (process as any).send = originalSend
+    if (connected) Object.defineProperty(process, 'connected', connected); else delete (process as any).connected
+    if (enabled === undefined) delete process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED; else process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED = enabled
+  }
+})
+
+test('FIX-50 full review real Core: the memory page deletes a standalone failed source and completes cleanup', { skip }, async t => {
+  const f = await fixture(t), before = await f.world()
+  f.reject(true)
+  await f.manager.ingest(owner, boundary('记住：我的收藏编号是Q42。', 'standalone-failed'))
+  await wait(async () => (await f.manager.query(owner, 'query_jobs', { operation: 'list' }))
+    .formation_requests.some(row => ['dead', 'no_change'].includes(row.state)))
+  const sources = (await f.manager.query(owner, 'query_evidence', { operation: 'list' })).evidence
+  const source = sources.find(row => row.raw_content.includes('Q42'))
+  assert.ok(source)
+  const revision = (await f.world()).world_revision
+  const preview = await f.manager.query(owner, 'preview_forget', { target_kind: 'evidence', target_id: source.evidence_id })
+  assert.deepEqual(preview.items, []); assert.equal(preview.evidence_count, 1)
+  const url = new URL('/personal/v1/memory/evidence/' + source.evidence_id, 'http://synthetic')
+  const response = await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname: url.pathname, url,
+    request: { method: 'DELETE' }, readJson: async () => ({ requestId: 'full-review-standalone-delete', expectedWorldRevision: revision }) })
+  console.log('full-review standalone', JSON.stringify({ status: response.status, receipt: response.body.receipt }))
+  assert.equal(response.status, 200)
+  assert.equal(response.body.receipt.state, 'applied')
+  assert.equal(response.body.receipt.storageCleanup.state, 'complete')
+  await assert.rejects(handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname: url.pathname, url,
+    request: { method: 'GET' }, readJson: async () => ({}) }), { code: 'NOT_FOUND', status: 404 })
+  const after = await f.world()
+  assert.equal(after.world_revision, revision + 1)
+  assert.deepEqual(after.items, before.items.map(row => ({ ...row, world_revision: revision + 1,
+    provenance: row.provenance.map(source => ({ ...source, evidence: { ...source.evidence, world_revision: revision + 1 } })) })),
+    'The independent memory and its source must survive unchanged at the new global revision')
+  assert.equal(f.trace.filter(row => row.method === 'submit_command').length, 1)
+})
 
 test('FIX-50 G7 M7 real Core: forgetting blue preserves the independent walking source in the same recall candidates', { skip }, async t => {
   const walkingText = '我喜欢喝红茶。另记一件独立的事：我周末喜欢散步。'
