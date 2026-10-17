@@ -1962,7 +1962,7 @@ async function bootstrap() {
       const foregroundProfile = settingsMod.listModelProfiles().profiles.find(profile =>
         profile.id === settingsMod.sessionModelBinding(request.sessionId));
       if (request.action === 'tool') return handlePersonalMemoryTool(personalMemoryManager, binding.ownerId,
-        request.tool, { sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile), memoryPolicy });
+        request.tool, { sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile), memoryPolicy, signal: request.signal });
       personalMemoryIpc.recallRequests++;
       const finishMemory = modelScheduler.beginMemory(request.sessionId);
       const recalled = await personalMemoryManager.recall(binding.ownerId, { query: request.query,

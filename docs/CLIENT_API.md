@@ -342,8 +342,8 @@ UX-P1 增补：列表 `GET /memory/items` 可显式传 `kind=all`，合并四类
 | GET `/memory/evidence/{evidenceId}/forget-preview` | 无 | 同上，预览单条来源的级联范围 | 同上 | 桌、手、安（界面）；苹（接口） |
 | POST `/memory/items/{kind}/{itemId}/correct` | `requestId,expectedWorldRevision,text`；非entity，非空文字≤4,000 UTF-16 | 200或409 `Receipt` | 422 `MEMORY_ACTION_UNSUPPORTED`；409 `MEMORY_REQUEST_CONFLICT / MEMORY_REPLAY_REDACTED` | 桌、手、安、苹 |
 | POST `/memory/items/{kind}/{itemId}/mute` | `requestId,expectedWorldRevision` | 200或409 `Receipt` | 503 `MEMORY_ACTION_UNSUPPORTED / MEMORY_UNAVAILABLE`；409请求冲突 | 桌、手、安、苹 |
-| DELETE `/memory/items/{kind}/{itemId}` | `requestId,expectedWorldRevision`；可选 `deleteConversationSnippets:false`（JSON体） | 200或409 `Receipt` | 503 `MEMORY_DELETE_UNAVAILABLE`；409请求冲突 | 桌、手、安、苹 |
-| DELETE `/memory/evidence/{evidenceId}` | `requestId,expectedWorldRevision`；可选 `deleteConversationSnippets:false`（JSON体） | 200或409 `Receipt` | 404 `NOT_FOUND`；503 `MEMORY_DELETE_UNAVAILABLE` | 桌、手、安、苹 |
+| DELETE `/memory/items/{kind}/{itemId}` | `requestId,expectedWorldRevision`；可选 `deleteConversationSnippets:false`（JSON体） | 200或409 `Receipt`；提交前无法完整处理来源时409 `{state:"withheld",error:{code:"MEMORY_FORGET_INCOMPLETE"},message}`，无 `receipt` | 503 `MEMORY_DELETE_UNAVAILABLE`；409请求冲突或范围未完成 | 桌、手、安、苹 |
+| DELETE `/memory/evidence/{evidenceId}` | `requestId,expectedWorldRevision`；可选 `deleteConversationSnippets:false`（JSON体） | 同上；预提交未完成不创建Core回执 | 404 `NOT_FOUND`；503 `MEMORY_DELETE_UNAVAILABLE`；409 `MEMORY_FORGET_INCOMPLETE` | 桌、手、安、苹 |
 | GET `/memory/commands/by-request/{requestId}` | 无 | 200 `Receipt`（也可包含拒绝/冲突状态） | 404 `NOT_FOUND`；409 `MEMORY_REPLAY_REDACTED` | 桌、手、安、苹 |
 | POST `/memory/commands/by-request/{requestId}/retry-cleanup` | `{}`，≤1 KiB；只重试原删除的底层清理 | 200 `Receipt` | 404 `NOT_FOUND`；422 `MEMORY_ACTION_UNSUPPORTED`；503 `SERVICE_UNAVAILABLE` | 桌、安（能力）、苹 |
 
@@ -352,6 +352,16 @@ UX-P1 增补：列表 `GET /memory/items` 可显式传 `kind=all`，合并四类
 FX-15：确认决定的来源列表可额外包含 `role:"assistant"`、`messageId`、`conversationId`；`rawContent` 为被确认的助手提议原话。`evidenceId` 指向提议所在回合的用户证据，用于权限及遗忘依赖，不表示助手文字成为用户 Evidence（原始证据）。同一 `evidenceId` 可同时出现用户原话和助手上下文，客户端应按 `evidenceId + role + messageId` 区分；旧客户端继续显示既有摘要和原文。助手来源撤权或删除后不返回正文。
 
 查询对当前账号快照搜索，`query` 经 NFKC/trim/小写规范化；游标绑定账号、kind、query、worldRevision，修订变化后重新查首屏。`currentState` 另可 `not_current`。来源最多200条，摘要≤2,000、原文≤8,192 UTF-16；详情/来源内部大小上限256 KiB。拒绝删除的原因在 `receipt.reasonCode`，可为 `MEMORY_DELETE_CONFLICT / MEMORY_SOURCE_UNRECOVERABLE / MEMORY_DELETE_SOURCE_UNKNOWN / MEMORY_COMMAND_REJECTED`；外层未知错误会投影为 `SERVICE_UNAVAILABLE`。`capabilities.inject` 仅表示能力，当前没有公开「注入/采用记忆」HTTP路由。
+
+M3安全边界：DELETE在提交前，绑定当前owner、选中对象、Core预览/修订及真实来源核对完成性；现有处理模型只能用于只读判断，不扩大原删除目标。原文或摘要中已知仍有目标内容、并且来源还须保留独立事实时，不提交删除、不因本次遗忘递增修订，返回上述409。无法确认模型配置、权限、来源或同一修订时也如实未执行；未获准的来源不交给云模型。GET预览继续不调用模型。没有Core回执的409不能当作成功：新共享界面显示未执行；旧界面可保留待确认标记并查询原请求，但不自动重发或显示已忘。此核对只接记忆条目/来源DELETE，不改变独立的整账号数据清除路径。
+
+自然语言遗忘若在提交前已知范围不完整，返回终态 `withheld`，不作为排队删除继续执行；旧动作有匹配owner/request/操作/目标/修订的真实applied回执时只报 `partial`，保留原Core回执且不重放。旧命令已保留但回执暂不可核实时，沿原请求身份和恢复节奏保持 `queued`/结果待确认，只读核对回执，不声称从未执行，也不为补全结果再派发删除。以上安全收口不代表M3已物理完成；Core局部来源清理与安装验收仍待后续包。
+
+旧版冻结计划没有完成性证明时，未提交的计划须按原主体、主题和同一修订只读复核；复核不得替换冻结的授权范围、删除目标或命令身份。无法证明原范围完整时终止本次删除。已有旧命令只核对原回执：确认执行后说明“原请求已执行，但还不能确认完全忘掉”，不凭空断言某条来源必然残留；回执未知继续保持待确认。来源中目标事实属于谁与整段来源涉及哪些人分别核对：他人的目标事实与本人的无关事实共用来源，不构成本人目标残留；同属本人的混合内容、两人的目标事实或归属不明仍保留并如实未完成。整段来源的删除授权继续核对全部事实，主体字段缺失或矛盾不放行。
+
+目标事实的模型主体关系还须与Core明确的事实主体一致；冲突只会停止，不能用来扩大删除。页面可读取当前同修订、获准处理的World事实作为完成性见证，不把见证加入选中目标或级联范围；来源不可读时不交给模型。已有旧完成性证明也须按此规则重新核对，原冻结范围与旧命令身份保持。负向偏好仍是有效事实，不因表达“不喜欢”而失去目标资格。
+
+保留条数按独立记录投影：不同World身份分别计数，已由这些World的provenance代表的同一Evidence不再重复计数，独立未形成Evidence仍计数；不按正文相似或姓名合并。旧完成性证明中的重复计数仅在同授权、同目标、同修订复核成功后刷新，不能借此重授权或重放已有命令。遇到模型主体与Core冲突时整次withheld是明确安全合同：即使其中一个目标原可删除，也不在矛盾中继续提交；这与旧版允许继续删除的故障场景不同，合法明确范围的applied要求保持。
 
 FG-1：遗忘按来源级联清除 Evidence（来源证据）、依赖理解、关系和无剩余依据的人物／别名，清除 Core（记忆核心）派生上下文、宿主注入／采用标记、投影及纠正日志副本。SQLite（嵌入式数据库）清理使用 `secure_delete` 和 WAL（预写日志）截断；`storageCleanup.state=pending` 表示仍有底层或宿主清理待完成，不能宣称不可恢复。原请求回执和 `retry-cleanup` 可在重启后继续核对。
 

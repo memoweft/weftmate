@@ -66,6 +66,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             return '当前账户记忆超过搜索上限，未返回局部结果。请稍后再试。';
         if (error?.code === 'MEMORY_REVISION_CHANGED')
             return '记忆已变更，旧页已清除。保留了搜索条件，请重新查询。';
+        if (error?.code === 'MEMORY_FORGET_INCOMPLETE')
+            return '这次没有执行遗忘：相关来源仍无法完整处理。独立记忆和原聊天保留。';
         if (error?.code === 'NETWORK')
             return '连接中断，记忆状态暂时无法确认。请重试。';
         return '记忆暂时无法读取。请检查连接并重试。';
@@ -505,7 +507,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
                         core.showMemoryReceipt('记忆已不存在，本次未提交。请刷新列表后重新核对。', marker.requestId);
                         return;
                     }
-                    const message = error.code === 'INVALID_REQUEST' ? '请求内容未通过检查，本次未提交。请核对更正说明后重新提交。'
+                    const message = error.code === 'MEMORY_FORGET_INCOMPLETE' ? core.memoryFailure(error)
+                        : error.code === 'INVALID_REQUEST' ? '请求内容未通过检查，本次未提交。请核对更正说明后重新提交。'
                         : error.code === 'MEMORY_DELETE_UNAVAILABLE' ? '删除能力暂不可用，本次未提交。'
                             : '当前账户或记忆能力不允许这项操作，本次未提交。请刷新状态后核对。';
                     effects.detailStatus('本次未提交。');

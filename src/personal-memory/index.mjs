@@ -12,6 +12,7 @@ import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
 import { recallQuestions,recallEntries } from './recall-questions.mjs';
 import { createMemoryActions } from './actions.mjs';
+import { classifyForgetRequest, scopedForgetPlan, checkForgetCompletion, forgetSourceText } from './forget-model.mjs';
 
 const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
@@ -496,9 +497,67 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
 
   const manager = {
     enabled,
-    mutateFromTool(ownerId, action) {
+    async forgetFromMessage(ownerId, action) {
+      owner(ownerId);
+      let scope;
+      try {
+        const route = await resolveProcessingRoute(ownerId, action.sessionId);
+        scope = await classifyForgetRequest({ ...route, signal: action.signal }, action.source.text);
+      } catch {
+        if (action.signal?.aborted) return { state: 'cancelled', message: '操作已停止，没有删除记忆。' };
+        return { state: 'no_action', decision: { isForgetRequest: false, subject: 'unknown', topic: '',
+          conditionsOrQuestions: false, authorized: false, reason: 'unavailable' } };
+      }
+      if (!scope.authorized) return { state: 'no_action', decision: scope };
+      const result = await this.mutateFromTool(ownerId, { ...action, name: 'memory_forget', scope, automatic: true,
+        arguments: { query: scope.topic } });
+      return { ...result, ...(result.state === 'applied' ? { message: result.message.replace('已忘掉这件事。',
+        `已删除关于“${scope.topic}”的记忆，包括旧版本和来源原文。`) } : {}), decision: scope };
+    },
+    async planForget(ownerId, action) {
+      const route = await resolveProcessingRoute(ownerId, action.sessionId);
+      action.signal?.throwIfAborted();
+      return scopedForgetPlan(this, ownerId, action, { ...route, signal: action.signal });
+    },
+    async revalidateForget(ownerId, action, signal) {
+      const text = forgetSourceText(action.source, true);
+      if (text === null) return { authorized: false };
+      try {
+        const route = await resolveProcessingRoute(ownerId, action.sessionId);
+        return await classifyForgetRequest({ ...route, signal }, text);
+      } catch {
+        signal?.throwIfAborted();
+        return { authorized: false };
+      }
+    },
+    async checkForgetCompletion(ownerId, proposal) {
+      const route = await resolveProcessingRoute(ownerId, null);
+      return checkForgetCompletion(this, ownerId, proposal, route);
+    },
+    correctionSourceSupported(ownerId) {
+      return withOwner(ownerId, entry => entry.capabilities?.services?.command?.correction_source === true);
+    },
+    async mutateFromTool(ownerId, action) {
       owner(ownerId);
       if (!enabled || closing || erasingOwners.has(ownerId)) throw error('MEMORY_UNAVAILABLE');
+      if (action.name === 'memory_forget') {
+        const text = forgetSourceText(action.source);
+        if (text === null) return { state: 'withheld', message: '无法完整核对遗忘请求，这次没有执行；请重新确认。' };
+        // Only new host input enters here. submit() never overwrites an existing
+        // record, so resubmission cannot manufacture an original for old work.
+        action = { ...action, source: { ...action.source, message: action.source.message ?? { content: text } } };
+      }
+      if (action.name === 'memory_forget' && !action.scope) {
+        let scope;
+        try {
+          const route = await resolveProcessingRoute(ownerId, action.sessionId);
+          scope = await classifyForgetRequest({ ...route, signal: action.signal }, action.source?.text ?? '');
+        } catch { return action.signal?.aborted
+          ? { state: 'cancelled', message: '操作已停止，没有删除记忆。' }
+          : { state: 'no_action', message: '这次还没确认要删除哪些记忆，没有删除，也没有排队重试。' }; }
+        if (!scope.authorized) return { state: 'no_action', message: '这次没有删除记忆，也没有排队重试；请先说清要直接忘掉哪件事。' };
+        return this.mutateFromTool(ownerId, { ...action, scope });
+      }
       return actions.submit(ownerId, action);
     },
     async markAccountErased(ownerId) {
@@ -813,7 +872,15 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       }
       scheduleRetry(ownerId, true);
       if (defer) return { state: 'queued', reasonCode: 'MEMORY_BOUNDARY_PENDING' };
-      const results = await flushPending(ownerId);
+      let results = await flushPending(ownerId);
+      // Startup may already be draining an empty snapshot while this boundary
+      // is appended. That completed flight never attempted the new row; drain
+      // it now rather than losing the immediate retry behind that same flight.
+      if (!results.has(boundary.event_id)) {
+        const unattempted = await queueOutbox(ownerId, async () => (await readOutbox(ownerId)).items
+          .some(item => item.boundary.event_id === boundary.event_id && !item.blocked && !item.lastFailureCode));
+        if (unattempted) results = await flushPending(ownerId);
+      }
       return results.get(boundary.event_id) ?? { state: 'queued', reasonCode: 'MEMORY_BOUNDARY_PENDING' };
     },
     submit(ownerId, command) { return withOwner(ownerId, (entry) => entry.rpc.request('submit_command', { command })); },
@@ -867,6 +934,18 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       })();
       commandFlights.set(key, work);
       try { return await work; } finally { commandFlights.delete(key); }
+    },
+    async receiptForAction(ownerId, proposal) {
+      owner(ownerId);
+      const marker = await journal.get(ownerId, proposal.requestId), command = marker?.command;
+      if (!command || !['delete_evidence', 'delete_world_item'].includes(command.operation) ||
+        command.operation !== proposal.operation || command.target_kind !== proposal.targetKind || command.target_id !== proposal.targetId ||
+        command.expected_world_revision !== proposal.expectedWorldRevision) throw error('MEMORY_REQUEST_CONFLICT');
+      // Completion inspection reads only the original Core receipt. Unlike the
+      // public receipt getter, it must not trigger another host cleanup attempt.
+      const result = await withOwner(ownerId, entry => entry.rpc.request('query_command_receipt', { command_id: command.command_id }));
+      if ((result?.receipt ?? result)?.command_id !== command.command_id) throw error('MEMORY_RESPONSE_INVALID');
+      return result;
     },
     async receiptByRequest(ownerId, requestId) {
       owner(ownerId);
