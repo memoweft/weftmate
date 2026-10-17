@@ -4,7 +4,19 @@ import {pathToFileURL} from 'node:url';
 import {createMobileCloud, authorizeMobile} from './auth.mjs';
 function source(file){const url=pathToFileURL(resolve(file));return readFileSync(url,'utf8').replaceAll('import.meta.url',JSON.stringify(url.href)).replace(/from (['"])(\.\.?\/[^'"]+)\1/g,(_,q,p)=>`from '${new URL(p,url).href}'`);}
 const data=code=>'data:text/javascript;base64,'+Buffer.from(code).toString('base64');
+// Test-only phase hooks in the original dispatcher. No product instrumentation,
+// payloads or identifiers are emitted by the frozen-create observer.
+const commands=source('src/personal-access/commands.mjs').replaceAll('\r\n','\n')
+ .replace('async function dispatch(ownerId, commandId) {', "async function dispatch(ownerId, commandId) { context.__reviewCommandPhase?.(ownerId,commandId,'dispatch.enter');")
+ .replace("next.commands[commandId].state = 'dispatching';", "context.__reviewCommandPhase?.(ownerId,commandId,'dispatch.commit.start'); next.commands[commandId].state = 'dispatching';")
+ .replace('snapshot = structuredClone(context.accountState(ownerId).commands[commandId]);', "snapshot = structuredClone(context.accountState(ownerId).commands[commandId]); context.__reviewCommandPhase?.(ownerId,commandId,'dispatch.commit.done');")
+ .replace('try { result = await withDeadline(() => callback, DISPATCH_TIMEOUT_MS); }\n      catch (error) {', "context.__reviewCommandPhase?.(ownerId,commandId,'backend.await'); try { result = await withDeadline(() => callback, DISPATCH_TIMEOUT_MS); context.__reviewCommandPhase?.(ownerId,commandId,'backend.receipt'); }\n      catch (error) { context.__reviewCommandPhase?.(ownerId,commandId,'backend.error',safeCode(error));")
+ .replace('await context.serial(() => context.mutate(ownerId, (next) => {\n        const command = next.commands[commandId];', "context.__reviewCommandPhase?.(ownerId,commandId,'receipt.commit.start'); await context.serial(() => context.mutate(ownerId, (next) => {\n        const command = next.commands[commandId];")
+ .replace("if (snapshot.kind === 'session.message' && snapshot.payload.attachments &&", "context.__reviewCommandPhase?.(ownerId,commandId,'receipt.commit.done'); if (snapshot.kind === 'session.message' && snapshot.payload.attachments &&")
+ .replace('// Route preparation happens before inference is issued.', "context.__reviewCommandPhase?.(ownerId,commandId,'dispatch.error',safeCode(error)); // Route preparation happens before inference is issued.")
+ .replace('function schedule(ownerId, commandId) {', "function schedule(ownerId, commandId) { context.__reviewCommandPhase?.(ownerId,commandId,'schedule');");
 let service=source('src/personal-access/index.mjs').replace('const service = {','const service = { __reviewServer:()=>server,__reviewContext:context,__reviewCounts:()=>({accountWaiters:accountWaiters.size,accountRevision}),');
+service=service.replace(pathToFileURL(resolve('src/personal-access/commands.mjs')).href,data(commands));
 service=service.replace('const changeKey =','const __reviewDigests=[]; const changeKey =')
  .replace("=> createHmac('sha256', changeKey)","=> (__reviewDigests.push(field), createHmac('sha256', changeKey))")
  .replace('__reviewContext:context,','__reviewContext:context,__reviewDigests:()=>__reviewDigests,');
