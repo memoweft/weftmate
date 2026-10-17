@@ -4,8 +4,8 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { startTimelineCandidate } from './integration/bl29-rework/fixture.mjs';
-import { getEventListeners } from 'node:events';
+import { startTimelineCandidate, observeTimelineHttp } from './integration/bl29-rework/fixture.mjs';
+import { EventEmitter, getEventListeners } from 'node:events';
 
 function probe(name: string) {
   const root=mkdtempSync(join(tmpdir(),'weftmate-bl29-account-'));
@@ -67,28 +67,116 @@ test('BL-29c N3 catalog close during snapshot and after a real commit wake drain
   assert.equal(rows.find(row=>row.kind==='logout').result.status,401);
 });
 
-test('BL-29c N3 cancellation during shared catalog read removes each HTTP request listener',async()=>{
-  const f=await startTimelineCandidate({daily:true,inlineProgress:true,historyCount:0});
-  let release;
-  try {
-    const c=f.debug.service.__reviewContext,chat=(await f.request('/chats/main')).chat;
-    const startingRevision=c.accountRevisionFor(f.debug.auth.account.ownerId);
-    let entered=false;const gate=new Promise(resolve=>{release=resolve;});
-    const original=f.debug.backend.listModels;
-    f.debug.backend.listModels=async args=>{entered=true;await gate;return original(args);};
-    const controllers=Array.from({length:20},()=>new AbortController());
-    const pending=controllers.map(controller=>fetch(`${f.origin}/personal/v1/chats/${chat.chatId}/events`,{
+function completionGate() {
+  let release=()=>{};const promise=new Promise<void>(resolve=>{release=resolve;});
+  return {promise,release};
+}
+
+function observeCatalogReaders(c,owner,count) {
+  const ready=completionGate(),revisions=[],original=c.accountChanges;
+  c.accountChanges=function(...args){
+    const work=Reflect.apply(original,this,args);
+    if(args[0]===owner&&args[1]){
+      revisions.push(c.accountRevisionFor(owner));
+      if(revisions.length===count)ready.release();
+    }
+    return work;
+  };
+  return {ready:ready.promise,revisions};
+}
+
+async function catalogCancellationFixture() {
+  const f=await startTimelineCandidate({daily:true,inlineProgress:true,historyCount:0,quietCatalog:true});
+  const c=f.debug.service.__reviewContext,owner=f.debug.auth.account.ownerId;
+  const chat=(await f.request('/chats/main')).chat,path=`/personal/v1/chats/${chat.chatId}/events`;
+  const http=observeTimelineHttp(f,path),controllers=Array.from({length:20},()=>new AbortController());
+  let pending=[];
+  return {f,c,owner,http,controllers,
+    start(){pending=controllers.map(controller=>fetch(f.origin+path,{
       headers:{cookie:f.debug.cookie},signal:controller.signal,
-    }).catch(()=>null));
-    while(!entered)await new Promise(resolve=>setTimeout(resolve,1));
-    await new Promise(resolve=>setTimeout(resolve,30));controllers.forEach(controller=>controller.abort());
-    await Promise.all(pending);await new Promise(resolve=>setTimeout(resolve,30));
-    const listeners=getEventListeners(c.closingSignal,'abort');
-    const listenerKinds=listeners.map(listener=>listener.toString().includes('controller.abort')?'http-reader':listener.toString().includes('finish(undefined)')?'shared-catalog':'other');
-    assert.equal(listeners.length,1,'only the independent shared catalog owns a close listener; '+JSON.stringify({startingRevision,endingRevision:c.accountRevisionFor(f.debug.auth.account.ownerId),listenerKinds}));
-    release();await c.accountChanges(f.debug.auth.account.ownerId);
+    }).catch(()=>null));return pending;},
+    async close(){controllers.forEach(controller=>controller.abort());await Promise.all(pending);await f.close();rmSync(f.root,{recursive:true,force:true});},
+  };
+}
+
+test('BL-29c N3 cancellation during shared catalog read removes each HTTP request listener',async()=>{
+  const fixture=await catalogCancellationFixture(),{f,c,owner,http,controllers}=fixture;
+  const catalog=completionGate(),entered=completionGate(),readers=observeCatalogReaders(c,owner,20);
+  const revision=c.accountRevisionFor(owner),original=f.debug.backend.listModels;let calls=0;
+  f.debug.backend.listModels=async args=>{calls++;entered.release();await catalog.promise;return original(args);};
+  try {
+    const pending=fixture.start();await entered.promise;await readers.ready;
+    assert.equal(http.started,20);assert.equal(calls,1);
+    assert.deepEqual(readers.revisions,Array(20).fill(revision));
+    controllers.forEach(controller=>controller.abort());await Promise.all(pending);
+    await http.waitForCompleted(20);
+    assert.equal(getEventListeners(c.closingSignal,'abort').length,1,'only the independent shared catalog owns a close listener');
+    catalog.release();await c.accountChanges(owner);
     assert.equal(getEventListeners(c.closingSignal,'abort').length,0);
-  } finally {release?.();await f.close();rmSync(f.root,{recursive:true,force:true});}
+  } finally {catalog.release();await fixture.close();}
+});
+
+test('BL-29c N3 query cancellation waits for the real handler finally before checking cleanup',async()=>{
+  const fixture=await catalogCancellationFixture(),{f,c,owner,http,controllers}=fixture;
+  const query=completionGate(),queryEntered=completionGate(),catalog=completionGate(),readers=observeCatalogReaders(c,owner,19);
+  const originalQuery=c.chatTimeline.query,originalModels=f.debug.backend.listModels;let queries=0;
+  c.chatTimeline.query=async function(...args){
+    if(++queries===2){queryEntered.release();await query.promise;}
+    return Reflect.apply(originalQuery,this,args);
+  };
+  f.debug.backend.listModels=async args=>{await catalog.promise;return originalModels(args);};
+  try {
+    const pending=fixture.start();await queryEntered.promise;await readers.ready;
+    assert.equal(http.started,20);
+    controllers.forEach(controller=>controller.abort());await Promise.all(pending);
+    await http.closed();await http.waitForCompleted(19);
+    assert.equal(http.completed,19,'response.close does not complete the gated query handler');
+    query.release();await http.waitForCompleted(20);
+    assert.equal(getEventListeners(c.closingSignal,'abort').length,1);
+    catalog.release();await c.accountChanges(owner);
+    assert.equal(getEventListeners(c.closingSignal,'abort').length,0);
+  } finally {query.release();catalog.release();await fixture.close();}
+});
+
+test('BL-29c N3 each revision owns its catalog until completion despite HTTP reader cancellation',async()=>{
+  const fixture=await catalogCancellationFixture(),{f,c,owner,http,controllers}=fixture;
+  const queries=completionGate(),firstEntered=completionGate(),secondEntered=completionGate();
+  const firstCatalog=completionGate(),secondCatalog=completionGate(),readers=observeCatalogReaders(c,owner,20);
+  const originalQuery=c.chatTimeline.query,originalModels=f.debug.backend.listModels;let queryCount=0,calls=0;
+  c.chatTimeline.query=async function(...args){if(++queryCount>1)await queries.promise;return Reflect.apply(originalQuery,this,args);};
+  f.debug.backend.listModels=async args=>{
+    const call=++calls;assert.ok(call<=2);
+    (call===1?firstEntered:secondEntered).release();
+    await (call===1?firstCatalog:secondCatalog).promise;return originalModels(args);
+  };
+  try {
+    const before=c.accountRevisionFor(owner),pending=fixture.start();await firstEntered.promise;
+    const firstReader=c.accountChanges(owner);
+    await c.serial(()=>c.mutate(owner,next=>{next.account.displayName='Catalog next revision';next.account.profileRevision++;}));
+    const after=c.accountRevisionFor(owner);assert.ok(after>before);
+    queries.release();await secondEntered.promise;await readers.ready;
+    assert.equal(http.started,20);assert.equal(calls,2);
+    assert.deepEqual(readers.revisions,[before,...Array(19).fill(after)]);
+    const secondReader=c.accountChanges(owner);
+    controllers[1].abort();await pending[1];await http.waitForCompleted(1);
+    assert.equal(http.completed,1,'one HTTP cancellation must not complete the other shared readers');
+    controllers.forEach(controller=>controller.abort());await Promise.all(pending);await http.waitForCompleted(20);
+    assert.equal(getEventListeners(c.closingSignal,'abort').length,2,'each unfinished revision owns its shared read');
+    firstCatalog.release();assert.ok((await firstReader).models);
+    assert.equal(getEventListeners(c.closingSignal,'abort').length,1);
+    secondCatalog.release();assert.ok((await secondReader).models);
+    assert.equal(getEventListeners(c.closingSignal,'abort').length,0);
+  } finally {queries.release();firstCatalog.release();secondCatalog.release();await fixture.close();}
+});
+
+test('BL-29c N3 handler completion observation rethrows the original rejection including undefined',async()=>{
+  for(const error of [undefined,new Error('synthetic handler rejection')]){
+    const fixture={debug:{service:{__reviewOnHttp:null}}},http=observeTimelineHttp(fixture,'/synthetic');
+    const work=Promise.reject(error);
+    fixture.debug.service.__reviewOnHttp({method:'GET',url:'/synthetic'},new EventEmitter(),work);
+    await assert.rejects(http.waitForCompleted(1),actual=>actual===error);
+    assert.equal(http.completed,1);
+  }
 });
 
 test('BL-29c N3/mixed revision catalog failure preserves body and catalog snapshot keeps its starting revision',()=>{
