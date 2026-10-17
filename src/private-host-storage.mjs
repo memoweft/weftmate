@@ -105,7 +105,7 @@ async function protectWindows(target, kind) {
       protectedPaths.set(key, identity(await lstat(target)));
       end();
     } catch (error) {
-      end({ code: error.killed ? 'ACL_PROCESS_KILLED' : Number.isInteger(error.code) ? 'ACL_EXIT_NONZERO' : error.code ?? 'PRIVATE_STORAGE_UNAVAILABLE' });
+      end(error, 'ok', () => error.killed ? 'ACL_PROCESS_KILLED' : Number.isInteger(error.code) ? 'ACL_EXIT_NONZERO' : error.code ?? 'PRIVATE_STORAGE_UNAVAILABLE');
       throw privateFailure();
     }
   })().finally(() => protecting.delete(key));

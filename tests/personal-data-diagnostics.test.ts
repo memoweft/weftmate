@@ -1,12 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { channel } from 'node:diagnostics_channel';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createDataControls } from '../src/personal-data/index.mjs';
 import { observeErasure } from './helpers/data-delete-diagnostics.mjs';
-import { traceErasure, erasurePhase } from '../src/personal-data/diagnostics.mjs';
+import { traceErasure, erasurePhase, subscribeErasure } from '../src/personal-data/diagnostics.mjs';
 import { ensurePrivateDirectory } from '../src/private-host-storage.mjs';
 import { durableWrite } from '../src/personal-access/store.mjs';
 import { readFile } from 'node:fs/promises';
@@ -28,9 +27,8 @@ for (const [phase, dependency] of [
     const root = await mkdtemp(path.join(tmpdir(), 'weftmate-erasure-observation-'));
     const entered = deferred(), blocked = deferred();
     const records: any[] = [];
-    const diagnostics = channel('weftmate.data-erasure');
     const observe = (row: unknown) => records.push(row);
-    diagnostics.subscribe(observe);
+    const unsubscribe = subscribeErasure(observe);
     const observation = observeErasure();
     const error = Object.assign(new Error('PRIVATE_CONTENT synthetic account secret path'), { code: 'SYNTHETIC_FAILURE' });
     const wait = async (name: string) => { if (name === dependency) { entered.resolve(); await blocked.promise; } };
@@ -82,7 +80,7 @@ for (const [phase, dependency] of [
     } finally {
       blocked.reject(error);
       await data.close();
-      diagnostics.unsubscribe(observe);
+      unsubscribe();
       observation.close();
       await rm(root, { recursive: true, force: true });
     }
