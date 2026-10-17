@@ -1,0 +1,471 @@
+{
+  "description": "Behavior captured by executing origin/main manager and parser, not by a source-text assertion.",
+  "baseline": "578c3f745930dfa48f0e1bc54f8f74a1eaa1ad0c",
+  "cases": [
+    {
+      "name": "Memory: / current / budget 1200",
+      "budget": 1200,
+      "pending": false,
+      "renderedRecall": "记忆：第一条正文\nMemory: 正文中的英文标题\n记忆：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory: 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：第一条正文\nMemory: 正文中的英文标题\n\n记忆：第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "第一条正文\nMemory: 正文中的英文标题"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "Memory: / current / budget 48",
+      "budget": 48,
+      "pending": false,
+      "renderedRecall": "记忆：第一条正文\nMemory: 正文中的英文标题\n记忆：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory: 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：第一条正文\nMemory: 正文中的英文标题\n\n记忆：第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "第一条正文\nMemory: 正文中的英文标题"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "Memory: / current / budget 90",
+      "budget": 90,
+      "pending": false,
+      "renderedRecall": "记忆：第一条正文\nMemory: 正文中的英文标题\n记忆：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory: 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：第一条正文\nMemory: 正文中的英文标题\n\n记忆：第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "第一条正文\nMemory: 正文中的英文标题"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "Memory: / pending / budget 1200",
+      "budget": 1200,
+      "pending": true,
+      "renderedRecall": "记忆：第一条正文\nMemory: 正文中的英文标题\n记忆：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory: 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第一条正文\nMemory: 正文中的英文标题\n\n记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第一条正文\nMemory: 正文中的英文标题"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "Memory: / pending / budget 48",
+      "budget": 48,
+      "pending": true,
+      "renderedRecall": "记忆：第一条正文\nMemory: 正文中的英文标题\n记忆：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory: 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文",
+        "memories": [
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "Memory: / pending / budget 90",
+      "budget": 90,
+      "pending": true,
+      "renderedRecall": "记忆：第一条正文\nMemory: 正文中的英文标题\n记忆：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory: 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第一条正文\nMemory: 正文中的英文标题\n\n记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第一条正文\nMemory: 正文中的英文标题"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "Memory (past): / current / budget 1200",
+      "budget": 1200,
+      "pending": false,
+      "renderedRecall": "记忆：第一条正文\nMemory (past): 正文中的英文标题\n记忆（过往）：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory (past): 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆（过往）：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：第一条正文\nMemory (past): 正文中的英文标题\n\n记忆（过往）：第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "第一条正文\nMemory (past): 正文中的英文标题"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "Memory (past): / current / budget 48",
+      "budget": 48,
+      "pending": false,
+      "renderedRecall": "记忆：第一条正文\nMemory (past): 正文中的英文标题\n记忆（过往）：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory (past): 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆（过往）：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：第一条正文\nMemory (past): 正文中的英文标题\n\n记忆（过往）：第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "第一条正文\nMemory (past): 正文中的英文标题"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "Memory (past): / current / budget 90",
+      "budget": 90,
+      "pending": false,
+      "renderedRecall": "记忆：第一条正文\nMemory (past): 正文中的英文标题\n记忆（过往）：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory (past): 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆（过往）：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：第一条正文\nMemory (past): 正文中的英文标题\n\n记忆（过往）：第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "第一条正文\nMemory (past): 正文中的英文标题"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "Memory (past): / pending / budget 1200",
+      "budget": 1200,
+      "pending": true,
+      "renderedRecall": "记忆：第一条正文\nMemory (past): 正文中的英文标题\n记忆（过往）：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory (past): 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆（过往）：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第一条正文\nMemory (past): 正文中的英文标题\n\n记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第一条正文\nMemory (past): 正文中的英文标题"
+          },
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 2
+      }
+    },
+    {
+      "name": "Memory (past): / pending / budget 48",
+      "budget": 48,
+      "pending": true,
+      "renderedRecall": "记忆：第一条正文\nMemory (past): 正文中的英文标题\n记忆（过往）：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory (past): 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆（过往）：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文",
+        "memories": [
+          {
+            "id": "second",
+            "kind": "event",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第二条正文"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    },
+    {
+      "name": "Memory (past): / pending / budget 90",
+      "budget": 90,
+      "pending": true,
+      "renderedRecall": "记忆：第一条正文\nMemory (past): 正文中的英文标题\n记忆（过往）：第二条正文",
+      "entries": [
+        {
+          "pair": [
+            "cognition",
+            "first"
+          ],
+          "claim": "记忆：第一条正文\nMemory (past): 正文中的英文标题"
+        },
+        {
+          "pair": [
+            "event",
+            "second"
+          ],
+          "claim": "记忆（过往）：第二条正文"
+        }
+      ],
+      "expected": {
+        "state": "ready",
+        "contextText": "记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。第一条正文\nMemory (past): 正文中的英文标题",
+        "memories": [
+          {
+            "id": "first",
+            "kind": "cognition",
+            "summary": "已被用户纠正，待更新；以下旧内容不能作为当前事实。第一条正文\nMemory (past): 正文中的英文标题"
+          }
+        ],
+        "worldRevision": 8,
+        "sourceCount": 1
+      }
+    }
+  ]
+}

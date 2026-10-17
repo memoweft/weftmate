@@ -11,6 +11,7 @@ import { reconcileChatIdentity } from '../src/personal-access/chat-identity.mjs'
 import { createOfflineService } from '../src/personal-offline/index.mjs';
 import { recallEntries } from '../src/personal-memory/recall-questions.mjs';
 import { recallDateCases } from './fixtures/recall-date-contract.ts';
+import legacyRecall from './fixtures/legacy-recall-output.json' with { type: 'json' };
 import { ACTIVITY_TYPES } from '../src/personal-access/activity-store.mjs';
 import '../src/ui-core/phone-memory.js';
 import '../src/ui-core/offline.js';
@@ -70,7 +71,11 @@ for (const lang of ['en', 'zh'] as const) for (const dated of [false, true]) {
   assert.equal(entries[2].snapshot,snapshots[0]);
  });
 }
-test('G9 recall boundaries preserve inline and indented literal headers; ambiguous unescaped headers never acquire IDs',()=>{
+for (const fixture of legacyRecall.cases.filter(item=>!item.pending&&item.budget===1200)) test(`G9 legacy parser matches main output: ${fixture.name}`,()=>{
+ const snapshot={preview:{selected_item_ids:[['cognition','first'],['event','second']],rendered_recall:fixture.renderedRecall}};
+ assert.deepEqual(recallEntries([snapshot]).map(({pair,claim})=>({pair,claim})),fixture.entries);
+});
+test('G9 recall boundaries preserve literal headers and fall back to legacy parsing or unpaired original text',()=>{
  const claims=['Memory: [2026-01-06] A literal Memory: is part of this sentence.\n  Memory (past): quoted continuation.\n记忆力是另一个词。',
   '记忆（过往）：[2026-07-14] 下一条\n  记忆：缩进的原话。'];
  const snapshot={preview:{selected_item_ids:[['cognition','first'],['event','second']],rendered_recall:claims.join('\n')}};
@@ -78,7 +83,13 @@ test('G9 recall boundaries preserve inline and indented literal headers; ambiguo
  for(const header of ['Memory:', 'Memory (past):', '记忆：', '记忆（过往）：']) {
   const ambiguous={preview:{selected_item_ids:snapshot.preview.selected_item_ids,
    rendered_recall:`Memory: first body\n${header}literal body line\nMemory: second body`}};
-  assert.ok(recallEntries([ambiguous]).every(e=>!e.claim),'extra reserved lines cannot shift text onto another ID');
+  const rendered=ambiguous.preview.rendered_recall;
+  const expected=header.startsWith('记忆')
+   ? [{pair:snapshot.preview.selected_item_ids[0],claim:`Memory: first body\n${header}literal body line`},
+      {pair:snapshot.preview.selected_item_ids[1],claim:'Memory: second body'}]
+   : [{pair:null,claim:rendered}];
+  assert.deepEqual(recallEntries([ambiguous]).map(({pair,claim})=>({pair,claim})),expected,
+   'legacy-compatible pairs survive; otherwise the complete original remains without IDs');
  }
 });
 test('MEM-7 ordinary backend replacements and receiver binding remain live through phone history',async()=>{
