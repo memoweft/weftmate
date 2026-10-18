@@ -1,13 +1,16 @@
 import { fileURLToPath } from 'node:url';
 /** An inert first paint, adopted by the authenticated desktop after startup. */
-export function createDesktopStartup(window, { startInTray = false, isQuitting }) {
+export function createDesktopStartup(window, { startInTray = false, maximized = false, isQuitting }) {
   let hidden = startInTray;
   const close = event => {
     if (!isQuitting()) { event.preventDefault(); hidden = true; window.hide(); }
   };
   window.on('close', close);
   const ready = window.loadFile(fileURLToPath(new URL('./desktop-startup.html', import.meta.url))).then(() => {
-    if (!hidden && !isQuitting() && !window.isDestroyed()) window.show();
+    if (!hidden && !isQuitting() && !window.isDestroyed()) {
+      if (maximized) window.maximize();
+      window.show();
+    }
   });
   return {
     ready,
