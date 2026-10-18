@@ -7,12 +7,12 @@ async function setup(extra:any={}){
   const ctx=vm.createContext({Date,Map,Set,Promise,URL,JSON,console,globalThis:null});ctx.globalThis=ctx;
   ctx.WeftUiCore={factories:{}};vm.runInContext(await readFile('src/ui-core/computers.js','utf8'),ctx);
   const calls:any[]=[],prefs=new Map();const core:any={state:{cloudAuth:{sub:'synthetic'},hostId:'a',sessions:[]},
-    accessApi:async(path:string,options:any={})=>{calls.push({host:'a',path,options});return path.startsWith('/sessions')?{sessions:[{sessionId:'a-session',title:'A'}]}:{projects:[]};},
+    accessApi:async(path:string,options:any={})=>{calls.push({host:'a',path,options});return path.startsWith('/sessions')?{sessions:extra.localSessions||[{sessionId:'a-session',title:'A'}]}:{projects:[]};},
     selectSession:async()=>{},startNewConversation:()=>{},clearSession:()=>{},cloudCurrentComputer:()=> 'a',
     cloudConnect:async(id:string)=>({hostId:id,status:'online',baseUrl:'https://'+id+'.example.com'}),
     cloudComputerCapabilities:async()=>({cloudChannel:1}),
     cloudComputerChannel:async()=>({token:'synthetic-token',account:{ownerId:'b-owner'},device:{id:'phone'},csrfToken:'csrf'}),
-    acceptSession:()=>{},refreshStatus:async()=>{},refreshModels:async()=>{},refreshSessions:async()=>{},api:async()=>({})};
+    acceptSession:()=>{},refreshStatus:async()=>{},refreshModels:async()=>{},refreshSessions:extra.refreshSessions||(async()=>{}),api:async()=>({})};
   const effects={paintComputers:()=>{},toast:()=>{},openComputerChannel:async(c:any)=>({close:()=>{},request:async(path:string,options:any)=>{calls.push({host:c.hostId,path,options});return {sessions:[{sessionId:'b-session',title:'B'}]};}})};
   core.accessBase='/personal/v1';core.authBase='/personal/v1/auth';core.requestJson=(url:string,options:any)=>coreOriginal(url.replace('/personal/v1',''),options);
   const coreOriginal=core.accessApi;
@@ -46,6 +46,29 @@ test('the desktop program keeps local conversations while showing the account co
   assert.equal(core.hasMultipleComputers(),true);assert.equal(core.canChooseExecutionComputer(),false);
   const listed=await core.accessApi('/sessions?archived=all');assert.equal(listed.sessions.length,1);assert.equal(calls.length,1);assert.equal(calls[0].host,'a');
   await core.selectExecutionComputer('b');assert.equal(calls.length,1);
+});
+
+test('cloud login keeps the desktop local sidebar and send availability when its relay is offline',async()=>{
+  const localSessions=[{sessionId:'a-session',title:'A',running:true,sendAvailable:true}];
+  let refreshes=0;
+  const {core,calls}=await setup({desktop:true,localSessions,refreshSessions:async()=>{refreshes++;}});
+  core.state.personalCapabilities={workAndChat:1};
+  core.updateComputerDirectory({hosts:[{hostId:'a',online:false},{hostId:'b',online:false}],capabilities:{multiHost:1}});
+  assert.equal(core.canChooseExecutionComputer(),true);
+  const listed=await core.accessApi('/sessions?archived=all');
+  assert.equal(listed.sessions.length,1);
+  assert.equal(listed.sessions[0].sessionId,'a-session');
+  assert.equal(listed.sessions[0].computerOffline,undefined);
+  assert.equal(listed.sessions[0].running,true);
+  localSessions[0].running=false;
+  const completed=await core.accessApi('/sessions?archived=all');
+  assert.equal(completed.sessions[0].running,false);
+  assert.equal(completed.sessions[0].sendAvailable,true);
+  assert.equal(calls.filter(row=>row.host==='a').length,2);
+  assert.equal(calls.filter(row=>row.host!=='a').length,0);
+  await core.refreshSessions();
+  assert.equal(refreshes,1,'local relay status must not bypass logical history refresh');
+  await assert.rejects(core.selectExecutionComputer('b'),error=>error.code==='COMPUTER_OFFLINE');
 });
 test('list merges by computer; sending and retries address only the selected computer; offline lists retain ownership',async()=>{
   const {core,calls}=await setup();const hosts=[{hostId:'a',name:'synthetic-desk',online:true},{hostId:'b',name:'synthetic-laptop',online:true}];
