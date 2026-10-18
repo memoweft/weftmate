@@ -12,6 +12,7 @@ import { cpus, totalmem } from 'node:os';
 import { join, resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
+import { checkMainHistoryActions, checkTimelineSourceActions } from '../helpers/history-message-scenarios.mjs';
 const root=resolve(import.meta.dirname,'../..'), evidence=evidencePath('ia-3');
 await mkdir(evidence,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
@@ -75,12 +76,11 @@ try{
   await button(page,`${dateLabel}，收起`).waitFor();await shot('desktop-light-date');
   await button(page,`${dateLabel}，收起`).click();await page.getByRole('button',{name:new RegExp(`^${dateLabel} · \\d+ 条，展开$`)}).waitFor();await shot('desktop-light-folded');
   await page.getByRole('button',{name:new RegExp(`^${dateLabel} · \\d+ 条，展开$`)}).click();
-  const sourceMessage=page.getByRole('group',{name:/^我的消息：/}).first();await sourceMessage.focus();const menu=sourceMessage.getByLabel('消息菜单',{exact:true});await menu.click();await button(page,'从这里开旁聊').first().click();
-  await page.getByRole('textbox',{name:'旁聊名称'}).fill('合成旁聊：纸船核对');await page.getByRole('textbox',{name:'旁聊第一句话'}).fill('请核对纸船');
-  await button(page,'确认开旁聊').click();await page.getByRole('dialog',{name:'开旁聊',exact:true}).waitFor({state:'hidden'});await page.getByText('相关上下文尚未带入',{exact:true}).waitFor();
-  assert.equal(await page.locator('#message-text').inputValue(),'请核对纸船');await shot('desktop-light-side-origin');
-  await button(page,'回到主对话原消息').click();await page.waitForFunction(()=>document.querySelector('#assistant-title').textContent==='WeftMate');
-  report.checks.push('fixed-main','recent-tail','search-highlight-next-previous','date-locate','side-origin-reference-only','draft-transfer');
+  const sourceMessage=page.getByRole('group',{name:/^我的消息：/}).first();await sourceMessage.focus();
+  await checkTimelineSourceActions(page,sourceMessage);
+  await checkMainHistoryActions(page,page.getByRole('group',{name:/^助手消息：/}).first());
+  await shot('desktop-light-history-actions');
+  report.checks.push('recent-tail','search-highlight-next-previous','date-locate','D92-no-anchored-side-chat');
   // Two local cache tiers, 30 switches, no model/network latency injected.
   const timings=[];
   for(let n=0;n<30;n++){await button(page,/^合成旁聊：项目安排/).click();const start=performance.now();await button(page,'WeftMate 主对话').click();await page.waitForFunction(()=>document.querySelector('#assistant-title').textContent==='WeftMate'&&!document.querySelector('#message-text').disabled&&document.querySelector('#transcript .message'));timings.push(performance.now()-start);}

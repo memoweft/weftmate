@@ -9,6 +9,7 @@ import {randomUUID} from 'node:crypto';
 import {chromium} from 'playwright';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {harness} from './ia-2b-harness.mjs';
+import {checkTimelineSourceActions} from '../helpers/history-message-scenarios.mjs';
 const root=resolve(import.meta.dirname,'../..'),out=evidencePath('ia-4');await mkdir(out,{recursive:true});
 const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',serial='127.0.0.1:7555',pkg='com.memoweft.weftmate.mobile.ia4qa';
 const run=(...args)=>execFileSync(adb,['-s',serial,...args],{encoding:'utf8',windowsHide:true});
@@ -60,13 +61,12 @@ try{
     const name=await page.evaluate(()=>{const box=$('chat-scroll').getBoundingClientRect();return [...document.querySelectorAll('[role=group][aria-label]')].find(row=>{const r=row.getBoundingClientRect();return r.top>=box.top&&r.bottom<=box.bottom;})?.getAttribute('aria-label');});
     assert.ok(name);const row=page.getByRole('group',{name,exact:true});
     if(theme==='light'){const box=await row.boundingBox();assert.ok(box);const touch=await page.context().newCDPSession(page);await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width/2,y:box.y+box.height/2}]});await delay(700);await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
-    else{await row.click();await row.getByLabel('消息菜单',{exact:true}).click();}
-    await row.getByRole('button',{name:'从这里开旁聊',exact:true}).click();
-    await page.getByRole('textbox',{name:'旁聊名称'}).fill('合成安卓旁聊');await b('确认开旁聊').click();await page.getByRole('dialog',{name:'开旁聊',exact:true}).waitFor({state:'hidden'});await page.getByText('相关上下文尚未带入',{exact:true}).waitFor();await shot(`${theme}-origin`);await b('回到主对话原消息').click();
+    else await row.click();
+    await checkTimelineSourceActions(page,row);await shot(`${theme}-history-actions`);
     console.log('native navigation',await page.evaluate(()=>({body:document.body.className,topbar:getComputedStyle(document.querySelector('.topbar')).display,menuHidden:$('menu-button').hidden,page:state.page,logical:state.logicalChats,transition:state.transitionPending})));
     await b('打开导航').click();await b('WeftMate 主对话').click();
   }
-  report.checks.push('real-native-status-main','native-calendar','search-navigation','fold-expand','side-create-source-return','themes');
+  report.checks.push('real-native-status-main','native-calendar','search-navigation','fold-expand','D92-no-anchored-side-chat','themes');
   if(process.argv.includes('--performance')){
     console.log('native 60-second scroll sample');await cmd({kind:'chat.message',chatId:main.chatId,modelProfileId:'local',text:'合成安卓万条流式滚动'});
     await page.evaluate(async()=>{await uiCore.selectMainChat();for(let n=0;n<5;n++)await uiCore.loadOlderLogicalHistory();for(const day of uiCore.mainChatDays())uiCore.expandChatDay(day.date);mobileEffects.scrollToLatest();});
