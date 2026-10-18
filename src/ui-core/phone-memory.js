@@ -5,7 +5,7 @@
   // Only a direct affirmative request can restore suppressed text. Ambiguous
   // wording stays suppressed, even if the extraction model proposes the fact.
   const rememberRequest=text=>/^(?:(?:请(?:你)?|麻烦(?:你)?|请帮我|帮我)\s*)?(?:重新|再次|再)?记住|^(?:please\s+)?(?:remember|re-?remember)\b/iu.test(String(text).trim())&&
-    !/不|没|无|别|勿|甭|取消|拒绝|如果|若|假|条件|前提|只有|才|的话|以后|将来|是否|能否|可否|怎么|如何|吗|么|\b(?:not|no|never|don't|cannot|can't|cancel|if|unless|when|whether|could|would|should|only)\b|[？?“”「」『』"]/iu.test(text);
+    !/不|没|无|别|勿|甭|取消|拒绝|如果|若|假|条件|前提|只有|才|的话|是否|能否|可否|怎么|如何|吗|么|\b(?:not|no|never|don't|cannot|can't|cancel|if|unless|when|whether|could|would|should|only)\b|[？?“”「」『』"]/iu.test(text);
   const forgetCandidate=text=>/忘|forget|删除.*记忆|清除.*记忆/iu.test(text);
   const digest=async(text,crypto=globalThis.crypto)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(normalize(text)))),b=>b.toString(16).padStart(2,'0')).join('');
   const sensitive=text=>{const lower=String(text).toLowerCase();
