@@ -505,8 +505,8 @@ test('memory view preserves chat draft and discards a successful response for an
   get('memory-correct-text').value = '合成目标已不存在。'
   get('memory-correct-text').fire('input')
   get('memory-confirm-action').fire('click')
-  for (let i = 0; i < 20 && !get('memory-receipt-text').textContent.includes('记忆已不存在'); i++) await flush()
-  assert.match(get('memory-receipt-text').textContent, /本次未提交/)
+  for (let i = 0; i < 20 && !get('memory-receipt-text').textContent.includes('这条记忆当前无法查看'); i++) await flush()
+  assert.match(get('memory-receipt-text').textContent, /本次没有执行/)
   assert.equal(get('memory-detail-dialog').open, false)
   assert.equal(get('memory-list').children.length, 0)
   assert.equal([...storage.keys()].some((key) => key.startsWith('weftmate:memory-request:')), false,
