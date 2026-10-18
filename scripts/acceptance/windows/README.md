@@ -1,0 +1,1 @@
+按 `docs/PLAN.md` 第 2 节用 `build.mjs OUTPUT MEMORY_RUNTIME [VERSION]` 制备候选，再执行 `rerun.ps1 -Installer INSTALLER -EvidenceDirectory NEW_DIRECTORY -LockDirectory LOCK_DIRECTORY` 进入全新经典 Windows Sandbox，脚本提供 C1、C3、C6、C7、M1、M2、H1、H3、H5 的自动操作及截图，通知需核对实际到达，其余场景需补人工走查；密钥只在进程内通过 RSA OAEP 一次性交接，10-18 经典沙盒启动受阻，界面跑法尚未完成安装版验证。
