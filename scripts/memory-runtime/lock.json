@@ -10,16 +10,16 @@
   },
   "core": {
     "repo": "https://github.com/memoweft/memoweft",
-    "commit": "e9cc1b298d6611b29fb1024dd1f8cf75c9d333c7",
-    "sourceTree": "ed801e32e23fb4303332ef32b5a0adb5a5201fbb",
+    "commit": "069ecca674ff7fb65efee1dbcaae612dcd2da662",
+    "sourceTree": "26ff6b902c4541b530cbcad6d88642389da2991b",
     "lockSha256": "bad2179707ae12b727786660bd8313b40a4919c9799ff996042544e609b2c813",
     "license": "MIT",
     "archive": {
-      "file": "memoweft-e9cc1b298d6611b29fb1024dd1f8cf75c9d333c7.zip",
-      "url": "https://codeload.github.com/memoweft/memoweft/zip/e9cc1b298d6611b29fb1024dd1f8cf75c9d333c7",
-      "sha256": "324338cd5fe030044fddf3f6e7ad4c0690935137c0832f014800e26c336ae0be",
-      "bytes": 5111870,
-      "root": "memoweft-e9cc1b298d6611b29fb1024dd1f8cf75c9d333c7"
+      "file": "memoweft-069ecca674ff7fb65efee1dbcaae612dcd2da662.zip",
+      "url": "https://codeload.github.com/memoweft/memoweft/zip/069ecca674ff7fb65efee1dbcaae612dcd2da662",
+      "sha256": "0546f4b1ff793edf407e97da640bb2c7e5f4fbd8d9a16d742fbe11e2346fa4f2",
+      "bytes": 5113917,
+      "root": "memoweft-069ecca674ff7fb65efee1dbcaae612dcd2da662"
     }
   },
   "protocol": {
