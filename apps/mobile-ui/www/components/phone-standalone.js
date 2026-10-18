@@ -196,6 +196,7 @@
     state.profile = { displayName: info.localOnly ? '本机使用' : info.email, phoneOnly: true, localOnly: info.localOnly === true };
     uiCore.stopConnection(); document.body.classList.remove('cloud-auth-active'); $('cloud-auth-page').classList.remove('active');
     showProfile(state.profile); page('chat'); show();
+    uiCore.syncMobileIdentity();
     await uiCore.loadMessageModePreference();
     engine.resumeQueue();
     if (native) { await syncAccountAppearance(); await nativeCall('app.ready', { owner: (await nativeCall('app.bootstrap')).owner, hasDraft: false }); }
@@ -265,6 +266,7 @@
       const authBusy=!!globalThis.WeftMobileCloud?.core?.cloudAuthView?.()?.busy;
       if (!state.booted || !state.loggedIn || !engine || !account) return { ready: false, authBusy };
       if (p.owner && p.owner !== sessionKey) throw Error('ACCOUNT_SWITCHED');
+      uiCore.syncMobileIdentity();
       if (action === 'model') state.model = await nativeCall('phone.models.select', p);
       else if (action === 'composer') await engine.saveComposer(p.conversationId || null, p.draft || '');
       else if (action === 'send' || action === 'regenerate') {
@@ -274,6 +276,7 @@
         else {
           state.conversationId = p.conversationId || null;
           if (action === 'send') {
+            nativeError='';
             const receipt = await engine.enqueue(p.text, state.conversationId, uiCore.messageModePreference());
             state.conversationId = receipt.conversationId;
           } else void run(() => engine.regenerate(state.conversationId));

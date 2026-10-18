@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import '../src/ui-core/offline.js';
 
 const W = (globalThis as any).WeftOffline;
@@ -71,4 +73,18 @@ test('steer interrupts the active phone response and handles the follow-up befor
   f.releases.at(-1)!(); await until(() => f.calls.length === 3);
   assert.equal(f.calls[2].messages.at(-1).content, 'later');
   f.releases.at(-1)!(); await until(() => !f.engine.view().running); f.engine.close();
+});
+
+test('native phone presentation reads the current account message preference before enqueueing', async () => {
+  const info = { origin:'https://synthetic.example', accountId:'account-a' };
+  let preferenceOwner='previous-account', submitted:any;
+  const state:any = {booted:true, loggedIn:true, owner:'account-a', connection:'phone', model:{modelId:'synthetic',endpoint:'https://model.example/v1'}};
+  const engine={view:()=>({running:true,conversations:[],pendingMessages:[]}),enqueue:async(text:string,id:string,intent:string)=>{submitted={text,id,intent};return{conversationId:'original-chat'};}};
+  const context:any={window:{weftNative:true},state,document:{addEventListener(){}},addEventListener(){},clearTimeout,
+    androidBridge:{call:async()=>info},WeftOffline:{create:async()=>engine},
+    uiCore:{syncMobileIdentity:()=>{preferenceOwner=state.owner;},messageModePreference:()=>preferenceOwner==='account-a'?'steer':'queue'}};
+  runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js',import.meta.url),'utf8'),context);
+  await context.WeftPhone.restoreArchive(info,{});
+  const receipt=await context.WeftPhone.presentation('send',{text:'补充当前回复',conversationId:'original-chat'});
+  assert.equal(submitted.intent,'steer');assert.equal(receipt.selectedId,'original-chat');
 });
