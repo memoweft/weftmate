@@ -33,7 +33,7 @@ function boundary(text: string, sessionId: string) {
   ]
   return assertOwnerBoundBoundary(sessionId, boundaryForCompletedTurn({ id: sessionId, header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))
 }
-async function fixture(t: any, { interpret = null, misattribute = false, birthdayContract = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。' }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, birthdayContract?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string } = {}) {
+async function fixture(t: any, { interpret = null, misattribute = false, birthdayContract = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。', cleanupDeletedMemory = null }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, birthdayContract?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string, cleanupDeletedMemory?: ((owner: string, input: any) => Promise<void>) | null } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
   let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false, unavailableText = ''
   let recoveryGate: { entered: () => void, pending: Promise<void> } | null = null
@@ -87,7 +87,7 @@ async function fixture(t: any, { interpret = null, misattribute = false, birthda
   const baseUrl = `http://127.0.0.1:${(server.address() as any).port}/v1`
   const route = () => ({ profileId: 'synthetic', baseUrl, model: 'synthetic', credential: 'synthetic', routeFingerprint: null, modelTier: 'cloud' })
   const create = (dataRoot = root) => createPersonalMemoryManager({ root: dataRoot, enabled: true, python, pythonPath, baseUrl, model: '@current', credential: () => 'synthetic',
-    processingRoute: route, defaultProcessingRoute: route, rpcFactory: options => {
+    processingRoute: route, defaultProcessingRoute: route, cleanupDeletedMemory, rpcFactory: options => {
       const rpc = new MemoWeftRpc(options), request = rpc.request.bind(rpc)
       rpc.request = async (...args: Parameters<MemoWeftRpc['request']>) => {
         if (args[0] === 'query_jobs' && recoveryGate) {
@@ -1097,6 +1097,40 @@ test('review-486 real Core: late query selection with different correction text 
     const row = rows['memory-tool:' + createHash('sha256').update('late-query-selection').digest('hex')]
     assert.equal(row.result?.state, 'not_found'); assert.deepEqual(row.arguments, {}); assert.equal(row.command, undefined)
   } finally { release(); await pending }
+})
+
+test('review scope real Core: withdrawing an uncorrected source scrubs a pending deletion after restart', { skip, timeout: 30000 }, async t => {
+  const text = '记住：我的合成收藏编号是Q486。'
+  const f = await fixture(t, { seedText: text, cleanupDeletedMemory: async () => { throw Error('synthetic host cleanup unavailable') } })
+  const world = await f.world(), old = world.items[0]
+  const deleted = await f.manager.submitCommand(owner, { requestId: 'uncorrected-delete', operation: 'delete_world_item', targetKind: 'cognition', targetId: old.item_id, expectedWorldRevision: world.world_revision, payload: {} })
+  assert.equal(deleted.receipt.result_state, 'applied'); assert.equal(deleted.receipt.storage_cleanup.state, 'pending')
+  const file = path.join(f.root, 'accounts', owner, 'memory-home/command-journal.json')
+  const initialMarker = JSON.parse(await readFile(file, 'utf8')).records['uncorrected-delete']
+  assert.ok(initialMarker.cleanup.sourceTexts.includes(text))
+  assert.equal(f.trace.filter(row => row.method === 'submit_command' && row.params.command.operation === 'correct_world_item').length, 0)
+  await f.manager.discardPendingSources(owner, { sessionId: 'remember' })
+  await assert.rejects(f.manager.eraseConversationContext(owner, 'remember'), /synthetic host cleanup unavailable/)
+  await f.restart(); await f.manager.retryCleanupByRequest(owner, 'uncorrected-delete'); await f.manager.close()
+  const hits: string[] = []
+  async function scan(directory: string) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const item = path.join(directory, entry.name)
+      if (entry.isDirectory()) await scan(item)
+      else {
+        if ((await readFile(item)).includes(Buffer.from(text))) hits.push(entry.name)
+        assert.equal(entry.name.endsWith('.tmp'), false)
+      }
+    }
+  }
+  await scan(f.root)
+  console.log(JSON.stringify({ reproduction: 'uncorrected-pending-deletion', remainingFiles: hits.length }))
+  assert.deepEqual(hits, [])
+  assert.ok(initialMarker.cleanup.sourceRefs.some(ref => ref.evidenceId && ref.sessionIds.includes('remember') &&
+    ref.textHash === createHash('sha256').update(text).digest('hex')), 'new deletion records must capture real source provenance before deletion')
+  const marker = JSON.parse(await readFile(file, 'utf8')).records['uncorrected-delete']
+  assert.deepEqual(marker.cleanup.sourceTexts, [])
+  assert.equal(marker.command.command_id, deleted.receipt.command_id)
 })
 
 test('review-486 real Core: a later missing forget target cannot erase an already committed command identity', { skip, timeout: 30000 }, async t => {

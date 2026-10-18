@@ -852,7 +852,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       const result = await withOwner(ownerId, entry => entry.rpc.request('erase_conversation_context', { conversation_id: sessionId }));
       const ids = result.affected_ids ?? [];
       await actions.redact(ownerId, { affectedIds: ids, sessionId });
-      await journal.redactTargets(ownerId, ids, { sessionId });
+      // This is a source-scoped withdrawal, not a request to forget every
+      // source/correction sharing one of Core's affected target IDs.
+      await journal.redactTargets(ownerId, [], { sessionId });
       if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
       return result;
     },
@@ -1069,8 +1071,18 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
               }
             }
           }
+          // Capture each source's own provenance before Core erases it. Job
+          // acceptance links evidence IDs to sessions even without corrections;
+          // never infer ownership from another command targeting the same item.
+          const jobs = await withOwner(ownerId, entry => entry.capabilities?.methods?.includes('query_jobs')
+            ? entry.rpc.request('query_jobs', { operation: 'list' }) : {});
           cleanup = { deleteConversationSnippets: proposal.deleteConversationSnippets === true,
-            sourceTexts: [...new Set(sources.map(source => source?.raw_content).filter(text => typeof text === 'string' && text.length > 0))] };
+            sourceTexts: [...new Set(sources.map(source => source?.raw_content).filter(text => typeof text === 'string' && text.length > 0))],
+            sourceRefs: sources.filter(source => typeof source?.raw_content === 'string' && source.raw_content).map(source => ({
+              textHash: createHash('sha256').update(source.raw_content).digest('hex'), evidenceId: source.evidence_id ?? null,
+              sessionIds: [...new Set((jobs.jobs ?? []).filter(job => source.evidence_id && job.acceptance?.evidence_ids?.includes(source.evidence_id))
+                .flatMap(job => [job.acceptance.parent_session_id, job.acceptance.result_session_id]).filter(id => typeof id === 'string' && id))],
+            })) };
         }
       }
       const marker = await journal.reserve({ ownerId, ...proposal, cleanup }, assertActive);

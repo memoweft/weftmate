@@ -128,27 +128,34 @@ export function createMemoryCommandJournal({ root }) {
       const targets = new Set(ids);
       return queue(ownerId, async () => {
         const state = await read(ownerId);
-        const withdrawnTexts = new Set(sourceTexts);
-        const matchesText = (value, texts = withdrawnTexts) => typeof value === 'string' && value && [...texts].some(text =>
+        const matchesText = value => typeof value === 'string' && value && sourceTexts.some(text =>
           text && (value.includes(text) || text.includes(value)));
-        const corrections = new Set();
-        // Preserve the session/target association before clearing correction
-        // payloads: a pending deletion marker may reference the same source.
-        for (const record of Object.values(state.records)) {
-          if (record.redacted === true || record.command.operation !== 'correct_world_item') continue;
-          const payload = record.command.payload;
-          if (!targets.has(record.command.target_id) && !(sessionId && payload.source?.session_id === sessionId) &&
-              ![payload.correction_text, payload.source?.content].some(value => matchesText(value, sourceTexts))) continue;
-          corrections.add(record); targets.add(record.command.target_id);
-          for (const text of [payload.correction_text, payload.source?.content]) if (typeof text === 'string' && text) withdrawnTexts.add(text);
-        }
         let count = 0;
         for (const record of Object.values(state.records)) {
           let changed = false;
-          if (corrections.has(record)) { record.command.payload = {}; record.redacted = true; changed = true; }
+          const wholeTarget = targets.has(record.command.target_id);
+          if (record.redacted !== true && record.command.operation === 'correct_world_item') {
+            const payload = record.command.payload;
+            // Scope belongs to this command, never to another correction of
+            // the same target. Missing legacy session provenance is uncertain.
+            if (wholeTarget || sessionId && (!payload.source?.session_id || payload.source.session_id === sessionId) ||
+                [payload.correction_text, payload.source?.content].some(matchesText)) {
+              record.command.payload = {}; record.redacted = true; changed = true;
+            }
+          }
           if (['delete_evidence', 'delete_world_item'].includes(record.command.operation) && record.cleanup?.sourceTexts?.length) {
-            const retained = targets.has(record.command.target_id) ? [] : record.cleanup.sourceTexts.filter(text => !matchesText(text));
-            if (retained.length !== record.cleanup.sourceTexts.length) { record.cleanup.sourceTexts = retained; changed = true; }
+            const refs = record.cleanup.sourceRefs ?? [];
+            const retainedRefs = refs.filter(ref => !wholeTarget && !(sessionId &&
+              (!ref.sessionIds?.length || ref.sessionIds.includes(sessionId))));
+            const retained = record.cleanup.sourceTexts.filter(text => !wholeTarget && !matchesText(text) &&
+              (!sessionId || retainedRefs.some(ref => ref.textHash === digest(text))));
+            // Old markers have no per-source session IDs: redact uncertain
+            // text, preserving the receipt identity and pending cleanup flags.
+            if (retained.length !== record.cleanup.sourceTexts.length || retainedRefs.length !== refs.length) {
+              record.cleanup.sourceTexts = retained;
+              if (record.cleanup.sourceRefs) record.cleanup.sourceRefs = retainedRefs.filter(ref => retained.some(text => digest(text) === ref.textHash));
+              changed = true;
+            }
           }
           // Keep command identity and cleanup flags: this removes plaintext,
           // not the pending cleanup or the ability to query its original receipt.
