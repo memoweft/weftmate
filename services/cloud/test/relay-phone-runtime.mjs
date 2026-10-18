@@ -108,6 +108,7 @@ export async function phoneRuntime(root, logs, options = {}) {
     listSessions: () => gateway('/sessions'), resolveSession: async () => ({ profile }), ensureKnownSession: async () => {},
     gateway, queue: fn => fn(), bindSession: (id, profileId) => bindings.set(id, profileId),
     getRuntimeId: () => runtime.currentPersonalRuntimeId(),
+    ...(options.nativeTaskStop ? { taskStop: input => runtime.stopPersonalTask(input) } : {}),
     sessionProfileId: id => bindings.get(id), sessionProfileIds: () => Object.fromEntries(bindings),
     replyEvidence: input => runtime.readPersonalReplyEvidence(input), sessionWorkspaceRoot: join(root, 'workspaces'),
     inferenceVerified: () => true,
