@@ -20,6 +20,14 @@
 
 G9 新英文召回合同以首行 `Memory:` / `Memory (past):` 定格式并用 LF 分隔条目：生产端须在正文中任何以 `记忆：`、`记忆（过往）：`、`Memory:`、`Memory (past):` 或反斜杠 `\` 开头的行前再加一个 `\`，解析端只按未转义英文条目头切分并逐行还原一层合法转义，日期及正文空白原样保留，首行不是条目头、条数与 ID 数不符、出现未转义中文条目头或非法转义时按原预算保留完整原文而不配 ID，不跨格式回退，首行旧中文格式仍逐字沿用旧规则且不作转义还原。
 
+初始化语言取自 DSH 界面设置的 `locale.preference`：个人宿主通过 `settings.describe` 的 `locale.value.preference` 读取，旧插件通过 `settings.get('locale').preference` 读取；只有 `'en'` 传英文，中文、未设置或读取失败均传 `'zh'`。已有桥进程保留初始化语言，重启或按现有机制重新初始化时才读取新值，不做热切换。未显式选择语言时，浏览器自己的临时语言不作为宿主配置；此时记忆仍回退中文。
+
+真实 Core 测试只接受显式环境输入：`WEFTMATE_TEST_MEMOWEFT_PYTHON` / `WEFTMATE_TEST_MEMOWEFT_SOURCE`，或旧桥接名 `WEFTMATE_MEMOWEFT_PYTHON` / `WEFTMATE_MEMOWEFT_PYTHONPATH`。本包按 `scripts/memory-runtime/lock.json` 下载并校验的隔离副本也通过这些变量传入；测试不猜本机源码位置，缺配置明确跳过，手工验收脚本缺必需输入则报错。测试和脚本设置 `PYTHONDONTWRITEBYTECODE=1`，不向源码目录写缓存。DSH 源码测试/构建同样要求显式 `WEFTMATE_DSH_CHECKOUT`；已有固定成品缓存仍可复用。
+
+### 开发基线与验收边界
+
+**记忆开发基线**（2026-10-16，`bf0a9c4d6`/Core `e86b73b`/真实MiMo；[证据与边界](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208869990)）：M1/M2通过；M3旧修订/导出残留、M7错误成功/误删来源失败，见[#334](https://github.com/memoweft/weftmate/issues/334)。D16、D33要求遗忘整条修订链。M4暂缓；M5–M6安卓链未验完。缺语义组件，仅开发宿主/隔离APK结果，**不计入③**；安装结果见下表。
+
 ## 2. 规则
 
 1. **先验收，再动手。** 开工第一件事是按 PLAN 的记忆场景（M1–M7）跑一遍，结果记进地图第 4 节。两种环境都要跑：全新安装的 Windows 安装包（合成账号），以及开发模式下带记忆配置的宿主（合成数据）。跨端场景注明实际参与的设备；缺少环境时记阻塞，不能用宿主单测代替手机验收。本人自己的安装版只在本人在场时只读核对，不改它的数据。

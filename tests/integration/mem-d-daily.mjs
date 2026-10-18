@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
@@ -19,8 +20,8 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 const arg = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name)+1] : fallback;
 const repository = resolve(arg('--repo', join(import.meta.dirname,'../..')));
 const out = resolve(arg('--out',evidencePath('mem-d/before-main')));
-const core = resolve(arg('--core','C:/Temp/weftmate-mem-d-core/py/src'));
-const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
+const core = resolve((arg('--core') ?? requireMemoWeftPath('source')));
+const python = requireMemoWeftPath('python');
 const root = mkdtempSync(join(tmpdir(),'weftmate-mem-d-')), profile = join(root,'profile'), evaluation = join(root,'eval');
 mkdirSync(out,{recursive:true}); mkdirSync(profile); mkdirSync(evaluation);
 const real = arg('--model','synthetic') === 'mimo';

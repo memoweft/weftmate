@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Formal baseline on real Electron/DSH, fresh account/Core per model. Keys stay in memory. */
@@ -28,7 +29,7 @@ const memoryCorrection = process.argv.includes('--memory-correction');
 assert.ok(!memoryCorrection || memoryLoop, '--memory-correction requires --memory-loop');
 assert.ok(!memoryAccuracy || memoryLoop, '--memory-accuracy requires --memory-loop');
 const coreSourceIndex = process.argv.indexOf('--memory-core-source');
-const coreSource = coreSourceIndex === -1 ? 'D:/AIProjects/MemoWeft/Core/py/src'
+const coreSource = coreSourceIndex === -1 ? requireMemoWeftPath('source')
   : resolve(process.argv[coreSourceIndex + 1]);
 const lan = process.argv.includes('--lan');
 const alternateLan = process.argv.includes('--alternate-lan');
@@ -75,7 +76,7 @@ assert.equal((await fetch(`${prepared.origin}/personal/v1/auth/setup`, { method:
   body: JSON.stringify({ grant: setup.grant, username, password, deviceName: 'Baseline preparation' }) })).status, 201);
 await prep.close();
 const memoryConfig = join(root, 'memory-config.json');
-writeFileSync(memoryConfig, JSON.stringify({ python: 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',
+writeFileSync(memoryConfig, JSON.stringify({ python: requireMemoWeftPath('python'),
   pythonPath: coreSource, baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', authRef: 'baseline-pending' }));
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || name === 'ELECTRON_RUN_AS_NODE' || name === 'MIMO_API_KEY' || name === 'MODEL_SWITCH_UNIFIED_KEY') delete env[name];
