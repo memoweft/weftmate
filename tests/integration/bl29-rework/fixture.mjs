@@ -2,6 +2,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createMobileCloud, authorizeMobile} from './auth.mjs';
+import {instrumentClosePhases} from './close-observation.mjs';
 function source(file){const url=pathToFileURL(resolve(file));return readFileSync(url,'utf8').replaceAll('import.meta.url',JSON.stringify(url.href)).replace(/from (['"])(\.\.?\/[^'"]+)\1/g,(_,q,p)=>`from '${new URL(p,url).href}'`);}
 const data=code=>'data:text/javascript;base64,'+Buffer.from(code).toString('base64');
 // Test-only phase hooks in the original dispatcher. No product instrumentation,
@@ -16,6 +17,7 @@ const commands=source('src/personal-access/commands.mjs').replaceAll('\r\n','\n'
  .replace('// Route preparation happens before inference is issued.', "context.__reviewCommandPhase?.(ownerId,commandId,'dispatch.error',safeCode(error)); // Route preparation happens before inference is issued.")
  .replace('function schedule(ownerId, commandId) {', "function schedule(ownerId, commandId) { context.__reviewCommandPhase?.(ownerId,commandId,'schedule');");
 let service=source('src/personal-access/index.mjs').replace('const service = {','const service = { __reviewServer:()=>server,__reviewContext:context,__reviewCounts:()=>({accountWaiters:accountWaiters.size,accountRevision}),');
+service=instrumentClosePhases(service.replaceAll('\r\n','\n'));
 service=service.replace(pathToFileURL(resolve('src/personal-access/commands.mjs')).href,data(commands));
 service=service.replace('const changeKey =','const __reviewDigests=[]; const changeKey =')
  .replace("=> createHmac('sha256', changeKey)","=> (__reviewDigests.push(field), createHmac('sha256', changeKey))")
