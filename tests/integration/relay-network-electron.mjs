@@ -8,6 +8,7 @@ import { generateKeyPairSync } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { syntheticCertificate } from '../helpers/r0-2-certificates.mjs';
 import { createDesktopRelayNetwork } from '../../src/personal-relay/desktop-network.mjs';
+import { frpcConfig } from '../../src/personal-relay/index.mjs';
 
 app.setPath('userData',process.env.WEFTMATE_PROXY_TEST_PROFILE);
 app.disableHardwareAcceleration();
@@ -31,13 +32,15 @@ app.whenReady().then(async()=>{
   await listen(proxy);
   const proxyUrl=`http://127.0.0.1:${proxy.address().port}`;
   let env={HTTP_PROXY:proxyUrl,HTTPS_PROXY:proxyUrl};
-  if(mode==='system'){await session.defaultSession.setProxy({mode:'fixed_servers',proxyRules:proxyUrl});env={};}
+  if(mode==='system'||mode.startsWith('system-')){await session.defaultSession.setProxy({mode:'fixed_servers',proxyRules:proxyUrl,proxyBypassRules:'<-loopback>'});env={};}
+  if(mode==='system-bypass-all')env.NO_PROXY='*';
+  if(mode==='system-bypass-multiple')env.NO_PROXY=' direct.invalid, second-direct.invalid ; unused.invalid ';
   if(mode==='direct'){await session.defaultSession.setProxy({mode:'direct'});env={};}
   if(mode==='auth')env={HTTPS_PROXY:proxyUrl,HTTP_PROXY:proxyUrl.replace('http://','http://synthetic-user:synthetic-pass@')};
   if(mode==='bypass')env.NO_PROXY='direct.invalid';
   if(mode==='bypass-multiple')env.NO_PROXY=' direct.invalid, second-direct.invalid ; unused.invalid ';
   if(mode==='socks-portless')env={HTTPS_PROXY:'socks5://synthetic-user:synthetic-pass@proxy.invalid'};
-  if(['direct','bypass','bypass-multiple'].includes(mode)){
+  if(['direct','bypass','bypass-multiple','system-bypass-all','system-bypass-multiple','system-local','env-local'].includes(mode)){
     origin=track(createServer((req,res)=>res.end('direct')));await listen(origin);
   }
   if(mode==='tls-reject'){
@@ -51,7 +54,7 @@ app.whenReady().then(async()=>{
     const real=session.fromPartition(...args);
     real.webRequest.onErrorOccurred(detail=>console.error('CHROMIUM_NETWORK_ERROR', /^net::ERR_[A-Z0-9_]+$/.test(detail.error)?detail.error:'REQUEST_FAILED'));
     const setProxy=real.setProxy.bind(real);
-    real.setProxy=async config=>{proxyConfig=config;await setProxy(config);};
+    real.setProxy=async config=>{if(config.proxyRules?.includes(proxyUrl))proxyConfig=config;await setProxy(config);};
     return real;
   }};
   let challenged=false;
@@ -64,18 +67,30 @@ app.whenReady().then(async()=>{
     }));return req;
   }}:net;
   network=await createDesktopRelayNetwork({session:sessionApi,net:requestApi,env});
-  if(mode==='bypass-multiple')assert.equal(proxyConfig.proxyBypassRules,'direct.invalid,second-direct.invalid,unused.invalid','Electron bypass contract uses commas');
+  if(mode==='bypass-multiple')assert.ok(proxyConfig.proxyBypassRules.startsWith('<-loopback>,direct.invalid,second-direct.invalid,unused.invalid,'),'Electron bypass contract uses commas');
   if(mode==='socks-portless'){
-    assert.equal(await network.proxyFor('https://relay.invalid'),'socks5://synthetic-user:synthetic-pass@proxy.invalid:1080');
+    const proxyUrl=await network.proxyFor('https://relay.invalid');
+    assert.equal(proxyUrl,'socks5://synthetic-user:synthetic-pass@proxy.invalid:1080');
+    const config=frpcConfig({credentials:{baseUrl:'https://content.invalid',serverAddr:'relay.invalid',serverName:'relay.invalid',serverPort:443,hostId:'synthetic',credential:'synthetic'},localPort:1,transportCaFile:'synthetic',adminPort:2,adminPassword:'synthetic',proxyUrl});
+    assert.ok(config.includes('transport.proxyURL = "socks5://synthetic-user:synthetic-pass@proxy.invalid:1080"'));
     assert.deepEqual(await (await network.fetch('https://certificate.invalid')).json(),{authenticated:true});assert.equal(challenged,true);
   } else if(['tls-reject','unreachable'].includes(mode)){
     await assert.rejects(network.fetch(mode==='tls-reject'?'https://r0-2.invalid/':'http://certificate.invalid/directory',{signal:AbortSignal.timeout(3000)}),e=>e.code==='NETWORK_UNAVAILABLE');
     if(mode==='tls-reject')assert.equal(hits[0],'r0-2.invalid:443');
-  } else if(['direct','bypass','bypass-multiple'].includes(mode)) {
-    const url=`http://direct.invalid:${origin.address().port}/`;
+  } else if(['direct','bypass','bypass-multiple','system-bypass-all','system-bypass-multiple','system-local','env-local'].includes(mode)) {
+    const local=mode.endsWith('-local');
+    // Check relay routing first: the review's exact NO_PROXY=* reproducer.
+    if(mode==='system-bypass-all')assert.equal(await network.proxyFor('https://relay.invalid'),null);
+    if(local)for(const host of ['localhost','child.localhost','localhost.','child.localhost.','127.0.0.1','127.255.255.254','10.1.2.3','172.16.0.1','172.31.255.254','192.168.5.2','169.254.1.2','[::1]','[fc00::1]','[fdff::1]','[fe80::1]','[febf::1]','[::ffff:127.0.0.1]','[::ffff:10.1.2.3]','[::ffff:172.16.1.2]','[::ffff:192.168.1.2]','[::ffff:169.254.1.2]']){
+      assert.equal(await network.proxyFor(`https://${host}:443`),null,`${host} must explicitly bypass ${mode}`);
+    }
+    if(local)for(const host of ['9.255.255.255','11.0.0.1','172.15.255.255','172.32.0.1','192.169.0.1','169.253.1.2','[2001:db8::1]','[fec0::1]']){
+      assert.equal(await network.proxyFor(`https://${host}:443`),proxyUrl,`${host} must retain the proxy`);
+    }
+    const url=`http://${local?'127.0.0.1':'direct.invalid'}:${origin.address().port}/`;
     assert.equal(await (await network.fetch(url,{signal:AbortSignal.timeout(3000)})).text(),'direct');
     assert.equal(await network.proxyFor(url),null);assert.equal(hits.length,0);
-    if(mode==='bypass-multiple'){
+    if(mode==='bypass-multiple'||mode==='system-bypass-multiple'){
       const second=`http://second-direct.invalid:${origin.address().port}/`;
       assert.equal(await(await network.fetch(second,{signal:AbortSignal.timeout(3000)})).text(),'direct');
       assert.equal(await network.proxyFor(second),null);assert.equal(hits.length,0);

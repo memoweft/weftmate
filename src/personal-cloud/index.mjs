@@ -129,7 +129,7 @@ export async function createHostCloudIdentity(context, options) {
         response.status === 409 ? 409 : 503);
       return result;
     } catch (error) {
-      if (error.code === 'CLOUD_BINDING_CONFLICT' || route.startsWith('/hosts/relay/dns/') && error.code) throw error;
+      if (error.code === 'CLOUD_BINDING_CONFLICT' || error.code === 'PROXY_CONFIGURATION_INVALID' || route.startsWith('/hosts/relay/dns/') && error.code) throw error;
       throw failure('CLOUD_UNAVAILABLE', 503);
     }
   }
