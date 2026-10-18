@@ -1,3 +1,4 @@
+import { createDesktopStartup } from './desktop-startup.mjs';
 import { setProcessWarningLog } from './process-output.mjs';
 import { usageResponse } from './personal-access/usage-response.mjs';
 import { readFile as readFileAsync, rm as rmAsync, writeFile as writeFileAsync } from 'node:fs/promises';
@@ -98,7 +99,7 @@ import { FORMAL_LOCAL_BASE_URL, OCCAMY_VISION_PROFILE_ID, listFormalLocalModels,
   projectOccamyImageInput, reconcileOccamyImageInput,
   readUserModelSwitcherKey } from './local-model-config.mjs';
 import { servePersonalAccessUi } from './personal-access-ui/index.mjs';
-import { createPersonalDesktop } from './personal-desktop.mjs';
+import { createPersonalDesktop, preparePersonalDesktopWindow } from './personal-desktop.mjs';
 import { loadDesktopMemoryConfig } from './personal-memory/config.mjs';
 import { bundledMemoryConfiguration, bundledMemoryRpcFactory } from './personal-memory/bundled-runtime.mjs';
 import { createPersonalMemoryManager } from './personal-memory/index.mjs';
@@ -377,6 +378,9 @@ let personalBackupManager = null;
 let backupRestartRequested = false;
 let personalAccessOrigin = null;
 let personalDesktop = null;
+let desktopStartup = null;
+let preparedDesktopWindow = null;
+let credentialInitialization = null;
 let desktopUpdates = null;
 let desktopStatus = { host: '启动中', model: '未选择' };
 let personalMemoryManager = null;
@@ -1465,16 +1469,46 @@ async function bootstrap() {
   officialRouteMigrationComplete = restoredOfficialMigrationRoutes !== null;
   officialRouteMigrationRoutes = restoredOfficialMigrationRoutes ?? new Set();
   legacyRoutePatchRetired = officialRouteMigrationComplete || isRoutePatchRetired();
-  // 先加载 safeStorage vault；现有密钥只在 DSH 受管 child IPC 按 ref 请求时解密。
-  try {
-    configStoreMod = await import('./config-store.ts');
-    await configStoreMod.initializeCredentialStorage(error => logCrash('credential-storage', error));
-    await reconcileCloudVaultRestore(userDataDir,configStoreMod,personalBackupManager?.isRestoredStartup()===true);
-    console.log('[weftmate] ✓ 模型凭据保险库已就绪');
-  } catch (e) {
-    logCrash('credential-storage', e);
-    if(existsSync(join(userDataDir,'personal-backup','cloud-vault-restore.json'))) {
-      requestFatalStartupExit('云端备份恢复失败',e,'恢复的密钥未能安全保存，程序将保留恢复前的数据。');return;
+  // The native shell can paint while Chromium commits its first master key.
+  // It exposes no business page until the original durable proof has completed.
+  if (desktopRequested) {
+    preparedDesktopWindow = preparePersonalDesktopWindow();
+    win = preparedDesktopWindow.window;
+    trackUserInterfaceReady(win);
+    desktopStartup = createDesktopStartup(win, {
+      startInTray: process.argv.includes('--start-in-tray') || process.platform === 'darwin' && app.isPackaged && app.getLoginItemSettings().wasOpenedAtLogin,
+      isQuitting: () => isQuitting,
+    });
+    // Observe rejection immediately; awaiting below still preserves the failure.
+    void desktopStartup.ready.catch(error => logCrash('desktop-startup-window', error));
+    setupTray();
+  }
+  configStoreMod = await import('./config-store.ts');
+  credentialInitialization = configStoreMod.initializeCredentialStorage(error => logCrash('credential-storage', error));
+  void credentialInitialization.catch(() => {});
+  async function finishCredentialStartup() {
+    try {
+      await credentialInitialization;
+      credentialInitialization = null;
+      if (isQuitting) return false;
+      await reconcileCloudVaultRestore(userDataDir, configStoreMod, personalBackupManager?.isRestoredStartup() === true);
+      console.log('[weftmate] ✓ 模型凭据保险库已就绪');
+      return true;
+    } catch (error) {
+      credentialInitialization = null;
+      if (isQuitting) return false;
+      logCrash('credential-storage', error);
+      if (existsSync(join(userDataDir, 'personal-backup', 'cloud-vault-restore.json'))) {
+        requestFatalStartupExit('云端备份恢复失败', error, '恢复的密钥未能安全保存，程序将保留恢复前的数据。');
+      } else if (desktopStartup) {
+        desktopStatus = { host: '准备未完成', model: '未选择' };
+        refreshTrayMenu();
+        await desktopStartup.fail();
+      } else {
+        // Non-desktop modes retain their existing read-only recovery path.
+        return true;
+      }
+      return false;
     }
   }
 
@@ -1489,32 +1523,6 @@ async function bootstrap() {
     ? undefined
     : process.env.WEFTMATE_AI_GAME_DEV_TOKEN;
   delete process.env.WEFTMATE_AI_GAME_DEV_TOKEN;
-  if (typeof aiGameDevelopmentToken === 'string'
-    && aiGameDevelopmentToken.length >= 16 && aiGameDevelopmentToken.length <= 4096) {
-    try { configStoreMod?.saveCredential?.(AI_GAME_CREDENTIAL_REF, aiGameDevelopmentToken); }
-    catch { console.warn('[weftmate] AI-Game 开发 capability 未能写入安全凭据库。'); }
-  }
-  // Stable per-installation capability owner pair. These values are
-  // intentionally non-secret, but remain host-only: the credential bridge
-  // keeps them out of renderer state, URLs, ordinary settings, child env, and
-  // logs. The bearer token authenticates requests but never defines ownership.
-  try {
-    for (const [ref, prefix] of [
-      [AI_GAME_PRINCIPAL_REF, 'principal'],
-      [AI_GAME_CONTROLLER_REF, 'controller'],
-    ]) {
-      const existingId = configStoreMod?.getCredential?.(ref);
-      if (typeof existingId !== 'string'
-        || !/^[A-Za-z0-9._:-]{1,256}$/.test(existingId)) {
-        configStoreMod?.saveCredential?.(
-          ref,
-          `${prefix}_${randomUUID().replaceAll('-', '')}`,
-        );
-      }
-    }
-  } catch {
-    console.warn('[weftmate] AI-Game 本机 owner identity 未能持久化；v2 capability 将保持不可用。');
-  }
   // Legacy source-contract boundary: there is intentionally no development
   // origin value. The following runtime-root capture replaces ambient origin
   // adoption, and the DSH child receives neither value.
@@ -1527,12 +1535,40 @@ async function bootstrap() {
   delete process.env.WEFTMATE_AI_GAME_ORIGIN;
   const phoneExecutionConfigPath = app.isPackaged ? null : process.env.WEFTMATE_PHONE_EXECUTION_CONFIG;
   delete process.env.WEFTMATE_PHONE_EXECUTION_CONFIG;
-  if (aiGameManagedRuntimeRoot || (app.isPackaged && existsSync(join(process.resourcesPath, 'ai-game-runtime')))) {
+  function seedManagedCredentials() {
+    if (typeof aiGameDevelopmentToken === 'string'
+      && aiGameDevelopmentToken.length >= 16 && aiGameDevelopmentToken.length <= 4096) {
+      try { configStoreMod?.saveCredential?.(AI_GAME_CREDENTIAL_REF, aiGameDevelopmentToken); }
+      catch { console.warn('[weftmate] AI-Game 开发 capability 未能写入安全凭据库。'); }
+    }
+    // Stable per-installation capability owner pair. These values are
+    // intentionally non-secret, but remain host-only: the credential bridge
+    // keeps them out of renderer state, URLs, ordinary settings, child env, and
+    // logs. The bearer token authenticates requests but never defines ownership.
     try {
-      if (!configStoreMod.getCredential(AI_GAME_CREDENTIAL_REF)) {
-        configStoreMod.saveCredential(AI_GAME_CREDENTIAL_REF, randomBytes(32).toString('hex'));
+      for (const [ref, prefix] of [
+        [AI_GAME_PRINCIPAL_REF, 'principal'],
+        [AI_GAME_CONTROLLER_REF, 'controller'],
+      ]) {
+        const existingId = configStoreMod?.getCredential?.(ref);
+        if (typeof existingId !== 'string'
+          || !/^[A-Za-z0-9._:-]{1,256}$/.test(existingId)) {
+          configStoreMod?.saveCredential?.(
+            ref,
+            `${prefix}_${randomUUID().replaceAll('-', '')}`,
+          );
+        }
       }
-    } catch { console.warn('[weftmate] 手机运行组件的本机凭据尚未就绪。'); }
+    } catch {
+      console.warn('[weftmate] AI-Game 本机 owner identity 未能持久化；v2 capability 将保持不可用。');
+    }
+    if (aiGameManagedRuntimeRoot || (app.isPackaged && existsSync(join(process.resourcesPath, 'ai-game-runtime')))) {
+      try {
+        if (!configStoreMod.getCredential(AI_GAME_CREDENTIAL_REF)) {
+          configStoreMod.saveCredential(AI_GAME_CREDENTIAL_REF, randomBytes(32).toString('hex'));
+        }
+      } catch { console.warn('[weftmate] 手机运行组件的本机凭据尚未就绪。'); }
+    }
   }
 
   // settings.ts 仍驻 main：桌面宠物窗口状态（本机显示偏好）归它。
@@ -1799,7 +1835,7 @@ async function bootstrap() {
   });
   // Deliberately independent: a slow/missing managed runtime must not delay
   // DSH bootstrap, window creation, or ordinary conversation.
-  void aiGameRuntime.start();
+  // Started only after durable credentials are available below.
   const productDshRuntime = app.isPackaged
     ? join(process.resourcesPath, 'dsh-runtime')
     : join(app.getAppPath(), 'vendor', 'dsh-runtime');
@@ -2167,6 +2203,24 @@ async function bootstrap() {
       void modWindowManager?.rebind?.(null);
     }
   };
+  // A fresh profile has no model routes or secrets for the child to consume.
+  // Compose and start that same runtime while Chromium persists its first key;
+  // existing/restore/migration profiles retain their original ordered startup.
+  if (isQuitting) return;
+  const earlyRuntime = desktopRequested && !personalBackupManager?.isRestoredStartup()
+    && !existsSync(join(userDataDir, 'weftmate-model.enc'))
+    && settingsMod.listModelProfiles().profiles.length === 0
+    && !aiGameManagedRuntimeRoot && !existsSync(join(process.resourcesPath, 'ai-game-runtime'))
+    ? replaceSharedRuntime() : null;
+  void earlyRuntime?.catch(error => logCrash('early-runtime-start', error));
+  if (!await finishCredentialStartup()) {
+    await earlyRuntime?.catch(() => {});
+    await webRuntime?.close();
+    runtimeOrigin = null;
+    return;
+  }
+  seedManagedCredentials();
+  void aiGameRuntime.start();
   // The journal was recovered before imports above.  From this point onward
   // every route mutation enters the same queue before it can write one again.
   try {
@@ -2206,7 +2260,7 @@ async function bootstrap() {
   try { cleanupMarkedLegacyCredentialAliases(); }
   catch (error) { logCrash('official-route-migration-alias-cleanup', error); }
   console.log('[weftmate] DSH_HOME =', dshHome);
-  runtimeOrigin = null;
+  if (!earlyRuntime) runtimeOrigin = null;
   // Official DSH also owns first-run setup. The desktop view starts after
   // its exact-origin fence; personal host starts after IPC registration.
   sessionReferenceScan = { state: personalHostMode ? 'pending' : 'ready', error: null };
@@ -3471,7 +3525,7 @@ async function bootstrap() {
       hostLog.write('host.startup', { phase: 'runtime-start' });
       await startPersonalHost({
         startRuntime: async () => {
-          const origin = await ensureSharedRuntime({ reload: true });
+          const origin = earlyRuntime ? await earlyRuntime : await ensureSharedRuntime({ reload: true });
           hostLog.write('host.startup', { phase: 'runtime-ready' });
           return origin;
         },
@@ -3631,11 +3685,13 @@ async function bootstrap() {
           hostLog.write('host.startup', { phase: 'window-prepare' });
           await desktopUpdates.prepareWindow();
           hostLog.write('host.startup', { phase: 'window-create' });
-          personalDesktop = createPersonalDesktop({ computerUsageService: personalAccessService, systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
-            startInTray: process.argv.includes('--start-in-tray') || process.platform === 'darwin' && app.isPackaged && app.getLoginItemSettings().wasOpenedAtLogin,
+          await desktopStartup?.ready;
+          if (isQuitting) return;
+          desktopStartup?.adopt();
+          personalDesktop = createPersonalDesktop({ preparedWindow: preparedDesktopWindow, computerUsageService: personalAccessService, systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
+            startInTray: true, // Preserve the startup shell's visibility, including a user closing it.
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
           win = personalDesktop.window;
-          trackUserInterfaceReady(win);
           desktopUpdates.attach(win);
           setupTray();
           await personalDesktop.ready;
@@ -3800,6 +3856,9 @@ app.on('before-quit', (e) => {
 
   shutdownPromise = (async () => {
     let backupSafe = true;
+    // A user can now quit during the original bounded readiness operation.
+    // Wait for its proof child to close before allowing Electron to exit.
+    await credentialInitialization?.catch(() => {});
     nextShutdownStep('backup-online-stop');
     await personalBackupManager?.stopOnline();
     nextShutdownStep('desktop-session');
