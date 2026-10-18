@@ -30,8 +30,10 @@ async function check(name, run) {
 }
 async function prepare(page, surface) {
   page.setDefaultTimeout(4000);
-  await page.setContent('<!doctype html><html><head><title>WeftMate progress renderer check</title></head><body><ol id="timeline"></ol></body></html>');
-  await page.addStyleTag({path:join(root,'src/personal-access-ui/styles.css')});
+  await page.setContent('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>WeftMate progress renderer check</title></head><body><ol id="timeline" class="transcript" style="padding:24px"></ol></body></html>');
+  const styles=surface==='desktop'?'src/personal-access-ui':'apps/mobile-ui/www';
+  await page.addStyleTag({path:join(root,styles,'tokens.css')});
+  await page.addStyleTag({path:join(root,styles,'styles.css')});
   await page.evaluate(() => {
     globalThis.WeftUiCore={factories:{}};
     globalThis.WeftIcons={create:()=>document.createElement('span')};
@@ -45,7 +47,11 @@ async function capture(page, name) {
   if (!evidence) return;
   for (const theme of ['light','dark']) {
     await page.evaluate(value=>document.documentElement.dataset.theme=value,theme);
-    await page.screenshot({path:join(evidence,name+'-'+theme+'.png'),fullPage:true});
+    const file=join(evidence,name+'-'+theme+'.png');
+    if(app && name.startsWith('desktop')) {
+      const image=await app.evaluate(async({BrowserWindow})=>(await BrowserWindow.getAllWindows()[0].capturePage(undefined,{stayHidden:true,stayAwake:true})).toPNG().toString('base64'));
+      await writeFile(file,Buffer.from(image,'base64'));
+    } else await page.screenshot({path:file,fullPage:true});
   }
 }
 try {
