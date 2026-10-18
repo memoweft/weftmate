@@ -417,7 +417,7 @@ test('FIX-50 G7 M7 real Core: forgetting blue preserves the independent walking 
   assert.deepEqual(f.errors, [])
 })
 
-for (const scenario of ['with current fact', 'orphan only', 'saved v3 plan']) test(`M7 real Core: terminal unformed source is forgotten (${scenario})`, { skip }, async t => {
+for (const scenario of ['with current fact', 'orphan only', 'saved v3 plan', 'saved v4 plan']) test(`M7 real Core: terminal unformed source is forgotten (${scenario})`, { skip }, async t => {
   let redId: string;
   const f = await fixture(t, { seedText: '我喜欢喝红茶。', interpret: payload => {
     const evidence = payload.evidence[0], green = evidence.text.includes('绿茶');
@@ -444,7 +444,7 @@ for (const scenario of ['with current fact', 'orphan only', 'saved v3 plan']) te
     assert.equal((await f.world()).items.length, 0)
   }
   await f.manager.ingest(owner, boundary('我周末喜欢散步。', 'independent-walk')); await f.ready()
-  if (scenario === 'saved v3 plan') {
+  if (scenario.startsWith('saved v')) {
     const snapshot = await f.world(), red = snapshot.items.find(row => row.item_id === redId)
     const authorization = { authorized: true, isForgetRequest: true, subject: 'self', topic: '我喝茶的偏好', conditionsOrQuestions: false }
     const requestId = 'memory-tool:' + createHash('sha256').update('saved-v3-unformed').digest('hex')
@@ -453,7 +453,7 @@ for (const scenario of ['with current fact', 'orphan only', 'saved v3 plan']) te
     await writeFile(path.join(f.root, 'accounts', owner, 'memory-home/pending-actions.json'), JSON.stringify({ records: {
       [requestId]: { requestId, name: 'memory_forget', arguments: { query: authorization.topic }, sessionId: 'saved-v3', modelTier: 'cloud',
         source: { text, message: { content: text, message_id: 'saved-v3-user' } }, scope: authorization,
-        plan: { version: 2, completionVersion: 3, completionState: 'complete', worldRevision: snapshot.world_revision,
+        plan: { version: 2, completionVersion: scenario === 'saved v4 plan' ? 4 : 3, completionState: 'complete', worldRevision: snapshot.world_revision,
           authorization, authorizedEvidenceIds: red.provenance.map(source => source.evidence_id), evidenceIds: [],
           worldTargets: [{ kind: 'cognition', id: redId }], affectedIds: [redId], sourceTexts: ['我喜欢喝红茶。'] } },
     } }))
