@@ -562,7 +562,7 @@ test('item deletion requires typing confirmation and reports incomplete storage 
   assert.match(app.get('page-content').textContent, /默认保留对话原文/)
   const input = findAll(app.get('page-content'), (node) => node.tagName === 'INPUT' && node.type === 'text')[0]
   input.value = '删除';input.fire('input');assert.equal(confirm.disabled, false);confirm.fire('click')
-  await waitUntil(() => app.get('page-content').textContent.includes('底层清理仍待完成'), 'cleanup boundary visible')
+  await waitUntil(() => app.get('page-content').textContent.includes('清理还未完成'), 'cleanup boundary visible')
   assert.equal(writes.length, 1);assert.equal(writes[0].method, 'DELETE')
   assert.match(writes[0].path, /\/items\/cognition\/memory-A$/)
   assert.equal(writes[0].body.expectedWorldRevision, 10)
@@ -719,7 +719,7 @@ test('unknown receipt keeps the original request marker for manual review withou
   await waitUntil(() => !!findButton(app.get('page-content'), '停用这项记忆'), 'mute action available')
   findButton(app.get('page-content'), '停用这项记忆')!.fire('click')
   findButton(app.get('page-content'), '确认停用')!.fire('click')
-  await waitUntil(() => app.get('page-content').textContent.includes('原请求结果仍待确认'), 'uncertain state visible')
+  await waitUntil(() => app.get('page-content').textContent.includes('这次操作是否完成尚未确认'), 'uncertain state visible')
   assert.equal(writes, 1)
   assert.equal(app.storage.has('weftmate-mobile-memory-request:scope-A'), true)
   assert.ok(findButton(app.get('page-content'), '核对原请求'))
@@ -778,12 +778,12 @@ test('correction result belongs to the acted-on item and clears when a different
   const correction = findAll(app.get('page-content'), (node) => node.tagName === 'TEXTAREA')[0]
   correction.value = 'I prefer green';correction.fire('input')
   findButton(app.get('page-content'), '保存纠正')!.fire('click')
-  await waitUntil(() => app.get('page-content').textContent.includes('纠正已应用'), 'old item result visible')
+  await waitUntil(() => app.get('page-content').textContent.includes('记忆已纠正'), 'old item result visible')
   findButton(app.get('page-content'), '返回记忆列表')!.fire('click')
   await waitUntil(() => !!findButton(app.get('page-content'), 'I prefer green'), 'new item listed')
   findButton(app.get('page-content'), 'I prefer green')!.fire('click')
   await waitUntil(() => app.get('page-content').textContent.includes('I prefer green'), 'new detail visible')
-  assert.doesNotMatch(app.get('page-content').textContent, /纠正已应用/)
+  assert.doesNotMatch(app.get('page-content').textContent, /记忆已纠正/)
 })
 
 test('delete conflict copy names source or dependency conflict without guessing another memory', async () => {

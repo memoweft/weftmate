@@ -435,7 +435,9 @@ test('memory view preserves chat draft and discards a successful response for an
   assert.equal(get('memory-detail-check').textContent, '重试清理')
   cleanupReply = 'forbidden'
   get('memory-detail-check').fire('click')
-  for (let i = 0; i < 20 && !get('memory-receipt-text').textContent.includes('无权重试'); i++) await flush()
+  assert.equal(get('memory-receipt-text').textContent, '正在清理，请稍候…')
+  for (let i = 0; i < 20 && !get('memory-receipt-text').textContent.includes('没有清理权限'); i++) await flush()
+  assert.equal(get('memory-receipt-text').textContent, '当前账户没有清理权限，本次未执行。请确认使用的是有权限的账户后再试。')
   assert.equal(retryPostCount, 1)
   assert.equal(retryCoreCount, 0, '403 was rejected before cleanup work')
   cleanupReply = 'network'
@@ -459,9 +461,9 @@ test('memory view preserves chat draft and discards a successful response for an
   assert.equal(get('memory-receipt-check').textContent, '重试清理')
   cleanupReply = 'complete'
   get('memory-detail-check').fire('click')
-  for (let i = 0; i < 20 && (retryCoreCount < 2 || !get('memory-receipt-text').textContent.includes('当前存储清理已完成')); i++) await flush()
+  for (let i = 0; i < 20 && (retryCoreCount < 2 || !get('memory-receipt-text').textContent.includes('本次清理已完成')); i++) await flush()
   assert.equal(retryCoreCount, 2)
-  assert.match(get('memory-receipt-text').textContent, /当前存储清理已完成/)
+  assert.match(get('memory-receipt-text').textContent, /本次清理已完成/)
   assert.equal(get('memory-receipt-check').hidden, true)
   deferNextCorrect = true
   get('memory-correct-action').fire('click')
@@ -523,7 +525,7 @@ test('memory view preserves chat draft and discards a successful response for an
   assert.equal(get('memory-confirm-action').disabled, true)
   assert.equal(get('memory-detail-check').hidden, false)
   assert.match(get('memory-detail-status').textContent, /本次执行结果待确认/)
-  assert.match(get('memory-detail-error').textContent, /请点“核对处理结果”查询原请求/)
+  assert.match(get('memory-detail-error').textContent, /请点“核对处理结果”查看这次操作是否完成/)
   const postsBeforeCheck = requests.filter((url) => url.endsWith('/memory/items/cognition/memory-a-1/correct')).length
   get('memory-confirm-action').fire('click')
   get('memory-detail-check').fire('click')
