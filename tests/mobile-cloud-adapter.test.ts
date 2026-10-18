@@ -43,9 +43,9 @@ test('mobile adapter preserves native trust and token errors without inventing d
   } });
   const response = await api.fetch('https://host.example.com/personal/v1/auth/cloud-session');
   assert.equal(response.status, 403); assert.equal((await response.json()).error.code, 'PAIRING_REQUIRED');
-  const client = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, exchange: async () => { throw { code: 'PAIRING_REQUIRED' }; } });
+  const client = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, authorized: async () => ({status:'online'}), exchange: async () => { throw { code: 'PAIRING_REQUIRED' }; } });
   await assert.rejects(client.exchange(), error => error.code === 'PAIRING_REQUIRED');
-  const invalid = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, exchange: async () => { throw { code: 'CLOUD_TOKEN_INVALID' }; } });
+  const invalid = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, authorized: async () => ({status:'online'}), exchange: async () => { throw { code: 'CLOUD_TOKEN_INVALID' }; } });
   await assert.rejects(invalid.exchange(), error => error.code === 'CLOUD_TOKEN_INVALID');
 });
 
