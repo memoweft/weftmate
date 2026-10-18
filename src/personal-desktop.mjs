@@ -21,6 +21,9 @@ import { windowIcon, notificationIcon } from './app-icons.mjs';
 import { nativeEventNotification } from './personal-access/notification-content.mjs';
 import { createWindowsSendTo, windowsApprovalNotification, actOnWindowsApproval } from './windows-system-integration.mjs';
 import { nativeWindowRequest } from './personal-desktop-request.mjs';
+import { restoreWindowsDesktopBounds } from './windows-desktop-bounds.mjs';
+import { restoreDesktopBounds } from './desktop-window-bounds.mjs';
+export { restoreDesktopBounds } from './desktop-window-bounds.mjs';
 
 export function desktopNotification(event, taskTitle) {
   if (process.platform === 'win32' && event.type === 'approval.requested') {
@@ -34,19 +37,6 @@ export function desktopNotificationOptions(event, taskTitle) {
   const message = desktopNotification(event, taskTitle);
   return message && { ...message, icon: notificationIcon,
     ...(process.platform === 'win32' && event.type === 'approval.requested' ? { actions: [{ type: 'button', text: '查看' }] } : {}) };
-}
-
-export function restoreDesktopBounds(saved, displays) {
-  const bounds = saved?.bounds;
-  if (!bounds || !['x', 'y', 'width', 'height'].every(key => Number.isFinite(bounds[key])) ||
-      bounds.width < 760 || bounds.height < 520) return { width: 1200, height: 800 };
-  const display = displays.find(({ workArea: area }) => bounds.x + bounds.width > area.x &&
-    bounds.y + bounds.height > area.y && bounds.x < area.x + area.width && bounds.y < area.y + area.height);
-  if (!display) return { width: 1200, height: 800 };
-  const area = display.workArea;
-  const width = Math.min(bounds.width, area.width), height = Math.min(bounds.height, area.height);
-  return { width, height, x: Math.max(area.x, Math.min(bounds.x, area.x + area.width - width)),
-    y: Math.max(area.y, Math.min(bounds.y, area.y + area.height - height)) };
 }
 
 export function createPersonalDesktop({ computerUsageService, systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
@@ -69,8 +59,12 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     webPreferences: { session: desktopSession, preload: join(import.meta.dirname, 'personal-desktop-preload.cjs'),
       nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
   });
-  // On Windows at fractional DPI, constructor dimensions can include a different frame inset.
-  if (Number.isFinite(bounds.x)) win.setBounds(bounds);
+  const display = Number.isFinite(bounds.x) ? screen.getDisplayMatching(bounds) : null;
+  const restoreBounds = Number.isFinite(bounds.x) && process.platform === 'win32' && !Number.isInteger(display.scaleFactor)
+    ? restoreWindowsDesktopBounds(win, bounds, display).catch(error => {
+      createHostLog(app.getPath('userData')).failure('window-bounds', error);
+      win.setBounds(bounds);
+    }) : Promise.resolve(Number.isFinite(bounds.x) && win.setBounds(bounds));
   const uiUrl = new URL('/personal/v1/ui', origin).href;
   let contentOrigin = origin;
   const certificatePins = new Map(), networkRequests = new Map(), peerOrigins = new Set();
@@ -575,9 +569,10 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     persist: (owner, generation, buckets) => computerUsageService.recordComputerUsage(owner, generation, buckets),
   }) : null;
   if (computerUsage) computerUsageService.setComputerUsageCheckpoint(owner => computerUsage.checkpoint(owner));
-  const ready = win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : '')).then(() => { if (!startInTray) show(); });
+  const ready = restoreBounds.then(() => win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : ''))).then(() => { if (!startInTray) show(); });
   return { window: win, show, openSettings() { show(); void win.webContents.executeJavaScript("globalThis.WeftSettingsNavigation?.open('general')").catch(() => {}); }, sendTo, ready, async close() {
     stopped = true; clearTimeout(timer);
+    await restoreBounds;
     await computerUsage?.close();
     if (computerUsage) computerUsageService.setComputerUsageCheckpoint(null);
     for (const notification of notifications) notification.close();
