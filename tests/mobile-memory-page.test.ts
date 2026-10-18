@@ -318,6 +318,27 @@ async function openMemory(app: ReturnType<typeof harness>, owner: 'A' | 'B' = 'A
   app.nav.find((button) => button.dataset.page === 'memory')!.fire('click')
   await waitUntil(() => app.businessPaths.some((request) => request.owner === owner && request.path === '/personal/v1/memory/status'), 'memory status was not requested')
 }
+for (const [code, expected] of [
+  ['MEMORY_REVISION_CHANGED', '记忆已在电脑上更新。为避免显示旧结果，请刷新后重新读取。'],
+  ['MEMORY_SEARCH_LIMIT', '这类记忆太多，暂时无法完整列出。为避免遗漏，本次没有显示部分结果；请换一个类别，或在电脑上查看。'],
+  ['MEMORY_OWNER_MISMATCH', '无法确认当前账户，页面上的记忆内容已清除。请重新连接账户后查看。'],
+  ['MEMORY_CONNECTION_UNVERIFIED', '尚未通过电脑确认当前账户。请连接电脑后重新读取，避免显示旧内容。'],
+  ['MEMORY_PATH_TOO_LONG', '搜索内容或后续页面暂时无法在手机上打开。请缩短关键词并刷新；仍无法打开时，可在电脑上查看。'],
+  ['MEMORY_INVALID_RESPONSE', '暂时无法显示记忆内容，请稍后刷新重试。'],
+  ['MEMORY_ACTION_UNSUPPORTED', '这条记忆暂时无法进行这项操作，请刷新详情后查看可用操作。'],
+  ['MEMORY_DELETE_UNAVAILABLE', '当前账户暂时无法删除记忆，请稍后再试。'],
+  ['MEMORY_UNAVAILABLE', '记忆暂时不可用，本次操作没有执行。请稍后再试。'],
+  ['MEMORY_DISABLED', '记忆暂时不可用，本次操作没有执行。请稍后再试。'],
+  ['MEMORY_RESPONSE_TOO_LARGE', '这次返回的内容无法在手机上完整显示，请在电脑上查看记忆和来源。'],
+  ['MEMORY_FUTURE_UNKNOWN', '操作未完成，请稍后重试'],
+]) test(`mobile error mapping ${code} reaches the rendered memory page`, async () => {
+  const app = harness({ status: () => { throw new Error(code); } });
+  await openMemory(app);
+  await waitUntil(() => app.get('page-content').textContent.includes(expected), `${code} visible`);
+  assert.doesNotMatch(app.get('page-content').textContent, /MEMORY_|标识|重放|注入|快照|接口|原生|命令副本/);
+  assert.equal(app.businessPaths.every(request => request.method === 'GET'), true);
+});
+
 function switchToConnect(app: ReturnType<typeof harness>) { app.nav.find((button) => button.dataset.page === 'connect')!.fire('click') }
 async function openModels(app: ReturnType<typeof harness>) {
   await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app bootstrap did not finish')
@@ -348,8 +369,8 @@ async function logoutAndLoginB(app: ReturnType<typeof harness>) {
 
 test('memory status distinguishes ready, degraded, disabled and unavailable; absent capabilities keep actions hidden', async () => {
   for (const scenario of [
-    { state: 'ready', worldRevision: 9, caps: { list: true, source: true, inject: true }, expected: '当前账户的记忆快照' },
-    { state: 'degraded', worldRevision: 9, caps: { list: true, source: true, inject: false }, expected: '记忆可查看；当前模型记忆注入不可用。' },
+    { state: 'ready', worldRevision: 9, caps: { list: true, source: true, inject: true }, expected: '这里显示当前账户的记忆' },
+    { state: 'degraded', worldRevision: 9, caps: { list: true, source: true, inject: false }, expected: '可以查看记忆，但当前模型暂时无法在回答时使用这些记忆。' },
     { state: 'disabled', worldRevision: null, caps: { list: false, source: false, inject: false }, expected: '尚未启用' },
     { state: 'unavailable', worldRevision: null, caps: { list: false, source: false, inject: false }, expected: '暂不可用' },
   ]) {
@@ -391,7 +412,7 @@ test('a delayed A list failure after B is displayed cannot clear B data or show 
   app.rejectDeferred(0, 'MEMORY_SEARCH_LIMIT')
   for (let index = 0; index < 20; index++) await flush()
   assert.match(app.get('page-content').textContent, /B memory private to B/)
-  assert.doesNotMatch(app.get('page-content').textContent, /超过服务端完整快照上限/)
+  assert.doesNotMatch(app.get('page-content').textContent, /这类记忆太多/)
 })
 
 test('first list page establishes its revision, while a changed later page clears the old snapshot', async () => {
@@ -479,7 +500,7 @@ test('empty state separates blocked pending sources from previously deleted-sour
   await openMemory(blocked)
   await waitUntil(() => blocked.get('page-content').textContent.includes('来源尚未处理'), 'pending count was not visible')
   assert.match(blocked.get('page-content').textContent, /其中 1 条已暂停自动处理/)
-  assert.match(blocked.get('page-content').textContent, /恢复后会按顺序自动补交/)
+  assert.match(blocked.get('page-content').textContent, /恢复后会按顺序自动处理/)
 
   const deletedHistory = harness({ status: (owner) => ({ ownerId: appOwner(owner), state: 'ready', worldRevision: 11,
     capabilities: { list: true, source: true, inject: true }, pendingBoundaryCount: 0, blockedBoundaryCount: 0,
@@ -559,16 +580,43 @@ test('item deletion requires typing confirmation and reports incomplete storage 
   await waitUntil(() => app.get('page-content').textContent.includes('以下内容会一起忘掉'), 'cascade preview loaded')
   const confirm = findButton(app.get('page-content'), '确认永久删除记忆')!
   assert.equal(confirm.disabled, true);assert.equal(writes.length, 0)
-  assert.match(app.get('page-content').textContent, /默认保留对话原文/)
+  assert.match(app.get('page-content').textContent, /默认保留聊天原话；勾选后，同时删除聊天记录里的这几句原话。以前的备份不受影响。/)
   const input = findAll(app.get('page-content'), (node) => node.tagName === 'INPUT' && node.type === 'text')[0]
   input.value = '删除';input.fire('input');assert.equal(confirm.disabled, false);confirm.fire('click')
-  await waitUntil(() => app.get('page-content').textContent.includes('底层清理仍待完成'), 'cleanup boundary visible')
+  await waitUntil(() => app.get('page-content').textContent.includes('清理还未完成'), 'cleanup boundary visible')
   assert.equal(writes.length, 1);assert.equal(writes[0].method, 'DELETE')
   assert.match(writes[0].path, /\/items\/cognition\/memory-A$/)
   assert.equal(writes[0].body.expectedWorldRevision, 10)
   assert.equal(writes[0].body.deleteConversationSnippets, false)
   assert.doesNotMatch(app.get('page-content').textContent, /Delete this memory/)
 })
+
+for (const [code, expected] of [
+  ['MEMORY_REQUEST_CONFLICT', '这次操作与之前保存的内容不一致，本次没有执行。请刷新后重新操作。'],
+  ['MEMORY_REPLAY_REDACTED', '这次操作的内容已经清除，无法再执行。请重新操作。'],
+]) test(`mobile ${code} displays the actual deletion failure without internal terms`, async () => {
+  let writes = 0;
+  const item = { id: 'memory-A', kind: 'cognition', text: 'Synthetic deletion target', currentState: 'current', lifecycle: {}, sourceCount: 1 };
+  const app = harness({
+    status: owner => ({ ownerId: appOwner(owner), state: 'ready', worldRevision: 10, capabilities: { list: true, source: true, deleteWorldItem: true } }),
+    items: owner => ({ ownerId: appOwner(owner), worldRevision: 10, searchScope: 'account_snapshot', items: [item], nextCursor: null, hasMore: false }),
+    details: owner => ({ ownerId: appOwner(owner), worldRevision: 10, item, availableActions: { delete: { available: true } } }),
+    sources: owner => ({ ownerId: appOwner(owner), worldRevision: 10, sources: [] }),
+    write: () => { writes++; throw new Error(code); },
+  });
+  await openMemory(app);
+  await waitUntil(() => app.get('page-content').textContent.includes(item.text), 'item loaded');
+  findButton(app.get('page-content'), item.text)!.fire('click');
+  await waitUntil(() => !!findButton(app.get('page-content'), '永久删除这项记忆'), 'delete available');
+  findButton(app.get('page-content'), '永久删除这项记忆')!.fire('click');
+  await waitUntil(() => app.get('page-content').textContent.includes('以下内容会一起忘掉'), 'preview ready');
+  const input = findAll(app.get('page-content'), node => node.tagName === 'INPUT' && node.type === 'text')[0];
+  input.value = '删除'; input.fire('input'); findButton(app.get('page-content'), '确认永久删除记忆')!.fire('click');
+  await waitUntil(() => writes === 1 && findAll(app.get('page-content'), node => node.textContent.includes('本次未提交') || node.textContent.includes(expected)).length > 0, 'failure displayed');
+  assert.ok(app.get('page-content').textContent.includes(expected), app.get('page-content').textContent);
+  assert.doesNotMatch(app.get('page-content').textContent, /请求标识|不可重放|MEMORY_/);
+  assert.equal(writes, 1);
+});
 
 test('source evidence deletion uses the evidence ID and refreshes the source list', async () => {
   let revision = 10;let deleted = false;const writes: Array<{ path: string; method: string; body: any }> = []
@@ -598,7 +646,7 @@ test('source evidence deletion uses the evidence ID and refreshes the source lis
   assert.equal((snippets as any).checked, false); (snippets as any).checked = true; snippets.fire('change')
   const input = findAll(app.get('page-content'), (node) => node.tagName === 'INPUT' && node.type === 'text')[0]
   input.value = '删除';input.fire('input');findButton(app.get('page-content'), '确认删除这条来源')!.fire('click')
-  await waitUntil(() => app.get('page-content').textContent.includes('服务端没有返回来源记录'), 'fresh source list rendered')
+  await waitUntil(() => app.get('page-content').textContent.includes('当前没有可显示的来源记录'), 'fresh source list rendered')
   assert.equal(writes.length, 1);assert.equal(writes[0].method, 'DELETE')
   assert.match(writes[0].path, /\/evidence\/evidence-A$/)
   assert.equal(writes[0].body.deleteConversationSnippets, true)
@@ -719,10 +767,10 @@ test('unknown receipt keeps the original request marker for manual review withou
   await waitUntil(() => !!findButton(app.get('page-content'), '停用这项记忆'), 'mute action available')
   findButton(app.get('page-content'), '停用这项记忆')!.fire('click')
   findButton(app.get('page-content'), '确认停用')!.fire('click')
-  await waitUntil(() => app.get('page-content').textContent.includes('原请求结果仍待确认'), 'uncertain state visible')
+  await waitUntil(() => app.get('page-content').textContent.includes('这次操作是否完成尚未确认'), 'uncertain state visible')
   assert.equal(writes, 1)
   assert.equal(app.storage.has('weftmate-mobile-memory-request:scope-A'), true)
-  assert.ok(findButton(app.get('page-content'), '核对原请求'))
+  assert.ok(findButton(app.get('page-content'), '核对处理结果'))
   assert.equal(findButton(app.get('page-content'), '停用这项记忆'), undefined)
 })
 
@@ -778,15 +826,15 @@ test('correction result belongs to the acted-on item and clears when a different
   const correction = findAll(app.get('page-content'), (node) => node.tagName === 'TEXTAREA')[0]
   correction.value = 'I prefer green';correction.fire('input')
   findButton(app.get('page-content'), '保存纠正')!.fire('click')
-  await waitUntil(() => app.get('page-content').textContent.includes('纠正已应用'), 'old item result visible')
+  await waitUntil(() => app.get('page-content').textContent.includes('记忆已纠正'), 'old item result visible')
   findButton(app.get('page-content'), '返回记忆列表')!.fire('click')
   await waitUntil(() => !!findButton(app.get('page-content'), 'I prefer green'), 'new item listed')
   findButton(app.get('page-content'), 'I prefer green')!.fire('click')
   await waitUntil(() => app.get('page-content').textContent.includes('I prefer green'), 'new detail visible')
-  assert.doesNotMatch(app.get('page-content').textContent, /纠正已应用/)
+  assert.doesNotMatch(app.get('page-content').textContent, /记忆已纠正/)
 })
 
-test('delete conflict copy names source or dependency conflict without guessing another memory', async () => {
+test('delete conflict copy offers source inspection without guessing another memory', async () => {
   const app = harness({
     status: (owner) => ({ ownerId: appOwner(owner), state: 'ready', worldRevision: 10,
       capabilities: { list: true, source: true, deleteWorldItem: true } }),
@@ -804,7 +852,7 @@ test('delete conflict copy names source or dependency conflict without guessing 
   const input = findAll(app.get('page-content'), (node) => node.tagName === 'INPUT' && node.type === 'text')[0]
   input.value = '删除';input.fire('input')
   findButton(app.get('page-content'), '确认永久删除记忆')!.fire('click')
-  await waitUntil(() => app.get('page-content').textContent.includes('来源或依赖关系存在冲突'), 'conflict shown')
+  await waitUntil(() => app.get('page-content').textContent.includes('这条记忆暂时无法删除，本次没有执行；请查看来源，或先停用。'), 'conflict shown')
   assert.doesNotMatch(app.get('page-content').textContent, /其他记忆使用/)
 })
 

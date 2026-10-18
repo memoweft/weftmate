@@ -302,11 +302,11 @@
     health.className='memory-health '+(healthy?'is-healthy':recovering?'is-progress':'is-warning');health.replaceChildren();
     const bar=document.createElement('div');bar.className='memory-issue-bar';
     bar.append(WeftIcons.create(healthy?'allow':recovering?'history':'warn',20));
-    const label=document.createElement('span');label.textContent=issues.length?(corrections?`有 ${corrections} 条纠正没有生效`:`有 ${issues.length} 条记忆没有形成`):healthy?`记忆正常 · ${Number.isSafeInteger(count)?`已形成 ${count} 条`:'正在读取数量'} · 队列 0`:recovering?text:`${text} · 积压 ${(status?.pendingBoundaryCount||0)+(status?.pendingFormationCount||0)} 条`;bar.append(label);health.append(bar);
+    const label=document.createElement('span');label.textContent=issues.length?(corrections?`有 ${corrections} 条纠正没有生效`:`有 ${issues.length} 条内容尚未记住`):healthy?`记忆正常 · ${Number.isSafeInteger(count)?`已记住 ${count} 条`:'正在读取数量'} · 没有待处理内容`:recovering?text:`${text} · 待处理 ${(status?.pendingBoundaryCount||0)+(status?.pendingFormationCount||0)} 条`;bar.append(label);health.append(bar);
     if(healthy||recovering||!status)return;
     const panel=document.createElement('div');panel.className='memory-issue-cards';panel.hidden=true;
     const view=document.createElement('button');view.type='button';view.className='message-action';view.textContent='查看';view.setAttribute('aria-expanded','false');view.onclick=()=>{panel.hidden=!panel.hidden;view.textContent=panel.hidden?'查看':'收起';view.setAttribute('aria-expanded',String(!panel.hidden));};bar.append(view);
-    if(!issues.length){const p=document.createElement('p');p.textContent='检查设置里的模型，恢复后会自动继续。已提交的回合继续整理。';panel.append(p);}
+    if(!issues.length){const p=document.createElement('p');p.textContent='检查设置里的模型，恢复后会自动继续。已送去整理的内容会继续处理。';panel.append(p);}
     for(const issue of issues){const card=document.createElement('article');card.className='memory-issue-card';
       const original=document.createElement('p');original.textContent=issue.text;card.append(original);
       const time=document.createElement('time');time.className='message-time';time.textContent=issue.updatedAt||issue.createdAt?new Date(issue.updatedAt||issue.createdAt).toLocaleString('zh-CN'):'时间未记录';card.append(time);
