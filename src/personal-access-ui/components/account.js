@@ -516,7 +516,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
                     throw { code: 'REQUEST_FAILED' };
                 ui.byId('revoke-dialog').close();
                 core.state.revokeId = null;
-                core.state.deviceNotice = '设备撤销已收到宿主回执。';
+                core.state.deviceNotice = '已收到设备撤销的处理结果。';
                 await core.refreshDevices();
             }
             catch (error) {

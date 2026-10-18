@@ -300,12 +300,12 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         await rm(cwd, { recursive: true, force: true }); throw error
       }
     },
-    async cleanupMemoryCopies({ sessionId, sourceTexts = [], affectedIds = [], deleteConversationSnippets = false, scheduleIds = [], goalIds = [] }) {
+    async cleanupMemoryCopies({ sessionId, sourceTexts = [], affectedIds = [], deleteConversationSnippets = false, scheduleIds = [], goalIds = [], prepareOnly = false, snippetTargets }) {
       requireRuntime()
       const listed = await listSessions()
-      if (!listed?.items?.some(item => item.sessionId === sessionId)) return { cleaned: true }
+      if (!listed?.items?.some(item => item.sessionId === sessionId)) return { cleaned: true, snippetsVerified: true, snippetTargets: [] }
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/memory-cleanup`, { method: 'POST',
-        body: JSON.stringify({ sourceTexts, deleteConversationSnippets, scheduleIds, goalIds, ...(affectedIds.length ? {affectedIds} : {}) }) })
+        body: JSON.stringify({ sourceTexts, deleteConversationSnippets, scheduleIds, goalIds, prepareOnly, snippetTargets, ...(affectedIds.length ? {affectedIds} : {}) }) })
     },
     accountWorkspaceRoot(ownerId) { return sessionWorkspaceRoot ? sessionWorkspace(sessionWorkspaceRoot, ownerId, 'account').replace(/[\\/]account$/, '') : null; },
     async sessionStorage({ sessionId, ownerId }) {

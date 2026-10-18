@@ -89,8 +89,10 @@ test('D33 snippet erasure removes packed native text/reasoning/tool deltas even 
   {type:'reasoning-chunks',seq0:5,time0:4,data:{turn:1,step:1,index:1,dt:[1,1],texts:['ERASE_','THIS_','PHRASE']}},
   {type:'tool-call-chunks',seq0:8,time0:7,data:{turn:1,step:1,index:2,id:'tool',dt:[1,1],args:['ERASE_','THIS_','PHRASE']}},entry(11,'turn/end',{turn:1,reason:{kind:'aborted'}})];
  const content=rows.map(row=>JSON.stringify(row)).join('\n')+'\n';await writeFile(file,content);
- const persistence={readRaw:async()=>({meta:{id:'s'},content}),locate:()=>({path:file}),config:{root}};
- try{await eraseSessionMemoryArtifact(persistence,'s',{sourceTexts:['ERASE_THIS_PHRASE'],deleteConversationSnippets:true});
+ const persistence={readRaw:async()=>({meta:{id:'s'},content:await readFile(file,'utf8')}),locate:()=>({path:file}),config:{root}};
+ try{const plan=await eraseSessionMemoryArtifact(persistence,'s',{sourceTexts:['ERASE_THIS_PHRASE'],prepareOnly:true});
+  assert.doesNotMatch(JSON.stringify(plan),/ERASE_|THIS_|PHRASE/);
+  await eraseSessionMemoryArtifact(persistence,'s',{...plan,sourceTexts:[],deleteConversationSnippets:true});
   const clean=await readFile(file,'utf8');assert.doesNotMatch(clean,/ERASE_|THIS_|PHRASE/);
   const packed=clean.trim().split('\n').map(JSON.parse).filter(row=>row.type.endsWith('-chunks'));
   assert.deepEqual(packed[0].data.texts,['','','']);assert.deepEqual(packed[2].data.args,['','','']);

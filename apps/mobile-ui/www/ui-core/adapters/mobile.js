@@ -369,19 +369,19 @@ function memoryCurrent(token){return !!token&&state.page==='memory'&&state.gener
 
 function memoryFailureText(error){const code=error?.message||'OPERATION_FAILED';
   if(code==='MEMORY_REVISION_CHANGED')return '记忆已在电脑上更新。为避免显示旧结果，请刷新后重新读取。';
-  if(code==='MEMORY_SEARCH_LIMIT')return '该类别的记忆规模超过服务端完整快照上限；服务端没有返回部分数据。请切换类别，或在电脑端查看。';
-  if(code==='MEMORY_OWNER_MISMATCH'||code==='ACCOUNT_IDENTITY_MISMATCH')return '账户身份核对失败，记忆内容已清除。请重新检查账户连接。';
-  if(code==='MEMORY_CONNECTION_UNVERIFIED')return '电脑尚未在线核对当前账户；为避免显示旧缓存，请连接后重新读取。';
-  if(code==='MEMORY_PATH_TOO_LONG')return '搜索词或分页标识超过手机版接口长度限制；请缩短关键词后刷新重试。';
+  if(code==='MEMORY_SEARCH_LIMIT')return '这类记忆太多，暂时无法完整列出。为避免遗漏，本次没有显示部分结果；请换一个类别，或在电脑上查看。';
+  if(code==='MEMORY_OWNER_MISMATCH'||code==='ACCOUNT_IDENTITY_MISMATCH')return '无法确认当前账户，页面上的记忆内容已清除。请重新连接账户后查看。';
+  if(code==='MEMORY_CONNECTION_UNVERIFIED')return '尚未通过电脑确认当前账户。请连接电脑后重新读取，避免显示旧内容。';
+  if(code==='MEMORY_PATH_TOO_LONG')return '搜索内容或后续页面暂时无法在手机上打开。请缩短关键词并刷新；仍无法打开时，可在电脑上查看。';
   if(code==='LOGIN_REQUIRED'||code==='UNAUTHORIZED'||code==='AUTH_REQUIRED')return '电脑账户连接已失效，请重新连接后查看记忆。';
-  if(code==='MEMORY_INVALID_RESPONSE')return '记忆服务返回了无法识别的数据；请稍后刷新重试。';
-  if(code==='MEMORY_ACTION_UNSUPPORTED')return '当前记忆不能执行这项操作；请刷新详情核对可用能力。';
-  if(code==='MEMORY_DELETE_UNAVAILABLE')return '当前账户的记忆删除能力暂不可用。';
-  if(code==='MEMORY_UNAVAILABLE'||code==='MEMORY_DISABLED')return '记忆服务当前不可用，本次操作未提交。';
-  if(code==='MEMORY_REQUEST_CONFLICT')return '请求标识与已保存内容冲突，本次未提交。';
-  if(code==='MEMORY_REPLAY_REDACTED')return '旧请求正文已不可重放，本次未提交。';
+  if(code==='MEMORY_INVALID_RESPONSE')return '暂时无法显示记忆内容，请稍后刷新重试。';
+  if(code==='MEMORY_ACTION_UNSUPPORTED')return '这条记忆暂时无法进行这项操作，请刷新详情后查看可用操作。';
+  if(code==='MEMORY_DELETE_UNAVAILABLE')return '当前账户暂时无法删除记忆，请稍后再试。';
+  if(code==='MEMORY_UNAVAILABLE'||code==='MEMORY_DISABLED')return '记忆暂时不可用，本次操作没有执行。请稍后再试。';
+  if(code==='MEMORY_REQUEST_CONFLICT')return '这次操作与之前保存的内容不一致，本次没有执行。请刷新后重新操作。';
+  if(code==='MEMORY_REPLAY_REDACTED')return '这次操作的内容已经清除，无法再执行。请重新操作。';
   if(code==='BUSINESS_RESPONSE_INVALID'||code==='BUSINESS_RESPONSE_TOO_LARGE'||code==='MEMORY_RESPONSE_TOO_LARGE')
-    return '服务端返回内容超过手机可安全显示的范围；请在电脑端查看完整记忆与来源。';
+    return '这次返回的内容无法在手机上完整显示，请在电脑上查看记忆和来源。';
   if(code==='NATIVE_UNAVAILABLE'||code==='TIMEOUT'||code==='OPERATION_FAILED')return '电脑记忆服务暂时不可达；手机对话仍可继续。请重新读取。';
   return effects.safeError(error)}
 
@@ -551,16 +551,16 @@ async function loadMemoryDetail(target,token,item){if(!memoryCurrent(token))retu
     memory.sources=sources.sources;memory.sourcesLoading=false;memory.sourceError='';effects.renderMemoryDetail(target,token);
   }catch(error){if(!memoryCurrent(token))return;memoryFail(token,error,target)}}
 
-function memoryReceiptMessage(receipt,operation){if(receipt.state==='no_change')return '服务端确认没有发生变更；已重新读取当前记忆。';
-  if(operation==='correct')return '纠正已应用；已重新读取当前记忆与来源。';
-  if(operation==='mute')return '记忆已停用，不再参与后续召回；原内容和来源仍可查看。';
-  if(receipt.storageCleanup?.state==='pending')return '已从当前有效记忆与召回移除；底层清理仍待完成。原聊天、会话存档和既有备份仍可能保留。';
-  return '已从当前有效记忆与召回移除；原聊天、会话存档和既有备份仍可能保留。'}
+function memoryReceiptMessage(receipt,operation){if(receipt.state==='no_change')return '这次没有更改记忆，已重新读取当前内容。';
+  if(operation==='correct')return '记忆已纠正，已重新读取当前内容和来源。';
+  if(operation==='mute')return '记忆已停用，之后的回答不再使用；原内容和来源仍可查看。';
+  if(receipt.storageCleanup?.state==='pending')return '记忆已移除，但清理还未完成。聊天记录和已有备份仍可能保留。';
+  return '记忆已移除。聊天记录和已有备份仍可能保留。'}
 
-function memoryReceiptRejected(receipt){return ({MEMORY_DELETE_CONFLICT:'来源或依赖关系存在冲突，本次未删除；可查看来源或选择停用。',
-  MEMORY_SOURCE_UNRECOVERABLE:'旧来源身份已不可恢复，本次未删除。',
-  MEMORY_DELETE_SOURCE_UNKNOWN:'来源身份无法确认，本次未删除。'}[receipt.reasonCode]||
-  '服务端拒绝了本次操作；当前记忆已重新读取。')}
+function memoryReceiptRejected(receipt){return ({MEMORY_DELETE_CONFLICT:'这条记忆暂时无法删除，本次没有执行；请查看来源，或先停用。',
+  MEMORY_SOURCE_UNRECOVERABLE:'无法再确认这条记忆对应的原话，本次没有删除。',
+  MEMORY_DELETE_SOURCE_UNKNOWN:'无法确认这条记忆来自哪条原话，本次没有删除。'}[receipt.reasonCode]||
+  '这次操作未被接受，已重新读取当前记忆。')}
 
 function handleMemoryReceipt(receipt,marker,token){if(!memoryCurrent(token)||!receipt||receipt.requestId!==marker.requestId||
   !['applied','no_change','revision_conflict','rejected'].includes(receipt.state)||
@@ -580,15 +580,15 @@ function handleMemoryReceipt(receipt,marker,token){if(!memoryCurrent(token)||!re
 
 async function reconcileMemoryMarker(marker=state.memory?.pendingMarker){const memory=state.memory;
   if(!marker||!memory||memory.checkingReceipt||!memoryCurrent(memoryToken()))return;
-  const token=memoryToken();memory.checkingReceipt=true;memory.receiptMessage='正在查询原请求回执…';
+  const token=memoryToken();memory.checkingReceipt=true;memory.receiptMessage='正在核对这次操作的结果…';
   if(memory.view==='detail')effects.renderMemoryDetail(memory.target,token);else effects.renderMemoryList(memory.target);
   try{const result=await business({path:`/personal/v1/memory/commands/by-request/${memoryPathEncode(marker.requestId)}`,method:'GET'});
     if(!memoryCurrent(token))return;
     if(!handleMemoryReceipt(result?.receipt,marker,token)){
-      memory.receiptMessage='回执内容无法确认；原请求仍保留，不会自动重发。';
+      memory.receiptMessage='暂时无法确认这次操作是否完成。操作记录已保留，不会自动重复执行。';
       memory.checkingReceipt=false;if(memory.view==='detail')effects.renderMemoryDetail(memory.target,token);else effects.renderMemoryList(memory.target)}}
   catch{if(!memoryCurrent(token))return;memory.checkingReceipt=false;
-    memory.receiptMessage='原请求结果仍待确认。请稍后核对回执；不会自动重发。';
+    memory.receiptMessage='这次操作是否完成尚未确认。请稍后核对处理结果，不会自动重复执行。';
     if(memory.view==='detail')effects.renderMemoryDetail(memory.target,token);else effects.renderMemoryList(memory.target)}}
 
 async function previewMemoryForget(choice){const memory=state.memory,token=memoryToken();
@@ -616,9 +616,9 @@ async function submitMemoryAction(operation,evidenceId=null,correction=''){const
     id=operation==='deleteEvidence'?evidenceId:itemId,revision=memory.detailRevision;
   if(!Number.isSafeInteger(revision)||!memoryPathIdSupported(id))return;
   const marker={requestId,operation,kind,id,itemId};
-  if(!persistMemoryMarker(marker)){memory.detailError='无法保存回执查询标识；本次没有提交。';effects.renderMemoryDetail(memory.target);return}
+  if(!persistMemoryMarker(marker)){memory.detailError='暂时无法保存这次操作的记录，本次没有提交。请稍后再试。';effects.renderMemoryDetail(memory.target);return}
   memory.pendingMarker=marker;memory.activeOperation=marker;memory.detailError='';memory.confirmation=null;
-  memory.receiptItemId=itemId;memory.receiptMessage='正在提交操作并等待回执…';const token=memoryToken();effects.renderMemoryDetail(memory.target,token);
+  memory.receiptItemId=itemId;memory.receiptMessage='正在处理，请稍候…';const token=memoryToken();effects.renderMemoryDetail(memory.target,token);
   const base=operation==='deleteEvidence'?`/personal/v1/memory/evidence/${memoryPathEncode(id)}`:
     `/personal/v1/memory/items/${memoryPathEncode(kind)}/${memoryPathEncode(id)}`;
   const path=operation==='correct'?`${base}/correct`:operation==='mute'?`${base}/mute`:base,
@@ -627,7 +627,7 @@ async function submitMemoryAction(operation,evidenceId=null,correction=''){const
       ...(['deleteItem','deleteEvidence'].includes(operation)?{deleteConversationSnippets}:{})};
   try{const result=await business({path,method,body});if(!memoryCurrent(token))return;
     if(!handleMemoryReceipt(result?.receipt,marker,token)){
-      memory.activeOperation=null;memory.receiptMessage='回执内容无法确认；原请求仍待核对，不会自动重发。';
+      memory.activeOperation=null;memory.receiptMessage='暂时无法确认这次操作是否完成。请核对处理结果，不会自动重复执行。';
       effects.renderMemoryDetail(memory.target,token)}}
   catch(error){if(!memoryCurrent(token))return;memory.activeOperation=null;
     if(['UNAUTHORIZED','FORBIDDEN','INVALID_REQUEST','NOT_FOUND','MEMORY_DISABLED','MEMORY_UNAVAILABLE',
@@ -637,7 +637,7 @@ async function submitMemoryAction(operation,evidenceId=null,correction=''){const
         memory.items=[];memory.detail=null;memory.sources=[];memory.view='list';startMemorySnapshot(memory.target,memory.kind,memory.query)}
       else effects.renderMemoryDetail(memory.target,token);
       return}
-    memory.receiptMessage='提交结果待确认，正在查询原请求回执；不会自动重发。';
+    memory.receiptMessage='正在核对这次操作是否完成，不会自动重复执行。';
     effects.renderMemoryDetail(memory.target,token);void reconcileMemoryMarker(marker)}}
   async function retryMemoryFormation(jobId, requestId) {
     const token=memoryToken();
