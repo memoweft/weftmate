@@ -49,7 +49,7 @@ export function restoreDesktopBounds(saved, displays) {
     y: Math.max(area.y, Math.min(bounds.y, area.y + area.height - height)) };
 }
 
-export function createPersonalDesktop({ computerUsageService, systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
+export function preparePersonalDesktopWindow() {
   const stateFile = join(app.getPath('userData'), 'desktop-window.json');
   let saved = {};
   try { saved = JSON.parse(readFileSync(stateFile, 'utf8')); } catch { /* first launch */ }
@@ -60,7 +60,6 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     const index = nativeTheme.shouldUseDarkColors ? 1 : 0;
     return { color: tokenValues('--canvas')[index], symbolColor: tokenValues('--ink')[index], height: 44 };
   };
-  let resolvedPalette = null;
   const bounds = restoreDesktopBounds(saved, screen.getAllDisplays());
   const win = new BrowserWindow({
     ...bounds, minWidth: 480, minHeight: 520,
@@ -71,6 +70,12 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   });
   // On Windows at fractional DPI, constructor dimensions can include a different frame inset.
   if (Number.isFinite(bounds.x)) win.setBounds(bounds);
+  return { window: win, stateFile, saved, desktopSession, palette };
+}
+
+export function createPersonalDesktop({ computerUsageService, systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {}, preparedWindow = preparePersonalDesktopWindow() }) {
+  const { window: win, stateFile, saved, desktopSession, palette } = preparedWindow;
+  let resolvedPalette = null;
   const uiUrl = new URL('/personal/v1/ui', origin).href;
   let contentOrigin = origin;
   const certificatePins = new Map(), networkRequests = new Map(), peerOrigins = new Set();

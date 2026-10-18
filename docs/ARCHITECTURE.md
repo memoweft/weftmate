@@ -10,7 +10,7 @@
 2. 主进程创建 `DshWebRuntime`，明确使用产品固定的 DSH（助手运行时）产物。开发树与安装包的产物来源不同，固定依赖身份由 [dsh-pin.json](../tests/contract/dsh-pin.json) 与构建产物清单约束；不能借用本机另一份源码判断安装版能力。
 3. 个人宿主通过 `startPersonalHost()` 启动运行时，迁移模型路由并恢复会话绑定。`ensureSharedRuntime()` 管理同一运行时实例，不为每个模型另起一套 DSH。
 4. 主进程用 `createPersonalAccessBackend()` 组装运行时回调，用 `createPersonalAccessService()` 恢复账户私有存储并组装业务服务。工厂恢复存储，`start()` 才开始监听环回地址。
-5. 个人服务就绪后，桌面模式由 [personal-desktop.mjs](../src/personal-desktop.mjs) 创建窗口，加载个人网页；无窗口模式保留同一宿主服务。非个人宿主分支加载 DSH 自身界面，不能把两种界面入口混为一谈。
+5. 桌面模式先由 [personal-desktop.mjs](../src/personal-desktop.mjs) 创建主窗口，[desktop-startup.mjs](../src/desktop-startup.mjs) 显示本地「准备中」页面。凭据初始化与首窗绘制并行；没有模型凭据和路由、没有备份恢复或手机运行组件的新目录，同时启动同一个 DSH。已有凭据和旧版迁移仍按原顺序执行。个人服务就绪后，同一个窗口接入原有鉴权和个人网页。首次启动仍须等 Chromium 将主密钥写入 `Local State`，通过持久密钥认证、刷盘和关闭文件后才允许保存凭据；失败时保留错误说明，不开放业务页面。托盘启动保持隐藏，准备期间关窗仍收进托盘。无窗口模式保留同一宿主服务；非个人宿主分支加载 DSH 自身界面。
 6. 退出由 `before-quit` 复用同一个异步收尾过程，关闭个人服务、后台工作、记忆与运行时后才放行；运行日志由 [host-log.mjs](../src/host-log.mjs) 记录生命周期与安全诊断。
 
 安装包的运行时组件、记忆启用条件和验收缺口分别见 [记忆运行时说明](../scripts/memory-runtime/README.md) 与 [MEMORY](MEMORY.md)。内置组件不等于全新安装已自动启用记忆。
