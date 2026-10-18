@@ -163,10 +163,11 @@
     value.tasks??=[];
     value.pendingMessages??=[];
     let queueFlight, closed=false, activeConversationId=null, queueError='';
+    const memoryConversations = new Set();
     value.phoneMemory??=globalThis.WeftPhoneMemory?.fresh();value.forgetConversations??=[];
     let memoryFlight,memoryEpoch=0,memoryAbort;
     if(value.snapshot)targets=await vault.targets?.(value.snapshot.control.accountId)||[value.snapshot];
-    const view = () => ({ ...value, targets, activeConversationId, queueError, ready:phoneModel?!!phoneModel():!!value.snapshot, chatReady:phoneModel?!!phoneModel():!!value.snapshot?.model,taskReady:cloudTasksSupported&&!!tasks&&!!vault.seal&&!!value.snapshot?.taskRecipient, taskSending, running:running||taskSending||!!queueFlight });
+    const view = () => ({ ...value, targets, activeConversationId, queueError, queueRetryAvailable:!!queueError&&value.pendingMessages.length>0, ready:phoneModel?!!phoneModel():!!value.snapshot, chatReady:phoneModel?!!phoneModel():!!value.snapshot?.model,taskReady:cloudTasksSupported&&!!tasks&&!!vault.seal&&!!value.snapshot?.taskRecipient, taskSending, running:running||taskSending||!!queueFlight });
     const persist = async () => { await vault.save(value); notify(view()); };
     async function clear() { const accountId=value.snapshot?.control?.accountId;version++;memoryEpoch++;memoryAbort?.abort();cloudTasksSupported=false; abort?.abort(); value = {...empty(),pendingMessages:[]};targets=[];await vault.clearAccount?.(accountId);await vault.clear(); notify(view()); }
     async function clearReplica() {
@@ -328,16 +329,17 @@
       const pending = {id:crypto.randomUUID(), conversationId:conversation.id, text:text.trim(), timestamp:Date.now()};
       if (intent === 'steer' && running && activeConversationId === conversation.id) value.pendingMessages.unshift(pending);
       else value.pendingMessages.push(pending);
+      if(queueError)queueError=queueFailureMessage();
       const ticket = version;
       await persist();
       if (ticket !== version || closed) fail('OFFLINE_RESET_REQUIRED');
-      queueError='';
       if (intent === 'steer' && running && activeConversationId === conversation.id) abort?.abort();
       resumeQueue();
       return {conversationId:conversation.id, requestId:pending.id};
     }
     function resumeQueue() {
-      if (queueFlight || running || closed || !phoneModel?.() || !value.pendingMessages.length || queueError) return;
+      if (queueFlight || running || closed || !value.pendingMessages.length || queueError) return;
+      if (phoneModel && !phoneModel()) { queueError=queueFailureMessage();notify(view());return; }
       const ticket = version;
       // Defer the worker until queueFlight is installed, including synchronous failures.
       queueFlight = Promise.resolve().then(async () => {
@@ -347,14 +349,27 @@
           catch (error) {
             if (closed || ticket !== version) return;
             if (error.name !== 'AbortError' && error.message !== 'CANCELLED') {
-              queueError='回复未完成，已保留消息。请检查网络或模型配置后重试。';
-              // A preflight failure has not consumed this input. Keep it for retry.
-              if (value.pendingMessages.some(row => row.id === pending.id)) break;
+              queueError=queueFailureMessage();
+              break;
             }
           }
         }
       }).finally(() => { queueFlight=null; notify(view()); });
       notify(view());
+    }
+    function queueFailureMessage() {
+      return value.pendingMessages.length
+        ? '回复没能完成，待发消息已保留。请检查网络或模型设置，再点「重试排队消息」。'
+        : '回复未完成，生成的文字已保留。请检查网络或模型设置后重试回复。';
+    }
+    function retryQueue() {
+      if (closed || running || queueFlight) return;
+      queueError='';
+      resumeQueue();
+      notify(view());
+    }
+    function takeMemoryConversations() {
+      const ids=[...memoryConversations];memoryConversations.clear();return ids;
     }
     async function send(text, conversationId = null, pendingId = null) {
       if(!value.snapshot?.model&&!phoneModel)fail('OFFLINE_MODEL_REQUIRED');
@@ -395,6 +410,7 @@
         if (pendingId) value.pendingMessages = value.pendingMessages.filter(row => row.id !== pendingId);
         activeConversationId = conversation.id;
         await persist();
+        memoryConversations.add(conversation.id);
         if(ticket!==version)fail('OFFLINE_RESET_REQUIRED');
         // Existing native offline.complete consumes JSON. The account-owned
         // phone transport supplies its own streaming completion method.
@@ -472,7 +488,7 @@
       }
       if (changed) await persist();
     }
-    return { view, sync, send, enqueue, resumeQueue, regenerate, check, clear, extractMemory,memoryChange,removeConversation,submitTask, retryTask, cancelTask, refreshTasks, clearTasks, declineWork, saveComposer: async (conversationId, draft) => { value.nativeDrafts ??= {}; value.nativeDrafts[conversationId || 'new'] = draft; value.nativeComposer = { conversationId, draft }; await persist(); }, stop: () => abort?.abort(), close: () => { closed=true;version++;memoryEpoch++;memoryAbort?.abort();abort?.abort(); vault.close(); } };
+    return { view, sync, send, enqueue, resumeQueue, retryQueue, takeMemoryConversations, regenerate, check, clear, extractMemory,memoryChange,removeConversation,submitTask, retryTask, cancelTask, refreshTasks, clearTasks, declineWork, saveComposer: async (conversationId, draft) => { value.nativeDrafts ??= {}; value.nativeDrafts[conversationId || 'new'] = draft; value.nativeComposer = { conversationId, draft }; await persist(); }, stop: () => abort?.abort(), close: () => { closed=true;version++;memoryEpoch++;memoryAbort?.abort();abort?.abort(); vault.close(); } };
   }
   globalThis.WeftOffline = { create, browserVault, nativeVault, recall, requestBody, readCompletion, encode, decode };
 })();
