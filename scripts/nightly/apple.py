@@ -29,6 +29,8 @@ def main():
     parser.add_argument('--commit', required=True)
     parser.add_argument('--seconds', type=int, default=4500)
     parser.add_argument('--candidate', action='store_true')
+    parser.add_argument('--worktree', required=True)
+    parser.add_argument('--repository', required=True)
     args = parser.parse_args()
     if not re.fullmatch(r'[A-Za-z0-9-]+', args.run_id) or not re.fullmatch(r'[a-f0-9]{40}', args.commit):
         parser.error('Invalid run identity')
@@ -40,8 +42,10 @@ def main():
     lock = control / 'nightly.lock'
     status = {'status': 'passed', 'reason': '', 'platformResults': {name: {'status': 'not-run'} for name in ['mac', 'iphone', 'watch']}}
     cleanup = {'createdDevices': [], 'deletedDevices': [], 'processesStopped': 0, 'bootedOwnedRemaining': []}
-    tree = Path.home() / 'Desktop/WeftMate/weftmate-nightly'
-    origin = Path.home() / 'Desktop/WeftMate/weftmate'
+    tree = Path(args.worktree).resolve()
+    origin = Path(args.repository).resolve()
+    if tree == origin or tree.name != 'weftmate-nightly':
+        parser.error('Use a dedicated worktree named weftmate-nightly')
     owned_lock = False
     processes = []
     devices = []

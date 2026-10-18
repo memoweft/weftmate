@@ -111,7 +111,7 @@ try {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
-  const config = await productionConfigFromTask({ sourceTaskScript: join(repository, 'scripts/run-personal-host-task.ps1'), dataDirectory: profile, rehearsal: true });
+  const config = await productionConfigFromTask({ sourceTaskScript: join(repository, 'scripts/run-personal-host-task.ps1'), runtimeDirectory: root, dataDirectory: profile, rehearsal: true });
   saveDesktopConfig(configFile, config);
   console.log('Starting source rehearsal, with offline network boundary');
   const sourceRun = await start(false); report.sourceRuntimeReady = sourceRun.status.backend?.runtime;

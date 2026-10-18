@@ -2,9 +2,9 @@
 param(
     [ValidateRange(1, 240)][int]$MaxMinutes = 90,
     [ValidateRange(0, 1)][double]$DiffThreshold = 0.08,
-    [string]$Worktree = 'D:\AIProjects\WeftMate\Worktrees\nightly',
-    [string]$ReportRoot = 'D:\AIProjects\WeftMate\Runtime\Nightly',
-    [string]$Orchestrator = 'D:\AIProjects\WeftMate\Runtime\Orchestrator',
+    [Parameter(Mandatory)][string]$Worktree,
+    [Parameter(Mandatory)][string]$ReportRoot,
+    [Parameter(Mandatory)][string]$Orchestrator,
     [string]$MacHost = 'mac',
     # Validation before merge: use the current package commit in both dedicated trees.
     [switch]$Candidate,
