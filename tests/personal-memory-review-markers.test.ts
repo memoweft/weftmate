@@ -6,9 +6,11 @@ import { tmpdir } from 'node:os';
 import { createMemoryCommandJournal } from '../src/personal-memory/journal.mjs';
 import { createMemoryActions } from '../src/personal-memory/actions.mjs';
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs';
+import { createHash } from 'node:crypto';
 
 const owner = 'owner-00000000-0000-4000-8000-000000000001';
 const secret = 'SYNTHETIC-PENDING-DELETE-SOURCE';
+const sourceRef = (text, sessionId) => ({ textHash: createHash('sha256').update(text).digest('hex'), evidenceId: `evidence-${sessionId}`, sessionIds: [sessionId] });
 async function noCopies(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const file = join(directory, entry.name);
@@ -16,6 +18,83 @@ async function noCopies(directory) {
     else { assert.equal((await readFile(file)).includes(Buffer.from(secret)), false, `plaintext in ${entry.name}`); assert.equal(entry.name.endsWith('.tmp'), false); }
   }
 }
+
+test('review scope: an uncorrected pending deletion loses session text across restart and retry', { timeout: 15000 }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-uncorrected-marker-'));
+  let journal = createMemoryCommandJournal({ root });
+  const proposal = { ownerId: owner, requestId: 'ordinary-delete', operation: 'delete_world_item', targetKind: 'cognition', targetId: 'ordinary-target', expectedWorldRevision: 1, payload: {},
+    cleanup: { sourceTexts: [secret], sourceRefs: [sourceRef(secret, 'session-a')], deleteConversationSnippets: true } };
+  try {
+    const before = await journal.reserve(proposal);
+    await journal.redactTargets(owner, [], { sessionId: 'session-a' });
+    await journal.close(); journal = createMemoryCommandJournal({ root });
+    const after = await journal.reserve(proposal);
+    assert.deepEqual(after.command, before.command); assert.deepEqual(after.cleanup.sourceTexts, []);
+    await noCopies(root);
+  } finally { await journal.close(); await rm(root, { recursive: true, force: true }); }
+});
+
+for (const scope of ['session', 'source', 'context']) test(`review scope: ${scope} withdrawal preserves another session's correction and pending deletion on the same target`, { timeout: 20000 }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-marker-local-scope-'));
+  const kept = 'SYNTHETIC-RETAINED-SESSION-B', journal = createMemoryCommandJournal({ root });
+  const correction = (sessionId, text) => ({ ownerId: owner, requestId: `correct-${sessionId}`, operation: 'correct_world_item', targetKind: 'cognition', targetId: 'shared-target', expectedWorldRevision: 1,
+    payload: { correction_text: text, source: { session_id: sessionId, content: text } } });
+  const methods = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary', 'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance', 'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup', 'erase_conversation_context'];
+  const submitted = [], cleanupInputs = [];
+  let blocked = true;
+  const manager = createPersonalMemoryManager({ root, enabled: true, python: join(root, 'synthetic-python'), pythonPath: root,
+    baseUrl: 'http://127.0.0.1:1/v1', model: '@current', credential: () => 'synthetic',
+    cleanupDeletedMemory: async (_owner, input) => { cleanupInputs.push(input); },
+    rpcFactory: () => ({ child: {}, async close() {}, async request(method, params = {}) {
+      if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods };
+      if (method === 'initialize') return { runtime: { subject_id: owner, db_path: join(params.dsh_home, 'memoweft/memoweft.sqlite3') }, capabilities: { subject_id: owner, methods, services: { command: { correction_source: true, operations: ['correct_world_item', 'delete_world_item'] } } } };
+      if (method === 'health') return { runtime: { subject_id: owner, route_ready: true } };
+      if (method === 'query_world') return { world_revision: 1 };
+      if (method === 'erase_conversation_context') return { affected_ids: [] };
+      if (method === 'query_command_receipt') throw Object.assign(Error('no receipt'), { code: 'command_receipt_not_found' });
+      if (method === 'submit_command') {
+        if (blocked && params.command.operation === 'correct_world_item') throw Object.assign(Error('synthetic write unavailable'), { code: 'MEMORY_BUSY' });
+        submitted.push(params.command); return { receipt: { result_state: 'applied', affected_ids: [] } };
+      }
+      return {};
+    } }) });
+  const actionB = { requestId: 'queued-b', name: 'memory_correct', sessionId: 'session-b', arguments: { kind: 'cognition', id: 'shared-target', text: kept, sourceQuote: kept },
+    source: { text: kept, message: { message_id: 'message-b', content: kept } } };
+  const pendingFile = join(root, 'accounts', owner, 'memory-home/pending-actions.json');
+  try {
+    await journal.reserve(correction('session-a', secret));
+    assert.equal((await manager.mutateFromTool(owner, actionB)).state, 'queued');
+    const commandB = JSON.parse(await readFile(pendingFile, 'utf8')).records['queued-b'].command;
+    await journal.reserve({ ownerId: owner, requestId: 'mixed-delete', operation: 'delete_world_item', targetKind: 'cognition', targetId: 'shared-target', expectedWorldRevision: 1, payload: {},
+      cleanup: { sourceTexts: [secret, kept], sourceRefs: [sourceRef(secret, 'session-a'), sourceRef(kept, 'session-b')], deleteConversationSnippets: true } });
+    if (scope === 'context') await manager.eraseConversationContext(owner, 'session-a');
+    else await manager.discardPendingSources(owner, scope === 'session' ? { sessionId: 'session-a' } : { sourceTexts: [secret] });
+    assert.deepEqual((await journal.get(owner, 'mixed-delete')).cleanup.sourceTexts, [kept]);
+    assert.deepEqual((await journal.get(owner, 'correct-session-a')).command.payload, {});
+    assert.deepEqual((await journal.get(owner, commandB.requestId)).command.payload, commandB.payload);
+    assert.equal(JSON.parse(await readFile(pendingFile, 'utf8')).records['queued-b'].arguments.text, kept);
+    await noCopies(root);
+    blocked = false;
+    assert.equal((await manager.mutateFromTool(owner, actionB)).state, 'applied');
+    assert.equal(submitted.length, 1);
+    const deletion = await journal.get(owner, 'mixed-delete');
+    await manager.submitCommand(owner, { requestId: deletion.requestId, operation: 'delete_world_item', targetKind: 'cognition', targetId: 'shared-target', expectedWorldRevision: 1, payload: {} });
+    assert.equal(submitted.length, 2); assert.deepEqual(cleanupInputs.at(-1).sourceTexts, [kept]);
+    await noCopies(root);
+  } finally { await manager.close(); await journal.close(); await rm(root, { recursive: true, force: true }); }
+});
+
+for (const legacy of [true, false]) test(`review scope: ${legacy ? 'legacy' : 'unresolved'} source provenance is scrubbed without losing the deletion receipt`, { timeout: 15000 }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-unknown-source-')), journal = createMemoryCommandJournal({ root });
+  try {
+    const before = await journal.reserve({ ownerId: owner, requestId: 'unknown-source', operation: 'delete_evidence', targetKind: 'evidence', targetId: 'unknown-evidence', expectedWorldRevision: 1, payload: {},
+      cleanup: { sourceTexts: [secret], ...(legacy ? {} : { sourceRefs: [{ ...sourceRef(secret, 'unused'), sessionIds: [] }] }), deleteConversationSnippets: true } });
+    await journal.redactTargets(owner, [], { sessionId: 'withdrawn-session' });
+    const after = await journal.get(owner, before.requestId);
+    assert.deepEqual(after.command, before.command); assert.deepEqual(after.cleanup.sourceTexts, []);
+    assert.equal(after.cleanup.deleteConversationSnippets, true); await noCopies(root);
+  } finally { await journal.close(); await rm(root, { recursive: true, force: true }); }
+});
 
 for (const scope of ['target', 'source', 'session']) test(`pending deletion marker loses withdrawn ${scope} text but keeps its command identity`, { timeout: 15000 }, async () => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-delete-marker-'));
@@ -26,7 +105,7 @@ for (const scope of ['target', 'source', 'session']) test(`pending deletion mark
     const original = await journal.reserve(deletion);
     await journal.reserve({ ownerId: owner, requestId: 'source-correction', operation: 'correct_world_item', targetKind: 'cognition', targetId: 'forgotten-target', expectedWorldRevision: 6,
       payload: { correction_text: secret, source: { session_id: 'withdrawn-session', content: secret } } });
-    await journal.reserve({ ...deletion, requestId: 'unrelated-delete', targetId: 'unrelated-target', cleanup: { sourceTexts: ['UNRELATED-SOURCE'], deleteConversationSnippets: false } });
+    await journal.reserve({ ...deletion, requestId: 'unrelated-delete', targetId: 'unrelated-target', cleanup: { sourceTexts: ['UNRELATED-SOURCE'], sourceRefs: [sourceRef('UNRELATED-SOURCE', 'unrelated-session')], deleteConversationSnippets: false } });
     await journal.redactTargets(owner, scope === 'target' ? ['forgotten-target'] : [],
       scope === 'source' ? { sourceTexts: [secret] } : scope === 'session' ? { sessionId: 'withdrawn-session' } : {});
     const redacted = await journal.get(owner, deletion.requestId);
