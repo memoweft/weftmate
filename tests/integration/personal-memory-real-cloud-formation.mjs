@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Isolated real MiMo chat -> real Core formation -> new cloud turn recall. */
 import assert from 'node:assert/strict';
@@ -13,8 +14,8 @@ if (process.platform !== 'win32' || process.env.WEFTMATE_STAGE15_REAL_CLOUD_MEMO
   throw new Error('Set WEFTMATE_STAGE15_REAL_CLOUD_MEMORY_E2E=1 for this bounded real MiMo acceptance.');
 }
 const repository = dirname(fileURLToPath(new URL('../../package.json', import.meta.url)));
-const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
-const pythonPath = 'D:/AIProjects/MemoWeft/Core/py/src';
+const python = requireMemoWeftPath('python');
+const pythonPath = requireMemoWeftPath('source');
 const privateRoot = realpathSync(join(repository, '..', 'Runtime', 'UnifiedAssistant', 'private-model-tests'));
 const keyPath = process.env.WEFTMATE_STAGE15_MIMO_DPAPI_PATH;
 if (!keyPath || !isAbsolute(keyPath) || basename(keyPath) !== 'mimo-v2.6-flash.dpapi' ||
