@@ -11,6 +11,7 @@ import { randomUUID, createHash } from 'node:crypto';
 import { phoneRuntime } from '../../services/cloud/test/relay-phone-runtime.mjs';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
+import { modelReasoning } from '../../src/model-reasoning.mjs';
 import { cleanupOwnedProcesses, redactEvidenceText } from '../helpers/process-evidence.mjs';
 for (const stream of [process.stdout, process.stderr]) stream.on('error', error => { if (error.code !== 'EPIPE') throw error; });
 
@@ -69,7 +70,7 @@ try {
       let raw = ''; for await (const chunk of req) raw += chunk;
       const body = JSON.parse(raw);
       const record = { stage, messages: body.messages.map(m => ({ role: m.role, text: textOf(m),
-        ...(m.tool_calls ? { toolCalls: m.tool_calls.map(c => c.function.name) } : {}) })), tools: body.tools?.map(t => t.function.name) };
+        ...(m.tool_calls ? { toolCalls: m.tool_calls.map(c => c.function.name) } : {}) })), tools: body.tools?.map(t => t.function.name), thinking: body.thinking };
       report.requests.push(record);
       const controller = new AbortController(); res.on('close', () => controller.abort());
       const response = await fetch('https://api.xiaomimimo.com/v1/chat/completions', {
@@ -87,6 +88,14 @@ try {
   });
   await new Promise(r => proxy.listen(0, '127.0.0.1', r));
   runtime = await phoneRuntime(root, logs, { baseUrl: `http://127.0.0.1:${proxy.address().port}/v1`, modelId: 'mimo-v2.6-flash', apiKey: 'proxy-only', nativeTaskStop: true });
+  // The recording URL is local. Preserve the official model's production wire
+  // declaration instead of accidentally treating it as an unknown model.
+  const declaration = modelReasoning({ baseUrl: 'https://api.xiaomimimo.com/v1', model: 'mimo-v2.6-flash' });
+  const modelPatchPath = join(root, 'dsh-home', 'model.yml');
+  const modelPatch = await readFile(modelPatchPath, 'utf8');
+  await writeFile(modelPatchPath, modelPatch.replace('id: mimo-v2.6-flash\n', 'id: mimo-v2.6-flash\n'
+    + `            reasoningEfforts: ${JSON.stringify(declaration.reasoningEfforts)}\n            compat: ${JSON.stringify(declaration.compat)}\n`));
+  report.reasoningDeclaration = declaration;
   const relayState = runtime.backend.chatRelayState;
   runtime.backend.chatRelayState = async input => { const state = await relayState(input); return forceRelay ? { ...state, pending: true } : state; };
   const install = runtime.backend.installChatHandoff;
@@ -118,10 +127,21 @@ try {
   app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: repository, timeout: 30000,
     args: ['scripts/review-gallery/electron.mjs', '--disable-backgrounding-occluded-windows', '--disable-features=CalculateNativeWinOcclusion'], env });
   page = await app.firstWindow(); page.setDefaultTimeout(90000);
-  await page.addInitScript(() => { let module; Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true, get: () => module, set: value => {
+  await page.addInitScript(() => {
+    // Exercise foreground renderer polling while the owned OS window remains
+    // hidden, as required for unattended local acceptance.
+    Object.defineProperty(document, 'visibilityState', { get: () => 'visible' });
+    Object.defineProperty(document, 'hidden', { get: () => false });
+    let module; Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true, get: () => module, set: value => {
     module = value; const create = value.create; value.create = (...args) => { globalThis.w4Core = create(...args); return globalThis.w4Core; }; } }); });
   await page.context().addCookies([{ name: 'wm_personal_session', value: cookie.slice(cookie.indexOf('=') + 1), url: started.origin }]);
   await page.goto(started.origin + '/personal/v1/ui/'); await page.waitForFunction(() => globalThis.w4Core?.state.personalCapabilities?.workAndChat === 1);
+  await app.evaluate(({ BrowserWindow }) => { const window = BrowserWindow.getAllWindows()[0];
+    assertHidden(window); window.webContents.send('wm:desktop:visibility', false);
+    function assertHidden(window) { if (window.isVisible()) throw Error('W4 window unexpectedly visible'); }
+  });
+  await page.waitForFunction(() => w4Core.foreground() && w4Core.state.background === false);
+  report.rendererVisibility = 'foreground visibility simulated; OS window remains hidden';
   const events = async id => { const page = await api(`/sessions/${id}/events?limit=200`); return [...page.events, ...(page.liveEvents ?? [])]; };
   const command = async body => {
     const submitted = (await api('/commands', { requestId: randomUUID(), targetDeviceId: started.hostId, ...body })).command;
@@ -140,7 +160,7 @@ try {
     if (scenario === '431') {
       await page.evaluate(async () => { await w4Core.refreshLogicalSessions(); await w4Core.selectMainChat(); });
       const chatId = (await api('/chats/main')).chat.chatId;
-      const long = await command({ kind: 'chat.message', chatId, modelProfileId: 'synthetic', text: '只用纯文字回答，不用工具，不要列任务计划：请写一篇6000字的合成科普文章，主题是光合作用。直接开始正文。\n合成背景材料：\n' + '合成记录：植物在光照下利用水和二氧化碳形成有机物。\n'.repeat(60) });
+      const long = await command({ kind: 'chat.message', chatId, modelProfileId: 'synthetic', text: '只用纯文字，把“合成测试长回复。”连续重复500遍，不用工具，不要列任务计划，直接开始正文。\n合成背景材料：\n' + '合成记录：这些内容仅用于独立测试对话的上下文整理。\n'.repeat(60) });
       await page.evaluate(async () => { await w4Core.refreshLogicalSessions(); await w4Core.selectMainChat(); });
       await until(async () => (await events(long.sessionId)).some(e => e.type === 'assistant.delta' && e.data.streaming === true && e.data.text.length > 200), 'long reply streaming');
       console.log('W4 431: live long reply observed');
@@ -156,7 +176,7 @@ try {
     } else { await page.evaluate(() => w4Core.startNewConversation()); }
     const request = scenario === '431'
       ? 'G7-W3：请帮我把一个合成文件夹里的文件按扩展名分别放入子文件夹。需要先切换到工作并由我选择文件夹，只动选定的合成目录，不处理其他位置。'
-      : '请把我接下来选择的合成文件夹中的文件，按扩展名分别放入同名子文件夹，保留文件名和内容，只动选定的目录。';
+      : '请把我接下来选择的合成文件夹中的文件，按扩展名分别放入同名子文件夹，保留文件名和内容，只动选定的目录。请直接在选定目录下创建 txt、csv、md 子文件夹，不再包一层总目录，不新增脚本或报告。';
     await page.locator('#message-text').fill(request); await page.locator('#send-message').click();
     console.log(`W4 ${scenario}: file request sent`);
     const region = page.getByRole('region', { name: '切换到工作', exact: true }); await region.waitFor();
@@ -182,6 +202,7 @@ try {
     const finalFiles = await snapshot(folder);
     assert.deepEqual(Object.keys(finalFiles).sort(), ['csv/data.csv', 'md/readme.md', 'txt/note.txt']);
     assert.equal(await page.evaluate(() => w4Core.state.selectedSessionId), identity.sessionId);
+    assert.equal(await page.evaluate(() => w4Core.state.selectedChatId), identity.chatId);
     await until(async () => (await events(identity.sessionId)).some(e => e.type === 'turn.ended'), 'task completed');
     const history = await events(identity.sessionId);
     assert.equal(history.filter(e => e.type === 'user.message' && e.data.text === request).length, 1);
