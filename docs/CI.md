@@ -16,6 +16,8 @@
 
 ## 合并与红灯处理
 
+CSR 的常规云测试固定核验 32 把 P-256 密钥（含标量 111 和前导零用例）；完整 10,000 把随机密钥及独立 OpenSSL 核验位于 `services/cloud/stress/host-csr.test.mjs`，由 S2b 明确运行，不进入常规 `test/*.test.mjs`，避免每次重复启动一万次 OpenSSL。两处共用同一组公钥、域名和签名断言；专用核验的数量与期限不变。
+
 合并前，必须把最新 main 合入工作分支，等待该合并结果的全部云端检查通过；单个工作包此前通过不能替代合并结果通过。合主线后的检查也全部核对，由编排者收取结果。计时清单内一次恢复仍须在结果中明示，不能称为首次全绿。
 
 遇到红灯，先保存运行 ID（标识）、提交、平台、文件、用例、历史尝试与失败日志；重跑成功不删除原失败。`node .github/scripts/ci-post-merge-survey.mjs <起点 UTC（协调世界时）>` 按固定起点采集 CI、Review gallery（审稿画廊）、Windows packaged application（打包程序）、S1c、S2、S2b 与 Pinned DSH vendor tests（固定运行时测试）。公开证据清理机器身份；原始日志留本包 `.local`。
