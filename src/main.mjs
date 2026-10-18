@@ -559,6 +559,7 @@ function startStageOneEvents(sessionId) {
 /** 把窗口唤到前台(托盘点击 / 第二实例 / 菜单"显示")。 */
 function showWindow() {
   if (personalDesktop) { personalDesktop.show(); return; }
+  if (desktopStartup) { desktopStartup.show(); return; }
   if (!win || win.isDestroyed()) return;
   if (win.isMinimized()) win.restore();
   win.show();
@@ -1478,6 +1479,8 @@ async function bootstrap() {
     win = preparedDesktopWindow.window;
     trackUserInterfaceReady(win);
     desktopStartup = createDesktopStartup(win, {
+      restoreBounds: preparedDesktopWindow.restoreBounds,
+      lifecycle: preparedDesktopWindow.lifecycle,
       maximized: preparedDesktopWindow.saved.maximized === true,
       startInTray: process.argv.includes('--start-in-tray') || process.platform === 'darwin' && app.isPackaged && app.getLoginItemSettings().wasOpenedAtLogin,
       isQuitting: () => isQuitting,
@@ -3864,8 +3867,11 @@ app.on('before-quit', (e) => {
   try { accessClosing = personalAccessService?.close?.() ?? null; }
   catch (error) { shutdownFailed = true; logCrash('shutdown-personal-access', error); }
 
+  const boundsClosing = preparedDesktopWindow?.close();
   shutdownPromise = (async () => {
     let backupSafe = true;
+    try { await boundsClosing; }
+    catch (error) { logCrash('shutdown-window-bounds', error); }
     // A user can now quit during the original bounded readiness operation.
     // Wait for its proof child to close before allowing Electron to exit.
     await credentialInitialization?.catch(() => {});

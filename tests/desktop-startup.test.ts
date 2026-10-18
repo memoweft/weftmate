@@ -38,3 +38,24 @@ test('normal startup restores saved maximization before showing the preparation 
  const startup=createDesktopStartup(f.window,{...f.options,maximized:true});f.load();await startup.ready;
  assert.deepEqual(order,['maximize','show']);
 });
+
+test('preparation loads immediately but activation waits for geometry, independently of credentials',async()=>{
+ const f=fixture(),order:string[]=[],lifecycle={stopped:false,maximizeOnShow:true};let restore;
+ f.window.maximize=()=>order.push('maximize');f.window.show=()=>order.push('show');
+ const startup=createDesktopStartup(f.window,{...f.options,lifecycle,restoreBounds:new Promise(resolve=>{restore=resolve;})});
+ startup.show();f.load();await new Promise(resolve=>setImmediate(resolve));
+ assert.deepEqual(order,[],'early activation must not maximize constructor geometry');
+ restore(true);await startup.ready;assert.deepEqual(order,['maximize','show']);
+ assert.equal(lifecycle.maximizeOnShow,false,'business handoff shares the consumed maximize request');
+});
+test('terminal cancellation shared with the window owner suppresses late fallback and activation',async()=>{
+ const f=fixture(),lifecycle={stopped:false,maximizeOnShow:true};let restore;
+ f.window.maximize=()=>{throw Error('late maximize');};
+ const startup=createDesktopStartup(f.window,{...f.options,lifecycle,restoreBounds:new Promise(resolve=>{restore=resolve;})});
+ startup.show();f.load();lifecycle.stopped=true;restore(false);await startup.ready;startup.show();
+ assert.equal(f.window.shown,0);assert.equal(lifecycle.maximizeOnShow,true);
+});
+test('a failed bounded geometry restore opens the fallback even for a tray launch',async()=>{
+ const f=fixture(),startup=createDesktopStartup(f.window,{...f.options,startInTray:true,restoreBounds:Promise.resolve(false)});
+ f.load();await startup.ready;assert.equal(f.window.shown,1);
+});
