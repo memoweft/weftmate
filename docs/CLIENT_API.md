@@ -367,6 +367,8 @@ M3安全边界：DELETE在提交前，绑定当前owner、选中对象、Core预
 
 FG-1：遗忘按来源级联清除 Evidence（来源证据）、依赖理解、关系和无剩余依据的人物／别名，清除 Core（记忆核心）派生上下文、宿主注入／采用标记、投影及纠正日志副本。SQLite（嵌入式数据库）清理使用 `secure_delete` 和 WAL（预写日志）截断；`storageCleanup.state=pending` 表示仍有底层或宿主清理待完成，不能宣称不可恢复。原请求回执和 `retry-cleanup` 可在重启后继续核对。
 
+`GET /memory/status` 可返回 `pendingCleanup:[{requestId,kind,id}]`，只包含本账户未完成的宿主清理身份，不含原文。客户端用既有 `/memory/commands/by-request/:requestId/retry-cleanup` 重试；`applied` 与 `no_change` 回执均须检查 `storageCleanup`，不能把后者误判为清理完成。勾选删除聊天原话时，宿主预先保存不含原文的事件定位，实际擦除并重新读取核对后才返回 `complete`；失败保留 `pending` 及重试入口，新打开的记忆页也可从状态恢复该入口。未新增业务路径或权限。
+
 D33：`deleteConversationSnippets` 默认 `false`。桌面、手机网页及手机界面的记忆页「忘掉」确认框先列出级联记忆名称与数量；删除对话勾选遗忘时显示汇总数量。两类确认框均提供「同时删除对话里含这句话的原话」，每次打开默认不勾。显式 `true` 才另外清除该账户原生会话日志／个人命令记录中含来源原话的文字，保留会话及其他片段。Core 自己的原话副本无论是否勾选均清除；无关证据的前置 AI 上下文原样保留。预览只读，不创建回执、不递增修订、不调用模型；预览失败或修订与详情不一致时不可确认。记忆删除沿用 `expectedWorldRevision`，会话删除传 `memoryWorldRevision`；修订变化返回409 `MEMORY_REVISION_CHANGED`，需要重新核对。选项属于原请求身份的一部分，重试不得改变。默认保留的对话原文和过去已生成的备份可含原话；专用记忆导出始终排除被遗忘的正式记忆。若随后删除相应对话，新的 BK-1 备份也应不再包含这些对话与记忆的副本。
 
 桌面导出通过受限的原生保存接口选择文件位置，文件正文仍来自上述已鉴权 `/personal/v1/memory/export`；保存对话框结束后重新取当前导出并核对账户，防止保存期间切换账户或遗忘后写出旧内容。浏览器使用网页下载。

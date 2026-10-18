@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, realpath, rm, readFile, writeFile } from 'node:fs/promises'
+import { mkdtemp, realpath, rm, readFile, readdir, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -33,7 +33,7 @@ function boundary(text: string, sessionId: string) {
   ]
   return assertOwnerBoundBoundary(sessionId, boundaryForCompletedTurn({ id: sessionId, header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))
 }
-async function fixture(t: any, { interpret = null, misattribute = false, birthdayContract = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。' }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, birthdayContract?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string } = {}) {
+async function fixture(t: any, { interpret = null, misattribute = false, birthdayContract = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。', cleanupDeletedMemory = null }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, birthdayContract?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string, cleanupDeletedMemory?: ((owner: string, input: any) => Promise<void>) | null } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
   let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false, unavailableText = ''
   let recoveryGate: { entered: () => void, pending: Promise<void> } | null = null
@@ -87,7 +87,7 @@ async function fixture(t: any, { interpret = null, misattribute = false, birthda
   const baseUrl = `http://127.0.0.1:${(server.address() as any).port}/v1`
   const route = () => ({ profileId: 'synthetic', baseUrl, model: 'synthetic', credential: 'synthetic', routeFingerprint: null, modelTier: 'cloud' })
   const create = (dataRoot = root) => createPersonalMemoryManager({ root: dataRoot, enabled: true, python, pythonPath, baseUrl, model: '@current', credential: () => 'synthetic',
-    processingRoute: route, defaultProcessingRoute: route, rpcFactory: options => {
+    processingRoute: route, defaultProcessingRoute: route, cleanupDeletedMemory, rpcFactory: options => {
       const rpc = new MemoWeftRpc(options), request = rpc.request.bind(rpc)
       rpc.request = async (...args: Parameters<MemoWeftRpc['request']>) => {
         if (args[0] === 'query_jobs' && recoveryGate) {
@@ -989,10 +989,26 @@ test('review-1 real Core: deletion ends a queued correction instead of blocking 
   assert.equal(pending.state, 'queued')
   // Keep this correction unavailable until the real page deletion commits;
   // otherwise the recovery timer can win first on a fast CI machine.
-  f.holdCorrections(true); f.offline(false)
-  const deleted = await f.manager.submitCommand(owner, { requestId: 'delete-before-retry', operation: 'delete_world_item', targetKind: 'cognition',
-    targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
-  assert.equal(deleted.receipt.result_state, 'applied')
+  f.holdCorrections(true)
+  let entered!: () => void, release!: () => void, held = false
+  const started = new Promise<void>(resolve => { entered = resolve })
+  const released = new Promise<void>(resolve => { release = resolve })
+  const query = f.manager.query.bind(f.manager)
+  const hook = t.mock.method(f.manager, 'query', async (...args: any[]) => {
+    const result = await query(...args)
+    if (!held && args[1] === 'query_world' && args[2]?.operation === 'revision') {
+      held = true; entered(); await released
+    }
+    return result
+  })
+  try {
+    f.offline(false); await f.manager.flushPending(owner); await started
+    // The queued correction has read its old action but cannot checkpoint its
+    // command until the real Core deletion and host redaction have completed.
+    const deleted = await f.manager.submitCommand(owner, { requestId: 'delete-before-retry', operation: 'delete_world_item', targetKind: 'cognition',
+      targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
+    assert.equal(deleted.receipt.result_state, 'applied')
+  } finally { release(); hook.mock.restore() }
   await f.restart(); f.holdCorrections(false)
   // Startup has already read its empty outbox when it polls Core jobs. Enqueue
   // the new turn there and let its immediate retry fire before startup finishes.
@@ -1013,9 +1029,139 @@ test('review-1 real Core: deletion ends a queued correction instead of blocking 
   assert.equal(canceled.result.state, 'not_found')
   assert.deepEqual(canceled.arguments, {})
   assert.equal(canceled.command, undefined)
+  await writeFile(path.join(f.root, 'action-diagnostics.json'), JSON.stringify(f.trace.filter(row => row.actionTrace)))
+  async function noErasedCopies(directory: string) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const file = path.join(directory, entry.name)
+      if (entry.isDirectory()) await noErasedCopies(file)
+      else {
+        const bytes = await readFile(file)
+        for (const text of ['我喜欢喝红茶。', '纠正为红茶。']) assert.equal(bytes.includes(Buffer.from(text)), false, `erased correction remains in ${entry.name}`)
+        assert.equal(entry.name.endsWith('.tmp'), false, 'completed erasure must leave no pre-redaction temporary file')
+      }
+    }
+  }
   const recall = await f.manager.recall(owner, { query: '我喜欢喝什么茶？', sessionId: 'after-deleted-restart', modelTier: 'cloud' })
   assert.doesNotMatch(recall.contextText, /乌龙茶|红茶/, 'the canceled correction must not restore forgotten content')
   assert.deepEqual(f.errors, [])
+  // Core owns live SQLite/worker locks. Close it normally before inspecting all
+  // files, including its database, logs and any leftover temporary preimages.
+  await f.manager.close()
+  await noErasedCopies(f.root)
+})
+
+test('review-486 real Core: late query selection with different correction text is erased across restart', { skip }, async t => {
+  const f = await fixture(t), old = (await f.world()).items[0]
+  const newText = '我的饮茶偏好现在是红茶。', newSource = '以后饮品换为红茶。'
+  assert.notEqual(newText, old.value.content); assert.notEqual(newSource, old.value.content)
+  f.holdCorrections(true)
+  let entered!: () => void, release!: () => void, held = false, submitted = 0
+  const started = new Promise<void>(resolve => { entered = resolve }), released = new Promise<void>(resolve => { release = resolve })
+  const query = f.manager.query.bind(f.manager), submit = f.manager.submitCommand.bind(f.manager)
+  t.mock.method(f.manager, 'query', async (...args: any[]) => {
+    const result = await query(...args)
+    if (!held && args[1] === 'preview_recall') {
+      assert.ok(result.preview.selected_item_ids.some((pair: any[]) => pair[1] === old.item_id))
+      held = true; entered(); await released
+    }
+    return result
+  })
+  t.mock.method(f.manager, 'submitCommand', async (...args: any[]) => {
+    if (args[1].operation === 'correct_world_item') submitted++
+    return submit(...args)
+  })
+  let pending
+  try {
+    pending = f.tool('memory_correct', { query: '我喜欢喝什么茶', text: newText }, 'late-query-selection', newSource)
+    await started
+    const deleted = await f.manager.submitCommand(owner, { requestId: 'erase-during-selection', operation: 'delete_world_item',
+      targetKind: 'cognition', targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
+    assert.equal(deleted.receipt.result_state, 'applied')
+    release(); await pending; await f.restart(); await f.manager.flushPending(owner); await f.manager.close()
+    const hits: string[] = []
+    async function scan(directory: string) {
+      for (const entry of await readdir(directory, { withFileTypes: true })) {
+        const file = path.join(directory, entry.name)
+        if (entry.isDirectory()) await scan(file)
+        else {
+          const bytes = await readFile(file)
+          if ([newText, newSource].some(text => bytes.includes(Buffer.from(text)))) hits.push(entry.name)
+          assert.equal(entry.name.endsWith('.tmp'), false)
+        }
+      }
+    }
+    await scan(f.root)
+    console.log(JSON.stringify({ reproduction: 'real-core-different-source-selection', submitted, remainingFiles: hits.length }))
+    assert.deepEqual(hits, []); assert.equal(submitted, 0)
+    const rows = JSON.parse(await readFile(path.join(f.root, 'accounts', owner, 'memory-home/pending-actions.json'), 'utf8')).records
+    const row = rows['memory-tool:' + createHash('sha256').update('late-query-selection').digest('hex')]
+    assert.equal(row.result?.state, 'not_found'); assert.deepEqual(row.arguments, {}); assert.equal(row.command, undefined)
+  } finally { release(); await pending }
+})
+
+test('review scope real Core: withdrawing an uncorrected source scrubs a pending deletion after restart', { skip, timeout: 30000 }, async t => {
+  const text = '记住：我的合成收藏编号是Q486。'
+  const f = await fixture(t, { seedText: text, cleanupDeletedMemory: async () => { throw Error('synthetic host cleanup unavailable') } })
+  const world = await f.world(), old = world.items[0]
+  const deleted = await f.manager.submitCommand(owner, { requestId: 'uncorrected-delete', operation: 'delete_world_item', targetKind: 'cognition', targetId: old.item_id, expectedWorldRevision: world.world_revision, payload: {} })
+  assert.equal(deleted.receipt.result_state, 'applied'); assert.equal(deleted.receipt.storage_cleanup.state, 'pending')
+  const file = path.join(f.root, 'accounts', owner, 'memory-home/command-journal.json')
+  const initialMarker = JSON.parse(await readFile(file, 'utf8')).records['uncorrected-delete']
+  assert.ok(initialMarker.cleanup.sourceTexts.includes(text))
+  assert.equal(f.trace.filter(row => row.method === 'submit_command' && row.params.command.operation === 'correct_world_item').length, 0)
+  await f.manager.discardPendingSources(owner, { sessionId: 'remember' })
+  await assert.rejects(f.manager.eraseConversationContext(owner, 'remember'), /synthetic host cleanup unavailable/)
+  await f.restart(); await f.manager.retryCleanupByRequest(owner, 'uncorrected-delete'); await f.manager.close()
+  const hits: string[] = []
+  async function scan(directory: string) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const item = path.join(directory, entry.name)
+      if (entry.isDirectory()) await scan(item)
+      else {
+        if ((await readFile(item)).includes(Buffer.from(text))) hits.push(entry.name)
+        assert.equal(entry.name.endsWith('.tmp'), false)
+      }
+    }
+  }
+  await scan(f.root)
+  console.log(JSON.stringify({ reproduction: 'uncorrected-pending-deletion', remainingFiles: hits.length }))
+  assert.deepEqual(hits, [])
+  assert.ok(initialMarker.cleanup.sourceRefs.some(ref => ref.evidenceId && ref.sessionIds.includes('remember') &&
+    ref.textHash === createHash('sha256').update(text).digest('hex')), 'new deletion records must capture real source provenance before deletion')
+  const marker = JSON.parse(await readFile(file, 'utf8')).records['uncorrected-delete']
+  assert.deepEqual(marker.cleanup.sourceTexts, [])
+  assert.equal(marker.command.command_id, deleted.receipt.command_id)
+})
+
+test('review-486 real Core: a later missing forget target cannot erase an already committed command identity', { skip, timeout: 30000 }, async t => {
+  const f = await fixture(t), old = (await f.world()).items[0]
+  const original = '请忘掉我喝茶的偏好。'
+  t.mock.method(f.manager, 'planForget', async (_owner, action) => ({
+    version: 2, completionVersion: 3, completionState: 'complete', worldRevision: 1, authorization: action.scope,
+    worldTargets: [{ kind: 'cognition', id: old.item_id }, { kind: 'cognition', id: 'synthetic-missing-target' }],
+    evidenceIds: [], sourceTexts: [original],
+  }))
+  const result = await f.tool('memory_forget', { query: '我喝茶的偏好' }, 'partial-missing-target', original)
+  assert.notEqual(result.state, 'not_found')
+  const file = path.join(f.root, 'accounts', owner, 'memory-home/pending-actions.json')
+  const requestId = 'memory-tool:' + createHash('sha256').update('partial-missing-target').digest('hex')
+  const before = JSON.parse(await readFile(file, 'utf8')).records[requestId]
+  const command = before.commands?.[`cognition:${old.item_id}`]
+  assert.ok(command); assert.deepEqual(before.finished, [`cognition:${old.item_id}`])
+  assert.equal((await f.manager.receiptForAction(owner, command)).receipt.result_state, 'applied')
+  await f.restart(); await f.manager.flushPending(owner); await f.manager.close()
+  const after = JSON.parse(await readFile(file, 'utf8')).records[requestId]
+  assert.deepEqual(after.commands[`cognition:${old.item_id}`], command)
+  assert.deepEqual(after.finished, before.finished); assert.notEqual(after.result?.state, 'not_found')
+  assert.equal(f.trace.filter(row => row.method === 'submit_command').length, 1, 'recovery must never replay the committed deletion')
+  async function scan(directory: string) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const item = path.join(directory, entry.name)
+      if (entry.isDirectory()) await scan(item)
+      else assert.equal((await readFile(item)).includes(Buffer.from(original)), false, `forget text remains in ${entry.name}`)
+    }
+  }
+  await scan(f.root)
 })
 
 test('review-1 real Core: an older failed correction cannot undo the later successful preference', { skip }, async t => {
