@@ -62,8 +62,24 @@ export function certificateInfo(certificate, { domain, spki }) {
 export async function issueHostCertificate({ directoryUrl, email, accountKey, privateJwk, domain, relayRequest, signal, fetcher = fetch, diagnostic }) {
   const pending = new Set(), orderUrls = new Map();
   const stages = new Map([[directoryUrl, 'directory']]), validChallenges = new Set();
-  let account, context = { stage: 'csr', target: 'local' }, reported = false;
-  function report(error) { reportCertificateFailure(diagnostic, context, error); reported = true; }
+  const reportedFailures = new WeakSet(), challengeFailures = new Map();
+  let account, context = { stage: 'csr', target: 'local' };
+  function markReported(failure) {
+    if (failure !== null && (typeof failure === 'object' || typeof failure === 'function')) reportedFailures.add(failure);
+  }
+  function report(error, failureContext = context) {
+    // ACME.js wraps an HTTP problem in a new Error, retaining this exact body
+    // as _rawBody. Track failure identities, never a previous request's state:
+    // the library may recover badNonce and then encounter a different failure.
+    // Challenge errors lose _rawBody in ACME.js's transformError, retaining
+    // only auth.url. Link that wrapper to the reported response of its attempt.
+    const challengeFailure = challengeFailures.get(error?.auth?.url);
+    if (reportedFailures.has(error) || reportedFailures.has(error?._rawBody) || reportedFailures.has(challengeFailure)) {
+      markReported(error); return;
+    }
+    markReported(error);
+    reportCertificateFailure(diagnostic, failureContext, error);
+  }
   async function postAsGet(url, nonce) {
     if (nonce) acmeRequests._setNonce(client, nonce);
     const result = await acmeRequests._jwsRequest(client, { accountKey, url,
@@ -83,7 +99,13 @@ export async function issueHostCertificate({ directoryUrl, email, accountKey, pr
     // pass the cloud contract; the CA still performs real DNS-01 validation.
     skipChallengeTest: true, skipDryRun: true,
     __request: async options => {
-      context = { stage: stages.get(options.url) ?? 'unknown', target: 'acme' }; reported = false;
+      // Keep response metadata and reporting state with this request: another
+      // request can start while fetch/text or a signed POST-as-GET is pending.
+      const requestContext = { stage: stages.get(options.url) ?? 'unknown', target: 'acme' };
+      let requestReported = false;
+      context = requestContext;
+      // A retry is a new attempt, including retries of the same challenge.
+      challengeFailures.delete(options.url);
       // ACME.js 3.1 adds already-valid challenges to its presentation list and
       // accepts them again. Strict servers reject that update. Read the known
       // valid challenge with the library's signed POST-as-GET instead (RFC8555).
@@ -97,18 +119,22 @@ export async function issueHostCertificate({ directoryUrl, email, accountKey, pr
         if (new URL(options.url).hostname === 'api.rootprojects.org') throw new Error('Optional maintainer registration disabled');
         const response = await fetcher(options.url, { method: options.method, headers: options.headers,
           body: options.body, redirect: 'error', signal: AbortSignal.any([signal, AbortSignal.timeout(30_000)]) });
-        context.httpStatus = response.status;
+        requestContext.httpStatus = response.status;
         const text = await response.text();
         let body = text;
         if (response.headers.get('content-type')?.includes('json')) body = text ? JSON.parse(text) : null;
-        context.acmeProblem = body?.type ?? body?.error?.type;
-        context.acmeStatus = body?.status;
-        if (!response.ok) report({ code: 'E_ACME' });
+        requestContext.acmeProblem = body?.type ?? body?.error?.type;
+        requestContext.acmeStatus = body?.status;
+        if (!response.ok) { report({ code: 'E_ACME' }, requestContext); requestReported = true; }
         if (!response.ok && body?.type) body = response.status === 400 ? { ...body, status: 400 }
           : { status: response.status, error: { type: body.type, detail: body.detail } };
         else if (!response.ok) throw Object.assign(new Error('ACME request failed'), { code: 'ACME_REQUEST_FAILED' });
+        if (requestReported) {
+          markReported(body);
+          if (requestContext.stage === 'validation') challengeFailures.set(options.url, body);
+        }
         const headers = Object.fromEntries(response.headers);
-        if (context.stage === 'directory') for (const [field, stage] of [['newNonce', 'nonce'], ['newAccount', 'account'], ['newOrder', 'order']]) {
+        if (requestContext.stage === 'directory') for (const [field, stage] of [['newNonce', 'nonce'], ['newAccount', 'account'], ['newOrder', 'order']]) {
           if (body?.[field]) stages.set(body[field], stage);
         }
         for (const url of body?.authorizations ?? []) stages.set(url, 'authorization');
@@ -136,7 +162,11 @@ export async function issueHostCertificate({ directoryUrl, email, accountKey, pr
           return polled;
         }
         return { statusCode: response.status, headers, body };
-      } catch (error) { if (!reported) report(error); throw error; }
+      } catch (error) {
+        if (requestReported) markReported(error);
+        else report(error, requestContext);
+        throw error;
+      }
     },
   });
   try {
@@ -161,7 +191,7 @@ export async function issueHostCertificate({ directoryUrl, email, accountKey, pr
     return `${result.cert}\n${result.chain}\n`;
   } catch (error) {
     if (error.code === 'DNS_PROPAGATION_TIMEOUT') context = { stage: 'dns_propagation', target: 'cloud_dns' };
-    if (!reported) report(error);
+    report(error);
     throw error;
   } finally {
     // Includes values whose present failed after DNS write/propagation timeout.
