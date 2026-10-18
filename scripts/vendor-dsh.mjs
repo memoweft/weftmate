@@ -422,8 +422,7 @@ export function preparePatchedCheckout(projectRoot, source, checkout, pin, ident
 async function main() {
   const pin = await loadPin()
   const identity = await runtimeIdentity(repoRoot)
-  const shared = resolve(process.env.WEFTMATE_DSH_CACHE_ROOT || (process.platform === 'win32' && existsSync('D:/AIProjects/WeftMate/Worktrees')
-    ? DEFAULT_WINDOWS_CACHE_ROOT : join(repoRoot, '.local/dsh-cache')))
+  const shared = resolve(process.env.WEFTMATE_DSH_CACHE_ROOT || DEFAULT_WINDOWS_CACHE_ROOT)
   const cache = join(shared, `dsh-runtime-${pin.commit.slice(0, 12)}-${identity.patchesSha256.slice(0, 16)}`)
   if (process.argv.includes('--dry-run')) {
     return assemble(sourceRepository(pin), pin, identity)

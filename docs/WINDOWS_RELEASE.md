@@ -103,18 +103,22 @@ update-public-keys.json                # 公开验收副本，客户端信任来
 
 先由 Claude 审查本包并确认发布身份、安装包哈希。以下脚本只在本人安排迁移时执行；本包没有执行日用任务的停止、删除、启动或原数据写入。
 
-1. 原计划任务仍运行时做 `Prepare`。脚本只解析原 Production（生产）脚本里的字面值，不执行它；备份原安装配置，写新配置。核对端口18186、原数据路径、public-origin（公开来源）、记忆桥配置、手机包、云 / 中继 / ACME 参数。若本人进程环境使用额外 `WEFTMATE_ACME_EMAIL` / 私有证书路径，私下补到配置或保留本人用户环境，勿写入公开日志。
+1. 原计划任务仍运行时做 `Prepare`。用 `-RuntimeDirectory` 传入原任务实际使用的绝对运行目录；旧部署脚本里已有明确 `$runtime` 字面值时仍可读取它。脚本只解析原 Production（生产）脚本里的配置，不执行它；备份原安装配置，写新配置。核对端口18186、原数据路径、public-origin（公开来源）、记忆桥配置、手机包、云 / 中继 / ACME 参数。若本人进程环境使用额外 `WEFTMATE_ACME_EMAIL` / 私有证书路径，私下补到配置或保留本人用户环境，勿写入公开日志。
 2. `Apply` 导出原任务 XML（任务定义）到用户私有迁移目录、记录原启用状态、停用并停止原任务，安装按用户的程序，使用新配置启动。同一原数据目录只启动一个宿主。安装失败自动恢复原任务。
 3. `Verify` 检查本地端口与公开配置。AUTH-1 版本在本机原生窗口直接进入原账户，不要求云/本地密码；核对原对话、记忆和模型设置、原激活云绑定；在设置按需云登录，再核对手机远程；设置 → 系统状态核对宿主 / 记忆桥；通过已登录 `/status` 核对中继在线、证书错误为空、证书到期日合理。再验手机远程内容与 `https://home.weftmate.com:8443`；确认模型正常，不重新绑定或新建空账号来替代原数据。
 4. 本人确认上述项目后 `Finalize` 才删除原任务。开机自启由安装版设置管理，确认已启用。原 XML 保留，用于随时回退。
 5. 任一步失败，执行一次 `Rollback`：只停止指定安装路径的程序、移除安装版开机项，恢复先前配置与原任务 XML / 启用状态，然后启动原任务。它复用原数据，保留迁移后已写入的对话，不恢复旧数据快照。
 
 ```powershell
-$migration = 'D:\AIProjects\WeftMate\Worktrees\w4\scripts\migrate-installed-desktop.ps1'
-$sourceTask = 'D:\AIProjects\WeftMate\Repository\scripts\run-personal-host-task.ps1'
-& $migration -Action Prepare -SourceTaskScript $sourceTask -DataDirectory 'D:\AIProjects\WeftMate\Runtime\UnifiedAssistant\personal-account-20260926'
+# 在已核对的源码仓库中运行；目录来自原部署配置，不是新的默认值。
+$migration = (Resolve-Path './scripts/migrate-installed-desktop.ps1').Path
+$sourceTask = (Resolve-Path './scripts/run-personal-host-task.ps1').Path
+$runtimeDirectory = Read-Host '原任务实际使用的绝对运行目录'
+$dataDirectory = Read-Host '原数据的绝对目录'
+& $migration -Action Prepare -SourceTaskScript $sourceTask -RuntimeDirectory $runtimeDirectory -DataDirectory $dataDirectory
 # 仅在本人迁移窗口执行；Installer 换为已核对哈希的真实发布包。
-& $migration -Action Apply -Installer 'D:\WeftMateDownloads\WeftMate-Setup-0.2.0.exe'
+$installer = Read-Host '已核对哈希的安装包绝对路径'
+& $migration -Action Apply -Installer $installer
 & $migration -Action Verify
 # 本人完成登录 / 记忆桥 / 中继 / 证书 / 手机验收后：
 & $migration -Action Finalize
