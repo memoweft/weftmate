@@ -635,12 +635,14 @@ export function apply(ctx, config = {}) {
         memoryCapabilities = await bridge.request('capabilities')
         bridge.acceptCapabilities(memoryCapabilities)
         if (Number.isInteger(memoryCapabilities?.world_revision)) latestWorldRevision = memoryCapabilities.world_revision
+        let lang = 'zh'
+        try { if (ctx.get('settings')?.get?.('locale')?.preference === 'en') lang = 'en' } catch { /* Preserve Chinese when settings are unavailable. */ }
         const initializeParams = {
           session_id: 'weftmate-host',
           dsh_home: DSH_HOME(),
           platform: 'dsh',
           model_tier: process.env.WEFTMATE_MEMOWEFT_MODEL_TIER || 'local',
-          lang: 'zh',
+          lang,
         }
         if (typeof modelApiKey === 'string' && modelApiKey) initializeParams.model_api_key = modelApiKey
         const result = await bridge.request('initialize', initializeParams)

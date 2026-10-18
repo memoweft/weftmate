@@ -16,6 +16,35 @@ const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_bo
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup', 'query_jobs']
 
+for (const preference of ['zh', 'en', undefined, 'unavailable'] as const) test(`G9 personal initialize uses UI locale: ${preference}`, async t => {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-language-'))
+  const languages: string[] = []
+  let current = preference
+  let child: object | null = {}
+  const manager = createPersonalMemoryManager({ root, enabled: true,
+    python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
+    baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'synthetic',
+    language: async () => { if (current === 'unavailable') throw new Error('unavailable'); return current },
+    rpcFactory: () => ({ get child() { return child }, async close() {}, async request(method, params = {}) {
+      if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods: required }
+      if (method === 'initialize') {
+        languages.push(params.lang)
+        return { runtime: { subject_id: ownerA, db_path: join(params.dsh_home, 'memoweft', 'memoweft.sqlite3') },
+          capabilities: { subject_id: ownerA, methods: required, services: { command: { operations: [] } } } }
+      }
+      if (method === 'health') return { runtime: { subject_id: ownerA, route_ready: true } }
+      return {}
+    } }) })
+  t.after(async () => { await manager.close(); rmSync(root, { recursive: true, force: true }) })
+  await manager.query(ownerA, 'query_world', { operation: 'revision' })
+  current = preference === 'en' ? 'zh' : 'en'
+  await manager.query(ownerA, 'query_world', { operation: 'revision' })
+  assert.deepEqual(languages, [preference === 'en' ? 'en' : 'zh'], 'existing process retains its initialization language')
+  child = null
+  await manager.query(ownerA, 'query_world', { operation: 'revision' })
+  assert.deepEqual(languages, [preference === 'en' ? 'en' : 'zh', current], 'a recreated bridge reads the latest preference')
+})
+
 function recallContractManager(t: any, preview: any, recallMaxChars = 1200) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-recall-format-'))
   const manager = createPersonalMemoryManager({ root, enabled: true,
