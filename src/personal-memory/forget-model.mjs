@@ -252,11 +252,29 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     const preview = await cascade({ object_kind: 'evidence', item_id: id });
     if (typeof preview.forget_scope === 'string') forgetScopes[`evidence:${id}`] = preview.forget_scope;
   }
+  const evidenceIds = [...evidence.keys()].filter(id => !coveredEvidence.has(id));
+  const targets = [...worldTargets, ...evidenceIds.map(id => ({ kind: 'evidence', id }))];
+  let batchForget;
+  if (!retainedUncertainCount && targets.length > 1 && await manager.forgetBatchSupported?.(owner)) {
+    if (targets.length > 32) return changedScope();
+    const [first, ...rest] = targets;
+    const additional_targets = rest.map(row => ({ target_kind: row.kind, target_id: row.id }));
+    const preview = await manager.query(owner, 'preview_forget', {
+      target_kind: first.kind, target_id: first.id, additional_targets,
+    });
+    // The combined transaction must not expand the independently authorized
+    // source/fact sets. Derived copies are Core's already previewed cascade.
+    if (preview.world_revision !== worldRevision || typeof preview.forget_scope !== 'string' ||
+        (preview.evidence_ids ?? []).some(id => !evidence.has(id)) ||
+        (preview.items ?? []).some(item => !derivedContext(item) &&
+          item.object_kind !== 'entity' && !selected.has(`${item.object_kind}:${item.item_id}`))) return changedScope();
+    batchForget = { forget_scope: preview.forget_scope, additional_targets };
+  }
   const latest = await manager.query(owner, 'query_world', { operation: 'revision' });
   if (latest.world_revision !== worldRevision || [...previews.values()].some(preview => preview.world_revision !== worldRevision)) return changedScope();
   return { version: 2, completionVersion: forgetCompletionVersion, completionState: retainedUncertainCount > 0 ? 'withheld' : 'complete', worldRevision, authorizedEvidenceIds: [...evidence.keys()],
-    evidenceIds: [...evidence.keys()].filter(id => !coveredEvidence.has(id)), sourceTexts: [...evidence.values()].filter(Boolean),
-    worldTargets, forgetScopes,
+    evidenceIds, sourceTexts: [...evidence.values()].filter(Boolean),
+    worldTargets, forgetScopes, ...(batchForget ? { batchForget } : {}),
     affectedIds: [...selected].map(key => byKey.get(key).item_id), authorization: request, retainedOtherCount, retainedUncertainCount };
 }
 

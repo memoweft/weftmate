@@ -920,6 +920,11 @@ test('real Core: one forget removes a failed duplicate correction quote as well 
   const recall = await f.manager.recall(owner, { query: '我喜欢喝什么茶？', sessionId: 'another-device', modelTier: 'cloud' })
   assert.doesNotMatch(recall.contextText, /红茶|乌龙茶/, 'deleting only the formal fact leaves the failed correction quote recallable')
   assert.equal((await f.manager.status(owner)).failedCorrectionCount, 0)
+  assert.equal((await f.manager.status(owner)).worldRevision, revision + 1, 'one authorized topic is one atomic Core commit')
+  const deletions = f.trace.filter(row => row.method === 'submit_command' && row.params.command.operation.startsWith('delete_'))
+  assert.equal(deletions.length, 1, 'no sequential re-preview or second deletion')
+  assert.ok(deletions[0].params.command.payload.additional_targets.length)
+  assert.doesNotMatch(await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'command-journal.json'), 'utf8'), /红茶|乌龙茶/)
 })
 
 test('real Core: a lost correction receipt is replayed once after restart', { skip }, async t => {
