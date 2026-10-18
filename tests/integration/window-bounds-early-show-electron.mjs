@@ -4,9 +4,8 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { _electron } from 'playwright';
 import executablePath from 'electron';
-import { closeTestElectron } from '../helpers/close-test-electron.mjs';
+import { launchWindowElectron, closeWindowElectron, stopWindowElectron } from '../helpers/bounded-window-electron.mjs';
 
 const root = mkdtempSync(join(tmpdir(), 'weftmate-window-early-show-'));
 const repository = fileURLToPath(new URL('../../', import.meta.url));
@@ -14,7 +13,7 @@ const expected = { x: 80, y: 80, width: 1000, height: 600 };
 const server = createServer((request, response) => {
   if (request.url === '/personal/v1/ui') {
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
-    response.end('<!doctype html><title>WeftMate</title><script>globalThis.settingsCalls=[];globalThis.WeftSettingsNavigation={open:category=>settingsCalls.push(category)};window.weftmateDesktop.onConversation(value=>{globalThis.startupConversation=value});</script>Window startup fixture');
+    response.end('<!doctype html><title>WeftMate</title><script>globalThis.startupConversations=[];globalThis.settingsCalls=[];globalThis.WeftSettingsNavigation={open:category=>settingsCalls.push(category)};window.weftmateDesktop.onConversation(value=>{globalThis.startupConversation=value;startupConversations.push(value)});</script>Window startup fixture');
   }
   else { response.writeHead(401); response.end('{}'); }
 });
@@ -38,8 +37,8 @@ try {
       WINDOW_BOUNDS_EARLY_ACTION: action, WINDOW_BOUNDS_TRAY: String(attempt !== 1),
       WINDOW_BOUNDS_ORIGIN: `http://127.0.0.1:${server.address().port}`, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' };
     delete env.ELECTRON_RUN_AS_NODE;
-    application = await _electron.launch({ executablePath, cwd: repository, env,
-      args: ['tests/helpers/window-bounds-electron.mjs', `--force-device-scale-factor=${scale}`] });
+    application = await launchWindowElectron({ executablePath, cwd: repository, env,
+      args: ['tests/helpers/window-bounds-electron.mjs', `--force-device-scale-factor=${scale}`] }, join(profile, 'process.log'));
     const observed = await application.evaluate(async ({ screen }) => {
       const desktop = globalThis.windowBoundsDesktop;
       await desktop.ready;
@@ -55,9 +54,9 @@ try {
     }
     if (action === 'send-to') {
       await page.waitForFunction(() => globalThis.startupConversation?.sessionId === 'early-last');
-      assert.deepEqual(await page.evaluate(() => globalThis.startupConversation), { sessionId: 'early-last' });
+      assert.deepEqual(await page.evaluate(() => globalThis.startupConversations), [{ sessionId: 'early-last' }]);
     }
-    await closeTestElectron(application, async () => { await globalThis.windowBoundsDesktop.close(); });
+    await closeWindowElectron(application);
     application = null; observer.close(); observer = null;
     const saved = JSON.parse(readFileSync(stateFile, 'utf8'));
     const row = { scale, attempt, action, expected, ...observed, saved, snapshots }; report.push(row);
@@ -71,7 +70,7 @@ try {
     } catch (error) { failures.push({ scale, attempt, error: error.message }); }
   }
 } finally {
-  observer?.close(); await application?.close(); await new Promise(resolve => server.close(resolve));
+  observer?.close(); await stopWindowElectron(application); await new Promise(resolve => server.close(resolve));
   if (process.env.WEFTMATE_EVIDENCE_DIR) {
     mkdirSync(process.env.WEFTMATE_EVIDENCE_DIR, { recursive: true });
     writeFileSync(join(process.env.WEFTMATE_EVIDENCE_DIR, 'window-bounds-early-show.json'), JSON.stringify({ report, failures }, null, 2));
