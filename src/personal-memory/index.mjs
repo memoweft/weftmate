@@ -64,7 +64,22 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const formationOwners = new Set();
   const outboxQueues = new Map();
   const homePromises = new Map();
-  const journal = createMemoryCommandJournal({ root });
+  const prepareConversationCleanup = async (ownerId, record) => {
+    const plan = cleanupDeletedMemory
+      ? await cleanupDeletedMemory(ownerId, { ...record.cleanup, prepareOnly: true, journalManaged: true })
+      : { conversationTargets: [] };
+    if (!Array.isArray(plan?.conversationTargets)) throw error('MEMORY_CLEANUP_PENDING');
+    const pending = await queueOutbox(ownerId, () => readOutbox(ownerId));
+    return { ...plan, pendingBoundaryIds: pending.items.filter(item => record.cleanup.sourceTexts?.some(text =>
+      item.boundary.source_messages?.some(message => message.content.includes(text)))).map(item => item.boundary.event_id) };
+  };
+  const eraseConversationSnippets = async (ownerId, record) => {
+    const result = await withOwner(ownerId, entry => entry.rpc.request('query_command_receipt', { command_id: record.command.command_id }));
+    if (!['applied', 'no_change'].includes((result.receipt ?? result).result_state)) throw error('MEMORY_CLEANUP_PENDING');
+    await discardOutboxSources(ownerId, { sourceTexts: record.cleanup.sourceTexts, boundaryIds: record.cleanup.pendingBoundaryIds });
+    return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...record.cleanup, affectedIds: [], journalManaged: true }) : { snippetsVerified: true };
+  };
+  const journal = createMemoryCommandJournal({ root, prepareCleanup: prepareConversationCleanup, eraseSnippets: eraseConversationSnippets });
   const commandFlights = new Map();
   const manualFormationUntil = new Map();
   const actions = createMemoryActions({ root, manager: () => manager, schedule: scheduleRetry,
@@ -587,10 +602,16 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       ? receipt.affected_ids.filter((id) => typeof id === 'string' && id.length <= 512) : [])];
     try {
       await actions.redact(ownerId, { affectedIds: ids, sourceTexts: marker?.cleanup?.sourceTexts ?? [], completedRequestId: marker?.requestId });
-      if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids,
-        sourceTexts: marker?.cleanup?.sourceTexts ?? [], deleteConversationSnippets: marker?.cleanup?.deleteConversationSnippets === true });
+      // Drain outside the journal lock: a drain may inspect action receipts.
+      await flushFlights.get(ownerId)?.catch(() => {});
+      if (marker) await journal.finishCleanup(ownerId, marker.requestId, async current => {
+        await discardOutboxSources(ownerId, { sourceTexts: current.cleanup?.sourceTexts, boundaryIds: current.cleanup?.pendingBoundaryIds });
+        return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...current.cleanup, affectedIds: ids,
+          sourceTexts: current.cleanup?.sourceTexts ?? [], deleteConversationSnippets: current.cleanup?.deleteConversationSnippets === true,
+          journalManaged: true }) : { snippetsVerified: true };
+      });
+      else if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
       await journal.redactTargets(ownerId, ids, { sourceTexts: marker?.cleanup?.sourceTexts ?? [] });
-      if (marker?.cleanup) await journal.clearCleanup(ownerId, marker.requestId);
       return result;
     }
     catch {
@@ -598,6 +619,19 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         storage_cleanup: { state: 'pending', detail_code: 'host_journal_cleanup_pending' } };
       return result?.receipt ? { ...result, receipt: pending } : pending;
     }
+  }
+
+  async function discardOutboxSources(ownerId, { sessionId = null, sourceTexts = [], boundaryIds = [] } = {}) {
+    if (!sessionId && !sourceTexts.length && !boundaryIds.length) return;
+    await queueOutbox(ownerId, async () => {
+      const state = await readOutbox(ownerId);
+      const removed = state.items.filter(item => boundaryIds.includes(item.boundary.event_id) || sessionId && item.boundary.parent_session_id === sessionId ||
+        sourceTexts.some(text => item.boundary.source_messages?.some(message => message.content.includes(text))));
+      state.items = state.items.filter(item => !removed.includes(item));
+      state.discardedBoundaryCount += removed.length;
+      if (removed.length) state.lastFailureCode = 'MEMORY_SOURCE_DELETED';
+      await writeOutbox(ownerId, state);
+    });
   }
 
   const startup = enabled ? readdir(path.join(root, 'accounts')).then(async ids => {
@@ -756,17 +790,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     },
     async discardPendingSources(ownerId, { sessionId = null, sourceTexts = [] } = {}) {
       await actions.redact(ownerId, { sessionId, sourceTexts });
-      await journal.redactTargets(ownerId, [], { sessionId, sourceTexts });
       await flushFlights.get(ownerId)?.catch(() => {});
-      await queueOutbox(ownerId, async () => {
-        const state = await readOutbox(ownerId);
-        const removed = state.items.filter(item => sessionId && item.boundary.parent_session_id === sessionId ||
-          sourceTexts.some(text => item.boundary.source_messages?.some(message => message.content.includes(text))));
-        state.items = state.items.filter(item => !removed.includes(item));
-        state.discardedBoundaryCount += removed.length;
-        if (removed.length) state.lastFailureCode = 'MEMORY_SOURCE_DELETED';
-        await writeOutbox(ownerId, state);
-      });
+      await journal.redactTargets(ownerId, [], { sessionId, sourceTexts });
+      await discardOutboxSources(ownerId, { sessionId, sourceTexts });
     },
     async pendingStatus(ownerId) { owner(ownerId); return outboxStatus(ownerId); },
     async discardOfflinePending(ownerId) {
@@ -801,7 +827,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       if (!enabled) return { state: 'disabled', worldRevision: null, capabilities: capabilities(null),
         pendingBoundaryCount: 0, blockedBoundaryCount: 0, discardedBoundaryCount: 0,
         lastFailureCode: null };
+      let pendingCleanup = [];
       try {
+        pendingCleanup = await journal.pendingCleanup(ownerId);
         return await withOwner(ownerId, async (entry) => {
           await flushObservedEntry(ownerId, entry);
           const health = await entry.rpc.request('health');
@@ -820,7 +848,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             && ['restart_recovered', 'shutdown_recovered'].includes(job.worker?.last_error_type)).length;
           const failedFormationCount = jobs.filter(job => ['failed', 'blocked', 'uncertain', 'dead'].includes(job.worker?.state)).length;
           const routeState = processingHealth ? await processingHealth(ownerId).catch(() => 'unavailable') : 'ready';
-          const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount && !formationIssues.length;
+          const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount && !formationIssues.length && !pendingCleanup.length;
           if (runtimeCurrent(ownerId, entry.generation)) {
             if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
             else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
@@ -834,7 +862,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             version: health?.version ?? health?.runtime?.version ?? await readSourceVersion(),
             worldRevision: Number.isSafeInteger(revision) ? revision : null,
             capabilities: { ...capabilities(entry), inject: entry.routeReady && backlog.pendingBoundaryCount === 0 }, ...backlog,
-            pendingFormationCount, recoveringFormationCount, failedFormationCount, failedCorrectionCount, formationIssues,
+            pendingFormationCount, recoveringFormationCount, failedFormationCount, failedCorrectionCount, formationIssues, pendingCleanup,
             ...(!entry.routeReady || routeState === 'unavailable' ? { reasonCode: 'MEMORY_MODEL_UNAVAILABLE' }
               : routeState === 'waiting' ? { reasonCode: 'MEMORY_MODEL_WAITING' }
               : formationIssues.length || failedFormationCount ? { reasonCode: 'MEMORY_FORMATION_FAILED' }
@@ -847,7 +875,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         const code = cause?.code ?? failures.get(ownerId) ?? 'MEMORY_UNAVAILABLE';
         const backlog = await outboxStatus(ownerId).catch(() => ({ pendingBoundaryCount: null, blockedBoundaryCount: null, discardedBoundaryCount: null }));
         return { state: 'unavailable', worldRevision: null, capabilities: capabilities(null),
-          ...backlog,
+          ...backlog, pendingCleanup,
           lastFailureCode: code, reasonCode: code };
       }
     },
@@ -1086,6 +1114,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
               sessionIds: [...new Set((jobs.jobs ?? []).filter(job => source.evidence_id && job.acceptance?.evidence_ids?.includes(source.evidence_id))
                 .flatMap(job => [job.acceptance.parent_session_id, job.acceptance.result_session_id]).filter(id => typeof id === 'string' && id))],
             })) };
+          if (cleanup.deleteConversationSnippets) Object.assign(cleanup, await prepareConversationCleanup(ownerId, { cleanup }));
         }
       }
       const marker = await journal.reserve({ ownerId, ...proposal, cleanup }, assertActive);

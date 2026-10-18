@@ -2,6 +2,7 @@
 globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
     function memoryHealthText(status) {
         if (!status) return '正在检查记忆健康…';
+        if (status.pendingCleanup?.length) return '还有删除未清理完，请重试清理。';
         const code = status.reasonCode ?? status.lastError ?? status.lastFailureCode;
         const waiting = status.pendingBoundaryCount ?? 0;
         if (status.state === 'disabled') return '记忆暂停：尚未启用';
@@ -97,6 +98,13 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             if (!['ready', 'recovering', 'degraded', 'disabled', 'unavailable'].includes(payload?.state) || !payload?.capabilities)
                 throw { code: 'REQUEST_FAILED' };
             core.memory.status = payload;
+            if (!core.memory.cleanupMarker && !core.memory.unresolvedMarker && payload.pendingCleanup?.length) {
+                const pending = payload.pendingCleanup[0];
+                const marker = { ...pending, operation: 'delete', cleanupOnly: true, cleanupState: 'pending', hostId: core.state.hostId };
+                core.setCleanupMarker(marker, core.memoryCleanupKey(token.ownerId, marker.hostId));
+                core.memory.cleanupMarker = marker;
+                core.showMemoryReceipt('还有删除未清理完，请点“重试清理”继续。', marker.requestId, 'retry-cleanup');
+            }
             if (!['ready', 'recovering', 'degraded'].includes(payload.state) || payload.capabilities.list !== true) {
                 core.invalidateMemorySnapshot(payload.state === 'disabled' ? '记忆尚未接入当前宿主。'
                     : ['ready', 'recovering', 'degraded'].includes(payload.state) ? '当前账户没有记忆列表权限。' : '记忆服务暂时不可用，请稍后刷新。', payload.state !== 'disabled');
@@ -199,23 +207,23 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         catch { /* Best effort. */ }
     }
     function memoryReceiptMessage(receipt, operation) {
-        if (receipt.state === 'no_change')
+        if (receipt.state === 'no_change' && operation !== 'delete')
             return '宿主确认没有发生变更。';
         if (operation === 'correct')
             return '纠正已应用，当前记忆已更新。';
         if (operation === 'mute')
             return '记忆已停用，不再参与后续召回；原内容和来源仍可查看。';
         if (receipt.storageCleanup?.state === 'pending')
-            return '已从当前有效记忆与召回移除，底层清理待完成。可稍后查询回执。';
+            return '记忆已移除，但删除清理还未完成。请点“重试清理”继续。';
         if (receipt.storageCleanup?.state === 'complete')
-            return '已从当前有效记忆与召回移除，当前存储清理已完成。原聊天、会话存档、过去备份和文件系统快照仍保留。';
+            return '记忆已移除，当前存储清理已完成。未勾选删除的聊天原话、过去备份和文件系统快照仍保留。';
         return '已从当前有效记忆与召回移除，底层清理状态待确认；原聊天、会话存档、过去备份和文件系统快照仍保留。';
     }
     function applyMemoryReceipt(receipt, marker, key, token) {
         if (!receipt || !['applied', 'no_change', 'revision_conflict', 'rejected'].includes(receipt.state)
             || receipt.requestId !== marker.requestId)
             return false;
-        const needsCleanupCheck = marker.operation === 'delete' && receipt.state === 'applied'
+        const needsCleanupCheck = marker.operation === 'delete' && ['applied', 'no_change'].includes(receipt.state)
             && receipt.storageCleanup?.state !== 'complete';
         const cleanupState = receipt.storageCleanup?.state === 'pending' ? 'pending' : 'unknown';
         const cleanupMarker = needsCleanupCheck ? { ...marker, cleanupOnly: true, cleanupState, retryUnknown: false } : null;
@@ -571,7 +579,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             const result = await core.requestMemoryCleanup(marker.requestId);
             if (!core.memoryIdentityCurrent(token))
                 return;
-            if (!(result?.receipt?.state === 'applied' && core.applyMemoryReceipt(result.receipt, marker, core.memoryMarkerKey(token.ownerId, marker.hostId), token))
+            if (!(['applied', 'no_change'].includes(result?.receipt?.state) && core.applyMemoryReceipt(result.receipt, marker, core.memoryMarkerKey(token.ownerId, marker.hostId), token))
                 && core.memoryViewCurrent(token)) {
                 const uncertain = { ...marker, retryUnknown: true };
                 core.setCleanupMarker(uncertain, cleanupKey);
@@ -582,7 +590,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         catch (error) {
             if (!core.memoryIdentityCurrent(token))
                 return;
-            if (error?.payload?.receipt?.state === 'applied'
+            if (['applied', 'no_change'].includes(error?.payload?.receipt?.state)
                 && core.applyMemoryReceipt(error.payload.receipt, marker, core.memoryMarkerKey(token.ownerId, marker.hostId), token))
                 return;
             if (error.code === 'UNAUTHORIZED' || error.status === 401)

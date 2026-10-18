@@ -104,7 +104,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ui.byId('memory-receipt-text').textContent = message;
         ui.byId('memory-receipt-id').textContent = requestId;
         ui.byId('memory-receipt-check').hidden = action === 'none';
-        ui.byId('memory-receipt-check').textContent = action === 'retry-cleanup' ? '重试底层清理' : '核对处理结果';
+        ui.byId('memory-receipt-check').textContent = action === 'retry-cleanup' ? '重试清理' : '核对处理结果';
         ui.byId('memory-receipt').hidden = false;
     }
     function renderMemoryItems() {
@@ -179,7 +179,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ui.byId('memory-detail-check').hidden = !core.memory.unresolvedMarker && !core.memory.cleanupMarker;
         ui.byId('memory-detail-check').textContent = core.memory.cleanupMarker?.cleanupState === 'pending'
             && core.memory.cleanupMarker?.retryUnknown !== true
-            && !core.memory.unresolvedMarker ? '重试底层清理' : '核对处理结果';
+            && !core.memory.unresolvedMarker ? '重试清理' : '核对处理结果';
         ui.byId('memory-detail-check').disabled = core.memory.cleanupRetrying;
         ui.byId('memory-correct-action').hidden = mode !== 'detail' || !core.memoryActionAllowed('correct');
         ui.byId('memory-mute-action').hidden = mode !== 'detail' || !core.memoryActionAllowed('mute');
