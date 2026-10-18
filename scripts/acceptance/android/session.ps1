@@ -41,10 +41,14 @@ try {
   $existing=& $Adb -s $serial shell pm list packages $package
   if(!$existing){
     $existing|Set-Content (Join-Path $Evidence 'fresh-before.txt')
-    & $Adb -s $serial install (Join-Path $Evidence 'baseline.apk')|Set-Content (Join-Path $Evidence 'install.txt')
-    & $Adb -s $serial install (Join-Path $Evidence 'driver.apk')|Set-Content (Join-Path $Evidence 'install-driver.txt')
   }
-  & $Adb -s $serial install -r (Join-Path $Evidence 'driver.apk')|Out-Null
+  # Always install this batch's candidate, including when reusing an instance. -r retains data.
+  foreach($apk in @('baseline','driver')){
+    $installed=& $Adb -s $serial install -r (Join-Path $Evidence "$apk.apk")
+    $installExit=$LASTEXITCODE
+    $installed|Set-Content (Join-Path $Evidence "install-$apk.txt")
+    if($installExit -ne 0 -or ($installed|Out-String) -notmatch '(?m)^Success\s*$'){throw "Candidate installation failed: $apk"}
+  }
   & $Adb -s $serial shell am force-stop $package|Out-Null
   & $Adb -s $serial shell run-as $package rm -f files/b2-driver-port|Out-Null
   $instrument=Start-Process -FilePath $Adb -ArgumentList @('-s',$serial,'shell','am','instrument','-w','-r','-e','class','com.memoweft.weftmate.mobile.BaselineDriver',"$package.test/androidx.test.runner.AndroidJUnitRunner") -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $Evidence 'instrument.txt') -RedirectStandardError (Join-Path $Evidence 'instrument-error.txt')

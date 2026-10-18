@@ -30,7 +30,7 @@ turns = [dict(id=str(uuid.uuid4()), conversationId=conversation, timestamp=int(t
               memoryRefs=[], dependencyComplete=True,
               messages=[dict(role='user', text=f'B2合成历史 USER-{index:04d}'), dict(role='assistant', text=f'B2合成历史 ANSWER-{index:04d}')])
          for index in range(600)]
-value['turns'] = value.get('turns', []) + turns
+# Top-level turns is the pending sync outbox; fixtures belong only to stored conversations.
 value['conversations'] = value.get('conversations', []) + [dict(id=conversation, turns=turns)]
 value['nativeComposer'] = dict(conversationId=conversation, draft='')
 call(action='call', method='phone.offline.save', params=dict(value=value))
