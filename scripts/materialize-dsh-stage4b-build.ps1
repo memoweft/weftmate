@@ -1,10 +1,12 @@
 param(
   [Parameter(Mandatory = $true)]
-  [string]$SourceRoot
+  [string]$SourceRoot,
+  [Parameter(Mandatory = $true)]
+  [string]$ExpectedParent
 )
 
 $ErrorActionPreference = 'Stop'
-$expectedParent = 'D:\AIProjects\WeftMate\Runtime\Stage4B'
+$expectedParent = (Resolve-Path -LiteralPath $ExpectedParent).Path.TrimEnd('\')
 $root = (Resolve-Path -LiteralPath $SourceRoot).Path
 if (-not $root.StartsWith($expectedParent + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
   throw "SourceRoot must remain below $expectedParent (received $root)"

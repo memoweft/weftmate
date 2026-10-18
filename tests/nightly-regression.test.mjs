@@ -12,6 +12,12 @@ import { buildForSmoke } from '../scripts/nightly/installed-build.mjs';
 import { startTimelineCandidate } from './integration/timeline-ui-candidate.mjs';
 import { androidPackages, androidPackageReason, androidBusyReason } from '../scripts/nightly/android-packages.mjs';
 
+test('nightly refuses missing directory configuration before creating a run', async () => {
+  for (const args of [[], ['--worktree', 'unused'], ['--reports', 'unused']]) {
+    await assert.rejects(bootstrap(args, { execute() { assert.fail('must not launch'); } }), /--worktree and --reports are required/);
+  }
+});
+
 test('Android inventory names leftover test packages without classifying the daily or unknown package as disposable', async () => {
   const output = 'package:com.memoweft.weftmate.mobile\npackage:com.memoweft.weftmate.mobile.s3aqa\npackage:com.memoweft.weftmate.mobile.stage15memoryqa.test\npackage:com.memoweft.weftmate.mobile.debug.test\npackage:com.memoweft.weftmate.mobile.unknown\n';
   assert.deepEqual(androidPackages(output).testPackages, ['com.memoweft.weftmate.mobile.debug.test', 'com.memoweft.weftmate.mobile.s3aqa', 'com.memoweft.weftmate.mobile.stage15memoryqa.test']);
@@ -31,11 +37,12 @@ test('task registration prefers the stable alias and WhatIf describes the comple
     // Mock every ScheduledTasks constructor and mutation. The actual task
     // service is never called, even if ShouldProcess regresses.
     const harness = join(root, 'verify.ps1');
-    await writeFile(harness, `param([string]$Registration, [string]$FakeLocal)\n$ErrorActionPreference = 'Stop'\n$env:LOCALAPPDATA = $FakeLocal\nfunction New-ScheduledTaskAction { param($Execute,$Argument,$WorkingDirectory) @{ Execute=$Execute; Arguments=$Argument; WorkingDirectory=$WorkingDirectory } }\nfunction New-ScheduledTaskTrigger {}\nfunction New-ScheduledTaskPrincipal {}\nfunction New-ScheduledTaskSettingsSet {}\nfunction Register-ScheduledTask { throw 'registration must never run' }\n& $Registration -WhatIf -MaxMinutes 17\n`);
+    await writeFile(harness, `param([string]$Registration, [string]$FakeLocal)\n$ErrorActionPreference = 'Stop'\n$env:LOCALAPPDATA = $FakeLocal\nfunction New-ScheduledTaskAction { param($Execute,$Argument,$WorkingDirectory) @{ Execute=$Execute; Arguments=$Argument; WorkingDirectory=$WorkingDirectory } }\nfunction New-ScheduledTaskTrigger {}\nfunction New-ScheduledTaskPrincipal {}\nfunction New-ScheduledTaskSettingsSet {}\nfunction Register-ScheduledTask { throw 'registration must never run' }\n& $Registration -WhatIf -MaxMinutes 17 -Worktree (Join-Path $FakeLocal 'nightly') -ReportRoot (Join-Path $FakeLocal 'reports') -Orchestrator (Join-Path $FakeLocal 'orchestrator')\n`);
     const run = () => execFileSync('pwsh', ['-NoProfile', '-File', harness, join(process.cwd(), 'scripts/nightly/register-task.ps1'), root], { encoding: 'utf8' });
     const withAlias = run();
     assert.ok(withAlias.includes(`Execute: ${alias}`));
     assert.match(withAlias, /Arguments: -NoProfile -WindowStyle Hidden -File ".*run-nightly\.ps1" -MaxMinutes 17/);
+    for (const name of ['Worktree', 'ReportRoot', 'Orchestrator']) assert.ok(withAlias.includes(`-${name} "${join(root, name === 'Worktree' ? 'nightly' : name === 'ReportRoot' ? 'reports' : 'orchestrator')}"`));
     assert.ok(withAlias.includes(`WorkingDirectory: ${join(process.cwd(), 'scripts/nightly')}`));
     await rm(alias);
     const fallback = execFileSync('pwsh', ['-NoProfile', '-Command', '(Get-Command pwsh).Source'], { encoding: 'utf8' }).trim();
