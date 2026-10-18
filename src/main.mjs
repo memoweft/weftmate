@@ -380,7 +380,9 @@ let personalAccessOrigin = null;
 let personalDesktop = null;
 let desktopStartup = null;
 let preparedDesktopWindow = null;
+let credentialsVerified = false;
 let credentialInitialization = null;
+let runtimePreparation = null;
 let desktopUpdates = null;
 let desktopStatus = { host: '启动中', model: '未选择' };
 let personalMemoryManager = null;
@@ -1309,7 +1311,7 @@ function showDesktopPetContextMenu() {
     { label: name, enabled: false },
     { type: 'separator' },
     { label: '去聊天', click: showWindow },
-    { label: '宠物设置…', click: openDesktopPetPage },
+    { label: '宠物设置…', enabled: credentialsVerified, click: openDesktopPetPage },
     { label: '允许自由活动', type: 'checkbox', checked: desktopPetFreeActivity(), click: (item) => setDesktopPetFreeActivity(item.checked) },
     { label: '回到屏幕右下角', click: recoverDesktopPetToCorner },
     { type: 'separator' },
@@ -1476,6 +1478,7 @@ async function bootstrap() {
     win = preparedDesktopWindow.window;
     trackUserInterfaceReady(win);
     desktopStartup = createDesktopStartup(win, {
+      maximized: preparedDesktopWindow.saved.maximized === true,
       startInTray: process.argv.includes('--start-in-tray') || process.platform === 'darwin' && app.isPackaged && app.getLoginItemSettings().wasOpenedAtLogin,
       isQuitting: () => isQuitting,
     });
@@ -1486,12 +1489,20 @@ async function bootstrap() {
   configStoreMod = await import('./config-store.ts');
   credentialInitialization = configStoreMod.initializeCredentialStorage(error => logCrash('credential-storage', error));
   void credentialInitialization.catch(() => {});
+  // Load declarations while waiting; service factories/listeners still run only
+  // after proof. No import below starts identity, relay or account services.
+  const personalServiceModules = personalHostMode ? Promise.all([
+    import('./personal-access/index.mjs'), import('./personal-relay/index.mjs'), import('./personal-cloud/index.mjs'),
+  ]) : null;
+  void personalServiceModules?.catch(() => {});
   async function finishCredentialStartup() {
     try {
       await credentialInitialization;
       credentialInitialization = null;
       if (isQuitting) return false;
       await reconcileCloudVaultRestore(userDataDir, configStoreMod, personalBackupManager?.isRestoredStartup() === true);
+      credentialsVerified = true;
+      refreshTrayMenu();
       console.log('[weftmate] ✓ 模型凭据保险库已就绪');
       return true;
     } catch (error) {
@@ -1505,8 +1516,9 @@ async function bootstrap() {
         refreshTrayMenu();
         await desktopStartup.fail();
       } else {
-        // Non-desktop modes retain their existing read-only recovery path.
-        return true;
+        hostExitReason = 'startup-failure';
+        startupExitCode = 1;
+        app.quit();
       }
       return false;
     }
@@ -1697,11 +1709,13 @@ async function bootstrap() {
   }
   // R6-01 · 感知采集面（main 侧）：opt-in、热生效；采样双工文件供运行时宿主插件出 UI/注入面。
   // R8-01 · 设备接缝（main 侧）：配对 token/设备登记/手机观察消费；手机段合并进感知采样。
-  devicesRuntime = initDevices({ dshHome });
-  perceptionRuntime = initPerception({
-    dshHome,
-    readMobileObservations: () => devicesRuntime?.readMobileObservations() ?? [],
-  });
+  function startDeviceCapabilities() {
+    devicesRuntime = initDevices({ dshHome });
+    perceptionRuntime = initPerception({
+      dshHome,
+      readMobileObservations: () => devicesRuntime?.readMobileObservations() ?? [],
+    });
+  }
   // ── R6-02 · 桌宠动作请求面：官方 UI 胶囊 → 宿主插件写请求文件 → main 消费 ──
   const PET_REQUEST_FILE = join(dshHome, 'weftmate-pet-request.json');
   async function handlePetRequests() {
@@ -1726,12 +1740,14 @@ async function bootstrap() {
     } catch (error) { logCrash('pet-request', error); }
   }
   writeHostState();
-  setInterval(writeHostState, 5_000).unref?.();
-  let requestPolling = Promise.resolve();
-  setInterval(() => {
-    requestPolling = requestPolling.then(handleUpdateRequests).then(handlePerceptionRequests)
-      .then(handlePetRequests).catch(error => logCrash('host-request-poll', error));
-  }, 1_000).unref?.();
+  function startHostRequestConsumers() {
+    setInterval(writeHostState, 5_000).unref?.();
+    let requestPolling = Promise.resolve();
+    setInterval(() => {
+      requestPolling = requestPolling.then(handleUpdateRequests).then(handlePerceptionRequests)
+        .then(handlePetRequests).catch(error => logCrash('host-request-poll', error));
+    }, 1_000).unref?.();
+  }
 
   const routeMutationJournal = createRouteMutationJournal({ journalPath: ROUTE_MUTATION_JOURNAL, patchPath: ROUTES_PATCH,
     restoreSettingsBytes: (bytes) => settingsMod.restoreSettingsBytes(bytes), restoreVaultBytes: (bytes) => configStoreMod.restoreVaultBytes(bytes) });
@@ -1886,37 +1902,39 @@ async function bootstrap() {
   const localModelFlag = process.argv.find(arg => arg.startsWith('--local-model-config='));
   const localModelController = localModelFlag
     ? createLocalModelController(localModelFlag.slice('--local-model-config='.length)) : null;
-  modelScheduler = await createModelScheduler({
-    onBackgroundResult: ({ ownerId, profileId, ...result }) => personalAccessService?.reportBackgroundModel(ownerId, profileId, result),
-    onEvent: (event, data) => hostLog.write(event, data),
-    memoryProfileFor: ownerId => {
-      const profile = memoryBackgroundProfile(ownerId);
-      return profile && memoryRecallModelTier(profile) === 'local' ? profile : null;
-    },
-    backgroundReady: (profile, scope = {}) => backgroundModelReady(profile, { credentialFor: credentialForModelProfile,
-      onUnavailable: result => personalAccessService?.reportBackgroundModel(scope.ownerId ?? personalAccessService?.ownerForSession(scope.sessionId)?.ownerId, profile.id, result) }),
-    suggestionReady: (profile, { signal }) => suggestionModelReady(profile, { credentialFor: credentialForModelProfile, signal }),
-    beginUsage: input => input.sessionId && !input.ownerId && !personalAccessService?.ownerForSession(input.sessionId)
-      ? null : personalAccessService?.beginUsage(input),
-    finishUsage: input => personalAccessService?.finishUsage(input),
-    importPermission: (ownerId, routeId) => personalAccessService?.importPermission(ownerId, routeId) ?? 'stop',
-    isIdle: async () => !personalAccessService?.hasUnissuedDshCommands?.() &&
-      (await webRuntime?.personalModelQueueIdle?.(true))?.idle === true,
-    profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id ||
-      routeForProfile(profile.id).provider === id || profile.baseUrl?.replace(/\/+$/, '') === id?.replace(/\/+$/, '')),
-    credentialFor: credentialForModelProfile,
-    backgroundRoute: async (sessionId, profileId) => {
-      const binding = personalAccessService?.ownerForSession(sessionId);
-      const selectedId = binding ? await personalAccessService.resolveBackgroundModel(binding.ownerId, settingsMod.listModelProfiles().profiles) : null;
-      const profile = settingsMod.listModelProfiles().profiles.find(row => selectedId
-        ? row.id === selectedId : row.id === profileId || routeForProfile(row.id).provider === profileId);
-      if (!profile || binding && !personalAccessService.canUseModelProfile(binding.ownerId, profile.id, 'new')) {
-        throw new Error('MODEL_UNAVAILABLE');
-      }
-      return { provider: routeForProfile(profile.id).provider, model: profile.model };
-    },
-  });
-  process.env.WEFTMATE_MODEL_SCHEDULER_URL = modelScheduler.url;
+  async function startModelScheduler() {
+    modelScheduler = await createModelScheduler({
+      onBackgroundResult: ({ ownerId, profileId, ...result }) => personalAccessService?.reportBackgroundModel(ownerId, profileId, result),
+      onEvent: (event, data) => hostLog.write(event, data),
+      memoryProfileFor: ownerId => {
+        const profile = memoryBackgroundProfile(ownerId);
+        return profile && memoryRecallModelTier(profile) === 'local' ? profile : null;
+      },
+      backgroundReady: (profile, scope = {}) => backgroundModelReady(profile, { credentialFor: credentialForModelProfile,
+        onUnavailable: result => personalAccessService?.reportBackgroundModel(scope.ownerId ?? personalAccessService?.ownerForSession(scope.sessionId)?.ownerId, profile.id, result) }),
+      suggestionReady: (profile, { signal }) => suggestionModelReady(profile, { credentialFor: credentialForModelProfile, signal }),
+      beginUsage: input => input.sessionId && !input.ownerId && !personalAccessService?.ownerForSession(input.sessionId)
+        ? null : personalAccessService?.beginUsage(input),
+      finishUsage: input => personalAccessService?.finishUsage(input),
+      importPermission: (ownerId, routeId) => personalAccessService?.importPermission(ownerId, routeId) ?? 'stop',
+      isIdle: async () => !personalAccessService?.hasUnissuedDshCommands?.() &&
+        (await webRuntime?.personalModelQueueIdle?.(true))?.idle === true,
+      profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id ||
+        routeForProfile(profile.id).provider === id || profile.baseUrl?.replace(/\/+$/, '') === id?.replace(/\/+$/, '')),
+      credentialFor: credentialForModelProfile,
+      backgroundRoute: async (sessionId, profileId) => {
+        const binding = personalAccessService?.ownerForSession(sessionId);
+        const selectedId = binding ? await personalAccessService.resolveBackgroundModel(binding.ownerId, settingsMod.listModelProfiles().profiles) : null;
+        const profile = settingsMod.listModelProfiles().profiles.find(row => selectedId
+          ? row.id === selectedId : row.id === profileId || routeForProfile(row.id).provider === profileId);
+        if (!profile || binding && !personalAccessService.canUseModelProfile(binding.ownerId, profile.id, 'new')) {
+          throw new Error('MODEL_UNAVAILABLE');
+        }
+        return { provider: routeForProfile(profile.id).provider, model: profile.model };
+      },
+    });
+    process.env.WEFTMATE_MODEL_SCHEDULER_URL = modelScheduler.url;
+  }
   const createWebRuntime = () => new DshWebRuntime({
     // One process and one home are the Stage 0/1 durability boundary. Session
     // provider/model selection, not a child process, owns model affinity.
@@ -2203,22 +2221,29 @@ async function bootstrap() {
       void modWindowManager?.rebind?.(null);
     }
   };
-  // A fresh profile has no model routes or secrets for the child to consume.
-  // Compose and start that same runtime while Chromium persists its first key;
-  // existing/restore/migration profiles retain their original ordered startup.
+  // Only file preparation and the CLI dump can overlap credential proof.
+  // No plugin boot, HTTP/WS listener, IPC carrier, token or request consumer.
   if (isQuitting) return;
-  const earlyRuntime = desktopRequested && !personalBackupManager?.isRestoredStartup()
+  const earlyPreparation = desktopRequested && !personalBackupManager?.isRestoredStartup()
     && !existsSync(join(userDataDir, 'weftmate-model.enc'))
     && settingsMod.listModelProfiles().profiles.length === 0
-    && !aiGameManagedRuntimeRoot && !existsSync(join(process.resourcesPath, 'ai-game-runtime'))
-    ? replaceSharedRuntime() : null;
-  void earlyRuntime?.catch(error => logCrash('early-runtime-start', error));
+    && !aiGameManagedRuntimeRoot && !existsSync(join(process.resourcesPath, 'ai-game-runtime'));
+  if (earlyPreparation) {
+    writeModelRoutesPatch(ROUTES_PATCH, []);
+    writeCredentialSecurityPatch();
+    runtimePreparation = webRuntime.prepare();
+    void runtimePreparation.catch(error => logCrash('runtime-preparation', error));
+  }
   if (!await finishCredentialStartup()) {
-    await earlyRuntime?.catch(() => {});
-    await webRuntime?.close();
-    runtimeOrigin = null;
+    await runtimePreparation?.catch(() => {});
+    await webRuntime.close();
     return;
   }
+  // The single capability boundary: none of these producers/consumers starts
+  // before Chromium's persisted master key has authenticated and been flushed.
+  startDeviceCapabilities();
+  startHostRequestConsumers();
+  await startModelScheduler();
   seedManagedCredentials();
   void aiGameRuntime.start();
   // The journal was recovered before imports above.  From this point onward
@@ -2260,7 +2285,7 @@ async function bootstrap() {
   try { cleanupMarkedLegacyCredentialAliases(); }
   catch (error) { logCrash('official-route-migration-alias-cleanup', error); }
   console.log('[weftmate] DSH_HOME =', dshHome);
-  if (!earlyRuntime) runtimeOrigin = null;
+  runtimeOrigin = null;
   // Official DSH also owns first-run setup. The desktop view starts after
   // its exact-origin fence; personal host starts after IPC registration.
   sessionReferenceScan = { state: personalHostMode ? 'pending' : 'ready', error: null };
@@ -3525,7 +3550,8 @@ async function bootstrap() {
       hostLog.write('host.startup', { phase: 'runtime-start' });
       await startPersonalHost({
         startRuntime: async () => {
-          const origin = earlyRuntime ? await earlyRuntime : await ensureSharedRuntime({ reload: true });
+          if (earlyPreparation) await runtimePreparation;
+          const origin = await ensureSharedRuntime({ reload: !earlyPreparation });
           hostLog.write('host.startup', { phase: 'runtime-ready' });
           return origin;
         },
@@ -3556,14 +3582,12 @@ async function bootstrap() {
           try { assertAuthoritativeSessionsIdle(await listSharedSessionsForReferenceGuard()); return true; }
           catch { return false; }
         } });
-        const { createPersonalAccessService } = await import('./personal-access/index.mjs');
-        const { relayFromEnvironment } = await import('./personal-relay/index.mjs');
+        const [{ createPersonalAccessService }, { relayFromEnvironment }, { cloudIdentityFromEnvironment }] = await personalServiceModules;
         const relayConfig = relayFromEnvironment();
         if (relayConfig) {
           relayConfig.diagnostic = error => logCrash('relay-command', error);
           relayConfig.onRecovery = component => hostLog.write('component.recovery', { phase: component, status: 'completed', action: 'retry' });
         }
-        const { cloudIdentityFromEnvironment } = await import('./personal-cloud/index.mjs');
         const systemModelProfile = ownerId => {
           const profileId = personalAccessService?.currentChatModelProfile(ownerId);
           const active = activeModelProfile();
@@ -3827,10 +3851,10 @@ function refreshTrayMenu() {
     { label: '打开 WeftMate', click: showWindow },
     ...(personalHostMode ? [{ label: `宿主：${desktopStatus.host} · 模型：${desktopStatus.model}`, enabled: false }] : []),
     { type: 'separator' },
-    { label: updateLabel, enabled: updateReady || (update.enabled && !updateBusy), click: updateReady ? installPreviewUpdateFromTray : () => { void checkPreviewUpdateFromTray(); } },
-    { label: '导出脱敏诊断…', click: () => { void exportRedactedDiagnosticsFromMain().catch((error) => logCrash('diagnostics-export', error)); } },
-    { label: '宠物设置…', click: openDesktopPetPage },
-    { label: desktopPetVisible() ? '让桌面宠物休息' : '唤醒桌面宠物', click: () => {
+    { label: updateLabel, enabled: credentialsVerified && (updateReady || (update.enabled && !updateBusy)), click: updateReady ? installPreviewUpdateFromTray : () => { void checkPreviewUpdateFromTray(); } },
+    { label: '导出脱敏诊断…', enabled: credentialsVerified, click: () => { void exportRedactedDiagnosticsFromMain().catch((error) => logCrash('diagnostics-export', error)); } },
+    { label: '宠物设置…', enabled: credentialsVerified, click: openDesktopPetPage },
+    { label: desktopPetVisible() ? '让桌面宠物休息' : '唤醒桌面宠物', enabled: credentialsVerified, click: () => {
       const latest = desktopCompanion;
       void toggleDesktopPet(latest).catch((error) => logCrash('desktop-pet-tray', error));
     } },
@@ -3859,6 +3883,7 @@ app.on('before-quit', (e) => {
     // A user can now quit during the original bounded readiness operation.
     // Wait for its proof child to close before allowing Electron to exit.
     await credentialInitialization?.catch(() => {});
+    await runtimePreparation?.catch(() => {});
     nextShutdownStep('backup-online-stop');
     await personalBackupManager?.stopOnline();
     nextShutdownStep('desktop-session');

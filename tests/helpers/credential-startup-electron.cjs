@@ -27,7 +27,32 @@ childProcess.spawn = function(command, args, options) {
 };
 require('node:module').syncBuiltinESMExports();
 app.credentialStartupGate.waitRuntimeClosed = () => Promise.all(runtimes);
-import(pathToFileURL(join(root, 'src/main.mjs')).href).catch(()=>app.exit(75));
+app.credentialStartupGate.listeners = 0;
+const net = require('node:net'), listen = net.Server.prototype.listen;
+net.Server.prototype.listen = function (...args) {
+  if (!app.credentialStartupGate.released) app.credentialStartupGate.listeners++;
+  return listen.apply(this, args);
+};
+const testPort = Number(process.env.WEFTMATE_CREDENTIAL_STARTUP_TEST_PORT);
+delete process.env.WEFTMATE_CREDENTIAL_STARTUP_TEST_PORT;
+(async () => {
+  const { DshWebRuntime } = await import(pathToFileURL(join(root, 'src/dsh-web-runtime.ts')).href);
+  for (const method of ['start', 'prepare']) {
+    const original = DshWebRuntime.prototype[method];
+    if (!original) continue;
+    DshWebRuntime.prototype[method] = async function (...args) {
+      if (Number.isInteger(testPort) && testPort > 0) this.opts.port = testPort;
+      const result = await original.apply(this, args);
+      if (method === 'start') app.credentialStartupGate.runtimeOrigin = result;
+      if (!app.credentialStartupGate.released) {
+        app.credentialStartupGate.earlySettled = true;
+        app.emit('credential-startup-settled');
+      }
+      return result;
+    };
+  }
+  await import(pathToFileURL(join(root, 'src/main.mjs')).href);
+})().catch(()=>app.exit(75));
 
 app.credentialStartupGate.check = async () => {
   const store=await import(pathToFileURL(join(root,'src/config-store.ts')).href);

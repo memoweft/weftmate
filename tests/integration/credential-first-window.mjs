@@ -45,7 +45,8 @@ try {
   };
   if(scenario==='ready')await capture('preparing');
   await app.evaluate(async ({app})=>{
-    if(!app.credentialStartupGate.runtimeStarted)await new Promise(resolve=>app.once('credential-startup-runtime',resolve));
+    if(!app.credentialStartupGate.earlySettled)await new Promise(resolve=>app.once('credential-startup-settled',resolve));
+    if(app.credentialStartupGate.runtimeStarted)throw Error('application runtime started before credentials');
   });
   const early=await app.evaluate(({app})=>app.credentialStartupGate.check());
   assert.deepEqual(early,{message:'本机没有可用的加密后端，无法安全保存模型凭据。',written:false});
@@ -61,6 +62,10 @@ try {
   await page.waitForURL('**/personal/v1/ui*',{timeout:30000});
   await page.waitForFunction(()=>globalThis.__WeftUiStarted===true,{},{timeout:30000});
   assert.equal((await app.windows()).length,1,'startup hands off the same native window');
+  const runtimeOrigin=await app.evaluate(({app})=>app.credentialStartupGate.runtimeOrigin);
+  const state=await (await fetch(runtimeOrigin+'/weftmate/device/state.json',{headers:{origin:runtimeOrigin},signal:AbortSignal.timeout(2000)})).json();
+  const paired=await fetch(runtimeOrigin+'/weftmate/device/v1/pair',{method:'POST',headers:{origin:runtimeOrigin,'content-type':'application/json'},body:JSON.stringify({token:state.pairing.token,deviceName:'synthetic-after-ready'}),signal:AbortSignal.timeout(2000)});
+  assert.equal(paired.status,200,'device pairing is enabled after successful proof');
   assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].isVisible()),false,'handoff preserves a user closing the preparation window');
   }
   let closeTimer;try{await Promise.race([app.close(),new Promise((_,reject)=>closeTimer=setTimeout(()=>reject(Error('close timeout')),10000))]);}finally{clearTimeout(closeTimer);}

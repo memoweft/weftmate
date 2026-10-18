@@ -33,3 +33,8 @@ test('startup load failure stays an error and does not claim a shown window',asy
   await assert.rejects(startup.fail(),error=>error===original);
   assert.equal(f.window.shown,0);
 });
+test('normal startup restores saved maximization before showing the preparation shell',async()=>{
+ const f=fixture(),order:string[]=[];f.window.maximize=()=>order.push('maximize');f.window.show=()=>order.push('show');
+ const startup=createDesktopStartup(f.window,{...f.options,maximized:true});f.load();await startup.ready;
+ assert.deepEqual(order,['maximize','show']);
+});
