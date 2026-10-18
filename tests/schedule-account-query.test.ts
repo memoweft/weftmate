@@ -1,6 +1,25 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createScheduleOperations } from '../src/personal-access/schedules.mjs';
+import { installAccountScheduleQuery } from '../src/plugins/personal-schedule-query.mjs';
+
+test('adapting an already registered native list keeps one tool and uses the live user receipt', async () => {
+  const original = { name: 'schedule_list', parameters: {}, execute: async () => [] };
+  const tools = { get: (name: string, agent: any) => name === 'schedule_list' && agent.id === 'fresh' ? original : undefined };
+  const agent = { id: 'fresh', session: { events: [
+    { type: 'turn/start', data: { turn: 1 } },
+    { type: 'user/message', data: { source: { kind: 'user', rpcId: 'receipt-a' } } },
+    { type: 'tool/call', data: { callId: 'list-call' } },
+  ] } };
+  let called: any;
+  const account = { scope: 'account', items: [{ id: 'schedule-1', sessionId: 'old', text: '明早提醒' }] };
+  installAccountScheduleQuery(tools, agent, async (input: any) => { called = input; return account; });
+  assert.equal(tools.get('schedule_list', agent), original);
+  const value = await (original as any).execute({}, { agent, callId: 'list-call' });
+  assert.deepEqual(value, account);
+  assert.deepEqual(called, { action: 'schedule_list', sessionId: 'fresh', sourceReceiptId: 'receipt-a' });
+  assert.deepEqual((original as any).output.render({}, value), [{ type: 'text', text: JSON.stringify(account) }]);
+});
 
 test('model reminder query matches the goals list across conversations and isolates accounts', async () => {
   const device = { scopes: ['sessions:read'], authEpoch: 1 };

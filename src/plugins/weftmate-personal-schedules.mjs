@@ -9,6 +9,7 @@ import { scheduleContent } from '../personal-access/schedules-calendar.mjs';
 import { foldGoal } from '@deepseek-ai/dsh-goal';
 import { createNativeGoalManager } from '../personal-access/goals-native.mjs';
 import { isHealthQuestion } from './personal-prompt.mjs';
+import { installAccountScheduleQuery } from './personal-schedule-query.mjs';
 
 export const name = 'weftmate-personal-schedules';
 export const inject = ['agents', 'sessions', 'tools', 'sessionPersistence', 'webServer', 'weftmateSessionLifecycle'];
@@ -51,12 +52,7 @@ export async function apply(ctx) {
   });
   ctx.on('agent/created', ({ agent }) => {
     if (!personal(agent)) return;
-    agent.ctx.tools.register(defineTool({ name: 'schedule_list',
-      description: 'List all reminders and scheduled tasks for this account across every conversation, including paused entries. This is the same list as the goals page; an empty list means no entries in this account.',
-      parameters: {},
-      output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-      execute: (_args, exec) => request({ action: 'schedule_list', sessionId: exec.agent.id, sourceReceiptId: scheduleSourceReceipt(exec) }),
-      presentCall: () => ({ card: 'generic', title: '查看提醒与定时任务', kind: 'other' }) }));
+    installAccountScheduleQuery(ctx.tools, agent, request);
     agent.ctx.tools.register(defineTool({name:'health_query',
       description:'查询本人健康汇总。问睡眠、恢复、负荷、压力、电能、体能年龄、熬夜关联时先查再答；只比较自己平时，不诊断，不提疾病名或建议用药。未接上或缺测就明确说明。',
       parameters:{metric:{type:'string',required:true,enum:['overview','restingHeartRateBpm','hrvSdnnMs','respiratoryRateBrpm','spo2Pct','wristTempC','vo2Max','activeEnergyKcal','exerciseMinutes','steps','sleepMinutes','inBedMinutes','deepMinutes','coreMinutes','remMinutes','awakeMinutes','recovery','sleep','load','stress','energy','fitnessAge','usageActiveMinutes','usageLateNightMinutes','heartRateAvgBpm','heartRateMinBpm','heartRateMaxBpm','workoutMinutes'],description:'overview 或指定指标'},from:{type:'string',description:'账号时区 YYYY-MM-DD，默认最近7天'},to:{type:'string',description:'账号时区 YYYY-MM-DD，最多90天'}},
