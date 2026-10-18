@@ -16,7 +16,7 @@ const diagnosticCodes = new Set([...Object.keys(constants.errno), 'E_ACME', 'E_A
   'ACME_REQUEST_FAILED', 'ABORT_ERR', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT',
   'UND_ERR_SOCKET', 'ERR_TLS_CERT_ALTNAME_INVALID', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
   'CERT_HAS_EXPIRED', 'CSR_PATCH_INVALID', 'DNS_NOT_CONFIGURED', 'DNS_PROVIDER_ERROR', 'DNS_PROPAGATION_TIMEOUT', 'DNS_ZONE_MISMATCH',
-  'CLOUD_UNAVAILABLE', 'CERTIFICATE_KEY_DOMAIN_MISMATCH', 'CERTIFICATE_INVALID_DATES']);
+  'CLOUD_UNAVAILABLE', 'NETWORK_UNAVAILABLE', 'CERTIFICATE_KEY_DOMAIN_MISMATCH', 'CERTIFICATE_INVALID_DATES']);
 const acmeProblems = new Set(['accountDoesNotExist', 'alreadyRevoked', 'badCSR', 'badNonce', 'badPublicKey',
   'badRevocationReason', 'badSignatureAlgorithm', 'caa', 'compound', 'connection', 'dns', 'externalAccountRequired',
   'incorrectResponse', 'invalidContact', 'malformed', 'orderNotReady', 'rateLimited', 'rejectedIdentifier',
@@ -203,7 +203,7 @@ export async function issueHostCertificate({ directoryUrl, email, accountKey, pr
 
 export async function createCertificateManager({ root, domain, identity, certFile,
   directoryUrl = ACME_PRODUCTION, email, onInstalled = async () => {}, now = Date.now,
-  issue = issueHostCertificate, diagnostic }) {
+  issue = issueHostCertificate, fetcher = fetch, diagnostic }) {
   const dir = path.join(root, 'relay-tls'); await ensurePrivateDirectory(dir);
   certFile ??= path.join(dir, 'host-fullchain.pem');
   await ensurePrivateDirectory(path.dirname(certFile));
@@ -242,7 +242,7 @@ export async function createCertificateManager({ root, domain, identity, certFil
           await atomic(stateFile, JSON.stringify(state));
           stage = 'issuance';
           const certificate = await issue({ directoryUrl, email, domain, accountKey, ...tls,
-            relayRequest: identity.relayRequest, signal: abort.signal,
+            relayRequest: identity.relayRequest, signal: abort.signal, fetcher,
             diagnostic: error => { issuanceReported = true; diagnostic?.(error); } });
           stage = 'validate_certificate';
           const info = certificateInfo(certificate, { domain, spki: tls.spki });
@@ -260,7 +260,7 @@ export async function createCertificateManager({ root, domain, identity, certFil
       } catch (error) {
         if (stage !== 'issuance' || !issuanceReported) reportCertificateFailure(diagnostic, { stage, target: 'local' }, error);
         // No CA response bodies, challenge values or credentials in /status.
-        state.certificateErrorCode = ['DNS_NOT_CONFIGURED', 'DNS_PROVIDER_ERROR', 'DNS_PROPAGATION_TIMEOUT',
+        state.certificateErrorCode = error.code === 'NETWORK_UNAVAILABLE' ? 'CERTIFICATE_NETWORK_UNAVAILABLE' : ['DNS_NOT_CONFIGURED', 'DNS_PROVIDER_ERROR', 'DNS_PROPAGATION_TIMEOUT',
           'DNS_ZONE_MISMATCH', 'CLOUD_UNAVAILABLE', 'CERTIFICATE_KEY_DOMAIN_MISMATCH', 'CERTIFICATE_INVALID_DATES']
           .includes(error.code) ? error.code : 'CERTIFICATE_ISSUANCE_FAILED';
       }

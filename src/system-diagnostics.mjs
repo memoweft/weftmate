@@ -80,6 +80,7 @@ export function buildSystemStatus(input = {}, { now = Date.now() } = {}) {
   components.push(row('certificate', certificateDisabled ? 'disabled' : certificateReady && !renewalFailed ? 'healthy' : 'problem',
     certificateDisabled ? 'CERTIFICATE_DISABLED' : expired ? 'CERTIFICATE_EXPIRED' : renewalFailed ? 'CERTIFICATE_RENEWAL_FAILED' : certificateReady ? 'CERTIFICATE_READY' : 'CERTIFICATE_UNAVAILABLE',
     certificateDisabled ? '未启用需要证书的远程连接。' : expired ? '远程证书已经过期，手机与其他电脑的安全连接受影响，本机仍可使用。' :
+      certificate.certificateErrorCode === 'CERTIFICATE_NETWORK_UNAVAILABLE' ? '网络连不上证书服务。请检查网络或代理设置，再点重试。' :
       renewalFailed ? '远程证书更新没有成功，远程安全连接可能受影响，本机仍可使用。' : certificateReady ?
         '远程安全连接使用的证书有效。' : '远程证书暂时不可用，远程安全连接受影响，本机仍可使用。',
     'diagnostics', '查看安全连接的运行记录'));

@@ -21,7 +21,7 @@ async function unusedPort() {
   const port = server.address().port;
   await new Promise(resolve => server.close(resolve)); return port;
 }
-export function frpcConfig({ credentials: c, localPort, transportCaFile, adminPort, adminPassword, logLevel = 'error' }) {
+export function frpcConfig({ credentials: c, localPort, transportCaFile, adminPort, adminPassword, logLevel = 'error', proxyUrl }) {
   const str = JSON.stringify;
   return `serverAddr = ${str(c.serverAddr)}
 serverPort = ${c.serverPort}
@@ -32,7 +32,7 @@ transport.tls.enable = true
 transport.tls.disableCustomTLSFirstByte = true
 transport.tls.serverName = ${str(c.serverName)}
 transport.tls.trustedCaFile = ${str(transportCaFile)}
-transport.tcpMux = true
+${proxyUrl ? `transport.proxyURL = ${str(proxyUrl)}\n` : ''}transport.tcpMux = true
 transport.heartbeatInterval = 5
 transport.heartbeatTimeout = 15
 webServer.addr = "127.0.0.1"
@@ -97,6 +97,9 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
         if (closed) { await certificates.close(); return; }
         certificates.start();
         await certificates.check();
+        const status = certificates.status();
+        if (!status.certificateExpiresAt && status.certificateErrorCode)
+          throw Object.assign(new Error('Certificate unavailable'), { code: status.certificateErrorCode });
       }
       const certificate = options.developmentTls
         ? await developmentCertificate({ root, domain, privateJwk: tls.privateJwk, diagnostic:options.diagnostic }) : { certFile: certificates?.certFile ?? options.certFile };
@@ -108,14 +111,17 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
       setPublicOrigin(publicOrigin);
     }
     adminPort = await unusedPort(); adminPassword = randomBytes(32).toString('base64url');
-    await writeFile(configFile, frpcConfig({ credentials, localPort: adapter.port,
+    const proxyUrl = await options.proxyFor?.(`https://${credentials.serverName}:${credentials.serverPort}`);
+    await writeFile(configFile, frpcConfig({ credentials, localPort: adapter.port, proxyUrl,
       transportCaFile: options.transportCaFile, adminPort, adminPassword, logLevel: options.observe ? 'info' : 'error' }), { mode: 0o600 });
     await ensurePrivateFile(configFile);
     if (closed) return;
     state = 'connecting'; failure = null;
+    const childEnv = { ...process.env, ELECTRON_RUN_AS_NODE: '1' };
+    if (options.proxyFor) for (const name of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy']) delete childEnv[name];
     child = fork(fileURLToPath(new URL('./sidecar.mjs', import.meta.url)), [options.binary, configFile], {
       stdio: ['ignore', options.observe ? 'pipe' : 'ignore', options.observe ? 'pipe' : 'ignore','ipc'], execArgv: [],
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, windowsHide: true });
+      env: childEnv, windowsHide: true });
     const current = child;
     current.stdout?.resume(); current.stderr?.resume();
     observe('sidecar.spawned', {}, current);
@@ -163,7 +169,9 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
   }
   return {
     start(localOrigin) { origin = localOrigin; void tick(); timer = setInterval(() => { void tick(); }, pollMs); timer.unref(); },
-    status() { return { state, baseUrl: publicOrigin, certificateExpiresAt, certificateErrorCode: null, ...certificates?.status(), ...(failure ? { errorCode: failure } : {}) }; },
+    status() { return { state, baseUrl: publicOrigin, certificateExpiresAt, certificateErrorCode: null, ...certificates?.status(), ...(failure ? { errorCode: failure } : {}),
+      ...(certificates?.status().certificateErrorCode === 'CERTIFICATE_NETWORK_UNAVAILABLE' ? { message: '网络连不上证书服务。请检查网络或代理设置，再点重试。' }
+        : state === 'offline' && ['NETWORK_UNAVAILABLE', 'CLOUD_UNAVAILABLE', 'RELAY_UNAVAILABLE'].includes(lastReason) ? { message: '网络连不上远程连接服务。请检查网络或代理设置，再点重试。' } : {}) }; },
     async rotate(requestId) {
       await polling;
       const next = await identity.relayRequest('/hosts/relay/rotate', { requestId });
