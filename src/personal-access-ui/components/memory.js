@@ -54,6 +54,17 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     function memoryStatus(message, error = false) {
         const node = ui.byId('memory-status');
         ui.paintMemoryHealth?.(core.memory.status);
+        if (core.memory.status?.state === 'disabled') {
+            // Rich status content must not inherit the plain-text loading animation.
+            node.classList.remove('reply-status', 'reply-working');
+            node.textContent = '这台电脑尚未启用记忆，暂时不能跨对话记住你告诉它的事。请在这台电脑';
+            const download = ui.element('a', '', '下载并安装最新版');
+            download.href = 'https://weftmate.com/downloads/';
+            download.target = '_blank'; download.rel = 'noopener noreferrer';
+            node.append(download, ' WeftMate，然后重新打开应用。聊天仍可使用。');
+            node.classList.toggle('is-error', false);
+            return;
+        }
         if (['unavailable', 'degraded'].includes(core.memory.status?.state) &&
             core.memory.status.reasonCode === 'MEMORY_MODEL_UNAVAILABLE') {
             node.textContent = '记忆要用的模型还没设置好或暂时连不上，请检查模型设置。';
