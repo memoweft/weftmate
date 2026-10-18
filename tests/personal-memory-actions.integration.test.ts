@@ -1050,6 +1050,55 @@ test('review-1 real Core: deletion ends a queued correction instead of blocking 
   await noErasedCopies(f.root)
 })
 
+test('review-486 real Core: late query selection with different correction text is erased across restart', { skip }, async t => {
+  const f = await fixture(t), old = (await f.world()).items[0]
+  const newText = '我的饮茶偏好现在是红茶。', newSource = '以后饮品换为红茶。'
+  assert.notEqual(newText, old.value.content); assert.notEqual(newSource, old.value.content)
+  f.holdCorrections(true)
+  let entered!: () => void, release!: () => void, held = false, submitted = 0
+  const started = new Promise<void>(resolve => { entered = resolve }), released = new Promise<void>(resolve => { release = resolve })
+  const query = f.manager.query.bind(f.manager), submit = f.manager.submitCommand.bind(f.manager)
+  t.mock.method(f.manager, 'query', async (...args: any[]) => {
+    const result = await query(...args)
+    if (!held && args[1] === 'preview_recall') {
+      assert.ok(result.preview.selected_item_ids.some((pair: any[]) => pair[1] === old.item_id))
+      held = true; entered(); await released
+    }
+    return result
+  })
+  t.mock.method(f.manager, 'submitCommand', async (...args: any[]) => {
+    if (args[1].operation === 'correct_world_item') submitted++
+    return submit(...args)
+  })
+  let pending
+  try {
+    pending = f.tool('memory_correct', { query: '我喜欢喝什么茶', text: newText }, 'late-query-selection', newSource)
+    await started
+    const deleted = await f.manager.submitCommand(owner, { requestId: 'erase-during-selection', operation: 'delete_world_item',
+      targetKind: 'cognition', targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
+    assert.equal(deleted.receipt.result_state, 'applied')
+    release(); await pending; await f.restart(); await f.manager.flushPending(owner); await f.manager.close()
+    const hits: string[] = []
+    async function scan(directory: string) {
+      for (const entry of await readdir(directory, { withFileTypes: true })) {
+        const file = path.join(directory, entry.name)
+        if (entry.isDirectory()) await scan(file)
+        else {
+          const bytes = await readFile(file)
+          if ([newText, newSource].some(text => bytes.includes(Buffer.from(text)))) hits.push(entry.name)
+          assert.equal(entry.name.endsWith('.tmp'), false)
+        }
+      }
+    }
+    await scan(f.root)
+    console.log(JSON.stringify({ reproduction: 'real-core-different-source-selection', submitted, remainingFiles: hits.length }))
+    assert.deepEqual(hits, []); assert.equal(submitted, 0)
+    const rows = JSON.parse(await readFile(path.join(f.root, 'accounts', owner, 'memory-home/pending-actions.json'), 'utf8')).records
+    const row = rows['memory-tool:' + createHash('sha256').update('late-query-selection').digest('hex')]
+    assert.equal(row.result?.state, 'not_found'); assert.deepEqual(row.arguments, {}); assert.equal(row.command, undefined)
+  } finally { release(); await pending }
+})
+
 test('review-1 real Core: an older failed correction cannot undo the later successful preference', { skip }, async t => {
   const f = await fixture(t), old = (await f.world()).items[0]
   f.holdCorrectionText('我喜欢喝红茶。')
