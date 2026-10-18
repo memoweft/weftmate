@@ -712,6 +712,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     correctionSourceSupported(ownerId) {
       return withOwner(ownerId, entry => entry.capabilities?.services?.command?.correction_source === true);
     },
+    forgetBatchSupported(ownerId) {
+      return withOwner(ownerId, entry => entry.capabilities?.services?.command?.forget_batch === 1);
+    },
     async mutateFromTool(ownerId, action) {
       owner(ownerId);
       if (!enabled || closing || erasingOwners.has(ownerId)) throw error('MEMORY_UNAVAILABLE');
@@ -1084,21 +1087,25 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         const prior = await journal.get(ownerId, proposal.requestId);
         if (!prior) {
           let sources = [];
-          if (proposal.targetKind === 'evidence') {
-            const result = await withOwner(ownerId, entry => entry.rpc.request('query_evidence', { operation: 'get', evidence_id: proposal.targetId }));
-            sources = [result.evidence];
-          } else {
-            const result = await withOwner(ownerId, entry => entry.rpc.request('query_provenance', { object_kind: proposal.targetKind, item_id: proposal.targetId, projection: 'history' }));
-            sources = (result.provenance ?? []).map(source => source.evidence);
-            if (proposal.targetKind === 'entity') {
-              const mentions = value => typeof value === 'string' ? value === proposal.targetId
-                : Array.isArray(value) ? value.some(mentions)
-                  : value && typeof value === 'object' ? Object.values(value).some(mentions) : false;
-              for (const kind of ['relationship', 'cognition']) {
-                const related = await withOwner(ownerId, entry => entry.rpc.request('query_world', { operation: 'list', object_kind: kind, include_history: true }));
-                for (const item of related.items ?? []) if (mentions(item.value)) {
-                  const provenance = await withOwner(ownerId, entry => entry.rpc.request('query_provenance', { object_kind: kind, item_id: item.item_id, projection: 'history' }));
-                  sources.push(...(provenance.provenance ?? []).map(source => source.evidence));
+          const targets = [{ target_kind: proposal.targetKind, target_id: proposal.targetId },
+            ...(proposal.payload?.additional_targets ?? [])];
+          for (const target of targets) {
+            if (target.target_kind === 'evidence') {
+              const result = await withOwner(ownerId, entry => entry.rpc.request('query_evidence', { operation: 'get', evidence_id: target.target_id }));
+              sources.push(result.evidence);
+            } else {
+              const result = await withOwner(ownerId, entry => entry.rpc.request('query_provenance', { object_kind: target.target_kind, item_id: target.target_id, projection: 'history' }));
+              sources.push(...(result.provenance ?? []).map(source => source.evidence));
+              if (target.target_kind === 'entity') {
+                const mentions = value => typeof value === 'string' ? value === target.target_id
+                  : Array.isArray(value) ? value.some(mentions)
+                    : value && typeof value === 'object' ? Object.values(value).some(mentions) : false;
+                for (const kind of ['relationship', 'cognition']) {
+                  const related = await withOwner(ownerId, entry => entry.rpc.request('query_world', { operation: 'list', object_kind: kind, include_history: true }));
+                  for (const item of related.items ?? []) if (mentions(item.value)) {
+                    const provenance = await withOwner(ownerId, entry => entry.rpc.request('query_provenance', { object_kind: kind, item_id: item.item_id, projection: 'history' }));
+                    sources.push(...(provenance.provenance ?? []).map(source => source.evidence));
+                  }
                 }
               }
             }
