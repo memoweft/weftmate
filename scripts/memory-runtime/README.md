@@ -6,7 +6,7 @@
 [#332 的总经理转达](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)。
 
 `lock.json` 固定官方 Python 3.13.16 嵌入 ZIP、Core 已合入并首轮通过的
-`e9cc1b298d6611b29fb1024dd1f8cf75c9d333c7` 提交及官方源归档 URL、大小与
+`069ecca674ff7fb65efee1dbcaae612dcd2da662` 提交及官方源归档 URL、大小与
 散列、Core `uv.lock` 散列、Windows CPython 3.13 对应 wheel、传递依赖、许可、模型
 修订及文件散列。基础层是 Python/Core 和 7 个基础依赖；完整层在同一
 基础上加入 17 个语义依赖、固定模型/分词器、微软两个必需运行库和许可。
@@ -30,6 +30,8 @@ WeftMate 两个传输入口每次分配新 ID，业务恢复使用边界、命�
 助手提出的事实必须得到用户明确确认才可形成记忆；简短的行动确认只能确认
 实际选中的行动提议，不能借同轮其他提议把助手的事实陈述写成用户记忆。
 未覆盖的确认句式仍有漏形成限制，本次版本更新不替代 M1/M2/M3/M7 安装验收。
+包含 [MemoWeft #127](https://github.com/memoweft/memoweft/pull/127) 的跨轮行动确认修复：
+简短指回确认须以完整主题和实际动作匹配选中的提议，保留完整原话的否定与问句核对。
 
 ## 制备两种载荷
 
