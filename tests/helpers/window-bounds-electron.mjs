@@ -19,8 +19,8 @@ if (process.env.WINDOW_BOUNDS_FAULT === 'hung') {
     if (command !== 'powershell.exe') return execFile(command, args, options, callback);
     // An owned, inert bridge and descendant, each bounded independently too.
     const script = `const {spawn}=require('node:child_process');const {writeFileSync}=require('node:fs');const {join}=require('node:path');
-      const leaf=spawn(process.execPath,['--eval','setTimeout(()=>{},30000)'],{windowsHide:true,stdio:'ignore',env:process.env});
-      writeFileSync(join(process.env.WINDOW_BOUNDS_PROFILE,'bridge-pids.json'),JSON.stringify([process.pid,leaf.pid]));setTimeout(()=>{},30000);`;
+      const leaf=spawn(process.execPath,['--eval','setTimeout(()=>process.exit(0),30000)'],{windowsHide:true,timeout:30000,stdio:'ignore',env:process.env});
+      writeFileSync(join(process.env.WINDOW_BOUNDS_PROFILE,'bridge-pids.json'),JSON.stringify([process.pid,leaf.pid]));setTimeout(()=>process.exit(0),30000);`;
     const child = execFile(process.execPath, ['--eval', script], { ...options,
       env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } }, callback);
     child.stdin?.on('error', () => {});
