@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+const proxyPort = url => Number(url.port || (url.protocol === 'https:' ? 443 : ['socks4:', 'socks5:'].includes(url.protocol) ? 1080 : 80));
+
 const networkFailure = () => Object.assign(new Error('Network connection unavailable'), { code: 'NETWORK_UNAVAILABLE' });
 
 // Use Chromium's normal system/PAC proxy resolution. Explicit environment
@@ -15,7 +17,7 @@ export async function createDesktopRelayNetwork({ session, net, env = process.en
     try { url = new URL(value); } catch { throw networkFailure(); }
     if (!['http:', 'https:', 'socks5:', 'socks4:'].includes(url.protocol)) throw networkFailure();
     if (url.username || url.password) credentials.set(scheme + ':', {
-      host: url.hostname, port: Number(url.port || (url.protocol === 'https:' ? 443 : 80)),
+      host: url.hostname, port: proxyPort(url),
       username: decodeURIComponent(url.username), password: decodeURIComponent(url.password),
     });
     url.username = ''; url.password = '';
@@ -24,7 +26,7 @@ export async function createDesktopRelayNetwork({ session, net, env = process.en
   if (rules.length) {
     transport = session.fromPartition(`weftmate-relay-${randomUUID()}`, { cache: false });
     await transport.setProxy({ mode: 'fixed_servers', proxyRules: rules.join(';'),
-      proxyBypassRules: (env.no_proxy || env.NO_PROXY || '').split(/[,;]/).map(s => s.trim()).filter(Boolean).join(';') });
+      proxyBypassRules: (env.no_proxy || env.NO_PROXY || '').split(/[,;]/).map(s => s.trim()).filter(Boolean).join(',') });
   }
   function authenticatedFetch(url, options = {}) {
     return new Promise((resolve, reject) => {
@@ -78,7 +80,7 @@ export async function createDesktopRelayNetwork({ session, net, env = process.en
       if (!match) throw networkFailure();
       const proxy = new URL(`${match[1] === 'PROXY' || match[1] === 'HTTP' ? 'http' : 'socks5'}://${match[2]}`);
       const credential = credentials.get(new URL(url).protocol);
-      if (credential && proxy.hostname === credential.host && Number(proxy.port || 80) === credential.port) {
+      if (credential && proxy.hostname === credential.host && proxyPort(proxy) === credential.port) {
         proxy.username = credential.username; proxy.password = credential.password;
       }
       return proxy.href.replace(/\/$/, '');
