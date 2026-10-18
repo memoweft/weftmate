@@ -6,7 +6,7 @@ import { runInNewContext } from 'node:vm';
 test('disabled memory explains the missing capability and links to the current installer', async () => {
   const context: any = { WeftUiComponents: { factories: {} } };
   runInNewContext(await readFile(new URL('../src/personal-access-ui/components/memory.js', import.meta.url), 'utf8'), context);
-  const node: any = { textContent: '', children: [], classList: { toggle() {} }, append(...items) { this.children.push(...items); } };
+  const node: any = { textContent: '', children: [], classList: { toggle() {}, remove() {} }, append(...items) { this.children.push(...items); } };
   const core: any = { memory: { status: { state: 'disabled' } } };
   const ui = { byId: () => node, element: (tag, className, textContent) => ({ tag, className, textContent }) };
   context.WeftUiComponents.factories.memory(core, ui).memoryStatus('这台电脑尚未开启记忆。');

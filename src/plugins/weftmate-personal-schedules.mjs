@@ -9,6 +9,7 @@ import { scheduleContent } from '../personal-access/schedules-calendar.mjs';
 import { foldGoal } from '@deepseek-ai/dsh-goal';
 import { createNativeGoalManager } from '../personal-access/goals-native.mjs';
 import { isHealthQuestion } from './personal-prompt.mjs';
+import { installAccountScheduleQuery } from './personal-schedule-query.mjs';
 
 export const name = 'weftmate-personal-schedules';
 export const inject = ['agents', 'sessions', 'tools', 'sessionPersistence', 'webServer', 'weftmateSessionLifecycle'];
@@ -51,6 +52,7 @@ export async function apply(ctx) {
   });
   ctx.on('agent/created', ({ agent }) => {
     if (!personal(agent)) return;
+    installAccountScheduleQuery(ctx.tools, agent, request);
     agent.ctx.tools.register(defineTool({name:'health_query',
       description:'查询本人健康汇总。问睡眠、恢复、负荷、压力、电能、体能年龄、熬夜关联时先查再答；只比较自己平时，不诊断，不提疾病名或建议用药。未接上或缺测就明确说明。',
       parameters:{metric:{type:'string',required:true,enum:['overview','restingHeartRateBpm','hrvSdnnMs','respiratoryRateBrpm','spo2Pct','wristTempC','vo2Max','activeEnergyKcal','exerciseMinutes','steps','sleepMinutes','inBedMinutes','deepMinutes','coreMinutes','remMinutes','awakeMinutes','recovery','sleep','load','stress','energy','fitnessAge','usageActiveMinutes','usageLateNightMinutes','heartRateAvgBpm','heartRateMinBpm','heartRateMaxBpm','workoutMinutes'],description:'overview 或指定指标'},from:{type:'string',description:'账号时区 YYYY-MM-DD，默认最近7天'},to:{type:'string',description:'账号时区 YYYY-MM-DD，最多90天'}},
@@ -61,7 +63,10 @@ export async function apply(ctx) {
       description: 'List all reminders/tasks (including paused), or pause, resume, delete, or run one now in this conversation. Use the returned stable id.',
       parameters: { action: { type: 'string', enum: ['list', 'pause', 'resume', 'delete', 'run'], required: true }, id: { type: 'string' } },
       output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-      execute: (args, exec) => manager.manage(exec.agent, args.action, args.id),
+      execute: async (args, exec) => {
+        const value = await manager.manage(exec.agent, args.action, args.id);
+        return args.action === 'list' ? { ...value, scope: 'conversation', message: 'Only this conversation. Use schedule_list to read all reminders for the account.' } : value;
+      },
       presentCall: () => ({ card: 'generic', title: '管理提醒与定时任务', kind: 'other' }) }));
   });
   ctx.on('agent/pre-step', async (payload, next) => {

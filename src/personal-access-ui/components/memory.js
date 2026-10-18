@@ -55,6 +55,8 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         const node = ui.byId('memory-status');
         ui.paintMemoryHealth?.(core.memory.status);
         if (core.memory.status?.state === 'disabled') {
+            // Rich status content must not inherit the plain-text loading animation.
+            node.classList.remove('reply-status', 'reply-working');
             node.textContent = '这台电脑尚未启用记忆，暂时不能跨对话记住你告诉它的事。请在这台电脑';
             const download = ui.element('a', '', '下载并安装最新版');
             download.href = 'https://weftmate.com/downloads/';
