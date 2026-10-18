@@ -32,4 +32,3 @@ export function physicalDesktopBounds(raw, current, target, scale, toDip, toScre
   if (Object.keys(desired).some(key => converted[key] !== desired[key])) throw new Error('WINDOW_BOUNDS_UNREPRESENTABLE');
   return result;
 }
-
