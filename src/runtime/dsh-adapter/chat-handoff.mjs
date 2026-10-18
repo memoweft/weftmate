@@ -32,7 +32,8 @@ export async function prepareNativeHandoff(ctx, agent) {
   let turn;
   for (const event of session.events) {
     if (event.type === 'turn/start') turn = event.data.turn;
-    if (turn !== undefined) turns.set(event.seq, turn);
+    const eventTurn = event.data?.turn ?? turn;
+    if (eventTurn !== undefined) turns.set(event.seq, eventTurn);
     if (event.type === 'turn/end') {
       outcomes.set(event.data.turn, event.data.reason.kind);
       turn = undefined;
@@ -48,14 +49,15 @@ export async function prepareNativeHandoff(ctx, agent) {
   };
   for (const seq of session.surface.nodes) {
     const event = events.get(seq), message = event.data?.message ?? event.data;
-    if (['weftmate-personal-memory','weftmate-memory-erasure','weftmate-personal-conversation-context'].includes(message?.source?.plugin)) continue;
+    const source = event.data?.source ?? message?.source;
+    if (['weftmate-personal-memory','weftmate-memory-erasure','weftmate-personal-conversation-context'].includes(source?.plugin)) continue;
     if (!['user/message','assistant/message'].includes(event.type)) continue;
     const text = (message.content ?? []).filter(part => part.type === 'text').map(part => part.text).join('\n');
     if (text) {
       // A retained user request and its answer are historical data together.
       // Flattening them into a new user message loses who said what and whether
       // that instruction has already been fulfilled (notably after queue/stop).
-      const role = event.type === 'assistant/message' ? 'assistant' : message.source?.kind === 'plugin' ? 'context' : 'user';
+      const role = event.type === 'assistant/message' ? 'assistant' : source?.kind === 'plugin' ? 'context' : 'user';
       const historicalTurn = turns.get(seq);
       rows.push({ role, text, ...(historicalTurn === undefined ? {} : {
         turn: historicalTurn, outcome: outcomes.get(historicalTurn),

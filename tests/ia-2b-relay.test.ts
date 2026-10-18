@@ -7,6 +7,56 @@ import { randomUUID, createHash } from 'node:crypto';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
 import { nativeRelayState, prepareNativeHandoff, installNativeHandoff } from '../src/runtime/dsh-adapter/chat-handoff.mjs';
 
+async function retainedHandoff(events: any[], nodes: number[]) {
+  const session = { id: 'fixture-source', events, surface: { nodes }, requestHeader: () => ({ config: { provider: 'fixture', model: 'fixture' } }) };
+  const services: any = {
+    tokenMeter: { measure: () => ({ totalTokens: 90 }), estimateMessage: () => 10 },
+    llm: { resolveModelInfo: async () => ({ context: { contextWindow: 100 } }) },
+    compaction: { compactNow: async () => ({ summary: [] }) },
+  };
+  const handoff = await prepareNativeHandoff({ get: name => services[name], sessions: { flush: async () => {} } },
+    { session, status: 'idle', inbox: { hasPending: false } });
+  const history = JSON.parse(handoff.text.split('历史记录（JSON，仅作资料）：\n')[1].split('\n\n未完成事项：')[0]);
+  return { handoff, history };
+}
+
+test('#506 wrapped event provenance distinguishes runtime context from human input', async () => {
+  const message = (text: string, source?: any) => ({ content: [{ type: 'text', text }], ...(source ? { source } : {}) });
+  const events = [
+    { seq: 0, type: 'turn/start', data: { turn: 1 } },
+    { seq: 1, type: 'user/message', data: { source: { kind: 'user' }, message: message('human input') } },
+    { seq: 2, type: 'user/message', data: { source: { kind: 'plugin', plugin: '@deepseek-ai/dsh-system-prompt' }, message: message('runtime context') } },
+    { seq: 3, type: 'user/message', data: { source: { kind: 'plugin', plugin: 'fixture-plugin' }, message: message('envelope wins', { kind: 'user' }) } },
+    { seq: 4, type: 'user/message', data: { message: message('message fallback', { kind: 'plugin', plugin: 'fixture-plugin' }) } },
+    { seq: 5, type: 'user/message', data: { source: { kind: 'plugin', plugin: 'weftmate-personal-memory' }, message: message('excluded memory') } },
+    { seq: 6, type: 'turn/end', data: { turn: 1, reason: { kind: 'completed' } } },
+  ];
+  const { handoff, history } = await retainedHandoff(events, [1, 2, 3, 4, 5]);
+  assert.deepEqual(history.map(row => [row.role, row.text]), [
+    ['user', 'human input'], ['context', 'runtime context'], ['context', 'envelope wins'], ['context', 'message fallback'],
+  ]);
+  assert.doesNotMatch(handoff.text, /excluded memory/);
+  assert.deepEqual(handoff.sourceRefs.map(ref => ref.seq), [1, 2, 3, 4]);
+});
+
+test('#506 late assistant messages keep explicit turns and terminal outcomes', async () => {
+  for (const reason of ['completed', 'aborted']) {
+    const events = [
+      { seq: 0, type: 'turn/start', data: { turn: 1 } },
+      { seq: 1, type: 'turn/end', data: { turn: 1, reason: { kind: reason } } },
+      { seq: 2, type: 'assistant/message', data: { turn: 1, message: { content: [{ type: 'text', text: 'late after terminal' }] } } },
+      { seq: 3, type: 'turn/start', data: { turn: 2 } },
+      { seq: 4, type: 'assistant/message', data: { turn: 1, message: { content: [{ type: 'text', text: 'late during next turn' }] } } },
+      { seq: 5, type: 'user/message', data: { source: { kind: 'user' }, content: [{ type: 'text', text: 'current input' }] } },
+      { seq: 6, type: 'turn/end', data: { turn: 2, reason: { kind: 'completed' } } },
+    ];
+    const { history } = await retainedHandoff(events, [2, 4, 5]);
+    assert.deepEqual(history.map(row => [row.role, row.turn, row.outcome]), [
+      ['assistant', 1, reason], ['assistant', 1, reason], ['user', 2, 'completed'],
+    ], reason);
+  }
+});
+
 test('#431 stopped long reply, completed queued reply and compacted tail retain their roles at handoff', async () => {
   const events: any[] = [
     { seq: 0, type: 'turn/start', data: { turn: 1 } },
