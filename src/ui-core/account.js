@@ -176,7 +176,7 @@ globalThis.WeftUiCore.factories.account = (core, effects, environment) => {
             return;
         if (command?.kind !== 'session.create' || command.requestId !== intent.sessionRequestId ||
             command.workspaceKind !== 'browser' || !core.sessionIdPattern.test(command.sessionId ?? '')) {
-            effects.browserWorkspaceNotice('网页会话回执与原选择不一致，已保留请求供核对。');
+            effects.browserWorkspaceNotice('返回的网页会话与原选择不一致，请核对；这次操作已保留。');
             return;
         }
         for (let attempt = 0; attempt < 5 && current() && ['pending', 'dispatching'].includes(command.state); attempt++) {
@@ -241,7 +241,7 @@ globalThis.WeftUiCore.factories.account = (core, effects, environment) => {
             return;
         if (message?.kind !== 'session.message' || message.requestId !== intent.messageRequestId ||
             message.sessionId !== command.sessionId || message.workspaceKind !== 'browser') {
-            effects.browserWorkspaceNotice('网页目标回执与原选择不一致，编号已保留。');
+            effects.browserWorkspaceNotice('返回的网页目标与原选择不一致，请核对；操作编号已保留。');
             return;
         }
         if (message.state !== 'accepted_by_dsh') {

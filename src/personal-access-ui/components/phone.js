@@ -324,7 +324,7 @@ globalThis.WeftUiComponents.factories.phone = (core, ui) => {
                 content = ({ completed: '已结束', cancelled: '已取消', failed: '失败', interrupted: '中断' })[event.payload?.status];
             }
             else if (event.kind === 'tool.receipt') {
-                label = `${source} · 手机工具回执`;
+                label = `${source} · 手机工具结果`;
                 const status = ({ dispatched: '已派发，结果待核对', observed: '已观察到结果', failed: '失败',
                     uncertain: '结果待确认' })[event.payload?.status];
                 content = status ? `${status}。${event.payload.summary ?? ''}` : null;

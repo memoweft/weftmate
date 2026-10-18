@@ -202,3 +202,25 @@ test('a complete selected chain can proceed while unrelated walking and the orig
   assert.ok(f.world().some(row => row.item_id === 'walking'));
   assert.deepEqual(f.originalChat, [mixed, '记住我喜欢喝红茶', '我其实更喜欢绿茶。']);
 });
+
+for (const path of ['topic-plan', 'page-confirmation']) test(`${path} rejects a selection whose revision changed before completion`, async t => {
+  const f = await fixture(t); f.walkingOnly('我周末喜欢散步。');
+  let entered, release;
+  const started = new Promise<void>(resolve => { entered = resolve; });
+  const resumed = new Promise<void>(resolve => { release = resolve; });
+  const query = f.manager.query.bind(f.manager);
+  t.mock.method(f.manager, 'query', async (...args) => {
+    if (args[1] === 'query_world' && args[2].operation === 'revision') { entered(); await resumed; }
+    return query(...args);
+  });
+  let pending;
+  try {
+    pending = path === 'topic-plan' ? f.manager.planForget(owner, request)
+      : f.manager.checkForgetCompletion(owner, { targetKind: 'cognition', targetId: 'green', expectedWorldRevision: 7 });
+    await started;
+    await f.manager.submitCommand(owner, { requestId: 'other-deletion', operation: 'delete_world_item', targetKind: 'cognition', targetId: 'green', expectedWorldRevision: 7, payload: {} });
+    release(); const result = await pending;
+    assert.equal(path === 'topic-plan' ? result.completionState : result.state, 'withheld');
+    assert.equal(f.commands.length, 1, 'the stale selection never submits another deletion');
+  } finally { release(); await pending; }
+});
