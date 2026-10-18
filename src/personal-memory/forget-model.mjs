@@ -316,7 +316,7 @@ export async function checkForgetCompletion(manager, owner, proposal, route) {
     // Formation can fail before any World item exists. The explicitly selected
     // source is then the target fact, subject to the same classification and
     // completion checks; it grants no authority over other sources or items.
-    if (selectedSource && !(preview.items ?? []).length) candidates.push({ key: `target:evidence:${proposal.targetId}`,
+    if (selectedSource && !items.length) candidates.push({ key: `target:evidence:${proposal.targetId}`,
       kind: 'evidence', text: [selectedSource.raw_content, selectedSource.summary].filter(Boolean).join('\n'), graphSubject: null,
       sourceTexts: [selectedSource.raw_content, selectedSource.summary].filter(Boolean) });
     if (!facts.length || !candidates.length) return unknown();
