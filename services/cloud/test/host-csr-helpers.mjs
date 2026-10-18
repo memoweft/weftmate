@@ -23,8 +23,16 @@ export function verifyCsr(csr, jwk, domains = [domain]) {
   const output = result.stdout;
   const pem = output.match(/-----BEGIN PUBLIC KEY-----[\s\S]*?-----END PUBLIC KEY-----/)[0];
   assert.ok(createPublicKey(pem).export({ type: 'spki', format: 'der' }).equals(publicKey(jwk)), 'CSR keeps the exact public key');
-  assert.ok(output.includes(`CN = ${domains[0]}`) || output.includes(`CN=${domains[0]}`));
+  const subject = output.match(/^\s*Subject:\s*CN\s*=\s*([^\r\n]+)$/m)?.[1].trim();
+  assert.equal(subject, domains[0], 'independent parser keeps the exact common name');
   assert.deepEqual([...output.matchAll(/DNS:([^,\s]+)/g)].map(m => m[1]), domains);
+}
+
+// ACME.js uses _info for the product's P-256 CSRs. Keep that consumer contract
+// separate from the independent OpenSSL oracle: _info guesses RSA signatures.
+export function verifyHostCsr(csr, jwk, domains = [domain]) {
+  assert.equal(jwk.kty, 'EC'); assert.equal(jwk.crv, 'P-256');
+  verifyCsr(csr, jwk, domains);
   const info = CSR._info(csr);
   assert.deepEqual(info.altnames, domains);
   assert.equal(info.subject, domains[0]);

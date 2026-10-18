@@ -8,10 +8,26 @@
  */
 
 import { execFile, spawn } from 'node:child_process'
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { createReadStream } from 'node:fs'
 import { lstat, open, readFile, readdir, realpath } from 'node:fs/promises'
 import { join, relative, resolve, sep } from 'node:path'
+
+export const AI_GAME_PRINCIPAL_REF = 'WEFTMATE_AI_GAME_PRINCIPAL_ID'
+export const AI_GAME_CONTROLLER_REF = 'WEFTMATE_AI_GAME_CONTROLLER_ID'
+
+/** Host-only identity: read durable credentials first; never publish IDs or errors. */
+export function ensureAiGameOwnerIds(store, generateId = randomUUID) {
+  for (const [ref, prefix] of [
+    [AI_GAME_PRINCIPAL_REF, 'principal'],
+    [AI_GAME_CONTROLLER_REF, 'controller'],
+  ]) {
+    const existingId = store?.getCredential?.(ref)
+    if (typeof existingId !== 'string' || !/^[A-Za-z0-9._:-]{1,256}$/.test(existingId)) {
+      store?.saveCredential?.(ref, `${prefix}_${generateId().replaceAll('-', '')}`)
+    }
+  }
+}
 
 export const AI_GAME_RUNTIME_DIRECTORY = 'ai-game-runtime'
 export const AI_GAME_MANAGED_ORIGIN_REF = 'WEFTMATE_AI_GAME_MANAGED_ORIGIN'
