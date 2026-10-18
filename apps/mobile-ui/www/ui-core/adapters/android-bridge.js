@@ -183,6 +183,7 @@
     // Verified account login selects its own computer automatically. There is
     // no device approval or pairing step on this journey.
     client.exchange = async (...args) => {
+      const selectedHost = client.config?.hostId;
       if (client.config?.hostId === 'unconnected') {
         const directory = await client.authorized('/devices');
         const host = directory.hosts?.find(row => row.status === 'online' || row.online === true) || directory.hosts?.[0];
@@ -195,7 +196,14 @@
         client.config = { ...client.config, ...config, clientId: client.clientId || client.config.clientId };
         await connected({ hostId: host.hostId, baseUrl: client.host });
       }
-      try { return await exchange(...args); }
+      try {
+        // Native configure can restore a real host config from cache while its relay is offline.
+        if (selectedHost && selectedHost !== 'unconnected') {
+          const connection = await client.authorized('/hosts/connect', { method: 'POST', body: { hostId: selectedHost } });
+          if (connection.status === 'offline') return { status: 'cloud_only' };
+        }
+        return await exchange(...args);
+      }
       catch (error) {
         if (error.status === 404 && ['HOST_NOT_FOUND', 'NOT_FOUND'].includes(error.code)) return { status: 'cloud_only' };
         throw error;
