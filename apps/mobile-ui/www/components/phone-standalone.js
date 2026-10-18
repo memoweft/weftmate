@@ -76,15 +76,16 @@
       thinking:()=>currentServiceModel()?.deepThinking,toggleThinking:async enabled=>{if(native)await serviceCall('update',{...serviceDirectory.selected,deepThinkingEnabled:enabled});else{modelServices.setDeepThinking(enabled);serviceDirectory=modelServices.view();}},toast});
     await phonePicker.open();
   }
-  const sendBlocker = text => !engine ? '正在打开对话，请稍候再发送。'
+  const sendBlocker = (text, queue = false) => !engine ? '正在打开对话，请稍候再发送。'
     : !state.model ? '先在设置里添加一个模型，再开始聊天。'
     : state.modelSwitching ? '正在测试或切换模型，请稍候再发送。'
-    : engine.view().running ? '当前回复还在进行，请先停止或等待。'
+    : engine.view().running && !queue ? '当前回复还在进行，请先停止或等待。'
     : !text.trim() ? '先输入消息。'
     : text.trim().length>16384 ? '消息过长，请缩短后发送。' : '';
   const show = () => {
     if (!engine) return;
-    const value = engine.view(); state.busy = value.running;
+    const value = engine.view(), finished=state.busy && !value.running; state.busy = value.running;
+    if(finished && api.active){clearTimeout(memoryTimer);const id=value.activeConversationId||state.conversationId;memoryTimer=setTimeout(()=>void engine?.extractMemory(id),20000);}
     state.conversations = value.conversations.map(c => ({ id: c.id, createdAt:new Date(c.turns[0]?.timestamp||Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
     if (!state.conversationId && value.running) state.conversationId = value.conversations.at(-1)?.id || null;
     renderConversationList(); if (state.page === 'chat' && state.chatSource === 'phone') render(); updateComposer();
@@ -195,6 +196,8 @@
     state.profile = { displayName: info.localOnly ? '本机使用' : info.email, phoneOnly: true, localOnly: info.localOnly === true };
     uiCore.stopConnection(); document.body.classList.remove('cloud-auth-active'); $('cloud-auth-page').classList.remove('active');
     showProfile(state.profile); page('chat'); show();
+    await uiCore.loadMessageModePreference();
+    engine.resumeQueue();
     if (native) { await syncAccountAppearance(); await nativeCall('app.ready', { owner: (await nativeCall('app.bootstrap')).owner, hasDraft: false }); }
     clearInterval(poll); if (!info.localOnly) poll = setInterval(() => void connect().catch(() => {}), 15000);
   }
@@ -266,17 +269,20 @@
       else if (action === 'composer') await engine.saveComposer(p.conversationId || null, p.draft || '');
       else if (action === 'send' || action === 'regenerate') {
         if (!api.active) throw Error('HOST_AVAILABLE');
-        const reason=sendBlocker(action==='send'?String(p.text||''):'重新生成');
+        const reason=sendBlocker(action==='send'?String(p.text||''):'重新生成', action==='send');
         if(reason){nativeError=reason;sent=false;}
         else {
           state.conversationId = p.conversationId || null;
-          void run(() => action === 'send' ? engine.send(p.text, state.conversationId) : engine.regenerate(state.conversationId));
+          if (action === 'send') {
+            const receipt = await engine.enqueue(p.text, state.conversationId, uiCore.messageModePreference());
+            state.conversationId = receipt.conversationId;
+          } else void run(() => engine.regenerate(state.conversationId));
         }
       } else if (action === 'stop') engine.stop();
       else if (action !== 'view') throw Error('INVALID_REQUEST');
       const value = engine.view();
       return { ready: true, active: api.active, authBusy, owner: sessionKey, page: state.page, selectedId: state.conversationId,
-        running: value.running, sent, modelSwitching:!!state.modelSwitching, conversations: value.conversations, composer: value.nativeComposer || null, drafts: value.nativeDrafts || {}, error: nativeError };
+        running: value.running, activeConversationId:value.activeConversationId, pendingMessages:value.pendingMessages, messageMode:uiCore.messageModePreference(), sent, modelSwitching:!!state.modelSwitching, conversations: value.conversations, composer: value.nativeComposer || null, drafts: value.nativeDrafts || {}, error: value.queueError || nativeError };
     },
     ensureAccount: async info => {if(sessionKey&&sessionKey!==`${info.origin}:${info.accountId}`)await api.clear();},
     modelCall: (method,p={})=>routeCall(method,p),

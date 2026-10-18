@@ -379,6 +379,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 } },false,onPreview,{})
             }
             SelectionContainer{NativeMarkdown(text)}
+            if(user && d.optBoolean("queued")) Text("排队中",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if(!user && e.optString("type")!="assistant.delta") Row {
             NativeIconButton(R.drawable.wm_copy,"复制回复",compact=true){m.copyReply(text)}
