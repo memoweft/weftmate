@@ -12,6 +12,12 @@ app.whenReady().then(() => {
   globalThis.restoreWindowsDesktopBounds = restoreWindowsDesktopBounds;
   if (process.env.WINDOW_BOUNDS_EARLY_SHOW === 'true') {
     globalThis.windowBoundsDesktop.show();
+    if (process.env.WINDOW_BOUNDS_EARLY_ACTION === 'settings') globalThis.windowBoundsDesktop.openSettings();
+    if (process.env.WINDOW_BOUNDS_EARLY_ACTION === 'send-to') {
+      globalThis.windowBoundsDesktop.sendTo([]);
+      globalThis.windowBoundsDesktop.show({ sessionId: 'early-first' });
+      globalThis.windowBoundsDesktop.show({ sessionId: 'early-last' });
+    }
     const win = globalThis.windowBoundsDesktop.window;
     globalThis.windowBoundsEarlyShow = { visible: win.isVisible(), maximized: win.isMaximized() };
   }

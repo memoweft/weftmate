@@ -12,7 +12,10 @@ const root = mkdtempSync(join(tmpdir(), 'weftmate-window-early-show-'));
 const repository = fileURLToPath(new URL('../../', import.meta.url));
 const expected = { x: 80, y: 80, width: 1000, height: 600 };
 const server = createServer((request, response) => {
-  if (request.url === '/personal/v1/ui') response.end('<!doctype html><title>WeftMate</title>Window startup fixture');
+  if (request.url === '/personal/v1/ui') {
+    response.setHeader('Content-Type', 'text/html; charset=utf-8');
+    response.end('<!doctype html><title>WeftMate</title><script>globalThis.settingsCalls=[];globalThis.WeftSettingsNavigation={open:category=>settingsCalls.push(category)};window.weftmateDesktop.onConversation(value=>{globalThis.startupConversation=value});</script>Window startup fixture');
+  }
   else { response.writeHead(401); response.end('{}'); }
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -30,7 +33,9 @@ try {
       if (!['desktop-window.json', 'desktop-window.json.tmp'].includes(String(file))) return;
       try { snapshots.push(JSON.parse(readFileSync(join(profile, String(file)), 'utf8'))); } catch {}
     });
+    const action = ['show', 'settings', 'send-to'][attempt - 1];
     const env = { ...process.env, WINDOW_BOUNDS_PROFILE: profile, WINDOW_BOUNDS_EARLY_SHOW: 'true',
+      WINDOW_BOUNDS_EARLY_ACTION: action, WINDOW_BOUNDS_TRAY: String(attempt !== 1),
       WINDOW_BOUNDS_ORIGIN: `http://127.0.0.1:${server.address().port}`, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' };
     delete env.ELECTRON_RUN_AS_NODE;
     application = await _electron.launch({ executablePath, cwd: repository, env,
@@ -43,10 +48,19 @@ try {
       return { early: globalThis.windowBoundsEarlyShow, maximized, visible: win.isVisible(),
         bounds: win.getBounds(), normal: win.getNormalBounds(), scale: screen.getPrimaryDisplay().scaleFactor };
     });
+    const page = await application.firstWindow();
+    if (action === 'settings') {
+      await page.waitForFunction(() => globalThis.settingsCalls.length === 1);
+      assert.deepEqual(await page.evaluate(() => globalThis.settingsCalls), ['general']);
+    }
+    if (action === 'send-to') {
+      await page.waitForFunction(() => globalThis.startupConversation?.sessionId === 'early-last');
+      assert.deepEqual(await page.evaluate(() => globalThis.startupConversation), { sessionId: 'early-last' });
+    }
     await closeTestElectron(application, async () => { await globalThis.windowBoundsDesktop.close(); });
     application = null; observer.close(); observer = null;
     const saved = JSON.parse(readFileSync(stateFile, 'utf8'));
-    const row = { scale, attempt, expected, ...observed, saved, snapshots }; report.push(row);
+    const row = { scale, attempt, action, expected, ...observed, saved, snapshots }; report.push(row);
     console.log(JSON.stringify(row));
     try {
       assert.equal(observed.scale, scale); assert.equal(observed.maximized, true); assert.equal(observed.visible, true);
