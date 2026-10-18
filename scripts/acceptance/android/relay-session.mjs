@@ -6,6 +6,7 @@ import { randomBytes } from 'node:crypto';
 import { createConnection } from 'node:net';
 import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
+import { createControlAccess } from '../control-access.mjs';
 
 const require = createRequire(import.meta.url);
 const { _electron } = require('playwright');
@@ -20,6 +21,8 @@ if (executableIndex >= 0 && (!desktopExecutable || desktopExecutable.startsWith(
 let app, page, lock, controlServer, reply, email = '', code = '', closed = false;
 const password = 'B2-' + randomBytes(24).toString('base64url') + '!a9';
 const secrets = new Set([password, process.env.MIMO_API_KEY].filter(Boolean));
+const controlAccess = createControlAccess();
+secrets.add(controlAccess.token);
 const owner = 'A1 relay acceptance ' + new Date().toISOString();
 const redact = value => {
   let text = typeof value === 'string' ? value : JSON.stringify(value);
@@ -88,6 +91,7 @@ try {
       cloudIssuer: env.WEFTMATE_CLOUD_ISSUER, cloudDesktopClientId: env.WEFTMATE_CLOUD_DESKTOP_CLIENT_ID,
       cloudWebClientId: env.WEFTMATE_CLOUD_WEB_CLIENT_ID, cloudDesktopRedirectUri: env.WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI,
       relayEnabled: true, acmeEnabled: true, acmeDirectoryUrl: env.WEFTMATE_ACME_DIRECTORY_URL } }));
+  delete env.NODE_USE_ENV_PROXY;
   if (useEnvProxy) env.NODE_USE_ENV_PROXY = '1';
   delete env.ELECTRON_RUN_AS_NODE;
   app = await _electron.launch({ executablePath: desktopExecutable ?? require('electron'), cwd: repo,
@@ -100,6 +104,7 @@ try {
   }
   let queue = Promise.resolve();
   controlServer = createServer((request, response) => {
+    if (!controlAccess.authorize(request, response)) return;
     if (request.method !== 'POST' || request.url !== '/') { response.writeHead(404).end(); return; }
     let line = ''; request.setEncoding('utf8'); request.on('data', data => { line += data; });
     request.on('end', () => { queue = queue.then(async () => {
@@ -119,6 +124,6 @@ try {
   }); }); });
   await new Promise(resolve => controlServer.listen(0, '127.0.0.1', resolve));
   const controlPort = controlServer.address().port;
-  await writeFile(join(evidence, phoneOnly ? 'cloud-control-phone.json' : 'cloud-control.json'), JSON.stringify({ controlPort, pid: process.pid }));
+  await controlAccess.publish(join(evidence, phoneOnly ? 'cloud-control-phone.json' : 'cloud-control.json'), { controlPort, pid: process.pid });
   emit({ ready: true, sourceDesktop: !phoneOnly && !desktopExecutable, installedDesktop: !!desktopExecutable, useEnvProxy, port: page ? new URL(page.url()).port : null, controlPort, hidden: true });
 } catch (error) { emit({ startupError: error.message }); await close(); process.exitCode = 1; }

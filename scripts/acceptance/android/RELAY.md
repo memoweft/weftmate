@@ -31,3 +31,9 @@ node scripts/acceptance/android/relay-session.mjs <外部证据目录> <锁目�
 依次核对电脑实际登录、`/status.relay.state=online`、手机目录对应电脑 `online=true`、实际“连接这台电脑”动作成功。C8 必须在同一对话核对历史与追加回复；W4 必须从 APK 发起创建文件并在电脑读取真实文件，不能只凭模型说“完成”。首次签发失败的资料会保存每日重试时间；网络修好后使用程序的证书重试入口，或为下一轮申请全新隔离资料，不删除旧证据。
 
 手机驱动仍从本轮 `session.json` 获取随机 ADB forward 端口。结束时发送 `close`、创建 `stop-session`，核对测试进程树、forward 和锁均回收，并卸载本轮独立 APK。证据留在仓库外。
+
+## 本机控制器鉴权
+
+每次启动生成独立的随机令牌。读取当前会话的 `cloud-control.json` / `cloud-control-phone.json`，将 `controlToken` 放到每次请求的 `Authorization: Bearer <controlToken>` 头中（包括 `email`、`code`、`run` 和 `close`）。会话文件在写入令牌前已限制为仅当前操作系统用户可读写；不要复制、提交、打印或截图该文件与请求头。重启后重新读文件，不能沿用旧令牌。
+
+缺失或错误令牌返回 401；任何带 `Origin` 头的请求（包括空值或 `null`）返回 403，拒绝发生在读取正文和编译脚本之前。只从本机脚本调用，不从浏览器页面调用。
