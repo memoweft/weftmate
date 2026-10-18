@@ -1,11 +1,9 @@
 // Adapted from the G7 build-only runner; optional isolated application identity.
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {spawnSync} from 'node:child_process';
+import {spawnSync,execFileSync} from 'node:child_process';
 import {resolve,join} from 'node:path';
-import {withMemoryRuntimeResources} from '../../memory-runtime-package.mjs';
-import {verifyWindowsPackage} from '../../verify-windows-package.mjs';
-import {UUID} from 'builder-util-runtime';
+import {assertMainSource} from './build-source.mjs';
 const [outputArg,memoryArg,version='0.1.1-preview.1019',identity,stageArg]=process.argv.slice(2);
 if(!outputArg||!memoryArg||!identity)throw Error('Usage: node scripts/acceptance/windows/build.mjs OUTPUT MEMORY_RUNTIME VERSION UNIQUE_ID [VERIFIED_STAGE]');
 const repo=resolve(import.meta.dirname,'../../..'),output=resolve(outputArg);
@@ -14,9 +12,11 @@ Object.assign(env,{CSC_IDENTITY_AUTO_DISCOVERY:'false',WEFTMATE_EVIDENCE_DIR:out
 for(const stream of [process.stdout,process.stderr])stream.on('error',e=>{if(e.code!=='EPIPE')throw e;});
 function run(script,args=[]){const r=spawnSync(process.execPath,[script,...args],{cwd:repo,env,stdio:'inherit',windowsHide:true,timeout:1200000});if(r.status!==0)throw Error(`Build step failed: ${script} (${r.status})`);}
 await mkdir(output,{recursive:true});
-const git=args=>spawnSync('git',args,{cwd:repo,encoding:'utf8',windowsHide:true}).stdout.trim();
-const source=git(['rev-parse','origin/main']),buildHead=git(['rev-parse','HEAD']);
-if(git(['diff','origin/main','--','src','runtime','build','package.json','package-lock.json','patches']))throw Error('Product source differs from fetched main');
+const git=args=>execFileSync('git',args,{cwd:repo,encoding:'utf8',windowsHide:true,timeout:10000}).trim();
+const source=assertMainSource(repo),buildHead=git(['rev-parse','HEAD']);
+const {withMemoryRuntimeResources}=await import('../../memory-runtime-package.mjs');
+const {verifyWindowsPackage}=await import('../../verify-windows-package.mjs');
+const {UUID}=await import('builder-util-runtime');
 if(identity&&!/^[a-z0-9]+$/.test(identity))throw Error('Invalid isolated identity');
 const stage=stageArg?resolve(stageArg):join(output,'stage');run('scripts/verify-dsh-vendor.mjs');if(!stageArg)run('scripts/stage-dsh-runtime.mjs',['--stage-root',stage]);
 const pkg=JSON.parse(await readFile(join(repo,'package.json'),'utf8'));
