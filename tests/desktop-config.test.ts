@@ -31,12 +31,14 @@ test('installed startup reads configuration and channel without source launcher 
 });
 test('migration parses Production values without executing task and rehearsal disables public access', async () => {
   const sourceTaskScript = resolve('scripts/run-personal-host-task.ps1');
-  const config = await productionConfigFromTask({ sourceTaskScript });
+  const runtimeDirectory = resolve('synthetic-runtime');
+  const config = await productionConfigFromTask({ sourceTaskScript, runtimeDirectory });
   assert.equal(config.accessPort, 18186); assert.equal(config.publicOrigin, 'https://home.weftmate.com:8443');
   assert.match(config.mobileUiDirectory, /mobile-ui-releases$/);
   assert.match(config.personalMemoryConfig, /personal-memory-config-20260927.json$/);
   assert.equal(config.production.relayEnabled, true);
-  const rehearsal = await productionConfigFromTask({ sourceTaskScript, dataDirectory: resolve('test-profile'), rehearsal: true });
+  const rehearsal = await productionConfigFromTask({ sourceTaskScript, runtimeDirectory, dataDirectory: resolve('test-profile'), rehearsal: true });
+  await assert.rejects(productionConfigFromTask({ sourceTaskScript }), /SOURCE_RUNTIME_DIRECTORY_REQUIRED/);
   assert.equal(rehearsal.accessPort, 0); assert.equal(rehearsal.publicOrigin, undefined);
   assert.equal(rehearsal.production.relayEnabled, false); assert.equal(rehearsal.updates.baseUrl, undefined);
 });

@@ -27,7 +27,7 @@ const BOUNDARY_PREFIX = 'weftmate-compression-boundary-v1'
 const TURN_BOUNDARY_PREFIX = 'weftmate-turn-boundary-v1'
 const HANDOFF_STATE_FILE = () => join(DSH_HOME(), 'memoweft', 'weftmate-handoff-v1.json')
 const PYTHON = () => process.env.WEFTMATE_MEMOWEFT_PYTHON || 'python'
-const PYTHONPATH = () => process.env.WEFTMATE_MEMOWEFT_PYTHONPATH || 'D:/AIProjects/MemoWeft/Core/py/src'
+const PYTHONPATH = () => process.env.WEFTMATE_MEMOWEFT_PYTHONPATH || ''
 const RECALL_QUERY_MAX_CHARS = 500
 const RECALL_MAX_EVIDENCE = 24
 const RECALL_MAX_EVIDENCE_CHARS = 1_200
@@ -212,6 +212,9 @@ export class MemoWeftBridge {
 
   start() {
     if (this.child) return
+    // The legacy DSH surface has no verified bundled-runtime metadata. Only
+    // the account-scoped desktop manager may select that runtime automatically.
+    if (!this.pythonPath) throw Object.assign(new Error('记忆未配置，请配置记忆后重试。'), { code: 'MEMORY_NOT_CONFIGURED' })
     const child = spawn(this.python, ['-m', 'memoweft.integrations.dsh_bridge'], {
       env: { ...process.env, PYTHONPATH: this.pythonPath },
       stdio: ['pipe', 'pipe', 'pipe'],

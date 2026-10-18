@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 
-export const mumuManager = 'D:/Software/MuMuPlayer/nx_main/MuMuManager.exe';
-export const adbExecutable = 'D:/Software/MuMuPlayer/nx_main/adb.exe';
+export const mumuManager = process.env.WEFTMATE_MUMU_MANAGER || 'MuMuManager.exe';
+export const adbExecutable = process.env.WEFTMATE_ADB || 'adb';
 export class AndroidEnvironmentError extends Error {
   constructor(reason) { super(`环境问题：未拍（${reason}）`); this.name = 'AndroidEnvironmentError'; }
 }

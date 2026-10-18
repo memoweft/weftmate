@@ -4,6 +4,7 @@ param(
   [ValidateSet('Prepare','Apply','Verify','Finalize','Rollback')][string]$Action = 'Prepare',
   [string]$TaskName = 'WeftMate Personal Host',
   [string]$SourceTaskScript,
+  [string]$RuntimeDirectory,
   [string]$DataDirectory,
   [string]$Installer,
   [string]$InstalledExe = (Join-Path $env:LOCALAPPDATA 'Programs\WeftMate\WeftMate.exe'),
@@ -34,6 +35,7 @@ if ($Action -eq 'Prepare') {
   $hadConfig = Test-Path -LiteralPath $ConfigFile
   if ($hadConfig) { Copy-Item -LiteralPath $ConfigFile -Destination $previousConfig -Force }
   $args = @((Join-Path $PSScriptRoot 'migrate-desktop-config.mjs'), '--source', $SourceTaskScript, '--output', $ConfigFile)
+  if ($RuntimeDirectory) { $args += @('--runtime', $RuntimeDirectory) }
   if ($DataDirectory) { $args += @('--data', $DataDirectory) }
   if ($Rehearsal) { $args += @('--rehearsal', 'true') }
   & node @args
