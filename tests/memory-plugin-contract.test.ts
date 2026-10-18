@@ -57,6 +57,50 @@ function canonicalJson(value) {
 }
 
 describe('R7 记忆宿主插件契约', () => {
+  for (const preference of ['zh', 'en', undefined, 'unavailable']) it(`G9 legacy initialize uses UI locale: ${preference}`, async () => {
+    const { apply } = await importMemoryPlugin();
+    const home = mkdtempSync(join(tmpdir(), 'weftmate-plugin-language-'));
+    const before = { enabled: process.env.WEFTMATE_MEMOWEFT_ENABLED, home: process.env.DSH_HOME };
+    process.env.WEFTMATE_MEMOWEFT_ENABLED = '1'; process.env.DSH_HOME = home;
+    const lifecycle = mockEffects();
+    let handler: any;
+    const languages: string[] = [];
+    let current = preference;
+    const bridge: any = { child: {}, generation: 0, acceptCapabilities() {}, async close() {}, async request(method: string, params: any) {
+      if (method === 'initialize') languages.push(params.lang);
+      if (method === 'query_world') return { items: [] };
+      return {};
+    } };
+    const ctx: any = { logger: { info() {} }, on() {}, effect: lifecycle.effect, get(name: string) {
+      if (name === 'webServer') return { register(route: any) { handler = route.handler; return () => {} } };
+      if (name === 'settings') return { get(ns: string) {
+        assert.equal(ns, 'locale');
+        if (current === 'unavailable') throw new Error('unavailable');
+        return current === undefined ? undefined : { preference: current };
+      } };
+    } };
+    try {
+      apply(ctx, { bridge });
+      const req: any = { method: 'GET', url: '/weftmate/memory/world.json', headers: {} };
+      let status: number | undefined;
+      await handler(req, { writeHead(code: number) { status = code }, end() {} });
+      assert.equal(status, 200);
+      assert.deepEqual(languages, [preference === 'en' ? 'en' : 'zh']);
+      current = preference === 'en' ? 'zh' : 'en';
+      const res = { writeHead() {}, end() {} };
+      await handler(req, res);
+      assert.equal(languages.length, 1, 'changing the preference does not hot-switch Core');
+      bridge.generation++;
+      await handler(req, res);
+      assert.deepEqual(languages, [preference === 'en' ? 'en' : 'zh', current]);
+    } finally {
+      await lifecycle.dispose();
+      for (const [key, value] of [['WEFTMATE_MEMOWEFT_ENABLED', before.enabled], ['DSH_HOME', before.home]]) {
+        if (value === undefined) delete process.env[key!]; else process.env[key!] = value;
+      }
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
   it('world adapter exposes the formal Core subject_id for V2 command construction without inventing one', async () => {
     const { adaptWorldForLegacyPanel } = await importMemoryPlugin();
     const core = { subject_id: 'owner-actual', world_revision: 1, items: [] };
