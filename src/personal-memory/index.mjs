@@ -66,7 +66,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const journal = createMemoryCommandJournal({ root });
   const commandFlights = new Map();
   const manualFormationUntil = new Map();
-  const actions = createMemoryActions({ root, manager: () => manager, schedule: scheduleRetry });
+  const actions = createMemoryActions({ root, manager: () => manager, schedule: scheduleRetry,
+    redactJournal: (ownerId, row) => journal.redactTargets(ownerId,
+      [row.arguments?.id, row.target?.id, row.command?.targetId, ...(row.affectedIds ?? [])].filter(Boolean),
+      { sourceTexts: [row.arguments?.text, row.source?.text, row.source?.message?.content,
+        row.command?.payload?.correction_text].filter(value => typeof value === 'string' && value) }) });
   let closing = false;
   let startQueue = Promise.resolve();
   let sourceVersion;
@@ -579,10 +583,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     const ids = [command.target_id, ...(Array.isArray(receipt.affected_ids)
       ? receipt.affected_ids.filter((id) => typeof id === 'string' && id.length <= 512) : [])];
     try {
-      await actions.redact(ownerId, { affectedIds: ids, sourceTexts: marker?.cleanup?.sourceTexts ?? [] });
+      await actions.redact(ownerId, { affectedIds: ids, sourceTexts: marker?.cleanup?.sourceTexts ?? [], completedRequestId: marker?.requestId });
       if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids,
         sourceTexts: marker?.cleanup?.sourceTexts ?? [], deleteConversationSnippets: marker?.cleanup?.deleteConversationSnippets === true });
-      await journal.redactTargets(ownerId, ids);
+      await journal.redactTargets(ownerId, ids, { sourceTexts: marker?.cleanup?.sourceTexts ?? [] });
       if (marker?.cleanup) await journal.clearCleanup(ownerId, marker.requestId);
       return result;
     }
@@ -748,6 +752,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         ? (await entry.rpc.request('query_jobs', { operation: 'list' })).jobs?.map(job => job.acceptance?.boundary_event_id).filter(Boolean) ?? [] : []);
     },
     async discardPendingSources(ownerId, { sessionId = null, sourceTexts = [] } = {}) {
+      await actions.redact(ownerId, { sessionId, sourceTexts });
+      await journal.redactTargets(ownerId, [], { sessionId, sourceTexts });
       await flushFlights.get(ownerId)?.catch(() => {});
       await queueOutbox(ownerId, async () => {
         const state = await readOutbox(ownerId);
@@ -845,7 +851,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     async eraseConversationContext(ownerId, sessionId) {
       const result = await withOwner(ownerId, entry => entry.rpc.request('erase_conversation_context', { conversation_id: sessionId }));
       const ids = result.affected_ids ?? [];
-      await journal.redactTargets(ownerId, ids);
+      await actions.redact(ownerId, { affectedIds: ids, sessionId });
+      await journal.redactTargets(ownerId, ids, { sessionId });
       if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
       return result;
     },
@@ -1034,9 +1041,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     submit(ownerId, command) { return withOwner(ownerId, (entry) => entry.rpc.request('submit_command', { command })); },
     receipt(ownerId, commandId) { return withOwner(ownerId, (entry) => entry.rpc.request('query_command_receipt',
       { command_id: commandId })); },
-    async submitCommand(ownerId, proposal) {
+    async submitCommand(ownerId, proposal, assertActive = () => {}) {
       owner(ownerId);
       await privateHome(ownerId);
+      assertActive();
       let cleanup;
       if (proposal.operation.startsWith('delete_')) {
         const prior = await journal.get(ownerId, proposal.requestId);
@@ -1065,7 +1073,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             sourceTexts: [...new Set(sources.map(source => source?.raw_content).filter(text => typeof text === 'string' && text.length > 0))] };
         }
       }
-      const marker = await journal.reserve({ ownerId, ...proposal, cleanup });
+      const marker = await journal.reserve({ ownerId, ...proposal, cleanup }, assertActive);
       const command = marker.command;
       const key = `${ownerId}\0${proposal.requestId}`;
       if (commandFlights.has(key)) return commandFlights.get(key);
@@ -1076,7 +1084,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         catch (cause) { if (cause?.code !== 'command_receipt_not_found') throw cause; }
         if (!result) {
           if (marker.redacted === true) throw error('MEMORY_REPLAY_REDACTED');
-          result = await withOwner(ownerId, (entry) => entry.rpc.request('submit_command', { command }));
+          result = await withOwner(ownerId, (entry) => {
+            assertActive();
+            return entry.rpc.request('submit_command', { command });
+          });
         }
         return { ...await cleanupAfterDelete(ownerId, command, result, marker), operation: command.operation };
       })();

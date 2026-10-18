@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, realpath, rm, readFile, writeFile } from 'node:fs/promises'
+import { mkdtemp, realpath, rm, readFile, readdir, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -989,10 +989,26 @@ test('review-1 real Core: deletion ends a queued correction instead of blocking 
   assert.equal(pending.state, 'queued')
   // Keep this correction unavailable until the real page deletion commits;
   // otherwise the recovery timer can win first on a fast CI machine.
-  f.holdCorrections(true); f.offline(false)
-  const deleted = await f.manager.submitCommand(owner, { requestId: 'delete-before-retry', operation: 'delete_world_item', targetKind: 'cognition',
-    targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
-  assert.equal(deleted.receipt.result_state, 'applied')
+  f.holdCorrections(true)
+  let entered!: () => void, release!: () => void, held = false
+  const started = new Promise<void>(resolve => { entered = resolve })
+  const released = new Promise<void>(resolve => { release = resolve })
+  const query = f.manager.query.bind(f.manager)
+  const hook = t.mock.method(f.manager, 'query', async (...args: any[]) => {
+    const result = await query(...args)
+    if (!held && args[1] === 'query_world' && args[2]?.operation === 'revision') {
+      held = true; entered(); await released
+    }
+    return result
+  })
+  try {
+    f.offline(false); await f.manager.flushPending(owner); await started
+    // The queued correction has read its old action but cannot checkpoint its
+    // command until the real Core deletion and host redaction have completed.
+    const deleted = await f.manager.submitCommand(owner, { requestId: 'delete-before-retry', operation: 'delete_world_item', targetKind: 'cognition',
+      targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
+    assert.equal(deleted.receipt.result_state, 'applied')
+  } finally { release(); hook.mock.restore() }
   await f.restart(); f.holdCorrections(false)
   // Startup has already read its empty outbox when it polls Core jobs. Enqueue
   // the new turn there and let its immediate retry fire before startup finishes.
@@ -1013,9 +1029,25 @@ test('review-1 real Core: deletion ends a queued correction instead of blocking 
   assert.equal(canceled.result.state, 'not_found')
   assert.deepEqual(canceled.arguments, {})
   assert.equal(canceled.command, undefined)
+  await writeFile(path.join(f.root, 'action-diagnostics.json'), JSON.stringify(f.trace.filter(row => row.actionTrace)))
+  async function noErasedCopies(directory: string) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const file = path.join(directory, entry.name)
+      if (entry.isDirectory()) await noErasedCopies(file)
+      else {
+        const bytes = await readFile(file)
+        for (const text of ['我喜欢喝红茶。', '纠正为红茶。']) assert.equal(bytes.includes(Buffer.from(text)), false, `erased correction remains in ${entry.name}`)
+        assert.equal(entry.name.endsWith('.tmp'), false, 'completed erasure must leave no pre-redaction temporary file')
+      }
+    }
+  }
   const recall = await f.manager.recall(owner, { query: '我喜欢喝什么茶？', sessionId: 'after-deleted-restart', modelTier: 'cloud' })
   assert.doesNotMatch(recall.contextText, /乌龙茶|红茶/, 'the canceled correction must not restore forgotten content')
   assert.deepEqual(f.errors, [])
+  // Core owns live SQLite/worker locks. Close it normally before inspecting all
+  // files, including its database, logs and any leftover temporary preimages.
+  await f.manager.close()
+  await noErasedCopies(f.root)
 })
 
 test('review-1 real Core: an older failed correction cannot undo the later successful preference', { skip }, async t => {
