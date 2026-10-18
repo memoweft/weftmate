@@ -54,7 +54,7 @@
       const lastBlock = groups.filter(group=>group.taskId===block.taskId).at(-1) === block
       const displayOutcome = (!lastBlock || options.quietFailure) && ['error','failed','blocked'].includes(outcome.reason) ? {...outcome,reason:'ended'} : outcome
       const view = globalThis.WeftUiCore.progressText(block.steps, displayOutcome)
-      if (stopView && !stopView.terminal) { view.text = `${view.text} · ${stopView.text}`; view.running = true }
+      if (stopView && !stopView.terminal) { view.text = `${view.text} · ${WeftUiCore.progressWaitingText(stopView.text, block.language)}`; view.running = true }
       // Keep completed work visible while a real native turn waits for its
       // next model/tool result. The stage comes from host state, not a timer
       // pretending that another tool is still running.

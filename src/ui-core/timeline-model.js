@@ -174,7 +174,7 @@
         const prose = String(text || '').replace(/```[\s\S]*?```|`[^`]*`|https?:\/\/\S+/g, '');
         const han = (prose.match(/\p{Script=Han}/gu) || []).length;
         const words = (prose.match(/[A-Za-z]{2,}/g) || []).length;
-        return han ? words > han ? 'en' : 'zh' : words >= 3 ? 'en' : null;
+        return han ? words > han ? 'en' : 'zh' : words >= 1 ? 'en' : null;
     }
     function progressLanguage(events, block) {
         const session = block.steps[0]?.sessionId;
@@ -189,7 +189,7 @@
     function progressWaitingText(value, language) {
         if (language !== 'en') return value;
         let text = String(value || '');
-        const labels = {'等待模型回复…':'Waiting for the model…','正在读取记忆…':'Reading memory…','模型响应慢，正在重试…':'The model is slow; retrying…','正在思考…':'Thinking…','正在回复…':'Replying…','等待接续':'Waiting to resume'};
+        const labels = {'等待模型回复…':'Waiting for the model…','正在读取记忆…':'Reading memory…','模型响应慢，正在重试…':'The model is slow; retrying…','正在思考…':'Thinking…','正在回复…':'Replying…','等待接续':'Waiting to resume','正在停止…':'Stopping…'};
         for (const [source, target] of Object.entries(labels)) text = text.replace(source, target);
         text = text.replace(/^正在加载模型(.*?)…/, 'Loading model$1…').replace(/模型排队中，前面还有 (\d+) 个请求/, 'Queued; $1 requests ahead').replace(/(\d+) 秒$/, '$1 s');
         return text;
