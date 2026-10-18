@@ -1778,6 +1778,8 @@ DATA-1日摘要usage可增量返回`lastUserMessageAt`（ISO或null），仅取�
 
 DATA-2增量：`usageActiveMinutes/usageLateNightMinutes` 的每个趋势点附 `source:"computer"|"chat"`，来源和概况相同；今日解读、周回顾与原生 `health_query` 同用这份汇总，不传采样明细。
 
+睡眠查询补充（#429）：`metric` 为 `overview`、`sleep` 或 `sleepMinutes` 时，`health_query` 另返回 `sleepSummary:{unit:"min",recordedDays,missingDays,averageMinutes,scoreRecordedDays,scoreRequirement,items:[{day,minutes,score,baselineNights,scoreMissing}]}`。`items` 按查询范围逐日排列；`minutes`、`score` 是两项独立观测，任一缺测为 null，缺测日不补零，真实零分钟计入均值；`averageMinutes` 只按有时长的天计算，无记录为 null；`scoreMissing` 列出该日评分缺少的输入（目标日前28天有效睡眠不足7夜时含 `baselineNights`）。`sleep` 的 `items[].value` 仍是评分，含义不变。有时长但没有评分时应按时长回答并说明评分缺什么，不能说没有睡眠记录。
+
 DATA-2原生查询补充：未接入身体测量、但查询范围（含目标日的昨夜窗口）有本机使用观察时，`health_query` 的 overview／usage 两项仍返回汇总 `items`，并附 `connected:false,usageConnected:true`；有效查询增量带 `timeZone` 与 overview 的 `usage.lastUsedAtLocal`（账号当地 `YYYY-MM-DD HH:mm`／null）供模型直接引用钟点，避免误换算 UTC（协调世界时）使用时刻；身体指标仍为空。完全没数据时保留原「还没接上」回执。
 
 ### MEM-1：从其他应用导入聊天记录
