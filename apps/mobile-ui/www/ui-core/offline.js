@@ -4,6 +4,12 @@
   const encode = bytes => btoa(Array.from(new Uint8Array(bytes), c => String.fromCharCode(c)).join('')).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const decode = value => Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
   const fail = code => { throw Object.assign(new Error(code), { code }); };
+  const phoneHistoryFailure = error => (error?.code || error?.message) === 'OFFLINE_STORAGE_TOO_LARGE'
+    ? '手机聊天记录已达到保存上限，新增内容还未保存。请打开旧对话，点「更多 → 完整对话功能 → 对话操作 → 删除对话」清理不需要的记录后重试。' : '';
+  async function savePhoneHistory(call, value) {
+    if (utf8(JSON.stringify(value)).byteLength > 8 * 1024 * 1024) fail('OFFLINE_STORAGE_TOO_LARGE');
+    return call('phone.offline.save', {value});
+  }
   const empty = () => ({ snapshot: null, turns: [], conversations: [], tasks: [], forgetConversations: [], phoneMemory:globalThis.WeftPhoneMemory?.fresh() });
   function terms(text) {
     const normalized = text.normalize('NFKC').toLowerCase();
@@ -430,5 +436,5 @@
     }
     return { view, sync, send, regenerate, check, clear, extractMemory,memoryChange,removeConversation,submitTask, retryTask, cancelTask, refreshTasks, clearTasks, declineWork, saveComposer: async (conversationId, draft) => { value.nativeDrafts ??= {}; value.nativeDrafts[conversationId || 'new'] = draft; value.nativeComposer = { conversationId, draft }; await persist(); }, stop: () => abort?.abort(), close: () => { version++;memoryEpoch++;memoryAbort?.abort();abort?.abort(); vault.close(); } };
   }
-  globalThis.WeftOffline = { create, browserVault, nativeVault, recall, requestBody, readCompletion, encode, decode };
+  globalThis.WeftOffline = { create, browserVault, nativeVault, recall, requestBody, readCompletion, encode, decode, savePhoneHistory, phoneHistoryFailure };
 })();

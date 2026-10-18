@@ -429,14 +429,15 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         WebViewCompat.addWebMessageListener(web, "weftNative", setOf(origin)) { _, message, sourceOrigin, mainFrame, reply ->
             if (closed.get()) return@addWebMessageListener
             val raw = message.data ?: return@addWebMessageListener
-            if (!mainFrame || sourceOrigin.toString() != origin || raw.length > 10 * 1024 * 1024) return@addWebMessageListener
-            val request = try { JSONObject(raw) } catch (_: Exception) { return@addWebMessageListener }
+            if (!mainFrame || sourceOrigin.toString() != origin) return@addWebMessageListener
+            val decoded = readWebBridgeRequest(raw) ?: return@addWebMessageListener
+            val request = decoded.value
             val id = request.optString("id")
             val method = request.optString("method")
-            if (!method.startsWith("offline.") && method !in setOf("conversation.export", "clipboard.copy") && raw.length > 128 * 1024) return@addWebMessageListener
-            if (!id.matches(Regex("[A-Za-z0-9_-]{1,80}"))) return@addWebMessageListener
-            if (!method.matches(Regex("[A-Za-z.]{1,64}"))) {
-                respond(reply, id, false, JSONObject().put("code", "INVALID_REQUEST"))
+            if (decoded.errorCode != null) {
+                respond(reply, id, false, JSONObject().put("code", decoded.errorCode).apply {
+                    if (decoded.errorCode.endsWith("TOO_LARGE")) put("status", 413)
+                })
                 return@addWebMessageListener
             }
             val themeParams = request.optJSONObject("params")
