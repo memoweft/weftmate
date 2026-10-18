@@ -167,8 +167,8 @@
       memory.suppressedAt??={};for(const hash of memory.suppressedText)memory.suppressedAt[hash]??=Date.now();
       for(const item of memory.items)if(item.sourceTimestamp===undefined){const dates=(item.sourceIDs||[]).map(id=>sources.get(id)).filter(t=>typeof t==='number');item.sourceTimestamp=dates.length?Math.max(...dates):item.updatedAt;}
     }
-    let memoryFlight,memoryEpoch=0,memoryAbort,writes=Promise.resolve();
-    const write=action=>{const next=writes.then(action);writes=next.catch(()=>{});return next;};
+    let memoryFlight,memoryEpoch=0,memoryAbort,closed=false,writes=Promise.resolve();
+    const write=action=>{const ticket=version;const next=writes.then(()=>{if(closed||ticket!==version)fail('OFFLINE_RESET_REQUIRED');return action();});writes=next.catch(()=>{});return next;};
     if(value.snapshot)targets=await vault.targets?.(value.snapshot.control.accountId)||[value.snapshot];
     const view = () => ({ ...value, targets, sendingConversationId, ready:phoneModel?!!phoneModel():!!value.snapshot, chatReady:phoneModel?!!phoneModel():!!value.snapshot?.model,taskReady:cloudTasksSupported&&!!tasks&&!!vault.seal&&!!value.snapshot?.taskRecipient, taskSending, running:running||taskSending });
     const persist = () => write(async () => { await vault.save(value); notify(view()); });
@@ -437,17 +437,22 @@
       }catch{return false;}finally{memoryFlight=null;}})();return memoryFlight;
     }
     async function memoryChange(action,id,text){
+      const ticket=version;
       memoryEpoch++;memoryAbort?.abort();
       return write(async()=>{
-      const ticket=version,next=structuredClone(value),state=next.phoneMemory;if(!state||state.transferred&&action!=='release-authority')fail('INVALID_REQUEST');
+      const next={...value,phoneMemory:structuredClone(value.phoneMemory)},state=next.phoneMemory;if(!state||state.transferred&&action!=='release-authority')fail('INVALID_REQUEST');
       if(action==='toggle')state.enabled=!!text;
       else if(action==='release-authority'){Object.assign(state,globalThis.WeftPhoneMemory.fresh(),{enabled:state.enabled,resumeAfter:Date.now()});next.snapshot=null;next.handover=null;}
-      else if(action==='confirm-handover'){next.handover.awaitingConfirmation=false;}
+      else if(action==='confirm-handover'){next.handover={...value.handover,awaitingConfirmation:false};}
       else if(action==='forget')await globalThis.WeftPhoneMemory.forget(state,id,crypto);
       else if(action==='pin'){const item=state.items.find(i=>i.id===id);if(item)item.pinned=!item.pinned;}
       else if(action==='forget-all'){for(const item of [...state.items])await globalThis.WeftPhoneMemory.forget(state,item.id,crypto);state.suppressedSources=[...new Set([...state.suppressedSources,...value.conversations.flatMap(c=>c.turns.map(t=>t.id))])];}
       else await globalThis.WeftPhoneMemory.edit(state,id,text,crypto);
-      await vault.save(next);if(ticket!==version)fail('OFFLINE_RESET_REQUIRED');value=next;notify(view());
+      if(closed||ticket!==version)fail('OFFLINE_RESET_REQUIRED');
+      await vault.save(next);if(closed||ticket!==version)fail('OFFLINE_RESET_REQUIRED');
+      // Keep live conversation/turn objects: an in-flight reply still writes to them.
+      value.phoneMemory=state;if(action==='release-authority'){value.snapshot=next.snapshot;value.handover=next.handover;}if(action==='confirm-handover')value.handover=next.handover;
+      notify(view());
       });
     }
     async function removeConversation(id){
@@ -465,7 +470,7 @@
       }
       if (changed) await persist();
     }
-    return { view, sync, send, regenerate, check, clear, extractMemory,memoryChange,removeConversation,submitTask, retryTask, cancelTask, refreshTasks, clearTasks, declineWork, saveComposer: async (conversationId, draft) => { value.nativeDrafts ??= {}; value.nativeDrafts[conversationId || 'new'] = draft; value.nativeComposer = { conversationId, draft }; await persist(); }, stop: () => {memoryEpoch++;memoryAbort?.abort();abort?.abort();}, close: () => { version++;memoryEpoch++;memoryAbort?.abort();abort?.abort(); vault.close(); } };
+    return { view, sync, send, regenerate, check, clear, extractMemory,memoryChange,removeConversation,submitTask, retryTask, cancelTask, refreshTasks, clearTasks, declineWork, saveComposer: async (conversationId, draft) => { value.nativeDrafts ??= {}; value.nativeDrafts[conversationId || 'new'] = draft; value.nativeComposer = { conversationId, draft }; await persist(); }, stop: () => {memoryEpoch++;memoryAbort?.abort();abort?.abort();}, close: () => { closed=true;version++;memoryEpoch++;memoryAbort?.abort();abort?.abort(); vault.close(); } };
   }
   globalThis.WeftOffline = { create, browserVault, nativeVault, recall, requestBody, readCompletion, encode, decode };
 })();

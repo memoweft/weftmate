@@ -129,3 +129,42 @@ test('opening a new conversation before the idle timer still forms the preceding
  await f.engine.send('记住我喜欢喝红茶');assert.equal(f.engine.view().phoneMemory.items.length,0);
  assert.equal((await f.engine.send('我喜欢喝什么？')).text,'红茶');
 });
+
+test('queued account A memory writes expire on close before the native current account changes to B',async()=>{
+ let release!:()=>void,entered!:()=>void,block=false,current='A';
+ const ready=new Promise<void>(r=>entered=r),pending=new Promise<void>(r=>release=r);
+ const a=M.fresh(),b=M.fresh();await M.edit(a,null,'A 合成偏好',webcrypto);await M.edit(b,null,'B 合成偏好',webcrypto);
+ const containers:any={A:{snapshot:null,phoneMemory:a,conversations:[],turns:[],tasks:[]},B:{snapshot:null,phoneMemory:b,conversations:[],turns:[],tasks:[]}};
+ const writes:string[]=[];
+ const e=await W.create({identity:{accountId:'A',origin:'local'},crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
+  load:async()=>structuredClone(containers.A),close(){},save:async(v:any)=>{const account=current;writes.push(account);if(block){block=false;entered();await pending;}containers[account]=structuredClone(v);}}});
+ block=true;const first=e.memoryChange('toggle',null,false);const rejectedFirst=assert.rejects(first);
+ await ready;const second=e.memoryChange('toggle',null,true);const rejectedSecond=assert.rejects(second);
+ e.close();current='B';release();await rejectedFirst;await rejectedSecond;
+ assert.equal(containers.B.phoneMemory.items[0].text,'B 合成偏好');assert.deepEqual(writes,['A']);
+ await assert.rejects(e.memoryChange('add',null,'关闭后不应写入'));assert.deepEqual(writes,['A']);
+});
+
+test('negative, question and conditional remember requests never unlock a forgotten digest even when extraction proposes it',async()=>{
+ const texts=['我不想再记住我喜欢红茶这件事了。','我不想记住我喜欢红茶。','我不愿重新记住我喜欢红茶。','我没有要求记住我喜欢红茶。','我想知道怎么记住我喜欢红茶。','请记住我喜欢红茶，好吗','假若我说记住我喜欢红茶，再保存。','I do not want to remember that I like tea.','Could you remember that I like tea','Remember that I like tea only if I confirm.'];
+ for(const text of texts){const s=M.fresh(),fact=text.match(/[A-Za-z]/)?'I like tea':'我喜欢红茶';
+  await M.edit(s,null,fact,webcrypto);await M.forget(s,s.items[0].id,webcrypto);
+  const source=turn('new',text,Date.now()+1000);
+  await M.extract(s,{id:'new-chat',turns:[source]},async()=>result({upsert:[row(null,'new',fact)],invalidate:[]}),webcrypto);
+  assert.equal(s.items.length,0,text);
+ }
+});
+
+test('forgetting a memory during a reply preserves streamed and final assistant messages in the saved turn',async t=>{
+ let entered!:()=>void,release!:()=>void,progress:any;
+ const ready=new Promise<void>(r=>entered=r),pending=new Promise<void>(r=>release=r);let stored:any;
+ const e=await W.create({identity:{},crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
+  load:async()=>({snapshot:null,phoneMemory:M.fresh(),conversations:[],turns:[],tasks:[]}),close(){},save:async(v:any)=>{stored=structuredClone(v)},
+  complete:async(_body:any,_model:any,_signal:any,onProgress:any)=>{progress=onProgress;onProgress('前半段');entered();await pending;return{choices:[{message:{content:'完整助手回复'}}]};}}});t.after(()=>e.close());
+ await e.memoryChange('add',null,'我喜欢红茶');const id=e.view().phoneMemory.items[0].id;
+ const sending=e.send('请解释水循环');await ready;await e.memoryChange('forget',id);progress('前半段和后半段');release();
+ const reply=await sending;assert.equal(reply.text,'完整助手回复');
+ assert.equal(stored.phoneMemory.items.length,0);
+ assert.deepEqual(stored.conversations[0].turns[0].messages,[{role:'user',text:'请解释水循环'},{role:'assistant',text:'完整助手回复'}]);
+ assert.deepEqual(stored.turns[0].messages,stored.conversations[0].turns[0].messages);
+});

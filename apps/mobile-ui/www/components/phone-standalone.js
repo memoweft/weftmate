@@ -141,7 +141,7 @@
       const phoneScope={accountId:info.accountId,origin:info.origin};
       const vault = native ? {
         key: () => nativeCall('phone.offline.key'), load: () => nativeCall('phone.offline.load'),
-        save: value => nativeCall('phone.offline.save', { value }), clear: () => nativeCall('phone.offline.clear',phoneScope), close() {},
+        save: value => {if(sessionKey!==next)throw Error('ACCOUNT_SWITCHED');return nativeCall('phone.offline.save', { value,...phoneScope });}, clear: () => nativeCall('phone.offline.clear',phoneScope), close() {},
         open: (envelope, identity) => nativeCall('phone.offline.open', { envelope, identity }),
         complete: async (body, snapshot, signal, onProgress) => {
           if(signal.aborted)throw new DOMException('CANCELLED','AbortError');

@@ -238,3 +238,15 @@ test('native phone presentation selects the new chat after pending memory, witho
  assert.notEqual(view.selectedId,old);assert.equal(view.selectedId,view.conversations.at(-1).id);
  reply();while(engine.view().running)await new Promise(r=>setImmediate(r));
 });
+
+test('native vault writes carry the account identity captured when the phone engine attached',async()=>{
+ let attached:any,saved:any;
+ const identity={accountId:'account-a',origin:'https://synthetic.example',deviceId:'phone'};
+ const context:any={window:{weftNative:true},state:{},document:{addEventListener(){}},addEventListener(){},
+  androidBridge:{call:async(method:string,params:any)=>{if(method==='phone.identity')return identity;if(method==='phone.offline.save'){saved=params;return{}};assert.fail(method);}},
+  WeftOffline:{create:async(options:any)=>{attached=options;return{view:()=>({conversations:[]})}}},clearTimeout};
+ runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js',import.meta.url),'utf8'),context);
+ await context.WeftPhone.restoreArchive(identity,{});
+ await attached.vault.save({phoneMemory:{items:[]}});
+ assert.equal(saved.accountId,identity.accountId);assert.equal(saved.origin,identity.origin);
+});
