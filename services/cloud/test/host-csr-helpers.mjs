@@ -30,4 +30,3 @@ export function verifyCsr(csr, jwk, domains = [domain]) {
   assert.equal(info.subject, domains[0]);
   assert.ok(publicKey(info.jwk).equals(publicKey(jwk)), 'ACME parser keeps fixed-width coordinates');
 }
-
