@@ -429,6 +429,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-conversation-context.mjs'), join(dir, 'plugins', 'weftmate-personal-conversation-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-task-control.mjs'), join(dir, 'plugins', 'weftmate-personal-task-control.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-schedules.mjs'), join(dir, 'plugins', 'weftmate-personal-schedules.mjs')],
+    [join(PLUGINS_DIR, 'personal-schedule-query.mjs'), join(dir, 'plugins', 'personal-schedule-query.mjs')],
     [join(here, 'personal-access', 'schedules-native.mjs'), join(dir, 'personal-access', 'schedules-native.mjs')],
     [join(here, 'personal-access', 'goals-native.mjs'), join(dir, 'personal-access', 'goals-native.mjs')],
     [join(here, 'personal-access', 'schedules-calendar.mjs'), join(dir, 'personal-access', 'schedules-calendar.mjs')],
@@ -2298,7 +2299,7 @@ export class DshWebRuntime {
     const row = message as Record<string, unknown>
     if (row.protocol !== 'weftmate.personal-schedules.v1' || typeof row.id !== 'string' ||
         !/^schedule-[0-9a-f-]{36}$/.test(row.id) || typeof row.sessionId !== 'string' ||
-        !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) || !['context', 'execute', 'health_query'].includes(String(row.action))) return
+        !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) || !['context', 'execute', 'health_query', 'schedule_list'].includes(String(row.action))) return
     if (this.closed || this.child !== child || this.closedChildren.has(child) || !this.opts.personalScheduleHandler) return
     const respond = (value: object) => { if (child.connected && this.child === child) child.send({ protocol: row.protocol, id: row.id, ...value }) }
     const input = { action: row.action as string, sessionId: row.sessionId,
