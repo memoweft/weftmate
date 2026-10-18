@@ -1,6 +1,6 @@
 # 手机轻量记忆（D63 / APPLE-7 / MEM-7）
 
-手机唯一的原始资料是对话；轻量条目可丢弃，不向电脑上传、不合并成第二套正式记忆。iPhone原生、Android（安卓）原生和网页采用本文同一规则。规范与APPLE-7的 `PhoneMemoryRules` / `PhoneMemoryState` 对齐；密钥仍留在原生安全存储／网页当次页面内存。
+手机唯一的原始资料是对话；轻量条目可丢弃，不向电脑上传、不合并成第二套正式记忆。iPhone原生、Android（安卓）原生和网页采用本文的来源、落盘与接手原则。基础结构沿用APPLE-7的 `PhoneMemoryRules` / `PhoneMemoryState`；下文注明的完整遗忘核对和修订屏蔽适用于安卓与手机网页，苹果实现另行维护。密钥仍留在原生安全存储／网页当次页面内存。
 
 ## 触发、原话与水位
 
@@ -8,7 +8,7 @@
 
 成功加密落盘后才推进已处理来源ID（标识）；模型、解析或存储失败静默保留旧水位，下次触发再试。写入前核对账号身份、记忆操作代次与取消状态，编辑、忘掉、关闭、换号或接手后的迟到结果不应用。
 
-规范系统提示与APPLE-7一致：
+安卓与手机网页的提炼系统提示：
 
 ```text
 {"upsert":[{"id":null,"text":"fact","sourceIDs":["user-message-id"],"evidence":"exact-user-quote"}],"invalidate":[{"id":"existing-id","sourceIDs":["user-message-id"],"evidence":"exact-user-quote"}]}
@@ -19,7 +19,7 @@
 新条目的id为null，更新必须使用输入的已有id；sourceIDs仅限这批原话，evidence必须是其中的一段原文。始终返回upsert和invalidate两个数组；不要输出Markdown或解释。
 ```
 
-用户消息为 `{"原话":[{"id","text"}],"已有记忆":[{"id","text"}]}`。输出为 `upsert / invalidate`（新增或更新／作废）；新增id为空，更新／作废使用已有id。每条带本批 `sourceIDs` 和逐字 `evidence`，验证所有来源均存在且安全、证据至少在一条引用原话中连续出现。助手文字永不作为来源。
+用户消息为 `{"原话":[{"id","text"}],"已有记忆":[{"id","text"}]}`。输出保留 `upsert / invalidate`（新增或更新／作废）的结构；新增id为空，更新使用已有id，`invalidate` 不在后台执行。每条带本批 `sourceIDs` 和逐字 `evidence`，验证所有来源均存在且安全、证据至少在一条引用原话中连续出现。助手文字永不作为来源。
 
 安卓与手机网页兼容模型省略空数组、用空字符串表示新增id的返回；错误类型、未知来源或非逐字证据仍不接受。纠正保存最新来源时间与历史正文摘要，较旧来源重试不能覆盖较新的纠正。后台提炼不执行 `invalidate`，纠正使用原id更新。
 
