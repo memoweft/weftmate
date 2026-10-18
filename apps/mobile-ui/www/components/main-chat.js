@@ -97,7 +97,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                     });
                 } else if (!spec.event.data.truncated) WeftContent.update(body, spec.event.data.text, { streaming: spec.event.data.streaming === true });
                 WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId);
-                if (!spec.event.data.live) { if(core.supportsChat('sideChats'))row.weftOpenSideChat=()=>showSidePanel(spec.event); (ui.bindMainMessage || ui.messageActions?.bind)?.(row,spec.event); globalThis.WeftModelThinking?.(core,row,spec.event); ui.appendReplyMemory?.(row,spec.event); }
+                if (!spec.event.data.live) { (ui.bindMainMessage || ui.messageActions?.bind)?.(row,spec.event); globalThis.WeftModelThinking?.(core,row,spec.event); ui.appendReplyMemory?.(row,spec.event); }
                 if(core.state.chatWindow.search.query.trim())highlight(row);
                 return;
             }
@@ -110,13 +110,6 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             row.dataset.memorySession=spec.event.sourceRef?.sessionId||'';
             if (!spec.event.data?.live) ui.bindMainMessage?.(row, spec.event);
             const complete = Number.isSafeInteger(spec.event.data?.streamSeq) ? spec.event.data.streaming !== true : !timelineChat().running || spec.event.sourceRef?.sessionId !== timelineChat().activeSessionId || spec.event.type === 'user.message' || spec.event.eventId !== rows.filter(item => item.kind === 'message').at(-1)?.key;
-            if (complete && core.supportsChat('sideChats')) {
-                row.weftOpenSideChat = () => showSidePanel(spec.event);
-                if (!row.querySelector('.message-actions')) {
-                const menu = ui.element('details', 'chat-message-menu'), summary = ui.element('summary'); summary.setAttribute('aria-label', '消息菜单'); summary.append(WeftIcons.create('more', 16));
-                menu.append(summary, button('从这里开对话', '从这里开对话', () => showSidePanel(spec.event))); (row.querySelector('.message-actions') || row).append(menu);
-                }
-            }
             globalThis.WeftReplyMotion?.indicator(row.querySelector('.message-text,.markdown'),!complete && spec.event.type==='assistant.message');
             if(complete)globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-actions'),'arrival');
             highlight(row);
@@ -238,23 +231,6 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         else if (ref) {const mainSource=ref.chatId===core.state.mainChat?.chatId;origin.append(button(mainSource?'来自原对话 · 查看原消息':'来自原对话 · 查看原消息',mainSource?'查看原对话消息':'查看原对话消息',async()=>{if(mainSource)return core.selectMainChat(ref.eventId);const source=(await core.readChat(ref.chatId)).chat;return core.selectSession(source.activeSessionId);}));}
         if (transfer?.state === 'references_only') origin.append(ui.element('span', 'muted', '相关上下文尚未带入'));
     }
-    function showSidePanel(event,originChatId=core.state.mainChat.chatId,modelProfileId=core.state.modelProfileId) {
-        const identity = core.state.identityGeneration;
-        const dialog = ui.element('dialog', 'dialog model-editor-dialog side-chat-dialog'); dialog.setAttribute('aria-label', '开对话');
-        const head=ui.element('header','dialog-head'),body=ui.element('div','dialog-body model-editor-body'),footer=ui.element('footer','dialog-footer');
-        const title = ui.element('input'); title.setAttribute('aria-label', '对话名称'); title.value = Array.from(event.data.text || '新对话').slice(0, 30).join('');
-        const first = ui.element('textarea'); first.setAttribute('aria-label', '对话第一句话'); first.value = ui.readMessageDraft();
-        const field=ui.element('label','project-field field','对话第一句话');field.append(first);
-        const nameField=ui.element('label','project-field field','对话名称');nameField.append(title);
-        head.append(ui.element('h2', '', '从这里开对话'),iconButton('deny','关闭',()=>dialog.close()));
-        body.append(nameField,ui.element('p', 'side-source', Array.from(event.data.text || '').slice(0, 160).join('')),ui.element('p', 'muted', '相关上下文尚未带入'),field);
-        footer.append(button('取消', '取消', () => { dialog.close(); dialog.remove(); }), button('开对话', '确认开对话', async () => {
-                const draft = first.value; await core.openSideChat({ entry: 'message', title: title.value, originChatId, originEventId: event.eventId,modelProfileId });
-                if(identity!==core.state.identityGeneration){dialog.close();dialog.remove();return;}
-                ui.restoreMainChatDraft(draft); dialog.close(); dialog.remove(); ui.byId('message-text').focus();
-            }, 'button primary'));
-        dialog.append(head,body,footer);document.body.append(dialog); dialog.addEventListener('close', () => dialog.remove()); dialog.showModal(); title.focus();
-    }
     function mountMainChat() {
         sidebar = button('小纬', '小纬主对话', () => core.selectMainChat(), 'rail-main-chat');
         const avatar = ui.element('span', 'wm-brand chat-avatar'); avatar.setAttribute('aria-hidden', 'true'); sidebar.prepend(avatar); sidebar.hidden = true;
@@ -302,7 +278,6 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         document.addEventListener('keydown', event => { if (event.key === 'Escape' && searchPanel.open) { searchPanel.open = false; searchPanel.hidden = true; void core.searchMainChat(''); } });
     }
     return { mountMainChat, renderMainChat, paintLiveChatMessages, focusMainEvent, resetMainChatView, renderChatOrigin, fixedPageNavigation: () => fixedNavigation,
-        async openPhoneHistorySideChat(event){const settings=await core.accessApi('/settings/models');showSidePanel(event,core.state.selectedChatId,settings.defaultModelProfileId||settings.backgroundModelProfileId);},
         mainChatAnchor: () => {const saved=rememberAnchor();const index=rows.findIndex(row=>row.key===saved?.key);const row=rows.slice(Math.max(0,index)).find(row=>row.event?.eventId||row.events?.length);return row?.event?.eventId||row?.events?.[0]?.eventId||null;},
         restoreMainChatDraft: text => { ui.byId('message-text').value = text; ui.updateAvailability(); },
         renderSessions: () => { original.renderSessions(); if (sidebar) { sidebar.hidden = core.supportsWorkModes?.() || !core.state.mainChat; sidebarHeading.hidden = sidebar.hidden; } renderMainChat(); },
