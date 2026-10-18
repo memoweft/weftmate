@@ -23,7 +23,7 @@ async function assertNoCopies(root) {
   }
 }
 
-test('query selection arriving after deletion is retired even when correction and deleted source differ', async () => {
+for (const erased of ['target', 'revision-chain']) test(`query selection arriving after ${erased} deletion is retired even when correction and deleted source differ`, async () => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-late-selection-'));
   const entered = gate(), release = gate();
   const deletedSource = 'OLD_ASSERTION_486';
@@ -40,7 +40,7 @@ test('query selection arriving after deletion is retired even when correction an
   try {
     const action = { ...correction(), arguments: { query: 'beverage preference', text: secret, sourceQuote: secret } };
     pending = actions.submit(owner, action); await entered.promise;
-    await actions.redact(owner, { affectedIds: ['old-target'], sourceTexts: [deletedSource] });
+    await actions.redact(owner, { affectedIds: erased === 'target' ? ['old-target'] : ['newer-revision', 'old-target'], sourceTexts: [deletedSource] });
     release.resolve(); const result = await pending;
     console.log(JSON.stringify({ reproduction: 'different-source-late-selection', submitted, state: result.state }));
     assert.equal(result.state, 'not_found'); assert.equal(submitted, 0);
@@ -48,6 +48,51 @@ test('query selection arriving after deletion is retired even when correction an
     assert.deepEqual(row.arguments, {}); assert.equal(row.command, undefined); await assertNoCopies(root);
     await actions.close(); actions = createMemoryActions({ root, manager: () => manager, schedule() {} });
     await actions.resume(owner); assert.equal(submitted, 0); await assertNoCopies(root);
+  } finally { release.resolve(); await pending; await actions.close(); await rm(root, { recursive: true, force: true }); }
+});
+
+for (const phase of ['forget-plan', 'successor']) test(`late ${phase} selection cannot save a target deleted while it was unresolved`, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-late-target-'));
+  const entered = gate(), release = gate(); let submitted = 0;
+  const selected = phase === 'successor' ? 'successor-target' : 'old-target';
+  const manager = {
+    async correctionSourceSupported() { return true; },
+    async planForget() {
+      const plan = { version: 2, worldRevision: 1, worldTargets: [{ kind: 'cognition', id: selected }], sourceTexts: [secret] };
+      entered.resolve(); await release.promise; return plan;
+    },
+    async query(_owner, _method, params) {
+      if (params.operation === 'revision') return { world_revision: 1 };
+      const result = { items: [{ object_kind: 'cognition', item_id: selected, current_state: 'current',
+        transition_history: [{ transition_kind: 'corrects', prior_item_id: 'old-target', replacement_item_id: selected }] }] };
+      entered.resolve(); await release.promise; return result;
+    },
+    async submitCommand() { submitted++; return { result_state: 'rejected' }; },
+  };
+  const actions = createMemoryActions({ root, manager: () => manager, schedule() {} }); let pending;
+  try {
+    const action: any = correction();
+    if (phase === 'forget-plan') { action.name = 'memory_forget'; action.arguments = { query: 'beverage preference' }; }
+    pending = actions.submit(owner, action); await entered.promise;
+    await actions.redact(owner, { affectedIds: [selected], sourceTexts: ['OLD_ASSERTION_486'] });
+    release.resolve(); assert.equal((await pending).state, 'not_found');
+    assert.equal(submitted, phase === 'successor' ? 1 : 0, 'no command may be sent for the late selected target');
+    await actions.resume(owner); await assertNoCopies(root);
+  } finally { release.resolve(); await pending; await actions.close(); await rm(root, { recursive: true, force: true }); }
+});
+
+test('an unrelated deletion cannot cancel a late selection of a live target', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-live-selection-'));
+  const entered = gate(), release = gate(); let submitted = 0;
+  const manager = { async correctionSourceSupported() { return true; }, async query(_owner, method) {
+    if (method === 'preview_recall') { entered.resolve(); await release.promise; return { preview: { selected_item_ids: [['cognition', 'live-target']] } }; }
+    return { world_revision: 2 };
+  }, async submitCommand() { submitted++; return { result_state: 'applied', affected_ids: ['live-target'] }; } };
+  const actions = createMemoryActions({ root, manager: () => manager, schedule() {} }); let pending;
+  try {
+    pending = actions.submit(owner, { ...correction(), arguments: { query: 'live beverage preference', text: secret, sourceQuote: secret } });
+    await entered.promise; await actions.redact(owner, { affectedIds: ['unrelated-deleted-target'], sourceTexts: ['OLD_ASSERTION_486'] });
+    release.resolve(); assert.equal((await pending).state, 'applied'); assert.equal(submitted, 1);
   } finally { release.resolve(); await pending; await actions.close(); await rm(root, { recursive: true, force: true }); }
 });
 
