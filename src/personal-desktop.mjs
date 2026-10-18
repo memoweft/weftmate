@@ -39,7 +39,7 @@ export function desktopNotificationOptions(event, taskTitle) {
     ...(process.platform === 'win32' && event.type === 'approval.requested' ? { actions: [{ type: 'button', text: '查看' }] } : {}) };
 }
 
-export function createPersonalDesktop({ computerUsageService, systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
+export function preparePersonalDesktopWindow() {
   const stateFile = join(app.getPath('userData'), 'desktop-window.json');
   let saved = {};
   try { saved = JSON.parse(readFileSync(stateFile, 'utf8')); } catch { /* first launch */ }
@@ -50,7 +50,6 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     const index = nativeTheme.shouldUseDarkColors ? 1 : 0;
     return { color: tokenValues('--canvas')[index], symbolColor: tokenValues('--ink')[index], height: 44 };
   };
-  let resolvedPalette = null;
   const bounds = restoreDesktopBounds(saved, screen.getAllDisplays());
   const win = new BrowserWindow({
     ...bounds, minWidth: 480, minHeight: 520,
@@ -59,17 +58,27 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     webPreferences: { session: desktopSession, preload: join(import.meta.dirname, 'personal-desktop-preload.cjs'),
       nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
   });
+  const lifecycle = { stopped: false, maximizeOnShow: saved.maximized === true };
   const display = Number.isFinite(bounds.x) ? screen.getDisplayMatching(bounds) : null;
   const restoreJob = Number.isFinite(bounds.x) && process.platform === 'win32' && !Number.isInteger(display.scaleFactor)
     ? createWindowsDesktopBoundsRestore(win, bounds, display)
     : { ready: Promise.resolve(Number.isFinite(bounds.x) && win.setBounds(bounds)), cancel: () => Promise.resolve() };
   const restoreBounds = restoreJob.ready.then(() => true, error => {
-    if (!stopped && !win.isDestroyed()) {
+    if (!lifecycle.stopped && !win.isDestroyed()) {
       createHostLog(app.getPath('userData')).failure('window-bounds', error);
       win.setBounds(bounds);
     }
     return false;
   });
+  const close = () => { lifecycle.stopped = true; return restoreJob.cancel(); };
+  win.once('closed', () => { void close().catch(() => {}); });
+  return { window: win, stateFile, saved, desktopSession, palette, restoreBounds, lifecycle, close };
+}
+
+export function createPersonalDesktop({ computerUsageService, systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {}, preparedWindow = preparePersonalDesktopWindow() }) {
+  const { window: win, stateFile, saved, desktopSession, palette, restoreBounds, lifecycle } = preparedWindow;
+  let resolvedPalette = null;
+
   const uiUrl = new URL('/personal/v1/ui', origin).href;
   let contentOrigin = origin;
   const certificatePins = new Map(), networkRequests = new Map(), peerOrigins = new Set();
@@ -394,17 +403,17 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     await writeFile(selected.filePath, exported.content, { encoding: 'utf8', mode: 0o600 });
     return { exported: true };
   });
-  let pendingConversation = null, clientReady = false, maximizeOnShow = saved.maximized === true;
+  let pendingConversation = null, clientReady = false;
   // A failed restore may show the fallback, but may never persist its geometry.
   let boundsRestored = false, activationReady = false, showRequested = false;
   const show = sessionId => {
-    if (stopped || win.isDestroyed()) return;
+    if (lifecycle.stopped || win.isDestroyed()) return;
     if (sessionId) pendingConversation = sessionId;
     // All activation paths share this gate. Maximizing before native bounds
     // restore finishes makes Windows remember the constructor's normal size.
     if (!activationReady) { showRequested = true; return; }
     showRequested = false;
-    if (maximizeOnShow) { win.maximize(); maximizeOnShow = false; }
+    if (lifecycle.maximizeOnShow) { win.maximize(); lifecycle.maximizeOnShow = false; }
     if (win.isMinimized()) win.restore();
     win.show(); win.focus();
     if (pendingConversation && clientReady) {
@@ -434,7 +443,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   let boundsTimer;
   const save = () => {
     clearTimeout(boundsTimer);
-    if (boundsRestored && !win.isDestroyed()) return writeBounds(JSON.stringify({ bounds: win.getNormalBounds(), maximized: maximizeOnShow || win.isMaximized() })).catch(() => {});
+    if (boundsRestored && !win.isDestroyed()) return writeBounds(JSON.stringify({ bounds: win.getNormalBounds(), maximized: lifecycle.maximizeOnShow || win.isMaximized() })).catch(() => {});
   };
   const scheduleSave = () => { if (!boundsRestored) return; clearTimeout(boundsTimer); boundsTimer = setTimeout(save, 200); };
   win.on('close', event => { void save(); if (!isQuitting()) { event.preventDefault(); win.hide(); } });
@@ -446,7 +455,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   const writeReminders = createLatestFileWriter(reminderNotificationsFile);
   let reminderNotified = new Set();
   try { reminderNotified = new Set(JSON.parse(readFileSync(reminderNotificationsFile, 'utf8'))); } catch { /* first use */ }
-  let timer, stopped = false, ownerId = null, initialized = false;
+  let timer, ownerId = null, initialized = false;
   const activityNotifiedFile = join(app.getPath('userData'), 'desktop-activity-notifications.json');
   const writeActivityNotified = createLatestFileWriter(activityNotifiedFile);
   let activityNotified;
@@ -503,7 +512,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     do {
       for (const item of current.items) {
         const key = `${me.account?.ownerId}:${item.id}`;
-        if (activityNotified.has(key) || item.notification.notify === false || item.notification.level === 'silent' || stopped || !Notification.isSupported()) continue;
+        if (activityNotified.has(key) || item.notification.notify === false || item.notification.level === 'silent' || lifecycle.stopped || !Notification.isSupported()) continue;
         const approval = process.platform === 'win32' && item.type === 'approval.pending' && item.state === 'pending' ? await approvalFor(item) : null;
         if (process.platform === 'win32' && item.type === 'approval.pending' && !approval) continue;
         const presentation = approval ? windowsApprovalNotification(approval) : null;
@@ -522,7 +531,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
       }
       cursor = current.nextCursor;
       if (cursor) current = await jsonLocal(`/activity?filter=unread&limit=200&cursor=${encodeURIComponent(cursor)}`);
-    } while (cursor && !stopped);
+    } while (cursor && !lifecycle.stopped);
   }
   async function poll() {
     try {
@@ -552,7 +561,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
             const reminder = event.type === 'assistant.message' && event.data?.reminder;
             if (reminder && reminderNotified.has(reminderKey)) continue;
             const message = (reminder || last !== undefined || initialized) && desktopNotification(event, row.title);
-            if (!message || stopped || !Notification.isSupported()) continue;
+            if (!message || lifecycle.stopped || !Notification.isSupported()) continue;
             const notification = new Notification(desktopNotificationOptions(event, row.title));
             notifications.add(notification);
             notification.on('click', () => show(row.sessionId));
@@ -570,13 +579,13 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
           if (!Number.isSafeInteger(page.nextSeq) || page.nextSeq <= cursor) break;
           cursor = page.nextSeq; watermarks.set(row.sessionId, cursor);
           if (!page.hasMore) break;
-        } while (!stopped);
+        } while (!lifecycle.stopped);
       }
       initialized = true;
       const hostStatus = await jsonLocal('/status');
       updateStatus({ host: hostStatus.backend?.runtime === 'ready' ? '运行中' : '暂不可用' });
     } catch { updateStatus({ host: '暂不可用' }); /* Preserve notification watermarks on a transient failure. */ }
-    finally { if (!stopped) timer = setTimeout(poll, 2000); }
+    finally { if (!lifecycle.stopped) timer = setTimeout(poll, 2000); }
   }
   void poll();
   const computerUsage = process.platform === 'win32' && computerUsageService ? createComputerUsageSampler({
@@ -588,16 +597,16 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   const ready = restoreBounds.then(confirmed => {
     boundsRestored = confirmed; activationReady = true;
     if (showRequested || !confirmed) show();
-    if (!stopped && !win.isDestroyed()) return win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : ''));
+    if (!lifecycle.stopped && !win.isDestroyed()) return win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : ''));
   }).then(() => { if (!startInTray) show(); });
   return { window: win, show, openSettings() {
     show();
     void ready.then(() => {
-      if (!stopped && !win.isDestroyed()) return win.webContents.executeJavaScript("globalThis.WeftSettingsNavigation?.open('general')");
+      if (!lifecycle.stopped && !win.isDestroyed()) return win.webContents.executeJavaScript("globalThis.WeftSettingsNavigation?.open('general')");
     }).catch(() => {});
   }, sendTo, ready, async close() {
-    stopped = true; clearTimeout(timer);
-    await restoreJob.cancel();
+    lifecycle.stopped = true; clearTimeout(timer);
+    await preparedWindow.close();
     await computerUsage?.close();
     if (computerUsage) computerUsageService.setComputerUsageCheckpoint(null);
     for (const notification of notifications) notification.close();
