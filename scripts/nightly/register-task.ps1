@@ -1,10 +1,20 @@
 [CmdletBinding(SupportsShouldProcess)]
-param([string]$Script = (Join-Path $PSScriptRoot 'run-nightly.ps1'), [int]$MaxMinutes = 90)
+param(
+    [string]$Script = (Join-Path $PSScriptRoot 'run-nightly.ps1'), [int]$MaxMinutes = 90,
+    [Parameter(Mandatory)][string]$Worktree,
+    [Parameter(Mandatory)][string]$ReportRoot,
+    [Parameter(Mandatory)][string]$Orchestrator
+)
 $ErrorActionPreference = 'Stop'
 $scriptPath = (Resolve-Path -LiteralPath $Script).Path
 $stablePwshPath = Join-Path $env:LOCALAPPDATA 'Microsoft/WindowsApps/pwsh.exe'
 $pwshPath = if (Test-Path -LiteralPath $stablePwshPath -PathType Leaf) { $stablePwshPath } else { (Get-Command pwsh -ErrorAction Stop).Source }
 $actionArguments = "-NoProfile -WindowStyle Hidden -File `"$scriptPath`" -MaxMinutes $MaxMinutes"
+foreach ($option in @('Worktree', 'ReportRoot', 'Orchestrator')) {
+    $value = [IO.Path]::GetFullPath((Get-Variable -Name $option -ValueOnly))
+    if ($value.Contains('"')) { throw 'Directory arguments cannot contain quotes' }
+    $actionArguments += " -$option `"$value`""
+}
 $workingDirectory = Split-Path $scriptPath
 if ($WhatIfPreference) {
     Write-Output "Execute: $pwshPath"
