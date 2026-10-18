@@ -1,3 +1,4 @@
+const derivedContext = item => ['interaction_context', 'evidence_context', 'interaction_commitment'].includes(item.object_kind);
 const invalid = () => Object.assign(Error('MEMORY_FORGET_DECISION_INVALID'), { code: 'MEMORY_FORGET_DECISION_INVALID' });
 export const forgetCompletionVersion = 3; // Includes the retained-record count projection.
 // A recovered record needs the retained original, not just an old excerpt.
@@ -208,7 +209,7 @@ export async function scopedForgetPlan(manager, owner, action, route) {
       const selectedRow = byKey.get(key);
       if (selectedRow.object_kind !== 'evidence') {
         const preview = await cascade(selectedRow);
-        if ((preview.items ?? []).some(item => item.object_kind !== 'entity' && !selected.has(`${item.object_kind}:${item.item_id}`))) {
+        if ((preview.items ?? []).some(item => item.object_kind !== 'entity' && !derivedContext(item) && !selected.has(`${item.object_kind}:${item.item_id}`))) {
           selected.delete(key); changed = true; continue;
         }
       }
@@ -235,7 +236,7 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     decisions.get(row.key)?.hasTargetFact && !eligible(row.key) && !other(row.key)).length;
   const evidence = new Map();
   for (const key of selected) for (const source of candidateSources(byKey.get(key))) evidence.set(source.evidence_id, source.evidence?.raw_content);
-  const coveredItems = new Set(), coveredEvidence = new Set(), worldTargets = [];
+  const coveredItems = new Set(), coveredEvidence = new Set(), worldTargets = [], forgetScopes = {};
   const worldRows = [...selected].map(key => byKey.get(key)).filter(row => row.object_kind !== 'evidence')
     .sort((a, b) => Number(b.object_kind === 'entity') - Number(a.object_kind === 'entity') ||
       Number(b.current_state === 'current') - Number(a.current_state === 'current'));
@@ -243,14 +244,19 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     if (coveredItems.has(`${row.object_kind}:${row.item_id}`)) continue;
     const preview = await cascade(row);
     worldTargets.push({ kind: row.object_kind, id: row.item_id });
+    if (typeof preview.forget_scope === 'string') forgetScopes[`${row.object_kind}:${row.item_id}`] = preview.forget_scope;
     for (const item of preview.items ?? []) coveredItems.add(`${item.object_kind}:${item.item_id}`);
     for (const id of preview.evidence_ids ?? []) coveredEvidence.add(id);
+  }
+  for (const id of evidence.keys()) if (!coveredEvidence.has(id)) {
+    const preview = await cascade({ object_kind: 'evidence', item_id: id });
+    if (typeof preview.forget_scope === 'string') forgetScopes[`evidence:${id}`] = preview.forget_scope;
   }
   const latest = await manager.query(owner, 'query_world', { operation: 'revision' });
   if (latest.world_revision !== worldRevision || [...previews.values()].some(preview => preview.world_revision !== worldRevision)) return changedScope();
   return { version: 2, completionVersion: forgetCompletionVersion, completionState: retainedUncertainCount > 0 ? 'withheld' : 'complete', worldRevision, authorizedEvidenceIds: [...evidence.keys()],
     evidenceIds: [...evidence.keys()].filter(id => !coveredEvidence.has(id)), sourceTexts: [...evidence.values()].filter(Boolean),
-    worldTargets,
+    worldTargets, forgetScopes,
     affectedIds: [...selected].map(key => byKey.get(key).item_id), authorization: request, retainedOtherCount, retainedUncertainCount };
 }
 
@@ -295,7 +301,7 @@ export async function checkForgetCompletion(manager, owner, proposal, route) {
         }
       } while (changed);
     }
-    const items = (preview.items ?? []).filter(item => item.object_kind !== 'entity' || item.item_type === 'person');
+    const items = (preview.items ?? []).filter(item => !derivedContext(item) && (item.object_kind !== 'entity' || item.item_type === 'person'));
     const targets = items.filter(item => proposal.targetKind === 'evidence' || chain.has(`${item.object_kind}:${item.item_id}`));
     if (targets.some(item => !rows.some(row => row.object_kind === item.object_kind && row.item_id === item.item_id))) return unknown();
     const candidates = items.map(item => {

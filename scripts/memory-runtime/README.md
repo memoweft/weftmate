@@ -6,11 +6,13 @@
 [#332 的总经理转达](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)。
 
 `lock.json` 固定官方 Python 3.13.16 嵌入 ZIP、Core 已合入并首轮通过的
-`069ecca674ff7fb65efee1dbcaae612dcd2da662` 提交及官方源归档 URL、大小与
+`b9a49df7d079f9060106d7eb6614fbfeca57206c` 提交及官方源归档 URL、大小与
 散列、Core `uv.lock` 散列、Windows CPython 3.13 对应 wheel、传递依赖、许可、模型
 修订及文件散列。基础层是 Python/Core 和 7 个基础依赖；完整层在同一
 基础上加入 17 个语义依赖、固定模型/分词器、微软两个必需运行库和许可。
 不带开发工具、pip、账户库或用户数据。wheel 的原有许可和元数据保留。
+
+此版本还包含 MemoWeft #130 的偏好修订合同和 #131 的派生上下文清理及遗忘范围凭据；宿主须保留预览返回的凭据，不能在删除时静默刷新。
 
 此 Core 版本包含英文召回的真实日期与 `initialize.lang` 支持（MemoWeft #122）；
 语言读取和重新初始化规则见 [MEMORY.md](../../docs/MEMORY.md)。

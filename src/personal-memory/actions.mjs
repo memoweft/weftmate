@@ -236,14 +236,16 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
           const revision = action.plan.nextRevision ?? action.plan.worldRevision;
           command = { requestId: `forget:${hash(`${action.requestId}|${id}|${revision}`)}`,
             operation: target.kind === 'evidence' ? 'delete_evidence' : 'delete_world_item',
-            targetKind: target.kind, targetId: target.id, payload: {}, expectedWorldRevision: revision };
+            targetKind: target.kind, targetId: target.id,
+            payload: typeof action.plan.forgetScopes?.[`${target.kind}:${target.id}`] === 'string'
+              ? { forget_scope: action.plan.forgetScopes[`${target.kind}:${target.id}`] } : {}, expectedWorldRevision: revision };
           await save(data => { (data.records[action.requestId].commands ??= {})[id] = command; });
         }
         signal?.throwIfAborted();
         action.commandDispatched = true;
         const result = await submit(command);
         const receipt = result.receipt ?? result;
-        if (receipt.result_state === 'revision_conflict') return changedScope(Boolean(action.finished?.length));
+        if (receipt.result_state === 'revision_conflict' || ['forget_scope_changed', 'forget_scope_required'].includes(receipt.rejection_code)) return changedScope(Boolean(action.finished?.length));
         if (receipt.result_state === 'rejected') return { state: 'rejected', message: '这次还没能忘掉这条记忆。' };
         if (!['applied', 'no_change'].includes(receipt.result_state)) throw Error('MEMORY_ACTION_PENDING');
         if (receipt.storage_cleanup?.state === 'pending') await save(data => {
