@@ -36,7 +36,6 @@ import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, readdir, realpath, unlink, writeFile, open } from 'node:fs/promises'
-import { homedir } from 'node:os'
 import { basename, delimiter, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadPin } from '../tests/contract/support/checkout.ts'
@@ -403,7 +402,7 @@ async function assemble(checkout, pin, identity, scratch) {
 }
 
 function sourceRepository(pin) {
-  for (const candidate of [process.env.WEFTMATE_DSH_CHECKOUT, 'D:/AIProjects/Shared/Dependencies/DeepSeekHarness', join(homedir(), 'deepseek-harness'), resolve(repoRoot, '..', 'deepseek-harness')].filter(Boolean)) {
+  for (const candidate of [process.env.WEFTMATE_DSH_CHECKOUT].filter(Boolean)) {
     const root = resolve(repoRoot, candidate)
     const probe = spawnSync('git', ['-C', root, 'cat-file', '-e', `${pin.commit}^{commit}`], { windowsHide: true, stdio: 'ignore' })
     if (probe.status === 0) return root
@@ -423,8 +422,7 @@ export function preparePatchedCheckout(projectRoot, source, checkout, pin, ident
 async function main() {
   const pin = await loadPin()
   const identity = await runtimeIdentity(repoRoot)
-  const shared = resolve(process.env.WEFTMATE_DSH_CACHE_ROOT || (process.platform === 'win32' && existsSync('D:/AIProjects/WeftMate/Worktrees')
-    ? DEFAULT_WINDOWS_CACHE_ROOT : join(repoRoot, '.local/dsh-cache')))
+  const shared = resolve(process.env.WEFTMATE_DSH_CACHE_ROOT || DEFAULT_WINDOWS_CACHE_ROOT)
   const cache = join(shared, `dsh-runtime-${pin.commit.slice(0, 12)}-${identity.patchesSha256.slice(0, 16)}`)
   if (process.argv.includes('--dry-run')) {
     return assemble(sourceRepository(pin), pin, identity)

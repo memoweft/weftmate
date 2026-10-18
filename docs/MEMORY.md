@@ -8,6 +8,7 @@
 |---|---|
 | 链路：每轮结束，记忆插件把真人原话交给摄取，再交给按账户管理的 MemoWeft 进程（Python，独立仓库 `memoweft/memoweft`）。召回、纠正、遗忘走同一条链 | `src/plugins/weftmate-personal-memory.mjs` → `src/personal-access/memory-ingestion.mjs` → `src/personal-memory/`：`index.mjs` 管理器（每个账户一个进程，同时最多 4 个）、`rpc.mjs` 通信、`journal.mjs` 命令日志、`actions.mjs` 纠正与遗忘、`http.mjs` 接口 |
 | Windows 安装版无显式配置时自动定位随包组件并生成本次启动配置；已有 `--personal-memory-config=<文件>` 或安装配置继续优先，macOS 不变 | `src/desktop-config.mjs`、`src/personal-memory/config.mjs`、`src/main.mjs` |
+| 旧 `--dsh-window` 兼容插件仍由 DSH 模板装载，默认关闭；启用后必须显式提供 `WEFTMATE_MEMOWEFT_PYTHONPATH`，缺少时报告「记忆未配置」且不启动 Python。它没有账户管理器的随包校验元数据，不能自行选择随包运行时；个人主路继续使用上面的自动接线 | `src/plugins/weftmate-memory.mjs`、`src/dsh-web-runtime.ts` |
 | 这个文件必须指向本机已有的 Python 解释器和 MemoWeft 源码目录（目录里要有 `memoweft/integrations/dsh_bridge/__main__.py`）；记忆处理用的模型入口只能是本机 `http://127.0.0.1:<端口>/v1` | `src/personal-memory/config.mjs` |
 | 安装版把 `desktop-config.json` 里的 `personalMemoryConfig` 转成上面的参数。自动配置不写入此项，每次按当前安装位置重算，账户记忆仍在用户数据目录；macOS 只在配置旁边已有 `memory-config.json` 时才加 | `src/desktop-config.mjs` |
 | 本人从源码版迁移来的安装版，迁移脚本写入了这一项，所以它依赖本机现成的 Python 和 MemoWeft 源码 | `scripts/migrate-desktop-config.mjs` |
@@ -19,6 +20,14 @@
 | WeftMate 这一侧的记忆代码约 5400 行，含命令日志、待发队列和恢复补做。2026-10-14、15 两天连着修了遗忘循环（FIX-45）、纠正与遗忘的中断恢复（FIX-47），遗忘由宿主执行（FIX-50）还在做 | 上面这些文件；GitHub 上对应的 PR |
 
 G9 新英文召回合同以首行 `Memory:` / `Memory (past):` 定格式并用 LF 分隔条目：生产端须在正文中任何以 `记忆：`、`记忆（过往）：`、`Memory:`、`Memory (past):` 或反斜杠 `\` 开头的行前再加一个 `\`，解析端只按未转义英文条目头切分并逐行还原一层合法转义，日期及正文空白原样保留，首行不是条目头、条数与 ID 数不符、出现未转义中文条目头或非法转义时按原预算保留完整原文而不配 ID，不跨格式回退，首行旧中文格式仍逐字沿用旧规则且不作转义还原。
+
+初始化语言取自 DSH 界面设置的 `locale.preference`：个人宿主通过 `settings.describe` 的 `locale.value.preference` 读取，旧插件通过 `settings.get('locale').preference` 读取；只有 `'en'` 传英文，中文、未设置或读取失败均传 `'zh'`。已有桥进程保留初始化语言，重启或按现有机制重新初始化时才读取新值，不做热切换。未显式选择语言时，浏览器自己的临时语言不作为宿主配置；此时记忆仍回退中文。
+
+真实 Core 测试只接受显式环境输入：`WEFTMATE_TEST_MEMOWEFT_PYTHON` / `WEFTMATE_TEST_MEMOWEFT_SOURCE`，或旧桥接名 `WEFTMATE_MEMOWEFT_PYTHON` / `WEFTMATE_MEMOWEFT_PYTHONPATH`。本包按 `scripts/memory-runtime/lock.json` 下载并校验的隔离副本也通过这些变量传入；测试不猜本机源码位置，缺配置明确跳过，手工验收脚本缺必需输入则报错。测试和脚本设置 `PYTHONDONTWRITEBYTECODE=1`，不向源码目录写缓存。DSH 源码测试/构建同样要求显式 `WEFTMATE_DSH_CHECKOUT`；已有固定成品缓存仍可复用。
+
+### 开发基线与验收边界
+
+**记忆开发基线**（2026-10-16，`bf0a9c4d6`/Core `e86b73b`/真实MiMo；[证据与边界](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208869990)）：M1/M2通过；M3旧修订/导出残留、M7错误成功/误删来源失败，见[#334](https://github.com/memoweft/weftmate/issues/334)。D16、D33要求遗忘整条修订链。M4暂缓；M5–M6安卓链未验完。缺语义组件，仅开发宿主/隔离APK结果，**不计入③**；安装结果见下表。
 
 ## 2. 规则
 

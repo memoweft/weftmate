@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
@@ -31,7 +32,7 @@ const prepared=await prep.start(),grant=await prep.issueSetupGrant();
 assert.equal((await fetch(prepared.origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin:prepared.origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,...credentials})})).status,201);
 await prep.close();
 const config=join(root,'memory.json');
-writeFileSync(config,JSON.stringify({python:'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',pythonPath:'D:/AIProjects/MemoWeft/Worktrees/mem-2-validation/py/src',baseUrl:'http://127.0.0.1:1/v1',model:'@current',authRef:'mem2-pending'}));
+writeFileSync(config,JSON.stringify({python:requireMemoWeftPath('python'),pythonPath:requireMemoWeftPath('source'),baseUrl:'http://127.0.0.1:1/v1',model:'@current',authRef:'mem2-pending'}));
 const env={...process.env};for(const name of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(name)||['ELECTRON_RUN_AS_NODE','MIMO_API_KEY','MODEL_SWITCH_UNIFIED_KEY'].includes(name))delete env[name];
 env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.WEFTMATE_BASELINE_TRACE=join(root,'requests.jsonl');env.WEFTMATE_BASELINE_MEMORY_TRACE=join(root,'memory-requests.jsonl');env.WEFTMATE_BASELINE_RECALL_TRACE=join(root,'recall.jsonl');
@@ -107,7 +108,7 @@ for t in tables:
  rows=c.execute('SELECT * FROM "'+t.replace('"','""')+'"').fetchall()
  if any(n in json.dumps(rows,ensure_ascii=False,default=str) for n in sys.argv[2:]):hits.append(t)
 print(json.dumps({'tables':len(tables),'matches':hits}));c.close()`;
- report.databaseScan=JSON.parse(execFileSync('D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',['-c',dbScript,db,secret,second],{encoding:'utf8',windowsHide:true}));assert.deepEqual(report.databaseScan.matches,[]);
+ report.databaseScan=JSON.parse(execFileSync(requireMemoWeftPath('python'),['-c',dbScript,db,secret,second],{encoding:'utf8',windowsHide:true}));assert.deepEqual(report.databaseScan.matches,[]);
  report.coreScan=scan(join(profile,'personal-access','accounts',ownerId,'memory-home'),[secret,second]);assert.deepEqual(report.coreScan.matches,[]);
  const backup=await api('/backups',{});assert.equal(backup.status,202,JSON.stringify(backup));
  const state=await until(async()=>{const r=(await api('/backups')).body;return r.status?.state==='succeeded'&&r;},'backup complete');

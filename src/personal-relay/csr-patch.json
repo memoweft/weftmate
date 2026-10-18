@@ -1,0 +1,48 @@
+[
+  {
+    "package": "@root/asn1",
+    "version": "1.0.2",
+    "file": "parser.js",
+    "changes": [
+      [
+        "depth.length += 1;",
+        "depth.push(asn1.children.length);"
+      ],
+      [
+        "depth.length -= 1;",
+        "depth.pop();"
+      ],
+      [
+        "// For ambigious / unknown types, recurse and return on failure",
+        "// PKCS#10 callers can identify opaque values by schema position.\n\t\t// Never guess whether an EC point happens to look like ASN.1.\n\t\tif ((opts.valuePaths || []).indexOf(depth.join('.')) !== -1) {\n\t\t\treturn asn1;\n\t\t}\n\n\t\t// For ambigious / unknown types, recurse and return on failure"
+      ],
+      [
+        "var opts2 = { json: false !== opts.json };",
+        "var opts2 = { json: false !== opts.json, valuePaths: opts.valuePaths };"
+      ]
+    ],
+    "sha256": "a96c8d73aff943618d9353b3fd20636177ceddee18c6d7010e653fc283009311",
+    "patchedSha256": "df2766cf2317c701d7be7d1a85162fff4a5db15627f7e80e3a392b42ada6f31c"
+  },
+  {
+    "package": "@root/csr",
+    "version": "0.8.1",
+    "file": "csr.js",
+    "changes": [
+      [
+        "var c = Asn1Parser.parse({ der: der, verbose: true, json: false });",
+        "// CertificationRequestInfo.subjectPKInfo.subjectPublicKey is an opaque\n\t// BIT STRING, not a nested DER value (RFC 5480 section 2.2).\n\tvar c = Asn1Parser.parse({ der: der, verbose: true, json: false, valuePaths: ['0.2.1'] });"
+      ],
+      [
+        "\t\tpub = { kty: kty, x: pub.slice(0, 32), y: pub.slice(32) };\n\t\twhile (0 === pub.x[0]) {\n\t\t\tpub.x = pub.x.slice(1);\n\t\t}\n\t\twhile (0 === pub.y[0]) {\n\t\t\tpub.y = pub.y.slice(1);\n\t\t}",
+        "\t\t// SEC1 coordinates are fixed-width, including leading zero octets.\n\t\tvar width = (pub.length || pub.byteLength) / 2;\n\t\tpub = { kty: kty, x: pub.slice(0, width), y: pub.slice(width) };"
+      ],
+      [
+        "pub = req.children[2].children[1].children[0];",
+        "pub = Asn1Parser.parse({ der: req.children[2].children[1].value, verbose: true, json: false });"
+      ]
+    ],
+    "sha256": "80ecd71787dfd1d1ccd087126fa6a139e4c07f3b7197f3db889e1c81d8af84ac",
+    "patchedSha256": "43d35066748c0329d2590f3e8edf3a9c446f905d152a7b4bf86e88fe066d6855"
+  }
+]

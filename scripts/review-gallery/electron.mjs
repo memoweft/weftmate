@@ -11,7 +11,7 @@ app.whenReady().then(async () => {
   let quitting = false;
   // Register before the first window can be navigated or its load interrupted.
   app.on('before-quit', () => { quitting = true; console.log('Review desktop before-quit.'); });
-  const desktop = createPersonalDesktop({ libraryDesktopToken:process.env.REVIEW_LIBRARY_TOKEN, origin: process.env.REVIEW_ORIGIN, isQuitting: () => quitting });
+  const desktop = createPersonalDesktop({ startInTray:process.env.REVIEW_HIDDEN === '1', libraryDesktopToken:process.env.REVIEW_LIBRARY_TOKEN, origin: process.env.REVIEW_ORIGIN, isQuitting: () => quitting });
   globalThis.__reviewDesktop = desktop;
   await desktop.ready;
   console.log('Review desktop ready.');
