@@ -7,11 +7,11 @@
 | 事实 | 出处 |
 |---|---|
 | 链路：每轮结束，记忆插件把真人原话交给摄取，再交给按账户管理的 MemoWeft 进程（Python，独立仓库 `memoweft/memoweft`）。召回、纠正、遗忘走同一条链 | `src/plugins/weftmate-personal-memory.mjs` → `src/personal-access/memory-ingestion.mjs` → `src/personal-memory/`：`index.mjs` 管理器（每个账户一个进程，同时最多 4 个）、`rpc.mjs` 通信、`journal.mjs` 命令日志、`actions.mjs` 纠正与遗忘、`http.mjs` 接口 |
-| 只有启动时带 `--personal-memory-config=<文件>` 才启用 | `src/main.mjs`（解析参数约第 209 行，创建管理器约第 3150 行） |
+| Windows 安装版无显式配置时自动定位随包组件并生成本次启动配置；已有 `--personal-memory-config=<文件>` 或安装配置继续优先，macOS 不变 | `src/desktop-config.mjs`、`src/personal-memory/config.mjs`、`src/main.mjs` |
 | 这个文件必须指向本机已有的 Python 解释器和 MemoWeft 源码目录（目录里要有 `memoweft/integrations/dsh_bridge/__main__.py`）；记忆处理用的模型入口只能是本机 `http://127.0.0.1:<端口>/v1` | `src/personal-memory/config.mjs` |
-| 安装版把安装配置 `desktop-config.json` 里的 `personalMemoryConfig` 转成上面的参数。全新安装时，Windows 默认配置没有这一项；macOS 只在配置旁边已有 `memory-config.json` 时才加 | `src/desktop-config.mjs` |
+| 安装版把 `desktop-config.json` 里的 `personalMemoryConfig` 转成上面的参数。自动配置不写入此项，每次按当前安装位置重算，账户记忆仍在用户数据目录；macOS 只在配置旁边已有 `memory-config.json` 时才加 | `src/desktop-config.mjs` |
 | 本人从源码版迁移来的安装版，迁移脚本写入了这一项，所以它依赖本机现成的 Python 和 MemoWeft 源码 | `scripts/migrate-desktop-config.mjs` |
-| Windows 构建已能随包携带固定 Python/Core；默认完整语义层，基础层可单独构建。自动配置尚未接通，**全新安装默认仍没有启用记忆** | `scripts/memory-runtime/README.md`、`scripts/memory-runtime-package.mjs`；D106 / D110，#332 G8 |
+| Windows 默认完整语义层，基础层可单独构建。应用元数据固定组件清单散列，启动核对文件后接入；组件异常只停用记忆，聊天和数据保留。实际新装/升级验收仍按地图记录 | `src/personal-memory/bundled-runtime.mjs`、`scripts/memory-runtime/README.md`；D106 / D110 |
 | 手机单独聊天只有轻量记忆，不合并成第二套正式记忆；电脑接手后，原对话交给电脑摄取（D63） | [PHONE_MEMORY.md](PHONE_MEMORY.md)、`src/ui-core/phone-memory.js`、`apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneMemory.swift` |
 | 记忆页：桌面 `src/personal-access-ui/components/memory.js`，共用逻辑 `src/ui-core/memory.js`，手机网页 `apps/mobile-ui/www/components/memory.js` | — |
 | CI 里接真实 MemoWeft 的作业固定到 Core 已合入主线并通过主线检查的提交；版本更新走独立 PR，真实集成测试的文件名单保留在作业里 | `.github/workflows/ci.yml` 的 `observed-core` |
