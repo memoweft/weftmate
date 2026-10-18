@@ -1,4 +1,5 @@
 import { setProcessWarningLog } from './process-output.mjs';
+import { createDesktopRelayNetwork } from './personal-relay/desktop-network.mjs';
 import { createDesktopStartup } from './desktop-startup.mjs';
 import { usageResponse } from './personal-access/usage-response.mjs';
 import { readFile as readFileAsync, rm as rmAsync, writeFile as writeFileAsync } from 'node:fs/promises';
@@ -27,7 +28,7 @@ import { createHostLog, redactSecretText, diagnosticPlatform } from './host-log.
 import { readLocalServiceKey } from './local-service-key.mjs';
 import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady, createBackgroundRouteRecorder } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, crashReporter, powerMonitor } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, net, crashReporter, powerMonitor } from 'electron';
 import { stageCloudVaultRestore, reconcileCloudVaultRestore, finishCloudVaultRestore } from './personal-cloud-backup/vault-restore.mjs';
 import { privateNetworkOnPower } from './personal-cloud-backup/upload-conditions.mjs';
 import packageInfo from '../package.json' with { type: 'json' };
@@ -3573,7 +3574,12 @@ async function bootstrap() {
         } });
         const [{ createPersonalAccessService }, { relayFromEnvironment }, { cloudIdentityFromEnvironment }] = await personalServiceModules;
         const relayConfig = relayFromEnvironment();
+        const cloudConfig = cloudIdentityFromEnvironment();
+        const relayNetwork = cloudConfig || relayConfig ? await createDesktopRelayNetwork({ session, net }) : null;
+        if (cloudConfig) cloudConfig.fetcher = relayNetwork.fetch;
         if (relayConfig) {
+          relayConfig.proxyFor = relayNetwork.proxyFor;
+          if (relayConfig.acme) relayConfig.acme.fetcher = relayNetwork.fetch;
           relayConfig.diagnostic = error => logCrash('relay-command', error);
           relayConfig.onRecovery = component => hostLog.write('component.recovery', { phase: component, status: 'completed', action: 'retry' });
         }
@@ -3642,7 +3648,7 @@ async function bootstrap() {
             else { const error = await shell.openPath(file); if (error) throw new Error('Default application unavailable'); }
           },
           root: join(userDataDir, 'personal-access'), port: accessPort, backend: accessBackend,
-          cloudIdentity: cloudIdentityFromEnvironment(),
+          cloudIdentity: cloudConfig,
           relay: relayConfig,
           verifyToolResult: (input) => accessBackend.verifyToolResult(input),
           uiHandler: servePersonalAccessUi,
