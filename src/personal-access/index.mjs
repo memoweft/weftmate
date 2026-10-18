@@ -813,9 +813,28 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       : historyImport.owns(ownerId, routeId) && accountState(ownerId).historyImports.find(j => j.routeId === routeId)?.state === 'paused' ? 'wait' : 'stop',
     memoryTurnPolicy: temporaryChats.policy,
     expireTemporaryChats: temporaryChats.sweep,
-    async cleanupMemoryCopies(ownerId, { sourceTexts = [], affectedIds = [], deleteConversationSnippets = false }) {
+    async cleanupMemoryCopies(ownerId, { sourceTexts = [], affectedIds = [], deleteConversationSnippets = false,
+      prepareOnly = false, conversationTargets, hostTargets, journalManaged = false }) {
+      if (prepareOnly) {
+        const account = accountState(ownerId), targets = [];
+        const pending = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
+        for (const sessionId of new Set([...Object.keys(account.sessions), ...(pending ? [pending] : [])])) {
+          if (account.sessions[sessionId]?.phoneHistory) continue;
+          const prepared = await callBackend(() => backend.cleanupMemoryCopies({ ownerId, sessionId, sourceTexts,
+            deleteConversationSnippets: true, prepareOnly: true }));
+          if (!Array.isArray(prepared?.snippetTargets)) throw failure('MEMORY_CLEANUP_PENDING', 503);
+          targets.push({ sessionId, snippetTargets: prepared.snippetTargets,
+            receiptIds: Object.values(account.commands).filter(row => row.sessionId === sessionId && sourceTexts.some(text => row.payload?.text?.includes(text))).map(row => row.receiptId).filter(Boolean) });
+        }
+        return { conversationTargets: targets, hostTargets: {
+          sessionIds: Object.entries(account.sessions).filter(([, row]) => sourceTexts.some(text => row.title?.includes(text))).map(([id]) => id),
+          commandIds: Object.entries(account.commands).filter(([, row]) => sourceTexts.some(text => row.payload?.text?.includes(text))).map(([id]) => id),
+        } };
+      }
       await serial(() => mutate(ownerId, next => { next.memoryCleanupPending = true; }));
-      await memoryManager?.discardPendingSources?.(ownerId, { sourceTexts });
+      // Journal-owned cleanup already runs inside its account serial section.
+      // Re-entering source withdrawal here would deadlock that same operation.
+      if (!journalManaged) await memoryManager?.discardPendingSources?.(ownerId, { sourceTexts });
       await mainChat.drain(ownerId);
       await offline.invalidate(ownerId);
       // Portable backups already exclude this managed migration preimage.
@@ -826,18 +845,21 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }));
       const account = accountState(ownerId);
       const pendingSegment = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
-      for (const sessionId of new Set([...Object.keys(account.sessions), ...(pendingSegment ? [pendingSegment] : [])])) {
+      for (const sessionId of new Set([...Object.keys(account.sessions), ...(pendingSegment ? [pendingSegment] : []), ...(conversationTargets ?? []).map(target => target.sessionId)])) {
         // Phone history is authoritative source text, not an executable native
         // session or a derived memory copy. Its explicit deletion uses
         // forgetConversations; ordinary memory erasure retains that original.
         if(account.sessions[sessionId]?.phoneHistory)continue;
-        const receiptIds = Object.values(account.commands).filter(row => row.sessionId === sessionId && sourceTexts.some(text => text && row.payload?.text?.includes(text))).map(row => row.receiptId).filter(Boolean);
+        const target = conversationTargets?.find(row => row.sessionId === sessionId);
+        const receiptIds = [...new Set([...(target?.receiptIds ?? []), ...Object.values(account.commands).filter(row => row.sessionId === sessionId && sourceTexts.some(text => text && row.payload?.text?.includes(text))).map(row => row.receiptId).filter(Boolean)])];
         const schedulesErased = backend.schedules ? await backend.schedules({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
         const goalErased = backend.goals ? await backend.goals({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
         const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets,
+          ...(conversationTargets ? { snippetTargets: target?.snippetTargets ?? [] } : {}),
           ...(affectedIds.length ? { affectedIds } : {}),
           ...(schedulesErased?.removedNativeIds?.length ? { scheduleIds: schedulesErased.removedNativeIds } : {}),
           ...(goalErased?.clearedGoalIds?.length ? { goalIds: goalErased.clearedGoalIds } : {}) }));
+        if (deleteConversationSnippets && conversationTargets && cleaned?.snippetsVerified !== true) throw failure('MEMORY_CLEANUP_PENDING', 503);
         sessions.invalidate(ownerId,sessionId);
         if (cleaned?.forgottenSeqs?.length) await serial(() => mutate(ownerId, next => {
           const session = next.sessions[sessionId];
@@ -848,6 +870,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         if (accountState(ownerId).sessions[sessionId])
           await callBackend(() => backend.readEvents({ ownerId, sessionId, limit: 200 }));
       }
+      if (deleteConversationSnippets && hostTargets) await serial(() => mutate(ownerId, next => {
+        for (const id of hostTargets.sessionIds ?? []) if (next.sessions[id]) next.sessions[id].title = '[已遗忘的原话]';
+        for (const id of hostTargets.commandIds ?? []) if (next.commands[id]?.payload) {
+          next.commands[id].payload.text = '[已遗忘的原话]';
+          next.commands[id].payloadHash = digest(JSON.stringify(next.commands[id].payload));
+        }
+      }));
       if (deleteConversationSnippets && sourceTexts.length) await serial(() => mutate(ownerId, next => {
         for (const session of Object.values(next.sessions)) {
           if (typeof session.title === 'string') for (const source of sourceTexts.filter(Boolean))
@@ -863,7 +892,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }));
       await serial(() => mutate(ownerId, next => { delete next.memoryCleanupPending; }));
       for (const command of Object.values(accountState(ownerId).commands)) if (command.state === 'pending') schedule(ownerId, command.commandId);
-      return { cleaned: true };
+      return { cleaned: true, snippetsVerified: deleteConversationSnippets === true };
     },
     handleScheduleRuntime: scheduleOperations.handleRuntime,
     async restoreSchedules() {

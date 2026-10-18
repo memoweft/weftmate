@@ -36,7 +36,7 @@ async function resolveBrowserIntent(intent,message){const owner=state.owner,epoc
     catch{if(current())effects.paintWorkspaceNotice(message,'网页会话送达状态不明；重连后先查原编号，不会重复创建。');return}}
   if(command?.kind!=='session.create'||command.requestId!==intent.sessionRequestId||
     command.workspaceKind!=='browser'||!sessionIdPattern.test(command.sessionId||'')){
-    if(current())effects.paintWorkspaceNotice(message,'网页会话回执与原选择不一致，编号已保留供核对。');return}
+    if(current())effects.paintWorkspaceNotice(message,'返回的网页会话与原选择不一致，请核对；操作编号已保留。');return}
   for(let attempt=0;attempt<5&&current()&&['pending','dispatching'].includes(command.state);attempt++){
     await new Promise(resolve=>setTimeout(resolve,800));if(!current())return;
     try{command=(await core.android.call('shared.commands.byRequest',{requestId:intent.sessionRequestId}))?.command||command}
@@ -61,7 +61,7 @@ async function resolveBrowserIntent(intent,message){const owner=state.owner,epoc
   if(!sent){try{const result=await core.android.call('shared.send',{sessionId:command.sessionId,
       text,requestId:intent.messageRequestId});if(!sameOwner())return;
       if(result?.source!=='host'||result.sessionId!==command.sessionId||
-        result.requestId!==intent.messageRequestId){effects.status('网页目标回执不完整，原编号已保留');return}
+        result.requestId!==intent.messageRequestId){effects.status('未收到完整的网页处理结果，请稍后核对；操作编号已保留');return}
       if(result.state==='accepted'){
         environment.storage.removeItem(browserIntentKey(intent.hostId));
         effects.status('网页目标已送达电脑会话，正在等待实际阅读结果');void effects.loadSharedHistory();return}
@@ -91,7 +91,7 @@ async function resolveProjectSessionIntent(intent,message){
     catch(error){if(current())effects.paintWorkspaceNotice(message,'送达状态尚不明确。保留原请求编号；重连后会先查询再重试。');return}}
   if(command.kind!=='session.create'||command.requestId!==intent.requestId||
     command.projectId!==intent.projectId||!sessionIdPattern.test(command.sessionId||'')){
-    if(current())effects.paintWorkspaceNotice(message,'会话回执与原选择不一致，已保留请求供核对。');return}
+    if(current())effects.paintWorkspaceNotice(message,'返回的会话与原选择不一致，请核对；这次操作已保留。');return}
   if(['pending','dispatching'].includes(command.state)){
     for(let attempt=0;attempt<5&&current()&&['pending','dispatching'].includes(command.state);attempt++){
       await new Promise(resolve=>setTimeout(resolve,800));
@@ -136,7 +136,7 @@ async function publishSavedPhoneModel(item){const owner=state.owner,epoch=state.
   try{const result=await core.android.call('models.account.publishSaved',{endpoint:item.endpoint,
     modelId:item.modelId,requestId:marker.requestId});if(!current())return;
     const operation=result?.operation;
-    if(operation?.requestId!==marker.requestId){effects.toast('上传回执无法核对；原编号已保留',true);return}
+    if(operation?.requestId!==marker.requestId){effects.toast('暂时无法确认上传是否完成，请稍后核对；操作编号已保留',true);return}
     if(operation.status==='succeeded'){
       clearAccountModelIntent('publish',id,marker.requestId);
       effects.toast('原手机模型已保存到当前电脑账户；已有会话目的地保持不变');effects.page('models')
@@ -159,7 +159,7 @@ async function transferAccountModel(item,replaceExistingKey=false){const owner=s
   catch{effects.toast('无法保存取回编号，本次没有提交',true);return}
   try{const result=await core.android.call('models.account.transfer',{accountModelId:item.accountModelId,
     expectedRevision:item.revision,requestId:marker.requestId,replaceExistingKey});if(!current())return;
-    if(result?.requestId!==marker.requestId){effects.toast('取回回执无法核对；原编号已保留',true);return}
+    if(result?.requestId!==marker.requestId){effects.toast('暂时无法确认取回是否完成，请稍后核对；操作编号已保留',true);return}
     if(result.status==='credential_conflict'){
       clearAccountModelIntent('transfer',id,marker.requestId);
       state.accountModelCredentialConflict={owner,id,item};

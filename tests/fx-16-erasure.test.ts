@@ -49,8 +49,8 @@ for (const action of ['forget', 'forget-title', 'delete']) test(`D33 cached ${ac
     adapter = createDshSessionAdapter({ sessions: { list: listNative }, events: {} }, { readLog: log, lifecycle: {
       cleanupMemory: async (id: string, options: any) => {
         const affected = (await persistence.readRaw(id)).content.includes(secret);
-        await eraseSessionMemoryArtifact(persistence, id, options);
-        return { cleaned: true, forgottenSeqs: affected ? [0] : [] };
+        const result = await eraseSessionMemoryArtifact(persistence, id, options);
+        return { ...result, forgottenSeqs: affected && !options.prepareOnly ? [0] : [] };
       },
       remove: async (id: string) => { await rm(artifacts.get(id)!); artifacts.delete(id); return { deleted: true }; },
     } });
@@ -100,7 +100,12 @@ for (const action of ['forget', 'forget-title', 'delete']) test(`D33 cached ${ac
     assert.ok(sourceChat);
     assert.match(JSON.stringify(await request(`/chats/${sourceChat.chatId}/search?q=${secret}`)), new RegExp(secret));
     await request(`/chats/${sourceChat.chatId}/events?limit=1`);
-    if (action.startsWith('forget')) await service.cleanupMemoryCopies(ownerId, { sourceTexts: [secret], deleteConversationSnippets: true });
+    if (action.startsWith('forget')) {
+      const plan = await service.cleanupMemoryCopies(ownerId, { sourceTexts: [secret], deleteConversationSnippets: true, prepareOnly: true });
+      assert.equal(JSON.stringify(plan).includes(secret), false);
+      assert.match((await persistence.readRaw(ids[0])).content, new RegExp(secret), 'preparing locators must not erase before the deletion commits');
+      await service.cleanupMemoryCopies(ownerId, { ...plan, sourceTexts: [], deleteConversationSnippets: true });
+    }
     else await request(`/sessions/${ids[0]}`, 'DELETE', {});
     const verify = async () => {
       for (const base of ['/sessions', '/chats']) {

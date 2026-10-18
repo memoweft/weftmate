@@ -1,0 +1,222 @@
+{
+  "rows": [
+    {
+      "id": "tea",
+      "text": "合成偏好：茉莉花茶放在蓝色茶罐。",
+      "occurred": "2026-01-01T00:00:00"
+    },
+    {
+      "id": "yarn",
+      "text": "合成偏好：蓝色毛线放在书桌旁。",
+      "occurred": "2026-01-02T00:00:00"
+    },
+    {
+      "id": "walk",
+      "text": "合成计划：周末去自然徒步。",
+      "occurred": "2026-01-03T00:00:00"
+    },
+    {
+      "id": "mixed",
+      "text": "合成项目 Nimbus 使用紫色标签。",
+      "occurred": "2026-01-04T00:00:00"
+    }
+  ],
+  "cases": [
+    {
+      "query": "茶罐",
+      "preview": {
+        "query_hash": "46edf82f866978ba8df7f159221e6fd77022cb29f87dc9d79e06ae66806255ce",
+        "model_tier": "local",
+        "selected_item_ids": [
+          [
+            "cognition",
+            "tea"
+          ]
+        ],
+        "currentness_digest": "2b7c8edeb9d0f83c1d876a9f8d5446abad2fcfcd1d02075ee350b62e22f61837",
+        "rendered_recall": "记忆：合成偏好：茉莉花茶放在蓝色茶罐。",
+        "recall_snapshot_token": "53dca77b78dbe6193ee5b78515b867ead5639fc4d95cc50406d8d0d2ea7df086",
+        "count": 1,
+        "model_call_count": 0,
+        "world_write_count": 0,
+        "recent_evidence": [],
+        "pending_corrections": []
+      },
+      "memories": [
+        {
+          "id": "tea",
+          "kind": "cognition",
+          "summary": "合成偏好：茉莉花茶放在蓝色茶罐。"
+        }
+      ],
+      "contextText": "记忆：合成偏好：茉莉花茶放在蓝色茶罐。",
+      "sourceCount": 1
+    },
+    {
+      "query": "毛线",
+      "preview": {
+        "query_hash": "2702789cebd3f7af1b4c5e334f8a156ffb4e8df7eb65db06f5fe70b57b7605e2",
+        "model_tier": "local",
+        "selected_item_ids": [
+          [
+            "cognition",
+            "yarn"
+          ]
+        ],
+        "currentness_digest": "2b7c8edeb9d0f83c1d876a9f8d5446abad2fcfcd1d02075ee350b62e22f61837",
+        "rendered_recall": "记忆：合成偏好：蓝色毛线放在书桌旁。",
+        "recall_snapshot_token": "547f824d36998f6a053ad48a37eb32eee83fb11ec2ac17b2c57c2f2ac69221fc",
+        "count": 1,
+        "model_call_count": 0,
+        "world_write_count": 0,
+        "recent_evidence": [],
+        "pending_corrections": []
+      },
+      "memories": [
+        {
+          "id": "yarn",
+          "kind": "cognition",
+          "summary": "合成偏好：蓝色毛线放在书桌旁。"
+        }
+      ],
+      "contextText": "记忆：合成偏好：蓝色毛线放在书桌旁。",
+      "sourceCount": 1
+    },
+    {
+      "query": "合成",
+      "preview": {
+        "query_hash": "a5651442f1703b0efcea027f1b515478d35a8c9449888819ee91169b63489d08",
+        "model_tier": "local",
+        "selected_item_ids": [
+          [
+            "cognition",
+            "mixed"
+          ],
+          [
+            "cognition",
+            "tea"
+          ],
+          [
+            "cognition",
+            "walk"
+          ],
+          [
+            "cognition",
+            "yarn"
+          ]
+        ],
+        "currentness_digest": "2b7c8edeb9d0f83c1d876a9f8d5446abad2fcfcd1d02075ee350b62e22f61837",
+        "rendered_recall": "记忆：合成项目 Nimbus 使用紫色标签。\n记忆：合成偏好：茉莉花茶放在蓝色茶罐。\n记忆：合成计划：周末去自然徒步。\n记忆：合成偏好：蓝色毛线放在书桌旁。",
+        "recall_snapshot_token": "220b9a05f094870634e8febd0eb8b533ffe54b706faa903df1cb54172c39e1dc",
+        "count": 4,
+        "model_call_count": 0,
+        "world_write_count": 0,
+        "recent_evidence": [],
+        "pending_corrections": []
+      },
+      "memories": [
+        {
+          "id": "mixed",
+          "kind": "cognition",
+          "summary": "合成项目 Nimbus 使用紫色标签。"
+        },
+        {
+          "id": "tea",
+          "kind": "cognition",
+          "summary": "合成偏好：茉莉花茶放在蓝色茶罐。"
+        },
+        {
+          "id": "walk",
+          "kind": "cognition",
+          "summary": "合成计划：周末去自然徒步。"
+        },
+        {
+          "id": "yarn",
+          "kind": "cognition",
+          "summary": "合成偏好：蓝色毛线放在书桌旁。"
+        }
+      ],
+      "contextText": "记忆：合成项目 Nimbus 使用紫色标签。\n\n记忆：合成偏好：茉莉花茶放在蓝色茶罐。\n\n记忆：合成计划：周末去自然徒步。\n\n记忆：合成偏好：蓝色毛线放在书桌旁。",
+      "sourceCount": 4
+    },
+    {
+      "query": "Nimbus 项目",
+      "preview": {
+        "query_hash": "64c3e51a9bf7de89de6965652f86c1c82aa2be417ad2e5aa6b21a14d19aa6c05",
+        "model_tier": "local",
+        "selected_item_ids": [
+          [
+            "cognition",
+            "mixed"
+          ]
+        ],
+        "currentness_digest": "2b7c8edeb9d0f83c1d876a9f8d5446abad2fcfcd1d02075ee350b62e22f61837",
+        "rendered_recall": "记忆：合成项目 Nimbus 使用紫色标签。",
+        "recall_snapshot_token": "b9f9f862b7121f4b752324e097ff42b44303553be97d5874ef5c0ee08e87234f",
+        "count": 1,
+        "model_call_count": 0,
+        "world_write_count": 0,
+        "recent_evidence": [],
+        "pending_corrections": []
+      },
+      "memories": [
+        {
+          "id": "mixed",
+          "kind": "cognition",
+          "summary": "合成项目 Nimbus 使用紫色标签。"
+        }
+      ],
+      "contextText": "记忆：合成项目 Nimbus 使用紫色标签。",
+      "sourceCount": 1
+    },
+    {
+      "query": "周末徒步",
+      "preview": {
+        "query_hash": "930b53ddbee1563e45aa386dc0d2f4373e6826466d1023859a2ce045ee5079d9",
+        "model_tier": "local",
+        "selected_item_ids": [
+          [
+            "cognition",
+            "walk"
+          ]
+        ],
+        "currentness_digest": "2b7c8edeb9d0f83c1d876a9f8d5446abad2fcfcd1d02075ee350b62e22f61837",
+        "rendered_recall": "记忆：合成计划：周末去自然徒步。",
+        "recall_snapshot_token": "8188eae20b7802578e672d04657f72d063b7e74300485ab75fefcb3db00698b6",
+        "count": 1,
+        "model_call_count": 0,
+        "world_write_count": 0,
+        "recent_evidence": [],
+        "pending_corrections": []
+      },
+      "memories": [
+        {
+          "id": "walk",
+          "kind": "cognition",
+          "summary": "合成计划：周末去自然徒步。"
+        }
+      ],
+      "contextText": "记忆：合成计划：周末去自然徒步。",
+      "sourceCount": 1
+    },
+    {
+      "query": "没有命中的火星",
+      "preview": {
+        "query_hash": "f0ed85830b634cc36a1d72f87052a28b0b3184e116cbc751eb4a95069aff8c8b",
+        "model_tier": "local",
+        "selected_item_ids": [],
+        "currentness_digest": "2b7c8edeb9d0f83c1d876a9f8d5446abad2fcfcd1d02075ee350b62e22f61837",
+        "rendered_recall": "",
+        "recall_snapshot_token": "99be74064e69333a505262c7b83ab1f0a5a59f1c63bc0dce3451a24f78e83f4e",
+        "count": 0,
+        "model_call_count": 0,
+        "world_write_count": 0,
+        "recent_evidence": [],
+        "pending_corrections": []
+      },
+      "memories": [],
+      "contextText": "",
+      "sourceCount": 0
+    }
+  ]
+}

@@ -12,7 +12,7 @@ const failure = (code) => Object.assign(new Error(code), { code });
 const digest = (value) => createHash('sha256').update(value).digest('hex');
 
 /** Host-owned durable command identity; MemoWeft remains the receipt and mutation authority. */
-export function createMemoryCommandJournal({ root }) {
+export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseSnippets = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root)) throw failure('MEMORY_CONFIGURATION_INVALID');
   const queues = new Map();
   const fileFor = (ownerId) => path.join(root, 'accounts', ownerId, 'memory-home', 'command-journal.json');
@@ -56,7 +56,7 @@ export function createMemoryCommandJournal({ root }) {
     }
     return value;
   }
-  async function write(ownerId, value) {
+  async function write(ownerId, value, assertActive = () => {}) {
     const file = fileFor(ownerId);
     const body = JSON.stringify(value);
     if (Buffer.byteLength(body, 'utf8') > MAX_BYTES) throw failure('MEMORY_JOURNAL_FULL');
@@ -65,10 +65,12 @@ export function createMemoryCommandJournal({ root }) {
     let handle;
     try {
       handle = await open(tmp, 'wx', 0o600);
+      assertActive();
       await handle.writeFile(body, 'utf8');
       await handle.sync();
       await handle.close(); handle = null;
       await ensurePrivateFile(tmp);
+      assertActive();
       await rename(tmp, file);
       await ensurePrivateFile(file);
     } finally {
@@ -77,8 +79,19 @@ export function createMemoryCommandJournal({ root }) {
       releaseWrite();
     }
   }
+  async function prepare(ownerId, state, record) {
+    const cleanup = record.cleanup;
+    if (!cleanup?.deleteConversationSnippets || Array.isArray(cleanup.conversationTargets)) return;
+    // A legacy marker already stripped of every locator cannot prove erasure.
+    // Keep it pending instead of turning an empty scan into a success receipt.
+    if (!cleanup.sourceTexts?.length || !prepareCleanup) throw failure('MEMORY_CLEANUP_PENDING');
+    const plan = await prepareCleanup(ownerId, record);
+    if (!Array.isArray(plan?.conversationTargets)) throw failure('MEMORY_CLEANUP_PENDING');
+    Object.assign(cleanup, plan);
+    await write(ownerId, state); // durable text-free locators precede any erase
+  }
   return {
-    async reserve({ ownerId, requestId, operation, targetKind, targetId, payload, expectedWorldRevision, deleteConversationSnippets, cleanup }) {
+    async reserve({ ownerId, requestId, operation, targetKind, targetId, payload, expectedWorldRevision, deleteConversationSnippets, cleanup }, assertActive = () => {}) {
       check(ownerId, requestId);
       const proposal = { operation, targetKind, targetId, payload, expectedWorldRevision,
         ...(deleteConversationSnippets === true ? { deleteConversationSnippets: true } : {}) };
@@ -86,6 +99,7 @@ export function createMemoryCommandJournal({ root }) {
       await ensurePrivateDirectory(path.dirname(fileFor(ownerId)));
       return queue(ownerId, async () => {
         const state = await read(ownerId);
+        assertActive();
         const prior = state.records[requestId];
         if (prior) {
           if (prior.payloadHash !== payloadHash) throw failure('MEMORY_REQUEST_CONFLICT');
@@ -99,7 +113,7 @@ export function createMemoryCommandJournal({ root }) {
           target_id: targetId, payload };
         state.records[requestId] = { requestId, payloadHash, command,
           ...(deleteConversationSnippets === true ? { deleteConversationSnippets: true } : {}), ...(cleanup ? { cleanup } : {}) };
-        await write(ownerId, state);
+        await write(ownerId, state, assertActive);
         return state.records[requestId];
       });
     },
@@ -111,13 +125,29 @@ export function createMemoryCommandJournal({ root }) {
       check(ownerId,'account-erase');
       return queue(ownerId,async()=>Object.values((await read(ownerId)).records).filter(row=>['delete_evidence','delete_world_item'].includes(row.command.operation)).map(row=>row.requestId));
     },
-    async clearCleanup(ownerId, requestId) {
+    async pendingCleanup(ownerId) {
+      check(ownerId, 'pending-cleanup');
+      return queue(ownerId, async () => Object.values((await read(ownerId)).records)
+        .filter(record => record.cleanup?.snippetsPending === true)
+        .map(record => ({ requestId: record.requestId, kind: record.command.target_kind, id: record.command.target_id })));
+    },
+    async finishCleanup(ownerId, requestId, clean) {
       check(ownerId, requestId);
-      return queue(ownerId, async () => { const state = await read(ownerId);
-        if (state.records[requestId]?.cleanup) { delete state.records[requestId].cleanup; await write(ownerId, state); }
+      return queue(ownerId, async () => {
+        const state = await read(ownerId), record = state.records[requestId];
+        if (!record) throw failure('MEMORY_REQUEST_INVALID');
+        try {
+          await prepare(ownerId, state, record);
+          const result = await clean(record);
+          if (record.cleanup?.deleteConversationSnippets && result?.snippetsVerified !== true) throw failure('MEMORY_CLEANUP_PENDING');
+        } catch (cause) {
+          if (record.cleanup) { record.cleanup.snippetsPending = true; await write(ownerId, state); }
+          throw cause;
+        }
+        if (record.cleanup) { delete record.cleanup; await write(ownerId, state); }
       });
     },
-    async redactTargets(ownerId, ids) {
+    async redactTargets(ownerId, ids, { sourceTexts = [], sessionId = null } = {}) {
       if (typeof ownerId !== 'string' || !OWNER.test(ownerId) || !Array.isArray(ids) ||
           ids.some((value) => typeof value !== 'string' || value.length > 512)) {
         throw failure('MEMORY_REQUEST_INVALID');
@@ -125,13 +155,51 @@ export function createMemoryCommandJournal({ root }) {
       const targets = new Set(ids);
       return queue(ownerId, async () => {
         const state = await read(ownerId);
+        const matchesText = value => typeof value === 'string' && value && sourceTexts.some(text =>
+          text && (value.includes(text) || text.includes(value)));
         let count = 0;
         for (const record of Object.values(state.records)) {
-          if (!targets.has(record.command.target_id) || record.redacted === true ||
-              record.command.operation !== 'correct_world_item') continue;
-          record.command.payload = {};
-          record.redacted = true;
-          count++;
+          let changed = false;
+          const wholeTarget = targets.has(record.command.target_id);
+          if (record.redacted !== true && record.command.operation === 'correct_world_item') {
+            const payload = record.command.payload;
+            // Scope belongs to this command, never to another correction of
+            // the same target. Missing legacy session provenance is uncertain.
+            if (wholeTarget || sessionId && (!payload.source?.session_id || payload.source.session_id === sessionId) ||
+                [payload.correction_text, payload.source?.content].some(matchesText)) {
+              record.command.payload = {}; record.redacted = true; changed = true;
+            }
+          }
+          if (['delete_evidence', 'delete_world_item'].includes(record.command.operation) && record.cleanup?.sourceTexts?.length) {
+            const refs = record.cleanup.sourceRefs ?? [];
+            const retainedRefs = refs.filter(ref => !wholeTarget && !(sessionId &&
+              (!ref.sessionIds?.length || ref.sessionIds.includes(sessionId))));
+            const retained = record.cleanup.sourceTexts.filter(text => !wholeTarget && !matchesText(text) &&
+              (!sessionId || retainedRefs.some(ref => ref.textHash === digest(text))));
+            // Old markers have no per-source session IDs: redact uncertain
+            // text, preserving the receipt identity and pending cleanup flags.
+            if (retained.length !== record.cleanup.sourceTexts.length || retainedRefs.length !== refs.length) {
+              if (record.cleanup.deleteConversationSnippets && prepareCleanup) {
+                try {
+                  await prepare(ownerId, state, record);
+                  const erased = await eraseSnippets(ownerId, record);
+                  if (erased?.snippetsVerified !== true) throw failure('MEMORY_CLEANUP_PENDING');
+                  delete record.cleanup.snippetsPending;
+                } catch {
+                  record.cleanup.snippetsPending = true;
+                  // When even locating the old text failed, keep the last
+                  // usable locator until retry can durably replace it by IDs.
+                  if (!Array.isArray(record.cleanup.conversationTargets)) { count++; continue; }
+                }
+              }
+              record.cleanup.sourceTexts = retained;
+              if (record.cleanup.sourceRefs) record.cleanup.sourceRefs = retainedRefs.filter(ref => retained.some(text => digest(text) === ref.textHash));
+              changed = true;
+            }
+          }
+          // Keep command identity and cleanup flags: this removes plaintext,
+          // not the pending cleanup or the ability to query its original receipt.
+          if (changed) count++;
         }
         if (count) await write(ownerId, state);
         return count;
