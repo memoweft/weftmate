@@ -38,6 +38,12 @@ python scripts/acceptance/android/local-suite.py --evidence <证据目录> --adb
 
 电脑端须用合成账号、独立工作目录和 MiMo；手机走产品提供的登录与连接流程。电脑端是源码运行，不能报告为安装版。先验 C8 续聊与模型切换，再验 W2 批准/拒绝，W4 创建文件/读目录/执行命令，W5 离线排队/取消/上线执行，W6 保留原电脑归属；M5/M6 核对手机到电脑的记忆接续与获准召回。
 
+新资料目录第一次启动后，先请求本地账户初始化授权，再配置模型；不能直接跳到手机配对：
+
+1. 把 `{"action":"account.setup"}` 写入该轮证据目录的 `host-command.json`，等待 `host.log` 报告 `setupLinkFile`，并确认 `<ProfileName>/personal-access/setup/` 出现本轮未过期的授权文件。不要把授权链接或文件内容放进日志、截图或公开材料。
+2. 在进程环境中提供 `MIMO_API_KEY`，运行 `node scripts/acceptance/android/host-setup.mjs <证据目录> [ProfileName]`（默认 `host-profile`）。脚本使用刚签发的授权创建合成本地账户，再写入 MiMo 服务；授权、会话 Cookie 和模型密钥只在进程中使用。
+3. 核对 `host-ready.json` 的 `accountConfigured: true`、`modelServiceHttpStatus: 201`（或接口成功的 2xx）、`statusHttpStatus: 200`；随后在实际页面完成一次模型问答，再通过产品流程登录云账号、连接手机。配置成功不等于模型推理或跨端验收已通过。
+
 云登录使用执行者会话已经绑定的 `codex_apps / microsoft_outlook_email`：先用 `get_profile` 在进程内取得测试地址；每次提交注册或登录请求前记录UTC时间，只检索该时间之后、主题含WeftMate的邮件，并在进程内核对收件人属于本次测试请求后提取唯一验证码。不要读取无关正文、发送邮件或修改邮箱状态。地址、验证码、密码和模型密钥不写入跑法文件、证据、PR或issue；云账户页用匹配布尔值留证，不能直接截图邮箱。
 
 `cloud-session.mjs <外部证据目录> <锁目录>` 启动26分钟上限的隔离源码电脑端，真实Electron窗口从创建时隐藏，使用随机监听端口；按 `services/cloud/deploy/README.md` 使用已登记的程序回调参数，回调参数不另开本机监听或探测该端口。继承本机工具说明提供的只读frpc和CA文件路径，以及进程内MiMo配置。`--phone-only` 只启动轻量手机驱动控制器，不占电脑端重活名额。
@@ -51,3 +57,9 @@ python scripts/acceptance/android/local-suite.py --evidence <证据目录> --adb
 H1 实际设置 5 分钟提醒并等待通知，H2 分别核对无来源提示与有合成数据时的今日数据。H5 保存明日本地 9 点提醒，在目标页查看和删除另一条提醒，长期目标须有真实进度；保存不等于到点通知。时间未到明确写阻塞。后台挂起后的通知延迟写“阻塞：需真机”。不改系统时钟、网络或安全设置。
 
 每个场景最多 30 分钟，保留失败和阻塞继续下一项。最后一批 `session.ps1` 加 `-Uninstall`，核对候选及测试 APK 都已卸载、实例停止、ADB 断开、锁已释放。电脑端发送正常关闭后有 15 秒收尾期限，超时只终止自身进程树。公开 PR/issue 仅写合成现象、版本、源码与 APK 散列、证据文件名，不附本机路径或私密截图。
+
+## 本机控制器鉴权
+
+每次启动生成独立的随机令牌。读取当前会话的 `cloud-control.json` / `cloud-control-phone.json`，将 `controlToken` 放到每次请求的 `Authorization: Bearer <controlToken>` 头中（包括 `email`、`code`、`run` 和 `close`）。会话文件在写入令牌前已限制为仅当前操作系统用户可读写；不要复制、提交、打印或截图该文件与请求头。重启后重新读文件，不能沿用旧令牌。
+
+缺失或错误令牌返回 401；任何带 `Origin` 头的请求（包括空值或 `null`）返回 403，拒绝发生在读取正文和编译脚本之前。只从本机脚本调用，不从浏览器页面调用。
