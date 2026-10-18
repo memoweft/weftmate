@@ -27,6 +27,7 @@ npm run dist:win:candidate -- `
 - `vendor:dsh` 自动构建固定提交与随仓补丁，并把工作树的 `vendor/dsh-runtime` 联接到共享缓存；缺失、升级固定提交或增删改补丁后运行 `npm run vendor:dsh`；同身份缓存损坏时按下节保留现场并人工挪开；候选构建只校验已有运行时，夜间的 `vendor-tests` 阶段会重建缺失或过期运行时；
 - `vendor:verify` 检查版本、文件、依赖闭包和启动行为；
 - `dist:win` 把已验证的 DSH 运行时放入 Windows 安装包；
+- 所有 electron-builder 入口的共享 `beforePack` 显式应用并核验 [CSR 依赖补丁](../patches/root-csr/README.md)，不依赖 `postinstall`；归档检查再核对实际打进去的依赖完整哈希，未知版本或哈希拒绝构建并要求重新评估补丁；
 - `dist:win:candidate` 先验证现有 vendor，再使用无 reparse point（重解析点）的隔离暂存目录构建，并审计安装包闭包、开发机路径、用户数据和凭据文件；
 - DSH 版本、脚本版本和依赖闭包必须在每次构建时从当前 pin（固定版本文件）与生成的 manifest（清单）读取；长期文档不保存会过期的 commit、包数量或候选路径。
 

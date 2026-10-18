@@ -1,40 +1,37 @@
 // Applied by npm ci/install before any host code loads the pinned ACME client.
 // Fail closed on dependency drift; never silently ship an unpatched parser.
 import { readFile, writeFile } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
-import { createRequire } from 'node:module';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { csrPatches, csrHash, csrIntegrityError, resolveCsrDependencies, verifyPatchedCsrBytes } from '../src/personal-relay/csr-integrity.mjs';
 
-const require = createRequire(import.meta.url);
-const patches = JSON.parse(await readFile(new URL('../patches/root-csr/patch.json', import.meta.url), 'utf8'));
-const hash = text => createHash('sha256').update(text).digest('hex');
-// Resolve from the actual consumers too: a future nested duplicate must not
-// leave ACME.js using an unpatched copy while our direct CSR import is fixed.
-const acmeRequire = createRequire(require.resolve('@root/acme'));
-const csrFile = require.resolve('@root/csr');
-if (acmeRequire.resolve('@root/csr') !== csrFile) throw new Error('Unexpected nested @root/csr; update the CSR patch');
-const csrRequire = createRequire(csrFile);
-if (csrRequire.resolve('@root/asn1/parser') !== require.resolve('@root/asn1/parser'))
-  throw new Error('Unexpected nested @root/asn1; update the CSR patch');
-
-// Validate all inputs before writing either file. Already-patched installs are
-// idempotent; whole-file hashes bind every replacement to the lockfile versions.
-const writes = [];
-for (const patch of patches) {
-  const directory = path.dirname(require.resolve(`${patch.package}/package.json`));
-  const { version } = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'));
-  if (version !== patch.version) throw new Error(`CSR patch requires ${patch.package}@${patch.version}`);
-  const file = path.join(directory, patch.file);
-  const source = await readFile(file, 'utf8');
-  if (hash(source) === patch.patchedSha256) continue;
-  if (hash(source) !== patch.sha256) throw new Error(`Unexpected ${patch.package}/${patch.file}; update the CSR patch`);
-  let patched = source;
-  for (const [before, after] of patch.changes) {
-    if (patched.split(before).length !== 2) throw new Error(`Nonunique CSR patch in ${patch.package}`);
-    patched = patched.replace(before, after);
+export async function applyRootCsrPatch({ requireFrom = import.meta.url } = {}) {
+  const { file: dependencyFile, read } = resolveCsrDependencies(requireFrom);
+  // Validate all inputs before writing either file. Already-patched installs are
+  // idempotent; whole-file hashes bind every replacement to the lockfile versions.
+  const writes = [];
+  for (const patch of csrPatches) {
+    const base = `node_modules/${patch.package}`;
+    const metadata = JSON.parse(read(`${base}/package.json`));
+    if (patch.package === '@root/csr' && metadata.main !== patch.file) throw csrIntegrityError('@root/csr entry mismatch');
+    if (metadata.version !== patch.version) throw csrIntegrityError(`${patch.package} version mismatch`);
+    const file = dependencyFile(`${base}/${patch.file}`);
+    const source = await readFile(file, 'utf8');
+    if (csrHash(source) === patch.patchedSha256) continue;
+    if (csrHash(source) !== patch.sha256) throw csrIntegrityError(`${patch.package}/${patch.file} unknown SHA256`);
+    let patched = source;
+    for (const [before, after] of patch.changes) {
+      if (patched.split(before).length !== 2) throw csrIntegrityError(`${patch.package} nonunique patch`);
+      patched = patched.replace(before, after);
+    }
+    if (csrHash(patched) !== patch.patchedSha256) throw csrIntegrityError(`${patch.package} invalid patch`);
+    writes.push([file, patched]);
   }
-  if (hash(patched) !== patch.patchedSha256) throw new Error(`Invalid CSR patch for ${patch.package}`);
-  writes.push([file, patched]);
+  for (const [file, patched] of writes) await writeFile(file, patched);
+  return verifyPatchedCsrBytes(read);
 }
-for (const [file, patched] of writes) await writeFile(file, patched);
-console.log('Pinned @root/csr schema patch verified');
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  await applyRootCsrPatch();
+  console.log('Pinned @root/csr schema patch verified');
+}

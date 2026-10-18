@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import asarApi from '@electron/asar'
 import { buildMachineIdentity, containsDevelopmentPath, forbiddenArchiveEntry, packagedTextViolation, packagedBinaryViolation } from './windows-package-policy.mjs'
 import { verifyMemoryRuntime, modeOf } from './memory-runtime/verify.mjs'
+import { csrPatches, csrIntegrityError, verifyPatchedCsrBytes } from '../src/personal-relay/csr-integrity.mjs'
 
 const { extractFile, listPackage, statFile, uncache } = asarApi
 
@@ -121,6 +122,16 @@ export async function verifyWindowsPackage({ unpacked, installer, resourcesDirec
   }
 
   await assertNoReparsePoints(runtime)
+  // Read the shipped archive (including asar.unpacked via extractFile), not
+  // the checkout's node_modules or the archive's own claimed patch metadata.
+  for (const entry of entries) {
+    const normalized = entry.replaceAll('\\', '/').replace(/^\/+/, '')
+    for (const patch of csrPatches) {
+      const suffix = `node_modules/${patch.package}/package.json`
+      if (normalized.endsWith(`/${suffix}`)) throw csrIntegrityError(`unexpected nested ${patch.package} copy in app.asar`)
+    }
+  }
+  const csrDependencies = verifyPatchedCsrBytes(file => extractFile(asar, join(...file.split('/')), false))
   const packageMetadata = JSON.parse(extractFile(asar, 'package.json', false).toString('utf8'))
   // The existing Mac trial reuses all archive/vendor/privacy checks. Its
   // trusted build entry explicitly selects darwin; metadata cannot opt a
@@ -155,6 +166,7 @@ export async function verifyWindowsPackage({ unpacked, installer, resourcesDirec
       reparsePoints: 0,
     },
     looseResources: { scannedTextFiles: resourceScan.scannedFiles, scannedBinaryFiles: resourceScan.binaryFiles },
+    csrDependencies,
     memoryRuntime,
     boundaries: {
       developmentPaths: 0,
