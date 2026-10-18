@@ -1,6 +1,7 @@
 const derivedContext = item => ['interaction_context', 'evidence_context', 'interaction_commitment'].includes(item.object_kind);
 const invalid = () => Object.assign(Error('MEMORY_FORGET_DECISION_INVALID'), { code: 'MEMORY_FORGET_DECISION_INVALID' });
-export const forgetCompletionVersion = 3; // Includes the retained-record count projection.
+const candidateBatchChars = 16000;
+export const forgetCompletionVersion = 5; // Terminal job sources must also be readable and fit the model request.
 // A recovered record needs the retained original, not just an old excerpt.
 // Fresh host inputs may have only text; the manager preserves it before queuing.
 export function forgetSourceText(source, requireOriginal = false) {
@@ -73,7 +74,7 @@ export async function classifyForgetCandidates(route, request, candidates) {
   // The host completion gateway accepts at most 16,384 characters per message.
   const batches = []; let batch = [];
   for (const candidate of candidates) {
-    if (JSON.stringify({ request, candidates: [...batch, candidate] }).length > 16000 && batch.length) { batches.push(batch); batch = []; }
+    if (JSON.stringify({ request, candidates: [...batch, candidate] }).length > candidateBatchChars && batch.length) { batches.push(batch); batch = []; }
     batch.push(candidate);
   }
   if (batch.length) batches.push(batch);
@@ -129,6 +130,8 @@ export async function scopedForgetPlan(manager, owner, action, route) {
   const worldRevision = worlds[0]?.world_revision;
   const changedScope = () => ({ version: 2, completionVersion: forgetCompletionVersion, completionState: 'withheld', evidenceIds: [], worldTargets: [], affectedIds: [], sourceTexts: [],
     state: 'withheld', message: '记忆在确认期间发生了变化，这次没有删除；请重新确认要忘掉的内容。' });
+  const incomplete = message => ({ version: 2, completionVersion: forgetCompletionVersion, completionState: 'withheld', worldRevision,
+    authorization: request, evidenceIds: [], worldTargets: [], affectedIds: [], sourceTexts: [], state: 'withheld', message });
   if (!Number.isSafeInteger(worldRevision) || worlds.some(world => world.world_revision !== worldRevision)) return changedScope();
   const rows = worlds.flatMap(world => world.items ?? []), byKey = new Map(rows.map(row => [`${row.object_kind}:${row.item_id}`, row]));
   const entities = new Map(rows.filter(row => row.object_kind === 'entity').map(row => [row.item_id, row.value]));
@@ -157,18 +160,28 @@ export async function scopedForgetPlan(manager, owner, action, route) {
   // too; this nominates a completion boundary, never extra deletion authority.
   const knownSources = candidates.flatMap(candidate => candidateSources(byKey.get(candidate.key)))
     .map(source => ({ id: source.evidence_id, text: source.evidence.raw_content ?? source.evidence.summary }));
-  const provisional = [...knownSources, ...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? []),
+  // A no_change job can retain a source without any World item or recent-recall nomination.
+  // Core's durable acceptance IDs survive removal of its failed interpretation.
+  const jobSources = (jobs.jobs ?? []).flatMap(job => (job.acceptance?.evidence_ids ?? []).map(id => ({ id })));
+  const jobSourceIds = new Set(jobSources.map(source => source.id));
+  const provisional = [...knownSources, ...jobSources, ...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? []),
     ...(jobs.formation_requests ?? []).map(row => ({ id: row.evidence_id, text: row.text }))];
   for (const item of provisional) {
     const id = item.id ?? item.evidence_id, key = `evidence:${id}`;
     if (byKey.has(key)) continue;
     const result = await manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: id });
     const evidence = result.evidence;
-    if (!readable([{ evidence, permissions: evidence.permissions }])) continue;
+    if (!readable([{ evidence, permissions: evidence.permissions }])) {
+      if (jobSourceIds.has(id) && evidence.currentness_state !== 'evidence_deleted')
+        return incomplete('无法在当前权限下确认完整遗忘范围，这次没有执行；独立记忆和原聊天保留。');
+      continue;
+    }
     byKey.set(key, { item_id: id, object_kind: 'evidence', provenance: [{ evidence_id: id, evidence }], value: {} });
     candidates.push({ key, kind: 'evidence', text: [evidence.raw_content, evidence.summary].filter(Boolean).join('\n') || item.text,
       sourceTexts: [evidence.raw_content, evidence.summary].filter(Boolean), graphSubject: null });
   }
+  if (candidates.some(candidate => JSON.stringify({ request, candidates: [candidate] }).length > candidateBatchChars))
+    return incomplete('相关来源内容过长，暂时无法完整核对，这次没有执行遗忘；独立记忆和原聊天保留。');
   const decisions = await classifyForgetCandidates(route, request, candidates);
   if (candidates.some(candidate => {
     const decision = decisions.get(candidate.key);
