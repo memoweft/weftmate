@@ -86,7 +86,7 @@
     if (!engine) return;
     const value = engine.view(); state.busy = value.running;
     state.conversations = value.conversations.map(c => ({ id: c.id, createdAt:new Date(c.turns[0]?.timestamp||Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
-    if (!state.conversationId && value.running) state.conversationId = value.conversations.at(-1)?.id || null;
+    if (!state.conversationId && value.running) state.conversationId = value.sendingConversationId || null;
     renderConversationList(); if (state.page === 'chat' && state.chatSource === 'phone') render(); updateComposer();
     if(state.page==='memory'&&globalThis.WeftPhone?.memoryPending)$('page-content').phoneMemoryPaint?.();
   };

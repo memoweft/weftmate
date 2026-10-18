@@ -159,7 +159,7 @@
     return { choices: [{ message: { content: text, ...(calls.size ? { tool_calls: [...calls.values()] } : {}) } }] };
   }
   async function create({ vault, identity, host, control, tasks, taskDevice, phoneModel, hostCapabilities = () => ({}), workRequests = false, accountCheck, notify = () => {}, crypto = globalThis.crypto }) {
-    let value = await vault.load(), running = false, taskSending=false, abort, version = 0, targets=[],cloudTasksSupported=false;
+    let value = await vault.load(), running = false, sendingConversationId=null, taskSending=false, abort, version = 0, targets=[],cloudTasksSupported=false;
     value.tasks??=[];
     value.phoneMemory??=globalThis.WeftPhoneMemory?.fresh();value.forgetConversations??=[];
     if(value.phoneMemory){
@@ -170,7 +170,7 @@
     let memoryFlight,memoryEpoch=0,memoryAbort,writes=Promise.resolve();
     const write=action=>{const next=writes.then(action);writes=next.catch(()=>{});return next;};
     if(value.snapshot)targets=await vault.targets?.(value.snapshot.control.accountId)||[value.snapshot];
-    const view = () => ({ ...value, targets, ready:phoneModel?!!phoneModel():!!value.snapshot, chatReady:phoneModel?!!phoneModel():!!value.snapshot?.model,taskReady:cloudTasksSupported&&!!tasks&&!!vault.seal&&!!value.snapshot?.taskRecipient, taskSending, running:running||taskSending });
+    const view = () => ({ ...value, targets, sendingConversationId, ready:phoneModel?!!phoneModel():!!value.snapshot, chatReady:phoneModel?!!phoneModel():!!value.snapshot?.model,taskReady:cloudTasksSupported&&!!tasks&&!!vault.seal&&!!value.snapshot?.taskRecipient, taskSending, running:running||taskSending });
     const persist = () => write(async () => { await vault.save(value); notify(view()); });
     async function clear() { const accountId=value.snapshot?.control?.accountId;version++;memoryEpoch++;memoryAbort?.abort();cloudTasksSupported=false; abort?.abort(); value = empty();targets=[];await write(async()=>{await vault.clearAccount?.(accountId);await vault.clear();}); notify(view()); }
     async function clearReplica() {
@@ -332,7 +332,7 @@
       // Leaving a native conversation must flush its facts too. Start before
       // setting running, then keep the composer busy while that extraction finishes.
       const preparation=memoryFlight||(phoneModel&&previous&&previous.id!==conversationId?extractMemory(previous.id):null);
-      running = true; abort = new AbortController(); const ticket = version;
+      running = true; sendingConversationId=null; abort = new AbortController(); const ticket = version;
       try {
         if(preparation)await preparation;
         if(abort.signal.aborted)throw new DOMException('CANCELLED','AbortError');
@@ -343,6 +343,7 @@
           ? value.snapshot?.recent?.find(c => c.id === conversationId.slice(7)) : null;
         const conversation = value.conversations.find(c => c.id === conversationId) ?? { id: crypto.randomUUID(), turns: [],
           ...(recent ? { sourceSessionId: recent.id, context: recent.messages } : {}) };
+        sendingConversationId=conversation.id;
         const useLight=!!value.phoneMemory&&!value.phoneMemory.transferred;
         const light=useLight?globalThis.WeftPhoneMemory?.recall(value.phoneMemory,text)||[]:[];
         const snapshot = { items: [], ...value.snapshot, model: submittedPhoneModel || value.snapshot?.model };
