@@ -23,6 +23,34 @@ async function assertNoCopies(root) {
   }
 }
 
+test('query selection arriving after deletion is retired even when correction and deleted source differ', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-late-selection-'));
+  const entered = gate(), release = gate();
+  const deletedSource = 'OLD_ASSERTION_486';
+  assert.notEqual(secret, deletedSource); assert.equal(secret.includes(deletedSource), false);
+  let submitted = 0;
+  const manager = { async correctionSourceSupported() { return true; },
+    async query(_owner, method) {
+      if (method === 'preview_recall') { entered.resolve(); await release.promise; return { preview: { selected_item_ids: [['cognition', 'old-target']] } }; }
+      return { world_revision: 2 };
+    },
+    async submitCommand() { submitted++; throw Object.assign(Error('synthetic write unavailable'), { code: 'MEMORY_BUSY' }); },
+  };
+  let actions = createMemoryActions({ root, manager: () => manager, schedule() {} }), pending;
+  try {
+    const action = { ...correction(), arguments: { query: 'beverage preference', text: secret, sourceQuote: secret } };
+    pending = actions.submit(owner, action); await entered.promise;
+    await actions.redact(owner, { affectedIds: ['old-target'], sourceTexts: [deletedSource] });
+    release.resolve(); const result = await pending;
+    console.log(JSON.stringify({ reproduction: 'different-source-late-selection', submitted, state: result.state }));
+    assert.equal(result.state, 'not_found'); assert.equal(submitted, 0);
+    const row = JSON.parse(await readFile(join(root, 'accounts', owner, 'memory-home/pending-actions.json'), 'utf8')).records[action.requestId];
+    assert.deepEqual(row.arguments, {}); assert.equal(row.command, undefined); await assertNoCopies(root);
+    await actions.close(); actions = createMemoryActions({ root, manager: () => manager, schedule() {} });
+    await actions.resume(owner); assert.equal(submitted, 0); await assertNoCopies(root);
+  } finally { release.resolve(); await pending; await actions.close(); await rm(root, { recursive: true, force: true }); }
+});
+
 for (const step of ['revision', 'selection', 'reserved-command', 'forget-plan']) test(`deletion retires a recovery paused at ${step} without rewriting erased text`, async () => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-erase-race-'));
   const entered = gate(), release = gate();
