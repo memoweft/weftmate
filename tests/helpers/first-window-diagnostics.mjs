@@ -132,3 +132,24 @@ export async function waitForFirstWindow({ app, profile, launchStartedAt = NaN, 
     throw error;
   }
 }
+
+/** Preserve firstWindow's 30s startup budget across the preparation shell.
+ * Business-document admission is the commit signal; its subsequent load keeps
+ * the original separate 15s navigation budget. No sleep, retry or longer limit. */
+export async function waitForPersonalWindow(options) {
+  const deadline = Date.now() + 30000;
+  const app = options.app;
+  const page = await waitForFirstWindow({ ...options, app: {
+    process: () => app.process(),
+    async firstWindow() {
+      const window = await app.firstWindow();
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw Object.assign(Error('First business window startup timed out'), { name: 'TimeoutError' });
+      await window.waitForURL('**/personal/v1/ui*', { waitUntil: 'commit', timeout: remaining });
+      return window;
+    },
+  } });
+  page.setDefaultTimeout(15000);
+  await page.waitForURL('**/personal/v1/ui*');
+  return page;
+}
