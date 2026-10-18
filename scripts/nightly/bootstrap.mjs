@@ -17,8 +17,9 @@ export async function launchEngine(context, args, execute) {
 export async function bootstrap(args, { execute: injectedExecute } = {}) {
   const value = (name, fallback) => { const i = args.indexOf(name); return i < 0 ? fallback : args[i + 1]; };
   const repository = resolve(value('--repository', join(import.meta.dirname, '../..')));
-  const worktree = resolve(value('--worktree', 'D:/AIProjects/WeftMate/Worktrees/nightly'));
-  const reports = resolve(value('--reports', 'D:/AIProjects/WeftMate/Runtime/Nightly'));
+  if (!value('--worktree') || !value('--reports')) throw Error('--worktree and --reports are required');
+  const worktree = resolve(value('--worktree'));
+  const reports = resolve(value('--reports'));
   const minutes = Number(value('--minutes', 90)), threshold = Number(value('--threshold', 0.08));
   if (!(minutes > 0 && minutes <= 240 && threshold >= 0 && threshold <= 1) || repository === worktree || !/[\\/]nightly$/.test(worktree)) throw Error('Use a dedicated worktree named nightly and a valid deadline');
   const startedAt = new Date().toISOString(), now = new Date();

@@ -67,7 +67,7 @@ flowchart LR
 
 原生客户端保存配对得到的 TLS SPKI，并在 HTTPS 连接验证；证书续期保持同一密钥，换密钥由旧密钥签名且经已有信任连接更新。云目录返回的 pin 不是可信替代。全设备丢失时，通过本地恢复/恢复密钥与本人重新认领宿主，而非邮件登录自动取得全部内容。
 
-**数据归属通过 membership（成员关系）表达，一个账号可有多台电脑**；中继、令牌受众、对话、项目、文件与工具执行都带确定的 `hostId`。默认新对话用唯一在线电脑，或上次用的在线电脑；旁聊、分叉与项目继承来源。已有会话及未确认消息不改电脑、不广播。当前每台电脑仍有本机主对话与本机记忆；账号级主对话与记忆所在电脑只出方案，见 [MULTI_COMPUTER.md](MULTI_COMPUTER.md)。
+**数据归属通过 membership（成员关系）表达，一个账号可有多台电脑**；中继、令牌受众、对话、项目、文件与工具执行都带确定的 `hostId`。默认新对话用唯一在线电脑，或上次用的在线电脑；已有普通对话、分叉与项目会话继承来源电脑。已有会话及未确认消息不改电脑、不广播。当前每台电脑仍有本机主对话与本机记忆；账号级主对话与记忆所在电脑只出方案，见 [MULTI_COMPUTER.md](MULTI_COMPUTER.md)。
 
 云目录与签名撤权回执可选增加 `capabilities.multiHost:1`；旧云没有字段时客户端沿原路径，不请求新电脑管理或内容认证通道。多台目录明确关联登录设备的 `hostId`，同名电脑用 `displayName` 区分；单台原条目字段不变。在线来自该电脑的中继心跳，没有中继配置时沿原安装活动投影。迁移011只增移除电脑和任务取消的最小记录，不保存内容。改名与移除接受同账号云 DPoP（设备持钥证明）；移除撤掉那台电脑的登录授权、成员与远程连接，取消离线任务并清除密文，保留无正文取消回执，本机数据继续使用。重新登录取得新授权并重新认领后换中继凭据，不复活旧登录。
 
@@ -146,6 +146,7 @@ TLS adapter 直接使用 **S1b identity.json 已生成的内容私钥**，校验
 
 - 开发/测试：`WEFTMATE_RELAY_DEVELOPMENT_TLS=true`，OpenSSL 在隔离宿主目录生成 7 天开发 CA，签署原内容 key 的 CSR；测试客户端显式信这份 CA，不改系统信任。
 - 生产（S2b）：`WEFTMATE_RELAY_ACME_ENABLED=true` 后，宿主进程内的固定 Node ACME.js 客户端用现有内容 JWK 生成 CSR、通过安装 proof 请求 DNS-01；不依赖 Windows certbot/OpenSSL。ACME 目录可配置为生产 Let's Encrypt、staging 或隔离 Pebble，账号 key 按目录独立存在宿主私有文件，内容 key 不离开宿主。库的可选 maintainer 联系/locale 注册已关闭；旧版 processing 订单由库自身签名工具按 RFC8555 POST-as-GET 轮询，Pebble 已验证。
+- CSR 依赖的[固定补丁](../patches/root-csr/README.md)在安装及打包前按版本和文件哈希应用，归档检查核对实际依赖字节，宿主首次使用前再校验，不符报 `CSR_PATCH_INVALID`；按 PKCS#10 结构读取公钥，避免部分 EC 点被当成嵌套 ASN.1，保留坐标前导零。升级依赖须重新评估补丁、同步哈希和行为测试，否则构建失败，不能依靠更换内容密钥或签发重试规避。`services/cloud` 的生产入口只负责 DNS/中继，不使用 CSR/ACME.js。
 - 签发/续期：启动与每天检查，剩余 <30 天重签；失败按天重试并持久化重试日期，保留已有证书。成功校验域名/SPKI/有效期后，0600 原子安装 fullchain、`setSecureContext` 热载，不重启宿主/frpc，不中断既有 TLS 连接。`WEFTMATE_RELAY_CERT_FILE` 可指定安装位置，默认私有 `relay-tls/host-fullchain.pem`；`/status.relay` 新增 `certificateExpiresAt`（UTC/null）与 `certificateErrorCode`（代码/null）。staging 与生产使用独立证书路径，staging 不被普通浏览器信任。
 - CA 复用已验证授权时，已完成的挑战只用签名 POST-as-GET 读取，不再次提交验证，也不重复发布 TXT。证书失败通过已有 `diagnostic` 回调给出固定字段：`stage`（目录、nonce、账户、下单、授权、TXT 发布/传播/清理、验证、finalize、订单轮询、下载、本机校验/安装/热载）、`target`、已知 `errorCode/causeCode/errorName`、`httpStatus`、枚举 `acmeProblem/acmeStatus`；不带地址、错误正文、JWK、令牌或证书内容，对外错误码与每天检查规则不变。
 - 云 DNS 权限：只接受 43 字符 base64url TXT 值，记录名固定为 `_acme-challenge.<此宿主认领的完整域名>`；不接受 caller 指定 zone/name/type/TTL，不给宿主全区 DNS API key。`services/cloud/src/dns-aliyun.mjs` 通过官方 OpenAPI V3 ACS3-HMAC-SHA256 调用 AddDomainRecord/DeleteDomainRecord，免费 AliDNS 区将内部 TTL=60 提升到最低 600 秒。每个权威 NS 都查到 TXT 后才返回，约 90 秒超时给 `DNS_PROPAGATION_TIMEOUT`；宿主允许 DNS 请求 125 秒。API 失败给 `DNS_PROVIDER_ERROR`，不返回凭据或阿里云原始错误正文。

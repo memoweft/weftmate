@@ -2,8 +2,9 @@
 import { randomUUID } from 'node:crypto'
 import { lstat, mkdir, mkdtemp, readdir, realpath, rename, rm, symlink, unlink } from 'node:fs/promises'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-export const DEFAULT_WINDOWS_CACHE_ROOT = 'D:/AIProjects/WeftMate/Worktrees/_shared'
+export const DEFAULT_WINDOWS_CACHE_ROOT = fileURLToPath(new URL('../.local/dsh-cache', import.meta.url))
 
 export function isWithin(parent, child) {
   const rel = relative(parent, child)
