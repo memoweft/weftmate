@@ -25,12 +25,35 @@ const trace = (owner, event, fields) => {
 const pendingMessage = name => name === 'memory_forget'
   ? '这次还没忘掉，稍后会再试。' : '这次还没记住，稍后会再试。';
 const notFound = () => ({ state: 'not_found', message: '没找到这条记忆。' });
+const retiredAction = () => Object.assign(Error('MEMORY_ACTION_RETIRED'), { code: 'MEMORY_ACTION_RETIRED' });
+function clearActionBody(row) {
+  row.arguments = {};
+  for (const key of ['source', 'target', 'command', 'plan', 'scope', 'finished', 'commands']) delete row[key];
+}
+function scrubForgetReceipt(row) {
+  row.arguments = {};
+  for (const key of ['source', 'target', 'command', 'scope']) delete row[key];
+  if (row.plan) { row.plan.sourceTexts = []; delete row.plan.authorization; delete row.plan.message; }
+}
+const submittedForget = row => row.name === 'memory_forget' &&
+  (Object.keys(row.commands ?? {}).length > 0 || (row.finished?.length ?? 0) > 0);
+function retainForgetReceipts(row) {
+  scrubForgetReceipt(row);
+  row.plan = { ...row.plan, completionVersion: forgetCompletionVersion, completionState: 'withheld', completionUpgraded: true };
+  // A later missing target says nothing about earlier submitted commands. Use
+  // the existing receipt-only recovery path, never replay to infer an outcome.
+  if (row.result?.state === 'not_found') delete row.result;
+}
+const actionTargets = row => [row.arguments?.id, row.target?.id, row.command?.targetId,
+  ...(row.affectedIds ?? []), ...(row.plan?.affectedIds ?? []),
+  ...(row.plan?.worldTargets ?? []).map(target => target.id), ...(row.plan?.evidenceIds ?? []),
+  ...(row.plan?.authorizedEvidenceIds ?? []), ...Object.values(row.commands ?? {}).map(command => command.targetId)];
 const changedScope = partial => ({ state: partial ? 'partial' : 'withheld', message: partial
   ? '部分记忆已删除，但其余内容在确认后发生了变化，没有继续删除；请重新确认。'
   : '记忆在原来确认后发生了变化，这次没有删除；请重新确认要忘掉的内容。' });
 
 /** Durable user intents. Core remains the only authority for facts and receipts. */
-export function createMemoryActions({ root, manager, schedule }) {
+export function createMemoryActions({ root, manager, schedule, redactJournal = async () => {} }) {
   const queues = new Map(), flights = new Map();
   // Live request cancellation only; never persisted as another work queue.
   const liveSignals = new Map();
@@ -39,19 +62,70 @@ export function createMemoryActions({ root, manager, schedule }) {
     const work = (queues.get(owner) ?? Promise.resolve()).catch(() => {}).then(fn);
     queues.set(owner, work.catch(() => {})); return work;
   };
+  async function scrubTerminals(owner, data) {
+    let changed = false;
+    for (const row of Object.values(data.records)) if (row.result?.state === 'not_found' &&
+        (Object.keys(row.arguments ?? {}).length || ['source', 'target', 'command', 'plan', 'scope', 'finished', 'commands'].some(key => key in row))) {
+      // Keep the old target/source until both existing files have been scrubbed.
+      await redactJournal(owner, row);
+      if (submittedForget(row)) retainForgetReceipts(row);
+      else clearActionBody(row);
+      changed = true;
+    }
+    return changed;
+  }
   async function read(owner) {
-    try { await ensurePrivateFile(file(owner)); return JSON.parse(await readFile(file(owner), 'utf8')); }
+    try {
+      await ensurePrivateFile(file(owner));
+      const data = JSON.parse(await readFile(file(owner), 'utf8'));
+      // Older hosts could persist a not_found receipt alongside a resurrected
+      // command. Honor that existing terminal result on restart, without replay.
+      const changed = await scrubTerminals(owner, data);
+      if (changed) await durableWrite(file(owner), data);
+      return data;
+    }
     catch (error) { if (error.code === 'ENOENT') return { records: {} }; throw error; }
   }
   async function update(owner, fn) {
     return serial(owner, async () => {
       await ensurePrivateDirectory(path.dirname(file(owner)));
       const data = await read(owner), result = fn(data);
+      await scrubTerminals(owner, data);
       await durableWrite(file(owner), data); return result;
     });
   }
-  async function perform(owner, action, signal, recovering) {
+  async function perform(owner, action, signal, recovering, lease) {
     const m = manager();
+    const assertActive = () => { if (lease.retired) throw retiredAction(); };
+    // Same serialization as redaction: a terminal record cannot accept a late
+    // plan/target/command checkpoint from an earlier asynchronous snapshot.
+    const save = async fn => {
+      let selectedDeleted = false;
+      const result = await update(owner, data => {
+        assertActive();
+        const row = data.records[action.requestId];
+        if (!row || row.result) throw retiredAction();
+        const result = fn(data);
+        // Selection may return an ID that was not yet known when redaction ran.
+        // Check it under that same lock, before any plaintext checkpoint is written.
+        if (actionTargets(row).some(id => lease.deletedTargets.has(id))) {
+          row.result = notFound(); selectedDeleted = true;
+        }
+        if (lease.scrubbed) scrubForgetReceipt(row);
+        return result;
+      });
+      // update has persisted the terminal, scrubbed record. Do not throw inside
+      // its mutation callback and accidentally discard that terminal write.
+      if (selectedDeleted) lease.retired = true;
+      assertActive();
+      return result;
+    };
+    const submit = async command => {
+      assertActive(); lease.commandRequestId = command.requestId;
+      try { return await m.submitCommand(owner, command, assertActive); }
+      finally { lease.commandRequestId = null; }
+    };
+    assertActive();
     signal?.throwIfAborted();
     if (action.name === 'memory_forget') {
       if (recovering) {
@@ -65,6 +139,7 @@ export function createMemoryActions({ root, manager, schedule }) {
           catch { signal?.throwIfAborted(); }
         }
         signal?.throwIfAborted();
+        assertActive();
         const prior = [action.scope, action.plan?.authorization].filter(Boolean);
         if (dispatched || scope?.authorized !== true || prior.some(value => value.authorized !== true ||
             value.subject !== scope.subject || value.topic !== scope.topic)) {
@@ -72,7 +147,7 @@ export function createMemoryActions({ root, manager, schedule }) {
           // already takes the receipt-only path below, including old upgrades.
           if (!dispatched || action.plan?.completionState !== 'withheld') {
             action.plan = { ...action.plan, completionVersion: forgetCompletionVersion, completionState: 'withheld', completionUpgraded: true };
-            await update(owner, data => { data.records[action.requestId].plan = action.plan; });
+            await save(data => { data.records[action.requestId].plan = action.plan; });
           }
         } else action = { ...action, scope };
       }
@@ -84,6 +159,7 @@ export function createMemoryActions({ root, manager, schedule }) {
         let complete = false, retainedOtherCount;
         if (!Object.keys(action.commands ?? {}).length && !action.finished?.length &&
             frozen.version === 2 && Number.isSafeInteger(frozen.worldRevision) && frozen.authorization?.authorized === true) {
+          assertActive();
           const proof = await m.planForget(owner, { ...action, scope: frozen.authorization, signal });
           signal?.throwIfAborted();
           const targets = plan => [...(plan.worldTargets ?? []).map(row => `${row.kind}:${row.id}`),
@@ -97,12 +173,13 @@ export function createMemoryActions({ root, manager, schedule }) {
         }
         action.plan = { ...frozen, completionVersion: forgetCompletionVersion, completionState: complete ? 'complete' : 'withheld', completionUpgraded: true,
           ...(complete ? { retainedOtherCount } : {}) };
-        await update(owner, data => { data.records[action.requestId].plan = action.plan; });
+        await save(data => { data.records[action.requestId].plan = action.plan; });
       }
       // New requests still pass the original whole-message/subject checks.
       if (!action.plan || (action.plan.completionState !== 'withheld' &&
           (action.plan.version !== 2 || !Number.isSafeInteger(action.plan.worldRevision) || action.plan.authorization?.authorized !== true))) {
         const previous = action.plan;
+        assertActive();
         const plan = await m.planForget(owner, { ...action, signal });
         signal?.throwIfAborted();
         if (previous) {
@@ -111,7 +188,7 @@ export function createMemoryActions({ root, manager, schedule }) {
           if ((plan.authorizedEvidenceIds ?? plan.evidenceIds ?? []).some(id => !evidence.has(id)) ||
               (plan.affectedIds ?? []).some(id => !items.has(id))) return changedScope(Boolean(action.finished?.length));
         }
-        await update(owner, data => { data.records[action.requestId].plan = plan; }); action.plan = plan;
+        await save(data => { data.records[action.requestId].plan = plan; }); action.plan = plan;
       }
       const deletions = [...(action.plan.worldTargets ?? []), ...(action.plan.evidenceIds ?? []).map(id => ({ kind: 'evidence', id }))];
       const retained = (action.plan.retainedOtherCount ? `还有 ${action.plan.retainedOtherCount} 条关于别人的没动。` : '') +
@@ -122,6 +199,7 @@ export function createMemoryActions({ root, manager, schedule }) {
         let applied = false, uncertain = (action.finished ?? []).some(id => !action.commands?.[id]);
         const commands = Object.entries(action.commands ?? {});
         for (const [id, command] of commands) {
+          assertActive();
           if (id !== (command.targetKind === 'evidence' ? command.targetId : `${command.targetKind}:${command.targetId}`)) { uncertain = true; continue; }
           try {
             const result = await m.receiptForAction(owner, command);
@@ -149,6 +227,7 @@ export function createMemoryActions({ root, manager, schedule }) {
         : retained ? { state: 'withheld', message: '这次没有删除记忆。' + retained } : notFound();
       if (!Number.isSafeInteger(action.plan.nextRevision ?? action.plan.worldRevision)) return changedScope(Boolean(action.finished?.length));
       for (const target of deletions) {
+        assertActive();
         signal?.throwIfAborted();
         const id = target.kind === 'evidence' ? target.id : `${target.kind}:${target.id}`;
         if (action.finished?.includes(id)) continue;
@@ -158,19 +237,19 @@ export function createMemoryActions({ root, manager, schedule }) {
           command = { requestId: `forget:${hash(`${action.requestId}|${id}|${revision}`)}`,
             operation: target.kind === 'evidence' ? 'delete_evidence' : 'delete_world_item',
             targetKind: target.kind, targetId: target.id, payload: {}, expectedWorldRevision: revision };
-          await update(owner, data => { (data.records[action.requestId].commands ??= {})[id] = command; });
+          await save(data => { (data.records[action.requestId].commands ??= {})[id] = command; });
         }
         signal?.throwIfAborted();
         action.commandDispatched = true;
-        const result = await m.submitCommand(owner, command);
+        const result = await submit(command);
         const receipt = result.receipt ?? result;
         if (receipt.result_state === 'revision_conflict') return changedScope(Boolean(action.finished?.length));
         if (receipt.result_state === 'rejected') return { state: 'rejected', message: '这次还没能忘掉这条记忆。' };
         if (!['applied', 'no_change'].includes(receipt.result_state)) throw Error('MEMORY_ACTION_PENDING');
-        if (receipt.storage_cleanup?.state === 'pending') await update(owner, data => {
+        if (receipt.storage_cleanup?.state === 'pending') await save(data => {
           (data.records[action.requestId].cleanupPending ??= []).push(command.requestId);
         });
-        await update(owner, data => {
+        await save(data => {
           (data.records[action.requestId].finished ??= []).push(id);
           data.records[action.requestId].plan.nextRevision = receipt.after_revision;
         });
@@ -186,32 +265,35 @@ export function createMemoryActions({ root, manager, schedule }) {
       state: 'withheld', message: '这次纠正缺少对应的原话，请重新确认要修改的内容。' };
     if (!await m.correctionSourceSupported?.(owner)) return {
       state: 'unsupported', message: '当前记忆组件不支持核对纠正原话，请更新后再试。' };
+    assertActive();
     let target = action.arguments;
     if (target.query && !action.target) {
       const snapshot = await m.query(owner, 'preview_recall', { query: target.query, model_tier: action.modelTier ?? 'local' });
       target = (snapshot.preview?.selected_item_ids ?? []).map(([kind, id]) => ({ kind, id }))
         .find(item => ['cognition', 'relationship', 'event'].includes(item.kind));
       if (!target) return notFound();
-      await update(owner, data => { data.records[action.requestId].target = target; });
+      await save(data => { data.records[action.requestId].target = target; });
     }
     target = action.target ?? target;
     let command = action.command;
     if (!command) {
+      assertActive();
       const revision = await m.query(owner, 'query_world', { operation: 'revision' });
       command = { requestId: `correct:${hash(`${action.requestId}|${target.kind}|${target.id}|${revision.world_revision}`)}`,
         operation: 'correct_world_item', targetKind: target.kind, targetId: target.id,
         payload: { correction_text: action.arguments.text, source: { ...action.source.message,
           session_id: action.sessionId, quote: action.arguments.sourceQuote } }, expectedWorldRevision: revision.world_revision };
-      await update(owner, data => { data.records[action.requestId].command = command; });
+      await save(data => { data.records[action.requestId].command = command; });
     }
-    const result = await m.submitCommand(owner, command);
+    const result = await submit(command);
     const receipt = result.receipt ?? result;
-    if (receipt.result_state === 'revision_conflict') await update(owner, data => { delete data.records[action.requestId].command; });
+    if (receipt.result_state === 'revision_conflict') await save(data => { delete data.records[action.requestId].command; });
     if (receipt.result_state === 'rejected') {
+      assertActive();
       const world = await m.query(owner, 'query_world', { operation: 'list', object_kind: target.kind, include_history: true });
       const successor = memorySuccessors(world.items ?? []).resolve(`${target.kind}:${target.id}`);
       if (!successor || successor.current_state !== 'current') return notFound();
-      if (successor.item_id !== target.id) await update(owner, data => {
+      if (successor.item_id !== target.id) await save(data => {
         data.records[action.requestId].target = { kind: target.kind, id: successor.item_id };
         delete data.records[action.requestId].command;
       });
@@ -237,16 +319,24 @@ export function createMemoryActions({ root, manager, schedule }) {
         flight.snapshot = new Set(actions.map(row => row.requestId));
         trace(owner, 'flight-snapshot', { flightId: flight.id, requestIds: [...flight.snapshot].map(hash) });
         for (const previous of actions.filter(row => !row.result)) {
-          const action = (await serial(owner, () => read(owner))).records[previous.requestId];
-          if (!action || action.result || flight.attempted.has(action.requestId)) continue;
+          const lease = { requestId: previous.requestId, retired: false, commandRequestId: null, deletedTargets: new Set() };
+          const action = await serial(owner, async () => {
+            const row = (await read(owner)).records[previous.requestId];
+            if (!row || row.result || flight.attempted.has(row.requestId)) return null;
+            // Publish the live attempt under the same lock as its snapshot, so
+            // redaction cannot miss it between reading and beginning execution.
+            flight.current = lease;
+            return row;
+          });
+          if (!action) continue;
           flight.attempted.add(action.requestId);
           trace(owner, 'perform-enter', { flightId: flight.id, requestId: hash(action.requestId) });
           try {
             const { affectedIds, ...result } = await perform(owner, action, liveSignals.get(`${owner}|${action.requestId}`),
-              !flight.submitted.has(action.requestId));
+              !flight.submitted.has(action.requestId), lease);
             await update(owner, data => {
               const row = data.records[action.requestId];
-              if (row.result) return;
+              if (row.result || lease.retired) return;
               row.result = result;
               if (affectedIds) row.affectedIds = affectedIds;
               if (row.name === 'memory_correct' && result.state === 'applied') {
@@ -263,15 +353,18 @@ export function createMemoryActions({ root, manager, schedule }) {
               }
               // Finished forgetting keeps no body copy in this recovery file.
               if (row.name === 'memory_forget') {
-                row.arguments = {}; delete row.source; delete row.plan; delete row.finished; delete row.commands; delete row.scope;
+                if (submittedForget(row)) scrubForgetReceipt(row);
+                else clearActionBody(row);
               }
             });
             trace(owner, 'perform-return', { flightId: flight.id, requestId: hash(action.requestId) });
           } catch (error) {
+            if (lease.retired || error?.code === 'MEMORY_ACTION_RETIRED') continue;
             trace(owner, 'perform-error', { flightId: flight.id, requestId: hash(action.requestId), errorCode: errorCode(error) });
             if (liveSignals.get(`${owner}|${action.requestId}`)?.aborted && !action.commandDispatched) {
               await update(owner, data => {
                 const row = data.records[action.requestId];
+                if (!row || row.result) return;
                 row.result = { state: row.finished?.length ? 'partial' : 'cancelled', message: row.finished?.length
                   ? '操作已停止；部分记忆已删除，其余没有继续删除。' : '操作已停止，没有删除记忆。' };
                 row.arguments = {}; delete row.source; delete row.plan; delete row.scope;
@@ -280,11 +373,14 @@ export function createMemoryActions({ root, manager, schedule }) {
               await update(owner, data => { data.records[action.requestId].result ??= {
                 state: 'rejected', message: '这次纠正的原话不一致，没有修改记忆；请重新确认。' }; });
             } else if (['world_item_not_found', 'evidence_not_found'].includes(error?.code)) {
-              await update(owner, data => { data.records[action.requestId].result ??= notFound(); });
+              const needsReceipt = await update(owner, data => {
+                const row = data.records[action.requestId]; row.result ??= notFound(); return submittedForget(row);
+              });
+              if (needsReceipt) schedule(owner);
             } else schedule(owner);
             // A transient or permanent failure belongs to this request only.
             // Other queued user requests must still get their own attempt.
-          }
+          } finally { if (flight.current === lease) flight.current = null; }
         }
         const latest = Object.values((await serial(owner, () => read(owner))).records);
         for (const action of latest) for (const requestId of action.cleanupPending ?? []) {
@@ -358,22 +454,45 @@ export function createMemoryActions({ root, manager, schedule }) {
         ? '上次遗忘结果还未能确认，本次没有继续删除；稍后只核对原请求结果。' : pendingMessage(action.name) };
     },
     resume,
-    async redact(owner, { affectedIds = [], sourceTexts = [] }) {
+    async redact(owner, { affectedIds = [], sourceTexts = [], sessionId = null, completedRequestId = null }) {
       const forgotten = new Set(affectedIds);
       const includesSource = value => typeof value === 'string' && value.length > 0 &&
         sourceTexts.some(text => text && (value.includes(text) || text.includes(value)));
+      let needsReceipt = false;
       await serial(owner, async () => {
         const data = await read(owner); let changed = false;
+        const lease = flights.get(owner)?.current;
+        let ownsCompletion = false;
         for (const row of Object.values(data.records)) {
-          if (![row.arguments?.id, row.target?.id, row.command?.targetId, ...(row.affectedIds ?? []), ...(row.plan?.affectedIds ?? [])].some(id => forgotten.has(id)) &&
-              ![row.arguments?.text, row.source?.text, row.command?.payload?.correction_text].some(includesSource)) continue;
+          if (!(sessionId && row.sessionId === sessionId) &&
+              !actionTargets(row).some(id => forgotten.has(id)) &&
+              ![row.arguments?.text, row.arguments?.query, row.source?.text, row.source?.message?.content,
+                row.command?.payload?.correction_text, ...(row.plan?.sourceTexts ?? [])].some(includesSource)) continue;
           changed = true;
           row.arguments = {}; delete row.source; delete row.target; delete row.command;
-          if (row.name === 'memory_forget' && row.plan) row.plan.sourceTexts = [];
-          else row.result ??= notFound(); // A deleted target cannot be recreated by a queued correction.
+          delete row.scope;
+          // The deletion whose receipt invoked this cleanup still owns its
+          // receipt bookkeeping. Other pending actions are terminal immediately.
+          const completing = row.name === 'memory_forget' && completedRequestId &&
+            (lease?.requestId === row.requestId && lease.commandRequestId === completedRequestId ||
+              Object.values(row.commands ?? {}).some(command => command.requestId === completedRequestId));
+          if (completing && row.plan) {
+            scrubForgetReceipt(row);
+            if (lease?.requestId === row.requestId) { lease.scrubbed = true; ownsCompletion = true; }
+          } else {
+            row.result ??= notFound();
+            if (submittedForget(row)) { retainForgetReceipts(row); needsReceipt ||= !row.result; }
+            else clearActionBody(row);
+            if (lease?.requestId === row.requestId) lease.retired = true;
+          }
         }
+        // This bounded, live-attempt set contains IDs only and dies with the
+        // existing flight. It also covers selections not yet saved in any row.
+        // The operation's own deletion receipt must still finish its bookkeeping.
+        if (lease && !ownsCompletion) for (const id of forgotten) lease.deletedTargets.add(id);
         if (changed) await durableWrite(file(owner), data);
       });
+      if (needsReceipt) schedule(owner);
     },
     async pending(owner) { return Object.values((await serial(owner, () => read(owner))).records).some(row => !row.result || row.cleanupPending?.length); },
     async clear(owner) {

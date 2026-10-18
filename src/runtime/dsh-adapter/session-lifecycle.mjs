@@ -107,7 +107,7 @@ export function nativeSessionLifecycle(ctx) {
       if (meta.agentPreset?.startsWith('personal-')) await ensure({ sessionId }, true)
       return task()
     }),
-    cleanupMemory: (sessionId, { sourceTexts = [], affectedIds = [], deleteConversationSnippets = false, scheduleIds = [], goalIds = [] } = {}) => serial(sessionId, async () => {
+    cleanupMemory: (sessionId, { sourceTexts = [], affectedIds = [], deleteConversationSnippets = false, scheduleIds = [], goalIds = [], prepareOnly = false, snippetTargets } = {}) => serial(sessionId, async () => {
       const persistence = ctx.get('sessionPersistence')
       const agent = ctx.get('agents')?.get(sessionId)
       if (agent && (agent.status !== 'idle' || agent.inbox?.hasPending)) {
@@ -116,12 +116,16 @@ export function nativeSessionLifecycle(ctx) {
       }
       await ensure({ sessionId }, true)
       const handle = handles.get(sessionId)
-      const forgottenSeqs = shadowForgottenSurface(handle.agent.session, sourceTexts, createUserMessage, affectedIds)
+      if (prepareOnly) {
+        await ctx.sessions.flush(handle.agent.session)
+        return eraseSessionMemoryArtifact(persistence, sessionId, { sourceTexts, prepareOnly: true })
+      }
+      const forgottenSeqs = shadowForgottenSurface(handle.agent.session, snippetTargets ? [] : sourceTexts, createUserMessage, affectedIds, snippetTargets)
       await ctx.sessions.flush(handle.agent.session)
       await handle.dispose(); handles.delete(sessionId)
-      await eraseSessionMemoryArtifact(persistence, sessionId, { sourceTexts, affectedIds, deleteConversationSnippets, scheduleIds, goalIds })
+      const erased = await eraseSessionMemoryArtifact(persistence, sessionId, { sourceTexts, affectedIds, deleteConversationSnippets, scheduleIds, goalIds, snippetTargets })
       await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(sessionId)
-      return { cleaned: true, forgottenSeqs }
+      return { ...erased, forgottenSeqs }
     }),
     fork: (sessionId, options) => serial(sessionId, async () => {
       await ensure({ sessionId }, true)

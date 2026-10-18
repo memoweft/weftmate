@@ -6,11 +6,11 @@ function paintChatMemoryAvailability(value) {
   for(const issue of issues){const row=[...document.querySelectorAll('.message.user')].find(row=>row.dataset.memorySession===issue.sessionId&&row.textContent.includes(issue.text));if(!row)continue;
     let target=row;for(let next=row.nextElementSibling;next&&!next.classList.contains('user');next=next.nextElementSibling)if(next.classList.contains('assistant')){target=next;break;}
     if(target.querySelector(`[data-formation-notice="${CSS.escape(issue.jobId)}"]`))continue;
-    const bar=el('div','memory-issue-bar');bar.dataset.formationNotice=issue.jobId;bar.setAttribute('role','status');bar.append(WeftIcons.create('warn',16),el('span','',issue.intent==='correction'?'这条纠正没有生效':'这条记忆尚未形成'));
+    const bar=el('div','memory-issue-bar');bar.dataset.formationNotice=issue.jobId;bar.setAttribute('role','status');bar.append(WeftIcons.create('warn',16),el('span','',issue.intent==='correction'?'这条纠正没有生效':'这条内容尚未记住'));
     const view=action('查看',()=>page('memory'),false);bar.append(view);target.append(bar);
   }
   node.hidden=!state.loggedIn||value?.state!=='unavailable';
-  node.textContent=node.hidden?'':'记忆暂时不可用，普通对话已保存，恢复后会自动补交。';
+  node.textContent=node.hidden?'':'记忆暂时不可用，普通对话已保存，恢复后会自动整理。';
 }
 async function exportMyMemories(format) {
   const owner=state.owner,epoch=state.authEpoch;
@@ -47,16 +47,16 @@ function memoryItemsPath(...args){return uiCore.mobile.memoryItemsPath(...args)}
 
 function memoryListAllowed(...args){return uiCore.mobile.memoryListAllowed(...args)}
 
-function memoryStatusText(memory=state.memory){if(state.transitionPending)return '正在切换账户；旧账户的记忆已清除。';
+function memoryStatusText(memory=state.memory){if(state.transitionPending)return '正在切换账户；旧账户的记忆已从页面移除。';
   if(!state.loggedIn||!state.owner)return '请先连接个人账户，才能查看该账户的记忆。';
   if(memory?.loading)return memory.boundOwnerId?'正在读取当前账户的记忆列表…':'正在核对账户并读取记忆状态…';
   if(memory?.error)return memory.error;
   if(memory?.statusState==='disabled')return '当前账户尚未启用记忆服务。';
   if(memory?.statusState==='unavailable')return '当前账户的记忆服务暂不可用。';
   if(memory?.statusState==='recovering')return '正在继续整理上次没做完的记忆';
-  if(memory?.statusState==='degraded'&&memory.capabilities.inject===false)return '记忆可查看；当前模型记忆注入不可用。';
-  if(memory?.statusState==='degraded')return '记忆服务部分可用；请留意服务端提供的状态说明。';
-  if(memory?.statusState==='ready')return '显示当前账户的记忆快照；可用操作以当前服务能力与单条记忆状态为准。';
+  if(memory?.statusState==='degraded'&&memory.capabilities.inject===false)return '可以查看记忆，但当前模型暂时无法在回答时使用这些记忆。';
+  if(memory?.statusState==='degraded')return '部分记忆功能暂时不可用，请查看上方的状态说明。';
+  if(memory?.statusState==='ready')return '这里显示当前账户的记忆，可用操作会显示在每条记忆的详情中。';
   if(memory?.statusState==='error')return memory.error||'记忆读取失败，请重试。';
   return '记忆状态尚未读取。'}
 
@@ -64,7 +64,7 @@ function memoryLifecycle(item){const lifecycle=item?.lifecycle&&typeof item.life
   if(lifecycle.invalidAt)values.push(`已失效 · ${timeLabel(lifecycle.invalidAt)}`);
   if(lifecycle.archivedAt)values.push(`已归档 · ${timeLabel(lifecycle.archivedAt)}`);
   if(lifecycle.mutedAt)values.push(`已停用 · ${timeLabel(lifecycle.mutedAt)}`);
-  if(!values.length)values.push(item?.currentState==='current'?'当前有效':'非当前；服务未提供具体生命周期原因');return values}
+  if(!values.length)values.push(item?.currentState==='current'?'当前有效':'当前未生效，暂时无法查看具体原因');return values}
 
 function memoryRelationLabel(value){return ({support:'支持该理解',supports:'支持该理解',alias:'别名来源',corrects:'用于修正',retracts:'撤回'}[value]||'来源关系未分类')}
 
@@ -81,7 +81,7 @@ function memoryIngestionPanel(target){
   const preview=action('整理过去的对话',async()=>{
     preview.disabled=true;message.textContent='正在统计可整理的过去对话…';
     try{const value=await uiCore.mobile.business({path:'/personal/v1/memory/backfill',method:'GET'});if(!memoryCurrent(token))return;
-      prepared=value;message.textContent=!value.turnCount?'过去的对话已全部整理，没有需要补的回合。':`可整理 ${value.sessionCount} 个会话、${value.turnCount} 个回合。预计输入约 ${value.estimatedUsage.inputTokens.toLocaleString()}、输出约 ${value.estimatedUsage.outputTokens.toLocaleString()} 个词元；实际用量取决于模型与重试。跳过临时对话、已关闭记忆的对话及已遗忘内容。`;confirm.hidden=!value.turnCount;card.hidden=false;preview.hidden=true;
+      prepared=value;message.textContent=!value.turnCount?'过去的对话都已送去整理，没有需要重复处理的内容。':`可整理 ${value.sessionCount} 段对话，共 ${value.turnCount} 轮。预计输入约 ${value.estimatedUsage.inputTokens.toLocaleString()}、输出约 ${value.estimatedUsage.outputTokens.toLocaleString()} 个词元；实际用量取决于模型与重试。跳过临时对话、已关闭记忆的对话及已遗忘内容。`;confirm.hidden=!value.turnCount;card.hidden=false;preview.hidden=true;
     }catch{if(memoryCurrent(token))message.textContent='统计失败，请检查连接后重试。'}finally{preview.disabled=false;}
   },false);
   async function change(body){busy=true;for(const b of [preview,confirm,pause,cancel])b.disabled=true;
@@ -97,7 +97,7 @@ function memoryIngestionPanel(target){
       onRetry:async(issue,requestId)=>{await uiCore.mobile.business({path:`/personal/v1/memory/formation/${encodeURIComponent(issue.jobId)}/retry`,method:'POST',body:{requestId}});if(memoryCurrent(token))await refresh();}});
     const active=job&&['running','paused'].includes(job.state);preview.disabled=busy||!!active;preview.hidden=!!active||!card.hidden;pause.hidden=cancel.hidden=!active;
     pause.textContent=job?.state==='paused'?'继续整理':'暂停整理';
-    progress.textContent=job?`${({running:'正在补整理',paused:'已暂停',cancelled:'已取消',completed:'补交完成'})[job.state]}：已提交 ${job.submittedTurns-job.skippedTurns} / ${job.totalTurns} 回合。${active?'暂停或取消后不再提交后续回合；已提交的回合继续整理。':''}`:'';
+    progress.textContent=job?`${({running:'正在整理过去的对话',paused:'已暂停',cancelled:'已取消',completed:'对话已送去整理'})[job.state]}：已送去整理 ${job.submittedTurns-job.skippedTurns} / ${job.totalTurns} 轮对话。${active?'暂停或取消后不再处理后续对话；已送去整理的内容会继续处理。':''}`:'';
   }
   async function refresh(){if(!memoryCurrent(token)||!section.isConnected||busy||document.visibilityState==='hidden')return;
     try{const value=await uiCore.mobile.business({path:'/personal/v1/memory/status',method:'GET'});if(memoryCurrent(token)&&section.isConnected){state.memory.healthStatus=value;paint(value)}}catch{if(memoryCurrent(token))health.textContent='记忆状态暂时无法读取，请刷新重试。';}}
@@ -135,16 +135,16 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   const actions=el('div','form-actions memory-toolbar');const submit=action('搜索',()=>{},true);submit.type='submit';
   submit.classList.add('memory-search-submit');submit.replaceChildren(WeftIcons.create('search',20));submit.setAttribute('aria-label','搜索记忆');search.box.classList.add('memory-search-field');search.box.append(submit);form.append(actions);target.append(form);
   if(memoryListAllowed(memory)){const more=action('更多记忆操作',()=>WeftPopover.menu(more,[{name:'刷新',icon:'sync',disabled:memory.loading,action:()=>startMemorySnapshot(target,memory.kind,memory.query)},...['json','markdown'].map(format=>({name:`导出我的记忆 · ${format==='json'?'JSON':'Markdown'}`,icon:'download',action:()=>exportMyMemories(format)}))]),false);more.classList.add('icon-button');more.replaceChildren(WeftIcons.create('more',20));more.setAttribute('aria-label','更多记忆操作');const title=target.querySelector('h1');const titleRow=el('div','memory-title-row');title.before(titleRow);titleRow.append(title,more);}
-  if(memory.pendingBoundaryCount>0)target.append(notice(`有 ${memory.pendingBoundaryCount} 条来源尚未处理${memory.blockedBoundaryCount>0?`，其中 ${memory.blockedBoundaryCount} 条已暂停自动处理`:''}。恢复后会按顺序自动补交。`,'来源待处理'));
+  if(memory.pendingBoundaryCount>0)target.append(notice(`有 ${memory.pendingBoundaryCount} 条来源尚未处理${memory.blockedBoundaryCount>0?`，其中 ${memory.blockedBoundaryCount} 条已暂停自动处理`:''}。恢复后会按顺序自动处理。`,'来源待处理'));
   if(memory.lastFailureCode==='MEMORY_SOURCE_DELETED'&&memory.discardedBoundaryCount>0)
     target.append(notice(`${memory.discardedBoundaryCount} 条来源已删除；这不表示仍有待处理来源。`,'来源状态'));
   else if(memory.lastFailureCode&&memory.lastFailureCode!=='MEMORY_SOURCE_DELETED')
-    target.append(notice('最近来源处理状态见上方记忆健康；恢复后会按顺序自动补交。','来源状态'));
-  if(memory.loading&&memory.items.length)target.append(notice('正在读取同一记忆快照的下一页…'));
-  if(!memory.items.length){if(memory.loading)target.append(el('p','muted','正在读取完整的账户记忆快照…'));
+    target.append(notice('最近来源处理状态见上方记忆健康；恢复后会按顺序自动处理。','来源状态'));
+  if(memory.loading&&memory.items.length)target.append(notice('正在读取更多记忆…'));
+  if(!memory.items.length){if(memory.loading)target.append(el('p','muted','正在读取当前账户的记忆…'));
     else if(!memory.error&&memory.statusState!=='error'){
       target.append(el('p','muted',memory.query?'没有匹配的记忆。试试缩短关键词或更换类别。':
-        memory.pendingBoundaryCount?'当前还没有已形成的记忆。':'当前账户还没有可显示的记忆。'));
+        memory.pendingBoundaryCount?'当前还没有记住内容。':'当前账户还没有可显示的记忆。'));
     }}
   else { const entries=memory.items.map(item=>{const wrapper=el('div','memory-item'),entry=row(`${item.truncated===true?'记忆片段 · ':''}${item.text}`,`${MEMORY_KINDS[item.kind]} · ${memoryLifecycle(item).join(' · ')}${item.updatedAt?` · 更新于 ${timeLabel(item.updatedAt)}`:''}`,()=>openMemoryDetail(target,item));wrapper.append(entry);
     if(item.importSources?.length)wrapper.append(el('p','muted','来自 ' + item.importSources[0].appName + ' 的一段对话'));for(const id of item.sourceConversationIds??[]){const source=action('来源对话',()=>selectSharedSession(id),false);source.classList.add('memory-source-link');source.prepend(WeftIcons.create('chat',16));wrapper.append(source)}return wrapper;});target.append(group('记忆列表',entries)); }
@@ -183,9 +183,9 @@ function memoryActionAllowed(...args){return uiCore.mobile.memoryActionAllowed(.
 
 function renderMemoryReceipt(target){const memory=state.memory;if(!memory)return;
   const marker=memory.pendingMarker||savedMemoryMarker();
-  if(marker){const box=notice(memory.receiptMessage||'上一条记忆操作结果待确认。原请求已保留，不会自动重复提交。','结果待核对');
-    const check=action(memory.checkingReceipt?'正在核对…':'核对原请求',()=>reconcileMemoryMarker(marker),false);
-    check.disabled=!!memory.checkingReceipt;box.append(el('p','memory-request-id',`请求编号：${marker.requestId}`),check);target.append(box)}
+  if(marker){const box=notice(memory.receiptMessage||'上一条记忆操作是否完成还需确认。操作记录已保留，不会自动重复执行。','结果待核对');
+    const check=action(memory.checkingReceipt?'正在核对…':'核对处理结果',()=>reconcileMemoryMarker(marker),false);
+    check.disabled=!!memory.checkingReceipt;box.append(el('p','memory-request-id',`操作编号：${marker.requestId}`),check);target.append(box)}
   else if(memory.receiptMessage&&(memory.view!=='detail'||memory.selectedItem?.id===memory.receiptItemId))
     target.append(notice(memory.receiptMessage,'操作结果'))}
 
@@ -211,11 +211,11 @@ function renderMemoryDetail(target=memoryTarget,token=memoryToken()){target=memo
       entry.append(el('strong','',`${memoryRelationLabel(relation)} · ${memoryCurrentnessLabel(source.currentnessState)}`));
       if(typeof source.recordedAt==='string')entry.append(el('p','muted',`记录于 ${timeLabel(source.recordedAt)}`));
       const permissions=source.permissions&&typeof source.permissions==='object'?source.permissions:{};
-      entry.append(el('p','muted',`记忆内容的模型目的地：本机模型${permissions.allowLocalRead===true?'允许':'未允许'} · 云端模型${permissions.allowCloudRead===true?'允许':'未允许'} · 记忆推理${permissions.allowInference===true?'允许':'未允许'}`));
+      entry.append(el('p','muted',`允许读取这条记忆的模型：本机模型${permissions.allowLocalRead===true?'允许':'未允许'} · 云端模型${permissions.allowCloudRead===true?'允许':'未允许'} · 自动整理记忆${permissions.allowInference===true?'允许':'未允许'}`));
       entry.append(el('p','muted','这些权限只描述记忆内容的模型读取用途，不代表设备操作或删除权限。'));
       if(!source.importSource&&source.summary!==null&&typeof source.summary==='string')entry.append(el('p','muted',`摘要：${source.summary}`));
       if(source.contentAvailable===true&&typeof source.rawContent==='string'){
-        if(source.rawContentTruncated===true)entry.append(el('p','muted','以下原文已由服务端截断。'));
+        if(source.rawContentTruncated===true)entry.append(el('p','muted','以下仅显示部分原话。'));
         entry.append(el('p','',globalThis.WeftImportSourceText?.(source)??source.rawContent));
       }else if(source.contentAvailable===false)entry.append(el('p','muted','此来源正文当前不可读取。'));
       else if(source.importSource||source.summary===null||typeof source.summary!=='string')entry.append(el('p','muted','这段聊天记录当前不可读。'));
@@ -223,7 +223,7 @@ function renderMemoryDetail(target=memoryTarget,token=memoryToken()){target=memo
         openMemoryConfirmation({operation:'deleteEvidence',id:source.evidenceId,
           summary:source.importSource?`来自 ${source.importSource.appName} 的一段对话`:source.summary||'这条来源',confirmText:''},target,token)},false));
       box.append(entry)}target.append(sourceGroup)}
-  else if(!memory.sourcesLoading&&!memory.sourceError&&memory.detail&&!memory.sources.length)target.append(el('p','muted','服务端没有返回来源记录。'));
+  else if(!memory.sourcesLoading&&!memory.sourceError&&memory.detail&&!memory.sources.length)target.append(el('p','muted','当前没有可显示的来源记录。'));
   renderMemoryActions(target,token)}
 
 function loadMemoryDetail(target,...args){if(target&&typeof target==='object')memoryTarget=target;return uiCore.mobile.loadMemoryDetail('memory',...args)}
@@ -258,13 +258,13 @@ function renderMemoryActions(target,token){const memory=state.memory,detail=memo
     body=box.querySelector('.group-body');
   box.classList.add('memory-confirm-panel');
   if(choice.operation==='correct'){
-    body.append(el('p','muted','写下新的理解；保存后旧理解会退出当前召回，来源与修订记录仍可查询。'));
+    body.append(el('p','muted','写下需要更新的记忆；保存后，旧内容将不再作为当前记忆用于回答，仍可查看来源和之前的修改记录。'));
     const input=el('textarea','memory-correction');input.maxLength=4000;input.placeholder='输入正确的理解';
     input.value=memory.correctionDraft;input.addEventListener('input',()=>{memory.correctionDraft=input.value});body.append(input,
       action('保存纠正',()=>submitMemoryAction('correct',null,input.value),true));
   }else{
     body.append(el('p','memory-consequence',choice.operation==='mute'?
-      '停用后，记忆和来源仍可查看，但不再参与后续召回。':choice.operation==='deleteEvidence'?
+      '停用后，记忆和来源仍可查看，但不再用于之后的回答。':choice.operation==='deleteEvidence'?
       `将清除来源“${choice.summary}”及以下记忆，之后的记忆导出不再包含它们。`:
       '将清除来源及以下记忆，之后的记忆导出不再包含它们。'));
     if(choice.operation!=='mute'){
@@ -274,7 +274,7 @@ function renderMemoryActions(target,token){const memory=state.memory,detail=memo
       const label=el('label','session-forget'),snippets=el('input');snippets.type='checkbox';snippets.checked=choice.deleteConversationSnippets===true;
       snippets.addEventListener('change',()=>{choice.deleteConversationSnippets=snippets.checked});
       label.append(snippets,document.createTextNode('同时删除对话里含这句话的原话'));body.append(label,
-        el('p','muted','默认保留对话原文；勾选后删除对应原生对话片段及个人命令副本。以前的备份仍保留。'));
+        el('p','muted','默认保留聊天原话；勾选后，同时删除聊天记录里的这几句原话。以前的备份不受影响。'));
       const input=field('输入“删除”以确认','text',choice.confirmText||'');input.input.maxLength=2;
       const confirm=action(choice.operation==='deleteEvidence'?'确认删除这条来源':'确认永久删除记忆',
         ()=>submitMemoryAction(choice.operation,choice.id||null),true);
