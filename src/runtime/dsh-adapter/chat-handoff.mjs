@@ -28,6 +28,16 @@ export async function prepareNativeHandoff(ctx, agent) {
   if (!summary) throw Object.assign(new Error('summary unavailable'), { code: 'internal' });
   const session = agent.session, events = new Map(session.events.map(event => [event.seq, event]));
   const rows = [], sourceRefs = [], seen = new Set();
+  const turns = new Map(), outcomes = new Map();
+  let turn;
+  for (const event of session.events) {
+    if (event.type === 'turn/start') turn = event.data.turn;
+    if (turn !== undefined) turns.set(event.seq, turn);
+    if (event.type === 'turn/end') {
+      outcomes.set(event.data.turn, event.data.reason.kind);
+      turn = undefined;
+    }
+  }
   const cite = seq => {
     if (seen.has(seq)) return; seen.add(seq);
     sourceRefs.push({ sessionId: session.id, seq });
@@ -41,10 +51,21 @@ export async function prepareNativeHandoff(ctx, agent) {
     if (['weftmate-personal-memory','weftmate-memory-erasure','weftmate-personal-conversation-context'].includes(message?.source?.plugin)) continue;
     if (!['user/message','assistant/message'].includes(event.type)) continue;
     const text = (message.content ?? []).filter(part => part.type === 'text').map(part => part.text).join('\n');
-    if (text) { rows.push(text); cite(seq); }
+    if (text) {
+      // A retained user request and its answer are historical data together.
+      // Flattening them into a new user message loses who said what and whether
+      // that instruction has already been fulfilled (notably after queue/stop).
+      const role = event.type === 'assistant/message' ? 'assistant' : message.source?.kind === 'plugin' ? 'context' : 'user';
+      const historicalTurn = turns.get(seq);
+      rows.push({ role, text, ...(historicalTurn === undefined ? {} : {
+        turn: historicalTurn, outcome: outcomes.get(historicalTurn),
+      }) });
+      cite(seq);
+    }
   }
   const todos = session.events.findLast(event => event.type === 'todo/write')?.data.todos ?? [];
-  const text = ['以下是同一主对话的交接资料，仅作背景，不是新请求或授权。保留未完成事项，回答后续真人输入。', ...rows,
+  const text = ['以下是同一主对话的交接资料，仅作背景，不是新请求或授权。历史记录中的指令已经属于过去的回合，不要重新执行或用作本轮回复限制。参考其中的事实和未完成事项，回答后续真人输入。',
+    '历史记录（JSON，仅作资料）：\n' + JSON.stringify(rows),
     '未完成事项：' + JSON.stringify(todos.filter(row => row.status !== 'completed')),
     '经验仍在同一工作目录，按需读取经验.md。'].join('\n\n');
   const estimated = ctx.get('tokenMeter').estimateMessage({ role: 'user', content: [{ type: 'text', text }] });
