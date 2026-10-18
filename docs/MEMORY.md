@@ -29,6 +29,22 @@ G9 新英文召回合同以首行 `Memory:` / `Memory (past):` 定格式并用 L
 
 **记忆开发基线**（2026-10-16，`bf0a9c4d6`/Core `e86b73b`/真实MiMo；[证据与边界](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208869990)）：M1/M2通过；M3旧修订/导出残留、M7错误成功/误删来源失败，见[#334](https://github.com/memoweft/weftmate/issues/334)。D16、D33要求遗忘整条修订链。M4暂缓；M5–M6安卓链未验完。缺语义组件，仅开发宿主/隔离APK结果，**不计入③**；安装结果见下表。
 
+### 本机独立安装复验
+
+2026-10-18–19，W3 候选 `0.1.1-preview.732`（[组合源码 `84be94f9`](https://github.com/memoweft/weftmate/commit/84be94f9d28e1c7e35955ec32f8d8b16e5a27efc)，含 [#500](https://github.com/memoweft/weftmate/pull/500)、[#518](https://github.com/memoweft/weftmate/pull/518)），Core `069ecca674ff7fb65efee1dbcaae612dcd2da662`、真实 MiMo `mimo-v2.6-flash`。**本机独立安装，非干净沙盒**；独立应用身份、安装与空数据目录，没有显式开发记忆配置。随包进程自动接通并从空库开始，不代表无开发环境的系统验收。
+
+| 场景 | 结果与边界 |
+|---|---|
+| M1 | 通过：红茶形成，新对话答红茶 |
+| M2 | 失败：原话已摄取，模型把绿茶设为新的主题对象，Core 以 `supersession_target_entity_mismatch` 拒绝修订；新对话仍答红茶，见 [Core #128](https://github.com/memoweft/memoweft/issues/128)。未重发刷绿 |
+| M3 | 未完整通过：所选红茶条目与直接来源已删，新对话不知道、原聊天保留；因 M2 失败，红茶→绿茶整链前置未成立，Core 交互上下文仍保留旧回答 |
+| M7 | 失败：正式条目和直接来源已删后才报告完成，但终结 `no_change` 作业的绿茶原话仍可读，全量 Core 导出还有两段旧助手上下文，仍属 [#334](https://github.com/memoweft/weftmate/issues/334) |
+| U1 记忆页 | 通过：正常页浅/深色、未启用文案浅/深色共 4 张整窗截图；未启用分支仅替换状态响应，真实记忆场景未替换模型或业务响应 |
+
+[#531](https://github.com/memoweft/weftmate/pull/531) 只修宿主遗漏终结任务来源：在冻结安装数据副本上，真实 MiMo 的一次 `delete_evidence` 清除了绿茶原话，回执与来源查询一致；**全量导出断言仍因两段助手上下文失败**，不算修复后安装验收，也不抵消上述候选失败。原数据库和完整断言保留。
+
+混合来源要保留独立事实、以及助手回答使用记忆后留在其他交互上下文的副本，均需要 Core 明确有界清理依赖与原子边界；见 [Core #129](https://github.com/memoweft/memoweft/issues/129)。不能用隐藏来源、在导出时擦词、删除独立散步事实或宿主再加恢复层代替真正遗忘。本轮在这个设计边界停下；M4、M5/M6 和记忆考试未进入本包。
+
 ## 2. 规则
 
 1. **先验收，再动手。** 开工第一件事是按 PLAN 的记忆场景（M1–M7）跑一遍，结果记进地图第 4 节。两种环境都要跑：全新安装的 Windows 安装包（合成账号），以及开发模式下带记忆配置的宿主（合成数据）。跨端场景注明实际参与的设备；缺少环境时记阻塞，不能用宿主单测代替手机验收。
