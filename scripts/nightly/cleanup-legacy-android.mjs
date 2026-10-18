@@ -1,10 +1,13 @@
 // One-time, explicitly authorized NIGHT-2 leftovers; never an automatic nightly phase.
 import { execFileSync } from 'node:child_process';
 import { open, rm, writeFile } from 'node:fs/promises';
+import { isAbsolute, join } from 'node:path';
 import { androidBusyReason } from './android-packages.mjs';
 import { readMuMuInfo, adbExecutable as adb } from './mumu.mjs';
 let serial;
-const lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock';
+const orchestrator = process.env.WEFTMATE_ORCHESTRATOR_DIR;
+if (!orchestrator || !isAbsolute(orchestrator)) throw Error('WEFTMATE_ORCHESTRATOR_DIR must be an explicit absolute directory');
+const lock=join(orchestrator, 'mumu.lock');
 const handle=await open(lock,'wx'); await handle.writeFile('NIGHT-2 legacy package cleanup'); await handle.close();
 const command=(...args)=>execFileSync(adb,['-s',serial,...args],{encoding:'utf8',windowsHide:true,timeout:15000});
 try {

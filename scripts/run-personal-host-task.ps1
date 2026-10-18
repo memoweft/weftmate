@@ -5,14 +5,17 @@ param(
     [ValidateSet('Probe', 'Production')]
     [string] $Mode,
 
+    [Parameter(Mandatory = $true)]
+    [string] $RuntimeDirectory,
+
     [switch] $DryRun
 )
 
 $ErrorActionPreference = 'Stop'
-$node = 'C:\Program Files\nodejs\node.exe'
+$node = (Get-Command node -CommandType Application -ErrorAction Stop).Source
 $repository = Split-Path -Parent $PSScriptRoot
 $launcher = Join-Path $PSScriptRoot 'run-personal-host.mjs'
-$runtime = 'D:\AIProjects\WeftMate\Runtime\UnifiedAssistant'
+$runtime = (Resolve-Path -LiteralPath $RuntimeDirectory).Path
 
 try {
     if (-not (Test-Path -LiteralPath $node -PathType Leaf)) { throw 'Node executable is missing' }

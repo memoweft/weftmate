@@ -8,6 +8,7 @@
 |---|---|
 | 链路：每轮结束，记忆插件把真人原话交给摄取，再交给按账户管理的 MemoWeft 进程（Python，独立仓库 `memoweft/memoweft`）。召回、纠正、遗忘走同一条链 | `src/plugins/weftmate-personal-memory.mjs` → `src/personal-access/memory-ingestion.mjs` → `src/personal-memory/`：`index.mjs` 管理器（每个账户一个进程，同时最多 4 个）、`rpc.mjs` 通信、`journal.mjs` 命令日志、`actions.mjs` 纠正与遗忘、`http.mjs` 接口 |
 | Windows 安装版无显式配置时自动定位随包组件并生成本次启动配置；已有 `--personal-memory-config=<文件>` 或安装配置继续优先，macOS 不变 | `src/desktop-config.mjs`、`src/personal-memory/config.mjs`、`src/main.mjs` |
+| 旧 `--dsh-window` 兼容插件仍由 DSH 模板装载，默认关闭；启用后必须显式提供 `WEFTMATE_MEMOWEFT_PYTHONPATH`，缺少时报告「记忆未配置」且不启动 Python。它没有账户管理器的随包校验元数据，不能自行选择随包运行时；个人主路继续使用上面的自动接线 | `src/plugins/weftmate-memory.mjs`、`src/dsh-web-runtime.ts` |
 | 这个文件必须指向本机已有的 Python 解释器和 MemoWeft 源码目录（目录里要有 `memoweft/integrations/dsh_bridge/__main__.py`）；记忆处理用的模型入口只能是本机 `http://127.0.0.1:<端口>/v1` | `src/personal-memory/config.mjs` |
 | 安装版把 `desktop-config.json` 里的 `personalMemoryConfig` 转成上面的参数。自动配置不写入此项，每次按当前安装位置重算，账户记忆仍在用户数据目录；macOS 只在配置旁边已有 `memory-config.json` 时才加 | `src/desktop-config.mjs` |
 | 本人从源码版迁移来的安装版，迁移脚本写入了这一项，所以它依赖本机现成的 Python 和 MemoWeft 源码 | `scripts/migrate-desktop-config.mjs` |
