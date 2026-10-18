@@ -10,8 +10,13 @@ const SCRIPT = readFileSync(fileURLToPath(new URL('./reader.ps1', import.meta.ur
 // This fixed program only needs Utility. Import it directly instead of making
 // its first JSON command discover/prepare the machine's unrelated modules.
 const BOOTSTRAP = Buffer.from([
+  "$weftmateStageClock=$null; try { $weftmateStageClock=[Diagnostics.Stopwatch]::StartNew() } catch {};",
+  "function Write-WeftmateReaderStage { param([string]$stage) try { if ($null -ne $weftmateStageClock) { [Console]::Error.WriteLine('WEFTMATE_PROJECT_READER_STAGE|'+$stage+'|'+$weftmateStageClock.ElapsedMilliseconds); [Console]::Error.Flush() } } catch {} };",
+  "Write-WeftmateReaderStage 'bootstrap_started';",
   "Import-Module ([IO.Path]::Combine($PSHOME,'Modules','Microsoft.PowerShell.Utility','Microsoft.PowerShell.Utility.psd1')) -ErrorAction Stop;",
-  "[Console]::InputEncoding = [Text.Encoding]::UTF8; $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json; & ([ScriptBlock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload.script)))) -RequestJson $payload.request -ReportReady",
+  "Write-WeftmateReaderStage 'utility_imported';",
+  "[Console]::InputEncoding = [Text.Encoding]::UTF8; $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json; Write-WeftmateReaderStage 'payload_read';",
+  "& ([ScriptBlock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload.script)))) -RequestJson $payload.request -ReportReady -DiagnosticStage ${function:Write-WeftmateReaderStage}",
 ].join(' '), 'utf16le').toString('base64');
 const POWERSHELL = path.win32.join(process.env.SystemRoot ?? 'C:\\Windows',
   'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
@@ -45,7 +50,11 @@ if (process.platform !== 'win32') throw issue('PROJECT_WINDOWS_REQUIRED');
 // The one-shot reader compiles its immutable native handle checks before it
 // touches the project. Give initialization and the actual operation their own
 // bounded phase; neither phase retries nor changes file/security limits.
-export function invokeProjectReader(input, { spawnProcess = spawn, setTimer = setTimeout, clearTimer = clearTimeout, now = Date.now } = {}) {
+const CHILD_STAGES = new Set(['bootstrap_started', 'utility_imported', 'payload_read', 'compile_started', 'compile_completed', 'ready_emitted']);
+const SIGNALS = new Set(['SIGTERM', 'SIGKILL', 'SIGINT', 'SIGABRT', 'SIGSEGV', 'SIGBREAK', 'SIGHUP', 'SIGQUIT']);
+let nextInvocation = 0;
+export function invokeProjectReader(input, { spawnProcess = spawn, setTimer = setTimeout, clearTimer = clearTimeout,
+  now = () => performance.now(), observe = event => console.info('Project reader observation:', JSON.stringify(event)) } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawnProcess(POWERSHELL, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', BOOTSTRAP], {
       windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
@@ -53,21 +62,47 @@ export function invokeProjectReader(input, { spawnProcess = spawn, setTimer = se
     let stdout = '', stderr = '';
     let done = false, readyAt, phase = 'initialization';
     const startedAt = now();
-    const expire = () => { child.kill(); finish(issue('PROJECT_READER_TIMEOUT')); };
+    const invocation = ++nextInvocation;
+    let observationFailures = 0, spawnObserved = false, stdinFinished = false, lastChildStage = null, childElapsedMs = null;
+    let diagnosticLine = '', droppingLine = false;
+    const elapsed = () => Math.max(0, Math.floor(now() - startedAt));
+    const publish = (source, stage, fields = {}) => {
+      try {
+        const result = observe({ invocation, source, stage, parentElapsedMs: elapsed(), ...fields });
+        if (result && typeof result.then === 'function') Promise.resolve(result).catch(() => { observationFailures++; });
+      } catch { observationFailures++; }
+    };
+    const stop = reason => {
+      let returned = false, killed = false;
+      try { killed = child.kill() === true; returned = true; }
+      finally { publish('parent', 'kill_requested', { reason, returned, killed }); }
+    };
+    const childDiagnostic = line => {
+      const match = /^WEFTMATE_PROJECT_READER_STAGE\|([a-z_]+)\|(\d+)$/.exec(line.trim());
+      if (!match || !CHILD_STAGES.has(match[1]) || !Number.isSafeInteger(Number(match[2]))) return;
+      lastChildStage = match[1]; childElapsedMs = Number(match[2]);
+      // Child Stopwatch and parent monotonic time have separate origins.
+      publish('child', lastChildStage, { childElapsedMs });
+    };
+    const expire = () => { stop('timeout'); finish(issue('PROJECT_READER_TIMEOUT')); };
     let timer = setTimer(expire, 30_000);
     function finish(error, result) {
       if (done) return;
       done = true;
       clearTimer(timer);
       if (error) {
-        const readerEvidence={phase,initializationMs:(readyAt ?? now())-startedAt,
-          operationMs:readyAt === undefined ? null : now()-readyAt,stdoutBytes:Buffer.byteLength(stdout),stderrBytes:Buffer.byteLength(stderr)};
+        const readerEvidence={invocation,phase,initializationMs:Math.max(0,Math.floor((readyAt ?? now())-startedAt)),
+          operationMs:readyAt === undefined ? null : Math.max(0,Math.floor(now()-readyAt)),stdoutBytes:Buffer.byteLength(stdout),stderrBytes:Buffer.byteLength(stderr),
+          spawnObserved,stdinFinished,readyObserved:readyAt!==undefined,lastChildStage,childElapsedMs,observationFailures};
         // Metadata only: no project paths, source text or credentials in logs.
-        console.warn('Project reader failure:',JSON.stringify({code:error.code,...readerEvidence}));
+        try { console.warn('Project reader failure:',JSON.stringify({code:error.code,...readerEvidence})); }
+        catch { readerEvidence.observationFailures=++observationFailures; }
         reject(Object.assign(error,{readerEvidence}));
       }
       else resolve(result);
     }
+    child.on('spawn', () => { spawnObserved = true; publish('parent', 'spawn_observed'); });
+    child.stdin.on('finish', () => { stdinFinished = true; publish('parent', 'stdin_finished'); });
     child.on('error', () => finish(issue('PROJECT_FILE_UNAVAILABLE')));
     child.stdin.on('error', () => finish(issue('PROJECT_FILE_UNAVAILABLE')));
     child.stdout.setEncoding('utf8');
@@ -76,17 +111,28 @@ export function invokeProjectReader(input, { spawnProcess = spawn, setTimer = se
       stdout += chunk;
       if (phase === 'initialization' && stdout.includes('\n')) {
         const newline = stdout.indexOf('\n');
-        if (stdout.slice(0, newline).trim() !== 'WEFTMATE_PROJECT_READER_READY') { child.kill(); finish(issue('PROJECT_READER_INVALID')); return; }
+        if (stdout.slice(0, newline).trim() !== 'WEFTMATE_PROJECT_READER_READY') { stop('invalid_output'); finish(issue('PROJECT_READER_INVALID')); return; }
         stdout = stdout.slice(newline + 1); readyAt = now(); phase = 'operation';
         clearTimer(timer); timer = setTimer(expire, 15_000);
+        publish('parent', 'ready_observed');
       }
-      if (Buffer.byteLength(stdout, 'utf8') > 256 * 1024) { child.kill(); finish(issue('PROJECT_READER_INVALID')); }
+      if (Buffer.byteLength(stdout, 'utf8') > 256 * 1024) { stop('invalid_output'); finish(issue('PROJECT_READER_INVALID')); }
     });
     child.stderr.on('data', (chunk) => {
       stderr += chunk;
       if (stderr.length > 4_096) stderr = stderr.slice(0, 4_096);
+      for (const character of chunk) {
+        if (character === '\n') {
+          if (!droppingLine) childDiagnostic(diagnosticLine);
+          diagnosticLine = ''; droppingLine = false;
+        } else if (!droppingLine) {
+          diagnosticLine += character;
+          if (diagnosticLine.length > 256) { diagnosticLine = ''; droppingLine = true; }
+        }
+      }
     });
-    child.on('close', (code) => {
+    child.on('close', (code, signal) => {
+      publish('parent', 'close_observed', { exitCode: Number.isInteger(code) ? code : null, signal: SIGNALS.has(signal) ? signal : null });
       if (code !== 0) return finish(issue('PROJECT_FILE_UNAVAILABLE'));
       if (phase !== 'operation') return finish(issue('PROJECT_READER_INVALID'));
       let value;

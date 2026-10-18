@@ -21,7 +21,7 @@ async function unusedPort() {
   const port = server.address().port;
   await new Promise(resolve => server.close(resolve)); return port;
 }
-export function frpcConfig({ credentials: c, localPort, transportCaFile, adminPort, adminPassword }) {
+export function frpcConfig({ credentials: c, localPort, transportCaFile, adminPort, adminPassword, logLevel = 'error' }) {
   const str = JSON.stringify;
   return `serverAddr = ${str(c.serverAddr)}
 serverPort = ${c.serverPort}
@@ -40,7 +40,7 @@ webServer.port = ${adminPort}
 webServer.user = "relay"
 webServer.password = ${str(adminPassword)}
 log.to = "console"
-log.level = "error"
+log.level = ${str(logLevel)}
 [[proxies]]
 name = "content"
 type = "https"
@@ -61,12 +61,19 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
   let credentials, adminPort, adminPassword, certificates, activeCertFile, certificateExpiresAt = null;
   const configFile = path.join(dir, 'frpc.toml');
   let retryAt = 0, retryMs = 2000, lastReason = null;
+  // Optional diagnostics are a side channel: never affect relay results/errors.
+  function observe(stage, detail, childProcess) {
+    try {
+      if (options.observe) options.observe({ stage, detail: typeof detail === 'function' ? detail() : detail }, childProcess)?.catch?.(() => {});
+    } catch {}
+  }
   function failed(error) {
     const reason = error?.code ?? error?.cause?.code ?? error?.message ?? 'RELAY_UNAVAILABLE';
     if (reason !== lastReason) options.diagnostic?.(error);
     lastReason = reason;
     retryAt = clock() + retryMs; retryMs = Math.min(retryMs * 2, 60_000);
     state = closed ? 'stopped' : 'offline'; failure = 'RELAY_UNAVAILABLE';
+    observe('relay.failed', { code: error?.code, cause: error?.cause?.code, reason });
   }
   async function stopChild() {
     const current = child; child = null;
@@ -82,10 +89,11 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
     if (publicOrigin && next.baseUrl !== publicOrigin) throw new Error('Relay changed claimed domain');
     publicOrigin = next.baseUrl; credentials = { ...next, serverAddr: options.connectAddress ?? next.serverAddr, serverPort: options.connectPort ?? next.serverPort };
     if (!adapter) {
+      observe('host.tls.requested');
       const domain = new URL(publicOrigin).hostname, tls = identity.tls();
       if (options.acme && !options.developmentTls) {
         certificates ??= await createCertificateManager({ root, domain, identity, certFile: options.certFile,
-          ...options.acme, onInstalled: async () => { await adapter?.reload(); } });
+          ...options.acme, diagnostic: options.diagnostic, onInstalled: async () => { await adapter?.reload(); } });
         if (closed) { await certificates.close(); return; }
         certificates.start();
         await certificates.check();
@@ -96,20 +104,29 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
       certificateExpiresAt = certificateInfo(await readFile(certificate.certFile), { domain, spki: tls.spki }).certificateExpiresAt;
       if (closed) return;
       adapter = await createHostTlsAdapter({ origin, publicOrigin, ...tls, certFile: certificate.certFile });
+      observe('host.tls.ready');
       setPublicOrigin(publicOrigin);
     }
     adminPort = await unusedPort(); adminPassword = randomBytes(32).toString('base64url');
     await writeFile(configFile, frpcConfig({ credentials, localPort: adapter.port,
-      transportCaFile: options.transportCaFile, adminPort, adminPassword }), { mode: 0o600 });
+      transportCaFile: options.transportCaFile, adminPort, adminPassword, logLevel: options.observe ? 'info' : 'error' }), { mode: 0o600 });
     await ensurePrivateFile(configFile);
     if (closed) return;
     state = 'connecting'; failure = null;
     child = fork(fileURLToPath(new URL('./sidecar.mjs', import.meta.url)), [options.binary, configFile], {
-      stdio: ['ignore','ignore','ignore','ipc'], execArgv: [],
+      stdio: ['ignore', options.observe ? 'pipe' : 'ignore', options.observe ? 'pipe' : 'ignore','ipc'], execArgv: [],
       env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, windowsHide: true });
     const current = child;
+    current.stdout?.resume(); current.stderr?.resume();
+    observe('sidecar.spawned', {}, current);
+    current.on('message', message => {
+      if (message?.kind === 'frpc.spawned') observe('frpc.spawned', { pid: message.pid });
+    });
     current.once('error', () => { state = 'offline'; failure = 'FRPC_START_FAILED'; });
-    current.once('exit', () => { if (child === current) { child = null; state = closed ? 'stopped' : 'offline'; } });
+    current.once('exit', (code, signal) => {
+      observe('sidecar.exited', { code, signal });
+      if (child === current) { child = null; state = closed ? 'stopped' : 'offline'; }
+    });
   }
   async function tick() {
     if (closed || polling) return polling;
@@ -122,16 +139,21 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
         if (clock() < retryAt) return;
         if (!child) {
           state = 'connecting';
-          await launch(await identity.relayRequest('/hosts/relay/credentials', {}));
+          observe('relay.registration.requested');
+          const next = await identity.relayRequest('/hosts/relay/credentials', {});
+          observe('relay.registration.received');
+          await launch(next);
         }
         if (!child || closed) return;
         const result = await fetchImpl(`http://127.0.0.1:${adminPort}/api/status`, {
           headers: { authorization: `Basic ${Buffer.from(`relay:${adminPassword}`).toString('base64')}` },
           signal: AbortSignal.timeout(1500), redirect: 'error' });
         const status = await result.json();
+        observe('frpc.status', () => ({ httpStatus: result.status, proxies: status.https?.map(p => ({ status: p.status, err: p.err })) }));
         state = result.ok && status.https?.some(p => p.status === 'running') ? 'online' : 'offline';
         failure = state === 'online' ? null : 'RELAY_UNAVAILABLE';
         if (state === 'online') {
+          observe('host.online');
           retryAt = 0; retryMs = 2000;
           if (lastReason !== null) { lastReason = null; options.onRecovery?.('relay'); }
         } else failed(Object.assign(new Error('RELAY_UNAVAILABLE'), { code: 'RELAY_UNAVAILABLE' }));

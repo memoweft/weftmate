@@ -1,8 +1,12 @@
-param([string]$RequestJson, [switch]$ReportReady)
+param([string]$RequestJson, [switch]$ReportReady, [scriptblock]$DiagnosticStage)
 $ErrorActionPreference = 'Stop'
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
+function Report-ReaderStage([string]$Stage) {
+  if ($DiagnosticStage) { try { & $DiagnosticStage $Stage } catch {} }
+}
+Report-ReaderStage 'compile_started'
 Add-Type -TypeDefinition @'
 using System;
 using System.Collections.Generic;
@@ -244,8 +248,9 @@ public static class SafeProjectReader {
   }
 }
 '@
+Report-ReaderStage 'compile_completed'
 
-if ($ReportReady) { [Console]::Out.WriteLine('WEFTMATE_PROJECT_READER_READY'); [Console]::Out.Flush() }
+if ($ReportReady) { [Console]::Out.WriteLine('WEFTMATE_PROJECT_READER_READY'); [Console]::Out.Flush(); Report-ReaderStage 'ready_emitted' }
 
 try {
   $request = $(if ($RequestJson) { $RequestJson } else { [Console]::In.ReadToEnd() }) | ConvertFrom-Json

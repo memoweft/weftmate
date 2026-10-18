@@ -20,7 +20,7 @@ function refused(code) {
   return error;
 }
 
-export async function findFormalLocalModel(modelId, catalogDir = 'D:\\AI\\Config') {
+export async function findFormalLocalModel(modelId, catalogDir = process.env.WEFTMATE_LOCAL_MODEL_CATALOG_DIR || '') {
   if (typeof modelId !== 'string' || !MODEL_ID.test(modelId) || !path.isAbsolute(catalogDir)) {
     throw refused('LOCAL_MODEL_INVALID');
   }
@@ -54,7 +54,7 @@ export async function findFormalLocalModel(modelId, catalogDir = 'D:\\AI\\Config
 }
 
 /** Read formal metadata only; no key lookup, service request or model load. */
-export async function listFormalLocalModels(catalogDir = 'D:\\AI\\Config') {
+export async function listFormalLocalModels(catalogDir = process.env.WEFTMATE_LOCAL_MODEL_CATALOG_DIR || '') {
   if (typeof catalogDir !== 'string' || !path.isAbsolute(catalogDir)) throw refused('LOCAL_MODEL_INVALID');
   const root = await lstat(catalogDir);
   if (!root.isDirectory() || root.isSymbolicLink()) throw refused('LOCAL_MODEL_INVALID');

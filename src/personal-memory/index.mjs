@@ -10,8 +10,9 @@ import { createPersonalHealthStore, OBSERVED_PENDING } from '../personal-health/
 import { semanticRecallStatus } from '../system-diagnostics.mjs';
 import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
-import { recallQuestions,recallEntries } from './recall-questions.mjs';
+import { recallQuestions,recallEntries,isEnglishRecall } from './recall-questions.mjs';
 import { createMemoryActions } from './actions.mjs';
+import { classifyForgetRequest, scopedForgetPlan, checkForgetCompletion, forgetSourceText } from './forget-model.mjs';
 
 const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
@@ -30,6 +31,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   baseUrl, model, credential = () => null, rpcFactory = (options) => new MemoWeftRpc(options),
   processingRoute = null, defaultProcessingRoute = null, maxActiveOwners = MAX_ACTIVE_OWNERS,
   formationWaitMs = 0, cleanupDeletedMemory = null, processingHealth = null, retainLocalWorker = false,
+  language = () => 'zh',
   recallMaxItems = Number(process.env.WEFTMATE_MEMORY_RECALL_MAX_ITEMS ?? 6),
   recallMaxChars = Number(process.env.WEFTMATE_MEMORY_RECALL_MAX_CHARS ?? 1200) }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) || typeof enabled !== 'boolean' ||
@@ -54,14 +56,37 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const flushFlights = new Map();
   const retryTimers = new Map();
   const retryCounts = new Map();
+  const runtimeFailures = new Map();
+  const runtimeGenerations = new Map();
+  const repairingOwners = new Set();
+  const repairFlights = new Map();
   const startupWorlds = new Set();
   const formationOwners = new Set();
   const outboxQueues = new Map();
   const homePromises = new Map();
-  const journal = createMemoryCommandJournal({ root });
+  const prepareConversationCleanup = async (ownerId, record) => {
+    const plan = cleanupDeletedMemory
+      ? await cleanupDeletedMemory(ownerId, { ...record.cleanup, prepareOnly: true, journalManaged: true })
+      : { conversationTargets: [] };
+    if (!Array.isArray(plan?.conversationTargets)) throw error('MEMORY_CLEANUP_PENDING');
+    const pending = await queueOutbox(ownerId, () => readOutbox(ownerId));
+    return { ...plan, pendingBoundaryIds: pending.items.filter(item => record.cleanup.sourceTexts?.some(text =>
+      item.boundary.source_messages?.some(message => message.content.includes(text)))).map(item => item.boundary.event_id) };
+  };
+  const eraseConversationSnippets = async (ownerId, record) => {
+    const result = await withOwner(ownerId, entry => entry.rpc.request('query_command_receipt', { command_id: record.command.command_id }));
+    if (!['applied', 'no_change'].includes((result.receipt ?? result).result_state)) throw error('MEMORY_CLEANUP_PENDING');
+    await discardOutboxSources(ownerId, { sourceTexts: record.cleanup.sourceTexts, boundaryIds: record.cleanup.pendingBoundaryIds });
+    return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...record.cleanup, affectedIds: [], journalManaged: true }) : { snippetsVerified: true };
+  };
+  const journal = createMemoryCommandJournal({ root, prepareCleanup: prepareConversationCleanup, eraseSnippets: eraseConversationSnippets });
   const commandFlights = new Map();
   const manualFormationUntil = new Map();
-  const actions = createMemoryActions({ root, manager: () => manager, schedule: scheduleRetry });
+  const actions = createMemoryActions({ root, manager: () => manager, schedule: scheduleRetry,
+    redactJournal: (ownerId, row) => journal.redactTargets(ownerId,
+      [row.arguments?.id, row.target?.id, row.command?.targetId, ...(row.affectedIds ?? [])].filter(Boolean),
+      { sourceTexts: [row.arguments?.text, row.source?.text, row.source?.message?.content,
+        row.command?.payload?.correction_text].filter(value => typeof value === 'string' && value) }) });
   let closing = false;
   let startQueue = Promise.resolve();
   let sourceVersion;
@@ -186,6 +211,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   }
 
   const boundaryFailureCode = (cause) => {
+    // Initialization failure is not a conflict in the source. Keep its existing
+    // outbox row replayable after repair/restart, including Core internal_error.
+    if (cause?.memoryRuntimeFailure) return 'MEMORY_PROCESS_UNAVAILABLE';
     if (cause?.code === 'hard_deleted_source') return 'MEMORY_SOURCE_DELETED';
     if (cause?.code === 'internal_error') return 'MEMORY_BOUNDARY_BLOCKED';
     if (['MEMORY_PROCESS_UNAVAILABLE', 'MEMORY_TIMEOUT', 'MEMORY_BUSY', 'MEMORY_CLOSING',
@@ -194,9 +222,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     }
     return 'MEMORY_BOUNDARY_FAILED';
   };
-  async function noteBoundaryFailure(ownerId, eventId, cause) {
+  async function noteBoundaryFailure(ownerId, eventId, cause, generation = runtimeGeneration(ownerId)) {
     const code = boundaryFailureCode(cause);
-    boundaryFailures.set(ownerId, code);
+    if (runtimeCurrent(ownerId, generation)) boundaryFailures.set(ownerId, code);
+    // A received failure still owns its durable source bookkeeping, even if
+    // repair has retired the worker. Only live runtime state is generation-bound.
     await queueOutbox(ownerId, async () => {
       const latest = await readOutbox(ownerId);
       const row = latest.items.find((item) => item.boundary.event_id === eventId);
@@ -215,6 +245,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       await writeOutbox(ownerId, latest);
     });
     const backlog = await outboxStatus(ownerId);
+    if (!runtimeCurrent(ownerId, generation)) return code;
     const entry = entries.get(ownerId);
     if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
     if (code === 'MEMORY_SOURCE_DELETED' && backlog.pendingBoundaryCount === 0) {
@@ -230,52 +261,88 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       lastFailureCode: state.items.findLast((item) => item.lastFailureCode)?.lastFailureCode ??
         state.lastFailureCode };
   }
-  function scheduleRetry(ownerId, immediate = false) {
-    if (closing || retryTimers.has(ownerId)) return;
+  function runtimeStopped(ownerId) { return runtimeFailures.get(ownerId)?.stopped === true; }
+  function runtimeGeneration(ownerId) { return runtimeGenerations.get(ownerId) ?? 0; }
+  function runtimeCurrent(ownerId, generation) { return generation === runtimeGeneration(ownerId) && !repairingOwners.has(ownerId); }
+  function assertRuntimeCurrent(ownerId, generation) {
+    if (!runtimeCurrent(ownerId, generation)) throw Object.assign(error('MEMORY_CLOSING'), { runtimeCancelled: true });
+  }
+  function recordRuntimeFailure(ownerId, entry, cause, initializing = false) {
+    if (!rpcFactory.managedRuntime || closing || !runtimeCurrent(ownerId, entry.generation)) return;
+    // Core 2112aa8 protocol_v2.py:134-140,334-336 validates this immutable
+    // initialization argument; 813-825 shows why internal_error is NOT safe here.
+    const confirmed = ['MEMORY_COMPONENT_MISSING', 'MEMORY_COMPONENT_HASH_MISMATCH'].includes(cause?.code) ||
+      cause?.executionFailure === true || initializing && cause?.coreError === true &&
+      cause.requestMethod === 'initialize' && ['invalid_subject_id'].includes(cause.code);
+    // A nonzero exit (even before capabilities) gives no cause. Unknown startup
+    // failures share the same finite budget as disconnects and timeouts.
+    if (!initializing && !confirmed &&
+        !['MEMORY_PROCESS_UNAVAILABLE', 'MEMORY_TIMEOUT', 'MEMORY_PROTOCOL_ERROR'].includes(cause?.code)) return;
+    cause.memoryRuntimeFailure = true;
+    if (entry.runtimeFailure) return;
+    entry.runtimeFailure = true;
+    const attempts = (runtimeFailures.get(ownerId)?.attempts ?? 0) + 1;
+    runtimeFailures.set(ownerId, { attempts, stopped: confirmed || attempts >= 3,
+      code: cause?.code ?? 'MEMORY_UNAVAILABLE' });
+    failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
+    clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
+    // Reuse the startup/recovery path; no additional queue or timer.
+    startupWorlds.add(ownerId);
+    scheduleRetry(ownerId);
+  }
+  function scheduleRetry(ownerId, immediate = false, generation = runtimeGeneration(ownerId)) {
+    if (closing || !runtimeCurrent(ownerId, generation) || runtimeStopped(ownerId) || retryTimers.has(ownerId)) return;
     const attempt = retryCounts.get(ownerId) ?? 0;
     const timer = setTimeout(() => {
+      if (!runtimeCurrent(ownerId, generation) || retryTimers.get(ownerId) !== timer) return;
       retryTimers.delete(ownerId);
       const active = flushFlights.get(ownerId);
       if (active) {
         // This wake-up may belong to a boundary queued after the active drain's
         // snapshot. Keep it until that drain finishes instead of consuming it.
-        void active.finally(() => scheduleRetry(ownerId, true)).catch(() => {});
+        void active.finally(() => scheduleRetry(ownerId, true, generation)).catch(() => {});
         return;
       }
-      void flushPending(ownerId).catch(() => {});
+      void flushPending(ownerId, generation).catch(() => {});
     }, immediate ? 0 : Math.min(30_000, 1000 * 2 ** Math.min(attempt, 5)));
     timer.unref?.(); retryTimers.set(ownerId, timer);
   }
-  function flushPending(ownerId) {
+  function flushPending(ownerId, generation = runtimeGeneration(ownerId)) {
+    if (!runtimeCurrent(ownerId, generation)) return Promise.resolve(new Map());
     if (flushFlights.has(ownerId)) return flushFlights.get(ownerId);
-    const work = drainPending(ownerId).finally(() => flushFlights.delete(ownerId));
+    const work = drainPending(ownerId, generation).finally(() => { if (flushFlights.get(ownerId) === work) flushFlights.delete(ownerId); });
     flushFlights.set(ownerId, work);
     return work;
   }
-  async function drainPending(ownerId) {
+  async function drainPending(ownerId, generation) {
     const results = new Map();
-    if (closing || erasingOwners.has(ownerId)) return results;
+    if (closing || !runtimeCurrent(ownerId, generation) || runtimeStopped(ownerId) || erasingOwners.has(ownerId)) return results;
+    const retry = immediate => scheduleRetry(ownerId, immediate, generation);
     clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
     let pending;
     try { pending = await queueOutbox(ownerId, () => readOutbox(ownerId)); }
-    catch { failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); return results; }
+    catch { if (runtimeCurrent(ownerId, generation)) failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); return results; }
+    if (!runtimeCurrent(ownerId, generation)) return results;
     // An empty host outbox does not mean Core has finished formation. Open
     // existing worlds on startup even without a UI/status request, and use
     // the existing retry schedule if the model route is not yet available.
     if (!pending.items.length && startupWorlds.has(ownerId)) {
       try { await withOwner(ownerId, () => {}); }
       catch (cause) {
+        if (!runtimeCurrent(ownerId, generation)) return results;
         failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
-        scheduleRetry(ownerId);
+        retry();
         retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1);
       }
     }
     for (const row of pending.items) {
-      if (closing || row.blocked) break;
+      if (closing || !runtimeCurrent(ownerId, generation) || row.blocked) break;
       const boundary = row.boundary;
       try {
         const result = await withOwner(ownerId, entry => entry.rpc.request('ingest_boundary', { boundary }),
           row.offline === true ? null : boundary.parent_session_id);
+        // Finish the issued delivery before retiring this drain. Its Core
+        // acknowledgement must remove the existing row and reach the caller.
         formationOwners.add(ownerId);
         await queueOutbox(ownerId, async () => {
           const latest = await readOutbox(ownerId);
@@ -283,28 +350,33 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           await writeOutbox(ownerId, latest);
         });
         results.set(boundary.event_id, { state: 'accepted', jobState: result?.job_state ?? 'unknown' });
+        if (!runtimeCurrent(ownerId, generation)) return results;
         retryCounts.delete(ownerId);
       } catch (cause) {
+        // Cancellation before admission has no Core outcome to acknowledge.
+        if (cause?.runtimeCancelled) return results;
         let code;
-        try { code = await noteBoundaryFailure(ownerId, boundary.event_id, cause); }
-        catch { code = 'MEMORY_OUTBOX_CORRUPT'; failures.set(ownerId, code); }
+        try { code = await noteBoundaryFailure(ownerId, boundary.event_id, cause, generation); }
+        catch { code = 'MEMORY_OUTBOX_CORRUPT'; if (runtimeCurrent(ownerId, generation)) failures.set(ownerId, code); }
         results.set(boundary.event_id, { state: code === 'MEMORY_SOURCE_DELETED' ? 'discarded'
           : ['MEMORY_BOUNDARY_BLOCKED', 'MEMORY_OUTBOX_CORRUPT'].includes(code) ? 'blocked' : 'queued', reasonCode: code });
+        if (!runtimeCurrent(ownerId, generation)) return results;
         if (code === 'MEMORY_SOURCE_DELETED') continue;
         if (!['MEMORY_BOUNDARY_BLOCKED', 'MEMORY_OUTBOX_CORRUPT'].includes(code)) {
-          scheduleRetry(ownerId); retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1);
+          retry(); retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1);
         }
         break;
       }
     }
     const backlog = await outboxStatus(ownerId);
+    if (!runtimeCurrent(ownerId, generation)) return results;
     const entry = entries.get(ownerId);
     if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
     if (!backlog.pendingBoundaryCount) boundaryFailures.delete(ownerId);
-    else if (!backlog.blockedBoundaryCount) scheduleRetry(ownerId);
+    else if (!backlog.blockedBoundaryCount) retry();
     // A delivered boundary may still have a failed Core formation job. Resume
     // both accepted jobs and durable user actions without requiring a UI read.
-    void actions.resume(ownerId).catch(() => scheduleRetry(ownerId));
+    void actions.resume(ownerId).catch(() => retry());
     try {
       if (formationOwners.has(ownerId)) {
         let pollingEntry;
@@ -312,8 +384,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           pollingEntry = entry; entry.recoveryFlight = poll;
           if (!entry.capabilities?.methods?.includes('query_jobs')) return;
           const result = await entry.rpc.request('query_jobs', { operation: 'list' });
+          if (!runtimeCurrent(ownerId, generation)) return;
           let pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
           for (const item of result.formation_requests ?? []) if (['no_change', 'dead'].includes(item.state)) {
+            if (!runtimeCurrent(ownerId, generation)) return;
             if (!entry.capabilities.methods.includes('retry_formation')) continue;
             // An explicit retry owns its just-enqueued successor. Give it one
             // normal recovery interval before creating another background replay.
@@ -322,19 +396,35 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             pending = true;
           }
           if (pending || await actions.pending(ownerId)) {
-            retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1); scheduleRetry(ownerId);
-          } else { retryCounts.delete(ownerId); formationOwners.delete(ownerId); }
+            if (!runtimeCurrent(ownerId, generation)) return;
+            retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1); retry();
+          } else if (runtimeCurrent(ownerId, generation)) { retryCounts.delete(ownerId); formationOwners.delete(ownerId); }
         });
         try { await poll; }
         finally { if (pollingEntry?.recoveryFlight === poll) delete pollingEntry.recoveryFlight; }
       }
-    } catch { scheduleRetry(ownerId); }
+    } catch { retry(); }
     return results;
   }
 
-  async function prepare(ownerId, sessionId = null) {
+  async function prepare(ownerId, sessionId = null, generation = runtimeGeneration(ownerId)) {
     if (closing) throw error('MEMORY_CLOSING');
+    assertRuntimeCurrent(ownerId, generation);
+    if (runtimeStopped(ownerId)) throw Object.assign(error(runtimeFailures.get(ownerId).code), { memoryRuntimeFailure: true });
     const existing = entries.get(ownerId);
+    // A worker can disconnect between requests, with no pending RPC to reject.
+    if (rpcFactory.managedRuntime && existing?.ready && !existing.rpc.child) {
+      existing.ready = false;
+      recordRuntimeFailure(ownerId, existing, error('MEMORY_PROCESS_UNAVAILABLE'));
+      if (runtimeStopped(ownerId)) throw Object.assign(error(runtimeFailures.get(ownerId).code), { memoryRuntimeFailure: true });
+    }
+    let runtimeValidated = false;
+    if (!existing?.ready || !existing.rpc.child) {
+      try { await rpcFactory.validate?.(); }
+      catch (cause) { recordRuntimeFailure(ownerId, { generation }, cause, true); throw cause; }
+      assertRuntimeCurrent(ownerId, generation);
+      runtimeValidated = true;
+    }
     let selected = null;
     if (sessionId !== null || !existing?.ready || !existing.rpc.child) {
       try { selected = erasingOwners.has(ownerId) ? {baseUrl,model:'@current',credential:null,modelTier:'local',sessionScoped:false,key:'erased-read-only',readOnly:true} : await resolveProcessingRoute(ownerId, sessionId); }
@@ -351,14 +441,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         }
       }
     }
+    assertRuntimeCurrent(ownerId, generation);
     if (existing?.ready && existing.rpc.child &&
         (selected === null || existing.routeKey === selected.key)) return existing;
     if (existing?.initializing) return existing.initializing;
     // Background status/retry polling must not turn a foreground model-route
     // switch into MEMORY_BUSY. It never calls DSH or changes the selected route.
     if (existing?.recoveryFlight) await existing.recoveryFlight.catch(() => {});
+    assertRuntimeCurrent(ownerId, generation);
     if (existing?.active > 0) throw error('MEMORY_BUSY');
     if (existing) { entries.delete(ownerId); await existing.rpc.close().catch(() => {}); }
+    assertRuntimeCurrent(ownerId, generation);
     if (entries.size >= maxActiveOwners) {
       const idle = [...entries.entries()].filter(([, entry]) => entry.active === 0 && !entry.initializing)
         .sort((a, b) => a[1].lastUsed - b[1].lastUsed)[0];
@@ -366,26 +459,47 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       entries.delete(idle[0]);
       await idle[1].rpc.close();
     }
+    assertRuntimeCurrent(ownerId, generation);
+    if (!runtimeValidated) {
+      try { await rpcFactory.validate?.(); }
+      catch (cause) { recordRuntimeFailure(ownerId, { generation }, cause, true); throw cause; }
+      assertRuntimeCurrent(ownerId, generation);
+    }
     const home = await privateHome(ownerId);
+    assertRuntimeCurrent(ownerId, generation);
+    if (closing) throw error('MEMORY_CLOSING');
     const rpc = rpcFactory({ python, pythonPath,
       env: { MEMOWEFT_BASE_URL: selected.baseUrl, MEMOWEFT_WORLD_MODEL: selected.model,
         MEMOWEFT_DSH_SESSION_SCOPE: selected.sessionScoped ? '1' : '0' } });
-    const entry = { rpc, ready: false, active: 0, lastUsed: Date.now(),
+    const entry = { rpc, generation, ready: false, active: 0, lastUsed: Date.now(),
       capabilities: null, routeReady: false, backlogCount: null, initializing: null,
       routeKey: selected.key, modelTier: selected.modelTier };
+    const request = rpc.request.bind(rpc);
+    rpc.request = (method, ...args) => {
+      // Admission only: old entries cannot issue the next RPC in a multi-step
+      // action. An already-issued promise is never replaced or post-filtered;
+      // its caller must receive the outcome and finish redaction/acknowledgement.
+      // shutdown belongs to disposal, which must also work for retired entries.
+      if (method !== 'shutdown') assertRuntimeCurrent(ownerId, generation);
+      return request(method, ...args);
+    };
     entries.set(ownerId, entry);
     entry.initializing = (async () => {
       const before = await rpc.request('capabilities');
+      assertRuntimeCurrent(ownerId, generation);
       if (before?.protocol !== 'memoweft.dsh_rpc' || before?.protocol_version !== 2 ||
           before?.schema_version !== 1 || !Array.isArray(before?.methods) ||
           REQUIRED_METHODS.some((name) => !before.methods.includes(name))) {
         throw error('MEMORY_PROTOCOL_INCOMPATIBLE');
       }
+      let lang = 'zh';
+      try { if (await language() === 'en') lang = 'en'; } catch { /* No UI preference available; preserve Chinese. */ }
       const initialized = await rpc.request('initialize', {
         session_id: 'weftmate-personal-host', dsh_home: home, subject_id: ownerId,
-        platform: 'dsh', model_tier: selected.modelTier, lang: 'zh', auto_route: !selected.readOnly,
+        platform: 'dsh', model_tier: selected.modelTier, lang, auto_route: !selected.readOnly,
         model_api_key: selected.credential,
       });
+      assertRuntimeCurrent(ownerId, generation);
       if (initialized?.runtime?.subject_id !== ownerId ||
           path.resolve(initialized.runtime.db_path ?? '') !== path.join(home, 'memoweft', 'memoweft.sqlite3')) {
         throw error('MEMORY_IDENTITY_MISMATCH');
@@ -397,9 +511,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       }
       entry.capabilities = capabilities;
       const health = await rpc.request('health');
+      assertRuntimeCurrent(ownerId, generation);
       if (health?.runtime?.subject_id !== ownerId) throw error('MEMORY_IDENTITY_MISMATCH');
       entry.routeReady = health.runtime.route_ready === true;
       const backlog = await outboxStatus(ownerId);
+      assertRuntimeCurrent(ownerId, generation);
       entry.backlogCount = backlog.pendingBoundaryCount;
       if (backlog.pendingBoundaryCount > 0) boundaryFailures.set(ownerId,
         backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED' ? 'MEMORY_BOUNDARY_PENDING'
@@ -408,13 +524,19 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       startupWorlds.delete(ownerId);
       entry.initializing = null;
       failures.delete(ownerId);
-      scheduleRetry(ownerId, true);
+      scheduleRetry(ownerId, true, generation);
       return entry;
     })().catch(async (cause) => {
       entry.initializing = null;
       entry.ready = false;
-      entries.delete(ownerId);
-      failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
+      if (entries.get(ownerId) === entry) entries.delete(ownerId);
+      // Preserve initialization provenance even after retirement. It describes
+      // this failure, not a conflict in a boundary that has not been sent yet.
+      if (rpcFactory.managedRuntime) cause.memoryRuntimeFailure = true;
+      if (runtimeCurrent(ownerId, generation)) {
+        failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
+        recordRuntimeFailure(ownerId, entry, cause, true);
+      }
       await rpc.close().catch(() => {});
       throw cause;
     });
@@ -425,21 +547,29 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     owner(ownerId);
     if (!enabled) throw error('MEMORY_DISABLED');
     if (closing) throw error('MEMORY_CLOSING');
-    const work = startQueue.then(() => prepare(ownerId, sessionId));
+    const generation = runtimeGeneration(ownerId);
+    assertRuntimeCurrent(ownerId, generation);
+    const work = startQueue.then(() => prepare(ownerId, sessionId, generation));
     startQueue = work.catch(() => {});
     return work;
   }
 
   async function withOwner(ownerId, work, sessionId = null) {
     const entry = await acquire(ownerId, sessionId);
+    assertRuntimeCurrent(ownerId, entry.generation);
     entry.active++;
     entry.lastUsed = Date.now();
     try { return await work(entry); }
     catch (cause) {
-      if (cause?.code === 'MEMORY_PROCESS_UNAVAILABLE' || cause?.code === 'MEMORY_TIMEOUT' ||
-          cause?.code === 'MEMORY_PROTOCOL_ERROR') {
-        entry.ready = false;
-        failures.set(ownerId, cause.code);
+      // Preserve the original error too. A retired request cannot charge the
+      // replacement's budget or overwrite its status, but still owns its result.
+      if (runtimeCurrent(ownerId, entry.generation)) {
+        recordRuntimeFailure(ownerId, entry, cause);
+        if (cause?.code === 'MEMORY_PROCESS_UNAVAILABLE' || cause?.code === 'MEMORY_TIMEOUT' ||
+            cause?.code === 'MEMORY_PROTOCOL_ERROR') {
+          entry.ready = false;
+          failures.set(ownerId, cause.code);
+        }
       }
       throw cause;
     } finally { entry.active--; entry.lastUsed = Date.now(); }
@@ -471,11 +601,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     const ids = [command.target_id, ...(Array.isArray(receipt.affected_ids)
       ? receipt.affected_ids.filter((id) => typeof id === 'string' && id.length <= 512) : [])];
     try {
-      await actions.redact(ownerId, { affectedIds: ids, sourceTexts: marker?.cleanup?.sourceTexts ?? [] });
-      if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids,
-        sourceTexts: marker?.cleanup?.sourceTexts ?? [], deleteConversationSnippets: marker?.cleanup?.deleteConversationSnippets === true });
-      await journal.redactTargets(ownerId, ids);
-      if (marker?.cleanup) await journal.clearCleanup(ownerId, marker.requestId);
+      await actions.redact(ownerId, { affectedIds: ids, sourceTexts: marker?.cleanup?.sourceTexts ?? [], completedRequestId: marker?.requestId });
+      // Drain outside the journal lock: a drain may inspect action receipts.
+      await flushFlights.get(ownerId)?.catch(() => {});
+      if (marker) await journal.finishCleanup(ownerId, marker.requestId, async current => {
+        await discardOutboxSources(ownerId, { sourceTexts: current.cleanup?.sourceTexts, boundaryIds: current.cleanup?.pendingBoundaryIds });
+        return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...current.cleanup, affectedIds: ids,
+          sourceTexts: current.cleanup?.sourceTexts ?? [], deleteConversationSnippets: current.cleanup?.deleteConversationSnippets === true,
+          journalManaged: true }) : { snippetsVerified: true };
+      });
+      else if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
+      await journal.redactTargets(ownerId, ids, { sourceTexts: marker?.cleanup?.sourceTexts ?? [] });
       return result;
     }
     catch {
@@ -483,6 +619,19 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         storage_cleanup: { state: 'pending', detail_code: 'host_journal_cleanup_pending' } };
       return result?.receipt ? { ...result, receipt: pending } : pending;
     }
+  }
+
+  async function discardOutboxSources(ownerId, { sessionId = null, sourceTexts = [], boundaryIds = [] } = {}) {
+    if (!sessionId && !sourceTexts.length && !boundaryIds.length) return;
+    await queueOutbox(ownerId, async () => {
+      const state = await readOutbox(ownerId);
+      const removed = state.items.filter(item => boundaryIds.includes(item.boundary.event_id) || sessionId && item.boundary.parent_session_id === sessionId ||
+        sourceTexts.some(text => item.boundary.source_messages?.some(message => message.content.includes(text))));
+      state.items = state.items.filter(item => !removed.includes(item));
+      state.discardedBoundaryCount += removed.length;
+      if (removed.length) state.lastFailureCode = 'MEMORY_SOURCE_DELETED';
+      await writeOutbox(ownerId, state);
+    });
   }
 
   const startup = enabled ? readdir(path.join(root, 'accounts')).then(async ids => {
@@ -496,9 +645,94 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
 
   const manager = {
     enabled,
-    mutateFromTool(ownerId, action) {
+    repairRuntime(ownerId) {
+      owner(ownerId);
+      if (repairFlights.has(ownerId)) return repairFlights.get(ownerId);
+      if (closing) return Promise.reject(error('MEMORY_CLOSING'));
+      // Invalidate first, before waiting: old timers, queued starts and active
+      // callbacks must never borrow the fresh budget during this asynchronous gap.
+      runtimeGenerations.set(ownerId, runtimeGeneration(ownerId) + 1);
+      repairingOwners.add(ownerId);
+      clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
+      const previous = entries.get(ownerId);
+      entries.delete(ownerId);
+      const oldStarts = startQueue, oldDrain = flushFlights.get(ownerId);
+      const work = (async () => {
+        await Promise.allSettled([startup, oldStarts, oldDrain,
+          Promise.resolve().then(() => previous?.rpc.close())].filter(Boolean));
+        if (closing) throw error('MEMORY_CLOSING');
+        runtimeFailures.delete(ownerId); retryCounts.delete(ownerId); failures.delete(ownerId);
+        repairingOwners.delete(ownerId);
+        scheduleRetry(ownerId, true);
+        return this.status(ownerId);
+      })().finally(() => {
+        repairingOwners.delete(ownerId);
+        if (repairFlights.get(ownerId) === work) repairFlights.delete(ownerId);
+      });
+      repairFlights.set(ownerId, work);
+      return work;
+    },
+    async forgetFromMessage(ownerId, action) {
+      owner(ownerId);
+      let scope;
+      try {
+        const route = await resolveProcessingRoute(ownerId, action.sessionId);
+        scope = await classifyForgetRequest({ ...route, signal: action.signal }, action.source.text);
+      } catch {
+        if (action.signal?.aborted) return { state: 'cancelled', message: '操作已停止，没有删除记忆。' };
+        return { state: 'no_action', decision: { isForgetRequest: false, subject: 'unknown', topic: '',
+          conditionsOrQuestions: false, authorized: false, reason: 'unavailable' } };
+      }
+      if (!scope.authorized) return { state: 'no_action', decision: scope };
+      const result = await this.mutateFromTool(ownerId, { ...action, name: 'memory_forget', scope, automatic: true,
+        arguments: { query: scope.topic } });
+      return { ...result, ...(result.state === 'applied' ? { message: result.message.replace('已忘掉这件事。',
+        `已删除关于“${scope.topic}”的记忆，包括旧版本和来源原文。`) } : {}), decision: scope };
+    },
+    async planForget(ownerId, action) {
+      const route = await resolveProcessingRoute(ownerId, action.sessionId);
+      action.signal?.throwIfAborted();
+      return scopedForgetPlan(this, ownerId, action, { ...route, signal: action.signal });
+    },
+    async revalidateForget(ownerId, action, signal) {
+      const text = forgetSourceText(action.source, true);
+      if (text === null) return { authorized: false };
+      try {
+        const route = await resolveProcessingRoute(ownerId, action.sessionId);
+        return await classifyForgetRequest({ ...route, signal }, text);
+      } catch {
+        signal?.throwIfAborted();
+        return { authorized: false };
+      }
+    },
+    async checkForgetCompletion(ownerId, proposal) {
+      const route = await resolveProcessingRoute(ownerId, null);
+      return checkForgetCompletion(this, ownerId, proposal, route);
+    },
+    correctionSourceSupported(ownerId) {
+      return withOwner(ownerId, entry => entry.capabilities?.services?.command?.correction_source === true);
+    },
+    async mutateFromTool(ownerId, action) {
       owner(ownerId);
       if (!enabled || closing || erasingOwners.has(ownerId)) throw error('MEMORY_UNAVAILABLE');
+      if (action.name === 'memory_forget') {
+        const text = forgetSourceText(action.source);
+        if (text === null) return { state: 'withheld', message: '无法完整核对遗忘请求，这次没有执行；请重新确认。' };
+        // Only new host input enters here. submit() never overwrites an existing
+        // record, so resubmission cannot manufacture an original for old work.
+        action = { ...action, source: { ...action.source, message: action.source.message ?? { content: text } } };
+      }
+      if (action.name === 'memory_forget' && !action.scope) {
+        let scope;
+        try {
+          const route = await resolveProcessingRoute(ownerId, action.sessionId);
+          scope = await classifyForgetRequest({ ...route, signal: action.signal }, action.source?.text ?? '');
+        } catch { return action.signal?.aborted
+          ? { state: 'cancelled', message: '操作已停止，没有删除记忆。' }
+          : { state: 'no_action', message: '这次还没确认要删除哪些记忆，没有删除，也没有排队重试。' }; }
+        if (!scope.authorized) return { state: 'no_action', message: '这次没有删除记忆，也没有排队重试；请先说清要直接忘掉哪件事。' };
+        return this.mutateFromTool(ownerId, { ...action, scope });
+      }
       return actions.submit(ownerId, action);
     },
     async markAccountErased(ownerId) {
@@ -555,16 +789,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         ? (await entry.rpc.request('query_jobs', { operation: 'list' })).jobs?.map(job => job.acceptance?.boundary_event_id).filter(Boolean) ?? [] : []);
     },
     async discardPendingSources(ownerId, { sessionId = null, sourceTexts = [] } = {}) {
+      await actions.redact(ownerId, { sessionId, sourceTexts });
       await flushFlights.get(ownerId)?.catch(() => {});
-      await queueOutbox(ownerId, async () => {
-        const state = await readOutbox(ownerId);
-        const removed = state.items.filter(item => sessionId && item.boundary.parent_session_id === sessionId ||
-          sourceTexts.some(text => item.boundary.source_messages?.some(message => message.content.includes(text))));
-        state.items = state.items.filter(item => !removed.includes(item));
-        state.discardedBoundaryCount += removed.length;
-        if (removed.length) state.lastFailureCode = 'MEMORY_SOURCE_DELETED';
-        await writeOutbox(ownerId, state);
-      });
+      await journal.redactTargets(ownerId, [], { sessionId, sourceTexts });
+      await discardOutboxSources(ownerId, { sessionId, sourceTexts });
     },
     async pendingStatus(ownerId) { owner(ownerId); return outboxStatus(ownerId); },
     async discardOfflinePending(ownerId) {
@@ -599,7 +827,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       if (!enabled) return { state: 'disabled', worldRevision: null, capabilities: capabilities(null),
         pendingBoundaryCount: 0, blockedBoundaryCount: 0, discardedBoundaryCount: 0,
         lastFailureCode: null };
+      let pendingCleanup = [];
       try {
+        pendingCleanup = await journal.pendingCleanup(ownerId);
         return await withOwner(ownerId, async (entry) => {
           await flushObservedEntry(ownerId, entry);
           const health = await entry.rpc.request('health');
@@ -618,10 +848,12 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             && ['restart_recovered', 'shutdown_recovered'].includes(job.worker?.last_error_type)).length;
           const failedFormationCount = jobs.filter(job => ['failed', 'blocked', 'uncertain', 'dead'].includes(job.worker?.state)).length;
           const routeState = processingHealth ? await processingHealth(ownerId).catch(() => 'unavailable') : 'ready';
-          const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount && !formationIssues.length;
-          if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
-          else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
-            ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
+          const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount && !formationIssues.length && !pendingCleanup.length;
+          if (runtimeCurrent(ownerId, entry.generation)) {
+            if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
+            else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
+              ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
+          }
           const recovering = recoveringFormationCount > 0 && entry.routeReady && routeState === 'ready'
             && !backlog.pendingBoundaryCount && !failedFormationCount && !formationIssues.length;
           return { state: ready ? 'ready' : recovering ? 'recovering' : 'degraded',
@@ -630,7 +862,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             version: health?.version ?? health?.runtime?.version ?? await readSourceVersion(),
             worldRevision: Number.isSafeInteger(revision) ? revision : null,
             capabilities: { ...capabilities(entry), inject: entry.routeReady && backlog.pendingBoundaryCount === 0 }, ...backlog,
-            pendingFormationCount, recoveringFormationCount, failedFormationCount, failedCorrectionCount, formationIssues,
+            pendingFormationCount, recoveringFormationCount, failedFormationCount, failedCorrectionCount, formationIssues, pendingCleanup,
             ...(!entry.routeReady || routeState === 'unavailable' ? { reasonCode: 'MEMORY_MODEL_UNAVAILABLE' }
               : routeState === 'waiting' ? { reasonCode: 'MEMORY_MODEL_WAITING' }
               : formationIssues.length || failedFormationCount ? { reasonCode: 'MEMORY_FORMATION_FAILED' }
@@ -643,14 +875,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         const code = cause?.code ?? failures.get(ownerId) ?? 'MEMORY_UNAVAILABLE';
         const backlog = await outboxStatus(ownerId).catch(() => ({ pendingBoundaryCount: null, blockedBoundaryCount: null, discardedBoundaryCount: null }));
         return { state: 'unavailable', worldRevision: null, capabilities: capabilities(null),
-          ...backlog,
+          ...backlog, pendingCleanup,
           lastFailureCode: code, reasonCode: code };
       }
     },
     async eraseConversationContext(ownerId, sessionId) {
       const result = await withOwner(ownerId, entry => entry.rpc.request('erase_conversation_context', { conversation_id: sessionId }));
       const ids = result.affected_ids ?? [];
-      await journal.redactTargets(ownerId, ids);
+      await actions.redact(ownerId, { affectedIds: ids, sessionId });
+      // This is a source-scoped withdrawal, not a request to forget every
+      // source/correction sharing one of Core's affected target IDs.
+      await journal.redactTargets(ownerId, [], { sessionId });
       if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
       return result;
     },
@@ -754,15 +989,27 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         for (const snapshot of snapshots) {
           const rendered = snapshot?.preview?.rendered_recall ?? '';
           const pairs = snapshot?.preview?.selected_item_ids ?? [];
-          if (!pairs.length && rendered.trim() &&
+          // Only explicit new English framing opts out of main's projection.
+          if (!pairs.length && !isEnglishRecall(rendered) && rendered.trim() &&
               fragments.join('\n\n').length + rendered.length + 2 <= formalBudget && !fragments.includes(rendered.trim())) fragments.push(rendered.trim());
         }
         for (const entry of recallEntries(snapshots)) {
-          const {snapshot,pair}=entry;
+          const {snapshot,pair,header:recallHeader}=entry;
           const [kind, id] = Array.isArray(pair) ? pair : [];
           let claim = entry.claim;
-          if (claim && (snapshot?.preview?.pending_corrections ?? []).length) claim = '记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。' + claim.replace(/^记忆(?:（过往）)?：/, '');
-          const summary = claim?.replace(/^记忆(?:（过往）)?：/, '').trim().slice(0, 240);
+          if (claim && (snapshot?.preview?.pending_corrections ?? []).length) {
+            const header = claim.trimStart().match(recallHeader)?.[0];
+            const body = pair === null ? claim : claim.replace(recallHeader, '');
+            claim = header?.startsWith('Memory')
+              ? `${header}Already corrected by the user; pending update. The following old content must not be used as a current fact. ${body}`
+              : '记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。' + body;
+          }
+          if (pair === null) {
+            if (claim?.trim() && fragments.join('\n\n').length + claim.length + 2 <= formalBudget &&
+                !fragments.includes(claim)) fragments.push(claim);
+            continue;
+          }
+          const summary = claim?.replace(recallHeader, '').trim().slice(0, 240);
           if (!['cognition', 'entity', 'relationship', 'event'].includes(kind) ||
               typeof id !== 'string' || !summary || seen.has(`${kind}:${id}`) ||
               memories.length + recentEvidence.length >= recallMaxItems || fragments.join('\n\n').length + claim.length + 2 > formalBudget) continue;
@@ -813,15 +1060,24 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       }
       scheduleRetry(ownerId, true);
       if (defer) return { state: 'queued', reasonCode: 'MEMORY_BOUNDARY_PENDING' };
-      const results = await flushPending(ownerId);
+      let results = await flushPending(ownerId);
+      // Startup may already be draining an empty snapshot while this boundary
+      // is appended. That completed flight never attempted the new row; drain
+      // it now rather than losing the immediate retry behind that same flight.
+      if (!results.has(boundary.event_id)) {
+        const unattempted = await queueOutbox(ownerId, async () => (await readOutbox(ownerId)).items
+          .some(item => item.boundary.event_id === boundary.event_id && !item.blocked && !item.lastFailureCode));
+        if (unattempted) results = await flushPending(ownerId);
+      }
       return results.get(boundary.event_id) ?? { state: 'queued', reasonCode: 'MEMORY_BOUNDARY_PENDING' };
     },
     submit(ownerId, command) { return withOwner(ownerId, (entry) => entry.rpc.request('submit_command', { command })); },
     receipt(ownerId, commandId) { return withOwner(ownerId, (entry) => entry.rpc.request('query_command_receipt',
       { command_id: commandId })); },
-    async submitCommand(ownerId, proposal) {
+    async submitCommand(ownerId, proposal, assertActive = () => {}) {
       owner(ownerId);
       await privateHome(ownerId);
+      assertActive();
       let cleanup;
       if (proposal.operation.startsWith('delete_')) {
         const prior = await journal.get(ownerId, proposal.requestId);
@@ -846,11 +1102,22 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
               }
             }
           }
+          // Capture each source's own provenance before Core erases it. Job
+          // acceptance links evidence IDs to sessions even without corrections;
+          // never infer ownership from another command targeting the same item.
+          const jobs = await withOwner(ownerId, entry => entry.capabilities?.methods?.includes('query_jobs')
+            ? entry.rpc.request('query_jobs', { operation: 'list' }) : {});
           cleanup = { deleteConversationSnippets: proposal.deleteConversationSnippets === true,
-            sourceTexts: [...new Set(sources.map(source => source?.raw_content).filter(text => typeof text === 'string' && text.length > 0))] };
+            sourceTexts: [...new Set(sources.map(source => source?.raw_content).filter(text => typeof text === 'string' && text.length > 0))],
+            sourceRefs: sources.filter(source => typeof source?.raw_content === 'string' && source.raw_content).map(source => ({
+              textHash: createHash('sha256').update(source.raw_content).digest('hex'), evidenceId: source.evidence_id ?? null,
+              sessionIds: [...new Set((jobs.jobs ?? []).filter(job => source.evidence_id && job.acceptance?.evidence_ids?.includes(source.evidence_id))
+                .flatMap(job => [job.acceptance.parent_session_id, job.acceptance.result_session_id]).filter(id => typeof id === 'string' && id))],
+            })) };
+          if (cleanup.deleteConversationSnippets) Object.assign(cleanup, await prepareConversationCleanup(ownerId, { cleanup }));
         }
       }
-      const marker = await journal.reserve({ ownerId, ...proposal, cleanup });
+      const marker = await journal.reserve({ ownerId, ...proposal, cleanup }, assertActive);
       const command = marker.command;
       const key = `${ownerId}\0${proposal.requestId}`;
       if (commandFlights.has(key)) return commandFlights.get(key);
@@ -861,12 +1128,27 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         catch (cause) { if (cause?.code !== 'command_receipt_not_found') throw cause; }
         if (!result) {
           if (marker.redacted === true) throw error('MEMORY_REPLAY_REDACTED');
-          result = await withOwner(ownerId, (entry) => entry.rpc.request('submit_command', { command }));
+          result = await withOwner(ownerId, (entry) => {
+            assertActive();
+            return entry.rpc.request('submit_command', { command });
+          });
         }
         return { ...await cleanupAfterDelete(ownerId, command, result, marker), operation: command.operation };
       })();
       commandFlights.set(key, work);
       try { return await work; } finally { commandFlights.delete(key); }
+    },
+    async receiptForAction(ownerId, proposal) {
+      owner(ownerId);
+      const marker = await journal.get(ownerId, proposal.requestId), command = marker?.command;
+      if (!command || !['delete_evidence', 'delete_world_item'].includes(command.operation) ||
+        command.operation !== proposal.operation || command.target_kind !== proposal.targetKind || command.target_id !== proposal.targetId ||
+        command.expected_world_revision !== proposal.expectedWorldRevision) throw error('MEMORY_REQUEST_CONFLICT');
+      // Completion inspection reads only the original Core receipt. Unlike the
+      // public receipt getter, it must not trigger another host cleanup attempt.
+      const result = await withOwner(ownerId, entry => entry.rpc.request('query_command_receipt', { command_id: command.command_id }));
+      if ((result?.receipt ?? result)?.command_id !== command.command_id) throw error('MEMORY_RESPONSE_INVALID');
+      return result;
     },
     async receiptByRequest(ownerId, requestId) {
       owner(ownerId);
@@ -927,6 +1209,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       retryTimers.clear();
       await Promise.allSettled([...flushFlights.values()]);
       await startQueue.catch(() => {});
+      await Promise.allSettled([...repairFlights.values()]);
       await Promise.all([...outboxQueues.values()].map((pending) => pending.catch(() => {})));
       await Promise.all([...commandFlights.values()].map((pending) => pending.catch(() => {})));
       await actions.close();

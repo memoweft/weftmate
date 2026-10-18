@@ -2,20 +2,21 @@
 globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
     function memoryHealthText(status) {
         if (!status) return '正在检查记忆健康…';
+        if (status.pendingCleanup?.length) return '还有删除未清理完，请重试清理。';
         const code = status.reasonCode ?? status.lastError ?? status.lastFailureCode;
         const waiting = status.pendingBoundaryCount ?? 0;
         if (status.state === 'disabled') return '记忆暂停：尚未启用';
-        if (code === 'MEMORY_MODEL_UNAVAILABLE') return `记忆暂停：记忆模型不可用${waiting ? `，已保存 ${waiting} 条待补交` : ''}`;
-        if (code === 'MEMORY_MODEL_WAITING') return `记忆等待：模型切换中${waiting ? `，已保存 ${waiting} 条待补交` : ''}`;
-        if (status.failedCorrectionCount > 0) return `有 ${status.failedCorrectionCount} 条纠正没有生效，请查看原话并重试形成`;
-        if (status.formationIssues?.length > 0) return `有 ${status.formationIssues.length} 条记忆没有形成，请查看原话并重试形成`;
+        if (code === 'MEMORY_MODEL_UNAVAILABLE') return `记忆暂停：需要的模型暂时无法使用${waiting ? `，${waiting} 条内容已保存，等待处理` : ''}`;
+        if (code === 'MEMORY_MODEL_WAITING') return `记忆等待：模型切换中${waiting ? `，${waiting} 条内容已保存，等待处理` : ''}`;
+        if (status.failedCorrectionCount > 0) return `有 ${status.failedCorrectionCount} 条纠正没有生效，请查看原话并重新整理`;
+        if (status.formationIssues?.length > 0) return `有 ${status.formationIssues.length} 条内容尚未记住，请查看原话并重新整理`;
         if (status.blockedBoundaryCount > 0) return `记忆暂停：${status.blockedBoundaryCount} 条来源需要处理`;
         if (status.failedFormationCount > 0) return `记忆暂停：${status.failedFormationCount} 条整理失败，请检查模型服务`;
-        if (waiting) return `正在补交 ${waiting} 条${code === 'MEMORY_BUSY' ? '，服务忙，稍后自动重试' : ''}`;
+        if (waiting) return `正在处理 ${waiting} 条已保存的内容${code === 'MEMORY_BUSY' ? '，服务忙，稍后自动重试' : ''}`;
         if (code === 'MEMORY_FORMATION_RECOVERING') return '正在继续整理上次没做完的记忆';
         if (status.pendingFormationCount > 0) return `正在整理 ${status.pendingFormationCount} 条已提交的对话`;
-        if (status.state === 'unavailable' || status.captureError) return '记忆暂停：服务暂不可用，恢复后自动补交';
-        return status.state === 'ready' ? '记忆正常' : '记忆暂停：请检查模型与宿主连接';
+        if (status.state === 'unavailable' || status.captureError) return '记忆暂时不可用，恢复后会自动处理已保存的内容';
+        return status.state === 'ready' ? '记忆正常' : '记忆暂停：请检查模型服务和电脑连接';
     }
     function memoryIdentity() {
         return { generation: core.state.identityGeneration, ownerId: core.state.account?.ownerId,
@@ -63,9 +64,11 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         if (error?.status === 403 || error?.code === 'FORBIDDEN')
             return '当前账户没有查看这项记忆的权限。';
         if (error?.code === 'MEMORY_SEARCH_LIMIT')
-            return '当前账户记忆超过搜索上限，未返回局部结果。请稍后再试。';
+            return '当前账户的记忆太多，暂时无法完整搜索。为避免遗漏，本次没有显示部分结果，请稍后再试。';
         if (error?.code === 'MEMORY_REVISION_CHANGED')
-            return '记忆已变更，旧页已清除。保留了搜索条件，请重新查询。';
+            return '记忆已更新，页面上的旧内容已清除。搜索条件已保留，请重新查询。';
+        if (error?.code === 'MEMORY_FORGET_INCOMPLETE')
+            return '这次没有执行遗忘：相关来源仍无法完整处理。独立记忆和原聊天保留。';
         if (error?.code === 'NETWORK')
             return '连接中断，记忆状态暂时无法确认。请重试。';
         return '记忆暂时无法读取。请检查连接并重试。';
@@ -78,7 +81,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         if (life.archivedAt)
             labels.push('已归档');
         if (life.mutedAt)
-            labels.push('已停用，不参与召回');
+            labels.push('已停用，回答时不再使用');
         if (labels.length)
             return labels.join(' · ');
         return item?.currentState === 'current' ? '当前有效' : '状态待确认';
@@ -95,8 +98,15 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             if (!['ready', 'recovering', 'degraded', 'disabled', 'unavailable'].includes(payload?.state) || !payload?.capabilities)
                 throw { code: 'REQUEST_FAILED' };
             core.memory.status = payload;
+            if (!core.memory.cleanupMarker && !core.memory.unresolvedMarker && payload.pendingCleanup?.length) {
+                const pending = payload.pendingCleanup[0];
+                const marker = { ...pending, operation: 'delete', cleanupOnly: true, cleanupState: 'pending', hostId: core.state.hostId };
+                core.setCleanupMarker(marker, core.memoryCleanupKey(token.ownerId, marker.hostId));
+                core.memory.cleanupMarker = marker;
+                core.showMemoryReceipt('还有删除未清理完，请点“重试清理”继续。', marker.requestId, 'retry-cleanup');
+            }
             if (!['ready', 'recovering', 'degraded'].includes(payload.state) || payload.capabilities.list !== true) {
-                core.invalidateMemorySnapshot(payload.state === 'disabled' ? '记忆尚未接入当前宿主。'
+                core.invalidateMemorySnapshot(payload.state === 'disabled' ? '这台电脑尚未开启记忆。'
                     : ['ready', 'recovering', 'degraded'].includes(payload.state) ? '当前账户没有记忆列表权限。' : '记忆服务暂时不可用，请稍后刷新。', payload.state !== 'disabled');
                 return false;
             }
@@ -197,23 +207,23 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         catch { /* Best effort. */ }
     }
     function memoryReceiptMessage(receipt, operation) {
-        if (receipt.state === 'no_change')
-            return '宿主确认没有发生变更。';
+        if (receipt.state === 'no_change' && operation !== 'delete')
+            return '这次没有更改记忆。';
         if (operation === 'correct')
             return '纠正已应用，当前记忆已更新。';
         if (operation === 'mute')
-            return '记忆已停用，不再参与后续召回；原内容和来源仍可查看。';
+            return '记忆已停用，之后的回答不再使用；原内容和来源仍可查看。';
         if (receipt.storageCleanup?.state === 'pending')
-            return '已从当前有效记忆与召回移除，底层清理待完成。可稍后查询回执。';
+            return '记忆已移除，但删除清理还未完成。请点“重试清理”继续。';
         if (receipt.storageCleanup?.state === 'complete')
-            return '已从当前有效记忆与召回移除，当前存储清理已完成。原聊天、会话存档、过去备份和文件系统快照仍保留。';
-        return '已从当前有效记忆与召回移除，底层清理状态待确认；原聊天、会话存档、过去备份和文件系统快照仍保留。';
+            return '记忆已移除，本次清理已完成。未勾选删除的聊天原话、过去的备份和系统保存的旧副本仍保留。';
+        return '记忆已移除，但是否清理完还需确认。聊天记录和过去的备份仍可能保留，请核对处理结果。';
     }
     function applyMemoryReceipt(receipt, marker, key, token) {
         if (!receipt || !['applied', 'no_change', 'revision_conflict', 'rejected'].includes(receipt.state)
             || receipt.requestId !== marker.requestId)
             return false;
-        const needsCleanupCheck = marker.operation === 'delete' && receipt.state === 'applied'
+        const needsCleanupCheck = marker.operation === 'delete' && ['applied', 'no_change'].includes(receipt.state)
             && receipt.storageCleanup?.state !== 'complete';
         const cleanupState = receipt.storageCleanup?.state === 'pending' ? 'pending' : 'unknown';
         const cleanupMarker = needsCleanupCheck ? { ...marker, cleanupOnly: true, cleanupState, retryUnknown: false } : null;
@@ -249,15 +259,15 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         if (receipt.state === 'revision_conflict') {
             core.staleMemoryProjection(marker);
             effects.memoryStatus('记忆在操作前发生变化，旧页已清除；请重新查询，未自动重试。', true);
-            core.showMemoryReceipt('记忆版本已变化，本次未应用；纠正草稿仍保留。请重新查询后明确提交。', marker.requestId);
+            core.showMemoryReceipt('这条记忆已被修改，本次操作没有生效；纠正草稿仍保留。请刷新后确认是否继续。', marker.requestId);
             return true;
         }
         const code = receipt.reasonCode;
         const message = code === 'MEMORY_DELETE_CONFLICT'
-            ? '来源仍被其他记忆使用，本次未删除。可查看来源或选择停用。'
+            ? '这条记忆暂时无法删除，本次没有执行；请查看来源，或先停用。'
             : code === 'MEMORY_SOURCE_UNRECOVERABLE'
-                ? '旧来源身份已不可恢复，本次未删除；需要单独处理旧资料。'
-                : '宿主拒绝了本次操作，记忆未确认更改。请核对状态后重试。';
+                ? '无法再确认旧记忆对应的原话，本次没有删除；请查看原来的资料。'
+                : '这次操作未被接受，尚未确认记忆是否更改。请核对处理结果后再试。';
         core.showMemoryReceipt(message, marker.requestId);
         if (core.memory.selected && core.memory.selected.kind === marker.kind && core.memory.selected.id === marker.id
             && core.memory.selectedGeneration === marker.selectedGeneration)
@@ -274,14 +284,14 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             return;
         core.memory.unresolvedMarker = unknown ?? null;
         core.memory.cleanupMarker = cleanup ?? null;
-        core.showMemoryReceipt(marker.cleanupOnly ? '逻辑删除已确认，正在核对底层清理回执…'
-            : '上次操作的结果待确认，正在查询持久回执…', marker.requestId, marker.cleanupOnly && marker.cleanupState === 'pending' && marker.retryUnknown !== true ? 'retry-cleanup' : 'check');
+        core.showMemoryReceipt(marker.cleanupOnly ? '记忆已移除，正在核对是否已清理完…'
+            : '正在核对上次操作的结果…', marker.requestId, marker.cleanupOnly && marker.cleanupState === 'pending' && marker.retryUnknown !== true ? 'retry-cleanup' : 'check');
         try {
             const result = await core.memoryRequest(`/commands/by-request/${encodeURIComponent(marker.requestId)}`);
             if (!core.memoryIdentityCurrent(token))
                 return;
             if (!core.applyMemoryReceipt(result?.receipt, marker, key, token) && core.memoryViewCurrent(token)) {
-                core.showMemoryReceipt(marker.cleanupOnly ? '逻辑删除已确认，但底层清理回执仍无法确认。'
+                core.showMemoryReceipt(marker.cleanupOnly ? '记忆已移除，但清理是否完成尚未确认。请稍后核对处理结果。'
                     : '仍无法确认上次操作的结果。不会自动重发，请稍后查询。', marker.requestId, marker.cleanupOnly && marker.cleanupState === 'pending' && marker.retryUnknown !== true ? 'retry-cleanup' : 'check');
             }
         }
@@ -290,8 +300,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
                 return;
             if (error.code === 'UNAUTHORIZED' || error.status === 401)
                 return core.sessionExpired();
-            core.showMemoryReceipt(marker.cleanupOnly ? '逻辑删除已确认，底层清理状态暂无法查询。'
-                : '上次操作的结果待确认。不会自动重发；请稍后查询回执。', marker.requestId, marker.cleanupOnly && marker.cleanupState === 'pending' && marker.retryUnknown !== true ? 'retry-cleanup' : 'check');
+            core.showMemoryReceipt(marker.cleanupOnly ? '记忆已移除，但暂时无法查询清理进度。请稍后核对处理结果。'
+                : '上次操作是否完成尚未确认。请稍后核对处理结果，不会自动重复执行。', marker.requestId, marker.cleanupOnly && marker.cleanupState === 'pending' && marker.retryUnknown !== true ? 'retry-cleanup' : 'check');
         }
         finally {
             if (core.memoryViewCurrent(token))
@@ -373,9 +383,9 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             if (kind === 'all') core.memory.totalCount = Number.isSafeInteger(page.totalCount) ? page.totalCount : null;
             effects.renderMemoryItems();
             effects.memoryStatus(core.memory.items.length ? `已读取${kind === 'all' ? '全部类型记忆' : core.memoryKinds[kind]}。${core.memory.hasMore ? '可继续读取更多。' : ''}`
-                : query ? '当前类型没有匹配的已形成记忆。'
+                : query ? '这一类记忆中没有匹配的内容。'
                     : core.memory.status?.pendingBoundaryCount > 0
-                        ? '尚无已形成记忆；有待处理来源。'
+                        ? '还没有记住内容，有一些资料正在等待处理。'
                         : '当前账户的这一类记忆为空。');
         }
         catch (error) {
@@ -464,10 +474,10 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         const existing = core.storedMemoryMarker(key);
         if (existing) {
             core.memory.unresolvedMarker = existing;
-            return effects.detailError('当前账户有一条待核对操作。请刷新查询原回执后再提交新操作。');
+            return effects.detailError('还有一条操作尚未确认结果。请先核对处理结果，再进行新操作。');
         }
         if (!core.persistMemoryMarker(marker, key))
-            return effects.detailError('暂时无法保存回执查询标识；为避免结果不明，本次没有提交。');
+            return effects.detailError('暂时无法保存这次操作的记录，本次没有提交。请稍后再试。');
         core.memory.activeOperation = marker;
         const operationGeneration = ++core.memory.operationGeneration;
         effects.setMemoryConfirmBusy(true);
@@ -482,9 +492,9 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
                 return;
             if (!core.applyMemoryReceipt(result?.receipt, marker, key, token) && core.memoryViewCurrent(token)) {
                 core.memory.unresolvedMarker = marker;
-                core.showMemoryReceipt('回执内容无法确认，原请求仍待核对；不会自动重发。', marker.requestId, 'check');
+                core.showMemoryReceipt('暂时无法确认这次操作是否完成。操作记录已保留，不会自动重复执行。', marker.requestId, 'check');
                 effects.detailStatus('本次执行结果待确认。');
-                effects.detailError('请点“核对处理结果”查询原请求，不会自动重发。');
+                effects.detailError('请点“核对处理结果”查看这次操作是否完成，不会自动重复执行。');
             }
         }
         catch (error) {
@@ -501,13 +511,14 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
                 if (core.memoryViewCurrent(token)) {
                     if (error.code === 'NOT_FOUND') {
                         core.staleMemoryProjection(marker);
-                        effects.memoryStatus('这条记忆已不在当前账户的有效库中，旧列表已清除；请刷新查询。', true);
-                        core.showMemoryReceipt('记忆已不存在，本次未提交。请刷新列表后重新核对。', marker.requestId);
+                        effects.memoryStatus('这条记忆当前无法查看，页面上的旧内容已清除；请刷新。', true);
+                        core.showMemoryReceipt('这条记忆当前无法查看，本次没有执行。请刷新列表后核对。', marker.requestId);
                         return;
                     }
-                    const message = error.code === 'INVALID_REQUEST' ? '请求内容未通过检查，本次未提交。请核对更正说明后重新提交。'
-                        : error.code === 'MEMORY_DELETE_UNAVAILABLE' ? '删除能力暂不可用，本次未提交。'
-                            : '当前账户或记忆能力不允许这项操作，本次未提交。请刷新状态后核对。';
+                    const message = error.code === 'MEMORY_FORGET_INCOMPLETE' ? core.memoryFailure(error)
+                        : error.code === 'INVALID_REQUEST' ? '这次操作的信息不完整或不正确，本次没有执行。请检查后再试。'
+                        : error.code === 'MEMORY_DELETE_UNAVAILABLE' ? '暂时无法删除记忆，本次没有执行。请稍后再试。'
+                            : '当前无法进行这项操作，本次没有执行。请刷新后查看可用操作。';
                     effects.detailStatus('本次未提交。');
                     core.showMemoryReceipt(message, marker.requestId);
                     effects.detailError(message);
@@ -518,8 +529,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
                 core.memory.unresolvedMarker = null;
                 if (core.memoryViewCurrent(token)) {
                     const message = error.code === 'MEMORY_REQUEST_CONFLICT'
-                        ? '原请求标识与已保存内容冲突，本次未提交。请重新核对后再决定。'
-                        : '旧请求正文已不可重放，本次未提交。请重新核对后再决定。';
+                        ? '这次操作与之前保存的内容不一致，本次没有执行。请刷新后重新操作。'
+                        : '这次操作的内容已经清除，无法再执行。请重新操作。';
                     effects.detailStatus('本次未提交。');
                     core.showMemoryReceipt(message, marker.requestId);
                     effects.detailError(message);
@@ -530,9 +541,9 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             else {
                 core.memory.unresolvedMarker = marker;
                 if (core.memoryViewCurrent(token)) {
-                    core.showMemoryReceipt('结果待确认，原请求已保留；不会自动重发。', marker.requestId, 'check');
+                    core.showMemoryReceipt('这次操作是否完成还需确认。操作记录已保留，不会自动重复执行。', marker.requestId, 'check');
                     effects.detailStatus('本次执行结果待确认。');
-                    effects.detailError('请点“核对处理结果”查询原请求，不会自动重发。');
+                    effects.detailError('请点“核对处理结果”查看这次操作是否完成，不会自动重复执行。');
                 }
             }
         }
@@ -562,24 +573,24 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         }
         core.memory.cleanupRetrying = true;
         effects.setMemoryCleanupBusy(true);
-        core.showMemoryReceipt('正在请求底层清理并等待结果…', marker.requestId, 'retry-cleanup');
+        core.showMemoryReceipt('正在清理，请稍候…', marker.requestId, 'retry-cleanup');
         effects.setMemoryCleanupBusy(true);
         try {
             const result = await core.requestMemoryCleanup(marker.requestId);
             if (!core.memoryIdentityCurrent(token))
                 return;
-            if (!(result?.receipt?.state === 'applied' && core.applyMemoryReceipt(result.receipt, marker, core.memoryMarkerKey(token.ownerId, marker.hostId), token))
+            if (!(['applied', 'no_change'].includes(result?.receipt?.state) && core.applyMemoryReceipt(result.receipt, marker, core.memoryMarkerKey(token.ownerId, marker.hostId), token))
                 && core.memoryViewCurrent(token)) {
                 const uncertain = { ...marker, retryUnknown: true };
                 core.setCleanupMarker(uncertain, cleanupKey);
                 core.memory.cleanupMarker = uncertain;
-                core.showMemoryReceipt('本次清理结果暂无法确认。请先核对原回执；不会自动再次重试。', marker.requestId, 'check');
+                core.showMemoryReceipt('暂时无法确认这次清理是否完成。请先核对处理结果，不会自动再次清理。', marker.requestId, 'check');
             }
         }
         catch (error) {
             if (!core.memoryIdentityCurrent(token))
                 return;
-            if (error?.payload?.receipt?.state === 'applied'
+            if (['applied', 'no_change'].includes(error?.payload?.receipt?.state)
                 && core.applyMemoryReceipt(error.payload.receipt, marker, core.memoryMarkerKey(token.ownerId, marker.hostId), token))
                 return;
             if (error.code === 'UNAUTHORIZED' || error.status === 401)
@@ -592,8 +603,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
                     core.memory.cleanupMarker = uncertain;
                 }
                 const message = refused
-                    ? '当前账户无权重试底层清理，本次未执行；请核对权限后再决定。'
-                    : '本次清理结果待确认。请先核对原回执；不会自动再次重试。';
+                    ? '当前账户没有清理权限，本次未执行。请确认使用的是有权限的账户后再试。'
+                    : '这次清理是否完成尚未确认。请先核对处理结果，不会自动再次清理。';
                 core.showMemoryReceipt(message, marker.requestId, refused ? 'retry-cleanup' : 'check');
             }
         }
@@ -647,7 +658,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             catch (error) {
                 if (!core.memoryViewCurrent(token))
                     return;
-                core.invalidateMemorySnapshot('暂时无法确认宿主身份，管理操作不可用。请重试。');
+                core.invalidateMemorySnapshot('暂时无法确认连接的电脑，记忆管理暂不可用。请重试。');
                 return;
             }
         }

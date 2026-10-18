@@ -22,13 +22,14 @@ test('fixed inputs reject altered archives and preparation requires an explicit 
 
 test('packaging defaults to the approved full layer and preserves official Python bytes during signing',async()=>{
   const calls=[];
-  const verify=async(source,options)=>{calls.push({source,...options});};
+  const verify=async(source,options)=>{calls.push({source,...options});return {manifestSha256:'a'.repeat(64)};};
   const previous=process.env.WEFTMATE_MEMORY_RUNTIME_MODE;
   delete process.env.WEFTMATE_MEMORY_RUNTIME_MODE;
   let config;
   try{config=await withMemoryRuntimeResources({}, {source:'synthetic-payload'},verify);}
   finally{if(previous===undefined)delete process.env.WEFTMATE_MEMORY_RUNTIME_MODE;else process.env.WEFTMATE_MEMORY_RUNTIME_MODE=previous;}
   assert.equal(config.extraMetadata.memoryRuntimeMode,'full');
+  assert.equal(config.extraMetadata.memoryRuntimeManifestSha256,'a'.repeat(64));
   assert.equal(calls[0].mode,'full');
   const packager={platformSpecificBuildOptions:config.win};
   const sign=file=>WinPackager.prototype.shouldSignFile.call(packager,file);
@@ -59,8 +60,11 @@ test('payload verification catches missing, corrupted, mixed-version and undecla
     assert.equal((await verify()).mode,'base');
     // A payload/cache from before the accepted Core update cannot pass as
     // either selected layer, even if its file inventory was resealed.
-    for(const mode of ['base','full']){
-      await sealMemoryRuntimeFixture(root,{mode,core:'e86b73ba9570a9bd490ef90bfb7059574de5e449'});
+    for(const mode of ['base','full'])for(const core of [
+      'e86b73ba9570a9bd490ef90bfb7059574de5e449',
+      '52952ff0e896d745e3c6ec65579ea643f8b996fb',
+    ]){
+      await sealMemoryRuntimeFixture(root,{mode,core});
       await assert.rejects(verifyMemoryRuntime(root,{mode}),/version\/platform\/layer mismatch/);
     }
     await sealMemoryRuntimeFixture(root);

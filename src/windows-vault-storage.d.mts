@@ -17,6 +17,7 @@ export interface WindowsStorageReadinessDiagnostic {
   readonly childError: WindowsStorageDiagnosticCode;
   readonly childTimedOut: boolean;
   readonly childTimeoutMs: number|null;
+  /** Proof process lifetime, including waiting for Chromium's persisted key on stdin. */
   readonly childElapsedMs: number|null;
   readonly childStdoutBytes: number|null;
   readonly childStderrBytes: number|null;

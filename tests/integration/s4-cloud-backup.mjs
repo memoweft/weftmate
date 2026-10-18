@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic local cloud + actual production Electron/DSH, with a durable Windows vault.
 import assert from 'node:assert/strict';
@@ -84,7 +85,7 @@ await mkdir(evidence,{recursive:true});await mkdir(join(repo,'.local'),{recursiv
 const previousMemoryConfig=process.env.WEFTMATE_S4_RESUME_ROOT?JSON.parse(await readFile(join(root,'memory-config.json'),'utf8')):null;
 await new Promise((done,reject)=>{modelProxy.once('error',reject);modelProxy.listen(previousMemoryConfig?Number(new URL(previousMemoryConfig.baseUrl).port):0,'127.0.0.1',done);});
 const memoryConfig=join(root,'memory-config.json');
-await writeFile(memoryConfig,JSON.stringify({python:'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',pythonPath:'D:/AIProjects/MemoWeft/Core/py/src',baseUrl:`http://127.0.0.1:${modelProxy.address().port}/v1`,model:'@current',authRef:'fixture'}));
+await writeFile(memoryConfig,JSON.stringify({python:requireMemoWeftPath('python'),pythonPath:requireMemoWeftPath('source'),baseUrl:`http://127.0.0.1:${modelProxy.address().port}/v1`,model:'@current',authRef:'fixture'}));
 function environment(cloud=f) {
   return {...Object.fromEntries(Object.entries(process.env).filter(([name])=>!name.startsWith('WEFTMATE_')&&!name.startsWith('MEMOWEFT_')&&!['MIMO_API_KEY','MODEL_SWITCH_UNIFIED_KEY','ELECTRON_RUN_AS_NODE'].includes(name))),WEFTMATE_TEST_HOST_NAME:'synthetic-host',WEFTMATE_S4_FIXTURE_ROOT:root,WEFTMATE_S4_DIAGNOSTICS:join(root,'diagnostics.jsonl'),WEFTMATE_CLOUD_ISSUER:cloud.config.issuer,WEFTMATE_CLOUD_ALLOW_INSECURE_LOOPBACK:'true',WEFTMATE_CLOUD_WEB_CLIENT_ID:'test-native'};
 }
@@ -395,7 +396,7 @@ try {
 } finally {
   uploadGate?.release();clearInterval(clock);await app?.close().catch(()=>{});for(const cleanup of cleanups.reverse())await cleanup();
   for(const controller of controllers)controller.abort();modelProxy.closeAllConnections();await new Promise(done=>modelProxy.close(done));
-  report.proxyRequests=proxyRequests;report.modelRequests=proxyRequests.model;report.cleanup=cleanupOwnedProcesses({startedAt,executables:[process.execPath,electron,resolve('D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe')],commandRoots:[root]});
+  report.proxyRequests=proxyRequests;report.modelRequests=proxyRequests.model;report.cleanup=cleanupOwnedProcesses({startedAt,executables:[process.execPath,electron,resolve(requireMemoWeftPath('python'))],commandRoots:[root]});
   await releaseHeavy();await appendFile(join(repo,'.local/s4-attempts.jsonl'),JSON.stringify({at:new Date().toISOString(),status:report.status,modelRequests:report.modelRequests,error:report.error??null})+'\n');
   await writeFile(join(evidence,process.env.WEFTMATE_S4_WIRE_ONLY==='true'?'verification-wire.json':process.env.WEFTMATE_S4_COMPAT_ONLY==='true'?'verification-old-cloud.json':'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({status:report.status,modelRequests:report.modelRequests,checks:report.checks}));
   if(report.status==='passed'&&process.env.WEFTMATE_S4_DIAG_ONLY!=='true')await removeOwnRoot();

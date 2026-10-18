@@ -8,12 +8,12 @@ import { registerHooks } from 'node:module';
 const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-plugin-'));
 const pluginPath = join(root, 'weftmate-personal-memory.mjs');
 copyFileSync(fileURLToPath(new URL('../../src/plugins/weftmate-personal-memory.mjs', import.meta.url)), pluginPath);
-if (process.argv.includes('--privacy-only')) {
+if (process.argv.includes('--privacy-only') || process.argv.includes('--protocol-only')) {
   // Portable contract test for the final derivation path. The real DSH factory
   // remains exercised by the existing vendor test and MEM-2 Electron evidence.
   registerHooks({ resolve(specifier, context, next) {
     if (specifier === '@deepseek-ai/dsh-llm/message') return { shortCircuit:true,
-      url:'data:text/javascript,'+encodeURIComponent('export const createUserMessage = input => ({id:crypto.randomUUID(),role:"user",...input});') };
+      url:'data:text/javascript,'+encodeURIComponent('const message = (role,input) => ({id:crypto.randomUUID(),role,...input}); export const createUserMessage = input => message("user",input); export const createAssistantMessage = input => message("assistant",input);') };
     return next(specifier, context);
   } });
 } else symlinkSync(fileURLToPath(new URL('../../vendor/dsh-runtime/node_modules', import.meta.url)),
@@ -62,6 +62,24 @@ async function preStep(id, agent = { session: session(id) }, priorMessages = nul
       sourceFrozen: Object.isFrozen(injected.at(-1).source) } : null };
 }
 process.on('message', async (message) => {
+  if (message?.type === 'run-forget') {
+    try {
+      const value = session('session-explicit-forget');
+      const user = { ...userClaim('explicit'), content: [{ type: 'text', text: message.text }] };
+      const agent = { id: value.id, session: value };
+      const inputs = [user, { ...userClaim('calculation'), content: [{ type: 'text', text: '另外请计算12×13。' }] }];
+      if (message.durableOnly) value.append('user/message', user);
+      const first = await preStep(value.id, agent, message.durableOnly ? [user] : inputs, message.durableOnly ? [] : inputs);
+      if (!message.durableOnly) value.append('user/message', user);
+      // A later step must not submit the same intent again.
+      const second = await preStep(value.id, agent, first.messages, []);
+      value.append('assistant/message', { turn: 1, message: { source: { provider: 'synthetic', model: 'synthetic' },
+        content: [{ type: 'text', text: '12×13＝156。' }] } });
+      await handlers.get('agent/turn-stopping')({ agent, turn: 1 });
+      process.send({ type: 'result', first, second, events: value.events });
+    } catch (error) { process.send({ type: 'failed', error: String(error.stack) }); }
+    return;
+  }
   if (message?.type === 'run-private') {
     try {
       const value = session('session-private');

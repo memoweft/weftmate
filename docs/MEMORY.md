@@ -7,16 +7,27 @@
 | 事实 | 出处 |
 |---|---|
 | 链路：每轮结束，记忆插件把真人原话交给摄取，再交给按账户管理的 MemoWeft 进程（Python，独立仓库 `memoweft/memoweft`）。召回、纠正、遗忘走同一条链 | `src/plugins/weftmate-personal-memory.mjs` → `src/personal-access/memory-ingestion.mjs` → `src/personal-memory/`：`index.mjs` 管理器（每个账户一个进程，同时最多 4 个）、`rpc.mjs` 通信、`journal.mjs` 命令日志、`actions.mjs` 纠正与遗忘、`http.mjs` 接口 |
-| 只有启动时带 `--personal-memory-config=<文件>` 才启用 | `src/main.mjs`（解析参数约第 209 行，创建管理器约第 3150 行） |
+| Windows 安装版无显式配置时自动定位随包组件并生成本次启动配置；已有 `--personal-memory-config=<文件>` 或安装配置继续优先，macOS 不变 | `src/desktop-config.mjs`、`src/personal-memory/config.mjs`、`src/main.mjs` |
+| 旧 `--dsh-window` 兼容插件仍由 DSH 模板装载，默认关闭；启用后必须显式提供 `WEFTMATE_MEMOWEFT_PYTHONPATH`，缺少时报告「记忆未配置」且不启动 Python。它没有账户管理器的随包校验元数据，不能自行选择随包运行时；个人主路继续使用上面的自动接线 | `src/plugins/weftmate-memory.mjs`、`src/dsh-web-runtime.ts` |
 | 这个文件必须指向本机已有的 Python 解释器和 MemoWeft 源码目录（目录里要有 `memoweft/integrations/dsh_bridge/__main__.py`）；记忆处理用的模型入口只能是本机 `http://127.0.0.1:<端口>/v1` | `src/personal-memory/config.mjs` |
-| 安装版把安装配置 `desktop-config.json` 里的 `personalMemoryConfig` 转成上面的参数。全新安装时，Windows 默认配置没有这一项；macOS 只在配置旁边已有 `memory-config.json` 时才加 | `src/desktop-config.mjs` |
+| 安装版把 `desktop-config.json` 里的 `personalMemoryConfig` 转成上面的参数。自动配置不写入此项，每次按当前安装位置重算，账户记忆仍在用户数据目录；macOS 只在配置旁边已有 `memory-config.json` 时才加 | `src/desktop-config.mjs` |
 | 本人从源码版迁移来的安装版，迁移脚本写入了这一项，所以它依赖本机现成的 Python 和 MemoWeft 源码 | `scripts/migrate-desktop-config.mjs` |
-| Windows 构建已能随包携带固定 Python/Core；默认完整语义层，基础层可单独构建。自动配置尚未接通，**全新安装默认仍没有启用记忆** | `scripts/memory-runtime/README.md`、`scripts/memory-runtime-package.mjs`；D106 / D110，#332 G8 |
+| Windows 默认完整语义层，基础层可单独构建。应用元数据固定组件清单散列，启动核对文件后接入；组件异常只停用记忆，聊天和数据保留。实际新装/升级验收仍按地图记录 | `src/personal-memory/bundled-runtime.mjs`、`scripts/memory-runtime/README.md`；D106 / D110 |
 | 手机单独聊天只有轻量记忆，不合并成第二套正式记忆；电脑接手后，原对话交给电脑摄取（D63） | [PHONE_MEMORY.md](PHONE_MEMORY.md)、`src/ui-core/phone-memory.js`、`apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneMemory.swift` |
 | 记忆页：桌面 `src/personal-access-ui/components/memory.js`，共用逻辑 `src/ui-core/memory.js`，手机网页 `apps/mobile-ui/www/components/memory.js` | — |
 | CI 里接真实 MemoWeft 的作业固定到 Core 已合入主线并通过主线检查的提交；版本更新走独立 PR，真实集成测试的文件名单保留在作业里 | `.github/workflows/ci.yml` 的 `observed-core` |
 | 旧插件 `src/plugins/weftmate-memory.mjs`（约 1240 行）仍写在 DSH 配置模板 R7–R10 里。按文件头注释，它只在 `WEFTMATE_MEMOWEFT_ENABLED=1` 时工作；个人宿主模式下设这个变量，程序会拒绝启动。默认路径写死了一个本机目录 | `src/dsh-web-runtime.ts`、`src/main.mjs` 约第 172 行 |
 | WeftMate 这一侧的记忆代码约 5400 行，含命令日志、待发队列和恢复补做。2026-10-14、15 两天连着修了遗忘循环（FIX-45）、纠正与遗忘的中断恢复（FIX-47），遗忘由宿主执行（FIX-50）还在做 | 上面这些文件；GitHub 上对应的 PR |
+
+G9 新英文召回合同以首行 `Memory:` / `Memory (past):` 定格式并用 LF 分隔条目：生产端须在正文中任何以 `记忆：`、`记忆（过往）：`、`Memory:`、`Memory (past):` 或反斜杠 `\` 开头的行前再加一个 `\`，解析端只按未转义英文条目头切分并逐行还原一层合法转义，日期及正文空白原样保留，首行不是条目头、条数与 ID 数不符、出现未转义中文条目头或非法转义时按原预算保留完整原文而不配 ID，不跨格式回退，首行旧中文格式仍逐字沿用旧规则且不作转义还原。
+
+初始化语言取自 DSH 界面设置的 `locale.preference`：个人宿主通过 `settings.describe` 的 `locale.value.preference` 读取，旧插件通过 `settings.get('locale').preference` 读取；只有 `'en'` 传英文，中文、未设置或读取失败均传 `'zh'`。已有桥进程保留初始化语言，重启或按现有机制重新初始化时才读取新值，不做热切换。未显式选择语言时，浏览器自己的临时语言不作为宿主配置；此时记忆仍回退中文。
+
+真实 Core 测试只接受显式环境输入：`WEFTMATE_TEST_MEMOWEFT_PYTHON` / `WEFTMATE_TEST_MEMOWEFT_SOURCE`，或旧桥接名 `WEFTMATE_MEMOWEFT_PYTHON` / `WEFTMATE_MEMOWEFT_PYTHONPATH`。本包按 `scripts/memory-runtime/lock.json` 下载并校验的隔离副本也通过这些变量传入；测试不猜本机源码位置，缺配置明确跳过，手工验收脚本缺必需输入则报错。测试和脚本设置 `PYTHONDONTWRITEBYTECODE=1`，不向源码目录写缓存。DSH 源码测试/构建同样要求显式 `WEFTMATE_DSH_CHECKOUT`；已有固定成品缓存仍可复用。
+
+### 开发基线与验收边界
+
+**记忆开发基线**（2026-10-16，`bf0a9c4d6`/Core `e86b73b`/真实MiMo；[证据与边界](https://github.com/memoweft/weftmate/issues/332#issuecomment-6208869990)）：M1/M2通过；M3旧修订/导出残留、M7错误成功/误删来源失败，见[#334](https://github.com/memoweft/weftmate/issues/334)。D16、D33要求遗忘整条修订链。M4暂缓；M5–M6安卓链未验完。缺语义组件，仅开发宿主/隔离APK结果，**不计入③**；安装结果见下表。
 
 ## 2. 规则
 
@@ -25,7 +36,10 @@
 3. **记忆内容不外露。** 日志、PR、截图和问题单里不出现真实的记忆内容，只写条数、状态和合成例子。
 4. **打包方式已定为 A（D106），默认完整语义层（D110）。** 安装包携带受管 Python、MemoWeft 和必需依赖，两层仍能单独构建，固定版本、散列与许可，用户端不安装依赖。保留显式已有配置的兼容性；运行时与数据目录分开，组件更新不能覆盖用户记忆。组件分发、自动接线、安装升级验收依次完成，构建方法和限制见 [组件说明](../scripts/memory-runtime/README.md)。方案比较保留在第 5 节，不再重复询问这项决定。
 5. **可靠性放进内核，不在 WeftMate 这一侧再叠层。** 不再新增队列、日志、恢复补做这类层。遇到失败，先复现、先写一条会失败的测试，再判断原因在哪一层：内核缺原子性或幂等，就改 MemoWeft（在它自己的仓库，走它自己的 PR），WeftMate 这侧只做同步调用。确实要在 WeftMate 这侧加，在 PR 里写清复现步骤和为什么不能放进内核。
-6. **删除语义照 D16、D33。** 忘掉记忆和删除聊天原话是两件事；只有确认删除成功，才能对用户说「已经忘了」。
+6. **删除语义照 D16、D33。** 忘掉一条记忆包含整条修订链及其来源，确认前列出连带条目；独立的其他话题和默认保留的聊天原话不动。同批最新指令一起核对，取消先于命令提交就不删除；已提交的命令以 Core 实际回执为准，只有确认成功才能说「已经忘了」。纠正也必须关联真实消息原话，模型改写只是提议；宿主核对 Core 的来源能力，由 Core 复用该消息的来源、逐字片段和形成规则。
+   整句核对过长或失败时不删，不得截断后重新授权；长消息即使只有明确遗忘也按相同边界停下。旧请求恢复（含定时、重启和冻结计划复用）须重新核对保留的完整原话，不沿用保存的授权；原话缺失、过长、无法核对或授权范围变化时，停止并要求重新确认。已有命令只查询原回执，结果不明时保留原身份和不确定状态，不重放删除。记忆页选中的未形成独立来源，以完整来源本身核对权限、归属和完成性，不因没有正式条目而一律拒绝。混合来源还包含目标内容且必须保留独立事实时，本批按[经理确认](https://github.com/memoweft/weftmate/issues/332#issuecomment-6221354361)安全停止：预提交不执行，已有真实成功回执仅报部分完成；旧命令结果不确定时保留原身份等待核对，不说从未执行。M3仍失败，不能用隐藏来源、擦词或误删独立事实代替真正遗忘。Core有界来源清理须另交设计并在安装版验过，本批不实现，也不默认启用记忆。
+   删除清理与排队动作的落盘共用原有账号串行操作：已作废动作不能再写入目标、命令或原文，也不能在命令日志中重新预留或提交。目标选择或遗忘计划尚未保存时，当前执行中的动作仍要记下期间实际删除的目标 ID，并在接受迟到结果时核对，不依赖新旧正文相同；这些 ID 只随该次执行存活。已经提交的遗忘仍保留无原文的回执核对身份，不因清理而误报为从未执行；会话擦除和来源撤回同时清理排队动作与命令日志。
+   删除日志的每段来源文本在写入时保存自己的证据 ID、会话 ID 和文本散列；按会话或来源撤回只匹配各条记录自己的来源，不把匹配到的纠正扩成整目标撤回。勾选擦除聊天原话时，删除提交前记录不含原文的会话、事件与字段定位；原生擦除后重新读取核对。旧记录须在同一账号串行操作内先保存这些定位、尝试擦除，再脱敏；擦不了就保留未完成状态，重启后按原定位重试，不重放删除。尚未取得定位时保留最后可用的依据；已经丢失全部定位的旧记录不能凭空报完成。没有聊天原话擦除要求的未知来源仍保守脱敏，保留原命令身份。
 7. **接口变化要同步。** 改 `/personal/v1/memory` 下的路由，同时改 [CLIENT_API.md](CLIENT_API.md) 和安卓白名单（`Network.kt::validBusinessPath`、`BusinessRouteUnitTest.kt`）。
 8. **真实内核的测试进 CI 名单。** 新增接真实 MemoWeft 的测试，加进 `observed-core` 的文件名单。内核修复先在 Core 合入主线并通过主线检查，再用独立 PR 更新这里的 `ref`，按当前名单复验；已有的随包运行时固定版本须同时保持一致，并在 PR 里说明。
 9. **范围。** 只改上表里的记忆文件和 MemoWeft 仓库，界面只改记忆页。别的端、别的功能有问题，记下来交给总代理。

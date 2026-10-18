@@ -12,6 +12,7 @@ import { pathToFileURL } from 'node:url';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { localUiSession } from './local-ui-session.mjs';
+import { waitForFirstWindow } from './first-window-diagnostics.mjs';
 
 export async function until(fn, timeout = 45000) {
   const end = Date.now() + timeout;
@@ -29,10 +30,10 @@ export async function nativeOwnerSession(page) {
   assert.ok(me.account?.ownerId);
   return me;
 }
-export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir(), processEvidence, cloudIdentity } = {}) {
+export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir(), processEvidence, cloudIdentity, respond } = {}) {
   const root = realpathSync.native(mkdtempSync(join(tempRoot, 'weftmate-fx21-'))), profile = join(root, 'profile');
   mkdirSync(profile); writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
-  const h = { root, profile, app: null, requests: [], source, executable, old };
+  const h = { root, profile, app: null, requests: [], source, executable, old, respond };
   const evidence = processEvidence?.({ root, profile, executable: executable || createRequire(import.meta.url)('electron') });
   const server = createServer(async (req, res) => {
     if (req.url.endsWith('/models')) return res.writeHead(200, {'content-type':'application/json'}).end(JSON.stringify({data:[{id:'synthetic-fx21',context_window:32768}]}));
@@ -64,10 +65,11 @@ export async function migrationHost({ nativeSession = false, executable, source 
     env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
     if(cloudIdentity){env.WEFTMATE_CLOUD_ISSUER=cloudIdentity.issuer;env.WEFTMATE_CLOUD_ALLOW_INSECURE_LOOPBACK=String(cloudIdentity.allowInsecureLoopback===true);}
     const passwordStore = process.platform === 'linux' ? ['--password-store=gnome-libsecret'] : [];
+    const launchStartedAt = Date.now();
     h.app = await _electron.launch({executablePath:h.executable || createRequire(import.meta.url)('electron'),args:h.executable?[...passwordStore,`--desktop-config=${config}`]:[h.source,...passwordStore,`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],cwd:h.source,env,timeout:90000});
     evidence?.track(h.app.process(), { executable: h.executable || createRequire(import.meta.url)('electron'), label: 'installed-electron' });
     h.stderr = []; h.app.process().stderr?.on('data', chunk => { h.stderr.push(String(chunk)); if (h.stderr.length > 200) h.stderr.shift(); });
-    h.page = await h.app.firstWindow(); h.page.setDefaultTimeout(15000);
+    h.page = await waitForFirstWindow({ app: h.app, profile, launchStartedAt, stderr: h.stderr }); h.page.setDefaultTimeout(15000);
     await h.page.waitForURL('**/personal/v1/ui*');
     if (nativeSession) await nativeOwnerSession(h.page);
     else await localUiSession(h.page,h.credentials,'FX21',{mainChat:!h.old});

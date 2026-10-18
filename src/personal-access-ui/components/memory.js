@@ -24,12 +24,12 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         for(const issue of issues){const row=[...document.querySelectorAll('.message.user')].find(row=>row.dataset.memorySession===issue.sessionId&&row.textContent.includes(issue.text));if(!row)continue;
           let target=row;for(let next=row.nextElementSibling;next&&!next.classList.contains('user');next=next.nextElementSibling)if(next.classList.contains('assistant')){target=next;break;}
           if(target.querySelector(`[data-formation-notice="${CSS.escape(issue.jobId)}"]`))continue;
-          const hint=ui.element('div','memory-issue-bar');hint.dataset.formationNotice=issue.jobId;hint.setAttribute('role','status');hint.append(WeftIcons.create('warn',16),ui.element('span','',issue.intent==='correction'?'这条纠正没有生效':'这条记忆尚未形成'));
+          const hint=ui.element('div','memory-issue-bar');hint.dataset.formationNotice=issue.jobId;hint.setAttribute('role','status');hint.append(WeftIcons.create('warn',16),ui.element('span','',issue.intent==='correction'?'这条纠正没有生效':'这条内容尚未记住'));
           const action=ui.element('button','message-action','查看');action.type='button';action.onclick=()=>core.openMemory();hint.append(action);target.append(hint);
 
         }
         node.hidden = status?.state !== 'unavailable';
-        node.textContent = node.hidden ? '' : '记忆暂时不可用，普通对话已保存，恢复后会自动补交。';
+        node.textContent = node.hidden ? '' : '记忆暂时不可用，普通对话已保存，恢复后会自动整理。';
     }
     async function exportMemories(format) {
         const button = ui.byId(`memory-export-${format}`); if(button) button.disabled = true;
@@ -54,13 +54,42 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     function memoryStatus(message, error = false) {
         const node = ui.byId('memory-status');
         ui.paintMemoryHealth?.(core.memory.status);
+        if (['unavailable', 'degraded'].includes(core.memory.status?.state) &&
+            core.memory.status.reasonCode === 'MEMORY_MODEL_UNAVAILABLE') {
+            node.textContent = '记忆要用的模型还没设置好或暂时连不上，请检查模型设置。';
+            const setup = ui.element('button', 'button secondary small', '设置模型');
+            setup.type = 'button';
+            setup.addEventListener('click', () => ui.openSettings('models'));
+            node.append(setup);
+            node.classList.toggle('is-error', true);
+            return;
+        }
+        if (core.memory.status?.state === 'unavailable') {
+            node.textContent = '记忆暂时没开，聊天仍可用；请';
+            const repair = ui.element('a', '', '下载并重新安装');
+            repair.href = 'https://weftmate.com/downloads/';
+            repair.target = '_blank'; repair.rel = 'noopener noreferrer';
+            node.append(repair, '，已有记忆会保留。');
+            if (globalThis.weftmateDesktop?.repairSystem) {
+                const retry = ui.element('button', 'button secondary small', '修复记忆');
+                retry.type = 'button';
+                retry.addEventListener('click', async () => {
+                    retry.disabled = true;
+                    try { await globalThis.weftmateDesktop.repairSystem('memory'); }
+                    catch { /* Keep the download repair action available on failure. */ }
+                    finally { retry.disabled = false; await core.openMemory(); }
+                });
+                node.append(retry);
+            }
+            node.classList.toggle('is-error', true);
+            return;
+        }
         const degraded = core.memory.status?.state === 'degraded';
         const modelNote = degraded && core.memory.status?.capabilities?.inject === false
-            ? (core.memory.status?.reasonCode === 'MEMORY_MODEL_UNAVAILABLE'
-                ? '模型路线暂不可用，当前记忆未用于模型回复。 ' : '当前记忆未用于模型回复。 ')
+            ? '当前记忆未用于模型回复。 '
             : '';
         const processingNote = core.memory.status?.blockedBoundaryCount > 0
-            ? '部分来源已阻断，当前不会自动重试。 '
+            ? '部分内容未能处理，已暂停自动重试。 '
             : core.memory.status?.pendingBoundaryCount > 0 ? '有来源待处理。 ' : '';
         node.textContent = `${modelNote}${processingNote}${message}`;
         node.classList.toggle('is-error', error);
@@ -75,7 +104,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ui.byId('memory-receipt-text').textContent = message;
         ui.byId('memory-receipt-id').textContent = requestId;
         ui.byId('memory-receipt-check').hidden = action === 'none';
-        ui.byId('memory-receipt-check').textContent = action === 'retry-cleanup' ? '重试底层清理' : '核对处理结果';
+        ui.byId('memory-receipt-check').textContent = action === 'retry-cleanup' ? '重试清理' : '核对处理结果';
         ui.byId('memory-receipt').hidden = false;
     }
     function renderMemoryItems() {
@@ -94,7 +123,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             button.append(ui.element('span', 'memory-item-meta', `${core.memoryKinds[item.kind] ?? '记忆'} · ${core.memoryLifecycle(item)}${item.updatedAt ? ` · 更新于 ${core.formatDate(item.updatedAt)}` : ''}`));
             if (!core.memoryPathId(item.id)) {
                 button.disabled = true;
-                button.append(ui.element('span', 'memory-item-meta', '此标识无法安全打开详情，暂可在列表查看。'));
+                button.append(ui.element('span', 'memory-item-meta', '暂时无法打开这条记忆的详情，可以先在列表中查看。'));
             }
             else
                 button.addEventListener('click', () => { void core.openMemoryDetail(item.kind, item.id); });
@@ -150,7 +179,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ui.byId('memory-detail-check').hidden = !core.memory.unresolvedMarker && !core.memory.cleanupMarker;
         ui.byId('memory-detail-check').textContent = core.memory.cleanupMarker?.cleanupState === 'pending'
             && core.memory.cleanupMarker?.retryUnknown !== true
-            && !core.memory.unresolvedMarker ? '重试底层清理' : '核对处理结果';
+            && !core.memory.unresolvedMarker ? '重试清理' : '核对处理结果';
         ui.byId('memory-detail-check').disabled = core.memory.cleanupRetrying;
         ui.byId('memory-correct-action').hidden = mode !== 'detail' || !core.memoryActionAllowed('correct');
         ui.byId('memory-mute-action').hidden = mode !== 'detail' || !core.memoryActionAllowed('mute');
@@ -163,7 +192,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         }
         else if (mode === 'mute') {
             ui.byId('memory-confirm-action').textContent = '确认停用';
-            ui.byId('memory-confirm-copy').textContent = '停用后仍可查看记忆和来源，但不再用于后续召回。';
+            ui.byId('memory-confirm-copy').textContent = '停用后仍可查看记忆和来源，但不再用于之后的回答。';
         }
         else if (mode === 'delete') {
             ui.byId('memory-confirm-action').textContent = '确认忘掉';
@@ -184,7 +213,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             checkbox.checked = core.memory.deleteConversationSnippets === true;
             checkbox.addEventListener('change', () => { core.memory.deleteConversationSnippets = checkbox.checked; });
             label.append(checkbox, document.createTextNode('同时删除对话里含这句话的原话')); scope.append(label);
-            ui.byId('memory-delete-boundary').textContent = '默认保留对话原文；勾选后删除对应原生对话片段及个人命令副本。以前的备份仍保留。';
+            ui.byId('memory-delete-boundary').textContent = '默认保留聊天原话；勾选后，同时删除聊天记录里的这几句原话。以前的备份不受影响。';
         }
         const scope = document.getElementById('memory-forget-scope'); if (scope) scope.hidden = mode !== 'delete';
         ui.byId('memory-confirm-action').disabled = !!core.memory.activeOperation || !!core.memory.unresolvedMarker || !!core.memory.selected?.stale
@@ -294,7 +323,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             preview.disabled = busy || !!active; preview.hidden=!!active || !card.hidden;
             pause.hidden = cancel.hidden = !active;
             pause.textContent = job?.state === 'paused' ? '继续整理' : '暂停整理';
-            progress.textContent = job ? `${({running:'正在补整理',paused:'已暂停',cancelled:'已取消',completed:'补交完成'})[job.state] ?? '整理中'}：已提交 ${job.submittedTurns - job.skippedTurns} / ${job.totalTurns} 回合${job.skippedTurns ? `，已跳过 ${job.skippedTurns} 回合` : ''}。${active ? '暂停或取消后不再提交后续回合；已提交的回合继续整理。' : ''}` : '';
+            progress.textContent = job ? `${({running:'正在整理过去的对话',paused:'已暂停',cancelled:'已取消',completed:'对话已送去整理'})[job.state] ?? '整理中'}：已送去整理 ${job.submittedTurns - job.skippedTurns} / ${job.totalTurns} 轮对话${job.skippedTurns ? `，已跳过 ${job.skippedTurns} 轮` : ''}。${active ? '暂停或取消后不再处理后续对话；已送去整理的内容会继续处理。' : ''}` : '';
         }
         async function refresh() {
             if (core.state.currentView !== 'memory' || busy) return;
@@ -309,7 +338,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             const previewIdentity = core.memoryIdentity(); identity = previewIdentity; busy = true; preview.disabled = true;
             explanation.textContent = '正在统计可整理的过去对话…';
             try { prepared = await core.memoryRequest('/backfill'); if (!core.memoryIdentityCurrent(previewIdentity)) return;
-                explanation.textContent = !prepared.turnCount ? '过去的对话已全部补交，没有需要重复整理的回合。' : `可整理 ${prepared.sessionCount} 个会话、${prepared.turnCount} 个回合。预计输入约 ${prepared.estimatedUsage.inputTokens.toLocaleString()}、输出约 ${prepared.estimatedUsage.outputTokens.toLocaleString()} 个词元；实际用量取决于模型与重试。跳过临时对话、已关闭记忆的对话及已遗忘内容。`;
+                explanation.textContent = !prepared.turnCount ? '过去的对话都已送去整理，没有需要重复处理的内容。' : `可整理 ${prepared.sessionCount} 段对话，共 ${prepared.turnCount} 轮。预计输入约 ${prepared.estimatedUsage.inputTokens.toLocaleString()}、输出约 ${prepared.estimatedUsage.outputTokens.toLocaleString()} 个词元；实际用量取决于模型与重试。跳过临时对话、已关闭记忆的对话及已遗忘内容。`;
                 confirm.hidden = !prepared.turnCount; card.hidden=false; preview.hidden=true;
             } catch { if (core.memoryIdentityCurrent(previewIdentity)) explanation.textContent = '统计失败，请检查连接后重试。'; }
             finally { busy = false; preview.disabled = false; }

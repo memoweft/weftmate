@@ -11,6 +11,8 @@ import {keyId} from '../../src/personal-update/manifest.mjs';
 import {migrationHost,until} from '../../tests/helpers/migration-host.mjs';
 import {redactBuildMachineIdentity} from '../windows-package-policy.mjs';
 import {createProcessEvidence} from '../../tests/helpers/process-evidence.mjs';
+import {installedSmokeFailureSummary} from './installed-smoke-diagnostics.mjs';
+import {createInstalledSmokeResponder,installedSmokePrompt,installedSmokeRequestKind} from './installed-smoke-provider.mjs';
 const option=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
 const testIdentity=option('--test-identity','fx21qa');assert.match(testIdentity,/^[a-z0-9]+$/);
 const out=resolve(option('--out','.local/installed-smoke'));mkdirSync(out,{recursive:true});
@@ -50,7 +52,7 @@ try {
     if(report.realInstall){await run(installer,['--updated','/S','/currentuser',`/D=${installation}`]);installed=true;executable=installedExecutable();}
     else executable=join(build,'win-unpacked',`WeftMate-${testIdentity}.exe`);
   }
-  h=await migrationHost({nativeSession:true,executable,tempRoot:temp,processEvidence:({root,profile,executable})=>createProcessEvidence({outputDir:join(out,'electron-processes'),profileDirectory:profile,commandRoots:[root],executables:[executable,process.execPath],startedAt:started})});
+  h=await migrationHost({nativeSession:true,executable,tempRoot:temp,respond:createInstalledSmokeResponder(),processEvidence:({root,profile,executable})=>createProcessEvidence({outputDir:join(out,'electron-processes'),profileDirectory:profile,commandRoots:[root],executables:[executable,process.execPath],startedAt:started})});
   if(installed){report.installationRegistered=hasTestInstallation();assert.equal(report.installationRegistered,true);}
   h.page.on('response',async r=>{if(r.url().includes('/commands')){try{const value=await r.json();if(value.command)report.folderCommands=[...(report.folderCommands||[]),{kind:value.command.kind,state:value.command.state,errorCode:value.command.errorCode}];}catch{}}});
   report.packaged=await h.app.evaluate(({app})=>({isPackaged:app.isPackaged,appPath:app.getAppPath()}));assert.equal(report.packaged.isPackaged,true);
@@ -87,16 +89,9 @@ try {
     return row?.classList.contains('is-current') && !document.querySelector('#message-text')?.disabled;
   },session.sessionId);
   assert.equal((await h.api(`/sessions/${session.sessionId}/approval-mode`,{mode:'ask'},'PATCH')).status,200);
-  let calls=0;
-  h.respond=async input=>{
-    if(!input.stream)return {role:'assistant',content:'synthetic provider ready'};
-    const tool=['load_tools','read','write'][calls++];
-    if(!tool)return {role:'assistant',content:'FX21 synthetic project file 已读取，并保存 approved.md。'};
-    const args=tool==='load_tools'?{names:['read','write']}:tool==='read'?{file_path:'brief.md'}:{file_path:'approved.md',content:'FX21 synthetic project file\n'};
-    return {role:'assistant',tool_calls:[{index:0,id:'call-'+randomUUID(),type:'function',function:{name:tool,arguments:JSON.stringify(args)}}]};
-  };
-  const sent=await h.api('/commands',{requestId:randomUUID(),kind:'session.message',targetDeviceId:h.hostId,sessionId:session.sessionId,text:'读取合成项目 brief.md，并写 approved.md，等待审批。'});await h.receipt(sent.body.command);
+  const sent=await h.api('/commands',{requestId:randomUUID(),kind:'session.message',targetDeviceId:h.hostId,sessionId:session.sessionId,text:installedSmokePrompt});await h.receipt(sent.body.command);
   const decisions=[];
+  report.approvals=decisions; // Preserve already-approved cards even if the later wait fails.
   await until(async()=>{
     const rows=(await h.api(`/sessions/${session.sessionId}/approvals`)).body.approvals||[];
     for(const approval of rows.filter(a=>a.status==='pending'&&!decisions.includes(a.approvalId))){
@@ -114,7 +109,7 @@ try {
   report.approvals=decisions;assert.ok(decisions.length>0);
   assert.equal(readFileSync(join(project,'approved.md'),'utf8'),'FX21 synthetic project file\n');
   const task=await until(async()=>{const r=await h.api('/tasks/'+sent.body.command.commandId);return r.body.replyEvidence?.status==='completed'&&r.body;});
-  report.readProof=h.requests.some(r=>r.messages?.some(m=>m.role==='tool'&&String(m.content).includes('FX21 synthetic project file')));
+  report.readProof=h.requests.some(r=>installedSmokeRequestKind(r)==='project'&&r.messages?.some(m=>m.role==='tool'&&String(m.content).includes('FX21 synthetic project file')));
   assert.ok(report.readProof,'real native read result must reach the synthetic provider');report.checks.push('native-project-read-and-approved-write');
   // Export through the installed native bridge; only the system dialog result is replaced.
   const history=(await h.api(`/sessions/${report.main.sessionId}/events?limit=200`)).body.events;
@@ -146,10 +141,12 @@ try {
     selectedSessions:[...document.querySelectorAll('.session-row > button.is-current')].map(row=>row.parentElement.dataset.sessionId),
     messageDisabled:document.querySelector('#message-text')?.disabled,transcript:document.querySelector('#transcript')?.innerText,
     approvalCards:[...document.querySelectorAll('[data-conversation-approval]')].map(row=>({id:row.dataset.conversationApproval,text:row.innerText}))})).catch(()=>null);
-  console.error('Packaged smoke failure:',redactBuildMachineIdentity(JSON.stringify({error:report.error,failureView:report.failureView})).replaceAll(temp,'%TEMP%'));
+  const failureSummary=installedSmokeFailureSummary({error:report.error,failureView:report.failureView,stderr:h?.stderr,firstWindowDiagnostics:error.firstWindowDiagnostics});
+  Object.assign(report,failureSummary);
+  console.error('Packaged smoke failure:',redactBuildMachineIdentity(JSON.stringify(failureSummary)).replaceAll(temp,'%TEMP%'));
 }
 finally{
-  if(h)report.modelCalls=h.requests.map(r=>({stream:r.stream,toolResponses:r.messages?.filter(m=>m.role==='tool').map(m=>({name:m.name,content:String(m.content).slice(0,1000)}))}));
+  if(h)report.modelCalls=h.requests.map(r=>({stream:r.stream,...h.respond.describe(r),toolResponses:r.messages?.filter(m=>m.role==='tool').map(m=>({name:m.name,content:String(m.content).slice(0,1000)}))}));
   try{
   await h?.close({failed:!report.smokePassed,beforeDataRemoval:()=>{
     if(!report.smokePassed)return;
