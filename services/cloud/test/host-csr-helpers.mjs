@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import { createECDH, createPublicKey } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import CSR from '@root/csr';
+
+export const domain = `h-${'b'.repeat(32)}.hosts.example.com`;
+// Public, synthetic scalars; never persist randomly sampled private keys.
+export function scalarKey(value) {
+  const d = Buffer.alloc(32); d.writeUInt32BE(value, 28);
+  const ec = createECDH('prime256v1'); ec.setPrivateKey(d);
+  const point = ec.getPublicKey();
+  return { kty: 'EC', crv: 'P-256', d: d.toString('base64url'),
+    x: point.subarray(1, 33).toString('base64url'), y: point.subarray(33).toString('base64url') };
+}
+export function publicKey(jwk) { return createPublicKey({ key: jwk, format: 'jwk' }).export({ type: 'spki', format: 'der' }); }
+export function verifyCsr(csr, jwk, domains = [domain]) {
+  // OpenSSL parses and verifies independently of both @root/csr and @root/asn1.
+  // A bad signature can still exit 0 on some OpenSSL releases: require its verdict.
+  const result = spawnSync('openssl', ['req', '-verify', '-noout', '-text', '-pubkey'],
+    { input: csr, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true, timeout: 30_000, killSignal: 'SIGKILL' });
+  assert.equal(result.status, 0, 'OpenSSL can parse the CSR');
+  assert.match(result.stdout + result.stderr, /(?:verify OK|self-signature ok)/i, 'OpenSSL validates the CSR signature');
+  const output = result.stdout;
+  const pem = output.match(/-----BEGIN PUBLIC KEY-----[\s\S]*?-----END PUBLIC KEY-----/)[0];
+  assert.ok(createPublicKey(pem).export({ type: 'spki', format: 'der' }).equals(publicKey(jwk)), 'CSR keeps the exact public key');
+  assert.ok(output.includes(`CN = ${domains[0]}`) || output.includes(`CN=${domains[0]}`));
+  assert.deepEqual([...output.matchAll(/DNS:([^,\s]+)/g)].map(m => m[1]), domains);
+  const info = CSR._info(csr);
+  assert.deepEqual(info.altnames, domains);
+  assert.equal(info.subject, domains[0]);
+  assert.ok(publicKey(info.jwk).equals(publicKey(jwk)), 'ACME parser keeps fixed-width coordinates');
+}
+
