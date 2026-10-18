@@ -5,14 +5,14 @@ const {join} = require('node:path');
 // after $INSTDIR and the legacy CreateDirectory reserve (MAX_PATH - 12).
 async function installerPayloadPaths(root) {
   let maxSuffix=0,files=0,directories=0,longest='';
-  async function visit(relative='') {
-    for(const name of await readdir(join(root,relative))) {
-      const entry=relative?relative+'\\'+name:name;
-      const stat=await lstat(join(root,...entry.split('\\')));
+  async function visit(parts=[]) {
+    for(const name of await readdir(join(root,...parts))) {
+      const child=[...parts,name],entry=child.join('\\');
+      const stat=await lstat(join(root,...child));
       if(stat.isSymbolicLink())throw Error('Installer payload must contain physical files and directories');
       const suffix=1+entry.length+(stat.isDirectory()?12:0);
       if(suffix>maxSuffix){maxSuffix=suffix;longest=entry;}
-      if(stat.isDirectory()){directories++;await visit(entry);}
+      if(stat.isDirectory()){directories++;await visit(child);}
       else if(stat.isFile())files++;
       else throw Error('Unsupported installer payload entry');
     }
