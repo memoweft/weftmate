@@ -8,6 +8,7 @@ import { EMPTY_HEALTH,validHealthDay } from './records-schema.mjs';
 import { healthOverview,healthMetrics,healthCalendar,healthShiftDay,healthWeeklySummary,METRIC_IDS } from './analysis.mjs';
 import {createHealthItemAnalysis} from './item-analysis.mjs';
 import { identifyHealthSuggestions,statisticalHealthInsight } from './insight.mjs';
+import { sleepQuerySummary } from './query-sleep.mjs';
 
 export function createHealthOperations(context){
   const itemAnalysis=createHealthItemAnalysis(context);
@@ -30,7 +31,9 @@ export function createHealthOperations(context){
     const items=[];for(let day=from;day<=to;day=healthShiftDay(day,1)){
       if(input.metric==='overview'){const o=hydrate(s,owner,day);items.push({day,recovery:{score:o.recovery.score,state:o.recovery.state,label:o.recovery.label},sleep:{score:o.sleep.score,minutes:o.sleep.minutes,state:o.sleep.state,label:o.sleep.label},load:{score:o.load.score,state:o.load.state,label:o.load.label},stress:o.stress?{score:o.stress.score,average:o.stress.average,latest:o.stress.latest,state:o.stress.state,label:o.stress.label}:null,energy:o.energy?{current:o.energy.current,state:o.energy.state,label:o.energy.label,degraded:o.energy.degraded}:null,fitnessAge:o.fitnessAge?{fitnessAge:o.fitnessAge.fitnessAge,actualAge:o.fitnessAge.actualAge,difference:o.fitnessAge.difference,state:o.fitnessAge.state,missing:o.fitnessAge.missing}:null,vitals:o.vitals,usage:queryUsage(o.usage,owner)});}
       else items.push(healthMetrics(s,accountForDay(owner,day),input.metric,1,day,zone(owner),context.timestamp()).points[0]);
-    }return {connected,from,to,timeZone:zone(owner),metric:input.metric,items,...(!connected&&usageConnected?{usageConnected:true}:{})};
+    }return {connected,from,to,timeZone:zone(owner),metric:input.metric,items,
+      ...(['overview','sleep','sleepMinutes'].includes(input.metric) ? {sleepSummary:sleepQuerySummary(s,from,to,zone(owner))} : {}),
+      ...(!connected&&usageConnected?{usageConnected:true}:{})};
   }
   async function handleHttp(request,response,url,owner){
     const path=url.pathname,dayMatch=/^\/personal\/v1\/daily-summaries\/(\d{4}-\d{2}-\d{2})\/health$/.exec(path),metricMatch=/^\/personal\/v1\/health\/metrics\/([A-Za-z0-9]+)$/.exec(path),suggestion=/^\/personal\/v1\/health\/suggestions\/(health-[a-f0-9]{32})\/remind$/.exec(path);
