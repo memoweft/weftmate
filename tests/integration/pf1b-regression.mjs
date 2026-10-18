@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 /** PF-1b: unchanged four memory scenarios plus sealed C, then LAN wire timings.
  * Runs the existing real Electron/DSH/Core runners under one atomic LAN lease.
@@ -10,7 +11,7 @@ import { resolve, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 const option = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : fallback;
 const out = resolve(option('--out', evidencePath('pf-1b/memory-performance')));
-const core = resolve(option('--memory-core-source', 'D:/AIProjects/MemoWeft/Core/py/src'));
+const core = resolve((option('--memory-core-source') ?? requireMemoWeftPath('source')));
 const lock = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';
 const token = `PF-1b memory/performance ${randomUUID()}`;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));

@@ -831,7 +831,7 @@ export interface DshWebRuntimeOptions {
   /** Account memory requests carry only real DSH session identity, never caller-owned ownerId. */
   personalMemoryRequestHandler?: (request: Readonly<{ id: string, action: 'recall' | 'ingest' | 'tool',
     sessionId: string, turn: number, query?: string, userMessageId?: string | null,
-    boundary?: Record<string, unknown>, tool?: Record<string, unknown> }>) => Promise<unknown>
+    boundary?: Record<string, unknown>, tool?: Record<string, unknown>, signal?: AbortSignal }>) => Promise<unknown>
   /** First-turn, owner-bound phone conversation context from this managed child only. */
   personalScheduleHandler?: (request: Readonly<{ action: string, sessionId: string, text?: string, deliveryId?: string, sourceReceiptId?: string }>) => Promise<unknown>
   personalConversationContextHandler?: (request: Readonly<{ id: string, sessionId: string,
@@ -1223,7 +1223,7 @@ export class DshWebRuntime {
   /** 正在等待 main safeStorage 回调的 IPC；close/child exit 都会立即失效，不等待回调自行结束。 */
   private readonly credentialPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
   private readonly personalDesktopPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
-  private readonly personalMemoryPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
+  private readonly personalMemoryPending = new Map<ChildProcess, Set<{ id: string, controller: AbortController, timer: NodeJS.Timeout, settled: boolean }>>()
   private readonly personalConversationContextPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
   private readonly taskStopPending = new Map<string, { child: ChildProcess, timer: NodeJS.Timeout,
     receiptIds: readonly string[], resolve: (result: PersonalTaskStopResult) => void }>()
@@ -1541,7 +1541,7 @@ export class DshWebRuntime {
   private failPersonalMemoryRequests(child: ChildProcess): void {
     const pending = this.personalMemoryPending.get(child)
     if (!pending) return
-    for (const entry of pending) { entry.settled = true; clearTimeout(entry.timer) }
+    for (const entry of pending) { entry.controller.abort(); entry.settled = true; clearTimeout(entry.timer) }
     pending.clear()
     this.personalMemoryPending.delete(child)
   }
@@ -2216,6 +2216,10 @@ export class DshWebRuntime {
     const row = message as Record<string, unknown>
     if (row.protocol !== 'weftmate.personal-memory.v1') return
     const action = row.action
+    if (action === 'cancel' && typeof row.id === 'string' && this.child === child) {
+      for (const entry of this.personalMemoryPending.get(child) ?? []) if (entry.id === row.id) entry.controller.abort()
+      return
+    }
     if (typeof row.id !== 'string' || !/^memory-[0-9a-f-]{36}$/.test(row.id) ||
         !['recall', 'ingest', 'tool'].includes(String(action)) ||
         typeof row.sessionId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) ||
@@ -2240,7 +2244,7 @@ export class DshWebRuntime {
         this.opts.personalMemoryRequestHandler === undefined) {
       respond({ ok: false, error: 'MEMORY_UNAVAILABLE' }); return
     }
-    const entry = { timer: undefined as unknown as NodeJS.Timeout, settled: false }
+    const entry = { id: row.id, controller: new AbortController(), timer: undefined as unknown as NodeJS.Timeout, settled: false }
     let pending = this.personalMemoryPending.get(child)
     if (!pending) { pending = new Set(); this.personalMemoryPending.set(child, pending) }
     pending.add(entry)
@@ -2252,10 +2256,16 @@ export class DshWebRuntime {
       if (pending?.size === 0) this.personalMemoryPending.delete(child)
       if (!this.closed && !this.closedChildren.has(child) && this.child === child) respond(value)
     }
-    entry.timer = setTimeout(() => settle({ ok: false, error: 'MEMORY_TIMEOUT' }), action === 'recall' ? 365_000 : 20_000)
+    // Stop preparation at the deadline, but keep the final receipt: Core may
+    // already have committed a command and cancellation cannot undo that write.
+    entry.timer = setTimeout(() => {
+      entry.controller.abort()
+      if (action !== 'tool') settle({ ok: false, error: 'MEMORY_TIMEOUT' })
+    }, action === 'recall' ? 365_000
+      : action === 'tool' && (row.tool as Record<string, unknown>).name === 'memory_forget_request' ? 360_000 : 20_000)
     entry.timer.unref?.()
     const request = Object.freeze({ id: row.id, action: action as 'recall' | 'ingest' | 'tool',
-      sessionId: row.sessionId, turn: row.turn as number,
+      sessionId: row.sessionId, turn: row.turn as number, signal: entry.controller.signal,
       ...(action === 'recall' ? { query: row.query as string,
         userMessageId: row.userMessageId as string | null | undefined }
         : action === 'tool' ? { tool: row.tool as Record<string, unknown> }

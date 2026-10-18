@@ -40,7 +40,7 @@ export function memoryReplyStream() {
 export const personalMemoryGuidance = 'When the current user introduces a specific person with a useful ability or relationship, acknowledge briefly and make one opt-in proposal to remind the user to contact that person in a relevant future situation. This brief question in reply text is an exception to clarification-only guidance; do not call ask_user_question or block the conversation. 本轮用户新提供了具体人物的可用能力或有自然未来用途的关系，且还没有确认过相关决定时，即使当前没有在安排相关任务，也要简短提议一次。用一句简短问句，提议由你这个助手在以后相关情境提醒用户找这个人，并邀请用户确认；不需要用户先说“记住”。用户有具体任务或明确限定回复格式时先完成当前请求，不提新建议；没有持续用途的泛聊只简短回应。背景记忆本身不触发新提议。一次只提议一件相关的事；结合对话和当前记忆，同一事不重复提议，闲聊、拒绝或不回应时不坚持。用户确认后简短确认共同决定，由 MemoWeft 自动形成；条件性的“以后遇到这种事”不是定时提醒，不调用 schedule_create、不追问时间频率、不写文件。只有用户明确要求具体时间的通知或执行任务才使用调度工具。问历史人物、关系或决定时，若当前对话和背景记忆都没有可靠依据，直接说明目前不能确定，不为了猜出旧事实而查工作文件或发起阻塞的提问；用户明确要求查文件或复用当前对话经验时仍按该目标处理。纠正后采用最新理解；被取代的来源可用于解释以前为什么那样理解，不能当作当前事实。 本轮记忆在回复后异步形成，尚无成功回执；确认或纠正时应说“我记下了，稍后整理进记忆”，不得说“已记住／已纠正”。这不替代首次有用人物的一次提议和确认问句。';
 
 export const name = 'weftmate-personal-memory';
-export const personalMemoryToolsGuidance = 'In chat and work, explicit forgetting requires memory_forget and corrections require memory_correct, never file tools or a promise to organize later. Use query with the exact user topic, or memory_query then exact kind/id. If memory_query is unavailable, still submit the requested write by query so the host can retry it. The host durably retries queued writes; say its message plainly. Confirm only applied results. Always finish this turn with a brief user-facing reply; never print tool names, ids, item types or error codes. When memory is unknown or forgotten, briefly say you do not know; do not guess, repeat old preferences, list examples, or ask the user to repeat a forgotten fact. 不知道或已遗忘的偏好，只说目前不知道；不列举偏好选项，不邀请用户再说一次。';
+export const personalMemoryToolsGuidance = 'In chat and work, explicit forgetting requires memory_forget and corrections require memory_correct, never file tools or a promise to organize later. Use query with the exact user topic, or memory_query then exact kind/id. If memory_query is unavailable, still submit the requested write by query so the host can retry it. The host durably retries queued writes; say its message plainly. Confirm only applied results. Withheld or partial forgetting is not complete: report the host message, preserve unrelated facts and the original conversation, and never say everything was forgotten or retry the same stopped action. Always finish this turn with a brief user-facing reply; never print tool names, ids, item types or error codes. When memory is unknown or forgotten, briefly say you do not know; do not guess, repeat old preferences, list examples, or ask the user to repeat a forgotten fact. 不知道或已遗忘的偏好，只说目前不知道；不列举偏好选项，不邀请用户再说一次。';
 export const inject = ['tools'];
 export const PERSONAL_MEMORY_PROTOCOL = 'weftmate.personal-memory.v1';
 const PRESETS = new Set(['personal-remote', 'personal-shared-chat']);
@@ -63,6 +63,9 @@ const diagnostic = (stage, failure) => {
 };
 
 const digest = (value) => createHash('sha256').update(value).digest('hex');
+
+/** A coarse nomination only: the host model must read the whole message before any deletion. */
+export const possibleForgetRequest = text => /忘|别记|不要记|不再记|(?:删|清除).*记忆|forget|delete.*memor/iu.test(text);
 const contentText = (parts) => Array.isArray(parts)
   ? parts.filter((part) => part?.type === 'text' && typeof part.text === 'string').map((part) => part.text).join('\n')
   : '';
@@ -100,21 +103,32 @@ class HostMemoryBridge {
     }
     const id = `memory-${randomUUID()}`;
     return new Promise((resolve, reject) => {
+      const cancel = () => {
+        try { process.send({ protocol: PERSONAL_MEMORY_PROTOCOL, id, action: 'cancel' }); }
+        catch { /* A disconnected child cannot cancel work in its parent. */ }
+      };
       const timer = setTimeout(() => {
+        if (action === 'tool') { cancel(); return; }
         if (!this.pending.delete(id)) return;
         reject(new Error('MEMORY_TIMEOUT'));
-      }, action === 'recall' ? 360_000 : 18_000);
+      }, action === 'recall' || data.tool?.name === 'memory_forget_request' ? 360_000 : 18_000);
       const abort = () => {
         const entry = this.pending.get(id);
         if (!entry) return;
+        if (action === 'tool') { cancel(); return; }
         this.pending.delete(id); clearTimeout(timer); reject(new Error('MEMORY_CANCELLED'));
       };
       this.pending.set(id, { resolve: (value) => { signal?.removeEventListener?.('abort', abort); resolve(value); },
         reject: (reason) => { signal?.removeEventListener?.('abort', abort); reject(reason); }, timer });
       signal?.addEventListener?.('abort', abort, { once: true });
+      const unavailable = () => {
+        const entry = this.pending.get(id);
+        if (!entry) return;
+        this.pending.delete(id); clearTimeout(timer); entry.reject(new Error('MEMORY_UNAVAILABLE'));
+      };
       try { process.send({ protocol: PERSONAL_MEMORY_PROTOCOL, id, action, ...data },
-        (error) => { if (error) abort(); }); }
-      catch { abort(); }
+        (error) => { if (error) unavailable(); }); }
+      catch { unavailable(); }
     });
   }
 
@@ -160,7 +174,7 @@ export function boundaryForCompletedTurn(session, event) {
     payload_hash: payloadHash };
 }
 
-export function userForTurn(session, turn, maxChars = 500) {
+export function userForTurn(session, turn, maxChars = 500, includeSource = false) {
   if (!PRESETS.has(session?.header?.agentPreset) || !Array.isArray(session.events) ||
       !Number.isSafeInteger(turn)) return null;
   const startIndex = session.events.findLastIndex((entry) => entry.type === 'turn/start' &&
@@ -171,8 +185,12 @@ export function userForTurn(session, turn, maxChars = 500) {
     entry.type === 'user/message' && entry.data?.source?.kind === 'user' &&
     contentText(entry.data?.content).trim());
   if (!event) return null;
+  const preceding = session.events.slice(startIndex + 1, session.events.indexOf(event)).findLast(entry => entry.type === 'assistant/message');
   return { id: typeof event.data?.id === 'string' ? event.data.id : null,
-    seq: event.seq, text: contentText(event.data.content).trim().slice(0, maxChars) };
+    seq: event.seq, text: maxChars === null ? contentText(event.data.content).trim() : contentText(event.data.content).trim().slice(0, maxChars),
+    ...(includeSource ? { message: { message_id: event.data.id, content: contentText(event.data.content),
+      preceding_ai_context: preceding ? contentText(preceding.data?.message?.content) : null,
+      ...(Number.isFinite(Number(event.time)) && Number(event.time) > 0 ? { timestamp: Math.floor(Number(event.time) / 1000) } : {}) } } : {}) };
 }
 
 /** DSH claims inbox messages before pre-step; it appends them to session.events afterward. */
@@ -221,9 +239,15 @@ export function apply(ctx) {
   if (process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED !== '1') return;
   const bridge = new HostMemoryBridge();
   const actionReplies = new WeakMap();
+  const explicitActions = new WeakMap();
   const requestScopes = new WeakMap();
   const cleanupRequests = new Map();
   const cleanupFlights = new Set();
+  function rememberReply(agent, turn, message) {
+    const previous = actionReplies.get(agent);
+    const messages = [...new Set([...(previous?.turn === turn ? previous.messages : []), message])];
+    actionReplies.set(agent, { turn, afterSeq: agent.session.events.at(-1)?.seq ?? -1, messages, message: messages.join('') });
+  }
   ctx.on('agent/created', async ({ agent }) => {
     if (!PRESETS.has(agent.session?.header?.agentPreset) || agent.session.header.origin === 'subagent') return;
     const { defineTool } = await import('@deepseek-ai/dsh-tools');
@@ -239,24 +263,34 @@ export function apply(ctx) {
       { name: 'memory_forget', title: '忘掉记忆', description: 'Forget the requested topic and its sources and correction history. Prefer query with the user topic; the host resolves matching records and durably retries outages. Only claim success for applied. Does not edit computer files.', parameters: target },
       { name: 'memory_correct', title: '纠正记忆', description: 'Correct a matching memory to the current user\'s new understanding. Use exact kind/id and latest worldRevision from memory_query. Only claim correction after an applied receipt.',
         parameters: { ...target, kind: { ...target.kind, enum: ['cognition', 'relationship', 'event'] },
-          text: { type: 'string', required: true, description: 'The user\'s corrected fact, not the superseded value.' } } },
+          text: { type: 'string', required: true, description: 'The corrected fact. It is a proposal, never the original source.' },
+          sourceQuote: { type: 'string', required: true, description: 'One complete verbatim clause or sentence from the CURRENT user message that states the correction, including its punctuation. Preserve every word, number and name. Exclude independent other facts. The host supplies the real message identity.' } } },
     ]) agent.ctx.tools.register(defineTool({ ...tool,
       output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
       execute: async (args, exec) => {
         const turn = agent.session.events.findLast(event => event.type === 'turn/start').data.turn;
-        const result = await bridge.request('tool', { sessionId: agent.id, turn,
+        // Recall may use an excerpt; deletion must submit the whole message or
+        // fail the host's existing size check, never authorize from a prefix.
+        const source = userForTurn(agent.session, turn, tool.name === 'memory_forget' ? null : 16000, true);
+        const verified = explicitActions.get(agent);
+        const previous = tool.name === 'memory_forget' && verified?.turn === turn &&
+          verified.results.get(source?.id ?? digest(source?.text ?? ''));
+        // A failed check is still the result for this input. Missing decision
+        // metadata is not permission to try again through the model tool.
+        const existing = previous ?? null;
+        const result = existing ? existing.state === 'no_action'
+          ? { state: 'no_action', message: '本轮没有直接删除授权，这次没有删除记忆，也没有排队重试。请先回答问题或确认条件。' } : existing
+          : await bridge.request('tool', { sessionId: agent.id, turn,
           tool: { name: tool.name, arguments: args,
-            source: userForTurn(agent.session, turn, 16000),
+            source,
             requestId: `memory-tool:${digest(`${agent.id}|${turn}|${exec.callId}`)}` } }, exec.signal)
           .catch(() => ({ state: 'unavailable', message: tool.name === 'memory_query'
             ? '暂时查不到记忆。' : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。' }));
         if (tool.name !== 'memory_query') {
-          const previous = actionReplies.get(agent);
           const message = result.message ?? (['applied', 'no_change'].includes(result.receipt?.state)
             ? tool.name === 'memory_forget' ? '已忘掉这件事。' : '已按你刚才的说法更新记忆。'
             : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。');
-          const messages = [...new Set([...(previous?.turn === turn ? previous.messages : []), message])];
-          actionReplies.set(agent, { turn, afterSeq: agent.session.events.at(-1)?.seq ?? -1, messages, message: messages.join('') });
+          rememberReply(agent, turn, message);
         }
         if (result.receipt?.storageCleanup?.state === 'pending') {
           let requests = cleanupRequests.get(agent.id);
@@ -294,16 +328,22 @@ export function apply(ctx) {
     const action = actionReplies.get(agent);
     if (!action || action.turn !== turn || signal?.aborted) return;
     const events = agent.session.events;
-    if (events.some(event => event.seq > action.afterSeq && event.type === 'assistant/message' &&
+    // Automatic deletion always has a factual receipt after the normal reply.
+    // Never conclude the turn or replace the model's answer to other requests.
+    const tracked = explicitActions.get(agent);
+    const explicit = tracked?.message ? tracked : null;
+    if (explicit?.turn === turn && explicit.reported) return;
+    if (explicit?.turn !== turn && events.some(event => event.seq > action.afterSeq && event.type === 'assistant/message' &&
         contentText(event.data?.message?.content).trim())) return;
     const { createAssistantMessage } = await import('@deepseek-ai/dsh-llm/message');
     const source = events.findLast(event => event.type === 'assistant/message')?.data?.message?.source;
     const step = (events.findLast(event => event.type === 'step/start')?.data.step ?? 0) + 1;
     agent.session.append('step/start', { turn, step });
     agent.session.append('assistant/message', { turn, step,
-      message: createAssistantMessage({ source: { provider: source.provider, model: source.model },
-        content: [{ type: 'text', text: action.message }] }) }, { surfaceOp: 'append' });
+      message: createAssistantMessage({ source: { provider: source?.provider ?? 'weftmate', model: source?.model ?? 'memory' },
+        content: [{ type: 'text', text: explicit?.turn === turn ? explicit.message : action.message }] }) }, { surfaceOp: 'append' });
     agent.session.append('step/end', { turn, step });
+    if (explicit?.turn === turn) explicit.reported = true;
   });
   ctx.on('agent/status', ({ agent, status }) => {
     if (status !== 'idle' || !cleanupRequests.size) return;
@@ -333,11 +373,40 @@ export function apply(ctx) {
     const turn = payload.turn;
     const user = userForPreStep(session, turn, payload.messages);
     if (!user) { delete session[Symbol.for('weftmate.memoryRecall')]; return clearedDecision; }
+    let explicit = explicitActions.get(payload.agent);
+    if (explicit?.turn !== turn) explicit = null;
+    // One inbox claim can contain several user messages; later tool steps may
+    // claim another message in the same turn. Deduplicate messages, not turns.
+    const claimed = (payload.messages ?? []).filter(message => message?.source?.kind === 'user');
+    const inputs = claimed.length ? claimed.map(message => ({ id: message.id, text: contentText(message.content).trim() }))
+      : [userForTurn(session, turn, null) ?? user];
     const query = user.text;
     let text = null;
     try {
-      diagnostic('prestep-send');
       payload.agent[Symbol.for('weftmate.memoryRecallPending')] = true;
+      const keys = inputs.map(input => input.id ?? digest(input.text));
+      if (keys.some(key => !explicit?.seen.has(key)) && inputs.some(input => possibleForgetRequest(input.text))) {
+        const input = { id: inputs.at(-1).id, text: inputs.map(input => input.text).join('\n') };
+        const key = digest(keys.join('|'));
+        explicit ??= { turn, message: '', context: '', reported: false, seen: new Set(), results: new Map() };
+        for (const id of keys) explicit.seen.add(id);
+        explicitActions.set(payload.agent, explicit);
+        const result = await bridge.request('tool', { sessionId: session.id, turn,
+          tool: { name: 'memory_forget_request', arguments: {}, source: input,
+            requestId: `memory-tool:${digest(`${session.id}|${turn}|${key}|forget-request`)}` } }, payload.signal)
+          .catch(() => ({ state: 'unavailable', message: '这次还没忘掉，请稍后再试。' }));
+        for (const id of keys) explicit.results.set(id, result);
+        // A nomination can be a translation, quotation, condition or question.
+        // Such messages still receive the normal model reply, with no deletion receipt.
+        if (result.state === 'no_action') {
+          explicit.context += '【本轮删除授权核对】结合整条消息，当前没有直接、无条件的删除授权。没有删除，也没有提交或排队遗忘；不要调用遗忘工具或声称稍后会删除。请正常完成当前翻译、解释、提问或条件确认。\n';
+        } else {
+          explicit.reported = false; explicit.message += result.message ?? '这次还没忘掉，请稍后再试。';
+          explicitActions.set(payload.agent, explicit);
+          rememberReply(payload.agent, turn, explicit.message);
+        }
+      }
+      diagnostic('prestep-send');
       const result = await bridge.request('recall', { sessionId: session.id, turn, query,
         userMessageId: user.id }, payload.signal);
       if (result.memoryPolicy?.resetContext) {
@@ -360,6 +429,8 @@ export function apply(ctx) {
       // A failed bridge clears this step's memory rather than reusing prior data.
     }
     finally { delete payload.agent[Symbol.for('weftmate.memoryRecallPending')]; }
+    if (explicit?.turn === turn && explicit.message) text = `【本轮遗忘操作的实际结果】${explicit.message}\n这项操作已由宿主核对处理，无需重复调用；如实说明结果，并继续回答用户本轮其余请求。\n` + (text ?? '');
+    if (explicit?.turn === turn && explicit.context) text = explicit.context + (text ?? '');
     if (text === null) return clearedDecision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
     diagnostic('prestep-factory-ready');
@@ -369,7 +440,7 @@ export function apply(ctx) {
       source: { kind: 'plugin', plugin: name, form: 'snapshot',
         sections: [{ name: 'weftmate-personal-memory', text: background }] },
     });
-    session[Symbol.for('weftmate.memoryRecall')].messageId = memoryMessage.id;
+    (session[Symbol.for('weftmate.memoryRecall')] ??= { turn, memories: [] }).messageId = memoryMessage.id;
     diagnostic('prestep-message-created');
     return { ...clearedDecision, messages: backgroundBeforeUser(messages, [memoryMessage]) };
   }, { prepend: true });

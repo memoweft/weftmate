@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Isolated real Electron/DSH/account/Core startup, without inference or real user data. */
 import assert from 'node:assert/strict';
@@ -11,8 +12,8 @@ if (process.platform !== 'win32' || process.env.WEFTMATE_REAL_MEMORY_HOST_START 
   throw new Error('Set WEFTMATE_REAL_MEMORY_HOST_START=1 for isolated model-free Electron startup.');
 }
 const repository = dirname(fileURLToPath(new URL('../../package.json', import.meta.url)));
-const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
-const pythonPath = 'D:/AIProjects/MemoWeft/Core/py/src';
+const python = requireMemoWeftPath('python');
+const pythonPath = requireMemoWeftPath('source');
 if (!existsSync(python)) throw new Error('MemoWeft Core Python runtime is unavailable');
 const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-host-'));
 assert.ok(realpathSync(root).startsWith(realpathSync(tmpdir()) + sep));

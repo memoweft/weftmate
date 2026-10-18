@@ -12,6 +12,8 @@ jobs:
     name: Pinned DSH vendor unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,6 +25,9 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Install Electron display dependencies
         run: |
           npx playwright install --with-deps chromium
@@ -31,9 +36,21 @@ jobs:
           node node_modules/electron/install.js
           sudo chown root:root node_modules/electron/dist/chrome-sandbox
           sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
-      - name: Read production DSH pin
+      - name: Read production DSH and Core pins
         run: |
           node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('tests/contract/dsh-pin.json')); fs.appendFileSync(process.env.GITHUB_ENV, 'DSH_PIN='+p.commit+'\n');"
+          node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('scripts/memory-runtime/lock.json')); fs.appendFileSync(process.env.GITHUB_ENV, 'MEMOWEFT_CORE_PIN='+p.core.commit+'\n');"
+      - uses: actions/checkout@v4
+        with:
+          repository: memoweft/memoweft
+          ref: ${{ env.MEMOWEFT_CORE_PIN }}
+          path: .local/vendor-memoweft-core
+          persist-credentials: false
+      - name: Install pinned Core for real plugin bridge tests
+        run: |
+          python -m pip install ./.local/vendor-memoweft-core/py
+          python -c "import sys; print('WEFTMATE_TEST_MEMOWEFT_PYTHON=' + sys.executable)" >> "$GITHUB_ENV"
+          echo "WEFTMATE_TEST_MEMOWEFT_SOURCE=$GITHUB_WORKSPACE/.local/vendor-memoweft-core/py/src" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           repository: deepseek-ai/deepseek-harness
@@ -64,6 +81,7 @@ jobs:
           WEFTMATE_DSH_CHECKOUT: ${{ github.workspace }}/.local/relay-dsh
       - name: Required pinned vendor suite
         run: |
+          node --input-type=module -e "import { memoWeftTestEnvironment } from './tests/helpers/memoweft-environment.mjs'; const core=memoWeftTestEnvironment(); if (!core.available) throw new Error(core.skipReason);"
           dbus-run-session -- bash -euo pipefail -c '
             eval "$(printf "%s" "synthetic-ci-keyring" | gnome-keyring-daemon --unlock --components=secrets)"
             eval "$(gnome-keyring-daemon --start --components=secrets)"

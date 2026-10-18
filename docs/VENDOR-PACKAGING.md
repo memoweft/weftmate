@@ -27,6 +27,7 @@ npm run dist:win:candidate -- `
 - `vendor:dsh` 自动构建固定提交与随仓补丁，并把工作树的 `vendor/dsh-runtime` 联接到共享缓存；缺失、升级固定提交或增删改补丁后运行 `npm run vendor:dsh`；同身份缓存损坏时按下节保留现场并人工挪开；候选构建只校验已有运行时，夜间的 `vendor-tests` 阶段会重建缺失或过期运行时；
 - `vendor:verify` 检查版本、文件、依赖闭包和启动行为；
 - `dist:win` 把已验证的 DSH 运行时放入 Windows 安装包；
+- 所有 electron-builder 入口的共享 `beforePack` 显式应用并核验 [CSR 依赖补丁](../patches/root-csr/README.md)，不依赖 `postinstall`；归档检查再核对实际打进去的依赖完整哈希，未知版本或哈希拒绝构建并要求重新评估补丁；
 - `dist:win:candidate` 先验证现有 vendor，再使用无 reparse point（重解析点）的隔离暂存目录构建，并审计安装包闭包、开发机路径、用户数据和凭据文件；
 - DSH 版本、脚本版本和依赖闭包必须在每次构建时从当前 pin（固定版本文件）与生成的 manifest（清单）读取；长期文档不保存会过期的 commit、包数量或候选路径。
 
@@ -50,7 +51,7 @@ Windows 安装、更新、卸载、数据保留、诊断和恢复的当前边界
 
 发货用的固定 DSH = `tests/contract/dsh-pin.json` 的提交 **加上** `patches/dsh/*.patch`（文件名以固定提交前缀开头）。只按固定提交构建、不打这些补丁，得到的不是产品实际使用的运行时——例如首屏输入区依赖的 `data-weftmate-hero-composer` 布局接缝就来自 `…-stage3-hero-composer-carry.patch`。
 
-- 一条命令：`npm run vendor:dsh`。脚本从 `WEFTMATE_DSH_CHECKOUT` 或本机惯例目录读取包含固定提交的 Git 对象，创建独立 clone（克隆副本），固定检出、按文件名顺序打全部补丁、安装锁定依赖并编译，再装配运行时。主检出的工作区、分支和配置均不改动；不再要求手工先打补丁或编译。
+- 一条命令：`npm run vendor:dsh`。脚本从调用者显式设置的 `WEFTMATE_DSH_CHECKOUT` 读取包含固定提交的 Git 对象，创建独立 clone（克隆副本），固定检出、按文件名顺序打全部补丁、安装锁定依赖并编译，再装配运行时。主检出的工作区、分支和配置均不改动；不再要求手工先打补丁或编译。
 - 升级固定提交时，每个补丁要么已被上游吸收后删除，要么改名为新提交前缀并重新生成；不允许留下打不上的补丁。
 - 新增补丁必须同时有一条依赖它的测试（如 `tests/weftmate-conversation-surface.test.ts`），这样漏打补丁会在 vendor 测试里变红。
 

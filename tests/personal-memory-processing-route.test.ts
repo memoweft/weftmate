@@ -4,12 +4,217 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs'
+import { recallDateCases } from './fixtures/recall-date-contract.ts'
+import legacyRecall from './fixtures/legacy-recall-output.json' with { type: 'json' }
+import unheadedRecall from './fixtures/legacy-unheaded-output.json' with { type: 'json' }
+import escapeCases from './fixtures/recall-escape-contract.json' with { type: 'json' }
+import { renderRecallReference } from './fixtures/recall-escape-reference.mjs'
 
 const ownerA = 'owner-00000000-0000-4000-8000-000000000001'
 const ownerB = 'owner-00000000-0000-4000-8000-000000000002'
 const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup', 'query_jobs']
+
+for (const preference of ['zh', 'en', undefined, 'unavailable'] as const) test(`G9 personal initialize uses UI locale: ${preference}`, async t => {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-language-'))
+  const languages: string[] = []
+  let current = preference
+  let child: object | null = {}
+  const manager = createPersonalMemoryManager({ root, enabled: true,
+    python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
+    baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'synthetic',
+    language: async () => { if (current === 'unavailable') throw new Error('unavailable'); return current },
+    rpcFactory: () => ({ get child() { return child }, async close() {}, async request(method, params = {}) {
+      if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods: required }
+      if (method === 'initialize') {
+        languages.push(params.lang)
+        return { runtime: { subject_id: ownerA, db_path: join(params.dsh_home, 'memoweft', 'memoweft.sqlite3') },
+          capabilities: { subject_id: ownerA, methods: required, services: { command: { operations: [] } } } }
+      }
+      if (method === 'health') return { runtime: { subject_id: ownerA, route_ready: true } }
+      return {}
+    } }) })
+  t.after(async () => { await manager.close(); rmSync(root, { recursive: true, force: true }) })
+  await manager.query(ownerA, 'query_world', { operation: 'revision' })
+  current = preference === 'en' ? 'zh' : 'en'
+  await manager.query(ownerA, 'query_world', { operation: 'revision' })
+  assert.deepEqual(languages, [preference === 'en' ? 'en' : 'zh'], 'existing process retains its initialization language')
+  child = null
+  await manager.query(ownerA, 'query_world', { operation: 'revision' })
+  assert.deepEqual(languages, [preference === 'en' ? 'en' : 'zh', current], 'a recreated bridge reads the latest preference')
+})
+
+function recallContractManager(t: any, preview: any, recallMaxChars = 1200) {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-recall-format-'))
+  const manager = createPersonalMemoryManager({ root, enabled: true,
+    python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
+    baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'synthetic',
+    recallMaxItems: 5, recallMaxChars,
+    rpcFactory: () => ({ child: {}, async close() {}, async request(method, params = {}) {
+      if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods: required }
+      if (method === 'initialize') return {
+        runtime: { subject_id: ownerA, db_path: join(params.dsh_home, 'memoweft', 'memoweft.sqlite3') },
+        capabilities: { subject_id: ownerA, methods: required, services: { command: { operations: [] } } } }
+      if (method === 'health') return { runtime: { subject_id: ownerA, route_ready: true } }
+      if (method === 'query_world') { assert.equal(params.operation, 'revision'); return { world_revision: 8 } }
+      if (method === 'preview_recall') return { world_revision: 8, preview }
+      if (method === 'query_interactions') return { rendered_context: '' }
+      return {}
+    } }) })
+  t.after(async () => { await manager.close(); rmSync(root, { recursive: true, force: true }) })
+  return manager
+}
+
+for (const fixture of legacyRecall.cases) test(`G9 legacy manager matches main output: ${fixture.name}`, async t => {
+  const manager = recallContractManager(t, {
+    selected_item_ids: [['cognition', 'first'], ['event', 'second']], rendered_recall: fixture.renderedRecall,
+    pending_corrections: fixture.pending ? [{ evidence_id: 'synthetic-correction',
+      text: 'Synthetic correction. '.repeat(80), created_at: '2026-10-17T00:00:00Z' }] : [],
+  }, fixture.budget)
+  const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+  assert.deepEqual(result, fixture.expected, `must exactly match original main ${legacyRecall.baseline}`)
+})
+
+for (const fixture of unheadedRecall.cases) test(`G9 all non-English manager inputs match main: ${fixture.name}`, async t => {
+  const manager = recallContractManager(t, {
+    selected_item_ids: fixture.pairs, rendered_recall: fixture.renderedRecall,
+    pending_corrections: fixture.pending ? [{ evidence_id: 'synthetic-correction',
+      text: 'Synthetic correction. '.repeat(80), created_at: '2026-10-17T00:00:00Z' }] : [],
+  }, fixture.budget)
+  const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+  assert.deepEqual(result, fixture.expected, `must exactly match original main ${unheadedRecall.baseline}`)
+})
+
+const formatCases = [
+  { name: 'English first line rejects unescaped Chinese body headers even when the English count matches',
+    claims: ['Memory: [2026-01-06] First body.\n记忆：正文中的中文标题', 'Memory (past): [Jan 06, 2026] Second body.'],
+    summaries: null },
+  { name: 'another date style in a new-format body stays literal',
+    claims: ['Memory: [2026-01-06] First body.\n[January 6, 2026] A quoted date.\n2026-07-14: Another date line.',
+      'Memory (past): [recorded at: 2026-10-16] Second body.'],
+    summaries: ['[2026-01-06] First body.\n[January 6, 2026] A quoted date.\n2026-07-14: Another date line.',
+      '[recorded at: 2026-10-16] Second body.'] },
+  { name: 'unescaped English header with another date style preserves unpaired original',
+    claims: ['Memory: [2026-01-06] First body.\nMemory: [January 6, 2026] Quoted heading.', 'Memory (past): Second body.'],
+    summaries: null },
+  { name: 'ambiguous new parsing never crosses into the Chinese grammar',
+    claims: ['Memory: First body.\nMemory: Quoted heading.\nMemory (past): Another quoted heading.', '记忆：Second body.'],
+    summaries: null },
+  { name: 'legacy first line keeps main positional behavior without new validation or unescaping',
+    claims: ['记忆：First body.\n记忆：Quoted heading.', '记忆：Second body.'],
+    summaries: ['First body.', 'Quoted heading.'], contextText: '记忆：First body.\n\n记忆：Quoted heading.' },
+]
+for (const fixture of formatCases) test(`G9 format choice: ${fixture.name}`, async t => {
+  const rendered = fixture.claims.join('\n')
+  const pairs = [['cognition', 'first'], ['event', 'second']]
+  const manager = recallContractManager(t, { selected_item_ids: pairs, rendered_recall: rendered })
+  const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+  assert.equal(result.sourceCount, fixture.summaries ? 2 : 0)
+  assert.deepEqual(result.memories, fixture.summaries ? pairs.map(([kind, id], index) => ({ kind, id, summary: fixture.summaries![index] })) : [])
+  assert.equal(result.contextText, fixture.contextText ?? (fixture.summaries ? fixture.claims.join('\n\n') : rendered))
+})
+
+for (const fixture of escapeCases) {
+  if (fixture.unescaped) test(`G9 review manager preserves unpaired original: ${fixture.name}`, async t => {
+    const manager = recallContractManager(t, { selected_item_ids: fixture.items.map(item => [item.kind, item.id]),
+      rendered_recall: fixture.unescaped })
+    const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    assert.equal(result.sourceCount, 0)
+    assert.deepEqual(result.memories, [])
+    assert.equal(result.contextText, fixture.unescaped)
+  })
+  for (const pending of [false, true]) test(`G9 reference-rendered manager keeps decoded bodies (${pending ? 'pending' : 'current'}): ${fixture.name}`, async t => {
+    const manager = recallContractManager(t, { selected_item_ids: fixture.items.map(item => [item.kind, item.id]),
+      rendered_recall: renderRecallReference(fixture.items), pending_corrections: pending ? [{ evidence_id: 'synthetic-correction',
+        text: 'Synthetic correction. '.repeat(80), created_at: '2026-10-17T00:00:00Z' }] : [] })
+    const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    const warning = pending ? 'Already corrected by the user; pending update. The following old content must not be used as a current fact. ' : ''
+    assert.equal(result.sourceCount, fixture.items.length)
+    assert.deepEqual(result.memories, fixture.items.map(item => ({ kind: item.kind, id: item.id, summary: `${warning}${item.body}`.trim().slice(0, 240) })))
+    assert.equal(result.contextText, fixture.items.map(item => `${item.past ? 'Memory (past):' : 'Memory:'}${warning}${item.body}`).join('\n\n'))
+  })
+}
+
+for (const rendered of ['Memory: first\n\\unescaped backslash\nMemory: second']) {
+  test(`G9 malformed new English escapes stay unpaired: ${JSON.stringify(rendered)}`, async t => {
+    const manager = recallContractManager(t, { selected_item_ids: [['cognition', 'first'], ['event', 'second']], rendered_recall: rendered })
+    const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    assert.equal(result.sourceCount, 0)
+    assert.deepEqual(result.memories, [])
+    assert.equal(result.contextText, rendered)
+  })
+}
+
+for (const budgetDelta of [1, 2]) test(`G9 unpaired original obeys the unchanged fragment budget (${budgetDelta})`, async t => {
+  const rendered = 'Memory: first\nMemory: quoted heading\nMemory: second'
+  const manager = recallContractManager(t, { selected_item_ids: [['cognition', 'first'], ['event', 'second']],
+    rendered_recall: rendered }, rendered.length + budgetDelta)
+  const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+  assert.equal(result.sourceCount, 0)
+  assert.deepEqual(result.memories, [])
+  assert.equal(result.contextText, budgetDelta === 2 ? rendered : '', 'keep whole fragments with the same two-character budget allowance as main')
+})
+
+for (const lang of ['en', 'zh'] as const) for (const dated of [false, true]) for (const pending of [false, true]) {
+  test(`G9 manager preserves ${lang} IDs, dates and bodies (${dated ? 'dated' : 'undated'}, ${pending ? 'pending correction' : 'current snapshot'})`, async t => {
+    const root = mkdtempSync(join(tmpdir(), 'weftmate-recall-format-'))
+    const headers = lang === 'en' ? ['Memory:', 'Memory (past):'] : ['记忆：', '记忆（过往）：']
+    const bodies = recallDateCases.map(item => `${dated ? `[${item.date}] ` : ''}${item[lang]}\n${lang === 'en' ? 'Exact continuation.' : '逐字保留的下一行。'}`)
+    const claims = bodies.map((body, index) => `${headers[index % 2]}${body}`)
+    const pairs = [['cognition', 'pet'], ['event', 'games'], ['cognition', 'travel']]
+    let ambiguous = false
+    const manager = createPersonalMemoryManager({ root, enabled: true,
+      python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
+      baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'synthetic',
+      recallMaxItems: 5, recallMaxChars: 1200,
+      rpcFactory: () => ({ child: {}, async close() {}, async request(method, params = {}) {
+        if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods: required }
+        if (method === 'initialize') return {
+          runtime: { subject_id: ownerA, db_path: join(params.dsh_home, 'memoweft', 'memoweft.sqlite3') },
+          capabilities: { subject_id: ownerA, methods: required, services: { command: { operations: [] } } } }
+        if (method === 'health') return { runtime: { subject_id: ownerA, route_ready: true } }
+        if (method === 'query_world') { assert.equal(params.operation, 'revision'); return { world_revision: 8 } }
+        if (method === 'preview_recall') return { world_revision: 8, preview: {
+          selected_item_ids: pairs,
+          rendered_recall: ambiguous ? `${claims[0]}\nMemory: unescaped literal line\n${claims.slice(1).join('\n')}` : claims.join('\n'),
+          // This synthetic source exceeds the separate recent-evidence budget;
+          // the formal claims must still carry their pending-correction warning.
+          pending_corrections: pending ? [{ evidence_id: 'synthetic-correction',
+            text: 'Synthetic correction. '.repeat(80), created_at: '2026-10-17T00:00:00Z' }] : [],
+        } }
+        if (method === 'query_interactions') return { rendered_context: '' }
+        return {}
+      } }) })
+    t.after(async () => { await manager.close(); rmSync(root, { recursive: true, force: true }) })
+    const result = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    const warning = lang === 'en'
+      ? 'Already corrected by the user; pending update. The following old content must not be used as a current fact. '
+      : '已被用户纠正，待更新；以下旧内容不能作为当前事实。'
+    const expectedClaims = pending ? bodies.map((body, index) => `${lang === 'en' ? headers[index % 2] : '记忆：'}${warning}${body}`) : claims
+    assert.equal(result.sourceCount, 3, 'all original IDs must survive the new English format')
+    assert.deepEqual(result.memories, pairs.map(([kind, id], index) => ({ kind, id,
+      summary: `${pending ? warning : ''}${bodies[index]}`.trim().slice(0, 240) })))
+    assert.equal(result.contextText, expectedClaims.join('\n\n'), 'no fact, date or source wording may be invented or rewritten')
+    if (lang === 'en') assert.doesNotMatch(result.contextText, /记忆[：（]/)
+    assert.ok(result.contextText.length <= 1200)
+    ambiguous = true
+    const fallback = await manager.recall(ownerA, { query: 'What changed?', sessionId: 'format-contract', modelTier: 'cloud' })
+    if (lang === 'zh') {
+      const fallbackClaims = [...expectedClaims]
+      fallbackClaims[0] += '\nMemory: unescaped literal line'
+      assert.equal(fallback.sourceCount, 3, 'legacy Chinese parsing keeps the embedded English title in its original body')
+      assert.equal(fallback.contextText, fallbackClaims.join('\n\n'))
+      assert.deepEqual(fallback.memories.map(m => m.id), pairs.map(pair => pair[1]))
+    } else {
+      const original = `${claims[0]}\nMemory: unescaped literal line\n${claims.slice(1).join('\n')}`
+      assert.equal(fallback.sourceCount, 0)
+      assert.deepEqual(fallback.memories, [])
+      assert.equal(fallback.contextText, `${pending ? `Memory:${warning}` : ''}${original}`,
+        'when the English format cannot align the IDs, preserve the original text and the correction warning without changing grammar')
+    }
+  })
+}
 
 test('fixed cold initialization alone can consume the old recall assertion while formation never blocks', async t => {
   let clock = 0

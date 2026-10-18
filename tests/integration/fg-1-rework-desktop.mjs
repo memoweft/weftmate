@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
@@ -19,8 +20,8 @@ import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/ho
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 
 const repository = resolve(import.meta.dirname, '../..');
-const core = 'D:/AIProjects/MemoWeft/Worktrees/fg-1-forget/py/src';
-const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
+const core = requireMemoWeftPath('source');
+const python = requireMemoWeftPath('python');
 const root = mkdtempSync(join(tmpdir(), 'weftmate-fg1-rework-'));
 const profile = join(root, 'profile'), evidence = evidencePath('fg-1/rework');
 mkdirSync(profile); mkdirSync(evidence, { recursive: true });

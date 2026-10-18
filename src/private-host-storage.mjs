@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import { chmod, lstat, mkdir, open, realpath, rename } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import path from 'node:path';
+import { beginErasurePhase, erasurePhase } from './personal-data/diagnostics.mjs';
 
 const WINDOWS_ACL_SCRIPT = String.raw`
 $ErrorActionPreference = 'Stop'
@@ -87,8 +88,9 @@ const identity = info => `${info.dev}:${info.ino}:${info.birthtimeMs}`;
 async function protectWindows(target, kind) {
   const key = `${kind}:${target}`;
   if (protectedPaths.get(key) === identity(await lstat(target))) return;
-  if (protecting.has(key)) return protecting.get(key);
+  if (protecting.has(key)) return erasurePhase('acl_wait', () => protecting.get(key));
   const work = (async () => {
+    const end = beginErasurePhase(kind === 'file' ? 'acl_file' : 'acl_directory');
     try {
       const systemPowerShell = path.join(process.env.SystemRoot ?? 'C:\\Windows',
         'System32', 'WindowsPowerShell', 'v1.0');
@@ -101,7 +103,11 @@ async function protectWindows(target, kind) {
         timeout: 15_000,
       });
       protectedPaths.set(key, identity(await lstat(target)));
-    } catch { throw privateFailure(); }
+      end();
+    } catch (error) {
+      end(error, 'ok', () => error.killed ? 'ACL_PROCESS_KILLED' : Number.isInteger(error.code) ? 'ACL_EXIT_NONZERO' : error.code ?? 'PRIVATE_STORAGE_UNAVAILABLE');
+      throw privateFailure();
+    }
   })().finally(() => protecting.delete(key));
   protecting.set(key, work);
   return work;

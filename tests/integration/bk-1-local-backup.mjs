@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -18,7 +19,7 @@ const evidence = evidencePath('bk-1'); await mkdir(evidence, { recursive: true }
 const { stdout } = await promisify(execFile)('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', "[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"], { windowsHide: true });
 const key = stdout.trim(); assert.ok(key, 'MiMo credential absent');
 const username = `bk-${randomUUID()}`, password = `test-${randomUUID()}-password`, memoryConfig = join(base, 'memory-config.json');
-await writeFile(memoryConfig, JSON.stringify({ python: 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe', pythonPath: 'D:/AIProjects/MemoWeft/Core/py/src', baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', authRef: 'fixture' }));
+await writeFile(memoryConfig, JSON.stringify({ python: requireMemoWeftPath('python'), pythonPath: requireMemoWeftPath('source'), baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', authRef: 'fixture' }));
 await writeFile(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const backend = Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(name => [name, async () => ({})]));
 const prep = await createPersonalAccessService({ root: join(profile, 'personal-access'), port: 0, backend }), started = await prep.start(), setup = await prep.issueSetupGrant();

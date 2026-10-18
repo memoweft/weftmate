@@ -8,6 +8,7 @@
   "type": "module",
   "main": "src/main.mjs",
   "scripts": {
+    "postinstall": "node scripts/patch-root-csr.mjs",
     "site:build": "node scripts/build-site.mjs",
     "site:preview": "node scripts/preview-site.mjs",
     "site:check": "node scripts/check-site.mjs",

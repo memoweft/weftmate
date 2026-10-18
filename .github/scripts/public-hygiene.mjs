@@ -29,6 +29,24 @@ export function textFile(bytes) {
   try { return new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
   catch { return null; }
 }
+
+// OS locations and redaction labels are portable conventions, not developer
+// workspaces. Test fixtures and vendored virtual filesystems are not defaults.
+export function productionPathFindings(file, text) {
+  if (!/^(src|scripts|apps|services)\//.test(file) ||
+      !/\.(?:m?[jt]s|cjs|tsx?|jsx|ps1|py|swift|kt|kts|sh|json|ya?ml)$/i.test(file) ||
+      /(?:^|\/)(?:Tests|tests|test|fixtures|Evidence|render-vendor)(?:\/|$)/.test(file) ||
+      /(?:^|\/)(?:vendor|format-vendor)\.js$/.test(file)) return [];
+  const paths = text.match(/(?<![\w\\])[A-Za-z]:[\\/]+[A-Za-z_<][^\r\n"'`;)\]}]*/g) ?? [];
+  const localDrive = paths.some(value => {
+    const normalized = value.replace(/\\+/g, '/');
+    return !/^[A-Za-z]:\/(?:Windows|ProgramData)(?:\/|$)/i.test(normalized)
+      && !/^[A-Za-z]:\/Program Files(?:[ /]|$)/i.test(normalized)
+      && !/^[A-Za-z]:\/Users\/(?:<user>|runneradmin)(?:\/|$)/i.test(normalized);
+  });
+  const localHome = /(?<![\w:/.-])(?:\/home\/[\w.-]+\/|~\/(?!\.weftmate-orchestrator(?:\/|\b))[\w.-]+\/)/.test(text);
+  return localDrive || localHome ? ['machine-specific path in production; use explicit configuration or a package-relative location'] : [];
+}
 export function repositoryFiles() {
   return execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], {maxBuffer: 16 * 1024 * 1024})
     .toString('utf8').split('\0').filter(Boolean);
@@ -70,7 +88,7 @@ export function checkRepository() {
     for (let path = file; path !== '.'; path = posix.dirname(path)) present.add(path);
     const text = textFile(bytes); if (text === null) continue;
     checked++;
-    const findings = identityFindings(text);
+    const findings = [...identityFindings(text), ...productionPathFindings(file, text)];
     if (findings.length) violations.push({file, findings});
     if (file.endsWith('.md') && !linkExempt.some(prefix => file.startsWith(prefix))) markdown.set(file, text);
   }

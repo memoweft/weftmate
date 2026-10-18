@@ -18,15 +18,16 @@ import { tlsSpki } from '../../../src/personal-relay/tls.mjs';
 
 const enabled = process.env.WEFTMATE_RELAY_E2E === 'true';
 import { relayFixture, freePort, waitFor, processChild } from './relay-fixture.mjs';
+import { closeRelayProcesses } from './relay-processes.mjs';
 const run = promisify(execFile);
 test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth, SSE, history, attachments, reconnect, pin and revoke',
   { skip: !enabled && 'Run with WEFTMATE_RELAY_E2E=true and official frp + HAProxy paths', timeout: 120_000 }, async t => {
-    const { f, root, infra, frontPort, frpDir, procs, frps, close } = await relayFixture(t, { liveClock: true });
+    const { f, root, infra, frontPort, frpDir, procs, frps, close, diagnostics } = await relayFixture(t, { liveClock: true });
     const updatePair = generateKeyPairSync('ed25519');
     const updatePrivateKey = updatePair.privateKey.export({ type: 'pkcs8', format: 'pem' });
     const updatePublicKey = updatePair.publicKey.export({ type: 'spki', format: 'pem' });
     const mobileUiTrustedKeys = { [keyId(updatePublicKey)]: updatePublicKey };
-    let host, stream, fakeTls; const fakeSockets = new Set();
+    let host, stream, fakeTls, scenarioError, failedStatus; const fakeSockets = new Set();
     const wireChunks = [];
     // Capture only the content-plane listener, after HAProxy and before frps.
     f.identity.relay.content.server.on('connection', socket => {
@@ -52,7 +53,8 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
         } };
       host = await createPersonalAccessService({ root:path.join(root,'host'), port:0, backend, mobileUiDir:bundles, mobileUiTrustedKeys,
         cloudIdentity:{issuer:f.config.issuer,allowInsecureLoopback:true},
-        relay:{binary:path.join(frpDir,'frpc'),transportCaFile:path.join(infra,'cert.pem'),developmentTls:true,connectAddress:'127.0.0.1',connectPort:frontPort,diagnostic:error=>t.diagnostic(error.message)} });
+        relay:{binary:path.join(frpDir,'frpc'),transportCaFile:path.join(infra,'cert.pem'),developmentTls:true,connectAddress:'127.0.0.1',connectPort:frontPort,
+          observe:diagnostics.observe,diagnostic:error=>t.diagnostic(error.message)} });
       const started = await host.start();
       assert.match(started.origin,/^http:\/\/127\.0\.0\.1:/);
       for(const listener of [f.identity.relay.control.server,f.identity.relay.content.server])assert.equal(listener.address().address,'127.0.0.1');
@@ -67,8 +69,11 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       assert.equal(setup.status,201,JSON.stringify(setup));
       const local = {cookie:setup.cookie,csrfToken:setup.data.csrfToken};
       const claim = await direct('/cloud/claims',{},local);
+      diagnostics.mark('host.binding.requested');
       assert.equal((await direct('/cloud/binding',{claimId:claim.data.claimId,accessToken:logged.access_token},local)).status,200);
+      diagnostics.mark('host.initial-online.wait');
       await waitFor(()=>host.relayStatus().state==='online', 'frpc did not become online: '+JSON.stringify(host.relayStatus()));
+      diagnostics.mark('host.initial-online.ok');
       const pairing = await direct('/cloud/pairings',{},local); assert.equal(pairing.status,201);
       const base = host.relayStatus().baseUrl, domain = new URL(base).hostname;
       const ca = await readFile(path.join(root,'host','relay-tls','development-ca.pem'));
@@ -142,9 +147,11 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       await waitFor(()=>events.includes('connected'),'SSE initial frame');
       await publishMobileUi({sourceDir:source,outputDir:bundles,uiVersion:'0.2.1',privateKey:updatePrivateKey});
       await waitFor(()=>events.includes('0.2.1'),'SSE update did not arrive');
+      diagnostics.mark('host.reconnect.requested');
       const closed=new Promise(r=>stream.res.once('close',r)); f.identity.relay.control.disconnect(started.hostId); await closed;
       await waitFor(()=>host.relayStatus().state==='online' && frps.logs().split('login').length>2,'Reconnect did not succeed',40_000);
       await waitFor(async()=>{try{return (await request('/status',{headers:auth})).status===200}catch{return false}},'Reconnected route missing');
+      diagnostics.mark('host.reconnect.ok');
       // A separately claimed host attempts the existing domain with its own credential.
       const other=await generateKeyPair('ES256'), otherId='host-relay-other', otherClaim=randomUUID();
       const otherChallenge=await f.api(`${P}/hosts/claims`,{method:'POST',status:200,body:{hostId:otherId,claimId:otherClaim,publicJwk:await exportJWK(other.publicKey),tlsSpki:'b'.repeat(43)}});
@@ -154,8 +161,9 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       const otherCredential=await f.identity.relay.hostRequest('/hosts/relay/credentials',otherId,{});
       const rogueAdmin=await freePort(), rogueFile=path.join(infra,'rogue.toml');
       await writeFile(rogueFile,frpcConfig({credentials:{...otherCredential,serverAddr:'127.0.0.1',serverPort:frontPort,baseUrl:base},localPort:1,
-        transportCaFile:path.join(infra,'cert.pem'),adminPort:rogueAdmin,adminPassword:'isolated-admin'}));
-      const rogue=processChild(path.join(frpDir,'frpc'),['-c',rogueFile]);procs.push(rogue);
+        transportCaFile:path.join(infra,'cert.pem'),adminPort:rogueAdmin,adminPassword:'isolated-admin',logLevel:'info'}));
+      const rogue=processChild(path.join(frpDir,'frpc'),['-c',rogueFile], 'rogue-frpc');procs.push(rogue);
+      diagnostics.mark('rogue-frpc.spawned');
       await waitFor(async()=>{try{const r=await fetch(`http://127.0.0.1:${rogueAdmin}/api/status`,{headers:{authorization:`Basic ${Buffer.from('relay:isolated-admin').toString('base64')}`}});
         return (await r.json()).https?.some(p=>p.status==='start error')}catch{return false}},'Foreign domain was not rejected');
       assert.equal((await request('/status',{headers:auth})).status,200); await rogue.close();
@@ -176,8 +184,10 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       assert.equal((await request('/status',{headers:auth})).status,200);
       // Rotate while live: old sockets close, same origin and pin, fresh frpc resumes.
       const beforeRotate=f.db.prepare('SELECT generation FROM host_relays WHERE host_id=?').get(started.hostId).generation;
+      diagnostics.mark('host.rotation.requested');
       await host.rotateRelayCredential('rotation-e2e');
       await waitFor(()=>host.relayStatus().state==='online','Credential rotation did not reconnect');
+      diagnostics.mark('host.rotation.online');
       assert.equal(f.db.prepare('SELECT generation FROM host_relays WHERE host_id=?').get(started.hostId).generation,beforeRotate+1);
       stream=await request('/app/updates',{headers:auth,streaming:true});stream.res.resume();
       const revoked=new Promise(r=>stream.res.once('close',r));
@@ -198,13 +208,29 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       if(process.env.WEFTMATE_RELAY_REPORT)await writeFile(process.env.WEFTMATE_RELAY_REPORT,JSON.stringify(proofReport,null,2)+'\n');
       t.diagnostic(JSON.stringify(proofReport));
     } catch (error) {
-      for (const proc of procs) t.diagnostic(`sidecar exit=${proc.child.exitCode}; log bytes=${proc.logs().length}`);
-      t.diagnostic(JSON.stringify(host?.relayStatus()));
+      scenarioError = error;
+      try {
+        failedStatus = host?.relayStatus();
+        diagnostics.mark('scenario.failed', { message: error.message });
+        diagnostics.dump(failedStatus);
+      } catch {}
       throw error;
     } finally {
-      stream?.req.destroy(); await host?.close();
-      for(const socket of fakeSockets)socket.destroy();
-      if(fakeTls)await new Promise(r=>{fakeTls.close(r);fakeTls.closeAllConnections()});
-      await close();
+      try {
+        await closeRelayProcesses([
+          { close },
+          { close: () => host?.close() },
+          { close: () => stream?.req.destroy() },
+          { close: async () => {
+            for(const socket of fakeSockets)socket.destroy();
+            if(fakeTls)await new Promise(r=>{fakeTls.close(r);fakeTls.closeAllConnections()});
+          } },
+        ]);
+      } catch (error) {
+        diagnostics.mark('cleanup.failed', { message: error.message });
+        if (!scenarioError) { scenarioError = error; throw error; }
+      } finally {
+        if (scenarioError) diagnostics.dump(failedStatus);
+      }
     }
   });

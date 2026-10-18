@@ -11,6 +11,9 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { mockUx7Requests, prepareUx7Suggestions, ux7Replies } from './ux-7-scenes.mjs';
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
+import { observePageFailures, sceneFailureSummary } from '../../scripts/review-gallery/scene-diagnostics.mjs';
+import { renderingFailureSampler } from '../../scripts/review-gallery/rendering-snapshot.mjs';
+import { prepareMobileRendering } from '../../scripts/review-gallery/mobile-rendering.mjs';
 import { redactEvidenceText } from '../helpers/process-evidence.mjs';
 import { galleryBridge } from '../../scripts/nightly/gallery-bridge.mjs';
 import { startAndroid } from '../../scripts/nightly/android.mjs';
@@ -55,7 +58,7 @@ try {
     const fixture = await startFe1bFixture();
     const candidate = await startTimelineCandidate({daily:true,logicalMobile:true,goals:true, historyCount: 0, interactive: true });
     const context = android ? android.page.context() : await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, colorScheme: theme });
-    const page = android?.page || await context.newPage(), errors = [];let mainFixture,suggestionFixture,renderingFixture;
+    const page = android?.page || await context.newPage(), errors = [];let mainFixture,suggestionFixture,renderingFixture,renderingDiagnostics;
     try {
       const bridge = mobileBridge(fixture, theme);
       currentBridge = bridge;
@@ -78,7 +81,8 @@ try {
       const conversation = title => button(new RegExp(`^${title} [0-9]`));
       const shot = async (scene, prepare, current = page) => {
         if ((onlyScene && scene !== onlyScene) || android && catalog.scenes.find(row => row.id === scene).unavailable?.includes('android')) return null;
-        const record = await runScene({ page:current, out, platform:android?'android':'mobile-web',scene,theme,prepare,screenshot:android?()=>android.screenshot(scene,theme):undefined });
+        const record = await runScene({ page:current, out, platform:android?'android':'mobile-web',scene,theme,prepare,screenshot:android?()=>android.screenshot(scene,theme):undefined,pageDiagnostics:scene==='rendering'?renderingDiagnostics:undefined,
+          failureSampler:scene==='rendering'?renderingFailureSampler(current,()=>android?android.entryUrl:renderingFixture?.mobileUrl):undefined });
         if (android && scene === 'next-suggestions' && record.status === 'failed') {
           const support = await current.evaluate(()=>({abortAny:typeof AbortSignal.any,webView:navigator.userAgent.match(/Chrome\/([0-9.]+)/)?.[1] || 'unknown'}));
           if (support.abortAny !== 'function') {
@@ -86,7 +90,7 @@ try {
             await writeFile(join(out,`review-android-${scene}-${theme}.json`),JSON.stringify(record,null,2)+'\n');
           }
         }
-        if(record.status === 'failed') captureFailures.push({scene,theme,reason:record.reason});
+        if(record.status === 'failed') captureFailures.push(sceneFailureSummary(record));
         return record;
       };
       // LG-1b account-first login; authentication below remains independent.
@@ -122,6 +126,7 @@ try {
       for (const scene of catalog.scenes.filter(row => !['login', 'question','main-chat','activity','goals','library','rendering','next-suggestions'].includes(row.id) && (!onlyScene || row.id === onlyScene))) await shot(scene.id, preparations[scene.id]);
       // FE-1a's real question projection supplies the missing FE-1b question fixture.
       const questionPage = android?.page || await context.newPage(); questionPage.setDefaultTimeout(30000);
+      renderingDiagnostics = observePageFailures(questionPage);
       if (android) await questionPage.unrouteAll({ behavior: 'ignoreErrors' });
       await questionPage.route('**/bridge', async route => {
         const body = route.request().postDataJSON();
@@ -137,8 +142,7 @@ try {
           phase='session-list';await questionPage.evaluate(()=>listSharedSessions());
           phase='drawer-open';await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();
           phase='session-select';await questionPage.getByRole('button',{name:'渲染样张',exact:true}).click();
-          phase='heading-scroll';await questionPage.getByRole('heading',{name:'公式与图表',exact:true}).scrollIntoViewIfNeeded();
-          phase='diagram-ready';await questionPage.locator('.render-diagram img').waitFor();
+          await prepareMobileRendering(questionPage, next => { phase=next; });
         } catch(error) {error.scenePhase=phase;throw error;}
       },questionPage);
       await shot('library', async () => { await navigate(questionPage, candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^成果库(?:，|$)/}).click();await questionPage.getByRole('button',{name:'预览 项目进度报告.md',exact:true}).waitFor(); },questionPage);
@@ -187,7 +191,7 @@ try {
       },mainPage);
       if (errors.length) themeErrors.push({theme,errors:errors.map(error => redactEvidenceText(error))});
       console.log(`Mobile ${theme}: scene outcomes recorded.`);
-    } finally { if (!android) await context.close(); await fixture.close(); await candidate.close();await mainFixture?.close();await suggestionFixture?.close();await renderingFixture?.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});if(suggestionFixture)await rm(suggestionFixture.root,{recursive:true,force:true}); }
+    } finally { renderingDiagnostics?.dispose(); if (!android) await context.close(); await fixture.close(); await candidate.close();await mainFixture?.close();await suggestionFixture?.close();await renderingFixture?.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});if(suggestionFixture)await rm(suggestionFixture.root,{recursive:true,force:true}); }
   }
   if(themeErrors.length) throw Error('Mobile renderer failed: ' + JSON.stringify(themeErrors));
   if(captureFailures.length) throw Error('Mobile scenes failed: ' + JSON.stringify(captureFailures));

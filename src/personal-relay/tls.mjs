@@ -4,7 +4,8 @@ import { request as httpRequest } from 'node:http';
 import { readFile, writeFile, access } from 'node:fs/promises';
 import { boundedCommand } from '../personal-update/watchdog-commands.mjs';
 import path from 'node:path';
-import CSR from '@root/csr';
+import { createCsr } from './csr.mjs';
+import { ensureCsrPatched } from './csr-integrity.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 
 export const tlsSpki = certificate => createHash('sha256').update(new X509Certificate(certificate)
@@ -13,6 +14,7 @@ export const tlsSpki = certificate => createHash('sha256').update(new X509Certif
 // CSR always uses S1b's existing content key, so issuance/renewal keeps the pin.
 export async function createHostCsr({ root, domain, privateJwk }) {
   if (!/^h-[a-f0-9]{32}\.[a-z0-9.-]+$/.test(domain)) throw new Error('Invalid claimed domain');
+  ensureCsrPatched();
   const dir = path.join(root, 'relay-tls');
   await ensurePrivateDirectory(dir);
   const keyFile = path.join(dir, 'key.pem'), csrFile = path.join(dir, 'host.csr');
@@ -21,7 +23,7 @@ export async function createHostCsr({ root, domain, privateJwk }) {
   await ensurePrivateFile(keyFile);
   const configFile = path.join(dir, 'csr.cnf');
   await writeFile(configFile, `[req]\nprompt=no\ndistinguished_name=dn\nreq_extensions=ext\n[dn]\nCN=${domain}\n[ext]\nsubjectAltName=DNS:${domain}\nextendedKeyUsage=serverAuth\n`, { mode: 0o600 });
-  await writeFile(csrFile, await CSR.csr({ jwk: privateJwk, domains: [domain], encoding: 'pem' }), { mode: 0o600 });
+  await writeFile(csrFile, await createCsr({ jwk: privateJwk, domains: [domain], encoding: 'pem' }), { mode: 0o600 });
   await ensurePrivateFile(csrFile);
   return { keyFile, csrFile, configFile, dir };
 }

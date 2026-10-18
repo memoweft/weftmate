@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
@@ -16,8 +17,8 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 export const run = promisify(execFile);
-export const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
-export const core = 'D:/AIProjects/MemoWeft/Core/py/src';
+export const python = requireMemoWeftPath('python');
+export const core = requireMemoWeftPath('source');
 export const repository = resolve(import.meta.dirname, '../..');
 export const evidence = evidencePath('ia-2b');
 export const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
