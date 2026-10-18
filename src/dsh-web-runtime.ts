@@ -429,6 +429,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-conversation-context.mjs'), join(dir, 'plugins', 'weftmate-personal-conversation-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-task-control.mjs'), join(dir, 'plugins', 'weftmate-personal-task-control.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-schedules.mjs'), join(dir, 'plugins', 'weftmate-personal-schedules.mjs')],
+    [join(PLUGINS_DIR, 'personal-schedule-query.mjs'), join(dir, 'plugins', 'personal-schedule-query.mjs')],
     [join(here, 'personal-access', 'schedules-native.mjs'), join(dir, 'personal-access', 'schedules-native.mjs')],
     [join(here, 'personal-access', 'goals-native.mjs'), join(dir, 'personal-access', 'goals-native.mjs')],
     [join(here, 'personal-access', 'schedules-calendar.mjs'), join(dir, 'personal-access', 'schedules-calendar.mjs')],
@@ -1207,6 +1208,8 @@ export class DshWebRuntime {
   private child: ChildProcess | undefined
   private originValue: string | null = null
   private closed = false
+  private readonly preflightChildren = new Set<ChildProcess>()
+  private prepared: Promise<SecureCompositionSnapshot | undefined> | undefined
   private startInFlight: Promise<string> | undefined
   private closeInFlight: Promise<void> | undefined
   private respawnTimer: NodeJS.Timeout | undefined
@@ -1394,7 +1397,7 @@ export class DshWebRuntime {
     const args = [...spec.nodeArgs, spec.bin, '--profile', this.opts.profileName,
       ...this.opts.patchFiles.flatMap((file) => ['--patch', file]), '--dump-config']
     const stdout = await new Promise<string>((resolve, reject) => {
-      execFile(spec.command, args, {
+      const child = execFile(spec.command, args, {
         cwd: spec.cwd,
         env: this.childEnv(),
         windowsHide: true,
@@ -1406,6 +1409,11 @@ export class DshWebRuntime {
           return
         }
         resolve(String(output))
+      })
+      this.preflightChildren.add(child)
+      child.once('close', () => {
+        this.closedChildren.add(child)
+        this.preflightChildren.delete(child)
       })
     })
     try {
@@ -2291,7 +2299,7 @@ export class DshWebRuntime {
     const row = message as Record<string, unknown>
     if (row.protocol !== 'weftmate.personal-schedules.v1' || typeof row.id !== 'string' ||
         !/^schedule-[0-9a-f-]{36}$/.test(row.id) || typeof row.sessionId !== 'string' ||
-        !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) || !['context', 'execute', 'health_query'].includes(String(row.action))) return
+        !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) || !['context', 'execute', 'health_query', 'schedule_list'].includes(String(row.action))) return
     if (this.closed || this.child !== child || this.closedChildren.has(child) || !this.opts.personalScheduleHandler) return
     const respond = (value: object) => { if (child.connected && this.child === child) child.send({ protocol: row.protocol, id: row.id, ...value }) }
     const input = { action: row.action as string, sessionId: row.sessionId,
@@ -2683,7 +2691,9 @@ export class DshWebRuntime {
   /** Every boot path, including crash respawn, must pass the secure composition fence. */
   private async preflightThenSpawn(): Promise<string> {
     this.ensureOpen()
-    const snapshot = await this.preflightSecureCredentialComposition()
+    const preparation = this.prepared
+    this.prepared = undefined // A frozen snapshot is consumed by exactly one boot.
+    const snapshot = await (preparation ?? this.preflightSecureCredentialComposition())
     this.ensureOpen()
     if (snapshot !== undefined && this.opts.testOnlyAfterSecureCompositionSnapshot !== undefined) {
       await this.opts.testOnlyAfterSecureCompositionSnapshot(Object.freeze({ digest: snapshot.digest, entries: snapshot.entries }))
@@ -2719,6 +2729,29 @@ export class DshWebRuntime {
     this.respawnTimer.unref?.()
   }
 
+  /** Prepare files and a frozen CLI dump only. No application/plugin boot or listener. */
+  async prepare(): Promise<void> {
+    this.ensureOpen()
+    if (this.prepared === undefined) {
+      this.prepared = this.prepareProfile().then(() => this.preflightSecureCredentialComposition())
+    }
+    await this.prepared
+    this.ensureOpen()
+  }
+
+  private async prepareProfile(): Promise<void> {
+    this.ensureOpen()
+    await mkdir(this.opts.homeDir, { recursive: true })
+    this.ensureOpen()
+    await mkdir(this.opts.workspaceDir, { recursive: true })
+    this.ensureOpen()
+    const profileResult = await writeWebProfile(this.opts.homeDir, this.opts.profileName, DEFAULT_PROFILE_BUNDLES, this.opts.profilePolicy)
+    this.ensureOpen()
+    if (profileResult !== 'unchanged') {
+      this.opts.log(`[dsh] profile ${this.opts.profileName} ${profileResult === 'created' ? '已写入' : '已修复'}（${this.opts.homeDir}）`)
+    }
+  }
+
   /**
    * 懒启动：写 profile → spawn 官方 CLI → 等 URL 行。失败自动重试（3 次内 1s 间隔）。
    * 已就绪且子进程活着时幂等返回当前 origin。
@@ -2729,15 +2762,7 @@ export class DshWebRuntime {
     if (this.startInFlight !== undefined) return this.startInFlight
     const run = async (attempt: number): Promise<string> => {
       this.ensureOpen()
-      await mkdir(this.opts.homeDir, { recursive: true })
-      this.ensureOpen()
-      await mkdir(this.opts.workspaceDir, { recursive: true })
-      this.ensureOpen()
-      const profileResult = await writeWebProfile(this.opts.homeDir, this.opts.profileName, DEFAULT_PROFILE_BUNDLES, this.opts.profilePolicy)
-      this.ensureOpen()
-      if (profileResult !== 'unchanged') {
-        this.opts.log(`[dsh] profile ${this.opts.profileName} ${profileResult === 'created' ? '已写入' : '已修复'}（${this.opts.homeDir}）`)
-      }
+      if (this.prepared === undefined) await this.prepareProfile()
       try {
         return await this.preflightThenSpawn()
       } catch (error) {
@@ -2771,7 +2796,8 @@ export class DshWebRuntime {
     this.child = undefined
     this.originValue = null
     // 同一 Promise 对并发 close 复用；快照在 closed fence 之后取得，之后不可能再登记新 child。
-    const registered = [...this.children]
+    this.prepared = undefined
+    const registered = [...this.children, ...this.preflightChildren]
     for (const child of registered) {
       this.invalidatePersonalRuntime(child)
       this.failCredentialRequests(child)
