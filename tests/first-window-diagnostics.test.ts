@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawn } from 'node:child_process';
-import { once } from 'node:events';
+import { once, EventEmitter } from 'node:events';
 import { mkdtempSync, appendFileSync, writeFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createHostLog } from '../src/host-log.mjs';
-import { waitForFirstWindow, summarizeDescendants } from './helpers/first-window-diagnostics.mjs';
+import { waitForFirstWindow, waitForPersonalWindow, summarizeDescendants } from './helpers/first-window-diagnostics.mjs';
 import { installedSmokeFailureSummary } from '../scripts/nightly/installed-smoke-diagnostics.mjs';
 
 const timeout = () => Object.assign(new Error('original firstWindow timeout'), { name: 'TimeoutError' });
@@ -194,4 +194,66 @@ test('frozen rejection still publishes safe metadata and preserves exact error i
   const error = Object.freeze(timeout()), published: string[] = [];
   await assert.rejects(waitForFirstWindow({ app: application({ pid: -1 }, error), profile: '', publish: value => published.push(value) }), value => value === error);
   assert.equal(published.length, 1); assert.match(published[0], /"state":"unavailable"/);
+});
+
+class PreparingDesktop extends EventEmitter {
+  timeout = 30000;
+  committed = false;
+  loaded = false;
+  waits: any[] = [];
+  setDefaultTimeout(value: number) { this.timeout = value; }
+  waitForURL(pattern: string, options: any = {}) {
+    this.waits.push({ pattern, ...options, budget: options.timeout ?? this.timeout });
+    const event = options.waitUntil === 'commit' ? 'commit' : 'load';
+    if (event === 'commit' ? this.committed : this.loaded) return Promise.resolve();
+    return new Promise<void>((resolve, reject) => {
+      const ready = () => { clearTimeout(timer); this.off(event, ready); resolve(); };
+      const timer = setTimeout(() => { this.off(event, ready); reject(Object.assign(Error('navigation deadline'), { name: 'TimeoutError' })); }, options.timeout ?? this.timeout);
+      this.on(event, ready);
+    });
+  }
+  commitBusinessPage() { this.committed = true; this.emit('commit'); }
+  finishBusinessPage() { this.loaded = true; this.emit('load'); }
+}
+const flush = () => new Promise(resolve => setImmediate(resolve));
+
+test('a preparation shell does not spend the business page 15s navigation budget', async t => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1000 });
+  const page = new PreparingDesktop(), app = { firstWindow: async () => page };
+  let result, failure;
+  const running = waitForPersonalWindow({ app }).then(value => { result = value; }, error => { failure = error; });
+  await flush();
+  // Real startup is progressing but has not admitted its business surface yet.
+  t.mock.timers.tick(16000); page.commitBusinessPage(); await flush();
+  assert.equal(result, undefined, 'a committed URL alone is not a loaded business page');
+  t.mock.timers.tick(1000); page.finishBusinessPage(); await running;
+  assert.equal(failure, undefined); assert.equal(result, page);
+  assert.deepEqual(page.waits.map(wait => [wait.waitUntil ?? 'load', wait.budget]), [['commit', 30000], ['load', 15000]]);
+});
+
+test('preparation and first-window creation share the original 30s deadline', async t => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1000 });
+  const page = new PreparingDesktop(), app = { firstWindow: () => new Promise(resolve => setTimeout(() => resolve(page), 5000)) };
+  const running = waitForPersonalWindow({ app });
+  const rejection = assert.rejects(running, { name: 'TimeoutError' });
+  t.mock.timers.tick(5000); await flush();
+  assert.equal(page.waits[0].budget, 25000, 'time already spent creating the window is not granted again');
+  t.mock.timers.tick(25000); await rejection;
+});
+
+test('an already loaded legacy business window needs no extra wait', async () => {
+  const page = new PreparingDesktop(); page.commitBusinessPage(); page.finishBusinessPage();
+  assert.equal(await waitForPersonalWindow({ app: { firstWindow: async () => page } }), page);
+  assert.equal(page.timeout, 15000);
+});
+
+test('business-document commit still leaves exactly 15s for loading', async t => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1000 });
+  const page = new PreparingDesktop();
+  const running = waitForPersonalWindow({ app: { firstWindow: async () => page } });
+  const rejection = assert.rejects(running, { name: 'TimeoutError' });
+  await flush(); t.mock.timers.tick(16000); page.commitBusinessPage(); await flush();
+  assert.equal(page.waits[1].budget, 15000);
+  t.mock.timers.tick(14999); await flush(); assert.equal(page.listenerCount('load'), 1);
+  t.mock.timers.tick(1); await rejection; assert.equal(page.listenerCount('load'), 0);
 });

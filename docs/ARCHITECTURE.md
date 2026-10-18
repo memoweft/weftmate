@@ -10,8 +10,31 @@
 2. 主进程创建 `DshWebRuntime`，明确使用产品固定的 DSH（助手运行时）产物。开发树与安装包的产物来源不同，固定依赖身份由 [dsh-pin.json](../tests/contract/dsh-pin.json) 与构建产物清单约束；不能借用本机另一份源码判断安装版能力。
 3. 个人宿主通过 `startPersonalHost()` 启动运行时，迁移模型路由并恢复会话绑定。`ensureSharedRuntime()` 管理同一运行时实例，不为每个模型另起一套 DSH。
 4. 主进程用 `createPersonalAccessBackend()` 组装运行时回调，用 `createPersonalAccessService()` 恢复账户私有存储并组装业务服务。工厂恢复存储，`start()` 才开始监听环回地址。
-5. 个人服务就绪后，桌面模式由 [personal-desktop.mjs](../src/personal-desktop.mjs) 创建窗口，加载个人网页；无窗口模式保留同一宿主服务。非个人宿主分支加载 DSH 自身界面，不能把两种界面入口混为一谈。
+5. 桌面模式先由 [personal-desktop.mjs](../src/personal-desktop.mjs) 创建主窗口，[desktop-startup.mjs](../src/desktop-startup.mjs) 显示本地「准备中」页面。凭据初始化与首窗绘制并行；没有模型凭据和路由、没有备份恢复或手机运行组件的新目录，只并行准备 DSH 文件与冻结配置快照，不启动应用或挂载接口。已有凭据和旧版迁移仍按原顺序执行。个人服务就绪后，同一个窗口接入原有鉴权和个人网页。首次启动仍须等 Chromium 将主密钥写入 `Local State`，通过持久密钥认证、刷盘和关闭文件后才允许保存凭据；失败时保留错误说明，不开放业务页面。托盘启动保持隐藏，准备期间关窗仍收进托盘。无窗口模式保留同一宿主服务；非个人宿主分支加载 DSH 自身界面。
 6. 退出由 `before-quit` 复用同一个异步收尾过程，关闭个人服务、后台工作、记忆与运行时后才放行；运行日志由 [host-log.mjs](../src/host-log.mjs) 记录生命周期与安全诊断。
+
+### 凭据就绪前的能力边界
+
+`finishCredentialStartup()` 成功意味着持久主密钥已通过原有认证、刷盘和关闭文件检查；在这之前，准备页只提供显示、隐藏、退出。采用「接口延后挂载」：`DshWebRuntime.prepare()` 只写运行档案、复制静态插件文件、执行固定 CLI 的 `--dump-config` 并冻结原安全快照。该命令只合成配置，不启动应用、不求值 `!!js`、不挂载插件；运行时 `start()` 在核验后消费同一快照，后续重启仍重新预检。失败或退出时不启动应用，并收掉预检子进程；原有数据不因准备失败而删除。
+
+| 入口 / 能力 | 核验前的处理 |
+|---|---|
+| `GET/HEAD /weftmate/device/state.json`；`POST /weftmate/device/v1/pair`、`/observation` | 运行时 HTTP 监听未创建，连接拒绝 `ECONNREFUSED`，没有 HTTP 状态码；`initDevices()` 未执行，不生成配对令牌、不消费请求、不新增设备或观察记录 |
+| `GET/HEAD /weftmate/status.json`、`/weftmate/perception.json`；`POST /weftmate/update`、`/perception`、`/pet` | 同一监听未创建；主进程的更新、感知及宠物请求文件消费者也未启动，不能写入或执行这些动作 |
+| `/weftmate/api/v1/sessions` 及各会话的 resume/messages/cancel/events/models/approval/history/source/stop-state/rename/fork/memory-cleanup/memory-boundaries/chat-handoff/storage、attachments、questions 子路由 | 网关和原生会话插件均未挂载，无任务、审批、工具、文件或命令执行入口 |
+| `/weftmate/api/v1/workspaces/*`、`models`、`settings/permission`、`diagnostics`、`paths`、`last-errors`、`backup-pause`、`backup-resume` | 同一网关未挂载；包括只读路径和诊断也不提前公开 |
+| `/weftmate/schedules/*`、`/weftmate/goals/*` | 定时任务与目标插件未启动，未恢复、注册或执行原生调度 |
+| `/weftmate/mods/*`（静态窗口、state、projects、assets、request）；`/weftmate/weftmod/*`（panel、control） | 模块、窗口、文件与工具控制接口未挂载；不启动工具子进程 |
+| DSH 自带静态页面、RPC（远程过程调用）、事件流及 WebSocket（双向连接）升级路由 | 应用及统一 WebServer 尚未启动，HTTP 与升级连接均不监听，不只保护 WeftMate 前缀 |
+| `/personal/v1/*`（鉴权、设备、项目、模型、记忆、同步、文件、命令等完整账户接口） | `createPersonalAccessService()` 工厂及 `start()` 在核验后执行；准备期间不恢复业务消费者、不监听个人服务 |
+| 主进程模型调度 / 记忆模型 HTTP 桥 | `startModelScheduler()` 在核验后执行；准备期间没有监听、推理队列或外部模型调用 |
+| DSH 子进程的 credentials / personal-desktop / memory / schedule / conversation-context / approval / project-proof 等 IPC（进程间通信） | 只有配置转储子进程，使用标准输入输出管道，无应用 IPC 载体或插件回调；应用载体在核验后才创建 |
+| 准备页 `weftmateDesktop` 预加载桥；`wm:stage*`、`wm:pet-*`、模块窗口桥及桌面业务处理器 | 函数名可见，业务处理器未注册，调用拒绝 `No handler registered`；不接受配对、密钥、项目或文件操作 |
+| 中继 / frp、云身份与同步、离线投递、云备份、记忆形成和历史导入 | 对应工厂或启动调用均在核验后的个人服务组装 / `start()` 阶段；准备期间不连接服务器、不启用隧道、不写业务数据 |
+| 设备令牌轮换、设备请求轮询、感知采集、更新 / 宠物请求轮询、日备份、原生定时任务 | 消费者和定时器延后启动；备份恢复日志的内部恢复仍在凭据导入前完成，但不启动日备份或云任务 |
+| 托盘、第二实例、本机桌面控制、窗口生命周期 | 准备期间只允许显示、隐藏、退出；更新检查、导出与宠物动作禁用。核验成功才启用相关能力。安装配置校验、异常日志、备份恢复日志和配置文件准备不提供外部业务接口 |
+
+这里选择不提前提供健康 HTTP；准备状态由本地窗口显示。只读健康检查以后若要提前提供，也必须是不含秘密且不启动业务组件的独立接口，不能借用完整运行时。
 
 安装包的运行时组件、记忆启用条件和验收缺口分别见 [记忆运行时说明](../scripts/memory-runtime/README.md) 与 [MEMORY](MEMORY.md)。内置组件不等于全新安装已自动启用记忆。
 
