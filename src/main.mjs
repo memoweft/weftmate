@@ -1,5 +1,5 @@
-import { createDesktopStartup } from './desktop-startup.mjs';
 import { setProcessWarningLog } from './process-output.mjs';
+import { createDesktopStartup } from './desktop-startup.mjs';
 import { usageResponse } from './personal-access/usage-response.mjs';
 import { readFile as readFileAsync, rm as rmAsync, writeFile as writeFileAsync } from 'node:fs/promises';
 import { createLatestFileWriter } from './latest-file-writer.mjs';
@@ -90,7 +90,7 @@ import { applyDesktopConfig, desktopConfigPath } from './desktop-config.mjs';
 import { appBootSignal, prepareAppRollback } from './personal-update/app-rollback.mjs';
 import { initPerception } from './perception.ts';
 import { initDevices } from './devices.ts';
-import { ManagedAiGameRuntime } from './managed-ai-game-runtime.mjs';
+import { ManagedAiGameRuntime, ensureAiGameOwnerIds, AI_GAME_PRINCIPAL_REF, AI_GAME_CONTROLLER_REF } from './managed-ai-game-runtime.mjs';
 import { ModWindowManager } from './mod-window-manager.mjs';
 import { createPersonalAccessBackend } from './personal-access-backend.mjs';
 import { loadPersonalDevelopmentTools } from './personal-development-tools.mjs';
@@ -1529,8 +1529,6 @@ async function bootstrap() {
   // before the managed DSH child is constructed; only ctx.credentials can
   // resolve it afterward. Packaged Stage 3 does not start or imply AI-Game.
   const AI_GAME_CREDENTIAL_REF = 'WEFTMATE_AI_GAME_CAPABILITY_TOKEN';
-  const AI_GAME_PRINCIPAL_REF = 'WEFTMATE_AI_GAME_PRINCIPAL_ID';
-  const AI_GAME_CONTROLLER_REF = 'WEFTMATE_AI_GAME_CONTROLLER_ID';
   const aiGameDevelopmentToken = app.isPackaged
     ? undefined
     : process.env.WEFTMATE_AI_GAME_DEV_TOKEN;
@@ -1558,19 +1556,7 @@ async function bootstrap() {
     // keeps them out of renderer state, URLs, ordinary settings, child env, and
     // logs. The bearer token authenticates requests but never defines ownership.
     try {
-      for (const [ref, prefix] of [
-        [AI_GAME_PRINCIPAL_REF, 'principal'],
-        [AI_GAME_CONTROLLER_REF, 'controller'],
-      ]) {
-        const existingId = configStoreMod?.getCredential?.(ref);
-        if (typeof existingId !== 'string'
-          || !/^[A-Za-z0-9._:-]{1,256}$/.test(existingId)) {
-          configStoreMod?.saveCredential?.(
-            ref,
-            `${prefix}_${randomUUID().replaceAll('-', '')}`,
-          );
-        }
-      }
+      ensureAiGameOwnerIds(configStoreMod);
     } catch {
       console.warn('[weftmate] AI-Game 本机 owner identity 未能持久化；v2 capability 将保持不可用。');
     }
