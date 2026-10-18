@@ -105,14 +105,7 @@
   ${EndIf}
   !endif
 !macroend
-!macro customInit
-  SetOutPath $TEMP
-  ; Upstream's silent section otherwise switches back to all users even when
-  ; /currentuser was explicitly requested. Keep the selected target scope.
-  ${If} ${isForCurrentUser}
-    StrCpy $hasPerMachineInstallation "0"
-  ${EndIf}
-  !insertmacro WeftLoad
+!macro WeftDefaultDirectory
   ; Only a fresh automatically generated per-user destination may be shortened.
   !insertmacro GetDParameter $R0
   ${If} $weftOldUser == ""
@@ -122,6 +115,16 @@
     System::Call '$PLUGINSDIR\WeftInstaller.dll::DefaultDirectory(w "$INSTDIR") w.r0'
     StrCpy $INSTDIR $0
   ${EndIf}
+!macroend
+!macro customInit
+  SetOutPath $TEMP
+  ; Upstream's silent section otherwise switches back to all users even when
+  ; /currentuser was explicitly requested. Keep the selected target scope.
+  ${If} ${isForCurrentUser}
+    StrCpy $hasPerMachineInstallation "0"
+  ${EndIf}
+  !insertmacro WeftLoad
+  !insertmacro WeftDefaultDirectory
   ${IfNot} ${Silent}
     ; The upstream init starts in $INSTDIR. Keep the UI and its Windows DLL
     ; search outside the old app directory while an upgrade removes that tree.
@@ -255,6 +258,9 @@ Var weftOldMachine
       ${If} ${isUpdated}
         Abort
       ${EndIf}
+      ; The range page calls setInstallModePerUser again after customInit.
+      ; Apply the same default after that page, immediately before displaying it.
+      !insertmacro WeftDefaultDirectory
       nsDialogs::Create 1018
       Pop $0
       !ifdef APP_64_UNPACKED_SIZE
