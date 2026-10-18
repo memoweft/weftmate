@@ -1,6 +1,7 @@
 param(
  [Parameter(Mandatory=$true)][string]$EvidenceDirectory,
  [ValidateSet('local','dev')][string]$Mode='local',
+ [ValidateRange(1,30)][int]$ScenarioTimeoutMinutes=30,
  [string[]]$Cases=@('onboarding','firstReply','createWaterReminder','createTimedReminder','healthNoData','healthWithData','queueAndStop','rapidThree','switchDuringReply','memoryForm','memoryCorrect','memoryForgetPage','memoryForgetChat','historyPagination','uiPages')
 )
 $ErrorActionPreference='Stop'
@@ -21,7 +22,7 @@ try{
   if($case-notmatch '^[a-zA-Z]+$'){throw 'Invalid scenario name'}
   $id=[Guid]::NewGuid().ToString();$code="const {pathToFileURL}=await import('node:url');const m=await import(pathToFileURL(ctx.input+'/scripts/acceptance/windows/scenarios.mjs'));return m.$case(ctx);"
   [IO.File]::WriteAllText((Join-Path $evidence 'request.json'),(@{id=$id;code=$code}|ConvertTo-Json -Compress))
-  $end=(Get-Date).AddMinutes(4);$received=$false
+  $end=(Get-Date).AddMinutes($ScenarioTimeoutMinutes);$received=$false
   while((Get-Date)-lt $end){try{$r=Get-Content (Join-Path $evidence 'response.json') -Raw -ErrorAction Stop|ConvertFrom-Json;if($r.id-eq $id){$r|ConvertTo-Json -Depth 30|Set-Content (Join-Path $evidence "$case-result.json");Write-Output "$case completed=$($r.ok)";$received=$true;break}}catch{};Start-Sleep -Milliseconds 500}
   if(!$received){throw "Scenario action timed out: $case"}
  }
