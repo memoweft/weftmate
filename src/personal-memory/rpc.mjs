@@ -8,19 +8,28 @@ const MAX_FRAME_BYTES = 8 * 1024 * 1024;
 const MAX_PENDING = 32;
 
 const failed = (code) => Object.assign(new Error(code), { code });
+// Permission/resource errors may be temporary. Do not interpret Windows'
+// generic UNKNOWN as a native bad-executable code that Node did not expose.
+const executionFailure = cause => ({ executionFailure:
+  ['ENOENT', 'ENOEXEC'].includes(cause?.code) });
 
 /** One official MemoWeft RPC v2 stdio transport for one account. */
 export class MemoWeftRpc {
-  constructor({ python, pythonPath, env = {}, requestTimeoutMs = 15_000 }) {
+  constructor({ python, pythonPath, env = {}, requestTimeoutMs = 15_000,
+    pythonArgs = ['-m', 'memoweft.integrations.dsh_bridge'] }) {
     if (typeof python !== 'string' || !python || typeof pythonPath !== 'string' || !pythonPath ||
         !Number.isInteger(requestTimeoutMs) || requestTimeoutMs < 1_000 || requestTimeoutMs > 60_000) {
       throw failed('MEMORY_CONFIGURATION_INVALID');
     }
     this.python = python;
     this.pythonPath = pythonPath;
+    this.pythonArgs = pythonArgs;
     this.env = env;
     this.requestTimeoutMs = requestTimeoutMs;
     this.child = null;
+    this.started = false;
+    this.closing = false;
+    this.closeFlight = null;
     this.closed = false;
     this.pending = new Map();
     this.buffer = '';
@@ -29,7 +38,12 @@ export class MemoWeftRpc {
   start() {
     if (this.closed) throw failed('MEMORY_CLOSING');
     if (this.child) return;
-    const child = spawn(this.python, ['-m', 'memoweft.integrations.dsh_bridge'], {
+    if (this.closing) throw failed('MEMORY_CLOSING');
+    // One transport owns exactly one process. Only the manager may replace a
+    // disconnected worker, after charging its retry budget and initializing it.
+    if (this.started) throw failed('MEMORY_PROCESS_UNAVAILABLE');
+    this.started = true;
+    const child = spawn(this.python, this.pythonArgs, {
       env: { ...process.env, ...this.env, PYTHONPATH: this.pythonPath },
       stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true,
     });
@@ -38,10 +52,10 @@ export class MemoWeftRpc {
     child.stdout.on('data', (part) => this.consume(String(part)));
     // RPC stderr may contain private source text. It is never forwarded to HTTP or logs.
     child.stderr.resume();
-    child.on('error', () => this.failAll('MEMORY_PROCESS_UNAVAILABLE'));
-    child.on('close', () => {
+    child.on('error', cause => this.failAll('MEMORY_PROCESS_UNAVAILABLE', executionFailure(cause)));
+    child.on('close', (exitCode, signal) => {
       if (this.child === child) this.child = null;
-      this.failAll('MEMORY_PROCESS_UNAVAILABLE');
+      this.failAll('MEMORY_PROCESS_UNAVAILABLE', { processExitCode: exitCode, processSignal: signal });
     });
   }
 
@@ -72,27 +86,29 @@ export class MemoWeftRpc {
       if (frame.protocol !== PROTOCOL || frame.protocol_version !== VERSION || frame.schema_version !== SCHEMA) {
         entry.reject(failed('MEMORY_PROTOCOL_ERROR'));
       } else if (frame.ok === true) entry.resolve(frame.result);
-      else entry.reject(failed(typeof frame.error?.code === 'string' && /^[a-z_]{2,80}$/.test(frame.error.code)
-        ? frame.error.code : 'MEMORY_RPC_ERROR'));
+      else {
+        const coreError = frame.ok === false && typeof frame.error?.code === 'string' && /^[a-z_]{2,80}$/.test(frame.error.code);
+        entry.reject(Object.assign(failed(coreError ? frame.error.code : 'MEMORY_RPC_ERROR'), { coreError, requestMethod: entry.method }));
+      }
     }
   }
 
-  failAll(code) {
+  failAll(code, details = {}) {
     for (const entry of this.pending.values()) {
       clearTimeout(entry.timer);
-      entry.reject(failed(code));
+      entry.reject(Object.assign(failed(code), details));
     }
     this.pending.clear();
   }
 
   request(method, params = {}, timeoutMs = this.requestTimeoutMs) {
-    if (this.closed) return Promise.reject(failed('MEMORY_CLOSING'));
+    if (this.closed || this.closing && method !== 'shutdown') return Promise.reject(failed('MEMORY_CLOSING'));
     if (!/^[a-z_]{2,80}$/.test(method) || !params || typeof params !== 'object' || Array.isArray(params) ||
         !Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 60_000) {
       return Promise.reject(failed('MEMORY_CONFIGURATION_INVALID'));
     }
     if (this.pending.size >= MAX_PENDING) return Promise.reject(failed('MEMORY_BUSY'));
-    try { this.start(); } catch { return Promise.reject(failed('MEMORY_PROCESS_UNAVAILABLE')); }
+    try { this.start(); } catch (cause) { return Promise.reject(Object.assign(failed('MEMORY_PROCESS_UNAVAILABLE'), executionFailure(cause))); }
     const requestId = `weftmate-${randomUUID()}`;
     const frame = { protocol: PROTOCOL, protocol_version: VERSION, schema_version: SCHEMA,
       request_id: requestId, method, params };
@@ -109,13 +125,20 @@ export class MemoWeftRpc {
           requestPhase: 'awaiting-worker-response',
         }));
       }, timeoutMs);
-      this.pending.set(requestId, { resolve, reject, timer });
+      this.pending.set(requestId, { resolve, reject, timer, method });
       try { this.child.stdin.write(data, 'utf8'); }
       catch { clearTimeout(timer); this.pending.delete(requestId); reject(failed('MEMORY_PROCESS_UNAVAILABLE')); }
     });
   }
 
-  async close() {
+  close() {
+    if (this.closeFlight) return this.closeFlight;
+    this.closing = true;
+    this.closeFlight = this.finishClose();
+    return this.closeFlight;
+  }
+
+  async finishClose() {
     if (this.closed) return;
     try { if (this.child) await this.request('shutdown', {}, 3_000); } catch { /* Bounded shutdown. */ }
     this.closed = true;
