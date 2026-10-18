@@ -221,6 +221,8 @@ test(`FIX-50 full review real Core: ${scenario} never reauthorizes incomplete fo
   }
 })
 
+const confirmedScope = async (f: any, kind: string, id: string) => (await f.manager.query(owner, 'preview_forget', { target_kind: kind, target_id: id })).forget_scope
+
 test('FIX-50 full review real Core: the memory page deletes a standalone failed source and completes cleanup', { skip }, async t => {
   const f = await fixture(t), before = await f.world()
   f.reject(true)
@@ -232,10 +234,10 @@ test('FIX-50 full review real Core: the memory page deletes a standalone failed 
   assert.ok(source)
   const revision = (await f.world()).world_revision
   const preview = await f.manager.query(owner, 'preview_forget', { target_kind: 'evidence', target_id: source.evidence_id })
-  assert.deepEqual(preview.items, []); assert.equal(preview.evidence_count, 1)
+  assert.ok(preview.items.every((item: any) => ['interaction_context', 'evidence_context'].includes(item.object_kind))); assert.equal(preview.evidence_count, 1)
   const url = new URL('/personal/v1/memory/evidence/' + source.evidence_id, 'http://synthetic')
   const response = await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname: url.pathname, url,
-    request: { method: 'DELETE' }, readJson: async () => ({ requestId: 'full-review-standalone-delete', expectedWorldRevision: revision }) })
+    request: { method: 'DELETE' }, readJson: async () => ({ requestId: 'full-review-standalone-delete', expectedWorldRevision: revision, forgetScope: preview.forget_scope }) })
   console.log('full-review standalone', JSON.stringify({ status: response.status, receipt: response.body.receipt }))
   assert.equal(response.status, 200)
   assert.equal(response.body.receipt.state, 'applied')
@@ -327,7 +329,7 @@ for (const committed of [true, false]) test(`FIX-50 recovery real Core: a ${comm
   record.plan = await f.manager.planForget(owner, record)
   const target = record.plan.worldTargets[0], key = `${target.kind}:${target.id}`
   const command = { requestId: 'old-committed-command', operation: 'delete_world_item', targetKind: target.kind, targetId: target.id,
-    expectedWorldRevision: record.plan.worldRevision, payload: {} }
+    expectedWorldRevision: record.plan.worldRevision, payload: { forget_scope: record.plan.forgetScopes[key] } }
   if (committed) {
     const receipt = await f.manager.submitCommand(owner, command)
     assert.equal(receipt.receipt.result_state, 'applied')
@@ -473,7 +475,7 @@ test('FIX-50 M3 safe real Core: a legacy applied receipt stays partial and is ne
   assert.ok(plan.retainedUncertainCount > 0); assert.equal(plan.worldTargets.length, 1)
   const target = plan.worldTargets[0], key = `${target.kind}:${target.id}`
   const command = { requestId: 'm3-already-applied', operation: 'delete_world_item', targetKind: target.kind,
-    targetId: target.id, expectedWorldRevision: plan.worldRevision, payload: {} }
+    targetId: target.id, expectedWorldRevision: plan.worldRevision, payload: { forget_scope: plan.forgetScopes[`${target.kind}:${target.id}`] } }
   const committed = await f.manager.submitCommand(owner, command), receipt = committed.receipt ?? committed
   assert.equal(receipt.result_state, 'applied')
   const originalReceipt = { commandId: receipt.command_id, state: receipt.result_state, revision: receipt.after_revision }
@@ -598,7 +600,7 @@ test('FIX-50 M3 page: preview and one atomic command forget every revision and s
   const path = `/personal/v1/memory/items/cognition/${current.item_id}`
   const preview = (await http(path + '/forget-preview')).body
   assert.ok(chain.every((row: any) => preview.items.some((item: any) => item.id === row.item_id)))
-  const forgotten = await http(path, 'DELETE', { requestId: 'm3-page-chain', expectedWorldRevision: preview.worldRevision })
+  const forgotten = await http(path, 'DELETE', { requestId: 'm3-page-chain', expectedWorldRevision: preview.worldRevision, forgetScope: preview.forgetScope })
   assert.equal(forgotten.body.receipt.state, 'applied')
   for (const row of chain) {
     await assert.rejects(http(`/personal/v1/memory/items/cognition/${row.item_id}`), { status: 404 })
@@ -870,7 +872,7 @@ test('FIX-50 review real Core: exact ids cannot expose candidates when recall is
   assert.equal((await f.world()).items[0].item_id, target.item_id)
   const pathname = `/personal/v1/memory/items/cognition/${target.item_id}`
   const deleted = await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname, url: new URL(pathname, 'http://memory'),
-    request: { method: 'DELETE' }, readJson: async () => ({ requestId: 'no-recall-page-delete', expectedWorldRevision: 1 }) })
+    request: { method: 'DELETE' }, readJson: async () => ({ requestId: 'no-recall-page-delete', expectedWorldRevision: 1, forgetScope: await confirmedScope(f, 'cognition', target.item_id) }) })
   assert.equal(deleted.body.receipt.state, 'applied')
   assert.equal((await f.world()).items.length, 0)
 })
@@ -1006,7 +1008,7 @@ test('review-1 real Core: deletion ends a queued correction instead of blocking 
     // The queued correction has read its old action but cannot checkpoint its
     // command until the real Core deletion and host redaction have completed.
     const deleted = await f.manager.submitCommand(owner, { requestId: 'delete-before-retry', operation: 'delete_world_item', targetKind: 'cognition',
-      targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
+      targetId: old.item_id, expectedWorldRevision: 1, payload: { forget_scope: await confirmedScope(f, 'cognition', old.item_id) } })
     assert.equal(deleted.receipt.result_state, 'applied')
   } finally { release(); hook.mock.restore() }
   await f.restart(); f.holdCorrections(false)
@@ -1075,7 +1077,7 @@ test('review-486 real Core: late query selection with different correction text 
     pending = f.tool('memory_correct', { query: '我喜欢喝什么茶', text: newText }, 'late-query-selection', newSource)
     await started
     const deleted = await f.manager.submitCommand(owner, { requestId: 'erase-during-selection', operation: 'delete_world_item',
-      targetKind: 'cognition', targetId: old.item_id, expectedWorldRevision: 1, payload: {} })
+      targetKind: 'cognition', targetId: old.item_id, expectedWorldRevision: 1, payload: { forget_scope: await confirmedScope(f, 'cognition', old.item_id) } })
     assert.equal(deleted.receipt.result_state, 'applied')
     release(); await pending; await f.restart(); await f.manager.flushPending(owner); await f.manager.close()
     const hits: string[] = []
@@ -1103,7 +1105,7 @@ test('review scope real Core: withdrawing an uncorrected source scrubs a pending
   const text = '记住：我的合成收藏编号是Q486。'
   const f = await fixture(t, { seedText: text, cleanupDeletedMemory: async () => { throw Error('synthetic host cleanup unavailable') } })
   const world = await f.world(), old = world.items[0]
-  const deleted = await f.manager.submitCommand(owner, { requestId: 'uncorrected-delete', operation: 'delete_world_item', targetKind: 'cognition', targetId: old.item_id, expectedWorldRevision: world.world_revision, payload: {} })
+  const deleted = await f.manager.submitCommand(owner, { requestId: 'uncorrected-delete', operation: 'delete_world_item', targetKind: 'cognition', targetId: old.item_id, expectedWorldRevision: world.world_revision, payload: { forget_scope: await confirmedScope(f, 'cognition', old.item_id) } })
   assert.equal(deleted.receipt.result_state, 'applied'); assert.equal(deleted.receipt.storage_cleanup.state, 'pending')
   const file = path.join(f.root, 'accounts', owner, 'memory-home/command-journal.json')
   const initialMarker = JSON.parse(await readFile(file, 'utf8')).records['uncorrected-delete']
@@ -1269,7 +1271,7 @@ test('review-4 real Core: deleting through the memory page also erases pending-a
   const current = (await f.world()).items.find((row: any) => row.current_state === 'current')
   const pathname = `/personal/v1/memory/items/cognition/${current.item_id}`
   const deleted = await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname, url: new URL(pathname, 'http://memory'),
-    request: { method: 'DELETE' }, readJson: async () => ({ requestId: 'page-delete', expectedWorldRevision: (await f.manager.status(owner)).worldRevision, deleteConversationSnippets: true }) })
+    request: { method: 'DELETE' }, readJson: async () => ({ requestId: 'page-delete', expectedWorldRevision: (await f.manager.status(owner)).worldRevision, deleteConversationSnippets: true, forgetScope: await confirmedScope(f, 'cognition', current.item_id) }) })
   assert.equal(deleted.body.receipt.state, 'applied')
   const state = await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json'), 'utf8')
   assert.doesNotMatch(state, /红茶/)
