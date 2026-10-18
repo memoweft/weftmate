@@ -386,6 +386,9 @@ extern "C" void __stdcall Attach(HWND parent,int operation) {
   closeControl(s,false);
   SetWindowPos(overlay,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);SetTimer(overlay,1,120,nullptr);
 }
+extern "C" const wchar_t* __stdcall DefaultDirectory(const wchar_t* directory) {
+  selectedDirectory=defaultInstallFolder(directory);return selectedDirectory.c_str();
+}
 extern "C" void __stdcall Ready(HWND parent,const wchar_t* directory,unsigned int kilobytes,const wchar_t* executable,const wchar_t* config,const wchar_t* fallback) {
   Attach(parent,0);auto s=progressSurface;KillTimer(s->window,1);s->ready=true;
   s->title=tr(L"准备安装 WeftMate",L"Install WeftMate");s->body=tr(L"选择安装位置，准备好后即可开始。",L"Choose where to install, then start when you are ready.");
