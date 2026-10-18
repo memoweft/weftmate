@@ -84,3 +84,18 @@ test('known direct computer connects without a relay, but mismatched host identi
   assert.equal(await functions.resolveMobileCloudConnection(client, other), other);
   await assert.rejects(functions.resolveMobileCloudConnection({ ...client, request: async () => ({ hostId: 'wrong-host' }) }, { hostId: 'host-example', status: 'offline' }), error => error.code === 'HOST_TRUST_INVALID');
 });
+
+test('cloud login stays phone-only when an offline computer still has a relay address', async () => {
+  let hostRequests = 0, connected = 0;
+  const client = context().adaptMobileCloudClient({
+    config: { hostId: 'unconnected', issuer: 'https://cloud.example/personal/v1/cloud/oidc' },
+    authorized: async (path: string) => path === '/devices'
+      ? { hosts: [{ hostId: 'offline-computer', status: 'offline' }] }
+      : { hostId: 'offline-computer', status: 'offline', baseUrl: 'https://unavailable.example' },
+    request: async () => { hostRequests++; throw { status: 503, code: 'CLOUD_TLS_UNAVAILABLE' }; },
+    exchange: async () => { throw Error('An offline computer must not supply account login'); },
+  }, async () => { connected++; });
+  assert.equal((await client.exchange()).status, 'cloud_only');
+  assert.equal(hostRequests, 0);
+  assert.equal(connected, 0);
+});
