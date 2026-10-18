@@ -1,14 +1,15 @@
 import { readFile } from 'node:fs/promises';
-import { resolve, dirname, join } from 'node:path';
+import { resolve, dirname, join, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { productionEnvironment, saveDesktopConfig } from '../src/desktop-config.mjs';
 
 /** Parse only literal deployment values; never execute the source task script. */
-export async function productionConfigFromTask({ sourceTaskScript, dataDirectory, rehearsal = false }) {
+export async function productionConfigFromTask({ sourceTaskScript, dataDirectory, runtimeDirectory, rehearsal = false }) {
   const text = await readFile(sourceTaskScript, 'utf8');
   const repository = dirname(dirname(resolve(sourceTaskScript)));
   const literal = variable => new RegExp(`\\$${variable}\\s*=\\s*'([^']+)'`, 'i').exec(text)?.[1];
-  const runtime = literal('runtime');
+  const runtime = runtimeDirectory ?? literal('runtime');
+  if (!runtime || !isAbsolute(runtime)) throw new Error('SOURCE_RUNTIME_DIRECTORY_REQUIRED');
   const profile = /\$profile\s*=\s*Join-Path\s+\$runtime\s+'([^']*personal-account[^']*)'/i.exec(text)?.[1];
   const port = [...text.matchAll(/\$port\s*=\s*'(\d+)'/g)].at(-1)?.[1];
   const publicOrigin = /'--public-origin'\s*,\s*'([^']+)'/.exec(text)?.[1];
@@ -36,7 +37,7 @@ export async function productionConfigFromTask({ sourceTaskScript, dataDirectory
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   const options = {};
   for (let i = 2; i < process.argv.length; i += 2) options[process.argv[i].slice(2)] = process.argv[i+1];
-  const config = await productionConfigFromTask({ sourceTaskScript: options.source, dataDirectory: options.data, rehearsal: options.rehearsal === 'true' });
+  const config = await productionConfigFromTask({ sourceTaskScript: options.source, dataDirectory: options.data, runtimeDirectory: options.runtime, rehearsal: options.rehearsal === 'true' });
   if (options.port) config.accessPort = Number(options.port);
   saveDesktopConfig(resolve(options.output), config);
   console.log('Production configuration written; account credentials remain in their existing data directory.');
