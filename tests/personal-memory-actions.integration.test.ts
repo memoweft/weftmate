@@ -1099,6 +1099,37 @@ test('review-486 real Core: late query selection with different correction text 
   } finally { release(); await pending }
 })
 
+test('review-486 real Core: a later missing forget target cannot erase an already committed command identity', { skip, timeout: 30000 }, async t => {
+  const f = await fixture(t), old = (await f.world()).items[0]
+  const original = '请忘掉我喝茶的偏好。'
+  t.mock.method(f.manager, 'planForget', async (_owner, action) => ({
+    version: 2, completionVersion: 3, completionState: 'complete', worldRevision: 1, authorization: action.scope,
+    worldTargets: [{ kind: 'cognition', id: old.item_id }, { kind: 'cognition', id: 'synthetic-missing-target' }],
+    evidenceIds: [], sourceTexts: [original],
+  }))
+  const result = await f.tool('memory_forget', { query: '我喝茶的偏好' }, 'partial-missing-target', original)
+  assert.notEqual(result.state, 'not_found')
+  const file = path.join(f.root, 'accounts', owner, 'memory-home/pending-actions.json')
+  const requestId = 'memory-tool:' + createHash('sha256').update('partial-missing-target').digest('hex')
+  const before = JSON.parse(await readFile(file, 'utf8')).records[requestId]
+  const command = before.commands?.[`cognition:${old.item_id}`]
+  assert.ok(command); assert.deepEqual(before.finished, [`cognition:${old.item_id}`])
+  assert.equal((await f.manager.receiptForAction(owner, command)).receipt.result_state, 'applied')
+  await f.restart(); await f.manager.flushPending(owner); await f.manager.close()
+  const after = JSON.parse(await readFile(file, 'utf8')).records[requestId]
+  assert.deepEqual(after.commands[`cognition:${old.item_id}`], command)
+  assert.deepEqual(after.finished, before.finished); assert.notEqual(after.result?.state, 'not_found')
+  assert.equal(f.trace.filter(row => row.method === 'submit_command').length, 1, 'recovery must never replay the committed deletion')
+  async function scan(directory: string) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const item = path.join(directory, entry.name)
+      if (entry.isDirectory()) await scan(item)
+      else assert.equal((await readFile(item)).includes(Buffer.from(original)), false, `forget text remains in ${entry.name}`)
+    }
+  }
+  await scan(f.root)
+})
+
 test('review-1 real Core: an older failed correction cannot undo the later successful preference', { skip }, async t => {
   const f = await fixture(t), old = (await f.world()).items[0]
   f.holdCorrectionText('我喜欢喝红茶。')

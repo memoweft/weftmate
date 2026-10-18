@@ -35,6 +35,15 @@ function scrubForgetReceipt(row) {
   for (const key of ['source', 'target', 'command', 'scope']) delete row[key];
   if (row.plan) { row.plan.sourceTexts = []; delete row.plan.authorization; delete row.plan.message; }
 }
+const submittedForget = row => row.name === 'memory_forget' &&
+  (Object.keys(row.commands ?? {}).length > 0 || (row.finished?.length ?? 0) > 0);
+function retainForgetReceipts(row) {
+  scrubForgetReceipt(row);
+  row.plan = { ...row.plan, completionVersion: forgetCompletionVersion, completionState: 'withheld', completionUpgraded: true };
+  // A later missing target says nothing about earlier submitted commands. Use
+  // the existing receipt-only recovery path, never replay to infer an outcome.
+  if (row.result?.state === 'not_found') delete row.result;
+}
 const actionTargets = row => [row.arguments?.id, row.target?.id, row.command?.targetId,
   ...(row.affectedIds ?? []), ...(row.plan?.affectedIds ?? []),
   ...(row.plan?.worldTargets ?? []).map(target => target.id), ...(row.plan?.evidenceIds ?? []),
@@ -59,7 +68,9 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
         (Object.keys(row.arguments ?? {}).length || ['source', 'target', 'command', 'plan', 'scope', 'finished', 'commands'].some(key => key in row))) {
       // Keep the old target/source until both existing files have been scrubbed.
       await redactJournal(owner, row);
-      clearActionBody(row); changed = true;
+      if (submittedForget(row)) retainForgetReceipts(row);
+      else clearActionBody(row);
+      changed = true;
     }
     return changed;
   }
@@ -325,7 +336,7 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
               !flight.submitted.has(action.requestId), lease);
             await update(owner, data => {
               const row = data.records[action.requestId];
-              if (row.result) return;
+              if (row.result || lease.retired) return;
               row.result = result;
               if (affectedIds) row.affectedIds = affectedIds;
               if (row.name === 'memory_correct' && result.state === 'applied') {
@@ -342,7 +353,8 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
               }
               // Finished forgetting keeps no body copy in this recovery file.
               if (row.name === 'memory_forget') {
-                row.arguments = {}; delete row.source; delete row.plan; delete row.finished; delete row.commands; delete row.scope;
+                if (submittedForget(row)) scrubForgetReceipt(row);
+                else clearActionBody(row);
               }
             });
             trace(owner, 'perform-return', { flightId: flight.id, requestId: hash(action.requestId) });
@@ -361,7 +373,10 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
               await update(owner, data => { data.records[action.requestId].result ??= {
                 state: 'rejected', message: '这次纠正的原话不一致，没有修改记忆；请重新确认。' }; });
             } else if (['world_item_not_found', 'evidence_not_found'].includes(error?.code)) {
-              await update(owner, data => { data.records[action.requestId].result ??= notFound(); });
+              const needsReceipt = await update(owner, data => {
+                const row = data.records[action.requestId]; row.result ??= notFound(); return submittedForget(row);
+              });
+              if (needsReceipt) schedule(owner);
             } else schedule(owner);
             // A transient or permanent failure belongs to this request only.
             // Other queued user requests must still get their own attempt.
@@ -443,6 +458,7 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
       const forgotten = new Set(affectedIds);
       const includesSource = value => typeof value === 'string' && value.length > 0 &&
         sourceTexts.some(text => text && (value.includes(text) || text.includes(value)));
+      let needsReceipt = false;
       await serial(owner, async () => {
         const data = await read(owner); let changed = false;
         const lease = flights.get(owner)?.current;
@@ -465,7 +481,8 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
             if (lease?.requestId === row.requestId) { lease.scrubbed = true; ownsCompletion = true; }
           } else {
             row.result ??= notFound();
-            clearActionBody(row);
+            if (submittedForget(row)) { retainForgetReceipts(row); needsReceipt ||= !row.result; }
+            else clearActionBody(row);
             if (lease?.requestId === row.requestId) lease.retired = true;
           }
         }
@@ -475,6 +492,7 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
         if (lease && !ownsCompletion) for (const id of forgotten) lease.deletedTargets.add(id);
         if (changed) await durableWrite(file(owner), data);
       });
+      if (needsReceipt) schedule(owner);
     },
     async pending(owner) { return Object.values((await serial(owner, () => read(owner))).records).some(row => !row.result || row.cleanupPending?.length); },
     async clear(owner) {

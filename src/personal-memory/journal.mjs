@@ -128,17 +128,31 @@ export function createMemoryCommandJournal({ root }) {
       const targets = new Set(ids);
       return queue(ownerId, async () => {
         const state = await read(ownerId);
-        let count = 0;
+        const withdrawnTexts = new Set(sourceTexts);
+        const matchesText = (value, texts = withdrawnTexts) => typeof value === 'string' && value && [...texts].some(text =>
+          text && (value.includes(text) || text.includes(value)));
+        const corrections = new Set();
+        // Preserve the session/target association before clearing correction
+        // payloads: a pending deletion marker may reference the same source.
         for (const record of Object.values(state.records)) {
           if (record.redacted === true || record.command.operation !== 'correct_world_item') continue;
           const payload = record.command.payload;
-          const fromSource = sessionId && payload.source?.session_id === sessionId ||
-            [payload.correction_text, payload.source?.content].some(value => typeof value === 'string' && value &&
-              sourceTexts.some(text => text && (value.includes(text) || text.includes(value))));
-          if (!targets.has(record.command.target_id) && !fromSource) continue;
-          record.command.payload = {};
-          record.redacted = true;
-          count++;
+          if (!targets.has(record.command.target_id) && !(sessionId && payload.source?.session_id === sessionId) &&
+              ![payload.correction_text, payload.source?.content].some(value => matchesText(value, sourceTexts))) continue;
+          corrections.add(record); targets.add(record.command.target_id);
+          for (const text of [payload.correction_text, payload.source?.content]) if (typeof text === 'string' && text) withdrawnTexts.add(text);
+        }
+        let count = 0;
+        for (const record of Object.values(state.records)) {
+          let changed = false;
+          if (corrections.has(record)) { record.command.payload = {}; record.redacted = true; changed = true; }
+          if (['delete_evidence', 'delete_world_item'].includes(record.command.operation) && record.cleanup?.sourceTexts?.length) {
+            const retained = targets.has(record.command.target_id) ? [] : record.cleanup.sourceTexts.filter(text => !matchesText(text));
+            if (retained.length !== record.cleanup.sourceTexts.length) { record.cleanup.sourceTexts = retained; changed = true; }
+          }
+          // Keep command identity and cleanup flags: this removes plaintext,
+          // not the pending cleanup or the ability to query its original receipt.
+          if (changed) count++;
         }
         if (count) await write(ownerId, state);
         return count;
