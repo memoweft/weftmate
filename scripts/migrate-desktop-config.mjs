@@ -9,7 +9,7 @@ export async function productionConfigFromTask({ sourceTaskScript, dataDirectory
   const repository = dirname(dirname(resolve(sourceTaskScript)));
   const literal = variable => new RegExp(`\\$${variable}\\s*=\\s*'([^']+)'`, 'i').exec(text)?.[1];
   const runtime = runtimeDirectory ?? literal('runtime');
-  if (!runtime || !isAbsolute(runtime)) throw new Error('SOURCE_RUNTIME_DIRECTORY_REQUIRED');
+  if (!runtime || !isAbsolute(runtime)) throw new Error('SOURCE_RUNTIME_DIRECTORY_REQUIRED: 缺少有效的绝对运行目录。请给迁移入口传 -RuntimeDirectory <运行目录>；直接调用转换脚本时传 --runtime <运行目录>。');
   const profile = /\$profile\s*=\s*Join-Path\s+\$runtime\s+'([^']*personal-account[^']*)'/i.exec(text)?.[1];
   const port = [...text.matchAll(/\$port\s*=\s*'(\d+)'/g)].at(-1)?.[1];
   const publicOrigin = /'--public-origin'\s*,\s*'([^']+)'/.exec(text)?.[1];
