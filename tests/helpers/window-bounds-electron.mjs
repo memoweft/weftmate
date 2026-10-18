@@ -10,4 +10,9 @@ app.whenReady().then(() => {
   });
   globalThis.restoreDesktopBounds = restoreDesktopBounds;
   globalThis.restoreWindowsDesktopBounds = restoreWindowsDesktopBounds;
+  if (process.env.WINDOW_BOUNDS_EARLY_SHOW === 'true') {
+    globalThis.windowBoundsDesktop.show();
+    const win = globalThis.windowBoundsDesktop.window;
+    globalThis.windowBoundsEarlyShow = { visible: win.isVisible(), maximized: win.isMaximized() };
+  }
 });

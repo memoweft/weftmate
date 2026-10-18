@@ -159,7 +159,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     await jsonLocal('/auth/me'); const image = clipboard.readImage();
     return image.isEmpty() ? null : {name:'剪贴板图片.png',contentType:'image/png',dataUrl:image.toDataURL()};
   });
-  handle('wm:desktop:capture-region', async () => { await jsonLocal('/auth/me'); return captureScreenRegion(win); });
+  handle('wm:desktop:capture-region', async () => { await jsonLocal('/auth/me'); await ready; return captureScreenRegion(win); });
   const selectedFolders = new Map();
   const pendingSendTo = [];
   const sendTo = paths => {
@@ -385,12 +385,17 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     return { exported: true };
   });
   let pendingConversation = null, clientReady = false, maximizeOnShow = saved.maximized === true;
+  let boundsRestored = false, showRequested = false;
   const show = sessionId => {
-    if (win.isDestroyed()) return;
+    if (stopped || win.isDestroyed()) return;
+    if (sessionId) pendingConversation = sessionId;
+    // All activation paths share this gate. Maximizing before native bounds
+    // restore finishes makes Windows remember the constructor's normal size.
+    if (!boundsRestored) { showRequested = true; return; }
+    showRequested = false;
     if (maximizeOnShow) { win.maximize(); maximizeOnShow = false; }
     if (win.isMinimized()) win.restore();
     win.show(); win.focus();
-    if (sessionId) pendingConversation = sessionId;
     if (pendingConversation && clientReady) {
       win.webContents.send('wm:desktop:conversation', pendingConversation);
       pendingConversation = null;
@@ -418,9 +423,9 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   let boundsTimer;
   const save = () => {
     clearTimeout(boundsTimer);
-    if (!win.isDestroyed()) return writeBounds(JSON.stringify({ bounds: win.getNormalBounds(), maximized: maximizeOnShow || win.isMaximized() })).catch(() => {});
+    if (boundsRestored && !win.isDestroyed()) return writeBounds(JSON.stringify({ bounds: win.getNormalBounds(), maximized: maximizeOnShow || win.isMaximized() })).catch(() => {});
   };
-  const scheduleSave = () => { clearTimeout(boundsTimer); boundsTimer = setTimeout(save, 200); };
+  const scheduleSave = () => { if (!boundsRestored) return; clearTimeout(boundsTimer); boundsTimer = setTimeout(save, 200); };
   win.on('close', event => { void save(); if (!isQuitting()) { event.preventDefault(); win.hide(); } });
   win.on('resized', scheduleSave); win.on('moved', scheduleSave);
   // Poll authenticated history in main so hidden windows and other conversations still notify.
@@ -569,8 +574,17 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     persist: (owner, generation, buckets) => computerUsageService.recordComputerUsage(owner, generation, buckets),
   }) : null;
   if (computerUsage) computerUsageService.setComputerUsageCheckpoint(owner => computerUsage.checkpoint(owner));
-  const ready = restoreBounds.then(() => win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : ''))).then(() => { if (!startInTray) show(); });
-  return { window: win, show, openSettings() { show(); void win.webContents.executeJavaScript("globalThis.WeftSettingsNavigation?.open('general')").catch(() => {}); }, sendTo, ready, async close() {
+  const ready = restoreBounds.then(() => {
+    boundsRestored = true;
+    if (showRequested) show();
+    if (!stopped && !win.isDestroyed()) return win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : ''));
+  }).then(() => { if (!startInTray) show(); });
+  return { window: win, show, openSettings() {
+    show();
+    void ready.then(() => {
+      if (!stopped && !win.isDestroyed()) return win.webContents.executeJavaScript("globalThis.WeftSettingsNavigation?.open('general')");
+    }).catch(() => {});
+  }, sendTo, ready, async close() {
     stopped = true; clearTimeout(timer);
     await restoreBounds;
     await computerUsage?.close();
