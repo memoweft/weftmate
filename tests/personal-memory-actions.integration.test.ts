@@ -439,10 +439,13 @@ for (const scenario of ['with current fact', 'orphan only', 'saved v3 plan', 'sa
   assert.equal((await f.world()).items.some(row => row.value.content.includes('绿茶')), false)
   if (scenario === 'orphan only') {
     const before = await f.world()
+    const forgetScope = await confirmedScope(f, 'cognition', redId)
     const path = `/personal/v1/memory/items/cognition/${redId}`
-    await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname: path,
+    const response = await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname: path,
       url: new URL(path, 'http://memory'), request: { method: 'DELETE' },
-      readJson: async () => ({ requestId: 'remove-prior-red', expectedWorldRevision: before.world_revision }) })
+      readJson: async () => ({ requestId: 'remove-prior-red', expectedWorldRevision: before.world_revision, forgetScope }) })
+    assert.equal(response.status, 200)
+    assert.equal(response.body.receipt.state, 'applied')
     assert.equal((await f.world()).items.length, 0)
   }
   await f.manager.ingest(owner, boundary('我周末喜欢散步。', 'independent-walk')); await f.ready()
