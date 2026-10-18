@@ -162,6 +162,11 @@
     let value = await vault.load(), running = false, taskSending=false, abort, version = 0, targets=[],cloudTasksSupported=false;
     value.tasks??=[];
     value.phoneMemory??=globalThis.WeftPhoneMemory?.fresh();value.forgetConversations??=[];
+    if(value.phoneMemory){
+      const memory=value.phoneMemory,sources=new Map(value.conversations.flatMap(c=>c.turns).map(t=>[t.id,t.timestamp]));
+      memory.suppressedAt??={};for(const hash of memory.suppressedText)memory.suppressedAt[hash]??=Date.now();
+      for(const item of memory.items)if(item.sourceTimestamp===undefined){const dates=(item.sourceIDs||[]).map(id=>sources.get(id)).filter(t=>typeof t==='number');item.sourceTimestamp=dates.length?Math.max(...dates):item.updatedAt;}
+    }
     let memoryFlight,memoryEpoch=0,memoryAbort,writes=Promise.resolve();
     const write=action=>{const next=writes.then(action);writes=next.catch(()=>{});return next;};
     if(value.snapshot)targets=await vault.targets?.(value.snapshot.control.accountId)||[value.snapshot];
