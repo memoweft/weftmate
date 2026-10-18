@@ -30,10 +30,27 @@ if (process.env.WINDOW_BOUNDS_FAULT === 'hung') {
   syncBuiltinESMExports();
 }
 app.whenReady().then(async () => {
-  const { createPersonalDesktop, restoreDesktopBounds } = await import('../../src/personal-desktop.mjs');
+  const { createPersonalDesktop, preparePersonalDesktopWindow, restoreDesktopBounds } = await import('../../src/personal-desktop.mjs');
   const { restoreWindowsDesktopBounds } = await import('../../src/windows-desktop-bounds.mjs');
   const createdAt = performance.now();
   let quitting = true;
+  if (process.env.WINDOW_BOUNDS_PREPARED === 'true') {
+    const { createDesktopStartup } = await import('../../src/desktop-startup.mjs');
+    const prepared = preparePersonalDesktopWindow();
+    let preparingQuitting = false;
+    const startup = createDesktopStartup(prepared.window, { startInTray: true, isQuitting: () => preparingQuitting,
+      restoreBounds: prepared.restoreBounds, lifecycle: prepared.lifecycle });
+    startup.show(); // Same early-activation path as tray/second-instance startup.
+    globalThis.windowBoundsEarlyShow = { visible: prepared.window.isVisible(), maximized: prepared.window.isMaximized() };
+    globalThis.windowBoundsDesktop = { window: prepared.window, ready: startup.ready, show: startup.show, async close() { preparingQuitting = true; await prepared.close(); } };
+    globalThis.adoptPreparedDesktop = () => {
+      startup.adopt();
+      globalThis.windowBoundsDesktop = createPersonalDesktop({ preparedWindow: prepared,
+        origin: process.env.WINDOW_BOUNDS_ORIGIN, isQuitting: () => quitting, startInTray: true });
+      return globalThis.windowBoundsDesktop.ready;
+    };
+    return;
+  }
   globalThis.windowBoundsDesktop = createPersonalDesktop({
     origin: process.env.WINDOW_BOUNDS_ORIGIN, libraryDesktopToken: process.env.WINDOW_BOUNDS_TOKEN,
     isQuitting: () => quitting, startInTray: process.env.WINDOW_BOUNDS_TRAY === 'true',

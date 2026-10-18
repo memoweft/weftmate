@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'">
+  <title>WeftMate</title>
+  <link rel="stylesheet" href="personal-access-ui/tokens.css">
+  <link rel="stylesheet" href="desktop-startup.css">
+  <script src="desktop-startup.js" defer></script>
+</head>
+<body>
+  <header>WeftMate</header>
+  <main>
+    <div id="preparing" role="status" aria-live="polite">
+      <h1>准备中</h1>
+      <p>正在安全读取本机设置，准备好后会自动打开。</p>
+    </div>
+    <div id="failed" role="alert" hidden>
+      <h1>暂时无法打开</h1>
+      <p>本机密钥未能安全读取。请退出后重新打开 WeftMate；原有数据已保留。</p>
+    </div>
+  </main>
+</body>
+</html>
