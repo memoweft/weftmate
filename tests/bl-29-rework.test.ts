@@ -5,6 +5,7 @@ import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { startTimelineCandidate } from './integration/bl29-rework/fixture.mjs';
+import { observeHostClose } from './integration/bl29-rework/close-observation.mjs';
 import { nativeTimelineLog } from '../src/runtime/dsh-adapter/timeline.mjs';
 import { getEventListeners } from 'node:events';
 import { createRequire } from 'node:module';
@@ -53,6 +54,7 @@ test('BL-29b M5/S2 gateway shutdown and runtime dispose respond SERVICE_CLOSING 
 
 test('BL-29b M5 host close revokes empty account waits before closing sockets', async t => {
   const f = await startTimelineCandidate({interactive:true,daily:true,inlineProgress:true,historyCount:0});
+  const observation = observeHostClose(t, f.debug.service);
   try {
     await f.progress.approve('bl29-close-approval','Write-Output synthetic');
     const chat = (await f.request('/chats/main')).chat;
@@ -63,9 +65,10 @@ test('BL-29b M5 host close revokes empty account waits before closing sockets', 
     assert.equal(f.debug.service.__reviewCounts().accountWaiters, 1);
     const before = f.debug.service.__reviewCounts().accountRevision;
     const at = Date.now(); await f.debug.service.close();
-    const closedAt = Date.now();
+    const closedAt = Date.now(); observation.mark('close.returned');
     const response = await pending;
     assert.equal(response.status, 503); assert.equal((await response.json()).error.code, 'SERVICE_CLOSING');
+    observation.mark('client.body_read');
     assert.ok(Date.now()-at<500, JSON.stringify({closeMs:closedAt-at,totalMs:Date.now()-at}));
     t.diagnostic(JSON.stringify({kind:'host-close-wait',closeMs:closedAt-at,totalMs:Date.now()-at}));
     assert.equal(f.debug.service.__reviewCounts().accountWaiters, 0);
@@ -76,6 +79,9 @@ test('BL-29b M5 host close revokes empty account waits before closing sockets', 
 
 test('host close drains a registered wait whose response finishes after the idle socket sweep', async t => {
   const f = await startTimelineCandidate({interactive:true,daily:true,inlineProgress:true,historyCount:0});
+  // Exercise observer failure on every tap while retaining the real close,
+  // complete 503 response, original 500ms budget and listener assertions.
+  const observation = observeHostClose(t, f.debug.service, { throwAfterObservation: true });
   let finishResponse;
   try {
     await f.progress.approve('close-late-response','Write-Output synthetic');
@@ -107,9 +113,10 @@ test('host close drains a registered wait whose response finishes after the idle
     for (let i=0;i<100&&f.debug.service.__reviewCounts().accountWaiters===0;i++) await new Promise(r=>setTimeout(r,5));
     assert.equal(f.debug.service.__reviewCounts().accountWaiters, 1);
     const before = f.debug.service.__reviewCounts().accountRevision;
-    const at = Date.now(); await f.debug.service.close();
+    const at = Date.now(); await f.debug.service.close(); observation.mark('close.returned');
     const response = await pending;
     assert.equal(response.status, 503); assert.equal((await response.json()).error.code, 'SERVICE_CLOSING');
+    observation.mark('client.body_read');
     assert.ok(Date.now()-at<500, `close and response took ${Date.now()-at}ms`);
     t.diagnostic(JSON.stringify({kind:'host-close-late-response',totalMs:Date.now()-at}));
     assert.equal(listeningClosed, true, 'close waits for the actual HTTP server drain');
@@ -117,6 +124,10 @@ test('host close drains a registered wait whose response finishes after the idle
     assert.equal(f.debug.eventWaiters.size, 0);
     assert.equal(getEventListeners(f.debug.service.__reviewContext.closingSignal,'abort').length, 0);
     assert.ok(f.debug.service.__reviewCounts().accountRevision>before);
+    const phases = observation.phases.map(row => row.phase);
+    for (const phase of ['waits.revoked', 'idle.swept', 'response.finished', 'http.closed', 'close.done', 'client.body_read'])
+      assert.ok(phases.includes(phase), `missing close observation: ${phase}`);
+    assert.ok(phases.indexOf('idle.swept') < phases.indexOf('response.finished'));
   } finally {finishResponse?.();await f.close();rmSync(f.root,{recursive:true,force:true});}
 });
 
