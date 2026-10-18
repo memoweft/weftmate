@@ -14,10 +14,11 @@ async function setup(extra:any={}){
     cloudComputerChannel:async()=>({token:'synthetic-token',account:{ownerId:'b-owner'},device:{id:'phone'},csrfToken:'csrf'}),
     acceptSession:()=>{},refreshStatus:async()=>{},refreshModels:async()=>{},refreshSessions:extra.refreshSessions||(async()=>{}),api:async()=>({})};
   const effects={paintComputers:()=>{},toast:()=>{},openComputerChannel:async(c:any)=>({close:()=>{},request:async(path:string,options:any)=>{calls.push({host:c.hostId,path,options});return {sessions:[{sessionId:'b-session',title:'B'}]};}})};
-  core.accessBase='/personal/v1';core.authBase='/personal/v1/auth';core.requestJson=(url:string,options:any)=>coreOriginal(url.replace('/personal/v1',''),options);
+  core.accessBase='/personal/v1';core.authBase='/personal/v1/auth';core.requestJson=extra.requestJson||((url:string,options:any)=>coreOriginal(url.replace('/personal/v1',''),options));
   const coreOriginal=core.accessApi;
-  ctx.WeftUiCore.factories.computers(core,effects,{...extra,storage:{getItem:(k:string)=>prefs.get(k),setItem:(k:string,v:string)=>prefs.set(k,v)}});
-  return {ctx,core,calls,effects};
+  const environment={...extra,storage:{getItem:(k:string)=>prefs.get(k),setItem:(k:string,v:string)=>prefs.set(k,v)}};
+  ctx.WeftUiCore.factories.computers(core,effects,environment);
+  return {ctx,core,calls,effects,environment};
 }
 test('execution defaults inherit sources, prefer last online computer, and choose the only online computer',async()=>{
   const {ctx}=await setup(),choose=ctx.WeftUiCore.chooseComputer;
@@ -51,7 +52,7 @@ test('the desktop program keeps local conversations while showing the account co
 test('cloud login keeps the desktop local sidebar and send availability when its relay is offline',async()=>{
   const localSessions=[{sessionId:'a-session',title:'A',running:true,sendAvailable:true}];
   let refreshes=0;
-  const {core,calls}=await setup({desktop:true,localSessions,refreshSessions:async()=>{refreshes++;}});
+  const {core,calls}=await setup({desktop:true,bindDesktop:true,localSessions,refreshSessions:async()=>{refreshes++;}});
   core.state.personalCapabilities={workAndChat:1};
   core.updateComputerDirectory({hosts:[{hostId:'a',online:false},{hostId:'b',online:false}],capabilities:{multiHost:1}});
   assert.equal(core.canChooseExecutionComputer(),true);
@@ -69,6 +70,60 @@ test('cloud login keeps the desktop local sidebar and send availability when its
   await core.refreshSessions();
   assert.equal(refreshes,1,'local relay status must not bypass logical history refresh');
   await assert.rejects(core.selectExecutionComputer('b'),error=>error.code==='COMPUTER_OFFLINE');
+});
+
+test('a trusted remote connection never receives the desktop local offline exemption',async()=>{
+  for(const cached of [false,true]){
+    const contentReads:string[]=[];let refreshes=0;
+    const {ctx,core,effects,environment}=await setup({desktop:true,bindDesktop:true,hostOrigin:'https://a.example.com',
+      cloudCredentials:async(key:string)=>key==='trusted-host:b'?{hostId:'b'}:undefined,
+      refreshSessions:async()=>{refreshes++;},
+      requestJson:async(url:string)=>{contentReads.push(url);return {sessions:[{sessionId:'b-session',title:'B'}]};}});
+    // Run the real trusted-host switch with synthetic credentials and session exchange.
+    ctx.WeftUiCore.CloudAuthClient=class {
+      config={hostId:'a'};host=environment.hostOrigin;generation=0;
+      async exchange(){return {account:{ownerId:'b-owner'},device:{id:'synthetic-device'},csrfToken:'synthetic-csrf'};}
+    };
+    vm.runInContext(await readFile('src/ui-core/cloud-account.js','utf8'),ctx);
+    Object.assign(effects,{openCloudHost:async(connection:any)=>connection});
+    Object.assign(core,ctx.WeftUiCore.factories.cloudAccount(core,effects,environment));
+    core.initializeCloudAccount();
+    await core.cloudConnectTrusted({hostId:'b',baseUrl:'https://b.example.com',status:'online'});
+    assert.equal(environment.bindDesktop,false);
+    assert.equal(core.cloudCurrentComputer(),'b');
+    assert.equal(core.accessBase,'https://b.example.com/personal/v1');
+    core.state.personalCapabilities={workAndChat:1};
+    const hosts=[{hostId:'a',online:false},{hostId:'b',online:cached}];
+    core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});
+    if(cached){
+      const online=await core.accessApi('/sessions?archived=all');
+      assert.equal(online.sessions[0].sessionId,'b-session');
+      assert.equal(contentReads.length,1);
+      assert.equal(contentReads[0],'https://b.example.com/personal/v1/sessions?archived=all');
+    }
+    hosts[1].online=false;
+    core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});contentReads.length=0;
+    const offline=await core.accessApi('/sessions?archived=all');
+    assert.equal(contentReads.length,0,'offline remote must not receive content requests');
+    assert.equal(offline.sessions.length,cached?1:0);
+    if(cached){assert.equal(offline.sessions[0].hostId,'b');assert.equal(offline.sessions[0].computerOffline,true);}
+    await core.refreshSessions();
+    assert.equal(refreshes,0,'offline remote must use the offline list refresh path');
+    assert.equal(contentReads.length,0);
+    assert.equal(core.state.sessions.length,cached?1:0);
+    if(cached)assert.equal(core.state.sessions[0].computerOffline,true);
+  }
+});
+
+test('offline exemption requires a verified native desktop connection',async()=>{
+  for(const environment of [{desktop:true},{desktop:true,bindDesktop:false},{desktop:false,bindDesktop:true}]){
+    const {core,calls}=await setup(environment);
+    core.state.personalCapabilities={workAndChat:1};
+    core.updateComputerDirectory({hosts:[{hostId:'a',online:false},{hostId:'b',online:false}],capabilities:{multiHost:1}});
+    const listed=await core.accessApi('/sessions?archived=all');
+    assert.equal(listed.sessions.length,0);
+    assert.equal(calls.length,0);
+  }
 });
 test('list merges by computer; sending and retries address only the selected computer; offline lists retain ownership',async()=>{
   const {core,calls}=await setup();const hosts=[{hostId:'a',name:'synthetic-desk',online:true},{hostId:'b',name:'synthetic-laptop',online:true}];
