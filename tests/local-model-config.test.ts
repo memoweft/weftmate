@@ -7,6 +7,23 @@ import test from 'node:test'
 import { findFormalLocalModel, listFormalLocalModels, prepareLocalModelConfig,
   projectOccamyImageInput, readUserModelSwitcherKey, reconcileOccamyImageInput } from '../src/local-model-config.mjs'
 
+test('local catalog requires configuration and an explicit environment keeps catalog behavior', async () => {
+  const before = process.env.WEFTMATE_LOCAL_MODEL_CATALOG_DIR;
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-configured-catalog-'));
+  try {
+    delete process.env.WEFTMATE_LOCAL_MODEL_CATALOG_DIR;
+    await assert.rejects(listFormalLocalModels(), { code: 'LOCAL_MODEL_INVALID' });
+    await assert.rejects(findFormalLocalModel('synthetic'), { code: 'LOCAL_MODEL_INVALID' });
+    writeFileSync(join(root, 'synthetic.json'), JSON.stringify({ dsh_model_id: 'synthetic', context_window: 8192, output_reserve: 1024 }));
+    process.env.WEFTMATE_LOCAL_MODEL_CATALOG_DIR = root;
+    assert.deepEqual(await listFormalLocalModels(), [await findFormalLocalModel('synthetic', root)]);
+  } finally {
+    if (before === undefined) delete process.env.WEFTMATE_LOCAL_MODEL_CATALOG_DIR;
+    else process.env.WEFTMATE_LOCAL_MODEL_CATALOG_DIR = before;
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('local model configuration accepts one exact formal catalog id and fixed 8081 endpoint', async () => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-local-model-'))
   try {
