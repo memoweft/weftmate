@@ -6,7 +6,7 @@
 [#332 的总经理转达](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)。
 
 `lock.json` 固定官方 Python 3.13.16 嵌入 ZIP、Core 已合入并首轮通过的
-`fc79404ddb4de2be7b242b957a0e33dfc735ba24` 提交及官方源归档 URL、大小与
+`935169ed235dd9f29f78bf5768c1b0fe06f31f27` 提交及官方源归档 URL、大小与
 散列、Core `uv.lock` 散列、Windows CPython 3.13 对应 wheel、传递依赖、许可、模型
 修订及文件散列。基础层是 Python/Core 和 7 个基础依赖；完整层在同一
 基础上加入 17 个语义依赖、固定模型/分词器、微软两个必需运行库和许可。
@@ -14,6 +14,17 @@
 
 此 Core 版本包含英文召回的真实日期与 `initialize.lang` 支持（MemoWeft #122）；
 语言读取和重新初始化规则见 [MEMORY.md](../../docs/MEMORY.md)。
+同时接入 MemoWeft #123 的有界响应缓存（最多 128 条、8 MiB Python 对象估算）与
+#124 的英文候选打分。8 MiB 仅是历史响应留存预算，不是整个进程的内存上限；
+单次查询、模型和向量索引仍有各自工作集。请求 ID 只在缓存窗口内重放；
+WeftMate 两个传输入口每次分配新 ID，业务恢复使用边界、命令或形成请求的持久身份。
+英文仍有小写功能词歧义的已知漏召回，完整不变量与限制见
+[MemoWeft #124](https://github.com/memoweft/memoweft/pull/124)，不代表通用英文质量或安装版验收。
+此版本还包含 [MemoWeft #125](https://github.com/memoweft/memoweft/pull/125)：
+状态 A→B→A 保留每次变化的独立来源和修订链，长期目标按支持原话的分句白名单形成。
+同一分句中的否定、他人主语/所有格及问句不支持本人目标；明确过往意向与同条原话
+中的后续本人收回也会拦截，原话仍保留为普通来源。白名单之外的句式、反讽和隐含语义
+仍有限制；例如「不打算放弃」也可能触发收回，不代表已解决所有目标理解。
 
 ## 制备两种载荷
 
