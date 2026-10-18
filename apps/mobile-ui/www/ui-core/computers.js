@@ -16,8 +16,8 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
   };
   const lastKey = () => `weftmate-computer:${core.state.cloudAuth?.sub || ''}`;
   const name = id => {const row=core.state.computers?.find(row=>row.hostId===id);return row?.displayName || row?.name || '这台电脑';};
-  // Cloud relay reachability does not govern the desktop's existing local connection.
-  const isLocalComputer = id => environment.desktop && id === core.cloudCurrentComputer?.();
+  // bindDesktop verifies nativeIdentity/ownHost; the current cloud target alone may be remote.
+  const isLocalComputer = id => environment.desktop && environment.bindDesktop === true && id === core.cloudCurrentComputer?.();
   core.computerName = name;
   core.hasMultipleComputers = () => core.state.computers?.length > 1;
   core.canChooseExecutionComputer=()=>enabled&&core.hasMultipleComputers();
