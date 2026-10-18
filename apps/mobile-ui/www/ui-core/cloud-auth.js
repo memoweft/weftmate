@@ -28,22 +28,24 @@
       return data;
     }
     async configure() {
+      let config;
       try {
-        this.config = await this.request(this.host + '/personal/v1/cloud/config');
-        await this.credentials('offline-config:' + this.host, this.config);
+        config = await this.request(this.host + '/personal/v1/cloud/config');
+        await this.credentials('offline-config:' + this.host, config);
       } catch (error) {
         if (error.code !== 'NETWORK' && !(error.status >= 500)) throw error;
-        this.config = await this.credentials('offline-config:' + this.host);
-        if (!this.config) throw error;
+        config = await this.credentials('offline-config:' + this.host);
+        if (!config) throw error;
       }
-      if (this.clientId) this.config.clientId = this.clientId;
-      const cloudOrigin = origin(this.config.issuer);
-      if (this.config.issuer !== cloudOrigin + '/personal/v1/cloud/oidc' || !this.config.clientId || !this.config.hostId) fail('INVALID_CONFIGURATION');
-      this.base = cloudOrigin + '/personal/v1/cloud';
+      if (this.clientId) config.clientId = this.clientId;
+      const cloudOrigin = origin(config.issuer);
+      if (config.issuer !== cloudOrigin + '/personal/v1/cloud/oidc' || !config.clientId || !config.hostId) fail('INVALID_CONFIGURATION');
       // Random desktop ports must not create a new login/key on each launch.
-      this.storageId = this.config.issuer + ':' + this.config.clientId + (this.nativeKey ? '' : ':' + this.config.hostId);
-      this.tokenId = 'app-tokens:' + this.storageId;
-      return this.config;
+      const storageId = config.issuer + ':' + config.clientId + (this.nativeKey ? '' : ':' + config.hostId);
+      // Publish only a complete configuration. Failed cache writes must not make
+      // saved()/key() skip initialization with an unknown credential identity.
+      Object.assign(this, { config, base: cloudOrigin + '/personal/v1/cloud', storageId, tokenId: 'app-tokens:' + storageId });
+      return config;
     }
     async key() {
       if (!this.config) await this.configure();
@@ -180,9 +182,14 @@
       this.refreshing = current;
       try { await current; } finally { if (this.refreshing === current) this.refreshing = null; }
     }
-    async authorized(path, { method = 'GET', body } = {}) {
+    async authorized(path, { method = 'GET', body, current } = {}) {
+      const check = () => { if (current && !current()) fail('CLOUD_TOKEN_INVALID'); };
+      check();
       const token = await this.access(), url = this.base + path;
-      return this.request(url, { method, body, headers: { Authorization: 'DPoP ' + token, DPoP: await this.proof(url, { method, token }) } });
+      check();
+      const proof = await this.proof(url, { method, token });
+      check(); // In particular, native signing may finish after a newer login.
+      return this.request(url, { method, body, headers: { Authorization: 'DPoP ' + token, DPoP: proof } });
     }
     async channel(connection, request) {
       const generation = this.generation, saved = await this.saved();

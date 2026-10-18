@@ -13,10 +13,11 @@ $alias=Join-Path $fixture 'data-link'
 New-Item -ItemType Junction -Path $alias -Target (Join-Path $old 'data')|Out-Null
 $vs=& "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
 $command=Join-Path $Out 'compile.cmd'
+"#define WEFT_INSTALL_MAX_SUFFIX 192" | Set-Content -LiteralPath (Join-Path $Out 'installer-payload.h')
 @"
 @call "$vs\VC\Auxiliary\Build\vcvars32.bat" >nul
 @cd /d "$Out"
-@cl /nologo /std:c++17 /EHsc /DUNICODE /D_UNICODE /utf-8 /W4 /WX "$workspace\tests\helpers\installer-directory-check.cpp" "$workspace\build\installer-directory.cpp" /Fecheck.exe /link shell32.lib shlwapi.lib ole32.lib
+@cl /nologo /std:c++17 /EHsc /DUNICODE /D_UNICODE /utf-8 /W4 /WX /I"$Out" "$workspace\tests\helpers\installer-directory-check.cpp" "$workspace\build\installer-directory.cpp" /Fecheck.exe /link shell32.lib shlwapi.lib ole32.lib
 "@ | Set-Content -LiteralPath $command
 try{
   & cmd.exe /d /c $command
