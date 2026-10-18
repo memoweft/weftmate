@@ -6,6 +6,7 @@ import {randomUUID} from 'node:crypto';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
+import {checkMainHistoryActions,checkTimelineSourceActions} from '../helpers/history-message-scenarios.mjs';
 const evidence=evidencePath('ia-4');await mkdir(evidence,{recursive:true});
 const web=process.argv.includes('--web');
 const f=await startTimelineCandidate({daily:true,sidebar:true,logicalMobile:true,interactive:true,inlineProgress:true,historyCount:0,baseTime:Date.now()-15000});
@@ -43,7 +44,7 @@ try{
       await page.screenshot({path:join(evidence,`web-${size.width}-${theme}-recent.png`)});
       const assistantName=await page.evaluate(()=>{const viewport=$('chat-scroll').getBoundingClientRect();return [...document.querySelectorAll('[role=group][aria-label]')].find(row=>{const box=row.getBoundingClientRect();return row.getAttribute('aria-label').startsWith('助手消息：')&&box.top>=viewport.top&&box.bottom<=viewport.bottom;})?.getAttribute('aria-label');});assert.ok(assistantName);
       const assistant=page.getByRole('group',{name:assistantName,exact:true});await assistant.click();await assistant.getByRole('button',{name:'复制回复',exact:true}).click();await page.getByRole('menuitem',{name:'复制纯文本',exact:true}).waitFor();await page.keyboard.press('Escape');
-      await assistant.getByRole('button',{name:'更多回复操作',exact:true}).click();await page.getByRole('menuitem',{name:'开旁聊重新生成',exact:true}).waitFor();await page.keyboard.press('Escape');
+      await checkMainHistoryActions(page,assistant);
       await b('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成手机结果摘要');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');
       for(const label of ['成功','失败','停止'])await page.getByRole('button',{name:new RegExp(`^打开旁聊结果：${label}`)}).waitFor();
       await b('关闭主对话搜索').click();
@@ -56,14 +57,13 @@ try{
       await b(`${label}，收起`).click();await page.getByRole('button',{name:new RegExp(`^${label} · \\d+ 条，展开$`)}).click();
       await page.screenshot({path:join(evidence,`web-${size.width}-${theme}-date.png`)});
       const visibleName=await page.evaluate(()=>{const box=document.querySelector('#chat-scroll').getBoundingClientRect();return [...document.querySelectorAll('[role=group][aria-label]')].find(row=>{const r=row.getBoundingClientRect();return r.top>=box.top&&r.bottom<=box.bottom;})?.getAttribute('aria-label');});
-      assert.ok(visibleName);const row=page.getByRole('group',{name:visibleName,exact:true});await row.click();await row.getByLabel('消息菜单',{exact:true}).click();
-      await row.getByRole('button',{name:'从这里开旁聊',exact:true}).click();
-      await page.getByRole('textbox',{name:'旁聊名称'}).fill('合成手机旁聊');await page.getByRole('textbox',{name:'旁聊第一句话'}).fill('合成草稿');await b('确认开旁聊').click();
-      await page.getByRole('dialog',{name:'开旁聊',exact:true}).waitFor({state:'hidden'});
-      await page.getByText('相关上下文尚未带入',{exact:true}).waitFor();assert.equal(await page.getByRole('textbox',{name:'输入消息',exact:true}).inputValue(),'合成草稿');
+      assert.ok(visibleName);const row=page.getByRole('group',{name:visibleName,exact:true});await row.click();
+      await checkTimelineSourceActions(page,row);
+      await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('合成草稿');
       if(web&&theme==='light'){const previous=new Set((await f.request('/commands?limit=50')).commands.map(row=>row.commandId));await b('发送').click();
-        await page.waitForFunction(()=>document.querySelector('#draft').value==='');const rows=(await f.request('/commands?limit=50')).commands;assert.ok(rows.some(row=>row.kind==='session.message'&&row.state==='accepted_by_dsh'&&!previous.has(row.commandId)));await page.getByText('合成草稿',{exact:true}).waitFor();}
-      await page.screenshot({path:join(evidence,`web-${size.width}-${theme}-origin.png`)});await b('回到主对话原消息').click();
+        await page.waitForFunction(()=>document.querySelector('#draft').value==='');const rows=(await f.request('/commands?limit=50')).commands;assert.ok(rows.some(row=>row.kind==='chat.message'&&row.state==='accepted_by_dsh'&&!previous.has(row.commandId)));await page.getByText('合成草稿',{exact:true}).waitFor();}
+      await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('');
+      await page.screenshot({path:join(evidence,`web-${size.width}-${theme}-history-actions.png`)});
       await b('打开导航').click();await b('WeftMate 主对话').click();
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     }
@@ -88,6 +88,6 @@ try{
     }
     await page.close();
   }
-  assert.deepEqual(report.errors,[]);report.checks.push('main-first','recent-tail','search-highlight-navigation','date-fold-unfold','side-reference-origin','draft-transfer','result-success-failure-stop-source','ux4-actions-preserved','web-side-send','both-themes-two-sizes','font130-no-overflow');
+  assert.deepEqual(report.errors,[]);report.checks.push('main-first','recent-tail','search-highlight-navigation','date-fold-unfold','D92-no-anchored-side-chat','result-success-failure-stop-source','ux4-actions-preserved','web-main-send','both-themes-two-sizes','font130-no-overflow');
   await writeFile(join(evidence,'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
 }finally{await browser?.close();await f.close();}

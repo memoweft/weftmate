@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
@@ -22,8 +23,8 @@ const home = join(root, 'accounts', ownerId, 'memory-home/memoweft'); await mkdi
 await copyFile(join(source, 'personal-access/accounts', ownerId, 'memory-home/memoweft/memoweft.sqlite3'), join(home, 'memoweft.sqlite3'));
 const model = createServer((_req, response) => { response.writeHead(503); response.end('{}'); });
 await new Promise(done => model.listen(0, '127.0.0.1', done));
-const manager = createPersonalMemoryManager({ root, enabled: true, python: 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',
-  pythonPath: 'D:/AIProjects/MemoWeft/Core/py/src', baseUrl: `http://127.0.0.1:${model.address().port}/v1`, model: '@current', credential: () => 'synthetic-no-model' });
+const manager = createPersonalMemoryManager({ root, enabled: true, python: requireMemoWeftPath('python'),
+  pythonPath: requireMemoWeftPath('source'), baseUrl: `http://127.0.0.1:${model.address().port}/v1`, model: '@current', credential: () => 'synthetic-no-model' });
 const marker = 'M3A_CORE_DERIVED_SENTINEL';
 try {
   const world = await manager.query(ownerId, 'query_world', { operation: 'list', include_history: false });

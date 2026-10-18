@@ -2,7 +2,7 @@
 # 用法（PowerShell）：.\scripts\make-self-signed-cert.ps1
 # 产出：.certs\weftmate-codesign.pfx（gitignored，不进仓库）
 # 签名打包：
-#   $env:CSC_LINK = 'D:\AIProjects\WeftMate\Repository\.certs\weftmate-codesign.pfx'
+#   $env:CSC_LINK = (Resolve-Path '.certs\weftmate-codesign.pfx').Path
 #   $env:CSC_KEY_PASSWORD = '<本脚本输出的密码>'
 #   npm run dist:win
 #

@@ -218,6 +218,7 @@ function extractCredentialRows(value: unknown, refs: readonly string[]): Record<
 export interface OfficialDshSettingsClient {
   readonly origin: string;
   describeSettings(): Promise<NamespaceSnapshot>;
+  readLocalePreference(): Promise<'zh' | 'en'>;
   mutateSettings(operations: readonly SettingsPathSetOperation[], expectedRevision: number): Promise<void>;
   describeCredentials(refs: readonly string[]): Promise<Record<string, CredentialRow>>;
 }
@@ -261,6 +262,12 @@ export function createOfficialDshSettingsClient(options: OfficialDshClientOption
   return {
     origin,
     async describeSettings() { return extractNamespace(await unary('settings.describe', {})); },
+    async readLocalePreference() {
+      const value = await unary('settings.describe', {});
+      if (!isRecord(value) || !Array.isArray(value.namespaces)) return 'zh';
+      const locale = value.namespaces.find(candidate => isRecord(candidate) && candidate.ns === 'locale');
+      return isRecord(locale) && isRecord(locale.value) && locale.value.preference === 'en' ? 'en' : 'zh';
+    },
     async mutateSettings(operations, expectedRevision) {
       if (!Number.isInteger(expectedRevision) || expectedRevision < 0) throw new TypeError('expectedRevision must be a non-negative integer');
       await unary('settings.mutate', {

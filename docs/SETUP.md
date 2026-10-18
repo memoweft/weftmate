@@ -50,7 +50,7 @@ node scripts/run-personal-host.mjs --user-data-dir C:\WeftMate-Test\profile --ac
 
 ### 日用 Windows 云账号（UP-2）
 
-计划任务 `WeftMate Personal Host` 使用主仓 `scripts/run-personal-host-task.ps1 -Mode Production`；工作树的改动合入并更新主仓后，在下一次由本人安排的重启生效。此脚本的 Probe（隔离探测）分支保持原样。不要为验证执行 Production，也不要停止日用程序或复制其数据。
+计划任务 `WeftMate Personal Host` 使用主仓 `scripts/run-personal-host-task.ps1 -Mode Production -RuntimeDirectory <绝对运行目录>`；运行目录取自原部署配置，不能猜测。工作树的改动合入并更新主仓后，在下一次由本人安排的重启生效。此脚本的 Probe（隔离探测）分支也需传运行目录。不要为验证执行 Production，也不要停止日用程序或复制其数据。
 
 Production 只配置以下公开值；账号密码、云令牌、阿里云凭据不在脚本中：
 
