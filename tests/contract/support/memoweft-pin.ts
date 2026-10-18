@@ -18,11 +18,12 @@ export interface MemoWeftPin {
   recordedAt: string
 }
 
-/** 桥 python（与 weftmate-memory 插件同一 env 接缝；缺省 = 本机开发 venv）。 */
-export const MEMOWEFT_PYTHON = process.env.WEFTMATE_MEMOWEFT_PYTHON ?? 'D:\\AIProjects\\WeftMate\\Runtime\\MemoWeftVenv\\Scripts\\python.exe'
+/** Explicit test interpreter only; never select a local developer environment. */
+import { memoWeftTestEnvironment } from '../../helpers/memoweft-environment.mjs';
+export const MEMOWEFT_PYTHON = memoWeftTestEnvironment().python
 
 export function memoweftBridgeAvailable(python = MEMOWEFT_PYTHON): boolean {
-  return existsSync(python)
+  return Boolean(python && existsSync(python))
 }
 
 export async function loadMemoWeftPin(contractDir: string): Promise<MemoWeftPin> {
@@ -78,8 +79,9 @@ export interface InstalledMemoWeft {
 
 /** 问桥 python：当前环境里实际安装的 MemoWeft 版本与工件树哈希。 */
 export async function probeInstalledMemoWeft(python = MEMOWEFT_PYTHON): Promise<InstalledMemoWeft> {
+  if (!python) throw new Error('Set WEFTMATE_TEST_MEMOWEFT_PYTHON explicitly for the isolated Core probe');
   return new Promise((resolve, reject) => {
-    const child = spawn(python, ['-c', PROBE_PY], { stdio: ['ignore', 'pipe', 'pipe'] })
+    const child = spawn(python, ['-c', PROBE_PY], { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } })
     let stdout = ''; let stderr = ''
     child.stdout.setEncoding('utf8'); child.stderr.setEncoding('utf8')
     child.stdout.on('data', (c: string) => { stdout += c })

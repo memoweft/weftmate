@@ -1,3 +1,4 @@
+import { requireMemoWeftPath, memoWeftTestEnvironment } from '../helpers/memoweft-environment.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import test from 'node:test';
 
@@ -31,9 +32,9 @@ test('forget preview includes interaction commitments in its count and named ite
   assert.equal(view.itemCount, 1);
   assert.equal(view.items[0].kind, 'interaction_commitment');
 });
-test('backup SQLite scan reaches all columns, legacy commitments and escaped JSON', { skip: process.platform !== 'win32' }, () => {
+test('backup SQLite scan reaches all columns, legacy commitments and escaped JSON', { skip: process.platform !== 'win32' ? 'Windows-only SQLite backup scan' : memoWeftTestEnvironment().python ? false : memoWeftTestEnvironment().skipReason }, () => {
   const root = mkdtempSync(join(tmpdir(), 'm2-backup-scan-'));
-  const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
+  const python = requireMemoWeftPath('python');
   const path = join(root, 'memory.sqlite3');
   try {
     execFileSync(python, ['-c', 'import sqlite3,sys,json; c=sqlite3.connect(sys.argv[1]); c.execute("CREATE TABLE interaction_commitment(content, raw_quote)"); c.execute("INSERT INTO interaction_commitment VALUES (?,?)", ("clean", sys.argv[2])); c.execute("CREATE TABLE new_text_table(unknown_json)"); c.execute("INSERT INTO new_text_table VALUES (?)", (json.dumps({"source":json.dumps({"raw":sys.argv[2]})}),)); c.commit(); c.close()', path, '王小明']);
