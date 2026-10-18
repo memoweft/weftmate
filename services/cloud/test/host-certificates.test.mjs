@@ -186,6 +186,37 @@ test('order failures retain their request context when a second signed account r
   });
 });
 
+test('a recovered badNonce does not suppress a later authorization or DNS failure diagnostic', async t => {
+  for (const stage of ['authorization', 'dns_publish']) await t.test(stage, async () => {
+    const diagnostics = [], dns = [];
+    const failure = Object.assign(new Error('synthetic later failure'),
+      { code: stage === 'authorization' ? 'ECONNRESET' : 'DNS_PROVIDER_ERROR' });
+    let orders = 0;
+    const ca = acmeFixture({ fail: route => {
+      if (route === '/order' && ++orders === 1) return new Response(JSON.stringify({
+        type: 'urn:ietf:params:acme:error:badNonce', detail: 'synthetic rejected nonce',
+      }), { status: 400, headers: { 'content-type': 'application/json', 'replay-nonce': 'synthetic-recovery-nonce' } });
+      if (route === '/authorization' && stage === 'authorization') throw failure;
+    } });
+    await assert.rejects(issueHostCertificate({ ...ca, domain,
+      accountKey: identity().tls().privateJwk, privateJwk: diagnosticContentKey(),
+      signal: new AbortController().signal, diagnostic: error => diagnostics.push(error),
+      relayRequest: async route => {
+        dns.push(route);
+        if (route.endsWith('/present')) throw failure;
+      } }), error => { assert.equal(error, failure); return true; });
+    assert.equal(orders, 2, 'real ACME library recovered the first badNonce');
+    assert.ok(ca.calls.some(({ route }) => route === '/authorization'));
+    assert.deepEqual(dns, stage === 'dns_publish' ? ['/hosts/relay/dns/present', '/hosts/relay/dns/cleanup'] : []);
+    assert.deepEqual(diagnostics.map(error => ({ stage: error.stage, target: error.target,
+      httpStatus: error.httpStatus, acmeProblem: error.acmeProblem, errorCode: error.errorCode })), [
+      { stage: 'order', target: 'acme', httpStatus: 400, acmeProblem: 'badNonce', errorCode: 'E_ACME' },
+      { stage, target: stage === 'authorization' ? 'acme' : 'cloud_dns', httpStatus: undefined,
+        acmeProblem: undefined, errorCode: failure.code },
+    ], 'each distinct failure is reported exactly once, even across recovery');
+  });
+});
+
 test('certificate validation and hot reload failures emit safe local diagnostics and preserve public error codes', async t => {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'wm-cert-diagnostic-')));
   t.after(() => rm(root, { recursive: true, force: true }));
