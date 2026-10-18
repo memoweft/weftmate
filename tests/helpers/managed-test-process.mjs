@@ -1,10 +1,12 @@
 import { spawn } from 'node:child_process';
 import { cleanupOwnedProcesses, describeExit, redactEvidenceText, systemCommitMemory } from './process-evidence.mjs';
+import { prepareNativeExitDiagnostics, collectNativeExitDiagnostics } from './native-exit-diagnostics.mjs';
 
 /** Await termination before the caller removes its isolated temp scope. */
-export async function runManagedTestProcess(command, args, { env, commandRoots = [], executables = [command], maxBuffer = 64 * 1024 * 1024, onOutput, timeoutMs } = {}) {
+export async function runManagedTestProcess(command, args, { env, commandRoots = [], executables = [command], maxBuffer = 64 * 1024 * 1024, onOutput, timeoutMs, diagnosticDirectory } = {}) {
   const startedAt = Date.now();
-  const child = spawn(command, args, { env, windowsHide: true, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] });
+  const diagnostics = diagnosticDirectory ? prepareNativeExitDiagnostics(diagnosticDirectory, args, env ?? process.env) : null;
+  const child = spawn(command, diagnostics?.args ?? args, { env: diagnostics?.env ?? env, windowsHide: true, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] });
   let stdout = '', stderr = '', error, interrupted = null, timedOut = false, escalation;
   const stop = signal => {
     if (interrupted) return;
@@ -48,6 +50,11 @@ export async function runManagedTestProcess(command, args, { env, commandRoots =
       systemCommit: systemCommitMemory(), stdoutTail: redactEvidenceText(stdout.slice(-8192), commandRoots),
       stderrTail: redactEvidenceText(stderr.slice(-8192), commandRoots),
     } : undefined;
+    if (evidence && diagnostics) {
+      try {
+        evidence.nativeExit = collectNativeExitDiagnostics(diagnostics.directory, { runnerPid: child.pid, stdout, stderr, roots: commandRoots });
+      } catch { /* Observation must never change the process result. */ }
+    }
     if (evidence) console.error(`Failed test process evidence: ${JSON.stringify(evidence)}`);
     return { ...result, stdout, stderr, error, interrupted, timedOut, evidence };
   } finally {
