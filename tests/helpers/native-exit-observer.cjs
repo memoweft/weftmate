@@ -29,15 +29,19 @@ function installNativeExitObserver({ directory, reportReader = () => process.rep
   return safely(() => {
     const destination = path.join(directory, `native-${process.pid}-${threadId}.json`);
     const active = new Map();
-    let lastChildExit = null, report = null, reportAvailable = false;
-    const snapshot = (phase, refresh = false) => safely(() => {
-      if (refresh) {
+    const modules = new Set([name(process.execPath), ...Object.keys(require.cache).filter(file => file.endsWith('.node')).map(name)]);
+    let lastChildExit = null, report = null, reportAvailable = false, reportAttempted = false;
+    const snapshot = (phase, failed = false) => safely(() => {
+      // Full reports are synchronous and expensive. Never collect one for
+      // startup, successful native loads, a normal exit or periodic sampling.
+      if (failed && !reportAttempted) {
+        reportAttempted = true;
         const next = safely(() => projectReport(reportReader()));
         if (next) { report = next; reportAvailable = true; }
       }
       write(destination, JSON.stringify({ pid: process.pid, ppid: process.ppid, threadId,
         nodeVersion: process.version, platform: process.platform, arch: process.arch,
-        phase, capturedAt: new Date().toISOString(), reportAvailable,
+        phase, capturedAt: new Date().toISOString(), reportAvailable, sharedObjects: [...modules],
         ...report, activeChildren: [...active.values()], lastChildExit }));
     });
     const spawned = ({ process: child }) => safely(() => {
@@ -48,7 +52,7 @@ function installNativeExitObserver({ directory, reportReader = () => process.rep
         snapshot('child-spawn');
         child.once('exit', (code, signal) => safely(() => {
           active.delete(row.pid); lastChildExit = { ...row, code, signal };
-          snapshot('child-exit');
+          snapshot('child-exit', code !== 0 || !!signal);
         }));
       }));
     });
@@ -59,18 +63,30 @@ function installNativeExitObserver({ directory, reportReader = () => process.rep
     const dlopen = process.dlopen;
     const observedDlopen = function (...args) {
       const result = Reflect.apply(dlopen, this, args);
-      snapshot('native-load', true);
+      safely(() => modules.add(name(args[1])));
+      snapshot('native-load');
       return result;
     };
     process.dlopen = observedDlopen;
-    const beforeExit = () => snapshot('beforeExit', true);
-    const exit = () => snapshot('exit', true);
+    const beforeExit = code => { if (code) snapshot('beforeExit', true); };
+    const exit = code => snapshot('exit', !!code);
+    const uncaught = () => snapshot('uncaughtException', true);
+    // Monitor preserves Node's original uncaught-exception behavior. Do not
+    // install signal handlers: those would suppress default termination.
+    process.on('uncaughtExceptionMonitor', uncaught);
+    const abort = process.abort;
+    const observedAbort = function (...args) {
+      snapshot('abort', true);
+      return Reflect.apply(abort, this, args);
+    };
+    process.abort = observedAbort;
     process.on('beforeExit', beforeExit); process.on('exit', exit);
-    const timer = setInterval(() => snapshot('sample', true), 1000); timer.unref();
-    snapshot('startup', true);
+    snapshot('startup');
     return () => safely(() => {
-      clearInterval(timer); events.unsubscribe(spawned);
+      events.unsubscribe(spawned);
       process.off('beforeExit', beforeExit); process.off('exit', exit);
+      process.off('uncaughtExceptionMonitor', uncaught);
+      if (process.abort === observedAbort) process.abort = abort;
       if (process.dlopen === observedDlopen) process.dlopen = dlopen;
     });
   });

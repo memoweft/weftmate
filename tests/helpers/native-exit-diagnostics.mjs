@@ -33,8 +33,11 @@ export function collectNativeExitDiagnostics(directory, { runnerPid, stdout, std
       sharedObjects: row.sharedObjects, nativeStack: row.nativeStack, resources: row.resources,
       activeChildren: row.activeChildren, lastChildExit: row.lastChildExit }));
     const tail = text => redactEvidenceText(text.slice(-8192), roots).split(/\r?\n/).slice(-80);
-    return { runnerPid, snapshots: safeSnapshots, reports, unreadable,
+    const redact = value => typeof value === 'string' ? redactEvidenceText(value, roots)
+      : Array.isArray(value) ? value.map(redact)
+      : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, redact(item)])) : value;
+    return redact({ runnerPid, snapshots: safeSnapshots, reports, unreadable,
       outputTail: tail(stdout), stderrTail: tail(stderr), tailLines: 80,
-      coverage: 'Node runner/file workers only; child_process async spawns; last snapshot may precede native failure; missing data is unknown' };
+      coverage: 'Node runner/file workers only; child_process async spawns; lightweight module names until failure; last snapshot may precede native failure; missing data is unknown' });
   } catch { return { runnerPid, available: false }; }
 }

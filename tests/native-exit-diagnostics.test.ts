@@ -6,6 +6,7 @@ import { basename, join } from 'node:path';
 import { runManagedTestProcess } from './helpers/managed-test-process.mjs';
 import { createRequire } from 'node:module';
 import { parseTap, runFileGate } from '../.github/scripts/ci-test-policy.mjs';
+import { collectNativeExitDiagnostics } from './helpers/native-exit-diagnostics.mjs';
 const { installNativeExitObserver, projectReport } = createRequire(import.meta.url)('./helpers/native-exit-observer.cjs');
 
 test('all passing leaves followed by a native-style file exit retain worker diagnostics without retry', async () => {
@@ -121,4 +122,64 @@ test('diagnostic reports publish module basenames and handle kinds without priva
   assert.deepEqual(projected.sharedObjects, ['addon.node', 'library.so']);
   assert.equal(JSON.stringify(projected).includes(secret), false);
   assert.equal(JSON.stringify(projected).includes('private'), false);
+});
+
+test('successful observer lifecycle and native loads never collect a full report', () => {
+  const original = process.dlopen;
+  let reports = 0, stop;
+  try {
+    process.dlopen = () => undefined;
+    stop = installNativeExitObserver({ directory: tmpdir(), reportReader: () => { reports++; return {}; }, write: () => {} });
+    process.dlopen({}, 'synthetic.node');
+    // Exercise the actual registered lifecycle callbacks without emitting exit
+    // into node:test's own process listeners.
+    const lifecycle = process.listeners('beforeExit').at(-1);
+    lifecycle(0);
+    process.listeners('exit').at(-1)(0);
+    assert.equal(reports, 0);
+  } finally { stop?.(); process.dlopen = original; }
+});
+
+test('failure indications collect once and abort preserves its receiver, return and exception', () => {
+  const original = process.abort, receiver = {}, result = {}, failure = Error('synthetic abort exception');
+  let reports = 0, calls = 0, stop;
+  try {
+    process.abort = function (...args) {
+      assert.equal(this, receiver); assert.deepEqual(args, ['synthetic']);
+      if (++calls === 2) throw failure;
+      return result;
+    };
+    stop = installNativeExitObserver({ directory: tmpdir(), reportReader: () => { reports++; return {}; }, write: () => {} });
+    assert.equal(reports, 0);
+    assert.equal(Reflect.apply(process.abort, receiver, ['synthetic']), result);
+    assert.equal(reports, 1);
+    assert.throws(() => Reflect.apply(process.abort, receiver, ['synthetic']), error => error === failure);
+    process.listeners('uncaughtExceptionMonitor').at(-1)(Error('synthetic exception'));
+    process.listeners('beforeExit').at(-1)(7);
+    process.listeners('exit').at(-1)(7);
+    assert.equal(reports, 1, 'later failure indications reuse the first report');
+    assert.equal(calls, 2);
+  } finally { stop?.(); process.abort = original; }
+});
+
+test('every newly published diagnostic string is scrubbed including nested snapshot and report fields', () => {
+  const scope = mkdtempSync(join(tmpdir(), 'weftmate-native-redaction-'));
+  const root = String.raw`D:\Synthetic Private\workspace`;
+  const forms = [root, root.replaceAll('\\', '\\\\'), root.replaceAll('\\', '/'),
+    'file:///' + root.replaceAll('\\', '/').split('/').map(encodeURIComponent).join('/')];
+  try {
+    for (const value of forms) {
+      writeFileSync(join(scope, 'native-1-0.json'), JSON.stringify({ pid: 1, phase: value,
+        activeChildren: [{ pid: 2, executable: value }], sharedObjects: [value], lastChildExit: { executable: value } }));
+      writeFileSync(join(scope, 'report.synthetic.json'), JSON.stringify({ header: { event: value } }));
+      const evidence = collectNativeExitDiagnostics(scope, { runnerPid: 1, stdout: value, stderr: value, roots: [root] });
+      assert.equal(evidence.outputTail[0], '%TEMP%');
+      assert.equal(evidence.stderrTail[0], '%TEMP%');
+      assert.equal(evidence.snapshots[0].phase, '%TEMP%');
+      assert.equal(evidence.snapshots[0].activeChildren[0].executable, '%TEMP%');
+      assert.equal(evidence.snapshots[0].sharedObjects[0], '%TEMP%');
+      assert.equal(evidence.snapshots[0].lastChildExit.executable, '%TEMP%');
+      assert.equal(evidence.reports[0].event, '%TEMP%');
+    }
+  } finally { rmSync(scope, { recursive: true, force: true }); }
 });

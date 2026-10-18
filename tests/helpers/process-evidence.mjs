@@ -15,8 +15,19 @@ export function describeExit(code, signal = null) {
     signal, meaning: signal ? `被信号 ${signal} 结束` : meanings.get(unsigned) || (unsigned === null ? '未取得退出码' : '非零退出码') };
 }
 export function redactEvidenceText(text, roots = []) {
-  let value = String(text).replace(/([A-Z]:[\\/]+Users[\\/]+)[^\\/\s]+/gi, '$1<user>');
-  for (const root of [...roots, hostname()]) if (root) value = value.split(root).join(root === hostname() ? '<host>' : '%TEMP%');
+  const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const separator = '(?:[\\\\/]|%2f|%5c)+';
+  let value = String(text);
+  // Match the representation, not just the raw root: TAP/JSON double the
+  // backslashes and file URLs percent-encode spaces, colons and separators.
+  // Do this before user masking, which otherwise changes an explicit root.
+  for (const root of [...roots].filter(Boolean).sort((a, b) => b.length - a.length)) {
+    const pattern = [...root].map(char => /[\\/]/.test(char) ? separator :
+      `(?:${escape(char)}|${[...Buffer.from(char)].map(byte => '%' + byte.toString(16).padStart(2, '0')).join('')})`).join('');
+    value = value.replace(new RegExp(`(?:file:${separator})?${pattern}`, /^[A-Z]:|^\\\\/i.test(root) ? 'gi' : 'g'), '%TEMP%');
+  }
+  value = value.replace(new RegExp(`([A-Z](?::|%3a)${separator}Users${separator})(?:(?![\\\\/]|%2f|%5c|[\\s"'<>]).)+`, 'gi'), '$1<user>');
+  value = value.replace(new RegExp(escape(hostname()), 'gi'), '<host>');
   return value.replace(/\b(?:Bearer|Basic)\s+\S+/gi, '[authorization]')
     .replace(/\b(?:api[_-]?key|token|password|secret|cookie|authorization)\s*[:=]\s*[^\s,;]+/gi, '[secret]')
     .replace(/([?&][^=\s]+)=([^\s&#]+)/g, '$1=[redacted]');

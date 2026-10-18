@@ -69,6 +69,35 @@ test('evidence identity and secret redaction leaves useful synthetic diagnostics
   assert.equal(redactEvidenceText('exit 0xC0000409 synthetic-host'), 'exit 0xC0000409 synthetic-host')
 })
 
+test('evidence roots redact Windows, escaped TAP/JSON, slash and encoded file URL forms before user masking', () => {
+  const root = String.raw`D:\Synthetic Private\用户\workspace`
+  const userRoot = ['C:', 'Users', 'Synthetic Person', 'workspace'].join('\\')
+  for (const directory of [root, userRoot]) {
+    const slash = directory.replaceAll('\\', '/')
+    const forms = [directory, directory.replaceAll('\\', '\\\\'), directory.replaceAll('\\', '\\\\\\\\'), slash,
+      slash.replace(/^[A-Z]/, x => x.toLowerCase()),
+      'file:///' + slash.split('/').map(encodeURIComponent).join('/'),
+      'file:///' + slash.split('/').map(encodeURIComponent).join('/').replaceAll('%3A', ':'),
+      'file:///' + encodeURIComponent(slash),
+    ]
+    for (const value of forms) assert.equal(redactEvidenceText(`location: '${value}/fixture.ts:1:1'`, [directory]),
+      "location: '%TEMP%/fixture.ts:1:1'", value)
+  }
+})
+
+test('existing process evidence callers also redact serialized child output with explicit scope roots', () => {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-escaped-evidence-'))
+  try {
+    const evidence = createProcessEvidence({ outputDir: join(root, 'out'), commandRoots: [root], memoryReader: () => ({ available: false }) })
+    const output = JSON.stringify({ location: join(root, 'synthetic.ts') })
+    const result = evidence.runSync(process.execPath, ['-e', `process.stdout.write(${JSON.stringify(output)});process.exit(7)`], { timeout: 5000 })
+    assert.equal(result.status, 7)
+    assert.equal(result.stdout, output, 'the original process result is unchanged')
+    assert.ok(evidence.records[0].stdoutTail.includes('%TEMP%'))
+    assert.equal(evidence.records[0].stdoutTail.includes(root.replaceAll('\\', '\\\\')), false)
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
 test('bounded output tails retain the entire final window and spawn failures retain their original error code', async () => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-evidence-test-'))
   try {
