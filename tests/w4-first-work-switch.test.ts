@@ -91,11 +91,11 @@ test('#363 first request with failed tool preparation switches and resumes file 
       const approvals = (await api(`/sessions/${id}/approvals`)).approvals;
       const events = (await api(`/sessions/${id}/events?limit=100`)).events;
       return approvals.some((a: any) => a.status === 'pending') || events.some((e: any) => e.type === 'turn.ended'
-        || e.type === 'step.started' && e.data.toolName === 'ask_user_question') ? { approvals, events } : null;
+        || e.type === 'question.asked') ? { approvals, events } : null;
     });
     const card = first.approvals.find((a: any) => a.status === 'pending');
     assert.equal(card?.intent, 'work-switch', 'the first user request must recover preparation and open a card');
-    assert.equal(first.events.some((e: any) => e.type === 'step.started' && e.data.toolName === 'ask_user_question'), false);
+    assert.equal(first.events.some((e: any) => e.type === 'question.asked'), false);
     assert.deepEqual((await readdir(folder)).sort(), ['a.txt', 'b.csv']);
     await api(`/sessions/${id}/approvals/${card.approvalId}`, { requestId: randomUUID(), outcome: 'allowed-once', workProjectId: project.projectId });
     await until(async () => {
