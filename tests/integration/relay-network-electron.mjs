@@ -1,5 +1,5 @@
 import { app, session, net } from 'electron';
-import { createServer } from 'node:http';
+import { createServer, request as httpRequest } from 'node:http';
 import { createServer as httpsServer } from 'node:https';
 import { connect } from 'node:net';
 import { EventEmitter } from 'node:events';
@@ -20,7 +20,7 @@ app.whenReady().then(async()=>{
  const listen=s=>new Promise(r=>s.listen(0,'127.0.0.1',r));
  const track=s=>{s.on('connection',c=>{sockets.add(c);c.once('close',()=>sockets.delete(c))});return s;};
  try {
-  const hits=[];let originHits=0;
+  const hits=[],certificateErrors=[];let originHits=0,secureRequests=0;
   proxy=track(createServer((req,res)=>{
     hits.push(req.url);
     if(mode==='auth'&&req.headers['proxy-authorization']!=='Basic '+Buffer.from('synthetic-user:synthetic-pass').toString('base64')){
@@ -43,16 +43,25 @@ app.whenReady().then(async()=>{
   if(['direct','bypass','bypass-multiple','system-bypass-all','system-bypass-multiple','system-local','env-local','env-loopback','env-loopback-dot'].includes(mode)){
     origin=track(createServer((req,res)=>{originHits++;res.end('direct');}));await listen(origin);
   }
-  if(mode==='tls-reject'){
+  if(mode.startsWith('tls-reject')){
     const {privateKey}=generateKeyPairSync('ec',{namedCurve:'prime256v1'});
-    secure=track(httpsServer({key:privateKey.export({format:'pem',type:'pkcs8'}),cert:syntheticCertificate(false,privateKey)},(req,res)=>res.end('untrusted')));await listen(secure);
-    proxy.on('connect',(req,client,head)=>{hits.push(req.url);const upstream=connect(secure.address().port,'127.0.0.1',()=>{client.write('HTTP/1.1 200 Connection Established\r\n\r\n');if(head.length)upstream.write(head);client.pipe(upstream);upstream.pipe(client);});sockets.add(upstream);upstream.on('error',()=>client.destroy());client.on('error',()=>upstream.destroy());client.on('close',()=>upstream.destroy());});
+    secure=track(httpsServer({key:privateKey.export({format:'pem',type:'pkcs8'}),cert:syntheticCertificate(false,privateKey)},(req,res)=>{secureRequests++;res.end('untrusted');}));await listen(secure);
+    proxy.on('connect',(req,client,head)=>{
+      hits.push(req.url);
+      // Chromium may request components in the background on any platform.
+      // Only tunnel the test target; never forward unrelated traffic.
+      if(req.url!=='r0-2.invalid:443'){client.end('HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\n\r\n');return;}
+      const upstream=connect(secure.address().port,'127.0.0.1',()=>{client.write('HTTP/1.1 200 Connection Established\r\n\r\n');if(head.length)upstream.write(head);client.pipe(upstream);upstream.pipe(client);});sockets.add(upstream);upstream.on('error',()=>client.destroy());client.on('error',()=>upstream.destroy());client.on('close',()=>upstream.destroy());
+    });
   }
   if(mode==='unreachable'){await new Promise(r=>proxy.close(r));}
   let proxyConfig;
   const sessionApi={defaultSession:session.defaultSession,fromPartition(...args){
     const real=session.fromPartition(...args);
-    real.webRequest.onErrorOccurred(detail=>console.error('CHROMIUM_NETWORK_ERROR', /^net::ERR_[A-Z0-9_]+$/.test(detail.error)?detail.error:'REQUEST_FAILED'));
+    real.webRequest.onErrorOccurred(detail=>{
+      if(detail.url==='https://r0-2.invalid/')certificateErrors.push(detail.error);
+      console.error('CHROMIUM_NETWORK_ERROR', /^net::ERR_[A-Z0-9_]+$/.test(detail.error)?detail.error:'REQUEST_FAILED');
+    });
     const setProxy=real.setProxy.bind(real);
     real.setProxy=async config=>{if(config.proxyRules?.includes(proxyUrl))proxyConfig=config;await setProxy(config);};
     return real;
@@ -67,6 +76,13 @@ app.whenReady().then(async()=>{
     }));return req;
   }}:net;
   network=await createDesktopRelayNetwork({session:sessionApi,net:requestApi,env});
+  if(mode==='tls-reject-background')await new Promise((resolve,reject)=>{
+    // Reproduce a Chromium background CONNECT arriving before the target.
+    // This request only contacts our own randomly allocated fake proxy.
+    const request=httpRequest({host:'127.0.0.1',port:proxy.address().port,method:'CONNECT',path:'background.invalid:443'});
+    request.once('connect',(_response,socket)=>{socket.destroy();resolve();});
+    request.once('error',reject);request.setTimeout(3000,()=>request.destroy(Error('Synthetic CONNECT timed out')));request.end();
+  });
   if(mode==='bypass-multiple')assert.ok(proxyConfig.proxyBypassRules.startsWith('<-loopback>,direct.invalid,second-direct.invalid,unused.invalid,'),'Electron bypass contract uses commas');
   if(mode==='env-loopback'||mode==='env-loopback-dot'){
     const host=mode==='env-loopback'?'loopback':'loopback.';
@@ -82,9 +98,14 @@ app.whenReady().then(async()=>{
     const config=frpcConfig({credentials:{baseUrl:'https://content.invalid',serverAddr:'relay.invalid',serverName:'relay.invalid',serverPort:443,hostId:'synthetic',credential:'synthetic'},localPort:1,transportCaFile:'synthetic',adminPort:2,adminPassword:'synthetic',proxyUrl});
     assert.ok(config.includes('transport.proxyURL = "socks5://synthetic-user:synthetic-pass@proxy.invalid:1080"'));
     assert.deepEqual(await (await network.fetch('https://certificate.invalid')).json(),{authenticated:true});assert.equal(challenged,true);
-  } else if(['tls-reject','unreachable'].includes(mode)){
-    await assert.rejects(network.fetch(mode==='tls-reject'?'https://r0-2.invalid/':'http://certificate.invalid/directory',{signal:AbortSignal.timeout(3000)}),e=>e.code==='NETWORK_UNAVAILABLE');
-    if(mode==='tls-reject')assert.equal(hits[0],'r0-2.invalid:443');
+  } else if(mode.startsWith('tls-reject')||mode==='unreachable'){
+    await assert.rejects(network.fetch(mode.startsWith('tls-reject')?'https://r0-2.invalid/':'http://certificate.invalid/directory',{signal:AbortSignal.timeout(3000)}),e=>e.code==='NETWORK_UNAVAILABLE');
+    if(mode.startsWith('tls-reject')){
+      assert.ok(hits.includes('r0-2.invalid:443'),'the certificate request must reach the fake proxy');
+      assert.ok(certificateErrors.includes('net::ERR_CERT_AUTHORITY_INVALID'),'the target must fail certificate validation, not just networking');
+      assert.equal(secureRequests,0,'untrusted TLS must never reach the HTTPS application');
+      if(mode==='tls-reject-background')assert.ok(hits.includes('background.invalid:443'));
+    }
   } else if(['direct','bypass','bypass-multiple','system-bypass-all','system-bypass-multiple','system-local','env-local'].includes(mode)) {
     const local=mode.endsWith('-local');
     // Check relay routing first: the review's exact NO_PROXY=* reproducer.
