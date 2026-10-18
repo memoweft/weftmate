@@ -5,7 +5,7 @@ import { constants } from 'node:os';
 import ACME from '@root/acme';
 import acmeRequests from '@root/acme/utils.js';
 import { setTimeout as delay } from 'node:timers/promises';
-import CSR from '@root/csr';
+import { createCsr } from './csr.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 import { tlsSpki } from './tls.mjs';
 
@@ -15,7 +15,7 @@ const DAY = 86_400_000;
 const diagnosticCodes = new Set([...Object.keys(constants.errno), 'E_ACME', 'E_ACME_CHALLENGE', 'E_ACME_UNKNOWN',
   'ACME_REQUEST_FAILED', 'ABORT_ERR', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT',
   'UND_ERR_SOCKET', 'ERR_TLS_CERT_ALTNAME_INVALID', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
-  'CERT_HAS_EXPIRED', 'DNS_NOT_CONFIGURED', 'DNS_PROVIDER_ERROR', 'DNS_PROPAGATION_TIMEOUT', 'DNS_ZONE_MISMATCH',
+  'CERT_HAS_EXPIRED', 'CSR_PATCH_INVALID', 'DNS_NOT_CONFIGURED', 'DNS_PROVIDER_ERROR', 'DNS_PROPAGATION_TIMEOUT', 'DNS_ZONE_MISMATCH',
   'CLOUD_UNAVAILABLE', 'CERTIFICATE_KEY_DOMAIN_MISMATCH', 'CERTIFICATE_INVALID_DATES']);
 const acmeProblems = new Set(['accountDoesNotExist', 'alreadyRevoked', 'badCSR', 'badNonce', 'badPublicKey',
   'badRevocationReason', 'badSignatureAlgorithm', 'caa', 'compound', 'connection', 'dns', 'externalAccountRequired',
@@ -170,7 +170,7 @@ export async function issueHostCertificate({ directoryUrl, email, accountKey, pr
     },
   });
   try {
-    const csr = await CSR.csr({ jwk: privateJwk, domains: [domain], encoding: 'pem' });
+    const csr = await createCsr({ jwk: privateJwk, domains: [domain], encoding: 'pem' });
     await client.init(directoryUrl);
     account = await client.accounts.create({ accountKey, subscriberEmail: email, agreeToTerms: true });
     const result = await client.certificates.create({ account, accountKey, csr, domains: [domain], challenges: {
