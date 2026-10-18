@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const require=createRequire(import.meta.url);
-for(const mode of ['env','system','direct','bypass','bypass-multiple','socks-portless','auth','tls-reject','unreachable']) test(`real Electron relay network: ${mode}`,{timeout:30000},async()=>{
+for(const mode of ['env','system','direct','bypass','bypass-multiple','system-bypass-all','system-bypass-multiple','system-local','env-local','socks-portless','auth','tls-reject','unreachable']) test(`real Electron relay network: ${mode}`,{timeout:30000},async()=>{
  const profile=await mkdtemp(join(tmpdir(),'weftmate-relay-proxy-'));
  const env={...process.env,WEFTMATE_PROXY_TEST_PROFILE:profile,WEFTMATE_PROXY_TEST_MODE:mode};delete env.ELECTRON_RUN_AS_NODE;delete env.NODE_USE_ENV_PROXY;
  let child;

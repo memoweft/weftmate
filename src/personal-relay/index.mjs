@@ -170,7 +170,8 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
   return {
     start(localOrigin) { origin = localOrigin; void tick(); timer = setInterval(() => { void tick(); }, pollMs); timer.unref(); },
     status() { return { state, baseUrl: publicOrigin, certificateExpiresAt, certificateErrorCode: null, ...certificates?.status(), ...(failure ? { errorCode: failure } : {}),
-      ...(certificates?.status().certificateErrorCode === 'CERTIFICATE_NETWORK_UNAVAILABLE' ? { message: '网络连不上证书服务。请检查网络或代理设置，再点重试。' }
+      ...(certificates?.status().certificateErrorCode === 'PROXY_CONFIGURATION_INVALID' || state === 'offline' && lastReason === 'PROXY_CONFIGURATION_INVALID' ? { message: '代理设置有问题，暂时连不上云端和远程连接服务。请检查代理设置后重启应用。' }
+        : certificates?.status().certificateErrorCode === 'CERTIFICATE_NETWORK_UNAVAILABLE' ? { message: '网络连不上证书服务。请检查网络或代理设置，再点重试。' }
         : state === 'offline' && ['NETWORK_UNAVAILABLE', 'CLOUD_UNAVAILABLE', 'RELAY_UNAVAILABLE'].includes(lastReason) ? { message: '网络连不上远程连接服务。请检查网络或代理设置，再点重试。' } : {}) }; },
     async rotate(requestId) {
       await polling;

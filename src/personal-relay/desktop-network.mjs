@@ -3,6 +3,14 @@ import { randomUUID } from 'node:crypto';
 const proxyPort = url => Number(url.port || (url.protocol === 'https:' ? 443 : ['socks4:', 'socks5:'].includes(url.protocol) ? 1080 : 80));
 
 const networkFailure = () => Object.assign(new Error('Network connection unavailable'), { code: 'NETWORK_UNAVAILABLE' });
+const configurationFailure = () => Object.assign(new Error('Proxy configuration invalid'), { code: 'PROXY_CONFIGURATION_INVALID' });
+// Explicit rules also apply when the system/PAC configuration disables
+// Chromium's implicit loopback bypass. CIDRs match URL literals, without local
+// DNS lookups that would disclose names intended for a proxy to resolve.
+const localBypass = ['localhost', '*.localhost', 'localhost.', '*.localhost.', '127.0.0.0/8', '10.0.0.0/8',
+  '172.16.0.0/12', '192.168.0.0/16', '169.254.0.0/16', '[::1]', 'fc00::/7', 'fe80::/10',
+  '::ffff:127.0.0.0/104', '::ffff:10.0.0.0/104', '::ffff:172.16.0.0/108',
+  '::ffff:192.168.0.0/112', '::ffff:169.254.0.0/112'];
 
 // Use Chromium's normal system/PAC proxy resolution. Explicit environment
 // proxies get a separate in-memory session; no cookies accompany these requests.
@@ -11,23 +19,46 @@ export async function createDesktopRelayNetwork({ session, net, env = process.en
   const http = env.http_proxy || env.HTTP_PROXY;
   const https = env.https_proxy || env.HTTPS_PROXY || http;
   const credentials = new Map(), rules = [];
-  for (const [scheme, value] of [['http', http], ['https', https]]) {
-    if (!value) continue;
-    let url;
-    try { url = new URL(value); } catch { throw networkFailure(); }
-    if (!['http:', 'https:', 'socks5:', 'socks4:'].includes(url.protocol)) throw networkFailure();
-    if (url.username || url.password) credentials.set(scheme + ':', {
-      host: url.hostname, port: proxyPort(url),
-      username: decodeURIComponent(url.username), password: decodeURIComponent(url.password),
-    });
-    url.username = ''; url.password = '';
-    rules.push(`${scheme}=${url.protocol}//${url.host}`);
+  const owned = new Set();
+  const partition = () => {
+    const value = session.fromPartition(`weftmate-relay-${randomUUID()}`, { cache: false });
+    owned.add(value); return value;
+  };
+  const close = async () => { await Promise.all([...owned].map(value => value.closeAllConnections())); };
+  let bypass;
+  try {
+    for (const [scheme, value] of [['http', http], ['https', https]]) {
+      if (!value) continue;
+      const url = new URL(value);
+      if (!['http:', 'https:', 'socks5:', 'socks4:'].includes(url.protocol)) throw configurationFailure();
+      if (url.username || url.password) credentials.set(scheme + ':', {
+        host: url.hostname, port: proxyPort(url),
+        username: decodeURIComponent(url.username), password: decodeURIComponent(url.password),
+      });
+      url.username = ''; url.password = '';
+      rules.push(`${scheme}=${url.protocol}//${url.host}`);
+    }
+    const proxyBypassRules = ['<-loopback>', ...(env.no_proxy || env.NO_PROXY || '').split(/[,;]/).map(s => s.trim()).filter(Boolean), ...localBypass].join(',');
+    if (rules.length) {
+      transport = partition();
+      await transport.setProxy({ mode: 'fixed_servers', proxyRules: rules.join(';'), proxyBypassRules });
+    }
+    // Ask Chromium to parse the SAME bypass rules for both system and env
+    // proxies. This session only resolves URLs; it never sends a request to the
+    // synthetic proxy. Keep the user's default session and PAC unchanged.
+    bypass = partition();
+    await bypass.setProxy({ mode: 'fixed_servers', proxyRules: 'http://bypass.invalid:80', proxyBypassRules });
+  } catch {
+    // A bad proxy must not escape into main's fatal local-startup path. Fail
+    // remote traffic closed, with no raw URL or decoded credentials in errors.
+    return { fetch: async () => { throw configurationFailure(); },
+      proxyFor: async () => { throw configurationFailure(); }, close };
   }
-  if (rules.length) {
-    transport = session.fromPartition(`weftmate-relay-${randomUUID()}`, { cache: false });
-    await transport.setProxy({ mode: 'fixed_servers', proxyRules: rules.join(';'),
-      proxyBypassRules: (env.no_proxy || env.NO_PROXY || '').split(/[,;]/).map(s => s.trim()).filter(Boolean).join(',') });
-  }
+  let direct;
+  const bypasses = async url => (await bypass.resolveProxy(url)).trim() === 'DIRECT';
+  const directTransport = () => direct ??= (async () => {
+    const value = partition(); await value.setProxy({ mode: 'direct' }); return value;
+  })();
   function authenticatedFetch(url, options = {}) {
     return new Promise((resolve, reject) => {
       const request = net.request({ url, method: options.method || 'GET', session: transport,
@@ -63,6 +94,7 @@ export async function createDesktopRelayNetwork({ session, net, env = process.en
     async fetch(input, options = {}) {
       const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url).href;
       try {
+        if (await bypasses(url)) return await (await directTransport()).fetch(input, { ...options, credentials: 'omit' });
         // net.fetch does not surface proxy authentication challenges. Use the
         // same Chromium session with request's per-request login event only for
         // explicit environment credentials; never answer origin challenges.
@@ -74,7 +106,10 @@ export async function createDesktopRelayNetwork({ session, net, env = process.en
       // frpc accepts one HTTP/SOCKS5 proxy. Keep PAC order; never silently turn
       // an unsupported or failed proxy into a direct connection.
       let route;
-      try { route = (await transport.resolveProxy(url)).split(';')[0].trim(); } catch { throw networkFailure(); }
+      try {
+        if (await bypasses(url)) return null;
+        route = (await transport.resolveProxy(url)).split(';')[0].trim();
+      } catch { throw networkFailure(); }
       if (route === 'DIRECT') return null;
       const match = /^(PROXY|HTTP|SOCKS5|SOCKS)\s+(\S+)$/.exec(route);
       if (!match) throw networkFailure();
@@ -85,7 +120,7 @@ export async function createDesktopRelayNetwork({ session, net, env = process.en
       }
       return proxy.href.replace(/\/$/, '');
     },
-    async close() { await transport.closeAllConnections(); },
+    close,
   };
 }
 

@@ -16,7 +16,7 @@ const diagnosticCodes = new Set([...Object.keys(constants.errno), 'E_ACME', 'E_A
   'ACME_REQUEST_FAILED', 'ABORT_ERR', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT',
   'UND_ERR_SOCKET', 'ERR_TLS_CERT_ALTNAME_INVALID', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
   'CERT_HAS_EXPIRED', 'CSR_PATCH_INVALID', 'DNS_NOT_CONFIGURED', 'DNS_PROVIDER_ERROR', 'DNS_PROPAGATION_TIMEOUT', 'DNS_ZONE_MISMATCH',
-  'CLOUD_UNAVAILABLE', 'NETWORK_UNAVAILABLE', 'CERTIFICATE_KEY_DOMAIN_MISMATCH', 'CERTIFICATE_INVALID_DATES']);
+  'CLOUD_UNAVAILABLE', 'NETWORK_UNAVAILABLE', 'PROXY_CONFIGURATION_INVALID', 'CERTIFICATE_KEY_DOMAIN_MISMATCH', 'CERTIFICATE_INVALID_DATES']);
 const acmeProblems = new Set(['accountDoesNotExist', 'alreadyRevoked', 'badCSR', 'badNonce', 'badPublicKey',
   'badRevocationReason', 'badSignatureAlgorithm', 'caa', 'compound', 'connection', 'dns', 'externalAccountRequired',
   'incorrectResponse', 'invalidContact', 'malformed', 'orderNotReady', 'rateLimited', 'rejectedIdentifier',
@@ -261,7 +261,7 @@ export async function createCertificateManager({ root, domain, identity, certFil
         if (stage !== 'issuance' || !issuanceReported) reportCertificateFailure(diagnostic, { stage, target: 'local' }, error);
         // No CA response bodies, challenge values or credentials in /status.
         state.certificateErrorCode = error.code === 'NETWORK_UNAVAILABLE' ? 'CERTIFICATE_NETWORK_UNAVAILABLE' : ['DNS_NOT_CONFIGURED', 'DNS_PROVIDER_ERROR', 'DNS_PROPAGATION_TIMEOUT',
-          'DNS_ZONE_MISMATCH', 'CLOUD_UNAVAILABLE', 'CERTIFICATE_KEY_DOMAIN_MISMATCH', 'CERTIFICATE_INVALID_DATES']
+          'DNS_ZONE_MISMATCH', 'CLOUD_UNAVAILABLE', 'PROXY_CONFIGURATION_INVALID', 'CERTIFICATE_KEY_DOMAIN_MISMATCH', 'CERTIFICATE_INVALID_DATES']
           .includes(error.code) ? error.code : 'CERTIFICATE_ISSUANCE_FAILED';
       }
       if (!closed) await atomic(stateFile, JSON.stringify(state));
