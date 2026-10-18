@@ -108,3 +108,24 @@ test('existing encrypted vault entries recover their newest source time before r
  assert.equal(e.view().phoneMemory.items[0].sourceTimestamp,300);
  assert.equal(Object.keys(e.view().phoneMemory.suppressedAt).length,1);
 });
+
+test('a new chat waits for an already running correction instead of canceling it and recalling the old value',async t=>{
+ let entered:any,finish:any,id='';const ready=new Promise<void>(r=>entered=r),pending=new Promise<void>(r=>finish=r);
+ const f=await engineFixture(async(body:any)=>{
+  if(body.max_tokens){entered();await pending;const source=JSON.parse(body.messages[1].content)['原话'][0];return result({upsert:[row(id,source.id,'绿茶')]});}
+  return {choices:[{message:{content:body.messages[0].content.includes('绿茶')?'绿茶':'红茶'}}]};
+ });t.after(()=>f.engine.close());
+ await f.engine.memoryChange('add',null,'红茶');id=f.engine.view().phoneMemory.items[0].id;
+ const first=await f.engine.send('我其实更喜欢绿茶');const extracting=f.engine.extractMemory(first.conversationId);await ready;
+ const asking=f.engine.send('我喜欢喝什么？');finish();await extracting;
+ assert.equal((await asking).text,'绿茶');
+});
+
+test('opening a new conversation before the idle timer still forms the preceding explicit preference',async t=>{
+ const f=await engineFixture(async(body:any)=>{
+  if(body.max_tokens){const source=JSON.parse(body.messages[1].content)['原话'][0];return result({upsert:[row(null,source.id,'红茶')]});}
+  return {choices:[{message:{content:body.messages[0].content.includes('记忆：红茶')?'红茶':'不知道'}}]};
+ });t.after(()=>f.engine.close());
+ await f.engine.send('记住我喜欢喝红茶');assert.equal(f.engine.view().phoneMemory.items.length,0);
+ assert.equal((await f.engine.send('我喜欢喝什么？')).text,'红茶');
+});
