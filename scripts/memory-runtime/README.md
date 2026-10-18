@@ -6,7 +6,7 @@
 [#332 的总经理转达](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)。
 
 `lock.json` 固定官方 Python 3.13.16 嵌入 ZIP、Core 已合入并首轮通过的
-`b9a49df7d079f9060106d7eb6614fbfeca57206c` 提交及官方源归档 URL、大小与
+`eb14bec5794796548734232d40c4196d842996eb` 提交及官方源归档 URL、大小与
 散列、Core `uv.lock` 散列、Windows CPython 3.13 对应 wheel、传递依赖、许可、模型
 修订及文件散列。基础层是 Python/Core 和 7 个基础依赖；完整层在同一
 基础上加入 17 个语义依赖、固定模型/分词器、微软两个必需运行库和许可。
@@ -167,3 +167,6 @@ Core 的 `internal_error` 是通用异常兜底（同文件 `823–825`），`ds
 发布者仍须确认自身权利。参见[微软官方条件](https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files)
 与[官方 REDIST 清单](https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution)。
 Python 的嵌入分发和模块查找行为见[官方说明](https://docs.python.org/3.13/using/windows.html#the-embeddable-package)。
+
+本版本含 MemoWeft #133 的多目标原子遗忘：先收齐所有显式目标的完整修订链和来源，
+再在一个事务删除。旧的不完整批量凭据失效，需重新预览确认；单目标凭据不变。
