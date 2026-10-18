@@ -15,9 +15,10 @@ export function cloudIdentityFromEnvironment(env = process.env) {
 
 export async function createHostCloudIdentity(context, options) {
   const config = cloudConfiguration(options);
+  const fetcher = options.fetcher ?? fetch;
   const hostId = context.rootState.hostId;
   const store = await openIdentity(context.root, hostId);
-  const verifier = createCloudVerifier(config, hostId, context.timestamp);
+  const verifier = createCloudVerifier(config, hostId, context.timestamp, fetcher);
   const installationKey = await importJWK(store.state.installation.privateJwk, 'ES256');
   let poll;
   let syncing = null;
@@ -118,7 +119,7 @@ export async function createHostCloudIdentity(context, options) {
   async function callCloud(route, body, token) {
     let response;
     try {
-      response = await fetch(`${config.base}${route}`, { method: 'POST', redirect: 'error',
+      response = await fetcher(`${config.base}${route}`, { method: 'POST', redirect: 'error',
         signal: AbortSignal.timeout(route.startsWith('/hosts/relay/dns/') ? 125_000 : 5000), headers: { 'content-type': 'application/json',
           origin: new URL(config.issuer).origin, ...(token ? { authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(body) });
@@ -128,7 +129,7 @@ export async function createHostCloudIdentity(context, options) {
         response.status === 409 ? 409 : 503);
       return result;
     } catch (error) {
-      if (error.code === 'CLOUD_BINDING_CONFLICT' || route.startsWith('/hosts/relay/dns/') && error.code) throw error;
+      if (error.code === 'CLOUD_BINDING_CONFLICT' || error.code === 'PROXY_CONFIGURATION_INVALID' || route.startsWith('/hosts/relay/dns/') && error.code) throw error;
       throw failure('CLOUD_UNAVAILABLE', 503);
     }
   }
@@ -608,7 +609,7 @@ export async function createHostCloudIdentity(context, options) {
       const proof=await new SignJWT({...body,sub:account.accountId,action}).setProtectedHeader({alg:'ES256',typ:'wm-host-request+jwt'})
         .setIssuer(hostId).setAudience(config.issuer).setIssuedAt().setExpirationTime('60s').setJti(randomUUID()).sign(installationKey);
       let response;
-      try { response=await fetch(`${config.base}${action}`,{method:'POST',redirect:'error',signal:AbortSignal.timeout(30000),
+      try { response=await fetcher(`${config.base}${action}`,{method:'POST',redirect:'error',signal:AbortSignal.timeout(30000),
         headers:{'content-type':'application/json',origin:new URL(config.issuer).origin},body:JSON.stringify({hostId,proof})}); }
       catch { throw failure('CLOUD_UNAVAILABLE',503); }
       const result=await response.json();
