@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -18,8 +19,8 @@ if (process.platform !== 'win32' || process.env.WEFTMATE_STAGE15_MEMORY_UI_SERVE
 const evidenceRoot = 'D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/Memory';
 const privateFixture = join(evidenceRoot, 'private-stage15-memory-ui-fixture.json');
 const publicEvidence = join(evidenceRoot, 'stage15-memory-ui-serve.json');
-const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
-const pythonPath = 'D:/AIProjects/MemoWeft/Core/py/src';
+const python = requireMemoWeftPath('python');
+const pythonPath = requireMemoWeftPath('source');
 if (!existsSync(python)) throw new Error('MemoWeft Core Python runtime is unavailable');
 const root = mkdtempSync(join(tmpdir(), 'weftmate-stage15-memory-ui-'));
 assert.ok(realpathSync(root).startsWith(realpathSync(tmpdir()) + sep));

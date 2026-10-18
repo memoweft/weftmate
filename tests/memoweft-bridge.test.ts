@@ -1,25 +1,23 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 // R7 记忆契约：MemoWeft 2.0 本地桥（stdio JSON-Lines + dsh_bridge entrypoint）。
-// 环境门（缺失则 skip，与 DSH contract 同纪律）：
-//   WEFTMATE_MEMOWEFT_PYTHON     → 桥 python（缺省 D:\AIProjects\WeftMate\Runtime\MemoWeftVenv\Scripts\python.exe）
-//   WEFTMATE_MEMOWEFT_PYTHONPATH → 2.0 源码（缺省 D:\AIProjects\MemoWeft\Core\py\src）
-const PYTHON = process.env.WEFTMATE_MEMOWEFT_PYTHON ?? 'D:\\AIProjects\\WeftMate\\Runtime\\MemoWeftVenv\\Scripts\\python.exe';
-const PYTHONPATH = process.env.WEFTMATE_MEMOWEFT_PYTHONPATH ?? 'D:\\AIProjects\\MemoWeft\\Core\\py\\src';
+// Real Core requires explicit isolated Python/source inputs and opt-in.
+import { memoWeftTestEnvironment } from './helpers/memoweft-environment.mjs';
+const coreEnvironment = memoWeftTestEnvironment();
+const { python: PYTHON, pythonPath: PYTHONPATH } = coreEnvironment;
 const FIXTURE = new URL('./contract/fixtures/r7-bridge-smoke.py', import.meta.url);
 
-const available = existsSync(PYTHON) && existsSync(join(PYTHONPATH, 'memoweft', 'integrations', 'dsh_bridge', '__main__.py'));
+const available = coreEnvironment.available;
 const optIn = process.env.WEFTMATE_TEST_MEMOWEFT === '1';
 
 function runPython(args: string[], input?: string, timeoutMs = 120_000): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
     const child = spawn(PYTHON, args, {
-      env: { ...process.env, PYTHONPATH },
+      env: { ...process.env, PYTHONPATH, PYTHONDONTWRITEBYTECODE: '1' },
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     let stdout = '';
@@ -44,7 +42,7 @@ function runPython(args: string[], input?: string, timeoutMs = 120_000): Promise
 
 describe('R7 MemoWeft 2.0 本地桥契约（可选外部系统，显式 opt-in）', {
   skip: !optIn ? 'MemoWeft 正向集成不属于默认工程门（设置 WEFTMATE_TEST_MEMOWEFT=1 显式运行）'
-    : available ? false : `MemoWeft 桥环境不可用（${PYTHON} / ${PYTHONPATH}）`,
+    : available ? false : coreEnvironment.skipReason,
 }, () => {
   it('边界链纵切：真实边界→durable 存储→Job applied→cognition→确定性召回（预算 0/1）', { timeout: 180_000 }, async () => {
     const result = await runPython([FIXTURE.pathname.slice(1)], undefined, 150_000);

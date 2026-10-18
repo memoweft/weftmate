@@ -50,7 +50,7 @@ Windows 安装、更新、卸载、数据保留、诊断和恢复的当前边界
 
 发货用的固定 DSH = `tests/contract/dsh-pin.json` 的提交 **加上** `patches/dsh/*.patch`（文件名以固定提交前缀开头）。只按固定提交构建、不打这些补丁，得到的不是产品实际使用的运行时——例如首屏输入区依赖的 `data-weftmate-hero-composer` 布局接缝就来自 `…-stage3-hero-composer-carry.patch`。
 
-- 一条命令：`npm run vendor:dsh`。脚本从 `WEFTMATE_DSH_CHECKOUT` 或本机惯例目录读取包含固定提交的 Git 对象，创建独立 clone（克隆副本），固定检出、按文件名顺序打全部补丁、安装锁定依赖并编译，再装配运行时。主检出的工作区、分支和配置均不改动；不再要求手工先打补丁或编译。
+- 一条命令：`npm run vendor:dsh`。脚本从调用者显式设置的 `WEFTMATE_DSH_CHECKOUT` 读取包含固定提交的 Git 对象，创建独立 clone（克隆副本），固定检出、按文件名顺序打全部补丁、安装锁定依赖并编译，再装配运行时。主检出的工作区、分支和配置均不改动；不再要求手工先打补丁或编译。
 - 升级固定提交时，每个补丁要么已被上游吸收后删除，要么改名为新提交前缀并重新生成；不允许留下打不上的补丁。
 - 新增补丁必须同时有一条依赖它的测试（如 `tests/weftmate-conversation-surface.test.ts`），这样漏打补丁会在 vendor 测试里变红。
 

@@ -10,14 +10,14 @@
 import { execFile, spawn } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 /** tests/contract/ */
 export const contractDir = dirname(here)
-/** 仓库根（D:\\MemoWeft\\weftmate）。 */
+/** Repository root. */
 export const repoRoot = resolve(contractDir, '..', '..')
 
 export interface DshPin {
@@ -46,14 +46,11 @@ export async function loadPin(): Promise<DshPin> {
   return pin
 }
 
-/** checkout 候选：env 覆盖 → 本机惯例 → 仓库兄弟目录。 */
+/** Checkout is an explicit input; never discover local source directories. */
 function checkoutCandidates(): string[] {
   const fromEnv = process.env.WEFTMATE_DSH_CHECKOUT
   const candidates = [
     fromEnv === undefined || fromEnv === '' ? undefined : fromEnv,
-    'D:/AIProjects/Shared/Dependencies/DeepSeekHarness',
-    join(homedir(), 'deepseek-harness'),
-    resolve(repoRoot, '..', 'deepseek-harness'),
   ].filter((candidate): candidate is string => candidate !== undefined)
   return candidates
 }

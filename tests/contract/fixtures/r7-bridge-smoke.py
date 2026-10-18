@@ -11,7 +11,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, r"D:\AIProjects\MemoWeft\Core\py\src")
+sys.dont_write_bytecode = True
 
 from memoweft.integrations.dsh_bridge import DshMemoWeftRuntime  # noqa: E402
 

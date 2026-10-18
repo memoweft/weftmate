@@ -260,3 +260,4 @@ jobs:
         run: node --test tests/personal-memory-observed.integration.test.ts tests/personal-memory-observed-outbox.test.ts tests/personal-memory-correction.integration.test.ts tests/personal-memory-freshness.integration.test.ts tests/personal-memory-confirmation.integration.test.ts tests/personal-memory-fx17.integration.test.ts tests/personal-memory-fx18.integration.test.ts tests/personal-memory-actions.integration.test.ts tests/personal-memory-recall-dates.integration.test.ts tests/desktop-memory-core.integration.test.ts
         env:
           WEFTMATE_TEST_MEMOWEFT_SOURCE: ${{ github.workspace }}/memoweft-core/py/src
+          PYTHONDONTWRITEBYTECODE: '1'

@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** MF-1: synthetic accounts, real Core, timestamped formation and immediate recall. */
@@ -15,7 +16,7 @@ import { createModelScheduler } from '../../src/model-scheduler.mjs';
 const arg = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name)+1] : fallback;
 const model = arg('--model','mimo'), single = process.argv.includes('--single-slot');
 const out = resolve(arg('--out',evidencePath(`mf-1/before-${model}${single?'-single':''}`)));
-const core = resolve(arg('--core-source','D:/AIProjects/MemoWeft/Worktrees/mf-1-memory-freshness/py/src'));
+const core = resolve((arg('--core-source') ?? requireMemoWeftPath('source')));
 const env = (name, scope) => execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',`[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','${scope}'))`],{encoding:'utf8',windowsHide:true}).trim();
 const key = model==='synthetic'?'synthetic-key':env(model==='mimo'?'MIMO_API_KEY':'WEFTMATE_LAN_MODEL_KEY',model==='mimo'?'Machine':'User');
 const base = model==='mimo'?'https://api.xiaomimimo.com/v1':model==='lan'?env('WEFTMATE_LAN_MODEL_BASE_URL','User'):null;
@@ -60,7 +61,7 @@ try {
   const endpoint=`http://127.0.0.1:${server.address().port}/v1`;
   const profile={id:'mf1',baseUrl:endpoint,model:model==='synthetic'?'synthetic':'measured-model'};
   scheduler=await createModelScheduler({isIdle:async()=>true,profileFor:()=>profile,backgroundRoute:async()=>profile,credentialFor:()=>key});
-  manager=createPersonalMemoryManager({root,enabled:true,python:'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',pythonPath:core,
+  manager=createPersonalMemoryManager({root,enabled:true,python:requireMemoWeftPath('python'),pythonPath:core,
     baseUrl:endpoint,model:'@current',credential:()=>key,
     processingRoute:(_owner,session)=>({profileId:'mf1',baseUrl:scheduler.memoryBaseUrl('mf1',owner,session),model:profile.model,credential:key,routeFingerprint:null,modelTier:model==='lan'?'local':'cloud'}),
     rpcFactory:options=>{const rpc=new MemoWeftRpc({...options,pythonPath:`${instrumentation}${process.platform==='win32'?';':':'}${core}`,env:{...options.env,MF1_CORE_PHASES:join(root,'core-phases.jsonl')}});const request=rpc.request.bind(rpc);rpc.request=async(method,params,...rest)=>{const t=performance.now();const result=await request(method,params,...rest);if(!['query_jobs','query_world','preview_recall','query_interactions'].includes(method))stamp(`rpc-${method}`,{durationMs:Math.round(performance.now()-t),result});return result;};return rpc;}});
