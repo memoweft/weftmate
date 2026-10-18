@@ -1,5 +1,5 @@
 const invalid = () => Object.assign(Error('MEMORY_FORGET_DECISION_INVALID'), { code: 'MEMORY_FORGET_DECISION_INVALID' });
-export const forgetCompletionVersion = 3; // Includes the retained-record count projection.
+export const forgetCompletionVersion = 4; // Includes retained sources from terminal ingestion jobs.
 // A recovered record needs the retained original, not just an old excerpt.
 // Fresh host inputs may have only text; the manager preserves it before queuing.
 export function forgetSourceText(source, requireOriginal = false) {
@@ -156,7 +156,10 @@ export async function scopedForgetPlan(manager, owner, action, route) {
   // too; this nominates a completion boundary, never extra deletion authority.
   const knownSources = candidates.flatMap(candidate => candidateSources(byKey.get(candidate.key)))
     .map(source => ({ id: source.evidence_id, text: source.evidence.raw_content ?? source.evidence.summary }));
-  const provisional = [...knownSources, ...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? []),
+  // A no_change job can retain a source without any World item or recent-recall nomination.
+  // Core's durable acceptance IDs survive removal of its failed interpretation.
+  const jobSources = (jobs.jobs ?? []).flatMap(job => (job.acceptance?.evidence_ids ?? []).map(id => ({ id })));
+  const provisional = [...knownSources, ...jobSources, ...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? []),
     ...(jobs.formation_requests ?? []).map(row => ({ id: row.evidence_id, text: row.text }))];
   for (const item of provisional) {
     const id = item.id ?? item.evidence_id, key = `evidence:${id}`;

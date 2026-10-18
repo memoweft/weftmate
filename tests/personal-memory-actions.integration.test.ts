@@ -417,6 +417,70 @@ test('FIX-50 G7 M7 real Core: forgetting blue preserves the independent walking 
   assert.deepEqual(f.errors, [])
 })
 
+for (const scenario of ['with current fact', 'orphan only', 'saved v3 plan']) test(`M7 real Core: terminal unformed source is forgotten (${scenario})`, { skip }, async t => {
+  let redId: string;
+  const f = await fixture(t, { seedText: '我喜欢喝红茶。', interpret: payload => {
+    const evidence = payload.evidence[0], green = evidence.text.includes('绿茶');
+    return { schema_version: 8, result: 'cognitions', cognitions: [{ action: 'form',
+      statement_kind: 'preference', formed_by: 'stated', proposition: evidence.text,
+      supports: evidence.segments.map((segment: any) => ({ evidence_id: evidence.id, segment_id: segment.id })),
+      ...(green ? { supersedes_cognition_id: redId, entity: { canonical_name: '绿茶', kind: 'topic', aliases: [] } }
+        : { target: 'owner_self' }) }] }
+  } })
+  redId = (await f.world()).items[0].item_id
+  await f.manager.ingest(owner, boundary('我其实更喜欢绿茶。', 'unformed-green')); await f.ready()
+  const jobs = await f.manager.query(owner, 'query_jobs', { operation: 'list' })
+  assert.ok(jobs.jobs.some(row => row.core_terminal?.world_result?.reason === 'supersession_target_entity_mismatch'))
+  const sources = await f.manager.query(owner, 'query_evidence', { operation: 'list' })
+  const greenSource = sources.evidence.find(row => row.raw_content === '我其实更喜欢绿茶。')
+  assert.ok(greenSource?.content_available)
+  assert.equal((await f.world()).items.some(row => row.value.content.includes('绿茶')), false)
+  if (scenario === 'orphan only') {
+    const before = await f.world()
+    const path = `/personal/v1/memory/items/cognition/${redId}`
+    await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname: path,
+      url: new URL(path, 'http://memory'), request: { method: 'DELETE' },
+      readJson: async () => ({ requestId: 'remove-prior-red', expectedWorldRevision: before.world_revision }) })
+    assert.equal((await f.world()).items.length, 0)
+  }
+  await f.manager.ingest(owner, boundary('我周末喜欢散步。', 'independent-walk')); await f.ready()
+  if (scenario === 'saved v3 plan') {
+    const snapshot = await f.world(), red = snapshot.items.find(row => row.item_id === redId)
+    const authorization = { authorized: true, isForgetRequest: true, subject: 'self', topic: '我喝茶的偏好', conditionsOrQuestions: false }
+    const requestId = 'memory-tool:' + createHash('sha256').update('saved-v3-unformed').digest('hex')
+    const text = '请忘掉我喝茶的偏好。'
+    await f.manager.close()
+    await writeFile(path.join(f.root, 'accounts', owner, 'memory-home/pending-actions.json'), JSON.stringify({ records: {
+      [requestId]: { requestId, name: 'memory_forget', arguments: { query: authorization.topic }, sessionId: 'saved-v3', modelTier: 'cloud',
+        source: { text, message: { content: text, message_id: 'saved-v3-user' } }, scope: authorization,
+        plan: { version: 2, completionVersion: 3, completionState: 'complete', worldRevision: snapshot.world_revision,
+          authorization, authorizedEvidenceIds: red.provenance.map(source => source.evidence_id), evidenceIds: [],
+          worldTargets: [{ kind: 'cognition', id: redId }], affectedIds: [redId], sourceTexts: ['我喜欢喝红茶。'] } },
+    } }))
+    await f.restart(); await f.ready()
+    const saved = await wait(async () => {
+      const row = JSON.parse(await readFile(path.join(f.root, 'accounts', owner, 'memory-home/pending-actions.json'), 'utf8')).records[requestId]
+      return row.result ? row : null
+    })
+    assert.equal(saved.result.state, 'withheld', 'upgrading proof must not add the newly discovered source to an old deletion plan')
+    assert.equal(f.trace.filter(row => row.method === 'submit_command').length, 0)
+    assert.equal((await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: greenSource.evidence_id })).evidence.content_available, true)
+    assert.ok((await f.world()).items.some(row => row.item_id === redId))
+    return
+  }
+  const result = await f.tool('memory_forget_request', {}, 'forget-unformed', '请忘掉我喝茶的偏好。')
+  assert.equal(result.state, 'applied')
+  const retained = await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: greenSource.evidence_id })
+  assert.equal(retained.evidence.content_available, false, 'a completion receipt must cover the terminal no_change source')
+  assert.equal(retained.evidence.raw_content, null)
+  assert.ok((await f.world()).items.some(row => row.value.content.includes('散步')))
+  const exported = JSON.stringify(await f.manager.portableExport(owner))
+  assert.doesNotMatch(exported, /红茶|绿茶/); assert.match(exported, /散步/)
+  await f.restart()
+  assert.equal((await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: greenSource.evidence_id })).evidence.content_available, false)
+  assert.deepEqual(f.errors, [])
+})
+
 async function mixedCompletionFixture(t: any, walkingOnly = false) {
   const mixed = '我喜欢喝红茶。另记一件独立的事：我周末喜欢散步。'
   const f = await fixture(t, { seedText: '记住我喜欢喝红茶', interpret: payload => {
