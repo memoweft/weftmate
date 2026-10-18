@@ -113,6 +113,15 @@
     StrCpy $hasPerMachineInstallation "0"
   ${EndIf}
   !insertmacro WeftLoad
+  ; Only a fresh automatically generated per-user destination may be shortened.
+  !insertmacro GetDParameter $R0
+  ${If} $weftOldUser == ""
+  ${AndIf} $weftOldMachine == ""
+  ${AndIf} $R0 == ""
+  ${AndIf} $INSTDIR == "$LOCALAPPDATA\Programs\${APP_FILENAME}"
+    System::Call '$PLUGINSDIR\WeftInstaller.dll::DefaultDirectory(w "$INSTDIR") w.r0'
+    StrCpy $INSTDIR $0
+  ${EndIf}
   ${IfNot} ${Silent}
     ; The upstream init starts in $INSTDIR. Keep the UI and its Windows DLL
     ; search outside the old app directory while an upgrade removes that tree.
