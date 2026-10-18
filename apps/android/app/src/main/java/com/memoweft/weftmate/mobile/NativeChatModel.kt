@@ -133,7 +133,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     private var modelSettingsFinished = false
     private val prefs = environment.preferences
     private val uncreatedDraftKey get() = "draft-new:$owner:$conversationMode"
-    val composer get() = NativeComposerState(draft, focused, attachments.size, running, !standalone)
+    val composer get() = NativeComposerState(draft, focused, attachments.size, running)
     suspend fun call(method: String, params: JSONObject = JSONObject()): JSONObject = environment.request(method, params)
     suspend fun business(path: String, method: String = "GET", body: JSONObject? = null): JSONObject {
         val request: suspend () -> JSONObject = { call("host.business", JSONObject().put("path", "/personal/v1$path").put("method", method).apply { body?.let { put("body", it) } }) }
@@ -224,17 +224,17 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         phoneModelSwitching=view.optBoolean("modelSwitching")
         sendAvailable=modelId.isNotBlank() && !phoneModelSwitching
         val conversations = view.optJSONArray("conversations")?.objects().orEmpty()
-        if (chatId == "phone-new" && view.optBoolean("running")) {
-            val next = view.optString("selectedId").takeUnless { it == "null" }.orEmpty()
-            if(next.isNotBlank()) { chatId=next; launch { call("native.conversation",JSONObject().put("id",next)) } }
-        }
         val conversation = conversations.find { it.optString("id") == chatId }
         val turns = conversation?.optJSONArray("turns")?.objects().orEmpty()
         running = view.optBoolean("running")
         rows = turns.flatMap { turn -> turn.optJSONArray("messages")?.objects().orEmpty().mapIndexed { index, message ->
             JSONObject().put("eventId", "${turn.optString("id")}:$index").put("at", java.time.Instant.ofEpochMilli(turn.optLong("timestamp")).toString())
-                .put("type", if (running && view.optString("selectedId") == chatId && turn === turns.lastOrNull() && message.optString("role") == "assistant") "assistant.delta" else "${message.optString("role")}.message").put("data", message)
-        } }
+                .put("type", if (running && view.optString("activeConversationId",view.optString("selectedId")) == chatId && turn === turns.lastOrNull() && message.optString("role") == "assistant") "assistant.delta" else "${message.optString("role")}.message").put("data", message)
+        } } + view.optJSONArray("pendingMessages")?.objects().orEmpty().filter { it.optString("conversationId") == chatId }.map { pending ->
+            JSONObject().put("eventId", "queued:${pending.optString("id")}").put("type", "user.message")
+                .put("at", java.time.Instant.ofEpochMilli(pending.optLong("timestamp")).toString())
+                .put("data", JSONObject().put("text",pending.optString("text")).put("queued",true))
+        }
         canRegenerate = standalone && !running && turns.lastOrNull()?.let { !it.optBoolean("synced") && it.optJSONArray("messages")?.objects()?.any { m -> m.optString("role") == "user" } == true } == true
         title = turns.firstOrNull()?.optJSONArray("messages")?.optJSONObject(0)?.optString("text")?.take(40) ?: "新对话"
         error = view.optString("error"); connected = true
@@ -510,7 +510,6 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
             } finally { if (retryGeneration == generation && revision == approvalModeRevision) approvalModeBusy = false }
         }
         if (!phone && !approvalModeReady) return@launch
-        if(standalone && running)return@launch
         scrollVersion++
         sending = true
         val g = generation; val text = draft; val files = attachments.map { it.getString("attachmentId") }
@@ -524,7 +523,13 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                 if(g!=generation)return@launch
                 check(accepted.optBoolean("ready") && accepted.optString("owner")==phoneOwner) { "ACCOUNT_SWITCHED" }
                 if(!accepted.optBoolean("sent",true)) { refreshPhone(accepted);return@launch }
-                submitted=true; call("native.draft",JSONObject().put("hasDraft",draft.isNotEmpty())); running = true
+                submitted=true; sending=false
+                if (chatId == "phone-new") {
+                    val next=accepted.stringOrEmpty("selectedId")
+                    if(next.isNotBlank()) { chatId=next; call("native.conversation",JSONObject().put("id",next)) }
+                }
+                refreshPhone(accepted)
+                call("native.draft",JSONObject().put("hasDraft",draft.isNotEmpty()))
                 refresh(); return@launch
             }
             val p = JSONObject().put("text", text).put("attachmentIds", JSONArray(files)).put("requestId", "native-${UUID.randomUUID()}")
