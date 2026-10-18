@@ -1141,7 +1141,7 @@ test('review-486 real Core: a later missing forget target cannot erase an alread
   t.mock.method(f.manager, 'planForget', async (_owner, action) => ({
     version: 2, completionVersion: 3, completionState: 'complete', worldRevision: 1, authorization: action.scope,
     worldTargets: [{ kind: 'cognition', id: old.item_id }, { kind: 'cognition', id: 'synthetic-missing-target' }],
-    evidenceIds: [], sourceTexts: [original],
+    evidenceIds: [], sourceTexts: [original], forgetScopes: { [`cognition:${old.item_id}`]: await confirmedScope(f, 'cognition', old.item_id) },
   }))
   const result = await f.tool('memory_forget', { query: '我喝茶的偏好' }, 'partial-missing-target', original)
   assert.notEqual(result.state, 'not_found')
