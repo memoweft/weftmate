@@ -12,4 +12,3 @@ test('10,000 random P-256 CSRs preserve public key, domains and valid signatures
     if ((i + 1) % 1000 === 0) t.diagnostic(`${i + 1}/10000 independently verified`);
   }
 });
-
