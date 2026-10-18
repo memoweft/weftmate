@@ -27,7 +27,7 @@ test('Relay phone first input and file task', {
     host = await createPersonalAccessService({ root: join(root, 'host'), port: 0, backend: runtime.backend, uiHandler: servePersonalAccessUi,
       cloudIdentity: { issuer: f.config.issuer, allowInsecureLoopback: true },
       relay: { binary: join(frpDir, 'frpc'), transportCaFile: join(infra.infra, 'cert.pem'), developmentTls: true,
-        connectAddress: '127.0.0.1', connectPort: frontPort, diagnostic: e => runtimeLogs.push(e.message) } });
+        connectAddress: '127.0.0.1', connectPort: frontPort, observe: infra.diagnostics.observe, diagnostic: e => runtimeLogs.push(e.message) } });
     runtime.setHost(host); await runtime.start(); const started = await host.start();
     const direct = async (route, body, auth, method = body === undefined ? 'GET' : 'POST', headers = {}) => {
       const response = await fetch(started.origin + '/personal/v1' + route, { method, signal: AbortSignal.timeout(15_000),
@@ -251,6 +251,7 @@ test('Relay phone first input and file task', {
     await phone.getByText('CI_R1_FILE_TASK_COMPLETED', { exact: true }).waitFor();
     await phone.screenshot({ path: join(evidence, 'file-task-completed.png') }); report.passed = true;
   } catch (error) {
+    try { infra?.diagnostics.dump(host?.relayStatus()); } catch {}
     report.passed = false; report.error = error.stack;
     report.sendTrace = await phone?.evaluate(() => globalThis.__ciR1SendTrace).catch(() => []);
     report.ui = await phone?.evaluate(() => { const s = globalThis.__ciR1Core?.state; return s && { currentView: s.currentView, refreshing: s.refreshing,
