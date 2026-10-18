@@ -12,7 +12,7 @@ import { frpcConfig } from '../../src/personal-relay/index.mjs';
 
 app.setPath('userData',process.env.WEFTMATE_PROXY_TEST_PROFILE);
 app.disableHardwareAcceleration();
-app.commandLine.appendSwitch('host-resolver-rules','MAP direct.invalid 127.0.0.1, MAP second-direct.invalid 127.0.0.1');
+app.commandLine.appendSwitch('host-resolver-rules','MAP direct.invalid 127.0.0.1, MAP second-direct.invalid 127.0.0.1, MAP loopback 127.0.0.1, MAP loopback. 127.0.0.1');
 for(const s of [process.stdout,process.stderr])s.on('error',()=>{});
 app.whenReady().then(async()=>{
  let network,proxy,origin,secure;const sockets=new Set();
@@ -20,7 +20,7 @@ app.whenReady().then(async()=>{
  const listen=s=>new Promise(r=>s.listen(0,'127.0.0.1',r));
  const track=s=>{s.on('connection',c=>{sockets.add(c);c.once('close',()=>sockets.delete(c))});return s;};
  try {
-  const hits=[];
+  const hits=[];let originHits=0;
   proxy=track(createServer((req,res)=>{
     hits.push(req.url);
     if(mode==='auth'&&req.headers['proxy-authorization']!=='Basic '+Buffer.from('synthetic-user:synthetic-pass').toString('base64')){
@@ -40,8 +40,8 @@ app.whenReady().then(async()=>{
   if(mode==='bypass')env.NO_PROXY='direct.invalid';
   if(mode==='bypass-multiple')env.NO_PROXY=' direct.invalid, second-direct.invalid ; unused.invalid ';
   if(mode==='socks-portless')env={HTTPS_PROXY:'socks5://synthetic-user:synthetic-pass@proxy.invalid'};
-  if(['direct','bypass','bypass-multiple','system-bypass-all','system-bypass-multiple','system-local','env-local'].includes(mode)){
-    origin=track(createServer((req,res)=>res.end('direct')));await listen(origin);
+  if(['direct','bypass','bypass-multiple','system-bypass-all','system-bypass-multiple','system-local','env-local','env-loopback','env-loopback-dot'].includes(mode)){
+    origin=track(createServer((req,res)=>{originHits++;res.end('direct');}));await listen(origin);
   }
   if(mode==='tls-reject'){
     const {privateKey}=generateKeyPairSync('ec',{namedCurve:'prime256v1'});
@@ -68,7 +68,15 @@ app.whenReady().then(async()=>{
   }}:net;
   network=await createDesktopRelayNetwork({session:sessionApi,net:requestApi,env});
   if(mode==='bypass-multiple')assert.ok(proxyConfig.proxyBypassRules.startsWith('<-loopback>,direct.invalid,second-direct.invalid,unused.invalid,'),'Electron bypass contract uses commas');
-  if(mode==='socks-portless'){
+  if(mode==='env-loopback'||mode==='env-loopback-dot'){
+    const host=mode==='env-loopback'?'loopback':'loopback.';
+    const url=`http://${host}:${origin.address().port}/`;
+    assert.equal(await(await network.fetch(url,{signal:AbortSignal.timeout(3000)})).text(),'direct',`${host} must reach the local service without a proxy`);
+    assert.equal(await network.proxyFor(url),null);
+    assert.equal(originHits,1);assert.equal(hits.length,0);
+    assert.equal((await(await network.fetch('http://certificate.invalid/directory',{signal:AbortSignal.timeout(3000)})).json()).via,'synthetic-proxy');
+    assert.equal(hits.length,1,'unrelated remote traffic must retain the environment proxy');
+  } else if(mode==='socks-portless'){
     const proxyUrl=await network.proxyFor('https://relay.invalid');
     assert.equal(proxyUrl,'socks5://synthetic-user:synthetic-pass@proxy.invalid:1080');
     const config=frpcConfig({credentials:{baseUrl:'https://content.invalid',serverAddr:'relay.invalid',serverName:'relay.invalid',serverPort:443,hostId:'synthetic',credential:'synthetic'},localPort:1,transportCaFile:'synthetic',adminPort:2,adminPassword:'synthetic',proxyUrl});

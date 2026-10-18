@@ -7,7 +7,7 @@ const configurationFailure = () => Object.assign(new Error('Proxy configuration 
 // Explicit rules also apply when the system/PAC configuration disables
 // Chromium's implicit loopback bypass. CIDRs match URL literals, without local
 // DNS lookups that would disclose names intended for a proxy to resolve.
-const localBypass = ['localhost', '*.localhost', 'localhost.', '*.localhost.', '127.0.0.0/8', '10.0.0.0/8',
+const localBypass = ['localhost', '*.localhost', 'localhost.', '*.localhost.', 'loopback', 'loopback.', '127.0.0.0/8', '10.0.0.0/8',
   '172.16.0.0/12', '192.168.0.0/16', '169.254.0.0/16', '[::1]', 'fc00::/7', 'fe80::/10',
   '::ffff:127.0.0.0/104', '::ffff:10.0.0.0/104', '::ffff:172.16.0.0/108',
   '::ffff:192.168.0.0/112', '::ffff:169.254.0.0/112'];
