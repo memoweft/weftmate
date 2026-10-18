@@ -97,3 +97,14 @@ test('forgetting on the page during an extraction save wins over the late extrac
  const forgetting=e.memoryChange('forget-all');finish();await extracting;await forgetting;
  assert.equal(saved.phoneMemory.items.length,0);assert.equal(e.view().phoneMemory.items.length,0);
 });
+
+test('existing encrypted vault entries recover their newest source time before retrying older conversations',async t=>{
+ const s=M.fresh();s.items=[{id:'legacy',text:'绿茶',sourceIDs:['a','b'],updatedAt:400}];
+ delete s.suppressedAt;s.suppressedText=[await M.digest('旧条目',webcrypto)];
+ const old={id:'old',turns:[turn('old','红茶',200)]};
+ const e=await W.create({identity:{},crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
+   load:async()=>({snapshot:null,phoneMemory:s,conversations:[{id:'a',turns:[turn('a','红茶',100)]},{id:'b',turns:[turn('b','绿茶',300)]},old],turns:[],tasks:[]}),save:async()=>{},close(){},complete:async()=>result({upsert:[row('legacy','old','红茶')]})}});
+ t.after(()=>e.close());await e.extractMemory('old');assert.equal(e.view().phoneMemory.items[0].text,'绿茶');
+ assert.equal(e.view().phoneMemory.items[0].sourceTimestamp,300);
+ assert.equal(Object.keys(e.view().phoneMemory.suppressedAt).length,1);
+});
