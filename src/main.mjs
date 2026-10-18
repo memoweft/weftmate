@@ -3157,6 +3157,7 @@ async function bootstrap() {
       root: join(userDataDir, 'personal-access'), enabled: true,
       cleanupDeletedMemory: (ownerId, options) => personalAccessService.cleanupMemoryCopies(ownerId, options),
       python: memoryConfig.python, pythonPath: memoryConfig.pythonPath,
+      language: () => createOfficialDshSettingsClient({ origin: runtimeOrigin }).readLocalePreference(),
       baseUrl: modelScheduler.memoryBaseUrl(memoryConfig.authRef), model: memoryConfig.model,
       credential: (ownerId) => {
         if (!personalAccessService?.canUseModelProfile?.(ownerId, memoryConfig.authRef)) return null;
