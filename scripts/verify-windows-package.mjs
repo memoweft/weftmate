@@ -128,6 +128,8 @@ export async function verifyWindowsPackage({ unpacked, installer, resourcesDirec
   const memoryRuntime = platform === 'darwin' ? null : await verifyMemoryRuntime(join(resources, 'memory-runtime'), {
     mode: modeOf(packageMetadata.memoryRuntimeMode),
   })
+  if (memoryRuntime && packageMetadata.memoryRuntimeManifestSha256 !== memoryRuntime.manifestSha256)
+    throw new Error('memory runtime manifest does not match application metadata')
   // Include unpacked app dependencies, relay configuration and all loose resources.
   const resourceScan = await scanTextTree(resources, identity)
 
