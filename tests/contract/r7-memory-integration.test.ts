@@ -10,15 +10,14 @@ import {
   runNode,
 } from './support/checkout.ts';
 
-const PYTHON = process.env.WEFTMATE_MEMOWEFT_PYTHON ?? 'D:\\MemoWeft\\.venv-memoweft\\Scripts\\python.exe';
-const PYTHONPATH = process.env.WEFTMATE_MEMOWEFT_PYTHONPATH ?? 'D:\\AIProjects\\MemoWeft\\Core\\py\\src';
-const { existsSync } = await import('node:fs');
-const memoweftAvailable = existsSync(PYTHON) && existsSync(join(PYTHONPATH, 'memoweft', 'integrations', 'dsh_bridge', '__main__.py'));
+import { memoWeftTestEnvironment } from '../helpers/memoweft-environment.mjs';
+const coreEnvironment = memoWeftTestEnvironment();
+const { python: PYTHON, pythonPath: PYTHONPATH, available: memoweftAvailable } = coreEnvironment;
 const optIn = process.env.WEFTMATE_TEST_MEMOWEFT === '1';
 
 describe('R7 记忆插件集成（checkout 形态，真插件→真桥→applied→浏览/召回）', {
   skip: !optIn ? 'MemoWeft 正向集成不属于默认工程门（设置 WEFTMATE_TEST_MEMOWEFT=1 显式运行）'
-    : memoweftAvailable ? false : `MemoWeft 桥环境不可用（${PYTHON} / ${PYTHONPATH}）`,
+    : memoweftAvailable ? false : coreEnvironment.skipReason,
 }, () => {
   test('compaction 事件 → 插件组装 → 桥解释落库 → 管理面浏览/确定性召回命中、负查询不泄露', { timeout: 240_000 }, async () => {
     const pin = await loadPin();
@@ -29,6 +28,7 @@ describe('R7 记忆插件集成（checkout 形态，真插件→真桥→applied
     env.WEFTMATE_MEMOWEFT_PYTHON = PYTHON;
     env.WEFTMATE_MEMOWEFT_PYTHONPATH = PYTHONPATH;
     env.WEFTMATE_MEMOWEFT_ENABLED = '1';
+    env.PYTHONDONTWRITEBYTECODE = '1';
     // Core accepts its deterministic bridge model response only in the
     // explicit test mode; this remains inside the child fixture environment.
     env.MEMOWEFT_TESTING = '1';

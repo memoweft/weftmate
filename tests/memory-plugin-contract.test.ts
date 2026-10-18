@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
+import { memoWeftTestEnvironment } from './helpers/memoweft-environment.mjs';
 
 // R7 记忆宿主插件契约（源码锁）：
 //  - 边界源（compaction/end 门控 + user Evidence 组装 + 信封哈希绑定 + 跨语言规范化字节一致）
@@ -15,12 +16,15 @@ const plugin = readFileSync(new URL('../src/plugins/weftmate-memory.mjs', import
 const runtime = readFileSync(new URL('../src/dsh-web-runtime.ts', import.meta.url), 'utf8');
 const main = readFileSync(new URL('../src/main.mjs', import.meta.url), 'utf8');
 const client = readFileSync(new URL('../src/plugins/weftmate-client/client.js', import.meta.url), 'utf8');
-const CORE_PYTHON = process.env.WEFTMATE_MEMOWEFT_PYTHON ?? 'D:\\AIProjects\\MemoWeft\\Core\\py\\.venv\\Scripts\\python.exe';
-const CORE_PYTHONPATH = process.env.WEFTMATE_MEMOWEFT_PYTHONPATH ?? 'D:\\AIProjects\\MemoWeft\\Core\\py\\src';
-const coreAvailable = existsSync(CORE_PYTHON) && existsSync(join(CORE_PYTHONPATH, 'memoweft', 'integrations', 'dsh_bridge', '__main__.py'));
+const coreEnvironment = memoWeftTestEnvironment();
+const { python: CORE_PYTHON, pythonPath: CORE_PYTHONPATH, available: coreAvailable } = coreEnvironment;
 const stagedMemoryRoot = mkdtempSync(join(tmpdir(), 'weftmate-memory-module-'));
 const stagedMemoryPath = join(stagedMemoryRoot, 'weftmate-memory.mjs');
-const vendorTools = pathToFileURL(join(fileURLToPath(new URL('../', import.meta.url)), 'vendor', 'dsh-runtime', 'node_modules', '@deepseek-ai', 'dsh-tools', 'lib', 'index.js')).href;
+const vendorToolsPath = join(fileURLToPath(new URL('../', import.meta.url)), 'vendor', 'dsh-runtime', 'node_modules', '@deepseek-ai', 'dsh-tools', 'lib', 'index.js');
+const vendorTools = pathToFileURL(vendorToolsPath).href;
+const bridgeEnvironmentSkip = !existsSync(vendorToolsPath)
+  ? 'Pinned DSH vendor runtime is unavailable; the optional bridge group runs in the pinned-vendor CI job'
+  : coreAvailable ? false : coreEnvironment.skipReason;
 writeFileSync(stagedMemoryPath, plugin.replace("from '@deepseek-ai/dsh-tools'", `from ${JSON.stringify(vendorTools)}`), 'utf8');
 const importMemoryPlugin = () => import(pathToFileURL(stagedMemoryPath).href);
 process.on('exit', () => rmSync(stagedMemoryRoot, { recursive: true, force: true }));
@@ -57,6 +61,50 @@ function canonicalJson(value) {
 }
 
 describe('R7 记忆宿主插件契约', () => {
+  for (const preference of ['zh', 'en', undefined, 'unavailable']) it(`G9 legacy initialize uses UI locale: ${preference}`, { skip: bridgeEnvironmentSkip }, async () => {
+    const { apply } = await importMemoryPlugin();
+    const home = mkdtempSync(join(tmpdir(), 'weftmate-plugin-language-'));
+    const before = { enabled: process.env.WEFTMATE_MEMOWEFT_ENABLED, home: process.env.DSH_HOME };
+    process.env.WEFTMATE_MEMOWEFT_ENABLED = '1'; process.env.DSH_HOME = home;
+    const lifecycle = mockEffects();
+    let handler: any;
+    const languages: string[] = [];
+    let current = preference;
+    const bridge: any = { child: {}, generation: 0, acceptCapabilities() {}, async close() {}, async request(method: string, params: any) {
+      if (method === 'initialize') languages.push(params.lang);
+      if (method === 'query_world') return { items: [] };
+      return {};
+    } };
+    const ctx: any = { logger: { info() {} }, on() {}, effect: lifecycle.effect, get(name: string) {
+      if (name === 'webServer') return { register(route: any) { handler = route.handler; return () => {} } };
+      if (name === 'settings') return { get(ns: string) {
+        assert.equal(ns, 'locale');
+        if (current === 'unavailable') throw new Error('unavailable');
+        return current === undefined ? undefined : { preference: current };
+      } };
+    } };
+    try {
+      apply(ctx, { bridge });
+      const req: any = { method: 'GET', url: '/weftmate/memory/world.json', headers: {} };
+      let status: number | undefined;
+      await handler(req, { writeHead(code: number) { status = code }, end() {} });
+      assert.equal(status, 200);
+      assert.deepEqual(languages, [preference === 'en' ? 'en' : 'zh']);
+      current = preference === 'en' ? 'zh' : 'en';
+      const res = { writeHead() {}, end() {} };
+      await handler(req, res);
+      assert.equal(languages.length, 1, 'changing the preference does not hot-switch Core');
+      bridge.generation++;
+      await handler(req, res);
+      assert.deepEqual(languages, [preference === 'en' ? 'en' : 'zh', current]);
+    } finally {
+      await lifecycle.dispose();
+      for (const [key, value] of [['WEFTMATE_MEMOWEFT_ENABLED', before.enabled], ['DSH_HOME', before.home]]) {
+        if (value === undefined) delete process.env[key!]; else process.env[key!] = value;
+      }
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
   it('world adapter exposes the formal Core subject_id for V2 command construction without inventing one', async () => {
     const { adaptWorldForLegacyPanel } = await importMemoryPlugin();
     const core = { subject_id: 'owner-actual', world_revision: 1, items: [] };
@@ -201,7 +249,7 @@ describe('R7 记忆宿主插件契约', () => {
     }
   });
 
-  it('真实 Core RPC：capability、精确 history、启动对账、完整 capture 与 stale model 过滤往返', { skip: coreAvailable ? false : 'MemoWeft Core venv unavailable', timeout: 60_000 }, async () => {
+  it('真实 Core RPC：capability、精确 history、启动对账、完整 capture 与 stale model 过滤往返', { skip: bridgeEnvironmentSkip, timeout: 60_000 }, async () => {
     const { MemoWeftBridge, apply } = await importMemoryPlugin();
     const home = mkdtempSync(join(tmpdir(), 'weftmate-memory-actual-core-'));
     const oldEnabled = process.env.WEFTMATE_MEMOWEFT_ENABLED;

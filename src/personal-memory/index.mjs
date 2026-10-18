@@ -31,6 +31,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   baseUrl, model, credential = () => null, rpcFactory = (options) => new MemoWeftRpc(options),
   processingRoute = null, defaultProcessingRoute = null, maxActiveOwners = MAX_ACTIVE_OWNERS,
   formationWaitMs = 0, cleanupDeletedMemory = null, processingHealth = null, retainLocalWorker = false,
+  language = () => 'zh',
   recallMaxItems = Number(process.env.WEFTMATE_MEMORY_RECALL_MAX_ITEMS ?? 6),
   recallMaxChars = Number(process.env.WEFTMATE_MEMORY_RECALL_MAX_CHARS ?? 1200) }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) || typeof enabled !== 'boolean' ||
@@ -472,9 +473,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           REQUIRED_METHODS.some((name) => !before.methods.includes(name))) {
         throw error('MEMORY_PROTOCOL_INCOMPATIBLE');
       }
+      let lang = 'zh';
+      try { if (await language() === 'en') lang = 'en'; } catch { /* No UI preference available; preserve Chinese. */ }
       const initialized = await rpc.request('initialize', {
         session_id: 'weftmate-personal-host', dsh_home: home, subject_id: ownerId,
-        platform: 'dsh', model_tier: selected.modelTier, lang: 'zh', auto_route: !selected.readOnly,
+        platform: 'dsh', model_tier: selected.modelTier, lang, auto_route: !selected.readOnly,
         model_api_key: selected.credential,
       });
       assertRuntimeCurrent(ownerId, generation);

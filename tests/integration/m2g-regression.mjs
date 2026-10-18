@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Original seven + unchanged A/C, one LAN and MiMo round, under the LAN lease. */
 import assert from 'node:assert/strict';
@@ -8,7 +9,7 @@ import { resolve, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 const option = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : fallback;
 const out = resolve(option('--out', evidencePath('m2g/regression')));
-const core = resolve(option('--memory-core-source', 'D:/AIProjects/MemoWeft/Worktrees/m2g-person-loop/py/src'));
+const core = resolve((option('--memory-core-source') ?? requireMemoWeftPath('source')));
 const repository = resolve(import.meta.dirname, '../..');
 const lock = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock', token = `M2g regression ${randomUUID()}`;
 const pause = ms => new Promise(r => setTimeout(r, ms)), exec = promisify(execFile);
