@@ -3,7 +3,10 @@
 import { spawn } from 'node:child_process';
 const [binary, configFile] = process.argv.slice(2);
 if (!process.connected || !binary || !configFile) throw new Error('Sidecar requires a parent IPC channel');
-const child = spawn(binary, ['-c', configFile], { stdio: 'ignore', windowsHide: true });
+const child = spawn(binary, ['-c', configFile], { stdio: ['ignore', process.stdout, process.stderr], windowsHide: true });
+child.once('spawn', () => {
+  try { if (process.connected) process.send({ kind: 'frpc.spawned', pid: child.pid }, () => {}); } catch {}
+});
 let stopping = false, timer;
 function stop() {
   if (stopping) return; stopping = true;
