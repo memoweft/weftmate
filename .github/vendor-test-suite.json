@@ -455,6 +455,8 @@
   ],
   "files": [
     "tests/w4-first-work-switch.test.ts",
+    "tests/credential-startup-security.test.ts",
+    "tests/credential-first-window.test.ts",
     "tests/first-work-switch.test.ts",
     "tests/personal-reply-content-vendor.test.ts",
     "tests/personal-forget-loop.test.ts",
