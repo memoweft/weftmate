@@ -11,13 +11,6 @@ module.exports = async context => {
   await (await import('../memory-runtime-package.mjs')).beforeWindowsMemoryPack(context);
   const root=context.packager.projectDir, out=join(root,'.local/installer-ui');
   mkdirSync(out,{recursive:true});
-  const run=(cmd,args,options={})=>{
-    const r=spawnSync(cmd,args,{encoding:'utf8',windowsHide:true,...options});
-    if(r.status!==0)throw Error(`Installer asset compilation failed: ${r.stderr||r.stdout||r.error}`);
-    return r.stdout.trim();
-  };
-  const vs=run(join(process.env['ProgramFiles(x86)'],'Microsoft Visual Studio/Installer/vswhere.exe'),['-latest','-products','*','-requires','Microsoft.VisualStudio.Component.VC.Tools.x86.x64','-property','installationPath']);
-  if(!vs)throw Error('Installer assets need Visual Studio C++ build tools (x86).');
   const tokens=JSON.parse(readFileSync(join(root,'design/tokens/tokens.json'),'utf8'));
   const themes=Object.values(tokens.surfaces.desktop.themes);
   const values=t=>t.variables;
@@ -28,6 +21,20 @@ module.exports = async context => {
   const identity=context.packager.config.extraMetadata?.desktopIdentity;
   if(identity&&!/^WeftMate [a-z0-9]+$/.test(identity))throw Error('Invalid installer test identity');
   writeFileSync(join(out,'identity.nsh'),`!define WEFT_CONTROL_NAMESPACE "${identity?identity+'\\':''}"\n${identity?'!define WEFT_TEST_IDENTITY\n':''}`);
+};
+// afterPack sees the final app.asar, unpacked dependencies, DSH and memory
+// runtime. Compile the same UI with that payload's exact path budget.
+module.exports.compile = async context => {
+  const root=context.packager.projectDir,out=join(root,'.local/installer-ui');
+  await require('./installer-payload-paths.cjs').writeInstallerPayloadHeader(context.appOutDir,out);
+  const run=(cmd,args,options={})=>{
+    const r=spawnSync(cmd,args,{encoding:'utf8',windowsHide:true,timeout:120000,...options});
+    if(r.status!==0)throw Error(`Installer asset compilation failed: ${r.stderr||r.stdout||r.error}`);
+    return r.stdout.trim();
+  };
+  const vs=run(join(process.env['ProgramFiles(x86)'],'Microsoft Visual Studio/Installer/vswhere.exe'),['-latest','-products','*','-requires','Microsoft.VisualStudio.Component.VC.Tools.x86.x64','-property','installationPath']);
+  if(!vs)throw Error('Installer assets need Visual Studio C++ build tools (x86).');
+  const identity=context.packager.config.extraMetadata?.desktopIdentity;
   const envScript=join(out,'compiler-env.cmd');
   writeFileSync(envScript,`@call "${join(vs,'VC/Auxiliary/Build/vcvars32.bat')}" >nul\r\n@set\r\n`);
   const envText=run('cmd.exe',['/d','/c',envScript]);
