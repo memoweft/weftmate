@@ -1,12 +1,25 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include "installer-directory.h"
+#include "installer-payload.h"
 #include <shobjidl.h>
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <vector>
 static thread_local bool pickerOpen=false;
 bool choosingInstallFolder(){return pickerOpen;}
+std::wstring defaultInstallFolder(const std::wstring& directory) {
+  if(directory.size()+WEFT_INSTALL_MAX_SUFFIX<260||GetFileAttributes(directory.c_str())!=INVALID_FILE_ATTRIBUTES)return directory;
+  // Only shorten the auto-generated per-user candidate name. Normal WeftMate
+  // already fits; existing locations and custom paths stay authoritative.
+  wchar_t local[32768]{};GetEnvironmentVariable(L"LOCALAPPDATA",local,32768);
+  const std::wstring prefix=std::wstring(local)+L"\\Programs\\WeftMate";
+  if(directory.compare(0,prefix.size(),prefix)!=0)return directory;
+  if(directory.size()<=prefix.size()||(directory[prefix.size()]!=L' '&&directory[prefix.size()]!=L'-'))return directory;
+  const auto identity=directory.substr(prefix.size()+1);
+  if(identity.empty()||identity.find_first_not_of(L"abcdefghijklmnopqrstuvwxyz0123456789")!=std::wstring::npos)return directory;
+  return std::wstring(local)+L"\\Programs\\WM-"+identity;
+}
 
 static bool within(const std::wstring& path,const std::wstring& root) {
   if(root.empty()||path.size()<root.size()||_wcsnicmp(path.c_str(),root.c_str(),root.size())!=0)return false;
@@ -41,7 +54,7 @@ std::wstring validateInstallFolder(const std::wstring& path,const std::wstring& 
   bool protectedProgram=within(path,environment(L"ProgramFiles"))||within(path,environment(L"ProgramFiles(x86)"))||within(path,environment(L"ProgramW6432"));
   if(within(path,windows)||(protectedProgram&&!IsUserAnAdmin())||within(path,environment(L"ProgramData"))||within(path,environment(L"APPDATA"))||(within(path,local)&&!within(path,local+L"\\Programs"))||within(path,physicalData)||(!physicalData.empty()&&within(physicalData,path)))
     return tr(L"这里是系统或数据目录。请选择其他文件夹。",L"This is a system or data folder. Choose another folder.");
-  if(path.empty()||path.size()+192>=260)
+  if(path.empty()||path.size()+WEFT_INSTALL_MAX_SUFFIX>=260)
     return tr(L"这个位置的路径太长。请选择更靠近磁盘根目录的文件夹。",L"This path is too long for the app files. Choose a folder closer to the drive root.");
   if(PathIsRelative(path.c_str()))return tr(L"请选择一个完整的文件夹路径。",L"Choose an absolute folder path.");
   if(GetFileAttributes(path.c_str())!=INVALID_FILE_ATTRIBUTES&&!oldOrEmpty(path,executable))
