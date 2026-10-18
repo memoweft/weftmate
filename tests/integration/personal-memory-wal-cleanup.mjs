@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -15,8 +16,8 @@ import { boundaryForCompletedTurn } from '../../src/plugins/weftmate-personal-me
 if (process.platform !== 'win32' || process.env.WEFTMATE_REAL_MEMORY_WAL_E2E !== '1') {
   throw new Error('Set WEFTMATE_REAL_MEMORY_WAL_E2E=1 for isolated Core WAL cleanup acceptance.');
 }
-const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
-const pythonPath = 'D:/AIProjects/MemoWeft/Core/py/src';
+const python = requireMemoWeftPath('python');
+const pythonPath = requireMemoWeftPath('source');
 if (!existsSync(python)) throw new Error('MemoWeft Core Python runtime is unavailable');
 const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-wal-'));
 assert.ok(realpathSync(root).startsWith(realpathSync(tmpdir()) + sep));

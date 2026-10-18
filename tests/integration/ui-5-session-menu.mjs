@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -31,7 +32,7 @@ const redact = value => privateValues.reduce((text, secret) => text.replaceAll(s
 const root = join('C:/Temp', `weftmate-ui-5-${modelName}-${randomUUID()}`), profile = join(root, 'profile'), out = join(root, 'eval');
 mkdirSync(profile, { recursive: true }); mkdirSync(out);
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
-const memoryConfig=join(root,'memory-config.json');writeFileSync(memoryConfig,JSON.stringify({python:'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',pythonPath:'D:/AIProjects/MemoWeft/Core/py/src',baseUrl:'http://127.0.0.1:8081/v1',model:'@current',authRef:'fixture'}));
+const memoryConfig=join(root,'memory-config.json');writeFileSync(memoryConfig,JSON.stringify({python:requireMemoWeftPath('python'),pythonPath:requireMemoWeftPath('source'),baseUrl:'http://127.0.0.1:8081/v1',model:'@current',authRef:'fixture'}));
 const username = `eval-${randomUUID()}`, password = `test-${randomUUID()}-password`;
 const backend = Object.fromEntries(['getStatus', 'listModels', 'preflight', 'createSession', 'sendMessage', 'cancelSession', 'readEvents', 'describeSession'].map(name => [name, async () => ({})]));
 const prep = await createPersonalAccessService({ root: join(profile, 'personal-access'), port: 0, backend });

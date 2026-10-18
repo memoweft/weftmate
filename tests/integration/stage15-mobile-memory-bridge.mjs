@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -25,8 +26,8 @@ if (![adb, appApk, testApk].every((value) => typeof value === 'string' && exists
     typeof serial !== 'string' || !serial) {
   throw new Error('Stage15 Android bridge requires existing WEFTMATE_STAGE15_ADB, serial, app APK and test APK paths.');
 }
-const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
-const pythonPath = 'D:/AIProjects/MemoWeft/Core/py/src';
+const python = requireMemoWeftPath('python');
+const pythonPath = requireMemoWeftPath('source');
 if (!existsSync(python)) throw new Error('MemoWeft Core Python runtime is unavailable');
 const root = mkdtempSync(join(tmpdir(), 'weftmate-stage15-android-memory-'));
 assert.ok(realpathSync(root).startsWith(realpathSync(tmpdir()) + sep));

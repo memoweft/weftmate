@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Real isolated Core workers, synthetic interpretation, no network model calls. */
 import assert from 'node:assert/strict';
@@ -11,8 +12,8 @@ import { boundaryForCompletedTurn } from '../../src/plugins/weftmate-personal-me
 if (process.platform !== 'win32' || process.env.WEFTMATE_REAL_MEMORY_WORLD_E2E !== '1') {
   throw new Error('Set WEFTMATE_REAL_MEMORY_WORLD_E2E=1 for this synthetic, model-free Core worker test.');
 }
-const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
-const pythonPath = 'D:/AIProjects/MemoWeft/Core/py/src';
+const python = requireMemoWeftPath('python');
+const pythonPath = requireMemoWeftPath('source');
 if (!existsSync(python)) throw new Error('MemoWeft Core Python runtime is unavailable');
 const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-world-'));
 assert.ok(realpathSync(root).startsWith(realpathSync(tmpdir()) + sep));
