@@ -36,7 +36,6 @@ import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, readdir, realpath, unlink, writeFile, open } from 'node:fs/promises'
-import { homedir } from 'node:os'
 import { basename, delimiter, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadPin } from '../tests/contract/support/checkout.ts'
@@ -403,7 +402,7 @@ async function assemble(checkout, pin, identity, scratch) {
 }
 
 function sourceRepository(pin) {
-  for (const candidate of [process.env.WEFTMATE_DSH_CHECKOUT, 'D:/AIProjects/Shared/Dependencies/DeepSeekHarness', join(homedir(), 'deepseek-harness'), resolve(repoRoot, '..', 'deepseek-harness')].filter(Boolean)) {
+  for (const candidate of [process.env.WEFTMATE_DSH_CHECKOUT].filter(Boolean)) {
     const root = resolve(repoRoot, candidate)
     const probe = spawnSync('git', ['-C', root, 'cat-file', '-e', `${pin.commit}^{commit}`], { windowsHide: true, stdio: 'ignore' })
     if (probe.status === 0) return root

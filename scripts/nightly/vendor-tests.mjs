@@ -1,11 +1,10 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { assertRuntimeIdentity } from '../dsh-runtime-identity.mjs';
 
-export async function pinnedBuild(worktree, roots = ['D:/AIProjects/Shared/Dependencies/DeepSeekHarness', join(homedir(),'deepseek-harness')]) {
+export async function pinnedBuild(worktree, roots = [process.env.WEFTMATE_DSH_CHECKOUT].filter(Boolean)) {
   let pin;
   try { pin=JSON.parse(await readFile(join(worktree,'tests/contract/dsh-pin.json'),'utf8')); }
   catch (error) { if (error.code==='ENOENT') return; throw error; }

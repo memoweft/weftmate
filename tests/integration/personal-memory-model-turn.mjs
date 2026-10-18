@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Opt-in real DSH account-memory turn acceptance; follows one already-loaded formal local model. */
 import assert from 'node:assert/strict';
@@ -16,8 +17,8 @@ if (process.platform !== 'win32' || process.env.WEFTMATE_REAL_MEMORY_MODEL_E2E !
 }
 const controlOnly = process.env.WEFTMATE_MEMORY_CONTROL_ONLY === '1';
 const repository = dirname(fileURLToPath(new URL('../../package.json', import.meta.url)));
-const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
-const pythonPath = 'D:/AIProjects/MemoWeft/Core/py/src';
+const python = requireMemoWeftPath('python');
+const pythonPath = requireMemoWeftPath('source');
 if (!existsSync(python)) throw new Error('MemoWeft Core Python runtime is unavailable');
 const formalIds = new Set((await listFormalLocalModels()).map((item) => item.modelId));
 assert.equal(formalIds.size, 9, 'formal local catalog must contain the nine host-managed profiles');

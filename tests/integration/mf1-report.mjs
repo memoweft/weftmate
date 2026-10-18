@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Consolidate MF-1 observations; never rewrite the original scenario results. */
 import { readFileSync, writeFileSync, readdirSync, existsSync, lstatSync } from 'node:fs';
@@ -76,7 +77,7 @@ save('scorecard.json',{generatedAt:new Date().toISOString(),timeline,matrices,ei
   distinction:'Behavior scores preserve the original reply/semantic criteria; original formal-source checks remain unchanged and separately reported. Provisional quotes are never counted as formal World items.'});
 save('usage-total.json',{...totals,pricing:{verifiedAt:'2026-10-09',url:'https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash',uncachedPerMillionCny:1,cachedPerMillionCny:0.02,outputPerMillionCny:2},syntheticRoots:[...syntheticRoots]});
 if(process.argv.includes('--formation-jobs')) {
-  const raw=execFileSync('D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe', ['tests/integration/mf1-core-jobs.py',...syntheticRoots],
+  const raw=execFileSync(requireMemoWeftPath('python'), ['tests/integration/mf1-core-jobs.py',...syntheticRoots],
     {encoding:'utf8',maxBuffer:40*1024*1024,windowsHide:true,env:{...process.env,PYTHONIOENCODING:'utf-8'}});
   save('formation-jobs.json',JSON.parse(raw));
   const jobs=JSON.parse(raw), observed=[];
