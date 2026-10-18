@@ -1,5 +1,6 @@
 LIBRARY WeftInstaller
 EXPORTS
+ DefaultDirectory=_DefaultDirectory@4
   Ready=_Ready@24
   Validate=_Validate@0
   Directory=_Directory@0
