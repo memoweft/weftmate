@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHash, generateKeyPairSync } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, rm, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -9,7 +9,8 @@ import ASN1 from '@root/asn1/parser.js';
 import { issueHostCertificate, createCertificateManager } from '../../../src/personal-relay/certificates.mjs';
 import { developmentCertificate, tlsSpki } from '../../../src/personal-relay/tls.mjs';
 
-import { domain, scalarKey, publicKey, verifyCsr } from './host-csr-helpers.mjs';
+import { domain, scalarKey, publicKey, verifyCsr, verifyHostCsr } from './host-csr-helpers.mjs';
+import { seededRsa } from './host-csr-rsa-fixture.mjs';
 
 const DAY = 86_400_000;
 
@@ -47,9 +48,9 @@ test('scalar 111 reaches ACME finalize and download with its original P-256 key'
   verifyCsr(`-----BEGIN CERTIFICATE REQUEST-----\n${ca.csrs[0].toString('base64')}\n-----END CERTIFICATE REQUEST-----`, jwk);
 });
 
-test('fixed-width EC coordinates and explicit RSA public-key decoding preserve multiple SANs', async () => {
+test('fixed-width EC coordinates and seeded RSA CSRs preserve multiple SANs', async () => {
   const domains = [domain, 'secondary.example.com'];
-  for (const jwk of [scalarKey(43), generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey.export({ format: 'jwk' })]) {
+  for (const jwk of [scalarKey(43), seededRsa()]) {
     verifyCsr(await CSR.csr({ jwk, domains }), jwk, domains);
   }
 });
@@ -67,7 +68,7 @@ test('32 deterministic P-256 CSRs preserve public key, domains and valid signatu
   // Always include the original parser failure and the leading-zero coordinate.
   for (const value of [...Array.from({ length: 30 }, (_, i) => i + 1), 43, 111]) {
     const jwk = scalarKey(value);
-    verifyCsr(await CSR.csr({ jwk, domains: [domain], encoding: 'pem' }), jwk);
+    verifyHostCsr(await CSR.csr({ jwk, domains: [domain], encoding: 'pem' }), jwk);
   }
 });
 

@@ -18,9 +18,9 @@
 
 CSR 的常规云测试固定核验 32 把 P-256 密钥（含标量 111 和前导零用例）；完整 10,000 把随机密钥及独立 OpenSSL 核验位于 `services/cloud/stress/host-csr.test.mjs`，由 S2b 明确运行，不进入常规 `test/*.test.mjs`，避免每次重复启动一万次 OpenSSL。两处共用同一组公钥、域名和签名断言；专用核验的数量与期限不变。
 
-合并前，必须把最新 main 合入工作分支，等待该合并结果的全部云端检查通过；单个工作包此前通过不能替代合并结果通过。合主线后的检查也全部核对，由编排者收取结果。计时清单内一次恢复仍须在结果中明示，不能称为首次全绿。
+合并与红灯的处理按 [AGENTS](../AGENTS.md) 和 D114：合进最新 main、自动检查全绿、总代理看过就合；偶发失败直接重跑（`gh run rerun --failed`），在「偶发失败总账」issue 记一行，不追。
 
-遇到红灯，先保存运行 ID（标识）、提交、平台、文件、用例、历史尝试与失败日志；重跑成功不删除原失败。`node .github/scripts/ci-post-merge-survey.mjs <起点 UTC（协调世界时）>` 按固定起点采集 CI、Review gallery（审稿画廊）、Windows packaged application（打包程序）、S1c、S2、S2b 与 Pinned DSH vendor tests（固定运行时测试）。公开证据清理机器身份；原始日志留本包 `.local`。
+需要汇总时，`node .github/scripts/ci-post-merge-survey.mjs <起点 UTC（协调世界时）>` 按固定起点采集 CI、Review gallery（审稿画廊）、Windows packaged application（打包程序）、S1c、S2、S2b 与 Pinned DSH vendor tests（固定运行时测试）。
 
 按证据区分夹具竞态、测试写法不确定、产品问题与纯墙上时钟预算。等待必须依据命令终态、真实长轮询注册或观察者关闭；不靠固定 sleep（休眠）猜测就绪。密文篡改解码后翻转字节。精确读计数和完整存储快照测试先关闭独立后台观察者。继承临时目录的子进程不更新创建者租约。
 
@@ -28,7 +28,6 @@ CSR 的常规云测试固定核验 32 把 P-256 密钥（含标量 111 和前导
 
 `Required unit tests (summary)` 仍须等全部分片报告，缺失、重复或失败继续阻断；它不需要安装依赖。无法在其它分片未结束时宣布整体通过。Observed bridge（记忆观察桥）、vendor／打包／画廊保持独立，继续拆这些任务不能缩短 `gh run rerun --failed` 对同一次运行结束的等待。保持全部检查标准；需要定位时查看已完成的失败 job（任务）日志，完整失败重跑等运行结束后执行。
 
-空账户关闭的500ms检查不在自动重试清单；它的首次失败直接阻断，测试与计时要求保留。不为功能失败登记计时例外；再次失败应继续查阶段耗时和真实条件，不能增加第二次自动重跑。固定复现、逐项定性和连续六轮同代码证据见 [CI-3](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ci-3/README.md)。
 
 两条宿主关闭用例都会输出 `host-close-phases`：撤销等待、各组件清理、审批落盘、空闲连接清扫、HTTP 关闭、服务端响应结束和客户端读完响应的相对毫秒数。观测只注入测试夹具，失败时同样保留；观测回调出错被内部吞掉，原关闭调用、异常、完整响应及500ms要求不变。
 

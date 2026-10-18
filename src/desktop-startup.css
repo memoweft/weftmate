@@ -1,0 +1,9 @@
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--canvas); color: var(--ink); font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
+header { height: 44px; padding: 13px 20px; font-size: 13px; color: var(--ink-secondary); -webkit-app-region: drag; user-select: none; }
+main { min-height: calc(100vh - 44px); display: grid; place-items: center; padding: 32px; }
+main > div { width: min(100%, 400px); }
+h1 { margin: 0 0 12px; font-size: 24px; font-weight: 600; line-height: 1.4; }
+p { margin: 0; color: var(--ink-secondary); font-size: 14px; line-height: 1.8; }
+::selection { background: var(--accent-soft); color: var(--ink); }
