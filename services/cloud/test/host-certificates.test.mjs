@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateKeyPairSync, createHash, createPublicKey } from 'node:crypto';
+import { generateKeyPairSync, createHash, createPublicKey, createECDH } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, writeFile, rm, stat, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import ACME from '@root/acme';
 import { createCertificateManager, issueHostCertificate } from '../../../src/personal-relay/certificates.mjs';
 import { developmentCertificate } from '../../../src/personal-relay/tls.mjs';
 const DAY = 86_400_000, domain = `h-${'b'.repeat(32)}.hosts.example.com`;
@@ -12,6 +13,17 @@ function identity() {
   const privateJwk = privateKey.export({format:'jwk'});
   const spki = createHash('sha256').update(createPublicKey(privateKey).export({format:'der',type:'spki'})).digest('base64url');
   return {tls:()=>({privateJwk,spki}),relayRequest:async()=>{}};
+}
+
+// A fixed, synthetic content key makes transport-stage injection deterministic.
+// @root/csr's ASN.1 heuristic misreads some random EC points before newOrder;
+// those local parser failures must not stand in for the requested CA failure.
+function diagnosticContentKey() {
+  const d = Buffer.alloc(32); d[31] = 1;
+  const key = createECDH('prime256v1'); key.setPrivateKey(d);
+  const point = key.getPublicKey(null, 'uncompressed');
+  return { kty: 'EC', crv: 'P-256', d: d.toString('base64url'),
+    x: point.subarray(1, 33).toString('base64url'), y: point.subarray(33).toString('base64url') };
 }
 
 // Run the real ACME client/signing/CSR against fixed RFC8555 responses. Pebble
@@ -112,12 +124,13 @@ test('issuance diagnostics identify ACME and DNS failure stages without reflecti
         token: secret, privateJwk: { d: secret }, url: `https://example.com/${secret}` });
     } });
     await assert.rejects(issueHostCertificate({ ...ca, domain, accountKey: identity().tls().privateJwk,
-      privateJwk: identity().tls().privateJwk, signal: new AbortController().signal,
+      privateJwk: diagnosticContentKey(), signal: new AbortController().signal,
       diagnostic: error => diagnostics.push(error), relayRequest: async route => {
         dns.push(route);
         if (entry.dns && route.endsWith('/present') || entry.cleanup && route.endsWith('/cleanup'))
           throw Object.assign(new Error(secret), { code: entry.code, cause: { code: secret } });
       } }));
+    if (entry.route) assert.ok(ca.calls.some(({ route }) => route === entry.route), 'injected failure route was reached');
     assert.equal(diagnostics.length, 1);
     const diagnostic = diagnostics[0];
     assert.equal(diagnostic.code, 'CERTIFICATE_ISSUANCE_FAILED');
@@ -131,6 +144,45 @@ test('issuance diagnostics identify ACME and DNS failure stages without reflecti
     assert.ok(!diagnostic.message.includes(secret));
     assert.ok(!diagnostic.stack.includes(secret));
     if (entry.dns) assert.deepEqual(dns, ['/hosts/relay/dns/present', '/hosts/relay/dns/cleanup']);
+  });
+});
+
+test('order failures retain their request context when a second signed account request interleaves', async t => {
+  const create = ACME.create;
+  let client;
+  t.mock.method(ACME, 'create', options => (client = create(options)));
+  const cases = [
+    { name: 'ordinary 429 has no account retry', interleave: false },
+    { name: 'interleaved account before 429', interleave: true },
+    { name: 'interleaved account before transport failure', interleave: true, transport: true },
+  ];
+  for (const { name, interleave, transport } of cases) await t.test(name, async () => {
+    const accountKey = identity().tls().privateJwk, diagnostics = [];
+    const transportError = Object.assign(new TypeError('synthetic transport failure'), { cause: { code: 'ECONNRESET' } });
+    const ca = acmeFixture({ fail: async route => {
+      if (route !== '/order') return;
+      // Use the real library, JWS signing and transport. Hold the order's
+      // failure until another request on this same client has completed.
+      if (interleave) {
+        await client.request({ method: 'HEAD', url: 'https://acme.example.com/nonce' });
+        await client.accounts.create({ accountKey, agreeToTerms: true });
+      }
+      if (transport) throw transportError;
+      return new Response(JSON.stringify({ type: 'urn:ietf:params:acme:error:rateLimited', detail: 'synthetic' }),
+        { status: 429, headers: { 'content-type': 'application/json' } });
+    } });
+    await assert.rejects(issueHostCertificate({ ...ca, domain, accountKey,
+      privateJwk: diagnosticContentKey(), signal: new AbortController().signal,
+      relayRequest: async () => {}, diagnostic: error => { diagnostics.push(error); throw new Error('observer failed'); } }),
+    transport ? error => { assert.equal(error, transportError); return true; } : { code: 'E_ACME', status: 429 });
+    assert.deepEqual(ca.calls.filter(({ route }) => ['/account', '/order'].includes(route)).map(({ route }) => route),
+      interleave ? ['/account', '/order', '/account'] : ['/account', '/order']);
+    assert.equal(diagnostics.length, 1);
+    assert.equal(diagnostics[0].stage, 'order');
+    assert.equal(diagnostics[0].target, 'acme');
+    assert.equal(diagnostics[0].httpStatus, transport ? undefined : 429);
+    assert.equal(diagnostics[0].acmeProblem, transport ? undefined : 'rateLimited');
+    assert.equal(diagnostics[0].causeCode, transport ? 'ECONNRESET' : undefined);
   });
 });
 
