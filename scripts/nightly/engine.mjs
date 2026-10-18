@@ -14,9 +14,11 @@ import { redactEvidenceText, systemCommitMemory, describeExit } from '../../test
 const scripts = fileURLToPath(new URL('.', import.meta.url));
 const value = (name, fallback) => { const i = process.argv.indexOf(name); return i < 0 ? fallback : process.argv[i + 1]; };
 const repository = resolve(value('--repository', join(scripts, '../..')));
-const worktree = resolve(value('--worktree', 'D:/AIProjects/WeftMate/Worktrees/nightly'));
-const reports = resolve(value('--reports', 'D:/AIProjects/WeftMate/Runtime/Nightly'));
-const orchestrator = resolve(value('--orchestrator', 'D:/AIProjects/WeftMate/Runtime/Orchestrator'));
+if (!value('--worktree') || !value('--reports') || !value('--orchestrator'))
+  throw Error('--worktree, --reports and --orchestrator are required');
+const worktree = resolve(value('--worktree'));
+const reports = resolve(value('--reports'));
+const orchestrator = resolve(value('--orchestrator'));
 const mac = value('--mac', 'mac'), minutes = Number(value('--minutes', 90)), threshold = Number(value('--threshold', 0.08));
 const context = JSON.parse(await readFile(value('--nightly-engine'), 'utf8'));
 const { startedAt, deadline, runId, out, date, bootstrapCommit } = context;
@@ -183,6 +185,11 @@ try {
     });
     await phase('apple', ['mac', 'iphone', 'watch'], async () => {
       if (process.argv.includes('--skip-apple')) return skip('主动跳过，未拍');
+      const macWorktree = process.env.WEFTMATE_NIGHTLY_MAC_WORKTREE;
+      const macRepository = process.env.WEFTMATE_NIGHTLY_MAC_REPOSITORY;
+      if (!macWorktree?.startsWith('/') || !macRepository?.startsWith('/'))
+        throw Error('WEFTMATE_NIGHTLY_MAC_WORKTREE and WEFTMATE_NIGHTLY_MAC_REPOSITORY must be explicit absolute paths');
+      const quote = value => "'" + value.replaceAll("'", "'\\''") + "'";
       if (await isLocked('lan.lock')) return skip('被占用，未拍（LAN 锁）');
       const check = await run('ssh', ['-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', mac, '! pgrep -f "codex -m" >/dev/null && ! pgrep -x xcodebuild >/dev/null && test ! -d ~/.weftmate-orchestrator/nightly.lock && test -z "$(xcrun simctl list devices booted | grep Booted)"'], { name: 'apple-idle', allowFailure: true, limit: 20000 });
       if (check.code !== 0) return skip('被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）');
@@ -192,7 +199,7 @@ try {
       await run('ssh', ['-o', 'BatchMode=yes', mac, `mkdir -p ~/${remoteRoot}`], { name: 'apple-directory' });
       await run('scp', [join(engineScripts, 'apple.py'), `${mac}:${remoteRoot}/apple.py`], { name: 'apple-script' });
       if (process.argv.includes('--candidate')) await run('scp', [bundle, `${mac}:${remoteRoot}/candidate.bundle`], { name: 'apple-bundle' });
-      await run('ssh', ['-o', 'BatchMode=yes', mac, `python3 ~/${remoteRoot}/apple.py --run-id ${runId} --commit ${sourceCommit} --seconds ${Math.max(30, Math.floor((deadline - Date.now()) / 1000) - 30)}${process.argv.includes('--candidate') ? ' --candidate' : ''}`], { name: 'apple' });
+      await run('ssh', ['-o', 'BatchMode=yes', mac, `python3 ~/${remoteRoot}/apple.py --run-id ${runId} --commit ${sourceCommit} --worktree ${quote(macWorktree)} --repository ${quote(macRepository)} --seconds ${Math.max(30, Math.floor((deadline - Date.now()) / 1000) - 30)}${process.argv.includes('--candidate') ? ' --candidate' : ''}`], { name: 'apple' });
       await run('scp', ['-r', `${mac}:${remoteRoot}/gallery/.`, gallery], { name: 'apple-evidence' });
       cleanup.apple = JSON.parse((await run('ssh', ['-o', 'BatchMode=yes', mac, `cat ~/${remoteRoot}/cleanup.json`], { name: 'apple-cleanup-read' })).output);
       const status = JSON.parse((await run('ssh', ['-o', 'BatchMode=yes', mac, `cat ~/${remoteRoot}/status.json`], { name: 'apple-status' })).output);
