@@ -21,7 +21,7 @@ import { windowIcon, notificationIcon } from './app-icons.mjs';
 import { nativeEventNotification } from './personal-access/notification-content.mjs';
 import { createWindowsSendTo, windowsApprovalNotification, actOnWindowsApproval } from './windows-system-integration.mjs';
 import { nativeWindowRequest } from './personal-desktop-request.mjs';
-import { restoreWindowsDesktopBounds } from './windows-desktop-bounds.mjs';
+import { createWindowsDesktopBoundsRestore } from './windows-desktop-bounds.mjs';
 import { restoreDesktopBounds } from './desktop-window-bounds.mjs';
 export { restoreDesktopBounds } from './desktop-window-bounds.mjs';
 
@@ -60,11 +60,16 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
       nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
   });
   const display = Number.isFinite(bounds.x) ? screen.getDisplayMatching(bounds) : null;
-  const restoreBounds = Number.isFinite(bounds.x) && process.platform === 'win32' && !Number.isInteger(display.scaleFactor)
-    ? restoreWindowsDesktopBounds(win, bounds, display).catch(error => {
+  const restoreJob = Number.isFinite(bounds.x) && process.platform === 'win32' && !Number.isInteger(display.scaleFactor)
+    ? createWindowsDesktopBoundsRestore(win, bounds, display)
+    : { ready: Promise.resolve(Number.isFinite(bounds.x) && win.setBounds(bounds)), cancel: () => Promise.resolve() };
+  const restoreBounds = restoreJob.ready.then(() => true, error => {
+    if (!stopped && !win.isDestroyed()) {
       createHostLog(app.getPath('userData')).failure('window-bounds', error);
       win.setBounds(bounds);
-    }) : Promise.resolve(Number.isFinite(bounds.x) && win.setBounds(bounds));
+    }
+    return false;
+  });
   const uiUrl = new URL('/personal/v1/ui', origin).href;
   let contentOrigin = origin;
   const certificatePins = new Map(), networkRequests = new Map(), peerOrigins = new Set();
@@ -385,13 +390,14 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     return { exported: true };
   });
   let pendingConversation = null, clientReady = false, maximizeOnShow = saved.maximized === true;
-  let boundsRestored = false, showRequested = false;
+  // A failed restore may show the fallback, but may never persist its geometry.
+  let boundsRestored = false, activationReady = false, showRequested = false;
   const show = sessionId => {
     if (stopped || win.isDestroyed()) return;
     if (sessionId) pendingConversation = sessionId;
     // All activation paths share this gate. Maximizing before native bounds
     // restore finishes makes Windows remember the constructor's normal size.
-    if (!boundsRestored) { showRequested = true; return; }
+    if (!activationReady) { showRequested = true; return; }
     showRequested = false;
     if (maximizeOnShow) { win.maximize(); maximizeOnShow = false; }
     if (win.isMinimized()) win.restore();
@@ -574,9 +580,9 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     persist: (owner, generation, buckets) => computerUsageService.recordComputerUsage(owner, generation, buckets),
   }) : null;
   if (computerUsage) computerUsageService.setComputerUsageCheckpoint(owner => computerUsage.checkpoint(owner));
-  const ready = restoreBounds.then(() => {
-    boundsRestored = true;
-    if (showRequested) show();
+  const ready = restoreBounds.then(confirmed => {
+    boundsRestored = confirmed; activationReady = true;
+    if (showRequested || !confirmed) show();
     if (!stopped && !win.isDestroyed()) return win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : ''));
   }).then(() => { if (!startInTray) show(); });
   return { window: win, show, openSettings() {
@@ -586,7 +592,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     }).catch(() => {});
   }, sendTo, ready, async close() {
     stopped = true; clearTimeout(timer);
-    await restoreBounds;
+    await restoreJob.cancel();
     await computerUsage?.close();
     if (computerUsage) computerUsageService.setComputerUsageCheckpoint(null);
     for (const notification of notifications) notification.close();

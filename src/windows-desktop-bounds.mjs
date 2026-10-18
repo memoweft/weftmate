@@ -1,7 +1,8 @@
 import { execFile } from 'node:child_process';
-import { createInterface } from 'node:readline';
+import { join } from 'node:path';
 import { screen } from 'electron';
 import { physicalDesktopBounds } from './desktop-window-bounds.mjs';
+import { createWindowsBoundsBridge } from './windows-bounds-bridge.mjs';
 
 // Electron 43's frameless Windows setter rounds the resize frame in DIP before
 // Windows scales it, while its getter encloses the physical HWND before removing
@@ -32,6 +33,7 @@ try {
   if (-not [WeftWindowBounds]::GetWindowRect($window, [ref]$rect)) { throw 'Window bounds unavailable' }
   [Console]::WriteLine((@{x=$rect.Left;y=$rect.Top;width=($rect.Right-$rect.Left);height=($rect.Bottom-$rect.Top)} | ConvertTo-Json -Compress))
   $target = [Console]::In.ReadLine() | ConvertFrom-Json
+  if ($null -eq $target) { throw 'Window restore cancelled' }
   [void][WeftWindowBounds]::GetWindowThreadProcessId($window, [ref]$owner)
   if ($owner -ne $v.pid) { throw 'Window owner changed' }
   if (-not [WeftWindowBounds]::SetWindowPos($window, [IntPtr]::Zero, $target.x, $target.y, $target.width, $target.height, 0x14)) { throw 'Window restore failed' }
@@ -39,21 +41,24 @@ try {
 `;
 
 
-export function restoreWindowsDesktopBounds(win, target, display) {
+export function createWindowsDesktopBoundsRestore(win, target, display) {
   const handle = win.getNativeWindowHandle();
   const input = { handle: (handle.length === 8 ? handle.readBigUInt64LE() : BigInt(handle.readUInt32LE())).toString(), pid: process.pid };
-  return new Promise((resolve, reject) => {
-    const child = execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
-      { windowsHide: true }, error => error ? reject(error) : resolve());
-    child.stdin.on('error', reject);
-    const lines = createInterface({ input: child.stdout });
-    lines.once('line', line => {
-      try {
-        const physical = physicalDesktopBounds(JSON.parse(line), win.getBounds(), target, display.scaleFactor,
-          rect => screen.screenToDipRect(win, rect), rect => screen.dipToScreenRect(win, rect));
-        child.stdin.end(JSON.stringify(physical) + '\n');
-      } catch (error) { child.stdin.end(); reject(error); }
-    });
-    child.stdin.write(JSON.stringify(input) + '\n');
+  return createWindowsBoundsBridge({ input,
+    start: complete => execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
+      { windowsHide: true, maxBuffer: 8192 }, complete),
+    convert: raw => physicalDesktopBounds(raw, win.getBounds(), target, display.scaleFactor,
+      rect => screen.screenToDipRect(win, rect), rect => screen.dipToScreenRect(win, rect)),
+    verify: () => !win.isDestroyed() && Object.entries(target).every(([key, value]) => win.getNormalBounds()[key] === value),
+    terminate: child => new Promise(resolve => {
+      if (!child?.pid || child.exitCode !== null || child.signalCode !== null) return resolve();
+      // Kill the owned bridge's entire tree (PowerShell can invoke a compiler).
+      execFile(join(process.env.SystemRoot, 'System32', 'taskkill.exe'), ['/PID', String(child.pid), '/T', '/F'],
+        { windowsHide: true, timeout: 1000 }, error => { if (error && child.exitCode === null) child.kill('SIGKILL'); resolve(); });
+    }),
   });
+}
+
+export function restoreWindowsDesktopBounds(win, target, display) {
+  return createWindowsDesktopBoundsRestore(win, target, display).ready;
 }

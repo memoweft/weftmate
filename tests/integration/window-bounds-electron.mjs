@@ -4,9 +4,8 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { _electron } from 'playwright';
 import executablePath from 'electron';
-import { closeTestElectron } from '../helpers/close-test-electron.mjs';
+import { launchWindowElectron, closeWindowElectron, stopWindowElectron } from '../helpers/bounded-window-electron.mjs';
 
 const root = mkdtempSync(join(tmpdir(), 'weftmate-window-bounds-'));
 const repository = fileURLToPath(new URL('../../', import.meta.url));
@@ -34,8 +33,8 @@ try {
         WINDOW_BOUNDS_ORIGIN: origin };
       delete env.ELECTRON_RUN_AS_NODE;
       const launchStarted = Date.now();
-      application = await _electron.launch({ executablePath, cwd: repository, env,
-        args: ['tests/helpers/window-bounds-electron.mjs', `--force-device-scale-factor=${scale}`] });
+      application = await launchWindowElectron({ executablePath, cwd: repository, env,
+        args: ['tests/helpers/window-bounds-electron.mjs', `--force-device-scale-factor=${scale}`] }, join(profile, 'process.log'));
       const page = await application.firstWindow();
       const observed = await application.evaluate(async ({ screen }) => {
         await globalThis.windowBoundsDesktop.ready;
@@ -85,7 +84,7 @@ try {
         });
         assert.equal(tray.hidden, true); assert.equal(tray.maximized, true); assert.deepEqual(tray.normal, expected);
       }
-      await closeTestElectron(application, async () => { await globalThis.windowBoundsDesktop.close(); });
+      await closeWindowElectron(application);
       application = null;
       const saved = JSON.parse(readFileSync(stateFile, 'utf8')).bounds;
       const row = { scale, cycle, expected, ...observed, saved, cycleMs: Date.now() - launchStarted }; report.push(row);
@@ -96,7 +95,7 @@ try {
     }
   }
 } finally {
-  await application?.close(); await new Promise(resolve => server.close(resolve));
+  await stopWindowElectron(application); await new Promise(resolve => server.close(resolve));
   if (process.env.WEFTMATE_EVIDENCE_DIR) {
     mkdirSync(process.env.WEFTMATE_EVIDENCE_DIR, { recursive: true });
     writeFileSync(join(process.env.WEFTMATE_EVIDENCE_DIR, 'window-bounds.json'), JSON.stringify({ report, failures }, null, 2));
