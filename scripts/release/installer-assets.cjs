@@ -3,6 +3,10 @@ const {mkdirSync,readFileSync,writeFileSync} = require('node:fs');
 const {join,resolve} = require('node:path');
 const {spawnSync} = require('node:child_process');
 module.exports = async context => {
+  // Shared beforePack for every platform/entry, including direct builder calls
+  // and npmRebuild:false. Never depend on npm postinstall having run.
+  const {pathToFileURL} = require('node:url');
+  await (await import('../patch-root-csr.mjs')).applyRootCsrPatch({requireFrom:pathToFileURL(join(context.packager.projectDir,'package.json')).href});
   if (context.electronPlatformName !== 'win32') return;
   await (await import('../memory-runtime-package.mjs')).beforeWindowsMemoryPack(context);
   const root=context.packager.projectDir, out=join(root,'.local/installer-ui');
