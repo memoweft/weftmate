@@ -44,7 +44,7 @@ for (const scope of ['session', 'source', 'context']) test(`review scope: ${scop
   let blocked = true;
   const manager = createPersonalMemoryManager({ root, enabled: true, python: join(root, 'synthetic-python'), pythonPath: root,
     baseUrl: 'http://127.0.0.1:1/v1', model: '@current', credential: () => 'synthetic',
-    cleanupDeletedMemory: async (_owner, input) => { cleanupInputs.push(input); },
+    cleanupDeletedMemory: async (_owner, input) => { cleanupInputs.push(input); return input.prepareOnly ? { conversationTargets: [] } : { snippetsVerified: true }; },
     rpcFactory: () => ({ child: {}, async close() {}, async request(method, params = {}) {
       if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods };
       if (method === 'initialize') return { runtime: { subject_id: owner, db_path: join(params.dsh_home, 'memoweft/memoweft.sqlite3') }, capabilities: { subject_id: owner, methods, services: { command: { correction_source: true, operations: ['correct_world_item', 'delete_world_item'] } } } };

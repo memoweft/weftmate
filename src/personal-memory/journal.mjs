@@ -12,7 +12,7 @@ const failure = (code) => Object.assign(new Error(code), { code });
 const digest = (value) => createHash('sha256').update(value).digest('hex');
 
 /** Host-owned durable command identity; MemoWeft remains the receipt and mutation authority. */
-export function createMemoryCommandJournal({ root }) {
+export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseSnippets = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root)) throw failure('MEMORY_CONFIGURATION_INVALID');
   const queues = new Map();
   const fileFor = (ownerId) => path.join(root, 'accounts', ownerId, 'memory-home', 'command-journal.json');
@@ -79,6 +79,17 @@ export function createMemoryCommandJournal({ root }) {
       releaseWrite();
     }
   }
+  async function prepare(ownerId, state, record) {
+    const cleanup = record.cleanup;
+    if (!cleanup?.deleteConversationSnippets || Array.isArray(cleanup.conversationTargets)) return;
+    // A legacy marker already stripped of every locator cannot prove erasure.
+    // Keep it pending instead of turning an empty scan into a success receipt.
+    if (!cleanup.sourceTexts?.length || !prepareCleanup) throw failure('MEMORY_CLEANUP_PENDING');
+    const plan = await prepareCleanup(ownerId, record);
+    if (!Array.isArray(plan?.conversationTargets)) throw failure('MEMORY_CLEANUP_PENDING');
+    Object.assign(cleanup, plan);
+    await write(ownerId, state); // durable text-free locators precede any erase
+  }
   return {
     async reserve({ ownerId, requestId, operation, targetKind, targetId, payload, expectedWorldRevision, deleteConversationSnippets, cleanup }, assertActive = () => {}) {
       check(ownerId, requestId);
@@ -114,10 +125,26 @@ export function createMemoryCommandJournal({ root }) {
       check(ownerId,'account-erase');
       return queue(ownerId,async()=>Object.values((await read(ownerId)).records).filter(row=>['delete_evidence','delete_world_item'].includes(row.command.operation)).map(row=>row.requestId));
     },
-    async clearCleanup(ownerId, requestId) {
+    async pendingCleanup(ownerId) {
+      check(ownerId, 'pending-cleanup');
+      return queue(ownerId, async () => Object.values((await read(ownerId)).records)
+        .filter(record => record.cleanup?.snippetsPending === true)
+        .map(record => ({ requestId: record.requestId, kind: record.command.target_kind, id: record.command.target_id })));
+    },
+    async finishCleanup(ownerId, requestId, clean) {
       check(ownerId, requestId);
-      return queue(ownerId, async () => { const state = await read(ownerId);
-        if (state.records[requestId]?.cleanup) { delete state.records[requestId].cleanup; await write(ownerId, state); }
+      return queue(ownerId, async () => {
+        const state = await read(ownerId), record = state.records[requestId];
+        if (!record) throw failure('MEMORY_REQUEST_INVALID');
+        try {
+          await prepare(ownerId, state, record);
+          const result = await clean(record);
+          if (record.cleanup?.deleteConversationSnippets && result?.snippetsVerified !== true) throw failure('MEMORY_CLEANUP_PENDING');
+        } catch (cause) {
+          if (record.cleanup) { record.cleanup.snippetsPending = true; await write(ownerId, state); }
+          throw cause;
+        }
+        if (record.cleanup) { delete record.cleanup; await write(ownerId, state); }
       });
     },
     async redactTargets(ownerId, ids, { sourceTexts = [], sessionId = null } = {}) {
@@ -152,6 +179,19 @@ export function createMemoryCommandJournal({ root }) {
             // Old markers have no per-source session IDs: redact uncertain
             // text, preserving the receipt identity and pending cleanup flags.
             if (retained.length !== record.cleanup.sourceTexts.length || retainedRefs.length !== refs.length) {
+              if (record.cleanup.deleteConversationSnippets && prepareCleanup) {
+                try {
+                  await prepare(ownerId, state, record);
+                  const erased = await eraseSnippets(ownerId, record);
+                  if (erased?.snippetsVerified !== true) throw failure('MEMORY_CLEANUP_PENDING');
+                  delete record.cleanup.snippetsPending;
+                } catch {
+                  record.cleanup.snippetsPending = true;
+                  // When even locating the old text failed, keep the last
+                  // usable locator until retry can durably replace it by IDs.
+                  if (!Array.isArray(record.cleanup.conversationTargets)) { count++; continue; }
+                }
+              }
               record.cleanup.sourceTexts = retained;
               if (record.cleanup.sourceRefs) record.cleanup.sourceRefs = retainedRefs.filter(ref => retained.some(text => digest(text) === ref.textHash));
               changed = true;
