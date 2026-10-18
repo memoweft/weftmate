@@ -48,6 +48,22 @@ test('ready child unexpected zero exit is recorded and recovery keeps its exit m
   assert.equal(events.some(event => event.action === 'respawn-abandoned'), false)
 })
 
+test('spawn stage observation preserves startup result and ignores sync/async observer failures', async t => {
+  const { web, child, spawn } = fixture(t)
+  const phases: string[] = []
+  ;(web as any).opts.onStartupPhase = (phase: string) => {
+    phases.push(phase)
+    if (phase === 'runtime-spawn-requested') throw Error('private-observer')
+    return Promise.reject(Error('private-async-observer'))
+  }
+  const started = spawn()
+  child.emit('spawn')
+  child.ready()
+  assert.equal(await started, 'http://127.0.0.1:43123')
+  assert.deepEqual(phases, ['runtime-spawn-requested', 'runtime-spawned'])
+  await web.close()
+})
+
 test('abnormal exit preserves the Windows code, failed respawn and shutdown abandonment', async t => {
   const { web, child, events, spawn } = fixture(t)
   const started = spawn(); child.ready(); await started

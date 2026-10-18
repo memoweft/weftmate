@@ -1,8 +1,10 @@
 import { execFile } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, openSync, readSync, closeSync, mkdirSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { constants } from 'node:os';
 import { sanitizeErrorDiagnostic } from '../../src/host-log.mjs';
+import { startupPhases } from '../../src/startup-observation.mjs';
 
 const phases = new Set(['bootstrap', 'runtime-start', 'runtime-ready', 'personal-access-start',
   'personal-access-ready', 'window-prepare', 'window-create', 'window-created']);
@@ -14,6 +16,15 @@ const sources = new Set(['uncaughtException', 'unhandledRejection', 'main-startu
   'harness-startup', 'harness-window-startup', 'crash-reporter', 'startup-error-dialog']);
 const signals = new Set(['SIGTERM', 'SIGINT', 'SIGKILL', 'SIGHUP', 'SIGABRT', 'SIGSEGV', 'SIGBREAK', 'SIGQUIT']);
 const integer = Number.isSafeInteger;
+
+export function prepareFirstWindowTrace(profile, env) {
+  try {
+    const directory = join(profile, 'logs'), file = join(directory, `first-window-${randomUUID()}.jsonl`);
+    mkdirSync(directory, { recursive: true });
+    env.WEFTMATE_FIRST_WINDOW_TRACE = file;
+    return file;
+  } catch { return undefined; /* Trace setup must not prevent the original launch. */ }
+}
 
 function processSnapshot(child) {
   const exitCode = integer(child?.exitCode) ? child.exitCode : null;
@@ -88,19 +99,63 @@ export function summarizeDescendants(rows, parentPid) {
       /(?:^|\s)memoweft\.integrations\.dsh_bridge(?:\s|$)/.test(row.CommandLine ?? '')).length };
 }
 
-async function childSnapshot(pid, state) {
-  const unavailable = status => ({ summary: { status }, processIds: new Set([pid]) });
+export function queryWindowsProcesses(run = execFile) {
+  const systemPowerShell = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0');
+  return new Promise((resolve, reject) => run(join(systemPowerShell, 'powershell.exe'), ['-NoProfile', '-NonInteractive', '-Command',
+    'Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,Name,CommandLine -ErrorAction Stop | Select-Object ProcessId,ParentProcessId,Name,CommandLine | ConvertTo-Json -Compress'],
+  { windowsHide: true, encoding: 'utf8', timeout: 3000, maxBuffer: 8 * 1024 * 1024,
+    env: { ...process.env, PSModulePath: join(systemPowerShell, 'Modules') } }, (error, stdout) => {
+    if (error) reject(error);
+    else {
+      try {
+        const rows = JSON.parse(stdout), processes = Array.isArray(rows) ? rows : [rows];
+        if (!processes.length || !processes.every(row => integer(row?.ProcessId) && integer(row?.ParentProcessId) && typeof row?.Name === 'string'))
+          throw Object.assign(Error(), { code: 'INVALID_PROCESS_ROWS' });
+        resolve(processes);
+      } catch (error) { reject(error); }
+    }
+  }));
+}
+
+async function childSnapshot(pid, state, queryProcesses) {
+  const unavailable = (status, reason) => ({ summary: { status, ...(reason ? { reason } : {}) }, processIds: new Set([pid]) });
   if (state === 'exited' || state === 'not-running') return unavailable('parent-exited');
   if (state !== 'alive' || process.platform !== 'win32') return unavailable('unavailable');
   try {
-    const rows = await new Promise((resolve, reject) => execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-      'Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,CommandLine | ConvertTo-Json -Compress'],
-    { windowsHide: true, encoding: 'utf8', timeout: 3000, maxBuffer: 8 * 1024 * 1024 }, (error, stdout) => {
-      if (error) reject(error); else { try { resolve(JSON.parse(stdout)); } catch (error) { reject(error); } }
-    }));
+    const rows = await queryProcesses();
     const processes = Array.isArray(rows) ? rows : [rows];
     return { summary: summarizeDescendants(processes, pid), processIds: descendantIds(processes, pid) };
-  } catch { return unavailable('unavailable'); }
+  } catch (error) {
+    const reason = error?.killed ? 'timeout' : error?.code === 'ENOENT' ? 'query-missing' :
+      error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' ? 'output-limit' :
+      error instanceof SyntaxError ? 'invalid-json' : error?.code === 'INVALID_PROCESS_ROWS' ? 'invalid-result' : 'query-failed';
+    return unavailable('unavailable', reason);
+  }
+}
+
+function startupSnapshot(file, launchStartedAt) {
+  if (!file) return { status: 'unavailable' };
+  if (!Number.isFinite(launchStartedAt) || launchStartedAt <= 0 || launchStartedAt > Date.now())
+    return { status: 'no-current-run' };
+  let fd;
+  try {
+    // Bound reads even when a malformed trace was supplied; never emit its text.
+    fd = openSync(file, 'r');
+    const buffer = Buffer.alloc(64 * 1024), length = readSync(fd, buffer, 0, buffer.length, 0);
+    const sampledAt = Date.now(), phases = [];
+    let pid;
+    for (const line of buffer.subarray(0, length).toString('utf8').split('\n')) {
+      try {
+        const row = JSON.parse(line);
+        if (!Number.isFinite(launchStartedAt) || row.at < launchStartedAt || row.at > sampledAt || !Number.isFinite(row.at) ||
+          !integer(row.pid) || row.pid <= 0 || !integer(row.elapsedMs) || row.elapsedMs < 0 || !startupPhases.has(row.phase)) continue;
+        if (!pid) { if (row.phase !== 'module-entry') continue; pid = row.pid; }
+        if (row.pid === pid) phases.push({ phase: row.phase, elapsedMs: row.elapsedMs });
+      } catch { /* Partial final write. */ }
+    }
+    return phases.length ? { status: 'ok', lastPhase: phases.at(-1).phase, phases } : { status: 'no-current-run' };
+  } catch (error) { return { status: error.code === 'ENOENT' ? 'missing' : 'unavailable' }; }
+  finally { if (fd !== undefined) try { closeSync(fd); } catch {} }
 }
 
 function stderrSnapshot(stderr) {
@@ -116,16 +171,20 @@ function stderrSnapshot(stderr) {
 
 /** Sample only after the unchanged firstWindow call fails, before host cleanup.
  * No Electron IPC: the main thread may be stalled. Publication is best effort. */
-export async function waitForFirstWindow({ app, profile, launchStartedAt = NaN, stderr = [], publish = message => console.error(message) }) {
+export async function waitForFirstWindow({ app, profile, launchStartedAt = NaN, traceFile, queryProcesses = queryWindowsProcesses,
+  stderr = [], publish = message => console.error(message) }) {
   try { return await app.firstWindow(); }
   catch (error) {
     try {
       const child = app.process(), main = processSnapshot(child);
+      // Capture the failed wait's stage before the optional 3s CIM query can
+      // advance the startup we are trying to diagnose.
+      const startup = startupSnapshot(traceFile, launchStartedAt);
       // Playwright's Windows launcher is cmd.exe. Match the host only inside
       // that live process tree; never fall back to an unrelated/stale log run.
-      const children = await childSnapshot(child?.pid, main.state);
+      const children = await childSnapshot(child?.pid, main.state, queryProcesses);
       const hostLog = hostLogSnapshot(profile, children.processIds, launchStartedAt), stderrTail = stderrSnapshot(stderr);
-      const snapshot = { process: main, hostLog, children: children.summary, stderrTail };
+      const snapshot = { process: main, hostLog, children: children.summary, stderrTail, startup };
       try { error.firstWindowDiagnostics = snapshot; } catch { /* Preserve frozen errors too. */ }
       try { Promise.resolve(publish(`First window failure: ${JSON.stringify(snapshot)}`)).catch(() => {}); } catch {}
     } catch { /* Observation must never replace the original failure. */ }

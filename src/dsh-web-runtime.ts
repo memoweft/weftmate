@@ -849,6 +849,7 @@ export interface DshWebRuntimeOptions {
   /** Observes process failures/recovery without affecting runtime lifecycle. */
   onProcessEvent?: (event: Readonly<DshProcessEvent>) => void
   onProcessWarning?: (data: { name: string, code: string }) => void
+  onStartupPhase?: (phase: 'runtime-spawn-requested' | 'runtime-spawned') => void
   /** 就绪等待上限（缺省 120s）。 */
   readyTimeoutMs?: number
 }
@@ -1201,6 +1202,7 @@ export class DshWebRuntime {
     log: (line: string) => void
     onProcessEvent: DshWebRuntimeOptions['onProcessEvent']
     onProcessWarning: DshWebRuntimeOptions['onProcessWarning']
+    onStartupPhase: DshWebRuntimeOptions['onStartupPhase']
     readyTimeoutMs: number
   }
 
@@ -1265,6 +1267,7 @@ export class DshWebRuntime {
       log: options.log ?? (() => {}),
       onProcessEvent: options.onProcessEvent,
       onProcessWarning: options.onProcessWarning,
+      onStartupPhase: options.onStartupPhase,
       readyTimeoutMs: options.readyTimeoutMs ?? 120_000,
     }
   }
@@ -2532,6 +2535,10 @@ export class DshWebRuntime {
         WEFTMATE_SECURE_BOOTSTRAP_PROFILE_POLICY: this.opts.profilePolicy,
         WEFTMATE_SECURE_SNAPSHOT_ACTIVE: '1',
       }
+      const observe = (phase: 'runtime-spawn-requested' | 'runtime-spawned') => {
+        try { Promise.resolve(this.opts.onStartupPhase?.(phase)).catch(() => {}) } catch { /* Observation only. */ }
+      }
+      observe('runtime-spawn-requested')
       const child = spawn(spec.command, args, {
         cwd: spec.cwd,
         env,
@@ -2541,6 +2548,7 @@ export class DshWebRuntime {
         windowsHide: true,
         detached: process.platform !== 'win32',
       })
+      child.once('spawn', () => observe('runtime-spawned'))
       if (secureBootstrap !== undefined) this.secureChildren.add(child)
       this.registerChild(child)
       if (this.child && this.child !== child) this.invalidatePersonalRuntime(this.child)

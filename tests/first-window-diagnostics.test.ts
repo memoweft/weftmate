@@ -7,8 +7,98 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createHostLog } from '../src/host-log.mjs';
-import { waitForFirstWindow, summarizeDescendants } from './helpers/first-window-diagnostics.mjs';
+import { waitForFirstWindow, summarizeDescendants, prepareFirstWindowTrace } from './helpers/first-window-diagnostics.mjs';
 import { installedSmokeFailureSummary } from '../scripts/nightly/installed-smoke-diagnostics.mjs';
+import * as diagnostics from './helpers/first-window-diagnostics.mjs';
+
+test('startup trace survives an unavailable process tree and projects only fixed phases and numeric timing', async t => {
+  const f = fixture(t, process.pid), traceFile = join(f.profile, 'startup.jsonl');
+  writeFileSync(traceFile, [
+    { at: Date.now(), pid: process.pid, phase: 'module-entry', elapsedMs: 10 },
+    { at: Date.now(), pid: process.pid, phase: 'window-created', elapsedMs: 200 },
+    { at: Date.now(), pid: process.pid, phase: 'window-ready-to-show', elapsedMs: 900, secret: 'private-account' },
+    { at: Date.now(), pid: process.pid, phase: 'private-secret', elapsedMs: 999 },
+  ].map(row => JSON.stringify(row)).join('\n') + '\n{partial');
+  const error: any = timeout();
+  await assert.rejects(waitForFirstWindow({ app: application(process, error), profile: f.profile,
+    launchStartedAt: f.launchStartedAt, traceFile, queryProcesses: async () => {
+      appendFileSync(traceFile, '\n' + JSON.stringify({ at: Date.now(), pid: process.pid, phase: 'window-load-finished', elapsedMs: 1100 }));
+      throw Object.assign(Error('private-path'), { killed: true });
+    }, publish() {} }), value => value === error);
+  assert.equal(error.firstWindowDiagnostics.startup.status, 'ok');
+  assert.deepEqual(error.firstWindowDiagnostics.startup.phases, [
+    { phase: 'module-entry', elapsedMs: 10 }, { phase: 'window-created', elapsedMs: 200 },
+    { phase: 'window-ready-to-show', elapsedMs: 900 },
+  ]);
+  assert.deepEqual(error.firstWindowDiagnostics.children, process.platform === 'win32'
+    ? { status: 'unavailable', reason: 'timeout' } : { status: 'unavailable' });
+  assert.doesNotMatch(JSON.stringify(error.firstWindowDiagnostics), /private|startup.jsonl/);
+});
+
+test('trace preparation uses a unique launch destination and an unavailable disk cannot prevent launch', t => {
+  const f = fixture(t, process.pid), env: any = {};
+  const first = prepareFirstWindowTrace(f.profile, env);
+  assert.equal(env.WEFTMATE_FIRST_WINDOW_TRACE, first);
+  assert.notEqual(prepareFirstWindowTrace(f.profile, env), first);
+  const blocker = join(f.profile, 'file'); writeFileSync(blocker, 'synthetic');
+  assert.equal(prepareFirstWindowTrace(blocker, {}), undefined);
+  const frozen = Object.freeze({});
+  assert.equal(prepareFirstWindowTrace(f.profile, frozen), undefined);
+});
+
+test('Windows process query requests only needed CIM properties in the system module environment', async () => {
+  let options: any, command: any;
+  const query = (diagnostics as any).queryWindowsProcesses;
+  assert.equal(typeof query, 'function');
+  assert.deepEqual(await query((exe: string, args: string[], opts: any, callback: any) => {
+    options = opts; command = args.at(-1);
+    callback(null, '[{"ProcessId":1,"ParentProcessId":0,"Name":"node.exe"}]');
+  }), [{ ProcessId: 1, ParentProcessId: 0, Name: 'node.exe' }]);
+  assert.equal(options.timeout, 3000);
+  assert.equal(options.windowsHide, true);
+  assert.match(options.env.PSModulePath, /WindowsPowerShell[\\/]v1.0[\\/]Modules$/);
+  assert.match(command, /-Property ProcessId,ParentProcessId,Name,CommandLine -ErrorAction Stop/);
+  for (const output of ['', 'null', '[]', '[{"ProcessId":"private"}]']) {
+    await assert.rejects(query((_exe: any, _args: any, _opts: any, callback: any) => callback(null, output)));
+  }
+});
+
+test('process query failure reasons never include native stderr or error messages', async t => {
+  if (process.platform !== 'win32') return;
+  const f = fixture(t, process.pid);
+  for (const [queryError, reason] of [
+    [Object.assign(Error('private-query-path'), { killed: true }), 'timeout'],
+    [Object.assign(Error('private-query-path'), { code: 'ENOENT' }), 'query-missing'],
+    [Object.assign(Error('private-query-path'), { code: 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' }), 'output-limit'],
+    [new SyntaxError('private-json'), 'invalid-json'],
+    [Object.assign(Error('private-query-path'), { code: 'INVALID_PROCESS_ROWS' }), 'invalid-result'],
+    [Error('private-query-path'), 'query-failed'],
+  ]) {
+    const error: any = timeout();
+    await assert.rejects(waitForFirstWindow({ app: application(process, error), profile: f.profile,
+      launchStartedAt: f.launchStartedAt, queryProcesses: async () => { throw queryError; }, publish() {} }), value => value === error);
+    assert.deepEqual(error.firstWindowDiagnostics.children, { status: 'unavailable', reason });
+    assert.doesNotMatch(JSON.stringify(error.firstWindowDiagnostics), /private/);
+  }
+});
+
+test('startup trace rejects stale, future, invalid and other-process rows instead of guessing a stage', async t => {
+  const f = fixture(t, process.pid), traceFile = join(f.profile, 'startup.jsonl');
+  const at = Date.now(), row = { at, pid: process.pid, phase: 'module-entry', elapsedMs: 1 };
+  for (const content of [
+    [{ ...row, at: f.launchStartedAt - 1 }], [{ ...row, at: at + 86400000 }],
+    [{ ...row, at: 'private' }], [{ ...row, elapsedMs: -1 }], [{ ...row, phase: 'window-created' }],
+  ]) {
+    writeFileSync(traceFile, content.map(value => JSON.stringify(value)).join('\n'));
+    const error: any = timeout();
+    await assert.rejects(waitForFirstWindow({ app: application({ pid: -1 }, error), traceFile, launchStartedAt: f.launchStartedAt, publish() {} }));
+    assert.deepEqual(error.firstWindowDiagnostics.startup, { status: 'no-current-run' });
+  }
+  writeFileSync(traceFile, [row, { ...row, pid: process.pid + 1, phase: 'window-created', elapsedMs: 2 }].map(value => JSON.stringify(value)).join('\n'));
+  const error: any = timeout();
+  await assert.rejects(waitForFirstWindow({ app: application({ pid: -1 }, error), traceFile, launchStartedAt: f.launchStartedAt, publish() {} }));
+  assert.deepEqual(error.firstWindowDiagnostics.startup.phases, [{ phase: 'module-entry', elapsedMs: 1 }]);
+});
 
 const timeout = () => Object.assign(new Error('original firstWindow timeout'), { name: 'TimeoutError' });
 function fixture(t: any, pid: number) {

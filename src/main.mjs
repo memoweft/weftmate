@@ -1,4 +1,6 @@
 import { setProcessWarningLog } from './process-output.mjs';
+import './startup-observation-entry.mjs';
+import { observeStartup } from './startup-observation.mjs';
 import { usageResponse } from './personal-access/usage-response.mjs';
 import { readFile as readFileAsync, rm as rmAsync, writeFile as writeFileAsync } from 'node:fs/promises';
 import { createLatestFileWriter } from './latest-file-writer.mjs';
@@ -110,6 +112,7 @@ import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storag
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
 // This Intel-only local trial follows the machine's GPU constraint on Finder launch too.
+observeStartup('main-imports-ready');
 if (process.platform === 'darwin' && packageInfo.macTrial) {
   app.disableHardwareAcceleration();
   // The local trial points at an existing read-only Core checkout.
@@ -154,8 +157,10 @@ if (process.argv.includes('--uninstall-cleanup')) {
   } catch { app.exit(1); }
 }
 let installedDesktopConfig;
+observeStartup('desktop-config-start');
 try { installedDesktopConfig = applyDesktopConfig({ appData: desktopControlAppData, packaged: app.isPackaged }); }
 catch (error) { recordEarlyStartupFailure('desktop-config', error, 1); throw error; }
+observeStartup('desktop-config-ready');
 if (app.isPackaged) repairWindowsLoginItem({ name: packageInfo.desktopIdentity || 'WeftMate', executable: process.execPath });
 if (app.isPackaged && process.env.WEFTMATE_RELAY_ENABLED === 'true') {
   process.env.WEFTMATE_FRPC_FILE = join(process.resourcesPath, 'relay', 'frpc.exe');
@@ -308,7 +313,9 @@ process.on('unhandledRejection', (reason) => { logCrash('unhandledRejection', re
 // 托盘图标由 design/icons/app 单色母版生成，跟随系统任务栏主题。
 
 // 单实例锁:桌面常驻防开多份进程抢同一个数据目录。抢不到 = 已有一个在跑,退出自己,让那个把窗口唤前台。
+observeStartup('single-instance-start');
 if (!app.requestSingleInstanceLock()) {
+  observeStartup('single-instance-denied');
   // A second instance must not overwrite the active instance's durable marker.
   hostLog.write('host.start', { mode: 'single-instance', pid: process.pid });
   hostLog.write('host.exit', { reason: 'single-instance', exitCode: personalHostMode && headless ? 2 : 0,
@@ -318,6 +325,7 @@ if (!app.requestSingleInstanceLock()) {
     app.exit(2);
   } else app.quit();
 } else {
+  observeStartup('single-instance-acquired');
   hostLog.begin({ mode: personalHostMode ? 'personal-host' : 'desktop', pid: process.pid,
     version: app.getVersion(), headless, memoryEnabled: personalMemoryRequested,
     localModelConfigured: process.argv.some(arg => arg.startsWith('--local-model-config=')) });
@@ -1336,6 +1344,7 @@ async function loadCompanion() {
 }
 
 async function bootstrap() {
+  observeStartup('bootstrap');
   hostLog.write('host.startup', { phase: 'bootstrap' });
   // ── R1 · 官方 DSH web 基座：产品面全部经官方 web（子进程托管 127.0.0.1 前端）──
   // A crash journal must be restored before *any* config/vault import, legacy
@@ -1343,6 +1352,7 @@ async function bootstrap() {
   // otherwise normalize/rewrite exactly the bytes the journal protects.
   const userDataDir = app.getPath('userData');
   if (personalHostMode) await ensurePrivateDirectory(userDataDir);
+  observeStartup('profile-private-ready');
   if (personalHostMode) personalBackupManager = await createBackupManager({
     root: userDataDir, appVersion: app.getVersion(),
     onShutdownFailure: error => logCrash('shutdown-backup', error),
@@ -1363,6 +1373,7 @@ async function bootstrap() {
       }
     }),
   });
+  observeStartup('backup-ready');
   if (process.env.WEFTMATE_STAGE14_R2_OBSERVE === '1') {
     if (!personalHostMode || app.isPackaged) throw new Error('Stage14R2 observer requires an isolated development host');
     stage14R2Observation = stage14R2ObservationProfile({ enabled: '1', profile: userDataDir,
@@ -1467,9 +1478,14 @@ async function bootstrap() {
   legacyRoutePatchRetired = officialRouteMigrationComplete || isRoutePatchRetired();
   // 先加载 safeStorage vault；现有密钥只在 DSH 受管 child IPC 按 ref 请求时解密。
   try {
+    observeStartup('config-import-start');
     configStoreMod = await import('./config-store.ts');
+    observeStartup('config-import-ready');
+    observeStartup('credential-storage-start');
     await configStoreMod.initializeCredentialStorage(error => logCrash('credential-storage', error));
+    observeStartup('credential-storage-ready');
     await reconcileCloudVaultRestore(userDataDir,configStoreMod,personalBackupManager?.isRestoredStartup()===true);
+    observeStartup('cloud-vault-ready');
     console.log('[weftmate] ✓ 模型凭据保险库已就绪');
   } catch (e) {
     logCrash('credential-storage', e);
@@ -1543,6 +1559,7 @@ async function bootstrap() {
   }
 
   // R6-02 · 伴侣状态（宠物窗口显示源）：PetStore → sanitize。
+  observeStartup('config-ready');
   await loadCompanion();
 
   // ── R1-02 · DSH web 运行时：写 profile → spawn 官方 CLI → 等官方 URL 行 ──
@@ -1993,6 +2010,7 @@ async function bootstrap() {
         messageHash: request.messageHash });
     } : undefined,
     onProcessEvent: event => hostLog.write('runtime.process_gone', event),
+    onStartupPhase: observeStartup,
     onProcessWarning: data => hostLog.write('process.warning', { ...data, source: 'dsh' }),
     log: (line) => { hostLog.write('runtime.event', { source: 'dsh', code: /error|failed|失败/i.test(line) ? 'RUNTIME_FAILURE' : 'RUNTIME_STATE' }); console.log(`[weftmate] ${redactSecretText(line)}`); },
   });
@@ -3152,6 +3170,7 @@ async function bootstrap() {
   }
 
   if (personalMemoryRequested) {
+    observeStartup('memory-config-start');
     const runtimeOptions = { directory: installedDesktopConfig?.memoryRuntimeDirectory,
       mode: packageInfo.memoryRuntimeMode, manifestSha256: packageInfo.memoryRuntimeManifestSha256 };
     // Automatic checks belong to the manager's attempt budget, including the
@@ -3160,6 +3179,7 @@ async function bootstrap() {
       ? (await loadDesktopMemoryConfig({ explicitPath: personalMemoryConfigPath })).config
       : bundledMemoryConfiguration(runtimeOptions);
     personalMemoryRuntimeConfig = memoryConfig;
+    observeStartup('memory-config-ready');
     try { hostLog.write('memory.bridge', { phase: 'configured', configured: true }); } catch { /* Observation only. */ }
     personalMemoryManager = createPersonalMemoryManager({
       root: join(userDataDir, 'personal-access'), enabled: true,
@@ -3468,10 +3488,12 @@ async function bootstrap() {
 
   try {
     if (personalHostMode) {
+      observeStartup('runtime-start');
       hostLog.write('host.startup', { phase: 'runtime-start' });
       await startPersonalHost({
         startRuntime: async () => {
           const origin = await ensureSharedRuntime({ reload: true });
+          observeStartup('runtime-ready');
           hostLog.write('host.startup', { phase: 'runtime-ready' });
           return origin;
         },
@@ -3619,8 +3641,10 @@ async function bootstrap() {
            },
           ...(personalPublicOrigin ? { allowedOrigins: [personalPublicOrigin], trustedProxy: true } : {}),
         });
+        observeStartup('personal-access-start');
         hostLog.write('host.startup', { phase: 'personal-access-start' });
         const started = await personalAccessService.start();
+        observeStartup('personal-access-ready');
         hostLog.write('host.startup', { phase: 'personal-access-ready' });
         personalAccessOrigin = assertLoopbackOrigin(started.origin);
         writeHostState();
@@ -3628,8 +3652,10 @@ async function bootstrap() {
         if (desktopRequested) {
           // Explicit legacy setup links remain valid; the default first page is account login.
           const setupGrant = null;
+          observeStartup('window-prepare');
           hostLog.write('host.startup', { phase: 'window-prepare' });
           await desktopUpdates.prepareWindow();
+          observeStartup('window-create');
           hostLog.write('host.startup', { phase: 'window-create' });
           personalDesktop = createPersonalDesktop({ computerUsageService: personalAccessService, systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
             startInTray: process.argv.includes('--start-in-tray') || process.platform === 'darwin' && app.isPackaged && app.getLoginItemSettings().wasOpenedAtLogin,
@@ -3642,6 +3668,7 @@ async function bootstrap() {
           if (pendingWindowsSendTo.length) personalDesktop.sendTo(pendingWindowsSendTo.splice(0));
           if (await win.webContents.executeJavaScript('globalThis.__WeftUiStarted === true')) await appBootSignal('healthy', desktopControlAppData);
         }
+        observeStartup('host-ready');
         hostLog.write('host.ready', { durationMs: Math.round(performance.now() - bootStartedAt) });
       }
     } else {
