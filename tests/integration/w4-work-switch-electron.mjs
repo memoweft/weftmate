@@ -86,7 +86,7 @@ try {
     }
   });
   await new Promise(r => proxy.listen(0, '127.0.0.1', r));
-  runtime = await phoneRuntime(root, logs, { baseUrl: `http://127.0.0.1:${proxy.address().port}/v1`, modelId: 'mimo-v2.6-flash', apiKey: 'proxy-only' });
+  runtime = await phoneRuntime(root, logs, { baseUrl: `http://127.0.0.1:${proxy.address().port}/v1`, modelId: 'mimo-v2.6-flash', apiKey: 'proxy-only', nativeTaskStop: true });
   const relayState = runtime.backend.chatRelayState;
   runtime.backend.chatRelayState = async input => { const state = await relayState(input); return forceRelay ? { ...state, pending: true } : state; };
   const install = runtime.backend.installChatHandoff;
@@ -138,15 +138,19 @@ try {
     const project = (await api('/projects', { requestId: randomUUID(), name: '合成文件夹' + scenario, rootPath: folder, permission: 'write' })).project;
     let before;
     if (scenario === '431') {
-      await page.evaluate(() => w4Core.selectMainChat());
+      await page.evaluate(async () => { await w4Core.refreshLogicalSessions(); await w4Core.selectMainChat(); });
       const chatId = (await api('/chats/main')).chat.chatId;
       const long = await command({ kind: 'chat.message', chatId, modelProfileId: 'synthetic', text: '只用纯文字回答，不用工具，不要列任务计划：请写一篇6000字的合成科普文章，主题是光合作用。直接开始正文。\n合成背景材料：\n' + '合成记录：植物在光照下利用水和二氧化碳形成有机物。\n'.repeat(60) });
-      await page.evaluate(() => w4Core.selectMainChat());
-      await until(async () => (await events(long.sessionId)).filter(e => e.type === 'assistant.delta').map(e => e.data.text ?? '').join('').length > 2200, 'long reply streaming');
+      await page.evaluate(async () => { await w4Core.refreshLogicalSessions(); await w4Core.selectMainChat(); });
+      await until(async () => (await events(long.sessionId)).some(e => e.type === 'assistant.delta' && e.data.streaming === true && e.data.text.length > 200), 'long reply streaming');
+      console.log('W4 431: live long reply observed');
       const queued = await command({ kind: 'chat.message', chatId, text: 'G7-C3-QUEUE：排队后只回复“排队保留”。', intent: 'queue' });
+      console.log('W4 431: queued request accepted');
       await api(`/tasks/${long.commandId}/stop`, { requestId: randomUUID() });
       await until(async () => (await events(long.sessionId)).some(e => e.type === 'turn.ended' && e.data.reason === 'aborted'), 'long reply aborted');
+      console.log('W4 431: native aborted observed');
       await until(async () => (await events(queued.sessionId)).some(e => e.type === 'assistant.message' && e.data.text.trim() === '排队保留'), 'queued reply');
+      console.log('W4 431: queued reply completed');
       await until(async () => (await relayState({ sessionId: long.sessionId, ownerId: auth.account.ownerId })).safe, 'idle queue drained');
       before = { chatId, sessionId: long.sessionId }; forceRelay = true;
     } else { await page.evaluate(() => w4Core.startNewConversation()); }
@@ -154,6 +158,7 @@ try {
       ? 'G7-W3：请帮我把一个合成文件夹里的文件按扩展名分别放入子文件夹。需要先切换到工作并由我选择文件夹，只动选定的合成目录，不处理其他位置。'
       : '请把我接下来选择的合成文件夹中的文件，按扩展名分别放入同名子文件夹，保留文件名和内容，只动选定的目录。';
     await page.locator('#message-text').fill(request); await page.locator('#send-message').click();
+    console.log(`W4 ${scenario}: file request sent`);
     const region = page.getByRole('region', { name: '切换到工作', exact: true }); await region.waitFor();
     const identity = await page.evaluate(() => ({ sessionId: w4Core.state.selectedSessionId, chatId: w4Core.state.selectedChatId }));
     report.lastSessionId = identity.sessionId;
