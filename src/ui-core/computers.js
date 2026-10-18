@@ -57,7 +57,8 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
     })().finally(()=>connecting.delete(id));connecting.set(id,pending);return pending;
   }
   async function request(id,path,options={}) {
-    if(id===core.cloudCurrentComputer?.()&&current===id)return json(core.accessBase+path,options);
+    // The verified local transport stays reachable while a remote channel is selected.
+    if(isLocalComputer(id)||id===core.cloudCurrentComputer?.()&&current===id)return json(core.accessBase+path,options);
     const row=core.state.computers?.find(row=>row.hostId===id);
     if(!row?.online)throw {code:'COMPUTER_OFFLINE'};
     const entry=await channel(id);
@@ -111,7 +112,7 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
   core.selectExecutionComputer = async id => {
     if(!enabled || id===current)return;
     if(core.state.submitting || core.state.unresolvedSubmission)throw {code:'SESSION_BUSY'};
-    const row=core.state.computers.find(row=>row.hostId===id);if(!row?.online)throw {code:'COMPUTER_OFFLINE'};
+    const row=core.state.computers.find(row=>row.hostId===id);if(!row?.online&&!isLocalComputer(id))throw {code:'COMPUTER_OFFLINE'};
     let entry;
     try { entry=id===core.cloudCurrentComputer?.()?null:await channel(id); }
     catch(error) {

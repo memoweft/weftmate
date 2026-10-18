@@ -72,6 +72,53 @@ test('cloud login keeps the desktop local sidebar and send availability when its
   await assert.rejects(core.selectExecutionComputer('b'),error=>error.code==='COMPUTER_OFFLINE');
 });
 
+for(const cached of [false,true])test(`selected remote keeps fresh local conversations when the local relay goes offline (${cached?'with':'without'} snapshot)`,async()=>{
+  const localSessions=[{sessionId:'a-session',title:'A',running:true,sendAvailable:false}];
+  const {core,calls}=await setup({desktop:true,bindDesktop:true,localSessions});
+  core.state.personalCapabilities={workAndChat:1};
+  const hosts=[{hostId:'a',online:true},{hostId:'b',online:true}];
+  core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});
+  if(cached)await core.accessApi('/sessions?archived=all');
+  await core.selectExecutionComputer('b');
+  hosts[0].online=false;localSessions[0].running=false;localSessions[0].sendAvailable=true;
+  core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});calls.length=0;
+  const listed=await core.accessApi('/sessions?archived=all');
+  const local=listed.sessions.find((row:any)=>row.hostId==='a');
+  assert.ok(local,'reachable physical local host must remain in the sidebar');
+  assert.equal(local.computerOffline,undefined,'local row must not be an offline snapshot');
+  assert.equal(local.running,false);assert.equal(local.sendAvailable,true);
+  assert.equal(calls.filter(row=>row.host==='a').length,1,'read the original local transport while the remote is selected');
+  assert.equal(core.currentExecutionComputer(),'b','listing local content must not change the execution computer');
+  calls.length=0;
+  await core.accessApi('/commands',{method:'POST',body:{targetDeviceId:'b',requestId:'synthetic-remote-command'}});
+  assert.equal(calls.length,1);assert.equal(calls[0].host,'b');
+});
+
+test('selecting the physical local computer restores its session and send route even when its relay is offline',async()=>{
+  const direct:any[]=[],accepted:any[]=[];let refreshes=0;
+  const localSession={account:{ownerId:'a-owner'},device:{id:'a-device'},csrfToken:'a-csrf'};
+  const {core,calls}=await setup({desktop:true,bindDesktop:true,refreshSessions:async()=>{refreshes++;},
+    requestJson:async(url:string,options:any)=>{direct.push({url,options});return url.endsWith('/auth/me')?localSession:{};}});
+  core.acceptSession=(session:any)=>{accepted.push(session);core.state.account=session.account;core.state.csrfToken=session.csrfToken;};
+  core.state.personalCapabilities={workAndChat:1};
+  const hosts=[{hostId:'a',online:true},{hostId:'b',online:true}];
+  core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});
+  await core.selectExecutionComputer('b');
+  assert.equal(core.state.account.ownerId,'b-owner');
+  hosts[0].online=false;core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});
+  await core.selectExecutionComputer('a');
+  assert.equal(core.currentExecutionComputer(),'a');assert.equal(core.remoteComputerSelected(),false);
+  assert.equal(accepted.at(-1),localSession);assert.equal(core.state.csrfToken,'a-csrf');
+  assert.equal(direct[0].url,'/personal/v1/auth/me');assert.equal(refreshes,2);
+  calls.length=0;direct.length=0;
+  const body={targetDeviceId:'a',requestId:'synthetic-local-command'};
+  await core.accessApi('/commands',{method:'POST',body});
+  assert.equal(direct.length,1);assert.equal(direct[0].url,'/personal/v1/commands');
+  assert.equal(direct[0].options.body,body);assert.equal(calls.length,0,'local sends must not use the remote channel');
+  hosts[1].online=false;
+  await assert.rejects(core.selectExecutionComputer('b'),error=>error.code==='COMPUTER_OFFLINE');
+});
+
 test('a trusted remote connection never receives the desktop local offline exemption',async()=>{
   for(const cached of [false,true]){
     const contentReads:string[]=[];let refreshes=0;
@@ -112,6 +159,7 @@ test('a trusted remote connection never receives the desktop local offline exemp
     assert.equal(contentReads.length,0);
     assert.equal(core.state.sessions.length,cached?1:0);
     if(cached)assert.equal(core.state.sessions[0].computerOffline,true);
+    await assert.rejects(core.selectExecutionComputer('a'),error=>error.code==='COMPUTER_OFFLINE');
   }
 });
 
