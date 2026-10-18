@@ -58,6 +58,16 @@ function successEnvelope(request: any, value: unknown) {
 }
 
 describe('official DSH legacy route migration helper', () => {
+  for (const preference of ['zh', 'en', undefined]) it(`reads resolved locale.preference through settings.describe: ${preference}`, async () => {
+    await withFixture(({ path, body }) => {
+      assert.equal(path, '/api/settings.describe');
+      return { body: successEnvelope(body, { writable: true, namespaces: preference === undefined ? [] : [
+        { ns: 'locale', value: { preference }, base: { preference: 'zh' }, user: { preference: 'en' } },
+      ] }) };
+    }, async origin => {
+      assert.equal(await createOfficialDshSettingsClient({ origin }).readLocalePreference(), preference === 'en' ? 'en' : 'zh');
+    });
+  });
   it('uses exact loopback unary envelopes and projects only metadata', async () => {
     const observed: any[] = [];
     await withFixture(({ path, body }) => {
