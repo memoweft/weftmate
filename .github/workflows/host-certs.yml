@@ -23,7 +23,7 @@ jobs:
           node scripts/download-pebble.mjs
           node scripts/download-frp.mjs
       - name: Signed host DNS, issuance, hot reload and renewal
-        run: node --test services/cloud/test/dns-aliyun.test.mjs services/cloud/test/host-csr.test.mjs services/cloud/test/host-certificates.test.mjs services/cloud/test/host-certificates-pebble.test.mjs
+        run: node --test services/cloud/test/dns-aliyun.test.mjs services/cloud/test/host-csr.test.mjs services/cloud/stress/host-csr.test.mjs services/cloud/test/host-certificates.test.mjs services/cloud/test/host-certificates-pebble.test.mjs
         env:
           WEFTMATE_PEBBLE_E2E: 'true'
           WEFTMATE_FRPC_FILE: ${{ github.workspace }}/.local/frp/frp_0.71.0_linux_amd64/frpc

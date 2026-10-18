@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createECDH, createPublicKey, createHash, generateKeyPairSync } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
+import { createHash, generateKeyPairSync } from 'node:crypto';
 import { mkdtemp, readFile, rm, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -10,33 +9,9 @@ import ASN1 from '@root/asn1/parser.js';
 import { issueHostCertificate, createCertificateManager } from '../../../src/personal-relay/certificates.mjs';
 import { developmentCertificate, tlsSpki } from '../../../src/personal-relay/tls.mjs';
 
-const domain = `h-${'b'.repeat(32)}.hosts.example.com`, DAY = 86_400_000;
-// Public, synthetic scalars; never persist randomly sampled private keys.
-function scalarKey(value) {
-  const d = Buffer.alloc(32); d.writeUInt32BE(value, 28);
-  const ec = createECDH('prime256v1'); ec.setPrivateKey(d);
-  const point = ec.getPublicKey();
-  return { kty: 'EC', crv: 'P-256', d: d.toString('base64url'),
-    x: point.subarray(1, 33).toString('base64url'), y: point.subarray(33).toString('base64url') };
-}
-function publicKey(jwk) { return createPublicKey({ key: jwk, format: 'jwk' }).export({ type: 'spki', format: 'der' }); }
-function verifyCsr(csr, jwk, domains = [domain]) {
-  // OpenSSL parses and verifies independently of both @root/csr and @root/asn1.
-  // A bad signature can still exit 0 on some OpenSSL releases: require its verdict.
-  const result = spawnSync('openssl', ['req', '-verify', '-noout', '-text', '-pubkey'],
-    { input: csr, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
-  assert.equal(result.status, 0, 'OpenSSL can parse the CSR');
-  assert.match(result.stdout + result.stderr, /(?:verify OK|self-signature ok)/i, 'OpenSSL validates the CSR signature');
-  const output = result.stdout;
-  const pem = output.match(/-----BEGIN PUBLIC KEY-----[\s\S]*?-----END PUBLIC KEY-----/)[0];
-  assert.ok(createPublicKey(pem).export({ type: 'spki', format: 'der' }).equals(publicKey(jwk)), 'CSR keeps the exact public key');
-  assert.ok(output.includes(`CN = ${domains[0]}`) || output.includes(`CN=${domains[0]}`));
-  assert.deepEqual([...output.matchAll(/DNS:([^,\s]+)/g)].map(m => m[1]), domains);
-  const info = CSR._info(csr);
-  assert.deepEqual(info.altnames, domains);
-  assert.equal(info.subject, domains[0]);
-  assert.ok(publicKey(info.jwk).equals(publicKey(jwk)), 'ACME parser keeps fixed-width coordinates');
-}
+import { domain, scalarKey, publicKey, verifyCsr } from './host-csr-helpers.mjs';
+
+const DAY = 86_400_000;
 
 function caFixture(certificate = '-----BEGIN CERTIFICATE-----\nsynthetic-certificate\n-----END CERTIFICATE-----') {
   const base = 'https://acme.example.com', calls = [], csrs = [];
@@ -88,12 +63,11 @@ test('independent CSR verification rejects a changed signature, key or domain', 
   assert.throws(() => verifyCsr(`-----BEGIN CERTIFICATE REQUEST-----\n${Buffer.from(der).toString('base64')}\n-----END CERTIFICATE REQUEST-----`, jwk));
 });
 
-test('10,000 random P-256 CSRs preserve public key, domains and valid signatures', { timeout: 600_000 }, async t => {
-  for (let i = 0; i < 10_000; i++) {
-    const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).privateKey.export({ format: 'jwk' });
-    const csr = await CSR.csr({ jwk, domains: [domain], encoding: 'pem' });
-    verifyCsr(csr, jwk);
-    if ((i + 1) % 1000 === 0) t.diagnostic(`${i + 1}/10000 independently verified`);
+test('32 deterministic P-256 CSRs preserve public key, domains and valid signatures', { timeout: 60_000 }, async () => {
+  // Always include the original parser failure and the leading-zero coordinate.
+  for (const value of [...Array.from({ length: 30 }, (_, i) => i + 1), 43, 111]) {
+    const jwk = scalarKey(value);
+    verifyCsr(await CSR.csr({ jwk, domains: [domain], encoding: 'pem' }), jwk);
   }
 });
 

@@ -42,10 +42,13 @@ without that review. `--ignore-scripts` development installs must explicitly
 run `node scripts/patch-root-csr.mjs`; packaging always does this itself.
 
 `services/cloud/test/host-csr.test.mjs` exercises real ACME.js with synthetic
-responses and scalar 111, verifies every one of 10,000 random P-256 CSRs with
-OpenSSL (key, CN/SAN and signature), covers leading-zero coordinates and RSA,
-and checks daily recovery from the legacy failure across a manager restart.
-The S2b workflow runs this suite alongside the existing Pebble DNS-01 scenarios.
+responses and scalar 111, verifies 32 fixed P-256 keys with OpenSSL (key, CN/SAN
+and signature), covers leading-zero coordinates and RSA, and checks daily
+recovery from the legacy failure across a manager restart. The complete
+10,000-random-key sweep lives in `services/cloud/stress/host-csr.test.mjs`, outside
+the routine cloud `test/*.test.mjs` discovery. S2b explicitly runs both suites
+alongside the existing Pebble DNS-01 scenarios; no exhaustive assertions are
+skipped or reduced. OpenSSL child processes are hidden and have a 30s deadline.
 `tests/csr-integrity.test.ts` and `tests/verify-windows-package.test.ts` exercise
 build repair/refusal, first-use refusal, and actual packed/unpacked bytes.
 The upstream P-384 signature algorithm mismatch is tracked separately in
