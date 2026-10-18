@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   droppedProjectFolder: file => { const path = webUtils.getPathForFile(file); return path ? ipcRenderer.invoke('wm:desktop:project-drop', path) : Promise.resolve(null); },
   identity: () => ipcRenderer.invoke('wm:desktop:identity'),
   credentials: (key, value, remove) => ipcRenderer.invoke('wm:desktop:credentials', key, value, remove),
+  cloudCredentialsPresent: () => ipcRenderer.invoke('wm:desktop:cloud-credentials-present'),
   cloudKey: (scope) => ipcRenderer.invoke('wm:desktop:key', scope),
   cloudProof: (scope, input) => ipcRenderer.invoke('wm:desktop:proof', scope, input),
   resetCloudKey: scope => ipcRenderer.invoke('wm:desktop:key-reset', scope),
