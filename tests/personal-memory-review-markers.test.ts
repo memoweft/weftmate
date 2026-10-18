@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createMemoryCommandJournal } from '../src/personal-memory/journal.mjs';
 import { createMemoryActions } from '../src/personal-memory/actions.mjs';
+import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs';
 
 const owner = 'owner-00000000-0000-4000-8000-000000000001';
 const secret = 'SYNTHETIC-PENDING-DELETE-SOURCE';
@@ -38,6 +39,51 @@ for (const scope of ['target', 'source', 'session']) test(`pending deletion mark
     assert.deepEqual(replay.command, original.command); assert.deepEqual(replay.cleanup.sourceTexts, []);
     await noCopies(root);
   } finally { await journal.close(); await rm(root, { recursive: true, force: true }); }
+});
+
+test('a target-only scrub preserves a different correction even when its text is identical', { timeout: 15000 }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-marker-scope-')), journal = createMemoryCommandJournal({ root });
+  const command = { ownerId: owner, operation: 'correct_world_item', targetKind: 'cognition', expectedWorldRevision: 1, payload: { correction_text: secret } };
+  try {
+    await journal.reserve({ ...command, requestId: 'selected', targetId: 'selected-target' });
+    await journal.reserve({ ...command, requestId: 'independent', targetId: 'independent-target' });
+    await journal.redactTargets(owner, ['selected-target']);
+    assert.deepEqual((await journal.get(owner, 'selected')).command.payload, {});
+    assert.deepEqual((await journal.get(owner, 'independent')).command.payload, command.payload);
+  } finally { await journal.close(); await rm(root, { recursive: true, force: true }); }
+});
+
+test('real manager withdrawal and cleanup retry retain the original deletion with no source text', { timeout: 15000 }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-marker-retry-'));
+  const methods = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary', 'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance', 'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup'];
+  let submitted = 0, originalCommand, receipt;
+  const cleanupInputs = [];
+  const create = () => createPersonalMemoryManager({ root, enabled: true, python: join(root, 'synthetic-python'), pythonPath: root,
+    baseUrl: 'http://127.0.0.1:1/v1', model: '@current', credential: () => 'synthetic',
+    cleanupDeletedMemory: async (_owner, input) => { cleanupInputs.push(input); throw Error('synthetic cleanup remains unavailable'); },
+    rpcFactory: () => ({ child: {}, async close() {}, async request(method, params = {}) {
+      if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1, methods };
+      if (method === 'initialize') return { runtime: { subject_id: owner, db_path: join(params.dsh_home, 'memoweft/memoweft.sqlite3') }, capabilities: { subject_id: owner, methods, services: { command: { operations: ['delete_world_item'] } } } };
+      if (method === 'health') return { runtime: { subject_id: owner, route_ready: true } };
+      if (method === 'query_provenance') return { provenance: [{ evidence: { raw_content: secret } }] };
+      if (method === 'query_command_receipt') { if (receipt) return receipt; throw Object.assign(Error('no receipt'), { code: 'command_receipt_not_found' }); }
+      if (method === 'submit_command') {
+        submitted++; originalCommand = structuredClone(params.command);
+        receipt = { receipt: { command_id: originalCommand.command_id, result_state: 'applied', affected_ids: ['target'], storage_cleanup: { state: 'complete' } } };
+        return receipt;
+      }
+      return {};
+    } }) });
+  let manager = create();
+  try {
+    const result = await manager.submitCommand(owner, { requestId: 'pending-delete', operation: 'delete_world_item', targetKind: 'cognition', targetId: 'target', expectedWorldRevision: 1, payload: {} });
+    assert.equal(result.receipt.storage_cleanup.state, 'pending');
+    await manager.discardPendingSources(owner, { sourceTexts: [secret] }); await noCopies(root);
+    await manager.close(); manager = create();
+    const retried = await manager.retryCleanupByRequest(owner, 'pending-delete');
+    assert.equal(retried.receipt.command_id, originalCommand.command_id); assert.equal(retried.receipt.storage_cleanup.state, 'pending');
+    assert.equal(submitted, 1); assert.deepEqual(cleanupInputs.at(-1).sourceTexts, []); await noCopies(root);
+  } finally { await manager.close(); await rm(root, { recursive: true, force: true }); }
 });
 
 const action = { requestId: 'multi-target-forget', name: 'memory_forget', arguments: { query: secret },
