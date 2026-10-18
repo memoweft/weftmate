@@ -19,6 +19,19 @@ function turn(turn: number, offset: number, user: string, reply: string) {
 }
 const english = turn(1, 0, 'What reminder is already saved? Read the actual list. Reply in English.', 'Your reminder is saved for later tonight.');
 
+test('short English turns retain English progress while running and completed', () => {
+  const core = timeline();
+  for (const [user, reply] of [['List reminders','No reminders'], ['Reminders?', 'None.'], ['OK', 'Done']]) {
+    const events = turn(1, 0, user, reply);
+    for (const rows of [events, events.slice(0, 6)]) {
+      const block = core.projectTimeline(rows).groups[0];
+      assert.equal(block.language, 'en', user);
+      assert.equal(core.progressText(block.steps, core.turnOutcome(rows, block.taskId)).text, 'Handled 1 scheduling action');
+      assert.equal(core.stepPresentation(block.steps[1], {}).summary, 'List schedules');
+    }
+  }
+});
+
 test('English reminder conversation has an English progress title despite Chinese runtime metadata', () => {
   const core = timeline(), block = core.projectTimeline(english).groups[0];
   assert.equal(core.progressText(block.steps, core.turnOutcome(english, block.taskId)).text, 'Handled 1 scheduling action');
