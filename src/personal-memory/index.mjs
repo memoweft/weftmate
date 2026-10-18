@@ -64,10 +64,29 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const formationOwners = new Set();
   const outboxQueues = new Map();
   const homePromises = new Map();
-  const journal = createMemoryCommandJournal({ root });
+  const prepareConversationCleanup = async (ownerId, record) => {
+    const plan = cleanupDeletedMemory
+      ? await cleanupDeletedMemory(ownerId, { ...record.cleanup, prepareOnly: true, journalManaged: true })
+      : { conversationTargets: [] };
+    if (!Array.isArray(plan?.conversationTargets)) throw error('MEMORY_CLEANUP_PENDING');
+    const pending = await queueOutbox(ownerId, () => readOutbox(ownerId));
+    return { ...plan, pendingBoundaryIds: pending.items.filter(item => record.cleanup.sourceTexts?.some(text =>
+      item.boundary.source_messages?.some(message => message.content.includes(text)))).map(item => item.boundary.event_id) };
+  };
+  const eraseConversationSnippets = async (ownerId, record) => {
+    const result = await withOwner(ownerId, entry => entry.rpc.request('query_command_receipt', { command_id: record.command.command_id }));
+    if (!['applied', 'no_change'].includes((result.receipt ?? result).result_state)) throw error('MEMORY_CLEANUP_PENDING');
+    await discardOutboxSources(ownerId, { sourceTexts: record.cleanup.sourceTexts, boundaryIds: record.cleanup.pendingBoundaryIds });
+    return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...record.cleanup, affectedIds: [], journalManaged: true }) : { snippetsVerified: true };
+  };
+  const journal = createMemoryCommandJournal({ root, prepareCleanup: prepareConversationCleanup, eraseSnippets: eraseConversationSnippets });
   const commandFlights = new Map();
   const manualFormationUntil = new Map();
-  const actions = createMemoryActions({ root, manager: () => manager, schedule: scheduleRetry });
+  const actions = createMemoryActions({ root, manager: () => manager, schedule: scheduleRetry,
+    redactJournal: (ownerId, row) => journal.redactTargets(ownerId,
+      [row.arguments?.id, row.target?.id, row.command?.targetId, ...(row.affectedIds ?? [])].filter(Boolean),
+      { sourceTexts: [row.arguments?.text, row.source?.text, row.source?.message?.content,
+        row.command?.payload?.correction_text].filter(value => typeof value === 'string' && value) }) });
   let closing = false;
   let startQueue = Promise.resolve();
   let sourceVersion;
@@ -582,11 +601,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     const ids = [command.target_id, ...(Array.isArray(receipt.affected_ids)
       ? receipt.affected_ids.filter((id) => typeof id === 'string' && id.length <= 512) : [])];
     try {
-      await actions.redact(ownerId, { affectedIds: ids, sourceTexts: marker?.cleanup?.sourceTexts ?? [] });
-      if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids,
-        sourceTexts: marker?.cleanup?.sourceTexts ?? [], deleteConversationSnippets: marker?.cleanup?.deleteConversationSnippets === true });
-      await journal.redactTargets(ownerId, ids);
-      if (marker?.cleanup) await journal.clearCleanup(ownerId, marker.requestId);
+      await actions.redact(ownerId, { affectedIds: ids, sourceTexts: marker?.cleanup?.sourceTexts ?? [], completedRequestId: marker?.requestId });
+      // Drain outside the journal lock: a drain may inspect action receipts.
+      await flushFlights.get(ownerId)?.catch(() => {});
+      if (marker) await journal.finishCleanup(ownerId, marker.requestId, async current => {
+        await discardOutboxSources(ownerId, { sourceTexts: current.cleanup?.sourceTexts, boundaryIds: current.cleanup?.pendingBoundaryIds });
+        return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...current.cleanup, affectedIds: ids,
+          sourceTexts: current.cleanup?.sourceTexts ?? [], deleteConversationSnippets: current.cleanup?.deleteConversationSnippets === true,
+          journalManaged: true }) : { snippetsVerified: true };
+      });
+      else if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
+      await journal.redactTargets(ownerId, ids, { sourceTexts: marker?.cleanup?.sourceTexts ?? [] });
       return result;
     }
     catch {
@@ -594,6 +619,19 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         storage_cleanup: { state: 'pending', detail_code: 'host_journal_cleanup_pending' } };
       return result?.receipt ? { ...result, receipt: pending } : pending;
     }
+  }
+
+  async function discardOutboxSources(ownerId, { sessionId = null, sourceTexts = [], boundaryIds = [] } = {}) {
+    if (!sessionId && !sourceTexts.length && !boundaryIds.length) return;
+    await queueOutbox(ownerId, async () => {
+      const state = await readOutbox(ownerId);
+      const removed = state.items.filter(item => boundaryIds.includes(item.boundary.event_id) || sessionId && item.boundary.parent_session_id === sessionId ||
+        sourceTexts.some(text => item.boundary.source_messages?.some(message => message.content.includes(text))));
+      state.items = state.items.filter(item => !removed.includes(item));
+      state.discardedBoundaryCount += removed.length;
+      if (removed.length) state.lastFailureCode = 'MEMORY_SOURCE_DELETED';
+      await writeOutbox(ownerId, state);
+    });
   }
 
   const startup = enabled ? readdir(path.join(root, 'accounts')).then(async ids => {
@@ -751,16 +789,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         ? (await entry.rpc.request('query_jobs', { operation: 'list' })).jobs?.map(job => job.acceptance?.boundary_event_id).filter(Boolean) ?? [] : []);
     },
     async discardPendingSources(ownerId, { sessionId = null, sourceTexts = [] } = {}) {
+      await actions.redact(ownerId, { sessionId, sourceTexts });
       await flushFlights.get(ownerId)?.catch(() => {});
-      await queueOutbox(ownerId, async () => {
-        const state = await readOutbox(ownerId);
-        const removed = state.items.filter(item => sessionId && item.boundary.parent_session_id === sessionId ||
-          sourceTexts.some(text => item.boundary.source_messages?.some(message => message.content.includes(text))));
-        state.items = state.items.filter(item => !removed.includes(item));
-        state.discardedBoundaryCount += removed.length;
-        if (removed.length) state.lastFailureCode = 'MEMORY_SOURCE_DELETED';
-        await writeOutbox(ownerId, state);
-      });
+      await journal.redactTargets(ownerId, [], { sessionId, sourceTexts });
+      await discardOutboxSources(ownerId, { sessionId, sourceTexts });
     },
     async pendingStatus(ownerId) { owner(ownerId); return outboxStatus(ownerId); },
     async discardOfflinePending(ownerId) {
@@ -795,7 +827,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       if (!enabled) return { state: 'disabled', worldRevision: null, capabilities: capabilities(null),
         pendingBoundaryCount: 0, blockedBoundaryCount: 0, discardedBoundaryCount: 0,
         lastFailureCode: null };
+      let pendingCleanup = [];
       try {
+        pendingCleanup = await journal.pendingCleanup(ownerId);
         return await withOwner(ownerId, async (entry) => {
           await flushObservedEntry(ownerId, entry);
           const health = await entry.rpc.request('health');
@@ -814,7 +848,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             && ['restart_recovered', 'shutdown_recovered'].includes(job.worker?.last_error_type)).length;
           const failedFormationCount = jobs.filter(job => ['failed', 'blocked', 'uncertain', 'dead'].includes(job.worker?.state)).length;
           const routeState = processingHealth ? await processingHealth(ownerId).catch(() => 'unavailable') : 'ready';
-          const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount && !formationIssues.length;
+          const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount && !formationIssues.length && !pendingCleanup.length;
           if (runtimeCurrent(ownerId, entry.generation)) {
             if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
             else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
@@ -828,7 +862,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             version: health?.version ?? health?.runtime?.version ?? await readSourceVersion(),
             worldRevision: Number.isSafeInteger(revision) ? revision : null,
             capabilities: { ...capabilities(entry), inject: entry.routeReady && backlog.pendingBoundaryCount === 0 }, ...backlog,
-            pendingFormationCount, recoveringFormationCount, failedFormationCount, failedCorrectionCount, formationIssues,
+            pendingFormationCount, recoveringFormationCount, failedFormationCount, failedCorrectionCount, formationIssues, pendingCleanup,
             ...(!entry.routeReady || routeState === 'unavailable' ? { reasonCode: 'MEMORY_MODEL_UNAVAILABLE' }
               : routeState === 'waiting' ? { reasonCode: 'MEMORY_MODEL_WAITING' }
               : formationIssues.length || failedFormationCount ? { reasonCode: 'MEMORY_FORMATION_FAILED' }
@@ -841,14 +875,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         const code = cause?.code ?? failures.get(ownerId) ?? 'MEMORY_UNAVAILABLE';
         const backlog = await outboxStatus(ownerId).catch(() => ({ pendingBoundaryCount: null, blockedBoundaryCount: null, discardedBoundaryCount: null }));
         return { state: 'unavailable', worldRevision: null, capabilities: capabilities(null),
-          ...backlog,
+          ...backlog, pendingCleanup,
           lastFailureCode: code, reasonCode: code };
       }
     },
     async eraseConversationContext(ownerId, sessionId) {
       const result = await withOwner(ownerId, entry => entry.rpc.request('erase_conversation_context', { conversation_id: sessionId }));
       const ids = result.affected_ids ?? [];
-      await journal.redactTargets(ownerId, ids);
+      await actions.redact(ownerId, { affectedIds: ids, sessionId });
+      // This is a source-scoped withdrawal, not a request to forget every
+      // source/correction sharing one of Core's affected target IDs.
+      await journal.redactTargets(ownerId, [], { sessionId });
       if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
       return result;
     },
@@ -1037,9 +1074,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     submit(ownerId, command) { return withOwner(ownerId, (entry) => entry.rpc.request('submit_command', { command })); },
     receipt(ownerId, commandId) { return withOwner(ownerId, (entry) => entry.rpc.request('query_command_receipt',
       { command_id: commandId })); },
-    async submitCommand(ownerId, proposal) {
+    async submitCommand(ownerId, proposal, assertActive = () => {}) {
       owner(ownerId);
       await privateHome(ownerId);
+      assertActive();
       let cleanup;
       if (proposal.operation.startsWith('delete_')) {
         const prior = await journal.get(ownerId, proposal.requestId);
@@ -1064,11 +1102,22 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
               }
             }
           }
+          // Capture each source's own provenance before Core erases it. Job
+          // acceptance links evidence IDs to sessions even without corrections;
+          // never infer ownership from another command targeting the same item.
+          const jobs = await withOwner(ownerId, entry => entry.capabilities?.methods?.includes('query_jobs')
+            ? entry.rpc.request('query_jobs', { operation: 'list' }) : {});
           cleanup = { deleteConversationSnippets: proposal.deleteConversationSnippets === true,
-            sourceTexts: [...new Set(sources.map(source => source?.raw_content).filter(text => typeof text === 'string' && text.length > 0))] };
+            sourceTexts: [...new Set(sources.map(source => source?.raw_content).filter(text => typeof text === 'string' && text.length > 0))],
+            sourceRefs: sources.filter(source => typeof source?.raw_content === 'string' && source.raw_content).map(source => ({
+              textHash: createHash('sha256').update(source.raw_content).digest('hex'), evidenceId: source.evidence_id ?? null,
+              sessionIds: [...new Set((jobs.jobs ?? []).filter(job => source.evidence_id && job.acceptance?.evidence_ids?.includes(source.evidence_id))
+                .flatMap(job => [job.acceptance.parent_session_id, job.acceptance.result_session_id]).filter(id => typeof id === 'string' && id))],
+            })) };
+          if (cleanup.deleteConversationSnippets) Object.assign(cleanup, await prepareConversationCleanup(ownerId, { cleanup }));
         }
       }
-      const marker = await journal.reserve({ ownerId, ...proposal, cleanup });
+      const marker = await journal.reserve({ ownerId, ...proposal, cleanup }, assertActive);
       const command = marker.command;
       const key = `${ownerId}\0${proposal.requestId}`;
       if (commandFlights.has(key)) return commandFlights.get(key);
@@ -1079,7 +1128,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         catch (cause) { if (cause?.code !== 'command_receipt_not_found') throw cause; }
         if (!result) {
           if (marker.redacted === true) throw error('MEMORY_REPLAY_REDACTED');
-          result = await withOwner(ownerId, (entry) => entry.rpc.request('submit_command', { command }));
+          result = await withOwner(ownerId, (entry) => {
+            assertActive();
+            return entry.rpc.request('submit_command', { command });
+          });
         }
         return { ...await cleanupAfterDelete(ownerId, command, result, marker), operation: command.operation };
       })();
