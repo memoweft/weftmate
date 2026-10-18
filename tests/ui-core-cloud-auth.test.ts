@@ -69,6 +69,43 @@ async function fixture() {
 }
 const login = async (f: any) => f.client.begin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url'), deviceName: 'Synthetic browser' })
 
+test('Android account login and cold loads preserve the same credentials while its computer is offline', async () => {
+  const f = await fixture(), entered: any[] = [];
+  runInNewContext(readFileSync(new URL('../src/ui-core/adapters/android-bridge.js', import.meta.url), 'utf8'), f.context);
+  const reopen = () => {
+    const core: any = { state: { currentView: 'login' }, show() {}, load() {}, clearSession() {}, sessionExpired() {},
+      acceptSession: () => assert.fail('An offline computer cannot grant a host session'),
+      enterAssistant: () => assert.fail('Phone content must use its own account'), refreshPendingDevices: async () => {} };
+    Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, { enterCloudOnly: (info: any) => entered.push(info) },
+      { ...f.environment, deviceType: 'android', retainNativeCache: true }));
+    const client = core.initializeCloudAccount(); f.useClient(client);
+    f.context.WeftUiCore.adaptMobileCloudClient(client);
+    const fetch = client.fetch;
+    client.fetch = async (url: string, options: any) => {
+      if (url.endsWith('/cloud/config')) return response({ issuer, clientId: 'weftmate-web', hostId: 'unconnected' });
+      if (url.endsWith('/devices')) return response({ devices: [], hosts: [{ hostId: 'offline-computer', online: false }] });
+      if (url.endsWith('/hosts/connect')) return response({ hostId: 'offline-computer', status: 'offline', baseUrl: 'https://unavailable.example' });
+      assert.ok(!url.startsWith('https://unavailable.example'), 'account login must not depend on the offline relay TLS');
+      return fetch(url, options);
+    };
+    return { core, client };
+  };
+  const { core, client } = reopen();
+  await core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') });
+  const saved = await client.saved();
+  assert.equal(core.cloudAuthView().mode, 'authenticated');
+  for (let cold = 0; cold < 2; cold++) {
+    const next = reopen();
+    await next.core.load();
+    assert.equal(next.core.cloudAuthView().mode, 'authenticated');
+    assert.equal(next.core.cloudAuthView().cloudOnly, true);
+    assert.equal((await next.client.saved()).refreshToken, saved.refreshToken);
+    assert.equal((await next.client.saved()).sub, saved.sub);
+  }
+  assert.equal(entered.length, 3);
+  assert.ok(entered.every(info => info.accountId === saved.sub && info.email === saved.email));
+});
+
 test('AUTH-1 a delayed device rename cannot restore cloud credentials after logout', async () => {
   const f = await fixture(); await login(f)
   const snapshot = await f.client.saved(); let release: Function = () => {}, started: Function = () => {}

@@ -188,7 +188,7 @@
         const host = directory.hosts?.find(row => row.status === 'online' || row.online === true) || directory.hosts?.[0];
         if (!host) return { status: 'cloud_only' };
         const connection = await client.authorized('/hosts/connect', { method: 'POST', body: { hostId: host.hostId } });
-        if (!connection.baseUrl) return { status: 'cloud_only' };
+        if (!connection.baseUrl || connection.status === 'offline') return { status: 'cloud_only' };
         client.host = new URL(connection.baseUrl).origin;
         const config = await client.request(client.host + '/personal/v1/cloud/config');
         if (config.hostId !== host.hostId || config.issuer !== client.config.issuer) throw { code: 'HOST_TRUST_INVALID' };
