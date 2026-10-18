@@ -58,6 +58,7 @@ try {
       }
       if (cycle <= 2 && process.env.WEFTMATE_EVIDENCE_DIR) {
         await application.evaluate(({ nativeTheme }, theme) => { nativeTheme.themeSource = theme; }, cycle === 1 ? 'light' : 'dark');
+        await page.emulateMedia({ colorScheme: cycle === 1 ? 'light' : 'dark' });
         await page.getByRole('heading', { name: '窗口尺寸验证' }).waitFor();
         await page.waitForFunction(dark => matchMedia('(prefers-color-scheme: dark)').matches === dark, cycle === 2);
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
