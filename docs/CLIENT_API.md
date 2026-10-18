@@ -158,12 +158,14 @@ Windows程序、远程网页、手机网页与安卓界面包共用同一策略�
 | GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；FX-16 增加 `limit`（1–200，新客户端请求100；省略时保留旧客户端完整枚举）、`cursor`（前页最后一项的会话 ID）、`q`（标题搜索，最多256字符） | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local","processing":{"phase":"queued","ahead":1,"modelName":"Muse Q5"}}],"snapshotAt":"2026-10-09T00:00:00.000Z"}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
 | PATCH `/sessions/{sessionId}/metadata` | `pinned?,unread?,title?,groupId?,projectId?`，至少一项；布尔值、非空标题≤256字符；groupId为本账号分组ID或null | 200 `{sessionId,pinned?,unread?,title?,groupId?,readMessageSeq?}`；原生 `sessionTitle.rename` 写用户标题，停止自动标题覆盖；手动已读记录最新助手消息水位 | 400 INVALID_REQUEST；404 SESSION_UNAVAILABLE / NOT_FOUND；409 SESSION_BUSY | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/fork` | 空对象 `{}`；原对话须空闲 | 201 `{sessionId,title}`；原生 DSH（助手运行时）事件种子及 parentSession 分叉谱系创建可继续的独立对话，标题加「（分叉）」；复制独立工作目录与经验，继承模型、分组或项目绑定；项目文件夹不复制，普通对话复制独立工作目录；不复制 MemoWeft（记忆核心）的记忆来源/绑定，原对话不变 | 404 SESSION_UNAVAILABLE；409 SESSION_BUSY；503 BACKEND_UNAVAILABLE | 桌、手、安、苹 |
-| POST `/sessions/{sessionId}/message-branches` | `{requestId,seq,action:"edit"\|"regenerate",modelProfileId?}`；`seq` 是原生用户 / 助手消息锚点；仅本人可写的空闲旁聊 | 201 `{sessionId,title,modelProfileId,sendRequestId,text,groupId,action,sourceSessionId,sourceSeq,inputSourceSessionId,userSeq,seedThroughSeq,attachments?,originalAttachments?,attachmentMessageId?}`；原生事件种子在对应用户消息的回合开始前截断，旧回复及后续回合不进入新版本；`text` 是原始用户输入，编辑时由客户端替换。仅创建分支，尚未发起推理 | 409 SESSION_BUSY / SESSION_READ_ONLY / MAIN_CHAT_PROTECTED / REQUEST_CONFLICT；404 SOURCE_UNAVAILABLE / SESSION_UNAVAILABLE；422 MODEL_UNAVAILABLE | 桌、手、安、苹（重新生成） |
+| POST `/sessions/{sessionId}/message-branches` | `{requestId,seq,action:"edit"\|"regenerate",modelProfileId?}`；`seq` 是原生用户 / 助手消息锚点；仅本人可写的空闲普通对话（`kind:side`） | 201 `{sessionId,title,modelProfileId,sendRequestId,text,groupId,action,sourceSessionId,sourceSeq,inputSourceSessionId,userSeq,seedThroughSeq,attachments?,originalAttachments?,attachmentMessageId?}`；原生事件种子在对应用户消息的回合开始前截断，旧回复及后续回合不进入新版本；`text` 是原始用户输入，编辑时由客户端替换。仅创建分支，尚未发起推理 | 409 SESSION_BUSY / SESSION_READ_ONLY / MAIN_CHAT_PROTECTED / REQUEST_CONFLICT；404 SOURCE_UNAVAILABLE / SESSION_UNAVAILABLE；422 MODEL_UNAVAILABLE | 桌、手、安、苹（重新生成） |
 | GET `/sessions/{sessionId}/message-branches` | 无 | 200 `{groups:[{groupId,action,sourceSessionId,sourceSeq,versions:[{sessionId,anchorSeq? ,afterSeq?}]}]}`；第一项为原版，其余按创建顺序；原版用 `anchorSeq`，新版本用 `afterSeq` 后第一条同角色消息定位 | 404 SESSION_UNAVAILABLE；409 SESSION_READ_ONLY | 桌、手、安；苹（依客户端能力） |
 
 UX-4：创建分支后，通过原有 `/commands` 发送 `kind:"session.message",targetDeviceId,sessionId,text,mode:"queue"`，**必须使用返回的 `sendRequestId`**，并带回返回的附件字段。宿主复制已上传原件与模型原先读取的材料，不从用户文件夹重新读取附件；图片材料从原生历史附件取回，文字材料按原暂存大小及哈希核对。本人用户消息通过原生回执与输入哈希核对后恢复本人原文，编辑读取原生锚点，避免历史摘要 / 旧缓存改变输入。分支继承模型（可显式换模型）、项目 / 分组、审批模式、临时记忆设置和深入思考；已有对话的模型不改变。分支 `requestId` 同体重试复用同一分支，异体返回 REQUEST_CONFLICT；消息送达不确定时先查 `/commands/by-request/{sendRequestId}` 再重放同一消息体。原分支及后续历史保留，切版只是打开另一个 `sessionId`。删除来源 / 版本或遗忘时清除对应派生分支回执，不用旧回执还原原话。
 
-D49 更新：模型已处理的本人消息不提供编辑 / 重发入口，只有尚未处理的排队消息沿原队列接口编辑 / 撤回。兼容主聊天保留原逻辑身份（D92），助手回复的重新生成开旁聊。使用既有 `session.side.create`，`originChatId/originEventId` 指向所选消息，父级为本账户主对话；原主对话保留，以来源引用带上下文，不做整条主对话分叉，也不创建主对话版本切换。重新生成先按逻辑历史找到锚点前的用户消息，支持跨执行段。新旁聊创建回执被受理后再发原始用户输入。
+D49 更新：模型已处理的本人消息不提供编辑 / 重发入口，只有尚未处理的排队消息沿原队列接口编辑 / 撤回。普通可写对话的助手回复保留重新生成与换模型重新生成；兼容主聊天保留原逻辑身份（D92），当前界面没有开旁聊菜单或会另建旁聊的重生成操作。手机导入历史只读，两种重生成均不可用。
+
+**旧端兼容**：主聊天回复原有的重新生成流程仍可使用 `session.side.create`，`originChatId/originEventId` 指向所选消息，父级为本账户主对话；原主对话保留，以来源引用带上下文，不做整条主对话分叉，也不创建主对话版本切换。重新生成先按逻辑历史找到锚点前的用户消息，支持跨执行段。新旁聊创建回执被受理后再发原始用户输入。
 
 UX-4 的有用 / 没用反馈仅存当前设备、当前账号的本机记录（`version,sessionId,seq,rating,reason,note,at`；手机本机记录用 `source:"phone",conversationId,messageId` 代替宿主锚点）；没有上传反馈的 HTTP 路由。Windows（视窗系统）通过已有原生加密偏好存储持久化反馈，避免程序随机端口变化丢记录；网页 / 安卓在设备存储保存。导出复用完整历史分页，主对话用跨段 `/chats/{id}/events`；客户端脱敏后预览并保存 Markdown（标记文本）/ PNG（图片文件），工具步骤默认不含，附件仅列名称。安卓新增系统保存文件桥，界面包最低原生 code27。Apple（苹果端）须用相同消息锚点、回执与版本关系，反馈留设备端，导出前沿用凭据 / 本机路径脱敏与预览边界。
 | GET `/session-groups` | 无查询 | 200 `{groups:[{id,name}]}`，仅当前账号 | — | 桌、手、安、苹 |
@@ -301,7 +303,7 @@ ST-2：操作类型为 `read/write/delete/command/network/external/spend/install
 
 FIX-40：`ask`（每次询问）优先于账户／项目的长期 `allow`（允许）规则与对话内分类授权；每次工具操作仍须原生一次审批，`deny`（禁止）规则继续生效。存储中的规则不被删除，切回其他模式后按原规则处理。该模式新建的审批 `canAlwaysAllow:false`，批准只作用于本次操作；拒绝通过原生工具错误返回模型。
 
-`GET /chats/main`、`GET /chats/{id}` 的 `chat` 增加 `approvalMode`（审批方式），值域与会话接口相同。`PATCH /chats/{id}` 接收且只接收 `{"approvalMode":"ask"}`，返回 `200 {chat}`，需要原 `commands:write` 权限；无原生会话的主对话也能先保存选择，不改变账户默认值。逻辑对话模式跨原生段继承；既有 `PATCH /sessions/{id}/approval-mode` 同时更新所属逻辑对话。无会话且尚无逻辑身份的新旁聊由客户端暂存选择，创建回执返回后必须先保存、核对模式，再发第一条消息；保存失败不发送，草稿保留。
+`GET /chats/main`、`GET /chats/{id}` 的 `chat` 增加 `approvalMode`（审批方式），值域与会话接口相同。`PATCH /chats/{id}` 接收且只接收 `{"approvalMode":"ask"}`，返回 `200 {chat}`，需要原 `commands:write` 权限；无原生会话的主对话也能先保存选择，不改变账户默认值。逻辑对话模式跨原生段继承；既有 `PATCH /sessions/{id}/approval-mode` 同时更新所属逻辑对话。无会话且尚无逻辑身份的新普通对话由客户端暂存选择，创建回执返回后必须先保存、核对模式，再发第一条消息；保存失败不发送，草稿保留。
 
 审批公开行增加可选 `operationCategories:string[]`、`canAlwaysAllow:boolean`；POST 审批的 `scope` 可为 `global-category`（只允许 `outcome:allowed-once` 且 `canAlwaysAllow:true`），在提交原审批决定的同一次账户写入中设置对应全局类别为 `allow`。原 `once/conversation-category` 兼容，已决定的请求仍用原 ID 与原体重放。
 
@@ -364,6 +366,8 @@ M3安全边界：DELETE在提交前，绑定当前owner、选中对象、Core预
 保留条数按独立记录投影：不同World身份分别计数，已由这些World的provenance代表的同一Evidence不再重复计数，独立未形成Evidence仍计数；不按正文相似或姓名合并。旧完成性证明中的重复计数仅在同授权、同目标、同修订复核成功后刷新，不能借此重授权或重放已有命令。遇到模型主体与Core冲突时整次withheld是明确安全合同：即使其中一个目标原可删除，也不在矛盾中继续提交；这与旧版允许继续删除的故障场景不同，合法明确范围的applied要求保持。
 
 FG-1：遗忘按来源级联清除 Evidence（来源证据）、依赖理解、关系和无剩余依据的人物／别名，清除 Core（记忆核心）派生上下文、宿主注入／采用标记、投影及纠正日志副本。SQLite（嵌入式数据库）清理使用 `secure_delete` 和 WAL（预写日志）截断；`storageCleanup.state=pending` 表示仍有底层或宿主清理待完成，不能宣称不可恢复。原请求回执和 `retry-cleanup` 可在重启后继续核对。
+
+`GET /memory/status` 可返回 `pendingCleanup:[{requestId,kind,id}]`，只包含本账户未完成的宿主清理身份，不含原文。客户端用既有 `/memory/commands/by-request/:requestId/retry-cleanup` 重试；`applied` 与 `no_change` 回执均须检查 `storageCleanup`，不能把后者误判为清理完成。勾选删除聊天原话时，宿主预先保存不含原文的事件定位，实际擦除并重新读取核对后才返回 `complete`；失败保留 `pending` 及重试入口，新打开的记忆页也可从状态恢复该入口。未新增业务路径或权限。
 
 D33：`deleteConversationSnippets` 默认 `false`。桌面、手机网页及手机界面的记忆页「忘掉」确认框先列出级联记忆名称与数量；删除对话勾选遗忘时显示汇总数量。两类确认框均提供「同时删除对话里含这句话的原话」，每次打开默认不勾。显式 `true` 才另外清除该账户原生会话日志／个人命令记录中含来源原话的文字，保留会话及其他片段。Core 自己的原话副本无论是否勾选均清除；无关证据的前置 AI 上下文原样保留。预览只读，不创建回执、不递增修订、不调用模型；预览失败或修订与详情不一致时不可确认。记忆删除沿用 `expectedWorldRevision`，会话删除传 `memoryWorldRevision`；修订变化返回409 `MEMORY_REVISION_CHANGED`，需要重新核对。选项属于原请求身份的一部分，重试不得改变。默认保留的对话原文和过去已生成的备份可含原话；专用记忆导出始终排除被遗忘的正式记忆。若随后删除相应对话，新的 BK-1 备份也应不再包含这些对话与记忆的副本。
 
@@ -606,7 +610,7 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 
 服务端串行合并字段，冲突按最后一次成功写入为准；`updatedAt` 为宿主保存时间，旧账户无已保存设置时为 `null` 并返回默认值。旧本设备的 D36 引导偏好在首次读取时迁入未配置账户；以后账户值优先。客户端仅成功回执后显示「已同步」，读取／保存失败保留可重试状态，切账户丢弃迟到回执。
 
-称呼、简介、语气、自定义语气、详细程度、写作风格和固定说明在每个新回合通过 DSH（助手运行时）原生系统提示段组装，回合内保持快照，不改写历史；主对话、普通／项目旁聊和临时对话共用此机制。固定说明从不写入本人消息或 MemoWeft（记忆服务）摄取边界，也不成为 Evidence（记忆证据）。关闭网页搜索会从原生模型工具目录移除并拒绝 `web_search|web_fetch|browser`；不撤销普通文件／电脑能力。
+称呼、简介、语气、自定义语气、详细程度、写作风格和固定说明在每个新回合通过 DSH（助手运行时）原生系统提示段组装，回合内保持快照，不改写历史；兼容主聊天、普通对话、项目会话和临时对话共用此机制。固定说明从不写入本人消息或 MemoWeft（记忆服务）摄取边界，也不成为 Evidence（记忆证据）。关闭网页搜索会从原生模型工具目录移除并拒绝 `web_search|web_fetch|browser`；不撤销普通文件／电脑能力。
 
 新建对话读取 `defaultDeepThinking`，仍沿 UX-3 的模型目录能力和 `/sessions/{id}/thinking`，不支持的模型以普通方式回答；既有对话保持自己的偏好。`assistant.message.data.modelThinking` 是可选的模型返回思考内容（最多 4,000 字，沿历史正文的安全投影），只用于展示三档，不作为回复正文、上下文交接或记忆输入；模型不提供时没有空思考块。原生来源接口与工具详情仍不返回此内容。
 
@@ -1237,7 +1241,7 @@ UX-6 / D53：既有 `GET /chats` 支持 `scope=search`，用于当前账户统�
 
 ### 9.4 兼容旁聊创建与结果回写
 
-能力增加 `sideChats:1`。沿用原 `/commands` 的 `commands:write`、设备归属、模型/项目权限、Cookie（会话凭据）/CSRF（跨站请求伪造防护）及原命令查询回执，不增加执行器或新的模型授权。
+本节保留旧端兼容的旁聊创建、来源引用与结果回写契约；`sideChats:1` 不表示新版界面提供从消息开旁聊或主聊天回复重生成的入口。普通新建仍按 D92 的对话／工作模式进行。沿用原 `/commands` 的 `commands:write`、设备归属、模型/项目权限、Cookie（会话凭据）/CSRF（跨站请求伪造防护）及原命令查询回执，不增加执行器或新的模型授权。
 
 `POST /commands` 新增客户端命令：
 
@@ -1257,14 +1261,14 @@ UX-6 / D53：既有 `GET /chats` 支持 `scope=search`，用于当前账户统�
 
 必填 `requestId,kind,targetDeviceId,parent,modelProfileId`；`parent.kind=main|project`，`parent.id` 必须是当前账户主对话或已授权且未撤销项目。`title` 可选，去首尾空白后1–256字符；来源两个字段同时出现或省略，只能是当前账户可读的完整公开用户/助手消息。来源与组织父级分别保存：项目来源移到主对话父级不会继承项目写权限，目标项目使用原 D37 权限及目录。旁聊开出的新旁聊仍直接属于所选主对话或项目，不嵌套。
 
-`entry` 可选 `composer|message|suggestion`；缺省有来源为 `message`、无来源为 `composer`。`message` 必须有来源。模型建议入口必须另传 `confirmed:true`，否则409 `SIDE_CHAT_CONFIRMATION_REQUIRED`；客户端只在用户点确认后提交。此 API（应用接口）没有注册成模型自动建聊工具。输入区草稿和待上传附件留在客户端，创建不发送首句、不执行原消息、不改变审批模式。
+`entry` 可选 `composer|message|suggestion`；缺省有来源为 `message`、无来源为 `composer`。`message` 必须有来源。旧端兼容的模型建议创建请求必须另传 `confirmed:true`，否则409 `SIDE_CHAT_CONFIRMATION_REQUIRED`；旧端只在用户点确认后提交，新版不提供该专用入口。此 API（应用接口）没有注册成模型自动建聊工具。输入区草稿和待上传附件留在客户端，创建不发送首句、不执行原消息、不改变审批模式。
 
 返回202 `{command}`，附 `kind:"session.side.create",chatId,sessionId,contextTransfer`；内部复用原持久 `session.create` 的创建/恢复流程。两项身份在首次受理时确定，同请求并发或重试返回同一命令；不同请求体409 `REQUEST_CONFLICT`。客户端等原 `/commands/by-request/{requestId}` 到 `accepted_by_dsh` 后才能使用旁聊。失败/不确定沿原回执处理，不换新请求编号重发。新旁聊使用独立原生会话与工作目录；项目旁聊沿原项目目录。
 
 FX-19：`GET /status.personalCapabilities.creationReceipt=1` 表示 `POST /commands` 的 `session.create` / `session.side.create` 可附 `waitForReceipt:true`。宿主先持久受理、沿原串行调度创建并持久提交最终回执，再返回同一202 `{command}`；响应可能为 `accepted_by_dsh`、失败或 `uncertain`，只有前者允许继续使用新会话。省略或false保留原快速受理响应；其他命令或非布尔值返回400。该选项不计入幂等请求身份，同一requestId切换等待方式不重复创建。等待在状态写入队列之外进行，仍沿既有30秒调度期限；客户端请求超时45秒。断线或超时不取消已持久的命令，须用原 `/commands/by-request/{requestId}` 核对，不能换编号重发；重启后原有pending恢复、dispatching转uncertain规则不变。客户端保持创建及选择期间禁用，读回已接受的单条聊天实体、恢复草稿后解锁，不全量刷新列表。安卓已有 `/commands` 及原请求查询白名单覆盖此选项，无新路由、无新壳要求；Apple（苹果端）可按精确能力版本选择等待，原轮询保持兼容。
 
 
-`contextTransfer={state:"references_only",sourceRefs:[{chatId,eventId,kind:"native",hostId,sessionId,seq,contentRevision}],truncated:false}`，`Chat` 同时返回 `originRefs` 与 `contextTransfer`。不转移原生摘要，仅返回引用，界面必须提示“相关上下文尚未带入”，允许用户编辑首句继续。不能把引用就绪显示为完整上下文已转移；不把客户端摘要当事实，也不复制整条历史或注入伪造真人消息。来源删除后原链接返回不可用，引用不能恢复正文。原 D34 分叉继续完整事件种子语义，本接口不等同分叉。临时来源409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，共享来源409 `SHARED_CONTEXT_UNAVAILABLE`；不接受绕过提示的确认布尔开关。
+`contextTransfer={state:"references_only",sourceRefs:[{chatId,eventId,kind:"native",hostId,sessionId,seq,contentRevision}],truncated:false}`，`Chat` 同时返回 `originRefs` 与 `contextTransfer`。不转移原生摘要，仅返回引用。旧端兼容创建流程必须提示“相关上下文尚未带入”，允许用户编辑首句继续；新版界面仍可展示既有来源引用，但不提供从消息开旁聊的入口。不能把引用就绪显示为完整上下文已转移；不把客户端摘要当事实，也不复制整条历史或注入伪造真人消息。来源删除后原链接返回不可用，引用不能恢复正文。原 D34 分叉继续完整事件种子语义，本接口不等同分叉。临时来源409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，共享来源409 `SHARED_CONTEXT_UNAVAILABLE`；不接受绕过提示的确认布尔开关。
 
 | 接口 | 请求 | 响应与规则 |
 |---|---|---|
@@ -1330,7 +1334,7 @@ D33 与删除会话清理同一缓存，SQLite 使用安全删除及 VACUUM（�
 
 ## 10. 临时对话（MEM-2）
 
-`GET /status.personalCapabilities.temporaryChats=1` 表示支持本节；旧客户端忽略新增字段。主对话是长期关系，不能设置临时或关闭记忆，入口应新建临时旁聊。
+`GET /status.personalCapabilities.temporaryChats=1` 表示支持本节；旧客户端忽略新增字段。兼容主聊天不能设置临时或关闭记忆；当前界面通过普通新建流程创建临时对话，不提供专用的开旁聊入口。
 
 | 接口 | 请求 / 响应 | 语义 |
 |---|---|---|
@@ -1347,7 +1351,7 @@ D33 与删除会话清理同一缓存，SQLite 使用安全删除及 VACUUM（�
 
 宿主启动及每分钟检查到期对话，沿D33/FG原生生命周期停止任务、删除原生日志、专属工作目录、附件、成果副本与宿主命令正文；忙碌或原生清理未确认时保留原记录并重试，不返回虚假的删除完成。共享项目目录内的用户文件仍按D33保留。新备份排除含临时内容的整段会话、工作目录、命令与可重建历史缓存，普通回合已形成的长期记忆保留。过去导出的文件与旧备份沿既有删除边界处理。
 
-临时内容不自动回写主对话、不进入动态正文、全局成果库、近期对话离线副本。分叉、引用开旁聊、发布结果对 `hasTemporaryContent` 会话返回409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，直到显式分享功能提供确认与预览。TB-1/TB-3未来的全局列表必须排除该标记；对话内自己的输出与来源仍可查看。MEM-2没有新增全局列表接口。
+临时内容不自动回写主对话、不进入动态正文、全局成果库、近期对话离线副本。分叉、旧端兼容的引用开旁聊、发布结果对 `hasTemporaryContent` 会话返回409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，直到显式分享功能提供确认与预览。TB-1/TB-3未来的全局列表必须排除该标记；对话内自己的输出与来源仍可查看。MEM-2没有新增全局列表接口。
 
 临时历史 `cacheAllowed:false` 时不写离线缓存，离线副本继续消费宿主过滤结果；到期 404 后移除本机展示缓存。新建、记忆／召回开关与删除期限使用本节公开字段，不因兼容主聊天身份而扩大临时内容范围。
 
@@ -1860,7 +1864,7 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 
 回执兼容增加 `receipts:[{id,state:"synced",sessionId?,chatId?,importId?,memoryState?}]`。synced只在原文历史与MEM-1任务均持久保存后发出，表示已接收而非已形成；重发相同轮次／正文返回稳定历史标识，同账号同轮次ID跨手机去重，正文变化409。phoneFirst和新交接队列的去重不依赖Cookie（会话凭据）续期。普通M3-A电脑副本离线轮次保持原摄取／依赖处理。手机全回执后清轻量条目、水位与屏蔽摘要；未确认或部分确认继续使用条目，原对话保留。真实形成状态由imports取得。
 
-电脑复用MEM-1的导入任务／后台模型调度／来源回执／暂停继续／取消／整批忘掉，不另设形成接口。来源 `importSource` / `importSources` 的app为phone、appName为「手机上的对话」，兼容增加deviceName、turnId，保留原日期。手机历史加入现有sessions/chats列表，`phoneHistory:true,readOnly:true,source:"phone"`，可看、搜索并从消息开旁聊；不冒充可直接发送的原生电脑会话。直接在同一历史会话续聊留后续。旧会话事件投影的 `data.phoneEventId` 保留同一个稳定时间线标识，供历史消息的旁聊入口引用；标识按账号隔离。
+电脑复用MEM-1的导入任务／后台模型调度／来源回执／暂停继续／取消／整批忘掉，不另设形成接口。来源 `importSource` / `importSources` 的app为phone、appName为「手机上的对话」，兼容增加deviceName、turnId，保留原日期。手机历史加入现有sessions/chats列表，`phoneHistory:true,readOnly:true,source:"phone"`，可查看、搜索、复制、引用和导出；不冒充可直接发送的原生电脑会话，不提供开旁聊入口，不能在原历史内续聊或重新生成。旧会话事件投影的 `data.phoneEventId` 保留同一个稳定时间线标识，供旧端兼容的来源引用使用；当前界面不再将该字段接到开旁聊动作，标识仍按账号隔离。
 
 达到100轮或256 KiB等待确认；小量静默整理。导入记录增加deviceName、handoverId、from/to、conversationCount、received、expectedTurns、estimate、confirmationRequired。沿 `/memory/backfill` 增加 `action:"import-confirm",jobId,confirm:true`；确认后进入原running，可用原import-pause／resume。预计模型、输入／输出词元与费用区间沿MEM-1，默认后台模型变动前重新估算。完成时动态静默记录「已把手机上的N段对话整理进记忆」，等待确认时动态指向设置→记忆。整批忘掉不删除手机原文。
 

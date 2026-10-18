@@ -257,7 +257,14 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
       if (action === 'memory-cleanup' && req.method === 'POST') {
         const body = await readJson(req, 1024 * 1024)
         if (typeof body.deleteConversationSnippets !== 'boolean' || !Array.isArray(body.sourceTexts) ||
-            body.sourceTexts.some(text => typeof text !== 'string' || !text || text.length > 100000)) throw new TypeError('invalid memory cleanup')
+            body.sourceTexts.some(text => typeof text !== 'string' || !text || text.length > 100000) ||
+            body.prepareOnly !== undefined && typeof body.prepareOnly !== 'boolean' ||
+            body.snippetTargets !== undefined && (!Array.isArray(body.snippetTargets) || body.snippetTargets.some(target =>
+              !Number.isSafeInteger(target?.rowIndex) || target.rowIndex < 0 ||
+              target.seq !== undefined && (!Number.isSafeInteger(target.seq) || target.seq < 0) ||
+              target.turn !== undefined && (!Number.isSafeInteger(target.turn) || target.turn < 0) ||
+              !Array.isArray(target.paths) || target.paths.some(path => !Array.isArray(path) || !path.length ||
+                path.some(key => typeof key !== 'string' || ['__proto__', 'prototype', 'constructor'].includes(key)))))) throw new TypeError('invalid memory cleanup')
         return writeJson(res, 200, await sessions.cleanupMemory(sessionId, body))
       }
       if (!action && req.method === 'DELETE') {

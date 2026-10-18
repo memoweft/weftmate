@@ -10,10 +10,22 @@ test('source snippet cleanup survives restart, keeps its switch identity, and er
   try{
     let journal=createMemoryCommandJournal({root});
     const marker=await journal.reserve({...proposal,cleanup:{sourceTexts:['FGPrivateOriginal'],deleteConversationSnippets:true}});await journal.close();
-    journal=createMemoryCommandJournal({root});
+    journal=createMemoryCommandJournal({root,prepareCleanup:async(_owner:any,record:any)=>{
+      assert.deepEqual(record.cleanup.sourceTexts,['FGPrivateOriginal']);
+      return {conversationTargets:[]};
+    }});
     assert.deepEqual((await journal.reserve(proposal)).cleanup,marker.cleanup);
     await assert.rejects(journal.reserve({...proposal,deleteConversationSnippets:false}),{code:'MEMORY_REQUEST_CONFLICT'});
-    await journal.clearCleanup(ownerId,proposal.requestId);await journal.close();
+    await assert.rejects(journal.finishCleanup(ownerId,proposal.requestId,async()=>({snippetsVerified:false})),{code:'MEMORY_CLEANUP_PENDING'});
+    assert.deepEqual((await journal.get(ownerId,proposal.requestId)).cleanup.sourceTexts,['FGPrivateOriginal']);
+    assert.equal((await journal.pendingCleanup(ownerId)).length,1);
+    await journal.finishCleanup(ownerId,proposal.requestId,async(record:any)=>{
+      assert.deepEqual(record.cleanup.sourceTexts,['FGPrivateOriginal']);
+      assert.equal(record.cleanup.deleteConversationSnippets,true);
+      return {snippetsVerified:true};
+    });
+    assert.equal((await journal.pendingCleanup(ownerId)).length,0);
+    await journal.close();
     assert.doesNotMatch(await readFile(join(root,'accounts',ownerId,'memory-home','command-journal.json'),'utf8'),/FGPrivateOriginal/);
   }finally{await rm(root,{recursive:true,force:true})}
 });
@@ -33,9 +45,14 @@ test('entity snippet opt-in follows related provenance when its direct source li
     if(method==='submit_command')return {receipt:{result_state:'applied',command_id:params.command.command_id,after_revision:2,affected_ids:['person','rel','evidence'],storage_cleanup:{state:'complete'}}};
     return {};
   },close:async()=>{rpc.child=null}};
-  const cleaned:any[]=[];
-  const manager=createPersonalMemoryManager({root,enabled:true,python:join(root,'python.exe'),pythonPath:root,baseUrl:'http://127.0.0.1:1/v1',model:'@current',credential:()=> 'synthetic',rpcFactory:()=>rpc,cleanupDeletedMemory:async(_owner:string,options:any)=>cleaned.push(options)});
+  const cleaned:any[]=[],prepared:any[]=[];
+  const manager=createPersonalMemoryManager({root,enabled:true,python:join(root,'python.exe'),pythonPath:root,baseUrl:'http://127.0.0.1:1/v1',model:'@current',credential:()=> 'synthetic',rpcFactory:()=>rpc,cleanupDeletedMemory:async(_owner:string,options:any)=>{
+    if(options.prepareOnly){prepared.push(options);return {conversationTargets:[]};}
+    cleaned.push(options);return {snippetsVerified:true};
+  }});
   try{await manager.submitCommand(owner,{requestId:'forget-person',operation:'delete_world_item',targetKind:'entity',targetId:'person',expectedWorldRevision:1,payload:{delete_conversation_snippets:true},deleteConversationSnippets:true});
+    assert.equal(prepared.length,1);assert.deepEqual(prepared[0].sourceTexts,['FGEntityOriginal']);
+    assert.equal(cleaned.length,1);
     assert.deepEqual(cleaned[0].sourceTexts,['FGEntityOriginal']);assert.equal(cleaned[0].deleteConversationSnippets,true);
     assert.doesNotMatch(await readFile(join(root,'accounts',owner,'memory-home','command-journal.json'),'utf8'),/FGEntityOriginal/);
   }finally{await manager.close();await rm(root,{recursive:true,force:true})}
