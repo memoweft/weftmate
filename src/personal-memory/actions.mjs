@@ -35,6 +35,10 @@ function scrubForgetReceipt(row) {
   for (const key of ['source', 'target', 'command', 'scope']) delete row[key];
   if (row.plan) { row.plan.sourceTexts = []; delete row.plan.authorization; delete row.plan.message; }
 }
+const actionTargets = row => [row.arguments?.id, row.target?.id, row.command?.targetId,
+  ...(row.affectedIds ?? []), ...(row.plan?.affectedIds ?? []),
+  ...(row.plan?.worldTargets ?? []).map(target => target.id), ...(row.plan?.evidenceIds ?? []),
+  ...(row.plan?.authorizedEvidenceIds ?? []), ...Object.values(row.commands ?? {}).map(command => command.targetId)];
 const changedScope = partial => ({ state: partial ? 'partial' : 'withheld', message: partial
   ? '部分记忆已删除，但其余内容在确认后发生了变化，没有继续删除；请重新确认。'
   : '记忆在原来确认后发生了变化，这次没有删除；请重新确认要忘掉的内容。' });
@@ -84,13 +88,27 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
     const assertActive = () => { if (lease.retired) throw retiredAction(); };
     // Same serialization as redaction: a terminal record cannot accept a late
     // plan/target/command checkpoint from an earlier asynchronous snapshot.
-    const save = fn => update(owner, data => {
+    const save = async fn => {
+      let selectedDeleted = false;
+      const result = await update(owner, data => {
+        assertActive();
+        const row = data.records[action.requestId];
+        if (!row || row.result) throw retiredAction();
+        const result = fn(data);
+        // Selection may return an ID that was not yet known when redaction ran.
+        // Check it under that same lock, before any plaintext checkpoint is written.
+        if (actionTargets(row).some(id => lease.deletedTargets.has(id))) {
+          row.result = notFound(); selectedDeleted = true;
+        }
+        if (lease.scrubbed) scrubForgetReceipt(row);
+        return result;
+      });
+      // update has persisted the terminal, scrubbed record. Do not throw inside
+      // its mutation callback and accidentally discard that terminal write.
+      if (selectedDeleted) lease.retired = true;
       assertActive();
-      if (!data.records[action.requestId] || data.records[action.requestId].result) throw retiredAction();
-      const result = fn(data);
-      if (lease.scrubbed) scrubForgetReceipt(data.records[action.requestId]);
       return result;
-    });
+    };
     const submit = async command => {
       assertActive(); lease.commandRequestId = command.requestId;
       try { return await m.submitCommand(owner, command, assertActive); }
@@ -290,7 +308,7 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
         flight.snapshot = new Set(actions.map(row => row.requestId));
         trace(owner, 'flight-snapshot', { flightId: flight.id, requestIds: [...flight.snapshot].map(hash) });
         for (const previous of actions.filter(row => !row.result)) {
-          const lease = { requestId: previous.requestId, retired: false, commandRequestId: null };
+          const lease = { requestId: previous.requestId, retired: false, commandRequestId: null, deletedTargets: new Set() };
           const action = await serial(owner, async () => {
             const row = (await read(owner)).records[previous.requestId];
             if (!row || row.result || flight.attempted.has(row.requestId)) return null;
@@ -427,16 +445,16 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
         sourceTexts.some(text => text && (value.includes(text) || text.includes(value)));
       await serial(owner, async () => {
         const data = await read(owner); let changed = false;
+        const lease = flights.get(owner)?.current;
+        let ownsCompletion = false;
         for (const row of Object.values(data.records)) {
           if (!(sessionId && row.sessionId === sessionId) &&
-              ![row.arguments?.id, row.target?.id, row.command?.targetId, ...(row.affectedIds ?? []), ...(row.plan?.affectedIds ?? []),
-                ...(row.plan?.worldTargets ?? []).map(target => target.id), ...(row.plan?.evidenceIds ?? [])].some(id => forgotten.has(id)) &&
+              !actionTargets(row).some(id => forgotten.has(id)) &&
               ![row.arguments?.text, row.arguments?.query, row.source?.text, row.source?.message?.content,
                 row.command?.payload?.correction_text, ...(row.plan?.sourceTexts ?? [])].some(includesSource)) continue;
           changed = true;
           row.arguments = {}; delete row.source; delete row.target; delete row.command;
           delete row.scope;
-          const lease = flights.get(owner)?.current;
           // The deletion whose receipt invoked this cleanup still owns its
           // receipt bookkeeping. Other pending actions are terminal immediately.
           const completing = row.name === 'memory_forget' && completedRequestId &&
@@ -444,13 +462,17 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
               Object.values(row.commands ?? {}).some(command => command.requestId === completedRequestId));
           if (completing && row.plan) {
             scrubForgetReceipt(row);
-            if (lease?.requestId === row.requestId) lease.scrubbed = true;
+            if (lease?.requestId === row.requestId) { lease.scrubbed = true; ownsCompletion = true; }
           } else {
             row.result ??= notFound();
             clearActionBody(row);
             if (lease?.requestId === row.requestId) lease.retired = true;
           }
         }
+        // This bounded, live-attempt set contains IDs only and dies with the
+        // existing flight. It also covers selections not yet saved in any row.
+        // The operation's own deletion receipt must still finish its bookkeeping.
+        if (lease && !ownsCompletion) for (const id of forgotten) lease.deletedTargets.add(id);
         if (changed) await durableWrite(file(owner), data);
       });
     },
