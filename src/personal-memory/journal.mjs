@@ -56,7 +56,7 @@ export function createMemoryCommandJournal({ root }) {
     }
     return value;
   }
-  async function write(ownerId, value) {
+  async function write(ownerId, value, assertActive = () => {}) {
     const file = fileFor(ownerId);
     const body = JSON.stringify(value);
     if (Buffer.byteLength(body, 'utf8') > MAX_BYTES) throw failure('MEMORY_JOURNAL_FULL');
@@ -65,10 +65,12 @@ export function createMemoryCommandJournal({ root }) {
     let handle;
     try {
       handle = await open(tmp, 'wx', 0o600);
+      assertActive();
       await handle.writeFile(body, 'utf8');
       await handle.sync();
       await handle.close(); handle = null;
       await ensurePrivateFile(tmp);
+      assertActive();
       await rename(tmp, file);
       await ensurePrivateFile(file);
     } finally {
@@ -78,7 +80,7 @@ export function createMemoryCommandJournal({ root }) {
     }
   }
   return {
-    async reserve({ ownerId, requestId, operation, targetKind, targetId, payload, expectedWorldRevision, deleteConversationSnippets, cleanup }) {
+    async reserve({ ownerId, requestId, operation, targetKind, targetId, payload, expectedWorldRevision, deleteConversationSnippets, cleanup }, assertActive = () => {}) {
       check(ownerId, requestId);
       const proposal = { operation, targetKind, targetId, payload, expectedWorldRevision,
         ...(deleteConversationSnippets === true ? { deleteConversationSnippets: true } : {}) };
@@ -86,6 +88,7 @@ export function createMemoryCommandJournal({ root }) {
       await ensurePrivateDirectory(path.dirname(fileFor(ownerId)));
       return queue(ownerId, async () => {
         const state = await read(ownerId);
+        assertActive();
         const prior = state.records[requestId];
         if (prior) {
           if (prior.payloadHash !== payloadHash) throw failure('MEMORY_REQUEST_CONFLICT');
@@ -99,7 +102,7 @@ export function createMemoryCommandJournal({ root }) {
           target_id: targetId, payload };
         state.records[requestId] = { requestId, payloadHash, command,
           ...(deleteConversationSnippets === true ? { deleteConversationSnippets: true } : {}), ...(cleanup ? { cleanup } : {}) };
-        await write(ownerId, state);
+        await write(ownerId, state, assertActive);
         return state.records[requestId];
       });
     },
@@ -117,7 +120,7 @@ export function createMemoryCommandJournal({ root }) {
         if (state.records[requestId]?.cleanup) { delete state.records[requestId].cleanup; await write(ownerId, state); }
       });
     },
-    async redactTargets(ownerId, ids) {
+    async redactTargets(ownerId, ids, { sourceTexts = [], sessionId = null } = {}) {
       if (typeof ownerId !== 'string' || !OWNER.test(ownerId) || !Array.isArray(ids) ||
           ids.some((value) => typeof value !== 'string' || value.length > 512)) {
         throw failure('MEMORY_REQUEST_INVALID');
@@ -127,8 +130,12 @@ export function createMemoryCommandJournal({ root }) {
         const state = await read(ownerId);
         let count = 0;
         for (const record of Object.values(state.records)) {
-          if (!targets.has(record.command.target_id) || record.redacted === true ||
-              record.command.operation !== 'correct_world_item') continue;
+          if (record.redacted === true || record.command.operation !== 'correct_world_item') continue;
+          const payload = record.command.payload;
+          const fromSource = sessionId && payload.source?.session_id === sessionId ||
+            [payload.correction_text, payload.source?.content].some(value => typeof value === 'string' && value &&
+              sourceTexts.some(text => text && (value.includes(text) || text.includes(value))));
+          if (!targets.has(record.command.target_id) && !fromSource) continue;
           record.command.payload = {};
           record.redacted = true;
           count++;
