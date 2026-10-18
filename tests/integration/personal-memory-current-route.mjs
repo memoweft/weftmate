@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 /** Real Core route against an isolated fake ModelSwitcher; never reaches port 8081. */
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
@@ -9,8 +10,8 @@ import { promisify } from 'node:util';
 if (process.env.WEFTMATE_REAL_MEMORY_ROUTE_E2E !== '1') {
   throw new Error('Set WEFTMATE_REAL_MEMORY_ROUTE_E2E=1 for this fake-upstream Core route test.');
 }
-const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
-const pythonPath = 'D:/AIProjects/MemoWeft/Core/py/src';
+const python = requireMemoWeftPath('python');
+const pythonPath = requireMemoWeftPath('source');
 if (!existsSync(python)) throw new Error('MemoWeft Core Python runtime is unavailable');
 let loaded = true;
 let postCount = 0;

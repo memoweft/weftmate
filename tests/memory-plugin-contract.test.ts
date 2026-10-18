@@ -1,10 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
+import { memoWeftTestEnvironment } from './helpers/memoweft-environment.mjs';
 
 // R7 记忆宿主插件契约（源码锁）：
 //  - 边界源（compaction/end 门控 + user Evidence 组装 + 信封哈希绑定 + 跨语言规范化字节一致）
@@ -15,9 +16,8 @@ const plugin = readFileSync(new URL('../src/plugins/weftmate-memory.mjs', import
 const runtime = readFileSync(new URL('../src/dsh-web-runtime.ts', import.meta.url), 'utf8');
 const main = readFileSync(new URL('../src/main.mjs', import.meta.url), 'utf8');
 const client = readFileSync(new URL('../src/plugins/weftmate-client/client.js', import.meta.url), 'utf8');
-const CORE_PYTHON = process.env.WEFTMATE_MEMOWEFT_PYTHON ?? 'D:\\AIProjects\\MemoWeft\\Core\\py\\.venv\\Scripts\\python.exe';
-const CORE_PYTHONPATH = process.env.WEFTMATE_MEMOWEFT_PYTHONPATH ?? 'D:\\AIProjects\\MemoWeft\\Core\\py\\src';
-const coreAvailable = existsSync(CORE_PYTHON) && existsSync(join(CORE_PYTHONPATH, 'memoweft', 'integrations', 'dsh_bridge', '__main__.py'));
+const coreEnvironment = memoWeftTestEnvironment();
+const { python: CORE_PYTHON, pythonPath: CORE_PYTHONPATH, available: coreAvailable } = coreEnvironment;
 const stagedMemoryRoot = mkdtempSync(join(tmpdir(), 'weftmate-memory-module-'));
 const stagedMemoryPath = join(stagedMemoryRoot, 'weftmate-memory.mjs');
 const vendorTools = pathToFileURL(join(fileURLToPath(new URL('../', import.meta.url)), 'vendor', 'dsh-runtime', 'node_modules', '@deepseek-ai', 'dsh-tools', 'lib', 'index.js')).href;
@@ -245,7 +245,7 @@ describe('R7 记忆宿主插件契约', () => {
     }
   });
 
-  it('真实 Core RPC：capability、精确 history、启动对账、完整 capture 与 stale model 过滤往返', { skip: coreAvailable ? false : 'MemoWeft Core venv unavailable', timeout: 60_000 }, async () => {
+  it('真实 Core RPC：capability、精确 history、启动对账、完整 capture 与 stale model 过滤往返', { skip: coreAvailable ? false : coreEnvironment.skipReason, timeout: 60_000 }, async () => {
     const { MemoWeftBridge, apply } = await importMemoryPlugin();
     const home = mkdtempSync(join(tmpdir(), 'weftmate-memory-actual-core-'));
     const oldEnabled = process.env.WEFTMATE_MEMOWEFT_ENABLED;

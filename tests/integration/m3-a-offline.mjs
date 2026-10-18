@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
@@ -99,8 +100,8 @@ try {
   const forwarded = await fetch(cloudConfig.origin + '/healthz', { signal: AbortSignal.timeout(2000) }).then(r => r.ok).catch(() => false);
   if (!forwarded) cloudProxy = await bridge(Number(new URL(cloudConfig.origin).port), Number(new URL(cloudConfig.origin).port), address);
   relay = await bridge(relayPort, hostPort);
-  await writeFile(join(root, 'memory.json'), JSON.stringify({ python: 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',
-    pythonPath: 'D:/AIProjects/MemoWeft/Core/py/src', baseUrl: `http://127.0.0.1:${hostPort}/v1`, model: '@current', authRef: 'm3a' }));
+  await writeFile(join(root, 'memory.json'), JSON.stringify({ python: requireMemoWeftPath('python'),
+    pythonPath: requireMemoWeftPath('source'), baseUrl: `http://127.0.0.1:${hostPort}/v1`, model: '@current', authRef: 'm3a' }));
   await startHost();
   desktopAuth = await exchange('desktop', '/auth/cloud-desktop'); assert.equal(desktopAuth.status, 200, JSON.stringify(desktopAuth));
   hostId = (await api('/status')).body.hostId;

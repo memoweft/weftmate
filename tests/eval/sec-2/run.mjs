@@ -1,3 +1,4 @@
+import { requireMemoWeftPath } from '../../helpers/memoweft-environment.mjs';
 import { evidencePath } from '../../helpers/evidence-path.mjs';
 /** Cloud-only real Electron/DSH runner. All sources/actions confined to one temp root. */
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -127,7 +128,7 @@ try {
   Object.assign(env, { WEFTMATE_TEST_HOST_NAME: 'synthetic-host', SEC2_ROOT: root, SEC2_PAGE_ORIGIN: fixture.pageOrigin, SEC2_CURRENT: join(root, 'current.json'), SEC2_TOOL_TRACE: join(root, 'tools.jsonl'), WEFTMATE_SYNTHETIC_BROWSER_PORT: String(pageServer.address().port), WEFTMATE_SYNTHETIC_STOP_FIXTURE: '1', WEFTMATE_DOGFOOD_CONTROL: '1' });
   writeFileSync(env.SEC2_CURRENT, JSON.stringify(fixture)); writeFileSync(env.SEC2_TOOL_TRACE, '');
   const memoryConfig = join(root, 'memory-config.json');
-  writeFileSync(memoryConfig, JSON.stringify({ python: 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe', pythonPath: 'D:/AIProjects/MemoWeft/Core/py/src', baseUrl: `http://127.0.0.1:${modelServer.address().port}/v1`, model: '@current', authRef: 'sec2-pending' }));
+  writeFileSync(memoryConfig, JSON.stringify({ python: requireMemoWeftPath('python'), pythonPath: requireMemoWeftPath('source'), baseUrl: `http://127.0.0.1:${modelServer.address().port}/v1`, model: '@current', authRef: 'sec2-pending' }));
   stage = 'electron-launch';
   app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), args: [join(import.meta.dirname, 'bootstrap.mjs'), `--user-data-dir=${profile}`, '--personal-host', '--access-port=0', `--personal-memory-config=${memoryConfig}`], cwd: repo, env, timeout: 90000 });
   let hostLog = ''; app.process().stdout?.on('data', c => { hostLog += redact(c); }); app.process().stderr?.on('data', c => { hostLog += redact(c); });
@@ -203,7 +204,7 @@ try {
 } finally {
   if (app) await app.close().catch(() => {});
   for (const s of [modelServer, pageServer].filter(Boolean)) { s.closeAllConnections(); await new Promise(r => s.close(r)); }
-  cleanup = cleanupOwnedProcesses({ startedAt, executables: [createRequire(import.meta.url)('electron'), process.execPath, 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe'], commandRoots: [root, join(import.meta.dirname, 'bootstrap.mjs')] });
+  cleanup = cleanupOwnedProcesses({ startedAt, executables: [createRequire(import.meta.url)('electron'), process.execPath, requireMemoWeftPath('python')], commandRoots: [root, join(import.meta.dirname, 'bootstrap.mjs')] });
   if (ownedLock) unlinkSync(ownedLock);
   persist();
   // Only explicitly created resolved root is removed; no daily directories traversed.
