@@ -4,9 +4,10 @@ import { restoreWindowsDesktopBounds } from '../../src/windows-desktop-bounds.mj
 
 app.setPath('userData', process.env.WINDOW_BOUNDS_PROFILE);
 app.whenReady().then(() => {
+  let quitting = true;
   globalThis.windowBoundsDesktop = createPersonalDesktop({
     origin: process.env.WINDOW_BOUNDS_ORIGIN, libraryDesktopToken: process.env.WINDOW_BOUNDS_TOKEN,
-    isQuitting: () => true, startInTray: process.env.WINDOW_BOUNDS_TRAY === 'true',
+    isQuitting: () => quitting, startInTray: process.env.WINDOW_BOUNDS_TRAY === 'true',
   });
   globalThis.restoreDesktopBounds = restoreDesktopBounds;
   globalThis.restoreWindowsDesktopBounds = restoreWindowsDesktopBounds;
@@ -16,6 +17,10 @@ app.whenReady().then(() => {
     if (process.env.WINDOW_BOUNDS_EARLY_ACTION === 'send-to') {
       globalThis.windowBoundsDesktop.sendTo([]);
       globalThis.windowBoundsDesktop.show({ sessionId: 'early-first' });
+      // Exercise the actual close-to-tray save path before native restoration,
+      // then issue another activation. Its constructor size must not be saved.
+      quitting = false;
+      try { globalThis.windowBoundsDesktop.window.close(); } finally { quitting = true; }
       globalThis.windowBoundsDesktop.show({ sessionId: 'early-last' });
     }
     const win = globalThis.windowBoundsDesktop.window;
