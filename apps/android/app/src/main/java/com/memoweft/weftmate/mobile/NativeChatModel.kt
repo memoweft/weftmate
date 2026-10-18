@@ -101,6 +101,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     var standalone by mutableStateOf(false)
     var phoneArchive by mutableStateOf(false)
     var canRegenerate by mutableStateOf(false)
+    var canRetryQueue by mutableStateOf(false)
     var dark by mutableStateOf(false)
     var textSize by mutableFloatStateOf(DesignTokens.font15)
     var codeSize by mutableFloatStateOf(DesignTokens.font13)
@@ -227,6 +228,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         val conversation = conversations.find { it.optString("id") == chatId }
         val turns = conversation?.optJSONArray("turns")?.objects().orEmpty()
         running = view.optBoolean("running")
+        canRetryQueue = standalone && view.optBoolean("queueRetryAvailable")
         rows = turns.flatMap { turn -> turn.optJSONArray("messages")?.objects().orEmpty().mapIndexed { index, message ->
             JSONObject().put("eventId", "${turn.optString("id")}:$index").put("at", java.time.Instant.ofEpochMilli(turn.optLong("timestamp")).toString())
                 .put("type", if (running && view.optString("activeConversationId",view.optString("selectedId")) == chatId && turn === turns.lastOrNull() && message.optString("role") == "assistant") "assistant.delta" else "${message.optString("role")}.message").put("data", message)
@@ -300,7 +302,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
             if (startingDraftKey != null) { putString("draft:$owner:$chatId", draft); remove(startingDraftKey) }
         }.apply()
         rows = emptyList(); approvals = emptyList(); questions = emptyList(); uncertain = emptyList(); phoneLive = ""; focused = false
-        canRegenerate = false
+        canRegenerate = false; canRetryQueue = false
         var approvalSelectionRevision = approvalModeRevision
         try {
         call("native.conversation", JSONObject().put("id", chatId))
@@ -550,6 +552,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     }
     fun stop() = launch { if (phoneArchive) environment.phone("stop", phoneParams()) else if (phone) call("chat.stop") else if (sessionId.isNotBlank()) call("shared.stop", JSONObject().put("sessionId", sessionId).put("requestId", "stop-${UUID.randomUUID()}")); refresh() }
     fun regenerate() = launch { if (canRegenerate) { scrollVersion++;environment.phone("regenerate", phoneParams()); refresh() } }
+    fun retryQueue() = launch { if (standalone && phoneArchive && canRetryQueue) { scrollVersion++;environment.phone("retryQueue",phoneParams());refresh() } }
     fun copyReply(text:String) = launch { call("clipboard.copy",JSONObject().put("text",text));copyVersion++ }
     fun checkDelivery() = launch { call("shared.outbox.reconcile"); refresh() }
     private suspend fun writeApprovalMode(selected: String, session: String, chat: String): String {

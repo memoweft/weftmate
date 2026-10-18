@@ -17,7 +17,10 @@ class NativePhoneQueueTest {
         override val foreground = true
         val sent = mutableListOf<String>()
         var stopped = 0
-        private fun view() = JSONObject().put("ready", true).put("owner", "").put("running", true)
+        var paused = false
+        var retries = 0
+        private fun view() = JSONObject().put("ready", true).put("owner", "").put("running", !paused)
+            .put("queueRetryAvailable",paused).put("error",if(paused) "请检查网络或模型设置，再点「重试排队消息」。" else "")
             .put("selectedId", "phone-test").put("messageMode", "queue")
             .put("conversations", JSONArray()).put("pendingMessages", JSONArray(sent.mapIndexed { i, text ->
                 JSONObject().put("id", "queued-$i").put("conversationId", "phone-test").put("text", text)
@@ -25,6 +28,7 @@ class NativePhoneQueueTest {
         override suspend fun phone(action: String, params: JSONObject): JSONObject {
             if (action == "send") sent.add(params.getString("text"))
             if (action == "stop") stopped++
+            if (action == "retryQueue") { retries++; paused=false }
             return view().put("sent", true)
         }
         override suspend fun request(method: String, params: JSONObject) = JSONObject()
@@ -52,5 +56,19 @@ class NativePhoneQueueTest {
             assertTrue(m.rows.all { it.getJSONObject("data").optBoolean("queued") })
             m.stop(); assertEquals(1, e.stopped)
         } finally { scope.cancel() }
+    }
+
+    @Test fun pausedQueueExposesRetryAndResumesWithoutSubmittingTheEditorsNextDraft() = runBlocking {
+        val e=Environment(); val scope=CoroutineScope(SupervisorJob()+Dispatchers.Unconfined)
+        try {
+            val m=model(e,scope)
+            m.edit("已发送的消息");m.send()
+            e.paused=true;m.refresh()
+            assertTrue(m.canRetryQueue);assertTrue(m.error.contains("重试排队消息"))
+            m.edit("下一条仍是草稿");m.retryQueue()
+            assertEquals(1,e.retries);assertFalse(m.canRetryQueue)
+            assertEquals(listOf("已发送的消息"),e.sent)
+            assertEquals("下一条仍是草稿",m.draft)
+        }finally{scope.cancel()}
     }
 }
