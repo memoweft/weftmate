@@ -1,7 +1,1 @@
-按 `docs/PLAN.md` 第 2 节执行 `build.mjs OUTPUT/candidate MEMORY_RUNTIME VERSION UNIQUE_ID [VERIFIED_STAGE]`、`rerun.ps1 -EvidenceDirectory OUTPUT`（本机独立身份、默认目录安装，非干净沙盒）；`scenarios.mjs` 自动操作聊天、千条分页、记忆、提醒和浅深页面，`work-steps.mjs` 提供选目录、审批检查点与文件/预览核验，云验证码由绑定 Outlook 连接只读本次邮件并在进程内交接、工作多轮审批及答复含义需人工判读，`prepare-explicit-core.mjs NEW_OUTPUT PREPARED_RUNTIME [ELECTRON_EXE]` 配合 `-Mode dev` 补显式 Core 环境，`native-notifications.mjs APP_ID OUTPUT [PATTERN] [MINIMUM]` 读取该独立身份的真实 Windows 通知历史；不使用沙盒、不改系统设置，实际覆盖与失败见 #509 及包目录结果表。
-跨端前用 `relay-network-check.mjs --desktop-executable EXE` 核验候选的实际网络；新安装可给 `install-local.mjs` 加 `--relay`（或 `rerun.ps1 -Relay`），仅在已有代理且直连失败时加 `--use-env-proxy`（或 `-UseEnvProxy`），使独立资料开启真实中继并仅向测试子进程传入 `NODE_USE_ENV_PROXY=1`，两端源码 SHA、电脑在线/离线操作及成果须另作真实联调核对。
-`cross-steps.mjs::desktopOfflineWindow(ctx)` 关闭当前候选并写 `cross-offline-ready.json`，手机真实排队/取消后写 `cross-online.json` 的同一 `runId` 使其重开；超时也在 `finally` 重开，期间不要另投控制器请求。
-
-构建前校验整个已跟踪源码与当前抓取的 `origin/main` 一致，仅允许 `scripts/acceptance/` 有差异；构建脚本、资源准备脚本和 electron-builder 钩子也在校验范围内。拒绝仓库外部输入之外的未跟踪文件，并额外检查 `src/`、`runtime/`、`build/`、`patches/`、`scripts/` 下被忽略但可能参与打包的文件。使用干净的 main 源码副本执行；候选记录同时保留 main 源码 SHA 和验收分支的 buildHead。
-
-`rerun.ps1` 每个场景默认给 30 分钟，覆盖记忆确认/召回和历史重启等多段等待；可用 `-ScenarioTimeoutMinutes <1–30>` 缩短本轮预算。超过预算仍会报超时并在 finally 中关闭控制器及其子进程。
+按 `docs/PLAN.md` 第2节运行 `build.mjs OUTPUT/candidate MEMORY_RUNTIME VERSION UNIQUE_ID`、`rerun.ps1 -EvidenceDirectory OUTPUT`（单项默认30分钟，跨端加 `-Relay`，确需已有进程代理时加 `-UseEnvProxy`），同目录脚本提供显式Core、工作审批检查点、离线联调、目标页和Windows原生通知补验（连续补验用不同 `evidencePrefix`），验证码只经绑定Outlook在进程内交接，实际结果及证据留仓库外，不修产品代码、不改系统设置。

@@ -17,7 +17,7 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const until=async(fn,timeout=90000)=>{const end=Date.now()+timeout;while(Date.now()<end){const v=await fn();if(v)return v;await pause(250);}throw Error('STATE_TIMEOUT');};
 const pair=generateKeyPairSync('rsa',{modulusLength:2048});
 await writeFile(join(output,'operator-public.pem'),pair.publicKey.export({type:'spki',format:'pem'}));
-key=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','[Console]::Out.Write([Environment]::GetEnvironmentVariable("MIMO_API_KEY","Machine"))'],{windowsHide:true,encoding:'utf8'}).trim();email=process.env.B1_TEST_EMAIL||'';
+key=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','[Console]::Out.Write([Environment]::GetEnvironmentVariable("MIMO_API_KEY","Machine"))'],{windowsHide:true,encoding:'utf8',timeout:10000}).trim();email=process.env.B1_TEST_EMAIL||'';
 const installation=JSON.parse(await readFile(join(output,'installation.json'),'utf8'));
 if(!installation.installedExecutable||!installation.profile||(!development&&installation.exeExists!==true))throw Error('A successfully verified isolated installation is required');
 const exe=installation.installedExecutable;
@@ -39,8 +39,12 @@ async function api(path,body,method=body===undefined?'GET':'POST'){
 }
 async function snapshot(){return {text:await page.locator('body').innerText(),buttons:await page.getByRole('button').allTextContents(),inputs:await page.locator('input,textarea,select').evaluateAll(es=>es.map(e=>({tag:e.tagName,id:e.id,type:e.type,label:e.getAttribute('aria-label'),placeholder:e.getAttribute('placeholder')})))};}
 async function shot(name){
+ await page.evaluate(mail=>{const rows=[];if(mail){const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;while((node=walker.nextNode()))if(node.textContent.includes(mail)){rows.push([node,node.textContent]);node.textContent=node.textContent.replaceAll(mail,'[test mailbox]');}}globalThis.baselineEvidenceMasks=rows;},email);
+ try{
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  const capture=await app.evaluate(async({desktopCapturer,BrowserWindow})=>{const target=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().includes('/personal/v1/ui'));const sources=await desktopCapturer.getSources({types:['window'],thumbnailSize:{width:1920,height:1080}});const source=sources.find(s=>s.id===target.getMediaSourceId());if(!source)throw Error('Installed application capture unavailable');return source.thumbnail.toPNG().toString('base64');});
  await writeFile(join(output,name+'.png'),Buffer.from(capture,'base64'));
+ }finally{await page.evaluate(()=>{for(const[node,text]of globalThis.baselineEvidenceMasks??[])if(node.isConnected)node.textContent=text;delete globalThis.baselineEvidenceMasks;}).catch(()=>{});}
 }
 async function send(text){const inputBox=page.getByRole('textbox',{name:'输入消息',exact:true});await inputBox.waitFor();await until(()=>inputBox.isEnabled(),45000);await inputBox.fill(text);await page.getByRole('button',{name:'发送',exact:true}).click();}
 const ctx={get app(){return app;},get page(){return page;},api,save,shot,snapshot,send,until,pause,launch,output,input,fillCode:async(locator,envelope)=>{const code=privateDecrypt({key:pair.privateKey,padding:constants.RSA_PKCS1_OAEP_PADDING,oaepHash:'sha256'},Buffer.from(envelope,'base64')).toString();await locator.fill(code);},fillEmail:locator=>locator.fill(email),fillKey:async locator=>{if(await locator.getAttribute('type')!=='password')throw Error('Key field must be masked');await locator.fill(key);},notices:()=>app.evaluate(()=>({requested:globalThis.baselineNotices,shown:globalThis.baselineShown}))};
