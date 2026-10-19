@@ -165,13 +165,14 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                     if(selectedTab=="chat") Text(m.subtitle,fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=1,overflow=TextOverflow.Ellipsis)
                 }
                 Box {
-                    NativeIconButton(R.drawable.wm_more,"更多",Modifier.nativeFrost(CircleShape)){overflow=true}
+                    NativeIconButton(R.drawable.wm_more,"更多",Modifier.nativeFrost(CircleShape)){overflow=true;m.refreshOfflineWorkAvailability()}
                     NativeMenu(expanded=showOverflow,keepEditorFocus=true,onDismissRequest={overflow=false}) {
                         if(m.running && selectedTab!="library") NativeMenuItem(text={Text("停止回复")},onClick={overflow=false;m.stop()},leadingIcon={Icon(painterResource(R.drawable.wm_stop),null)})
                         NativeMenuItem(text={Text("设置")},onClick={overflow=false;focus.clearFocus();settings.open()},leadingIcon={Icon(painterResource(R.drawable.wm_settings),null)})
                         if(selectedTab=="library")NativeMenuItem(text={Text("打开原网页成果库")},onClick={overflow=false;activity.originalLibrary()},leadingIcon={Icon(painterResource(R.drawable.wm_layers),null)})
                         if(selectedTab!="library")NativeMenuItem(text={Text(if(m.workAndChat && m.sidebarMode=="work")"新建工作" else "新建对话")},onClick={overflow=false;focus.clearFocus();activity.hideKeyboard();m.focused=false;m.newChat()},leadingIcon={Icon(painterResource(R.drawable.wm_plus),null)})
                         if(selectedTab!="library")NativeMenuItem(text={Text("完整对话功能")},onClick={overflow=false;m.tab="web-chat"},leadingIcon={Icon(painterResource(R.drawable.wm_chat),null)})
+                        if(selectedTab=="chat"&&!m.connected&&m.offlineWorkReady)NativeMenuItem(text={Text("交给电脑，上线后做")},onClick={overflow=false;m.openOfflineWork()},leadingIcon={Icon(painterResource(R.drawable.wm_clock),null)})
                     }
                 }
             }

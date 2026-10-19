@@ -22,6 +22,25 @@ class CloudAppUnitTest {
     }
     private val host = "https://host.example.com"
     private val issuer = "https://cloud.example.com/personal/v1/cloud/oidc"
+    @Test fun taskSubmitBodyBudgetMatchesCloudAndDoesNotWidenOtherRoutes(){
+        val submit=issuer.removeSuffix("/oidc")+"/hosts/offline/tasks/submit"
+        assertEquals(70*1024,cloudAppRequestBody(submit,"POST",issuer,"x".repeat(70*1024)).size)
+        assertThrows(IllegalArgumentException::class.java){cloudAppRequestBody(submit,"POST",issuer,"x".repeat(70*1024+1))}
+        val large="x".repeat(16385)
+        for(target in listOf(submit+"/",submit+"?extra=1",submit+"#fragment",submit+"-other",
+            submit.replace("/tasks/","/tasks%2F"),submit.replace("cloud.example.com","evil.example.com"),
+            submit.replace("/submit","/list"),submit.replace("/submit","/cancel"),submit.replace("/submit","/clear"),
+            "$issuer/token",issuer.removeSuffix("/oidc")+"/auth/login")){
+            assertThrows(target,IllegalArgumentException::class.java){cloudAppRequestBody(target,"POST",issuer,large)}
+        }
+        for(method in listOf("GET","PUT","post"))
+            assertThrows(method,IllegalArgumentException::class.java){cloudAppRequestBody(submit,method,issuer,large)}
+    }
+    @Test fun ordinaryCloudBodyBudgetStillCountsUtf8Bytes(){
+        val target="$issuer/token"
+        assertEquals(16384,cloudAppRequestBody(target,"POST",issuer,"x".repeat(16384)).size)
+        assertThrows(IllegalArgumentException::class.java){cloudAppRequestBody(target,"POST",issuer,"任".repeat(5462))}
+    }
     @Test fun offlinePhoneTasksUseOnlyFourExactCloudPostRoutes() {
         for (action in listOf("submit", "list", "cancel", "clear")) {
             val path = "/personal/v1/cloud/hosts/offline/tasks/$action"
