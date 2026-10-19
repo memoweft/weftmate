@@ -485,7 +485,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         effects.detailStatus('正在提交并等待处理结果…');
         const path = `/items/${selected.kind}/${core.memoryPathId(selected.id)}/${operation}`;
         const body = { requestId, expectedWorldRevision: selected.worldRevision, ...(operation === 'correct' ? { text: textValue } : {}),
-            ...(operation === 'delete' ? { deleteConversationSnippets: core.memory.deleteConversationSnippets === true } : {}) };
+            ...(operation === 'delete' ? { deleteConversationSnippets: core.memory.deleteConversationSnippets === true,
+                ...(typeof core.memory.forgetPreview?.forgetScope === 'string' ? { forgetScope: core.memory.forgetPreview.forgetScope } : {}) } : {}) };
         try {
             const result = await core.submitMemoryCommand(selected, operation, body);
             if (!core.memoryIdentityCurrent(token) || operationGeneration !== core.memory.operationGeneration)
@@ -709,7 +710,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
     function forgetItemSummary(item) {
         const label = { entity: '人物与事物', relationship: '关系', event: '经历', cognition: '理解',
             person: '人物', evaluation: '评价', decision: '决定', preference: '偏好',
-            commitment: '交互承诺', recommendation: '交互建议', agreement: '共同约定' }[item.itemType ?? item.kind] ?? core.memoryKinds[item.kind];
+            commitment: '交互承诺', recommendation: '交互建议', agreement: '共同约定',
+            interaction_context: '对话记忆副本', preceding_ai_context: '记忆前文副本' }[item.itemType ?? item.kind] ?? core.memoryKinds[item.kind];
         return `${item.text.length > 160 ? item.text.slice(0, 160) + '…' : item.text}（${label}）`;
     }
     core.forgetItemSummary = forgetItemSummary;

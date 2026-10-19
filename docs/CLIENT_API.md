@@ -1008,7 +1008,7 @@ AND-3：Android（安卓）原生 `cloud.app.configure` 与 `cloud.app.identity`
 | 云 POST `/personal/v1/cloud/hosts/relay/rotate` | 同上安装 proof，额外签入稳定 requestId | 200 同 credentials；同 requestId 幂等；新 generation 关闭旧连接，域名与内容 pin 不变；宿主 `rotateRelayCredential(requestId)` 同时重启 sidecar |
 | 云 POST `/personal/v1/cloud/hosts/relay/revoke` | 同上安装 proof | 200 `{revoked:true,closedConnections}`；安装本身也可撤销；撤销记录重开后仍有效，取凭据不会自动恢复 |
 | 云 POST `/personal/v1/cloud/hosts/relay/dns/present`、`…/dns/cleanup` | 同上安装 proof，额外签入 `{value:"<43 字符 base64url ACME TXT>"}` | 200 `{name:"_acme-challenge.<自己的宿主域名>",updated:true}`；name/type/zone/TTL 不可由调用方指定；云 provider 未配置时 503 `DNS_NOT_CONFIGURED`；present 在全部权威 NS 查询到 TXT 后返回（约 90 秒等待）；503 `DNS_PROVIDER_ERROR` / `DNS_PROPAGATION_TIMEOUT` / `DNS_ZONE_MISMATCH` 表示 API/传播/区配置失败；cleanup 仅删 provider 自己写入的 RecordId，输入错误 400 `INVALID_DNS_CHALLENGE` |
-| 宿主 GET `/personal/v1/status` | 原宿主 Cookie / 合法 Bearer | 新增 `relay:{state:"disabled"\|"stopped"\|"connecting"\|"online"\|"offline",baseUrl:string\|null,errorCode?:"RELAY_UNAVAILABLE"\|"FRPC_START_FAILED",certificateExpiresAt?:string\|null,certificateErrorCode?:string\|null}`；来自私有 frpc 代理状态；到期为 UTC ISO8601，最近签发错误为 DNS_NOT_CONFIGURED / DNS_PROVIDER_ERROR / DNS_PROPAGATION_TIMEOUT / DNS_ZONE_MISMATCH / CLOUD_UNAVAILABLE / CERTIFICATE_KEY_DOMAIN_MISMATCH / CERTIFICATE_INVALID_DATES / CERTIFICATE_ISSUANCE_FAILED 或 null；未启用中继时证书字段可省略，不含秘密 |
+| 宿主 GET `/personal/v1/status` | 原宿主 Cookie / 合法 Bearer | 新增 `relay:{state:"disabled"\|"stopped"\|"connecting"\|"online"\|"offline",baseUrl:string\|null,errorCode?:"RELAY_UNAVAILABLE"\|"FRPC_START_FAILED",certificateExpiresAt?:string\|null,certificateErrorCode?:string\|null,message?:string}`；来自私有 frpc 代理状态；到期为 UTC ISO8601，最近签发错误为 DNS_NOT_CONFIGURED / DNS_PROVIDER_ERROR / DNS_PROPAGATION_TIMEOUT / DNS_ZONE_MISMATCH / CLOUD_UNAVAILABLE / CERTIFICATE_NETWORK_UNAVAILABLE / PROXY_CONFIGURATION_INVALID / CERTIFICATE_KEY_DOMAIN_MISMATCH / CERTIFICATE_INVALID_DATES / CERTIFICATE_ISSUANCE_FAILED 或 null；网络无法访问证书服务时离线并提供固定人话 message，检查网络或代理后可重试；代理 URL 或凭据编码无效时为 PROXY_CONFIGURATION_INVALID，并给出检查代理设置后重启应用的固定人话 message，本机服务仍可用；未启用中继时证书字段可省略，不含秘密 |
 | 宿主 POST `/personal/v1/cloud/pairings` | 沿用 7.4 的**已认证直接地址**本地密码或自动绑定电脑的受信 Cookie/CSRF | 原响应额外含 `relay`（同上状态/baseUrl）；`tlsSpki` 是实际 TLS listener 同一把内容公钥的 DER SPKI SHA256、base64url 无 padding。已有信任/当面配对通道是 pin 来源 |
 
 安装请求仍要求有效 60 秒、允许 30 秒偏差、云持久防重放 jti 与同源 Origin；不得把凭据取回接口当作公开目录。新增云错误：503 `RELAY_NOT_CONFIGURED / DNS_NOT_CONFIGURED`，403 `HOST_NOT_CLAIMED / RELAY_REVOKED`。最初认领的成员只具有宿主**传输**管理权；不会获得其他本地账号内容权限；既有 S1b 宿主迁移保留其原首个 membership 作为 transport owner。最后一个成员解绑也撤销中继。已撤销宿主的凭据不自动复活。
@@ -1778,6 +1778,8 @@ DATA-1日摘要usage可增量返回`lastUserMessageAt`（ISO或null），仅取�
 
 DATA-2增量：`usageActiveMinutes/usageLateNightMinutes` 的每个趋势点附 `source:"computer"|"chat"`，来源和概况相同；今日解读、周回顾与原生 `health_query` 同用这份汇总，不传采样明细。
 
+睡眠查询补充（#429）：`metric` 为 `overview`、`sleep` 或 `sleepMinutes` 时，`health_query` 另返回 `sleepSummary:{unit:"min",recordedDays,missingDays,averageMinutes,scoreRecordedDays,scoreRequirement,items:[{day,minutes,score,baselineNights,scoreMissing}]}`。`items` 按查询范围逐日排列；`minutes`、`score` 是两项独立观测，任一缺测为 null，缺测日不补零，真实零分钟计入均值；`averageMinutes` 只按有时长的天计算，无记录为 null；`scoreMissing` 列出该日评分缺少的输入（目标日前28天有效睡眠不足7夜时含 `baselineNights`）。`sleep` 的 `items[].value` 仍是评分，含义不变。有时长但没有评分时应按时长回答并说明评分缺什么，不能说没有睡眠记录。
+
 DATA-2原生查询补充：未接入身体测量、但查询范围（含目标日的昨夜窗口）有本机使用观察时，`health_query` 的 overview／usage 两项仍返回汇总 `items`，并附 `connected:false,usageConnected:true`；有效查询增量带 `timeZone` 与 overview 的 `usage.lastUsedAtLocal`（账号当地 `YYYY-MM-DD HH:mm`／null）供模型直接引用钟点，避免误换算 UTC（协调世界时）使用时刻；身体指标仍为空。完全没数据时保留原「还没接上」回执。
 
 ### MEM-1：从其他应用导入聊天记录
@@ -1875,3 +1877,7 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 **手机发起删除**：同路径可带 `{generation,turns:[],forgetConversations:[原conversationId]}`（每次最多50个）。仅提交过或部分提交过该对话的受信物理手机可请求；电脑先持久登记墓碑并禁止重交，再用MEM-1来源遗忘任务清原来源／派生记忆和电脑历史，推进原清理代次。回 `{generation:新代次,receipts:[],forgottenConversations:[id]}` 只表示删除请求持久接受，真正清完的导入记录才为forgotten。客户端更新代次、重新取副本；未交独立原对话不受派生删除影响。重发被删对话的轮次回state:forgotten，不能复活来源。
 
 原生业务路径限定为 `/offline/sync`、`/offline/turns`、`/memory/status`、`/memory/backfill`。客户端须分别处理 `memoryAuthority`、稳定历史回执、长消息分片和删除方向；`fragmentReceipts` 不能当整轮确认。原生加密容器保留手机原始对话与未确认轻量内容，接收电脑 `reset` 不先清空手机原始容器，普通电脑副本仍按原删除合同清空。上述新字段沿原 RSA（非对称加密）信封、账号授权与删除代次，不授予额外权限。
+
+### 遗忘确认范围凭据
+
+记忆条目/来源的 `forget-preview` 响应增加 `forgetScope`；删除请求必须随用户已确认的计划原样提交该字段。服务端只透传为 Core 的 `forget_scope`，不在提交时刷新。Core 拒绝已变化或缺失的范围凭据时，回执映射为 `MEMORY_REVISION_CHANGED`，需重新预览和确认。预览 `items` 可包含 `interaction_context`（对话记忆副本）和 `evidence_context` / `preceding_ai_context`（记忆前文副本）；它们不是新增的原话来源删除目标，`evidenceIds` 仍只列原来源。现有路径、HTTP 方法和安卓路径白名单不变。

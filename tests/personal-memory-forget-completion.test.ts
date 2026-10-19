@@ -15,7 +15,8 @@ const request = { requestId: 'synthetic-forget', name: 'memory_forget', scope, a
 const mixed = '我喜欢喝红茶。另记一件独立的事：我周末喜欢散步。';
 async function fixture(t: any) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-forget-completion-'));
-  let revision = 7, scheduled = 0, cleanupReceiptReads = 0;
+  let revision = 7, scheduled = 0, cleanupReceiptReads = 0, maxInputChars = Infinity;
+  let terminalJobs: any[] = [];
   const commands: any[] = [], receipts = new Map(), judgeInputs: any[] = [], originalChat = [mixed, '记住我喜欢喝红茶', '我其实更喜欢绿茶。'];
   const permissions = { allow_local_read: true, allow_cloud_read: true, allow_inference: true };
   const sources = new Map(['old', 'green', 'mixed'].map((id, index) => [id, { evidence_id: id,
@@ -31,6 +32,7 @@ async function fixture(t: any) {
     let text = ''; for await (const part of req) text += part;
     const body = JSON.parse(text), input = JSON.parse(body.messages.at(-1).content), name = body.tools[0].function.name;
     judgeInputs.push(input);
+    if (body.messages.at(-1).content.length > maxInputChars) { res.writeHead(400).end('{}'); return; }
     const items = input.candidates.map((row: any) => ({ key: row.key, subjects: ['self'], targetSubjects: /红茶|绿茶/.test(row.text) ? ['self'] : [],
       matchesTopic: /红茶|绿茶/.test(row.text), hasTargetFact: /红茶|绿茶/.test(row.text),
       sourceFullyAuthorized: !row.sourceTexts.some((source: string) => source.includes('散步')) }));
@@ -48,7 +50,7 @@ async function fixture(t: any) {
         : { world_revision: revision, items: params.object_kind === 'cognition' ? worlds : [] };
       if (method === 'query_evidence') return { world_revision: revision, evidence: sources.get(params.evidence_id) };
       if (method === 'preview_recall') return { preview: { recent_evidence: [], pending_corrections: [] } };
-      if (method === 'query_jobs') return { formation_requests: [] };
+      if (method === 'query_jobs') return { formation_requests: [], jobs: terminalJobs };
       if (method === 'preview_forget') {
         const items = worlds.filter(row => ['old', 'green'].includes(row.item_id)).map(row => ({ ...row, name: row.value.content }));
         return { world_revision: revision, items, item_count: items.length, evidence_ids: ['old', 'green'], evidence_count: 2 };
@@ -77,6 +79,16 @@ async function fixture(t: any) {
   return { root, actions, manager, sources, commands, receipts, originalChat, route, judgeInputs, get revision() { return revision; },
     get scheduled() { return scheduled; }, world: () => worlds,
     get cleanupReceiptReads() { return cleanupReceiptReads; },
+    terminalSource(mode: 'local-only' | 'no-inference' | 'deleted' | 'long') {
+      worlds = [item('green', '用户其实更喜欢绿茶。', 'green')];
+      const text = mode === 'long' ? '另一项合成资料：' + 'x'.repeat(5000) : '我喜欢喝红茶。';
+      sources.set('terminal', { evidence_id: 'terminal', raw_content: mode === 'deleted' ? null : text,
+        summary: mode === 'deleted' ? null : text, content_available: mode !== 'deleted',
+        currentness_state: mode === 'deleted' ? 'evidence_deleted' : 'current',
+        permissions: { allow_local_read: true, allow_cloud_read: mode !== 'local-only', allow_inference: mode !== 'no-inference' } });
+      terminalJobs = [{ acceptance: { evidence_ids: ['terminal'] }, worker: { state: 'no_change' } }];
+      maxInputChars = 16384;
+    },
     walkingOnly(summary = mixed) {
       worlds = worlds.filter(row => row.item_id !== 'independent-red');
       sources.get('mixed').raw_content = '我周末喜欢散步。'; sources.get('mixed').summary = summary;
@@ -87,6 +99,31 @@ async function fixture(t: any) {
       for (const row of worlds) for (const source of row.provenance) if (source.evidence_id === 'mixed') source.permissions = blocked;
     } };
 }
+
+for (const mode of ['local-only', 'no-inference', 'long'] as const)
+test(`retained job source ${mode} withholds before any model classification or deletion`, async t => {
+  const f = await fixture(t); f.terminalSource(mode);
+  const result = await f.actions.submit(owner, request);
+  assert.equal(result.state, 'withheld');
+  assert.equal(f.judgeInputs.length, 0);
+  assert.equal(f.commands.length, 0);
+  assert.equal(f.scheduled, 1, 'only the existing initial submission wakeup is registered');
+  await f.actions.resume(owner);
+  assert.equal(await f.actions.pending(owner), false);
+  assert.equal(f.scheduled, 1, 'an uncheckable source must not add a retry wakeup');
+  assert.equal(f.judgeInputs.length, 0);
+  assert.equal(f.commands.length, 0);
+  assert.equal(f.world().length, 1);
+  assert.equal(f.sources.get('terminal').content_available, true);
+});
+
+test('an already deleted terminal source does not block an otherwise complete forget', async t => {
+  const f = await fixture(t); f.terminalSource('deleted');
+  const result = await f.actions.submit(owner, request);
+  assert.equal(result.state, 'applied');
+  assert.equal(f.commands.length, 1);
+  assert.ok(f.judgeInputs.every(input => input.candidates.every(row => row.key !== 'evidence:terminal')));
+});
 
 test('known retained mixed sources withhold the whole topic action before any Core delete', async t => {
   const f = await fixture(t), before = f.originalChat.slice();

@@ -69,6 +69,92 @@ async function fixture() {
 }
 const login = async (f: any) => f.client.begin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url'), deviceName: 'Synthetic browser' })
 
+test('Android account login and cold loads preserve the same credentials while its computer is offline', async () => {
+  const f = await fixture(), entered: any[] = [];
+  runInNewContext(readFileSync(new URL('../src/ui-core/adapters/android-bridge.js', import.meta.url), 'utf8'), f.context);
+  const reopen = () => {
+    const core: any = { state: { currentView: 'login' }, show() {}, load() {}, clearSession() {}, sessionExpired() {},
+      acceptSession: () => assert.fail('An offline computer cannot grant a host session'),
+      enterAssistant: () => assert.fail('Phone content must use its own account'), refreshPendingDevices: async () => {} };
+    Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, { enterCloudOnly: (info: any) => entered.push(info) },
+      { ...f.environment, deviceType: 'android', retainNativeCache: true }));
+    const client = core.initializeCloudAccount(); f.useClient(client);
+    f.context.WeftUiCore.adaptMobileCloudClient(client);
+    const fetch = client.fetch;
+    client.fetch = async (url: string, options: any) => {
+      if (url.endsWith('/cloud/config')) return response({ issuer, clientId: 'weftmate-web', hostId: 'unconnected' });
+      if (url.endsWith('/devices')) return response({ devices: [], hosts: [{ hostId: 'offline-computer', online: false }] });
+      if (url.endsWith('/hosts/connect')) return response({ hostId: 'offline-computer', status: 'offline', baseUrl: 'https://unavailable.example' });
+      assert.ok(!url.startsWith('https://unavailable.example'), 'account login must not depend on the offline relay TLS');
+      return fetch(url, options);
+    };
+    return { core, client };
+  };
+  const { core, client } = reopen();
+  await core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') });
+  const saved = await client.saved();
+  assert.equal(core.cloudAuthView().mode, 'authenticated');
+  for (let cold = 0; cold < 2; cold++) {
+    const next = reopen();
+    await next.core.load();
+    assert.equal(next.core.cloudAuthView().mode, 'authenticated');
+    assert.equal(next.core.cloudAuthView().cloudOnly, true);
+    assert.equal((await next.client.saved()).refreshToken, saved.refreshToken);
+    assert.equal((await next.client.saved()).sub, saved.sub);
+  }
+  assert.equal(entered.length, 3);
+  assert.ok(entered.every(info => info.accountId === saved.sub && info.email === saved.email));
+});
+
+test('Android cold load with cached selected-host config preserves cloud login when that computer goes offline', async () => {
+  const f = await fixture(), entered: any[] = [], hostRequests: string[] = [];
+  let offline = false, accepted = 0;
+  runInNewContext(readFileSync(new URL('../src/ui-core/adapters/android-bridge.js', import.meta.url), 'utf8'), f.context);
+  const reopen = () => {
+    const core: any = { state: { currentView: 'login' }, show() {}, load() {}, clearSession() {}, sessionExpired() {},
+      acceptSession: () => { assert.equal(offline, false); accepted++; }, enterAssistant: async () => {}, refreshPendingDevices: async () => {} };
+    Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, { enterCloudOnly: (info: any) => entered.push(info) },
+      { ...f.environment, deviceType: 'android', retainNativeCache: true }));
+    const client = core.initializeCloudAccount(); f.useClient(client);
+    f.context.WeftUiCore.adaptMobileCloudClient(client);
+    const fetch = client.fetch;
+    client.fetch = async (url: string, options: any) => {
+      // CloudAppLogin.configure returns this persisted real host config when the relay is unavailable.
+      if (url.endsWith('/cloud/config')) return response({ issuer, clientId: 'weftmate-web', hostId: 'host-test' });
+      if (url.endsWith('/hosts/connect')) return response({ hostId: 'host-test', status: offline ? 'offline' : 'online', baseUrl: f.environment.hostOrigin });
+      if (url.startsWith(f.environment.hostOrigin)) {
+        hostRequests.push(url);
+        if (offline) return response({ error: { code: 'CLOUD_TLS_UNAVAILABLE' } }, 503);
+      }
+      return fetch(url, options);
+    };
+    return { core, client };
+  };
+  const warm = reopen();
+  await warm.core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') });
+  assert.equal(warm.core.cloudAuthView().mode, 'authenticated');
+  assert.equal(accepted, 1, 'the previous login really established a computer session');
+  const saved = await warm.client.saved();
+  offline = true; hostRequests.length = 0;
+  for (let cold = 0; cold < 2; cold++) {
+    const next = reopen();
+    await next.core.load(); // No cached native session: it expired before this cold start.
+    assert.equal(next.client.config.hostId, 'host-test', 'cached configuration must not be reset to unconnected');
+    assert.equal(next.core.cloudAuthView().mode, 'authenticated');
+    assert.equal(next.core.cloudAuthView().cloudOnly, true);
+    assert.equal((await next.client.saved()).refreshToken, saved.refreshToken);
+    assert.equal((await next.client.saved()).sub, saved.sub);
+  }
+  assert.equal(hostRequests.length, 0, 'offline cached relay must not receive content-session requests');
+  assert.equal(accepted, 1);
+  assert.equal(entered.length, 2);
+  assert.ok(entered.every(info => info.accountId === saved.sub && info.email === saved.email));
+  f.advance(400000); f.rejectRefresh();
+  const expired = reopen(); await expired.core.load();
+  assert.equal(expired.core.cloudAuthView().mode, 'login', 'offline fallback still requires valid cloud credentials');
+  assert.equal(await expired.client.saved(), undefined);
+});
+
 test('AUTH-1 a delayed device rename cannot restore cloud credentials after logout', async () => {
   const f = await fixture(); await login(f)
   const snapshot = await f.client.saved(); let release: Function = () => {}, started: Function = () => {}
@@ -94,7 +180,7 @@ test('AUTH-1 cancelling a desktop exchange during its nonce request cannot bind 
   assert.equal(f.records.has('trusted-host:host-test'), false)
 })
 
-test('AUTH-1 native startup never contacts cloud and optional login expiry keeps local account, content and settings', async () => {
+test('AUTH-1 unbound native startup never contacts cloud and optional login expiry keeps local account, content and settings', async () => {
   const f = await fixture(), projections: string[] = [], notices: string[] = []
   let cleared = 0, entered = 0
   const local = { account: { ownerId: 'original-local-owner', username: 'synthetic-local' }, device: { id: 'native-session', authKind: 'desktop' }, csrfToken: 'local-csrf', local: true }
@@ -102,7 +188,8 @@ test('AUTH-1 native startup never contacts cloud and optional login expiry keeps
     load: () => {}, clearSession: () => { cleared++; core.state.account = null }, sessionExpired: () => {},
     acceptSession: (payload: any) => { Object.assign(core.state, { account: payload.account, device: payload.device, csrfToken: payload.csrfToken }) },
     enterAssistant: async () => { entered++; core.state.currentView = 'assistant' }, refreshPendingDevices: async () => {},
-    api: async (path: string) => path === '/state' ? { configured: true } : path === '/desktop' ? local : assert.fail('Unexpected auth path ' + path) }
+    api: async (path: string) => path === '/state' ? { configured: true } : path === '/desktop' ? local : assert.fail('Unexpected auth path ' + path),
+    accessApi: async (path: string) => path === '/cloud/binding' ? { status: 'unbound' } : assert.fail('Unexpected business path ' + path) }
   Object.assign(f.environment, { desktop: true, nativeIdentity: async () => ({ localOrigin: f.environment.hostOrigin, deviceName: 'synthetic-host' }) })
   Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, { toast: (message: string) => notices.push(message) }, f.environment))
   const client = core.initializeCloudAccount(); f.useClient(client)
