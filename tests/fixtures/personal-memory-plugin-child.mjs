@@ -62,6 +62,15 @@ async function preStep(id, agent = { session: session(id) }, priorMessages = nul
       sourceFrozen: Object.isFrozen(injected.at(-1).source) } : null };
 }
 process.on('message', async (message) => {
+  if (message?.type === 'run-peer-recall') {
+    try {
+      const value = session('session-new-peer', message.preset);
+      const user = { ...userClaim('peer'), content: [{ type: 'text', text: '我最喜欢的花是什么？' }] };
+      const result = await preStep(value.id, { session: value }, [user], [user]);
+      process.send({ type: 'result', ...result });
+    } catch (error) { process.send({ type: 'failed', error: String(error.stack) }); }
+    return;
+  }
   if (message?.type === 'run-forget') {
     try {
       const value = session('session-explicit-forget');

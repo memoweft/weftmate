@@ -409,7 +409,6 @@
       running = true; sendingConversationId=null; activeConversationId=conversationId; abort = new AbortController(); const ticket = version;
       try {
         if(preparation)await preparation;
-        if(abort.signal.aborted)throw new DOMException('CANCELLED','AbortError');
         if(ticket!==version)fail('OFFLINE_RESET_REQUIRED');
         await check();
         if(ticket!==version)fail('OFFLINE_RESET_REQUIRED');
@@ -446,6 +445,9 @@
         await persist();
         memoryConversations.add(conversation.id);
         if(ticket!==version)fail('OFFLINE_RESET_REQUIRED');
+        // A stopped preparation still consumes this accepted input exactly once.
+        // Otherwise the queue catches cancellation and restarts the same head.
+        if(abort.signal.aborted)throw new DOMException('CANCELLED','AbortError');
         if(useLight&&globalThis.WeftPhoneMemory.forgetCandidate(text)){
           const epoch=memoryEpoch;
           const ids=await globalThis.WeftPhoneMemory.planForget(value.phoneMemory,text.trim(),request=>vault.complete({...request,model:snapshot.model.modelId},snapshot,abort.signal));
