@@ -112,7 +112,7 @@ def test_run(base, payload, path, suites, environment, artifacts, name):
     if bundle.exists():
         run(["xcrun", "xcresulttool", "get", "test-results", "summary", "--path", str(bundle)],
             artifacts / (name + "-summary.json"), 60)
-    row = {"batch": name, "exitCode": code, "seconds": round(time.monotonic() - started, 1)}
+    row = {"batch": name, "tests": suites, "exitCode": code, "seconds": round(time.monotonic() - started, 1)}
     if timed_out:
         row["timedOut"] = True
     return row
@@ -251,7 +251,7 @@ def main():
                 results.append(test_run(base, payload, private_run, suites, environment, artifacts, name))
             except (RuntimeError, TimeoutError, subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
                 print(str(error), flush=True)
-                results.append({"batch": name, "exitCode": 1, "error": str(error)})
+                results.append({"batch": name, "tests": suites, "exitCode": 1, "error": str(error)})
             finally:
                 for process in processes:
                     stop(process)
