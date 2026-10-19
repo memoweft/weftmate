@@ -79,7 +79,7 @@ const canonicalJson = (value) => {
     (letter) => `\\u${letter.charCodeAt(0).toString(16).padStart(4, '0')}`);
 };
 
-class HostMemoryBridge {
+export class HostMemoryBridge {
   constructor() {
     this.pending = new Map();
     this.closed = false;
@@ -98,11 +98,29 @@ class HostMemoryBridge {
   }
 
   request(action, data, signal) {
+    const deliveries = action === 'ingest' ? [] : [...this.pending.values()]
+      .filter(entry => entry.action === 'ingest').map(entry => entry.promise);
+    if (!deliveries.length) return this.dispatch(action, data, signal);
+    // A new conversation can start while the previous turn's existing IPC is
+    // still delivering its boundary. Fence that delivery, not model formation;
+    // Core supplies the permission-checked pending quote once it is accepted.
+    let abort;
+    const delivered = new Promise((resolve, reject) => {
+      abort = () => reject(new Error('MEMORY_CANCELLED'));
+      if (signal?.aborted) return abort();
+      signal?.addEventListener?.('abort', abort, { once: true });
+      Promise.all(deliveries).then(resolve, reject);
+    });
+    return delivered.finally(() => signal?.removeEventListener?.('abort', abort))
+      .then(() => this.dispatch(action, data, signal));
+  }
+
+  dispatch(action, data, signal) {
     if (this.closed || typeof process.send !== 'function' || process.connected !== true || signal?.aborted) {
       return Promise.reject(new Error('MEMORY_UNAVAILABLE'));
     }
     const id = `memory-${randomUUID()}`;
-    return new Promise((resolve, reject) => {
+    const promise = new Promise((resolve, reject) => {
       const cancel = () => {
         try { process.send({ protocol: PERSONAL_MEMORY_PROTOCOL, id, action: 'cancel' }); }
         catch { /* A disconnected child cannot cancel work in its parent. */ }
@@ -130,6 +148,9 @@ class HostMemoryBridge {
         (error) => { if (error) unavailable(); }); }
       catch { unavailable(); }
     });
+    const entry = this.pending.get(id);
+    if (entry) Object.assign(entry, { action, promise });
+    return promise;
   }
 
   close() {
