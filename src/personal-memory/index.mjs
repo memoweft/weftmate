@@ -699,7 +699,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       if (text === null) return { authorized: false };
       try {
         const route = await resolveProcessingRoute(ownerId, action.sessionId);
-        return await classifyForgetRequest({ ...route, signal }, text);
+        return await classifyForgetRequest({ ...route, signal }, text, action.scope ?? action.plan?.authorization);
       } catch {
         signal?.throwIfAborted();
         return { authorized: false };
