@@ -90,6 +90,61 @@ test('native phone vault without seal keeps cloud-supported tasks hidden and off
   const text=(node:any):string=>node.textContent+' '+(node.children||[]).map(text).join(' ');
   assert.ok(!/失败|错误|暂时无法|回复未完成/.test(text(f.body)));mounted.close();
 });
+test('a capable native vault exposes offline computer tasks, seals them natively and keeps queue cancellation usable',async()=>{
+  const f=fixture(),calls:any[]=[],cancelEntries:any[]=[];
+  f.environment.WeftPopover={menu:(_anchor:any,entries:any[])=>cancelEntries.splice(0,cancelEntries.length,...entries)};
+  const current={origin:'synthetic',ownerId:'owner',deviceId:'cookie',hostId:'host'};
+  const control={authorized:true,accountId:'cloud-account',hostId:'host',generation:1,capabilities:{offlineTasks:1}};
+  const target={generation:1,taskRecipient:{kty:'RSA',n:'synthetic-public-key',e:'AQAB'},control};
+  let value:any={snapshot:{...target,items:[],recent:[],model:null},tasks:[],turns:[],conversations:[]},engine:any;
+  const W=(globalThis as any).WeftOffline;
+  f.environment.WeftOffline={...W,create:async(options:any)=>engine=await W.create(options)};
+  f.core.connectionView=()=>({kind:'host_offline'});f.core.cloudOfflineStatus=async()=>control;
+  f.core.cloudOfflineTaskDevice=async()=> 'physical-phone';
+  f.core.cloudOfflineTasks=async(action:string,body:any)=>{
+    if(action==='list')return {items:value.tasks.filter((t:any)=>t.state!=='sending')};
+    return {id:body.id,hostId:'host',state:action==='cancel'?'canceled':'waiting',expiresAt:Date.now()+60000};
+  };
+  const nativeCall=async(method:string,params:any={})=>{
+    calls.push({method,params});
+    if(method==='offline.load')return value;
+    if(method==='offline.save'){value=params.value;return {saved:true};}
+    if(method==='offline.targets')return {targets:[target]};
+    if(method==='offline.seal')return {version:1,ciphertext:'native-sealed-synthetic'};
+    throw Error('Unexpected native call: '+method);
+  };
+  const mounted=f.environment.WeftOfflineView.mount({core:f.core,identity:async()=>current,nativeCall,nativeTaskVault:true,host:async()=>{throw {code:'HOST_OFFLINE'};}});
+  try{
+    await new Promise(resolve=>setImmediate(resolve));await mounted.tick();
+    assert.equal(f.core.offlineWorkReady(),true,'authenticated recipient plus native task capability must enable the task entry');
+    assert.equal(engine.view().chatReady,false,'computer tasks must not need a phone chat model');
+    const task=await engine.submitTask('读取合成目录里的说明');
+    assert.equal(task.state,'waiting');
+    const sealed=calls.find(call=>call.method==='offline.seal');
+    assert.equal(sealed.params.identity.hostId,'host');assert.equal(sealed.params.identity.accountId,'cloud-account');
+    assert.equal(sealed.params.identity.deviceId,'physical-phone');assert.equal(sealed.params.payload.text,'读取合成目录里的说明');
+    const descendants=(node:any):any[]=>[node,...(node.children||[]).flatMap(descendants)];
+    const cancel=descendants(f.body).find(node=>node.textContent==='取消这件事');
+    assert.ok(cancel,'the queued task exposes its cancellation action');cancel.onclick();
+    assert.equal(engine.view().tasks[0].state,'waiting','opening confirmation does not cancel');
+    await cancelEntries.find(entry=>entry.name==='确认取消').action();
+    assert.equal(engine.view().tasks[0].state,'canceled');
+  }finally{mounted.close();}
+});
+test('explicit offline work entry remains editable while content transport is reconnecting',async()=>{
+  const f=fixture();
+  const view={ready:true,chatReady:false,taskReady:true,running:false,tasks:[],targets:[],conversations:[],turns:[],snapshot:{recent:[]}};
+  f.environment.WeftOffline.create=async()=>({view:()=>view,sync:async()=>true,check:async()=>({}),close(){}});
+  f.core.connectionView=()=>({kind:'connecting'});
+  const mounted=f.environment.WeftOfflineView.mount({core:f.core,identity:async()=>({origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'})});
+  try{
+    await new Promise(resolve=>setImmediate(resolve));
+    f.core.openOfflineWorkMode('电脑上线后读一下说明');
+    const form=f.body.children[0].children.at(-1),input=form.children[0].children.at(-1);
+    assert.equal(input.disabled,false,'cloud task submission must not wait for the unavailable content transport');
+    assert.equal(form.children[2].disabled,false);
+  }finally{mounted.close();}
+});
 test('polling never navigates over approvals; return stays closed on repeated offline ticks', async () => {
   const f = fixture();
   const mounted = f.environment.WeftOfflineView.mount({ core: f.core, identity: async () => ({ origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host' }) });
