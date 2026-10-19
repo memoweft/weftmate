@@ -156,7 +156,7 @@
     const pending=core.refreshPendingDevices;core.refreshPendingDevices=(...args)=>core.state.cloudAuth.cloudOnly?Promise.resolve():pending(...args);
     core.observeConnection=listener=>uiCore.observeConnection(listener);
     core.retryConnection=()=>uiCore.retryConnection();
-    globalThis.WeftOfflineView?.mount({ core, goalsCore:uiCore, nativeCall: native ? call : null,
+    globalThis.WeftOfflineView?.mount({ core, goalsCore:uiCore, nativeCall: native ? call : null, nativeTaskVault: identity.nativeOfflineTasks === 1,
       openConversation: () => page('chat'),
       identity: async () => native ? call('offline.identity') : core.cloudOfflineIdentity(),
       host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });
