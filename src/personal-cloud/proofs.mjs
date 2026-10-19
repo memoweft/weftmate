@@ -1,4 +1,4 @@
-import { calculateJwkThumbprint, createRemoteJWKSet, importJWK, jwtVerify } from 'jose';
+import { customFetch, calculateJwkThumbprint, createRemoteJWKSet, importJWK, jwtVerify } from 'jose';
 import { createHash } from 'node:crypto';
 import { failure } from '../personal-access/common.mjs';
 
@@ -20,9 +20,9 @@ export function cloudConfiguration(options) {
   return { issuer, base: issuer.slice(0, -5), jwksUri: `${issuer}/jwks` };
 }
 
-export function createCloudVerifier(config, hostId, clock) {
+export function createCloudVerifier(config, hostId, clock, fetcher = fetch) {
   // Only this configured URL may supply keys. Token jku/x5u are never followed.
-  const keys = createRemoteJWKSet(new URL(config.jwksUri), { cooldownDuration: 0, timeoutDuration: 5000 });
+  const keys = createRemoteJWKSet(new URL(config.jwksUri), { cooldownDuration: 0, timeoutDuration: 5000, [customFetch]: fetcher });
   const hostAudience = `${config.base}/hosts/${hostId}`;
   async function verify(token, audience = hostAudience, scope = 'host:session') {
     try {

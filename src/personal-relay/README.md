@@ -83,3 +83,11 @@ node --test services/cloud/test/dns-aliyun.test.mjs services/cloud/test/host-cer
 官方 Pebble 2.10.1 / challtestsrv 二进制与公用测试 CA 夹具经过 SHA256 验证，全部留在忽略目录 `.local/pebble/`。测试启动回环 CA、真实 UDP/TCP DNS、假 AliDNS API、真实 cloud/宿主/官方 frpc/TLS adapter，验证真实配对 pin、热载保留连接与模拟到期续期；不连接阿里云或生产 CA。GitHub `Host certificates (Pebble DNS-01)` 重复此链路并上传无秘密 JSON 报告。
 
 选用 ACME.js 是因为 acme-client 5.4.0 的 legacy node-forge 依赖目前触发未修复高危审计；本包没有放宽审计门禁。固定 ACME.js 版本，HTTP 兼容层通过库自带签名工具对 processing 订单做 RFC8555 POST-as-GET 轮询，避免其旧版重复 finalize 行为；Pebble 覆盖这一路径。后续升级 ACME 库仍需复跑本测试。
+
+## 桌面代理
+
+桌面证书签发、云控制请求（含 DNS 挑战、目录公钥及凭据）使用 Electron 的 Chromium 网络栈。默认沿用系统/PAC 代理；已有 HTTP_PROXY / HTTPS_PROXY（也支持小写）时使用独立内存会话，HTTPS_PROXY 优先于 HTTP_PROXY，并遵循 NO_PROXY。环境代理认证仅响应对应代理的认证挑战，不向源站发送代理凭据。没有修改用户/机器配置，不需要 NODE_USE_ENV_PROXY。
+
+frpc 连接使用同一会话 resolveProxy 对中继地址的结果，交给官方 transport.proxyURL（HTTP/SOCKS5）；显式直连时不继承 frpc 自行读取的代理环境，防止绕过同一解析结果。系统 PAC 多项结果使用第一项；不支持的代理类型会报网络连接失败，不退回直连。TLS 仍验证原域名、CA 与内容公钥。
+
+证书网络不可达时 certificateErrorCode 为 CERTIFICATE_NETWORK_UNAVAILABLE，relay 变为 offline，并显示“网络连不上证书服务。请检查网络或代理设置，再点重试。”已有证书保留，重试入口不需重启整个程序。
