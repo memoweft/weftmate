@@ -69,7 +69,7 @@ def start_node(filename, artifacts, processes, logs, extra_args=(), environment=
                                cwd=ROOT.parents[1], env={**os.environ, **(environment or {})},
                                stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
     processes.append(process)
-    deadline = time.monotonic() + 90
+    deadline = time.monotonic() + 180
     while time.monotonic() < deadline:
         for line in log.read_text(errors="replace").splitlines():
             try:
@@ -98,22 +98,31 @@ def test_run(base, payload, path, suites, environment, artifacts, name):
     command = [*base, "-xctestrun", str(path), "-resultBundlePath", str(artifacts / (name + ".xcresult")),
                *["-only-testing:WeftMatePhoneUITests/" + suite for suite in suites], "test-without-building"]
     started = time.monotonic()
+    timed_out = False
     try:
-        code = run(command, artifacts / (name + ".log"), 2700)
+        # local contains the complete self-contained suite; other batches each
+        # contain one method. Keep the per-test Xcode limits unchanged.
+        code = run(command, artifacts / (name + ".log"), 4500 if name == "local" else 2700)
+    except subprocess.TimeoutExpired:
+        code = 124
+        timed_out = True
     finally:
         path.unlink(missing_ok=True)
     bundle = artifacts / (name + ".xcresult")
     if bundle.exists():
         run(["xcrun", "xcresulttool", "get", "test-results", "summary", "--path", str(bundle)],
             artifacts / (name + "-summary.json"), 60)
-    return {"batch": name, "exitCode": code, "seconds": round(time.monotonic() - started, 1)}
+    row = {"batch": name, "exitCode": code, "seconds": round(time.monotonic() - started, 1)}
+    if timed_out:
+        row["timedOut"] = True
+    return row
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--derived-data", type=Path, required=True)
-    parser.add_argument("--group", choices=["local", "host", "cloud", "features"], default="local")
+    parser.add_argument("--group", choices=["local", "host", "host-legacy", "host-modern", "cloud", "features"], default="local")
     args = parser.parse_args()
     artifacts = args.artifacts.resolve()
     artifacts.mkdir(parents=True, exist_ok=True)
@@ -175,8 +184,10 @@ def main():
                 health = start_node("h3-isolated-host.mjs", artifacts, processes, logs)["origin"]
                 return {"APPLE9_MODEL_URL": model + "/v1", "WEFTMATE_H3_HOST": health}
             batches = [("local", SUITES, local_setup)]
-        elif args.group == "host":
-            for filename, key, suites in HOST_BATCHES:
+        elif args.group in ("host", "host-legacy", "host-modern"):
+            host_batches = (HOST_BATCHES[:1] if args.group == "host-legacy" else
+                            HOST_BATCHES[1:] if args.group == "host-modern" else HOST_BATCHES)
+            for filename, key, suites in host_batches:
                 def setup(filename=filename, key=key):
                     config = start_node(filename, artifacts, processes, logs)
                     return {key: config["driver"], "WEFTMATE_A17_STATE": "empty", "WEFTMATE_A17_THEME": "light"}
