@@ -278,6 +278,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
     }
     async function recoverMemoryReceipt() {
         const token = core.memoryIdentity();
+        const selectedGeneration = core.memory.selectedGeneration;
         const key = core.memoryMarkerKey();
         const unknown = core.storedMemoryMarker(key) ?? core.memory.unresolvedMarker;
         const cleanup = core.storedCleanupMarkers(core.memoryCleanupKey()).at(0) ?? core.memory.cleanupMarker;
