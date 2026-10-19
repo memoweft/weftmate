@@ -109,7 +109,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     assert.equal(loaded.isError, false)
     assert.deepEqual(agent[Symbol.for('weftmate.loadedTools')], new Set(['pwsh']))
     const assembled = await assemble()
-    assert.equal(assembled.tools[0].description, 'Run a PowerShell command in this conversation or an explicit workdir. For file organization, use Move-Item -LiteralPath with explicit destinations and skip existing destinations; do not use -Force to replace user files unless requested. Directory creation is ordinary; deleting or overwriting user files requires native approval.')
+    assert.equal(assembled.tools[0].description, 'Run a PowerShell command in this conversation or an explicit workdir. The terminal is non-interactive: it cannot answer Read-Host, key presses, or confirmation prompts. Use native approval for risky operations; after approval, execute that approved operation without a second terminal confirmation. Do not add interactive -Confirm; when a cmdlet otherwise prompts, use -Confirm:$false. Never use this to bypass native approval or retry a rejected action. For file organization, use Move-Item -LiteralPath with explicit destinations and skip existing destinations; do not use -Force to replace user files unless requested. Directory creation is ordinary; deleting or overwriting user files requires native approval.')
     assert.equal(rawSchema.description, 'pwsh', 'the native registry and other presets keep their descriptions')
     for (let i = 0; i < 150; i++) remoteSession.append('tool/call', { turn: 1, callId: `call-${i}`, name: 'read' })
     const decision = await scoped.ctx.waterfall('agent/pre-step', {
