@@ -76,6 +76,17 @@ app.whenReady().then(async()=>{
     }));return req;
   }}:net;
   network=await createDesktopRelayNetwork({session:sessionApi,net:requestApi,env});
+  if(mode==='cold-start'){
+    // Exercise each new session's FIRST lookup and request, without warming it
+    // through resolveProxy or retrying a failed request.
+    for(let i=0;i<32;i++){
+      const response=await network.fetch('http://certificate.invalid/directory',{signal:AbortSignal.timeout(3000)});
+      assert.equal(response.status,200);assert.equal((await response.json()).via,'synthetic-proxy');
+      assert.equal(await network.proxyFor('https://relay.invalid:443'),proxyUrl);
+      await network.close();
+      network=await createDesktopRelayNetwork({session:sessionApi,net:requestApi,env});
+    }
+  }
   if(mode==='tls-reject-background')await new Promise((resolve,reject)=>{
     // Reproduce a Chromium background CONNECT arriving before the target.
     // This request only contacts our own randomly allocated fake proxy.
