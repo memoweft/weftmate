@@ -1,5 +1,7 @@
 import { memoryItemsFormedInWindow } from './world-projection.mjs';
 const KINDS = new Set(['cognition', 'entity', 'relationship', 'event']);
+const CONTEXT_KINDS = new Set(['interaction_commitment', 'interaction_context', 'evidence_context']);
+const FORGET_SCOPE = /^forget-scope-v1:[a-f0-9]{64}$/;
 const REQUEST_ID = /^[A-Za-z0-9_.:-]{1,128}$/;
 const ITEM_ID = /^[A-Za-z0-9._:-]{1,512}$/;
 const MAX_SNAPSHOT_BYTES = 8 * 1024 * 1024;
@@ -37,11 +39,17 @@ export function forgetPreviewView(result) {
       result.item_count !== result.items.length || !safeNumber(result.evidence_count) || !Array.isArray(result.evidence_ids))
     throw failure('MEMORY_RESPONSE_INVALID', 503);
   return { worldRevision: result.world_revision, itemCount: result.item_count, evidenceCount: result.evidence_count,
+    ...(result.forget_scope !== undefined ? { forgetScope: checkedForgetScope(result.forget_scope) } : {}),
     evidenceIds: result.evidence_ids, items: result.items.map(item => {
-      if (!(KINDS.has(item.object_kind) || item.object_kind === 'interaction_commitment') || typeof item.item_id !== 'string' || typeof item.name !== 'string')
+      if (!(KINDS.has(item.object_kind) || CONTEXT_KINDS.has(item.object_kind)) || typeof item.item_id !== 'string' || typeof item.name !== 'string')
         throw failure('MEMORY_RESPONSE_INVALID', 503);
       return { kind: item.object_kind, id: item.item_id, text: item.name, itemType: item.item_type };
     }) };
+}
+
+function checkedForgetScope(value) {
+  if (typeof value !== 'string' || !FORGET_SCOPE.test(value)) throw failure('INVALID_REQUEST');
+  return value;
 }
 
 function itemView(value) {
@@ -83,7 +91,8 @@ function publicReceipt(value, requestId) {
   const rawReason = receipt.rejection_code;
   const isDelete = ['delete_evidence', 'delete_world_item'].includes(value?.operation);
   const reasonCode = receipt.result_state === 'rejected'
-    ? isDelete && rawReason === 'source_origin_unrecoverable' ? 'MEMORY_SOURCE_UNRECOVERABLE'
+    ? isDelete && ['forget_scope_changed', 'forget_scope_required'].includes(rawReason) ? 'MEMORY_REVISION_CHANGED'
+      : isDelete && rawReason === 'source_origin_unrecoverable' ? 'MEMORY_SOURCE_UNRECOVERABLE'
       : isDelete && ['shared_source', 'source_evidence_shared', 'source_origin_reused',
         'world_item_has_dependents'].includes(rawReason) ? 'MEMORY_DELETE_CONFLICT'
         : isDelete && rawReason === 'source_provenance_missing' ? 'MEMORY_DELETE_SOURCE_UNKNOWN'
@@ -284,20 +293,22 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
     }
     if (method === 'DELETE' && !action) {
       const body = await readJson(request, 12 * 1024);
-      keys(body, ['requestId', 'expectedWorldRevision', 'deleteConversationSnippets'], ['requestId', 'expectedWorldRevision']);
+      keys(body, ['requestId', 'expectedWorldRevision', 'deleteConversationSnippets', 'forgetScope'], ['requestId', 'expectedWorldRevision']);
       if (body.deleteConversationSnippets !== undefined && typeof body.deleteConversationSnippets !== 'boolean') throw failure('INVALID_REQUEST');
       return submit({ manager, ownerId, body, operation: 'delete_world_item', targetKind: kind,
-        targetId: id, payload: body.deleteConversationSnippets === true ? { delete_conversation_snippets: true } : {} });
+        targetId: id, payload: { ...(body.deleteConversationSnippets === true ? { delete_conversation_snippets: true } : {}),
+          ...(body.forgetScope !== undefined ? { forget_scope: checkedForgetScope(body.forgetScope) } : {}) } });
     }
   }
   const evidenceMatch = /^\/personal\/v1\/memory\/evidence\/([A-Za-z0-9._:-]+)$/.exec(path);
   if (method === 'DELETE' && evidenceMatch) {
     if (url.search || !ITEM_ID.test(evidenceMatch[1])) throw failure('INVALID_REQUEST');
     const body = await readJson(request, 12 * 1024);
-    keys(body, ['requestId', 'expectedWorldRevision', 'deleteConversationSnippets'], ['requestId', 'expectedWorldRevision']);
+    keys(body, ['requestId', 'expectedWorldRevision', 'deleteConversationSnippets', 'forgetScope'], ['requestId', 'expectedWorldRevision']);
     if (body.deleteConversationSnippets !== undefined && typeof body.deleteConversationSnippets !== 'boolean') throw failure('INVALID_REQUEST');
     return submit({ manager, ownerId, body, operation: 'delete_evidence', targetKind: 'evidence',
-      targetId: evidenceMatch[1], payload: body.deleteConversationSnippets === true ? { delete_conversation_snippets: true } : {} });
+      targetId: evidenceMatch[1], payload: { ...(body.deleteConversationSnippets === true ? { delete_conversation_snippets: true } : {}),
+          ...(body.forgetScope !== undefined ? { forget_scope: checkedForgetScope(body.forgetScope) } : {}) } });
   }
   const receiptMatch = /^\/personal\/v1\/memory\/commands\/by-request\/([A-Za-z0-9_.:-]+)$/.exec(path);
   if (method === 'GET' && receiptMatch) {

@@ -25,6 +25,13 @@ export async function createDesktopRelayNetwork({ session, net, env = process.en
     owned.add(value); return value;
   };
   const close = async () => { await Promise.all([...owned].map(value => value.closeAllConnections())); };
+  const configureProxy = async (value, config) => {
+    await value.setProxy(config);
+    // setProxy acknowledges the preference write, not its propagation to the
+    // Chromium network service. Wait for that service before the first lookup
+    // or request, including the session used to decide whether to bypass.
+    await value.forceReloadProxyConfig();
+  };
   let bypass;
   try {
     for (const [scheme, value] of [['http', http], ['https', https]]) {
@@ -41,13 +48,13 @@ export async function createDesktopRelayNetwork({ session, net, env = process.en
     const proxyBypassRules = ['<-loopback>', ...(env.no_proxy || env.NO_PROXY || '').split(/[,;]/).map(s => s.trim()).filter(Boolean), ...localBypass].join(',');
     if (rules.length) {
       transport = partition();
-      await transport.setProxy({ mode: 'fixed_servers', proxyRules: rules.join(';'), proxyBypassRules });
+      await configureProxy(transport, { mode: 'fixed_servers', proxyRules: rules.join(';'), proxyBypassRules });
     }
     // Ask Chromium to parse the SAME bypass rules for both system and env
     // proxies. This session only resolves URLs; it never sends a request to the
     // synthetic proxy. Keep the user's default session and PAC unchanged.
     bypass = partition();
-    await bypass.setProxy({ mode: 'fixed_servers', proxyRules: 'http://bypass.invalid:80', proxyBypassRules });
+    await configureProxy(bypass, { mode: 'fixed_servers', proxyRules: 'http://bypass.invalid:80', proxyBypassRules });
   } catch {
     // A bad proxy must not escape into main's fatal local-startup path. Fail
     // remote traffic closed, with no raw URL or decoded credentials in errors.
@@ -57,7 +64,7 @@ export async function createDesktopRelayNetwork({ session, net, env = process.en
   let direct;
   const bypasses = async url => (await bypass.resolveProxy(url)).trim() === 'DIRECT';
   const directTransport = () => direct ??= (async () => {
-    const value = partition(); await value.setProxy({ mode: 'direct' }); return value;
+    const value = partition(); await configureProxy(value, { mode: 'direct' }); return value;
   })();
   function authenticatedFetch(url, options = {}) {
     return new Promise((resolve, reject) => {
