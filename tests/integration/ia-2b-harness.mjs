@@ -27,7 +27,7 @@ export async function until(check, timeout = 180000) {
   while (Date.now() < deadline) { const value = await check(); if (value) return value; await pause(200); }
   throw new Error('IA-2b isolated test timeout');
 }
-export async function harness(label, { memory = true, mainChat = false, provider = null, modelTrace = false } = {}) {
+export async function harness(label, { memory = true, mainChat = false, provider = null, modelTrace = false, hidden = false } = {}) {
   const base = await mkdtemp(join(tmpdir(), `weftmate-ia-2b-${label}-`)), profile = join(base, 'profile');
   await mkdir(profile); await mkdir(evidence, { recursive: true });
   await writeFile(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
@@ -61,13 +61,17 @@ export async function harness(label, { memory = true, mainChat = false, provider
   }
   async function launch() {
     app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), args: [join(repository, 'tests/integration/ia-2b-bootstrap.mjs'),
-      `--user-data-dir=${profile}`, '--personal-host', '--access-port=0', ...(memory ? [`--personal-memory-config=${config}`] : [])], cwd: repository, env, timeout: 90000 });
+      `--user-data-dir=${profile}`, '--personal-host', '--access-port=0', ...(hidden ? ['--start-in-tray', '--disable-backgrounding-occluded-windows', '--disable-features=CalculateNativeWinOcclusion'] : []), ...(memory ? [`--personal-memory-config=${config}`] : [])], cwd: repository, env, timeout: 90000 });
     let errors = '';
     app.process().stderr.on('data', part => { errors += String(part); appendFileSync(join(base, 'host.log'), String(part).replaceAll(key, '[redacted]')); });
     app.process().stdout.on('data', part => appendFileSync(join(base, 'host.log'), String(part).replaceAll(key, '[redacted]')));
     launches++;
     try { page = await app.firstWindow({ timeout: 90000 }); await page.waitForURL('**/personal/v1/ui'); }
     catch (error) { await writeFile(join(base, 'launch-error.log'), errors); console.error(errors.replaceAll(key, '[redacted]').slice(-8000)); throw error; }
+    if (hidden) await page.addInitScript(() => {
+      Object.defineProperty(document,'visibilityState',{get:()=> 'visible'});
+      Object.defineProperty(document,'hidden',{get:()=>false});
+    });
     if (modelTrace) await page.addInitScript(() => {
       let module;
       Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true, get: () => module, set: value => {
@@ -76,6 +80,9 @@ export async function harness(label, { memory = true, mainChat = false, provider
       } });
     });
     await localUiSession(page, { username, password }, 'IA-2b test', {mainChat});
+    if (hidden) {
+      await app.evaluate(({BrowserWindow})=>{const window=BrowserWindow.getAllWindows()[0];if(window.isVisible())throw Error('Acceptance window unexpectedly visible');window.webContents.setBackgroundThrottling(false);window.webContents.send('wm:desktop:visibility',false);});
+    }
     await app.evaluate(async (_, apiKey) => globalThis.m2ExitSeedCredentials({ 'ia2b-mimo': apiKey }), key);
     assert.equal((await api('/backups/settings', { enabled: false, directory: join(base, 'Backups') }, 'PATCH')).status, 200);
   }
