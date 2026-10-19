@@ -107,6 +107,9 @@
     if((finished || processed.length) && !value.running && api.active && memoryConversations.size){clearTimeout(memoryTimer);memoryTimer=setTimeout(()=>flushMemory(),20000);}
     state.conversations = value.conversations.map(c => ({ id: c.id, createdAt:new Date(c.turns[0]?.timestamp||Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
     if (!state.conversationId && value.running) state.conversationId = value.sendingConversationId || null;
+    // NativeActivity parks this page while Compose owns the visible chat.
+    // Keep the engine and memory schedule live without rebuilding hidden history.
+    if(globalThis.weftNativeChatActive===true)return;
     renderConversationList(); if (state.page === 'chat' && state.chatSource === 'phone') render(); updateComposer();
     if(state.page==='memory'&&globalThis.WeftPhone?.memoryPending)$('page-content').phoneMemoryPaint?.();
   };
