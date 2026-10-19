@@ -46,7 +46,8 @@
       // Share the complete read, including supplements: polling/timeline refreshes
       // must not invalidate successful stages before they can reach the view.
       if(healthRead?.token===token&&healthRead.day===requestedDay)return healthRead.promise;
-      const {promise,resolve,reject}=Promise.withResolvers(),pending={token,day:requestedDay,promise};healthRead=pending;
+      let resolve,reject;const promise=new Promise((done,failed)=>{resolve=done;reject=failed;});
+      const pending={token,day:requestedDay,promise};healthRead=pending;
       readHealthData(requestedDay,token).finally(()=>{if(healthRead===pending)healthRead=null;}).then(resolve,reject);
       return pending.promise;
     }
