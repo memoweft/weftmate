@@ -133,7 +133,7 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
                         text = fields.joinToString("&") { (name, value) -> URLEncoder.encode(name, "UTF-8") + "=" + URLEncoder.encode(if (name == "refresh_token") real else value, "UTF-8") }
                     }
                 }
-                val bytes = text.toByteArray(Charsets.UTF_8); require(bytes.size <= 16384)
+                val bytes = cloudAppRequestBody(target, method, issuer, text)
                 connection.doOutput = true; connection.setFixedLengthStreamingMode(bytes.size)
                 connection.outputStream.use { it.write(bytes) }
             }

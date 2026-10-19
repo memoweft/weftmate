@@ -2,9 +2,9 @@ import { personalMemoryGuidance, personalMemoryToolsGuidance } from './weftmate-
 const descriptions = {
   schedule_list: 'Read all reminders and scheduled tasks in the account across conversations, matching the goals page. Use this for questions about existing reminders.',
   health_query: 'Read personal health overview or a metric over an account-local date range (up to 90 days). For questions about sleep, recovery, training, stress, energy, fitness age or late-night usage, query recorded numbers first. Compare only the personal baseline; do not diagnose or invent missing measurements.',
-  schedule_create: 'Use only when the user explicitly requested a time-based reminder or scheduled task. An agreement to remind the user when a topic comes up (for example, when they want to team up) is a contextual memory decision, handled automatically by MemoWeft; do not invent a date/time or ask for a frequency for that agreement. Create a durable WeftMate reminder or executable task using DSH. WeftMate already supports calendar recurrence through prompt JSON: {"weftmate":1,"kind":"reminder","text":"交报告"} or {"weftmate":1,"kind":"task","text":"生成周报文件","repeat":{"kind":"weekly","time":"08:00:00","weekday":1}}. weekday: Sunday=0, Monday=1. daily repeat omits weekday. Select at (local date/time in the account time zone), after_seconds (first occurrence after a delay), or every_seconds (fixed interval >=300). For delayed first occurrence followed by calendar recurrence, use after_seconds AND repeat inside prompt, not every_seconds. The installed host handles notifications, execution, approval, and recurrence. Call this tool directly; do not inspect application source or implement timers/scripts for scheduling. Confirm only after tool success, in one sentence with local time and content.',
+  schedule_create: 'Use only when the user explicitly requested a time-based reminder or scheduled task. An agreement to remind the user when a topic comes up (for example, when they want to team up) is a contextual memory decision, handled automatically by MemoWeft; do not invent a date/time or ask for a frequency for that agreement. Create a durable WeftMate reminder or executable task using DSH. WeftMate already supports calendar recurrence through prompt JSON: {"weftmate":1,"kind":"reminder","text":"交报告"} or {"weftmate":1,"kind":"task","text":"生成周报文件","repeat":{"kind":"weekly","time":"08:00:00","weekday":1}}. weekday: Sunday=0, Monday=1. daily repeat omits weekday. Select at as a direct local date/time object with date YYYY-MM-DD, time HH:mm:ss and time_zone set to the account IANA zone (never JSON-encode at), after_seconds (first occurrence after a delay), or every_seconds (fixed interval >=300). For delayed first occurrence followed by calendar recurrence, use after_seconds AND repeat inside prompt, not every_seconds. The installed host handles notifications, execution, approval, and recurrence. Call this tool directly; do not inspect application source or implement timers/scripts for scheduling. Confirm only after tool success, in one sentence with local time and content.',
   schedule_manage: 'Manage all schedules in this conversation, including paused entries. List to find the exact stable id, then pause/resume/delete/run. Use this to cancel reminders requested in conversation.',
-  pwsh: 'Run a PowerShell command in this conversation or an explicit workdir. For file organization, use Move-Item -LiteralPath with explicit destinations and skip existing destinations; do not use -Force to replace user files unless requested. Directory creation is ordinary; deleting or overwriting user files requires native approval.',
+  pwsh: 'Run a PowerShell command in this conversation or an explicit workdir. The terminal is non-interactive: it cannot answer Read-Host, key presses, or confirmation prompts. Use native approval for risky operations; after approval, execute that approved operation without a second terminal confirmation. Do not add interactive -Confirm; when a cmdlet otherwise prompts, use -Confirm:$false. Never use this to bypass native approval or retry a rejected action. For file organization, use Move-Item -LiteralPath with explicit destinations and skip existing destinations; do not use -Force to replace user files unless requested. Directory creation is ordinary; deleting or overwriting user files requires native approval.',
   bash: 'Run a shell command in this conversation or an explicit workdir.',
   read: 'Read a file. Relative paths use this conversation directory.',
   read_image: 'Read an image file.',
@@ -25,10 +25,22 @@ const researchGuidance = 'For research, first state a short deliverable outline 
 const LOAD = 'load_tools';
 const groups = { goal: ['create_goal', 'get_goal', 'update_goal'], jobs: ['job_list', 'job_output', 'job_kill'], subagent: ['subagent', 'send_message', 'interrupt_agent'] };
 export const isHealthQuestion=question=>/电脑使用|电脑用了|屏幕时间|(?:昨晚|昨夜|深夜).*电脑|电脑.*(?:用了多久|几点|时长)|健康|压力|电能|体能年龄|身体年龄|睡眠|睡得|睡了|熬夜|恢复|训练负荷|运动负荷|运动记录|心率|血氧|手腕温度|步数|摄氧量|\b(?:sleep|recovery|stress|energy|fitness age|hrv|spo2)\b/i.test(question);
-/** Pure projection: never changes tool execution, permission, or parameter schemas. */
+/** Pure model projection; native execution, permission and registry contracts remain unchanged. */
 export function presentPersonalPrompt(assembly, selected = new Set()) {
-    assembly = { ...assembly, tools: assembly.tools.map(tool => descriptions[tool.name]
-      ? { ...tool, description: descriptions[tool.name] } : tool) };
+    assembly = { ...assembly, tools: assembly.tools.map(tool => {
+      const description = descriptions[tool.name];
+      if (!description) return tool;
+      // Present one unambiguous absolute-time shape to the model. The native
+      // registry still accepts both local objects and offset strings for other callers.
+      const localAt = tool.name === 'schedule_create' && tool.parameters?.properties?.at?.oneOf?.find(branch => branch.type === 'object');
+      if (!localAt) return { ...tool, description };
+      const at = { ...localAt, description: 'Account-local absolute time. Pass this object directly, never a JSON-encoded string.',
+        properties: { ...localAt.properties,
+          date: { ...localAt.properties.date, description: 'Local calendar date, YYYY-MM-DD.' },
+          time: { ...localAt.properties.time, description: 'Local time, HH:mm:ss (24-hour); do not put a date or UTC offset here.' },
+          time_zone: { ...localAt.properties.time_zone, description: 'Account IANA time zone, for example Asia/Shanghai.' } } };
+      return { ...tool, description, parameters: { ...tool.parameters, properties: { ...tool.parameters.properties, at } } };
+    }) };
     const toolNames = new Set([LOAD, ...selected]);
     const catalog = assembly.tools.filter(tool => tool.name !== LOAD).map(tool =>
       `${tool.name}: ${tool.description.split(/[.\n]/)[0].slice(0, 24)}`).join('\n');
