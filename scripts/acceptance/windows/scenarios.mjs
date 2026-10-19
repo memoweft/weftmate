@@ -47,6 +47,10 @@ export async function newChat(ctx){
  const chatMode=ctx.page.getByRole('tab',{name:'对话',exact:true});if(await chatMode.isVisible())await chatMode.click();
  await ctx.page.locator('#new-session').click();
  await ctx.page.locator('#message-text').waitFor({state:'visible'});
+ // Account model synchronization can change the default order. Keep the requested
+ // acceptance model explicit instead of accidentally exercising another MiMo model.
+ await ctx.page.locator('#model-trigger').click();
+ await ctx.page.getByRole('menuitemradio',{name:'MiMo v2.6 Flash',exact:true}).click();
 }
 export async function waitReply(ctx,needle,timeout=120000){
  await waitTurn(ctx,timeout);assert.ok((await ctx.page.locator('.message.assistant').last().innerText()).includes(needle),`Actual final answer does not contain expected scenario marker: ${needle}`);

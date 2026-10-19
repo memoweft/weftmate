@@ -1,6 +1,8 @@
 param(
  [Parameter(Mandatory=$true)][string]$EvidenceDirectory,
  [ValidateSet('local','dev')][string]$Mode='local',
+ [switch]$Relay,
+ [switch]$UseEnvProxy,
  [ValidateRange(1,30)][int]$ScenarioTimeoutMinutes=30,
  [string[]]$Cases=@('onboarding','firstReply','createWaterReminder','createTimedReminder','healthNoData','healthWithData','queueAndStop','rapidThree','switchDuringReply','memoryForm','memoryCorrect','memoryForgetPage','memoryForgetChat','historyPagination','uiPages')
 )
@@ -14,7 +16,7 @@ function Wait-Ready {
  while(!(Test-Path (Join-Path $evidence 'ready.json'))){if((Get-Date)-gt $end-or $controller.HasExited){throw 'Installed application startup failed; inspect fatal.json'};Start-Sleep -Milliseconds 500}
 }
 try{
- if(!(Test-Path (Join-Path $evidence 'installation.json'))){if($Mode-eq 'dev'){throw 'Prepare the explicit-Core descriptor first'};node "$PSScriptRoot\install-local.mjs" $evidence;if($LASTEXITCODE-ne 0){throw 'Default installation failed'}}
+ if(!(Test-Path (Join-Path $evidence 'installation.json'))){if($Mode-eq 'dev'){throw 'Prepare the explicit-Core descriptor first'};$installOptions=@();if($Relay){$installOptions+='--relay'};if($UseEnvProxy){$installOptions+='--use-env-proxy'};node "$PSScriptRoot\install-local.mjs" $evidence @installOptions;if($LASTEXITCODE-ne 0){throw 'Default installation failed'}}
  $controllerArguments=@("$PSScriptRoot\controller.mjs",$repo,$evidence,$Mode)|ForEach-Object {'"'+$_+'"'}
  $controller=Start-Process -FilePath (Get-Command node.exe).Source -ArgumentList $controllerArguments -WorkingDirectory $repo -WindowStyle Hidden -RedirectStandardOutput (Join-Path $evidence 'controller.stdout.log') -RedirectStandardError (Join-Path $evidence 'controller.stderr.log') -PassThru
  Wait-Ready
