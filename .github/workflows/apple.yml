@@ -103,7 +103,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [local, host, cloud, features]
+        group: [local, host-legacy, host-modern, cloud, features]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
