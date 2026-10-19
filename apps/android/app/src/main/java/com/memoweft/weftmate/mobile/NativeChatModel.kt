@@ -150,7 +150,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         hostModelServices = false
         val b = call("app.bootstrap")
         val nextOwner = b.optString("owner")
-        if (owner != nextOwner) { workAndChat=false; newWork=false; conversationMode="chat"; loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
+        if (owner != nextOwner) { offlineWorkReady=false; workAndChat=false; newWork=false; conversationMode="chat"; loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
         owner = nextOwner; loggedIn = b.optBoolean("loggedIn"); localOnly = b.optString("authSource") == "phone-local"; standalone = b.optString("authSource") in setOf("phone", "phone-local")
         sidebarMode = prefs.getString("conversation-mode:$owner", "chat").let { if (it == "work") "work" else "chat" }
         val appearance = call("settings.appearance")
@@ -740,8 +740,13 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         } catch (_: Exception) { error="文件夹未选好，请重试。草稿已保留。" }
         finally { workChoicesBusy = false }
     }
-    fun openOfflineWork(row: JSONObject) = launch {
-        val text = nativeWorkSwitchText(row, rows, draft)
+    fun refreshOfflineWorkAvailability() = launchJob {
+        val g=generation
+        val ready=runCatching{environment.presentation("return {ready:globalThis.WeftMobileCloud?.core?.offlineWorkReady?.()===true};").optBoolean("ready")}.getOrDefault(false)
+        if(g==generation)offlineWorkReady=ready
+    }
+    fun openOfflineWork(row: JSONObject? = null) = launch {
+        val text = if(row==null)draft else nativeWorkSwitchText(row, rows, draft)
         environment.presentation("const core=globalThis.WeftMobileCloud?.core;if(!core?.offlineWorkReady?.())throw {code:'COMPUTER_OFFLINE'};core.openOfflineWorkMode(${JSONObject.quote(text)});return {};")
         tab="web-chat"
     }

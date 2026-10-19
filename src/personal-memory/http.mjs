@@ -355,6 +355,9 @@ async function submit({ manager, ownerId, body, operation, targetKind, targetId,
     let completion;
     try { completion = await manager.checkForgetCompletion?.(ownerId, { targetKind, targetId, expectedWorldRevision: body.expectedWorldRevision }); }
     catch { /* Missing processing configuration/permission cannot prove completion. */ }
+    if (completion?.reasonCode === 'MEMORY_REVISION_CHANGED') return {
+      status: 409, body: { state: 'withheld', error: { code: 'MEMORY_REVISION_CHANGED' },
+        message: '记忆在确认期间有更新，这次没有删除。请查看最新范围后重新确认。' } };
     if (completion?.state !== 'complete' || completion.worldRevision !== body.expectedWorldRevision) return {
       status: 409, body: { state: 'withheld', error: { code: 'MEMORY_FORGET_INCOMPLETE' },
         message: '这次没有执行遗忘：相关来源仍无法完整处理。独立记忆和原聊天保留。' } };
