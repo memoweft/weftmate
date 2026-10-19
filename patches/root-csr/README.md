@@ -49,6 +49,18 @@ recovery from the legacy failure across a manager restart. The complete
 the routine cloud `test/*.test.mjs` discovery. S2b explicitly runs both suites
 alongside the existing Pebble DNS-01 scenarios; no exhaustive assertions are
 skipped or reduced. OpenSSL child processes are hidden and have a 30s deadline.
+The stress sweep uses the production `createCsr` entry and checks both OpenSSL
+and the P-256 ACME.js consumer contract; 32 random RSA keys are also checked
+independently there. Routine RSA inputs come from a public synthetic seed.
+
+`verifyCsr` uses OpenSSL alone as the independent parser for every key type.
+`verifyHostCsr` separately asserts the product's P-256 `CSR._info` contract.
+The latter is not a general RSA parser: it infers signature type from guessed
+ASN.1 children, so some valid raw RSA signatures are mistaken for ECDSA and
+throw (#492). A fixed seeded RSA regression retains that input characteristic
+without making the independent oracle depend on this heuristic. The product
+generates ES256/P-256 content keys; this test fix does not change the locked
+production patch or imply support for RSA content keys.
 `tests/csr-integrity.test.ts` and `tests/verify-windows-package.test.ts` exercise
 build repair/refusal, first-use refusal, and actual packed/unpacked bytes.
 The upstream P-384 signature algorithm mismatch is tracked separately in

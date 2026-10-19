@@ -19,10 +19,11 @@ export function createScheduleOperations(context) {
     const ownerId = context.sessionOperations.ownerForSession(input.sessionId)?.ownerId;
     if (!ownerId || !context.hostOwner(ownerId)) throw failure('SESSION_UNAVAILABLE', 404);
     const row = session(ownerId, input.sessionId);
-    if(input.action==='health_query') {
+    if(input.action==='health_query' || input.action==='schedule_list') {
       const source=Object.values(context.accountState(ownerId).commands).find(c=>c.sessionId===input.sessionId&&c.receiptId===input.sourceReceiptId&&c.state==='accepted_by_dsh');
       const device=source&&context.accountState(ownerId).devices[source.sourceDeviceId];
       if(!source||!device||device.revoked||device.expiresAt&&Date.parse(device.expiresAt)<=context.timestamp()||!device.scopes.includes('sessions:read')||source.sourceAuthEpoch!==undefined&&source.sourceAuthEpoch!==device.authEpoch||context.dataControls?.isLocked(ownerId))throw failure('FORBIDDEN',403);
+      if (input.action === 'schedule_list') return { scope: 'account', items: await listAccount(ownerId) };
       return context.healthOperations.query(ownerId,input.query);
     }
     if(input.action==='memory_digest'){const status=await context.memoryManager?.status(ownerId);if(status)await context.activity.memoryDigest.refresh(ownerId,status,{arm:false});return {accepted:true};}
@@ -58,6 +59,25 @@ export function createScheduleOperations(context) {
     }));
     context.schedule(ownerId, commandId);
     return { accepted: true, commandId };
+  }
+  // The model and the goals page share the account boundary and redaction.
+  async function listAccount(ownerId, notifications = false) {
+    const generation = context.accountState(ownerId).activity?.generation ?? 0;
+    const rows = await Promise.all(Object.entries(context.accountState(ownerId).sessions)
+      .filter(([, row]) => row.origin === 'personal-remote' && !row.deleting)
+      .map(async ([sessionId]) => {
+        const value = await context.backend.schedules({ sessionId, ownerId, action: notifications ? 'notifications' : 'list' });
+        const live = context.accountState(ownerId);
+        if (!live.sessions[sessionId] || live.sessions[sessionId].deleting || live.memoryCleanupPending) return [];
+        return value.items.map(item => {
+          const result = { ...item, sessionId };
+          if (hasPrivateContent(live.sessions[sessionId])) { result.text = '临时对话中的定时任务'; result.temporary = true; }
+          if (result.lastResult?.commandId) { const command = live.commands[result.lastResult.commandId], activity = Object.values(live.activity?.items ?? {}).find(row => row.source.taskId === result.lastResult.commandId && row.type.startsWith('task.')); result.lastResult = { ...result.lastResult, state: activity?.type.slice(5) ?? (command?.state === 'rejected' ? 'failed' : 'queued') }; }
+          return result;
+        });
+      }));
+    if ((context.accountState(ownerId).activity?.generation ?? 0) !== generation) throw failure('CURSOR_RESET_REQUIRED', 409);
+    return rows.flat();
   }
   async function createUI(ownerId, auth, body, authorize = () => {}, match = null, request = {method:'POST'}) {
     if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN',403);
@@ -106,20 +126,7 @@ export function createScheduleOperations(context) {
     }
     if (!match?.[1]) {
       if (write) throw failure('INVALID_REQUEST');
-      const generation = context.accountState(ownerId).activity?.generation ?? 0;
-      const rows = await Promise.all(Object.entries(context.accountState(ownerId).sessions).filter(([, row]) => row.origin === 'personal-remote')
-        .map(async ([sessionId]) => {
-          const value = await context.backend.schedules({ sessionId, ownerId, action: notifications ? 'notifications' : 'list' });
-          const live = context.accountState(ownerId); if (!live.sessions[sessionId] || live.sessions[sessionId].deleting || live.memoryCleanupPending) return [];
-          return value.items.map(item => {
-            const result = { ...item, sessionId };
-            if (hasPrivateContent(live.sessions[sessionId])) { result.text = '临时对话中的定时任务'; result.temporary = true; }
-            if (result.lastResult?.commandId) { const command = live.commands[result.lastResult.commandId], activity = Object.values(live.activity?.items ?? {}).find(row => row.source.taskId === result.lastResult.commandId && row.type.startsWith('task.')); result.lastResult = { ...result.lastResult, state: activity?.type.slice(5) ?? (command?.state === 'rejected' ? 'failed' : 'queued') }; }
-            return result;
-          });
-        }));
-      if ((context.accountState(ownerId).activity?.generation ?? 0) !== generation) throw failure('CURSOR_RESET_REQUIRED', 409);
-      context.json(response, 200, { items: rows.flat() }); return true;
+      context.json(response, 200, { items: await listAccount(ownerId, notifications) }); return true;
     }
     const [, sessionId, id, action] = match;
     session(ownerId, sessionId);

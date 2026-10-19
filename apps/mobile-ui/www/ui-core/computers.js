@@ -16,6 +16,8 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
   };
   const lastKey = () => `weftmate-computer:${core.state.cloudAuth?.sub || ''}`;
   const name = id => {const row=core.state.computers?.find(row=>row.hostId===id);return row?.displayName || row?.name || '这台电脑';};
+  // bindDesktop verifies nativeIdentity/ownHost; the current cloud target alone may be remote.
+  const isLocalComputer = id => environment.desktop && environment.bindDesktop === true && id === core.cloudCurrentComputer?.();
   core.computerName = name;
   core.hasMultipleComputers = () => core.state.computers?.length > 1;
   core.canChooseExecutionComputer=()=>enabled&&core.hasMultipleComputers();
@@ -55,7 +57,8 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
     })().finally(()=>connecting.delete(id));connecting.set(id,pending);return pending;
   }
   async function request(id,path,options={}) {
-    if(id===core.cloudCurrentComputer?.()&&current===id)return json(core.accessBase+path,options);
+    // The verified local transport stays reachable while a remote channel is selected.
+    if(isLocalComputer(id)||id===core.cloudCurrentComputer?.()&&current===id)return json(core.accessBase+path,options);
     const row=core.state.computers?.find(row=>row.hostId===id);
     if(!row?.online)throw {code:'COMPUTER_OFFLINE'};
     const entry=await channel(id);
@@ -75,7 +78,7 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
   const refresh=core.refreshSessions;
   core.refreshSessions=async(...args)=>{
     if(enabled)await directory().catch(()=>{});
-    if(enabled&&core.hasMultipleComputers()&&core.state.computers.find(row=>row.hostId===current)?.online===false){
+    if(enabled&&core.hasMultipleComputers()&&!isLocalComputer(current)&&core.state.computers.find(row=>row.hostId===current)?.online===false){
       const page=await core.accessApi('/sessions?archived=all');core.state.sessions=page.sessions || [];
       effects.renderSessions?.();effects.updateAvailability?.();return;
     }
@@ -91,7 +94,7 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
       for(const computer of core.state.computers){
         const key=computer.hostId+':'+path;
         try {
-          if(!computer.online)throw {code:'COMPUTER_OFFLINE'};
+          if(!computer.online&&!isLocalComputer(computer.hostId))throw {code:'COMPUTER_OFFLINE'};
           const result=await request(computer.hostId,path,options);snapshots.set(key,result);
           if(computer.hostId===current)active=result;
           rows.push(...(result[field] || []).map(row=>({...row,hostId:computer.hostId,computerName:name(computer.hostId)})));
@@ -109,7 +112,7 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
   core.selectExecutionComputer = async id => {
     if(!enabled || id===current)return;
     if(core.state.submitting || core.state.unresolvedSubmission)throw {code:'SESSION_BUSY'};
-    const row=core.state.computers.find(row=>row.hostId===id);if(!row?.online)throw {code:'COMPUTER_OFFLINE'};
+    const row=core.state.computers.find(row=>row.hostId===id);if(!row?.online&&!isLocalComputer(id))throw {code:'COMPUTER_OFFLINE'};
     let entry;
     try { entry=id===core.cloudCurrentComputer?.()?null:await channel(id); }
     catch(error) {

@@ -1,5 +1,7 @@
+const derivedContext = item => ['interaction_context', 'evidence_context', 'interaction_commitment'].includes(item.object_kind);
 const invalid = () => Object.assign(Error('MEMORY_FORGET_DECISION_INVALID'), { code: 'MEMORY_FORGET_DECISION_INVALID' });
-export const forgetCompletionVersion = 3; // Includes the retained-record count projection.
+const candidateBatchChars = 16000;
+export const forgetCompletionVersion = 5; // Terminal job sources must also be readable and fit the model request.
 // A recovered record needs the retained original, not just an old excerpt.
 // Fresh host inputs may have only text; the manager preserves it before queuing.
 export function forgetSourceText(source, requireOriginal = false) {
@@ -72,7 +74,7 @@ export async function classifyForgetCandidates(route, request, candidates) {
   // The host completion gateway accepts at most 16,384 characters per message.
   const batches = []; let batch = [];
   for (const candidate of candidates) {
-    if (JSON.stringify({ request, candidates: [...batch, candidate] }).length > 16000 && batch.length) { batches.push(batch); batch = []; }
+    if (JSON.stringify({ request, candidates: [...batch, candidate] }).length > candidateBatchChars && batch.length) { batches.push(batch); batch = []; }
     batch.push(candidate);
   }
   if (batch.length) batches.push(batch);
@@ -128,6 +130,8 @@ export async function scopedForgetPlan(manager, owner, action, route) {
   const worldRevision = worlds[0]?.world_revision;
   const changedScope = () => ({ version: 2, completionVersion: forgetCompletionVersion, completionState: 'withheld', evidenceIds: [], worldTargets: [], affectedIds: [], sourceTexts: [],
     state: 'withheld', message: '记忆在确认期间发生了变化，这次没有删除；请重新确认要忘掉的内容。' });
+  const incomplete = message => ({ version: 2, completionVersion: forgetCompletionVersion, completionState: 'withheld', worldRevision,
+    authorization: request, evidenceIds: [], worldTargets: [], affectedIds: [], sourceTexts: [], state: 'withheld', message });
   if (!Number.isSafeInteger(worldRevision) || worlds.some(world => world.world_revision !== worldRevision)) return changedScope();
   const rows = worlds.flatMap(world => world.items ?? []), byKey = new Map(rows.map(row => [`${row.object_kind}:${row.item_id}`, row]));
   const entities = new Map(rows.filter(row => row.object_kind === 'entity').map(row => [row.item_id, row.value]));
@@ -156,18 +160,28 @@ export async function scopedForgetPlan(manager, owner, action, route) {
   // too; this nominates a completion boundary, never extra deletion authority.
   const knownSources = candidates.flatMap(candidate => candidateSources(byKey.get(candidate.key)))
     .map(source => ({ id: source.evidence_id, text: source.evidence.raw_content ?? source.evidence.summary }));
-  const provisional = [...knownSources, ...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? []),
+  // A no_change job can retain a source without any World item or recent-recall nomination.
+  // Core's durable acceptance IDs survive removal of its failed interpretation.
+  const jobSources = (jobs.jobs ?? []).flatMap(job => (job.acceptance?.evidence_ids ?? []).map(id => ({ id })));
+  const jobSourceIds = new Set(jobSources.map(source => source.id));
+  const provisional = [...knownSources, ...jobSources, ...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? []),
     ...(jobs.formation_requests ?? []).map(row => ({ id: row.evidence_id, text: row.text }))];
   for (const item of provisional) {
     const id = item.id ?? item.evidence_id, key = `evidence:${id}`;
     if (byKey.has(key)) continue;
     const result = await manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: id });
     const evidence = result.evidence;
-    if (!readable([{ evidence, permissions: evidence.permissions }])) continue;
+    if (!readable([{ evidence, permissions: evidence.permissions }])) {
+      if (jobSourceIds.has(id) && evidence.currentness_state !== 'evidence_deleted')
+        return incomplete('无法在当前权限下确认完整遗忘范围，这次没有执行；独立记忆和原聊天保留。');
+      continue;
+    }
     byKey.set(key, { item_id: id, object_kind: 'evidence', provenance: [{ evidence_id: id, evidence }], value: {} });
     candidates.push({ key, kind: 'evidence', text: [evidence.raw_content, evidence.summary].filter(Boolean).join('\n') || item.text,
       sourceTexts: [evidence.raw_content, evidence.summary].filter(Boolean), graphSubject: null });
   }
+  if (candidates.some(candidate => JSON.stringify({ request, candidates: [candidate] }).length > candidateBatchChars))
+    return incomplete('相关来源内容过长，暂时无法完整核对，这次没有执行遗忘；独立记忆和原聊天保留。');
   const decisions = await classifyForgetCandidates(route, request, candidates);
   if (candidates.some(candidate => {
     const decision = decisions.get(candidate.key);
@@ -208,7 +222,7 @@ export async function scopedForgetPlan(manager, owner, action, route) {
       const selectedRow = byKey.get(key);
       if (selectedRow.object_kind !== 'evidence') {
         const preview = await cascade(selectedRow);
-        if ((preview.items ?? []).some(item => item.object_kind !== 'entity' && !selected.has(`${item.object_kind}:${item.item_id}`))) {
+        if ((preview.items ?? []).some(item => item.object_kind !== 'entity' && !derivedContext(item) && !selected.has(`${item.object_kind}:${item.item_id}`))) {
           selected.delete(key); changed = true; continue;
         }
       }
@@ -235,7 +249,7 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     decisions.get(row.key)?.hasTargetFact && !eligible(row.key) && !other(row.key)).length;
   const evidence = new Map();
   for (const key of selected) for (const source of candidateSources(byKey.get(key))) evidence.set(source.evidence_id, source.evidence?.raw_content);
-  const coveredItems = new Set(), coveredEvidence = new Set(), worldTargets = [];
+  const coveredItems = new Set(), coveredEvidence = new Set(), worldTargets = [], forgetScopes = {};
   const worldRows = [...selected].map(key => byKey.get(key)).filter(row => row.object_kind !== 'evidence')
     .sort((a, b) => Number(b.object_kind === 'entity') - Number(a.object_kind === 'entity') ||
       Number(b.current_state === 'current') - Number(a.current_state === 'current'));
@@ -243,14 +257,37 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     if (coveredItems.has(`${row.object_kind}:${row.item_id}`)) continue;
     const preview = await cascade(row);
     worldTargets.push({ kind: row.object_kind, id: row.item_id });
+    if (typeof preview.forget_scope === 'string') forgetScopes[`${row.object_kind}:${row.item_id}`] = preview.forget_scope;
     for (const item of preview.items ?? []) coveredItems.add(`${item.object_kind}:${item.item_id}`);
     for (const id of preview.evidence_ids ?? []) coveredEvidence.add(id);
+  }
+  for (const id of evidence.keys()) if (!coveredEvidence.has(id)) {
+    const preview = await cascade({ object_kind: 'evidence', item_id: id });
+    if (typeof preview.forget_scope === 'string') forgetScopes[`evidence:${id}`] = preview.forget_scope;
+  }
+  const evidenceIds = [...evidence.keys()].filter(id => !coveredEvidence.has(id));
+  const targets = [...worldTargets, ...evidenceIds.map(id => ({ kind: 'evidence', id }))];
+  let batchForget;
+  if (!retainedUncertainCount && targets.length > 1 && await manager.forgetBatchSupported?.(owner)) {
+    if (targets.length > 32) return changedScope();
+    const [first, ...rest] = targets;
+    const additional_targets = rest.map(row => ({ target_kind: row.kind, target_id: row.id }));
+    const preview = await manager.query(owner, 'preview_forget', {
+      target_kind: first.kind, target_id: first.id, additional_targets,
+    });
+    // The combined transaction must not expand the independently authorized
+    // source/fact sets. Derived copies are Core's already previewed cascade.
+    if (preview.world_revision !== worldRevision || typeof preview.forget_scope !== 'string' ||
+        (preview.evidence_ids ?? []).some(id => !evidence.has(id)) ||
+        (preview.items ?? []).some(item => !derivedContext(item) &&
+          item.object_kind !== 'entity' && !selected.has(`${item.object_kind}:${item.item_id}`))) return changedScope();
+    batchForget = { forget_scope: preview.forget_scope, additional_targets };
   }
   const latest = await manager.query(owner, 'query_world', { operation: 'revision' });
   if (latest.world_revision !== worldRevision || [...previews.values()].some(preview => preview.world_revision !== worldRevision)) return changedScope();
   return { version: 2, completionVersion: forgetCompletionVersion, completionState: retainedUncertainCount > 0 ? 'withheld' : 'complete', worldRevision, authorizedEvidenceIds: [...evidence.keys()],
-    evidenceIds: [...evidence.keys()].filter(id => !coveredEvidence.has(id)), sourceTexts: [...evidence.values()].filter(Boolean),
-    worldTargets,
+    evidenceIds, sourceTexts: [...evidence.values()].filter(Boolean),
+    worldTargets, forgetScopes, ...(batchForget ? { batchForget } : {}),
     affectedIds: [...selected].map(key => byKey.get(key).item_id), authorization: request, retainedOtherCount, retainedUncertainCount };
 }
 
@@ -295,7 +332,7 @@ export async function checkForgetCompletion(manager, owner, proposal, route) {
         }
       } while (changed);
     }
-    const items = (preview.items ?? []).filter(item => item.object_kind !== 'entity' || item.item_type === 'person');
+    const items = (preview.items ?? []).filter(item => !derivedContext(item) && (item.object_kind !== 'entity' || item.item_type === 'person'));
     const targets = items.filter(item => proposal.targetKind === 'evidence' || chain.has(`${item.object_kind}:${item.item_id}`));
     if (targets.some(item => !rows.some(row => row.object_kind === item.object_kind && row.item_id === item.item_id))) return unknown();
     const candidates = items.map(item => {
@@ -310,7 +347,7 @@ export async function checkForgetCompletion(manager, owner, proposal, route) {
     // Formation can fail before any World item exists. The explicitly selected
     // source is then the target fact, subject to the same classification and
     // completion checks; it grants no authority over other sources or items.
-    if (selectedSource && !(preview.items ?? []).length) candidates.push({ key: `target:evidence:${proposal.targetId}`,
+    if (selectedSource && !items.length) candidates.push({ key: `target:evidence:${proposal.targetId}`,
       kind: 'evidence', text: [selectedSource.raw_content, selectedSource.summary].filter(Boolean).join('\n'), graphSubject: null,
       sourceTexts: [selectedSource.raw_content, selectedSource.summary].filter(Boolean) });
     if (!facts.length || !candidates.length) return unknown();
