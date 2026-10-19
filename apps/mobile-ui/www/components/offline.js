@@ -14,7 +14,7 @@
         FORBIDDEN: '离线副本同步没有权限，请重新连接电脑。',
         INVALID_REQUEST: '离线副本同步未完成，请重新连接电脑。' })[code] || '离线副本同步未完成，请稍后重试。' };
     },
-    mount({ core, goalsCore=core, nativeCall, identity: readIdentity, host, desktop = false, openConversation = () => {} }) {
+    mount({ core, goalsCore=core, nativeCall, nativeTaskVault = false, identity: readIdentity, host, desktop = false, openConversation = () => {} }) {
       if (desktop) return;
       let engine, scope, identity, polling = false, offline = false, selected = null, error = '', showHistory = false, taskMode=false;
       const section = element('section', '', 'offline-chat'); section.hidden = true; section.setAttribute('aria-label', '离线对话');
@@ -60,9 +60,10 @@
         notice.textContent = error; notice.hidden = !error || idleCloudSetup || showHistory || !!core.connectionView && core.connectionView().kind !== 'online';
         title.textContent = offline ? '离线模式' : '离线对话';
         mode.textContent = offline ? view?.taskReady?(view.chatReady?explanation:'电脑离线，可以先记下要做的事，等电脑上线后去做。'):'电脑离线，可以继续聊天和使用记忆。' : view?.turns.length ? '电脑已上线，正在同步离线对话' : '已同步';
-        label.firstChild.textContent = offline ? taskMode?'要交代什么？':'继续聊聊' : '电脑已上线，可返回原对话查看进展';
+        if(taskMode&&!offline)mode.textContent='先记下要做的事，电脑收到后会去做。';
+        label.firstChild.textContent = taskMode?'要交代什么？':offline?'继续聊聊':'电脑已上线，可返回原对话查看进展';
         input.placeholder=taskMode?'等电脑上线后，要去做什么？':'继续聊聊…';
-        input.disabled = !offline || !(taskMode?view?.taskReady:view?.chatReady??view?.ready) || view.running;
+        input.disabled = !offline&&!taskMode || !(taskMode?view?.taskReady:view?.chatReady??view?.ready) || view.running;
         send.disabled = input.disabled || !input.value.trim();
         if(taskMode&&input.value.length>8192)send.disabled=true;
         more.disabled=input.disabled;more.hidden=!view?.ready;
@@ -85,14 +86,21 @@
         messages.replaceChildren();
         if (!conversation?.turns.length && !recent) messages.append(element('p',view?.chatReady?'可以继续聊聊。与当前问题相关的记忆会帮助回答。':'先告诉我要做什么，电脑上线后会去做。','offline-empty'));
         const rows = [...(recent?.messages || conversation?.context || []), ...(conversation?.turns || []).flatMap(t => t.messages)];
-        const renderedTasks=new Set(),taskNames={sending:'还没确认记下，请重试',waiting:'已记下，等电脑上线',claimed:'已记下，等电脑上线',received:'已交给电脑，等待开始',started:'电脑已开始',completed:'做完了',failed:'没做成',expired:'过期了，没做',canceled:'已取消'};
+        const renderedTasks=new Set(),taskNames={sending:'还没确认记下，请重试',waiting:'排队中，等电脑上线',claimed:'排队中，等电脑上线',received:'已交给电脑，等待开始',started:'电脑已开始',completed:'做完了',failed:'没做成',expired:'过期了，没做',canceled:'已取消'};
+        function cancellation(row,task){
+          if(!['waiting','claimed'].includes(task.state))return;
+          const cancel=element('button','取消这件事');cancel.type='button';
+          cancel.onclick=()=>WeftPopover.menu(cancel,[{name:'确认取消',action:async()=>{
+            try{await core.cancelOfflineTask(task.id);error='';}catch(cause){error=cause.userMessage||'取消未完成，请检查网络后重试。';}paint();
+          }}]);row.append(cancel);
+        }
         for (const message of rows) {
           if(typeof message.text!=='string'||!message.text.trim())continue;
           const row = element('article', '', `offline-message ${message.role}`);
           const body = globalThis.WeftContent ? WeftContent.create(message.text, 'offline-message-body markdown-body') : element('div', message.text, 'offline-message-body');
           if (!globalThis.WeftContent && message.role === 'assistant' && globalThis.WeftFormat?.render) body.innerHTML = globalThis.WeftFormat.render(message.text);
           row.append(element('span', message.role === 'user' ? '我' : 'WeftMate'), body);
-          const task=message.offlineTaskId&&view?.tasks?.find(t=>t.id===message.offlineTaskId);if(task){renderedTasks.add(task.id);row.append(element('p',taskNames[task.state]||'正在确认','offline-task-state'));}
+          const task=message.offlineTaskId&&view?.tasks?.find(t=>t.id===message.offlineTaskId);if(task){renderedTasks.add(task.id);row.append(element('p',taskNames[task.state]||'正在确认','offline-task-state'));cancellation(row,task);}
           messages.append(row);
         }
         for(const task of view?.tasks||[]){
@@ -100,6 +108,7 @@
           const row=element('article','','offline-message user'),body=element('div',task.text,'offline-message-body');
           row.append(element('span','我'),body,element('p',task.state==='sending'&&view?.taskSending?'正在记下来…':taskNames[task.state]||'正在确认','offline-task-state'));
           if(task.state==='sending'){const retry=element('button','重试');retry.type='button';retry.disabled=view?.taskSending;retry.onclick=async()=>{retry.disabled=true;try{await engine.retryTask(task.id);}catch{error='还没确认记下，请稍后重试。';paint();}finally{retry.disabled=false;}};row.append(retry);}
+          cancellation(row,task);
           messages.append(row);
         }
         for (const turn of conversation?.turns || []) if (turn.workRequest?.status === 'pending') {
@@ -120,7 +129,7 @@
         if (engine) { if(identity?.hostId===current.hostId&&identity?.ownerId!==current.ownerId)await engine.clear();engine.close(); }
         scope = next; identity = current;
         offline = false; showHistory = false; error = '';
-        const vault = nativeCall ? WeftOffline.nativeVault(nativeCall) : await WeftOffline.browserVault(scope);
+        const vault = nativeCall ? WeftOffline.nativeVault(nativeCall, { tasks: nativeTaskVault }) : await WeftOffline.browserVault(scope);
         engine = await WeftOffline.create({ vault, identity, host, workRequests: !nativeCall, control: hostId => core.cloudOfflineStatus(hostId),
           tasks:core.cloudOfflineTasks,taskDevice:core.cloudOfflineTaskDevice,notify:()=>{paint();goalsCore.offlineTasksChanged?.();} });
         targetHostId=engine.view().tasks.at(-1)?.hostId||current.hostId;
