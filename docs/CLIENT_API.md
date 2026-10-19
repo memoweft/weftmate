@@ -1877,3 +1877,7 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 **手机发起删除**：同路径可带 `{generation,turns:[],forgetConversations:[原conversationId]}`（每次最多50个）。仅提交过或部分提交过该对话的受信物理手机可请求；电脑先持久登记墓碑并禁止重交，再用MEM-1来源遗忘任务清原来源／派生记忆和电脑历史，推进原清理代次。回 `{generation:新代次,receipts:[],forgottenConversations:[id]}` 只表示删除请求持久接受，真正清完的导入记录才为forgotten。客户端更新代次、重新取副本；未交独立原对话不受派生删除影响。重发被删对话的轮次回state:forgotten，不能复活来源。
 
 原生业务路径限定为 `/offline/sync`、`/offline/turns`、`/memory/status`、`/memory/backfill`。客户端须分别处理 `memoryAuthority`、稳定历史回执、长消息分片和删除方向；`fragmentReceipts` 不能当整轮确认。原生加密容器保留手机原始对话与未确认轻量内容，接收电脑 `reset` 不先清空手机原始容器，普通电脑副本仍按原删除合同清空。上述新字段沿原 RSA（非对称加密）信封、账号授权与删除代次，不授予额外权限。
+
+### 遗忘确认范围凭据
+
+记忆条目/来源的 `forget-preview` 响应增加 `forgetScope`；删除请求必须随用户已确认的计划原样提交该字段。服务端只透传为 Core 的 `forget_scope`，不在提交时刷新。Core 拒绝已变化或缺失的范围凭据时，回执映射为 `MEMORY_REVISION_CHANGED`，需重新预览和确认。预览 `items` 可包含 `interaction_context`（对话记忆副本）和 `evidence_context` / `preceding_ai_context`（记忆前文副本）；它们不是新增的原话来源删除目标，`evidenceIds` 仍只列原来源。现有路径、HTTP 方法和安卓路径白名单不变。

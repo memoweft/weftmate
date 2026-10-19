@@ -41,6 +41,9 @@ function boundary(text: string, sessionId: string) {
 // Script only the model interpretation. Real Core owns Evidence, compilation,
 // atomic transitions, currentness, provenance and recall; no database seeding.
 for (const scenario of [
+  { name: 'frozen M2 green tea', old: '我喜欢喝红茶。',
+    correction: '我其实更喜欢绿茶。', query: '我喜欢喝什么？',
+    action: 'form', field: 'supersedes_cognition_id', replacement: '更喜欢绿茶', obsolete: '喜欢喝红茶' },
   { name: 'explicit correction', old: '我最近只能周三晚上锻炼，安排运动时帮我记着。',
     correction: '不对，是周五晚上。', query: '下周给我安排一次锻炼，放在哪天比较合适？',
     action: 'correct', field: 'corrects_cognition_id', replacement: '周五', obsolete: '周三' },
@@ -71,9 +74,13 @@ for (const scenario of [
           assert.equal(payload.current_cognitions.length, 1)
           assert.match(payload.current_cognitions[0].content, new RegExp(scenario.obsolete))
         }
-        const item = { action: correcting ? scenario.action : 'form', target: 'owner_self',
+        const frozen = scenario.name === 'frozen M2 green tea'
+        const item = { action: correcting ? scenario.action : 'form',
+          ...(!frozen || !correcting ? { target: 'owner_self' } : {}),
           statement_kind: 'preference', formed_by: 'stated', proposition: evidence.text,
-          supports: evidence.segments.map((segment: any) => ({ evidence_id: evidence.id, segment_id: segment.id })),
+          // Frozen installed MiMo interpretations, remapping only generated IDs.
+          supports: frozen ? [{ evidence_id: evidence.id, sentence_id: 't0' }] : evidence.segments.map((segment: any) => ({ evidence_id: evidence.id, segment_id: segment.id })),
+          ...(frozen && !correcting ? { entity: { canonical_name: '红茶', kind: 'topic', aliases: [] } } : {}),
           ...(correcting ? { [scenario.field]: payload.current_cognitions[0].id } : {}) }
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ schema_version: 8,
@@ -106,6 +113,7 @@ for (const scenario of [
       assert.deepEqual(errors, [])
       assert.equal(requests.length, 2, 'recall makes no generation calls')
       assert.match(after.contextText, new RegExp(scenario.replacement))
+      assert.doesNotMatch(after.contextText, /以下旧内容不能作为当前事实|待更新/)
       assert.doesNotMatch(after.contextText, new RegExp(scenario.obsolete))
       const items = (await world()).items
       const old = items.find((item: any) => item.item_id === prior.item_id)
