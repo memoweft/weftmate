@@ -4,6 +4,12 @@
   const encode = bytes => btoa(Array.from(new Uint8Array(bytes), c => String.fromCharCode(c)).join('')).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const decode = value => Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
   const fail = code => { throw Object.assign(new Error(code), { code }); };
+  const phoneHistoryFailure = error => (error?.code || error?.message) === 'OFFLINE_STORAGE_TOO_LARGE'
+    ? '手机聊天记录已达到保存上限，新增内容还未保存。请打开旧对话，点「更多 → 完整对话功能 → 对话操作 → 删除对话」清理不需要的记录后重试。' : '';
+  async function savePhoneHistory(call, value, scope) {
+    if (utf8(JSON.stringify(value)).byteLength > 8 * 1024 * 1024) fail('OFFLINE_STORAGE_TOO_LARGE');
+    return call('phone.offline.save', {value,...scope});
+  }
   const empty = () => ({ snapshot: null, turns: [], conversations: [], tasks: [], forgetConversations: [], phoneMemory:globalThis.WeftPhoneMemory?.fresh() });
   function terms(text) {
     const normalized = text.normalize('NFKC').toLowerCase();
@@ -165,7 +171,7 @@
     let value = await vault.load(), running = false, sendingConversationId=null, taskSending=false, abort, version = 0, targets=[],cloudTasksSupported=false;
     value.tasks??=[];
     value.pendingMessages??=[];
-    let queueFlight, activeConversationId=null, queueError='';
+    let queueFlight, activeConversationId=null, queueError='', queueFailure;
     const memoryConversations = new Set();
     value.phoneMemory??=globalThis.WeftPhoneMemory?.fresh();value.forgetConversations??=[];
     if(value.phoneMemory){
@@ -334,13 +340,22 @@
     async function enqueue(text, conversationId = null, intent = 'queue') {
       if (closed || !phoneModel?.() || typeof text !== 'string' || !text.trim() || text.length > 16384 || !['queue','steer'].includes(intent)) fail('INVALID_REQUEST');
       const conversation = value.conversations.find(c => c.id === conversationId) || {id: crypto.randomUUID(), turns: []};
-      if (!value.conversations.includes(conversation)) value.conversations.push(conversation);
+      const created=!value.conversations.includes(conversation);
+      if (created) value.conversations.push(conversation);
       const pending = {id:crypto.randomUUID(), conversationId:conversation.id, text:text.trim(), timestamp:Date.now()};
       if (intent === 'steer' && running && activeConversationId === conversation.id) value.pendingMessages.unshift(pending);
       else value.pendingMessages.push(pending);
       if(queueError)queueError=queueFailureMessage();
       const ticket = version;
-      await persist();
+      try { await persist(); }
+      catch (error) {
+        if(ticket===version&&!closed){
+          value.pendingMessages=value.pendingMessages.filter(row=>row.id!==pending.id);
+          if(created&&!conversation.turns.length&&!value.pendingMessages.some(row=>row.conversationId===conversation.id))value.conversations=value.conversations.filter(row=>row!==conversation);
+          notify(view());
+        }
+        throw error;
+      }
       if (ticket !== version || closed) fail('OFFLINE_RESET_REQUIRED');
       if (intent === 'steer' && running && activeConversationId === conversation.id) abort?.abort();
       resumeQueue();
@@ -358,7 +373,7 @@
           catch (error) {
             if (closed || ticket !== version) return;
             if (error.name !== 'AbortError' && error.message !== 'CANCELLED') {
-              queueError=queueFailureMessage();
+              queueFailure=error;queueError=queueFailureMessage();
               break;
             }
           }
@@ -367,13 +382,15 @@
       notify(view());
     }
     function queueFailureMessage() {
+      const capacity=phoneHistoryFailure(queueFailure);
+      if(capacity)return capacity;
       return value.pendingMessages.length
         ? '回复没能完成，待发消息已保留。请检查网络或模型设置，再点「重试排队消息」。'
         : '回复未完成，生成的文字已保留。请检查网络或模型设置后重试回复。';
     }
     function retryQueue() {
       if (closed || running || queueFlight) return;
-      queueError='';
+      queueError='';queueFailure=null;
       resumeQueue();
       notify(view());
     }
@@ -535,5 +552,5 @@
     }
     return { view, sync, send, enqueue, resumeQueue, retryQueue, takeMemoryConversations, regenerate, check, clear, extractMemory,memoryChange,removeConversation,submitTask, retryTask, cancelTask, refreshTasks, clearTasks, declineWork, saveComposer: async (conversationId, draft) => { value.nativeDrafts ??= {}; value.nativeDrafts[conversationId || 'new'] = draft; value.nativeComposer = { conversationId, draft }; await persist(); }, stop: () => {memoryEpoch++;memoryAbort?.abort();abort?.abort();}, close: () => { closed=true;version++;memoryEpoch++;memoryAbort?.abort();abort?.abort(); vault.close(); } };
   }
-  globalThis.WeftOffline = { create, browserVault, nativeVault, recall, requestBody, readCompletion, encode, decode };
+  globalThis.WeftOffline = { create, browserVault, nativeVault, recall, requestBody, readCompletion, encode, decode, savePhoneHistory, phoneHistoryFailure };
 })();
