@@ -59,10 +59,10 @@ class OfflineTaskVaultTest {
         val phone=HostIdentity("https://cloud.invalid","synthetic",account,"unconnected","physical-phone","","","phone")
         val vault=OfflineVault(context,phone,remote);val key=recipient()
         try{
-            vault.save(JSONObject().put("snapshot",JSONObject.NULL).put("conversations",JSONArray().put(JSONObject().put("id","original"))).put("turns",JSONArray().put(JSONObject().put("id","pending").put("conversationId","original"))))
+            vault.save(JSONObject().put("snapshot",JSONObject.NULL).put("conversations",JSONArray().put(JSONObject().put("id","original").put("sourceSessionId",JSONObject.NULL)).put(JSONObject().put("id","original-empty").put("sourceSessionId",""))).put("turns",JSONArray().put(JSONObject().put("id","pending").put("conversationId","original"))))
             install(vault,remote,account,key)
             vault.clearAccount(account)
-            val after=vault.load();assertTrue(after.isNull("snapshot"));assertEquals("original",after.getJSONArray("conversations").getJSONObject(0).getString("id"));assertEquals("pending",after.getJSONArray("turns").getJSONObject(0).getString("id"))
+            val after=vault.load();assertTrue(after.isNull("snapshot"));assertEquals(2,after.getJSONArray("conversations").length());assertEquals("original",after.getJSONArray("conversations").getJSONObject(0).getString("id"));assertEquals("pending",after.getJSONArray("turns").getJSONObject(0).getString("id"))
         }finally{vault.clear()}
     }
 }

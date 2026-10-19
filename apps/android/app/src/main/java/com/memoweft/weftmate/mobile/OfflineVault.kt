@@ -189,7 +189,7 @@ internal class OfflineVault(private val context: Context, private val host: Host
             if(control.optString("accountId")==accountId&&(hostId==null||control.optString("hostId")==hostId&&(keepGeneration==null||snapshot.getLong("generation")!=keepGeneration))){
                 if(value.optBoolean("_phoneSource")||record.scope==phoneScope){
                     val derived=mutableSetOf<String>()
-                    value.optJSONArray("conversations")?.let { rows->for(i in 0 until rows.length())rows.getJSONObject(i).let{if(it.has("sourceSessionId"))derived.add(it.getString("id"))} }
+                    value.optJSONArray("conversations")?.let { rows->for(i in 0 until rows.length())rows.getJSONObject(i).let{if(!it.isNull("sourceSessionId")&&it.optString("sourceSessionId").isNotEmpty())derived.add(it.getString("id"))} }
                     fun filter(rows:JSONArray?,keep:(JSONObject)->Boolean)=JSONArray((0 until (rows?.length()?:0)).map{rows!!.getJSONObject(it)}.filter(keep))
                     value.put("snapshot",JSONObject.NULL).put("tasks",JSONArray()).put("fragmentProgress",JSONObject())
                     value.put("conversations",filter(value.optJSONArray("conversations")){it.optString("id") !in derived})
