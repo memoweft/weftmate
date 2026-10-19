@@ -32,7 +32,7 @@ export function workContinuationPrompt(session, policy) {
   const switched = current.some(event => event.type === 'approval/asked' && event.data.reason === WORK_SWITCH_REASON &&
     current.some(answer => answer.type === 'approval/decided' && answer.data.id === event.data.id && answer.data.outcome === 'allowed-once'));
   if (!switched) return null;
-  return `用户已批准切换到工作，电脑和文件夹选择已完成：${policy.project.name}（${policy.project.rootPath}）。这只是完成了工作准备，不代表原任务已完成。请在本轮接着实际执行用户原请求，核对结果后再报告；不要停在口头计划、再次索要文件夹或等待用户重发指令。需要别的工具时继续用 load_tools 加载后调用；文件整理使用文件工具或命令工具（如 glob、pwsh），不需要操作应用界面。只操作所选文件夹，继续遵守原有权限、审批、拒绝和停止决定。`;
+  return `用户已批准切换到工作，电脑和文件夹选择已完成：${policy.project.name}（${policy.project.rootPath}）。这就是用户刚选定的目标目录，以此路径为准，不要再按名称到别处寻找这个文件夹。这只是完成了工作准备，不代表原任务已完成。请在本轮接着实际执行用户原请求，核对结果后再报告；不要停在口头计划、再次索要文件夹或等待用户重发指令。需要别的工具时继续用 load_tools 加载后调用；文件整理使用文件工具或命令工具（如 glob、pwsh），不需要操作应用界面。只操作所选文件夹，继续遵守原有权限、审批、拒绝和停止决定。`;
 }
 
 /** Recover the observed normal stop after a failed post-switch operation.
