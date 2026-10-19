@@ -38,6 +38,8 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     var loading by mutableStateOf(true)
     var error by mutableStateOf("")
     var connected by mutableStateOf(true)
+    var computerOffline by mutableStateOf(false)
+        private set
     var rows by mutableStateOf(emptyList<JSONObject>())
     var approvals by mutableStateOf(emptyList<JSONObject>())
     var questions by mutableStateOf(emptyList<JSONObject>())
@@ -79,6 +81,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     val subtitle get() = when {
         phoneHistory -> "来自手机 · 只读"
         standalone || phone -> "手机自己答的"
+        computerOffline -> "$hostName · 现在离线"
         workAndChat && conversationMode == "work" -> "$hostName · ${workProject?.stringOrEmpty("name")?.ifEmpty { null } ?: "选择项目或文件夹"}"
         workAndChat -> "由 $hostName 回答"
         connected -> "已连接"
@@ -150,7 +153,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         hostModelServices = false
         val b = call("app.bootstrap")
         val nextOwner = b.optString("owner")
-        if (owner != nextOwner) { workAndChat=false; newWork=false; conversationMode="chat"; loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
+        if (owner != nextOwner) { computerOffline=false; workAndChat=false; newWork=false; conversationMode="chat"; loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
         owner = nextOwner; loggedIn = b.optBoolean("loggedIn"); localOnly = b.optString("authSource") == "phone-local"; standalone = b.optString("authSource") in setOf("phone", "phone-local")
         sidebarMode = prefs.getString("conversation-mode:$owner", "chat").let { if (it == "work") "work" else "chat" }
         val appearance = call("settings.appearance")
@@ -183,7 +186,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         workAndChat = hostWorkAndChatDeclared(hostStatus)
         hostId = hostStatus?.stringOrEmpty("hostId").orEmpty()
         hostName = hostStatus?.stringOrEmpty("hostName")?.ifEmpty { null } ?: "这台电脑"
-        if (hostStatus != null) connected = true
+        if (hostStatus != null) { connected = true; computerOffline = false }
         if (workAndChat) refreshWorkChoices()
         refreshMessageIntent()
         refreshChats()
@@ -482,15 +485,27 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                     }
                 }
             }
-            connected = true; error = ""
+            connected = true; computerOffline = false; error = ""
         } catch (e: CancellationException) { throw e
         } catch (e: Exception) {
             if (g != generation) return
             connected = false
             if (e is ApiFailure && e.status == 409) { cursor = ""; timeline.reset(); rows = emptyList() }
-            if (e is ApiFailure && e.status in listOf(401, 403)) { loggedIn = false; rows = emptyList(); approvals = emptyList(); questions = emptyList(); timeline.reset(); poll?.cancel(); environment.showLogin() }
-            else error = "连接暂时中断，正在重连。"
+            if (e is ApiFailure && e.status in listOf(401, 403)) { computerOffline = false; loggedIn = false; rows = emptyList(); approvals = emptyList(); questions = emptyList(); timeline.reset(); poll?.cancel(); environment.showLogin() }
+            else describeComputerFailure(g,hostId)
         } finally { if (refreshGeneration == g) { refreshing = false; refreshPhase = "idle" } }
+    }
+    private suspend fun describeComputerFailure(g:Int,originalHost:String) {
+        val directory=try { environment.directory() } catch(e:CancellationException) { throw e } catch(_:Exception) { null }
+        if(g!=generation||hostId!=originalHost)return
+        val hosts=directory?.optJSONArray("hosts")?.objects().orEmpty()
+        val original=hosts.find{originalHost.isNotBlank()&&it.stringOrEmpty("hostId")==originalHost}
+        computerOffline=original!=null&&(original.opt("online")==false||original.optString("status")=="offline")
+        if(hosts.isNotEmpty())computers=hosts
+        if(computerOffline&&original!=null){
+            hostName=original.stringOrEmpty("displayName").ifEmpty{original.stringOrEmpty("name")}.ifEmpty{hostName}
+            error="这台电脑（$hostName）现在离线。上线后可以接着${if(conversationMode=="work")"原来的工作" else "这段对话"}。"
+        }else error="连接暂时中断，正在重连。"
     }
     fun send() = launch {
         if (sending || approvalModeBusy || !canSend || workBusy || uncertain.any { it.optString("state") == "uncertain" } || draft.isBlank() && attachments.isEmpty()) return@launch
