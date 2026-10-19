@@ -50,6 +50,16 @@ internal fun cloudAppFailure(error: Exception): ApiFailure = when(error) {
     else -> ApiFailure(503, "CLOUD_TRANSPORT_UNAVAILABLE")
 }
 
+internal fun cloudAppRequestBody(target: String, method: String, issuer: String, text: String): ByteArray {
+    val bytes = text.toByteArray(Charsets.UTF_8)
+    // Match the cloud's task submit budget: a 64 KiB encrypted envelope plus
+    // its routing fields. Account and other task requests keep the 16 KiB cap.
+    val limit = if (method == "POST" && target == issuer.removeSuffix("/oidc") + "/hosts/offline/tasks/submit")
+        70 * 1024 else 16384
+    require(bytes.size <= limit)
+    return bytes
+}
+
 internal fun cloudAppRouteAllowed(target: String, method: String, host: String, issuer: String): Boolean {
     if (method !in setOf("GET", "POST")) return false
     val cloud = issuer.removeSuffix("/oidc")

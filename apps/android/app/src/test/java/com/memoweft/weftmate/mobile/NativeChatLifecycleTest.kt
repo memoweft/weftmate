@@ -47,6 +47,8 @@ class NativeChatLifecycleTest {
         var account = "mode2a-test-owner"
         var configured = true
         var online = true
+        var offlineReady=false
+        var lastPresentation=""
         var creations = 0
         var sent = 0
         var approval = "auto"
@@ -130,7 +132,7 @@ class NativeChatLifecycleTest {
             else -> JSONObject()
         }
         override suspend fun phone(action: String, params: JSONObject) = JSONObject()
-        override suspend fun presentation(script: String) = JSONObject()
+        override suspend fun presentation(script: String):JSONObject {lastPresentation=script;return JSONObject().put("ready",offlineReady)}
         override suspend fun directory() = JSONObject()
         override fun showLogin() {}
     }
@@ -382,5 +384,24 @@ class NativeChatLifecycleTest {
             until { !f.chat.newWork && f.chat.canSend && !f.chat.submitting }
             f.chat.send(); until { e.sent == 1 }
         } finally { f.close() }
+    }
+    @Test fun offlineTaskEntryRefreshesItsCapabilityWithoutReadingTheDisconnectedComputersProjects() = runBlocking {
+        val e=Environment();val f=Fixture(e)
+        try{
+            f.chat.bootstrap();e.online=false;e.offlineReady=true
+            f.chat.refreshOfflineWorkAvailability().join()
+            assertTrue(f.chat.offlineWorkReady)
+            e.offlineReady=false;f.chat.refreshOfflineWorkAvailability().join();assertFalse(f.chat.offlineWorkReady)
+        }finally{f.close()}
+    }
+    @Test fun aNewOfflineTaskUsesTheDraftRatherThanRepeatingAnEarlierWorkRequest() = runBlocking {
+        val e=Environment();val f=Fixture(e)
+        try{
+            f.chat.bootstrap();f.chat.edit("上线后读一下新的说明")
+            val chat=f.chat.chatId;val session=f.chat.sessionId;val host=f.chat.hostId
+            f.chat.openOfflineWork();until{f.chat.tab=="web-chat"}
+            assertTrue(e.lastPresentation.contains(JSONObject.quote("上线后读一下新的说明")))
+            assertEquals(chat,f.chat.chatId);assertEquals(session,f.chat.sessionId);assertEquals(host,f.chat.hostId)
+        }finally{f.close()}
     }
 }
