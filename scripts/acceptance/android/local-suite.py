@@ -77,7 +77,13 @@ def main():
             call('page', name='chat')
             call('clickLabel', label='打开侧栏')
             shot(f'u1-sidebar-{theme}')
-            call('click', text='设置')
+            call('clickLabel', label='关闭侧栏')
+            call('settings', name='')
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                if '搜索设置' in call('tree')['tree']:
+                    break
+                time.sleep(.2)
             save(f'u1-settings-{theme}-tree', call('tree'))
             shot(f'u1-settings-{theme}')
         call('page', name='chat')

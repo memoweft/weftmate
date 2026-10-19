@@ -77,6 +77,7 @@ class Stage1Driver {
             "click"->{val node=compose.onNodeWithText(request.getString("text"));runCatching{node.performScrollTo()};node.performClick();JSONObject()}
             "clickLabel"->{compose.onNodeWithContentDescription(request.getString("label")).performClick();JSONObject()}
             "scrollText"->{compose.onNodeWithContentDescription(request.optString("list","消息列表")).performScrollToNode(hasText(request.getString("text")));JSONObject()}
+            "historySwipe"->{compose.onNodeWithContentDescription("消息列表").performTouchInput{swipeDown(durationMillis=500)};state()}
             "model"->{runBlocking(Dispatchers.Main){val service=activity.settings.services.first();val model=service.getJSONArray("models").objects().first{it.getString("modelId")==request.getString("id")};activity.settings.chooseModel(service,model)};JSONObject()}
             "tree"->JSONObject().put("tree",compose.onAllNodes(isRoot(),useUnmergedTree=true).fetchSemanticsNodes().indices.joinToString("\n"){index->compose.onAllNodes(isRoot(),useUnmergedTree=true)[index].printToString()})
             "shot"->{val name=request.getString("name");check(name.matches(Regex("[a-zA-Z0-9-]+")));main{activity.hideKeyboard()};compose.mainClock.advanceTimeBy(500);compose.waitForIdle();Thread.sleep(100);File(activity.filesDir,"$name.png").outputStream().use{out->inst.uiAutomation.takeScreenshot().compress(Bitmap.CompressFormat.PNG,100,out)};JSONObject().put("file","$name.png")}
