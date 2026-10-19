@@ -55,6 +55,7 @@ test('W3 selection acknowledged after a discovery tool continues the original tu
     await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'session.message', sessionId, text: 'W3_CONTINUE_ORIGINAL', intent: 'queue' });
     const card = await wait(async () => (await api(`/sessions/${sessionId}/approvals`)).approvals.find((a: any) => a.status === 'pending' && a.intent === 'work-switch'), 'discovery tool switch card');
     await assert.rejects(readFile(join(folder, 'continued.txt')));
+    assert.ok(requests[0].messages.some((m: any) => text(m).includes('文件整理、读写或命令任务，先直接 load_tools')), 'before switching, route file tasks to native file/command tools instead of application automation');
     await api(`/sessions/${sessionId}/approvals/${card.approvalId}`, { requestId: randomUUID(), outcome: 'allowed-once', workProjectId: project.projectId });
     await wait(async () => (await api(`/sessions/${sessionId}/events?limit=200`)).events.some((e: any) => e.type === 'turn.ended'), 'continued turn ends');
     const afterDiscovery = requests.find(body => body.messages.some((m: any) => m.tool_call_id === 'continue-1'));
