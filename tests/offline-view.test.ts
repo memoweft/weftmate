@@ -134,7 +134,7 @@ test('a capable native vault exposes offline computer tasks, seals them natively
 test('explicit offline work entry remains editable while content transport is reconnecting',async()=>{
   const f=fixture();
   const view={ready:true,chatReady:false,taskReady:true,running:false,tasks:[],targets:[],conversations:[],turns:[],snapshot:{recent:[]}};
-  f.environment.WeftOffline.create=async()=>({view:()=>view,sync:async()=>true,check:async()=>({}),close(){}});
+  f.environment.WeftOffline.create=async()=>({view:()=>view,sync:async()=>true,check:async()=>({}),submitTask:async()=>({state:'waiting'}),close(){}});
   f.core.connectionView=()=>({kind:'connecting'});
   const mounted=f.environment.WeftOfflineView.mount({core:f.core,identity:async()=>({origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'})});
   try{
@@ -143,6 +143,8 @@ test('explicit offline work entry remains editable while content transport is re
     const form=f.body.children[0].children.at(-1),input=form.children[0].children.at(-1);
     assert.equal(input.disabled,false,'cloud task submission must not wait for the unavailable content transport');
     assert.equal(form.children[2].disabled,false);
+    await form.listeners.submit({preventDefault(){}});
+    assert.equal(form.children.at(-1).disabled,false,'after acceptance, the explicit task-mode picker must remain usable for another task');
   }finally{mounted.close();}
 });
 test('polling never navigates over approvals; return stays closed on repeated offline ticks', async () => {

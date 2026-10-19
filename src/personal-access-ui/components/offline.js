@@ -66,7 +66,7 @@
         input.disabled = !offline&&!taskMode || !(taskMode?view?.taskReady:view?.chatReady??view?.ready) || view.running;
         send.disabled = input.disabled || !input.value.trim();
         if(taskMode&&input.value.length>8192)send.disabled=true;
-        more.disabled=input.disabled;more.hidden=!view?.ready;
+        more.disabled=!!view?.running||!view?.ready;more.hidden=!view?.ready;
         send.textContent=taskMode?'记下来':'发送';input.maxLength=taskMode?8192:16384;
         status.textContent = error || (view?.running ? '正在回复…' : view?.turns.length ? '电脑上线后自动同步' : '');
         if(taskMode&&!error)status.textContent=view?.taskSending?'正在记下来…':'记下来，等电脑上线后去做';
