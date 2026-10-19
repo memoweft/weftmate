@@ -106,7 +106,7 @@
     for(const id of processed)memoryConversations.add(id);
     if((finished || processed.length) && !value.running && api.active && memoryConversations.size){clearTimeout(memoryTimer);memoryTimer=setTimeout(()=>flushMemory(),20000);}
     state.conversations = value.conversations.map(c => ({ id: c.id, createdAt:new Date(c.turns[0]?.timestamp||Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
-    if (!state.conversationId && value.running) state.conversationId = value.conversations.at(-1)?.id || null;
+    if (!state.conversationId && value.running) state.conversationId = value.sendingConversationId || null;
     renderConversationList(); if (state.page === 'chat' && state.chatSource === 'phone') render(); updateComposer();
     if(state.page==='memory'&&globalThis.WeftPhone?.memoryPending)$('page-content').phoneMemoryPaint?.();
   };
@@ -167,7 +167,7 @@
       const phoneScope={accountId:info.accountId,origin:info.origin};
       const vault = native ? {
         key: () => nativeCall('phone.offline.key'), load: () => nativeCall('phone.offline.load'),
-        save: value => nativeCall('phone.offline.save', { value }), clear: () => nativeCall('phone.offline.clear',phoneScope), close() {},
+        save: value => {if(sessionKey!==next)throw Error('ACCOUNT_SWITCHED');return nativeCall('phone.offline.save', { value,...phoneScope });}, clear: () => nativeCall('phone.offline.clear',phoneScope), close() {},
         open: (envelope, identity) => nativeCall('phone.offline.open', { envelope, identity }),
         complete: async (body, snapshot, signal, onProgress) => {
           if(signal.aborted)throw new DOMException('CANCELLED','AbortError');
