@@ -50,7 +50,7 @@ async function fixture(t: any) {
         : { world_revision: revision, items: params.object_kind === 'cognition' ? worlds : [] };
       if (method === 'query_evidence') return { world_revision: revision, evidence: sources.get(params.evidence_id) };
       if (method === 'preview_recall') return { preview: { recent_evidence: [], pending_corrections: [] } };
-      if (method === 'query_jobs') return { formation_requests: [], jobs: terminalJobs };
+      if (method === 'query_jobs') return { world_revision: revision, formation_requests: [], jobs: terminalJobs };
       if (method === 'preview_forget') {
         const items = worlds.filter(row => ['old', 'green'].includes(row.item_id)).map(row => ({ ...row, name: row.value.content }));
         return { world_revision: revision, items, item_count: items.length, evidence_ids: ['old', 'green'], evidence_count: 2 };
