@@ -69,6 +69,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             return '当前账户的记忆太多，暂时无法完整搜索。为避免遗漏，本次没有显示部分结果，请稍后再试。';
         if (error?.code === 'MEMORY_REVISION_CHANGED')
             return '记忆已更新，页面上的旧内容已清除。搜索条件已保留，请重新查询。';
+        if (error?.code === 'MEMORY_FORMATION_PENDING')
+            return '刚才的对话还在整理，本次没有删除。请稍后返回详情，重新打开遗忘范围并确认。';
         if (error?.code === 'MEMORY_FORGET_INCOMPLETE')
             return '这次没有执行遗忘：相关来源仍无法完整处理。独立记忆和原聊天保留。';
         if (error?.code === 'NETWORK')
@@ -295,6 +297,11 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
                 return;
             const receipt = result?.receipt;
             if (marker.operation === 'delete' && receipt?.requestId === marker.requestId &&
+                receipt.state === 'rejected' && receipt.reasonCode === 'MEMORY_FORMATION_PENDING') {
+                formationPendingForget(marker, key, token, selectedGeneration);
+                return;
+            }
+            if (marker.operation === 'delete' && receipt?.requestId === marker.requestId &&
                 (receipt.state === 'revision_conflict' || receipt.state === 'rejected' && receipt.reasonCode === 'MEMORY_REVISION_CHANGED')) {
                 await refreshChangedForget(marker, key, token, selectedGeneration);
                 return;
@@ -460,6 +467,19 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             effects.renderMemoryMode();
         }
     }
+    function formationPendingForget(marker, key, token, selectedGeneration) {
+        core.clearMemoryMarker(key);
+        core.memory.unresolvedMarker = null;
+        core.memory.activeOperation = null;
+        if (!core.memoryViewCurrent(token) || core.memory.selectedGeneration !== selectedGeneration) return;
+        core.memory.forgetPreview = null;
+        core.memory.forgetPreviewError = core.memoryFailure({ code: 'MEMORY_FORMATION_PENDING' });
+        effects.setMemoryConfirmBusy(false);
+        effects.detailStatus('本次没有删除。');
+        effects.detailError(core.memory.forgetPreviewError);
+        effects.renderMemoryMode();
+    }
+
     async function refreshChangedForget(marker, key, token, selectedGeneration) {
         // A verified rejection means nothing was committed. Only read
         // the new scope; a second user confirmation creates a new command.
@@ -524,6 +544,11 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
                 return;
             const receipt = result?.receipt;
             if (marker.operation === 'delete' && receipt?.requestId === marker.requestId &&
+                receipt.state === 'rejected' && receipt.reasonCode === 'MEMORY_FORMATION_PENDING') {
+                formationPendingForget(marker, key, token, selectedGeneration);
+                return;
+            }
+            if (marker.operation === 'delete' && receipt?.requestId === marker.requestId &&
                 (receipt.state === 'revision_conflict' || receipt.state === 'rejected' && receipt.reasonCode === 'MEMORY_REVISION_CHANGED')) {
                 await refreshChangedForget(marker, key, token, selectedGeneration);
                 return;
@@ -539,6 +564,12 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             if (!core.memoryIdentityCurrent(token) || operationGeneration !== core.memory.operationGeneration)
                 return;
             const receipt = error?.payload?.receipt;
+            if (marker.operation === 'delete' &&
+                (error.code === 'MEMORY_FORMATION_PENDING' && error.payload?.state === 'withheld' ||
+                 receipt?.requestId === marker.requestId && receipt.state === 'rejected' && receipt.reasonCode === 'MEMORY_FORMATION_PENDING')) {
+                formationPendingForget(marker, key, token, selectedGeneration);
+                return;
+            }
             if (core.applyMemoryReceipt(receipt, marker, key, token))
                 return;
             if (marker.operation === 'delete' && error.code === 'MEMORY_REVISION_CHANGED' && error.payload?.state === 'withheld') {
@@ -739,7 +770,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             core.memory.forgetPreview = preview;
         } catch (error) {
             if (!core.memoryViewCurrent(token) || core.memory.selectedGeneration !== generation || core.memory.mode !== 'delete') return;
-            core.memory.forgetPreviewError = '无法读取遗忘范围，请返回详情并重新打开。';
+            core.memory.forgetPreviewError = error?.code === 'MEMORY_FORMATION_PENDING' ? core.memoryFailure(error) : '无法读取遗忘范围，请返回详情并重新打开。';
             effects.detailError(core.memoryFailure(error));
         }
         effects.renderMemoryMode();

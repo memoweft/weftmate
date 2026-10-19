@@ -64,7 +64,7 @@ async function fixture(t: any, mode: 'self-mixed' | 'other-mixed' | 'other-only'
       if (method === 'query_world') return { world_revision: revision, items: rows.filter(row => row.object_kind === params.object_kind) };
       if (method === 'query_evidence') return { world_revision: revision, evidence: sources.get(params.evidence_id) };
       if (method === 'preview_recall') return { preview: { recent_evidence: [], pending_corrections: [] } };
-      if (method === 'query_jobs') return { formation_requests: [] };
+      if (method === 'query_jobs') return { world_revision: revision, formation_requests: [] };
       if (method === 'preview_forget') return { world_revision: revision,
         items: rows.filter(row => row.item_id === params.target_id).map(row => ({ ...row, name: row.value.content })), evidence_ids: ['green-source'] };
       throw Error(method);
