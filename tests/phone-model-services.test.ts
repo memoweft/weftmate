@@ -223,7 +223,7 @@ test('native phone presentation selects the new chat after pending memory, witho
   WeftPhoneModelServices:{create:async()=>({currentModel:()=>model,clear(){}})},
   WeftOffline:{browserVault:async()=>vault,create:async(options:any)=>(engine=await W.create({...options,crypto:webcrypto}))},
   androidBridge:{call:async()=>assert.fail('browser synthetic test cannot read native secrets')},
-  renderConversationList(){},updateComposer(){},status(){},uiCore:{phoneAccountConnection(){}},
+  renderConversationList(){},updateComposer(){},status(){},uiCore:{phoneAccountConnection(){},syncMobileIdentity(){},messageModePreference:()=>'queue'},
   URL,DOMException,AbortController,clearTimeout,setTimeout:()=>0,clearInterval};
  runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js',import.meta.url),'utf8'),context);
  await context.WeftPhone.restoreArchive({origin:'https://synthetic.example',accountId:'test'},{authorized:async()=>({devices:[{isCurrent:true}]})});
