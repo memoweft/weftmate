@@ -1,0 +1,20 @@
+// A separate development host with an explicit, already prepared Core configuration.
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
+import {resolve,join} from 'node:path';
+import {createRequire} from 'node:module';
+import {PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT} from '../../../src/host-mode.mjs';
+const [rootArg,runtimeArg,electronArg]=process.argv.slice(2);
+if(!rootArg||!runtimeArg)throw Error('Usage: prepare-explicit-core.mjs NEW_OUTPUT PREPARED_RUNTIME');
+const root=resolve(rootArg),runtime=resolve(runtimeArg),profile=join(root,'profile');
+const repository=resolve(import.meta.dirname,'../../..');
+if(existsSync(profile))throw Error('Preserve the existing explicit-Core profile');
+const manifest=JSON.parse(await readFile(join(runtime,'MEMORY-RUNTIME.json'),'utf8'));
+await mkdir(profile,{recursive:true});await mkdir(join(root,'work'),{recursive:true});
+await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT),{flag:'wx'});
+const memory=join(root,'memory-config.json'),desktopConfig=join(root,'desktop-config.json');
+await writeFile(memory,JSON.stringify({python:join(runtime,'python/python.exe'),pythonPath:join(runtime,'core/src'),baseUrl:'http://127.0.0.1:1/v1',model:'@current',authRef:'acceptance-current'},null,2),{flag:'wx'});
+await writeFile(desktopConfig,JSON.stringify({schemaVersion:1,dataDirectory:profile,accessPort:0,personalMemoryConfig:memory,workspaceDirectory:join(root,'work'),production:{relayEnabled:false,acmeEnabled:false},updates:{channel:'preview'}},null,2),{flag:'wx'});
+const electron=electronArg?resolve(electronArg):createRequire(import.meta.url)('electron');
+await writeFile(join(root,'installation.json'),JSON.stringify({installedExecutable:electron,profile,desktopConfig,developmentHost:true,environment:'explicit Core development host; supplemental to installed baseline',core:manifest.core,environmentVariables:{MEMOWEFT_SEMANTIC_CACHE_DIR:join(runtime,'models')}},null,2),{flag:'wx'});
+console.log(JSON.stringify({profileCreated:true,explicitCore:true,core:manifest.core}));

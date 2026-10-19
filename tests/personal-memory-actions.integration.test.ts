@@ -33,7 +33,7 @@ function boundary(text: string, sessionId: string) {
   ]
   return assertOwnerBoundBoundary(sessionId, boundaryForCompletedTurn({ id: sessionId, header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))
 }
-async function fixture(t: any, { interpret = null, misattribute = false, birthdayContract = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。', cleanupDeletedMemory = null }: { interpret?: ((payload: any) => any) | null, misattribute?: boolean, birthdayContract?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string, cleanupDeletedMemory?: ((owner: string, input: any) => Promise<void>) | null } = {}) {
+async function fixture(t: any, { interpret = null, misattribute = false, birthdayContract = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。', cleanupDeletedMemory = null, inspectDecision = null }: { inspectDecision?: ((input: any, tool: string) => void) | null, interpret?: ((payload: any) => any) | null, misattribute?: boolean, birthdayContract?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string, cleanupDeletedMemory?: ((owner: string, input: any) => Promise<void>) | null } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
   let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false, unavailableText = ''
   let recoveryGate: { entered: () => void, pending: Promise<void> } | null = null
@@ -53,6 +53,7 @@ async function fixture(t: any, { interpret = null, misattribute = false, birthda
           return
         }
         const input = JSON.parse(request.messages.at(-1).content)
+        inspectDecision?.(input, decisionTool)
         const value = decisionTool === 'classify_forget_request' ? {
           isForgetRequest: !/如果|哪些|翻译/.test(input.message), conditionsOrQuestions: /如果|哪些/.test(input.message),
           subject: input.message.includes('妈妈') ? 'other:妈妈' : input.message.includes('林舟') ? 'other:林舟' : 'self',
@@ -1349,4 +1350,37 @@ test('review-4 real Core: deleting through the memory page also erases pending-a
   assert.doesNotMatch(state, /红茶/)
   await f.restart()
   assert.doesNotMatch(await readFile(path.join(f.root, 'accounts', owner, 'memory-home', 'pending-actions.json'), 'utf8'), /红茶/)
+})
+
+
+test('M7: the judge receives Core revision links and the whole user request before deleting an old value', { skip }, async t => {
+  let oldId = '', newId = '', inspected = 0
+  const message = '请立即永久删除我喜欢喝红茶的这条记忆。'
+  const f = await fixture(t, { seedText: '我喜欢喝红茶。', interpret: payload => {
+    const e = payload.evidence[0]
+    return { schema_version: 8, result: 'cognitions', cognitions: [{ action: 'form', target: 'owner_self',
+      statement_kind: 'preference', formed_by: 'stated', proposition: e.text,
+      supports: [{ evidence_id: e.id, sentence_id: 't0' }],
+      ...(e.text.includes('绿茶') ? { supersedes_cognition_id: oldId } : {}) }] }
+  }, inspectDecision: (input, tool) => {
+    if (tool !== 'classify_forget_candidates') return
+    inspected++
+    assert.equal(input.request.originalMessage, message)
+    assert.equal(input.request.revisionChains.length, 1)
+    assert.deepEqual(new Set(input.request.revisionChains[0].map(row => row.key)), new Set([`cognition:${oldId}`, `cognition:${newId}`]))
+    assert.ok(input.request.revisionChains[0].every(row => row.graphSubject === 'self'))
+  } })
+  oldId = (await f.world()).items[0].item_id
+  await f.manager.ingest(owner, boundary('我其实更喜欢绿茶。', 'changed-green'))
+  newId = await wait(async () => (await f.world()).items.find(row => row.item_id !== oldId)?.item_id)
+  await f.manager.ingest(owner, boundary('我周末喜欢散步。', 'independent-walk'))
+  await wait(async () => (await f.world()).items.some(row => row.value.content.includes('散步')))
+  const result = await f.tool('memory_forget_request', {}, 'forget-old-value', message)
+  assert.equal(result.state, 'applied')
+  assert.ok(inspected > 0)
+  assert.deepEqual(f.errors, [])
+  const remaining = (await f.world()).items
+  assert.equal(remaining.length, 1)
+  assert.match(remaining[0].value.content, /散步/)
+  assert.doesNotMatch(JSON.stringify(await f.manager.portableExport(owner)), /红茶|绿茶/)
 })
