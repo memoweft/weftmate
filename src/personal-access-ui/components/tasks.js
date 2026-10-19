@@ -102,7 +102,10 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
                 continue;
             if (card && anchor && anchor.nextSibling !== card)
                 list.insertBefore(card, anchor.nextSibling);
-            const signature = JSON.stringify([payload, entry.notice]);
+            const timelineEvents = core.timelineEventsForContext(context);
+            const sourceEvent = timelineEvents.find(event => event.type === 'user.message' && event.data?.receiptId === receiptId);
+            const language = sourceEvent ? core.progressLanguage(timelineEvents, { seq:sourceEvent.seq, steps:[{sessionId:context.sessionId}] }) : undefined;
+            const signature = JSON.stringify([payload, entry.notice, language]);
             const scope = JSON.stringify([context.ownerId, context.identity, context.source, context.sessionId,
                 context.conversationId, entry.taskId]);
             if (card?.dataset.signature === signature && card.dataset.scope === scope)
@@ -129,7 +132,7 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
             if (outputLimited) card.append(ui.element('strong', 'conversation-task-title', '回复状态'));
             if (entry.notice) card.append(ui.element('p', 'conversation-task-notice', entry.notice));
             if (steps.length && !hasTimeline) {
-                const view = core.progressText(steps.map(step => ({ ...step, summary: step.summary || core.executionName(step) })), {terminal:['completed','failed','aborted','blocked'].includes(payload?.replyEvidence?.status)||control?.state==='stopped', reason:payload?.replyEvidence?.status==='completed'?'completed':control?.state==='stopped'?'aborted':payload?.replyEvidence?.status, endReasonKind:payload?.replyEvidence?.endReasonKind});
+                const view = core.progressText(steps.map(step => ({ ...step, summary: step.summary || core.executionName(step) })), {language,terminal:['completed','failed','aborted','blocked'].includes(payload?.replyEvidence?.status)||control?.state==='stopped', reason:payload?.replyEvidence?.status==='completed'?'completed':control?.state==='stopped'?'aborted':payload?.replyEvidence?.status, endReasonKind:payload?.replyEvidence?.endReasonKind});
                 card.classList.toggle('has-failure', !!view.failed);
                 const details = ui.element('details', 'execution-block'); details.open = expanded || !!view.failed && card.dataset.failed !== 'true'; card.dataset.failed = String(!!view.failed);
                 const summary = ui.element('summary', 'inline-progress-summary', view.text); summary.setAttribute('role', 'button');
@@ -139,9 +142,9 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
                 summary.dataset.conversationTaskAction = 'more';
                 const records = ui.element('div', 'execution-records');
                 for (const step of steps) {
-                    const presentation = core.stepPresentation(step,{reason:payload?.replyEvidence?.status==='completed'?'completed':control?.state==='stopped'?'aborted':payload?.replyEvidence?.status});
-                    if (!['issue','failed'].includes(presentation.state)) presentation.statusText = step.jobState ? core.executionProgress(step) : presentation.state==='cancelled' ? presentation.statusText : core.executionProgress(step);
-                    records.append(globalThis.WeftTimelineCards.step({ ...presentation, stepId:step.executionId,summary:core.executionName(step) },savedSteps.get(step.executionId),view.running,{}));
+                    const presentation = core.stepPresentation({...step,language},{reason:payload?.replyEvidence?.status==='completed'?'completed':control?.state==='stopped'?'aborted':payload?.replyEvidence?.status});
+                    if (language !== 'en' && !['issue','failed'].includes(presentation.state)) presentation.statusText = step.jobState ? core.executionProgress(step) : presentation.state==='cancelled' ? presentation.statusText : core.executionProgress(step);
+                    records.append(globalThis.WeftTimelineCards.step({ ...presentation, stepId:step.executionId,summary:language === 'en' ? presentation.summary : core.executionName(step) },savedSteps.get(step.executionId),view.running,{}));
                 }
                 details.append(summary, records); card.append(details);
             }

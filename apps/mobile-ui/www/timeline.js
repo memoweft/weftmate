@@ -24,7 +24,10 @@
     if (waiting) put('waiting', Math.max(started.seq, ...ordered.filter(event => event.type === 'user.message' && event.seq > started.seq).map(event => event.seq)) + 0.1, row => {
       row.classList.add('inline-waiting'); row.setAttribute('role', 'status')
       let text=row.querySelector('.inline-progress-text');if(!text){text=node('span','inline-progress-text is-running');row.replaceChildren(text)}
-      if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,options.waiting,true);else text.textContent=options.waiting
+      const seq = Math.max(started.seq, ...ordered.filter(event => event.type === 'user.message' && event.seq > started.seq).map(event => event.seq))
+      const language = WeftUiCore.progressLanguage(ordered, {seq,steps:[{sessionId:started.sessionId || started.sourceRef?.sessionId}]})
+      const label = WeftUiCore.progressWaitingText(options.waiting, language)
+      if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,label,true);else text.textContent=label
     })
     for (const block of groups) put(`steps-${block.seq}`, WeftUiCore.progressPosition(ordered, block), row => {
       block.steps = block.steps.map(step=>globalThis.WeftUiCore.executionPresentation(step,options.executions))
@@ -34,7 +37,7 @@
       for (const step of block.steps) {
         const seq = step.detailRef?.seq, cached = row.progressDetails.get(seq)
         if (cached && cached !== 'loading') {
-          step.summary = cached.summary; step.arguments = cached.arguments; step.interrupted = cached.interrupted
+          step.summary = block.language === 'en' ? globalThis.WeftUiCore.toolSummary(step.toolName, cached.arguments || step.arguments, block.language) : cached.summary; step.arguments = cached.arguments; step.interrupted = cached.interrupted
         } else if (Number.isSafeInteger(seq) && !cached && options.readDetail && (expandedForObjects || step === currentForObjects || step.state === 'failed')) {
           row.progressDetails.set(seq, 'loading')
           void options.readDetail(seq).then(data => {
@@ -45,11 +48,19 @@
         }
       }
       const previous = row.querySelector('details')
-      const outcome = globalThis.WeftUiCore.turnOutcome(ordered, block.taskId,options.stopViews?.[block.taskId])
-      const terminal = outcome.terminal
+      const stopView = options.stopViews?.[block.taskId]
+      const outcome = globalThis.WeftUiCore.turnOutcome(ordered, block.taskId,stopView)
+      const terminal = outcome.terminal || stopView?.terminal
       const lastBlock = groups.filter(group=>group.taskId===block.taskId).at(-1) === block
       const displayOutcome = (!lastBlock || options.quietFailure) && ['error','failed','blocked'].includes(outcome.reason) ? {...outcome,reason:'ended'} : outcome
-      const view = globalThis.WeftUiCore.progressText(block.steps, displayOutcome), running = view.running
+      const view = globalThis.WeftUiCore.progressText(block.steps, displayOutcome)
+      if (stopView && !stopView.terminal) { view.text += ` · ${WeftUiCore.progressWaitingText(stopView.text, block.language)}`; view.running = true }
+      if (options.waiting && !stopView && !terminal && !view.running && !view.failed &&
+          block === groups.at(-1) && started && block.seq > started.seq &&
+          block.steps.every(step => WeftUiCore.executionState(step) === 'completed')) {
+        view.text += ` · ${WeftUiCore.progressWaitingText(options.waiting, block.language)}`; view.running = true
+      }
+      const running = view.running
       const signature = JSON.stringify([block, terminal, view])
       if (row.dataset.signature === signature) return
       row.dataset.signature = signature
@@ -70,15 +81,16 @@
       const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true')
       if (window.WeftIcons) arrow.append(window.WeftIcons.create('chevron', 16))
       summary.append(arrow)
-      const accessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${view.text}，${details.open ? '已展开' : '已收起'}`) }
+      const accessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${view.text}${block.language === 'en' ? details.open ? ', expanded' : ', collapsed' : details.open ? '，已展开' : '，已收起'}`) }
       details.addEventListener('toggle', () => { accessibility(); if (details.open && details.isConnected) renderCurrent() }); accessibility()
       const records = node('div', 'execution-records')
       details.append(summary, records)
       for (const rawStep of block.steps) {
         const step = globalThis.WeftUiCore.stepPresentation(rawStep,displayOutcome)
-        const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || '工具执行'}${step.statusText ? ` · ${step.statusText}` : step.state === 'failed' ? ' · 遇到问题' : step.state === 'cancelled' ? ' · 已停止' : step.state === 'running' && running ? ' · 运行中' : ''}${step.approvalText ? ` · ${step.approvalText}` : ''}`)
+        const english = step.language === 'en'
+        const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || (english ? 'Tool execution' : '工具执行')}${step.statusText ? ` · ${step.statusText}` : step.state === 'failed' ? english ? ' · Encountered an issue' : ' · 遇到问题' : step.state === 'cancelled' ? english ? ' · Stopped' : ' · 已停止' : step.state === 'running' && running ? english ? ' · Running' : ' · 运行中' : ''}${step.approvalText ? ` · ${step.approvalText}` : ''}`)
         const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true'); label.append(arrow)
-        const output = node('pre', 'timeline-raw'), copy = node('button', 'timeline-action', '复制')
+        const output = node('pre', 'timeline-raw'), copy = node('button', 'timeline-action', english ? 'Copy' : '复制')
         detail.dataset.step = String(step.stepId)
         detail.dataset.state = step.state
         detail.dataset.detailSeq = String(step.detailRef?.seq ?? '')
@@ -90,19 +102,19 @@
         }
         copy.type = 'button'; copy.hidden = true
         if (detail.dataset.loaded === 'true') copy.hidden = false
-        copy.addEventListener('click', async () => { try { if (options.copyText) await options.copyText(output.textContent); else await navigator.clipboard.writeText(output.textContent); copy.textContent = '已复制' } catch { copy.textContent = '复制未完成' } })
-        const resources = node('button', 'timeline-action step-resources', '查看使用的来源'); resources.type = 'button'
+        copy.addEventListener('click', async () => { try { if (options.copyText) await options.copyText(output.textContent); else await navigator.clipboard.writeText(output.textContent); copy.textContent = english ? 'Copied' : '已复制' } catch { copy.textContent = english ? 'Could not copy' : '复制未完成' } })
+        const resources = node('button', 'timeline-action step-resources', english ? 'View sources used' : '查看使用的来源'); resources.type = 'button'
         resources.addEventListener('click', () => options.openStep?.(step, resources))
         detail.append(label, resources, output, copy)
         if (detail.dataset.loaded === 'true') appendReferences(detail.rawText || output.textContent, detail, options)
         detail.addEventListener('toggle', async () => {
           if (!detail.open || detail.dataset.loaded || !step.detailRef) return
-          detail.dataset.loaded = 'loading'; output.textContent = '正在读取…'
+          detail.dataset.loaded = 'loading'; output.textContent = english ? 'Loading…' : '正在读取…'
           try { const data = await options.readDetail(step.detailRef.seq)
             if (!detail.isConnected) return
-            output.textContent = `${WeftUiCore.executionDetailText(data.text || '')}${data.truncated ? '\n[内容已截断]' : ''}`; detail.rawText = data.text; copy.hidden = false; detail.dataset.loaded = 'true'
+            output.textContent = `${WeftUiCore.executionDetailText(data.text || '', step.language)}${data.truncated ? english ? '\n[Content truncated]' : '\n[内容已截断]' : ''}`; detail.rawText = data.text; copy.hidden = false; detail.dataset.loaded = 'true'
             appendReferences(data.text, detail, options)
-          } catch { output.textContent = '暂时无法读取，收起后可重试。'; delete detail.dataset.loaded }
+          } catch { output.textContent = english ? 'Could not load. Collapse and reopen to retry.' : '暂时无法读取，收起后可重试。'; delete detail.dataset.loaded }
         })
         records.append(detail)
       }
