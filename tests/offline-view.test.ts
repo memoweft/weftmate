@@ -91,7 +91,7 @@ test('native phone vault without seal keeps cloud-supported tasks hidden and off
   assert.ok(!/失败|错误|暂时无法|回复未完成/.test(text(f.body)));mounted.close();
 });
 test('a capable native vault exposes offline computer tasks, seals them natively and keeps queue cancellation usable',async()=>{
-  const f=fixture(),calls:any[]=[],cancelEntries:any[]=[];
+  const f=fixture(),goalsCore:any={},calls:any[]=[],cancelEntries:any[]=[];
   f.environment.WeftPopover={menu:(_anchor:any,entries:any[])=>cancelEntries.splice(0,cancelEntries.length,...entries)};
   const current={origin:'synthetic',ownerId:'owner',deviceId:'cookie',hostId:'host'};
   const control={authorized:true,accountId:'cloud-account',hostId:'host',generation:1,capabilities:{offlineTasks:1}};
@@ -113,7 +113,7 @@ test('a capable native vault exposes offline computer tasks, seals them natively
     if(method==='offline.seal')return {version:1,ciphertext:'native-sealed-synthetic'};
     throw Error('Unexpected native call: '+method);
   };
-  const mounted=f.environment.WeftOfflineView.mount({core:f.core,identity:async()=>current,nativeCall,nativeTaskVault:true,host:async()=>{throw {code:'HOST_OFFLINE'};}});
+  const mounted=f.environment.WeftOfflineView.mount({core:f.core,goalsCore,identity:async()=>current,nativeCall,nativeTaskVault:true,host:async()=>{throw {code:'HOST_OFFLINE'};}});
   try{
     await new Promise(resolve=>setImmediate(resolve));await mounted.tick();
     assert.equal(f.core.offlineWorkReady(),true,'authenticated recipient plus native task capability must enable the task entry');

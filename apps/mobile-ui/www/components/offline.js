@@ -91,7 +91,7 @@
           if(!['waiting','claimed'].includes(task.state))return;
           const cancel=element('button','取消这件事');cancel.type='button';
           cancel.onclick=()=>WeftPopover.menu(cancel,[{name:'确认取消',action:async()=>{
-            try{await core.cancelOfflineTask(task.id);error='';}catch(cause){error=cause.userMessage||'取消未完成，请检查网络后重试。';}paint();
+            try{await goalsCore.cancelOfflineTask(task.id);error='';}catch(cause){error=cause.userMessage||'取消未完成，请检查网络后重试。';}paint();
           }}]);row.append(cancel);
         }
         for (const message of rows) {
