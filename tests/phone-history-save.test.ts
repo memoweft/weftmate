@@ -78,3 +78,28 @@ test('capacity failure while saving a reply pauses later inputs with the capacit
  assert.equal(calls,1);assert.deepEqual(engine.view().pendingMessages.map((p:any)=>p.text),['第二条']);
  assert.match(engine.view().queueError,/保存上限/);assert.match(engine.view().queueError,/更多.*删除对话/);
 });
+
+
+test('native long-history progress keeps the account engine live without repainting the covered webpage',async t=>{
+ const identity={accountId:'native-history',origin:'local',localOnly:true};let engine:any,paints=0;
+ const turns=Array.from({length:600},(_,i)=>({id:'old-'+i,conversationId:'long',timestamp:i,messages:[{role:'user',text:'旧问题'+i},{role:'assistant',text:'旧回复'+i}]}));
+ const context:any={window:{weftNative:true},weftNativeChatActive:true,
+  state:{booted:true,loggedIn:true,connection:'phone',page:'settings',conversationId:'long',model:{modelId:'synthetic',endpoint:'https://synthetic.example/v1'}},
+  document:{addEventListener(){}},addEventListener(){},clearTimeout,setTimeout:()=>0,
+  renderConversationList(){paints++},updateComposer(){paints++},uiCore:{syncMobileIdentity(){},messageModePreference:()=>'queue'},
+  WeftOffline:{...W,create:async(options:any)=>(engine=await W.create({...options,crypto:webcrypto}))},
+  androidBridge:{call:async(method:string)=>{
+   if(method==='phone.identity')return identity;
+   if(method==='phone.offline.load')return JSON.parse(JSON.stringify({snapshot:null,turns,conversations:[{id:'long',turns}]}));
+   if(method==='phone.offline.save')return{saved:true};
+   if(method==='phone.complete'){for(const text of ['一','一二','一二三'])context.WeftPhone.event({event:'phone.progress',data:{text}});return{choices:[{message:{content:'完整新回复'}}]};}
+   assert.fail(method);
+  }}};
+ runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js',import.meta.url),'utf8'),context);
+ await context.WeftPhone.restoreArchive(identity,{});t.after(()=>engine.close());
+ await context.WeftPhone.presentation('send',{text:'新的输入',conversationId:'long'});await until(()=>!engine.view().running);
+ assert.equal(engine.view().conversations[0].turns.length,601);
+ assert.equal(engine.view().conversations[0].turns.at(-1).messages[1].text,'完整新回复');
+ assert.equal(paints,0,'covered native webpage must not rebuild its long history on each progress/save event');
+ context.weftNativeChatActive=false;await engine.saveComposer('long','回到完整页面');assert.ok(paints>0,'visible webpage keeps its normal repaint path');
+});
