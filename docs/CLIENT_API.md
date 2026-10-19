@@ -710,7 +710,7 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 | `POST /personal/v1/cloud/hosts/offline/tasks/cancel` | `{hostId,id}` | 同条状态，`canceled` 后云密文已删除；409 `TASK_ALREADY_RECEIVED` 表示电脑已接收，沿原 `/tasks/{id}/stop` 停止 |
 | `POST /personal/v1/cloud/hosts/offline/tasks/clear` | `{}` | `{deleted:true}`，当前手机所有目标电脑的云记录删除；退出先清理再撤销原凭据 |
 
-状态为 `waiting/claimed/received/started/completed/failed/expired/canceled`；客户端正文／摘要只读自己设备的加密保管库。64 KiB 单信封、每账户100件尚未终结事项、7天自动过期；领取回执保留到执行终结，终态元数据7天后清除。接口每账户每分钟120次，429 `RATE_LIMITED`；容量429 `CAPACITY_LIMIT`，正文413 `BODY_TOO_LARGE`；授权403 `DEVICE_NOT_TRUSTED`，旧代次409 `OFFLINE_RESET_REQUIRED`。取消可在 `waiting/claimed` 时提交；取消与电脑确认按云事务先后决定，不冒称已取消正在执行的操作。
+状态为 `waiting/claimed/received/started/completed/failed/expired/canceled`；客户端正文／摘要只读自己设备的加密保管库。任务提交完整请求体最多 70 KiB；安卓 `cloud.app.request` 自 `0.8.44/code57` 起仅对配置云来源的精确 POST 提交路由采用相同上限，其他账号／任务请求仍为 16 KiB。64 KiB 单信封、每账户100件尚未终结事项、7天自动过期；领取回执保留到执行终结，终态元数据7天后清除。接口每账户每分钟120次，429 `RATE_LIMITED`；容量429 `CAPACITY_LIMIT`，正文413 `BODY_TOO_LARGE`；授权403 `DEVICE_NOT_TRUSTED`，旧代次409 `OFFLINE_RESET_REQUIRED`。取消可在 `waiting/claimed` 时提交；取消与电脑确认按云事务先后决定，不冒称已取消正在执行的操作。
 
 电脑安装签名 `POST /personal/v1/cloud/hosts/offline/tasks/claim|ack|result` 的契约见 [云端接口](../services/cloud/README.md)。领取按创建序号，确认前持久登记原 `session.message` 与 `mode:"queue"`、确认后删云密文、再派发；任务 ID 复用原命令避免重启／重复领取另建任务。权限与审批沿原对话、项目及账号规则，来源不放宽权限。登录寿命到期不取消已登记的物理设备意图，但撤权／账号退出／代次变化仍禁止派发。
 
