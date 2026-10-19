@@ -14,7 +14,7 @@ import { createRuntimePhaseDiagnostics } from './helpers/runtime-phase-diagnosti
 const text = (m: any) => typeof m.content === 'string' ? m.content : (m.content || []).filter((p: any) => p.type === 'text').map((p: any) => p.text).join('');
 async function links(directory: string) { for (const row of await readdir(directory, { withFileTypes: true })) { const path = join(directory, row.name);
   if ((await lstat(path)).isSymbolicLink()) await unlink(path); else if (row.isDirectory()) await links(path); } }
-test('W3 selection acknowledged after a discovery tool continues the original turn, not just a plan', { timeout: 90000 }, async () => {
+for (const { failedDiscovery, failRecovery } of [{ failedDiscovery: false, failRecovery: false }, { failedDiscovery: true, failRecovery: false }, { failedDiscovery: true, failRecovery: true }]) test(`W3 selection ${failRecovery ? 'bounds native recovery to once' : 'continues the original turn'} after ${failedDiscovery ? 'a failed discovery and a text-only plan' : 'a discovery tool'}`, { timeout: 90000 }, async () => {
   const root = await mkdtemp(join(tmpdir(), 'work-continuation-')), logs: string[] = [], requests: any[] = [];
   let host: any, runtime: any;
   const respond = (body: any) => {
@@ -25,12 +25,17 @@ test('W3 selection acknowledged after a discovery tool continues the original tu
     const calls = body.messages.slice(user + 1).flatMap((m: any) => m.tool_calls || []);
     const step = calls.length;
     const continuation = body.messages.slice(user + 1).find((m: any) => text(m).includes('文件夹选择已完成'));
+    const recovery = body.messages.slice(user + 1).some((m: any) => text(m).includes('刚才的电脑操作未完成'));
     // A discovery call can trigger the card without doing the requested work.
     // Model the reported ambiguity: absent acknowledgement it stops with a plan.
     if (step >= 2 && !continuation) return { content: '切换到工作模式后，我会继续处理，请选择文件夹。' };
-    const name = step === 0 || step === 2 ? 'load_tools' : step === 1 ? 'glob' : 'write';
+    if (step >= 2 && failedDiscovery && !recovery) return { content: '没有出现选择文件夹的界面，请重试切换。' };
+    if (failRecovery && step >= 3) return { content: '电脑操作仍未完成。' };
+    if (failRecovery && step === 2) return { content: '', tool_calls: [{ id: 'continue-2', type: 'function', function: { name: 'read', arguments: '{"file_path":"still-missing.txt"}' } }] };
+    const discovery = failedDiscovery ? 'read' : 'glob';
+    const name = step === 0 || step === 2 ? 'load_tools' : step === 1 ? discovery : 'write';
     if (step >= 4) return { content: '已实际完成原请求。' };
-    const args = step === 0 ? { names: ['glob'] } : step === 1 ? { pattern: '*' } : step === 2 ? { names: ['write'] } : { file_path: 'continued.txt', content: 'original-turn-completed' };
+    const args = step === 0 ? { names: [discovery] } : step === 1 ? failedDiscovery ? { file_path: 'missing-discovery.txt' } : { pattern: '*' } : step === 2 ? { names: ['write'] } : { file_path: 'continued.txt', content: 'original-turn-completed' };
     return { content: '', tool_calls: [{ id: `continue-${step}`, type: 'function', function: { name, arguments: JSON.stringify(args) } }] };
   };
   const wait = async (read: () => Promise<any>, label: string) => {
@@ -61,9 +66,12 @@ test('W3 selection acknowledged after a discovery tool continues the original tu
     const afterDiscovery = requests.find(body => body.messages.some((m: any) => m.tool_call_id === 'continue-1'));
     assert.ok(afterDiscovery, 'original discovery call must resume in the existing native turn');
     assert.ok(afterDiscovery.messages.some((m: any) => text(m).includes('文件夹选择已完成') && text(m).includes(project.name)), 'next model step must acknowledge the completed selection and continue the original goal');
-    assert.equal(await readFile(join(folder, 'continued.txt'), 'utf8'), 'original-turn-completed');
+    if (failRecovery) { await assert.rejects(readFile(join(folder, 'continued.txt'))); assert.equal(requests.length, 5, 'a second failure must end instead of looping'); }
+    else assert.equal(await readFile(join(folder, 'continued.txt'), 'utf8'), 'original-turn-completed');
+    assert.equal(requests.at(-1).messages.filter((m: any) => text(m).includes('刚才的电脑操作未完成')).length, failedDiscovery ? 1 : 0, 'one native recovery message, never repeated');
     const events = (await api(`/sessions/${sessionId}/events?limit=200`)).events;
     assert.equal(events.filter((e: any) => e.type === 'user.message' && e.data?.text === 'W3_CONTINUE_ORIGINAL').length, 1, 'do not resend the user request');
+    assert.equal(events.filter((e: any) => e.type === 'turn.ended').length, 1, 'recovery stays inside the original turn');
     assert.equal((await api(`/sessions/${sessionId}/approvals`)).approvals.filter((a: any) => a.status === 'pending').length, 0);
   } finally { await runtime?.close(); await host?.close(); await links(root); await rm(root, { recursive: true, force: true }); }
 });

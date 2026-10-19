@@ -1,11 +1,28 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { toolNeedsComputer, workContinuationPrompt, WORK_SWITCH_REASON } from '../src/plugins/personal-work-mode.mjs';
+import { toolNeedsComputer, workContinuationPrompt, workFailureNeedsContinuation, WORK_SWITCH_REASON } from '../src/plugins/personal-work-mode.mjs';
 import { bindConversationWork, conversationMode, modeProjection } from '../src/personal-access/work-and-chat.mjs';
 import { reconcileChatIdentity, validateChatIdentity } from '../src/personal-access/chat-identity.mjs';
 
 (globalThis as any).WeftUiCore ??= { factories: {} };
 await import('../src/ui-core/work-and-chat.js');
+
+test('W3 failed-operation recovery preserves refusal, request failure and output-limit boundaries', () => {
+  const policy = { conversationMode: 'work', project: { name: '合成目录', rootPath: '/synthetic' } };
+  const events: any[] = [{ type: 'turn/start' }, { type: 'user/message', data: { source: { kind: 'user' } } },
+    { type: 'approval/asked', data: { id: 'switch', reason: WORK_SWITCH_REASON } }, { type: 'approval/decided', data: { id: 'switch', outcome: 'allowed-once' } },
+    { type: 'tool/call', data: { callId: 'failed', name: 'read' } },
+    { type: 'tool/result', data: { message: { content: [{ type: 'tool-result', toolCallId: 'failed', isError: true }] } } },
+    { type: 'assistant/chunk', data: { chunk: { type: 'finish', reason: { kind: 'stop' } } } }];
+  const check = (rows = events) => workFailureNeedsContinuation({ events: rows }, policy);
+  assert.equal(check(), true);
+  for (const outcome of ['rejected', 'cancelled', 'unavailable']) assert.equal(check([...events, { type: 'approval/decided', data: { id: 'risk', outcome } }]), false, outcome);
+  for (const kind of ['max-tokens', 'error', 'aborted']) assert.equal(check([...events, { type: 'assistant/chunk', data: { chunk: { type: 'finish', reason: { kind } } } }]), false, kind);
+  assert.equal(check([...events, { type: 'tool/result', data: { message: { content: [{ type: 'tool-result', toolCallId: 'failed', isError: false }] } } }]), false, 'do not repeat a successful effect');
+  assert.equal(check([...events, { type: 'user/message', data: { source: { kind: 'user' } } }]), false, 'a later user instruction must not revive the original request');
+  assert.equal(check([...events, { type: 'turn/end' }]), false);
+  const loader = structuredClone(events); loader[4].data.name = 'load_tools'; assert.equal(check(loader), false, 'native loader recovery already owns this failure');
+});
 
 test('W3 acknowledgement requires this turn\'s granted switch and expires at stop or the next user turn', () => {
   const start = { type: 'turn/start', data: { turn: 1 } };
