@@ -8,10 +8,11 @@
         return n;
     };
     function stepCard(step, saved, running, options) {
-        const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || '工具执行'}${step.statusText ? ` · ${step.statusText}` : step.state === 'failed' ? ' · 遇到问题' : step.state === 'cancelled' ? ' · 已停止' : step.state === 'running' && running ? ' · 运行中' : ''}${step.approvalText ? ` · ${step.approvalText}` : ''}`);
+        const english = step.language === 'en';
+        const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || (english ? 'Tool execution' : '工具执行')}${step.statusText ? ` · ${step.statusText}` : step.state === 'failed' ? english ? ' · Encountered an issue' : ' · 遇到问题' : step.state === 'cancelled' ? english ? ' · Stopped' : ' · 已停止' : step.state === 'running' && running ? english ? ' · Running' : ' · 运行中' : ''}${step.approvalText ? ` · ${step.approvalText}` : ''}`);
         const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true');
         arrow.append(window.WeftIcons.create('chevron', 16)); label.append(arrow);
-        const output = node('pre', 'timeline-raw'), copy = node('button', 'timeline-action', '复制');
+        const output = node('pre', 'timeline-raw'), copy = node('button', 'timeline-action', english ? 'Copy' : '复制');
         detail.dataset.step = String(step.stepId);
         detail.dataset.state = step.state;
         detail.dataset.detailSeq = String(step.detailRef?.seq ?? '');
@@ -34,13 +35,13 @@
                     await options.copyText(output.textContent);
                 else
                     await navigator.clipboard.writeText(output.textContent);
-                copy.textContent = '已复制';
+                copy.textContent = english ? 'Copied' : '已复制';
             }
             catch {
-                copy.textContent = '复制未完成';
+                copy.textContent = english ? 'Could not copy' : '复制未完成';
             }
         });
-        const resources = node('button', 'timeline-action step-resources', '查看使用的来源');
+        const resources = node('button', 'timeline-action step-resources', english ? 'View sources used' : '查看使用的来源');
         resources.type = 'button';
         resources.addEventListener('click', () => options.openStep?.(step, resources));
         detail.append(label, resources, output, copy);
@@ -51,19 +52,19 @@
             if (!detail.open || detail.dataset.loaded || !step.detailRef)
                 return;
             detail.dataset.loaded = 'loading';
-            output.textContent = '正在读取…';
+            output.textContent = english ? 'Loading…' : '正在读取…';
             try {
                 const data = await options.readDetail(step.detailRef.seq);
                 if (!detail.isConnected)
                     return;
-                output.textContent = `${globalThis.WeftUiCore.executionDetailText(data.text || '')}${data.truncated ? '\n[内容已截断]' : ''}`;
+                output.textContent = `${globalThis.WeftUiCore.executionDetailText(data.text || '', step.language)}${data.truncated ? english ? '\n[Content truncated]' : '\n[内容已截断]' : ''}`;
                 detail.rawText = data.text;
                 copy.hidden = false;
                 detail.dataset.loaded = 'true';
                 appendReferences(data.text, detail, options);
             }
             catch {
-                output.textContent = '暂时无法读取，收起后可重试。';
+                output.textContent = english ? 'Could not load. Collapse and reopen to retry.' : '暂时无法读取，收起后可重试。';
                 delete detail.dataset.loaded;
             }
         });

@@ -7,17 +7,18 @@ async function setup(extra:any={}){
   const ctx=vm.createContext({Date,Map,Set,Promise,URL,JSON,console,globalThis:null});ctx.globalThis=ctx;
   ctx.WeftUiCore={factories:{}};vm.runInContext(await readFile('src/ui-core/computers.js','utf8'),ctx);
   const calls:any[]=[],prefs=new Map();const core:any={state:{cloudAuth:{sub:'synthetic'},hostId:'a',sessions:[]},
-    accessApi:async(path:string,options:any={})=>{calls.push({host:'a',path,options});return path.startsWith('/sessions')?{sessions:[{sessionId:'a-session',title:'A'}]}:{projects:[]};},
+    accessApi:async(path:string,options:any={})=>{calls.push({host:'a',path,options});return path.startsWith('/sessions')?{sessions:extra.localSessions||[{sessionId:'a-session',title:'A'}]}:{projects:[]};},
     selectSession:async()=>{},startNewConversation:()=>{},clearSession:()=>{},cloudCurrentComputer:()=> 'a',
     cloudConnect:async(id:string)=>({hostId:id,status:'online',baseUrl:'https://'+id+'.example.com'}),
     cloudComputerCapabilities:async()=>({cloudChannel:1}),
     cloudComputerChannel:async()=>({token:'synthetic-token',account:{ownerId:'b-owner'},device:{id:'phone'},csrfToken:'csrf'}),
-    acceptSession:()=>{},refreshStatus:async()=>{},refreshModels:async()=>{},refreshSessions:async()=>{},api:async()=>({})};
+    acceptSession:()=>{},refreshStatus:async()=>{},refreshModels:async()=>{},refreshSessions:extra.refreshSessions||(async()=>{}),api:async()=>({})};
   const effects={paintComputers:()=>{},toast:()=>{},openComputerChannel:async(c:any)=>({close:()=>{},request:async(path:string,options:any)=>{calls.push({host:c.hostId,path,options});return {sessions:[{sessionId:'b-session',title:'B'}]};}})};
-  core.accessBase='/personal/v1';core.authBase='/personal/v1/auth';core.requestJson=(url:string,options:any)=>coreOriginal(url.replace('/personal/v1',''),options);
+  core.accessBase='/personal/v1';core.authBase='/personal/v1/auth';core.requestJson=extra.requestJson||((url:string,options:any)=>coreOriginal(url.replace('/personal/v1',''),options));
   const coreOriginal=core.accessApi;
-  ctx.WeftUiCore.factories.computers(core,effects,{...extra,storage:{getItem:(k:string)=>prefs.get(k),setItem:(k:string,v:string)=>prefs.set(k,v)}});
-  return {ctx,core,calls,effects};
+  const environment={...extra,storage:{getItem:(k:string)=>prefs.get(k),setItem:(k:string,v:string)=>prefs.set(k,v)}};
+  ctx.WeftUiCore.factories.computers(core,effects,environment);
+  return {ctx,core,calls,effects,environment};
 }
 test('execution defaults inherit sources, prefer last online computer, and choose the only online computer',async()=>{
   const {ctx}=await setup(),choose=ctx.WeftUiCore.chooseComputer;
@@ -46,6 +47,131 @@ test('the desktop program keeps local conversations while showing the account co
   assert.equal(core.hasMultipleComputers(),true);assert.equal(core.canChooseExecutionComputer(),false);
   const listed=await core.accessApi('/sessions?archived=all');assert.equal(listed.sessions.length,1);assert.equal(calls.length,1);assert.equal(calls[0].host,'a');
   await core.selectExecutionComputer('b');assert.equal(calls.length,1);
+});
+
+test('cloud login keeps the desktop local sidebar and send availability when its relay is offline',async()=>{
+  const localSessions=[{sessionId:'a-session',title:'A',running:true,sendAvailable:true}];
+  let refreshes=0;
+  const {core,calls}=await setup({desktop:true,bindDesktop:true,localSessions,refreshSessions:async()=>{refreshes++;}});
+  core.state.personalCapabilities={workAndChat:1};
+  core.updateComputerDirectory({hosts:[{hostId:'a',online:false},{hostId:'b',online:false}],capabilities:{multiHost:1}});
+  assert.equal(core.canChooseExecutionComputer(),true);
+  const listed=await core.accessApi('/sessions?archived=all');
+  assert.equal(listed.sessions.length,1);
+  assert.equal(listed.sessions[0].sessionId,'a-session');
+  assert.equal(listed.sessions[0].computerOffline,undefined);
+  assert.equal(listed.sessions[0].running,true);
+  localSessions[0].running=false;
+  const completed=await core.accessApi('/sessions?archived=all');
+  assert.equal(completed.sessions[0].running,false);
+  assert.equal(completed.sessions[0].sendAvailable,true);
+  assert.equal(calls.filter(row=>row.host==='a').length,2);
+  assert.equal(calls.filter(row=>row.host!=='a').length,0);
+  await core.refreshSessions();
+  assert.equal(refreshes,1,'local relay status must not bypass logical history refresh');
+  await assert.rejects(core.selectExecutionComputer('b'),error=>error.code==='COMPUTER_OFFLINE');
+});
+
+for(const cached of [false,true])test(`selected remote keeps fresh local conversations when the local relay goes offline (${cached?'with':'without'} snapshot)`,async()=>{
+  const localSessions=[{sessionId:'a-session',title:'A',running:true,sendAvailable:false}];
+  const {core,calls}=await setup({desktop:true,bindDesktop:true,localSessions});
+  core.state.personalCapabilities={workAndChat:1};
+  const hosts=[{hostId:'a',online:true},{hostId:'b',online:true}];
+  core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});
+  if(cached)await core.accessApi('/sessions?archived=all');
+  await core.selectExecutionComputer('b');
+  hosts[0].online=false;localSessions[0].running=false;localSessions[0].sendAvailable=true;
+  core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});calls.length=0;
+  const listed=await core.accessApi('/sessions?archived=all');
+  const local=listed.sessions.find((row:any)=>row.hostId==='a');
+  assert.ok(local,'reachable physical local host must remain in the sidebar');
+  assert.equal(local.computerOffline,undefined,'local row must not be an offline snapshot');
+  assert.equal(local.running,false);assert.equal(local.sendAvailable,true);
+  assert.equal(calls.filter(row=>row.host==='a').length,1,'read the original local transport while the remote is selected');
+  assert.equal(core.currentExecutionComputer(),'b','listing local content must not change the execution computer');
+  calls.length=0;
+  await core.accessApi('/commands',{method:'POST',body:{targetDeviceId:'b',requestId:'synthetic-remote-command'}});
+  assert.equal(calls.length,1);assert.equal(calls[0].host,'b');
+});
+
+test('selecting the physical local computer restores its session and send route even when its relay is offline',async()=>{
+  const direct:any[]=[],accepted:any[]=[];let refreshes=0;
+  const localSession={account:{ownerId:'a-owner'},device:{id:'a-device'},csrfToken:'a-csrf'};
+  const {core,calls}=await setup({desktop:true,bindDesktop:true,refreshSessions:async()=>{refreshes++;},
+    requestJson:async(url:string,options:any)=>{direct.push({url,options});return url.endsWith('/auth/me')?localSession:{};}});
+  core.acceptSession=(session:any)=>{accepted.push(session);core.state.account=session.account;core.state.csrfToken=session.csrfToken;};
+  core.state.personalCapabilities={workAndChat:1};
+  const hosts=[{hostId:'a',online:true},{hostId:'b',online:true}];
+  core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});
+  await core.selectExecutionComputer('b');
+  assert.equal(core.state.account.ownerId,'b-owner');
+  hosts[0].online=false;core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});
+  await core.selectExecutionComputer('a');
+  assert.equal(core.currentExecutionComputer(),'a');assert.equal(core.remoteComputerSelected(),false);
+  assert.equal(accepted.at(-1),localSession);assert.equal(core.state.csrfToken,'a-csrf');
+  assert.equal(direct[0].url,'/personal/v1/auth/me');assert.equal(refreshes,2);
+  calls.length=0;direct.length=0;
+  const body={targetDeviceId:'a',requestId:'synthetic-local-command'};
+  await core.accessApi('/commands',{method:'POST',body});
+  assert.equal(direct.length,1);assert.equal(direct[0].url,'/personal/v1/commands');
+  assert.equal(direct[0].options.body,body);assert.equal(calls.length,0,'local sends must not use the remote channel');
+  hosts[1].online=false;
+  await assert.rejects(core.selectExecutionComputer('b'),error=>error.code==='COMPUTER_OFFLINE');
+});
+
+test('a trusted remote connection never receives the desktop local offline exemption',async()=>{
+  for(const cached of [false,true]){
+    const contentReads:string[]=[];let refreshes=0;
+    const {ctx,core,effects,environment}=await setup({desktop:true,bindDesktop:true,hostOrigin:'https://a.example.com',
+      cloudCredentials:async(key:string)=>key==='trusted-host:b'?{hostId:'b'}:undefined,
+      refreshSessions:async()=>{refreshes++;},
+      requestJson:async(url:string)=>{contentReads.push(url);return {sessions:[{sessionId:'b-session',title:'B'}]};}});
+    // Run the real trusted-host switch with synthetic credentials and session exchange.
+    ctx.WeftUiCore.CloudAuthClient=class {
+      config={hostId:'a'};host=environment.hostOrigin;generation=0;
+      async exchange(){return {account:{ownerId:'b-owner'},device:{id:'synthetic-device'},csrfToken:'synthetic-csrf'};}
+    };
+    vm.runInContext(await readFile('src/ui-core/cloud-account.js','utf8'),ctx);
+    Object.assign(effects,{openCloudHost:async(connection:any)=>connection});
+    Object.assign(core,ctx.WeftUiCore.factories.cloudAccount(core,effects,environment));
+    core.initializeCloudAccount();
+    await core.cloudConnectTrusted({hostId:'b',baseUrl:'https://b.example.com',status:'online'});
+    assert.equal(environment.bindDesktop,false);
+    assert.equal(core.cloudCurrentComputer(),'b');
+    assert.equal(core.accessBase,'https://b.example.com/personal/v1');
+    core.state.personalCapabilities={workAndChat:1};
+    const hosts=[{hostId:'a',online:false},{hostId:'b',online:cached}];
+    core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});
+    if(cached){
+      const online=await core.accessApi('/sessions?archived=all');
+      assert.equal(online.sessions[0].sessionId,'b-session');
+      assert.equal(contentReads.length,1);
+      assert.equal(contentReads[0],'https://b.example.com/personal/v1/sessions?archived=all');
+    }
+    hosts[1].online=false;
+    core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});contentReads.length=0;
+    const offline=await core.accessApi('/sessions?archived=all');
+    assert.equal(contentReads.length,0,'offline remote must not receive content requests');
+    assert.equal(offline.sessions.length,cached?1:0);
+    if(cached){assert.equal(offline.sessions[0].hostId,'b');assert.equal(offline.sessions[0].computerOffline,true);}
+    await core.refreshSessions();
+    assert.equal(refreshes,0,'offline remote must use the offline list refresh path');
+    assert.equal(contentReads.length,0);
+    assert.equal(core.state.sessions.length,cached?1:0);
+    if(cached)assert.equal(core.state.sessions[0].computerOffline,true);
+    await assert.rejects(core.selectExecutionComputer('a'),error=>error.code==='COMPUTER_OFFLINE');
+  }
+});
+
+test('offline exemption requires a verified native desktop connection',async()=>{
+  for(const environment of [{desktop:true},{desktop:true,bindDesktop:false},{desktop:false,bindDesktop:true}]){
+    const {core,calls}=await setup(environment);
+    core.state.personalCapabilities={workAndChat:1};
+    core.updateComputerDirectory({hosts:[{hostId:'a',online:false},{hostId:'b',online:false}],capabilities:{multiHost:1}});
+    const listed=await core.accessApi('/sessions?archived=all');
+    assert.equal(listed.sessions.length,0);
+    assert.equal(calls.length,0);
+  }
 });
 test('list merges by computer; sending and retries address only the selected computer; offline lists retain ownership',async()=>{
   const {core,calls}=await setup();const hosts=[{hostId:'a',name:'synthetic-desk',online:true},{hostId:'b',name:'synthetic-laptop',online:true}];
