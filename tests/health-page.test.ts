@@ -45,3 +45,42 @@ test('sleep stages use existing metric reads and the 14 day comparison survives 
 test('a missing stage or failed stage read never blanks the rest of the overview',async()=>{
   const {core,fixture}=await setup();core.accessApi=async(path:string)=>{if(path.includes('/metrics/deepMinutes'))throw Error('unavailable');return fixture.reply(path);};await core.readHealth();assert.equal(core.health.error,'');assert.equal(core.health.sleepStages.deepMinutes,null);assert.equal(core.health.stageError,'连接暂时中断');assert.ok(core.health.sleepStages.remMinutes>0);assert.ok(core.health.overview.sleep.minutes>0);
 });
+
+test('refreshes during the first health read cannot starve completed sleep stages',async()=>{
+  for(const missing of [false,true]){
+    const {core,fixture}=await setup();let releaseFirst!:()=>void,releaseLater!:()=>void,started!:()=>void;
+    const firstMetrics=new Promise<void>(r=>releaseFirst=r),laterMetrics=new Promise<void>(r=>releaseLater=r),metricsStarted=new Promise<void>(r=>started=r);
+    let overviews=0;
+    core.accessApi=async(path:string)=>{
+      if(path.includes('/overview'))overviews++;
+      if(path.includes('/metrics/')){const first=overviews===1;started();await(first?firstMetrics:laterMetrics);}
+      const result=fixture.reply(path);
+      if(missing&&/\/metrics\/(deepMinutes|remMinutes|awakeMinutes|inBedMinutes)/.test(path))for(const point of result.points)point.value=null;
+      return result;
+    };
+    const initial=core.readHealth();await metricsStarted;
+    // Timeline/foreground refreshes can arrive before the first supplement batch completes.
+    const refreshes=[core.readHealth(),core.readHealth(core.health.day)];
+    try{
+      releaseFirst();await initial;
+      assert.equal(core.health.supplementLoading,false,'successful first supplements must reach the page despite overlapping refreshes');
+      assert.equal(core.health.sleepStages.deepMinutes,missing?null:fixture.metric('deepMinutes',7).points.at(-1).value);
+      assert.equal(overviews,1,'same-day refreshes share the full in-flight read');
+    }finally{releaseLater();await Promise.all(refreshes);}
+  }
+});
+
+test('changing the health date supersedes an in-flight read without accepting its late stages',async()=>{
+  const {core,fixture}=await setup();let release!:()=>void,started!:()=>void;
+  const gate=new Promise<void>(r=>release=r),metricsStarted=new Promise<void>(r=>started=r);
+  core.accessApi=async(path:string)=>{if(path.includes('/metrics/')&&core.health.day===fixture.today){started();await gate;}return fixture.reply(path);};
+  const initial=core.readHealth();await metricsStarted;
+  const day='2026-10-10';await core.readHealth(day);
+  assert.equal(core.health.day,day);assert.equal(core.health.supplementLoading,false);
+  const stages=JSON.stringify(core.health.sleepStages);release();await initial;
+  assert.equal(core.health.day,day);assert.equal(JSON.stringify(core.health.sleepStages),stages);
+  assert.equal(core.health.sleepStages.deepMinutes,fixture.metric('deepMinutes',7).points.find((p:any)=>p.day===day).value);
+  // Completion of the superseded read must not retain the deduplication entry.
+  let overviews=0;const read=core.accessApi;core.accessApi=async(path:string)=>{if(path.includes('/overview'))overviews++;return read(path);};
+  await core.readHealth(day);assert.equal(overviews,1);
+});
