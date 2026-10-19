@@ -53,7 +53,7 @@ jobs:
           retention-days: 7
 
   build:
-    name: ${{ matrix.platform }} build${{ matrix.platform == 'iOS' && ' and UI tests' || '' }}
+    name: ${{ matrix.platform }} build
     runs-on: macos-15
     timeout-minutes: 60
     strategy:
@@ -88,13 +88,44 @@ jobs:
           xcodebuild -project WeftMate.xcodeproj -scheme "$SCHEME" -configuration Debug \
             -destination "$DESTINATION" -derivedDataPath "$RUNNER_TEMP/apple-build" \
             -jobs 4 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/apple-results/build.log"
-      - name: iPhone XCTest and UI tests
-        if: matrix.platform == 'iOS'
-        run: python3 Scripts/run_ci_ui_tests.py --artifacts "$RUNNER_TEMP/apple-results" --derived-data "$RUNNER_TEMP/apple-build"
       - name: Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: apple-${{ matrix.platform }}
+          path: ${{ runner.temp }}/apple-results
+          retention-days: 7
+
+  phone-tests:
+    name: iPhone UI (${{ matrix.group }})
+    runs-on: macos-15
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [local, host, cloud, features]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        if: matrix.group != 'local'
+        with:
+          node-version: 24
+      - name: Local fixture dependencies
+        if: matrix.group != 'local'
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ci --prefix services/cloud --ignore-scripts --no-audit --no-fund
+      - name: iPhone XCTest and UI tests
+        working-directory: apps/apple
+        env:
+          TEST_GROUP: ${{ matrix.group }}
+        run: |
+          python3 Scripts/run_ci_ui_tests.py --group "$TEST_GROUP" \
+            --artifacts "$RUNNER_TEMP/apple-results" --derived-data "$RUNNER_TEMP/apple-build"
+      - name: Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-phone-${{ matrix.group }}
           path: ${{ runner.temp }}/apple-results
           retention-days: 7
