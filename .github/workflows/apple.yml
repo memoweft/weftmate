@@ -107,11 +107,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        if: matrix.group != 'local'
         with:
           node-version: 24
       - name: Local fixture dependencies
-        if: matrix.group != 'local'
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm ci --prefix services/cloud --ignore-scripts --no-audit --no-fund
