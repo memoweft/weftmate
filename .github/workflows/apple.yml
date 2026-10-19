@@ -1,0 +1,100 @@
+name: Apple
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/apple/**'
+      - '.github/workflows/apple.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/apple/**'
+      - '.github/workflows/apple.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apple-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+
+jobs:
+  core:
+    name: Swift core and state checks
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/apple
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          mkdir -p "$RUNNER_TEMP/apple-results"
+      - name: Swift package tests
+        run: |
+          set -o pipefail
+          swift test --package-path Packages/WeftMateCore --scratch-path "$RUNNER_TEMP/apple-core" --jobs 2 2>&1 | tee "$RUNNER_TEMP/apple-results/core.log"
+      - name: Standalone state checks
+        if: ${{ !cancelled() }}
+        run: python3 Scripts/run_state_checks.py --core-build "$RUNNER_TEMP/apple-core" --artifacts "$RUNNER_TEMP/apple-results/state"
+      - name: Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-core
+          path: ${{ runner.temp }}/apple-results
+          retention-days: 7
+
+  build:
+    name: ${{ matrix.platform }} build${{ matrix.platform == 'iOS' && ' and UI tests' || '' }}
+    runs-on: macos-15
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: iOS
+            scheme: WeftMatePhone
+            destination: generic/platform=iOS Simulator
+          - platform: watchOS
+            scheme: WeftMateWatch
+            destination: generic/platform=watchOS Simulator
+          - platform: macOS
+            scheme: WeftMateMac
+            destination: platform=macOS
+    defaults:
+      run:
+        working-directory: apps/apple
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available
+          mkdir -p "$RUNNER_TEMP/apple-results"
+      - name: Unsigned build
+        env:
+          SCHEME: ${{ matrix.scheme }}
+          DESTINATION: ${{ matrix.destination }}
+        run: |
+          set -o pipefail
+          xcodebuild -project WeftMate.xcodeproj -scheme "$SCHEME" -configuration Debug \
+            -destination "$DESTINATION" -derivedDataPath "$RUNNER_TEMP/apple-build" \
+            -jobs 4 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/apple-results/build.log"
+      - name: iPhone XCTest and UI tests
+        if: matrix.platform == 'iOS'
+        run: python3 Scripts/run_ci_ui_tests.py --artifacts "$RUNNER_TEMP/apple-results" --derived-data "$RUNNER_TEMP/apple-build"
+      - name: Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-${{ matrix.platform }}
+          path: ${{ runner.temp }}/apple-results
+          retention-days: 7
