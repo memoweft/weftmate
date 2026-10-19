@@ -226,7 +226,9 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
       if (!deletions.length) return action.plan.state ? { state: action.plan.state, message: action.plan.message }
         : retained ? { state: 'withheld', message: '这次没有删除记忆。' + retained } : notFound();
       if (!Number.isSafeInteger(action.plan.nextRevision ?? action.plan.worldRevision)) return changedScope(Boolean(action.finished?.length));
-      for (const target of deletions) {
+      // One frozen batch preview is one command and one actual Core receipt.
+      // Older saved plans keep their original identities and scope fences.
+      for (const target of action.plan.batchForget ? deletions.slice(0, 1) : deletions) {
         assertActive();
         signal?.throwIfAborted();
         const id = target.kind === 'evidence' ? target.id : `${target.kind}:${target.id}`;
@@ -236,14 +238,16 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
           const revision = action.plan.nextRevision ?? action.plan.worldRevision;
           command = { requestId: `forget:${hash(`${action.requestId}|${id}|${revision}`)}`,
             operation: target.kind === 'evidence' ? 'delete_evidence' : 'delete_world_item',
-            targetKind: target.kind, targetId: target.id, payload: {}, expectedWorldRevision: revision };
+            targetKind: target.kind, targetId: target.id,
+            payload: action.plan.batchForget ?? (typeof action.plan.forgetScopes?.[`${target.kind}:${target.id}`] === 'string'
+              ? { forget_scope: action.plan.forgetScopes[`${target.kind}:${target.id}`] } : {}), expectedWorldRevision: revision };
           await save(data => { (data.records[action.requestId].commands ??= {})[id] = command; });
         }
         signal?.throwIfAborted();
         action.commandDispatched = true;
         const result = await submit(command);
         const receipt = result.receipt ?? result;
-        if (receipt.result_state === 'revision_conflict') return changedScope(Boolean(action.finished?.length));
+        if (receipt.result_state === 'revision_conflict' || ['forget_scope_changed', 'forget_scope_required'].includes(receipt.rejection_code)) return changedScope(Boolean(action.finished?.length));
         if (receipt.result_state === 'rejected') return { state: 'rejected', message: '这次还没能忘掉这条记忆。' };
         if (!['applied', 'no_change'].includes(receipt.result_state)) throw Error('MEMORY_ACTION_PENDING');
         if (receipt.storage_cleanup?.state === 'pending') await save(data => {

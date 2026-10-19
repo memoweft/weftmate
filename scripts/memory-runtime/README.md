@@ -6,11 +6,13 @@
 [#332 的总经理转达](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)。
 
 `lock.json` 固定官方 Python 3.13.16 嵌入 ZIP、Core 已合入并首轮通过的
-`935169ed235dd9f29f78bf5768c1b0fe06f31f27` 提交及官方源归档 URL、大小与
+`eb14bec5794796548734232d40c4196d842996eb` 提交及官方源归档 URL、大小与
 散列、Core `uv.lock` 散列、Windows CPython 3.13 对应 wheel、传递依赖、许可、模型
 修订及文件散列。基础层是 Python/Core 和 7 个基础依赖；完整层在同一
 基础上加入 17 个语义依赖、固定模型/分词器、微软两个必需运行库和许可。
 不带开发工具、pip、账户库或用户数据。wheel 的原有许可和元数据保留。
+
+此版本还包含 MemoWeft #130 的偏好修订合同和 #131 的派生上下文清理及遗忘范围凭据；宿主须保留预览返回的凭据，不能在删除时静默刷新。
 
 此 Core 版本包含英文召回的真实日期与 `initialize.lang` 支持（MemoWeft #122）；
 语言读取和重新初始化规则见 [MEMORY.md](../../docs/MEMORY.md)。
@@ -25,6 +27,13 @@ WeftMate 两个传输入口每次分配新 ID，业务恢复使用边界、命�
 同一分句中的否定、他人主语/所有格及问句不支持本人目标；明确过往意向与同条原话
 中的后续本人收回也会拦截，原话仍保留为普通来源。白名单之外的句式、反讽和隐含语义
 仍有限制；例如「不打算放弃」也可能触发收回，不代表已解决所有目标理解。
+
+同时包含 [MemoWeft #126](https://github.com/memoweft/memoweft/pull/126)：
+助手提出的事实必须得到用户明确确认才可形成记忆；简短的行动确认只能确认
+实际选中的行动提议，不能借同轮其他提议把助手的事实陈述写成用户记忆。
+未覆盖的确认句式仍有漏形成限制，本次版本更新不替代 M1/M2/M3/M7 安装验收。
+包含 [MemoWeft #127](https://github.com/memoweft/memoweft/pull/127) 的跨轮行动确认修复：
+简短指回确认须以完整主题和实际动作匹配选中的提议，保留完整原话的否定与问句核对。
 
 ## 制备两种载荷
 
@@ -158,3 +167,6 @@ Core 的 `internal_error` 是通用异常兜底（同文件 `823–825`），`ds
 发布者仍须确认自身权利。参见[微软官方条件](https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files)
 与[官方 REDIST 清单](https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution)。
 Python 的嵌入分发和模块查找行为见[官方说明](https://docs.python.org/3.13/using/windows.html#the-embeddable-package)。
+
+本版本含 MemoWeft #133 的多目标原子遗忘：先收齐所有显式目标的完整修订链和来源，
+再在一个事务删除。旧的不完整批量凭据失效，需重新预览确认；单目标凭据不变。
