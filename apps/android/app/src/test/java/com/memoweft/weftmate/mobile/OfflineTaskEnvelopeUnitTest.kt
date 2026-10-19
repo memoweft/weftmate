@@ -49,6 +49,32 @@ class OfflineTaskEnvelopeUnitTest {
         val another=sealOfflineTask(JSONObject().put("text",text),public(pair),identity())
         assertNotEquals(envelope.getString("iv"),another.getString("iv"));assertNotEquals(envelope.getString("ciphertext"),another.getString("ciphertext"))
     }
+    @Test fun fourThousandChineseCharactersCanPassTheNativeTaskUploadBoundary(){
+        val pair=pair();val id=identity();val text="任".repeat(4000)
+        val payload=JSONObject().put("text",text).put("sessionId",JSONObject.NULL)
+            .put("projectId",JSONObject.NULL).put("createdAt",1792400000000L)
+        val envelope=sealOfflineTask(payload,public(pair),id)
+        val body=JSONObject().put("hostId",id.getString("hostId")).put("id",id.getString("id"))
+            .put("generation",id.getInt("generation")).put("envelope",envelope).toString()
+        assertTrue(body.toByteArray(Charsets.UTF_8).size>16384)
+        val issuer="https://cloud.example.com/personal/v1/cloud/oidc"
+        val uploaded=cloudAppRequestBody(issuer.removeSuffix("/oidc")+"/hosts/offline/tasks/submit","POST",issuer,body)
+        val received=JSONObject(String(uploaded,Charsets.UTF_8)).getJSONObject("envelope")
+        assertEquals(text,open(received,pair,id).getString("text"))
+    }
+    @Test fun maximumLengthChineseAndEmojiTasksSurviveEncryptionAndNativeUpload(){
+        val pair=pair();val id=identity();val issuer="https://cloud.example.com/personal/v1/cloud/oidc"
+        for(text in listOf("任".repeat(8192),"😀".repeat(4096))){
+            assertEquals(8192,text.length)
+            val envelope=sealOfflineTask(JSONObject().put("text",text).put("sessionId","synthetic-session")
+                .put("projectId","synthetic-project").put("createdAt",1792400000000L),public(pair),id)
+            assertTrue(envelope.toString().toByteArray(Charsets.UTF_8).size<=64*1024)
+            val body=JSONObject().put("hostId",id.getString("hostId")).put("id",id.getString("id"))
+                .put("generation",id.getInt("generation")).put("envelope",envelope).toString()
+            val uploaded=cloudAppRequestBody(issuer.removeSuffix("/oidc")+"/hosts/offline/tasks/submit","POST",issuer,body)
+            assertEquals(text,open(JSONObject(String(uploaded,Charsets.UTF_8)).getJSONObject("envelope"),pair,id).getString("text"))
+        }
+    }
     @Test fun alteredHostAccountDeviceGenerationOrCiphertextCannotOpen(){
         val pair=pair();val envelope=sealOfflineTask(JSONObject().put("text","synthetic"),public(pair),identity())
         for(key in listOf("hostId","accountId","deviceId","generation")){
