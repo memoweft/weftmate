@@ -125,8 +125,11 @@
       close() { database.close(); },
     };
   }
-  function nativeVault(call) {
+  function nativeVault(call, { tasks = false } = {}) {
     return { key: () => call('offline.key'), load: () => call('offline.load'), save: value => call('offline.save', { value }),
+      ...(tasks ? { seal: (payload, publicJwk, identity) => call('offline.seal', { payload, recipient: publicJwk, identity }),
+        targets: accountId => call('offline.targets', { accountId }).then(result => result.targets),
+        clearAccount: (accountId, hostId, keepGeneration) => call('offline.clearAccount', { accountId, hostId, keepGeneration }) } : {}),
       open: (envelope, identity) => call('offline.open', { envelope, identity }),
       complete: body => call('offline.complete', { body }, 180000), clear: () => call('offline.clear'), close() {} };
   }
