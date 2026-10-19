@@ -84,6 +84,23 @@ test('known direct computer connects without a relay, but mismatched host identi
   assert.equal(await functions.resolveMobileCloudConnection(client, other), other);
   await assert.rejects(functions.resolveMobileCloudConnection({ ...client, request: async () => ({ hostId: 'wrong-host' }) }, { hostId: 'host-example', status: 'offline' }), error => error.code === 'HOST_TRUST_INVALID');
 });
+test('an unavailable cached direct transport preserves the clouds explicit offline result for the original computer',async()=>{
+  const connection={hostId:'host-example',status:'offline',approval:'trusted'};
+  const client={config:{hostId:'host-example'},host:'https://host.example.com',request:async()=>{throw {code:'CLOUD_TLS_UNAVAILABLE',status:503};}};
+  const offline=await context().resolveMobileCloudConnection(client,connection);
+  assert.equal(offline,connection);assert.equal(offline.status,'offline');
+  await assert.rejects(context().resolveMobileCloudConnection({...client,request:async()=>{throw {code:'UNAUTHORIZED',status:401};}},connection),error=>error.code==='UNAUTHORIZED');
+});
+test('cached native verification falls through to cloud presence after transport loss but keeps authorization failures',async()=>{
+  const functions=context(),offline={hostId:'original-host',status:'offline'};let probes=0;
+  for(const verify of [async()=>null,async()=>{throw {code:'CLOUD_TRANSPORT_UNAVAILABLE',status:503};}]){
+    assert.equal(await functions.probeMobileCloudPresence(verify,async()=>{probes++;return offline;}),offline);
+  }
+  const online={hostId:'original-host',status:'online'};
+  assert.equal(await functions.probeMobileCloudPresence(async()=>online,async()=>{throw Error('Known direct connection must stay usable');}),online);
+  await assert.rejects(functions.probeMobileCloudPresence(async()=>{throw {code:'UNAUTHORIZED',status:401};},async()=>offline),error=>error.code==='UNAUTHORIZED');
+  assert.equal(probes,2);
+});
 
 test('cloud login stays phone-only when an offline computer still has a relay address', async () => {
   let hostRequests = 0, connected = 0;

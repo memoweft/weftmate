@@ -47,6 +47,7 @@ class NativeChatLifecycleTest {
         var account = "mode2a-test-owner"
         var configured = true
         var online = true
+        var directoryHosts = JSONArray()
         var creations = 0
         var sent = 0
         var approval = "auto"
@@ -131,7 +132,7 @@ class NativeChatLifecycleTest {
         }
         override suspend fun phone(action: String, params: JSONObject) = JSONObject()
         override suspend fun presentation(script: String) = JSONObject()
-        override suspend fun directory() = JSONObject()
+        override suspend fun directory() = JSONObject().put("hosts",directoryHosts)
         override fun showLogin() {}
     }
     private class Fixture(val environment: Environment) {
@@ -382,5 +383,36 @@ class NativeChatLifecycleTest {
             until { !f.chat.newWork && f.chat.canSend && !f.chat.submitting }
             f.chat.send(); until { e.sent == 1 }
         } finally { f.close() }
+    }
+    @Test fun originalWorkExplainsItsNamedComputerIsOfflineAndResumesWithoutChangingOwnership() = runBlocking {
+        val e=Environment();val f=Fixture(e)
+        try{
+            f.chat.bootstrap();f.chat.newChat("work").join();f.chat.chooseWorkProject(e.project)
+            until{!f.chat.newWork&&f.chat.chatId.isNotBlank()}
+            f.chat.edit("上线后接着读说明")
+            val chat=f.chat.chatId;val session=f.chat.sessionId;val host=f.chat.hostId;val project=f.chat.workProject
+            e.directoryHosts=JSONArray().put(JSONObject().put("hostId",host).put("name","书房电脑").put("online",false))
+                .put(JSONObject().put("hostId","other-computer").put("name","另一台电脑").put("online",true))
+            e.online=false;f.chat.refresh()
+            assertTrue("the original computer must be named",f.chat.error.contains("书房电脑"))
+            assertTrue(f.chat.error.contains("离线"));assertFalse(f.chat.error.contains("正在重连"))
+            assertFalse(f.chat.connected);assertFalse(f.chat.canSend)
+            assertEquals(chat,f.chat.chatId);assertEquals(session,f.chat.sessionId);assertEquals(host,f.chat.hostId);assertEquals(project,f.chat.workProject)
+            assertEquals("上线后接着读说明",f.chat.draft)
+            e.online=true;f.chat.refresh()
+            assertTrue(f.chat.connected);assertEquals("",f.chat.error)
+            assertEquals(chat,f.chat.chatId);assertEquals(session,f.chat.sessionId);assertEquals(host,f.chat.hostId)
+            assertEquals("上线后接着读说明",f.chat.draft)
+        }finally{f.close()}
+    }
+    @Test fun anOfflineOtherComputerOrUnknownDirectoryDoesNotRelabelTheOriginalComputer() = runBlocking {
+        val e=Environment();val f=Fixture(e)
+        try{
+            f.chat.bootstrap();val host=f.chat.hostId;e.online=false
+            for(original in listOf(JSONObject().put("hostId",host).put("online",true),JSONObject().put("hostId",host))){
+                e.directoryHosts=JSONArray().put(original).put(JSONObject().put("hostId","other").put("online",false))
+                f.chat.refresh();assertFalse(f.chat.computerOffline);assertEquals("连接暂时中断，正在重连。",f.chat.error);assertEquals(host,f.chat.hostId)
+            }
+        }finally{f.close()}
     }
 }
