@@ -66,6 +66,7 @@ for (const { failedDiscovery, failRecovery } of [{ failedDiscovery: false, failR
     const afterDiscovery = requests.find(body => body.messages.some((m: any) => m.tool_call_id === 'continue-1'));
     assert.ok(afterDiscovery, 'original discovery call must resume in the existing native turn');
     assert.ok(afterDiscovery.messages.some((m: any) => text(m).includes('文件夹选择已完成') && text(m).includes(project.name)), 'next model step must acknowledge the completed selection and continue the original goal');
+    assert.ok(afterDiscovery.messages.some((m: any) => text(m).includes(`Current workspace: ${folder}.`)), 'desktop tool guidance must follow the selected execution directory, not the immutable chat header');
     if (failRecovery) { await assert.rejects(readFile(join(folder, 'continued.txt'))); assert.equal(requests.length, 5, 'a second failure must end instead of looping'); }
     else assert.equal(await readFile(join(folder, 'continued.txt'), 'utf8'), 'original-turn-completed');
     assert.equal(requests.at(-1).messages.filter((m: any) => text(m).includes('刚才的电脑操作未完成')).length, failedDiscovery ? 1 : 0, 'one native recovery message, never repeated');
