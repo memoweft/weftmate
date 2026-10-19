@@ -43,9 +43,9 @@ test('mobile adapter preserves native trust and token errors without inventing d
   } });
   const response = await api.fetch('https://host.example.com/personal/v1/auth/cloud-session');
   assert.equal(response.status, 403); assert.equal((await response.json()).error.code, 'PAIRING_REQUIRED');
-  const client = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, exchange: async () => { throw { code: 'PAIRING_REQUIRED' }; } });
+  const client = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, authorized: async () => ({status:'online'}), exchange: async () => { throw { code: 'PAIRING_REQUIRED' }; } });
   await assert.rejects(client.exchange(), error => error.code === 'PAIRING_REQUIRED');
-  const invalid = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, exchange: async () => { throw { code: 'CLOUD_TOKEN_INVALID' }; } });
+  const invalid = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, authorized: async () => ({status:'online'}), exchange: async () => { throw { code: 'CLOUD_TOKEN_INVALID' }; } });
   await assert.rejects(invalid.exchange(), error => error.code === 'CLOUD_TOKEN_INVALID');
 });
 
@@ -83,4 +83,19 @@ test('known direct computer connects without a relay, but mismatched host identi
   const other = { hostId: 'other-host', status: 'offline' };
   assert.equal(await functions.resolveMobileCloudConnection(client, other), other);
   await assert.rejects(functions.resolveMobileCloudConnection({ ...client, request: async () => ({ hostId: 'wrong-host' }) }, { hostId: 'host-example', status: 'offline' }), error => error.code === 'HOST_TRUST_INVALID');
+});
+
+test('cloud login stays phone-only when an offline computer still has a relay address', async () => {
+  let hostRequests = 0, connected = 0;
+  const client = context().adaptMobileCloudClient({
+    config: { hostId: 'unconnected', issuer: 'https://cloud.example/personal/v1/cloud/oidc' },
+    authorized: async (path: string) => path === '/devices'
+      ? { hosts: [{ hostId: 'offline-computer', status: 'offline' }] }
+      : { hostId: 'offline-computer', status: 'offline', baseUrl: 'https://unavailable.example' },
+    request: async () => { hostRequests++; throw { status: 503, code: 'CLOUD_TLS_UNAVAILABLE' }; },
+    exchange: async () => { throw Error('An offline computer must not supply account login'); },
+  }, async () => { connected++; });
+  assert.equal((await client.exchange()).status, 'cloud_only');
+  assert.equal(hostRequests, 0);
+  assert.equal(connected, 0);
 });
