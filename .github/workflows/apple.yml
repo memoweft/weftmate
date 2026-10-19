@@ -1,0 +1,184 @@
+name: Apple
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/apple/**'
+      - '.github/workflows/apple.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/apple/**'
+      - '.github/workflows/apple.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apple-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+
+jobs:
+  core:
+    name: Swift core (blocking) and state report
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/apple
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          mkdir -p "$RUNNER_TEMP/apple-results"
+      - name: Swift package tests
+        run: |
+          set -o pipefail
+          swift test --package-path Packages/WeftMateCore --scratch-path "$RUNNER_TEMP/apple-core" --jobs 2 2>&1 | tee "$RUNNER_TEMP/apple-results/core.log"
+      - name: Standalone state checks
+        id: state
+        if: ${{ !cancelled() }}
+        # Existing baseline failures (#546) remain visible without blocking P0.
+        continue-on-error: true
+        run: python3 Scripts/run_state_checks.py --core-build "$RUNNER_TEMP/apple-core" --artifacts "$RUNNER_TEMP/apple-results/state"
+      - name: State summary
+        if: always()
+        env:
+          STATE_OUTCOME: ${{ steps.state.outcome }}
+        run: python3 Scripts/write_ci_summary.py state --artifacts "$RUNNER_TEMP/apple-results" --outcome "$STATE_OUTCOME"
+      - name: Compact state report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-report-state
+          path: ${{ runner.temp }}/apple-results/report.json
+          retention-days: 7
+      - name: Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-core
+          path: ${{ runner.temp }}/apple-results
+          retention-days: 7
+
+  build:
+    name: ${{ matrix.platform }} build (blocking)
+    runs-on: macos-15
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: iOS
+            scheme: WeftMatePhone
+            destination: generic/platform=iOS Simulator
+          - platform: watchOS
+            scheme: WeftMateWatch
+            destination: generic/platform=watchOS Simulator
+          - platform: macOS
+            scheme: WeftMateMac
+            destination: platform=macOS
+    defaults:
+      run:
+        working-directory: apps/apple
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available
+          mkdir -p "$RUNNER_TEMP/apple-results"
+      - name: Unsigned build
+        env:
+          SCHEME: ${{ matrix.scheme }}
+          DESTINATION: ${{ matrix.destination }}
+        run: |
+          set -o pipefail
+          xcodebuild -project WeftMate.xcodeproj -scheme "$SCHEME" -configuration Debug \
+            -destination "$DESTINATION" -derivedDataPath "$RUNNER_TEMP/apple-build" \
+            -jobs 4 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/apple-results/build.log"
+      - name: Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-${{ matrix.platform }}
+          path: ${{ runner.temp }}/apple-results
+          retention-days: 7
+
+  phone-tests:
+    name: iPhone UI report (${{ matrix.group }})
+    runs-on: macos-15
+    timeout-minutes: 90
+    # Preparation failures also remain reporting-only, with missing data called out.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [local, host-legacy, host-modern, cloud, features]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Local fixture dependencies
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ci --prefix services/cloud --ignore-scripts --no-audit --no-fund
+      - name: iPhone XCTest and UI tests
+        id: ui
+        continue-on-error: true
+        working-directory: apps/apple
+        env:
+          TEST_GROUP: ${{ matrix.group }}
+        run: |
+          python3 Scripts/run_ci_ui_tests.py --group "$TEST_GROUP" \
+            --artifacts "$RUNNER_TEMP/apple-results" --derived-data "$RUNNER_TEMP/apple-build"
+      - name: UI summary
+        if: always()
+        env:
+          TEST_GROUP: ${{ matrix.group }}
+          UI_OUTCOME: ${{ steps.ui.outcome }}
+        run: |
+          python3 apps/apple/Scripts/write_ci_summary.py ui --group "$TEST_GROUP" \
+            --artifacts "$RUNNER_TEMP/apple-results" --outcome "$UI_OUTCOME"
+      - name: Compact UI report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-report-${{ matrix.group }}
+          path: ${{ runner.temp }}/apple-results/report.json
+          retention-days: 7
+      - name: Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-phone-${{ matrix.group }}
+          path: ${{ runner.temp }}/apple-results
+          retention-days: 7
+
+  report:
+    name: Apple baseline summary
+    if: always()
+    needs: [core, build, phone-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Summary parser tests
+        run: python3 -m unittest discover -s apps/apple/Scripts -p test_ci_summary.py -v
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apple-report-*
+          path: ${{ runner.temp }}/apple-reports
+      - name: All state and iPhone results
+        if: always()
+        env:
+          CORE_RESULT: ${{ needs.core.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: python3 apps/apple/Scripts/write_ci_summary.py aggregate --artifacts "$RUNNER_TEMP/apple-reports"
