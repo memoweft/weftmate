@@ -24,7 +24,10 @@
     if (waiting) put('waiting', Math.max(started.seq, ...ordered.filter(event => event.type === 'user.message' && event.seq > started.seq).map(event => event.seq)) + 0.1, row => {
       row.classList.add('inline-waiting'); row.setAttribute('role', 'status')
       let text=row.querySelector('.inline-progress-text'); if(!text){text=node('span','inline-progress-text is-running');row.replaceChildren(text)}
-      if(globalThis.WeftReplyMotion) WeftReplyMotion.status(text,options.waiting,true); else text.textContent=options.waiting
+      const seq = Math.max(started.seq, ...ordered.filter(event => event.type === 'user.message' && event.seq > started.seq).map(event => event.seq))
+      const language = WeftUiCore.progressLanguage(ordered, {seq,steps:[{sessionId:started.sessionId || started.sourceRef?.sessionId}]})
+      const label = WeftUiCore.progressWaitingText(options.waiting, language)
+      if(globalThis.WeftReplyMotion) WeftReplyMotion.status(text,label,true); else text.textContent=label
     })
     for (const block of groups) put(`steps-${block.seq}`, WeftUiCore.progressPosition(ordered, block), row => {
       block.steps = block.steps.map(step=>globalThis.WeftUiCore.executionPresentation(step,options.executions))
@@ -34,12 +37,12 @@
       for (const step of block.steps) {
         const seq = step.detailRef?.seq, cached = row.progressDetails.get(seq)
         if (cached && cached !== 'loading') {
-          step.summary = cached.summary; step.arguments = cached.arguments; step.interrupted = cached.interrupted
+          step.summary = block.language === 'en' ? globalThis.WeftUiCore.toolSummary(step.toolName, cached.arguments || step.arguments, block.language) : cached.summary; step.arguments = cached.arguments; step.interrupted = cached.interrupted
         } else if (Number.isSafeInteger(seq) && !cached && options.readDetail && (expandedForObjects || step === currentForObjects || step.state === 'failed')) {
           row.progressDetails.set(seq, 'loading')
           void options.readDetail(seq).then(data => {
             const args = globalThis.WeftUiCore.toolArguments(data.text)
-            row.progressDetails.set(seq, Object.keys(args).length ? {summary: globalThis.WeftUiCore.toolSummary(step.toolName, args), arguments: args, interrupted: globalThis.WeftUiCore.interruptionFromDetail(data.text,step)} : {summary: step.summary})
+            row.progressDetails.set(seq, Object.keys(args).length ? {summary: globalThis.WeftUiCore.toolSummary(step.toolName, args, block.language), arguments: args, interrupted: globalThis.WeftUiCore.interruptionFromDetail(data.text,step)} : {summary: step.summary})
             if (row.isConnected && row.dataset.signature === signature) { delete row.dataset.signature; renderCurrent() }
           }).catch(() => { row.progressDetails.set(seq, {summary: step.summary}) })
         }
@@ -51,14 +54,14 @@
       const lastBlock = groups.filter(group=>group.taskId===block.taskId).at(-1) === block
       const displayOutcome = (!lastBlock || options.quietFailure) && ['error','failed','blocked'].includes(outcome.reason) ? {...outcome,reason:'ended'} : outcome
       const view = globalThis.WeftUiCore.progressText(block.steps, displayOutcome)
-      if (stopView && !stopView.terminal) { view.text = `${view.text} · ${stopView.text}`; view.running = true }
+      if (stopView && !stopView.terminal) { view.text = `${view.text} · ${WeftUiCore.progressWaitingText(stopView.text, block.language)}`; view.running = true }
       // Keep completed work visible while a real native turn waits for its
       // next model/tool result. The stage comes from host state, not a timer
       // pretending that another tool is still running.
       if (options.waiting && !stopView && !terminal && !view.running && !view.failed &&
           block === groups.at(-1) && started && block.seq > started.seq &&
           block.steps.every(step => globalThis.WeftUiCore.executionState(step) === 'completed')) {
-        view.text += ` · ${options.waiting}`; view.running = true
+        view.text += ` · ${WeftUiCore.progressWaitingText(options.waiting, block.language)}`; view.running = true
       }
       const running = view.running
       const signature = JSON.stringify([block, outcome, stopView])
@@ -68,7 +71,7 @@
         const text = previous?.querySelector('.inline-progress-text')
         if (text) {if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,view.text,running,block.steps.length <= (globalThis.WeftMotion?.listLimit || 20));else if(text.textContent!==view.text)text.textContent=view.text}
         text?.classList.toggle('is-running', running)
-        previous?.querySelector('summary')?.setAttribute('aria-label', `${view.text}，${previous.open ? '已展开' : '已收起'}`)
+        previous?.querySelector('summary')?.setAttribute('aria-label', `${view.text}${block.language === 'en' ? previous.open ? ', expanded' : ', collapsed' : previous.open ? '，已展开' : '，已收起'}`)
         return
       }
       row.dataset.signature = signature
@@ -92,7 +95,7 @@
         if (window.WeftIcons) arrow.append(window.WeftIcons.create('chevron', 16))
         summary.append(arrow)
       }
-      const accessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${view.text}，${details.open ? '已展开' : '已收起'}`) }
+      const accessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${view.text}${block.language === 'en' ? details.open ? ', expanded' : ', collapsed' : details.open ? '，已展开' : '，已收起'}`) }
       if (!previous) details.addEventListener('toggle', () => { accessibility(); if (details.open && details.isConnected) renderCurrent() }); accessibility()
       const records = details.querySelector('.execution-records') || node('div', 'execution-records')
       if (!summary.parentNode) details.append(summary)
