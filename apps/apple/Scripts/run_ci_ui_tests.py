@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import plistlib
+import re
 import signal
 import socket
 import subprocess
@@ -37,7 +38,7 @@ def stop(process):
     except ProcessLookupError:
         return
     try:
-        process.wait(timeout=10)
+        process.wait(timeout=20)
     except subprocess.TimeoutExpired:
         pass
     finally:
@@ -77,6 +78,9 @@ def start_node(filename, artifacts, processes, logs, extra_args=(), environment=
                 continue
             if isinstance(config, dict) and ("driver" in config or "origin" in config):
                 return config
+            if isinstance(config, dict) and config.get("realPersonalHost") and extra_args:
+                # apple5_real_host writes its synthetic credentials to a private file.
+                return json.loads(Path(extra_args[0]).read_text())
         if process.poll() is not None:
             raise RuntimeError(filename + " exited before ready; see fixture log")
         time.sleep(0.2)
@@ -114,7 +118,10 @@ def main():
     artifacts = args.artifacts.resolve()
     artifacts.mkdir(parents=True, exist_ok=True)
     devices = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "-j"]))
-    phones = [device for runtime, rows in devices["devices"].items() if ".iOS-" in runtime
+    runtimes = sorted(devices["devices"].items(), reverse=True,
+                      key=lambda item: tuple(map(int, re.findall(r"\d+", item[0].split(".iOS-")[-1])))
+                      if ".iOS-" in item[0] else ())
+    phones = [device for runtime, rows in runtimes if ".iOS-" in runtime
               for device in rows if device["name"].startswith("iPhone") and device.get("isAvailable")]
     if not phones:
         raise RuntimeError("No available iPhone simulator in selected Xcode")
@@ -128,8 +135,8 @@ def main():
         base = ["xcodebuild", "-destination", "platform=iOS Simulator,id=" + device,
                 "-destination-timeout", "120", "-parallel-testing-enabled", "NO",
                 "-maximum-concurrent-test-simulator-destinations", "1",
-                "-test-timeouts-enabled", "YES", "-default-test-execution-time-allowance", "180",
-                "-maximum-test-execution-time-allowance", "300"]
+                "-test-timeouts-enabled", "YES", "-default-test-execution-time-allowance", "600",
+                "-maximum-test-execution-time-allowance", "900"]
         code = run([*base, "-project", "WeftMate.xcodeproj", "-scheme", "WeftMatePhone",
                     "-configuration", "Debug", "-derivedDataPath", str(args.derived_data.resolve()),
                     "-jobs", "4", "CODE_SIGNING_ALLOWED=NO", "build-for-testing"],
@@ -139,13 +146,22 @@ def main():
         source = next((args.derived_data.resolve() / "Build/Products").glob("*.xctestrun"))
         payload = source.read_bytes()
         private_run = source.parent / "ci-fixture.xctestrun"
+        # Existing health runners install these extra apps explicitly; XCTest only
+        # installs its own test host. Boot headlessly and retain the same behavior.
+        subprocess.run(["xcrun", "simctl", "boot", device], check=False, timeout=30)
+        subprocess.run(["xcrun", "simctl", "bootstatus", device, "-b"], check=True, timeout=180)
+        for name in ["WeftMateHealthSeedPhone", "WeftMateHealthSeedWatch", "WeftMateHealth4Seed"]:
+            subprocess.run(["xcrun", "simctl", "install", device,
+                            str(source.parent / "Debug-iphonesimulator" / (name + ".app"))], check=True, timeout=60)
         for filename, port in (FIXTURES if args.group == "local" else []):
             stream = (artifacts / (filename + ".log")).open("w")
             logs.append(stream)
             process = subprocess.Popen([sys.executable, str(ROOT / "Tests" / filename), "--port", str(port)],
                                        cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
             processes.append(process)
-            deadline = time.monotonic() + 20
+            # HTTPServer.server_bind calls getfqdn; macOS runner DNS can take
+            # over 30s (actions/setup-python#1223). Keep a bounded readiness wait.
+            deadline = time.monotonic() + 90
             while True:
                 if process.poll() is not None:
                     raise RuntimeError(filename + " exited before ready")
@@ -158,7 +174,11 @@ def main():
                     time.sleep(0.2)
         batches = []
         if args.group == "local":
-            batches = [("local", SUITES, lambda: {})]
+            def local_setup():
+                model = start_node("phone_model_services_server.mjs", artifacts, processes, logs)["origin"]
+                health = start_node("h3-isolated-host.mjs", artifacts, processes, logs)["origin"]
+                return {"APPLE9_MODEL_URL": model + "/v1", "WEFTMATE_H3_HOST": health}
+            batches = [("local", SUITES, local_setup)]
         elif args.group == "host":
             for filename, key, suites in HOST_BATCHES:
                 def setup(filename=filename, key=key):
@@ -170,12 +190,12 @@ def main():
                 ("apple2_cloud_fixture.mjs", "WEFTMATE_APPLE2_DRIVER", ["APPLE2LoginUITests"]),
                 ("health1_cloud_fixture.mjs", "WEFTMATE_APPLE2_DRIVER", ["HEALTH1UITests"]),
                 ("lg2_cloud_fixture.mjs", "WEFTMATE_LG2_DRIVER", ["LG2AccountUITests"]),
-                ("apple2_cloud_fixture.mjs", "WEFTMATE_APPLE6_DRIVER", ["Apple6UITests/testLegacyNoComputerEntry", "Apple6UITests/testAStandaloneLight", "Apple6UITests/testBStandaloneDark"]),
+                ("apple6_ui_driver.mjs", "WEFTMATE_APPLE6_DRIVER", ["Apple6UITests/testLegacyNoComputerEntry", "Apple6UITests/testAStandaloneLight", "Apple6UITests/testBStandaloneDark"]),
             ]:
                 def setup(filename=filename, key=key):
                     config = start_node(filename, artifacts, processes, logs,
-                                        extra_args=["--apple6-nohost"] if key == "WEFTMATE_APPLE6_DRIVER" else [],
                                         environment={"WEFTMATE_HEALTH1_FIXTURE": "1",
+                                                     "WEFTMATE_APPLE6_HEALTH_ZONE": "America/Los_Angeles",
                                                      "WEFTMATE_APPLE6_SIMULATOR": device,
                                                      "WEFTMATE_APPLE6_SHOTS": str(artifacts / "apple6-shots")})
                     return {key: config["driver"]}
@@ -184,15 +204,29 @@ def main():
             def feature_setup():
                 health = start_node("health4_host_fixture.mjs", artifacts, processes, logs)["origin"]
                 contract = start_node("apple3_host_fixture.mjs", artifacts, processes, logs)["origin"]
-                driver = start_node("apple2_cloud_fixture.mjs", artifacts, processes, logs,
-                                    extra_args=["--apple6-nohost"], environment={
+                host = start_node("apple5_real_host.mjs", artifacts, processes, logs,
+                                  extra_args=[str(source.parent / "ci-apple5-private.json")],
+                                  environment={"WEFTMATE_APPLE6_HEALTH_ZONE": "America/Los_Angeles"})
+                driver = start_node("apple6_ui_driver.mjs", artifacts, processes, logs, environment={
+                                        "WEFTMATE_APPLE6_HEALTH_ZONE": "America/Los_Angeles",
                                         "WEFTMATE_APPLE6_SIMULATOR": device,
                                         "WEFTMATE_APPLE6_SHOTS": str(artifacts / "apple6-shots")})["driver"]
                 return {"WEFTMATE_HEALTH4_ORIGIN": health, "WEFTMATE_APPLE3_ORIGIN": contract,
-                        "WEFTMATE_APPLE5_ORIGIN": health, "WEFTMATE_APPLE5_USERNAME": "health4_synthetic",
-                        "WEFTMATE_APPLE5_PASSWORD": "synthetic-test-only", "WEFTMATE_APPLE6_DRIVER": driver}
+                        "WEFTMATE_APPLE5_ORIGIN": host["origin"], "WEFTMATE_APPLE5_USERNAME": host["username"],
+                        "WEFTMATE_APPLE5_PASSWORD": host["password"], "WEFTMATE_APPLE6_DRIVER": driver}
             batches = [("features", ["HEALTH4UITests", "Apple3UITests", "Apple4UITests", "Apple5UITests",
                                      "Apple5AddendumUITests", "Apple5FixUITests", "Apple6UITests/testCPresentationLightAndDark"], feature_setup)]
+        if args.group != "local":
+            # Legacy run_a5_ui.py creates a fresh fixture per method. Preserve that
+            # isolation for account changes, deletions and scenario-mutating tests.
+            isolated = []
+            for name, suites, setup in batches:
+                for suite in suites:
+                    selectors = ([suite] if "/" in suite else
+                                 [suite + "/" + method for method in re.findall(
+                                     r"\bfunc\s+(test\w+)\s*\(", (ROOT / "Tests" / (suite + ".swift")).read_text())])
+                    isolated.extend((name + "-" + selector.replace("/", "-"), [selector], setup) for selector in selectors)
+            batches = isolated
         for name, suites, setup in batches:
             try:
                 environment = setup()
@@ -204,6 +238,7 @@ def main():
                 for process in processes:
                     stop(process)
                 processes.clear()
+                (source.parent / "ci-apple5-private.json").unlink(missing_ok=True)
                 (artifacts / "batches.json").write_text(json.dumps(results, indent=2) + "\n")
         return int(any(row["exitCode"] for row in results))
     finally:
