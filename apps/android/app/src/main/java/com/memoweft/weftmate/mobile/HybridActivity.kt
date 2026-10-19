@@ -1045,7 +1045,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         }
         "offline.identity" -> secrets.host()?.takeUnless { it.phoneOnly }?.let { host -> JSONObject().put("ownerId", host.ownerId).put("hostId", host.hostId)
             .put("deviceId", host.deviceId).put("origin", host.origin) } ?: JSONObject()
-        "offline.key", "offline.load", "offline.save", "offline.open", "offline.complete", "offline.clear" -> {
+        "offline.key", "offline.load", "offline.save", "offline.open", "offline.complete", "offline.clear", "offline.seal", "offline.targets", "offline.clearAccount" -> {
             val host = requireHost()
             val vault = OfflineVault(this, host)
             val result = when (method) {
@@ -1053,6 +1053,14 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 "offline.load" -> vault.load()
                 "offline.save" -> vault.save(params.getJSONObject("value"))
                 "offline.open" -> vault.open(params.getJSONObject("envelope"), params.getJSONObject("identity"))
+                "offline.targets" -> JSONObject().put("targets",vault.targets(params.getString("accountId")))
+                "offline.clearAccount" -> vault.clearAccount(params.optString("accountId"), params.optString("hostId").takeIf { it.isNotEmpty() }, if(params.has("keepGeneration")) params.getLong("keepGeneration") else null)
+                "offline.seal" -> {
+                    val config = JSONObject(secrets.appValue("login") ?: throw ApiFailure(401,"LOGIN_REQUIRED")).getJSONObject("config")
+                    val physicalDevice = CloudAppKeys(secrets).get(config.getString("issuer")+":weftmate-android").getString("deviceId")
+                    require(params.getJSONObject("identity").getString("deviceId") == physicalDevice)
+                    vault.seal(params.getJSONObject("payload"), params.getJSONObject("recipient"), params.getJSONObject("identity"))
+                }
                 "offline.complete" -> vault.complete(params.getJSONObject("body"))
                 else -> vault.clear()
             }
@@ -1765,6 +1773,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         }
         "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
             .put("nativeEmailCodeLogin", true)
+            .put("nativeOfflineTasks", 1)
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
             .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.fix36qa", "com.memoweft.weftmate.mobile.and9qa", "com.memoweft.weftmate.mobile.and8qa", "com.memoweft.weftmate.mobile.and5qa", "com.memoweft.weftmate.mobile.and12qa", "com.memoweft.weftmate.mobile.and6qa", "com.memoweft.weftmate.mobile.and7qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.mob4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
