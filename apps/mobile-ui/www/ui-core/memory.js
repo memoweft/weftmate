@@ -42,7 +42,9 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         let response;
         try {
             response = await environment.fetch(`${core.memoryBase}${path}`, { method, headers, credentials: 'same-origin', cache: 'no-store',
-                signal: AbortSignal.timeout(15000), ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+                // Deletion includes model-backed scope checks before Core submission;
+                // match the existing chat-memory budget instead of abandoning it at 15s.
+                signal: AbortSignal.timeout(method === 'DELETE' ? 360000 : 15000), ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
         }
         catch {
             throw { code: 'NETWORK', status: 0 };
@@ -290,6 +292,12 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             const result = await core.memoryRequest(`/commands/by-request/${encodeURIComponent(marker.requestId)}`);
             if (!core.memoryIdentityCurrent(token))
                 return;
+            const receipt = result?.receipt;
+            if (marker.operation === 'delete' && receipt?.requestId === marker.requestId &&
+                (receipt.state === 'revision_conflict' || receipt.state === 'rejected' && receipt.reasonCode === 'MEMORY_REVISION_CHANGED')) {
+                await refreshChangedForget(marker, key, token, selectedGeneration);
+                return;
+            }
             if (!core.applyMemoryReceipt(result?.receipt, marker, key, token) && core.memoryViewCurrent(token)) {
                 core.showMemoryReceipt(marker.cleanupOnly ? '记忆已移除，但清理是否完成尚未确认。请稍后核对处理结果。'
                     : '仍无法确认上次操作的结果。不会自动重发，请稍后查询。', marker.requestId, marker.cleanupOnly && marker.cleanupState === 'pending' && marker.retryUnknown !== true ? 'retry-cleanup' : 'check');
@@ -451,6 +459,28 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             effects.renderMemoryMode();
         }
     }
+    async function refreshChangedForget(marker, key, token, selectedGeneration) {
+        // A verified rejection means nothing was committed. Only read
+        // the new scope; a second user confirmation creates a new command.
+        core.clearMemoryMarker(key);
+        core.memory.unresolvedMarker = null;
+        core.memory.forgetPreview = null;
+        if (core.memory.activeOperation === marker) core.memory.activeOperation = null;
+        if (core.memoryViewCurrent(token) && selectedGeneration === core.memory.selectedGeneration) {
+            const refreshedGeneration = selectedGeneration + 1;
+            await core.openMemoryDetail(marker.kind, marker.id);
+            if (core.memoryViewCurrent(token) && core.memory.selectedGeneration === refreshedGeneration &&
+                core.memory.selected?.kind === marker.kind && core.memory.selected.id === marker.id) {
+                await core.setMemoryMode('delete');
+                const message = '记忆刚有更新，本次没有删除。请查看最新遗忘范围后再确认。';
+                effects.detailStatus('本次未提交。');
+                effects.detailError(message);
+                core.showMemoryReceipt(message, marker.requestId);
+                effects.setMemoryConfirmBusy(false);
+                effects.renderMemoryMode();
+            }
+        }
+    }
     async function submitMemoryAction() {
         const selected = core.memory.selected;
         const operation = core.memory.mode;
@@ -491,6 +521,12 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             const result = await core.submitMemoryCommand(selected, operation, body);
             if (!core.memoryIdentityCurrent(token) || operationGeneration !== core.memory.operationGeneration)
                 return;
+            const receipt = result?.receipt;
+            if (marker.operation === 'delete' && receipt?.requestId === marker.requestId &&
+                (receipt.state === 'revision_conflict' || receipt.state === 'rejected' && receipt.reasonCode === 'MEMORY_REVISION_CHANGED')) {
+                await refreshChangedForget(marker, key, token, selectedGeneration);
+                return;
+            }
             if (!core.applyMemoryReceipt(result?.receipt, marker, key, token) && core.memoryViewCurrent(token)) {
                 core.memory.unresolvedMarker = marker;
                 core.showMemoryReceipt('暂时无法确认这次操作是否完成。操作记录已保留，不会自动重复执行。', marker.requestId, 'check');
@@ -504,6 +540,10 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             const receipt = error?.payload?.receipt;
             if (core.applyMemoryReceipt(receipt, marker, key, token))
                 return;
+            if (marker.operation === 'delete' && error.code === 'MEMORY_REVISION_CHANGED' && error.payload?.state === 'withheld') {
+                await refreshChangedForget(marker, key, token, selectedGeneration);
+                return;
+            }
             if (core.memoryPreDispatchCodes.has(error.code)) {
                 core.clearMemoryMarker(key);
                 core.memory.unresolvedMarker = null;
