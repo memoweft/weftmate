@@ -146,13 +146,9 @@ def main():
         source = next((args.derived_data.resolve() / "Build/Products").glob("*.xctestrun"))
         payload = source.read_bytes()
         private_run = source.parent / "ci-fixture.xctestrun"
-        # Existing health runners install these extra apps explicitly; XCTest only
-        # installs its own test host. Boot headlessly and retain the same behavior.
+        # Boot headlessly. Install health helpers only for the cases that use them.
         subprocess.run(["xcrun", "simctl", "boot", device], check=False, timeout=30)
         subprocess.run(["xcrun", "simctl", "bootstatus", device, "-b"], check=True, timeout=180)
-        for name in ["WeftMateHealthSeedPhone", "WeftMateHealthSeedWatch", "WeftMateHealth4Seed"]:
-            subprocess.run(["xcrun", "simctl", "install", device,
-                            str(source.parent / "Debug-iphonesimulator" / (name + ".app"))], check=True, timeout=60)
         for filename, port in (FIXTURES if args.group == "local" else []):
             stream = (artifacts / (filename + ".log")).open("w")
             logs.append(stream)
@@ -227,11 +223,22 @@ def main():
                                      r"\bfunc\s+(test\w+)\s*\(", (ROOT / "Tests" / (suite + ".swift")).read_text())])
                     isolated.extend((name + "-" + selector.replace("/", "-"), [selector], setup) for selector in selectors)
             batches = isolated
+        installed_seeders = set()
         for name, suites, setup in batches:
             try:
+                seeders = (["WeftMateHealthSeedPhone", "WeftMateHealthSeedWatch"]
+                           if any(suite.startswith("HEALTH1UITests/") for suite in suites) else
+                           ["WeftMateHealth4Seed"] if any(suite in ["HEALTH4UITests/testLightHealthJourney",
+                                                                                 "HEALTH4UITests/testDarkHealthJourney"] for suite in suites) else [])
+                for seeder in seeders:
+                    if seeder not in installed_seeders:
+                        subprocess.run(["xcrun", "simctl", "install", device,
+                                        str(source.parent / "Debug-iphonesimulator" / (seeder + ".app"))],
+                                       check=True, timeout=180)
+                        installed_seeders.add(seeder)
                 environment = setup()
                 results.append(test_run(base, payload, private_run, suites, environment, artifacts, name))
-            except (RuntimeError, TimeoutError, subprocess.TimeoutExpired) as error:
+            except (RuntimeError, TimeoutError, subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
                 print(str(error), flush=True)
                 results.append({"batch": name, "exitCode": 1, "error": str(error)})
             finally:
