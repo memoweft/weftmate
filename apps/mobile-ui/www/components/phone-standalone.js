@@ -1,6 +1,23 @@
 /* The existing phone UI presents account-owned M3 conversations in its main chat. */
 (() => {
   let engine, account, cloud, native, sessionKey, memoryModel, modelServices, serviceDirectory={services:[],selected:null}, nativeServices=false, phonePicker, progress, poll, archive, handoffNotice=false, nativeError='', memoryTimer;
+  const memoryConversations = new Set();
+  let memoryFlush;
+  async function flushMemory(id) {
+    if(id)memoryConversations.add(id);
+    if(memoryFlush)return memoryFlush;
+    const current=engine,key=sessionKey;
+    if(!current || current.view().running)return;
+    const flight=(async()=>{for(const conversationId of memoryConversations) {
+      if(current!==engine || key!==sessionKey || current.view().running)return;
+      if(!current.view().conversations.some(c=>c.id===conversationId)){memoryConversations.delete(conversationId);continue;}
+      const extracted=await current.extractMemory(conversationId);
+      if(current!==engine || key!==sessionKey)return;
+      if(extracted)memoryConversations.delete(conversationId);
+    }})();
+    memoryFlush=flight;
+    try{return await flight;}finally{if(memoryFlush===flight)memoryFlush=null;}
+  }
   const data = () => engine?.view() || archive;
   const list = () => (data()?.conversations || []).map(c => ({ id: c.id, createdAt: new Date(c.turns[0]?.timestamp || Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
   const nativeCall = (...args) => androidBridge.call(...args);
@@ -76,15 +93,18 @@
       thinking:()=>currentServiceModel()?.deepThinking,toggleThinking:async enabled=>{if(native)await serviceCall('update',{...serviceDirectory.selected,deepThinkingEnabled:enabled});else{modelServices.setDeepThinking(enabled);serviceDirectory=modelServices.view();}},toast});
     await phonePicker.open();
   }
-  const sendBlocker = text => !engine ? '正在打开对话，请稍候再发送。'
+  const sendBlocker = (text, queue = false) => !engine ? '正在打开对话，请稍候再发送。'
     : !state.model ? '先在设置里添加一个模型，再开始聊天。'
     : state.modelSwitching ? '正在测试或切换模型，请稍候再发送。'
-    : engine.view().running ? '当前回复还在进行，请先停止或等待。'
+    : engine.view().running && !queue ? '当前回复还在进行，请先停止或等待。'
     : !text.trim() ? '先输入消息。'
     : text.trim().length>16384 ? '消息过长，请缩短后发送。' : '';
   const show = () => {
     if (!engine) return;
-    const value = engine.view(); state.busy = value.running;
+    const value = engine.view(), finished=state.busy && !value.running; state.busy = value.running;
+    const processed=engine.takeMemoryConversations?.()||[];
+    for(const id of processed)memoryConversations.add(id);
+    if((finished || processed.length) && !value.running && api.active && memoryConversations.size){clearTimeout(memoryTimer);memoryTimer=setTimeout(()=>flushMemory(),20000);}
     state.conversations = value.conversations.map(c => ({ id: c.id, createdAt:new Date(c.turns[0]?.timestamp||Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
     if (!state.conversationId && value.running) state.conversationId = value.sendingConversationId || null;
     renderConversationList(); if (state.page === 'chat' && state.chatSource === 'phone') render(); updateComposer();
@@ -93,7 +113,12 @@
   function render() {
     const content = $('chat-content'); clear(content);
     const conversation = data()?.conversations.find(c => c.id === state.conversationId);
-    if (!conversation?.turns.length) { showWelcome(); return; }
+    if (!conversation?.turns.length) showWelcome();
+    if (api.active && engine.view().queueError) {
+      content.append(el('p','muted',engine.view().queueError));
+      if(engine.view().queueRetryAvailable)content.append(action('重试排队消息',()=>{nativeError='';engine.retryQueue();show();},false));
+    }
+    if (!conversation?.turns.length) return;
     for (const turn of conversation.turns) {
       for (const message of turn.messages) content.append(messageNode(message.role, message.text));
       if (turn.workRequest?.status === 'pending') {
@@ -126,13 +151,14 @@
     status(''); nativeError='';
     try { const result = await action(); if (result) state.conversationId = result.conversationId; }
     catch (error) { const stopped=error.name==='AbortError'||error.message==='CANCELLED';nativeError=WeftOffline.phoneHistoryFailure(error)||(stopped?'已停止，生成的文字已保存。':'回复未完成，已保存生成的文字。请检查网络或模型配置后重试。');status(nativeError,!stopped); }
-    finally { show();clearTimeout(memoryTimer);const id=state.conversationId;memoryTimer=setTimeout(()=>void engine?.extractMemory(id),20000);if(!api.active && engine?.view().turns.length)await connected(); }
+    finally { show();if(!api.active && engine?.view().turns.length)await connected(); }
   }
   async function attachEngine(info, client, adopt = true) {
     native = !!window.weftNative; cloud = client;
     const next = `${info.origin}:${info.accountId}`;
     if (sessionKey !== next) {
       clearTimeout(memoryTimer);
+      memoryConversations.clear();memoryFlush=null;
       if (engine) { const previous=engine;engine=null;previous.close(); }
       modelServices?.clear();
       sessionKey = next; account = info; memoryModel = null;modelServices=null;serviceDirectory={services:[],selected:null};nativeServices=false;
@@ -197,6 +223,9 @@
     state.profile = { displayName: info.localOnly ? '本机使用' : info.email, phoneOnly: true, localOnly: info.localOnly === true };
     uiCore.stopConnection(); document.body.classList.remove('cloud-auth-active'); $('cloud-auth-page').classList.remove('active');
     showProfile(state.profile); page('chat'); show();
+    uiCore.syncMobileIdentity();
+    await uiCore.loadMessageModePreference();
+    engine.resumeQueue();
     if (native) { await syncAccountAppearance(); await nativeCall('app.ready', { owner: (await nativeCall('app.bootstrap')).owner, hasDraft: false }); }
     clearInterval(poll); if (!info.localOnly) poll = setInterval(() => void connect().catch(() => {}), 15000);
   }
@@ -264,21 +293,34 @@
       const authBusy=!!globalThis.WeftMobileCloud?.core?.cloudAuthView?.()?.busy;
       if (!state.booted || !state.loggedIn || !engine || !account) return { ready: false, authBusy };
       if (p.owner && p.owner !== sessionKey) throw Error('ACCOUNT_SWITCHED');
+      uiCore.syncMobileIdentity();
       if (action === 'model') state.model = await nativeCall('phone.models.select', p);
       else if (action === 'composer') await engine.saveComposer(p.conversationId || null, p.draft || '');
       else if (action === 'send' || action === 'regenerate') {
         if (!api.active) throw Error('HOST_AVAILABLE');
-        const reason=sendBlocker(action==='send'?String(p.text||''):'重新生成');
+        const reason=sendBlocker(action==='send'?String(p.text||''):'重新生成', action==='send');
         if(reason){nativeError=reason;sent=false;}
         else {
           state.conversationId = p.conversationId || null;
-          void run(() => action === 'send' ? engine.send(p.text, state.conversationId) : engine.regenerate(state.conversationId));
+          if (action === 'send') {
+            nativeError='';
+            try {
+              const receipt = await engine.enqueue(p.text, state.conversationId, uiCore.messageModePreference());
+              state.conversationId = receipt.conversationId;
+            } catch(error) {
+              const capacity=WeftOffline.phoneHistoryFailure(error);if(!capacity)throw error;
+              nativeError=capacity;sent=false;
+            }
+          } else void run(() => engine.regenerate(state.conversationId));
         }
+      } else if (action === 'retryQueue') {
+        if (!api.active) throw Error('HOST_AVAILABLE');
+        nativeError='';engine.retryQueue();
       } else if (action === 'stop') engine.stop();
       else if (action !== 'view') throw Error('INVALID_REQUEST');
       const value = engine.view();
       return { ready: true, active: api.active, authBusy, owner: sessionKey, page: state.page, selectedId: state.conversationId,
-        running: value.running, sent, modelSwitching:!!state.modelSwitching, conversations: value.conversations, composer: value.nativeComposer || null, drafts: value.nativeDrafts || {}, error: nativeError };
+        running: value.running, activeConversationId:value.activeConversationId, pendingMessages:value.pendingMessages, queueRetryAvailable:!!value.queueRetryAvailable, messageMode:uiCore.messageModePreference(), sent, modelSwitching:!!state.modelSwitching, conversations: value.conversations, composer: value.nativeComposer || null, drafts: value.nativeDrafts || {}, error: value.queueError || nativeError };
     },
     ensureAccount: async info => {if(sessionKey&&sessionKey!==`${info.origin}:${info.accountId}`)await api.clear();},
     modelCall: (method,p={})=>routeCall(method,p),
@@ -286,7 +328,7 @@
     get memory(){return engine?.view().phoneMemory;},get handover(){return engine?.view().handover;},
     get memoryPending(){return !!engine?.view().phoneMemory&&!engine.view().phoneMemory.transferred;},
     memoryChange:(...args)=>engine.memoryChange(...args),confirmHandover:async()=>{await engine.memoryChange('confirm-handover');await connected();},
-    flushMemory:id=>engine?.extractMemory(id||state.conversationId),
+    flushMemory:id=>flushMemory(id||state.conversationId),
     removeConversation:async id=>{await engine.removeConversation(id);if(state.conversationId===id)selectConversation(null);show();if(!api.active)await connected();},
     get active() { return state.connection === 'phone' && !!engine; }, get hasData() { return !!data(); }, owns: id => !!data()?.conversations.some(c=>c.id===id), list, start, connected, routeCall, render,
     sendBlocker,
@@ -294,7 +336,7 @@
     event: value => { if (value.event === 'phone.progress') { progress?.(value.data.text); return true; } return false; },
     send: () => { const text = $('draft').value.trim(), reason=sendBlocker(text); if(reason){toast(reason);updateComposer();return {sent:false,reason};} $('draft').value = ''; return run(() => engine.send(text, state.conversationId)); },
     stop: () => engine?.stop(),
-    clear: async () => { clearInterval(poll);clearTimeout(memoryTimer); const previous = engine, hadArchive = archive; engine = null; archive = null; modelServices?.clear();modelServices=null;serviceDirectory={services:[],selected:null};nativeServices=false;memoryModel = null; account = null; sessionKey = null; state.model = null; nativeError='';
+    clear: async () => { clearInterval(poll);clearTimeout(memoryTimer);memoryConversations.clear();memoryFlush=null; const previous = engine, hadArchive = archive; engine = null; archive = null; modelServices?.clear();modelServices=null;serviceDirectory={services:[],selected:null};nativeServices=false;memoryModel = null; account = null; sessionKey = null; state.model = null; nativeError='';
       uiCore.phoneAccountConnection(false); if (previous) { previous.close(); } else if (hadArchive && window.weftNative) await nativeCall('phone.offline.clear'); },
     empty(target, name) {
       if(name==='memory')return WeftPhoneMemoryView(target);
@@ -307,6 +349,6 @@
       target.replaceChildren(heading(mobilePageNames[name] || mobileSettingsRegistry.get(name)?.name || (name==='memory'?'记忆':'设置')), icon,notice(copy[name] || '连上电脑后可用。'), action('怎么连上电脑', () => page('devices'), false));
     },
   };
-document.addEventListener('visibilitychange',()=>{clearTimeout(memoryTimer);void engine?.extractMemory(state.conversationId);});
-  globalThis.addEventListener?.('pagehide',()=>void engine?.extractMemory(state.conversationId));
+document.addEventListener('visibilitychange',()=>{clearTimeout(memoryTimer);void flushMemory(state.conversationId);});
+  globalThis.addEventListener?.('pagehide',()=>void flushMemory(state.conversationId));
 })();
