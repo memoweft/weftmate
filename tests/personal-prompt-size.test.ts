@@ -39,7 +39,7 @@ test('loading tools preserves exact schemas and relevant workflow guidance', () 
     'projection must not duplicate guidance');
 });
 
-test('deferred scheduling and questions receive WeftMate overrides while keeping native parameters', () => {
+test('deferred scheduling uses a local-time model contract while other parameters remain native', () => {
   const names = ['schedule_create', 'schedule_manage', 'ask_user_question'];
   const native = { ...assembly, tools: assembly.tools.map((tool: any) => names.includes(tool.name)
     ? { ...tool, description: 'Uncustomized runtime description' } : tool) };
@@ -47,7 +47,16 @@ test('deferred scheduling and questions receive WeftMate overrides while keeping
   for (const name of names) {
     const tool = projected.tools.find((tool: any) => tool.name === name);
     assert.equal(tool.description, personalToolDescriptions[name]);
-    assert.deepEqual(tool.parameters, native.tools.find((tool: any) => tool.name === name).parameters);
+    const parameters = native.tools.find((tool: any) => tool.name === name).parameters;
+    if (name === 'schedule_create') {
+      const localAt = parameters.properties.at.oneOf.find((branch: any) => branch.type === 'object');
+      assert.deepEqual(tool.parameters, { ...parameters, properties: { ...parameters.properties,
+        at: { ...localAt, description:'Account-local absolute time. Pass this object directly, never a JSON-encoded string.',
+          properties: { ...localAt.properties,
+            date:{...localAt.properties.date,description:'Local calendar date, YYYY-MM-DD.'},
+            time:{...localAt.properties.time,description:'Local time, HH:mm:ss (24-hour); do not put a date or UTC offset here.'},
+            time_zone:{...localAt.properties.time_zone,description:'Account IANA time zone, for example Asia/Shanghai.'} } } } });
+    } else assert.deepEqual(tool.parameters, parameters);
   }
   // A later job collection request also needs the ownership/result instructions.
   const collection = presentPersonalPrompt(assembly, new Set(['job_output']));
