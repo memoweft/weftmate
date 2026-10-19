@@ -215,9 +215,20 @@
     if (connection.hostId !== client.config.hostId || connection.status !== 'offline') return connection;
     // The cloud may lack a relay address while this phone already has a trusted
     // direct channel to the selected computer. Probe that existing channel.
-    const configuration = await client.request(client.host + '/personal/v1/cloud/config');
-    if (configuration.hostId !== connection.hostId) throw { code: 'HOST_TRUST_INVALID' };
-    await client.request(client.host + '/personal/v1/auth/cloud-nonce', { method: 'POST', body: {} });
-    return { ...connection, status: 'online', baseUrl: client.host };
+    try {
+      const configuration = await client.request(client.host + '/personal/v1/cloud/config');
+      if (configuration.hostId !== connection.hostId) throw { code: 'HOST_TRUST_INVALID' };
+      await client.request(client.host + '/personal/v1/auth/cloud-nonce', { method: 'POST', body: {} });
+      return { ...connection, status: 'online', baseUrl: client.host };
+    } catch(error) {
+      if(mobileTransportUnavailable(error))return connection;
+      throw error;
+    }
+  };
+  const mobileTransportUnavailable = error => ['NETWORK','HOST_UNAVAILABLE','HOST_OFFLINE','CLOUD_TLS_UNAVAILABLE','CLOUD_TRANSPORT_UNAVAILABLE','CLOUD_TIMEOUT','TIMEOUT','CONNECTION_FAILED'].includes(error.code||error.message);
+  globalThis.WeftUiCore.probeMobileCloudPresence = async (verifyNative, probeCloud) => {
+    try { const verified=await verifyNative();if(verified)return verified; }
+    catch(error) { if(!mobileTransportUnavailable(error))throw error; }
+    return probeCloud();
   };
 })();
