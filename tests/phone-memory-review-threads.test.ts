@@ -40,3 +40,24 @@ test('future words do not bypass conditional, negative, question or quotation ch
   const state=await extractionAfterForget(text);assert.equal(state.items.length,0,text);
  }
 });
+
+
+test('queue retry preserves memory edits made during the failed reply and all subsequent complete turns',async t=>{
+ let stored:any,release!:()=>void,progress:any,calls=0;
+ const wait=async(predicate:()=>boolean)=>{for(let i=0;i<200&&!predicate();i++)await new Promise(r=>setTimeout(r,5));assert.ok(predicate());};
+ const engine=await W.create({identity:{},crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
+  load:async()=>({snapshot:null,phoneMemory:M.fresh(),conversations:[],turns:[],tasks:[]}),save:async(v:any)=>{stored=structuredClone(v)},close(){},
+  complete:async(body:any,_model:any,_signal:any,onProgress:any)=>{calls++;progress=onProgress;onProgress('部分回复');await new Promise<void>(r=>release=r);if(calls===1)throw Error('NETWORK');return{choices:[{message:{content:'完整回复：'+body.messages.at(-1).content}}]};}}});
+ t.after(()=>engine.close());await engine.memoryChange('add',null,'红茶');const id=engine.view().phoneMemory.items[0].id;
+ const first=await engine.enqueue('第一条');await wait(()=>calls===1);
+ await engine.enqueue('第二条',first.conversationId);await engine.enqueue('第三条',first.conversationId);
+ await engine.memoryChange('edit',id,'绿茶');progress('已保留的部分回复');release();
+ await wait(()=>!!engine.view().queueError&&!engine.view().running);
+ assert.deepEqual(stored.pendingMessages.map((p:any)=>p.text),['第二条','第三条']);
+ assert.equal(stored.phoneMemory.items[0].text,'绿茶');
+ assert.equal(stored.conversations[0].turns[0].messages[1].text,'已保留的部分回复');
+ engine.retryQueue();await wait(()=>calls===2);release();await wait(()=>calls===3);release();await wait(()=>!engine.view().running);
+ assert.deepEqual(stored.conversations[0].turns.map((turn:any)=>turn.messages[1].text),['已保留的部分回复','完整回复：第二条','完整回复：第三条']);
+ assert.equal(stored.phoneMemory.items[0].text,'绿茶');assert.equal(stored.pendingMessages.length,0);
+ assert.deepEqual(engine.takeMemoryConversations(),[first.conversationId]);
+});

@@ -1832,7 +1832,7 @@ test('FIX-32 standalone send explains missing model, model test and running repl
  const h=harness({autoBoot:true});
  h.run('window.weftNative.onmessage=event=>androidBridge.receive(event)');
  h.run(`globalThis.fix32Running=false;globalThis.fix32Sends=0;
- WeftOffline.create=async()=>({view:()=>({conversations:[],turns:[],running:fix32Running}),send:async()=>{fix32Sends++},close(){},clear:async()=>{}});`);
+ WeftOffline.create=async()=>({view:()=>({conversations:[],turns:[],running:fix32Running}),resumeQueue(){},send:async()=>{fix32Sends++},close(){},clear:async()=>{}});`);
  await h.run('WeftPhone.start({origin:"https://cloud.example",accountId:"synthetic",email:"synthetic@example.com",deviceId:"phone"},{authorized:async()=>({devices:[]})})');
  h.node('draft').value='保留我的消息';h.run('state.model=null;updateComposer()');assert.equal(h.node('send-button').disabled,true);
  await h.run('WeftPhone.send()');assert.match(h.node('toast').textContent,/添加.*模型/);assert.equal(h.node('draft').value,'保留我的消息');
