@@ -31,9 +31,10 @@ internal fun offlineOpeningState(previous: JSONObject, reset: Boolean, phoneSour
     else previous
 
 /** Replica and outbox never enter LocalStore, WebView storage, logs or Android backups. */
-internal class OfflineVault(context: Context, private val host: HostIdentity, private val recipient: HostIdentity = host) {
-    companion object { private val locks = ConcurrentHashMap<String, Any>() }
-    private val scope = MessageDigest.getInstance("SHA-256").digest("${host.origin}:${host.ownerId}".toByteArray()).joinToString("") { "%02x".format(it) }
+internal class OfflineVault(private val context: Context, private val host: HostIdentity, private val recipient: HostIdentity = host,
+    private val scopeOverride: String? = null) {
+    companion object { private val locks = ConcurrentHashMap<String, Any>(); private val recordsLock = Any() }
+    private val scope = scopeOverride ?: MessageDigest.getInstance("SHA-256").digest("${host.origin}:${host.ownerId}".toByteArray()).joinToString("") { "%02x".format(it) }
     private val prefix = "weftmate-offline-$scope"
     private val file = File(context.noBackupFilesDir, "$prefix.bin")
     private fun <T> locked(action: () -> T): T = synchronized(locks.getOrPut(scope) { Any() }, action)
@@ -66,10 +67,12 @@ internal class OfflineVault(context: Context, private val host: HostIdentity, pr
     }
     private fun publicView(value: JSONObject): JSONObject = JSONObject(value.toString()).apply {
         remove("_deviceKey")
+        remove("_phoneSource")
         optJSONObject("snapshot")?.optJSONObject("model")?.remove("apiKey")
     }
     fun load() = locked { publicView(read()) }
     private fun write(value: JSONObject) {
+        if(scopeOverride==null)value.put("_phoneSource",host.authSource=="phone")
         val alias = "$prefix-data-${UUID.randomUUID()}"
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
         generator.init(KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
@@ -86,15 +89,18 @@ internal class OfflineVault(context: Context, private val host: HostIdentity, pr
     }
     fun save(value: JSONObject): JSONObject = locked { saveLocked(value) }
     private fun saveLocked(value: JSONObject): JSONObject {
-        require(value.toString().toByteArray().size <= 8 * 1024 * 1024)
+        requireOfflineVaultSize(value)
         val snapshot = value.optJSONObject("snapshot")
         val previous = read()
         previous.optJSONObject("_deviceKey")?.let { value.put("_deviceKey", it) }
         val prior = previous.optJSONObject("snapshot")
-        if (snapshot != null && prior != null) {
+        if (snapshot != null) {
+            require(prior != null)
             require(snapshot.getLong("generation") == prior.getLong("generation"))
             // Credential selection only comes from the authenticated host envelope.
             snapshot.put("model", prior.optJSONObject("model") ?: JSONObject.NULL)
+            snapshot.put("control", prior.optJSONObject("control") ?: JSONObject.NULL)
+            snapshot.put("taskRecipient", prior.optJSONObject("taskRecipient") ?: JSONObject.NULL)
         }
         write(value); return JSONObject().put("saved", true)
     }
@@ -136,6 +142,64 @@ internal class OfflineVault(context: Context, private val host: HostIdentity, pr
         val endpoint = Endpoints.modelUrl(model.getString("baseUrl").trimEnd('/') + "/chat/completions")
         return JsonHttp().request(endpoint, "POST", body,
             mapOf("Authorization" to "Bearer ${model.getString("apiKey")}"), readTimeoutMs = 180_000).body
+    }
+    private fun accountMatches(accountId:String):Boolean = locked {
+        accountId.isNotEmpty() && read().optJSONObject("snapshot")?.optJSONObject("control")?.optString("accountId")==accountId
+    }
+    private fun records():List<OfflineVault> = context.noBackupFilesDir.listFiles().orEmpty().mapNotNull { entry ->
+        val match=Regex("weftmate-offline-([a-f0-9]{64})\\.bin").matchEntire(entry.name) ?: return@mapNotNull null
+        OfflineVault(context,host,recipient,match.groupValues[1])
+    }
+    fun targets(accountId:String):JSONArray = synchronized(recordsLock) {
+        require(accountMatches(accountId))
+        val result=linkedMapOf<String,JSONObject>()
+        for(record in records())record.locked {
+            val snapshot=record.read().optJSONObject("snapshot") ?: return@locked
+            val control=snapshot.optJSONObject("control") ?: return@locked
+            val recipientKey=snapshot.optJSONObject("taskRecipient") ?: return@locked
+            if(control.optString("accountId")==accountId){
+                val id=control.getString("hostId")
+                val target=JSONObject().put("control",control).put("generation",snapshot.getLong("generation")).put("taskRecipient",recipientKey)
+                if(result[id]?.getLong("generation")?.let{it>snapshot.getLong("generation")}!=true)result[id]=target
+            }
+        }
+        JSONArray(result.values.toList())
+    }
+    fun seal(payload:JSONObject,publicJwk:JSONObject,identity:JSONObject):JSONObject {
+        require(identity.getString("purpose")=="offline-task")
+        UUID.fromString(identity.getString("id"))
+        require(payload.getString("text").isNotBlank()&&payload.getString("text").length<=8192)
+        val available=targets(identity.getString("accountId"))
+        val target=(0 until available.length()).map{available.getJSONObject(it)}.firstOrNull {
+            it.getJSONObject("control").getString("hostId")==identity.getString("hostId")&&it.getLong("generation")==identity.getLong("generation")
+        } ?: throw ApiFailure(409,"OFFLINE_RESET_REQUIRED")
+        val accepted=target.getJSONObject("taskRecipient")
+        require(listOf("kty","n","e").all { accepted.getString(it)==publicJwk.getString(it) })
+        return sealOfflineTask(payload,accepted,identity)
+    }
+    fun clearAccount(accountId:String,hostId:String?=null,keepGeneration:Long?=null):JSONObject = synchronized(recordsLock) {
+        if(accountId.isEmpty())return@synchronized JSONObject().put("cleared",true)
+        require(accountMatches(accountId))
+        val phoneScope=SecureSettings(context).appValue("phone-account")?.let { JSONObject(it) }?.let {
+            MessageDigest.getInstance("SHA-256").digest("${it.getString("origin")}:${it.getString("accountId")}".toByteArray()).joinToString(""){byte->"%02x".format(byte)}
+        }
+        for(record in records())record.locked {
+            val value=record.read();val snapshot=value.optJSONObject("snapshot") ?: return@locked
+            val control=snapshot.optJSONObject("control") ?: return@locked
+            if(control.optString("accountId")==accountId&&(hostId==null||control.optString("hostId")==hostId&&(keepGeneration==null||snapshot.getLong("generation")!=keepGeneration))){
+                if(value.optBoolean("_phoneSource")||record.scope==phoneScope){
+                    val derived=mutableSetOf<String>()
+                    value.optJSONArray("conversations")?.let { rows->for(i in 0 until rows.length())rows.getJSONObject(i).let{if(!it.isNull("sourceSessionId")&&it.optString("sourceSessionId").isNotEmpty())derived.add(it.getString("id"))} }
+                    fun filter(rows:JSONArray?,keep:(JSONObject)->Boolean)=JSONArray((0 until (rows?.length()?:0)).map{rows!!.getJSONObject(it)}.filter(keep))
+                    value.put("snapshot",JSONObject.NULL).put("tasks",JSONArray()).put("fragmentProgress",JSONObject())
+                    value.put("conversations",filter(value.optJSONArray("conversations")){it.optString("id") !in derived})
+                    value.put("turns",filter(value.optJSONArray("turns")){it.optString("conversationId") !in derived&&(it.optJSONArray("memoryRefs")?.length()?:0)==0})
+                    value.optJSONObject("phoneMemory")?.let{memory->listOf("items","processed","suppressedSources","suppressedText").forEach{memory.put(it,JSONArray())};memory.put("suppressedAt",JSONObject())}
+                    record.write(value)
+                }else record.clearLocked()
+            }
+        }
+        JSONObject().put("cleared",true)
     }
     fun clear(): JSONObject = locked { clearLocked() }
     private fun clearLocked(): JSONObject {

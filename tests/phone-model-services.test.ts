@@ -244,7 +244,7 @@ test('native vault writes carry the account identity captured when the phone eng
  const identity={accountId:'account-a',origin:'https://synthetic.example',deviceId:'phone'};
  const context:any={window:{weftNative:true},state:{},document:{addEventListener(){}},addEventListener(){},
   androidBridge:{call:async(method:string,params:any)=>{if(method==='phone.identity')return identity;if(method==='phone.offline.save'){saved=params;return{}};assert.fail(method);}},
-  WeftOffline:{create:async(options:any)=>{attached=options;return{view:()=>({conversations:[]})}}},clearTimeout};
+  WeftOffline:{savePhoneHistory:(globalThis as any).WeftOffline.savePhoneHistory,create:async(options:any)=>{attached=options;return{view:()=>({conversations:[]})}}},clearTimeout};
  runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js',import.meta.url),'utf8'),context);
  await context.WeftPhone.restoreArchive(identity,{});
  await attached.vault.save({phoneMemory:{items:[]}});
