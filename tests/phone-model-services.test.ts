@@ -209,3 +209,44 @@ test('phone Claude completion supports light memory without a progress callback 
   assert.deepEqual(JSON.parse(work.choices[0].message.tool_calls[0].function.arguments), { description: '合成文件工作' });
   manager.clear();
 });
+
+test('native phone presentation selects the new chat after pending memory, without jumping back to the old chat',async t=>{
+ const W=(globalThis as any).WeftOffline,M=(globalThis as any).WeftPhoneMemory;
+ let engine:any,entered!:()=>void,finish!:()=>void,reply!:()=>void;
+ const extracting=new Promise<void>(r=>entered=r),memory=new Promise<void>(r=>finish=r),answer=new Promise<void>(r=>reply=r);
+ const model={modelId:'synthetic',baseUrl:'https://model.example/v1'};
+ let chats=0;
+ const vault={load:async()=>({snapshot:null,turns:[],conversations:[],tasks:[],phoneMemory:M.fresh()}),save:async()=>{},close(){},
+  complete:async(body:any)=>{if(body.max_tokens){entered();await memory;const source=JSON.parse(body.messages[1].content)['原话'][0];return{choices:[{message:{content:JSON.stringify({upsert:[{id:null,text:'红茶',sourceIDs:[source.id],evidence:'红茶'}]})}}]};}
+    if(++chats>1)await answer;return{choices:[{message:{content:'合成回答'}}]};}};
+ const context:any={window:{},document:{addEventListener(){}},addEventListener(){},state:{booted:true,loggedIn:true,connection:'phone',page:'settings',model,conversationId:null},
+  WeftPhoneModelServices:{create:async()=>({currentModel:()=>model,clear(){}})},
+  WeftOffline:{browserVault:async()=>vault,create:async(options:any)=>(engine=await W.create({...options,crypto:webcrypto}))},
+  androidBridge:{call:async()=>assert.fail('browser synthetic test cannot read native secrets')},
+  renderConversationList(){},updateComposer(){},status(){},uiCore:{phoneAccountConnection(){}},
+  URL,DOMException,AbortController,clearTimeout,setTimeout:()=>0,clearInterval};
+ runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js',import.meta.url),'utf8'),context);
+ await context.WeftPhone.restoreArchive({origin:'https://synthetic.example',accountId:'test'},{authorized:async()=>({devices:[{isCurrent:true}]})});
+ t.after(()=>engine.close());
+ await context.WeftPhone.presentation('send',{text:'记住我喜欢喝红茶'});
+ while(engine.view().running)await new Promise(r=>setImmediate(r));
+ await new Promise(r=>setImmediate(r));const old=context.state.conversationId;
+ assert.ok(old);
+ await context.WeftPhone.presentation('send',{text:'我喜欢喝什么？'});await extracting;finish();
+ while(chats<2)await new Promise(r=>setImmediate(r));
+ const view=await context.WeftPhone.presentation('view');
+ assert.notEqual(view.selectedId,old);assert.equal(view.selectedId,view.conversations.at(-1).id);
+ reply();while(engine.view().running)await new Promise(r=>setImmediate(r));
+});
+
+test('native vault writes carry the account identity captured when the phone engine attached',async()=>{
+ let attached:any,saved:any;
+ const identity={accountId:'account-a',origin:'https://synthetic.example',deviceId:'phone'};
+ const context:any={window:{weftNative:true},state:{},document:{addEventListener(){}},addEventListener(){},
+  androidBridge:{call:async(method:string,params:any)=>{if(method==='phone.identity')return identity;if(method==='phone.offline.save'){saved=params;return{}};assert.fail(method);}},
+  WeftOffline:{savePhoneHistory:(globalThis as any).WeftOffline.savePhoneHistory,create:async(options:any)=>{attached=options;return{view:()=>({conversations:[]})}}},clearTimeout};
+ runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js',import.meta.url),'utf8'),context);
+ await context.WeftPhone.restoreArchive(identity,{});
+ await attached.vault.save({phoneMemory:{items:[]}});
+ assert.equal(saved.accountId,identity.accountId);assert.equal(saved.origin,identity.origin);
+});
