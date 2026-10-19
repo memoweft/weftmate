@@ -1,3 +1,4 @@
+const derivedContext = item => ['interaction_context', 'evidence_context', 'interaction_commitment'].includes(item.object_kind);
 const invalid = () => Object.assign(Error('MEMORY_FORGET_DECISION_INVALID'), { code: 'MEMORY_FORGET_DECISION_INVALID' });
 const candidateBatchChars = 16000;
 export const forgetCompletionVersion = 5; // Terminal job sources must also be readable and fit the model request.
@@ -221,7 +222,7 @@ export async function scopedForgetPlan(manager, owner, action, route) {
       const selectedRow = byKey.get(key);
       if (selectedRow.object_kind !== 'evidence') {
         const preview = await cascade(selectedRow);
-        if ((preview.items ?? []).some(item => item.object_kind !== 'entity' && !selected.has(`${item.object_kind}:${item.item_id}`))) {
+        if ((preview.items ?? []).some(item => item.object_kind !== 'entity' && !derivedContext(item) && !selected.has(`${item.object_kind}:${item.item_id}`))) {
           selected.delete(key); changed = true; continue;
         }
       }
@@ -248,7 +249,7 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     decisions.get(row.key)?.hasTargetFact && !eligible(row.key) && !other(row.key)).length;
   const evidence = new Map();
   for (const key of selected) for (const source of candidateSources(byKey.get(key))) evidence.set(source.evidence_id, source.evidence?.raw_content);
-  const coveredItems = new Set(), coveredEvidence = new Set(), worldTargets = [];
+  const coveredItems = new Set(), coveredEvidence = new Set(), worldTargets = [], forgetScopes = {};
   const worldRows = [...selected].map(key => byKey.get(key)).filter(row => row.object_kind !== 'evidence')
     .sort((a, b) => Number(b.object_kind === 'entity') - Number(a.object_kind === 'entity') ||
       Number(b.current_state === 'current') - Number(a.current_state === 'current'));
@@ -256,14 +257,37 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     if (coveredItems.has(`${row.object_kind}:${row.item_id}`)) continue;
     const preview = await cascade(row);
     worldTargets.push({ kind: row.object_kind, id: row.item_id });
+    if (typeof preview.forget_scope === 'string') forgetScopes[`${row.object_kind}:${row.item_id}`] = preview.forget_scope;
     for (const item of preview.items ?? []) coveredItems.add(`${item.object_kind}:${item.item_id}`);
     for (const id of preview.evidence_ids ?? []) coveredEvidence.add(id);
+  }
+  for (const id of evidence.keys()) if (!coveredEvidence.has(id)) {
+    const preview = await cascade({ object_kind: 'evidence', item_id: id });
+    if (typeof preview.forget_scope === 'string') forgetScopes[`evidence:${id}`] = preview.forget_scope;
+  }
+  const evidenceIds = [...evidence.keys()].filter(id => !coveredEvidence.has(id));
+  const targets = [...worldTargets, ...evidenceIds.map(id => ({ kind: 'evidence', id }))];
+  let batchForget;
+  if (!retainedUncertainCount && targets.length > 1 && await manager.forgetBatchSupported?.(owner)) {
+    if (targets.length > 32) return changedScope();
+    const [first, ...rest] = targets;
+    const additional_targets = rest.map(row => ({ target_kind: row.kind, target_id: row.id }));
+    const preview = await manager.query(owner, 'preview_forget', {
+      target_kind: first.kind, target_id: first.id, additional_targets,
+    });
+    // The combined transaction must not expand the independently authorized
+    // source/fact sets. Derived copies are Core's already previewed cascade.
+    if (preview.world_revision !== worldRevision || typeof preview.forget_scope !== 'string' ||
+        (preview.evidence_ids ?? []).some(id => !evidence.has(id)) ||
+        (preview.items ?? []).some(item => !derivedContext(item) &&
+          item.object_kind !== 'entity' && !selected.has(`${item.object_kind}:${item.item_id}`))) return changedScope();
+    batchForget = { forget_scope: preview.forget_scope, additional_targets };
   }
   const latest = await manager.query(owner, 'query_world', { operation: 'revision' });
   if (latest.world_revision !== worldRevision || [...previews.values()].some(preview => preview.world_revision !== worldRevision)) return changedScope();
   return { version: 2, completionVersion: forgetCompletionVersion, completionState: retainedUncertainCount > 0 ? 'withheld' : 'complete', worldRevision, authorizedEvidenceIds: [...evidence.keys()],
-    evidenceIds: [...evidence.keys()].filter(id => !coveredEvidence.has(id)), sourceTexts: [...evidence.values()].filter(Boolean),
-    worldTargets,
+    evidenceIds, sourceTexts: [...evidence.values()].filter(Boolean),
+    worldTargets, forgetScopes, ...(batchForget ? { batchForget } : {}),
     affectedIds: [...selected].map(key => byKey.get(key).item_id), authorization: request, retainedOtherCount, retainedUncertainCount };
 }
 
@@ -308,7 +332,7 @@ export async function checkForgetCompletion(manager, owner, proposal, route) {
         }
       } while (changed);
     }
-    const items = (preview.items ?? []).filter(item => item.object_kind !== 'entity' || item.item_type === 'person');
+    const items = (preview.items ?? []).filter(item => !derivedContext(item) && (item.object_kind !== 'entity' || item.item_type === 'person'));
     const targets = items.filter(item => proposal.targetKind === 'evidence' || chain.has(`${item.object_kind}:${item.item_id}`));
     if (targets.some(item => !rows.some(row => row.object_kind === item.object_kind && row.item_id === item.item_id))) return unknown();
     const candidates = items.map(item => {
@@ -323,7 +347,7 @@ export async function checkForgetCompletion(manager, owner, proposal, route) {
     // Formation can fail before any World item exists. The explicitly selected
     // source is then the target fact, subject to the same classification and
     // completion checks; it grants no authority over other sources or items.
-    if (selectedSource && !(preview.items ?? []).length) candidates.push({ key: `target:evidence:${proposal.targetId}`,
+    if (selectedSource && !items.length) candidates.push({ key: `target:evidence:${proposal.targetId}`,
       kind: 'evidence', text: [selectedSource.raw_content, selectedSource.summary].filter(Boolean).join('\n'), graphSubject: null,
       sourceTexts: [selectedSource.raw_content, selectedSource.summary].filter(Boolean) });
     if (!facts.length || !candidates.length) return unknown();

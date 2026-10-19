@@ -51,7 +51,7 @@ test('default immediate new-session recall bridges only accepted permitted quote
     const evidenceId = immediate.recentEvidence[0].id
     const command = async (operation: string, payload = {}) => manager.submit(owner, { schema_version: 1,
       command_id: `mf1-${operation}`, subject_id: owner, actor: 'owner', expected_world_revision: (await recall()).worldRevision,
-      operation, target_kind: 'evidence', target_id: evidenceId, payload, submitted_at: new Date().toISOString() })
+      operation, target_kind: 'evidence', target_id: evidenceId, payload: operation === 'delete_evidence' ? { ...payload, forget_scope: (await manager.query(owner, 'preview_forget', { target_kind: 'evidence', target_id: evidenceId })).forget_scope } : payload, submitted_at: new Date().toISOString() })
     const denied = await command('update_evidence_permissions', { allow_cloud_read: false })
     assert.equal(denied.receipt?.result_state ?? denied.result_state, 'applied')
     assert.doesNotMatch((await recall()).contextText, /小禾/)
@@ -121,7 +121,7 @@ test('elliptical numeric corrections are paired immediately; ambiguous topics an
       const revision = (await recall()).worldRevision
       const receipt = await manager.submit(owner, { schema_version: 1, command_id: `mf2-forget-${i}`, subject_id: owner,
         actor: 'owner', expected_world_revision: revision, operation: 'delete_evidence', target_kind: 'evidence',
-        target_id: id, payload: {}, submitted_at: new Date().toISOString() })
+        target_id: id, payload: { forget_scope: (await manager.query(owner, 'preview_forget', { target_kind: 'evidence', target_id: id })).forget_scope }, submitted_at: new Date().toISOString() })
       assert.equal(receipt.receipt?.result_state ?? receipt.result_state, 'applied')
     }
     assert.doesNotMatch((await recall()).contextText, /阳台盆栽|150|300/)

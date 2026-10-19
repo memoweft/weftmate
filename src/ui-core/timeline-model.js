@@ -67,8 +67,19 @@
             return result && typeof result === 'object' && !Array.isArray(result) ? result : {};
         } catch { return {}; }
     }
-    function toolSummary(tool, value) {
+    function toolSummary(tool, value, language = 'zh') {
         const args = toolArguments(value), name = toolName(tool || '工具操作');
+        if (language === 'en') {
+            const activity = toolActivity(name, language);
+            if (activity) return activity.summary;
+            const label = /^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(name) || args.command || args.cmd ? 'Run command'
+                : /delete|remove|unlink/i.test(name) ? 'Delete file' : /write|save|create_file/i.test(name) ? 'Write file'
+                : /edit|patch|replace|modify/i.test(name) ? 'Edit file' : /^(read|read_file)$/.test(name) ? 'Read file'
+                : /grep|search|glob/i.test(name) ? 'Search files' : /web|browser|fetch|navigate/i.test(name) ? 'Visit webpage'
+                : /subagent|spawn_agent|delegate|task/i.test(name) ? 'Run subtask' : 'Use extension';
+            const object = args.command || args.cmd || args.file_path || args.filePath || args.path || args.query || args.url;
+            return label + (typeof object === 'string' && object ? `: ${object.replace(/\s+/g, ' ').trim().slice(0, 180)}` : '');
+        }
         const short = value => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, 180);
         const paths = [...new Set([args.paths, args.files, args.file_path, args.filePath, args.path, args.target]
             .flat().filter(value => typeof value === 'string' && value))];
@@ -127,7 +138,7 @@
             : plain && humanReason && !row.toolName?.startsWith('mcp__') ? humanReason : approvalSummary(command ? 'command' : row.toolName,args), reason: !service && !row.toolName?.startsWith('mcp__') && offset >= 0 && explanation && !/mcp__|weftmate:|\b(?:pwsh|powershell|shell|bash)\b|[{}]/i.test(explanation) ? explanation : '',raw};
     }
     function rejectedStep(step) { return step.approvalOutcome === 'rejected' || step.approvalText === '已拒绝'; }
-    function toolActivity(name) {
+    function chineseToolActivity(name) {
         name = toolName(name);
         if (name === 'health_query') return { summary: '查询健康数据', kind: 'health' };
         if (/^calendar_(query|list|list_events|search|events|read|free)$/.test(name)) return { summary: '查询日历', kind: 'calendar' };
@@ -146,6 +157,44 @@
         if (name === 'ask_user_question') return { summary: '请求补充信息', kind: 'question' };
         return null;
     }
+    function toolActivity(name, language = 'zh') {
+        const activity = chineseToolActivity(name);
+        if (!activity || language !== 'en') return activity;
+        const labels = { health:'Query health data', calendar:'Query calendar', mail:'Read mail', clock:'Check current time',
+            calendar_create:'Create calendar event', calendar_update:'Update calendar event', calendar_delete:'Delete calendar event',
+            mail_send:'Send mail', mail_reply:'Reply to mail', mail_forward:'Forward mail', mail_mark:'Mark mail', mail_move:'Move mail', mail_delete:'Delete mail',
+            goalRead:'View task goal', goalCreate:'Create task goal', goal:'Update task goal', plan:'Organize execution plan',
+            code:'Run script', computer:'Operate computer app', memory:'Query or update memory', question:'Request information' };
+        const summary = activity.internal ? 'Prepare tools' : activity.kind === 'schedule'
+            ? /list/.test(name) ? 'List schedules' : /delete/.test(name) ? 'Delete schedule' : 'Update schedule'
+            : activity.kind === 'job' ? /kill/.test(name) ? 'Stop background command' : 'Check background command' : labels[activity.kind];
+        return { ...activity, summary };
+    }
+    function textLanguage(text) {
+        const prose = String(text || '').replace(/```[\s\S]*?```|`[^`]*`|https?:\/\/\S+/g, '');
+        const han = (prose.match(/\p{Script=Han}/gu) || []).length;
+        const words = (prose.match(/[A-Za-z]{2,}/g) || []).length;
+        return han ? words > han ? 'en' : 'zh' : words >= 1 ? 'en' : null;
+    }
+    function progressLanguage(events, block) {
+        const session = block.steps[0]?.sessionId;
+        const belongs = event => !session || (event.sessionId || event.sourceRef?.sessionId) === session;
+        const start = events.filter(event => belongs(event) && event.type === 'turn.started' && event.seq <= block.seq).at(-1);
+        const next = events.find(event => belongs(event) && event.type === 'turn.started' && event.seq > block.seq);
+        const messages = events.filter(event => belongs(event) && event.seq >= (start?.seq ?? -Infinity) && event.seq < (next?.seq ?? Infinity));
+        const reply = messages.filter(event => ['assistant.message','assistant.delta'].includes(event.type) && event.data?.text).at(-1);
+        const user = messages.filter(event => event.type === 'user.message' && event.seq <= block.seq).at(-1);
+        return textLanguage(reply?.data.text) || textLanguage(user?.data.text) || 'zh';
+    }
+    function progressWaitingText(value, language) {
+        if (language !== 'en') return value;
+        let text = String(value || '');
+        const labels = {'等待模型回复…':'Waiting for the model…','正在读取记忆…':'Reading memory…','模型响应慢，正在重试…':'The model is slow; retrying…','正在思考…':'Thinking…','正在回复…':'Replying…','等待接续':'Waiting to resume','正在停止…':'Stopping…'};
+        for (const [source, target] of Object.entries(labels)) text = text.replace(source, target);
+        text = text.replace(/^正在加载模型(.*?)…/, 'Loading model$1…').replace(/模型排队中，前面还有 (\d+) 个请求/, 'Queued; $1 requests ahead').replace(/(\d+) 秒$/, '$1 s');
+        return text;
+    }
+    globalThis.WeftUiCore.progressWaitingText = progressWaitingText;
     function sourcePresentation(tool, text) {
         const args = toolArguments(text);
         return { summary: toolSummary(tool, args), raw: executionDetailText(typeof text === 'string' ? text : JSON.stringify(text, null, 2)),
@@ -206,37 +255,45 @@
             retries: steps.filter(step => executionState(step) === 'failed' && !rejectedStep(step)).length };
     }
     function stepPresentation(step, outcome) {
-        const progress = classifyProgress([step], outcome), state = executionState(step);
-        if (rejectedStep(step)) return { ...step, state:'rejected', statusText:'你拒绝了，没有做' };
+        const progress = classifyProgress([step], outcome), state = executionState(step), rejected = rejectedStep(step);
+        const english = (outcome?.language || step.language) === 'en';
+        if (english) step = { ...step, language:'en', summary: toolSummary(step.toolName, step.arguments, 'en'),
+            approvalText: ({'已批准':'Approved','已拒绝':'Declined','已取消':'Cancelled','已失效':'Expired','等待批准':'Awaiting approval'})[step.approvalText] || step.approvalText };
+        if (rejected) return { ...step, state:'rejected', statusText:english ? 'Declined; not performed' : '你拒绝了，没有做' };
         if (state === 'cancelled' || progress.state === 'stopped' && ['running','pending','failed'].includes(state))
-            return { ...step, state: 'cancelled', statusText: '已中断' };
+            return { ...step, state: 'cancelled', statusText: english ? 'Interrupted' : '已中断' };
         if (state === 'failed') return { ...step, state: progress.state === 'failed' ? 'failed' : 'issue',
-            statusText: progress.state === 'completed' ? '已换办法继续' : progress.terminal ? '遇到问题' : '遇到问题，正在继续' };
-        return { ...step, statusText: state === 'running' && !progress.terminal ? '运行中' : '' };
+            statusText: english ? progress.state === 'completed' ? 'Continued another way' : progress.terminal ? 'Encountered an issue' : 'Encountered an issue; continuing'
+                : progress.state === 'completed' ? '已换办法继续' : progress.terminal ? '遇到问题' : '遇到问题，正在继续' };
+        return { ...step, statusText: state === 'running' && !progress.terminal ? english ? 'Running' : '运行中' : '' };
     }
     function progressText(steps, outcome = false) {
+        const language = outcome?.language || steps[0]?.language || 'zh', english = language === 'en';
         const progress = classifyProgress(steps, outcome);
         const rejected = steps.filter(rejectedStep);
         if (rejected.length) {
             const remaining = steps.filter(step => !rejectedStep(step));
             const other = progressText(remaining, outcome);
-            const refusal = rejected.map(step => `你拒绝了${(step.approvalSummary || approvalSummary(step.toolName,step.arguments))}，没有做`).join('；');
-            return {...other,text:[refusal,other.text === '已完成' || other.text === '工具已就绪' ? '' : other.text].filter(Boolean).join(' · ')};
+            const refusal = rejected.map(step => english ? `You declined ${toolSummary(step.toolName,step.arguments,language)}; not performed` : `你拒绝了${(step.approvalSummary || approvalSummary(step.toolName,step.arguments))}，没有做`).join(english ? '; ' : '；');
+            return {...other,text:[refusal,['已完成','工具已就绪','Completed','Tools ready'].includes(other.text) ? '' : other.text].filter(Boolean).join(' · ')};
         }
         const failed = steps.find(step => executionState(step) === 'failed');
         if (progress.state === 'failed') {
             const problem = failed?.summary || '这次回复';
             const limit = outcome.endReasonKind === 'max-tokens';
+            if (english) return { text: limit ? 'Reply incomplete: the response length limit was reached. You can ask me to continue.'
+                : `Could not finish: ${failed ? toolSummary(failed.toolName,failed.arguments,language) : 'this reply'} encountered an issue. You can ask me to retry.`, failed:true, running:false };
             return { text: limit ? '回复未完成：内容超出了本次可回复的长度，可以让我接着做。'
                 : `未能完成：${problem}遇到问题，可以让我重试或补充说明。`, failed: true, running: false };
         }
-        if (progress.state === 'stopped') return { text: '已中断', running: false };
-        if (failed && !progress.terminal) return { text: `第 ${failed.ordinal || steps.indexOf(failed) + 1} 步遇到问题，正在继续`, running: true };
+        if (progress.state === 'stopped') return { text: english ? 'Interrupted' : '已中断', running: false };
+        if (failed && !progress.terminal) return { text: english ? `Step ${failed.ordinal || steps.indexOf(failed) + 1} encountered an issue; continuing` : `第 ${failed.ordinal || steps.indexOf(failed) + 1} 步遇到问题，正在继续`, running: true };
         if (!progress.terminal && steps.some(step => executionState(step) === 'cancelled') &&
-            !steps.some(step => ['running','pending'].includes(executionState(step)))) return { text: '已中断', running: false };
+            !steps.some(step => ['running','pending'].includes(executionState(step)))) return { text: english ? 'Interrupted' : '已中断', running: false };
         const current = (!progress.terminal || steps.some(step=>['running','stopping'].includes(step.jobState))) && steps.filter(step => ['running', 'pending'].includes(executionState(step))).at(-1);
         if (current) {
-            const summary = toolActivity(current.toolName)?.summary || current.summary || toolSummary(current.toolName, current.arguments);
+            const summary = toolActivity(current.toolName, language)?.summary || (english ? toolSummary(current.toolName,current.arguments,language) : current.summary) || toolSummary(current.toolName, current.arguments);
+            if (english) return { text: `${current.approvalStatus === 'pending' ? 'Awaiting approval: ' : current.jobState === 'stopping' ? 'Stopping: ' : ''}${summary}…`, running:current.approvalStatus !== 'pending' };
             return { text: current.approvalStatus === 'pending' ? `等待批准：${summary}` : current.jobState === 'stopping' ? `正在停止：${summary}…` : `正在${summary.replace(/^运行命令：/, '运行命令 ')}…`, running: current.approvalStatus !== 'pending' };
         }
         const counts = new Map();
@@ -257,8 +314,14 @@
             counts.set(kind, (counts.get(kind) || 0) + amount);
         }
         const labels = { health: n => n === 1 ? '查了健康数据' : `查了 ${n} 次健康数据`, calendar: n => n === 1 ? '查了日历' : `查了 ${n} 次日历`, mail: n => n === 1 ? '读了邮件' : `读了 ${n} 次邮件`, clock: n => `查看了 ${n} 次当前时间`, calendar_create: n => `新建了 ${n} 次日程`, calendar_update: n => `修改了 ${n} 次日程`, calendar_delete: n => `删除了 ${n} 次日程`, mail_send: n => `发送了 ${n} 次邮件`, mail_reply: n => `回复了 ${n} 次邮件`, mail_forward: n => `转发了 ${n} 次邮件`, mail_mark: n => `标记了 ${n} 次邮件`, mail_move: n => `移动了 ${n} 次邮件`, mail_delete: n => `删除了 ${n} 次邮件`, command: n => `已运行 ${n} 个命令`, read: n => `读取了 ${n} 个文件`, search: n => `搜索了 ${n} 次`, write: n => `修改了 ${n} 个文件`, delete: n => `删除了 ${n} 个文件`, web: n => `访问了 ${n} 次网页`, subagent: n => `处理了 ${n} 个子任务`, goal: n => `更新了 ${n} 次任务目标`, goalRead: n => `查看了 ${n} 次任务目标`, goalCreate: n => `建立了 ${n} 个任务目标`, plan: n => `整理了 ${n} 次执行计划`, schedule: n => `处理了 ${n} 次定时安排`, job: n => `查看或管理了 ${n} 次后台命令`, code: n => `运行了 ${n} 次脚本`, computer: n => `操作了 ${n} 次电脑应用`, memory: n => `查询或更新了 ${n} 次记忆`, question: n => `请求了 ${n} 次补充信息`, extension: n => n === 1 ? '用了一个扩展工具' : `用了 ${n} 次扩展工具` };
-        const text = [...counts].map(([kind, count]) => labels[kind](count)).join('、') || (progress.state === 'completed' ? '已完成' : steps.length ? '工具已就绪' : '');
-        return { text: text + (progress.state === 'completed' && progress.retries ? ` · 中途有 ${progress.retries} 步重试` : ''), running: false };
+        const englishLabels = { health:['Queried','health record'], calendar:['Queried','calendar'], mail:['Read','mail item'], clock:['Checked','time'],
+            calendar_create:['Created','calendar event'], calendar_update:['Updated','calendar event'], calendar_delete:['Deleted','calendar event'],
+            mail_send:['Sent','email'],mail_reply:['Replied to','email'],mail_forward:['Forwarded','email'],mail_mark:['Marked','email'],mail_move:['Moved','email'],mail_delete:['Deleted','email'],
+            command:['Ran','command'],read:['Read','file'],search:['Performed','search'],write:['Updated','file'],delete:['Deleted','file'],web:['Visited','webpage'],subagent:['Handled','subtask'],
+            goal:['Updated','task goal'],goalRead:['Viewed','task goal'],goalCreate:['Created','task goal'],plan:['Organized','execution plan'],schedule:['Handled','scheduling action'],job:['Checked','background command'],code:['Ran','script'],computer:['Performed','computer action'],memory:['Queried or updated','memory item'],question:['Requested','clarification'],extension:['Used','extension'] };
+        const text = [...counts].map(([kind, count]) => english ? `${englishLabels[kind][0]} ${count} ${englishLabels[kind][1]}${count === 1 ? '' : kind === 'search' ? 'es' : 's'}` : labels[kind](count)).join(english ? ', ' : '、')
+            || (progress.state === 'completed' ? english ? 'Completed' : '已完成' : steps.length ? english ? 'Tools ready' : '工具已就绪' : '');
+        return { text: text + (progress.state === 'completed' && progress.retries ? english ? ` · ${progress.retries} retried step(s)` : ` · 中途有 ${progress.retries} 步重试` : ''), running: false };
     }
     function approvalProgress(row) {
         return ({ 'allowed-once': '已批准', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[row?.outcome || row?.decisionOutcome] || (row?.status === 'pending' ? '等待批准' : '');
@@ -300,7 +363,7 @@
             .map(event => ({...event, data:{...event.data,completedStep:undefined}, presentationSeq:event.seq}));
         for (const block of tasks.values()) {
             const outcome = turnOutcome(normalized,block.taskId), view = progressText(block.steps,outcome);
-            const steps = block.steps.map(step => ({...stepPresentation(step,outcome),summary:toolSummary(step.toolName,step.arguments),
+            const steps = block.steps.map(step => ({...stepPresentation(step,outcome),summary:toolSummary(step.toolName,step.arguments,step.language),
                 attention:!rejectedStep(step) && executionState(step)==='failed' || step.approvalStatus==='pending'}));
             rows.push({eventId:`progress:${block.taskId || block.seq}`,type:'native.progress',at:normalized[block.seq]?.at,
                 sourceRef:normalized[block.seq]?.sourceRef,presentationSeq:progressPosition(normalized,block),
@@ -318,13 +381,14 @@
         return rows.sort((a,b)=>a.presentationSeq-b.presentationSeq);
     }
     Object.assign(globalThis.WeftUiCore, {progressPosition,nativeTimelineRows});
-    function executionDetailText(text) {
+    function executionDetailText(text, language = 'zh') {
         try {
             const data = JSON.parse(text), args = toolArguments(data);
             const collect = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(collect)
                 : value?.type === 'text' ? [value.text || ''] : value?.content ? collect(value.content) : [];
             const output = collect(data.output).filter(Boolean).join('\n');
-            return Object.keys(args).length || output ? `${Object.keys(args).length ? `参数\n${JSON.stringify(readableParameters(args), null, 2)}` : ''}${output ? `\n\n输出\n${output}` : ''}`.trim() : data && typeof data === 'object' && ['arguments','parameters','output'].some(key => key in data) ? '暂无参数与输出' : text;
+            const english = language === 'en';
+            return Object.keys(args).length || output ? `${Object.keys(args).length ? `${english ? 'Parameters' : '参数'}\n${JSON.stringify(english ? args : readableParameters(args), null, 2)}` : ''}${output ? `\n\n${english ? 'Output' : '输出'}\n${output}` : ''}`.trim() : data && typeof data === 'object' && ['arguments','parameters','output'].some(key => key in data) ? english ? 'No parameters or output' : '暂无参数与输出' : text;
         } catch { return text; }
     }
     function projectTimeline(events, approvals = []) {
@@ -396,6 +460,12 @@
             bundle.data.artifacts.push(...(data.artifacts || [data.artifact || data]));
             bundle.seq = event.seq;
         }
+        for (const block of groups) {
+            const language = progressLanguage(ordered, block);
+            if (language !== 'en') continue;
+            block.language = language;
+            for (const step of block.steps) { step.language = language; step.summary = toolSummary(step.toolName, step.arguments, language); }
+        }
         return { ordered, groups, cards };
     }
     function finalArtifacts(artifacts) {
@@ -453,6 +523,6 @@
         }
         return references;
     }
-    Object.assign(globalThis.WeftUiCore, { projectTimeline, executionState, executionPresentation, interruptionFromDetail, turnOutcome, classifyProgress, stepPresentation, finalArtifacts, artifactFamilies, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, approvalSummary, approvalCopy, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
-    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, executionState, executionPresentation, interruptionFromDetail, turnOutcome, classifyProgress, stepPresentation, finalArtifacts, artifactFamilies, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, approvalSummary, approvalCopy, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
+    Object.assign(globalThis.WeftUiCore, { projectTimeline, progressLanguage, executionState, executionPresentation, interruptionFromDetail, turnOutcome, classifyProgress, stepPresentation, finalArtifacts, artifactFamilies, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, approvalSummary, approvalCopy, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
+    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, progressLanguage, executionState, executionPresentation, interruptionFromDetail, turnOutcome, classifyProgress, stepPresentation, finalArtifacts, artifactFamilies, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, approvalSummary, approvalCopy, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
 })();
