@@ -13,7 +13,7 @@ const candidate=JSON.parse(await readFile(join(root,'candidate/candidate.json'),
 if(!candidate.identity||!candidate.desktopIdentity)throw Error('An isolated candidate is required');
 const control=join(process.env.APPDATA,candidate.desktopIdentity,'WeftMate/desktop-config.json');
 const profile=join(root,'profile');
-const query=path=>spawnSync('reg.exe',['query',path],{windowsHide:true,encoding:'utf8'});
+const query=path=>spawnSync('reg.exe',['query',path],{windowsHide:true,encoding:'utf8',timeout:10000});
 const registry=[`HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${candidate.nsisGuid}`,`HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${candidate.nsisGuid}`];
 if(registry.some(path=>query(path).status===0)||existsSync(control)||existsSync(profile))throw Error('Fresh identity precondition failed; preserve existing data');
 const packed=JSON.parse(asar.extractFile(join(root,'candidate/build/win-unpacked/resources/app.asar'),'package.json').toString());

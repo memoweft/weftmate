@@ -42,9 +42,9 @@ export async function onboarding(ctx){
  return ctx.snapshot();
 }
 export async function newChat(ctx){
+ const chatMode=ctx.page.getByRole('tab',{name:'对话',exact:true});if(await chatMode.isVisible())await chatMode.click();
  const fixedVisible=await Promise.all(['activity','health','goals','library'].map(name=>ctx.page.locator(`.${name}-surface`).isVisible()));
  if(fixedVisible.some(Boolean)){const existing=ctx.page.locator('#session-list .session-row > button').first();if(await existing.count())await existing.click();}
- const chatMode=ctx.page.getByRole('tab',{name:'对话',exact:true});if(await chatMode.isVisible())await chatMode.click();
  await ctx.page.locator('#new-session').click();
  await ctx.page.locator('#message-text').waitFor({state:'visible'});
  // Account model synchronization can change the default order. Keep the requested
@@ -168,18 +168,19 @@ export async function uiPages(ctx){
   await ctx.until(()=>page.evaluate(t=>document.documentElement.dataset.theme===t,theme));
   await page.locator('.settings-nav-item[data-category="general"]').click();await ctx.shot(`u1-${theme}-settings`);
   observed.push({theme,page:'settings',text:await page.locator('#settings-dialog').innerText()});
-  await page.locator('.settings-nav-item[data-category="memory"]').click();await page.locator('#memory-list').waitFor({state:'visible'});await ctx.shot(`u1-${theme}-memory`);observed.push({theme,page:'memory',text:await page.locator('#settings-dialog').innerText()});
+  await page.locator('.settings-nav-item[data-category="memory"]').click();await ctx.until(async()=>await page.locator('#memory-list').isVisible()||(await page.locator('#settings-dialog').innerText()).includes('当前账户的这一类记忆为空。'),15000);await ctx.shot(`u1-${theme}-memory`);observed.push({theme,page:'memory',text:await page.locator('#settings-dialog').innerText()});
   await page.getByRole('button',{name:'关闭设置',exact:true}).click();
   await ctx.shot(`u1-${theme}-sidebar`);
   const selected=page.locator('#session-list button.is-current');if(await selected.count())await selected.first().click();else await newChat(ctx);
   await ctx.shot(`u1-${theme}-chat`);observed.push({theme,page:'chat',...(await ctx.snapshot())});
   for(const [name,selector]of [['activity','.activity-entry'],['health','.health-entry'],['goals','.goals-entry'],['library','.library-entry']]){
    await page.locator(selector).click();await page.locator(`.${name}-surface`).waitFor({state:'visible'});
-   await ctx.until(async()=>!(await page.locator(`.${name}-surface`).innerText()).includes('正在读取'),15000).catch(()=>{});
-   await ctx.shot(`u1-${theme}-${name}`);observed.push({theme,page:name,text:await page.locator(`.${name}-surface`).innerText()});
+   const surface=page.locator(`.${name}-surface`);
+   const loadingSettled=await ctx.until(async()=>!(await surface.innerText()).includes('正在读取')&&await surface.locator('[aria-busy="true"]:visible').count()===0,60000).then(()=>true,()=>false);
+   await ctx.shot(`u1-${theme}-${name}`);observed.push({theme,page:name,loadingSettled,text:await surface.innerText()});
   }
  }
- await ctx.save('u1-pages.json',observed);return observed;
+ await ctx.save('u1-pages.json',observed);assert.deepEqual(observed.filter(row=>row.loadingSettled===false).map(row=>`${row.theme}/${row.page}`),[],'U1: a page is still loading after 60 seconds');return observed;
 }
 export async function coldStart(ctx){
  const before={ui:await ctx.snapshot(),models:await ctx.api('/models'),notifications:await ctx.notices()};
@@ -197,7 +198,7 @@ export async function inspectProgress(ctx,{language='zh'}={}){
  assert.ok(language!=='en'||!/[\u3400-\u9fff]/.test(summary),'C10: an English conversation has a Chinese progress title');return {summary,details};
 }
 export async function askEnglishReminderList(ctx){
- await newChat(ctx);await ctx.send('What reminder is already saved in my account for later tonight? Read the actual reminder list. Do not create, delete or change any reminder. Reply in English.');
+ await newChat(ctx);await ctx.send('Which reminders do I already have saved? Please check the actual list and reply in English without creating, deleting or changing any reminder.');
  const ui=await waitTurn(ctx,120000),schedules=await ctx.api('/schedules');await ctx.save('h5-english-reminder-query.json',{ui,schedules});return {ui,schedules};
 }
 export async function prepareWorkFixture(ctx,{directory='work-fixture'}={}){
@@ -214,11 +215,14 @@ export async function switchToWorkRequest(ctx){
  await ctx.until(async()=>await ctx.page.locator('.work-switch-card').isVisible()||await ctx.page.locator('#transcript').evaluate(el=>{const rows=[...el.querySelectorAll('.message')];const user=rows.findLastIndex(r=>r.classList.contains('user'));const answer=rows.findLastIndex(r=>r.classList.contains('assistant'));return user>=0&&answer>user;})&&!await ctx.page.getByRole('button',{name:'停止回复',exact:true}).isVisible(),90000).catch(()=>{});
  await ctx.shot('w3-switch-card');const result={cardVisible:await ctx.page.locator('.work-switch-card').isVisible(),...await ctx.snapshot()};await ctx.save('w3-request.json',result);return result;
 }
-export async function historyPagination(ctx){
- await newChat(ctx);await ctx.send('C4 合成历史种子。只回答 C4SEED。');await waitReply(ctx,'C4SEED');
+export async function historyPagination(ctx,{reuseCurrentSeed=false}={}){
+ if(!reuseCurrentSeed){await newChat(ctx);await ctx.send('C4 合成历史种子：为历史分页准备一个独立对话，请简短确认。');}
+ assert.match(await ctx.page.locator('.message.user').last().innerText(),/C4.*(?:种子|分页)/,'Only the dedicated C4 fixture may receive synthetic history');
+ await waitTurn(ctx);
  const sessionId=await ctx.page.locator('#session-list button.is-current').first().evaluate(el=>el.closest('[data-session-id]')?.dataset.sessionId);
  if(!sessionId)throw Error('Current native session identifier unavailable');
- const isolated=await ctx.api(`/sessions/${encodeURIComponent(sessionId)}`,{memoryMode:'off'},'PATCH');assert.equal(isolated.status,200);
+ await ctx.until(async()=>{const row=(await ctx.api('/sessions')).body.sessions.find(s=>s.sessionId===sessionId);return row?.running===false&&row.lastOutcome==='completed';},90000);
+ const isolated=await ctx.api(`/sessions/${encodeURIComponent(sessionId)}/metadata`,{memoryMode:'off'},'PATCH');assert.equal(isolated.status,200);
  const startup=JSON.parse(await readFile(join(ctx.output,'startup.json'),'utf8'));
  await ctx.app.close();let prepared;try{prepared=await appendHistory({repository:ctx.input,profile:startup.profile,sessionId,output:ctx.output});await ctx.save('c4-prepared.json',prepared);}finally{await ctx.launch();}
  await ctx.page.locator(`[data-session-id="${sessionId}"] button`).first().click();
