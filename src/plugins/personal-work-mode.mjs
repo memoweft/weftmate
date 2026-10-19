@@ -35,6 +35,23 @@ export function workContinuationPrompt(session, policy) {
   return `用户已批准切换到工作，电脑和文件夹选择已完成：${policy.project.name}（${policy.project.rootPath}）。这只是完成了工作准备，不代表原任务已完成。请在本轮接着实际执行用户原请求，核对结果后再报告；不要停在口头计划、再次索要文件夹或等待用户重发指令。需要别的工具时继续用 load_tools 加载后调用；文件整理使用文件工具或命令工具（如 glob、pwsh），不需要操作应用界面。只操作所选文件夹，继续遵守原有权限、审批、拒绝和停止决定。`;
 }
 
+/** Recover the observed normal stop after a failed post-switch operation.
+ * Native request failures/output limits and user refusals keep their outcomes. */
+export function workFailureNeedsContinuation(session, policy) {
+  if (!workContinuationPrompt(session, policy)) return false;
+  const start = session.events.findLastIndex(event => event.type === 'turn/start');
+  const current = session.events.slice(start + 1);
+  if (current.filter(event => event.type === 'user/message' && event.data.source?.kind === 'user').length !== 1 ||
+      current.some(event => event.type === 'approval/decided' && event.data.outcome !== 'allowed-once')) return false;
+  const finish = current.findLast(event => event.type === 'assistant/chunk' && event.data.chunk?.type === 'finish');
+  if (!['stop', 'completed'].includes(finish?.data.chunk.reason.kind)) return false;
+  const result = current.findLast(event => event.type === 'tool/result');
+  const failed = result?.data.message.content.find(part => part.type === 'tool-result' && part.isError);
+  const call = failed && current.findLast(event => event.type === 'tool/call' && event.data.callId === failed.toolCallId);
+  // The catalog loader has its own bounded native recovery.
+  return !!call && call.data.name !== 'load_tools';
+}
+
 // A model may have expanded a new relative file against the old chat directory.
 // Choosing a project changes that default location; existing historical files stay put.
 export function applyWorkDirectoryChoice(exec, previousDirectory, directory) {
