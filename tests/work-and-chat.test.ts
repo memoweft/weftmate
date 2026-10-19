@@ -1,11 +1,30 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { toolNeedsComputer } from '../src/plugins/personal-work-mode.mjs';
+import { toolNeedsComputer, workContinuationPrompt, WORK_SWITCH_REASON } from '../src/plugins/personal-work-mode.mjs';
 import { bindConversationWork, conversationMode, modeProjection } from '../src/personal-access/work-and-chat.mjs';
 import { reconcileChatIdentity, validateChatIdentity } from '../src/personal-access/chat-identity.mjs';
 
 (globalThis as any).WeftUiCore ??= { factories: {} };
 await import('../src/ui-core/work-and-chat.js');
+
+test('W3 acknowledgement requires this turn\'s granted switch and expires at stop or the next user turn', () => {
+  const start = { type: 'turn/start', data: { turn: 1 } };
+  const asked = { type: 'approval/asked', data: { id: 'switch-1', reason: WORK_SWITCH_REASON } };
+  const answer = (outcome = 'allowed-once', id = 'switch-1') => ({ type: 'approval/decided', data: { id, outcome } });
+  const policy = { conversationMode: 'work', project: { name: '已选目录', rootPath: '/synthetic/selected' } };
+  const prompt = (events: any[], selected = policy) => workContinuationPrompt({ events }, selected);
+  assert.equal(prompt([start, asked]), null, 'pending selection is not consent');
+  assert.equal(prompt([start, asked, answer('rejected')]), null);
+  assert.equal(prompt([start, asked, answer('cancelled')]), null);
+  assert.equal(prompt([start, asked, answer('allowed-once', 'other')]), null);
+  assert.equal(prompt([start, asked, answer()], { ...policy, conversationMode: 'chat' }), null);
+  const completed = [start, asked, answer()];
+  assert.match(prompt(completed)!, /文件夹选择已完成：已选目录/);
+  assert.match(prompt([...completed, { type: 'tool/result', data: { isError: true } }])!, /继续遵守原有权限、审批、拒绝和停止决定/);
+  assert.equal(prompt([...completed, { type: 'turn/end', data: { reason: { kind: 'aborted' } } }]), null);
+  assert.equal(prompt([...completed, { type: 'turn/end' }, { type: 'turn/start', data: { turn: 2 } }]), null, 'do not revive the previous task in a later user turn');
+  assert.equal(prompt([start, { ...asked, data: { ...asked.data, reason: 'ordinary risk approval' } }, answer()]), null);
+});
 
 test('MODE-1 sidebar selection is account scoped, new follows it and opening a notified session selects its actual mode', async () => {
   const saved = new Map<string,string>(), storage = {getItem:(key:string)=>saved.get(key),setItem:(key:string,value:string)=>saved.set(key,value)};

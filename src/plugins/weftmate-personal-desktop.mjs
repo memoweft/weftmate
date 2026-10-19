@@ -18,7 +18,7 @@ import PlanModeController, { foldPlanMode } from '@deepseek-ai/dsh-plan-mode';
 import { approvalRequired, approvalPrompt, classifyPersonalRisk, RISK_LABELS } from './personal-approval-policy.mjs';
 import { installCommandEncoding } from './personal-command-encoding.mjs';
 import { reviewSourceLocations } from './personal-review-sources.mjs';
-import { toolNeedsComputer, chatModePrompt, applyWorkDirectoryChoice, WORK_SWITCH_REASON } from './personal-work-mode.mjs';
+import { toolNeedsComputer, chatModePrompt, workContinuationPrompt, applyWorkDirectoryChoice, WORK_SWITCH_REASON } from './personal-work-mode.mjs';
 
 export const name = 'weftmate-personal-desktop';
 export const PERSONAL_DESKTOP_PROTOCOL = 'weftmate.personal-desktop.v1';
@@ -744,13 +744,16 @@ export function apply(ctx) {
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
-    return { ...decision, messages: [...decision.messages.filter(message => !['weftmate-approval-mode', 'weftmate-project', 'weftmate-work-mode'].includes(message.source?.plugin)),
+    const continuation = workContinuationPrompt(step.agent.session, policy);
+    return { ...decision, messages: [...decision.messages.filter(message => !['weftmate-approval-mode', 'weftmate-project', 'weftmate-work-mode', 'weftmate-work-continuation'].includes(message.source?.plugin)),
       ...(policy.conversationMode ? [createUserMessage({ content: [{ type: 'text', text: chatModePrompt(policy.conversationMode) }],
         source: { kind: 'plugin', plugin: 'weftmate-work-mode' } })] : []),
       createUserMessage({ content: [{ type: 'text', text: approvalPrompt(policy.mode) }],
         source: { kind: 'plugin', plugin: 'weftmate-approval-mode' } }),
       ...(projectNotice ? [createUserMessage({ content: [{ type: 'text', text: projectNotice }],
-        source: { kind: 'plugin', plugin: 'weftmate-project' } })] : [])] };
+        source: { kind: 'plugin', plugin: 'weftmate-project' } })] : []),
+      ...(continuation ? [createUserMessage({ content: [{ type: 'text', text: continuation }],
+        source: { kind: 'plugin', plugin: 'weftmate-work-continuation' } })] : [])] };
   }, { prepend: true });
   // The pinned driver copies static AgentOptions, while the personal UI selects
   // models through DSH's scoped selection. Initialize a native child before its
