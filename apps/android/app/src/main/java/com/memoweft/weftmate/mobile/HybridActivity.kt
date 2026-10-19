@@ -1028,6 +1028,9 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         }
         "phone.offline.key", "phone.offline.load", "phone.offline.save", "phone.offline.open", "phone.offline.clear" -> {
             val account = PhoneAccount(this, secrets).let { if(method == "phone.offline.clear") it.storedIdentity() else it.identity() }
+            if (method == "phone.offline.save" && !phoneVaultWriteMatchesAccount(
+                if(params.has("accountId")) params.optString("accountId") else null,
+                if(params.has("origin")) params.optString("origin") else null, account.ownerId, account.origin)) throw ApiFailure(403,"ACCOUNT_SWITCHED")
             if(method == "phone.offline.clear" && params.has("accountId") && (params.optString("accountId") != account.ownerId || params.optString("origin") != account.origin)) JSONObject().put("cleared",true) else {
             val vault = OfflineVault(this, account, secrets.host() ?: account)
             when (method) {
