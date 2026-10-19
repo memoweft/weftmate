@@ -107,6 +107,9 @@
     if((finished || processed.length) && !value.running && api.active && memoryConversations.size){clearTimeout(memoryTimer);memoryTimer=setTimeout(()=>flushMemory(),20000);}
     state.conversations = value.conversations.map(c => ({ id: c.id, createdAt:new Date(c.turns[0]?.timestamp||Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
     if (!state.conversationId && value.running) state.conversationId = value.sendingConversationId || null;
+    // NativeActivity parks this page while Compose owns the visible chat.
+    // Keep the engine and memory schedule live without rebuilding hidden history.
+    if(globalThis.weftNativeChatActive===true)return;
     renderConversationList(); if (state.page === 'chat' && state.chatSource === 'phone') render(); updateComposer();
     if(state.page==='memory'&&globalThis.WeftPhone?.memoryPending)$('page-content').phoneMemoryPaint?.();
   };
@@ -150,7 +153,7 @@
   async function run(action) {
     status(''); nativeError='';
     try { const result = await action(); if (result) state.conversationId = result.conversationId; }
-    catch (error) { const stopped=error.name==='AbortError'||error.message==='CANCELLED';nativeError=stopped?'已停止，生成的文字已保存。':'回复未完成，已保存生成的文字。请检查网络或模型配置后重试。';status(nativeError,!stopped); }
+    catch (error) { const stopped=error.name==='AbortError'||error.message==='CANCELLED';nativeError=WeftOffline.phoneHistoryFailure(error)||(stopped?'已停止，生成的文字已保存。':'回复未完成，已保存生成的文字。请检查网络或模型配置后重试。');status(nativeError,!stopped); }
     finally { show();if(!api.active && engine?.view().turns.length)await connected(); }
   }
   async function attachEngine(info, client, adopt = true) {
@@ -167,7 +170,9 @@
       const phoneScope={accountId:info.accountId,origin:info.origin};
       const vault = native ? {
         key: () => nativeCall('phone.offline.key'), load: () => nativeCall('phone.offline.load'),
-        save: value => {if(sessionKey!==next)throw Error('ACCOUNT_SWITCHED');return nativeCall('phone.offline.save', { value,...phoneScope });}, clear: () => nativeCall('phone.offline.clear',phoneScope), close() {},
+        save: async value => { if(sessionKey!==next)throw Error('ACCOUNT_SWITCHED');try { return await WeftOffline.savePhoneHistory(nativeCall,value,phoneScope); }
+          catch(error){nativeError=WeftOffline.phoneHistoryFailure(error)||nativeError;throw error;} },
+        clear: () => nativeCall('phone.offline.clear',phoneScope), close() {},
         open: (envelope, identity) => nativeCall('phone.offline.open', { envelope, identity }),
         complete: async (body, snapshot, signal, onProgress) => {
           if(signal.aborted)throw new DOMException('CANCELLED','AbortError');
@@ -302,8 +307,13 @@
           state.conversationId = p.conversationId || null;
           if (action === 'send') {
             nativeError='';
-            const receipt = await engine.enqueue(p.text, state.conversationId, uiCore.messageModePreference());
-            state.conversationId = receipt.conversationId;
+            try {
+              const receipt = await engine.enqueue(p.text, state.conversationId, uiCore.messageModePreference());
+              state.conversationId = receipt.conversationId;
+            } catch(error) {
+              const capacity=WeftOffline.phoneHistoryFailure(error);if(!capacity)throw error;
+              nativeError=capacity;sent=false;
+            }
           } else void run(() => engine.regenerate(state.conversationId));
         }
       } else if (action === 'retryQueue') {

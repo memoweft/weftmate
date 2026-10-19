@@ -89,7 +89,7 @@ internal class OfflineVault(private val context: Context, private val host: Host
     }
     fun save(value: JSONObject): JSONObject = locked { saveLocked(value) }
     private fun saveLocked(value: JSONObject): JSONObject {
-        require(value.toString().toByteArray().size <= 8 * 1024 * 1024)
+        requireOfflineVaultSize(value)
         val snapshot = value.optJSONObject("snapshot")
         val previous = read()
         previous.optJSONObject("_deviceKey")?.let { value.put("_deviceKey", it) }
