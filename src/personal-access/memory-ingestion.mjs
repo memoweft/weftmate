@@ -23,7 +23,9 @@ export function createMemoryIngestion(context) {
       if (account.memoryCleanupPending) throw failure('MEMORY_BUSY', 503);
       if (!permitted(account.sessions[sessionId], { ...row, turn })) return { state: 'skipped', reasonCode: 'MEMORY_SOURCE_EXCLUDED' };
       if (account.memoryDeliveredTurns?.[key]) return { state: 'accepted', duplicate: true };
-      const result = await context.memoryManager.ingest(ownerId, boundary, { defer: true });
+      // Acknowledge this existing delivery after Core admission. The child can
+      // then order a new conversation after it without waiting for formation.
+      const result = await context.memoryManager.ingest(ownerId, boundary);
       if (!['accepted', 'queued', 'discarded'].includes(result.state)) throw failure(result.reasonCode ?? 'MEMORY_UNAVAILABLE', 503);
       await context.serial(() => context.mutate(ownerId, next => {
         next.memoryDeliveredTurns ??= {};
