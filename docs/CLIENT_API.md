@@ -710,7 +710,7 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 | `POST /personal/v1/cloud/hosts/offline/tasks/cancel` | `{hostId,id}` | 同条状态，`canceled` 后云密文已删除；409 `TASK_ALREADY_RECEIVED` 表示电脑已接收，沿原 `/tasks/{id}/stop` 停止 |
 | `POST /personal/v1/cloud/hosts/offline/tasks/clear` | `{}` | `{deleted:true}`，当前手机所有目标电脑的云记录删除；退出先清理再撤销原凭据 |
 
-状态为 `waiting/claimed/received/started/completed/failed/expired/canceled`；客户端正文／摘要只读自己设备的加密保管库。64 KiB 单信封、每账户100件尚未终结事项、7天自动过期；领取回执保留到执行终结，终态元数据7天后清除。接口每账户每分钟120次，429 `RATE_LIMITED`；容量429 `CAPACITY_LIMIT`，正文413 `BODY_TOO_LARGE`；授权403 `DEVICE_NOT_TRUSTED`，旧代次409 `OFFLINE_RESET_REQUIRED`。取消可在 `waiting/claimed` 时提交；取消与电脑确认按云事务先后决定，不冒称已取消正在执行的操作。
+状态为 `waiting/claimed/received/started/completed/failed/expired/canceled`；客户端正文／摘要只读自己设备的加密保管库。任务提交完整请求体最多 70 KiB；安卓 `cloud.app.request` 自 `0.8.44/code57` 起仅对配置云来源的精确 POST 提交路由采用相同上限，其他账号／任务请求仍为 16 KiB。64 KiB 单信封、每账户100件尚未终结事项、7天自动过期；领取回执保留到执行终结，终态元数据7天后清除。接口每账户每分钟120次，429 `RATE_LIMITED`；容量429 `CAPACITY_LIMIT`，正文413 `BODY_TOO_LARGE`；授权403 `DEVICE_NOT_TRUSTED`，旧代次409 `OFFLINE_RESET_REQUIRED`。取消可在 `waiting/claimed` 时提交；取消与电脑确认按云事务先后决定，不冒称已取消正在执行的操作。
 
 电脑安装签名 `POST /personal/v1/cloud/hosts/offline/tasks/claim|ack|result` 的契约见 [云端接口](../services/cloud/README.md)。领取按创建序号，确认前持久登记原 `session.message` 与 `mode:"queue"`、确认后删云密文、再派发；任务 ID 复用原命令避免重启／重复领取另建任务。权限与审批沿原对话、项目及账号规则，来源不放宽权限。登录寿命到期不取消已登记的物理设备意图，但撤权／账号退出／代次变化仍禁止派发。
 
@@ -718,7 +718,7 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 
 Android（安卓）四条云路径使用 `cloud-account`（云账号原生通道）的精确 POST，沿 `CloudAppCrypto.kt` 的固定云来源和原生身份签名，不进入 `Network.kt` 的电脑业务通道；电脑专用 `claim/ack/result` 仍拒绝。客户端只有具备设备保管库 `offline.seal` 加密、按电脑读取／清理、四条云接口与任务状态处理能力时才启用任务入口，缺少 `seal` 时隐藏入口，旧离线聊天仍可用。
 
-原生加密方法形状：`offline.seal({payload:{text,sessionId,projectId,createdAt},recipient:taskRecipient,identity:{purpose:"offline-task",accountId,hostId,deviceId,generation,id}})` 返回本节信封；原生补齐 `version/keyId` 并按本节算法处理，不能返回私钥或内容钥匙。多电脑保管库 `offline.targets({accountId})` 只返回 `[{control,generation,taskRecipient}]`，`offline.clearAccount({accountId,hostId?,keepGeneration?})` 清除此账号各电脑的加密记录与本地内容钥匙；指定 `hostId` 时只清该电脑，`keepGeneration` 保留其当前有效代次。`offline.load/save` 的原对象兼容保存 `tasks`。旧 `nativeVault` 缺少这些方法时不能声明任务支持。原生任务入口启用后才发送 `taskSupport:1`，同时处理 `model:null`、`taskReferences`、断网重试和退出先删除云记录的顺序。Android 后台补发及 Apple（苹果端）本地通知沿原动态决定消费，`task.started` 与终态使用不同事件身份；云推送仅作唤醒提示，再从电脑读取通知决定，不将云的事项身份当成对话正文或直接深链。
+原生加密方法形状：`offline.seal({payload:{text,sessionId,projectId,createdAt},recipient:taskRecipient,identity:{purpose:"offline-task",accountId,hostId,deviceId,generation,id}})` 返回本节信封；原生补齐 `version/keyId` 并按本节算法处理，不能返回私钥或内容钥匙。多电脑保管库 `offline.targets({accountId})` 只返回公有目标信息；安卓桥返回 `{targets:[{control,generation,taskRecipient}]}`，共用适配器解包为数组。`offline.clearAccount({accountId,hostId?,keepGeneration?})` 清除此账号各电脑的加密记录与本地内容钥匙；指定 `hostId` 时只清该电脑，`keepGeneration` 保留其当前有效代次，独立手机原话不随电脑副本删除。`offline.load/save` 的原对象兼容保存 `tasks`，电脑接收公钥和控制身份只由已认证副本更新。安卓 `0.8.42/code55` 的 `cloud.app.identity` 声明 `nativeOfflineTasks:1` 后，共用 `nativeVault` 才连接这些方法；旧壳保持任务入口隐藏。原生任务入口启用后才发送 `taskSupport:1`，同时处理 `model:null`、`taskReferences`、断网重试和退出先删除云记录的顺序。Android 后台补发及 Apple（苹果端）本地通知沿原动态决定消费，`task.started` 与终态使用不同事件身份；云推送仅作唤醒提示，再从电脑读取通知决定，不将云的事项身份当成对话正文或直接深链。
 
 ## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
