@@ -4,6 +4,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
@@ -76,6 +77,11 @@ class Stage1Driver {
             "input"->{compose.onNodeWithContentDescription(request.getString("label")).performScrollTo().performTextReplacement(request.getString("value"));JSONObject()}
             "click"->{val node=compose.onNodeWithText(request.getString("text"));runCatching{node.performScrollTo()};node.performClick();JSONObject()}
             "clickLabel"->{compose.onNodeWithContentDescription(request.getString("label")).performClick();JSONObject()}
+            "activate"->{
+              val node=if(request.has("label"))compose.onNodeWithContentDescription(request.getString("label")) else compose.onNodeWithText(request.getString("text"))
+              node.performSemanticsAction(SemanticsActions.OnClick){check(it())}
+              JSONObject().put("semanticAction",true)
+            }
             "scrollText"->{compose.onNodeWithContentDescription(request.optString("list","消息列表")).performScrollToNode(hasText(request.getString("text")));JSONObject()}
             "historySwipe"->{compose.onNodeWithContentDescription("消息列表").performTouchInput{swipeDown(durationMillis=500)};state()}
             "model"->{runBlocking(Dispatchers.Main){val service=activity.settings.services.first();val model=service.getJSONArray("models").objects().first{it.getString("modelId")==request.getString("id")};activity.settings.chooseModel(service,model)};JSONObject()}
