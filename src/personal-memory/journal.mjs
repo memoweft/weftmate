@@ -136,6 +136,10 @@ export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseS
       return queue(ownerId, async () => {
         const state = await read(ownerId), record = state.records[requestId];
         if (!record) throw failure('MEMORY_REQUEST_INVALID');
+        // Receipt inspection and Core storage retries must not reopen the host
+        // send gate after its copies have already been erased. Legacy records
+        // without proof still run cleanup; a retained pending marker wins.
+        if (record.cleanupCompleted === true && !record.cleanup) return;
         try {
           await prepare(ownerId, state, record);
           const result = await clean(record);
@@ -144,7 +148,9 @@ export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseS
           if (record.cleanup) { record.cleanup.snippetsPending = true; await write(ownerId, state); }
           throw cause;
         }
-        if (record.cleanup) { delete record.cleanup; await write(ownerId, state); }
+        delete record.cleanup;
+        record.cleanupCompleted = true;
+        await write(ownerId, state);
       });
     },
     async redactTargets(ownerId, ids, { sourceTexts = [], sessionId = null } = {}) {
