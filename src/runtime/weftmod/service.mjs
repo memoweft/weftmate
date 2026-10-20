@@ -94,8 +94,8 @@ function failedDeviceActionError(result, { runId, commandId, requestedActions, s
 }
 
 export class WeftModService {
-  constructor({ root, ctx, transport, identity, approve, image, desktop }) {
-    Object.assign(this, { ctx, transport, identity, approve, image, desktop })
+  constructor({ root, ctx, transport, identity, approve, image, desktop, directoryFor = exec => exec.agent?.session?.header?.cwd ?? null }) {
+    Object.assign(this, { ctx, transport, identity, approve, image, desktop, directoryFor })
     this.store = new WeftModStore(root)
     this.active = new Map()
     this.deviceOwners = new Map()
@@ -153,7 +153,7 @@ export class WeftModService {
     if (args.action === 'desktop') {
       await this.approve(exec, `desktop:${args.desktop?.action}`)
       const input = { ...args.desktop }
-      if (input.action === 'open' && !input.working_directory && exec.agent?.session?.header?.cwd) input.working_directory = exec.agent.session.header.cwd
+      if (input.action === 'open' && !input.working_directory && this.directoryFor(exec)) input.working_directory = this.directoryFor(exec)
       const result = await this.desktop(input, { signal: exec.signal })
       if (result.ok === false) throw Object.assign(new Error(`${result.error?.code ?? 'DESKTOP_FAILED'}: ${result.error?.message ?? 'Desktop operation failed'}`), { code: result.error?.code })
       return this.image(result, exec)
@@ -310,7 +310,7 @@ export class WeftModService {
     }
     if (args.action === 'help') return {
       language: 'JavaScript async function body; top-level await and return. Input parameters are available as params.',
-      workspace: exec.agent?.session?.header?.cwd ?? null,
+      workspace: this.directoryFor(exec),
       available_tools: this.ctx.tools.schemas(exec.agent).filter(t => !['run_code', 'weftmod_script'].includes(t.name)).map(t => t.name),
       tools: this.ctx.tools.schemas(exec.agent).filter(t => (args.tool_names ?? ['weftmod', 'pwsh', 'read', 'write']).includes(t.name))
         .map(t => ({ ...t, output: this.ctx.tools.get?.(t.name, exec.agent)?.output?.schema ?? null })),

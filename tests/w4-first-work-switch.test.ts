@@ -23,7 +23,7 @@ function firstWorkReply(body: any) {
   // Without the folder-selection contract, reproduce the observed path question.
   const hasFolderGuidance = body.messages.some((message: any) => {
     const notice = text(message);
-    return notice.includes('不要用 ask_user_question 索要路径') && notice.includes('相对路径') && notice.includes('切换到工作');
+    return /不要(?:用)? ask_user_question 索要路径/.test(notice) && notice.includes('相对路径') && notice.includes('切换到工作');
   });
   if (!hasFolderGuidance) {
     if (!hasTool('ask_user_question')) return call('load_tools', { names: ['ask_user_question'] });
@@ -53,6 +53,20 @@ test('#507 synthetic responder requests a folder path without selection guidance
   const call = reply.tool_calls?.[0]?.function;
   assert.equal(call?.name, 'ask_user_question', 'without the fix the model must reproduce the wrong path-question branch');
   assert.match(JSON.parse(call!.arguments).questions[0].question, /路径/);
+});
+
+test('folder-selection responder recognizes equivalent prohibitions without accepting a request to ask for a path', () => {
+  for (const prohibition of ['不要用 ask_user_question 索要路径', '不要 ask_user_question 索要路径', '请用 ask_user_question 索要路径']) {
+    const reply = firstWorkReply({
+      messages: [
+        { role: 'user', content: 'W4_FIRST 整理选定文件夹。' },
+        { role: 'user', content: `${prohibition}；可以使用相对路径，切换到工作。` },
+        { role: 'assistant', tool_calls: [{ function: { name: 'load_tools', arguments: '{"names":["write","ask_user_question"]}' } }] },
+      ],
+      tools: ['load_tools', 'write', 'ask_user_question'].map(name => ({ function: { name } })),
+    });
+    assert.equal(reply.tool_calls?.[0]?.function.name, prohibition.startsWith('不要') ? 'write' : 'ask_user_question', prohibition);
+  }
 });
 
 test('#363 first request with failed tool preparation switches and resumes file writes without a follow-up', { timeout: 60000 }, async () => {
