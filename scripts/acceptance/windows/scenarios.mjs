@@ -61,13 +61,14 @@ export async function waitTurn(ctx,timeout=150000){
  await ctx.until(async()=>{
   const selected=ctx.page.locator('#session-list button.is-current');
   const sessionId=await selected.count()?await selected.first().evaluate(el=>el.closest('[data-session-id]')?.dataset.sessionId):null;
-  const sessions=(await ctx.api('/sessions')).body.sessions??[];
+  const state=(await ctx.api('/sessions')).body,sessions=state.sessions??[];
   let row=sessions.find(s=>s.sessionId===sessionId);
   if(!row){
    // A selected work conversation can be inside a collapsed project group.
    const title=await ctx.page.locator('#assistant-title').innerText(),matches=sessions.filter(s=>s.mode==='work'&&s.title===title);
    if(matches.length===1)row=matches[0];
   }
+  if(!row&&state.statusSummary?.main&&await ctx.page.getByRole('tab',{name:'对话',exact:true}).getAttribute('aria-selected')==='true')row=state.statusSummary.main;
   return row?.running===false&&row.lastOutcome==='completed'&&!(await ctx.page.locator('#transcript').innerText()).includes('这轮对话尚无结束记录');
  },timeout);
  return ctx.snapshot();
@@ -88,6 +89,10 @@ export async function memoryForm(ctx){
  const formedTask=await ctx.until(async()=>{const tasks=await ctx.api('/tasks');return tasks.body.recent?.find(row=>row.title==='记住我喜欢喝红茶');},15000);ctx.memorySeedSessionId=formedTask.source.sessionId;ctx.memoryPreferredTea='红茶';
  await newChat(ctx);await ctx.send('我喜欢喝什么？');const result=await waitTurn(ctx);await ctx.shot('m1-recall');await ctx.save('m1-recall.json',result);assert.ok((await ctx.page.locator('.message.assistant').last().innerText()).includes('红茶'),'M1: final new-conversation answer did not recall red tea');return result;
 }
+export async function memoryFirstTrial(ctx){
+ const {firstMemoryTrial}=await import('./memory-first.mjs');
+ return firstMemoryTrial(ctx,{correct:true});
+}
 export async function memoryCorrect(ctx){
  await newChat(ctx);await ctx.send('我其实更喜欢绿茶');await waitReply(ctx,/绿茶|green\s+tea/i);await ctx.shot('m2-correct');
  await newChat(ctx);await ctx.send('我喜欢喝什么？');const result=await waitTurn(ctx);await ctx.shot('m2-recall');await ctx.save('m2-recall.json',result);assert.match(await ctx.page.locator('.message.assistant').last().innerText(),/绿茶|green\s+tea/i,'M2: final new-conversation answer did not adopt green tea');ctx.memoryPreferredTea='绿茶';return result;
@@ -98,7 +103,7 @@ async function teaSnapshot(ctx){
 export async function memoryForgetPage(ctx){
  const {page}=ctx;await page.locator('#account-menu-trigger').click();await page.locator('#rail-memory').click();
  await ctx.until(async()=>(await page.locator('#memory-list').innerText()).includes('茶'),60000);
- const before=await teaSnapshot(ctx),target=before.tea.find(row=>row.currentState==='current')||before.tea[0];if(!target)throw Error('M3: tea memory unavailable in the real memory page');
+ const before=await teaSnapshot(ctx),target=before.tea.find(row=>row.currentState==='current'&&ctx.memoryPreferredTea&&row.text.includes(ctx.memoryPreferredTea))||before.tea.find(row=>row.currentState==='current')||before.tea[0];if(!target)throw Error('M3: tea memory unavailable in the real memory page');
  let receipt;
  try{
   await page.locator('#memory-list').getByRole('button',{name:new RegExp(target.text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'))}).first().click();
@@ -107,7 +112,8 @@ export async function memoryForgetPage(ctx){
   await page.locator('#memory-confirm-action').click();await ctx.until(async()=>!await page.locator('#memory-detail-dialog').isVisible()||await page.locator('#memory-detail-check').isVisible()||/成功|完成|失败|待确认/.test(await page.locator('#memory-detail-status').innerText()),60000).catch(()=>{});
   if(await page.locator('#memory-detail-check').isVisible())await page.locator('#memory-detail-check').click();
   receipt={text:(await ctx.snapshot()).text,keepOriginal};await ctx.shot('m3-delete-result');
- }finally{if(await page.locator('#memory-detail-close').isVisible())await page.locator('#memory-detail-close').click();if(await page.getByRole('button',{name:'关闭设置',exact:true}).isVisible())await page.getByRole('button',{name:'关闭设置',exact:true}).click();}
+ }catch(error){await ctx.save('m3-first-ui-failure.json',await ctx.snapshot());await ctx.shot('m3-first-ui-failure');throw error;}
+ finally{if(await page.locator('#memory-detail-close').isVisible())await page.locator('#memory-detail-close').click();if(await page.getByRole('button',{name:'关闭设置',exact:true}).isVisible())await page.getByRole('button',{name:'关闭设置',exact:true}).click();}
  await newChat(ctx);await ctx.send('我喜欢喝什么？');const recall=await waitTurn(ctx);const after=await teaSnapshot(ctx),sources=await ctx.api(`/memory/items/${target.kind}/${encodeURIComponent(target.id)}/sources`);
  const originalChat=ctx.memorySeedSessionId?await ctx.api(`/sessions/${ctx.memorySeedSessionId}/events?limit=200`):null;
  const originalRetained=!!originalChat&&JSON.stringify(originalChat).includes('记住我喜欢喝红茶');
