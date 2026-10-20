@@ -18,7 +18,7 @@ import PlanModeController, { foldPlanMode } from '@deepseek-ai/dsh-plan-mode';
 import { approvalRequired, approvalPrompt, classifyPersonalRisk, RISK_LABELS } from './personal-approval-policy.mjs';
 import { installCommandEncoding } from './personal-command-encoding.mjs';
 import { reviewSourceLocations } from './personal-review-sources.mjs';
-import { toolNeedsComputer, chatModePrompt, applyWorkDirectoryChoice, WORK_SWITCH_REASON } from './personal-work-mode.mjs';
+import { toolNeedsComputer, chatModePrompt, workContinuationPrompt, workFailureNeedsContinuation, applyWorkDirectoryChoice, WORK_SWITCH_REASON } from './personal-work-mode.mjs';
 
 export const name = 'weftmate-personal-desktop';
 export const PERSONAL_DESKTOP_PROTOCOL = 'weftmate.personal-desktop.v1';
@@ -744,14 +744,33 @@ export function apply(ctx) {
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
-    return { ...decision, messages: [...decision.messages.filter(message => !['weftmate-approval-mode', 'weftmate-project', 'weftmate-work-mode'].includes(message.source?.plugin)),
+    const continuation = workContinuationPrompt(step.agent.session, policy);
+    return { ...decision, messages: [...decision.messages.filter(message => !['weftmate-approval-mode', 'weftmate-project', 'weftmate-work-mode', 'weftmate-work-continuation'].includes(message.source?.plugin)),
       ...(policy.conversationMode ? [createUserMessage({ content: [{ type: 'text', text: chatModePrompt(policy.conversationMode) }],
         source: { kind: 'plugin', plugin: 'weftmate-work-mode' } })] : []),
       createUserMessage({ content: [{ type: 'text', text: approvalPrompt(policy.mode) }],
         source: { kind: 'plugin', plugin: 'weftmate-approval-mode' } }),
       ...(projectNotice ? [createUserMessage({ content: [{ type: 'text', text: projectNotice }],
-        source: { kind: 'plugin', plugin: 'weftmate-project' } })] : [])] };
+        source: { kind: 'plugin', plugin: 'weftmate-project' } })] : []),
+      ...(continuation ? [createUserMessage({ content: [{ type: 'text', text: continuation }],
+        source: { kind: 'plugin', plugin: 'weftmate-work-continuation' } })] : [])] };
   }, { prepend: true });
+  const continuedWorkFailures = new WeakMap();
+  ctx.on('agent/turn-stopping', async ({ agent, turn, signal }) => {
+    if (signal.aborted || agent.session.header.agentPreset !== 'personal-remote' || agent.session.header.origin === 'subagent' ||
+        continuedWorkFailures.get(agent) === turn || agent.inbox.nextStep.length) return;
+    const start = agent.session.events.findLastIndex(event => event.type === 'turn/start');
+    if (!agent.session.events.slice(start + 1).some(event => event.type === 'approval/asked' && event.data.reason === WORK_SWITCH_REASON)) return;
+    const policy = await policyFor(agent);
+    if (signal.aborted || agent.inbox.nextStep.length || !workFailureNeedsContinuation(agent.session, policy)) return;
+    continuedWorkFailures.set(agent, turn);
+    const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
+    if (signal.aborted || agent.inbox.nextStep.length) return;
+    // DSH re-reads nextStep before committing turn/end. Keep the real user
+    // receipt and original turn, rather than submitting a synthetic new task.
+    agent.steer(createUserMessage({ source: { kind: 'plugin', plugin: 'weftmate-work-recovery' },
+      content: [{ type: 'text', text: `刚才的电脑操作未完成，但切换和文件夹选择已经成功。请在原回合自动恢复一次：先检查实际状态，不重复已完成的操作；再加载当前任务所需工具继续原请求，核对结果。文件任务直接使用文件或命令工具，不走设备转交。不要让用户再次切换或重发指令；权限、审批、拒绝和停止决定照旧。${workContinuationPrompt(agent.session, policy)}` }] }));
+  });
   // The pinned driver copies static AgentOptions, while the personal UI selects
   // models through DSH's scoped selection. Initialize a native child before its
   // loop starts, using the parent's actual request configuration and DSH's helper.
