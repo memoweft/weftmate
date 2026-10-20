@@ -12,6 +12,12 @@ function fixture({answers=[],initiallyRunning=false}={}){
 test('completion waits for the actual session even when the visible transcript looks finished',async()=>{
  const ctx=fixture({initiallyRunning:true});const result=await waitTurn(ctx);assert.ok(result.nativeReads>=2,'the initial native state is still running');
 });
+test('the selected main conversation completes through its summary when ordinary sessions are empty',async()=>{
+ const ctx=fixture(),getByRole=ctx.page.getByRole;let reads=0;
+ ctx.page.getByRole=(...args)=>({...getByRole(...args),getAttribute:async()=> 'true'});
+ ctx.api=async()=>({body:{sessions:[],statusSummary:{main:{running:++reads===1,lastOutcome:reads===1?null:'completed'}}}});
+ await waitTurn(ctx);assert.equal(reads,2);
+});
 test('a correction expressed as green tea still runs the required first new conversation',async()=>{
  const ctx=fixture({answers:["I've noted your preference for green tea.",'You prefer green tea.']});await memoryCorrect(ctx);assert.equal(ctx.memoryPreferredTea,'绿茶');
 });
@@ -35,4 +41,13 @@ test('page forgetting cannot pass with empty API results while the new chat stil
 });
 test('chat forgetting cannot pass with empty API results while the new chat still knows the preference',async()=>{
  await assert.rejects(memoryForgetChat(deletionFixture(['已经忘了','你喜欢绿茶'])),/still recalls the forgotten preference/);
+});
+test('page forgetting selects the current corrected preference before another still-current tea row',async()=>{
+ const ctx=deletionFixture(['我不知道你的饮品偏好']),native=ctx.api,paths=[];let lists=0;
+ ctx.api=async path=>{
+  paths.push(path);
+  if(path.startsWith('/memory/items?'))return {status:200,body:{items:lists++===0?[{id:'red',kind:'cognition',text:'用户喜欢红茶',currentState:'current'},{id:'green',kind:'cognition',text:'用户更喜欢绿茶',currentState:'current'}]:[]}};
+  return native(path);
+ };
+ await memoryForgetPage(ctx);assert.ok(paths.includes('/memory/items/cognition/green/sources'));
 });
