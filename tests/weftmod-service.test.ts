@@ -7,7 +7,7 @@ import { Context } from '../vendor/dsh-runtime/node_modules/@deepseek-ai/cordis/
 import { WorkerThreadCodeRuntime } from '../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-code-runtime-worker-thread/lib/index.js'
 import { WeftModService } from '../src/runtime/weftmod/service.mjs'
 
-async function fixture(t: any) {
+async function fixture(t: any, directoryFor?: (exec: any) => string) {
   const root = await mkdtemp(join(tmpdir(), 'weftmod-script-'))
   const runtime = new WorkerThreadCodeRuntime(new Context(), { computeMs: 60000, maxWallMs: 600000, maxOutputBytes: 67108864, maxOldGenerationSizeMb: 512 })
   t.after(async () => { await runtime.teardown(); await rm(root, { recursive: true, force: true }) })
@@ -33,10 +33,25 @@ async function fixture(t: any) {
     },
   } }
   const transport = { controlDeviceRun: async (...args: any[]) => { controls.push(args); return { status: args[1] } } }
-  const service = new WeftModService({ root, ctx, transport, identity: () => ({}), approve: async () => 'full-access', image: async (v: any) => v, desktop: async () => ({ ok: true }) })
+  const service = new WeftModService({ root, ctx, transport, identity: () => ({}), approve: async () => 'full-access', image: async (v: any) => v, desktop: async () => ({ ok: true }), directoryFor })
   await service.ready
   return { service, exec, calls, controls, deferred, controller, root }
 }
+
+test('W3 desktop launches and script help follow the selected directory without mutating the native header', async t => {
+  let selected = 'synthetic-chat-directory'
+  const f = await fixture(t, () => selected)
+  assert.equal((await f.service.script({ action: 'help' }, f.exec)).workspace, selected)
+  selected = 'synthetic-selected-project'
+  assert.equal((await f.service.script({ action: 'help' }, f.exec)).workspace, selected)
+  const launches: any[] = []
+  f.service.desktop = async (input: any) => { launches.push(input); return { ok: true } }
+  await f.service.device({ action: 'desktop', desktop: { action: 'open', path: 'synthetic-app' } }, f.exec)
+  await f.service.device({ action: 'desktop', desktop: { action: 'open', path: 'synthetic-app', working_directory: 'explicit-directory' } }, f.exec)
+  assert.equal(launches[0].working_directory, selected)
+  assert.equal(launches[1].working_directory, 'explicit-directory')
+  assert.equal((f.exec.agent.session as any).header, undefined)
+});
 
 test('a successful script without terminal observation remains unverified and is not reused', async t => {
   const f = await fixture(t)
