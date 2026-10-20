@@ -30,6 +30,7 @@ async function ownerQuery(manager, ownerId, method, params) {
   try { return await manager.query(ownerId, method, params); }
   catch (cause) {
     if (['world_item_not_found', 'evidence_not_found'].includes(cause?.code)) throw failure('NOT_FOUND', 404);
+    if (cause?.code === 'formation_in_progress') throw failure('MEMORY_FORMATION_PENDING', 409);
     throw cause;
   }
 }
@@ -92,6 +93,7 @@ function publicReceipt(value, requestId) {
   const isDelete = ['delete_evidence', 'delete_world_item'].includes(value?.operation);
   const reasonCode = receipt.result_state === 'rejected'
     ? isDelete && ['forget_scope_changed', 'forget_scope_required'].includes(rawReason) ? 'MEMORY_REVISION_CHANGED'
+      : isDelete && rawReason === 'formation_in_progress' ? 'MEMORY_FORMATION_PENDING'
       : isDelete && rawReason === 'source_origin_unrecoverable' ? 'MEMORY_SOURCE_UNRECOVERABLE'
       : isDelete && ['shared_source', 'source_evidence_shared', 'source_origin_reused',
         'world_item_has_dependents'].includes(rawReason) ? 'MEMORY_DELETE_CONFLICT'
@@ -355,6 +357,9 @@ async function submit({ manager, ownerId, body, operation, targetKind, targetId,
     let completion;
     try { completion = await manager.checkForgetCompletion?.(ownerId, { targetKind, targetId, expectedWorldRevision: body.expectedWorldRevision }); }
     catch { /* Missing processing configuration/permission cannot prove completion. */ }
+    if (completion?.reasonCode === 'MEMORY_FORMATION_PENDING') return {
+      status: 409, body: { state: 'withheld', error: { code: 'MEMORY_FORMATION_PENDING' },
+        message: '刚才的对话还在整理，本次没有删除。请稍后重新打开遗忘范围并确认。' } };
     if (completion?.reasonCode === 'MEMORY_REVISION_CHANGED') return {
       status: 409, body: { state: 'withheld', error: { code: 'MEMORY_REVISION_CHANGED' },
         message: '记忆在确认期间有更新，这次没有删除。请查看最新范围后重新确认。' } };
