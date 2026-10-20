@@ -35,13 +35,14 @@ test(`page source completion: ${scenario}`, async t => {
     if (method === 'query_world') return { world_revision: scenario === 'changed revision' && args.operation === 'revision' ? 8 : 7,
       items: args.object_kind === 'cognition' ? worlds : [] }
     if (method === 'query_evidence') return { world_revision: 7, evidence }
+    if (method === 'query_jobs') return { world_revision: 7, jobs: [] }
     throw Error(`Unexpected mutation or query: ${method}`)
   } }
   const result = await checkForgetCompletion(manager, 'synthetic-owner',
     { targetKind: 'evidence', targetId: 'selected', expectedWorldRevision: 7 },
     { baseUrl: `http://127.0.0.1:${(server.address() as any).port}/v1`, credential: 'synthetic', model: 'synthetic', modelTier: 'cloud' })
   assert.equal(result.state, scenario === 'standalone' ? 'complete' : 'withheld')
-  assert.ok(queries.every(method => ['query_world', 'query_evidence', 'preview_forget'].includes(method)))
+  assert.ok(queries.every(method => ['query_world', 'query_evidence', 'query_jobs', 'preview_forget'].includes(method)))
   if (scenario === 'denied permission') assert.equal(inputs.length, 0)
   else {
     assert.equal(inputs.length, 1)

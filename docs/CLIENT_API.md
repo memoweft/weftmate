@@ -355,6 +355,8 @@ FX-15：确认决定的来源列表可额外包含 `role:"assistant"`、`message
 
 查询对当前账号快照搜索，`query` 经 NFKC/trim/小写规范化；游标绑定账号、kind、query、worldRevision，修订变化后重新查首屏。`currentState` 另可 `not_current`。来源最多200条，摘要≤2,000、原文≤8,192 UTF-16；详情/来源内部大小上限256 KiB。拒绝删除的原因在 `receipt.reasonCode`，可为 `MEMORY_DELETE_CONFLICT / MEMORY_SOURCE_UNRECOVERABLE / MEMORY_DELETE_SOURCE_UNKNOWN / MEMORY_COMMAND_REJECTED`；外层未知错误会投影为 `SERVICE_UNAVAILABLE`。`capabilities.inject` 仅表示能力，当前没有公开「注入/采用记忆」HTTP路由。
 
+M3在途形成：Core返回 `formation_in_progress` 时，条目遗忘预览返回409 `MEMORY_FORMATION_PENDING`；DELETE提交前命中同一条件返回409及 `state:"withheld"`，明确没有提交。已进入命令路径的拒绝则由匹配请求的Core回执投影为同名 `receipt.reasonCode`。客户端清除已拒绝操作的标记与旧预览，提示对话尚在整理，稍后重新打开范围并明确确认；不自动重发删除。完整性核对同时查看任务账本中尚未形成或已终止无变更的原话，这些额外来源只能阻止原删除，不能扩大目标。未知/失败核对会再次读取当前修订，已有变更优先返回 `MEMORY_REVISION_CHANGED`。路径和请求字段不变。
+
 M3安全边界：DELETE在提交前，绑定当前owner、选中对象、Core预览/修订及真实来源核对完成性；现有处理模型只能用于只读判断，不扩大原删除目标。原文或摘要中已知仍有目标内容、并且来源还须保留独立事实时，不提交删除、不因本次遗忘递增修订，返回上述409。无法确认模型配置、权限、来源或同一修订时也如实未执行；未获准的来源不交给云模型。GET预览继续不调用模型。没有Core回执的409不能当作成功：新共享界面显示未执行；旧界面可保留待确认标记并查询原请求，但不自动重发或显示已忘。此核对只接记忆条目/来源DELETE，不改变独立的整账号数据清除路径。
 
 自然语言遗忘若在提交前已知范围不完整，返回终态 `withheld`，不作为排队删除继续执行；旧动作有匹配owner/request/操作/目标/修订的真实applied回执时只报 `partial`，保留原Core回执且不重放。旧命令已保留但回执暂不可核实时，沿原请求身份和恢复节奏保持 `queued`/结果待确认，只读核对回执，不声称从未执行，也不为补全结果再派发删除。以上安全收口不代表M3已物理完成；Core局部来源清理与安装验收仍待后续包。
