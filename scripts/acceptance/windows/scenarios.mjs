@@ -53,11 +53,23 @@ export async function newChat(ctx){
  await ctx.page.getByRole('menuitemradio',{name:'MiMo v2.6 Flash',exact:true}).click();
 }
 export async function waitReply(ctx,needle,timeout=120000){
- await waitTurn(ctx,timeout);assert.ok((await ctx.page.locator('.message.assistant').last().innerText()).includes(needle),`Actual final answer does not contain expected scenario marker: ${needle}`);
+ await waitTurn(ctx,timeout);const answer=await ctx.page.locator('.message.assistant').last().innerText();assert.ok(needle instanceof RegExp?needle.test(answer):answer.includes(needle),`Actual final answer does not contain expected scenario marker: ${needle}`);
  return ctx.snapshot();
 }
 export async function waitTurn(ctx,timeout=150000){
  await ctx.until(async()=>!await ctx.page.getByRole('button',{name:'停止回复',exact:true}).isVisible()&&await ctx.page.locator('#transcript').evaluate(el=>{const rows=[...el.querySelectorAll('.message')];const user=rows.findLastIndex(r=>r.classList.contains('user'));return user>=0&&rows.findLastIndex(r=>r.classList.contains('assistant'))>user;}),timeout);
+ await ctx.until(async()=>{
+  const selected=ctx.page.locator('#session-list button.is-current');
+  const sessionId=await selected.count()?await selected.first().evaluate(el=>el.closest('[data-session-id]')?.dataset.sessionId):null;
+  const sessions=(await ctx.api('/sessions')).body.sessions??[];
+  let row=sessions.find(s=>s.sessionId===sessionId);
+  if(!row){
+   // A selected work conversation can be inside a collapsed project group.
+   const title=await ctx.page.locator('#assistant-title').innerText(),matches=sessions.filter(s=>s.mode==='work'&&s.title===title);
+   if(matches.length===1)row=matches[0];
+  }
+  return row?.running===false&&row.lastOutcome==='completed'&&!(await ctx.page.locator('#transcript').innerText()).includes('这轮对话尚无结束记录');
+ },timeout);
  return ctx.snapshot();
 }
 export async function firstReply(ctx){
@@ -77,8 +89,8 @@ export async function memoryForm(ctx){
  await newChat(ctx);await ctx.send('我喜欢喝什么？');const result=await waitTurn(ctx);await ctx.shot('m1-recall');await ctx.save('m1-recall.json',result);assert.ok((await ctx.page.locator('.message.assistant').last().innerText()).includes('红茶'),'M1: final new-conversation answer did not recall red tea');return result;
 }
 export async function memoryCorrect(ctx){
- await newChat(ctx);await ctx.send('我其实更喜欢绿茶');await waitReply(ctx,'绿茶');await ctx.shot('m2-correct');
- await newChat(ctx);await ctx.send('我喜欢喝什么？');const result=await waitTurn(ctx);await ctx.shot('m2-recall');await ctx.save('m2-recall.json',result);assert.ok((await ctx.page.locator('.message.assistant').last().innerText()).includes('绿茶'),'M2: final new-conversation answer did not adopt green tea');ctx.memoryPreferredTea='绿茶';return result;
+ await newChat(ctx);await ctx.send('我其实更喜欢绿茶');await waitReply(ctx,/绿茶|green\s+tea/i);await ctx.shot('m2-correct');
+ await newChat(ctx);await ctx.send('我喜欢喝什么？');const result=await waitTurn(ctx);await ctx.shot('m2-recall');await ctx.save('m2-recall.json',result);assert.match(await ctx.page.locator('.message.assistant').last().innerText(),/绿茶|green\s+tea/i,'M2: final new-conversation answer did not adopt green tea');ctx.memoryPreferredTea='绿茶';return result;
 }
 async function teaSnapshot(ctx){
  const result=await ctx.api('/memory/items?kind=cognition');assert.equal(result.status,200,'Memory list is unavailable');assert.ok(Array.isArray(result.body.items));return {result,tea:result.body.items.filter(row=>/红茶|绿茶/.test(row.text))};
@@ -100,7 +112,7 @@ export async function memoryForgetPage(ctx){
  const originalChat=ctx.memorySeedSessionId?await ctx.api(`/sessions/${ctx.memorySeedSessionId}/events?limit=200`):null;
  const originalRetained=!!originalChat&&JSON.stringify(originalChat).includes('记住我喜欢喝红茶');
  const result={before,receipt,after,sources,recall,originalRetained};await ctx.save('m3-forget-page.json',result);await ctx.shot('m3-recall-after-forget');
- assert.ok(!after.tea.length&&!/红茶|绿茶/.test(JSON.stringify(sources.body))&&originalRetained,'M3: erased memory/source still readable or original chat was not retained');return result;
+ assert.ok(!after.tea.length&&!/红茶|绿茶/.test(JSON.stringify(sources.body))&&originalRetained,'M3: erased memory/source still readable or original chat was not retained');assert.doesNotMatch(await page.locator('.message.assistant').last().innerText(),/红茶|绿茶|red\s+tea|green\s+tea/i,'M3: new conversation still recalls the forgotten preference');return result;
 }
 export async function memoryForgetChat(ctx){
  let before=await teaSnapshot(ctx);if(!before.tea.length){await memoryForm(ctx);before=await teaSnapshot(ctx);}
@@ -111,7 +123,7 @@ export async function memoryForgetChat(ctx){
  const sources=await Promise.all(before.tea.map(row=>ctx.api(`/memory/items/${row.kind}/${encodeURIComponent(row.id)}/sources`)));
  const originalChat=ctx.memorySeedSessionId?await ctx.api(`/sessions/${ctx.memorySeedSessionId}/events?limit=200`):null;
  const result={before,answer,after,sources,recall,originalRetained:!!originalChat&&JSON.stringify(originalChat).includes('记住我喜欢喝红茶')};await ctx.save('m7-forget-chat.json',result);await ctx.shot('m7-recall-after-forget');
- assert.ok(!after.tea.length&&sources.every(r=>!/红茶|绿茶/.test(JSON.stringify(r.body)))&&result.originalRetained,'M7: memory or source text remains readable after dialogue forgetting');return result;
+ assert.ok(!after.tea.length&&sources.every(r=>!/红茶|绿茶/.test(JSON.stringify(r.body)))&&result.originalRetained,'M7: memory or source text remains readable after dialogue forgetting');assert.doesNotMatch(await ctx.page.locator('.message.assistant').last().innerText(),/红茶|绿茶|red\s+tea|green\s+tea/i,'M7: new conversation still recalls the forgotten preference');return result;
 }
 export async function queueAndStop(ctx,{newConversation=true}={}){
  if(newConversation)await newChat(ctx);await ctx.send('请直接在聊天正文中逐行写1到500，每行写「数字 合成排队验收」。不要使用任何工具，不要创建或写入文件，不要省略。');
@@ -159,28 +171,28 @@ export async function healthWithData(ctx){
  await ctx.until(async()=>await ctx.page.locator('.message.assistant').count()>0&&!await ctx.page.getByRole('button',{name:'停止回复',exact:true}).isVisible(),120000);
  const result=await ctx.snapshot();await ctx.save('h3-with-data.json',result);await ctx.shot('h3-with-data');return {actual,result};
 }
-export async function uiPages(ctx){
+export async function uiPages(ctx,{evidencePrefix='u1'}={}){
  const {page}=ctx;const observed=[];
  for(const theme of ['light','dark']){
   await page.locator('#account-menu-trigger').click();await page.locator('#rail-account').click();
   await page.locator('.settings-nav-item[data-category="appearance"]').click();
   await page.locator(`.appearance-modes button[data-value="${theme}"]`).click();
   await ctx.until(()=>page.evaluate(t=>document.documentElement.dataset.theme===t,theme));
-  await page.locator('.settings-nav-item[data-category="general"]').click();await ctx.shot(`u1-${theme}-settings`);
+  await page.locator('.settings-nav-item[data-category="general"]').click();await ctx.shot(`${evidencePrefix}-${theme}-settings`);
   observed.push({theme,page:'settings',text:await page.locator('#settings-dialog').innerText()});
-  await page.locator('.settings-nav-item[data-category="memory"]').click();await ctx.until(async()=>await page.locator('#memory-list').isVisible()||(await page.locator('#settings-dialog').innerText()).includes('当前账户的这一类记忆为空。'),15000);await ctx.shot(`u1-${theme}-memory`);observed.push({theme,page:'memory',text:await page.locator('#settings-dialog').innerText()});
+  await page.locator('.settings-nav-item[data-category="memory"]').click();await ctx.until(async()=>await page.locator('#memory-list').isVisible()||(await page.locator('#settings-dialog').innerText()).includes('当前账户的这一类记忆为空。'),15000);await ctx.shot(`${evidencePrefix}-${theme}-memory`);observed.push({theme,page:'memory',text:await page.locator('#settings-dialog').innerText()});
   await page.getByRole('button',{name:'关闭设置',exact:true}).click();
-  await ctx.shot(`u1-${theme}-sidebar`);
+  await ctx.shot(`${evidencePrefix}-${theme}-sidebar`);
   const selected=page.locator('#session-list button.is-current');if(await selected.count())await selected.first().click();else await newChat(ctx);
-  await ctx.shot(`u1-${theme}-chat`);observed.push({theme,page:'chat',...(await ctx.snapshot())});
+  await ctx.shot(`${evidencePrefix}-${theme}-chat`);observed.push({theme,page:'chat',...(await ctx.snapshot())});
   for(const [name,selector]of [['activity','.activity-entry'],['health','.health-entry'],['goals','.goals-entry'],['library','.library-entry']]){
    await page.locator(selector).click();await page.locator(`.${name}-surface`).waitFor({state:'visible'});
    const surface=page.locator(`.${name}-surface`);
-   const loadingSettled=await ctx.until(async()=>!(await surface.innerText()).includes('正在读取')&&await surface.locator('[aria-busy="true"]:visible').count()===0,60000).then(()=>true,()=>false);
-   await ctx.shot(`u1-${theme}-${name}`);observed.push({theme,page:name,loadingSettled,text:await surface.innerText()});
+   const loadingSettled=await ctx.until(async()=>!(await surface.innerText()).includes('正在读取')&&await surface.evaluate(el=>!el.classList.contains('health-date-out'))&&await surface.locator('[aria-busy="true"]:visible, .health-skeleton:visible, [role="status"][aria-label^="正在读取"]:visible').count()===0,60000).then(()=>true,()=>false);
+   await ctx.shot(`${evidencePrefix}-${theme}-${name}`);observed.push({theme,page:name,loadingSettled,text:await surface.innerText()});
   }
  }
- await ctx.save('u1-pages.json',observed);assert.deepEqual(observed.filter(row=>row.loadingSettled===false).map(row=>`${row.theme}/${row.page}`),[],'U1: a page is still loading after 60 seconds');return observed;
+ await ctx.save(`${evidencePrefix}-pages.json`,observed);assert.deepEqual(observed.filter(row=>row.loadingSettled===false).map(row=>`${row.theme}/${row.page}`),[],'U1: a page is still loading after 60 seconds');return observed;
 }
 export async function coldStart(ctx){
  const before={ui:await ctx.snapshot(),models:await ctx.api('/models'),notifications:await ctx.notices()};
@@ -218,10 +230,10 @@ export async function switchToWorkRequest(ctx){
 export async function historyPagination(ctx,{reuseCurrentSeed=false}={}){
  if(!reuseCurrentSeed){await newChat(ctx);await ctx.send('C4 合成历史种子：为历史分页准备一个独立对话，请简短确认。');}
  assert.match(await ctx.page.locator('.message.user').last().innerText(),/C4.*(?:种子|分页)/,'Only the dedicated C4 fixture may receive synthetic history');
- await waitTurn(ctx);
+ if(!reuseCurrentSeed)await waitTurn(ctx);
  const sessionId=await ctx.page.locator('#session-list button.is-current').first().evaluate(el=>el.closest('[data-session-id]')?.dataset.sessionId);
  if(!sessionId)throw Error('Current native session identifier unavailable');
- await ctx.until(async()=>{const row=(await ctx.api('/sessions')).body.sessions.find(s=>s.sessionId===sessionId);return row?.running===false&&row.lastOutcome==='completed';},90000);
+ await ctx.until(async()=>{const row=(await ctx.api('/sessions')).body.sessions.find(s=>s.sessionId===sessionId);return row?.running===false&&(reuseCurrentSeed?['completed','stopped','interrupted','failed'].includes(row.lastOutcome):row.lastOutcome==='completed');},90000);
  const isolated=await ctx.api(`/sessions/${encodeURIComponent(sessionId)}/metadata`,{memoryMode:'off'},'PATCH');assert.equal(isolated.status,200);
  const startup=JSON.parse(await readFile(join(ctx.output,'startup.json'),'utf8'));
  await ctx.app.close();let prepared;try{prepared=await appendHistory({repository:ctx.input,profile:startup.profile,sessionId,output:ctx.output});await ctx.save('c4-prepared.json',prepared);}finally{await ctx.launch();}
