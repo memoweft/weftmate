@@ -2,31 +2,11 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { mkdir, rename, writeFile, rm, open } from 'node:fs/promises';
-import { zstdDecompressSync, zstdCompress } from 'node:zlib';
+import { zstdCompress } from 'node:zlib';
 import { promisify } from 'node:util';
-import { pipeline, finished } from 'node:stream/promises';
+import { pipeline } from 'node:stream/promises';
+import { readNativeHeader } from './native-header.mjs';
 const compress = promisify(zstdCompress);
-
-async function headerOf(file, compressed) {
-  const stream = createReadStream(file); let bytes = Buffer.alloc(0);
-  try {
-    for await (const chunk of stream) {
-      bytes = Buffer.concat([bytes, chunk]);
-      if (compressed) {
-        let decoded;
-        try { decoded = zstdDecompressSync(bytes, { info: true }); }
-        catch (error) { if (error.code === 'Z_BUF_ERROR') continue; throw error; }
-        // DSH writes the header as its own Zstandard frame. Node decodes one
-        // frame; bytesWritten is the compressed frame boundary. The remaining
-        // frames must be copied verbatim rather than silently dropping them.
-        return { header: JSON.parse(decoded.buffer.toString('utf8').trim()), offset: decoded.engine.bytesWritten };
-      }
-      const newline = bytes.indexOf(10);
-      if (newline >= 0) return { header: JSON.parse(bytes.subarray(0, newline).toString('utf8')), offset: newline + 1 };
-    }
-    throw new Error('invalid DSH session header');
-  } finally { stream.destroy(); await finished(stream).catch(() => {}); }
-}
 
 /** Relocate the native header and directory while preserving every event-frame byte. */
 export async function rehomeSessions(stage, root, manifest, locate = null) {
@@ -40,7 +20,7 @@ export async function rehomeSessions(stage, root, manifest, locate = null) {
   }
   for (const row of rows) {
     const source = path.join(stage, row.path), compressed = row.path.endsWith('.zstd');
-    const { header, offset } = await headerOf(source, compressed);
+    const { header, offset } = await readNativeHeader(source);
     const oldRoot = path.posix.normalize(manifest.sourceRoot.replaceAll('\\', '/')).replace(/\/$/, ''), cwd = header.cwd;
     const portableCwd = typeof cwd === 'string' ? path.posix.normalize(cwd.replaceAll('\\', '/')) : null;
     if (header.type !== 'session' || !portableCwd?.toLowerCase().startsWith(oldRoot.toLowerCase() + '/')) continue;

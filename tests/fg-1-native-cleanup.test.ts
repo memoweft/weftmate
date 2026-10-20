@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { zstdCompressSync, zstdDecompressSync } from 'node:zlib';
 import { eraseSessionMemoryArtifact } from '../src/runtime/dsh-adapter/memory-erasure.mjs';
+import { readNativeHeader } from '../src/personal-backup/native-header.mjs';
 function decodeFrames(bytes) {
   const parts=[];let offset=0;
   while(offset<bytes.length){const decoded=zstdDecompressSync(bytes.subarray(offset),{info:true});parts.push(decoded.buffer);offset+=decoded.engine.bytesWritten}
@@ -21,8 +22,11 @@ test('native forgetting clears injected memory and projections, retaining origin
   try{
     await writeFile(file,zstdCompressSync(Buffer.from(events.map(row=>JSON.stringify(row)).join('\n')+'\n')));
     await eraseSessionMemoryArtifact(persistence, 'session');
-    assert.equal(JSON.parse(zstdDecompressSync(await readFile(file)).toString()).kind,'header');
-    let text=decodeFrames(await readFile(file));assert.match(text,/原话FGSecret/);assert.doesNotMatch(text,/FGSecret记忆|FGAdoptedSummary|previous-private-source|FGSecret交接/);
+    assert.deepEqual((await readNativeHeader(file)).header,events[0]);
+    let text=decodeFrames(await readFile(file));
+    const rows=text.trim().split('\n').map(line=>JSON.parse(line));
+    assert.equal(rows.length,events.length);assert.deepEqual(rows[0],events[0]);
+    assert.match(text,/原话FGSecret/);assert.doesNotMatch(text,/FGSecret记忆|FGAdoptedSummary|previous-private-source|FGSecret交接/);
     await eraseSessionMemoryArtifact(persistence, 'session',{deleteConversationSnippets:true,sourceTexts:['原话FGSecret']});
     text=decodeFrames(await readFile(file));assert.doesNotMatch(text,/FGSecret/);
   }finally{await rm(root,{recursive:true,force:true})}
