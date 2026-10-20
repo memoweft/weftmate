@@ -88,6 +88,9 @@
       setBusy: (form, busy) => { for (const node of form.querySelectorAll('input,button')) node.disabled = busy; },
       scanPairing };
     const effects = new Proxy({
+      // This client adopts one fixed native/browser host transport. A no-op here
+      // would falsely advertise the desktop's parallel computer-channel capability.
+      openComputerChannel: null,
       paintScreen: view => { if (view === 'login' || view === 'cloud-wait') showAuth(view === 'cloud-wait'); },
       paintCloudAuth: value => forms?.paint(value),
       readMessageDraft: () => byId('draft').value,
@@ -100,7 +103,7 @@
       nativeSessionExpired: () => { state.connection = 'expired'; uiCore.state.online = false; updateComposer(); },
       enterCloudOnly: info => WeftPhone.start(info, client),
       preparePhoneAccount: async info => { await WeftPhone.ensureAccount(info);if(!native)return;try{const saved=await androidBridge.call('phone.identity');if(saved.accountId===info.accountId&&saved.origin===info.origin)return;}catch{}await androidBridge.call('phone.adopt',info); },
-    }, { get: (target, key) => target[key] || noop });
+    }, { get: (target, key) => key in target ? target[key] : noop });
     core = WeftUiCore.create({ effects, ...transport, hostOrigin, initialPairing, crypto: globalThis.crypto, storage: localStorage,
       cloudVendor: WeftCloudVendor, desktop: false, bindDesktop: false, retainNativeCache: native, automaticHostTrust: native,
       nativeEmailCodeLogin: identity.nativeEmailCodeLogin,
