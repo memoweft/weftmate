@@ -5,6 +5,7 @@ import {existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {generateKeyPairSync,privateDecrypt,constants} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+import {presentAcceptanceWindow} from './present-window.mjs';
 const [input,output,mode='local']=process.argv.slice(2);
 if(!['local','dev'].includes(mode))throw Error('Only an isolated local installation or explicit-Core development host is supported');
 const local=true,development=mode==='dev';
@@ -56,7 +57,7 @@ try{
   if(existsSync(join(output,'stop.json')))break;
   const request=await readFile(join(output,'request.json'),'utf8').then(JSON.parse).catch(()=>null);
   if(!request||request.id===last){await pause(300);continue;}last=request.id;
-  try{await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows().find(v=>v.webContents.getURL().includes('/personal/v1/ui'));if(w?.isMinimized()){w.restore();w.show();w.focus();}});const value=await new Function('ctx',`return (async()=>{${request.code}\n})()`)(ctx);await save('response.json',{id:last,ok:true,value});}
+  try{await app.evaluate(presentAcceptanceWindow);const value=await new Function('ctx',`return (async()=>{${request.code}\n})()`)(ctx);await save('response.json',{id:last,ok:true,value});}
   catch(e){const windowState=await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().map(w=>({visible:w.isVisible(),focused:w.isFocused(),minimized:w.isMinimized()}))).catch(()=>null);await save('response.json',{id:last,ok:false,error:redact(e.stack),windowState});}
   await save('snapshot.json',await snapshot());await save('notifications.json',await ctx.notices());
  }

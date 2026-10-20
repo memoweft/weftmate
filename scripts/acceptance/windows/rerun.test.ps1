@@ -32,4 +32,10 @@ try {
   if(!$timedOut -or ($script:clock-$script:start).TotalSeconds -ne 60){throw 'Configured scenario deadline was not enforced'}
   if(!(Test-Path (Join-Path $folder 'stop.json'))){throw 'Controller cleanup was not requested'}
   Write-Output 'Short scenario budget still stops at 60 simulated seconds'
-} finally {Remove-Item -LiteralPath $folder -Recurse -Force}
+} finally {
+  $resolved=[IO.Path]::GetFullPath($folder)
+  $tempRoot=[IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')+'\'
+  if(!$resolved.StartsWith($tempRoot,[StringComparison]::OrdinalIgnoreCase)-or (Split-Path $resolved -Leaf)-notmatch '^scenario-budget-[0-9a-f-]{36}$'){throw 'Refuse cleanup outside the owned test directory'}
+  if((Get-Item -LiteralPath $resolved).Attributes-band [IO.FileAttributes]::ReparsePoint){throw 'Refuse cleanup through a reparse point'}
+  Remove-Item -LiteralPath $resolved -Recurse -Force
+}
