@@ -18,8 +18,39 @@ export function toolNeedsComputer(name, args = {}, connector = null) {
 }
 
 export const chatModePrompt = mode => mode === 'chat'
-  ? '当前是对话模式，可以聊天、查记忆和健康数据，也可以用 web_search/web_fetch 查询公开资料，不需要项目。需要读写电脑文件、运行命令、打开应用、交互操作浏览器或下载到电脑时，实际调用所需工具，系统会暂停并询问是否切换到工作。尚未选择文件夹时，不要用 ask_user_question 索要路径或代替目录选择；先加载并实际调用所需电脑工具，路径可以使用相对路径（如 .）。系统会在执行前暂停，通过“切换到工作”卡片让用户选择电脑和文件夹，确认后在所选目录执行。不要自行执行，不要只回答做不了，不要用文字假称卡片已经出现。用户选择先不用后，本轮停止这件事，用一句话说明它需要进入工作；下一轮可以再询问。'
+  ? '当前是对话模式：聊天、记忆、健康和 web_search/web_fetch 公开查询无需项目。文件整理、读写或命令任务，先直接 load_tools 加载 glob/read/write/pwsh 等所需文件或命令工具并调用；需要操作应用界面才用 weftmod，普通文件任务不必创建应用自动化脚本。未选目录时用相对路径（如 .），不要 ask_user_question 索要路径。实际电脑调用会在执行前暂停，显示“切换到工作”卡片，让用户选电脑和文件夹；确认后在所选目录接着完成原请求，权限审批照旧。不要只给计划、声称做不了或假称卡片已出现。选择先不用后本轮停止，下一轮才可再询问。'
   : '当前是工作模式，在已选择的电脑与项目文件夹里工作，继续遵守原有工具权限与审批。';
+
+/** A discovery tool can open the card without completing the user's task.
+ * Keep the acknowledgement in this native turn, including after tool loading
+ * or a recoverable error, without resending the original user message. */
+export function workContinuationPrompt(session, policy) {
+  if (policy.conversationMode !== 'work' || !policy.project) return null;
+  const events = session.events, start = events.findLastIndex(event => event.type === 'turn/start' || event.type === 'turn/end');
+  if (start < 0 || events[start].type !== 'turn/start') return null;
+  const current = events.slice(start + 1);
+  const switched = current.some(event => event.type === 'approval/asked' && event.data.reason === WORK_SWITCH_REASON &&
+    current.some(answer => answer.type === 'approval/decided' && answer.data.id === event.data.id && answer.data.outcome === 'allowed-once'));
+  if (!switched) return null;
+  return `用户已批准切换到工作，电脑和文件夹选择已完成：${policy.project.name}（${policy.project.rootPath}）。这就是用户刚选定的目标目录，以此路径为准，不要再按名称到别处寻找这个文件夹。这只是完成了工作准备，不代表原任务已完成。请在本轮接着实际执行用户原请求，核对结果后再报告；不要停在口头计划、再次索要文件夹或等待用户重发指令。需要别的工具时继续用 load_tools 加载后调用；文件整理使用文件工具或命令工具（如 glob、pwsh），不需要操作应用界面。只操作所选文件夹，继续遵守原有权限、审批、拒绝和停止决定。`;
+}
+
+/** Recover the observed normal stop after a failed post-switch operation.
+ * Native request failures/output limits and user refusals keep their outcomes. */
+export function workFailureNeedsContinuation(session, policy) {
+  if (!workContinuationPrompt(session, policy)) return false;
+  const start = session.events.findLastIndex(event => event.type === 'turn/start');
+  const current = session.events.slice(start + 1);
+  if (current.filter(event => event.type === 'user/message' && event.data.source?.kind === 'user').length !== 1 ||
+      current.some(event => event.type === 'approval/decided' && event.data.outcome !== 'allowed-once')) return false;
+  const finish = current.findLast(event => event.type === 'assistant/chunk' && event.data.chunk?.type === 'finish');
+  if (!['stop', 'completed'].includes(finish?.data.chunk.reason.kind)) return false;
+  const result = current.findLast(event => event.type === 'tool/result');
+  const failed = result?.data.message.content.find(part => part.type === 'tool-result' && part.isError);
+  const call = failed && current.findLast(event => event.type === 'tool/call' && event.data.callId === failed.toolCallId);
+  // The catalog loader has its own bounded native recovery.
+  return !!call && call.data.name !== 'load_tools';
+}
 
 // A model may have expanded a new relative file against the old chat directory.
 // Choosing a project changes that default location; existing historical files stay put.
