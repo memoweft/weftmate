@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm, readdir } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { gunzipSync, gzipSync, zstdCompressSync, zstdDecompressSync } from 'node:zlib';
+import { gunzipSync, gzipSync, zstdCompressSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { snapshot, verify, listBackups, retainedBackups, sqliteSnapshot } from '../src/personal-backup/archive.mjs';
 import { beginRestore, rollbackRestore, commitRestore } from '../src/personal-backup/restore.mjs';
@@ -18,6 +18,7 @@ import { once } from 'node:events';
 import { enterProfileWrite } from '../src/personal-backup/write-barrier.mjs';
 import { durableWrite } from '../src/personal-access/store.mjs';
 import { rehomeSessions } from '../src/personal-backup/rehome.mjs';
+import { readNativeHeader } from '../src/personal-backup/native-header.mjs';
 import { managedMkdtemp, disposeManagedTemp } from './helpers/managed-temp.mjs';
 
 const storageAttachments = ['weftmate-storage-key.json','weftmate-storage-key.json.previous-synthetic',
@@ -219,9 +220,9 @@ test('BK-1 rehoming preserves every compressed event frame after the native head
   const tail = Buffer.concat([zstdCompressSync(Buffer.from('{"type":"user/message"}\n')), zstdCompressSync(Buffer.from('{"type":"turn/end"}\n'))]);
   await writeFile(file, Buffer.concat([header, tail])); const targetRoot = path.join(f.base, 'other');
   await rehomeSessions(stage, targetRoot, { sourceRoot: f.root, files: [{ path: 'dsh-home/sessions/project/session/log.jsonl.zstd' }] }, () => file);
-  const result = await readFile(file), first = zstdDecompressSync(result, { info: true });
-  assert.equal(JSON.parse(first.buffer.toString()).cwd, path.join(targetRoot, 'conversations/owner/session'));
-  assert.deepEqual(result.subarray(first.engine.bytesWritten), tail);
+  const result = await readFile(file), first = await readNativeHeader(file);
+  assert.equal(first.header.cwd, path.join(targetRoot, 'conversations/owner/session'));
+  assert.deepEqual(result.subarray(first.offset), tail);
 });
 test('BK-1 portable restore rebinds an already claimed target to the restored owner, keeping its private key', async t => {
   const f = await fixture(t), issuer = 'https://accounts.example.invalid', sub = 'same-cloud-subject';

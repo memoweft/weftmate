@@ -2,8 +2,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { readFile, writeFile, readdir, lstat, rm, mkdir, rename } from 'node:fs/promises';
-import { zstdDecompressSync } from 'node:zlib';
-import { finished } from 'node:stream/promises';
+import { readNativeHeader } from './native-header.mjs';
 import { createRequire } from 'node:module';
 import { routeForProfile } from '../harness-model-routes.ts';
 import { officialCredentialRef } from '../dsh-settings-migration.ts';
@@ -116,24 +115,7 @@ async function paths(stage, relative = '') {
   }
   return names;
 }
-export async function nativeHeader(file) {
-  const stream = createReadStream(file, { highWaterMark: 64 * 1024 }); let bytes = Buffer.alloc(0);
-  try {
-    for await (const chunk of stream) {
-      bytes = Buffer.concat([bytes, chunk]);
-      if (bytes.length > 1024 * 1024) throw error('BACKUP_CORRUPT');
-      if (file.endsWith('.zstd')) {
-        try {
-          const decoded = zstdDecompressSync(bytes, { info: true, maxOutputLength: 1024 * 1024 });
-          return { header: JSON.parse(decoded.buffer.toString('utf8').trim()), offset: decoded.engine.bytesWritten };
-        }
-        catch (cause) { if (cause.code === 'Z_BUF_ERROR') continue; throw cause; }
-      }
-      const end = bytes.indexOf(10); if (end >= 0) return { header: JSON.parse(bytes.subarray(0, end).toString('utf8')), offset: end + 1 };
-    }
-    throw error('BACKUP_CORRUPT');
-  } finally { stream.destroy(); await finished(stream).catch(() => {}); }
-}
+export const nativeHeader = file => readNativeHeader(file, { maxBytes: 1024 * 1024 });
 
 /** Remove everything that cannot be attributed to the selected account. */
 export async function filterCloudStage(stage, scope) {
