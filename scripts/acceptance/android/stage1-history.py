@@ -37,6 +37,18 @@ def web(script):
     return value
 
 
+# The live phone engine owns a cached archive. Detach it before preparing a
+# fixture through the persistence bridge, otherwise its next composer/memory
+# save can overwrite the fixture with the older archive during cold shutdown.
+# clear() closes the active engine without deleting its stored account archive.
+web("(()=>{if(!WeftPhone.active)throw Error('ActiveStandalonePhoneRequired');"
+    "window.b2HistoryDetached=false;WeftPhone.clear().then(()=>window.b2HistoryDetached=true);return true})()")
+detach_deadline = time.monotonic() + 15
+while not web('window.b2HistoryDetached === true'):
+    if time.monotonic() > detach_deadline:
+        raise TimeoutError('Could not detach the active phone engine')
+    time.sleep(.1)
+time.sleep(.5)
 value = call(action='call', method='phone.offline.load')
 conversation = str(uuid.uuid4())
 turns = [dict(id=str(uuid.uuid4()), conversationId=conversation,
