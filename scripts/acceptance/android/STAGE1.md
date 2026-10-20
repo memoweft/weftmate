@@ -37,6 +37,8 @@ email / code 操作只把值放进控制器内存。只读本次请求后的对�
 
 - stage1-command.ps1 可直接发送 JSON 驱动请求；不带 ModelKey 时不会读取模型密钥。响应要核对 ok 和真实结果，发出动作不等于通过。
 - activate 按 label 或 text 触发控件的 Compose OnClick 语义动作，用于触摸目标被底部输入区覆盖的自动化定位；它仍走真实控件处理器，不替换服务回执。文件预览须等待内容加载并实际查看截图；C4 的物理滑动仍用 historySwipe。
+- 已交接的电脑端用 peer-window.mjs 的 prepareInvisiblePeer 保持透明、不抢焦点且正常触发前台生命周期。不要把 BrowserWindow.hide() 下暂停轮询或暂存发送的状态当成前台产品失败；文件选择器及离线 helper 重启电脑后也要恢复此测试窗口状态。不改业务回执，不重发原请求。
+- W2 核对实际 pending 的风险操作；模型可能先请求只读检查，也可能先用提问卡确认。拒绝只读检查不等于拒绝后续删除，应分别留证。
 - Stage1Driver 每次请求重新取当前 RESUMED NativeActivity，报告 foreground、submitting、workBusy。通知权限对话框、网页登录、页面切换后，先核对可见页面和当前状态再继续；不能拿旧 Activity 的状态代替当前画面。
 - stage1-cases.mjs 导出 chat、memory；用于手机独立使用，memory 可分 start / finish。重跑时用 save 包装器增加文件前缀，保留首次证据。模型应答、形成、纠正、删除和来源读回分别核对；超时保存当前状态，不推断通过。
 - stage1-remote.mjs 的 observe 保存状态、可见树、整屏图；queueAndStop 先确认前台单机状态，保留排队和停止证据。第二条排队回复的耗时不等于停止当前回复的延迟，应另量单个活动回复的停止时间。
