@@ -4,7 +4,7 @@ param(
  [switch]$Relay,
  [switch]$UseEnvProxy,
  [ValidateRange(1,30)][int]$ScenarioTimeoutMinutes=30,
- [string[]]$Cases=@('onboarding','firstReply','createWaterReminder','createTimedReminder','healthNoData','healthWithData','queueAndStop','rapidThree','switchDuringReply','memoryForm','memoryCorrect','memoryForgetPage','memoryForgetChat','historyPagination','uiPages')
+ [string[]]$Cases=@('onboarding','firstReply','createWaterReminder','createTimedReminder','healthNoData','healthWithData','queueAndStop','rapidThree','switchDuringReply','memoryFirstTrial','historyPagination','uiPages')
 )
 $ErrorActionPreference='Stop'
 $repo=(Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
