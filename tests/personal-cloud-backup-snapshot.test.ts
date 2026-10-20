@@ -66,7 +66,7 @@ test('S4 compressed native sessions preserve every frame and trusted descendants
   const original = Buffer.concat([header, tail]); await f.put('dsh-home/sessions/project/session-a/log.jsonl.zstd', original);
   const row = await snapshot({ ...f, cloudOwnerId: owner }), extracted = path.join(f.base, 'extracted'); await verify(path.join(f.directory, row.id), extracted);
   const actual = await readFile(path.join(extracted, 'dsh-home/sessions/project/session-a/log.jsonl.zstd'));
-  assert.deepEqual(actual, original); assert.equal(JSON.parse(zstdDecompressSync(actual).toString().trim()).id, 'session-a');
+  assert.deepEqual(actual, original); assert.equal(JSON.parse(zstdDecompressSync(actual.subarray(0, header.length)).toString().trim()).id, 'session-a');
 });
 
 test('S4 cloud manager waits for the BK-1 fence, captures secrets inside it and never requests restart', async t => {
