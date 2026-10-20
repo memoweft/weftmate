@@ -6,6 +6,7 @@ import { AiGameTransport } from '../runtime/ai-game/transport.mjs'
 import { callIdentity, effectivePermissionPreset, AI_GAME_CREDENTIAL_REF, AI_GAME_PRINCIPAL_REF, AI_GAME_CONTROLLER_REF, AI_GAME_MANAGED_STATE_REF, AI_GAME_MANAGED_ORIGIN_REF } from './weftmate-aigame-host.mjs'
 import { WeftModService } from '../runtime/weftmod/service.mjs'
 import { desktopCommand } from '../runtime/weftmod/desktop.mjs'
+import { executionDirectory } from './personal-project-context.mjs'
 
 export const name = 'weftmate-weftmod'
 export const inject = ['tools', 'approval', 'credentials']
@@ -122,7 +123,7 @@ export function registerWeftMod(ctx, { transport, identity, approve }) {
       if (exec.parent !== undefined) exec.deferContext(createUserMessage({ content: content(value), source: { kind: 'plugin', plugin: 'weftmod' } }))
       return value
     }
-    service = new WeftModService({ root: join(process.env.DSH_HOME ?? process.cwd(), 'weftmod'), ctx: runtimeCtx, transport, identity, approve: runtimeApproval, image: saveImage, desktop: desktopCommand })
+    service = new WeftModService({ root: join(process.env.DSH_HOME ?? process.cwd(), 'weftmod'), ctx: runtimeCtx, transport, identity, approve: runtimeApproval, image: saveImage, desktop: desktopCommand, directoryFor: exec => executionDirectory(exec.agent?.session) })
     const output = { schema: { type: 'json' }, render: (_args, value) => content(value) }
     runtimeCtx.tools.register(defineTool({
       name: 'weftmod',
@@ -159,13 +160,13 @@ export function registerWeftMod(ctx, { transport, identity, approve }) {
       const loaded = payload.agent?.[Symbol.for('weftmate.loadedTools')];
       const deferred = payload.agent?.session?.header?.agentPreset === 'personal-remote' &&
         !loaded?.has('weftmod') && !loaded?.has('weftmod_script');
-      const guide = `${deferred ? 'Windows desktop and Android automation are available through weftmod and weftmod_script. Load these tools when needed; their full workflow guidance follows after loading.' : TOOL_GUIDE}\nCurrent workspace: ${payload.agent?.session?.header?.cwd ?? 'not set'}.`
+      const guide = `${deferred ? 'Windows desktop and Android automation are available through weftmod and weftmod_script. Load these tools when needed; their full workflow guidance follows after loading.' : TOOL_GUIDE}\nCurrent workspace: ${executionDirectory(payload.agent?.session) ?? 'not set'}.`
       const hasGuide = message => message.source?.kind === 'plugin' && message.source.plugin === 'weftmod'
         && message.content?.some(block => block.type === 'text' && block.text === guide)
       // Read the live surface, so restored sessions deduplicate and compaction
       // can remove the guide without permanently suppressing its replacement.
       const current = payload.agent?.session?.deriveMessages?.() ?? []
-      const workspace = payload.agent?.session?.header?.cwd ?? null
+      const workspace = executionDirectory(payload.agent?.session) ?? null
       const freshUserInput = lastUserMessage(payload.messages ?? [])
       const target = freshUserInput?.text ?? lastUserTarget(current)
       const owner = payload.agent?.session?.id ?? payload.agent?.session?.header?.id
@@ -175,6 +176,9 @@ export function registerWeftMod(ctx, { transport, identity, approve }) {
         await service.suspendPendingOnUserInput(owner, origin)
         service.captureTarget(owner, target, workspace, origin)
       }
+      const captured = service.currentTargets.get(owner)
+      if (!freshUserInput && captured?.origin?.turn === payload.turn && captured.workspace !== workspace)
+        service.captureTarget(owner, captured.target, workspace, captured.origin)
       const marker = target ? reuseMarker(target, workspace, freshUserInput?.message.id ?? lastUserMessage(current)?.message.id ?? null) : null
       const reusedAlready = marker && (decision.messages.some(message => hasReuseMarker(message, marker)) || current.some(message => hasReuseMarker(message, marker)))
       const candidates = target && !reusedAlready ? await service.reuseCandidates(target) : []
