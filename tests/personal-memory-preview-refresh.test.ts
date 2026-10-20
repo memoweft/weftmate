@@ -101,3 +101,21 @@ for (const receiptState of ['revision_conflict', 'rejected'] as const) test(`rec
   assert.equal(receiptReads, 1, 'subsequent recovery does not revisit a cleared marker');
   assert.equal(writes, 0, 'new scope still requires the user to confirm; never retry automatically');
 });
+
+test('a confirmed non-submission while formation is active discards the old preview and never retries deletion',async()=>{
+ const context:any={WeftUiCore:{factories:{}},AbortSignal,URL,setTimeout,clearTimeout};
+ runInNewContext(await readFile(new URL('../src/ui-core/memory.js',import.meta.url),'utf8'),context);
+ const storage=new Map(),notices:string[]=[];let writes=0;
+ const core:any={state:{identityGeneration:1,account:{ownerId:'owner'},device:{id:'device'},csrfToken:'csrf',currentView:'memory',hostId:'host'},
+  memoryBase:'http://synthetic/memory',memoryKinds:{cognition:'理解'},memoryPreDispatchCodes:new Set(),memoryPathId:(id:string)=>id,
+  memory:{viewGeneration:0,selectedGeneration:0,operationGeneration:0,selected:{kind:'cognition',id:'tea',worldRevision:1},mode:'delete',
+   forgetPreview:{worldRevision:1,forgetScope:'old-scope'},drafts:new Map(),activeOperation:null}};
+ const effects=new Proxy({detailError:(m:string)=>notices.push(m),paintMemoryReceipt:(m:string)=>notices.push(m)}, {get:(v,k)=>v[k]??(()=>{})});
+ const environment={crypto:{randomUUID:()=>`request-${writes}`},storage:{getItem:(k:string)=>storage.get(k)??null,setItem:(k:string,v:string)=>storage.set(k,v),removeItem:(k:string)=>storage.delete(k)}};
+ Object.assign(core,context.WeftUiCore.factories.memory(core,effects,environment));core.memoryActionAllowed=()=>true;
+ core.submitMemoryCommand=async()=>{writes++;throw{code:'MEMORY_FORMATION_PENDING',payload:{state:'withheld'}};};
+ await core.submitMemoryAction();
+ assert.equal(writes,1);assert.equal(core.memory.unresolvedMarker,null);assert.equal(core.memory.forgetPreview,null);
+ assert.match(notices.join('\n'),/整理/);assert.match(notices.join('\n'),/没有删除/);assert.match(notices.join('\n'),/重新/);
+ await core.submitMemoryAction();assert.equal(writes,1,'old confirmation cannot reuse its credential while waiting for a new preview');
+});
