@@ -445,8 +445,16 @@ for (const scenario of ['with current fact', 'orphan only', 'saved v3 plan', 'sa
     const response = await handlePersonalMemoryHttp({ manager: f.manager, ownerId: owner, pathname: path,
       url: new URL(path, 'http://memory'), request: { method: 'DELETE' },
       readJson: async () => ({ requestId: 'remove-prior-red', expectedWorldRevision: before.world_revision, forgetScope }) })
-    assert.equal(response.status, 200)
-    assert.equal(response.body.receipt.state, 'applied')
+    // The page must now refuse this incomplete deletion. Keep the old-orphan
+    // cleanup regression by preparing legacy state through Core's exact-target
+    // primitive, not by requiring the host to report false completion again.
+    assert.equal(response.status, 409)
+    assert.equal(response.body.error.code, 'MEMORY_FORGET_INCOMPLETE')
+    assert.equal((await f.world()).items.length, 1)
+    const legacy = await f.manager.submitCommand(owner, { requestId: 'legacy-remove-prior-red',
+      expectedWorldRevision: before.world_revision, operation: 'delete_world_item', targetKind: 'cognition', targetId: redId,
+      payload: { forget_scope: forgetScope } })
+    assert.equal(legacy.receipt.result_state, 'applied')
     assert.equal((await f.world()).items.length, 0)
   }
   await f.manager.ingest(owner, boundary('我周末喜欢散步。', 'independent-walk')); await f.ready()

@@ -35,7 +35,7 @@ test('account memory routes keep health, list, source, search cursor and Trust r
   const root = mkdtempSync(join(tmpdir(), 'personal-memory-http-'))
   let aOwner = '', bOwner = ''
   let statusUnavailable = false, submitThrows = false, bStatusReady = false
-  let cleanupRetried = false
+  let cleanupRetried = false, formationPending = false
   const calls: Array<{ ownerId: string, method: string, params: any }> = []
   const item = (ownerId: string, id: string, text: string) => ({ item_id: id, object_kind: 'cognition',
     current_state: 'current', value: { content: text }, created_at: '2026-09-27T00:00:00.000Z',
@@ -57,6 +57,7 @@ test('account memory routes keep health, list, source, search cursor and Trust r
     query: async (ownerId: string, method: string, params: any) => {
       calls.push({ ownerId, method, params })
       if (method === 'preview_forget') {
+        if (formationPending) throw Object.assign(Error('formation_in_progress'), { code: 'formation_in_progress' });
         if (params.target_id.includes('owner-') && !params.target_id.includes(ownerId)) throw Object.assign(new Error('not found'), { code: 'world_item_not_found' });
         return { world_revision: 3, item_count: 2, evidence_count: 1, evidence_ids: [`e-${ownerId}`], items: [
           { object_kind: 'entity', item_id: 'person', name: '王小明', item_type: 'person' },
@@ -140,6 +141,11 @@ test('account memory routes keep health, list, source, search cursor and Trust r
     assert.equal(preview.status, 200); assert.equal(preview.body.itemCount, 2);
     assert.deepEqual(preview.body.items.map((item: any) => item.text), ['王小明', '好兄弟']);
     assert.equal(preview.body.worldRevision, 3);
+    formationPending = true;
+    const pendingPreview = await api(origin, 'GET', `/personal/v1/memory/items/cognition/c-${aOwner}-one/forget-preview`, undefined, a);
+    assert.equal(pendingPreview.status, 409);
+    assert.equal(pendingPreview.body.error.code, 'MEMORY_FORMATION_PENDING');
+    formationPending = false;
     assert.equal((await api(origin, 'GET', `/personal/v1/memory/items/cognition/c-${aOwner}-one/forget-preview`, undefined, b)).status, 404);
     const sourcePreview = await api(origin, 'GET', `/personal/v1/memory/evidence/e-${aOwner}/forget-preview`, undefined, a);
     assert.equal(sourcePreview.status, 200); assert.equal(calls.at(-1).params.target_kind, 'evidence');
