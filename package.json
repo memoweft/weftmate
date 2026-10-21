@@ -127,7 +127,7 @@
     "imapflow": "2.4.0",
     "jose": "6.2.12",
     "mailparser": "3.9.38",
-    "markdown-it": "14.1.0",
+    "markdown-it": "14.3.3",
     "nodemailer": "10.1.0",
     "tsdav": "2.4.0"
   },
