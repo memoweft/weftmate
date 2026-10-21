@@ -70,7 +70,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         if (error?.code === 'MEMORY_REVISION_CHANGED')
             return '记忆已更新，页面上的旧内容已清除。搜索条件已保留，请重新查询。';
         if (error?.code === 'MEMORY_FORMATION_PENDING')
-            return '刚才的对话还在整理，本次没有删除。请稍后返回详情，重新打开遗忘范围并确认。';
+            return '刚才的对话还在整理，本次没有删除。请稍后点“重新读取遗忘范围”，核对后再确认。';
         if (error?.code === 'MEMORY_FORGET_INCOMPLETE')
             return '这次没有执行遗忘：相关来源仍无法完整处理。独立记忆和原聊天保留。';
         if (error?.code === 'NETWORK')
@@ -759,21 +759,56 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         core.memory.mode = mode;
         core.memory.forgetPreview = null;
         core.memory.deleteConversationSnippets = false;
+        const readGeneration = core.memory.previewGeneration = (core.memory.previewGeneration ?? 0) + 1;
         if (mode !== 'delete') return;
         const selected = core.memory.selected, generation = core.memory.selectedGeneration, token = core.memoryIdentity();
+        if (!selected) return;
+        const hostId = core.state.hostId;
+        const current = () => core.memoryViewCurrent(token) && core.state.hostId === hostId
+            && core.memory.selectedGeneration === generation && core.memory.mode === 'delete'
+            && core.memory.previewGeneration === readGeneration;
         core.memory.forgetPreviewError = '';
+        core.memory.forgetPreviewLoading = true;
+        effects.detailError('');
         effects.renderMemoryMode();
-        try {
-            const preview = await core.readForgetPreview(selected.kind, selected.id);
-            if (!core.memoryViewCurrent(token) || core.memory.selectedGeneration !== generation || core.memory.mode !== 'delete') return;
-            if (preview.worldRevision !== selected.worldRevision) throw { code: 'MEMORY_REVISION_CHANGED' };
-            core.memory.forgetPreview = preview;
-        } catch (error) {
-            if (!core.memoryViewCurrent(token) || core.memory.selectedGeneration !== generation || core.memory.mode !== 'delete') return;
-            core.memory.forgetPreviewError = error?.code === 'MEMORY_FORMATION_PENDING' ? core.memoryFailure(error) : '无法读取遗忘范围，请返回详情并重新打开。';
-            effects.detailError(core.memoryFailure(error));
+        for (let attempt = 0; attempt < 7 && current(); attempt++) {
+            try {
+                const detail = await core.readMemoryItem(selected.kind, selected.id);
+                if (!current()) return;
+                if (detail?.item?.id !== selected.id || detail.item.kind !== selected.kind || !Number.isSafeInteger(detail.worldRevision))
+                    throw { code: 'REQUEST_FAILED' };
+                const sources = await core.readMemorySources(selected.kind, selected.id);
+                if (!current()) return;
+                if (!Array.isArray(sources?.sources) || sources.worldRevision !== detail.worldRevision) throw { code: 'MEMORY_REVISION_CHANGED' };
+                const preview = await core.readForgetPreview(selected.kind, selected.id);
+                if (!current()) return;
+                if (preview.worldRevision !== detail.worldRevision) throw { code: 'MEMORY_REVISION_CHANGED' };
+                core.memory.selected = { ...selected, item: detail.item, worldRevision: detail.worldRevision,
+                    availableActions: detail.availableActions ?? {}, stale: false };
+                core.memory.sources = sources.sources;
+                core.memory.forgetPreview = preview;
+                core.memory.forgetPreviewError = '';
+                effects.paintMemoryDetail(detail);
+                effects.renderMemorySources(sources.sources);
+                effects.detailStatus('范围已重新核对，请确认要忘掉的内容。');
+                break;
+            } catch (error) {
+                if (!current()) return;
+                if (error.code === 'UNAUTHORIZED' || error.status === 401) return core.sessionExpired();
+                if (attempt < 6 && ['MEMORY_FORMATION_PENDING', 'MEMORY_REVISION_CHANGED'].includes(error?.code)) {
+                    core.memory.forgetPreviewError = error.code === 'MEMORY_FORMATION_PENDING'
+                        ? '刚才的对话还在整理，正在等待并重新核对遗忘范围；尚未删除。' : '记忆有更新，正在重新核对遗忘范围；尚未删除。';
+                    effects.renderMemoryMode();
+                    if (error.code === 'MEMORY_FORMATION_PENDING') await new Promise(resolve => setTimeout(resolve, 5000));
+                    continue;
+                }
+                core.memory.forgetPreviewError = error?.code === 'MEMORY_FORMATION_PENDING'
+                    ? '刚才的对话仍在整理，尚未删除。请稍后点“重新读取遗忘范围”。'
+                    : '无法读取遗忘范围，尚未删除。请点“重新读取遗忘范围”。';
+                break;
+            }
         }
-        effects.renderMemoryMode();
+        if (current()) { core.memory.forgetPreviewLoading = false; effects.renderMemoryMode(); }
     }
     function setMemoryCorrectionText(text) {
         if (core.memory.selected)

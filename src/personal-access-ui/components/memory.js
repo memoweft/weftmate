@@ -220,6 +220,12 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
                 for (const item of preview.items) list.append(ui.element('li', '', core.forgetItemSummary(item)));
                 scope.append(list);
             }
+            else if (core.memory.forgetPreviewError && !core.memory.forgetPreviewLoading) {
+                const retry = ui.element('button', 'button secondary small', '重新读取遗忘范围');
+                retry.type = 'button';
+                retry.addEventListener('click', () => { void core.setMemoryMode('delete'); });
+                scope.append(retry);
+            }
             const label = ui.element('label', 'memory-forget-option'), checkbox = ui.element('input'); checkbox.type = 'checkbox';
             checkbox.checked = core.memory.deleteConversationSnippets === true;
             checkbox.addEventListener('change', () => { core.memory.deleteConversationSnippets = checkbox.checked; });

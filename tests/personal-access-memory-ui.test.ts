@@ -250,6 +250,7 @@ test('memory view preserves chat draft and discards a successful response for an
   let memoryOwner = 'owner-a'
   let memoryState = 'ready'
   let memoryRevision = 1
+  let failNextPreview = true
   let pendingBoundaryCount = 0
   let blockedBoundaryCount = 0
   let discardedBoundaryCount = 0
@@ -315,7 +316,10 @@ test('memory view preserves chat draft and discards a successful response for an
       return response({ ownerId: 'owner-a', receipt: { commandId: 'synthetic-command', requestId: body.requestId,
         state: 'applied', worldRevision: memoryRevision } })
     }
-    if (url.endsWith('/forget-preview')) return response({ ownerId: 'owner-a', worldRevision: memoryRevision, itemCount: 2, evidenceCount: 1, items: [secondItem, { id: 'person', kind: 'entity', itemType: 'person', text: '王小明' }] })
+    if (url.endsWith('/forget-preview')) {
+      if (failNextPreview) { failNextPreview = false; return response({ error: { code: 'MEMORY_UNAVAILABLE' } }, 503) }
+      return response({ ownerId: 'owner-a', worldRevision: memoryRevision, forgetScope: 'latest-scope', itemCount: 2, evidenceCount: 1, items: [secondItem, { id: 'person', kind: 'entity', itemType: 'person', text: '王小明' }] })
+    }
     if (url.endsWith('/memory/items/cognition/memory-a-2') && options.method === 'DELETE') {
       const body = JSON.parse(options.body)
       memoryItems = memoryItems.filter((item) => item.id !== 'memory-a-2')
@@ -417,6 +421,11 @@ test('memory view preserves chat draft and discards a successful response for an
   for (let i = 0; i < 20 && get('memory-delete-action').hidden; i++) await flush()
   get('memory-delete-action').fire('click')
   assert.equal(get('memory-confirm-action').disabled, true, 'wait for preview before confirmation')
+  for (let i = 0; i < 20 && !visibleText(get('memory-forget-scope')).includes('重新读取遗忘范围'); i++) await flush()
+  const retryPreview = descendants(get('memory-forget-scope')).find(node => node.tagName === 'BUTTON' && node.textContent === '重新读取遗忘范围')
+  assert.ok(retryPreview, 'retry is available inside the original confirmation panel')
+  assert.equal(get('memory-confirm-action').disabled, true)
+  retryPreview.fire('click')
   for (let i = 0; i < 20 && get('memory-confirm-action').disabled; i++) await flush()
   assert.match(get('memory-forget-scope').children[0].textContent, /2 项记忆/)
   get('memory-confirm-action').fire('click')

@@ -275,6 +275,7 @@ function renderMemoryActions(target,token){const memory=state.memory,detail=memo
       snippets.addEventListener('change',()=>{choice.deleteConversationSnippets=snippets.checked});
       label.append(snippets,document.createTextNode('同时删除对话里含这句话的原话'));body.append(label,
         el('p','muted','默认保留聊天原话；勾选后，同时删除聊天记录里的这几句原话。以前的备份不受影响。'));
+      if(!preview&&choice.previewError&&!choice.previewLoading)body.append(action('重新读取遗忘范围',()=>uiCore.mobilePreviewMemoryForget(choice),false));
       const input=field('输入“删除”以确认','text',choice.confirmText||'');input.input.maxLength=2;
       const confirm=action(choice.operation==='deleteEvidence'?'确认删除这条来源':'确认永久删除记忆',
         ()=>submitMemoryAction(choice.operation,choice.id||null),true);
