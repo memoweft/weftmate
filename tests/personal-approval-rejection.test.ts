@@ -9,7 +9,7 @@ import { stagePersonalPlugins } from './support/personal-plugins.ts';
 const vendor = (name: string) => pathToFileURL(resolve('vendor/dsh-runtime/node_modules/@deepseek-ai', name, 'lib/index.js')).href;
 type Stage = 'gate' | 'body';
 
-async function fixture(t: any, stage: Stage = 'gate', outcome = 'rejected', toolsMode: 'native' | 'both' = 'native') {
+async function fixture(t: any, stage: Stage = 'gate', outcome = 'rejected', toolsMode: 'native' | 'both' = 'native', nativeFs = false) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-approval-rejection-'));
   const staged = stagePersonalPlugins(root);
   const [{ Context }, { default: SystemPrompt }, { default: Sessions }, tools, llm,
@@ -28,15 +28,23 @@ async function fixture(t: any, stage: Stage = 'gate', outcome = 'rejected', tool
   if (toolsMode === 'both') await ctx.plugin((await import(vendor('dsh-code-runtime-worker-thread'))).default,
     { computeMs: 5000, maxWallMs: 10000, maxOutputBytes: 1024 * 1024, maxOldGenerationSizeMb: 128 });
   await ctx.plugin(tools.default, { mode: toolsMode });
+  if (nativeFs) {
+    await ctx.plugin((await import(vendor('dsh-fs-local'))).default, { cwd: root });
+    await ctx.plugin(await import(vendor('dsh-tool-fs')));
+  }
   await ctx.plugin(ApprovalService, { policy: 'ask' });
   await ctx.plugin(plugin.default);
-  const session = ctx.sessions.create('approval-rejection', { meta: { agentPreset: 'personal-remote' } });
+  const session = ctx.sessions.create('approval-rejection', { ...(nativeFs ? { cwd: root } : {}), meta: { agentPreset: 'personal-remote' } });
   const agent: any = { id: session.id, session, options: {} };
   const scope = createScope(ctx, agent); agent.ctx = scope.ctx;
   t.after(() => scope.dispose());
   const target = join(root, 'synthetic-user-file.txt');
   writeFileSync(target, 'synthetic content to preserve on rejection');
   let bodyCalls = 0, effects = 0, requests = 0, turn = 1;
+  const nativeReads: any[] = [];
+  if (nativeFs) ctx.on('tools/result', (exec: any, result: any) => {
+    if (exec.name === 'read') nativeReads.push({ callId: exec.callId, result });
+  });
   ctx.on('approval/request', async () => { requests++; return outcome; });
   ctx.on('tools/pre-execute', (exec: any, next: any) => stage === 'gate' && exec.name === 'fixture_remove'
     ? { kind: 'ask', reason: 'Delete the isolated synthetic file' } : next());
@@ -62,7 +70,8 @@ async function fixture(t: any, stage: Stage = 'gate', outcome = 'rejected', tool
     const result = await ctx.tools.execute({ name, callId, arguments: args, agent,
       signal: AbortSignal.timeout(toolsMode === 'both' ? 12000 : 5000) });
     // Match the native loop: persist the already-presented result, then derive the next model input.
-    const logged = session.append('tool/result', { turn, step: 1, ...(result.isError ? { error: result.error } : {}),
+    const logged = session.append('tool/result', { turn, step: 1,
+      ...(result.error?.info ? { error: result.error.info } : result.isError ? { error: result.error } : {}),
       message: llm.createToolResultMessage({ callId, content: result.content, isError: result.isError }) },
     { surfaceOp: 'append', sourceEventSeqs: [call.seq] });
     const derived = session.deriveMessages().filter((message: any) => message.source?.callId === callId ||
@@ -81,7 +90,7 @@ async function fixture(t: any, stage: Stage = 'gate', outcome = 'rejected', tool
     session.append('step/end', { turn, step: 1 }); session.append('turn/end', { turn, reason: { kind: 'stop' } });
     turn++; session.append('turn/start', { turn }); session.append('step/start', { turn, step: 1 });
   }
-  return { session, target, invoke, assertAudit, nextTurn, counts: () => ({ bodyCalls, effects, requests }) };
+  return { session, root, target, nativeReads, invoke, assertAudit, nextTurn, counts: () => ({ bodyCalls, effects, requests }) };
 }
 
 function assertRefusal(channels: Record<string, string>) {
@@ -240,3 +249,62 @@ test('native Code Mode caught rejection does not relabel a later unrelated read 
       `${channel} separately preserves the refusal without relabeling other failures`);
   }
 });
+
+for (const kind of ['missing-path', 'line-range'] as const) {
+  test(`native Code Mode caught rejection preserves real ${kind} read failure across model channels`, { timeout: 20000 }, async t => {
+    const f = await fixture(t, 'gate', 'rejected', 'both', true);
+    const existing = join(f.root, 'existing.txt'), missing = join(f.root, 'missing.txt');
+    writeFileSync(existing, 'first line\nsecond line\n');
+    const args = kind === 'missing-path' ? { file_path: 'missing.txt' } : { file_path: 'existing.txt', offset: 9 };
+    const meaning = kind === 'missing-path' ? /不存在|not found/i
+      : /(?:行号|行范围|读取范围).*(?:超出|越界)|(?:超出|越界).*(?:行|范围)|out of range/i;
+    const rootCallId = `caught-rejection-then-native-${kind}`;
+    const { result, channels } = await f.invoke('run_code', rootCallId, {
+      code: `try { await tools.fixture_remove({}); } catch {} return await tools.read(${JSON.stringify(args)});`,
+      description: 'Keep the refused deletion skipped while reading an independent synthetic file',
+    });
+    const started = f.session.events.filter((event: any) => event.type === 'tool/code-dispatch-start');
+    assert.deepEqual(started.map((event: any) => event.data.name), ['fixture_remove', 'read']);
+    for (const event of started) {
+      assert.equal(event.data.rootCallId, rootCallId); assert.equal(event.data.parentCallId, rootCallId);
+    }
+    assert.notEqual(started[0].data.subCallId, started[1].data.subCallId);
+    assert.deepEqual(started[1].data.arguments, args);
+    f.assertAudit(started[0].data.subCallId, 'rejected');
+    assert.equal(f.session.events.filter((event: any) => event.type === 'approval/asked').length, 1,
+      'only the deletion requests approval; the independent read is actually dispatched after catch');
+    const finished = f.session.events.filter((event: any) => event.type === 'tool/code-dispatch');
+    assert.deepEqual(finished.map((event: any) => [event.data.subCallId, event.data.isError]),
+      started.map((event: any) => [event.data.subCallId, true]));
+    assert.match(JSON.stringify(finished[0].data.content), /你已拒绝|用户.*拒绝/);
+    assert.match(JSON.stringify(finished[1].data.content), meaning, 'the actual native filesystem subcall preserves its bounded cause');
+    assert.equal(f.nativeReads.length, 1, 'presentation must not dispatch an automatic read retry');
+    assert.equal(f.nativeReads[0].callId, started[1].data.subCallId);
+    assert.equal(f.nativeReads[0].result.error.info.name, 'FsError');
+    assert.equal(f.nativeReads[0].result.error.info.code, 'FS_NOT_FOUND', 'both provider cases share this code');
+    assert.equal(result.isError, true);
+    assert.deepEqual(f.counts(), { bodyCalls: 0, effects: 0, requests: 1 });
+    assert.equal(readFileSync(f.target, 'utf8'), 'synthetic content to preserve on rejection');
+    assert.equal(readFileSync(existing, 'utf8'), 'first line\nsecond line\n');
+    assert.equal(existsSync(missing), false, 'presentation must not create the absent read target');
+    function textParts(value: any): string[] {
+      if (Array.isArray(value)) return value.flatMap(textParts);
+      if (value && typeof value === 'object') return value.type === 'text' && typeof value.text === 'string'
+        ? [value.text] : Object.values(value).flatMap(textParts);
+      return [];
+    }
+    for (const [channel, serialized] of Object.entries({ returned: channels.returned, persisted: channels.appended, derived: channels.derived })) {
+      const texts = textParts(JSON.parse(serialized));
+      assert.match(texts[0], meaning, `${channel} preserves the independent native filesystem cause in its first text block`);
+      assert.doesNotMatch(texts[0], /你已拒绝这项操作/, `${channel} does not attribute the whole failure to refusal`);
+      assert.ok(texts.slice(1).some(text => /你已拒绝其中一项操作/.test(text) && /其他步骤.*不代表被你拒绝/.test(text)),
+        `${channel} retains the real child refusal in a separate context block`);
+      assert.doesNotMatch(serialized, /FsError|FS_[A-Z_]+|weftmate-approval-rejection-|file:\/\/|\bat .*:\d+:\d+/,
+        `${channel} excludes provider codes, stacks and temporary paths`);
+      assert.doesNotMatch(serialized, /必要时换一种办法再试|(?:自动|稍后会|将会|正在).{0,8}(?:重试|再试)|(?:请|可以|建议|直接|应当|尝试).{0,8}(?:新建|创建)/,
+        `${channel} does not suggest creating files or automatically retrying`);
+      if (kind === 'line-range') assert.doesNotMatch(texts[0], /文件不存在|路径不存在|not found/i,
+        `${channel} does not confuse a bad line range with an absent path`);
+    }
+  });
+}
