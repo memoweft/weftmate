@@ -108,7 +108,7 @@ export function modelToolFailureValue(result, content) {
 }
 
 /** Presentation only: do not schedule retries or promise work that has not been scheduled. */
-export function modelToolFailure(name, result) {
+export function modelToolFailure(name, result, { approvalOutcome } = {}) {
   if (name === 'run_code' && result.isError) {
     const detail = JSON.stringify([result.error,result.content]);
     name = detail.includes('这次没忘掉') ? 'memory_forget' : detail.includes('这次没记住') ? 'memory_correct'
@@ -116,6 +116,12 @@ export function modelToolFailure(name, result) {
         : ['memory_forget','memory_correct','memory_query'].find(tool => detail.includes(tool)) ?? name;
   }
   const memory = name?.startsWith('memory_');
+  if (!memory && result.isError && approvalOutcome === 'rejected') return [{type:'text',text:
+    '你已拒绝这项操作。不要再次申请，也不要换工具或命令重试被拒绝的操作。请简短说明没有完成的部分，不要在回复里提工具名称、错误码或内部条目类型。'}];
+  if (!memory && result.isError && approvalOutcome === 'nested-rejection') return [
+    {type:'text',text:'这次处理没能完成。'},
+    {type:'text',text:'你已拒绝其中一项操作。不要再次申请，也不要换工具或命令重试被拒绝的那项操作。其他步骤的失败不代表被你拒绝，请按各步骤的实际结果分别说明没有完成的部分，不要在回复里提工具名称、错误码或内部条目类型。'},
+  ];
   const receipt = memory ? memoryReceipt(result) : undefined;
   const status = memory ? memoryReceiptForModel(result) : undefined;
   if (status) return [{type:'text',text:status.message},{type:'text',text:JSON.stringify({receipt:status})}];
