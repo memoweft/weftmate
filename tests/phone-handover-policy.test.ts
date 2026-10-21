@@ -20,7 +20,7 @@ export async function createPhoneHandoverFixture(t: any, clientCrypto: any = web
   t.after(() => rm(root, { recursive: true, force: true }));
   const accounts: any = { a: { sessions: {}, commands: {}, defaultModelProfileId: 'local' }, b: { sessions: {}, commands: {}, defaultModelProfileId: 'local' } };
   const boundaries: any[] = [], ledger: any[] = [];
-  let requestOwner = 'a', requestDevice = 'phone-a';
+  let requestOwner = 'a', requestDevice = 'phone-a', forgetIntent='forget', intentChecks=0;let intentHook:any=null;
   const ctx: any = {
     root, rootState: { hostId: 'synthetic-host', accounts }, timestamp: Date.now,
     accountState: (id: string) => accounts[id], serial: async (work: any) => work(),
@@ -48,7 +48,7 @@ export async function createPhoneHandoverFixture(t: any, clientCrypto: any = web
   const complete = async (body: any) => {
       if (body.max_tokens) {
         const request = JSON.parse(body.messages[1].content);
-        if (request.request) return { choices: [{ message: { content: JSON.stringify({ intent: 'forget', request: request.request, ids: [request.items[0].id] }) } }] };
+        if (request.request) {intentChecks++;if(intentHook)await intentHook();return { choices: [{ message: { content: JSON.stringify({ intent: forgetIntent, request: request.request, ids: forgetIntent==='forget'?[request.items[0].id]:[] }) } }] };}
         const source = request['原话'][0];
         const subject = source.text.includes('荔枝') ? '荔枝' : source.text.includes('绿茶') ? '绿茶' : source.text.includes('红茶') ? '红茶' : '白茶';
         const text = subject === '荔枝' ? '最喜欢的水果是荔枝' : `喜欢${subject}`;
@@ -67,7 +67,7 @@ export async function createPhoneHandoverFixture(t: any, clientCrypto: any = web
     host, control: async () => ({ authorized: true, accountId: 'synthetic-account', hostId: 'synthetic-host', generation: accounts.a.generation ?? 1 }) }); };
   let engine: any = await buildEngine(await W.browserVault(vaultName, { indexedDB: database, crypto: webcrypto }));
   t.after(() => engine.close());
-  const f: any = { ctx, boundaries, ledger, requests, call, setRequestIdentity: (owner: string, device: string) => { requestOwner = owner; requestDevice = device; }, setResponseTransform: (next: any) => { transform = next; }, get engine() { return engine; },
+  const f: any = { ctx, boundaries, ledger, requests, call, setForgetIntent:(intent:string)=>{forgetIntent=intent;},setIntentHook:(hook:any)=>{intentHook=hook;},get intentChecks(){return intentChecks;}, setRequestIdentity: (owner: string, device: string) => { requestOwner = owner; requestDevice = device; }, setResponseTransform: (next: any) => { transform = next; }, get engine() { return engine; },
     async restart() { engine.close(); engine = await buildEngine(await W.browserVault(vaultName, { indexedDB: database, crypto: webcrypto })); return engine; },
     async restartServer() {
       await ctx.historyImport.close(); await ctx.offline.close();
@@ -178,7 +178,7 @@ test('HANDOVER-POLICY persists the frozen source policy across an actual encrypt
   assert.equal(f.engine.view().phoneMemory.transferred, false);
 });
 
-test('HANDOVER-POLICY rejects a new explicit forget before any model request once first handover is pending', async t => {
+test('HANDOVER-POLICY confirms explicit intent then rejects old-authority mutation once first handover is pending', async t => {
   const f = await createPhoneHandoverFixture(t);
   const white = await f.engine.send('请记住，我喜欢白茶。');
   await f.engine.extractMemory(white.conversationId);
@@ -187,7 +187,7 @@ test('HANDOVER-POLICY rejects a new explicit forget before any model request onc
   await assert.rejects(f.engine.sync(), { code: 'OFFLINE_RECEIPT_REQUIRED' });
   const requestCount = f.requests.length;
   await assert.rejects(f.engine.send('请忘掉我喜欢白茶这项记忆。', white.conversationId), { code: 'MEMORY_HANDOVER_PENDING' });
-  assert.equal(f.requests.length, requestCount, 'the rejected deletion does not make a model request or return a deletion receipt');
+  assert.equal(f.requests.length, requestCount, 'the confirmed but uncommitted deletion makes no additional handover request');
   assert.equal(f.engine.view().handover.blockedReason, 'memory-change');
   assert.ok(f.engine.view().phoneMemory.items.some((item: any) => item.text.includes('白茶')));
 });
@@ -312,4 +312,37 @@ test('HANDOVER-POLICY cannot replay a blocked phone source through later legacy 
   // Reusing an id with the same blocked policy must not bypass qualification either.
   await assert.rejects(f.call('/offline/turns',{generation:packet.generation,turns:[packet.turns[0]]}));
   assert.equal(ingested,0);
+});
+
+
+test('HANDOVER-POLICY verifies a benign forget-word utterance before pausing pending handover', async t => {
+  const f=await createPhoneHandoverFixture(t);
+  const tea=await f.engine.send('请记住，我喜欢白茶。');await f.engine.extractMemory(tea.conversationId);
+  f.setResponseTransform((path:string,_body:any,result:any)=>path==='/offline/turns'?{...result,receipts:result.receipts.map((r:any)=>({...r,memoryPolicy:undefined}))}:result);
+  await assert.rejects(f.engine.sync(),{code:'OFFLINE_RECEIPT_REQUIRED'});
+  f.setForgetIntent('none');
+  for(const message of ['我忘记钥匙放在哪里了？','别人说“忘掉白茶”是什么意思？','如果以后想忘掉白茶会怎样？','不要忘掉白茶。']){
+    const answer=await f.engine.send(message);
+    assert.equal(answer.text,'收到。','a verified non-deletion chat is accepted rather than rejected as a deletion');
+  }
+  assert.equal(f.intentChecks,4,'each complete candidate is actually passed through the existing intent check');
+  assert.notEqual(f.engine.view().handover.blockedReason,'memory-change');
+  f.setResponseTransform((_p:any,_b:any,result:any)=>result);
+  assert.equal(await f.engine.sync(),true,'the unrelated utterance does not permanently stop handover retries');
+});
+
+
+for(const change of ['close','release','stop'])test(`HANDOVER-POLICY rejects a late confirmed forget after ${change} changes its authority`,async t=>{
+  const f=await createPhoneHandoverFixture(t);
+  const tea=await f.engine.send('请记住，我喜欢白茶。');await f.engine.extractMemory(tea.conversationId);
+  f.setResponseTransform((path:string,_body:any,result:any)=>path==='/offline/turns'?{...result,receipts:result.receipts.map((r:any)=>({...r,memoryPolicy:undefined}))}:result);
+  await assert.rejects(f.engine.sync(),{code:'OFFLINE_RECEIPT_REQUIRED'});
+  let entered!:()=>void,release!:()=>void;const ready=new Promise<void>(r=>entered=r),gate=new Promise<void>(r=>release=r);
+  f.setIntentHook(async()=>{entered();await gate;});
+  const sending=f.engine.send('请忘掉白茶偏好。');const rejected=assert.rejects(sending,{code:'OFFLINE_RESET_REQUIRED'});await ready;
+  if(change==='close')f.engine.close();else if(change==='release')await f.engine.memoryChange('release-authority');else f.engine.stop();
+  release();await rejected;
+  const messages=f.engine.view().conversations.flatMap((c:any)=>c.turns.flatMap((row:any)=>row.messages));
+  assert.equal(messages.some((m:any)=>m.role==='assistant'&&m.text.includes('已经忘掉')),false);
+  assert.notEqual(f.engine.view().handover?.blockedReason,'memory-change','a stale intent must not change current handover authority');
 });

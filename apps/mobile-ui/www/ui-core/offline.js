@@ -437,7 +437,6 @@
     async function send(text, conversationId = null, pendingId = null) {
       if(!value.snapshot?.model&&!phoneModel)fail('OFFLINE_MODEL_REQUIRED');
       if (running || taskSending || typeof text !== 'string' || !text.trim() || text.length > 16384) fail('INVALID_REQUEST');
-      if(value.phoneMemory?.handover&&!value.phoneMemory.transferred&&globalThis.WeftPhoneMemory?.forgetCandidate(text))return stopMemoryChangeDuringHandover();
       // Capture this submitted turn before authorization awaits; later menu choices affect the next turn.
       const submittedPhoneModel = phoneModel?.();
       const previous=value.conversations.find(c=>c.id===value.turns.at(-1)?.conversationId);
@@ -487,11 +486,17 @@
         // Otherwise the queue catches cancellation and restarts the same head.
         if(abort.signal.aborted)throw new DOMException('CANCELLED','AbortError');
         if(useLight&&globalThis.WeftPhoneMemory.forgetCandidate(text)){
-          const epoch=memoryEpoch;
+          const epoch=memoryEpoch,authority=value.phoneMemory,wasHandover=authority.handover,wasTransferred=authority.transferred;
+          const verifyAuthority=()=>{if(ticket!==version||epoch!==memoryEpoch||abort.signal.aborted||value.phoneMemory!==authority||authority.handover!==wasHandover||authority.transferred!==wasTransferred)fail('OFFLINE_RESET_REQUIRED');};
           const ids=await globalThis.WeftPhoneMemory.planForget(value.phoneMemory,text.trim(),request=>vault.complete({...request,model:snapshot.model.modelId},snapshot,abort.signal));
-          if(ticket!==version||epoch!==memoryEpoch||abort.signal.aborted)fail('OFFLINE_RESET_REQUIRED');
+          verifyAuthority();
           await check();
+          verifyAuthority();
           if(ids){
+            // A forget-word candidate may be a question or an ordinary chat.
+            // Pause only after the complete request has been authorised, and
+            // still before committing any deletion against the old authority.
+            if(value.phoneMemory?.handover&&!value.phoneMemory.transferred)return await stopMemoryChangeDuringHandover();
             const memory=structuredClone(value.phoneMemory);
             for(const id of ids)await globalThis.WeftPhoneMemory.forget(memory,id,crypto);
             turn.memoryPolicy={version:1,inference:'blocked',reason:'forget-request'};
