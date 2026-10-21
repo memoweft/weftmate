@@ -87,6 +87,32 @@ function memoryReceipt(result) {
     (typeof receipt.state === 'string' || receipt.available === false || receipt.error));
 }
 const CONFLICT_MESSAGE = '记忆刚被更新过，请重新查询后再改。';
+const FILE_ABSENT = '要读取的文件不存在，这一步没有完成。请根据原请求和实际文件路径决定下一步，不要声称已读到或写入文件。';
+const FILE_RANGE = '读取的行号超出文件范围，这一步没有完成。请核对读取范围和文件实际行数。';
+const FILE_DENIED = '当前文件权限不允许这项操作，这一步没有完成。不要换方法绕过权限，也不要声称已完成。';
+const FILE_UNRESOLVED = '这次读取没有找到对应的路径或行范围，请核对读取参数。这一步没有完成。';
+
+// These observed native FsError cases share a code for absence and bad ranges.
+// Select a bounded meaning from the provider's known shape, never relay its
+// path, stack or arbitrary diagnostic text. Keep our projection idempotent.
+function filesystemFailure(result) {
+  const info = result.error?.info ?? result.error;
+  const texts = [result.error?.message, ...(result.content ?? []).filter(part => part.type === 'text').map(part => part.text)];
+  if (info?.name === 'CodeRunFailedError' && info.code === 'CODE_RUN_FAILED') {
+    // Code Mode propagates the current child's sanitized message in its first
+    // exception line. Retain only our fixed meanings, never the stack or raw diagnostics.
+    const firstLines = texts.filter(text => typeof text === 'string').map(text => text.split('\n', 1)[0]);
+    return [FILE_ABSENT, FILE_RANGE, FILE_DENIED, FILE_UNRESOLVED].find(message => firstLines.some(line =>
+      line === message || line === `code run failed (exception): ToolCallError: ${message}` ||
+      line === `Error: code run failed (exception): ToolCallError: ${message}`));
+  }
+  if (info?.name !== 'FsError') return;
+  if (info.code === 'FS_SANDBOX_DENIED') return FILE_DENIED;
+  if (info.code !== 'FS_NOT_FOUND') return;
+  if (texts.some(text => text === FILE_RANGE || /^(?:Error: )?offset \d+ is out of range for "[^\n]*" \(\d+ lines\)$/.test(text ?? ''))) return FILE_RANGE;
+  if (texts.some(text => text === FILE_ABSENT || /^(?:Error: )?cannot read "[^\n]*": not found$/.test(text ?? ''))) return FILE_ABSENT;
+  return FILE_UNRESOLVED;
+}
 function memoryReceiptForModel(result) {
   const receipt = memoryReceipt(result);
   const conflict = receipt?.state === 'revision_conflict';
@@ -108,7 +134,7 @@ export function modelToolFailureValue(result, content) {
 }
 
 /** Presentation only: do not schedule retries or promise work that has not been scheduled. */
-export function modelToolFailure(name, result) {
+export function modelToolFailure(name, result, { approvalOutcome } = {}) {
   if (name === 'run_code' && result.isError) {
     const detail = JSON.stringify([result.error,result.content]);
     name = detail.includes('这次没忘掉') ? 'memory_forget' : detail.includes('这次没记住') ? 'memory_correct'
@@ -116,6 +142,14 @@ export function modelToolFailure(name, result) {
         : ['memory_forget','memory_correct','memory_query'].find(tool => detail.includes(tool)) ?? name;
   }
   const memory = name?.startsWith('memory_');
+  if (!memory && result.isError && approvalOutcome === 'rejected') return [{type:'text',text:
+    '你已拒绝这项操作。不要再次申请，也不要换工具或命令重试被拒绝的操作。请简短说明没有完成的部分，不要在回复里提工具名称、错误码或内部条目类型。'}];
+  const fileFailure = !memory && result.isError ? filesystemFailure(result) : undefined;
+  if (!memory && result.isError && approvalOutcome === 'nested-rejection') return [
+    {type:'text',text:fileFailure ?? '这次处理没能完成。'},
+    {type:'text',text:'你已拒绝其中一项操作。不要再次申请，也不要换工具或命令重试被拒绝的那项操作。其他步骤的失败不代表被你拒绝，请按各步骤的实际结果分别说明没有完成的部分，不要在回复里提工具名称、错误码或内部条目类型。'},
+  ];
+  if (fileFailure) return [{type:'text',text:fileFailure}];
   const receipt = memory ? memoryReceipt(result) : undefined;
   const status = memory ? memoryReceiptForModel(result) : undefined;
   if (status) return [{type:'text',text:status.message},{type:'text',text:JSON.stringify({receipt:status})}];
