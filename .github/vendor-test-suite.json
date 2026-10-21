@@ -460,6 +460,8 @@
     "tests/credential-first-window.test.ts",
     "tests/first-work-switch.test.ts",
     "tests/personal-reply-content-vendor.test.ts",
+    "tests/personal-approval-rejection.test.ts",
+    "tests/personal-offline-fs-result-context.test.ts",
     "tests/personal-forget-loop.test.ts",
     "tests/personal-approval-mode-execution.test.ts",
     "tests/personal-command-encoding-vendor.test.ts",
