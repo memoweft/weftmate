@@ -4,7 +4,7 @@ import {createServer} from 'node:net';
 import {mkdir,writeFile,readFile,readdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
-import {appendHistory} from './history.mjs';
+import {appendHistory,readNativeEvents} from './history.mjs';
 export async function onboarding(ctx){
  const {page,until}=ctx;
  const heading=page.locator('section.onboarding h1');
@@ -94,8 +94,8 @@ export async function memoryFirstTrial(ctx){
  return firstMemoryTrial(ctx,{correct:true});
 }
 export async function memoryCorrect(ctx){
- await newChat(ctx);await ctx.send('我其实更喜欢绿茶');await waitReply(ctx,/绿茶|green\s+tea/i);await ctx.shot('m2-correct');
- await newChat(ctx);await ctx.send('我喜欢喝什么？');const result=await waitTurn(ctx);await ctx.shot('m2-recall');await ctx.save('m2-recall.json',result);assert.match(await ctx.page.locator('.message.assistant').last().innerText(),/绿茶|green\s+tea/i,'M2: final new-conversation answer did not adopt green tea');ctx.memoryPreferredTea='绿茶';return result;
+ await newChat(ctx);await ctx.send('我其实更喜欢绿茶');await waitTurn(ctx);await ctx.save('m2-correction-ack.json',{answer:await ctx.page.locator('.message.assistant').last().innerText()});await ctx.shot('m2-correct');
+ await newChat(ctx);await ctx.send('我喜欢喝什么？');const result=await waitTurn(ctx);await ctx.shot('m2-recall');await ctx.save('m2-recall.json',result);const answer=await ctx.page.locator('.message.assistant').last().innerText();const automaticPass=/^(?:你(?:现在)?(?:更)?喜欢(?:喝)?绿茶|You (?:now )?prefer green tea)[。.!！]?$/i.test(answer.trim());await ctx.save('m2-answer-judgement.json',{answer,judgement:automaticPass?'passed':'manual-review',reason:automaticPass?'Unambiguous concise current preference':'Natural-language negation, comparison, uncertainty and deferred corrections need the complete answer reviewed'});assert.ok(automaticPass,'M2: manual review required; a green-tea keyword is insufficient');ctx.memoryPreferredTea='绿茶';return result;
 }
 async function teaSnapshot(ctx){
  const result=await ctx.api('/memory/items?kind=cognition');assert.equal(result.status,200,'Memory list is unavailable');assert.ok(Array.isArray(result.body.items));return {result,tea:result.body.items.filter(row=>/红茶|绿茶/.test(row.text))};
@@ -131,17 +131,25 @@ export async function memoryForgetChat(ctx){
  const result={before,answer,after,sources,recall,originalRetained:!!originalChat&&JSON.stringify(originalChat).includes('记住我喜欢喝红茶')};await ctx.save('m7-forget-chat.json',result);await ctx.shot('m7-recall-after-forget');
  assert.ok(!after.tea.length&&sources.every(r=>!/红茶|绿茶/.test(JSON.stringify(r.body)))&&result.originalRetained,'M7: memory or source text remains readable after dialogue forgetting');assert.doesNotMatch(await ctx.page.locator('.message.assistant').last().innerText(),/红茶|绿茶|red\s+tea|green\s+tea/i,'M7: new conversation still recalls the forgotten preference');return result;
 }
-export async function queueAndStop(ctx,{newConversation=true}={}){
+export async function queueAndStop(ctx,{newConversation=true,readEvents}={}){
  if(newConversation)await newChat(ctx);await ctx.send('请直接在聊天正文中逐行写1到500，每行写「数字 合成排队验收」。不要使用任何工具，不要创建或写入文件，不要省略。');
  await ctx.page.getByRole('button',{name:'停止回复',exact:true}).waitFor();
  await ctx.until(async()=>(await ctx.page.locator('.message.assistant').last().innerText().catch(()=>'' )).length>30);
+ const sessionId=await ctx.page.locator('#session-list button.is-current').first().evaluate(el=>el.closest('[data-session-id]')?.dataset.sessionId);
+ const native=readEvents??(async id=>{const installation=JSON.parse(await readFile(join(ctx.output,'installation.json'),'utf8'));return readNativeEvents({repository:ctx.input,profile:installation.profile,sessionId:id});});
+ const turn=(await native(sessionId)).findLast(row=>row.type==='turn/start')?.data.turn;
+ assert.ok(Number.isInteger(turn),'C3: an active native turn is required before testing stop');
  await ctx.send('排队验收：请只回答「排队输入保留」。');
  await ctx.shot('c3-queued');
+ await ctx.save('c3-stop-target.json',{sessionId,turn});
  const started=Date.now();await ctx.page.getByRole('button',{name:'停止回复',exact:true}).click();
- await ctx.until(async()=>!await ctx.page.getByRole('button',{name:'停止回复',exact:true}).isVisible(),15000);
- const stopElapsedMs=Date.now()-started;
+ const ended=await ctx.until(async()=>(await native(sessionId)).find(row=>row.type==='turn/end'&&row.data.turn===turn),15000);
+ assert.equal(ended.data.reason.kind,'aborted','C3: the targeted active reply did not stop');
+ assert.equal(ended.data.reason.reason?.kind,'user');
+ const stopElapsedMs=ended.time-started;
+ assert.ok(stopElapsedMs>=0,'C3: native stop evidence predates the click');
  await waitReply(ctx,'排队输入保留',150000);
- const result={stopElapsedMs,...await ctx.snapshot()};await ctx.save('c3-queue-stop.json',result);await ctx.shot('c3-queue-stop');return result;
+ const result={stopElapsedMs,queueDrainElapsedMs:Date.now()-started,sessionId,stoppedTurn:turn,nativeStoppedAt:ended.time,...await ctx.snapshot()};await ctx.save('c3-queue-stop.json',result);await ctx.shot('c3-queue-stop');return result;
 }
 export async function switchDuringReply(ctx){
  await newChat(ctx);await ctx.send('从1到120逐行输出合成段落，每行写「序号，切页验收」，最后一行写「切页正文完成」。');
@@ -234,7 +242,7 @@ export async function switchToWorkRequest(ctx){
  await ctx.shot('w3-switch-card');const result={cardVisible:await ctx.page.locator('.work-switch-card').isVisible(),...await ctx.snapshot()};await ctx.save('w3-request.json',result);return result;
 }
 export async function historyPagination(ctx,{reuseCurrentSeed=false}={}){
- if(!reuseCurrentSeed){await newChat(ctx);await ctx.send('C4 合成历史种子：为历史分页准备一个独立对话，请简短确认。');}
+ if(!reuseCurrentSeed){await newChat(ctx);await ctx.send('C4历史种子：请只回复「历史种子就绪」。');}
  assert.match(await ctx.page.locator('.message.user').last().innerText(),/C4.*(?:种子|分页)/,'Only the dedicated C4 fixture may receive synthetic history');
  if(!reuseCurrentSeed)await waitTurn(ctx);
  const sessionId=await ctx.page.locator('#session-list button.is-current').first().evaluate(el=>el.closest('[data-session-id]')?.dataset.sessionId);

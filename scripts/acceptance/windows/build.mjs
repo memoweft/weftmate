@@ -4,8 +4,8 @@ import {createHash} from 'node:crypto';
 import {spawnSync,execFileSync} from 'node:child_process';
 import {resolve,join} from 'node:path';
 import {assertMainSource} from './build-source.mjs';
-const [outputArg,memoryArg,version='0.1.1-preview.1019',identity,stageArg]=process.argv.slice(2);
-if(!outputArg||!memoryArg||!identity)throw Error('Usage: node scripts/acceptance/windows/build.mjs OUTPUT MEMORY_RUNTIME VERSION UNIQUE_ID [VERIFIED_STAGE]');
+const [outputArg,memoryArg,version='0.1.1-preview.1019',identity,stageArg,electronDistArg]=process.argv.slice(2);
+if(!outputArg||!memoryArg||!identity)throw Error('Usage: node scripts/acceptance/windows/build.mjs OUTPUT MEMORY_RUNTIME VERSION UNIQUE_ID [VERIFIED_STAGE] [ELECTRON_DIST]');
 const repo=resolve(import.meta.dirname,'../../..'),output=resolve(outputArg);
 const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>!/(?:API[_-]?KEY|AUTHORIZATION|BEARER|PASSWORD|SECRET|TOKEN|CSC_LINK|CSC_KEY_PASSWORD)|^(?:WEFTMATE_|MEMOWEFT_)/i.test(k)));
 Object.assign(env,{CSC_IDENTITY_AUTO_DISCOVERY:'false',WEFTMATE_EVIDENCE_DIR:output});
@@ -21,7 +21,7 @@ if(identity&&!/^[a-z0-9]+$/.test(identity))throw Error('Invalid isolated identit
 const stage=stageArg?resolve(stageArg):join(output,'stage');run('scripts/verify-dsh-vendor.mjs');if(!stageArg)run('scripts/stage-dsh-runtime.mjs',['--stage-root',stage]);
 const pkg=JSON.parse(await readFile(join(repo,'package.json'),'utf8'));
 const appId=identity?`com.memoweft.weftmate.${identity}`:pkg.build.appId;
-const config=await withMemoryRuntimeResources({...pkg.build,appId,extraMetadata:{version,...(identity?{name:`weftmate-${identity}`,desktopAppId:appId,desktopIdentity:`WeftMate ${identity}`}:{})},...(identity?{productName:`WeftMate ${identity}`,executableName:`WeftMate-${identity}`,nsis:{...pkg.build.nsis,shortcutName:`WeftMate ${identity}`,uninstallDisplayName:`WeftMate ${identity}`,createDesktopShortcut:false}}:{}),win:{...pkg.build.win,signExecutable:false},
+const config=await withMemoryRuntimeResources({...pkg.build,appId,...(electronDistArg?{electronDist:resolve(electronDistArg)}:{}),extraMetadata:{version,...(identity?{name:`weftmate-${identity}`,desktopAppId:appId,desktopIdentity:`WeftMate ${identity}`}:{})},...(identity?{productName:`WeftMate ${identity}`,executableName:`WeftMate-${identity}`,nsis:{...pkg.build.nsis,shortcutName:`WeftMate ${identity}`,uninstallDisplayName:`WeftMate ${identity}`,createDesktopShortcut:false}}:{}),win:{...pkg.build.win,signExecutable:false},
 extraResources:[{from:stage,to:'',filter:['dsh-runtime/**/*','relay/**/*']},{from:join(repo,'src/personal-update/trusted-keys.json'),to:'update-trusted-keys.json'}],
 directories:{...pkg.build.directories,output:join(output,'build')},publish:null},{mode:'full',source:resolve(memoryArg)});
 const configFile=join(output,'builder.json');await writeFile(configFile,JSON.stringify(config,null,2));

@@ -3,6 +3,17 @@ import {readFile,readdir,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {randomUUID} from 'node:crypto';
+export async function readNativeEvents({repository,profile,sessionId}){
+ const base=join(repository,'vendor/dsh-runtime/node_modules/@deepseek-ai');
+ const {JsonlSessionPersistence}=await import(pathToFileURL(join(base,'dsh-session-persistence-jsonl/lib/index.js')));
+ const directory=join(profile,'dsh-home/sessions');
+ const files=(await readdir(directory,{recursive:true})).filter(name=>name.includes(sessionId)&&name.endsWith('.zstd'));
+ if(files.length!==1)throw Error('Dedicated native session file unavailable or ambiguous');
+ const native=Object.assign(Object.create(JsonlSessionPersistence.prototype),{root:directory,compression:'zstd',packChunks:false});
+ const prefix=await native.readZstdPrefix(await readFile(join(directory,files[0])));
+ if(prefix.meta.id!==sessionId)throw Error('Native session identity mismatch');
+ return prefix.events;
+}
 export async function appendHistory({repository,profile,sessionId,output}){
  const base=join(repository,'vendor/dsh-runtime/node_modules/@deepseek-ai');
  const {JsonlSessionPersistence}=await import(pathToFileURL(join(base,'dsh-session-persistence-jsonl/lib/index.js')));

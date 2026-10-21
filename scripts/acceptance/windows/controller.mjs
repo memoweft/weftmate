@@ -10,7 +10,7 @@ const [input,output,mode='local']=process.argv.slice(2);
 if(!['local','dev'].includes(mode))throw Error('Only an isolated local installation or explicit-Core development host is supported');
 const local=true,development=mode==='dev';
 const {_electron}=createRequire(join(input,'package.json'))('playwright');
-let key='',email='',app,page;
+let key='',email='',app,page;const commandHttp=[];
 const redact=s=>String(s).replaceAll(key||'\0','[redacted]').replaceAll(email||'\0','[test mailbox]').replace(/((?:csrf|access_token|refresh_token|setupGrant|token)["'=:\s]+)[A-Za-z0-9._~-]{12,}/gi,'$1[redacted]');
 for(const stream of [process.stdout,process.stderr])stream.on('error',e=>{if(e.code!=='EPIPE')throw e;});
 const save=async(name,value)=>writeFile(join(output,name),redact(typeof value==='string'?value:JSON.stringify(value,null,2)));
@@ -31,8 +31,22 @@ async function launch(){
  app=await _electron.launch({executablePath:exe,args,env,timeout:90000});
  app.process().stdout?.resume();app.process().stderr?.resume();
  page=await until(async()=>app.windows().find(p=>p.url().includes('/personal/v1/ui')),90000);page.setDefaultTimeout(15000);
+ const observed=new WeakMap();
+ page.on('request',request=>{
+  if(request.method()!=='POST'||new URL(request.url()).pathname!=='/personal/v1/commands')return;
+  let body;try{body=request.postDataJSON();}catch{return;}
+  if(!['session.create','session.message','chat.create','chat.message','session.cancel'].includes(body?.kind))return;
+  const entry={requestedAt:new Date().toISOString(),method:'POST',path:'/personal/v1/commands',requestId:body.requestId,kind:body.kind,sessionId:body.sessionId,chatId:body.chatId,text:body.text};
+  observed.set(request,entry);commandHttp.push(entry);
+ });
+ page.on('response',async response=>{
+  const entry=observed.get(response.request());if(!entry)return;
+  entry.status=response.status();entry.respondedAt=new Date().toISOString();
+  try{const body=await response.json();entry.commandId=body.command?.commandId;entry.state=body.command?.state;entry.error={code:body.error?.code??body.code,message:body.error?.message??body.message};}catch{entry.bodyWasJson=false;}
+ });
+ page.on('requestfailed',request=>{const entry=observed.get(request);if(entry){entry.failedAt=new Date().toISOString();entry.transportError=request.failure()?.errorText;}});
  if(local){const actual=await app.evaluate(({app})=>({packaged:app.isPackaged,exe:app.getPath('exe'),profile:app.getPath('userData')}));if(actual.packaged===development||actual.exe.toLowerCase()!==exe.toLowerCase()||actual.profile.toLowerCase()!==installation.profile.toLowerCase())throw Error('Running installation identity mismatch');}
- await app.evaluate(({app,desktopCapturer},directory)=>{globalThis.baselineNotices=[];globalThis.baselineShown=[];app.on('weftmate-desktop-notification',e=>globalThis.baselineNotices.push({...e,observedAt:new Date().toISOString()}));app.on('weftmate-desktop-notification-shown',e=>{globalThis.baselineShown.push({...e,observedAt:new Date().toISOString()});setTimeout(async()=>{try{const sources=await desktopCapturer.getSources({types:['screen'],thumbnailSize:{width:1920,height:1080}});const fs=await import('node:fs/promises');await fs.writeFile(directory+'/notification-'+Date.now()+'.png',sources[0].thumbnail.toPNG());}catch{}},500);});},output);
+ await app.evaluate(({app})=>{globalThis.baselineNotices=[];globalThis.baselineShown=[];app.on('weftmate-desktop-notification',e=>globalThis.baselineNotices.push({...e,observedAt:new Date().toISOString()}));app.on('weftmate-desktop-notification-shown',e=>globalThis.baselineShown.push({...e,observedAt:new Date().toISOString()}));});
  await save('startup.json',await app.evaluate(({app})=>({version:app.getVersion(),packaged:app.isPackaged,exe:app.getPath('exe'),profile:app.getPath('userData'),pid:process.pid})));
 }
 async function api(path,body,method=body===undefined?'GET':'POST'){
@@ -59,7 +73,7 @@ try{
   if(!request||request.id===last){await pause(300);continue;}last=request.id;
   try{await app.evaluate(presentAcceptanceWindow);const value=await new Function('ctx',`return (async()=>{${request.code}\n})()`)(ctx);await save('response.json',{id:last,ok:true,value});}
   catch(e){const windowState=await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().map(w=>({visible:w.isVisible(),focused:w.isFocused(),minimized:w.isMinimized()}))).catch(()=>null);await save('response.json',{id:last,ok:false,error:redact(e.stack),windowState});}
-  await save('snapshot.json',await snapshot());await save('notifications.json',await ctx.notices());
+  await save('snapshot.json',await snapshot());await save('notifications.json',await ctx.notices());await save('command-http.json',commandHttp);
  }
 }catch(e){await save('fatal.json',{error:redact(e.stack)});}
-finally{if(app){const pid=app.process().pid;await app.close().catch(()=>{});try{execFileSync('taskkill.exe',['/PID',String(pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});}catch{}}key='';await save('controller-done.json',{at:new Date().toISOString()});}
+finally{await save('command-http.json',commandHttp);if(app){const pid=app.process().pid;await app.close().catch(()=>{});try{execFileSync('taskkill.exe',['/PID',String(pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});}catch{}}key='';await save('controller-done.json',{at:new Date().toISOString()});}
