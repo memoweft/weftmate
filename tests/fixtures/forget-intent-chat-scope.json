@@ -1,0 +1,14 @@
+[
+  {"id":"direct-default-chat","message":"请永久忘掉我最喜欢的零食是芝麻饼这条记忆，默认保留聊天原话。","authorized":true},
+  {"id":"unrelated-natural-preference","message":"我偏爱天文摄影这件事就别再记着了，聊天记录别删。","authorized":true},
+  {"id":"english-explicit-scope","message":"Forget my preference for jazz. Keep our chat history.","authorized":true},
+  {"id":"if-backup","message":"如果备份已经完成，再忘掉我喜欢爵士乐的偏好，保留聊天原话。","authorized":false},
+  {"id":"unless-confirmed","message":"除非我稍后再次确认，否则不要忘掉我喜欢爵士乐的偏好，聊天原话保留。","authorized":false},
+  {"id":"question-about-scope","message":"忘掉我喜欢爵士乐的偏好会删除哪些内容？我想保留聊天原话。","authorized":false},
+  {"id":"translation","message":"请翻译这句话：请忘掉我喜欢爵士乐的偏好，保留聊天原话。","authorized":false},
+  {"id":"quoted-explanation","message":"朋友说“忘掉我喜欢爵士乐的偏好，保留聊天原话”，请解释他的意思。","authorized":false},
+  {"id":"negated-forget","message":"不要忘掉我喜欢爵士乐的偏好，聊天原话也保留。","authorized":false},
+  {"id":"cancel-forget","message":"取消刚才忘掉我喜欢爵士乐的请求，保留这条记忆和聊天原话。","authorized":false},
+  {"id":"unclear-target","message":"把那件事忘掉，聊天原话保留。","authorized":false},
+  {"id":"unclear-subjects","message":"忘掉我和小林喜欢的音乐，保留聊天原话。","authorized":false}
+]

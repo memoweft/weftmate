@@ -60,6 +60,14 @@ async function decide(route, name, description, parameters, instruction, input) 
     { role: 'assistant', content: null, tool_calls: [{ id: 'subject-example', type: 'function', function: { name,
       arguments: JSON.stringify({ isForgetRequest: true, subject: 'other:妈妈', topic: '妈妈的生日', conditionsOrQuestions: false }) } }] },
     { role: 'tool', tool_call_id: 'subject-example', content: 'Classification accepted. Only the mother birthday in this user account is authorized.' },
+    { role: 'user', content: JSON.stringify({ message: '请忘掉我的通勤方式，聊天原话留下。' }) },
+    { role: 'assistant', content: null, tool_calls: [{ id: 'scope-example', type: 'function', function: { name,
+      arguments: JSON.stringify({ isForgetRequest: true, subject: 'self', topic: '我的通勤方式', conditionsOrQuestions: false }) } }] },
+    { role: 'tool', tool_call_id: 'scope-example', content: 'Classification accepted. Preserving application chat is the existing scope of memory forgetting, not an unresolved prerequisite.' },
+    { role: 'user', content: JSON.stringify({ message: '如果备份已完成，再忘掉我的通勤方式，聊天原话留下。' }) },
+    { role: 'assistant', content: null, tool_calls: [{ id: 'prerequisite-example', type: 'function', function: { name,
+      arguments: JSON.stringify({ isForgetRequest: true, subject: 'self', topic: '我的通勤方式', conditionsOrQuestions: true }) } }] },
+    { role: 'tool', tool_call_id: 'prerequisite-example', content: 'No deletion authorized. The backup prerequisite is unresolved even though preserving chat is a valid scope instruction.' },
   ] : [];
   for (let attempt = 0; attempt < 2; attempt++) {
     const response = await fetch(`${route.baseUrl.replace(/\/$/, '')}/chat/completions`, {
@@ -91,7 +99,10 @@ export async function classifyForgetRequest(route, message, previousScope = null
     } },
     'You classify memory deletion intent; you do not execute anything. Read the ENTIRE user message as one task, including all lines and all text after commas. '
     + 'Translation, quotation, explanation, examples, hypothetical instructions and questions about deletion are not deletion authorization. '
-    + 'Any condition, limitation requiring clarification, or question about whether/what to delete means conditionsOrQuestions=true and no immediate deletion. '
+    + 'An unresolved prerequisite for whether/when deletion may occur (such as if, unless, or awaiting confirmation), unclear scope, or a question about whether/what to delete means conditionsOrQuestions=true and no immediate deletion. '
+    + 'Distinguish such prerequisites from a clear specification of the requested result. Memory forgetting already preserves the original application chat by default; the memory and its internal source/context copies are the deletion target. '
+    + 'A direct request to forget a concrete memory while keeping the original chat/history is a clear scope instruction, not by itself a prerequisite or question: conditionsOrQuestions=false unless another part of the ENTIRE message supplies one. '
+    + 'This applies equally to natural paraphrases and English or Chinese. Do not infer authorization merely from words about keeping chat: conditions, questions, translations/quotations, negation/cancellation, and unclear subjects or targets still forbid authorization. '
     + 'Only an unconditional, direct request to forget a concrete memory has isForgetRequest=true. Preserve the subject: 我的/我=self; 妈妈/小王 are other:<name>. '
     + 'These are memories in the requesting user account, including facts about other people. A family role such as 妈妈 is an explicit subject; no legal name is needed. A direct 忘掉妈妈的生日 is authorized for other:妈妈, not a request to access another account. '
     + 'Multiple or unclear subjects/topics mean subject=unknown, topic="", no authorization. A separate unrelated task such as calculating 12×13 is allowed alongside a clear deletion request. '
