@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,webcrypto} from 'node:crypto';
 import {createPersonalAccessService} from '../src/personal-access/index.mjs';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
@@ -31,14 +31,14 @@ test('new phone model sync uses the declared computer protocol and never sends p
  }
 });
 
-test('a legacy computer receives the first phone turn with its original fields, without a rejected handover probe',async()=>{
- const context:any=vm.createContext({TextEncoder});vm.runInContext(await readFile('src/ui-core/offline.js','utf8'),context);
+test('a legacy computer without source qualification keeps the original phone turn pending instead of downgrading',async()=>{
+ const context:any=vm.createContext({TextEncoder,crypto:webcrypto});vm.runInContext(await readFile('src/ui-core/phone-memory.js','utf8'),context);vm.runInContext(await readFile('src/ui-core/offline.js','utf8'),context);
  const turn={id:'synthetic-turn',conversationId:'synthetic-conversation',timestamp:1,messages:[{role:'user',text:'你好'},{role:'assistant',text:'合成回复'}]};
  const requests:any[]=[];
  const engine=await context.WeftOffline.create({identity:{hostId:'synthetic'},phoneModel:()=>({modelId:'synthetic'}),hostCapabilities:()=>({}),
   vault:{load:async()=>({snapshot:null,turns:[turn],conversations:[],tasks:[]}),key:async()=>({}),save:async()=>{},close:()=>{},open:async()=>({items:[],remove:[],hashes:{},generation:1,model:null,control:{accountId:'synthetic'}})},
   host:async(path:string,body:any)=>{requests.push({path,body});assert.equal(body.phoneFirst,undefined);assert.equal(body.handover,undefined);assert.equal(body.turnFragments,undefined);return path==='/offline/turns'?{generation:1,receipts:[{id:turn.id,state:'synced'}]}:{};},});
- await engine.sync();assert.deepEqual(requests.map(r=>r.path),['/offline/sync','/offline/turns']);assert.deepEqual(Object.keys(requests[1].body).sort(),['generation','turns']);engine.close();
+ await assert.rejects(engine.sync(),{code:'COMPUTER_UPDATE_REQUIRED'});assert.deepEqual(requests.map(r=>r.path),['/offline/sync']);assert.equal(engine.view().turns.length,1);assert.equal(engine.view().turns[0].id,turn.id);assert.equal(engine.view().phoneMemory.transferred,false);engine.close();
 });
 
 test('phone sync commit wakes the existing chat wait; duplicate upload does not wake idle clients',async t=>{

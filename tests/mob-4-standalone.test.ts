@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
 import { IDBFactory } from 'fake-indexeddb';
+import '../src/ui-core/phone-memory.js';
 import '../src/ui-core/offline.js';
 const W = (globalThis as any).WeftOffline;
 
@@ -44,7 +45,7 @@ test('MOB-4 starts without a computer or replica, streams, stops, regenerates, a
   const db = new IDBFactory(); let model: any = null, requests = 0, authorized = true;
   const vault = await W.browserVault('phone:synthetic-a', { indexedDB: db, crypto: webcrypto });
   vault.complete = async (body: any, _snapshot: any, signal: any, progress: any) => {
-    requests++; assert.equal(body.tools, undefined); assert.match(body.messages[0].content, /不能读写电脑文件/);
+    requests++; assert.equal(body.tools, undefined); assert.match(body.messages[0].content, /不能(?:读写电脑文件|操作电脑)/);
     progress('正在'); progress('完整回复'); return { choices: [{ message: { content: '完整回复' } }] };
   };
   const options = { vault, identity: {}, host: () => assert.fail('no computer request'), crypto: webcrypto,
@@ -71,11 +72,11 @@ test('MOB-4 first computer sync preserves original phone IDs and uploads after a
     open: async (v: any) => v, clear: async () => {}, close() {}, complete: async () => ({ choices: [{ message: { content: '手机回复' } }] }) };
   const engine = await W.create({ vault, identity: {}, crypto: webcrypto, phoneModel: () => ({ modelId: 'synthetic' }),
     accountCheck: async () => ({}), control: async () => ({}), host: async (path: string, body: any) => {
-      if (path === '/offline/sync') return { generation, reset: true, remove: [], items: [], hashes: {}, model: { modelId: 'synthetic' } };
-      submitted = structuredClone(body); return { receipts: body.turns.map((t: any) => ({ id: t.id,state:'synced' })) };
+      if (path === '/offline/sync') return { generation, reset: true, remove: [], items: [], hashes: {}, model: { modelId: 'synthetic' },memoryAuthority:{ready:true,sourcePolicy:1} };
+      submitted = structuredClone(body); return { receipts: body.turns.map((t: any) => ({ id: t.id,state:'synced',memoryPolicy:t.memoryPolicy })) };
     } });
   await engine.send('请记住我的新偏好'); const id = stored.turns[0].id;
-  await engine.sync(); assert.equal(submitted.generation, generation); assert.equal(submitted.turns[0].id, id);
+  await engine.sync(); assert.equal(submitted.generation, generation); assert.equal(submitted.turns[0].id, id);assert.equal(submitted.turns[0].memoryPolicy.inference,'allowed');
   assert.equal(stored.turns.length, 0); assert.equal(stored.conversations[0].turns[0].synced, true);
 });
 
