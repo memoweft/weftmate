@@ -592,17 +592,49 @@ async function reconcileMemoryMarker(marker=state.memory?.pendingMarker){const m
     if(memory.view==='detail')effects.renderMemoryDetail(memory.target,token);else effects.renderMemoryList(memory.target)}}
 
 async function previewMemoryForget(choice){const memory=state.memory,token=memoryToken();
-  choice.deleteConversationSnippets=false;choice.preview=null;choice.previewError='';
+  choice.deleteConversationSnippets=false;choice.confirmText='';choice.preview=null;choice.previewError='';choice.previewLoading=true;
+  const readGeneration=choice.previewGeneration=(choice.previewGeneration||0)+1;
+  const hostId=core.state.hostId,deviceId=state.deviceId||state.profile?.device?.id;
+  const current=()=>memoryCurrent(token)&&memory.confirmation===choice&&choice.previewGeneration===readGeneration&&
+    core.state.hostId===hostId&&(state.deviceId||state.profile?.device?.id)===deviceId;
+  const item=memory.detail.item;
   const kind=choice.operation==='deleteEvidence'?'evidence':memory.detail.item.kind,
     id=choice.operation==='deleteEvidence'?choice.id:memory.detail.item.id;
   const path=`/personal/v1/memory/${kind==='evidence'?'evidence':`items/${memoryPathEncode(kind)}`}/${memoryPathEncode(id)}/forget-preview`;
-  try{const result=await business({path,method:'GET'});
-    if(!memoryCurrent(token)||memory.confirmation!==choice)return;
-    if(result.worldRevision!==memory.detailRevision)throw {code:'MEMORY_REVISION_CHANGED'};
-    choice.preview=result;
-  }catch(error){if(!memoryCurrent(token)||memory.confirmation!==choice)return;
-    choice.previewError='无法读取遗忘范围，请取消后重新打开。';}
-  effects.renderMemoryDetail(memory.target,token)}
+  const base=`/personal/v1/memory/items/${memoryPathEncode(item.kind)}/${memoryPathEncode(item.id)}`;
+  effects.renderMemoryDetail(memory.target,token);
+  for(let attempt=0;attempt<7&&current();attempt++){
+    try{
+      const detail=await business({path:base,method:'GET'});if(!current())return;
+      if(!memoryOwnerMatches(detail,memory))throw new Error('MEMORY_OWNER_MISMATCH');
+      if(!Number.isSafeInteger(detail.worldRevision)||detail.item?.id!==item.id||detail.item.kind!==item.kind||
+        typeof detail.item.text!=='string'||!Number.isSafeInteger(detail.item.sourceCount)||detail.item.sourceCount<0)throw new Error('MEMORY_INVALID_RESPONSE');
+      const sources=await business({path:`${base}/sources`,method:'GET'});if(!current())return;
+      if(!memoryOwnerMatches(sources,memory))throw new Error('MEMORY_OWNER_MISMATCH');
+      if(sources.worldRevision!==detail.worldRevision)throw new Error('MEMORY_REVISION_CHANGED');
+      if(!Array.isArray(sources.sources))throw new Error('MEMORY_INVALID_RESPONSE');
+      if(kind==='evidence'&&!sources.sources.some(source=>source.evidenceId===id))throw new Error('MEMORY_ACTION_UNSUPPORTED');
+      const result=await business({path,method:'GET'});if(!current())return;
+      if(!memoryOwnerMatches(result,memory))throw new Error('MEMORY_OWNER_MISMATCH');
+      if(result.worldRevision!==detail.worldRevision)throw new Error('MEMORY_REVISION_CHANGED');
+      if(typeof result.forgetScope!=='string'||!result.forgetScope||!Array.isArray(result.items))throw new Error('MEMORY_INVALID_RESPONSE');
+      if(detail.worldRevision!==memory.worldRevision){memory.items=[];memory.nextCursor=null;memory.hasMore=false;memory.refreshOnReturn=true}
+      memory.worldRevision=detail.worldRevision;memory.detailRevision=detail.worldRevision;memory.detail=detail;
+      memory.sources=sources.sources;memory.detailError='';memory.sourceError='';
+      choice.preview=result;choice.previewError='';break;
+    }catch(error){if(!current())return;
+      const code=error?.code||error?.message;
+      if(attempt<6&&['MEMORY_FORMATION_PENDING','MEMORY_REVISION_CHANGED'].includes(code)){
+        choice.previewError=code==='MEMORY_FORMATION_PENDING'?'刚才的对话还在整理，正在等待并重新核对遗忘范围；尚未删除。':'记忆有更新，正在重新核对遗忘范围；尚未删除。';
+        effects.renderMemoryDetail(memory.target,token);
+        if(code==='MEMORY_FORMATION_PENDING')await new Promise(resolve=>setTimeout(resolve,5000));
+        continue;
+      }
+      choice.previewError=code==='MEMORY_FORMATION_PENDING'?'刚才的对话仍在整理，尚未删除。请稍后点“重新读取遗忘范围”。':
+        '无法读取遗忘范围，尚未删除。请点“重新读取遗忘范围”。';break;
+    }
+  }
+  if(current()){choice.previewLoading=false;effects.renderMemoryDetail(memory.target,token)}}
 core.mobilePreviewMemoryForget=previewMemoryForget;
 async function submitMemoryAction(operation,evidenceId=null,correction=''){const memory=state.memory,detail=memory?.detail;
   if(!detail||!memoryCurrent(memoryToken())||!memoryActionAllowed(operation,
@@ -611,6 +643,8 @@ async function submitMemoryAction(operation,evidenceId=null,correction=''){const
     memory.detailError='纠正内容须为 1–4000 个字符。';effects.renderMemoryDetail(memory.target);return}
   if(['deleteItem','deleteEvidence'].includes(operation)&&memory.confirmation?.confirmText?.trim()!=='删除')return;
   if(['deleteItem','deleteEvidence'].includes(operation)&&memory.confirmation?.preview?.worldRevision!==memory.detailRevision)return;
+  const forgetScope=memory.confirmation?.preview?.forgetScope;
+  if(['deleteItem','deleteEvidence'].includes(operation)&&(typeof forgetScope!=='string'||!forgetScope))return;
   const deleteConversationSnippets=memory.confirmation?.deleteConversationSnippets===true;
   const requestId=newMemoryRequestId(),kind=detail.item.kind,itemId=detail.item.id,
     id=operation==='deleteEvidence'?evidenceId:itemId,revision=memory.detailRevision;
@@ -624,7 +658,7 @@ async function submitMemoryAction(operation,evidenceId=null,correction=''){const
   const path=operation==='correct'?`${base}/correct`:operation==='mute'?`${base}/mute`:base,
     method=['deleteItem','deleteEvidence'].includes(operation)?'DELETE':'POST',
     body={requestId,expectedWorldRevision:revision,...(operation==='correct'?{text}:{}),
-      ...(['deleteItem','deleteEvidence'].includes(operation)?{deleteConversationSnippets}:{})};
+      ...(['deleteItem','deleteEvidence'].includes(operation)?{deleteConversationSnippets,forgetScope}:{})};
   try{const result=await business({path,method,body});if(!memoryCurrent(token))return;
     if(!handleMemoryReceipt(result?.receipt,marker,token)){
       memory.activeOperation=null;memory.receiptMessage='暂时无法确认这次操作是否完成。请核对处理结果，不会自动重复执行。';
