@@ -9,7 +9,7 @@ import { runManagedTestProcess } from './helpers/managed-test-process.mjs';
 import { managedMkdtempSync, disposeManagedTemp as disposeOwnedTemp } from './helpers/managed-temp.mjs';
 
 test('new chat leaves fixed pages with empty and existing history using production HTTP assets in Chromium', { timeout: 180000 }, async t => {
-  const scope = managedMkdtempSync('weftmate-empty-chat-navigation-', { prune: false });
+  const scope = managedMkdtempSync('weftmate-', { prune: false });
   const output = process.env.WEFTMATE_EVIDENCE_DIR
     ? join(resolve(process.env.WEFTMATE_EVIDENCE_DIR), `browser-wrapper-${randomUUID()}`) : join(scope, 'evidence');
   const executablePath = chromium.executablePath();
