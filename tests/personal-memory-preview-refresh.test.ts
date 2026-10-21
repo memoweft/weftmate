@@ -3,6 +3,69 @@ import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
 
+async function previewHarness() {
+ const context:any={WeftUiCore:{factories:{}},AbortSignal,URL,setTimeout:(fn:any)=>setTimeout(fn,0),clearTimeout};
+ runInNewContext(await readFile(new URL('../src/ui-core/memory.js',import.meta.url),'utf8'),context);
+ const core:any={state:{identityGeneration:1,account:{ownerId:'owner'},device:{id:'device'},csrfToken:'csrf',currentView:'memory',hostId:'host'},
+  memory:{viewGeneration:0,selectedGeneration:0,selected:{kind:'cognition',id:'tea',worldRevision:1},mode:'detail'},memoryKinds:{cognition:'理解'}};
+ const effects=new Proxy({}, {get:()=>()=>{}});
+ Object.assign(core,context.WeftUiCore.factories.memory(core,effects,{}));
+ core.readMemoryItem=async()=>({item:{kind:'cognition',id:'tea'},worldRevision:2});
+ core.readMemorySources=async()=>({sources:[],worldRevision:2});
+ return core;
+}
+
+test('initial forget preview recovers formation and a new revision in the same confirmation flow without deleting',async()=>{
+ const core=await previewHarness();let reads=0,writes=0;
+ core.submitMemoryCommand=async()=>{writes++};
+ core.readForgetPreview=async()=>{if(++reads===1)throw{code:'MEMORY_FORMATION_PENDING'};return{worldRevision:2,forgetScope:'fresh',items:[]}};
+ await core.setMemoryMode('delete');
+ assert.equal(reads,2);assert.equal(core.memory.selected.worldRevision,2);
+ assert.equal(core.memory.forgetPreview?.forgetScope,'fresh');assert.equal(writes,0);
+});
+
+test('initial preview failure can be retried in place with fresh detail and sources',async()=>{
+ const core=await previewHarness();let reads=0;
+ core.readForgetPreview=async()=>{if(++reads===1)throw{code:'NETWORK'};return{worldRevision:2,forgetScope:'fresh',items:[]}};
+ await core.setMemoryMode('delete');
+ assert.equal(core.memory.forgetPreview,null);
+ assert.match(core.memory.forgetPreviewError,/重新读取遗忘范围/);
+ await core.setMemoryMode('delete');assert.equal(core.memory.forgetPreview?.forgetScope,'fresh');
+});
+
+for(const change of ['host','account','device','close','selection','new-read'])test(`pending preview cannot publish after ${change}`,async()=>{
+ const core=await previewHarness();let resolve:any;
+ core.readMemoryItem=async()=>({item:{kind:'cognition',id:'tea'},worldRevision:1});
+ core.readMemorySources=async()=>({sources:[],worldRevision:1});
+ core.readForgetPreview=()=>new Promise(r=>{resolve=r});
+ const pending=core.setMemoryMode('delete');while(!resolve)await new Promise(r=>setTimeout(r,0));
+ if(change==='host')core.state.hostId='other-host';
+ if(change==='account')core.state.account.ownerId='other-owner';
+ if(change==='device')core.state.device.id='other-device';
+ if(change==='close')core.closeMemoryDetail();
+ if(change==='selection')core.memory.selectedGeneration++;
+ if(change==='new-read'){
+   core.readForgetPreview=async()=>({worldRevision:1,forgetScope:'new-read',items:[]});await core.setMemoryMode('delete');
+ }
+ resolve({worldRevision:1,forgetScope:'old-host',items:[]});await pending;
+ assert.equal(core.memory.forgetPreview?.forgetScope,change==='new-read'?'new-read':undefined);
+});
+
+test('formation preview read is bounded and leaves the same panel retryable with no credential',async()=>{
+ const core=await previewHarness();let reads=0;
+ core.readForgetPreview=async()=>{reads++;throw{code:'MEMORY_FORMATION_PENDING'}};
+ await core.setMemoryMode('delete');assert.equal(reads,7);assert.equal(core.memory.forgetPreview,null);
+ assert.equal(core.memory.forgetPreviewLoading,false);assert.match(core.memory.forgetPreviewError,/重新读取遗忘范围/);
+});
+
+test('a source revision mismatch never exposes a partial preview and rereads the entire range',async()=>{
+ const core=await previewHarness();let sources=0,previews=0;
+ core.readMemorySources=async()=>({sources:[],worldRevision:++sources===1?3:2});
+ core.readForgetPreview=async()=>{previews++;return{worldRevision:2,forgetScope:'full',items:[]}};
+ await core.setMemoryMode('delete');assert.equal(sources,2);assert.equal(previews,1);
+ assert.equal(core.memory.forgetPreview?.forgetScope,'full');
+});
+
 for (const responseKind of ['preflight', 'scope-receipt'] as const) test(`stale preview (${responseKind}) is replaced read-only and needs a second confirmation`, async () => {
   const context: any = { WeftUiCore: { factories: {} }, AbortSignal, URL, setTimeout, clearTimeout };
   runInNewContext(await readFile(new URL('../src/ui-core/memory.js', import.meta.url), 'utf8'), context);
