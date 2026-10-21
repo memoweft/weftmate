@@ -393,7 +393,12 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
           flight.cleanupAttempted.add(cleanupKey);
           try {
             const result = await manager().retryCleanupByRequest(owner, requestId);
-            if ((result.receipt ?? result).storage_cleanup?.state !== 'pending') await update(owner, data => {
+            const receipt = result?.receipt ?? result, cleanup = receipt?.storage_cleanup;
+            // This manager method also verifies the host journal cleanup. Core
+            // no_change makes no physical deletion and may omit its cleanup field.
+            const complete = receipt?.result_state === 'applied' && cleanup?.state === 'complete' ||
+              receipt?.result_state === 'no_change' && (cleanup === undefined || cleanup?.state === 'complete');
+            if (complete) await update(owner, data => {
               const row = data.records[action.requestId]; row.cleanupPending = row.cleanupPending.filter(id => id !== requestId);
             });
             else schedule(owner);
@@ -454,6 +459,10 @@ export function createMemoryActions({ root, manager, schedule, redactJournal = a
         reason: budgetExpired ? action.automatic ? '60s-budget' : '8s-budget'
           : row.result ? 'flight-settled-with-result' : 'flight-settled-still-pending', recoveryRequested: true });
       const incomplete = row.name === 'memory_forget' && (row.plan?.retainedUncertainCount > 0 || row.plan?.state === 'withheld' || row.plan?.completionState === 'withheld');
+      // Keep the durable applied result as the no-replay barrier, but do not
+      // expose completion until every original cleanup request has finished.
+      if (row.name === 'memory_forget' && row.result?.state === 'applied' && row.cleanupPending?.length)
+        return { state: 'queued', message: '删除已执行，相关记录还在清理，暂时还没全部忘完。' };
       return row.result ?? { state: 'queued', message: incomplete
         ? '上次遗忘结果还未能确认，本次没有继续删除；稍后只核对原请求结果。' : pendingMessage(action.name) };
     },
