@@ -10,6 +10,13 @@ import { foldGoal } from '@deepseek-ai/dsh-goal';
 import { createNativeGoalManager } from '../personal-access/goals-native.mjs';
 import { isHealthQuestion } from './personal-prompt.mjs';
 import { installAccountScheduleQuery } from './personal-schedule-query.mjs';
+/** Goal-only model guidance; native transitions, round admission and budgets stay in DSH. */
+const guidance = 'Follow the objective\'s actual completion conditions. When the user requires multiple rounds for a goal, each requested round must be a distinct native <goal_round> continuation with its own recorded result. Multiple calculations, planned todos, or results narrated in the creating human turn cannot substitute for those rounds. For such a multi-round goal, create its plan, keep it active and end the human reply so the native driver can admit round 1; do not call complete in that setup turn. In each admitted goal round, do and record the next required work. If requested rounds or other completion conditions remain, keep the goal active and end this reply for the next continuation. Before completing, call get_goal and verify that its admitted rounds and actual records satisfy the user\'s requested rounds and every other condition. max_goal_rounds is only a continuation budget cap, never a required minimum: a single-step or already achieved objective may complete in the human turn or before the cap; do not pad rounds. Pause, cancellation, failure and unmet waiting conditions must use native controls, without forcing progress or claiming completion.';
+
+export function presentPersonalGoalWorkflow(assembly) {
+  return { ...assembly, sections: assembly.sections.map(section => section.name === 'tool:goal' && !section.text.endsWith(guidance)
+    ? { ...section, text: `${section.text}\n\n${guidance}` } : section) };
+}
 
 export const name = 'weftmate-personal-schedules';
 export const inject = ['agents', 'sessions', 'tools', 'sessionPersistence', 'webServer', 'weftmateSessionLifecycle'];
@@ -17,6 +24,10 @@ export const PROTOCOL = 'weftmate.personal-schedules.v1';
 const personal = agent => agent?.session?.header?.agentPreset === 'personal-remote' && agent.session.header.origin !== 'subagent';
 
 export async function apply(ctx) {
+  ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
+    const assembly = await next();
+    return personal(context.scope) ? presentPersonalGoalWorkflow(assembly) : assembly;
+  });
   const pending = new Map();
   const onMessage = frame => {
     if (frame?.protocol !== PROTOCOL || !pending.has(frame.id)) return;
