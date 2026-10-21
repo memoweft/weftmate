@@ -54,7 +54,7 @@
 
 先取消提炼并持久保存接手状态，再冻结 `id / conversationId / timestamp / messages` 进入队列。每批最多50轮／256 KiB；每个完整轮次同时冻结 `memoryPolicy`：允许形成是 `{version:1,inference:"allowed"}`，来源已明确遗忘或编辑抑制是 `{version:1,inference:"blocked",reason:"forgotten"|"edited"|"suppressed"|"forget-request"}`。策略随轮次和分片的 SHA-256 资格摘要固定，回执必须回显同一策略；只收到原文接收回执不算策略已接受。回执丢失、部分回执或重启时重发同一正文、ID和策略，手机在匹配 `memoryPolicy` 确认前不清屏蔽状态。
 
-电脑先保存策略再排入导入。`inference:"blocked"` 的来源仍保留可读原话，但跳过记忆形成和近期记忆背景；导入统计中 `total`／`received` 只计独特轮次，`processed` 只计 Core 处理完成且未因来源资格跳过的轮次（含未新增条目的 `no_change`），`skipped` 只计首次跳过。未确认／部分确认时轻量条目继续可用，所有轮次收到策略已接受的 `state:"synced"` 后才清条目、水位和屏蔽标记，原文仍保留。`synced` 只表示电脑持久接收，实际形成继续由电脑的MEM-1导入任务完成；手机之后展示电脑记忆／获准只读副本。
+电脑先保存策略再排入导入。`inference:"blocked"` 的来源仍保留可读原话，但跳过记忆形成和近期记忆背景；导入统计中 `total`／`received` 只计独特轮次，`processed` 只计允许来源的全部导入分块在 Core `query_jobs.worker.state` 达到成功终态（`applied / completed / no_change / done / succeeded`）且宿主已持久标为 `done` 的轮次；仅接收原文或交付任务不计，`no_change` 也不代表新增记忆条目，`skipped` 只计首次跳过。未确认／部分确认时轻量条目继续可用，所有轮次收到策略已接受的 `state:"synced"` 后才清条目、水位和屏蔽标记，原文仍保留。`synced` 只表示宿主原文历史、策略及导入记录持久接收，不表示 Core 已接收任务或形成；实际形成继续由电脑的MEM-1导入任务完成；手机之后展示电脑记忆／获准只读副本。
 
 达到100轮或256 KiB，手机先显示预计量与「现在交／稍后」；电脑导入记录也等待确认，展示原时间跨度、后台模型和预计用量。小量自动静默整理。此阈值与APPLE-7一致，避免两端体验不同；预计用量沿MEM-1，不是费用承诺。电脑从账号移除只能由成功读取设备目录且 `hosts=[]` 判断，网络失败不算；清派生状态并记录恢复时刻，之后只提炼新原话，不重扫已交旧对话。
 
