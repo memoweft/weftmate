@@ -177,7 +177,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
     const parts = path.split('/').map(decodeURIComponent)
     const kind = parts[5]
     const id = parts[6]
-    if (parts.at(-1) === 'forget-preview') return options.preview?.(owner) ?? { ownerId: rawOwners[owner], worldRevision: 10, itemCount: 2, evidenceCount: 1, items: [itemsByOwner[owner][0], {id: 'person', kind: 'entity', itemType: 'person', text: '王小明'}] }
+    if (parts.at(-1) === 'forget-preview') return options.preview?.(owner) ?? { ownerId: rawOwners[owner], worldRevision: 10, forgetScope: 'fixture-scope', itemCount: 2, evidenceCount: 1, items: [itemsByOwner[owner][0], {id: 'person', kind: 'entity', itemType: 'person', text: '王小明'}] }
     if (parts.at(-1) === 'sources') return options.sources?.(owner, kind, id) ?? { ownerId: rawOwners[owner], worldRevision: 10, sources: [
       { evidenceId: `evidence-${owner}`, relation: 'support', currentnessState: 'current',
         permissions: { allowLocalRead: true, allowCloudRead: false, allowInference: true },
@@ -652,6 +652,82 @@ test('source evidence deletion uses the evidence ID and refreshes the source lis
   assert.equal(writes[0].body.deleteConversationSnippets, true)
   assert.doesNotMatch(app.get('page-content').textContent, /Old source body/)
 })
+
+test('connected Core forget preview can recover in the same panel and submits the confirmed scope', async () => {
+  let reads=0;const writes:any[]=[];
+  const app=harness({status:owner=>({ownerId:appOwner(owner),state:'ready',worldRevision:10,
+    capabilities:{list:true,source:true,deleteEvidence:true}}),
+    preview:owner=>++reads===1?Promise.reject(new Error('MEMORY_UNAVAILABLE')):
+      {ownerId:appOwner(owner),worldRevision:10,forgetScope:'confirmed-scope',itemCount:0,evidenceCount:1,items:[]},
+    write:(_owner,_path,_method,body)=>{writes.push(body);return{}},
+  });
+  await openMemory(app);
+  await waitUntil(()=>!!findButton(app.get('page-content'),'A memory private to A'),'list');
+  findButton(app.get('page-content'),'A memory private to A')!.fire('click');
+  await waitUntil(()=>!!findButton(app.get('page-content'),'删除这条来源'),'detail');
+  findButton(app.get('page-content'),'删除这条来源')!.fire('click');
+  await waitUntil(()=>app.get('page-content').textContent.includes('无法读取遗忘范围'),'failure');
+  const retry=findButton(app.get('page-content'),'重新读取遗忘范围');assert.ok(retry);
+  retry.fire('click');
+  await waitUntil(()=>app.get('page-content').textContent.includes('将忘掉 0 项'),'fresh scope');
+  assert.equal(writes.length,0);
+  const input=findAll(app.get('page-content'),node=>node.tagName==='INPUT'&&node.type==='text')[0];
+  assert.equal(input.value,'');input.value='删除';input.fire('input');
+  findButton(app.get('page-content'),'确认删除这条来源')!.fire('click');
+  await waitUntil(()=>writes.length===1,'explicit submit');assert.equal(writes[0].forgetScope,'confirmed-scope');
+});
+
+async function openSourceForget(app:ReturnType<typeof harness>) {
+  await openMemory(app);
+  await waitUntil(()=>!!findButton(app.get('page-content'),'A memory private to A'),'list');
+  findButton(app.get('page-content'),'A memory private to A')!.fire('click');
+  await waitUntil(()=>!!findButton(app.get('page-content'),'删除这条来源'),'detail');
+  findButton(app.get('page-content'),'删除这条来源')!.fire('click');
+}
+const deleteSourceStatus=(owner:string)=>({ownerId:appOwner(owner),state:'ready',worldRevision:10,
+  capabilities:{list:true,source:true,deleteEvidence:true}});
+
+for(const reason of ['MEMORY_FORMATION_PENDING','MEMORY_REVISION_CHANGED'])test(`connected Core ${reason} rereads detail and sources before enabling explicit confirmation`,async()=>{
+  let reads=0,revision=10;
+  const app=harness({status:deleteSourceStatus,
+    details:owner=>({ownerId:appOwner(owner),worldRevision:revision,item:{id:'memory-A',kind:'cognition',text:'A memory private to A',sourceCount:1},availableActions:['deleteEvidence']}),
+    sources:owner=>({ownerId:appOwner(owner),worldRevision:revision,sources:[{evidenceId:'evidence-A',permissions:{allowLocalRead:true},contentAvailable:true}]}),
+    preview:owner=>{if(++reads===1){revision=11;throw new Error(reason)}return{ownerId:appOwner(owner),worldRevision:11,forgetScope:'scope-11',itemCount:0,evidenceCount:1,items:[]}},
+  });
+  await openSourceForget(app);
+  await waitUntil(()=>app.get('page-content').textContent.includes('将忘掉 0 项'),'refreshed preview');
+  assert.equal(reads,2);assert.ok(app.businessPaths.filter(row=>row.path.endsWith('/sources')).length>=3);
+  assert.equal(app.businessPaths.some(row=>row.method!=='GET'),false);
+  assert.equal(findButton(app.get('page-content'),'确认删除这条来源')!.disabled,true,'still needs newly typed confirmation');
+});
+
+for(const invalid of ['scope','owner','revision'])test(`connected Core rejects ${invalid} mismatch without accepting a partial preview`,async()=>{
+  const app=harness({status:deleteSourceStatus,preview:owner=>({ownerId:invalid==='owner'?'another-owner':appOwner(owner),
+    worldRevision:invalid==='revision'?11:10,forgetScope:invalid==='scope'?undefined:'scope',itemCount:1,evidenceCount:1,items:[{text:'untrusted-preview',kind:'cognition'}]})});
+  await openSourceForget(app);
+  await waitUntil(()=>!!findButton(app.get('page-content'),'重新读取遗忘范围'),'invalid preview stays retryable');
+  assert.doesNotMatch(app.get('page-content').textContent,/untrusted-preview/);
+  const input=findAll(app.get('page-content'),node=>node.tagName==='INPUT'&&node.type==='text')[0];input.value='删除';input.fire('input');
+  const confirm=findButton(app.get('page-content'),'确认删除这条来源')!;
+  assert.equal(confirm.disabled,true);confirm.fire('click');await flush();assert.equal(app.businessPaths.some(row=>row.method!=='GET'),false);
+});
+
+test('connected Core formation wait is bounded and leaves an in-panel read-only retry',async()=>{
+  let reads=0;const app=harness({status:deleteSourceStatus,preview:()=>{reads++;throw new Error('MEMORY_FORMATION_PENDING')}});
+  await openSourceForget(app);
+  await waitUntil(()=>!!findButton(app.get('page-content'),'重新读取遗忘范围'),'bounded wait');assert.equal(reads,7);
+  assert.equal(app.businessPaths.some(row=>row.method!=='GET'),false);
+});
+
+for(const change of ['cancel','account'])test(`connected Core discards a delayed preview after ${change}`,async()=>{
+  let resolve:any;const app=harness({status:deleteSourceStatus,preview:()=>new Promise(r=>{resolve=r})});
+  await openSourceForget(app);await waitUntil(()=>!!resolve,'preview in flight');
+  if(change==='cancel')findButton(app.get('page-content'),'取消')!.fire('click');
+  else {await logoutAndLoginB(app);await openMemory(app,'B');}
+  resolve({ownerId:appOwner('A'),worldRevision:10,forgetScope:'late',itemCount:1,evidenceCount:1,items:[{text:'late-secret',kind:'cognition'}]});
+  for(let i=0;i<10;i++)await flush();
+  assert.doesNotMatch(app.get('page-content').textContent,/late-secret/);assert.equal(app.businessPaths.some(row=>row.method!=='GET'),false);
+});
 
 test('forget confirmation cannot submit after preview failure or a changed revision', async () => {
   for (const fail of [true, false]) {
