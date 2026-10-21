@@ -143,6 +143,12 @@ internal fun businessReadTimeout(path: String, method: String): Int {
     return 20_000
 }
 
+internal fun businessHttpResponseLimit(path: String): Int = when {
+    path == "/personal/v1/offline/sync" -> nativeBusinessResponseLimit(path)
+    path.matches(Regex("/personal/v1/library/[A-Za-z0-9_-]{1,128}/preview")) -> 28 * 1024 * 1024
+    else -> 1024 * 1024
+}
+
 private fun requestByteLimit(url: URL): Int = if (url.path == "/personal/v1/health/records/batch") 1280 * 1024 else if (url.path.endsWith("/chat/completions"))
     14 * 1024 * 1024 else 256 * 1024
 
@@ -266,7 +272,7 @@ class JsonHttp : SseTransport {
                     val n = source.read(buffer)
                     if (n < 0) break
                     // Existing preview contract: PDFs up to 20 MB are returned as base64.
-                    val limit = if (connection.url.path.matches(Regex("/personal/v1/library/[A-Za-z0-9_-]{1,128}/preview"))) 28 * 1024 * 1024 else 1024 * 1024
+                    val limit = businessHttpResponseLimit(connection.url.path)
                     if (output.size() + n > limit) throw ApiFailure(status, "RESPONSE_TOO_LARGE")
                     output.write(buffer, 0, n)
                 }

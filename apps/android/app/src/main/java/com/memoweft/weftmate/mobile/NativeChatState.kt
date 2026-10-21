@@ -106,6 +106,28 @@ internal fun nativeBusinessResponseLimit(path: String): Int = when {
     path.startsWith("/personal/v1/offline/") -> 4 * 1024 * 1024
     else -> 256 * 1024
 }
+
+/** Keeps the host.business response size check and public projection together. */
+internal fun nativeBusinessResponse(path: String, result: JSONObject): JSONObject {
+    require(result.toString().length <= nativeBusinessResponseLimit(path))
+    if (path == "/personal/v1/offline/sync") {
+        // This is an authenticated opaque envelope, not display text. Cropping
+        // Base64 changes the authenticated ciphertext and prevents vault.open.
+        if (result.optInt("version") != 1 || result.optString("algorithm") != "RSA-OAEP-256+A256GCM")
+            throw ApiFailure(502, "BUSINESS_RESPONSE_INVALID")
+        val envelope = JSONObject().put("version", 1).put("algorithm", result.getString("algorithm"))
+        for (key in listOf("aad", "wrappedKey", "iv", "ciphertext")) {
+            val value = result.opt(key)
+            if (value !is String) throw ApiFailure(502, "BUSINESS_RESPONSE_INVALID")
+            envelope.put(key, value)
+        }
+        return envelope
+    }
+    return nativePublicBusiness(
+        result,
+        preview = path.substringBefore('?').matches(Regex("/personal/v1/library/[A-Za-z0-9_-]{1,128}/preview"))
+    ) as JSONObject
+}
 internal fun nativePendingMessageVisible(command: JSONObject, rows: List<JSONObject>): Boolean {
     val request=command.stringOrEmpty("requestId")
     val receipt=command.stringOrEmpty("receiptId").ifEmpty { command.optJSONObject("command")?.stringOrEmpty("receiptId").orEmpty() }

@@ -1943,8 +1943,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             if (host.phoneOnly) throw ApiFailure(503, "HOST_UNAVAILABLE")
             val result = api.business(host, params.getString("path"), params.optString("method", "GET"),
                 params.optJSONObject("body"), readActive)
-            require(result.toString().length <= nativeBusinessResponseLimit(params.getString("path")))
-            nativePublicBusiness(result, preview=params.getString("path").substringBefore('?').matches(Regex("/personal/v1/library/[A-Za-z0-9_-]{1,128}/preview"))) as JSONObject
+            nativeBusinessResponse(params.getString("path"), result)
         }
         "updates.status" -> uiState(bundles.state())
         "updates.preference" -> {
