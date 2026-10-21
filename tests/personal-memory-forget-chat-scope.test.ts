@@ -26,8 +26,10 @@ test('chat preservation never strips the full request or overrides the constrain
   try {
     for (const fixture of fixtures) {
       expected = fixture.message
-      output = { isForgetRequest: fixture.authorized, subject: 'self', topic: '音乐偏好', conditionsOrQuestions: !fixture.authorized }
-      assert.equal((await classifyForgetRequest(route, expected)).authorized, fixture.authorized, fixture.id)
+      // Even a genuinely direct request must remain unauthorized when the
+      // judge declines it. This loop tests host behavior, not language quality.
+      output = { isForgetRequest: false, subject: 'self', topic: '音乐偏好', conditionsOrQuestions: true }
+      assert.equal((await classifyForgetRequest(route, expected)).authorized, false, fixture.id)
     }
     expected = fixtures[0].message
     // Frozen real pre-fix output: words about preserving chat must never make
