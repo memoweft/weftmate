@@ -14,6 +14,7 @@ import { handlePersonalMemoryHttp } from '../src/personal-memory/http.mjs'
 import { boundaryForCompletedTurn } from '../src/plugins/weftmate-personal-memory.mjs'
 import { assertOwnerBoundBoundary } from '../src/personal-memory/boundary.mjs'
 import { birthdayForgetDecisions } from './helpers/birthday-forget-decisions.mjs'
+import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 
 const python = process.env.WEFTMATE_TEST_MEMOWEFT_PYTHON
 const pythonPath = process.env.WEFTMATE_TEST_MEMOWEFT_SOURCE
@@ -33,7 +34,8 @@ function boundary(text: string, sessionId: string) {
   ]
   return assertOwnerBoundBoundary(sessionId, boundaryForCompletedTurn({ id: sessionId, header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))
 }
-async function fixture(t: any, { interpret = null, misattribute = false, birthdayContract = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。', cleanupDeletedMemory = null, inspectDecision = null }: { inspectDecision?: ((input: any, tool: string) => void) | null, interpret?: ((payload: any) => any) | null, misattribute?: boolean, birthdayContract?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string, cleanupDeletedMemory?: ((owner: string, input: any) => Promise<void>) | null } = {}) {
+async function fixture(t: any, { ownerId = owner, interpret = null, misattribute = false, birthdayContract = false, malformedDecision = false, wrongQuestionOnly = false, seedText = '记住：我喜欢喝乌龙茶。', cleanupDeletedMemory = null, inspectDecision = null }: { ownerId?: string, inspectDecision?: ((input: any, tool: string) => void) | null, interpret?: ((payload: any) => any) | null, misattribute?: boolean, birthdayContract?: boolean, malformedDecision?: boolean, wrongQuestionOnly?: boolean, seedText?: string, cleanupDeletedMemory?: ((owner: string, input: any) => Promise<any>) | null } = {}) {
+  const owner = ownerId
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-fix47-')))
   let offline = false, reject = false, calls = 0, loseReceipt = false, correctionsUnavailable = false, unavailableText = ''
   let recoveryGate: { entered: () => void, pending: Promise<void> } | null = null
@@ -1180,6 +1182,157 @@ test('review-486 real Core: late query selection with different correction text 
     const row = rows['memory-tool:' + createHash('sha256').update('late-query-selection').digest('hex')]
     assert.equal(row.result?.state, 'not_found'); assert.deepEqual(row.arguments, {}); assert.equal(row.command, undefined)
   } finally { release(); await pending }
+})
+
+test('M7 real Core: first host cleanup pending cannot report completion while same-account new chat is refused', { skip, timeout: 45000 }, async t => {
+  const accessRoot = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-m7-first-cleanup-')))
+  const seedText = '记住：我喜欢喝乌龙茶。', independentText = '我周末喜欢散步。'
+  const originalEvents = [{ seq: 1, type: 'user/message', data: { content: seedText } }]
+  const sessions = new Map(), cleanupInputs: any[] = []
+  let blocked = true
+  const backend = {
+    getStatus: async () => ({ runtime: 'ready' }), listModels: async () => [{ id: 'local', model: 'synthetic', configured: true }],
+    preflight: async () => ({ ok: true }), sendMessage: async () => ({ accepted: true }), cancelSession: async () => ({ accepted: true }),
+    createSession: async ({ sessionId }) => { sessions.set(sessionId, { sessionId, agentPreset: 'personal-remote', running: false }); return { sessionId } },
+    describeSessions: async ids => ids.map(id => sessions.get(id)).filter(Boolean), describeSession: async id => sessions.get(id),
+    readEvents: async () => ({ events: originalEvents, nextSeq: 1, hasMore: false }),
+    cleanupMemoryCopies: async input => {
+      cleanupInputs.push(input)
+      if (blocked) throw Object.assign(Error('synthetic first native cleanup busy'), { code: 'SESSION_BUSY' })
+      return { cleaned: true }
+    },
+  }
+  const service = await createPersonalAccessService({ root: accessRoot, port: 0, backend })
+  t.after(async () => { await service.close(); await rm(accessRoot, { recursive: true, force: true }) })
+  const started = await service.start(), device = await service.enrollDevice({ name: 'synthetic' }), account = started.ownerId
+  const headers = { authorization: `Bearer ${device.token}`, 'content-type': 'application/json' }
+  const create = async requestId => {
+    const response = await fetch(started.origin + '/personal/v1/commands', { method: 'POST', headers,
+      body: JSON.stringify({ requestId, kind: 'session.create', targetDeviceId: started.hostId, modelProfileId: 'local' }) })
+    return { status: response.status, body: await response.json() }
+  }
+  const store = async () => JSON.parse(await readFile(path.join(accessRoot, 'store.json'), 'utf8')).accounts[account]
+  const first = await create('before-forget')
+  assert.equal(first.status, 202)
+  await wait(async () => (await store()).commands[first.body.command.commandId]?.state === 'accepted_by_dsh')
+  const f = await fixture(t, { ownerId: account, seedText,
+    cleanupDeletedMemory: (ownerId, input) => service.cleanupMemoryCopies(ownerId, input) })
+  await f.manager.ingest(account, boundary(independentText, 'independent-walking')); await f.ready()
+  const before = await f.world(), target = before.items.find(item => item.value.content.includes('乌龙茶'))
+  const independent = before.items.find(item => item.value.content.includes('散步'))
+  assert.ok(target); assert.ok(independent)
+  const sources = (await f.manager.query(account, 'query_evidence', { operation: 'list' })).evidence
+  const targetSource = sources.find(row => row.raw_content === seedText), independentSource = sources.find(row => row.raw_content === independentText)
+  assert.ok(targetSource); assert.ok(independentSource)
+  const actionId = 'first-cleanup-pending', requestId = 'memory-tool:' + createHash('sha256').update(actionId).digest('hex')
+  const actionFile = path.join(f.root, 'accounts', account, 'memory-home/pending-actions.json')
+  const journalFile = path.join(f.root, 'accounts', account, 'memory-home/command-journal.json')
+  const action = async () => JSON.parse(await readFile(actionFile, 'utf8')).records[requestId]
+  const result = await f.tool('memory_forget', { query: '我喝茶的偏好' }, actionId, '请忘掉我喝茶的偏好，保留聊天原话。')
+  const pendingAction = await action(), command = Object.values(pendingAction.commands)[0] as any
+  const pendingReceipt = await f.manager.receiptByRequest(account, command.requestId)
+  const pendingJournal = JSON.parse(await readFile(journalFile, 'utf8')).records[command.requestId]
+  const denied = await create('during-cleanup')
+  const pendingAccount = await store()
+  const pendingWorld = await f.world()
+  const deletedSource = (await f.manager.query(account, 'query_evidence', { operation: 'get', evidence_id: targetSource.evidence_id })).evidence
+  const repeated = await f.tool('memory_forget', { query: '我喝茶的偏好' }, actionId, '请忘掉我喝茶的偏好，保留聊天原话。')
+  await f.restart()
+  const afterRestart = await f.tool('memory_forget', { query: '我喝茶的偏好' }, actionId, '请忘掉我喝茶的偏好，保留聊天原话。')
+  // Release the controlled native failure, then use the existing action recovery.
+  // Collect the recovered control before asserting the original wrong success.
+  blocked = false
+  await f.manager.flushPending(account)
+  await wait(async () => (await action()).cleanupPending?.length === 0)
+  const recoveredAction = await action(), recoveredReceipt = await f.manager.receiptByRequest(account, command.requestId)
+  const recoveredJournal = JSON.parse(await readFile(journalFile, 'utf8')).records[command.requestId]
+  const recovered = await create('after-cleanup')
+  await wait(async () => (await store()).commands[recovered.body.command?.commandId]?.state === 'accepted_by_dsh')
+  const recoveredAccount = await store()
+  const retainedSource = (await f.manager.query(account, 'query_evidence', { operation: 'get', evidence_id: independentSource.evidence_id })).evidence
+  const recoveredTool = await f.tool('memory_forget', { query: '我喝茶的偏好' }, actionId, '请忘掉我喝茶的偏好，保留聊天原话。')
+  const deletions = f.trace.filter(row => row.method === 'submit_command' && row.params.command.operation.startsWith('delete_'))
+  const observation = { reproduction: 'first-host-cleanup-pending', core: deletions.map(row => ({ commandId: row.result.receipt.command_id,
+    state: row.result.receipt.result_state, storageCleanup: row.result.receipt.storage_cleanup })),
+    pending: { tool: result, repeatedTool: repeated, afterRestartTool: afterRestart, receipt: pendingReceipt.receipt, actionResult: pendingAction.result, cleanupPending: pendingAction.cleanupPending,
+      snippetsPending: pendingJournal.cleanup?.snippetsPending, http: denied, gate: pendingAccount.memoryCleanupPending,
+      acceptedRequests: Object.values(pendingAccount.commands).map((row: any) => ({ requestId: row.requestId, state: row.state })),
+      targetPresent: pendingWorld.items.some(item => item.item_id === target.item_id), sourceContentAvailable: deletedSource.content_available },
+    recovered: { tool: recoveredTool, actionResult: recoveredAction.result, cleanupPending: recoveredAction.cleanupPending, receipt: recoveredReceipt.receipt,
+      cleanupCompleted: recoveredJournal.cleanupCompleted, http: { status: recovered.status, commandState: recoveredAccount.commands[recovered.body.command?.commandId]?.state },
+      gate: recoveredAccount.memoryCleanupPending ?? false, deletionSubmissions: deletions.length, cleanupAttempts: cleanupInputs.length } }
+  console.log('M7 first-cleanup observation', JSON.stringify(observation))
+  assert.equal(deletions.length, 1, 'recovery must query the original deletion, never submit it again')
+  assert.equal(deletions[0].result.receipt.result_state, 'applied')
+  assert.equal(pendingReceipt.receipt.storage_cleanup.state, 'pending')
+  assert.equal(pendingJournal.cleanup.snippetsPending, true)
+  assert.equal(pendingAccount.memoryCleanupPending, true)
+  assert.equal(denied.status, 409)
+  assert.equal(denied.body.error.code, 'SESSION_BUSY')
+  assert.equal(Object.values(pendingAccount.commands).some((row: any) => row.requestId === 'during-cleanup'), false)
+  assert.equal(pendingWorld.items.some(item => item.item_id === target.item_id), false)
+  assert.ok(pendingWorld.items.some(item => item.item_id === independent.item_id))
+  assert.equal(deletedSource.content_available, false); assert.equal(deletedSource.raw_content, null)
+  assert.equal(retainedSource.raw_content, independentText)
+  assert.ok(cleanupInputs.every(input => input.deleteConversationSnippets === false), 'ordinary forgetting keeps original chat')
+  assert.deepEqual((await backend.readEvents()).events, originalEvents)
+  assert.equal(recoveredJournal.cleanupCompleted, true)
+  assert.equal(recoveredReceipt.receipt.command_id, pendingReceipt.receipt.command_id)
+  assert.equal(recoveredReceipt.receipt.storage_cleanup.state, 'complete')
+  assert.equal(recoveredAccount.memoryCleanupPending, undefined)
+  assert.equal(recovered.status, 202); assert.equal(sessions.size, 2)
+  assert.equal(Object.values(recoveredAccount.commands).some((row: any) => row.requestId === 'during-cleanup'), false, 'recovery never replays the refused user message')
+  assert.equal(recoveredAction.result.state, 'applied')
+  assert.equal(recoveredTool.state, 'applied')
+  for (const value of [result, repeated, afterRestart]) {
+    assert.equal(value.state, 'queued', 'first cleanup is still pending, so the tool must not claim fully forgotten')
+    assert.match(value.message, /清理/); assert.match(value.message, /还没全部忘完/)
+    assert.doesNotMatch(value.message, /已忘掉|已删除|已经忘/)
+  }
+})
+
+test('M7 real Core: no_change tombstone receipt gains host completion proof only after cleanup succeeds', { skip, timeout: 30000 }, async t => {
+  let blocked = false, cleanupCalls = 0
+  const f = await fixture(t, { cleanupDeletedMemory: async () => {
+    cleanupCalls++
+    if (blocked) throw Object.assign(Error('synthetic native cleanup busy'), { code: 'SESSION_BUSY' })
+    return { cleaned: true }
+  } })
+  const world = await f.world(), target = world.items[0]
+  const source = (await f.manager.query(owner, 'query_evidence', { operation: 'list' })).evidence[0]
+  const deleted = await f.manager.submitCommand(owner, { requestId: 'initial-real-delete', operation: 'delete_world_item',
+    targetKind: 'cognition', targetId: target.item_id, expectedWorldRevision: world.world_revision,
+    payload: { forget_scope: await confirmedScope(f, 'cognition', target.item_id) } })
+  assert.equal(deleted.receipt.result_state, 'applied')
+  blocked = true
+  // Core retains a content-free evidence tombstone. A new explicit command
+  // against it returns its genuine no_change receipt, with no physical cleanup
+  // field; this is not a replay of the already accepted deletion command.
+  const requestId = 'explicit-already-deleted-source'
+  const unchanged = await f.manager.submitCommand(owner, { requestId, operation: 'delete_evidence', targetKind: 'evidence',
+    targetId: source.evidence_id, expectedWorldRevision: deleted.receipt.after_revision, payload: {} })
+  const journalFile = path.join(f.root, 'accounts', owner, 'memory-home/command-journal.json')
+  const readMarker = async () => JSON.parse(await readFile(journalFile, 'utf8')).records[requestId]
+  const pending = await readMarker()
+  const rawReceipt = f.trace.find(row => row.method === 'submit_command' && row.params.command.operation === 'delete_evidence').result.receipt
+  assert.equal(rawReceipt.result_state, 'no_change'); assert.equal(rawReceipt.storage_cleanup, undefined)
+  assert.equal(unchanged.receipt.result_state, 'no_change'); assert.equal(unchanged.receipt.storage_cleanup.state, 'pending')
+  assert.equal(pending.cleanup.snippetsPending, true); assert.notEqual(pending.cleanupCompleted, true)
+  blocked = false
+  const recovered = await f.manager.retryCleanupByRequest(owner, requestId), completed = await readMarker()
+  const callsAtCompletion = cleanupCalls
+  const repeated = await f.manager.receiptByRequest(owner, requestId)
+  console.log('M7 no-change cleanup observation', JSON.stringify({ core: rawReceipt, pending: unchanged.receipt,
+    pendingJournal: { cleanupCompleted: pending.cleanupCompleted ?? false, snippetsPending: pending.cleanup.snippetsPending },
+    recovered: recovered.receipt, completedJournal: { cleanupCompleted: completed.cleanupCompleted, cleanupPresent: Boolean(completed.cleanup) },
+    cleanupCalls, deletionSubmissions: f.trace.filter(row => row.method === 'submit_command').length }))
+  assert.equal(recovered.receipt.command_id, unchanged.receipt.command_id)
+  assert.equal(recovered.receipt.result_state, 'no_change'); assert.equal(recovered.receipt.storage_cleanup, undefined)
+  assert.equal(completed.cleanupCompleted, true); assert.equal(completed.cleanup, undefined)
+  assert.equal(repeated.receipt.command_id, recovered.receipt.command_id)
+  assert.equal(cleanupCalls, callsAtCompletion, 'completed proof prevents duplicate native cleanup')
+  assert.equal(f.trace.filter(row => row.method === 'submit_command').length, 2)
+  assert.equal((await f.world()).items.length, 0)
 })
 
 test('review scope real Core: withdrawing an uncorrected source scrubs a pending deletion after restart', { skip, timeout: 30000 }, async t => {
