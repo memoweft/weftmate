@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { webcrypto } from 'node:crypto';
+import { webcrypto, createHash } from 'node:crypto';
 import { IDBFactory } from 'fake-indexeddb';
 import { createHistoryImport } from '../src/personal-access/history-import.mjs';
 import { createPhoneHistory } from '../src/personal-access/phone-history.mjs';
@@ -345,4 +345,52 @@ for(const change of ['close','release','stop'])test(`HANDOVER-POLICY rejects a l
   const messages=f.engine.view().conversations.flatMap((c:any)=>c.turns.flatMap((row:any)=>row.messages));
   assert.equal(messages.some((m:any)=>m.role==='assistant'&&m.text.includes('已经忘掉')),false);
   assert.notEqual(f.engine.view().handover?.blockedReason,'memory-change','a stale intent must not change current handover authority');
+});
+
+
+test('HANDOVER-POLICY releasing an unconfirmed authority retains the only live understanding and its blocked source',async t=>{
+  const f=await createPhoneHandoverFixture(t);
+  const original=await f.engine.send('请记住，我喜欢红茶。');await f.engine.extractMemory(original.conversationId);
+  const item=f.engine.view().phoneMemory.items[0];await f.engine.memoryChange('edit',item.id,'我喜欢绿茶');
+  assert.equal(await f.engine.sync(),false);assert.equal(f.engine.view().handover.blockedReason,'mixed-source');
+  const before=structuredClone(f.engine.view().phoneMemory),queued=f.engine.view().turns.length;
+  const rawHash=()=>createHash('sha256').update(JSON.stringify(f.engine.view().turns)).digest('hex'),beforeHash=rawHash();
+  await f.engine.memoryChange('release-authority');
+  assert.deepEqual(f.engine.view().phoneMemory.items,before.items,'unacknowledged unique phone understanding must not disappear when an unavailable computer is released');
+  assert.deepEqual(f.engine.view().phoneMemory.suppressedSources,before.suppressedSources,'release is not an acknowledgement of source qualification');
+  assert.equal(f.engine.view().turns.length,queued);assert.equal(f.engine.view().phoneMemory.handover,false);
+  assert.deepEqual(f.engine.view().phoneMemory.suppressedReasons,before.suppressedReasons);assert.equal(rawHash(),beforeHash);
+  await f.restart();
+  assert.deepEqual(f.engine.view().phoneMemory.items,before.items);assert.deepEqual(f.engine.view().phoneMemory.suppressedSources,before.suppressedSources);assert.deepEqual(f.engine.view().phoneMemory.suppressedReasons,before.suppressedReasons);assert.equal(rawHash(),beforeHash,'the same-account persisted raw body and qualification remain unchanged');
+  assert.equal(await f.engine.sync(),false);assert.equal(f.engine.view().handover.blockedReason,'mixed-source');
+  assert.equal(f.requests.filter((r:any)=>r.path==='/offline/turns').length,0,'a later reconnect still cannot replay the blocked source or silently discard the live edit');
+});
+
+
+test('HANDOVER-POLICY releases a fully policy-confirmed transfer using the normal fresh derived state',async t=>{
+  const f=await createPhoneHandoverFixture(t);
+  const tea=await f.engine.send('请记住，我喜欢白茶。');await f.engine.extractMemory(tea.conversationId);
+  await f.engine.sync();assert.equal(f.engine.view().phoneMemory.transferred,true);assert.equal(f.engine.view().turns.length,0);
+  const original=f.engine.view().conversations[0].turns[0].messages[0].text;
+  await f.engine.memoryChange('release-authority');
+  assert.equal(f.engine.view().phoneMemory.transferred,false);assert.equal(f.engine.view().phoneMemory.handover,false);assert.ok(f.engine.view().phoneMemory.resumeAfter);
+  assert.deepEqual(f.engine.view().phoneMemory.items,[]);assert.deepEqual(f.engine.view().phoneMemory.suppressedSources,[]);assert.equal(f.engine.view().conversations[0].turns[0].messages[0].text,original);
+});
+
+
+test('HANDOVER-POLICY keeps a frozen blocked packet across unconfirmed release, reload and same-account reconnect',async t=>{
+  const f=await createPhoneHandoverFixture(t);
+  const tea=await f.engine.send('请记住，我喜欢白茶。');await f.engine.extractMemory(tea.conversationId);await f.engine.memoryChange('forget',f.engine.view().phoneMemory.items[0].id);
+  const fruit=await f.engine.send('请记住，我最喜欢的水果是荔枝。');await f.engine.extractMemory(fruit.conversationId);
+  f.setResponseTransform((path:string,_body:any,result:any)=>path==='/offline/turns'?{...result,receipts:result.receipts.map((r:any)=>({...r,memoryPolicy:undefined}))}:result);
+  await assert.rejects(f.engine.sync(),{code:'OFFLINE_RECEIPT_REQUIRED'});
+  const hash=()=>createHash('sha256').update(JSON.stringify(f.engine.view().turns)).digest('hex'),beforeHash=hash(),before=structuredClone(f.engine.view().phoneMemory);
+  assert.ok(f.engine.view().turns.some((row:any)=>row.memoryPolicy?.inference==='blocked'));
+  await f.engine.memoryChange('release-authority');await f.restart();
+  assert.equal(hash(),beforeHash);assert.deepEqual(f.engine.view().phoneMemory.items,before.items);assert.deepEqual(f.engine.view().phoneMemory.suppressedReasons,before.suppressedReasons);
+  assert.equal(f.engine.view().phoneMemory.transferred,false);
+  f.setResponseTransform((_p:any,_b:any,result:any)=>result);await f.engine.sync();
+  assert.equal(f.engine.view().phoneMemory.transferred,true);
+  for(let i=0;i<16;i++)await f.ctx.historyImport.tick();
+  const formed=f.boundaries.map((b:any)=>JSON.stringify(b)).join('');assert.doesNotMatch(formed,/白茶/);assert.match(formed,/荔枝/);
 });

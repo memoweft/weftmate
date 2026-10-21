@@ -572,7 +572,13 @@
       }
       const next={...value,phoneMemory:structuredClone(value.phoneMemory)},state=next.phoneMemory;if(!state||state.transferred&&action!=='release-authority')fail('INVALID_REQUEST');
       if(action==='toggle')state.enabled=!!text;
-      else if(action==='release-authority'){Object.assign(state,globalThis.WeftPhoneMemory.fresh(),{enabled:state.enabled,resumeAfter:Date.now()});next.snapshot=null;next.handover=null;}
+      else if(action==='release-authority'){
+        // Losing the computer is not an acknowledgement. Pending local
+        // understanding and its source exclusions still belong to the phone.
+        if(!state.transferred&&(value.turns.length||value.handover)){state.handover=false;state.resumeAfter=Date.now();}
+        else Object.assign(state,globalThis.WeftPhoneMemory.fresh(),{enabled:state.enabled,resumeAfter:Date.now()});
+        next.snapshot=null;next.handover=null;
+      }
       else if(action==='confirm-handover'){next.handover={...value.handover,awaitingConfirmation:false};}
       else if(action==='forget')await globalThis.WeftPhoneMemory.forget(state,id,crypto);
       else if(action==='pin'){const item=state.items.find(i=>i.id===id);if(item)item.pinned=!item.pinned;}
