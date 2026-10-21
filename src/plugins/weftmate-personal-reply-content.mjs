@@ -62,7 +62,10 @@ export async function apply(ctx) {
         const tool = calls.get(data.message.source?.callId);
         const content = data.message.content.map(part => {
           if (part.type !== 'tool-result') return part;
-          const replacement = modelToolFailure(tool,part, {
+          // Native loop diagnostics are separate from message.content. Carry
+          // only the typed file failure into its bounded model projection.
+          const result = data.error?.name === 'FsError' ? {...part,error:data.error} : part;
+          const replacement = modelToolFailure(tool,result, {
             approvalOutcome: nativeApprovalOutcome(session, data.message.source?.callId, data.turn),
           });
           if (replacement) ctx.logger?.warn?.(`tool failure code=${failureCodes(part)}`);

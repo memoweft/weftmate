@@ -80,6 +80,8 @@ test('offline task read result retains real path absence through production hook
     { returned: true, persisted: true, derived: true }, 'all model-facing channels retain path absence instead of a generic failure');
   for (const [channel, text] of Object.entries(channels)) {
     assert.doesNotMatch(text, /用户.{0,4}拒绝|你已拒绝/, `${channel} does not invent a refusal`);
+    assert.doesNotMatch(text, /FsError|FS_NOT_FOUND|weftmate-offline-fs-context-|\bat .*:\d+:\d+/,
+      `${channel} omits raw diagnostics, temporary paths and stacks`);
   }
 });
 
@@ -94,6 +96,8 @@ test('offline task read result retains line-range failure without treating the s
   for (const [channel, text] of Object.entries(channels)) {
     assert.doesNotMatch(text, /文件不存在|(?:可以|请|直接|应当|建议|尝试).{0,8}(?:新建|创建)|create (?:the |a )?file/i,
       `${channel} must not infer file absence or creation from FS_NOT_FOUND alone`);
+    assert.doesNotMatch(text, /FsError|FS_NOT_FOUND|weftmate-offline-fs-context-|\bat .*:\d+:\d+/,
+      `${channel} omits raw diagnostics, temporary paths and stacks`);
   }
 });
 
@@ -112,5 +116,7 @@ test('typed sandbox denial stays an error and never becomes missing-file creatio
   for (const [channel, text] of Object.entries(channels)) {
     assert.doesNotMatch(text, /文件不存在|可以.{0,8}(?:新建|创建)|必要时换一种办法再试/i,
       `${channel} must not turn a permission failure into recoverable absence or bypass advice`);
+    assert.doesNotMatch(text, /FsError|FS_SANDBOX_DENIED|read-only sandbox/,
+      `${channel} preserves the denial without quoting provider diagnostics`);
   }
 });
