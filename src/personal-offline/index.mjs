@@ -7,7 +7,7 @@ import { durableWrite } from '../personal-access/store.mjs';
 import { hash, publicDeviceKey, sealReplica, taskRecipient } from './crypto.mjs';
 import { createOfflineTaskReceiver } from './tasks.mjs';
 import { createTurnFragments } from './turn-fragments.mjs';
-import { phoneTurnDigest } from '../personal-access/phone-history.mjs';
+import { phoneMemoryPolicy, phoneTurnDigest } from '../personal-access/phone-history.mjs';
 import { memorySnapshot, offlineBoundary, replicaDelta, REPLICA_LIMITS } from './snapshot.mjs';
 
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
@@ -49,7 +49,7 @@ export async function createOfflineService(context) {
     const result = [];
     const cloudProfiles = new Set((await context.backend.listModels()).filter(model => model.sourceKind === 'cloud').map(model => model.id));
     for (const [sessionId, session] of Object.entries(context.accountState(ownerId).sessions).reverse()) {
-      if (hasPrivateContent(session) || session.deleting || session.archived || !cloudProfiles.has(session.modelProfileId)) continue;
+      if (hasPrivateContent(session) || session.phoneHistory || session.deleting || session.archived || !cloudProfiles.has(session.modelProfileId)) continue;
       const page = await context.backend.readEvents({ ownerId, sessionId, limit: 20 }).catch(() => null);
       const currentSession = context.accountState(ownerId).sessions[sessionId];
       if (!currentSession || hasPrivateContent(currentSession)) continue;
@@ -121,7 +121,7 @@ export async function createOfflineService(context) {
           const recentMessages = model?await recent(ownerId):[];
           const taskReferences=body.taskSupport===1?Object.entries(context.accountState(ownerId).sessions).filter(([,s])=>s.origin==='personal-remote'&&!s.archived&&!s.deleting&&!hasPrivateContent(s)).slice(-100).map(([id,s])=>({id,title:s.title||'电脑上的对话',...(s.projectId?{projectId:s.projectId}:{})})):undefined;
           const metadata = { generation, reset: body.generation !== generation, model, recent: recentMessages,
-            memoryAuthority: { ready: context.memoryManager?.enabled === true && context.memoryManager.peek?.(ownerId) === 'connected', hostId: context.rootState.hostId },
+            memoryAuthority: { ready: context.memoryManager?.enabled === true && context.memoryManager.peek?.(ownerId) === 'connected', hostId: context.rootState.hostId, sourcePolicy: 1 },
             phoneImports: (context.historyImport?.list(ownerId).imports??[]).filter(j=>j.app==='phone').map(j=>({id:j.id,handoverId:j.handoverId,state:j.state})),
             taskRecipient:(await recipient()).publicJwk,
             ...(taskReferences?{taskReferences}:{}),
@@ -168,7 +168,9 @@ export async function createOfflineService(context) {
         if(body.turnFragments?.length)await save();
         body.turns.push(...assembled.complete);
         if(body.turns.length>50)throw failure('INVALID_REQUEST');
-        const receipts = forgottenFragments.map(p=>({id:p.id,state:'forgotten'}));
+        const phoneFirst=account.devices[deviceId].phoneFirst===true||handover!==undefined||body.turnFragments!==undefined;
+        // Validate the whole body, including policy and receipt conflicts,
+        // before the legacy path can submit even its first boundary to Core.
         for (const turn of body.turns) {
           if (!turn || !ID.test(turn.id) || !ID.test(turn.conversationId) || !Number.isSafeInteger(turn.timestamp) || turn.timestamp < 0 ||
               !Array.isArray(turn.messages) || turn.messages.length < 1 || turn.messages.length > 2 || turn.messages[0]?.role !== 'user' ||
@@ -178,24 +180,37 @@ export async function createOfflineService(context) {
                 turn.memoryRefs.some(ref => !['cognition', 'entity', 'relationship', 'event'].includes(ref?.kind) ||
                   typeof ref.id !== 'string' || !/^[A-Za-z0-9._:-]{1,512}$/.test(ref.id)))) throw failure('INVALID_REQUEST');
           if (new Set((turn.memoryRefs ?? []).map(ref => `${ref.kind}:${ref.id}`)).size !== (turn.memoryRefs ?? []).length) throw failure('INVALID_REQUEST');
-          if(account.forgottenConversations?.includes(turn.conversationId)){receipts.push({id:turn.id,state:'forgotten'});continue;}
-          const phoneFirst=account.devices[deviceId].phoneFirst===true||!!handover||!!body.turnFragments;
+          if (phoneFirst) {
+            if (turn.memoryPolicy === undefined) throw failure('PHONE_MEMORY_POLICY_REQUIRED',409);
+            turn.memoryPolicy = phoneMemoryPolicy(turn.memoryPolicy);
+          }
+        }
+        const submitted=body.turns.filter(turn=>!account.forgottenConversations?.includes(turn.conversationId));
+        if (phoneFirst) context.phoneHistory.assertReceive(ownerId,submitted);
+        else context.phoneHistory.assertLegacyReceive(ownerId,body.turns);
+        for (const turn of submitted) {
           const receiptId = hash(phoneFirst?`phone:${turn.id}`:`${deviceId}:${turn.id}`), digest = phoneFirst?phoneTurnDigest(turn):hash(turn), prior = account.receipts[receiptId];
           if (prior && prior !== digest && prior !== hash(turn)) throw failure('REQUEST_CONFLICT', 409);
+          if (!prior && !context.memoryManager?.enabled) throw failure('MEMORY_UNAVAILABLE', 503);
+        }
+        const receipts = forgottenFragments.map(p=>({id:p.id,state:'forgotten'}));
+        for (const turn of body.turns) {
+          if(account.forgottenConversations?.includes(turn.conversationId)){receipts.push({id:turn.id,state:'forgotten',...(phoneFirst?{memoryPolicy:turn.memoryPolicy}:{})});continue;}
+          const receiptId = hash(phoneFirst?`phone:${turn.id}`:`${deviceId}:${turn.id}`), digest = phoneFirst?phoneTurnDigest(turn):hash(turn), prior = account.receipts[receiptId];
           if (!prior) {
-            if (!context.memoryManager?.enabled) throw failure('MEMORY_UNAVAILABLE', 503);
             if(!phoneFirst){
               const ingest = await context.memoryManager.ingest(ownerId, offlineBoundary(deviceId, turn), { offline: true });
               if (ingest.state !== 'accepted') throw failure('MEMORY_UNAVAILABLE', 503);
               account.receipts[receiptId] = digest; await save();
             }
           }
-          receipts.push({ id: turn.id, state: 'synced' });
+          receipts.push({ id: turn.id, state: 'synced', ...(phoneFirst?{memoryPolicy:turn.memoryPolicy}:{}) });
         }
-        const submitted=body.turns.filter(turn=>!account.forgottenConversations?.includes(turn.conversationId));
-        if(submitted.length&&(account.devices[deviceId].phoneFirst===true||handover||body.turnFragments)){
+        if(submitted.length&&phoneFirst){
           if(!context.memoryManager?.enabled)throw failure('MEMORY_UNAVAILABLE',503);
-          const mapping=await context.phoneHistory.receive(ownerId,current.device.name||'手机',submitted);
+          // Reject every historic/source-policy conflict before either the
+          // read-only history or the Core import queue receives this packet.
+          const mapping=await context.phoneHistory.receive(ownerId,current.device.name||'手机',submitted,current.deviceId);
           const batch=handover??{id:`legacy-${hash(deviceId+JSON.stringify(submitted.map(t=>t.id))).slice(0,48)}`,totalTurns:submitted.length,conversationCount:new Set(submitted.map(t=>t.conversationId)).size,complete:true};
           const imported=await context.historyImport.receivePhone(ownerId,current.device.name||'手机',submitted,batch);
           for(const turn of submitted){account.receipts[hash(`phone:${turn.id}`)]=phoneTurnDigest(turn);account.phoneOwners??={};

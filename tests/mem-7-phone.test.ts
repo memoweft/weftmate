@@ -19,7 +19,7 @@ import { ACTIVITY_TYPES } from '../src/personal-access/activity-store.mjs';
 import '../src/ui-core/phone-memory.js';
 import '../src/ui-core/offline.js';
 const W=(globalThis as any).WeftOffline,M=(globalThis as any).WeftPhoneMemory;
-const turn=(id:string,c=id,text='我喜欢茉莉花茶')=>({id,conversationId:c,timestamp:Date.UTC(2025,4,1),messages:[{role:'user',text},{role:'assistant',text:'知道了。'}],memoryRefs:[],dependencyComplete:true});
+const turn=(id:string,c=id,text='我喜欢茉莉花茶')=>({id,conversationId:c,timestamp:Date.UTC(2025,4,1),messages:[{role:'user',text},{role:'assistant',text:'知道了。'}],memoryRefs:[],dependencyComplete:true,memoryPolicy:{version:1,inference:'allowed'}});
 const modelGate=()=>{let resolve!:()=>void;const promise=new Promise<void>(done=>resolve=done);return{promise,resolve};};
 
 test('MODEL-1 and MEM-7 keep the submitted chat model during authorization and use a new selection on the next turn',async t=>{
@@ -47,11 +47,11 @@ test('MODEL-1 memory selection stays fixed and MEM-7 computer handover aborts an
  const engine=await W.create({vault,identity:{ownerId:'synthetic',hostId:'host',deviceId:'phone'},crypto:webcrypto,phoneModel:()=>selected,
   accountCheck:async()=>{if(extracting&&!checked){checked=true;checking.resolve();await authorization.promise;}return{};},
   control:async()=>({authorized:true,accountId:'synthetic-account',hostId:'host',generation:1}),
-  host:async(path:string)=>path==='/offline/sync'?{generation:1,reset:false,items:[],remove:[],hashes:{},control:{accountId:'synthetic-account'},memoryAuthority:{ready:true}}:{receipts:[]}});t.after(()=>engine.close());
+  host:async(path:string)=>path==='/offline/sync'?{generation:1,reset:false,items:[],remove:[],hashes:{},control:{accountId:'synthetic-account'},memoryAuthority:{ready:true,sourcePolicy:1}}:{receipts:[]}});t.after(()=>engine.close());
  const sent=await engine.send('我喜欢茉莉花茶');extracting=true;const reading=engine.extractMemory(sent.conversationId);await checking.promise;
  selected={modelId:'synthetic-chat-b',interfaceType:'anthropic'};authorization.resolve();await completing.promise;
  assert.deepEqual(extractionModel,{modelId:'synthetic-chat-a',interfaceType:'openai-compatible'});
- await engine.sync();assert.equal(engine.view().phoneMemory.handover,true);assert.equal(extractionSignal?.aborted,true);
+ await assert.rejects(engine.sync(),{code:'OFFLINE_RECEIPT_REQUIRED'});assert.equal(engine.view().phoneMemory.handover,true);assert.equal(extractionSignal?.aborted,true);
  completion.resolve();assert.equal(await reading,false);assert.equal(engine.view().phoneMemory.items.length,0);assert.equal(engine.view().phoneMemory.processed.length,0);
  assert.equal(await engine.extractMemory(sent.conversationId),false);assert.equal(memoryRequests,1);
  assert.equal(engine.view().conversations[0].turns[0].messages[0].text,'我喜欢茉莉花茶','handover retains the original conversation');
@@ -151,7 +151,7 @@ test('MEM-7 stable receipts, split batches and two phones ingest exactly once th
  const otherAccount=await f.ctx.phoneHistory.receive('b','other-account-phone',[a]);assert.notEqual(otherAccount[0].sessionId,first.receipts[0].sessionId,
    'the same original ID cannot alias another account native history or execution ownership');
  await f.call('/turns',{generation:s.generation,turns:[b],handover:{...handover,complete:true}});await f.settle();assert.equal(f.requests,2);
- assert.equal(f.ctx.historyImport.list('a').imports[0].state,'completed');assert.equal(f.activity.at(-1).title,'已把手机上的 1 段对话整理进记忆');
+ assert.equal(f.ctx.historyImport.list('a').imports[0].state,'completed');assert.equal(f.activity.at(-1).title,'已处理手机上的 1 段对话');
  f.device='phone-b';await f.sync();await f.call('/turns',{generation:s.generation,turns:[a,b],handover:{id:'batch-b',totalTurns:2,conversationCount:1,complete:true}});await f.settle();assert.equal(f.requests,2);
  await assert.rejects(f.call('/turns',{generation:s.generation,turns:[{...a,messages:[{role:'user',text:'改了正文'}]}]}),{code:'REQUEST_CONFLICT'});
  assert.equal(f.ctx.historyImport.list('b').imports.length,0);
@@ -206,7 +206,7 @@ test('MEM-7 encrypted account isolation, retry, no watermark on failed save, rec
  const save=vault.save.bind(vault);vault.save=async(v:any)=>{if(failSave){failSave=false;throw Error('disk');}return save(v);};
  vault.open=async(v:any)=>v;vault.complete=async(body:any)=>{lastBody=body;if(body.max_tokens){requests++;if(fail){fail=false;throw Error('retry');}const source=JSON.parse(body.messages[1].content)['原话'][0];return{choices:[{message:{content:JSON.stringify({upsert:[{id:null,text:'喜欢茉莉花茶',evidence:'茉莉花茶',sourceIDs:[source.id]}],invalidate:[]})}}]};}return{choices:[{message:{content:'合成回答'}}]};};
  const identity={ownerId:'a',hostId:'host',deviceId:'phone'},engine=await W.create({vault,identity,crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),
-  control:async()=>({authorized:true,accountId:'account',hostId:'host',generation:1}),host:async(p:string,b:any)=>p==='/offline/sync'?{generation:1,reset:false,items:[],remove:[],hashes:{},control:{accountId:'account'},memoryAuthority:{ready:true}}:{receipts:(partial?b.turns.slice(0,1):b.turns).map((t:any)=>({id:t.id,state:'synced',sessionId:'phone-history',chatId:'chat-a',importId:'import-a'}))}});
+  control:async()=>({authorized:true,accountId:'account',hostId:'host',generation:1}),host:async(p:string,b:any)=>p==='/offline/sync'?{generation:1,reset:false,items:[],remove:[],hashes:{},control:{accountId:'account'},memoryAuthority:{ready:true,sourcePolicy:1}}:{receipts:(partial?b.turns.slice(0,1):b.turns).map((t:any)=>({id:t.id,state:'synced',sessionId:'phone-history',chatId:'chat-a',importId:'import-a',memoryPolicy:t.memoryPolicy}))}});
  const sent=await engine.send('我喜欢茉莉花茶');await engine.extractMemory(sent.conversationId);assert.equal(engine.view().phoneMemory.items.length,0);
  failSave=true;await engine.extractMemory(sent.conversationId);assert.equal(engine.view().phoneMemory.processed.length,0);await engine.extractMemory(sent.conversationId);assert.equal(engine.view().phoneMemory.items.length,1);
  await engine.send('我的饮品偏好是什么？');assert.match(lastBody.messages[0].content,/喜欢茉莉花茶/);

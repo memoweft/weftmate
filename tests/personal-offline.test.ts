@@ -7,6 +7,7 @@ import os from 'node:os';
 import { webcrypto, randomBytes } from 'node:crypto';
 import { IDBFactory } from 'fake-indexeddb';
 import { createOfflineService } from '../src/personal-offline/index.mjs';
+import { createPhoneHistory } from '../src/personal-access/phone-history.mjs';
 import { sealReplica } from '../src/personal-offline/crypto.mjs';
 import { openTask } from '../src/personal-offline/crypto.mjs';
 import { memorySnapshot, replicaDelta, offlineBoundary } from '../src/personal-offline/snapshot.mjs';
@@ -34,6 +35,7 @@ async function fixture(t: any) {
     memoryManager: { enabled: true, query: async (_: any, _method: any, input: any) => ({ world_revision: generation, ...(input.operation === 'list' ? { items } : {}) }),
       ingest: async (_: any, boundary: any) => { assert.ok(boundary.source_messages.every((m: any) => ['user', 'assistant'].includes(m.role))); accepted.push(boundary); return { state: 'accepted' }; }, discardOfflinePending: async () => {} },
     readJson: (request: any) => request.body, json: (_response: any, _status: any, value: any) => value };
+  context.phoneHistory = createPhoneHistory(context, context.backend);
   const service = await createOfflineService(context);
   t.after(() => service.close());
   const host = (route: string, body: any) => service.handle({ method: 'POST', body }, {}, new URL('http://127.0.0.1/personal/v1' + route), identity.ownerId);

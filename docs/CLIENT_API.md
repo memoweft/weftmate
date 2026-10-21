@@ -1862,19 +1862,23 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 
 沿3.19的两个精确路径与原认证／CSRF（跨站请求防护）／物理设备／删除代次，不新增权限。`phoneFirst:true` 接收公钥与对话，不依赖可下发的云模型；允许 `model:null`，后台整理使用电脑自己的后台模型。本机模型也可用。旧请求不声明phoneFirst／任务能力且没有云模型时仍返回 `OFFLINE_MODEL_REQUIRED`；新字段只兼容增加。
 
-`/offline/sync` 的加密内容兼容增加 `memoryAuthority:{ready:boolean,hostId}`，表示当前同账号电脑的真实记忆核心是否已就绪；核心尚未启用／尚未就绪不能虚构true。`phoneImports:[{id,handoverId?,state}]` 是该账号手机导入进度，状态沿MEM-1并增加 `receiving / awaiting_confirmation`（接收中／等确认）。手机只从成功的账号目录且hosts为空认定电脑被移除，网络失败不算。信号从现有副本回执提供，不造另一条设备发现机制。
+`/offline/sync` 的加密内容兼容增加 `memoryAuthority:{ready:boolean,hostId,sourcePolicy?:1}`，表示当前同账号电脑的真实记忆核心是否已就绪；`sourcePolicy:1` 表示电脑支持手机来源的逐轮形成资格。核心尚未启用／尚未就绪不能虚构 `ready:true`，不支持来源资格的电脑也不能虚构 `sourcePolicy:1`。`phoneImports:[{id,handoverId?,state}]` 是该账号手机导入进度，状态沿MEM-1并增加 `receiving / awaiting_confirmation`（接收中／等确认）。手机只从成功的账号目录且hosts为空认定电脑被移除，网络失败不算。信号从现有副本回执提供，不造另一条设备发现机制。
 
-`/offline/turns` 可增加 `handover:{id,totalTurns,conversationCount,bytes?,complete}`，每包仍最多50轮／256 KiB，最后包complete为true。id是手机持久冻结队列的随机批次标识；totalTurns是整批轮数，bytes是冻结turns的JSON（数据交换格式）UTF-8字节数。没有此字段的旧手机仍可接收；phoneFirst登记的旧轮次进入同一导入管线，按本次完整请求建批次。新客户端400／INVALID_REQUEST时可退回一次原字段形状；认证／权限失败不回退。
+`/offline/turns` 可增加 `handover:{id,totalTurns,conversationCount,bytes?,complete}`，每包仍最多50轮／256 KiB，最后包complete为true。id是手机持久冻结队列的随机批次标识；totalTurns是整批轮数，bytes是冻结turns的JSON（数据交换格式）UTF-8字节数。旧手机仍可读取和保留本地历史；进入phoneFirst导入的轮次必须带下述 `memoryPolicy`，缺少时服务端返回409 `PHONE_MEMORY_POLICY_REQUIRED`，不退回无策略导入。phoneFirst登记的旧轮次进入同一导入管线，按本次完整请求建批次。新客户端400／INVALID_REQUEST时不得因策略字段缺失退回原字段形状；认证／权限失败不回退。
 
-回执兼容增加 `receipts:[{id,state:"synced",sessionId?,chatId?,importId?,memoryState?}]`。synced只在原文历史与MEM-1任务均持久保存后发出，表示已接收而非已形成；重发相同轮次／正文返回稳定历史标识，同账号同轮次ID跨手机去重，正文变化409。phoneFirst和新交接队列的去重不依赖Cookie（会话凭据）续期。普通M3-A电脑副本离线轮次保持原摄取／依赖处理。手机全回执后清轻量条目、水位与屏蔽摘要；未确认或部分确认继续使用条目，原对话保留。真实形成状态由imports取得。
+回执兼容增加 `receipts:[{id,state:"synced",sessionId?,chatId?,importId?,memoryState?,memoryPolicy?}]`。手机来源的每个完整 `turn` 必须带 `memoryPolicy`：允许形成时为 `{version:1,inference:"allowed"}`；已明确遗忘、编辑抑制或其他已记录禁止来源时为 `{version:1,inference:"blocked",reason:"forgotten"|"edited"|"suppressed"|"forget-request"}`。策略随完整轮次进入每个分片的身份与 SHA-256（安全哈希）资格摘要；同一轮重试、重启和分片重组不得重算成另一策略。电脑回执必须回显相同策略；原文历史已持久保存不等于策略已接受，手机在收到匹配回执前不清屏蔽状态。
 
-电脑复用MEM-1的导入任务／后台模型调度／来源回执／暂停继续／取消／整批忘掉，不另设形成接口。来源 `importSource` / `importSources` 的app为phone、appName为「手机上的对话」，兼容增加deviceName、turnId，保留原日期。手机历史加入现有sessions/chats列表，`phoneHistory:true,readOnly:true,source:"phone"`，可查看、搜索、复制、引用和导出；不冒充可直接发送的原生电脑会话，不提供开旁聊入口，不能在原历史内续聊或重新生成。旧会话事件投影的 `data.phoneEventId` 保留同一个稳定时间线标识，供旧端兼容的来源引用使用；当前界面不再将该字段接到开旁聊动作，标识仍按账号隔离。
+`synced` 只表示原文历史与MEM-1任务均持久保存，表示接收而非记忆已形成；`processed` 只计 Core 处理完成且未因来源资格跳过的轮次（包括未新增记忆的 `no_change`，不是新记忆条目数），`skipped` 只计首次跳过的禁止来源，`total`／`received` 只计独特轮次，重复包不增加计数。禁止来源仍保留只读历史，不进入 Core（记忆核心）形成或近期记忆背景。重发相同轮次／正文／策略返回稳定历史标识；正文或策略变化409。phoneFirst和新交接队列的去重不依赖Cookie（会话凭据）续期。普通M3-A电脑副本离线轮次保持原摄取／依赖处理。
+
+电脑先持久保存来源策略，再排入导入；来源资格接口不另设新端点。旧电脑不支持 `sourcePolicy:1` 时，手机保留交接队列并提示更新电脑；旧手机提交phoneFirst轮次但缺少 `memoryPolicy` 时，服务端返回409 `PHONE_MEMORY_POLICY_REQUIRED`，不得静默按旧协议导入。对已持久接收的手机来源，随后重新登记为普通离线副本也不能绕过资格：旧副本入口拒绝已知手机来源或携带 `memoryPolicy` 的提交，普通未知的 M3-A 轮次不变。手机全回执且策略已接受后才清轻量条目、水位与屏蔽摘要；未确认或部分确认继续使用条目，原对话保留。真实形成状态由imports取得。升级后尚未处理、缺少来源策略的旧手机导入同样保留历史并暂停；不会扫描或清理已形成的旧事实。
+
+电脑复用MEM-1的导入任务／后台模型调度／来源回执／暂停继续／取消／整批忘掉，不另设形成接口。来源 `importSource` / `importSources` 的app为phone、appName为「手机上的对话」，兼容增加deviceName、turnId，保留原日期。禁止来源不能因再次导入而复活；若手机仍有一个依赖禁止来源的唯一轻量理解，手机保持 `handover pending`，不传递或清掉该理解，也不宣称完整迁移；混合来源的分句拆分暂不支持，保守保留原文并报告未完成。交接开始后新增编辑或遗忘会暂停后续提交并拒绝成功确认；已经送出的请求不可撤回，用户需到电脑现有记忆页核对，客户端不替电脑清理既有 Core 历史。手机历史加入现有sessions/chats列表，`phoneHistory:true,readOnly:true,source:"phone"`，可查看、搜索、复制、引用和导出；不冒充可直接发送的原生电脑会话，不提供开旁聊入口，不能在原历史内续聊或重新生成。旧会话事件投影的 `data.phoneEventId` 保留同一个稳定时间线标识，供旧端兼容的来源引用使用；当前界面不再将该字段接到开旁聊动作，标识仍按账号隔离。
 
 达到100轮或256 KiB等待确认；小量静默整理。导入记录增加deviceName、handoverId、from/to、conversationCount、received、expectedTurns、estimate、confirmationRequired。沿 `/memory/backfill` 增加 `action:"import-confirm",jobId,confirm:true`；确认后进入原running，可用原import-pause／resume。预计模型、输入／输出词元与费用区间沿MEM-1，默认后台模型变动前重新估算。完成时动态静默记录「已把手机上的N段对话整理进记忆」，等待确认时动态指向设置→记忆。整批忘掉不删除手机原文。
 
 **超长历史分片**：普通turns单条消息仍最多16,384 UTF-16字符。新客户端可用同路径请求 `{generation,turns:[],turnFragments:[{id,conversationId,timestamp,index,count,encoding:"json-utf8-base64",sha256,data}],handover?}`。先冻结完整原turn对象，将其JSON UTF-8字节按96,000字节切块；data为标准有填充Base64（编码），sha256是完整原turn字节的小写64位十六进制摘要。index从0开始，count固定；身份、原对话、时间、分片总数和摘要在所有分片一致。每包依旧256 KiB以内，不裁用户消息或助手回复。
 
-分片持久后回 `fragmentReceipts:[{id,index,state:"received"}]`，不能当整轮synced。全部分片重组／摘要与原身份匹配／历史及导入任务落盘后，才带原receipts的synced和稳定标识；重发最后分片不会重复形成。分片在私有电脑内容目录持久保存，重启可继续；完成后移除分片正文，删除／撤权代次变化清未完成分片。不同正文或分片描述复用标识409，旧手机无需理解新增字段。
+分片持久后回 `fragmentReceipts:[{id,index,state:"received"}]`，不能当整轮synced。全部分片重组／摘要与原身份匹配／历史及导入任务落盘后，才带原receipts的synced和稳定标识；重发最后分片不会重复形成。分片在私有电脑内容目录持久保存，重启可继续；完成后移除分片正文，删除／撤权代次变化清未完成分片。不同正文或分片描述复用标识409，旧手机可读取历史分片扩展，但没有来源策略的 phoneFirst 提交仍按上述升级边界拒绝。
 
 **手机发起删除**：同路径可带 `{generation,turns:[],forgetConversations:[原conversationId]}`（每次最多50个）。仅提交过或部分提交过该对话的受信物理手机可请求；电脑先持久登记墓碑并禁止重交，再用MEM-1来源遗忘任务清原来源／派生记忆和电脑历史，推进原清理代次。回 `{generation:新代次,receipts:[],forgottenConversations:[id]}` 只表示删除请求持久接受，真正清完的导入记录才为forgotten。客户端更新代次、重新取副本；未交独立原对话不受派生删除影响。重发被删对话的轮次回state:forgotten，不能复活来源。
 

@@ -176,7 +176,7 @@
     value.phoneMemory??=globalThis.WeftPhoneMemory?.fresh();value.forgetConversations??=[];
     if(value.phoneMemory){
       const memory=value.phoneMemory,sources=new Map(value.conversations.flatMap(c=>c.turns).map(t=>[t.id,t.timestamp]));
-      memory.suppressedAt??={};for(const hash of memory.suppressedText)memory.suppressedAt[hash]??=Date.now();
+      memory.suppressedReasons??={};memory.suppressedAt??={};for(const hash of memory.suppressedText)memory.suppressedAt[hash]??=Date.now();
       for(const item of memory.items)if(item.sourceTimestamp===undefined){const dates=(item.sourceIDs||[]).map(id=>sources.get(id)).filter(t=>typeof t==='number');item.sourceTimestamp=dates.length?Math.max(...dates):item.updatedAt;}
     }
     let memoryFlight,memoryEpoch=0,memoryAbort,closed=false,writes=Promise.resolve();
@@ -184,6 +184,13 @@
     if(value.snapshot)targets=await vault.targets?.(value.snapshot.control.accountId)||[value.snapshot];
     const view = () => ({ ...value, targets, sendingConversationId, activeConversationId, queueError, queueRetryAvailable:!!queueError&&value.pendingMessages.length>0, ready:phoneModel?!!phoneModel():!!value.snapshot, chatReady:phoneModel?!!phoneModel():!!value.snapshot?.model,taskReady:cloudTasksSupported&&!!tasks&&!!vault.seal&&!!value.snapshot?.taskRecipient, taskSending, running:running||taskSending||!!queueFlight });
     const persist = () => write(async () => { await vault.save(value); notify(view()); });
+    async function restrictHandover(reason) {
+      value.handover??={id:crypto.randomUUID(),totalTurns:value.turns.length,conversationCount:new Set(value.turns.map(t=>t.conversationId)).size,bytes:utf8(JSON.stringify(value.turns)).byteLength,awaitingConfirmation:false};
+      value.handover.blockedReason=reason;await persist();
+    }
+    async function stopMemoryChangeDuringHandover() {
+      await restrictHandover('memory-change');fail('MEMORY_HANDOVER_PENDING');
+    }
     async function clear() { const accountId=value.snapshot?.control?.accountId;version++;memoryEpoch++;memoryAbort?.abort();cloudTasksSupported=false; abort?.abort(); value = {...empty(),pendingMessages:[]};targets=[];await write(async()=>{await vault.clearAccount?.(accountId);await vault.clear();}); notify(view()); }
     async function clearReplica() {
       if(!phoneModel)return clear();
@@ -192,7 +199,7 @@
       value.turns=value.turns.filter(t=>!derived.has(t.conversationId)&&!(t.memoryRefs?.length));
       value.conversations=value.conversations.filter(c=>!derived.has(c.id));
       value.snapshot=null;value.tasks=[];value.fragmentProgress={};
-      if(value.phoneMemory){value.phoneMemory.items=[];value.phoneMemory.processed=[];value.phoneMemory.suppressedSources=[];value.phoneMemory.suppressedText=[];value.phoneMemory.suppressedAt={};}
+      if(value.phoneMemory){value.phoneMemory.items=[];value.phoneMemory.processed=[];value.phoneMemory.suppressedSources=[];value.phoneMemory.suppressedReasons={};value.phoneMemory.suppressedText=[];value.phoneMemory.suppressedAt={};}
       await persist();
     }
     async function check() {
@@ -210,6 +217,7 @@
     }
     async function sync() {
       if (running) return false;
+      if(value.handover?.blockedReason==='memory-change')return false;
       const ticket = version;
       const body={publicJwk:await vault.key(),generation:value.snapshot?.generation??0,hashes:value.snapshot?.hashes??{},...(phoneModel&&hostCapabilities().offlinePhoneFirst===1?{phoneFirst:true}:{})};
       let envelope;
@@ -238,6 +246,22 @@
       if(phoneModel&&delta.memoryAuthority?.ready===false)return false;
       if (value.turns.length) {
         const importsSupported=!!delta.memoryAuthority || Array.isArray(delta.phoneImports);
+        if(phoneModel){
+          if(value.handover?.blockedReason==='memory-change')return false;
+          if(delta.memoryAuthority?.sourcePolicy!==1){await restrictHandover('computer-update');fail('COMPUTER_UPDATE_REQUIRED');}
+          const blocked=new Set(value.phoneMemory?.suppressedSources||[]);
+          if(value.phoneMemory?.items.some(i=>(i.sourceIDs||[]).some(id=>blocked.has(id)))){await restrictHandover('mixed-source');return false;}
+          if(value.handover)delete value.handover.blockedReason;
+          // Freeze qualification with the original body before the first packet.
+          // Retries/fragments must keep the exact same source qualification.
+          for(const turn of value.turns){
+            turn.memoryPolicy??=blocked.has(turn.id)?{version:1,inference:'blocked',reason:value.phoneMemory.suppressedReasons?.[turn.id]||'suppressed'}:{version:1,inference:'allowed'};
+            const original=value.conversations.find(c=>c.id===turn.conversationId)?.turns.find(t=>t.id===turn.id);
+            if(original)original.memoryPolicy=turn.memoryPolicy;
+          }
+          await persist();
+          if(value.handover?.blockedReason==='memory-change')return false;
+        }
         if(phoneModel&&importsSupported&&!value.handover){const bytes=utf8(JSON.stringify(value.turns)).byteLength;value.handover={id:crypto.randomUUID(),totalTurns:value.turns.length,conversationCount:new Set(value.turns.map(t=>t.conversationId)).size,bytes,awaitingConfirmation:value.turns.length>=100||bytes>=256*1024};await persist();}
         if(importsSupported&&value.handover?.awaitingConfirmation)return false;
         const wireTurn = ({workRequest, ...turn}) => turn;
@@ -252,15 +276,28 @@
         const last=turnFragments?turnFragments[0].index===turnFragments[0].count-1&&value.turns.length===1:batch.length===value.turns.length;
         const body={generation:delta.generation,turns:batch,...(turnFragments?{turnFragments}:{}),
           ...(importsSupported&&value.handover?{handover:{id:value.handover.id,totalTurns:value.handover.totalTurns,conversationCount:value.handover.conversationCount,bytes:value.handover.bytes,complete:last}}:{})};
+        // The digest and durable batch freeze above can yield to a new user
+        // instruction. Never send an as-yet-unsubmitted packet after a pause.
+        if(ticket!==version||closed||value.handover?.blockedReason||phoneModel&&!value.phoneMemory?.handover)return false;
         let result;
         try{result=await host('/offline/turns',body);}
-        catch(error){if((error.code||error.message)!=='INVALID_REQUEST'||turnFragments||!value.handover)throw error;
+        catch(error){if(phoneModel||(error.code||error.message)!=='INVALID_REQUEST'||turnFragments||!value.handover)throw error;
           result=await host('/offline/turns',{generation:delta.generation,turns:batch});}
+        if (ticket !== version||closed) return false;
+        const acceptedPolicy=r=>{if(!phoneModel)return true;const expected=value.turns.find(t=>t.id===r.id)?.memoryPolicy,p=r.memoryPolicy;return !!expected&&!!p&&p.version===expected.version&&p.inference===expected.inference&&p.reason===expected.reason&&Object.keys(p).length===Object.keys(expected).length;};
+        const unconfirmed=phoneModel&&(result.receipts.some(r=>['synced','forgotten'].includes(r.state)&&!acceptedPolicy(r))||batch.length&&!batch.some(t=>result.receipts.some(r=>r.id===t.id&&['synced','forgotten'].includes(r.state)&&acceptedPolicy(r))));
+        const finalFragment=turnFragments?.[0],finalUnconfirmed=finalFragment&&finalFragment.index===finalFragment.count-1&&!result.receipts.some(r=>r.id===finalFragment.id&&['synced','forgotten'].includes(r.state)&&acceptedPolicy(r));
+        if(unconfirmed||finalUnconfirmed){
+          // A server may have accepted the turn and removed its fragment cache.
+          // Replay the complete frozen turn rather than an out-of-range cursor
+          // or only the last fragment against an empty receiver cache.
+          if(finalFragment){value.fragmentProgress??={};value.fragmentProgress[finalFragment.id]=0;}
+          await restrictHandover('policy-unconfirmed');fail('OFFLINE_RECEIPT_REQUIRED');
+        }
         if(turnFragments){const fragment=turnFragments[0];if(result.fragmentReceipts?.some(r=>r.id===fragment.id&&r.index===fragment.index&&r.state==='received')){
           value.fragmentProgress??={};value.fragmentProgress[fragment.id]=fragment.index+1;}
-          else if(!result.receipts.some(r=>r.id===fragment.id&&r.state==='synced'))fail('OFFLINE_RECEIPT_REQUIRED');}
-        if (ticket !== version) return false;
-      const synced = new Set(result.receipts.filter(r=>r.state==='synced'||r.state==='forgotten').map(r => r.id));
+          else if(!result.receipts.some(r=>r.id===fragment.id&&['synced','forgotten'].includes(r.state)))fail('OFFLINE_RECEIPT_REQUIRED');}
+      const synced = new Set(result.receipts.filter(r=>(r.state==='synced'||r.state==='forgotten')&&acceptedPolicy(r)).map(r => r.id));
         value.turns = value.turns.filter(t => !synced.has(t.id));for(const id of synced)if(value.fragmentProgress)delete value.fragmentProgress[id];
         for (const conversation of value.conversations) for (const turn of conversation.turns) if (synced.has(turn.id)) {
           const receipt=result.receipts.find(r=>r.id===turn.id);turn.synced=true;
@@ -269,8 +306,8 @@
         if(value.handover)value.handover.importId=result.receipts.find(r=>r.importId)?.importId||value.handover.importId;
         await persist();
       }
-      if(value.phoneMemory?.handover&&!value.turns.length&&value.conversations.every(c=>!c.turns.length||c.turns.every(t=>t.synced))){
-        value.phoneMemory.items=[];value.phoneMemory.processed=[];value.phoneMemory.suppressedSources=[];value.phoneMemory.suppressedText=[];value.phoneMemory.suppressedAt={};value.phoneMemory.transferred=true;await persist();
+      if(value.phoneMemory?.handover&&!value.handover?.blockedReason&&!value.turns.length&&value.conversations.every(c=>!c.turns.length||c.turns.every(t=>t.synced))){
+        value.phoneMemory.items=[];value.phoneMemory.processed=[];value.phoneMemory.suppressedSources=[];value.phoneMemory.suppressedReasons={};value.phoneMemory.suppressedText=[];value.phoneMemory.suppressedAt={};value.phoneMemory.transferred=true;await persist();
       }
       return true;
     }
@@ -400,6 +437,7 @@
     async function send(text, conversationId = null, pendingId = null) {
       if(!value.snapshot?.model&&!phoneModel)fail('OFFLINE_MODEL_REQUIRED');
       if (running || taskSending || typeof text !== 'string' || !text.trim() || text.length > 16384) fail('INVALID_REQUEST');
+      if(value.phoneMemory?.handover&&!value.phoneMemory.transferred&&globalThis.WeftPhoneMemory?.forgetCandidate(text))return stopMemoryChangeDuringHandover();
       // Capture this submitted turn before authorization awaits; later menu choices affect the next turn.
       const submittedPhoneModel = phoneModel?.();
       const previous=value.conversations.find(c=>c.id===value.turns.at(-1)?.conversationId);
@@ -456,6 +494,7 @@
           if(ids){
             const memory=structuredClone(value.phoneMemory);
             for(const id of ids)await globalThis.WeftPhoneMemory.forget(memory,id,crypto);
+            turn.memoryPolicy={version:1,inference:'blocked',reason:'forget-request'};
             memory.processed=[...new Set([...memory.processed,turn.id])];
             if(ticket!==version||epoch!==memoryEpoch||abort.signal.aborted)fail('OFFLINE_RESET_REQUIRED');
             const content=ids.length?'已经忘掉这项记忆，聊天原话仍保留。':'没有找到对应的手机记忆，没有删除其他内容。';
@@ -518,16 +557,21 @@
       }catch{return false;}finally{memoryFlight=null;}})();return memoryFlight;
     }
     async function memoryChange(action,id,text){
+      if(value.phoneMemory?.handover&&!value.phoneMemory.transferred&&!['release-authority','confirm-handover'].includes(action))return stopMemoryChangeDuringHandover();
       const ticket=version;
       memoryEpoch++;memoryAbort?.abort();
       return write(async()=>{
+      if(value.phoneMemory?.handover&&!value.phoneMemory.transferred&&!['release-authority','confirm-handover'].includes(action)){
+        value.handover??={id:crypto.randomUUID(),totalTurns:value.turns.length,conversationCount:new Set(value.turns.map(t=>t.conversationId)).size,bytes:utf8(JSON.stringify(value.turns)).byteLength,awaitingConfirmation:false};
+        value.handover.blockedReason='memory-change';await vault.save(value);notify(view());fail('MEMORY_HANDOVER_PENDING');
+      }
       const next={...value,phoneMemory:structuredClone(value.phoneMemory)},state=next.phoneMemory;if(!state||state.transferred&&action!=='release-authority')fail('INVALID_REQUEST');
       if(action==='toggle')state.enabled=!!text;
       else if(action==='release-authority'){Object.assign(state,globalThis.WeftPhoneMemory.fresh(),{enabled:state.enabled,resumeAfter:Date.now()});next.snapshot=null;next.handover=null;}
       else if(action==='confirm-handover'){next.handover={...value.handover,awaitingConfirmation:false};}
       else if(action==='forget')await globalThis.WeftPhoneMemory.forget(state,id,crypto);
       else if(action==='pin'){const item=state.items.find(i=>i.id===id);if(item)item.pinned=!item.pinned;}
-      else if(action==='forget-all'){for(const item of [...state.items])await globalThis.WeftPhoneMemory.forget(state,item.id,crypto);state.suppressedSources=[...new Set([...state.suppressedSources,...value.conversations.flatMap(c=>c.turns.map(t=>t.id))])];}
+      else if(action==='forget-all'){for(const item of [...state.items])await globalThis.WeftPhoneMemory.forget(state,item.id,crypto);state.suppressedSources=[...new Set([...state.suppressedSources,...value.conversations.flatMap(c=>c.turns.map(t=>t.id))])];state.suppressedReasons??={};for(const source of state.suppressedSources)state.suppressedReasons[source]='forgotten';}
       else await globalThis.WeftPhoneMemory.edit(state,id,text,crypto);
       if(closed||ticket!==version)fail('OFFLINE_RESET_REQUIRED');
       await vault.save(next);if(closed||ticket!==version)fail('OFFLINE_RESET_REQUIRED');

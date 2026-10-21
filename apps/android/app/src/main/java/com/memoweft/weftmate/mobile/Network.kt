@@ -54,7 +54,8 @@ internal fun validBusinessPath(path: String): Boolean {
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/library(/[A-Za-z0-9_-]{1,128}(/preview)?)?"))) return true
     if (query.isEmpty() && route == "/personal/v1/commands") return true
     // MEM-7 keeps reception, stable receipts and phone erasure on these exact paths.
-    if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true
+    // Source policy travels in the existing POST body, never an identity/query override.
+    if (query.isEmpty() && route in setOf("/personal/v1/offline/sync", "/personal/v1/offline/turns")) return true
     if (query.isEmpty() && (route == "/personal/v1/status" || route == "/personal/v1/commands" ||
         route.matches(Regex("/personal/v1/commands/[A-Za-z0-9_-]{1,128}")) ||
         route.matches(Regex("/personal/v1/chats/(main|[A-Za-z0-9_-]{1,128})")))) return true

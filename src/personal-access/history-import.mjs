@@ -4,7 +4,7 @@ import { defaultUsagePrice, usageCost } from './usage.mjs';
 import { currentChatProfile } from '../background-model-selection.mjs';
 import { failure } from './common.mjs';
 import { MAX_BODY } from './constants.mjs';
-import { phoneTurnKey } from './phone-history.mjs';
+import { phoneMemoryPolicy, phoneTurnKey } from './phone-history.mjs';
 
 export const PHONE_AUTO_LIMIT = Object.freeze({ turns:100,bytes:256*1024 });
 export function phoneNeedsConfirmation(count, bytes) {
@@ -71,8 +71,8 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       cost: unpricedRequests ? null : records.reduce((n, r) => n + (r.cost ?? 0), 0), unpricedRequests, unknownRequests: records.filter(r => !r.tokens).length };
   };
   const publicJob = (ownerId, job) => ({ id: job.id, app: job.app, appName: importApps[job.app], createdAt: job.createdAt,
-    state: job.state, total: job.items.length, processed: job.items.filter(i => i.done).length,
-    memoryCount: job.memoryCount ?? 0, skipped: job.skipped, error: job.error ?? null,
+    state: job.state, total: job.items.length, processed: job.app === 'phone' ? job.items.filter(i => i.done && !i.blocked).length : job.items.filter(i => i.done).length,
+    memoryCount: job.memoryCount ?? 0, skipped: job.app === 'phone' ? job.items.filter(i => i.blocked).length : job.skipped, error: job.error ?? null,
     waitingForChat: job.waitingForChat ?? false, usage: stats(ownerId, job),
     ...(job.app === 'phone' ? { deviceName: job.deviceName, handoverId: job.handoverId, from: job.from, to: job.to,
       conversationCount: new Set(job.items.map(i => i.id)).size, estimate: job.estimate,
@@ -212,18 +212,42 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       return;
     }
     if (job.countPending) await refreshCount(ownerId, job.id);
-    const selectedModel = await modelFor(ownerId);
-    if (!selectedModel || selectedModel.id !== job.estimate.profileId) {
-      await save(ownerId, records => { const j=records.find(j=>j.id===job.id);if(j.state!=='running')return;
-        if(j.app==='phone'){j.state='awaiting_confirmation';j.confirmationRequired=true;j.estimate=estimateImport(j.items.filter(i=>!i.done),selectedModel,context.usage.settings(ownerId).prices[selectedModel?.id]??defaultUsagePrice(selectedModel));j.error='后台模型已改变，请查看新的预计用量后继续。';}
-        else {j.state='paused';j.error='后台模型已改变，请取消这次导入，重新选择文件查看用量后开始。';} });
-      return;
-    }
     const item = job.items.find(i => !i.done && !i.deleted);
     if (!item) {
       await save(ownerId, records => { const j=records.find(j=>j.id===job.id);if(j.state==='running')j.state = 'completed'; });
-      if(job.app==='phone')await context.activity?.record(ownerId,{key:`phone-import:${job.id}:completed`,type:'memory.submission.completed',
-        title:`已把手机上的 ${new Set(job.items.filter(i=>!i.deleted).map(i=>i.id)).size} 段对话整理进记忆`,summary:'原对话仍可查看。',level:'silent'});
+      if(job.app==='phone') {
+        const formed=new Set(job.items.filter(i=>!i.deleted&&!i.blocked).map(i=>i.id)).size,blocked=job.items.filter(i=>i.blocked).length;
+        await context.activity?.record(ownerId,{key:`phone-import:${job.id}:completed`,type:'memory.submission.completed',
+          title:blocked?`已处理手机上的 ${formed} 段对话；跳过 ${blocked} 个不再整理的来源`:`已处理手机上的 ${formed} 段对话`,
+          summary:blocked?'原对话仍可查看；这些来源未再次形成记忆。':'原对话仍可查看。',level:'silent'});
+      }
+      return;
+    }
+    // The original phone turn is the authority for this decision. Job data is
+    // only a durable queue reference: reread the source before every attempt.
+    if (job.app === 'phone') {
+      const source=context.phoneHistory.read(ownerId,item.key), policy=source.memoryPolicy === undefined ? null : phoneMemoryPolicy(source.memoryPolicy);
+      if (!policy) {
+        await save(ownerId,records=>{const j=records.find(j=>j.id===job.id);if(j?.state==='running'){j.state='paused';j.error='手机来源缺少交接资格，未整理。';j.failureCode='PHONE_MEMORY_POLICY_REQUIRED';}});
+        return;
+      }
+      if (policy.inference === 'blocked') {
+        // A pending Core receipt was already sent under a prior policy. It is
+        // neither skipped nor migrated until the authorised cleanup path wins.
+        if (item.receipts.length) {
+          await save(ownerId,records=>{const j=records.find(j=>j.id===job.id);if(j?.state==='running'){j.state='paused';j.error='手机来源已不应再次整理；此前提交正在等待已授权清理。';j.failureCode='PHONE_MEMORY_POLICY_CHANGED';}});
+          return;
+        }
+        await save(ownerId,records=>{const j=records.find(j=>j.id===job.id),i=j?.items.find(i=>i.key===item.key);if(!i||j?.state!=='running')return;
+          i.blocked=true;i.done=true;i.cursor=i.chunks;j.failures=0;j.error=null;});
+        return;
+      }
+    }
+    const selectedModel = await modelFor(ownerId);
+    if (!selectedModel || selectedModel.id !== job.estimate.profileId) {
+      await save(ownerId, records => { const j=records.find(j=>j.id===job.id);if(j.state!=='running')return;
+        if(j.app==='phone'){j.state='awaiting_confirmation';j.confirmationRequired=true;j.estimate=estimateImport(j.items.filter(i=>!i.done&&!i.blocked),selectedModel,context.usage.settings(ownerId).prices[selectedModel?.id]??defaultUsagePrice(selectedModel));j.error='后台模型已改变，请查看新的预计用量后继续。';}
+        else {j.state='paused';j.error='后台模型已改变，请取消这次导入，重新选择文件查看用量后开始。';} });
       return;
     }
     // Chat has priority even before Core acceptance; the native scheduler also preempts formation.
@@ -293,6 +317,11 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
     const ledger = await context.memoryManager.query(ownerId, 'query_jobs', { operation: 'list' });
     const completed = new Map((ledger.jobs ?? []).filter(j => terminal(j.worker?.state)).map(j => [j.acceptance?.boundary_event_id, j]));
     if (!job.items.some(i => i.receipts.some(r => !r.done && completed.has(r.eventId)))) return;
+    const noLongerEligible = new Set();
+    if (job.app === 'phone') for (const item of job.items) if (item.receipts.some(r => !r.done && completed.has(r.eventId))) {
+      const source=context.phoneHistory.read(ownerId,item.key), policy=source.memoryPolicy === undefined ? null : phoneMemoryPolicy(source.memoryPolicy);
+      if (!policy || policy.inference === 'blocked') noLongerEligible.add(item.key);
+    }
     let changed = false;
     await save(ownerId, records => {
       const current = records.find(j => j.id === job.id);
@@ -300,6 +329,10 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       for (const item of current.items) for (const receipt of item.receipts.filter(r => !r.done)) {
         const accepted = completed.get(receipt.eventId);
         if (!accepted) continue;
+        if (noLongerEligible.has(item.key)) {
+          current.state='paused';current.error='手机来源已不应再次整理；此前提交正在等待已授权清理。';current.failureCode='PHONE_MEMORY_POLICY_CHANGED';
+          continue;
+        }
         receipt.evidenceIds = accepted.acceptance.evidence_ids ?? receipt.evidenceIds;
         receipt.done = true; item.cursor++; item.done = item.cursor >= item.chunks; current.countPending = true; changed = true;
       }
@@ -338,21 +371,24 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
   async function receivePhone(ownerId, deviceName, turns, handover) {
     const model=await modelFor(ownerId), items=turns.map(turn=>{const c=context.phoneHistory.read(ownerId,phoneTurnKey(turn));return {
       key:phoneTurnKey(turn),id:turn.conversationId,turnId:turn.id,at:c.at,until:c.until,characters:c.characters,bytes:Buffer.byteLength(JSON.stringify(turn)),
-      chunks:importChunks(c).length,cursor:0,done:false,receipts:[] };});
+      chunks:importChunks(c).length,cursor:0,done:false,receipts:[],memoryPolicy:c.memoryPolicy === undefined ? null : phoneMemoryPolicy(c.memoryPolicy) };});
     let jobId;
     await save(ownerId,records=>{
       const seen=new Set(records.filter(j=>j.app==='phone').flatMap(j=>j.items.map(i=>i.key)));
       let job=records.find(j=>j.app==='phone'&&j.handoverId===handover.id);
       if (!job) { const id=randomUUID();job={id,routeId:`import-${id}`,app:'phone',deviceName,handoverId:handover.id,
-        expectedTurns:handover.totalTurns,createdAt:now(),state:'receiving',items:[],skipped:0,memoryCount:0,failures:0};records.push(job); }
-      for(const item of items)if(!seen.has(item.key)){job.items.push(item);seen.add(item.key);}else if(!job.items.some(i=>i.key===item.key))job.skipped++;
+        expectedTurns:handover.totalTurns,createdAt:now(),state:'receiving',items:[],duplicateKeys:[],memoryCount:0,failures:0};records.push(job); }
+      for(const item of items)if(!seen.has(item.key)){job.items.push(item);seen.add(item.key);}else if(!job.items.some(i=>i.key===item.key)){
+        job.duplicateKeys??=[];if(!job.duplicateKeys.includes(item.key))job.duplicateKeys.push(item.key);
+      }
       jobId=job.id;
       if(job.state!=='receiving')return;
-      job.estimate=estimateImport(job.items,model,context.usage.settings(ownerId).prices[model?.id]??defaultUsagePrice(model));
+      job.estimate=estimateImport(job.items.filter(item=>item.memoryPolicy?.inference==='allowed'),model,context.usage.settings(ownerId).prices[model?.id]??defaultUsagePrice(model));
       job.from=job.items.map(i=>i.at).sort()[0]??null;job.to=job.items.map(i=>i.at).sort().at(-1)??null;
-      if(handover.complete || job.items.length+job.skipped>=job.expectedTurns){
+      const duplicateCount=job.duplicateKeys?.length??job.duplicates??job.skipped??0;
+      if(handover.complete || job.items.length+duplicateCount>=job.expectedTurns){
         job.items.sort((a,b)=>a.at.localeCompare(b.at)||a.turnId.localeCompare(b.turnId));
-        job.confirmationRequired=phoneNeedsConfirmation(Math.max(handover.totalTurns,job.items.length+job.skipped),
+        job.confirmationRequired=phoneNeedsConfirmation(Math.max(handover.totalTurns,job.items.length+duplicateCount),
           Math.max(handover.bytes??0,job.items.reduce((n,item)=>n+(item.bytes??0),0)));
         job.state=!job.items.length?'completed':job.confirmationRequired||!model?'awaiting_confirmation':'running';
       }

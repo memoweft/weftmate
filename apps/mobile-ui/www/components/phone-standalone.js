@@ -246,9 +246,9 @@
     if (!identity?.hostId || identity.hostId === 'unconnected') return;
     // Keep this account's vault and stable turn IDs while adopting the computer identity.
     Object.assign(account, identity);
-    try { do { if(await engine.sync()===false)break; } while (!engine.view().handover?.awaitingConfirmation&&(engine.view().turns.length||engine.view().forgetConversations.length)); handoffNotice=false;
+    try { do { if(await engine.sync()===false){if(engine.view().handover?.blockedReason&&!handoffNotice){handoffNotice=true;toast('部分记忆还没有交接，原对话和条目仍保留，请到记忆页查看。');}break;} } while (!engine.view().handover?.awaitingConfirmation&&(engine.view().turns.length||engine.view().forgetConversations.length)); if(!engine.view().handover?.blockedReason)handoffNotice=false;
       if(state.page==='memory')memoryPage($('page-content')); }
-    catch { if(!handoffNotice){handoffNotice=true;toast('手机对话仍在这里，连上电脑后会继续处理。');} }
+    catch(error) { if(!handoffNotice){handoffNotice=true;const code=error.code||error.message;toast(code==='COMPUTER_UPDATE_REQUIRED'?'请先更新电脑，手机对话和记忆仍保留，交接尚未完成。':code==='PHONE_MEMORY_POLICY_REQUIRED'?'请更新手机后再交接，原对话和记忆仍保留。':code==='OFFLINE_RECEIPT_REQUIRED'?'电脑还未确认完整接收，手机对话和记忆仍保留。':'手机对话仍在这里，连上电脑后会继续处理。');} }
   }
   async function routeCall(method, p) {
     if(native&&(method.startsWith("voice.")||method.startsWith("diagnostics.")||method.startsWith("updates.")))return nativeCall(method,p);
