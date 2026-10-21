@@ -135,7 +135,7 @@ test('FIX-50 #438: draining new submissions does not add cleanup retries to the 
     async retryCleanupByRequest() {
       cleanups++
       if (cleanups === 1) { entered.resolve(); await release.promise; throw Object.assign(Error('synthetic cleanup unavailable'), { code: 'MEMORY_BUSY' }) }
-      return { storage_cleanup: { state: 'completed' } }
+      return { result_state: 'applied', storage_cleanup: { state: 'complete' } }
     },
   })
   try {
@@ -144,7 +144,7 @@ test('FIX-50 #438: draining new submissions does not add cleanup retries to the 
     const second = f.actions.submit(owner, action('during-cleanup'))
     await f.persisted('during-cleanup')
     release.resolve()
-    assert.equal((await first).state, 'applied')
+    assert.equal((await first).state, 'queued')
     assert.equal((await second).state, 'applied')
     assert.equal(cleanups, 1)
     assert.equal(commands, 2)
