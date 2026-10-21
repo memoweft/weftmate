@@ -483,6 +483,12 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     }, querySelectorAll: () => [],
     addEventListener(name: string, listener: (event: any) => unknown) { documentListeners.set(name, [...(documentListeners.get(name) ?? []), listener]); },
     removeEventListener(name: string, listener: (event: any) => unknown) { documentListeners.set(name, (documentListeners.get(name) ?? []).filter(item => item !== listener)); },
+    dispatchEvent(event: Event) {
+      Object.defineProperties(event, { target: { configurable: true, value: document }, currentTarget: { configurable: true, value: document } });
+      for (const listener of [...(documentListeners.get(event.type) ?? [])]) listener.call(document, event);
+      Object.defineProperty(event, 'currentTarget', { configurable: true, value: null });
+      return !event.defaultPrevented;
+    },
     dispatchTestEvent(name: string, event: any) { event.currentTarget = document; for (const listener of documentListeners.get(name) ?? []) listener(event); },
   }
   focusDocument = document
@@ -498,7 +504,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   URLShim.revokeObjectURL = (value: string) => { objectUrls.revoked.push(value) }
   const context = { document, window, innerWidth: window.innerWidth, location, fetch, URL: URLShim, localStorage: { getItem: (key: string) => storage.get(key) ?? null,
     setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
-  TextEncoder, TextDecoder, Blob, File, AbortController, DOMException, queueMicrotask, Event,
+  TextEncoder, TextDecoder, Blob, File, AbortController, DOMException, queueMicrotask, Event, CustomEvent,
   MutationObserver: class { constructor(_callback: () => void) {} observe() {} disconnect() {} },
   Option: class extends Element { constructor(text: string, value: string) { super('', 'option'); this.textContent = text; this.value = value } },
   __weftmateTestHashBlobSha256: hashBlobSha256, crypto: { randomUUID: () => config.uuidForSync
@@ -547,6 +553,23 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
 function visibleText(node: Element): string {
   return [node.textContent, ...node.children.map(visibleText)].join(' ')
 }
+
+test('VM document delivers CustomEvent detail through its standard event listeners', async () => {
+  const page = harness([], [], false); await flush();
+  const detail = { view: 'synthetic-event-view' };
+  let received: unknown;
+  const listener = (event: CustomEvent) => {
+    received = event.detail;
+    assert.equal(event.target, page.document); assert.equal(event.currentTarget, page.document);
+    event.preventDefault();
+  };
+  page.document.addEventListener('synthetic-standard-event', listener);
+  const event = new CustomEvent('synthetic-standard-event', { detail, cancelable: true });
+  assert.equal(page.document.dispatchEvent(event), false);
+  assert.equal(received, detail); assert.equal(event.currentTarget, null);
+  page.document.removeEventListener('synthetic-standard-event', listener);
+  assert.equal(page.document.dispatchEvent(new CustomEvent('synthetic-standard-event', { detail })), true);
+});
 
 test('FIX-8 named new conversation and session entries leave phone mode and discard old pagination', async () => {
   const conversationId='conversation-00000000-0000-4000-8000-000000000099';

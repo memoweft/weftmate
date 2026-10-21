@@ -272,6 +272,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         });
     }
     function showConversation() {
+        document.dispatchEvent(new CustomEvent('weftmate:fixed-page', { detail: 'conversation' }));
         core.state.phonePane = false;
         ui.byId('conversation-pane').hidden = false;
         ui.byId('phone-pane').hidden = true;
