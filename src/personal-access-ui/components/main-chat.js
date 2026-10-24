@@ -73,6 +73,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         }
     }
     function updateRow(row, spec) {
+        if (spec.kind === 'message' && spec.event.data?.live) row.dataset.motion = 'enter-rise';
         const focus = row.contains(document.activeElement), focusName = document.activeElement?.getAttribute('aria-label'), saved = [...row.querySelectorAll('details')].map(detailState);
         if (saved.length) expanded.set(spec.key, saved);
         row.className = 'main-chat-row';
@@ -176,7 +177,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 row.dataset.chatSignature=JSON.stringify([event,spec.collapsed,core.state.chatWindow.search.query,null]);
             }
         }
-        ui.conversationScroll?.follow(true);
+        ui.conversationScroll?.follow();
         return true;
     }
     function renderMainChat() {

@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('../src/ui-core/reply-motion.js', import.meta.url), 'utf8');
-function fixture() {
+function fixture(queuedFrames = false) {
+  const frames = new Map<number, Function>(); let nextFrame = 0;
   const animations: any[] = [], listeners = new Map<string, Function>(), mediaListeners = new Map<string, Function>();
   class Text {
     nodeType = 3; parentNode: any = null; data: string; constructor(data: string) { this.data = data; }
@@ -40,11 +41,44 @@ function fixture() {
   const document = { documentElement: root, body, hidden: false, createElement: (tag: string) => new Element(tag), querySelectorAll: (selector: string) => root.querySelectorAll(selector), addEventListener: (name: string, listener: Function) => listeners.set(name, listener), createTreeWalker: (element: any) => { const leaves: any[] = []; const visit = (node: any) => node.nodeType === 3 ? leaves.push(node) : node.childNodes.forEach(visit); visit(element); let index = -1; return { currentNode: null, nextNode() { this.currentNode = leaves[++index]; return !!this.currentNode; } }; }, createRange: () => ({ setStart() {}, collapse() {}, getBoundingClientRect: () => ({ left: 100, bottom: 20 }) }) };
   const media = { matches: false, addEventListener: (name: string, listener: Function) => mediaListeners.set(name, listener) };
   const storage = new Map<string, string>();
-  const context: any = { document, matchMedia: () => media, localStorage: { getItem: (key: string) => storage.get(key), setItem: (key: string, value: string) => storage.set(key, value) }, getComputedStyle: () => ({ getPropertyValue: (key: string) => ({ '--wm-duration-replyChange': '150ms', '--wm-duration-replyFragment': '120ms', '--wm-easing-desktop': 'cubic-bezier(.22,1,.36,1)' })[key] || '' }), NodeFilter: { SHOW_TEXT: 4 }, requestAnimationFrame: (fn: Function) => fn(), CustomEvent: class { type: string; constructor(type: string) { this.type = type; } }, addEventListener: (name: string, listener: Function) => listeners.set(name, listener), dispatchEvent() {} };
+  const context: any = { document, matchMedia: () => media, localStorage: { getItem: (key: string) => storage.get(key), setItem: (key: string, value: string) => storage.set(key, value) }, getComputedStyle: () => ({ getPropertyValue: (key: string) => ({ '--wm-duration-replyChange': '220ms', '--wm-duration-replyFragment': '130ms', '--dur-3': '320ms', '--wm-easing-desktop': 'cubic-bezier(.16,1,.3,1)' })[key] || '' }), NodeFilter: { SHOW_TEXT: 4 }, requestAnimationFrame: (fn: Function) => fn(), CustomEvent: class { type: string; constructor(type: string) { this.type = type; } }, addEventListener: (name: string, listener: Function) => listeners.set(name, listener), dispatchEvent() {} };
+  if (queuedFrames) {
+    context.requestAnimationFrame = (fn: Function) => { frames.set(++nextFrame, fn); return nextFrame; };
+    context.cancelAnimationFrame = (id: number) => frames.delete(id);
+  }
   vm.runInNewContext(source, context);
   const element = (text = '', tag = 'p') => { const node = new Element(tag); node.textContent = text; body.append(node); return node; };
-  return { api: context.WeftReplyMotion, element, animations, root, media, document, listeners, mediaListeners };
+  return { api: context.WeftReplyMotion, element, animations, root, media, document, listeners, mediaListeners, frames,
+    tick() { const batch = [...frames.values()]; frames.clear(); batch.forEach(fn => fn()); } };
 }
+
+test('stream-type reveals 1–3 Unicode characters per frame and drains after completion without jumping', () => {
+  const f = fixture(true), body = f.element(), seen: string[] = [];
+  const render = (node: any, text: string) => { node.textContent = text; node._renderText = text; seen.push(text); };
+  const text = '你好🙂这是一段分批到达的回复。';
+  f.api.stream(body, text.slice(0, 8), { streaming: true }, render);
+  assert.equal(body.textContent, '');
+  f.tick(); assert.ok(Array.from(body.textContent).length >= 1 && Array.from(body.textContent).length <= 3);
+  f.api.stream(body, text, { streaming: false }, render);
+  assert.notEqual(body.textContent, text);
+  for (let n = 0; n < 20 && f.frames.size; n++) f.tick();
+  assert.equal(body.textContent, text);
+  for (let n = 1; n < seen.length; n++) assert.ok(Array.from(seen[n]).length - Array.from(seen[n - 1]).length <= 3);
+  assert.equal(f.frames.size, 0);
+});
+
+test('stream-type flushes on reduced motion or hidden window, cancels detached content and keeps history immediate', () => {
+  const f = fixture(true), body = f.element();
+  const render = (node: any, text: string) => { node.textContent = text; node._renderText = text; };
+  f.api.stream(body, '历史原文直接显示', { streaming: false }, render); assert.equal(body.textContent, '历史原文直接显示');
+  f.api.stream(body, '历史原文直接显示，继续流式', { streaming: true }, render);
+  f.api.setPreference('reduce'); assert.equal(body.textContent, '历史原文直接显示，继续流式'); assert.equal(f.frames.size, 0);
+  f.api.setPreference('system');
+  f.api.stream(body, '换一段生成文字', { streaming: true }, render);
+  f.document.hidden = true; f.listeners.get('visibilitychange')!(); assert.equal(body.textContent, '换一段生成文字');
+  f.document.hidden = false; f.listeners.get('visibilitychange')!();
+  f.api.stream(body, '换一段生成文字后续', { streaming: true }, render); body.remove(); f.tick(); assert.equal(f.frames.size, 0);
+});
 
 test('reply status switches synchronously, coalesces rapid updates and hides visual copies from accessibility', async () => {
   const f = fixture(), status = f.element(); status.setAttribute('aria-live', 'polite');
@@ -92,10 +126,10 @@ test('native window visibility pauses feedback when Chromium keeps document visi
   f.api.setVisibility(false); assert.equal(f.api.paused, false); assert.ok(!f.root.attributes.has('data-motion-paused')); assert.equal(f.animations.at(-1).playState, 'running'); assert.equal(content.textContent, '窗口最小化');
 });
 
-test('stream fragments keep text available immediately, preserve old prefix and unwrap after 120ms', async () => {
+test('stream fragments keep text available immediately, preserve old prefix and unwrap after the shortest motion token', async () => {
   const f = fixture(), content = f.element('已有文字 新到的短片段'); f.api.fragment(content, '已有文字 ');
   assert.equal(content.textContent, '已有文字 新到的短片段'); assert.equal(content.firstChild.data, '已有文字 ');
-  assert.equal(content.querySelectorAll('.reply-fragment').length, 1); assert.equal(f.animations.at(-1).timing.duration, 120);
+  assert.equal(content.querySelectorAll('.reply-fragment').length, 1); assert.equal(f.animations.at(-1).timing.duration, 130);
   f.animations.at(-1).finish(); await Promise.resolve(); assert.equal(content.querySelectorAll('.reply-fragment').length, 0); assert.equal(content.textContent, '已有文字 新到的短片段');
 });
 

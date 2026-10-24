@@ -107,14 +107,21 @@
 
 ## 动效参数
 
-`shared.duration` 输出 `--wm-duration-<名称>`。`fast / base / slow` 分别为已有的 180 / 200 / 220 毫秒；数字名称保留已有 160 / 240 / 260 / 280 / 300 / 420 毫秒的用途。`working` 为现有工作状态点的 1.8 秒周期；`reduced` 为手机现有减少动态效果时的 0.01 毫秒；`0ms` 为已有零时长覆盖。Android 模型弹层保留 160 毫秒时长和原有原生默认插值。
+`motion.duration` 与 `motion.easing` 是动效数值的唯一来源，来自本人提供的动效库。桌面和手机网页直接生成下列变量；原生兼容名称从相同引用解析，不维护第二套数值。
 
-`shared.easing.standard / smooth / enter / desktop / mobile` 分别保存现有 `ease`、`ease-in-out`、`ease-in`、`cubic-bezier(.16,1,.3,1)`、`cubic-bezier(.2,.8,.2,1)`；`enter` 沿用手机图片预览关闭时的已有曲线。本包仅换参数来源，不增加动画、修改关键帧或重新设计减少动态效果行为；UI-P1 定稿时在这里调整。
+| 时长 | 用途 |
+|---|---|
+| `--dur-1` 130ms | 轻反馈、淡入替换 |
+| `--dur-2` 220ms | 常规状态变化 |
+| `--dur-3` 320ms | 消息、列表和页面进入 |
+| `--dur-4` 420ms | 抽屉进入 |
+| `--dur-5` 640ms | 加载占位循环 |
 
+曲线为 `--ease-out`（`cubic-bezier(.16,1,.3,1)`）、`--ease-in-out`（`cubic-bezier(.4,0,.2,1)`）、`--ease-in`（`cubic-bezier(.4,0,1,1)`）、`--ease-linear`（`linear`）。原有 `shared.duration` / `shared.easing` 名称使用 `{motion.duration.dur-…}` / `{motion.easing.ease-…}` 引用；CSS 保留为变量别名，Android 和 Apple 解析为原生数值。新增动效直接用这五档时长和四条曲线。
 
-UI-P1 桌面在现有 `fast / base / 160ms / 240ms` 上接入 180 / 200 / 160 / 240 毫秒动效，曲线统一使用 `desktop`。新增 `exit` 为 120 毫秒退出，`stagger` 为新步骤 24 毫秒错开，`staggerLimit` 把错开总延迟限制为 60 毫秒，因此完整步骤序列最多 240 毫秒。系统减少动态效果时跳过动画；这些新增常量同步生成到各端，但手机与 Apple 未在本包消费新动效。详见 [UI-P1 证据](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ui-p1/README.md)。
+共用配方在 `src/ui-core/reply-motion.css`：`data-motion="enter-rise"`、`enter-fade`、`stagger-rise`、`view-enter`、`sheet-in`、`unfold`、`text-shimmer`，关键帧统一以 `m-` 开头。`unfold` 用一个子元素包内容，以 `.open` 或 `aria-expanded="true"` 展开；列表错峰延迟复用最短档并封顶。原生 `<details data-motion="unfold">` 通过 `[open]` 和 `::details-content` 展开正文，`summary` 留在原生布局中，正文仍用一个子元素包裹。`stream-type` 由 `WeftReplyMotion.stream` 使用 requestAnimationFrame（逐帧回调）每帧显示 1–3 个 Unicode 字符，继续复用正文渲染器；历史消息直接显示，超过库约定的 4000 字不逐字。流式内容跟随滚动位置，不叠加平滑滚动。
 
-UX-8 共用回复动效新增 `replyFragment`（120 毫秒）、`replyChange`（150 毫秒）、`replyScroll`（160 毫秒），复用 `working` 的 1.8 秒周期；位移沿 `space-2 / space-8`。微光使用五段静态渐变遮罩，`replySweep` 的 `steps(7,end)`（分段缓动）在各 243 毫秒淡亮 / 淡出区间约每秒更新 29 次，不移动遮罩或文字；呼吸沿 `smooth`，其它过渡沿 `desktop`。全部令牌生成到手机、Android（安卓）和 Apple（苹果）清单；减少动态效果与页面 / 原生窗口隐藏会暂停或取消动画。详见 [UX-8 证据](https://github.com/memoweft/weftmate/blob/85321e89888552fb25abe95b0fc8d61f62f2ef5f/tests/evidence/ux-8/README.md)。
+减少动态效果默认跟随 `prefers-reduced-motion`。设置通过全局 `WeftReplyMotion.setPreference('system' | 'reduce' | 'full')` 接入，并同步根元素的 `data-reduced-motion` / `data-motion-full`；`body.calm` 也可减弱 CSS 配方。减弱时消息只留最短档淡入，页面、抽屉、列表和展开直接到位，扫光停为静态文字，正文整段显示；窗口隐藏会暂停视觉反馈并清空逐帧积压。
 
 ## Apple 原生接入（DS-1b）
 

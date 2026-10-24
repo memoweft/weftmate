@@ -108,25 +108,25 @@ public enum WeftDesignTokens {
         "1_45": 1.45
     ]
     public static let durationMilliseconds: [String: Double] = [
-        "fast": 180,
-        "base": 200,
+        "fast": 130,
+        "base": 220,
         "slow": 220,
-        "working": 1800,
-        "reduced": 0.01,
-        "240ms": 240,
-        "160ms": 160,
-        "260ms": 260,
-        "280ms": 280,
-        "300ms": 300,
+        "working": 640,
+        "reduced": 130,
+        "240ms": 220,
+        "160ms": 130,
+        "260ms": 320,
+        "280ms": 320,
+        "300ms": 320,
         "420ms": 420,
-        "0ms": 0,
-        "exit": 120,
-        "stagger": 24,
-        "staggerLimit": 60,
-        "status": 150,
-        "replyFragment": 120,
-        "replyChange": 150,
-        "replyScroll": 160
+        "0ms": 130,
+        "exit": 130,
+        "stagger": 130,
+        "staggerLimit": 130,
+        "status": 130,
+        "replyFragment": 130,
+        "replyChange": 220,
+        "replyScroll": 130
     ]
     public static let fontFamily: [String: String] = [
         "body": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif",
@@ -144,12 +144,12 @@ public enum WeftDesignTokens {
         "table": ".9rem"
     ]
     public static let easing: [String: String] = [
-        "standard": "ease",
-        "smooth": "ease-in-out",
+        "standard": "cubic-bezier(.16,1,.3,1)",
+        "smooth": "cubic-bezier(.4,0,.2,1)",
         "desktop": "cubic-bezier(.16,1,.3,1)",
-        "mobile": "cubic-bezier(.2,.8,.2,1)",
-        "enter": "ease-in",
-        "replySweep": "steps(7,end)"
+        "mobile": "cubic-bezier(.16,1,.3,1)",
+        "enter": "cubic-bezier(.4,0,1,1)",
+        "replySweep": "linear"
     ]
     public static let shadowRecipes: [String: String] = [
         "desktop-model-menu": "0 10px 32px rgba(27,48,90,.18)",
@@ -451,27 +451,27 @@ public enum AppleTokens {
         public static let pressed: CGFloat = 0.985
     }
     public enum Motion {
-        public static let fast: TimeInterval = 0.18
-        public static let base: TimeInterval = 0.2
+        public static let fast: TimeInterval = 0.13
+        public static let base: TimeInterval = 0.22
         public static let slow: TimeInterval = 0.22
-        public static let working: TimeInterval = 1.8
-        public static let reduced: TimeInterval = 0.00001
-        public static let d240ms: TimeInterval = 0.24
-        public static let d160ms: TimeInterval = 0.16
-        public static let d260ms: TimeInterval = 0.26
-        public static let d280ms: TimeInterval = 0.28
-        public static let d300ms: TimeInterval = 0.3
+        public static let working: TimeInterval = 0.64
+        public static let reduced: TimeInterval = 0.13
+        public static let d240ms: TimeInterval = 0.22
+        public static let d160ms: TimeInterval = 0.13
+        public static let d260ms: TimeInterval = 0.32
+        public static let d280ms: TimeInterval = 0.32
+        public static let d300ms: TimeInterval = 0.32
         public static let d420ms: TimeInterval = 0.42
-        public static let d0ms: TimeInterval = 0
-        public static let exit: TimeInterval = 0.12
-        public static let stagger: TimeInterval = 0.024
-        public static let staggerLimit: TimeInterval = 0.06
-        public static let status: TimeInterval = 0.15
-        public static let replyFragment: TimeInterval = 0.12
-        public static let replyChange: TimeInterval = 0.15
-        public static let replyScroll: TimeInterval = 0.16
-        public static let disclosure: Animation = Animation.easeInOut(duration: Motion.base)
-        public static let connection: Animation = Animation.easeInOut(duration: Motion.fast)
+        public static let d0ms: TimeInterval = 0.13
+        public static let exit: TimeInterval = 0.13
+        public static let stagger: TimeInterval = 0.13
+        public static let staggerLimit: TimeInterval = 0.13
+        public static let status: TimeInterval = 0.13
+        public static let replyFragment: TimeInterval = 0.13
+        public static let replyChange: TimeInterval = 0.22
+        public static let replyScroll: TimeInterval = 0.13
+        public static let disclosure: Animation = Animation.timingCurve(0.4, 0, 0.2, 1, duration: Motion.base)
+        public static let connection: Animation = Animation.timingCurve(0.4, 0, 0.2, 1, duration: Motion.fast)
     }
     public enum Colors {
         public static let primary: Color = .primary

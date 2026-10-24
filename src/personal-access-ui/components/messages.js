@@ -37,7 +37,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
     function scrollToLatest() {
         ui.conversationScroll?.latest();
     }
-    function followConversationBottom() { ui.conversationScroll?.follow(true); }
+    function followConversationBottom() { ui.conversationScroll?.follow(); }
     function mountConversationScroll() {
         const box = ui.byId('chat-scroll'), list = ui.byId('transcript');
         ui.conversationScroll = globalThis.WeftConversationScroll(box, list, ui.byId('jump-latest'));

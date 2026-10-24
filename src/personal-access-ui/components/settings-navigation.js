@@ -29,7 +29,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             globalThis.WeftSettingsControls.groupRows(panel, category.name);
             for (const form of panel.querySelectorAll('.personalization-form')) globalThis.WeftSettingsControls.groupRows(form, category.name);
         }
-        if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (globalThis.WeftReplyMotion?.reduced ?? matchMedia('(prefers-reduced-motion: reduce)').matches) {
             for (const animation of dialog.getAnimations({ subtree: true })) animation.cancel();
         } else globalThis.WeftMotion?.reveal(panels.get(id), 'base');
     }

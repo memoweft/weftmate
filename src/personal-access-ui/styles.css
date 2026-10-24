@@ -824,13 +824,12 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 .progress-elapsed { flex:none; margin-inline-start:var(--wm-space-6); color:var(--progress-ink); font-variant-numeric:tabular-nums; }
 .progress-indicator { display:inline-flex; gap:3px; align-items:center; flex:none; margin-inline-end:var(--wm-space-6); }
 .progress-indicator[hidden] { display:none; }
-.progress-indicator i { width:3px; height:3px; border-radius:50%; background:currentColor; animation:progress-dot var(--dur-5, 640ms) var(--ease-in-out, ease-in-out) infinite alternate; }
+/* motion library: pulse-live; reduced keeps the running dots at one static tone. */
+.progress-indicator i { width:3px; height:3px; border-radius:50%; background:currentColor; animation:m-progress-dot var(--dur-5, 640ms) var(--ease-in-out, cubic-bezier(.4,0,.2,1)) infinite alternate; }
 .progress-indicator i:nth-child(2) { animation-delay:var(--dur-1, 130ms); }
 .progress-indicator i:nth-child(3) { animation-delay:var(--dur-2, 220ms); }
-@keyframes progress-dot { from {opacity:.3} to {opacity:1} }
+@keyframes m-progress-dot { from {opacity:.3} to {opacity:1} }
 /* motion library: enter-rise; unfold (0fr / 1fr, including streamed content). */
-.execution-block[data-motion="enter-rise"] { animation:progress-enter var(--dur-3, 320ms) var(--ease-out, cubic-bezier(.16,1,.3,1)) both; }
-@keyframes progress-enter { from {opacity:0;transform:translateY(9px)} to {opacity:1;transform:none} }
 .execution-block::details-content, .execution-step::details-content, .execution-step-group::details-content { display:grid; grid-template-rows:0fr; content-visibility:hidden; transition:grid-template-rows var(--dur-3, 320ms) var(--ease-out, cubic-bezier(.16,1,.3,1)),content-visibility var(--dur-3, 320ms) allow-discrete; }
 .execution-block[open]::details-content, .execution-step[open]::details-content, .execution-step-group[open]::details-content { grid-template-rows:1fr; content-visibility:visible; }
 .execution-records,.execution-step-body,.execution-group-records,.thinking-body { min-height:0; overflow:hidden; }
@@ -856,14 +855,15 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 .execution-block :is(.step-resources,.step-reference) { display:block; width:fit-content; min-height:0; min-width:0; padding:var(--wm-space-4) 0; margin:0 var(--wm-space-12) var(--wm-space-8); border:0; border-radius:0; background:transparent; color:var(--progress-ink); font-size:var(--wm-font-size-12); text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
 .execution-block :is(.step-resources,.step-reference):hover { color:var(--ink); }
 @media (prefers-reduced-motion:reduce) {
-  .execution-block[data-motion="enter-rise"] { animation:none; }
-  .progress-indicator i { animation:none; opacity:.6; }
-  .execution-block::details-content,.execution-step::details-content,.execution-step-group::details-content { transition:none; }
+  html:not([data-motion-full]) .execution-block[data-motion="enter-rise"] { animation:none!important; }
+  html:not([data-motion-full]) .progress-indicator i { animation:none!important; opacity:.6; }
+  html:not([data-motion-full]) :is(.execution-block,.execution-step,.execution-step-group)::details-content { transition:none!important; }
 }
-body.calm .execution-block, body.calm .progress-indicator i { animation:none; }
-body.calm .execution-block::details-content,body.calm .execution-step::details-content,body.calm .execution-step-group::details-content { transition:none; }
-:root[data-reduced-motion] .execution-block,:root[data-reduced-motion] .progress-indicator i { animation:none; }
-:root[data-reduced-motion] .execution-block::details-content,:root[data-reduced-motion] .execution-step::details-content,:root[data-reduced-motion] .execution-step-group::details-content { transition:none; }
+/* Outrank the shared reduced enter-rise fade: progress must stay fully static. */
+:is(body.calm,:root[data-reduced-motion]) .execution-block { animation:none!important; }
+:is(body.calm,:root[data-reduced-motion]) .progress-indicator i { animation:none!important; opacity:.6; }
+:is(body.calm,:root[data-reduced-motion]) .progress-chevron,
+:is(body.calm,:root[data-reduced-motion]) :is(.execution-block,.execution-step,.execution-step-group)::details-content { transition:none!important; }
 @keyframes progress-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .95; } }
 .conversation-task { border: 0; padding: 0; background: transparent; }
 .artifact-verification { color: var(--progress-ink); }
@@ -984,7 +984,7 @@ body.calm .execution-block::details-content,body.calm .execution-step::details-c
 @media(hover:none) { .session-list .session-more { opacity:1; } }
 .session-status { display:flex; flex:none; justify-content:center; align-items:center; width:var(--wm-space-28); }
 .session-unread-dot { width:var(--wm-space-6); height:var(--wm-space-6); border-radius:var(--wm-radius-circle); background:var(--accent); }
-.session-list .session-running-dot { flex:none; margin:0; width:var(--wm-space-14); height:var(--wm-space-14); border:var(--wm-space-2) solid var(--line); border-top-color:var(--ink-secondary); border-radius:var(--wm-radius-circle); background:transparent; animation:sidebar-spin var(--wm-duration-working) linear infinite; }
+.session-list .session-running-dot { flex:none; margin:0; width:var(--wm-space-14); height:var(--wm-space-14); border:var(--wm-space-2) solid var(--line); border-top-color:var(--ink-secondary); border-radius:var(--wm-radius-circle); background:transparent; animation:sidebar-spin var(--wm-duration-working) var(--ease-linear) infinite; }
 @keyframes sidebar-spin { to { transform:rotate(360deg); } }
 .sidebar-project-heading { border-radius:var(--wm-radius-7); padding-inline-end:var(--wm-space-6); margin-block:var(--wm-space-3); gap:0; }
 .sidebar-project-heading:hover, .sidebar-project-heading:focus-within { background:var(--surface-soft); }
@@ -1031,8 +1031,8 @@ body.calm .execution-block::details-content,body.calm .execution-step::details-c
 .session-unread-dot { background:var(--session-completed); }
 .session-unread-dot.is-approval,.session-unread-dot.is-question { background:var(--session-attention); }
 .session-unread-dot.is-failed { background:var(--session-failure); }
-.session-status .session-running-dot { flex:none; margin:0; width:var(--wm-space-14); height:var(--wm-space-14); border:var(--wm-space-2) solid var(--line); border-top-color:var(--ink-secondary); border-radius:var(--wm-radius-circle); background:transparent; animation:sidebar-spin var(--wm-duration-working) linear infinite; }
-.status-entering .session-unread-dot { animation:session-status-enter var(--wm-duration-status) ease-out; }
+.session-status .session-running-dot { flex:none; margin:0; width:var(--wm-space-14); height:var(--wm-space-14); border:var(--wm-space-2) solid var(--line); border-top-color:var(--ink-secondary); border-radius:var(--wm-radius-circle); background:transparent; animation:sidebar-spin var(--wm-duration-working) var(--ease-linear) infinite; }
+.status-entering .session-unread-dot { animation:session-status-enter var(--wm-duration-status) var(--ease-out); }
 @keyframes session-status-enter { from { opacity:0; } to { opacity:1; } }
 .session-group-toggle { display:flex; align-items:center; }
 .session-group .session-status { margin-inline-start:auto; }

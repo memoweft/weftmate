@@ -181,7 +181,7 @@
       details.progressAccessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${text.textContent}${block.language === 'en' ? details.open ? ', expanded' : ', collapsed' : details.open ? '，已展开' : '，已收起'}`) }
       if (!previous) details.addEventListener('toggle', () => { details.progressAccessibility(); if (details.open && details.isConnected) renderCurrent() }); details.progressAccessibility()
       const records = details.querySelector('.execution-records') || node('div', 'execution-records')
-      records.dataset.motion = 'unfold'
+      // unfold is owned by details::details-content, not a second closed grid.
       if (!summary.parentNode) details.append(summary)
       if (!records.parentNode) details.append(records)
       const savedGroups = new Map([...records.querySelectorAll('[data-step-group]')].map(detail => [detail.dataset.stepGroup, detail.open]))
