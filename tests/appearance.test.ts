@@ -34,6 +34,19 @@ test('broken or unavailable device storage does not prevent appearance reads or 
     const store = f.api.createAppearance({getItem(){throw Error('blocked')},setItem(){throw Error('blocked')}});
     store.set({theme:'light',codeFontSize:'15'}); assert.equal(store.value.codeFontSize, '15');
 });
+test('#646 complete device appearance preferences survive recreation with independent mode palettes', () => {
+    const f = fixture(), store = f.api.createAppearance(f.storage);
+    store.set({...store.value, uiFontSize:'16',fontSize:'18',codeFontSize:'14',fontLight:'serif',fontDark:'mono',
+        themePresetLight:'paper',themePresetDark:'default',backgroundLight:'#f5f5f5',backgroundDark:'#202020',
+        foregroundLight:'#222222',foregroundDark:'#eeeeee',contrast:'85',separateModes:true,translucentSidebar:true,fullWidth:true});
+    const restored = f.api.createAppearance(f.storage).value;
+    assert.deepEqual(restored,store.value);
+    assert.equal(restored.fontSize,'18'); assert.equal(restored.uiFontSize,'16'); assert.equal(restored.codeFontSize,'14');
+    assert.equal(restored.backgroundLight,'#f5f5f5');assert.equal(restored.backgroundDark,'#202020');
+    assert.equal(restored.fontLight,'serif');assert.equal(restored.fontDark,'mono');
+    store.set({...restored,backgroundLight:'url(invalid)',uiFontSize:'99',font:'unknown',contrast:'999'});
+    assert.equal(store.value.backgroundLight,''); assert.equal(store.value.uiFontSize,'14'); assert.equal(store.value.font,'system');assert.equal(store.value.contrast,'100');
+});
 const tokens = JSON.parse(readFileSync(new URL('../design/tokens/tokens.json', import.meta.url), 'utf8'));
 const css = readFileSync(new URL('../src/ui-core/appearance.css', import.meta.url), 'utf8');
 function luminance(hex: string) {
