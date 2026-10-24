@@ -131,6 +131,10 @@
     const content = node('div', cls); content._renderId = `wm-${++id}`; update(content,text,options); return content;
   }
   function update(content, text, options = {}) {
+    if (globalThis.WeftReplyMotion?.stream) return WeftReplyMotion.stream(content, text, options, renderUpdate);
+    return renderUpdate(content, text, options);
+  }
+  function renderUpdate(content, text, options = {}) {
     if (content._renderText === text) { if(options.streaming!==undefined)globalThis.WeftReplyMotion?.indicator(content,options.streaming); return content; }
     const previousText=content._renderText;
     // A completed prefix followed by the same plain paragraph needs no reparse of
@@ -145,7 +149,7 @@
         if(template.children.length===1 && next.tagName==='P' && next.children.length===0 && next.textContent===tail) {
           next._sourceHTML=next.outerHTML;last.replaceWith(next);content._renderText=text;
           const streaming=options.streaming===true || options.streaming!==false && content.classList.contains('reply-streaming');
-          if(streaming)globalThis.WeftReplyMotion?.fragment(next,before);
+          if(streaming && !options.motionFrame)globalThis.WeftReplyMotion?.fragment(next,before);
           if(options.streaming!==undefined || streaming)globalThis.WeftReplyMotion?.indicator(content,options.streaming ?? streaming);
           return content;
         }
@@ -181,7 +185,7 @@
       next._sourceHTML=html; const beforeText=previous?.textContent || '';
       if(previous) { if(previous.previousElementSibling?.classList.contains('render-table-actions'))previous.previousElementSibling.remove(); previous.replaceWith(next); }
       else content.append(next);
-      if(streaming) globalThis.WeftReplyMotion?.fragment(next,beforeText);
+      if(streaming && !options.motionFrame) globalThis.WeftReplyMotion?.fragment(next,beforeText);
     }
     for (const previous of old.slice(fresh.length)) { if(previous.previousElementSibling?.classList.contains('render-table-actions'))previous.previousElementSibling.remove(); previous.remove(); }
     enhance(content,options);

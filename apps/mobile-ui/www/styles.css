@@ -579,7 +579,7 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 .conversation-list .session-group-toggle,.mobile-projects .home-group{min-height:var(--wm-space-36);padding:var(--wm-space-12) var(--wm-space-12) var(--wm-space-6);font-size:var(--wm-font-size-12);font-weight:500;color:var(--muted);margin:0}
 .mobile-session-status{display:grid;place-items:center;flex:0 0 var(--wm-space-20);width:var(--wm-space-20);height:var(--wm-space-20)}
 .mobile-session-status.is-unread:after{content:"";width:var(--wm-space-6);height:var(--wm-space-6);border-radius:var(--wm-radius-circle);background:var(--accent)}
-.mobile-session-status.is-running:after{content:"";width:var(--wm-space-14);height:var(--wm-space-14);border:var(--wm-space-2) solid var(--line);border-top-color:var(--muted);border-radius:var(--wm-radius-circle);animation:mobile-status-spin var(--wm-duration-working) linear infinite}
+.mobile-session-status.is-running:after{content:"";width:var(--wm-space-14);height:var(--wm-space-14);border:var(--wm-space-2) solid var(--line);border-top-color:var(--muted);border-radius:var(--wm-radius-circle);animation:mobile-status-spin var(--wm-duration-working) var(--ease-linear) infinite}
 @keyframes mobile-status-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){html:not([data-motion-full]) .mobile-session-status.is-running:after {animation:none}}
 .mobile-session-button,.mobile-project-toggle{-webkit-user-select:none;user-select:none;touch-action:pan-y}
@@ -641,7 +641,7 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 .mobile-session-status.is-completed:after,.mobile-session-status.is-failed:after,.mobile-session-status.is-approval:after,.mobile-session-status.is-question:after { content:""; width:var(--wm-space-6); height:var(--wm-space-6); border-radius:var(--wm-radius-circle); background:var(--session-completed); }
 .mobile-session-status.is-failed:after { background:var(--session-failure); }
 .mobile-session-status.is-approval:after,.mobile-session-status.is-question:after { background:var(--session-attention); }
-.mobile-session-status.status-entering:after { animation:mobile-status-enter var(--wm-duration-status) ease-out; }
+.mobile-session-status.status-entering:after { animation:mobile-status-enter var(--wm-duration-status) var(--ease-out); }
 @keyframes mobile-status-enter { from {opacity:0} to {opacity:1} }
 .session-group-toggle { display:flex; align-items:center; }
 .session-group-toggle .mobile-session-status,.mobile-project-toggle .mobile-session-status,.rail-main-chat .mobile-session-status { margin-inline-start:auto; }
@@ -651,7 +651,7 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 .search-result-end .session-unread-dot { width:var(--wm-space-6); height:var(--wm-space-6); border-radius:var(--wm-radius-circle); background:var(--session-completed); }
 .search-result-end .is-approval,.search-result-end .is-question { background:var(--session-attention); }
 .search-result-end .is-failed { background:var(--session-failure); }
-.search-result-end .session-running-dot { margin:0; width:var(--wm-space-14); height:var(--wm-space-14); background:transparent; border:var(--wm-space-2) solid var(--line); border-top-color:var(--muted); animation:mobile-status-spin var(--wm-duration-working) linear infinite; }
+.search-result-end .session-running-dot { margin:0; width:var(--wm-space-14); height:var(--wm-space-14); background:transparent; border:var(--wm-space-2) solid var(--line); border-top-color:var(--muted); animation:mobile-status-spin var(--wm-duration-working) var(--ease-linear) infinite; }
 @media(prefers-reduced-motion:reduce) {html:not([data-motion-full]) .mobile-session-status:after,html:not([data-motion-full]) .search-result-end .session-running-dot { animation:none!important; } }
 
 .drawer .session-group-toggle,.home-conversations .session-group-toggle { display:flex; align-items:center; }
