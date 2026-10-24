@@ -135,6 +135,53 @@ try {
       }
       return result;
     }), { 'view-enter': 'none', 'sheet-in': 'none', 'text-shimmer': 'none', unfold: '0s', 'stagger-rise': 'none' });
+    // Drive the actual settings controls, including manual overrides of the OS.
+    await page.evaluate(theme => { WeftDesktop.setAppearance({ theme }); WeftSettingsNavigation.open('appearance'); }, theme);
+    if (!await page.locator('.appearance-advanced').evaluate(details => details.open)) await page.locator('.appearance-advanced > summary').click();
+    const motionButtons = page.getByRole('group', { name: '减少动态效果', exact: true });
+    const probe = () => page.evaluate(async () => {
+      const node = document.createElement('div'); node.dataset.motion = 'view-enter';
+      const text = '设置动效开关的合成回复';
+      const body = WeftContent.create('', 'markdown-body'); node.append(body); document.body.append(node);
+      WeftContent.update(body, text, { streaming: true });
+      const immediate = body._renderText || '';
+      await new Promise(requestAnimationFrame);
+      const result = { preference: WeftReplyMotion.preference, reduced: WeftReplyMotion.reduced,
+        animation: getComputedStyle(node).animationName, immediate, first: body._renderText, text };
+      node.remove(); return result;
+    });
+    await motionButtons.getByRole('button', { name: '关闭', exact: true }).click();
+    let choice = await probe();
+    assert.equal(choice.preference, 'full'); assert.equal(choice.reduced, false);
+    assert.equal(choice.animation, 'm-enter-rise'); assert.equal(choice.immediate, '');
+    assert.ok(Array.from(choice.first).length >= 1 && Array.from(choice.first).length <= 3);
+    assert.equal(await page.evaluate(() => {
+      WeftSettingsNavigation.open('general');
+      return document.querySelector('.settings-category[data-category=general]').getAnimations().some(animation => animation.playState === 'running');
+    }), true, 'manual motion-on must override the system setting for settings navigation too');
+    await page.reload();
+    await page.waitForFunction(() => globalThis.__feedbackSessionCore?.state.device?.authKind === 'desktop');
+    await page.evaluate(async id => { await __feedbackSessionCore.selectSession(id); WeftReplyMotion.setVisibility(false); WeftSettingsNavigation.open('appearance'); }, fixture.source);
+    if (!await page.locator('.appearance-advanced').evaluate(details => details.open)) await page.locator('.appearance-advanced > summary').click();
+    assert.equal(await motionButtons.getByRole('button', { name: '关闭', exact: true }).getAttribute('aria-pressed'), 'true');
+    choice = await probe(); assert.equal(choice.preference, 'full'); assert.equal(choice.reduced, false); assert.equal(choice.animation, 'm-enter-rise');
+    await motionButtons.getByRole('button', { name: '系统', exact: true }).click();
+    choice = await probe(); assert.equal(choice.preference, 'system'); assert.equal(choice.reduced, true);
+    assert.equal(choice.animation, 'none'); assert.equal(choice.immediate, choice.text);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    // Drive foreground restoration while keeping the native test window hidden.
+    await page.evaluate(() => { WeftReplyMotion.setVisibility(true); WeftReplyMotion.setVisibility(false); });
+    await page.waitForFunction(() => !WeftReplyMotion.reduced && !document.documentElement.hasAttribute('data-reduced-motion'));
+    choice = await probe(); assert.equal(choice.animation, 'm-enter-rise'); assert.equal(choice.immediate, '');
+    await motionButtons.getByRole('button', { name: '开启', exact: true }).click();
+    choice = await probe(); assert.equal(choice.preference, 'reduce'); assert.equal(choice.reduced, true);
+    assert.equal(choice.animation, 'none'); assert.equal(choice.immediate, choice.text);
+    if (out) {
+      const png = await app.evaluate(async ({ BrowserWindow }) => (await BrowserWindow.getAllWindows()[0].capturePage()).toPNG().toString('base64'));
+      await writeFile(join(out, `${theme}-settings-motion.png`), Buffer.from(png, 'base64'));
+    }
+    await motionButtons.getByRole('button', { name: '系统', exact: true }).click();
+    await page.evaluate(() => __feedbackSessionCore.show('assistant'));
   }
   assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().some(window => window.isVisible())), false);
   assert.deepEqual(errors, []);

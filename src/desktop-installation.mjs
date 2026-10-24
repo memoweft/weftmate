@@ -19,4 +19,4 @@ export function installationScope({ executable = process.execPath, platform = pr
   } catch {}
   return 'CurrentUser';
 }
-export const manualUpdateMessage = '新版已下载。请右键安装包，选择“以管理员身份运行”完成更新。';
+export const manualUpdateMessage = '新版已下载。这次请右键安装包，选择“以管理员身份运行”，迁移为仅当前用户安装；对话、记忆和设置会保留，以后更新无需管理员授权。';

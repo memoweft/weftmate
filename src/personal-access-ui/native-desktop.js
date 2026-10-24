@@ -18,6 +18,28 @@ function blendDesktopColor(base, scrim) {
   const mark = document.createElement('span'); mark.className = 'wm-brand'; bar.prepend(mark);
   const toggle = document.getElementById('rail-open'); toggle.classList.add('titlebar-rail-toggle'); toggle.title = '切换会话侧栏 · Ctrl B'; toggle.setAttribute('aria-label', '切换会话侧栏'); bar.append(toggle);
   document.body.prepend(bar);
+  // A quiet titlebar notice stays visible while downloading without interrupting chat.
+  const updateNotice = document.createElement('button');
+  updateNotice.type = 'button'; updateNotice.className = 'desktop-update-notice'; updateNotice.hidden = true;
+  updateNotice.setAttribute('aria-live', 'polite');
+  updateNotice.addEventListener('click', () => globalThis.WeftSettingsNavigation?.open('about'));
+  bar.append(updateNotice);
+  let completedVersion = null, updateEpoch = 0;
+  const paintUpdate = value => {
+    if (value.completedVersion) completedVersion = value.completedVersion;
+    const state = value.layers?.find(layer => layer.layer === 'app') || value;
+    updateNotice.textContent = state.status === 'downloaded' ? '新版已就绪 · 重启并更新'
+      : state.status === 'available' ? `发现 ${state.version} · 正在后台下载${Number.isFinite(state.progress?.percent) ? ` ${Math.floor(state.progress.percent)}%` : ''}`
+      : completedVersion ? `已更新到 ${completedVersion}` : '';
+    updateNotice.hidden = !updateNotice.textContent;
+    updateNotice.title = updateNotice.textContent ? `${updateNotice.textContent} · 查看更新详情` : '';
+  };
+  native.onUpdateState?.(value => { updateEpoch++; paintUpdate(value); });
+  const initialEpoch = updateEpoch;
+  native.updateState?.().then(value => {
+    if (initialEpoch === updateEpoch) paintUpdate(value);
+    else if (value.completedVersion) completedVersion = value.completedVersion;
+  }).catch(() => {});
   let modals = [], lastPalette = '';
   const updateTheme = () => {
     // UI-1 hides the site header in its full-height workspace. Reserve only the native bar there.

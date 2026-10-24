@@ -387,10 +387,18 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         const add = (label, icon, run) => { const button = ui.element('button', 'rail-link'); button.type = 'button';
             button.append(globalThis.WeftIcons.create(icon, 16), ui.element('span', '', label));
             button.onclick = () => { closeAccountMenu(); run(); }; menu.append(button); return button; };
-        add('用量详情', 'chart', () => ui.openSettings('usage'));
-        add('更新内容', 'sync', () => ui.openReleases());
-        add('帮助', 'info', () => ui.openHelp());
-        if (globalThis.weftmateDesktop || !matchMedia('(max-width:720px)').matches) add('快捷键一览', 'keyboard', () => ui.openShortcuts());
+        const usageLink = add('用量详情', 'chart', () => ui.openSettings('usage'));
+        identity.after(usageLink); usageLink.append(usage);
+        const help = ui.element('details', 'account-help'), summary = ui.element('summary', 'rail-link', '帮助');
+        summary.prepend(globalThis.WeftIcons.create('info', 16)); help.append(summary); menu.append(help);
+        summary.setAttribute('role', 'button'); summary.setAttribute('aria-expanded', 'false');
+        summary.setAttribute('aria-label', '帮助');
+        help.addEventListener('toggle', () => summary.setAttribute('aria-expanded', String(help.open)));
+        for (const [label, icon, run] of [['新功能', 'sync', () => ui.openReleases()], ['键盘快捷键', 'keyboard', () => ui.openShortcuts()], ['用户指南', 'info', () => ui.openHelp()]]) {
+            const button = add(label, icon, run); help.append(button);
+        }
+        // Memory and devices remain available through their D31 settings categories.
+        ui.byId('rail-memory').hidden = true; ui.byId('rail-devices').hidden = true;
         add('退出登录', 'logout', () => {
             const token = core.accountToken(), dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', '退出登录');
             const body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', '退出当前设备？'), ui.element('p', '', '退出后需要重新登录。电脑上的对话与文件会保留。'));
@@ -408,7 +416,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             catch { if (core.accountIdentityCurrent(token) && !menu.hidden) usage.textContent = '本月用量暂时无法读取，请在用量详情重试。'; }
         });
         menu.addEventListener('keydown', event => {
-            const buttons = [...menu.querySelectorAll('button')], index = buttons.indexOf(document.activeElement);
+            const buttons = [...menu.querySelectorAll('button,summary')].filter(button => button.getClientRects().length), index = buttons.indexOf(document.activeElement);
             if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
                 event.preventDefault(); buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
             }

@@ -24,7 +24,12 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         content.scrollTop = positions.get(id) || 0;
         category.mount({ ...options, target: panels.get(id), core, ui });
-        if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const panel = panels.get(id);
+        if (id !== 'appearance') {
+            globalThis.WeftSettingsControls.groupRows(panel, category.name);
+            for (const form of panel.querySelectorAll('.personalization-form')) globalThis.WeftSettingsControls.groupRows(form, category.name);
+        }
+        if (globalThis.WeftReplyMotion?.reduced ?? matchMedia('(prefers-reduced-motion: reduce)').matches) {
             for (const animation of dialog.getAnimations({ subtree: true })) animation.cancel();
         } else globalThis.WeftMotion?.reveal(panels.get(id), 'base');
     }
@@ -34,7 +39,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         for (const category of registry.list({ desktop: !!globalThis.weftmateDesktop, query: search.value })) {
             if (group !== category.group) { group = category.group; navigation.append(node('h2', 'settings-nav-group', group)); }
             const button = node('button', 'settings-nav-item', category.name); button.type = 'button'; button.dataset.category = category.id;
-            button.prepend(globalThis.WeftIcons.create(category.icon, 20));
+            button.prepend(globalThis.WeftIcons.create(category.icon, 16));
             button.addEventListener('click', () => selectSettings(category.id)); navigation.append(button);
             const option = new Option(`${category.group} · ${category.name}`, category.id); picker.append(option);
         }
@@ -164,7 +169,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         description('general', '语言', '当前界面使用简体中文。', '简体中文');
         panels.get('appearance').replaceChildren(node('p', 'muted', '保存到这台设备。'));
-        WeftAppearanceControls.mount(panels.get('appearance'), { get: WeftDesktop.getAppearance, set: WeftDesktop.setAppearance, toast: ui.toast });
+        WeftDesktopAppearanceControls.mount(panels.get('appearance'), { get: WeftDesktop.getAppearance, set: WeftDesktop.setAppearance, toast: ui.toast });
         move('memory', ui.byId('memory-view'));
 
         const updates = node('section', 'settings-updates'); updates.id = 'settings-updates'; panels.get('about').append(updates);
