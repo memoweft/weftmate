@@ -1,5 +1,5 @@
 globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
-  let toolbar, subtitle, computer, folder, error, modes;
+  let toolbar, subtitle, computer, folder, error, modes, draftModes;
   const node = ui.element;
   const project = () => core.currentFolderProject?.();
   function selectLabel(control, label, icon) {if(control.dataset.label===label)return;control.dataset.label=label;
@@ -11,12 +11,22 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     if (!toolbar) return;
     const enabled = core.supportsWorkModes(), working = core.currentConversationMode() === 'work';
     modes.hidden = !enabled;
+    draftModes.hidden = !enabled || !core.state.newConversation;
+    for (const b of draftModes.children) {
+      const selected = b.dataset.mode === core.currentConversationMode();
+      b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1;
+      b.disabled = !!core.state.submitting || !!core.state.unresolvedSubmission;
+    }
     const newLabel = ui.byId('new-session').querySelector('.rail-new-label'); if (newLabel) newLabel.textContent = enabled ? '新建' : '新对话';
     for (const b of modes.children) { const selected = b.dataset.mode === core.sidebarConversationMode(); b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1; }
     ui.byId('new-session').setAttribute('aria-label', enabled ? core.sidebarConversationMode() === 'work' ? '新建工作' : '新建对话' : '新对话');
     const form = ui.byId('message-form'), phoneLayout = globalThis.WeftPhoneUnify?.isPhone() === true;
     if (phoneLayout && toolbar.nextSibling !== form) form.before(toolbar);
     else if (!phoneLayout && toolbar.previousSibling !== form) form.after(toolbar);
+    const approval = ui.byId('approval-picker');
+    if (enabled && working && !phoneLayout) {
+      if (approval.parentElement !== toolbar) toolbar.insertBefore(approval, error);
+    } else if (approval.parentElement === toolbar) ui.byId('model-picker').before(approval);
     const fresh = core.state.newConversation, selected = project(), id = (fresh ? core.state.workDraftHostId : null) || core.currentExecutionComputer?.() || core.state.hostId;
     toolbar.hidden = !enabled || !working || core.state.activeChatSource === 'phone';
     if (!toolbar.hidden) {
@@ -100,6 +110,18 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
       const index = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - [...modes.children].indexOf(document.activeElement);
       modes.children[index]?.focus(); modes.children[index]?.click(); };
     ui.byId('session-rail').prepend(modes);
+    draftModes = modes.cloneNode(true); draftModes.className = 'rail-mode-switch conversation-mode-switch';
+    draftModes.setAttribute('aria-label', '新对话模式');
+    for (const b of draftModes.children) {
+      b.setAttribute('aria-controls', 'conversation-pane');
+      b.onclick = () => { core.cancelNextSuggestions?.();
+        void Promise.resolve(b.dataset.mode === 'work' ? core.startNewWork() : core.startNewConversation())
+          .catch(cause => ui.toast(core.failureMessage(cause))); };
+    }
+    draftModes.onkeydown = event => { if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return; event.preventDefault();
+      const index = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - [...draftModes.children].indexOf(document.activeElement);
+      draftModes.children[index]?.focus(); draftModes.children[index]?.click(); };
+    ui.byId('assistant-title').before(draftModes);
     toolbar = node('div', 'work-mode-toolbar'); toolbar.setAttribute('aria-label', '工作电脑与文件夹'); toolbar.hidden = true;
     computer = button('电脑', 'desktop', trigger => WeftPopover.openMenu(trigger, core.workComputers().map(row => ({ name: row.displayName || row.name, icon: 'desktop',
       checked: row.hostId === core.state.workDraftHostId, description: row.online ? '在线' : '不在线', disabled: !row.online,

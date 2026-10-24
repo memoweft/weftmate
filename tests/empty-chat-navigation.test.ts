@@ -41,6 +41,8 @@ test('new chat leaves fixed pages with empty and existing history using producti
     assert.equal(actual.conversationHidden, false);
     assert.equal(report.cases.length, 16, 'both history states, themes and four fixed pages execute');
     assert.ok(report.cases.every((row: any) => row.passed));
+    assert.equal(report.workChoicesPassed, true);
+    assert.equal(report.suggestionsRestored, true);
     assert.deepEqual([...new Set(report.cases.map((row: any) => row.history))].sort(), ['empty', 'existing']);
     assert.deepEqual([...new Set(report.cases.map((row: any) => row.theme))].sort(), ['dark', 'light']);
     assert.equal(report.seedOperations.length, 1, 'only the explicit existing-history fixture creates a session');

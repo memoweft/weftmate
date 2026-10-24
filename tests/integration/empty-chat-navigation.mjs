@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
 import { createDshSessionAdapter } from '../../src/runtime/dsh-adapter/sessions.mjs';
+import { cleanupOwnedProcesses } from '../helpers/process-evidence.mjs';
 
 for (const stream of [process.stdout, process.stderr]) stream.on('error', error => { if (error.code !== 'EPIPE') throw error; });
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-empty-chat';
@@ -19,6 +20,7 @@ const output = process.env.WEFTMATE_EVIDENCE_DIR;
 if (!output) throw Error('Set WEFTMATE_EVIDENCE_DIR outside the repository.');
 await mkdir(output, { recursive: true });
 const root = await mkdtemp(join(tmpdir(), 'weftmate-empty-chat-'));
+const startedAt = Date.now(), electronPath = createRequire(import.meta.url)('electron');
 const report = { scenario: '#609 empty-history new chat', renderer: browserOnly ? 'Chromium' : 'production Electron desktop',
   sourceHead: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true, timeout: 10000 }).trim(),
   passed: false, observations: [], errors: [], operations: [] };
@@ -40,6 +42,7 @@ try {
     getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: true } } }),
     listModels: async () => [{ id: 'synthetic', name: '合成模型', model: 'synthetic-no-inference', configured: true, sourceKind: 'local' }],
     preflight: async () => ({ ok: true }),
+    modelCompletion: async () => { throw Error('Optional inference is replaced by the synthetic suggestion response.'); },
     createSession: async input => {
       const operation = { kind: 'create', sessionId: input.sessionId };
       if (seedExisting) (report.seedOperations ??= []).push(operation); else report.operations.push(operation);
@@ -74,6 +77,8 @@ try {
     const value = await response.json(); assert.ok(response.ok, JSON.stringify({ path, status: response.status, error: value.error })); return value;
   };
   await api('/settings/models', { defaultModelProfileId: 'synthetic' }, 'PATCH');
+  const work = join(root, 'SyntheticWork'); await mkdir(work);
+  await api('/projects', { requestId: randomUUID(), name: '合成项目', rootPath: work, permission: 'read-only' });
   await api('/onboarding', { step: 'first', completed: true }, 'PATCH');
   assert.equal((await api('/sessions')).sessions.length, 0, 'the initial environment truly has zero sessions');
   let theme = process.env.EMPTY_CHAT_THEME ?? 'dark';
@@ -92,6 +97,7 @@ try {
     report.window = await app.evaluate(({ BrowserWindow }) => { const w = BrowserWindow.getAllWindows()[0]; return { exists: !!w, visible: w.isVisible() }; });
   }
   page.setDefaultTimeout(15000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(() => {
     let module;
     Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true, get: () => module, set: value => {
@@ -118,6 +124,7 @@ try {
     await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '外观', exact: true }).click();
     await page.getByRole('button', { name: theme === 'light' ? '浅色' : '深色', exact: true }).click();
     await page.getByRole('button', { name: '关闭设置', exact: true }).click();
+    await page.locator('#settings-dialog').waitFor({ state: 'hidden' });
     report.appearance = await page.evaluate(() => document.documentElement.dataset.theme);
     assert.equal(report.appearance, theme, 'the product appearance control applies the requested theme');
   };
@@ -131,6 +138,10 @@ try {
       fixedPagesHidden: [...document.querySelectorAll('.library-surface,.health-surface,.goals-surface,.activity-surface')].every(panel => panel.hidden),
       conversationHidden: document.getElementById('conversation-pane').hidden }));
     report.observations.push({ label, ...state });
+    // Hidden desktop captures are expensive. Retain the relevant before/after
+    // views while every navigation assertion still runs against the real DOM.
+    if (app && !['initial-empty-chat', 'library-before-new', 'new-chat-after-library', 'work-choices', 'suggestions-restored'].includes(label)) return state;
+    if (!app) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const file = join(output, `${label}-${theme}.png`);
     if (app && visible) {
       const ownedWindow = await app.evaluate(({ BrowserWindow }) => { const window = BrowserWindow.getAllWindows()[0];
@@ -156,10 +167,12 @@ try {
     return state;
   };
   await snapshot('initial-empty-chat');
+  assert.equal(await page.locator('#assistant-view .conversation-mode-switch').isVisible(), true,
+    '#622 the empty conversation has its own mode choice at the top');
   await page.getByRole('button', { name: '成果库', exact: true }).click();
   await page.locator('.library-surface').waitFor({ state: 'visible' });
   await snapshot('library-before-new');
-  await page.locator('[data-mode="chat"]').click();
+  await page.locator('#session-rail [data-mode="chat"]').click();
   await page.locator('#new-session').click();
   const actual = await snapshot('new-chat-after-library');
   assert.equal(actual.title, '新对话', 'new chat must replace the fixed-page title');
@@ -167,7 +180,7 @@ try {
   assert.equal(actual.conversationHidden, false);
   await page.locator('#message-text').fill('合成草稿，仅检查导航，不发送');
   report.cases = [{ history: 'empty', page: 'library', theme, passed: true }];
-  const themes = [theme, theme === 'light' ? 'dark' : 'light'];
+  const themes = browserOnly ? [theme, theme === 'light' ? 'dark' : 'light'] : [theme];
   const fixedPages = [{ key: 'library', label: '成果库' }, { key: 'health', label: '健康' },
     { key: 'goals', label: '目标' }, { key: 'activity', label: /^动态/ }];
   const assertChat = async (value, draft) => {
@@ -227,10 +240,67 @@ try {
   assert.equal(await page.locator('.library-surface').isVisible(), false, 'selecting an existing chat still closes the fixed page');
   await page.getByText('合成历史保留', { exact: true }).waitFor();
   await page.locator('#new-session').click();
-  await matrix('existing');
+  if (browserOnly) await matrix('existing');
   assert.equal(JSON.stringify(sessions.get(existing).events), retainedEvents, 'new chat and fixed-page navigation preserve existing history');
   assert.equal((await api('/sessions')).sessions.length, 1, 'new drafts create no extra server sessions');
-  assert.equal(report.cases.length, 16);
+  assert.equal(report.cases.length, browserOnly ? 16 : 4);
+  // Settings and memory share a modal; the New keyboard shortcut invokes the
+  // same sidebar action while the modal makes background controls inert.
+  for (const label of ['设置', '记忆']) {
+    await page.getByRole('button', { name: '账户菜单', exact: true }).click();
+    await page.locator('#account-menu').getByRole('button', { name: label, exact: true }).click();
+    await page.locator('#settings-dialog').waitFor({ state: 'visible' });
+    await page.keyboard.press('Control+n');
+    await page.locator('#settings-dialog').waitFor({ state: 'hidden' });
+    await assertChat(await snapshot(`new-chat-after-${label}`), await page.locator('#message-text').inputValue());
+  }
+  const draftModes = page.getByRole('tablist', { name: '新对话模式', exact: true });
+  await draftModes.getByRole('tab', { name: '工作', exact: true }).click();
+  await page.waitForFunction(() => emptyChatCore.currentConversationMode() === 'work');
+  assert.equal(await page.locator('#send-message').isDisabled(), true, 'first work message requires a folder');
+  await page.evaluate(() => { emptyChatCore.state.computers = [
+    { hostId: emptyChatCore.state.hostId, displayName: '合成电脑', online: true },
+    { hostId: 'synthetic-online', displayName: '合成另一台电脑', online: true },
+    { hostId: 'synthetic-offline', displayName: '合成离线电脑', online: false }];
+    emptyChatCore.chooseSidebarMode('work'); });
+  const toolbar = page.locator('.work-mode-toolbar');
+  await toolbar.getByRole('button', { name: '电脑：合成电脑', exact: true }).click();
+  assert.equal(await page.getByRole('menuitemradio', { name: /合成离线电脑/ }).isDisabled(), true);
+  await page.getByRole('menuitemradio', { name: /^合成电脑/ }).click();
+  await toolbar.getByRole('button', { name: '选择项目或文件夹', exact: true }).click();
+  await page.getByRole('menuitemradio', { name: /合成项目/ }).click();
+  await page.locator('#message-text').fill('合成工作草稿，不发送');
+  assert.equal(await page.locator('#send-message').isEnabled(), true);
+  assert.equal(await toolbar.locator('#approval-picker').isVisible(), true);
+  await toolbar.locator('#approval-mode-trigger').click();
+  await page.locator('#approval-mode-menu [data-mode="ask"]').click();
+  await page.waitForFunction(() => emptyChatCore.state.newConversationApprovalMode === 'ask');
+  await snapshot('work-choices');
+  await draftModes.getByRole('tab', { name: '对话', exact: true }).click();
+  await page.waitForFunction(() => emptyChatCore.currentConversationMode() === 'chat');
+  assert.equal(await toolbar.isVisible(), false);
+  assert.equal(await page.locator('#approval-mode-trigger').isVisible(), true);
+  // Real suggestion controller + presentation, with only the optional model
+  // response replaced. Typing and clearing must perform no second request.
+  let suggestionRequests = 0;
+  await page.route('**/sessions/*/suggestions', async route => {
+    suggestionRequests++;
+    await route.fulfill({ json: { requestId: route.request().postDataJSON().requestId, suggestions: ['合成建议一', '合成建议二'] } });
+  });
+  await page.locator(`#session-list .session-row[data-session-id="${existing}"] > button`).first().click();
+  await page.waitForFunction(id => emptyChatCore.state.selectedSessionId === id && !emptyChatCore.state.sessionSelecting, existing);
+  await page.locator('#message-text').fill('');
+  await page.evaluate(async () => { emptyChatCore.syncNextSuggestions(); await emptyChatCore.requestNextSuggestions('replies'); });
+  await page.locator('#next-suggestions').waitFor({ state: 'visible' });
+  const chips = await page.locator('.next-suggestion-chip').allTextContents(); assert.equal(chips.length, 2);
+  await page.locator('#message-text').fill('打字');
+  await page.locator('#next-suggestions').waitFor({ state: 'hidden' });
+  await page.locator('#message-text').fill('');
+  await page.locator('#next-suggestions').waitFor({ state: 'visible' });
+  assert.deepEqual(await page.locator('.next-suggestion-chip').allTextContents(), chips);
+  assert.equal(suggestionRequests, 1);
+  await snapshot('suggestions-restored');
+  report.workChoicesPassed = report.suggestionsRestored = true;
   assert.equal(report.operations.length, 0, 'navigation needs no server session or model request');
   assert.deepEqual(report.errors, []);
   report.passed = true;
@@ -247,8 +317,9 @@ try {
 finally {
   clearTimeout(timer);
   await Promise.allSettled([app?.close(), browser?.close()]); await host?.close();
+  if (!browserOnly) cleanupOwnedProcesses({ startedAt, executables: [electronPath], commandRoots: [root] });
   await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2));
   if (ownedLock) await unlink(ownedLock);
   const child = relative(tmpdir(), root); assert.ok(child && !child.startsWith('..') && !isAbsolute(child));
-  await rm(root, { recursive: true, force: true });
+  await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }

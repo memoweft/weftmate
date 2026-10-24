@@ -207,6 +207,9 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         });
         search.addEventListener('input', renderSettingsNavigation); picker.addEventListener('change', () => selectSettings(picker.value));
         close.addEventListener('click', () => ui.byId('account-back').click());
+        dialog.addEventListener('keydown', event => {
+            if (globalThis.WeftShortcuts.dispatch(event, { new: () => ui.byId('new-session').click() })) event.stopPropagation();
+        });
         dialog.addEventListener('cancel', event => { event.preventDefault(); ui.byId('account-back').click(); });
         dialog.addEventListener('close', () => { ui.stopAccountPairing?.(); returnFocus?.focus(); });
         renderSettingsNavigation(); selectSettings(selected);
