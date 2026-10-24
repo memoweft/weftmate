@@ -107,7 +107,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                     if (body) WeftContent.update(body, event.data.text, { streaming: event.data.streaming === true });
                 }
                 WeftContent.messageCompletionNotice(prior, core, event, sessionId);
-                globalThis.WeftModelThinking?.(core,prior,event);
+                (globalThis.WeftTimeline?.thinking || globalThis.WeftModelThinking)?.(core,prior,event);
                 if (!event.data.live) { ui.messageActions?.bind(prior,event,sessionId); ui.appendReplyMemory(prior,event); }
                 continue;
             }
@@ -172,7 +172,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (event.type === 'assistant.message') {
                 if (event.data?.live && event.data.text) globalThis.WeftContent?.update(row.querySelector('.message-text'),event.data.text,{streaming:event.data.streaming===true});
                 appendMessageFiles(row,event.data.text);
-                globalThis.WeftModelThinking?.(core, row, event);
+                (globalThis.WeftTimeline?.thinking || globalThis.WeftModelThinking)?.(core, row, event);
                 ui.appendReplyMemory(row, event);
             }
             const taskLabel = core.messageTaskLabel(event);

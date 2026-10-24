@@ -191,6 +191,10 @@
       const immutable=event.data?.phoneSource===true;
       if (event.sourceRef?.kind === 'native') event = { ...event, seq: event.sourceRef.seq };
       if (!id || !['user.message', 'assistant.message'].includes(event.type) || !event.data?.text) return;
+      if (event.type === 'assistant.message' && globalThis.WeftTimeline?.isFinalReply &&
+          !WeftTimeline.isFinalReply(timedHistory(id,!!event.sourceRef?.sessionId).ordered,event,core.conversationRunning?.(id))) {
+        row.querySelector('.message-actions')?.remove(); row.querySelector('.message-versions')?.remove(); return;
+      }
       if (row.querySelector('.message-actions')) {
         if(row.matches(':hover,:focus-within,.actions-visible'))timeUpdates.get(row)?.();
         return;
