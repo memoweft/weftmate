@@ -70,6 +70,17 @@ try {
   await page.waitForFunction(()=>progressCore.state.refreshing===false && progressCore.state.sessions.length>0);
   await page.evaluate(async id=>{try {await progressCore.savePersonalization({thinkingDisplay:'expanded',nextSuggestionsEnabled:false});await progressCore.selectSession(id);}catch(error){throw Error(JSON.stringify(error));}},fixture.sessionId);
   assert.equal(await page.evaluate(()=>progressCore.inLogicalTimeline()),logical);
+  const compactControls=await page.evaluate(async()=>{
+    const list=document.createElement('ol');document.body.append(list);
+    try {
+      WeftTimeline.render([{seq:0,type:'turn.started',data:{turn:9}},{seq:1,type:'assistant.message',data:{text:'',modelThinking:'合成思考',thinkingMs:1000}},
+        {seq:2,type:'step.completed',data:{taskId:'turn-9',stepId:'compact-command',toolName:'pwsh',state:'completed',summary:'运行命令',detailRef:{seq:2}}},
+        {seq:3,type:'turn.ended',data:{turn:9,reason:'completed'}}],list,{readDetail:async()=>({text:JSON.stringify({arguments:{command:'Write-Output "compact"'},output:'compact output'})}),openStep(){}});
+      list.querySelectorAll('details').forEach(node=>node.open=true);await new Promise(resolve=>setTimeout(resolve,0));
+      return [...list.querySelectorAll('.timeline-action:not(.step-resources):not(.step-reference)')].map(button=>({icon:!!button.querySelector('svg'),text:button.textContent.trim()}));
+    } finally {list.remove();}
+  });
+  assert.ok(compactControls.length>=4 && compactControls.every(button=>button.icon && !button.text),'progress copy/collapse controls must be icons, not text buttons');
   fixture.progress.call('read','read-1',{path:'motion.json',offset:0,limit:100});
   await page.getByText(/正在读取.*motion.json/).first().waitFor();
   fixture.progress.result('read-1','Synthetic first segment');
@@ -126,9 +137,15 @@ try {
   await page.waitForFunction(()=>!(progressCore.inLogicalTimeline()?progressCore.mainChatDays().flatMap(day=>day.events):progressCore.timelineEventsForContext()).some(event=>event.data?.live));
   assert.equal(await page.locator('.model-thinking').count(),1);
   assert.equal(await thinking.evaluate(node=>node.open),true,'user can keep finished thinking expanded');
+  await thinking.locator('.thinking-body').hover();
   await thinking.getByRole('button',{name:'收起',exact:true}).click();
   assert.equal(await thinking.evaluate(node=>node.open),false);
   await thinking.locator('summary').click();
+  const commentaryRow=page.locator('#transcript .message.assistant').filter({has:page.getByText('目录已经找到，接着核对用法。',{exact:true})});
+  await commentaryRow.hover();assert.equal(await commentaryRow.locator('.message-actions').count(),0,'interim commentary never receives reply controls');
+  const answerRow=page.locator('#transcript .message.assistant').filter({has:page.getByText('核对完成，下面是结果。',{exact:true})});
+  await page.mouse.move(10,10);assert.equal(await answerRow.locator('.message-actions').evaluate(node=>getComputedStyle(node).visibility),'hidden');
+  await answerRow.hover();assert.equal(await answerRow.locator('.message-actions').evaluate(node=>getComputedStyle(node).visibility),'visible','final reply keeps hover actions');
   const positions=await page.locator('#transcript > li').evaluateAll(rows=>rows.map(row=>row.textContent));
   const commentary=positions.findIndex(text=>text.includes('目录已经找到'));
   assert.ok(positions.findIndex(text=>text.includes('读取了 1 个文件'))<commentary);
@@ -168,12 +185,21 @@ try {
       const code=list.querySelector('code');
       list.querySelector('.render-code-actions button:last-child').click();
       await new Promise(resolve=>setTimeout(resolve,0));
-      return {copiedThinking,code:code?.textContent,highlighted:!!code?.querySelector('.hljs-built_in'),output:list.querySelector('.step-output')?.textContent,copied,summary:list.querySelector('.inline-progress-text')?.textContent};
+      return {feedback:!!list.querySelector('.model-thinking [data-copied="true"] svg'),copiedThinking,code:code?.textContent,highlighted:!!code?.querySelector('.hljs-built_in'),output:list.querySelector('.step-output')?.textContent,copied,summary:list.querySelector('.inline-progress-text')?.textContent};
     } catch(error) {list.remove();throw error;}
   });
   await page.locator('#progress2-command-probe').scrollIntoViewIfNeeded();
+  const stepBody=page.locator('#progress2-command-probe .execution-step-body');
+  await stepBody.locator('[data-icon="copy"]').first().focus();
+  assert.equal(await stepBody.locator('[data-icon="copy"]').first().evaluate(node=>getComputedStyle(node).opacity),'1','keyboard focus reveals detail icons');
+  await page.locator('#progress2-command-probe .render-code').hover();
+  const codeCopy=page.locator('#progress2-command-probe .render-code [data-icon="copy"]');
+  assert.equal(await codeCopy.evaluate(node=>getComputedStyle(node).opacity),'1');
+  assert.equal(await codeCopy.evaluate(node=>getComputedStyle(node).borderTopWidth),'0px');
+  assert.equal(await codeCopy.evaluate(node=>node.textContent),'');
   for(const theme of ['light','dark']){await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await capture('command-'+theme);}
   await page.locator('#progress2-command-probe').evaluate(node=>node.remove());
+  assert.equal(probes.feedback,true,'copy feedback uses a check icon');
   assert.equal(probes.copiedThinking,'先检查合成命令。');
   assert.match(probes.code,/^\$ Write-Output/);assert.equal(probes.output,'synthetic output');assert.equal(probes.copied,probes.code);
   assert.equal(probes.highlighted,true);assert.equal(probes.summary,'已运行 1 个命令');

@@ -2,6 +2,29 @@
 (() => {
   'use strict'
   const node = (tag, cls, text) => { const n = document.createElement(tag); n.className = cls || ''; if (text) n.textContent = text; return n }
+  function detailAction(name, icon, action) {
+    const button = node('button','timeline-action progress-icon-action');
+    button.type='button'; button.title=name; button.setAttribute('aria-label',name); button.dataset.icon=icon;
+    button.append(WeftIcons.create(icon,16)); button.addEventListener('click',action); return button;
+  }
+  async function copyFeedback(button, action) {
+    const label=button.title;
+    try {
+      await action(); button.replaceChildren(WeftIcons.create('allow',16)); button.dataset.copied='true'; button.setAttribute('aria-label','已复制');
+    } catch { button.setAttribute('aria-label','复制未完成，请重试'); }
+    clearTimeout(button.feedbackTimer);
+    const duration=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-5')) || 640;
+    button.feedbackTimer=setTimeout(()=>{button.replaceChildren(WeftIcons.create('copy',16));delete button.dataset.copied;button.setAttribute('aria-label',label);},duration);
+  }
+  function isFinalReply(events, event, running = false) {
+    const ordered=[...events].sort((a,b)=>a.seq-b.seq);
+    const start=ordered.findLast(item=>item.seq<=event.seq && item.type==='turn.started');
+    const next=ordered.find(item=>item.seq>event.seq && item.type==='turn.started');
+    const tail=ordered.filter(item=>item.seq>event.seq && (!next || item.seq<next.seq));
+    if(tail.some(item=>item.type.startsWith('step.') || ['assistant.message','user.message'].includes(item.type)))return false;
+    if(tail.some(item=>item.type==='turn.ended'))return true;
+    return !start && (!running || !!next);
+  }
   // Reasoning belongs to the progress disclosure; answer text stays in the transcript.
   function prepare(events, display = 'collapsed') {
     let taskId;
@@ -34,10 +57,9 @@
       const summary = node('summary'), title = node('span', 'thinking-title'), arrow = node('span', 'progress-chevron');
       arrow.append(WeftIcons.create('chevron',16)); summary.append(title,arrow);
       const body = node('div','thinking-body'), actions = node('div','progress-detail-actions');
-      const copy = node('button','timeline-action','复制'), collapse = node('button','timeline-action','收起');
-      copy.type = collapse.type = 'button'; copy.setAttribute('aria-label','复制思考内容');
-      copy.onclick = async () => { try { await (options.copyText || (text=>navigator.clipboard.writeText(text)))(detail.querySelector('p').textContent); copy.textContent='已复制'; } catch { copy.textContent='复制未完成'; } };
-      collapse.onclick = () => { detail.open=false; summary.focus(); };
+      const copy = detailAction('复制思考内容','copy',()=>void copyFeedback(copy,()=>
+        (options.copyText || (text=>navigator.clipboard.writeText(text)))(detail.querySelector('p').textContent)));
+      const collapse = detailAction('收起','chevron',()=>{detail.open=false;summary.focus();});
       actions.append(copy,collapse); body.append(actions,node('p')); detail.append(summary,body);
     }
     if (fresh) detail.open = step.thinkingActive && options.thinkingDisplay === 'expanded';
@@ -232,5 +254,5 @@
     }
     for (const [key, row] of existing) if (!seen.has(key)) row.remove()
   }
-  window.WeftTimeline = { render, prepare, thinking }
+  window.WeftTimeline = { render, prepare, thinking, detailAction, copyFeedback, isFinalReply }
 })()

@@ -38,3 +38,14 @@ test('#641 idle inbox acceptance is not a queue card; a message behind an active
     {seq:2,type:'task.ended',data:{taskId:'cancelled',reason:'canceled'}},queued(3,'next')])[1].queued, true);
   assert.equal(api.taskQueue([{seq:0,type:'turn.started'},{seq:1,type:'turn.ended'},queued(2,'idle')])[0].queued, false);
 });
+
+test('reply actions belong only to the final answer of each turn, never interim commentary', () => {
+  const f = fixture(), finalReply = f.WeftTimeline.isFinalReply;
+  const event = (seq,type,text='') => ({seq,type,data:{text}});
+  const commentary=event(1,'assistant.message','目录已经找到，接着核对用法。'),answer=event(3,'assistant.message','最终答案');
+  const history=[event(0,'turn.started'),commentary,event(2,'step.completed'),answer,event(4,'turn.ended')];
+  assert.equal(finalReply(history,commentary),false);
+  assert.equal(finalReply(history,answer),true);
+  assert.equal(finalReply(history.slice(0,2),commentary,true),false);
+  assert.equal(finalReply([...history,event(5,'turn.started')],answer,true),true);
+});

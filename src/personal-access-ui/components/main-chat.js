@@ -52,6 +52,8 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             const pendingState = spec.kind==='progress' ? [[...core.conversationQuestions.entries.values()].map(entry=>[entry.row.questionRpcId,entry.row.status,entry.row.answer]),[...core.conversationApprovals.entries.values()].map(entry=>[entry.row.approvalId,entry.row.status,entry.row.outcome])] : null;
             const signature = JSON.stringify([spec.events || spec.event || spec.date || spec.text, spec.collapsed, core.state.chatWindow.search.query,pendingState]);
             if (row.dataset.chatSignature !== signature) { updateRow(row, spec); row.dataset.chatSignature = signature; }
+            if (globalThis.WeftTimeline?.isFinalReply && spec.kind === 'message' && spec.event.type === 'assistant.message' && !spec.event.data?.live)
+                ui.bindMainMessage?.(row,spec.event);
             row.classList.toggle('is-last-assistant', !core.state.chatWindow.hasNewer && spec.event?.type === 'assistant.message' && spec.key === rows.findLast(item => item.event?.type === 'assistant.message')?.key);
         }
         // Move only rows out of order; never detach the focused control on a stream update.

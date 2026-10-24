@@ -844,6 +844,17 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 .step-detail-content .timeline-raw { margin:var(--wm-space-8) 0 0; overflow:auto; }
 .step-command .render-code { margin:0; }
 .execution-block .timeline-action { font-size:var(--wm-font-size-12); }
+.execution-block .progress-icon-action { display:inline-flex; align-items:center; justify-content:center; flex:none; width:var(--wm-space-28); min-width:var(--wm-space-28); height:var(--wm-space-28); min-height:var(--wm-space-28); padding:var(--wm-space-6); margin:0; border:0; border-radius:var(--wm-radius-4); background:transparent; color:var(--progress-ink); opacity:0; pointer-events:none; cursor:pointer; }
+.execution-block .progress-icon-action[hidden] { display:none; }
+.execution-block .progress-icon-action:hover { background:var(--accent-soft); color:var(--ink); }
+.execution-block .progress-icon-action:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }
+.progress-icon-action[data-icon="chevron"] svg { transform:rotate(180deg); }
+.thinking-body:is(:hover,:focus-within) > .progress-detail-actions > .progress-icon-action,
+.execution-step-body:is(:hover,:focus-within) > .progress-detail-actions > .progress-icon-action,
+.step-command .render-code:is(:hover,:focus-within) .progress-icon-action { opacity:1; pointer-events:auto; }
+.execution-step-body > .progress-detail-actions { padding:0 var(--wm-space-12); }
+.execution-block :is(.step-resources,.step-reference) { display:block; width:fit-content; min-height:0; min-width:0; padding:var(--wm-space-4) 0; margin:0 var(--wm-space-12) var(--wm-space-8); border:0; border-radius:0; background:transparent; color:var(--progress-ink); font-size:var(--wm-font-size-12); text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.execution-block :is(.step-resources,.step-reference):hover { color:var(--ink); }
 @media (prefers-reduced-motion:reduce) {
   .execution-block[data-motion="enter-rise"] { animation:none; }
   .progress-indicator i { animation:none; opacity:.6; }

@@ -12,7 +12,11 @@
         const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || (english ? 'Tool execution' : '工具执行')}${step.statusText ? ` · ${step.statusText}` : step.state === 'failed' ? english ? ' · Encountered an issue' : ' · 遇到问题' : step.state === 'cancelled' ? english ? ' · Stopped' : ' · 已停止' : step.state === 'running' && running ? english ? ' · Running' : ' · 运行中' : ''}${step.approvalText ? ` · ${step.approvalText}` : ''}`);
         const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true');
         arrow.append(window.WeftIcons.create('chevron', 16)); label.append(arrow);
-        const output = node('div', 'step-detail-content'), copy = node('button', 'timeline-action', english ? 'Copy' : '复制');
+        const output = node('div', 'step-detail-content');
+        const copy = WeftTimeline.detailAction(english ? 'Copy step details' : '复制步骤详情','copy',()=>void WeftTimeline.copyFeedback(copy,()=>
+            (options.copyText || (text=>navigator.clipboard.writeText(text)))(globalThis.WeftUiCore.executionDetailText(detail.rawText || '',step.language))));
+        const collapse = WeftTimeline.detailAction(english ? 'Collapse' : '收起','chevron',()=>{detail.open=false;label.focus();});
+        const actions = node('div','progress-detail-actions'); actions.append(copy,collapse);
         function paintDetail(raw, truncated = false) {
             output.replaceChildren();
             detail.dataset.truncated = String(truncated);
@@ -23,7 +27,11 @@
             if (typeof command === 'string' && /^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(step.toolName)) {
                 const fence = '`'.repeat(Math.max(3,...[...command.matchAll(/`+/g)].map(match=>match[0].length+1)));
                 const language = /pwsh|powershell/.test(step.toolName) ? 'powershell' : 'bash';
-                output.append(WeftContent.create(`${fence}${language}\n$ ${command}\n${fence}`, 'step-command markdown-body', {copy:options.copyText}));
+                const block=WeftContent.create(`${fence}${language}\n$ ${command}\n${fence}`, 'step-command markdown-body', {copy:options.copyText});
+                const controls=block.querySelector('.render-code-actions');
+                const codeCopy=WeftTimeline.detailAction(english ? 'Copy command' : '复制命令','copy',()=>void WeftTimeline.copyFeedback(codeCopy,()=>
+                    (options.copyText || (text=>navigator.clipboard.writeText(text)))(block.querySelector('code').textContent)));
+                controls.replaceChildren(codeCopy); output.append(block);
                 const text = globalThis.WeftUiCore.executionDetailText(raw, step.language);
                 const marker = english ? '\n\nOutput\n' : '\n\n输出\n';
                 const at = text.indexOf(marker);
@@ -48,22 +56,11 @@
         copy.hidden = true;
         if (detail.dataset.loaded === 'true')
             copy.hidden = false;
-        copy.addEventListener('click', async () => {
-            try {
-                if (options.copyText)
-                    await options.copyText(globalThis.WeftUiCore.executionDetailText(detail.rawText || '',step.language));
-                else
-                    await navigator.clipboard.writeText(globalThis.WeftUiCore.executionDetailText(detail.rawText || '',step.language));
-                copy.textContent = english ? 'Copied' : '已复制';
-            }
-            catch {
-                copy.textContent = english ? 'Could not copy' : '复制未完成';
-            }
-        });
         const resources = node('button', 'timeline-action step-resources', english ? 'View sources used' : '查看使用的来源');
         resources.type = 'button';
         resources.addEventListener('click', () => options.openStep?.(step, resources));
-        const body = node('div','execution-step-body'); body.append(resources,output,copy);
+        const body = node('div','execution-step-body'); body.append(actions,output);
+        if(options.openStep)body.append(resources);
         detail.append(label,body);
         detail.dataset.motion = 'unfold';
         if (detail.dataset.loaded === 'true')
