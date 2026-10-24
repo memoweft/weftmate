@@ -36,9 +36,13 @@ html[data-reduced-motion] .reply-working>.reply-sheen,html[data-reduced-motion] 
 [data-motion="sheet-in"] { animation:m-sheet-in var(--dur-4) var(--ease-out) both }
 @keyframes m-sheet-in { from { transform:translateX(102%) } to { transform:none } }
 /* unfold: wrap content in one child; toggle .open or aria-expanded. */
-[data-motion="unfold"] { display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--dur-3) var(--ease-out) }
-[data-motion="unfold"] > * { min-height:0;overflow:hidden }
-[data-motion="unfold"].open,[data-motion="unfold"][aria-expanded="true"] { grid-template-rows:1fr }
+[data-motion="unfold"]:not(details) { display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--dur-3) var(--ease-out) }
+[data-motion="unfold"]:not(details) > * { min-height:0;overflow:hidden }
+[data-motion="unfold"]:not(details).open,[data-motion="unfold"]:not(details)[aria-expanded="true"] { grid-template-rows:1fr }
+/* Native unfold leaves summary in normal flow; only the details body folds. */
+details[data-motion="unfold"]::details-content { display:grid;grid-template-rows:0fr;content-visibility:hidden;transition:grid-template-rows var(--dur-3) var(--ease-out),content-visibility var(--dur-3) allow-discrete }
+details[data-motion="unfold"][open]::details-content { grid-template-rows:1fr;content-visibility:visible }
+:is(html[data-reduced-motion],body.calm) details[data-motion="unfold"]::details-content { transition:none!important }
 [data-motion="text-shimmer"] {
   background:linear-gradient(100deg,var(--ink-muted,var(--muted)) 20%,var(--ink) 45%,var(--ink-muted,var(--muted)) 70%) 100% 0 / 220% 100%;
   background-clip:text;color:transparent;
@@ -53,6 +57,7 @@ html[data-reduced-motion] [data-motion="text-shimmer"],body.calm [data-motion="t
 html[data-reduced-motion] [data-motion="enter-rise"] { animation:m-fade var(--dur-1) var(--ease-out) both!important }
 body.calm [data-motion],body.calm [data-motion="stagger-rise"] > *,body.calm .m-stagger-rise > * { animation:none!important;transition:none!important }
 @media(prefers-reduced-motion:reduce) {
+  html:not([data-motion-full]) details[data-motion="unfold"]::details-content { transition:none!important }
   html:not([data-motion-full]) [data-motion="text-shimmer"] { animation:none!important;background:none;color:var(--ink-muted,var(--muted)) }
   html:not([data-motion-full]) [data-motion="enter-rise"] { animation:m-fade var(--dur-1) var(--ease-out) both!important }
   html:not([data-motion-full]) .reply-status[data-motion="enter-fade"] { animation:none!important }

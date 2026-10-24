@@ -143,15 +143,40 @@ try {
       const node = document.createElement('div'); node.dataset.motion = 'view-enter';
       const text = '设置动效开关的合成回复';
       const body = WeftContent.create('', 'markdown-body'); node.append(body); document.body.append(node);
+      const progress = document.createElement('ol'); node.append(progress);
+      WeftTimeline.render([
+        { seq: 0, type: 'turn.started', data: { turn: 1 } },
+        ...['read', 'exec'].map((toolName, index) => ({ seq: index + 1, type: 'step.started', at: new Date().toISOString(),
+          data: { taskId: 'motion-task', stepId: `motion-step-${index}`, toolName, state: 'running', summary: '合成进展步骤' } })),
+      ], progress);
+      const block = progress.querySelector('.execution-block'), step = progress.querySelector('.execution-step');
+      block.open = true; step.open = true;
       WeftContent.update(body, text, { streaming: true });
       const immediate = body._renderText || '';
       await new Promise(requestAnimationFrame);
+      for (const animation of progress.getAnimations({ subtree: true })) if (animation.effect.getTiming().iterations !== Infinity) animation.finish();
+      const records = progress.querySelector('.execution-records');
+      const progressStyle = { animations: progress.getAnimations({ subtree: true }).length,
+        dots: [...progress.querySelectorAll('.progress-indicator i')].map(dot => ({ animation: getComputedStyle(dot).animationName, opacity: getComputedStyle(dot).opacity })),
+        transition: getComputedStyle(block, '::details-content').transitionDuration,
+        recordsDisplay: getComputedStyle(records).display, recordsHeight: records.getBoundingClientRect().height,
+        stepDisplay: getComputedStyle(step).display, summaryHeight: step.querySelector('summary').getBoundingClientRect().height };
       const result = { preference: WeftReplyMotion.preference, reduced: WeftReplyMotion.reduced,
-        animation: getComputedStyle(node).animationName, immediate, first: body._renderText, text };
+        animation: getComputedStyle(node).animationName, immediate, first: body._renderText, text, progress: progressStyle };
       node.remove(); return result;
     });
+    const checkProgress = choice => {
+      assert.equal(choice.progress.recordsDisplay, 'block');
+      assert.notEqual(choice.progress.stepDisplay, 'grid');
+      assert.ok(choice.progress.recordsHeight > 0 && choice.progress.summaryHeight > 0, 'expanded progress and its summary remain visible');
+      if (choice.reduced) {
+        assert.equal(choice.progress.animations, 0); assert.equal(choice.progress.transition, '0s');
+        assert.ok(choice.progress.dots.every(dot => dot.animation === 'none' && dot.opacity === '0.6'));
+      } else assert.ok(choice.progress.dots.every(dot => dot.animation === 'm-progress-dot'));
+    };
     await motionButtons.getByRole('button', { name: '关闭', exact: true }).click();
     let choice = await probe();
+    checkProgress(choice);
     assert.equal(choice.preference, 'full'); assert.equal(choice.reduced, false);
     assert.equal(choice.animation, 'm-enter-rise'); assert.equal(choice.immediate, '');
     assert.ok(Array.from(choice.first).length >= 1 && Array.from(choice.first).length <= 3);
@@ -165,16 +190,20 @@ try {
     if (!await page.locator('.appearance-advanced').evaluate(details => details.open)) await page.locator('.appearance-advanced > summary').click();
     assert.equal(await motionButtons.getByRole('button', { name: '关闭', exact: true }).getAttribute('aria-pressed'), 'true');
     choice = await probe(); assert.equal(choice.preference, 'full'); assert.equal(choice.reduced, false); assert.equal(choice.animation, 'm-enter-rise');
+    checkProgress(choice);
     await motionButtons.getByRole('button', { name: '系统', exact: true }).click();
     choice = await probe(); assert.equal(choice.preference, 'system'); assert.equal(choice.reduced, true);
+    checkProgress(choice);
     assert.equal(choice.animation, 'none'); assert.equal(choice.immediate, choice.text);
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     // Drive foreground restoration while keeping the native test window hidden.
     await page.evaluate(() => { WeftReplyMotion.setVisibility(true); WeftReplyMotion.setVisibility(false); });
     await page.waitForFunction(() => !WeftReplyMotion.reduced && !document.documentElement.hasAttribute('data-reduced-motion'));
     choice = await probe(); assert.equal(choice.animation, 'm-enter-rise'); assert.equal(choice.immediate, '');
+    checkProgress(choice);
     await motionButtons.getByRole('button', { name: '开启', exact: true }).click();
     choice = await probe(); assert.equal(choice.preference, 'reduce'); assert.equal(choice.reduced, true);
+    checkProgress(choice);
     assert.equal(choice.animation, 'none'); assert.equal(choice.immediate, choice.text);
     if (out) {
       const png = await app.evaluate(async ({ BrowserWindow }) => (await BrowserWindow.getAllWindows()[0].capturePage()).toPNG().toString('base64'));
