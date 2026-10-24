@@ -17,6 +17,7 @@ import { readAppUpdateManifest, verifyDownloadedApp } from './personal-update/ap
 import type { UpdateManifest } from './personal-update/manifest.mjs'
 import { compareVersions } from './personal-update/manifest.mjs'
 import { rejectedAppVersion } from './personal-update/app-rollback.mjs'
+import { defaultUpdateChannel } from './desktop-config.mjs'
 
 export type UpdateStatus =
   | 'disabled'      // 未打包或未配置渠道
@@ -25,6 +26,7 @@ export type UpdateStatus =
   | 'available'     // 有新版（下载中）
   | 'downloaded'    // 已下载完成，等用户重启安装
   | 'not-available'
+  | 'empty'
   | 'error'
 
 export interface UpdateState {
@@ -35,6 +37,7 @@ export interface UpdateState {
   /** 错误信息（error 时，普通用户可读）。 */
   error: string | null
   releaseNotes?: string
+  progress?: { percent: number; transferred: number; total: number; bytesPerSecond: number }
 }
 
 const state: UpdateState = { enabled: false, status: 'disabled', version: null, error: null }
@@ -105,7 +108,7 @@ export async function initUpdater(getWindow: () => BrowserWindow | null, onState
     // The signed layer manifest authorizes the version before updater downloads it.
     updater.autoDownload = false
     updater.disableDifferentialDownload = false
-    updater.allowPrerelease = process.env.WEFTMATE_UPDATE_CHANNEL === 'preview'
+    updater.allowPrerelease = (process.env.WEFTMATE_UPDATE_CHANNEL || defaultUpdateChannel(app.getVersion())) === 'preview'
     updater.channel = updater.allowPrerelease ? 'preview' : 'latest'
     updater.allowDowngrade = false
     // Preview updates are installed only after the user chooses the explicit
@@ -116,11 +119,13 @@ export async function initUpdater(getWindow: () => BrowserWindow | null, onState
       if (!signedAppManifest || signedAppManifest.version !== info.version) {
         state.status = 'error'; state.error = sanitizeUpdateFailure('signature version mismatch'); publishState(getWindow); return
       }
-      state.status = 'available'; state.version = info.version; publishState(getWindow)
+      state.status = 'available'; state.version = info.version; state.progress = undefined; publishState(getWindow)
       void updater.downloadUpdate().catch(error => { state.status = 'error'; state.error = sanitizeUpdateFailure(error); publishState(getWindow) })
     })
     updater.on('update-not-available', () => { state.status = 'not-available'; publishState(getWindow) })
-    updater.on('download-progress', () => { state.status = 'available'; publishState(getWindow) })
+    updater.on('download-progress', ({ percent, transferred, total, bytesPerSecond }) => {
+      state.status = 'available'; state.progress = { percent, transferred, total, bytesPerSecond }; publishState(getWindow)
+    })
     updater.on('update-downloaded', async (info) => {
       try {
         if (!signedAppManifest || info.version !== signedAppManifest.version) throw new Error('signature version mismatch')
@@ -158,7 +163,7 @@ export async function checkForUpdates(getWindow: () => BrowserWindow | null): Pr
     // UPD-3 must provide the companion signed manifest URL for a packaged provider.
     const manifestFeed = process.env.WEFTMATE_APP_MANIFEST_FEED || (feed !== 'packaged' ? feed : null)
     if (!manifestFeed) throw new Error('signature manifest source missing')
-    signedAppManifest = await readAppUpdateManifest(manifestFeed, app.getVersion(), process.env.WEFTMATE_UPDATE_CHANNEL || 'stable')
+    signedAppManifest = await readAppUpdateManifest(manifestFeed, app.getVersion(), process.env.WEFTMATE_UPDATE_CHANNEL || defaultUpdateChannel(app.getVersion()))
     if (await rejectedAppVersion(signedAppManifest.version)) throw new Error('startup version rejected')
     state.releaseNotes = typeof signedAppManifest.releaseNotes === 'string' ? signedAppManifest.releaseNotes : ''
     if (compareVersions(signedAppManifest.version, app.getVersion()) <= 0) {
@@ -166,8 +171,10 @@ export async function checkForUpdates(getWindow: () => BrowserWindow | null): Pr
     }
     await autoUpdater.checkForUpdates()
   } catch (error) {
-    state.status = 'error'
-    state.error = sanitizeUpdateFailure(error)
+    const empty = (error as { code?: string })?.code === 'UPDATE_CHANNEL_EMPTY'
+    state.status = empty ? 'empty' : 'error'
+    state.error = empty ? null : sanitizeUpdateFailure(error)
+    if (empty) { state.version = null; state.releaseNotes = ''; state.progress = undefined; signedAppManifest = null }
     publishState(getWindow)
   } finally { checking = false }
   return state
@@ -197,7 +204,7 @@ export function changeUpdateChannel(): void {
   if (checking || state.status === 'available') throw new Error('UPDATE_DOWNLOAD_IN_PROGRESS')
   signedAppManifest = null
   downloadedInstaller = null
-  state.version = null; state.releaseNotes = ''; state.error = null
+  state.version = null; state.releaseNotes = ''; state.error = null; state.progress = undefined
   if (autoUpdater) {
     const feed = resolveFeed()
     if (feed && feed !== 'packaged') autoUpdater.setFeedURL({ provider: 'generic', url: feed, useMultipleRangeRequest: false })

@@ -15,8 +15,9 @@ export function updateSource(url) {
       !(parsed.protocol === 'https:' || parsed.protocol === 'http:' && ['127.0.0.1', '[::1]', 'localhost'].includes(parsed.hostname))) throw new Error('invalid update source');
   return parsed;
 }
-export async function downloadBytes(url, size, fetcher = fetch) {
+export async function downloadBytes(url, size, fetcher = fetch, channelManifest = false) {
   const response = await fetcher(updateSource(url), { redirect: 'error', signal: AbortSignal.timeout(60000) });
+  if (response.status === 404 && channelManifest) throw Object.assign(new Error('empty update channel'), { code: 'UPDATE_CHANNEL_EMPTY' });
   if (!response.ok) throw new Error('http update download failed');
   const chunks = []; let total = 0;
   for await (const chunk of response.body) {
@@ -64,6 +65,15 @@ export class UpdateStore {
     await mkdir(join(this.root, 'versions'), { recursive: true });
     try { Object.assign(this.pointer, JSON.parse(await readFile(join(this.root, 'current.json'), 'utf8'))); }
     catch (error) { if (error.code !== 'ENOENT') await this.rollback('hash update pointer invalid'); }
+    // A host upgrade carries its own matching UI. Retire the previous host's
+    // trial (including pointers written before builtInVersion was recorded).
+    let bundled = this.pointer.builtInVersion && this.pointer.builtInVersion !== this.builtInVersion;
+    if (!this.pointer.builtInVersion && this.pointer.trial && this.pointer.active) {
+      try { bundled = compareVersions((await this.manifest(this.pointer.active)).version, this.builtInVersion) <= 0; }
+      catch { bundled = true; }
+    }
+    if (bundled) { this.useBuiltIn(); await this.persist().catch(() => {}); }
+    this.pointer.builtInVersion = this.builtInVersion;
     if (this.pointer.trial) await this.rollback('startup self-check interrupted');
     if (this.pointer.active) {
       try { this.state.currentVersion = (await this.verifyVersion(this.pointer.active)).version; }
@@ -83,7 +93,7 @@ export class UpdateStore {
   async download(manifestUrl) {
     this.state.status = 'checking'; this.state.error = null;
     try {
-      const manifest = JSON.parse((await downloadBytes(manifestUrl, 1024 * 1024, this.fetcher)).toString('utf8'));
+      const manifest = JSON.parse((await downloadBytes(manifestUrl, 1024 * 1024, this.fetcher, true)).toString('utf8'));
       verifyManifest(manifest, this.trustedKeys, this.options());
       if (this.allowedPaths && manifest.files.some(file => !this.allowedPaths.has(file.path))) throw new Error('invalid resource path');
       const id = sha256(JSON.stringify(manifest));
@@ -125,7 +135,10 @@ export class UpdateStore {
         catch (error) { if (!(await lstat(this.directory(id)).catch(() => null))?.isDirectory()) throw error; await this.verifyVersion(id); }
         this.pointer.staged = id; await this.persist(); this.state.status = 'ready';
       } finally { await rm(staging, { recursive: true, force: true }); }
-    } catch (error) { this.state.status = 'failed'; this.state.error = /signature/.test(error.message) ? '更新签名校验失败' : /incompatible/.test(error.message) ? '此版本与当前程序不兼容' : /hash/.test(error.message) ? '更新文件校验失败' : /startup/.test(error.message) ? '此版本启动失败，已保留上一版' : '更新下载失败，请稍后重试'; }
+    } catch (error) {
+      if (error.code === 'UPDATE_CHANNEL_EMPTY') { this.state.status = 'empty'; this.state.error = null; this.state.availableVersion = null; }
+      else { this.state.status = 'failed'; this.state.error = /signature/.test(error.message) ? '更新签名校验失败' : /incompatible/.test(error.message) ? '此版本与当前程序不兼容' : /hash/.test(error.message) ? '更新文件校验失败' : /startup/.test(error.message) ? '此版本启动失败，已保留上一版' : '更新下载失败，请稍后重试'; }
+    }
     return this.state;
   }
   async activate({ idle = false } = {}) {
@@ -148,7 +161,13 @@ export class UpdateStore {
     if (!previous) this.state.currentVersion = this.builtInVersion;
     if (failed && !this.pointer.rejected.includes(failed)) this.pointer.rejected.push(failed);
     Object.assign(this.pointer, { active: previous, previous: null, staged: null, trial: false, lastFailure: { versionId: failed, reason, at: new Date().toISOString() } });
-    await this.persist(); this.state.status = 'failed'; this.state.error = '新界面启动失败，已恢复上一版';
+    try { await this.persist(); }
+    catch { this.useBuiltIn(); }
+    this.state.status = 'failed'; this.state.error = '新界面启动失败，已恢复可用界面';
+  }
+  useBuiltIn() {
+    Object.assign(this.pointer, { active: null, previous: null, staged: null, trial: false, builtInVersion: this.builtInVersion });
+    Object.assign(this.state, { currentVersion: this.builtInVersion, availableVersion: null, status: 'current', error: null });
   }
   async resource(name) {
     if (!this.pointer.active) return null;

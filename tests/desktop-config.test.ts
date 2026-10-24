@@ -9,6 +9,22 @@ import { uninstallDesktopData } from '../src/desktop-uninstall.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../src/host-mode.mjs';
 import { assertReleaseVersion } from '../scripts/release/windows.mjs';
 
+test('fresh Windows profiles follow the installed version and retain the chosen channel on upgrade', async () => {
+  for (const [appVersion, channel] of [['0.2.0-preview.13', 'preview'], ['0.2.0', 'stable']]) {
+    const root = await mkdtemp(join(tmpdir(), 'weftmate-channel-'));
+    try {
+      const input = { appData: root, packaged: true, platform: 'win32', argv: ['app'], env: {}, appVersion };
+      const created = applyDesktopConfig(input);
+      assert.equal(created.config.updates.channel, channel);
+      const saved = await readFile(created.file, 'utf8');
+      const next = applyDesktopConfig({ ...input, argv: ['app'], appVersion: '0.3.0' });
+      assert.equal(next.config.updates.channel, channel);
+      assert.equal(await readFile(created.file, 'utf8'), saved);
+      assert.equal(next.config.dataDirectory, created.config.dataDirectory);
+    } finally { await rm(root, { recursive: true, force: true }); }
+  }
+});
+
 test('installed startup reads configuration and channel without source launcher arguments', async () => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-config-'));
   try {

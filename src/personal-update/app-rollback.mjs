@@ -13,6 +13,15 @@ import { installationScope } from '../desktop-installation.mjs';
 const controlAppData = () => packageInfo.desktopIdentity ? join(app.getPath('appData'), packageInfo.desktopIdentity) : app.getPath('appData');
 
 export const rollbackRoot = appData => join(appData, 'WeftMate', 'app-recovery');
+export async function appUpdateVersionAtBoot(appData = controlAppData()) {
+  if (process.argv.includes('--updated')) return app.getVersion();
+  if (!app.isPackaged) return null;
+  // Older watchdogs do not pass --updated. Read their authorization before
+  // the healthy acknowledgement lets the watchdog remove pending.json.
+  const pending = await readFile(join(rollbackRoot(appData), 'pending.json'), 'utf8').then(JSON.parse).catch(() => null);
+  return pending?.nextVersion === app.getVersion() && pending.executable?.toLowerCase() === process.execPath.toLowerCase()
+    ? app.getVersion() : null;
+}
 export async function prepareAppRollback({ configFile, nextVersion, appData = app.getPath('appData'),
   timeoutMs = 180000, cacheDirectory, installer, installerSha256 }) {
   if (!app.isPackaged || process.platform !== 'win32') throw new Error('APP_RECOVERY_REQUIRES_WINDOWS_PACKAGE');
