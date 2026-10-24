@@ -5,7 +5,12 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
         const rows = new Map();
         const roots = commands.filter(row => ['session.message','chat.message'].includes(row.kind) && !row.rootTaskId && row.sessionId === sessionId);
         const root = data => roots.find(row => row.commandId === data.taskId || data.receiptId && row.receiptId === data.receiptId);
+        let replying = false, nativeTurn = false;
         for (const event of [...events].sort((a, b) => a.seq - b.seq)) {
+            if (event.type === 'turn.started') { replying = true; nativeTurn = true; }
+            if (event.type === 'turn.ended') { replying = false; nativeTurn = true; }
+            if (!nativeTurn && event.type === 'task.started') replying = true;
+            if (!nativeTurn && event.type === 'task.ended') replying = false;
             if (event.type === 'task.queued' && event.data?.inherited) continue;
             if (!['task.queued', 'task.started', 'task.ended'].includes(event.type)) continue;
             for (const data of event.data?.tasks || [event.data || {}]) {
@@ -14,7 +19,10 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
                 const previous = rows.get(taskId) || {};
                 rows.set(taskId, { ...previous, taskId, receiptId: data.receiptId || command?.receiptId || previous.receiptId,
                     text: data.text || previous.text || command?.text || command?.taskLabel || '排队任务',
-                    seq: previous.seq ?? event.seq, queued: previous.queued || event.type === 'task.queued',
+                    // Native inbox acceptance also occurs before an idle turn starts.
+                    // Only a message behind existing work belongs in the queue UI.
+                    seq: previous.seq ?? event.seq, queued: previous.queued || event.type === 'task.queued' &&
+                        (replying || [...rows.values()].some(row => row.taskId !== taskId && ['queued','running'].includes(row.state))),
                     state: event.type === 'task.queued' ? 'queued' : event.type === 'task.started' ? 'running' :
                         ['canceled', 'cancelled'].includes(data.reason) ? 'cancelled' : 'ended', reason: data.reason });
             }
