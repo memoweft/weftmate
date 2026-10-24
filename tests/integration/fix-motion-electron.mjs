@@ -102,9 +102,15 @@ try {
       const status = document.createElement('p'); document.body.append(status);
       WeftReplyMotion.status(status, '正在读取合成结果…', true);
       const loading = status.dataset.motion;
+      WeftReplyMotion.setVisibility(true);
+      const paused = getComputedStyle(status).animationPlayState;
+      WeftReplyMotion.setVisibility(false);
+      status.classList.add('reply-offscreen');
+      const offscreen = getComputedStyle(status).animationPlayState;
+      status.classList.remove('reply-offscreen');
       WeftReplyMotion.status(status, '合成结果已读取', false);
-      const result = { loading, loaded: status.dataset.motion, text: status.firstChild.textContent }; status.remove(); return result;
-    }), { loading: 'text-shimmer', loaded: 'enter-fade', text: '合成结果已读取' });
+      const result = { loading, paused, offscreen, loaded: status.dataset.motion, text: status.firstChild.textContent }; status.remove(); return result;
+    }), { loading: 'text-shimmer', paused: 'paused', offscreen: 'paused', loaded: 'enter-fade', text: '合成结果已读取' });
     if (out) {
       const png = await app.evaluate(async ({ BrowserWindow }) => (await BrowserWindow.getAllWindows()[0].capturePage()).toPNG().toString('base64'));
       await writeFile(join(out, `${theme}.png`), Buffer.from(png, 'base64'));

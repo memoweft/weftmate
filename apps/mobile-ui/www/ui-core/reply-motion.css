@@ -58,3 +58,5 @@ body.calm [data-motion],body.calm [data-motion="stagger-rise"] > *,body.calm .m-
   html:not([data-motion-full]) .reply-status[data-motion="enter-fade"] { animation:none!important }
 }
 html[data-reduced-motion] .reply-status[data-motion="enter-fade"] { animation:none!important }
+/* Preserve pausing over the status recipe's animation shorthand. */
+html[data-motion-paused] .reply-status[data-motion],.reply-offscreen[data-motion] { animation-play-state:paused!important }
