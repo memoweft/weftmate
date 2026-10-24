@@ -7,10 +7,11 @@ import { tmpdir } from 'node:os';
 import { join, resolve, relative, isAbsolute } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
+import '../helpers/posix-project-fixture.mjs';
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
 import { createDshSessionAdapter } from '../../src/runtime/dsh-adapter/sessions.mjs';
 import { cleanupOwnedProcesses } from '../helpers/process-evidence.mjs';
+const { createPersonalAccessService } = await import('../../src/personal-access/index.mjs');
 
 for (const stream of [process.stdout, process.stderr]) stream.on('error', error => { if (error.code !== 'EPIPE') throw error; });
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-empty-chat';
