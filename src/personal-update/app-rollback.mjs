@@ -15,6 +15,7 @@ const controlAppData = () => packageInfo.desktopIdentity ? join(app.getPath('app
 export const rollbackRoot = appData => join(appData, 'WeftMate', 'app-recovery');
 export async function appUpdateVersionAtBoot(appData = controlAppData()) {
   if (process.argv.includes('--updated')) return app.getVersion();
+  if (!app.isPackaged) return null;
   // Older watchdogs do not pass --updated. Read their authorization before
   // the healthy acknowledgement lets the watchdog remove pending.json.
   const pending = await readFile(join(rollbackRoot(appData), 'pending.json'), 'utf8').then(JSON.parse).catch(() => null);

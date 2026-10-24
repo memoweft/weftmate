@@ -82,6 +82,10 @@ test('old watchdog startup authorization supplies the updated version before its
   const recovery = join(root, 'WeftMate', 'app-recovery'); await mkdir(recovery, { recursive: true });
   const file = join(recovery, 'pending.json');
   await writeFile(file, JSON.stringify({ nextVersion: electron.app.getVersion(), executable: process.execPath }));
+  const { appUpdateVersionAtBoot } = await import('../src/personal-update/app-rollback.mjs');
+  electron.app.isPackaged = false;
+  try { assert.equal(await appUpdateVersionAtBoot(), null, 'source-mode launches do not consult installed recovery state'); }
+  finally { electron.app.isPackaged = true; }
   const desktop = await createDesktopUpdates({ root: join(root, 'ui-complete'), feed: null, trustedKeys, isIdle: async () => true });
   try {
     await rm(file);
