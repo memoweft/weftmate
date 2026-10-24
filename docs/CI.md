@@ -10,24 +10,19 @@
 
 云端 required 单文件期限为 10 分钟，依据既有最长文件约 8 分 12 秒的取证确定。超期结束本文件拥有的进程树，打印阶段、输出尾段、提交内存与退出码，判失败后继续下一文件。Windows 回收仍同时核对创建时间、可执行文件和隔离目录；每次尝试都有独立临时目录。矩阵 job（作业）期限为 25 分钟；完整报告在各分片步骤摘要与汇总步骤都可见。Chromium（浏览器引擎）和 Electron 二进制缓存按系统、架构及 `package-lock.json` 隔离；Windows 的 Media Foundation（媒体基础组件）仍用 Playwright 顺序安装。DSH（宿主运行时）缓存与版本不变。
 
-只读取 GitHub 的取证命令：`node .github/scripts/ci-failure-survey.mjs` 获取最近 80 次主流程；`survey({workflow:'windows-package.yml', ...})` 另取打包流程。原日志留在 `.local/ci-1/`，诊断摘要写到 `WEFTMATE_EVIDENCE_DIR` 下的 `ci-1/`，未设置时使用被忽略的 `.local/evidence/ci-1/`。`node .github/scripts/ci-run-evidence.mjs <运行ID> <标签>` 下载各片报告、记录用时与重跑恢复；`round-1` 至 `round-6` 自动生成完整结果表。
-
 检查名为 `test (windows-latest, shard 1/5)` 至 `5/5`、`test (ubuntu-latest, shard 1/3)` 至 `3/3`，阻断汇总为 `Required unit tests (summary)`。macOS 按原触发条件显示为 `test (macos-latest, shard 1/1)`。其他产品平台、云端服务与手机系统栏取证流程保留。
 
 ## 合并与红灯处理
 
 CSR 的常规云测试固定核验 32 把 P-256 密钥（含标量 111 和前导零用例）；完整 10,000 把随机密钥及独立 OpenSSL 核验位于 `services/cloud/stress/host-csr.test.mjs`，由 S2b 明确运行，不进入常规 `test/*.test.mjs`，避免每次重复启动一万次 OpenSSL。两处共用同一组公钥、域名和签名断言；专用核验的数量与期限不变。
 
-合并与红灯的处理按 [AGENTS](../AGENTS.md) 和 D114：合进最新 main、自动检查全绿、总代理看过就合；偶发失败直接重跑（`gh run rerun --failed`），在「偶发失败总账」issue 记一行，不追。
-
-需要汇总时，`node .github/scripts/ci-post-merge-survey.mjs <起点 UTC（协调世界时）>` 按固定起点采集 CI、Review gallery（审稿画廊）、Windows packaged application（打包程序）、S1c、S2、S2b 与 Pinned DSH vendor tests（固定运行时测试）。
+合并与红灯的处理只看 [AGENTS](../AGENTS.md) 和 D121：自动检查全绿、总代理看过就合；偶发失败直接重跑（`gh run rerun --failed`），不追、不记总账。
 
 按证据区分夹具竞态、测试写法不确定、产品问题与纯墙上时钟预算。等待必须依据命令终态、真实长轮询注册或观察者关闭；不靠固定 sleep（休眠）猜测就绪。密文篡改解码后翻转字节。精确读计数和完整存储快照测试先关闭独立后台观察者。继承临时目录的子进程不更新创建者租约。
 
 预算不包含与被测行为无关的合成身份准备或清理。BL-29 审批探针由 hooks（测试钩子）等待准备与退出；原 25 秒测量期限、30 秒测试期限及四项 2 秒断言保留。手机界面发布的准备也移入钩子，20 秒测量期限不变，SSE（服务器发送事件）读取期限的定时器在读完后释放。非零文件退出一律记录十进制／十六进制退出码、信号、阶段、输出尾段与提交内存概况，报告和失败日志都保留。
 
 `Required unit tests (summary)` 仍须等全部分片报告，缺失、重复或失败继续阻断；它不需要安装依赖。无法在其它分片未结束时宣布整体通过。Observed bridge（记忆观察桥）、vendor／打包／画廊保持独立，继续拆这些任务不能缩短 `gh run rerun --failed` 对同一次运行结束的等待。保持全部检查标准；需要定位时查看已完成的失败 job（任务）日志，完整失败重跑等运行结束后执行。
-
 
 两条宿主关闭用例都会输出 `host-close-phases`：撤销等待、各组件清理、审批落盘、空闲连接清扫、HTTP 关闭、服务端响应结束和客户端读完响应的相对毫秒数。观测只注入测试夹具，失败时同样保留；观测回调出错被内部吞掉，原关闭调用、异常、完整响应及500ms要求不变。
 
