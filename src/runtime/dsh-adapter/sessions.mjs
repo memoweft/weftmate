@@ -102,11 +102,9 @@ const HISTORY_PAGE_LIMIT = 200
 const HISTORY_RESPONSE_BYTES_LIMIT = 900_000
 function safeHistoryText(value, limit = HISTORY_TEXT_LIMIT) {
   const raw = String(value ?? '')
+  // Personal history and model consumers need the original text. Redaction
+  // belongs at log/diagnostic/export boundaries, never in this projection.
   const text = raw.slice(0, limit)
-    .replace(/(?:[A-Za-z]:\\|\\\\)[^\s"'<>]+/g, '[local path]')
-    .replace(/(^|[\s(])\/(?:[^\s"'<>/]+\/)*[^\s"'<>/]+/g, '$1[local path]')
-    .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer [redacted]')
-    .replace(/(?:sk-[A-Za-z0-9_-]{8,}|(?:api[_-]?key|token|secret|password)\s*[:=]\s*[^\s,;]+)/gi, '[redacted]')
   return { text, ...(raw.length > limit ? { truncated: true } : {}) }
 }
 function messageText(message, includeHash = false) {

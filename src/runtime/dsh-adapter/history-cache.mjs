@@ -2,6 +2,8 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdir, chmod } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
+const PROJECTION_VERSION = ':thinking-v1:stream-v1:original-text-v1';
+
 /** Rebuildable public-history projection, never a native log decoder. Native
  * persistence owns decoding/recovery; this cache supports bounded SQL ranges. */
 export function createHistoryCache({ file, source, readNative }) {
@@ -35,12 +37,12 @@ export function createHistoryCache({ file, source, readNative }) {
       const epoch = epochs.get(id) ?? 0;
       return serial(async () => {
         if (closed) throw new Error('history cache closed');
-        const native = await source(id), before = native ? {...native,revision:native.revision + ':thinking-v1:stream-v1'} : null, sql = await database();
+        const native = await source(id), before = native ? {...native,revision:native.revision + PROJECTION_VERSION} : null, sql = await database();
         let meta = sql.prepare('SELECT * FROM segments WHERE id=?').get(id);
         if (!before) { sql.prepare('DELETE FROM events WHERE session=?').run(id); sql.prepare('DELETE FROM segments WHERE id=?').run(id); return null; }
         if (meta?.revision !== before.revision) {
           const entries = before.events ?? await readNative(id);
-          const incremental = Boolean(before.events && meta && meta.tail < entries.length && meta.stable <= meta.tail);
+          const incremental = Boolean(before.events && meta?.revision.endsWith(PROJECTION_VERSION) && meta.tail < entries.length && meta.stable <= meta.tail);
           let after = incremental ? meta.stable : -1, stable = after, tail = entries.at(-1)?.seq ?? -1;
           // Projection is synchronous over immutable native objects; insertion
           // and the revision publish are one transaction, without async gaps.
