@@ -13,6 +13,36 @@ function fixture({ inlineCompletionEnabled = false, mobile = false } = {}) {
   return {global,core,timers,requests,set draft(value:string){draft=value},get paints(){return paints}};
 }
 const settle=()=>new Promise(resolve=>setTimeout(resolve,0));
+test('#627 typing and clearing restores the same replies without another request, including IME and inline completion', async () => {
+  const f=fixture({inlineCompletionEnabled:true});f.core.syncNextSuggestions();
+  f.core.state.historyEvents.set(1,{seq:1,type:'turn.ended',data:{reason:'completed'}});
+  f.core.syncNextSuggestions();await settle();
+  const original=[...f.core.nextSuggestionsView().suggestions];assert.equal(original.length,1);
+  f.core.setSuggestionsComposing(true);f.draft='草稿';f.core.nextSuggestionsInput(f.draft);
+  assert.equal(f.core.nextSuggestionsView().suggestions.length,0);
+  f.core.setSuggestionsComposing(false);[...f.timers.values()][0]();await settle();
+  f.draft='';f.core.nextSuggestionsInput('');f.core.syncNextSuggestions();await settle();
+  assert.deepEqual([...f.core.nextSuggestionsView().suggestions],original);
+  assert.equal(f.requests.filter(r=>r.options.method==='POST'&&r.options.body.kind==='replies').length,1);
+  f.core.dismissNextSuggestions();f.draft='再写';f.core.nextSuggestionsInput(f.draft);
+  f.draft='';f.core.nextSuggestionsInput('');assert.equal(f.core.nextSuggestionsView().suggestions.length,0);
+});
+test('#627 cancelled generation is never retried and cached replies do not survive conversation changes', async () => {
+  const f=fixture();f.core.state.historyEvents.set(1,{seq:1,type:'turn.ended',data:{reason:'completed'}});f.core.syncNextSuggestions();let done:any,signal:any;
+  f.core.accessApi=(path:string,options:any)=>{f.requests.push({path,options});return options.method==='DELETE'?Promise.resolve({}):new Promise(resolve=>{done=resolve;signal=options.signal})};
+  const request=f.core.requestNextSuggestions('replies');
+  f.draft='草稿';f.core.nextSuggestionsInput(f.draft);assert.equal(signal.aborted,true);
+  done({requestId:f.requests[0].options.body.requestId,suggestions:['迟到的建议']});await request;
+  f.draft='';f.core.nextSuggestionsInput('');f.core.syncNextSuggestions();
+  assert.equal(f.core.nextSuggestionsView().suggestions.length,0);assert.equal(f.requests.filter(r=>r.options.method==='POST').length,1);
+  f.core.accessApi=async(_path:string,options:any)=>({requestId:options.body.requestId,suggestions:['这一段的建议']});
+  await f.core.requestNextSuggestions('replies');f.draft='暂存';f.core.nextSuggestionsInput(f.draft);
+  f.core.state.selectedSessionId='another';f.core.syncNextSuggestions();
+  f.draft='';f.core.nextSuggestionsInput('');assert.equal(f.core.nextSuggestionsView().suggestions.length,0);
+  await f.core.requestNextSuggestions('replies');assert.equal(f.core.nextSuggestionsView().suggestions.length,1);
+  f.draft='暂存';f.core.nextSuggestionsInput(f.draft);f.core.state.modelProfileId='another-model';f.core.syncNextSuggestions();
+  f.draft='';f.core.nextSuggestionsInput('');assert.equal(f.core.nextSuggestionsView().suggestions.length,0);
+});
 for (const mobile of [false, true]) test(`BL-28a ${mobile ? 'phone' : 'desktop'} default typing sends zero completion requests; explicit opt-in restores completion`, async () => {
   const f=fixture({mobile});f.core.syncNextSuggestions();
   for (const draft of ['帮','帮我','帮我写']) { f.draft=draft;f.core.nextSuggestionsInput(draft); }

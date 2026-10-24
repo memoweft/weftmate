@@ -14,9 +14,9 @@
         const enabled = kind => kind === 'completion' ? core.state.personalization?.inlineCompletionEnabled === true : core.state.personalization?.nextSuggestionsEnabled !== false;
         const context = () => {
             const sessionId = core.state.activeChatSource === 'phone' ? core.phoneBinding?.()?.sessionId : core.state.selectedSessionId;
-            return { sessionId, ownerId: core.state.ownerId, identity: core.state.identityGeneration };
+            return { sessionId, ownerId: core.state.ownerId, identity: core.state.identityGeneration, modelProfileId: core.state.modelProfileId };
         };
-        const scopeOf = value => `${value.ownerId}/${value.identity}/${value.sessionId}`;
+        const scopeOf = value => `${value.ownerId}/${value.identity}/${value.sessionId}/${value.modelProfileId}`;
         const paint = () => { effects.paintNextSuggestions?.(nextSuggestionsView()); core._nextSuggestionsPaint?.(); };
         function cancelNextSuggestions({ clearReplies = true, cancelCompletion = false } = {}) {
             if (runtime.timer != null) { clear(runtime.timer); runtime.timer = null; }
@@ -34,18 +34,18 @@
             paint();
         }
         function nextSuggestionsView() {
-            return { suggestions: [...runtime.suggestions], completion: runtime.completion, draft: runtime.draft,
+            return { suggestions: !runtime.draft.trim() && !runtime.composing ? [...runtime.suggestions] : [], completion: runtime.completion, draft: runtime.draft,
                 enabled: enabled('replies'), inlineCompletionEnabled: enabled('completion'), requestId: runtime.pending?.requestId || null };
         }
         function viable(kind) {
             const ctx = context();
             return (!kind || enabled(kind)) && !!ctx.ownerId && !!ctx.sessionId && core.state.online !== false &&
-                core.state.personalCapabilities?.nextSuggestions === 1 && !runtime.composing &&
+                core.state.personalCapabilities?.nextSuggestions === 1 &&
                 !core.conversationRunning?.(ctx.sessionId) && !core.state.submitting && !core.state.sessionSelecting;
         }
         async function requestNextSuggestions(kind, draft = runtime.draft) {
-            if (!viable(kind) || kind === 'replies' && (draft.trim() || runtime.dismissed === runtime.boundary)) return;
-            cancelNextSuggestions();
+            if (!viable(kind) || runtime.composing || kind === 'replies' && (draft.trim() || runtime.dismissed === runtime.boundary)) return;
+            cancelNextSuggestions({ clearReplies: kind === 'replies' });
             const ctx = context(), requestId = environment.crypto.randomUUID(), controller = new AbortController();
             const task = { context: ctx, requestId, controller, kind, draft, scope: scopeOf(ctx), boundary: runtime.boundary };
             runtime.pending = task;
@@ -84,16 +84,16 @@
             paint();
         }
         function nextSuggestionsInput(draft = effects.readMessageDraft?.() || '') {
-            cancelNextSuggestions(); runtime.draft = draft;
+            cancelNextSuggestions({ clearReplies: false }); runtime.draft = draft;
             if (!draft.trim()) runtime.completionCancelled = false;
-            if (!runtime.completionCancelled && draft.trim() && viable('completion')) runtime.timer = schedule(() => {
+            if (!runtime.completionCancelled && !runtime.composing && draft.trim() && viable('completion')) runtime.timer = schedule(() => {
                 runtime.timer = null; void requestNextSuggestions('completion', draft);
             }, 350);
         }
         function dismissNextSuggestions() {
             runtime.dismissed = runtime.boundary; cancelNextSuggestions({ cancelCompletion: !!runtime.draft.trim() });
         }
-        function setSuggestionsComposing(value) { runtime.composing = value; cancelNextSuggestions(); if (!value) nextSuggestionsInput(); }
+        function setSuggestionsComposing(value) { runtime.composing = value; cancelNextSuggestions({ clearReplies: false }); if (!value) nextSuggestionsInput(); }
         return { nextSuggestionsView, syncNextSuggestions, nextSuggestionsInput, cancelNextSuggestions, dismissNextSuggestions,
             requestNextSuggestions, setSuggestionsComposing };
     };

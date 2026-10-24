@@ -7,6 +7,9 @@
 .rail-mode-switch button:active{transform:scale(.97)}
 .rail-mode-switch button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rail-mode-switch button:disabled{opacity:.45;cursor:default}
+.conversation-mode-switch{width:max-content;margin:0 0 var(--wm-space-8)}
+.library-open .conversation-mode-switch,.health-open .conversation-mode-switch,.goals-open .conversation-mode-switch,.activity-open .conversation-mode-switch{display:none}
+.work-mode-toolbar #approval-mode-trigger{margin:0}
 .work-select-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .work-mode-hint{margin:0;color:var(--ink-muted);font-size:var(--wm-font-size-12);flex-basis:100%}
 .conversation-mode-subtitle{margin:var(--wm-space-4) 0 0;color:var(--ink-muted);font-size:var(--wm-font-size-12);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
