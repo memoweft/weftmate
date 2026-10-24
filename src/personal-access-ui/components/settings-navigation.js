@@ -169,7 +169,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         description('general', '语言', '当前界面使用简体中文。', '简体中文');
         panels.get('appearance').replaceChildren(node('p', 'muted', '保存到这台设备。'));
-        WeftAppearanceControls.mount(panels.get('appearance'), { get: WeftDesktop.getAppearance, set: WeftDesktop.setAppearance, toast: ui.toast });
+        WeftDesktopAppearanceControls.mount(panels.get('appearance'), { get: WeftDesktop.getAppearance, set: WeftDesktop.setAppearance, toast: ui.toast });
         move('memory', ui.byId('memory-view'));
 
         const updates = node('section', 'settings-updates'); updates.id = 'settings-updates'; panels.get('about').append(updates);
