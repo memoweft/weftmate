@@ -1,6 +1,7 @@
 .message-actions, .message-versions { display:flex; align-items:center; gap:var(--wm-space-4); margin-top:var(--wm-space-8); color:var(--ink-muted); flex-wrap:wrap; }
 .message-actions { visibility:hidden; }
-.message:hover > .message-actions, .message:focus-within > .message-actions, .message.is-last-assistant > .message-actions, .message.actions-visible > .message-actions { visibility:visible; }
+.message:hover > .message-actions, .message:focus-within > .message-actions, .message.actions-visible > .message-actions { visibility:visible; }
+.message.assistant > .message-actions > .message-time { margin-left:auto; }
 .message.user .message-actions, .message.user .message-versions { justify-content:flex-end; }
 .message-action { border:0; background:transparent; color:inherit; min-width:var(--wm-space-32); min-height:var(--wm-space-32); padding:var(--wm-space-6); border-radius:var(--wm-radius-8); display:inline-flex; align-items:center; justify-content:center; font:inherit; font-size:var(--wm-font-size-13); }
 .message-action:hover, .message-action[aria-pressed=true] { background:var(--accent-soft); color:var(--accent); }
@@ -77,6 +78,8 @@ summary:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-o
 .main-chat-search .chat-icon-button { background:transparent; color:var(--ink); }
 .main-chat-search .chat-icon-button:hover,.main-chat-search .chat-icon-button:focus-visible { background:var(--accent-soft); }
 @media(pointer:coarse) {
+  .message.assistant > .message-actions { visibility:hidden; }
+  .message.assistant.actions-visible > .message-actions,.message.assistant:focus-visible > .message-actions,.message.assistant:has(:focus-visible) > .message-actions { visibility:visible; }
   .wm-menu-item { min-height:var(--wm-space-44); }
   .message.user > .message-actions,.main-chat-row.message.user > .message-actions { display:none!important; }
   .message.user.time-visible > .message-actions { display:flex!important; visibility:visible; }

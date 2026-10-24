@@ -76,6 +76,7 @@ for (const theme of ['light', 'dark']) {
       const anchoredNow = () => fixed + Math.floor(performance.now() - started);
       globalThis.Date = class extends NativeDate { constructor(...args) { super(...(args.length ? args : [anchoredNow()])); } static now() { return anchoredNow(); } };
     }, { theme, origin: fixture.origin });
+    await page.route('**/personal/v1/memory/items/cognition/synthetic-memory', route => route.fulfill({ json: { ownerId, item: { text: '使用中文说明' } } }));
     await page.route('**/personal/v1/memory/items/**/sources', route => route.fulfill({ json: { ownerId, sources: [{ recordedAt: '2026-10-08T08:00:00Z', contentAvailable: true, rawContent: '合成偏好：使用中文说明。' }] } }));
     const projectionPage = page;
     let projectionDocumentEpoch = 0;
@@ -189,7 +190,7 @@ for (const theme of ['light', 'dark']) {
         } finally { page.off('response', decisionResponse); }
       },
       'outputs-sources': async () => { await home(); await button('输出与来源').click(); await page.getByRole('button', { name: /README.md.*读取/ }).waitFor(); },
-      memory: async () => { await home(); await button('查看这条回复采用的 1 条记忆来源').click(); await page.getByText('合成偏好：使用中文说明。', { exact: true }).waitFor(); },
+      memory: async () => { await home(); await button('查看这条回复参考的 1 条记忆来源').click(); await page.getByText('合成偏好：使用中文说明。', { exact: true }).waitFor(); },
       appearance: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '外观', exact: true }).click(); await page.getByRole('group', { name: '颜色模式' }).waitFor(); },
       general: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '助手', exact: true }).click(); await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).waitFor(); },
       usage: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '用量', exact: true }).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
