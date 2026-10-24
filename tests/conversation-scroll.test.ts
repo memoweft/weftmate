@@ -16,6 +16,11 @@ function fixture(smooth=false){
  const tick=()=>{time+=16;const batch=frames.splice(0);batch.forEach(fn=>fn(time));return box.scrollTop;};
  return {box,content,button,scroll,flush,fire,observers,viewport,events,tick};
 }
+test('streaming follows the current bottom in one frame without smooth chasing',()=>{
+ const f=fixture(true);f.scroll.latest();
+ for(let i=0;i<10;i++){f.box.scrollHeight+=20;f.scroll.changed();f.tick();assert.equal(f.box.scrollTop,f.box.scrollHeight-f.box.clientHeight);}
+});
+
 test('smooth follow never replays its old origin after a layout clamp reaches the new bottom',()=>{
  const f=fixture(true);f.scroll.latest();f.box.scrollHeight+=160;f.scroll.changed();for(let i=0;i<8;i++)f.tick();
  // Composer shrinks/keyboard closes during the animation; Chromium clamps.

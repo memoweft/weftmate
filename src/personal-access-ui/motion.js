@@ -25,6 +25,30 @@
   function reveal(element, name = 'fast', index = 0) {
     return play(element, [{ opacity: .65 }, { opacity: 1 }], name, index);
   }
+  // view-enter / enter-fade: CSS owns the common recipes, including reduction.
+  function enter(element, pattern = 'view-enter') {
+    if (!element) return;
+    cancel(element); element.dataset.motion = pattern;
+    // Settings leave the chat mounted behind the dialog. Replay its existing
+    // CSS animation when returning, even when the recipe attribute is unchanged.
+    if ((globalThis.WeftReplyMotion?.reduced ?? preference.matches) || (globalThis.WeftReplyMotion?.paused ?? document.hidden)) return;
+    for (const animation of element.getAnimations()) if (animation.animationName?.startsWith('m-')) {
+      animation.currentTime = 0; animation.play();
+    }
+  }
+  // Fixed pages share the assistant screen. Observe their actual visibility,
+  // rather than treating a fixed-page change as a new assistant navigation.
+  const pages = '.activity-surface,.library-surface,.goals-surface,.health-surface,#conversation-pane';
+  new MutationObserver(records => {
+    for (const record of records) {
+      if (record.type === 'attributes') {
+        if (record.target.matches(pages)) enter(record.target);
+      } else for (const node of record.addedNodes) if (node.nodeType === 1) {
+        if (node.matches(pages)) enter(node);
+        for (const page of node.querySelectorAll(pages)) enter(page);
+      }
+    }
+  }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
   // Keep an inert visual copy outside layout, then remove the real content immediately.
   // Never retain active buttons, duplicate accessible names, or postpone the next action.
   function snapshot(element) {
@@ -70,5 +94,5 @@
   }
   preference.addEventListener('change', () => { if (preference.matches) for (const animation of [...active]) animation.cancel(); });
   addEventListener('weft-reply-motion-change', () => { for (const animation of [...active]) { if (globalThis.WeftReplyMotion?.reduced) animation.cancel(); else if ((globalThis.WeftReplyMotion?.paused ?? document.hidden)) animation.pause(); else animation.play(); } });
-  globalThis.WeftMotion = { reveal, snapshot, dismiss, remove, hide, details, changed, cancel, listLimit };
+  globalThis.WeftMotion = { reveal, enter, snapshot, dismiss, remove, hide, details, changed, cancel, listLimit };
 })();

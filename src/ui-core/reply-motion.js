@@ -1,4 +1,4 @@
-/* Shared visual feedback. Content and accessible live regions update immediately. */
+/* Shared reply feedback and frame-paced streaming; history remains immediate. */
 (() => {
   const media = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
   const root = document.documentElement, active = new Set(), owners = new WeakMap(), states = new WeakMap();
@@ -6,10 +6,47 @@
   const paused = () => document.hidden || nativeHidden;
   try { preference = localStorage.getItem('weftmate.reply-motion.v1') || 'system'; } catch {}
   const reduced = () => preference === 'reduce' || preference === 'system' && (media?.matches || nativeReduced);
+  const streams = new WeakMap(), pendingStreams = new Set();
+  // stream-type: one rAF queue per body, coalescing transport chunks (also the
+  // terminal snapshot). Render Markdown through the normal incremental renderer.
+  function stream(content, text, options, render) {
+    let state = streams.get(content);
+    if ((!options.streaming && !state) || reduced() || paused() || Array.from(text).length > 4000) {
+      if (state) finishStream(state, false);
+      return render(content, text, options);
+    }
+    if (!state) {
+      state = { content, shown: content._renderText || '', frame: null };
+      streams.set(content, state); pendingStreams.add(state);
+    }
+    Object.assign(state, { text, options, render });
+    if (state.frame === null) state.frame = requestAnimationFrame(() => tickStream(state));
+    return content;
+  }
+  function finishStream(state, flush) {
+    if (state.frame !== null) cancelAnimationFrame(state.frame);
+    state.frame = null; streams.delete(state.content); pendingStreams.delete(state);
+    if (flush && state.content.isConnected) state.render(state.content, state.text, state.options);
+  }
+  function tickStream(state) {
+    state.frame = null;
+    if (!state.content.isConnected) { finishStream(state, false); return; }
+    if (reduced() || paused()) { finishStream(state, true); return; }
+    const target = Array.from(state.text), shown = Array.from(state.shown);
+    let common = 0;
+    while (common < shown.length && shown[common] === target[common]) common++;
+    // Corrections replace the changed suffix; never split a surrogate pair.
+    state.shown = target.slice(0, common + Math.min(3, target.length - common)).join('');
+    const complete = state.shown === state.text;
+    state.render(state.content, state.shown, { ...state.options, streaming: !complete || state.options.streaming === true, motionFrame: true });
+    if (complete) finishStream(state, false);
+    else state.frame = requestAnimationFrame(() => tickStream(state));
+  }
   // Motion tokens are shared constants. Read once before updates, avoiding a style
   // flush between replacing the newest paragraph and measuring the finished frame.
   const tokenStyle=getComputedStyle(root), durations=new Map();
   for(const name of ['replyFragment','replyChange','replyScroll','working']) {const value=tokenStyle.getPropertyValue(`--wm-duration-${name}`).trim();durations.set(name,parseFloat(value)*(value.endsWith('ms')?1:1000));}
+  durations.set('arrival', parseFloat(tokenStyle.getPropertyValue('--dur-3')) || durations.get('replyChange'));
   const easing=tokenStyle.getPropertyValue('--wm-easing-desktop').trim();
   const milliseconds = name => durations.get(name);
   function play(element, frames, name, cleanup) {
@@ -22,7 +59,8 @@
   }
   function reveal(element, kind = 'fragment') {
     if (!element) return;
-    return play(element, [{opacity:.72, transform:kind === 'send' ? 'translateY(var(--wm-space-8))' : kind === 'arrival' ? 'translateY(var(--wm-space-2))' : 'none'}, {opacity:1, transform:'none'}], kind === 'fragment' ? 'replyFragment' : 'replyChange');
+    // enter-rise for new messages; enter-fade for in-place replacements.
+    return play(element, [{opacity:.72, transform:kind === 'send' || kind === 'arrival' ? 'translateY(var(--wm-space-8))' : 'none'}, {opacity:1, transform:'none'}], kind === 'fragment' ? 'replyFragment' : kind === 'send' || kind === 'arrival' ? 'arrival' : 'replyChange');
   }
   const visible = typeof IntersectionObserver === 'function' ? new IntersectionObserver(entries => {
     for (const entry of entries) entry.target.classList.toggle('reply-offscreen', !entry.isIntersecting);
@@ -34,6 +72,7 @@
     if (changed) { owners.get(element)?.cancel(); element.querySelector('.reply-status-out')?.remove(); }
     if (!saved || saved.text !== text || element.firstChild?.nodeType !== 3 || element.firstChild.data !== text) element.textContent = text;
     states.set(element, {text}); element.classList.add('reply-status'); element.classList.toggle('reply-working', running);
+    element.setAttribute('data-motion', running ? 'text-shimmer' : 'enter-fade');
     let sheen = element.querySelector('.reply-sheen');
     if (running && !sheen) { sheen = document.createElement('span'); sheen.className = 'reply-sheen'; sheen.setAttribute('aria-hidden','true'); element.append(sheen); }
     if (sheen) { if (sheen._replyText !== text) { sheen._replyText=text;sheen.replaceChildren(...Array.from({length:5},(_,index)=>{const part=document.createElement('span');part.className='reply-sheen-part';part.setAttribute('data-text',text);part.style.setProperty('--reply-phase',`${index*25}%`);part.style.setProperty('--reply-offset',String(index/5));return part;})); } if (!running) sheen.remove(); }
@@ -76,6 +115,7 @@
   }
   function sync() {
     root.toggleAttribute('data-reduced-motion', !!reduced()); root.toggleAttribute('data-motion-full', preference === 'full'); root.toggleAttribute('data-motion-paused', paused());
+    if (reduced() || paused()) for (const state of [...pendingStreams]) finishStream(state, true);
     if (reduced()) { for (const animation of [...active]) animation.cancel(); document.querySelectorAll('.reply-indicator').forEach(dot => dot.remove()); }
     if (!reduced()) { for (const animation of active) { if (paused()) animation.pause(); else animation.play(); } for(const content of document.querySelectorAll('.reply-streaming')) indicator(content,true); }
     globalThis.dispatchEvent(new CustomEvent('weft-reply-motion-change'));
@@ -91,7 +131,7 @@
     for(const [value,label] of [['system','跟随系统'],['reduce','开启']]) {const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option);}
     select.value=preference;select.addEventListener('change',()=>setPreference(select.value));return select;
   }
-  globalThis.WeftReplyMotion = {status,reveal,fragment,indicator,setPreference,setVisibility,preferenceControl,milliseconds,get preference(){return preference},get paused(){return !!paused()},get reduced(){return !!reduced()}};
+  globalThis.WeftReplyMotion = {status,reveal,fragment,indicator,stream,setPreference,setVisibility,preferenceControl,milliseconds,get preference(){return preference},get paused(){return !!paused()},get reduced(){return !!reduced()}};
   media?.addEventListener('change', sync); document.addEventListener('visibilitychange', sync);
   globalThis.addEventListener('weft-motion-preference', event => {nativeReduced=event.detail?.reducedMotion === true;sync();}); sync();
   // Existing application status surfaces share feedback without changing aria-live.
