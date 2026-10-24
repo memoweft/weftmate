@@ -181,6 +181,8 @@ export function boundaryForCompletedTurn(session, event) {
     if (!text.trim()) continue;
     sourceMessages.push({ role: user ? 'user' : 'assistant', content: text,
       source_ref: `source:${sourceMessages.length}`,
+      ...(!user && entry.data?.model_context_dependencies
+        ? { model_context_dependencies: entry.data.model_context_dependencies } : {}),
       ...(typeof (user ? entry.data?.id : entry.data?.message?.id) === 'string'
         ? { message_id: user ? entry.data.id : entry.data.message.id } : {}),
       ...(Number.isFinite(Number(entry.time)) && Number(entry.time) > 0
@@ -256,6 +258,28 @@ export function ordinaryContextAfterTemporary(messages, events, firstTurn) {
     (allowed.has(message.id) || current >= 0 && index >= current));
 }
 
+function mergeRecallDependencies(previous, value, refs = []) {
+  const world = new Map([...(previous?.world_items ?? []), ...(value?.world_items ?? refs.map(item => ({ object_kind: item.kind, item_id: item.id })))]
+    .map(item => [`${item.object_kind}:${item.item_id}`, item]));
+  const interactions = [...new Set([...(previous?.interaction_ids ?? []), ...(value?.interaction_ids ?? [])])];
+  const complete = status => ['complete', 'complete_empty'].includes(status);
+  const known = (!previous || complete(previous.capture_status)) && complete(value?.capture_status) && world.size <= 64 && interactions.length <= 64;
+  return { schema_version: 1, capture_status: known ? (world.size || interactions.length ? 'complete' : 'complete_empty') : 'unavailable',
+    world_items: known ? [...world.values()] : [], interaction_ids: known ? interactions : [] };
+}
+
+function contextRecallDependencies(session, messages) {
+  const saved = new Map((session.events ?? []).filter(event => event.type === 'assistant/message' && event.data?.message?.id)
+    .map(event => [event.data.message.id, event.data.model_context_dependencies]));
+  let dependencies = { schema_version: 1, capture_status: 'complete_empty', world_items: [], interaction_ids: [] };
+  for (const message of messages) {
+    // A compacted summary has no separable per-reply provenance here.
+    if (message.source?.kind === 'plugin' && message.source.plugin === 'compact') dependencies = mergeRecallDependencies(dependencies, null);
+    else if (message.role === 'assistant') dependencies = mergeRecallDependencies(dependencies, saved.get(message.id));
+  }
+  return dependencies;
+}
+
 export function apply(ctx) {
   if (process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED !== '1') return;
   const bridge = new HostMemoryBridge();
@@ -307,7 +331,12 @@ export function apply(ctx) {
             requestId: `memory-tool:${digest(`${agent.id}|${turn}|${exec.callId}`)}` } }, exec.signal)
           .catch(() => ({ state: 'unavailable', message: tool.name === 'memory_query'
             ? '暂时查不到记忆。' : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。' }));
-        if (tool.name !== 'memory_query') {
+        if (tool.name === 'memory_query') {
+          const previous = agent.session[Symbol.for('weftmate.memoryRecall')];
+          agent.session[Symbol.for('weftmate.memoryRecall')] = { ...(previous?.turn === turn ? previous : { turn, memories: [] }),
+            dependencies: mergeRecallDependencies(previous?.turn === turn ? previous.dependencies : null,
+              result.model_context_dependencies, result.items ?? []) };
+        } else {
           const message = result.message ?? (['applied', 'no_change'].includes(result.receipt?.state)
             ? tool.name === 'memory_forget' ? '已忘掉这件事。' : '已按你刚才的说法更新记忆。'
             : tool.name === 'memory_forget' ? '这次还没忘掉，请稍后再试。' : '这次还没记住，请稍后再试。');
@@ -439,12 +468,19 @@ export function apply(ctx) {
       }
       diagnostic(result?.state === 'ready' ? 'prestep-reply-ready'
         : result?.state === 'withheld' ? 'prestep-reply-withheld' : 'prestep-reply-other');
-      session[Symbol.for('weftmate.memoryRecall')] = { turn, memories: result.state === 'ready' && result.contextText?.trim() ? result.memories ?? [] : [] };
+      const previous = session[Symbol.for('weftmate.memoryRecall')];
+      const memories = result.state === 'ready' && result.contextText?.trim() ? result.memories ?? [] : [];
+      const inherited = contextRecallDependencies(session, messages);
+      session[Symbol.for('weftmate.memoryRecall')] = { turn, memories,
+        dependencies: mergeRecallDependencies(previous?.turn === turn ? mergeRecallDependencies(inherited, previous.dependencies) : inherited,
+          result.state === 'ready' ? result.model_context_dependencies : null, memories) };
       if (result.state === 'ready' && typeof result.contextText === 'string' && result.contextText.trim() &&
           result.contextText.length <= 16_384) text = result.contextText;
       if (result.memoryPolicy?.ingest === false) text = '本轮是临时对话：不形成记忆，不承诺以后记住，也不要提议记住本轮内容。仍可使用下方已有记忆回答。\n' + (text ?? '');
     } catch (error) {
-      delete session[Symbol.for('weftmate.memoryRecall')];
+      const previous = session[Symbol.for('weftmate.memoryRecall')];
+      session[Symbol.for('weftmate.memoryRecall')] = { turn, memories: [],
+        dependencies: mergeRecallDependencies(previous?.turn === turn ? previous.dependencies : contextRecallDependencies(session, messages), null) };
       diagnostic(['MEMORY_TIMEOUT', 'MEMORY_CANCELLED', 'MEMORY_UNAVAILABLE'].includes(error?.message)
         ? `prestep-error-${error.message}` : 'prestep-error-other', error);
       // A failed bridge clears this step's memory rather than reusing prior data.
@@ -502,7 +538,9 @@ export function apply(ctx) {
         const recalled = session[Symbol.for('weftmate.memoryRecall')];
         data = { ...data, message: { ...data.message, content: data.message.content.map(part =>
           part.type === 'text' ? { ...part, text: withoutMemoryToolMarkup(part.text) } : part) },
-          memoryUsed: recalled?.turn === data.turn ? recalled.memories : [] };
+          memoryUsed: recalled?.turn === data.turn ? recalled.memories.filter(item => item.kind !== 'evidence') : [],
+          ...(recalled?.turn === data.turn && recalled.dependencies
+            ? { model_context_dependencies: recalled.dependencies } : {}) };
       }
       return append(type, data, ...rest);
     };

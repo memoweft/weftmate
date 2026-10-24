@@ -14,6 +14,7 @@ if (process.argv.includes('--privacy-only') || process.argv.includes('--protocol
   registerHooks({ resolve(specifier, context, next) {
     if (specifier === '@deepseek-ai/dsh-llm/message') return { shortCircuit:true,
       url:'data:text/javascript,'+encodeURIComponent('const message = (role,input) => ({id:crypto.randomUUID(),role,...input}); export const createUserMessage = input => message("user",input); export const createAssistantMessage = input => message("assistant",input);') };
+    if (specifier === '@deepseek-ai/dsh-tools') return { shortCircuit: true, url: 'data:text/javascript,export const defineTool = input => input;' };
     return next(specifier, context);
   } });
 } else symlinkSync(fileURLToPath(new URL('../../vendor/dsh-runtime/node_modules', import.meta.url)),
@@ -35,18 +36,19 @@ if (!handlers.has('agent/pre-step') || !handlers.has('session/event')) {
 }
 process.send({ type: 'ready' });
 
-function session(id, preset = 'personal-shared-chat') {
+function session(id, preset = 'personal-shared-chat', restoredEvents = null) {
   const value = { id, header: { agentPreset: preset }, deriveMessages() { return this.events.filter(event => event.type === 'user/message').map(event => event.data); }, append(type, data) { const event = Object.freeze({ seq: this.events.length + 1, type, data }); this.events.push(event); return event; }, events: [
     { seq: 1, type: 'turn/start', data: { turn: 1 } },
   ] };
+  if (restoredEvents) value.events = restoredEvents;
   handlers.get('session/created')(value);
   return value;
 }
 const userClaim = (id) => ({ id: `user-${id}`, role: 'user',
   content: [{ type: 'text', text: '合成用户提问' }], source: { kind: 'user' } });
-async function preStep(id, agent = { session: session(id) }, priorMessages = null, claimedMessages = null) {
+async function preStep(id, agent = { session: session(id) }, priorMessages = null, claimedMessages = null, turn = 1) {
   const claimed = claimedMessages ?? [userClaim(id)];
-  const result = await handlers.get('agent/pre-step')({ agent, turn: 1, messages: claimed },
+  const result = await handlers.get('agent/pre-step')({ agent, turn, messages: claimed },
     async () => ({ kind: 'enter', messages: priorMessages ?? [
       ...claimed,
       { role: 'user', content: [{ type: 'text', text: 'STALE_A_CONTEXT' }],
@@ -62,6 +64,47 @@ async function preStep(id, agent = { session: session(id) }, priorMessages = nul
       sourceFrozen: Object.isFrozen(injected.at(-1).source) } : null };
 }
 process.on('message', async (message) => {
+  if (message?.type === 'run-cross-turn-dependencies') {
+    try {
+      const first = session('session-cross-turn'), agent = { session: first };
+      const user = userClaim('first'); first.append('user/message', user);
+      await preStep(first.id, agent, [user], [user]);
+      const prior = first.append('assistant/message', { turn: 1, message: { id: 'prior-reply', role: 'assistant', content: [{ type: 'text', text: 'Synthetic old reply.' }] } });
+      const restored = structuredClone(first.events);
+      if (message.scenario === 'unknown') delete restored.at(-1).data.model_context_dependencies;
+      const value = session(first.id, 'personal-shared-chat', restored), current = userClaim('second');
+      value.append('turn/start', { turn: 2 }); value.append('user/message', current);
+      const history = message.scenario === 'dropped' ? [] : message.scenario === 'compacted'
+        ? [{ id: 'compact', role: 'user', source: { kind: 'plugin', plugin: 'compact' }, content: [{ type: 'text', text: 'Synthetic old reply summary.' }] }]
+        : [prior.data.message];
+      const step = await preStep(value.id, { session: value }, [...history, current], [current], 2);
+      let captured = value.append('assistant/message', { turn: 2, message: { id: 'new-reply', role: 'assistant', content: [{ type: 'text', text: 'Synthetic paraphrase.' }] } });
+      if (message.scenario === 'transitive') {
+        const next = session(value.id, 'personal-shared-chat', structuredClone(value.events)), third = userClaim('third');
+        next.append('turn/start', { turn: 3 }); next.append('user/message', third);
+        await preStep(next.id, { session: next }, [captured.data.message, third], [third], 3);
+        captured = next.append('assistant/message', { turn: 3, message: { id: 'third-reply', role: 'assistant', content: [{ type: 'text', text: 'Another paraphrase.' }] } });
+      }
+      process.send({ type: 'result', dependencies: captured.data.model_context_dependencies,
+        priorInContext: step.messages.some(item => item.id === 'prior-reply') });
+    } catch (error) { process.send({ type: 'failed', error: String(error.stack) }); }
+    return;
+  }
+  if (message?.type === 'run-query-dependencies') {
+    try {
+      const value = session('session-query-dependencies'), tools = new Map();
+      const agent = { id: value.id, session: value, ctx: { tools: { register(tool) { tools.set(tool.name, tool); } } } };
+      value.append('user/message', userClaim('query'));
+      await handlers.get('agent/created')({ agent });
+      const first = await preStep(value.id, agent);
+      await tools.get('memory_query').execute({ query: 'another source' }, {});
+      await preStep(value.id, agent, first.messages, []);
+      const captured = value.append('assistant/message', { turn: 1,
+        message: { content: [{ type: 'text', text: 'synthetic reply' }] } }).data;
+      process.send({ type: 'result', dependencies: captured.model_context_dependencies });
+    } catch (error) { process.send({ type: 'failed', error: String(error.stack) }); }
+    return;
+  }
   if (message?.type === 'run-peer-recall') {
     try {
       const value = session('session-new-peer', message.preset);
@@ -108,7 +151,8 @@ process.on('message', async (message) => {
     const a = await preStep('session-a', agentA);
     for (const message of a.messages) agentA.session.append('user/message', message);
     const latestContextCount = agentA.session.deriveMessages().filter(message => message.source?.plugin === 'weftmate-personal-memory').length;
-    const adopted = agentA.session.append('assistant/message', { turn: 1, message: { content: [{ type: 'text', text: '采用回复' }] } }).data.memoryUsed;
+    const captured = agentA.session.append('assistant/message', { turn: 1, message: { content: [{ type: 'text', text: '采用回复' }] } }).data;
+    const adopted = captured.memoryUsed;
     agentA.session.events.push({ seq: 2, type: 'user/message', data: userClaim('session-a') });
     const laterClaim = [{ role: 'assistant', content: [{ type: 'text', text: 'tool continuation' }],
       source: { kind: 'plugin', plugin: 'other' } }];
@@ -131,6 +175,6 @@ process.on('message', async (message) => {
     current.events.push(end);
     handlers.get('session/event')(current, end);
     await new Promise((resolve) => setTimeout(resolve, 50));
-    process.send({ type: 'result', adopted, latestContextCount, withheldContextCount, a, aWithheld, aUpdated, empty, b, ambiguous, cloud, noClaim });
+    process.send({ type: 'result', adopted, dependencies: captured.model_context_dependencies, latestContextCount, withheldContextCount, a, aWithheld, aUpdated, empty, b, ambiguous, cloud, noClaim });
   } catch { process.send({ type: 'failed' }); }
 });

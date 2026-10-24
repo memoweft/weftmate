@@ -239,7 +239,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: memoweft/memoweft
-          ref: 06205fccfe3530101bf428e90cbef8546812b310
+          ref: 1f01aaa1a44524f7c9b9e851a8f2ca106ac3ec67
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node

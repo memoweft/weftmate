@@ -20,6 +20,28 @@ const events = [
   { seq: 4, type: 'turn/end', data: { turn: 1, reason: { kind: 'stop' } } },
 ]
 
+test('completed desktop turn preserves Core evidence dependencies on assistant context', () => {
+  const dependencies = { schema_version: 1, capture_status: 'complete',
+    world_items: [{ object_kind: 'evidence', item_id: 'synthetic-source' }], interaction_ids: [] };
+  const captured = structuredClone(events);
+  Object.assign(captured[2].data, { model_context_dependencies: dependencies });
+  const boundary = boundaryForCompletedTurn({ id: sessionId, header: { agentPreset: 'personal-shared-chat' }, events: captured }, captured.at(-1));
+  assert.deepEqual(boundary.source_messages[1].model_context_dependencies, dependencies);
+  assertOwnerBoundBoundary(sessionId, boundary);
+});
+
+for (const status of ['unavailable', 'withheld', 'complete_empty', 'complete']) test(`desktop boundary enforces the Core ${status} reference contract`, () => {
+  const make = (world_items: any[], interaction_ids: string[]) => {
+    const captured = structuredClone(events);
+    Object.assign(captured[2].data, { model_context_dependencies: { schema_version: 1, capture_status: status, world_items, interaction_ids } });
+    return boundaryForCompletedTurn({ id: sessionId, header: { agentPreset: 'personal-shared-chat' }, events: captured }, captured.at(-1));
+  };
+  const empty = make([], []), world = make([{ object_kind: 'evidence', item_id: 'source' }], []), interaction = make([], ['history']);
+  for (const boundary of status === 'complete' ? [empty] : [world, interaction])
+    assert.throws(() => assertOwnerBoundBoundary(sessionId, boundary), { code: 'MEMORY_BOUNDARY_INVALID' });
+  for (const boundary of status === 'complete' ? [world, interaction] : [empty]) assertOwnerBoundBoundary(sessionId, boundary);
+});
+
 test('only a uniquely bound DSH session may select an owner memory process', () => {
   const one = { [ownerA]: { sessions: { [sessionId]: { origin: 'personal-remote', modelProfileId: 'formal-local' } } },
     [ownerB]: { sessions: {} } }
