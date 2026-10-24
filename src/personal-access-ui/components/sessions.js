@@ -363,15 +363,17 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         notice.textContent = selected?.projectNotice || (selected?.projectName ? `项目：${selected.projectName}` : ''); notice.hidden = !notice.textContent;
         globalThis.WeftMotion?.changed(ui.byId('chat-scroll'), sessionId, 'base');
     }
-    function acknowledgeVisibleConversation() {
+    function visibleConversation() {
         const pane=ui.byId('conversation-pane'), scroll=ui.byId('chat-scroll');
         const selected=core.state.sessions.find(row=>row.sessionId===core.state.selectedSessionId);
         if(manualUnreadSession && (manualUnreadSession!==selected?.sessionId||selected?.running))manualUnreadSession=null;
-        if(manualUnreadSession===selected?.sessionId)return;
-        if(document.visibilityState!=='visible'||!core.foreground()||core.state.currentView!=='assistant'||pane.hidden||!pane.getClientRects().length) return;
-        if(scroll.scrollHeight-scroll.scrollTop-scroll.clientHeight>48||core.state.chatWindow?.hasNewer) return;
-        if(core.inMainChat?.()) {void core.markLatestChatRead?.();return;}
-        void core.markVisibleSessionRead?.();
+        if(manualUnreadSession===selected?.sessionId)return false;
+        if(document.visibilityState!=='visible'||!core.foreground()||core.state.currentView!=='assistant'||pane.hidden||!pane.getClientRects().length) return false;
+        if(scroll.scrollHeight-scroll.scrollTop-scroll.clientHeight>48||core.state.chatWindow?.hasNewer) return false;
+        return true;
+    }
+    function acknowledgeVisibleConversation() {
+        if(visibleConversation())void core.markVisibleSessionRead?.(visibleConversation);
     }
     document.addEventListener('visibilitychange',acknowledgeVisibleConversation);
     window.addEventListener('focus',acknowledgeVisibleConversation);

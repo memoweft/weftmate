@@ -156,13 +156,26 @@ test('visible terminal session acknowledgement persists once, preserves attentio
   const context:any={WeftUiCore:{factories:{}}};runInNewContext(readFileSync(new URL('../src/ui-core/sessions.js',import.meta.url),'utf8'),context);
   const calls:any[]=[];let release:any;
   const core:any={state:{identityGeneration:1,activeChatSource:'desktop',selectedSessionId:'a',sessions:[{sessionId:'a',unread:true,running:true},{sessionId:'b',unread:true}],chats:[]},
-    accessApi:async(path:string,options:any)=>{calls.push({path,options});return new Promise(done=>release=done);}};
+    refreshHistory:async()=>({kind:'changed'}),accessApi:async(path:string,options:any)=>{calls.push({path,options});return new Promise(done=>release=done);}};
   const actions=context.WeftUiCore.factories.sessions(core,{renderSessions(){},updateAvailability(){}},{ });
-  await actions.markVisibleSessionRead();assert.equal(calls.length,0);
-  core.state.sessions[0].running=false;core.state.sessions[0].attention='approval';await actions.markVisibleSessionRead();assert.equal(calls.length,0);
-  core.state.sessions[0].attention=null;core.state.activeChatSource='phone';await actions.markVisibleSessionRead();assert.equal(calls.length,0);
-  core.state.activeChatSource='desktop';const read=actions.markVisibleSessionRead();await actions.markVisibleSessionRead();assert.equal(calls.length,1);
+  await actions.markVisibleSessionRead(()=>true);assert.equal(calls.length,0);
+  core.state.sessions[0].running=false;core.state.sessions[0].attention='approval';await actions.markVisibleSessionRead(()=>true);assert.equal(calls.length,0);
+  core.state.sessions[0].attention=null;core.state.activeChatSource='phone';await actions.markVisibleSessionRead(()=>true);assert.equal(calls.length,0);
+  core.state.activeChatSource='desktop';const read=actions.markVisibleSessionRead(()=>true);await actions.markVisibleSessionRead(()=>true);assert.equal(calls.length,1);
   assert.equal(calls[0].path,'/sessions/a/metadata');assert.equal(calls[0].options.body.unread,false);release({unread:false});await read;
   assert.equal(core.state.sessions[0].unread,false);assert.equal(core.state.sessions[1].unread,true);
-  core.state.sessions[0].unread=true;const late=actions.markVisibleSessionRead();core.state.identityGeneration++;core.state.sessions=[{sessionId:'a',unread:true}];release({unread:false});await late;assert.equal(core.state.sessions[0].unread,true);
+  core.state.sessions[0].unread=true;const late=actions.markVisibleSessionRead(()=>true);core.state.identityGeneration++;core.state.sessions=[{sessionId:'a',unread:true}];release({unread:false});await late;assert.equal(core.state.sessions[0].unread,true);
+});
+
+
+test('sidebar completion cannot acknowledge delayed, failed or no-longer-visible history',async()=>{
+  const context:any={WeftUiCore:{factories:{}}};runInNewContext(readFileSync(new URL('../src/ui-core/sessions.js',import.meta.url),'utf8'),context);
+  let deliver:any,visible=true;const writes:any[]=[];
+  const core:any={state:{identityGeneration:1,historyGeneration:1,activeChatSource:'desktop',selectedSessionId:'a',sessions:[{sessionId:'a',unread:true}],chats:[]},
+    refreshHistory:()=>new Promise(done=>deliver=done),accessApi:async(path:string,options:any)=>{writes.push({path,options});return {unread:false};}};
+  const actions=context.WeftUiCore.factories.sessions(core,{renderSessions(){},updateAvailability(){}},{});
+  let read=actions.markVisibleSessionRead(()=>visible);await Promise.resolve();assert.equal(writes.length,0,'the sidebar is ahead of rendered history');deliver({kind:'failed'});await read;assert.equal(writes.length,0);
+  read=actions.markVisibleSessionRead(()=>visible);await Promise.resolve();visible=false;deliver({kind:'changed'});await read;assert.equal(writes.length,0,'window hidden while history was delayed');
+  visible=true;read=actions.markVisibleSessionRead(()=>visible);await Promise.resolve();core.state.selectedSessionId='b';deliver({kind:'changed'});await read;assert.equal(writes.length,0,'selection changed while reading');
+  core.state.selectedSessionId='a';read=actions.markVisibleSessionRead(()=>visible);await Promise.resolve();deliver({kind:'changed'});await read;assert.equal(writes.length,1);
 });

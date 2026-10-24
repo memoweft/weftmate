@@ -86,10 +86,18 @@ try {
   });
   await page.keyboard.press('Escape');
   await check('#638 visible completion read',async()=>{
-    fixture.progress.chunk('合成完成结果',2);fixture.progress.completeStream('合成完成结果',2);fixture.progress.finish();
-    await page.getByText('合成完成结果',{exact:true}).waitFor();
-    await page.evaluate(()=>progressCore.refreshSessions());
-    await page.waitForFunction(()=>!progressCore.state.sessions.find(s=>s.sessionId===progressCore.state.selectedSessionId)?.unread,{},{timeout:5000});
+    let releaseHistory;
+    const delayed=new Promise(resolve=>releaseHistory=resolve);
+    const pattern='**/personal/v1/sessions/*/events?*';
+    await page.route(pattern,async route=>{const response=await route.fetch(nativeFixtureFetchOptions(route,{origin:fixture.origin,libraryDesktopToken:fixture.libraryDesktopToken}));await delayed;await route.fulfill({response});});
+    try {
+      fixture.progress.chunk('合成完成结果',2);fixture.progress.completeStream('合成完成结果',2);fixture.progress.finish();
+      await page.evaluate(()=>progressCore.refreshSessions());
+      assert.equal(await page.evaluate(()=>progressCore.state.sessions.find(s=>s.sessionId===progressCore.state.selectedSessionId)?.unread),true,'unseen completion remains unread while history is delayed');
+      releaseHistory();
+      await page.getByText('合成完成结果',{exact:true}).waitFor();
+      await page.waitForFunction(()=>!progressCore.state.sessions.find(s=>s.sessionId===progressCore.state.selectedSessionId)?.unread,{},{timeout:5000});
+    } finally {releaseHistory();await page.unroute(pattern);}
     assert.equal(await row.locator('.is-completed').count(),0);
   });
   await check('manual unread stays unread until the next turn',async()=>{
