@@ -20,6 +20,30 @@ const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'i
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup'];
 const MAX_ACTIVE_OWNERS = 4;
 
+async function recalledInteractionDependencies(rpc, interaction, modelTier) {
+  if (!Array.isArray(interaction.items)) return { complete: false, ids: [] };
+  const ids = new Set(interaction.items.map(item => item.id)), searches = new Map();
+  let complete = true;
+  for (const commitment of interaction.commitments ?? []) {
+    const matches = item => item.conversation_id === commitment.conversation_id && item.episode_id === commitment.episode_id &&
+      (commitment.assistant_message_id
+        ? item.turns?.some(turn => turn.role === 'assistant' && turn.message_id === commitment.assistant_message_id)
+        : item.turns?.filter(turn => turn.role === 'assistant').length === 1);
+    let sources = interaction.items.filter(matches);
+    if (!sources.length) {
+      const query = (commitment.raw_quote || commitment.content).slice(0, 4000);
+      try {
+        if (!searches.has(query)) searches.set(query, await rpc.request('query_interactions', {
+          query, projection: 'history', search_mode: 'history_search', model_tier: modelTier }));
+        sources = (searches.get(query).items ?? []).filter(matches);
+      } catch { complete = false; continue; }
+    }
+    if (sources.length !== 1) complete = false;
+    else ids.add(sources[0].id);
+  }
+  return { complete, ids: [...ids] };
+}
+
 const error = (code) => Object.assign(new Error(code), { code });
 const owner = (value) => {
   if (typeof value !== 'string' || !OWNER.test(value)) throw error('MEMORY_OWNER_UNAVAILABLE');
@@ -1048,14 +1072,18 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         }
         if (recentText) fragments.push(recentText);
         const contextText = fragments.join('\n\n').slice(0, recallMaxChars);
+        const interactionDependencies = expandedRecall && interactionUsed
+          ? await recalledInteractionDependencies(entry.rpc, interaction, destinationTier) : { complete: true, ids: [] };
+        const worldDependencies = [...new Map([...memories.map(item => ({ object_kind: item.kind, item_id: item.id })),
+          ...recentEvidence.flatMap(item => [item.id, item.precedingEvidenceId].filter(Boolean)
+            .map(item_id => ({ object_kind: 'evidence', item_id })))].map(item => [`${item.object_kind}:${item.item_id}`, item])).values()];
+        const dependenciesComplete = interactionDependencies.complete && worldDependencies.length <= 64 && interactionDependencies.ids.length <= 64;
         return { state: 'ready', contextText, memories, ...(recentEvidence.length ? { recentEvidence } : {}), worldRevision: Number.isSafeInteger(world?.world_revision)
           ? world.world_revision : null, sourceCount: memories.length,
           ...(expandedRecall ? { model_context_dependencies: { schema_version: 1,
-            capture_status: interactionUsed && !Array.isArray(interaction.items) ? 'unavailable' : 'complete',
-            world_items: [...new Map([...memories.map(item => ({ object_kind: item.kind, item_id: item.id })),
-              ...recentEvidence.flatMap(item => [item.id, item.precedingEvidenceId].filter(Boolean)
-                .map(item_id => ({ object_kind: 'evidence', item_id })))].map(item => [`${item.object_kind}:${item.item_id}`, item])).values()],
-            interaction_ids: interactionUsed ? (interaction.items ?? []).map(item => item.id) : [],
+            capture_status: dependenciesComplete ? (worldDependencies.length || interactionDependencies.ids.length ? 'complete' : 'complete_empty') : 'unavailable',
+            world_items: dependenciesComplete ? worldDependencies : [],
+            interaction_ids: dependenciesComplete ? interactionDependencies.ids : [],
           } } : {}) };
       }, sessionId);
     },

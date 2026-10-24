@@ -36,18 +36,19 @@ if (!handlers.has('agent/pre-step') || !handlers.has('session/event')) {
 }
 process.send({ type: 'ready' });
 
-function session(id, preset = 'personal-shared-chat') {
+function session(id, preset = 'personal-shared-chat', restoredEvents = null) {
   const value = { id, header: { agentPreset: preset }, deriveMessages() { return this.events.filter(event => event.type === 'user/message').map(event => event.data); }, append(type, data) { const event = Object.freeze({ seq: this.events.length + 1, type, data }); this.events.push(event); return event; }, events: [
     { seq: 1, type: 'turn/start', data: { turn: 1 } },
   ] };
+  if (restoredEvents) value.events = restoredEvents;
   handlers.get('session/created')(value);
   return value;
 }
 const userClaim = (id) => ({ id: `user-${id}`, role: 'user',
   content: [{ type: 'text', text: '合成用户提问' }], source: { kind: 'user' } });
-async function preStep(id, agent = { session: session(id) }, priorMessages = null, claimedMessages = null) {
+async function preStep(id, agent = { session: session(id) }, priorMessages = null, claimedMessages = null, turn = 1) {
   const claimed = claimedMessages ?? [userClaim(id)];
-  const result = await handlers.get('agent/pre-step')({ agent, turn: 1, messages: claimed },
+  const result = await handlers.get('agent/pre-step')({ agent, turn, messages: claimed },
     async () => ({ kind: 'enter', messages: priorMessages ?? [
       ...claimed,
       { role: 'user', content: [{ type: 'text', text: 'STALE_A_CONTEXT' }],
@@ -63,6 +64,32 @@ async function preStep(id, agent = { session: session(id) }, priorMessages = nul
       sourceFrozen: Object.isFrozen(injected.at(-1).source) } : null };
 }
 process.on('message', async (message) => {
+  if (message?.type === 'run-cross-turn-dependencies') {
+    try {
+      const first = session('session-cross-turn'), agent = { session: first };
+      const user = userClaim('first'); first.append('user/message', user);
+      await preStep(first.id, agent, [user], [user]);
+      const prior = first.append('assistant/message', { turn: 1, message: { id: 'prior-reply', role: 'assistant', content: [{ type: 'text', text: 'Synthetic old reply.' }] } });
+      const restored = structuredClone(first.events);
+      if (message.scenario === 'unknown') delete restored.at(-1).data.model_context_dependencies;
+      const value = session(first.id, 'personal-shared-chat', restored), current = userClaim('second');
+      value.append('turn/start', { turn: 2 }); value.append('user/message', current);
+      const history = message.scenario === 'dropped' ? [] : message.scenario === 'compacted'
+        ? [{ id: 'compact', role: 'user', source: { kind: 'plugin', plugin: 'compact' }, content: [{ type: 'text', text: 'Synthetic old reply summary.' }] }]
+        : [prior.data.message];
+      const step = await preStep(value.id, { session: value }, [...history, current], [current], 2);
+      let captured = value.append('assistant/message', { turn: 2, message: { id: 'new-reply', role: 'assistant', content: [{ type: 'text', text: 'Synthetic paraphrase.' }] } });
+      if (message.scenario === 'transitive') {
+        const next = session(value.id, 'personal-shared-chat', structuredClone(value.events)), third = userClaim('third');
+        next.append('turn/start', { turn: 3 }); next.append('user/message', third);
+        await preStep(next.id, { session: next }, [captured.data.message, third], [third], 3);
+        captured = next.append('assistant/message', { turn: 3, message: { id: 'third-reply', role: 'assistant', content: [{ type: 'text', text: 'Another paraphrase.' }] } });
+      }
+      process.send({ type: 'result', dependencies: captured.data.model_context_dependencies,
+        priorInContext: step.messages.some(item => item.id === 'prior-reply') });
+    } catch (error) { process.send({ type: 'failed', error: String(error.stack) }); }
+    return;
+  }
   if (message?.type === 'run-query-dependencies') {
     try {
       const value = session('session-query-dependencies'), tools = new Map();

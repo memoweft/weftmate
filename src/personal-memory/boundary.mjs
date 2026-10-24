@@ -8,7 +8,8 @@ const validDependencies = value => value && value.schema_version === 1 &&
   ['complete', 'complete_empty', 'unavailable', 'withheld'].includes(value.capture_status) &&
   Array.isArray(value.world_items) && value.world_items.length <= 64 &&
   value.world_items.every(item => ['cognition', 'entity', 'relationship', 'event', 'evidence'].includes(item?.object_kind) && dependencyId(item.item_id)) &&
-  Array.isArray(value.interaction_ids) && value.interaction_ids.length <= 64 && value.interaction_ids.every(dependencyId);
+  Array.isArray(value.interaction_ids) && value.interaction_ids.length <= 64 && value.interaction_ids.every(dependencyId) &&
+  (value.capture_status === 'complete') === Boolean(value.world_items.length || value.interaction_ids.length);
 const canonicalJson = (value) => {
   const sorted = (item) => item === null || typeof item !== 'object' ? item
     : Array.isArray(item) ? item.map(sorted)

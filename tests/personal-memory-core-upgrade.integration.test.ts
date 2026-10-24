@@ -55,7 +55,7 @@ runpy.run_module('memoweft.integrations.dsh_bridge', run_name='__main__')
     const events = [{ seq: 1, type: 'turn/start', data: { turn: 1 } },
       { seq: 2, type: 'user/message', data: { id: 'quote-question', source: { kind: 'user' }, content: [{ type: 'text', text: 'What glaze do I use?' }] } },
       { seq: 3, type: 'assistant/message', data: { model_context_dependencies: dependencies,
-        message: { id: 'quote-answer', content: [{ type: 'text', text: 'You use cobalt glaze.' }] } } },
+        message: { id: 'quote-answer', content: [{ type: 'text', text: 'I recommend cobalt glaze.' }] } } },
       { seq: 4, type: 'turn/end', data: { turn: 1, reason: { kind: 'stop' } } }];
     const sessionId = 'import-e2-answer';
     const boundary = assertOwnerBoundBoundary(sessionId, boundaryForCompletedTurn({ id: sessionId,
@@ -67,6 +67,29 @@ runpy.run_module('memoweft.integrations.dsh_bridge', run_name='__main__')
       user_message_id: 'quote-question', assistant_message_id: 'quote-answer',
       expected_context_hash: before.items[0].context_hash, model_context_dependencies: dependencies });
     assert.equal(linked.result_state, 'no_change', 'the full inline dependency survived ingestion unchanged');
+    const suggestions = await manager.query(owner, 'query_interactions', { query: 'Any suggestions?',
+      session_id: 'fresh', projection: 'model', model_tier: 'local' });
+    assert.equal(suggestions.items.length, 0, 'the source interaction is absent from ordinary topic matches');
+    assert.equal(suggestions.commitments.length, 1);
+    const advice = await manager.recall(owner, { query: 'Any suggestions?', sessionId: 'fresh', modelTier: 'local' });
+    assert.match(advice.contextText, /cobalt/);
+    assert.equal(advice.model_context_dependencies.capture_status, 'complete');
+    assert.deepEqual(advice.model_context_dependencies.interaction_ids, [before.items[0].id]);
+    const saveReply = async (id: string, model_context_dependencies: any) => {
+      const copied = [{ seq: 1, type: 'turn/start', data: { turn: 1 } },
+        { seq: 2, type: 'user/message', data: { id: id + '-user', source: { kind: 'user' }, content: [{ type: 'text', text: 'Please paraphrase.' }] } },
+        { seq: 3, type: 'assistant/message', data: { model_context_dependencies,
+          message: { id: id + '-answer', content: [{ type: 'text', text: 'The suggested material is cobalt glaze.' }] } } },
+        { seq: 4, type: 'turn/end', data: { turn: 1, reason: { kind: 'stop' } } }];
+      const boundary = assertOwnerBoundBoundary(id, boundaryForCompletedTurn({ id,
+        header: { agentPreset: 'personal-shared-chat' }, events: copied }, copied.at(-1)));
+      await manager.ingest(owner, boundary);
+      assert.equal((await manager.status(owner)).pendingBoundaryCount, 0, 'Core accepts the dependency DTO without stranding the boundary');
+    };
+    // Isolate the transitive edge: a direct World reference must not make
+    // deletion pass when the recommendation's source interaction is missing.
+    await saveReply('derived-advice', { ...advice.model_context_dependencies, world_items: [] });
+    await saveReply('unknown-provenance', { schema_version: 1, capture_status: 'unavailable', world_items: [], interaction_ids: [] });
     let preview: any;
     const deadline = Date.now() + 15000;
     do {
@@ -81,6 +104,9 @@ runpy.run_module('memoweft.integrations.dsh_bridge', run_name='__main__')
     assert.equal(deleted.receipt.result_state, 'applied');
     const after = await manager.query(owner, 'query_interactions', { conversation_id: sessionId, user_message_id: 'quote-question', projection: 'history' });
     assert.doesNotMatch(JSON.stringify(after), /cobalt/);
+    const derived = await manager.query(owner, 'query_interactions', { conversation_id: 'derived-advice',
+      user_message_id: 'derived-advice-user', projection: 'history' });
+    assert.doesNotMatch(JSON.stringify(derived), /cobalt/, 'forgetting cascades through the historical recommendation into a new reply');
     assert.doesNotMatch((await manager.recall(owner, { query: 'What glaze do I use?', sessionId: 'fresh', modelTier: 'local' })).contextText, /cobalt/);
   } finally { await manager.close(); await rm(root, { recursive: true, force: true }); }
 });

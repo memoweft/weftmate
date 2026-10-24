@@ -265,7 +265,19 @@ function mergeRecallDependencies(previous, value, refs = []) {
   const complete = status => ['complete', 'complete_empty'].includes(status);
   const known = (!previous || complete(previous.capture_status)) && complete(value?.capture_status) && world.size <= 64 && interactions.length <= 64;
   return { schema_version: 1, capture_status: known ? (world.size || interactions.length ? 'complete' : 'complete_empty') : 'unavailable',
-    world_items: world.size <= 64 ? [...world.values()] : [], interaction_ids: interactions.length <= 64 ? interactions : [] };
+    world_items: known ? [...world.values()] : [], interaction_ids: known ? interactions : [] };
+}
+
+function contextRecallDependencies(session, messages) {
+  const saved = new Map((session.events ?? []).filter(event => event.type === 'assistant/message' && event.data?.message?.id)
+    .map(event => [event.data.message.id, event.data.model_context_dependencies]));
+  let dependencies = { schema_version: 1, capture_status: 'complete_empty', world_items: [], interaction_ids: [] };
+  for (const message of messages) {
+    // A compacted summary has no separable per-reply provenance here.
+    if (message.source?.kind === 'plugin' && message.source.plugin === 'compact') dependencies = mergeRecallDependencies(dependencies, null);
+    else if (message.role === 'assistant') dependencies = mergeRecallDependencies(dependencies, saved.get(message.id));
+  }
+  return dependencies;
 }
 
 export function apply(ctx) {
@@ -458,8 +470,9 @@ export function apply(ctx) {
         : result?.state === 'withheld' ? 'prestep-reply-withheld' : 'prestep-reply-other');
       const previous = session[Symbol.for('weftmate.memoryRecall')];
       const memories = result.state === 'ready' && result.contextText?.trim() ? result.memories ?? [] : [];
+      const inherited = contextRecallDependencies(session, messages);
       session[Symbol.for('weftmate.memoryRecall')] = { turn, memories,
-        dependencies: mergeRecallDependencies(previous?.turn === turn ? previous.dependencies : null,
+        dependencies: mergeRecallDependencies(previous?.turn === turn ? mergeRecallDependencies(inherited, previous.dependencies) : inherited,
           result.state === 'ready' ? result.model_context_dependencies : null, memories) };
       if (result.state === 'ready' && typeof result.contextText === 'string' && result.contextText.trim() &&
           result.contextText.length <= 16_384) text = result.contextText;
@@ -467,7 +480,7 @@ export function apply(ctx) {
     } catch (error) {
       const previous = session[Symbol.for('weftmate.memoryRecall')];
       session[Symbol.for('weftmate.memoryRecall')] = { turn, memories: [],
-        dependencies: mergeRecallDependencies(previous?.turn === turn ? previous.dependencies : null, null) };
+        dependencies: mergeRecallDependencies(previous?.turn === turn ? previous.dependencies : contextRecallDependencies(session, messages), null) };
       diagnostic(['MEMORY_TIMEOUT', 'MEMORY_CANCELLED', 'MEMORY_UNAVAILABLE'].includes(error?.message)
         ? `prestep-error-${error.message}` : 'prestep-error-other', error);
       // A failed bridge clears this step's memory rather than reusing prior data.

@@ -101,8 +101,9 @@ test('forked plugin hook callbacks use owner-bound IPC and replace stale account
     assert.equal(value.latestContextCount, 1);
     assert.equal(value.withheldContextCount, 0, 'withheld later recall removes committed earlier plugin context from the next model request');
     assert.deepEqual(value.adopted, [{ id: 'cog-a', kind: 'cognition', summary: 'A安全摘要' }]);
-    assert.deepEqual(value.dependencies.world_items, [
-      { object_kind: 'cognition', item_id: 'cog-a' }, { object_kind: 'evidence', item_id: 'source-a' }]);
+    assert.equal(value.dependencies.capture_status, 'unavailable', 'legacy recall without dependency metadata cannot claim a complete capture');
+    assert.deepEqual(value.dependencies.world_items, []);
+    assert.deepEqual(value.dependencies.interaction_ids, []);
     assert.ok(value.a.text.endsWith('A_ONLY_SYNTHETIC_MEMORY'));
     assert.match(value.a.text, /背景记忆，不是用户的新请求/)
     for (const entry of [value.a, value.aUpdated, value.b]) {
