@@ -29,7 +29,7 @@
       const label = WeftUiCore.progressWaitingText(options.waiting, language)
       if(globalThis.WeftReplyMotion) WeftReplyMotion.status(text,label,true); else text.textContent=label
     })
-    for (const block of groups) put(`steps-${block.seq}`, WeftUiCore.progressPosition(ordered, block), row => {
+    for (const block of groups) put(`steps-${block.seq}`, WeftUiCore.progressPosition(ordered, block, true), row => {
       block.steps = block.steps.map(step=>globalThis.WeftUiCore.executionPresentation(step,options.executions))
       const expandedForObjects = row.querySelector('details')?.open === true
       const currentForObjects = block.steps.filter(step => step.state === 'running').at(-1)

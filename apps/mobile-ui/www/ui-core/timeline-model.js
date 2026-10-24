@@ -326,8 +326,6 @@
     function approvalProgress(row) {
         return ({ 'allowed-once': '已批准', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[row?.outcome || row?.decisionOutcome] || (row?.status === 'pending' ? '等待批准' : '');
     }
-    // Keep tool blocks where they happened, including after the turn settles.
-    function progressPosition(events, block) { return block.seq; }
     function groupConsecutiveSteps(steps) {
         const groups = [];
         for (const step of steps) {
@@ -350,7 +348,8 @@
         return groups;
     }
     globalThis.WeftUiCore.groupConsecutiveSteps = groupConsecutiveSteps;
-    function nativeProgressPosition(events, block) {
+    function progressPosition(events, block, chronological = false) {
+        if (chronological) return block.seq;
         if (!turnOutcome(events, block.taskId).terminal) return block.seq;
         const session = block.steps[0]?.sessionId;
         const end = events.filter(event => ['turn.ended','task.ended'].includes(event.type) && turnOutcome([event],block.taskId).terminal).at(-1);
@@ -389,7 +388,7 @@
             const steps = block.steps.map(step => ({...stepPresentation(step,outcome),summary:toolSummary(step.toolName,step.arguments,step.language),
                 attention:!rejectedStep(step) && executionState(step)==='failed' || step.approvalStatus==='pending'}));
             rows.push({eventId:`progress:${block.taskId || block.seq}`,type:'native.progress',at:normalized[block.seq]?.at,
-                sourceRef:normalized[block.seq]?.sourceRef,presentationSeq:nativeProgressPosition(normalized,block),
+                sourceRef:normalized[block.seq]?.sourceRef,presentationSeq:progressPosition(normalized,block),
                 data:{taskId:block.taskId,summary:view.text || '回复已结束',running:view.running,failed:!!view.failed,steps}});
         }
         for (const [decisions,family,id] of [[approvals,'approval','approvalId'],[questions,'question','questionRpcId']])

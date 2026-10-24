@@ -31,9 +31,9 @@ test('#623 commentary stays between its tool blocks during work and after comple
   page = await service.historyPage('s');
   const groups = core.projectTimeline(page.events).groups;
   assert.equal(groups.length, 2);
-  assert.ok(core.progressPosition(page.events, groups[0]) < 4);
-  assert.ok(core.progressPosition(page.events, groups[1]) > 4);
-  assert.ok(core.progressPosition(page.events, groups[1]) < 7);
+  assert.ok(core.progressPosition(page.events, groups[0], true) < 4);
+  assert.ok(core.progressPosition(page.events, groups[1], true) > 4);
+  assert.ok(core.progressPosition(page.events, groups[1], true) < 7);
   const prompt = presentPersonalPrompt({ sections: [], tools: [] });
   assert.ok(prompt.sections.find(section => section.name === 'weftmate:progress-guidance').text.includes('between tool batches'));
   assert.equal(presentPersonalPrompt(prompt).sections.filter(section => section.name === 'weftmate:progress-guidance').length, 1);

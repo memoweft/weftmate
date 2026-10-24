@@ -208,7 +208,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 const end = projected.groups.find(next => next.seq > block.seq)?.seq ?? Infinity;
                 const events = mapped.filter(event => event.seq >= block.seq && event.seq < end && !['user.message', 'assistant.message', 'side.result'].includes(event.type)).flatMap(event=>event.type==='artifact.created' ? event.data?.completedStep ? [{...event,type:'step.completed',data:event.data.completedStep}] : [] : [event]);
                 events.push(...mapped.filter(event=>['task.ended','turn.ended'].includes(event.type)&&WeftUiCore.turnOutcome([event],block.taskId).terminal&&!events.includes(event)));
-                specs.push({ kind: 'progress', key: `progress:${mapped[block.seq]?.eventId || block.seq}`, seq: WeftUiCore.progressPosition(mapped, block), events, finalTaskBlock:projected.groups.filter(group=>group.taskId===block.taskId).at(-1)===block, estimate: 48 });
+                specs.push({ kind: 'progress', key: `progress:${mapped[block.seq]?.eventId || block.seq}`, seq: WeftUiCore.progressPosition(mapped, block, true), events, finalTaskBlock:projected.groups.filter(group=>group.taskId===block.taskId).at(-1)===block, estimate: 48 });
             }
             for (const event of projected.cards.filter(event => /^(artifact.|question.)/.test(event.type))) specs.push({ kind: 'progress', key: `output:${event.eventId || event.seq}`, seq: event.seq, events: [{...event,data:{...event.data,completedStep:undefined}},...mapped.filter(end=>['task.ended','turn.ended'].includes(end.type)&&WeftUiCore.turnOutcome([end],event.data.taskId).terminal)], estimate: 70 });
             rows.push(...specs.sort((a, b) => a.seq - b.seq));

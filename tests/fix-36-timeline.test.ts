@@ -36,10 +36,10 @@ test('FIX-36 a resolved approval snapshot clears pending attention in a logical 
   assert.equal(progress.data.steps.at(-1).approvalStatus,'resolved');assert.equal(progress.data.steps.at(-1).attention,false);
   assert.equal(progress.data.steps.at(-1).approvalText,'已批准');
 });
-test('FIX-36 desktop tool blocks retain chronology across completed and running turns',()=>{
+test('FIX-36 final summary never crosses the next turn or moves running work',()=>{
   const first=progressEvents(),second=progressEvents('running','synthetic-session',2).map((event,index)=>({...event,seq:first.length+index+1}));
   const events=[...first,...second],blocks=core.projectTimeline(events).groups;
-  assert.equal(core.progressPosition(events,blocks[0]),blocks[0].seq);
+  assert.equal(core.progressPosition(events,blocks[0]),first.at(-2).seq+.01);
   assert.equal(core.progressPosition(events,blocks.at(-1)),blocks.at(-1).seq);
   assert.equal(core.nativeTimelineRows(events).filter(row=>row.type==='native.progress').length,2);
 });
