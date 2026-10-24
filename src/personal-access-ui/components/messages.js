@@ -101,9 +101,14 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 prior.dataset.seq = String(event.seq);
                 prior.dataset.liveMessage = String(event.data.live===true);
                 if (event.data.truncated && !event.data.fullTextReadFailed && core.completeMessageEvent) completeMessageBody(prior, event, sessionId);
-                else if (!event.data.truncated) WeftContent.update(prior.querySelector('.message-text'), event.data.text, { streaming: event.data.streaming === true });
+                else if (!event.data.truncated) {
+                    if (event.data.text && !prior.querySelector('.message-text')) prior.append(WeftContent.create('', 'message-text markdown-body'));
+                    const body = prior.querySelector('.message-text');
+                    if (body) WeftContent.update(body, event.data.text, { streaming: event.data.streaming === true });
+                }
                 WeftContent.messageCompletionNotice(prior, core, event, sessionId);
-                if (!event.data.live) { ui.messageActions?.bind(prior,event,sessionId); ui.appendReplyMemory(prior,event); globalThis.WeftModelThinking?.(core,prior,event); }
+                globalThis.WeftModelThinking?.(core,prior,event);
+                if (!event.data.live) { ui.messageActions?.bind(prior,event,sessionId); ui.appendReplyMemory(prior,event); }
                 continue;
             }
             const images = Array.isArray(event.data?.images) ? event.data.images : [];
@@ -165,7 +170,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (originalImages.length)
                 ui.appendUnpreviewedOriginalImages(row, originalImages);
             if (event.type === 'assistant.message') {
-                if (event.data?.live) globalThis.WeftContent?.update(row.querySelector('.message-text'),event.data.text,{streaming:event.data.streaming===true});
+                if (event.data?.live && event.data.text) globalThis.WeftContent?.update(row.querySelector('.message-text'),event.data.text,{streaming:event.data.streaming===true});
                 appendMessageFiles(row,event.data.text);
                 globalThis.WeftModelThinking?.(core, row, event);
                 ui.appendReplyMemory(row, event);

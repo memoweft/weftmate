@@ -326,8 +326,31 @@
     function approvalProgress(row) {
         return ({ 'allowed-once': '已批准', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[row?.outcome || row?.decisionOutcome] || (row?.status === 'pending' ? '等待批准' : '');
     }
-    // Source sequence numbers stay intact; only the terminal presentation moves.
-    function progressPosition(events, block) {
+    // Keep tool blocks where they happened, including after the turn settles.
+    function progressPosition(events, block) { return block.seq; }
+    function groupConsecutiveSteps(steps) {
+        const groups = [];
+        for (const step of steps) {
+            const name = toolName(step.toolName), kind = /^(read|read_file)$/.test(name) ? 'read' : name;
+            let group = groups.at(-1);
+            if (!group || group.kind !== kind) { group = { kind, steps: [] }; groups.push(group); }
+            group.steps.push(step);
+        }
+        for (const group of groups) {
+            const first = group.steps[0], count = group.steps.length, english = first.language === 'en';
+            const same = group.steps.every(step => step.summary === first.summary);
+            const paths = new Set(group.steps.flatMap(step => {
+                const args = toolArguments(step.arguments);
+                return [args.paths,args.files,args.file_path,args.filePath,args.path].flat().filter(value => typeof value === 'string' && value);
+            }));
+            group.summary = count === 1 ? first.summary : same ? `${first.summary} · ${count} ${english ? 'times' : '次'}`
+                : group.kind === 'read' && paths.size ? english ? `Read ${paths.size} files · ${count} times` : `读取了 ${paths.size} 个文件 · ${count} 次`
+                : `${toolActivity(first.toolName, first.language)?.summary || (english ? toolSummary(first.toolName, {}, 'en') : toolLabel(first.toolName))} · ${count} ${english ? 'times' : '次'}`;
+        }
+        return groups;
+    }
+    globalThis.WeftUiCore.groupConsecutiveSteps = groupConsecutiveSteps;
+    function nativeProgressPosition(events, block) {
         if (!turnOutcome(events, block.taskId).terminal) return block.seq;
         const session = block.steps[0]?.sessionId;
         const end = events.filter(event => ['turn.ended','task.ended'].includes(event.type) && turnOutcome([event],block.taskId).terminal).at(-1);
@@ -366,7 +389,7 @@
             const steps = block.steps.map(step => ({...stepPresentation(step,outcome),summary:toolSummary(step.toolName,step.arguments,step.language),
                 attention:!rejectedStep(step) && executionState(step)==='failed' || step.approvalStatus==='pending'}));
             rows.push({eventId:`progress:${block.taskId || block.seq}`,type:'native.progress',at:normalized[block.seq]?.at,
-                sourceRef:normalized[block.seq]?.sourceRef,presentationSeq:progressPosition(normalized,block),
+                sourceRef:normalized[block.seq]?.sourceRef,presentationSeq:nativeProgressPosition(normalized,block),
                 data:{taskId:block.taskId,summary:view.text || '回复已结束',running:view.running,failed:!!view.failed,steps}});
         }
         for (const [decisions,family,id] of [[approvals,'approval','approvalId'],[questions,'question','questionRpcId']])

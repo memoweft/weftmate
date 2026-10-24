@@ -7,6 +7,8 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     const listStart = () => list().getBoundingClientRect().top - box().getBoundingClientRect().top + box().scrollTop;
     const fixedTitle = () => document.body.classList.contains('health-open') ? '健康' : document.body.classList.contains('help-open') ? document.querySelector('.help-surface')?.dataset.title || '帮助与小技巧' : document.body.classList.contains('library-open') ? '成果库' : document.body.classList.contains('goals-open') ? '目标' : document.body.classList.contains('activity-open') ? '动态' : 'WeftMate';
     const main = () => (core.inLogicalTimeline?.() ?? core.inMainChat?.()) === true;
+    const detailKey = detail => detail.dataset.step || (detail.dataset.stepGroup ? `steps:${detail.dataset.stepGroup}` : detail.classList.contains('model-thinking') ? 'thinking' : 'group');
+    const detailState = detail => ({ key: detailKey(detail), open: detail.open, active: detail.dataset.active });
     const timelineChat = () => core.currentTimelineChat?.() || core.state.mainChat;
     const button = (text, name, action, className = 'button quiet small') => {
         const node = ui.element('button', className, text); node.type = 'button'; node.setAttribute('aria-label', name || text);
@@ -29,7 +31,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     }
     function measureOffsets() { let total = 0; offsets = rows.map(row => { const offset = total; total += heights.get(row.key) || row.estimate; return offset; }); return total; }
     function rememberRow(row) {
-        expanded.set(row.dataset.eventId, [...row.querySelectorAll('details')].map(detail => ({ key: detail.dataset.step || 'group', open: detail.open })));
+        expanded.set(row.dataset.eventId, [...row.querySelectorAll('details')].map(detailState));
         observer?.unobserve(row); mounted.delete(row.dataset.eventId); row.remove();
     }
     function renderVisible() {
@@ -69,7 +71,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         }
     }
     function updateRow(row, spec) {
-        const focus = row.contains(document.activeElement), focusName = document.activeElement?.getAttribute('aria-label'), saved = [...row.querySelectorAll('details')].map(detail => ({ key: detail.dataset.step || 'group', open: detail.open }));
+        const focus = row.contains(document.activeElement), focusName = document.activeElement?.getAttribute('aria-label'), saved = [...row.querySelectorAll('details')].map(detailState);
         if (saved.length) expanded.set(spec.key, saved);
         row.className = 'main-chat-row';
         if (spec.kind === 'day') {
@@ -81,10 +83,11 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 renderMainChat();
             }, 'chat-day-toggle'); action.setAttribute('aria-expanded', String(!spec.collapsed)); row.append(action);
         } else if (spec.kind === 'message') {
-            if (row.dataset.streamSeq === String(spec.event.data?.streamSeq) && row.dataset.streamSearch===core.state.chatWindow.search.query && Number.isSafeInteger(spec.event.data?.streamSeq) && row.querySelector('.message-text,.markdown')) {
+            if (row.dataset.streamSeq === String(spec.event.data?.streamSeq) && row.dataset.streamSearch===core.state.chatWindow.search.query && Number.isSafeInteger(spec.event.data?.streamSeq) && row.querySelector('.message-text,.markdown,.model-thinking')) {
                 row.classList.add('message','assistant');
                 row.setAttribute('aria-label',`助手消息：${Array.from(spec.event.data.text).slice(0,80).join('')}`);
                 row.dataset.seq = String(spec.event.sourceRef?.seq ?? spec.event.seq);
+                if (spec.event.data.text && !row.querySelector('.message-text,.markdown')) row.append(WeftContent.create('', 'message-text markdown-body'));
                 const body = row.querySelector('.message-text,.markdown');
                 if (spec.event.data.truncated && !spec.event.data.fullTextReadFailed && core.completeMessageEvent) {
                     globalThis.WeftReplyMotion?.indicator(body,false);
@@ -95,9 +98,10 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                         if(body.isConnected && identity===core.state.identityGeneration && owner===core.state.ownerId)
                             WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId, true);
                     });
-                } else if (!spec.event.data.truncated) WeftContent.update(body, spec.event.data.text, { streaming: spec.event.data.streaming === true });
+                } else if (body && !spec.event.data.truncated) WeftContent.update(body, spec.event.data.text, { streaming: spec.event.data.streaming === true });
                 WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId);
-                if (!spec.event.data.live) { (ui.bindMainMessage || ui.messageActions?.bind)?.(row,spec.event); globalThis.WeftModelThinking?.(core,row,spec.event); ui.appendReplyMemory?.(row,spec.event); }
+                globalThis.WeftModelThinking?.(core,row,spec.event);
+                if (!spec.event.data.live) { (ui.bindMainMessage || ui.messageActions?.bind)?.(row,spec.event); ui.appendReplyMemory?.(row,spec.event); }
                 if(core.state.chatWindow.search.query.trim())highlight(row);
                 return;
             }
@@ -145,7 +149,10 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 openArtifact: artifact => ui.openTimelinePreview(core.conversationTaskContext(), core.artifactPreviewPath(artifact.artifactId), artifact.fileName || '成果文件'),
                 appendArtifactActions: (target, artifact) => ui.appendResourceArtifactActions(target, artifact) });
         }
-        for (const state of expanded.get(spec.key) || []) { const detail = [...row.querySelectorAll('details')].find(detail => (detail.dataset.step || 'group') === state.key); if (detail) detail.open = state.open; }
+        for (const state of expanded.get(spec.key) || []) {
+            const detail = [...row.querySelectorAll('details')].find(detail => detailKey(detail) === state.key);
+            if (detail && (state.key !== 'thinking' || state.active === detail.dataset.active)) detail.open = state.open;
+        }
         if (focus && !row.contains(document.activeElement)) ([...row.querySelectorAll('[aria-label]')].find(node => node.getAttribute('aria-label') === focusName) || row).focus({ preventScroll: true });
     }
     function paintLiveChatMessages() {
@@ -158,7 +165,10 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             if(!spec)return false;
             spec.event=event;const row=mounted.get(key);
             if(row){
-                WeftContent.update(row.querySelector('.message-text,.markdown'),event.data.text,{streaming:event.data.streaming===true});
+                if (event.data.text && !row.querySelector('.message-text,.markdown')) return false;
+                const body = row.querySelector('.message-text,.markdown');
+                if (body) WeftContent.update(body,event.data.text,{streaming:event.data.streaming===true});
+                globalThis.WeftModelThinking?.(core,row,event);
                 row.dataset.chatSignature=JSON.stringify([event,spec.collapsed,core.state.chatWindow.search.query,null]);
             }
         }

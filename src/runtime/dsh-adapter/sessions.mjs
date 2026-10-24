@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto'
 import { describeTool, toolArguments } from './timeline.mjs'
 import { sourceRange } from './source-range.mjs'
 import { claimedInputsAt, indexInboxTimeline, turnReceiptAt } from './inbox-timeline.mjs'
-import { liveMessages } from './live-messages.mjs'
+import { liveMessages, thinkingDuration } from './live-messages.mjs'
 
 const SAFE_ERROR_CODES = new Set([
   'session-not-found',
@@ -155,7 +155,7 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
     const modelThinking = includeThinking && Array.isArray(message?.content) ? message.content.filter(part => part?.type === 'reasoning' && typeof part.text === 'string').map(part => part.text).join('') : '';
     if (data || images.length || modelThinking) projected = { seq, type: 'assistant.message', data: { ...(data ?? { text: '' }),
       ...(event.sourceEventSeqs?.length ? { streamSeq: event.sourceEventSeqs[0] } : {}),
-      ...(modelThinking ? { modelThinking: safeHistoryText(modelThinking).text } : {}),
+      ...(modelThinking ? { modelThinking: safeHistoryText(modelThinking, Infinity).text } : {}),
       ...(images.length ? { images } : {}),
       ...(Array.isArray(event.data?.memoryUsed) ? { memoryUsed: event.data.memoryUsed
         .filter(item => ['cognition', 'entity', 'relationship', 'event'].includes(item?.kind) &&
@@ -465,6 +465,10 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
         if (Number.isSafeInteger(previous.data?.turn)) { contextTurn = previous.data.turn; break }
       }
       const event = projectHistoryEvent(entries[index], raw.type === 'tool/result' ? relatedCall(entries, index, cache) : null, contextTurn, raw.type === 'step/end' ? resolveStepEnd(entries, index, cache) : null, ['agent/inbox/spliced', 'step/start', 'step/end'].includes(raw.type) ? indexInboxTimeline(entries, cache, index) : null, options.includeThinking === true)
+      if (event?.data?.modelThinking) {
+        const duration = thinkingDuration(entries, raw, index);
+        if (duration !== undefined) event.data.thinkingMs = duration;
+      }
       const size = event ? Buffer.byteLength(JSON.stringify(event), 'utf8') : 0
       if (event && (events.length === limit || bytes + size > HISTORY_RESPONSE_BYTES_LIMIT)) { hasMore = true; break }
       scanned = raw.seq
@@ -594,11 +598,11 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
         const page = await readLog.historyPage(sessionId, options, (entries, range) => projectedPage(sessionId, entries, range));
         if (page) {
           const entries = beforeSeq === undefined ? await logFor(sessionId) : [];
-          return { ...page, ...(beforeSeq === undefined ? { liveSeq: (entries.at(-1)?.event ?? entries.at(-1))?.seq ?? -1, liveEvents: liveMessages(entries, text => safeHistoryText(text, Infinity).text) } : {}) };
+          return { ...page, ...(beforeSeq === undefined ? { liveSeq: (entries.at(-1)?.event ?? entries.at(-1))?.seq ?? -1, liveEvents: liveMessages(entries, text => safeHistoryText(text, Infinity).text, options.includeThinking === true) } : {}) };
         }
       }
       const entries = await logFor(sessionId);
-      return { ...projectedPage(sessionId, entries, options), ...(beforeSeq === undefined ? { liveSeq: (entries.at(-1)?.event ?? entries.at(-1))?.seq ?? -1, liveEvents: liveMessages(entries, text => safeHistoryText(text, Infinity).text) } : {}) };
+      return { ...projectedPage(sessionId, entries, options), ...(beforeSeq === undefined ? { liveSeq: (entries.at(-1)?.event ?? entries.at(-1))?.seq ?? -1, liveEvents: liveMessages(entries, text => safeHistoryText(text, Infinity).text, options.includeThinking === true) } : {}) };
     },
 
     async historyDetail(sessionId, seq) {
