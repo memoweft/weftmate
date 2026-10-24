@@ -250,7 +250,8 @@ try {
   // same sidebar action while the modal makes background controls inert.
   for (const label of ['设置', '记忆']) {
     await page.getByRole('button', { name: '账户菜单', exact: true }).click();
-    await page.locator('#account-menu').getByRole('button', { name: label, exact: true }).click();
+    await page.locator('#account-menu').getByRole('button', { name: '设置', exact: true }).click();
+    if (label === '记忆') await page.getByRole('navigation', {name:'设置分类'}).getByRole('button', {name:'记忆',exact:true}).click();
     await page.locator('#settings-dialog').waitFor({ state: 'visible' });
     await page.keyboard.press('Control+n');
     await page.locator('#settings-dialog').waitFor({ state: 'hidden' });
