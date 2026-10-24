@@ -31,6 +31,7 @@ async function removeOwned(directory, parent, prefix) {
 async function capture(name) {
   if (!process.env.WEFTMATE_EVIDENCE_DIR) return;
   await mkdir(process.env.WEFTMATE_EVIDENCE_DIR,{recursive:true});
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const png = await app.evaluate(async ({ BrowserWindow }) => (await BrowserWindow.getAllWindows()[0].capturePage(undefined,{stayHidden:true,stayAwake:true})).toPNG().toString('base64'));
   await writeFile(join(process.env.WEFTMATE_EVIDENCE_DIR, name+'.png'),Buffer.from(png,'base64'));
 }
@@ -92,8 +93,17 @@ try {
   assert.equal(await group.locator('.execution-step > summary').first().evaluate(node=>getComputedStyle(node,'::after').content),'none');
   assert.equal(await group.locator('.execution-step > summary > .progress-chevron').first().count(),1);
   await capture('grouped-tools');
+  await block.locator(':scope > summary').click();
   fixture.progress.reasoning('先核对合成资料中的约束。',2);
   const thinking=page.locator('.model-thinking').last();
+  const thinkingBlock=page.locator('.execution-block').last();
+  await thinkingBlock.locator(':scope > summary').getByText('先核对合成资料中的约束。',{exact:true}).waitFor();
+  assert.equal(await page.locator('.inline-waiting:visible').count(),0);
+  assert.equal(await page.locator('.progress-indicator:visible').count(),1);
+  assert.equal(await thinkingBlock.locator(':scope > summary .progress-indicator i').count(),3);
+  assert.match(await thinkingBlock.locator(':scope > summary .progress-elapsed').innerText(),/\d+ 秒/);
+  for(const theme of ['light','dark']){await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await thinkingBlock.scrollIntoViewIfNeeded();await capture('running-'+theme);}
+  if(!await thinkingBlock.evaluate(node=>node.open))await thinkingBlock.locator(':scope > summary').click();
   await thinking.locator('p').getByText('先核对合成资料中的约束。',{exact:true}).waitFor();
   assert.equal(await thinking.evaluate(node=>node.open),true);
   fixture.progress.reasoning('再比较两种结果。',2);
@@ -103,11 +113,12 @@ try {
   await page.evaluate(()=>progressCore.savePersonalization({thinkingDisplay:'hidden'}));
   assert.equal(await thinking.isVisible(),false);
   await page.evaluate(()=>progressCore.savePersonalization({thinkingDisplay:'expanded'}));
-  await thinking.locator('p').waitFor(); await capture('live-thinking');
+  await thinking.locator('p').waitFor();
+  for(const theme of ['light','dark']){await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await capture('live-thinking-'+theme);}
   fixture.progress.chunk('核对完成，下面是结果。',2);
   await page.getByText('核对完成，下面是结果。',{exact:true}).waitFor();
   assert.equal(await thinking.evaluate(node=>node.open),false);
-  assert.match(await thinking.locator('summary').innerText(),/思考过程 · \d+ 秒/);
+  assert.equal(await thinking.locator('summary').innerText(),'先核对合成资料中的约束。');
   await thinking.locator('summary').click();
   await thinking.locator('p').waitFor();
   fixture.progress.completeStream('核对完成，下面是结果。',2); fixture.progress.finish();
@@ -115,6 +126,9 @@ try {
   await page.waitForFunction(()=>!(progressCore.inLogicalTimeline()?progressCore.mainChatDays().flatMap(day=>day.events):progressCore.timelineEventsForContext()).some(event=>event.data?.live));
   assert.equal(await page.locator('.model-thinking').count(),1);
   assert.equal(await thinking.evaluate(node=>node.open),true,'user can keep finished thinking expanded');
+  await thinking.getByRole('button',{name:'收起',exact:true}).click();
+  assert.equal(await thinking.evaluate(node=>node.open),false);
+  await thinking.locator('summary').click();
   const positions=await page.locator('#transcript > li').evaluateAll(rows=>rows.map(row=>row.textContent));
   const commentary=positions.findIndex(text=>text.includes('目录已经找到'));
   assert.ok(positions.findIndex(text=>text.includes('读取了 1 个文件'))<commentary);
@@ -125,8 +139,9 @@ try {
   await page.waitForFunction(()=>progressCore.state.refreshing===false);
   await page.evaluate(id=>progressCore.selectSession(id),fixture.sessionId);
   await page.getByText('目录已经找到，接着核对用法。',{exact:true}).waitFor();
-  const restored=page.locator('.model-thinking');await restored.waitFor();assert.equal(await restored.evaluate(node=>node.open),false);
-  await restored.locator('summary').click();assert.equal(await restored.locator('p').innerText(),'先核对合成资料中的约束。再比较两种结果。');
+  const restored=page.locator('.model-thinking');await restored.waitFor({state:'attached'});assert.equal(await restored.evaluate(node=>node.open),false);
+  await page.locator('.execution-block').last().locator(':scope > summary').click();
+  await restored.locator('summary').click();await page.waitForFunction(()=>document.querySelector('.model-thinking p')?.innerText.includes('再比较两种结果。'));assert.equal(await restored.locator('p').innerText(),'先核对合成资料中的约束。再比较两种结果。');
   const recovered = await page.evaluate(async () => {
     const list=document.createElement('ol');document.body.append(list);
     const original=progressCore.completeMessageEvent, text='合成长答案。'.repeat(1000);
@@ -139,6 +154,44 @@ try {
     } finally {progressCore.completeMessageEvent=original;list.remove();}
   });
   assert.equal(recovered,true,'reasoning-only snapshot must create a body before hydrating a truncated final reply');
+  const probes = await page.evaluate(async () => {
+    let copied;
+    const list=document.createElement('ol');list.id='progress2-command-probe';list.className='chat-progress';document.querySelector('#transcript').append(list);
+    const readDetail=async()=>({text:JSON.stringify({arguments:{command:'Write-Output "synthetic"'},output:'synthetic output'})});
+    try {
+      WeftTimeline.render([{seq:0,type:'turn.started',data:{turn:9}},{seq:0.5,type:'assistant.message',data:{text:'',modelThinking:'先检查合成命令。',thinkingMs:1000}}, {seq:1,type:'step.completed',data:{taskId:'turn-9',stepId:'command',toolName:'pwsh',state:'completed',summary:'运行命令',detailRef:{seq:1}}},
+        {seq:2,type:'turn.ended',data:{turn:9,reason:'completed'}}],list,{readDetail,copyText:async text=>{copied=text;}});
+      list.querySelector('.execution-block').open=true;
+      list.querySelectorAll('.execution-step').forEach(step=>step.open=true);
+      await new Promise(resolve=>setTimeout(resolve,100));
+      list.querySelector('[aria-label="复制思考内容"]').click();await new Promise(resolve=>setTimeout(resolve,0));const copiedThinking=copied;
+      const code=list.querySelector('code');
+      list.querySelector('.render-code-actions button:last-child').click();
+      await new Promise(resolve=>setTimeout(resolve,0));
+      return {copiedThinking,code:code?.textContent,highlighted:!!code?.querySelector('.hljs-built_in'),output:list.querySelector('.step-output')?.textContent,copied,summary:list.querySelector('.inline-progress-text')?.textContent};
+    } catch(error) {list.remove();throw error;}
+  });
+  await page.locator('#progress2-command-probe').scrollIntoViewIfNeeded();
+  for(const theme of ['light','dark']){await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await capture('command-'+theme);}
+  await page.locator('#progress2-command-probe').evaluate(node=>node.remove());
+  assert.equal(probes.copiedThinking,'先检查合成命令。');
+  assert.match(probes.code,/^\$ Write-Output/);assert.equal(probes.output,'synthetic output');assert.equal(probes.copied,probes.code);
+  assert.equal(probes.highlighted,true);assert.equal(probes.summary,'已运行 1 个命令');
+  const queueProbe=await page.evaluate(()=>{
+    const before=progressCore.state.historyEvents,commands=progressCore.state.tasks;
+    const queued=(seq,id)=>({seq,type:'task.queued',data:{taskId:id,text:id}});
+    try {
+      progressCore.state.tasks=[];
+      progressCore.state.historyEvents=new Map([[0,queued(0,'first')]]);
+      progressUi.renderTaskQueue();const idle=document.querySelectorAll('.queued-task').length;
+      progressCore.state.historyEvents.set(1,{seq:1,type:'turn.started',data:{turn:1}});
+      progressCore.state.historyEvents.set(2,queued(2,'second'));
+      progressUi.renderTaskQueue();return {idle,busy:document.querySelectorAll('.queued-task').length};
+    } finally {progressCore.state.historyEvents=before;progressCore.state.tasks=commands;progressUi.renderTaskQueue();}
+  });
+  if(!logical)assert.deepEqual(queueProbe,{idle:0,busy:1});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  assert.equal(await page.locator('.execution-block').first().evaluate(node=>getComputedStyle(node).animationName),'none');
   assert.deepEqual(errors,[]);
   assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(window=>!window.isVisible())),true);
   console.log(`PASS FIX-PROGRESS ${logical?'segmented':'ordinary'}: real hidden desktop, interleaved durable commentary, grouped calls/detail/keyboard, live thinking/settings/collapse/reload.`);

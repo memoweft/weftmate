@@ -227,6 +227,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             return;
         const context = core.conversationTaskContext(), sessionId = context.sessionId;
         window.WeftTimeline.render(events.filter(event => event.type !== 'task.queued'), ui.byId('transcript'), {
+            thinkingDisplay:core.state.personalization?.thinkingDisplay,
             stopViews: Object.fromEntries(events.filter(event => event.type === 'turn.started')
                 .map(event => [`turn-${event.data?.turn}`, core.taskStopView(event.data?.turn)]).filter(([, view]) => view)),
             waiting: core.state.turnStatus === 'running' ? core.processingStageLabel(core.state.sessions.find(row => row.sessionId === sessionId)?.processing) : '',
