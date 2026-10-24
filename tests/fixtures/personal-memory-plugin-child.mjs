@@ -14,6 +14,7 @@ if (process.argv.includes('--privacy-only') || process.argv.includes('--protocol
   registerHooks({ resolve(specifier, context, next) {
     if (specifier === '@deepseek-ai/dsh-llm/message') return { shortCircuit:true,
       url:'data:text/javascript,'+encodeURIComponent('const message = (role,input) => ({id:crypto.randomUUID(),role,...input}); export const createUserMessage = input => message("user",input); export const createAssistantMessage = input => message("assistant",input);') };
+    if (specifier === '@deepseek-ai/dsh-tools') return { shortCircuit: true, url: 'data:text/javascript,export const defineTool = input => input;' };
     return next(specifier, context);
   } });
 } else symlinkSync(fileURLToPath(new URL('../../vendor/dsh-runtime/node_modules', import.meta.url)),
@@ -62,6 +63,21 @@ async function preStep(id, agent = { session: session(id) }, priorMessages = nul
       sourceFrozen: Object.isFrozen(injected.at(-1).source) } : null };
 }
 process.on('message', async (message) => {
+  if (message?.type === 'run-query-dependencies') {
+    try {
+      const value = session('session-query-dependencies'), tools = new Map();
+      const agent = { id: value.id, session: value, ctx: { tools: { register(tool) { tools.set(tool.name, tool); } } } };
+      value.append('user/message', userClaim('query'));
+      await handlers.get('agent/created')({ agent });
+      const first = await preStep(value.id, agent);
+      await tools.get('memory_query').execute({ query: 'another source' }, {});
+      await preStep(value.id, agent, first.messages, []);
+      const captured = value.append('assistant/message', { turn: 1,
+        message: { content: [{ type: 'text', text: 'synthetic reply' }] } }).data;
+      process.send({ type: 'result', dependencies: captured.model_context_dependencies });
+    } catch (error) { process.send({ type: 'failed', error: String(error.stack) }); }
+    return;
+  }
   if (message?.type === 'run-peer-recall') {
     try {
       const value = session('session-new-peer', message.preset);
