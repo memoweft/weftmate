@@ -94,7 +94,7 @@ function boundedText(value, limit) {
 function normalizeModelContextDependencies(value) {
   const rawWorldItems = Array.isArray(value?.world_items) ? value.world_items : []
   const rawInteractionIds = Array.isArray(value?.interaction_ids) ? value.interaction_ids : []
-  const validWorldItems = rawWorldItems.filter(item => item && ['cognition', 'entity', 'relationship', 'event'].includes(item.object_kind) && typeof item.item_id === 'string' && item.item_id.trim() === item.item_id && item.item_id.length > 0 && item.item_id.length <= 512)
+  const validWorldItems = rawWorldItems.filter(item => item && ['cognition', 'entity', 'relationship', 'event', 'evidence'].includes(item.object_kind) && typeof item.item_id === 'string' && item.item_id.trim() === item.item_id && item.item_id.length > 0 && item.item_id.length <= 512)
   const worldMap = new Map(validWorldItems
     .map(item => [`${item.object_kind}:${item.item_id}`, { object_kind: item.object_kind, item_id: item.item_id }]))
   const worldItems = [...worldMap.values()].slice(0, 64)
@@ -495,7 +495,7 @@ export function apply(ctx, config = {}) {
     var rawWorld = Array.isArray(adoption.selected_item_ids) ? adoption.selected_item_ids : []
     var rawInteractions = Array.isArray(adoption.interaction_ids) ? adoption.interaction_ids : []
     var worldKeys = new Set(), interactionKeys = new Set()
-    var worldValid = rawWorld.length <= 64 && rawWorld.every(function (pair) { var key = Array.isArray(pair) && pair.length === 2 && ['cognition', 'entity', 'relationship', 'event'].indexOf(pair[0]) >= 0 && typeof pair[1] === 'string' && pair[1].trim() === pair[1] && pair[1].length > 0 && pair[1].length <= 512 ? pair[0] + ':' + pair[1] : null; if (!key || worldKeys.has(key)) return false; worldKeys.add(key); return true })
+    var worldValid = rawWorld.length <= 64 && rawWorld.every(function (pair) { var key = Array.isArray(pair) && pair.length === 2 && ['cognition', 'entity', 'relationship', 'event', 'evidence'].indexOf(pair[0]) >= 0 && typeof pair[1] === 'string' && pair[1].trim() === pair[1] && pair[1].length > 0 && pair[1].length <= 512 ? pair[0] + ':' + pair[1] : null; if (!key || worldKeys.has(key)) return false; worldKeys.add(key); return true })
     var interactionsValid = rawInteractions.length <= 64 && rawInteractions.every(function (id) { if (typeof id !== 'string' || id.trim() !== id || !id.length || id.length > 512 || interactionKeys.has(id)) return false; interactionKeys.add(id); return true })
     var referencesValid = worldValid && interactionsValid && (rawWorld.length > 0 || rawInteractions.length > 0)
     if (typeof adoption.capture_status !== 'string') adoption.capture_status = referencesValid ? 'complete' : 'unavailable'
@@ -987,7 +987,10 @@ export function apply(ctx, config = {}) {
           return { ok: false, status: 'failed', error: 'preview_failed', query, level, count: 0, cognitions: [], evidence: [], sources: [], rendered_context: `记忆检索失败：${error?.message ?? String(error)}` }
         }
         const selected = Array.isArray(preview?.selected_item_ids) ? preview.selected_item_ids.filter(pair => Array.isArray(pair) && typeof pair[0] === 'string' && typeof pair[1] === 'string') : []
-        const cognitions = boundedText(preview?.rendered_recall, RECALL_MAX_RENDERED_CHARS).split('\n').map(line => line.trim()).filter(Boolean).map((content, index) => ({ id: selected[index]?.[1] ?? null, content, source_role: 'world_cognition' }))
+        const renderedRecall = boundedText(preview?.rendered_recall, RECALL_MAX_RENDERED_CHARS)
+        const expanded = selected.some(pair => pair[0] === 'evidence') || /^(?:本人档案（当前；保留原话归属）：|User profile \(current; original attribution\):)/u.test(renderedRecall)
+        const cognitions = expanded ? [{ id: null, content: renderedRecall, source_role: 'recall_context' }]
+          : renderedRecall.split('\n').map(line => line.trim()).filter(Boolean).map((content, index) => ({ id: selected[index]?.[1] ?? null, content, source_role: 'world_cognition' }))
         const evidence = []
         const sources = []
         const errors = []
@@ -995,6 +998,14 @@ export function apply(ctx, config = {}) {
         let interactionIds = [], interactionToken = null, interactionRendered = ''
         if ((level === 'evidence' || level === 'all') && policy.allowed) {
           for (const [kind, itemId] of selected) {
+            if (kind === 'evidence') {
+              // E2 already projects the permission-filtered original window.
+              // Evidence is a direct dependency, not a World provenance target.
+              if (!evidence.some(item => item.source_role === 'recall_context')) evidence.push({ evidence_id: null,
+                raw_content: renderedRecall, source_role: 'recall_context', relation: 'support', occurred_at: null })
+              sources.push({ kind: 'evidence', item_id: itemId, status: 'ok' })
+              continue
+            }
             try {
               const provenanceResult = await bridge.request('query_provenance', { object_kind: kind, item_id: itemId, projection: 'model' })
               const provenance = provenanceResult?.provenance

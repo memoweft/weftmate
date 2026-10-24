@@ -175,7 +175,7 @@ export async function createOfflineService(context) {
               turn.messages.some((m, i) => m.role !== (i === 0 ? 'user' : 'assistant') || typeof m.text !== 'string' || !m.text.trim() || m.text.length > 16384&&!assembled.complete.includes(turn))) throw failure('INVALID_REQUEST');
           if (turn.dependencyComplete !== undefined && typeof turn.dependencyComplete !== 'boolean' ||
               turn.memoryRefs !== undefined && (!Array.isArray(turn.memoryRefs) || turn.memoryRefs.length > 64 ||
-                turn.memoryRefs.some(ref => !['cognition', 'entity', 'relationship', 'event'].includes(ref?.kind) ||
+                turn.memoryRefs.some(ref => !['cognition', 'entity', 'relationship', 'event', 'evidence'].includes(ref?.kind) ||
                   typeof ref.id !== 'string' || !/^[A-Za-z0-9._:-]{1,512}$/.test(ref.id)))) throw failure('INVALID_REQUEST');
           if (new Set((turn.memoryRefs ?? []).map(ref => `${ref.kind}:${ref.id}`)).size !== (turn.memoryRefs ?? []).length) throw failure('INVALID_REQUEST');
           if(account.forgottenConversations?.includes(turn.conversationId)){receipts.push({id:turn.id,state:'forgotten'});continue;}

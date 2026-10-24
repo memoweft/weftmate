@@ -26,7 +26,7 @@ try {
   get.initializeProxy();
   assert.equal(global.GLOBAL_AGENT.HTTP_PROXY, origin);
   const artifact = await get.downloadArtifact({
-    version: '43.7.8', artifactName: 'SHASUMS256.txt', isGeneric: true,
+    version: '43.8.3', artifactName: 'SHASUMS256.txt', isGeneric: true,
     mirrorOptions: { mirror: 'http://dependency-smoke.invalid/' },
     cacheRoot, force: true,
     downloadOptions: { quiet: true, timeout: { request: 5_000 }, retry: { limit: 0 } },

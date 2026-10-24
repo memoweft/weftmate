@@ -588,9 +588,12 @@ describe('R7 记忆宿主插件契约', () => {
       bridge.capabilities = { permissions: { allow_inference: true, allow_cloud_read: true } };
       const partial = await tool.execute({ query: '偏好', level: 'all' }, { agent: { session: { id: 'local', requestHeader() { return { config: { provider: 'local', model: 'test' } }; } } } });
       assert.equal(partial.status, 'partial'); assert.equal(partial.ok, false); assert.equal(partial.count, 1); assert.ok(partial.errors.length > 0, 'a bridge source failure is not rewritten as zero matches');
-      bridge.request = async (method: string) => {
-        if (method === 'preview_recall') return { world_revision: 9, preview: { rendered_recall: '用户偏好简洁回答', selected_item_ids: [['cognition', 'c1']], recall_snapshot_token: 'world-token' } };
-        if (method === 'query_provenance') return { provenance: [{ evidence_id: 'e1', currentness_state: 'current', model_content_available: true, linked_world_items: [{ object_kind: 'cognition', item_id: 'c1' }, { object_kind: 'cognition', item_id: 'c2' }], permissions: { allow_inference: true, allow_local_read: true }, evidence: { currentness_state: 'current', content_available: true, raw_content: '原话', permissions: { allow_inference: true, allow_local_read: true } } }] };
+      bridge.request = async (method: string, params: any) => {
+        if (method === 'preview_recall') return { world_revision: 9, preview: { rendered_recall: '记忆：用户偏好简洁回答\n用户原话：请说简单些。', selected_item_ids: [['cognition', 'c1'], ['evidence', 'e1']], recall_snapshot_token: 'world-token' } };
+        if (method === 'query_provenance') {
+          assert.equal(params.object_kind, 'cognition', 'direct sources are not World provenance targets');
+          return { provenance: [{ evidence_id: 'e1', currentness_state: 'current', model_content_available: true, linked_world_items: [{ object_kind: 'cognition', item_id: 'c1' }, { object_kind: 'cognition', item_id: 'c2' }], permissions: { allow_inference: true, allow_local_read: true }, evidence: { currentness_state: 'current', content_available: true, raw_content: '原话', permissions: { allow_inference: true, allow_local_read: true } } }] };
+        }
         if (method === 'query_interactions') return { items: [{ id: 'interaction-1' }], rendered_context: '历史讨论', snapshot_token: 'interaction-token', commitments: [] };
         return {};
       };
@@ -602,7 +605,7 @@ describe('R7 记忆宿主插件契约', () => {
       await lifecycle.dispose();
       const stored = JSON.parse(readFileSync(join(home, 'memoweft', 'weftmate-handoff-v1.json'), 'utf8'));
       const capture = stored.recall_adoptions.find(item => item.capture_source === 'recall_memory');
-      assert.deepEqual(capture.selected_item_ids, [['cognition', 'c1'], ['cognition', 'c2']]);
+      assert.deepEqual(capture.selected_item_ids, [['cognition', 'c1'], ['evidence', 'e1'], ['cognition', 'c2']]);
       assert.deepEqual(capture.interaction_ids, ['interaction-1']);
       assert.equal(capture.capture_status, 'complete');
     } finally {
@@ -649,6 +652,10 @@ describe('R7 记忆宿主插件契约', () => {
   it('dependency capture fails closed when malformed or merged references exceed 64', () => {
     const source = plugin.slice(plugin.indexOf('function normalizeModelContextDependencies('), plugin.indexOf('export const MEMOWEFT_RPC_PROTOCOL')) + '\nreturn ({ normalizeModelContextDependencies, mergeModelContextDependencies })';
     const helpers = Function(source)();
+    const evidence = { schema_version: 1, capture_status: 'complete',
+      world_items: [{ object_kind: 'evidence', item_id: 'synthetic-source' }], interaction_ids: [] };
+    assert.deepEqual(helpers.normalizeModelContextDependencies(evidence), evidence);
+    assert.deepEqual(helpers.mergeModelContextDependencies(evidence, evidence), evidence);
     const tooMany = { schema_version: 1, capture_status: 'complete', world_items: Array.from({ length: 65 }, (_, index) => ({ object_kind: 'cognition', item_id: `c-${index}` })), interaction_ids: [] };
     assert.equal(helpers.normalizeModelContextDependencies(tooMany).capture_status, 'unavailable');
     assert.equal(helpers.normalizeModelContextDependencies({ ...tooMany, world_items: [{ object_kind: 'wrong', item_id: 'x' }] }).capture_status, 'unavailable');

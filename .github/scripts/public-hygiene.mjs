@@ -53,9 +53,11 @@ export function repositoryFiles() {
 }
 
 // Retired 2026-10-15. Git history keeps them; a stale branch must not bring them back.
-export const retiredPaths = ['docs/STATE.md', 'docs/DEVELOPMENT_ENVIRONMENT.md', 'docs/archive/', 'scripts/archive/'];
+export const retiredPaths = ['docs/STATE.md', 'docs/DEVELOPMENT_ENVIRONMENT.md', 'docs/archive/', 'scripts/archive/',
+  // Retired 2026-10-24 (D122): process rules and CI evidence tooling.
+  'docs/DSH_UPGRADE_POLICY.md', '.github/scripts/ci-post-merge-survey.mjs', '.github/scripts/ci-run-evidence.mjs', '.github/scripts/ci-six-rounds.mjs'];
 // Every session starts by reading these pages, so they stay short.
-export const entryLimits = {'PROJECT-MAP.md': 16_000, 'AGENTS.md': 8_000};
+export const entryLimits = {'PROJECT-MAP.md': 16_000, 'AGENTS.md': 8_000, 'docs/PLAN.md': 6_000, 'docs/DECISIONS.md': 40_000};
 // Generated evidence keeps its own historical links.
 const linkExempt = ['apps/apple/Tests/Evidence/'];
 
