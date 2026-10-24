@@ -2,7 +2,7 @@
 
 > 交互标准对齐 **Claude Code**（桌面 app、手机 app）与 **Codex**（桌面 app、手机端）；功能是 WeftMate 自己的。两者底层与 WeftMate 相同：模型 → 调工具 → 看结果 → 再决定。
 > 实现前请实际打开本机安装的 Claude 桌面版与 Codex 桌面版对照手感；本文件写规则，不逐像素复刻，也不使用它们的品牌元素。
-> 相关决定见 [DECISIONS](DECISIONS.md) D5–D7、D36、D49、D92；当前验收场景见 [PLAN](PLAN.md)。
+> 相关决定见 [DECISIONS](DECISIONS.md) D5–D7、D36、D49、D92；「能用」的标准见 [PLAN](PLAN.md)。
 
 ## 1. 总原则
 
