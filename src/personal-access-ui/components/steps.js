@@ -9,13 +9,14 @@
     };
     function stepCard(step, saved, running, options) {
         const english = step.language === 'en';
+        const progress = window.WeftTimeline;
         const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || (english ? 'Tool execution' : '工具执行')}${step.statusText ? ` · ${step.statusText}` : step.state === 'failed' ? english ? ' · Encountered an issue' : ' · 遇到问题' : step.state === 'cancelled' ? english ? ' · Stopped' : ' · 已停止' : step.state === 'running' && running ? english ? ' · Running' : ' · 运行中' : ''}${step.approvalText ? ` · ${step.approvalText}` : ''}`);
         const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true');
         arrow.append(window.WeftIcons.create('chevron', 16)); label.append(arrow);
         const output = node('div', 'step-detail-content');
-        const copy = WeftTimeline.detailAction(english ? 'Copy step details' : '复制步骤详情','copy',()=>void WeftTimeline.copyFeedback(copy,()=>
+        const copy = progress.detailAction(english ? 'Copy step details' : '复制步骤详情','copy',()=>void progress.copyFeedback(copy,()=>
             (options.copyText || (text=>navigator.clipboard.writeText(text)))(globalThis.WeftUiCore.executionDetailText(detail.rawText || '',step.language))));
-        const collapse = WeftTimeline.detailAction(english ? 'Collapse' : '收起','chevron',()=>{detail.open=false;label.focus();});
+        const collapse = progress.detailAction(english ? 'Collapse' : '收起','chevron',()=>{detail.open=false;label.focus();});
         const actions = node('div','progress-detail-actions'); actions.append(copy,collapse);
         function paintDetail(raw, truncated = false) {
             output.replaceChildren();
@@ -29,7 +30,7 @@
                 const language = /pwsh|powershell/.test(step.toolName) ? 'powershell' : 'bash';
                 const block=WeftContent.create(`${fence}${language}\n$ ${command}\n${fence}`, 'step-command markdown-body', {copy:options.copyText});
                 const controls=block.querySelector('.render-code-actions');
-                const codeCopy=WeftTimeline.detailAction(english ? 'Copy command' : '复制命令','copy',()=>void WeftTimeline.copyFeedback(codeCopy,()=>
+                const codeCopy=progress.detailAction(english ? 'Copy command' : '复制命令','copy',()=>void progress.copyFeedback(codeCopy,()=>
                     (options.copyText || (text=>navigator.clipboard.writeText(text)))(block.querySelector('code').textContent)));
                 controls.replaceChildren(codeCopy); output.append(block);
                 const text = globalThis.WeftUiCore.executionDetailText(raw, step.language);
