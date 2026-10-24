@@ -258,8 +258,8 @@ try {
       await openAcceptanceConversation();
       const label = page.locator('.reply-memory').last();
       await label.waitFor({ state: 'visible' });
-      assert.match(await label.textContent(), /用到了 \d+ 条记忆/);
-      if (memoryUi) assert.equal(await label.textContent(), '用到了 1 条记忆');
+      assert.match(await label.textContent(), /参考了 \d+ 条记忆/);
+      if (memoryUi) assert.equal(await label.textContent(), '参考了 1 条记忆');
       await label.click();
       await page.getByRole('heading', { name: '这条回复的记忆来源' }).waitFor();
       await until(async () => await page.locator('.memory-source-text').count());

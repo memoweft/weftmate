@@ -42,6 +42,7 @@ try {
       if (baselineAssets?.has(name)) return route.fulfill({ contentType: name.endsWith('.html') ? 'text/html; charset=utf-8' : 'text/javascript; charset=utf-8', body: baselineAssets.get(name) });
       return route.continue();
     }
+    if (url.pathname === '/personal/v1/memory/items/cognition/synthetic-memory') return route.fulfill({ json: { ownerId: fixtureOwner, item: { text: '使用中文说明' } } });
     if (/\/memory\/items\/.*\/sources$/.test(url.pathname)) return route.fulfill({ json: { ownerId: fixtureOwner, sources: [{ recordedAt: '2026-10-08T08:00:00Z', contentAvailable: true, rawContent: '合成偏好：使用中文说明。' }] } });
     const response = await route.fetch({ url: candidate.origin + url.pathname + url.search,
       headers: { ...route.request().headers(), origin: candidate.origin } });
@@ -82,7 +83,7 @@ try {
   await page.getByRole('button', { name: /README.md.*读取/ }).click();
   await page.getByText('读取 1 次', { exact: true }).waitFor(); await shot('sources');
   await page.getByRole('button', { name: '收起右侧面板', exact: true }).click();
-  await page.getByRole('button', { name: '查看这条回复采用的 1 条记忆来源', exact: true }).click();
+  await page.getByRole('button', { name: '查看这条回复参考的 1 条记忆来源', exact: true }).click();
   await page.getByText('合成偏好：使用中文说明。', { exact: true }).waitFor(); await shot('memory');
   await page.getByRole('button', { name: '收起右侧面板', exact: true }).click();
   await page.getByRole('radio', { name: '简要报告', exact: true }).check();
