@@ -3,6 +3,13 @@ import { createHash } from 'node:crypto';
 const fail = () => Object.assign(new Error('MEMORY_BOUNDARY_INVALID'), { code: 'MEMORY_BOUNDARY_INVALID' });
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
 const EVENT = /^weftmate-turn-boundary-v1:[a-f0-9]{32}:[a-f0-9]{64}$/;
+const dependencyId = value => typeof value === 'string' && value.length > 0 && value.length <= 512 && value.trim() === value;
+const validDependencies = value => value && value.schema_version === 1 &&
+  ['complete', 'complete_empty', 'unavailable', 'withheld'].includes(value.capture_status) &&
+  Array.isArray(value.world_items) && value.world_items.length <= 64 &&
+  value.world_items.every(item => ['cognition', 'entity', 'relationship', 'event', 'evidence'].includes(item?.object_kind) && dependencyId(item.item_id)) &&
+  Array.isArray(value.interaction_ids) && value.interaction_ids.length <= 64 && value.interaction_ids.every(dependencyId) &&
+  (value.capture_status === 'complete') === Boolean(value.world_items.length || value.interaction_ids.length);
 const canonicalJson = (value) => {
   const sorted = (item) => item === null || typeof item !== 'object' ? item
     : Array.isArray(item) ? item.map(sorted)
@@ -31,7 +38,9 @@ export function assertOwnerBoundBoundary(sessionId, boundary) {
         message.source_ref !== `source:${index}` ||
         (message.message_id !== undefined && (typeof message.message_id !== 'string' || message.message_id.length > 160)) ||
         (message.timestamp !== undefined && (!Number.isSafeInteger(message.timestamp) || message.timestamp < 0)) ||
-        Object.keys(message).some((key) => !['role', 'content', 'source_ref', 'message_id', 'timestamp'].includes(key))) {
+        (message.model_context_dependencies !== undefined &&
+          (message.role !== 'assistant' || !validDependencies(message.model_context_dependencies))) ||
+        Object.keys(message).some((key) => !['role', 'content', 'source_ref', 'message_id', 'timestamp', 'model_context_dependencies'].includes(key))) {
       throw fail();
     }
   }

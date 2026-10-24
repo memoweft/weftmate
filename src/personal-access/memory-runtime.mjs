@@ -31,7 +31,8 @@ export async function handlePersonalMemoryTool(manager, ownerId, tool, { session
     return { state: recalled.state, reasonCode: recalled.reasonCode, worldRevision: recalled.worldRevision,
       items: [...(recalled.memories ?? []), ...(recalled.recentEvidence ?? []).map(item => ({
         id: item.id, kind: 'evidence', summary: item.summary,
-      }))], contextText: recalled.contextText };
+      }))], contextText: recalled.contextText,
+      ...(recalled.model_context_dependencies ? { model_context_dependencies: recalled.model_context_dependencies } : {}) };
   }
   const correct = tool.name === 'memory_correct';
   if (manager.mutateFromTool && ['memory_correct', 'memory_forget'].includes(tool.name)) {

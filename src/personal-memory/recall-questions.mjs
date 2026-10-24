@@ -47,6 +47,11 @@ export function recallEntries(snapshots) {
   const groups=snapshots.map(snapshot=>{
     const rendered=snapshot?.preview?.rendered_recall??'';
     const pairs=snapshot?.preview?.selected_item_ids??[];
+    // E2 adds profile text and quote windows. IDs describe all dependencies,
+    // including quote support; they no longer correspond one-to-one to lines.
+    if (pairs.some(pair=>pair?.[0]==='evidence') || /^(?:本人档案（当前；保留原话归属）：|User profile \(current; original attribution\):)/u.test(rendered)) {
+      return [{snapshot,pair:null,dependencies:pairs,claim:rendered,header:englishHeader}];
+    }
     if (!isEnglishRecall(rendered)) {
       return legacyRecallEntries([snapshot]).map(entry=>({...entry,header:legacyHeader}));
     }

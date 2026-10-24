@@ -5,7 +5,7 @@
 ## 1. 方向（2026-10-24）
 
 - **一个大脑、多个窗口**（D119）：只有电脑上的 MemoWeft 形成、纠正、遗忘记忆；手机、iPhone、手表存原话、读同步来的记忆。
-- **换新做法，做到能用就行**（D120）：形成按原则判断，召回语义优先并附原话，用 MemoWeft 草稿 #138（E2）。「能用」= 想得起、改得了、忘得掉；换完不再在实验题上调。
+- **换新做法，做到能用就行**（D120）：形成按原则判断，召回语义优先并附本人档案和原话，用 MemoWeft #143 合入的 E2（`1f01aaa1a44524f7c9b9e851a8f2ca106ac3ec67`），CI 和随包清单固定同一版本。「能用」= 想得起、改得了、忘得掉；换完不再在实验题上调。
 - **根子在内核就修内核**（D111）：MemoWeft 是独立仓库，修好合进它的主线后，WeftMate 再换版本；不在 WeftMate 这侧加队列、日志、补做这类层来绕。
 
 ## 2. 删除怎么算（D16、D33）
@@ -35,6 +35,8 @@ G9 新英文召回合同以首行 `Memory:` / `Memory (past):` 定格式并用 L
 初始化语言取自 DSH 界面设置的 `locale.preference`：个人宿主通过 `settings.describe` 的 `locale.value.preference` 读取，旧插件通过 `settings.get('locale').preference` 读取；只有 `'en'` 传英文，中文、未设置或读取失败均传 `'zh'`。已有桥进程保留初始化语言，重启或按现有机制重新初始化时才读取新值，不做热切换。未显式选择语言时，浏览器自己的临时语言不作为宿主配置；此时记忆仍回退中文。
 
 真实 Core 测试只接受显式环境输入：`WEFTMATE_TEST_MEMOWEFT_PYTHON` / `WEFTMATE_TEST_MEMOWEFT_SOURCE`，或旧桥接名 `WEFTMATE_MEMOWEFT_PYTHON` / `WEFTMATE_MEMOWEFT_PYTHONPATH`。本包按 `scripts/memory-runtime/lock.json` 下载并校验的隔离副本也通过这些变量传入；测试不猜本机源码位置，缺配置明确跳过，手工验收脚本缺必需输入则报错。测试和脚本设置 `PYTHONDONTWRITEBYTECODE=1`，不向源码目录写缓存。DSH 源码测试/构建同样要求显式 `WEFTMATE_DSH_CHECKOUT`；已有固定成品缓存仍可复用。
+
+E2 的 `selected_item_ids` 是整段召回的依赖，`count` 统计全部依赖，可含 `evidence`；档案和原话窗口不能与这些 ID 逐行配对。宿主保留有界整段正文及完整来源引用，桌面回合、历史补交和离线回传保留 `model_context_dependencies.world_items`，遗忘按原 ID 交 Core 处理。记忆页、导出和摘要仍只列四类正式记忆，原话不作为独立记忆展示。
 
 ## 4. 安装包里的记忆
 
