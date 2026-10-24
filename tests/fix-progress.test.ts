@@ -4,6 +4,10 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { createDshSessionAdapter } from '../src/runtime/dsh-adapter/sessions.mjs';
 import { presentPersonalPrompt } from '../src/plugins/personal-prompt.mjs';
+import { createHistoryCache } from '../src/runtime/dsh-adapter/history-cache.mjs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 function timeline() {
   const context: any = { WeftUiCore: { factories: {} } };
@@ -70,4 +74,23 @@ test('#629 reasoning streams only when requested, keeps full content and timing 
   assert.equal(final.data.modelThinking,text+'继续');
   assert.equal(final.data.thinkingMs,2000);
   assert.equal((await service.historyPage('s')).events.find(e=>e.type==='assistant.message').data.modelThinking,undefined);
+});
+
+test('#629 long reasoning preserves the final answer and stream identity, including cached hidden reads', async () => {
+  const thinking = '合成思考'.repeat(12000), text = '最终答案仍然可见。';
+  const entries = [entry(0,'turn/start',{turn:1}),entry(1,'assistant/chunk',{turn:1,step:1,chunk:{type:'reasoning-delta',text:thinking}}),
+    {...entry(2,'assistant/message',{turn:1,step:1,content:[{type:'reasoning',text:thinking},{type:'text',text}]}),sourceEventSeqs:[1]}];
+  const final = (await adapter(entries).historyPage('s',{includeThinking:true})).events.find(event=>event.type==='assistant.message');
+  assert.equal(final.data.text,text);assert.equal(final.data.streamSeq,1);assert.equal(final.data.modelThinking,thinking);
+  const root = await mkdtemp(join(tmpdir(),'weftmate-progress-cache-'));
+  const cache = createHistoryCache({file:join(root,'history.sqlite'),source:async()=>({revision:'one',events:entries}),readNative:async()=>entries});
+  const read: any = async()=>entries;
+  read.historyPage=(id,options,project)=>cache.read(id,options,project);
+  const service=createDshSessionAdapter({sessions:{list:async()=>({result:{ok:true,value:{items:[{sessionId:'s'}]}}})},events:{}},{readLog:read});
+  try {
+    const shown=(await service.historyPage('s',{includeThinking:true})).events.find(event=>event.type==='assistant.message');
+    assert.equal(shown.data.text,text);assert.equal(shown.data.modelThinking,thinking);
+    const hidden=(await service.historyPage('s')).events.find(event=>event.type==='assistant.message');
+    assert.equal(hidden.data.text,text);assert.equal(hidden.data.streamSeq,1);assert.equal(hidden.data.modelThinking,undefined);
+  } finally {await cache.close();await rm(root,{recursive:true,force:true});}
 });

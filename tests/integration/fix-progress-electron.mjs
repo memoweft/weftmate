@@ -127,6 +127,18 @@ try {
   await page.getByText('目录已经找到，接着核对用法。',{exact:true}).waitFor();
   const restored=page.locator('.model-thinking');await restored.waitFor();assert.equal(await restored.evaluate(node=>node.open),false);
   await restored.locator('summary').click();assert.equal(await restored.locator('p').innerText(),'先核对合成资料中的约束。再比较两种结果。');
+  const recovered = await page.evaluate(async () => {
+    const list=document.createElement('ol');document.body.append(list);
+    const original=progressCore.completeMessageEvent, text='合成长答案。'.repeat(1000);
+    try {
+      progressCore.completeMessageEvent=async(_session,event)=>({...event,data:{...event.data,text,truncated:false}});
+      progressUi.paintHistoryMessages([{seq:1000,type:'assistant.message',data:{text:'',streamSeq:1000,live:true,streaming:true,modelThinking:'仅思考快照',thinkingActive:true}}],list);
+      progressUi.paintHistoryMessages([{seq:1001,type:'assistant.message',data:{text:text.slice(0,4000),streamSeq:1000,truncated:true,modelThinking:'仅思考快照'}}],list);
+      await new Promise(resolve=>setTimeout(resolve,0));
+      return list.querySelector('.message-text')?.textContent === text;
+    } finally {progressCore.completeMessageEvent=original;list.remove();}
+  });
+  assert.equal(recovered,true,'reasoning-only snapshot must create a body before hydrating a truncated final reply');
   assert.deepEqual(errors,[]);
   assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().every(window=>!window.isVisible())),true);
   console.log(`PASS FIX-PROGRESS ${logical?'segmented':'ordinary'}: real hidden desktop, interleaved durable commentary, grouped calls/detail/keyboard, live thinking/settings/collapse/reload.`);

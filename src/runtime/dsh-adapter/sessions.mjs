@@ -257,7 +257,10 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
   if (projected && ['task.started', 'task.ended'].includes(projected.type) && inbox?.receiptId) {
     projected.data.receiptId = inbox.receiptId;
   }
-  if (projected && Buffer.byteLength(JSON.stringify(projected), 'utf8') > 32_000) {
+  // Reasoning is bounded by the history page budget, separately from tool payloads.
+  // A long trace must never replace the answer and its stream identity with a tool stub.
+  const { modelThinking: _thinking, ...timelineData } = projected?.data ?? {};
+  if (projected && Buffer.byteLength(JSON.stringify({ ...projected, data: timelineData }), 'utf8') > 32_000) {
     const { taskId, stepId, callId, toolName, summary, state, artifactId, fileName, size, contentType } = projected.data
     projected.data = { taskId, stepId, callId, toolName, summary, state, artifactId, fileName, size, contentType,
       detailRef: { seq }, truncated: true }

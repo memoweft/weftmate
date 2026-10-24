@@ -100,9 +100,9 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (prior) {
                 prior.dataset.seq = String(event.seq);
                 prior.dataset.liveMessage = String(event.data.live===true);
+                if (event.data.text && !prior.querySelector('.message-text')) prior.append(WeftContent.create('', 'message-text markdown-body'));
                 if (event.data.truncated && !event.data.fullTextReadFailed && core.completeMessageEvent) completeMessageBody(prior, event, sessionId);
                 else if (!event.data.truncated) {
-                    if (event.data.text && !prior.querySelector('.message-text')) prior.append(WeftContent.create('', 'message-text markdown-body'));
                     const body = prior.querySelector('.message-text');
                     if (body) WeftContent.update(body, event.data.text, { streaming: event.data.streaming === true });
                 }
