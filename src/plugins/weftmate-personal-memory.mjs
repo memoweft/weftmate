@@ -181,6 +181,8 @@ export function boundaryForCompletedTurn(session, event) {
     if (!text.trim()) continue;
     sourceMessages.push({ role: user ? 'user' : 'assistant', content: text,
       source_ref: `source:${sourceMessages.length}`,
+      ...(!user && entry.data?.model_context_dependencies
+        ? { model_context_dependencies: entry.data.model_context_dependencies } : {}),
       ...(typeof (user ? entry.data?.id : entry.data?.message?.id) === 'string'
         ? { message_id: user ? entry.data.id : entry.data.message.id } : {}),
       ...(Number.isFinite(Number(entry.time)) && Number(entry.time) > 0
@@ -439,7 +441,20 @@ export function apply(ctx) {
       }
       diagnostic(result?.state === 'ready' ? 'prestep-reply-ready'
         : result?.state === 'withheld' ? 'prestep-reply-withheld' : 'prestep-reply-other');
-      session[Symbol.for('weftmate.memoryRecall')] = { turn, memories: result.state === 'ready' && result.contextText?.trim() ? result.memories ?? [] : [] };
+      const previous = session[Symbol.for('weftmate.memoryRecall')];
+      const memories = result.state === 'ready' && result.contextText?.trim() ? result.memories ?? [] : [];
+      const dependencies = new Map((previous?.turn === turn ? previous.dependencies?.world_items ?? [] : [])
+        .map(item => [`${item.object_kind}:${item.item_id}`, item]));
+      for (const item of result.model_context_dependencies?.world_items ?? memories.map(item => ({ object_kind: item.kind, item_id: item.id }))) {
+        dependencies.set(`${item.object_kind}:${item.item_id}`, item);
+      }
+      const interactionIds = [...new Set([...(previous?.turn === turn ? previous.dependencies?.interaction_ids ?? [] : []),
+        ...(result.model_context_dependencies?.interaction_ids ?? [])])];
+      session[Symbol.for('weftmate.memoryRecall')] = { turn, memories, dependencies: {
+        schema_version: 1, capture_status: result.state === 'ready' && dependencies.size <= 64 && interactionIds.length <= 64
+          ? result.model_context_dependencies?.capture_status ?? 'unavailable' : 'unavailable',
+        world_items: dependencies.size <= 64 ? [...dependencies.values()] : [], interaction_ids: interactionIds.length <= 64 ? interactionIds : [],
+      } };
       if (result.state === 'ready' && typeof result.contextText === 'string' && result.contextText.trim() &&
           result.contextText.length <= 16_384) text = result.contextText;
       if (result.memoryPolicy?.ingest === false) text = '本轮是临时对话：不形成记忆，不承诺以后记住，也不要提议记住本轮内容。仍可使用下方已有记忆回答。\n' + (text ?? '');
@@ -502,7 +517,9 @@ export function apply(ctx) {
         const recalled = session[Symbol.for('weftmate.memoryRecall')];
         data = { ...data, message: { ...data.message, content: data.message.content.map(part =>
           part.type === 'text' ? { ...part, text: withoutMemoryToolMarkup(part.text) } : part) },
-          memoryUsed: recalled?.turn === data.turn ? recalled.memories : [] };
+          memoryUsed: recalled?.turn === data.turn ? recalled.memories.filter(item => item.kind !== 'evidence') : [],
+          ...(recalled?.turn === data.turn && recalled.dependencies
+            ? { model_context_dependencies: recalled.dependencies } : {}) };
       }
       return append(type, data, ...rest);
     };

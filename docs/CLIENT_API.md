@@ -226,7 +226,7 @@ BL-29c 在既有 `events|changes` 响应保留可选 `accountChanges:{revision,m
 
 持久化取舍：固定DSH（助手运行时）本来就持久保存原始分块，按其原生序号／时间重建快照，接回不重生成。公开快照是易失展示数据，不进入公开历史SQLite（本地数据库）缓存、搜索、记忆、导出、离线副本或安卓历史缓存；完整消息仍是历史正文的权威来源。未形成完整消息的停止／失败片段只在最新回合的暂态展示中保留，不承诺成为正式历史消息。删除会话清除原生日志及索引；遗忘清除快照集合并核对来源，勾选删除原话时同时清空原生打包文字／思考的 `texts` 和工具参数 `args`，不从分块恢复被擦内容。安卓现有精确路由及JSON透传已支持这些追加字段，不需要新壳版本。Apple（苹果端）须按本段接累计替换、独立水位、同节点动效及内容代次清理，Watch（手表）可显示累计正文但不新增输入能力。
 
-M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在上下文中的 MemoWeft Recall（记忆召回）依据，数组项为 `{"id":"cognition-…","kind":"cognition","summary":"偏好用中文和买菜例子解释技术"}`。`kind` 为 `cognition/entity/relationship/event`，`summary` 最多240个 UTF-16 单元，取自目标模型权限过滤后的召回文本。后台形成走既有模型排队与账户后台模型配置；每轮按当前消息召回，并用 MemoWeft 的称呼/表达方式查询补充持续适用的对话偏好，结果去重；下一轮召回等待已接受的 Core（记忆核心）形成工作完成，普通对话在服务不可用或等待到期时继续。
+M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在上下文中的 MemoWeft Recall（记忆召回）依据，数组项为 `{"id":"cognition-…","kind":"cognition","summary":"偏好用中文和买菜例子解释技术"}`。`kind` 为 `cognition/entity/relationship/event`，`summary` 最多240个 UTF-16 单元，取自目标模型权限过滤后的召回文本；E2 档案和原话组合召回使用共享正文摘要，不逐行给 ID 归属。内部 `model_context_dependencies.world_items` 另保留完整依赖（含 `evidence`），来源依赖不计入给人看的记忆列表。后台形成走既有模型排队与账户后台模型配置；每轮按当前消息召回，并用 MemoWeft 的称呼/表达方式查询补充持续适用的对话偏好，结果去重；下一轮召回等待已接受的 Core（记忆核心）形成工作完成，普通对话在服务不可用或等待到期时继续。
 
 新宿主在未命中、不可用或预算移除记忆时返回 `memoryUsed:[]`；旧宿主可省略此字段。它证明此回复请求采用了这些上下文依据，不声称能读取模型内部推理或证明每一条都改变了输出。客户端可用 `GET /memory/items/{kind}/{id}/sources`（3.9）打开当前来源；记忆后来删除或权限改变时，历史摘要仍是当时的回复依据，当前来源可返回不可读/404，不能用历史标签恢复已忘掉的原文。
 
@@ -685,7 +685,7 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 
 `aad` 解码后为 JSON（数据交换格式）`{version:1,ownerId,hostId,deviceId,keyId}`；客户端必须核对当前账户／宿主／设备。`wrappedKey` 用设备 RSA-OAEP 私钥解开，摘要与 MGF1（掩码生成函数）均为 SHA-256。内容钥匙为 32 字节 AES，GCM 的 `additionalData` 使用原始 `aad` 字节，不重编码 JSON。
 
-每个补交轮次还携带 `memoryRefs:[{kind,id}]`（最多64个唯一引用）与 `dependencyComplete`（布尔值）。引用包含当前召回及有界对话上下文所继承的记忆依赖，不能填正文。宿主将它写入助手消息的 Core `model_context_dependencies`，使遗忘能级联清除已经补交的回复副本；旧客户端或近期对话无法完整追溯时标记 `unavailable`，不伪造完整依赖。接口 `timestamp` 使用毫秒，宿主转换为 Core 的秒值。去重绑定本地受信物理设备身份，不受云会话续期后新 Cookie 设备编号影响。
+每个补交轮次还携带 `memoryRefs:[{kind,id}]`（最多64个唯一引用；`kind` 接受 `cognition/entity/relationship/event/evidence`，其中 `evidence` 是原话来源依赖）与 `dependencyComplete`（布尔值）。引用包含当前召回及有界对话上下文所继承的记忆依赖，不能填正文。宿主将它写入助手消息的 Core `model_context_dependencies`，使遗忘能级联清除已经补交的回复副本；旧客户端或近期对话无法完整追溯时标记 `unavailable`，不伪造完整依赖。接口 `timestamp` 使用毫秒，宿主转换为 Core 的秒值。去重绑定本地受信物理设备身份，不受云会话续期后新 Cookie 设备编号影响。
 
 解密副本为 `{generation,reset,worldRevision,items,remove,hashes,truncated,recent,model,control,syncedAt}`。`items` 是新增或变化项：`{id,kind,text,viewpoint,sources:[{id,summary}],updatedAt,currentState:"current"}`；`remove` 是删除标识；`hashes` 是当前完整项目哈希表。`reset:true` 必须先清除旧副本和待补交离线对话，再应用。任何删除项也清理可能引用旧内容的离线对话。`recent` 最多 10 段×20 条；`model` 含账户选定的 `profileId,name,baseUrl,modelId,apiKey`，只能在设备安全层解密，安卓不得传 API key（模型凭据）到页面。`control` 为云状态接口地址、`hostId`、绑定的云 `accountId` 与 `generation`；核对授权时须逐一匹配账户和代次，不能把同一宿主另一账户的授权用于此副本。
 

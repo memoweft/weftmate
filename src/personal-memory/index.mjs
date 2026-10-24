@@ -963,6 +963,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         // Summaries come from permission-filtered rendered snapshots, never
         // unrestricted query_world values on a cloud destination.
         const memories = [], fragments = [], seen = new Set(), recentEvidence = [];
+        let expandedRecall = false, interactionUsed = false;
         // Core reads accepted Evidence in the same permission-filtered snapshot.
         // Keep it visibly provisional and never fabricate a formal World item.
         const recent = new Map();
@@ -997,10 +998,29 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           if (!pairs.length && !isEnglishRecall(rendered) && rendered.trim() &&
               fragments.join('\n\n').length + rendered.length + 2 <= formalBudget && !fragments.includes(rendered.trim())) fragments.push(rendered.trim());
         }
-        for (const entry of recallEntries(snapshots)) {
+        const entries = recallEntries(snapshots);
+        // Prefer the actual question over the supplemental identity query when
+        // E2 supplies a combined profile/quote snapshot within the same budget.
+        if (entries.some(entry => entry.dependencies)) entries.sort((a, b) =>
+          Number(b.snapshot === snapshots[1]) - Number(a.snapshot === snapshots[1]));
+        for (const entry of entries) {
           const {snapshot,pair,header:recallHeader}=entry;
           const [kind, id] = Array.isArray(pair) ? pair : [];
           let claim = entry.claim;
+          if (entry.dependencies) {
+            const remaining = formalBudget - fragments.join('\n\n').length - 2;
+            if (!claim?.trim() || remaining <= 0 || fragments.includes(claim)) continue;
+            expandedRecall = true;
+            fragments.push(claim.slice(0, remaining));
+            for (const [kind, id] of entry.dependencies) {
+              if (!['cognition', 'entity', 'relationship', 'event', 'evidence'].includes(kind) ||
+                  typeof id !== 'string' || seen.has(`${kind}:${id}`)) continue;
+              seen.add(`${kind}:${id}`);
+              // E2 text is a shared context, not one attributed line per ID.
+              memories.push({ kind, id, summary: claim.slice(0, remaining).trim().slice(0, 240) });
+            }
+            continue;
+          }
           if (claim && (snapshot?.preview?.pending_corrections ?? []).length) {
             const header = claim.trimStart().match(recallHeader)?.[0];
             const body = pair === null ? claim : claim.replace(recallHeader, '');
@@ -1014,7 +1034,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             continue;
           }
           const summary = claim?.replace(recallHeader, '').trim().slice(0, 240);
-          if (!['cognition', 'entity', 'relationship', 'event'].includes(kind) ||
+          if (!['cognition', 'entity', 'relationship', 'event', 'evidence'].includes(kind) ||
               typeof id !== 'string' || !summary || seen.has(`${kind}:${id}`) ||
               memories.length + recentEvidence.length >= recallMaxItems || fragments.join('\n\n').length + claim.length + 2 > formalBudget) continue;
           seen.add(`${kind}:${id}`);
@@ -1022,12 +1042,21 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         }
         if (!pendingCorrections.size && typeof interaction?.rendered_context === 'string' && interaction.rendered_context.trim()) {
           const remaining = formalBudget - fragments.join('\n\n').length - 2;
-          if (interaction.rendered_context.trim().length <= remaining) fragments.push(interaction.rendered_context.trim());
+          if (interaction.rendered_context.trim().length <= remaining) {
+            fragments.push(interaction.rendered_context.trim()); interactionUsed = true;
+          }
         }
         if (recentText) fragments.push(recentText);
         const contextText = fragments.join('\n\n').slice(0, recallMaxChars);
         return { state: 'ready', contextText, memories, ...(recentEvidence.length ? { recentEvidence } : {}), worldRevision: Number.isSafeInteger(world?.world_revision)
-          ? world.world_revision : null, sourceCount: memories.length };
+          ? world.world_revision : null, sourceCount: memories.length,
+          ...(expandedRecall ? { model_context_dependencies: { schema_version: 1,
+            capture_status: interactionUsed && !Array.isArray(interaction.items) ? 'unavailable' : 'complete',
+            world_items: [...new Map([...memories.map(item => ({ object_kind: item.kind, item_id: item.id })),
+              ...recentEvidence.flatMap(item => [item.id, item.precedingEvidenceId].filter(Boolean)
+                .map(item_id => ({ object_kind: 'evidence', item_id })))].map(item => [`${item.object_kind}:${item.item_id}`, item])).values()],
+            interaction_ids: interactionUsed ? (interaction.items ?? []).map(item => item.id) : [],
+          } } : {}) };
       }, sessionId);
     },
     // Imports already have a read-only recovery source. Do not write another full-text outbox.

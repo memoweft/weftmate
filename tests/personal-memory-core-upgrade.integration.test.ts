@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs';
 import { MemoWeftRpc } from '../src/personal-memory/rpc.mjs';
+import { boundaryForCompletedTurn } from '../src/plugins/weftmate-personal-memory.mjs';
+import { assertOwnerBoundBoundary } from '../src/personal-memory/boundary.mjs';
 
 const python = process.env.WEFTMATE_TEST_MEMOWEFT_PYTHON;
 const pythonPath = process.env.WEFTMATE_TEST_MEMOWEFT_SOURCE;
@@ -20,6 +22,68 @@ const seed = (db: string, rows: any[]) => {
   });
   assert.equal(result.status, 0, result.stderr);
 };
+
+test('real E2 quote dependency survives host ingestion and forgetting erases the derived reply', { skip, timeout: 60000 }, async () => {
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'weftmate-e2-source-')));
+  // Only candidate scores are synthetic; projection, source gates, RPC,
+  // context storage and deletion all use the locked real Core.
+  const script = `
+import runpy
+import memoweft.integrations.hermes.recall as recall
+from memoweft.semantic.config import SemanticConfig
+class Provider:
+    config = SemanticConfig()
+    def candidates(self, db, subject_id, query): return []
+    def score_texts(self, query, texts): return [0.98 for text in texts]
+recall.provider_for = lambda db: Provider()
+runpy.run_module('memoweft.integrations.dsh_bridge', run_name='__main__')
+`;
+  const manager = createPersonalMemoryManager({ root, enabled: true, python, pythonPath,
+    baseUrl: 'http://127.0.0.1:1/v1', model: '@current', credential: () => 'synthetic', language: () => 'en',
+    rpcFactory: options => new MemoWeftRpc({ ...options, pythonArgs: ['-B', '-c', script], env: {
+      ...options.env, MEMOWEFT_SEMANTIC_ENABLED: '0', MEMOWEFT_TESTING: '1', MEMOWEFT_TEST_MODEL_RESPONSE: '__smart__',
+      PYTHONDONTWRITEBYTECODE: '1' } }) });
+  try {
+    await manager.query(owner, 'query_world', { operation: 'revision' });
+    seed(join(root, 'accounts', owner, 'memory-home', 'memoweft', 'memoweft.sqlite3'), [
+      { id: 'glaze', text: 'I use cobalt glaze on my ceramic pieces.', occurred: '2026-01-01T00:00:00' }]);
+    const recalled = await manager.recall(owner, { query: 'What glaze do I use?', sessionId: 'synthetic', modelTier: 'local' });
+    assert.match(recalled.contextText, /User original.*cobalt glaze/);
+    assert.ok(recalled.memories.some(item => item.kind === 'evidence' && item.id === 'source-glaze'));
+    const dependencies = { schema_version: 1, capture_status: 'complete',
+      world_items: recalled.memories.map(item => ({ object_kind: item.kind, item_id: item.id })), interaction_ids: [] };
+    const events = [{ seq: 1, type: 'turn/start', data: { turn: 1 } },
+      { seq: 2, type: 'user/message', data: { id: 'quote-question', source: { kind: 'user' }, content: [{ type: 'text', text: 'What glaze do I use?' }] } },
+      { seq: 3, type: 'assistant/message', data: { model_context_dependencies: dependencies,
+        message: { id: 'quote-answer', content: [{ type: 'text', text: 'You use cobalt glaze.' }] } } },
+      { seq: 4, type: 'turn/end', data: { turn: 1, reason: { kind: 'stop' } } }];
+    const sessionId = 'import-e2-answer';
+    const boundary = assertOwnerBoundBoundary(sessionId, boundaryForCompletedTurn({ id: sessionId,
+      header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)));
+    await manager.ingestImport(owner, boundary, sessionId);
+    const before = await manager.query(owner, 'query_interactions', { conversation_id: sessionId, user_message_id: 'quote-question', projection: 'history' });
+    assert.equal(before.items[0].dependency_state, 'visible');
+    const linked = await manager.query(owner, 'link_interaction_dependencies', { conversation_id: sessionId,
+      user_message_id: 'quote-question', assistant_message_id: 'quote-answer',
+      expected_context_hash: before.items[0].context_hash, model_context_dependencies: dependencies });
+    assert.equal(linked.result_state, 'no_change', 'the full inline dependency survived ingestion unchanged');
+    let preview: any;
+    const deadline = Date.now() + 15000;
+    do {
+      try { preview = await manager.query(owner, 'preview_forget', { target_kind: 'evidence', target_id: 'source-glaze' }); break; }
+      catch (cause) { if (cause.code !== 'formation_in_progress') throw cause; }
+      await new Promise(resolve => setTimeout(resolve, 50));
+    } while (Date.now() < deadline);
+    assert.ok(preview.items.some(item => item.object_kind === 'interaction_context'));
+    const deleted = await manager.submit(owner, { schema_version: 1, command_id: 'e2-forget-source', subject_id: owner,
+      actor: 'owner', expected_world_revision: preview.world_revision, operation: 'delete_evidence', target_kind: 'evidence',
+      target_id: 'source-glaze', payload: { forget_scope: preview.forget_scope }, submitted_at: new Date().toISOString() });
+    assert.equal(deleted.receipt.result_state, 'applied');
+    const after = await manager.query(owner, 'query_interactions', { conversation_id: sessionId, user_message_id: 'quote-question', projection: 'history' });
+    assert.doesNotMatch(JSON.stringify(after), /cobalt/);
+    assert.doesNotMatch((await manager.recall(owner, { query: 'What glaze do I use?', sessionId: 'fresh', modelTier: 'local' })).contextText, /cobalt/);
+  } finally { await manager.close(); await rm(root, { recursive: true, force: true }); }
+});
 
 for (const raises of [false, true]) test(`bridge memory observer preserves ${raises ? 'exception identity' : 'return identity'} when observation fails`, { skip }, () => {
   const script = `

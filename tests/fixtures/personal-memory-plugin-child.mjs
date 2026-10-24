@@ -108,7 +108,8 @@ process.on('message', async (message) => {
     const a = await preStep('session-a', agentA);
     for (const message of a.messages) agentA.session.append('user/message', message);
     const latestContextCount = agentA.session.deriveMessages().filter(message => message.source?.plugin === 'weftmate-personal-memory').length;
-    const adopted = agentA.session.append('assistant/message', { turn: 1, message: { content: [{ type: 'text', text: '采用回复' }] } }).data.memoryUsed;
+    const captured = agentA.session.append('assistant/message', { turn: 1, message: { content: [{ type: 'text', text: '采用回复' }] } }).data;
+    const adopted = captured.memoryUsed;
     agentA.session.events.push({ seq: 2, type: 'user/message', data: userClaim('session-a') });
     const laterClaim = [{ role: 'assistant', content: [{ type: 'text', text: 'tool continuation' }],
       source: { kind: 'plugin', plugin: 'other' } }];
@@ -131,6 +132,6 @@ process.on('message', async (message) => {
     current.events.push(end);
     handlers.get('session/event')(current, end);
     await new Promise((resolve) => setTimeout(resolve, 50));
-    process.send({ type: 'result', adopted, latestContextCount, withheldContextCount, a, aWithheld, aUpdated, empty, b, ambiguous, cloud, noClaim });
+    process.send({ type: 'result', adopted, dependencies: captured.model_context_dependencies, latestContextCount, withheldContextCount, a, aWithheld, aUpdated, empty, b, ambiguous, cloud, noClaim });
   } catch { process.send({ type: 'failed' }); }
 });

@@ -150,6 +150,19 @@ test('AUTH-1 native desktop publishes encrypted offline memory; replaying its Co
   } finally {vault.close();}
 });
 
+test('host accepts evidence dependencies on uploaded turns without adding sources to the replica', async t => {
+  const f = await fixture(t);
+  const vault = await W.browserVault('e2-host-dependencies', { indexedDB: new IDBFactory(), crypto: webcrypto });
+  t.after(() => vault.close());
+  await f.host('/offline/sync', { publicJwk: await vault.key(), generation: 0, hashes: {} });
+  const turn = { id: 'e2-source-turn', conversationId: 'synthetic', timestamp: Date.now(), dependencyComplete: true,
+    memoryRefs: [{ kind: 'cognition', id: 'tea' }, { kind: 'evidence', id: 'tea-source' }],
+    messages: [{ role: 'user', text: '合成问题' }, { role: 'assistant', text: '合成答复' }] };
+  await f.host('/offline/turns', { generation: 1, turns: [turn] });
+  assert.deepEqual(f.accepted[0].source_messages[1].model_context_dependencies.world_items,
+    turn.memoryRefs.map(ref => ({ object_kind: ref.kind, item_id: ref.id })));
+});
+
 test('online sync → cloud-only relevant recall → offline preference → idempotent import → forget cannot resurrect', async t => {
   const f = await fixture(t), vault = await W.browserVault('roundtrip', { indexedDB: new IDBFactory(), crypto: webcrypto });
   let lastBody: any;
