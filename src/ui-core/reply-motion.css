@@ -2,13 +2,13 @@
 .reply-status{position:relative;animation:none!important}
 .reply-status.reply-working>.reply-sheen{position:absolute;inset:0;pointer-events:none;color:var(--ink);opacity:.36}
 [data-theme=dark] .reply-status.reply-working>.reply-sheen{opacity:.22}
-.reply-sheen-part{position:absolute;inset:0;opacity:0;mask-image:linear-gradient(90deg,transparent calc(var(--reply-phase) - 25%),#000 var(--reply-phase),transparent calc(var(--reply-phase) + 25%));animation:reply-sheen var(--wm-duration-working) var(--wm-easing-replySweep) infinite;animation-delay:calc(var(--wm-duration-working) * var(--reply-offset));will-change:opacity}
+.reply-sheen-part{position:absolute;inset:0;opacity:0;mask-image:linear-gradient(90deg,transparent calc(var(--reply-phase) - 25%),#000 var(--reply-phase),transparent calc(var(--reply-phase) + 25%));animation:m-status-sheen var(--dur-5) var(--ease-linear) infinite;animation-delay:calc(var(--wm-duration-working) * var(--reply-offset));will-change:opacity}
 .reply-sheen-part::before{content:attr(data-text)}
-@keyframes reply-sheen{0%,27%,100%{opacity:0}13.5%{opacity:1}}
+@keyframes m-status-sheen{0%,27%,100%{opacity:0}13.5%{opacity:1}}
 .reply-status-out{position:absolute;inset:0;pointer-events:none;white-space:inherit;background:var(--surface);color:inherit}
 .reply-streaming{position:relative}
-.reply-indicator{position:absolute;inline-size:var(--wm-space-4);block-size:var(--wm-space-4);border-radius:var(--wm-radius-circle);background:var(--ink-secondary,var(--muted));pointer-events:none;animation:reply-breathe var(--wm-duration-working) var(--wm-easing-smooth) infinite}
-@keyframes reply-breathe{0%,100%{opacity:.6;transform:scale(.85)}50%{opacity:.9;transform:scale(1)}}
+.reply-indicator{position:absolute;inline-size:var(--wm-space-4);block-size:var(--wm-space-4);border-radius:var(--wm-radius-circle);background:var(--ink-secondary,var(--muted));pointer-events:none;animation:m-reply-breathe var(--dur-5) var(--ease-in-out) infinite}
+@keyframes m-reply-breathe{0%,100%{opacity:.6;transform:scale(.85)}50%{opacity:.9;transform:scale(1)}}
 html[data-motion-paused] *,html[data-motion-paused] *::before,html[data-motion-paused] *::after,.reply-offscreen,.reply-offscreen .reply-sheen-part{animation-play-state:paused!important}
 html[data-reduced-motion] *,html[data-reduced-motion] *::before,html[data-reduced-motion] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 html[data-reduced-motion] .reply-working>.reply-sheen,html[data-reduced-motion] .reply-indicator{display:none}
@@ -22,3 +22,41 @@ html[data-reduced-motion] .reply-working>.reply-sheen,html[data-reduced-motion] 
 .settings-row:has(.reply-motion-select) .settings-select:active{background:var(--accent-soft)}
 .settings-row:has(.reply-motion-select) .settings-select:focus-visible{outline:2px solid var(--accent);outline-offset:var(--wm-space-2)}
 .settings-row:has(.reply-motion-select) .settings-select:disabled{opacity:.4;cursor:default}
+
+/* Supplied motion library ids. Timing and curves live only in design/tokens. */
+[data-motion="enter-rise"],[data-motion="view-enter"],
+[data-motion="stagger-rise"] > *,.m-stagger-rise > * {
+  animation:m-enter-rise var(--dur-3) var(--ease-out) both;
+}
+/* An already-visible first frame avoids a blank flash between pages. */
+@keyframes m-enter-rise { from { opacity:.72;transform:translateY(8px) } to { opacity:1;transform:none } }
+[data-motion="enter-fade"] { animation:m-fade var(--dur-1) var(--ease-out) both }
+@keyframes m-fade { from { opacity:.72 } to { opacity:1 } }
+[data-motion="stagger-rise"] > :nth-child(2),.m-stagger-rise > :nth-child(2) { animation-delay:calc(var(--dur-1) / 4) }
+[data-motion="stagger-rise"] > :nth-child(3),.m-stagger-rise > :nth-child(3) { animation-delay:calc(var(--dur-1) / 2) }
+[data-motion="stagger-rise"] > :nth-child(n+4),.m-stagger-rise > :nth-child(n+4) { animation-delay:var(--dur-1) }
+[data-motion="sheet-in"] { animation:m-sheet-in var(--dur-4) var(--ease-out) both }
+@keyframes m-sheet-in { from { transform:translateX(102%) } to { transform:none } }
+/* unfold: wrap content in one child; toggle .open or aria-expanded. */
+[data-motion="unfold"] { display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--dur-3) var(--ease-out) }
+[data-motion="unfold"] > * { min-height:0;overflow:hidden }
+[data-motion="unfold"].open,[data-motion="unfold"][aria-expanded="true"] { grid-template-rows:1fr }
+[data-motion="text-shimmer"] {
+  background:linear-gradient(100deg,var(--ink-muted,var(--muted)) 20%,var(--ink) 45%,var(--ink-muted,var(--muted)) 70%) 100% 0 / 220% 100%;
+  background-clip:text;color:transparent;
+  animation:m-shimmer var(--dur-5) var(--ease-linear) infinite;
+}
+@keyframes m-shimmer { to { background-position:-100% 0 } }
+/* reply-status keeps its positioning contract; its loading text uses the recipe. */
+.reply-status[data-motion="text-shimmer"] { animation:m-shimmer var(--dur-5) var(--ease-linear) infinite!important }
+.reply-status[data-motion="enter-fade"] { animation:m-fade var(--dur-1) var(--ease-out) both!important }
+.reply-status[data-motion="text-shimmer"] > .reply-sheen { display:none }
+html[data-reduced-motion] [data-motion="text-shimmer"],body.calm [data-motion="text-shimmer"] { animation:none!important;background:none;color:var(--ink-muted,var(--muted)) }
+html[data-reduced-motion] [data-motion="enter-rise"] { animation:m-fade var(--dur-1) var(--ease-out) both!important }
+body.calm [data-motion],body.calm [data-motion="stagger-rise"] > *,body.calm .m-stagger-rise > * { animation:none!important;transition:none!important }
+@media(prefers-reduced-motion:reduce) {
+  html:not([data-motion-full]) [data-motion="text-shimmer"] { animation:none!important;background:none;color:var(--ink-muted,var(--muted)) }
+  html:not([data-motion-full]) [data-motion="enter-rise"] { animation:m-fade var(--dur-1) var(--ease-out) both!important }
+  html:not([data-motion-full]) .reply-status[data-motion="enter-fade"] { animation:none!important }
+}
+html[data-reduced-motion] .reply-status[data-motion="enter-fade"] { animation:none!important }

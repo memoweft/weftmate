@@ -18,7 +18,7 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
             followingTop = Math.max(0, box.scrollHeight - box.clientHeight);
             if (!smooth || reduced() || (globalThis.WeftReplyMotion?.paused ?? document.hidden)) { stop(); if (Math.abs(box.scrollTop-followingTop)>1) box.scrollTop = followingTop; }
             else if (Math.abs(box.scrollTop-followingTop)>1) {
-                if (!moving) { const css=getComputedStyle(document.documentElement); const curve=css.getPropertyValue('--wm-easing-desktop').match(/[\d.]+/g)?.map(Number); const started=performance.now(); moving={from:box.scrollTop, to:followingTop, started, lastTime:started, duration:globalThis.WeftReplyMotion?.milliseconds('replyScroll') || 160, curve}; }
+                if (!moving) { const css=getComputedStyle(document.documentElement); const curve=css.getPropertyValue('--wm-easing-desktop').match(/[\d.]+/g)?.map(Number); const started=performance.now(); moving={from:box.scrollTop, to:followingTop, started, lastTime:started, duration:globalThis.WeftReplyMotion?.milliseconds('replyScroll') || parseFloat(css.getPropertyValue('--dur-1')), curve}; }
                 if (frame === null) {
                     const tick = time => {
                         frame = null; if (!pinned || !moving) return;
@@ -49,7 +49,9 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     const changed = () => {
         if (!pinned) newContent = true;
         if (pending) return;
-        pending = true; requestAnimationFrame(() => { pending = false; follow(true); });
+        // stream-type: follow the current layout, without a second animation
+        // chasing the text frames. User scrolling still unpins immediately.
+        pending = true; requestAnimationFrame(() => { pending = false; follow(); });
     };
     const scrolled = () => {
         const top = box.scrollTop;
