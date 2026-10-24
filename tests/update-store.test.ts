@@ -53,6 +53,8 @@ test('first boot after a host upgrade retires the old UI trial in favour of the 
   const f = await fixture(t), old = await new UpdateStore(f.options).init();
   f.publish('0.2.0'); await old.check(f.url); await old.activate({ idle: true });
   assert.equal(old.pointer.trial, true);
+  // preview.12 did not stamp the bundled host version in current.json.
+  delete old.pointer.builtInVersion; await old.persist();
   const upgraded = await new UpdateStore({ ...f.options, builtInVersion: '0.2.0',
     versions: { app: '0.2.0', host: '0.2.0', bridge: 1 } }).init();
   assert.equal(upgraded.pointer.active, null);
@@ -78,6 +80,12 @@ test('an empty UI channel is distinct from a network or asset download failure',
   await store.check(f.url);
   assert.equal(store.state.status, 'empty');
   assert.equal(store.state.error, null);
+  f.publish('0.2.0');
+  const missingAsset = await new UpdateStore({ ...f.options, root: join(f.root, 'missing-asset'),
+    fetcher: async (url: URL) => url.pathname.endsWith('manifest-ui.json') ? fetch(url) : new Response('', { status: 404 }) }).init();
+  await missingAsset.check(f.url);
+  assert.equal(missingAsset.state.status, 'failed');
+  assert.equal(missingAsset.pointer.staged, null);
 });
 test('only changed files download; active version waits for idle, persists and rolls back a failed trial', async t => {
   const f = await fixture(t); const store = await new UpdateStore(f.options).init()
