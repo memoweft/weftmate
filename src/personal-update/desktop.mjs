@@ -5,10 +5,10 @@ import { UpdateStore, updateSource } from './store.mjs';
 import { personalAccessUiResources, setPersonalAccessUiResourceReader } from '../personal-access-ui/index.mjs';
 import { updateState, checkForUpdates, quitAndInstall, changeUpdateChannel, requiresManualAppInstall, showPreparedInstaller } from '../update.ts';
 import { manualUpdateMessage } from '../desktop-installation.mjs';
-import { configureUpdateEnvironment, saveDesktopConfig } from '../desktop-config.mjs';
+import { configureUpdateEnvironment, saveDesktopConfig, defaultUpdateChannel } from '../desktop-config.mjs';
 import { createMobileUiPublisher } from '../personal-access/mobile-ui-release.mjs';
 import { installPreparedUpdate } from '../update-policy.ts';
-import { cancelAppRollback } from './app-rollback.mjs';
+import { cancelAppRollback, appUpdateVersionAtBoot } from './app-rollback.mjs';
 
 export async function updateTrustedKeys({ development = false, feed = null } = {}) {
   // Packaged applications never accept an environment-provided trust root.
@@ -21,7 +21,8 @@ export async function updateTrustedKeys({ development = false, feed = null } = {
 export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion(), getWindow = () => null,
   root = join(app.getPath('userData'), 'updates', 'ui'), feed = process.env.WEFTMATE_UI_UPDATE_FEED,
   trustedKeys = null, selfCheckTimeout = 10000, mobileUiDir = null, beforeAppInstall = async () => {}, onAppInstall = () => {}, desktopConfig = null } = {}) {
-  let channel = process.env.WEFTMATE_UPDATE_CHANNEL || 'stable';
+  let channel = process.env.WEFTMATE_UPDATE_CHANNEL || defaultUpdateChannel(appVersion);
+  const completedVersion = await appUpdateVersionAtBoot();
   const store = await new UpdateStore({ root, trustedKeys: trustedKeys || await updateTrustedKeys({ development: !app.isPackaged, feed }),
     versions: { app: appVersion, host: appVersion, bridge: 1 }, channel, builtInVersion: appVersion,
     allowedPaths: new Set(personalAccessUiResources.keys()), builtInFile: name => personalAccessUiResources.get(name) }).init();
@@ -37,7 +38,8 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
     { layer: 'mobile-ui', currentVersion: mobileManifest?.version || mobileManifest?.uiVersion || null,
       availableVersion: mobileManifest?.version || mobileManifest?.uiVersion || null, scope: 'host-published',
       status: mobileError ? 'failed' : mobileManifest ? 'device-managed' : 'disabled', error: mobileError, enabled: !!mobile, channel },
-  ], canRestart: updateState().status === 'downloaded', manualInstall: requiresManualAppInstall(), canChangeChannel: !!desktopConfig && !['available', 'checking'].includes(updateState().status), channel };
+  ], completedVersion,
+    canRestart: updateState().status === 'downloaded', manualInstall: requiresManualAppInstall(), canChangeChannel: !!desktopConfig && !['available', 'checking'].includes(updateState().status), channel };
   };
   async function check() {
     await Promise.all([feed ? store.check(feed) : undefined, checkForUpdates(getWindow)]);
@@ -46,8 +48,12 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
   async function failed() {
     if (!store.pointer.trial || switching) return;
     switching = true; clearTimeout(healthTimer);
-    try { await store.rollback(); if (window && !window.isDestroyed()) window.webContents.reload(); }
+    try { await rollback(); if (window && !window.isDestroyed()) window.webContents.reload(); }
     finally { switching = false; }
+  }
+  async function rollback() {
+    try { await store.rollback(); }
+    catch { store.useBuiltIn(); }
   }
   async function loaded() {
     if (!store.pointer.trial || !window || window.isDestroyed()) return;
@@ -71,7 +77,7 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
       startFailed = false;
       healthTimer = setTimeout(() => void failed(), selfCheckTimeout);
       window.webContents.reload(); return true;
-    } catch { await store.rollback(); return false; }
+    } catch { await rollback(); return false; }
     finally { switching = false; }
   }
   function attach(win) {
@@ -115,7 +121,9 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
     ipcMain.handle(channelName, (event, value) => { if (!trusted(event)) throw new Error('Desktop update unavailable'); return handler(value); });
   }
   if (feed || updateState().enabled) { checkTimer = setInterval(() => void check(), 60 * 60 * 1000); checkTimer.unref(); void check(); }
-  return { store, state, check, reopen, attach, restart, async prepareWindow() { if (await isIdle()) await store.activate({ idle: true }); },
+  return { store, state, check, reopen, attach, restart, async prepareWindow() {
+    if (await isIdle()) try { await store.activate({ idle: true }); } catch { await rollback(); }
+  },
     close() { clearInterval(checkTimer); clearTimeout(healthTimer); setPersonalAccessUiResourceReader(null);
       for (const name of ['wm:desktop:update-state', 'wm:desktop:update-check', 'wm:desktop:update-restart', 'wm:desktop:update-channel']) ipcMain.removeHandler(name); } };
 }

@@ -16,6 +16,15 @@
   }
 }
 .weftmate-desktop .desktop-startup { display: flex; align-items: center; }
+.weftmate-desktop .desktop-update-notice {
+  -webkit-app-region: no-drag;
+  position: absolute; inset-inline-end: var(--wm-size-160); top: 50%; transform: translateY(-50%);
+  max-width: min(45vw, 420px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: var(--wm-space-4) var(--wm-space-8); border: 0; border-radius: var(--wm-space-4);
+  background: transparent; color: var(--ink-secondary); font: inherit; cursor: pointer;
+}
+.weftmate-desktop .desktop-update-notice:hover { background: var(--surface-soft); color: var(--ink); }
+.weftmate-desktop .desktop-update-notice:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .weftmate-desktop .rail-heading > strong { display: none; }
 .weftmate-desktop .rail-top { display: flex; align-items: center; gap: var(--wm-space-8); }
 .weftmate-desktop .rail-heading { padding: 0; flex-shrink: 0; }

@@ -48,6 +48,37 @@ test('channel switching preserves an installed signed UI and rejects downloads f
   const restarted = await new UpdateStore({ ...f.options, channel: 'preview' }).init();
   assert.equal(restarted.state.currentVersion, '0.2.0');
 });
+
+test('first boot after a host upgrade retires the old UI trial in favour of the bundled UI', async t => {
+  const f = await fixture(t), old = await new UpdateStore(f.options).init();
+  f.publish('0.2.0'); await old.check(f.url); await old.activate({ idle: true });
+  assert.equal(old.pointer.trial, true);
+  const upgraded = await new UpdateStore({ ...f.options, builtInVersion: '0.2.0',
+    versions: { app: '0.2.0', host: '0.2.0', bridge: 1 } }).init();
+  assert.equal(upgraded.pointer.active, null);
+  assert.equal(upgraded.pointer.trial, false);
+  assert.equal(upgraded.state.currentVersion, '0.2.0');
+  assert.equal(upgraded.state.status, 'current');
+  assert.equal(await upgraded.resource('personal-access-ui/app.js'), null);
+});
+
+test('UI rollback persistence failure leaves bundled resources usable', async t => {
+  const f = await fixture(t), store = await new UpdateStore(f.options).init();
+  f.publish('0.2.0'); await store.check(f.url); await store.activate({ idle: true });
+  store.persist = async () => { throw new Error('disk unavailable'); };
+  await assert.doesNotReject(store.rollback());
+  assert.equal(store.pointer.active, null);
+  assert.equal(store.pointer.trial, false);
+  assert.equal(await store.resource('personal-access-ui/app.js'), null);
+});
+
+test('an empty UI channel is distinct from a network or asset download failure', async t => {
+  const f = await fixture(t);
+  const store = await new UpdateStore({ ...f.options, fetcher: async () => new Response('', { status: 404 }) }).init();
+  await store.check(f.url);
+  assert.equal(store.state.status, 'empty');
+  assert.equal(store.state.error, null);
+});
 test('only changed files download; active version waits for idle, persists and rolls back a failed trial', async t => {
   const f = await fixture(t); const store = await new UpdateStore(f.options).init()
   f.publish('0.2.0'); await store.check(f.url)

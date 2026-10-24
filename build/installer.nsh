@@ -2,6 +2,7 @@
 !include LogicLib.nsh
 !include MUI2.nsh
 !include "${BUILD_RESOURCES_DIR}\windows-send-to.nsh"
+!include "${BUILD_RESOURCES_DIR}\installer-scope.nsh"
 !include "${BUILD_RESOURCES_DIR}\..\.local\installer-ui\identity.nsh"
 !macroundef MUI_UNPAGE_WELCOME
 !macro MUI_UNPAGE_WELCOME
@@ -27,15 +28,6 @@
 !macro MUI_UNPAGE_FINISH
 !macroend
 
-!macro customInstallMode
-  ${If} $installMode == "all"
-    StrCpy $isForceCurrentInstall "0"
-    StrCpy $isForceMachineInstall "1"
-  ${Else}
-    StrCpy $isForceCurrentInstall "1"
-    StrCpy $isForceMachineInstall "0"
-  ${EndIf}
-!macroend
 !macro customPageAfterChangeDir
   Page custom WeftChoose WeftChooseLeave
 !macroend
@@ -80,6 +72,9 @@
   ; electron-builder runs this script once more to write the uninstaller (BUILD_UNINSTALLER).
   ; That pass installs nothing: it must not be refused because the build machine has an all-users install.
   !ifndef BUILD_UNINSTALLER
+  ${If} ${isForAllUsers}
+    !insertmacro WeftFail 740 "CURRENT_USER_REQUIRED: install for the current user"
+  ${EndIf}
   ; Refuse unavailable elevation before the upstream silent UAC branch.
   StrCpy $R2 0
   ${If} $weftOldMachine != ""
@@ -120,9 +115,9 @@
   SetOutPath $TEMP
   ; Upstream's silent section otherwise switches back to all users even when
   ; /currentuser was explicitly requested. Keep the selected target scope.
-  ${If} ${isForCurrentUser}
-    StrCpy $hasPerMachineInstallation "0"
-  ${EndIf}
+  StrCpy $hasPerMachineInstallation "0"
+  StrCpy $hasPerUserInstallation "1"
+  !insertmacro setInstallModePerUser
   !insertmacro WeftLoad
   !insertmacro WeftDefaultDirectory
   ${IfNot} ${Silent}
@@ -325,6 +320,8 @@ Var weftOldMachine
     HideWindow
     StrCpy $1 ""
     ${If} ${isUpdated}
+    ${OrIf} $weftOldUser != ""
+    ${OrIf} $weftOldMachine != ""
       StrCpy $1 "--updated"
     ${EndIf}
     !ifdef WEFT_TEST_IDENTITY

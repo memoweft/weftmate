@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from './host-mode.mjs';
 
 export const desktopConfigPath = (appData, platform = process.platform) => join(appData, platform === 'darwin' ? 'WeftMate Trial' : 'WeftMate', 'desktop-config.json');
+export const defaultUpdateChannel = version => /^\d+\.\d+\.\d+-preview\.\d+$/.test(version) ? 'preview' : 'stable';
 export const productionEnvironment = Object.freeze({
   cloudIssuer: 'WEFTMATE_CLOUD_ISSUER', cloudDesktopClientId: 'WEFTMATE_CLOUD_DESKTOP_CLIENT_ID',
   cloudDesktopRedirectUri: 'WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI', cloudWebClientId: 'WEFTMATE_CLOUD_WEB_CLIENT_ID',
@@ -39,7 +40,7 @@ export function saveDesktopConfig(file, value) {
   writeFileSync(temp, JSON.stringify(value, null, 2) + '\n', { mode: 0o600, flag: 'wx' });
   renameSync(temp, file);
 }
-export function applyDesktopConfig({ appData, argv = process.argv, env = process.env, packaged = false, platform = process.platform, resourcesPath = process.resourcesPath }) {
+export function applyDesktopConfig({ appData, argv = process.argv, env = process.env, packaged = false, platform = process.platform, resourcesPath = process.resourcesPath, appVersion = '' }) {
   const explicit = argv.find(arg => arg.startsWith('--desktop-config='))?.slice('--desktop-config='.length);
   const file = resolve(explicit || desktopConfigPath(appData, platform));
   if (!explicit && (!packaged || platform === 'darwin' && (argv.some(arg => arg.startsWith('--user-data-dir=')) || env.WEFTMATE_USER_DATA))) return null;
@@ -59,7 +60,7 @@ export function applyDesktopConfig({ appData, argv = process.argv, env = process
       } : { production: { cloudIssuer: 'https://api.weftmate.com/personal/v1/cloud/oidc', cloudDesktopClientId: 'weftmate-desktop',
         cloudDesktopRedirectUri: 'http://127.0.0.1:18186/personal/v1/ui/', cloudWebClientId: 'weftmate-desktop', relayEnabled: true,
         acmeEnabled: true, acmeDirectoryUrl: 'https://acme-v02.api.letsencrypt.org/directory' },
-      updates: { channel: 'stable', baseUrl: 'https://weftmate.com/updates/windows/x64/' } }) });
+      updates: { channel: defaultUpdateChannel(appVersion), baseUrl: 'https://weftmate.com/updates/windows/x64/' } }) });
   }
   const config = validateDesktopConfig(JSON.parse(readFileSync(file, 'utf8')));
   const options = { 'user-data-dir': config.dataDirectory, 'access-port': config.accessPort,
