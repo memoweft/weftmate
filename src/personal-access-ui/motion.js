@@ -29,6 +29,12 @@
   function enter(element, pattern = 'view-enter') {
     if (!element) return;
     cancel(element); element.dataset.motion = pattern;
+    // Settings leave the chat mounted behind the dialog. Replay its existing
+    // CSS animation when returning, even when the recipe attribute is unchanged.
+    if ((globalThis.WeftReplyMotion?.reduced ?? preference.matches) || (globalThis.WeftReplyMotion?.paused ?? document.hidden)) return;
+    for (const animation of element.getAnimations()) if (animation.animationName?.startsWith('m-')) {
+      animation.currentTime = 0; animation.play();
+    }
   }
   // Fixed pages share the assistant screen. Observe their actual visibility,
   // rather than treating a fixed-page change as a new assistant navigation.

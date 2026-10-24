@@ -58,10 +58,14 @@ try {
       await surface.waitFor({ state: 'visible' });
       assert.equal(await surface.getAttribute('data-motion'), 'view-enter');
     }
-    await page.evaluate(() => __feedbackSessionCore.show('account'));
+    await page.evaluate(() => {
+      for (const animation of document.getElementById('assistant-view').getAnimations()) animation.finish();
+      __feedbackSessionCore.show('account');
+    });
     assert.equal(await page.locator('#account-view').getAttribute('data-motion'), 'enter-fade');
     await page.evaluate(async id => { await __feedbackSessionCore.selectSession(id); __feedbackSessionCore.show('assistant'); }, fixture.source);
     assert.equal(await page.locator('#assistant-view').getAttribute('data-motion'), 'view-enter');
+    assert.equal(await page.locator('#assistant-view').evaluate(node => node.getAnimations().some(animation => animation.animationName === 'm-enter-rise' && animation.playState === 'running')), true, 'returning from settings must replay entry on the reused chat surface');
     const result = await page.evaluate(async () => {
       const body = WeftContent.create('', 'message-text markdown-body');
       const row = document.createElement('li'); row.className = 'message assistant'; row.dataset.motion = 'enter-rise'; row.append(body); document.getElementById('transcript').append(row);
