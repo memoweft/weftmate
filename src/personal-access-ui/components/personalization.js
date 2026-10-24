@@ -77,18 +77,30 @@ globalThis.WeftPersonalizationView = (core, target, category, {toast = () => {}}
 globalThis.WeftModelThinking = (core, row, event) => {
     const text = event.data?.modelThinking, display = core.state.personalization?.thinkingDisplay || 'collapsed';
     if (typeof text !== 'string' || !text) return;
-    row.classList.toggle('thinking-only',!event.data.text&&!event.data.images?.length);
-    const details = document.createElement('details'); details.className = 'model-thinking';
-    details.open = display === 'expanded';
+    const only = !event.data.text && !event.data.images?.length, active = event.data.thinkingActive === true;
+    row.classList.toggle('thinking-only', only);
+    row.hidden = only && display === 'hidden';
+    let details = row.querySelector('.model-thinking');
+    const fresh = !details;
+    if (fresh) {
+        details = document.createElement('details'); details.className = 'model-thinking';
+        details.append(document.createElement('summary'), document.createElement('p')); row.prepend(details);
+    }
+    if (fresh || details.dataset.active === 'true' && !active) details.open = active && display === 'expanded';
+    details.dataset.active = String(active);
     details.hidden = display === 'hidden';
-    const summary = document.createElement('summary'); summary.textContent = '思考过程';
-    const content = document.createElement('p'); content.textContent = text;
-    details.append(summary, content); row.prepend(details);
+    const duration = Number.isFinite(event.data.thinkingMs) ? `${Math.round(event.data.thinkingMs / 1000)} 秒` : '用时未记录';
+    details.querySelector('summary').textContent = `思考过程 · ${active ? '正在思考' : duration}`;
+    details.querySelector('p').textContent = text;
     if (!globalThis.WeftThinkingListener) {
         globalThis.WeftThinkingListener = true;
         document.addEventListener('weft:personalization', () => {
             const mode = core.state.personalization?.thinkingDisplay || 'collapsed';
-            for (const node of document.querySelectorAll('.model-thinking')) { node.hidden = mode === 'hidden'; node.open = mode === 'expanded'; }
+            for (const node of document.querySelectorAll('.model-thinking')) {
+                node.hidden = mode === 'hidden'; node.open = mode === 'expanded' && node.dataset.active === 'true';
+                const message = node.closest('.message');
+                if (message?.classList.contains('thinking-only')) message.hidden = mode === 'hidden';
+            }
         });
     }
 };

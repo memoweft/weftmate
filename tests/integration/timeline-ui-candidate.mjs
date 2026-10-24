@@ -28,6 +28,7 @@ export async function startTimelineCandidate(options = {}) {
   const append = (type, data) => { const event = { seq: events.length, time: options.digest ? options.clock() + events.length * 500 : baseTime + events.length * 500, type, data }; events.push(event);for(const wake of eventWaiters)wake(sessionId,event.seq); return event }
   const call = (name, id, args) => append('tool/call', { turn: 1, callId: id, name, arguments: JSON.stringify(args) })
   const result = (id, text, isError = false) => append('tool/result', { turn: 1, message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError, content: [{ type: 'text', text }] }] } })
+  const showThinking = options.thinking === true;
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
   const notificationRows = [];
   const scheduleRows = [{id:'ui4-schedule',text:'提交合成报告',state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:'2026-10-09T01:00:00Z'}];
@@ -106,7 +107,7 @@ export async function startTimelineCandidate(options = {}) {
       if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false; } return { status: 'stopped', receiptIds, jobs: [], executionCancelled: true }; },
     cancelSession: async () => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false } return { accepted: true } },
     describeSession: async id => options.daily && dailySessions.has(id) ? {sessionId:id,running:id===sessionId?running:dailySessions.get(id).running,processing,agentPreset:'personal-remote',modelProfileId:'local',title:dailySessions.get(id).title} : id === sessionId ? { sessionId, running, processing, agentPreset: 'personal-remote', modelProfileId: 'local', title: '项目进度报告', ...(contextUsage ? {contextUsage} : {}) } : null,
-    readEvents: async ({ sessionId: id, ...options }) => {if(dailySessions.has(id))return createDshSessionAdapter({sessions:{list:async()=>ok({items:[...dailySessions.keys()].map(sessionId=>({sessionId,origin:'user'}))})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyPage(id,options);return adapter.historyPage(id, options)},
+    readEvents: async ({ sessionId: id, ...options }) => {if(dailySessions.has(id))return createDshSessionAdapter({sessions:{list:async()=>ok({items:[...dailySessions.keys()].map(sessionId=>({sessionId,origin:'user'}))})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyPage(id,options);return adapter.historyPage(id, { includeThinking: showThinking, ...options })},
     readEventDetail: async ({ sessionId: id, seq }) => dailySessions.has(id) ? createDshSessionAdapter({sessions:{list:async()=>ok({items:[{sessionId:id,origin:'user'}]})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyDetail(id,seq) : adapter.historyDetail(id, seq),
     getTaskReplyEvidence: async ({sessionId:id}) => ({ status: options.daily && dailySessions.get(id)?.events.at(-1)?.type==='turn/end'
       ? ({completed:'completed',error:'failed',aborted:'aborted'}[dailySessions.get(id).events.at(-1).data.reason.kind]||'completed') : (options.daily ? dailySessions.get(id)?.running : running) ? 'waiting' : 'completed', turn: 1,
@@ -274,8 +275,9 @@ export async function startTimelineCandidate(options = {}) {
       context: value=>{contextUsage=value},
       call, result,
       text: text => append('assistant/message', {content:[{type:'text',text}]}),
-      chunk: text => append('assistant/chunk',{turn:1,step:1,chunk:{type:'text-delta',text}}),
-      completeStream: text => {const sourceEventSeqs=events.filter(event=>event.type==='assistant/chunk'&&event.data.turn===1&&event.data.step===1).map(event=>event.seq);const event=append('assistant/message',{turn:1,step:1,message:{content:[{type:'text',text}]}});event.sourceEventSeqs=sourceEventSeqs;return event;},
+      chunk: (text, step = 1) => append('assistant/chunk',{turn:1,step,chunk:{type:'text-delta',text}}),
+      reasoning: (text, step = 1) => append('assistant/chunk',{turn:1,step,chunk:{type:'reasoning-delta',text}}),
+      completeStream: (text, step = 1) => {const chunks=events.filter(event=>event.type==='assistant/chunk'&&event.data.turn===1&&event.data.step===step);const reasoning=chunks.filter(event=>event.data.chunk.type==='reasoning-delta').map(event=>event.data.chunk.text).join('');const event=append('assistant/message',{turn:1,step,message:{content:[...(reasoning?[{type:'reasoning',text:reasoning}]:[]),{type:'text',text}]}});event.sourceEventSeqs=chunks.map(event=>event.seq);return event;},
       phase: value => {processing=value},
       finish: reason => {append('turn/end',{turn:1,reason:{kind:reason||'completed'}});running=false;if(dailySessions.has(sessionId))dailySessions.get(sessionId).running=false;},
       approve: async (id, command) => {const user=events.findLast(event=>event.type==='user/message');const approvalId=randomUUID(), tuple={runtimeId,approvalId,sessionId,turn:1,callId:id,rootCallId:id,receiptId:user.data.source.rpcId,messageHash:hash(user.data.content.filter(part=>part.type==='text').map(part=>part.text).join('')),toolName:'pwsh',argumentsHash:hash(command)};

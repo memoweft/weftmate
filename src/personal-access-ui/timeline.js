@@ -29,7 +29,7 @@
       const label = WeftUiCore.progressWaitingText(options.waiting, language)
       if(globalThis.WeftReplyMotion) WeftReplyMotion.status(text,label,true); else text.textContent=label
     })
-    for (const block of groups) put(`steps-${block.seq}`, WeftUiCore.progressPosition(ordered, block), row => {
+    for (const block of groups) put(`steps-${block.seq}`, WeftUiCore.progressPosition(ordered, block, true), row => {
       block.steps = block.steps.map(step=>globalThis.WeftUiCore.executionPresentation(step,options.executions))
       const expandedForObjects = row.querySelector('details')?.open === true
       const currentForObjects = block.steps.filter(step => step.state === 'running').at(-1)
@@ -100,7 +100,19 @@
       const records = details.querySelector('.execution-records') || node('div', 'execution-records')
       if (!summary.parentNode) details.append(summary)
       if (!records.parentNode) details.append(records)
-      records.replaceChildren(...block.steps.map(step => globalThis.WeftTimelineCards.step(globalThis.WeftUiCore.stepPresentation(step,displayOutcome), savedSteps.get(String(step.stepId)), running, options)))
+      const savedGroups = new Map([...records.querySelectorAll('[data-step-group]')].map(detail => [detail.dataset.stepGroup, detail.open]))
+      records.replaceChildren(...WeftUiCore.groupConsecutiveSteps(block.steps).map(group => {
+        const children = group.steps.map(step => globalThis.WeftTimelineCards.step(globalThis.WeftUiCore.stepPresentation(step,displayOutcome), savedSteps.get(String(step.stepId)), running, options))
+        if (children.length === 1) return children[0]
+        const detail = node('details', 'execution-step-group'), label = node('summary', '', group.summary)
+        detail.dataset.stepGroup = String(group.steps[0].stepId)
+        const newFailure = children.some(child => child.dataset.state === 'failed' && savedSteps.get(child.dataset.step)?.dataset.state !== 'failed')
+        detail.open = newFailure || (savedGroups.get(detail.dataset.stepGroup) ?? children.some(child => child.open))
+        const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true')
+        arrow.append(window.WeftIcons.create('chevron', 16)); label.append(arrow)
+        detail.append(label, ...children)
+        return detail
+      }))
       const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
       if (!previous) row.replaceChildren(details)
       if (hadFocus) (focusStep ? [...records.querySelectorAll('.execution-step')].find(detail => detail.dataset.step === focusStep)?.querySelector('summary') : summary)?.focus({ preventScroll: true })
