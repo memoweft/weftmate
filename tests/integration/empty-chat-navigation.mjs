@@ -155,10 +155,9 @@ try {
       { encoding: 'utf8', windowsHide: true, timeout: 10000 });
       report.visibleCaptures ??= []; report.visibleCaptures.push({ label, ...JSON.parse(evidence) });
     } else if (app) {
-      // Native capture supports hidden production windows without showing an
-      // OS window or changing navigation/DOM state for the screenshot.
       const captured = await app.evaluate(async ({ BrowserWindow }) => {
-        const image = await BrowserWindow.getAllWindows()[0].capturePage(undefined, { stayHidden: true });
+        const window = BrowserWindow.getAllWindows()[0]; window.webContents.invalidate();
+        const image = await window.capturePage(undefined, { stayHidden: true, stayAwake: true });
         if (image.isEmpty()) throw Error('Native window capture is empty');
         return image.toDataURL();
       });
@@ -171,6 +170,7 @@ try {
     '#622 the empty conversation has its own mode choice at the top');
   await page.getByRole('button', { name: '成果库', exact: true }).click();
   await page.locator('.library-surface').waitFor({ state: 'visible' });
+  assert.equal(await page.locator('.conversation-mode-switch').isVisible(), false, 'the draft mode choice belongs only to the conversation');
   await snapshot('library-before-new');
   await page.locator('#session-rail [data-mode="chat"]').click();
   await page.locator('#new-session').click();
