@@ -8,6 +8,7 @@ test('reply controls and account-local time appear on hover, focus or tap, with 
   try {
     for (const touch of [false, true]) {
       const page = await browser.newPage({ hasTouch: touch, isMobile: touch, viewport: { width: touch ? 390 : 1200, height: 800 } });
+      page.setDefaultTimeout(3000);
       try {
         await page.setContent('<main id="chat-content"><article class="message assistant"><p class="message-text">合成回复</p></article><textarea id="draft"></textarea></main>');
         for (const name of ['tokens.css', 'message-actions.css']) await page.addStyleTag({ path: fileURLToPath(new URL(`../src/personal-access-ui/${name}`, import.meta.url)) });
@@ -27,6 +28,11 @@ test('reply controls and account-local time appear on hover, focus or tap, with 
         const row = page.locator('article'), bar = row.getByRole('group', { name: '回复操作', includeHidden: true });
         await page.mouse.move(0, 0);
         assert.equal(await bar.isVisible(), false, 'including the last assistant reply');
+        if (touch) await page.evaluate(() => {
+          const scope = globalThis as any, row = document.querySelector('article');
+          row.querySelector('.message-actions').remove();
+          scope.actions.bind(row, scope.displayEvents[2]);
+        });
         if (touch) await row.locator('.message-text').tap(); else await row.hover();
         await bar.waitFor({ state: 'visible' });
         await page.waitForFunction(() => document.querySelector('.message-time')?.textContent === '14:32');

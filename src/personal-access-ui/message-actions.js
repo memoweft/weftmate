@@ -7,7 +7,7 @@
     node.addEventListener('click', action); return node;
   };
   function create({ core, draft, selectSession, copy, save, notice, events, sessionId, title, localEvents }) {
-    const versions = new Map(), sources = new Map(), timeZones = new Map(), timeUpdates = new WeakMap();
+    const versions = new Map(), sources = new Map(), timeZones = new Map(), timeUpdates = new WeakMap(), touchRows = new WeakSet();
     let selection = '', selectionRow = null, lastIdentity, openMenuClose;
     const selectionChanged = () => {
       const value = window.getSelection(), row = value?.anchorNode?.parentElement?.closest('.message.assistant');
@@ -252,7 +252,10 @@
         if (!core.inMainChat?.()) bar.append(more);
         bar.append(quoteButton, report);
         bar.append(time);
-        row.addEventListener('click',e=>{if(matchMedia('(pointer:coarse)').matches&&!e.target.closest('button,a,input,textarea,summary'))row.classList.toggle('actions-visible');});
+        if (!touchRows.has(row)) {
+          touchRows.add(row);
+          row.addEventListener('click',e=>{if(matchMedia('(pointer:coarse)').matches&&!e.target.closest('button,a,input,textarea,summary'))row.classList.toggle('actions-visible');});
+        }
       }
       row.dataset.memorySession=id;row.append(bar); if (!local&&!immutable) void versionBar(row, id, event); refresh();
     }
