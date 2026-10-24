@@ -36,7 +36,7 @@
 - 推送前跑新加、改过和相关的测试，加类型检查和 `node .github/scripts/public-hygiene.mjs`；全量交给 CI。
 - 只校验外部输入（HTTP 请求、设备和云端消息、模型输出、用户文件）；没出现过的失败不加防护层。工具、压缩、子任务、调度、审批优先用 DSH 自带的（D87）。
 - 新增或改动 `/personal/v1` 路由：同时改安卓 `Network.kt::validBusinessPath` 和 `BusinessRouteUnitTest.kt`；接口变了改 `docs/CLIENT_API.md`。改了 `src/ui-core/`，跑 `node apps/mobile-ui/src/build-ui-core.mjs`。
-- 需要新壳版本时直接升版本号并在 PR 里写明，不用先问本人（D115）。
+- 需要新壳版本时直接升版本号并在 PR 里写明，不用先问本人；修完的 Windows 版本直接推到 weftmate.com 的更新目录（D115）。
 - 界面改动在真实程序里看：Windows 用 Playwright 驱动 Electron。测试进程无界面、设超时、结束时连子进程一起收。
 
 ## 做完与文档
