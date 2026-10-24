@@ -601,11 +601,17 @@ test('memory reads discard a response for another account and reset authenticate
   assert.equal(f.core.state.historyEvents.size, 0)
 })
 
+const expectedAppearanceDefaults = {
+  theme:'system',accent:'neutral',fontSize:'15',accentLight:'neutral',accentDark:'neutral',codeFontSize:'13',
+  uiFontSize:'14',themePreset:'default',themePresetLight:'default',themePresetDark:'default',
+  font:'system',fontLight:'system',fontDark:'system',backgroundLight:'',backgroundDark:'',foregroundLight:'',foregroundDark:'',
+  separateModes:true,contrast:'60',translucentSidebar:false,fullWidth:false,
+}
 test('appearance persistence and session sorting work without a window or DOM', () => {
   const f = fixture(), prefs = f.core.appearance
   assert.equal(prefs.value.theme, 'system')
   prefs.set({ theme: 'dark', accent: 'purple', fontSize: '19', accentLight: 'purple', accentDark: 'purple', codeFontSize: '13' })
-  assert.deepEqual(plain(f.api.createAppearance(f.environment.storage).value), { theme: 'dark', accent: 'purple', fontSize: '19', accentLight: 'purple', accentDark: 'purple', codeFontSize: '13' })
+  assert.deepEqual(plain(f.api.createAppearance(f.environment.storage).value), { ...expectedAppearanceDefaults, theme: 'dark', accent: 'purple', fontSize: '19', accentLight: 'purple', accentDark: 'purple', codeFontSize: '13' })
   const sessions = [{ sessionId: 'old', updatedAt: '2026-10-07T08:00:00Z' }, { sessionId: 'new', updatedAt: '2026-10-08T08:00:00Z' }]
   assert.deepEqual(plain(f.core.sortSessions(sessions)).map((s: any) => s.sessionId), ['new', 'old'])
   assert.equal(sessions[0].sessionId, 'old')
@@ -667,7 +673,7 @@ test('appearance keeps unknown saved fields while the control defaults stay stab
   const f = fixture()
   f.core.appearance.set({ theme: 'dark', accent: 'blue', fontSize: '17', legacyField: true })
   assert.equal(f.api.createAppearance(f.environment.storage).value.legacyField, true)
-  assert.deepEqual(Object.keys(f.api.appearanceDefaults), ['theme', 'accent', 'fontSize', 'accentLight', 'accentDark', 'codeFontSize'])
+  assert.deepEqual(plain(f.api.appearanceDefaults), expectedAppearanceDefaults)
 })
 
 

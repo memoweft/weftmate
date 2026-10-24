@@ -6,9 +6,9 @@ import { runInNewContext } from 'node:vm'
 import test from 'node:test'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
-const source = ['ui-core/store.js', 'ui-core/timeline-model.js', 'ui-core/appearance.js', 'ui-core/appearance-controls.js', 'personal-access-ui/desktop.js'].map(path => readFileSync(new URL('../src/' + path, import.meta.url), 'utf8')).join('\n;\n')
+const source = ['ui-core/store.js', 'ui-core/timeline-model.js', 'ui-core/appearance.js', 'personal-access-ui/components/settings-appearance.js', 'personal-access-ui/desktop.js'].map(path => readFileSync(new URL('../src/' + path, import.meta.url), 'utf8')).join('\n;\n')
 function presentation(saved: object | null = null, dark = false) {
-  const root = { dataset: {} as Record<string, string>, style: { setProperty(name: string, value: string) { values.set(name, value) } } }
+  const root = { dataset: {} as Record<string, string>, toggleAttribute() {}, style: { setProperty(name: string, value: string) { values.set(name, value) }, removeProperty(name: string) { values.delete(name) } } }
   const values = new Map<string, string>(), window: Record<string, any> = {}
   const document = { documentElement: root, getElementById: () => null }
   runInNewContext(source, { window, document, localStorage: { getItem: () => JSON.stringify(saved) },

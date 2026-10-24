@@ -8,6 +8,11 @@ import { completionActivitySummary } from './activity-copy.mjs';
 
 export const ACTIVITY_TYPES = ['reminder.triggered','task.started','task.completed','task.failed','task.stopped','approval.pending','question.pending','memory.paused','memory.submission.completed','memory.report','system.update.available','system.reconnected','system.device.signed_in','system.dnd.summary','system.notification.test','system.data.operation','companion.greeting'];
 const short = value => Array.from(String(value ?? '').replace(/\s+/g, ' ').trim()).slice(0,160).join('');
+// Handled decisions and automatic bookkeeping belong in All, without a badge.
+function needsAttention(row) {
+  return ['task.completed', 'task.failed'].includes(row.type) ||
+    ['approval.pending', 'question.pending'].includes(row.type) && row.state === 'pending';
+}
 export function activityState(account) {
   return account.activity ??= { version:1, secret:randomBytes(32).toString('hex'), sequence:0, generation:0, items:{}, changes:[], sources:{}, operations:{},suppressed:{} };
 }
@@ -52,7 +57,7 @@ export function putActivity(account, key, input) {
   if(previous && Object.hasOwn(previous.notification,'notify')) row.notification={...previous.notification,...row.notification,
     ...(row.notification.level==='silent'?{notify:false,sound:false,decision:'activity',reason:'silent'}:{})};
   const seq=++state.sequence;
-  state.items[id]={...row, revision:(previous?.revision??0)+1,attentionRevision:seq,createdSequence:previous?.createdSequence??seq,read:false};
+  state.items[id]={...row, revision:(previous?.revision??0)+1,attentionRevision:seq,createdSequence:previous?.createdSequence??seq,read:!needsAttention(row)};
   state.changes.push({seq,id}); return state.items[id];
 }
 export function removeActivity(account, predicate) {
@@ -65,6 +70,12 @@ export function removeActivity(account, predicate) {
 }
 export function reconcileActivity(account) {
   const state=activityState(account);
+  // Correct badges already persisted by older versions, and publish the correction
+  // through the existing changes feed so an open activity page updates as well.
+  for (const row of Object.values(state.items)) if (!row.read && !needsAttention(row)) {
+    row.read = true; row.revision++; row.attentionRevision = ++state.sequence;
+    state.changes.push({seq:state.sequence,id:row.id});
+  }
   if(state) removeActivity(account,row=>row.source.sessionId && (!account.sessions[row.source.sessionId] ||
     account.sessions[row.source.sessionId].forgottenSeqs?.includes(row.source.seq)));
   for(const command of Object.values(account.commands)) {
