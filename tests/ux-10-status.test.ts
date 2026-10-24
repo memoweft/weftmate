@@ -150,3 +150,19 @@ test('D55 latest main read uses the existing metadata route, respects newer hist
   core.state.personalCapabilities.sessionStatus=1;const late=actions.markLatestChatRead();core.state.identityGeneration++;core.state.mainChat={...chat,chatId:'new-owner'};
   release({chat:{...chat,unread:false}});await late;assert.equal(core.state.mainChat.chatId,'new-owner');assert.equal(refreshes,1);
 });
+
+
+test('visible terminal session acknowledgement persists once, preserves attention/running and ignores late account replies',async()=>{
+  const context:any={WeftUiCore:{factories:{}}};runInNewContext(readFileSync(new URL('../src/ui-core/sessions.js',import.meta.url),'utf8'),context);
+  const calls:any[]=[];let release:any;
+  const core:any={state:{identityGeneration:1,activeChatSource:'desktop',selectedSessionId:'a',sessions:[{sessionId:'a',unread:true,running:true},{sessionId:'b',unread:true}],chats:[]},
+    accessApi:async(path:string,options:any)=>{calls.push({path,options});return new Promise(done=>release=done);}};
+  const actions=context.WeftUiCore.factories.sessions(core,{renderSessions(){},updateAvailability(){}},{ });
+  await actions.markVisibleSessionRead();assert.equal(calls.length,0);
+  core.state.sessions[0].running=false;core.state.sessions[0].attention='approval';await actions.markVisibleSessionRead();assert.equal(calls.length,0);
+  core.state.sessions[0].attention=null;core.state.activeChatSource='phone';await actions.markVisibleSessionRead();assert.equal(calls.length,0);
+  core.state.activeChatSource='desktop';const read=actions.markVisibleSessionRead();await actions.markVisibleSessionRead();assert.equal(calls.length,1);
+  assert.equal(calls[0].path,'/sessions/a/metadata');assert.equal(calls[0].options.body.unread,false);release({unread:false});await read;
+  assert.equal(core.state.sessions[0].unread,false);assert.equal(core.state.sessions[1].unread,true);
+  core.state.sessions[0].unread=true;const late=actions.markVisibleSessionRead();core.state.identityGeneration++;core.state.sessions=[{sessionId:'a',unread:true}];release({unread:false});await late;assert.equal(core.state.sessions[0].unread,true);
+});

@@ -196,6 +196,16 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             rememberFolder(project?.projectId || null);
         } finally {if(core.state.folderChanging===operation)core.state.folderChanging=null;if(identity===core.state.identityGeneration)effects.updateAvailability();}
     }
+    let visibleRead;
+    async function markVisibleSessionRead() {
+        const sessionId=core.state.selectedSessionId;
+        const session=core.state.sessions.find(row=>row.sessionId===sessionId);
+        if(visibleRead || core.state.activeChatSource!=='desktop' || !session?.unread || session.running || session.attention) return;
+        visibleRead=true;
+        try {await updateSession(sessionId,{unread:false});}
+        catch { /* Keep unread when acknowledgement fails; the next visible refresh retries. */ }
+        finally {visibleRead=false;}
+    }
     async function updateSession(sessionId, patch) {
         const identity = core.state.identityGeneration;
         const statusChanged = typeof patch.unread === 'boolean' && core.state.sessions.some(row => row.sessionId === sessionId && row.unread !== patch.unread);
@@ -257,7 +267,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return result;
     }
-    return { sidebarStatus, folderMutationPending, registerFolderChoice, partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
+    return { markVisibleSessionRead, sidebarStatus, folderMutationPending, registerFolderChoice, partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
 };
 globalThis.WeftUiCore.sessionMenuItems = session => [
     {id:'pin',label:session.pinned?'取消置顶':'置顶',key:'P'},
