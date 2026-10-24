@@ -17,9 +17,10 @@
     button.feedbackTimer=setTimeout(()=>{button.replaceChildren(WeftIcons.create('copy',16));delete button.dataset.copied;button.setAttribute('aria-label',label);},duration);
   }
   function isFinalReply(events, event, running = false) {
+    if(event.data?.reminder)return true;
     const ordered=[...events].sort((a,b)=>a.seq-b.seq);
     const start=ordered.findLast(item=>item.seq<=event.seq && item.type==='turn.started');
-    const next=ordered.find(item=>item.seq>event.seq && item.type==='turn.started');
+    const next=ordered.find(item=>item.seq>event.seq && (item.type==='turn.started' || !start && item.type==='user.message'));
     const tail=ordered.filter(item=>item.seq>event.seq && (!next || item.seq<next.seq));
     if(tail.some(item=>item.type.startsWith('step.') || ['assistant.message','user.message'].includes(item.type)))return false;
     if(tail.some(item=>item.type==='turn.ended'))return true;

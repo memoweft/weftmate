@@ -48,4 +48,7 @@ test('reply actions belong only to the final answer of each turn, never interim 
   assert.equal(finalReply(history,answer),true);
   assert.equal(finalReply(history.slice(0,2),commentary,true),false);
   assert.equal(finalReply([...history,event(5,'turn.started')],answer,true),true);
+  const legacy=[event(0,'user.message','第一个问题'),commentary,event(2,'user.message','第二个问题'),answer];
+  assert.equal(finalReply(legacy,commentary),true,'older message-only history retains each turn final reply');
+  assert.equal(finalReply(history,{...commentary,data:{text:'独立提醒',reminder:true}},true),true);
 });
