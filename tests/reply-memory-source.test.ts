@@ -73,3 +73,16 @@ test('unavailable memory never falls back to the internal recall summary', async
   assert.doesNotMatch(content.text(), /秋天|2026-01-01T|用户原话/);
 });
 
+test('a shared evidence ID preserves the user confirmation and distinct assistant proposals', async () => {
+  const { row, content, core } = await setup();
+  const data = await core.readMemorySources();
+  const user = { ...data.sources[0], messageId: 'confirmation', role: 'user', rawContent: '是的。' };
+  const proposal = { ...data.sources[0], messageId: 'proposal', role: 'assistant', rawContent: '你喜欢秋天，适合安排赏叶旅行。' };
+  core.readMemorySources = async () => ({ sources: [user, proposal, proposal,
+    { ...proposal, messageId: 'proposal-2', rawContent: '我会优先推荐秋季行程。' }] });
+  await row.children[0].listener();
+  assert.equal(content.text().split('是的。').length - 1, 1);
+  assert.equal(content.text().split(proposal.rawContent).length - 1, 1);
+  assert.equal(content.text().split('我会优先推荐秋季行程。').length - 1, 1);
+});
+

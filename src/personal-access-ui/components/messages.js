@@ -269,7 +269,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                         section.append(ui.element('p', 'muted', '当前没有可展示的来源。'));
                     const seen = new Set();
                     for (const source of data.sources ?? []) {
-                        const key = source.evidenceId || JSON.stringify([source.recordedAt, source.rawContent, source.summary, source.contentAvailable]);
+                        const key = JSON.stringify([source.evidenceId, source.role || 'user', source.conversationId, source.messageId,
+                            ...(source.evidenceId ? [] : [source.recordedAt, source.rawContent, source.summary, source.contentAvailable])]);
                         if (seen.has(key)) continue;
                         seen.add(key);
                         section.append(ui.element('p', 'muted', source.recordedAt ? `记录于 ${core.formatDate(source.recordedAt)}` : '对话来源'));
