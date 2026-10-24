@@ -145,8 +145,8 @@ test('activity HTTP snapshots, filtered all-read, version conflicts, restart, na
   // through the real read path before asserting approval + question + memory.
   await f.request(`/sessions/${f.sessionId}/questions`);
   await f.recordActivity({key:'pause',type:'memory.paused',title:'记忆已暂停',summary:'测试状态',level:'normal'});
-  const initial=await f.request('/activity?limit=1');assert.ok(initial.hasMore);assert.ok(initial.unreadCount>=3);
-  const memory=await f.request('/activity?type=memory');assert.equal(memory.items.length,1);
+  const initial=await f.request('/activity?limit=1');assert.ok(initial.hasMore);assert.ok(initial.unreadCount>=2);
+  const memory=await f.request('/activity?type=memory');assert.equal(memory.items.length,1);assert.equal(memory.items[0].read,true);
   await assert.rejects(()=>f.request('/activity/read',{requestId:42,through:memory.snapshotCursor}),/INVALID_REQUEST/);
   const readId=randomUUID();await f.request('/activity/read',{requestId:readId,through:memory.snapshotCursor});
   await f.request('/activity/read',{requestId:readId,through:memory.snapshotCursor});
@@ -156,7 +156,7 @@ test('activity HTTP snapshots, filtered all-read, version conflicts, restart, na
   await f.recordActivity({key:'new',type:'memory.submission.completed',title:'补交完成',summary:'已经同步',level:'silent'});
   const older=await f.request(`/activity?limit=1&cursor=${encodeURIComponent(initial.nextCursor)}`);assert.equal(older.items.some((r:any)=>r.title==='补交完成'),false);
   await f.request('/activity/read',{requestId:randomUUID(),through:initial.snapshotCursor});
-  const newRow=(await f.request('/activity?type=memory')).items.find((r:any)=>r.title==='补交完成');assert.equal(newRow.read,false);
+  const newRow=(await f.request('/activity?type=memory')).items.find((r:any)=>r.title==='补交完成');assert.equal(newRow.read,true);
   await assert.rejects(()=>f.request(`/activity/${newRow.id}/read`,{requestId:randomUUID(),read:true,attentionRevision:newRow.attentionRevision-1},'PATCH'),/REQUEST_CONFLICT/);
   const approval=(await f.request('/activity?filter=actionable')).items.find((r:any)=>r.type==='approval.pending');assert.ok(approval);
   const action=approval.actions.find((a:any)=>a.kind==='respond_approval');const answer=await f.request(`/sessions/${action.target.sessionId}/approvals/${action.target.approvalId}`,{requestId:'activity-native-approve',outcome:'allowed-once'});
