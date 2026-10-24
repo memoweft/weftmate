@@ -71,4 +71,3 @@ test('#629 reasoning streams only when requested, keeps full content and timing 
   assert.equal(final.data.thinkingMs,2000);
   assert.equal((await service.historyPage('s')).events.find(e=>e.type==='assistant.message').data.modelThinking,undefined);
 });
-
