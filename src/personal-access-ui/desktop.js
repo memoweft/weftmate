@@ -16,7 +16,6 @@
     globalThis.WeftDesktopAppearanceControls.apply(appearance, root.dataset.theme)
     globalThis.WeftSystemBars?.sync()
     root.style.setProperty('--text-size', `var(--wm-font-size-${appearance.fontSize}, ${appearance.fontSize}px)`)
-    for (const key of Object.keys(defaults)) if (byId(`appearance-${key}`)) byId(`appearance-${key}`).value = appearance[key]
   }
   applyAppearance(appearanceStore.value)
   media?.addEventListener?.('change', () => { if (appearance.theme === 'system') applyAppearance() })

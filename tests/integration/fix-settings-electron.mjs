@@ -66,6 +66,14 @@ try {
   await page.getByRole('slider', { name: '对比度', exact: true }).fill('90');
   assert.notEqual(await page.locator('#settings-dialog').evaluate(el => getComputedStyle(el).getPropertyValue('--line')),lineBefore);
   await choose('字体', '衬线'); assert.ok((await page.evaluate(() => getComputedStyle(document.documentElement).fontFamily)).includes('Georgia'));
+  await page.evaluate(() => WeftDesktop.setAppearance({theme:'system',accentLight:'green',accentDark:'blue',fontLight:'mono',fontDark:'serif'}));
+  await page.emulateMedia({colorScheme:'dark'});
+  await page.waitForFunction(() => document.documentElement.dataset.theme === 'dark');
+  assert.equal(await page.locator('#appearance-accent').inputValue(),'blue','system changes keep the active mode control in sync');
+  await page.emulateMedia({colorScheme:'light'});
+  await page.waitForFunction(() => document.documentElement.dataset.theme === 'light');
+  assert.equal(await page.locator('#appearance-accent').inputValue(),'green');
+  assert.equal(await page.locator('#appearance-font').inputValue(),'mono');
   await page.getByRole('group', { name: '减少动态效果', exact: true }).getByRole('button', { name: '开启', exact: true }).click(); assert.equal(await page.evaluate(() => WeftReplyMotion.preference), 'reduce');
   await page.getByRole('group', { name: '减少动态效果', exact: true }).getByRole('button', { name: '系统', exact: true }).click(); assert.equal(await page.evaluate(() => WeftReplyMotion.preference), 'system');
   await page.getByRole('switch', { name: '页面全宽显示', exact: true }).check(); assert.equal(await page.evaluate(() => document.documentElement.hasAttribute('data-page-full-width')), true);
