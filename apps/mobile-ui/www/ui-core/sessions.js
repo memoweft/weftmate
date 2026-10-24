@@ -196,6 +196,26 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             rememberFolder(project?.projectId || null);
         } finally {if(core.state.folderChanging===operation)core.state.folderChanging=null;if(identity===core.state.identityGeneration)effects.updateAvailability();}
     }
+    let visibleRead;
+    async function markVisibleSessionRead(isVisible) {
+        const sessionId=core.state.selectedSessionId, identity=core.state.identityGeneration, generation=core.state.historyGeneration;
+        const session=core.state.sessions.find(row=>row.sessionId===sessionId);
+        if(visibleRead || core.state.activeChatSource!=='desktop' || !session?.unread || session.running || session.attention || !isVisible()) return;
+        const current=()=>identity===core.state.identityGeneration&&generation===core.state.historyGeneration&&sessionId===core.state.selectedSessionId&&core.state.activeChatSource==='desktop';
+        visibleRead=true;
+        try {
+            // A sidebar snapshot can precede the final history response. Join any
+            // older read, then fetch and paint the current tail before acknowledging it.
+            if(core.state.historyInFlight)await core.state.historyInFlight.promise;
+            if(!current())return;
+            const history=await core.refreshHistory(false);
+            if(!current() || !['changed','unchanged'].includes(history?.kind) || core.state.historyHasMore || core.state.chatWindow?.hasNewer || !isVisible())return;
+            if(core.inMainChat?.())await core.markLatestChatRead();
+            else await updateSession(sessionId,{unread:false});
+        }
+        catch { /* Keep unread when history or acknowledgement fails; a visible refresh retries. */ }
+        finally {visibleRead=false;}
+    }
     async function updateSession(sessionId, patch) {
         const identity = core.state.identityGeneration;
         const statusChanged = typeof patch.unread === 'boolean' && core.state.sessions.some(row => row.sessionId === sessionId && row.unread !== patch.unread);
@@ -257,7 +277,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return result;
     }
-    return { sidebarStatus, folderMutationPending, registerFolderChoice, partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
+    return { markVisibleSessionRead, sidebarStatus, folderMutationPending, registerFolderChoice, partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
 };
 globalThis.WeftUiCore.sessionMenuItems = session => [
     {id:'pin',label:session.pinned?'取消置顶':'置顶',key:'P'},

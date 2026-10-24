@@ -109,6 +109,7 @@ class Element {
     if (this.ownerDocument) { this.ownerDocument.activeElement.focused = false; this.ownerDocument.activeElement = this }
     this.focused = true; this.focusOptions = options
   }
+  getClientRects() { return this.hidden || !this.isConnected ? [] : [this.getBoundingClientRect()] }
   getBoundingClientRect() { return { left: 16, right: 366, top: 680, bottom: 724 } }
   querySelectorAll(selector = ''): Element[] {
     return this.children.flatMap((child) => [
