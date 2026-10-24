@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   clipboardImage: () => ipcRenderer.invoke('wm:desktop:clipboard-image'),
   captureRegion: () => ipcRenderer.invoke('wm:desktop:capture-region'),
   updateState: () => ipcRenderer.invoke('wm:desktop:update-state'),
+  onUpdateState: callback => { const listener = (_event, state) => callback(state); ipcRenderer.on('wm:update-state', listener); return () => ipcRenderer.removeListener('wm:update-state', listener); },
   checkUpdates: () => ipcRenderer.invoke('wm:desktop:update-check'),
   setUpdateChannel: channel => ipcRenderer.invoke('wm:desktop:update-channel', channel),
   restartForUpdate: () => ipcRenderer.invoke('wm:desktop:update-restart'),

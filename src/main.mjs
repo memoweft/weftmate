@@ -156,7 +156,7 @@ if (process.argv.includes('--uninstall-cleanup')) {
   } catch { app.exit(1); }
 }
 let installedDesktopConfig;
-try { installedDesktopConfig = applyDesktopConfig({ appData: desktopControlAppData, packaged: app.isPackaged }); }
+try { installedDesktopConfig = applyDesktopConfig({ appData: desktopControlAppData, packaged: app.isPackaged, appVersion: app.getVersion() }); }
 catch (error) { recordEarlyStartupFailure('desktop-config', error, 1); throw error; }
 if (app.isPackaged) repairWindowsLoginItem({ name: packageInfo.desktopIdentity || 'WeftMate', executable: process.execPath });
 if (app.isPackaged && process.env.WEFTMATE_RELAY_ENABLED === 'true') {

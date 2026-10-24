@@ -90,7 +90,7 @@ if (installResult === 0) {
     const metadata = JSON.parse(await readFile(join(state.installation, 'resources/app.asar/package.json'), 'utf8'));
     if (metadata.version !== state.nextVersion) throw new Error('installed version mismatch');
     const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
-    const child = spawn(state.executable, [`--desktop-config=${state.configFile}`], { cwd: state.snapshot, detached: true, windowsHide: true, stdio: 'ignore', env });
+    const child = spawn(state.executable, [`--desktop-config=${state.configFile}`, '--updated'], { cwd: state.snapshot, detached: true, windowsHide: true, stdio: 'ignore', env });
     newAppPid = child.pid;
     child.on('error', () => {}); child.unref();
     await save('monitor-state.json', { phase: 'checking-startup', token: state.token });
