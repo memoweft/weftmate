@@ -66,7 +66,7 @@
     if (!active.has(menu)) {
       const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(() => refresh()) : null;
       active.set(menu, { trigger, options: { side, align }, observer });
-      observer?.observe(menu); observer?.observe(trigger);
+      observer?.observe(menu); if (trigger.nodeType === 1) observer?.observe(trigger);
     } else Object.assign(active.get(menu), { trigger, options: { side, align } });
   }
   let frame;
@@ -86,6 +86,26 @@
   globalThis.window?.addEventListener?.('scroll', refresh, true);
   globalThis.window?.visualViewport?.addEventListener('resize', refresh);
   globalThis.window?.visualViewport?.addEventListener('scroll', refresh);
+  function bindTooltips() {
+    // Tooltips share the viewport-aware anchor geometry with menus, never a row's containing block.
+    let tooltip, tooltipTrigger;
+    function closeTooltip() {
+      if(tooltip) {active.get(tooltip)?.observer?.disconnect();active.delete(tooltip);tooltip.remove();}
+      tooltipTrigger?.removeAttribute('aria-describedby');tooltip=null;tooltipTrigger=null;
+    }
+    function showTooltip(trigger) {
+      if(!trigger?.dataset.tooltip || trigger===tooltipTrigger) return;
+      closeTooltip();tooltipTrigger=trigger;
+      tooltip=document.createElement('div');tooltip.className='control-tooltip';tooltip.id='control-tooltip';tooltip.setAttribute('role','tooltip');tooltip.textContent=trigger.dataset.tooltip;
+      trigger.setAttribute('aria-describedby',tooltip.id);document.body.append(tooltip);position(tooltip,trigger,{side:'top'});
+    }
+    document.addEventListener('pointerover',event=>showTooltip(event.target.closest?.('[data-tooltip]')));
+    document.addEventListener('pointerout',event=>{if(tooltipTrigger&&!tooltipTrigger.contains(event.relatedTarget))closeTooltip();});
+    document.addEventListener('focusin',event=>showTooltip(event.target.closest?.('[data-tooltip]')));
+    document.addEventListener('focusout',closeTooltip);
+    document.addEventListener('pointerdown',closeTooltip);
+    document.addEventListener('keydown',event=>{if(event.key==='Escape')closeTooltip();});
+  }
   function bindSelect(select, className) {
     if (!select?.parentNode) return;
     const menu = document.createElement('div');
@@ -322,6 +342,6 @@
     const popup=openMenu(trigger,entries.map(entry=>({...entry,action:async()=>{try{await entry.action()}catch(error){onError(error)}}})),{onClose:()=>{dismissMenu=null}});
     dismissMenu=popup.close;return popup.close;
   }
-  globalThis.WeftPopover = { position, bindSelect, bindSettings, bindSettingsSelect, openMenu, autosize, modelGate, memoryHealth, menu, pullRefresh, closeMenu:()=>dismissMenu?.() };
+  globalThis.WeftPopover = { position, bindTooltips, bindSelect, bindSettings, bindSettingsSelect, openMenu, autosize, modelGate, memoryHealth, menu, pullRefresh, closeMenu:()=>dismissMenu?.() };
 
 })();
