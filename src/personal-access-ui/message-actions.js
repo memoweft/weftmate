@@ -8,6 +8,25 @@
   };
   function create({ core, draft, selectSession, copy, save, notice, events, sessionId, title, localEvents }) {
     const versions = new Map(), sources = new Map(), timeZones = new Map(), timeUpdates = new WeakMap(), touchRows = new WeakSet();
+    const defaultTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone, timeFormats = new Map();
+    let timingCache;
+    function formatsFor(zone) {
+      if (!timeFormats.has(zone)) timeFormats.set(zone, {
+        day: new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}),
+        today: new Intl.DateTimeFormat('zh-CN',{timeZone:zone,hour:'numeric',minute:'2-digit',hourCycle:'h23'}),
+        older: new Intl.DateTimeFormat('zh-CN',{timeZone:zone,year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit',hourCycle:'h23'}),
+      });
+      return timeFormats.get(zone);
+    }
+    function timedHistory(id, logical) {
+      const history = logical && core.state.chatWindow?.events
+        ? [...core.state.chatWindow.events.values()].filter(item=>item.sourceRef?.sessionId===id).map(item=>({...item,seq:item.sourceRef.seq}))
+        : (events?.() || []).filter(item=>!(item.sourceRef?.sessionId || item.sessionId) || (item.sourceRef?.sessionId || item.sessionId)===id);
+      const signature=JSON.stringify(history.map(item=>[item.seq,item.type,item.at,item.time,item.createdAt]));
+      if (timingCache?.id !== id || timingCache.signature !== signature)
+        timingCache={id,signature,ordered:history.slice().sort((a,b)=>a.seq-b.seq),durations:new Map()};
+      return timingCache;
+    }
     let selection = '', selectionRow = null, lastIdentity, openMenuClose;
     const selectionChanged = () => {
       const value = window.getSelection(), row = value?.anchorNode?.parentElement?.closest('.message.assistant');
@@ -172,7 +191,10 @@
       const immutable=event.data?.phoneSource===true;
       if (event.sourceRef?.kind === 'native') event = { ...event, seq: event.sourceRef.seq };
       if (!id || !['user.message', 'assistant.message'].includes(event.type) || !event.data?.text) return;
-      if (row.querySelector('.message-actions')) { timeUpdates.get(row)?.(); return; }
+      if (row.querySelector('.message-actions')) {
+        if(row.matches(':hover,:focus-within,.actions-visible'))timeUpdates.get(row)?.();
+        return;
+      }
       row.tabIndex=0;row.setAttribute('role','group');if(!row.hasAttribute('aria-label'))row.setAttribute('aria-label',`${event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(event.data.text).slice(0,80).join('')}`);
       const bar = el('div', 'message-actions'); bar.setAttribute('role', 'group'); bar.setAttribute('aria-label', event.type === 'user.message' ? '自己的消息操作' : '回复操作');
       const copyMessage = async format => { const value = local ? event : await core.completeMessageEvent(id, event);
@@ -182,28 +204,28 @@
       copyButton.setAttribute('aria-haspopup', 'menu'); copyButton.setAttribute('aria-expanded', 'false');
       copyButton.setAttribute('aria-label', event.type === 'user.message' ? '复制消息' : '复制回复'); bar.append(copyButton);
       const time=el('time','message-time');
-      let zone=Intl.DateTimeFormat().resolvedOptions().timeZone;
+      let zone=defaultTimeZone;
       const updateTime=()=>{
         const captured=identity();
-        const history = event.sourceRef?.sessionId && core.state.chatWindow?.events
-          ? [...core.state.chatWindow.events.values()].filter(item=>item.sourceRef?.sessionId===id).map(item=>({...item,seq:item.sourceRef.seq}))
-          : (events?.() || []).filter(item=>!(item.sourceRef?.sessionId || item.sessionId) || (item.sourceRef?.sessionId || item.sessionId)===id);
-        const ordered=history.slice().sort((a,b)=>a.seq-b.seq), current=ordered.find(item=>item.seq===event.seq) || event;
+        const {ordered,durations}=timedHistory(id,!!event.sourceRef?.sessionId), current=ordered.find(item=>item.seq===event.seq) || event;
         const recorded=new Date(current.at || current.time || current.createdAt || NaN);
         if (Number.isFinite(recorded.getTime())) time.dateTime=recorded.toISOString();
         else { time.removeAttribute('datetime');time.textContent='时间未记录';return; }
         const stamp = () => {
           if (identity() !== captured) return;
           const date=new Date(time.dateTime), today=new Date();
-          const day=value=>new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(value);
-          time.textContent=new Intl.DateTimeFormat('zh-CN',{timeZone:zone,hour:'numeric',minute:'2-digit',hourCycle:'h23',...(day(date)===day(today)?{}:{year:'numeric',month:'numeric',day:'numeric'})}).format(date);
+          const formats=formatsFor(zone);
+          time.textContent=(formats.day.format(date)===formats.day.format(today)?formats.today:formats.older).format(date);
           if(event.type==='assistant.message') {
-            const start=ordered.findLastIndex(item=>item.seq<event.seq&&item.type==='turn.started');
-            const next=ordered.findIndex((item,index)=>index>start&&item.type==='turn.started');
-            const turn=ordered.slice(start+1,next<0?undefined:next);
-            const sent=start>=0?turn.find(item=>item.type==='user.message'):null;
-            const end=turn.find(item=>item.seq>event.seq&&item.type==='turn.ended');
-            const elapsed=Date.parse(end?.at)-Date.parse(sent?.at);
+            if(!durations.has(event.seq)) {
+              const start=ordered.findLastIndex(item=>item.seq<event.seq&&item.type==='turn.started');
+              const next=ordered.findIndex((item,index)=>index>start&&item.type==='turn.started');
+              const turn=ordered.slice(start+1,next<0?undefined:next);
+              const sent=start>=0?turn.find(item=>item.type==='user.message'):null;
+              const end=turn.find(item=>item.seq>event.seq&&item.type==='turn.ended');
+              durations.set(event.seq,Date.parse(end?.at)-Date.parse(sent?.at));
+            }
+            const elapsed=durations.get(event.seq);
             if(Number.isFinite(elapsed)&&elapsed>=0) {
               const seconds=Math.floor(elapsed/1000),minutes=Math.floor(seconds/60);
               time.textContent+=` · 用时 ${minutes?`${minutes} 分 `:''}${seconds%60} 秒`;
@@ -212,11 +234,15 @@
         };
         stamp();
         if (!local) {
-          if (!timeZones.has(captured)) timeZones.set(captured,core.accessApi('/settings/usage').then(value=>value.timeZone||Intl.DateTimeFormat().resolvedOptions().timeZone).catch(()=>Intl.DateTimeFormat().resolvedOptions().timeZone));
+          if (!timeZones.has(captured)) timeZones.set(captured,core.accessApi('/settings/usage').then(value=>value.timeZone||defaultTimeZone).catch(()=>defaultTimeZone));
           void timeZones.get(captured).then(value=>{zone=value;stamp();});
         }
       };
-      timeUpdates.set(row,updateTime);updateTime();
+      timeUpdates.set(row,updateTime);
+      if (!row.dataset.messageTimeBound) {
+        row.dataset.messageTimeBound='true';
+        for(const name of ['pointerenter','focusin'])row.addEventListener(name,()=>timeUpdates.get(row)?.());
+      }
       if (event.type === 'user.message') {
         copyButton.replaceWith(button('复制消息','copy',()=>void guarded(()=>copyMessage('plain'))));
         bar.prepend(time);
@@ -254,7 +280,7 @@
         bar.append(time);
         if (!touchRows.has(row)) {
           touchRows.add(row);
-          row.addEventListener('click',e=>{if(matchMedia('(pointer:coarse)').matches&&!e.target.closest('button,a,input,textarea,summary'))row.classList.toggle('actions-visible');});
+          row.addEventListener('click',e=>{if(matchMedia('(pointer:coarse)').matches&&!e.target.closest('button,a,input,textarea,summary')){row.classList.toggle('actions-visible');if(row.classList.contains('actions-visible'))timeUpdates.get(row)?.();}});
         }
       }
       row.dataset.memorySession=id;row.append(bar); if (!local&&!immutable) void versionBar(row, id, event); refresh();
@@ -262,12 +288,12 @@
     function refresh() {
       if (lastIdentity && lastIdentity !== identity()) {
         document.querySelectorAll('.message-action-dialog').forEach(dialog => dialog.close());
-        openMenuClose?.(false); timeZones.clear();
+        openMenuClose?.(false); timeZones.clear(); timingCache=null;
         document.querySelector('.composer-message-quote')?.remove(); sources.clear(); versions.clear(); selection = '';
       }
       lastIdentity = identity();
       for (const node of document.querySelectorAll('[data-message-mutation]')) node.disabled = !!core.messageBusy(node.dataset.messageMutation);
-      for(const row of document.querySelectorAll('.message'))timeUpdates.get(row)?.();
+      for(const row of document.querySelectorAll('.message:hover,.message:focus-within,.message.actions-visible'))timeUpdates.get(row)?.();
       const records = core.readMessageFeedback();
       for (const node of document.querySelectorAll('[data-problem-feedback]')) node.hidden = !records.some(row => `${row.sessionId ?? row.conversationId}:${row.seq ?? row.messageId}` === node.dataset.problemFeedback && row.rating === 'unhelpful');
       for (const node of document.querySelectorAll('[data-feedback]')) node.setAttribute('aria-pressed', String(records.some(row => `${row.sessionId ?? row.conversationId}:${row.seq ?? row.messageId}:${row.rating}` === node.dataset.feedback)));

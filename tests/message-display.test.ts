@@ -14,6 +14,14 @@ test('reply controls and account-local time appear on hover, focus or tap, with 
         for (const name of ['tokens.css', 'message-actions.css']) await page.addStyleTag({ path: fileURLToPath(new URL(`../src/personal-access-ui/${name}`, import.meta.url)) });
         await page.addScriptTag({ path: fileURLToPath(new URL('../src/personal-access-ui/message-actions.js', import.meta.url)) });
         await page.evaluate(() => {
+          const scope = globalThis as any, Original = Intl.DateTimeFormat;
+          scope.formatterCount = 0; scope.historyReads = 0;
+          Intl.DateTimeFormat = new Proxy(Original, {
+            construct(target, args) { scope.formatterCount++; return Reflect.construct(target, args); },
+            apply(target, self, args) { scope.formatterCount++; return Reflect.apply(target, self, args); },
+          });
+        });
+        await page.evaluate(() => {
           const scope = globalThis as any;
           const accountDay = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
           const at = new Date(accountDay + 'T06:32:00Z');
@@ -24,10 +32,16 @@ test('reply controls and account-local time appear on hover, focus or tap, with 
           ];
           const core = { state: { ownerId: 'synthetic', identityGeneration: 1, sessions: [] },
             readMessageFeedback: () => [], messageBusy: () => false, accessApi: async () => ({ groups: [], timeZone: 'Asia/Shanghai' }) };
-          scope.actions = scope.WeftMessageActions.create({ core, draft: () => document.querySelector('textarea'), sessionId: () => 'synthetic', events: () => scope.displayEvents });
+          scope.actions = scope.WeftMessageActions.create({ core, draft: () => document.querySelector('textarea'), sessionId: () => 'synthetic', events: () => { scope.historyReads++; return scope.displayEvents; } });
           scope.actions.bind(document.querySelector('article'), scope.displayEvents[2]);
+          for (let index = 0; index < 100; index++) {
+            const row = document.createElement('article'); row.className = 'message assistant'; row.hidden = true;
+            document.querySelector('main').append(row); scope.actions.bind(row, scope.displayEvents[2]);
+          }
+          for (let index = 0; index < 10; index++) scope.actions.refresh();
         });
-        const row = page.locator('article'), bar = row.getByRole('group', { name: '回复操作', includeHidden: true });
+        assert.equal(await page.evaluate(() => (globalThis as any).historyReads), 0, 'hidden rows do not scan history during bind or draft refresh');
+        const row = page.locator('article').first(), bar = row.getByRole('group', { name: '回复操作', includeHidden: true });
         await page.mouse.move(0, 0);
         assert.equal(await bar.isVisible(), false, 'including the last assistant reply');
         if (touch) await page.evaluate(() => {
@@ -47,6 +61,7 @@ test('reply controls and account-local time appear on hover, focus or tap, with 
         await page.keyboard.press('Tab'); await row.focus(); assert.equal(await bar.isVisible(), true);
         await page.evaluate(() => { const scope = globalThis as any; scope.displayEvents[2].at = '2020-01-02T06:32:00Z'; scope.actions.refresh(); });
         assert.match(await bar.innerText(), /2020.*1.*2.*14:32/);
+        assert.ok(await page.evaluate(() => (globalThis as any).formatterCount < 10), 'formatters are reused across replies and refreshes');
       } finally { await page.close(); }
     }
   } finally { await browser.close(); }
