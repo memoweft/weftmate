@@ -2,7 +2,7 @@
 // use the shipped POSIX inspector (real handles/inode identity), as a folder
 // selection substitute. Production platform support and native approvals stay unchanged.
 import { registerHooks } from 'node:module';
-const targets = ['personal-tool-approvals.test.ts', 'personal-approval-mode-execution.test.ts', 'personal-goal-round-driver.test.ts', 'personal-forget-loop.test.ts', 'work-and-chat-runtime.test.ts', 'work-and-chat-controls.test.ts', 'w4-first-work-switch.test.ts', 'relay-phone.test.mjs'];
+const targets = ['personal-tool-approvals.test.ts', 'personal-approval-mode-execution.test.ts', 'personal-goal-round-driver.test.ts', 'personal-forget-loop.test.ts', 'work-and-chat-runtime.test.ts', 'work-and-chat-controls.test.ts', 'w4-first-work-switch.test.ts', 'relay-phone.test.mjs', 'empty-chat-navigation.mjs'];
 if (process.platform === 'linux' && process.argv.some(arg => targets.some(name => arg.endsWith(name)))) {
   const urls = new Set([new URL('../../src/personal-projects/index.mjs', import.meta.url).href,
     new URL('../../src/personal-access/store.mjs', import.meta.url).href]);
