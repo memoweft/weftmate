@@ -32,9 +32,7 @@ html[data-reduced-motion] .reply-working>.reply-sheen,html[data-reduced-motion] 
 @keyframes m-enter-rise { from { opacity:.72;transform:translateY(8px) } to { opacity:1;transform:none } }
 [data-motion="enter-fade"] { animation:m-fade var(--dur-1) var(--ease-out) both }
 @keyframes m-fade { from { opacity:.72 } to { opacity:1 } }
-[data-motion="stagger-rise"] > :nth-child(2),.m-stagger-rise > :nth-child(2) { animation-delay:calc(var(--dur-1) / 4) }
-[data-motion="stagger-rise"] > :nth-child(3),.m-stagger-rise > :nth-child(3) { animation-delay:calc(var(--dur-1) / 2) }
-[data-motion="stagger-rise"] > :nth-child(n+4),.m-stagger-rise > :nth-child(n+4) { animation-delay:var(--dur-1) }
+[data-motion="stagger-rise"] > :nth-child(n+2),.m-stagger-rise > :nth-child(n+2) { animation-delay:var(--dur-1) }
 [data-motion="sheet-in"] { animation:m-sheet-in var(--dur-4) var(--ease-out) both }
 @keyframes m-sheet-in { from { transform:translateX(102%) } to { transform:none } }
 /* unfold: wrap content in one child; toggle .open or aria-expanded. */
