@@ -168,6 +168,7 @@ try {
   await snapshot('initial-empty-chat');
   assert.equal(await page.locator('#assistant-view .conversation-mode-switch').isVisible(), true,
     '#622 the empty conversation has its own mode choice at the top');
+  assert.equal(await page.getByRole('tab', { name: '对话', exact: true }).count(), 1, 'sidebar and draft mode controls have distinct accessible names');
   await page.getByRole('button', { name: '成果库', exact: true }).click();
   await page.locator('.library-surface').waitFor({ state: 'visible' });
   assert.equal(await page.locator('.conversation-mode-switch').isVisible(), false, 'the draft mode choice belongs only to the conversation');
@@ -255,7 +256,7 @@ try {
     await assertChat(await snapshot(`new-chat-after-${label}`), await page.locator('#message-text').inputValue());
   }
   const draftModes = page.getByRole('tablist', { name: '新对话模式', exact: true });
-  await draftModes.getByRole('tab', { name: '工作', exact: true }).click();
+  await draftModes.getByRole('tab', { name: '新对话：工作', exact: true }).click();
   await page.waitForFunction(() => emptyChatCore.currentConversationMode() === 'work');
   assert.equal(await page.locator('#send-message').isDisabled(), true, 'first work message requires a folder');
   await page.evaluate(() => { emptyChatCore.state.computers = [
@@ -276,7 +277,7 @@ try {
   await page.locator('#approval-mode-menu [data-mode="ask"]').click();
   await page.waitForFunction(() => emptyChatCore.state.newConversationApprovalMode === 'ask');
   await snapshot('work-choices');
-  await draftModes.getByRole('tab', { name: '对话', exact: true }).click();
+  await draftModes.getByRole('tab', { name: '新对话：对话', exact: true }).click();
   await page.waitForFunction(() => emptyChatCore.currentConversationMode() === 'chat');
   assert.equal(await toolbar.isVisible(), false);
   assert.equal(await page.locator('#approval-mode-trigger').isVisible(), true);

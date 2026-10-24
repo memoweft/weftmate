@@ -13,7 +13,7 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     modes.hidden = !enabled;
     draftModes.hidden = !enabled || !core.state.newConversation;
     for (const b of draftModes.children) {
-      const selected = b.dataset.mode === core.currentConversationMode();
+      const selected = b.dataset.draftMode === core.currentConversationMode();
       b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1;
       b.disabled = !!core.state.submitting || !!core.state.unresolvedSubmission;
     }
@@ -113,9 +113,11 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     draftModes = modes.cloneNode(true); draftModes.className = 'rail-mode-switch conversation-mode-switch';
     draftModes.setAttribute('aria-label', '新对话模式');
     for (const b of draftModes.children) {
+      b.dataset.draftMode = b.dataset.mode; delete b.dataset.mode;
+      b.setAttribute('aria-label', `新对话：${b.dataset.draftMode === 'work' ? '工作' : '对话'}`);
       b.setAttribute('aria-controls', 'conversation-pane');
       b.onclick = () => { core.cancelNextSuggestions?.();
-        void Promise.resolve(b.dataset.mode === 'work' ? core.startNewWork() : core.startNewConversation())
+        void Promise.resolve(b.dataset.draftMode === 'work' ? core.startNewWork() : core.startNewConversation())
           .catch(cause => ui.toast(core.failureMessage(cause))); };
     }
     draftModes.onkeydown = event => { if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return; event.preventDefault();
