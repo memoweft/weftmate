@@ -11,7 +11,9 @@ import { feedbackUiSession } from '../helpers/feedback-ui-session.mjs';
 
 const repo = resolve(import.meta.dirname, '../..');
 const profile = await mkdtemp(join(tmpdir(), 'weftmate-fix-motion-'));
-process.env.WEFTMATE_MANAGED_TEMP_ROOT = join(profile, 'fixtures');
+// Keep the CI runner's managed parent/scope together; local direct runs get
+// their own fixture root so they never scan another test's temporary files.
+if (!process.env.WEFTMATE_TEST_TEMP_SCOPE) process.env.WEFTMATE_MANAGED_TEMP_ROOT = join(profile, 'fixtures');
 const out = process.env.WEFTMATE_MOTION_OUTPUT;
 if (out) await mkdir(out, { recursive: true });
 const bootstrap = join(profile, 'motion-shell.mjs');
