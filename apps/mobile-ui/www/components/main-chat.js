@@ -158,7 +158,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     }
     function paintLiveChatMessages() {
         if(!main()||core.state.chatWindow.search.query.trim())return false;
-        if(globalThis.WeftTimeline?.prepare && core.mainChatDays().some(day=>day.events.some(event=>event.data?.modelThinking)))return false;
+        if(globalThis.WeftTimeline?.prepare && core.mainChatDays().some(day=>day.events.some(event=>event.data?.live && event.data?.modelThinking)))return false;
         const live=core.mainChatDays().flatMap(group=>group.events).filter(event=>event.data?.live);
         const keys=new Set(live.map(event=>event.presentationKey||event.eventId));
         if(rows.some(spec=>spec.event?.data?.live&&!keys.has(spec.key)))return false;
@@ -205,7 +205,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             const mappedEvents = group.events.map((event, seq) => ({ ...event, seq, progressSeq:seq, data: { ...event.data,
                 ...(event.data?.taskId?.startsWith('turn-') ? {taskId:`${event.sourceRef.sessionId}:${event.data.taskId}`} : {}),
                 ...(event.data?.completedStep ? {completedStep:{...event.data.completedStep,taskId:event.data.completedStep.taskId?.startsWith('turn-')?`${event.sourceRef.sessionId}:${event.data.completedStep.taskId}`:event.data.completedStep.taskId}}:{}) } })), mapped = globalThis.WeftTimeline?.prepare ? WeftTimeline.prepare(mappedEvents,core.state.personalization?.thinkingDisplay) : mappedEvents, projected = WeftUiCore.projectTimeline(mapped);
-            const specs = visible.map(event => ({ kind: event.type === 'side.result' ? 'result' : 'message', key: event.presentationKey || event.eventId, event, seq: mapped.find(item => item.eventId === event.eventId).seq, estimate: 100 }));
+            const specs = visible.map(event => ({ kind: event.type === 'side.result' ? 'result' : 'message', key: event.presentationKey || event.eventId, event, seq: mapped.find(item => item.eventId === event.eventId && item.type === event.type).seq, estimate: 100 }));
             for (const block of projected.groups) {
                 const end = projected.groups.find(next => next.seq > block.seq)?.seq ?? Infinity;
                 const events = mapped.filter(event => event.seq >= block.seq && event.seq < end && !['user.message', 'assistant.message', 'side.result'].includes(event.type)).flatMap(event=>event.type==='artifact.created' ? event.data?.completedStep ? [{...event,type:'step.completed',data:event.data.completedStep}] : [] : [event]);

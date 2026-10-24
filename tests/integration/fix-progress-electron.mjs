@@ -177,6 +177,20 @@ try {
   assert.equal(probes.copiedThinking,'先检查合成命令。');
   assert.match(probes.code,/^\$ Write-Output/);assert.equal(probes.output,'synthetic output');assert.equal(probes.copied,probes.code);
   assert.equal(probes.highlighted,true);assert.equal(probes.summary,'已运行 1 个命令');
+  if(logical) {
+    const reasoningOnly=await page.evaluate(()=>{
+      const original=progressCore.mainChatDays,sessionId=progressCore.state.selectedSessionId;
+      const event=(seq,type,data)=>({seq,type,data,eventId:'synthetic-reasoning-'+seq,at:new Date().toISOString(),orderKey:String(seq),sourceRef:{sessionId,seq}});
+      try {
+        progressCore.mainChatDays=()=>[{date:'2026-10-25',label:'今天',collapsed:false,events:[
+          event(0,'turn.started',{turn:9}),event(1,'assistant.message',{streamSeq:1,text:'只有思考后的合成答案。',modelThinking:'先核对合成问题。',thinkingMs:1000}),event(2,'turn.ended',{turn:9,reason:'completed'})]}];
+        progressUi.renderMainChat();
+        const rows=[...document.querySelectorAll('#transcript > li')];
+        return {answer:rows.findIndex(row=>row.querySelector('.message-text')?.textContent==='只有思考后的合成答案。'),progress:rows.findIndex(row=>row.querySelector('.model-thinking'))};
+      } finally {progressCore.mainChatDays=original;progressUi.renderMainChat();}
+    });
+    assert.ok(reasoningOnly.progress>=0 && reasoningOnly.answer>reasoningOnly.progress,'a reasoning-only reply keeps progress above the answer');
+  }
   const queueProbe=await page.evaluate(()=>{
     const before=progressCore.state.historyEvents,commands=progressCore.state.tasks;
     const queued=(seq,id)=>({seq,type:'task.queued',data:{taskId:id,text:id}});
