@@ -26,7 +26,8 @@ const killTree = () => {
 const deadline = setTimeout(() => { killTree(); process.exitCode = 1; }, 90000);
 try {
   fixture = await startFixture();
-  const at = new Date(); at.setUTCHours(6, 32, 0, 0);
+  const accountDay = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
+  const at = new Date(accountDay + 'T06:32:00Z');
   const rows = fixture.logs.get(fixture.source);
   rows.find(row => row.type === 'user.message').at = new Date(+at - 96000).toISOString();
   for (const type of ['assistant.message', 'turn.ended']) rows.find(row => row.type === type).at = at.toISOString();

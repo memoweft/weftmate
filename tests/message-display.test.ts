@@ -14,7 +14,9 @@ test('reply controls and account-local time appear on hover, focus or tap, with 
         for (const name of ['tokens.css', 'message-actions.css']) await page.addStyleTag({ path: fileURLToPath(new URL(`../src/personal-access-ui/${name}`, import.meta.url)) });
         await page.addScriptTag({ path: fileURLToPath(new URL('../src/personal-access-ui/message-actions.js', import.meta.url)) });
         await page.evaluate(() => {
-          const scope = globalThis as any, at = new Date(); at.setUTCHours(6, 32, 0, 0);
+          const scope = globalThis as any;
+          const accountDay = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
+          const at = new Date(accountDay + 'T06:32:00Z');
           scope.displayEvents = [
             { seq: 0, type: 'turn.started', at: new Date(+at - 100000).toISOString(), data: { turn: 1 } },
             { seq: 1, type: 'user.message', at: new Date(+at - 96000).toISOString(), data: { text: '合成提问' } },
