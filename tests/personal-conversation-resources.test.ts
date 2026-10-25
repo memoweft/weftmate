@@ -8,6 +8,14 @@ import { conversationResources } from '../src/personal-access/resources.mjs'
 import { createPersonalAccessService } from './helpers/personal-access-fixture.mjs'
 import { waitForCommand } from './helpers/wait-for-command.mjs'
 
+test('#660 memory references remain available in output and sources without copying recalled text',async()=>{
+  const context={callBackend:read=>read(),backend:{readEvents:async()=>({events:[{seq:1,type:'assistant.message',data:{memoryUsed:[{kind:'cognition',id:'synthetic-memory',summary:'private recalled text'}]}}],nextSeq:1,hasMore:false})}};
+  const result=await conversationResources(context,{commands:{}},'session-one','owner-one',-1);
+  assert.equal(result.sources[0].kind,'memory');
+  assert.deepEqual(result.sources[0].memory,{kind:'cognition',id:'synthetic-memory'});
+  assert.doesNotMatch(JSON.stringify(result),/private recalled text/);
+});
+
 test('conversation resources project files, webpages and tools without returning raw output or other sessions', async () => {
   const step = { taskId: 'turn-1', stepId: 'read-1', toolName: 'read', summary: '读取 2 个文件', detailRef: { seq: 1 } }
   const events = [{ seq: 1, type: 'step.started', data: step }, { seq: 2, type: 'step.completed', data: { ...step, detailRef: { seq: 2 } } },

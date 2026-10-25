@@ -29,6 +29,7 @@ import {
 import { InProcessApiClient, toFetchHandler } from '@deepseek-ai/dsh-host-apiproxy'
 import { nativeTimelineLog } from '../runtime/dsh-adapter/timeline.mjs'
 import { nativeSessionLifecycle } from '../runtime/dsh-adapter/session-lifecycle.mjs'
+import { createNativeCommands } from '../runtime/dsh-adapter/commands.mjs'
 
 export const name = 'weftmate-host'
 // apiProxy is a hard composition dependency: Gateway v1 constructs its
@@ -43,8 +44,10 @@ export function apply(ctx) {
   const lifecycle = nativeSessionLifecycle(ctx)
   ctx.provide('weftmateSessionLifecycle', lifecycle)
   const readLog = nativeTimelineLog(ctx);
+  const client = new InProcessApiClient(toFetchHandler(apiProxy));
   const gatewayV1 = createGatewayV1({
-    client: new InProcessApiClient(toFetchHandler(apiProxy)),
+    client,
+    nativeCommands:createNativeCommands({client,lifecycle,getAgent:id=>ctx.get('agents')?.get(id),getCommands:()=>ctx.get('commands')}),
     readLog,
     lifecycle,
     // P1-05 diagnostics deps：pin 由打包/启动方注入（env），不自行推断。

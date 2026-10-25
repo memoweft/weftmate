@@ -120,7 +120,7 @@
   handleChatScroll=function(){if(main()){ensureConversationScroll().scrolled();syncPendingDecision();}else oldScroll();};
   send=async function(options={}){
     if(window.weftNative&&state.connection==='expired'){globalThis.WeftMobileCloud.core?.startCloudJourney();return;}
-    try{return await (main()?uiCore.sendMainDraft($('draft').value,options.intent):state.logicalChats&&!window.weftNative?uiCore.sendDraft($('draft').value,options.intent):oldSend(options));}
+    try{return await (main()?uiCore.sendDraft($('draft').value,options.intent):state.logicalChats&&!window.weftNative?uiCore.sendDraft($('draft').value,options.intent):oldSend(options));}
     finally{if(state.chatSource==='host'&&state.page==='chat')scheduleSharedPoll();}
   };
   selectSharedSession=function(id){return state.logicalChats?uiCore.selectLogicalSession(id):nativeSides(id);};

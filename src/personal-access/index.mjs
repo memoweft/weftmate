@@ -690,8 +690,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     if (closing) throw failure('SERVICE_CLOSING', 503);
   }
 
-  function callBackend(task) {
-    return withDeadline(() => { requireOpen(); return task(); }, DISPATCH_TIMEOUT_MS);
+  function callBackend(task, timeoutMs = DISPATCH_TIMEOUT_MS) {
+    return withDeadline(() => { requireOpen(); return task(); }, timeoutMs);
   }
 
   function serial(task) {

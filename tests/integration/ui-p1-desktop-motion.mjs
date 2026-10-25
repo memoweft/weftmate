@@ -27,9 +27,10 @@ let application, page, candidate;
 const retiredCandidates = [];
 const errors = [], results = [], performanceResults = [];
 async function until(check) { const deadline = performance.now() + 30000; while (performance.now() < deadline) { if (await check()) return; await new Promise(done => setTimeout(done, 50)); } throw Error('Motion fixture condition timed out'); }
+const processSummary=phase=>phase==='before'?page.getByText('执行了 2 步 · 用时 2 秒',{exact:true}):page.locator('.execution-block > summary').first();
 async function frames(phase, name, action) {
   console.log(`${phase}: ${name}`);
-  if (name.startsWith('execution-')) await page.getByText(phase === 'before' ? '执行了 2 步 · 用时 2 秒' : '读取了 3 个文件、已运行 1 个命令', { exact: true }).scrollIntoViewIfNeeded();
+  if (name.startsWith('execution-')) await processSummary(phase).scrollIntoViewIfNeeded();
   if (name === 'approval-resolve') await page.locator('[data-conversation-approval]').first().scrollIntoViewIfNeeded();
   await page.evaluate(() => {
     for (const animation of document.getAnimations()) { try { animation.finish(); } catch {} }
@@ -157,7 +158,7 @@ try {
     await page.getByRole('heading', { name: '登录 WeftMate' }).waitFor();
     await frames(phase, 'approval-enter', async () => { await localUiSession(page, candidate.credentials,'Synthetic motion regression',{interceptLegacyStatus:false}); await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor(); });
     await page.getByRole('button', { name: phase === 'before' ? '允许一次' : '批准', exact: true }).waitFor();
-    const summary = page.getByText(phase === 'before' ? '执行了 2 步 · 用时 2 秒' : '读取了 3 个文件、已运行 1 个命令', { exact: true });
+    const summary = processSummary(phase);
     await frames(phase, 'execution-expand', () => summary.evaluate(element => element.click()));
     await frames(phase, 'execution-collapse', () => summary.evaluate(element => element.click()));
     if (phase === 'after') await measure('execution-expand-collapse', async () => { await summary.evaluate(element => element.click()); await page.waitForTimeout(240); await summary.evaluate(element => element.click()); });

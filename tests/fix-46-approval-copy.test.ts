@@ -36,14 +36,15 @@ test('FIX-46 a rejected step is never a retry or a completed operation',()=>{
   events.at(-1)!.data.reason='completed';
   const row={approvalId:'rejected-write',sessionId:'synthetic-session',callId:failed.data.callId,turn:1,status:'resolved',outcome:'rejected'};
   const projected=core.nativeTimelineRows(events,[row]).find(r=>r.type==='native.progress');
-  assert.match(projected.data.summary,/你拒绝了.*report.md.*没有做/);
+  assert.match(projected.data.summary,/写入.*report.md.*被你拒绝了/);
   assert.doesNotMatch(projected.data.summary,/重试|换办法|修改了/);
+  assert.match(projected.data.steps.find(s=>s.callId===row.callId).summary,/写入.*report.md/);
   assert.equal(projected.data.steps.find(s=>s.callId===row.callId).statusText,'你拒绝了，没有做');
   assert.equal(projected.data.steps.find(s=>s.callId===row.callId).attention,false);
   // Historical event receipts produce the same wording without an approval snapshot.
   events.splice(events.length-2,0,{seq:100,type:'approval.requested',data:{approvalId:row.approvalId,callId:row.callId}},
     {seq:101,type:'approval.resolved',data:{approvalId:row.approvalId,outcome:'rejected'}} as any);
-  assert.match(core.nativeTimelineRows(events).find(r=>r.type==='native.progress').data.summary,/你拒绝了.*没有做/);
+  assert.match(core.nativeTimelineRows(events).find(r=>r.type==='native.progress').data.summary,/写入.*被你拒绝了/);
 });
 
 const refused = {toolName:'write',state:'failed',approvalOutcome:'rejected',arguments:{file_path:'report.md'}};
@@ -53,7 +54,7 @@ for (const [name,outcome] of [
   ['user stop',{terminal:true,reason:'aborted'}],
 ] as const) test(`FIX-46 refusal preserves the whole reply status: ${name}`,()=>{
   const core:any=timelineCore(),baseline=core.progressText([],outcome),value=core.progressText([refused],outcome);
-  assert.match(value.text,/你拒绝了.*report.md.*没有做/);
+  assert.match(value.text,/写入.*report.md.*被你拒绝了/);
   assert.ok(value.text.includes(baseline.text),`missing reply status: ${baseline.text}`);
   assert.equal(value.failed,baseline.failed);assert.equal(value.running,baseline.running);
   if(outcome.reason==='error')assert.equal(value.failed,true);
@@ -68,7 +69,7 @@ for (const [name,outcome] of [
 test('FIX-46 refusal keeps another failed step and the reply failure marker',()=>{
   const core:any=timelineCore(),other={toolName:'web_fetch',state:'failed',summary:'读取网页'},outcome={terminal:true,reason:'error'};
   const baseline=core.progressText([other],outcome),value=core.progressText([refused,other],outcome);
-  assert.match(value.text,/你拒绝了.*report.md.*没有做/);
+  assert.match(value.text,/写入.*report.md.*被你拒绝了/);
   assert.ok(value.text.includes(baseline.text));assert.equal(value.failed,true);
   assert.equal(core.classifyProgress([refused,other],outcome).retries,1);
 });
