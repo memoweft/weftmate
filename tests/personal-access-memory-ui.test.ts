@@ -374,6 +374,7 @@ test('memory view preserves chat draft and discards a successful response for an
     history: { replaceState() {} }, addEventListener() {}, WeftIcons: null as any }
   mountDesktopTestTree(document, get)
   const context = { document, window, matchMedia: () => ({matches:false,addEventListener(){},removeEventListener(){}}), location: { ...window.location, protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl, Event,
+    MutationObserver: class { constructor(_callback: () => void) {} observe() {} disconnect() {} },
     Option: class extends Node { constructor(text: string, value: string) { super(); this.tagName = 'OPTION'; this.textContent = text; this.value = value } },
     crypto: { randomUUID: () => `synthetic-${++requestSequence}` },
     localStorage: { getItem: (key: string) => storage.get(key) ?? null,

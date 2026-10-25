@@ -3,16 +3,19 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     let registry, selected = 'general', dialog, search, navigation, content, picker, returnFocus, cloudNotice;
     const panels = new Map(), positions = new Map();
     let updateGeneration = 0;
+    let usageScope = '';
     const mountedCategories = new Map();
     const node = (tag, className, text) => ui.element(tag, className, text);
     function selectSettings(id, options = {}) {
         if (id === 'healthData') id = 'reviewHealth';
         const category = registry.get(id);
         if (!category || !registry.list({ desktop: !!globalThis.weftmateDesktop }).includes(category)) return;
-        if (id === selected && mountedCategories.get(id) === core.state.identityGeneration && !Object.keys(options).length) return;
+        const sameScope = id !== 'usage' || usageScope === (options.sessionId || '');
+        if (id === selected && sameScope && mountedCategories.get(id) === core.state.identityGeneration && !Object.keys(options).length && !search.value.trim()) return;
         if(id==='models')void core.refreshModelServices?.().catch(()=>ui.toast('模型服务暂时无法读取，请重试。'));
         if (!panels.has(id)) { const panel = node('section', 'settings-category'); panel.dataset.category = id; panels.set(id, panel); content.append(panel); }
         if (content) positions.set(selected, content.scrollTop);
+        if (panels.get(selected)?.querySelector('.wm-skeleton,[aria-busy=true]')) mountedCategories.delete(selected);
         if (selected === 'devices' && id !== 'devices') ui.stopCloudPairing();
         selected = id;
         if (id !== 'memory' && core.state.currentView === 'memory') core.openAccount();
@@ -25,16 +28,31 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             if (button.dataset.category === id) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
         }
         content.scrollTop = positions.get(id) || 0;
-        category.mount({ ...options, target: panels.get(id), core, ui });
+        const cached = mountedCategories.get(id) === core.state.identityGeneration;
+        if (!cached || !sameScope || Object.keys(options).length || ['account', 'devices', 'memory', 'about', 'executionRecords', 'connectors'].includes(id))
+            category.mount({ ...options, target: panels.get(id), core, ui });
+        if (id === 'usage') usageScope = options.sessionId || '';
         mountedCategories.set(id, core.state.identityGeneration);
         const panel = panels.get(id);
         if (id !== 'appearance') {
             globalThis.WeftSettingsControls.groupRows(panel, category.name);
-            for (const form of panel.querySelectorAll('.personalization-form')) globalThis.WeftSettingsControls.groupRows(form, category.name);
+            for (const form of panel.querySelectorAll('.personalization-form,.notification-settings')) globalThis.WeftSettingsControls.groupRows(form, category.name);
+        }
+        for (const heading of panel.querySelectorAll('h2')) {
+            if (heading.textContent.trim() === category.name && !heading.closest('.settings-group')) heading.classList.add('settings-redundant-title');
+        }
+        registry.register({...category,keywords:[...new Set([...category.keywords,...[...panel.querySelectorAll('label,.row-label,h3')].map(item=>item.textContent.trim())])]});
+        const query = search.value.trim().toLocaleLowerCase();
+        if (query) {
+            const match = [...panel.querySelectorAll('label,.settings-row')].find(row => row.textContent.toLocaleLowerCase().includes(query));
+            if (match) {
+                for (let parent = match.parentElement; parent && parent !== panel; parent = parent.parentElement) if (parent.tagName === 'DETAILS') parent.open = true;
+                match.scrollIntoView({block:'center'});
+            }
         }
         if (globalThis.WeftReplyMotion?.reduced ?? matchMedia('(prefers-reduced-motion: reduce)').matches) {
             for (const animation of dialog.getAnimations({ subtree: true })) animation.cancel();
-        } else globalThis.WeftMotion?.reveal(panels.get(id), 'base');
+        } else globalThis.WeftMotion?.reveal(panels.get(id), 'slow');
     }
     function renderSettingsNavigation() {
         navigation.replaceChildren(); picker.replaceChildren();
@@ -56,13 +74,16 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     }
     function showSettingsDialog() {
         if (dialog?.open) return;
-        if (dialog) { returnFocus = document.activeElement; dialog.showModal(); globalThis.WeftMotion?.reveal(dialog, 'slow'); }
+        if (dialog) { returnFocus = document.activeElement; dialog.inert = false; dialog.showModal(); }
         const strip = ui.byId('settings-usage-strip');
         const ready = WeftControls.loading(strip, { rows: 1, compact: true });
         void core.loadUsageStrip().then(text => { if (text && dialog.open && ready()) strip.textContent = text; }).catch(() => { if (dialog.open && ready()) strip.textContent = '本月用量暂时无法读取，点此重试。'; });
         selectSettings(core.state.currentView === 'memory' ? 'memory' : selected);
     }
-    function hideSettingsDialog() { if (dialog?.open) dialog.close(); }
+    function hideSettingsDialog() { if (dialog?.open) {
+        for (const id of ['executionRecords', 'connectors']) mountedCategories.delete(id);
+        dialog.inert = true; dialog.close();
+    } }
     async function renderSettingsUpdates(check = false) {
         const target = ui.byId('settings-updates'), token = core.accountToken(), generation = ++updateGeneration;
         const current = () => core.accountIdentityCurrent(token) && generation === updateGeneration && dialog.open && selected === 'about';
@@ -155,6 +176,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const tools = account.querySelector('.tool-settings');
         for (const section of [...tools.querySelectorAll('section')]) move('resources', section);
         move(globalThis.weftmateDesktop ? 'system' : 'general', ui.byId('connection-copy').closest('section'));
+        for (const id of ['projects-status', 'browser-workspace-status']) ui.byId(id).replaceChildren(WeftControls.skeleton({rows:1,compact:true}));
         const nativeSettings = ui.byId('desktop-auto-start');
         if (nativeSettings) {
             const sendTo = ui.byId('desktop-send-to');
