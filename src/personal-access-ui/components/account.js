@@ -332,7 +332,9 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
         ui.byId('account-model-section').hidden = !visible;
     }
     function projectNotice(message) {
-        ui.byId('projects-status').textContent = message;
+        const status = ui.byId('projects-status');
+        if (message === '正在读取项目…') status.replaceChildren(WeftControls.skeleton({rows:1,compact:true}));
+        else status.textContent = message;
     }
     function clearProjectView() {
         ui.byId('projects-list').replaceChildren();
@@ -605,7 +607,9 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
         ui.byId('devices-loading').hidden = hidden;
     }
     function browserWorkspaceText(message) {
-        ui.byId('browser-workspace-status').textContent = message;
+        const status = ui.byId('browser-workspace-status');
+        if (message === '正在核对网页阅读能力…') status.replaceChildren(WeftControls.skeleton({rows:1,compact:true}));
+        else status.textContent = message;
     }
     function browserWorkspaceHidden(hidden) {
         ui.byId('browser-workspace-status').hidden = hidden;

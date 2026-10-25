@@ -351,7 +351,9 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('message-text').value = '';
         ui.byId('message-attachments').value = '';
     }
+    let accountHelp;
     function closeAccountMenu() {
+        accountHelp?.close(false); accountHelp = null;
         ui.byId('account-menu').hidden = true;
         ui.byId('account-menu-trigger').setAttribute('aria-expanded', 'false');
     }
@@ -389,31 +391,48 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             button.onclick = () => { closeAccountMenu(); run(); }; menu.append(button); return button; };
         const usageLink = add('用量详情', 'chart', () => ui.openSettings('usage'));
         identity.after(usageLink); usageLink.append(usage);
-        const help = ui.element('details', 'account-help'), summary = ui.element('summary', 'rail-link', '帮助');
-        summary.prepend(globalThis.WeftIcons.create('info', 16)); help.append(summary); menu.append(help);
-        summary.setAttribute('role', 'button'); summary.setAttribute('aria-expanded', 'false');
-        summary.setAttribute('aria-label', '帮助');
-        help.addEventListener('toggle', () => summary.setAttribute('aria-expanded', String(help.open)));
-        for (const [label, icon, run] of [['新功能', 'sync', () => ui.openReleases()], ['键盘快捷键', 'keyboard', () => ui.openShortcuts()], ['用户指南', 'info', () => ui.openHelp()]]) {
-            const button = add(label, icon, run); help.append(button);
-        }
+        const help = ui.element('button', 'rail-link account-help', '帮助'); help.type = 'button';
+        help.prepend(globalThis.WeftIcons.create('info', 16)); help.append(globalThis.WeftIcons.create('right', 16)); menu.append(help);
+        help.setAttribute('aria-label', '帮助'); help.setAttribute('aria-haspopup', 'menu'); help.setAttribute('aria-expanded', 'false');
+        const openHelp = () => {
+            if (accountHelp) { accountHelp.close(); accountHelp = null; return; }
+            accountHelp = globalThis.WeftPopover.openMenu(help, [
+                {name:'新功能',icon:'sync',action:()=>{closeAccountMenu();ui.openReleases();}},
+                {name:'键盘快捷键',icon:'keyboard',action:()=>{closeAccountMenu();ui.openShortcuts();}},
+                {name:'用户指南',icon:'info',action:()=>{closeAccountMenu();ui.openHelp();}},
+            ], {label:'帮助',onClose:()=>{accountHelp=null;}});
+            accountHelp.menu.classList.add('account-help-menu');
+            globalThis.WeftPopover.position(accountHelp.menu, help, {side:'right'});
+        };
+        help.addEventListener('click', openHelp);
+        help.addEventListener('keydown', event => { if (event.key === 'ArrowRight') { event.preventDefault(); openHelp(); } });
+        new MutationObserver(() => { if (menu.hidden) { accountHelp?.close(false); accountHelp = null; } }).observe(menu, {attributes:true,attributeFilter:['hidden']});
         // Memory and devices remain available through their D31 settings categories.
         ui.byId('rail-memory').hidden = true; ui.byId('rail-devices').hidden = true;
-        add('退出登录', 'logout', () => {
+        const logout = add('退出登录', 'logout', () => {
             const token = core.accountToken(), dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', '退出登录');
             const body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', '退出当前设备？'), ui.element('p', '', '退出后需要重新登录。电脑上的对话与文件会保留。'));
             const cancel = ui.element('button', 'button secondary', '取消'); cancel.onclick = () => dialog.close();
-            const confirm = ui.element('button', 'button primary', '确认退出'); confirm.onclick = () => { dialog.close(); if (core.accountIdentityCurrent(token)) ui.byId('logout-button').click(); };
+            const confirm = ui.element('button', 'button primary', '确认退出'); confirm.onclick = () => {
+                dialog.close();
+                if (!core.accountIdentityCurrent(token)) return;
+                if (core.state.cloudAuth?.mode === 'authenticated') void core.cloudLogout().catch(error => ui.toast(core.cloudError(error)));
+                else ui.byId('logout-button').click();
+            };
             const footer = ui.element('div', 'dialog-footer'); footer.append(cancel, confirm); dialog.append(body, footer);
             dialog.onclose = () => { dialog.remove(); ui.byId('account-menu-trigger').focus(); }; document.body.append(dialog); dialog.showModal(); cancel.focus();
         });
+        const login = add('登录以使用远程访问', 'account', () => core.startCloudJourney());
         ui.byId('account-menu-trigger').addEventListener('click', async () => {
+            accountHelp?.close(false); accountHelp = null;
+            const authenticated = core.state.cloudAuth?.mode === 'authenticated' || core.state.device?.authKind !== 'desktop';
+            logout.hidden = !authenticated; login.hidden = authenticated;
             name.textContent = core.profileName();
             email.textContent = WeftUiCore.accountLabel(core.state.account || {},core.state.cloudAuth?.mode === 'authenticated' ? core.state.cloudAuth.email : '');
             usage.replaceChildren(WeftControls.skeleton({rows:1,compact:true}));
             const token = core.accountToken();
-            try { const text = await core.loadUsageStrip(); if (text && core.accountIdentityCurrent(token) && !menu.hidden) usage.textContent = text; }
-            catch { if (core.accountIdentityCurrent(token) && !menu.hidden) usage.textContent = '本月用量暂时无法读取，请在用量详情重试。'; }
+            try { const text = await core.loadUsageStrip(); if (text && core.accountIdentityCurrent(token) && !menu.hidden) usage.textContent = text.split(' · ')[0]; }
+            catch { if (core.accountIdentityCurrent(token) && !menu.hidden) usage.textContent = '暂不可用'; }
         });
         menu.addEventListener('keydown', event => {
             const buttons = [...menu.querySelectorAll('button,summary')].filter(button => button.getClientRects().length), index = buttons.indexOf(document.activeElement);
