@@ -3,10 +3,10 @@
     const { segmented, toggle, row, select } = globalThis.WeftControls;
     const disclosures = new WeakSet();
     const disclosureAnimations = new Set();
-    const reduced = () => globalThis.WeftReplyMotion?.reduced ?? matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = () => globalThis.WeftReplyMotion?.reduced ?? window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const settleDisclosures = () => { if(reduced())for(const animation of disclosureAnimations)animation.finish(); };
     addEventListener('weft-reply-motion-change',settleDisclosures);
-    matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',settleDisclosures);
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',settleDisclosures);
     function timing(token = '--dur-4') {
         const css = getComputedStyle(document.documentElement), value = css.getPropertyValue(token).trim();
         return { duration: parseFloat(value) * (value.endsWith('ms') ? 1 : 1000), easing: css.getPropertyValue('--ease-out').trim() };
