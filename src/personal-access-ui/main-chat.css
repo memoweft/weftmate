@@ -118,6 +118,7 @@
 #conversation-pane.chat-workspace :is(.execution-step,.execution-step-group,.execution-block,.approval-detail,.question-bar-detail)[data-motion=unfold]::details-content { display:block; block-size:0; overflow:clip; interpolate-size:allow-keywords; content-visibility:hidden; transition:block-size var(--dur-4) var(--ease-out),content-visibility var(--dur-4) allow-discrete; }
 #conversation-pane.chat-workspace :is(.execution-step,.execution-step-group,.execution-block,.approval-detail,.question-bar-detail)[data-motion=unfold][open]::details-content { block-size:auto; content-visibility:visible; }
 #conversation-pane.chat-workspace .execution-block[data-motion=unfold]::details-content { transition-duration:var(--dur-5); }
+#conversation-pane.chat-workspace .motion-details[data-motion=unfold]::details-content { transition:none; }
 #conversation-pane.chat-workspace .progress-chevron { transition:transform var(--dur-3) var(--ease-out); }
 #conversation-pane.chat-workspace .message:focus-visible { outline:2px solid var(--line); outline-offset:4px; border-radius:6px; }
 @media (max-width:760px) {

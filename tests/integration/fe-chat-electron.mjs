@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {_electron} from 'playwright';
 import {createRequire} from 'node:module';
 import {randomUUID} from 'node:crypto';
-import {mkdtemp,mkdir,writeFile,rm,open,unlink} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,rm,open,unlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -48,6 +48,10 @@ try {
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repo,args:[bootstrap],env,timeout:30000});
   for(const stream of [app.process().stdout,app.process().stderr])stream?.on('error',e=>{if(e.code!=='EPIPE')throw e});
   const page=await app.firstWindow();page.setDefaultTimeout(12000);
+  if(process.env.WEFTMATE_FE_CHAT_SHELL_MOTION) {
+    const source=await readFile(process.env.WEFTMATE_FE_CHAT_SHELL_MOTION,'utf8');
+    await page.route('**/personal/v1/ui/motion.js',route=>route.fulfill({body:source,contentType:'text/javascript'}));
+  }
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/personal/v1/settings/usage',route=>route.fulfill({json:{timeZone:'Asia/Shanghai'}}));
   await feedbackUiSession(page,fixture,{native:true});
@@ -165,6 +169,7 @@ try {
     await capture('disclosure',()=>work,1900);const frames=await work;await writeFile(join(out,'disclosure-heights.json'),JSON.stringify(frames,null,2));const full=Math.max(...frames.open);assert.ok(full>frames.closed+20,JSON.stringify({closed:frames.closed,full,first:frames.open.slice(0,6)}));
     assert.ok(frames.open.some(n=>n>frames.closed+2&&n<full-2),'opening changes actual height');
     assert.ok(frames.close.some(n=>n>frames.closed+2&&n<full-2),'closing changes actual height');
+    assert.ok(Math.abs(frames.close.at(-1)-frames.closed)<=2,'closing finishes at the original summary height');
     await writeFile(join(out,'disclosure-heights.json'),JSON.stringify(frames,null,2));
   });
   await check('tool timestamps and durations are available to focus',async()=>{
