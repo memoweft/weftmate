@@ -22,7 +22,9 @@
     const start=ordered.findLast(item=>item.seq<=event.seq && item.type==='turn.started');
     const next=ordered.find(item=>item.seq>event.seq && (item.type==='turn.started' || !start && item.type==='user.message'));
     const tail=ordered.filter(item=>item.seq>event.seq && (!next || item.seq<next.seq));
-    if(tail.some(item=>item.type.startsWith('step.') || ['assistant.message','user.message'].includes(item.type)))return false;
+    if(tail.some(item=>['assistant.message','user.message'].includes(item.type)))return false;
+    if(tail.some(item=>item.type==='turn.ended' && item.data?.reason==='completed'))return true;
+    if(tail.some(item=>item.type.startsWith('step.')))return false;
     if(tail.some(item=>item.type==='turn.ended'))return true;
     return !start && (!running || !!next);
   }
@@ -36,8 +38,10 @@
       if (event.data?.taskId) taskId = event.data.taskId;
       if (event.type !== 'assistant.message') return [event];
       const next = ordered.find(item=>item.seq>event.seq && (item.type==='turn.started' || item.type==='user.message'));
-      const interim = ordered.some(item=>item.seq>event.seq && (!next || item.seq<next.seq) &&
-        (item.type.startsWith('step.') || item.type==='assistant.message' && (item.data?.text || item.data?.images?.length)));
+      const tail=ordered.filter(item=>item.seq>event.seq && (!next || item.seq<next.seq));
+      const completed=tail.some(item=>item.type==='turn.ended' && item.data?.reason==='completed');
+      const interim = tail.some(item=>item.type==='assistant.message' && (item.data?.text || item.data?.images?.length)) ||
+        !completed && tail.some(item=>item.type.startsWith('step.'));
       const language = WeftUiCore.progressLanguage(ordered,{seq:event.seq,steps:[{sessionId:event.sessionId || event.sourceRef?.sessionId}]});
       const data = event.data, anchor = event.progressSeq ?? data.streamSeq ?? event.seq;
       const result = [];

@@ -42,3 +42,14 @@ test('#660 English interim reasoning stays behind the thinking disclosure in a C
   assert.equal(prepared.some(e=>e.data?.toolName==='__progress' && /Now write/.test(e.data.progressText)),false);
   assert.equal(prepared.find(e=>e.data?.modelThinking==='Now write the file.').data.summary,'思考过程');
 });
+test('#660 late tool completion stays above the final reply rather than swallowing it',()=>{
+  const f=timeline(),events=[{seq:0,type:'turn.started',data:{turn:1}},
+    {seq:1,type:'user.message',data:{text:'查一下天气。'}},
+    {seq:2,type:'assistant.message',data:{text:'今天多云。'}},
+    {seq:3,type:'step.completed',data:{taskId:'turn-1',stepId:'weather',toolName:'web_fetch'}},
+    {seq:4,type:'turn.ended',data:{turn:1,reason:'completed'}}];
+  const prepared=f.WeftTimeline.prepare(events),projected=f.WeftUiCore.projectTimeline(prepared,[],true);
+  assert.equal(prepared.find(e=>e.type==='assistant.message')?.data.text,'今天多云。');
+  assert.ok(f.WeftUiCore.progressPosition(prepared,projected.groups[0],true)<2);
+  assert.equal(f.WeftTimeline.isFinalReply(events,events[2]),true);
+});

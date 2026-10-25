@@ -350,7 +350,7 @@
     }
     globalThis.WeftUiCore.groupConsecutiveSteps = groupConsecutiveSteps;
     function progressPosition(events, block, chronological = false) {
-        if (chronological) return block.seq;
+        if (chronological) return Number.isFinite(block.replySeq) ? Math.min(block.seq,block.replySeq-0.01) : block.seq;
         if (!turnOutcome(events, block.taskId).terminal) return block.seq;
         const session = block.steps[0]?.sessionId;
         const end = events.filter(event => ['turn.ended','task.ended'].includes(event.type) && turnOutcome([event],block.taskId).terminal).at(-1);
@@ -485,6 +485,13 @@
             bundle.seq = event.seq;
         }
         for (const block of groups) {
+            if(mergeTurns) {
+                const session=block.steps[0]?.sessionId;
+                const belongs=event=>!session || (event.sessionId || event.sourceRef?.sessionId)===session;
+                const start=ordered.findLast(event=>belongs(event) && event.type==='turn.started' && event.seq<=block.seq);
+                const next=ordered.find(event=>belongs(event) && event.type==='turn.started' && event.seq>block.seq);
+                block.replySeq=ordered.find(event=>belongs(event) && event.type==='assistant.message' && event.seq>(start?.seq ?? -Infinity) && (!next || event.seq<next.seq))?.seq;
+            }
             const language = progressLanguage(ordered, block);
             block.language = language;
             for (const step of block.steps) {
