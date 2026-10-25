@@ -3,7 +3,7 @@ globalThis.WeftAuxiliaryMotion = {
     expanded: new WeakMap(),
     expand(content, open, trigger) {
         trigger?.setAttribute('aria-expanded', String(open));
-        if (globalThis.WeftMotion?.visibility) { WeftMotion.visibility(content, open); return; }
+        if (globalThis.WeftMotion?.visibility) { globalThis.WeftMotion.visibility(content, open); return; }
         const previous = this.expanded.get(content), from = content.hidden ? 0 : content.getBoundingClientRect().height;
         previous?.cancel(); content.hidden = false; content.inert = !open;
         trigger?.setAttribute('aria-expanded', String(open));

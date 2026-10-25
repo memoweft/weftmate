@@ -231,7 +231,7 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
       content.append(small(m.overview.updatedAt?`数据更新于 ${timeLabel(m.overview.updatedAt)}`:'这一天还没有记录。'));
     }
     };
-    if(globalThis.WeftMotion?.transition)WeftMotion.transition(content,paint,{key:`${m.day}/${m.view}/${m.metric}`});else paint();
+    if(globalThis.WeftMotion?.transition)globalThis.WeftMotion.transition(content,paint,{key:`${m.day}/${m.view}/${m.metric}`});else paint();
     if(viewChanged){const scroller=mobile?document.getElementById('generic-page'):target;if(scroller)scroller.scrollTop=0;}
     if(focusName){const replacement=[...target.querySelectorAll('button')].find(n=>(n.getAttribute('aria-label')||n.textContent)===focusName);replacement?.focus({preventScroll:true});}
     const key=`${m.day}/${m.view}/${m.metric}`;const reduced=G.reducedMotion()||globalThis.WeftReplyMotion?.paused===true;

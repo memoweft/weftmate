@@ -77,7 +77,7 @@
         detail.querySelector('summary').title=[stamp,duration].filter(Boolean).join(' · ');
         detail.querySelector('summary').setAttribute('aria-description',[stamp,duration].filter(Boolean).join(' · '));
         // The common shell takes over measured transitions when available.
-        if(globalThis.WeftMotion?.visibility)WeftMotion.details(detail);
+        if(globalThis.WeftMotion?.visibility)globalThis.WeftMotion.details(detail);
         if(detail.open)void detail.loadDetail();
         return detail;
     }
