@@ -198,6 +198,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
                 page.items = await core.completeHistoryEvents(page.items, historyWindow.state.events);
             if (token !== scope() || generation !== historyWindow.state.generation) return {kind:'cancelled'};
             core.acceptAccountChanges?.(page.accountChanges);
+            await reconcileMainRequests();
+            if (token !== scope() || generation !== historyWindow.state.generation) return {kind:'cancelled'};
             historyWindow.merge(page, direction); core.observeOptimistic(page.items || []); notify();
             void Promise.all([core.refreshConversationApprovals(),core.refreshConversationQuestions()]).catch(()=>{});
             void refreshChatDates().catch(() => {});
@@ -323,6 +325,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
                 page.upserts = await core.completeHistoryEvents(page.upserts, historyWindow.state.events);
             if (token !== scope() || generation !== historyWindow.state.generation) return outcome = core.historyReadResult('cancelled');
             const before = JSON.stringify(historyWindow.ordered());
+            await reconcileMainRequests();
+            if (token !== scope()) return core.historyReadResult('cancelled');
             historyWindow.merge(page, 'changes'); core.observeOptimistic(page.upserts || []);
             if (before !== JSON.stringify(historyWindow.ordered())) {
                 if (!(page.upserts?.length || page.removals?.length)) { if (effects.paintLiveChatMessages?.() !== true) effects.renderMainChat?.(); }
@@ -330,7 +334,6 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             }
             core.acceptAccountChanges?.(page.accountChanges);
             if (page.upserts?.length || page.removals?.length) void core.refreshConversationFacts?.();
-            await reconcileMainRequests();
             if (page.upserts?.length || page.removals?.length) {
                 const main = core.state.workTimeline ? await core.readChat(core.state.selectedChatId) : await core.readMainChat();
                 if (token === scope()) { const changed = JSON.stringify(timelineChat()) !== JSON.stringify(main.chat);
@@ -452,6 +455,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         }
         if (token !== core.state.identityGeneration || row.ownerId !== core.state.ownerId) return;
         row.command = result.command; row.receiptId = row.command?.receiptId;
+        core.rememberTurnRequest(row);
         row.status = ['accepted_by_dsh', 'observed'].includes(row.command?.state) ? 'accepted' : ['rejected', 'failed', 'uncertain'].includes(row.command?.state) ? 'failed' : 'sending';
         core.updateFromCommand(row.command);
         if (row.receiptId) observeOptimistic(historyWindow.ordered());
@@ -493,7 +497,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const blocker = core.sendBlocker(text, true);
         if (blocker) return core.explainSendBlocker(blocker);
         const attachments = core.currentAttachmentDrafts();
-        const row = { ownerId: core.state.ownerId, chatId: core.state.selectedChatId, requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), text, status: 'sending', files: attachments.map(item => item.file.name) };
+        const row = { ownerId: core.state.ownerId, chatId: core.state.selectedChatId, requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), text, at:new Date().toISOString(), status: 'sending', files: attachments.map(item => item.file.name) };
         pending.set(row.requestId, row); notify(); effects.scrollToLatest();
         row.nativeFields = {chatId:row.chatId,text,requestId:row.requestId,modelProfileId:core.state.modelProfileId,intent:intent || core.composerInputMode(core.state.selectedSessionId),attachmentIds:attachments.map(item=>item.attachmentId)};
         if(attachments.length && !environment.mobileState)row.attachmentSnapshot={drafts:[...attachments],modelProfileId:row.nativeFields.modelProfileId};
@@ -556,7 +560,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         retryMainRequest, reconcileMainRequests,
         restoreMainRequests: rows => { for (const row of rows) {
             if(row.kind!=='chat.message'||!row.chatId||!row.requestId||pending.has(row.requestId)||row.state==='rejected')continue;
-            pending.set(row.requestId,{...row,ownerId:core.state.ownerId,text:row.text||'',status:row.state==='accepted'?'accepted':'failed',receiptId:row.command?.receiptId});
+            pending.set(row.requestId,{...row,at:row.at || row.createdAt || new Date().toISOString(),ownerId:core.state.ownerId,text:row.text||'',status:row.state==='accepted'?'accepted':'failed',receiptId:row.command?.receiptId});
         } observeOptimistic(historyWindow.ordered());notify(); },
         mainAttachmentDraftKey: id => inMain() ? `${core.state.ownerId}|${core.state.mainChat.chatId}` : legacy.attachmentDraftKey(id, true),
         resetLogicalSession: () => { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;core.state.sessionListCursor=null;core.state.chatListCursor=null;core.state.sessionListQuery='';core.state.sessionListGeneration=(core.state.sessionListGeneration||0)+1;historyWindow.reset();core.resourceCache=null;effects.resetMainChatView?.(); pending.clear(); drafts.clear(); core.state.mainChat = null; core.state.workTimeline = null; core.state.selectedChatId = null; core.state.chats = []; core.state.sessionStatusSummary = null; }
