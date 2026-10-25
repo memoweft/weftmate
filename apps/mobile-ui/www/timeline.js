@@ -219,6 +219,8 @@
       const focused = document.activeElement, focusStep = focused?.closest?.('.execution-step')?.dataset.step
       const hadFocus = row.contains?.(focused)
       const savedSteps = new Map([...row.querySelectorAll('.execution-step')].map(detail => [detail.dataset.step, detail]))
+      // stepCard mutates reused nodes, so compare with their state before paint.
+      const savedStepStates = new Map([...savedSteps].map(([key, detail]) => [key, detail.dataset.state]))
       const newFailure = view.failed && row.dataset.failed !== 'true'; row.dataset.failed = String(!!view.failed)
       const details = previous || node('details', 'execution-block')
       details.dataset.decisionAnchor=String(options.decisionAnchor ?? block===groups.at(-1));
@@ -266,6 +268,7 @@
           const label=node('summary'),title=node('span','step-group-title'),arrow=node('span','progress-chevron');arrow.setAttribute('aria-hidden','true');arrow.append(WeftIcons.create('chevron',16));label.append(title,arrow);
           detail.append(label,node('div','execution-group-records'));detail.open=children.some(child=>child.open);
         }
+        if(children.some(child=>child.dataset.state==='failed' && savedStepStates.get(child.dataset.step)!=='failed'))detail.open=true;
         if(detail.querySelector('.step-group-title').textContent!==group.summary)detail.querySelector('.step-group-title').textContent=group.summary;
         reconcile(detail.querySelector('.execution-group-records'),children);
         if(globalThis.WeftMotion?.visibility)WeftMotion.details(detail);

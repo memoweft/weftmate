@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {fileURLToPath} from 'node:url';
+import {verifyFailureGroup} from './helpers/fe-chat-failure-group.mjs';
 
 test('FE-CHAT process and in-place question controls', {timeout:30000}, async t=>{
   const browser=await chromium.launch({headless:true,...(process.env.CI?{}:{channel:'chrome'})});
@@ -9,7 +10,7 @@ test('FE-CHAT process and in-place question controls', {timeout:30000}, async t=
     const page=await browser.newPage();
     await page.setContent('<ol id="transcript"></ol><section id="approval-bar" hidden></section>');
     await page.evaluate(()=>{Object.assign(globalThis,{WeftUiCore:{},WeftIcons:{create:()=>document.createElement('span')}});});
-    for(const file of ['ui-core/timeline-model.js','personal-access-ui/timeline.js','personal-access-ui/components/question-bar.js'])
+    for(const file of ['ui-core/timeline-model.js','personal-access-ui/timeline.js','personal-access-ui/components/steps.js','personal-access-ui/components/question-bar.js'])
       await page.addScriptTag({path:fileURLToPath(new URL('../src/'+file,import.meta.url))});
     await t.test('elapsed hover and focus information follows waiting updates on the same process node',async()=>{
       const result=await page.evaluate(()=>{
@@ -27,6 +28,9 @@ test('FE-CHAT process and in-place question controls', {timeout:30000}, async t=
         return {open:(list.querySelector('.execution-block') as HTMLDetailsElement).open,message:list.querySelector('.execution-failure')?.textContent};
       });
       assert.equal(result.open,true);assert.match(result.message,/未能完成|回复未完成/);
+    });
+    await t.test('new terminal failure opens a reused collapsed same-tool group, while unchanged polls retain user collapse and focus',async()=>{
+      await verifyFailureGroup(page);
     });
     await t.test('question choices and submit keep their exact callback and lock through in-place movement',async()=>{
       const result=await page.evaluate(()=>{

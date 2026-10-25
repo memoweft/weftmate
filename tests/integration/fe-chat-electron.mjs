@@ -9,6 +9,7 @@ import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {startFixture} from './ux-4-fixture.mjs';
 import {feedbackUiSession} from '../helpers/feedback-ui-session.mjs';
+import {verifyFailureGroup} from '../helpers/fe-chat-failure-group.mjs';
 
 const repo=resolve(import.meta.dirname,'../..'),out=process.env.WEFTMATE_FE_CHAT_OUTPUT;
 assert.ok(out && !resolve(out).startsWith(repo),'captures belong outside the repository');
@@ -154,6 +155,9 @@ try {
       feChatEvents.push({seq:5,at:'2026-10-26T01:00:02Z',type:'step.completed',data:{taskId:'turn-42',stepId:'file-3',toolName:'read',summary:'读取合成文件 3',state:'completed'}});feChatRender();
       return {group:group===target.querySelector('.execution-step-group'),tool:tool===target.querySelector('.execution-step'),summary:summary===target.querySelector('.execution-step > summary'),focus:document.activeElement===summary,open:tool.open&&group.open};
     });await capture('tool-focus',()=>work,1500);const result=await work;assert.deepEqual(result,{group:true,tool:true,summary:true,focus:true,open:true});
+  });
+  await check('new terminal failure reveals its collapsed tool group and unchanged polling retains collapse and focus',async()=>{
+    await verifyFailureGroup(page,name=>capture(name,null,250));
   });
   await check('process expansion and collapse have real intermediate heights',async()=>{
     await capture('disclosure-closed',()=>page.evaluate(()=>{document.querySelector('#fe-chat-probe .execution-block').open=false}),900);
