@@ -51,6 +51,10 @@ try {
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/personal/v1/settings/usage',route=>route.fulfill({json:{timeZone:'Asia/Shanghai'}}));
   await feedbackUiSession(page,fixture,{native:true});
+  await page.evaluate(async()=>{
+    WeftReplyMotion.setVisibility(false);
+    await Promise.allSettled(document.getAnimations().filter(a=>Number.isFinite(a.effect.getTiming().iterations)).map(a=>a.finished));
+  });
   await page.evaluate(async id=>{await __feedbackSessionCore.selectSession(id)},fixture.source);
   await page.unroute('**/personal/v1/status');
   await page.evaluate(async()=>{const c=__feedbackSessionCore;await c.refreshStatus();await c.refreshSessions();await c.selectMainChat();c.setMessageMode('queue')});
