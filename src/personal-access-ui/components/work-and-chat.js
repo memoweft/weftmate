@@ -1,5 +1,5 @@
 globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
-  let toolbar, subtitle, computer, folder, error, modes, draftModes;
+  let toolbar, subtitle, computer, folder, error, modes, draftModes, introCopy;
   const node = ui.element;
   const project = () => core.currentFolderProject?.();
   function selectLabel(control, label, icon) {if(control.dataset.label===label)return;control.dataset.label=label;
@@ -12,6 +12,11 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     const enabled = core.supportsWorkModes(), working = core.currentConversationMode() === 'work';
     modes.hidden = !enabled;
     draftModes.hidden = !enabled || !core.state.newConversation;
+    const freshPage=!!core.state.newConversation;
+    document.body.classList.toggle('new-conversation-page',freshPage);
+    introCopy.hidden=!freshPage;
+    const description=working?'选好文件夹，交给电脑帮你完成。':'问个问题、整理想法，或聊聊今天。';
+    if(introCopy.textContent!==description)introCopy.textContent=description;
     for (const b of draftModes.children) {
       const selected = b.dataset.draftMode === core.currentConversationMode();
       b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1;
@@ -104,7 +109,7 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     modes = node('div', 'rail-mode-switch'); modes.setAttribute('role', 'tablist'); modes.setAttribute('aria-label', '对话模式');
     for (const [mode, name, icon] of [['chat','对话','chat'], ['work','工作','folder']]) {
       const b = node('button', '', name); b.type = 'button'; b.dataset.mode = mode; b.setAttribute('role','tab'); b.setAttribute('aria-label',name);
-      b.setAttribute('aria-controls','session-list'); b.prepend(WeftIcons.create(icon,18)); b.onclick = () => core.chooseSidebarMode(mode); modes.append(b);
+      b.setAttribute('aria-controls','session-list'); b.prepend(WeftIcons.create(icon,18)); b.onclick = () => {if(core.sidebarConversationMode()!==mode)core.chooseSidebarMode(mode);}; modes.append(b);
     }
     modes.onkeydown = event => { if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return; event.preventDefault();
       const index = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - [...modes.children].indexOf(document.activeElement);
@@ -116,14 +121,15 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
       b.dataset.draftMode = b.dataset.mode; delete b.dataset.mode;
       b.setAttribute('aria-label', `新对话：${b.dataset.draftMode === 'work' ? '工作' : '对话'}`);
       b.setAttribute('aria-controls', 'conversation-pane');
-      b.onclick = () => { core.cancelNextSuggestions?.();
+      b.onclick = () => { if(core.currentConversationMode()===b.dataset.draftMode)return;core.cancelNextSuggestions?.();
         void Promise.resolve(b.dataset.draftMode === 'work' ? core.startNewWork() : core.startNewConversation())
           .catch(cause => ui.toast(core.failureMessage(cause))); };
     }
     draftModes.onkeydown = event => { if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return; event.preventDefault();
       const index = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - [...draftModes.children].indexOf(document.activeElement);
       draftModes.children[index]?.focus(); draftModes.children[index]?.click(); };
-    ui.byId('assistant-title').before(draftModes);
+    const intro=ui.byId('chat-intro');intro.prepend(draftModes);
+    introCopy=node('p','new-conversation-description');intro.querySelector('h1').after(introCopy);
     toolbar = node('div', 'work-mode-toolbar'); toolbar.setAttribute('aria-label', '工作电脑与文件夹'); toolbar.hidden = true;
     computer = button('电脑', 'desktop', trigger => WeftPopover.openMenu(trigger, core.workComputers().map(row => ({ name: row.displayName || row.name, icon: 'desktop',
       checked: row.hostId === core.state.workDraftHostId, description: row.online ? '在线' : '不在线', disabled: !row.online,
