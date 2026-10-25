@@ -11,6 +11,9 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         panel.innerHTML = '<nav class="actions" aria-label="设置分类"><button class="button secondary" type="button" id="cloud-account-tab">账户</button><button class="button secondary" type="button" id="cloud-devices-tab">设备</button></nav><p id="cloud-settings-status" class="form-error" role="status"></p><section id="cloud-account-panel" aria-label="账户"><h2>账户</h2><p class="account-row"><span>邮箱</span><strong id="cloud-email"></strong></p><p id="cloud-login-needed" class="muted"></p><div id="cloud-local-accounts" hidden></div><div class="actions" id="cloud-login-actions"></div><div class="actions" id="cloud-account-actions"></div><div id="cloud-account-flow"></div></section><section id="cloud-devices-panel" aria-label="设备" hidden><div class="group-heading"><h2>设备</h2><button class="button secondary" type="button" id="cloud-directory-refresh">刷新设备</button></div><p id="cloud-directory-status" class="muted" role="status"></p><div class="actions" id="cloud-directory-login"></div><ul id="cloud-directory" class="device-list" aria-live="polite"></ul></section>';
         const refresh = panel.querySelector('#cloud-directory-refresh'); refresh.className='icon-button'; refresh.replaceChildren(WeftIcons.create('sync',18)); refresh.setAttribute('aria-label','刷新设备'); refresh.title='刷新设备';
         account.prepend(panel);
+        const signedIn = globalThis.WeftControls.tag('已登录'); signedIn.id = 'cloud-login-state';
+        const emailValue = ui.element('div', 'cloud-account-identity-value'), email = ui.byId('cloud-email');
+        email.before(emailValue); emailValue.append(email, signedIn);
         ui.paintPendingDevices = () => { paintCloudPending(); const badge = ui.byId('pending-device-badge'); if (badge) badge.hidden = true; };
         ui.byId('cloud-account-tab').addEventListener('click', () => select('account'));
         ui.byId('cloud-devices-tab').addEventListener('click', () => { select('devices'); void refreshDirectory(); });
@@ -53,14 +56,15 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     function paintCloudSettings() {
         if (!ui.byId('cloud-settings')) return;
         const active = core.state.cloudAuth.mode === 'authenticated', view = core.cloudAuthView();
+        ui.byId('cloud-account-panel').dataset.signedIn = String(active);
         ui.byId('cloud-settings').hidden = false;
         ui.byId('cloud-account-actions').hidden = !active;
         ui.byId('cloud-login-actions').hidden = active;
         ui.byId('cloud-login-needed').hidden = active;
-        ui.byId('cloud-login-needed').textContent = view.error || '本机的对话、记忆和设置可以直接使用。需要远程访问时，再登录 WeftMate。';
+        ui.byId('cloud-login-needed').textContent = view.error || '只在这台电脑上用；登录后可远程访问。';
         ui.byId('cloud-email').textContent = active ? core.state.cloudAuth.email : '尚未登录';
         ui.byId('cloud-directory-login').hidden = active;
-        ui.byId('account-heading').closest('section').hidden = active;
+        ui.byId('account-heading').closest('section').hidden = false;
         ui.byId('devices-heading').closest('section').hidden = true;
         ui.byId('cloud-account').hidden = true;
         if (view.localDesktop) { ui.byId('password-open').hidden = true; ui.byId('logout-button').hidden = true; }

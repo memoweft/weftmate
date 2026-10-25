@@ -81,7 +81,7 @@ try {
   await page.getByRole('switch', { name: '半透明侧边栏', exact: true }).check(); assert.equal(await page.evaluate(() => document.documentElement.hasAttribute('data-translucent-sidebar')), true);
   const before = await page.evaluate(() => WeftDesktop.getAppearance()); await page.reload(); await page.waitForFunction(() => !!globalThis.WeftDesktop && globalThis.__feedbackSessionCore?.state.device?.authKind === 'desktop'); await page.evaluate(async () => { await globalThis.__feedbackSessionCore.enterAssistant(); }); assert.deepEqual(await page.evaluate(() => WeftDesktop.getAppearance()), before);
   await page.getByRole('button', { name: '账户菜单', exact: true }).click(); await page.locator('#account-menu').waitFor(); await capture('account-menu');
-  await page.getByRole('button', { name: '帮助', exact: true }).click(); await page.getByRole('button', { name: '用户指南', exact: true }).waitFor(); await capture('account-help');
+  await page.getByRole('button', { name: '帮助', exact: true }).click(); await page.getByRole('menuitem', { name: '用户指南', exact: true }).waitFor(); await capture('account-help');
   assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().some(window => window.isVisible())), false); assert.deepEqual(errors, []);
   console.log('PASS #639/#646: bounded grouped settings, light/dark production Electron, live appearance preferences, renderer reload persistence, account help menu.');
 } catch (error) {

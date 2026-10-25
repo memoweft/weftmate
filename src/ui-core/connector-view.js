@@ -3,13 +3,14 @@
   const node = (tag, cls = '', text = '') => { const el = document.createElement(tag); el.className = cls; el.textContent = text; return el; };
   const button = (text, action, cls = 'secondary') => { const el = node('button', `button ${cls}`, text); el.type = 'button'; el.onclick = action; return el; };
   globalThis.WeftConnectorsView = (core, target, { desktop = false, toast = () => {} } = {}) => {
+    if(target.connectorView?.identity===core.state.identityGeneration){target.connectorView.resume();return;}
     const identity = core.state.identityGeneration, generation = target.connectorGeneration = (target.connectorGeneration ?? 0) + 1;
     const current = () => target.isConnected && identity === core.state.identityGeneration && generation === target.connectorGeneration;
     let saved, selected, editor, timer, reads=0;
     const body = node('div','connectors-view'); target.replaceChildren(body);
     async function load() {
       clearTimeout(timer);const read=++reads;
-      body.replaceChildren(node('p','muted','正在读取…'),node('div','record-skeleton'),node('div','record-skeleton'));
+      body.replaceChildren(WeftControls.skeleton({rows:2}));
       try { const result = await core.readConnectors(); if (current()&&read===reads) { saved = {connectors:[],builtinConnectors:[],canManageConnectors:false,...result}; draw();watch(); } }
       catch { if(current()&&read===reads) body.replaceChildren(node('p','muted','暂时无法读取，请重试。'),button('重试',load)); }
     }
@@ -81,6 +82,7 @@
       const draft=()=>builtin?{builtinId:builtin.id,fields:Object.fromEntries(Object.entries(fields).filter(([key])=>!builtin.fields.find(row=>row.name===key).secret).map(([key,input])=>[key,input.value])),credentials:Object.fromEntries(Object.entries(fields).filter(([key])=>builtin.fields.find(row=>row.name===key).secret).map(([key,input])=>[key,input.value]))}:{name:name.value,transport:kind.value,command:command.value,args:args.value.split('\n').filter(Boolean),url:url.value,credentials:credentials()};
       const test=button('测试连接',async()=>{test.disabled=true;save.disabled=true;notice.textContent='正在测试连接…';try{const input=draft(),result=await core.changeConnector({action:'test',...input});if(!current())return;notice.replaceChildren(node('p',result.connectionTest.ok?'':'connector-problem',result.connectionTest.ok?'连接成功':result.connectionTest.message));if(builtin&&result.connectionTest.ok)notice.append(node('p','muted',builtin.id==='mail'?'收件和发件都可以使用；需要发信或整理时会先问你。':'日历已可以读取；添加后可以查看可用操作。'));else for(const tool of result.connectionTest.tools)notice.append(node('p','muted',`${tool.displayName||tool.rawName} · ${tool.description}`));tested=result.connectionTest.ok?JSON.stringify(input):null;save.disabled=!tested;notice.scrollIntoView({block:'nearest'});}catch{notice.textContent='连接未成功，请检查填写内容后重试。';}finally{test.disabled=false;}});
       const save=button('添加',async()=>{if(tested!==JSON.stringify(draft())){notice.textContent='填写内容已变化，请先测试连接。';save.disabled=true;return;}save.disabled=true;try{await core.changeConnector({action:'add',...draft()});editor.close();await load();toast('连接器已添加');}catch{notice.textContent='添加未完成，请重新测试连接。';test.disabled=false;}},'primary');save.disabled=true;view.actions.append(button('取消',()=>editor.close()),test,save);view.form.onsubmit=event=>event.preventDefault();view.form.addEventListener('input',()=>{save.disabled=true;tested=null;});}
+    target.connectorView={identity,resume:()=>{if(saved)watch();}};
     void load();
   };
 })();
