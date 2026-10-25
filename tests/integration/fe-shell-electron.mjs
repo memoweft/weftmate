@@ -21,7 +21,10 @@ const {app}=createRequire(${JSON.stringify(new URL('../../package.json',import.m
 app.setName('WeftMate FE Shell Test');app.setAppUserModelId('com.memoweft.weftmate.test.fe-shell');app.disableHardwareAcceleration();
 await import(${JSON.stringify(new URL('../../scripts/review-gallery/electron.mjs',import.meta.url).href)});`);
 let app, fixture, child;
-const kill = () => { if(child?.exitCode === null) spawnSync('taskkill.exe',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore',timeout:5000}); };
+const kill = () => { if(child?.exitCode === null) {
+  if(process.platform==='win32')spawnSync('taskkill.exe',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore',timeout:5000});
+  else child.kill('SIGKILL');
+} };
 const deadline = setTimeout(()=>{kill();process.exitCode=1;},150000);
 const failures = [], errors = [];
 try {
