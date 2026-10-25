@@ -42,6 +42,7 @@
         const count = remaining + row.questions.length - index - 1;
         if (count) body.append(node('small', `还有 ${count} 个问题`, 'approval-remaining'));
         const details = node('details', '', 'question-bar-detail'); details.open = !!expanded;
+        details.dataset.motion='unfold';
         details.hidden = !question.detail && !(question.options || []).some(option => option.description);
         details.append(node('summary', question.intent?.kind === 'plan-review' ? '查看执行计划' : '查看完整说明'), node('p', question.detail || question.question));
         for (const option of question.options || []) if (option.description) details.append(node('p', `${option.label}：${option.description}`));
@@ -93,8 +94,9 @@
         return row.outcome === 'cancelled' ? '提问已取消' : '提问已结束';
     }
     function ensure(approval) {
-        let bar = document.getElementById('question-bar');
+        let bar = globalThis.WeftTimeline?.decisionSurface('question-bar') || document.getElementById('question-bar');
         if (!bar) { bar = node('div', '', 'approval-bar question-bar'); bar.id = 'question-bar'; bar.setAttribute('role', 'region'); bar.setAttribute('aria-label', '待回答问题'); bar.hidden = true; approval.after(bar); }
+        globalThis.WeftTimeline?.decisionSurface('question-bar',bar);
         return bar;
     }
     function waiting(approval, count) {
