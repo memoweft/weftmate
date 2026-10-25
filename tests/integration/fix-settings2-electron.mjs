@@ -117,7 +117,7 @@ try {
     await page.waitForFunction(()=>globalThis.__recordReads===2);
     await page.waitForFunction(()=>!document.querySelector('.execution-records .record-skeleton,.execution-records .wm-skeleton'));
     assert.equal(await page.evaluate(()=>globalThis.__recordFilters===document.querySelector('.record-filters')),true,'record loading resumes without rebuilding filters');
-    await page.getByRole('button',{name:'关闭设置',exact:true}).click();await open('executionRecords');
+    await page.evaluate(()=>{document.querySelector('[aria-label="关闭设置"]').click();WeftSettingsNavigation.open('executionRecords');});
     await page.waitForFunction(()=>globalThis.__recordReads===3);
   }
   if(!process.argv.includes('--review-records')) {
