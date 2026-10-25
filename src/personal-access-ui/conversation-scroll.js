@@ -83,7 +83,8 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     globalThis.visualViewport?.addEventListener('resize', changed);
     globalThis.addEventListener?.('resize', changed);
     content.addEventListener('load', changed, true);
-    const beforeToggle = event => { if (event.target.closest?.('summary')) {stop();pinned=false;followingTop=null;paint();} };
+    // A disclosure changes geometry, not the reader's bottom-follow intent.
+    const beforeToggle = event => { if (event.target.closest?.('summary')) {stop();followingTop=null;paint();} };
     content.addEventListener('pointerdown', beforeToggle, true);
     content.addEventListener('keydown', event=>{if(['Enter',' '].includes(event.key))beforeToggle(event)}, true);
     content.addEventListener('toggle', changed, true);
