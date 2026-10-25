@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir, rename, rm, lstat } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { compareVersions, sha256, verifyManifest } from './manifest.mjs';
+import { compareVersions, sha256, verifyManifest, validateManifest } from './manifest.mjs';
 
 export async function atomicJson(file, data) {
   await mkdir(dirname(file), { recursive: true });
@@ -94,7 +94,16 @@ export class UpdateStore {
     this.state.status = 'checking'; this.state.error = null;
     try {
       const manifest = JSON.parse((await downloadBytes(manifestUrl, 1024 * 1024, this.fetcher, true)).toString('utf8'));
-      verifyManifest(manifest, this.trustedKeys, this.options());
+      // Verify the signature before trusting the requested application version.
+      verifyManifest(manifest, this.trustedKeys, { layer: this.layer, channel: this.channel });
+      if (this.layer === 'ui' && manifest.minAppVersion && this.versions.app &&
+          compareVersions(this.versions.app, manifest.minAppVersion) < 0) {
+        this.state.availableVersion = manifest.version;
+        this.state.status = 'app-update-required';
+        if (this.pointer.staged) { this.pointer.staged = null; await this.persist(); }
+        return this.state;
+      }
+      validateManifest(manifest, this.options());
       if (this.allowedPaths && manifest.files.some(file => !this.allowedPaths.has(file.path))) throw new Error('invalid resource path');
       const id = sha256(JSON.stringify(manifest));
       this.state.availableVersion = manifest.version;

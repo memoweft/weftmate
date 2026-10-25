@@ -1,12 +1,27 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { productDshRuntimeDirectory } from '../src/runtime-components.mjs';
 
 const main = readFileSync(new URL('../src/main.mjs', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 
 describe('阶段 0 主进程启动与退出收口', () => {
-  it('开发版和安装版都固定使用 WeftMate 自有 vendor DSH', () => {
-    assert.match(main, /const productDshRuntime = app\.isPackaged\s*\? join\(process\.resourcesPath, 'dsh-runtime'\)\s*:\s*join\(app\.getAppPath\(\), 'vendor', 'dsh-runtime'\)/);
+  it('开发版、旧安装版和独立组件安装版都固定使用 WeftMate 自有 vendor DSH', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'fix-update2-runtime-selection-'));
+    try {
+      const resourcesPath = join(root, 'installed/resources'), appPath = join(root, 'development');
+      const select = (packaged: boolean) => productDshRuntimeDirectory({ packaged, resourcesPath, appPath });
+      assert.equal(select(false), join(appPath, 'vendor/dsh-runtime'));
+      assert.equal(select(true), join(resourcesPath, 'dsh-runtime'));
+      await mkdir(resourcesPath, { recursive: true });
+      await writeFile(join(resourcesPath, 'runtime-components.json'), JSON.stringify({ schemaVersion: 1,
+        components: { 'dsh-runtime': 'a'.repeat(64) } }));
+      assert.equal(select(true), join(root, 'installed.components/dsh', 'a'.repeat(16)));
+      assert.equal(select(false), join(appPath, 'vendor/dsh-runtime'));
+    } finally { await rm(root, { recursive: true, force: true }); }
     assert.match(main, /runtimePath: productDshRuntime/);
     assert.doesNotMatch(main.slice(main.indexOf('const createWebRuntime =')), /checkoutPath:/);
   });

@@ -1,6 +1,6 @@
 /** Build and sign a local upload tree. This command never uploads or creates a tag. */
 import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createPublicKey } from 'node:crypto';
@@ -10,6 +10,20 @@ import { packageRelease } from './package.mjs';
 import { keyId, signingKeyFromEnvironment, compareVersions } from '../../src/personal-update/manifest.mjs';
 import { verifyWindowsPackage } from '../verify-windows-package.mjs';
 import { withMemoryRuntimeResources } from '../memory-runtime-package.mjs';
+import { downloadBytes } from '../../src/personal-update/store.mjs';
+
+export async function previousWindowsUiManifest(options, channel, fetcher = fetch) {
+  if (options['previous-ui']) return JSON.parse(await readFile(resolve(options['previous-ui']), 'utf8'));
+  if (options.previous) {
+    try { return JSON.parse(await readFile(join(dirname(resolve(options.previous)), 'manifest-ui.json'), 'utf8')); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
+  // A synthetic identity has its own signing key/feed and no production baseline.
+  if (options['test-identity']) return null;
+  try {
+    return JSON.parse((await downloadBytes(`https://weftmate.com/updates/windows/x64/${channel}/manifest-ui.json`, 1024 * 1024, fetcher, true)).toString('utf8'));
+  } catch (error) { if (error.code === 'UPDATE_CHANNEL_EMPTY') return null; throw error; }
+}
 
 export function assertReleaseVersion(version, channel) {
   compareVersions(version, '0.0.0');
@@ -69,8 +83,10 @@ export async function buildWindowsRelease(options) {
   const upload = join(output, 'upload/updates/windows/x64', channel);
   const releaseNotes = options.notes ? await readFile(resolve(options.notes), 'utf8') : '';
   const previous = options.previous ? JSON.parse(await readFile(resolve(options.previous), 'utf8')) : null;
+  const previousUi = await previousWindowsUiManifest(options, channel);
   await packageRelease({ layer: 'app', version, channel, outputDir: upload, sourceDir: join(output, 'build'), previousManifest: previous, privateKey, releaseNotes });
-  await packageRelease({ layer: 'ui', version: options['ui-version'] || version, channel, outputDir: upload, privateKey, releaseNotes });
+  await packageRelease({ layer: 'ui', version: options['ui-version'] || version, appVersion: version,
+    previousManifest: previousUi, channel, outputDir: upload, privateKey, releaseNotes });
   // Keep previous EXE/blockmap assets in the same channel root when uploading; delta requests need both.
   await copyFile(keysFile, join(output, 'upload/update-public-keys.json'));
   const signature = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',

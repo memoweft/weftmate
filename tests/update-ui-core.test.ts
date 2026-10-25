@@ -12,6 +12,7 @@ test('About actions expose native layer state, checking, failures and explicit r
   assert.equal(core.updateStatusText(state.layers[0]), '已就绪，下次打开窗口时更新')
   assert.equal(core.updateStatusText({ status: 'failed', error: '签名校验失败' }), '签名校验失败')
   assert.equal(core.updateStatusText({ status: 'empty' }), '这个通道暂时没有新版本')
+  assert.equal(core.updateStatusText({ status: 'app-update-required' }), '需要更新程序')
   assert.equal(core.updateStatusText({ status: 'available', progress: { percent: 37.5 } }), '正在后台下载 37%')
   await core.checkUpdates(); assert.equal((await core.restartForUpdate()).restarted, false)
   assert.deepEqual(actions, ['check', 'restart'])

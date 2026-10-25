@@ -39,5 +39,5 @@ module.exports.compile = async context => {
   writeFileSync(envScript,`@call "${join(vs,'VC/Auxiliary/Build/vcvars32.bat')}" >nul\r\n@set\r\n`);
   const envText=run('cmd.exe',['/d','/c',envScript]);
   const env={...process.env};for(const line of envText.split(/\r?\n/)){const i=line.indexOf('=');if(i>0)env[line.slice(0,i)]=line.slice(i+1);}
-  run('cl.exe',['/nologo','/LD','/std:c++17','/O2','/MT','/utf-8','/W4','/WX','/DUNICODE','/D_UNICODE',...(identity?['/DWEFT_QA']:[]),`/I${out}`,resolve(root,'build/installer-ui.cpp'),resolve(root,'build/installer-directory.cpp'),`/Fo${out}\\`,'/link',`/DEF:${join(root,'build/installer-ui.def')}`,`/OUT:${join(out,'WeftInstaller.dll')}`,'/Brepro','user32.lib','gdi32.lib','advapi32.lib','comctl32.lib','dwmapi.lib','shell32.lib','shlwapi.lib','ole32.lib'],{env,cwd:out});
+  run('cl.exe',['/nologo','/LD','/std:c++17','/O2','/MT','/utf-8','/W4','/WX','/DUNICODE','/D_UNICODE',...(identity?['/DWEFT_QA']:[]),`/I${out}`,resolve(root,'build/installer-ui.cpp'),resolve(root,'build/installer-directory.cpp'),resolve(root,'build/installer-components.cpp'),`/Fo${out}\\`,'/link',`/DEF:${join(root,'build/installer-ui.def')}`,`/OUT:${join(out,'WeftInstaller.dll')}`,'/Brepro','user32.lib','gdi32.lib','advapi32.lib','comctl32.lib','dwmapi.lib','shell32.lib','shlwapi.lib','ole32.lib'],{env,cwd:out});
 };

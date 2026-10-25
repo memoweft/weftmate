@@ -4,6 +4,10 @@
 !include "${BUILD_RESOURCES_DIR}\windows-send-to.nsh"
 !include "${BUILD_RESOURCES_DIR}\installer-scope.nsh"
 !include "${BUILD_RESOURCES_DIR}\..\.local\installer-ui\identity.nsh"
+!include "${BUILD_RESOURCES_DIR}\..\.local\installer-ui\runtime-components.nsh"
+!ifdef APP_64_UNPACKED_SIZE
+  !define /math WEFT_TOTAL_UNPACKED_SIZE ${APP_64_UNPACKED_SIZE} + ${WEFT_RUNTIME_COMPONENT_KB}
+!endif
 !macroundef MUI_UNPAGE_WELCOME
 !macro MUI_UNPAGE_WELCOME
 !macroend
@@ -259,7 +263,7 @@ Var weftOldMachine
       nsDialogs::Create 1018
       Pop $0
       !ifdef APP_64_UNPACKED_SIZE
-        System::Call '$PLUGINSDIR\WeftInstaller.dll::Ready(p $HWNDPARENT, w "$INSTDIR", i ${APP_64_UNPACKED_SIZE}, w "${APP_EXECUTABLE_FILENAME}", w "$APPDATA\${WEFT_CONTROL_NAMESPACE}WeftMate\desktop-config.json", w "%APPDATA%\${WEFT_CONTROL_NAMESPACE}com.memoweft.weftmate")'
+        System::Call '$PLUGINSDIR\WeftInstaller.dll::Ready(p $HWNDPARENT, w "$INSTDIR", i ${WEFT_TOTAL_UNPACKED_SIZE}, w "${APP_EXECUTABLE_FILENAME}", w "$APPDATA\${WEFT_CONTROL_NAMESPACE}WeftMate\desktop-config.json", w "%APPDATA%\${WEFT_CONTROL_NAMESPACE}com.memoweft.weftmate")'
       !else
         System::Call '$PLUGINSDIR\WeftInstaller.dll::Ready(p $HWNDPARENT, w "$INSTDIR", i 0, w "${APP_EXECUTABLE_FILENAME}", w "$APPDATA\${WEFT_CONTROL_NAMESPACE}WeftMate\desktop-config.json", w "%APPDATA%\${WEFT_CONTROL_NAMESPACE}com.memoweft.weftmate")'
       !endif
@@ -302,6 +306,7 @@ Var weftOldMachine
 ; Finish at the end of the actual file/registration section, as the upstream
 ; one-click path does. There is no hidden Close button to wait for.
 !macro customInstall
+  !insertmacro WeftInstallRuntimeComponents
   !insertmacro WeftSendToInstall
   FileOpen $0 "$INSTDIR\resources\weftmate-install.json" w
   FileWrite $0 '{"scope":"$installMode","externalQuit":true}'
@@ -359,5 +364,6 @@ Var weftOldMachine
         System::Call '$PLUGINSDIR\WeftInstaller.dll::CleanupWarning()'
       ${EndIf}
     ${EndIf}
+    System::Call '$PLUGINSDIR\WeftInstaller.dll::RemoveComponents(w "$INSTDIR.components", w "${APP_ID}") i.r0'
   ${EndIf}
 !macroend

@@ -87,6 +87,47 @@ test('an empty UI channel is distinct from a network or asset download failure',
   assert.equal(missingAsset.state.status, 'failed');
   assert.equal(missingAsset.pointer.staged, null);
 });
+
+test('a signed UI requiring a newer app skips added paths without downloading or reporting failure', async t => {
+  const f = await fixture(t);
+  const allowedPaths = new Set(f.content.keys());
+  const store = await new UpdateStore({ ...f.options, allowedPaths }).init();
+  f.content.set('personal-access-ui/new-component.js', Buffer.from('new component'));
+  const manifest = f.publish('0.3.0');
+  f.setManifest(signManifest({ ...manifest, minAppVersion: '0.3.0' }, f.privateKey));
+  await store.check(f.url);
+  assert.equal(store.state.status, 'app-update-required');
+  assert.equal(store.state.error, null);
+  assert.equal(store.state.availableVersion, '0.3.0');
+  assert.equal(store.pointer.staged, null);
+  assert.equal(await store.activate({ idle: true }), false);
+  assert.deepEqual(f.requests, []);
+  // A forged compatibility range must still fail signature verification.
+  f.setManifest({ ...manifest, minAppVersion: '99.0.0' });
+  await store.check(f.url);
+  assert.equal(store.state.status, 'failed');
+  assert.match(store.state.error!, /签名/);
+});
+
+test('Windows UI releases raise the app floor on added files and preserve it on replacement-only releases', async t => {
+  const f = await fixture(t), resources = new Map<string, string>();
+  const add = async (name: string, text: string) => {
+    const file = join(f.root, name); await writeFile(file, text); resources.set(`personal-access-ui/${name}`, file);
+  };
+  await add('index.html', 'first');
+  const publish = (version: string, previousManifest: any = null) => packageRelease({ layer: 'ui', version, appVersion: version,
+    outputDir: join(f.root, 'feed'), privateKey: f.privateKey, resources, previousManifest });
+  const first = await publish('0.2.0');
+  assert.equal(first.minAppVersion, '0.2.0', 'without a baseline, require this app conservatively');
+  await add('index.html', 'replacement');
+  const replacement = await publish('0.3.0', first);
+  assert.equal(replacement.minAppVersion, '0.2.0');
+  await add('new.js', 'component');
+  const added = await publish('0.4.0', replacement);
+  assert.equal(added.minAppVersion, '0.4.0');
+  await add('index.html', 'another replacement');
+  assert.equal((await publish('0.5.0', added)).minAppVersion, '0.4.0');
+});
 test('only changed files download; active version waits for idle, persists and rolls back a failed trial', async t => {
   const f = await fixture(t); const store = await new UpdateStore(f.options).init()
   f.publish('0.2.0'); await store.check(f.url)

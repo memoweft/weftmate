@@ -3,7 +3,7 @@ const {join} = require('node:path');
 
 // Count UTF-16 code units, as Win32 and std::wstring do. Include the separator
 // after $INSTDIR and the legacy CreateDirectory reserve (MAX_PATH - 12).
-async function installerPayloadPaths(root) {
+async function installerPayloadPaths(root,{includeComponents=true}={}) {
   let maxSuffix=0,files=0,directories=0,longest='';
   async function visit(parts=[]) {
     for(const name of await readdir(join(root,...parts))) {
@@ -18,6 +18,16 @@ async function installerPayloadPaths(root) {
     }
   }
   await visit();
+  if(includeComponents) {
+    const componentRoot=root+'.components';
+    const componentStat=await lstat(componentRoot).catch(error=>{if(error.code==='ENOENT')return null;throw error;});
+    if(componentStat) {
+      if(componentStat.isSymbolicLink())throw Error('Installer component root must be physical');
+      const components=await installerPayloadPaths(componentRoot,{includeComponents:false});
+      maxSuffix=Math.max(maxSuffix,'.components'.length+components.maxSuffix);
+      files+=components.files;directories+=components.directories;
+    }
+  }
   if(!files)throw Error('Installer payload is empty');
   // These are added by NSIS after the archive is extracted.
   for(const entry of ['Uninstall WeftMate.exe','resources\\weftmate-install.json'])maxSuffix=Math.max(maxSuffix,1+entry.length);
