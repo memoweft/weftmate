@@ -6,8 +6,8 @@
   globalThis.WeftPermissionRulesView = (core, target, { toast = () => {}, project = null, changed = () => {} } = {}) => {
     const identity = core.state.identityGeneration, generation = target.permissionGeneration = (target.permissionGeneration ?? 0) + 1;
     const current = () => target.isConnected && identity === core.state.identityGeneration && generation === target.permissionGeneration;
-    const body = node('div','permission-rules'), notice = node('p','muted','正在读取…'); notice.setAttribute('role','status');
-    target.replaceChildren(body); body.append(notice,node('div','record-skeleton'),node('div','record-skeleton'));
+    const body = node('div','permission-rules'), notice = node('p','muted'); notice.setAttribute('role','status');
+    target.replaceChildren(body); body.append(notice,WeftControls.skeleton({rows:2}));
     let rules = { ...(project?.permissionRules ?? {}) }, saved;
     const defaultValue = type => saved.mode === 'ask' ? 'ask' : saved.mode === 'allow-all' && !type.restricted ? 'allow' : type.default;
     const fail = () => { body.replaceChildren(notice);notice.hidden = false; notice.textContent = '暂时无法读取，点重试再看看。'; const retry = node('button','button secondary small','重试'); retry.type='button'; retry.onclick=load; notice.append(retry); };
@@ -53,9 +53,10 @@
     void load();
   };
   globalThis.WeftExecutionRecordsView = (core, target, { openConversation, current: visible = () => true } = {}) => {
+    if(target.executionRecordsView?.identity===core.state.identityGeneration){target.executionRecordsView.resume();return;}
     const identity=core.state.identityGeneration, generation=target.recordGeneration=(target.recordGeneration??0)+1;
     const current=()=>target.isConnected&&identity===core.state.identityGeneration&&generation===target.recordGeneration&&visible();
-    const body=node('div','execution-records'), filters=node('div','record-filters'), list=node('div','record-list'), notice=node('p','muted','正在读取…');notice.setAttribute('role','status');
+    const body=node('div','execution-records'), filters=node('div','record-filters'), list=node('div','record-list'), notice=node('p','muted');notice.setAttribute('role','status');
     target.replaceChildren(body);body.append(node('p','muted','查看助手做过的操作与每次审批。点一条回到原对话。'),filters,notice,list);
     const pick=(label,choices)=>{const select=node('select');select.setAttribute('aria-label',label);for(const [value,text]of choices){const option=node('option','',text);option.value=value;select.append(option);}filters.append(select);select.onchange=()=>void load();return select;};
     const type=pick('操作类型',[['','所有操作']]), project=pick('筛选项目',[['','所有项目'],['none','无项目']]), time=pick('记录时间',[['','所有时间'],['today','今天'],['7','最近 7 天'],['30','最近 30 天']]);
@@ -71,7 +72,7 @@
       if(type.value)params.set('type',type.value);if(project.value)params.set('projectId',project.value);
       if(time.value){const date=new Date();if(time.value==='today')date.setHours(0,0,0,0);else date.setDate(date.getDate()-Number(time.value));params.set('since',date.toISOString());}
       if(append&&cursor)params.set('before',cursor);
-      busy=true;more.disabled=true;notice.hidden=false;notice.textContent='正在读取…';if(!loaded&&!list.children.length)list.append(node('div','record-skeleton'),node('div','record-skeleton'));
+      busy=true;more.disabled=true;notice.hidden=false;notice.replaceChildren();if(!loaded&&!list.children.length)list.append(WeftControls.skeleton({rows:2}));
       try {
         const [page,settings]=await Promise.all([core.readExecutionRecords(params),loaded?null:core.readPermissionRules()]);
         if(!current()||request!==body.recordRequest)return;
@@ -90,7 +91,12 @@
       finally{if(current()&&request===body.recordRequest){busy=false;more.disabled=false;}}
     }
     // Changes to approvals and tool receipts also arrive through the existing refresh event.
-    const timer=setInterval(()=>{if(!current()){clearInterval(timer);return;}if(document.visibilityState!=='hidden'&&!busy&&!expanded)void load();},15000);
-    void load();
+    let timer;
+    function resume(){
+      clearInterval(timer);
+      timer=setInterval(()=>{if(!current()){clearInterval(timer);return;}if(document.visibilityState!=='hidden'&&!busy&&!expanded)void load();},15000);
+      void load();
+    }
+    target.executionRecordsView={identity,resume};resume();
   };
 })();
