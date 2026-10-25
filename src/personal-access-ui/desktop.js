@@ -8,6 +8,7 @@
   let appearance = { ...defaults }, preview = null, returnFocus = null, actions = null, picker = null
   const tabs = new Map()
   const media = window.matchMedia?.('(prefers-color-scheme: dark)')
+  const railMedia = window.matchMedia?.('(max-width: 640px)')
   function applyAppearance(value = appearance) {
     appearance = { ...defaults, ...value }
     const root = document.documentElement
@@ -174,17 +175,41 @@
     panel.content.replaceChildren(image)
   }
   const { sessionGroup, sortSessions } = globalThis.WeftUiCore
-  function toggleRail(force) {
-    const narrow = window.matchMedia?.('(max-width: 640px)').matches
-    const collapsed = force === undefined ? narrow ? byId('session-rail').classList.contains('is-open') : !document.body.classList.contains('rail-collapsed') : force
+  function syncRailState(collapsed, narrow = !!railMedia?.matches) {
+    const rail = byId('session-rail')
     document.body.classList.toggle('rail-collapsed', collapsed)
-    if (!narrow) { byId('session-rail').inert = collapsed; byId('session-rail').setAttribute('aria-hidden',String(collapsed)) }
-    if (narrow) { byId('session-rail').classList.toggle('is-open', !collapsed); byId('rail-backdrop').hidden = collapsed }
+    rail.inert = collapsed
+    rail.setAttribute('aria-hidden', String(collapsed))
+    byId('rail-backdrop').hidden = !narrow || collapsed
     byId('rail-open').setAttribute('aria-expanded', String(!collapsed))
+    if (collapsed && rail.contains(document.activeElement)) byId('rail-open').focus()
+  }
+  function toggleRail(force) {
+    const narrow = !!railMedia?.matches
+    const collapsed = force === undefined ? narrow ? byId('session-rail').classList.contains('is-open') : !document.body.classList.contains('rail-collapsed') : force
+    byId('session-rail').classList.toggle('is-open', narrow && !collapsed)
+    syncRailState(collapsed, narrow)
     if (collapsed) byId('rail-open').focus()
   }
   function init(callbacks) {
     actions = callbacks
+    const rail = byId('session-rail')
+    let wasNarrow = !!railMedia?.matches
+    const syncCurrentRail = () => {
+      const narrow = !!railMedia?.matches
+      const collapsed = narrow ? !rail.classList.contains('is-open') : document.body.classList.contains('rail-collapsed')
+      syncRailState(collapsed, narrow)
+    }
+    syncCurrentRail()
+    railMedia?.addEventListener('change', event => {
+      const collapsed = wasNarrow ? !rail.classList.contains('is-open') : document.body.classList.contains('rail-collapsed')
+      wasNarrow = event.matches
+      rail.classList.toggle('is-open', wasNarrow && !collapsed)
+      syncRailState(collapsed, wasNarrow)
+    })
+    // Existing navigation closes the drawer by removing is-open. Keep that
+    // path's accessibility state aligned without changing feature handlers.
+    new MutationObserver(syncCurrentRail).observe(rail, {attributes:true,attributeFilter:['class']})
     byId('conversation-resources')?.addEventListener('click', () => { void showPicker() })
     document.addEventListener('click', e => { if (picker && !picker.contains(e.target) && !e.target.closest('#conversation-resources, .preview-add')) hidePicker() })
     byId('account-menu-trigger').addEventListener('click', () => {
