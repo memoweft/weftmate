@@ -30,3 +30,10 @@ test('#671 stopped state belongs to the process, without a second instruction pa
   const tasks=f.WeftUiCore.factories.tasks(core,{},{});
   assert.equal(tasks.taskControlStatus({state:'stop_requested',stopStatus:'completed'}),'已结束');
 });
+test('#670 a raw desktop source uses the same turn key for waiting and tool steps',()=>{
+  const f=context(),events=[{seq:0,sessionId:'synthetic-session',type:'turn.started',data:{turn:1}},
+    {seq:1,sessionId:'synthetic-session',type:'user.message',data:{text:'读取合成资料'}},
+    {seq:2,sessionId:'synthetic-session',type:'step.started',data:{taskId:'turn-1',stepId:'read',toolName:'read',state:'running'}}];
+  const groups=f.WeftUiCore.projectTimeline(events,[],true).groups;
+  assert.equal(groups.length,1);assert.equal(groups[0].steps.length,1);assert.equal(groups[0].taskId,'turn-1');
+});

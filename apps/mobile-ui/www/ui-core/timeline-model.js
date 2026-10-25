@@ -441,7 +441,7 @@
             const event = raw.type === 'artifact.created' && raw.data?.completedStep ? { ...raw, type: 'step.completed', data: raw.data.completedStep } : raw;
             if (mergeTurns && event.type === 'turn.started') {
                 const sessionId = event.sessionId || event.sourceRef?.sessionId;
-                const taskId = `${sessionId ? sessionId + ':' : ''}turn-${event.data?.turn}`;
+                const taskId = `${event.sourceRef?.sessionId ? event.sourceRef.sessionId + ':' : ''}turn-${event.data?.turn}`;
                 group = {seq:event.seq, taskId, sessionId, turnStart:true, pendingRequestId:event.data?.pendingRequestId, steps:[]};
                 groups.push(group);
             }
