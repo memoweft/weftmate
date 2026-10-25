@@ -53,6 +53,15 @@
     for (let index = 0; index < rows; index++) { const line = node('span', 'wm-skeleton-row'); line.setAttribute('aria-hidden', 'true'); line.append(node('span'), node('span')); block.append(line); }
     return block;
   }
+  // Keep already-mounted children connected when a snapshot has the same order.
+  function reconcile(target, children) {
+    let cursor = target.firstChild;
+    for (const child of children) {
+      if (child === cursor) cursor = cursor.nextSibling;
+      else target.insertBefore(child, cursor);
+    }
+    while (cursor) { const next = cursor.nextSibling; cursor.remove(); cursor = next; }
+  }
   // Own only the loading placeholder. Completion never overwrites a newer load.
   const loads = new WeakMap();
   function loading(target, options) {
@@ -76,7 +85,7 @@
     element.addEventListener('close', () => { if (previous?.isConnected) previous.focus({ preventScroll: true }); });
     return element;
   }
-  globalThis.WeftControls = { node, button, input, toggle, segmented, row, group, skeleton, loading, dialog,
+  globalThis.WeftControls = { node, button, input, toggle, segmented, row, group, skeleton, loading, dialog, reconcile,
     drawer: options => dialog({ ...options, drawer: true }),
     tag: text => node('span', 'wm-tag', text),
     select: source => globalThis.WeftPopover.bindSettingsSelect(source),

@@ -19,9 +19,10 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
     let form=null,signature='';
     const stateNames={running:'进行中',queued:'排队中',approval:'等待审批',question:'等待回答',stopping:'正在停止',unconfirmed:'结果待确认',completed:'已完成',failed:'失败',stopped:'已停止',active:'进行中',paused:'已暂停',blocked:'需要处理',complete:'已完成'};
     function confirmDelete(text,action,offlineTask=false){
-        const returnFocus=document.activeElement,dialog=el('dialog','dialog confirm-dialog message-action-dialog goals-confirm');dialog.setAttribute('aria-label',text);
-        const head=el('div','dialog-head'),body=el('div','dialog-body'),footer=el('div','dialog-footer');head.append(el('h2','',text));body.append(el('p','muted',offlineTask?'取消后，电脑上线也不会做这件事。':'删除后不会再按这个安排运行。已完成的对话记录会保留。'));
-        const cancel=button(offlineTask?'继续等':'取消',()=>dialog.close()),remove=button(offlineTask?'取消这件事':'确认删除',async()=>{remove.disabled=true;try{await action();dialog.close();notify(offlineTask?'已取消':'定时任务已删除');}finally{remove.disabled=false;}},'button danger');footer.append(cancel,remove);dialog.append(head,body,footer);target.append(dialog);dialog.onclose=()=>{dialog.remove();if(returnFocus?.isConnected)returnFocus.focus();};dialog.onkeydown=e=>{if(e.key==='Escape')e.stopPropagation();};dialog.showModal();cancel.focus();
+        const body=el('p','muted',offlineTask?'取消后，电脑上线也不会做这件事。':'删除后不会再按这个安排运行。已完成的对话记录会保留。');
+        const cancel=button(offlineTask?'继续等':'取消',()=>dialog.close()),remove=button(offlineTask?'取消这件事':'确认删除',async()=>{remove.disabled=true;try{await action();dialog.close();notify(offlineTask?'已取消':'定时任务已删除');}finally{remove.disabled=false;}},'button danger');
+        const dialog=WeftControls.dialog({title:text,content:body,actions:[cancel,remove]});dialog.classList.add('dialog','confirm-dialog','goals-confirm');
+        target.append(dialog);dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.onkeydown=e=>{if(e.key==='Escape')e.stopPropagation();};dialog.openPanel();cancel.focus();
     }
     // Date and time use the application's shared combobox controls, with no system picker.
     function dateTimeField(label,type,value){
@@ -100,7 +101,10 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
     function render(){
         const model=core.goalsPage;refresh.disabled=model.loading;newSchedule.disabled=core.state.personalCapabilities?.scheduleEditing!==1||!model.sessions.some(s=>s.taskAvailable!==false);newGoal.disabled=core.state.personalCapabilities?.goals!==1||!model.sessions.some(s=>s.taskAvailable!==false);
         const offlineTasks=(core.offlineTasksView?.()||[]).filter(t=>['waiting','claimed','sending','expired'].includes(t.state));
-        const next=JSON.stringify([model.loading,model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy],offlineTasks]);if(signature===next)return;signature=next;
+        for(const {list}of Object.values(sections))list.setAttribute('aria-busy',String(model.loading));
+        const next=JSON.stringify([!model.tasks.length||!model.schedules.length||!model.goals.length?model.loading:null,model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy],offlineTasks]);
+        // Per-section snapshots keep task buttons in place while empty siblings load.
+        if(signature===next)return;signature=next;
         offlineSection.hidden=!offlineTasks.length;offlineList.replaceChildren();
         for(const task of offlineTasks){
           const item=el('article','goals-row'),copy=button('',()=>core.openOfflineTask(task),'goals-row-content');copy.setAttribute('aria-label',`查看 ${task.text}`);
@@ -109,6 +113,8 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
         }
         const focused=document.activeElement,focusedLabel=focused?.getAttribute('aria-label')??focused?.textContent,focusedRow=focused?.closest('article')?.dataset.goalKey;
         for(const [key,{list}]of Object.entries(sections)){
+            const sectionSignature=JSON.stringify([model[key],model.errors[key],[...model.busy],model[key].length?null:model.loading,model.sessions,model.timeZone]);
+            if(list.dataset.snapshot===sectionSignature)continue;list.dataset.snapshot=sectionSignature;
             list.replaceChildren();list.setAttribute('aria-busy',String(model.loading));if(model.errors[key]){list.append(stateBlock('error',key,model.errors[key]));continue;}
             const rows=key==='tasks'?model.tasks:model[key];if(!rows.length)list.append(stateBlock(model.loading?'loading':'empty',key,{tasks:'交代助手做事后，可以在这里查看进展。',schedules:'新建定时任务，也可以在对话里说“每天早上 8 点提醒我喝水”。',goals:'把想持续推进的事关联到一个对话，每次进展都留在原对话。'}[key]));
             for(const row of rows){
@@ -129,7 +135,7 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
                 actions.append(menuButton(row,entries));item.append(copy,actions);list.append(item);
             }
         }
-        recentList.replaceChildren(...model.recent.map(taskRow));if(!model.recent.length)recentList.append(el('p','goals-empty','最近 7 天还没有完成的任务。'));
+        const recentSignature=JSON.stringify(model.recent);if(recentList.dataset.snapshot!==recentSignature){recentList.dataset.snapshot=recentSignature;recentList.replaceChildren(...model.recent.map(taskRow));if(!model.recent.length)recentList.append(el('p','goals-empty','最近 7 天还没有完成的任务。'));}
         if(focusedRow){const article=[...target.querySelectorAll('article')].find(n=>n.dataset.goalKey===focusedRow);[...article?.querySelectorAll('button,input')??[]].find(n=>(n.getAttribute('aria-label')??n.textContent)===focusedLabel)?.focus({preventScroll:true});}
     }
     return {render,reset(){form?.remove();form=null;signature='';WeftPopover.closeMenu();render();},focus:()=>title.focus(),close(){WeftPopover.closeMenu();target.querySelector('dialog')?.close();}};

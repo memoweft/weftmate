@@ -4,15 +4,18 @@ globalThis.WeftSchedulesView = (core, target, { openConversation, autoLoad = tru
     const status = element('p', 'muted'); status.setAttribute('role', 'status');
     const refresh = element('button', 'button secondary', '刷新提醒'); refresh.type = 'button';
     const list = element('ul', 'settings-schedules-list'); list.setAttribute('aria-label', '提醒与定时任务列表');
-    target.replaceChildren(status, refresh, list);
-    let generation = 0;
+    const toolbar=element('div','settings-schedules-toolbar');toolbar.append(status,refresh);target.replaceChildren(toolbar,list);
+    let generation = 0, snapshot = '';
     async function render() {
         core.syncMobileIdentity?.();
-        const version = ++generation, token = core.accountToken(); status.textContent = ''; const ready = WeftControls.loading(list, { tag: 'li' });
+        const version = ++generation, token = core.accountToken();
+        const ready = list.children.length ? (()=>{list.removeAttribute('aria-busy');}) : WeftControls.loading(list, { tag: 'li' });
+        list.setAttribute('aria-busy','true');refresh.disabled=true;
         try {
             const value = await core.loadSchedules();
             if (!value || version !== generation || !core.accountIdentityCurrent(token) || !current()) return;
-            list.replaceChildren(); ready(); status.textContent = value.items.length ? `${value.items.length} 项提醒与定时任务` : '还没有提醒。可以在对话里说“明天早上 9 点提醒我交报告”。';
+            ready();status.textContent = value.items.length ? `${value.items.length} 项提醒与定时任务` : '还没有提醒。可以在对话里说“明天早上 9 点提醒我交报告”。';
+            const next=JSON.stringify(value.items);if(snapshot===next)return;snapshot=next;list.replaceChildren();
             for (const row of value.items) {
                 const item = element('li', 'system-service settings-schedule-row'); item.setAttribute('aria-label', row.text);
                 const details = element('div', 'system-service-detail');
@@ -32,7 +35,8 @@ globalThis.WeftSchedulesView = (core, target, { openConversation, autoLoad = tru
                 }
                 list.append(item);
             }
-        } catch { ready(); if (core.accountIdentityCurrent(token) && current()) status.textContent = '读取失败，请刷新重试。'; }
+        } catch { if(version===generation&&core.accountIdentityCurrent(token)&&current()){ready();status.textContent='读取失败，请刷新重试。';} }
+        finally { if(version===generation&&core.accountIdentityCurrent(token)&&current())refresh.disabled=false; }
     }
     refresh.addEventListener('click', () => { void render(); }); if (autoLoad) void render(); return render;
 };
