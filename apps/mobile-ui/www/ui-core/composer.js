@@ -19,7 +19,9 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             (!next || event.seq<next.seq) &&
             (!block.sessionId || (event.sessionId || event.sourceRef?.sessionId)===block.sessionId));
         const request=block.pendingRequestId || turnRequests.get(user?.data?.receiptId);
-        return request ? `request:${request}` : `${block.taskId}:${block.seq}`;
+        const start=events.find(event=>event.seq===block.seq);
+        const anchor=start?.presentationKey || start?.eventId || start?.sourceRef?.seq;
+        return request ? `request:${request}` : `${block.taskId}:${anchor ?? block.seq}`;
     }
     function messagePresentationKey(event) { requestScope(); return turnRequests.get(event.data?.receiptId) || event.presentationKey || event.eventId; }
     const thinkingWrites = new Map();

@@ -5,7 +5,7 @@ import { runInNewContext } from 'node:vm';
 
 function context() {
   const f:any = { WeftUiCore:{factories:{}} }; f.window=f;
-  for(const file of ['timeline-model','messages','tasks'])
+  for(const file of ['timeline-model','messages','tasks','composer'])
     runInNewContext(readFileSync(`src/ui-core/${file}.js`,'utf8'),f);
   return f;
 }
@@ -36,4 +36,12 @@ test('#670 a raw desktop source uses the same turn key for waiting and tool step
     {seq:2,sessionId:'synthetic-session',type:'step.started',data:{taskId:'turn-1',stepId:'read',toolName:'read',state:'running'}}];
   const groups=f.WeftUiCore.projectTimeline(events,[],true).groups;
   assert.equal(groups.length,1);assert.equal(groups[0].steps.length,1);assert.equal(groups[0].taskId,'turn-1');
+});
+test('#669 loading an earlier same-day page preserves the process identity and anchor',()=>{
+  const f=context(),composer=f.WeftUiCore.factories.composer({state:{ownerId:'synthetic-owner',identityGeneration:1}},{},{});
+  const before=[{seq:0,eventId:'stable-turn',sourceRef:{sessionId:'synthetic-session',seq:50},type:'turn.started',data:{turn:4}},
+    {seq:1,eventId:'stable-user',sourceRef:{sessionId:'synthetic-session',seq:51},type:'user.message',data:{text:'合成资料'}}];
+  const after=before.map(event=>({...event,seq:event.seq+20}));
+  const key=events=>composer.turnPresentationKey(events,f.WeftUiCore.projectTimeline(events,[],true).groups[0]);
+  assert.equal(key(before),key(after));
 });
