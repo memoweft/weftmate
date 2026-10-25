@@ -63,6 +63,13 @@
   }
   let viewTransition;
   const handoffs=new WeakMap();
+  function resetIdentity() {
+    viewTransition?.transition.skipTransition();viewTransition?.restore();
+    for(const target of document.querySelectorAll('[data-motion-pending]')) {
+      handoffs.delete(target);delete target.dataset.motionPending;
+    }
+    for(const copy of document.querySelectorAll('.motion-copy')) {cancel(copy);copy.remove();}
+  }
   function handoff(target, operation) {
     const previous=handoffs.get(target);if(previous?.copy)previous.copy.remove();
     const state={copy:snapshot(target)};handoffs.set(target,state);target.dataset.motionPending='true';
@@ -171,5 +178,5 @@
   mount(document.body);pushBack();
   preference.addEventListener('change',()=>{if(reduced())for(const animation of [...active])animation.finish();});
   addEventListener('weft-reply-motion-change',()=>{for(const a of [...active]){if(reduced())a.finish();else if(paused())a.pause();else a.play();}});
-  globalThis.WeftMotion={reveal,enter,snapshot,dismiss,remove,hide,details,changed,cancel,listLimit,transition,swap,handoff,visibility,menu,dialog,timing,get reduced(){return reduced();}};
+  globalThis.WeftMotion={reveal,enter,snapshot,dismiss,remove,hide,details,changed,cancel,listLimit,transition,swap,handoff,visibility,menu,dialog,resetIdentity,timing,get reduced(){return reduced();}};
 })();

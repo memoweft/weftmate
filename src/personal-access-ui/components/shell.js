@@ -319,6 +319,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('revoke-confirm').disabled = false;
     }
     function resetIdentityControls() {
+        globalThis.WeftMotion?.resetIdentity();
         ui.byId('account-name').textContent = '';
         ui.byId('rail-account-name').textContent = '我的账户';
         ui.byId('rail-avatar-image').removeAttribute('src');

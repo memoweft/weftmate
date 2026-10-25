@@ -131,6 +131,19 @@ try {
     });
     assert.equal(result,false,'loading a different identity must not retain the preceding account usage');
   });
+  await check('identity reset removes pending conversation visuals immediately',async()=>{
+    const result=await page.evaluate(async()=>{
+      const target=document.createElement('section');target.style.cssText='position:fixed;top:100px;left:300px;width:320px;height:40px';
+      target.textContent='previous-account-synthetic-conversation';document.body.append(target);
+      let release;const pending=WeftMotion.handoff(target,()=>new Promise(resolve=>{release=resolve;target.replaceChildren();}));
+      const copies=()=>[...document.querySelectorAll('.motion-copy')].filter(n=>n.textContent.includes('previous-account-synthetic-conversation')).length;
+      const before=copies();
+      WeftUiComponents.factories.shell(__feedbackSessionCore,{byId:id=>document.getElementById(id)}).resetIdentityControls();
+      const after=copies(),marked=target.hasAttribute('data-motion-pending');release();await pending;
+      const settled=copies();target.remove();return {before,after,marked,settled};
+    });
+    assert.deepEqual(result,{before:1,after:0,marked:false,settled:0});
+  });
   await check('reduced motion settles layout immediately',async()=>{
     await page.emulateMedia({reducedMotion:'reduce'});
     const state=await page.evaluate(()=>{const d=document.querySelector('#shell-details-probe')||document.createElement('details');if(!d.isConnected){d.innerHTML='<summary>合成</summary><div>内容</div>';document.body.append(d);WeftMotion.details(d);}d.querySelector('summary').click();const result={open:d.open,animations:d.getAnimations().length};d.remove();return result;});assert.deepEqual(state,{open:true,animations:0});
