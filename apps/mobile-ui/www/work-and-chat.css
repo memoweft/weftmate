@@ -15,7 +15,7 @@
 .conversation-mode-switch .mode-choice-description{grid-column:2;color:var(--ink-muted);font-size:var(--wm-type-secondary);font-weight:400;white-space:nowrap}
 .new-conversation-description{font-size:var(--wm-type-body);line-height:1.6;color:var(--ink-muted);margin:var(--wm-space-12) 0 0}
 .new-conversation-page .chat-intro{margin:max(var(--wm-space-32),12vh) 0 var(--wm-space-24);text-align:center}
-.new-conversation-page .chat-intro h1{font-size:var(--wm-type-title);font-weight:500;color:var(--ink);letter-spacing:-.02em}
+.new-conversation-page .chat-intro h1{margin:0;font-size:var(--wm-type-title);line-height:1.5;font-weight:500;color:var(--ink);letter-spacing:-.02em}
 .new-conversation-page .conversation-pane{justify-content:center}
 .new-conversation-page .conversation-pane > .chat-scroll{flex:0 1 auto;min-height:0;max-height:65%;padding-block:0}
 .new-conversation-page .conversation-pane .chat-intro{margin:var(--wm-space-24) auto var(--wm-space-16)}

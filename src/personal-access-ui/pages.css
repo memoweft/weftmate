@@ -181,16 +181,6 @@ dialog.search-palette:not(.shortcuts-panel) { width:min(680px,calc(100dvw - 32px
 .session-rail .rail-avatar { width:var(--wm-space-28); height:var(--wm-space-28); flex-basis:var(--wm-space-28); font-size:var(--wm-type-secondary); }
 .assistant-topbar #show-account { display:none; }
 :is(.activity-open,.goals-open,.library-open,.health-open) .assistant-topbar :is(.conversation-mode-subtitle,#assistant-connection) { display:none; }
-/* The new conversation owns its mode choice; the caption stays a single line. */
-.chat-intro .conversation-mode-switch { display:inline-flex; width:auto; margin:0 0 var(--wm-space-16); }
-.chat-intro .conversation-mode-switch[hidden] { display:none; }
-.chat-intro .conversation-mode-switch button { min-width:calc(var(--wm-space-64) + var(--wm-space-16)); min-height:var(--control-height); font-size:var(--wm-type-button); }
-.new-conversation-page .chat-intro { margin:clamp(32px,10vh,96px) auto var(--wm-space-section); max-width:65ch; }
-.new-conversation-page .chat-intro h1 { margin:0; font-size:var(--wm-type-title); line-height:1.5; font-weight:500; }
-.new-conversation-description { margin:var(--wm-space-8) 0 var(--wm-space-16); color:var(--ink-muted); font-size:var(--wm-type-secondary); }
-.new-conversation-page .work-mode-toolbar { gap:var(--wm-space-6); padding:var(--wm-space-8) var(--wm-space-4) 0; margin:0; }
-.new-conversation-page .work-select { min-height:var(--control-height); font-size:var(--wm-type-button); border-radius:var(--wm-radius-control); padding:var(--wm-space-6) var(--wm-space-8); }
-.new-conversation-page .next-suggestions { font-size:var(--wm-type-secondary); gap:var(--wm-space-6); }
 /* Incumbent editors and confirmations use the public dialog's frame and density. */
 dialog.dialog:not(.settings-dialog) { box-sizing:border-box; width:min(560px,calc(100dvw - var(--wm-space-32))); height:fit-content; max-height:calc(100dvh - var(--wm-space-32)); margin:auto; padding:0; border:0; border-radius:var(--wm-radius-panel); color:var(--ink); background:var(--surface); box-shadow:var(--shadow-float); font:400 var(--wm-type-body)/1.6 var(--wm-font-family-body); animation:m-enter-rise var(--dur-4) var(--ease-out) both; }
 dialog.dialog.confirm-dialog { width:min(480px,calc(100dvw - var(--wm-space-32))); }

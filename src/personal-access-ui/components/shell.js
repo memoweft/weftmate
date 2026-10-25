@@ -328,6 +328,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('account-menu-name').textContent = '';
         ui.byId('account-menu-email').textContent = '';
         ui.byId('account-menu-usage').textContent = '';
+        ui.byId('settings-usage-strip')?.replaceChildren();
         ui.byId('device-list').replaceChildren();
         if (ui.byId('password-dialog').open)
             ui.byId('password-dialog').close();

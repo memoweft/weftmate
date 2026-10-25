@@ -114,6 +114,18 @@ try {
     assert.equal(await page.locator('.session-rail').evaluate(n=>n.querySelector('.rail-mode-switch').getBoundingClientRect().right<=n.getBoundingClientRect().right),true,'both history modes stay inside the narrow sidebar');
     await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1200,800));
   });
+  await check('account change clears previous usage before refresh',async()=>{
+    const result=await page.evaluate(()=>{
+      const strip=document.getElementById('settings-usage-strip');
+      strip.textContent='previous-account-synthetic-usage';
+      const shell=WeftUiComponents.factories.shell(__feedbackSessionCore,{byId:id=>document.getElementById(id)});
+      shell.resetIdentityControls();
+      const ready=WeftControls.loading(strip,{rows:1,compact:true});
+      const retained=strip.textContent.includes('previous-account-synthetic-usage');ready();
+      return retained;
+    });
+    assert.equal(result,false,'loading a different identity must not retain the preceding account usage');
+  });
   await check('reduced motion settles layout immediately',async()=>{
     await page.emulateMedia({reducedMotion:'reduce'});
     const state=await page.evaluate(()=>{const d=document.querySelector('#shell-details-probe')||document.createElement('details');if(!d.isConnected){d.innerHTML='<summary>合成</summary><div>内容</div>';document.body.append(d);WeftMotion.details(d);}d.querySelector('summary').click();const result={open:d.open,animations:d.getAnimations().length};d.remove();return result;});assert.deepEqual(state,{open:true,animations:0});

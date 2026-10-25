@@ -563,6 +563,7 @@ kbd { font: inherit; font-size: var(--wm-font-size-10); color: var(--ink-muted);
 .rail-avatar { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border-radius: var(--wm-radius-circle); background: var(--accent-soft); color: var(--accent); overflow: hidden; font-size: var(--wm-font-size-12); }
 .rail-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .assistant-topbar { min-height:52px; padding:var(--wm-space-8) var(--wm-space-24); border:0; gap:var(--wm-space-12); }
+.weftmate-desktop body:is(.activity-open,.goals-open,.library-open,.health-open) .assistant-topbar { display:none; }
 .assistant-topbar .assistant-heading { display:flex; flex-direction:row; align-items:center; gap:var(--wm-space-10); overflow:hidden; }
 .assistant-topbar .conversation-mode-subtitle { margin:0; font-size:var(--wm-type-secondary); }
 .assistant-topbar #conversation-resources { font-size:var(--wm-type-secondary); color:var(--ink-muted); }
