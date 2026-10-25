@@ -95,6 +95,14 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       ...(item.running === true ? { processing: await processingStatus(sessionId) } : {}) }
   }
   return {
+    async listSlashCommands({sessionId,ownerId}) {
+      requireRuntime();await requireSession(sessionId,ownerId);
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/slash-commands`);
+    },
+    async executeSlashCommand({sessionId,ownerId,line}) {
+      requireRuntime();await requireSession(sessionId,ownerId);
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/slash-commands`,{method:'POST',body:JSON.stringify({line})});
+    },
     async getStatus() {
       const running = Boolean(currentOrigin())
       let chat = false

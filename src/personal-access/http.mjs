@@ -1,4 +1,5 @@
 import { dailyDigestState } from './daily-digest.mjs';
+import { SLASH_COMMAND_TIMEOUT_MS } from '../runtime/dsh-adapter/commands.mjs';
 import { connectorSettings } from '../personal-connectors/access.mjs';
 import { PERMISSION_TYPES, validPermissionRules, mergePermissionRules, connectorToolKey } from '../plugins/personal-permission-rules.mjs';
 import { executionRecords } from './execution-records.mjs';
@@ -1592,6 +1593,24 @@ export function createHttpHandler(context) {
           ? await context.sessionOperations.deleteSession(ownerId, lifecycleMatch[1], body)
           : await context.sessionOperations.archiveSession(ownerId, lifecycleMatch[1], lifecycleMatch[2] === 'archive');
         return context.json(response, 200, result);
+      }
+      const slashMatch=/^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/slash-commands$/.exec(pathname);
+      if(slashMatch && ['GET','POST'].includes(request.method)) {
+        if(url.search) throw failure('INVALID_REQUEST');
+        const sessionId=id(slashMatch[1]),session=state.sessions[sessionId];
+        if(!session || session.archived || session.deleting) throw failure('SESSION_UNAVAILABLE',404);
+        if(!['personal-remote','shared-chat'].includes(session.origin)) throw failure('SESSION_READ_ONLY',409);
+        const write=request.method==='POST',scope=write?'commands:write':'sessions:read';
+        context.authenticate(request,scope);
+        const body=write?await context.readJson(request):{};
+        if(write)exactKeys(body,['line'],['line']);
+        if(write && (typeof body.line!=='string' || body.line.length>32000 || !/^\/[a-z][a-z0-9_-]*(?:\s|$)/.test(body.line))) throw failure('INVALID_REQUEST');
+        const method=write?'executeSlashCommand':'listSlashCommands';
+        if(typeof context.backend[method]!=='function') throw failure('BACKEND_UNAVAILABLE',503);
+        const result=await context.callBackend(()=>context.backend[method]({sessionId,ownerId,...(write?{line:body.line}:{})}),write?SLASH_COMMAND_TIMEOUT_MS:undefined);
+        const current=context.authenticate(request,scope);
+        if(current.ownerId!==ownerId || current.deviceId!==deviceId) throw failure('UNAUTHORIZED',401);
+        return context.json(response,200,result);
       }
       const questionMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/questions(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
       if (request.method === 'GET' && questionMatch && !questionMatch[2]) {

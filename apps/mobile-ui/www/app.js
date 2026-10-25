@@ -863,6 +863,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Decision updates preserve the current scroll position and can interrupt
     // a smooth scroll. Jump atomically so the requested card is reached.
     scroll.scrollTo({top:scroll.scrollTop+target.getBoundingClientRect().top-scroll.getBoundingClientRect().top-16,behavior:'instant'});syncPendingDecision();});
+  WeftSlashMenu.mount(uiCore,{field:$('draft'),anchor:$('draft').parentElement,toast,repaint:updateComposer});
   $('draft').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){
     event.preventDefault();if(!$('send-button').disabled)void send({intent:event.ctrlKey||event.metaKey?'queue':undefined});}});
   $('model-button').addEventListener('click',openModels);$('plus-button').addEventListener('click',openAttachmentMenu);

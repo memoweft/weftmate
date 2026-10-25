@@ -68,6 +68,7 @@ internal fun validBusinessPath(path: String): Boolean {
     if (route == "/personal/v1/settings/usage" && query.isEmpty()) return true
     if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/resources")) &&
         (query.isEmpty() || query.matches(Regex("afterSeq=(-1|[0-9]+)")))) return true
+    if (query.isEmpty() && route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/slash-commands"))) return true
     // UX-7 uses one ephemeral session endpoint; cancellation accepts only its request ID.
     if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/suggestions")) &&
         (query.isEmpty() || query.replace(Regex("(?i)%3a"), ":").matches(Regex("requestId=[A-Za-z0-9_.:-]{1,128}")))) return true
@@ -131,6 +132,7 @@ internal fun validBusinessMethod(path: String, method: String): Boolean =
             path.matches(Regex("/personal/v1/daily-summaries/[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])/health"))))
 
 internal fun businessReadTimeout(path: String, method: String): Int {
+    if (method == "POST" && path.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/slash-commands"))) return 125_000
     if (method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))) return 360_000
     if (path.endsWith("/message-branches")) return 120_000
     // Mainline reply reads may wait 25 seconds for a real change. The socket

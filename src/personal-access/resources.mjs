@@ -53,6 +53,11 @@ export async function conversationResources(context, account, sessionId, ownerId
       source: publicSource(row),
     }));
   for (const event of page.events) {
+    if(event.type==='assistant.message') for(const memory of event.data?.memoryUsed || []) {
+      if(typeof memory.id!=='string' || !['cognition','entity','relationship','event','evidence'].includes(memory.kind))continue;
+      sources.push({key:`memory:${memory.kind}:${memory.id}`,kind:'memory',name:'记忆来源',memory:{kind:memory.kind,id:memory.id},
+        uses:[{id:`memory:${event.seq}`,seq:event.seq,at:event.at,summary:'这轮回复使用的记忆',verb:'引用'}]});
+    }
     const step = event.type === 'artifact.created' ? event.data?.completedStep
       : event.type.startsWith('step.') || ['question.asked', 'question.answered'].includes(event.type) ? event.data : null;
     if (!step?.toolName || !step.detailRef) continue;

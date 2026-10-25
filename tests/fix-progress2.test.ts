@@ -19,7 +19,8 @@ test('#643 #637 thinking joins chronological steps before the answer with a stab
   const groups = f.WeftUiCore.projectTimeline(prepared).groups;
   assert.equal(groups.length, 1);
   assert.equal(groups[0].steps[0].modelThinking, events[1].data.modelThinking);
-  assert.equal(groups[0].steps[0].summary, '先核对资料。');
+  assert.equal(groups[0].steps[0].summary, '思考过程');
+  assert.equal(groups[0].steps[0].modelThinking, '先核对资料。再比较结果。');
   const final = f.WeftTimeline.prepare(events.map(e => e.seq === 1 ? {...e, seq:4, data:{...e.data,text:'答案',thinkingActive:false,thinkingMs:2000}} : e));
   assert.equal(final.find(e=>e.data?.modelThinking && e.type.startsWith('step.')).data.stepId, groups[0].steps[0].stepId);
   assert.equal(final.find(e=>e.type==='assistant.message').data.text, '答案');

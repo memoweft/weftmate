@@ -75,8 +75,10 @@ try {
     await input.fill('下一件事：整理会议记录'); await input.press('Enter')
     await until(() => candidate.operations.some(op => op.text === '下一件事：整理会议记录' && op.mode === 'queue'))
     await until(async () => (await input.inputValue()) === '')
-    await page.getByRole('button', { name: '读取了 3 个文件、已运行 1 个命令，已收起', exact: true }).click()
-    await page.getByText(/^读取 3 个文件/).click()
+    const process=page.locator('.execution-block').first();
+    if(!await process.evaluate(node=>node.open))await process.locator(':scope > summary').click();
+    for(const group of await process.locator('.execution-step-group').all())if(!await group.evaluate(node=>node.open))await group.locator(':scope > summary').click();
+    await process.locator('.execution-step > summary').filter({hasText:/^读取 3 个文件/}).first().click()
     await page.getByText(/Read 3 files successfully/).waitFor()
     await page.getByRole('button', { name: '批准', exact: true }).click()
     await page.getByRole('region', { name: '待批准操作' }).waitFor({ state: 'hidden' })

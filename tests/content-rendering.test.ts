@@ -67,6 +67,10 @@ test('shared offline content: parsing, injection set, streaming, controls and fa
     const result=await page.evaluate(()=>{const body=WeftContent.create('[已读](https://example.com/)\n\n[普通](https://example.org/)','markdown-body',{pages:[{url:'https://example.com/',title:'宿主已读的合成标题'}]});return {cards:body.querySelectorAll('.render-link-card').length,title:body.querySelector('.render-link-card strong').textContent,external:body.querySelectorAll('.external-link[target="_blank"]').length};});
     assert.equal(result.cards,1);assert.equal(result.external,2);assert.equal(result.title,'宿主已读的合成标题');
   });
+  await t.test('#657 numbered citations and footer links stay compact even when the source is captured',async()=>{
+    const result=await page.evaluate(()=>{const body=WeftContent.create('结论[1](https://example.com/)。\n\n## 出处\n\n1. [合成站点](https://example.com/) · 今天 11:32 访问 · 一句话摘要。','markdown-body',{pages:[{url:'https://example.com/',title:'宿主已读的合成标题'}]});return {citation:body.querySelector('.render-citation').textContent,cards:body.querySelectorAll('.render-link-card').length,source:body.querySelector('.render-sources a').textContent};});
+    assert.equal(result.citation,'1');assert.equal(result.cards,0);assert.equal(result.source,'合成站点');
+  });
   await t.test('an incomplete streamed diagram recovers to graph view when the syntax becomes valid',async()=>{
     await page.evaluate(()=>{globalThis.streamDiagram=WeftContent.create('```mermaid\ngraph LR\n A -->');document.body.replaceChildren(streamDiagram);});
     await page.locator('.diagram-failed').waitFor();
