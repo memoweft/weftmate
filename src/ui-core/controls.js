@@ -65,12 +65,19 @@
   // Own only the loading placeholder. Completion never overwrites a newer load.
   const loads = new WeakMap();
   function loading(target, options) {
-    const placeholder = skeleton(options); loads.set(target, placeholder);
-    target.setAttribute('aria-busy', 'true'); target.replaceChildren(placeholder);
+    const pending=loads.get(target);
+    if(pending){pending.placeholder?.remove();pending.indicator?.remove();}
+    const hasContent=[...target.childNodes].some(child=>child.nodeType===3?!!child.textContent.trim():child.nodeType===1&&!child.classList.contains('wm-skeleton')&&!child.classList.contains('wm-refresh-status'));
+    const placeholder=hasContent?null:skeleton(options);
+    const indicator=hasContent?node(options?.tag||'span','wm-refresh-status','正在刷新…'):null;
+    if(indicator){indicator.setAttribute('role','status');target.append(indicator);}
+    else target.replaceChildren(placeholder);
+    const load={placeholder,indicator};loads.set(target,load);
+    target.setAttribute('aria-busy', 'true');
     return () => {
-      if (loads.get(target) !== placeholder) return false;
-      loads.delete(target); placeholder.remove(); target.removeAttribute('aria-busy');
-      globalThis.WeftMotion?.reveal(target, 'base'); return true;
+      if (loads.get(target) !== load) return false;
+      loads.delete(target);placeholder?.remove();indicator?.remove();target.removeAttribute('aria-busy');
+      if(!hasContent)globalThis.WeftMotion?.reveal(target,'base');return true;
     };
   }
   function dialog({ title, content, actions = [], drawer = false } = {}) {
@@ -81,7 +88,7 @@
     element.append(head, body);
     if (actions.length) { const footer = node('footer', 'wm-dialog-footer'); footer.append(...actions); element.append(footer); }
     let previous;
-    element.openPanel = () => { if (element.open) return; previous = document.activeElement; if (!element.isConnected) document.body.append(element); element.showModal(); };
+    element.openPanel = () => { if (element.open) return; previous = document.activeElement; if (!element.isConnected) document.body.append(element); globalThis.WeftMotion?.dialog(element); element.showModal(); };
     element.addEventListener('close', () => { if (previous?.isConnected) previous.focus({ preventScroll: true }); });
     return element;
   }

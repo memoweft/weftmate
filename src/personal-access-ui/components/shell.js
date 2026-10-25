@@ -354,7 +354,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     let accountHelp;
     function closeAccountMenu() {
         accountHelp?.close(false); accountHelp = null;
-        ui.byId('account-menu').hidden = true;
+        globalThis.WeftPopover.hide(ui.byId('account-menu'));
         ui.byId('account-menu-trigger').setAttribute('aria-expanded', 'false');
     }
     function stopCloudPairing() {
@@ -365,7 +365,8 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         void ui.checkCloudBackupPrompt?.();
         for (const name of ui.views)
             ui.byId(`${name}-view`).hidden = name !== view && !(['account', 'memory'].includes(view) && name === 'assistant') && !(view === 'memory' && name === 'account');
-        if (ui.motionView !== view) globalThis.WeftMotion?.enter(ui.byId(`${view}-view`), view === 'account' || view === 'memory' ? 'enter-fade' : 'view-enter');
+        const retainedWorkspace=view==='assistant'&&['account','memory'].includes(ui.motionView);
+        if (ui.motionView !== view&&!retainedWorkspace) globalThis.WeftMotion?.enter(ui.byId(`${view}-view`), view === 'account' || view === 'memory' ? 'enter-fade' : 'view-enter');
         ui.motionView = view;
         document.body.classList.toggle('assistant-active', ['assistant', 'account', 'memory'].includes(view));
         if (view === 'account' || view === 'memory') {

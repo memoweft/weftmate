@@ -1,98 +1,164 @@
-/* Desktop presentation only. Layout and feature actions always settle synchronously. */
+/* Shared desktop motion. Presentation never postpones a feature action or request. */
 (() => {
-  const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const active = new Set(), owners = new WeakMap();
+  const preference = matchMedia('(prefers-reduced-motion: reduce)');
+  const active = new Set(), owners = new WeakMap(), settlers = new WeakMap(), boundDetails = new WeakSet(), boundDialogs = new WeakSet();
+  const pageRects = new WeakMap(), pageVisibility = new WeakMap(), transitionKeys = new WeakMap();
   const listLimit = 20;
-  function timing(name = 'base', delayIndex = 0) {
+  const reduced = () => globalThis.WeftReplyMotion?.reduced ?? preference.matches;
+  const paused = () => globalThis.WeftReplyMotion?.paused ?? document.hidden;
+  function timing(name = 'base', index = 0) {
     const css = getComputedStyle(document.documentElement);
-    const milliseconds = key => {
-      const value = css.getPropertyValue(`--wm-duration-${key}`).trim();
-      return parseFloat(value) * (value.endsWith('ms') ? 1 : 1000);
-    };
-    return { fill: 'backwards', duration: milliseconds(name), easing: css.getPropertyValue('--wm-easing-desktop').trim(),
-      delay: Math.min(delayIndex * milliseconds('stagger'), milliseconds('staggerLimit')) };
+    const ms = key => { const value = css.getPropertyValue(key).trim(); return parseFloat(value) * (value.endsWith('ms') ? 1 : 1000); };
+    return { fill:'both', duration:ms(name.startsWith('dur-') ? `--${name}` : `--wm-duration-${name}`) || ms('--dur-3'),
+      easing:css.getPropertyValue('--ease-out').trim() || css.getPropertyValue('--wm-easing-desktop').trim(),
+      delay:Math.min(index * ms('--wm-duration-stagger'), ms('--wm-duration-staggerLimit')) };
   }
-  function cancel(element) { owners.get(element)?.cancel(); }
+  function cancel(element) { const animation=owners.get(element);if(animation){settlers.get(animation)?.(true);animation.cancel();} }
   function play(element, frames, name = 'base', index = 0, cleanup) {
     cancel(element);
-    if ((globalThis.WeftReplyMotion?.reduced ?? preference.matches) || (globalThis.WeftReplyMotion?.paused ?? document.hidden) || !element?.isConnected || !element.animate) { cleanup?.(); return; }
+    if (reduced() || paused() || !element?.isConnected || !element.animate) { cleanup?.(false); return; }
     const animation = element.animate(frames, timing(name, index));
     owners.set(element, animation); active.add(animation);
-    const done = () => { active.delete(animation); if (owners.get(element) === animation) owners.delete(element); cleanup?.(); };
-    animation.finished.then(done, done);
+    let settled = false;
+    const done = cancelled => { if (settled) return; settled=true; active.delete(animation);
+      if (owners.get(element) === animation) owners.delete(element); cleanup?.(cancelled); };
+    settlers.set(animation,done);
+    animation.finished.then(() => { done(false); animation.cancel(); }, () => done(true));
     return animation;
   }
-  function reveal(element, name = 'base', index = 0) {
-    return play(element, [{ opacity: .65 }, { opacity: 1 }], name, index);
-  }
-  // view-enter / enter-fade: CSS owns the common recipes, including reduction.
+  function reveal(element, name = 'base', index = 0) { return play(element,[{opacity:.65},{opacity:1}],name,index); }
   function enter(element, pattern = 'view-enter') {
     if (!element) return;
-    cancel(element); element.dataset.motion = pattern;
-    // Settings leave the chat mounted behind the dialog. Replay its existing
-    // CSS animation when returning, even when the recipe attribute is unchanged.
-    if ((globalThis.WeftReplyMotion?.reduced ?? preference.matches) || (globalThis.WeftReplyMotion?.paused ?? document.hidden)) return;
-    for (const animation of element.getAnimations()) if (animation.animationName?.startsWith('m-')) {
-      animation.currentTime = 0; animation.play();
+    element.dataset.motion = pattern;
+    if (reduced() || paused()) return;
+    // Imperative enter keeps its old replay contract. Automatic page detection
+    // only calls this on a real visibility edge, never on a polling repaint.
+    for(const animation of element.getAnimations())if(animation.animationName?.startsWith('m-')&&animation.playState==='finished'){
+      animation.currentTime=0;animation.play();
     }
   }
-  // Fixed pages share the assistant screen. Observe their actual visibility,
-  // rather than treating a fixed-page change as a new assistant navigation.
-  const pages = '.activity-surface,.library-surface,.goals-surface,.health-surface,#conversation-pane';
-  new MutationObserver(records => {
-    for (const record of records) {
-      if (record.type === 'attributes') {
-        if (record.target.matches(pages) && record.oldValue !== record.target.getAttribute('hidden') && !record.target.hidden) enter(record.target);
-      } else for (const node of record.addedNodes) if (node.nodeType === 1) {
-        if (node.matches(pages)) enter(node);
-        for (const page of node.querySelectorAll(pages)) enter(page);
-      }
-    }
-  }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'], attributeOldValue: true });
-  // Keep an inert visual copy outside layout, then remove the real content immediately.
-  // Never retain active buttons, duplicate accessible names, or postpone the next action.
-  function snapshot(element) {
-    if ((globalThis.WeftReplyMotion?.reduced ?? preference.matches) || (globalThis.WeftReplyMotion?.paused ?? document.hidden) || !element?.isConnected || element.hidden) return;
-    const rect = element.getBoundingClientRect();
-    if (!rect.width || !rect.height || rect.bottom < 0 || rect.top > innerHeight) return;
+  function snapshot(element, rect = element?.getBoundingClientRect(), includeHidden = false) {
+    if (reduced() || paused() || !element?.isConnected || element.hidden && !includeHidden || !rect?.width || !rect.height) return;
     const copy = element.cloneNode(true);
-    copy.removeAttribute('id');
+    copy.removeAttribute('id'); copy.removeAttribute('popover'); copy.removeAttribute('hidden'); copy.removeAttribute('data-motion');
     for (const node of copy.querySelectorAll('[id]')) node.removeAttribute('id');
-    copy.inert = true; copy.setAttribute('aria-hidden', 'true'); copy.classList.add('motion-copy');
-    Object.assign(copy.style, { position: 'fixed', top: `${rect.top}px`, left: `${rect.left}px`,
-      width: `${rect.width}px`, height: `${rect.height}px`, margin: '0' });
+    for (const node of copy.querySelectorAll('[data-motion]')) node.removeAttribute('data-motion');
+    copy.inert=true;copy.setAttribute('aria-hidden','true');copy.classList.add('motion-copy');
+    Object.assign(copy.style,{position:'fixed',inset:'auto',top:`${rect.top}px`,left:`${rect.left}px`,width:`${rect.width}px`,height:`${rect.height}px`,margin:'0',animation:'none'});
     document.body.append(copy);
+    const source=[element,...element.querySelectorAll('*')], target=[copy,...copy.querySelectorAll('*')];
+    source.forEach((node,i)=>{if(node.scrollTop)target[i].scrollTop=node.scrollTop;if(node.scrollLeft)target[i].scrollLeft=node.scrollLeft;
+      if(node.matches('input,textarea,select'))target[i].value=node.value;if(node.matches('input'))target[i].checked=node.checked;});
     return copy;
   }
-  function dismiss(copy, crop = false) {
-    if (!copy) return;
-    play(copy, [{ opacity: 1, clipPath: 'inset(0 0 0 0)' },
-      { opacity: 0, clipPath: crop ? 'inset(0 0 100% 0)' : 'inset(0 0 0 0)' }], 'exit', 0, () => copy.remove());
+  function dismiss(copy, crop = false) { if(!copy)return;return play(copy,[{opacity:1,transform:'translateY(0)',clipPath:'inset(0)'},{opacity:0,transform:'translateY(-4px)',clipPath:crop?'inset(0 0 100% 0)':'inset(0)'}],'dur-4',0,()=>copy.remove()); }
+  function remove(element) {const copy=snapshot(element);element?.remove();return dismiss(copy);}
+  function hide(element) {const copy=snapshot(element);if(element)element.hidden=true;return dismiss(copy);}
+  function transition(target, update, {key} = {}) {
+    const same=key!==undefined&&transitionKeys.get(target)===key;
+    const copy=same?null:snapshot(target);const result=update();
+    if(key!==undefined)transitionKeys.set(target,key);
+    if(!same){dismiss(copy);enter(target);}
+    return result;
   }
-  function remove(element) { const copy = snapshot(element); element?.remove(); dismiss(copy); }
-  function hide(element) { const copy = snapshot(element); element.hidden = true; dismiss(copy); }
-  function details(element) {
-    const summary = element.querySelector('summary');
-    if (!summary) return;
-    summary.addEventListener('click', event => {
-      if (event.defaultPrevented || event.target.closest('a, button, input')) return;
-      event.preventDefault();
-      const short = element.querySelectorAll('.execution-step').length <= listLimit;
-      const copy = element.open && short ? snapshot(element) : null;
-      element.open = !element.open;
-      if (element.open && short) {
-        reveal(element, 'base');
-        let index = 0;
-        for (const step of element.querySelectorAll('.execution-step')) reveal(step, 'base', index++);
-      } else dismiss(copy, true);
+  let viewTransition;
+  const handoffs=new WeakMap();
+  function handoff(target, operation) {
+    const previous=handoffs.get(target);if(previous?.copy)previous.copy.remove();
+    const state={copy:snapshot(target)};handoffs.set(target,state);target.dataset.motionPending='true';
+    const finish=()=>{if(handoffs.get(target)!==state)return;handoffs.delete(target);delete target.dataset.motionPending;dismiss(state.copy);};
+    // Invoke immediately; the promise only owns the outgoing presentation.
+    try { return Promise.resolve(operation()).finally(finish); }catch(error){finish();throw error;}
+  }
+  function swap(target, render, {key} = {}) {
+    const same=key!==undefined&&transitionKeys.get(target)===key;
+    if(same||reduced()||document.hidden||!document.startViewTransition)return Promise.resolve(transition(target,render,{key}));
+    viewTransition?.transition.skipTransition();viewTransition?.restore();
+    const previous=target.style.viewTransitionName;target.style.viewTransitionName='weft-surface';
+    let result;
+    const current=document.startViewTransition(()=>{result=render();if(key!==undefined)transitionKeys.set(target,key);});
+    let restored=false;
+    const state={transition:current,restore:()=>{if(restored)return;restored=true;target.style.viewTransitionName=previous;if(viewTransition===state)viewTransition=null;}};
+    viewTransition=state;
+    current.ready.catch(()=>{});
+    current.finished.then(state.restore,state.restore);
+    return current.updateCallbackDone.then(()=>result);
+  }
+  const folds=new WeakMap();
+  function resize(element, opening, setOpen, name='dur-5') {
+    const height=element.hidden?0:element.getBoundingClientRect().height;
+    cancel(element);
+    const previous={height:element.style.height,overflow:element.style.overflow};
+    setOpen(true);element.style.height='auto';
+    const full=element.getBoundingClientRect().height;
+    const summary=element.tagName==='DETAILS'?element.querySelector(':scope > summary'):null;
+    const end=opening?full:summary?summary.getBoundingClientRect().height+parseFloat(getComputedStyle(element).paddingTop)+parseFloat(getComputedStyle(element).paddingBottom):0;
+    if(reduced()||paused()){setOpen(opening);folds.delete(element);return;}
+    element.style.overflow='clip';element.style.height=`${height}px`;
+    folds.set(element,opening);
+    return play(element,[{height:`${height}px`},{height:`${end}px`}],name,0,cancelled=>{
+      element.style.height=previous.height;element.style.overflow=previous.overflow;
+      if(!cancelled){setOpen(opening);folds.delete(element);}
     });
   }
-  function changed(element, key, name = 'base') {
-    if (element.dataset.motionKey === key) return;
-    element.dataset.motionKey = key;
-    reveal(element, name);
+  function visibility(element, visible, {duration='dur-5'} = {}) {
+    if(!element || (folds.get(element)??!element.hidden)===visible)return;
+    return resize(element,visible,open=>{element.hidden=!open;},duration);
   }
-  preference.addEventListener('change', () => { if (preference.matches) for (const animation of [...active]) animation.cancel(); });
-  addEventListener('weft-reply-motion-change', () => { for (const animation of [...active]) { if (globalThis.WeftReplyMotion?.reduced) animation.cancel(); else if ((globalThis.WeftReplyMotion?.paused ?? document.hidden)) animation.pause(); else animation.play(); } });
-  globalThis.WeftMotion = { reveal, enter, snapshot, dismiss, remove, hide, details, changed, cancel, listLimit };
+  function details(element) {
+    if(!element||boundDetails.has(element))return;const summary=element.querySelector(':scope > summary');if(!summary)return;
+    boundDetails.add(element);element.classList.add('motion-details');
+    summary.addEventListener('click',event=>{
+      if(event.defaultPrevented||event.target.closest('a,button,input,select,textarea'))return;
+      event.preventDefault();
+      const opening=!(folds.get(element)??element.open);
+      summary.setAttribute('aria-expanded',String(opening));
+      resize(element,opening,open=>{element.open=open;});
+    });
+    element.addEventListener('toggle',()=>{if(!folds.has(element))summary.setAttribute('aria-expanded',String(element.open));});
+  }
+  function changed(element,key,name='base') {if(!element||element.dataset.motionKey===key)return;element.dataset.motionKey=key;return reveal(element,name);}
+  function menu(element,opening=true) {
+    if(!element)return;
+    if(!opening){element.inert=true;return play(element,[{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(3px) scale(.985)'}],'dur-3',0);}
+    element.inert=false;return play(element,[{opacity:.35,transform:'translateY(4px) scale(.985)'},{opacity:1,transform:'translateY(0) scale(1)'}],'dur-3',0);
+  }
+  function dialog(element) {
+    if(!element||boundDialogs.has(element))return;boundDialogs.add(element);
+    const nativeClose=element.close.bind(element);let closing;
+    element.close=value=>{
+      if(!element.open||closing)return;
+      element.returnValue=value??'';
+      if(reduced()||paused()){nativeClose(element.returnValue);return;}
+      element.inert=true;element.dataset.motionClosing='true';
+      closing=play(element,[{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(8px) scale(.985)'}],'dur-4',0,()=>{
+        element.inert=false;delete element.dataset.motionClosing;closing=null;nativeClose(element.returnValue);
+      });
+    };
+    element.addEventListener('cancel',event=>{event.preventDefault();element.close();});
+  }
+  const pages='.activity-surface,.library-surface,.goals-surface,.health-surface,#conversation-pane';
+  function rememberPage(page) {if(!page.hidden){const r=page.getBoundingClientRect();if(r.width&&r.height)pageRects.set(page,r);}pageVisibility.set(page,!page.hidden);}
+  const resizeObserver=new ResizeObserver(entries=>{for(const {target} of entries)if(!target.hidden)rememberPage(target);});
+  function mount(root) {
+    for(const detail of [root,...root.querySelectorAll('details')])if(detail.matches('details'))details(detail);
+    for(const page of [root,...root.querySelectorAll(pages)])if(page.matches(pages)&&!pageVisibility.has(page)){rememberPage(page);resizeObserver.observe(page);enter(page);}
+  }
+  function pushBack() {document.body.classList.toggle('motion-modal-open',!!document.querySelector('dialog[open]'));}
+  new MutationObserver(records=>{
+    const changedPages=new Set();
+    for(const record of records){
+      if(record.type==='childList')for(const node of record.addedNodes)if(node.nodeType===1&&!node.closest('.motion-copy'))mount(node);
+      if(record.type==='attributes'&&record.target.matches(pages))changedPages.add(record.target);
+    }
+    for(const page of changedPages){const visible=!page.hidden,wasVisible=pageVisibility.get(page);
+      if(visible!==wasVisible){if(!visible){const copy=snapshot(page,pageRects.get(page),true);if(copy){copy.classList.add('motion-page-copy');dismiss(copy);}}
+        else enter(page);rememberPage(page);}
+    }
+    pushBack();
+  }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','open']});
+  mount(document.body);pushBack();
+  preference.addEventListener('change',()=>{if(reduced())for(const animation of [...active])animation.finish();});
+  addEventListener('weft-reply-motion-change',()=>{for(const a of [...active]){if(reduced())a.finish();else if(paused())a.pause();else a.play();}});
+  globalThis.WeftMotion={reveal,enter,snapshot,dismiss,remove,hide,details,changed,cancel,listLimit,transition,swap,handoff,visibility,menu,dialog,timing,get reduced(){return reduced();}};
 })();
