@@ -26,8 +26,10 @@
 #conversation-pane.chat-workspace .composer-actions { min-height:36px; gap:4px; }
 #conversation-pane.chat-workspace .composer-icon { flex-basis:34px; width:34px; height:34px; }
 #conversation-pane.chat-workspace .composer-icon svg { width:19px; height:19px; }
-#conversation-pane.chat-workspace .composer-send { transition:border-radius var(--dur-3) var(--ease-out),background var(--dur-3) var(--ease-out),color var(--dur-3) var(--ease-out),transform var(--dur-3) var(--ease-out); }
-#conversation-pane.chat-workspace .composer-send:active { transform:scale(.94); }
+#conversation-pane.chat-workspace .composer-send { transition:border-radius var(--dur-3) var(--ease-out),background var(--dur-3) var(--ease-out),color var(--dur-3) var(--ease-out); }
+#conversation-pane.chat-workspace .composer-send:active { transform:none; }
+#conversation-pane.chat-workspace .composer-send > svg { transition:transform var(--dur-3) var(--ease-out); }
+#conversation-pane.chat-workspace .composer-send:active > svg { transform:scale(.94); }
 #conversation-pane.chat-workspace .composer-above-slot { min-height:32px; margin:0 8px 6px; }
 #conversation-pane.chat-workspace .model-hint:empty { display:none; }
 #conversation-pane.chat-workspace .composer-menu .model-option { min-height:36px; font-size:13px; }
