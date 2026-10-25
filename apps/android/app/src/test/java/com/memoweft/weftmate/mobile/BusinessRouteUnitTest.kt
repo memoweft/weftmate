@@ -7,6 +7,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun slashCommandsUseExactSessionRoute() {
+        assertTrue(validBusinessPath("/personal/v1/sessions/session-one/slash-commands"))
+        assertFalse(validBusinessPath("/personal/v1/sessions/session-one/slash-commands?ownerId=other"))
+        assertFalse(validBusinessPath("/personal/v1/sessions/session-one/slash-commands/raw"))
+    }
     @Test fun workModeUsesExistingExactSessionProjectAndApprovalRoutes() {
         for (route in listOf("/personal/v1/sessions?archived=all", "/personal/v1/projects", "/personal/v1/projects/project-mode/sessions", "/personal/v1/chats/chat-mode/events?limit=200")) assertTrue(route, validBusinessPath(route))
         assertEquals("/personal/v1/sessions/session-mode/approvals?limit=50", approvalListPath("session-mode"))

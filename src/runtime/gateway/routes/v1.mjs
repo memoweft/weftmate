@@ -43,7 +43,7 @@ function promptContent(value) {
   return value
 }
 
-export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagnosticsDeps } = {}) {
+export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, diagnostics: diagnosticsDeps } = {}) {
   if (client === undefined) throw new TypeError('supported DSH client is required')
   const sessions = createDshSessionAdapter(client, { readLog, lifecycle })
   const agents = createDshAgentAdapter(sessions)
@@ -152,6 +152,14 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
     const questionMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/questions(?:\/([0-9a-f-]{36}))?$/i.exec(pathname)
     const workspaceMatch = /^\/weftmate\/api\/v1\/workspaces\/([^/]+)$/.exec(pathname)
     try {
+      const commandMatch=/^\/weftmate\/api\/v1\/sessions\/([^/]+)\/slash-commands$/.exec(pathname);
+      if(commandMatch && nativeCommands) {
+        const sessionId=commandMatch[1];
+        await sessions.resume(sessionId);
+        if(req.method==='GET') return writeJson(res,200,await nativeCommands.list(sessionId));
+        if(req.method==='POST') return writeJson(res,200,await nativeCommands.execute(sessionId,(await readJson(req)).line));
+      }
+
       if (pathname === `${BASE}/sessions` && req.method === 'POST') {
         const payload = await readJson(req); const created = await sessions.create(payload)
         records.set(created.sessionId, { events: [], listeners: new Set(), state: undefined, lastSeq: -1, nextId: 1 })

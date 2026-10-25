@@ -41,3 +41,45 @@
 .rail-main-chat { flex-shrink:0; margin-top:var(--wm-space-8); }
 .side-result-link { display:flex; align-items:center; gap:var(--wm-space-8); }
 .side-result-arrow { flex-shrink:0; transform:rotate(-90deg); }
+
+/* Conversation reading surface: one measure, quiet process, a steady composer. */
+@media (min-width: 761px) {
+  .assistant-topbar { min-height:var(--wm-space-56); padding-inline:var(--wm-space-page); gap:var(--wm-space-row); border-bottom:1px solid var(--panel-divider); }
+  #assistant-title { font-size:var(--wm-type-heading); font-weight:550; line-height:var(--wm-line-height-1_4); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #conversation-pane .main-chat-tools { padding:var(--wm-space-4) var(--wm-space-page); gap:var(--wm-space-4); }
+  #conversation-pane .chat-scroll { padding:var(--wm-space-20) var(--wm-space-page); }
+  #conversation-pane .transcript { max-width:74ch; margin-inline:auto; gap:var(--wm-space-20); }
+  #conversation-pane .message.user { max-width:85%; padding:0; background:transparent; border-radius:0; margin-bottom:var(--wm-space-12)!important; font-size:var(--text-size); line-height:var(--wm-line-height-1_65); }
+  #conversation-pane .message.assistant { padding:0; font-size:var(--text-size); line-height:var(--wm-line-height-1_7); }
+  #conversation-pane .main-chat-row.message { padding-block:var(--wm-space-8); }
+  #conversation-pane .main-chat-row:has(> .chat-progress) { padding-block:0; }
+  #conversation-pane .chat-day { padding-block:var(--wm-space-8); }
+  #conversation-pane .chat-day-toggle { font-size:var(--wm-type-secondary); padding:var(--wm-space-4) var(--wm-space-8); }
+  #conversation-pane .composer-area { max-width:min(100%,80ch); margin-inline:auto; width:100%; padding:var(--wm-space-12) var(--wm-space-page) var(--wm-space-16); box-sizing:border-box; }
+  #conversation-pane .message-form { border-radius:var(--wm-radius-panel); background:var(--surface); padding:var(--wm-space-12); box-shadow:none; transition:border-color var(--dur-3) var(--ease-out),background var(--dur-3) var(--ease-out); }
+  #conversation-pane .message-form textarea { min-height:var(--wm-space-48); max-height:var(--wm-size-160); font-size:var(--wm-type-body); padding:var(--wm-space-4); line-height:var(--wm-line-height-1_65); }
+  #conversation-pane .message-form textarea::placeholder { color:var(--ink-secondary); }
+  #conversation-pane .message-time { font-size:var(--wm-type-secondary); }
+  #conversation-pane .chat-intro h1 { font-size:var(--wm-type-title); font-weight:500; }
+}
+#conversation-pane .execution-block { color:var(--ink-secondary); margin:0; }
+#conversation-pane .execution-block > summary { min-height:var(--wm-space-32); font-size:var(--wm-type-secondary); gap:var(--wm-space-6); }
+#conversation-pane .execution-records { margin-block:var(--wm-space-8) var(--wm-space-12); background:var(--surface-soft); border-radius:var(--wm-radius-card); border:0; }
+#conversation-pane .execution-note { padding:var(--wm-space-10) var(--wm-space-12); font-size:var(--wm-type-secondary); color:var(--ink-secondary); }
+#conversation-pane .execution-note > :first-child { margin-top:0; }
+#conversation-pane .execution-note > :last-child { margin-bottom:0; }
+#conversation-pane .model-thinking .thinking-title { font-size:var(--wm-type-secondary); }
+#conversation-pane .progress-chevron { transition:transform var(--dur-4) var(--ease-out); }
+#conversation-pane .markdown-body :is(h1,h2,h3) { margin-top:var(--wm-space-24); margin-bottom:var(--wm-space-8); font-weight:600; }
+#conversation-pane .markdown-body p { margin-block:var(--wm-space-10); }
+#conversation-pane .markdown-body > :first-child { margin-top:0; }
+#conversation-pane .render-code { border:0; border-radius:var(--wm-radius-card); background:var(--surface-soft); margin-block:var(--wm-space-16); }
+#conversation-pane .render-code-head { padding:var(--wm-space-6) var(--wm-space-12); font-size:var(--wm-type-secondary); background:transparent; border-bottom:1px solid var(--line); }
+#conversation-pane .render-code pre { padding:var(--wm-space-12); font-size:var(--wm-font-size-13); line-height:var(--wm-line-height-1_65); }
+
+@media (min-width:761px) {
+  .assistant-topbar .assistant-heading { flex-direction:row; align-items:baseline; flex-wrap:wrap; gap:var(--wm-space-4) var(--wm-space-12); }
+  .assistant-topbar #assistant-connection { font-size:var(--wm-type-secondary); }
+  .assistant-topbar .presence-badge { align-self:center; margin-inline-start:var(--wm-space-4); }
+  #conversation-pane .message-user-bubble { border-radius:var(--wm-radius-card); }
+}

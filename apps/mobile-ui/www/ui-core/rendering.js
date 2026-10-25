@@ -127,6 +127,30 @@
     }
     return content;
   }
+  function sourceTypography(content) {
+    const blocks=[...content.children];
+    const heading=blocks.find(block=>/^(出处|来源|Sources|References)[:：]?$/i.test(block.textContent.trim()) && /^(H[1-6]|P)$/.test(block.tagName));
+    if(heading) {
+      heading.classList.add('render-sources-heading');
+      const following=blocks.slice(blocks.indexOf(heading)+1);
+      const entries=following.flatMap(block=>/^(OL|UL)$/.test(block.tagName)?[...block.children]:[block]);
+      following.forEach(block=>block.classList.add('render-sources'));
+      entries.forEach((entry,index)=>{entry.id=`${content._renderId}-source-${index+1}`});
+      for(const block of blocks.slice(0,blocks.indexOf(heading))) {
+        const walker=document.createTreeWalker(block,NodeFilter.SHOW_TEXT), texts=[];
+        while(walker.nextNode()) if(!walker.currentNode.parentElement.closest('a,code,pre,button'))texts.push(walker.currentNode);
+        for(const text of texts) {
+          const matches=[...text.data.matchAll(/\[(\d+)\]/g)].filter(match=>entries[Number(match[1])-1]);
+          if(!matches.length)continue;
+          const fragment=document.createDocumentFragment();let offset=0;
+          for(const match of matches){fragment.append(document.createTextNode(text.data.slice(offset,match.index)));const link=node('a','render-citation',match[0]);link.href=`#${content._renderId}-source-${match[1]}`;link.setAttribute('aria-label',`查看出处 ${match[1]}`);fragment.append(link);offset=match.index+match[0].length}
+          fragment.append(document.createTextNode(text.data.slice(offset)));text.replaceWith(fragment);
+        }
+      }
+    }
+    for(const paragraph of content.querySelectorAll(':scope > p'))if(/^(来源|Source)[:：]/i.test(paragraph.textContent.trim()) && paragraph.querySelector('a'))paragraph.classList.add('render-source-line');
+    for(const link of content.querySelectorAll('a'))if(/^\[?\d+\]?$/.test(link.textContent.trim()))link.classList.add('render-citation');
+  }
   function create(text, cls = 'markdown-body', options = {}) {
     const content = node('div', cls); content._renderId = `wm-${++id}`; update(content,text,options); return content;
   }
@@ -188,6 +212,7 @@
       if(streaming && !options.motionFrame) globalThis.WeftReplyMotion?.fragment(next,beforeText);
     }
     for (const previous of old.slice(fresh.length)) { if(previous.previousElementSibling?.classList.contains('render-table-actions'))previous.previousElementSibling.remove(); previous.remove(); }
+    sourceTypography(content);
     enhance(content,options);
     if (options.streaming !== undefined || streaming) globalThis.WeftReplyMotion?.indicator(content,options.streaming ?? streaming);
     for(const block of content.querySelectorAll('.render-code')) if(!block._sourceHTML) block._sourceHTML=block.querySelector('pre')._sourceHTML;

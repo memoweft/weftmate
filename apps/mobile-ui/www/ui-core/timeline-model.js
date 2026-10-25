@@ -176,13 +176,14 @@
         const words = (prose.match(/[A-Za-z]{2,}/g) || []).length;
         return han ? words > han ? 'en' : 'zh' : words >= 1 ? 'en' : null;
     }
+    globalThis.WeftUiCore.textLanguage = textLanguage;
     function progressLanguage(events, block) {
         const session = block.steps[0]?.sessionId;
         const belongs = event => !session || (event.sessionId || event.sourceRef?.sessionId) === session;
         const start = events.filter(event => belongs(event) && event.type === 'turn.started' && event.seq <= block.seq).at(-1);
         const next = events.find(event => belongs(event) && event.type === 'turn.started' && event.seq > block.seq);
         const messages = events.filter(event => belongs(event) && event.seq >= (start?.seq ?? -Infinity) && event.seq < (next?.seq ?? Infinity));
-        const reply = messages.filter(event => ['assistant.message','assistant.delta'].includes(event.type) && event.data?.text).at(-1);
+        const reply = messages.filter(event => ['assistant.message','assistant.delta'].includes(event.type) && event.data?.text && !messages.some(next=>next.seq>event.seq && next.type.startsWith('step.'))).at(-1);
         const user = messages.filter(event => event.type === 'user.message' && event.seq <= block.seq).at(-1);
         return textLanguage(reply?.data.text) || textLanguage(user?.data.text) || 'zh';
     }
@@ -259,7 +260,7 @@
         const english = (outcome?.language || step.language) === 'en';
         if (english) step = { ...step, language:'en', summary: toolSummary(step.toolName, step.arguments, 'en'),
             approvalText: ({'已批准':'Approved','已拒绝':'Declined','已取消':'Cancelled','已失效':'Expired','等待批准':'Awaiting approval'})[step.approvalText] || step.approvalText };
-        if (rejected) return { ...step, state:'rejected', statusText:english ? 'Declined; not performed' : '你拒绝了，没有做' };
+        if (rejected) return { ...step, state:'rejected', summary:english ? `You declined ${toolSummary(step.toolName,step.arguments,'en')}`:`${toolLabel(step.toolName)}被你拒绝了`,statusText:'',approvalText:'' };
         if (state === 'cancelled' || progress.state === 'stopped' && ['running','pending','failed'].includes(state))
             return { ...step, state: 'cancelled', statusText: english ? 'Interrupted' : '已中断' };
         if (state === 'failed') return { ...step, state: progress.state === 'failed' ? 'failed' : 'issue',
@@ -274,7 +275,7 @@
         if (rejected.length) {
             const remaining = steps.filter(step => !rejectedStep(step));
             const other = progressText(remaining, outcome);
-            const refusal = rejected.map(step => english ? `You declined ${toolSummary(step.toolName,step.arguments,language)}; not performed` : `你拒绝了${(step.approvalSummary || approvalSummary(step.toolName,step.arguments))}，没有做`).join(english ? '; ' : '；');
+            const refusal = rejected.map(step => english ? `You declined ${toolSummary(step.toolName,step.arguments,language)}` : `${toolLabel(step.toolName)}被你拒绝了`).join(english ? '; ' : '；');
             return {...other,text:[refusal,['已完成','工具已就绪','Completed','Tools ready'].includes(other.text) ? '' : other.text].filter(Boolean).join(' · ')};
         }
         const failed = steps.find(step => executionState(step) === 'failed');
@@ -413,7 +414,7 @@
             return Object.keys(args).length || output ? `${Object.keys(args).length ? `${english ? 'Parameters' : '参数'}\n${JSON.stringify(english ? args : readableParameters(args), null, 2)}` : ''}${output ? `\n\n${english ? 'Output' : '输出'}\n${output}` : ''}`.trim() : data && typeof data === 'object' && ['arguments','parameters','output'].some(key => key in data) ? english ? 'No parameters or output' : '暂无参数与输出' : text;
         } catch { return text; }
     }
-    function projectTimeline(events, approvals = []) {
+    function projectTimeline(events, approvals = [], mergeTurns = false) {
         const ordered = [...events].filter(event => !(event.type === 'task.queued' && event.data?.inherited)).sort((a, b) => a.seq - b.seq), groups = [], steps = new Map();
         let group = null;
         const ordinals = new Map();
@@ -423,6 +424,7 @@
                 const data = event.data || {}, key = `${data.taskId}/${data.stepId}`;
                 let step = steps.get(key);
                 if (!step) {
+                    if (mergeTurns) group = groups.find(item=>item.taskId===data.taskId) || null;
                     if (!group || group.taskId !== data.taskId) {
                         group = { seq: event.seq, taskId: data.taskId, steps: [] };
                         groups.push(group);
@@ -484,9 +486,13 @@
         }
         for (const block of groups) {
             const language = progressLanguage(ordered, block);
-            if (language !== 'en') continue;
             block.language = language;
-            for (const step of block.steps) { step.language = language; step.summary = toolSummary(step.toolName, step.arguments, language); }
+            for (const step of block.steps) {
+                step.language = language;
+                if(step.toolName==='__thinking') step.summary=language==='en'?'Thinking':'思考过程';
+                else if(step.toolName==='__progress') step.summary=language==='en'?'Progress update':'进展说明';
+                else if(language==='en' || textLanguage(step.summary)==='en') step.summary=toolSummary(step.toolName,step.arguments,language);
+            }
         }
         return { ordered, groups, cards };
     }

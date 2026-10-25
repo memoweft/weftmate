@@ -81,7 +81,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
                     for (const use of source.uses) {
                         const id = use.callId || use.id, previous = uses.get(id);
                         // Prefer captured content over a raw invocation for the same read.
-                        uses.set(id, previous?.path.startsWith('/tasks/') && !use.path.startsWith('/tasks/') ? { ...use, path: previous.path } : use);
+                        uses.set(id, previous?.path?.startsWith('/tasks/') && !use.path?.startsWith('/tasks/') ? { ...use, path: previous.path } : use);
                     }
                     cache.sources.set(source.key, { ...prior, ...source, uses: [...uses.values()] });
                 }

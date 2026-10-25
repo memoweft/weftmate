@@ -1885,3 +1885,7 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 记忆条目/来源的 `forget-preview` 响应增加 `forgetScope`；删除请求必须随用户已确认的计划原样提交该字段。服务端只透传为 Core 的 `forget_scope`，不在提交时刷新。Core 拒绝已变化或缺失的范围凭据时，回执映射为 `MEMORY_REVISION_CHANGED`，需重新预览和确认。预览 `items` 可包含 `interaction_context`（对话记忆副本）和 `evidence_context` / `preceding_ai_context`（记忆前文副本）；它们不是新增的原话来源删除目标，`evidenceIds` 仍只列原来源。现有路径、HTTP 方法和安卓路径白名单不变。
 
 遗忘提交前若范围核对发现世界修订号变化，返回 HTTP 409、`state: withheld` 和既有错误码 `MEMORY_REVISION_CHANGED`；此分支没有预留或提交删除命令。客户端清除原未确认标记，只读重新加载详情与预览，必须再次经用户确认才生成新请求身份。Core 已返回 `revision_conflict` 或范围凭据变化的明确拒绝回执时也按此交互处理；未知结果仍只核对原回执，不重放删除。页面 DELETE 的等待预算与对话记忆操作一致，以容纳提交前的模型范围核对；普通读取仍保留短超时。路径和请求字段不变。
+
+### 输入框命令与技能
+
+`GET /personal/v1/sessions/:sessionId/slash-commands` 返回当前会话 DSH 目录 `{items:[{name,description,kind:"command"|"skill",input?:{hint}}]}`，需 `sessions:read`。`POST` 同一路由传 `{line:"/compact"}`，需 `commands:write`，返回 DSH 原生 `{commandId,result:{kind:"success"|"error",text?}}`；不把命令作为普通消息交给模型。技能按目录选择后把 `/技能名 ` 放入草稿，由原有消息发送入口交给 DSH 原生技能注入。目录与执行都核对账户的会话归属，归档、删除中及只读历史不可执行。

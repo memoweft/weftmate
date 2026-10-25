@@ -106,6 +106,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         ui.byId('message-text').placeholder = '向 WeftMate 说说你的目标';
     }
     function mountComposer() {
+        globalThis.WeftSlashMenu.mount(core,{field:ui.byId('message-text'),anchor:ui.byId('message-form'),toast:ui.toast,repaint:ui.updateAvailability});
         folderChoice=globalThis.WeftFolderChoice.create(core,{form:ui.byId('message-form'),tools:ui.byId('attachment-add').parentElement,toast:ui.toast,readDraft:ui.readMessageDraft});
         ui.receiveWindowsSendTo = async payload => {
             if (core.state.currentView !== 'assistant') await core.enterAssistant();

@@ -71,6 +71,10 @@ test('research self-check defaults on, follows the account turn snapshot, and of
   const first=await hooks['system-prompt/assemble'](null,{scope:agent},async()=>assembly);
   const grounded=(value:any)=>value.sections.find((s:any)=>s.name==='weftmate:grounded-writing').text;
   assert.match(grounded(first),/self-check is ON/);
+  assert.match(grounded(first),/Simple lookups such as weather, exchange rates or current time must answer directly/);
+  assert.match(grounded(first),/do not add a research outline, source section, access time, quotation, JSON, arrays or self-check/);
+  assert.match(grounded(first),/actual individual URL/);
+  assert.match(grounded(first),/account local timezone as human words/);
   settings={researchSelfCheck:false};
   assert.match(grounded(await hooks['system-prompt/assemble'](null,{scope:agent},async()=>assembly)),/self-check is ON/);
   await hooks['agent/pre-step']({agent,turn:2},async()=>{});

@@ -65,7 +65,7 @@ textarea.wm-input { min-height:calc(var(--control-height) * 3);resize:vertical; 
 .wm-dialog-head h2 { margin:0;font-size:var(--wm-type-heading);font-weight:600; }
 .wm-dialog-body { padding:var(--wm-space-8) var(--wm-space-20) var(--wm-space-20);font-size:var(--wm-type-body); }
 .wm-dialog-footer { justify-content:flex-end;border-top:1px solid var(--line); }
-.wm-drawer { margin:0 0 0 auto;width:min(440px,100vw);height:100dvh;max-height:100dvh;border-radius:var(--wm-radius-panel) 0 0 var(--wm-radius-panel);animation:m-sheet-in var(--dur-4) var(--ease-out) both; }
+.wm-drawer { margin:0 0 0 auto;width:min(440px,100vw);height:100dvh;max-height:100dvh;border-radius:var(--wm-radius-panel) 0 0 var(--wm-radius-panel);animation:m-enter-rise var(--dur-4) var(--ease-out) both; }
 .wm-skeleton { display:grid;gap:var(--wm-space-16);width:100%;padding:var(--wm-space-16) 0;list-style:none; }
 .wm-skeleton-row { display:grid;gap:var(--wm-space-8);min-height:var(--wm-space-44); }
 .wm-skeleton-row>span { display:block;height:var(--wm-space-12);width:76%;border-radius:var(--wm-radius-6);background:var(--control-soft);animation:m-skeleton var(--dur-5) var(--ease-in-out) infinite alternate; }
@@ -87,3 +87,24 @@ textarea.wm-input { min-height:calc(var(--control-height) * 3);resize:vertical; 
 @media(max-width:640px) { :is(.wm-row,.settings-row) { gap:var(--wm-space-12);padding-inline:var(--wm-space-12); } .wm-row>.wm-input { max-width:50%; } }
 :is(html[data-reduced-motion],body.calm) .wm-skeleton-row>span { animation:none; }
 @media(prefers-reduced-motion:reduce) { html:not([data-motion-full]) .wm-skeleton-row>span { animation:none; } }
+
+.slash-command-menu { max-height:min(42vh,360px)!important; min-width:260px; border-radius:var(--wm-radius-panel); padding:var(--wm-space-6); animation:m-enter-rise var(--dur-4) var(--ease-out) both; }
+.slash-command-menu .wm-menu-item { min-height:var(--wm-space-48); padding:var(--wm-space-8) var(--wm-space-10); }
+.slash-command-menu .wm-menu-item[data-active=true] { background:var(--surface-soft,var(--soft)); color:var(--ink); }
+.slash-command-menu .wm-menu-label { font-size:var(--wm-type-menu); }
+.slash-command-menu .wm-menu-description { display:block; margin-top:var(--wm-space-2); font-size:var(--wm-type-secondary); line-height:var(--wm-line-height-1_4); color:var(--ink-secondary,var(--secondary)); white-space:normal; }
+.markdown-body .render-citation { font-size:var(--wm-type-secondary); vertical-align:super; line-height:0; white-space:nowrap; text-decoration:none; padding-inline:var(--wm-space-2); }
+.markdown-body .render-sources-heading { font-size:var(--wm-type-secondary); color:var(--ink-secondary,var(--secondary)); margin-top:var(--wm-space-16); margin-bottom:var(--wm-space-4); }
+.markdown-body .render-sources, .markdown-body .render-source-line { color:var(--ink-secondary,var(--secondary)); font-size:var(--wm-type-secondary); line-height:var(--wm-line-height-1_5); margin-block:var(--wm-space-4); }
+.markdown-body .render-sources li { margin-block:var(--wm-space-4); }
+.markdown-body .render-sources p { margin-block:var(--wm-space-4); }
+@media(prefers-reduced-motion:reduce) { html:not([data-motion-full]) .slash-command-menu { animation:none; } }
+:root[data-reduced-motion] .slash-command-menu { animation:none; }
+
+#main-chat-transcript .progress-indicator { display:inline-flex; gap:var(--wm-space-4); align-items:center; margin-inline-end:var(--wm-space-6); }
+#main-chat-transcript .progress-indicator[hidden] { display:none; }
+#main-chat-transcript .progress-indicator i { width:var(--wm-space-4);height:var(--wm-space-4);border-radius:var(--wm-radius-circle);background:currentColor;animation:m-reply-breathe var(--dur-5) var(--ease-in-out) infinite; }
+#main-chat-transcript .progress-elapsed { margin-inline-start:var(--wm-space-6);font-variant-numeric:tabular-nums; }
+#main-chat-transcript .thinking-body p { white-space:pre-wrap;font-size:var(--wm-type-secondary); }
+@media(prefers-reduced-motion:reduce) { #main-chat-transcript .progress-indicator i { animation:none; } }
+:root[data-reduced-motion] #main-chat-transcript .progress-indicator i { animation:none; }

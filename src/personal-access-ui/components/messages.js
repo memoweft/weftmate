@@ -100,6 +100,12 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             const anchors=new Set([...core.state.historyEvents.values()].map(event=>String(event.data?.streamSeq ?? event.seq)));
             for(const row of [...list.children])if(row.dataset.liveMessage==='true'&&!anchors.has(row.dataset.streamSeq))row.remove();
         }
+        if (!targetList && globalThis.WeftTimeline?.prepare) {
+            const prepared=WeftTimeline.prepare(core.timelineEventsForContext(),core.state.personalization?.thinkingDisplay);
+            const shown=new Set(prepared.filter(event=>event.type==='assistant.message').map(event=>String(event.data?.streamSeq ?? event.seq)));
+            for(const row of list.querySelectorAll('.message.assistant')) if(!shown.has(row.dataset.streamSeq || row.dataset.seq)) row.remove();
+            events=events.filter(event=>event.type!=='assistant.message' || shown.has(String(event.data?.streamSeq ?? event.seq)));
+        }
         const incremental = list.children.length > 0 && !core.state.olderLoading;
         for (const event of events) {
             if (!['user.message', 'assistant.message'].includes(event.type))
@@ -253,54 +259,9 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         return images.length;
     }
     function appendReplyMemory(row, event) {
-        const memories = Array.isArray(event.data?.memoryUsed) ? event.data.memoryUsed : [];
-        if (!memories.length || !window.WeftDesktop)
-            return;
-        const button = ui.element('button', 'button quiet small reply-memory', `参考了 ${memories.length} 条记忆`);
-        button.type = 'button';
-        button.setAttribute('aria-label', `查看这条回复参考的 ${memories.length} 条记忆来源`);
-        button.addEventListener('click', async () => {
-            const context = core.conversationTaskContext();
-            const target = window.WeftDesktop.openPreview('记忆来源', button, `reply-memory:${context.sessionId}:${event.seq}`, 'source');
-            target.content.replaceChildren(ui.element('h2', '', '这条回复的记忆来源'));
-            for (const item of memories) {
-                const section = ui.element('section', 'reply-memory-source');
-                const status = ui.element('div', 'muted');
-                status.append(WeftControls.skeleton({rows:1,compact:true,tag:'span'})); section.append(status);
-                target.content.append(section);
-                try {
-                    // Recall summaries may contain shared model context for several IDs.
-                    // Read the authoritative item instead of displaying that internal framing.
-                    const [detail, data] = await Promise.all([
-                        core.readMemoryItem(item.kind, item.id), core.readMemorySources(item.kind, item.id),
-                    ]);
-                    if (!core.conversationTaskCurrent(context) || !target.content.isConnected)
-                        return;
-                    status.remove();
-                    section.append(ui.element('p', '', detail.item?.text
-                        ? `${detail.item.text}${detail.item.truncated ? '\n（仅显示片段）' : ''}` : '记忆内容当前不可用。'));
-                    if (!data.sources?.length)
-                        section.append(ui.element('p', 'muted', '当前没有可展示的来源。'));
-                    const seen = new Set();
-                    for (const source of data.sources ?? []) {
-                        const key = JSON.stringify([source.evidenceId, source.role || 'user', source.conversationId, source.messageId,
-                            ...(source.evidenceId ? [] : [source.recordedAt, source.rawContent, source.summary, source.contentAvailable])]);
-                        if (seen.has(key)) continue;
-                        seen.add(key);
-                        section.append(ui.element('p', 'muted', source.recordedAt ? `记录于 ${core.formatDate(source.recordedAt)}` : '对话来源'));
-                        section.append(ui.element('p', 'memory-source-text', source.contentAvailable
-                            ? source.rawContent || source.summary || '此来源没有可显示的原文。' : '此来源已删除或当前不可读取。'));
-                    }
-                }
-                catch {
-                    if (core.conversationTaskCurrent(context) && target.content.isConnected) {
-                        status.textContent = '来源暂时无法读取，请重新打开。';
-                    }
-                }
-            }
-        });
-        row.append(button);
+        row.querySelectorAll('.reply-memory').forEach(node=>node.remove());
     }
+
     function renderTurnStatus() {
         const value = core.turnStatusViewModel();
         if (!value)
