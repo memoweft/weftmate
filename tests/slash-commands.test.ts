@@ -20,6 +20,14 @@ test('#659 opening commands in a new work conversation preserves the current dra
   assert.equal(state.attachmentDrafts.get('owner|created-session')[0],file);assert.equal(state.attachmentDrafts.has('owner|new'),false);
   assert.equal(creations,1);assert.equal(core.creatingOptimisticSession,false);
 });
+test('#659 temporary command discovery keeps the native temporary-session flag',async()=>{
+  const env:any={setTimeout,WeftUiCore:{factories:{}}};runInNewContext(readFileSync('src/ui-core/slash-commands.js','utf8'),env);
+  const state:any={ownerId:'owner',identityGeneration:1,activeChatSource:'desktop',newConversationId:'temporary-draft',newConversationTemporary:true,newConversationMode:'chat',mainChat:{chatId:'main'},selectedSessionId:null,attachmentDrafts:new Map()};
+  let fields:any;
+  const core:any={state,supportsChat:()=>true,openSideChat:async()=>{throw Error('side create does not accept temporary')},submitCommand:async(_kind,input)=>{fields=input;return {state:'accepted_by_dsh',sessionId:'temporary-session'}},refreshSessions:async()=>{},selectSession:async id=>{state.selectedSessionId=id},attachmentDraftKey:()=> 'empty',accessApi:async()=>({items:[]})};
+  await env.WeftUiCore.factories.slashCommands(core,{readMessageDraft:()=> '/compact',restoreMainChatDraft:()=>{}},{crypto:{randomUUID:()=> 'temporary-request'}}).listSlashCommands();
+  assert.equal(fields.temporary,true);assert.equal(state.selectedSessionId,'temporary-session');
+});
 
 test('#659 discovers scoped DSH commands and skills, and executes on the same resumed agent',async()=>{
   const calls:any[]=[],agent={session:{id:'s-one'}};

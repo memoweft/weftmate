@@ -68,3 +68,12 @@ test('legacy messages without a native turn boundary keep their separate answer 
     {seq:2,type:'assistant.message',data:{text:'第一段报告。'}},{seq:3,type:'assistant.message',data:{text:'下一段报告。'}}];
   assert.equal(f.WeftTimeline.prepare(events).filter(e=>e.type==='assistant.message').length,2);
 });
+test('#660 receipt task events do not split commentary from the native turn steps',()=>{
+  const f=timeline(),events=[{seq:0,type:'turn.started',data:{turn:1}},
+    {seq:1,type:'task.started',data:{taskId:'command-one',turn:1}},
+    {seq:2,type:'assistant.message',data:{text:'先读取资料。'}},
+    {seq:3,type:'step.completed',data:{taskId:'turn-1',stepId:'read',toolName:'read',state:'completed'}},
+    {seq:4,type:'assistant.message',data:{text:'资料已经整理好了。'}},{seq:5,type:'turn.ended',data:{turn:1,reason:'completed'}}];
+  const p=f.WeftUiCore.projectTimeline(f.WeftTimeline.prepare(events),[],true);
+  assert.equal(p.groups.length,1);assert.equal(p.groups[0].steps.length,2);
+});

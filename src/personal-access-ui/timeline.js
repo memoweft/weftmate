@@ -37,7 +37,7 @@
       if(event.type==='turn.started')activeTurn=true;
       if(event.type==='turn.ended')activeTurn=false;
       if (event.type === 'turn.started') taskId = `${event.sourceRef?.sessionId ? event.sourceRef.sessionId + ':' : ''}turn-${event.data?.turn}`;
-      if (event.data?.taskId) taskId = event.data.taskId;
+      if (!activeTurn && event.data?.taskId) taskId = event.data.taskId;
       if (event.type !== 'assistant.message') return [event];
       const next = ordered.find(item=>item.seq>event.seq && (item.type==='turn.started' || item.type==='user.message'));
       const tail=ordered.filter(item=>item.seq>event.seq && (!next || item.seq<next.seq));
@@ -214,7 +214,7 @@
       if (!records.parentNode) details.append(records)
       const savedGroups = new Map([...records.querySelectorAll('[data-step-group]')].map(detail => [detail.dataset.stepGroup, detail.open]))
       records.replaceChildren(...WeftUiCore.groupConsecutiveSteps(block.steps).map(group => {
-        const children = group.steps.map(step => step.toolName === '__thinking' ? thinkingCard(step,savedSteps.get(String(step.stepId)),options) : step.toolName==='__progress' ? WeftContent.create(step.progressText,'execution-note markdown-body') : globalThis.WeftTimelineCards.step(globalThis.WeftUiCore.stepPresentation(step,{...displayOutcome,language:block.language}), savedSteps.get(String(step.stepId)), running, options))
+        const children = group.steps.map(step => step.toolName === '__thinking' ? thinkingCard(step,savedSteps.get(String(step.stepId)),options) : step.toolName==='__progress' ? WeftContent.create(step.progressText,'execution-note markdown-body') : globalThis.WeftTimelineCards.step(globalThis.WeftUiCore.stepPresentation(step,{...displayOutcome,language:block.language,humanCopy:true}), savedSteps.get(String(step.stepId)), running, options))
         if (children.length === 1) return children[0]
         const detail = node('details', 'execution-step-group'), label = node('summary', '', group.summary)
         detail.dataset.stepGroup = String(group.steps[0].stepId)

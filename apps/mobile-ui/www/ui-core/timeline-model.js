@@ -260,7 +260,8 @@
         const english = (outcome?.language || step.language) === 'en';
         if (english) step = { ...step, language:'en', summary: toolSummary(step.toolName, step.arguments, 'en'),
             approvalText: ({'已批准':'Approved','已拒绝':'Declined','已取消':'Cancelled','已失效':'Expired','等待批准':'Awaiting approval'})[step.approvalText] || step.approvalText };
-        if (rejected) return { ...step, state:'rejected', summary:english ? `You declined ${toolSummary(step.toolName,step.arguments,'en')}`:`${toolLabel(step.toolName)}被你拒绝了`,statusText:'',approvalText:'' };
+        if (rejected) return outcome?.humanCopy ? { ...step, state:'rejected', summary:english ? `You declined ${toolSummary(step.toolName,step.arguments,'en')}`:`${toolSummary(step.toolName,step.arguments)}被你拒绝了`,statusText:'',approvalText:'' }
+            : { ...step,state:'rejected',statusText:english?'Declined; not performed':'你拒绝了，没有做' };
         if (state === 'cancelled' || progress.state === 'stopped' && ['running','pending','failed'].includes(state))
             return { ...step, state: 'cancelled', statusText: english ? 'Interrupted' : '已中断' };
         if (state === 'failed') return { ...step, state: progress.state === 'failed' ? 'failed' : 'issue',
@@ -275,7 +276,7 @@
         if (rejected.length) {
             const remaining = steps.filter(step => !rejectedStep(step));
             const other = progressText(remaining, outcome);
-            const refusal = rejected.map(step => english ? `You declined ${toolSummary(step.toolName,step.arguments,language)}` : `${toolLabel(step.toolName)}被你拒绝了`).join(english ? '; ' : '；');
+            const refusal = rejected.map(step => english ? `You declined ${toolSummary(step.toolName,step.arguments,language)}` : `${toolSummary(step.toolName,step.arguments)}被你拒绝了`).join(english ? '; ' : '；');
             return {...other,text:[refusal,['已完成','工具已就绪','Completed','Tools ready'].includes(other.text) ? '' : other.text].filter(Boolean).join(' · ')};
         }
         const failed = steps.find(step => executionState(step) === 'failed');
@@ -503,6 +504,7 @@
                 block.replySeq=ordered.find(event=>belongs(event) && event.type==='assistant.message' && event.seq>(start?.seq ?? -Infinity) && (!next || event.seq<next.seq))?.seq;
             }
             const language = progressLanguage(ordered, block);
+            if(language!=='en' && !mergeTurns)continue;
             block.language = language;
             for (const step of block.steps) {
                 step.language = language;
