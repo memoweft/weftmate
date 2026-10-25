@@ -21,6 +21,20 @@ test('streaming follows the current bottom in one frame without smooth chasing',
  for(let i=0;i<10;i++){f.box.scrollHeight+=20;f.scroll.changed();f.tick();assert.equal(f.box.scrollTop,f.box.scrollHeight-f.box.clientHeight);}
 });
 
+test('opening and closing details preserves bottom following or an explicitly unpinned reader',()=>{
+ for(const input of ['pointerdown','keydown'])for(const unpinned of [false,true]){
+  const f=fixture(true);f.scroll.latest();
+  if(unpinned){f.fire('wheel',{deltaY:-120});f.box.scrollTop=600;f.fire('scroll');}
+  const target={closest:()=>({tagName:'SUMMARY'})};
+  for(const delta of [180,-120]){
+   f.content.listeners.get(input)?.({target,key:'Enter'});
+   f.box.scrollHeight+=delta;f.content.listeners.get('toggle')?.();f.observers.forEach(fn=>fn());f.tick();
+   assert.equal(f.scroll.pinned,!unpinned,`${input}, unpinned=${unpinned}`);
+   assert.equal(f.box.scrollTop,unpinned?600:f.box.scrollHeight-f.box.clientHeight);
+  }
+ }
+});
+
 test('smooth follow never replays its old origin after a layout clamp reaches the new bottom',()=>{
  const f=fixture(true);f.scroll.latest();f.box.scrollHeight+=160;f.scroll.changed();for(let i=0;i<8;i++)f.tick();
  // Composer shrinks/keyboard closes during the animation; Chromium clamps.

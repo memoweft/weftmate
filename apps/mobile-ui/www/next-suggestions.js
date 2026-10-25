@@ -24,10 +24,13 @@
         function priority() {
             const value = {};
             for (const [key, selector] of Object.entries(groups)) {
-                const rows = [...area.querySelectorAll(selector)].sort((a, b) => Number(b.classList.contains('presence-bar')) - Number(a.classList.contains('presence-bar')));
+                const decision = key==='approval'||key==='question';
+                const phoneDecision = decision && (mobile || globalThis.WeftPhoneUnify?.isPhone());
+                const rows = [...(decision?document:area).querySelectorAll(selector)].sort((a, b) => Number(b.classList.contains('presence-bar')) - Number(a.classList.contains('presence-bar')));
                 let active = false;
                 for (const row of rows) { const show = visible(row); row.dataset.composerSuppressed = String(active && show); if (show) active = true; }
-                for (const row of rows) { row.dataset.composerAbove = key; if (row.parentElement !== slot) slot.insertBefore(row, bar); }
+                // Phone presentation owns these original controls in its scroll flow.
+                for (const row of rows) { row.dataset.composerAbove = key; if (!phoneDecision && row.dataset.inlineDecision!=='true' && row.parentElement !== slot) slot.insertBefore(row, bar); }
                 value[key] = rows.some(visible);
             }
             value.noModel = field.disabled || !!area.querySelector('.needs-model-hint:not([hidden]),.model-gate:not([hidden]),.model-gate-hint:not([hidden])');

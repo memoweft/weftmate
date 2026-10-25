@@ -433,7 +433,11 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             label.append(ui.element('span', 'session-title-text', title));
             if(core.hasMultipleComputers?.())label.append(ui.element('small','session-computer-name',`${core.computerName(session.hostId)}${session.computerOffline?' · 不在线':''}`));
             button.append(label);
-            button.addEventListener('click', () => { void core.selectSession(session.sessionId); });
+            button.addEventListener('click', () => {
+                const select=()=>core.selectSession(session.sessionId);
+                const current=core.state.activeChatSource==='desktop'&&core.state.selectedSessionId===session.sessionId&&!core.state.newConversation;
+                void Promise.resolve(!current&&globalThis.WeftMotion?WeftMotion.handoff(ui.byId('chat-scroll'),select):select()).catch(error=>ui.toast(core.failureMessage(error)));
+            });
             row.append(button);
             appendStatus(row, session);
             row.className = 'session-row' + (session.unread ? ' is-unread' : ''); row.dataset.sessionId = session.sessionId;
@@ -481,7 +485,9 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         create.replaceChildren(WeftIcons.create('compose',16),ui.element('span','rail-new-label','新对话'),ui.element('kbd','','Ctrl N'));
         const normal=ui.element('button','session-menu-item','新建对话');normal.type='button';normal.setAttribute('role','menuitem');normal.prepend(WeftIcons.create('compose',16));temporary.className='session-menu-item';temporary.setAttribute('role','menuitem');temporary.prepend(WeftIcons.create('clock',16));
         const work=ui.element('button','session-menu-item','新建工作');work.type='button';work.setAttribute('role','menuitem');work.prepend(WeftIcons.create('folder',16));work.onclick=()=>{close();core.startNewWork();};menu.append(normal,work,temporary);group.append(menu);
-        const close=()=>{menu.hidden=true;toggle.setAttribute('aria-expanded','false')};normal.onclick=()=>{close();ui.closeRail();core.startNewConversation()};temporary.addEventListener('click',close);
+        const close=()=>{WeftPopover.hide(menu);toggle.setAttribute('aria-expanded','false')};normal.onclick=()=>{close();ui.closeRail();core.startNewConversation()};temporary.addEventListener('click',close);
+        // New starts in one clear place, regardless of the current history filter.
+        create.addEventListener('click',event=>{if(!core.supportsWorkModes?.())return;event.stopImmediatePropagation();close();ui.closeRail();void core.startNewConversation().catch(error=>ui.toast(core.failureMessage(error)));},true);
         toggle.onclick=()=>{menu.hidden=!menu.hidden;toggle.setAttribute('aria-expanded',String(!menu.hidden));if(!menu.hidden){WeftPopover.position(menu,toggle,{side:'bottom'});normal.focus()}};
         menu.onkeydown=event=>{if(event.key==='Escape'){event.stopPropagation();close();toggle.focus()}if(['ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();const items=[normal,work,temporary],at=items.indexOf(document.activeElement);items[(at+(event.key==='ArrowDown'?1:-1)+items.length)%items.length].focus()}};
         document.addEventListener('pointerdown',event=>{if(!group.contains(event.target))close()});

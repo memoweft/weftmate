@@ -41,7 +41,7 @@ globalThis.WeftUiCore.factories.activity = (core,effects,environment) => {
             }
         }catch(error){if(error.status===409&&scope()===token){resetActivity();await readActivity();} /* Preserve known counts while reconnecting. */}
     }
-    async function setActivityFilter(filter){if(!filters[filter])return;model.filter=filter;model.generation++;model.items=[];model.nextCursor=null;model.snapshotCursor=null;flight=null;await readActivity();}
+    async function setActivityFilter(filter){if(!filters[filter])return;model.filter=filter;model.generation++;model.nextCursor=null;model.snapshotCursor=null;flight=null;await readActivity();}
     async function markActivityRead(row){const token=scope();await core.accessApi(`/activity/${encodeURIComponent(row.id)}/read`,{method:'PATCH',protectedWrite:true,body:{requestId:environment.crypto.randomUUID(),read:true,attentionRevision:row.attentionRevision}});if(scope()===token)await readActivity();}
     async function markAllActivityRead(){if(!model.snapshotCursor)return;const token=scope();await core.accessApi('/activity/read',{method:'POST',protectedWrite:true,body:{requestId:environment.crypto.randomUUID(),through:model.snapshotCursor}});if(scope()===token)await readActivity();}
     async function activityAction(row,action,outcome){

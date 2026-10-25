@@ -11,7 +11,7 @@
   // terminal snapshot). Render Markdown through the normal incremental renderer.
   function stream(content, text, options, render) {
     let state = streams.get(content);
-    if ((!options.streaming && !state) || reduced() || paused() || Array.from(text).length > 4000) {
+    if ((!options.streaming && !state) || reduced() || paused()) {
       if (state) finishStream(state, false);
       return render(content, text, options);
     }
@@ -19,6 +19,10 @@
       state = { content, shown: content._renderText || '', frame: null };
       streams.set(content, state); pendingStreams.add(state);
     }
+    // Transport may deliver a paragraph at once. Keep the small-chunk cadence,
+    // but bound each burst's visual queue to one transition instead of seconds.
+    if (state.text !== text || state.options?.streaming && !options.streaming)
+      state.framesLeft = Math.ceil((milliseconds('replyChange') || 420) / (1000 / 60));
     Object.assign(state, { text, options, render });
     if (state.frame === null) state.frame = requestAnimationFrame(() => tickStream(state));
     return content;
@@ -36,7 +40,9 @@
     let common = 0;
     while (common < shown.length && shown[common] === target[common]) common++;
     // Corrections replace the changed suffix; never split a surrogate pair.
-    state.shown = target.slice(0, common + Math.min(3, target.length - common)).join('');
+    const remaining = target.length - common;
+    const count = Math.max(3, Math.ceil(remaining / Math.max(1, state.framesLeft--)));
+    state.shown = target.slice(0, common + Math.min(count, remaining)).join('');
     const complete = state.shown === state.text;
     state.render(state.content, state.shown, { ...state.options, streaming: !complete || state.options.streaming === true, motionFrame: true });
     if (complete) finishStream(state, false);

@@ -21,11 +21,12 @@ globalThis.WeftLibraryView={mount({target,core,desktop=false,openPreview,configu
     for(const [id,label]of [['list','列表视图'],['grid','网格视图']]){const el=iconButton(label,id,()=>{core.library.view=id;render();});el.dataset.view=id;views.append(el);}
     if(!desktop)views.hidden=true;
     toolbar.append(search,project,time,views);
+    const reset=button('清除筛选',async()=>{search.value='';Object.assign(core.library,{type:'',projectId:'',time:'all',search:''});await core.setLibraryFilter('search','');},'button quiet small library-reset');reset.hidden=true;
     const status=node('p','library-status');status.setAttribute('role','status');
     const list=node('div','library-list');list.setAttribute('aria-label','成果文件');
-    const more=button('加载更多',()=>core.readLibrary(true));target.replaceChildren(head,intro,filters,toolbar,status,list,more);
+    const more=button('加载更多',()=>core.readLibrary(true));const statusbar=node('div','library-statusbar');statusbar.append(status,reset);target.replaceChildren(head,intro,toolbar,filters,statusbar,list,more);
     globalThis.WeftPopover?.bindSettingsSelect(project);globalThis.WeftPopover?.bindSettingsSelect(time);
-    let previewEpoch=0,rowSignature='';
+    let previewEpoch=0,rowSignature='';const mounted=new Map();
     async function preview(item,trigger){
         const epoch=++previewEpoch,identity=core.state.identityGeneration,generation=core.library.generation;
         const content=openPreview(item,trigger);globalThis.WeftDesktop?.configureLibraryPreview(core.library.items,preview);content.replaceChildren(skeleton());
@@ -57,22 +58,25 @@ globalThis.WeftLibraryView={mount({target,core,desktop=false,openPreview,configu
     function dateLabel(value){const date=new Date(value),now=new Date();return new Intl.DateTimeFormat('zh-CN',date.toDateString()===now.toDateString()?{hour:'numeric',minute:'2-digit',hourCycle:'h23'}:{month:'long',day:'numeric',...(date.getFullYear()!==now.getFullYear()?{year:'numeric'}:{})}).format(date);}
     function render(){
         const model=core.library;refresh.disabled=model.loading;more.hidden=!model.nextCursor;more.disabled=model.loading;
-        status.textContent=model.loading?'':model.error?'读取失败':`${model.total} 个文件`;list.setAttribute('aria-busy',String(model.loading));
+        reset.hidden=!(model.type||model.search||model.projectId||model.time!=='all');
+        status.textContent=model.error?`${model.error}${model.items.length?' · 仍显示上次读取的文件':''}`:model.loading&&model.items.length?'正在更新文件…':model.loading?'':`${model.total} 个文件`;list.setAttribute('aria-busy',String(model.loading));
         for(const el of filters.children){el.setAttribute('aria-pressed',String(el.dataset.type===model.type));el.disabled=model.loading;}
         for(const el of views.children)el.setAttribute('aria-pressed',String(el.dataset.view===model.view));
         const projects=JSON.stringify(model.projects);if(project.dataset.items!==projects){project.dataset.items=projects;project.replaceChildren();for(const row of [{id:'',name:'全部项目'},...model.projects]){const option=node('option','',row.name);option.value=row.id;project.append(option);}}
         project.value=model.projectId;time.value=model.time;project.disabled=time.disabled=model.loading;project.dispatchEvent(new Event('weft:sync'));time.dispatchEvent(new Event('weft:sync'));
-        list.classList.toggle('is-grid',desktop&&model.view==='grid');const signature=JSON.stringify([model.items,model.view,model.type,model.search,model.projectId,model.time,model.items.length?null:[model.loading,model.error]]);if(signature===rowSignature)return;rowSignature=signature;list.replaceChildren();
-        if(!model.items.length){list.append(model.loading?skeleton():model.error?empty(model.error,'warn',true):empty(model.type||model.search||model.projectId||model.time!=='all'?'没有找到符合条件的文件。试试其他筛选或文件名。':'还没有成果。让助手写文档、整理表格或生成图片，完成的文件会出现在这里。'));return;}
-        for(const item of model.items){const row=node('article','library-row');row.dataset.libraryId=item.id;row.classList.toggle('is-missing',!item.exists);
+        list.classList.toggle('is-grid',desktop&&model.view==='grid');const signature=JSON.stringify([model.items,model.view,model.type,model.search,model.projectId,model.time,model.items.length?null:[model.loading,model.error]]);if(signature===rowSignature)return;rowSignature=signature;
+        if(!model.items.length){mounted.clear();list.replaceChildren(model.loading?skeleton():model.error?empty(model.error,'warn',true):empty(model.type||model.search||model.projectId||model.time!=='all'?'没有找到符合条件的文件。试试其他筛选或文件名。':'还没有成果。对话里做好的文件，会出现在这里。'));return;}
+        const rows=[];
+        for(const item of model.items){const key=`${core.state.identityGeneration}:${item.id}`,signature=JSON.stringify([item,core.state.personalCapabilities.libraryDesktopActions]);const previous=mounted.get(key);if(previous?.signature===signature){rows.push(previous.row);continue;}const row=node('article','library-row');row.dataset.libraryId=item.id;row.classList.toggle('is-missing',!item.exists);
             const open=button('',trigger=>preview(item,trigger),'library-file');open.setAttribute('aria-label',`预览 ${item.fileName}`);
             const art=node('span','library-file-icon');art.append(icon(item));
             if(item.type==='image'&&item.exists){const identity=core.state.identityGeneration,generation=model.generation;void core.libraryPreview(item).then(data=>{if(identity!==core.state.identityGeneration||generation!==core.library.generation||!art.isConnected||data.kind!=='image')return;const img=node('img','library-thumbnail');img.alt='';img.src=`data:${data.contentType};base64,${data.data}`;art.replaceChildren(img);}).catch(()=>{});}
             const copy=node('span','library-file-copy');copy.append(node('strong','library-file-name',item.fileName),node('span','library-file-meta',`${/\.pdf$/i.test(item.fileName)?'PDF':/\.(zip|7z|rar|tar|gz)$/i.test(item.fileName)?'压缩包':labels[item.type]} · ${bytes(item.size)}${item.projectName?` · ${item.projectName}`:''}`));
             open.append(art,copy);const info=node('div','library-row-info');const date=node('time','library-date',dateLabel(item.modifiedAt));date.dateTime=item.modifiedAt;date.title=new Date(item.modifiedAt).toLocaleString('zh-CN');info.append(date);
             if(!item.exists){copy.append(node('span','library-missing','已不在原位置'));row.title='文件可能已被移动或删除；仍可查看来源对话和复制原路径。';}
-            const actions=node('div','library-row-actions');appendActions(actions,item);row.append(open,info,actions);row.onclick=event=>{if(!event.target.closest('button'))open.click();};list.append(row);
+            const actions=node('div','library-row-actions');appendActions(actions,item);row.append(open,info,actions);row.onclick=event=>{if(!event.target.closest('button'))open.click();};rows.push(row);mounted.set(key,{signature,row});
         }
+        WeftControls.reconcile(list,rows);for(const [key,value]of mounted)if(!rows.includes(value.row))mounted.delete(key);
     }
     const autoRefresh=setInterval(()=>{if(target.isConnected&&!target.hidden&&document.visibilityState==='visible'&&core.foreground())void core.readLibrary();},core.polling.overview);
     return {render,preview,deactivate(){previewEpoch++;clearTimeout(searchTimer);WeftPopover.closeMenu();},dispose(){previewEpoch++;clearTimeout(searchTimer);clearInterval(autoRefresh);WeftPopover.closeMenu();},focus(){title.focus();}};

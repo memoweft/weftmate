@@ -6,6 +6,14 @@
     document.addEventListener('keydown',event=>{if(!event.metaKey&&!event.ctrlKey&&!event.altKey)document.documentElement.dataset.inputModality='keyboard';},true);
   }
   const active = new Map();
+  function hide(menu) {
+    if(!menu||menu.hidden)return;
+    const copy=globalThis.WeftMotion?.snapshot(menu);
+    active.get(menu)?.observer?.disconnect();active.delete(menu);
+    menu.hidden=true;
+    if(menu.matches(':popover-open'))menu.hidePopover();
+    globalThis.WeftMotion?.dismiss(copy);
+  }
   function pullRefresh(target, refresh, enabled = () => true) {
     let start=null;
     target.addEventListener('touchstart',event=>{start=enabled()&&target.scrollTop<=0?event.touches[0]?.clientY:null;},{passive:true});
@@ -67,6 +75,7 @@
       const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(() => refresh()) : null;
       active.set(menu, { trigger, options: { side, align }, observer });
       observer?.observe(menu); if (trigger.nodeType === 1) observer?.observe(trigger);
+      globalThis.WeftMotion?.menu(menu,true);
     } else Object.assign(active.get(menu), { trigger, options: { side, align } });
   }
   let frame;
@@ -115,7 +124,7 @@
     select.parentNode.append(menu);
     select.setAttribute('aria-haspopup', 'menu');
     const close = (focus = false) => {
-      menu.hidden = true; select.setAttribute('aria-expanded', 'false');
+      hide(menu); select.setAttribute('aria-expanded', 'false');
       if (focus) select.focus({ preventScroll: true });
     };
     const open = () => {
@@ -178,7 +187,7 @@
     select.after(trigger, menu); select.hidden = true; select.tabIndex = -1; select.setAttribute('aria-hidden', 'true');
     settingsSelects.set(select, trigger);
     const sync = () => { menu.dataset.presentation = innerWidth <= 600 ? 'sheet' : 'popover'; text.textContent = select.selectedOptions[0]?.textContent || label; trigger.disabled = select.disabled; trigger.hidden = select.dataset.controlHidden === 'true' || select.classList.contains('settings-category-picker') && innerWidth >= 720; };
-    const close = (focus = false) => { menu.hidden = true; trigger.setAttribute('aria-expanded', 'false'); if (popoverOpen()) menu.hidePopover(); if (focus) trigger.focus({ preventScroll: true }); };
+    const close = (focus = false) => { hide(menu); trigger.setAttribute('aria-expanded', 'false'); if (popoverOpen()) menu.hidePopover(); if (focus) trigger.focus({ preventScroll: true }); };
     // Android WebView may not support the Popover API selector; treat it as closed.
     const popoverOpen = () => { try { return menu.matches(':popover-open'); } catch { return false; } };
     let search;
@@ -253,8 +262,10 @@
     let child, closed = false;
     const close = (focus = true) => {
       if (closed) return; closed = true; child?.close(false);
+      menu.setAttribute('aria-hidden','true');
       active.get(menu)?.observer?.disconnect(); active.delete(menu);
-      document.removeEventListener('pointerdown', outside); menu.remove();
+      document.removeEventListener('pointerdown', outside);
+      const exit=globalThis.WeftMotion?.menu(menu,false);if(exit)exit.finished.then(()=>menu.remove(),()=>menu.remove());else menu.remove();
       trigger.setAttribute('aria-expanded', 'false'); onClose?.();
       if (focus && trigger.isConnected) trigger.focus({preventScroll:true});
     };
@@ -342,6 +353,6 @@
     const popup=openMenu(trigger,entries.map(entry=>({...entry,action:async()=>{try{await entry.action()}catch(error){onError(error)}}})),{onClose:()=>{dismissMenu=null}});
     dismissMenu=popup.close;return popup.close;
   }
-  globalThis.WeftPopover = { position, bindTooltips, bindSelect, bindSettings, bindSettingsSelect, openMenu, autosize, modelGate, memoryHealth, menu, pullRefresh, closeMenu:()=>dismissMenu?.() };
+  globalThis.WeftPopover = { position, hide, bindTooltips, bindSelect, bindSettings, bindSettingsSelect, openMenu, autosize, modelGate, memoryHealth, menu, pullRefresh, closeMenu:()=>dismissMenu?.() };
 
 })();

@@ -1723,7 +1723,8 @@ test('M1-0 mobile execution is collapsed by default, groups calls once, and ends
     {seq:5,type:'task.ended',data:{taskId:'turn-1'}}];renderSharedConversation()`);
   const blocks=h.node('chat-content').children.filter(node=>node.dataset.timeline?.startsWith('steps-'));
   assert.equal(blocks.length,1);assert.equal(blocks[0].querySelector('details').open,false);
-  assert.match(allText(blocks[0]),/处理了 2 步 · 用时未记录/);
+  assert.equal(blocks[0].querySelector('.inline-progress-text').textContent,'处理了 2 步');
+  assert.equal(blocks[0].querySelector('.progress-elapsed').textContent,'用时未记录');
   assert.equal(blocks[0].querySelectorAll('.execution-step').length,2);
   assert.equal(h.node('chat-content').children.some(node=>node.dataset.timelineApproval==='approval-one'),false);
   const counts=h.node('chat-content').children.length;h.run('renderTimeline()');assert.equal(h.node('chat-content').children.length,counts);

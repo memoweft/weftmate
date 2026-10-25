@@ -2,6 +2,42 @@
 (() => {
   'use strict'
   const node = (tag, cls, text) => { const n = document.createElement(tag); n.className = cls || ''; if (text) n.textContent = text; return n }
+  function reconcile(parent, children) {
+    let next=parent.firstChild;
+    for(const child of children) {
+      if(child===next)next=next.nextSibling;
+      else if(parent.moveBefore && child.isConnected && parent.isConnected)parent.moveBefore(child,next);
+      else parent.insertBefore(child,next);
+    }
+    for(const child of [...parent.childNodes])if(!children.includes(child))child.remove();
+  }
+  // Keep the original actionable nodes, listeners and authority checks when
+  // presenting decisions beside the process. Home anchors survive chat resets.
+  const decisionSurfaces=new Map();
+  function decisionSurface(id, supplied) {
+    const found=supplied || document.getElementById(id);
+    if(found && !decisionSurfaces.has(id)) {
+      const home=document.createComment(id+' home'),anchor=id==='question-bar' && decisionSurfaces.get('approval-bar')?.home;
+      if(anchor?.isConnected)anchor.after(home);else found.before(home);
+      decisionSurfaces.set(id,{element:found,home});
+    }
+    return decisionSurfaces.get(id)?.element || found;
+  }
+  function placeDecisions(list=document.getElementById('transcript'), park=false) {
+    if(!list || globalThis.WeftPhoneUnify?.isPhone())return;
+    decisionSurface('approval-bar');decisionSurface('question-bar');
+    const process=park?null:[...list.querySelectorAll('.execution-block[data-decision-anchor="true"]')].at(-1)?.parentElement;
+    for(const {element,home} of decisionSurfaces.values()) {
+      const parent=process || home.parentNode;if(!parent)continue;
+      const before=process?null:home.nextSibling;
+      element.dataset.inlineDecision=String(!!process);
+      if(element.parentNode===parent && (process || element===before))continue;
+      const active=document.activeElement,focused=element.contains(active);
+      if(parent.moveBefore && element.isConnected && parent.isConnected)parent.moveBefore(element,before);
+      else parent.insertBefore(element,before);
+      if(focused && document.activeElement!==active)active.focus({preventScroll:true});
+    }
+  }
   function detailAction(name, icon, action) {
     const button = node('button','timeline-action progress-icon-action');
     button.type='button'; button.title=name; button.setAttribute('aria-label',name); button.dataset.icon=icon;
@@ -85,10 +121,11 @@
       actions.append(copy,collapse); body.append(actions,node('p')); detail.append(summary,body);
     }
     if (fresh) detail.open = step.thinkingActive && options.thinkingDisplay === 'expanded';
-    if (detail.dataset.active === 'true' && !step.thinkingActive) detail.open = false;
     detail.dataset.active = String(!!step.thinkingActive);
     detail.querySelector('.thinking-title').textContent = step.summary;
-    detail.querySelector('p').textContent = step.modelThinking;
+    const body=detail.querySelector('p');
+    if(body.textContent!==step.modelThinking)body.textContent = step.modelThinking;
+    if(globalThis.WeftMotion?.visibility)WeftMotion.details(detail);
     return detail;
   }
   function render(events, list, options = {}) {
@@ -158,11 +195,12 @@
         const end=ordered.find(event=>['turn.ended','task.ended'].includes(event.type)&&WeftUiCore.turnOutcome([event],block.taskId).terminal);
         const ms=Date.parse(end?.at)-Date.parse(start?.at || block.steps[0]?.at);
         const duration=Number.isFinite(ms)?`${Math.max(0,Math.round(ms/1000))} ${block.language==='en'?'s':'秒'}`:block.language==='en'?'duration unavailable':'用时未记录';
-        view.text=['aborted','cancelled','canceled','stopped','killed'].includes(outcome.reason) ? (block.language==='en'?'Stopped':'已停止') : block.language==='en'?`Processed ${block.steps.length} steps · ${duration}`:`处理了 ${block.steps.length} 步 · ${duration}`;
+        view.text=['aborted','cancelled','canceled','stopped','killed'].includes(outcome.reason) ? (block.language==='en'?'Stopped':'已停止') : tools.length ? block.language==='en'?`Processed ${tools.length} steps`:`处理了 ${tools.length} 步` : block.language==='en'?'Completed':'已完成';
+        view.duration=duration;
         view.running=false;
       }
       const running = view.running
-      const elapsed = running ? /\d+ (?:秒|s)$/.exec(options.waiting || '')?.[0] || `${Math.max(0,Math.floor((Date.now()-Date.parse(current?.at || started?.at))/1000)) || 0} ${block.language==='en'?'s':'秒'}` : ''
+      const elapsed = view.duration || (running ? /\d+ (?:秒|s)$/.exec(options.waiting || '')?.[0] || `${Math.max(0,Math.floor((Date.now()-Date.parse(current?.at || started?.at))/1000)) || 0} ${block.language==='en'?'s':'秒'}` : '')
       if (running) view.text = view.text.replace(/\s*\d+ (?:秒|s)$/, '')
       const signature = JSON.stringify([block, outcome, stopView])
       row.dataset.running = String(running)
@@ -172,6 +210,7 @@
         if (text) {if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,view.text,running,block.steps.length <= (globalThis.WeftMotion?.listLimit || 20));else if(text.textContent!==view.text)text.textContent=view.text}
         text?.classList.toggle('is-running', running)
         const timer = previous?.querySelector('.progress-elapsed'); if(timer)timer.textContent=elapsed
+        if(previous?.querySelector('summary'))previous.querySelector('summary').title=[view.text,elapsed].filter(Boolean).join(' · ');
         const indicator = previous?.querySelector('.progress-indicator'); if(indicator)indicator.hidden=!running
         previous?.querySelector('summary')?.setAttribute('aria-label', `${view.text}${block.language === 'en' ? previous.open ? ', expanded' : ', collapsed' : previous.open ? '，已展开' : '，已收起'}`)
         return
@@ -180,14 +219,18 @@
       const focused = document.activeElement, focusStep = focused?.closest?.('.execution-step')?.dataset.step
       const hadFocus = row.contains?.(focused)
       const savedSteps = new Map([...row.querySelectorAll('.execution-step')].map(detail => [detail.dataset.step, detail]))
+      // stepCard mutates reused nodes, so compare with their state before paint.
+      const savedStepStates = new Map([...savedSteps].map(([key, detail]) => [key, detail.dataset.state]))
       const newFailure = view.failed && row.dataset.failed !== 'true'; row.dataset.failed = String(!!view.failed)
       const details = previous || node('details', 'execution-block')
+      details.dataset.decisionAnchor=String(options.decisionAnchor ?? block===groups.at(-1));
       if (!previous) details.dataset.replyProcess = 'true'
       details.dataset.motion = 'unfold'
-      details.open = previous?.open === true
+      details.open = newFailure || previous?.open === true
       row.dataset.running = String(running)
       row.classList.toggle('has-failure', !!view.failed)
       const summary = details.querySelector('summary') || node('summary', 'inline-progress-summary')
+      summary.title=[view.text,elapsed].filter(Boolean).join(' · ');
       summary.setAttribute('role', 'button')
       const text = summary.querySelector('.inline-progress-text') || node('span', 'inline-progress-text')
       if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,view.text,running,block.steps.length <= (globalThis.WeftMotion?.listLimit || 20));else text.textContent = view.text
@@ -207,22 +250,43 @@
       // unfold is owned by details::details-content, not a second closed grid.
       if (!summary.parentNode) details.append(summary)
       if (!records.parentNode) details.append(records)
-      const savedGroups = new Map([...records.querySelectorAll('[data-step-group]')].map(detail => [detail.dataset.stepGroup, detail.open]))
-      records.replaceChildren(...WeftUiCore.groupConsecutiveSteps(block.steps).map(group => {
-        const children = group.steps.map(step => step.toolName === '__thinking' ? thinkingCard(step,savedSteps.get(String(step.stepId)),options) : step.toolName==='__progress' ? WeftContent.create(step.progressText,'execution-note markdown-body') : globalThis.WeftTimelineCards.step(globalThis.WeftUiCore.stepPresentation(step,{...displayOutcome,language:block.language,humanCopy:true}), savedSteps.get(String(step.stepId)), running, options))
+      const savedGroups = new Map([...records.querySelectorAll('[data-step-group]')].map(detail => [detail.dataset.stepGroup, detail]))
+      const savedNotes = new Map([...records.querySelectorAll('[data-progress-note]')].map(detail => [detail.dataset.progressNote,detail]))
+      const recordNodes=WeftUiCore.groupConsecutiveSteps(block.steps).map(group => {
+        const children = group.steps.map(step => {
+          if(step.toolName==='__thinking')return thinkingCard(step,savedSteps.get(String(step.stepId)),options);
+          if(step.toolName==='__progress') {
+            const note=savedNotes.get(String(step.stepId)) || WeftContent.create('','execution-note markdown-body');
+            note.dataset.progressNote=String(step.stepId);WeftContent.update(note,step.progressText);return note;
+          }
+          return WeftTimelineCards.step(WeftUiCore.stepPresentation(step,{...displayOutcome,language:block.language,humanCopy:true}),savedSteps.get(String(step.stepId)),running,options);
+        })
         if (children.length === 1) return children[0]
-        const detail = node('details', 'execution-step-group'), label = node('summary', '', group.summary)
-        detail.dataset.stepGroup = String(group.steps[0].stepId)
-        const newFailure = children.some(child => child.dataset.state === 'failed' && savedSteps.get(child.dataset.step)?.dataset.state !== 'failed')
-        detail.open = newFailure || (savedGroups.get(detail.dataset.stepGroup) ?? children.some(child => child.open))
-        const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true')
-        arrow.append(window.WeftIcons.create('chevron', 16)); label.append(arrow)
-        const body = node('div','execution-group-records');body.append(...children)
-        detail.append(label, body)
+        const key=String(group.steps[0].stepId),savedGroup=savedGroups.get(key);
+        const detail=savedGroup || node('details','execution-step-group');detail.dataset.stepGroup=key;detail.dataset.motion='unfold';
+        if(!savedGroup) {
+          const label=node('summary'),title=node('span','step-group-title'),arrow=node('span','progress-chevron');arrow.setAttribute('aria-hidden','true');arrow.append(WeftIcons.create('chevron',16));label.append(title,arrow);
+          detail.append(label,node('div','execution-group-records'));detail.open=children.some(child=>child.open);
+        }
+        if(children.some(child=>child.dataset.state==='failed' && savedStepStates.get(child.dataset.step)!=='failed'))detail.open=true;
+        if(detail.querySelector('.step-group-title').textContent!==group.summary)detail.querySelector('.step-group-title').textContent=group.summary;
+        reconcile(detail.querySelector('.execution-group-records'),children);
+        if(globalThis.WeftMotion?.visibility)WeftMotion.details(detail);
         return detail
-      }))
+      });
+      if(!recordNodes.length) {
+        const empty=records.querySelector('.execution-empty') || node('p','execution-empty');
+        const text=terminal ? block.language==='en'?'No tools were used for this reply.':'这次回复没有调用工具。' : block.language==='en'?'The reply will appear below. Tool activity will be collected here.':'回答会显示在下方；如需调用工具，过程会记录在这里。';
+        if(empty.textContent!==text)empty.textContent=text;recordNodes.push(empty);
+      }
+      if(view.failed) {
+        const failure=records.querySelector('.execution-failure') || node('p','execution-failure');
+        if(failure.textContent!==view.text)failure.textContent=view.text;recordNodes.unshift(failure);
+      }
+      reconcile(records,recordNodes);
       const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
       if (!previous) row.replaceChildren(details)
+      if(globalThis.WeftMotion?.visibility)WeftMotion.details(details);
       if (!previous) requestAnimationFrame(()=>globalThis.WeftReplyMotion?.reveal(summary,'status'))
       if (hadFocus) (focusStep ? [...records.querySelectorAll('.execution-step')].find(detail => detail.dataset.step === focusStep)?.querySelector('summary') : summary)?.focus({ preventScroll: true })
       globalThis.WeftMotion?.dismiss(collapse, true)
@@ -278,6 +342,7 @@
       })
     }
     for (const [key, row] of existing) if (!seen.has(key)) row.remove()
+    if(list.closest('#transcript'))placeDecisions();
   }
-  window.WeftTimeline = { render, prepare, thinking, detailAction, copyFeedback, isFinalReply }
+  window.WeftTimeline = { render, prepare, thinking, detailAction, copyFeedback, isFinalReply, decisionSurface, placeDecisions }
 })()

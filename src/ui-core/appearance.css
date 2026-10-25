@@ -10,8 +10,8 @@
 .appearance-modes button[aria-pressed=true]>svg { opacity:1; }
 .appearance-modes button:disabled { opacity:.5; cursor:default; }
 .appearance-thumbnail { display:flex; height:var(--wm-space-72); overflow:hidden; margin-bottom:var(--wm-space-8); border:1px solid var(--line); border-radius:var(--wm-radius-6); background:#fff; --mini-rail:#f1f0ed; --mini-line:#575752; --mini-bubble:#e9ece8; }
-.appearance-thumbnail[data-mode=dark] { background:#262724; --mini-rail:#20211f; --mini-line:#bbbdb4; --mini-bubble:#353e35; }
-.appearance-thumbnail[data-mode=system] { background:linear-gradient(90deg,#fff 50%,#262724 50%); --mini-bubble:linear-gradient(90deg,#e9ece8 50%,#353e35 50%); }
+.appearance-thumbnail[data-mode=dark] { background:#202020; --mini-rail:#181818; --mini-line:#bcbcbc; --mini-bubble:#333333; }
+.appearance-thumbnail[data-mode=system] { background:linear-gradient(90deg,#fff 50%,#202020 50%); --mini-bubble:linear-gradient(90deg,#eeeeee 50%,#333333 50%); }
 .appearance-mini-rail { display:flex; flex-direction:column; gap:var(--wm-space-6); width:25%; padding:var(--wm-space-8) var(--wm-space-4); background:var(--mini-rail); }
 .appearance-mini-rail i { height:var(--wm-space-4); background:var(--mini-line); opacity:.5; border-radius:var(--wm-radius-2); }
 .appearance-mini-chat { flex:1; display:flex; flex-direction:column; gap:var(--wm-space-6); padding:var(--wm-space-8); }
