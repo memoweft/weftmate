@@ -29,7 +29,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         content.scrollTop = positions.get(id) || 0;
         const cached = mountedCategories.get(id) === core.state.identityGeneration;
-        if (!cached || !sameScope || Object.keys(options).length || ['account', 'devices', 'memory', 'about', 'executionRecords'].includes(id))
+        if (!cached || !sameScope || Object.keys(options).length || ['account', 'devices', 'memory', 'about', 'executionRecords', 'connectors'].includes(id))
             category.mount({ ...options, target: panels.get(id), core, ui });
         if (id === 'usage') usageScope = options.sessionId || '';
         mountedCategories.set(id, core.state.identityGeneration);
@@ -240,7 +240,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             if (globalThis.WeftShortcuts.dispatch(event, { new: () => ui.byId('new-session').click() })) event.stopPropagation();
         });
         dialog.addEventListener('cancel', event => { event.preventDefault(); ui.byId('account-back').click(); });
-        dialog.addEventListener('close', () => { mountedCategories.delete('executionRecords'); ui.stopAccountPairing?.(); returnFocus?.focus(); });
+        dialog.addEventListener('close', () => { for (const id of ['executionRecords', 'connectors']) mountedCategories.delete(id); ui.stopAccountPairing?.(); returnFocus?.focus(); });
         renderSettingsNavigation(); selectSettings(selected);
         globalThis.WeftPopover.bindSettings(dialog);
         globalThis.WeftPopover.bindSettings(editor);

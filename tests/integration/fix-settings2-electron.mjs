@@ -90,6 +90,21 @@ try {
   await open('assistant');await open('personalization');
   assert.equal(await bio.inputValue(),'合成的未保存简介','category switching preserves unsaved text');
   assert.equal(await page.evaluate(()=>__settingsDraft===document.querySelector('#personalization-bio')&&__settingsNav===document.querySelector('.settings-navigation')),true,'switch changes content visibility, retaining controls and navigation');
+  await page.evaluate(()=>{
+    const core=__feedbackSessionCore;globalThis.__readConnectors=core.readConnectors;
+    core.readConnectors=()=>new Promise(resolve=>{globalThis.__releaseConnectors=async()=>{core.readConnectors=globalThis.__readConnectors;resolve(await core.readConnectors());};});
+  });
+  await open('connectors');
+  assert.equal(await page.locator('.connectors-view .wm-skeleton').count(),1,'connector loading uses the shared skeleton');
+  assert.doesNotMatch(await page.locator('.connectors-view').innerText(),/正在读取/);
+  await page.evaluate(()=>globalThis.__releaseConnectors());
+  await page.locator('.connectors-view .wm-skeleton').waitFor({state:'detached'});
+  await page.evaluate(()=>{globalThis.__connectorBody=document.querySelector('.connectors-view');});
+  await open('general');await open('connectors');
+  assert.equal(await page.evaluate(()=>globalThis.__connectorBody===document.querySelector('.connectors-view')),true,'connector controls survive returning to the category');
+  await page.evaluate(()=>WeftUiComponents.factories.account(__feedbackSessionCore,{byId:id=>document.getElementById(id)}).accountModelStatus('正在读取模型…'));
+  assert.equal(await page.locator('#account-models-status .wm-skeleton').count(),1,'model loading uses the shared skeleton');
+  await page.evaluate(()=>document.querySelector('#account-models-status').replaceChildren());
   {
     await page.evaluate(()=>{
       const core=__feedbackSessionCore;globalThis.__readRecords=core.readExecutionRecords;globalThis.__recordReads=0;

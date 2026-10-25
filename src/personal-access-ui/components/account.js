@@ -189,7 +189,8 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
     }
     function accountModelStatus(text, error = false) {
         const node = ui.byId('account-models-status');
-        node.textContent = text;
+        if (text === '正在读取模型…') node.replaceChildren(WeftControls.skeleton({rows:1,compact:true}));
+        else node.textContent = text;
         node.classList.toggle('form-error', error);
     }
     function renderAccountModels() {
