@@ -9,9 +9,9 @@ const tokens = JSON.parse(readFileSync(new URL('../design/tokens/tokens.json', i
 
 test('native caption background and symbols composite the design scrim in light and dark modes', () => {
   const scrim = tokens.shared.color['desktop-scrim'];
-  assert.equal(blend('rgb(255, 255, 255)', scrim), 'rgb(190, 194, 201)');
-  assert.equal(blend('rgb(32, 32, 32)', scrim), 'rgb(30, 34, 40)');
-  assert.equal(blend('rgb(241, 242, 246)', scrim), 'rgb(180, 185, 194)');
+  assert.equal(blend('rgb(255, 255, 255)', scrim), 'rgb(204, 204, 204)');
+  assert.equal(blend('rgb(32, 32, 32)', scrim), 'rgb(30, 30, 30)');
+  assert.equal(blend('rgb(241, 242, 246)', scrim), 'rgb(193, 194, 197)');
   assert.equal(blend('rgb(32, 32, 32)', 'rgba(0, 0, 0, 0)'), 'rgb(32, 32, 32)');
   assert.equal(blend('rgb(32, 32, 32)', 'rgb(8, 14, 25)'), 'rgb(8, 14, 25)');
   assert.equal(blend('rgb(255, 255, 255)', 'rgba(0, 0, 0, .5)'), 'rgb(128, 128, 128)');
