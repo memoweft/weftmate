@@ -161,7 +161,7 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 .health-page [data-metric=recovery] { --health-color:var(--health-recovery); }
 .health-metric[data-metric=recovery] { color:var(--health-ink); padding:var(--wm-space-20); border:0; border-radius:var(--wm-radius-24); gap:var(--wm-space-8); align-self:start; }
 .health-metric[data-metric=recovery] .health-card-name { color:var(--health-muted); }
-.health-metric[data-metric=recovery] .health-big { font-size:calc(var(--wm-font-size-28) * 2); font-weight:750; line-height:1; letter-spacing:-.035em; }
+.health-metric[data-metric=recovery] .health-big { font-size:var(--wm-font-size-28); font-weight:550; line-height:1.2; letter-spacing:-.035em; }
 .health-score-number { display:flex; align-items:baseline; gap:var(--wm-space-4); margin-top:var(--wm-space-8); }
 .health-score-number .health-unit { font-size:var(--wm-font-size-12); }
 .health-graphic { display:block; width:100%; flex:none; overflow:visible; }
@@ -186,7 +186,7 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 .health-card { background:var(--health-card); border:0; border-radius:var(--wm-radius-24); }
 .health-metric,.health-metric[data-metric=recovery] { align-self:stretch; color:var(--health-ink); padding:var(--wm-space-20); min-height:calc(var(--wm-space-48) * 5); gap:var(--wm-space-8); position:relative; transition:background var(--wm-duration-fast),transform var(--wm-duration-fast); }
 .health-metric .health-card-name,.health-metric[data-metric=recovery] .health-card-name { font-size:var(--wm-font-size-15); color:var(--health-muted); }
-.health-metric .health-big,.health-metric[data-metric=recovery] .health-big { font-size:calc(var(--wm-font-size-28) * 2); font-weight:750; line-height:1; letter-spacing:-.035em; }
+.health-metric .health-big,.health-metric[data-metric=recovery] .health-big { font-size:var(--wm-font-size-28); font-weight:550; line-height:1.2; letter-spacing:-.035em; }
 .health-score-number { margin-top:0; flex-wrap:wrap; }
 .health-metric .health-score-number { margin-top:var(--wm-space-8); }
 .health-metric>.health-status { color:var(--health-color); font-weight:600; }
@@ -212,13 +212,13 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 .health-selected-point { stroke-width:3; }
 .health-age-capsule { display:inline-flex; align-self:flex-start; color:var(--health-color); background:var(--health-color-soft); border-radius:var(--wm-radius-999); padding:var(--wm-space-4) var(--wm-space-8); font-size:var(--wm-font-size-12); font-weight:600; }
 .health-insight { position:relative; background:var(--health-card); overflow:hidden; }
-.health-insight::after { content:''; position:absolute; inset:auto 0 0; height:var(--wm-space-3); background:linear-gradient(90deg,var(--health-recovery),var(--health-load),var(--health-sleep),var(--health-hrv)); }
+
 .health-insight>h2 { display:flex; align-items:center; gap:var(--wm-space-8); color:var(--health-muted); font-size:var(--wm-font-size-15); }
 .health-insight>h2 .wm-icon { color:var(--health-sleep); }
 .health-insight h3 { font-size:var(--wm-font-size-24); color:var(--health-ink); line-height:1.35; }
 .health-insight .health-reading { color:var(--health-muted); }
-.health-insight .health-remind { color:var(--health-card); background:var(--health-recovery); font-weight:600; }
-.health-page .health-insight .health-remind:hover { color:var(--health-card); background:var(--health-recovery); filter:brightness(1.08); }
+.health-insight .health-remind { color:var(--surface); background:var(--accent); font-weight:600; }
+.health-page .health-insight .health-remind:hover { color:var(--surface); background:var(--accent); filter:brightness(1.08); }
 .health-insight-foot .health-control { background:var(--surface-soft,var(--soft)); }
 .health-mobile .health-insight { background:var(--health-card); }
 .health-sleep-summary { margin-top:var(--wm-space-20); }
