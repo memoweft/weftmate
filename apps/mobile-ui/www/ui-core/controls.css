@@ -67,6 +67,7 @@ textarea.wm-input { min-height:calc(var(--control-height) * 3);resize:vertical; 
 .wm-dialog-footer { justify-content:flex-end;border-top:1px solid var(--line); }
 .wm-drawer { margin:0 0 0 auto;width:min(440px,100vw);height:100dvh;max-height:100dvh;border-radius:var(--wm-radius-panel) 0 0 var(--wm-radius-panel);animation:m-enter-rise var(--dur-4) var(--ease-out) both; }
 .wm-skeleton { display:grid;gap:var(--wm-space-16);width:100%;padding:var(--wm-space-16) 0;list-style:none; }
+.wm-refresh-status { display:block;margin-block:var(--wm-space-6);color:var(--control-muted);font-size:var(--wm-type-secondary);line-height:1.5;animation:m-fade var(--dur-3) var(--ease-out) both; }
 .wm-skeleton-row { display:grid;gap:var(--wm-space-8);min-height:var(--wm-space-44); }
 .wm-skeleton-row>span { display:block;height:var(--wm-space-12);width:76%;border-radius:var(--wm-radius-6);background:var(--control-soft);animation:m-skeleton var(--dur-5) var(--ease-in-out) infinite alternate; }
 .wm-skeleton-row>span+span { width:52%; }

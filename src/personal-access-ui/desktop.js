@@ -37,7 +37,7 @@
   function icon(kind) { return window.WeftIcons.create(({ webpage: 'web', collection: 'outputs' })[kind] || kind, 16) }
   let pickerTrigger;
   function hidePicker(restoreFocus = false) {
-    picker?.remove(); picker = null; pickerTrigger?.setAttribute('aria-expanded','false');
+    if(picker)globalThis.WeftMotion?WeftMotion.remove(picker):picker.remove(); picker = null; pickerTrigger?.setAttribute('aria-expanded','false');
     if(restoreFocus&&pickerTrigger?.isConnected)pickerTrigger.focus({preventScroll:true});pickerTrigger=null;
     byId('conversation-resources')?.setAttribute('aria-expanded', 'false')
   }
@@ -178,6 +178,7 @@
     const narrow = window.matchMedia?.('(max-width: 640px)').matches
     const collapsed = force === undefined ? narrow ? byId('session-rail').classList.contains('is-open') : !document.body.classList.contains('rail-collapsed') : force
     document.body.classList.toggle('rail-collapsed', collapsed)
+    if (!narrow) { byId('session-rail').inert = collapsed; byId('session-rail').setAttribute('aria-hidden',String(collapsed)) }
     if (narrow) { byId('session-rail').classList.toggle('is-open', !collapsed); byId('rail-backdrop').hidden = collapsed }
     byId('rail-open').setAttribute('aria-expanded', String(!collapsed))
     if (collapsed) byId('rail-open').focus()
@@ -187,11 +188,11 @@
     byId('conversation-resources')?.addEventListener('click', () => { void showPicker() })
     document.addEventListener('click', e => { if (picker && !picker.contains(e.target) && !e.target.closest('#conversation-resources, .preview-add')) hidePicker() })
     byId('account-menu-trigger').addEventListener('click', () => {
-      const menu = byId('account-menu'); menu.hidden = !menu.hidden
+      const menu = byId('account-menu'); if(menu.hidden)menu.hidden=false;else WeftPopover.hide(menu)
       byId('account-menu-trigger').setAttribute('aria-expanded', String(!menu.hidden))
       if (!menu.hidden) { globalThis.WeftPopover?.position(menu, byId('account-menu-trigger')); menu.querySelector('button')?.focus() }
     })
-    document.addEventListener('click', e => { if (!byId('account-menu').hidden && !byId('account-menu').parentNode.contains(e.target)) { byId('account-menu').hidden = true; byId('account-menu-trigger').setAttribute('aria-expanded', 'false') } })
+    document.addEventListener('click', e => { if (!byId('account-menu').hidden && !byId('account-menu').parentNode.contains(e.target)) { WeftPopover.hide(byId('account-menu')); byId('account-menu-trigger').setAttribute('aria-expanded', 'false') } })
 
     const input = byId('message-text')
     input.addEventListener('keydown', e => {
@@ -212,7 +213,7 @@
         if(e.defaultPrevented)return false
         if (picker) { hidePicker(true) }
         else if (preview && !preview.panel.hidden) closePreview()
-        else if (!byId('account-menu').hidden) { byId('account-menu').hidden = true; byId('account-menu-trigger').setAttribute('aria-expanded', 'false'); byId('account-menu-trigger').focus() }
+        else if (!byId('account-menu').hidden) { WeftPopover.hide(byId('account-menu')); byId('account-menu-trigger').setAttribute('aria-expanded', 'false'); byId('account-menu-trigger').focus() }
         else actions.stop()
       }})
     })

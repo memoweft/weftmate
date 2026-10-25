@@ -62,12 +62,14 @@ try {
     }
     await page.evaluate(() => {
       for (const animation of document.getElementById('assistant-view').getAnimations()) animation.finish();
+      globalThis.__motionWorkspace=document.getElementById('assistant-view');
       __feedbackSessionCore.show('account');
     });
     assert.equal(await page.locator('#account-view').getAttribute('data-motion'), 'enter-fade');
     await page.evaluate(async id => { await __feedbackSessionCore.selectSession(id); __feedbackSessionCore.show('assistant'); }, fixture.source);
     assert.equal(await page.locator('#assistant-view').getAttribute('data-motion'), 'view-enter');
-    assert.equal(await page.locator('#assistant-view').evaluate(node => node.getAnimations().some(animation => animation.animationName === 'm-enter-rise' && animation.playState === 'running')), true, 'returning from settings must replay entry on the reused chat surface');
+    assert.equal(await page.locator('#assistant-view').evaluate(node => node===globalThis.__motionWorkspace),true,'settings preserves the existing workspace');
+    assert.equal(await page.locator('#assistant-view').evaluate(node => node.getAnimations().some(animation => animation.animationName === 'm-enter-rise' && animation.playState === 'running')), false, 'returning from a modal must not replay the retained workspace');
     const result = await page.evaluate(async () => {
       const body = WeftContent.create('', 'message-text markdown-body');
       const row = document.createElement('li'); row.className = 'message assistant'; row.dataset.motion = 'enter-rise'; row.append(body); document.getElementById('transcript').append(row);
