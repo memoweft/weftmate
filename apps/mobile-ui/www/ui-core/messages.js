@@ -121,7 +121,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             core.state.olderLoading = false;
             core.state.turnStatus = null;
             core.state.turnEndReasonKind = null;
-            effects.clearHistoryView();
+            effects.clearHistoryView(true);
             effects.renderTurnStatus();
         }
         const generation = core.state.historyGeneration;
@@ -152,6 +152,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                     const events = page.events.some(event => event.data?.truncated)
                         ? await core.completeHistoryEvents(page.events) : page.events;
                     if (!stillCurrent()) return core.historyReadResult('cancelled');
+                    if (reset) effects.finishHistoryLoading?.();
                     changed = core.appendHistory(events, page.liveEvents, page.liveSeq) || changed;
                     core.state.afterSeq = page.nextSeq;
                     if (!page.hasMore) {
@@ -184,6 +185,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             return await promise;
         }
         finally {
+            if (stillCurrent() && reset) effects.finishHistoryLoading?.();
             if (core.state.historyInFlight?.promise === promise)
                 core.state.historyInFlight = null;
         }

@@ -1,6 +1,6 @@
 # WeftMate 设计令牌
 
-`tokens.json` 是颜色、字体、字号、行高、间距、圆角、阴影与动效参数的唯一来源。DS-1 从实际使用的桌面、手机 Web（网页界面）与 Android（安卓）兼容原生页取值，保留它们现有的差异。本包保持外观；UI-P1 再决定动画与精修参数。
+`tokens.json` 是颜色、字体、字号、行高、间距、圆角、阴影与动效参数的唯一来源。桌面与手机网页共用 `src/ui-core/controls.js` / `controls.css` 的公共层；原生兼容令牌仍从同一母版生成。
 
 ## 修改与生成
 
@@ -111,10 +111,10 @@
 
 | 时长 | 用途 |
 |---|---|
-| `--dur-1` 130ms | 轻反馈、淡入替换 |
-| `--dur-2` 220ms | 常规状态变化 |
-| `--dur-3` 320ms | 消息、列表和页面进入 |
-| `--dur-4` 420ms | 抽屉进入 |
+| `--dur-1` 130ms | 悬停、按压反馈 |
+| `--dur-2` 220ms | 列表错峰 |
+| `--dur-3` 320ms | 内容替换、菜单、状态变化 |
+| `--dur-4` 420ms | 页面、弹窗、展开与抽屉 |
 | `--dur-5` 640ms | 加载占位循环 |
 
 曲线为 `--ease-out`（`cubic-bezier(.16,1,.3,1)`）、`--ease-in-out`（`cubic-bezier(.4,0,.2,1)`）、`--ease-in`（`cubic-bezier(.4,0,1,1)`）、`--ease-linear`（`linear`）。原有 `shared.duration` / `shared.easing` 名称使用 `{motion.duration.dur-…}` / `{motion.easing.ease-…}` 引用；CSS 保留为变量别名，Android 和 Apple 解析为原生数值。新增动效直接用这五档时长和四条曲线。
@@ -140,3 +140,23 @@
 Apple 当前没有手写 `.shadow`，系统菜单 / 导航 / 按钮的原生效果继续由系统绘制，不启用 Web 阴影配方。视口断点、栏宽 / 窗口大小、图标光学尺寸、比例和功能计时仍属于布局 / 图标 / 业务契约；SwiftUI 未显式指定的系统控件默认值继续使用原生默认值。以后新增自定义样式，先补对应母版令牌。
 
 前后原生截图与逐像素报告见 [DS-1b](../../apps/apple/Tests/Evidence/DS-1b/README.md)。
+
+## 页面包怎么用公共层（FIX-DESIGN-BASE）
+
+先加载 `tokens.css`、`ui-core/controls.js`、已有的 `popovers.js` 和 `reply-motion.js`；`ui-core/controls.css` 放在页面样式后。桌面与手机网页入口已接好，新增页面不需要自己复制控件。
+
+| 用途 | 公共接口 / 样式 |
+|---|---|
+| 字号 | `--wm-type-body` 14、`secondary` 12、`heading` 18、`title` 22、`sidebar` / `menu` / `button` 13；聊天正文继续尊重 `--text-size`，设备界面字号继续尊重 `--ui-size` |
+| 间距 / 圆角 | `--wm-space-inline` 8、`row` 12、`section` / `page` 24；`--wm-radius-control` 8、`card` 12、`panel` 16 |
+| 颜色 / 阴影 | `--canvas` 页面、`--surface` 内容、`--surface-soft` 次级底、`--ink` 正文、`--ink-secondary` 次要、`--ink-muted` 说明、`--line` 分隔、`--accent` 主操作；浮层用 `--shadow-float` |
+| 按钮 | `WeftControls.button('保存', {variant:'primary', action})`；`secondary` / `text` / `icon`，图标传自己的 SVG 节点，图标按钮仍提供名称 |
+| 表单 | `input({label, value, placeholder})`；多行加 `multiline:true`；`toggle(checkbox)`、`select(nativeSelect)`、`segmented(nativeSelect)` 保留原控件的值与 `change` 事件 |
+| 分组 / 列表行 / 标签 | `group('标题', [row('名称','说明',control)])`、`tag('标签')`；旧 `WeftSettingsControls` 接口直接转入公共实现 |
+| 菜单 / 弹层 | `menu(trigger, items)` 复用 `WeftPopover`，自动避让窗口边缘、内部滚动、键盘选择和关闭后归还焦点 |
+| 对话框 / 侧滑面板 | `dialog({title, content, actions})` / `drawer(...)` 返回原生模态节点；`openPanel()` 打开，`close()` 关闭；调用者负责移除用完的临时节点 |
+| 加载 | `skeleton({rows:3})`；或 `const ready=loading(content)`，请求完成用 `if (ready())` 再替换内容。请求失败仍显示能重试的人话；后来的请求不会被旧 `ready()` 清掉 |
+
+只替换内容容器，保留侧栏、页头、输入区和分类面板。当前项重复点击直接返回；主动刷新走独立的刷新动作。异步结果仍核对原有身份和请求代次。不要每次刷新都重建控件、重放入场动效。
+
+页面进入 / 展开用 `data-motion="view-enter"` / `unfold`（420ms），浮层和内容替换用 320–420ms；列表第一次出现用 `data-motion="stagger-rise"`，错峰依次用已有时长并封顶。只有悬停和按压用快档，不另写时长和曲线。减少动态效果继续由 `WeftReplyMotion` 统一处理。

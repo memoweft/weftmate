@@ -48,7 +48,7 @@
     if (picker) { hidePicker(); return }
     const menu = node('div', 'resource-picker'); menu.setAttribute('role', 'dialog'); menu.setAttribute('aria-label', '输出与来源')
     const close = node('button', 'button quiet small resource-picker-close', '关闭列表'); close.type = 'button'; close.addEventListener('click',()=>hidePicker(true))
-    menu.append(close, node('p', 'muted', '正在读取…')); picker = menu; pickerTrigger=trigger
+    menu.append(close, WeftControls.skeleton({rows:3})); picker = menu; pickerTrigger=trigger
     globalThis.WeftUiLayout.mountResourcePicker(menu)
     globalThis.WeftPopover?.position(menu, trigger, { side: 'bottom', align: 'end' })
     trigger.setAttribute('aria-expanded', 'true'); close.focus({ preventScroll: true })
@@ -102,7 +102,7 @@
     for (const [id, tab] of tabs) {
       tab.content.hidden = id !== key; tab.select.setAttribute('aria-selected', String(id === key)); tab.select.tabIndex = id === key ? 0 : -1
     }
-    if (switching) globalThis.WeftMotion?.reveal(selected.content, 'fast')
+    if (switching) globalThis.WeftMotion?.reveal(selected.content, 'base')
     if (focus) selected.select.focus({ preventScroll: true })
   }
   function openPreview(title, trigger = document.activeElement, key = title, kind = 'file') {

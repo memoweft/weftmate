@@ -9,11 +9,20 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             bytes: new Uint8Array(await blob.arrayBuffer()), ownerId: core.state.ownerId }) : undefined,
         title: () => core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.title });
     globalThis.WeftProblemFeedback = trigger => ui.messageActions.openFeedback(trigger);
-    function clearHistoryView() {
+    function clearHistoryView(loading = false) {
         globalThis.WeftContent?.closeGallery(false);
-        ui.byId('transcript').replaceChildren();
+        const list = ui.byId('transcript');
+        list.replaceChildren(...(loading ? [WeftControls.skeleton({ tag: 'li' })] : []));
+        if (loading) { list.setAttribute('aria-busy', 'true'); ui.byId('chat-intro').hidden = true; }
+        else list.removeAttribute('aria-busy');
         historyNotice('');
         ui.renderTurnStatus?.();
+    }
+    function finishHistoryLoading() {
+        const list = ui.byId('transcript');
+        if (!list.hasAttribute('aria-busy')) return;
+        list.querySelector(':scope > .wm-skeleton')?.remove(); list.removeAttribute('aria-busy');
+        globalThis.WeftMotion?.reveal(list, 'base');
     }
     function historyNotice(message, kind = 'ordinary') {
         // Only read failures merge into connection state; preserve all other notices.
@@ -178,7 +187,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             const taskLabel = core.messageTaskLabel(event);
             if (event.type === 'user.message' && taskLabel) row.append(ui.element('small', 'message-task-label', taskLabel));
             if (event.data.truncated === true && !event.data.fullTextReadFailed)
-                row.append(ui.element('span', 'truncated', '正在读取完整回复…'));
+                { const placeholder = ui.element('span', 'truncated'); placeholder.append(WeftControls.skeleton({rows:1,compact:true,tag:'span'})); row.append(placeholder); }
             const next = [...list.children].find(n => Number(n.dataset.seq) > event.seq);
             if (next)
                 list.insertBefore(row, next);
@@ -256,8 +265,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             target.content.replaceChildren(ui.element('h2', '', '这条回复的记忆来源'));
             for (const item of memories) {
                 const section = ui.element('section', 'reply-memory-source');
-                const status = ui.element('p', 'muted', '正在读取来源…');
-                section.append(status);
+                const status = ui.element('div', 'muted');
+                status.append(WeftControls.skeleton({rows:1,compact:true,tag:'span'})); section.append(status);
                 target.content.append(section);
                 try {
                     // Recall summaries may contain shared model context for several IDs.
@@ -312,7 +321,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         const button = ui.byId('load-older');
         button.hidden = core.state.newConversation || !core.conversationTaskContext().sessionId || !core.state.hasOlder || !Number.isSafeInteger(core.state.nextBeforeSeq);
         button.disabled = core.state.olderLoading;
-        button.textContent = core.state.olderLoading ? '正在读取…' : '加载更早内容';
+        button.setAttribute('aria-label','加载更早内容'); button.replaceChildren(...(core.state.olderLoading ? [WeftControls.skeleton({rows:1,compact:true,tag:'span'})] : [document.createTextNode('加载更早内容')]));
     }
-    return { followConversationBottom, mountConversationScroll, renderOptimisticMessages, clearHistoryView, historyNotice, beginOlderHistory, restoreOlderHistoryPosition, scrollToLatest, paintHistoryMessages, appendOriginalFiles, appendUnpreviewedOriginalImages, appendReplyMemory, renderTurnStatus, renderOlderControl };
+    return { followConversationBottom, mountConversationScroll, renderOptimisticMessages, finishHistoryLoading, clearHistoryView, historyNotice, beginOlderHistory, restoreOlderHistoryPosition, scrollToLatest, paintHistoryMessages, appendOriginalFiles, appendUnpreviewedOriginalImages, appendReplyMemory, renderTurnStatus, renderOlderControl };
 };

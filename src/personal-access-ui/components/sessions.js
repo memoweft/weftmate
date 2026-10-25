@@ -467,7 +467,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             (focusMore ? replacement?.querySelector('.session-more') : replacement?.children[0])?.focus({preventScroll:true});
         }
         ui.byId('sessions-status').textContent = matches || projectMatches ? '' : query ? '没有找到会话。' : workingList ? '还没有工作，点新建开始。' : '还没有对话，点新建开始。';
-        if (matches <= 20) globalThis.WeftMotion?.changed(list, JSON.stringify([query, sessions.map(row => row.sessionId)]), 'fast');
+        if (matches <= 20) globalThis.WeftMotion?.changed(list, JSON.stringify([query, sessions.map(row => row.sessionId)]), 'base');
         else globalThis.WeftMotion?.cancel(list);
     }
     function mountSessions() {

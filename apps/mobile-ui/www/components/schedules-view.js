@@ -8,11 +8,11 @@ globalThis.WeftSchedulesView = (core, target, { openConversation, autoLoad = tru
     let generation = 0;
     async function render() {
         core.syncMobileIdentity?.();
-        const version = ++generation, token = core.accountToken(); status.textContent = '正在读取…'; list.replaceChildren();
+        const version = ++generation, token = core.accountToken(); status.textContent = ''; const ready = WeftControls.loading(list, { tag: 'li' });
         try {
             const value = await core.loadSchedules();
             if (!value || version !== generation || !core.accountIdentityCurrent(token) || !current()) return;
-            list.replaceChildren(); status.textContent = value.items.length ? `${value.items.length} 项提醒与定时任务` : '还没有提醒。可以在对话里说“明天早上 9 点提醒我交报告”。';
+            list.replaceChildren(); ready(); status.textContent = value.items.length ? `${value.items.length} 项提醒与定时任务` : '还没有提醒。可以在对话里说“明天早上 9 点提醒我交报告”。';
             for (const row of value.items) {
                 const item = element('li', 'system-service settings-schedule-row'); item.setAttribute('aria-label', row.text);
                 const details = element('div', 'system-service-detail');
@@ -32,7 +32,7 @@ globalThis.WeftSchedulesView = (core, target, { openConversation, autoLoad = tru
                 }
                 list.append(item);
             }
-        } catch { if (core.accountIdentityCurrent(token) && current()) status.textContent = '读取失败，请刷新重试。'; }
+        } catch { ready(); if (core.accountIdentityCurrent(token) && current()) status.textContent = '读取失败，请刷新重试。'; }
     }
     refresh.addEventListener('click', () => { void render(); }); if (autoLoad) void render(); return render;
 };

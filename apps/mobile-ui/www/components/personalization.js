@@ -4,8 +4,8 @@ globalThis.WeftPersonalizationView = (core, target, category, {toast = () => {}}
     const identity = core.state.identityGeneration;
     const current = () => target.isConnected && identity === core.state.identityGeneration;
     const node = (tag, cls = '', text = '') => { const n = document.createElement(tag); n.className = cls; n.textContent = text; return n; };
-    const form = node('form', 'personalization-form'), notice = node('p', 'muted', '正在读取…'); notice.setAttribute('role', 'status');
-    target.replaceChildren(form); form.append(notice);
+    const form = node('form', 'personalization-form'), notice = node('div', 'muted'); notice.setAttribute('role', 'status');
+    target.replaceChildren(form); form.append(notice); notice.append(WeftControls.skeleton({rows:1,compact:true}));
     let saved, ready = false;
     const busy = value => { for (const element of form.querySelectorAll('input,textarea,select,button')) element.disabled = value; };
     const report = (value, justSaved = false) => { if (!current()) return; saved = value.settings; notice.textContent = ''; notice.hidden = true; if (justSaved) toast('已同步 · 从下一次回复开始生效'); };

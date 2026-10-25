@@ -36,7 +36,7 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
                 card.append(actions);
             }
             list.append(card);
-            if (!previous.has(row.taskId) && visible.length <= 20) globalThis.WeftMotion?.reveal(card, 'fast');
+            if (!previous.has(row.taskId) && visible.length <= 20) globalThis.WeftMotion?.reveal(card, 'base');
         }
         for (const copy of departing) globalThis.WeftMotion?.dismiss(copy);
         if (taskId && action && document.activeElement === document.body) {

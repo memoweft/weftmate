@@ -379,7 +379,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         menu.setAttribute('aria-label', '账户选项'); menu.setAttribute('role', 'region');
         const identity = ui.element('div', 'account-menu-identity');
         const name = ui.element('strong'), email = ui.element('span', 'muted'); name.id = 'account-menu-name'; email.id = 'account-menu-email'; identity.append(name, email);
-        const usage = ui.element('p', 'account-usage-strip', '正在读取本月用量…'); usage.setAttribute('role', 'status');
+        const usage = ui.element('div', 'account-usage-strip'); usage.setAttribute('role', 'status');
         usage.id = 'account-menu-usage';
         menu.prepend(identity, usage);
         ui.byId('rail-account').append(ui.element('kbd', 'account-menu-key', 'Ctrl+,'));
@@ -410,7 +410,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('account-menu-trigger').addEventListener('click', async () => {
             name.textContent = core.profileName();
             email.textContent = WeftUiCore.accountLabel(core.state.account || {},core.state.cloudAuth?.mode === 'authenticated' ? core.state.cloudAuth.email : '');
-            usage.textContent = '正在读取本月用量…';
+            usage.replaceChildren(WeftControls.skeleton({rows:1,compact:true}));
             const token = core.accountToken();
             try { const text = await core.loadUsageStrip(); if (text && core.accountIdentityCurrent(token) && !menu.hidden) usage.textContent = text; }
             catch { if (core.accountIdentityCurrent(token) && !menu.hidden) usage.textContent = '本月用量暂时无法读取，请在用量详情重试。'; }

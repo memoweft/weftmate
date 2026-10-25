@@ -52,12 +52,12 @@ globalThis.WeftLibraryView={mount({target,core,desktop=false,openPreview,configu
         const menu=iconButton(previewAction?'更多预览操作':`更多操作 ${item.fileName}`,'more',trigger=>WeftPopover.menu(trigger,entries(item),error=>notice(core.failureMessage(error))));
         menu.setAttribute('aria-haspopup','menu');menu.setAttribute('aria-expanded','false');parent.append(menu);
     }
-    function skeleton(){const box=node('div','library-skeleton');box.setAttribute('aria-label','正在读取成果');box.setAttribute('role','status');for(let i=0;i<4;i++){const row=node('div','library-skeleton-row');row.append(node('span','library-skeleton-icon'),node('span','library-skeleton-line'));box.append(row);}return box;}
+    const skeleton = () => WeftControls.skeleton({ rows: 4 });
     function empty(message,id='folder',retry=false){const box=node('div','library-empty');box.append(WeftIcons.create(id,24),node('p','',message));if(retry)box.append(button('重试',()=>core.readLibrary(),'button secondary small'));return box;}
     function dateLabel(value){const date=new Date(value),now=new Date();return new Intl.DateTimeFormat('zh-CN',date.toDateString()===now.toDateString()?{hour:'numeric',minute:'2-digit',hourCycle:'h23'}:{month:'long',day:'numeric',...(date.getFullYear()!==now.getFullYear()?{year:'numeric'}:{})}).format(date);}
     function render(){
         const model=core.library;refresh.disabled=model.loading;more.hidden=!model.nextCursor;more.disabled=model.loading;
-        status.textContent=model.loading?'正在读取成果…':model.error?'读取失败':`${model.total} 个文件`;list.setAttribute('aria-busy',String(model.loading));
+        status.textContent=model.loading?'':model.error?'读取失败':`${model.total} 个文件`;list.setAttribute('aria-busy',String(model.loading));
         for(const el of filters.children){el.setAttribute('aria-pressed',String(el.dataset.type===model.type));el.disabled=model.loading;}
         for(const el of views.children)el.setAttribute('aria-pressed',String(el.dataset.view===model.view));
         const projects=JSON.stringify(model.projects);if(project.dataset.items!==projects){project.dataset.items=projects;project.replaceChildren();for(const row of [{id:'',name:'全部项目'},...model.projects]){const option=node('option','',row.name);option.value=row.id;project.append(option);}}
