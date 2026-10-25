@@ -351,6 +351,14 @@
     }
     globalThis.WeftUiCore.groupConsecutiveSteps = groupConsecutiveSteps;
     function progressPosition(events, block, chronological = false) {
+        if (chronological && block.turnStart) {
+            const next = events.find(event=>event.type==='turn.started' && event.seq>block.seq &&
+                (!block.sessionId || (event.sessionId || event.sourceRef?.sessionId)===block.sessionId));
+            const user = events.find(event => event.seq > block.seq && event.type === 'user.message' &&
+                (!next || event.seq<next.seq) &&
+                (!block.sessionId || (event.sessionId || event.sourceRef?.sessionId) === block.sessionId));
+            return (user?.seq ?? block.seq) + 0.1;
+        }
         if (chronological) return Number.isFinite(block.replySeq) ? Math.min(block.seq,block.replySeq-0.01) : block.seq;
         if (!turnOutcome(events, block.taskId).terminal) return block.seq;
         const session = block.steps[0]?.sessionId;
@@ -364,7 +372,7 @@
         return reply ? reply.seq + 0.01 : block.seq;
     }
     function progressEvents(events,block) {
-        const session=block.steps[0]?.sessionId,belongs=event=>!session || (event.sessionId || event.sourceRef?.sessionId)===session;
+        const session=block.sessionId || block.steps[0]?.sessionId,belongs=event=>!session || (event.sessionId || event.sourceRef?.sessionId)===session;
         const start=events.findLast(event=>belongs(event) && event.type==='turn.started' && event.seq<=block.seq);
         const next=events.find(event=>belongs(event) && event.type==='turn.started' && event.seq>block.seq);
         return events.filter(event=>belongs(event) && event.seq>=(start?.seq ?? -Infinity) && (!next || event.seq<next.seq) &&
@@ -431,6 +439,12 @@
         const ordinals = new Map();
         for (const raw of ordered) {
             const event = raw.type === 'artifact.created' && raw.data?.completedStep ? { ...raw, type: 'step.completed', data: raw.data.completedStep } : raw;
+            if (mergeTurns && event.type === 'turn.started') {
+                const sessionId = event.sessionId || event.sourceRef?.sessionId;
+                const taskId = `${sessionId ? sessionId + ':' : ''}turn-${event.data?.turn}`;
+                group = {seq:event.seq, taskId, sessionId, turnStart:true, pendingRequestId:event.data?.pendingRequestId, steps:[]};
+                groups.push(group);
+            }
             if (event.type.startsWith('step.')) {
                 const data = event.data || {}, key = `${data.taskId}/${data.stepId}`;
                 let step = steps.get(key);
@@ -497,7 +511,7 @@
         }
         for (const block of groups) {
             if(mergeTurns) {
-                const session=block.steps[0]?.sessionId;
+                const session=block.sessionId || block.steps[0]?.sessionId;
                 const belongs=event=>!session || (event.sessionId || event.sourceRef?.sessionId)===session;
                 const start=ordered.findLast(event=>belongs(event) && event.type==='turn.started' && event.seq<=block.seq);
                 const next=ordered.find(event=>belongs(event) && event.type==='turn.started' && event.seq>block.seq);

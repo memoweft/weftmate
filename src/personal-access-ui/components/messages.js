@@ -22,7 +22,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         const list = ui.byId('transcript');
         if (!list.hasAttribute('aria-busy')) return;
         list.querySelector(':scope > .wm-skeleton')?.remove(); list.removeAttribute('aria-busy');
-        globalThis.WeftMotion?.reveal(list, 'base');
+        globalThis.WeftReplyMotion?.reveal(list, 'status');
     }
     function historyNotice(message, kind = 'ordinary') {
         // Only read failures merge into connection state; preserve all other notices.
@@ -79,6 +79,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         }
         for (const node of list.querySelectorAll('[data-optimistic]')) if (!node.dataset.motionSent) {node.dataset.motionSent='true';globalThis.WeftReplyMotion?.reveal(node,'send');}
         ui.byId('chat-intro').hidden = rows.length > 0 || list.children.length > 0;
+        ui.renderTimeline();
     }
     function completeMessageBody(row, event, sessionId) {
         const body = row.querySelector('.message-text');

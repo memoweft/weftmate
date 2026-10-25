@@ -256,9 +256,9 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
     function taskControlStatus(control) {
         if (control?.state === 'stop_requested' && typeof control.stopStatus === 'string') {
             if (control.stopStatus === 'stopped')
-                return '电脑已核对这件事的实际停止。已执行的步骤与成果会保留。';
+                return '已停止';
             if (control.stopStatus === 'completed')
-                return '这件事的回合已不在运行；未确认是停止请求使它结束。核对已执行的步骤与成果后，可写明下一步。';
+                return '已结束';
             if (control.stopStatus === 'cancel_requested')
                 return '电脑已对准这件事发起取消，正在等待实际结束记录。';
             if (control.legacyStopIntent && !control.canResume)

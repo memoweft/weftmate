@@ -1,6 +1,27 @@
 /* Shared composer state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     const messages = new Map();
+    const turnRequests = new Map();
+    let turnRequestScope;
+    function requestScope() {
+        const scope = `${core.state.ownerId}:${core.state.identityGeneration}`;
+        if (scope !== turnRequestScope) { turnRequests.clear(); turnRequestScope=scope; }
+    }
+    function rememberTurnRequest(row) {
+        requestScope();
+        if (row.receiptId) turnRequests.set(row.receiptId,row.requestId);
+    }
+    function turnPresentationKey(events, block) {
+        requestScope();
+        const next=events.find(event=>event.type==='turn.started' && event.seq>block.seq &&
+            (!block.sessionId || (event.sessionId || event.sourceRef?.sessionId)===block.sessionId));
+        const user=events.find(event=>event.type==='user.message' && event.seq>block.seq &&
+            (!next || event.seq<next.seq) &&
+            (!block.sessionId || (event.sessionId || event.sourceRef?.sessionId)===block.sessionId));
+        const request=block.pendingRequestId || turnRequests.get(user?.data?.receiptId);
+        return request ? `request:${request}` : `${block.taskId}:${block.seq}`;
+    }
+    function messagePresentationKey(event) { requestScope(); return turnRequests.get(event.data?.receiptId) || event.presentationKey || event.eventId; }
     const thinkingWrites = new Map();
     async function refreshThinkingModels() {
         const identity = core.state.identityGeneration;
@@ -31,7 +52,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         finally { thinkingWrites.delete(key); effects.updateAvailability(); }
     }
     function beginOptimistic(fields) {
-        const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration, status:'sending', ...fields};
+        const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration, at:new Date().toISOString(), status:'sending', ...fields};
         messages.set(row.requestId, row);
         effects.renderOptimisticMessages?.();
         return row;
@@ -47,6 +68,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (!row || row.ownerId !== core.state.ownerId || row.identity !== core.state.identityGeneration) return;
         row.command = command;
         row.receiptId = command.receiptId;
+        rememberTurnRequest(row);
         row.status = ['accepted_by_dsh', 'observed'].includes(command.state) ? 'accepted' :
             ['failed', 'rejected', 'blocked', 'uncertain'].includes(command.state) ? 'failed' : 'sending';
         if (row.status === 'accepted' && row.sessionId === core.state.selectedSessionId && effects.readMessageDraft() === row.text)
@@ -435,7 +457,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const name = core.state.executionAccountName || '原账号';
         return `这台电脑由账号 ${name} 负责执行；当前账号只能聊天。切回 ${name} 或在 ${name} 的设置里移交。`;
     }
-    return { executionAccountHint, refreshThinkingModels, thinkingView, setDeepThinking, handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
+    return { rememberTurnRequest, turnPresentationKey, messagePresentationKey, executionAccountHint, refreshThinkingModels, thinkingView, setDeepThinking, handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
         addAttachmentFiles, composerInputMode, conversationRunning, messageModePreference, loadMessageModePreference, sendBlocker, explainSendBlocker, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };
 };
 

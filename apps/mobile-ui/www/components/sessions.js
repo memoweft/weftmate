@@ -239,6 +239,7 @@ function renderOptimisticMessages(){if(state.chatSource!=='host'||state.page!=='
     if(['failed','confirming','undelivered'].includes(row.status)){const retry=el('button','shared-check',state.sharedPending?.requestId===row.requestId?'检查状态':'重试发送');retry.disabled=!uiCore.state.online;retry.addEventListener('click',()=>{
       if(state.sharedPending?.requestId===row.requestId)void checkSharedPending();else void uiCore.retryOptimistic(row.requestId)});node.append(retry)}content.append(node);if(arriving)globalThis.WeftReplyMotion?.reveal(node,'send');
   }
+  renderTimeline();
 }
 
 function loadSharedHistory(wait=false){if(globalThis.weftNativeChatActive===true)return Promise.resolve();return uiCore.loadMobileHistory(wait)}

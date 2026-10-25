@@ -243,7 +243,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             .sort((a, b) => a.seq - b.seq).at(-1);
         const stop = core.taskStopView?.(started?.data?.turn);
         if (stop && !core.state.historyHasMore) return { isRunning: false,
-            message: stop.terminal ? `${stop.text}。核对已执行的步骤与成果后，可写明下一步。` : stop.text };
+            message: '' };
         let message = '';
         const isRunning = core.state.turnStatus === 'running' && core.conversationRunning(core.state.selectedSessionId);
         if (core.state.historyHasMore) {
@@ -271,7 +271,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                 break;
             }
             case 'aborted':
-                message = '本轮已停止。如需继续，请重新发送。';
+                message = '';
                 break;
             case 'blocked':
                 message = '本轮因执行受限而停止，目标尚未确认完成。';
