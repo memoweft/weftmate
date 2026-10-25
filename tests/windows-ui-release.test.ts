@@ -13,6 +13,7 @@ test('Windows release reads the previous UI separately from the app manifest', a
   const offline = async () => { throw Error('unexpected network request'); };
   assert.deepEqual(await previousWindowsUiManifest({ 'previous-ui': file }, 'preview', offline), ui);
   assert.deepEqual(await previousWindowsUiManifest({ previous: join(root, 'manifest-app.json') }, 'preview', offline), ui);
+  assert.equal(await previousWindowsUiManifest({ 'test-identity': 'fixupdate2qa' }, 'preview', offline), null);
   await rm(file);
   const urls: string[] = [];
   assert.deepEqual(await previousWindowsUiManifest({}, 'preview', async (url: URL) => { urls.push(String(url)); return new Response(JSON.stringify(ui)); }), ui);

@@ -18,6 +18,8 @@ export async function previousWindowsUiManifest(options, channel, fetcher = fetc
     try { return JSON.parse(await readFile(join(dirname(resolve(options.previous)), 'manifest-ui.json'), 'utf8')); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
+  // A synthetic identity has its own signing key/feed and no production baseline.
+  if (options['test-identity']) return null;
   try {
     return JSON.parse((await downloadBytes(`https://weftmate.com/updates/windows/x64/${channel}/manifest-ui.json`, 1024 * 1024, fetcher, true)).toString('utf8'));
   } catch (error) { if (error.code === 'UPDATE_CHANNEL_EMPTY') return null; throw error; }
