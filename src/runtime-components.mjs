@@ -5,6 +5,10 @@ import { join, dirname } from 'node:path';
 // The full content hash remains in the descriptor and completion marker.
 export const runtimeComponentRelative = (name, version) => join(name === 'dsh-runtime' ? 'dsh' : 'memory', version.slice(0, 16));
 
+export function productDshRuntimeDirectory({ packaged, resourcesPath, appPath }) {
+  return packaged ? packagedRuntimeDirectory(resourcesPath, 'dsh-runtime') : join(appPath, 'vendor', 'dsh-runtime');
+}
+
 export function packagedRuntimeDirectory(resources, name) {
   const descriptor = join(resources, 'runtime-components.json');
   if (existsSync(descriptor)) {

@@ -1,5 +1,5 @@
 import { setProcessWarningLog } from './process-output.mjs';
-import { packagedRuntimeDirectory } from './runtime-components.mjs';
+import { productDshRuntimeDirectory } from './runtime-components.mjs';
 import { createDesktopRelayNetwork } from './personal-relay/desktop-network.mjs';
 import { createDesktopStartup } from './desktop-startup.mjs';
 import { usageResponse } from './personal-access/usage-response.mjs';
@@ -1843,9 +1843,8 @@ async function bootstrap() {
   // Deliberately independent: a slow/missing managed runtime must not delay
   // DSH bootstrap, window creation, or ordinary conversation.
   // Started only after durable credentials are available below.
-  const productDshRuntime = app.isPackaged
-    ? packagedRuntimeDirectory(process.resourcesPath, 'dsh-runtime')
-    : join(app.getAppPath(), 'vendor', 'dsh-runtime');
+  const productDshRuntime = productDshRuntimeDirectory({ packaged: app.isPackaged,
+    resourcesPath: process.resourcesPath, appPath: app.getAppPath() });
   if (personalHostMode && process.env.WEFTMATE_SYNTHETIC_STOP_FIXTURE === '1') {
     console.log('[weftmate] synthetic source provenance=' + JSON.stringify({
       appPath: app.getAppPath(), mainModule: fileURLToPath(import.meta.url),
