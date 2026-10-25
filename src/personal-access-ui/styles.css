@@ -527,6 +527,8 @@ select { color: var(--ink); background: var(--surface); }
 .startup-mark { display:grid;place-items:center;width:var(--wm-space-40);height:var(--wm-space-40);color:var(--ink-muted); }
 .startup-mark .wm-icon { animation:sidebar-spin var(--dur-5) var(--ease-linear) infinite; }
 .motion-page-copy { z-index:4; background:var(--panel); }
+.motion-dialog-backdrop { position:fixed;inset:0;z-index:100;pointer-events:none; }
+.motion-dialog-copy { z-index:101; }
 .assistant-main:has([data-motion-pending]) .assistant-topbar::after { content:'正在打开…';color:var(--ink-muted);font-size:var(--wm-type-secondary); }
 ::view-transition { pointer-events:none; }
 ::view-transition-group(weft-surface) { animation-duration:var(--dur-4); animation-timing-function:var(--ease-out); }
