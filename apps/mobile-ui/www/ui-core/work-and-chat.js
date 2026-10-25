@@ -76,9 +76,13 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
     if (enabled()) { core.state.selectedChatId = null; core.state.workTimeline = null; chooseSidebarMode('chat'); return newConversation(true, args[1]); }
     return newConversation(...args);
   };
-  if (selectSession) core.selectSession = async (id, ...args) => { const result = await selectSession(id, ...args);
+  if (selectSession) core.selectSession = async (id, ...args) => {
+    if (core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === id && !core.state.newConversation) { effects.showConversation(); effects.closeRail(); return; }
+    const result = await selectSession(id, ...args);
     if (enabled() && core.state.selectedSessionId === id) chooseSidebarMode(currentMode()); return result; };
-  if (selectMain) core.selectMainChat = async (...args) => { const result = await selectMain(...args);
+  if (selectMain) core.selectMainChat = async (...args) => {
+    if (!args[0] && core.state.activeChatSource === 'desktop' && core.state.mainChat && core.state.selectedChatId === core.state.mainChat.chatId && !core.state.newConversation) { effects.showConversation(); effects.closeRail(); return; }
+    const result = await selectMain(...args);
     if (enabled() && core.state.selectedChatId === core.state.mainChat?.chatId) chooseSidebarMode(currentMode()); return result; };
   if (selectPhone) core.selectPhoneConversation = (...args) => { const result = selectPhone(...args); if (enabled()) chooseSidebarMode('chat'); return result; };
   core.sendDraft = (...args) => {

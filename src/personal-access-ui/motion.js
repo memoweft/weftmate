@@ -3,7 +3,7 @@
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const active = new Set(), owners = new WeakMap();
   const listLimit = 20;
-  function timing(name = 'fast', delayIndex = 0) {
+  function timing(name = 'base', delayIndex = 0) {
     const css = getComputedStyle(document.documentElement);
     const milliseconds = key => {
       const value = css.getPropertyValue(`--wm-duration-${key}`).trim();
@@ -13,7 +13,7 @@
       delay: Math.min(delayIndex * milliseconds('stagger'), milliseconds('staggerLimit')) };
   }
   function cancel(element) { owners.get(element)?.cancel(); }
-  function play(element, frames, name = 'fast', index = 0, cleanup) {
+  function play(element, frames, name = 'base', index = 0, cleanup) {
     cancel(element);
     if ((globalThis.WeftReplyMotion?.reduced ?? preference.matches) || (globalThis.WeftReplyMotion?.paused ?? document.hidden) || !element?.isConnected || !element.animate) { cleanup?.(); return; }
     const animation = element.animate(frames, timing(name, index));
@@ -22,7 +22,7 @@
     animation.finished.then(done, done);
     return animation;
   }
-  function reveal(element, name = 'fast', index = 0) {
+  function reveal(element, name = 'base', index = 0) {
     return play(element, [{ opacity: .65 }, { opacity: 1 }], name, index);
   }
   // view-enter / enter-fade: CSS owns the common recipes, including reduction.
@@ -42,13 +42,13 @@
   new MutationObserver(records => {
     for (const record of records) {
       if (record.type === 'attributes') {
-        if (record.target.matches(pages)) enter(record.target);
+        if (record.target.matches(pages) && record.oldValue !== record.target.getAttribute('hidden') && !record.target.hidden) enter(record.target);
       } else for (const node of record.addedNodes) if (node.nodeType === 1) {
         if (node.matches(pages)) enter(node);
         for (const page of node.querySelectorAll(pages)) enter(page);
       }
     }
-  }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
+  }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'], attributeOldValue: true });
   // Keep an inert visual copy outside layout, then remove the real content immediately.
   // Never retain active buttons, duplicate accessible names, or postpone the next action.
   function snapshot(element) {
@@ -83,11 +83,11 @@
       if (element.open && short) {
         reveal(element, 'base');
         let index = 0;
-        for (const step of element.querySelectorAll('.execution-step')) reveal(step, 'fast', index++);
+        for (const step of element.querySelectorAll('.execution-step')) reveal(step, 'base', index++);
       } else dismiss(copy, true);
     });
   }
-  function changed(element, key, name = 'fast') {
+  function changed(element, key, name = 'base') {
     if (element.dataset.motionKey === key) return;
     element.dataset.motionKey = key;
     reveal(element, name);

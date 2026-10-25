@@ -101,6 +101,7 @@ class Element {
   cloneNode(deep = false) { const copy=new Element(this.id,this.tagName);copy.ownerDocument=this.ownerDocument;copy.hidden=this.hidden;copy.disabled=this.disabled;copy.value=this.value;copy.textContent=this.textContent;copy.className=this.className;copy.src=this.src;copy.attributes=new Map(this.attributes);copy.dataset={...this.dataset};if(deep)copy.append(...this.children.map(child=>child.cloneNode(true)));return copy }
   setAttribute(name: string, value: string) { this.attributes.set(name, value);if(name==='class')this.className=value }
   getAttribute(name: string) { if (name.startsWith('data-')) return this.dataset[name.slice(5).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] ?? this.attributes.get(name) ?? null; return this.attributes.get(name) ?? null }
+  hasAttribute(name: string) { return this.getAttribute(name) !== null }
   removeAttribute(name: string) { this.attributes.delete(name); if (name === 'src') this.src = '' }
   toggleAttribute(name: string, force?: boolean) { const present = this.getAttribute(name) !== null, enabled = force ?? !present; if (enabled) this.setAttribute(name, ''); else this.removeAttribute(name); return enabled }
   decode() { return this.decodeHandler ? this.decodeHandler() : Promise.resolve() }
@@ -112,6 +113,7 @@ class Element {
   getClientRects() { return this.hidden || !this.isConnected ? [] : [this.getBoundingClientRect()] }
   getBoundingClientRect() { return { left: 16, right: 366, top: 680, bottom: 724 } }
   querySelectorAll(selector = ''): Element[] {
+    if (selector.startsWith(':scope > ')) return this.children.filter(child => matchesTestSelector(child, selector.slice(':scope > '.length)))
     return this.children.flatMap((child) => [
       ...(matchesTestSelector(child, selector) ? [child] : []), ...child.querySelectorAll(selector),
     ])
@@ -881,7 +883,7 @@ test('A to B to A discards old history responses even when the session ID matche
   assert.equal(page.conversationButtons().length, 2)
   page.setDeferHistory(true)
   const [a, b] = [page.getByRole('button',{name:'A'}),page.getByRole('button',{name:'B'})]
-  a.fire('click') // A1
+  void page.core.refreshHistory(true) // A1: refresh the current chat; clicking it is intentionally inert.
   b.fire('click') // B1
   a.fire('click') // A2
   assert.equal(page.history.A.length, 2)
@@ -1264,7 +1266,7 @@ test('durable turn errors remain visible while a later completed turn clears the
   events.push({ seq: 4, type: 'turn.started', data: {} },
     { seq: 5, type: 'assistant.message', data: { text: 'reply' } },
     { seq: 6, type: 'turn.ended', data: { reason: 'completed' } })
-  page.getByRole('button',{name:'A'}).fire('click')
+  await page.core.refreshHistory()
   for (let attempt = 0; attempt < 10 && page.get('transcript').children.length < 2; attempt++) await flush()
   assert.equal(page.get('timeline-status').textContent, '')
   assert.match(page.get('transcript').children.map(visibleText).join(' '), /hello.*reply/)

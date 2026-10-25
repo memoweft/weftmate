@@ -50,10 +50,11 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
     function render(){
         const model=core.activity;all.disabled=!model.snapshotCursor||!model.unreadCount||model.loading;
         for(const el of filters.children){el.setAttribute('aria-current',el.dataset.filter===model.filter?'true':'false');el.disabled=model.loading;}
-        notice.textContent=model.error|| (model.loading?'正在读取动态…':`${model.unreadCount} 条未读${model.actionableCount?` · ${model.actionableCount} 项待处理`:''}`);
+        notice.textContent=model.error|| (model.loading?'':`${model.unreadCount} 条未读${model.actionableCount?` · ${model.actionableCount} 项待处理`:''}`);
         more.hidden=!model.nextCursor;more.disabled=model.loading;
-        if(!model.items.length){mounted.clear();const empty=node('div',model.loading&&mobile?'library-skeleton':'activity-empty');if(mobile){empty.append(WeftIcons.create(model.error?'warn':'bell',24));if(model.loading){empty.setAttribute('role','status');empty.setAttribute('aria-label','正在读取动态');for(let i=0;i<4;i++)empty.append(node('div','library-skeleton-row'));}}
-            empty.append(node('p','',model.loading?'正在读取…':model.error?model.error:model.filter==='all'?'还没有动态。设一个提醒，或让助手做件事。':'这里暂时没有相关动态。'));
+        if(!model.items.length){mounted.clear();
+            if(model.loading){list.replaceChildren(WeftControls.skeleton({rows:4}));return;}
+            const empty=node('div','activity-empty');empty.append(node('p','',model.error|| (model.filter==='all'?'还没有动态。设一个提醒，或让助手做件事。':'这里暂时没有相关动态。')));
             if(mobile&&model.error)empty.append(button('重试',()=>core.readActivity()));list.replaceChildren(empty);return;}
         const days=new Map(),formatter=new Intl.DateTimeFormat('zh-CN',{timeZone:timeZone(),year:'numeric',month:'long',day:'numeric'}),clock=new Intl.DateTimeFormat('zh-CN',{timeZone:timeZone(),hour:'2-digit',minute:'2-digit',hour12:false});
         const active=document.activeElement,focusedId=active?.closest('[data-activity-id]')?.dataset.activityId,focusedText=active?.textContent;

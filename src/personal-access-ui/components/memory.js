@@ -213,7 +213,8 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             scope.replaceChildren(); scope.hidden = false;
             const preview = core.memory.forgetPreview;
             const status = ui.element('p', '', preview ? `将忘掉 ${preview.itemCount} 项记忆，清除 ${preview.evidenceCount} 条来源。以下内容会一起忘掉：`
-                : core.memory.forgetPreviewError || '正在读取将一起忘掉的记忆…');
+                : core.memory.forgetPreviewError || '');
+            if (!preview && !core.memory.forgetPreviewError) status.append(WeftControls.skeleton({rows:1,compact:true,tag:'span'}));
             status.setAttribute('role', 'status'); scope.append(status);
             if (preview) {
                 const list = ui.element('ul', 'memory-sources');
@@ -278,7 +279,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ui.byId('memory-sources').replaceChildren();
         ui.byId('memory-sources-status').textContent = '';
         ui.detailError('');
-        ui.detailStatus('正在读取记忆详情…');
+        ui.detailStatus(''); ui.byId('memory-detail-status').replaceChildren(WeftControls.skeleton({rows:1,compact:true,tag:'span'}));
         ui.renderMemoryMode();
         if (!ui.byId('memory-detail-dialog').open)
             ui.byId('memory-detail-dialog').showModal();

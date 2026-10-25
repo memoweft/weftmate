@@ -122,6 +122,9 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     function cancelSessionSelection() { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;effects.updateAvailability(); }
     async function selectMainChat(anchor) {
         if (!supports('chats') || !core.state.mainChat) return;
+        if (!anchor && core.state.activeChatSource === 'desktop' && core.state.selectedChatId === core.state.mainChat.chatId && !core.state.newConversation) {
+            effects.showConversation(); effects.closeRail(); return;
+        }
         core.state.workTimeline = null;
         unavailableChatId = null;
         if (!core.state.sessionSelecting && !core.state.sideCreating) drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
@@ -145,6 +148,9 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         void core.refreshApprovalMode(core.state.selectedSessionId);
     }
     async function selectSession(id, {empty = false, creating = false} = {}) {
+        if (!creating && core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === id && !core.state.newConversation) {
+            effects.showConversation(); effects.closeRail(); return;
+        }
         if (core.state.mainChat?.activeSessionId === id) return selectMainChat();
         const logical = core.state.chats?.find(row => row.activeSessionId === id && row.logicalHistory);
         if (logical) {
@@ -181,6 +187,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     }
     async function readPage(params, direction) {
         const token = scope(), generation = historyWindow.state.generation;
+        core.state.logicalHistoryLoading = !historyWindow.state.events.size;
+        notify();
         try {
             const page = await core.readChatEvents(core.state.selectedChatId, { limit: 200, ...params });
             if (token !== scope() || generation !== historyWindow.state.generation) return {kind:'cancelled'};
@@ -199,6 +207,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (token !== scope() || generation !== historyWindow.state.generation) return {kind:'cancelled'};
             effects.historyNotice('历史暂时无法读取，请重试。', 'read-failure');
             return failedRead(error, token);
+        } finally {
+            if (token === scope() && generation === historyWindow.state.generation) { core.state.logicalHistoryLoading = false; notify(); }
         }
     }
     async function refreshChatDates() {
@@ -510,7 +520,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     }
     function composerState(text) {
         const view = legacy.composerState(text, true);
-        if (core.state.sessionSelecting || core.state.sideCreating) return { ...view, messageDisabled: true, sendDisabled: true, attachmentsDisabled: true, voiceDisabled: true, hint: core.state.sideCreating?'正在创建对话…':'正在打开对话…' };
+        if (core.state.sessionSelecting || core.state.sideCreating) return { ...view, messageDisabled: true, sendDisabled: true, attachmentsDisabled: true, voiceDisabled: true, hint: core.state.sideCreating?'正在创建对话…':'' };
         if (!inMain() || core.state.workTimeline) return view;
         const available = supports('chatSend') && core.state.mainChat.sendAvailable && core.state.models.some(model => model.id === core.state.modelProfileId);
         return { ...view, messageDisabled: !available || !!core.state.attachmentUpload, attachmentsDisabled: !available || !!core.state.attachmentUpload || core.state.submitting,

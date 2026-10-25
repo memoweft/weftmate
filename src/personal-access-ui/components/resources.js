@@ -4,7 +4,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         const context = core.conversationTaskContext();
         if (trigger?.getAttribute('aria-busy') === 'true') return true;
         const label = trigger?.textContent;
-        if (trigger) { trigger.setAttribute('aria-busy', 'true'); trigger.textContent = '正在读取出处…'; }
+        if (trigger) { trigger.setAttribute('aria-busy', 'true'); trigger.replaceChildren(WeftControls.skeleton({rows:1,compact:true,tag:'span'})); }
         try {
             const source = await core.capturedSourceForUrl(url);
             if (!core.conversationTaskCurrent(context)) return true;
@@ -126,7 +126,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             return;
         }
         document.querySelector('.timeline-preview')?.remove();
-        const panel = ui.element('aside', 'timeline-preview'), close = ui.element('button', 'button quiet small', '关闭预览'), text = ui.element('pre', 'timeline-raw', '正在读取…');
+        const panel = ui.element('aside', 'timeline-preview'), close = ui.element('button', 'button quiet small', '关闭预览'), text = ui.element('pre', 'timeline-raw'); text.append(WeftControls.skeleton({rows:1,compact:true,tag:'span'}));
         close.type = 'button';
         close.addEventListener('click', () => panel.remove());
         panel.append(close, ui.element('h2', '', title), text);
@@ -182,7 +182,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
                     return;
                 line.dataset.loaded = 'loading';
                 line.querySelector('pre')?.remove();
-                const content = ui.element('pre', 'timeline-raw', '正在读取…');
+                const content = ui.element('pre', 'timeline-raw'); content.append(WeftControls.skeleton({rows:1,compact:true,tag:'span'}));
                 content.tabIndex = 0;
                 line.append(content);
                 try {
@@ -273,6 +273,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         });
     }
     function showConversation() {
+        if (core.state.activeChatSource !== 'phone' && core.state.currentView === 'assistant' && !ui.byId('conversation-pane').hidden) { ui.closeRail(); return; }
         core.show('assistant');
         document.dispatchEvent(new CustomEvent('weftmate:fixed-page', { detail: 'conversation' }));
         core.state.phonePane = false;

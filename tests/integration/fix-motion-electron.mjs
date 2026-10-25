@@ -103,7 +103,7 @@ try {
       result.alias = style.getPropertyValue('--wm-duration-fast').trim();
       return result;
     });
-    assert.deepEqual(recipes, { 'enter-rise': 'm-enter-rise', 'enter-fade': 'm-fade', 'stagger-rise': 'm-enter-rise', 'view-enter': 'm-enter-rise', 'sheet-in': 'm-sheet-in', unfold: '0.32s', 'text-shimmer': 'm-shimmer', alias: '130ms' });
+    assert.deepEqual(recipes, { 'enter-rise': 'm-enter-rise', 'enter-fade': 'm-fade', 'stagger-rise': 'm-enter-rise', 'view-enter': 'm-enter-rise', 'sheet-in': 'm-sheet-in', unfold: '0.42s', 'text-shimmer': 'm-shimmer', alias: '130ms' });
     assert.deepEqual(await page.evaluate(() => {
       const status = document.createElement('p'); document.body.append(status);
       WeftReplyMotion.status(status, '正在读取合成结果…', true);

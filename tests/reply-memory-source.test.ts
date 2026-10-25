@@ -23,8 +23,9 @@ class Element {
 
 async function setup() {
   const content = new Element('div');
-  const context: any = { WeftUiComponents: { factories: {} }, window: { WeftDesktop: { openPreview: () => ({ content }) } } };
-  runInNewContext(await readFile(new URL('../src/personal-access-ui/components/messages.js', import.meta.url), 'utf8'), context);
+  const context: any = { document: { createElement: (tag: string) => new Element(tag) }, WeftUiComponents: { factories: {} }, window: { WeftDesktop: { openPreview: () => ({ content }) } } };
+  const controls = await readFile(new URL('../src/ui-core/controls.js', import.meta.url), 'utf8');
+  runInNewContext(controls+'\n;\n'+await readFile(new URL('../src/personal-access-ui/components/messages.js', import.meta.url), 'utf8'), context);
   const core = {
     conversationTaskContext: () => ({ sessionId: 'synthetic' }), conversationTaskCurrent: () => true,
     readMemoryItem: async () => ({ item: { text: '用户喜欢秋天。' } }),

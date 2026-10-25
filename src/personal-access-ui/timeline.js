@@ -205,7 +205,7 @@
       if (details.open && block.steps.length <= 20) {
         let index = 0
         for (const step of details.querySelectorAll('.execution-step'))
-          if (!savedSteps.has(step.dataset.step)) globalThis.WeftMotion?.reveal(step, 'fast', index++)
+          if (!savedSteps.has(step.dataset.step)) globalThis.WeftMotion?.reveal(step, 'base', index++)
       }
     })
     for (const event of cards) {

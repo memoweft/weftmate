@@ -203,7 +203,11 @@
       "56": "56px",
       "64": "64px",
       "72": "72px",
-      "settings-nav-gap": "4px"
+      "settings-nav-gap": "4px",
+      "row": "12px",
+      "section": "24px",
+      "page": "24px",
+      "inline": "8px"
     },
     "radius": {
       "4": "4px",
@@ -225,7 +229,10 @@
       "26": "26px",
       "32": "32px",
       "999": "999px",
-      "circle": "50%"
+      "circle": "50%",
+      "control": "8px",
+      "card": "12px",
+      "panel": "16px"
     },
     "fontSize": {
       "10": "10px",
@@ -277,23 +284,23 @@
     },
     "duration": {
       "fast": "130ms",
-      "base": "220ms",
-      "slow": "220ms",
+      "base": "320ms",
+      "slow": "420ms",
       "working": "640ms",
       "reduced": "130ms",
-      "240ms": "220ms",
+      "240ms": "320ms",
       "160ms": "130ms",
       "260ms": "320ms",
       "280ms": "320ms",
       "300ms": "320ms",
       "420ms": "420ms",
       "0ms": "130ms",
-      "exit": "130ms",
+      "exit": "420ms",
       "stagger": "130ms",
-      "staggerLimit": "130ms",
-      "status": "130ms",
+      "staggerLimit": "420ms",
+      "status": "320ms",
       "replyFragment": "130ms",
-      "replyChange": "220ms",
+      "replyChange": "320ms",
       "replyScroll": "130ms"
     },
     "easing": {
@@ -316,7 +323,8 @@
       "mobile-approval-menu": "0 12px 32px rgba(0,0,0,.16)",
       "mobile-attachment-remove": "-2px 2px 9px rgba(20,34,58,.16)",
       "model-picker-light": "0 24px 72px rgba(27,48,90,.16)",
-      "model-picker-dark": "0 12px 36px rgba(0,0,0,.28)"
+      "model-picker-dark": "0 12px 36px rgba(0,0,0,.28)",
+      "control": "0 1px 3px rgba(0,0,0,.08)"
     },
     "size": {
       "160": "160px",
@@ -344,6 +352,23 @@
       "heading3": "1.1rem",
       "inlineCode": ".9em",
       "table": ".9rem"
+    },
+    "type": {
+      "body": "14px",
+      "secondary": "12px",
+      "heading": "18px",
+      "title": "22px",
+      "sidebar": "13px",
+      "menu": "13px",
+      "button": "13px"
+    },
+    "control": {
+      "pointer": "32px",
+      "touch": "44px",
+      "switch-width": "36px",
+      "switch-height": "22px",
+      "switch-thumb": "16px",
+      "blur": "16px"
     }
   },
   "surfaces": {

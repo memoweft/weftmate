@@ -70,6 +70,7 @@ class FakeElement {
   setAttribute(name: string, value: string) { this.attributes.set(name, value) }
   removeAttribute(name: string) { this.attributes.delete(name) }
   getAttribute(name: string) { return this.attributes.get(name) ?? null }
+  hasAttribute(name: string) { return this.attributes.has(name) }
   get parentElement() { return this.parentNode }
   get isConnected(): boolean { return this.id==='body'||htmlIds.has(this.id)||this.parentNode?.isConnected===true }
   replaceWith(...nodes: FakeElement[]) {const parent=this.parentNode;if(!parent)return;const index=parent.children.indexOf(this);parent.children.splice(index,1,...nodes);for(const node of nodes)node.parentNode=parent;this.parentNode=null;}

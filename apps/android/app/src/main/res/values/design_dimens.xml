@@ -64,4 +64,7 @@
     <dimen name="wm_radius26">26dp</dimen>
     <dimen name="wm_radius32">32dp</dimen>
     <dimen name="wm_radius999">999dp</dimen>
+    <dimen name="wm_radiuscontrol">8dp</dimen>
+    <dimen name="wm_radiuscard">12dp</dimen>
+    <dimen name="wm_radiuspanel">16dp</dimen>
 </resources>

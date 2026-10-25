@@ -200,6 +200,11 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         list().classList.add('is-main-chat');
         ui.byId('assistant-title').textContent = core.state.workTimeline ? timelineChat().title || '工作' : fixedTitle(); ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？'; origin.hidden = true;
         const saved = ui.conversationScroll?.pinned ? null : rememberAnchor();
+        if (core.state.logicalHistoryLoading && !core.state.chatWindow.events.size) {
+            if (!list().querySelector(':scope > .wm-skeleton')) { list().replaceChildren(WeftControls.skeleton({ tag: 'li' })); mounted.clear(); top = bottom = null; }
+            list().setAttribute('aria-busy', 'true'); ui.byId('chat-intro').hidden = true; return;
+        }
+        if (list().hasAttribute('aria-busy')) { list().removeAttribute('aria-busy'); globalThis.WeftMotion?.reveal(list(), 'base'); }
         rows = [];
         for (const group of core.mainChatDays()) {
             const visible = group.events.filter(event => /^(user.message|assistant.message|side.result)$/.test(event.type) && !(globalThis.WeftTimeline?.prepare && event.data?.modelThinking && !event.data.text && !event.data.images?.length));

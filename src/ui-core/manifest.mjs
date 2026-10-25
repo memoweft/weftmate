@@ -8,7 +8,7 @@ export const uiCoreAssets = Object.freeze([
 ])
 
 /** Shared content presentation is browser-only; feature factories remain DOM-free. */
-export const uiCorePresentationAssets = Object.freeze(['connector-view.js', 'permission-view.js', 'rendering.js', 'reply-motion.js', 'appearance-controls.js', 'model-label.js', 'model-picker.js', 'dialogs.js', 'composer-press.js']);
-export const uiCoreStyleAssets = Object.freeze(['connectors.css', 'reply-motion.css', 'appearance.css', 'dialogs.css', 'model-picker.css']);
+export const uiCorePresentationAssets = Object.freeze(['controls.js', 'connector-view.js', 'permission-view.js', 'rendering.js', 'reply-motion.js', 'appearance-controls.js', 'model-label.js', 'model-picker.js', 'dialogs.js', 'composer-press.js']);
+export const uiCoreStyleAssets = Object.freeze(['connectors.css', 'reply-motion.css', 'appearance.css', 'dialogs.css', 'model-picker.css', 'controls.css']);
 export const uiCoreBrowserAssets = Object.freeze([uiCoreAssets[0], ...uiCorePresentationAssets, ...uiCoreAssets.slice(1), ...uiCoreStyleAssets, 'model-service-catalog.mjs']);
 export const uiCoreSourceAsset = name => name === 'model-service-catalog.mjs' ? '../model-service-catalog.mjs' : name;

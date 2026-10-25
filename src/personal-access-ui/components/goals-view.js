@@ -93,7 +93,7 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
     }
     function stateBlock(kind,key,message){
         const block=el('div',`goals-state goals-state-${kind}`);block.setAttribute('role',kind==='error'?'alert':'status');
-        if(kind==='loading'){block.setAttribute('aria-label',`正在读取${{tasks:'进行中任务',schedules:'定时任务',goals:'长期目标'}[key]}`);for(let i=0;i<2;i++){const line=el('div','goals-skeleton');line.setAttribute('aria-hidden','true');line.append(el('span'),el('span'));block.append(line);}}
+        if(kind==='loading')block.append(WeftControls.skeleton({rows:2}));
         else{block.append(WeftIcons.create(kind==='error'?'warn':{tasks:'allow',schedules:'clock',goals:'chart'}[key],20),el('strong','',kind==='error'?'暂时无法读取':{tasks:'现在没有进行中的任务',schedules:'安排下一件事',goals:'持续推进想完成的事'}[key]),el('p','goals-meta',message));if(kind==='error')block.append(button('重试',()=>core.readGoals()));}
         return block;
     }

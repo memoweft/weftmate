@@ -434,7 +434,7 @@ test('QA-8 review and health controls use the composed writer for toggles and cl
   const ctx: any = { document: { createElement: make, body: make('body') }, Event: class {},
     Option: class { text: string; value: string; constructor(text: string, value: string) { this.text = text; this.value = value } },
     WeftSettingsControls: { toggle() {}, row(...args: any[]) { const n = make('div'); n.append(args.at(-1)); return n } } }
-  runInNewContext(desktopScript('components/notifications.js'), ctx)
+  runInNewContext(desktopScript('ui-core/controls.js')+'\n;\n'+desktopScript('components/notifications.js'), ctx)
   ctx.WeftNotificationsView(f.core, make('section'), { section: 'reviewHealth' })
   await new Promise(resolve => setImmediate(resolve))
   const toggle = nodes.find(n => n.id === 'health-modelInsightsEnabled')
@@ -602,8 +602,8 @@ test('memory reads discard a response for another account and reset authenticate
 })
 
 const expectedAppearanceDefaults = {
-  theme:'system',accent:'neutral',fontSize:'15',accentLight:'neutral',accentDark:'neutral',codeFontSize:'13',
-  uiFontSize:'14',themePreset:'default',themePresetLight:'default',themePresetDark:'default',
+  theme:'system',accent:'neutral',fontSize:'14',accentLight:'neutral',accentDark:'neutral',codeFontSize:'12',
+  uiFontSize:'13',themePreset:'default',themePresetLight:'default',themePresetDark:'default',
   font:'system',fontLight:'system',fontDark:'system',backgroundLight:'',backgroundDark:'',foregroundLight:'',foregroundDark:'',
   separateModes:true,contrast:'60',translucentSidebar:false,fullWidth:false,
 }

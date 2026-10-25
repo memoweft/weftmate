@@ -53,12 +53,12 @@ function harness() {
     },
   };
   const ui = { element: (tag, className = '', text = '') => new Element(tag, className, text), toast() {} };
-  const context = { document: { body }, WeftUiComponents: { factories: {} }, WeftUiCore: { factories: {} }, weftmateDesktop: {},
+  const context = { document: { body, createElement: tag => new Element(tag) }, WeftUiComponents: { factories: {} }, WeftUiCore: { factories: {} }, weftmateDesktop: {},
     WeftSettingsControls: { toggle() {} }, WeftIcons: { create: () => new Element('svg') },
     WeftUiLayout: { mountBackup: section => { mounted = section; body.append(section); } },
     setInterval: callback => { intervals.push(callback); return intervals.length; }, setTimeout() {},
   };
-  runInNewContext([desktopScript('ui-core/auth.js'), desktopScript('ui-core/backup.js'), desktopScript('components/backup.js')].join('\n;\n'), context);
+  runInNewContext([desktopScript('ui-core/controls.js'), desktopScript('ui-core/auth.js'), desktopScript('ui-core/backup.js'), desktopScript('components/backup.js')].join('\n;\n'), context);
   Object.assign(core, context.WeftUiCore.factories.auth(core, {}, {}));
   Object.assign(core, context.WeftUiCore.factories.backup(core));
   const component = context.WeftUiComponents.factories.backup(core, ui); component.mountBackup();

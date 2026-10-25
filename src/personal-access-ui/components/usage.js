@@ -1,11 +1,11 @@
 /* Usage presentation shared by desktop and the generated mobile usage-view asset. */
 globalThis.WeftUsageView = function (core, target, { sessionId = '', current = () => target.isConnected } = {}) {
     const node = (tag, text, className = '') => { const element = document.createElement(tag); element.textContent = text; element.className = className; return element; };
-    const status = node('p', '正在读取用量…', 'muted'); status.setAttribute('role', 'status');
+    const status = node('div', '', 'muted'); status.setAttribute('role', 'status');
     target.replaceChildren(status);
     let month = '';
     async function render() {
-        status.textContent = '正在读取用量…';
+        status.replaceChildren(WeftControls.skeleton({rows:1,compact:true,tag:'span'}));
         try {
             const value = await core.loadUsage({ sessionId, month });
             if (!value || !current()) return;
