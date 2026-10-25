@@ -12,7 +12,10 @@ test('silent setup guards drawing, preserves upstream /D resolution and refuses 
   assert.match(installer, /ADMIN_REQUIRED/);
   assert.match(installer, /WeftFail 740/);
   assert.match(installer, /WeftFail 1633/);
-  assert.match(installer, /!macro customUnInstallCheck\s+\$\{If\} \$\{Errors\}/);
+  assert.match(installer, /!macro WeftUninstallCheck ROOT\s+\$\{If\} \$\{Errors\}/);
+  // The update monitor has already moved the old tree (and its uninstaller) aside.
+  assert.match(installer, /\$\{If\} \$\{FileExists\} "\$R1"\s+!insertmacro WeftFail 2 "UNINSTALL_FAILED: previous uninstaller could not be started"/);
+  assert.match(installer, /!macro customUnInstallCheck\s+!insertmacro WeftUninstallCheck SHELL_CONTEXT/);
   assert.match(installer, /\$installMode == "all"/);
   assert.match(installer, /StrCpy \$hasPerMachineInstallation "0"\s+StrCpy \$hasPerUserInstallation "1"\s+!insertmacro setInstallModePerUser/);
   assert.match(installer, /StrCpy \$installMode "all"\s+!insertmacro uninstallOldVersion HKEY_LOCAL_MACHINE\s+StrCpy \$installMode "CurrentUser"/);

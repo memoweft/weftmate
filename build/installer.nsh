@@ -213,16 +213,26 @@ Var weftOldMachine
   !endif
 !macroend
 
-!macro customUnInstallCheck
+!macro WeftUninstallCheck ROOT
   ${If} ${Errors}
-    !insertmacro WeftFail 2 "UNINSTALL_FAILED: previous uninstaller could not be started"
+    ; The update monitor moves the closed installation aside before running
+    ; setup: its uninstaller is gone and nothing is left in place to remove.
+    ReadRegStr $R1 ${ROOT} "${UNINSTALL_REGISTRY_KEY}" UninstallString
+    !insertmacro GetInQuotes $R1 "$R1"
+    ${If} ${FileExists} "$R1"
+      !insertmacro WeftFail 2 "UNINSTALL_FAILED: previous uninstaller could not be started"
+    ${EndIf}
+    ClearErrors
   ${EndIf}
   ${If} $R0 != 0
     !insertmacro WeftFail 2 "UNINSTALL_FAILED: previous installation could not be removed"
   ${EndIf}
 !macroend
+!macro customUnInstallCheck
+  !insertmacro WeftUninstallCheck SHELL_CONTEXT
+!macroend
 !macro customUnInstallCheckCurrentUser
-  !insertmacro customUnInstallCheck
+  !insertmacro WeftUninstallCheck HKCU
 !macroend
 
 !macro customHeader
