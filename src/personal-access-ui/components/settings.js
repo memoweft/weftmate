@@ -26,7 +26,7 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
     }
     async function queryModelServiceDraft() {
         const generation = ++queryGeneration, token = core.accountToken(), fields = serviceFields();
-        const result = ui.byId('account-model-draft-result'); result.textContent = '正在读取这个服务的模型…';
+        const result = ui.byId('account-model-draft-result'); result.replaceChildren(WeftControls.skeleton({rows:1,compact:true,tag:'span'}));
         try {
             const value = await core.checkModelService({...fields,...(serviceEditing ? {serviceId:serviceEditing.serviceId} : {})});
             if (generation !== queryGeneration || !core.accountCurrent(token) || !ui.byId('account-model-dialog').open) return;
@@ -240,7 +240,7 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
     }
     function systemLoading() {
         records()?.paint(null);
-        ui.byId('system-notice').textContent = '正在读取…';
+        ui.byId('system-notice').replaceChildren(WeftControls.skeleton({rows:1,compact:true,tag:'span'}));
         ui.byId('system-services').replaceChildren();
         ui.byId('background-model-select').disabled = true;
     }

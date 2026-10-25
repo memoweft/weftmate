@@ -75,7 +75,7 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
     function mountCloudBackup(section) {
         const region=ui.element('section','cloud-backup-settings');region.setAttribute('aria-label','云端备份');
         const head=ui.element('div','group-heading');head.append(ui.element('h3','','云端备份'));
-        const status=ui.element('p','field-help','正在读取…');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+        const status=ui.element('div','field-help');status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.append(WeftControls.skeleton({rows:1,compact:true,tag:'span'}));
         const details=ui.element('p','field-help'),actions=ui.element('div','actions'),list=ui.element('ul','system-services');list.setAttribute('aria-label','云端备份列表');
         region.append(head,status,details,actions,list);section.append(region);
         let value,busy=false,checking=false,promptId=null,promptOwner=null;

@@ -3,12 +3,14 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     let registry, selected = 'general', dialog, search, navigation, content, picker, returnFocus, cloudNotice;
     const panels = new Map(), positions = new Map();
     let updateGeneration = 0;
+    const mountedCategories = new Map();
     const node = (tag, className, text) => ui.element(tag, className, text);
     function selectSettings(id, options = {}) {
-        if(id==='models')void core.refreshModelServices?.().catch(()=>ui.toast('模型服务暂时无法读取，请重试。'));
         if (id === 'healthData') id = 'reviewHealth';
         const category = registry.get(id);
         if (!category || !registry.list({ desktop: !!globalThis.weftmateDesktop }).includes(category)) return;
+        if (id === selected && mountedCategories.get(id) === core.state.identityGeneration && !Object.keys(options).length) return;
+        if(id==='models')void core.refreshModelServices?.().catch(()=>ui.toast('模型服务暂时无法读取，请重试。'));
         if (!panels.has(id)) { const panel = node('section', 'settings-category'); panel.dataset.category = id; panels.set(id, panel); content.append(panel); }
         if (content) positions.set(selected, content.scrollTop);
         if (selected === 'devices' && id !== 'devices') ui.stopCloudPairing();
@@ -24,6 +26,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         content.scrollTop = positions.get(id) || 0;
         category.mount({ ...options, target: panels.get(id), core, ui });
+        mountedCategories.set(id, core.state.identityGeneration);
         const panel = panels.get(id);
         if (id !== 'appearance') {
             globalThis.WeftSettingsControls.groupRows(panel, category.name);
@@ -52,23 +55,24 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         selectSettings(id, options);
     }
     function showSettingsDialog() {
-        if (!dialog?.open) { returnFocus = document.activeElement; dialog.showModal(); globalThis.WeftMotion?.reveal(dialog, '240ms'); }
+        if (dialog?.open) return;
+        if (dialog) { returnFocus = document.activeElement; dialog.showModal(); globalThis.WeftMotion?.reveal(dialog, 'slow'); }
         const strip = ui.byId('settings-usage-strip');
-        strip.textContent = '正在读取本月用量…';
-        void core.loadUsageStrip().then(text => { if (text && dialog.open) strip.textContent = text; }).catch(() => { if (dialog.open) strip.textContent = '本月用量暂时无法读取，点此重试。'; });
+        const ready = WeftControls.loading(strip, { rows: 1, compact: true });
+        void core.loadUsageStrip().then(text => { if (text && dialog.open && ready()) strip.textContent = text; }).catch(() => { if (dialog.open && ready()) strip.textContent = '本月用量暂时无法读取，点此重试。'; });
         selectSettings(core.state.currentView === 'memory' ? 'memory' : selected);
     }
     function hideSettingsDialog() { if (dialog?.open) dialog.close(); }
     async function renderSettingsUpdates(check = false) {
         const target = ui.byId('settings-updates'), token = core.accountToken(), generation = ++updateGeneration;
         const current = () => core.accountIdentityCurrent(token) && generation === updateGeneration && dialog.open && selected === 'about';
-        const loading = node('p', 'muted', check ? '正在检查更新…' : '正在读取版本…'); loading.setAttribute('role', 'status'); target.replaceChildren(loading);
+        const loading = node('p', 'muted'); loading.setAttribute('role', 'status'); const ready = WeftControls.loading(target, {rows:2});
         let value;
         try { value = await (check ? core.checkUpdates() : core.readUpdateState()); }
-        catch { if (current()) loading.textContent = '更新状态暂时无法读取，请重试。'; }
+        catch { if (current()) { ready(); loading.textContent = '更新状态暂时无法读取，请重试。'; target.replaceChildren(loading); } }
         if (!current()) return;
         const names = {ui:'电脑界面',app:'程序版本','mobile-ui':'手机界面'};
-        if(value) {target.replaceChildren();for(const layer of value.layers) target.append(globalThis.WeftSettingsControls.row(names[layer.layer] || '版本',
+        ready(); if(value) {target.replaceChildren();for(const layer of value.layers) target.append(globalThis.WeftSettingsControls.row(names[layer.layer] || '版本',
             `当前 ${layer.currentVersion || '版本未知'}${layer.availableVersion ? ` · 可用 ${layer.availableVersion}` : ''}`,node('span','settings-value',core.updateStatusText(layer))));}
         if (value?.channel) {
             const channel = node('select', ''); channel.setAttribute('aria-label', '更新通道');
@@ -178,9 +182,10 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             panels.get('about').append(globalThis.WeftSettingsControls.row(label,'在应用内阅读。',link));
         }
         description('about', 'WeftMate', '跨设备、跨对话的个人助手。', globalThis.weftmateDesktop ? '桌面程序' : '远程网页');
-        const appVersion = node('span', 'settings-value', '正在读取…');
+        const appVersion = node('span', 'settings-value');
+        appVersion.append(WeftControls.skeleton({rows:1,compact:true}));
         if (globalThis.weftmateDesktop) { panels.get('about').append(globalThis.WeftSettingsControls.row('版本', '当前桌面程序。', appVersion)); void globalThis.weftmateDesktop.settings().then(settings => { appVersion.textContent = settings.version; }); }
-        const version = node('span', 'settings-value', '正在读取…'); version.id = 'settings-host-version';
+        const version = node('span', 'settings-value'); version.id = 'settings-host-version'; version.append(WeftControls.skeleton({rows:1,compact:true}));
         panels.get('about').append(globalThis.WeftSettingsControls.row('宿主版本', '来自当前连接的宿主。', version));
         const feedback = node('a', 'button secondary', '反馈问题'); feedback.href = 'https://github.com/memoweft/weftmate/issues'; feedback.target = '_blank'; feedback.rel = 'noopener noreferrer';
         panels.get('about').append(globalThis.WeftSettingsControls.row('帮助与反馈', '描述问题时请勿包含密码或私人对话。', feedback));

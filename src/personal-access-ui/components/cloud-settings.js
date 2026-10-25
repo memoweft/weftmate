@@ -72,7 +72,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         if (core.state.cloudAuth.mode !== 'authenticated' && !core.cloudAuthView().localSession) return;
         const generation = core.state.identityGeneration, request = ++directoryGeneration;
         const status = ui.byId('cloud-directory-status'), list = ui.byId('cloud-directory'); list.setAttribute('aria-busy', 'true');
-        if (!list.children.length) { status.textContent = '正在读取设备…'; for (let index = 0; index < 3; index++) { const row = ui.element('li', 'library-skeleton-row'); row.setAttribute('aria-hidden', 'true'); row.append(ui.element('span', 'library-skeleton-icon'), ui.element('span', 'library-skeleton-line')); list.append(row); } }
+        if (!list.children.length) { status.textContent = ''; list.append(WeftControls.skeleton({tag:'li'})); }
         try { const directory = await (core.state.cloudAuth.mode === 'authenticated' ? core.cloudDirectory() : core.localDeviceDirectory()); if (generation !== core.state.identityGeneration || request !== directoryGeneration) return; status.textContent = ''; list.setAttribute('aria-busy', 'false'); renderDirectory(directory); }
         catch (failure) { if (generation === core.state.identityGeneration && request === directoryGeneration) { list.setAttribute('aria-busy', 'false'); for (const row of list.querySelectorAll('.library-skeleton-row')) row.remove(); status.textContent = '设备暂时无法读取。请点刷新重试。'; if (showError) error(failure); } }
     }

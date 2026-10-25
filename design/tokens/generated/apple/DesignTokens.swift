@@ -43,7 +43,11 @@ public enum WeftDesignTokens {
         "56": 56,
         "64": 64,
         "72": 72,
-        "settings-nav-gap": 4
+        "settings-nav-gap": 4,
+        "row": 12,
+        "section": 24,
+        "page": 24,
+        "inline": 8
     ]
     public static let radius: [String: Double] = [
         "4": 4,
@@ -64,7 +68,10 @@ public enum WeftDesignTokens {
         "24": 24,
         "26": 26,
         "32": 32,
-        "999": 999
+        "999": 999,
+        "control": 8,
+        "card": 12,
+        "panel": 16
     ]
     public static let fontSize: [String: Double] = [
         "10": 10,
@@ -109,23 +116,23 @@ public enum WeftDesignTokens {
     ]
     public static let durationMilliseconds: [String: Double] = [
         "fast": 130,
-        "base": 220,
-        "slow": 220,
+        "base": 320,
+        "slow": 420,
         "working": 640,
         "reduced": 130,
-        "240ms": 220,
+        "240ms": 320,
         "160ms": 130,
         "260ms": 320,
         "280ms": 320,
         "300ms": 320,
         "420ms": 420,
         "0ms": 130,
-        "exit": 130,
+        "exit": 420,
         "stagger": 130,
-        "staggerLimit": 130,
-        "status": 130,
+        "staggerLimit": 420,
+        "status": 320,
         "replyFragment": 130,
-        "replyChange": 220,
+        "replyChange": 320,
         "replyScroll": 130
     ]
     public static let fontFamily: [String: String] = [
@@ -163,7 +170,8 @@ public enum WeftDesignTokens {
         "mobile-approval-menu": "0 12px 32px rgba(0,0,0,.16)",
         "mobile-attachment-remove": "-2px 2px 9px rgba(20,34,58,.16)",
         "model-picker-light": "0 24px 72px rgba(27,48,90,.16)",
-        "model-picker-dark": "0 12px 36px rgba(0,0,0,.28)"
+        "model-picker-dark": "0 12px 36px rgba(0,0,0,.28)",
+        "control": "0 1px 3px rgba(0,0,0,.08)"
     ]
     public static let desktopLight: [String: String] = [
         "--canvas": "#faf9f7",
@@ -354,6 +362,10 @@ public enum AppleTokens {
         public static let p64: CGFloat = 64
         public static let p72: CGFloat = 72
         public static let psettings_nav_gap: CGFloat = 4
+        public static let prow: CGFloat = 12
+        public static let psection: CGFloat = 24
+        public static let ppage: CGFloat = 24
+        public static let pinline: CGFloat = 8
         public static let pcontrol_switch_width: CGFloat = 42
         public static let pmodel_menu_extent: CGFloat = 300
         public static let pphone_drawer_width: CGFloat = 320
@@ -378,6 +390,9 @@ public enum AppleTokens {
         public static let r26: CGFloat = 26
         public static let r32: CGFloat = 32
         public static let r999: CGFloat = 999
+        public static let rcontrol: CGFloat = 8
+        public static let rcard: CGFloat = 12
+        public static let rpanel: CGFloat = 16
     }
     public enum FontSize {
         public static let f10: CGFloat = 10
@@ -452,23 +467,23 @@ public enum AppleTokens {
     }
     public enum Motion {
         public static let fast: TimeInterval = 0.13
-        public static let base: TimeInterval = 0.22
-        public static let slow: TimeInterval = 0.22
+        public static let base: TimeInterval = 0.32
+        public static let slow: TimeInterval = 0.42
         public static let working: TimeInterval = 0.64
         public static let reduced: TimeInterval = 0.13
-        public static let d240ms: TimeInterval = 0.22
+        public static let d240ms: TimeInterval = 0.32
         public static let d160ms: TimeInterval = 0.13
         public static let d260ms: TimeInterval = 0.32
         public static let d280ms: TimeInterval = 0.32
         public static let d300ms: TimeInterval = 0.32
         public static let d420ms: TimeInterval = 0.42
         public static let d0ms: TimeInterval = 0.13
-        public static let exit: TimeInterval = 0.13
+        public static let exit: TimeInterval = 0.42
         public static let stagger: TimeInterval = 0.13
-        public static let staggerLimit: TimeInterval = 0.13
-        public static let status: TimeInterval = 0.13
+        public static let staggerLimit: TimeInterval = 0.42
+        public static let status: TimeInterval = 0.32
         public static let replyFragment: TimeInterval = 0.13
-        public static let replyChange: TimeInterval = 0.22
+        public static let replyChange: TimeInterval = 0.32
         public static let replyScroll: TimeInterval = 0.13
         public static let disclosure: Animation = Animation.timingCurve(0.4, 0, 0.2, 1, duration: Motion.base)
         public static let connection: Animation = Animation.timingCurve(0.4, 0, 0.2, 1, duration: Motion.fast)

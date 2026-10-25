@@ -104,6 +104,9 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         finally{if(current()){core.state.approvalModeLoading=false;effects.setApprovalModeBusy(false);}}
     }
     async function selectSession(sessionId, legacy = false, initialHistory = true) {
+        if (core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === sessionId && !core.state.newConversation) {
+            effects.showConversation(); effects.closeRail(); return;
+        }
         if (!legacy && core.selectLogicalSession) return core.selectLogicalSession(sessionId);
         if (!core.sessionIdPattern.test(sessionId))
             return;

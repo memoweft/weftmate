@@ -12,7 +12,7 @@ function fixture(saved?: string) {
 }
 test('appearance defaults, separate accents and code size survive a new device store instance', () => {
     const f = fixture(), store = f.api.createAppearance(f.storage);
-    assert.equal(store.value.theme, 'system'); assert.equal(store.value.codeFontSize, '13');
+    assert.equal(store.value.theme, 'system'); assert.equal(store.value.codeFontSize, '12');
     store.set({ ...store.value, theme: 'dark', accentLight: 'blue', accentDark: 'green', codeFontSize: '17', fontSize: '14' });
     const restored = f.api.createAppearance(f.storage).value;
     assert.equal(restored.accentLight, 'blue'); assert.equal(restored.accentDark, 'green');
@@ -25,7 +25,7 @@ test('legacy accent migrates to both modes, unknown density remains harmless and
     assert.equal(f.api.createAppearance(f.storage).value.accentDark, 'purple');
     assert.equal(f.api.createAppearance(f.storage).value.density, 'compact');
     const store = f.api.createAppearance(f.storage); store.set({theme:'invalid',codeFontSize:'999',fontSize:'0',accentLight:'invalid'});
-    assert.equal(store.value.theme, 'system'); assert.equal(store.value.codeFontSize, '13'); assert.equal(store.value.fontSize, '15'); assert.equal(store.value.accentLight, 'neutral');
+    assert.equal(store.value.theme, 'system'); assert.equal(store.value.codeFontSize, '12'); assert.equal(store.value.fontSize, '14'); assert.equal(store.value.accentLight, 'neutral');
     const ui = readFileSync(new URL('../src/ui-core/appearance-controls.js', import.meta.url), 'utf8');
     assert.doesNotMatch(ui, /select\('density'|界面密度/);
 });
@@ -45,7 +45,7 @@ test('#646 complete device appearance preferences survive recreation with indepe
     assert.equal(restored.backgroundLight,'#f5f5f5');assert.equal(restored.backgroundDark,'#202020');
     assert.equal(restored.fontLight,'serif');assert.equal(restored.fontDark,'mono');
     store.set({...restored,backgroundLight:'url(invalid)',uiFontSize:'99',font:'unknown',contrast:'999'});
-    assert.equal(store.value.backgroundLight,''); assert.equal(store.value.uiFontSize,'14'); assert.equal(store.value.font,'system');assert.equal(store.value.contrast,'100');
+    assert.equal(store.value.backgroundLight,''); assert.equal(store.value.uiFontSize,'13'); assert.equal(store.value.font,'system');assert.equal(store.value.contrast,'100');
 });
 const tokens = JSON.parse(readFileSync(new URL('../design/tokens/tokens.json', import.meta.url), 'utf8'));
 const css = readFileSync(new URL('../src/ui-core/appearance.css', import.meta.url), 'utf8');

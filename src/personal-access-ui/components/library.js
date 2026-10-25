@@ -1,7 +1,12 @@
 globalThis.WeftUiComponents.factories.library=(core,ui)=>{
-    let panel,view,entry,opened=false,sourceAnchor,opening=0;
-    function close(){opening++;const wasOpen=opened;sourceAnchor=null;opened=false;if(panel)panel.hidden=true;ui.byId('conversation-pane').hidden=false;document.body.classList.remove('library-open');entry?.setAttribute('aria-current','false');view?.deactivate();if(wasOpen)ui.paintSelectedSession(core.state.selectedSessionId);}
-    async function open(){const generation=++opening;await core.enterAssistant();if(generation!==opening)return;ui.closeFixedPage?.();opened=true;panel.hidden=false;ui.byId('conversation-pane').hidden=true;document.body.classList.add('library-open');entry.setAttribute('aria-current','page');ui.byId('assistant-title').textContent='成果库';ui.closeRail();await core.readLibrary();if(opened)view.focus();}
+    let panel,view,entry,opened=false,sourceAnchor,opening=0,pendingOpen=false;
+    function close(){const pending=pendingOpen;pendingOpen=false;opening++;if(!opened){if(pending)ui.byId('conversation-pane').hidden=false;return;}sourceAnchor=null;opened=false;if(panel)panel.hidden=true;ui.byId('conversation-pane').hidden=false;document.body.classList.remove('library-open');entry?.setAttribute('aria-current','false');view?.deactivate();ui.paintSelectedSession(core.state.selectedSessionId);}
+    async function open(){
+        if(opened||pendingOpen){ui.closeRail();return;}
+        const generation=++opening;pendingOpen=true;
+        try{await core.enterAssistant();if(generation!==opening)return;pendingOpen=false;ui.closeFixedPage?.();opened=true;panel.hidden=false;ui.byId('conversation-pane').hidden=true;document.body.classList.add('library-open');entry.setAttribute('aria-current','page');ui.byId('assistant-title').textContent='成果库';ui.closeRail();await core.readLibrary();if(opened)view.focus();}
+        finally{if(generation===opening)pendingOpen=false;}
+    }
     const timeline=ui.renderTimeline;let eventSignature;
     function focusSource(){if(!sourceAnchor)return;if(core.inMainChat?.()){ui.focusMainEvent?.(sourceAnchor.eventId);return;}
         const row=ui.byId('transcript').querySelector(`[data-seq="${sourceAnchor.seq}"]`);if(row){row.tabIndex=-1;row.scrollIntoView({block:'center'});row.focus();}}

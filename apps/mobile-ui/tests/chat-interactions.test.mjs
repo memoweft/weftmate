@@ -55,6 +55,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     click(){this.fire('click');this.onclick?.({target:this,currentTarget:this,preventDefault(){},stopPropagation(){}})}
     setAttribute(key,value){this.attrs[key]=value}
     getAttribute(key){return this.attrs[key]??null}
+    hasAttribute(key){return Object.hasOwn(this.attrs,key)}
     removeAttribute(key){delete this.attrs[key];if(key==='id')this.id='';if(key==='src')this.src='';}
     cloneNode(deep=false){const copy=new Node(this.id);copy.tagName=this.tagName;copy.className=this.className;copy.attrs={...this.attrs};copy.textContent=this.textContent;copy.hidden=this.hidden;if(deep)copy.append(...this.children.map(child=>child instanceof Node?child.cloneNode(true):child instanceof TextNode?new TextNode(child.data):child));return copy;}
     getBoundingClientRect(){return {top:500,height:132}}

@@ -104,7 +104,7 @@ globalThis.WeftRunRecords = {
         const button = (text, action) => { const value=node('button','button secondary small',text); value.type='button'; value.addEventListener('click',action); return value; };
         function paint(value) {
             body.replaceChildren(); section.dataset.state = value?.state || 'loading';
-            if (!value) { const loading=node('p','run-record-loading','正在读取运行记录…'); loading.setAttribute('role','status'); body.append(loading); return; }
+            if (!value) { const loading=node('div','run-record-loading'); loading.setAttribute('role','status'); loading.append(WeftControls.skeleton()); body.append(loading); return; }
             if (value.state !== 'ready') { body.append(node('p','muted','运行记录暂时无法读取，请重试。'),button('重试读取',retry)); return; }
             const list=node('dl','run-record-facts');
             const fact=(label,text)=>{list.append(node('dt','',label),node('dd','',text));};

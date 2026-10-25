@@ -26,21 +26,24 @@ html[data-reduced-motion] .reply-working>.reply-sheen,html[data-reduced-motion] 
 /* Supplied motion library ids. Timing and curves live only in design/tokens. */
 [data-motion="enter-rise"],[data-motion="view-enter"],
 [data-motion="stagger-rise"] > *,.m-stagger-rise > * {
-  animation:m-enter-rise var(--dur-3) var(--ease-out) both;
+  animation:m-enter-rise var(--dur-4) var(--ease-out) both;
 }
 /* An already-visible first frame avoids a blank flash between pages. */
 @keyframes m-enter-rise { from { opacity:.72;transform:translateY(8px) } to { opacity:1;transform:none } }
-[data-motion="enter-fade"] { animation:m-fade var(--dur-1) var(--ease-out) both }
+[data-motion="enter-fade"] { animation:m-fade var(--dur-3) var(--ease-out) both }
 @keyframes m-fade { from { opacity:.72 } to { opacity:1 } }
-[data-motion="stagger-rise"] > :nth-child(n+2),.m-stagger-rise > :nth-child(n+2) { animation-delay:var(--dur-1) }
+[data-motion="stagger-rise"] > :nth-child(2),.m-stagger-rise > :nth-child(2) { animation-delay:var(--dur-1) }
+[data-motion="stagger-rise"] > :nth-child(3),.m-stagger-rise > :nth-child(3) { animation-delay:var(--dur-2) }
+[data-motion="stagger-rise"] > :nth-child(4),.m-stagger-rise > :nth-child(4) { animation-delay:var(--dur-3) }
+[data-motion="stagger-rise"] > :nth-child(n+5),.m-stagger-rise > :nth-child(n+5) { animation-delay:var(--dur-4) }
 [data-motion="sheet-in"] { animation:m-sheet-in var(--dur-4) var(--ease-out) both }
 @keyframes m-sheet-in { from { transform:translateX(102%) } to { transform:none } }
 /* unfold: wrap content in one child; toggle .open or aria-expanded. */
-[data-motion="unfold"]:not(details) { display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--dur-3) var(--ease-out) }
+[data-motion="unfold"]:not(details) { display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--dur-4) var(--ease-out) }
 [data-motion="unfold"]:not(details) > * { min-height:0;overflow:hidden }
 [data-motion="unfold"]:not(details).open,[data-motion="unfold"]:not(details)[aria-expanded="true"] { grid-template-rows:1fr }
 /* Native unfold leaves summary in normal flow; only the details body folds. */
-details[data-motion="unfold"]::details-content { display:grid;grid-template-rows:0fr;content-visibility:hidden;transition:grid-template-rows var(--dur-3) var(--ease-out),content-visibility var(--dur-3) allow-discrete }
+details[data-motion="unfold"]::details-content { display:grid;grid-template-rows:0fr;content-visibility:hidden;transition:grid-template-rows var(--dur-4) var(--ease-out),content-visibility var(--dur-4) allow-discrete }
 details[data-motion="unfold"][open]::details-content { grid-template-rows:1fr;content-visibility:visible }
 :is(html[data-reduced-motion],body.calm) details[data-motion="unfold"]::details-content { transition:none!important }
 [data-motion="text-shimmer"] {
@@ -51,7 +54,7 @@ details[data-motion="unfold"][open]::details-content { grid-template-rows:1fr;co
 @keyframes m-shimmer { to { background-position:-100% 0 } }
 /* reply-status keeps its positioning contract; its loading text uses the recipe. */
 .reply-status[data-motion="text-shimmer"] { animation:m-shimmer var(--dur-5) var(--ease-linear) infinite!important }
-.reply-status[data-motion="enter-fade"] { animation:m-fade var(--dur-1) var(--ease-out) both!important }
+.reply-status[data-motion="enter-fade"] { animation:m-fade var(--dur-3) var(--ease-out) both!important }
 .reply-status[data-motion="text-shimmer"] > .reply-sheen { display:none }
 html[data-reduced-motion] [data-motion="text-shimmer"],body.calm [data-motion="text-shimmer"] { animation:none!important;background:none;color:var(--ink-muted,var(--muted)) }
 html[data-reduced-motion] [data-motion="enter-rise"] { animation:m-fade var(--dur-1) var(--ease-out) both!important }

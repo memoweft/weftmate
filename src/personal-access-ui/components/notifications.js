@@ -4,9 +4,9 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
   const controls=globalThis.WeftSettingsControls, identity=core.state.identityGeneration;
   const current=()=>target.isConnected&&identity===core.state.identityGeneration;
   const node=(tag,text='',cls='')=>{const el=document.createElement(tag);el.textContent=text;el.className=cls;return el;};
-  const form=node('form','','personalization-form notification-settings'),notice=node('p','正在读取…','muted');notice.setAttribute('role','status');
+  const form=node('form','','personalization-form notification-settings'),notice=node('div','','muted');notice.setAttribute('role','status');
   const fields=new Map(),healthFields=new Map();let ready=false,saved,localDelivery=false,healthReady=false,healthSaved,healthNotice;
-  target.replaceChildren(form);form.append(notice);
+  target.replaceChildren(form);form.append(notice);notice.append(WeftControls.skeleton({rows:1,compact:true}));
   const busy=value=>{for(const el of form.querySelectorAll('input,select,button'))el.disabled=value||el.dataset.reserved==='true';};
   const fill=settings=>{for(const [key,el] of fields){if(el.type==='checkbox')el.checked=settings[key];else el.value=String(settings[key]);el.dispatchEvent(new Event('weft:sync'));}};
   async function write(patch){if(!ready||!current())return;busy(true);notice.textContent='正在同步…';
@@ -48,7 +48,7 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
     const cancel=node('button','取消','button secondary'),confirm=node('button','确认清空','button danger');cancel.type=confirm.type='button';cancel.onclick=()=>box.close();confirm.onclick=async()=>{box.close();if(await write({reviewClear:true}))device.toast?.('回顾已清空。');};const actions=node('div','','actions');actions.append(cancel,confirm);box.append(actions);box.addEventListener('close',()=>{box.remove();focus?.focus();});document.body.append(box);globalThis.WeftPopover?.bindSettings(box);box.showModal();cancel.focus();};
   form.append(controls.row('已保存的回顾','清空后，助手不再引用这些摘要。',clear));
   form.append(node('h2','健康数据'));
-  healthNotice=node('p','正在读取健康设置…','muted');healthNotice.setAttribute('role','status');form.append(healthNotice);
+  healthNotice=node('div','','muted');healthNotice.setAttribute('role','status');form.append(healthNotice);healthNotice.append(WeftControls.skeleton({rows:1,compact:true}));
   field('modelInsightsEnabled','用模型解读','会把每天的汇总数字发给你设置的模型，不发明细。','checkbox',undefined,true);
   field('itemAnalysisEnabled','各项 AI 分析','展开时才分析这一项；会把每天的汇总数字发给你设置的模型，不发明细。','checkbox',undefined,true);
   field('sleepTargetMinutes','睡眠目标','用来比较自己的睡眠时长。','select',[[360,'6 小时'],[390,'6.5 小时'],[420,'7 小时'],[450,'7.5 小时'],[480,'8 小时'],[510,'8.5 小时'],[540,'9 小时']],true);
