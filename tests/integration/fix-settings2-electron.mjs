@@ -90,6 +90,33 @@ try {
   await open('assistant');await open('personalization');
   assert.equal(await bio.inputValue(),'合成的未保存简介','category switching preserves unsaved text');
   assert.equal(await page.evaluate(()=>__settingsDraft===document.querySelector('#personalization-bio')&&__settingsNav===document.querySelector('.settings-navigation')),true,'switch changes content visibility, retaining controls and navigation');
+  {
+    await page.evaluate(()=>{
+      const core=__feedbackSessionCore;globalThis.__readRecords=core.readExecutionRecords;globalThis.__recordReads=0;
+      core.readExecutionRecords=(...args)=>{globalThis.__recordReads++;return globalThis.__recordReads===1?new Promise(resolve=>{globalThis.__releaseRecords=()=>resolve({items:[],projects:[],hasMore:false});}):globalThis.__readRecords(...args);};
+    });
+    await open('executionRecords');await page.waitForFunction(()=>globalThis.__recordReads===1);
+    await page.evaluate(()=>{globalThis.__recordFilters=document.querySelector('.record-filters');});
+    await open('general');await page.evaluate(()=>globalThis.__releaseRecords());
+    await open('executionRecords');
+    await page.waitForFunction(()=>globalThis.__recordReads===2);
+    await page.waitForFunction(()=>!document.querySelector('.execution-records .record-skeleton,.execution-records .wm-skeleton'));
+    assert.equal(await page.evaluate(()=>globalThis.__recordFilters===document.querySelector('.record-filters')),true,'record loading resumes without rebuilding filters');
+    await page.getByRole('button',{name:'关闭设置',exact:true}).click();await open('executionRecords');
+    await page.waitForFunction(()=>globalThis.__recordReads===3);
+  }
+  if(!process.argv.includes('--review-records')) {
+    await page.evaluate(()=>{
+      const core=__feedbackSessionCore;globalThis.__loadUsage=core.loadUsage;globalThis.__usageScopes=[];
+      core.loadUsage=options=>{globalThis.__usageScopes.push(options.sessionId||'');return globalThis.__loadUsage(options);};
+    });
+    await page.evaluate(()=>WeftSettingsNavigation.open('usage',{sessionId:__feedbackSessionCore.state.selectedSessionId}));
+    await page.locator('.usage-toolbar').waitFor();await open('general');await open('usage');
+    assert.equal(await page.evaluate(()=>globalThis.__usageScopes.at(-1)),'','returning to usage restores account totals');
+    await page.evaluate(()=>WeftSettingsNavigation.open('usage',{sessionId:__feedbackSessionCore.state.selectedSessionId}));
+    await page.locator('.usage-toolbar').waitFor();await open('usage');
+    assert.equal(await page.evaluate(()=>globalThis.__usageScopes.at(-1)),'','opening default usage also resets the active conversation scope');
+  }
   for(const theme of ['light','dark']) {
     await page.evaluate(theme=>WeftDesktop.setAppearance({theme}),theme);
     for(const id of ['general','personalization','assistant','notifications','reviewHealth','appearance','account','devices','usage','data','archived','models','approvals','connectors','executionRecords','memory','schedules','resources','system','backups','about']) {
