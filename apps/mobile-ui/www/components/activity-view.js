@@ -1,3 +1,22 @@
+/* Real layout expansion; callbacks and requests never wait for presentation. */
+globalThis.WeftAuxiliaryMotion = {
+    expanded: new WeakMap(),
+    expand(content, open, trigger) {
+        trigger?.setAttribute('aria-expanded', String(open));
+        if (globalThis.WeftMotion?.visibility) { WeftMotion.visibility(content, open); return; }
+        const previous = this.expanded.get(content), from = content.hidden ? 0 : content.getBoundingClientRect().height;
+        previous?.cancel(); content.hidden = false; content.inert = !open;
+        trigger?.setAttribute('aria-expanded', String(open));
+        const settle = () => { content.hidden = !open; content.inert = false; content.style.removeProperty('height'); content.style.removeProperty('overflow'); this.expanded.delete(content); };
+        if (globalThis.WeftReplyMotion?.reduced || globalThis.WeftReplyMotion?.paused || matchMedia('(prefers-reduced-motion: reduce)').matches && !document.documentElement.hasAttribute('data-motion-full')) { settle(); return; }
+        const to = open ? content.scrollHeight : 0, css = getComputedStyle(document.documentElement);
+        const duration = parseFloat(css.getPropertyValue(Math.max(from, to) > 400 ? '--dur-5' : '--dur-4'));
+        content.style.height = `${to}px`; content.style.overflow = 'clip';
+        const animation = content.animate([{height:`${from}px`,opacity:open ? .5 : 1},{height:`${to}px`,opacity:open ? 1 : 0}], {duration,easing:css.getPropertyValue('--ease-out').trim()});
+        this.expanded.set(content, animation);
+        animation.finished.then(() => { if (this.expanded.get(content) === animation) settle(); }, () => {});
+    }
+};
 /* Shared presentation for desktop and the mobile web shell. */
 globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.activity.timeZone}){
     const node=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls||'';if(text!==undefined)el.textContent=text;return el;};
@@ -6,7 +25,7 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
     const head=node('div','activity-heading'),title=node('h1','','动态'),notice=node('p','activity-notice');notice.setAttribute('role','status');
     title.tabIndex=-1;
     const all=button('全部已读',()=>core.markAllActivityRead());head.append(title,all);
-    const description=node('p','muted','提醒、任务结果和需要你处理的事项，都在这里。');
+    const description=node('p','muted','需要你处理的事，和已经完成的结果。');
     const filters=node('nav','activity-filters');filters.setAttribute('aria-label','筛选动态');
     for(const [id,label]of [['all','全部'],['actionable','待处理'],['task','任务'],['reminder','提醒'],['memory','记忆']]){const el=button(label,()=>core.setActivityFilter(id));el.dataset.filter=id;filters.append(el);}
     const list=node('div','activity-days'),more=button('更多动态',()=>core.readActivity(true));
@@ -52,7 +71,7 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
         if(renderSignature===nextSignature)return;renderSignature=nextSignature;
         all.disabled=!model.snapshotCursor||!model.unreadCount||model.loading;
         for(const el of filters.children){el.setAttribute('aria-current',el.dataset.filter===model.filter?'true':'false');el.disabled=model.loading;}
-        notice.textContent=model.error|| (model.loading?'':`${model.unreadCount} 条未读${model.actionableCount?` · ${model.actionableCount} 项待处理`:''}`);
+        notice.textContent=model.error?`${model.error}${model.items.length?' · 仍显示上次的动态':''}`:model.loading&&model.items.length?'正在更新…':model.loading?'':model.actionableCount?`${model.actionableCount} 项待处理${model.unreadCount?` · ${model.unreadCount} 条未读`:''}`:model.unreadCount?`${model.unreadCount} 条未读`:'没有待处理的事';
         more.hidden=!model.nextCursor;more.disabled=model.loading;
         list.setAttribute('aria-busy',String(model.loading));
         if(!model.items.length){mounted.clear();mountedDays.clear();
@@ -65,7 +84,7 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
         for(const item of model.items){const date=formatter.format(new Date(item.at));if(!days.has(date)){let section=mountedDays.get(date);if(!section){section=node('section','activity-day');section.append(node('h2','',date));mountedDays.set(date,section);}days.set(date,section);dayRows.set(date,[]);}
             let row=mounted.get(item.id);if(!row){row=node('article','activity-row');row.dataset.activityId=item.id;row.tabIndex=-1;mounted.set(item.id,row);}
             const signature=JSON.stringify([item,model.busy.has(item.id)]);
-            if(row.dataset.signature!==signature){row.dataset.signature=signature;row.classList.toggle('is-unread',!item.read);
+            if(row.dataset.signature!==signature){row.dataset.signature=signature;row.classList.toggle('is-unread',!item.read);row.classList.toggle('needs-action',item.state==='pending');
                 const heading=node('div','activity-row-heading'),label=node('h3','',item.title),time=node('time','muted',clock.format(new Date(item.at)));time.dateTime=item.at;
                 if(item.computerName||core.hasMultipleComputers?.())heading.append(node('small','muted',item.computerName||core.computerName(item.source?.hostId||core.currentExecutionComputer())));
                 heading.append(label,time);const summary=node('p','activity-summary',item.weeklyInsight?(()=>{const date=new Intl.DateTimeFormat('zh-CN',{timeZone:'UTC',month:'long',day:'numeric'});return `${date.format(new Date(item.weeklyInsight.from+'T00:00:00Z'))} — ${date.format(new Date(Date.parse(item.weeklyInsight.to+'T00:00:00Z')-86400000))}`;})():item.summary),actions=node('div','activity-actions');
