@@ -216,8 +216,9 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
             const available = model.status === 'active' && model.configured;
             const failed = checked && (!checked.reachable || checked.authentication === 'rejected' || checked.model === 'missing' || checked.model === 'test_failed' || ['failed', 'invalid'].includes(checked.catalog) || checked.catalog === 'unsupported' && !checked.inferenceVerified);
             const status = !model.configured ? '密钥暂时读不出' : loaded ? '已加载' : !available || failed ? '不可用' : '可用';
-            main.append(ui.element('small','muted',model.deepThinking?.supported?'支持深入思考':'此模型未声明深入思考能力'));
-            main.append(ui.element('strong', '', model.name || model.modelId), ui.element('small', 'muted', `${model.modelId} · ${label}`), ui.element('span', 'model-status' + (loaded ? ' is-loaded' : ''), status));
+            const title=ui.element('div','model-choice-title');
+            title.append(ui.element('strong','',model.name||model.modelId),ui.element('span','model-status'+(loaded?' is-loaded':''),status));
+            main.append(title,ui.element('small','muted',`${model.modelId} · ${label}`),ui.element('small','muted',model.deepThinking?.supported?'支持深入思考':'此模型未声明深入思考能力'));
             const actions = ui.element('div', 'actions');
             const edit = ui.element('button', model.configured ? 'button quiet small' : 'button secondary small', model.configured ? '编辑' : '重新填写');
             edit.disabled = core.state.accountModelBusy || !!marker || model.status !== 'active';

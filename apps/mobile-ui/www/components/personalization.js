@@ -21,11 +21,17 @@ globalThis.WeftPersonalizationView = (core, target, category, {toast = () => {}}
         field.setAttribute('aria-label', label); field.maxLength = globalThis.WeftPersonalization.limits[key] * 2;
         if (multiline) field.rows = key === 'fixedInstructions' ? 5 : 3;
         const wrapper = node('div', 'personalization-field'), count = node('small', 'muted');
+        const expandable = ['toneInstructions','fixedInstructions','writingStyle'].includes(key);
+        const editor = expandable ? node('details','settings-editor') : null, summary = expandable ? node('summary','',label) : null;
+        const value = expandable ? node('span','settings-editor-value muted') : null;
+        if(editor){summary.append(value);editor.append(summary);}
         count.id = field.id + '-count'; field.setAttribute('aria-describedby', count.id);
-        const update = () => { const length = [...field.value].length, limit = globalThis.WeftPersonalization.limits[key]; count.textContent = `${length} / ${limit} 字`; field.setCustomValidity(length > limit ? `最多填写 ${limit} 字。` : ''); };
+        const update = () => { const length = [...field.value].length, limit = globalThis.WeftPersonalization.limits[key]; count.textContent = `${length} / ${limit} 字`; if(value)value.textContent=length?`已填写 ${length} 字`:'未设置';field.setCustomValidity(length > limit ? `最多填写 ${limit} 字。` : ''); };
         field.addEventListener('input', update); wrapper.append(field, count);
         const row = controls.row(label, description, wrapper); row.querySelector('label').htmlFor = field.id; row.classList.add('personalization-text-row');
-        form.append(row); texts.set(key, field); field.updateCount = update; return field;
+        if(editor){editor.append(row);form.append(editor);controls.details(editor);field.addEventListener('invalid',()=>{editor.open=true;});}
+        else form.append(row);
+        texts.set(key, field); field.updateCount = update; return field;
     }
     function select(key, label, description, options) {
         const field = node('select'); field.id = 'personalization-' + key; field.setAttribute('aria-label', label);
@@ -40,8 +46,10 @@ globalThis.WeftPersonalizationView = (core, target, category, {toast = () => {}}
         field.addEventListener('change', () => { void write({ [key]: field.checked }, key === 'useWritingStyle' && field.checked && !texts.get('writingStyle').value.trim()); });
     }
     if (category === 'personalization') {
+        form.append(node('h2','settings-section-title','认识你'));
         text('preferredName', '怎么称呼你', '名字或昵称，助手会在合适的时候使用。');
         text('bio', '你的简介', '职业、关注点或希望助手了解的背景，可留空。', true);
+        form.append(node('h2','settings-section-title','回复方式'));
         select('tone', '回复语气', '选一种常用语气，也可以补充自己的说明。', [['natural', '自然'], ['concise', '简洁'], ['detailed', '详细'], ['formal', '正式'], ['casual', '轻松']]);
         text('toneInstructions', '自定义语气说明', '例如：先给结论，避免客套话。', true);
         text('fixedInstructions', '固定说明', '用于所有对话，包括临时对话。这里的说明不会形成记忆。', true);
@@ -52,15 +60,18 @@ globalThis.WeftPersonalizationView = (core, target, category, {toast = () => {}}
         extract.type = clear.type = 'button'; extract.addEventListener('click', () => { void write({}, true); });
         clear.addEventListener('click', async () => { await write({ writingStyle: '' }); if (current() && saved.writingStyle === '') { texts.get('writingStyle').value = ''; texts.get('writingStyle').updateCount(); } });
         actions.append(extract, clear); form.append(actions);
-        const save = node('button', 'button primary', '保存个性化'); save.type = 'submit'; form.append(save);
+        const save = node('button', 'button primary', '保存个性化'); save.type = 'submit'; const footer=node('div','settings-form-actions');footer.append(save);form.append(footer);
     } else {
+        form.append(node('h2','settings-section-title','输入与建议'));
         toggle('nextSuggestionsEnabled', '下一步建议', '回复结束后给出几条相关短句，点一下填进输入框，不会自动发送。');
         toggle('inlineCompletionEnabled', '输入时补全', '打字时用灰色字补出后半句，按 Tab 接受。用云端模型时可能来不及显示。');
+        form.append(node('h2','settings-section-title','回答与思考'));
         toggle('webSearch', '网页搜索', '允许助手根据问题搜索和读取网页。关闭后，需要最新资料时会说明无法查证。');
         toggle('researchSelfCheck', '成文前核对事实', '查资料成文时，用已读取的原文核对关键结论、适用范围和数字。关闭后仍保留出处与未确认说明。');
         select('verbosity', '回答详细程度', '作为默认偏好，你仍可在对话中要求更短或更详细。', [['short', '简短'], ['medium', '适中'], ['thorough', '详尽']]);
         select('thinkingDisplay', '显示思考过程', '仅对提供思考内容的模型生效，不改变模型的思考能力。', [['collapsed', '折叠'], ['expanded', '展开'], ['hidden', '不显示']]);
         toggle('defaultDeepThinking', '新对话默认深入思考', '只用于支持深入思考的模型；不支持的模型会按普通方式回答。已有对话可在输入区单独设置。');
+        form.append(node('h2','settings-section-title','回复进行中'));
         select('messageMode', '回复进行中时发送的消息', '排队：等当前回复结束后处理。引导：插入当前回复，调整方向。', [['queue', '排队'], ['steer', '引导']]);
     }
     function fill(settings) {
