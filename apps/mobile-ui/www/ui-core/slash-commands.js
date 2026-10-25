@@ -1,6 +1,6 @@
 /* Session-scoped DSH discovery and execution; skills remain native prompt references. */
 globalThis.WeftUiCore.factories.slashCommands=(core,effects,environment)=>{
-  const scope=()=>`${core.state.ownerId}/${core.state.identityGeneration}/${core.state.selectedSessionId}/${core.state.newConversationId}`;
+  const scope=()=>`${core.state.ownerId}/${core.state.identityGeneration}/${core.state.activeChatSource}/${core.state.selectedSessionId}/${core.state.newConversationId}`;
   let pending;
   async function ensureSlashSession() {
     if(core.state.selectedSessionId) return core.state.selectedSessionId;
@@ -73,11 +73,12 @@ globalThis.WeftUiCore.factories.slashCommands=(core,effects,environment)=>{
 
 globalThis.WeftSlashMenu={mount(core,{field,anchor=field,toast,repaint}) {
   let popup,items=[],selected=0,generation=0,dismissed='',busy=false,catalogScope='';
-  const scope=()=>`${core.state.ownerId}/${core.state.identityGeneration}/${core.state.selectedSessionId}/${core.state.newConversationId}`;
+  const scope=()=>`${core.state.ownerId}/${core.state.identityGeneration}/${core.state.activeChatSource}/${core.state.selectedSessionId}/${core.state.newConversationId}`;
   const close=()=>{popup?.close(false);popup=null;field.removeAttribute('aria-activedescendant')};
   const active=()=>{const buttons=[...(popup?.menu.querySelectorAll('button')||[])];buttons.forEach((button,i)=>{button.dataset.active=String(i===selected);button.id=`slash-option-${i}`});field.setAttribute('aria-activedescendant',`slash-option-${selected}`);buttons[selected]?.scrollIntoView({block:'nearest'})};
   const descriptions={compact:'压缩较早的对话，保留当前进展',goal:'查看或设置当前目标',feedback:'向运行时提交反馈'};
   const pick=async item=>{
+    if(catalogScope!==scope()){close();return}
     close();dismissed='';
     const args=/^\/\S+\s([\s\S]*)$/.exec(field.value)?.[1] || '';
     field.value=`/${item.name}${args?' '+args:' '}`;field.dispatchEvent(new Event('input',{bubbles:true}));

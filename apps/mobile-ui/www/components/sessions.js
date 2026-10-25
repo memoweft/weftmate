@@ -161,7 +161,10 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
     '这台电脑已有执行账号。当前账号仅可聊天，不能操作电脑或读取原账号资料；请在电脑退出后登录原账号。'));
   if (session?.projectNotice || session?.projectName) content.append(el('p','shared-notice',session.projectNotice || `项目：${session.projectName}`));
   if(state.sharedError && uiCore.connectionView().kind==='online')content.append(el('div','shared-notice',state.sharedError));
+  const prepared=window.WeftTimeline?.prepare?window.WeftTimeline.prepare(state.sharedEvents,uiCore.state.personalization?.thinkingDisplay):state.sharedEvents;
+  const shown=new Set(prepared.filter(event=>event.type==='assistant.message').map(event=>String(event.data?.streamSeq ?? event.seq)));
   let lastTurn='',lastEndReasonKind='';for(const event of state.sharedEvents){
+    if(event.type==='assistant.message' && !shown.has(String(event.data?.streamSeq ?? event.seq)))continue;
     if(event.type==='user.message'||event.type==='assistant.message'){
       const body=event.data?.text,images=Array.isArray(event.data?.images)?event.data.images:[],
         originalFiles=event.type==='user.message'&&Array.isArray(event.data?.originalAttachments)?
@@ -173,13 +176,13 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
           const target=prior.querySelector('.markdown');
           if(!event.data.truncated)WeftContent.update(target,body,{streaming:event.data.streaming===true,copy:copyText,openExternal:url=>{location.href=url}});
           else if(prior.dataset.seq!==String(event.seq))void uiCore.completeMessageEvent(state.sharedSessionId,event).then(full=>{if(target.isConnected)WeftContent.update(target,full.data.text,{streaming:false,copy:copyText,openExternal:url=>{location.href=url}});}).catch(()=>{});
-          if(!event.data.live && prior.dataset.seq!==String(event.seq)){mobileMessageActions?.bind(prior,event,state.sharedSessionId);appendRenderedFiles(prior,body);WeftModelThinking(uiCore,prior,event);}
+          if(!event.data.live && prior.dataset.seq!==String(event.seq)){mobileMessageActions?.bind(prior,event,state.sharedSessionId);appendRenderedFiles(prior,body);(window.WeftTimeline?.thinking || WeftModelThinking)(uiCore,prior,event);}
           prior.dataset.seq=String(event.seq);content.append(prior);continue;
         }
         const row=messageNode(event.type==='user.message'?'user':'assistant',typeof body==='string'?body:'',[],null,null,{streaming:event.data.streaming===true});
         row.dataset.nativeMessageKey=key;row.dataset.seq=String(event.seq);row.dataset.eventSignature=JSON.stringify(event);
         if(event.data?.live)row.querySelector('.message-tools')?.remove();
-        if(event.type==='assistant.message'){WeftModelThinking(uiCore,row,event);const pages=[...(uiCore.conversationTasks?.entries?.values()||[])].flatMap(entry=>entry.payload?.sources||[]);globalThis.WeftContent?.enhance(row.querySelector('.markdown'),{pages,copy:copyText,openExternal:url=>{location.href=url}});}
+        if(event.type==='assistant.message'){(window.WeftTimeline?.thinking || WeftModelThinking)(uiCore,row,event);const pages=[...(uiCore.conversationTasks?.entries?.values()||[])].flatMap(entry=>entry.payload?.sources||[]);globalThis.WeftContent?.enhance(row.querySelector('.markdown'),{pages,copy:copyText,openExternal:url=>{location.href=url}});}
         if(images.length){const gallery=el('div','message-thumbnails');let unavailable=0;
           const scope={owner:state.owner,epoch:state.authEpoch,source:'host',conversationId:state.sharedSessionId};
           for(const image of images){const url=['image/png','image/jpeg','image/webp','image/gif'].includes(image?.contentType)
@@ -206,16 +209,16 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
   }
   state.sharedRunning=lastTurn ? lastTurn==='running' : !!session?.running;
   const live=[...content.querySelectorAll('.message.assistant')].at(-1),lastUser=[...content.querySelectorAll('.message.user')].at(-1);if(live&&(!lastUser||Number(live.dataset.seq)>Number(lastUser.dataset.seq)))globalThis.WeftReplyMotion?.indicator(live.querySelector('.markdown'),state.sharedRunning&&uiCore.state.online&&state.sharedEvents.find(event=>String(event.seq)===live.dataset.seq)?.data?.streaming!==false);
-  if(uiCore.state.online&&(lastTurn==='running'||state.sharedRunning))content.append(el('p','shared-turn-state reply-status',uiCore.state.online?'正在处理…':`${uiCore.connectionView().label} · 等待接续`));
+
   // Disconnected turns wait in the single connection row; retain their terminal
   // explanation in conversation content only after the computer is reachable.
-  else if(uiCore.state.online&&lastTurn&&lastTurn!=='completed')content.append(el('p','shared-turn-state',lastTurn==='error'&&lastEndReasonKind==='max-tokens'
+  if(uiCore.state.online&&!state.sharedRunning&&lastTurn&&lastTurn!=='completed')content.append(el('p','shared-turn-state',lastTurn==='error'&&lastEndReasonKind==='max-tokens'
     ?'本轮因输出限制结束，可继续对话。':{
       aborted:'电脑回合已停止',error:'电脑回合未完成',blocked:'电脑回合等待处理',unknown:'电脑那边的进度还没确认'}[lastTurn]||'电脑那边的进度还没确认'));
   if(!state.sharedError&&!content.querySelector('.message')){
     if(state.sharedLoading)content.append(el('p','muted','正在读取电脑会话…'));
     else if(!state.sharedEvents.length&&!state.sharedHasOlder&&!state.sharedPending&&!uiCore.optimisticMessages().length)content.append(welcomeState());
-    else if(state.sharedEvents.length||state.sharedHasOlder)content.append(el('p','muted','这段会话还没有可显示的文字记录'));
+    else if(!state.sharedRunning&&(state.sharedEvents.length||state.sharedHasOlder))content.append(el('p','muted','这段会话还没有可显示的文字记录'));
   }
   content.append(...saved);
   for(const node of [...root.children])if(!desired.includes(node)&&!node.dataset.optimistic)node.remove();

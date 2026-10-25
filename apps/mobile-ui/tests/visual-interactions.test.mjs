@@ -24,7 +24,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
   await new Promise(done=>server.listen(0,'127.0.0.1',done));await mkdir(evidence,{recursive:true});
   const browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
-  const capture=async name=>{await page.evaluate(()=>Promise.allSettled(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished)));await page.screenshot({path:resolve(evidence,name)})};
+  const capture=async name=>{await page.evaluate(()=>Promise.allSettled(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>{if(a.playState==='paused')a.finish();return a.finished})));await page.screenshot({path:resolve(evidence,name)})};
   try{
     await page.addInitScript(()=>{
       const now='2026-10-08T06:00:00.000Z';
@@ -87,7 +87,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
     await page.locator('#home-page').getByRole('button',{name:'搜索',exact:true}).click();const search=page.getByRole('combobox',{name:'搜索内容',exact:true});await search.fill('项目');await page.getByRole('tab',{name:'对话',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#search-results').getAttribute('aria-busy')==='false');assert.equal(await page.getByRole('option').count(),1);await search.fill('');await page.getByRole('button',{name:'关闭搜索',exact:true}).click();await page.getByRole('dialog',{name:'搜索',exact:true}).waitFor({state:'hidden'});
     for(const theme of ['light','dark']){
       await page.evaluate(value=>applyTheme(value),theme);await capture(`${theme}-list.png`);
-      await page.locator('#home-conversations [data-id="running"]').click();await page.getByText('正在处理…',{exact:true}).waitFor();
+      await page.locator('#home-conversations [data-id="running"]').click();await page.locator('[data-timeline^="steps-"][data-running="true"] .execution-block > summary').waitFor();assert.equal(await page.locator('.shared-turn-state').count(),0);
       assert.equal(await page.locator('.execution-block').evaluate(n=>n.open),false);await capture(`${theme}-running.png`);
       assert.equal(await page.getByRole('button',{name:'停止回复',exact:true}).isVisible(),true);await page.locator('#page-back').click();
       await page.locator('#home-conversations [data-id="approve"]').click();await page.evaluate(()=>refreshToolApprovals());

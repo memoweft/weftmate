@@ -63,3 +63,8 @@ test('#660 artifact completion updates its existing process step and result refe
   const step=f.WeftUiCore.projectTimeline(selected,[],true).groups[0].steps[0];
   assert.equal(step.state,'completed');assert.equal(step.detailRef.seq,2);
 });
+test('legacy messages without a native turn boundary keep their separate answer bodies',()=>{
+  const f=timeline(),events=[{seq:1,type:'step.completed',data:{taskId:'turn-1',stepId:'read',toolName:'read'}},
+    {seq:2,type:'assistant.message',data:{text:'第一段报告。'}},{seq:3,type:'assistant.message',data:{text:'下一段报告。'}}];
+  assert.equal(f.WeftTimeline.prepare(events).filter(e=>e.type==='assistant.message').length,2);
+});

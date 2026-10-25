@@ -31,16 +31,18 @@
   // Reasoning belongs to the progress disclosure; answer text stays in the transcript.
   function prepare(events, display = 'collapsed') {
     const ordered = [...events].sort((a,b)=>a.seq-b.seq);
-    let taskId;
+    let taskId,activeTurn=false;
     return ordered.flatMap(event => {
       if (event.data?.toolName === '__thinking' && display === 'hidden') return [];
+      if(event.type==='turn.started')activeTurn=true;
+      if(event.type==='turn.ended')activeTurn=false;
       if (event.type === 'turn.started') taskId = `${event.sourceRef?.sessionId ? event.sourceRef.sessionId + ':' : ''}turn-${event.data?.turn}`;
       if (event.data?.taskId) taskId = event.data.taskId;
       if (event.type !== 'assistant.message') return [event];
       const next = ordered.find(item=>item.seq>event.seq && (item.type==='turn.started' || item.type==='user.message'));
       const tail=ordered.filter(item=>item.seq>event.seq && (!next || item.seq<next.seq));
       const completed=tail.some(item=>item.type==='turn.ended' && item.data?.reason==='completed');
-      const scoped=!!taskId || tail.some(item=>item.type.startsWith('step.') && item.data?.taskId);
+      const scoped=activeTurn;
       const interim = scoped && (tail.some(item=>item.type==='assistant.message' && (item.data?.text || item.data?.images?.length)) ||
         !completed && tail.some(item=>item.type.startsWith('step.')));
       const language = WeftUiCore.progressLanguage(ordered,{seq:event.seq,steps:[{sessionId:event.sessionId || event.sourceRef?.sessionId}]});

@@ -96,7 +96,7 @@
     }
     for (const link of content.querySelectorAll('a')) {
       const known = options.pages?.find(page => page.url === link.href && page.title);
-      if(known&&!link.classList.contains('render-link-card')){link.classList.add('render-link-card');link.replaceChildren(node('strong','',known.title),node('small','',new URL(link.href).hostname));}
+      if(known&&!link.closest('.render-citation,.render-sources,.render-source-line')&&!link.classList.contains('render-link-card')){link.classList.add('render-link-card');link.replaceChildren(node('strong','',known.title),node('small','',new URL(link.href).hostname));}
       if (link.dataset.enhanced) continue; link.dataset.enhanced = 'true';
       const href = link.getAttribute('href') || '';
       const daily=/^#weftmate:(session|library):([A-Za-z0-9_-]+)$/.exec(href);
@@ -116,7 +116,7 @@
         }
       });
       const page = options.pages?.find(page => page.url === url && page.title);
-      if (page) { link.classList.add('render-link-card'); link.replaceChildren(node('strong','',page.title),node('small','',new URL(url).hostname)); }
+      if (page && !link.closest('.render-citation,.render-sources,.render-source-line')) { link.classList.add('render-link-card'); link.replaceChildren(node('strong','',page.title),node('small','',new URL(url).hostname)); }
     }
     for (const image of content.querySelectorAll('img')) {
       if (image.dataset.enhanced) continue; image.dataset.enhanced = 'true'; image.tabIndex = 0; image.setAttribute('role','button'); image.setAttribute('aria-label',`查看图片 ${image.alt || '图片'}`);

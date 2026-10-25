@@ -1530,7 +1530,8 @@ test('terminal-output-limit mobile keeps an old pure-reply card bound to its sou
     {seq:3,type:'turn.started',data:{turn:3}});renderSharedConversation()`);
   card=h.node('chat-content').children.find(node=>node.dataset.conversationTask===fixture.task.taskId);
   assert.match(allText(card),/因输出限制结束，尚未确认完整交付/);
-  assert.equal(h.node('chat-content').children.find(node=>node.className.split(' ').includes('shared-turn-state')).textContent,'正在处理…');
+  assert.equal(h.node('chat-content').children.some(node=>node.className.split(' ').includes('shared-turn-state')),false);
+  assert.ok(h.node('chat-content').children.some(node=>node.dataset.timeline==='waiting'));
   h.run("state.sharedSessions[0].running=false;state.sharedEvents.push({seq:4,type:'turn.ended',data:{reason:'completed',turn:3}});renderSharedConversation()");
   assert.equal(h.node('chat-content').children.some(node=>node.className.split(' ').includes('shared-turn-state')),false);
   h.run("state.sharedEvents.push({seq:5,type:'turn.ended',data:{reason:'error',turn:4}});renderSharedConversation()");
@@ -1725,6 +1726,14 @@ test('M1-0 mobile execution is collapsed by default, groups calls once, and ends
   assert.equal(h.node('chat-content').children.some(node=>node.dataset.timelineApproval==='approval-one'),false);
   const counts=h.node('chat-content').children.length;h.run('renderTimeline()');assert.equal(h.node('chat-content').children.length,counts);
 })
+
+test('#637 mobile running thinking has no second status line outside its process',()=>{
+  const h=harness();prepareSyntheticTaskChat(h);
+  h.run(`state.sharedEvents=[{seq:0,type:'turn.started',data:{turn:1}},{seq:1,type:'assistant.message',data:{text:'',modelThinking:'Thinking',thinkingActive:true}}];renderSharedConversation()`);
+  assert.equal(h.node('chat-content').querySelectorAll('.execution-block').length,1);
+  assert.equal(h.node('chat-content').querySelectorAll('.shared-turn-state').length,0);
+  assert.doesNotMatch(allText(h.node('chat-content')),/正在处理|还没有可显示的文字记录/);
+});
 
 test('#660 completed process stays above reply and remains there after historical redraw',()=>{
   const h=harness();prepareSyntheticTaskChat(h);
