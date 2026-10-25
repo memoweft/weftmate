@@ -33,3 +33,15 @@ test('installer audit rejects empty and linked payloads',async()=>{
     await rm(join(root,'link'));
   } finally {await rm(root,{recursive:true,force:true});await rm(other,{recursive:true,force:true});}
 });
+
+test('installer path budget includes the versioned runtime sibling',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'installer-component-paths-'));
+  try {
+    const app=join(root,'app');await mkdir(app);await writeFile(join(app,'shell.exe'),'shell');
+    const relative='dsh\\0123456789abcdef\\node_modules\\'+('x'.repeat(90));
+    const directory=join(app+'.components',...relative.split('\\'));
+    await mkdir(directory,{recursive:true});await writeFile(join(directory,'entry.js'),'runtime');
+    const audit=await paths.installerPayloadPaths(app);
+    assert.equal(audit.maxSuffix,'.components'.length+1+relative.length+12);
+  } finally {await rm(root,{recursive:true,force:true});}
+});

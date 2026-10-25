@@ -63,7 +63,7 @@ node scripts/memory-runtime/prepare.mjs --mode full --output .local/memory-full 
 和整个固定清单，因此 base/full 都拒绝复用旧 `e86b73ba`、`52952ff0` 载荷。随包版本
 与 `observed-core` 保持一致，版本升级遵守 MEMORY.md 的主线首绿规则。
 
-输出直接放入 `resources/memory-runtime/`：
+制备输出在打包复制阶段放入 `resources/memory-runtime/`，Windows 最终打包时移入 `<安装目录>.components/memory/<内容版本>/`。程序通过 `resources/runtime-components.json` 定位它；相同版本在程序更新时直接沿用，账户数据位置不变。旧的非独立目录布局仍可读取。组件内部结构保持不变：
 
 ```text
 memory-runtime/

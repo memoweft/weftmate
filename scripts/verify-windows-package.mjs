@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import asarApi from '@electron/asar'
 import { buildMachineIdentity, containsDevelopmentPath, forbiddenArchiveEntry, packagedTextViolation, packagedBinaryViolation } from './windows-package-policy.mjs'
 import { verifyMemoryRuntime, modeOf } from './memory-runtime/verify.mjs'
+import { packagedRuntimeDirectory } from '../src/runtime-components.mjs'
 import { csrPatches, csrIntegrityError, verifyPatchedCsrBytes } from '../src/personal-relay/csr-integrity.mjs'
 
 const { extractFile, listPackage, statFile, uncache } = asarApi
@@ -73,7 +74,7 @@ export async function verifyWindowsPackage({ unpacked, installer, resourcesDirec
   identity = { ...identity, roots: [...(identity.roots ?? []), resolve(here, '..')] }
   const resources = resourcesDirectory ? resolve(resourcesDirectory) : join(unpacked, 'resources')
   const asar = join(resources, 'app.asar')
-  const runtime = join(resources, 'dsh-runtime')
+  const runtime = packagedRuntimeDirectory(resources, 'dsh-runtime')
   const vendorManifest = join(runtime, 'VENDOR-MANIFEST.json')
 
   for (const required of [unpacked, installer, asar, runtime, vendorManifest]) {
@@ -136,13 +137,21 @@ export async function verifyWindowsPackage({ unpacked, installer, resourcesDirec
   // The existing Mac trial reuses all archive/vendor/privacy checks. Its
   // trusted build entry explicitly selects darwin; metadata cannot opt a
   // Windows package out of the required Windows component checks.
-  const memoryRuntime = platform === 'darwin' ? null : await verifyMemoryRuntime(join(resources, 'memory-runtime'), {
+  const memoryDirectory = packagedRuntimeDirectory(resources, 'memory-runtime')
+  const memoryRuntime = platform === 'darwin' ? null : await verifyMemoryRuntime(memoryDirectory, {
     mode: modeOf(packageMetadata.memoryRuntimeMode),
   })
   if (memoryRuntime && packageMetadata.memoryRuntimeManifestSha256 !== memoryRuntime.manifestSha256)
     throw new Error('memory runtime manifest does not match application metadata')
   // Include unpacked app dependencies, relay configuration and all loose resources.
   const resourceScan = await scanTextTree(resources, identity)
+  if (runtime !== join(resources, 'dsh-runtime')) {
+    const componentScan = await scanTextTree(runtime, identity)
+    const memoryScan = await scanTextTree(memoryDirectory, identity)
+    resourceScan.runtimeTextFiles += componentScan.scannedFiles
+    resourceScan.scannedFiles += componentScan.scannedFiles + memoryScan.scannedFiles
+    resourceScan.binaryFiles += componentScan.binaryFiles + memoryScan.binaryFiles
+  }
 
   const result = {
     schemaVersion: 1,

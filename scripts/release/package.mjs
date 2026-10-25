@@ -9,7 +9,7 @@ import { publishMobileUi } from '../../src/personal-access/mobile-ui-release.mjs
 
 /** A full immutable version and a changed-file tree; clients also diff against their own hashes. */
 export async function packageRelease({ layer, version, outputDir, sourceDir, channel = 'stable',
-  minAppVersion = '0.1.0', minHostVersion = '0.1.0', minNativeVersion = '0.0.0',
+  minAppVersion = '0.1.0', appVersion = null, minHostVersion = '0.1.0', minNativeVersion = '0.0.0',
   minNativeVersionCode = 23, bridgeVersion = 1, previousManifest = null, privateKey = null,
   resources = null, releaseNotes = '' }) {
   privateKey ||= await signingKeyFromEnvironment();
@@ -47,6 +47,13 @@ export async function packageRelease({ layer, version, outputDir, sourceDir, cha
     const bytes = await readFile(source); files.push({ path: name, size: bytes.length, sha256: sha256(bytes) });
   }
   files.sort((a, b) => a.path < b.path ? -1 : 1);
+  if (previousManifest) verifyManifest(previousManifest, trustedKeys, { layer, channel });
+  if (layer === 'ui' && appVersion) {
+    const previousPaths = new Set(previousManifest?.files.map(file => file.path));
+    // New resources cannot be served by older hosts' built-in path allowlist.
+    minAppVersion = !previousManifest || files.some(file => !previousPaths.has(file.path))
+      ? appVersion : previousManifest.minAppVersion || minAppVersion;
+  }
   const manifest = signManifest({ schemaVersion: 1, layer, version, channel, minAppVersion, minHostVersion,
     ...(layer === 'ui' ? { bridgeVersion } : {}), files, publishedAt: new Date().toISOString(),
     assetBase: `./files/${layer}/${version}/`, releaseNotes }, privateKey);
