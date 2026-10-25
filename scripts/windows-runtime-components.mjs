@@ -1,10 +1,10 @@
 import { mkdir, readdir, readFile, writeFile, lstat, rename, rm } from 'node:fs/promises';
-import { join, relative } from 'node:path';
+import { join, relative, toNamespacedPath } from 'node:path';
 import { createHash } from 'node:crypto';
 import { runtimeComponentRelative } from '../src/runtime-components.mjs';
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
-const nsisPath = value => value.replaceAll('$', '$$');
+const nsisPath = value => toNamespacedPath(value).replaceAll('$', '$$');
 
 async function inventory(root) {
   const files = [];

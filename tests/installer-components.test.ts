@@ -29,11 +29,15 @@ test('native component install skips unchanged files, repairs interrupted instal
   const cmd = join(root, 'compile.cmd');
   await writeFile(cmd, `@call "${vs}\\VC\\Auxiliary\\Build\\vcvars32.bat" >nul\r\n@cl /nologo /LD /std:c++17 /W4 /WX /MT /DUNICODE /D_UNICODE "${resolve('build/installer-components.cpp')}" /Fo"${join(root, 'components.obj')}" /link /DEF:"${def}" /OUT:"${dll}"\r\n`);
   run('cmd.exe', ['/d', '/c', cmd]);
-  const build = join(root, 'build'), installed = join(root, 'installed'), headers = join(root, 'headers');
+  const build = join(root, 'build-' + 'x'.repeat(100)), installed = join(root, 'installed'), headers = join(root, 'headers');
   const config = { appId: 'test.fixupdate2' };
   const stage = async (dsh: string) => {
     for (const [name, text] of [['dsh-runtime', dsh], ['memory-runtime', 'unchanged memory']]) {
       const dir = join(build, 'resources', name); await mkdir(dir, { recursive: true }); await writeFile(join(dir, 'entry.js'), text);
+      if(name==='dsh-runtime') {
+        const deep=join(dir,...Array(10).fill('nested'));
+        await mkdir(deep,{recursive:true});await writeFile(join(deep,'long-build-source.js'),'long source, short installation');
+      }
     }
     await prepareWindowsRuntimeComponents({ appOutDir: build, packager: { projectDir: root, config } }, headers);
     // Only the production component macro executes, with two synthetic files.
