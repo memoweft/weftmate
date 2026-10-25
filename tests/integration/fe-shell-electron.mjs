@@ -11,6 +11,7 @@ import { feedbackUiSession } from '../helpers/feedback-ui-session.mjs';
 
 const baseline = process.argv.includes('--before');
 const refreshBaseline=process.argv.includes('--refresh-before');
+const narrowOnly=process.argv.includes('--narrow');
 const profile = await mkdtemp(join(tmpdir(), 'weftmate-fe-shell-'));
 if (!process.env.WEFTMATE_TEST_TEMP_SCOPE) process.env.WEFTMATE_MANAGED_TEMP_ROOT = join(profile, 'fixtures');
 const output = process.env.WEFTMATE_FE_SHELL_OUTPUT;
@@ -46,6 +47,36 @@ try {
   }};
   const capture=async name=>{if(!output)return;const png=await app.evaluate(async({BrowserWindow})=>(await BrowserWindow.getAllWindows()[0].capturePage(undefined,{stayHidden:true,stayAwake:true})).toPNG().toString('base64'));await writeFile(join(output,`${baseline?'before':'after'}-${name}.png`),Buffer.from(png,'base64'));};
   async function check(name, run) {try {await run();console.log('PASS '+name);}catch(e){failures.push(name+': '+e.message);console.log('FAIL '+name+': '+e.message);}}
+  if(narrowOnly) {
+    const resize=async width=>{await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,680),width);await page.waitForFunction(width=>innerWidth===width,width);await settle();};
+    const railState=()=>page.locator('#session-rail').evaluate(rail=>({
+      inert:rail.inert,hidden:rail.getAttribute('aria-hidden'),open:rail.classList.contains('is-open'),
+      collapsed:document.body.classList.contains('rail-collapsed'),expanded:document.getElementById('rail-open').getAttribute('aria-expanded'),
+      backdropHidden:document.getElementById('rail-backdrop').hidden,focusInside:rail.contains(document.activeElement),
+    }));
+    await resize(1200);
+    await page.locator('#rail-open').click();await settle();
+    assert.deepEqual(await railState(),{inert:true,hidden:'true',open:false,collapsed:true,expanded:'false',backdropHidden:true,focusInside:false});
+    await resize(600);await page.locator('#rail-open').click();await settle();
+    const opened=await railState();await capture('breakpoint-narrow-open');console.log('NARROW_OPEN '+JSON.stringify(opened));
+    // Use a real pointer click. Programmatic element.click() would bypass inert.
+    await page.locator('.goals-entry').click({timeout:2500});await page.locator('.goals-surface').waitFor({state:'visible'});await settle();
+    assert.deepEqual(opened,{inert:false,hidden:'false',open:true,collapsed:false,expanded:'true',backdropHidden:false,focusInside:false});
+    assert.deepEqual(await railState(),{inert:true,hidden:'true',open:false,collapsed:true,expanded:'false',backdropHidden:true,focusInside:false});
+    await page.locator('#rail-open').focus();await page.keyboard.press('Enter');await settle();
+    await page.locator('.library-entry').focus();assert.equal(await page.locator('.library-entry').evaluate(n=>document.activeElement===n),true,'opened drawer accepts keyboard focus');
+    await resize(1200);await capture('breakpoint-wide-return');
+    assert.deepEqual(await railState(),{inert:false,hidden:'false',open:false,collapsed:false,expanded:'true',backdropHidden:true,focusInside:true});
+    await page.locator('.health-entry').click();await page.locator('.health-surface').waitFor({state:'visible'});await settle();
+    assert.equal((await railState()).expanded,'true','visible wide sidebar remains expanded after navigation');
+    await page.locator('#rail-open').click();await settle();await resize(640);
+    await page.locator('#rail-open').click();await settle();assert.equal((await railState()).inert,false);
+    await page.locator('#rail-backdrop').click({position:{x:590,y:400}});await settle();
+    assert.deepEqual(await railState(),{inert:true,hidden:'true',open:false,collapsed:true,expanded:'false',backdropHidden:true,focusInside:false});
+    await resize(641);assert.deepEqual(await railState(),{inert:true,hidden:'true',open:false,collapsed:true,expanded:'false',backdropHidden:true,focusInside:false});
+    await page.locator('#rail-open').click();await settle();await page.locator('.goals-entry').click();await page.locator('.goals-surface').waitFor({state:'visible'});
+    console.log('PASS width 1200 -> collapsed -> 600 -> pointer navigation -> keyboard open -> 1200 -> navigation; 640/641 backdrop and accessibility');
+  } else {
   await check('refresh preserves usable controls and only the newest load settles',async()=>{
     const probe=()=>page.evaluate(()=>{const box=document.createElement('div'),button=document.createElement('button');button.textContent='可用内容';box.append(button);document.body.append(box);button.focus();const first=WeftControls.loading(box),second=WeftControls.loading(box);const kept=button.isConnected&&document.activeElement===button;const stale=first(),busy=box.getAttribute('aria-busy'),latest=second();const result={kept,stale,busy,latest,ready:!box.hasAttribute('aria-busy')};box.remove();return result;});
     assert.deepEqual(await probe(),{kept:true,stale:false,busy:'true',latest:true,ready:true});
@@ -148,5 +179,6 @@ try {
     await page.emulateMedia({reducedMotion:'reduce'});
     const state=await page.evaluate(()=>{const d=document.querySelector('#shell-details-probe')||document.createElement('details');if(!d.isConnected){d.innerHTML='<summary>合成</summary><div>内容</div>';document.body.append(d);WeftMotion.details(d);}d.querySelector('summary').click();const result={open:d.open,animations:d.getAnimations().length};d.remove();return result;});assert.deepEqual(state,{open:true,animations:0});
   });
+  }
   assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().some(w=>w.isVisible())),false);assert.deepEqual(errors,[]);assert.deepEqual(failures,[]);
 } finally {await app?.close().catch(()=>{});kill();await fixture?.close();clearTimeout(deadline);const rel=relative(tmpdir(),profile);assert.ok(rel&&!isAbsolute(rel)&&!rel.startsWith('..')&&rel.startsWith('weftmate-fe-shell-'));await rm(profile,{recursive:true,force:true});}
