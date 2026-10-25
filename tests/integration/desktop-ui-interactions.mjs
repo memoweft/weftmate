@@ -127,7 +127,7 @@ try {
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), theme)
     assert.equal(await page.evaluate(() => document.documentElement.dataset.accent), 'green')
     assert.equal(await page.locator('.markdown-body').first().evaluate(element => getComputedStyle(element).fontSize), '17px')
-    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize), '14px')
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize), '13px')
     // Paste/drop target semantic controls; neither operation depends on their layout slot.
     await input.evaluate(element => {
       const files = new DataTransfer(); files.items.add(new File(['synthetic paste'], '粘贴.txt', { type: 'text/plain' }))

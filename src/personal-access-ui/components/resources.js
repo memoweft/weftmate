@@ -273,7 +273,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         });
     }
     function showConversation() {
-        if (core.state.currentView === 'assistant' && !ui.byId('conversation-pane').hidden) { ui.closeRail(); return; }
+        if (core.state.activeChatSource !== 'phone' && core.state.currentView === 'assistant' && !ui.byId('conversation-pane').hidden) { ui.closeRail(); return; }
         core.show('assistant');
         document.dispatchEvent(new CustomEvent('weftmate:fixed-page', { detail: 'conversation' }));
         core.state.phonePane = false;

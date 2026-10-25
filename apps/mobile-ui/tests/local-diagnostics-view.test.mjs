@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-const source=readFileSync(new URL('../../../src/personal-access-ui/components/presence.js',import.meta.url),'utf8');
+const source=readFileSync(new URL('../../../src/ui-core/controls.js',import.meta.url),'utf8')+'\n;\n'+readFileSync(new URL('../../../src/personal-access-ui/components/presence.js',import.meta.url),'utf8');
 class Node {
     constructor(tag){this.tag=tag;this.children=[];this.attributes={};this.dataset={};this.listeners={};this.hidden=false;}
     append(...nodes){for(const node of nodes){this.children.push(node);node.parent=this;}}
@@ -53,7 +53,8 @@ test('records have loading/error/empty, human preview, structured copy and user 
     const c=fixture(),target=new Node('div'),copied=[],shared=[];let retries=0;
     const view=c.WeftRunRecords.mount(target,{core:{dateText:()=> '今天 9:00'},title:'本机（这部手机）',local:true,desktop:null,
         retry:()=>retries++,copySummary:async text=>copied.push(text),shareLogs:async()=>shared.push(true)});
-    assert.equal(view.section.dataset.state,'loading');assert.match(all(target).map(node=>node.textContent).join(' '),/正在读取/);
+    assert.equal(view.section.dataset.state,'loading');assert.ok(all(target).find(node=>node.attributes.role==='status'&&node.attributes['aria-label']==='内容加载中'),'loading keeps an accessible skeleton');
+    assert.doesNotMatch(all(target).map(node=>node.textContent).join(' '),/正在读取/);
     view.paint({state:'error'});await all(target).find(node=>node.textContent==='重试读取').click();assert.equal(retries,1);
     view.paint({state:'ready',startedAt:'synthetic',abnormalCountsLast7Days:{},summary:'{"platform":"android"}',summaryPreview:'本机预览'});
     assert.equal(shared.length,0);assert.match(all(target).map(node=>node.textContent).join(' '),/没有异常记录/);
