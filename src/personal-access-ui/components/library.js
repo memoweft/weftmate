@@ -4,7 +4,7 @@ globalThis.WeftUiComponents.factories.library=(core,ui)=>{
     async function open(){
         if(opened||pendingOpen){ui.closeRail();return;}
         const generation=++opening;pendingOpen=true;
-        try{await core.enterAssistant();if(generation!==opening)return;pendingOpen=false;ui.closeFixedPage?.();opened=true;panel.hidden=false;ui.byId('conversation-pane').hidden=true;document.body.classList.add('library-open');entry.setAttribute('aria-current','page');ui.byId('assistant-title').textContent='成果库';ui.closeRail();await core.readLibrary();if(opened)view.focus();}
+        try{core.show('assistant');if(generation!==opening)return;pendingOpen=false;ui.closeFixedPage?.();opened=true;panel.hidden=false;ui.byId('conversation-pane').hidden=true;document.body.classList.add('library-open');entry.setAttribute('aria-current','page');ui.byId('assistant-title').textContent='成果库';ui.closeRail();await core.readLibrary();if(opened)view.focus();}
         finally{if(generation===opening)pendingOpen=false;}
     }
     const timeline=ui.renderTimeline;let eventSignature;

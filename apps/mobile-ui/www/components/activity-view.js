@@ -11,7 +11,7 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
     for(const [id,label]of [['all','全部'],['actionable','待处理'],['task','任务'],['reminder','提醒'],['memory','记忆']]){const el=button(label,()=>core.setActivityFilter(id));el.dataset.filter=id;filters.append(el);}
     const list=node('div','activity-days'),more=button('更多动态',()=>core.readActivity(true));
     target.replaceChildren(head,description,filters,notice,list,more);
-    const mounted=new Map();
+    const mounted=new Map(),mountedDays=new Map();let renderSignature='';
     function digestContent(item){
         const report=item.memoryDigest,body=node('div','memory-digest');
         const formatter=new Intl.DateTimeFormat('zh-CN',{timeZone:report.timeZone,month:'long',day:'numeric'});
@@ -48,17 +48,21 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
         body.append(sources);return body;
     }
     function render(){
-        const model=core.activity;all.disabled=!model.snapshotCursor||!model.unreadCount||model.loading;
+        const model=core.activity,nextSignature=JSON.stringify([model.items,model.filter,model.loading,model.error,model.unreadCount,model.actionableCount,model.snapshotCursor,model.nextCursor,[...model.busy],timeZone()]);
+        if(renderSignature===nextSignature)return;renderSignature=nextSignature;
+        all.disabled=!model.snapshotCursor||!model.unreadCount||model.loading;
         for(const el of filters.children){el.setAttribute('aria-current',el.dataset.filter===model.filter?'true':'false');el.disabled=model.loading;}
         notice.textContent=model.error|| (model.loading?'':`${model.unreadCount} 条未读${model.actionableCount?` · ${model.actionableCount} 项待处理`:''}`);
         more.hidden=!model.nextCursor;more.disabled=model.loading;
-        if(!model.items.length){mounted.clear();
+        list.setAttribute('aria-busy',String(model.loading));
+        if(!model.items.length){mounted.clear();mountedDays.clear();
             if(model.loading){list.replaceChildren(WeftControls.skeleton({rows:4}));return;}
             const empty=node('div','activity-empty');empty.append(node('p','',model.error|| (model.filter==='all'?'还没有动态。设一个提醒，或让助手做件事。':'这里暂时没有相关动态。')));
-            if(mobile&&model.error)empty.append(button('重试',()=>core.readActivity()));list.replaceChildren(empty);return;}
+            if(model.error)empty.append(button('重试',()=>core.readActivity()));list.replaceChildren(empty);return;}
         const days=new Map(),formatter=new Intl.DateTimeFormat('zh-CN',{timeZone:timeZone(),year:'numeric',month:'long',day:'numeric'}),clock=new Intl.DateTimeFormat('zh-CN',{timeZone:timeZone(),hour:'2-digit',minute:'2-digit',hour12:false});
         const active=document.activeElement,focusedId=active?.closest('[data-activity-id]')?.dataset.activityId,focusedText=active?.textContent;
-        for(const item of model.items){const date=formatter.format(new Date(item.at));if(!days.has(date)){const section=node('section','activity-day');section.append(node('h2','',date));days.set(date,section);}
+        const dayRows=new Map();
+        for(const item of model.items){const date=formatter.format(new Date(item.at));if(!days.has(date)){let section=mountedDays.get(date);if(!section){section=node('section','activity-day');section.append(node('h2','',date));mountedDays.set(date,section);}days.set(date,section);dayRows.set(date,[]);}
             let row=mounted.get(item.id);if(!row){row=node('article','activity-row');row.dataset.activityId=item.id;row.tabIndex=-1;mounted.set(item.id,row);}
             const signature=JSON.stringify([item,model.busy.has(item.id)]);
             if(row.dataset.signature!==signature){row.dataset.signature=signature;row.classList.toggle('is-unread',!item.read);
@@ -92,11 +96,13 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
                     row.append(digestContent(item));
                 }
             }
-            days.get(date).append(row);
+            dayRows.get(date).push(row);
         }
-        list.replaceChildren(...days.values());
+        for(const [date,section]of days)WeftControls.reconcile(section,[section.firstChild,...dayRows.get(date)]);
+        WeftControls.reconcile(list,[...days.values()]);
+        for(const date of mountedDays.keys())if(!days.has(date))mountedDays.delete(date);
         for(const [id]of mounted)if(!model.items.some(row=>row.id===id))mounted.delete(id);
         if(focusedId){const row=mounted.get(focusedId);const focus=[...(row?.querySelectorAll('button')??[])].find(el=>el.textContent===focusedText);(focus??row)?.focus({preventScroll:true});}
     }
-    return {render,destroy(){mounted.clear();target.replaceChildren();}};
+    return {render,destroy(){mounted.clear();mountedDays.clear();target.replaceChildren();}};
 }};

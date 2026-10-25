@@ -6,20 +6,21 @@
     return new Promise(resolve => {
       const previous = document.activeElement;
       const node = (tag, className, text) => { const el = document.createElement(tag); el.className = className; if (text !== undefined) el.textContent = text; return el; };
-      const dialog = node('dialog', 'dialog confirm-dialog weft-confirm');
       const id = `weft-confirm-${++sequence}`;
-      dialog.setAttribute('aria-labelledby', `${id}-title`);
-      dialog.setAttribute('aria-describedby', `${id}-message`);
-      const head = node('div', 'dialog-head'), heading = node('h2', '', title);
-      heading.id = `${id}-title`; head.append(heading);
-      const body = node('div', 'dialog-body'), description = node('p', '', message);
-      description.id = `${id}-message`; body.append(description);
-      const footer = node('div', 'dialog-footer');
-      const cancel = node('button', 'button secondary', cancelLabel), accept = node('button', `button ${danger ? 'danger' : 'primary'}`, confirmLabel);
+      const controls = globalThis.WeftControls;
+      const description = node('p', '', message); description.id = `${id}-message`;
+      const cancel = controls ? controls.button(cancelLabel) : node('button', 'button secondary', cancelLabel);
+      const accept = controls ? controls.button(confirmLabel, {variant:danger?'danger':'primary'}) : node('button', `button ${danger ? 'danger' : 'primary'}`, confirmLabel);
+      cancel.classList.add('button','secondary'); accept.classList.add('button',danger?'danger':'primary');
       cancel.type = accept.type = 'button';
+      const actions = information ? [accept] : [cancel,accept];
+      const dialog = controls ? controls.dialog({title,content:description,actions}) : node('dialog');
+      dialog.classList.add('dialog','confirm-dialog','weft-confirm');
+      if(!controls){const head=node('div','dialog-head');head.append(node('h2','',title));const body=node('div','dialog-body');body.append(description);const foot=node('div','dialog-footer');foot.append(...actions);dialog.append(head,body,foot);}
+      const head=dialog.firstElementChild,heading=head.querySelector('h2'),body=description.parentElement,footer=dialog.lastElementChild;
+      head.querySelector('button')?.remove();head.classList.add('dialog-head');body.classList.add('dialog-body');footer.classList.add('dialog-footer');
+      heading.id = `${id}-title`;dialog.setAttribute('aria-labelledby',heading.id);dialog.setAttribute('aria-describedby',description.id);
       cancel.onclick = () => dialog.close('cancel'); accept.onclick = () => dialog.close('confirm');
-      if (!information) footer.append(cancel);
-      footer.append(accept); dialog.append(head, body, footer);
       // showModal makes the rest of the page inert; Tab stays on the dialog's actions.
       dialog.addEventListener('keydown', event => {
         event.stopPropagation();
@@ -33,7 +34,7 @@
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); dialog.close('cancel'); }
       });
       dialog.addEventListener('close', () => { const accepted = dialog.returnValue === 'confirm'; dialog.remove(); if (previous?.isConnected) previous.focus({ preventScroll: true }); resolve(accepted); }, { once: true });
-      document.body.append(dialog); dialog.showModal();
+      document.body.append(dialog); if(controls)dialog.openPanel();else dialog.showModal();
       (information ? accept : cancel).focus({ preventScroll: true });
     });
   }
