@@ -1531,7 +1531,9 @@ test('terminal-output-limit mobile keeps an old pure-reply card bound to its sou
   card=h.node('chat-content').children.find(node=>node.dataset.conversationTask===fixture.task.taskId);
   assert.match(allText(card),/因输出限制结束，尚未确认完整交付/);
   assert.equal(h.node('chat-content').children.some(node=>node.className.split(' ').includes('shared-turn-state')),false);
-  assert.ok(h.node('chat-content').children.some(node=>node.dataset.timeline==='waiting'));
+  assert.equal(h.node('chat-content').querySelectorAll('.execution-block').length,1);
+  assert.match(allText(h.node('chat-content').querySelector('.execution-block')),/等待接续/);
+  assert.equal(h.node('chat-content').children.some(node=>node.dataset.timeline==='waiting'),false);
   h.run("state.sharedSessions[0].running=false;state.sharedEvents.push({seq:4,type:'turn.ended',data:{reason:'completed',turn:3}});renderSharedConversation()");
   assert.equal(h.node('chat-content').children.some(node=>node.className.split(' ').includes('shared-turn-state')),false);
   h.run("state.sharedEvents.push({seq:5,type:'turn.ended',data:{reason:'error',turn:4}});renderSharedConversation()");
@@ -1743,8 +1745,10 @@ test('#660 completed process stays above reply and remains there after historica
     {seq:3,type:'assistant.message',data:{text:'合成最终回复'}},
     {seq:4,type:'turn.ended',data:{turn:1,reason:'completed'}}];renderSharedConversation()`);
   const order=()=>h.node('chat-content').children.filter(node=>node.dataset.seq).map(node=>Number(node.dataset.seq));
-  assert.deepEqual(order(),[2,3]);
-  h.run('renderSharedConversation();renderTimeline()');assert.deepEqual(order(),[2,3]);
+  assert.deepEqual(order(),[1.1,3]);
+  const process=h.node('chat-content').querySelector('.execution-block');
+  h.run('renderSharedConversation();renderTimeline()');assert.deepEqual(order(),[1.1,3]);
+  assert.equal(h.node('chat-content').querySelector('.execution-block'),process);
   const details=h.node('chat-content').querySelector('.execution-block');assert.equal(details.open,false);
   details.open=true;h.run('renderTimeline()');assert.equal(h.node('chat-content').querySelector('.execution-block').open,true);
   h.run(`const retained=document.createElement('li');retained.id='fix36-reading-history';document.getElementById('chat-content').append(retained);renderTimeline()`);

@@ -47,7 +47,8 @@
   const tokenStyle=getComputedStyle(root), durations=new Map();
   for(const name of ['replyFragment','replyChange','replyScroll','working']) {const value=tokenStyle.getPropertyValue(`--wm-duration-${name}`).trim();durations.set(name,parseFloat(value)*(value.endsWith('ms')?1:1000));}
   durations.set('arrival', parseFloat(tokenStyle.getPropertyValue('--dur-3')) || durations.get('replyChange'));
-  const easing=tokenStyle.getPropertyValue('--wm-easing-desktop').trim();
+  durations.set('replyChange', parseFloat(tokenStyle.getPropertyValue('--dur-4')));
+  const easing=tokenStyle.getPropertyValue('--ease-out').trim();
   const milliseconds = name => durations.get(name);
   function play(element, frames, name, cleanup) {
     owners.get(element)?.cancel();
@@ -77,12 +78,7 @@
     if (running && !sheen) { sheen = document.createElement('span'); sheen.className = 'reply-sheen'; sheen.setAttribute('aria-hidden','true'); element.append(sheen); }
     if (sheen) { if (sheen._replyText !== text) { sheen._replyText=text;sheen.replaceChildren(...Array.from({length:5},(_,index)=>{const part=document.createElement('span');part.className='reply-sheen-part';part.setAttribute('data-text',text);part.style.setProperty('--reply-phase',`${index*25}%`);part.style.setProperty('--reply-offset',String(index/5));return part;})); } if (!running) sheen.remove(); }
     visible?.observe(element);
-    if (changed && transition && !reduced() && !paused()) {
-      const copy = document.createElement('span'); copy.className = 'reply-status-out'; copy.textContent = saved.text; copy.setAttribute('aria-hidden','true');
-      element.append(copy);
-      play(copy, [{opacity:.55,transform:'none'},{opacity:0,transform:'translateY(calc(-1 * var(--wm-space-2)))'}], 'replyChange', () => copy.remove());
-      play(element, [{opacity:.72,transform:'translateY(var(--wm-space-2))'},{opacity:1,transform:'none'}], 'replyChange');
-    }
+    if (changed && transition) play(element, [{opacity:.72},{opacity:1}], 'replyChange');
   }
   // Animate only appended text, retaining markup, syntax colors and native selection.
   // Wrappers have no font, spacing or display changes, so height measurements stay stable.

@@ -41,7 +41,7 @@ function fixture(queuedFrames = false) {
   const document = { documentElement: root, body, hidden: false, createElement: (tag: string) => new Element(tag), querySelectorAll: (selector: string) => root.querySelectorAll(selector), addEventListener: (name: string, listener: Function) => listeners.set(name, listener), createTreeWalker: (element: any) => { const leaves: any[] = []; const visit = (node: any) => node.nodeType === 3 ? leaves.push(node) : node.childNodes.forEach(visit); visit(element); let index = -1; return { currentNode: null, nextNode() { this.currentNode = leaves[++index]; return !!this.currentNode; } }; }, createRange: () => ({ setStart() {}, collapse() {}, getBoundingClientRect: () => ({ left: 100, bottom: 20 }) }) };
   const media = { matches: false, addEventListener: (name: string, listener: Function) => mediaListeners.set(name, listener) };
   const storage = new Map<string, string>();
-  const context: any = { document, matchMedia: () => media, localStorage: { getItem: (key: string) => storage.get(key), setItem: (key: string, value: string) => storage.set(key, value) }, getComputedStyle: () => ({ getPropertyValue: (key: string) => ({ '--wm-duration-replyChange': '220ms', '--wm-duration-replyFragment': '130ms', '--dur-3': '320ms', '--wm-easing-desktop': 'cubic-bezier(.16,1,.3,1)' })[key] || '' }), NodeFilter: { SHOW_TEXT: 4 }, requestAnimationFrame: (fn: Function) => fn(), CustomEvent: class { type: string; constructor(type: string) { this.type = type; } }, addEventListener: (name: string, listener: Function) => listeners.set(name, listener), dispatchEvent() {} };
+  const context: any = { document, matchMedia: () => media, localStorage: { getItem: (key: string) => storage.get(key), setItem: (key: string, value: string) => storage.set(key, value) }, getComputedStyle: () => ({ getPropertyValue: (key: string) => ({ '--wm-duration-replyChange': '220ms', '--wm-duration-replyFragment': '130ms', '--dur-3': '320ms', '--dur-4':'420ms', '--ease-out':'cubic-bezier(.16,1,.3,1)', '--wm-easing-desktop': 'cubic-bezier(.16,1,.3,1)' })[key] || '' }), NodeFilter: { SHOW_TEXT: 4 }, requestAnimationFrame: (fn: Function) => fn(), CustomEvent: class { type: string; constructor(type: string) { this.type = type; } }, addEventListener: (name: string, listener: Function) => listeners.set(name, listener), dispatchEvent() {} };
   if (queuedFrames) {
     context.requestAnimationFrame = (fn: Function) => { frames.set(++nextFrame, fn); return nextFrame; };
     context.cancelAnimationFrame = (id: number) => frames.delete(id);
@@ -80,13 +80,14 @@ test('stream-type flushes on reduced motion or hidden window, cancels detached c
   f.api.stream(body, '换一段生成文字后续', { streaming: true }, render); body.remove(); f.tick(); assert.equal(f.frames.size, 0);
 });
 
-test('reply status switches synchronously, coalesces rapid updates and hides visual copies from accessibility', async () => {
+test('reply status switches synchronously in place without duplicating or moving text', async () => {
   const f = fixture(), status = f.element(); status.setAttribute('aria-live', 'polite');
   f.api.status(status, '正在思考…', true);
   assert.equal(status.firstChild.data, '正在思考…'); assert.equal(status.querySelector('.reply-sheen').getAttribute('aria-hidden'), 'true');
   for (let n = 0; n < 30; n++) f.api.status(status, `正在读取第 ${n + 1} 个文件…`, true);
-  assert.equal(status.firstChild.data, '正在读取第 30 个文件…'); assert.equal(status.querySelectorAll('.reply-status-out').length, 1);
-  assert.equal(status.querySelector('.reply-status-out').getAttribute('aria-hidden'), 'true'); assert.equal(status.getAttribute('aria-live'), 'polite');
+  assert.equal(status.firstChild.data, '正在读取第 30 个文件…'); assert.equal(status.querySelectorAll('.reply-status-out').length, 0);
+  assert.equal(status.getAttribute('aria-live'), 'polite');
+  const change=f.animations.at(-1);assert.equal(change.timing.duration,420);assert.ok(change.frames.every(frame=>!frame.transform));
   assert.ok(f.animations.filter(animation => animation.playState === 'running' && animation.target.isConnected).length <= 2);
   for (const animation of f.animations) if (animation.playState === 'running') animation.finish(); await Promise.resolve();
   assert.equal(status.querySelectorAll('.reply-status-out').length, 0);

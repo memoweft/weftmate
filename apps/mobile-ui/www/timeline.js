@@ -94,7 +94,11 @@
   function render(events, list, options = {}) {
     list.progressRender = { events, options }
     const renderCurrent = () => { const current = list.progressRender; render(current.events, list, current.options) }
-    const { ordered, groups, cards } = globalThis.WeftUiCore.projectTimeline(prepare(events, options.thinkingDisplay), options.approvals || [], true)
+    const prepared=prepare(events, options.thinkingDisplay)
+    const active=prepared.findLast(event=>event.type==='turn.started'||event.type==='turn.ended')?.type==='turn.started'
+    const pending=!active && options.pending?.find(row=>['sending','accepted'].includes(row.status))
+    if(pending) prepared.push({seq:Math.max(-1,...prepared.map(event=>event.seq))+1,at:pending.at,type:'turn.started',data:{turn:`pending-${pending.requestId}`,pendingRequestId:pending.requestId}})
+    const { ordered, groups, cards } = globalThis.WeftUiCore.projectTimeline(prepared, options.approvals || [], true)
     const existing = new Map([...list.children].filter(n => n.dataset.timeline).map(n => [n.dataset.timeline, n]))
     const seen = new Set()
     const put = (key, seq, build) => {
@@ -108,17 +112,7 @@
       return row
     }
     const started = ordered.filter(event => event.type === 'turn.started').at(-1)
-    const waiting = options.waiting && started && !ordered.some(event => event.seq > started.seq &&
-      (event.type.startsWith('step.') || event.type === 'assistant.message' && event.data?.text))
-    if (waiting) put('waiting', Math.max(started.seq, ...ordered.filter(event => event.type === 'user.message' && event.seq > started.seq).map(event => event.seq)) + 0.1, row => {
-      row.classList.add('inline-waiting'); row.setAttribute('role', 'status')
-      let text=row.querySelector('.inline-progress-text'); if(!text){text=node('span','inline-progress-text is-running');row.replaceChildren(text)}
-      const seq = Math.max(started.seq, ...ordered.filter(event => event.type === 'user.message' && event.seq > started.seq).map(event => event.seq))
-      const language = WeftUiCore.progressLanguage(ordered, {seq,steps:[{sessionId:started.sessionId || started.sourceRef?.sessionId}]})
-      const label = WeftUiCore.progressWaitingText(options.waiting, language)
-      if(globalThis.WeftReplyMotion) WeftReplyMotion.status(text,label,true); else text.textContent=label
-    })
-    for (const block of groups) put(`steps-${block.seq}`, WeftUiCore.progressPosition(ordered, block, true), row => {
+    for (const block of groups) put(`steps-${options.processKey?.(block) || block.seq}`, WeftUiCore.progressPosition(ordered, block, true), row => {
       block.steps = block.steps.map(step=>globalThis.WeftUiCore.executionPresentation(step,options.executions))
       const expandedForObjects = row.querySelector('details')?.open === true
       const currentForObjects = block.steps.filter(step => step.state === 'running').at(-1)
@@ -146,6 +140,7 @@
       const thought = block.steps.filter(step=>step.toolName === '__thinking').at(-1)
       const current = block.steps.filter(step=>step.state === 'running').at(-1)
       const view = globalThis.WeftUiCore.progressText(tools, {...displayOutcome,language:block.language})
+      if (!block.steps.length && !terminal) { view.text=WeftUiCore.progressWaitingText(options.waiting || '等待模型回复…',block.language);view.running=true }
       if (current?.toolName === '__thinking' && !terminal) {view.text=block.language==='en'?'Thinking…':'正在思考…';view.running=true}
       else if (!tools.length && thought) view.text = `思考过程 · ${Number.isFinite(thought.thinkingMs) ? Math.round(thought.thinkingMs/1000)+' 秒' : '用时未记录'}`
       if (stopView && !stopView.terminal) { view.text = `${view.text} · ${WeftUiCore.progressWaitingText(stopView.text, block.language)}`; view.running = true }
@@ -153,16 +148,18 @@
       // next model/tool result. The stage comes from host state, not a timer
       // pretending that another tool is still running.
       if (options.waiting && !stopView && !terminal && !view.running && !view.failed &&
-          block === groups.at(-1) && started && block.seq > started.seq &&
+          block === groups.at(-1) && started && block.seq >= started.seq &&
           block.steps.every(step => globalThis.WeftUiCore.executionState(step) === 'completed')) {
         view.text = WeftUiCore.progressWaitingText(options.waiting, block.language); view.running = true
       }
       if(terminal && !view.failed && !tools.some(step=>step.approvalOutcome==='rejected')) {
-        const start=ordered.findLast(event=>event.type==='turn.started' && event.seq<=block.seq && (!block.steps[0]?.sessionId || (event.sessionId||event.sourceRef?.sessionId)===block.steps[0].sessionId));
+        const session=block.sessionId || block.steps[0]?.sessionId;
+        const start=ordered.findLast(event=>event.type==='turn.started' && event.seq<=block.seq && (!session || (event.sessionId||event.sourceRef?.sessionId)===session));
         const end=ordered.find(event=>['turn.ended','task.ended'].includes(event.type)&&WeftUiCore.turnOutcome([event],block.taskId).terminal);
         const ms=Date.parse(end?.at)-Date.parse(start?.at || block.steps[0]?.at);
         const duration=Number.isFinite(ms)?`${Math.max(0,Math.round(ms/1000))} ${block.language==='en'?'s':'秒'}`:block.language==='en'?'duration unavailable':'用时未记录';
-        view.text=block.language==='en'?`Processed ${block.steps.length} steps · ${duration}`:`处理了 ${block.steps.length} 步 · ${duration}`;
+        view.text=['aborted','cancelled','canceled','stopped','killed'].includes(outcome.reason) ? (block.language==='en'?'Stopped':'已停止') : block.language==='en'?`Processed ${block.steps.length} steps · ${duration}`:`处理了 ${block.steps.length} 步 · ${duration}`;
+        view.running=false;
       }
       const running = view.running
       const elapsed = running ? /\d+ (?:秒|s)$/.exec(options.waiting || '')?.[0] || `${Math.max(0,Math.floor((Date.now()-Date.parse(current?.at || started?.at))/1000)) || 0} ${block.language==='en'?'s':'秒'}` : ''
@@ -185,15 +182,13 @@
       const savedSteps = new Map([...row.querySelectorAll('.execution-step')].map(detail => [detail.dataset.step, detail]))
       const newFailure = view.failed && row.dataset.failed !== 'true'; row.dataset.failed = String(!!view.failed)
       const details = previous || node('details', 'execution-block')
+      if (!previous) details.dataset.replyProcess = 'true'
       details.dataset.motion = 'unfold'
       details.open = previous?.open === true
       row.dataset.running = String(running)
       row.classList.toggle('has-failure', !!view.failed)
       const summary = details.querySelector('summary') || node('summary', 'inline-progress-summary')
       summary.setAttribute('role', 'button')
-      let indicator = summary.querySelector('.progress-indicator')
-      if (!indicator) { indicator=node('span','progress-indicator');indicator.setAttribute('aria-hidden','true');indicator.append(node('i'),node('i'),node('i'));summary.prepend(indicator) }
-      indicator.hidden = !running
       const text = summary.querySelector('.inline-progress-text') || node('span', 'inline-progress-text')
       if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,view.text,running,block.steps.length <= (globalThis.WeftMotion?.listLimit || 20));else text.textContent = view.text
       text.classList.toggle('is-running', running)
@@ -228,6 +223,7 @@
       }))
       const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
       if (!previous) row.replaceChildren(details)
+      if (!previous) requestAnimationFrame(()=>globalThis.WeftReplyMotion?.reveal(summary,'status'))
       if (hadFocus) (focusStep ? [...records.querySelectorAll('.execution-step')].find(detail => detail.dataset.step === focusStep)?.querySelector('summary') : summary)?.focus({ preventScroll: true })
       globalThis.WeftMotion?.dismiss(collapse, true)
       if (details.open && block.steps.length <= 20) {
