@@ -505,7 +505,10 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   const URLShim = class extends URL {}
   URLShim.createObjectURL = (_file: object) => { const value = `blob:synthetic-${objectUrls.created.length + 1}`; objectUrls.created.push(value); return value }
   URLShim.revokeObjectURL = (value: string) => { objectUrls.revoked.push(value) }
-  const context = { document, window, innerWidth: window.innerWidth, location, fetch, URL: URLShim, localStorage: { getItem: (key: string) => storage.get(key) ?? null,
+  const context = { document, window, innerWidth: window.innerWidth, location, fetch, URL: URLShim,
+    // This DOM harness runs paint callbacks immediately; Electron covers motion timing.
+    requestAnimationFrame:(callback:(time:number)=>void)=>{callback(0);return 1;},
+    localStorage: { getItem: (key: string) => storage.get(key) ?? null,
     setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
   TextEncoder, TextDecoder, Blob, File, AbortController, DOMException, queueMicrotask, Event, CustomEvent,
   MutationObserver: class { constructor(_callback: () => void) {} observe() {} disconnect() {} },
@@ -989,9 +992,9 @@ test('orphan stop observation ends its progress without inventing history or hid
   ]
   const page = harness([command], events, true, { taskDetails: { [command.commandId]: task } })
   await ready(page)
-  for (let i = 0; i < 30 && !page.get('timeline-status').textContent.includes('已结束'); i++) await flush()
-  assert.match(page.get('timeline-status').textContent, /^已结束/)
-  const progress = page.get('transcript').children.find((row: any) => row.dataset.timeline === 'steps-2')
+  for (let i = 0; i < 30 && page.get('transcript').children.find((row:any)=>row.querySelector('.execution-block'))?.dataset.running !== 'false'; i++) await flush()
+  assert.equal(page.get('timeline-status').textContent, '')
+  const progress = page.get('transcript').children.find((row: any) => row.querySelector('.execution-block'))
   assert.ok(progress)
   assert.match(visibleText(progress), /处理了 1 步/)
   assert.doesNotMatch(visibleText(progress), /失败|正在继续/)
@@ -1000,8 +1003,10 @@ test('orphan stop observation ends its progress without inventing history or hid
   events.push({ seq: 4, type: 'turn.started', data: { turn: 2 } },
     { seq: 5, type: 'user.message', data: { text: '新的无关目标', receiptId: 'rpc:other.2' } })
   page.tick()
-  for (let i = 0; i < 30 && page.get('timeline-status').textContent.includes('已结束'); i++) await flush()
+  for (let i = 0; i < 30 && page.get('transcript').querySelectorAll('.execution-block').length<2; i++) await flush()
   assert.equal(page.get('timeline-status').hidden, true, 'old terminal evidence cannot hide the new running turn')
+  const running=page.get('transcript').children.filter((row:any)=>row.querySelector('.execution-block')).at(-1)!
+  assert.notEqual(running,progress);assert.equal(running.dataset.running,'true')
 })
 
 function task15NarrowCard(page: ReturnType<typeof harness>) {
@@ -1127,7 +1132,7 @@ test('synthetic cached progress becomes visibly stale and a late receipt moves i
   taskDetails[source.commandId].control.stopStatus = 'stopped'
   taskDetails[source.commandId].executionSteps[0].jobState = 'killed'
   page.tick(); for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(card), /后台已停止.*实际停止/)
+  assert.match(visibleText(card), /后台已停止.*已停止/)
   delete taskDetails[source.commandId]
   page.tick(); for (let i = 0; i < 15; i++) await flush()
   assert.match(visibleText(card), /待更新.*运行命令 · 后台已停止/)
@@ -1174,7 +1179,7 @@ test('terminal-output-limit desktop history requires the normalized pair and pre
     { data: {}, text: '本轮结束状态尚不明确，请在电脑核对。' },
     { data: { reason: { kind: 'max-tokens' } }, text: '本轮结束状态尚不明确，请在电脑核对。' },
     { data: { reason: 'completed', endReasonKind: 'max-tokens' }, text: '' },
-    { data: { reason: 'aborted', endReasonKind: 'max-tokens' }, text: '本轮已停止。如需继续，请重新发送。' },
+    { data: { reason: 'aborted', endReasonKind: 'max-tokens' }, text: '' },
     { data: { reason: 'blocked', endReasonKind: 'max-tokens' }, text: '本轮因执行受限而停止，目标尚未确认完成。' },
   ]
   for (const item of cases) {
@@ -1290,9 +1295,11 @@ test('history polling catches up across pages and shows a persisted user abort o
   for (let attempt = 0; attempt < 15 && !page.get('timeline-status').textContent.includes('历史仍在补读'); attempt++) await flush()
   assert.match(page.get('timeline-status').textContent, /历史仍在补读/)
   assert.doesNotMatch(page.get('timeline-status').textContent, /尚无结束记录/)
+  assert.doesNotMatch(visibleText(page.get('transcript')), /Stopped/)
   page.tick()
-  for (let attempt = 0; attempt < 15 && !page.get('timeline-status').textContent.includes('本轮已停止'); attempt++) await flush()
-  assert.match(page.get('timeline-status').textContent, /本轮已停止/)
+  for (let attempt = 0; attempt < 15 && !visibleText(page.get('transcript')).includes('Stopped'); attempt++) await flush()
+  assert.equal(page.get('timeline-status').textContent,'')
+  assert.match(visibleText(page.get('transcript').querySelector('.execution-block')!), /Stopped/)
 })
 
 test('new sync records render as read-only phone sources while an older host keeps its normal chat', async () => {
