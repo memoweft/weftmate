@@ -1,9 +1,10 @@
 /* Desktop question bar, using authoritative shared question actions. */
 globalThis.WeftUiComponents.factories.questions = (core, ui) => {
     function renderConversationQuestions() {
-        const context = core.approvalContext(), list = ui.byId('transcript'), approval = ui.byId('approval-bar');
+        const context = core.approvalContext(), list = ui.byId('transcript'), approval = globalThis.WeftTimeline?.decisionSurface('approval-bar') || ui.byId('approval-bar');
         if (!approval) return;
         const bar = WeftQuestionBar.ensure(approval);
+        globalThis.WeftTimeline?.placeDecisions();
         const phone = globalThis.WeftPhoneUnify?.isPhone() === true;
         if (phone) globalThis.WeftPhoneUnify.placeDecision(ui,bar);
         const rows = core.approvalContextCurrent(context) ? [...core.conversationQuestions.entries.values()]

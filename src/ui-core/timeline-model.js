@@ -456,7 +456,7 @@
                     }
                     const ordinal = (ordinals.get(data.taskId) || 0) + 1;
                     ordinals.set(data.taskId, ordinal);
-                    step = { ...data, sessionId:event.sessionId || event.sourceRef?.sessionId, ordinal, at: event.at, endAt: event.type === 'step.completed' ? event.at : null };
+                    step = { ...data, sessionId:event.sessionId || event.sourceRef?.sessionId, ordinal, at: event.at, ...(event.type==='step.completed'?{startRecorded:false}:{}), endAt: event.type === 'step.completed' ? event.at : null };
                     group.steps.push(step);
                     steps.set(key, step);
                 }

@@ -12,6 +12,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
     function clearHistoryView(loading = false) {
         globalThis.WeftContent?.closeGallery(false);
         const list = ui.byId('transcript');
+        globalThis.WeftTimeline?.placeDecisions(list,true);
         list.replaceChildren(...(loading ? [WeftControls.skeleton({ tag: 'li' })] : []));
         if (loading) { list.setAttribute('aria-busy', 'true'); ui.byId('chat-intro').hidden = true; }
         else list.removeAttribute('aria-busy');
@@ -31,6 +32,9 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         ui.byId('timeline-status').textContent = message;
         ui.byId('timeline-status').hidden = !message;
         if (message && kind === 'read-failure') {
+            const retry = ui.element('button','button secondary small','重新读取');retry.type='button';
+            retry.addEventListener('click',async()=>{retry.disabled=true;retry.textContent='正在读取…';try{await core.refreshHistory();}finally{if(retry.isConnected){retry.disabled=false;retry.textContent='重新读取';}}});
+            ui.byId('timeline-status').append(retry);
             const report = ui.element('button', 'button secondary small', '反馈问题'); report.type = 'button';
             report.onclick = () => ui.messageActions.openFeedback(report); ui.byId('timeline-status').append(report);
         }

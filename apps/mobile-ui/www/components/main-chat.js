@@ -7,7 +7,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     const listStart = () => list().getBoundingClientRect().top - box().getBoundingClientRect().top + box().scrollTop;
     const fixedTitle = () => document.body.classList.contains('health-open') ? '健康' : document.body.classList.contains('help-open') ? document.querySelector('.help-surface')?.dataset.title || '帮助与小技巧' : document.body.classList.contains('library-open') ? '成果库' : document.body.classList.contains('goals-open') ? '目标' : document.body.classList.contains('activity-open') ? '动态' : 'WeftMate';
     const main = () => (core.inLogicalTimeline?.() ?? core.inMainChat?.()) === true;
-    const detailKey = detail => detail.dataset.step || (detail.dataset.stepGroup ? `steps:${detail.dataset.stepGroup}` : detail.classList.contains('model-thinking') ? 'thinking' : 'group');
+    const detailKey = detail => detail.dataset.step || (detail.dataset.stepGroup ? `steps:${detail.dataset.stepGroup}` : detail.closest('[data-inline-decision]') ? `decision:${detail.closest('[data-inline-decision]').id}:${detail.className}` : detail.classList.contains('model-thinking') ? 'thinking' : 'process');
     const detailState = detail => ({ key: detailKey(detail), open: detail.open, active: detail.dataset.active });
     const timelineChat = () => core.currentTimelineChat?.() || core.state.mainChat;
     const button = (text, name, action, className = 'button quiet small') => {
@@ -31,6 +31,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     }
     function measureOffsets() { let total = 0; offsets = rows.map(row => { const offset = total; total += heights.get(row.key) || row.estimate; return offset; }); return total; }
     function rememberRow(row) {
+        if(row.querySelector('[data-inline-decision="true"]'))globalThis.WeftTimeline?.placeDecisions(list(),true);
         expanded.set(row.dataset.eventId, [...row.querySelectorAll('details')].map(detailState));
         observer?.unobserve(row); mounted.delete(row.dataset.eventId); row.remove();
     }
@@ -60,6 +61,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         let previous = top;
         for (const spec of visible) { const row = mounted.get(spec.key); if (previous.nextSibling !== row) previous.after(row); previous = row; }
         if (previous.nextSibling !== bottom) previous.after(bottom);
+        globalThis.WeftTimeline?.placeDecisions(list());
     }
     function buildRow() { return ui.element('li', 'main-chat-row'); }
     function highlight(row) {
@@ -114,7 +116,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             if (Number.isSafeInteger(spec.event.data?.streamSeq)) row.dataset.streamSeq = String(spec.event.data.streamSeq);
             row.dataset.streamSearch=core.state.chatWindow.search.query;
             row.dataset.messageType=spec.event.type;
-            if(spec.event.data?.live)requestAnimationFrame(()=>globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-text'),'status'));
+            if(spec.event.data?.live && !heights.has(spec.key))requestAnimationFrame(()=>globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-text'),'arrival'));
             row.dataset.memorySession=spec.event.sourceRef?.sessionId||'';
             if (!spec.event.data?.live) ui.bindMainMessage?.(row, spec.event);
             const complete = Number.isSafeInteger(spec.event.data?.streamSeq) ? spec.event.data.streaming !== true : !timelineChat().running || spec.event.sourceRef?.sessionId !== timelineChat().activeSessionId || spec.event.type === 'user.message' || spec.event.eventId !== rows.filter(item => item.kind === 'message').at(-1)?.key;
@@ -144,7 +146,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             }
         } else {
             const nested = row.querySelector('ol') || ui.element('ol', 'chat-progress'); if (!nested.parentNode) row.replaceChildren(nested);
-            globalThis.WeftTimeline.render(spec.events, nested, { processKey:()=>spec.key, waiting:spec.waiting, quietFailure:spec.finalTaskBlock===false, stopViews:Object.fromEntries([...core.conversationTasks.entries.values()].filter(entry=>entry.payload?.control?.state==='stopped'||entry.payload?.control?.stopStatus==='stopped').map(entry=>[`${entry.sessionId}:turn-${entry.payload?.source?.dshTurn??entry.payload?.replyEvidence?.turn}`,{terminal:true,text:'已停止'}])), executions:[...core.conversationTasks.entries.values()].flatMap(entry=>entry.payload?core.relatedExecutionSteps(entry.payload).map(row=>({...row,sessionId:entry.sessionId})):[]), approvals: [...core.conversationApprovals.entries.values()].map(entry=>entry.row),
+            globalThis.WeftTimeline.render(spec.events, nested, { decisionAnchor:spec===rows.findLast(row=>row.kind==='progress'&&row.events?.some(event=>event.type==='turn.started')), processKey:()=>spec.key, waiting:spec.waiting, quietFailure:spec.finalTaskBlock===false, stopViews:Object.fromEntries([...core.conversationTasks.entries.values()].filter(entry=>entry.payload?.control?.state==='stopped'||entry.payload?.control?.stopStatus==='stopped').map(entry=>[`${entry.sessionId}:turn-${entry.payload?.source?.dshTurn??entry.payload?.replyEvidence?.turn}`,{terminal:true,text:'已停止'}])), executions:[...core.conversationTasks.entries.values()].flatMap(entry=>entry.payload?core.relatedExecutionSteps(entry.payload).map(row=>({...row,sessionId:entry.sessionId})):[]), approvals: [...core.conversationApprovals.entries.values()].map(entry=>entry.row),
                 thinkingDisplay:core.state.personalization?.thinkingDisplay,
                 readDetail: seq => { const event = spec.events.find(event => event.sourceRef?.seq === seq || event.data?.detailRef?.seq === seq); return event ? core.readTimelineDetail(event.sourceRef.sessionId, seq) : Promise.reject({ code: 'SOURCE_UNAVAILABLE' }); },
                 questions: [...core.conversationQuestions.entries.values()].map(entry => {const event=spec.events.find(event=>event.sourceRef?.seq===entry.row.observedSeq);return {...entry.row,observedSeq:event?.seq??entry.row.observedSeq};}),
@@ -203,7 +205,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         ui.byId('assistant-title').textContent = core.state.workTimeline ? timelineChat().title || '工作' : fixedTitle(); ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？'; origin.hidden = true;
         const saved = ui.conversationScroll?.pinned ? null : rememberAnchor();
         if (core.state.logicalHistoryLoading && !core.state.chatWindow.events.size) {
-            if (!list().querySelector(':scope > .wm-skeleton')) { list().replaceChildren(WeftControls.skeleton({ tag: 'li' })); mounted.clear(); top = bottom = null; }
+            if (!list().querySelector(':scope > .wm-skeleton')) { const loading=WeftControls.skeleton({tag:'li',rows:3});loading.classList.add('chat-history-loading');loading.prepend(ui.element('span','chat-loading-label','正在打开对话…'));list().replaceChildren(loading); mounted.clear(); top = bottom = null; }
             list().setAttribute('aria-busy', 'true'); ui.byId('chat-intro').hidden = true; return;
         }
         if (list().hasAttribute('aria-busy')) { list().removeAttribute('aria-busy'); globalThis.WeftReplyMotion?.reveal(list(), 'status'); }
@@ -248,7 +250,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         ui.conversationScroll?.hold(); box().scrollTop = listStart() + offsets[index]; renderVisible();
         const row = mounted.get(rows[index].key);row?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});row?.focus({ preventScroll: true });
     }
-    function resetMainChatView() { generation++; rows = []; offsets = []; heights.clear(); expanded.clear(); mounted.clear(); top = bottom = null; observer?.disconnect(); list().classList.remove('is-main-chat'); list().setAttribute('aria-live','polite'); if (searchPanel) { searchPanel.querySelector('input').value = ''; searchPanel.querySelector('[role=status]').textContent = ''; } }
+    function resetMainChatView() { globalThis.WeftTimeline?.placeDecisions(list(),true); generation++; rows = []; offsets = []; heights.clear(); expanded.clear(); mounted.clear(); top = bottom = null; observer?.disconnect(); list().classList.remove('is-main-chat'); list().setAttribute('aria-live','polite'); if (searchPanel) { searchPanel.querySelector('input').value = ''; searchPanel.querySelector('[role=status]').textContent = ''; } }
     function renderChatOrigin(chat) {
         origin.replaceChildren(); origin.hidden = !chat?.contextTransfer?.sourceDeleted && !chat?.contextTransfer?.sourceRefs?.length && !chat?.originRefs?.length; if (origin.hidden) return;
         const transfer = chat.contextTransfer, ref = chat.originRefs?.[0] || transfer?.sourceRefs?.[0];

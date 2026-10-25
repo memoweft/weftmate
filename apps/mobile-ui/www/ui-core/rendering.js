@@ -161,6 +161,22 @@
   function renderUpdate(content, text, options = {}) {
     if (content._renderText === text) { if(options.streaming!==undefined)globalThis.WeftReplyMotion?.indicator(content,options.streaming); return content; }
     const previousText=content._renderText;
+    // Appending plain prose to an existing paragraph must preserve its text
+    // node and selection. Markdown boundaries still use the normal parser.
+    if (previousText && text.startsWith(previousText)) {
+      const suffix=text.slice(previousText.length), boundary=previousText.lastIndexOf('\n\n');
+      const tail=previousText.slice(boundary<0?0:boundary+2), nextTail=tail+suffix;
+      const last=[...content.children].filter(el=>!el.classList.contains('reply-indicator')).at(-1);
+      const plain=last?.tagName==='P' && last.children.length===0 && last.textContent===tail;
+      // Incomplete Markdown prefixes can become headings/lists/links when the
+      // next chunk arrives. Only prose with no such boundary takes this path.
+      if (plain && suffix && !/[\n\\`*_~\[\]<>!&:/|@$.]/.test(nextTail) && !/^(?:[ \t]{4}|[ \t]{0,3}[#>+\-])/.test(nextTail)) {
+        last.firstChild.appendData(suffix); content._renderText=text;
+        delete last._sourceHTML; delete last._renderHTML;
+        if (options.streaming!==undefined)globalThis.WeftReplyMotion?.indicator(content,options.streaming);
+        return content;
+      }
+    }
     // A completed prefix followed by the same plain paragraph needs no reparse of
     // earlier code/table blocks. Prove both boundaries with the rendered paragraph;
     // Markdown, references, open fences and new blocks keep the full parser path.
@@ -171,9 +187,12 @@
         const template=node('div');template.innerHTML=WeftFormat.render(tail,{prefix:content._renderId,highlightCache:content._highlightCache});
         const next=template.firstElementChild;
         if(template.children.length===1 && next.tagName==='P' && next.children.length===0 && next.textContent===tail) {
-          next._sourceHTML=next.outerHTML;last.replaceWith(next);content._renderText=text;
+          const beforeHTML=next.outerHTML;
+          if(last.firstChild?.nodeType===3 && last.childNodes.length===1)last.firstChild.data=tail;
+          else last.textContent=tail;
+          last._sourceHTML=beforeHTML;delete last._renderHTML;content._renderText=text;
           const streaming=options.streaming===true || options.streaming!==false && content.classList.contains('reply-streaming');
-          if(streaming && !options.motionFrame)globalThis.WeftReplyMotion?.fragment(next,before);
+          if(streaming && !options.motionFrame)globalThis.WeftReplyMotion?.fragment(last,before);
           if(options.streaming!==undefined || streaming)globalThis.WeftReplyMotion?.indicator(content,options.streaming ?? streaming);
           return content;
         }

@@ -1,7 +1,6 @@
 /** Presentation helper shared by the desktop and mobile scroll surfaces. */
 globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) => {
     let pinned = true, pending = false, followingTop = null, newContent = false;
-    let togglePinned = false;
     let scrollbarDrag=false,lastTop=box.scrollTop;
     let moving = null, frame = null;
     const stop = () => { if (frame !== null) cancelAnimationFrame(frame); frame = null; moving = null; };
@@ -84,10 +83,10 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     globalThis.visualViewport?.addEventListener('resize', changed);
     globalThis.addEventListener?.('resize', changed);
     content.addEventListener('load', changed, true);
-    const beforeToggle = event => { if (event.target.closest?.('summary')) togglePinned=pinned; };
+    const beforeToggle = event => { if (event.target.closest?.('summary')) {stop();pinned=false;followingTop=null;paint();} };
     content.addEventListener('pointerdown', beforeToggle, true);
     content.addEventListener('keydown', event=>{if(['Enter',' '].includes(event.key))beforeToggle(event)}, true);
-    content.addEventListener('toggle', () => { if(togglePinned) {togglePinned=false;latest();} else changed(); }, true);
+    content.addEventListener('toggle', changed, true);
     paint();
     return {latest, changed, follow, scrolled, hold() {stop();pinned=false; followingTop=null; paint();}, get pinned() {return pinned;}};
 };
