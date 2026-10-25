@@ -53,3 +53,13 @@ test('#660 late tool completion stays above the final reply rather than swallowi
   assert.ok(f.WeftUiCore.progressPosition(prepared,projected.groups[0],true)<2);
   assert.equal(f.WeftTimeline.isFinalReply(events,events[2]),true);
 });
+test('#660 artifact completion updates its existing process step and result reference',()=>{
+  const f=timeline(),events=[{seq:0,type:'turn.started',data:{turn:1}},
+    {seq:1,type:'step.started',data:{taskId:'turn-1',stepId:'write',toolName:'write',state:'running',detailRef:{seq:1}}},
+    {seq:2,type:'artifact.created',data:{artifactId:'file-one',completedStep:{taskId:'turn-1',stepId:'write',toolName:'write',state:'completed',detailRef:{seq:2}}}},
+    {seq:3,type:'turn.ended',data:{turn:1,reason:'completed'}}];
+  const block=f.WeftUiCore.projectTimeline(events,[],true).groups[0];
+  const selected=f.WeftUiCore.progressEvents(events,block);
+  const step=f.WeftUiCore.projectTimeline(selected,[],true).groups[0].steps[0];
+  assert.equal(step.state,'completed');assert.equal(step.detailRef.seq,2);
+});

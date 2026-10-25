@@ -12,7 +12,7 @@ import { feedbackUiSession } from '../helpers/feedback-ui-session.mjs';
 const repo = resolve(import.meta.dirname, '../..');
 const profile = await mkdtemp(join(tmpdir(), 'weftmate-fix-chat3-'));
 // Keep the shared fixture helper's managed-temp scan inside this test profile.
-process.env.WEFTMATE_MANAGED_TEMP_ROOT = join(profile, 'fixtures');
+if(!process.env.WEFTMATE_TEST_TEMP_SCOPE)process.env.WEFTMATE_MANAGED_TEMP_ROOT = join(profile, 'fixtures');
 const out = process.env.WEFTMATE_CHAT3_OUTPUT;
 assert.ok(out, 'screenshot output must be outside the repository');
 await mkdir(out, { recursive: true });
@@ -32,9 +32,9 @@ try {
   assert.equal(mainCommand.state,'accepted_by_dsh');fixture.source=mainCommand.sessionId;
   const describe=fixture.backend.describeSession;
   fixture.backend.describeSession=async id=>({...await describe(id),running:fixture.logs.get(id)?.findLast(e=>e.type==='turn.started'||e.type==='turn.ended')?.type==='turn.started',processing:{phase:'answering'}});
-  const executed=[];
+  const executed=[];let slowCommand=!process.argv.includes('--fast');
   fixture.backend.listSlashCommands=async()=>({items:[{name:'compact',description:'Compact history',kind:'command'},{name:'goal',description:'Set goal',kind:'command',input:{hint:'目标内容'}},{name:'review',description:'检查当前内容',kind:'skill'}]});
-  fixture.backend.executeSlashCommand=async input=>{executed.push(input.line);return {commandId:'native-command',result:{kind:'success',text:'已执行'}}};
+  fixture.backend.executeSlashCommand=async input=>{if(slowCommand){slowCommand=false;await new Promise(resolve=>setTimeout(resolve,16000))}executed.push(input.line);return {commandId:'native-command',result:{kind:'success',text:'已执行'}}};
   const rows = fixture.logs.get(fixture.source);
   const at = new Date().toISOString();
   rows.splice(0, rows.length, ...[
@@ -98,7 +98,7 @@ try {
   }
   const field=page.locator('#message-text');await field.fill('/comp');await page.getByRole('menuitem',{name:'/compact',exact:true}).waitFor();
   assert.equal(await page.getByRole('menuitem',{name:'/goal',exact:true}).count(),0);
-  await field.press('Enter');await page.waitForFunction(()=>document.getElementById('message-text').value==='');
+  await field.press('Enter');await page.waitForFunction(()=>document.getElementById('message-text').value==='',undefined,{timeout:25000});
   assert.deepEqual(executed,['/compact']);
   await field.fill('/');await page.getByRole('menuitem',{name:'/goal',exact:true}).waitFor();await field.press('ArrowDown');await field.press('Enter');
   assert.equal(await field.inputValue(),'/goal ');
@@ -111,6 +111,14 @@ try {
   assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().some(w=>w.isVisible())),false);
   if(errors.length)console.error(errors[0]);
   assert.equal(errors.length,0);
+  const projectRoot=join(profile,'synthetic-work');await mkdir(projectRoot,{recursive:true});
+  const project=(await fixture.request('/projects',{requestId:'chat3-work-project',name:'合成资料',rootPath:projectRoot})).project;
+  await page.evaluate(async project=>{const core=__feedbackSessionCore;await core.refreshSessionProjects();await core.startNewWork(core.state.hostId,project);core.state.attachmentDrafts.set(core.attachmentDraftKey(),[{attachmentId:'sha256:'+ 'a'.repeat(64),file:new File(['synthetic note'],'note.txt',{type:'text/plain'}),status:'uploaded'}])},project);
+  await field.fill('/comp');
+  try{await page.getByRole('menuitem',{name:'/compact',exact:true}).waitFor()}catch(error){console.error(await page.evaluate(()=>({draft:document.getElementById('message-text').value,selected:__feedbackSessionCore.state.selectedSessionId,newConversation:__feedbackSessionCore.state.newConversation,mode:__feedbackSessionCore.state.newConversationMode,creating:__feedbackSessionCore.creatingOptimisticSession,toast:document.querySelector('#toast')?.textContent,operation:document.getElementById('operation-status')?.textContent,tasks:__feedbackSessionCore.state.tasks.map(c=>({kind:c.kind,state:c.state,errorCode:c.errorCode}))})));throw error}
+  assert.equal(await field.inputValue(),'/comp');
+  assert.equal(await page.evaluate(()=>__feedbackSessionCore.currentAttachmentDrafts().length),1);
+  await field.press('Escape');
   await page.goto(fixture.mobileUrl);
   await page.waitForFunction(()=>state.booted && !!uiCore.state.mainChat);
   await page.evaluate(async()=>{await uiCore.selectMainChat()});

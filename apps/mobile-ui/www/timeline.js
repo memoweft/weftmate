@@ -40,8 +40,9 @@
       const next = ordered.find(item=>item.seq>event.seq && (item.type==='turn.started' || item.type==='user.message'));
       const tail=ordered.filter(item=>item.seq>event.seq && (!next || item.seq<next.seq));
       const completed=tail.some(item=>item.type==='turn.ended' && item.data?.reason==='completed');
-      const interim = tail.some(item=>item.type==='assistant.message' && (item.data?.text || item.data?.images?.length)) ||
-        !completed && tail.some(item=>item.type.startsWith('step.'));
+      const scoped=!!taskId || tail.some(item=>item.type.startsWith('step.') && item.data?.taskId);
+      const interim = scoped && (tail.some(item=>item.type==='assistant.message' && (item.data?.text || item.data?.images?.length)) ||
+        !completed && tail.some(item=>item.type.startsWith('step.')));
       const language = WeftUiCore.progressLanguage(ordered,{seq:event.seq,steps:[{sessionId:event.sessionId || event.sourceRef?.sessionId}]});
       const data = event.data, anchor = event.progressSeq ?? data.streamSeq ?? event.seq;
       const result = [];

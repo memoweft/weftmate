@@ -152,6 +152,23 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         globalThis.WeftDesktopUI?.appendArtifactActions(actions, artifact, ui.toast);
         parent.append(actions);
     }
+    async function openMemorySource(memory,content,context) {
+        const pending=ui.element('div');pending.append(WeftControls.skeleton({rows:2}));content.append(pending);
+        try {
+            const [detail,data]=await Promise.all([core.readMemoryItem(memory.kind,memory.id),core.readMemorySources(memory.kind,memory.id)]);
+            if(!core.conversationTaskCurrent(context) || !content.isConnected)return;
+            pending.remove();content.append(ui.element('p','',detail.item?.text ? `${detail.item.text}${detail.item.truncated?'\n（仅显示片段）':''}`:'记忆内容当前不可用。'));
+            if(!data.sources?.length)content.append(ui.element('p','muted','当前没有可展示的来源。'));
+            const seen=new Set();
+            for(const source of data.sources || []) {
+                const key=JSON.stringify([source.evidenceId,source.role || 'user',source.conversationId,source.messageId,
+                    ...(source.evidenceId?[]:[source.recordedAt,source.rawContent,source.summary,source.contentAvailable])]);
+                if(seen.has(key))continue;seen.add(key);
+                content.append(ui.element('p','muted',source.recordedAt?`记录于 ${core.formatDate(source.recordedAt)}`:'对话来源'));
+                content.append(ui.element('p','memory-source-text',source.contentAvailable ? source.rawContent || source.summary || '此来源没有可显示的原文。':'此来源已删除或当前不可读取。'));
+            }
+        } catch {if(core.conversationTaskCurrent(context) && pending.isConnected)pending.textContent='来源暂时无法读取，请重新打开。'}
+    }
     function openConversationResource(item, trigger = document.activeElement, showExcerpt = false) {
         const context = core.conversationTaskContext();
         if (!core.conversationTaskCurrent(context))
@@ -162,15 +179,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         }
         const target = window.WeftDesktop.openPreview(item.name, trigger, item.key, item.kind);
         target.content.replaceChildren(ui.element('h2', '', item.name), ui.element('p', 'muted', window.WeftDesktop.usageText(item)));
-        if(item.memory) {
-            const pending=ui.element('div');pending.append(WeftControls.skeleton({rows:2}));target.content.append(pending);
-            void Promise.all([core.readMemoryItem(item.memory.kind,item.memory.id),core.readMemorySources(item.memory.kind,item.memory.id)]).then(([detail,data])=>{
-                if(!core.conversationTaskCurrent(context) || !target.content.isConnected)return;
-                pending.remove();target.content.append(ui.element('p','',detail.item?.text || '记忆内容当前不可用。'));
-                for(const source of data.sources || [])target.content.append(ui.element('p','memory-source-text',source.contentAvailable ? source.rawContent || source.summary || '此来源没有可显示的原文。':'此来源已删除或当前不可读取。'));
-            }).catch(()=>{if(core.conversationTaskCurrent(context)&&pending.isConnected)pending.textContent='来源暂时无法读取，请重新打开。'});
-            return;
-        }
+        if(item.memory)return openMemorySource(item.memory,target.content,context);
         if (item.location)
             target.content.append(ui.element('p', 'muted resource-location', item.location));
         if (item.url) {

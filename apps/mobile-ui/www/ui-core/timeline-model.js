@@ -362,6 +362,16 @@
             (!event.data?.taskId || event.data.taskId === block.taskId)).at(-1);
         return reply ? reply.seq + 0.01 : block.seq;
     }
+    function progressEvents(events,block) {
+        const session=block.steps[0]?.sessionId,belongs=event=>!session || (event.sessionId || event.sourceRef?.sessionId)===session;
+        const start=events.findLast(event=>belongs(event) && event.type==='turn.started' && event.seq<=block.seq);
+        const next=events.find(event=>belongs(event) && event.type==='turn.started' && event.seq>block.seq);
+        return events.filter(event=>belongs(event) && event.seq>=(start?.seq ?? -Infinity) && (!next || event.seq<next.seq) &&
+            (['turn.started','user.message'].includes(event.type) || ['turn.ended','task.ended'].includes(event.type) && turnOutcome([event],block.taskId).terminal ||
+            event.type.startsWith('step.') && event.data?.taskId===block.taskId || event.type==='artifact.created' && event.data?.completedStep?.taskId===block.taskId))
+            .map(event=>event.type==='artifact.created'?{...event,type:'step.completed',data:event.data.completedStep}:event);
+    }
+    globalThis.WeftUiCore.progressEvents=progressEvents;
     // Native uses the web projection and wording through its embedded UI engine.
     // Kotlin never maintains a second tool-name mapping.
     function nativeTimelineRows(events, approvals = [], questions = []) {

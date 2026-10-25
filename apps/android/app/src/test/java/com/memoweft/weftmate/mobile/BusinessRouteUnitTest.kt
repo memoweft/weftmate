@@ -8,6 +8,8 @@ import org.junit.Test
 
 class BusinessRouteUnitTest {
     @Test fun slashCommandsUseExactSessionRoute() {
+        assertEquals(125_000, businessReadTimeout("/personal/v1/sessions/session-one/slash-commands", "POST"))
+        assertEquals(20_000, businessReadTimeout("/personal/v1/sessions/session-one/slash-commands", "GET"))
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/slash-commands"))
         assertFalse(validBusinessPath("/personal/v1/sessions/session-one/slash-commands?ownerId=other"))
         assertFalse(validBusinessPath("/personal/v1/sessions/session-one/slash-commands/raw"))

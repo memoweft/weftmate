@@ -9,11 +9,29 @@ globalThis.WeftUiCore.factories.slashCommands=(core,effects,environment)=>{
     pending=(async()=>{
       if(core.supportsChat?.('sideChats') && core.state.mainChat && core.state.newConversationMode!=='work' && !core.state.newConversationProjectId) await core.openSideChat({entry:'composer',...(core.state.newConversationTemporary?{temporary:true}:{})});
       else {
-        const result=await core.submitCommand('session.create',{modelProfileId:core.state.modelProfileId,...(core.state.newConversationTemporary?{temporary:true}:{})},null,environment.crypto.randomUUID());
+        let result;
+        const requestId=environment.crypto.randomUUID();
+        core.creatingOptimisticSession=true;
+        try {
+          result=await core.submitCommand('session.create',{modelProfileId:core.state.modelProfileId,...(core.state.newConversationTemporary?{temporary:true}:{})},null,requestId);
+          for(let n=0;n<180 && ['pending','dispatching','preflight'].includes(result?.state);n++) {
+            await new Promise(resolve=>setTimeout(resolve,250));
+            if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || draft!==core.state.newConversationId || core.state.selectedSessionId)return null;
+            result=(await core.accessApi(`/commands/by-request/${encodeURIComponent(requestId)}`)).command;
+            core.updateFromCommand(result);
+          }
+        }
+        finally {core.creatingOptimisticSession=false}
         if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || draft!==core.state.newConversationId) return null;
         if(result?.state!=='accepted_by_dsh' || !result.sessionId) throw {code:'BACKEND_UNAVAILABLE'};
         if(core.state.newConversationProjectId) await core.updateSession(result.sessionId,{projectId:core.state.newConversationProjectId});
-        await core.refreshSessions();await core.selectSession(result.sessionId);
+        await core.refreshSessions();
+        if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || draft!==core.state.newConversationId || core.state.selectedSessionId)return null;
+        const text=effects.readMessageDraft(),oldKey=core.attachmentDraftKey(),attachments=core.state.attachmentDrafts.get(oldKey);
+        await core.selectSession(result.sessionId);
+        if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || core.state.selectedSessionId!==result.sessionId)return null;
+        if(attachments){const newKey=core.attachmentDraftKey();core.state.attachmentDrafts.set(newKey,attachments);if(newKey!==oldKey)core.state.attachmentDrafts.delete(oldKey);effects.renderAttachmentDrafts?.()}
+        effects.restoreMainChatDraft?.(text);
       }
       if(identity!==core.state.identityGeneration || owner!==core.state.ownerId) return null;
       return core.state.selectedSessionId;
@@ -31,7 +49,7 @@ globalThis.WeftUiCore.factories.slashCommands=(core,effects,environment)=>{
   async function runSlashCommand(line) {
     const sessionId=await ensureSlashSession(),token=scope();
     if(!sessionId)return;
-    const result=await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/slash-commands`,{method:'POST',protectedWrite:true,body:{line}});
+    const result=await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/slash-commands`,{method:'POST',protectedWrite:true,body:{line},timeoutMs:125000});
     if(token!==scope())return;
     if(result.result?.kind==='error') {effects.toast(result.result.text || '命令没有执行，请重试。');return false;}
     if(effects.readMessageDraft()?.trim()===line.trim())effects.clearMessageDraft();
@@ -86,7 +104,7 @@ globalThis.WeftSlashMenu={mount(core,{field,anchor=field,toast,repaint}) {
     if(/\s/.test(query)){close();return}
     if(items.length){show(query);return}
     if(busy)return;busy=true;const token=scope(),run=++generation;
-    try {const catalog=await core.listSlashCommands();if(run!==generation || catalog.scope!==scope())return;items=catalog.items || [];catalogScope=catalog.scope;if(field.value.startsWith('/') && field.value!==dismissed)show(field.value)}
+    try {const catalog=await core.listSlashCommands();if(run!==generation || catalog.scope!==scope())return;items=catalog.items || [];catalogScope=catalog.scope;previous=scope();if(field.value.startsWith('/') && field.value!==dismissed)show(field.value)}
     catch(error){toast(core.failureMessage(error));close()}
     finally{busy=false}
   }

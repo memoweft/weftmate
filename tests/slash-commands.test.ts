@@ -8,6 +8,18 @@ import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {startFixture} from './integration/ux-4-fixture.mjs';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+
+test('#659 opening commands in a new work conversation preserves the current draft and attachments',async()=>{
+  const env:any={setTimeout,WeftUiCore:{factories:{}}};runInNewContext(readFileSync('src/ui-core/slash-commands.js','utf8'),env);
+  let draft='/comp',creations=0;const file={attachmentId:'synthetic-file'},state:any={ownerId:'owner',identityGeneration:1,newConversationId:'draft-one',newConversationMode:'work',activeChatSource:'desktop',newConversation:true,selectedSessionId:null,attachmentDrafts:new Map([['owner|new',[file]]])};
+  const core:any={state,attachmentDraftKey:()=>`owner|${state.selectedSessionId||'new'}`,submitCommand:async()=>{creations++;assert.equal(core.creatingOptimisticSession,true);return {state:'pending'}},refreshSessions:async()=>{},selectSession:async id=>{state.selectedSessionId=id;state.newConversation=false;draft=''},accessApi:async path=>path.startsWith('/commands/by-request/')?{command:{state:'accepted_by_dsh',sessionId:'created-session'}}:{items:[]},updateFromCommand:()=>{if(!core.creatingOptimisticSession){state.selectedSessionId='created-session';draft=''}}};
+  const api=env.WeftUiCore.factories.slashCommands(core,{readMessageDraft:()=>draft,restoreMainChatDraft:text=>{draft=text}}, {crypto:{randomUUID:()=> 'request-one'}});
+  await api.listSlashCommands();assert.equal(draft,'/comp');
+  assert.equal(state.attachmentDrafts.get('owner|created-session')[0],file);assert.equal(state.attachmentDrafts.has('owner|new'),false);
+  assert.equal(creations,1);assert.equal(core.creatingOptimisticSession,false);
+});
 
 test('#659 discovers scoped DSH commands and skills, and executes on the same resumed agent',async()=>{
   const calls:any[]=[],agent={session:{id:'s-one'}};
@@ -34,7 +46,7 @@ test('#659 Gateway and authenticated personal routes forward native command admi
     assert.deepEqual(calls,[['s-one','/compact']]);
   }finally{await gateway.close();await new Promise<void>(resolve=>server.close(()=>resolve()))}
   const temp=await mkdtemp(join(tmpdir(),'weftmate-slash-test-'));
-  const previous=process.env.WEFTMATE_MANAGED_TEMP_ROOT;process.env.WEFTMATE_MANAGED_TEMP_ROOT=temp;
+  const previous=process.env.WEFTMATE_MANAGED_TEMP_ROOT;if(!process.env.WEFTMATE_TEST_TEMP_SCOPE)process.env.WEFTMATE_MANAGED_TEMP_ROOT=temp;
   const fixture=await startFixture();
   try {
     fixture.backend.listSlashCommands=async input=>({items:[{name:'compact',description:input.sessionId,kind:'command'}]});
@@ -42,6 +54,8 @@ test('#659 Gateway and authenticated personal routes forward native command admi
     const path=`/sessions/${fixture.source}/slash-commands`;
     assert.equal((await fixture.request(path)).items[0].description,fixture.source);
     await fixture.request(path,{line:'/goal finish'});assert.equal(calls.at(-1),'/goal finish');
+    fixture.backend.executeSlashCommand=async()=>{await new Promise(resolve=>setTimeout(resolve,31000));return {result:{kind:'success',text:'压缩完成'}}};
+    assert.equal((await fixture.request(path,{line:'/compact'})).result.kind,'success','native compaction may outlast the ordinary 30-second backend dispatch');
     await assert.rejects(fixture.request(path,{line:'ordinary text'}),{status:400});
     await assert.rejects(fixture.request(path+'?ownerId=other'),{status:400});
     await assert.rejects(fixture.request('/sessions/not-owned/slash-commands'),{status:404});

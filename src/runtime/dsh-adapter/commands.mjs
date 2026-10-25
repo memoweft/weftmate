@@ -1,4 +1,5 @@
 import {unwrap} from './sessions.mjs';
+export const SLASH_COMMAND_TIMEOUT_MS=120000;
 
 // DSH owns discovery, scope, command admission, lifecycle and skill injection.
 export function createNativeCommands({client,lifecycle,getAgent,getCommands}) {
@@ -21,7 +22,7 @@ export function createNativeCommands({client,lifecycle,getAgent,getCommands}) {
     async execute(sessionId,line) {
       if(typeof line!=='string' || line.length>32000 || !/^\/[a-z][a-z0-9_-]*(?:\s|$)/.test(line)) throw new TypeError('invalid command');
       return use(sessionId,async agent=>{
-      const execution=await getCommands().execute(agent,line,AbortSignal.timeout(120000));
+      const execution=await getCommands().execute(agent,line,AbortSignal.timeout(SLASH_COMMAND_TIMEOUT_MS));
       return execution || {result:{kind:'error',text:'没有找到这个命令，请重新选择。'}};
       });
     },

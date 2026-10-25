@@ -87,7 +87,7 @@
       }
       if ((row = match(/^\/personal\/v1\/sync\/conversations\/([^/]+)\/shared$/))) return call('shared.conversations.get', { conversationId: decodeURIComponent(row[1]) });
       // The existing native business router enforces the allowed /personal/v1 paths.
-      return call('host.business', { path: pathname + url.search, method, ...(body !== undefined ? { body } : {}) }, pathname.endsWith('/restart') ? 360000 : timeout);
+      return call('host.business', { path: pathname + url.search, method, ...(body !== undefined ? { body } : {}) }, pathname.endsWith('/restart') ? 360000 : pathname.endsWith('/slash-commands') && method==='POST' ? 125000 : timeout);
     }
     async function fetch(path, options = {}) {
       try {

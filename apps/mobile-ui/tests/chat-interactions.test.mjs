@@ -1720,12 +1720,13 @@ test('M1-0 mobile execution is collapsed by default, groups calls once, and ends
     {seq:5,type:'task.ended',data:{taskId:'turn-1'}}];renderSharedConversation()`);
   const blocks=h.node('chat-content').children.filter(node=>node.dataset.timeline?.startsWith('steps-'));
   assert.equal(blocks.length,1);assert.equal(blocks[0].querySelector('details').open,false);
-  assert.match(allText(blocks[0]),/读取了 1 个文件、已运行 1 个命令/);
+  assert.match(allText(blocks[0]),/处理了 2 步 · 用时未记录/);
+  assert.equal(blocks[0].querySelectorAll('.execution-step').length,2);
   assert.equal(h.node('chat-content').children.some(node=>node.dataset.timelineApproval==='approval-one'),false);
   const counts=h.node('chat-content').children.length;h.run('renderTimeline()');assert.equal(h.node('chat-content').children.length,counts);
 })
 
-test('FIX-36 completed summary moves below reply and remains there after historical redraw',()=>{
+test('#660 completed process stays above reply and remains there after historical redraw',()=>{
   const h=harness();prepareSyntheticTaskChat(h);
   h.run(`state.sharedEvents=[
     {seq:1,type:'turn.started',data:{turn:1}},
@@ -1733,8 +1734,8 @@ test('FIX-36 completed summary moves below reply and remains there after histori
     {seq:3,type:'assistant.message',data:{text:'合成最终回复'}},
     {seq:4,type:'turn.ended',data:{turn:1,reason:'completed'}}];renderSharedConversation()`);
   const order=()=>h.node('chat-content').children.filter(node=>node.dataset.seq).map(node=>Number(node.dataset.seq));
-  assert.deepEqual(order(),[3,3.01]);
-  h.run('renderSharedConversation();renderTimeline()');assert.deepEqual(order(),[3,3.01]);
+  assert.deepEqual(order(),[2,3]);
+  h.run('renderSharedConversation();renderTimeline()');assert.deepEqual(order(),[2,3]);
   const details=h.node('chat-content').querySelector('.execution-block');assert.equal(details.open,false);
   details.open=true;h.run('renderTimeline()');assert.equal(h.node('chat-content').querySelector('.execution-block').open,true);
   h.run(`const retained=document.createElement('li');retained.id='fix36-reading-history';document.getElementById('chat-content').append(retained);renderTimeline()`);
@@ -1767,7 +1768,7 @@ test('consecutive steps show readable descriptions before their raw detail',()=>
     {seq:2,type:'step.completed',data:{taskId:'turn-1',stepId:'read-b',toolName:'read_file',groupHint:'read_file',summary:'读取文件',state:'completed',detailRef:{seq:2}}}];renderSharedConversation()`);
   const subgroup=h.node('chat-content').querySelector('.execution-block');assert.ok(subgroup);
   assert.match(allText(subgroup),/读取了 2 个文件/);assert.equal(subgroup.open,false);
-  assert.equal(subgroup.querySelector('.execution-records').children.filter(node=>node.className==='execution-step').length,2);
+  assert.equal(subgroup.querySelector('.execution-records').querySelectorAll('.execution-step').length,2);
 })
 
 test('system status on phones is read-only even when the computer advertises component repair',async()=>{

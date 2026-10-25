@@ -1,4 +1,5 @@
 import { dailyDigestState } from './daily-digest.mjs';
+import { SLASH_COMMAND_TIMEOUT_MS } from '../runtime/dsh-adapter/commands.mjs';
 import { connectorSettings } from '../personal-connectors/access.mjs';
 import { PERMISSION_TYPES, validPermissionRules, mergePermissionRules, connectorToolKey } from '../plugins/personal-permission-rules.mjs';
 import { executionRecords } from './execution-records.mjs';
@@ -1606,7 +1607,7 @@ export function createHttpHandler(context) {
         if(write && (typeof body.line!=='string' || body.line.length>32000 || !/^\/[a-z][a-z0-9_-]*(?:\s|$)/.test(body.line))) throw failure('INVALID_REQUEST');
         const method=write?'executeSlashCommand':'listSlashCommands';
         if(typeof context.backend[method]!=='function') throw failure('BACKEND_UNAVAILABLE',503);
-        const result=await context.callBackend(()=>context.backend[method]({sessionId,ownerId,...(write?{line:body.line}:{})}));
+        const result=await context.callBackend(()=>context.backend[method]({sessionId,ownerId,...(write?{line:body.line}:{})}),write?SLASH_COMMAND_TIMEOUT_MS:undefined);
         const current=context.authenticate(request,scope);
         if(current.ownerId!==ownerId || current.deviceId!==deviceId) throw failure('UNAUTHORIZED',401);
         return context.json(response,200,result);

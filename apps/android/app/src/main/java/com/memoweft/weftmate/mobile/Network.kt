@@ -132,6 +132,7 @@ internal fun validBusinessMethod(path: String, method: String): Boolean =
             path.matches(Regex("/personal/v1/daily-summaries/[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])/health"))))
 
 internal fun businessReadTimeout(path: String, method: String): Int {
+    if (method == "POST" && path.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/slash-commands"))) return 125_000
     if (method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))) return 360_000
     if (path.endsWith("/message-branches")) return 120_000
     // Mainline reply reads may wait 25 seconds for a real change. The socket

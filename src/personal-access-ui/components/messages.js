@@ -259,7 +259,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         return images.length;
     }
     function appendReplyMemory(row, event) {
-        row.querySelectorAll('.reply-memory').forEach(node=>node.remove());
+        // Kept for existing render adapters; memory references live in output and sources.
     }
 
     function renderTurnStatus() {
