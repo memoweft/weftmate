@@ -42,7 +42,7 @@ function decodeText(bytes) {
   try { return new TextDecoder(utf16 ? (bytes[0] === 0xff ? 'utf-16le' : 'utf-16be') : 'utf-8', { fatal: true }).decode(bytes) }
   catch { return null }
 }
-async function scanTextTree(root, identity) {
+async function scanTextTree(root, identity, resourcePrefix = '') {
   const pending = [root]
   let scannedFiles = 0
   let runtimeTextFiles = 0
@@ -57,7 +57,7 @@ async function scanTextTree(root, identity) {
     if (!stat.isFile() || current === join(root, 'app.asar')) continue
     const bytes = await readFile(current)
     const text = decodeText(bytes)
-    const file = relative(root, current)
+    const file = join(resourcePrefix, relative(root, current))
     const violation = text === null ? packagedBinaryViolation(bytes, file, identity) : packagedTextViolation(text, file, identity)
     if (violation) throw new Error(`packaged text contains ${violation}: ${file}`)
     if (text !== null) {
@@ -146,8 +146,8 @@ export async function verifyWindowsPackage({ unpacked, installer, resourcesDirec
   // Include unpacked app dependencies, relay configuration and all loose resources.
   const resourceScan = await scanTextTree(resources, identity)
   if (runtime !== join(resources, 'dsh-runtime')) {
-    const componentScan = await scanTextTree(runtime, identity)
-    const memoryScan = await scanTextTree(memoryDirectory, identity)
+    const componentScan = await scanTextTree(runtime, identity, 'dsh-runtime')
+    const memoryScan = await scanTextTree(memoryDirectory, identity, 'memory-runtime')
     resourceScan.runtimeTextFiles += componentScan.scannedFiles
     resourceScan.scannedFiles += componentScan.scannedFiles + memoryScan.scannedFiles
     resourceScan.binaryFiles += componentScan.binaryFiles + memoryScan.binaryFiles
