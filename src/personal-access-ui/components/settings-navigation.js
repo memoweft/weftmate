@@ -71,13 +71,13 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     }
     function showSettingsDialog() {
         if (dialog?.open) return;
-        if (dialog) { returnFocus = document.activeElement; dialog.showModal(); }
+        if (dialog) { returnFocus = document.activeElement; dialog.inert = false; dialog.showModal(); }
         const strip = ui.byId('settings-usage-strip');
         const ready = WeftControls.loading(strip, { rows: 1, compact: true });
         void core.loadUsageStrip().then(text => { if (text && dialog.open && ready()) strip.textContent = text; }).catch(() => { if (dialog.open && ready()) strip.textContent = '本月用量暂时无法读取，点此重试。'; });
         selectSettings(core.state.currentView === 'memory' ? 'memory' : selected);
     }
-    function hideSettingsDialog() { if (dialog?.open) dialog.close(); }
+    function hideSettingsDialog() { if (dialog?.open) { dialog.inert = true; dialog.close(); } }
     async function renderSettingsUpdates(check = false) {
         const target = ui.byId('settings-updates'), token = core.accountToken(), generation = ++updateGeneration;
         const current = () => core.accountIdentityCurrent(token) && generation === updateGeneration && dialog.open && selected === 'about';

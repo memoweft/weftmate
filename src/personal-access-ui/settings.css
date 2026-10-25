@@ -58,7 +58,7 @@
 .settings-head .icon-close { width:var(--wm-space-32);height:var(--wm-space-32);padding:var(--wm-space-6); }
 .settings-dialog #account-view { flex:1;min-height:0;display:flex;flex-direction:column; }
 .settings-dialog #account-view[hidden] { display:none; }
-#settings-dialog:not([open]) #account-view[hidden] { display:flex; }
+#settings-dialog:not([open]) #account-view[hidden] { display:flex!important; }
 .settings-content { flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:var(--wm-space-8) var(--wm-space-24) var(--wm-space-24); }
 .settings-category { width:100%;max-width:600px;margin-inline:auto;min-width:0; }
 .settings-category[hidden],.settings-redundant-title,.settings-control-source { display:none!important; }

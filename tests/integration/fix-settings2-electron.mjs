@@ -56,6 +56,11 @@ try {
   }
   await open('account');await capture('initial-account');
   await page.getByRole('button',{name:'关闭设置',exact:true}).click();
+  if(!process.argv.includes('--baseline')) {
+    const exit=await page.evaluate(()=>({inert:document.querySelector('#settings-dialog').inert,content:getComputedStyle(document.querySelector('#account-view')).display}));
+    assert.equal(exit.inert,true,'closing controls become inert during the exit transition');
+    assert.equal(exit.content,'flex','closing retains the content until the dialog transition ends');
+  }
   await page.getByRole('button',{name:'账户菜单',exact:true}).click();await page.locator('#account-menu').waitFor();
   await capture('initial-menu');
   assert.equal(await page.locator('#account-menu').getByRole('button',{name:'退出登录',exact:true}).count(),0,'local-only account has no logout action');
