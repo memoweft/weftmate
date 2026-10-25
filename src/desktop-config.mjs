@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from './host-mode.mjs';
+import { packagedRuntimeDirectory } from './runtime-components.mjs';
 
 export const desktopConfigPath = (appData, platform = process.platform) => join(appData, platform === 'darwin' ? 'WeftMate Trial' : 'WeftMate', 'desktop-config.json');
 export const defaultUpdateChannel = version => /^\d+\.\d+\.\d+-preview\.\d+$/.test(version) ? 'preview' : 'stable';
@@ -76,7 +77,7 @@ export function applyDesktopConfig({ appData, argv = process.argv, env = process
   // automatic path as an explicit user configuration across upgrades.
   const memoryRuntimeDirectory = packaged && platform === 'win32' && resourcesPath &&
     !argv.some(arg => arg.startsWith('--personal-memory-config'))
-    ? join(resourcesPath, 'memory-runtime') : null;
+    ? packagedRuntimeDirectory(resourcesPath, 'memory-runtime') : null;
   return { file, config, memoryRuntimeDirectory };
 }
 export function configureUpdateEnvironment(config, env = process.env) {

@@ -4,7 +4,7 @@ globalThis.WeftUiCore.factories.update = (core, effects, environment) => {
     const labels = { disabled: '尚未配置', idle: '尚未检查', checking: '检查中', downloading: '下载中',
         available: '下载中', downloaded: '已就绪，重启后完成更新', ready: '已就绪，下次打开窗口时更新',
         starting: '正在验证新界面', current: '已是最新版本', 'not-available': '已是最新版本', empty: '这个通道暂时没有新版本',
-        failed: '更新失败', error: '更新失败', 'device-managed': '在手机上检查', 'source-unavailable': '连上电脑后可检查界面更新' };
+        failed: '更新失败', error: '更新失败', 'app-update-required': '需要更新程序', 'device-managed': '在手机上检查', 'source-unavailable': '连上电脑后可检查界面更新' };
     async function readUpdateState() {
         if (desktop?.updateState) return desktop.updateState();
         if (environment.mobileState && effects.nativeCall) {

@@ -28,6 +28,8 @@ node scripts/release/verify.mjs D:/private/update-feed/stable/manifest-ui.json D
 
 产物：`manifest-ui.json`、`files/ui/<version>/`、`delta/ui/<version>/`、`delta-ui.json`。先上传不可变的 `files/`，最后原子替换清单；`delta/` 用于审查差异和上传规划，不是必须先应用的补丁。保留完整版本，较老客户端也能下载自己需要的文件。清单的 `assetBase` 相对清单地址解析。
 
+Windows 发布入口自动读取上一版界面清单：可用 `--previous-ui <manifest-ui.json>` 指定，否则先找 `--previous` 所在目录的同名清单，再读取当前渠道的发布清单。新增资源路径时，`minAppVersion` 提升到本次程序版本；仅替换已有路径时保留上一版最低要求。没有上一版清单时也要求本次程序版本。旧程序跳过不兼容的界面下载，关于页提示「需要更新程序」。
+
 客户端使用 `WEFTMATE_UI_UPDATE_FEED=https://<source>/stable/manifest-ui.json`，`WEFTMATE_UPDATE_CHANNEL=stable`。HTTPS（加密网络协议）是正式来源；HTTP（网络协议）只接受本机回环地址。禁用重定向，签名覆盖来源路径、版本、渠道、兼容范围和全部文件。没有来源时显示未配置。
 
 后台每小时检查，也可手动检查。文件只在签名和 SHA-256（文件哈希）均通过后成为待应用版本。窗口下次打开且 DSH（助手运行时）无任务、页面无未发送草稿时切换；后台任务与服务不重启。新页须在所有同步挂载完成后设置 `__WeftUiStarted=true`。导航失败、渲染进程失败、脚本启动异常、超时或进程在启动验证期间退出，均恢复上一完整版本，记录失败版本身份；同一坏版不重复应用。要修复坏版，递增版本重新发布。
@@ -48,6 +50,8 @@ Android `stable` 是当前原生壳的默认渠道；独立预览壳用 Gradle�
 ## 发布程序本体与 blockmap
 
 先按原有打包流程生成有代码签名的 NSIS（Windows 安装包格式）安装包、`.blockmap` 和 `latest.yml`。`nsis.differentialPackage=true`、`disableDifferentialDownload=false` 已接线；保留旧安装包的 blockmap（分块映射），更新服务器支持 HTTP Range（字节范围请求）。让 electron-builder（程序打包工具）生成实际分块，不用自制二进制补丁。
+
+Windows 的 DSH 和记忆运行时按文件内容生成独立版本，放在 `<安装目录>.components/`；`resources/runtime-components.json` 只记录版本。安装器直接安装缺少的组件，不把它们放进程序本体的归档再解压、复制。相同版本不重写；旧版本保留供程序回退，普通卸载时一并删除。首次从旧目录布局升级仍需安装一次组件，此后才能复用。按用户安装、更新后的启动方式和账户数据位置沿用原有行为。
 
 ```powershell
 node scripts/release/package.mjs --layer app --version 0.2.0 --channel stable --source-dir D:/private/reviewed-installers --output-dir D:/private/app-feed/stable

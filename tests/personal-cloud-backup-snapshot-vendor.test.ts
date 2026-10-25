@@ -7,9 +7,11 @@ import {gunzipSync} from 'node:zlib';
 import {snapshot,verify} from '../src/personal-backup/archive.mjs';
 import {createNativeSettingsReader} from '../src/personal-backup/cloud-snapshot.mjs';
 import {stageRuntimeEntry} from '../scripts/windows-package-policy.mjs';
+import {prepareWindowsRuntimeComponents} from '../scripts/windows-runtime-components.mjs';
+import {packagedRuntimeDirectory} from '../src/runtime-components.mjs';
 import {owner,other,sha,fixture} from './helpers/cloud-backup-snapshot-fixture.mjs';
 
-test('S4 packaged resources ship the pinned YAML parser and can create a scoped cloud snapshot without profile or repository runtime',async t=>{
+for(const versioned of [false,true])test(`S4 ${versioned?'versioned':'legacy'} packaged resources create a scoped cloud snapshot without profile or repository runtime`,async t=>{
   const f=await fixture(t),runtime=await realpath('vendor/dsh-runtime'),resourcesPath=path.join(f.base,'installed/resources'),target=path.join(resourcesPath,'dsh-runtime');
   const build=JSON.parse(await readFile('package.json','utf8')).build;
   assert.ok(build.extraResources.some(row=>row.from==='.stage'&&row.to===''&&row.filter.includes('dsh-runtime/**/*')));
@@ -18,7 +20,11 @@ test('S4 packaged resources ship the pinned YAML parser and can create a scoped 
   await check(yaml);
   await mkdir(path.join(target,'node_modules'),{recursive:true});await cp(yaml,path.join(target,'node_modules/yaml'),{recursive:true});
   await writeFile(path.join(target,'package.json'),await readFile(path.join(runtime,'package.json')));
-  const anchor=path.join(target,'package.json'),attempts=[];
+  if(versioned){
+    const memory=path.join(resourcesPath,'memory-runtime');await mkdir(memory);await writeFile(path.join(memory,'fixture'),'synthetic');
+    await prepareWindowsRuntimeComponents({appOutDir:path.dirname(resourcesPath),packager:{projectDir:f.base,config:{appId:'test.backupcomponents'}}});
+  }
+  const anchor=path.join(packagedRuntimeDirectory(resourcesPath,'dsh-runtime'),'package.json'),attempts=[];
   const nativeSettingsReader=createNativeSettingsReader({resourcesPath,requireModule:location=>module=>{
     attempts.push(location);if(location!==anchor)throw Object.assign(new Error('synthetic absent development runtime'),{code:'MODULE_NOT_FOUND'});
     return createRequire(location)(module);

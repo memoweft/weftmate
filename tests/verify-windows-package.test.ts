@@ -5,10 +5,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import asar from '@electron/asar';
 import { verifyWindowsPackage } from '../scripts/verify-windows-package.mjs';
-import {memoryRuntimeFixture} from './helpers/memory-runtime-fixture.mjs';
+import {memoryRuntimeFixture,sealMemoryRuntimeFixture} from './helpers/memory-runtime-fixture.mjs';
 import {verifyMemoryRuntime} from '../scripts/memory-runtime/verify.mjs';
 import {csrDependencyFixture} from './helpers/csr-dependency-fixture.mjs';
 import {csrPatches} from '../src/personal-relay/csr-integrity.mjs';
+import {prepareWindowsRuntimeComponents} from '../scripts/windows-runtime-components.mjs';
+import {packagedRuntimeDirectory} from '../src/runtime-components.mjs';
 
 test('package scanner distinguishes upstream paths and refuses synthetic build identity across archives and loose resources', async () => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-package-policy-'));
@@ -70,6 +72,18 @@ test('package scanner distinguishes upstream paths and refuses synthetic build i
     await writeFile(join(source, 'src/main.mjs'), identity.username);
     await pack();
     await assert.rejects(verify(), /app.asar contains build-machine-identity/);
+    await writeFile(join(source, 'src/main.mjs'), 'export const synthetic = true;');
+    await writeFile(join(resources, 'memory-runtime/site-packages/upstream-example.py'), upstream);
+    await sealMemoryRuntimeFixture(join(resources, 'memory-runtime'));
+    const separatedMemory = await verifyMemoryRuntime(join(resources, 'memory-runtime'), {mode:'base'});
+    await writeFile(join(source, 'package.json'), JSON.stringify({...memoryMetadata,memoryRuntimeManifestSha256:separatedMemory.manifestSha256}));
+    await pack();
+    await prepareWindowsRuntimeComponents({ appOutDir: unpacked, packager: { projectDir: root, config: { appId: 'test.components' } } });
+    const separated = await verify();
+    assert.equal(separated.memoryRuntime.manifestSha256, separatedMemory.manifestSha256);
+    const movedConfig = join(packagedRuntimeDirectory(resources, 'dsh-runtime'), 'config.json');
+    await writeFile(movedConfig, identity.hostname);
+    await assert.rejects(verify(), /build-machine-identity/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

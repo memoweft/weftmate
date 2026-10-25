@@ -7,6 +7,7 @@ import { createRequire } from 'node:module';
 import { routeForProfile } from '../harness-model-routes.ts';
 import { officialCredentialRef } from '../dsh-settings-migration.ts';
 import { hasPrivateContent } from '../personal-access/temporary-chats.mjs';
+import { packagedRuntimeDirectory } from '../runtime-components.mjs';
 
 const digest = value => createHash('sha256').update(value).digest('hex');
 const error = code => Object.assign(new Error(code), { code, status: 409 });
@@ -26,7 +27,7 @@ export function createNativeSettingsReader({ requireModule = createRequire, reso
         [path.join(root, 'dsh-home/profiles/node_modules/@deepseek-ai/dsh-settings-file/package.json'), 'yaml'],
         [import.meta.url, '../../vendor/dsh-runtime/node_modules/yaml'],
       ];
-      if (typeof resourcesPath === 'string' && resourcesPath.length) locations.push([path.join(resourcesPath, 'dsh-runtime/package.json'), 'yaml']);
+      if (typeof resourcesPath === 'string' && resourcesPath.length) locations.push([path.join(packagedRuntimeDirectory(resourcesPath, 'dsh-runtime'), 'package.json'), 'yaml']);
       for (const [anchor, module] of locations) {
         try { nativeSettingsParser = requireModule(anchor)(module); break; }
         catch { /* Try the next existing runtime location. */ }

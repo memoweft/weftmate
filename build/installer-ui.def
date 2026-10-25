@@ -1,5 +1,10 @@
 LIBRARY WeftInstaller
 EXPORTS
+  PrepareComponents=_PrepareComponents@8
+  ComponentReady=_ComponentReady@8
+  PrepareComponent=_PrepareComponent@8
+  CompleteComponent=_CompleteComponent@8
+  RemoveComponents=_RemoveComponents@8
  DefaultDirectory=_DefaultDirectory@4
   Ready=_Ready@24
   Validate=_Validate@0

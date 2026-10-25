@@ -1,9 +1,11 @@
 // Production Electron shell and update IPC with a synthetic updater transport.
 import { app, nativeTheme, Notification } from 'electron';
 import { registerHooks } from 'node:module';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { createPersonalDesktop } from '../../src/personal-desktop.mjs';
 app.setPath('userData', process.env.FIX_UPDATE_PROFILE);
-app.setAppUserModelId('com.memoweft.weftmate.fixupdate');
+app.setAppUserModelId('com.memoweft.weftmate.fixupdate2');
 app.getVersion = () => '0.2.0-preview.13';
 Notification.isSupported = () => false;
 globalThis.fixUpdateState = { enabled: true, status: 'not-available', version: null, error: null };
@@ -24,7 +26,9 @@ nativeTheme.themeSource = 'light';
 let quitting = false;
 app.on('before-quit', () => { quitting = true; });
 const { createDesktopUpdates } = await import('../../src/personal-update/desktop.mjs');
-const updates = await createDesktopUpdates({ isIdle: async () => true, feed: null });
+const updates = await createDesktopUpdates({ isIdle: async () => true, feed: process.env.FIX_UPDATE_UI_FEED || null,
+  ...(process.env.FIX_UPDATE_UI_FEED ? { root: join(process.env.FIX_UPDATE_PROFILE, 'updates/ui'),
+    trustedKeys: JSON.parse(await readFile(process.env.FIX_UPDATE_KEYS, 'utf8')) } : {}) });
 const desktop = createPersonalDesktop({ origin: process.env.FIX_UPDATE_ORIGIN, libraryDesktopToken: process.env.FIX_UPDATE_TOKEN,
   startInTray: true, isQuitting: () => quitting });
 updates.attach(desktop.window);
