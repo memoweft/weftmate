@@ -5,7 +5,7 @@
     const disclosureAnimations = new Set();
     const reduced = () => globalThis.WeftReplyMotion?.reduced ?? window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const settleDisclosures = () => { if(reduced())for(const animation of disclosureAnimations)animation.finish(); };
-    addEventListener('weft-reply-motion-change',settleDisclosures);
+    window.addEventListener('weft-reply-motion-change',settleDisclosures);
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',settleDisclosures);
     function timing(token = '--dur-4') {
         const css = getComputedStyle(document.documentElement), value = css.getPropertyValue(token).trim();
