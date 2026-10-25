@@ -125,15 +125,26 @@
   }
   function dialog(element) {
     if(!element||boundDialogs.has(element))return;boundDialogs.add(element);
-    const nativeClose=element.close.bind(element);let closing;
+    const nativeClose=element.close.bind(element);
     element.close=value=>{
-      if(!element.open||closing)return;
-      element.returnValue=value??'';
-      if(reduced()||paused()){nativeClose(element.returnValue);return;}
-      element.inert=true;element.dataset.motionClosing='true';
-      closing=play(element,[{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(8px) scale(.985)'}],'dur-4',0,()=>{
-        element.inert=false;delete element.dataset.motionClosing;closing=null;nativeClose(element.returnValue);
-      });
+      if(!element.open)return;
+      const captured=snapshot(element);
+      if(captured){
+        // A closed <dialog> has browser-owned painting rules. A plain visual
+        // surface keeps the complete captured frame while native close fires.
+        const copy=document.createElement('div');
+        for(const attribute of captured.attributes)if(attribute.name!=='open')copy.setAttribute(attribute.name,attribute.value);
+        copy.append(...captured.childNodes);captured.replaceWith(copy);
+        copy.inert=true;copy.style.display='block';copy.classList.add('motion-dialog-copy');
+        const backdrop=document.createElement('div'),style=getComputedStyle(element,'::backdrop');
+        backdrop.className='motion-dialog-backdrop';backdrop.inert=true;backdrop.setAttribute('aria-hidden','true');
+        Object.assign(backdrop.style,{background:style.backgroundColor,backdropFilter:style.backdropFilter});copy.before(backdrop);
+        play(backdrop,[{opacity:1},{opacity:0}],'dur-4',0,()=>backdrop.remove());
+        play(copy,[{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(8px) scale(.985)'}],'dur-4',0,()=>copy.remove());
+      }
+      // Native close and its decision/focus callbacks keep their original timing.
+      // Only an inert visual survives; an animation never gates a request.
+      nativeClose(value??'');
     };
     element.addEventListener('cancel',event=>{event.preventDefault();element.close();});
   }

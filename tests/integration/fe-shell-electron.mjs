@@ -104,8 +104,13 @@ try {
   });
   await check('common dialog keeps its exit, cancellation and focus',async()=>{
     await page.evaluate(()=>{const b=document.querySelector('.goals-entry');b.focus();globalThis.shellAnswer=null;void WeftDialogs.request({title:'合成确认',message:'保留焦点与取消动作'}).then(v=>globalThis.shellAnswer=v);});await settle();
+    await page.evaluate(()=>{const r=document.querySelector('.weft-confirm').getBoundingClientRect();globalThis.shellDialogWidth=r.width;});await capture('dialog-open-dark');
     await page.keyboard.press('Escape');
-    assert.equal(await page.getByRole('dialog',{name:'合成确认'}).count(),1,'outgoing dialog remains during the exit');
+    assert.equal(await page.getByRole('dialog',{name:'合成确认'}).count(),0,'native cancellation completes immediately');
+    assert.ok(await page.locator('.motion-dialog-copy[aria-hidden=true]').count(),'only the inert outgoing visual remains');
+    for(const time of [0,130,260,420]){await page.evaluate(time=>{for(const element of document.querySelectorAll('.motion-dialog-copy,.motion-dialog-backdrop'))for(const a of element.getAnimations()){a.pause();a.currentTime=time;}},time);
+      if(time===0)assert.equal(await page.evaluate(()=>Math.abs(document.querySelector('.motion-dialog-copy').getBoundingClientRect().width-shellDialogWidth)<1),true,'dialog visual keeps the original complete width');
+      await capture('dialog-exit-frame-'+time);}
     await settle();await page.waitForFunction(()=>shellAnswer===false);assert.equal(await page.locator('.goals-entry').evaluate(n=>n===document.activeElement),true);
   });
   await check('shell remains usable in a narrow Windows window',async()=>{
