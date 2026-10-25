@@ -130,8 +130,9 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         ui.syncPhoneDecisions?.();
     }
     function renderConversationApprovals() {
-        const context = core.approvalContext(), bar = ui.byId('approval-bar');
+        const context = core.approvalContext(), bar = globalThis.WeftTimeline?.decisionSurface('approval-bar') || ui.byId('approval-bar');
         if (!bar) return;
+        globalThis.WeftTimeline?.placeDecisions();
         if (globalThis.WeftQuestionBar?.retainInteraction(bar, renderConversationApprovals)) return;
         if (globalThis.WeftPhoneUnify?.isPhone()) { renderPhoneApprovals(context,bar); ui.renderTimeline();for(const node of ui.byId('transcript').querySelectorAll('[data-timeline-approval]'))if(core.conversationApprovals.entries.has(node.dataset.timelineApproval))node.hidden=true;return; }
         const rows = core.approvalContextCurrent(context) ? [...core.conversationApprovals.entries.values()]
@@ -175,6 +176,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         bar.replaceChildren();
         const card = ui.element('div', 'approval-bar-content'); card.dataset.conversationApproval = row.approvalId;
         const presentation = core.approvalPresentation(row), details = ui.element('details', 'approval-detail'); details.open = expanded;
+        details.dataset.motion='unfold';
         const summary = ui.element('summary', '', `要${presentation.summary}`), raw = ui.element('pre', 'timeline-raw');
         summary.dataset.conversationApprovalAction = 'parameters';
         const reason = ui.element('p', 'approval-explanation');

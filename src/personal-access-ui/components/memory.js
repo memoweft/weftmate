@@ -1,16 +1,23 @@
 /* Desktop memory component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     let resetIngestion = () => {};
-    let importsView, importsOwner;
+    let importsView, importsOwner, importsTools;
+    const memoryRows = new Map();
+    let renderedScope;
+    const listScope = () => `${core.state.identityGeneration}|${core.state.account?.ownerId ?? core.state.ownerId}|${core.memory.kind}|${core.memory.query}|${JSON.stringify(core.memory.weekFilter)}`;
     function mountHistoryImports() {
         const owner = core.state.account?.ownerId;
         if (!globalThis.WeftHistoryImportView || !owner) return;
         if (importsView && importsOwner === owner) return;
-        importsView?.destroy(); importsOwner = owner;
+        importsView?.destroy(); importsTools?.remove(); importsOwner = owner;
         importsView = WeftHistoryImportView({ target: ui.byId('memory-view'), owner: () => core.state.account?.ownerId,
             request: core.accessApi, desktop: globalThis.weftmateDesktop?.previewHistoryImport ? globalThis.weftmateDesktop : null,
             refreshMemory: () => void core.loadMemoryPage() });
-        ui.byId('memory-search-form').before(importsView.element);
+        const tools = ui.element('details', 'memory-import-tools'); tools.dataset.motion = 'unfold';
+        importsTools = tools;
+        tools.append(ui.element('summary', '', '导入已有对话'), importsView.element);
+        const panelTools = ui.byId('memory-panel-tools');
+        if (panelTools) panelTools.append(tools); else ui.byId('memory-search-form').before(tools);
     }
     function paintMemoryAvailability(status) {
         let node = ui.byId('chat-memory-notice');
@@ -124,9 +131,14 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         if(!week){week=ui.element('button','button secondary small');week.id='memory-week-filter';week.type='button';week.textContent='正在查看这一周的记忆 · 查看全部';week.onclick=()=>{core.memory.weekFilter=null;void core.loadMemoryPage();};ui.byId('memory-search-form').before(week);}
         week.hidden=!core.memory.weekFilter;
         const list = ui.byId('memory-list');
-        list.replaceChildren();
+        const rows = [], owner = core.state.account?.ownerId ?? core.state.ownerId;
         for (const item of core.memory.items) {
+            const key = `${owner}|${item.kind}|${item.id}`;
+            const signature = JSON.stringify([item, core.memoryLifecycle(item)]);
+            const previous = memoryRows.get(key);
+            if (previous?.signature === signature) { rows.push(previous.row); continue; }
             const row = ui.element('li', 'memory-item');
+            row.dataset.memoryId = item.id;
             const button = ui.element('button', 'memory-item-button');
             button.type = 'button';
             button.append(ui.element('span', 'memory-item-text', typeof item.text === 'string'
@@ -141,9 +153,16 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             row.append(button);
             const ids = item.sourceConversationIds ?? (item.sourceSessionId ? [item.sourceSessionId] : []);
             for (const id of ids) { const source = ui.element('button','memory-source-link','来源对话'); source.type='button'; source.setAttribute('aria-label',`查看来源对话：${item.text}`); source.addEventListener('click',async()=>{ui.hideSettingsDialog();try { await core.selectSession(id); } catch(error) { ui.toast(core.failureMessage(error)); }}); source.prepend(WeftIcons.create('chat',16));row.append(source); }
-            if (!ids.length) { const source=ui.element('button','memory-source-link',item.importSources?.length ? `来自 ${item.importSources[0].appName}${item.importSources[0].originalAt ? '，' + new Intl.DateTimeFormat('zh-CN', {year:'numeric',month:'long'}).format(new Date(item.importSources[0].originalAt)) : ''}的一段对话` : item.sourceCount ? '查看来源 · 对话未定位' : '查看来源'); source.type='button'; source.addEventListener('click',()=>{void core.openMemoryDetail(item.kind,item.id)});source.prepend(WeftIcons.create('chat',16));row.append(source); }
-            list.append(row);
+            if (!ids.length) { const source=ui.element('button','memory-source-link',item.importSources?.length ? `来自 ${item.importSources[0].appName}${item.importSources[0].originalAt ? '，' + new Intl.DateTimeFormat('zh-CN', {year:'numeric',month:'long'}).format(new Date(item.importSources[0].originalAt)) : ''}的一段对话` : item.sourceCount ? '查看原话' : '查看来源'); source.type='button'; source.addEventListener('click',()=>{void core.openMemoryDetail(item.kind,item.id)});source.prepend(WeftIcons.create('chat',16));row.append(source); }
+            rows.push(row); memoryRows.set(key, { signature, row });
         }
+        if (!rows.length) {
+            const empty = ui.element('li', 'memory-empty', core.memory.query ? '没有找到相关记忆，试试更短的关键词。' : '还没有记忆。聊聊你的习惯和想法，之后可以在这里查看、纠正或忘掉。');
+            rows.push(empty);
+        }
+        WeftControls.reconcile(list, rows);
+        renderedScope = listScope(); list.removeAttribute('aria-busy');
+        for (const [key, value] of memoryRows) if (!rows.includes(value.row)) memoryRows.delete(key);
         ui.byId('memory-more').hidden = !core.memory.hasMore;
         ui.paintMemoryHealth?.(core.memory.status);
     }
@@ -250,6 +269,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             void core.recoverMemoryReceipt();
     }
     function resetMemoryControls() {
+        memoryRows.clear();
         resetIngestion();
         ui.byId('memory-kind').value = 'all'; ui.syncMemoryFilters?.();
         ui.byId('memory-query').value = '';
@@ -266,6 +286,10 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             ui.byId('memory-detail-dialog').close();
     }
     function clearMemoryList() {
+        if (core.memory.revision != null && renderedScope === listScope()) {
+            ui.byId('memory-list').setAttribute('aria-busy', 'true'); return;
+        }
+        memoryRows.clear(); renderedScope = undefined;
         ui.byId('memory-list').replaceChildren();
         ui.byId('memory-more').hidden = true;
     }
@@ -373,13 +397,20 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         pause.addEventListener('click', () => { if(job) void change({action:job.state==='paused'?'resume':'pause',jobId:job.id}); });
         cancel.addEventListener('click', () => { if(job) void change({action:'cancel',jobId:job.id}); });
         cancelPreview.addEventListener('click',()=>{prepared=null;card.hidden=true;preview.hidden=false;explanation.textContent='';preview.focus();});
-        actions.append(preview, pause, cancel); section.append(health, actions, card, progress);
-        ui.byId('memory-search-form').before(section);
+        const tools = ui.element('details', 'memory-maintenance'); tools.dataset.motion = 'unfold';
+        const summary = ui.element('summary', '', '整理过去的对话'), body = ui.element('div');
+        actions.append(preview, pause, cancel); body.append(actions, card, progress); tools.append(summary, body); section.append(health, tools);
+        const panelTools = ui.element('div', 'memory-tools'); panelTools.id = 'memory-panel-tools';
+        panelTools.append(section); ui.byId('memory-list').after(panelTools);
         setInterval(() => { void refresh(); }, 3000);
         ui.byId('memory-refresh').addEventListener('click', () => { void refresh(); });
     }
     function mountMemory() {
         mountIngestion();
+        ui.byId('memory-view').classList.add('auxiliary-memory-page');
+        const understanding = ui.element('h3', 'memory-understanding-title', '当前理解');
+        ui.byId('memory-detail-text').before(understanding);
+        ui.byId('memory-detail-body').querySelector('h3:not(.memory-understanding-title)').textContent = '原话与来源';
         const refreshButton = ui.byId('memory-refresh'); refreshButton.className = 'icon-button'; refreshButton.hidden = true;
         refreshButton.replaceChildren(WeftIcons.create('sync', 18)); refreshButton.setAttribute('aria-label', '刷新记忆'); refreshButton.title = '刷新记忆';
         const searchButton = ui.byId('memory-search-form').querySelector('button[type=submit]');

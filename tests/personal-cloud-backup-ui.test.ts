@@ -7,6 +7,9 @@ class Element {
   tagName; className = ''; children = []; parentNode = null; dataset = {}; attributes = new Map(); listeners = new Map();
   hidden = false; disabled = false; value = ''; checked = false; open = false; content = '';
   constructor(tag, className = '', text = '') { this.tagName = tag.toUpperCase(); this.className = className; this.content = text; }
+  classList = {
+    add: (...names) => { this.className = [...new Set([...this.className.split(/\s+/).filter(Boolean), ...names])].join(' '); },
+  };
   get textContent() { return this.content + this.children.map(child => child.textContent).join(''); }
   set textContent(value) { this.content = String(value); this.replaceChildren(); }
   append(...children) { for (const child of children) { child.remove(); child.parentNode = this; this.children.push(child); } }
@@ -21,6 +24,7 @@ class Element {
   showModal() { this.open = true; }
   close() { this.open = false; void this.fire('close'); }
   querySelectorAll(selector) {
+    if (selector.startsWith(':scope > ')) return this.children.filter(child => child.tagName === selector.slice(9).toUpperCase());
     const matches = node => selector.startsWith('.') ? node.className.split(/\s+/).includes(selector.slice(1))
       : selector.startsWith('[aria-label=') ? node.getAttribute('aria-label') === selector.slice(13, -2)
         : selector === '*' || node.tagName === selector.toUpperCase();
@@ -54,11 +58,12 @@ function harness() {
   };
   const ui = { element: (tag, className = '', text = '') => new Element(tag, className, text), toast() {} };
   const context = { document: { body, createElement: tag => new Element(tag) }, WeftUiComponents: { factories: {} }, WeftUiCore: { factories: {} }, weftmateDesktop: {},
-    WeftSettingsControls: { toggle() {} }, WeftIcons: { create: () => new Element('svg') },
+    window: { addEventListener() {}, matchMedia: media => ({ media, matches: false, addEventListener() {} }) },
+    WeftIcons: { create: () => new Element('svg') },
     WeftUiLayout: { mountBackup: section => { mounted = section; body.append(section); } },
     setInterval: callback => { intervals.push(callback); return intervals.length; }, setTimeout() {},
   };
-  runInNewContext([desktopScript('ui-core/controls.js'), desktopScript('ui-core/auth.js'), desktopScript('ui-core/backup.js'), desktopScript('components/backup.js')].join('\n;\n'), context);
+  runInNewContext([desktopScript('ui-core/controls.js'), desktopScript('components/settings-controls.js'), desktopScript('ui-core/auth.js'), desktopScript('ui-core/backup.js'), desktopScript('components/backup.js')].join('\n;\n'), context);
   Object.assign(core, context.WeftUiCore.factories.auth(core, {}, {}));
   Object.assign(core, context.WeftUiCore.factories.backup(core));
   const component = context.WeftUiComponents.factories.backup(core, ui); component.mountBackup();

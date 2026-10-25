@@ -119,6 +119,7 @@ class Element {
     ])
   }
   querySelector(selector: string) { return this.querySelectorAll(selector)[0] ?? null }
+  matches(selector: string) { return matchesTestSelector(this, selector) }
   closest(selector: string): Element | null { return selector.split(',').some(part => matchesTestSelector(this, part.trim())) ? this : this.parentNode?.closest(selector) ?? null }
   contains(node: Element | null): boolean { return !!node && (node === this || this.children.some((child) => child.contains(node))) }
   get isConnected(): boolean { return this.root || this.parentNode?.isConnected === true }
@@ -129,6 +130,9 @@ class Element {
   open = false
   parentNode: Element | null = null
   get parentElement() { return this.parentNode }
+  get nodeType() { return this.tagName === '#COMMENT' ? 8 : this.tagName === '#TEXT' ? 3 : 1 }
+  get childNodes() { return this.children }
+  get firstChild() { return this.children[0] || null }
   get firstElementChild() { return this.children[0] || null }
   get nextSibling() { return this.parentNode?.children[this.parentNode.children.indexOf(this) + 1] ?? null }
   get nextElementSibling() { return this.nextSibling }
@@ -150,6 +154,8 @@ class Element {
 
 function matchesTestSelector(node: Element, selector: string) {
   if(selector==='button:not(:disabled)')return node.tagName==='BUTTON'&&!node.disabled;
+  const excluded=/^(.+):not\(([^()]+)\)$/.exec(selector);
+  if(excluded)return matchesTestSelector(node,excluded[1])&&!matchesTestSelector(node,excluded[2]);
   const attribute=/^(\w+)?\[([\w-]+)="([^"]*)"\]$/.exec(selector);
   if(attribute)return (!attribute[1]||node.tagName===attribute[1].toUpperCase())&&node.getAttribute(attribute[2])===attribute[3];
   if(selector.split(',').length>1)return selector.split(',').some(part=>matchesTestSelector(node,part.trim()));
@@ -472,6 +478,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   const documentListeners = new Map<string, Array<(event: any) => unknown>>();
   const document = { body, activeElement: body, documentElement: new Element('document-root', 'html'), visibilityState: 'visible', getElementById:(id:string)=>id.startsWith('service-')?nodes.get(id)||body.querySelector('#'+id):get(id),
     createTextNode:(text:string)=>{const node=new Element('','#text');node.textContent=text;return node;},
+    createComment:(text:string)=>{const node=new Element('','#comment');node.textContent=text;node.ownerDocument=document;return node;},
     createElementNS: (_namespace: string, tagName: string) => { const node = new Element('', tagName); node.ownerDocument = document; return node },
     createElement: (tagName: string) => { const node = new Element('', tagName); node.ownerDocument = document; return node },
     querySelector: (selector: string): Element | null => {
@@ -501,7 +508,8 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   mountDesktopTestTree(document, get)
   const location = { hash: config.setupGrant ? `#setup=${config.setupGrant}` : '',
     pathname: '/personal/v1/ui', search: '', protocol: 'http:' }
-  const window = { location, innerWidth: 1280, innerHeight: 820, history: { replaceState() {} }, addEventListener() {}, WeftIcons: null as any }
+  const window = { location, innerWidth: 1280, innerHeight: 820, history: { replaceState() {} }, addEventListener() {},
+    matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }), WeftIcons: null as any }
   const URLShim = class extends URL {}
   URLShim.createObjectURL = (_file: object) => { const value = `blob:synthetic-${objectUrls.created.length + 1}`; objectUrls.created.push(value); return value }
   URLShim.revokeObjectURL = (value: string) => { objectUrls.revoked.push(value) }
@@ -587,7 +595,7 @@ test('FIX-8 named new conversation and session entries leave phone mode and disc
   page.getByRole('button',{name:'合成手机记录'}).fire('click');await flush();
   assert.equal(page.getByRole('textbox',{name:'输入消息'}).placeholder,'补充到这条手机对话');
   Object.assign(page.core.state,{hasOlder:true,nextBeforeSeq:20,olderLoading:true});
-  page.getByRole('button',{name:/^新对话/}).fire('click');await flush();
+  page.getByRole('button',{name:'新建对话'}).fire('click');await flush();
   assert.equal(page.core.state.activeChatSource,'desktop');assert.equal(page.core.state.selectedPhoneConversationId,null);
   assert.equal(page.core.state.selectedSessionId,null);assert.equal(page.core.state.newConversation,true);
   assert.equal(page.getByRole('textbox',{name:'输入消息'}).placeholder,'向 WeftMate 说说你的目标');
@@ -840,7 +848,7 @@ test('a delayed create keeps the old conversation until acceptance and then sele
   tasks.push(command)
   for (let attempt = 0; attempt < 10 && !page.storage.get('weftmate:requests:v1:owner-test')?.includes('cmd-create'); attempt++) await flush()
   assert.equal(page.get('assistant-title').textContent, 'A')
-  assert.equal(page.getByRole('button', { name: /新对话/ }).disabled, true, 'pending create cannot be repeated with a new ID')
+  assert.equal(page.getByRole('button', { name: '新建对话' }).disabled, true, 'pending create cannot be repeated with a new ID')
   assert.equal(page.get('reset-operation').hidden, true, 'pending work cannot be acknowledged as uncertain')
   assert.match(page.storage.get('weftmate:requests:v1:owner-test')!, /cmd-create/)
 

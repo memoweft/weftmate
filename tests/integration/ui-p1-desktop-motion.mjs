@@ -28,6 +28,13 @@ const retiredCandidates = [];
 const errors = [], results = [], performanceResults = [];
 async function until(check) { const deadline = performance.now() + 30000; while (performance.now() < deadline) { if (await check()) return; await new Promise(done => setTimeout(done, 50)); } throw Error('Motion fixture condition timed out'); }
 const processSummary=phase=>phase==='before'?page.getByText('执行了 2 步 · 用时 2 秒',{exact:true}):page.locator('.execution-block > summary').first();
+async function settleDisclosure() {
+  await page.evaluate(async()=>{
+    const detail=document.querySelector('.execution-block');
+    await Promise.allSettled(detail.getAnimations({subtree:true}).filter(animation=>Number.isFinite(animation.effect.getTiming().iterations)).map(animation=>animation.finished));
+    await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
+  });
+}
 async function frames(phase, name, action) {
   console.log(`${phase}: ${name}`);
   if (name.startsWith('execution-')) await processSummary(phase).scrollIntoViewIfNeeded();
@@ -218,13 +225,16 @@ try {
     // moves 0 -> 72 when the expanded content first overflows; absolute scrollTop
     // equality would reject the documented bottom-follow policy (D35).
     await page.evaluate(() => { document.querySelector('.execution-block').open = false; });
-    await page.waitForTimeout(260);
+    await settleDisclosure();
+    const closedHeight=await page.locator('.execution-block').first().evaluate(node=>node.getBoundingClientRect().height);
     await page.evaluate(() => { const scroll = document.getElementById('chat-scroll'); scroll.scrollTop = scroll.scrollHeight; scroll.dispatchEvent(new Event('scroll')); });
     await page.locator('.execution-block > summary').first().click();
-    const layout = await page.evaluate(() => { const scroll = document.getElementById('chat-scroll'); return { height: scroll.scrollHeight, client: scroll.clientHeight }; });
-    await page.waitForTimeout(260);
+    await settleDisclosure();
+    const layout = await page.evaluate(() => { const scroll = document.getElementById('chat-scroll'); return { height: scroll.scrollHeight, client: scroll.clientHeight, detailHeight:document.querySelector('.execution-block').getBoundingClientRect().height }; });
+    assert.ok(layout.detailHeight>closedHeight,'expanded process exposes its content');
+    await page.evaluate(async()=>{await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
     const followed = await page.evaluate(() => { const scroll = document.getElementById('chat-scroll'); return { height: scroll.scrollHeight, client: scroll.clientHeight, gap: scroll.scrollHeight - scroll.clientHeight - scroll.scrollTop }; });
-    assert.equal(followed.height, layout.height, 'animation must not change final content geometry');
+    assert.equal(followed.height, layout.height, 'settled animation keeps its final content geometry');
     assert.equal(followed.client, layout.client);
     assert.ok(Math.abs(followed.gap) <= 1, `pinned reader stays at bottom: ${JSON.stringify(followed)}`);
     // A reader who scrolls upward must retain the visible summary's anchor,
@@ -236,10 +246,10 @@ try {
     await page.evaluate(() => { const scroll = document.getElementById('chat-scroll');
       scroll.dispatchEvent(new WheelEvent('wheel', { deltaY: -120 })); scroll.scrollTop = 0; scroll.dispatchEvent(new Event('scroll'));
       document.querySelector('.execution-block').open = false; });
-    await page.waitForTimeout(260);
+    await settleDisclosure();
     await page.locator('.execution-block > summary').first().click();
     const anchor = await page.evaluate(() => document.querySelector('.execution-block > summary').getBoundingClientRect().top - document.getElementById('chat-scroll').getBoundingClientRect().top);
-    await page.waitForTimeout(260);
+    await settleDisclosure();
     const readerAnchor = await page.evaluate(() => document.querySelector('.execution-block > summary').getBoundingClientRect().top - document.getElementById('chat-scroll').getBoundingClientRect().top);
     assert.ok(Math.abs(readerAnchor - anchor) <= 1, `reading anchor moved: ${anchor} -> ${readerAnchor}`);
     await page.locator('#motion-reader-history').evaluate(element => element.remove());

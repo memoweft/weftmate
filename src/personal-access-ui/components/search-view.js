@@ -23,11 +23,11 @@ globalThis.WeftSearchView = {
   const footer=el('div','search-palette-footer');
   for(const [label,keys] of [['关闭',['Esc']],['切换类型',['←','→']],['上下选择',['↑','↓']],['打开',['↵']],['操作',['Alt','↵']]]){const hint=el('span','search-key-hint',label);for(const key of keys)hint.append(el('kbd','search-key',key));footer.append(hint);}
   dialog.append(header,tabs,feedback,results,footer);document.body.append(dialog);
-  let returnFocus,closeTimer,closeGeneration=0,closing;
-  function show(){clearTimeout(closeTimer);closeGeneration++;dialog.classList.remove('is-closing');input.value='';returnFocus=document.activeElement;if(!dialog.open)dialog.showModal();input.focus();}
-  function hide(){results.replaceChildren();input.value='';if(closing)return closing;if(!dialog.open)return Promise.resolve();const generation=++closeGeneration;dialog.classList.add('is-closing');
-    closing=new Promise(resolve=>{const finish=()=>{if(generation===closeGeneration){dialog.close();dialog.classList.remove('is-closing');if(returnFocus?.isConnected&&!document.querySelector('dialog[open]')&&(document.activeElement===document.body||document.activeElement===returnFocus))returnFocus.focus();}closing=null;resolve();};
-      if(matchMedia('(prefers-reduced-motion: reduce)').matches)queueMicrotask(finish);else closeTimer=setTimeout(finish,120);});return closing;}
+  let returnFocus,exitAnimation,finishExit,closing,renderSignature='';
+  function show(){exitAnimation?.cancel();finishExit?.(true);dialog.inert=false;dialog.classList.remove('is-closing');input.value='';returnFocus=document.activeElement;if(!dialog.open)dialog.showModal();input.focus();}
+  function hide(){if(closing)return closing;if(!dialog.open)return Promise.resolve();dialog.inert=true;
+    closing=new Promise(resolve=>{let settled=false;const finish=reopened=>{if(settled)return;settled=true;if(!reopened){dialog.close();dialog.inert=false;results.replaceChildren();renderSignature='';input.value='';if(returnFocus?.isConnected&&!document.querySelector('dialog[open]')&&(document.activeElement===document.body||document.activeElement===returnFocus))returnFocus.focus();}closing=null;finishExit=null;resolve();};finishExit=finish;
+      if(globalThis.WeftReplyMotion?.reduced||globalThis.WeftReplyMotion?.paused||matchMedia('(prefers-reduced-motion: reduce)').matches&&!document.documentElement.hasAttribute('data-motion-full'))queueMicrotask(()=>finish());else{const css=getComputedStyle(document.documentElement);exitAnimation=dialog.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(8px)'}],{duration:parseFloat(css.getPropertyValue('--dur-4')),easing:css.getPropertyValue('--ease-out').trim(),fill:'forwards'});exitAnimation.finished.then(()=>{exitAnimation.cancel();finish();},()=>{});}});return closing;}
   const highlight=(text,q)=>{const span=el('span');text=String(text??'');if(!q)return Object.assign(span,{textContent:text});const lower=text.toLowerCase(),needle=q.toLowerCase();let position=0,hit;
     while((hit=lower.indexOf(needle,position))>=0){span.append(document.createTextNode(text.slice(position,hit)),el('mark','search-highlight',text.slice(hit,hit+q.length)));position=hit+q.length;}span.append(document.createTextNode(text.slice(position)));return span;};
   const meta=text=>WeftSearchView.formatDate(text,core.state.mainChat?.timeZone||core.state.account?.timeZone||'Asia/Shanghai');
@@ -37,8 +37,10 @@ globalThis.WeftSearchView = {
   function select(){const rows=[...results.querySelectorAll('[role=option]')];rows.forEach((node,index)=>{node.setAttribute('aria-selected',String(index===core.search.selected));node.classList.toggle('is-selected',index===core.search.selected);});const current=rows[core.search.selected];if(current){input.setAttribute('aria-activedescendant',current.id);current.scrollIntoView({block:'nearest'});}else input.removeAttribute('aria-activedescendant');}
   function render(){if(!core.search.open)return;const model=core.search;if(input.value!==model.query)input.value=model.query;
     for(const tab of tabs.children){const chosen=tab.dataset.type===model.type;tab.setAttribute('aria-selected',String(chosen));tab.setAttribute('aria-pressed',String(chosen));tab.tabIndex=chosen?0:-1;}
-    results.replaceChildren();results.setAttribute('aria-busy',String(model.loading));feedback.textContent='';
-    if(model.loading){for(let i=0;i<5;i++){const row=el('div','search-skeleton');row.setAttribute('aria-hidden','true');row.append(el('span','search-skeleton-icon'),el('span','search-skeleton-line'));results.append(row);}feedback.textContent='正在搜索…';return;}
+    results.setAttribute('aria-busy',String(model.loading));results.inert=model.loading;dialog.classList.toggle('is-searching',model.loading);feedback.textContent=model.loading?'正在搜索…':'';
+    if(model.loading&&results.querySelector('[role=option]'))return;
+    const signature=JSON.stringify([model.query,model.type,model.groups,model.error,model.loading]);if(signature===renderSignature){select();return;}renderSignature=signature;results.replaceChildren();
+    if(model.loading){results.append(WeftControls.skeleton({rows:4}));return;}
     if(model.error){const error=el('div','search-error');error.setAttribute('role','alert');const retry=el('button','button secondary small','重试');retry.type='button';retry.onclick=()=>void core.readSearch();error.append(el('span','',model.error),retry);results.append(error);}
     if(model.groups.some(group=>group.id==='empty')||!model.groups.some(group=>group.rows.length)&&!model.error){const empty=el('div','search-empty');empty.append(icon('search'),el('strong','','没有找到相关内容'),el('p','muted','试试其他关键词，或从这句话开始新的旁聊。'));results.append(empty);}
     let index=0;

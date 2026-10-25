@@ -10,15 +10,16 @@ globalThis.WeftHelpView={mount({target,core,kind,back,run,mobile=false}){
   function empty(text,action,label){content.replaceChildren();const box=el('div','help-empty');box.append(WeftIcons.create('info',32),el('p','',text));if(action)box.append(button(label,action));content.append(box);}
   if(kind==='help'){
     const feedback=el('div','message-dialog-actions');
-    feedback.append(button('反馈问题',event=>run('feedback',event.currentTarget)),button('我发过的反馈',event=>run('sentFeedback',event.currentTarget)));target.append(feedback);
+    feedback.classList.add('help-actions');feedback.append(button('反馈问题',event=>run('feedback',event.currentTarget)),button('我发过的反馈',event=>run('sentFeedback',event.currentTarget),'button quiet small'));head.append(feedback);
     target.append(el('p','help-intro','找到一个小技巧，马上试试。'));
     const search=el('input','help-search');search.type='search';search.placeholder='搜索帮助，如“记忆”或“离线”';search.setAttribute('aria-label','搜索帮助');target.append(search,content);
     const count=el('p','help-result-count');count.setAttribute('role','status');target.append(count);
     function render(){content.replaceChildren();const rows=core.filterHelp(search.value);count.textContent=search.value?`${rows.length} 条小技巧`:'';
       if(!rows.length){empty('没有找到相关小技巧，试试更短的关键词。',()=>{search.value='';render();search.focus();},'清除搜索');return;}
       let group,section;for(const row of rows){if(group!==row.group){group=row.group;section=el('section','help-topic-group');section.append(el('h2','',group));content.append(section);}
-        const article=el('article','help-topic');article.append(el('h3','',row.title),el('p','',row.text));
-        if(row.action)article.append(button(row.tryLabel,()=>run(row.action)));section.append(article);}}
+        const article=el('details','help-topic');article.dataset.motion='unfold';article.open=!!search.value.trim();
+        const summary=el('summary'),body=el('div','help-topic-body');summary.append(el('h3','',row.title));body.append(el('p','',row.text));
+        if(row.action)body.append(button(row.tryLabel,()=>run(row.action)));article.append(summary,body);section.append(article);globalThis.WeftMotion?.details?.(article);}}
     search.addEventListener('input',render);render();
   }else{
     target.append(el('p','help-intro','每次更新，让日常使用更顺手。'),content);
@@ -30,7 +31,7 @@ globalThis.WeftHelpView={mount({target,core,kind,back,run,mobile=false}){
       if(!rows.length){empty('还没有更新内容。下一次更新后，可以来这里看看。',()=>run('about'),'查看版本');return;}
       for(const [index,row]of rows.entries()){
         const article=el('article','release-entry'),top=el('div','release-heading'),body=el('div','release-body');
-        const toggle=button(row.version,()=>{body.hidden=!body.hidden;toggle.setAttribute('aria-expanded',String(!body.hidden));},'release-toggle');toggle.append(WeftIcons.create('chevron',16));toggle.setAttribute('aria-expanded',String(index===0));
+        const toggle=button(row.version,()=>{WeftAuxiliaryMotion.expand(body,toggle.getAttribute('aria-expanded')!=='true',toggle);},'release-toggle');toggle.append(WeftIcons.create('chevron',16));toggle.setAttribute('aria-expanded',String(index===0));
         body.id=`release-${row.version.replaceAll('.','-')}`;toggle.setAttribute('aria-controls',body.id);body.hidden=index!==0;top.append(toggle);
         if(row.version===current.version)toggle.append(el('span','release-current','当前版本'));if(row.date){const d=row.date.split('-');toggle.append(el('time','release-date',`${Number(d[0])} 年 ${Number(d[1])} 月 ${Number(d[2])} 日`));}
         for(const [key,label]of [['added','新增'],['improved','改进'],['fixed','修复']])if(row[key].length){const section=el('section');section.append(el('h3','',label));const list=el('ul');for(const text of row[key])list.append(el('li','',text));section.append(list);body.append(section);}

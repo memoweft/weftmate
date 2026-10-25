@@ -116,12 +116,12 @@
         }
         color('background','背景色','--canvas'); color('foreground','前景色','--ink');
         select(palette, 'font', '字体', '', fonts, true);
-        const advanced = node('details', 'appearance-advanced'); advanced.append(node('summary', '', '高级')); target.append(advanced);
-        const sizes = group(advanced, '文字大小');
+        const sizes = group(target, '文字大小');
         for (const [key,label,help] of [['uiFontSize','界面字号','调整菜单、设置与控件的文字大小。'],['fontSize','内容字号','调整对话正文与输入文字大小。'],['codeFontSize','代码字号','调整代码块与行内代码。']]) {
             const wrap = node('div','appearance-number'), input = node('input'); input.type = 'number'; input.min = '10'; input.max = '24'; input.step = '1'; input.id = 'appearance-' + key; input.setAttribute('aria-label',label);
             controls.set(key,input); input.addEventListener('change',()=>{if(input.reportValidity())void save({[key]:input.value});}); wrap.append(input,node('span','muted','px')); sizes.append(WeftSettingsControls.row(label,help,wrap));
         }
+        const advanced = node('details', 'appearance-advanced'); advanced.append(node('summary', '', '更多显示偏好')); target.append(advanced);WeftSettingsControls.details(advanced);
         const behavior = group(advanced, '显示偏好');
         motion = node('div','settings-segmented'); motion.setAttribute('role','group'); motion.setAttribute('aria-label','减少动态效果');
         for (const [value,label] of [['system','系统'],['reduce','开启'],['full','关闭']]) { const button = node('button','',label); button.type = 'button'; button.dataset.value = value; button.onclick = () => { globalThis.WeftReplyMotion?.setPreference(value); sync(); }; motion.append(button); }

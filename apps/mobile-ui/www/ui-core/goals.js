@@ -13,7 +13,7 @@ globalThis.WeftUiCore.factories.goals = (core,effects,environment) => {
             const results=await Promise.allSettled(paths.map(([,path,cap])=>Promise.resolve().then(()=>{if(cap&&core.state.personalCapabilities?.[cap]!==1)throw {code:'CAPABILITY_UNAVAILABLE'};return core.accessApi(path);})));
             if(scope()!==token||model.generation!==generation)return;
             results.forEach((result,index)=>{const key=paths[index][0];if(result.status==='fulfilled'){model[key]=result.value.items ?? result.value.sessions ?? [];if(key==='tasks'){model.recent=result.value.recent;model.timeZone=result.value.timeZone;}delete model.errors[key];}
-                else{model[key]=[];if(key==='tasks')model.recent=[];model.errors[key]=result.reason?.code==='CAPABILITY_UNAVAILABLE'?'更新电脑上的 WeftMate 后可使用这项功能。':core.failureMessage(result.reason);}});
+                else{const unavailable=result.reason?.code==='CAPABILITY_UNAVAILABLE';if(unavailable){model[key]=[];if(key==='tasks')model.recent=[];}model.errors[key]=unavailable?'更新电脑上的 WeftMate 后可使用这项功能。':core.failureMessage(result.reason);}});
             if(core.state.mainChat?.activeSessionId&&!model.sessions.some(row=>row.sessionId===core.state.mainChat.activeSessionId))model.sessions.unshift({sessionId:core.state.mainChat.activeSessionId,title:'WeftMate 主对话',taskAvailable:true});
             model.loading=false;effects.renderGoals?.();
         })().finally(()=>{if(flight===work)flight=null;});flight=work;return work;

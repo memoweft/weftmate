@@ -183,25 +183,34 @@ test('memory view preserves chat draft and discards a successful response for an
   const source = desktopFeatureSource()
   class Node {
     id: string
-    children: Node[] = []
+    childNodes: Node[] = []
+    get children() { return this.childNodes.filter(child => child.nodeType === 1) }
     parentNode: Node | null = null
     get parentElement() { return this.parentNode }
     tagName = 'DIV'
+    get nodeType() { return this.tagName === '#COMMENT' ? 8 : this.tagName === '#TEXT' ? 3 : 1 }
     attributes = new Map<string, string>()
     listeners = new Map<string, Array<(event: any) => void>>()
     hidden = false
     disabled = false
     open = false
     value = ''
-    textContent = ''
+    data = ''
+    get textContent(): string { return this.nodeType === 1 ? this.childNodes.filter(child => child.nodeType !== 8).map(child => child.textContent).join('') : this.data }
+    set textContent(text: string) {
+      if (this.nodeType !== 1) { this.data = String(text); return }
+      this.replaceChildren()
+      if (text) { const child = new Node(); child.tagName = '#TEXT'; child.data = String(text); this.append(child) }
+    }
     className = ''
+    style: Record<string, string> = {}
     dataset: Record<string, string> = {}
     // Mirrors DOMTokenList closely enough for class-driven visibility checks.
-    classList = (() => { const names = new Set<string>(); return {
-      add: (...values: string[]) => { for (const value of values) names.add(value) },
-      remove: (...values: string[]) => { for (const value of values) names.delete(value) },
-      toggle: (value: string, force?: boolean) => { const on = force ?? !names.has(value); if (on) names.add(value); else names.delete(value); return on },
-      contains: (value: string) => names.has(value) } })()
+    classList = {
+      add: (...values: string[]) => { this.className = [...new Set([...this.className.split(/\s+/).filter(Boolean), ...values])].join(' ') },
+      remove: (...values: string[]) => { this.className = this.className.split(/\s+/).filter(value => !values.includes(value)).join(' ') },
+      toggle: (value: string, force?: boolean) => { const on = force ?? !this.classList.contains(value); if (on) this.classList.add(value); else this.classList.remove(value); return on },
+      contains: (value: string) => this.className.split(/\s+/).includes(value) }
     constructor(id = '') { this.id = id }
     addEventListener(name: string, fn: (event: any) => void) {
       this.listeners.set(name, [...this.listeners.get(name) ?? [], fn])
@@ -210,21 +219,37 @@ test('memory view preserves chat draft and discards a successful response for an
       for (const fn of this.listeners.get(name) ?? []) fn({ currentTarget: this, target: this, preventDefault() {} })
     }
     dispatchEvent(event: Event) { this.fire(event.type); return true }
-    append(...nodes: Node[]) { for (const node of nodes) node.parentNode = this; this.children.push(...nodes) }
-    prepend(...nodes: Node[]) { for (const node of nodes) node.parentNode = this; this.children.unshift(...nodes) }
-    insertBefore(node: Node, reference: Node | null) { node.parentNode?.children.splice(node.parentNode.children.indexOf(node),1);node.parentNode=this;const index=reference?this.children.indexOf(reference):-1;if(index<0)this.children.push(node);else this.children.splice(index,0,node);return node }
-    get nextSibling() { if(!this.parentNode)return null;return this.parentNode.children[this.parentNode.children.indexOf(this)+1]??null }
-    before(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this); for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
-    after(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this) + 1; for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
-    replaceChildren(...nodes: Node[]) { this.children = nodes }
-    cloneNode(deep = false) { const copy = new Node(this.id); copy.tagName=this.tagName;copy.className=this.className;copy.textContent=this.textContent;copy.hidden=this.hidden;copy.disabled=this.disabled;copy.attributes=new Map(this.attributes);copy.dataset={...this.dataset};if(deep)copy.append(...this.children.map(child=>child.cloneNode(true)));return copy }
-    setAttribute(name: string, value: string) { this.attributes.set(name, value) }
+    append(...nodes: Node[]) { for (const node of nodes) { node.remove(); node.parentNode = this; this.childNodes.push(node) } }
+    prepend(...nodes: Node[]) { for (const node of [...nodes].reverse()) { node.remove(); node.parentNode = this; this.childNodes.unshift(node) } }
+    insertBefore(node: Node, reference: Node | null) { if(node===reference)return node;node.remove();node.parentNode=this;const index=reference?this.childNodes.indexOf(reference):-1;if(index<0)this.childNodes.push(node);else this.childNodes.splice(index,0,node);return node }
+    get nextSibling() { if(!this.parentNode)return null;return this.parentNode.childNodes[this.parentNode.childNodes.indexOf(this)+1]??null }
+    before(...nodes: Node[]) { for (const node of nodes) this.parentNode?.insertBefore(node, this) }
+    after(...nodes: Node[]) { const next = this.nextSibling; for (const node of nodes) this.parentNode?.insertBefore(node, next) }
+    remove() { if(this.parentNode)this.parentNode.childNodes.splice(this.parentNode.childNodes.indexOf(this),1);this.parentNode=null }
+    replaceChildren(...nodes: Node[]) { for(const child of [...this.childNodes])child.remove();this.append(...nodes) }
+    cloneNode(deep = false) { const copy = new Node(this.id); copy.tagName=this.tagName;copy.className=this.className;copy.data=this.data;copy.hidden=this.hidden;copy.disabled=this.disabled;copy.attributes=new Map(this.attributes);copy.dataset={...this.dataset};if(deep)copy.append(...this.childNodes.map(child=>child.cloneNode(true)));return copy }
+    setAttribute(name: string, value: string) { this.attributes.set(name, value); if(name==='class')this.className=value }
     getAttribute(name: string) { return this.attributes.get(name) ?? null }
-    removeAttribute() {}
+    removeAttribute(name: string) { this.attributes.delete(name) }
+    get firstChild() { return this.childNodes[0] || null }
     get firstElementChild() { return this.children[0] || null }
-    querySelectorAll(selector: string): Node[] { const all = this.children.flatMap(child => [child, ...child.querySelectorAll('*')]); return selector === '*' ? all : all.filter(child => selector.startsWith('#') ? child.id === selector.slice(1) : child.tagName === selector.toUpperCase()) }
+    matches(selector: string): boolean {
+      if(this.nodeType!==1)return false
+      return selector.split(',').some(part => {
+        const simple = part.trim(), excluded = /^(.+):not\(([^()]+)\)$/.exec(simple)
+        if(excluded)return this.matches(excluded[1])&&!this.matches(excluded[2])
+        if (simple.startsWith('#')) return this.id === simple.slice(1)
+        const [tag, ...classes] = simple.split('.')
+        return (!tag || tag === '*' || this.tagName === tag.toUpperCase()) && classes.every(name => this.className.split(/\s+/).includes(name))
+      })
+    }
+    querySelectorAll(selector: string): Node[] {
+      const direct = selector.startsWith(':scope > '), query = direct ? selector.slice(9) : selector
+      const all = direct ? this.children : this.children.flatMap(child => [child, ...child.querySelectorAll('*')])
+      return all.filter(child => child.matches(query))
+    }
     querySelector(selector: string) { return this.querySelectorAll(selector)[0] || null }
-    closest(selector: string): Node | null { for(let parent: Node | null = this; parent; parent = parent.parentNode) if(selector.startsWith('#') ? parent.id === selector.slice(1) : parent.tagName === selector.toUpperCase()) return parent; return null }
+    closest(selector: string): Node | null { for(let parent: Node | null = this; parent; parent = parent.parentNode) if(parent.matches(selector)) return parent; return null }
     focus() {}
     showModal() { this.open = true }
     close() { this.open = false }
@@ -366,14 +391,16 @@ test('memory view preserves chat draft and discards a successful response for an
   const storage = new Map<string, string>()
   const document = { body: new Node('body'), visibilityState: 'visible',
     getElementById: get, createElement: (tag: string) => { const node = new Node(); node.tagName = tag.toUpperCase(); return node },
-    createTextNode: (text: string) => { const node = new Node(); node.textContent = text; return node },
+    createTextNode: (text: string) => { const node = new Node(); node.tagName = '#TEXT'; node.textContent = text; return node },
+    createComment: (text: string) => { const node = new Node(); node.tagName = '#COMMENT'; node.textContent = text; return node },
     createElementNS: (_namespace: string, tag: string) => { const node = new Node(); node.tagName = tag.toUpperCase(); return node },
     querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : selector === 'section.settings-category[data-category="general"]' ? get('general-panel') : null,
     querySelectorAll: () => [], addEventListener() {} }
+  const matchMedia = (media: string) => ({ media, matches: false, addEventListener() {}, removeEventListener() {} })
   const window = { location: { hash: '', pathname: '/personal/v1/ui', search: '' },
-    history: { replaceState() {} }, addEventListener() {}, WeftIcons: null as any }
+    history: { replaceState() {} }, addEventListener() {}, matchMedia, WeftIcons: null as any }
   mountDesktopTestTree(document, get)
-  const context = { document, window, matchMedia: () => ({matches:false,addEventListener(){},removeEventListener(){}}), location: { ...window.location, protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl, Event,
+  const context = { document, window, matchMedia, location: { ...window.location, protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl, Event,
     MutationObserver: class { constructor(_callback: () => void) {} observe() {} disconnect() {} },
     Option: class extends Node { constructor(text: string, value: string) { super(); this.tagName = 'OPTION'; this.textContent = text; this.value = value } },
     crypto: { randomUUID: () => `synthetic-${++requestSequence}` },

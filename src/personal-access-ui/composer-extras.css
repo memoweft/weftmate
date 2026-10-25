@@ -16,3 +16,28 @@
 .subtasks-popover button:hover { background:var(--surface-soft); }
 .subtasks-trigger:focus-visible,.subtasks-popover button:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }
 @media(max-width:600px) { .thinking-badge { max-width:var(--wm-space-44); overflow:hidden; } }
+
+/* The input is the quiet continuation of the reading column. */
+#conversation-pane.chat-workspace .composer-area { box-sizing:border-box; width:100%; max-width:calc(var(--chat-measure) + 2 * var(--chat-gutter)); margin-inline:auto; padding:8px var(--chat-gutter) 16px; border:0; background:transparent; }
+#conversation-pane.chat-workspace .message-form { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:8px; box-shadow:0 3px 12px color-mix(in srgb,var(--ink) 3%,transparent); transition:border-color var(--dur-3) var(--ease-out),box-shadow var(--dur-3) var(--ease-out); }
+#conversation-pane.chat-workspace .message-form:focus-within { border-color:color-mix(in srgb,var(--ink) 40%,var(--line)); box-shadow:0 4px 18px color-mix(in srgb,var(--ink) 5%,transparent); }
+#conversation-pane.chat-workspace .message-form textarea { field-sizing:content; min-height:40px; max-height:180px; padding:8px 10px; font-size:var(--text-size,14px); line-height:1.65; transition:height var(--dur-3) var(--ease-out); }
+#conversation-pane.chat-workspace .message-form textarea::placeholder { color:var(--ink-secondary); }
+#conversation-pane.chat-workspace .composer-actions { min-height:36px; gap:4px; }
+#conversation-pane.chat-workspace .composer-icon { flex-basis:34px; width:34px; height:34px; }
+#conversation-pane.chat-workspace .composer-icon svg { width:19px; height:19px; }
+#conversation-pane.chat-workspace .composer-send { transition:border-radius var(--dur-3) var(--ease-out),background var(--dur-3) var(--ease-out),color var(--dur-3) var(--ease-out); }
+#conversation-pane.chat-workspace .composer-send:active { transform:none; }
+#conversation-pane.chat-workspace .composer-send > svg { transition:transform var(--dur-3) var(--ease-out); }
+#conversation-pane.chat-workspace .composer-send:active > svg { transform:scale(.94); }
+#conversation-pane.chat-workspace .composer-above-slot { min-height:32px; margin:0 8px 6px; }
+#conversation-pane.chat-workspace .model-hint:empty { display:none; }
+#conversation-pane.chat-workspace .composer-menu .model-option { min-height:36px; font-size:13px; }
+#conversation-pane.chat-workspace .composer-subtasks { margin:4px 0; }
+#conversation-pane.chat-workspace .subtasks-trigger { min-height:32px; padding:4px 12px; }
+#conversation-pane.chat-workspace .composer-attachments { padding-top:6px; margin:0 4px 6px; }
+#conversation-pane.chat-workspace .attachment-draft { padding:6px 8px; border-radius:8px; }
+#conversation-pane.chat-workspace .attachment-draft-list { gap:4px; max-height:180px; overflow:auto; }
+
+#conversation-pane.chat-workspace .composer-send.is-stop { border-radius:10px; background:var(--surface-soft); color:var(--ink); }
+#conversation-pane.chat-workspace .composer-send:disabled { cursor:default; }

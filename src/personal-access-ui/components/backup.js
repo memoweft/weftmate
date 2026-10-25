@@ -4,9 +4,12 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
     function mountBackup() {
         const section = ui.element('section', 'card group backup-settings'); section.setAttribute('aria-label', '备份与恢复'); section.dataset.settingsGroup = '此电脑'; section.dataset.settingsCategory = 'backups';
         section.append(ui.element('h2', '', '备份与恢复'));
+        section.append(ui.element('h3','settings-section-title','本地备份'));
+        const description=ui.element('details','backup-description'),summary=ui.element('summary','','备份内容与保存方式');description.append(summary);
         for (const text of ['每天空闲时自动备份，程序保持打开。有任务正在运行时，自动备份会等任务完成。',
             '包含账号与设置、对话与经验、成果、用量和记忆。模型密钥、云令牌、设备私钥与登录会话不进包；恢复后请重新登录，换电脑后重新填写模型密钥。',
-            '本地备份未加密，包含私人内容，请保存在你信任的磁盘。']) section.append(ui.element('p', 'field-help', text));
+            '本地备份未加密，包含私人内容，请保存在你信任的磁盘。']) description.append(ui.element('p', 'field-help', text));
+        section.append(description);globalThis.WeftSettingsControls.details(description);
         const form = ui.element('form'), inputs = {};
         function field(parent, name, text, type = 'text') {
             const label = ui.element('label'), input = ui.element('input'); input.name = name; input.type = type;
@@ -28,10 +31,12 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
         const importPath = field(importForm, 'path', '另一台电脑的备份路径'); importPath.placeholder = '填写这台宿主电脑上 .wmb 文件的完整路径';
         const importButton = ui.element('button', 'button secondary', '导入备份'); importButton.type = 'submit'; importForm.append(importButton);
         const notice = ui.element('p'), list = ui.element('ul', 'system-services'); notice.setAttribute('role', 'status'); notice.setAttribute('aria-live', 'polite'); list.setAttribute('aria-label', '备份列表');
-        section.append(form, actions, importForm, notice, list);
+        const importing=ui.element('details','backup-import');importing.append(ui.element('summary','','从另一份备份恢复'),importForm);
+        section.append(form, actions,notice,list,importing);globalThis.WeftSettingsControls.details(importing);
         const cloud=globalThis.weftmateDesktop?mountCloudBackup(section):null;
         globalThis.WeftUiLayout.mountBackup(section);
-        let busy = false;
+        let busy = false, loaded = false;
+        for(const input of Object.values(inputs))input.disabled=true;
         async function run(action) {
             if (busy) return; busy = true;
             const token = core.accountToken();
@@ -44,6 +49,8 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
         async function refresh() {
             const token = core.accountToken(), value = await core.readBackups();
             if (!core.accountCurrent(token)) return;
+            loaded=true;section.dataset.loadState='ready';
+            for(const input of Object.values(inputs))input.disabled=false;
             for (const key of ['directory', 'dailyDays', 'weeklyCopies']) inputs[key].value = value.settings[key];
             inputs.enabled.checked = value.settings.enabled; list.replaceChildren();
             for (const backup of value.backups) {
@@ -69,7 +76,11 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
         create.addEventListener('click', () => void run(async () => { await core.createBackup(); await refresh(); notice.textContent = '备份已完成。'; }));
         form.addEventListener('submit', event => { event.preventDefault(); void run(async () => { await core.saveBackupSettings({ enabled: inputs.enabled.checked, directory: inputs.directory.value, dailyDays: Number(inputs.dailyDays.value), weeklyCopies: Number(inputs.weeklyCopies.value) }); notice.textContent = '备份设置已保存。'; }); });
         importForm.addEventListener('submit', event => { event.preventDefault(); void run(async () => { await core.importBackup(importPath.value); await refresh(); notice.textContent = '备份已导入并通过校验，请在列表中选择恢复。'; }); });
-        showSettingsBackups = () => { void run(refresh); void cloud?.refresh(); };
+        showSettingsBackups = () => {
+            if(!loaded)section.dataset.loadState='loading';
+            void run(refresh).finally(()=>{if(!loaded){section.dataset.loadState='error';notice.textContent='暂时无法读取本地备份。点击“刷新备份列表”重试。';}});
+            void cloud?.refresh();
+        };
     }
     let checkCloudBackupPrompt=()=>{};
     function mountCloudBackup(section) {

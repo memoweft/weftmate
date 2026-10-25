@@ -12,6 +12,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const refresh = panel.querySelector('#cloud-directory-refresh'); refresh.className='icon-button'; refresh.replaceChildren(WeftIcons.create('sync',18)); refresh.setAttribute('aria-label','刷新设备'); refresh.title='刷新设备';
         account.prepend(panel);
         const signedIn = globalThis.WeftControls.tag('已登录'); signedIn.id = 'cloud-login-state';
+        panel.querySelector('#cloud-account-panel > h2').textContent='远程访问';
         const emailValue = ui.element('div', 'cloud-account-identity-value'), email = ui.byId('cloud-email');
         email.before(emailValue); emailValue.append(email, signedIn);
         ui.paintPendingDevices = () => { paintCloudPending(); const badge = ui.byId('pending-device-badge'); if (badge) badge.hidden = true; };
@@ -57,6 +58,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         if (!ui.byId('cloud-settings')) return;
         const active = core.state.cloudAuth.mode === 'authenticated', view = core.cloudAuthView();
         ui.byId('cloud-account-panel').dataset.signedIn = String(active);
+        ui.byId('cloud-login-state').hidden = !active;
         ui.byId('cloud-settings').hidden = false;
         ui.byId('cloud-account-actions').hidden = !active;
         ui.byId('cloud-login-actions').hidden = active;

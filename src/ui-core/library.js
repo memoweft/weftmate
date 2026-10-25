@@ -19,7 +19,7 @@ globalThis.WeftUiCore.factories.library=(core,effects)=>{
         }catch(error){if(token===scope()&&generation===model.generation)model.error=error.status===409?'成果已更新，请刷新。':core.failureMessage(error);}
         finally{if(token===scope()&&generation===model.generation){model.loading=false;effects.renderLibrary?.();}if(flight===work)flight=null;}})();flight=work;return work;
     }
-    async function setLibraryFilter(key,value){if(!['type','projectId','time','search'].includes(key))return;model[key]=value;model.generation++;model.items=[];model.nextCursor=null;flight=null;await readLibrary();}
+    async function setLibraryFilter(key,value){if(!['type','projectId','time','search'].includes(key))return;model[key]=value;model.generation++;model.nextCursor=null;flight=null;await readLibrary();}
     async function libraryPreview(item){const token=scope(),generation=model.generation;const data=await core.accessApi(`/library/${encodeURIComponent(item.id)}/preview`);if(token!==scope()||generation!==model.generation)throw {code:'STALE_CONTEXT'};return data;}
     async function openLibrarySource(item){const token=scope();const detail=await core.accessApi(`/library/${encodeURIComponent(item.id)}`);if(token!==scope())return;await effects.openLibrarySource?.(detail.item.source);}
     return {library:model,readLibrary,setLibraryFilter,libraryPreview,openLibrarySource,resetLibrary};

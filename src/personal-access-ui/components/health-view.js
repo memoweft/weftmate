@@ -105,20 +105,19 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
     if(H.finite(score)){const x=Math.max(4,Math.min(296,score*3));svg.append(svgEl('path',{d:`M${x-4} 0 L${x+4} 0 L${x} 7 Z`,class:'health-marker'}));}wrap.append(svg);return wrap;}
   function loadGauge(data){const range=data?.recommendedRange;if(!H.finite(range?.low)||!H.finite(range?.high))return G.range(data?.score,data?.low,data?.high);const ceiling=Math.max(100,data.daily??0,range.high*1.1);return G.range(data.daily,range.low,range.high,0,ceiling);}
   function loadRange(data){const range=data?.recommendedRange;return H.finite(range?.low)&&H.finite(range?.high)?`今天 ${H.value(data.daily)} · 建议 ${H.value(range.low)}–${H.value(range.high)}（相对负荷）`:H.finite(data?.low)?`你平时 ${H.value(data.low)}–${H.value(data.high)}`:'再戴几天就有对比了';}
-  function insightCard(collapsible=false){const data=m.overview?.insight,n=card('今日解读');n.classList.add('health-insight');
-    n.querySelector('h2').prepend(WeftIcons.create('health',18));
+  function insightCard(collapsible=false){
+    const data=m.overview?.insight,n=card('今日解读');n.querySelector('h2').prepend(WeftIcons.create('health',18));
     if(!data){n.append(el('h3','','这一天还没有足够的记录'),small('有了睡眠和活动记录，就能把当天的变化讲给你听。'));return n;}
-    if(collapsible){const toggle=action(data.headline,()=>{expanded=!expanded;render();},'health-insight-toggle');toggle.append(WeftIcons.create('chevron',18));toggle.setAttribute('aria-expanded',String(expanded));n.append(toggle);}else n.append(el('h3','',data.headline));
-    if(!collapsible||expanded){n.append(el('p',`health-reading${basisOpen||collapsible?' is-expanded':''}`,data.text));
-      for(const suggestion of (data.suggestions??[]).slice(0,2)){const row=el('div','health-suggestion'),saved=m.reminders.has(suggestion.id),b=action(saved?'已设提醒':m.busy.has(suggestion.id)?'正在设置…':'提醒我',()=>core.remindHealth(suggestion));
-        b.classList.add('health-remind');b.disabled=saved||m.busy.has(suggestion.id)||!suggestion.reminder||m.day!==m.today;if(!suggestion.reminder)b.title='这条建议没有指定提醒时间';row.append(el('span','',suggestion.text),b);n.append(row);}
-      const foot=el('div','health-insight-foot');
-      const basis=action(basisOpen?'收起解读':'展开解读',()=>{basisOpen=!basisOpen;render();});basis.setAttribute('aria-expanded',String(basisOpen));foot.append(basis);
-      if(basisOpen&&data.observations?.length){const body=el('div','health-basis');
-        body.append(small(`依据：${[...new Set(data.observations.flatMap(o=>o.inputs??[]))].map(id=>H.metrics[id]?.[0]??({lateNightMinutes:'深夜使用时长',activeMinutes:'电脑使用时长'}[id]??'每日汇总')).join('、')}`));for(const o of data.observations)body.append(small(o.text));n.append(body);
-      }
-      foot.append(action('接着问它',()=>core.askHealth()));n.append(foot);
-    }return n;
+    const body=el('div','health-insight-body');body.hidden=collapsible&&!expanded;
+    if(collapsible){const toggle=action(data.headline,()=>{expanded=!expanded;WeftAuxiliaryMotion.expand(body,expanded,toggle);},'health-insight-toggle');toggle.append(WeftIcons.create('chevron',18));toggle.setAttribute('aria-expanded',String(expanded));n.append(toggle);}else n.append(el('h3','',data.headline));
+    body.append(el('p','health-reading is-expanded',data.text));
+    for(const suggestion of (data.suggestions??[]).slice(0,2)){const row=el('div','health-suggestion'),saved=m.reminders.has(suggestion.id),b=action(saved?'已设提醒':m.busy.has(suggestion.id)?'正在设置…':'提醒我',()=>core.remindHealth(suggestion));
+      b.classList.add('health-remind');b.disabled=saved||m.busy.has(suggestion.id)||!suggestion.reminder||m.day!==m.today;if(!suggestion.reminder)b.title='这条建议没有指定提醒时间';row.append(el('span','',suggestion.text),b);body.append(row);}
+    const foot=el('div','health-insight-foot');
+    if(data.observations?.length){const evidence=el('div','health-basis');evidence.hidden=!basisOpen;
+      evidence.append(small(`依据：${[...new Set(data.observations.flatMap(o=>o.inputs??[]))].map(id=>H.metrics[id]?.[0]??({lateNightMinutes:'深夜使用时长',activeMinutes:'电脑使用时长'}[id]??'每日汇总')).join('、')}`));for(const o of data.observations)evidence.append(small(o.text));
+      const basis=action(basisOpen?'收起解读':'展开解读',()=>{basisOpen=!basisOpen;basis.textContent=basisOpen?'收起解读':'展开解读';WeftAuxiliaryMotion.expand(evidence,basisOpen,basis);});basis.setAttribute('aria-expanded',String(basisOpen));foot.append(basis);body.append(evidence);}
+    foot.append(action('接着问它',()=>core.askHealth()));body.append(foot);n.append(body);return n;
   }
   function metricButton(id,data={}){data??={};const n=colorMetric(action('',()=>core.openHealthMetric(id,'detail'),'health-metric health-card'),id,data);n.setAttribute('aria-label',H.metrics[id][0]+'，查看详情');
     const value=id==='fitnessAge'?data.fitnessAge:id==='energy'?data.current:data.score;n.setAttribute('aria-description',H.finite(value)?`${H.value(value,id)} ${H.metrics[id][1]}，${data.label??''}`:id==='fitnessAge'?H.profileHint(data):data.label??'当天还没有测量');const name=el('span','health-card-name',H.metrics[id][0]);name.append(WeftIcons.create('right',14));n.append(name,number(value,id));
@@ -224,11 +223,15 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
     const signature=JSON.stringify([m,calendarOpen,expanded,basisOpen,moreWorkouts,[...methodOpen],[...analysisBasis],compact],(_key,value)=>value instanceof Map||value instanceof Set?[...value]:value);
     if(contentSignature===signature)return;contentSignature=signature;motionFrame?.();
     const focus=document.activeElement,focusName=content.contains(focus)?focus.getAttribute('aria-label')||focus.textContent:null;
+    const paint=()=>{
     content.replaceChildren();if(calendarOpen)content.append(calendar());
-    if(m.error){content.append(errorState(m.error,()=>core.readHealth()));}else if(m.loading||!m.overview){content.append(skeleton('正在读取健康'));}else if(!m.overview.connected){content.append(disconnected());}else{
+    if(m.error&&!m.overview){content.append(errorState(m.error,()=>core.readHealth()));}else if(!m.overview){content.append(skeleton('正在读取健康'));}else if(!m.overview.connected){content.append(disconnected());}else{
+      if(m.error){const warning=el('div','health-refresh-error');warning.setAttribute('role','status');warning.append(small('更新失败，仍显示上次的记录。'),action('重试',()=>core.readHealth()));content.append(warning);}
       const layout=el('div',`health-layout is-${m.view}`);if(m.view==='today')layout.append(todayContent());else if(m.view==='detail')layout.append(detailContent());else if(!mobile&&globalThis.matchMedia('(min-width:901px)').matches)layout.append(todayContent());const trend=trendPanel();trend.classList.add('health-trend-panel');if(m.view!=='today'||!mobile)layout.append(trend);content.append(layout);if(m.view==='today'&&!mobile)content.append(weekCard());
       content.append(small(m.overview.updatedAt?`数据更新于 ${timeLabel(m.overview.updatedAt)}`:'这一天还没有记录。'));
     }
+    };
+    if(globalThis.WeftMotion?.transition)globalThis.WeftMotion.transition(content,paint,{key:`${m.day}/${m.view}/${m.metric}`});else paint();
     if(viewChanged){const scroller=mobile?document.getElementById('generic-page'):target;if(scroller)scroller.scrollTop=0;}
     if(focusName){const replacement=[...target.querySelectorAll('button')].find(n=>(n.getAttribute('aria-label')||n.textContent)===focusName);replacement?.focus({preventScroll:true});}
     const key=`${m.day}/${m.view}/${m.metric}`;const reduced=G.reducedMotion()||globalThis.WeftReplyMotion?.paused===true;

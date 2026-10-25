@@ -89,8 +89,11 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
     function renderModelServices() {
         const heading=ui.byId('account-model-section').querySelector('h2');heading.textContent='模型服务';
         heading.nextElementSibling.textContent='填一个地址和密钥，自动列出可用模型。';
-        const list=ui.byId('account-models-list');list.replaceChildren();list.classList.add('wm-model-service-list');
+        const list=ui.byId('account-models-list');
+        const signature=JSON.stringify([core.state.modelServices,core.state.modelServicesCanManage]);
         ui.byId('account-model-add').hidden=!core.state.modelServicesCanManage;ui.byId('account-models-status').textContent='';
+        if(list.dataset.servicesSnapshot===signature)return;
+        list.dataset.servicesSnapshot=signature;list.replaceChildren();list.classList.add('wm-model-service-list');
         if(!core.state.modelServices.length){list.append(ui.element('li','wm-model-empty','添加一个模型服务，就可以开始聊天。'));return;}
         for(const service of core.state.modelServices){
             const row=ui.element('li','wm-model-service-card'),open=ui.element('button','wm-model-service-open');open.type='button';

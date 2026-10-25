@@ -68,6 +68,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         menu.querySelector('button')?.focus();
     }
     function paintComposerExtras(value) {
+        ui.byId('message-form').dataset.composerState=core.state.submitting?'sending':value.running?'responding':'ready';
         folderChoice?.paint();
         const thinking = core.thinkingView();
         ui.byId('thinking-badge').hidden = !thinking.supported || !thinking.enabled;
@@ -106,6 +107,8 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         ui.byId('message-text').placeholder = '向 WeftMate 说说你的目标';
     }
     function mountComposer() {
+        ui.byId('conversation-pane').classList.add('chat-workspace');
+        globalThis.WeftTimeline?.decisionSurface('approval-bar');
         globalThis.WeftSlashMenu.mount(core,{field:ui.byId('message-text'),anchor:ui.byId('message-form'),toast:ui.toast,repaint:ui.updateAvailability});
         folderChoice=globalThis.WeftFolderChoice.create(core,{form:ui.byId('message-form'),tools:ui.byId('attachment-add').parentElement,toast:ui.toast,readDraft:ui.readMessageDraft});
         ui.receiveWindowsSendTo = async payload => {

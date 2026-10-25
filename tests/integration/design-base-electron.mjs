@@ -122,15 +122,16 @@ try {
     await capture('chat-' + theme);
     for (const view of ['activity', 'goals', 'library', 'health']) {
       await page.locator('.' + view + '-entry').evaluate(button => button.click());
-      const surface = page.locator('.' + view + '-surface'); await surface.waitFor({ state: 'visible' });
+      const surface = page.getByRole('region', { name: {activity:'动态',goals:'目标',library:'成果库',health:'健康'}[view], exact:true });
+      await surface.waitFor({ state: 'visible' });
       await page.waitForFunction(view => {
         const core = __feedbackSessionCore, model = core[view === 'goals' ? 'goalsPage' : view];
         return Object.entries(model || {}).every(([key,value]) => !/loading$/i.test(key) || !value);
       }, view);
-      const repeatedPage = await page.evaluate(view => {
+      const repeatedPage = await surface.evaluate((surface, view) => {
         const core = __feedbackSessionCore, method = 'read' + view[0].toUpperCase() + view.slice(1), read = core[method];
         let reads = 0; core[method] = (...args) => { reads++; return read(...args); };
-        const surface = document.querySelector('.' + view + '-surface'), children = [...surface.children];
+        const children = [...surface.children];
         document.querySelector('.' + view + '-entry').click(); core[method] = read;
         return {same:children.every((node,index)=>surface.children[index]===node),reads};
       }, view);

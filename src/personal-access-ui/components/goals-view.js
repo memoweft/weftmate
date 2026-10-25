@@ -7,16 +7,16 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
     const iconButton=(name,icon,action)=>{const n=button('',action,'button quiet small goals-icon');n.setAttribute('aria-label',name);n.title=name;n.append(WeftIcons.create(icon,16));return n;};
     const refresh=iconButton('刷新目标','sync',()=>core.readGoals());
     const head=el('div','goals-heading'),title=el('h1','','目标');title.tabIndex=-1;head.append(title,refresh);
-    target.classList.add('goals-page');target.replaceChildren(head,el('p','goals-intro','看看正在做的事，安排之后的事，持续推进想完成的目标。'));
+    target.classList.add('goals-page');target.replaceChildren(head,el('p','goals-intro','正在做的事、之后的安排，都有着落。'));
     const sections={};for(const [id,name]of [['tasks','进行中'],['schedules','定时任务'],['goals','长期目标']]){
         const section=el('section','goals-section'),header=el('div','goals-heading'),heading=el('h2','',name),list=el('div','goals-list');section.setAttribute('aria-label',name);header.append(heading);section.append(header,list);target.append(section);sections[id]={section,header,list};
     }
     const recent=el('div','goals-recent'),recentList=el('div','goals-list');recentList.hidden=true;recentList.id=`goals-recent-${crypto.randomUUID()}`;
     const offlineSection=el('section','goals-section'),offlineList=el('div','goals-list');offlineSection.setAttribute('aria-label','等电脑上线');offlineSection.append(el('h3','','等电脑上线'),offlineList);sections.tasks.section.append(offlineSection);offlineSection.hidden=true;
     core.offlineTasksChanged=()=>{render();};
-    const recentToggle=button('最近完成 · 保留 7 天',()=>{recentList.hidden=!recentList.hidden;recentToggle.setAttribute('aria-expanded',String(!recentList.hidden));},'chat-day-toggle goals-collapse');
+    const recentToggle=button('最近完成 · 保留 7 天',()=>{WeftAuxiliaryMotion.expand(recentList,recentToggle.getAttribute('aria-expanded')!=='true',recentToggle);},'chat-day-toggle goals-collapse');
     recentToggle.prepend(WeftIcons.create('chevron',16));recentToggle.setAttribute('aria-expanded','false');recentToggle.setAttribute('aria-controls',recentList.id);recent.append(recentToggle,recentList);sections.tasks.section.append(recent);
-    let form=null,signature='';
+    let form=null,signature='';const taskRows=new Map(),otherRows=new Map();
     const stateNames={running:'进行中',queued:'排队中',approval:'等待审批',question:'等待回答',stopping:'正在停止',unconfirmed:'结果待确认',completed:'已完成',failed:'失败',stopped:'已停止',active:'进行中',paused:'已暂停',blocked:'需要处理',complete:'已完成'};
     function confirmDelete(text,action,offlineTask=false){
         const body=el('p','muted',offlineTask?'取消后，电脑上线也不会做这件事。':'删除后不会再按这个安排运行。已完成的对话记录会保留。');
@@ -88,14 +88,25 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
     function menuButton(row,entries){const n=iconButton(`更多操作 ${row.title??row.text}`,'more',()=>WeftPopover.menu(n,entries,message=>notify(core.failureMessage(message))));n.setAttribute('aria-haspopup','menu');n.setAttribute('aria-expanded','false');return n;}
     function contentButton(row,action){const copy=button('',action,'goals-row-content');copy.setAttribute('aria-label',`${row.text?'编辑':'查看'} ${row.title??row.text}`);copy.append(el('h3','',row.title??row.text));return copy;}
     function taskRow(row){
+        const key=`${core.state.identityGeneration}:${row.taskId}`;
+        let record=taskRows.get(key);
+        if(record){record.row=row;record.title.textContent=row.title;record.meta.textContent=`${stateNames[row.status]??'处理中'} · ${row.startedAt?'已运行':'已等待'} ${Math.floor(row.elapsedSeconds/60)} 分钟`;record.step.textContent=row.step;record.source.textContent=row.conversationTitle;record.stop.hidden=!row.canStop;record.stop.disabled=core.goalsPage.busy.has(row.taskId);return record.item;}
+        record={row};
         const item=el('article','goals-row');item.setAttribute('aria-label',row.title);item.dataset.goalKey=row.taskId;
-        const copy=contentButton(row,()=>open(row));copy.append(el('span','goals-meta',`${row.conversationTitle} · ${stateNames[row.status]??'处理中'}`),el('span','goals-meta',`${row.startedAt?'已运行':'已等待'} ${Math.floor(row.elapsedSeconds/60)} 分钟`),el('span','goals-step',row.step));
-        const actions=el('div','goals-row-actions');if(row.canStop){const stop=button('停止',()=>core.stopOverviewTask(row));stop.disabled=core.goalsPage.busy.has(row.taskId);actions.append(stop);}actions.append(menuButton(row,[{name:'打开对话与步骤',action:()=>open(row)}]));item.append(copy,actions);return item;
+        const body=el('div','goals-task-copy'),detail=el('div','goals-task-detail');detail.hidden=true;detail.id=`goal-progress-${crypto.randomUUID()}`;
+        const copy=contentButton(row,()=>WeftAuxiliaryMotion.expand(detail,copy.getAttribute('aria-expanded')!=='true',copy));copy.setAttribute('aria-label',`展开进展 ${row.title}`);copy.setAttribute('aria-expanded','false');copy.setAttribute('aria-controls',detail.id);
+        copy.append(el('span','goals-meta',`${stateNames[row.status]??'处理中'} · ${row.startedAt?'已运行':'已等待'} ${Math.floor(row.elapsedSeconds/60)} 分钟`),WeftIcons.create('chevron',14));
+        const step=el('p','goals-step',row.step),source=el('p','goals-source',row.conversationTitle);
+        detail.append(step,source,button('打开对话与步骤',()=>open(record.row),'button quiet small'));body.append(copy,detail);
+        const actions=el('div','goals-row-actions'),stop=button('停止',()=>core.stopOverviewTask(record.row));stop.hidden=!row.canStop;stop.disabled=core.goalsPage.busy.has(row.taskId);actions.append(stop,menuButton(row,[{name:'打开对话与步骤',action:()=>open(record.row)}]));item.append(body,actions);
+        Object.assign(record,{item,title:copy.querySelector('h3'),meta:copy.querySelector('.goals-meta'),step,source,stop});taskRows.set(key,record);return item;
     }
     function stateBlock(kind,key,message){
+        const unsupported=kind==='error'&&message.startsWith('更新电脑上的');
+        if(unsupported)kind='unavailable';
         const block=el('div',`goals-state goals-state-${kind}`);block.setAttribute('role',kind==='error'?'alert':'status');
         if(kind==='loading')block.append(WeftControls.skeleton({rows:2}));
-        else{block.append(WeftIcons.create(kind==='error'?'warn':{tasks:'allow',schedules:'clock',goals:'chart'}[key],20),el('strong','',kind==='error'?'暂时无法读取':{tasks:'现在没有进行中的任务',schedules:'安排下一件事',goals:'持续推进想完成的事'}[key]),el('p','goals-meta',message));if(kind==='error')block.append(button('重试',()=>core.readGoals()));}
+        else{block.append(WeftIcons.create(kind==='error'?'warn':{tasks:'allow',schedules:'clock',goals:'chart'}[key],20),el('strong','',unsupported?`${{tasks:'任务进展',schedules:'定时任务',goals:'长期目标'}[key]}尚未接入`:kind==='error'?'暂时无法读取':{tasks:'现在没有进行中的任务',schedules:'安排下一件事',goals:'持续推进想完成的事'}[key]),el('p','goals-meta',unsupported?`更新电脑上的 WeftMate 后，就能在这里${{tasks:'查看正在做的事',schedules:'安排之后要做的事',goals:'接着推进长期计划'}[key]}。`:message));if(kind==='error')block.append(button('重试',()=>core.readGoals()));}
         return block;
     }
     function render(){
@@ -115,10 +126,11 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
         for(const [key,{list}]of Object.entries(sections)){
             const sectionSignature=JSON.stringify([model[key],model.errors[key],[...model.busy],model[key].length?null:model.loading,model.sessions,model.timeZone]);
             if(list.dataset.snapshot===sectionSignature)continue;list.dataset.snapshot=sectionSignature;
-            list.replaceChildren();list.setAttribute('aria-busy',String(model.loading));if(model.errors[key]){list.append(stateBlock('error',key,model.errors[key]));continue;}
-            const rows=key==='tasks'?model.tasks:model[key];if(!rows.length)list.append(stateBlock(model.loading?'loading':'empty',key,{tasks:'交代助手做事后，可以在这里查看进展。',schedules:'新建定时任务，也可以在对话里说“每天早上 8 点提醒我喝水”。',goals:'把想持续推进的事关联到一个对话，每次进展都留在原对话。'}[key]));
+            const nextRows=[];list.setAttribute('aria-busy',String(model.loading));if(model.errors[key]){nextRows.push(stateBlock('error',key,model.errors[key]+(model[key].length?' · 下面保留上次读取的结果。':'')));if(!model[key].length){list.replaceChildren(...nextRows);continue;}}
+            const rows=key==='tasks'?model.tasks:model[key];if(!rows.length)nextRows.push(stateBlock(model.loading?'loading':'empty',key,{tasks:'交代助手做事后，可以在这里展开查看进展。',schedules:core.state.personalCapabilities?.scheduleEditing===1?'按你设定的时间提醒，也可以在对话里直接交代。':'连接支持定时任务的电脑后，可以安排之后要做的事。',goals:core.state.personalCapabilities?.goals===1?'把想持续推进的事关联到一个对话。':'连接支持目标的电脑后，可以接着推进长期计划。'}[key]));
             for(const row of rows){
-                if(key==='tasks'){list.append(taskRow(row));continue;}
+                if(key==='tasks'){nextRows.push(taskRow(row));continue;}
+                const rowKey=`${core.state.identityGeneration}:${key}:${row.id}`,snapshot=JSON.stringify([row,model.busy.has(row.id)]),previous=otherRows.get(rowKey);if(previous?.snapshot===snapshot){nextRows.push(previous.item);continue;}
                 const item=el('article','goals-row'),actions=el('div','goals-row-actions');item.setAttribute('aria-label',row.title??row.text);item.dataset.goalKey=`${row.sessionId??row.source?.sessionId}/${row.id}`;
                 const edit=()=>row.temporary?open(row):showForm(key==='schedules'?'schedule':'goal',row),copy=contentButton(row,edit),entries=[];
                 if(key==='schedules'){
@@ -132,11 +144,13 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
                     if(row.description)copy.append(el('span','goals-step',row.description));copy.append(el('span','goals-meta',`${stateNames[row.phase]??'处理中'} · ${row.progress}${row.scheduleIds?.length?` · ${row.scheduleIds.length} 个定时任务`:''}`),el('span','goals-source',sourceTitle(row)));
                     entries.push({name:'查看目标详情',action:edit});if(row.phase!=='complete')entries.push({name:'完成目标',action:()=>core.manageLongGoal(row,'complete',crypto.randomUUID())});entries.push({name:'打开所属对话',action:()=>open(row)},{name:'归档目标',action:()=>core.manageLongGoal(row,'archive',crypto.randomUUID())});
                 }
-                actions.append(menuButton(row,entries));item.append(copy,actions);list.append(item);
+                actions.append(menuButton(row,entries));item.append(copy,actions);nextRows.push(item);otherRows.set(rowKey,{snapshot,item});
             }
+            WeftControls.reconcile(list,nextRows);
         }
-        const recentSignature=JSON.stringify(model.recent);if(recentList.dataset.snapshot!==recentSignature){recentList.dataset.snapshot=recentSignature;recentList.replaceChildren(...model.recent.map(taskRow));if(!model.recent.length)recentList.append(el('p','goals-empty','最近 7 天还没有完成的任务。'));}
+        const recentSignature=JSON.stringify(model.recent);if(recentList.dataset.snapshot!==recentSignature){recentList.dataset.snapshot=recentSignature;WeftControls.reconcile(recentList,model.recent.length?model.recent.map(taskRow):[el('p','goals-empty','最近 7 天还没有完成的任务。')]);}
+        for(const [key,record]of taskRows)if(!record.item.isConnected)taskRows.delete(key);for(const [key,record]of otherRows)if(!record.item.isConnected)otherRows.delete(key);
         if(focusedRow){const article=[...target.querySelectorAll('article')].find(n=>n.dataset.goalKey===focusedRow);[...article?.querySelectorAll('button,input')??[]].find(n=>(n.getAttribute('aria-label')??n.textContent)===focusedLabel)?.focus({preventScroll:true});}
     }
-    return {render,reset(){form?.remove();form=null;signature='';WeftPopover.closeMenu();render();},focus:()=>title.focus(),close(){WeftPopover.closeMenu();target.querySelector('dialog')?.close();}};
+    return {render,reset(){form?.remove();form=null;signature='';taskRows.clear();otherRows.clear();WeftPopover.closeMenu();render();},focus:()=>title.focus(),close(){WeftPopover.closeMenu();target.querySelector('dialog')?.close();}};
 }};
