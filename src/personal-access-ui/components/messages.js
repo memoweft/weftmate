@@ -13,7 +13,14 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         globalThis.WeftContent?.closeGallery(false);
         const list = ui.byId('transcript');
         globalThis.WeftTimeline?.placeDecisions(list,true);
-        list.replaceChildren(...(loading ? [WeftControls.skeleton({ tag: 'li' })] : []));
+        // Binding the first accepted session is a history read of the same
+        // message. Preserve its user anchor and disclosure through that read.
+        const pending=new Set(core.optimisticMessages().map(row=>core.rememberTurnRequest(row).key));
+        for(const child of [...list.children]) {
+            const key=child.dataset.messageKey;
+            if(!pending.has(key?.startsWith('request:')?key:`request:${key}`) && !pending.has(key) && ![...pending].some(key=>child.dataset.timeline===`steps-${key}`))child.remove();
+        }
+        if(loading && !list.children.length)list.append(WeftControls.skeleton({tag:'li'}));
         if (loading) { list.setAttribute('aria-busy', 'true'); ui.byId('chat-intro').hidden = true; }
         else list.removeAttribute('aria-busy');
         historyNotice('');
@@ -59,11 +66,15 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
     function renderOptimisticMessages() {
         const list = ui.byId('transcript');
         const rows = core.optimisticMessages();
+        const processes=core.messageProcesses(core.timelineEventsForContext(),rows);
         for (const node of list.querySelectorAll('[data-optimistic]'))
             if (!rows.some(row => row.requestId === node.dataset.optimistic)) node.remove();
         for (const row of rows) {
             let node = [...list.children].find(node => node.dataset.optimistic === row.requestId);
             if (!node) { node = ui.element('li', 'message user'); node.dataset.optimistic = row.requestId; list.append(node); }
+            const process=processes.find(process=>process.requestId===row.requestId);
+            node.dataset.messageKey=process?.messageKey || row.requestId;
+            if(process)node.dataset.seq=String(process.position);
             const signature = JSON.stringify([row.text, row.status, row.files]);
             if (node.dataset.signature === signature) continue;
             node.dataset.signature = signature; node.classList.toggle('is-sending', row.status === 'sending');
@@ -137,7 +148,12 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             const originalImages = event.type === 'user.message' ? core.unpreviewedOriginalImages(event) : [];
             if (typeof event.data?.text !== 'string' && images.length === 0 && files.length === 0 && originalImages.length === 0)
                 continue;
-            const row = ui.element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`);
+            const messageKey=core.messagePresentationKey(event);
+            const priorUser=event.type==='user.message' && [...list.children].find(node=>node.classList.contains('user') &&
+                (node.dataset.messageKey===messageKey || event.data?.receiptId && node.dataset.receiptId===event.data.receiptId));
+            const row = priorUser || ui.element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`);
+            if(priorUser){row.replaceChildren();delete row.dataset.optimistic;row.classList.remove('is-sending','send-failed');}
+            row.dataset.messageKey=messageKey;
             row.tabIndex=0;row.setAttribute('role','group');row.setAttribute('aria-label',`${event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(event.data?.text||'附件').slice(0,80).join('')}`);
             if (event.type === 'user.message' && core.receiptIdPattern.test(event.data?.receiptId || ''))
                 row.dataset.receiptId = event.data.receiptId;
@@ -199,7 +215,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (event.type === 'user.message' && taskLabel) row.append(ui.element('small', 'message-task-label', taskLabel));
             if (event.data.truncated === true && !event.data.fullTextReadFailed)
                 { const placeholder = ui.element('span', 'truncated'); placeholder.append(WeftControls.skeleton({rows:1,compact:true,tag:'span'})); row.append(placeholder); }
-            const next = [...list.children].find(n => Number(n.dataset.seq) > event.seq);
+            const next = [...list.children].find(n => n!==row && Number(n.dataset.seq) > event.seq);
             if (next)
                 list.insertBefore(row, next);
             else

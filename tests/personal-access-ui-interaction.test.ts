@@ -529,7 +529,9 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
      return id
    }, clearTimeout(id: number) { taskTimers.delete(id) }, setInterval: (callback: () => void) => { const id=++intervalId;refreshTicks.set(id,callback);return id }, clearInterval(id: number) { refreshTicks.delete(id) } }
   runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/icons.js'), 'utf8') + '\nwindow.WeftIcons = globalThis.WeftIcons;', context)
-  runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/timeline.js'), 'utf8'), context)
+  // Browser window exports are also global bindings. This VM keeps window in
+  // a separate object, so bridge the real renderer just like WeftIcons above.
+  runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/timeline.js'), 'utf8') + '\nglobalThis.WeftTimeline = window.WeftTimeline;', context)
   runInNewContext(executableSource.replace('    ui.loadAttachmentHasher', '    globalThis.__testCore = core;\n    ui.loadAttachmentHasher'), context)
   const named = (label: string, name: string | RegExp) => typeof name === 'string' ? label === name : name.test(label);
   const dynamicButtons = () => get('session-list').querySelectorAll('button');
@@ -567,6 +569,11 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
 function visibleText(node: Element): string {
   return [node.textContent, ...node.children.map(visibleText)].join(' ')
 }
+
+// Message-owned disclosures are separate transcript rows. These feature tests
+// count messages and receipt-bound task cards, rather than disclosure siblings.
+const messageRows = (list: Element) => list.children.filter(row => row.classList.contains('message'))
+const messageAndTaskRows = (list: Element) => list.children.filter(row => row.classList.contains('message') || row.dataset.conversationTask)
 
 test('VM document delivers CustomEvent detail through its standard event listeners', async () => {
   const page = harness([], [], false); await flush();
@@ -942,7 +949,7 @@ test('synthetic conversation progress attaches to the exact dotted RPC receipt a
   await flush()
   page.tick() // The existing refresh reads roots after the command list has loaded.
   for (let i = 0; i < 30 && !page.get('transcript').children.some((row) => row.dataset.conversationTask); i++) await flush()
-  const rows = page.get('transcript').children
+  const rows = messageAndTaskRows(page.get('transcript'))
   const card = rows.find((row) => row.dataset.conversationTask === source.commandId)!
   assert.ok(card)
   assert.equal(rows[0].dataset.receiptId, source.receiptId)
@@ -1133,7 +1140,7 @@ test('synthetic cached progress becomes visibly stale and a late receipt moves i
       sourceReceiptId: source.receiptId, jobId: 'job-stale', jobState: 'stopping' }] }
   page.tick(); for (let i = 0; i < 15; i++) await flush()
   const card = page.get('transcript').children.find((row) => row.dataset.conversationTask)!
-  const rows = page.get('transcript').children
+  const rows = messageAndTaskRows(page.get('transcript'))
   assert.equal(rows.indexOf(card), rows.findIndex((row) => row.dataset.receiptId === source.receiptId) + 1)
   assert.match(visibleText(card), /后台正在停止.*等待实际结束记录/)
   assert.doesNotMatch(visibleText(card), /实际停止|待更新/)
@@ -1215,7 +1222,8 @@ test('terminal-output-limit desktop keeps an old pure-reply card bound to its so
   const card = page.get('transcript').children.find((row) => row.dataset.conversationTask === source.commandId)!
   assert.ok(card)
   assert.equal(card.children[0].textContent, '回复状态')
-  assert.equal(card.parentNode!.children.indexOf(card), card.parentNode!.children.findIndex((row) => row.dataset.receiptId === source.receiptId) + 1)
+  const rows = messageAndTaskRows(card.parentNode!)
+  assert.equal(rows.indexOf(card), rows.findIndex((row) => row.dataset.receiptId === source.receiptId) + 1)
   assert.match(visibleText(card), /因输出限制结束，尚未确认完整交付/)
   assert.doesNotMatch(visibleText(card), /工具进展|已正常结束|用户拒绝|费用|没有成果/)
   assert.equal(page.get('timeline-status').textContent, '回复达到长度限制。发送“继续”接着处理。')
@@ -1303,11 +1311,13 @@ test('history polling catches up across pages and shows a persisted user abort o
   for (let attempt = 0; attempt < 15 && !page.get('timeline-status').textContent.includes('历史仍在补读'); attempt++) await flush()
   assert.match(page.get('timeline-status').textContent, /历史仍在补读/)
   assert.doesNotMatch(page.get('timeline-status').textContent, /尚无结束记录/)
-  assert.doesNotMatch(visibleText(page.get('transcript')), /Stopped/)
+  // No user or assistant message supplies a display language in this fixture;
+  // the real message-process renderer uses the Chinese interface fallback.
+  assert.doesNotMatch(visibleText(page.get('transcript')), /已停止/)
   page.tick()
-  for (let attempt = 0; attempt < 15 && !visibleText(page.get('transcript')).includes('Stopped'); attempt++) await flush()
+  for (let attempt = 0; attempt < 15 && !visibleText(page.get('transcript')).includes('已停止'); attempt++) await flush()
   assert.equal(page.get('timeline-status').textContent,'')
-  assert.match(visibleText(page.get('transcript').querySelector('.execution-block')!), /Stopped/)
+  assert.match(visibleText(page.get('transcript').querySelector('.execution-block')!), /已停止/)
 })
 
 test('new sync records render as read-only phone sources while an older host keeps its normal chat', async () => {
@@ -1588,8 +1598,8 @@ test('DSH history renders image-only and mixed user turns from owner-scoped GET,
     ] } },
   ]
   const page = harness([], events, false)
-  for (let attempt = 0; attempt < 20 && page.get('transcript').children.length < 3; attempt++) await flush()
-  const rows = page.get('transcript').children
+  for (let attempt = 0; attempt < 20 && messageRows(page.get('transcript')).length < 3; attempt++) await flush()
+  const rows = messageRows(page.get('transcript'))
   assert.equal(rows.length, 3, 'image-only user message is visible')
   const firstGallery = rows[0].children.find((child) => child.className === 'synced-image-gallery')!
   assert.equal(firstGallery.children.length, 1)
@@ -1629,8 +1639,8 @@ test('desktop history offers a generic original download only for unstaged large
       unpreviewedOriginalImageIds: [largeOriginalId] } },
   ]
   const page = harness([], events, false)
-  for (let attempt = 0; attempt < 20 && page.get('transcript').children.length < 2; attempt++) await flush()
-  const rows = page.get('transcript').children
+  for (let attempt = 0; attempt < 20 && messageRows(page.get('transcript')).length < 2; attempt++) await flush()
+  const rows = messageRows(page.get('transcript'))
   const largeOnly = rows[0].children.find((child) => child.className === 'synced-image-original-list')!
   assert.equal(largeOnly.children.length, 1)
   const largeLink = largeOnly.children[0] as any
