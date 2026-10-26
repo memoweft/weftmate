@@ -17,8 +17,30 @@ import Foundation
         do { state = try vault.load() } catch { try vault.clear(); state = OfflineState() }
     }
     public func clear() throws {
-        revision = UUID(); modelTask?.cancel(); modelTask = nil; state = OfflineState()
+        suspend(); state = OfflineState()
         try vault.clear()
+    }
+    public func suspend() { revision=UUID();modelTask?.cancel();modelTask=nil }
+    private func eraseDerived(reset: Bool,removedIDs: [String] = []) throws {
+        suspend()
+        if phoneFirst {
+            let retired=(state.retiredPhoneTurnIDs ?? []).union(state.turns.map(\.id)).union(state.synced)
+            let previous=state.erasure
+            state.retiredPhoneTurnIDs=retired
+            state.erasure = .init(hostID:vault.identity.hostId,removedIDs:Array(Set((previous?.removedIDs ?? [])+removedIDs)).sorted(),reset:reset || previous?.reset == true)
+        }
+        state.turns=[];state.contexts=[:];state.workTasks=nil
+        state.phoneHandovers=nil;state.pendingSubmission=nil;state.phoneTurnFragments=nil
+        if !phoneFirst { state.synced=[] }
+        state.snapshot=nil
+        try vault.clear()
+        if phoneFirst { try vault.save(state) }
+    }
+    public func revoke() throws {
+        if phoneFirst { try eraseDerived(reset:true) } else { try clear() }
+    }
+    public func acknowledgeErasure(_ id: String) throws {
+        guard state.erasure?.id == id else { return };state.erasure=nil;try vault.save(state)
     }
     private func valid(_ ticket: UUID) throws {
         guard revision == ticket else { throw OfflineFailure.authorization }
@@ -37,7 +59,7 @@ import Foundation
             else if case APIFailure.server(let code, _) = error { status = code }
             else { status = nil }
             if status.map({ [401, 403, 404].contains($0) }) == true || (error as? APIFailure) == .notAuthenticated {
-                try clear(); throw OfflineFailure.authorization
+                try revoke(); throw OfflineFailure.authorization
             }
             throw error
         }
@@ -46,7 +68,7 @@ import Foundation
               snapshot.control.hostId == vault.identity.hostId, !snapshot.control.accountId.isEmpty,
               authorization.accountId == snapshot.control.accountId,
               authorization.generation == snapshot.generation, snapshot.control.generation == snapshot.generation else {
-            try clear(); throw OfflineFailure.authorization
+            try revoke(); throw OfflineFailure.authorization
         }
     }
     public func excludeUnsubmittedPhoneTurns(_ exclusions: PhoneTranscriptSync) throws {
@@ -66,7 +88,7 @@ import Foundation
                      control: (String) async throws -> OfflineAuthorization) async throws {
         guard !busy else { throw OfflineFailure.busy }; busy = true
         defer { busy = false }
-        let ticket = revision
+        var ticket = revision
         do {
             var request = OfflineSyncRequest(publicJwk: try vault.publicJwk(), generation: state.snapshot?.generation ?? 0, hashes: state.snapshot?.hashes ?? [:])
             request.phoneFirst=phoneFirst ? true : nil
@@ -75,6 +97,7 @@ import Foundation
             try valid(ticket)
             let delta = try vault.open(envelope, identity: identity)
             try merge(delta)
+            ticket=revision
             try await check(control: control); try valid(ticket)
             try vault.save(state)
             // A model and a nonempty copy are unrelated to the computer's ability to receive originals.
@@ -86,7 +109,7 @@ import Foundation
                 state.pendingSubmission=submission;try vault.save(state)
                 let result = try await submit(submission); try valid(ticket)
                 try await check(control: control); try valid(ticket)
-                guard result.generation == delta.generation else { try clear(); throw OfflineFailure.authorization }
+                guard result.generation == delta.generation else { try revoke(); throw OfflineFailure.authorization }
                 let fragment=submission.turnFragments?.first
                 let ids = Set(submission.turns.map(\.id)+(submission.turnFragments ?? []).map(\.id))
                 guard result.receipts.allSatisfy({ ids.contains($0.id) && $0.state == "synced" }) else { throw OfflineFailure.invalid }
@@ -124,9 +147,9 @@ import Foundation
             }
         } catch {
             if revision == ticket {
-                if case APIFailure.server(_, let code) = error, code == "OFFLINE_RESET_REQUIRED" { try clear() }
-                if case OfflineFailure.identity = error { try clear() }
-                if case APIFailure.server(let status, _) = error, [401, 403].contains(status) { try clear() }
+                if case APIFailure.server(_, let code) = error, code == "OFFLINE_RESET_REQUIRED" { try revoke() }
+                if case OfflineFailure.identity = error { try revoke() }
+                if case APIFailure.server(let status, _) = error, [401, 403].contains(status) { try revoke() }
             }
             throw error
         }
@@ -174,19 +197,17 @@ import Foundation
               delta.items.allSatisfy({ $0.currentState == "current" && $0.text.utf16.count <= 2000 }),
               delta.recent.count <= 10, delta.recent.allSatisfy({ $0.messages.count <= 20 && $0.messages.allSatisfy({ ["user", "assistant"].contains($0.role) && $0.text.utf16.count <= 4000 }) }) else { throw OfflineFailure.invalid }
         let reset = delta.reset || (state.snapshot != nil && state.snapshot?.generation != delta.generation)
-        if reset || !delta.remove.isEmpty {
-            // Delete the old file/key before applying any replacement. History can inherit erased facts.
-            try vault.clear(); state.turns = []; state.synced = []; state.contexts = [:]
-            state.phoneHandovers=nil;state.pendingSubmission=nil;state.phoneTurnFragments=nil
-            if reset { state.snapshot = nil }
+        var items = Dictionary(uniqueKeysWithValues: (reset ? [] : state.snapshot?.items ?? []).map { ($0.id, $0) })
+        if (reset || !delta.remove.isEmpty) && (state.snapshot != nil || !state.turns.isEmpty || state.pendingSubmission != nil) {
+            try eraseDerived(reset:reset,removedIDs:delta.remove)
         }
-        var items = Dictionary(uniqueKeysWithValues: (state.snapshot?.items ?? []).map { ($0.id, $0) })
         for id in delta.remove { items[id] = nil }
         for item in delta.items { items[item.id] = item }
         guard Set(items.keys) == Set(delta.hashes.keys), items.count <= 500 else { throw OfflineFailure.invalid }
         var next = delta; next.items = items.values.sorted { $0.id < $1.id }
         guard try JSONEncoder().encode(next).count <= 2 * 1024 * 1024 else { throw OfflineFailure.invalid }
         state.snapshot = next
+        try vault.save(state)
     }
     public func retainWorkTask(_ task: OfflineWorkTask) throws {
         guard state.snapshot?.generation == task.generation, task.hostId == vault.identity.hostId else { throw OfflineFailure.identity }
@@ -206,6 +227,7 @@ import Foundation
     public func enqueuePhoneTurns(_ turns: [OfflineTurn], generation: Int, handover: OfflineHandover? = nil) throws {
         guard !busy, state.snapshot?.generation == generation else { throw OfflineFailure.notReady }
         let encoder=JSONEncoder();encoder.outputFormatting=[.sortedKeys]
+        guard turns.allSatisfy({ state.retiredPhoneTurnIDs?.contains($0.id) != true }) else { return }
         for turn in turns {
             guard turn.memoryRefs.count <= 64,!turn.messages.isEmpty,turn.messages.first?.role == "user",
                   turn.messages.count <= 2,turn.messages.allSatisfy({ ["user","assistant"].contains($0.role) && !$0.text.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty }) else { throw OfflineFailure.invalid }

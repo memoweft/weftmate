@@ -17,10 +17,14 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
     var memoryHostID: String? { ready ? hostID : nil }
     var hostID="synthetic-computer"
     var authorizations=0
+    var memoryRevision: UUID?=UUID()
+    var memoryErasure: OfflineReplicaErasure?
+    var replicaHostID: String? { hostID }
+    func acknowledgeMemoryErasure(_ id: String) { if memoryErasure?.id == id { memoryErasure=nil } }
     func authorizeMemory(control: (String) async throws -> OfflineAuthorization) async throws {
         authorizations += 1
         let authorization=try await control(hostID)
-        guard authorization.authorized,authorization.hostId == hostID,authorization.accountId == memoryAccountID,authorization.generation == generation else { memoryItems=[];ready=false;throw OfflineFailure.authorization }
+        guard authorization.authorized,authorization.hostId == hostID,authorization.accountId == memoryAccountID,authorization.generation == generation else { memoryItems=[];ready=false;memoryRevision=UUID();memoryErasure = .init(hostID:hostID,removedIDs:[],reset:true);throw OfflineFailure.authorization }
     }
     func erase() { enqueued=[];synced=[];memoryItems=[];ready=false }
     var generation: Int?=1
@@ -47,4 +51,5 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
         let json: [String:Any]=["authorized":true,"hostId":host,"accountId":cloudLogin.subject ?? "", "generation":controlGeneration]
         return try JSONDecoder().decode(OfflineAuthorization.self,from:JSONSerialization.data(withJSONObject:json))
     }
+    func removeComputerReplica(_ host: String) { offline.erase();offline.memoryRevision=UUID() }
 }

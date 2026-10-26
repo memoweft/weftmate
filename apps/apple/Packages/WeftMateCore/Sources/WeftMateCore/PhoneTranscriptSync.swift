@@ -6,9 +6,12 @@ public struct PhoneTranscriptSync: Codable, Sendable {
     public var hostID: String?
     public var excludedSourceIDs: Set<String> = []
     public var excludedTextDigests: Set<String> = []
+    /// ID-only barrier survives generation changes, receipt loss and computer replacement.
+    public var retiredTurnIDs: Set<String>?
+    public var removedHostIDs: Set<String>?
     public init() {}
     func excludes(id: String, text: String) -> Bool {
-        excludedSourceIDs.contains(id) || excludedTextDigests.contains(Self.digest(text))
+        excludedSourceIDs.contains(id) || retiredTurnIDs?.contains(id) == true || excludedTextDigests.contains(Self.digest(text))
     }
     static func digest(_ text: String) -> String {
         SHA256.hash(data:Data(text.lowercased().filter { !$0.isWhitespace }.utf8)).map { String(format:"%02x",$0) }.joined()

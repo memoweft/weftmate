@@ -119,6 +119,13 @@ public struct OfflineReceipts: Codable, Sendable {
     public let receipts: [Receipt]
     public var fragmentReceipts: [FragmentReceipt]? = nil
 }
+public struct OfflineReplicaErasure: Codable, Sendable {
+    public var id: String = UUID().uuidString
+    public var hostID: String
+    public var removedIDs: [String]
+    public var reset: Bool
+    public init(hostID: String,removedIDs: [String],reset: Bool) { self.hostID=hostID;self.removedIDs=removedIDs;self.reset=reset }
+}
 public struct OfflineState: Codable, Sendable {
     public var snapshot: OfflineSnapshot?
     public var turns: [OfflineTurn] = []
@@ -128,6 +135,8 @@ public struct OfflineState: Codable, Sendable {
     public var phoneHandovers: [OfflinePhoneHandover]? = nil
     public var pendingSubmission: OfflineSubmission? = nil
     public var phoneTurnFragments: [String: OfflineTurnFragmentProgress]? = nil
+    public var retiredPhoneTurnIDs: Set<String>? = nil
+    public var erasure: OfflineReplicaErasure? = nil
     public init() {}
 }
 public enum OfflineFailure: Error, LocalizedError {

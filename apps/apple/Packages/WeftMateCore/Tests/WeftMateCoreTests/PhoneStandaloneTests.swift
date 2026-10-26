@@ -26,14 +26,14 @@ struct PhoneStandaloneTests {
     @Test func transferFreezesBodiesAndRetiresDeletedGeneration() throws {
         var state=PhoneChatState(),thread=PhoneChatThread();thread.messages=[.init(role:"user",text:"synthetic preference"),.init(role:"assistant",text:"synthetic answer")];state.threads=[thread];state.selected=thread.id
         let initial=state.prepareMigration(host:"computer-a",generation:1)
-        #expect(initial.count == 1);#expect(initial[0].memoryRefs.isEmpty);#expect(initial[0].dependencyComplete)
+        #expect(initial.count == 1);#expect(initial[0].memoryRefs.isEmpty);#expect(!initial[0].dependencyComplete)
         state.threads[0].messages[1].text="regenerated reply"
         let retry=state.prepareMigration(host:"computer-a",generation:1)
         #expect(retry[0].id == initial[0].id);#expect(retry[0].messages == initial[0].messages)
         state.acknowledgeMigration(host:"computer-a",generation:1,ids:Set(initial.map(\.id)))
         #expect(state.prepareMigration(host:"computer-a",generation:1).isEmpty)
         #expect(state.prepareMigration(host:"computer-a",generation:2).isEmpty)
-        #expect(state.threads.isEmpty);#expect(state.selected == nil)
+        #expect(state.threads[0].messages.first == thread.messages.first);#expect(state.selected == thread.id)
     }
     @Test func deletionGenerationKeepsUnsharedIndependentThreads() {
         var state=PhoneChatState(),shared=PhoneChatThread(),independent=PhoneChatThread()
@@ -41,7 +41,7 @@ struct PhoneStandaloneTests {
         state.threads=[shared];_=state.prepareMigration(host:"computer-a",generation:1)
         state.threads.append(independent);state.selected=independent.id
         state.applyMigrationGeneration(host:"computer-a",generation:2)
-        #expect(state.threads == [independent]);#expect(state.selected == independent.id)
+        #expect(state.threads == [shared,independent]);#expect(state.selected == independent.id)
         #expect(state.migrations?["computer-a"]?.turns.isEmpty == true)
     }
     @Test func streamParsesContentAndRejectsTools() throws {

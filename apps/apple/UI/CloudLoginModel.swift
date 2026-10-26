@@ -283,6 +283,7 @@ final class CloudLoginModel: ObservableObject {
                 }
                 await refreshComputerConversations()
             } else { requestedComputerID=nil;computerConversations=[];computerClients=[:];computerLists=[:] }
+            guard ticket == operation,authenticated,subject == self.subject else { return }
             #if os(iOS)
             if let app { app.phoneChat.activate(app:app);app.phoneChat.computerDirectoryChanged(hostIDs:Set(directory.hosts.map { $0.hostId ?? $0.id })) }
             #endif

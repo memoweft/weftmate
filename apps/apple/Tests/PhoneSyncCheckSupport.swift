@@ -23,4 +23,5 @@ final class PhoneSyncKeys: CredentialStore,@unchecked Sendable {
         guard authorizationAvailable else { throw APIFailure.transport(.unavailable) }
         return try JSONDecoder().decode(OfflineAuthorization.self,from:JSONSerialization.data(withJSONObject:["authorized":true,"hostId":host,"accountId":cloudLogin.subject ?? "","generation":generation]))
     }
+    func removeComputerReplica(_ host: String) { offline.removeComputer(host) }
 }
