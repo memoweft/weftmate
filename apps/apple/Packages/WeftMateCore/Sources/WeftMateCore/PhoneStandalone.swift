@@ -105,7 +105,7 @@ public struct PhoneChatState: Codable, Sendable {
     public var reminderReads: [String:ReminderReadToken]?
     public var reminderCancellations: [ReminderCancellation]?
     public var pausedReminderIDs: [String:Set<String>]?
-    public var memory: PhoneMemoryState?
+    public var transcriptSync: PhoneTranscriptSync?
     public init() {}
 }
 /// Account identity is the cloud issuer and subject, never email or a computer ID.
@@ -145,7 +145,10 @@ public final class PhoneChatStore {
         guard FileManager.default.fileExists(atPath:file.path) else { return .init() }
         guard let key=try credentials.load(key:prefix+".aes") else { throw APIFailure.credentialStorage }
         let data=try AES.GCM.open(AES.GCM.SealedBox(combined:Data(contentsOf:file)),using:SymmetricKey(data:key),authenticating:aad)
-        return try JSONDecoder().decode(PhoneChatState.self,from:data)
+        let upgraded=try PhoneTranscriptStorage.upgrade(data)
+        let state=try JSONDecoder().decode(PhoneChatState.self,from:upgraded)
+        if upgraded != data { try save(state) }
+        return state
     }
     public func save(_ state: PhoneChatState) throws {
         let key: SymmetricKey
@@ -204,7 +207,7 @@ extension PhoneChatState {
         let offered=Set(migration.turns.map(\.id))
         for thread in threads {
             guard !(migrations ?? [:]).contains(where: { $0.key != host && $0.value.conversationIDs.contains(thread.id) }) else { continue }
-            for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) {
+            for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) && transcriptSync?.excludes(id:message.id,text:message.text) != true {
                 var messages=[OfflineMessage(role:"user",text:([message.text]+(message.attachments ?? []).map(\.placeholder)).filter { !$0.isEmpty }.joined(separator:"\n"))]
                 if thread.messages.indices.contains(index+1),thread.messages[index+1].role == "assistant",!thread.messages[index+1].text.isEmpty { messages.append(.init(role:"assistant",text:thread.messages[index+1].text)) }
                 migration.turns.append(.init(id:message.id,conversationId:thread.id,timestamp:Int64(message.date.timeIntervalSince1970*1000),messages:messages,memoryRefs:thread.messages.indices.contains(index+1) ? thread.messages[index+1].memoryRefs ?? [] : [],dependencyComplete:thread.messages.indices.contains(index+1) ? thread.messages[index+1].dependencyComplete ?? true : true))
@@ -212,11 +215,10 @@ extension PhoneChatState {
             }
         }
         if migrations == nil { migrations=[:] };migrations?[host]=migration
-        return migration.turns.filter { !migration.accepted.contains($0.id) }
+        return migration.turns.filter { !migration.accepted.contains($0.id) && transcriptSync?.excludes(id:$0.id,text:$0.messages.first?.text ?? "") != true }
     }
     public mutating func applyMigrationGeneration(host: String,generation: Int) {
         guard let existing=migrations?[host],existing.generation != generation else { return }
-        memory?.items.removeAll { existing.conversationIDs.contains($0.threadID ?? "") }
         threads.removeAll { existing.conversationIDs.contains($0.id) }
         for row in reminders ?? [] where existing.conversationIDs.contains(row.sessionID ?? "") { cancelReminder(.reminder(id:row.id,hostID:nil)) }
         reminders?.removeAll { existing.conversationIDs.contains($0.sessionID ?? "") }

@@ -6,7 +6,28 @@
 
 Mac/iPhone 已包含对话附件上传、历史附件预览/保存、明确确认不确定本地消息后接管、账户与原会话读取、按账户保存草稿和离线缓存、明确选择模型后续聊、记忆页面、对话内执行时间线、来源/停止、审批与信息问答，以及 UTF-8 文本成果预览/保存/分享。Watch 通过 iPhone 原生连接显示当前进度、审批与最近回复，前台/刷新观察到任务完成时触感反馈；远程推送与真机配对验证尚未完成。源码接入和离线测试通过不等于真实后端或设备验收。
 
-## 构建与打开
+## iPhone 作为电脑窗口（APPLE-1-WINDOW）
+
+iPhone 只加密保存原话、附件、日期、草稿、模型配置和原话交收据，不再提炼、纠正、遗忘或置顶自己的记忆。旧容器首次读取会原地升级：丢弃轻量记忆正文与提炼开关，保留旧遗忘所需的来源 ID 和正文摘要作为禁止重交记录；原话和已交收据保留。屏蔽也作用于旧加密发件箱中尚未上交的原话，升级不会上传旧轻量正文。
+
+记忆页展示当前账号、当前电脑的获准副本和来源，空副本就显示空状态。手机模型可在原话交接尚未完成或选择稍后交时读取副本；账号切换或电脑移除不会恢复手机自记。电脑在线时，“修改或忘掉电脑记忆”进入现有电脑接口；电脑不可达时只读获准副本。未连接过电脑也可用已配置模型聊天，排队、停止、原话同步、提醒来源和电脑任务入口保持可用。
+
+生成器同时提供 `WindowTest`、`WindowTestRelease` 配置和 `WeftMatePhoneWindowTest` / `WeftMateWatchWindowTest` / `WeftMateMacWindowTest` Scheme（构建方案）。手机身份为 `com.weftmate.apple.windowtest`，Watch 为 `com.weftmate.apple.windowtest.watch`，伴随绑定匹配，显示名均为“WeftMate 苹果测试”。第 5 包沿此配置签名；`WindowTestRelease` 使用空 entitlement（能力声明）供聊天和同步试用，健康能力的签名与真机验收另行处理。模拟器使用 `apple-1-window-*` 名称，界面用例使用独立随机 namespace（命名空间）。
+
+Windows 可运行 `python apps/apple/Scripts/generate_project.py` 和 `python -m unittest discover -s apps/apple/Tests -p 'test_window_*.py'`。Swift 与原生界面结果须在 Mac 实测；源码和项目生成成功不代表已编译通过。Mac 单独一个执行会话先运行：
+
+```sh
+python3 apps/apple/Scripts/run_window_checks.py --phase core --artifacts <包的evidence目录>
+python3 apps/apple/Scripts/run_window_checks.py --phase state --artifacts <包的evidence目录>
+python3 apps/apple/Scripts/run_window_checks.py --phase mac --artifacts <包的evidence目录>
+python3 apps/apple/Scripts/run_window_checks.py --phase ui --phone-id <本包模拟器实际UUID> --artifacts <包的evidence目录>
+```
+
+核心阶段运行 `swift test --package-path apps/apple/Packages/WeftMateCore --jobs 2`；状态阶段注册新的 `PhoneWindowModelChecks`，并运行 `PhoneStandaloneModelChecks`、`PhoneReminderModelChecks`、附件和模型服务回归。前者用真实合成 HTTP/SSE（服务器推送流）计数，跨过原 20 秒停顿、换会话和重新激活，断言只有显式聊天请求；同时覆盖未交完即可读副本、部分收据、大量交接稍后再交、账号/电脑隔离与授权变更。旧容器迁移用例直接构造旧加密文件，核对原话、日期、草稿、模型和收据保留，且旧正文不再落盘。
+
+UI 阶段只跑 `PhoneWindowUITests/testMemoryRoutes`：无副本、有副本、电脑不可达，以及本地编辑入口消失，应用截图保存在 `PhoneWindow.xcresult`。脚本每条命令限 20 分钟并回收本次进程组，采用 `-jobs 4 -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1`，不开 `Simulator.app`；批后 `shutdown all` 并休息 3 分钟，发现新 `gpuRestart` 报告再等 10 分钟。新应用崩溃报告或无法读取诊断目录会分别记录；完整闭环和真机签名、后台行为留给后续设备验收。
+
+## 常规构建与打开
 
 在本目录执行：
 

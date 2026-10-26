@@ -773,14 +773,17 @@ final class AppleAppModel: ObservableObject {
         guard let session, let directory = timelineStateDirectory else { return }
         #if os(iOS)
         let phoneFirst=true
+        phoneChat.activate(app:self)
+        let transcriptExclusions=phoneChat.state.transcriptSync
         let supportsWork=mainChat.capabilities.supports("workAndChat")
         #else
         let phoneFirst=false
+        let transcriptExclusions: PhoneTranscriptSync?=nil
         let supportsWork=false
         #endif
         await offline.poll(session: session, client: client, directory: directory.appendingPathComponent("Offline"),
             store: KeychainCredentialStore(service: cloudNamespace + ".offline"),
-            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, multipleComputers:cloudLogin.multiHost, workAndChat:supportsWork, control: offlineAuthorization)
+            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, multipleComputers:cloudLogin.multiHost, workAndChat:supportsWork, transcriptExclusions:transcriptExclusions, control: offlineAuthorization)
         #if os(iOS)
         await phoneChat.synchronize(app:self)
         if offline.hostOffline { _ = await watchSnapshotBytes() }
@@ -2440,6 +2443,24 @@ private final class CaptureCredentials: CredentialStore, @unchecked Sendable {
     func load(key: String) -> Data? { lock.withLock { values[key] } }
     func save(_ data: Data, key: String) { lock.withLock { values[key] = data } }
     func delete(key: String) { lock.withLock { values[key] = nil } }
+}
+#endif
+
+#if DEBUG && os(iOS)
+extension AppleAppModel {
+    func seedPhoneWindowFixture(scene: String) throws {
+        let args=ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"),args.contains("--phone-window-fixture") else { return }
+        if scene != "no-copy" {
+            let value: [String:Any] = ["server":["origin":"https://window.example.invalid"],
+                "account":["ownerId":"window-owner","username":"synthetic","displayName":"合成账号"],
+                "device":["id":"window-device","name":"苹果测试"],"hostId":"window-computer","verification":"verified"]
+            session=try JSONDecoder().decode(AccountSession.self,from:JSONSerialization.data(withJSONObject:value))
+            cloudLogin.seedPhoneWindowAccount()
+            try offline.seedPhoneWindowReplica(disconnected:scene == "unreachable")
+        }
+        restoring=false
+    }
 }
 #endif
 
