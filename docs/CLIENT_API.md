@@ -1858,7 +1858,7 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 `state:"synced"` 表示轮次已接收，不代表记忆已形成；可选稳定历史标识、分片与手机交接的增量契约见下节。客户端保留原手机对话可读，不把只读历史标识当作可发送的原生会话。
 
 
-### MEM-7：手机原对话交给电脑（旧 D63（已被 D119 取代），与APPLE-7共用）
+### MEM-7：手机原对话交给电脑（D119）
 
 沿3.19的两个精确路径与原认证／CSRF（跨站请求防护）／物理设备／删除代次，不新增权限。`phoneFirst:true` 接收公钥与对话，不依赖可下发的云模型；允许 `model:null`，后台整理使用电脑自己的后台模型。本机模型也可用。旧请求不声明phoneFirst／任务能力且没有云模型时仍返回 `OFFLINE_MODEL_REQUIRED`；新字段只兼容增加。
 
@@ -1866,11 +1866,11 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 
 `/offline/turns` 可增加 `handover:{id,totalTurns,conversationCount,bytes?,complete}`，每包仍最多50轮／256 KiB，最后包complete为true。id是手机持久冻结队列的随机批次标识；totalTurns是整批轮数，bytes是冻结turns的JSON（数据交换格式）UTF-8字节数。没有此字段的旧手机仍可接收；phoneFirst登记的旧轮次进入同一导入管线，按本次完整请求建批次。新客户端400／INVALID_REQUEST时可退回一次原字段形状；认证／权限失败不回退。
 
-回执兼容增加 `receipts:[{id,state:"synced",sessionId?,chatId?,importId?,memoryState?}]`。synced只在原文历史与MEM-1任务均持久保存后发出，表示已接收而非已形成；重发相同轮次／正文返回稳定历史标识，同账号同轮次ID跨手机去重，正文变化409。phoneFirst和新交接队列的去重不依赖Cookie（会话凭据）续期。普通M3-A电脑副本离线轮次保持原摄取／依赖处理。手机全回执后清轻量条目、水位与屏蔽摘要；未确认或部分确认继续使用条目，原对话保留。真实形成状态由imports取得。
+回执兼容增加 `receipts:[{id,state:"synced",sessionId?,chatId?,importId?,memoryState?}]`。synced只在原文历史与MEM-1任务均持久保存后发出，表示已接收而非已形成；重发相同轮次／正文返回稳定历史标识，同账号同轮次ID跨手机去重，正文变化409。phoneFirst和新交接队列的去重不依赖Cookie（会话凭据）续期。普通M3-A电脑副本离线轮次保持原摄取／依赖处理。安卓与手机网页不再产生轻量条目，旧容器的 `phoneMemory` 字段读入即丢弃，不上传。手机只使用电脑同步来的 `items`；全回执后清待交队列，未确认或部分确认时保留待交原话，原对话始终保留。真实形成状态由imports取得。
 
 电脑复用MEM-1的导入任务／后台模型调度／来源回执／暂停继续／取消／整批忘掉，不另设形成接口。来源 `importSource` / `importSources` 的app为phone、appName为「手机上的对话」，兼容增加deviceName、turnId，保留原日期。手机历史加入现有sessions/chats列表，`phoneHistory:true,readOnly:true,source:"phone"`，可查看、搜索、复制、引用和导出；不冒充可直接发送的原生电脑会话，不提供开旁聊入口，不能在原历史内续聊或重新生成。旧会话事件投影的 `data.phoneEventId` 保留同一个稳定时间线标识，供旧端兼容的来源引用使用；当前界面不再将该字段接到开旁聊动作，标识仍按账号隔离。
 
-达到100轮或256 KiB等待确认；小量静默整理。导入记录增加deviceName、handoverId、from/to、conversationCount、received、expectedTurns、estimate、confirmationRequired。沿 `/memory/backfill` 增加 `action:"import-confirm",jobId,confirm:true`；确认后进入原running，可用原import-pause／resume。预计模型、输入／输出词元与费用区间沿MEM-1，默认后台模型变动前重新估算。完成时动态静默记录「已把手机上的N段对话整理进记忆」，等待确认时动态指向设置→记忆。整批忘掉不删除手机原文。
+安卓与手机网页连上电脑就自动交原话，达到100轮或256 KiB也不再要求手机确认；保留 `handover` 标识及计数字段供旧电脑接收。旧电脑可能仍在导入页等待确认。电脑端现有合同：导入记录增加deviceName、handoverId、from/to、conversationCount、received、expectedTurns、estimate、confirmationRequired。沿 `/memory/backfill` 增加 `action:"import-confirm",jobId,confirm:true`；确认后进入原running，可用原import-pause／resume。预计模型、输入／输出词元与费用区间沿MEM-1，默认后台模型变动前重新估算。完成时动态静默记录「已把手机上的N段对话整理进记忆」，等待确认时动态指向设置→记忆。整批忘掉不删除手机原文。
 
 **超长历史分片**：普通turns单条消息仍最多16,384 UTF-16字符。新客户端可用同路径请求 `{generation,turns:[],turnFragments:[{id,conversationId,timestamp,index,count,encoding:"json-utf8-base64",sha256,data}],handover?}`。先冻结完整原turn对象，将其JSON UTF-8字节按96,000字节切块；data为标准有填充Base64（编码），sha256是完整原turn字节的小写64位十六进制摘要。index从0开始，count固定；身份、原对话、时间、分片总数和摘要在所有分片一致。每包依旧256 KiB以内，不裁用户消息或助手回复。
 
@@ -1878,7 +1878,7 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 
 **手机发起删除**：同路径可带 `{generation,turns:[],forgetConversations:[原conversationId]}`（每次最多50个）。仅提交过或部分提交过该对话的受信物理手机可请求；电脑先持久登记墓碑并禁止重交，再用MEM-1来源遗忘任务清原来源／派生记忆和电脑历史，推进原清理代次。回 `{generation:新代次,receipts:[],forgottenConversations:[id]}` 只表示删除请求持久接受，真正清完的导入记录才为forgotten。客户端更新代次、重新取副本；未交独立原对话不受派生删除影响。重发被删对话的轮次回state:forgotten，不能复活来源。
 
-原生业务路径限定为 `/offline/sync`、`/offline/turns`、`/memory/status`、`/memory/backfill`。客户端须分别处理 `memoryAuthority`、稳定历史回执、长消息分片和删除方向；`fragmentReceipts` 不能当整轮确认。原生加密容器保留手机原始对话与未确认轻量内容，接收电脑 `reset` 不先清空手机原始容器，普通电脑副本仍按原删除合同清空。上述新字段沿原 RSA（非对称加密）信封、账号授权与删除代次，不授予额外权限。
+原生业务路径限定为 `/offline/sync`、`/offline/turns`、`/memory/status`、`/memory/backfill`。客户端须分别处理 `memoryAuthority`、稳定历史回执、长消息分片和删除方向；`fragmentReceipts` 不能当整轮确认。原生加密容器保留手机原始对话，接收电脑 `reset` 不先清空手机原始容器，普通电脑副本仍按原删除合同清空。上述新字段沿原 RSA（非对称加密）信封、账号授权与删除代次，不授予额外权限。
 
 ### 遗忘确认范围凭据
 
