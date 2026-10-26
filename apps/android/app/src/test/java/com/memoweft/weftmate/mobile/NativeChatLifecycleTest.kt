@@ -52,6 +52,8 @@ class NativeChatLifecycleTest {
         var lastPresentation=""
         var creations = 0
         var sent = 0
+        var phoneMessages = JSONObject().put("messages", JSONArray()).put("turnStatus", "")
+        var sentText = ""
         var approval = "auto"
         var selectedProfile = "test-model"
         var selectionFailure: ApiFailure? = null
@@ -128,8 +130,10 @@ class NativeChatLifecycleTest {
             "chat.send" -> {
                 assertEquals("phone-created-conversation", params.getString("conversationId"))
                 // Delegated turns follow the bound session, rather than the phone's saved default.
+                sentText = params.getString("text")
                 sentProfile = boundSessionProfile; sent++; JSONObject().put("state", "accepted")
             }
+            "conversations.messages" -> phoneMessages
             else -> JSONObject()
         }
         override suspend fun phone(action: String, params: JSONObject) = JSONObject()
@@ -146,6 +150,28 @@ class NativeChatLifecycleTest {
 
     private val service = JSONObject().put("serviceId", "model-service-00000000-0000-4000-8000-000000000048")
     private val v25 = JSONObject().put("modelId", "mimo-v2.5").put("name", "MiMo v2.5")
+
+    @Test fun failedPairedPhoneReplyRemainsVisibleAfterRefreshAndCanRetryWithoutLosingDraft() = runBlocking {
+        val e=Environment();val f=Fixture(e)
+        try {
+            f.chat.bootstrap()
+            e.phoneMessages=JSONObject().put("turnStatus","failed").put("turnErrorCode","OPERATION_FAILED")
+                .put("messages",JSONArray().put(JSONObject().put("id","synthetic-user").put("role","user").put("text","合成失败消息")))
+            f.chat.select(JSONObject().put("id","phone-created-conversation").put("source","phone"))
+            f.chat.refresh()
+            assertTrue(f.chat.error.contains("回复没能完成"))
+            assertTrue(f.chat.canRetryPhoneReply)
+            f.chat.edit("尚未发送的新草稿")
+            f.chat.retryPhoneReply()
+            until { e.sent == 1 }
+            assertEquals("合成失败消息",e.sentText)
+            assertEquals("尚未发送的新草稿",f.chat.draft)
+            e.phoneMessages.put("turnStatus","completed").remove("turnErrorCode")
+            f.chat.refresh()
+            assertEquals("",f.chat.error)
+            assertFalse(f.chat.canRetryPhoneReply)
+        } finally { f.close() }
+    }
 
     @Test fun modelMenuSelectionSendsHostContractAndUsesItsReceiptForTheNextMessage() = runBlocking {
         val e = Environment(); val f = Fixture(e)
