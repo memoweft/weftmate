@@ -101,6 +101,7 @@ public struct OfflineSubmission: Codable, Sendable, Equatable {
     public let generation: Int
     public let turns: [OfflineTurn]
     public var handover: OfflineHandover? = nil
+    public var turnFragments: [OfflineTurnFragment]? = nil
     /// The size check and PersonalClient must use the exact same wire encoding.
     public func encoded() throws -> Data {
         let encoder=JSONEncoder();encoder.outputFormatting=[.sortedKeys,.withoutEscapingSlashes]
@@ -109,8 +110,14 @@ public struct OfflineSubmission: Codable, Sendable, Equatable {
 }
 public struct OfflineReceipts: Codable, Sendable {
     public struct Receipt: Codable, Sendable { public let id, state: String }
+    public struct FragmentReceipt: Codable, Sendable {
+        public let id, state: String
+        public let index: Int
+        public var sha256: String? = nil
+    }
     public let generation: Int
     public let receipts: [Receipt]
+    public var fragmentReceipts: [FragmentReceipt]? = nil
 }
 public struct OfflineState: Codable, Sendable {
     public var snapshot: OfflineSnapshot?
@@ -120,6 +127,7 @@ public struct OfflineState: Codable, Sendable {
     public var workTasks: [OfflineWorkTask]? = nil
     public var phoneHandovers: [OfflinePhoneHandover]? = nil
     public var pendingSubmission: OfflineSubmission? = nil
+    public var phoneTurnFragments: [String: OfflineTurnFragmentProgress]? = nil
     public init() {}
 }
 public enum OfflineFailure: Error, LocalizedError {

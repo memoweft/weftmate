@@ -91,23 +91,9 @@ import Testing
         #expect(try await f.submissions().isEmpty)
         #expect(f.engine.state.turns.count == 1 && f.engine.state.synced.isEmpty)
     }
-    @Test func longTurnStaysPendingWhileShortTurnsAdvance() async throws {
-        let f=try await PhoneSyncFixture();defer { f.close() };try await f.sync()
-        var long=PhoneChatThread(),short=PhoneChatThread()
-        long.messages=[.init(role:"user",text:String(repeating:"长",count:17000))]
-        short.messages=[.init(role:"user",text:"仍可先交的短话")];f.phone.threads=[long,short]
-        let turns=f.phone.prepareMigration(host:f.identity.hostId,generation:1)
-        try f.engine.enqueuePhoneTurns(turns,generation:1,handover:f.phone.migrations?[f.identity.hostId]?.handover)
-        // A long original is retained for APPLE-3 fragmentation; the current handover stays open.
-        try await f.sync()
-        let submissions=try await f.submissions()
-        #expect(submissions.count == 1 && (submissions[0]["turns"] as! [Any]).count == 1)
-        #expect((submissions[0]["handover"] as! [String:Any])["complete"] as? Bool == false)
-        #expect(f.engine.state.turns.count == 2 && f.engine.state.synced == [short.messages[0].id])
-    }
 }
 
-@MainActor private final class PhoneSyncFixture {
+@MainActor final class PhoneSyncFixture {
     let process=Process()
     let directory=FileManager.default.temporaryDirectory.appendingPathComponent("phone-sync-"+UUID().uuidString)
     let keys=MemoryStore()
@@ -117,12 +103,12 @@ import Testing
     let client: PersonalClient
     let origin: String
     var phone=PhoneChatState()
-    init() async throws {
+    init(sourceName: String = "phone_sync_server.mjs") async throws {
         vault=try OfflineVault(identity:identity,directory:directory,store:keys)
         engine=try OfflineReplica(vault:vault,phoneFirst:true)
         client=PersonalClient(credentialStore:keys)
         let pipe=Pipe()
-        let source=URL(fileURLWithPath:#filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Tests/phone_sync_server.mjs")
+        let source=URL(fileURLWithPath:#filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Tests/"+sourceName)
         process.executableURL=URL(fileURLWithPath:"/usr/bin/env");process.arguments=["node",source.path];process.standardOutput=pipe
         try process.run()
         var data=Data()

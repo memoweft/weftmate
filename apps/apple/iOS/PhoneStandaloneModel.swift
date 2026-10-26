@@ -160,9 +160,6 @@ import WeftMateCore
             if pending.isEmpty {
                 handoffCount=0;handoffBytes=0;handoffApproved=false;handoffDeferred=false
             } else if (pending.count >= 100 || handoffBytes >= 256*1024),!handoffApproved { return }
-            if pending.contains(where: { $0.messages.contains { $0.text.utf16.count > 16384 } }) {
-                notice="有一段对话比较长，仍在等待交给电脑。这里的原话会保留。"
-            }
             if !pending.isEmpty,let migration=state.migrations?[host] {
                 let ids=Set(migration.handoverTurnIDs ?? pending.map(\.id))
                 try app.offline.enqueuePhoneTurns(migration.turns.filter { ids.contains($0.id) },generation:generation,handover:migration.handover)
