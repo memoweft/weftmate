@@ -397,7 +397,7 @@ backup=/root/weftmate-deploy/dep-1-backup-20261011T043145Z
 
 ## S4 云端加密备份上线（尚未部署）
 
-设计与客户端协议见 [CLOUD_BACKUP.md](../../../docs/CLOUD_BACKUP.md)。服务只有备份密文、包裹后的主钥匙和传输／配额元数据，没有恢复码、备份主钥匙、内容条数或文件名。结构 10 的 `010-cloud-backups.sql` 新增五张表及索引：`cloud_backup_keys`、`cloud_backups`、`cloud_backup_chunks`、`cloud_backup_quota`、`cloud_backup_controls`，并增加现有清理代次的删除触发器；已有表结构与历史迁移不改写。沿启动迁移账本执行一次。遗忘／权限清理代次增加时删除账号旧云备份和未完成上传，包裹钥匙保留，旧代次重新上传返回冲突。
+设计与客户端协议见 [CLOUD_BACKUP.md](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLOUD_BACKUP.md)。服务只有备份密文、包裹后的主钥匙和传输／配额元数据，没有恢复码、备份主钥匙、内容条数或文件名。结构 10 的 `010-cloud-backups.sql` 新增五张表及索引：`cloud_backup_keys`、`cloud_backups`、`cloud_backup_chunks`、`cloud_backup_quota`、`cloud_backup_controls`，并增加现有清理代次的删除触发器；已有表结构与历史迁移不改写。沿启动迁移账本执行一次。遗忘／权限清理代次增加时删除账号旧云备份和未完成上传，包裹钥匙保留，旧代次重新上传返回冲突。
 
 可选配置 `CLOUD_BACKUP_ACCOUNT_BYTES` 默认 `314572800`（300 MiB，每账号），`CLOUD_BACKUP_GLOBAL_BYTES` 默认 `6442450944`（6 GiB，全站）。二者必须为正的安全整数字节数；未配置就用默认值。全站约 12 GB 可用盘时给数据库、WAL（预写日志）、邮件和运维暂存留空间；上涨配额必须先评估磁盘，不依赖账号数乘每人额度。额度包含完整备份和待传整包预留，服务器事务阻止并发超用。超限返回 `BACKUP_QUOTA_EXCEEDED` 或 `BACKUP_GLOBAL_QUOTA_EXCEEDED`，带该账号当前用量与配置上限；不会静默丢弃旧备份。
 

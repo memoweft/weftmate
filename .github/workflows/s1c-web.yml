@@ -1,6 +1,7 @@
 name: S1c Web and Android
 on:
   pull_request:
+    paths-ignore: ['**/*.md', 'docs/**']
   push:
     branches: [main]
   workflow_dispatch:
@@ -32,6 +33,7 @@ jobs:
   browser:
     name: Web cloud login interactions
     runs-on: ubuntu-24.04  # Playwright chromium is not available on ubuntu-latest (26.04) yet
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,7 +45,9 @@ jobs:
       - run: npx --prefix apps/mobile-ui playwright install --with-deps chromium
       - run: node --test tests/personal-cloud-web.test.ts apps/mobile-ui/tests/cloud-login.test.mjs apps/mobile-ui/tests/chat-interactions.test.mjs apps/mobile-ui/tests/release-blockers.test.mjs
       - run: node --test apps/mobile-ui/tests/approval-interactions.test.mjs
-      - run: node --test apps/mobile-ui/tests/visual-interactions.test.mjs
+      # Screenshot walkthrough: runs after merge on main, not on pull requests.
+      - if: github.event_name != 'pull_request'
+        run: node --test apps/mobile-ui/tests/visual-interactions.test.mjs
       - run: node --test services/cloud/test/web-login.test.mjs
         env:
           WEFTMATE_WEB_E2E: 'true'

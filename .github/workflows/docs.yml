@@ -1,0 +1,26 @@
+name: Docs
+
+# Pull requests that only touch Markdown or docs/ skip the heavy workflows
+# (their paths-ignore); this keeps identity, link and entry-size checks on
+# every pull request. Pushes to main still run everything.
+on:
+  pull_request:
+
+jobs:
+  hygiene:
+    name: Public repository hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Hygiene
+        run: |
+          node --test tests/public-hygiene.test.mjs
+          node .github/scripts/public-hygiene.mjs

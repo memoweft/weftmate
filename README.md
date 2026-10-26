@@ -2,13 +2,14 @@
 
 跨设备、跨对话的个人 AI 助手：同一个账号下，无论在电脑、手机还是手表，换了对话还是换了模型，面对的都是同一个能自主办事、越用越懂你的 WeftMate。
 
-- 接手维护先读：[PROJECT-MAP.md](PROJECT-MAP.md)
-- 工作规矩：[AGENTS.md](AGENTS.md)
+- 从这里开始（分区与该读哪一页）：[PROJECT-MAP.md](PROJECT-MAP.md)
+- 怎么干活：[AGENTS.md](AGENTS.md)
 - 愿景：[docs/VISION.md](docs/VISION.md)
-- 决定：[docs/DECISIONS.md](docs/DECISIONS.md)
+- 本人定下的规则：[docs/DECISIONS.md](docs/DECISIONS.md)
+- 本人新增的改动：[docs/OWNER_CHANGES.md](docs/OWNER_CHANGES.md)
 - 路线与当前工作：[docs/PLAN.md](docs/PLAN.md)
 - 开发环境与命令：[docs/SETUP.md](docs/SETUP.md)
-- 架构与接口：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)、[docs/CLIENT_API.md](docs/CLIENT_API.md)
+- 架构：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 | 端 | 位置 |
 |---|---|

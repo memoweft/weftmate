@@ -1,6 +1,6 @@
 # 架构与加载链
 
-本文按源码说明启动、请求、运行时和数据的连接关系。产品决定见 [DECISIONS](DECISIONS.md)，客户端字段与错误见 [CLIENT_API](CLIENT_API.md)；代码、CI、安装验收与日用认可的层级见 [项目地图](../PROJECT-MAP.md) 第 4 节。源码存在不等于安装版或线上部署已验收。
+本文按源码说明启动、请求、运行时和数据的连接关系，是「桌面宿主」分区的入口页。
 
 ## 1. 桌面与个人宿主启动
 
@@ -76,7 +76,7 @@ flowchart TD
 
 ## 4. 逻辑对话、历史与记忆
 
-逻辑对话链为 [chat-identity.mjs](../src/personal-access/chat-identity.mjs) → [chats.mjs](../src/personal-access/chats.mjs)／[chat-timeline.mjs](../src/personal-access/chat-timeline.mjs) → 原生历史投影。`chatId` 聚合执行段，`sessionId` 仍是原执行与记忆来源。原主聊天入口按 D92 取消，底层 `kind:main`、接力、生命周期保护与默认后台投递为兼容保留；细节见 [IA_MAIN_CHAT](IA_MAIN_CHAT.md)。
+逻辑对话链为 [chat-identity.mjs](../src/personal-access/chat-identity.mjs) → [chats.mjs](../src/personal-access/chats.mjs)／[chat-timeline.mjs](../src/personal-access/chat-timeline.mjs) → 原生历史投影。`chatId` 聚合执行段，`sessionId` 仍是原执行与记忆来源。原主聊天入口按 D92 取消，底层 `kind:main`、接力、生命周期保护与默认后台投递为兼容保留；细节见 [IA_MAIN_CHAT](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/IA_MAIN_CHAT.md)。
 
 历史分三层：DSH 原生日志是执行来源；宿主公开历史缓存可重建；逻辑时间线建立渐进内存索引并提供签名分页。缓存命中不代表首次无缓存读取已有物理范围保证。工具原始详情仍从原日志按需读取。
 
@@ -95,11 +95,11 @@ flowchart TD
 | 同步与离线 | [personal-sync/](../src/personal-sync/) 保存账户与设备来源事件；[personal-offline/](../src/personal-offline/) 管加密副本、删除代次与补交。同步事实不重新派发电脑动作 |
 | 云与中继 | [personal-cloud/](../src/personal-cloud/)、[personal-relay/](../src/personal-relay/) 接 [services/cloud/](../services/cloud/)；账号、设备目录、连接、密文暂存与备份按各自协议工作。源码与实际部署须分别核验 |
 
-手机不连电脑的聊天与轻量记忆沿其独立路径；电脑任务仍绑定确定电脑及项目，不因另一台在线自动迁移。协议见 CLIENT_API、[CLOUD](CLOUD.md) 与 [CLOUD_BACKUP](CLOUD_BACKUP.md)。
+手机不连电脑的聊天与轻量记忆沿其独立路径；电脑任务仍绑定确定电脑及项目，不因另一台在线自动迁移。协议见 CLIENT_API、[CLOUD](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLOUD.md) 与 [CLOUD_BACKUP](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLOUD_BACKUP.md)。
 
 ## 6. 连接器与其他账户服务
 
-[personal-connectors/](../src/personal-connectors/) 使用固定 DSH 的 MCP（模型上下文协议）客户端处理连接、发现与调用；WeftMate 负责隔离进程、账户配置、凭据与审批。`load_tools` 仍由 DSH 提供，不另建模型工具调度。内置邮件与日历入口见 [service-server.mjs](../src/personal-connectors/service-server.mjs)，依赖和许可见 [ST7B_DEPENDENCIES](ST7B_DEPENDENCIES.md)。
+[personal-connectors/](../src/personal-connectors/) 使用固定 DSH 的 MCP（模型上下文协议）客户端处理连接、发现与调用；WeftMate 负责隔离进程、账户配置、凭据与审批。`load_tools` 仍由 DSH 提供，不另建模型工具调度。内置邮件与日历入口见 [service-server.mjs](../src/personal-connectors/service-server.mjs)，依赖和许可见 [ST7B_DEPENDENCIES](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/ST7B_DEPENDENCIES.md)。
 
 第三方凭据与模型密钥复用主进程加密库；[vault.mjs](../src/personal-connectors/vault.mjs) 按账户与连接器划分名称空间，配置和列表不返回真实值。工具结果是外部资料，不能取得用户指令或执行授权。具体请求、默认审批和错误边界见 CLIENT_API 连接器一节。
 

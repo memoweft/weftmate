@@ -1,6 +1,7 @@
 name: Pinned DSH vendor tests
 on:
   pull_request:
+    paths-ignore: ['**/*.md', 'docs/**']
   push:
     branches: [main]
   workflow_dispatch:
