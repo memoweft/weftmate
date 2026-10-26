@@ -6,11 +6,6 @@ import { failure } from './common.mjs';
 import { MAX_BODY } from './constants.mjs';
 import { phoneTurnKey } from './phone-history.mjs';
 
-export const PHONE_AUTO_LIMIT = Object.freeze({ turns:100,bytes:256*1024 });
-export function phoneNeedsConfirmation(count, bytes) {
-  return count >= PHONE_AUTO_LIMIT.turns || bytes >= PHONE_AUTO_LIMIT.bytes;
-}
-
 const digest = value => createHash('sha256').update(value).digest('hex');
 const terminal = state => ['applied', 'completed', 'no_change', 'done', 'succeeded'].includes(state);
 const canonical = value => JSON.stringify(value, (_, v) => v && typeof v === 'object' && !Array.isArray(v)
@@ -79,10 +74,16 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       received: job.items.length, expectedTurns: job.expectedTurns, confirmationRequired: job.confirmationRequired } : {}) });
   const duplicates = ownerId => new Set(jobs(ownerId).filter(j => j.state !== 'forgotten').flatMap(j => j.items.filter(i => i.done || i.receipts.length).map(i => i.key)));
   async function modelFor(ownerId) {
-    const catalog = await context.backend.listModels({ ownerId });
-    const state = context.accountState(ownerId), id = state.backgroundModelProfileId ?? currentChatProfile(state, id => catalog.some(m => m.id === id));
+    const catalog = (await context.backend.listModels({ ownerId })).filter(m => m.configured !== false);
+    const state = context.accountState(ownerId), id = catalog.some(m => m.id === state.backgroundModelProfileId)
+      ? state.backgroundModelProfileId : currentChatProfile(state, id => catalog.some(m => m.id === id));
     return catalog.find(m => m.id === id) ?? null;
   }
+  const missingPhoneModel = (ownerId, job) => context.activity?.record(ownerId, {
+    key: `phone-import:${job.id}:model-required`, type: 'memory.paused',
+    title: '手机对话已保存，等电脑配好聊天模型后自动整理',
+    summary: '去设置 → 模型服务添加聊天模型，配好后会自动继续。', level: 'silent',
+  });
   async function preview(ownerId, app, paths) {
     const files = await sourceFiles(app, paths), imported = duplicates(ownerId), seen = new Set(), items = [];
     for (const file of files) for (const c of await read(app, file)) {
@@ -213,10 +214,26 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
     }
     if (job.countPending) await refreshCount(ownerId, job.id);
     const selectedModel = await modelFor(ownerId);
-    if (!selectedModel || selectedModel.id !== job.estimate.profileId) {
+    if (job.app === 'phone') {
+      if (!selectedModel) {
+        if (job.state !== 'awaiting_confirmation' || job.confirmationRequired) {
+          await save(ownerId, records => { const j=records.find(j=>j.id===job.id);
+            if(!['running','awaiting_confirmation'].includes(j.state))return;
+            j.state='awaiting_confirmation';j.confirmationRequired=false;j.error='电脑还没有可用的聊天模型，配好后会自动整理。'; });
+          await missingPhoneModel(ownerId, job);
+        }
+        return;
+      }
+      if (job.state === 'awaiting_confirmation' || selectedModel.id !== job.estimate?.profileId) {
+        await save(ownerId, records => { const j=records.find(j=>j.id===job.id);
+          if(!['running','awaiting_confirmation'].includes(j.state))return;
+          j.state='running';j.confirmationRequired=false;j.error=null;
+          j.estimate=estimateImport(j.items.filter(i=>!i.done),selectedModel,context.usage.settings(ownerId).prices[selectedModel.id]??defaultUsagePrice(selectedModel)); });
+      }
+      if(!permit(ownerId,job.routeId))return;
+    } else if (!selectedModel || selectedModel.id !== job.estimate.profileId) {
       await save(ownerId, records => { const j=records.find(j=>j.id===job.id);if(j.state!=='running')return;
-        if(j.app==='phone'){j.state='awaiting_confirmation';j.confirmationRequired=true;j.estimate=estimateImport(j.items.filter(i=>!i.done),selectedModel,context.usage.settings(ownerId).prices[selectedModel?.id]??defaultUsagePrice(selectedModel));j.error='后台模型已改变，请查看新的预计用量后继续。';}
-        else {j.state='paused';j.error='后台模型已改变，请取消这次导入，重新选择文件查看用量后开始。';} });
+        j.state='paused';j.error='后台模型已改变，请取消这次导入，重新选择文件查看用量后开始。'; });
       return;
     }
     const item = job.items.find(i => !i.done && !i.deleted);
@@ -315,7 +332,7 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
         if (closed) break;
         await reconcileStopped(ownerId, structuredClone(j)).catch(() => {});
       }
-      for (const ownerId of Object.keys(context.rootState.accounts)) for (const j of jobs(ownerId).filter(j => ['running', 'forgetting'].includes(j.state))) {
+      for (const ownerId of Object.keys(context.rootState.accounts)) for (const j of jobs(ownerId).filter(j => ['running', 'forgetting'].includes(j.state) || j.app==='phone' && j.state==='awaiting_confirmation')) {
         if (closed) break;
         const processingState=j.state;
         try { await process(ownerId, structuredClone(j)); }
@@ -352,14 +369,13 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       job.from=job.items.map(i=>i.at).sort()[0]??null;job.to=job.items.map(i=>i.at).sort().at(-1)??null;
       if(handover.complete || job.items.length+job.skipped>=job.expectedTurns){
         job.items.sort((a,b)=>a.at.localeCompare(b.at)||a.turnId.localeCompare(b.turnId));
-        job.confirmationRequired=phoneNeedsConfirmation(Math.max(handover.totalTurns,job.items.length+job.skipped),
-          Math.max(handover.bytes??0,job.items.reduce((n,item)=>n+(item.bytes??0),0)));
-        job.state=!job.items.length?'completed':job.confirmationRequired||!model?'awaiting_confirmation':'running';
+        job.confirmationRequired=false;
+        job.state=!job.items.length?'completed':!model?'awaiting_confirmation':'running';
+        if(!model)job.error='电脑还没有可用的聊天模型，配好后会自动整理。';
       }
     });
     const job=jobs(ownerId).find(j=>j.id===jobId);
-    if(job.state==='awaiting_confirmation')await context.activity?.record(ownerId,{key:`phone-import:${job.id}:confirmation`,
-      type:'memory.paused',title:'手机上的对话等你确认整理',summary:`${new Set(job.items.map(i=>i.id)).size} 段对话，去设置 → 记忆查看预计用量。`,level:'silent'});
+    if(job.state==='awaiting_confirmation')await missingPhoneModel(ownerId,job);
     return {importId:jobId,state:job.state};
   }
   async function forgetPhone(ownerId, conversationIds) {
