@@ -82,7 +82,6 @@ async function refreshAttachmentDrafts(generation=attachmentViewGeneration){if(!
     status(`附件草稿未能恢复 · ${safeError(e)}`,true);return false}}
 
 function selectConversation(id){uiCore.cancelNextSuggestions?.();closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.sharedGeneration++;state.chatSource='phone';state.restorePending=false;state.sharedAwaiting=null;state.scrollPinned=true;
-  if(globalThis.WeftPhone?.active&&state.conversationId!==id)void WeftPhone.flushMemory(state.conversationId);
   try{localStorage.removeItem(chatSourceKey())}catch{}status('');closeToast();
   state.activeSend=null;state.sendUncertain=false;state.conversationId=id;try{if(id)localStorage.setItem(selectionKey(),id);else localStorage.removeItem(selectionKey())}catch{}
   closeAttachmentMenu();loadDraft();page('chat');scrollBottom(true);if(id&&!globalThis.WeftPhone?.owns(id))void refreshHandoff(id)}

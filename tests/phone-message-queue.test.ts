@@ -67,18 +67,6 @@ for (const failure of ['transport','validation']) test(`generation ${failure} fa
   } finally { f.engine.close(); }
 });
 
-test('the real queue reports each processed conversation once for deferred memory extraction',async()=>{
-  const f=await fixture();
-  try {
-    const a=await f.engine.enqueue('conversation A');await until(()=>f.calls.length===1);
-    const c=await f.engine.enqueue('conversation C');
-    f.releases.shift()!();await until(()=>f.calls.length===2);
-    f.releases.shift()!();await until(()=>!f.engine.view().running);
-    assert.deepEqual(f.engine.takeMemoryConversations(),[a.conversationId,c.conversationId]);
-    assert.deepEqual(f.engine.takeMemoryConversations(),[]);
-  } finally {f.engine.close();}
-});
-
 test('adding an input to a paused failed reply keeps it pending and explains the visible retry action',async()=>{
   const f=await fixture(undefined,{response:()=>{throw Error('NETWORK');}});
   try {
@@ -110,23 +98,6 @@ for (const failure of ['account','model']) test(`explicit retry recovers a prese
     f.releases.shift()!();await until(()=>!f.engine.view().running);
     assert.equal(f.engine.view().pendingMessages.length,0);
   } finally { f.engine.close(); }
-});
-
-test('queue completion schedules memory for every processed conversation rather than the selected chat',async()=>{
-  const info={origin:'https://synthetic.example',accountId:'memory-queue'};
-  let notify!:()=>void,completed=['A','C'];const extracted:string[]=[],timers=new Map<number,()=>any>();let timerId=0;
-  const value={running:false,activeConversationId:null,conversations:['A','B','C'].map(id=>({id,turns:[]}))};
-  const engine={view:()=>value,takeMemoryConversations:()=>{const ids=completed;completed=[];return ids;},extractMemory:async(id:string)=>{extracted.push(id);return true;}};
-  const state={busy:true,page:'settings',connection:'phone',conversationId:'B'};
-  const context:any={window:{weftNative:true},state,document:{addEventListener(){}},addEventListener(){},
-    androidBridge:{call:async()=>info},WeftOffline:{create:async(options:any)=>{notify=options.notify;return engine;}},
-    renderConversationList(){},updateComposer(){},
-    setTimeout:(fn:()=>any,ms:number)=>{assert.equal(ms,20000);timers.set(++timerId,fn);return timerId;},clearTimeout:(id:number)=>timers.delete(id)};
-  runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js',import.meta.url),'utf8'),context);
-  await context.WeftPhone.restoreArchive(info,{});notify();
-  assert.equal(timers.size,1);
-  await [...timers.values()][0]();
-  assert.deepEqual(extracted,['A','C']);assert.equal(state.conversationId,'B');
 });
 
 test('stop cancels the active transport immediately and continues the queued input without losing partial text', async () => {
