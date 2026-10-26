@@ -153,6 +153,7 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
 
 let memoryPullMounted=false;
 function renderPhoneMemoryReplica(target,snapshot=globalThis.WeftPhone?.memoryReplica){
+  if(state.memory){state.memory.flow++;state.memory.loading=false;}
   target.replaceChildren(heading('记忆'));
   if(!snapshot){target.append(notice('记忆在电脑上形成。连上电脑后，这里会显示 WeftMate 记得的事。'),action('怎么连上电脑',()=>page('devices'),false));return;}
   target.append(notice('电脑连上后可以修改和忘掉'));
