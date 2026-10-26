@@ -5,9 +5,10 @@ let ts;
 
 export const REQUIRED_SHARD_SEED = 'required-v5190';
 export const WINDOWS_REQUIRED_SHARD_SEED = 'required-windows-v10760';
-export const REQUIRED_SHARD_COUNTS = Object.freeze({ 'ubuntu-latest': 3, 'windows-latest': 5, 'macos-latest': 1 });
-export function requiredShardPlan({ includeMac = false } = {}) {
-  return Object.entries(REQUIRED_SHARD_COUNTS).filter(([os]) => includeMac || os !== 'macos-latest')
+export const REQUIRED_SHARD_COUNTS = Object.freeze({ 'ubuntu-latest': 3, 'windows-latest': 5 });
+// Pull requests run the Linux shards; pushes to main run every OS.
+export function requiredShardPlan({ oses = Object.keys(REQUIRED_SHARD_COUNTS) } = {}) {
+  return Object.entries(REQUIRED_SHARD_COUNTS).filter(([os]) => oses.includes(os))
     .flatMap(([os, count]) => Array.from({ length: count }, (_, i) => ({ os, shard: `${i + 1}/${count}` })));
 }
 export function shardForFile(file, count, seed = REQUIRED_SHARD_SEED) {
