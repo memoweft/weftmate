@@ -57,7 +57,7 @@ import WeftMateCore
     private var transferring=false
     var handoffHost: String? { state.transcriptSync?.hostID }
     private var hasComputerReplica: Bool {
-        guard let app,account == app.phoneAccountIdentity,let host=app.session?.hostId,
+        guard let app,account == app.phoneAccountIdentity,let host=app.session?.hostId ?? app.offline.memoryHostID,
               let subject=app.cloudLogin.subject,app.cloudLogin.authenticated else { return false }
         return app.offline.memoryHostID == host && app.offline.memoryAccountID == subject
     }
@@ -148,22 +148,25 @@ import WeftMateCore
             let generation=control.generation
             state.applyMigrationGeneration(host:host,generation:generation)
             if app.offline.memoryHostID == host,app.offline.memoryAccountID == subject {
-                state.acknowledgeMigration(host:host,ids:app.offline.synced)
+                state.acknowledgeMigration(host:host,generation:app.offline.generation ?? -1,ids:app.offline.synced)
             }
             try persist()
             guard app.offline.memoryHostID == host,app.offline.memoryAccountID == subject,
-                  !app.offline.hostOffline,app.offline.generation == generation else { return }
+                  !app.offline.hostOffline,app.offline.generation == generation,app.offline.memoryAuthorityReady else { return }
             // Readiness is the authenticated M3-A snapshot + matching cloud authorization.
             if handoffHost != host { if state.transcriptSync == nil { state.transcriptSync = .init() };state.transcriptSync?.hostID=host;try persist() }
             let pending=state.prepareMigration(host:host,generation:generation);try persist()
-            handoffCount=pending.count;handoffBytes=pending.reduce(0) { $0+$1.messages.reduce(0) { $0+$1.text.utf8.count } }
+            handoffCount=pending.count;handoffBytes=state.migrations?[host]?.handover?.bytes ?? 0
             if pending.isEmpty {
                 handoffCount=0;handoffBytes=0;handoffApproved=false;handoffDeferred=false
             } else if (pending.count >= 100 || handoffBytes >= 256*1024),!handoffApproved { return }
             if pending.contains(where: { $0.messages.contains { $0.text.utf16.count > 16384 } }) {
-                notice="有一段对话比较长，电脑更新后会继续接过来。这里的原话仍然保留。";return
+                notice="有一段对话比较长，仍在等待交给电脑。这里的原话会保留。"
             }
-            if !pending.isEmpty { try app.offline.enqueuePhoneTurns(pending,generation:generation) }
+            if !pending.isEmpty,let migration=state.migrations?[host] {
+                let ids=Set(migration.handoverTurnIDs ?? pending.map(\.id))
+                try app.offline.enqueuePhoneTurns(migration.turns.filter { ids.contains($0.id) },generation:generation,handover:migration.handover)
+            }
         } catch { if ticket == epoch { notice="本机对话仍在这里，电脑准备好后会自动同步。" } }
     }
     private func authorizeTransferredHistory(ticket: UUID) async throws {

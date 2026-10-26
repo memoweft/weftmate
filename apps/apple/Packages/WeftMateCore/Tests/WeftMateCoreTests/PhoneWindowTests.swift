@@ -15,7 +15,7 @@ import Testing
         thread.messages=[original,.init(role:"assistant",text:"原回复")]
         state.threads=[thread];state.selected=thread.id;state.pending = .init();state.pending?.text="未发草稿"
         let offered=state.prepareMigration(host:"computer-a",generation:7)
-        state.acknowledgeMigration(host:"computer-a",ids:Set(offered.map(\.id)))
+        state.acknowledgeMigration(host:"computer-a",generation:7,ids:Set(offered.map(\.id)))
         try store.save(state)
         let model=PhoneModelConfiguration(name:"原模型",baseURL:"https://model.example.invalid/v1",model:"synthetic",apiKey:"synthetic-key")
         try store.saveModels([model]);let library=try store.loadLibrary()

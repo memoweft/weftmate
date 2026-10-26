@@ -54,6 +54,8 @@ import Foundation
         guard !pending.isEmpty else { return }
         let ids=Set(pending.map(\.id))
         state.turns.removeAll { ids.contains($0.id) }
+        if state.pendingSubmission?.turns.contains(where:{ ids.contains($0.id) }) == true { state.pendingSubmission=nil }
+        state.phoneHandovers=state.phoneHandovers?.filter { Set($0.turnIDs).isDisjoint(with:ids) }
         try vault.save(state)
     }
     public func sync(identity: OfflineIdentity,
@@ -67,31 +69,30 @@ import Foundation
             var request = OfflineSyncRequest(publicJwk: try vault.publicJwk(), generation: state.snapshot?.generation ?? 0, hashes: state.snapshot?.hashes ?? [:])
             request.phoneFirst=phoneFirst ? true : nil
             request.taskSupport=workAndChat ? 1 : nil
-            let envelope: OfflineEnvelope
-            do { envelope=try await fetch(request) }
-            catch APIFailure.server(400,"INVALID_REQUEST") where phoneFirst || workAndChat {
-                // The older M3-A host rejects unknown request fields; retry its original shape.
-                try valid(ticket);request.phoneFirst=nil;request.taskSupport=nil;envelope=try await fetch(request)
-            }
+            let envelope=try await fetch(request)
             try valid(ticket)
             let delta = try vault.open(envelope, identity: identity)
             try merge(delta)
             try await check(control: control); try valid(ticket)
             try vault.save(state)
-            let pending = state.turns.filter { !state.synced.contains($0.id) }
-            var batch: [OfflineTurn] = []
-            for turn in pending.prefix(50) {
-                let candidate = OfflineSubmission(generation: delta.generation, turns: batch + [turn])
-                if try JSONEncoder().encode(candidate).count > 256 * 1024 { break }
-                batch.append(turn)
-            }
-            if !batch.isEmpty {
-                let result = try await submit(.init(generation: delta.generation, turns: batch)); try valid(ticket)
+            // A model and a nonempty copy are unrelated to the computer's ability to receive originals.
+            if phoneFirst && delta.memoryAuthority?.ready != true { return }
+            while let submission=try nextSubmission(generation:delta.generation) {
+                state.pendingSubmission=submission;try vault.save(state)
+                let result = try await submit(submission); try valid(ticket)
                 try await check(control: control); try valid(ticket)
                 guard result.generation == delta.generation else { try clear(); throw OfflineFailure.authorization }
-                let ids = Set(batch.map(\.id))
+                let ids = Set(submission.turns.map(\.id))
                 guard result.receipts.allSatisfy({ ids.contains($0.id) && $0.state == "synced" }) else { throw OfflineFailure.invalid }
-                state.synced.formUnion(result.receipts.map(\.id)); try vault.save(state)
+                state.synced.formUnion(result.receipts.map(\.id))
+                let received=ids.isSubset(of:state.synced)
+                if received {
+                    state.pendingSubmission=nil
+                    if let handover=submission.handover, handover.complete { state.phoneHandovers?.removeAll { $0.handover.id == handover.id } }
+                }
+                try vault.save(state)
+                // Partial/no acknowledgement retries the same complete request on the next poll.
+                if !received { break }
             }
         } catch {
             if revision == ticket {
@@ -102,15 +103,36 @@ import Foundation
             throw error
         }
     }
+    private func nextSubmission(generation: Int) throws -> OfflineSubmission? {
+        if let frozen=state.pendingSubmission { return frozen }
+        let pending=state.turns.filter { !state.synced.contains($0.id) }
+        let group=state.phoneHandovers?.first { group in pending.contains { group.turnIDs.contains($0.id) } }
+        let eligible=pending.filter { turn in
+            (group == nil || group!.turnIDs.contains(turn.id)) && turn.messages.allSatisfy { $0.text.utf16.count <= 16384 }
+        }
+        var submission=OfflineSubmission(generation:generation,turns:[],handover:group?.handover)
+        for turn in eligible.prefix(50) {
+            var candidate=OfflineSubmission(generation:generation,turns:submission.turns+[turn],handover:group?.handover)
+            if let group {
+                let delivered=state.synced.union(candidate.turns.map(\.id))
+                candidate.handover?.complete=group.turnIDs.count == group.handover.totalTurns && Set(group.turnIDs).isSubset(of:delivered)
+            }
+            if try candidate.encoded().count > 256*1024 { break }
+            submission=candidate
+        }
+        return submission.turns.isEmpty ? nil : submission
+    }
     func merge(_ delta: OfflineSnapshot) throws {
         guard delta.generation >= 0, delta.control.hostId == vault.identity.hostId,
-              delta.control.generation == delta.generation, delta.items.count <= 500,
+              !delta.control.accountId.isEmpty, delta.control.generation == delta.generation,
+              delta.memoryAuthority == nil || delta.memoryAuthority?.hostId == vault.identity.hostId, delta.items.count <= 500,
               delta.items.allSatisfy({ $0.currentState == "current" && $0.text.utf16.count <= 2000 }),
               delta.recent.count <= 10, delta.recent.allSatisfy({ $0.messages.count <= 20 && $0.messages.allSatisfy({ ["user", "assistant"].contains($0.role) && $0.text.utf16.count <= 4000 }) }) else { throw OfflineFailure.invalid }
         let reset = delta.reset || (state.snapshot != nil && state.snapshot?.generation != delta.generation)
         if reset || !delta.remove.isEmpty {
             // Delete the old file/key before applying any replacement. History can inherit erased facts.
             try vault.clear(); state.turns = []; state.synced = []; state.contexts = [:]
+            state.phoneHandovers=nil;state.pendingSubmission=nil
             if reset { state.snapshot = nil }
         }
         var items = Dictionary(uniqueKeysWithValues: (state.snapshot?.items ?? []).map { ($0.id, $0) })
@@ -136,15 +158,21 @@ import Foundation
         try vault.save(state)
     }
     /// Independent phone messages and any later computer-memory references; never computer tools.
-    public func enqueuePhoneTurns(_ turns: [OfflineTurn], generation: Int) throws {
+    public func enqueuePhoneTurns(_ turns: [OfflineTurn], generation: Int, handover: OfflineHandover? = nil) throws {
         guard !busy, state.snapshot?.generation == generation else { throw OfflineFailure.notReady }
         let encoder=JSONEncoder();encoder.outputFormatting=[.sortedKeys]
         for turn in turns {
             guard turn.memoryRefs.count <= 64,!turn.messages.isEmpty,turn.messages.first?.role == "user",
-                  turn.messages.count <= 2,turn.messages.allSatisfy({ ["user","assistant"].contains($0.role) && $0.text.utf16.count <= 16384 }) else { throw OfflineFailure.invalid }
+                  turn.messages.count <= 2,turn.messages.allSatisfy({ ["user","assistant"].contains($0.role) && !$0.text.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty }) else { throw OfflineFailure.invalid }
             if let existing=state.turns.first(where: { $0.id == turn.id }) {
                 guard try encoder.encode(existing) == encoder.encode(turn) else { throw OfflineFailure.invalid }
             } else { state.turns.append(turn) }
+        }
+        if let handover {
+            if state.phoneHandovers == nil { state.phoneHandovers=[] }
+            if let index=state.phoneHandovers?.firstIndex(where:{ $0.handover.id == handover.id }) {
+                guard state.phoneHandovers?[index].handover == handover else { throw OfflineFailure.invalid }
+            } else { state.phoneHandovers?.append(.init(handover:handover,turnIDs:turns.map(\.id))) }
         }
         try vault.save(state)
     }
