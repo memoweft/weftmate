@@ -36,7 +36,7 @@ import WeftMateCore
         for window in NSApplication.shared.windows { window.makeKeyAndOrderFront(nil) }
         NSApplication.shared.accessibilitySetValue(true, forAttribute: NSAccessibility.Attribute(rawValue: "AXEnhancedUserInterface"))
         guard let base = ProcessInfo.processInfo.environment["APPLE12_MODEL_FIXTURE"] else { throw NSError(domain: "FixtureMissing", code: 1) }
-        chat.activate(app: app); chat.setMemoryEnabled(false)
+        chat.activate(app: app)
         try chat.saveModel(.init(name: "Synthetic", baseURL: base, model: "synthetic-stream", apiKey: "synthetic-state-key"))
         _ = try await A10MacReview.wait("macChat.draft")
         chat.draft = "慢回复"; chat.send()
@@ -75,7 +75,7 @@ import WeftMateCore
                   let key = ProcessInfo.processInfo.environment["MIMO_API_KEY"]?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty else {
                 throw NSError(domain: "Apple12IsolatedLocalOnly", code: 1)
             }
-            chat.activate(app: app); chat.setMemoryEnabled(false)
+            chat.activate(app: app)
             NSApplication.shared.setActivationPolicy(.regular)
             NSApplication.shared.activate(ignoringOtherApps: true)
             for window in NSApplication.shared.windows { window.makeKeyAndOrderFront(nil) }
