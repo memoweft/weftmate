@@ -52,12 +52,8 @@ export function repositoryFiles() {
     .toString('utf8').split('\0').filter(Boolean);
 }
 
-// Retired 2026-10-15. Git history keeps them; a stale branch must not bring them back.
-export const retiredPaths = ['docs/STATE.md', 'docs/DEVELOPMENT_ENVIRONMENT.md', 'docs/archive/', 'scripts/archive/',
-  // Retired 2026-10-24 (D122): process rules and CI evidence tooling.
-  'docs/DSH_UPGRADE_POLICY.md', '.github/scripts/ci-post-merge-survey.mjs', '.github/scripts/ci-run-evidence.mjs', '.github/scripts/ci-six-rounds.mjs'];
 // Every session starts by reading these pages, so they stay short.
-export const entryLimits = {'PROJECT-MAP.md': 16_000, 'AGENTS.md': 8_000, 'docs/PLAN.md': 6_000, 'docs/DECISIONS.md': 40_000};
+export const entryLimits = {'PROJECT-MAP.md': 8_000, 'AGENTS.md': 4_000, 'docs/PLAN.md': 4_000, 'docs/DECISIONS.md': 12_000, 'docs/OWNER_CHANGES.md': 8_000};
 // Generated evidence keeps its own historical links.
 const linkExempt = ['apps/apple/Tests/Evidence/'];
 
@@ -93,9 +89,6 @@ export function checkRepository() {
     const findings = [...identityFindings(text), ...productionPathFindings(file, text)];
     if (findings.length) violations.push({file, findings});
     if (file.endsWith('.md') && !linkExempt.some(prefix => file.startsWith(prefix))) markdown.set(file, text);
-  }
-  for (const retired of retiredPaths) {
-    if (present.has(retired.replace(/\/$/, ''))) violations.push({file: retired, findings: ['Retired path is back; its history stays in Git. Current facts live in PROJECT-MAP.md and docs/DECISIONS.md. Remove it with git rm instead of restoring it.']});
   }
   for (const [file, limit] of Object.entries(entryLimits)) {
     try {

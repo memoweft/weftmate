@@ -1,6 +1,6 @@
 # WeftMate Cloud · S1a–S2 / S1d
 
-独立的 Node **24.x** ESM 服务。S1a 实现云账号、邮箱验证、密码找回、新云设备邮件确认和 OIDC；设计见 [CLOUD.md](../../docs/CLOUD.md)，接口见 [CLIENT_API.md 第 7 节](../../docs/CLIENT_API.md#7-云端账号s1a客户端接入在后续包)。S1b 已接宿主认领、安装签名与设备撤权；S2 已接官方 frp 授权与 TLS 透传。五端完整客户端在 S1c。不接收对话、记忆、健康或宿主密码。
+独立的 Node **24.x** ESM 服务。S1a 实现云账号、邮箱验证、密码找回、新云设备邮件确认和 OIDC；设计见 [CLOUD.md](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLOUD.md)，接口见 [CLIENT_API.md 第 7 节](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLIENT_API.md#7-云端账号s1a客户端接入在后续包)。S1b 已接宿主认领、安装签名与设备撤权；S2 已接官方 frp 授权与 TLS 透传。五端完整客户端在 S1c。不接收对话、记忆、健康或宿主密码。
 
 ## 本地运行
 
@@ -69,7 +69,7 @@ npm start
 
 ## OIDC、存储与密钥
 
-S1d / D29 的 App（应用）内完整账号页、设备目录/连接和受信 pin（证书公钥指纹）交付见 [CLIENT_API 7.8](../../docs/CLIENT_API.md#78-app-内账号与设置设备s1d--d29) 与 [CLOUD 第 14 节](../../docs/CLOUD.md#14-s1d-app-内账号与设置设备d29)。`/auth/authorization` / resume 封装 provider 标准授权交互，不导航外部网页；新 App grant 强制 P-256 DPoP（设备密钥持有证明）。以下 S1a/S1c 表述为兼容路径。独立相关验证：`node --test test/app-devices.test.mjs test/identity.test.mjs test/hosts.test.mjs`；新 test 含真实 main 进程、file 邮件与隔离宿主闭环，数据只在系统临时目录。
+S1d / D29 的 App（应用）内完整账号页、设备目录/连接和受信 pin（证书公钥指纹）交付见 [CLIENT_API 7.8](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLIENT_API.md#78-app-内账号与设置设备s1d--d29) 与 [CLOUD 第 14 节](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLOUD.md#14-s1d-app-内账号与设置设备d29)。`/auth/authorization` / resume 封装 provider 标准授权交互，不导航外部网页；新 App grant 强制 P-256 DPoP（设备密钥持有证明）。以下 S1a/S1c 表述为兼容路径。独立相关验证：`node --test test/app-devices.test.mjs test/identity.test.mjs test/hosts.test.mjs`；新 test 含真实 main 进程、file 邮件与隔离宿主闭环，数据只在系统临时目录。
 
 锁定 `oidc-provider 9.12.2` 和 `jose 6.2.12`，自己的 package-lock；不手写 OAuth/JWT。Authorization Code + 强制 PKCE S256，授权码 60 秒、单次使用；访问/ID token 300 秒，访问 token 的 audience 仅 `<issuer origin>/personal/v1/cloud`。scope 为 `cloud:account`；JWT 不包含邮箱或内容。请求 `openid offline_access cloud:account` 且 `prompt=consent` 才有离线刷新；原生客户端须校验 state、ID token nonce/issuer/audience/RS256/exp，并将刷新凭据放系统凭据库。浏览器不把刷新凭据放 localStorage。[oidc-provider](https://github.com/panva/node-oidc-provider)、[jose](https://github.com/panva/jose)
 
@@ -132,4 +132,4 @@ S7：schema（存储结构）9 新增 `009-offline-tasks.sql`，不改变旧表�
 
 S7兼容能力：已有 /hosts/offline/status 与 /hosts/offline/publish 回执、签名 /hosts/revocations 事件令牌兼容增加 capabilities.offlineTasks:1。旧云没有字段，新客户端不显示或请求任务功能；刷新重新判定，没有404探测或永久负缓存。
 
-S4：结构 10 的 `010-cloud-backups.sql` 只增加云备份密文、包裹后的主钥匙、清单及配额表。精确 POST（提交）路由 `/personal/v1/cloud/backups/{key/read,key/write,start,chunk/upload,complete,list,chunk/download,delete,clear}` 使用现有 DPoP（设备持钥证明），或绑定到已登录账号成员资格的宿主安装签名；后者签名 `sub`（账号标识）和精确 `action`（请求路径），拒绝重放。`key/read {password}` 可沿现有云密码核对授权本机敏感查看，服务仍没有恢复码或解密钥匙。其他请求仅最少传输状态与密文；每块 1 MiB 加 16 字节，最多 512 块，一份待传、最近三份完整备份；7 天未完成上传自动清除。整包先预留额度，完成时按序核对密文哈希，重试返回已收索引。全部删除与账号注销核对清单、块、包裹钥匙和额度均为零。能力 `capabilities.cloudBackup:1` 加到健康检查与原签名控制回执；旧云客户端不探测新接口。完整设计／接口见 [CLOUD_BACKUP.md](../../docs/CLOUD_BACKUP.md)，部署与回退见 [deploy/README.md](deploy/README.md#s4-云端加密备份上线尚未部署)。
+S4：结构 10 的 `010-cloud-backups.sql` 只增加云备份密文、包裹后的主钥匙、清单及配额表。精确 POST（提交）路由 `/personal/v1/cloud/backups/{key/read,key/write,start,chunk/upload,complete,list,chunk/download,delete,clear}` 使用现有 DPoP（设备持钥证明），或绑定到已登录账号成员资格的宿主安装签名；后者签名 `sub`（账号标识）和精确 `action`（请求路径），拒绝重放。`key/read {password}` 可沿现有云密码核对授权本机敏感查看，服务仍没有恢复码或解密钥匙。其他请求仅最少传输状态与密文；每块 1 MiB 加 16 字节，最多 512 块，一份待传、最近三份完整备份；7 天未完成上传自动清除。整包先预留额度，完成时按序核对密文哈希，重试返回已收索引。全部删除与账号注销核对清单、块、包裹钥匙和额度均为零。能力 `capabilities.cloudBackup:1` 加到健康检查与原签名控制回执；旧云客户端不探测新接口。完整设计／接口见 [CLOUD_BACKUP.md](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLOUD_BACKUP.md)，部署与回退见 [deploy/README.md](deploy/README.md#s4-云端加密备份上线尚未部署)。

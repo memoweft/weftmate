@@ -64,18 +64,6 @@ export async function inventory() {
       add('/personal/v1/cloud' + match[3], source, method, true);
     }
   }
-  const contract = await readFile(resolve(root, 'docs/CLIENT_API.md'), 'utf8');
-  for (const line of contract.split('\n')) {
-    // Contract tables specify every callable method/path; examples and prose
-    // are supplementary, and do not confuse JSON fields with endpoint paths.
-    for (const match of line.matchAll(/(?:GET|POST|PATCH|PUT|DELETE)(?:\/(?:GET|POST|PATCH|PUT|DELETE))*\s+`(\/[^`]+)`/g)) {
-      const template = match[1].startsWith('/personal/v1') ? match[1] : '/personal/v1' + match[1];
-      for (const method of match[0].split(' ')[0].split('/')) add(template, 'docs/CLIENT_API.md', method);
-    }
-    for (const match of line.matchAll(/`(GET|POST|PATCH|PUT|DELETE)(?:\/(?:GET|POST|PATCH|PUT|DELETE))*\s+(\/[^`\s]+)`/g)) {
-      add(match[2].startsWith('/personal/v1') ? match[2] : '/personal/v1' + match[2], 'docs/CLIENT_API.md', match[1]);
-    }
-  }
   // These operations belong to the desktop/private host or binary transports;
   // they must never be enabled through the generic mobile business bridge.
   const excluded = [

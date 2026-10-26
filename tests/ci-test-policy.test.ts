@@ -119,10 +119,10 @@ test('Windows five shards cover the current required files once with their audit
   assert.deepEqual(selectShard(files,'1/1'),files);
 });
 
-test('workflow matrix contains exactly five Windows, three Linux and one optional macOS shard', () => {
+test('workflow matrix contains exactly five Windows and three Linux shards', () => {
   const workflow=createRequire(import.meta.url)('js-yaml').load(readFileSync('.github/workflows/ci.yml','utf8'));
   const matrix=workflow.jobs.test.strategy.matrix;
-  for(const [os,count] of [['ubuntu-latest',3],['windows-latest',5],['macos-latest',1]] as const){
+  for(const [os,count] of [['ubuntu-latest',3],['windows-latest',5]] as const){
     const actual=matrix.shard.filter((shard:number)=>!matrix.exclude.some((row:any)=>row.os===os&&row.shard===shard));
     assert.deepEqual(actual,Array.from({length:count},(_,i)=>i+1),os);
   }
@@ -140,9 +140,9 @@ test('all-shard totals reject missing or duplicate reports and preserve red stat
   assert.throws(()=>aggregateReports(reports.map(row=>row.os==='windows-latest'?{...row,shard:row.shard.replace('/5','/3')}:row)),/unexpected/);
   assert.throws(()=>aggregateReports([...reports,reports[0]]),/duplicate/);
   assert.equal(aggregateReports([{...reports[0],exitCode:1},...reports.slice(1)]).exitCode,1);
-  const mac={os:'macos-latest',shard:'1/1',exitCode:0,passed:10,failed:0,skipped:2};
-  assert.throws(()=>aggregateReports(reports,{includeMac:true}),/Missing/);
-  assert.equal(aggregateReports([...reports,mac],{includeMac:true}).passed,90);
+  const linux=reports.filter(row=>row.os==='ubuntu-latest');
+  assert.equal(aggregateReports(linux,{oses:['ubuntu-latest']}).passed,30);
+  assert.throws(()=>aggregateReports(linux),/Missing/);
 });
 
 test('summary accepts a recovered shard and untouched successful shards from earlier attempts', () => {
@@ -155,8 +155,7 @@ test('summary accepts a recovered shard and untouched successful shards from ear
     assert.throws(()=>requireLatestShardJobs([...jobs,{...recovered,...change}]),/Latest shard/);
   assert.throws(()=>requireLatestShardJobs(jobs.slice(1)),/missing/);
   for(const shard of [4,5])assert.throws(()=>requireLatestShardJobs(jobs.filter(row=>row.name!==`test (windows-latest, shard ${shard}/5)`)),/missing/);
-  assert.throws(()=>requireLatestShardJobs(jobs,{includeMac:true}),/macos/);
-  assert.equal(requireLatestShardJobs([...jobs,{...jobs[0],name:'test (macos-latest, shard 1/1)'}],{includeMac:true}).length,9);
+  assert.equal(requireLatestShardJobs(jobs.filter(row=>row.name.includes('ubuntu')),{oses:['ubuntu-latest']}).length,3);
 });
 test('survey distinguishes assertion, timeout and process exit, and normalizes escaped Windows paths', () => {
   const block=(name:string,error:string)=>`test (windows-latest)\tstep\t2026-10-12T00:00:00Z not ok 1 - ${name}\n`+

@@ -184,7 +184,7 @@ Windows 的运行器与普通 CI 夹具一样，在系统盘根创建随机命�
 
 ## 本机运行诊断
 
-程序退出与崩溃诊断见 [运行记录说明](DIAGNOSTICS.md)。安装版使用配置的 `dataDirectory/logs` 与 `dataDirectory/Crashpad`，原生转储仅本地保存、关闭上传；普通卸载保留，明确删除数据时一起清除。安装目录冒烟同时检查真实日志、转储路径、上传开关与正常退出记录。BK-1（个人备份）当前会包含 `logs/`、排除 `Crashpad/`；建议单独调整备份排除范围，本包未改该产品选择。
+程序退出与崩溃诊断见 [运行记录说明](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/DIAGNOSTICS.md)。安装版使用配置的 `dataDirectory/logs` 与 `dataDirectory/Crashpad`，原生转储仅本地保存、关闭上传；普通卸载保留，明确删除数据时一起清除。安装目录冒烟同时检查真实日志、转储路径、上传开关与正常退出记录。BK-1（个人备份）当前会包含 `logs/`、排除 `Crashpad/`；建议单独调整备份排除范围，本包未改该产品选择。
 
 追加验收还发现了三项现有应用边界，安装界面包未改对应应用文件：含空格的程序路径下，开机自启状态查询可能显示关闭，实际 HKCU（当前用户注册表）启动命令和启动记录正确；主进程正常退出后的短暂进程查询窗口可能让监护保护返回 `SYSTEM_QUERY_FAILED`，全部旧进程消失后重跑原监护脚本才能完成；监护重新启动的测试窗口起初隐藏，后台验收仅在隔离桌面显现它。不能把后两项称为正常更新一次成功。手动安装包覆盖升级仍使用本包的直接启动方式，自动打开由实际窗口验证。自启查询路径按命令行解析的实现见 [Electron Windows 源码](https://raw.githubusercontent.com/electron/electron/v43.7.8/shell/browser/browser_win.cc)，后续修复归应用启动／可靠性工作包。
 ## 安装、移动位置与正常退出（INST-2）

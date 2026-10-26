@@ -42,7 +42,7 @@ E2 的 `selected_item_ids` 是整段召回的依赖，`count` 统计全部依赖
 
 安装包带受管 Python、MemoWeft 和完整语义层（D106、D110），用户不用装 Python；组件异常只停用记忆，聊天和数据保留。组件说明见 [scripts/memory-runtime/README.md](../scripts/memory-runtime/README.md)。
 
-改 `/personal/v1/memory` 下的路由，同时改 [CLIENT_API.md](CLIENT_API.md) 和安卓白名单（AGENTS「写代码」）。
+改 `/personal/v1/memory` 下的路由，同时改 [CLIENT_API.md](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLIENT_API.md) 和安卓白名单（AGENTS「写代码」）。
 
 ## 5. 手机窗口（D119）
 
