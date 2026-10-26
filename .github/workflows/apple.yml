@@ -38,7 +38,7 @@ jobs:
           swift --version
           mkdir -p "$RUNNER_TEMP/apple-results"
       - name: Isolated project generation checks
-        run: python3 -m unittest discover -s Tests -p test_window_project.py -v
+        run: python3 -m unittest discover -s Tests -p 'test_*window*.py' -v
       - name: Swift package tests
         run: |
           set -o pipefail

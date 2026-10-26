@@ -3,6 +3,12 @@ import XCTest
 // APPLE-1's PhoneWindowUITests covers memory routing in the ordinary phone suite.
 // This independent bundle verifies the installed candidate and real chat controller.
 final class PhoneWindowInstallUITests: XCTestCase {
+    private struct Traffic: Decodable, Sendable {
+        let starts: [String]
+        let completed: Int
+        let aborted: Int
+        let nonStreamRequests: Int
+    }
     override func setUp() { super.setUp(); continueAfterFailure = false }
 
     @MainActor private func launch() throws -> XCUIApplication {
@@ -24,11 +30,11 @@ final class PhoneWindowInstallUITests: XCTestCase {
     @MainActor private func capture(_ name: String, app: XCUIApplication) {
         let item = XCTAttachment(screenshot: app.screenshot()); item.name = name; item.lifetime = .keepAlways; add(item)
     }
-    @MainActor private func report() async throws -> [String: Any] {
+    @MainActor private func report() async throws -> Traffic {
         let model = try XCTUnwrap(ProcessInfo.processInfo.environment["WEFTMATE_PHONE_WINDOW_MODEL_URL"])
         let origin = try XCTUnwrap(URL(string: model)?.deletingLastPathComponent())
         let (data, _) = try await URLSession.shared.data(from: origin.appendingPathComponent("report"))
-        return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        return try JSONDecoder().decode(Traffic.self, from: data)
     }
     @MainActor func testStopQueueAndHomeScreenRelaunchRetainCandidateData() async throws {
         let app = try launch(); defer { app.terminate() }
@@ -38,7 +44,7 @@ final class PhoneWindowInstallUITests: XCTestCase {
         send(queued, app: app)
         XCTAssertTrue(text(queued, app: app).waitForExistence(timeout: 10))
         let before = try await report()
-        XCTAssertFalse((before["starts"] as? [String] ?? []).contains(queued), "Queued work must not start before the active reply ends")
+        XCTAssertFalse(before.starts.contains(queued), "Queued work must not start before the active reply ends")
         capture("window-queued", app: app)
         app.buttons["phoneChat.stop"].tap()
         XCTAssertTrue(app.buttons["phoneChat.stop"].waitForNonExistence(timeout: 10))
@@ -62,7 +68,7 @@ final class PhoneWindowInstallUITests: XCTestCase {
         XCTAssertTrue(text("Started:" + slow, app: app).waitForExistence(timeout: 15))
         send(queued, app: app)
         let before = try await report()
-        XCTAssertFalse((before["starts"] as? [String] ?? []).contains(queued))
+        XCTAssertFalse(before.starts.contains(queued))
         let model = try XCTUnwrap(ProcessInfo.processInfo.environment["WEFTMATE_PHONE_WINDOW_MODEL_URL"])
         var url = try XCTUnwrap(URLComponents(string: URL(string: model)!.deletingLastPathComponent().appendingPathComponent("release").absoluteString))
         url.queryItems = [URLQueryItem(name: "marker", value: slow)]
@@ -70,7 +76,7 @@ final class PhoneWindowInstallUITests: XCTestCase {
         let (_, response) = try await URLSession.shared.data(for: request)
         XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
         XCTAssertTrue(text("Done:" + queued, app: app).waitForExistence(timeout: 20))
-        let after = try await report(), starts = after["starts"] as? [String] ?? []
+        let after = try await report(), starts = after.starts
         XCTAssertEqual(starts.filter { $0 == slow }.count, 1)
         XCTAssertEqual(starts.filter { $0 == queued }.count, 1)
         capture("window-queue-completed", app: app)

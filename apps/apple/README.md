@@ -138,7 +138,7 @@ python3 Scripts/package_mac_trial.py --artifacts /private/path/apple-delivery
 Windows 可先验证并生成项目，连续生成两次应无差异：
 
 ```sh
-python3 -m unittest discover -s apps/apple/Tests -p test_window_project.py -v
+python3 -m unittest discover -s apps/apple/Tests -p 'test_*window*.py' -v
 node --test apps/apple/Tests/phone_window_model_server.test.mjs
 python3 apps/apple/Scripts/generate_project.py
 ```
