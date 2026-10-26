@@ -31,7 +31,7 @@ async function fixture(t: any) {
     service: { currentChatModelProfile: () => 'mimo' },
     accountModelManager: { readOfflineModel: async () => ({ baseUrl: 'https://model.example/v1', modelId: 'mimo', apiKey: 'synthetic-secret' }) },
     cloudIdentity: { publishOffline: async (_owner: string, value: number) => { generation = value; return { hostId: identity.hostId, accountId: 'account-test', generation, capabilities:{offlineTasks:1} }; } },
-    memoryManager: { enabled: true, query: async (_: any, _method: any, input: any) => ({ world_revision: generation, ...(input.operation === 'list' ? { items } : {}) }),
+    memoryManager: { enabled: true, status: async () => ({ state: 'ready' }), query: async (_: any, _method: any, input: any) => ({ world_revision: generation, ...(input.operation === 'list' ? { items } : {}) }),
       ingest: async (_: any, boundary: any) => { assert.ok(boundary.source_messages.every((m: any) => ['user', 'assistant'].includes(m.role))); accepted.push(boundary); return { state: 'accepted' }; }, discardOfflinePending: async () => {} },
     readJson: (request: any) => request.body, json: (_response: any, _status: any, value: any) => value };
   const service = await createOfflineService(context);
