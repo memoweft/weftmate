@@ -14,14 +14,13 @@ public struct PhoneModelConfiguration: Codable, Equatable, Identifiable, Sendabl
     public init(id: String = UUID().uuidString, name: String, baseURL: String, model: String, apiKey: String) {
         self.id=id; self.name=name; self.baseURL=baseURL; self.model=model; self.apiKey=apiKey
     }
-    public func request(messages: [[String:String]], stream: Bool, allowLoopback: Bool = false, maxTokens: Int? = nil) throws -> URLRequest {
+    public func request(messages: [[String:String]], stream: Bool, allowLoopback: Bool = false) throws -> URLRequest {
         guard let base=URL(string:baseURL), base.user == nil, base.password == nil, base.query == nil, base.fragment == nil,
               base.scheme == "https" || (allowLoopback && base.scheme == "http" && base.host == "127.0.0.1"),
               !model.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty, !apiKey.isEmpty else { throw OfflineFailure.model }
         var r=URLRequest(url:base.appendingPathComponent("chat/completions"),cachePolicy:.reloadIgnoringLocalCacheData,timeoutInterval:180)
         r.httpMethod="POST"; r.setValue("application/json",forHTTPHeaderField:"Content-Type"); r.setValue("Bearer "+apiKey,forHTTPHeaderField:"Authorization")
-        var body: [String:Any]=["model":model,"stream":stream,"messages":messages]
-        if let maxTokens { body["max_tokens"]=maxTokens }
+        let body: [String:Any]=["model":model,"stream":stream,"messages":messages]
         r.httpBody=try JSONSerialization.data(withJSONObject:body); return try adaptRequest(r)
     }
 }
@@ -59,11 +58,6 @@ extension PhoneModelConfiguration {
             body["thinking"]=deepThinking?.type == "adaptive" ? ["type":"adaptive"] : ["type":"enabled","budget_tokens":1024]
         }
         request.httpBody=try JSONSerialization.data(withJSONObject:body);return request
-    }
-    public func responseText(_ data: Data) throws -> String? {
-        guard let object=try JSONSerialization.jsonObject(with:data) as? [String:Any] else { return nil }
-        if interfaceType == "anthropic" { return (object["content"] as? [[String:Any]])?.filter {$0["type"] as? String == "text"}.compactMap {$0["text"] as? String}.joined() }
-        return ((object["choices"] as? [[String:Any]])?.first?["message"] as? [String:Any])?["content"] as? String
     }
     public func streamText(_ line: String) throws -> String? {
         if interfaceType != "anthropic" { return try PhoneStreamDelta.text(line) }
