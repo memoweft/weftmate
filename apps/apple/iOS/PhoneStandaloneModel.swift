@@ -177,7 +177,9 @@ import WeftMateCore
     }
     private var allowLoopback: Bool {
         #if DEBUG
-        loopbackOverride || (ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--apple6-fixture"))
+        loopbackOverride || (ProcessInfo.processInfo.arguments.contains("--ui-testing") &&
+            (ProcessInfo.processInfo.arguments.contains("--apple6-fixture") ||
+             (Bundle.main.bundleIdentifier == AppleStorageProfile.windowBundleID && ProcessInfo.processInfo.arguments.contains("--phone-window-chat-fixture"))))
         #else
         false
         #endif

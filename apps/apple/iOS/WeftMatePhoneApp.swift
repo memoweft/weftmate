@@ -9,6 +9,9 @@ struct WeftMatePhoneApp: App {
     @MainActor init() {
         let app=AppleAppModel();_model=StateObject(wrappedValue:app)
         DailyHealthBackground.register();PhoneReminderBackground.register();PhoneReminderNotifications.shared.attach(app)
+        #if DEBUG && targetEnvironment(simulator)
+        PhoneWindowUIFixture.configure(app: app)
+        #endif
     }
     var body: some Scene {
         WindowGroup {
@@ -33,6 +36,11 @@ struct WeftMatePhoneApp: App {
         .onChange(of: logScenePhase) { _, phase in RunLogRuntime.shared.phase(phase);if phase == .background || phase == .active { model.phoneChat.finishConversation() } }
     }
     private var healthContent: some View {
+        #if WEFTMATE_WINDOW_TEST
+        WeftMateRootView(model: model)
+            .modifier(PhoneReminderLifecycle(app:model,phone:model.phoneChat))
+            .environmentObject(health)
+        #else
         WeftMateRootView(model: model)
             .modifier(PhoneReminderLifecycle(app:model,phone:model.phoneChat))
             .environmentObject(health)
@@ -45,6 +53,7 @@ struct WeftMatePhoneApp: App {
                 guard logScenePhase == .active else { return }
                 await health.activate(app: model)
             }
+        #endif
     }
     @ViewBuilder private var content: some View {
         #if DEBUG

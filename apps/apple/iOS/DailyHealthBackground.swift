@@ -33,9 +33,11 @@ private enum HealthBackgroundCallbacks {
     private(set) static var registrationCount=0
     private static weak var model: DailyHealthModel?
     static func register() {
+        #if !WEFTMATE_WINDOW_TEST
         guard !registered else { return }
         registered=true; registrationCount += 1
         _=BGTaskScheduler.shared.register(forTaskWithIdentifier:DailyHealthModel.refreshID,using:nil,launchHandler:HealthBackgroundCallbacks.launch())
+        #endif
     }
     static func attach(_ model: DailyHealthModel) { self.model=model }
     fileprivate static func run(_ owner: HealthBackgroundCompletion) async {

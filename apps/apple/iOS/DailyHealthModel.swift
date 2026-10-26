@@ -89,6 +89,7 @@ import WeftMateCore
         catch { log(0, success: false, category: "network") }
     }
     func activate(app: AppleAppModel) async {
+        #if !WEFTMATE_WINDOW_TEST
         do { guard try prepare(app) else { return } }
         catch { log(0, success: false, category: "storage"); return }
         guard !busy else { activationPending = true; return }
@@ -100,6 +101,7 @@ import WeftMateCore
         // This is driven by an event, never a timer or an automatic loop on network failure.
         let requestedAgain = activationPending; activationPending = false
         if (token != generation || requestedAgain), app.session != nil { await activate(app: app) }
+        #endif
     }
     /// The SDK-facing callback has no inherited UI executor; UI references are dereferenced only after the hop.
     nonisolated private static func makeObserverUpdate(model: DailyHealthModel, app: AppleAppModel) -> @Sendable () async -> Void {
