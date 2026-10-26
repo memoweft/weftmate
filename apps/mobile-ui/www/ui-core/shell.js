@@ -532,6 +532,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.turnStatus = null;
         core.state.turnEndReasonKind = null;
         core.state.seenSeq.clear();
+        core.state.historyEvents.clear();
         effects.resetConversationControls();
         effects.renderAttachmentDrafts();
         core.operation('');
