@@ -1,29 +1,171 @@
 /* Shared composer state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     const messages = new Map();
-    const turnRequests = new Map();
+    // Presentation identities live for this identity generation. Consuming an
+    // optimistic echo never consumes the message's process or its aliases.
+    const presentationAliases = new Map(), presentationTurns = new Map();
+    let presentationRows = new WeakMap(), presentationOrder = 0;
     let turnRequestScope;
     function requestScope() {
         const scope = `${core.state.ownerId}:${core.state.identityGeneration}`;
-        if (scope !== turnRequestScope) { turnRequests.clear(); turnRequestScope=scope; }
+        if (scope !== turnRequestScope) { presentationAliases.clear(); presentationTurns.clear(); presentationRows=new WeakMap();presentationOrder=0;turnRequestScope=scope; }
+    }
+    const presentationScope = row => row?.chatId ? `chat:${row.chatId}` : core.state.selectedChatId && (!row?.sessionId || row.sessionId===core.state.selectedSessionId)
+        ? `chat:${core.state.selectedChatId}` : `session:${row?.sessionId || core.state.selectedSessionId || core.state.newConversationId}`;
+    const eventSession = event => event.sessionId || event.sourceRef?.sessionId || core.state.selectedSessionId || '';
+    const canonicalEntry = entry => entry?.mergedInto ? canonicalEntry(entry.mergedInto) : entry;
+    function mergeMessageEntries(left, right) {
+        left=canonicalEntry(left);right=canonicalEntry(right);
+        if(left===right)return left;
+        const [keep,other]=left.order<right.order ? [left,right] : [right,left];
+        for(const [key,value] of Object.entries(other)) if(keep[key]===undefined)keep[key]=value;
+        for(const turn of other.turns)keep.turns.add(turn);
+        other.mergedInto=keep;
+        for(const [key,entry] of presentationAliases)if(entry===other)presentationAliases.set(key,keep);
+        for(const owners of presentationTurns.values())if(owners.delete(other))owners.add(keep);
+        return keep;
+    }
+    function messageEntry(fields, event, conversation = presentationScope(fields)) {
+        requestScope();
+        const session = event ? eventSession(event) : fields.sessionId || '';
+        const source = event && (event.presentationKey || event.eventId || `${session}:${event.sourceRef?.seq ?? event.seq}`);
+        const aliases = [fields.requestId && `request:${fields.requestId}`, fields.receiptId && `receipt:${session}:${fields.receiptId}`,
+            fields.commandId && `command:${fields.commandId}`, source && `event:${source}`].filter(Boolean).map(key => `${conversation}|${key}`);
+        const matches=[...new Set(aliases.map(key=>canonicalEntry(presentationAliases.get(key))).filter(Boolean))];
+        const entry = matches.length ? matches.reduce(mergeMessageEntries) : {
+            key: fields.requestId ? `request:${fields.requestId}` : fields.receiptId ? `legacy:${session}:receipt:${fields.receiptId}` : `legacy:${source}`,
+            conversation, at: fields.at || event?.at, turns: new Set(),order:presentationOrder++
+        };
+        for (const key of aliases) presentationAliases.set(key,entry);
+        for (const key of ['requestId','receiptId','commandId','sessionId']) if (fields[key]) entry[key]=fields[key];
+        entry.at ||= fields.at || event?.at;
+        return entry;
     }
     function rememberTurnRequest(row) {
         requestScope();
-        if (row.receiptId) turnRequests.set(row.receiptId,row.requestId);
+        const previous=canonicalEntry(presentationRows.get(row));
+        const conversation=presentationScope(row);
+        let entry=messageEntry(row,undefined,conversation);
+        if(previous)entry=mergeMessageEntries(previous,entry);
+        presentationRows.set(row,entry);
+        // The request alias exists from send, before a session has been created.
+        // Add the receipt alias after creation/acceptance using that same entry.
+        if (row.receiptId && row.sessionId) presentationAliases.set(`${conversation}|receipt:${row.sessionId}:${row.receiptId}`,entry);
+        return entry;
+    }
+    function observeMessageProcesses(events) {
+        requestScope();
+        const conversation=presentationScope();
+        for (const event of events) if (['task.queued','task.started','task.ended'].includes(event.type)) {
+            for (const data of event.data?.tasks || [event.data || {}]) {
+                if (!data.requestId && !data.receiptId) continue;
+                const entry=messageEntry({...data,sessionId:eventSession(event)},undefined,conversation);
+                entry.at ||= event.at;
+                if (typeof data.text==='string') entry.text=data.text;
+                if (event.type==='task.queued') entry.queued=event;
+                if (event.type==='task.ended') entry.ended=event;
+                // Queued tasks can belong to a future turn. Only a native
+                // started task establishes a turn owner, never queue proximity.
+                if (event.type!=='task.started') continue;
+                const turn=data.turn ?? /^turn-(.+)$/.exec(data.turnTaskId || '')?.[1];
+                if (turn==null) continue;
+                const key=`${conversation}|${eventSession(event)}:turn-${turn}`;
+                if (!presentationTurns.has(key)) presentationTurns.set(key,new Set());
+                const owners=presentationTurns.get(key);
+                for(const owner of [...owners])if(!owner.requestId && !owner.receiptId && !owner.pending)mergeMessageEntries(owner,entry);
+                const bound=canonicalEntry(entry);owners.add(bound);bound.turns.add(key);
+            }
+        }
+        for (const event of events) if (event.type==='user.message') {
+            const entry=messageEntry({...event.data,sessionId:eventSession(event)},event,conversation);
+            entry.userSeen=true;entry.pending=undefined;entry.text=undefined;
+        }
+    }
+    function messageProcesses(events, pending = []) {
+        requestScope();
+        for (const row of pending) { const entry=rememberTurnRequest(row);entry.pending=row;entry.text=row.text; }
+        observeMessageProcesses(events);
+        const conversation=presentationScope(), entries=new Set(), assignments=new Map();
+        for (const row of pending) entries.add(rememberTurnRequest(row));
+        for (const event of events) if (event.type==='user.message') entries.add(messageEntry({...event.data,sessionId:eventSession(event)},event,conversation));
+        for (const event of events) if (event.type==='task.queued') for (const data of event.data?.tasks || [event.data || {}]) {
+            if ((data.requestId || data.receiptId) && typeof data.text==='string') {
+                const entry=messageEntry({...data,sessionId:eventSession(event)},undefined,conversation);
+                // Native inbox queued can carry only a receipt. Keep that fact
+                // until task.started identifies it; don't guess by text/order
+                // or display a second copy of a locally submitted message.
+                if(!entry.requestId && !entry.userSeen && pending.some(row=>!row.receiptId && (!row.sessionId || row.sessionId===eventSession(event))))continue;
+                entries.add(entry);
+            }
+        }
+        const projected=globalThis.WeftUiCore.projectTimeline(events,[],true);
+        for (const block of projected.groups) {
+            const session=block.sessionId || block.steps[0]?.sessionId || core.state.selectedSessionId || '';
+            const taskId=block.taskId?.startsWith(session+':') ? block.taskId : `${session}:${block.taskId}`;
+            const turnKey=`${conversation}|${taskId}`;
+            let owners=presentationTurns.get(turnKey);
+            const facts=globalThis.WeftUiCore.progressEvents(events,block);
+            const users=facts.filter(event=>event.type==='user.message');
+            // An orphan history fragment may have mounted before its user page.
+            // Merge aliases into that original identity when the page arrives.
+            if (owners?.size===1 && users.length===1) {
+                const owner=[...owners][0];
+                if(!owner.requestId && !owner.receiptId && !owner.pending)
+                    mergeMessageEntries(owner,messageEntry({...users[0].data,sessionId:eventSession(users[0])},users[0],conversation));
+            }
+            if (!owners?.size && users.length) {
+                owners=new Set(users.map(event=>messageEntry({...event.data,sessionId:eventSession(event)},event,conversation)));
+                presentationTurns.set(turnKey,owners);
+            }
+            if (!owners?.size) {
+                // A live unowned start is just a fact until task.started or the
+                // user receipt identifies it. It cannot replace a sent process.
+                if (pending.some(row=>!row.sessionId || row.sessionId===session) || [...entries].some(entry=>!entry.turns.size && entry.queued && entry.sessionId===session)) continue;
+                const start=events.find(event=>event.seq===block.seq) || events[0];
+                const entry=messageEntry({},start,conversation);
+                owners=new Set([entry]);presentationTurns.set(turnKey,owners);
+            }
+            for (const entry of owners) {
+                entries.add(entry);entry.turns.add(turnKey);
+                if (!assignments.has(entry)) assignments.set(entry,[]);
+                assignments.get(entry).push({block,facts});
+            }
+        }
+        return [...new Set([...entries].map(canonicalEntry))].map(entry=>{
+            const assigned=assignments.get(entry) || [], latest=assigned.at(-1);
+            const user=events.find(event=>event.type==='user.message' && messageEntry({...event.data,sessionId:eventSession(event)},event,conversation)===entry);
+            const local=pending.find(row=>rememberTurnRequest(row)===entry) || (!entry.userSeen && entry.pending);
+            let facts=assigned.flatMap(({facts})=>facts);
+            // A message owns one disclosure, even when a continuation has more
+            // than one native turn. Fold its steps under one presentation turn.
+            const start=facts.find(event=>event.type==='turn.started');
+            const turn=latest?.block.taskId?.split('turn-').at(-1) || `pending-${entry.key}`;
+            const session=latest?.block.sessionId || latest?.block.steps[0]?.sessionId || entry.sessionId || '';
+            const taskId=`${session ? session+':' : ''}turn-${turn}`;
+            facts=facts.filter(event=>!['turn.started','turn.ended','user.message'].includes(event.type)).map(event=>({...event,data:{...event.data,taskId}}));
+            const ended=entry.ended && (!latest || String(entry.ended.data?.turn)===String(turn)) ? entry.ended : null;
+            const end=latest?.facts.findLast(event=>['turn.ended','task.ended'].includes(event.type)) || ended;
+            const anchor=user || entry.queued;
+            const position=user?.seq ?? anchor?.seq ?? Math.max(-1,...events.map(event=>event.seq))+1+Math.max(0,pending.indexOf(local));
+            const at=entry.at || user?.at || local?.at || start?.at;
+            const first={...(start || {}),seq:(facts[0]?.seq ?? position)-0.1,at:start?.at || at,type:'turn.started',sourceRef:{...start?.sourceRef,sessionId:session},data:{turn,pendingRequestId:entry.requestId}};
+            const last=end && {...end,seq:Math.max(first.seq,...facts.map(event=>event.seq))+0.1,type:'turn.ended',data:{...end.data,turn}};
+            return {key:entry.key,messageKey:entry.key.startsWith('request:')?entry.key.slice(8):entry.key,requestId:entry.requestId,started:!!latest,user,pending:local || (!entry.userSeen && entry.text!==undefined ? {requestId:entry.key,text:entry.text,at,status:'accepted'} : null),at,position,
+                events:[first,...(user?[user]:[]),...facts,...(last?[last]:[])],taskId};
+        });
     }
     function turnPresentationKey(events, block) {
-        requestScope();
-        const next=events.find(event=>event.type==='turn.started' && event.seq>block.seq &&
-            (!block.sessionId || (event.sessionId || event.sourceRef?.sessionId)===block.sessionId));
-        const user=events.find(event=>event.type==='user.message' && event.seq>block.seq &&
-            (!next || event.seq<next.seq) &&
-            (!block.sessionId || (event.sessionId || event.sourceRef?.sessionId)===block.sessionId));
-        const request=block.pendingRequestId || turnRequests.get(user?.data?.receiptId);
+        const process=messageProcesses(events).find(process=>process.taskId===block.taskId || process.events.some(event=>event.type==='turn.started' && event.data.turn===events.find(event=>event.seq===block.seq)?.data?.turn));
+        if (process) return process.key;
         const start=events.find(event=>event.seq===block.seq);
         const anchor=start?.presentationKey || start?.eventId || start?.sourceRef?.seq;
-        return request ? `request:${request}` : `${block.taskId}:${anchor ?? block.seq}`;
+        return block.pendingRequestId ? `request:${block.pendingRequestId}` : `${block.taskId}:${anchor ?? block.seq}`;
     }
-    function messagePresentationKey(event) { requestScope(); return turnRequests.get(event.data?.receiptId) || event.presentationKey || event.eventId; }
+    function messagePresentationKey(event) {
+        if (event.type!=='user.message') return event.presentationKey || event.eventId;
+        const entry=messageEntry({...event.data,sessionId:eventSession(event)},event);
+        return entry.key.startsWith('request:') ? entry.key.slice(8) : entry.key;
+    }
     const thinkingWrites = new Map();
     async function refreshThinkingModels() {
         const identity = core.state.identityGeneration;
@@ -56,13 +198,14 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     function beginOptimistic(fields) {
         const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration, at:new Date().toISOString(), status:'sending', ...fields};
         messages.set(row.requestId, row);
+        rememberTurnRequest(row).pending=row;
         effects.renderOptimisticMessages?.();
         return row;
     }
     function optimisticMessages(legacy = false) {
         if (!legacy && core.mainOptimisticMessages) return core.mainOptimisticMessages();
         return [...messages.values()].filter(row => row.ownerId === core.state.ownerId &&
-            row.identity === core.state.identityGeneration && row.sessionId === core.state.selectedSessionId &&
+            row.identity === core.state.identityGeneration && (row.sessionId === core.state.selectedSessionId || core.state.newConversation && core.state.selectedSessionId===null && row.draftId===core.state.newConversationId) &&
             (row.sessionId !== null || row.draftId === core.state.newConversationId));
     }
     function reconcileOptimistic(command) {
@@ -82,11 +225,12 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     }
     function observeOptimistic(events, legacy = false) {
         if (!legacy && core.observeMainOptimistic) return core.observeMainOptimistic(events);
-        for (const event of events) if (event.type === 'task.queued') for (const data of event.data?.tasks || [event.data || {}]) {
+        observeMessageProcesses(events);
+        for (const event of events) if (['task.queued','task.started'].includes(event.type)) for (const data of event.data?.tasks || [event.data || {}]) {
             const row = messages.get(data.requestId);
             if (row && row.ownerId === core.state.ownerId && row.identity === core.state.identityGeneration &&
                 row.sessionId === (event.sessionId || event.sourceRef?.sessionId || core.state.selectedSessionId) && data.receiptId)
-                row.receiptId = data.receiptId;
+                {row.receiptId = data.receiptId;rememberTurnRequest(row);}
         }
         for (const event of events) if (event.type === 'user.message' && event.data?.receiptId) {
             for (const row of optimisticMessages(true)) if (row.receiptId === event.data.receiptId) {
@@ -332,6 +476,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             approvalMode: core.state.newConversation ? core.state.newConversationApprovalMode : null,
             intent: intent === 'queue' || intent === 'steer' ? intent : core.composerInputMode(core.state.selectedSessionId), status: 'sending'};
         messages.set(row.requestId, row);
+        rememberTurnRequest(row).pending=row;
         effects.renderOptimisticMessages?.(); effects.scrollToLatest();
         return deliverSafely(row);
     }
@@ -399,7 +544,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                     : !chat || !model ? '电脑尚无可用模型。历史可阅读，聊天请先在电脑设置中配置模型。' : '';
         return {
             placeholder: running ? globalThis.WeftUiCore.runningPlaceholder(messageModePreference()) : phoneChat ? '补充到这条手机对话' : '向 WeftMate 说说你的目标',
-            phoneChat, running, hint: hint || (running ? processingLabel((phoneChat ? boundSession : selected)?.processing) : ''), attachmentBusy,
+            phoneChat, running, hint, attachmentBusy,
             newSessionDisabled: !chat || !model || core.state.submitting || attachmentBusy || core.state.unresolvedSubmission,
             modelDisabled: phoneChat || !chat || !core.state.models.length,
             modelName: core.state.models.find(item => item.id === core.state.modelProfileId)?.name || '选择模型',
@@ -459,7 +604,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         const name = core.state.executionAccountName || '原账号';
         return `这台电脑由账号 ${name} 负责执行；当前账号只能聊天。切回 ${name} 或在 ${name} 的设置里移交。`;
     }
-    return { rememberTurnRequest, turnPresentationKey, messagePresentationKey, executionAccountHint, refreshThinkingModels, thinkingView, setDeepThinking, handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
+    return { rememberTurnRequest, observeMessageProcesses, messageProcesses, resetMessageProcesses:()=>{turnRequestScope=undefined;requestScope();}, turnPresentationKey, messagePresentationKey, executionAccountHint, refreshThinkingModels, thinkingView, setDeepThinking, handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
         addAttachmentFiles, composerInputMode, conversationRunning, messageModePreference, loadMessageModePreference, sendBlocker, explainSendBlocker, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };
 };
 

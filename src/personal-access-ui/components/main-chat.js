@@ -146,7 +146,9 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             }
         } else {
             const nested = row.querySelector('ol') || ui.element('ol', 'chat-progress'); if (!nested.parentNode) row.replaceChildren(nested);
-            globalThis.WeftTimeline.render(spec.events, nested, { decisionAnchor:spec===rows.findLast(row=>row.kind==='progress'&&row.events?.some(event=>event.type==='turn.started')), processKey:()=>spec.key, waiting:spec.waiting, quietFailure:spec.finalTaskBlock===false, stopViews:Object.fromEntries([...core.conversationTasks.entries.values()].filter(entry=>entry.payload?.control?.state==='stopped'||entry.payload?.control?.stopStatus==='stopped').map(entry=>[`${entry.sessionId}:turn-${entry.payload?.source?.dshTurn??entry.payload?.replyEvidence?.turn}`,{terminal:true,text:'已停止'}])), executions:[...core.conversationTasks.entries.values()].flatMap(entry=>entry.payload?core.relatedExecutionSteps(entry.payload).map(row=>({...row,sessionId:entry.sessionId})):[]), approvals: [...core.conversationApprovals.entries.values()].map(entry=>entry.row),
+            const decisions=[...core.conversationApprovals.entries.values(),...core.conversationQuestions.entries.values()].map(entry=>entry.row).filter(row=>row.status==='pending');
+            const decisionAnchor=decisions.length ? decisions.some(row=>spec.process?.taskId===`${row.sessionId}:turn-${row.turn}`) : spec===rows.findLast(row=>row.process?.started);
+            globalThis.WeftTimeline.render(spec.events, nested, { decisionAnchor, processKey:()=>spec.key, processes:spec.process ? [spec.process] : undefined, waiting:spec.waiting, quietFailure:spec.finalTaskBlock===false, stopViews:Object.fromEntries([...core.conversationTasks.entries.values()].filter(entry=>entry.payload?.control?.state==='stopped'||entry.payload?.control?.stopStatus==='stopped').map(entry=>[`${entry.sessionId}:turn-${entry.payload?.source?.dshTurn??entry.payload?.replyEvidence?.turn}`,{terminal:true,text:'已停止'}])), executions:[...core.conversationTasks.entries.values()].flatMap(entry=>entry.payload?core.relatedExecutionSteps(entry.payload).map(row=>({...row,sessionId:entry.sessionId})):[]), approvals: [...core.conversationApprovals.entries.values()].map(entry=>entry.row),
                 thinkingDisplay:core.state.personalization?.thinkingDisplay,
                 readDetail: seq => { const event = spec.events.find(event => event.sourceRef?.seq === seq || event.data?.detailRef?.seq === seq); return event ? core.readTimelineDetail(event.sourceRef.sessionId, seq) : Promise.reject({ code: 'SOURCE_UNAVAILABLE' }); },
                 questions: [...core.conversationQuestions.entries.values()].map(entry => {const event=spec.events.find(event=>event.sourceRef?.seq===entry.row.observedSeq);return {...entry.row,observedSeq:event?.seq??entry.row.observedSeq};}),
@@ -209,31 +211,43 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             list().setAttribute('aria-busy', 'true'); ui.byId('chat-intro').hidden = true; return;
         }
         if (list().hasAttribute('aria-busy')) { list().removeAttribute('aria-busy'); globalThis.WeftReplyMotion?.reveal(list(), 'status'); }
-        rows = [];
-        for (const group of core.mainChatDays()) {
-            const visible = group.events.filter(event => /^(user.message|assistant.message|side.result)$/.test(event.type) && !(globalThis.WeftTimeline?.prepare && event.data?.modelThinking && !event.data.text && !event.data.images?.length));
-            rows.push({ kind: 'day', key: `day:${group.date}`, date: group.date, label: group.label, collapsed: group.collapsed, count: core.state.chatWindow.dayCounts.get(group.date) ?? visible.length, estimate: 52 });
-            if (group.collapsed) continue;
-            const mappedEvents = group.events.map((event, seq) => ({ ...event, seq, progressSeq:seq, data: { ...event.data,
-                ...(event.data?.taskId?.startsWith('turn-') ? {taskId:`${event.sourceRef.sessionId}:${event.data.taskId}`} : {}),
-                ...(event.data?.completedStep ? {completedStep:{...event.data.completedStep,taskId:event.data.completedStep.taskId?.startsWith('turn-')?`${event.sourceRef.sessionId}:${event.data.completedStep.taskId}`:event.data.completedStep.taskId}}:{}) } })), mapped = globalThis.WeftTimeline?.prepare ? WeftTimeline.prepare(mappedEvents,core.state.personalization?.thinkingDisplay) : mappedEvents, projected = WeftUiCore.projectTimeline(mapped,[],true);
-            const specs = visible.filter(event=>mapped.some(item=>item.eventId===event.eventId && item.type===event.type)).map(event => ({ kind: event.type === 'side.result' ? 'result' : 'message', key: core.messagePresentationKey(event), event, seq: mapped.find(item => item.eventId === event.eventId && item.type === event.type).seq, estimate: 100 }));
-            for (const block of projected.groups) {
-                const events = WeftUiCore.progressEvents(mapped,block);
-                specs.push({ kind: 'progress', key: `progress:${core.turnPresentationKey(mapped,block)}`, seq: WeftUiCore.progressPosition(mapped, block, true), events, waiting:timelineChat().running && block.taskId?.startsWith(timelineChat().activeSessionId+':') && !WeftUiCore.turnOutcome(mapped,block.taskId).terminal ? core.processingStageLabel(timelineChat().processing) : '', finalTaskBlock:projected.groups.filter(group=>group.taskId===block.taskId).at(-1)===block, estimate: 48 });
-            }
-            for (const event of projected.cards.filter(event => /^(artifact.|question.)/.test(event.type))) specs.push({ kind: 'progress', key: `output:${event.eventId || event.seq}`, seq: event.seq, events: [{...event,data:{...event.data,completedStep:undefined}},...mapped.filter(end=>['task.ended','turn.ended'].includes(end.type)&&WeftUiCore.turnOutcome([end],event.data.taskId).terminal)], estimate: 70 });
-            rows.push(...specs.sort((a, b) => a.seq - b.seq));
+        // Establish ownership across the loaded window before splitting days.
+        // Each user and its process are inserted as one adjacent unit.
+        const days=core.mainChatDays(), optimistic=core.optimisticMessages();
+        const source=days.flatMap(group=>group.events);
+        const mappedEvents=source.map((event,seq)=>({...event,seq,progressSeq:seq,data:{...event.data,
+            ...(event.data?.taskId?.startsWith('turn-') ? {taskId:`${event.sourceRef.sessionId}:${event.data.taskId}`} : {}),
+            ...(event.data?.completedStep ? {completedStep:{...event.data.completedStep,taskId:event.data.completedStep.taskId?.startsWith('turn-')?`${event.sourceRef.sessionId}:${event.data.completedStep.taskId}`:event.data.completedStep.taskId}}:{})}}));
+        const mapped=globalThis.WeftTimeline?.prepare ? WeftTimeline.prepare(mappedEvents,core.state.personalization?.thinkingDisplay) : mappedEvents;
+        const processes=core.messageProcesses(mapped,optimistic), units=[];
+        for (const process of processes) {
+            const event=process.user, pending=process.pending;
+            const key=process.key.startsWith('request:') ? process.key.slice(8) : process.key;
+            const specs=[];
+            if(event)specs.push({kind:'message',key,event,estimate:100});
+            else if(pending)specs.push({kind:'optimistic',key,event:pending,estimate:90});
+            specs.push({kind:'progress',key:`progress:${process.key}`,events:process.events,process,estimate:48,
+                waiting:core.processingStageLabel(timelineChat().processing)});
+            units.push({at:process.at,seq:process.position,specs});
         }
-        const optimistic=core.optimisticMessages();
-        const pendingDate=optimistic[0] && WeftUiCore.ChatWindow.day(optimistic[0].at,core.state.chatWindow.timeZone);
-        if(pendingDate && !rows.some(row=>row.kind==='day' && row.date===pendingDate)) rows.push({kind:'day',key:`day:${pendingDate}`,date:pendingDate,label:'今天',collapsed:false,count:optimistic.length,estimate:52});
-        for (const event of optimistic) rows.push({ kind: 'optimistic', key: event.requestId, event, estimate: 90 });
-        const pending=optimistic.find(event=>['sending','accepted'].includes(event.status));
-        const active=rows.some(row=>row.kind==='progress' && row.events?.some(event=>event.type==='turn.started') &&
-            !row.events.some(event=>event.type==='turn.ended'));
-        if(pending && !active) rows.push({kind:'progress',key:`progress:request:${pending.requestId}`,estimate:48,
-            events:[{seq:0,at:pending.at,type:'turn.started',data:{turn:`pending-${pending.requestId}`,pendingRequestId:pending.requestId}}],waiting:core.processingLabel()});
+        for (const event of mapped.filter(event=>['assistant.message','side.result'].includes(event.type)))
+            units.push({at:event.at,seq:event.seq,specs:[{kind:event.type==='side.result'?'result':'message',key:core.messagePresentationKey(event),event,estimate:100}]});
+        const projected=WeftUiCore.projectTimeline(mapped,[],true);
+        for(const event of projected.cards.filter(event=>/^(artifact.|question.)/.test(event.type)))
+            units.push({at:event.at,seq:event.seq,specs:[{kind:'progress',key:`output:${event.eventId || event.seq}`,events:[{...event,data:{...event.data,completedStep:undefined}},...mapped.filter(end=>['task.ended','turn.ended'].includes(end.type)&&WeftUiCore.turnOutcome([end],event.data.taskId).terminal)],estimate:70}]});
+        const byDay=new Map();
+        for(const unit of units.sort((a,b)=>Date.parse(a.at)-Date.parse(b.at) || a.seq-b.seq)) {
+            const date=WeftUiCore.ChatWindow.day(unit.at,core.state.chatWindow.timeZone);
+            if(!byDay.has(date))byDay.set(date,[]);
+            byDay.get(date).push(...unit.specs);
+        }
+        rows=[];
+        for(const [date,specs] of [...byDay].sort(([a],[b])=>a.localeCompare(b))) {
+            const group=days.find(group=>group.date===date);
+            const collapsed=group?.collapsed && !optimistic.some(row=>WeftUiCore.ChatWindow.day(row.at,core.state.chatWindow.timeZone)===date);
+            rows.push({kind:'day',key:`day:${date}`,date,label:group?.label || WeftUiCore.ChatWindow.label(date,core.state.chatWindow.timeZone),collapsed,count:core.state.chatWindow.dayCounts.get(date) ?? specs.filter(spec=>['message','optimistic'].includes(spec.kind)).length,estimate:52});
+            if(!collapsed)rows.push(...specs);
+        }
         if (!top?.isConnected) { top = ui.element('li', 'chat-spacer'); bottom = ui.element('li', 'chat-spacer'); top.setAttribute('aria-hidden', 'true'); bottom.setAttribute('aria-hidden', 'true'); list().replaceChildren(top, bottom); list().setAttribute('aria-live','off'); mounted.clear(); }
         measureOffsets(); restoreAnchor(saved); renderVisible();
         ui.byId('chat-intro').hidden = rows.length > 0;

@@ -359,7 +359,7 @@ test('FX-11 progress counts actual activities and keeps internal names out of ru
   assert.doesNotMatch(text,/load_tools|todo_write|web_fetch|工具步骤|执行工具/);
 });
 
-test('running composer reports observed phases and hides them on an idle session without changing stop availability', () => {
+test('observed phases remain available to the message process without a duplicate composer hint or changing stop availability', () => {
   const f = fixture(), session: any = f.core.state.sessions[0];f.core.presence.success()
   session.running = true
   for (const [processing, label] of [
@@ -372,7 +372,8 @@ test('running composer reports observed phases and hides them on an idle session
   ]) {
     session.processing = processing
     const view = f.core.composerState('')
-    assert.equal(view.hint, label)
+    assert.equal(f.core.processingStageLabel(processing).replace(/ \d+ 秒$/, ''), label)
+    assert.equal(view.hint, '')
     assert.equal(view.cancelHidden, false)
     assert.equal(view.cancelDisabled, false)
   }
