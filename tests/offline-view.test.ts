@@ -19,12 +19,12 @@ class Node {
 }
 function fixture() {
   const body = new Node(), values = new Map(); let failure: any = null;
-  const view = { ready: true, conversations: [], turns: [], snapshot: { recent: [] } };
+  const view = { ready: true, conversations: [], turns: [], tasks:[], snapshot: { recent: [] } };
   const environment: any = { document: { body, createElement: () => new Node(), addEventListener() {}, visibilityState: 'visible' },
     setInterval() {}, clearInterval() {}, localStorage: { getItem: (k: string) => values.get(k), setItem: (k: string,v: string) => values.set(k,v) },
     WeftOffline: { browserVault: async () => ({}), create: async () => ({ view: () => view, sync: async () => { if (failure) throw failure; return true; }, check: async () => ({}), clear: async () => {}, close() {} }) } };
   runInNewContext(component, environment);
-  const core: any = { foreground:()=>true, accessApi: async () => { throw {code:'NETWORK'}; } };
+  const core: any = { state:{ownerId:'owner'}, foreground:()=>true, accessApi: async () => { throw {code:'NETWORK'}; } };
   return { environment, body, core, fail(error: any) { failure = error; } };
 }
 test('sync errors distinguish connectivity from permission, request and replica errors', () => {
@@ -35,6 +35,19 @@ test('sync errors distinguish connectivity from permission, request and replica 
     assert.equal(classify(error).unreachable, false, JSON.stringify(error)); assert.ok(classify(error).message);
   }
   assert.equal(classify({code:'UNAUTHORIZED',status:401}).clear,true);
+});
+
+test('paired replica is exposed to the memory page only for its current account',async()=>{
+  const f=fixture(),goalsCore:any={};let changes=0;
+  f.core.state={ownerId:'owner'};
+  const mounted=f.environment.WeftOfflineView.mount({core:f.core,goalsCore,onMemoryReplicaChanged:()=>changes++,
+    identity:async()=>({origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'})});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.ok(goalsCore.offlineMemoryReplica());
+  assert.ok(changes>0,'a newly loaded replica refreshes an already open memory page');
+  f.core.state.ownerId='another-owner';
+  assert.equal(goalsCore.offlineMemoryReplica(),null);
+  mounted.close();
 });
 
 test('phone plus menu and goals expose no task feature without support and appear after refreshed support',async()=>{

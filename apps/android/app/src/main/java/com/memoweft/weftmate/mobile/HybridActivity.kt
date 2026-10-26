@@ -2175,6 +2175,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             var reservationRequestId: String? = null
             var renewal: ScheduledFuture<*>? = null
             var actualModel: JSONObject? = null
+            var computerUnavailable = false
             val stillCurrent = { !closed.get() && !accountTransition.get() &&
                 turnEpoch == accountEpoch.get() && secrets.host() == host && !stopped }
             try {
@@ -2211,10 +2212,14 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                                     activeModel?.cancel()
                                 }
                             }, 10, 10, TimeUnit.SECONDS)
-                        }
+                        } else computerUnavailable = true
                     }
                 }
-                if (configured == null) throw ApiFailure(409, "MODEL_NOT_CONFIGURED")
+                val replyModel = phoneReplyModel(configured, hostProfile != null, computerUnavailable) {
+                    val account = PhoneAccount(this, secrets).identity()
+                    secrets.model(Endpoints.ownerKey(account.origin, account.ownerId))
+                }
+                val turnModel = replyModel.settings
                 val guardedTools = object : DeviceToolExecutor {
                     private val device = DeviceTools(this@HybridActivity)
                     override fun execute(name: String, arguments: JSONObject): ToolResult {
@@ -2222,13 +2227,13 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                         return device.execute(name, arguments)
                     }
                 }
-                val client = ModelClient(this, if (hostProfile == null) JsonHttp() else api.hostModelTransport(host!!),
+                val client = ModelClient(this, if (replyModel.viaComputer) api.hostModelTransport(host!!) else JsonHttp(),
                     guardedTools)
                 activeModel = client
                 if (stopped) client.cancel()
                 var lastProgressAt = 0L
                 var lastProgressLength = 0
-                val answer = client.complete(configured, store.messages(conversationId, owner),
+                val answer = client.complete(turnModel, store.messages(conversationId, owner),
                     receipt = { callId, name, status, summary ->
                         ensureOpen()
                         store.toolReceipt(conversationId, callId, name, status, summary)
@@ -2246,7 +2251,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                             .put("turnId", turnId).put("phase", phase))
                     }, attachments = files, attachmentStore = attachments,
                     onRequestStart = { requestUrl, actualModelId ->
-                        actualModel = actualOriginalModel(requestUrl, actualModelId, configured, hostProfile)
+                        actualModel = actualOriginalModel(requestUrl, actualModelId, turnModel, hostProfile.takeIf { replyModel.viaComputer })
                     })
                 if (stopped) throw ModelCancelled(answer)
                 ensureOpen()
