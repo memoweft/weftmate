@@ -132,10 +132,13 @@
     list.progressRender = { events, options }
     const renderCurrent = () => { const current = list.progressRender; render(current.events, list, current.options) }
     const prepared=prepare(events, options.thinkingDisplay)
-    const active=prepared.findLast(event=>event.type==='turn.started'||event.type==='turn.ended')?.type==='turn.started'
-    const pending=!active && options.pending?.find(row=>['sending','accepted'].includes(row.status))
-    if(pending) prepared.push({seq:Math.max(-1,...prepared.map(event=>event.seq))+1,at:pending.at,type:'turn.started',data:{turn:`pending-${pending.requestId}`,pendingRequestId:pending.requestId}})
-    const { ordered, groups, cards } = globalThis.WeftUiCore.projectTimeline(prepared, options.approvals || [], true)
+    const projection = globalThis.WeftUiCore.projectTimeline(prepared, options.approvals || [], true)
+    const { ordered, cards } = projection
+    const groups = options.processes ? options.processes.flatMap(process => {
+      const events=prepare(process.events,options.thinkingDisplay)
+      const projected=WeftUiCore.projectTimeline(events,options.approvals || [],true)
+      return projected.groups.map(block=>({...block,presentationKey:process.key,messageKey:process.messageKey,nativeStarted:process.started,submission:process.submission,position:process.position+0.1,events:projected.ordered}))
+    }).sort((a,b)=>a.position-b.position) : projection.groups
     const existing = new Map([...list.children].filter(n => n.dataset.timeline).map(n => [n.dataset.timeline, n]))
     const seen = new Set()
     const put = (key, seq, build) => {
@@ -148,8 +151,11 @@
       else if (!row.parentNode || previousSeq !== String(seq)) list.append(row)
       return row
     }
-    const started = ordered.filter(event => event.type === 'turn.started').at(-1)
-    for (const block of groups) put(`steps-${options.processKey?.(block) || block.seq}`, WeftUiCore.progressPosition(ordered, block, true), row => {
+    const lastStarted=groups.findLast(block=>block.nativeStarted!==false)
+    for (const block of groups) put(`steps-${options.processKey?.(block) || block.presentationKey || block.seq}`, block.position ?? WeftUiCore.progressPosition(ordered, block, true), row => {
+      const ordered=block.events || projection.ordered
+      const started=ordered.findLast(event=>event.type==='turn.started' && event.seq<=block.seq)
+      const waiting=block.nativeStarted===false ? '等待模型回复…' : options.waiting
       block.steps = block.steps.map(step=>globalThis.WeftUiCore.executionPresentation(step,options.executions))
       const expandedForObjects = row.querySelector('details')?.open === true
       const currentForObjects = block.steps.filter(step => step.state === 'running').at(-1)
@@ -169,7 +175,7 @@
       }
       const previous = row.querySelector('details')
       const stopView = options.stopViews?.[block.taskId]
-      const outcome = globalThis.WeftUiCore.turnOutcome(ordered, block.taskId,stopView)
+      const outcome = block.submission==='failed' ? {terminal:true,reason:'failed'} : globalThis.WeftUiCore.turnOutcome(ordered, block.taskId,stopView)
       const terminal = outcome.terminal || stopView?.terminal
       const lastBlock = groups.filter(group=>group.taskId===block.taskId).at(-1) === block
       const displayOutcome = (!lastBlock || options.quietFailure) && ['error','failed','blocked'].includes(outcome.reason) ? {...outcome,reason:'ended'} : outcome
@@ -177,17 +183,17 @@
       const thought = block.steps.filter(step=>step.toolName === '__thinking').at(-1)
       const current = block.steps.filter(step=>step.state === 'running').at(-1)
       const view = globalThis.WeftUiCore.progressText(tools, {...displayOutcome,language:block.language})
-      if (!block.steps.length && !terminal) { view.text=WeftUiCore.progressWaitingText(options.waiting || '等待模型回复…',block.language);view.running=true }
+      if (!block.steps.length && !terminal) { view.text=WeftUiCore.progressWaitingText(waiting || '等待模型回复…',block.language);view.running=true }
       if (current?.toolName === '__thinking' && !terminal) {view.text=block.language==='en'?'Thinking…':'正在思考…';view.running=true}
       else if (!tools.length && thought) view.text = `思考过程 · ${Number.isFinite(thought.thinkingMs) ? Math.round(thought.thinkingMs/1000)+' 秒' : '用时未记录'}`
       if (stopView && !stopView.terminal) { view.text = `${view.text} · ${WeftUiCore.progressWaitingText(stopView.text, block.language)}`; view.running = true }
       // Keep completed work visible while a real native turn waits for its
       // next model/tool result. The stage comes from host state, not a timer
       // pretending that another tool is still running.
-      if (options.waiting && !stopView && !terminal && !view.running && !view.failed &&
-          block === groups.at(-1) && started && block.seq >= started.seq &&
+      if (waiting && !stopView && !terminal && !view.running && !view.failed &&
+          block === lastStarted && started && block.seq >= started.seq &&
           block.steps.every(step => globalThis.WeftUiCore.executionState(step) === 'completed')) {
-        view.text = WeftUiCore.progressWaitingText(options.waiting, block.language); view.running = true
+        view.text = WeftUiCore.progressWaitingText(waiting, block.language); view.running = true
       }
       if(terminal && !view.failed && !tools.some(step=>step.approvalOutcome==='rejected')) {
         const session=block.sessionId || block.steps[0]?.sessionId;
@@ -199,8 +205,13 @@
         view.duration=duration;
         view.running=false;
       }
+      if(block.submission) {
+        view.text=block.submission==='failed' ? block.language==='en'?'Message not sent. Please retry.':'消息未能发送，请重试。'
+          : block.language==='en'?'Delivery needs checking. Please check the send status.':'发送结果待核对，请检查状态。';
+        view.running=false;
+      }
       const running = view.running
-      const elapsed = view.duration || (running ? /\d+ (?:秒|s)$/.exec(options.waiting || '')?.[0] || `${Math.max(0,Math.floor((Date.now()-Date.parse(current?.at || started?.at))/1000)) || 0} ${block.language==='en'?'s':'秒'}` : '')
+      const elapsed = view.duration || (running ? /\d+ (?:秒|s)$/.exec(waiting || '')?.[0] || `${Math.max(0,Math.floor((Date.now()-Date.parse(current?.at || started?.at))/1000)) || 0} ${block.language==='en'?'s':'秒'}` : '')
       if (running) view.text = view.text.replace(/\s*\d+ (?:秒|s)$/, '')
       const signature = JSON.stringify([block, outcome, stopView])
       row.dataset.running = String(running)
@@ -223,7 +234,8 @@
       const savedStepStates = new Map([...savedSteps].map(([key, detail]) => [key, detail.dataset.state]))
       const newFailure = view.failed && row.dataset.failed !== 'true'; row.dataset.failed = String(!!view.failed)
       const details = previous || node('details', 'execution-block')
-      details.dataset.decisionAnchor=String(options.decisionAnchor ?? block===groups.at(-1));
+      const decisions=[...(options.approvals || []),...(options.questions || [])].filter(row=>row.status==='pending');
+      details.dataset.decisionAnchor=String(options.decisionAnchor ?? (decisions.length ? decisions.some(row=>block.taskId===`turn-${row.turn}` || block.taskId===`${row.sessionId}:turn-${row.turn}`) : block===lastStarted));
       if (!previous) details.dataset.replyProcess = 'true'
       details.dataset.motion = 'unfold'
       details.open = newFailure || previous?.open === true
@@ -276,7 +288,8 @@
       });
       if(!recordNodes.length) {
         const empty=records.querySelector('.execution-empty') || node('p','execution-empty');
-        const text=terminal ? block.language==='en'?'No tools were used for this reply.':'这次回复没有调用工具。' : block.language==='en'?'The reply will appear below. Tool activity will be collected here.':'回答会显示在下方；如需调用工具，过程会记录在这里。';
+        const text=block.submission ? block.language==='en'?'Your message is kept here. Check delivery before retrying.':'消息仍保留在这里，核对发送状态后可以重试。'
+          : terminal ? block.language==='en'?'No tools were used for this reply.':'这次回复没有调用工具。' : block.language==='en'?'The reply will appear below. Tool activity will be collected here.':'回答会显示在下方；如需调用工具，过程会记录在这里。';
         if(empty.textContent!==text)empty.textContent=text;recordNodes.push(empty);
       }
       if(view.failed) {
@@ -342,6 +355,14 @@
       })
     }
     for (const [key, row] of existing) if (!seen.has(key)) row.remove()
+    for(const block of groups) if(block.messageKey) {
+      const anchor=[...list.children].find(row=>row.dataset.messageKey===block.messageKey)
+      const row=existing.get(`steps-${options.processKey?.(block) || block.presentationKey || block.seq}`)
+      if(anchor && row && anchor.nextSibling!==row) {
+        if(list.moveBefore && row.isConnected)list.moveBefore(row,anchor.nextSibling)
+        else anchor.after(row)
+      }
+    }
     if(list.closest('#transcript'))placeDecisions();
   }
   window.WeftTimeline = { render, prepare, thinking, detailAction, copyFeedback, isFinalReply, decisionSurface, placeDecisions }

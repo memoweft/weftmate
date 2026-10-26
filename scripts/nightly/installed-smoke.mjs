@@ -121,7 +121,8 @@ try {
   await h.page.getByRole('button',{name:'助手',exact:true}).click();
   await h.page.locator('#personalization-nextSuggestionsEnabled').waitFor();
   const switches=await h.page.locator('.personalization-form input.settings-switch').evaluateAll(nodes=>nodes.map(n=>({width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height})));
-  assert.ok(switches.length>0&&switches.every(s=>s.width===36&&s.height===22),JSON.stringify(switches));
+  // Measured while the settings dialog may still be easing in; sub-pixel drift is not a size change.
+  assert.ok(switches.length>0&&switches.every(s=>Math.abs(s.width-36)<0.5&&Math.abs(s.height-22)<0.5),JSON.stringify(switches));
   assert.equal(await h.page.getByText('已同步 · 从下一次回复开始生效',{exact:true}).count(),0);
   for(const theme of ['light','dark']){await h.page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await h.page.screenshot({path:join(out,`assistant-settings-${theme}.png`)});}
   await h.page.locator('#personalization-nextSuggestionsEnabled').click();

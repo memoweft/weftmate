@@ -373,11 +373,16 @@
     }
     function progressEvents(events,block) {
         const session=block.sessionId || block.steps[0]?.sessionId,belongs=event=>!session || (event.sessionId || event.sourceRef?.sessionId)===session;
-        const start=events.findLast(event=>belongs(event) && event.type==='turn.started' && event.seq<=block.seq);
+        const start=events.findLast(event=>belongs(event) && event.type==='turn.started' && event.seq<=block.seq &&
+            (block.taskId===`turn-${event.data?.turn}` || block.taskId===`${event.sessionId || event.sourceRef?.sessionId}:turn-${event.data?.turn}`));
         const next=events.find(event=>belongs(event) && event.type==='turn.started' && event.seq>block.seq);
-        return events.filter(event=>belongs(event) && event.seq>=(start?.seq ?? -Infinity) && (!next || event.seq<next.seq) &&
-            (['turn.started','user.message'].includes(event.type) || ['turn.ended','task.ended'].includes(event.type) && turnOutcome([event],block.taskId).terminal ||
-            event.type.startsWith('step.') && event.data?.taskId===block.taskId || event.type==='artifact.created' && event.data?.completedStep?.taskId===block.taskId))
+        const end=events.find(event=>belongs(event) && event.seq>=block.seq && ['turn.ended','task.ended'].includes(event.type) && turnOutcome([event],block.taskId).terminal);
+        return events.filter(event=>belongs(event) && (
+            // Late completions still update their explicitly owned step. Only
+            // unscoped user messages must stop at the native end boundary.
+            event.type.startsWith('step.') && event.data?.taskId===block.taskId || event.type==='artifact.created' && event.data?.completedStep?.taskId===block.taskId ||
+            ['turn.ended','task.ended'].includes(event.type) && turnOutcome([event],block.taskId).terminal ||
+            start && event.seq>=start.seq && (!next || event.seq<next.seq) && (!end || event.seq<=end.seq) && ['turn.started','user.message'].includes(event.type)))
             .map(event=>event.type==='artifact.created'?{...event,type:'step.completed',data:event.data.completedStep}:event);
     }
     globalThis.WeftUiCore.progressEvents=progressEvents;

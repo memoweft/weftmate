@@ -126,7 +126,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             if (hadFocus) { const replacement = [...card.querySelectorAll('[data-conversation-approval-action]')].find(node=>node.dataset.conversationApprovalAction===focusedAction); if (replacement && !replacement.disabled) replacement.focus({preventScroll:true}); }
             if (review?.warning && card.dataset.reviewFocusId !== row.approvalId) { card.querySelector('[data-conversation-approval-action="rejected"]')?.focus({preventScroll:true}); card.dataset.reviewFocusId = row.approvalId; }
         }
-        ui.byId('model-hint').hidden = rows.some(entry=>entry.row.status==='pending') || !ui.byId('model-hint').textContent;
+        ui.renderModelHint?.();
         ui.syncPhoneDecisions?.();
     }
     function renderConversationApprovals() {
@@ -140,7 +140,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             .sort((a, b) => a.row.createdAt.localeCompare(b.row.createdAt)) : [];
         const hadFocus = bar.contains(document.activeElement), action = document.activeElement?.dataset?.conversationApprovalAction;
         bar.hidden = rows.length === 0;
-        ui.byId('model-hint').hidden = !bar.hidden || core.state.sessions.some(session => session.sessionId === context.sessionId && session.running) || !ui.byId('model-hint').textContent;
+        ui.renderModelHint?.();
         if (!rows.length) {
             bar.replaceChildren(); delete bar.dataset.signature; delete bar.dataset.workSignature;
             if (hadFocus) ui.byId('message-text').focus({ preventScroll: true });

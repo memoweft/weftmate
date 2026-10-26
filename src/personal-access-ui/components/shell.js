@@ -245,9 +245,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         send.replaceChildren(window.WeftIcons.create(stop ? 'stop' : 'send', 20));
         ui.renderContextUsage();
         ui.renderOptimisticMessages();
-        ui.byId('model-hint').textContent = value.hint;
-        ui.byId('model-hint').setAttribute('role', 'status');
-        ui.byId('model-hint').hidden = !core.state.online || !value.hint || value.running || !ui.byId('approval-bar').hidden;
+        renderModelHint(value);
         ui.renderTimeline();
         for (const waiting of ui.byId('transcript').querySelectorAll('.inline-waiting .inline-progress-text')) {
             waiting.textContent = core.processingStageLabel(core.state.mainChat?.processing || core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.processing);
@@ -256,6 +254,12 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         WeftPopover.modelGate({missing:!!core.state.account && core.state.modelsKnown===true && !core.state.models.some(model=>model.configured!==false&&model.available!==false),
           field:ui.byId('message-text'),send,empty:!ui.byId('transcript').querySelector('.message'),content:ui.byId('chat-scroll'),composer:ui.byId('message-form').parentElement,openSettings:()=>ui.openSettings('models')});
         if (ui.byId('chat-scroll').classList.contains('needs-model-empty')) ui.byId('chat-intro').hidden=true;
+    }
+    function renderModelHint(value = core.composerState(ui.readMessageDraft())) {
+        const hint=ui.byId('model-hint');
+        hint.textContent=value.hint;
+        hint.setAttribute('role','status');
+        hint.hidden=!core.state.online || !value.hint || !ui.byId('approval-bar').hidden;
     }
     function startAssistantRefresh() {
         core.stopAssistantRefresh();
@@ -537,5 +541,5 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
                 void core.refreshPendingDevices();
         }, core.polling.presence);
     }
-    return { updateModelPicker, paintConnection, paintOperation, approvalModeReadFailed, closeModelMenu, openModelMenu, stopVoiceInput, startVoiceInput, takeSetupGrant, errorAt, toast, clearPasswords, setBusy, updateAvailability, startAssistantRefresh, showRegistration, cancelCloudLogin, resetAccountControls, resetIdentityControls, resetConversationControls, closeAccountMenu, stopCloudPairing, paintScreen, mountShell };
+    return { updateModelPicker, paintConnection, paintOperation, approvalModeReadFailed, closeModelMenu, openModelMenu, stopVoiceInput, startVoiceInput, takeSetupGrant, errorAt, toast, clearPasswords, setBusy, updateAvailability, renderModelHint, startAssistantRefresh, showRegistration, cancelCloudLogin, resetAccountControls, resetIdentityControls, resetConversationControls, closeAccountMenu, stopCloudPairing, paintScreen, mountShell };
 };

@@ -29,6 +29,14 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 const deferred = () => { let resolve!: (value: any) => void; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 
+test('#678 clearing the account drops native history before a later process repaint', () => {
+  const f=fixture();
+  f.core.state.historyEvents.set(1,{seq:1,type:'user.message',data:{text:'合成旧账户消息'}});
+  f.core.clearSession();
+  assert.equal(f.core.state.historyEvents.size,0);
+  assert.equal(f.core.timelineEventsForContext().length,0);
+});
+
 test('FIX-44 fix-1 oversized message detail leaves only that message partial and advances every history page', async () => {
   const f=fixture(path=>{
     if(path.endsWith('/10/detail'))return response({type:'assistant.message',text:'第一条全文'});
@@ -359,7 +367,7 @@ test('FX-11 progress counts actual activities and keeps internal names out of ru
   assert.doesNotMatch(text,/load_tools|todo_write|web_fetch|工具步骤|执行工具/);
 });
 
-test('running composer reports observed phases and hides them on an idle session without changing stop availability', () => {
+test('observed phases remain available to the message process without a duplicate composer hint or changing stop availability', () => {
   const f = fixture(), session: any = f.core.state.sessions[0];f.core.presence.success()
   session.running = true
   for (const [processing, label] of [
@@ -372,7 +380,8 @@ test('running composer reports observed phases and hides them on an idle session
   ]) {
     session.processing = processing
     const view = f.core.composerState('')
-    assert.equal(view.hint, label)
+    assert.equal(f.core.processingStageLabel(processing).replace(/ \d+ 秒$/, ''), label)
+    assert.equal(view.hint, '')
     assert.equal(view.cancelHidden, false)
     assert.equal(view.cancelDisabled, false)
   }

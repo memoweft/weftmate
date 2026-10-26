@@ -245,11 +245,10 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             return;
         const context = core.conversationTaskContext(), sessionId = context.sessionId;
         window.WeftTimeline.render(events.filter(event => event.type !== 'task.queued'), ui.byId('transcript'), {
-            pending:core.optimisticMessages(),
-            processKey:block=>core.turnPresentationKey(events,block),
+            processes:core.messageProcesses(WeftTimeline.prepare(events,core.state.personalization?.thinkingDisplay),core.optimisticMessages()),
             thinkingDisplay:core.state.personalization?.thinkingDisplay,
             stopViews: Object.fromEntries(events.filter(event => event.type === 'turn.started')
-                .map(event => [`turn-${event.data?.turn}`, core.taskStopView(event.data?.turn)]).filter(([, view]) => view)),
+                .map(event => [`${sessionId}:turn-${event.data?.turn}`, core.taskStopView(event.data?.turn)]).filter(([, view]) => view)),
             waiting: core.state.turnStatus === 'running' ? core.processingStageLabel(core.state.sessions.find(row => row.sessionId === sessionId)?.processing) : '',
             executions:[...core.conversationTasks.entries.values()].flatMap(entry=>entry.payload?core.relatedExecutionSteps(entry.payload).map(row=>({...row,sessionId:entry.sessionId})):[]),
             artifacts: [...core.conversationTasks.entries.values()].flatMap(entry => entry.payload?.artifacts || []),
