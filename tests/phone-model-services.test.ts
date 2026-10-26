@@ -6,7 +6,6 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import * as catalog from '../src/model-service-catalog.mjs';
 import '../src/ui-core/phone-model-services.js';
-import '../src/ui-core/phone-memory.js';
 import '../src/ui-core/offline.js';
 const create = (globalThis as any).WeftPhoneModelServices.create;
 
@@ -136,47 +135,7 @@ test('phone changing a service while an old directory refresh is pending ignores
   assert.ok(manager.currentModel().apiKey === nextCredential, 'only the newly configured service credential remains selected');
 });
 
-test('phone light memory freezes the selected service model before authorization and the next extraction uses the new selection', async t => {
-  const { endpoint, credential } = await fixture(t, (_request: any, response: any) => {
-    response.setHeader('content-type', 'application/json');
-    response.end(JSON.stringify({ data: [{ id: 'chat-first' }, { id: 'chat-second' }] }));
-  });
-  const manager = await create({ catalog, crypto: webcrypto });
-  await manager.configure({ endpoint, apiKey: credential });
-  const serviceId = manager.view().services[0].serviceId;
-  manager.select(serviceId, 'chat-first');
-  let stored: any = { snapshot: null, turns: [], conversations: [] }, waitForAuthorization = false;
-  let authorize!: () => void, enteredAuthorization!: () => void;
-  const authorization = new Promise<void>(resolve => { authorize = resolve; });
-  const entered = new Promise<void>(resolve => { enteredAuthorization = resolve; });
-  const extracted: string[] = [];
-  const vault = { load: async () => stored, save: async (value: any) => { stored = structuredClone(value); }, close() {},
-    complete: async (body: any, snapshot: any) => {
-      assert.equal(body.model, snapshot.model.modelId);
-      assert.equal(snapshot.model.serviceId, serviceId);
-      if (!body.max_tokens) return { choices: [{ message: { content: '已记下原话。' } }] };
-      extracted.push(body.model);
-      const source = JSON.parse(body.messages[1].content)['原话'][0];
-      return { choices: [{ message: { content: JSON.stringify({ upsert: [{ id: null, text: '喜欢茉莉花茶', evidence: '茉莉花茶', sourceIDs: [source.id] }], invalidate: [] }) } }] };
-    } };
-  const engine = await (globalThis as any).WeftOffline.create({ vault, identity: {}, crypto: webcrypto,
-    phoneModel: () => manager.currentModel(), accountCheck: async () => {
-      if (waitForAuthorization) { waitForAuthorization = false; enteredAuthorization(); await authorization; }
-      return {};
-    } });
-  t.after(() => { engine.close(); manager.clear(); });
-  const first = await engine.send('我喜欢茉莉花茶');
-  waitForAuthorization = true;
-  const extracting = engine.extractMemory(first.conversationId); await entered;
-  manager.select(serviceId, 'chat-second'); authorize();
-  assert.equal(await extracting, true);
-  await engine.send('我仍然喜欢茉莉花茶', first.conversationId);
-  await engine.extractMemory(first.conversationId);
-  assert.deepEqual(extracted, ['chat-first', 'chat-second']);
-  assert.equal(JSON.stringify(stored).includes(credential), false, 'in-flight service credential is never saved with phone memory or originals');
-});
-
-test('phone Claude completion supports light memory without a progress callback and preserves its requested token limit', async () => {
+test('phone Claude completion works without a progress callback and preserves its requested token limit', async () => {
   const credential = randomBytes(24).toString('base64url');
   const manager = await create({ catalog: { ...catalog, queryServiceCatalog: async () => ({ status: 'available', checkedAt: new Date().toISOString(), models: [{ modelId: 'claude-synthetic', name: '合成 Claude', enabled: true }] }) }, crypto: webcrypto });
   await manager.configure({ endpoint: 'https://model.example/v1', interfaceType: 'anthropic', apiKey: credential });
@@ -191,16 +150,16 @@ test('phone Claude completion supports light memory without a progress callback 
       assert.ok(options.headers['x-api-key'] === credential, 'credential remains only in the completion transport');
       requested = JSON.parse(options.body);
       if (requested.tools?.length) return { ok: true, json: async () => ({ stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'synthetic-work', name: 'computer_work', input: { description: '合成文件工作' } }] }) };
-      return { ok: true, json: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: '{"upsert":[],"invalidate":[]}' }] }) };
+      return { ok: true, json: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: '合成回复' }] }) };
     }, URL, DOMException, AbortController, clearTimeout };
   runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js', import.meta.url), 'utf8'), context);
   await context.WeftPhone.restoreArchive({ origin: 'https://synthetic.example', accountId: 'synthetic', deviceId: 'phone' }, {});
   assert.ok(attached, 'the standalone model service engine is attached');
   const reply = await attached.vault.complete({ model: 'claude-synthetic', stream: false, max_tokens: 1200,
-    messages: [{ role: 'system', content: '整理原话。' }, { role: 'user', content: '我喜欢茉莉花茶。' }] },
+    messages: [{ role: 'system', content: '请回答。' }, { role: 'user', content: '我喜欢茉莉花茶。' }] },
     { model: attached.phoneModel() }, new AbortController().signal);
   assert.equal(requested.model, 'claude-synthetic'); assert.equal(requested.max_tokens, 1200);
-  assert.equal(requested.stream, false); assert.equal(reply.choices[0].message.content, '{"upsert":[],"invalidate":[]}');
+  assert.equal(requested.stream, false); assert.equal(reply.choices[0].message.content, '合成回复');
   const work = await attached.vault.complete({ model: 'claude-synthetic', messages: [{ role: 'user', content: '合成请求' }],
     tools: [{ type: 'function', function: { name: 'computer_work', description: 'Ask to enter work', parameters: { type: 'object', properties: { description: { type: 'string' } } } } }] },
     { model: attached.phoneModel() }, new AbortController().signal);
@@ -210,14 +169,14 @@ test('phone Claude completion supports light memory without a progress callback 
   manager.clear();
 });
 
-test('native phone presentation selects the new chat after pending memory, without jumping back to the old chat',async t=>{
- const W=(globalThis as any).WeftOffline,M=(globalThis as any).WeftPhoneMemory;
- let engine:any,entered!:()=>void,finish!:()=>void,reply!:()=>void;
- const extracting=new Promise<void>(r=>entered=r),memory=new Promise<void>(r=>finish=r),answer=new Promise<void>(r=>reply=r);
+test('native phone presentation selects the new chat, without jumping back to the old chat',async t=>{
+ const W=(globalThis as any).WeftOffline;
+ let engine:any,reply!:()=>void;
+ const answer=new Promise<void>(r=>reply=r);
  const model={modelId:'synthetic',baseUrl:'https://model.example/v1'};
  let chats=0;
- const vault={load:async()=>({snapshot:null,turns:[],conversations:[],tasks:[],phoneMemory:M.fresh()}),save:async()=>{},close(){},
-  complete:async(body:any)=>{if(body.max_tokens){entered();await memory;const source=JSON.parse(body.messages[1].content)['原话'][0];return{choices:[{message:{content:JSON.stringify({upsert:[{id:null,text:'红茶',sourceIDs:[source.id],evidence:'红茶'}]})}}]};}
+ const vault={load:async()=>({snapshot:null,turns:[],conversations:[],tasks:[]}),save:async()=>{},close(){},
+  complete:async(body:any)=>{
     if(++chats>1)await answer;return{choices:[{message:{content:'合成回答'}}]};}};
  const context:any={window:{},document:{addEventListener(){}},addEventListener(){},state:{booted:true,loggedIn:true,connection:'phone',page:'settings',model,conversationId:null},
   WeftPhoneModelServices:{create:async()=>({currentModel:()=>model,clear(){}})},
@@ -232,7 +191,7 @@ test('native phone presentation selects the new chat after pending memory, witho
  while(engine.view().running)await new Promise(r=>setImmediate(r));
  await new Promise(r=>setImmediate(r));const old=context.state.conversationId;
  assert.ok(old);
- await context.WeftPhone.presentation('send',{text:'我喜欢喝什么？'});await extracting;finish();
+ await context.WeftPhone.presentation('send',{text:'我喜欢喝什么？'});
  while(chats<2)await new Promise(r=>setImmediate(r));
  const view=await context.WeftPhone.presentation('view');
  assert.notEqual(view.selectedId,old);assert.equal(view.selectedId,view.conversations.at(-1).id);
@@ -247,6 +206,6 @@ test('native vault writes carry the account identity captured when the phone eng
   WeftOffline:{savePhoneHistory:(globalThis as any).WeftOffline.savePhoneHistory,create:async(options:any)=>{attached=options;return{view:()=>({conversations:[]})}}},clearTimeout};
  runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js',import.meta.url),'utf8'),context);
  await context.WeftPhone.restoreArchive(identity,{});
- await attached.vault.save({phoneMemory:{items:[]}});
+ await attached.vault.save({conversations:[],turns:[]});
  assert.equal(saved.accountId,identity.accountId);assert.equal(saved.origin,identity.origin);
 });

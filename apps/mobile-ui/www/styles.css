@@ -696,7 +696,3 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 .approval-risk-actions .danger {background:var(--wm-color-toast-danger);color:var(--wm-color-white);border-radius:var(--wm-radius-12);font-weight:500;}
 .approval-risk-actions .danger:hover {background:var(--wm-color-danger-hover);}
 .approval-risk-actions .danger:active {filter:brightness(.9);}
-
-.phone-memory-switch-row { display:flex; align-items:center; justify-content:space-between; gap:var(--wm-space-16); }
-.phone-memory-switch-row>div { flex:1; min-width:0; }
-.phone-memory-switch-row .settings-switch { flex-shrink:0; }
