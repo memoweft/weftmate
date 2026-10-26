@@ -33,6 +33,7 @@ jobs:
   browser:
     name: Web cloud login interactions
     runs-on: ubuntu-24.04  # Playwright chromium is not available on ubuntu-latest (26.04) yet
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
