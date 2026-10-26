@@ -116,6 +116,10 @@ export async function createOfflineService(context) {
           try { model = await cloudModel(ownerId); }
           catch (error) { if ((taskSupport || body.phoneFirst === true) && error.code === 'OFFLINE_MODEL_REQUIRED') model = null; else throw error; }
           const snapshot = model || body.phoneFirst === true ? await memorySnapshot(context.memoryManager, ownerId) : {worldRevision:null,items:[],truncated:false};
+          // A legacy task-capable phone waits for memoryAuthority before it
+          // uploads originals. Without a cloud model the snapshot read above
+          // is skipped, so a cold worker otherwise never gets initialized.
+          if (taskSupport && !model && context.memoryManager?.enabled) await context.memoryManager.status(ownerId);
           const generation = account.generation;
           const known = body.generation === generation ? body.hashes ?? {} : {};
           const recentMessages = model?await recent(ownerId):[];

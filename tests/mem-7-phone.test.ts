@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash,webcrypto } from 'node:crypto';
 import { IDBFactory } from 'fake-indexeddb';
-import { createHistoryImport,phoneNeedsConfirmation,estimateImport,importBoundary,importChunks } from '../src/personal-access/history-import.mjs';
+import { createHistoryImport,estimateImport,importBoundary,importChunks } from '../src/personal-access/history-import.mjs';
 import { createPhoneHistory } from '../src/personal-access/phone-history.mjs';
 import { reconcileChatIdentity } from '../src/personal-access/chat-identity.mjs';
 import { createOfflineService } from '../src/personal-offline/index.mjs';
@@ -142,6 +142,16 @@ test('MEM-7 phone sync with no cloud model registers receiver, projects ready au
  f.ctx.memoryManager.peek=()=> 'starting';assert.equal((await f.sync()).memoryAuthority.ready,false);
  f.ctx.memoryManager.enabled=false;await assert.rejects(f.sync(),{code:'MEMORY_UNAVAILABLE'});
 });
+test('D119 task-capable legacy phone sync wakes a cold memory worker before advertising readiness',async t=>{
+ const f=await fixed(t);let connected=false,starts=0;
+ f.ctx.cloudIdentity.publishOffline=async(_id:string,generation:number)=>({hostId:'synthetic-host',accountId:'synthetic-account',generation,capabilities:{offlineTasks:1}});
+ f.ctx.memoryManager.peek=()=>connected?'connected':'stopped';
+ f.ctx.memoryManager.status=async()=>{starts++;connected=true;return{state:'ready'};};
+ const payload=await f.vault.open(await f.call('/sync',{publicJwk:await f.vault.key(),generation:0,hashes:{},taskSupport:1}),
+  {ownerId:'a',hostId:'synthetic-host',deviceId:'phone-a'});
+ assert.equal(starts,1);assert.equal(payload.model,null);assert.equal(payload.memoryAuthority.ready,true);
+ await f.call('/turns',{generation:payload.generation,turns:[turn('cold-start')]});await f.settle();assert.equal(f.requests,1);
+});
 test('MEM-7 stable receipts, split batches and two phones ingest exactly once through MEM-1 with original dates and visible searchable history',async t=>{
  const f=await fixed(t),s=await f.sync(),handover={id:'batch-a',totalTurns:2,conversationCount:1,complete:false};
  const a=turn('turn-a','conversation-a'),b=turn('turn-b','conversation-a','改口：我现在喜欢乌龙茶');
@@ -161,25 +171,50 @@ test('MEM-7 stable receipts, split batches and two phones ingest exactly once th
  assert.deepEqual(boundary.source_messages.map((m:any)=>m.role),['user','assistant']);assert.equal(boundary.source_messages[0].content,a.messages[0].text);
  assert.equal(boundary.source_messages[1].model_context_dependencies.capture_status,'complete_empty');
 });
-test('MEM-7 thresholds, confirmation, pause/resume and whole-batch forgetting reuse import controls',async t=>{
+test('D119 large phone batches start automatically and retain pause/resume and whole-batch forgetting',async t=>{
  const f=await fixed(t),s=await f.sync(),turns=Array.from({length:100},(_,i)=>turn('large-'+i));
  const input={generation:s.generation,turns:turns.slice(0,50),handover:{id:'large',totalTurns:100,conversationCount:100,complete:true}};
- await f.call('/turns',{...input,handover:{...input.handover,complete:false}});await f.call('/turns',{...input,turns:turns.slice(50)});const job=f.ctx.historyImport.list('a').imports[0];assert.equal(job.state,'awaiting_confirmation');await f.settle();assert.equal(f.requests,0);
- await assert.rejects(f.ctx.historyImport.action('a',{action:'confirm',jobId:job.id}),{code:'MEMORY_PREVIEW_REQUIRED'});
- await f.ctx.historyImport.action('a',{action:'confirm',jobId:job.id,confirm:true});await f.ctx.historyImport.tick();
+ await f.call('/turns',{...input,handover:{...input.handover,complete:false}});await f.call('/turns',{...input,turns:turns.slice(50)});const job=f.ctx.historyImport.list('a').imports[0];assert.equal(job.state,'running');assert.equal(job.confirmationRequired,false);
+ await f.ctx.historyImport.tick();
  await f.ctx.historyImport.action('a',{action:'pause',jobId:job.id});const before=f.requests;await f.settle(3);assert.equal(f.requests,before);
  await f.ctx.historyImport.action('a',{action:'resume',jobId:job.id});await f.settle(350);assert.equal(f.ctx.historyImport.list('a').imports[0].state,'completed');
  const p=await f.ctx.historyImport.action('a',{action:'forget-preview',jobId:job.id});await f.ctx.historyImport.action('a',{action:'forget',jobId:job.id,forgetToken:p.forgetToken,confirm:true});await f.settle();assert.equal(f.sources.size,0);assert.equal(f.ctx.historyImport.list('a').imports[0].state,'forgotten');
  assert.equal(Object.keys(f.ctx.accountState('a').phoneHistory).length,100,'forget memory retains original phone history');
- assert.equal(phoneNeedsConfirmation(99,256*1024-1),false);
- assert.equal(phoneNeedsConfirmation(1,256*1024),true);
  const long=Array.from({length:9},(_,i)=>turn('bytes-'+i,'bytes-'+i,'合成背景'.repeat(2500)));
  const current=await f.sync();
  const split={id:'bytes-batch',totalTurns:9,conversationCount:9,bytes:1,complete:false};
  await f.call('/turns',{generation:current.generation,turns:long.slice(0,4),handover:split});
  await f.call('/turns',{generation:current.generation,turns:long.slice(4),handover:{...split,complete:true}});
- assert.equal(f.ctx.historyImport.list('a').imports.find((j:any)=>j.handoverId==='bytes-batch').state,'awaiting_confirmation',
-   'threshold includes all persisted packets even when a phone underreports bytes');
+ assert.equal(f.ctx.historyImport.list('a').imports.find((j:any)=>j.handoverId==='bytes-batch').state,'running',
+   'persisted batches above 256 KiB also start without confirmation');
+});
+test('D119 missing chat model waits with a useful activity, resumes automatically and follows the current model',async t=>{
+ const f=await fixed(t),s=await f.sync();f.ctx.backend.listModels=async()=>[{id:'local',configured:false}];
+ await f.call('/turns',{generation:s.generation,turns:[turn('no-model')]});
+ let job=f.ctx.historyImport.list('a').imports[0];assert.equal(job.state,'awaiting_confirmation');assert.equal(job.confirmationRequired,false);
+ assert.match(f.activity.at(-1).title+f.activity.at(-1).summary,/聊天模型/);assert.doesNotMatch(f.activity.at(-1).title+f.activity.at(-1).summary,/确认|预计用量/);
+ await f.settle(3);assert.equal(f.requests,0);
+ f.ctx.backend.listModels=async()=>[{id:'local',configured:true,sourceKind:'local'}];
+ await f.ctx.historyImport.tick();assert.equal(f.requests,1,'configuring the chat model needs no confirmation');
+ f.ctx.accountState('a').lastChatModelProfileId='new-chat';f.ctx.backend.listModels=async()=>[{id:'new-chat',configured:true,sourceKind:'local'}];
+ await f.settle();job=f.ctx.historyImport.list('a').imports[0];assert.equal(job.state,'completed');assert.equal(job.estimate.profileId,'new-chat');
+});
+test('D119 old persisted confirmation batches resume after restart without changing manually paused jobs',async t=>{
+ const f=await fixed(t),s=await f.sync();await f.call('/turns',{generation:s.generation,turns:[turn('old-confirmation')]});
+ const job=f.ctx.accountState('a').historyImports[0];job.state='awaiting_confirmation';job.confirmationRequired=true;
+ await f.ctx.historyImport.close();f.ctx.historyImport=createHistoryImport(f.ctx);await f.settle();
+ assert.equal(f.ctx.historyImport.list('a').imports[0].state,'completed');assert.equal(f.requests,1);
+ await f.call('/turns',{generation:s.generation,turns:[turn('manual-pause')]});const paused=f.ctx.historyImport.list('a').imports[1];
+ await f.ctx.historyImport.action('a',{action:'pause',jobId:paused.id});await f.settle(3);assert.equal(f.requests,1);
+});
+test('D119 automatic model reselection cannot undo a manual pause while the catalog is being read',async t=>{
+ const f=await fixed(t),s=await f.sync();await f.call('/turns',{generation:s.generation,turns:[turn('model-race')]});
+ const job=f.ctx.accountState('a').historyImports[0],reading=modelGate(),release=modelGate();
+ f.ctx.backend.listModels=async()=>{reading.resolve();await release.promise;return[{id:'changed',configured:true}];};
+ f.ctx.accountState('a').lastChatModelProfileId='changed';
+ const tick=f.ctx.historyImport.tick();await reading.promise;
+ const pause=f.ctx.historyImport.action('a',{action:'pause',jobId:job.id});
+ release.resolve();await Promise.all([tick,pause]);assert.equal(f.requests,0);assert.equal(job.state,'paused');
 });
 test('MEM-7 phone initiated deletion erases submitted sources, rejects resurrection and cannot delete another phone source',async t=>{
  const f=await fixed(t),s=await f.sync();await f.call('/turns',{generation:s.generation,turns:[turn('delete-a')]});await f.settle();assert.ok(f.sources.size);

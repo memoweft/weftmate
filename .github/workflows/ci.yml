@@ -239,7 +239,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: memoweft/memoweft
-          ref: 1f01aaa1a44524f7c9b9e851a8f2ca106ac3ec67
+          ref: 05bf798066b57986ab74636860c5450cd7a2b041
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
@@ -257,7 +257,7 @@ jobs:
           python -m pip install ./memoweft-core/py
           python -c "import sys; print('WEFTMATE_TEST_MEMOWEFT_PYTHON=' + sys.executable)" >> "$GITHUB_ENV"
       - name: Real Core memory lifecycle integration
-        run: node --test tests/personal-memory-observed.integration.test.ts tests/personal-memory-observed-outbox.test.ts tests/personal-memory-correction.integration.test.ts tests/personal-memory-freshness.integration.test.ts tests/personal-memory-confirmation.integration.test.ts tests/personal-memory-fx17.integration.test.ts tests/personal-memory-fx18.integration.test.ts tests/personal-memory-actions.integration.test.ts tests/personal-memory-recall-dates.integration.test.ts tests/desktop-memory-core.integration.test.ts tests/personal-memory-core-upgrade.integration.test.ts tests/personal-memory-state-goals.integration.test.ts
+        run: node --test tests/personal-memory-observed.integration.test.ts tests/personal-memory-observed-outbox.test.ts tests/personal-memory-correction.integration.test.ts tests/personal-memory-freshness.integration.test.ts tests/personal-memory-confirmation.integration.test.ts tests/personal-memory-fx17.integration.test.ts tests/personal-memory-fx18.integration.test.ts tests/personal-memory-actions.integration.test.ts tests/personal-memory-recall-dates.integration.test.ts tests/desktop-memory-core.integration.test.ts tests/personal-memory-core-upgrade.integration.test.ts tests/personal-memory-state-goals.integration.test.ts tests/personal-offline-core.integration.test.ts
         env:
           WEFTMATE_TEST_MEMOWEFT_SOURCE: ${{ github.workspace }}/memoweft-core/py/src
           PYTHONDONTWRITEBYTECODE: '1'
