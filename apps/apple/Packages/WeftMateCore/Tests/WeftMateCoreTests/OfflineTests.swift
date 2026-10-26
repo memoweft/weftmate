@@ -208,12 +208,13 @@ private actor OfflineTransport: HTTPTransport {
         #expect(WatchTimelineProjection.connectionFailure(APIFailure.server(status: 401, code: "UNAUTHORIZED"), accountKey: "account") == nil)
         #expect(WatchTimelineProjection.connectionFailure(APIFailure.identityMismatch, accountKey: "account") == nil)
     }
-    @Test func longUnicodeReplyFitsHostTurnContract() async throws {
-        let transport = OfflineTransport(reply: String(repeating: "👩‍👩‍👧‍👧", count: 2000))
+    @Test func longUnicodeReplyRetainsOriginalForFragmentUpload() async throws {
+        let original=String(repeating: "👩‍👩‍👧‍👧", count: 2000)
+        let transport = OfflineTransport(reply: original)
         let (_, engine, dir, _) = try fixture(transport: transport); defer { try? FileManager.default.removeItem(at: dir) }
         try engine.merge(snapshot()); try await engine.send("你好", conversationID: "chat", control: { _ in status() })
         #expect(engine.state.turns[0].messages.count == 2)
-        #expect(engine.state.turns[0].messages[1].text.utf16.count <= 16384)
+        #expect(engine.state.turns[0].messages[1].text == original)
     }
     @Test func relatedRecallBoundedContextAndDependencies() async throws {
         let transport = OfflineTransport(), (_, engine, dir, _) = try fixture(transport: transport)
