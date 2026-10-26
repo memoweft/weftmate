@@ -25,10 +25,11 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
     func erase() { enqueued=[];synced=[];memoryItems=[];ready=false }
     var generation: Int?=1
     var ready=true
+    var memoryAuthorityReady=true
     var hostOffline=false
     var synced=Set<String>()
     var enqueued: [OfflineTurn]=[]
-    func enqueuePhoneTurns(_ values: [OfflineTurn],generation: Int) throws {
+    func enqueuePhoneTurns(_ values: [OfflineTurn],generation: Int,handover: OfflineHandover? = nil) throws {
         guard generation == self.generation else { throw OfflineFailure.notReady }
         for value in values where !enqueued.contains(where: { $0.id == value.id }) { enqueued.append(value) }
     }

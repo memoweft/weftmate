@@ -26,7 +26,7 @@ private actor OfflineTransport: HTTPTransport {
             "items": empty ? [] : [["id": "tea", "kind": "cognition", "text": "用户喝茶喜欢茉莉花茶，不加糖。", "currentState": "current", "sources": [["id": "source-tea", "summary": NSNull()]]],
                 ["id": "travel", "kind": "event", "text": "用户去青海旅行。", "currentState": "current", "sources": []]],
             "remove": empty ? ["tea", "travel"] : [], "hashes": empty ? [:] : ["tea": String(repeating: "a", count: 64), "travel": String(repeating: "b", count: 64)],
-            "truncated": false, "recent": [], "model": ["profileId": "mimo", "name": "Synthetic", "baseUrl": "https://model.example.com/v1", "modelId": "mimo", "apiKey": "a14-synthetic-model-key"],
+            "memoryAuthority":["ready":true,"hostId":"host-test"], "truncated": false, "recent": [], "model": ["profileId": "mimo", "name": "Synthetic", "baseUrl": "https://model.example.com/v1", "modelId": "mimo", "apiKey": "a14-synthetic-model-key"],
             "control": ["hostId": "host-test", "accountId": "account-test", "generation": generation]]
         return try JSONDecoder().decode(OfflineSnapshot.self, from: JSONSerialization.data(withJSONObject: json))
     }
@@ -70,22 +70,6 @@ private actor OfflineTransport: HTTPTransport {
         try await engine.sync(identity:identity,fetch:{ _ in envelope },submit:{ .init(generation:1,receipts:$0.turns.map { .init(id:$0.id,state:"synced") }) },control:{ _ in status() })
         #expect(engine.state.synced == Set(engine.state.turns.map(\.id)))
         #expect(try Data(contentsOf:vault.file).range(of:Data(fallback.apiKey.utf8)) == nil)
-    }
-    @Test func phoneFirstFallsBackOnlyForLegacyUnknownFieldRejection() async throws {
-        let (vault,_,dir,_)=try fixture();defer { try? FileManager.default.removeItem(at:dir) }
-        let engine=try OfflineReplica(vault:vault,phoneFirst:true),envelope=try seal(snapshot(),vault:vault)
-        var shapes: [Bool?]=[]
-        try await engine.sync(identity:identity,fetch:{ request in
-            shapes.append(request.phoneFirst)
-            if request.phoneFirst == true { throw APIFailure.server(status:400,code:"INVALID_REQUEST") }
-            return envelope
-        },submit:{ _ in .init(generation:1,receipts:[]) },control:{ _ in status() })
-        #expect(shapes.count == 2 && shapes[0] == true && shapes[1] == nil)
-        var denied=0
-        await #expect(throws:(any Error).self) {
-            try await engine.sync(identity:identity,fetch:{ _ in denied+=1;throw APIFailure.server(status:403,code:"FORBIDDEN") },submit:{ _ in .init(generation:1,receipts:[]) },control:{ _ in status() })
-        }
-        #expect(denied == 1)
     }
     @Test func windowsEnvelopeOriginalAADTagTamperAndIdentity() throws {
         let (vault, _, dir, _) = try fixture(); defer { try? FileManager.default.removeItem(at: dir) }

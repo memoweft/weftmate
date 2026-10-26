@@ -13,6 +13,17 @@ public struct OfflineIdentity: Codable, Sendable, Equatable {
     // Cookie device IDs rotate. Only the authenticated envelope check uses deviceId.
     var scope: String { "\(hostId.utf8.count):\(hostId)\(ownerId.utf8.count):\(ownerId)" }
 }
+/// Last successful binding, scoped by the cloud issuer and subject, without a host Cookie.
+public struct OfflineBinding: Codable, Sendable {
+    public let issuer, subject: String
+    public let identity: OfflineIdentity
+    public init(issuer: String, subject: String, identity: OfflineIdentity) {
+        self.issuer=issuer;self.subject=subject;self.identity=identity
+    }
+    public func matches(issuer: String,subject: String,hostID: String?) -> Bool {
+        self.issuer == issuer && self.subject == subject && (hostID == nil || identity.hostId == hostID)
+    }
+}
 public struct OfflineMemoryRef: Codable, Sendable, Hashable {
     public let kind, id: String
     public init(kind: String,id: String) { self.kind=kind;self.id=id }
@@ -26,7 +37,7 @@ public struct OfflineMemory: Codable, Sendable, Identifiable {
 public struct OfflineMessage: Codable, Sendable, Equatable {
     public let role, text: String
 }
-public struct OfflineTurn: Codable, Sendable, Identifiable {
+public struct OfflineTurn: Codable, Sendable, Identifiable, Equatable {
     public let id, conversationId: String
     public let timestamp: Int64
     public var messages: [OfflineMessage]
@@ -39,6 +50,10 @@ public struct OfflineModelConfiguration: Codable, Sendable {
 public struct OfflineControl: Codable, Sendable {
     public let hostId, accountId: String
     public let generation: Int
+}
+public struct OfflineMemoryAuthority: Codable, Sendable {
+    public let ready: Bool
+    public let hostId: String
 }
 public struct OfflineAuthorization: Codable, Sendable {
     public var capabilities: [String: JSONValue]? = nil
@@ -62,6 +77,7 @@ public struct OfflineSnapshot: Codable, Sendable {
     public let recent: [OfflineRecent]
     public let model: OfflineModelConfiguration?
     public let control: OfflineControl
+    public var memoryAuthority: OfflineMemoryAuthority? = nil
     public var taskRecipient: [String: String]? = nil
     public var taskReferences: [OfflineTaskReference]? = nil
 }
@@ -72,9 +88,24 @@ public struct OfflineSyncRequest: Encodable, Sendable {
     public var phoneFirst: Bool? = nil
     public var taskSupport: Int? = nil
 }
-public struct OfflineSubmission: Encodable, Sendable {
+public struct OfflineHandover: Codable, Sendable, Equatable {
+    public let id: String
+    public let totalTurns, conversationCount, bytes: Int
+    public var complete: Bool = false
+}
+public struct OfflinePhoneHandover: Codable, Sendable {
+    public let handover: OfflineHandover
+    public var turnIDs: [String]
+}
+public struct OfflineSubmission: Codable, Sendable, Equatable {
     public let generation: Int
     public let turns: [OfflineTurn]
+    public var handover: OfflineHandover? = nil
+    /// The size check and PersonalClient must use the exact same wire encoding.
+    public func encoded() throws -> Data {
+        let encoder=JSONEncoder();encoder.outputFormatting=[.sortedKeys,.withoutEscapingSlashes]
+        return try encoder.encode(self)
+    }
 }
 public struct OfflineReceipts: Codable, Sendable {
     public struct Receipt: Codable, Sendable { public let id, state: String }
@@ -87,6 +118,8 @@ public struct OfflineState: Codable, Sendable {
     public var synced: Set<String> = []
     public var contexts: [String: [OfflineMessage]] = [:]
     public var workTasks: [OfflineWorkTask]? = nil
+    public var phoneHandovers: [OfflinePhoneHandover]? = nil
+    public var pendingSubmission: OfflineSubmission? = nil
     public init() {}
 }
 public enum OfflineFailure: Error, LocalizedError {

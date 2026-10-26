@@ -770,7 +770,20 @@ final class AppleAppModel: ObservableObject {
         return try await cloudLogin.offlineAuthorization(hostID: hostID)
     }
     func pollOffline() async {
-        guard let session, let directory = timelineStateDirectory else { return }
+        guard let directory = timelineStateDirectory else { return }
+        let offlineDirectory=directory.appendingPathComponent("Offline")
+        let offlineKeys=KeychainCredentialStore(service:cloudNamespace+".offline")
+        guard let session else {
+            #if os(iOS)
+            do {
+                if let identity=try cloudLogin.savedOfflineIdentity() {
+                    await offline.restore(identity:identity,directory:offlineDirectory,store:offlineKeys,allowLoopback:permitsSyntheticLoopback,multipleComputers:cloudLogin.multiHost,control:offlineAuthorization)
+                } else { offline.suspend() }
+            } catch { offline.suspend() }
+            phoneChat.activate(app:self)
+            #endif
+            return
+        }
         #if os(iOS)
         let phoneFirst=true
         phoneChat.activate(app:self)
@@ -781,10 +794,11 @@ final class AppleAppModel: ObservableObject {
         let transcriptExclusions: PhoneTranscriptSync?=nil
         let supportsWork=false
         #endif
-        await offline.poll(session: session, client: client, directory: directory.appendingPathComponent("Offline"),
-            store: KeychainCredentialStore(service: cloudNamespace + ".offline"),
+        await offline.poll(session: session, client: client, directory: offlineDirectory,
+            store: offlineKeys,
             allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, multipleComputers:cloudLogin.multiHost, workAndChat:supportsWork, transcriptExclusions:transcriptExclusions, control: offlineAuthorization)
         #if os(iOS)
+        if self.session == session { try? cloudLogin.rememberOfflineIdentity(session) }
         await phoneChat.synchronize(app:self)
         if offline.hostOffline { _ = await watchSnapshotBytes() }
         #endif
@@ -1648,6 +1662,7 @@ final class AppleAppModel: ObservableObject {
 
     func removeComputerReplica(_ host: String) {
         offline.removeComputer(host)
+        try? cloudLogin.forgetOfflineIdentity(hostID:host)
         guard let directory=timelineStateDirectory else { return }
         do { try OfflineVault.clearComputer(hostID:host,directory:directory.appendingPathComponent("Offline"),store:KeychainCredentialStore(service:cloudNamespace+".offline")) }
         catch { authError="这台电脑的手机副本没能清除，请重试。" }

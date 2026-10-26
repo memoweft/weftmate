@@ -30,7 +30,7 @@ struct PhoneStandaloneTests {
         state.threads[0].messages[1].text="regenerated reply"
         let retry=state.prepareMigration(host:"computer-a",generation:1)
         #expect(retry[0].id == initial[0].id);#expect(retry[0].messages == initial[0].messages)
-        state.acknowledgeMigration(host:"computer-a",ids:Set(initial.map(\.id)))
+        state.acknowledgeMigration(host:"computer-a",generation:1,ids:Set(initial.map(\.id)))
         #expect(state.prepareMigration(host:"computer-a",generation:1).isEmpty)
         #expect(state.prepareMigration(host:"computer-a",generation:2).isEmpty)
         #expect(state.threads.isEmpty);#expect(state.selected == nil)

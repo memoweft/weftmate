@@ -192,24 +192,36 @@ public struct PhoneChatMigration: Codable, Sendable {
     public var turns: [OfflineTurn]
     public var accepted: Set<String>
     public var conversationIDs: Set<String>
+    public var handover: OfflineHandover? = nil
+    public var handoverTurnIDs: [String]? = nil
 }
 extension PhoneChatState {
     public mutating func prepareMigration(host: String, generation: Int) -> [OfflineTurn] {
         applyMigrationGeneration(host:host,generation:generation)
         let prior=migrations?[host]
         var migration=prior ?? PhoneChatMigration(generation:generation,turns:[],accepted:[],conversationIDs:[])
+        let pending=migration.turns.filter { !migration.accepted.contains($0.id) && transcriptSync?.excludes(id:$0.id,text:$0.messages.first?.text ?? "") != true }
+        if migration.handover != nil, !pending.isEmpty { return pending }
         let offered=Set(migration.turns.map(\.id))
         for thread in threads {
             guard !(migrations ?? [:]).contains(where: { $0.key != host && $0.value.conversationIDs.contains(thread.id) }) else { continue }
             for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) && transcriptSync?.excludes(id:message.id,text:message.text) != true {
                 var messages=[OfflineMessage(role:"user",text:([message.text]+(message.attachments ?? []).map(\.placeholder)).filter { !$0.isEmpty }.joined(separator:"\n"))]
                 if thread.messages.indices.contains(index+1),thread.messages[index+1].role == "assistant",!thread.messages[index+1].text.isEmpty { messages.append(.init(role:"assistant",text:thread.messages[index+1].text)) }
-                migration.turns.append(.init(id:message.id,conversationId:thread.id,timestamp:Int64(message.date.timeIntervalSince1970*1000),messages:messages,memoryRefs:thread.messages.indices.contains(index+1) ? thread.messages[index+1].memoryRefs ?? [] : [],dependencyComplete:thread.messages.indices.contains(index+1) ? thread.messages[index+1].dependencyComplete ?? true : true))
+                let reply=thread.messages.indices.contains(index+1) && thread.messages[index+1].role == "assistant" ? thread.messages[index+1] : nil
+                migration.turns.append(.init(id:message.id,conversationId:thread.id,timestamp:Int64(message.date.timeIntervalSince1970*1000),messages:messages,memoryRefs:reply?.memoryRefs ?? [],dependencyComplete:reply?.dependencyComplete ?? true))
                 migration.conversationIDs.insert(thread.id)
             }
         }
+        let next=migration.turns.filter { !migration.accepted.contains($0.id) && transcriptSync?.excludes(id:$0.id,text:$0.messages.first?.text ?? "") != true }
+        if !next.isEmpty {
+            // A new cohort begins only after every original in the prior cohort was received.
+            let bytes=(try? JSONEncoder().encode(next).count) ?? 0
+            migration.handover = .init(id:UUID().uuidString.lowercased(),totalTurns:next.count,conversationCount:Set(next.map(\.conversationId)).count,bytes:bytes)
+            migration.handoverTurnIDs=next.map(\.id)
+        }
         if migrations == nil { migrations=[:] };migrations?[host]=migration
-        return migration.turns.filter { !migration.accepted.contains($0.id) && transcriptSync?.excludes(id:$0.id,text:$0.messages.first?.text ?? "") != true }
+        return next
     }
     public mutating func applyMigrationGeneration(host: String,generation: Int) {
         guard let existing=migrations?[host],existing.generation != generation else { return }
@@ -220,8 +232,9 @@ extension PhoneChatState {
         if !threads.contains(where: { $0.id == selected }) { selected=nil }
         migrations?[host]=PhoneChatMigration(generation:generation,turns:[],accepted:[],conversationIDs:[])
     }
-    public mutating func acknowledgeMigration(host: String, ids: Set<String>) {
-        guard var value=migrations?[host] else { return };value.accepted.formUnion(ids.intersection(Set(value.turns.map(\.id))));migrations?[host]=value
+    public mutating func acknowledgeMigration(host: String, generation: Int, ids: Set<String>) {
+        guard var value=migrations?[host],value.generation == generation else { return }
+        value.accepted.formUnion(ids.intersection(Set(value.turns.map(\.id))));migrations?[host]=value
     }
 }
 
