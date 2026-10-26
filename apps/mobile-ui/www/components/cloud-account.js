@@ -160,6 +160,7 @@
     core.observeConnection=listener=>uiCore.observeConnection(listener);
     core.retryConnection=()=>uiCore.retryConnection();
     globalThis.WeftOfflineView?.mount({ core, goalsCore:uiCore, nativeCall: native ? call : null, nativeTaskVault: identity.nativeOfflineTasks === 1,
+      onMemoryReplicaChanged: () => {if(state.page==='memory'&&uiCore.connectionView().kind!=='online')memoryPage($('page-content'));},
       openConversation: () => page('chat'),
       identity: async () => native ? call('offline.identity') : core.cloudOfflineIdentity(),
       host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });
