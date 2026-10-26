@@ -127,7 +127,40 @@ python3 Scripts/package_mac_trial.py --artifacts /private/path/apple-delivery
 
 当前源码按服务器和账户保存草稿、已读取的会话缓存与不可变请求记录。界面分别显示保存状态、缓存读取时间和服务端回执；未知请求重开时先查询原身份，用户明确继续才复用原内容。主仓源码合并不会自动发布或更新官网安装包。
 
-### iPhone 与 Watch 真实设备的最后准备
+## iPhone 与 Watch 真实设备的最后准备
+
+### 独立 iPhone 测试候选（APPLE-5）
+
+生成器另外提供 `WeftMatePhoneWindowTest` 和对应 UI 测试目标。候选固定为 `com.weftmate.apple.windowtest`，主屏幕显示“WeftMate 苹果测试”；使用独立应用容器、固定的测试 Keychain service、偏好 suite 与本机状态目录。普通手动重开仍使用这些测试存储，不需要保留 Xcode 启动参数。原 Phone、Mac、Watch 目标仍分别构建。
+
+此目标只准备手机聊天与同步：不嵌入 Watch，不带 HealthKit entitlement、健康后台注册或后台刷新模式，也不启动 WatchConnectivity。提醒的前台与本机通知逻辑仍在，后台刷新不注册；健康不作为此候选的验收范围。`Config/Local.xcconfig` 沿用受忽略的本机团队配置；不要把团队或凭据写进生成器。云登录继续使用已登记的回调 URI。
+
+Windows 可先验证并生成项目，连续生成两次应无差异：
+
+```sh
+python3 -m unittest discover -s apps/apple/Tests -p test_window_project.py -v
+node --test apps/apple/Tests/phone_window_model_server.test.mjs
+python3 apps/apple/Scripts/generate_project.py
+```
+
+Mac 确认只有本次执行会话后，在 `apps/apple` 中运行下面各步。`EVIDENCE` 指向源码外的私有证据目录，`PHONE_ID` 使用本次选定的实际 iPhone 模拟器 UUID：
+
+```sh
+python3 Scripts/run_phone_window_checks.py --phase preflight --artifacts "$EVIDENCE"
+python3 Scripts/run_phone_window_checks.py --phase core --artifacts "$EVIDENCE"
+python3 Scripts/run_phone_window_checks.py --phase state --artifacts "$EVIDENCE" \
+  --check PhoneStandaloneModelChecks --check PhoneReminderModelChecks
+python3 Scripts/run_phone_window_checks.py --phase build --artifacts "$EVIDENCE"
+python3 Scripts/run_phone_window_checks.py --phase ui --device "$PHONE_ID" --artifacts "$EVIDENCE"
+```
+
+APPLE-1 至 4 合入后，另将它们新增的状态检查逐个加入 `--check`。UI 批次一起选择候选的 `PhoneWindowInstallUITests` 和 APPLE-1 的 `PhoneWindowUITests`；后者尚未集成时脚本拒绝最终 UI 验证，合入后须重新生成工程。至少执行这两组的三条测试，跳过或缺计数均不算通过。安装套件验证真实聊天控制器的排队、停止、队列依次执行、普通无参数重开与前后台恢复；仅 HTTP/SSE 回复时序使用合成替身。它不证明真实电脑的记忆形成、纠正或遗忘。
+
+脚本每次建独立证据和构建目录，记录提交、工作区状态、命令、退出码、XCTest 计数摘要、截图结果包与新增崩溃报告。Swift 测试及每条状态检查限 20 分钟，构建和 UI 批次各限 30 分钟；结束收本次进程组。UI 批后关闭全部模拟器，等待 3 分钟；本批新 `gpuRestart` 则等 10 分钟，不打开 Simulator.app。诊断目录不可读记为未知。
+
+免费团队签名、设备信任／开发者模式、真实 MemoWeft 形成→纠正→遗忘→手机副本，以及本人最终试用均待 Mac 和真机验证。Apple 说明 Personal Team 的安装描述文件有效期为 7 天，到期需用同一团队重新构建安装；本项目不自动续签。能力是否可用取决于实际团队及描述文件，不能由无签名编译推出可安装。参见 [Apple 免费设备测试说明](https://developer.apple.com/help/account/basics/about-your-developer-account)及[支持的 iOS 能力](https://developer.apple.com/help/account/reference/supported-capabilities-ios)。
+
+### 原 Phone 与 Watch 目标
 
 在 Xcode 设置的 Apple Accounts 中确认本人账户可用；Phone 和 Watch 两个 target 的 Signing & Capabilities 选择同一个已有团队并保留 Automatically manage signing。将解锁的 iPhone 连接到 Mac，在设备提示中信任这台电脑；Watch 使用与该手机的真实配对。按设备提示开启 Developer Mode，然后在 Scheme 的运行目标中选择真实 iPhone 或 Watch，执行 Run。Xcode 此时创建所需开发签名与描述文件；尚未完成这一步时，不提供未签名 IPA 下载。个人设备开发试用可以采用 Personal Team；TestFlight 和公开发行需要另行核实对应开发者资格。本工程不自动注册收费账号或修改本人团队选择。
 

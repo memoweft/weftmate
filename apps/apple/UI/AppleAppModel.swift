@@ -1385,17 +1385,17 @@ final class AppleAppModel: ObservableObject {
                 configurationError = "测试存储命名空间无效，请检查启动参数。"
             }
         }
-        let testService = "com.weftmate.apple.ui-tests.\(testNamespace)"
-        let preferences = uiTesting
-            ? UserDefaults(suiteName: testService) : UserDefaults.standard
+        let storage = AppleStorageProfile(bundleID: Bundle.main.bundleIdentifier, uiTesting: uiTesting, testNamespace: testNamespace)
+        let preferences: UserDefaults?
+        if let suite = storage.preferencesSuite { preferences = UserDefaults(suiteName: suite) }
+        else { preferences = UserDefaults.standard }
         if preferences == nil { configurationError = "无法打开测试存储，请检查启动参数。" }
         defaults = preferences
         appearanceMode = preferences?.string(forKey: "appearanceMode") ?? "system"
         #if DEBUG
         if uiTesting, let index = args.firstIndex(of: "--a5-theme"), args.indices.contains(index + 1), ["light", "dark"].contains(args[index + 1]) { appearanceMode = args[index + 1] }
         #endif
-        var store: any CredentialStore = KeychainCredentialStore(service: uiTesting
-            ? "\(testService).credentials" : "com.weftmate.apple.credentials")
+        var store: any CredentialStore = KeychainCredentialStore(service: storage.credentials)
         #if DEBUG && os(macOS)
         if uiTesting, args.contains("--lg2-capture"), let i = args.firstIndex(of: "--a11-local-host-id"), args.indices.contains(i + 1) { self.localHostID = args[i + 1] }
         if uiTesting, args.contains("--lg2-capture"), args.contains("--a5-local-server"),
@@ -1404,7 +1404,7 @@ final class AppleAppModel: ObservableObject {
             store = CaptureCredentials()
         }
         #endif
-        cloudNamespace = uiTesting ? testService + ".cloud" : "com.weftmate.apple.cloud"
+        cloudNamespace = storage.cloud
         var transport: any HTTPTransport = URLSessionTransport(hostPins: HostPinStore(store: KeychainCredentialStore(service: cloudNamespace + ".pins")))
         var routeEnabled = false
         #if DEBUG
@@ -1441,17 +1441,15 @@ final class AppleAppModel: ObservableObject {
         var initialDraftError: String?
         var localDirectory: URL?
         do {
-            if uiTesting {
+            if let subdirectory = storage.stateSubdirectory {
                 guard let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
                     throw CocoaError(.fileNoSuchFile)
                 }
-                if let i = args.firstIndex(of: "--ui-testing-data-dir"), args.indices.contains(i + 1) {
+                if !storage.isWindowTest, let i = args.firstIndex(of: "--ui-testing-data-dir"), args.indices.contains(i + 1) {
                     localDirectory = URL(fileURLWithPath: args[i + 1], isDirectory: true)
                         .appendingPathComponent("LocalState", isDirectory: true)
                 } else {
-                    localDirectory = base.appendingPathComponent("WeftMate/UITests", isDirectory: true)
-                        .appendingPathComponent(testNamespace, isDirectory: true)
-                        .appendingPathComponent("LocalState", isDirectory: true)
+                    localDirectory = base.appendingPathComponent(subdirectory, isDirectory: true)
                 }
             }
             let local = try LocalConversationStore(directory: localDirectory)

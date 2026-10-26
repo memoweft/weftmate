@@ -50,7 +50,7 @@ def configs(name, settings, is_project=False):
     for config in ["Debug", "Release"]:
         build = dict(settings)
         if config == "Debug":
-            build.update(SWIFT_OPTIMIZATION_LEVEL="-Onone", DEBUG_INFORMATION_FORMAT="dwarf", SWIFT_ACTIVE_COMPILATION_CONDITIONS="$(inherited) DEBUG", ENABLE_TESTABILITY="YES", ONLY_ACTIVE_ARCH="YES")
+            build.update(SWIFT_OPTIMIZATION_LEVEL="-Onone", DEBUG_INFORMATION_FORMAT="dwarf", SWIFT_ACTIVE_COMPILATION_CONDITIONS=build.get("SWIFT_ACTIVE_COMPILATION_CONDITIONS", "$(inherited)") + " DEBUG", ENABLE_TESTABILITY="YES", ONLY_ACTIVE_ARCH="YES")
             if name == "WeftMatePhone":
                 build["INFOPLIST_FILE"] = "Config/SimulatorTestInfo.plist"
                 build["INFOPLIST_KEY_NSHealthUpdateUsageDescription"] = "仅在隔离模拟器 XCTest 中写入合成样本，日用功能不写健康数据。"
@@ -127,12 +127,17 @@ def target(name, platform, sources, testing=None):
         if platform == "iphoneos":
             settings["INFOPLIST_KEY_NSCameraUsageDescription"] = "拍摄你选择的图片作为对话附件，或扫描电脑上的一次性配对二维码。"
         settings["INFOPLIST_KEY_NSLocalNetworkUsageDescription"] = "WeftMate 连接你选择的个人服务器，以便同步账户和会话。"
-    if not is_test and platform in ["iphoneos", "watchos"]:
+    if not is_test and platform in ["iphoneos", "watchos"] and name != "WeftMatePhoneWindowTest":
         settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMateHealth.entitlements"
         settings["INFOPLIST_KEY_NSHealthShareUsageDescription"] = "WeftMate 只读取你选择的健康项目，在设备上汇总每日摘要，用于个人陪伴。"
         if name == "WeftMatePhone":
             settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMatePhoneHealth.entitlements"
             settings["INFOPLIST_KEY_NSHealthShareUsageDescription"] = "WeftMate 会读取你的步数、睡眠、心率和运动，把每天的汇总送到你自己的电脑，用来回答『我最近睡得怎么样』这类问题。"
+    if name == "WeftMatePhoneWindowTest":
+        settings.update(PRODUCT_BUNDLE_IDENTIFIER="com.weftmate.apple.windowtest",
+                        INFOPLIST_KEY_CFBundleDisplayName="WeftMate 苹果测试",
+                        INFOPLIST_FILE="Config/PhoneWindowInfo.plist",
+                        SWIFT_ACTIVE_COMPILATION_CONDITIONS="$(inherited) WEFTMATE_WINDOW_TEST")
     cfg = configs(name, settings)
     tid = obj("target:" + name, isa="PBXNativeTarget", buildConfigurationList=cfg, buildPhases=phases, buildRules=[], dependencies=deps, name=name, packageProductDependencies=packages, productName=name, productReference=product, productType="com.apple.product-type.bundle.ui-testing" if is_test else "com.apple.product-type.application")
     targets.append(tid)
@@ -141,14 +146,22 @@ def target(name, platform, sources, testing=None):
         target_attrs[tid]["TestTargetID"] = ref("target:" + testing)
     return tid
 
-ui = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "UI").rglob("*.swift"))
-mac = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "macOS").rglob("*.swift"))
-phone = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "iOS").rglob("*.swift"))
-watch = ["UI/RunLogRuntime.swift"] + sorted(str(p.relative_to(ROOT)) for p in (ROOT / "watchOS").rglob("*.swift"))
+ui = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "UI").rglob("*.swift"))
+mac = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "macOS").rglob("*.swift"))
+phone = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "iOS").rglob("*.swift"))
+watch = ["UI/RunLogRuntime.swift"] + sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "watchOS").rglob("*.swift"))
 target("WeftMateWatch", "watchos", watch + ["UI/WeftIcon.swift", "../../design/tokens/generated/apple/DesignTokens.swift"])
 debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixture.swift", "Tests/HealthKitUIFixture.swift"]
 target("WeftMateMac", "macosx", ui + mac + ["iOS/PhoneStandaloneModel.swift", "iOS/PhoneProviderPreset.swift", "iOS/PhoneAttachmentInput.swift"] + debug_fixture + ["../../design/tokens/generated/apple/DesignTokens.swift"])
-target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture + ["Packages/WeftMateCore/Tests/WeftMateCoreTests/Mode2IFixture.swift", "Tests/Health4Fixture.swift", "Tests/Apple3Fixture.swift", "Tests/Apple4Fixture.swift", "Tests/Apple5Fixture.swift", "Tests/Apple5AddendumFixture.swift"] + ["../../design/tokens/generated/apple/DesignTokens.swift"])
+phone_sources = ui + phone + debug_fixture + ["Packages/WeftMateCore/Tests/WeftMateCoreTests/Mode2IFixture.swift", "Tests/Health4Fixture.swift", "Tests/Apple3Fixture.swift", "Tests/Apple4Fixture.swift", "Tests/Apple5Fixture.swift", "Tests/Apple5AddendumFixture.swift", "Tests/PhoneWindowUIFixture.swift"] + ["../../design/tokens/generated/apple/DesignTokens.swift"]
+target("WeftMatePhone", "iphoneos", phone_sources)
+target("WeftMatePhoneWindowTest", "iphoneos", phone_sources)
+window_tests = ["Tests/PhoneWindowCandidateUITests.swift"]
+# APPLE-1 contributes the memory-route suite. Include it when integrated, without
+# pulling in the legacy health helpers or the rest of the ordinary phone UI suite.
+if (ROOT / "Tests/PhoneWindowUITests.swift").exists():
+    window_tests.append("Tests/PhoneWindowUITests.swift")
+target("WeftMatePhoneWindowTestUITests", "iphoneos", window_tests, "WeftMatePhoneWindowTest")
 target("WeftMateHealth4Seed", "iphoneos", ["Tests/HEALTH4SeedApp.swift"])
 target("WeftMateHealthSeedPhone", "iphoneos", ["Tests/HEALTH1SeedApp.swift"])
 target("WeftMateHealthSeedWatch", "iphoneos", ["Tests/HEALTH1SeedApp.swift"])
@@ -164,10 +177,10 @@ data = "// !$*UTF8*$!\n{\n\tarchiveVersion = 1;\n\tclasses = {};\n\tobjectVersio
 for key, fields in OBJECTS.items():
     data += "\t\t" + key + " = " + encode(fields) + ";\n"
 data += "\t};\n\trootObject = " + ref("project") + ";\n}\n"
-(PROJECT / "project.pbxproj").write_text(data)
+(PROJECT / "project.pbxproj").write_text(data, encoding="utf-8", newline="\n")
 schemes = PROJECT / "xcshareddata/xcschemes"
 schemes.mkdir(parents=True, exist_ok=True)
-for name in ["WeftMateMac", "WeftMatePhone", "WeftMateWatch"]:
+for name in ["WeftMateMac", "WeftMatePhone", "WeftMateWatch", "WeftMatePhoneWindowTest"]:
     test = name + "UITests"
     def buildable(target_name, extension="app"):
         return f'<BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{ref("target:"+target_name)}" BuildableName="{target_name}.{extension}" BlueprintName="{target_name}" ReferencedContainer="container:WeftMate.xcodeproj"/>'
@@ -180,5 +193,5 @@ for name in ["WeftMateMac", "WeftMatePhone", "WeftMateWatch"]:
  <ProfileAction buildConfiguration="Release" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES"><BuildableProductRunnable runnableDebuggingMode="0">{buildable(name)}</BuildableProductRunnable></ProfileAction>
  <AnalyzeAction buildConfiguration="Debug"/><ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"/>
 </Scheme>'''
-    (schemes / (name + ".xcscheme")).write_text(xml)
-print("Generated WeftMate.xcodeproj with", len(ui), "shared UI sources and three native app targets.")
+    (schemes / (name + ".xcscheme")).write_text(xml, encoding="utf-8", newline="\n")
+print("Generated WeftMate.xcodeproj with", len(ui), "shared UI sources and four native app targets.")
