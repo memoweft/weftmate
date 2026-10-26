@@ -152,7 +152,18 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
 }
 
 let memoryPullMounted=false;
-function memoryPage(target){if(globalThis.WeftPhone?.memoryPending)return WeftPhoneMemoryView(target);memoryTarget=target;if(!memoryPullMounted){memoryPullMounted=true;WeftPopover.pullRefresh($('generic-page'),()=>startMemorySnapshot(memoryTarget,state.memory.kind,state.memory.query),()=>state.page==='memory'&&!state.memory.loading);}const scope=state.owner||'';if(!state.memory||state.memory.scope!==scope)state.memory=emptyMemoryState(scope);
+function renderPhoneMemoryReplica(target){
+  const snapshot=globalThis.WeftPhone?.memoryReplica;
+  target.replaceChildren(heading('记忆'));
+  if(!snapshot){target.append(notice('记忆在电脑上形成。连上电脑后，这里会显示 WeftMate 记得的事。'),action('怎么连上电脑',()=>page('devices'),false));return;}
+  target.append(notice('电脑连上后可以修改和忘掉'));
+  target.append(el('p','muted',`上次同步：${snapshot.syncedAt?timeLabel(snapshot.syncedAt):'时间未知'}`));
+  if(!snapshot.items?.length){target.append(notice('上次同步时还没有记忆。'));return;}
+  const section=group('电脑同步来的记忆',[]),body=section.querySelector('.group-body');
+  for(const item of snapshot.items){const row=el('div','memory-item');row.append(el('p','',item.text));body.append(row);}
+  target.append(section);
+}
+function memoryPage(target){if(globalThis.WeftPhone?.active)return renderPhoneMemoryReplica(target);memoryTarget=target;if(!memoryPullMounted){memoryPullMounted=true;WeftPopover.pullRefresh($('generic-page'),()=>startMemorySnapshot(memoryTarget,state.memory.kind,state.memory.query),()=>state.page==='memory'&&!state.memory.loading);}const scope=state.owner||'';if(!state.memory||state.memory.scope!==scope)state.memory=emptyMemoryState(scope);
   const memory=state.memory;memory.target='memory';memory.view='list';memory.flow++;
   memory.pendingMarker=savedMemoryMarker();
   if(!state.loggedIn||!scope||state.transitionPending){renderMemoryList(target);return}

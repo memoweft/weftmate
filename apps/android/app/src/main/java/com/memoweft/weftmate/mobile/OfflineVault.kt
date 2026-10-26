@@ -194,7 +194,7 @@ internal class OfflineVault(private val context: Context, private val host: Host
                     value.put("snapshot",JSONObject.NULL).put("tasks",JSONArray()).put("fragmentProgress",JSONObject())
                     value.put("conversations",filter(value.optJSONArray("conversations")){it.optString("id") !in derived})
                     value.put("turns",filter(value.optJSONArray("turns")){it.optString("conversationId") !in derived&&(it.optJSONArray("memoryRefs")?.length()?:0)==0})
-                    value.optJSONObject("phoneMemory")?.let{memory->listOf("items","processed","suppressedSources","suppressedText").forEach{memory.put(it,JSONArray())};memory.put("suppressedAt",JSONObject())}
+                    value.remove("phoneMemory")
                     record.write(value)
                 }else record.clearLocked()
             }

@@ -27,7 +27,7 @@
 | Windows 默认完整语义层，基础层可单独构建。应用元数据固定组件清单散列，启动核对文件后接入；组件异常只停用记忆，聊天和数据保留。实际新装/升级验收仍按地图记录 | `src/personal-memory/bundled-runtime.mjs`、`scripts/memory-runtime/README.md`；D106 / D110 |
 | 记忆页：桌面 `src/personal-access-ui/components/memory.js`，共用逻辑 `src/ui-core/memory.js`，手机网页 `apps/mobile-ui/www/components/memory.js` | — |
 | 旧插件 `src/plugins/weftmate-memory.mjs`（约 1240 行）仍写在 DSH 配置模板 R7–R10 里。按文件头注释，它只在 `WEFTMATE_MEMOWEFT_ENABLED=1` 时工作；个人宿主模式下设这个变量，程序会拒绝启动。默认路径写死了一个本机目录 | `src/dsh-web-runtime.ts`、`src/main.mjs` 约第 172 行 |
-| 手机单独聊天还有一套轻量记忆（旧做法）；按 D119 安卓阶段去掉，在那之前保持现状、不再修补 | [PHONE_MEMORY.md](PHONE_MEMORY.md)、`src/ui-core/phone-memory.js`、`apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneMemory.swift` |
+| 安卓与手机网页只存对话原话、读电脑同步来的记忆副本；旧容器里的手机轻量记忆字段读入即丢弃，不上传。苹果端旧实现尚待后续移除 | `src/ui-core/offline.js`、`apps/mobile-ui/www/components/memory.js`；苹果旧代码 `apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneMemory.swift` |
 | CI 里接真实 MemoWeft 的作业固定到 Core 主线的一个提交；内核修好合进主线后，再用单独的 PR 换这里和随包运行时的版本 | `.github/workflows/ci.yml` 的 `observed-core`、`scripts/memory-runtime/lock.json` |
 
 G9 新英文召回合同以首行 `Memory:` / `Memory (past):` 定格式并用 LF 分隔条目：生产端须在正文中任何以 `记忆：`、`记忆（过往）：`、`Memory:`、`Memory (past):` 或反斜杠 `\` 开头的行前再加一个 `\`，解析端只按未转义英文条目头切分并逐行还原一层合法转义，日期及正文空白原样保留，首行不是条目头、条数与 ID 数不符、出现未转义中文条目头或非法转义时按原预算保留完整原文而不配 ID，不跨格式回退，首行旧中文格式仍逐字沿用旧规则且不作转义还原。
@@ -43,3 +43,9 @@ E2 的 `selected_item_ids` 是整段召回的依赖，`count` 统计全部依赖
 安装包带受管 Python、MemoWeft 和完整语义层（D106、D110），用户不用装 Python；组件异常只停用记忆，聊天和数据保留。组件说明见 [scripts/memory-runtime/README.md](../scripts/memory-runtime/README.md)。
 
 改 `/personal/v1/memory` 下的路由，同时改 [CLIENT_API.md](CLIENT_API.md) 和安卓白名单（AGENTS「写代码」）。
+
+## 5. 手机窗口（D119）
+
+安卓与手机网页每条消息只请求一次聊天模型；使用手机自配模型或电脑下发模型时，都从 `/offline/sync` 的 `snapshot.items` 选取相关记忆作为背景。没有电脑副本时如实说明记忆在电脑上形成、连上电脑后才有。手机不提炼、纠正或遗忘记忆；离线要求忘掉时，提示连上电脑后再说一次或去记忆页忘掉。
+
+连着电脑时沿用电脑记忆页；断开后只读展示副本与上次同步时间，提示「电脑连上后可以修改和忘掉」。从没连过电脑时提示「记忆在电脑上形成。连上电脑后，这里会显示 WeftMate 记得的事。」原始对话加密保存在手机，连上电脑自动按原批次与轮次 ID 回传，不再按 100 轮或 256 KiB 要求手机确认；电脑回执确认前保留待交原话。旧 `phoneMemory` 字段丢弃不影响对话原话。

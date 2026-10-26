@@ -1,23 +1,6 @@
 /* The existing phone UI presents account-owned M3 conversations in its main chat. */
 (() => {
-  let engine, account, cloud, native, sessionKey, memoryModel, modelServices, serviceDirectory={services:[],selected:null}, nativeServices=false, phonePicker, progress, poll, archive, handoffNotice=false, nativeError='', memoryTimer;
-  const memoryConversations = new Set();
-  let memoryFlush;
-  async function flushMemory(id) {
-    if(id)memoryConversations.add(id);
-    if(memoryFlush)return memoryFlush;
-    const current=engine,key=sessionKey;
-    if(!current || current.view().running)return;
-    const flight=(async()=>{for(const conversationId of memoryConversations) {
-      if(current!==engine || key!==sessionKey || current.view().running)return;
-      if(!current.view().conversations.some(c=>c.id===conversationId)){memoryConversations.delete(conversationId);continue;}
-      const extracted=await current.extractMemory(conversationId);
-      if(current!==engine || key!==sessionKey)return;
-      if(extracted)memoryConversations.delete(conversationId);
-    }})();
-    memoryFlush=flight;
-    try{return await flight;}finally{if(memoryFlush===flight)memoryFlush=null;}
-  }
+  let engine, account, cloud, native, sessionKey, memoryModel, modelServices, serviceDirectory={services:[],selected:null}, nativeServices=false, phonePicker, progress, poll, archive, handoffNotice=false, nativeError='';
   const data = () => engine?.view() || archive;
   const list = () => (data()?.conversations || []).map(c => ({ id: c.id, createdAt: new Date(c.turns[0]?.timestamp || Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
   const nativeCall = (...args) => androidBridge.call(...args);
@@ -101,17 +84,13 @@
     : text.trim().length>16384 ? '消息过长，请缩短后发送。' : '';
   const show = () => {
     if (!engine) return;
-    const value = engine.view(), finished=state.busy && !value.running; state.busy = value.running;
-    const processed=engine.takeMemoryConversations?.()||[];
-    for(const id of processed)memoryConversations.add(id);
-    if((finished || processed.length) && !value.running && api.active && memoryConversations.size){clearTimeout(memoryTimer);memoryTimer=setTimeout(()=>flushMemory(),20000);}
+    const value = engine.view(); state.busy = value.running;
     state.conversations = value.conversations.map(c => ({ id: c.id, createdAt:new Date(c.turns[0]?.timestamp||Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
     if (!state.conversationId && value.running) state.conversationId = value.sendingConversationId || null;
     // NativeActivity parks this page while Compose owns the visible chat.
-    // Keep the engine and memory schedule live without rebuilding hidden history.
+    // Keep the engine live without rebuilding hidden history.
     if(globalThis.weftNativeChatActive===true)return;
     renderConversationList(); if (state.page === 'chat' && state.chatSource === 'phone') render(); updateComposer();
-    if(state.page==='memory'&&globalThis.WeftPhone?.memoryPending)$('page-content').phoneMemoryPaint?.();
   };
   function render() {
     const content = $('chat-content'); clear(content);
@@ -160,8 +139,6 @@
     native = !!window.weftNative; cloud = client;
     const next = `${info.origin}:${info.accountId}`;
     if (sessionKey !== next) {
-      clearTimeout(memoryTimer);
-      memoryConversations.clear();memoryFlush=null;
       if (engine) { const previous=engine;engine=null;previous.close(); }
       modelServices?.clear();
       sessionKey = next; account = info; memoryModel = null;modelServices=null;serviceDirectory={services:[],selected:null};nativeServices=false;
@@ -235,7 +212,6 @@
   async function connect() {
     if (account?.localOnly || !state.loggedIn || engine?.view().running || document.visibilityState === 'hidden') return;
     const directory = await cloud.authorized('/devices');
-    if(Array.isArray(directory.hosts)&&!directory.hosts.length&&engine?.view().phoneMemory?.handover){await engine.memoryChange('release-authority');if(!api.active)await start(account,cloud);return;}
     if (!api.active) { if (engine) await connected(); return; }
     if (directory.hosts?.some(h => h.status === 'online' || h.online === true)) await WeftMobileCloud.core.resumePhoneComputer();
   }
@@ -246,7 +222,7 @@
     if (!identity?.hostId || identity.hostId === 'unconnected') return;
     // Keep this account's vault and stable turn IDs while adopting the computer identity.
     Object.assign(account, identity);
-    try { do { if(await engine.sync()===false)break; } while (!engine.view().handover?.awaitingConfirmation&&(engine.view().turns.length||engine.view().forgetConversations.length)); handoffNotice=false;
+    try { do { if(await engine.sync()===false)break; } while (engine.view().turns.length||engine.view().forgetConversations.length); handoffNotice=false;
       if(state.page==='memory')memoryPage($('page-content')); }
     catch { if(!handoffNotice){handoffNotice=true;toast('手机对话仍在这里，连上电脑后会继续处理。');} }
   }
@@ -328,10 +304,7 @@
     ensureAccount: async info => {if(sessionKey&&sessionKey!==`${info.origin}:${info.accountId}`)await api.clear();},
     modelCall: (method,p={})=>routeCall(method,p),
     servicesView:()=>serviceDirectory,refreshServices:params=>serviceCall('refresh',params),selectServiceModel:item=>serviceCall('select',item),serviceCall,openModelMenu,catalogMessage,
-    get memory(){return engine?.view().phoneMemory;},get handover(){return engine?.view().handover;},
-    get memoryPending(){return !!engine?.view().phoneMemory&&!engine.view().phoneMemory.transferred;},
-    memoryChange:(...args)=>engine.memoryChange(...args),confirmHandover:async()=>{await engine.memoryChange('confirm-handover');await connected();},
-    flushMemory:id=>flushMemory(id||state.conversationId),
+    get memoryReplica(){return data()?.snapshot || null;},
     removeConversation:async id=>{await engine.removeConversation(id);if(state.conversationId===id)selectConversation(null);show();if(!api.active)await connected();},
     get active() { return state.connection === 'phone' && !!engine; }, get hasData() { return !!data(); }, owns: id => !!data()?.conversations.some(c=>c.id===id), list, start, connected, routeCall, render,
     sendBlocker,
@@ -339,19 +312,17 @@
     event: value => { if (value.event === 'phone.progress') { progress?.(value.data.text); return true; } return false; },
     send: () => { const text = $('draft').value.trim(), reason=sendBlocker(text); if(reason){toast(reason);updateComposer();return {sent:false,reason};} $('draft').value = ''; return run(() => engine.send(text, state.conversationId)); },
     stop: () => engine?.stop(),
-    clear: async () => { clearInterval(poll);clearTimeout(memoryTimer);memoryConversations.clear();memoryFlush=null; const previous = engine, hadArchive = archive; engine = null; archive = null; modelServices?.clear();modelServices=null;serviceDirectory={services:[],selected:null};nativeServices=false;memoryModel = null; account = null; sessionKey = null; state.model = null; nativeError='';
+    clear: async () => { clearInterval(poll); const previous = engine, hadArchive = archive; engine = null; archive = null; modelServices?.clear();modelServices=null;serviceDirectory={services:[],selected:null};nativeServices=false;memoryModel = null; account = null; sessionKey = null; state.model = null; nativeError='';
       uiCore.phoneAccountConnection(false); if (previous) { previous.close(); } else if (hadArchive && window.weftNative) await nativeCall('phone.offline.clear'); },
     empty(target, name) {
-      if(name==='memory')return WeftPhoneMemoryView(target);
+      if(name==='memory')return renderPhoneMemoryReplica(target);
       const copy = { activity: '助手的回复、提醒和完成的事情会出现在这里。连上电脑后可使用定时任务。',
         health: `这里显示来自 iPhone 或 Apple Watch 的健康数据。接上之后会出现在这里；${window.weftNative?'安卓目前不采集健康数据':'手机网页不直接采集健康数据'}。`,
         goals: '你想长期推进的目标会出现在这里。连上电脑后可添加目标和定时任务。',
         library: '对话中生成的文件和成果会出现在这里。连上电脑后可查看电脑上的成果。',
-        memory: '连上电脑后，WeftMate 才会从对话中整理记忆。手机上的对话会保留。' };
+        memory: '记忆在电脑上形成。连上电脑后，这里会显示 WeftMate 记得的事。' };
       const icon=el('span','empty-state-icon');icon.append(WeftIcons.create({health:'health',activity:'bell',goals:'goal',library:'folder',memory:'memory'}[name]||'device',32));
       target.replaceChildren(heading(mobilePageNames[name] || mobileSettingsRegistry.get(name)?.name || (name==='memory'?'记忆':'设置')), icon,notice(copy[name] || '连上电脑后可用。'), action('怎么连上电脑', () => page('devices'), false));
     },
   };
-document.addEventListener('visibilitychange',()=>{clearTimeout(memoryTimer);void flushMemory(state.conversationId);});
-  globalThis.addEventListener?.('pagehide',()=>void flushMemory(state.conversationId));
 })();

@@ -1,6 +1,6 @@
 /** Canonical assets and load order for desktop serving and the FE-1b mobile build. */
 export const uiCoreAssets = Object.freeze([
-  'store.js', 'human-format.js', 'shortcuts.js', 'release-notes.js', 'help.js', 'personalization.js', 'onboarding-copy.js', 'offline.js', 'phone-memory.js', 'auth.js', 'shell.js', 'presence.js', 'settings.js', 'connectors.js', 'backup.js', 'data.js', 'account.js', 'memory.js',
+  'store.js', 'human-format.js', 'shortcuts.js', 'release-notes.js', 'help.js', 'personalization.js', 'onboarding-copy.js', 'offline.js', 'auth.js', 'shell.js', 'presence.js', 'settings.js', 'connectors.js', 'backup.js', 'data.js', 'account.js', 'memory.js',
   'attachments.js', 'sessions.js', 'messages.js', 'message-actions.js', 'approvals.js', 'tasks.js',
   'questions.js', 'resources.js', 'phone.js', 'composer.js', 'model-services.js', 'phone-model-services.js', 'timeline-model.js', 'subtasks.js',
   'appearance.js', 'settings-registry.js', 'client.js', 'cloud-auth.js', 'cloud-account.js', 'usage.js', 'update.js', 'schedules.js', 'chat-window.js', 'main-chat.js', 'computers.js', 'work-and-chat.js', 'activity.js', 'goals.js', 'health.js', 'library.js', 'search.js', 'adapters/android-bridge.js', 'adapters/mobile-web.js', 'adapters/mobile.js',
