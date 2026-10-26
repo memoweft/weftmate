@@ -21,12 +21,20 @@ LIMITS = ["-jobs", "4", "-parallel-testing-enabled", "NO",
           "-maximum-concurrent-test-simulator-destinations", "1"]
 
 
-def diagnostics():
-    root = Path.home() / "Library/Logs/DiagnosticReports"
+def diagnostics(root=None):
+    root = root or Path.home() / "Library/Logs/DiagnosticReports"
     try:
-        files = {str(p.relative_to(root)): [p.stat().st_mtime_ns, p.stat().st_size]
-                 for p in root.rglob("*") if p.is_file() and
-                 (p.name.startswith("WeftMate") or "gpuRestart" in p.name)}
+        files = {}
+        def unavailable(error):
+            raise error
+        # pathlib glob can suppress unreadable-directory errors. An incomplete
+        # scan must stay unknown rather than being reported as zero crashes.
+        for directory, _, names in os.walk(root, onerror=unavailable):
+            for name in names:
+                if name.startswith("WeftMate") or "gpuRestart" in name:
+                    path = Path(directory) / name
+                    stat = path.stat()
+                    files[path.relative_to(root).as_posix()] = [stat.st_mtime_ns, stat.st_size]
         return {"available": True, "files": files}
     except OSError as error:
         return {"available": False, "error": type(error).__name__}
@@ -89,7 +97,8 @@ def ui(evidence, device):
     if not (ROOT / "Tests/PhoneWindowUITests.swift").exists():
         raise RuntimeError("Integrate APPLE-1's memory-route UI suite and regenerate the project before final UI validation")
     # The caller selects the actual UUID; never pick or launch an arbitrary device.
-    devices = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "-j"]))
+    evidence.run("simulator-list", ["xcrun", "simctl", "list", "devices", "available", "-j"], timeout=60)
+    devices = json.loads((evidence.path / "simulator-list.log").read_text())
     phones = [row for runtime, rows in devices["devices"].items() if ".iOS-" in runtime
               for row in rows if row.get("isAvailable") and row["name"].startswith("iPhone")]
     if not any(row["udid"] == device for row in phones):
