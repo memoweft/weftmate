@@ -101,13 +101,13 @@ test('one-time cleaner reads runtime identity, preserves JSON and source escapin
   } finally { rmSync(root, {recursive:true, force:true}); }
 });
 
-test('CLI rejects tracked evidence even when ignored or absent, retired pages, oversized entry pages and broken links; recovery passes', () => {
+test('CLI rejects tracked evidence even when ignored or absent, oversized entry pages and broken links; recovery passes', () => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-governance-'));
   try {
     execFileSync('git', ['init', '-q', root]);
     const run = () => spawnSync(process.execPath, [resolve('.github/scripts/public-hygiene.mjs')], {cwd:root, encoding:'utf8'});
     mkdirSync(join(root, 'tests/evidence'), {recursive:true});
-    mkdirSync(join(root, 'docs/archive/2026-10-07'), {recursive:true});
+    mkdirSync(join(root, 'docs'), {recursive:true});
     writeFileSync(join(root, '.gitignore'), 'tests/evidence/\n.local/\n');
     const evidence = join(root, 'tests/evidence/capture.png');
     writeFileSync(evidence, Buffer.from([0, 1]));
@@ -117,17 +117,12 @@ test('CLI rejects tracked evidence even when ignored or absent, retired pages, o
     rmSync(evidence);
     assert.equal(run().status, 1, 'missing working file is still tracked');
     execFileSync('git', ['rm', '--cached', '-f', 'tests/evidence/capture.png'], {cwd:root});
-    for (const page of ['docs/STATE.md', 'docs/archive/2026-10-07/PLAN.md']) {
-      writeFileSync(join(root, page), '# Old rules\n');
-      result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /Retired path is back/);
-      rmSync(join(root, page));
-    }
-    writeFileSync(join(root, 'PROJECT-MAP.md'), '现'.repeat(5334));
-    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /PROJECT-MAP.md exceeds 16 KB/);
-    writeFileSync(join(root, 'PROJECT-MAP.md'), 'a'.repeat(16_000));
+    writeFileSync(join(root, 'PROJECT-MAP.md'), '现'.repeat(2667));
+    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /PROJECT-MAP.md exceeds 8 KB/);
+    writeFileSync(join(root, 'PROJECT-MAP.md'), 'a'.repeat(8_000));
     assert.equal(run().status, 0, 'exact byte limit is allowed');
-    writeFileSync(join(root, 'AGENTS.md'), 'a'.repeat(8_001));
-    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /AGENTS.md exceeds 8 KB/);
+    writeFileSync(join(root, 'AGENTS.md'), 'a'.repeat(4_001));
+    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /AGENTS.md exceeds 4 KB/);
     writeFileSync(join(root, 'AGENTS.md'), '读 [地图](PROJECT-MAP.md)，决定见 [记录](docs/DECISIONS.md)。\n');
     result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /AGENTS.md: broken relative links.*docs\/DECISIONS.md/);
     writeFileSync(join(root, 'docs/DECISIONS.md'), '# 决定\n');

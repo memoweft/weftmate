@@ -27,7 +27,7 @@
 | Windows 默认完整语义层，基础层可单独构建。应用元数据固定组件清单散列，启动核对文件后接入；组件异常只停用记忆，聊天和数据保留。实际新装/升级验收仍按地图记录 | `src/personal-memory/bundled-runtime.mjs`、`scripts/memory-runtime/README.md`；D106 / D110 |
 | 记忆页：桌面 `src/personal-access-ui/components/memory.js`，共用逻辑 `src/ui-core/memory.js`，手机网页 `apps/mobile-ui/www/components/memory.js` | — |
 | 旧插件 `src/plugins/weftmate-memory.mjs`（约 1240 行）仍写在 DSH 配置模板 R7–R10 里。按文件头注释，它只在 `WEFTMATE_MEMOWEFT_ENABLED=1` 时工作；个人宿主模式下设这个变量，程序会拒绝启动。默认路径写死了一个本机目录 | `src/dsh-web-runtime.ts`、`src/main.mjs` 约第 172 行 |
-| 手机单独聊天还有一套轻量记忆（旧做法）；按 D119 安卓阶段去掉，在那之前保持现状、不再修补 | [PHONE_MEMORY.md](PHONE_MEMORY.md)、`src/ui-core/phone-memory.js`、`apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneMemory.swift` |
+| 手机单独聊天还有一套轻量记忆（旧做法）；按 D119 安卓阶段去掉，在那之前保持现状、不再修补 | [PHONE_MEMORY.md](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/PHONE_MEMORY.md)、`src/ui-core/phone-memory.js`、`apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneMemory.swift` |
 | CI 里接真实 MemoWeft 的作业固定到 Core 主线的一个提交；内核修好合进主线后，再用单独的 PR 换这里和随包运行时的版本 | `.github/workflows/ci.yml` 的 `observed-core`、`scripts/memory-runtime/lock.json` |
 
 G9 新英文召回合同以首行 `Memory:` / `Memory (past):` 定格式并用 LF 分隔条目：生产端须在正文中任何以 `记忆：`、`记忆（过往）：`、`Memory:`、`Memory (past):` 或反斜杠 `\` 开头的行前再加一个 `\`，解析端只按未转义英文条目头切分并逐行还原一层合法转义，日期及正文空白原样保留，首行不是条目头、条数与 ID 数不符、出现未转义中文条目头或非法转义时按原预算保留完整原文而不配 ID，不跨格式回退，首行旧中文格式仍逐字沿用旧规则且不作转义还原。
@@ -42,4 +42,4 @@ E2 的 `selected_item_ids` 是整段召回的依赖，`count` 统计全部依赖
 
 安装包带受管 Python、MemoWeft 和完整语义层（D106、D110），用户不用装 Python；组件异常只停用记忆，聊天和数据保留。组件说明见 [scripts/memory-runtime/README.md](../scripts/memory-runtime/README.md)。
 
-改 `/personal/v1/memory` 下的路由，同时改 [CLIENT_API.md](CLIENT_API.md) 和安卓白名单（AGENTS「写代码」）。
+改 `/personal/v1/memory` 下的路由，同时改 [CLIENT_API.md](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLIENT_API.md) 和安卓白名单（AGENTS「写代码」）。

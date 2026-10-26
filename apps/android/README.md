@@ -4,7 +4,7 @@ AND-4 默认使用原生骨架与聊天页；无电脑账号复用 MOB-4 的本�
 
 DIAG-2 增加本机运行记录：日志与持久启动标记位于 `noBackupFilesDir/diagnostics/`，最长 7 天、总计 2 MiB（兆二进制字节），不上传，也不进入 Android Auto Backup（安卓自动备份）或设备迁移。Android 11 及以上读取系统历史退出原因；后台被系统回收不提示异常。设置 → 常规 → 系统状态 → 运行记录可查看这部手机的记录、先预览再复制统一 JSON（结构化数据格式）摘要，并在主动点击后通过系统面板分享脱敏日志。网页内核崩溃后重建页面，原生未捕获异常交还系统默认处理器结束进程；系统处理器收到无敏感正文的异常副本。
 
-**需要新壳版本**：新增应用入口诊断、持久标记、系统退出原因查询、网页内核恢复和 `diagnostics.status / diagnostics.record / diagnostics.share` 三个本机桥方法；没有新增权限或 `/personal/v1` 路由，本包不修改原生版本号。旧壳显示本机记录读取失败与重试，不把电脑记录当成手机记录。无原生层的手机浏览器仅在本地保留最近 20 条网页错误、最长 7 天、最多 16 KiB（二进制千字节）；错误正文不保存。字段与映射见 [诊断说明](../../docs/DIAGNOSTICS.md)。
+**需要新壳版本**：新增应用入口诊断、持久标记、系统退出原因查询、网页内核恢复和 `diagnostics.status / diagnostics.record / diagnostics.share` 三个本机桥方法；没有新增权限或 `/personal/v1` 路由，本包不修改原生版本号。旧壳显示本机记录读取失败与重试，不把电脑记录当成手机记录。无原生层的手机浏览器仅在本地保留最近 20 条网页错误、最长 7 天、最多 16 KiB（二进制千字节）；错误正文不保存。字段与映射见 [诊断说明](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/DIAGNOSTICS.md)。
 
 DIAG-2 使用独立测试包 `com.memoweft.weftmate.mobile.diag2qa`；测试注入接收器仅在 debug（调试）资源中，且对其它包名无效，不进入发布包。MuMu（安卓模拟器）调试端口以 `MuMuManager.exe info -v 0` 的 `adb_port` 为准，下面旧包的固定端口命令只作历史参考。持有 `mumu.lock` 与重活名额后运行 `node tests/evidence/diag-2/native-run.mjs`，脚本自动卸载自己的两个测试包并断开 ADB（安卓调试桥），不修改模拟器设置、不关闭模拟器。
 
