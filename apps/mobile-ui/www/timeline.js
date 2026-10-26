@@ -137,7 +137,7 @@
     const groups = options.processes ? options.processes.flatMap(process => {
       const events=prepare(process.events,options.thinkingDisplay)
       const projected=WeftUiCore.projectTimeline(events,options.approvals || [],true)
-      return projected.groups.map(block=>({...block,presentationKey:process.key,messageKey:process.messageKey,nativeStarted:process.started,position:process.position+0.1,events:projected.ordered}))
+      return projected.groups.map(block=>({...block,presentationKey:process.key,messageKey:process.messageKey,nativeStarted:process.started,submission:process.submission,position:process.position+0.1,events:projected.ordered}))
     }).sort((a,b)=>a.position-b.position) : projection.groups
     const existing = new Map([...list.children].filter(n => n.dataset.timeline).map(n => [n.dataset.timeline, n]))
     const seen = new Set()
@@ -175,7 +175,7 @@
       }
       const previous = row.querySelector('details')
       const stopView = options.stopViews?.[block.taskId]
-      const outcome = globalThis.WeftUiCore.turnOutcome(ordered, block.taskId,stopView)
+      const outcome = block.submission==='failed' ? {terminal:true,reason:'failed'} : globalThis.WeftUiCore.turnOutcome(ordered, block.taskId,stopView)
       const terminal = outcome.terminal || stopView?.terminal
       const lastBlock = groups.filter(group=>group.taskId===block.taskId).at(-1) === block
       const displayOutcome = (!lastBlock || options.quietFailure) && ['error','failed','blocked'].includes(outcome.reason) ? {...outcome,reason:'ended'} : outcome
@@ -203,6 +203,11 @@
         const duration=Number.isFinite(ms)?`${Math.max(0,Math.round(ms/1000))} ${block.language==='en'?'s':'秒'}`:block.language==='en'?'duration unavailable':'用时未记录';
         view.text=['aborted','cancelled','canceled','stopped','killed'].includes(outcome.reason) ? (block.language==='en'?'Stopped':'已停止') : tools.length ? block.language==='en'?`Processed ${tools.length} steps`:`处理了 ${tools.length} 步` : block.language==='en'?'Completed':'已完成';
         view.duration=duration;
+        view.running=false;
+      }
+      if(block.submission) {
+        view.text=block.submission==='failed' ? block.language==='en'?'Message not sent. Please retry.':'消息未能发送，请重试。'
+          : block.language==='en'?'Delivery needs checking. Please check the send status.':'发送结果待核对，请检查状态。';
         view.running=false;
       }
       const running = view.running
@@ -283,7 +288,8 @@
       });
       if(!recordNodes.length) {
         const empty=records.querySelector('.execution-empty') || node('p','execution-empty');
-        const text=terminal ? block.language==='en'?'No tools were used for this reply.':'这次回复没有调用工具。' : block.language==='en'?'The reply will appear below. Tool activity will be collected here.':'回答会显示在下方；如需调用工具，过程会记录在这里。';
+        const text=block.submission ? block.language==='en'?'Your message is kept here. Check delivery before retrying.':'消息仍保留在这里，核对发送状态后可以重试。'
+          : terminal ? block.language==='en'?'No tools were used for this reply.':'这次回复没有调用工具。' : block.language==='en'?'The reply will appear below. Tool activity will be collected here.':'回答会显示在下方；如需调用工具，过程会记录在这里。';
         if(empty.textContent!==text)empty.textContent=text;recordNodes.push(empty);
       }
       if(view.failed) {

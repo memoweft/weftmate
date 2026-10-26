@@ -112,6 +112,57 @@ test('#678 ordinary work sessions retain each message/process pair', {timeout:30
       });
       assert.deepEqual(result.waiting,{hidden:true,text:''});assert.equal(result.configuration.hidden,false);assert.match(result.configuration.text,/模型/);
     });
+    await t.test('fork constructor queue seeds never become executable pending processes',async()=>{
+      await setup();
+      await page.evaluate(()=>{
+        const f=(globalThis as any).f;
+        f.append(4,'task.queued',{inherited:true,tasks:[{receiptId:'inherited-only',text:'不会执行的继承输入'}]});
+        if(f.core.messageProcesses(f.core.timelineEventsForContext()).length || document.querySelector('#transcript .execution-block'))throw Error('inherited queue seed became a waiting process');
+        const id=f.send('真实的新输入');f.check([id],'send beside inherited queue');
+        f.append(10,'task.queued',{requestId:id,receiptId:'real-receipt',text:'真实的新输入'});f.check([id],'real queued is retained');
+        f.append(11,'turn.started',{turn:1});f.append(13,'task.started',{requestId:id,receiptId:'real-receipt',turn:1,turnTaskId:'turn-1'});
+        f.append(14,'user.message',{receiptId:'real-receipt',text:'真实的新输入'});f.append(18,'turn.ended',{turn:1,reason:'completed'});f.check([id],'real user and terminal are retained');
+      });
+    });
+    await t.test('a rejected send fails in place and actual retry reuses its disclosure',async()=>{
+      await setup();
+      await page.evaluate(async()=>{
+        const f=(globalThis as any).f,id=f.send('发送失败后重试的合成消息');f.check([id],'before rejection');
+        const rejection={kind:'session.message',requestId:id,sessionId:'session-work',state:'rejected',errorCode:'MODEL_NOT_CONFIGURED'};
+        f.releases.get(id)(rejection);await f.deliveries.at(-1);f.check([id],'rejected without native start');
+        const [row,details,summary]=f.saved.get(id);
+        if(row.dataset.running!=='false' || !row.classList.contains('has-failure') || !/未.*发送|发送.*失败/.test(summary.textContent) || /等待模型/.test(summary.textContent))throw Error('unaccepted failed submission still waits for the model');
+        f.core.state.models=[];f.ui.renderModelHint();
+        const hint=document.getElementById('model-hint');
+        if(hint.hidden || !/模型/.test(hint.textContent) || /MODEL_NOT_CONFIGURED/.test(hint.textContent+summary.textContent))throw Error('configuration failure did not keep readable model guidance');
+        f.core.state.models=[{id:'synthetic',name:'合成模型',configured:true}];
+        const retry=f.core.retryOptimistic(id);
+        for(let i=0;i<15 && f.core.optimisticMessages()[0].requestId===id;i++)await Promise.resolve();
+        const retried=f.core.optimisticMessages()[0];
+        if(retried.requestId===id || !f.releases.has(retried.requestId))throw Error('real retry did not dispatch its new safe attempt');
+        f.check([id],'retry dispatch keeps original presentation');
+        if(row.dataset.running!=='true' || row.classList.contains('has-failure') || /未.*发送|发送.*失败/.test(summary.textContent))throw Error('retry did not clear the failure in place');
+        f.ack(retried.requestId,'retry-receipt');await retry;
+        f.append(20,'task.queued',{requestId:retried.requestId,receiptId:'retry-receipt',text:retried.text});
+        f.append(21,'turn.started',{turn:2});f.append(23,'task.started',{requestId:retried.requestId,receiptId:'retry-receipt',turn:2,turnTaskId:'turn-2'});
+        f.append(24,'user.message',{receiptId:'retry-receipt',text:retried.text});f.append(28,'turn.ended',{turn:2,reason:'completed'});f.check([id],'retry completed');
+        if(!/已完成/.test(summary.textContent) || details!==row.querySelector('.execution-block'))throw Error('retry lost terminal state or its original details');
+      });
+    });
+    await t.test('uncertain delivery stays unconfirmed and native acceptance takes precedence over a failed local snapshot',async()=>{
+      await setup();
+      await page.evaluate(async()=>{
+        const f=(globalThis as any).f,id=f.send('需要核对发送结果的合成消息');f.check([id],'send before uncertain result');
+        f.releases.get(id)({kind:'session.message',requestId:id,sessionId:'session-work',state:'uncertain',receiptId:'uncertain-receipt'});await f.deliveries.at(-1);
+        f.check([id],'uncertain result');const [row,,summary]=f.saved.get(id);
+        if(row.classList.contains('has-failure') || /等待模型|未能发送/.test(summary.textContent) || !/核对/.test(summary.textContent))throw Error('uncertain delivery was mistaken for a definite failure or model response');
+        f.append(30,'task.queued',{requestId:id,receiptId:'uncertain-receipt',text:'需要核对发送结果的合成消息'});f.check([id],'native acceptance after uncertain lookup');
+        if(row.dataset.running!=='true' || row.classList.contains('has-failure') || !/等待模型/.test(summary.textContent))throw Error('real native acceptance lost to the local failed snapshot');
+        f.append(31,'turn.started',{turn:3});f.append(33,'task.started',{requestId:id,receiptId:'uncertain-receipt',turn:3,turnTaskId:'turn-3'});f.check([id],'native start despite failed local status');
+        f.append(34,'user.message',{receiptId:'uncertain-receipt',text:'需要核对发送结果的合成消息'});f.append(38,'turn.ended',{turn:3,reason:'completed'});f.check([id],'uncertain request completed');
+        if(!/已完成/.test(summary.textContent))throw Error('uncertain request did not retain its actual native terminal state');
+      });
+    });
   } finally {await browser.close();}
 });
 

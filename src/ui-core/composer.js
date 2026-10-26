@@ -57,6 +57,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         requestScope();
         const conversation=presentationScope();
         for (const event of events) if (['task.queued','task.started','task.ended'].includes(event.type)) {
+            if(event.type==='task.queued' && event.data?.inherited)continue;
             for (const data of event.data?.tasks || [event.data || {}]) {
                 if (!data.requestId && !data.receiptId) continue;
                 const entry=messageEntry({...data,sessionId:eventSession(event)},undefined,conversation);
@@ -83,6 +84,9 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     }
     function messageProcesses(events, pending = []) {
         requestScope();
+        // Constructor-seed queue insertions are history, never child-runtime
+        // work. Keep actual user events and all executable queue facts intact.
+        events=events.filter(event=>!(event.type==='task.queued' && event.data?.inherited));
         for (const row of pending) { const entry=rememberTurnRequest(row);entry.pending=row;entry.text=row.text; }
         observeMessageProcesses(events);
         const conversation=presentationScope(), entries=new Set(), assignments=new Map();
@@ -150,8 +154,11 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             const at=entry.at || user?.at || local?.at || start?.at;
             const first={...(start || {}),seq:(facts[0]?.seq ?? position)-0.1,at:start?.at || at,type:'turn.started',sourceRef:{...start?.sourceRef,sessionId:session},data:{turn,pendingRequestId:entry.requestId}};
             const last=end && {...end,seq:Math.max(first.seq,...facts.map(event=>event.seq))+0.1,type:'turn.ended',data:{...end.data,turn}};
+            const unaccepted=!latest && !entry.turns.size && !entry.queued && !user && !['accepted_by_dsh','observed'].includes(local?.command?.state);
+            const submission=unaccepted && (local?.status==='confirming' || local?.status==='failed' && local.command?.state==='uncertain') ? 'confirming'
+                : unaccepted && ['failed','undelivered'].includes(local?.status) ? 'failed' : undefined;
             return {key:entry.key,messageKey:entry.key.startsWith('request:')?entry.key.slice(8):entry.key,requestId:entry.requestId,started:!!latest,user,pending:local || (!entry.userSeen && entry.text!==undefined ? {requestId:entry.key,text:entry.text,at,status:'accepted'} : null),at,position,
-                events:[first,...(user?[user]:[]),...facts,...(last?[last]:[])],taskId};
+                events:[first,...(user?[user]:[]),...facts,...(last?[last]:[])],taskId,submission};
         });
     }
     function turnPresentationKey(events, block) {
@@ -227,6 +234,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (!legacy && core.observeMainOptimistic) return core.observeMainOptimistic(events);
         observeMessageProcesses(events);
         for (const event of events) if (['task.queued','task.started'].includes(event.type)) for (const data of event.data?.tasks || [event.data || {}]) {
+            if(event.type==='task.queued' && event.data?.inherited)continue;
             const row = messages.get(data.requestId);
             if (row && row.ownerId === core.state.ownerId && row.identity === core.state.identityGeneration &&
                 row.sessionId === (event.sessionId || event.sourceRef?.sessionId || core.state.selectedSessionId) && data.receiptId)

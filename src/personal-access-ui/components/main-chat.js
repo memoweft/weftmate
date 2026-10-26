@@ -50,7 +50,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         for (const spec of visible) {
             let row = mounted.get(spec.key);
             if (!row) { row = buildRow(spec); row.dataset.eventId = spec.key; row.tabIndex = -1; mounted.set(spec.key, row); observer?.observe(row); }
-            const pendingState = spec.kind==='progress' ? [[...core.conversationQuestions.entries.values()].map(entry=>[entry.row.questionRpcId,entry.row.status,entry.row.answer]),[...core.conversationApprovals.entries.values()].map(entry=>[entry.row.approvalId,entry.row.status,entry.row.outcome])] : null;
+            const pendingState = spec.kind==='progress' ? [spec.process?.submission,[...core.conversationQuestions.entries.values()].map(entry=>[entry.row.questionRpcId,entry.row.status,entry.row.answer]),[...core.conversationApprovals.entries.values()].map(entry=>[entry.row.approvalId,entry.row.status,entry.row.outcome])] : null;
             const signature = JSON.stringify([spec.events || spec.event || spec.date || spec.text, spec.collapsed, spec.waiting, core.state.chatWindow.search.query,pendingState]);
             if (row.dataset.chatSignature !== signature) { updateRow(row, spec); row.dataset.chatSignature = signature; }
             if (globalThis.WeftTimeline?.isFinalReply && spec.kind === 'message' && spec.event.type === 'assistant.message' && !spec.event.data?.live)

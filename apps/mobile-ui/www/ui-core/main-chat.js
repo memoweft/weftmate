@@ -520,6 +520,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         if (core.state.workTimeline) return legacy.observeOptimistic(events, true);
         legacy.observeOptimistic(events, true);
         for (const event of events) if (['task.queued','task.started'].includes(event.type)) for (const data of event.data?.tasks || [event.data || {}]) {
+            if(event.type==='task.queued' && event.data?.inherited)continue;
             const row=pending.get(data.requestId);
             if (row && row.ownerId===core.state.ownerId && row.chatId===core.state.selectedChatId) {
                 row.receiptId=data.receiptId || row.receiptId;row.sessionId=event.sessionId || event.sourceRef?.sessionId || row.sessionId;
