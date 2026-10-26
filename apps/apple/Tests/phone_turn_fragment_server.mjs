@@ -13,7 +13,10 @@ export async function startPhoneTurnFragmentServer(){
   const root=await mkdtemp(join(tmpdir(),'apple-3-fragments-'));
   const identity={ownerId:'owner-test',hostId:'host-test',deviceId:'device-test'};
   const account={sessions:{},commands:{}},config={generation:1};
-  const report={sync:[],turns:[],raw:[],accepted:[],assemblies:[],handovers:[]};
+  const report={sync:[],turns:[],raw:[],accepted:[],assemblies:[],handovers:[],chats:[]};
+  const pausedReplies=new Set();
+  const permission={allow_local_read:true,allow_cloud_read:true,allow_inference:true};
+  const finishReply=res=>{if(!res.destroyed)res.end('data: '+JSON.stringify({choices:[{delta:{content:config.reply??'合成普通回复。'}}]})+'\n\ndata: [DONE]\n\n');pausedReplies.delete(res);};
   const accepted=new Map(),pieces=new Map();
   const snapshotReport=()=>({...report,history:Object.values(account.phoneHistory??{}).flatMap(c=>c.turns)});
   const ctx={root,rootState:{hostId:identity.hostId},timestamp:Date.now,accountState:()=>account,
@@ -22,7 +25,10 @@ export async function startPhoneTurnFragmentServer(){
     modelSelectable:()=>true,service:{currentChatModelProfile:()=>null},backend:{listModels:async()=>[]},
     activity:{record:async()=>{}},
     cloudIdentity:{publishOffline:async(_id,generation)=>({hostId:identity.hostId,accountId:'account-test',generation})},
-    memoryManager:{enabled:true,peek:()=> 'connected',query:async()=>({world_revision:1,items:[]}),discardOfflinePending:async()=>{}},
+    memoryManager:{enabled:true,peek:()=> 'connected',query:async()=>({world_revision:config.generation,items:config.memory?[{
+      item_id:'tea',object_kind:'cognition',current_state:'current',value:{content:'合成电脑记忆：我喜欢茉莉花茶'},permissions:[permission],
+      provenance:[{evidence_id:'source-tea',permissions:permission,currentness_state:'current',evidence:{content_available:true}}],updated_at:'2025-01-01T00:00:00Z'
+    }]:[]}),discardOfflinePending:async()=>{}},
     historyImport:{list:()=>({imports:[]}),receivePhone:async(_owner,_device,turns,handover)=>{
       report.handovers.push(handover);
       for(const turn of turns)if(!accepted.has(turn.id)){accepted.set(turn.id,turn);report.accepted.push(turn);}
@@ -43,7 +49,15 @@ export async function startPhoneTurnFragmentServer(){
       if(body.generation&&body.generation!==config.generation){await offline.invalidate(identity.ownerId);pieces.clear();}
       Object.assign(config,body);json({ok:true});return;
     }
+    if(req.url==='/release'){for(const reply of pausedReplies)finishReply(reply);json({ok:true});return;}
     if(req.url==='/report'){json(snapshotReport());return;}
+    if(req.url==='/v1/chat/completions'){
+      if(req.headers.authorization!=='Bearer synthetic-state-key'){res.writeHead(401);json({error:'UNAUTHORIZED'});return;}
+      report.chats.push(body);res.writeHead(200,{'content-type':'text/event-stream'});
+      if(config.pauseModel){pausedReplies.add(res);res.write('data: '+JSON.stringify({choices:[{delta:{content:'合成中途派生片段'}}]})+'\n\n');}
+      else finishReply(res);
+      return;
+    }
     if(['/personal/v1/auth/login','/personal/v1/auth/me'].includes(req.url)){
       res.setHeader('set-cookie','wm_personal_session='+'a'.repeat(43)+'; HttpOnly');
       json({account:{ownerId:identity.ownerId,username:'synthetic',displayName:'Synthetic'},device:{id:identity.deviceId,name:'Synthetic'},csrfToken:'b'.repeat(43)});return;

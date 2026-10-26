@@ -769,14 +769,22 @@ final class AppleAppModel: ObservableObject {
         #endif
         return try await cloudLogin.offlineAuthorization(hostID: hostID)
     }
+    func refreshMemoryReplicaAfterMutation() async {
+        #if os(iOS)
+        do { try offline.invalidateMemory();try phoneChat.refreshComputerMemory() }
+        catch { authError="电脑操作已生效，手机副本清理待重试。" }
+        await pollOffline()
+        #endif
+    }
     func pollOffline() async {
         guard let directory = timelineStateDirectory else { return }
         let offlineDirectory=directory.appendingPathComponent("Offline")
         let offlineKeys=KeychainCredentialStore(service:cloudNamespace+".offline")
         guard let session else {
             #if os(iOS)
+            phoneChat.activate(app:self)
             do {
-                if let identity=try cloudLogin.savedOfflineIdentity() {
+                if let identity=try cloudLogin.savedOfflineIdentity(),phoneChat.permitsComputerReplica(identity.hostId) {
                     await offline.restore(identity:identity,directory:offlineDirectory,store:offlineKeys,allowLoopback:permitsSyntheticLoopback,multipleComputers:cloudLogin.multiHost,control:offlineAuthorization)
                 } else { offline.suspend() }
             } catch { offline.suspend() }
@@ -787,6 +795,7 @@ final class AppleAppModel: ObservableObject {
         #if os(iOS)
         let phoneFirst=true
         phoneChat.activate(app:self)
+        guard phoneChat.permitsComputerReplica(session.hostId) else { offline.removeComputer(session.hostId);return }
         let transcriptExclusions=phoneChat.state.transcriptSync
         let supportsWork=mainChat.capabilities.supports("workAndChat")
         #else
@@ -1661,6 +1670,9 @@ final class AppleAppModel: ObservableObject {
     }
 
     func removeComputerReplica(_ host: String) {
+        #if os(iOS)
+        phoneChat.computerRemoved(host)
+        #endif
         offline.removeComputer(host)
         try? cloudLogin.forgetOfflineIdentity(hostID:host)
         guard let directory=timelineStateDirectory else { return }

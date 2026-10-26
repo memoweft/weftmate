@@ -22,6 +22,13 @@ import WeftMateCore
     @Published private(set) var workTasks: [OfflineWorkTask] = []
     var workSnapshot: OfflineSnapshot? { ready ? replica?.state.snapshot : nil }
     @Published private(set) var polling = false
+    var memoryRevision: UUID? { replica?.revision }
+    var memoryErasure: OfflineReplicaErasure? { replica?.state.erasure }
+    var replicaHostID: String? { identity?.hostId }
+    func acknowledgeMemoryErasure(_ id: String) throws { try replica?.acknowledgeErasure(id) }
+    func invalidateMemory() throws {
+        guard let replica else { return };try replica.revoke();publish(replica)
+    }
     func authorizeMemory(control: (String) async throws -> OfflineAuthorization) async throws {
         guard let engine=replica,ready else { throw OfflineFailure.notReady }
         do {
@@ -48,11 +55,11 @@ import WeftMateCore
         conversationID = UUID().uuidString.lowercased(); recentID = recent; draft = ""
     }
     func suspend() {
-        if let replica,let identity { retainedReplicas[scope(identity)]=replica }
+        if let replica,let identity { replica.suspend();retainedReplicas[scope(identity)]=replica }
         replica=nil;identity=nil;workTasks=[];draft="";turns=[];synced=[];recent=[];ready=false;showHistory=false;hostOffline=false;conversationID=UUID().uuidString.lowercased()
     }
     func removeComputer(_ host: String) {
-        if identity?.hostId == host { do { try replica?.clear() } catch { notice="电脑副本暂时没能清除，请重试。" };suspend() }
+        if identity?.hostId == host { do { try replica?.revoke() } catch { notice="电脑副本暂时没能清除，请重试。" };suspend() }
         do { for (key,engine) in retainedReplicas where engine.state.snapshot?.control.hostId == host { try engine.clear();retainedReplicas[key]=nil } }
         catch { notice="电脑副本暂时没能清除，请重试。" }
     }
@@ -86,7 +93,7 @@ import WeftMateCore
             ready=false;hostOffline=true
             try await engine.check(control:control)
             guard replica === engine else { return };publish(engine);notice=nil
-        } catch { ready=false;turns=[];synced=[];recent=[];notice="无法核对云授权，请联网后重试。" }
+        } catch { ready=false;turns=[];synced=[];recent=[];notice="记忆副本暂不可用，仍可用自己的模型聊天。" }
     }
     func poll(session: AccountSession, client: PersonalClient, directory: URL, store: any CredentialStore,
               allowLoopback: Bool, phoneFirst: Bool = false, multipleComputers: Bool = false, workAndChat: Bool = false, transcriptExclusions: PhoneTranscriptSync? = nil, control: (String) async throws -> OfflineAuthorization) async {
@@ -129,6 +136,7 @@ import WeftMateCore
                 } else if case APIFailure.server(let status, _) = error, status >= 500 {
                     hostOffline = true
                 } else {
+                    ready=false;turns=[];recent=[]
                     notice = (error as? LocalizedError)?.errorDescription ?? "离线同步暂不可用。"
                     if engine.state.snapshot == nil { publish(engine) }
                 }
