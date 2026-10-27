@@ -28,7 +28,7 @@ struct PhoneLocalHealthView: View {
                 if health.busy { ProgressView("正在读取本机测量…") }
             }.padding(AppleTokens.Space.p20)
         }.background(Weave.canvas).navigationTitle("健康").toolbar { PhoneAccountMenu(model:app) }
-            .task(id:app.phoneAccountIdentity) { await health.activate(app:app) }
+            .task(id:app.phoneAccountIdentity) { await health.enteredHealthPage(app:app) }
     }
     private func metric(_ title: String,_ value: Double?,_ unit: String) -> some View {
         VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {

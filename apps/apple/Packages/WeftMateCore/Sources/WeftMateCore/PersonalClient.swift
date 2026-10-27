@@ -1571,9 +1571,8 @@ public actor PersonalClient {
     }
     public func submitOffline(_ body: OfflineSubmission) async throws -> OfflineReceipts {
         let (auth, generation) = try snapshot()
-        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         let response = try await rawRequest(server: auth.session.server, path: "/offline/turns", method: "POST",
-            body: encoder.encode(body), auth: auth)
+            body: body.encoded(), auth: auth)
         try check(generation); return try decode(response.body)
     }
     public func nativeUpdateStatus() async throws -> NativeHostStatus {

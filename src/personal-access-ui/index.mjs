@@ -6,7 +6,6 @@ import { uiCoreBrowserAssets as uiCoreAssets, uiCoreSourceAsset } from '../ui-co
 import renderAssets from './render-assets.json' with {type: 'json'};
 
 const files = new Map([
-  ...['workspace.js', 'workspace.css'].map(name => [`/personal/v1/ui/panels/${name}`, [`panels/${name}`, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ...['panels/terminal.css', 'vendor/terminal/xterm.js', 'vendor/terminal/addon-fit.js', 'vendor/terminal/xterm.css'].map(name =>
     [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/pages.css', ['pages.css','text/css; charset=utf-8']],
@@ -106,6 +105,7 @@ const files = new Map([
   ['/personal/v1/ui/panels/files.js', ['panels/files.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/chat.js', ['panels/chat.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/subtasks.js', ['panels/subtasks.js', 'text/javascript; charset=utf-8']],
+  ...['workspace.js', 'workspace.css'].map(name => [`/personal/v1/ui/panels/${name}`, [`panels/${name}`, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/workspace.css', ['workspace.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/system-bars.js', ['system-bars.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/format-vendor.js', ['format-vendor.js', 'text/javascript; charset=utf-8']],

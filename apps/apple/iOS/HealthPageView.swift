@@ -41,6 +41,7 @@ struct HealthPageView: View {
                 HealthAdditionalAuthorizationView(authorize:{ requestExpansion=true; expansion=false },later:{ expansion=false })
             }
             .task(id:app.accountEpoch) {
+                await health.enteredHealthPage(app:app)
                 await page.refresh(app:app)
                 expansion=await health.checkExpansion(app:app)
             }

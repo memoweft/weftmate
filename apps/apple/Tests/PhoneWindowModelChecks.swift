@@ -45,7 +45,8 @@ import WeftMateCore
         try require(!model.showsLocalConversation(connected:true,openedSessionID:nil),"connected-start-and-task-entry-route-remote")
 
         app.session=PhoneCheckSession()
-        app.offline.memoryItems=try JSONDecoder().decode([OfflineMemory].self,from:Data("[{\"id\":\"computer-memory\",\"kind\":\"cognition\",\"text\":\"电脑记住的绘画偏好\",\"sources\":[],\"currentState\":\"current\"}]".utf8))
+        let computerItems=try JSONDecoder().decode([OfflineMemory].self,from:Data("[{\"id\":\"computer-memory\",\"kind\":\"cognition\",\"text\":\"电脑记住的绘画偏好\",\"sources\":[],\"currentState\":\"current\"}]".utf8))
+        app.offline.memoryItems=computerItems
         await model.synchronize(app:app)
         let original=app.offline.enqueued
         try require(!original.isEmpty && app.offline.synced.isEmpty,"original-transcript-has-no-receipts-yet")
@@ -67,11 +68,13 @@ import WeftMateCore
         app.cloudLogin.subject="account-a";model.activate(app:app)
         model.computerDirectoryChanged(hostIDs:[]);app.session=nil
         try require(model.computerMemory.isEmpty && !model.state.threads.isEmpty,"removal-keeps-originals-without-phone-memory-fallback")
+        try require(!app.offline.ready && app.offline.memoryItems.isEmpty,"removed-computer-copy-is-cleared")
         model.newThread();try await chat("移除电脑后普通聊天")
         let afterRemoval=try await report()
         try require(!(afterRemoval["contexts"] as! [String]).last!.contains("电脑记住的绘画偏好"),"removed-computer-memory-never-enters-request")
 
-        app.cloudLogin.subject="large-account";app.session=PhoneCheckSession();app.offline.hostOffline=false;app.offline.enqueued=[];app.offline.synced=[];app.offline.memoryAccountID="large-account"
+        app.cloudLogin.subject="large-account";app.session=PhoneCheckSession();app.offline.ready=true;app.offline.hostOffline=false;app.offline.enqueued=[];app.offline.synced=[];app.offline.memoryAccountID="large-account"
+        app.offline.memoryItems=computerItems
         var large=PhoneChatState()
         for i in 0..<100 { var thread=PhoneChatThread();thread.messages=[.init(role:"user",text:"合成第\(i)轮")];large.threads.append(thread) }
         let store=try PhoneChatStore(account:app.phoneAccountIdentity,directory:root.appendingPathComponent("PhoneChats"),credentials:keys)
@@ -88,7 +91,8 @@ import WeftMateCore
         app.controlGeneration=2
         try require(model.currentModel != nil,"new-account-has-model-before-revocation")
         model.newThread();try await chat("绘画")
-        try require(model.messages.last?.replyStatus == .failed && model.computerMemory.isEmpty,"revoked-generation-cannot-reach-model-with-old-copy")
+        try require(model.messages.last?.replyStatus != .complete && model.computerMemory.isEmpty,"revoked-generation-cannot-reach-model-with-old-copy")
+        try require(model.messages.contains { $0.role == "user" && $0.text == "绘画" },"revoked-attempt-retains-original")
         let final=try await report()
         try require(final["requests"] as? Int == 4 && final["streams"] as? Int == 4 && final["nonStreaming"] as? Int == 0,"only-four-explicit-chats-zero-extraction")
         model.clearLocalData();try require(model.state.threads.isEmpty && model.models.isEmpty,"clear-removes-local-originals-and-models")

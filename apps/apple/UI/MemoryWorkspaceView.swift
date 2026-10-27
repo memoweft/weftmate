@@ -19,7 +19,8 @@ struct MemoryWorkspaceView: View {
             journal: try? LocalMemoryOperationStore(directory: appModel.assistantStateDirectory),
             accountEpoch: appModel.accountEpoch,
             currentEpoch: { [weak appModel] in appModel?.accountEpoch ?? UUID() },
-            currentSession: { [weak appModel] in appModel?.session }))
+            currentSession: { [weak appModel] in appModel?.session },
+            refreshReplica: { [weak appModel] in await appModel?.refreshMemoryReplicaAfterMutation() }))
     }
 
     var body: some View {

@@ -87,6 +87,7 @@ final class MemoryWorkspaceModel: ObservableObject {
     private let epoch: UUID
     private let currentEpoch: @MainActor () -> UUID
     private let currentSession: @MainActor () -> AccountSession?
+    private let refreshReplica: @MainActor () async -> Void
     private var generation = UUID()
     private var detailRequest = UUID()
     private var cursor: MemoryPageCursor?
@@ -107,9 +108,11 @@ final class MemoryWorkspaceModel: ObservableObject {
     private var sourceWorkerID = UUID()
 
     init(client: PersonalClient, journal: LocalMemoryOperationStore?, accountEpoch: UUID,
-         currentEpoch: @escaping @MainActor () -> UUID, currentSession: @escaping @MainActor () -> AccountSession?) {
+         currentEpoch: @escaping @MainActor () -> UUID, currentSession: @escaping @MainActor () -> AccountSession?,
+         refreshReplica: @escaping @MainActor () async -> Void = {}) {
         self.client = client; self.journal = journal; epoch = accountEpoch
         self.currentEpoch = currentEpoch; self.currentSession = currentSession
+        self.refreshReplica=refreshReplica
         expectedSession = currentSession()
         journalUsable = journal != nil
         if journal == nil { notice = "本机操作记录未能打开。可以读取记忆，修改暂不可用。" }
@@ -402,6 +405,8 @@ final class MemoryWorkspaceModel: ObservableObject {
                 case .found(let receipt):
                     let prior = try await journal.operation(for: intent) ?? row.record
                     let saved = try await journal.recordReceipt(receipt, for: intent, expectedRevision: prior.revision)
+                    guard self.canPublish(request) else { return }
+                    if receipt.effectApplied && row.record.receipt?.effectApplied != true { await self.refreshReplica() }
                     guard self.canPublish(request) else { return }
                     self.publish(saved)
                     await self.applyConfirmedEffect(saved)

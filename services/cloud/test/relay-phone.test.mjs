@@ -48,6 +48,8 @@ test('Relay phone first input and file task', {
     await waitFor(() => host.relayStatus().state === 'online', 'relay not online');
     const base = host.relayStatus().baseUrl, domain = new URL(base).hostname;
     const pairing = await direct('/cloud/pairings', {}, local); assert.equal(pairing.status, 201);
+    // This test uses the QR certificate pin, then exercises ordinary cloud login.
+    assert.equal((await direct('/cloud/pairings/decision', {challenge:pairing.data.challenge,decision:'cancel'}, local)).data.state,'cancelled');
     browser = await chromium.launch({ headless: true, args: ['--no-proxy-server', `--host-resolver-rules=MAP ${domain} 127.0.0.1`,
       `--ignore-certificate-errors-spki-list=${Buffer.from(pairing.data.tlsSpki, 'base64url').toString('base64')}`] });
     phone = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
