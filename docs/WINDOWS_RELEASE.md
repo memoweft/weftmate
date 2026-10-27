@@ -162,6 +162,8 @@ $installer = Read-Host '已核对哈希的安装包绝对路径'
 
 夜间回归的 `installed-smoke` 阶段从当前源码构建独立 `fx21qa` 身份的 NSIS（Windows 安装器），默认启动其 `win-unpacked` 中的真实程序。它使用合成账号、合成模型、随机端口、临时数据；通过真实 `src/main.mjs` 网关创建主会话、添加合成项目文件夹、执行原生文件读取和审批后写入、导出实际主对话记录。系统选择 / 保存对话框只替换返回值，不操作桌面。失败使夜间阶段失败，原始结果在 `installed-smoke/results.json`。
 
+交互检查由 `migration-host.mjs` 显示它创建的独立窗口；托盘启动会让原生可见性把界面切到后台并暂停读取，即使 Playwright 仍能找到并点击第一张审批卡。`tests/second-approval.test.ts` 从托盘启动真实程序，验证窗口显示后，读取和写入两张审批卡依次可点、两条审批均完成，写入内容正确。
+
 ```powershell
 # 夜间同一路径：构建后直接验证安装目录，不登记系统安装项。
 node scripts/nightly/installed-smoke.mjs --out .local/installed-smoke
