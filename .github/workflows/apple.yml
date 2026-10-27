@@ -37,6 +37,12 @@ jobs:
           xcodebuild -version
           swift --version
           mkdir -p "$RUNNER_TEMP/apple-results"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Host route fixture dependencies
+        working-directory: .
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Swift package tests
         run: |
           set -o pipefail
