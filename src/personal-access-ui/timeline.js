@@ -208,7 +208,7 @@
         const end=ordered.find(event=>['turn.ended','task.ended'].includes(event.type)&&WeftUiCore.turnOutcome([event],block.taskId).terminal);
         const ms=Date.parse(end?.at)-Date.parse(start?.at || block.steps[0]?.at);
         const duration=Number.isFinite(ms)?`${Math.max(0,Math.round(ms/1000))} ${block.language==='en'?'s':'秒'}`:block.language==='en'?'duration unavailable':'用时未记录';
-        view.text=['aborted','cancelled','canceled','stopped','killed'].includes(outcome.reason) ? (block.language==='en'?'Stopped':'已停止') : block.language==='en'?'Completed':'已完成';
+        view.text=['aborted','cancelled','canceled','stopped','killed'].includes(outcome.reason) ? (block.language==='en'?'Stopped':'已停止') : outcome.reason==='completed' ? block.language==='en'?'Completed':'已完成' : block.language==='en'?'Ended':'已结束';
         view.duration=duration;
         view.running=false;
       }
