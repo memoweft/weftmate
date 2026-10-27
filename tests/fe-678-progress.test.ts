@@ -9,6 +9,8 @@ test('#678 every message owns one persistent process through native prefixes', {
   const browser = await chromium.launch({headless:true,...(process.env.CI ? {} : {channel:'chrome'})});
   try {
     const page = await browser.newPage({viewport:{width:1200,height:1800}});
+    // Keep the Oct 25 anchor in "yesterday"; older days intentionally collapse.
+    await page.clock.setFixedTime(new Date('2026-10-26T12:00:00Z'));
     async function setup(work = false) {
       await page.setContent(`<div id="session-rail"><div class="rail-top"></div></div><div class="assistant-topbar"><span id="assistant-title"></span></div><div id="chat-scroll" style="height:1600px;overflow:auto"><ol id="transcript"></ol></div><div id="chat-intro"><h1></h1></div><button id="load-older"></button><button id="jump-latest"></button><input id="message-text"><section id="approval-bar" hidden></section><p id="model-hint"></p>`);
       await page.evaluate(() => {
