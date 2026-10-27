@@ -121,8 +121,10 @@ function startMobileConnection() {
 let previousConnectionKind = uiCore.connectionView().kind;
 uiCore.observeConnection(view => {
   const recovered = view.kind === 'online' && previousConnectionKind !== 'online';
+  const changed = view.kind !== previousConnectionKind;
   previousConnectionKind = view.kind;
   if (recovered && state.chatSource === 'host' && state.page === 'chat') scheduleSharedPoll();
+  if (changed && state.page === 'memory') memoryPage($('page-content'));
 });
 let mobileNextSuggestions = null;
 const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore, draft:()=>$('draft'),

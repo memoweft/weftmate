@@ -7,11 +7,11 @@ const api=context.WeftUiCore, plain=(value:any)=>JSON.parse(JSON.stringify(value
 const failed={stepId:'search',toolName:'grep',ordinal:17,state:'failed',summary:'搜索资料',exitCode:1};
 const done={stepId:'write',toolName:'write',state:'completed',summary:'写入报告'};
 const complete={terminal:true,reason:'completed'};
-test('UX-3 recovered nonzero command, final failed step in completed turn and timeout are neutral',()=>{
+test('UX-3 completed rounds preserve each failed attempt without failing the whole reply',()=>{
  for(const steps of [[failed,done],[done,failed],[{...failed,endReasonKind:'timeout'},done]]){
   const copy=JSON.stringify(steps),view=api.progressText(steps,complete);
   assert.equal(view.failed,undefined);assert.equal(view.running,false);assert.match(view.text,/中途有 1 步重试/);
-  assert.equal(api.stepPresentation(steps.find(s=>s.state==='failed'),complete).state,'issue');assert.equal(JSON.stringify(steps),copy);
+  assert.equal(api.stepPresentation(steps.find(s=>s.state==='failed'),complete).state,'failed');assert.equal(JSON.stringify(steps),copy);
  }
 });
 test('UX-3 user interrupt and assistant termination before rerun take precedence over failed state',()=>{
@@ -28,9 +28,9 @@ test('UX-3 only terminal error or blocked round gets an actionable failure',()=>
   const view=api.progressText(steps,{terminal:true,reason});assert.equal(view.failed,true);assert.match(view.text,/未能完成/);assert.match(view.text,/重试或补充说明/);assert.doesNotMatch(view.text,/第.*步失败/);
  }
 });
-test('UX-3 in-progress error stays neutral until outcome arrives',()=>{
+test('UX-3 in-progress failure retains its result while the round continues',()=>{
  const view=api.progressText([failed,done],{terminal:false});assert.equal(view.failed,undefined);assert.equal(view.running,true);assert.equal(view.text,'第 17 步遇到问题，正在继续');
- assert.equal(api.stepPresentation(failed,{}).state,'issue');
+ assert.equal(api.stepPresentation(failed,{}).state,'failed');
 });
 test('UX-3 historical replay uses terminal facts for every earlier tool block without changing stored events',()=>{
  const events=[{seq:1,type:'turn.started',data:{turn:1}},{seq:2,type:'step.completed',data:{...failed,taskId:'turn-1'}},{seq:3,type:'assistant.message',data:{text:'换一种办法。'}},{seq:4,type:'step.completed',data:{...done,taskId:'turn-1'}},{seq:5,type:'turn.ended',data:{turn:1,reason:'completed'}}];
