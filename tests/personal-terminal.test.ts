@@ -22,11 +22,14 @@ const alive = (pid: number) => { try {
 test('real PTY: input, UTF-8, resize, replay cursor, ownership and process-tree disposal', { timeout: 35000 }, async () => {
   const cwd = await mkdtemp(join(tmpdir(), 'weftmate-terminal-'));
   const fixture = join(cwd, 'interactive.cjs');
-  await writeFile(fixture, `const child = require('node:child_process').spawn(process.execPath, ['-e','setInterval(()=>{},1000)'], {stdio:'ignore',windowsHide:true});
-console.log('READY',process.pid,child.pid,process.cwd(),process.stdout.isTTY);
+  await writeFile(fixture, `process.env.FORCE_COLOR='1';
+const child = require('node:child_process').spawn(process.execPath, ['-e','setInterval(()=>{},1000)'], {stdio:'ignore',windowsHide:true});
+process.stdout.write('\\x1b[31mANSI_SENTINEL\\x1b[0m\\r\\n');
+// Control records are strings: console's inspection colors must not decorate IDs or sizes.
+console.log('READY '+process.pid+' '+child.pid+' '+process.cwd()+' '+process.stdout.isTTY);
 process.stdin.setRawMode(true);process.stdin.resume();
-process.stdout.on('resize',()=>console.log('SIZE',process.stdout.columns,process.stdout.rows));
-process.stdin.on('data',b=>{const s=b.toString();console.log('INPUT',s);if(s.includes('later'))setTimeout(()=>console.log('DISCONNECTED_OUTPUT'),100);});`);
+process.stdout.on('resize',()=>console.log('SIZE '+process.stdout.columns+' '+process.stdout.rows));
+process.stdin.on('data',b=>{const s=b.toString();console.log('INPUT '+s);if(s.includes('later'))setTimeout(()=>console.log('DISCONNECTED_OUTPUT'),100);});`);
   const manager = createTerminalManager({ shell: { file: process.execPath, args: [fixture] } });
   let parent = 0, child = 0;
   try {
@@ -36,6 +39,8 @@ process.stdin.on('data',b=>{const s=b.toString();console.log('INPUT',s);if(s.inc
     await waitFor(() => /READY\s+\d+\s+\d+/.test(output), () => 'PTY readiness ' + JSON.stringify(output.replaceAll(cwd, '<workspace>')));
     const pids = output.match(/READY\s+(\d+)\s+(\d+)/)!; parent = Number(pids[1]); child = Number(pids[2]);
     assert.ok(alive(parent)); assert.ok(alive(child)); assert.match(output, /true/);
+    assert.ok(output.includes('ANSI_SENTINEL'));
+    assert.match(output, /\x1b\[[0-9;]*m/, 'real terminal output retains ANSI colors');
     assert.equal((await manager.create({ ownerId: owner, deviceId: device, conversationId: 'conversation-a', tabId: 'tab-a', cwd })).terminalId, terminal.terminalId);
     assert.throws(() => manager.info('another-owner', device, terminal.terminalId), /NOT_FOUND/);
     assert.throws(() => manager.input(owner, 'another-device', terminal.terminalId, 'bad'), /NOT_FOUND/);
