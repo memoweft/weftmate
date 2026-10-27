@@ -49,6 +49,6 @@ export async function measureUi(page, name, action, ready) {
   },ready);
   await action();
   const sample=await page.evaluate(()=>finishUiSample());
-  if(sample.frames<20||sample.feedbackMs===null)throw Error(`No representative visual feedback for ${name}`);
+  if(sample.frames<20||sample.feedbackMs===null)throw Error(`No representative visual feedback for ${name}: ${JSON.stringify(sample)}`);
   return { name,...sample };
 }

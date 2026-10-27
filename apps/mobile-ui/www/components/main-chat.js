@@ -51,6 +51,10 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             catch (error) { done(); throw error; }
         };
     }
+    for (const name of ['sendDraft', 'sendMainDraft']) {
+        const action = core[name]; if (!action) continue;
+        core[name] = function (...args) { if (main()) restoring = null; return action.apply(this,args); };
+    }
     const button = (text, name, action, className = 'button quiet small') => {
         const node = ui.element('button', className, text); node.type = 'button'; node.setAttribute('aria-label', name || text);
         node.addEventListener('click', () => Promise.resolve(action()).catch(error => ui.toast(core.failureMessage(error)))); return node;
@@ -267,7 +271,9 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         if (logical()) { ui.byId('assistant-title').textContent = core.state.workTimeline ? timelineChat().title || '工作' : fixedTitle(); origin.hidden = true; }
         ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？';
         const saved = restoring?.anchor || (ui.conversationScroll?.pinned ? null : rememberAnchor());
-        if (core.state.logicalHistoryLoading && !core.state.chatWindow.events.size) {
+        const loading = logical() ? core.state.logicalHistoryLoading && !core.state.chatWindow.events.size
+            : core.state.historyInFlight?.generation === core.state.historyGeneration && !core.state.historyEvents.size && !core.optimisticMessages().length;
+        if (loading) {
             if (!list().querySelector(':scope > .wm-skeleton')) { const loading=WeftControls.skeleton({tag:'li',rows:3});loading.classList.add('chat-history-loading');loading.prepend(ui.element('span','chat-loading-label','正在打开对话…'));list().replaceChildren(loading); mounted.clear(); top = bottom = null; }
             list().setAttribute('aria-busy', 'true'); ui.byId('chat-intro').hidden = true; return;
         }
@@ -459,6 +465,6 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         renderTimeline: (...args) => main() ? scheduleRender() : original.renderTimeline(...args),
         beginOlderHistory: () => { if (!main()) return original.beginOlderHistory(); ui.conversationScroll?.hold(); if (!restoring) restoring = { anchor: rememberAnchor(), pinned: false }; },
         restoreOlderHistoryPosition: () => main() ? scheduleRender() : original.restoreOlderHistoryPosition(),
-        scrollToLatest: () => { if (!main()) return original.scrollToLatest(); ui.conversationScroll?.latest(); scheduleRender(); }
+        scrollToLatest: () => { if (!main()) return original.scrollToLatest(); if (!selectionCapture && !core.state.sessionSelecting) restoring = null; ui.conversationScroll?.latest(); scheduleRender(); }
     };
 };

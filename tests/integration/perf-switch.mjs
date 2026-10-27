@@ -33,10 +33,16 @@ try {
   for (let turn = 1; turn <= 150; turn++) {
     put('turn.started', { turn }); put('user.message', { text: `合成问题 ${turn}`, receiptId: `synthetic-${turn}`, turn });
     for (let step = 0; step < (turn === 150 && !process.argv.includes('--code-only') ? 80 : 1); step++)
-      put('step.completed', { taskId: `turn-${turn}`, stepId: `step-${turn}-${step}`, toolName: 'read', state: 'completed', summary: `读取合成资料 ${step}`, turn });
+      put('step.completed', { taskId: `turn-${turn}`, stepId: `step-${turn}-${step}`, toolName: 'read', state: 'completed', summary: `读取合成资料 ${step}`, turn,
+        ...(turn === 150 && !process.argv.includes('--code-only') ? {detailRef:{seq:history.length}} : {}) });
     put('assistant.message', { text: `合成回复 ${turn}\n\n**代码示例**\n\n\`\`\`js\n${'const synthetic = 123;\n'.repeat(35)}\`\`\`\n\n报告已保存`, turn });
     put('turn.ended', { turn, reason: 'completed' });
   }
+  const readDetail = fixture.backend.readEventDetail;
+  fixture.backend.readEventDetail = async input => {
+    const event = fixture.logs.get(input.sessionId)?.find(event => event.seq === input.seq);
+    return event?.data?.detailRef ? {seq:input.seq,type:event.type,text:JSON.stringify({arguments:{path:`synthetic-${input.seq}.md`}}),output:'合成步骤输出'} : readDetail(input);
+  };
   const profile = await mkdtemp(join(temp, 'profile-'));
   const env = { ...process.env, PERF_SWITCH_PROFILE: profile, PERF_SWITCH_ORIGIN: fixture.origin, PERF_SWITCH_TOKEN: fixture.libraryDesktopToken }; delete env.ELECTRON_RUN_AS_NODE;
   app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: root, args: ['tests/helpers/perf-switch-electron.mjs'], env, timeout: 25000 });
@@ -132,7 +138,7 @@ try {
     put('turn.started', { turn: 151 }); put('user.message', { text: '合成流式问题', receiptId: 'synthetic-stream', turn: 151 });
     const liveSeq = history.length;
     live = [{ seq: liveSeq, type: 'assistant.delta', sessionId: fixture.source, at: new Date().toISOString(), data: { text: '合成流式第一段', streaming: true, turn: 151 } }];
-    await page.locator('#jump-latest').click();
+    await page.evaluate(() => testUi.scrollToLatest());
     await page.evaluate(() => testCore.refreshHistory());
     await page.getByText('合成流式第一段', { exact: true }).waitFor();
     await page.evaluate(() => { globalThis.firstLiveRow = [...document.querySelectorAll('.message.assistant')].find(row => row.textContent.includes('合成流式第一段')); });

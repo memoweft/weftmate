@@ -80,6 +80,10 @@ try {
     {seq:nextSeq+1,type:'step.started',at:new Date().toISOString(),data:{turn:2,stepId:'design-running',toolName:'read',state:'running',summary:'正在整理合成资料'}});
   await page.evaluate(async () => {
     const core = __feedbackSessionCore; await core.refreshHistory();
+  });
+  await page.evaluate(async () => {
+    await new Promise(requestAnimationFrame);
+    await new Promise(requestAnimationFrame);
     globalThis.designRows = [...document.getElementById('transcript').children];
     globalThis.designAnimations = document.getElementById('transcript').getAnimations({ subtree: true });
   });
@@ -105,6 +109,7 @@ try {
     void __feedbackSessionCore.selectSession(id);
   }, second);
   await page.locator('#transcript > .wm-skeleton').waitFor();
+  await page.evaluate(async () => { await new Promise(requestAnimationFrame); await new Promise(requestAnimationFrame); });
   assert.equal(await page.locator('#transcript').getAttribute('aria-busy'), 'true');
   await capture('loading-light');
   release();

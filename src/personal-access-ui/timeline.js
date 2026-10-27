@@ -138,6 +138,17 @@
   function render(events, list, options = {}) {
     list.progressRender = { events, options }
     const renderCurrent = () => { const current = list.progressRender; render(current.events, list, current.options) }
+    const scheduleCurrent = row => {
+      list.progressUpdates ||= new Set()
+      list.progressUpdates.add(row)
+      if (list.progressUpdateQueued) return
+      list.progressUpdateQueued = true
+      requestAnimationFrame(() => {
+        list.progressUpdateQueued = false
+        const pending = [...list.progressUpdates]; list.progressUpdates.clear()
+        if (list.isConnected && pending.some(row => row.isConnected && list.contains(row))) renderCurrent()
+      })
+    }
     const prepared=prepare(events, options.thinkingDisplay)
     const projection = globalThis.WeftUiCore.projectTimeline(prepared, options.approvals || [], true)
     const { ordered, cards } = projection
@@ -176,7 +187,7 @@
           void options.readDetail(seq).then(data => {
             const args = {...globalThis.WeftUiCore.toolArguments(data.text),...(typeof data.description==='string'?{description:data.description}:{})}
             row.progressDetails.set(seq, Object.keys(args).length ? {summary: globalThis.WeftUiCore.toolSummary(step.toolName, args, block.language), arguments: args, interrupted: globalThis.WeftUiCore.interruptionFromDetail(data.text,step)} : {summary: step.summary})
-            if (row.isConnected && list.contains(row)) { delete row.dataset.signature; renderCurrent() }
+            if (row.isConnected && list.contains(row)) { delete row.dataset.signature; scheduleCurrent(row) }
           }).catch(() => { row.progressDetails.set(seq, {summary: step.summary}) })
         }
       }
