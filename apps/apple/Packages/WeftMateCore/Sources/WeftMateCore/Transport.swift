@@ -176,7 +176,7 @@ public final class URLSessionTransport: HTTPTransport, Sendable {
             case .timedOut: throw APIFailure.transport(.timeout)
             case .cancelled: throw APIFailure.transport(.cancelled)
             case .serverCertificateUntrusted, .serverCertificateHasBadDate, .serverCertificateHasUnknownRoot,
-                 .serverCertificateNotYetValid, .secureConnectionFailed: throw APIFailure.transport(.certificate)
+                 .serverCertificateNotYetValid: throw APIFailure.transport(.certificate)
             default: throw APIFailure.transport(.unavailable)
             }
         } catch { throw APIFailure.transport(.unavailable) }
