@@ -114,7 +114,7 @@ struct PhoneBottomTabs: View {
     @Binding var selection: PhoneTab
     var reselect: () -> Void = {}
     @Environment(\.dynamicTypeSize) private var typeSize
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.phoneReduceMotion) private var reduceMotion
     private var items: some View {
         HStack(spacing: AppleTokens.Space.p4) {
             ForEach(PhoneTab.allCases) { tab in
@@ -127,7 +127,7 @@ struct PhoneBottomTabs: View {
                             .frame(width: AppleTokens.Space.p64, height: AppleTokens.Space.p28)
                             .background(selection == tab ? Weave.soft : .clear, in: Capsule())
                         Text(tab.title).font(AppleTokens.Fonts.caption2)
-                    }.frame(maxWidth: .infinity).frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44)
+                    }.frame(maxWidth: .infinity).frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
                 }.buttonStyle(PhoneTabStyle(selected: selection == tab))
                     .accessibilityLabel(tab.title).accessibilityIdentifier("phone.tab." + tab.id)
                     .accessibilityAddTraits(selection == tab ? .isSelected : [])

@@ -14,7 +14,7 @@ struct WeftMatePhoneApp: App {
         WindowGroup {
             Group {
                 #if DEBUG && targetEnvironment(simulator)
-                if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple11-fixture") { PhoneReminderTestFixture(app:model) }
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple11-fixture") { PhoneReminderTestFixture(app:model).environmentObject(health) }
                 else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple9-fixture") { PhoneServiceScreenshotFixture(app:model) }
                 else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple8-fixture") { PhoneAttachmentScreenshotFixture(app:model) }
                 else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--phone-window-fixture") { PhoneWindowTestFixture(app:model) }

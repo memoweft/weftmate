@@ -1,6 +1,17 @@
 import SwiftUI
 import WeftMateCore
 
+private struct PhoneReduceMotionOverrideKey: EnvironmentKey {
+    static let defaultValue = false
+}
+extension EnvironmentValues {
+    var phoneReduceMotionOverride: Bool {
+        get { self[PhoneReduceMotionOverrideKey.self] }
+        set { self[PhoneReduceMotionOverrideKey.self] = newValue }
+    }
+    var phoneReduceMotion: Bool { accessibilityReduceMotion || phoneReduceMotionOverride }
+}
+
 /// Native short actions stay attached to their trigger, including in compact width.
 struct PhoneActionMenu<Label: View, Actions: View>: View {
     let label: Label
@@ -18,33 +29,42 @@ struct PhoneDrawer<Panel: View>: ViewModifier {
     let canOpenFromEdge: Bool
     let panel: () -> Panel
     @State private var drag: CGFloat = 0
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var containerWidth: CGFloat = 0
+    @Environment(\.phoneReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var scheme
     func body(content: Content) -> some View {
-        GeometryReader { geometry in
-            let width = min(AppleTokens.Phone.drawerWidth, geometry.size.width - AppleTokens.Space.p44)
-            let progress = PhoneDrawerGesture.progress(open: open, translation: Double(drag), width: Double(width))
-            ZStack(alignment: .leading) {
-                content.allowsHitTesting(progress == 0).accessibilityHidden(progress > 0)
-                Color.black.opacity((scheme == .dark ? AppleTokens.Phone.darkScrim : AppleTokens.Phone.lightScrim) * progress)
-                    .ignoresSafeArea().onTapGesture { setOpen(false) }
-                    .allowsHitTesting(progress > 0).accessibilityHidden(true).gesture(gesture)
-                panel().frame(width: width).frame(maxHeight: .infinity)
-                    .background(Weave.canvas)
-                    .clipShape(UnevenRoundedRectangle(bottomTrailingRadius: AppleTokens.Radius.r24, topTrailingRadius: AppleTokens.Radius.r24))
-                    .offset(x: reduceMotion ? 0 : -width * CGFloat(1 - progress))
-                    .opacity(reduceMotion ? progress : 1)
-                    .allowsHitTesting(progress > 0).accessibilityHidden(progress == 0)
-                    .accessibilityAddTraits(.isModal)
-                    .accessibilityAction(.escape) { setOpen(false) }
-                    .accessibilityIdentifier("phone.sidebar.panel")
-                    .simultaneousGesture(gesture)
-                if canOpenFromEdge && !open {
-                    Color.clear.frame(width: AppleTokens.Phone.edgeWidth).contentShape(Rectangle())
-                        .accessibilityHidden(true).gesture(gesture)
-                }
+        let width = min(AppleTokens.Phone.drawerWidth, max(0, containerWidth - AppleTokens.Space.p44))
+        let progress = PhoneDrawerGesture.progress(open: open, translation: Double(drag), width: Double(width))
+        ZStack(alignment: .leading) {
+            content.allowsHitTesting(progress == 0).accessibilityHidden(progress > 0)
+            // Stable layers animate without retaining an outgoing modal's gesture ownership.
+            Color.black.opacity((scheme == .dark ? AppleTokens.Phone.darkScrim : AppleTokens.Phone.lightScrim) * progress)
+                .ignoresSafeArea().onTapGesture { setOpen(false) }
+                .gesture(gesture, including: progress > 0 ? .all : .none)
+                .allowsHitTesting(progress > 0).accessibilityHidden(true)
+            panel().frame(width: width).frame(maxHeight: .infinity)
+                .background(Weave.canvas)
+                .clipShape(UnevenRoundedRectangle(bottomTrailingRadius: AppleTokens.Radius.r24, topTrailingRadius: AppleTokens.Radius.r24))
+                .offset(x: reduceMotion ? 0 : -width * CGFloat(1 - progress))
+                .opacity(reduceMotion ? progress : 1)
+                .accessibilityElement(children: progress > 0 ? .contain : .ignore)
+                .accessibilityAddTraits(progress > 0 ? .isModal : [])
+                .accessibilityAction(.escape) { setOpen(false) }
+                .accessibilityIdentifier("phone.sidebar.panel")
+                .simultaneousGesture(gesture, including: progress > 0 ? .all : .none)
+                .allowsHitTesting(progress > 0)
+                .accessibilityHidden(progress == 0)
+            if canOpenFromEdge && !open {
+                Color.clear.frame(width: AppleTokens.Phone.edgeWidth).contentShape(Rectangle())
+                    .accessibilityHidden(true).gesture(gesture)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onGeometryChange(for: CGFloat.self, of: { @Sendable proxy in proxy.size.width },
+                          action: Self.widthChanged { containerWidth = $0 })
+    }
+    nonisolated private static func widthChanged(_ update: @escaping @MainActor @Sendable (CGFloat) -> Void) -> @Sendable (CGFloat) -> Void {
+        { value in Task { @MainActor in update(value) } }
     }
     private var gesture: some Gesture {
         DragGesture(minimumDistance: AppleTokens.Space.p12)
