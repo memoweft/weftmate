@@ -93,11 +93,9 @@ struct ConversationView: View {
     @State private var dictationPopover = false
     @State private var previousTailID: String?
     @State private var composerIdentity = UUID()
-    @State private var decisionJump = 0
     @State private var latestJump = 0
-    @State private var decisionVisible = false
     @State private var atBottom = true
-    @State private var revealDecision = false
+    @State private var queueOpen = false
     @StateObject private var phonePositions = MainChatPositionTracker()
     @State private var resourcePopover = false
     @State private var showingUsage = false
@@ -188,7 +186,7 @@ struct ConversationView: View {
             }.ignoresSafeArea()
         }
         .fullScreenCover(isPresented: $showingPreview) { attachmentPreview }
-        .sheet(isPresented: $resources.visible) { ConversationResourcesPanel(app: model, resources: resources).phoneSheet("输出与来源", identifier: "closeResourcesPanel", close: { resources.visible = false }) }
+        .navigationDestination(isPresented: $resources.visible) { PhoneConversationResourcesPage(app: model, resources: resources) }
         #endif
         .onChange(of: model.accountEpoch) { _, _ in importingAttachments = false; showingCamera = false; showingPhotos = false; importScope = nil; cancelScreenshot(); closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
         .onChange(of: conversation.id) { _, _ in cancelScreenshot(); closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
@@ -345,15 +343,17 @@ struct ConversationView: View {
                 }
             }
             #endif
-            .onChange(of:decisionJump) { _,_ in
-                let id=interactions.pendingApprovals.first?.id
-                if let entry=TimelineProjection.entries(model.timeline.events).first(where:{$0.event.data["approvalId"]?.string == id && id != nil || $0.event.type.hasPrefix("question.") && !interactions.pendingQuestions.isEmpty}) { proxy.scrollTo(entry.id,anchor:.bottom) }
-                else { proxy.scrollTo("phone.pendingDecision",anchor:.bottom) }
-            }
             #if os(iOS)
             .onChange(of:latestJump) { _,_ in follow.returnToBottom(); proxy.scrollTo("latest",anchor:.bottom) }
-            .task(id:pendingDecisionID) { guard pendingDecisionID != nil else { return }; draftFocused=false; follow.returnToBottom(); revealDecision=true; await Task.yield(); await Task.yield(); decisionJump += 1 }
-            .onChange(of:viewportHeight) { _,_ in if revealDecision { decisionJump += 1; revealDecision=false } else if follow.following { proxy.scrollTo("latest",anchor:.bottom) } }
+            .onChange(of:viewportHeight) { _,_ in if follow.following { proxy.scrollTo("latest",anchor:.bottom) } }
+            .simultaneousGesture(DragGesture().onChanged { value in
+                if value.translation.height > 0 { follow.userScrolled(distanceFromBottom: 49) }
+            })
+            .overlay(alignment: .bottom) {
+                if !follow.following && !atBottom {
+                    PhoneLatestReplyButton { draftFocused=false; latestJump += 1 }.accessibilityIdentifier("returnToBottom")
+                }
+            }
             #endif
             .onChange(of: model.sourceMessageTarget) { _, seq in
                 if let seq { follow.userScrolled(distanceFromBottom: 100); proxy.scrollTo("event-\(seq)", anchor: .center) }
@@ -385,14 +385,12 @@ struct ConversationView: View {
                 previousTailID = TimelineProjection.entries(model.timeline.events).last?.id ?? model.messages.last?.id
                 if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) }
             }
-            #if os(iOS)
-            composer.id(composerIdentity)
-            #endif
             }
         }
         }
-        .background(Weave.surface)
+        .background(Weave.canvas)
         #if os(iOS)
+        .safeAreaInset(edge: .bottom, spacing: 0) { composer.id(composerIdentity) }
         .environment(\.phoneWorkApp,model)
         #endif
         .navigationTitle(conversation.temporaryState.notice().isEmpty ? (conversation.title.isEmpty ? "对话" : conversation.title) : "临时对话")
@@ -546,6 +544,18 @@ struct ConversationView: View {
         }
     }
 
+    private func editQueued(_ task:QueuedTask) async {
+        let epoch=model.accountEpoch,key=AppleAppModel.draftKey(for:conversation)
+        guard draft.wrappedValue.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty,(model.attachmentDrafts[key] ?? []).isEmpty else {
+            model.queueNotice="先发送或清空当前草稿，再修改排队消息。"; return
+        }
+        await model.cancelQueued(task,conversation:conversation)
+        guard model.accountEpoch == epoch,model.queueNotice == nil,!model.queuedTasks(for:conversation).contains(where:{$0.id == task.id}) else { return }
+        if draft.wrappedValue.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty,(model.attachmentDrafts[key] ?? []).isEmpty {
+            draft.wrappedValue=task.text; queueOpen=false
+        } else { model.queueNotice="已经撤回。当前草稿保留，原消息："+task.text }
+    }
+
     private var composerTools: some View {
         let accountEpoch=model.accountEpoch
         let key=AppleAppModel.draftKey(for:conversation)
@@ -576,6 +586,9 @@ struct ConversationView: View {
                         }.accessibilityIdentifier("composer.camera")
                         Button("照片", image: ImageResource(name: "wm-image", bundle: .main)) { importScope = model.uxScope; showingPhotos = true }.accessibilityIdentifier("composer.photos")
                         Button("文件", image: ImageResource(name: "wm-file", bundle: .main)) { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
+                        if let usage=conversation.contextUsage {
+                            Button(usage.label) { contextPopover=true }.accessibilityIdentifier("contextUsage")
+                        }
                         #endif
                         #if DEBUG
                         if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--a15-synthetic-media") {
@@ -598,7 +611,10 @@ struct ConversationView: View {
                     #endif
                     .phoneIcon().phoneComposerControl(circle: true).disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
                     .accessibilityIdentifier("addAttachmentButton")
-                    if !dynamicTypeSize.isAccessibilitySize && composerExpanded { composerApprovalMode(accountEpoch: accountEpoch) }
+                    #if os(iOS)
+                    .phonePopover(isPresented:$contextPopover) { if let usage=conversation.contextUsage { Text(usage.label).padding(AppleTokens.Space.p16) } }
+                    #endif
+                    if !dynamicTypeSize.isAccessibilitySize { composerApprovalMode(accountEpoch: accountEpoch) }
                     if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
                     Spacer(minLength: AppleTokens.Space.p4)
                     #if os(macOS)
@@ -612,7 +628,7 @@ struct ConversationView: View {
                             .help(usage.label).popover(isPresented: $contextPopover) { Text(usage.label).font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
                     }
                     #endif
-                    if composerExpanded {
+                    Group {
                     if model.modelServicesSupported == true {
                         ServiceModelMenuButton(services:model.modelServices,current:model.sendTargets[key]?.modelProfileID,label:model.sendTargets[key]?.modelName ?? "当前模型",usesImages:(model.attachmentDrafts[key] ?? []).contains(where: {$0.original.isImage}) || model.messages.contains(where: {!$0.images.isEmpty || $0.originalAttachments.contains(where: \.isImage)}),thinkingSupported:model.modelServices.flatMap(\.models).first(where: {$0.matches(model.sendTargets[key]?.modelProfileID)})?.deepThinking?.supported == true,thinking:Binding(get:{model.thinking.confirmed?.enabled == true},set:{value in Task { await model.refreshThinking(conversation,enabled:value) }}),select:{service,item in Task { await model.chooseServiceModel(service,item,conversation:conversation) }},add:{showingModels=true},refresh:{Task { await model.refreshServiceMenus() }},identifier:"composerModel")
                         if !model.mainChat.capabilities.supports("workAndChat") { ComputerMenuButton(cloud:model.cloudLogin) }
@@ -647,17 +663,7 @@ struct ConversationView: View {
                     Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic", size: AppleTokens.Space.p16).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44) }
                         .buttonStyle(.plain).phoneIcon(quiet: true).accessibilityLabel("语音输入")
                     }
-                #if os(iOS)
-                    if composerExpanded, let usage = conversation.contextUsage {
-                        Button { contextPopover.toggle() } label: {
-                            ZStack {
-                                Circle().stroke(Weave.line, lineWidth: AppleTokens.Space.p2)
-                                if let value = usage.fraction { Circle().trim(from: 0, to: min(1, value)).stroke(usage.warning ? Weave.danger : Weave.muted, style: StrokeStyle(lineWidth: AppleTokens.Space.p2, lineCap: .round)).rotationEffect(.degrees(-90)) }
-                            }.frame(width: AppleTokens.Space.p18, height: AppleTokens.Space.p18).phoneMenuLabel(circle: true, onCard: true)
-                        }.buttonStyle(.plain).phoneIcon(quiet: true).accessibilityLabel(usage.label).accessibilityIdentifier("contextUsage")
-                            .help(usage.label).popover(isPresented: $contextPopover) { Text(usage.label).font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
-                    }
-                #endif
+
                     let action = ComposerAction.resolve(running: model.tasksAvailable(conversation) && conversation.running, text: draft.wrappedValue, attachments: !(model.attachmentDrafts[key] ?? []).isEmpty)
                     #if os(iOS)
                     let voice=PhoneComposerPrimaryAction.resolve(running:conversation.running,draft:draft.wrappedValue,attachmentCount:(model.attachmentDrafts[key] ?? []).count) == .voice
@@ -670,7 +676,7 @@ struct ConversationView: View {
                     } label: { WeftIcon(action == .stop ? "stop" : voice ? "mic" : "send").frame(width: AppleTokens.Space.p20, height: AppleTokens.Space.p44) }
                         .buttonStyle(PrimaryActionStyle(fillsWidth: false)).phoneIcon(primary: true).tint(Weave.accent)
                         .disabled(action == .stop ? model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil : !voice && !model.canSend(conversation))
-                        .accessibilityLabel(action == .stop ? "停止" : voice ? "语音输入" : "发送").accessibilityIdentifier("sendButton")
+                        .accessibilityLabel(action == .stop ? "停止" : voice ? "语音输入" : conversation.running ? "排队发送" : "发送").accessibilityIdentifier("sendButton")
                         .popover(isPresented:$dictationPopover) { Text("使用系统听写输入文字").font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
                     #if os(macOS)
                     if model.tasksAvailable(conversation) { Button("停止") { Task { await model.stopActiveTask() } }.keyboardShortcut(.escape, modifiers: []).hidden().frame(width: 0, height: 0) }
@@ -679,7 +685,7 @@ struct ConversationView: View {
     }
     private var showsSmallMic: Bool {
         #if os(iOS)
-        !draft.wrappedValue.isEmpty || !(model.attachmentDrafts[AppleAppModel.draftKey(for:conversation)] ?? []).isEmpty
+        false
         #else
         true
         #endif
@@ -690,25 +696,21 @@ struct ConversationView: View {
         phonePositions.frames[id]=frame
         let actualHeight=height>0 ? height : viewportHeight
         if actualHeight != viewportHeight { viewportHeight=actualHeight }
-        let card=phonePositions.frames["phone.pendingDecision"]
-        let visible=card.map { PhoneChatViewport.intersects(top:Double($0.minY),bottom:Double($0.maxY),height:Double(actualHeight)) } ?? false
-        if visible != decisionVisible { decisionVisible=visible }
         let end=phonePositions.frames["phone.end"]
-        let bottom=PhoneChatViewport.atBottom(lastTop:card.map { Double($0.minY) },lastBottom:card.map { Double($0.maxY) },endTop:end.map { Double($0.minY) },endBottom:end.map { Double($0.maxY) },height:Double(actualHeight))
-        if bottom != atBottom { atBottom=bottom }
-        #endif
-    }
-    private var composerExpanded: Bool {
-        #if os(iOS)
-        PhoneComposerState(focused: draftFocused, draft: model.draftText(for: conversation, accountEpoch: model.accountEpoch), attachmentCount: (model.attachmentDrafts[AppleAppModel.draftKey(for: conversation)] ?? []).count).expanded
-        #else
-        true
+        let distance=end.map { max(0,$0.maxY-actualHeight) } ?? .greatestFiniteMagnitude
+        if id == "phone.end",userScrolling,let top=end?.minY,let before=phonePositions.previousEndTop {
+            if top > before { follow.userScrolled(distanceFromBottom:49) }
+            else if top < before { follow.userScrolled(distanceFromBottom:Double(distance)) }
+        }
+        if id == "phone.end" { phonePositions.previousEndTop=end?.minY }
+        if atBottom != (distance <= 48) { atBottom=distance <= 48 }
+        if let first=phonePositions.frames.filter({ $0.key != "phone.end" && $0.value.maxY > 0 && $0.value.minY < actualHeight }).min(by:{ $0.value.minY < $1.value.minY }),visibleMessageID != first.key { visibleMessageID=first.key }
         #endif
     }
     private var phoneDraftInput: some View {
         TextField(conversation.running ? (model.runningMessageMode == .queue ? "排队到下一条…" : "引导当前回复…") : "向 WeftMate 说说你的目标",
             text: draft, axis: .vertical)
-            .lineLimit(1...PhoneComposerState(focused:draftFocused,draft:draft.wrappedValue,attachmentCount:(model.attachmentDrafts[AppleAppModel.draftKey(for:conversation)] ?? []).count).maximumLines).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
+            .lineLimit(1...5).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
             .focused($draftFocused).disabled(!model.canEditDraft(for: conversation)).accessibilityIdentifier("conversationDraft")
     }
     private var composer: some View {
@@ -720,6 +722,31 @@ struct ConversationView: View {
                     .font(AppleTokens.Fonts.callout)
             }
             let queued = model.queuedTasks(for: conversation)
+            #if os(iOS)
+            if model.tasksAvailable(conversation), !queued.isEmpty {
+                Button("\(queued.count) 条消息排队中") { draftFocused=false; queueOpen=true }
+                    .font(AppleTokens.Fonts.caption).accessibilityIdentifier("conversation.queue")
+                    .sheet(isPresented:$queueOpen) {
+                        ScrollView {
+                            VStack(alignment:.leading,spacing:AppleTokens.Space.p16) {
+                                ForEach(model.queuedTasks(for:conversation)) { task in
+                                    VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
+                                        Text(task.text).fixedSize(horizontal:false,vertical:true)
+                                        HStack {
+                                            Button("修改") { Task { await editQueued(task) } }
+                                            Spacer()
+                                            Button("撤回",role:.destructive) { Task { await model.cancelQueued(task,conversation:conversation) } }
+                                        }.frame(minHeight:AppleTokens.Space.p44)
+                                    }.disabled(model.queueBusy.contains(task.id) || model.historyCachedAt != nil)
+                                        .accessibilityIdentifier("queuedTask."+task.id)
+                                    Divider()
+                                }
+                                if let notice=model.queueNotice { Text(notice).foregroundStyle(Weave.muted) }
+                            }.padding(AppleTokens.Phone.pageInset)
+                        }.phoneSheet("排队消息",close:{queueOpen=false})
+                    }
+            }
+            #else
             if model.tasksAvailable(conversation), !queued.isEmpty {
                 DisclosureGroup("\(queued.count) 个排队中") {
                     ScrollView {
@@ -739,6 +766,7 @@ struct ConversationView: View {
                     }.frame(maxHeight: 180)
                 }.font(AppleTokens.Fonts.caption)
             }
+            #endif
             if let notice = model.queueNotice { Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             let subtasks = ComposerSubtasks.merge(model.timeline.events)
             if subtasks.contains(where: { $0.state == "running" }) {
@@ -768,13 +796,7 @@ struct ConversationView: View {
             if let error = model.thinkingError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
             if model.tasksAvailable(conversation) {
                 #if os(iOS)
-                if pendingDecisionID != nil && !decisionVisible || !atBottom {
-                    HStack {
-                        if !decisionVisible { PhonePendingDecisionNotice(model:interactions) { draftFocused=false; decisionJump += 1 } }
-                        Spacer()
-                        if !atBottom { Button { draftFocused=false; latestJump += 1 } label: { WeftIcon("chevron") }.phoneIcon().accessibilityLabel("回到底部").accessibilityIdentifier("returnToBottom") }
-                    }
-                }
+                PhonePendingDecisionNotice(model:interactions,events:model.timeline.events) { draftFocused=false }
                 #else
                 ConversationApprovalBar(model: interactions, events: model.timeline.events,computerName:model.cloudLogin.computerName(model.session?.hostId))
                 #endif
@@ -794,8 +816,6 @@ struct ConversationView: View {
                     } }.scrollIndicators(.hidden).accessibilityIdentifier("sideChat.attachmentBlocks")
                 }
                 phoneDraftInput.frame(minHeight:AppleTokens.Space.p44)
-                    .padding(.leading,composerExpanded ? AppleTokens.Space.p0 : AppleTokens.Space.p56)
-                    .padding(.trailing,composerExpanded ? AppleTokens.Space.p0 : (!draft.wrappedValue.isEmpty || !(model.attachmentDrafts[key] ?? []).isEmpty ? AppleTokens.Space.p44 * 2 + AppleTokens.Space.p16 : AppleTokens.Space.p44 + AppleTokens.Space.p8))
                 #else
                 HStack(alignment: .top, spacing: AppleTokens.Space.p8) {
                 TextField(conversation.running ? (model.runningMessageMode == .queue ? "排队到下一条…" : "引导当前回复…") : "向 WeftMate 说说你的目标", text: draft, axis: .vertical)
@@ -840,20 +860,15 @@ struct ConversationView: View {
                     }
                 }
                 #endif
-                if dynamicTypeSize.isAccessibilitySize && composerExpanded {
+                if dynamicTypeSize.isAccessibilitySize {
                     composerApprovalMode(accountEpoch: accountEpoch)
                 }
-                #if os(macOS)
                 composerTools
-                #endif
             }
             #if os(iOS)
-            .padding(.bottom,composerExpanded ? AppleTokens.Space.p56 : AppleTokens.Space.p0)
-            .overlay(alignment:.bottom) { composerTools }
-            .phoneComposerCard(expanded: composerExpanded)
-            .animation(reduceMotion ? nil : .easeOut(duration: AppleTokens.Motion.d160ms), value: composerExpanded)
+            .phoneChatComposer()
             .accessibilityElement(children:.contain).accessibilityIdentifier("sideChat.composer")
-            .accessibilityValue(composerExpanded ? "输入区已展开" : "输入区已收起")
+            .accessibilityValue("输入区最多五行")
             #else
             .padding(AppleTokens.Space.p9)
             .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r16))
@@ -974,7 +989,7 @@ struct MessageView: View {
                         Spacer(minLength: AppleTokens.Space.p32)
                         Text(message.text).textSelection(.enabled).lineSpacing(AppleTokens.Space.p5)
                             .padding(.horizontal, AppleTokens.Space.p16).padding(.vertical, AppleTokens.Space.p12)
-                            .background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r19))
+                            .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r19))
                     }
                 }
             } else {
@@ -1051,7 +1066,10 @@ private struct ConversationScrollTracking: ViewModifier {
     @Binding var follow: ConversationFollowState
     @State private var userScrolling = false
     func body(content: Content) -> some View {
-        if #available(iOS 18, macOS 15, *) {
+        #if os(iOS)
+        content
+        #else
+        if #available(macOS 15, *) {
             content
                 .onScrollTargetVisibilityChange(idType: String.self) { @Sendable ids in Task { @MainActor in visibleID = ids.contains("older") ? "older" : ids.contains("latest") ? "latest" : ids.first } }
                 .onScrollPhaseChange { @Sendable _, phase in Task { @MainActor in userScrolling = phase == .interacting || phase == .decelerating } }
@@ -1059,7 +1077,12 @@ private struct ConversationScrollTracking: ViewModifier {
                     Double(geometry.contentSize.height + geometry.contentInsets.bottom - geometry.contentOffset.y - geometry.containerSize.height)
                 } action: { @Sendable _, distance in Task { @MainActor in if userScrolling { follow.userScrolled(distanceFromBottom: distance) } } }
         } else {
+            #if os(iOS)
+            content
+            #else
             content.scrollPosition(id: $visibleID, anchor: .bottom).onChange(of: visibleID) { _, value in follow.userScrolled(distanceFromBottom: value == "latest" ? 0 : 100) }
+            #endif
         }
+        #endif
     }
 }

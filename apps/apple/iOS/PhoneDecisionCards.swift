@@ -6,7 +6,6 @@ struct PhoneApprovalCard: View {
     @ObservedObject var model: TaskInteractionModel
     var approval: SessionApproval
     var events: [TimelineEvent]
-    @State private var choice: PhoneApprovalChoice = .once
     private var key: String { "approval:"+approval.id }
     private var hasCategory: Bool { approval.offersAlwaysAllow || !(approval.riskCategories ?? []).isEmpty }
     var body: some View {
@@ -22,24 +21,26 @@ struct PhoneApprovalCard: View {
                 Text(approval.reversalNotice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             }.accessibilityIdentifier("approvalDetails")
             if let opinion=approval.secondOpinion { Text(opinion.text).font(AppleTokens.Fonts.callout).foregroundStyle(opinion.recommendsRejection ? Weave.danger : Weave.muted).accessibilityIdentifier("approvalSecondOpinion") }
-            if hasCategory {
-                ForEach(PhoneApprovalChoice.allCases,id:\.rawValue) { value in
-                    Button { choice=value } label: { PhoneChoiceLabel(title:value.title,selected:choice == value) }
-                        .buttonStyle(.plain).disabled(!model.canRespond(key)).accessibilityLabel(value.title).accessibilityValue(choice == value ? "已选择" : "未选择")
-                        .accessibilityIdentifier(value == .category ? (approval.offersAlwaysAllow ? "approvalAlwaysAllow" : "approveCategory."+approval.id) : value == .once ? "approveOnce."+approval.id : "rejectApproval."+approval.id)
+            Text(approval.reversalNotice).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
+            VStack(spacing: AppleTokens.Space.p8) {
+                Button("允许这一次") { submit(.once) }.buttonStyle(PrimaryActionStyle())
+                    .disabled(!model.canRespond(key)).accessibilityIdentifier("approveOnce."+approval.id)
+                Button("拒绝") { submit(.reject) }.buttonStyle(OutlineActionStyle())
+                    .disabled(!model.canRespond(key)).accessibilityIdentifier("rejectApproval."+approval.id)
+                if hasCategory {
+                    PhoneActionMenu {
+                        Button(approval.offersAlwaysAllow ? "以后这类都允许" : "本对话以后这类都允许") { submit(.category) }
+                            .accessibilityIdentifier(approval.offersAlwaysAllow ? "approvalAlwaysAllow" : "approveCategory."+approval.id)
+                    } label: { Text("更多批准方式").frame(minHeight: AppleTokens.Space.p44) }
+                        .disabled(!model.canRespond(key)).accessibilityIdentifier("approvalMore."+approval.id)
                 }
-                if !approval.offersAlwaysAllow { Text("以后这类都允许只用于当前对话。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-                HStack { Spacer(); Button("确认") { submit(choice) }.buttonStyle(PhoneDecisionActionStyle(primary:true)).disabled(!model.canRespond(key)).accessibilityIdentifier("approvalConfirm."+approval.id) }
-            } else {
-                HStack { Spacer(); Button("拒绝") { submit(.reject) }.buttonStyle(PhoneDecisionActionStyle(primary:false)).disabled(!model.canRespond(key)).accessibilityIdentifier("rejectApproval."+approval.id)
-                    Button("批准") { submit(.once) }.buttonStyle(PhoneDecisionActionStyle(primary:true)).disabled(!model.canRespond(key)).accessibilityIdentifier("approveOnce."+approval.id) }
             }
             if model.pendingApprovals.count>1 { Text("还有 \(model.pendingApprovals.count-1) 个待批准").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             if model.pendingQuestionCount>0 { Text("处理审批后还有 \(model.pendingQuestionCount) 个问题").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             if let error=model.errors[key] { InlineNotice(message:error,isError:true) }
             if model.hasSaved(key) { Button("核对并继续原提交") { Task { await model.continueOriginal(key) } }.disabled(model.busy.contains(key)) }
-        }.phoneDecisionCard().accessibilityElement(children:.contain).accessibilityIdentifier("approvalCard."+approval.id)
-            .task(id:approval.id) { choice = .once; await model.readApprovalPresentation(approval,events:events) }
+        }.phoneDecisionContent().accessibilityElement(children:.contain).accessibilityIdentifier("approvalCard."+approval.id)
+            .task(id:approval.id) { await model.readApprovalPresentation(approval,events:events) }
     }
     private func submit(_ choice: PhoneApprovalChoice) { Task { await model.decide(approval,outcome:choice.outcome,decisionScope:choice.scope(global:approval.offersAlwaysAllow)) } }
 }
@@ -78,11 +79,11 @@ struct PhoneQuestionCard: View {
                         if index>0 { Button("上一题") { writing=false; update { $0.index -= 1 } }.accessibilityIdentifier("questionPrevious") }
                         Spacer()
                         if index<batch.questions.count-1 { Button("下一题") { writing=false; update { $0.index += 1 } }.disabled(!draft.complete(question) || !model.canRespond(key)).accessibilityIdentifier("questionNext") }
-                        else { Button("确认") { writing=false; let value=draft; Task { await model.answer(batch,answers:batch.questions.map(value.answer)) } }.buttonStyle(PhoneDecisionActionStyle(primary:true)).disabled(!batch.questions.allSatisfy(draft.complete) || !model.canRespond(key)).accessibilityLabel("提交回答").accessibilityIdentifier("submitQuestion."+batch.id) }
+                        else { Button("确认") { writing=false; let value=draft; Task { await model.answer(batch,answers:batch.questions.map(value.answer)) } }.buttonStyle(PrimaryActionStyle(fillsWidth:false)).disabled(!batch.questions.allSatisfy(draft.complete) || !model.canRespond(key)).accessibilityLabel("提交回答").accessibilityIdentifier("submitQuestion."+batch.id) }
                     }
                 } else { Text("提交结果待核对，原请求已保留。").foregroundStyle(Weave.muted); Button("核对并继续原提交") { Task { await model.continueOriginal(key) } }.disabled(model.busy.contains(key)) }
                 if let error=model.errors[key] { InlineNotice(message:error,isError:true) }
-            }.phoneDecisionCard().accessibilityElement(children:.contain).accessibilityIdentifier("questionBar")
+            }.phoneDecisionContent().accessibilityElement(children:.contain).accessibilityIdentifier("questionBar")
         }
     }
 }
@@ -99,8 +100,8 @@ struct PhonePendingDecision: View {
     @ObservedObject var model: TaskInteractionModel
     var events: [TimelineEvent]
     var body: some View {
-        if let approval=model.pendingApprovals.first { PhoneApprovalCard(model:model,approval:approval,events:events) }
-        else if let question=model.pendingQuestions.first { PhoneQuestionCard(model:model,batch:question) }
+        if let approval=model.pendingApprovals.first { PhoneApprovalSummary(model:model,approval:approval,events:events) }
+        else if let question=model.pendingQuestions.first { PhoneQuestionSummary(model:model,batch:question) }
         else if let question=model.questions.first(where:{($0.status == .answered || $0.status == .resolved || model.isRegistered("question:"+$0.id))}),let receipt=model.answeredSummary(question) { Text(receipt).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("answeredQuestion."+question.id) }
         else if let approval=model.approvals.first(where:{receipt($0) != nil}),let summary=receipt(approval) { WeftLabel(summary,icon:"approval").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("approvalSummary."+approval.id) }
     }
@@ -115,30 +116,70 @@ struct PhonePendingDecision: View {
 }
 struct PhonePendingDecisionNotice: View {
     @ObservedObject var model: TaskInteractionModel
-    var open: () -> Void
+    var events: [TimelineEvent] = []
+    var open: () -> Void = {}
+    @State private var presented = false
     var body: some View {
         if !model.pendingApprovals.isEmpty || !model.pendingQuestions.isEmpty {
-            Button("有一项等你决定",action:open).font(AppleTokens.Fonts.caption).buttonStyle(OutlineActionStyle()).accessibilityIdentifier("phone.pendingDecision.open")
+            Button { open(); presented=true } label: {
+                HStack {
+                    WeftIcon(model.pendingApprovals.isEmpty ? "plan" : "approval", size: 16)
+                    Text(model.pendingApprovals.isEmpty ? "有问题等你回答" : "有一项等你批准").lineLimit(1)
+                    Spacer(); WeftIcon("right", size: 16)
+                }.frame(minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
+            }.font(AppleTokens.Fonts.callout).buttonStyle(.plain).foregroundStyle(Weave.secondary)
+                .accessibilityIdentifier("phone.pendingDecision.open")
+                .onChange(of:model.pendingApprovals.count+model.pendingQuestions.count) { _, count in if count == 0 { presented=false } }
+                .sheet(isPresented: $presented) {
+                    NavigationStack { ScrollView {
+                        if let approval=model.pendingApprovals.first { PhoneApprovalCard(model:model,approval:approval,events:events) }
+                        else if let batch=model.pendingQuestions.first { PhoneQuestionCard(model:model,batch:batch) }
+                        else { Text("这一项已处理").padding(AppleTokens.Space.p20) }
+                    } }.phoneSheet(model.pendingApprovals.isEmpty ? "回答问题" : "批准操作", close: { presented=false })
+                }
         }
     }
 }
-private extension View {
-    func phoneDecisionCard() -> some View {
-        self.frame(maxWidth:.infinity,alignment:.leading).padding(AppleTokens.Space.p16)
-            .background(Weave.surface,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r24))
-            .overlay(RoundedRectangle(cornerRadius:AppleTokens.Radius.r24).strokeBorder(Weave.line))
+struct PhoneApprovalSummary: View {
+    @ObservedObject var model: TaskInteractionModel
+    let approval: SessionApproval
+    let events: [TimelineEvent]
+    @State private var presented = false
+    var body: some View {
+        Button { presented=true } label: {
+            HStack { WeftIcon("approval", size: 16); Text(model.approvalHeadline(approval)); Spacer(); WeftIcon("right", size: 16) }
+                .font(AppleTokens.Fonts.callout).frame(minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
+        }.buttonStyle(.plain).foregroundStyle(Weave.secondary).accessibilityIdentifier("approval.open."+approval.id)
+            .onChange(of:model.pendingApprovals.first?.id) { _, id in if id == nil { presented=false } }
+            .sheet(isPresented: $presented) {
+                NavigationStack { ScrollView {
+                    if let current=model.pendingApprovals.first { PhoneApprovalCard(model:model,approval:current,events:events) }
+                    else { Text("这一项已处理").padding(AppleTokens.Space.p20) }
+                } }.phoneSheet("批准操作", close: { presented=false })
+            }
     }
 }
+struct PhoneQuestionSummary: View {
+    @ObservedObject var model: TaskInteractionModel
+    let batch: SessionQuestionBatch
+    @State private var presented = false
+    var body: some View {
+        Button { presented=true } label: {
+            HStack { WeftIcon("plan", size: 16); Text(batch.questions.first?.question ?? "有问题等你回答"); Spacer(); WeftIcon("right", size: 16) }
+                .font(AppleTokens.Fonts.callout).frame(minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
+        }.buttonStyle(.plain).foregroundStyle(Weave.secondary).accessibilityIdentifier("question.open."+batch.id)
+            .onChange(of:model.pendingQuestions.first?.id) { _, id in if id == nil { presented=false } }
+            .sheet(isPresented: $presented) {
+                ScrollView {
+                    if let current=model.pendingQuestions.first { PhoneQuestionCard(model:model,batch:current) }
+                    else { Text("这一项已处理").padding(AppleTokens.Space.p20) }
+                }.phoneSheet("回答问题", close: { presented=false })
+            }
+    }
+}
+private extension View {
+    func phoneDecisionContent() -> some View {
+        self.frame(maxWidth:.infinity,alignment:.leading).padding(AppleTokens.Space.p16)
 
-private struct PhoneDecisionActionStyle: ButtonStyle {
-    var primary: Bool
-    @Environment(\.isEnabled) private var enabled
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label.font(AppleTokens.Fonts.callout.weight(.medium)).padding(.horizontal,AppleTokens.Space.p16)
-            .frame(minWidth:AppleTokens.Space.p64,minHeight:AppleTokens.Space.p44)
-            .foregroundStyle(primary ? Weave.onAccent : Weave.ink)
-            .background(primary ? Weave.accent : Weave.surface,in:Capsule())
-            .overlay(Capsule().strokeBorder(primary ? AppleTokens.Colors.clear : Weave.line))
-            .opacity(!enabled ? AppleTokens.Opacity.disabled : configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
     }
 }

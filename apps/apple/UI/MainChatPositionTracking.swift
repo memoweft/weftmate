@@ -4,6 +4,7 @@ import SwiftUI
 @MainActor final class MainChatPositionTracker: ObservableObject {
     var frames: [String: CGRect] = [:]
     var following = true
+    var previousEndTop: CGFloat?
 }
 #if os(macOS)
 import AppKit

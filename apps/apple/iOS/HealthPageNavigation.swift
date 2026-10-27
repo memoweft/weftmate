@@ -106,9 +106,7 @@ struct PhoneWorkspace: View {
         if let route = PhoneSidebarDestination(rawValue: id) {
             switch route {
             case .conversations:
-                ScrollView { PhoneConversationDirectory(app: model, phone: phone, query: search, close: { closeSidebar() }) }
-                    .searchable(text: $search, prompt: "搜索对话").navigationTitle("全部对话").background(Weave.canvas)
-                    .accessibilityIdentifier("conversationList")
+                PhoneConversationsPage(app:model,phone:phone,query:$search)
             case .goals: PhoneGoalsView(app: model)
             case .library:
                 if model.session == nil { PhoneComputerEmptyPage(app: model, title: "成果库", explanation: "这里会保存电脑完成的文件。") }
@@ -123,8 +121,7 @@ struct PhoneWorkspace: View {
                 PhoneNewConversation(app: model, mode: .work).environment(\.phoneNavigationBack, { if !chatPath.isEmpty { chatPath.removeLast() } })
             }
         } else if id == "a16-side-list" {
-            ScrollView { PhoneConversationDirectory(app: model, phone: phone, query: search, close: { closeSidebar() }) }
-                .searchable(text: $search, prompt: "搜索对话").navigationTitle("全部对话").accessibilityIdentifier("conversationList")
+            PhoneConversationsPage(app:model,phone:phone,query:$search)
         } else if id == "daily-review" { DailyReviewView(app: model) }
         else if id == "health" { HealthPageView(app: model, ask: { text in Task { await ask(text) } }) }
         else if let row = model.conversations.first(where: { $0.id == id }) {
@@ -199,23 +196,5 @@ struct PhoneWorkspace: View {
         } else if model.mainChat.capabilities.supports("workAndChat") { model.phoneNewConversationDraft = text }
         else { model.mainChat.setDraft(text) }
         chatPath = []; chatRoot = UUID(); tab = .chat
-    }
-}
-
-private struct PhoneProjectsPage: View {
-    @ObservedObject var app: AppleAppModel
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
-                ProjectsEmpty(app: app)
-                ForEach(app.projects) { project in
-                    ProjectHeading(app: app, project: project)
-                    ForEach(app.projectRows(project, query: "")) { row in
-                        Button(row.title) { app.openedSessionID = row.id }.buttonStyle(.plain).frame(minHeight: AppleTokens.Phone.rowHeight)
-                    }
-                    ProjectMoreRows(app: app, project: project, search: "")
-                }
-            }.padding(AppleTokens.Phone.pageInset)
-        }.background(Weave.canvas).navigationTitle("项目")
     }
 }

@@ -39,38 +39,62 @@ struct PhoneWorkSelection: View {
         self.app = app; cloud = app.cloudLogin; _projectID = projectID; self.allowsComputer = allowsComputer
     }
     var body: some View {
-        HStack(spacing: AppleTokens.Space.p12) {
-            if allowsComputer && cloud.hosts.filter(\.online).count > 1 {
-                Menu {
-                    ForEach(cloud.hosts) { host in
-                        Button {
-                            if (host.hostId ?? host.id) == app.session?.hostId { return }
-                            projectID = ""
-                            Task { await cloud.connectHost(id: host.hostId ?? host.id) }
-                        } label: {
-                            if (host.hostId ?? host.id) == app.session?.hostId { Label(host.computerName, systemImage: "checkmark") }
-                            else { Text(host.computerName + (host.online ? "" : " · 不在线")) }
-                        }.disabled(!host.online)
-                    }
-                } label: { Text(cloud.selectedComputerName).font(AppleTokens.Fonts.callout).frame(minHeight: AppleTokens.Space.p44) }
-                    .accessibilityLabel("电脑：" + cloud.selectedComputerName).accessibilityIdentifier("phone.work.computer")
+        VStack(spacing:0) {
+            if allowsComputer {
+                NavigationLink {
+                    List {
+                        ForEach(cloud.hosts) { host in
+                            Button {
+                                if (host.hostId ?? host.id) != app.session?.hostId {
+                                    projectID=""; Task { await cloud.connectHost(id:host.hostId ?? host.id) }
+                                }
+                            } label: {
+                                HStack {
+                                    PhoneChatPageRow(title:host.computerName,subtitle:host.online ? "在线" : "不在线",icon:"desktop")
+                                    if (host.hostId ?? host.id) == app.session?.hostId { WeftIcon("allow",size:16) }
+                                }
+                            }.buttonStyle(.plain).disabled(!host.online).accessibilityIdentifier("phone.work.computer."+host.id)
+                        }
+                        if cloud.hosts.isEmpty { Text("从设置里添加电脑，再回到这里。") }
+                        if let error=cloud.error { Text(error).foregroundStyle(Weave.danger) }
+                    }.navigationTitle("选择电脑").toolbar(.visible,for:.navigationBar).background(Weave.grouped)
+                } label: { PhoneChatPageRow(title:cloud.selectedComputerName,subtitle:app.offline.hostOffline ? "电脑暂时不在线" : "当前连接的电脑",icon:"desktop") }
+                    .accessibilityIdentifier("phone.work.computer")
+                Divider()
             }
-            Menu {
-                ForEach(app.projects.filter { !$0.revoked }) { project in
-                    Button { projectID = project.id } label: {
-                        if projectID == project.id { Label(project.name, systemImage: "checkmark") } else { Text(project.name) }
-                    }.accessibilityIdentifier("phone.work.project." + project.id)
-                }
-                if app.projects.isEmpty { Text("先在电脑上添加项目或文件夹") }
+            NavigationLink {
+                PhoneWorkProjects(app:app,projectID:$projectID)
             } label: {
-                HStack(spacing: AppleTokens.Space.p8) {
-                    WeftIcon("folder", size: AppleTokens.Space.p18)
-                    Text(app.projects.first { $0.id == projectID }?.name ?? "项目 / 文件夹").lineLimit(1)
-                    WeftIcon("chevron", size: AppleTokens.Space.p16)
-                }.font(AppleTokens.Fonts.callout).frame(minHeight: AppleTokens.Space.p44)
-            }.accessibilityLabel("项目或文件夹").accessibilityIdentifier("phone.work.project")
-            Spacer(minLength: 0)
-        }.foregroundStyle(Weave.secondary).tint(Weave.accent)
+                let project=app.projects.first { $0.id == projectID }
+                PhoneChatPageRow(title:project?.name ?? "选择项目或文件夹",subtitle:project.map { "项目 · "+$0.permission.title } ?? "先确定读写范围",icon:"folder")
+            }.accessibilityIdentifier("phone.work.project")
+        }.buttonStyle(.plain).padding(.horizontal,AppleTokens.Space.p16)
+            .background(Weave.surface,in:RoundedRectangle(cornerRadius:AppleTokens.Phone.groupRadius))
+    }
+}
+private struct PhoneWorkProjects: View {
+    @ObservedObject var app: AppleAppModel
+    @Binding var projectID: String
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        List {
+            Section("项目与读写范围") {
+                ForEach(app.projects.filter { !$0.revoked }) { project in
+                    Button { projectID=project.id; dismiss() } label: {
+                        HStack {
+                            PhoneChatPageRow(title:project.name,subtitle:project.permission.title,icon:"folder")
+                            if project.id == projectID { WeftIcon("allow",size:16) }
+                        }
+                    }.buttonStyle(.plain).accessibilityIdentifier("phone.work.project."+project.id)
+                }
+            }
+            Section {
+                Text("工作只使用所选项目的文件范围，危险操作继续询问。项目在电脑上创建和管理。")
+                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                if app.projects.isEmpty { Button("刷新项目") { Task { await app.refresh() } } }
+                if let error=app.projectsError { Text(error).foregroundStyle(Weave.danger) }
+            }
+        }.navigationTitle("选择项目").toolbar(.visible,for:.navigationBar).background(Weave.grouped)
     }
 }
 
@@ -78,7 +102,7 @@ struct PhoneNewConversation: View {
     @ObservedObject var app: AppleAppModel
     var mode: ConversationMode
     @ObservedObject private var catalogue: MainChatModel
-    init(app: AppleAppModel, mode: ConversationMode) { self.app=app; self.mode=mode; catalogue=app.mainChat }
+    init(app: AppleAppModel, mode: ConversationMode, initialProjectID:String = "") { self.app=app; self.mode=mode; catalogue=app.mainChat; _projectID=State(initialValue:initialProjectID) }
     @State private var files: [ConversationAttachmentDraft] = []
     @State private var importing=false
     @State private var camera=false
@@ -99,18 +123,38 @@ struct PhoneNewConversation: View {
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
             PhoneChatHeader(title: mode == .work ? "新建工作" : "新建对话", status: mode == .work ? app.cloudLogin.selectedComputerName : "由 " + app.cloudLogin.selectedComputerName + " 回答") { EmptyView() }
-            Spacer()
-            VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
-                Text(mode == .chat ? "从这里开始聊" : canWork ? "让电脑动手" : WorkAndChat.noComputer).font(AppleTokens.Fonts.title2)
-                Text(mode == .chat ? "问问题、查资料，或说说你的想法。" : canWork ? "选好项目或文件夹，再交代要做的事。" : "手机自己就能聊天，电脑可以以后再添加。")
-                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
-            }.padding(AppleTokens.Space.p20).frame(maxWidth: .infinity, alignment: .leading)
-            Spacer()
-            if let error { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger).padding(.horizontal, AppleTokens.Space.p16) }
-            if mode == .chat || canWork {
-                composer
+            if mode == .work {
+                ScrollView {
+                    VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
+                        Text("开始一件工作").font(AppleTokens.Fonts.largeTitle.bold())
+                        Text("先选好电脑和项目，再交代事情。").foregroundStyle(Weave.muted)
+                        Text("这次在哪里做").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                        PhoneWorkSelection(app:app,projectID:$projectID)
+                        composer
+                        Text("开始工作后，这段对话保持工作模式；想纯聊天可以另开一段。")
+                            .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
+                        Button(busy ? "正在开始…" : "开始工作") { focused=false; Task { await send() } }
+                            .buttonStyle(PrimaryActionStyle()).disabled(busy || !canWork || !app.projects.contains { $0.id == projectID } || text.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && files.isEmpty)
+                            .accessibilityIdentifier("phone.work.start")
+                        if !canWork {
+                            Text(WorkAndChat.noComputer).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                            if WorkAndChat.offlineWorkAvailable(snapshot:app.offline.workSnapshot,authorization:app.cloudLogin.offlineWorkAuthorization,authenticated:app.cloudLogin.authenticated) { PhoneOfflineWork(app:app) }
+                        }
+                        if let error { Text(error).foregroundStyle(Weave.danger) }
+                    }.padding(AppleTokens.Phone.pageInset)
+                }
+            } else {
+                Spacer()
+                VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
+                    Text("从这里开始聊").font(AppleTokens.Fonts.title2)
+                    Text("问问题、查资料，或说说你的想法。").foregroundStyle(Weave.muted)
+                    if let error { Text(error).foregroundStyle(Weave.danger) }
+                }.padding(AppleTokens.Phone.pageInset).frame(maxWidth:.infinity,alignment:.leading)
+                Spacer()
             }
-        }.background(Weave.canvas).toolbar(.hidden, for: .navigationBar)
+
+        }.safeAreaInset(edge:.bottom,spacing:0) { if mode == .chat { composer } }
+            .background(mode == .work ? Weave.grouped : Weave.canvas).toolbar(.hidden, for: .navigationBar)
             .fileImporter(isPresented:$importing,allowedContentTypes:[.item],allowsMultipleSelection:true,onCompletion:importCallback)
             .photosPicker(isPresented:$photos,selection:$photoSelection,maxSelectionCount:4,matching:.images)
             .onChange(of:photoSelection) { _,items in
@@ -133,16 +177,15 @@ struct PhoneNewConversation: View {
     }
     private var composer: some View {
                 VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-                    if mode == .work { PhoneWorkSelection(app: app, projectID: $projectID) }
                     if !files.isEmpty {
                         ScrollView(.horizontal) { HStack {
                             ForEach(files) { file in PhoneAttachmentBlock(name:file.original.name,image:file.original.isImage ? file.file : nil,isImage:file.original.isImage,status:nil,remove:{ file.removeTemporaryFiles(); files.removeAll { $0.id == file.id } }) }
                         } }
                     }
                     TextField(mode == .chat ? "聊一聊…" : "让电脑做什么…", text: $app.phoneNewConversationDraft, axis: .vertical)
-                        .lineLimit(1...6).focused($focused).accessibilityIdentifier("phone.new.text")
+                        .lineLimit(1...5).focused($focused).accessibilityIdentifier("phone.new.text")
                     composerTools
-                }.padding(AppleTokens.Space.p12).background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Phone.composerRadius)).padding(AppleTokens.Space.p12)
+                }.phoneChatComposer()
     }
     private var composerTools: some View {
                     HStack {
@@ -168,10 +211,12 @@ struct PhoneNewConversation: View {
                             } label: { WeftIcon("model").phoneMenuLabel(circle:true,onCard:true) }.phoneIcon().accessibilityLabel("模型选择").accessibilityIdentifier("phone.new.model")
                         }
                         Spacer()
+                        if mode == .chat {
                         Button { if text.isEmpty && files.isEmpty { focused=true;dictation=true } else { focused = false; Task { await send() } } } label: { WeftIcon(busy ? "stop" : text.isEmpty && files.isEmpty ? "mic" : "send") }
                             .phoneIcon(primary: true).disabled(busy || catalogue.modelID.isEmpty || mode == .work && !app.projects.contains { $0.id == projectID })
                             .accessibilityLabel(text.isEmpty && files.isEmpty ? "语音输入" : "发送").accessibilityIdentifier("phone.new.send")
                             .popover(isPresented:$dictation) { Text("使用系统听写输入文字").padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
+                        }
                     }
     }
     private var importCallback: @Sendable (Result<[URL],Error>) -> Void {
@@ -218,9 +263,12 @@ struct PhoneWorkDirectoryLine: View {
     @ObservedObject var app: AppleAppModel
     var row: ConversationSummary
     var body: some View {
-        PhoneWorkSelection(app: app, projectID: Binding(get: { row.projectId ?? "" }, set: { id in
-            Task { await app.updateMetadata(row, projectID: id, changeProject: true) }
-        }), allowsComputer: false).disabled(row.running || app.lifecycleBusy || row.taskAvailable == false)
+        NavigationLink {
+            PhoneWorkProjects(app:app,projectID:Binding(get:{row.projectId ?? ""},set:{ id in Task { await app.updateMetadata(row,projectID:id,changeProject:true) } }))
+        } label: { PhoneChatPageRow(title:row.projectName ?? "选择项目",subtitle:"工作 · "+app.cloudLogin.selectedComputerName,icon:"folder") }
+            .buttonStyle(.plain).disabled(row.running || app.lifecycleBusy || row.taskAvailable == false)
+            .padding(.horizontal,AppleTokens.Space.p12)
+
     }
 }
 

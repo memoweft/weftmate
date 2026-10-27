@@ -44,8 +44,32 @@ struct ConversationTimelineView: View {
                 if !entry.steps.isEmpty {
                     TimelineExecutionBlock(appModel: appModel, client: appModel.assistantClient, sessionID: sessionID, entry: entry, interactions: interactions, openSources: openSources)
                         .id(entry.id + appModel.accountEpoch.uuidString)
-                } else if entry.event.type == "assistant.delta" {
-                    MessageBodyView(text: entry.event.data["text"]?.string ?? "", messageID: entry.id)
+                } else if entry.event.type.hasPrefix("assistant.") {
+                    #if os(iOS)
+                    MessageBodyView(text: entry.event.data["text"]?.string ?? "", messageID: entry.id, streaming: entry.event.type == "assistant.delta")
+                        .modifier(MessageActionsPresentation(app:appModel,id:entry.id,text:entry.event.data["text"]?.string ?? "",at:entry.event.at,user:false,enabled:entry.event.type == "assistant.message",latest:entry.id == phoneEntries.last?.id,menuID:"message.actions."+entry.id,quote:{
+                            appModel.setDraft(appModel.draftText(for:conversation,accountEpoch:appModel.accountEpoch)+"\n> "+(entry.event.data["text"]?.string ?? ""),for:conversation,accountEpoch:appModel.accountEpoch)
+                        },regenerate:{
+                            if let message=appModel.messages.first(where: { $0.id == appModel.timelineMessageIDs[entry.seq] }) { Task { await appModel.regenerateReply(message) } }
+                        },extra:{AnyView(EmptyView())}))
+                    #if os(iOS)
+                    if !UsedMemory.references(in:entry.event).isEmpty {
+                        Button("查看这条回复的来源") { openMemory(entry.event) }
+                            .font(AppleTokens.Fonts.caption).buttonStyle(.plain).foregroundStyle(Weave.muted)
+                            .frame(minHeight:AppleTokens.Space.p44).accessibilityIdentifier("memoryUsed.\(entry.seq)")
+                    }
+                    #endif
+                    #else
+                    if entry.event.type == "assistant.delta" { MessageBodyView(text:entry.event.data["text"]?.string ?? "",messageID:entry.id) }
+                    else if let message=appModel.messages.first(where:{$0.id == (appModel.timelineMessageIDs[entry.seq] ?? "host|\(sessionID)|\(entry.seq)")}) {
+                        MessageView(model:appModel,message:message,openAttachment:openAttachment)
+                    }
+                    let memories=UsedMemory.references(in:entry.event)
+                    if !memories.isEmpty {
+                        Button { openMemory(entry.event) } label: { WeftLabel("用到了 \(memories.count) 条记忆",icon:"memory",size:16).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+                            .buttonStyle(.plain).accessibilityIdentifier("memoryUsed.\(entry.seq)")
+                    }
+                    #endif
                 } else if entry.event.type.hasSuffix(".message") {
                     if let message = appModel.messages.first(where: { $0.id == (appModel.timelineMessageIDs[entry.seq] ?? "host|\(sessionID)|\(entry.seq)") }) {
                         MessageView(model: appModel, message: message, openAttachment: openAttachment)
@@ -55,6 +79,7 @@ struct ConversationTimelineView: View {
                         Text("已补充到当前任务").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                             .accessibilityIdentifier("supplementNotice." + receipt)
                     }
+                    #if os(macOS)
                     let memories = UsedMemory.references(in: entry.event)
                     if !memories.isEmpty {
                         Button { openMemory(entry.event) } label: {
@@ -63,6 +88,7 @@ struct ConversationTimelineView: View {
                         }.buttonStyle(.plain).accessibilityIdentifier("memoryUsed.\(entry.seq)")
                     }
 
+                    #endif
                 } else if entry.event.type.hasPrefix("question.") || entry.event.type.hasPrefix("approval.") {
                     TimelineInteractionCard(model: interactions, entry: entry, events: appModel.timeline.events)
                 } else if entry.event.type == "artifact.created" {
@@ -78,9 +104,7 @@ struct ConversationTimelineView: View {
             }.id(entry.id)
                 .background {
                     #if os(iOS)
-                    if let onDecisionPosition,entry.event.data["approvalId"]?.string == interactions.pendingApprovals.first?.id && interactions.pendingApprovals.first != nil || entry.event.type.hasPrefix("question.") && !interactions.pendingQuestions.isEmpty {
-                        MainChatEventPosition(eventID:"phone.pendingDecision",onPosition:onDecisionPosition)
-                    }
+                    if let onDecisionPosition { MainChatEventPosition(eventID:entry.id,onPosition:onDecisionPosition) }
                     #endif
                 }
         }
@@ -128,12 +152,13 @@ struct TimelineExecutionBlock: View {
     let entry: TimelineEntry
     @ObservedObject var interactions: TaskInteractionModel
     let openSources: () -> Void
+    var sourceEvents: [TimelineEvent]? = nil
     @State private var expanded = false
     @State private var initialized = false
     @StateObject private var progress = ToolProgressModel()
-    private var outcome: ReplyOutcome { ReplyOutcome.classify(events: appModel.timeline.events, taskID: entry.steps.first?.taskID ?? "") }
+    private var outcome: ReplyOutcome { ReplyOutcome.classify(events: sourceEvents ?? appModel.timeline.events, taskID: entry.steps.first?.taskID ?? "") }
     private var lastTaskBlock: Bool {
-        TimelineProjection.entries(appModel.timeline.events).last(where: { $0.steps.first?.taskID == entry.steps.first?.taskID })?.id == entry.id
+        TimelineProjection.entries(sourceEvents ?? appModel.timeline.events).last(where: { $0.steps.first?.taskID == entry.steps.first?.taskID })?.id == entry.id
     }
     private var failed: Bool {
         #if os(iOS)
@@ -173,7 +198,7 @@ struct TimelineExecutionBlock: View {
         .task(id: entry.steps.last(where: \.running)?.detailSeq) {
             if let step = entry.steps.last(where: \.running), entry.running { await progress.read(client: client, sessionID: sessionID, step: step) }
         }
-        .onAppear { if !initialized { expanded = failed
+        .onAppear { if !initialized { expanded = failed || entry.running
                 #if DEBUG && os(macOS)
                 let args = ProcessInfo.processInfo.arguments
                 if args.contains("--ui-testing"), args.contains("a9-detail") { expanded = true }
@@ -181,6 +206,9 @@ struct TimelineExecutionBlock: View {
                 initialized = true } }
         .onChange(of: appModel.subtaskStepTarget) { _, seq in if entry.steps.contains(where: { $0.seq == seq }) { expanded = true } }
         .onChange(of: failed) { _, value in if value { expanded = true } }
+        #if os(iOS)
+        .onChange(of: entry.running) { _, running in expanded = running }
+        #endif
     }
 }
 private struct TimelineStepView: View {
