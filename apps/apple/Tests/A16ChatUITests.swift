@@ -31,8 +31,15 @@ final class A16ChatUITests: XCTestCase {
         }
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true AND hittable == true"), object: expiry)
         XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed)
-        let frame = expiry.frame
-        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: frame.midX, dy: frame.midY)).tap()
+        for _ in 0..<2 {
+            // A refresh can replace the native presenter between the ready check and touch.
+            // Reacquire the actual visible row; only proceed once its submenu is present.
+            let row = element(app, "temporaryChat.expiryMenu")
+            try tap(row)
+            if app.buttons["7 天"].waitForExistence(timeout: 5) { return }
+            let tree = app.debugDescription
+            if tree.contains("label: '7 天'") || tree.contains("value: '7 天'") { return }
+        }
     }
     @MainActor private func tapNativeMenuName(_ app: XCUIApplication, _ name: String) throws {
         let native = app.buttons[name].firstMatch
@@ -90,6 +97,7 @@ final class A16ChatUITests: XCTestCase {
             "--a5-local-server", "--a5-theme", theme, "--server-url", ready["host"] as! String,
             "--a16-driver", ProcessInfo.processInfo.environment["WEFTMATE_A16_DRIVER"]!]
         app.launch(); defer { app.terminate() }
+        try tap(element(app, "phone.sidebar")); try tap(element(app, "phone.sidebar.main"))
         let oldPolicies = try await get("/temporary") as! [[String: Any]]
         let oldIDs = Set(oldPolicies.compactMap { $0["chatId"] as? String })
         try tap(element(app, "mainChat.plus"))

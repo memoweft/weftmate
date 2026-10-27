@@ -139,7 +139,7 @@ export const APPROVAL_STATES = new Set(['pending', 'answered', 'resolved', 'unav
 
 export const APPROVAL_PUBLIC_FIELDS = ['approvalId', 'sessionId', 'taskId', 'sourceCommandId', 'sourceReceiptId',
   'turn', 'callId', 'rootCallId', 'toolName', 'reason', 'createdAt', 'status',
-  'operationCategories', 'canAlwaysAllow', 'secondOpinion', 'intent', 'workProjectId', 'decisionOutcome', 'decisionRequestId', 'decisionScope', 'riskCategories', 'answeredAt', 'outcome', 'resolvedAt'];
+  'operationCategories', 'canAlwaysAllow', 'secondOpinion', 'intent', 'workProjectId', 'workSessionId', 'workCreateCommandId', 'workCommandId', 'decisionOutcome', 'decisionRequestId', 'decisionScope', 'riskCategories', 'answeredAt', 'outcome', 'resolvedAt'];
 
 export const APPROVAL_FIELDS = [...APPROVAL_PUBLIC_FIELDS, 'messageHash', 'argumentsHash', 'runtimeId',
   'invalidatedAt', 'invalidationReason'];

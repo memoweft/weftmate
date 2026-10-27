@@ -446,7 +446,7 @@
     },
     {
       "file": "tests/personal-approval-bridge.test.ts",
-      "name": "MODE-1 a native run_code nested call pauses before any effect even in allow-all, then continues after choosing work"
+      "name": "MODE-1 a native run_code nested computer call ends with a proposal and no effects even in allow-all"
     },
     {
       "file": "tests/personal-approval-bridge.test.ts",

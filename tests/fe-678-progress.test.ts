@@ -18,7 +18,7 @@ test('#678 every message owns one persistent process through native prefixes', {
         Object.assign(g, {WeftUiCore:{factories:{}},WeftUiComponents:{factories:{}},WeftIcons:{create:()=>document.createElement('span')},
           WeftContent:{create:(text:string,cls:string)=>{const n=document.createElement('div');n.className=cls;n.textContent=text;return n;},update:(n:HTMLElement,text:string)=>n.textContent=text,messageCompletionNotice:()=>{}}});
       });
-      for (const file of ['ui-core/timeline-model.js','ui-core/chat-window.js','ui-core/composer.js','ui-core/main-chat.js','personal-access-ui/timeline.js','personal-access-ui/components/steps.js','personal-access-ui/components/main-chat.js'])
+      for (const file of ['ui-core/timeline-model.js','ui-core/chat-window.js','ui-core/composer.js','ui-core/main-chat.js','personal-access-ui/timeline.js','personal-access-ui/components/steps.js','personal-access-ui/components/artifacts.js','personal-access-ui/components/main-chat.js'])
         await page.addScriptTag({path:fileURLToPath(new URL('../src/'+file,import.meta.url))});
       await page.evaluate(work => {
         const g=globalThis as any,noop=()=>{},chat={chatId:'chat',activeSessionId:'session',running:false,sendAvailable:true};
@@ -81,16 +81,34 @@ test('#678 every message owns one persistent process through native prefixes', {
         f.append('task.queued',{tasks:[{requestId:'C',receiptId:'receipt-C'},{requestId:'D',receiptId:'receipt-D'}]});f.check(['A','B','C','D'],'queue while B active');
         f.core.conversationApprovals.entries.set('synthetic-approval',{row:{approvalId:'synthetic-approval',sessionId:'session',turn:3,status:'pending'}});
         const bar=document.getElementById('approval-bar');bar.hidden=false;f.ui.renderMainChat();
-        if(bar.closest('.main-chat-row')?.getAttribute('data-event-id')!=='progress:request:B')throw Error('queued messages stole the active approval surface');
+        if(bar.closest('#transcript'))throw Error('approval must remain above the composer');
         f.core.conversationApprovals.entries.clear();bar.hidden=true;
         if(!/已停止/.test(f.saved.get('A')[2].textContent))throw Error('A must stay stopped');
         if(/已停止/.test(f.saved.get('B')[2].textContent))throw Error('B must not inherit stop');
       });
     });
+    await t.test('logical process completes above its answer and actual changes follow the answer',async()=>{
+      await setup(true);
+      const result=await page.evaluate(()=>{
+        const f=(globalThis as any).f;
+        f.send('changes','修改合成文件');
+        f.append('turn.started',{turn:1});f.append('task.started',{requestId:'changes',receiptId:'receipt-changes',turn:1,turnTaskId:'turn-1'});
+        f.append('user.message',{receiptId:'receipt-changes',text:'修改合成文件'});
+        f.append('step.completed',{taskId:'turn-1',stepId:'edit',toolName:'edit',state:'completed',fileChanges:[{path:'report.md',added:3,removed:2}]});
+        f.append('assistant.message',{text:'合成最终回答'});
+        f.append('turn.ended',{turn:1,reason:'completed'});
+        const answer=document.querySelector('.message.assistant'),changes=document.querySelector('.file-changes'),process=document.querySelector('.execution-block') as HTMLDetailsElement;
+        const ordered=!!(changes.compareDocumentPosition(answer)&Node.DOCUMENT_POSITION_PRECEDING);
+        f.ui.renderMainChat();
+        return {ordered,folded:!process.open,answer:answer.textContent,changes:document.querySelectorAll('.file-changes').length};
+      });
+      assert.deepEqual(result,{ordered:true,folded:true,answer:'合成最终回答',changes:1});
+    });
     await t.test('one process spans midnight and retains DOM when an older page is prepended',async()=>{
       await setup();
       await page.evaluate(()=>{
         const f=(globalThis as any).f;
+        f.core.state.chatWindow.expanded.add('2026-10-25');
         f.send('midnight','跨午夜合成消息','2026-10-25T23:59:59Z');f.check(['midnight'],'send before midnight');
         f.append('task.queued',{requestId:'midnight',receiptId:'receipt-midnight'});
         f.append('turn.started',{turn:1});f.check(['midnight'],'start next day');

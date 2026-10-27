@@ -92,6 +92,17 @@ async function openTimelinePreview(context,read,title,artifact=null){if(!convers
   }catch{if(state.resourceView!==view)return;clear(target);target.append(el('p','inline-error','暂时无法读取，请重试。'));
     const retry=el('button','secondary','重新读取');retry.addEventListener('click',load);target.append(retry)}};await load();
 }
+function openFileChange(file) {
+  const context=conversationTaskContext();
+  return openTimelinePreview(context,async()=>{
+    const parts=[];
+    for(const step of file.steps){
+      const detail=await uiCore.readTimelineDetail(step.sessionId || context.sessionId,step.detailRef.seq);
+      for(const diff of detail.fileDiffs || [])if(diff.path===file.path)parts.push(`改动前\n${diff.oldText ?? '（空）'}\n\n改动后\n${diff.newText}${diff.truncated?'\n\n内容较长，仅显示部分改动。':''}`);
+    }
+    return {kind:'text',text:parts.join('\n\n') || '这次改动的详情未记录。'};
+  },file.path.split(/[\\/]/).at(-1));
+}
 
 function readResourceUse(context,use){uiCore.syncMobileIdentity();return uiCore.readResource(use.path)}
 
@@ -135,6 +146,8 @@ function renderTimeline(events=state.sharedEvents){if(!window.WeftTimeline)retur
     openStep:step=>openConversationResources(item=>item.uses?.some(use=>use.id===`${step.taskId}/${step.stepId}`)),
     openReference:key=>openConversationResources(item=>item.key===key),
     readDetail:seq=>uiCore.readTimelineDetail(context.sessionId,seq),
+    readOutput:(seq,offset)=>uiCore.readTimelineOutput(context.sessionId,seq,offset),
+    openChange:openFileChange,
     fileLabel:artifact=>`${({'text/markdown':'Markdown','text/plain':'文本','application/pdf':'PDF','text/html':'网页'})[artifact.contentType]||'文件'} · ${attachmentSize(artifact.size||0)}`,
     readArtifact:id=>uiCore.accessApi(`/library/${encodeURIComponent(id)}`),
     openAllArtifacts:()=>selectMobileTab('library'),onError:()=>toast('文件操作未完成，请重试。'),

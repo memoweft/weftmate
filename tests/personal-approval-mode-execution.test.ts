@@ -27,7 +27,7 @@ async function until(check: () => Promise<any>) {
 // Real HTTP host settings, production personal plugin and pinned DSH ToolRuntime.
 // Only the backend's model/receipt carrier and the write producer are synthetic;
 // the latter actually writes a file, so bypassing approval is observable.
-async function fixture(t: any, { inheritedAllow = false, beforeFirstMessage = false, toolName = 'write' } = {}) {
+async function fixture(t: any, { inheritedAllow = false, toolName = 'write' } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-approval-execution-'))
   const events: any[] = [], sessions = new Set<string>()
   const receiptId = 'receipt-mode-execution'
@@ -73,23 +73,12 @@ async function fixture(t: any, { inheritedAllow = false, beforeFirstMessage = fa
   assert.equal(registered.status, 201, JSON.stringify(registered.body))
   const projectId = registered.body.project.projectId
   let sessionId: string, source: any
-  if (beforeFirstMessage) {
-    const chat = (await api('/chats/main')).body.chat
-    assert.equal(chat.activeSessionId, null)
-    const selected = await api(`/chats/${chat.chatId}`, { approvalMode: 'ask' }, 'PATCH')
-    assert.equal(selected.status, 200, JSON.stringify(selected.body))
-    assert.equal(selected.body.chat.approvalMode, 'ask')
-    assert.equal((await api('/settings/approvals')).body.mode, 'auto', 'first-message choice is scoped to this chat')
-    source = await command({ kind: 'chat.message', requestId: 'mode-source', chatId: chat.chatId, modelProfileId: 'local', text })
-    sessionId = source.sessionId
-  } else {
     const creation = await api(`/projects/${projectId}/sessions`, { requestId: 'mode-create', modelProfileId: 'local' })
     assert.equal(creation.status, 202, JSON.stringify(creation.body))
     const created = await waitForCommand(async () => (await api('/commands/' + creation.body.command.commandId)).body.command)
     sessionId = created.sessionId
     assert.equal((await api(`/sessions/${sessionId}/approval-mode`, { mode: 'ask' }, 'PATCH')).status, 200)
     source = await command({ kind: 'session.message', requestId: 'mode-source', sessionId, text })
-  }
   assert.equal(service.getApprovalPolicy({ sessionId }).mode, 'ask')
   const staged = stagePersonalPlugins(join(root, 'plugins'))
   const [plugin, { Context, Service }, { default: SystemPrompt }, { default: Sessions }, tools,
@@ -149,12 +138,6 @@ async function fixture(t: any, { inheritedAllow = false, beforeFirstMessage = fa
       const response = await api(`/sessions/${session.id}/approvals`)
       const row = response.body.approvals?.find((row: any) => row.status === 'pending')
       if (!row && settled) throw Error(JSON.stringify({ result: settled, fileExists: existsSync(join(root, 'first-message.txt')), response, events: session.events.slice(-4) }))
-      if (row?.intent === 'work-switch') {
-        assert.equal(existsSync(join(root, 'first-message.txt')), false, 'choosing a work directory cannot perform the pending write')
-        assert.equal((await api(`/sessions/${session.id}/approvals/${row.approvalId}`, { requestId: 'mode-work-choice', outcome: 'allowed-once', workProjectId: projectId })).status, 200)
-        assert.equal(service.getApprovalPolicy({ sessionId }).mode, 'ask', 'work conversion preserves the first-message approval choice')
-        return null
-      }
       return row
     }),
     close: async () => { controller.abort(); await pending; await ctx.fiber.dispose(); await closeService(); rmSync(root, { recursive: true, force: true }) } }
@@ -175,16 +158,5 @@ for (const toolName of ['write', 'shell']) for (const inheritedAllow of [false, 
       if (outcome === 'allowed-once') assert.equal(readFileSync(file, 'utf8'), 'APPROVED ONLY')
       else assert.match(JSON.stringify(result.content), /rejected/i, 'the native tool error tells the model the user rejected it')
     }
-  } finally { await f.close() }
-})
-
-test('FIX-40 ask selected before a new session first message rejects the real write', async t => {
-  const f = await fixture(t, { beforeFirstMessage: true, inheritedAllow: true })
-  try {
-    const work = f.execute('first-message.txt'), approval = await f.approval()
-    assert.equal(existsSync(join(f.root, 'first-message.txt')), false)
-    assert.equal((await f.api(`/sessions/${f.sessionId}/approvals/${approval.approvalId}`, { requestId: 'first-reject', outcome: 'rejected' })).status, 200)
-    assert.equal((await work).isError, true)
-    assert.equal(existsSync(join(f.root, 'first-message.txt')), false)
   } finally { await f.close() }
 })

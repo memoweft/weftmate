@@ -82,7 +82,7 @@ export function createNativeBrowserOperations(context) {
         ...(read.capturedFragment ? { capturedFragment: read.capturedFragment } : {}),
         ...(read.requestedSectionComplete ? { requestedSectionComplete: true } : {}),
         text: pagePreview(segments[0].text), sourcePath, previewTruncated: pagePreview(segments[0].text).length < segments[0].text.length,
-        links: read.links, outline: read.outline,
+        links: read.links.map(link => ({ ...link, linkId: `link-${randomUUID()}` })), outline: read.outline,
         segmentIndex: 0, segmentCount: segments.length, truncated: read.truncated,
         captureTruncated: read.captureTruncated === true, httpStatus: read.httpStatus ?? 200 };
       captures.set(captureId, { sessionId, segments, result });
