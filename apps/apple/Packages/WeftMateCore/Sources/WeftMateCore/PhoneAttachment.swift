@@ -79,16 +79,3 @@ extension PhoneModelConfiguration {
         return try adaptRequest(request)
     }
 }
-
-extension PhoneChatMessage {
-    /// A file is not proof of its author's identity. Require the user's explicit attribution,
-    /// then offer only first-person quotations, under the existing evidence/sensitive rules.
-    public var phoneMemoryText: String {
-        let lower=text.lowercased()
-        let deniesOwnership=["不是我写的","不是我的自述","不是我的原话","非我写的","i did not write","i didn't write","not my own words"].contains(where:lower.contains)
-        let ownsFile = !deniesOwnership && ["我写的","我的自述","文件里我说","文件中我说","我在文件里说","i wrote","my own words"].contains(where:lower.contains)
-        guard role == "user",ownsFile else { return text }
-        let quotes=(attachments ?? []).filter { !$0.isImage }.compactMap(\.text).flatMap { $0.components(separatedBy:.newlines) }.map { $0.trimmingCharacters(in:.whitespaces) }.filter { $0.hasPrefix("我") || $0.hasPrefix("I ") || $0.hasPrefix("I'm ") }
-        return ([text]+quotes).joined(separator:"\n")
-    }
-}

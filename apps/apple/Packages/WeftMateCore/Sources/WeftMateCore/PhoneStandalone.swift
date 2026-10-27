@@ -14,14 +14,13 @@ public struct PhoneModelConfiguration: Codable, Equatable, Identifiable, Sendabl
     public init(id: String = UUID().uuidString, name: String, baseURL: String, model: String, apiKey: String) {
         self.id=id; self.name=name; self.baseURL=baseURL; self.model=model; self.apiKey=apiKey
     }
-    public func request(messages: [[String:String]], stream: Bool, allowLoopback: Bool = false, maxTokens: Int? = nil) throws -> URLRequest {
+    public func request(messages: [[String:String]], stream: Bool, allowLoopback: Bool = false) throws -> URLRequest {
         guard let base=URL(string:baseURL), base.user == nil, base.password == nil, base.query == nil, base.fragment == nil,
               base.scheme == "https" || (allowLoopback && base.scheme == "http" && base.host == "127.0.0.1"),
               !model.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty, !apiKey.isEmpty else { throw OfflineFailure.model }
         var r=URLRequest(url:base.appendingPathComponent("chat/completions"),cachePolicy:.reloadIgnoringLocalCacheData,timeoutInterval:180)
         r.httpMethod="POST"; r.setValue("application/json",forHTTPHeaderField:"Content-Type"); r.setValue("Bearer "+apiKey,forHTTPHeaderField:"Authorization")
-        var body: [String:Any]=["model":model,"stream":stream,"messages":messages]
-        if let maxTokens { body["max_tokens"]=maxTokens }
+        let body: [String:Any]=["model":model,"stream":stream,"messages":messages]
         r.httpBody=try JSONSerialization.data(withJSONObject:body); return try adaptRequest(r)
     }
 }
@@ -59,11 +58,6 @@ extension PhoneModelConfiguration {
             body["thinking"]=deepThinking?.type == "adaptive" ? ["type":"adaptive"] : ["type":"enabled","budget_tokens":1024]
         }
         request.httpBody=try JSONSerialization.data(withJSONObject:body);return request
-    }
-    public func responseText(_ data: Data) throws -> String? {
-        guard let object=try JSONSerialization.jsonObject(with:data) as? [String:Any] else { return nil }
-        if interfaceType == "anthropic" { return (object["content"] as? [[String:Any]])?.filter {$0["type"] as? String == "text"}.compactMap {$0["text"] as? String}.joined() }
-        return ((object["choices"] as? [[String:Any]])?.first?["message"] as? [String:Any])?["content"] as? String
     }
     public func streamText(_ line: String) throws -> String? {
         if interfaceType != "anthropic" { return try PhoneStreamDelta.text(line) }
@@ -105,7 +99,7 @@ public struct PhoneChatState: Codable, Sendable {
     public var reminderReads: [String:ReminderReadToken]?
     public var reminderCancellations: [ReminderCancellation]?
     public var pausedReminderIDs: [String:Set<String>]?
-    public var memory: PhoneMemoryState?
+    public var transcriptSync: PhoneTranscriptSync?
     public init() {}
 }
 /// Account identity is the cloud issuer and subject, never email or a computer ID.
@@ -145,7 +139,10 @@ public final class PhoneChatStore {
         guard FileManager.default.fileExists(atPath:file.path) else { return .init() }
         guard let key=try credentials.load(key:prefix+".aes") else { throw APIFailure.credentialStorage }
         let data=try AES.GCM.open(AES.GCM.SealedBox(combined:Data(contentsOf:file)),using:SymmetricKey(data:key),authenticating:aad)
-        return try JSONDecoder().decode(PhoneChatState.self,from:data)
+        let upgraded=try PhoneTranscriptStorage.upgrade(data)
+        let state=try JSONDecoder().decode(PhoneChatState.self,from:upgraded)
+        if upgraded != data { try save(state) }
+        return state
     }
     public func save(_ state: PhoneChatState) throws {
         let key: SymmetricKey
@@ -204,7 +201,7 @@ extension PhoneChatState {
         let offered=Set(migration.turns.map(\.id))
         for thread in threads {
             guard !(migrations ?? [:]).contains(where: { $0.key != host && $0.value.conversationIDs.contains(thread.id) }) else { continue }
-            for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) {
+            for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) && transcriptSync?.excludes(id:message.id,text:message.text) != true {
                 var messages=[OfflineMessage(role:"user",text:([message.text]+(message.attachments ?? []).map(\.placeholder)).filter { !$0.isEmpty }.joined(separator:"\n"))]
                 if thread.messages.indices.contains(index+1),thread.messages[index+1].role == "assistant",!thread.messages[index+1].text.isEmpty { messages.append(.init(role:"assistant",text:thread.messages[index+1].text)) }
                 migration.turns.append(.init(id:message.id,conversationId:thread.id,timestamp:Int64(message.date.timeIntervalSince1970*1000),messages:messages,memoryRefs:thread.messages.indices.contains(index+1) ? thread.messages[index+1].memoryRefs ?? [] : [],dependencyComplete:thread.messages.indices.contains(index+1) ? thread.messages[index+1].dependencyComplete ?? true : true))
@@ -212,11 +209,10 @@ extension PhoneChatState {
             }
         }
         if migrations == nil { migrations=[:] };migrations?[host]=migration
-        return migration.turns.filter { !migration.accepted.contains($0.id) }
+        return migration.turns.filter { !migration.accepted.contains($0.id) && transcriptSync?.excludes(id:$0.id,text:$0.messages.first?.text ?? "") != true }
     }
     public mutating func applyMigrationGeneration(host: String,generation: Int) {
         guard let existing=migrations?[host],existing.generation != generation else { return }
-        memory?.items.removeAll { existing.conversationIDs.contains($0.threadID ?? "") }
         threads.removeAll { existing.conversationIDs.contains($0.id) }
         for row in reminders ?? [] where existing.conversationIDs.contains(row.sessionID ?? "") { cancelReminder(.reminder(id:row.id,hostID:nil)) }
         reminders?.removeAll { existing.conversationIDs.contains($0.sessionID ?? "") }

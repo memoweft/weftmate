@@ -5,7 +5,7 @@ const server=createServer(async(req,res)=>{
  if(req.url==='/report'){res.setHeader('content-type','application/json');res.end(JSON.stringify(requests));return;}
  const chunks=[];for await(const c of req)chunks.push(c);const body=JSON.parse(Buffer.concat(chunks));requests.push(body);
  if(body.model==='reject-images') {res.writeHead(400,{'content-type':'application/json'});res.end(JSON.stringify({error:{message:'This model does not support image_url inputs'}}));return;}
- if(!body.stream){res.setHeader('content-type','application/json');res.end(JSON.stringify({choices:[{message:{content:JSON.stringify({upsert:[],invalidate:[]})}}]}));return;}
+ if(!body.stream){res.writeHead(400);res.end('Unexpected non-chat request');return;}
  res.writeHead(200,{'content-type':'text/event-stream'});
  res.end('data: '+JSON.stringify({choices:[{delta:{content:'合成模型已收到图片和文件。'}}]})+'\n\ndata: [DONE]\n\n');
 });

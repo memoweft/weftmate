@@ -49,6 +49,13 @@ import Foundation
             try clear(); throw OfflineFailure.authorization
         }
     }
+    public func excludeUnsubmittedPhoneTurns(_ exclusions: PhoneTranscriptSync) throws {
+        let pending=state.turns.filter { !state.synced.contains($0.id) && exclusions.excludes(id:$0.id,text:$0.messages.first?.text ?? "") }
+        guard !pending.isEmpty else { return }
+        let ids=Set(pending.map(\.id))
+        state.turns.removeAll { ids.contains($0.id) }
+        try vault.save(state)
+    }
     public func sync(identity: OfflineIdentity,
                      fetch: (OfflineSyncRequest) async throws -> OfflineEnvelope,
                      submit: (OfflineSubmission) async throws -> OfflineReceipts,
@@ -165,7 +172,7 @@ import Foundation
             memoryRefs: Array(refs).sorted { $0.kind + $0.id < $1.kind + $1.id }.prefix(64).map { $0 },
             dependencyComplete: (state.contexts[conversationID] ?? []).isEmpty && refs.count <= 64 && turns.suffix(20).allSatisfy(\.dependencyComplete))
         state.turns.append(turn); try vault.save(state)
-        let prompt = PhoneMemoryContext.prompt(memories.map { ($0.text,$0.sources.map(\.id)) },computerOffline:true)
+        let prompt = ComputerMemoryContext.prompt(memories.map { ($0.text,$0.sources.map(\.id)) },computerOffline:true)
         let messages = [["role": "system", "content": prompt]] + history.map { ["role": $0.role, "content": $0.text] } + [["role": "user", "content": text]]
         let request=try model.request(messages:messages,stream:false,allowLoopback:allowLoopback)
         let finalRequest = request, transport = self.transport
