@@ -179,6 +179,7 @@ try {
     await page.getByRole('button', { name: '输出与来源', exact: true }).click();
     await frames(phase, 'panel-open', () => page.getByRole('button', { name: /README.md.*读取/ }).evaluate(button => button.click()));
     await page.getByRole('button', { name: '再打开一项' }).click();
+    if (phase !== 'before') await page.getByRole('menu', { name: '打开面板', exact: true }).getByRole('menuitem', { name: '文件', exact: true }).click();
     await page.getByRole('button', { name: '项目进度报告.md', exact: true }).click();
     const sourceTab = page.getByRole('tab', { name: 'README.md', exact: true });
     await frames(phase, 'panel-tab', () => sourceTab.evaluate(button => button.click()));

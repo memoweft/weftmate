@@ -7,6 +7,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun projectFolderChangeKeepsExactProjectPath() {
+        assertTrue(validBusinessPath("/personal/v1/projects/project-folder"))
+        assertTrue(validBusinessMethod("/personal/v1/projects/project-folder", "PATCH"))
+        assertFalse(validBusinessPath("/personal/v1/projects/project-folder/relocate"))
+        assertFalse(validBusinessPath("/personal/v1/projects/project-folder?rootPath=another"))
+    }
+
     @Test fun commandOutputUsesBoundedDetailPages() {
         val detail="/personal/v1/sessions/session-one/events/12/detail"
         assertTrue(validBusinessPath(detail))
