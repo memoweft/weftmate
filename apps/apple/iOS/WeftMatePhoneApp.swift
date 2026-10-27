@@ -36,11 +36,6 @@ struct WeftMatePhoneApp: App {
         .onChange(of: logScenePhase) { _, phase in RunLogRuntime.shared.phase(phase) }
     }
     private var healthContent: some View {
-        #if WEFTMATE_WINDOW_TEST
-        WeftMateRootView(model: model)
-            .modifier(PhoneReminderLifecycle(app:model,phone:model.phoneChat))
-            .environmentObject(health)
-        #else
         WeftMateRootView(model: model)
             .modifier(PhoneReminderLifecycle(app:model,phone:model.phoneChat))
             .environmentObject(health)
@@ -53,7 +48,6 @@ struct WeftMatePhoneApp: App {
                 guard logScenePhase == .active else { return }
                 await health.activate(app: model)
             }
-        #endif
     }
     @ViewBuilder private var content: some View {
         #if DEBUG

@@ -15,7 +15,7 @@ import Foundation
         presented = true
         app.cloudLogin.requireLogin()
     }
-    static func recordLoginVisible() {
+    static func recordLoginVisible(server: String) {
         guard presented, let installID,
               let cache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
         let directory = cache.appendingPathComponent("WindowInstall", isDirectory: true)
@@ -23,7 +23,7 @@ import Foundation
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
                                                     attributes: [.posixPermissions: 0o700])
             let payload: [String: Any] = ["loginVisible": true, "installID": installID,
-                                          "bundleID": Bundle.main.bundleIdentifier ?? ""]
+                                          "bundleID": Bundle.main.bundleIdentifier ?? "", "server": server]
             let data = try JSONSerialization.data(withJSONObject: payload)
             try data.write(to: directory.appendingPathComponent("login-visible.json"), options: .atomic)
         } catch { /* Optional local evidence must not interrupt the user's login. */ }

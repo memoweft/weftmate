@@ -12,7 +12,7 @@ iPhone 只加密保存原话、附件、日期、草稿、模型配置和原话�
 
 记忆页展示当前账号、当前电脑的获准副本和来源，空副本就显示空状态。手机模型可在原话交接尚未完成或选择稍后交时读取副本；账号切换或电脑移除不会恢复手机自记。电脑在线时，“修改或忘掉电脑记忆”进入现有电脑接口；电脑不可达时只读获准副本。未连接过电脑也可用已配置模型聊天，排队、停止、原话同步、提醒来源和电脑任务入口保持可用。
 
-最终手机候选使用独立的 `WeftMatePhoneWindowTest` 目标和 Scheme（构建方案），身份固定为 `com.weftmate.apple.windowtest`，显示名为“WeftMate 苹果测试”，不嵌入 Watch，也不申请健康签名能力。它在 Debug、Release 与隔离配置中保持同一测试身份。原三端另保留 `DebugWindowTest`、`WindowTestRelease` 配置，Mac/Watch 保留对应的 WindowTest Scheme；调试配置名保留 Debug，使 Xcode 同时按 Debug 构建共享 Swift 包。Watch 的隔离身份为 `com.weftmate.apple.windowtest.watch`，伴随绑定匹配。
+最终手机候选使用独立的 `WeftMatePhoneWindowTest` 目标和 Scheme（构建方案），身份固定为 `com.weftmate.apple.windowtest`，显示名为“WeftMate 苹果测试”，不嵌入 Watch，启用只读 HealthKit、后台送达与健康后台注册。它在 Debug、Release 与隔离配置中保持同一测试身份。原三端另保留 `DebugWindowTest`、`WindowTestRelease` 配置，Mac/Watch 保留对应的 WindowTest Scheme；调试配置名保留 Debug，使 Xcode 同时按 Debug 构建共享 Swift 包。Watch 的隔离身份为 `com.weftmate.apple.windowtest.watch`，伴随绑定匹配。
 
 Windows 可运行 `python apps/apple/Scripts/generate_project.py` 和 `python -m unittest discover -s apps/apple/Tests -p 'test_*window*.py'`。Swift 与原生界面结果须在 Mac 实测；源码和项目生成成功不代表已编译通过。整合后的候选统一按下方 APPLE-5 的 `run_phone_window_checks.py` 步骤串行检查，并逐项选择七组 Phone 状态检查。
 
@@ -147,7 +147,7 @@ python3 Scripts/package_mac_trial.py --artifacts /private/path/apple-delivery
 
 生成器另外提供 `WeftMatePhoneWindowTest` 和对应 UI 测试目标。候选固定为 `com.weftmate.apple.windowtest`，主屏幕显示“WeftMate 苹果测试”；使用独立应用容器、固定的测试 Keychain service、偏好 suite 与本机状态目录。普通手动重开仍使用这些测试存储，不需要保留 Xcode 启动参数。原 Phone、Mac、Watch 目标仍分别构建。
 
-此目标只准备手机聊天与同步：不嵌入 Watch，不带 HealthKit entitlement、健康后台注册或后台刷新模式，也不启动 WatchConnectivity。提醒的前台与本机通知逻辑仍在，后台刷新不注册；健康不作为此候选的验收范围。`Config/Local.xcconfig` 沿用受忽略的本机团队配置；不要把团队或凭据写进生成器。云登录继续使用已登记的回调 URI。
+此目标支持手机聊天、同步和健康读取：保留独立存储，不嵌入 Watch，也不启动 WatchConnectivity。使用 HealthKit 与 background-delivery entitlement，注册健康后台任务并启用 fetch；首次主动进入健康页时请求只读授权（toShare 为空），登录或启动时不请求健康授权。提醒的前台与本机通知逻辑仍在，提醒后台刷新仍不注册。`Config/Local.xcconfig` 沿用受忽略的本机团队配置；不要把团队或凭据写进生成器。云登录继续使用已登记的回调 URI。
 
 Windows 可先验证并生成项目，连续生成两次应无差异：
 
@@ -174,7 +174,7 @@ APPLE-1 至 4 合入后，另将它们新增的状态检查逐个加入 `--check
 
 脚本每次建独立证据和构建目录，记录提交、工作区状态、命令、退出码、XCTest 计数摘要、截图结果包与新增崩溃报告。Swift 测试及每条状态检查限 20 分钟，构建和 UI 批次各限 30 分钟；结束收本次进程组。UI 批后关闭全部模拟器，等待 3 分钟；本批新 `gpuRestart` 则等 10 分钟，不打开 Simulator.app。诊断目录不可读记为未知。
 
-免费团队签名、设备信任／开发者模式、真实 MemoWeft 形成→纠正→遗忘→手机副本，以及本人最终试用均待 Mac 和真机验证。Apple 说明 Personal Team 的安装描述文件有效期为 7 天，到期需用同一团队重新构建安装；本项目不自动续签。能力是否可用取决于实际团队及描述文件，不能由无签名编译推出可安装。参见 [Apple 免费设备测试说明](https://developer.apple.com/help/account/basics/about-your-developer-account)及[支持的 iOS 能力](https://developer.apple.com/help/account/reference/supported-capabilities-ios)。
+Mac 上用本人的免费 Personal Team 实际签名，核对描述文件包含 HealthKit 与后台送达，再安装到已信任且开启开发者模式的 iPhone；签名失败须保留 Xcode 原始错误并写回 PR，确认不能签健康后才安装无健康降级版。登录服务器为 https://api.weftmate.com，由本人输入账号密码和确认健康授权。Apple 说明 Personal Team 的安装描述文件有效期为 7 天，到期需用同一团队重新构建安装；本项目不自动续签。Apple 官方能力表将 HealthKit 列为免费 Apple Developer 账号可用；本机仍以实际签名与描述文件核验为准。续签时用同一台 Mac、同一 Apple ID 和 WeftMatePhoneWindowTest Scheme 再 Run 覆盖安装，实际核对容器测试文件保留；不卸载、不清理原数据。参见 [Apple 免费设备测试说明](https://developer.apple.com/help/account/basics/about-your-developer-account)及[支持的 iOS 能力](https://developer.apple.com/help/account/reference/supported-capabilities-ios)。
 
 ### 原 Phone 与 Watch 目标
 

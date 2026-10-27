@@ -69,6 +69,8 @@ private actor CommandHTTP: HTTPTransport {
             object = ["sessions": [session, ["sessionId": "session-other", "title": "Other", "running": false,
                 "sendAvailable": true, "modelProfileId": "profile-one"]]]
         case "/personal/v1/models": object = ["models": [["id": "profile-one", "name": "Fixture model", "model": "fixture-model", "configured": configured]]]
+        case "/personal/v1/model-services":
+            status = 404; object = ["error": ["code": "NOT_FOUND"]]
         case "/personal/v1/sync/capabilities": object = ["deviceId": "device-Mac", "platform": "macos", "sharedConversations": 1]
         case "/personal/v1/commands":
             let bytes = request.httpBody!

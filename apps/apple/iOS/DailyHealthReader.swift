@@ -61,11 +61,7 @@ private enum HealthReadingWork {
 @MainActor final class DailyHealthReader {
     let store = HKHealthStore()
     var available: Bool {
-        #if WEFTMATE_WINDOW_TEST
-        false
-        #else
         HKHealthStore.isHealthDataAvailable()
-        #endif
     }
     static var types: Set<HKSampleType> {
         [HKObjectType.quantityType(forIdentifier: .stepCount)!, HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,
