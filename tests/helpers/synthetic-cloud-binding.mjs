@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { generateKeyPair, exportJWK, SignJWT } from 'jose';
+import { generateKeyPair, exportJWK, SignJWT, calculateJwkThumbprint } from 'jose';
 export async function syntheticCloudBinding() {
   const signing = await generateKeyPair('RS256');
   const jwk = {...await exportJWK(signing.publicKey),kid:'fix8-synthetic',alg:'RS256',use:'sig'};
@@ -26,6 +26,12 @@ export async function syntheticCloudBinding() {
   await new Promise(done=>server.listen(0,'127.0.0.1',done));base=`http://127.0.0.1:${server.address().port}/personal/v1/cloud`;issuer=base+'/oidc';
   return {
     configuration:{issuer,allowInsecureLoopback:true},
+    async access(hostId, key, deviceId = 'pair-code-phone') {
+      return new SignJWT({sub:'fix8-cloud-synthetic',device_id:deviceId,auth_epoch:0,device_verified:true,
+        host_id:hostId,scope:'host:session',cnf:{jkt:await calculateJwkThumbprint(await exportJWK(key.publicKey))}})
+        .setProtectedHeader({alg:'RS256',typ:'at+jwt',kid:jwk.kid}).setIssuer(issuer).setAudience(`${base}/hosts/${hostId}`)
+        .setIssuedAt().setJti(randomUUID()).setExpirationTime('300s').sign(signing.privateKey);
+    },
     async bind(request){
       const before=await request('/auth/me');
       const claim=await request('/cloud/claims',{});
