@@ -243,9 +243,9 @@ function renderConversationQuestions(){
   for(const row of rows){
     const questionEvent=(state.chatSource==='phone'?state.linkedEvents.get(context.conversationId)?.events||[]:state.sharedEvents).filter(e=>e.type==='question.asked'&&e.data?.turn===row.turn&&e.seq<=row.observedSeq).at(-1);
     const anchor=questionEvent&&[...content.children].find(node=>node.dataset?.timelineQuestion===questionEvent.data.callId);
-    if(anchor){anchor.hidden=row.status==='pending';if(!anchor.hidden)anchor.textContent=WeftQuestionBar.record(row)}
+    if(anchor){anchor.hidden=row.status==='pending';if(!anchor.hidden)WeftQuestionBar.renderRecord(anchor,row)}
     for(const old of [...content.children])if(old.dataset?.questionRpcId===row.questionRpcId)old.remove();
-    if(!anchor&&row.status!=='pending'){const receipt=[...content.children].find(node=>node.dataset?.receiptId===row.sourceReceiptId);if(receipt){const record=el('section','question-record',WeftQuestionBar.record(row));record.dataset.questionRpcId=row.questionRpcId;content.insertBefore(record,receipt.nextSibling)}}
+    if(!anchor&&row.status!=='pending'){const receipt=[...content.children].find(node=>node.dataset?.receiptId===row.sourceReceiptId);if(receipt){const record=el('section','question-record');WeftQuestionBar.renderRecord(record,row);record.dataset.questionRpcId=row.questionRpcId;content.insertBefore(record,receipt.nextSibling)}}
   }
   if(!pending.length)return;
   const row=pending[0],attempt=questionAttempt(context,row),draft=questionDraft(context,row);
