@@ -74,6 +74,12 @@ flowchart TD
 - [work-and-chat.mjs](../src/personal-access/work-and-chat.mjs) 保存模式与项目绑定。D92 只允许工作操作电脑；切换卡片确认工作范围，不能代替具体工具批准。
 - 模型配置和凭据由主进程管理；运行时通过专用 IPC 获取所需秘密。模型服务与按会话选模见 [model-services.mjs](../src/personal-access/model-services.mjs)、[account-models.mjs](../src/personal-access/account-models.mjs) 与 CLIENT_API 第 3.10 节。
 
+### 桌面嵌入浏览器
+
+`personal-browser/desktop.mjs` 的 `DesktopBrowser` 组合现有读取器接口与 Electron `WebContentsView`：桌面面板 `personal-access-ui/panels/browser.js` 通过受鉴权的 `wm:desktop:browser` 预加载桥创建、导航和定位真实网页；Agent 的 `browser` 工具仍经账户业务调用同一个 `browserReader.read()`，使用这个对话最近展示的标签。网络仍经过 `personal-browser/network.mjs` 的地址校验、固定解析代理、下载和权限限制；每个新文档重置同样的网络字节预算，同时最多两次 Agent 读取。无桌面窗口的宿主继续使用原隐藏读取器。
+
+宿主按账户和逻辑 `chatId` 管理标签，执行段 `sessionId` 通过账户内的对话索引归到同一逻辑对话。创建先预留标签，再等待独立持久分区、代理和真实渲染器登记完成，面板与立即到来的工具调用等待同一个就绪结果。面板通过自身矩形更新视图位置，收起和切换只隐藏；关闭标签、删除对话、窗口关闭或退出释放视图与代理。网页分区与桌面程序界面的身份和数据分开。远程网页和手机只显示在电脑打开的说明。新增桥接不增加 `/personal/v1` 业务路由。
+
 ## 4. 逻辑对话、历史与记忆
 
 逻辑对话链为 [chat-identity.mjs](../src/personal-access/chat-identity.mjs) → [chats.mjs](../src/personal-access/chats.mjs)／[chat-timeline.mjs](../src/personal-access/chat-timeline.mjs) → 原生历史投影。`chatId` 聚合执行段，`sessionId` 仍是原执行与记忆来源。原主聊天入口按 D92 取消，底层 `kind:main`、接力、生命周期保护与默认后台投递为兼容保留；细节见 [IA_MAIN_CHAT](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/IA_MAIN_CHAT.md)。

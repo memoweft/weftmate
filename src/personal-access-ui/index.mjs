@@ -5,6 +5,7 @@ import { uiCoreBrowserAssets as uiCoreAssets, uiCoreSourceAsset } from '../ui-co
 import renderAssets from './render-assets.json' with {type: 'json'};
 
 const files = new Map([
+  ...['panels/browser.js', 'panels/browser.css'].map(name => [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/pages.css', ['pages.css','text/css; charset=utf-8']],
   ['/personal/v1/ui/components/computers.js', ['components/computers.js','text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/work-and-chat.js', ['components/work-and-chat.js','text/javascript; charset=utf-8']],
