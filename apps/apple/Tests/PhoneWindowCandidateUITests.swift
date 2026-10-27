@@ -17,7 +17,10 @@ final class PhoneWindowInstallUITests: XCTestCase {
         app.launchArguments = ["--ui-testing", "--phone-window-chat-fixture"]
         app.launchEnvironment["WEFTMATE_PHONE_WINDOW_MODEL_URL"] = url
         app.launch()
-        XCTAssertTrue(app.buttons["phoneChat.send"].waitForExistence(timeout: 30))
+        guard app.buttons["phoneChat.send"].waitForExistence(timeout: 30) else {
+            XCTFail("The restored candidate did not load its controlled chat model")
+            throw NSError(domain: "WindowFixtureStartup", code: 1)
+        }
         return app
     }
     @MainActor private func send(_ text: String, app: XCUIApplication) {

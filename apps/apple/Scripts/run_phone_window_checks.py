@@ -93,7 +93,7 @@ def xcode(destination, derived):
             "-derivedDataPath", str(derived)]
 
 
-def ui(evidence, device):
+def ui(evidence, device, derived_data=None):
     if not (ROOT / "Tests/PhoneWindowUITests.swift").exists():
         raise RuntimeError("Integrate APPLE-1's memory-route UI suite and regenerate the project before final UI validation")
     # The caller selects the actual UUID; never pick or launch an arbitrary device.
@@ -105,7 +105,7 @@ def ui(evidence, device):
         raise RuntimeError("--device must be an available iPhone simulator UUID")
     evidence.meta["simulator"] = next(row for row in phones if row["udid"] == device)
     evidence.save()
-    derived = evidence.path / "DerivedData"
+    derived = derived_data.resolve() if derived_data else evidence.path / "DerivedData"
     base = xcode("platform=iOS Simulator,id=" + device, derived)
     evidence.run("build-for-testing", [*base, "-project", "WeftMate.xcodeproj", "-scheme", SCHEME,
                  "-configuration", "Debug", "CODE_SIGNING_ALLOWED=NO", "build-for-testing"])
@@ -164,6 +164,7 @@ def main():
     parser.add_argument("--phase", choices=["preflight", "core", "state", "build", "ui"], required=True)
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--device", help="Actual iPhone simulator UUID, required for UI.")
+    parser.add_argument("--derived-data", type=Path, help="Reuse this task's isolated UI build cache; results remain in a fresh evidence directory.")
     parser.add_argument("--check", action="append", choices=list(CHECKS))
     args = parser.parse_args()
     if sys.platform != "darwin":
@@ -171,7 +172,7 @@ def main():
     if args.phase == "ui" and not args.device:
         parser.error("UI needs --device <actual UUID>")
     if args.phase == "state" and not args.check:
-        parser.error("Select each integrated state check with --check")
+        args.check = list(CHECKS)
     evidence = Evidence(args.artifacts, args.phase)
     code = 1
     try:
@@ -195,7 +196,7 @@ def main():
                 evidence.run(scheme, [*xcode(destination, evidence.path / scheme), "-project", "WeftMate.xcodeproj",
                              "-scheme", scheme, "-configuration", "Debug", "CODE_SIGNING_ALLOWED=NO", "build"])
         else:
-            ui(evidence, args.device)
+            ui(evidence, args.device, args.derived_data)
         code = 0
     except (RuntimeError, OSError, subprocess.SubprocessError) as error:
         code = 1; evidence.meta["error"] = str(error); print(str(error), file=sys.stderr)
