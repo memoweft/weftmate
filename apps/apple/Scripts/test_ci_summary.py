@@ -3,6 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
+from run_state_checks import CHECKS
 from write_ci_summary import markdown, state_report, ui_report
 
 
@@ -55,7 +56,7 @@ class SummaryTests(unittest.TestCase):
                 {"check": "AppleSendStateChecks", "compileExit": 1}]))
             report = state_report(root, "failure")
         self.assertEqual((report["passed"], report["failed"], report["skipped"]), (0, 2, 0))
-        self.assertEqual(len(report["blocked"]), 20)
+        self.assertEqual(len(report["blocked"]), len(CHECKS) - 2)
         self.assertEqual(report["failures"], ["AppleAdoptionStateChecks", "AppleSendStateChecks"])
 
 
