@@ -13,7 +13,15 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
 @MainActor final class PhoneCheckCloud { var subject: String?="account-a";var authenticated=true }
 @MainActor final class PhoneCheckOffline {
     var memoryItems: [OfflineMemory]=[]
-    func authorizeMemory(control: (String) async throws -> OfflineAuthorization) async throws {}
+    var memoryAccountID: String?="account-a"
+    var memoryHostID: String? { ready ? hostID : nil }
+    var hostID="synthetic-computer"
+    var authorizations=0
+    func authorizeMemory(control: (String) async throws -> OfflineAuthorization) async throws {
+        authorizations += 1
+        let authorization=try await control(hostID)
+        guard authorization.authorized,authorization.hostId == hostID,authorization.accountId == memoryAccountID,authorization.generation == generation else { memoryItems=[];ready=false;throw OfflineFailure.authorization }
+    }
     func erase() { enqueued=[];synced=[];memoryItems=[];ready=false }
     var generation: Int?=1
     var ready=true

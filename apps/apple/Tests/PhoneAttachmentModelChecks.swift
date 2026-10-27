@@ -71,11 +71,7 @@ import WeftMateCore
         let transmitted=try unwrap(Data(base64Encoded:String(unwrap(unwrap(imagePart["url"]).split(separator:",").last))))
         try require(transmitted == image.data && transmitted.count <= PhoneAttachment.imageBytes,"actual HTTP image bytes and shape")
         try require(parts.contains {($0["text"] as? String)?.contains(fileText) == true},"actual HTTP file text")
-        await model.extractMemory(threadID:try unwrap(model.state.selected))
-        let (memoryData,_)=try await URLSession.shared.data(from:unwrap(URL(string:origin+"/report")))
-        let traffic=try unwrap(JSONSerialization.jsonObject(with:memoryData) as? [[String:Any]])
-        let memoryTraffic=try unwrap(traffic.last),memoryBody=String(decoding:try JSONSerialization.data(withJSONObject:memoryTraffic),as:UTF8.self)
-        try require(memoryTraffic["stream"] as? Bool == false && !memoryBody.contains(fileText) && !memoryBody.contains(image.data.base64EncodedString()) && !memoryBody.contains("合成模型已收到"),"actual memory request excludes attachments and assistant interpretation")
+        try require(requests.count == 1 && requests.allSatisfy { $0["stream"] as? Bool == true },"attachment chat has no extraction side request")
         model.draft="";model.addAttachment(file);model.send();try await wait(model)
         try require(model.messages.filter {$0.role == "user"}.last?.text == "","attachment-only send")
         model.newThread();try model.saveModel(.init(name:"Reject",baseURL:origin+"/v1",model:"reject-images",apiKey:"synthetic-key"))
@@ -100,26 +96,8 @@ import WeftMateCore
         let boundedParts=boundedMessages.flatMap {$0["content"] as? [[String:Any]] ?? []}
         try require(boundedParts.filter {$0["type"] as? String == "image_url"}.count == 4,"whole request image cap across history")
         try require(boundedParts.compactMap {$0["text"] as? String}.filter {$0.contains("合成资料")}.reduce(0) {$0+$1.utf16.count} < 32500,"whole request file text budget across history")
-        var memory=PhoneMemoryState(),thread=PhoneChatThread(),message=PhoneChatMessage(role:"user",text:"我喜欢茶")
+        var thread=PhoneChatThread(),message=PhoneChatMessage(role:"user",text:"我喜欢茶")
         message.attachments=[image,file];thread.messages=[message]
-        let batch=memory.batch(thread)
-        try require(batch.map(\.text) == ["我喜欢茶"],"memory input excludes image interpretation and file text")
-        try memory.apply("{\"upsert\":[{\"id\":null,\"text\":\"虚构记录\",\"sourceIDs\":[\"\(message.id)\"],\"evidence\":\"虚构记录\"}],\"invalidate\":[]}",batch:batch,threadID:thread.id)
-        try require(memory.items.isEmpty,"file/image cannot supply memory evidence")
-        let selfFile=try PhoneAttachmentInput.file(Data("我喜欢淡茶。\n第三方信息：小林喜欢咖啡。".utf8),name:"自述.txt",remainingText:32000)
-        message.text="附件是我写的自述，请记住我说的事。";message.attachments=[selfFile,image];thread.messages=[message]
-        let ownBatch=PhoneMemoryState().batch(thread)
-        let ownFirst=try unwrap(ownBatch.first)
-        try require(ownFirst.text.contains("我喜欢淡茶。") && !ownFirst.text.contains("小林") && ownFirst.attachments == nil,"only explicitly attributed first-person file quotes qualify")
-        var ownMemory=PhoneMemoryState()
-        try ownMemory.apply("{\"upsert\":[{\"id\":null,\"text\":\"喜欢淡茶\",\"sourceIDs\":[\"\(message.id)\"],\"evidence\":\"我喜欢淡茶。\"}],\"invalidate\":[]}",batch:ownBatch,threadID:thread.id)
-        try require(ownMemory.items.count == 1,"file quotation still needs exact evidence")
-        var denied=message;denied.text="这份文件不是我写的，只帮我总结。"
-        try require(denied.phoneMemoryText == denied.text,"negated authorship cannot introduce file evidence")
-        var empty=PhoneChatThread();var onlyImage=PhoneChatMessage(role:"user",text:"");onlyImage.attachments=[image];empty.messages=[onlyImage]
-        try require(PhoneMemoryState().batch(empty).isEmpty,"image-only chat makes no memory request")
-        empty.messages=Array(repeating:onlyImage,count:8)+[.init(role:"user",text:"我正在学习钢琴")]
-        try require(PhoneMemoryState().batch(empty).map(\.text) == ["我正在学习钢琴"],"image-only turns cannot starve later user words")
         try require(PhoneAttachment.prefix("a😀b",units:2) == "a","UTF16 cutoff preserves Unicode boundary")
         try failure(.textLimit) { _=try PhoneAttachmentInput.file(Data("文件文字".utf8),name:"cap.txt",remainingText:0) }
         var state=restore.state;state.threads=[thread];let turns=state.prepareMigration(host:"synthetic",generation:1)

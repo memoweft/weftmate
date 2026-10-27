@@ -72,6 +72,13 @@ final class CloudLoginModel: ObservableObject {
         if args.contains("--ui-testing"), let i = args.firstIndex(of: "--s1c-cloud-url"), args.indices.contains(i + 1) { cloudAddress = args[i + 1] }
         #endif
     }
+    #if DEBUG && os(iOS)
+    func seedPhoneWindowAccount() {
+        let args=ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"),args.contains("--phone-window-fixture") else { return }
+        subject="window-account";authenticated=true;identityRestored=true
+    }
+    #endif
     private var allowLoopback: Bool {
         #if DEBUG
         ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver") || ProcessInfo.processInfo.arguments.contains("--lg2-cloud"))
