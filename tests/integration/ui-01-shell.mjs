@@ -11,7 +11,7 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const root = resolve(import.meta.dirname, '../..');
 const temp = join(root, '.local', 'ui01'); await mkdir(temp, { recursive: true });
-process.env.WEFTMATE_MANAGED_TEMP_ROOT ??= join(temp, 'fixtures');
+if (!process.env.WEFTMATE_TEST_TEMP_SCOPE) process.env.WEFTMATE_MANAGED_TEMP_ROOT ??= join(temp, 'fixtures');
 let application, fixture, lock, watchdog, page;
 const errors = [];
 const stopTree = () => { const pid = application?.process()?.pid; if (pid) spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { windowsHide: true, timeout: 10000, stdio: 'ignore' }); };
