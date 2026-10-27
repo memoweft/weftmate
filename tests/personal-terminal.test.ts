@@ -7,11 +7,11 @@ import { readFileSync } from 'node:fs';
 import { createTerminalManager } from '../src/personal-terminal/index.mjs';
 
 const owner = 'synthetic-owner', device = 'synthetic-device';
-function waitFor(check: () => boolean, timeout = 12000) {
+function waitFor(check: () => boolean, describe: () => string = () => '', timeout = 12000) {
   return new Promise<void>((resolve, reject) => {
     const deadline = Date.now() + timeout;
     const timer = setInterval(() => { if (check()) { clearInterval(timer); resolve(); }
-      else if (Date.now() > deadline) { clearInterval(timer); reject(new Error('terminal condition timed out')); } }, 20);
+      else if (Date.now() > deadline) { clearInterval(timer); reject(new Error(`terminal condition timed out: ${describe()}`)); } }, 20);
   });
 }
 const alive = (pid: number) => { try {
@@ -33,25 +33,25 @@ process.stdin.on('data',b=>{const s=b.toString();console.log('INPUT',s);if(s.inc
     const terminal = await manager.create({ ownerId: owner, deviceId: device, conversationId: 'conversation-a', tabId: 'tab-a', cwd });
     let output = '', seq = 0;
     let stop = manager.subscribe(owner, device, terminal.terminalId, 0, e => { if (e.type === 'output') { output += e.data; seq = e.seq; } });
-    await waitFor(() => /READY\s+\d+\s+\d+/.test(output));
+    await waitFor(() => /READY\s+\d+\s+\d+/.test(output), () => 'PTY readiness ' + JSON.stringify(output.replaceAll(cwd, '<workspace>')));
     const pids = output.match(/READY\s+(\d+)\s+(\d+)/)!; parent = Number(pids[1]); child = Number(pids[2]);
     assert.ok(alive(parent)); assert.ok(alive(child)); assert.match(output, /true/);
     assert.equal((await manager.create({ ownerId: owner, deviceId: device, conversationId: 'conversation-a', tabId: 'tab-a', cwd })).terminalId, terminal.terminalId);
     assert.throws(() => manager.info('another-owner', device, terminal.terminalId), /NOT_FOUND/);
     assert.throws(() => manager.input(owner, 'another-device', terminal.terminalId, 'bad'), /NOT_FOUND/);
     manager.input(owner, device, terminal.terminalId, '中文输入');
-    await waitFor(() => output.includes('INPUT 中文输入'));
+    await waitFor(() => output.includes('INPUT 中文输入'), () => 'UTF-8 input ' + JSON.stringify(output.replaceAll(cwd, '<workspace>')));
     manager.resize(owner, device, terminal.terminalId, 113, 31);
-    await waitFor(() => output.includes('SIZE 113 31'));
+    await waitFor(() => output.includes('SIZE 113 31'), () => 'PTY resize ' + JSON.stringify(output.replaceAll(cwd, '<workspace>')));
     assert.throws(() => manager.resize(owner, device, terminal.terminalId, 0, 31), /INVALID_REQUEST/);
     manager.input(owner, device, terminal.terminalId, 'later'); stop();
     const cursor = seq; await new Promise(resolve => setTimeout(resolve, 200));
     let replay = ''; const replaySeqs: number[] = [];
     stop = manager.subscribe(owner, device, terminal.terminalId, cursor, e => { if (e.type === 'output') { replay += e.data; replaySeqs.push(e.seq); } });
-    await waitFor(() => replay.includes('DISCONNECTED_OUTPUT'));
+    await waitFor(() => replay.includes('DISCONNECTED_OUTPUT'), () => 'cursor replay ' + JSON.stringify(replay));
     assert.ok(replaySeqs.every(seq => seq > cursor)); stop();
     await manager.destroy(owner, device, terminal.terminalId);
-    await waitFor(() => !alive(parent) && !alive(child));
+    await waitFor(() => !alive(parent) && !alive(child), () => `process tree: parent=${alive(parent)} child=${alive(child)}`);
     assert.throws(() => manager.info(owner, device, terminal.terminalId), /NOT_FOUND/);
   } finally {
     await manager.close();

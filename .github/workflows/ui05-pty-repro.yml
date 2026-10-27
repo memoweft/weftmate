@@ -1,0 +1,21 @@
+name: UI05 PTY reproduction
+on:
+  push:
+    branches: [wp/ui-05-terminal]
+    paths:
+      - 'tests/personal-terminal.test.ts'
+      - 'src/personal-terminal/**'
+      - '.github/workflows/ui05-pty-repro.yml'
+jobs:
+  linux-pty:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node --version
+      - run: node --test tests/personal-terminal.test.ts
