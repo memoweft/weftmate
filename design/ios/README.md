@@ -1,10 +1,10 @@
 # WeftMate iPhone 界面设计
 
-2026-10-27 · IOS-UI-DESIGN · 待本人看过确认。此包交付浏览器原型和移植说明；没有修改 Swift 或安卓代码，没有完成原生编译、实机验收或健康授权。
+2026-10-27 · IOS-UI-DESIGN-2 · 本人已认可整套设计，本次按意见改为系统白底和按钮旁小菜单。此包交付浏览器原型和移植说明；没有修改 Swift 或安卓代码，没有完成原生编译、实机验收或健康授权。
 
 直接打开 [prototype/index.html](prototype/index.html)。无需服务、网络或构建。宽屏左边可直达每页和切换示例状态；手机画框为 **393 × 852**，右上角切深浅色。窄屏只保留手机画面。所有账号、消息、健康数据、文件和金额均为合成示例，刷新重置。表单不保存凭据，只有「保存文件」下载合成文本；相机、通知、系统分享等入口用说明代替系统调用。
 
-先体验这几条路：聊天 → 发一句话 → 上滑停止跟随 → 回到最新；左缘右滑 → 侧栏 → 记忆 → 详情 → 纠正或遗忘；健康 → 睡眠 → 趋势 → 返回；输入框加号 → 弹层下拉关闭；设置 → 外观 → 深色；登录 → 验证 → 添加电脑 → 核对配对。桌面导览还能直接播放流式、查看待批准、待回答、排队消息。
+先体验这几条路：输入框加号 → 文件/相机/照片小菜单 → 点空白处关闭；模型名 → 小菜单切换模型；全部对话 →「…」→ 筛选/排序；设置 → 外观 → 深色。原有聊天流式、标签保留、侧栏、健康趋势、记忆纠正/遗忘和登录配对仍可体验。填写内容的底部弹层保留下拉关闭，桌面导览可播放流式、查看待批准、待回答、排队消息。
 
 ## 设计决定
 
@@ -71,7 +71,7 @@ flowchart TD
 | `conversations` / `search` / `history` | 对话与工作过滤、组别、状态、搜索结果分类、按日期定位；无结果说明恢复路径 | `UI/WeftMateRootView.swift`、`UI/SessionActions.swift`、`UI/MainChatView.swift`、`UI/MainChatPositionTracking.swift`：复用查询与定位行为，只换呈现 |
 | `work` / `projects` | 首条之前选电脑、项目与读写范围；工作后不切回对话；离线可暂存 | `iOS/PhoneWorkAndChat.swift`、`UI/ProjectsView.swift`、`UI/ComputerControls.swift`、`iOS/PhoneOfflineWork.swift`：手机用推进页面选择，不挤在输入区 |
 | `resources` / `task` | 成果、来源、过程三节；执行步骤可展开输出和复制，返回原消息 | `UI/MainChatResourcesView.swift`、`UI/ConversationResourcesView.swift`、`UI/ConversationTimelineView.swift`：手机完整子页；保留成果版本、来源锚点及任务交互 |
-| 输入区 / 附件弹层 | 草稿一至五行，附件在草稿上方；加号、模型、语音、发送位置固定；有回复时同一主操作位停止 | `UI/ComposerMedia.swift`、`iOS/PhoneAttachmentInput.swift`、`PhoneAttachmentBlock.swift`、`PhoneStandaloneMedia.swift`：系统选图、相机、文件权限与错误继续原实现 |
+| 输入区 / 附件菜单 | 草稿一至五行，附件在草稿上方；加号与模型使用按钮旁小菜单，位置固定；有回复时同一主操作位停止 | `UI/MainChatView.swift::composerTools/legacyModelSelection` 保留 `Menu`；系统选图、相机、文件权限与错误继续 `UI/ComposerMedia.swift`、`iOS/PhoneAttachmentInput.swift`、`PhoneAttachmentBlock.swift`、`PhoneStandaloneMedia.swift` 的实现 |
 | 批准 / 提问 / 队列弹层 | 正文显示影响，当前批准只一项；提问选项和补充文本；队列可改或撤回 | `UI/ConversationApprovalBar.swift`、`ConversationQuestionBar.swift`、`TaskInteractionView.swift`、`iOS/PhoneDecisionCards.swift`：主聊天中输入框上方保留待处理摘要，点击展开；原型由动态/导览进入完整弹层 |
 | `activity` | 待处理优先，其次完成、回顾、记忆变化；全部 / 未读 / 待处理；点击回到实际来源 | `iOS/PhoneFeaturesViews.swift::PhoneActivityView`、`DailyHealthViews.swift`：稳定行列表，替代等高大卡；保持分页和已读语义 |
 | `health` | 日期、更新时间、恢复、压力/电能/负荷、睡眠分期、身体指标、活动/月历、解读入口 | `iOS/HealthPageView.swift`、`HealthMetricsView.swift`、`HealthScoreRangeBar.swift`：主次分明的纵向列表；没有数据用破折号与原因 |
@@ -98,6 +98,35 @@ flowchart TD
 - **发送/停止/排队**：主操作位固定。回复中无草稿显示停止，有新草稿显示排队发送；排队消息可修改或撤回，已经处理的消息不可编辑重发。语音完成后回到草稿。建议点选只填草稿，不直接发送。
 - **键盘**：原生 `safeAreaInset(edge:.bottom)` 跟随键盘，避免内容和输入框各移动一次。输入时临时收起标签栏，收起键盘后原位恢复。浏览器原型用实际 textarea（多行输入框），未仿造 iOS 键盘；键盘交互、中文输入法候选与焦点切换必须在真机验。
 
+## 小菜单、浮窗与底部弹层
+
+短选择贴着触发按钮打开：加号的文件/相机/照片、模型、对话与消息「…」、筛选、排序、分组、项目、审批模式、保留时间和短确认。菜单宽 276 px，在按钮上方或下方按空间避让，离按钮 8 px；贴近屏幕边缘时横向移入可见区。没有整页变暗或底部拖柄；点击外部、Escape（退出键）关闭，关闭后焦点回原按钮，方向键选择菜单项。选择操作后收起；菜单内的开关保持原位。
+
+日期和带少量说明的短确认用 `popover`（按钮旁浮窗）；日期保持原生 `.popover` 与 `.presentationCompactAdaptation(.popover)`，窄屏也不自动变成上拉栏。嵌套菜单和短确认沿用原按钮的位置；从菜单进入重命名、新建分组/项目等表单后，改为底部弹层，关闭仍回到原按钮。
+
+需要输入内容或完整阅读的内容才用 `.sheet`（底部弹层）：新建/修改提醒、重命名、新建项目、手动配对、模型档案、批准影响详情、提问补充、完整遗忘范围与长说明。页内短筛选分段可以保留；额外筛选/排序在全部对话右上「…」里。原生选择文件、照片和分享继续使用系统选取器，不用原型小菜单代替权限流程。
+
+SwiftUI（苹果界面框架）沿用现有写法，以下是移植示意，非本包新增的原生代码。参考 [Menu](https://developer.apple.com/documentation/swiftui/menu) 与 [presentationCompactAdaptation](https://developer.apple.com/documentation/swiftui/view/presentationcompactadaptation(_:))。
+
+```swift
+Menu {
+    Button("文件", action: chooseFile)
+    Button("相机", action: takePhoto)
+    Button("照片", action: choosePhoto)
+} label: {
+    Image(systemName: "plus")
+}
+
+Button("选择日期") { choosingDate = true }
+    .popover(isPresented: $choosingDate, attachmentAnchor: .rect(.bounds)) {
+        DatePicker("选择日期", selection: $chosenDate, displayedComponents: .date)
+            .datePickerStyle(.graphical)
+            .padding()
+            .presentationCompactAdaptation(.popover)
+    }
+// 短确认同样锚定触发按钮的 popover；带输入的表单继续 .sheet。
+```
+
 ## 动效令牌与实现
 
 原型继续用仓库五档：130 / 220 / 320 / 420 / 640 ms；四曲线：`ease-out = cubic-bezier(.16,1,.3,1)`、`ease-in-out = cubic-bezier(.4,0,.2,1)`、`ease-in = cubic-bezier(.4,0,1,1)`、`linear`。不另造一套系统。下表是设计目标，**并非声称苹果系统的私有精确参数**；系统导航优先采用系统动画。
@@ -108,6 +137,7 @@ flowchart TD
 | 标签切换 | `dur-3` 320 ms / `ease-out` | 内容 Y 6→0，opacity .45→1；旧内容保留直到新内容可见 | `TabView(selection:)` 保活，轻 `.opacity`；选择底形可 `matchedGeometryEffect`，只动选中指示，不搬整个内容树 |
 | 侧栏 | `dur-4` 420 ms / `ease-out` | X −328→0；背景遮罩 opacity 0→1；当前页仍渲染 | 自定义 `ZStack` + `.transition(.move(edge:.leading))`；跟手用 `DragGesture`，释放 `.interactiveSpring(response:0.42,dampingFraction:0.88,blendDuration:0.08)` |
 | 侧栏手势取消 | `dur-3` 320 ms / `ease-out` | 前缘 24 pt 内开始；位移 96 pt 以上提交，其余回弹；子页边缘优先返回 | 实机加速度预测阈值；不劫持列表竖滑和控件拖动。VoiceOver（旁白）保留开关按钮 |
+| 小菜单 / 日期 / 短确认 | `dur-2` 220 ms / `ease-out` | 以按钮方向为缩放原点，scale .92→1、opacity 0→1；关闭反向，重开可中断；无整页遮暗 | 简短动作沿用 `Menu`；日期与短确认 `.popover` + `.presentationCompactAdaptation(.popover)`；系统控件采用系统动画 |
 | 底部弹层 | `dur-4` 420 ms / `ease-out` | Y 100%→0，遮罩同步；拖柄下拉 >96 pt 关闭 | `.sheet`、`.presentationDetents([.medium,.large])`、`.presentationDragIndicator(.visible)`；系统弹层跟手优先；有未保存表单时保留草稿或确认丢弃 |
 | 折叠过程 | `dur-2` 220 ms / `ease-in-out` | 高度与内容裁切、箭头旋转；不淡掉回答 | `DisclosureGroup` + `.animation(.easeInOut(duration:0.22),value:expanded)`；不要给整条消息施加 `.id` 重建 |
 | 列表增 / 删 | `dur-2` 220 ms / `ease-out` / `ease-in` | 增加 Y 8→0、opacity 0→1；移除 X 0→−24、opacity 1→0，然后收口 | 稳定 ID 的 `ForEach`、`.transition(.asymmetric(insertion:...,removal:...))`；状态回执后才移除 |
@@ -127,10 +157,10 @@ flowchart TD
 |---|---|---|
 | 原底部聊天、动态、健康、目标、成果库 | 前三项留底部，后两项进侧栏，无禁用重复按钮 | `PhonePresentation.swift::PhoneTab`、`WeftMateRootView.swift` |
 | 主对话、旁聊、手机本地对话、多电脑对话 | 侧栏「主对话 / 全部对话」，按对话/工作和电脑归属显示 | `PhoneStandaloneView.swift`、`WeftMateRootView.swift` |
-| 新对话、新工作、选电脑、选项目、只读/可写 | 新建弹层 → 工作选择页；首条之前选定 | `PhoneWorkAndChat.swift`、`ProjectsView.swift` |
-| 对话置顶、未读、重命名、分叉、分组、归档、删除 | 对话行可见更多按钮 → 操作弹层；归档在设置恢复 | `SessionActions.swift`、`MacSessionMenu.swift` 的共用语义 |
+| 新对话、新工作、选电脑、选项目、只读/可写 | 新建小菜单 → 工作选择页；首条之前选定；创建项目表单用底部弹层 | `PhoneWorkAndChat.swift`、`ProjectsView.swift` |
+| 对话置顶、未读、重命名、分叉、分组、归档、删除 | 对话行可见更多按钮 → 小菜单；重命名填写用底部弹层；归档在设置恢复 | `SessionActions.swift`、`MacSessionMenu.swift` 的共用语义 |
 | 临时对话、不形成记忆、是否召回、1/7/30 天或永久保留 | 新建 / 对话操作 → 临时对话；顶部持续标记 | `TemporaryChatMenu.swift` |
-| 原话日期定位、前后历史分页、全文搜索、来源位置返回 | 搜索 → 日期弹层 → 历史；详情返回恢复阅读锚点 | `MainChatView.swift`、`MainChatPositionTracking.swift` |
+| 原话日期定位、前后历史分页、全文搜索、来源位置返回 | 搜索 → 按钮旁日期浮窗 → 历史；详情返回恢复阅读锚点 | `MainChatView.swift`、`MainChatPositionTracking.swift` |
 | 发送、流式、停止、复制、重新生成、失败重试 | 聊天轮次与固定输入区；保留已收到内容 | `PhoneStandaloneView.swift`、`MainChatView.swift` |
 | 输入保留、排队、引导、编辑/撤回未处理消息 | 输入框与排队弹层；默认规则在常规设置 | `ConversationSendState.swift`、`AppleAppModel.swift` |
 | 下一步建议、引用、从消息开旁聊 | 回答下方；建议填草稿，旁聊保留来源 | `MessageActionsPresentation.swift`、`MainChatView.swift` |
@@ -140,7 +170,7 @@ flowchart TD
 | 拍照、图库、多文件、图片/文件预览、移除、能力限制、权限错误 | 输入框加号；系统选取器；附件草稿条；拒绝相机仍可文件 | `PhoneAttachmentInput.swift`、`PhoneStandaloneMedia.swift` |
 | 语音转写、完成/取消、键盘收起 | 输入框语音 → 转写确认回草稿；原生键盘工具栏 | `ComposerMedia.swift` |
 | 模型服务增改删、预设、自定义地址、密钥、刷新模型 | 设置 → 模型服务 → 编辑；错误在原位重试 | `ModelServicesSettings.swift`、`PhoneProviderPreset.swift` |
-| 每服务模型选择、图片能力、深入思考、主/后台模型、单价 | 输入框模型弹层；设置模型档案 | `ModelServiceControls.swift`、`SettingsView.swift` |
+| 每服务模型选择、图片能力、深入思考、主/后台模型、单价 | 输入框模型小菜单；设置模型档案表单 | `ModelServiceControls.swift`、`SettingsView.swift` |
 | 手机独立聊天、电脑离线继续聊、加密待同步、重连 | 聊天顶部状态、原话交接弹层、设备页 | `PhoneStandaloneModel.swift`、`OfflineChatView.swift` |
 | 离线电脑任务暂存与取消、模型转交前核对 | 输入框工作模式 → 离线暂存；等待任务在目标查看/取消 | `PhoneOfflineWork.swift`、`PhoneWorkAndChat.swift` |
 | 电脑收到原话 / 电脑就绪 / 模型可用 / 记忆形成 / 副本时间 | 原话交接 + 系统状态分别显示；不把接收当形成 | 当前 D119 与 Apple 手机窗口工作 |
@@ -180,8 +210,10 @@ flowchart TD
 
 | 类别 | 使用 / 新增 |
 |---|---|
-| 基础颜色 | 映射已有 `apple.colors.controlCanvas/Surface/Ink/Secondary/Muted/Accent/OnAccent`；浅色暖白，深色 `#1C1C1E` 中性灰，避免旧主题偏绿 |
-| 深色新增 | `soft #303033`、`line #454549`；两种遮罩与系统栏半透明颜色。确认后再映射到统一语义令牌 |
+| 系统背景 | `canvas` 浅 `#FFFFFF` / 深 `#000000`；`grouped` 浅 `#F2F2F7` / 深 `#000000`；`surface` 卡片与浮层浅 `#FFFFFF` / 深 `#1C1C1E`；对应系统背景、系统分组背景、次级分组背景 |
+| 次级底 / 分隔线 | `soft` 浅 `#F2F2F7` / 深 `#2C2C2E`；`line` 浅 `#C6C6C8` / 深 `#38383A`；半透明系统栏跟随白/黑底；不再使用米色 |
+| 正文 / 次级 / 弱化 | `ink` 浅 `#1C1C1E` / 深 `#F2F2F7`；`secondary` 浅 `#48484A` / 深 `#D1D1D6`；`muted` 浅 `#6C6C70` / 深 `#AEAEB2` |
+| 石墨操作 | `accent` 浅 `#2C2C2E` / 深 `#E5E5EA`；`on-accent` 浅 `#FFFFFF` / 深 `#1C1C1E`；健康与危险语义色继续沿用基础令牌 |
 | 健康颜色 | 全部来自现有 `apple.colors.health*`；指标颜色与应用强调色解耦 |
 | 字体 | 已有 `shared.fontFamily.body` 和常规字号 11–36；正文16、列表15、导航17、标题28；新增正文行高1.65、紧凑1.4、标题字重650，健康分数局部展示52 |
 | 间距 / 圆角 | 全部沿用 `shared.space` / `shared.radius`；页面20，行最小52，控件44，列表组16，输入20，弹层26 |
@@ -195,13 +227,13 @@ flowchart TD
 
 - 保留同一信息架构、内容密度、状态语义和三标签顺序；采用安卓系统状态栏、导航栏和键盘 inset（占位），不绘制 iPhone 状态栏/底部横条。
 - 返回键和 predictive back（预测返回）依次关闭弹层、收起侧栏、返回当前标签子页；根页不把系统返回改成打开侧栏。导航手势与系统边缘不争抢。
-- 弹层使用安卓原生底部弹层；照片、文件、分享和权限走安卓系统控件。健康来源按安卓现有能力展示，不搬 HealthKit 的授权文案。
+- 短选择使用锚定按钮的安卓菜单；日期使用平台日期控件；填写内容与长说明使用原生底部弹层。照片、文件、分享和权限走安卓系统控件。健康来源按安卓现有能力展示，不搬 HealthKit 的授权文案。
 - 保留标签/对话状态、流式跟随逻辑、减少动画、字体缩放与读屏顺序；动画按平台原生手感校准，不复制网页像素轨迹。
 
 ## 验证与接下来的验收
 
-复跑：`npm ci` 后运行 `node design/ios/prototype/verify.mjs <证据目录>`。脚本用 Playwright（浏览器自动化）打开本地文件，检查三标签、状态保留、侧栏、推进返回、弹层手势、流式停止跟随/恢复/停止、范围遗忘和登录配对，并重截每页每弹层深浅色。录屏与验证 JSON 写到传入目录，截图到 [screens/](screens/)。发布前还跑 `npm run typecheck`、`node .github/scripts/public-hygiene.mjs`。
+复跑：`npm ci` 后运行 `node design/ios/prototype/verify.mjs <证据目录>`。脚本用 Playwright（浏览器自动化）打开本地文件，检查三标签、状态保留、侧栏、推进返回、弹层手势、流式停止跟随/恢复/停止、范围遗忘和登录配对，并重截每页、小菜单、底部弹层的深浅色。小菜单用 `popover-` 前缀，底部弹层用 `sheet-` 前缀；`?panel=attachments` 等链接直接展示对应控件。录屏与验证 JSON 写到传入目录，截图到 [screens/](screens/)。发布前还跑 `npm run typecheck`、`node .github/scripts/public-hygiene.mjs`。
 
-本次浏览器检查：43 个页面、57 种弹层；深浅色及状态共 210 张 393×852 截图，245 项交互/画面断言通过，未发现脚本异常和横向溢出。独立审阅指出的范围读值、冷却、状态回显、遗忘后入口、复制正文和触控尺寸问题已修；42 项行为断言包括清理后的回访与状态隔离。视频和逐帧查看证据放在任务包，不把浏览器视频称为原生流畅度测量。固定截图是每页首屏；长页面下方内容在原型继续滚动查看。
+本次浏览器检查：43 个页面、40 种按钮旁菜单/浮窗、22 种底部弹层；深浅色及状态共 220 张 393×852 截图。检查覆盖系统白/黑及分组色、菜单贴按钮与避让、选择后生效、点击外部与键盘关闭、焦点恢复、表单分流，以及原有聊天、清理和登录配对交互；同时检查 320 px 窄屏和 1100 px 桌面导览。全量截图与布局检查通过，最终交互回归 63 项通过，未发现脚本异常和横向溢出；详细结果见本包 `verification.json` 与 `behavior-verification.json`。视频和逐帧查看证据放在任务包，不把浏览器视频称为原生流畅度测量。固定截图是每页首屏；长页面下方内容在原型继续滚动查看。
 
 本包的浏览器证据不能代替 iPhone 验收。下一包在 Mac：先接三标签与统一侧栏，再移植聊天/输入/弹层，接回设置与功能页；检查状态稳定后，真机核对返回手势、中文键盘、Dynamic Type（动态字号）、VoiceOver（旁白）、Reduce Motion（减少动态效果）、相机/文件/分享、健康授权、低帧率和长回复。健康读取能力取决于实际签名与授权，原型图里的测量不证明设备已读到数据。本人确认 iOS 顺手后，再移植安卓。

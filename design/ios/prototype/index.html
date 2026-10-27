@@ -11,10 +11,10 @@
     <img class="brand" src="../../icons/app/monochrome.svg" alt="WeftMate">
     <h1>随手接着聊。<br>事情在继续。</h1>
     <p>WeftMate · iPhone 界面设计</p>
-    <p class="review-note">点手机里的按钮体验。左缘右滑打开侧栏；子页右滑返回；弹层向下拖动收起。</p>
+    <p class="review-note">点手机里的按钮体验。左缘右滑打开侧栏；子页右滑返回；小菜单点空白处收起；填写内容的弹层可下拉关闭。</p>
     <label for="scene">直达页面</label><select id="scene"></select>
     <label for="state">预览状态</label><select id="state"><option value="normal">正常 · 合成示例</option><option value="offline">电脑离线</option><option value="empty">空内容 / 未授权</option><option value="error">读取失败</option><option value="loading">正在读取</option></select>
-    <div class="review-actions"><button data-action="stream">播放流式回复</button><button data-sheet="approval">待批准</button><button data-sheet="question">待回答</button><button data-sheet="queue">排队消息</button></div>
+    <div class="review-actions"><button data-action="stream">播放流式回复</button><button data-panel="approval">待批准</button><button data-panel="question">待回答</button><button data-panel="queue">排队消息</button></div>
     <p class="review-note">所有内容均为合成示例。操作只在此页面演示，不连接账号、电脑或健康数据。刷新即可重置。</p>
     <a href="../README.md">设计与移植说明</a>
   </aside>
@@ -30,6 +30,7 @@
     <div class="home-indicator" aria-hidden="true"></div>
     <div id="drawer-layer" class="overlay" hidden><button class="scrim" data-action="close-drawer" aria-label="收起侧栏"></button><aside id="drawer" tabindex="-1" role="dialog" aria-modal="true" aria-label="侧边栏"></aside></div>
     <div id="sheet-layer" class="overlay" hidden><button class="scrim" data-action="close-sheet" aria-label="关闭弹层"></button><section id="sheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></section></div>
+    <div id="popover-layer" class="overlay" hidden><button class="scrim" data-action="close-sheet" aria-label="关闭小菜单"></button><section id="popover" tabindex="-1" aria-labelledby="popover-title"></section></div>
     <div id="toast" role="status" hidden></div>
   </main>
   <script src="assets.js"></script><script src="app.js"></script><script src="pages.js"></script>

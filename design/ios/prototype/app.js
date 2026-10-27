@@ -17,7 +17,8 @@ const note = text => `<p class="note">${text}</p>`;
 const S = {tab:'chat', stacks:{chat:['chat'],activity:['activity'],health:['health']},state:'normal',model:'账户云模型',streaming:false,follow:true,queue:[],metric:'sleep',memoryKind:'偏好',fileType:'文档',forgotten:false,goalPaused:false,goalState:'active',temporary:false,conversation:'WeftMate',mode:'chat',replyCounter:0,overlay:null,theme:'light',authPurpose:'login',reminderID:null,reminders:[{id:1,text:'带水出门',date:'2026-10-28T09:00',complete:false},{id:2,text:'把借来的书带上',date:'2026-10-31T09:15',complete:false}]};
 const cache = new Map();
 Object.assign(S,{metricDays:7,healthCloud:false,mutedIDs:new Set(),memoryID:'preference',sourceMemory:'preference',forgottenIDs:new Set(),serviceDeleted:false,scheduleDeleted:false,healthDeleted:false,selectedDay:0,pendingDecision:null});
-let current=null, restoreFocus=null, streamHandle=0, toastTimer=0, transitionTimer=0, sheetName=null;
+let current=null, restoreFocus=null, streamHandle=0, toastTimer=0, transitionTimer=0, panelAnchor=null, drawerUnderPopover=null;
+const groupedPages=new Set(['conversations','work','projects','reminders','schedules','memory-cleanup','settings','general','appearance','account','change-email','change-password','devices','models','model-edit','usage','approvals','archived','system','about','diagnostics','health-settings']);
 const rootTitles={chat:'WeftMate',activity:'动态',health:'健康'};
 const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.reduceMotion==='true';
 const ms=name=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--'+name));
@@ -28,23 +29,24 @@ function navbar(id){
   const left=root?ib('sidebar','打开侧栏','data-action="drawer"'):ib('back','返回','data-action="back"');
   const label=id==='chat'?S.conversation:CATALOG[id];
   const subtitle=id==='chat'?`<small>${S.temporary?'临时对话 · 不形成记忆':S.state==='offline'?'电脑离线 · 手机自己答':S.mode==='work'?'工作 · 已连接示例电脑':'对话 · 手机随时可以聊'}</small>`:'';
-  const action=auth?'':id==='health'?ib('settings','健康数据设置','data-go="health-settings"'):id==='chat'?ib('compose','新建对话','data-sheet="new-chat"'):ib('more','页面选项','data-action="page-options"');
+  const action=auth?'':id==='health'?ib('settings','健康数据设置','data-go="health-settings"'):id==='chat'?ib('compose','新建对话','data-panel="new-chat"'):ib('more','页面选项','data-action="page-options"');
   return `<header class="navbar">${left}<div class="nav-title">${escapeHTML(label)}${subtitle}</div>${ib(S.theme==='light'?'moon':'sun','切换深浅色','data-action="theme"')}${action}</header>`;
 }
-function composer(){return `<div class="composer"><div class="composer-context"><button data-sheet="mode">${S.mode==='work'?'工作 · 示例电脑 / 周末计划':'对话'} ${icon('chevron').replace('<svg ','<svg style="display:inline;width:10px;height:10px" ')}</button><button data-sheet="sync">${S.state==='offline'?'2 条原话等待交给电脑':'电脑已收到原话'}</button></div><div class="composer-box"><div class="attachment-chip" hidden></div><textarea aria-label="消息" placeholder="接着聊，或者交代一件事…" rows="1"></textarea><div class="composer-tools">${ib('plus','添加附件','data-sheet="attachments"')}<button class="model-button" data-sheet="models"><span>${S.model}</span>${icon('chevron')}</button>${ib('mic','语音输入','data-sheet="voice"')}<button class="icon-button send-button" aria-label="发送消息" data-action="send">${icon('send')}</button></div></div></div>`;}
+function composer(){return `<div class="composer"><div class="composer-context"><button data-panel="mode">${S.mode==='work'?'工作 · 示例电脑 / 周末计划':'对话'} ${icon('chevron').replace('<svg ','<svg style="display:inline;width:10px;height:10px" ')}</button><button data-panel="sync">${S.state==='offline'?'2 条原话等待交给电脑':'电脑已收到原话'}</button></div><div class="composer-box"><div class="attachment-chip" hidden></div><textarea aria-label="消息" placeholder="接着聊，或者交代一件事…" rows="1"></textarea><div class="composer-tools">${ib('plus','添加附件','data-panel="attachments"')}<button class="model-button" data-panel="models"><span>${S.model}</span>${icon('chevron')}</button>${ib('mic','语音输入','data-panel="voice"')}<button class="icon-button send-button" aria-label="发送消息" data-action="send">${icon('send')}</button></div></div></div>`;}
 function emptyState(id){
   if(!['activity','health','goals','library','memory','conversations'].includes(id)) return null;
-  if(id==='health' && S.healthDeleted)return `<div class="empty">${icon('health')}<h3>摘要已删除，读取已停止</h3><p>本机摘要已清理；远端删除等待回执。「健康」中的原始记录保留。</p>${button('重新选择读取项目','data-sheet="health-permission"','outline')}</div>`;
+  if(id==='health' && S.healthDeleted)return `<div class="empty">${icon('health')}<h3>摘要已删除，读取已停止</h3><p>本机摘要已清理；远端删除等待回执。「健康」中的原始记录保留。</p>${button('重新选择读取项目','data-panel="health-permission"','outline')}</div>`;
   const nouns={activity:['bell','还没有动态','任务进展、提醒和每周回顾会出现在这里。'],health:['health','先接上健康数据','只读取你选择的项目。没有测量的地方留空。'],goals:['goal','给一件事留个位置','在对话里说说想长期做的事，也可以先设一个手机提醒。'],library:['outputs','成果会留在这里','对话里产生的文档、表格和图片，可以在这里再次找到。'],memory:['bookmark','还没有同步的记忆','连上电脑后会同步它整理好的记忆；现在也可以继续聊天。'],conversations:['chat','从一句话开始','在这里新建一段对话。']};
   const n=nouns[id];
   if(S.state==='loading') return `<div aria-busy="true" aria-label="正在读取" class="loading-bars">${Array.from({length:9},()=>'<span class="pulse"></span>').join('')}</div>`;
   if(S.state==='error') return `<div class="empty">${icon('offline')}<h3>这次没能读到${CATALOG[id]}</h3><p>已有内容会保留，可以重新读取。</p>${button('重试','data-action="retry-page"','primary')}</div>`;
-  if(S.state==='empty') return `<div class="empty">${icon(n[0])}<h3>${n[1]}</h3><p>${n[2]}</p>${button(id==='health'?'选择读取项目':id==='goals'?'新建提醒':'去聊天',id==='health'?'data-sheet="health-permission"':id==='goals'?'data-sheet="reminder"':'data-tab="chat"','primary')}</div>`;
+  if(S.state==='empty') return `<div class="empty">${icon(n[0])}<h3>${n[1]}</h3><p>${n[2]}</p>${button(id==='health'?'选择读取项目':id==='goals'?'新建提醒':'去聊天',id==='health'?'data-panel="health-permission"':id==='goals'?'data-panel="reminder"':'data-tab="chat"','primary')}</div>`;
   return null;
 }
 function mount(id){
   if(cache.has(id)) return cache.get(id);
   const el=document.createElement('section');el.className='page';el.dataset.page=id;el.setAttribute('aria-label',CATALOG[id]);
+  el.classList.toggle('grouped-page',groupedPages.has(id));
   const placeholder=emptyState(id);
   el.innerHTML=navbar(id)+`<div class="page-content ${id==='chat'?'chat-content':''}" tabindex="-1">${placeholder || PAGES[id]()}</div>`+(id==='chat'?composer()+`<button class="new-content" data-action="follow" hidden>回到最新回复 ${icon('chevron').replace('<svg ','<svg style="display:inline;width:12px;height:12px" ')}</button>`:'');
   $('#stage').append(el);cache.set(id,el);
@@ -65,6 +67,7 @@ function show(id,kind='push'){
   if(old!==next && kind!=='instant')next.classList.add(kind==='back'?'pop-enter':kind==='tab'?'tab-enter':'enter');
   transitionTimer=setTimeout(()=>{if(old && old!==next)old.classList.remove('leaving','pop-leave');next.classList.remove('enter','pop-enter','tab-enter');},reduceMotion()?1:ms('dur-3'));
   $('#phone').classList.toggle('auth-mode',AUTH_ROUTES.includes(id));
+  $('#phone').classList.toggle('grouped-page',groupedPages.has(id));
   $$('.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===S.tab?'page':'false'));
   $('#scene').value=id;document.title=CATALOG[id]+' · WeftMate 原型';
   if(kind!=='instant') $('.page-content',next).focus({preventScroll:true});
@@ -80,22 +83,65 @@ function back(){if(S.overlay){closeOverlay();return;}const stack=S.stacks[S.tab]
 function switchTab(tab){closeOverlay(true);if(S.tab===tab && S.stacks[tab].length>1){S.stacks[tab]=[tab];}S.tab=tab;show(currentRoute(),'tab');}
 function refresh(id=currentRoute()){const old=cache.get(id);if(old){if(old===current)current=null;old.remove();cache.delete(id);}show(id,'instant');}
 function toast(text){clearTimeout(toastTimer);$('#toast').textContent=text;$('#toast').hidden=false;toastTimer=setTimeout(()=>$('#toast').hidden=true,2800);}
-function drawerContent(){return `<div class="drawer-top"><strong>WeftMate</strong>${ib('deny','收起侧栏','data-action="close-drawer"')}</div><button class="search-field" style="width:100%" data-go="search">${icon('search')}<span class="muted">搜索对话与内容</span></button><div class="drawer-scroll"><button class="drawer-row" data-sheet="new-chat">${icon('compose')}新建对话</button><h3 class="drawer-section">你的对话</h3><button class="drawer-row active" data-action="main-chat">${icon('chat')}主对话<small>正在查看</small></button><button class="drawer-row" data-go="conversations">${icon('list')}全部对话<small>12</small></button><div class="drawer-recent"><button class="drawer-row" data-conversation="周末的散步计划">周末的散步计划</button><button class="drawer-row" data-conversation="把书房整理一下">把书房整理一下<small>待批准</small></button><button class="drawer-row" data-conversation="读书时记下的想法">读书时记下的想法</button></div><h3 class="drawer-section">长期留下来的</h3><button class="drawer-row" data-go="goals">${icon('goal')}目标与提醒<small>3</small></button><button class="drawer-row" data-go="library">${icon('outputs')}成果库</button><button class="drawer-row" data-go="memory">${icon('bookmark')}记忆</button><h3 class="drawer-section">工作空间</h3><button class="drawer-row" data-go="projects">${icon('folder')}项目<small>示例电脑</small></button></div><div class="drawer-footer"><button class="account" data-go="account"><span class="avatar">林</span><span>示例账号<small>个人空间</small></span></button>${ib('settings','设置','data-go="settings"')}</div>`;}
+function drawerContent(){return `<div class="drawer-top"><strong>WeftMate</strong>${ib('deny','收起侧栏','data-action="close-drawer"')}</div><button class="search-field" style="width:100%" data-go="search">${icon('search')}<span class="muted">搜索对话与内容</span></button><div class="drawer-scroll"><button class="drawer-row" data-panel="new-chat">${icon('compose')}新建对话</button><h3 class="drawer-section">你的对话</h3><button class="drawer-row active" data-action="main-chat">${icon('chat')}主对话<small>正在查看</small></button><button class="drawer-row" data-go="conversations">${icon('list')}全部对话<small>12</small></button><div class="drawer-recent"><button class="drawer-row" data-conversation="周末的散步计划">周末的散步计划</button><button class="drawer-row" data-conversation="把书房整理一下">把书房整理一下<small>待批准</small></button><button class="drawer-row" data-conversation="读书时记下的想法">读书时记下的想法</button></div><h3 class="drawer-section">长期留下来的</h3><button class="drawer-row" data-go="goals">${icon('goal')}目标与提醒<small>3</small></button><button class="drawer-row" data-go="library">${icon('outputs')}成果库</button><button class="drawer-row" data-go="memory">${icon('bookmark')}记忆</button><h3 class="drawer-section">工作空间</h3><button class="drawer-row" data-go="projects">${icon('folder')}项目<small>示例电脑</small></button></div><div class="drawer-footer"><button class="account" data-go="account"><span class="avatar">林</span><span>示例账号<small>个人空间</small></span></button>${ib('settings','设置','data-go="settings"')}</div>`;}
 function setInert(value){$('#stage').inert=value;$('.tabs').inert=value;}
 function openDrawer(){closeOverlay(true);restoreFocus=document.activeElement;$('#drawer').innerHTML=drawerContent();S.overlay='drawer';setInert(true);$('#drawer-layer').hidden=false;requestAnimationFrame(()=>{$('#drawer-layer').classList.add('open');$('#drawer').focus({preventScroll:true});});}
 function closeOverlay(immediate=false){
   if(!S.overlay)return;
   const layer=$('#'+S.overlay+'-layer');layer.classList.remove('open');
-  S.overlay=null;sheetName=null;setInert(false);
+  const duration=S.overlay==='popover'?'dur-2':'dur-4';
+  panelAnchor?.removeAttribute('aria-expanded');panelAnchor=null;
+  S.overlay=null;setInert(false);
+  const focusTarget=restoreFocus;
+  if(drawerUnderPopover){
+    $('#drawer').inert=false;restoreFocus=drawerUnderPopover.focus;drawerUnderPopover=null;
+    if(immediate){$('#drawer-layer').classList.remove('open');$('#drawer-layer').hidden=true;}
+    else {S.overlay='drawer';setInert(true);}
+  }
   const hide=()=>{if(!layer.classList.contains('open'))layer.hidden=true;};
-  if(immediate)hide();else setTimeout(hide,reduceMotion()?1:ms('dur-4'));
-  if(restoreFocus?.isConnected && !restoreFocus.closest('[aria-hidden=true]'))restoreFocus.focus({preventScroll:true});
+  if(immediate)hide();else setTimeout(hide,reduceMotion()?1:ms(duration));
+  if(focusTarget?.isConnected && !focusTarget.closest('[aria-hidden=true],[hidden]'))focusTarget.focus({preventScroll:true});
 }
-function openSheet(name){
-  closeOverlay(true);restoreFocus=document.activeElement;sheetName=name;S.overlay='sheet';
-  const spec=SHEETS[name]();$('#sheet').innerHTML=`<button class="sheet-grip" aria-label="向下拖动关闭弹层"></button><div class="sheet-heading"><h2 id="sheet-title">${spec[0]}</h2>${ib('deny','关闭弹层','data-action="close-sheet"')}</div><div class="sheet-content">${spec[1]}</div>`;
+function openPanel(name,trigger=document.activeElement){
+  // Nested choices stay attached to the original on-page control, never a removed menu row.
+  const keyboard=trigger===document.activeElement&&trigger.matches(':focus-visible');
+  const parentDrawer=trigger?.closest('#drawer')?{focus:restoreFocus}:drawerUnderPopover;
+  const anchor=trigger?.closest('#popover')?panelAnchor:trigger;
+  const focus=trigger?.closest('#drawer')?trigger:trigger?.closest('.overlay')?restoreFocus:trigger;
+  closeOverlay(true);restoreFocus=focus;
+  if(COMPACT_PANELS.has(name)){
+    if(parentDrawer){drawerUnderPopover=parentDrawer;$('#drawer-layer').hidden=false;$('#drawer-layer').classList.add('open');$('#drawer').inert=true;}
+    panelAnchor=anchor;S.overlay='popover';
+    const spec=PANELS[name](),panel=$('#popover');
+    const menu=!['date','temporary','delete-conversation'].includes(name)&&!CONFIRM_PANELS.has(name);
+    panel.dataset.kind=menu?'menu':'dialog';panel.setAttribute('role',menu?'menu':'dialog');
+    panel.setAttribute('aria-modal','true');panel.dataset.name=name;
+    panel.innerHTML=`<h2 id="popover-title">${spec[0]}</h2><div class="popover-content">${spec[1]}</div>`;
+    if(menu)$$('button',panel).forEach(b=>b.setAttribute('role',b.dataset.toggle?'menuitemcheckbox':'menuitem'));
+    if(anchor?.isConnected){anchor.setAttribute('aria-expanded','true');anchor.setAttribute('aria-haspopup',menu?'menu':'dialog');}
+    $('#popover-layer').hidden=false;setInert(true);positionPopover();
+    requestAnimationFrame(()=>{$('#popover-layer').classList.add('open');(keyboard?$('button,input',panel)||panel:panel).focus({preventScroll:true});});return;
+  }
+  if(parentDrawer)restoreFocus=parentDrawer.focus;
+  S.overlay='sheet';
+  const spec=PANELS[name]();$('#sheet').innerHTML=`<button class="sheet-grip" aria-label="向下拖动关闭弹层"></button><div class="sheet-heading"><h2 id="sheet-title">${spec[0]}</h2>${ib('deny','关闭弹层','data-action="close-sheet"')}</div><div class="sheet-content">${spec[1]}</div>`;
   $('#sheet-layer').hidden=false;setInert(true);requestAnimationFrame(()=>{$('#sheet-layer').classList.add('open');$('#sheet').focus({preventScroll:true});});
 }
+function positionPopover(){
+  const panel=$('#popover'),phone=$('#phone').getBoundingClientRect();
+  const rect=panelAnchor?.getBoundingClientRect();
+  const a=rect&&rect.width?{left:rect.left-phone.left,right:rect.right-phone.left,top:rect.top-phone.top,bottom:rect.bottom-phone.top}:{left:phone.width-56,right:phone.width-12,top:54,bottom:98};
+  const margin=12,gap=8,top=ms('status-height')+4,bottom=phone.height-ms('safe-bottom')-8;
+  const above=a.top-gap-top,below=bottom-a.bottom-gap;
+  panel.style.maxHeight=Math.max(44,bottom-top)+'px';
+  const height=panel.offsetHeight,up=height>below && above>below;
+  panel.style.maxHeight=Math.max(44,up?above:below)+'px';
+  const width=panel.offsetWidth,x=Math.max(margin,Math.min(a.left,phone.width-width-margin));
+  panel.style.left=x+'px';panel.style.top=(up?a.top-gap-panel.offsetHeight:a.bottom+gap)+'px';
+  panel.style.transformOrigin=`${Math.max(0,Math.min(width,(a.left+a.right)/2-x))}px ${up?'bottom':'top'}`;
+  panel.dataset.placement=up?'above':'below';
+}
+window.addEventListener('resize',()=>{if(S.overlay==='popover')positionPopover();});
 function updateFollow(){const page=cache.get('chat');if(page)$('.new-content',page).hidden=S.follow;}
 function motionProgress(progress){let low=0,high=1;for(let i=0;i<14;i++){const t=(low+high)/2;const x=3*(1-t)*(1-t)*t*.16+3*(1-t)*t*t*.3+t*t*t;if(x<progress)low=t;else high=t;}const t=(low+high)/2;return 1-Math.pow(1-t,3);}
 function follow(){const page=cache.get('chat');if(!page)return;S.follow=true;const content=$('.page-content',page),start=content.scrollTop,target=content.scrollHeight-content.clientHeight,time=performance.now();S.followAnimating=true;function frame(now){if(!S.follow){S.followAnimating=false;return;}const p=reduceMotion()?1:Math.min(1,(now-time)/ms('dur-3'));content.scrollTop=start+(target-start)*motionProgress(p);if(p<1)requestAnimationFrame(frame);else S.followAnimating=false;}requestAnimationFrame(frame);updateFollow();}
@@ -126,21 +172,23 @@ function theme(mode){S.theme=mode || (S.theme==='light'?'dark':'light');document
 function removeRow(el,message){const target=el.closest('.queue-row,.memory-item,.activity-row,.goal-block,.list-row');if(target){target.classList.add('row-exit');setTimeout(()=>target.remove(),reduceMotion()?1:ms('dur-2'));}toast(message);}
 document.addEventListener('click',e=>{
   const el=e.target.closest('button,a');if(!el || el.disabled)return;
-  if(el.dataset.reminder){S.reminderID=Number(el.dataset.reminder);openSheet('reminder-actions');return;}
+  if(el.dataset.reminder){S.reminderID=Number(el.dataset.reminder);openPanel('reminder-actions',el);return;}
   if(el.dataset.memory){S.memoryID=el.dataset.memory;S.memoryKind=({preference:'偏好',fact:'事实',review:'待核对'})[S.memoryID];cache.get('memory-detail')?.remove();cache.delete('memory-detail');go('memory-detail');return;}
   if(el.dataset.source){S.sourceMemory=el.dataset.source;cache.get('history')?.remove();cache.delete('history');go('history');return;}
   if(el.dataset.go==='library-detail' && el.closest('[data-file-type]')){S.fileType=el.closest('[data-file-type]').dataset.fileType;cache.get('library-detail')?.remove();cache.delete('library-detail');}
   if(el.dataset.go==='memory-detail' && el.dataset.kind){S.memoryKind=el.dataset.kind;cache.get('memory-detail')?.remove();cache.delete('memory-detail');}
   if(el.dataset.go){go(el.dataset.go);return;}
   if(el.dataset.tab){switchTab(el.dataset.tab);return;}
-  if(el.dataset.sheet){openSheet(el.dataset.sheet);return;}
+  if(el.dataset.panel){openPanel(el.dataset.panel,el);return;}
+  if(el.dataset.filter){const value=el.dataset.filter;closeOverlay();applySegment('对话模式',value);$$('[data-segment="对话模式"]',current).forEach(b=>b.setAttribute('aria-pressed',String(b.textContent===value)));return;}
+  if(el.dataset.sort){const byName=el.dataset.sort==='名称';closeOverlay();const rows=$$('[data-chat-kind]',current);rows.forEach((r,i)=>r.dataset.order??=String(i));rows.sort((a,b)=>byName?a.querySelector('strong').textContent.localeCompare(b.querySelector('strong').textContent,'zh-CN'):Number(a.dataset.order)-Number(b.dataset.order)).forEach(r=>r.parentElement.append(r));toast('已按'+el.dataset.sort+'排序');return;}
   if(el.dataset.metric){S.metric=el.dataset.metric;cache.get('health-detail')?.remove();cache.delete('health-detail');go('health-detail');return;}
   if(el.dataset.conversation){S.conversation=el.dataset.conversation;S.tab='chat';S.stacks.chat=['chat'];cache.get('chat')?.remove();cache.delete('chat');current=null;go('chat',{direct:true});return;}
   if(el.dataset.model){S.model=el.dataset.model;$$('.model-button span').forEach(v=>v.textContent=S.model);closeOverlay();toast('已选择 '+S.model);return;}
-  if(el.dataset.toggle){const on=el.getAttribute('aria-checked')!=='true';el.setAttribute('aria-checked',String(on));if(el.dataset.toggle==='reduce-motion')document.documentElement.dataset.reduceMotion=String(on);if(el.dataset.toggle==='health-cloud' && on){el.setAttribute('aria-checked','false');openSheet('health-cloud');}return;}
+  if(el.dataset.toggle){const on=el.getAttribute('aria-checked')!=='true';el.setAttribute('aria-checked',String(on));if(el.dataset.toggle==='reduce-motion')document.documentElement.dataset.reduceMotion=String(on);if(el.dataset.toggle==='health-cloud' && on){el.setAttribute('aria-checked','false');openPanel('health-cloud');}return;}
   if(el.dataset.segment){$$('button',el.parentElement).forEach(b=>b.setAttribute('aria-pressed',String(b===el)));applySegment(el.dataset.segment,el.textContent);return;}
   if(el.dataset.fill){go('chat');const input=$('textarea',cache.get('chat'));input.value=el.dataset.fill;input.focus();return;}
-  if(el.dataset.feedback){toast(el.dataset.feedback);return;}
+  if(el.dataset.feedback){if(S.overlay==='popover')closeOverlay();toast(el.dataset.feedback);return;}
   handleAction(el.dataset.action,el);
 });
 function handleAction(action,el){switch(action){
@@ -148,24 +196,25 @@ function handleAction(action,el){switch(action){
   case 'back':back();break;
   case 'drawer':openDrawer();break;
   case 'close-drawer':case 'close-sheet':closeOverlay();break;
-  case 'page-options':openSheet(currentRoute()==='memory-detail'?'memory-actions':currentRoute()==='goal-detail'?'goal-actions':currentRoute()==='library-detail'?'file-actions':'page-options');break;
+  case 'page-options':openPanel(currentRoute()==='memory-detail'?'memory-actions':currentRoute()==='goal-detail'?'goal-actions':currentRoute()==='library-detail'?'file-actions':'page-options',el);break;
   case 'main-chat':S.conversation='WeftMate';S.tab='chat';S.stacks.chat=['chat'];closeOverlay(true);show('chat','tab');break;
   case 'stream':case 'retry-reply':startStream();break;
   case 'send':{const ta=$('textarea',cache.get('chat'));if(S.streaming && !ta.value.trim()){finishStream(true);break;}if(!ta.value.trim()){toast('先写一句话，或添加一个附件');break;}const value=ta.value;ta.value='';startStream(value);break;}
   case 'process':{const detail=el.nextElementSibling,opening=detail.hidden;el.setAttribute('aria-expanded',String(opening));if(opening)detail.hidden=false;const height=detail.scrollHeight;detail.style.overflow='hidden';detail.getAnimations().forEach(a=>a.cancel());const animation=detail.animate(opening?[{height:'0px',opacity:0},{height:height+'px',opacity:1}]:[{height:height+'px',opacity:1},{height:'0px',opacity:0}],{duration:reduceMotion()?1:ms('dur-2'),easing:'cubic-bezier(.4,0,.2,1)'});animation.onfinish=()=>{if(!opening)detail.hidden=true;detail.style.overflow='';};break;}
   case 'follow':follow();break;
   case 'copy':{const turn=el.closest('.stream-turn')||el.closest('.page-content');const answer=$('.answer',turn);if(answer){const range=document.createRange();range.selectNodeContents(answer);getSelection().removeAllRanges();getSelection().addRange(range);toast('已选中这条回答正文，可使用浏览器复制');}}break;
-  case 'retry-page':S.state='normal';$('#state').value='normal';refresh();toast('已重新读取示例内容');break;
+  case 'copy-message':{const source=panelAnchor;closeOverlay(true);handleAction('copy',source);break;}
+  case 'retry-page':closeOverlay(true);S.state='normal';$('#state').value='normal';refresh();toast('已重新读取示例内容');break;
   case 'mark-read':$$('.unread',current).forEach(n=>n.classList.remove('unread'));el.textContent='已全部读过';$('.badge').hidden=true;toast('动态已标为已读');break;
   case 'approve':case 'reject':closeOverlay();$('.badge').hidden=true;toast(action==='approve'?'已允许这一次，示例任务继续':'已拒绝，示例任务停止');break;
   case 'answer-question':{const choices=$$('input:checked',$('#sheet')).map(n=>n.value);if(!choices.length){toast('先选择一个答案');break;}closeOverlay();toast('已提交：'+choices.join('、'));break;}
   case 'add-attachment':{closeOverlay();const p=cache.get('chat')||mount('chat');const chip=$('.attachment-chip',p);chip.hidden=false;chip.innerHTML=icon('file')+'散步路线.txt'+ib('deny','移除附件','data-action="remove-attachment"');toast('已添加示例文件');break;}
   case 'remove-attachment':el.closest('.attachment-chip').hidden=true;break;
   case 'voice-done':closeOverlay();switchTab('chat');$('textarea',cache.get('chat')).value='明天早上提醒我带水出门。';toast('语音已转成草稿，确认后发送');break;
-  case 'queue-add':S.queue.push('再给我一个雨天的备选。');openSheet('queue');break;
+  case 'queue-add':S.queue.push('再给我一个雨天的备选。');openPanel('queue');break;
   case 'queue-remove':S.queue.splice(Number(el.dataset.index),1);removeRow(el,'已撤回排队消息');break;
   case 'queue-edit':{const index=Number(el.dataset.index);closeOverlay();$('textarea',cache.get('chat')).value=S.queue.splice(index,1)[0];toast('已放回输入框修改');break;}
-  case 'temporary':S.temporary=true;closeOverlay();refresh('chat');toast('已开临时对话');break;
+  case 'temporary':S.temporary=true;closeOverlay(true);go('chat');refresh('chat');toast('已开临时对话');break;
   case 'new-chat':S.conversation='新对话';S.mode='chat';S.temporary=false;closeOverlay(true);S.tab='chat';S.stacks.chat=['chat'];refresh('chat');$('.page-content',current).innerHTML=`<div class="empty">${icon('chat')}<h2>今天想聊什么？</h2><p>接着一个想法，或者从一件小事开始。</p></div>`;break;
   case 'start-work':closeOverlay(true);S.mode='work';S.conversation='整理周末计划';S.tab='chat';S.stacks.chat=['chat'];refresh('chat');toast('已绑定示例电脑与项目');break;
   case 'set-expiry':S.temporary=true;closeOverlay();toast('自动删除：'+el.textContent.trim());break;
@@ -178,7 +227,7 @@ function handleAction(action,el){switch(action){
   case 'mute-memory':if(S.mutedIDs.has(S.memoryID))S.mutedIDs.delete(S.memoryID);else S.mutedIDs.add(S.memoryID);closeOverlay(true);refresh('memory-detail');toast(S.mutedIDs.has(S.memoryID)?'已停用这条示例记忆':'已重新启用这条示例记忆');break;
   case 'pause-goal':S.goalPaused=!S.goalPaused;closeOverlay();refresh('goal-detail');break;
   case 'complete-goal':case 'archive-goal':S.goalState=action==='complete-goal'?'complete':'archived';closeOverlay(true);go('goals');refresh('goals');toast(action==='complete-goal'?'目标已标为完成':'目标已移出列表，来源对话保留');break;
-  case 'reminder-new':S.reminderID=null;openSheet('reminder');break;
+  case 'reminder-new':S.reminderID=null;openPanel('reminder');break;
   case 'reminder-save':{const input=$('input[aria-label="提醒内容"]',$('#sheet'));if(!input.value.trim()){toast('写下要提醒的事');break;}const value={id:S.reminderID??Date.now(),text:input.value,date:$('input[type=datetime-local]',$('#sheet')).value,complete:false};const index=S.reminders.findIndex(r=>r.id===S.reminderID);if(index<0)S.reminders.unshift(value);else S.reminders[index]=value;closeOverlay(true);go('reminders');refresh('reminders');$('.reminder-list .list-row',current)?.classList.add('row-enter');toast(index<0?'已添加示例提醒':'已修改示例提醒');break;}
   case 'reminder-delete':case 'reminder-complete':{const item=S.reminders.find(r=>r.id===S.reminderID);if(action==='reminder-delete')S.reminders=S.reminders.filter(r=>r.id!==S.reminderID);else if(item)item.complete=true;closeOverlay(true);go('reminders');refresh('reminders');toast(action==='reminder-delete'?'示例提醒已删除':'示例提醒已完成');break;}
   case 'login-code':{const email=$('input[type=email]',current);if(email && !email.validity.valid){email.reportValidity();break;}if(email && !email.value){toast('先填写邮箱');break;}S.authPurpose=currentRoute();go('verify');break;}
@@ -193,7 +242,7 @@ function handleAction(action,el){switch(action){
   case 'delete-schedule':S.scheduleDeleted=true;closeOverlay(true);go('schedules');refresh('schedules');toast('示例定时任务已移除');break;
   case 'save-form':{const id=currentRoute();if(id==='change-password'){const values=$$('input',current).map(n=>n.value);if(values[1].length<8 || values[1]!==values[2]){toast('新密码至少 8 位，并且两次输入一致');break;}if(S.authPurpose==='recovery'){go('login');S.authPurpose='login';toast('示例密码已重设，可以重新登录');break;}}if(id==='change-email'){const email=$('input[type=email]',current);if(!email.value || !email.reportValidity() || !/^\d{6}$/.test($$('input',current)[1].value)){toast('请填写有效邮箱与 6 位验证码');break;}}toast('已保存到本次原型预览');break;}
   case 'forget-account':closeOverlay();go('login');toast('示例账号已退出');break;
-  case 'logout':openSheet('logout');break;
+  case 'logout':openPanel('logout',el);break;
   case 'large-type':$('#phone').classList.toggle('enlarge');toast('已切换大字号预览');break;
   case 'state-offline':S.state='offline';$('#state').value='offline';go('chat');refresh('chat');break;
   case 'date-jump':closeOverlay(true);go('history');break;
@@ -222,9 +271,10 @@ document.addEventListener('input',e=>{
   if(e.target.matches('.composer textarea')){e.target.style.height='44px';e.target.style.height=Math.min(132,e.target.scrollHeight)+'px';const send=$('[data-action=send]',current);send.setAttribute('aria-label',S.streaming && e.target.value.trim()?'排队发送':S.streaming?'停止回复':'发送消息');send.innerHTML=icon(S.streaming && !e.target.value.trim()?'stop':'send');}
 });
 document.addEventListener('keydown',e=>{
+  if(S.overlay==='popover' && ['ArrowDown','ArrowUp','Home','End'].includes(e.key) && !e.target.matches('input,textarea')){const items=$$('button:not(:disabled)', $('#popover'));const index=items.indexOf(document.activeElement);const next=e.key==='Home'?0:e.key==='End'?items.length-1:index<0?(e.key==='ArrowUp'?items.length-1:0):(index+(e.key==='ArrowDown'?1:-1)+items.length)%items.length;e.preventDefault();items[next]?.focus();}
   if(e.key==='Escape'){e.preventDefault();S.overlay?closeOverlay():back();}
   if(e.key==='Enter' && (e.ctrlKey||e.metaKey) && e.target.matches('.composer textarea')){e.preventDefault();handleAction('send');}
-  if(e.key==='Tab' && S.overlay){const panel=$('#'+S.overlay),focusable=$$('button:not(:disabled),input,textarea,select,a',panel).filter(n=>!n.hidden&&n.getClientRects().length);const first=focusable[0],last=focusable.at(-1);if(e.shiftKey && document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey && document.activeElement===last){e.preventDefault();first.focus();}}
+  if(e.key==='Tab' && S.overlay){const panel=$('#'+S.overlay),focusable=$$('button:not(:disabled),input,textarea,select,a',panel).filter(n=>!n.hidden&&n.getClientRects().length);const first=focusable[0],last=focusable.at(-1);if(document.activeElement===panel){e.preventDefault();(e.shiftKey?last:first)?.focus();}else if(e.shiftKey && document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey && document.activeElement===last){e.preventDefault();first.focus();}}
 });
 // A gesture follows the finger. Only the leading edge owns navigation gestures.
 let drag=null;
@@ -254,8 +304,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   hydrate();const params=new URLSearchParams(location.search);if(params.get('theme')==='dark')theme('dark');
   if(params.get('state')){S.state=params.get('state');$('#state').value=S.state;}
   go(params.get('page') in CATALOG?params.get('page'):'chat',{direct:true});
-  if(params.get('sheet') in SHEETS)openSheet(params.get('sheet'));
+  if(params.get('panel') in PANELS){
+    const name=params.get('panel'),fixture=PANEL_FIXTURES[name];
+    if(fixture){go(fixture[0],{direct:true});const anchor=$(fixture[1],current);anchor.scrollIntoView({block:'nearest'});openPanel(name,anchor);}
+    else openPanel(name);
+  }
   if(params.get('drawer')==='1')openDrawer();
   // Public fixture index for repeatable capture; all navigation remains available through UI.
-  window.prototypeFixtures={pages:Object.keys(CATALOG),sheets:Object.keys(SHEETS)};
+  window.prototypeFixtures={pages:Object.keys(CATALOG),sheets:Object.keys(PANELS),compact:[...COMPACT_PANELS]};
 });

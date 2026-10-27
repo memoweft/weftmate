@@ -8,10 +8,10 @@
     "row-min": "52px", "composer-max": "132px", "home-width": "134px"
   },
   "color": {
-    "light": { "canvas": "{apple.colors.controlCanvas}", "surface": "{apple.colors.controlSurface}", "ink": "{apple.colors.controlInk}", "secondary": "{apple.colors.controlSecondary}", "muted": "{apple.colors.controlMuted}", "accent": "{apple.colors.controlAccent}", "on-accent": "{apple.colors.controlOnAccent}", "soft": "{apple.colors.controlSoft}", "line": "{apple.colors.controlLine}", "scrim": "rgba(0,0,0,.26)", "glass": "rgba(250,249,247,.94)" },
-    "dark": { "canvas": "{apple.colors.controlCanvas}", "surface": "{apple.colors.controlSurface}", "ink": "{apple.colors.controlInk}", "secondary": "{apple.colors.controlSecondary}", "muted": "{apple.colors.controlMuted}", "accent": "{apple.colors.controlAccent}", "on-accent": "{apple.colors.controlOnAccent}", "soft": "#303033", "line": "#454549", "scrim": "rgba(0,0,0,.52)", "glass": "rgba(28,28,30,.94)" }
+    "light": { "canvas": "#FFFFFF", "grouped": "#F2F2F7", "surface": "#FFFFFF", "ink": "#1C1C1E", "secondary": "#48484A", "muted": "#6C6C70", "accent": "#2C2C2E", "on-accent": "#FFFFFF", "soft": "#F2F2F7", "line": "#C6C6C8", "scrim": "rgba(0,0,0,.26)", "glass": "rgba(255,255,255,.94)" },
+    "dark": { "canvas": "#000000", "grouped": "#000000", "surface": "#1C1C1E", "ink": "#F2F2F7", "secondary": "#D1D1D6", "muted": "#AEAEB2", "accent": "#E5E5EA", "on-accent": "#1C1C1E", "soft": "#2C2C2E", "line": "#38383A", "scrim": "rgba(0,0,0,.52)", "glass": "rgba(0,0,0,.94)" }
   },
   "type": { "body-leading": "1.65", "compact-leading": "1.4", "title-weight": "650", "health-score-size": "52px" },
   "motion": { "stream-ms-per-grapheme": 28, "stream-max-batch": 8, "follow-threshold": 48, "edge-width": 24, "gesture-commit": 96, "spring-response": 0.42, "spring-damping": 0.88, "spring-blend": 0.08 },
-  "shadow": { "frame": "0 24px 80px rgba(0,0,0,.16)", "sheet": "0 -8px 36px rgba(0,0,0,.12)" }
+  "shadow": { "frame": "0 24px 80px rgba(0,0,0,.16)", "sheet": "0 -8px 36px rgba(0,0,0,.12)", "popover-shadow": "0 8px 32px rgba(0,0,0,.24)" }
 }

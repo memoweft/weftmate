@@ -7,3 +7,22 @@
 .segment button{min-height:var(--s-44)}.send-button{width:var(--s-44);height:var(--s-44);min-height:var(--s-44)}.composer-context button{min-height:var(--s-44)}.process,.suggestions button,.section-title button,.notice button{min-height:var(--s-44)}.switch{height:var(--s-44);min-height:var(--s-44);width:var(--s-52);background:transparent!important}.switch:after{content:"";position:absolute;left:var(--s-4);top:var(--s-9);width:var(--s-44);height:var(--s-26);border-radius:var(--r-999);background:var(--line)}.switch[aria-checked=true]:after{background:var(--accent)}.switch:before{z-index:1;left:var(--s-7);top:var(--s-12)}
 .composer-context button,.section-title button{min-width:var(--s-44)}.answer-actions .icon-button{width:var(--s-44)}.sheet-grip{min-height:var(--s-44)}
 .health-score{font-size:var(--health-score-size)}
+.grouped-page{background:var(--grouped)}
+.phone.grouped-page .statusbar,.grouped-page .navbar{background:var(--grouped)}
+#popover-layer .scrim{background:transparent;transition:none}
+#popover{position:absolute;width:276px;max-width:calc(100% - 24px);display:flex;flex-direction:column;background:var(--surface);border-radius:var(--r-16);box-shadow:var(--popover-shadow);overflow:hidden;opacity:0;transform:scale(.92);transition:opacity var(--dur-2) var(--ease-out),transform var(--dur-2) var(--ease-out)}
+.open #popover{opacity:1;transform:scale(1)}
+#popover:focus{outline:none}
+#popover-title{font-size:var(--f-13);font-weight:500;color:var(--muted);padding:var(--s-12) var(--s-16) var(--s-8);flex:none}
+.popover-content{overflow:auto;overscroll-behavior:contain;padding:0 var(--s-16) var(--s-12)}
+.popover-content .list-row{min-height:var(--s-44);padding:var(--s-10) 0;gap:var(--s-12)}
+.popover-content .list-row:last-child{border-bottom:0}
+.popover-content .list-row .chevron{display:none}
+.popover-content .list-row strong{font-size:var(--f-15);font-weight:400}
+.popover-content .list-row small{font-size:var(--f-11)}
+.popover-content p{font-size:var(--f-14);color:var(--secondary);margin-bottom:var(--s-12)}
+.popover-content>.button.full{margin-top:var(--s-8);font-size:var(--f-14)}
+.popover-content .note{margin:var(--s-8) 0 0}
+.popover-content .field{margin:var(--s-8) 0}
+.popover-content [data-panel="delete-conversation"],.popover-content [data-panel="reminder-delete"],.popover-content [data-panel="remove-device"],.popover-content [data-panel="forget-memory"],.popover-content [data-panel="forget-source"]{color:var(--danger)}
+#popover [role^="menuitem"]:hover{background:var(--soft)}
