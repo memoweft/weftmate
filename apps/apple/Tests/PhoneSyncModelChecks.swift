@@ -61,6 +61,15 @@ import WeftMateCore
         let context=(requests.last?["messages"] as! [[String:Any]])[0]["content"] as! String
         try require(phone.messages.last?.replyStatus == .complete && context.contains("电脑记住我喜欢茉莉花茶") && context.contains("电脑离线"),"sessionless-chat-uses-copy-and-own-model")
         try require(requests.allSatisfy { $0["model"] as? String == "phone-configured" },"phone-model-independent-of-null-host-model")
+        phone.computerDirectoryChanged(hostIDs:[])
+        try require(!app.offline.ready && phone.computerMemory.isEmpty && !phone.state.threads.isEmpty,"removed-sessionless-computer-clears-copy-and-keeps-originals")
+        app.offline=OfflineChatModel()
+        await app.offline.restore(identity:identity,directory:directory,store:keys,multipleComputers:false,control:app.offlineAuthorization)
+        try require(!app.offline.ready && phone.computerMemory.isEmpty,"removed-copy-cannot-return-from-encrypted-vault")
+        // Explicitly obtain a fresh allowed fixture copy for the independent denial/account checks.
+        await app.offline.poll(session:session,client:client,directory:directory,store:keys,allowLoopback:true,phoneFirst:true,control:app.offlineAuthorization)
+        phone.computerDirectoryChanged(hostIDs:[identity.hostId])
+        try require(app.offline.ready && !phone.computerMemory.isEmpty,"fresh-fixture-copy-before-authorization-denial")
         app.authorizationAvailable=false
         await app.offline.restore(identity:identity,directory:directory,store:keys,multipleComputers:false,control:app.offlineAuthorization)
         try require(!app.offline.ready && phone.computerMemory.isEmpty,"cloud-unavailable-never-unlocks-copy")
