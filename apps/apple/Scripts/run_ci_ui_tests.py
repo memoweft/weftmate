@@ -13,7 +13,7 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-SUITES = ["WeftMateUITests", "S1cCloudUITests", "Mode2IUITests", "Apple8UITests",
+SUITES = ["IOSUISettingsUITests", "WeftMateUITests", "S1cCloudUITests", "Mode2IUITests", "Apple8UITests",
           "Apple9UITests", "Apple11UITests", "DIAG3UITests", "UPD2UITests",
           "A3TimelineUITests", "A4aApprovalUITests", "A4bResourcesUITests",
           "A4cAppearanceUITests", "IC2IconsUITests"]
@@ -122,7 +122,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--derived-data", type=Path, required=True)
-    parser.add_argument("--group", choices=["local", "host", "host-legacy", "host-modern", "cloud", "features"], default="local")
+    parser.add_argument("--group", choices=["local", "settings", "host", "host-legacy", "host-modern", "cloud", "features"], default="local")
     args = parser.parse_args()
     artifacts = args.artifacts.resolve()
     artifacts.mkdir(parents=True, exist_ok=True)
@@ -141,14 +141,14 @@ def main():
     results = []
     try:
         # Build all test sources once before starting any local services.
-        base = ["xcodebuild", "-destination", "platform=iOS Simulator,id=" + device,
+        base = ["xcodebuild", "-jobs", "4", "-destination", "platform=iOS Simulator,id=" + device,
                 "-destination-timeout", "120", "-parallel-testing-enabled", "NO",
                 "-maximum-concurrent-test-simulator-destinations", "1",
                 "-test-timeouts-enabled", "YES", "-default-test-execution-time-allowance", "600",
                 "-maximum-test-execution-time-allowance", "900"]
         code = run([*base, "-project", "WeftMate.xcodeproj", "-scheme", "WeftMatePhone",
                     "-configuration", "Debug", "-derivedDataPath", str(args.derived_data.resolve()),
-                    "-jobs", "4", "CODE_SIGNING_ALLOWED=NO", "build-for-testing"],
+                    "CODE_SIGNING_ALLOWED=NO", "build-for-testing"],
                    artifacts / "build-for-testing.log", 1200)
         if code:
             return code
@@ -184,6 +184,14 @@ def main():
                 health = start_node("h3-isolated-host.mjs", artifacts, processes, logs)["origin"]
                 return {"APPLE9_MODEL_URL": model + "/v1", "WEFTMATE_H3_HOST": health}
             batches = [("local", SUITES, local_setup)]
+        elif args.group == "settings":
+            def settings_host():
+                return {"WEFTMATE_A5_DRIVER": start_node("a5_cloud_fixture.mjs", artifacts, processes, logs)["driver"]}
+            def settings_account():
+                return {"WEFTMATE_LG2_DRIVER": start_node("lg2_cloud_fixture.mjs", artifacts, processes, logs)["driver"]}
+            batches = [("ios-settings", ["IOSUISettingsUITests"], lambda: {}),
+                       ("settings-host", ["A6SettingsUITests"], settings_host),
+                       ("settings-account", ["LG2AccountUITests"], settings_account)]
         elif args.group in ("host", "host-legacy", "host-modern"):
             host_batches = (HOST_BATCHES[:1] if args.group == "host-legacy" else
                             HOST_BATCHES[1:] if args.group == "host-modern" else HOST_BATCHES)

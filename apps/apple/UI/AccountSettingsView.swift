@@ -1,5 +1,6 @@
 import SwiftUI
 
+#if os(macOS)
 struct AccountSettingsView: View {
     @ObservedObject var cloud: CloudLoginModel
     private enum Field: Hashable { case current, password, repeated, email, code, deletion }
@@ -82,6 +83,13 @@ struct AccountSettingsView: View {
             }
     }
 }
+
+#else
+struct AccountSettingsView: View {
+    @ObservedObject var cloud: CloudLoginModel
+    var body: some View { PhoneAccountSettingsPage(cloud: cloud) }
+}
+#endif
 
 /// Cloud-only shell: the account stays usable before a trusted content host exists.
 struct CloudAccountHome: View {

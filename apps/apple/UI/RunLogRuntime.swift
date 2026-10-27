@@ -132,6 +132,7 @@ private final class EmergencyRunFailure: @unchecked Sendable {
     static func record() {
         shared.lock.lock(); defer { shared.lock.unlock() }
         guard let (root, platform, version, osVersion) = shared.configuration,
+              !FileManager.default.fileExists(atPath: root.appendingPathComponent("recording-disabled").path),
               let marker = try? JSONDecoder().decode(RunLogMarker.self, from: Data(contentsOf: root.appendingPathComponent("run-state.json"))) else { return }
         let at = RunLog.timestamp(Date())
         let object: [String: Any] = ["at": at, "event": "app.failure", "runId": marker.runId, "platform": platform.rawValue,

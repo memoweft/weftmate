@@ -46,6 +46,7 @@ final class A6SettingsUITests: XCTestCase {
         app.launchArguments = ["--ui-testing", "--ui-testing-namespace", namespace, "--server-url", ready["host"] as! String,
                                "--s1c-cloud-url", ready["cloud"] as! String, "--s1c-qr-url", driver + "/pairing.png", "--lg2-cloud", "--a5-theme", theme]
         app.launch()
+        try openSettings(app); try tap(app, "settings.accountCard")
         try fill(app, "accountEmail", credentials["email"] as! String)
         try tap(app, "accountRegistration"); try tap(app, "accountSubmit")
         try expect(app.textFields["accountCode"])
@@ -55,41 +56,33 @@ final class A6SettingsUITests: XCTestCase {
         try expect(app.textFields["accountDeviceName"]); try tap(app, "accountSubmit")
         try expect(app.textFields["accountCode"])
         try fill(app, "accountCode", try await get("/code")["code"] as! String); try tap(app, "accountSubmit")
-        try expect(app.staticTexts["已登录 WeftMate"]); _ = try await get("/bootstrap"); _ = try await get("/a7/seed-archived")
-        try tap(app, "设置 → 设备"); try tap(app, "刷新设备")
+        try expect(app.descendants(matching: .any)["signedInEmail"].firstMatch)
+        _ = try await get("/bootstrap"); _ = try await get("/a7/seed-archived")
+        try openSettings(app); try category(app, "devices"); try tap(app, "devices.refresh")
         try tap(app, "connectHost." + (ready["hostId"] as! String))
-        try expect(app.descendants(matching: .any)["cloudPairingReady"].firstMatch)
-        try tap(app, "cloudRequestApproval"); try expect(app.staticTexts["cloudWaiting"]); _ = try await get("/approve")
-        let sideList = app.descendants(matching: .any).matching(identifier: "mainChat.sideList").firstMatch
-        try expect(sideList); sideList.tap()
+        // The real connection now uses the account exchange; it has no legacy scan/approval gate.
+        try expect(app.staticTexts["已连接"])
+        if app.buttons["closeAuxiliarySheetButton"].exists { try tap(app, "closeAuxiliarySheetButton") }
+        try openSidebar(app); try tap(app, "phone.sidebar.conversations")
         try expect(app.descendants(matching: .any)["conversationList"].firstMatch)
         return (app, try await get("/a5/ids"))
     }
+    @MainActor private func openSidebar(_ app: XCUIApplication) throws {
+        let button = app.buttons["phone.sidebar"].exists ? app.buttons["phone.sidebar"] : app.buttons["phoneChat.sidebar"]
+        try expect(button); button.tap()
+    }
     @MainActor private func openSettings(_ app: XCUIApplication) throws {
-        try tap(app, "phoneAccountMenu"); try tap(app, "phoneMenu.settings")
+        if app.buttons["closeAuxiliarySheetButton"].exists { try tap(app, "closeAuxiliarySheetButton") }
+        if app.buttons["phoneAccountMenu"].exists { try tap(app, "phoneAccountMenu") }
+        else { try openSidebar(app); try tap(app, "phone.sidebar.settings") }
         try expect(app.navigationBars["设置"])
     }
     @MainActor @discardableResult private func category(_ app: XCUIApplication, _ id: String) throws -> CGRect {
-        let row = app.buttons["settingsCategory." + id]
-        let search = app.searchFields["搜索设置"]
-        // iOS 26's floating bottom search field can cover a hittable list row.
-        // Drag inside the list, then tap only a row whose centre is in its visible area.
-        let top = app.navigationBars["设置"].frame.maxY
-        for _ in 0..<12 {
-            let bottom = search.exists ? min(search.frame.minY, app.frame.maxY) : app.frame.maxY
-            if row.exists && row.isEnabled && row.isHittable && row.frame.midY > top && row.frame.maxY < bottom {
-                let frame = row.frame
-                row.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-                try expect(app.descendants(matching: .any)["settingsPage." + id].firstMatch)
-                return frame
-            }
-            let down = row.exists && row.frame.midY < top
-            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.35 : 0.65))
-            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.65 : 0.35))
-            start.press(forDuration: 0.05, thenDragTo: end)
-        }
-        XCTFail("Settings row has no unobscured tap area: " + id)
-        throw NSError(domain: "A6UI.RowVisibility", code: 1)
+        let row = app.buttons[id == "account" ? "settings.accountCard" : "settingsCategory." + id]
+        reveal(app, row); try expect(row)
+        let frame = row.frame; row.tap()
+        try expect(app.descendants(matching: .any)["settingsPage." + id].firstMatch)
+        return frame
     }
     @MainActor private func back(_ app: XCUIApplication) throws {
         let button = app.navigationBars.buttons["设置"].firstMatch; try expect(button); button.tap()
@@ -100,9 +93,9 @@ final class A6SettingsUITests: XCTestCase {
         let (app, ids) = try await launch(theme)
         defer { app.terminate() }
         try openSettings(app)
-        XCTAssertFalse(app.buttons["settingsCategory.system"].exists)
+        XCTAssertTrue(app.buttons["settingsCategory.system"].exists)
         XCTAssertFalse(app.buttons["settingsCategory.backups"].exists)
-        for id in ["general", "appearance", "account", "devices", "usage", "archived", "models", "approvals", "memory", "schedules", "about"] {
+        for id in ["general", "appearance", "account", "devices", "usage", "archived", "models", "approvals", "memory", "schedules", "system", "about"] {
             if id == "archived" {
                 let row = app.buttons["settingsCategory.archived"]
                 XCTAssertTrue(row.label.contains("1 条"), "Archive summary must show its count: " + row.label)
@@ -113,13 +106,15 @@ final class A6SettingsUITests: XCTestCase {
             try expect(app.descendants(matching: .any)["settingsPage." + id].firstMatch)
             if id == "appearance" { try expect(app.segmentedControls["appearancePicker"]); keep(app, "appearance", theme) }
             if id == "usage" { try expect(app.staticTexts["usageTotalCost"]); keep(app, "usage", theme) }
-            if id == "account" { try expect(app.staticTexts["signedInEmail"]); reveal(app, app.buttons["accountLogout"]); try expect(app.buttons["accountLogout"]) }
+            if id == "account" { try expect(app.descendants(matching: .any)["signedInEmail"].firstMatch); reveal(app, app.buttons["accountLogout"]); try expect(app.buttons["accountLogout"]) }
             if id == "devices" {
+                let menu = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "device.actions.")).firstMatch
+                reveal(app, menu); try expect(menu); menu.tap()
                 let rename = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "renameDevice.")).firstMatch
-                reveal(app, rename); try expect(rename); rename.tap()
-                let name = app.alerts.textFields.firstMatch; try expect(name); name.tap()
+                try expect(rename); rename.tap()
+                let name = app.textFields["devices.renameField"]; try expect(name); name.tap()
                 name.typeText(" 合成改名")
-                app.alerts.buttons["保存"].tap()
+                try tap(app, "devices.saveName")
                 try expect(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "合成改名")).firstMatch)
             }
             keep(app, "settings-" + id, theme)
@@ -135,16 +130,15 @@ final class A6SettingsUITests: XCTestCase {
         try await searchAndDeepLink(app, ids: ids, theme: theme)
     }
     @MainActor private func searchAndDeepLink(_ app: XCUIApplication, ids: [String: Any], theme: String = "light") async throws {
-        let search = app.searchFields["搜索设置"]
-        // Pull the native list down to reveal its searchable field.
+        let search = app.textFields["settingsSearch"]
         for _ in 0..<3 { if search.isHittable { break }; app.swipeDown() }
-        try expect(search); search.tap(); search.typeText("月度 上限")
+        try expect(search); search.tap(); search.typeText("月度 上限\n")
         XCTAssertTrue(app.buttons["settingsCategory.usage"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["settingsCategory.account"].exists)
         app.buttons["settingsCategory.usage"].tap(); try expect(app.staticTexts["usageTotalCost"])
         try back(app)
         XCTAssertEqual(search.value as? String, "月度 上限")
-        try tap(app, "关闭") // Native iOS search dismissal; restores the settings toolbar.
+        try tap(app, "清除搜索")
         try tap(app, "closeAuxiliarySheetButton")
         let row = app.descendants(matching: .any)["conversationRow." + ((ids["chatIDs"] as! [String:String])["review"]!)].firstMatch
         try expect(row); row.tap()

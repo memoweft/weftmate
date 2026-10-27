@@ -26,13 +26,29 @@ public enum AppleSettingsRegistry {
         .init(id: "backups", group: "此电脑", name: "备份与恢复", icon: "archive", keywords: ["备份", "恢复", "自动", "保留"], desktopOnly: true),
         .init(id: "about", group: "关于", name: "关于", icon: "info", keywords: ["版本", "条款", "隐私", "反馈", "更新"], desktopOnly: false)
     ]
-    private static let phoneCategories: [AppleSettingsCategory] = [
-        .init(id:"healthData",group:"设置",name:"健康数据",icon:"health",keywords:["今日解读","AI 分析","睡眠","恢复","压力","电能","体能年龄"],desktopOnly:false),
-        .init(id:"system",group:"此电脑",name:"系统状态",icon:"tool",keywords:["服务","电脑","后台模型"],desktopOnly:false)
-    ]
+    public static let phoneGroups = ["你的手机", "助手", "对话与维护"]
+    private static let phoneCategories: [AppleSettingsCategory] = {
+        let groups: [(String, [String])] = [
+            ("你的手机", ["general", "appearance", "healthData", "devices"]),
+            ("助手", ["models", "approvals", "usage", "memory", "schedules"]),
+            ("对话与维护", ["phone-chats", "archived", "system", "about"])
+        ]
+        let extra: [AppleSettingsCategory] = [
+            .init(id: "healthData", group: "你的手机", name: "健康数据", icon: "health", keywords: ["今日解读", "AI 分析", "睡眠", "恢复", "压力", "电能", "体能年龄"], desktopOnly: false),
+            .init(id: "phone-chats", group: "对话与维护", name: "手机上的对话", icon: "chat", keywords: ["原话", "历史"], desktopOnly: false)
+        ]
+        let rows = groups.flatMap { group, ids in
+            ids.map { id in
+                let source = (categories + extra).first { $0.id == id }!
+                return AppleSettingsCategory(id: id, group: group, name: id == "models" ? "模型服务" : source.name, icon: source.icon,
+                    keywords: source.keywords + (id == "about" ? ["运行", "日志", "诊断"] : []), desktopOnly: false)
+            }
+        }
+        return [categories.first { $0.id == "account" }!] + rows
+    }()
     public static func list(desktop: Bool, query: String = "") -> [AppleSettingsCategory] {
         let terms = query.lowercased().split(whereSeparator: \.isWhitespace)
-        let entries=desktop ? categories : [categories[0]] + phoneCategories + Array(categories.dropFirst())
+        let entries = desktop ? categories : phoneCategories
         return entries.filter { category in
             (!category.desktopOnly || desktop) && terms.allSatisfy {
                 ([category.name, category.group] + category.keywords).joined(separator: " ").lowercased().contains($0)

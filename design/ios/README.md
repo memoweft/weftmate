@@ -92,6 +92,8 @@ flowchart TD
 | `login` / `register` / `recovery` / `verify` | 邮箱验证码/密码、注册、找回、密码显隐/强度、六位验证与重发冷却；本机可先聊 | `UI/AuthView.swift`、`CloudAccessView.swift`、`CloudLoginModel.swift`：不同验证目的保留各自路由，不因统一视觉丢失恢复密码流程 |
 | `pairing` / `pair-confirm` | 相机权限、扫码、手动地址/码、核对两边代码、取消和稍后添加 | `iOS/PairingScannerView.swift`、`UI/DevicesView.swift`、`CloudDevicesView.swift`：扫描后先确认设备身份，连接失败有重试和继续手机聊天 |
 
+设置、账号与设备内容移植（IOS-UI-4-SETTINGS）：手机分类顺序由 `AppleSettingsRegistry.phoneGroups` 提供，首页与常规/外观/系统/关于/条款在 `UI/PhoneSettingsPages.swift`；账号表单在 `UI/PhoneAccountSettingsPage.swift`，电脑与配对在 `UI/PhoneDevicesPage.swift`，模型档案在 `UI/PhoneServiceModelProfile.swift`。沿用同一个设置导航栈，短动作复用外壳组件。Windows 只完成代码、工程生成和可运行检查；Swift 编译、真实流程与深浅色截图对照留给 Mac。配对暂时核对现有完整连接码，双方六位码需要电脑协议一起提供（[#714](https://github.com/memoweft/weftmate/issues/714)）。
+
 ## 聊天行为约定
 
 - **流式文字**：先显示已有字，再将新字按扩展字素簇追加（不能拆 emoji、组合字符）；28 ms/字素是模拟目标，每帧最多追上 8 个。每批文字只淡入 220 ms，不重排已有整段，不对整段做打字动画。真实模型 token（文字片段）的到达速度不受 UI 强行拖慢；落后时批量追上。代码块/表格先稳定容器，完成后解析对应块，不能每字重建整个 Markdown（标记文本）树。

@@ -12,13 +12,25 @@ private var serviceControlRadius: CGFloat {
     #if os(macOS)
     AppleTokens.Radius.r8
     #else
-    AppleTokens.Radius.r24
+    AppleTokens.Radius.r12
     #endif
 }
 
 /// Scoped controls-spec palette from the generated, shared token source.
 struct ServiceControlPalette {
     let dark: Bool
+    #if os(iOS)
+    var surface: Color { Weave.surface }
+    var canvas: Color { Weave.grouped }
+    var ink: Color { Weave.ink }
+    var secondary: Color { Weave.secondary }
+    var muted: Color { Weave.muted }
+    var accent: Color { Weave.accent }
+    var onAccent: Color { Weave.onAccent }
+    var line: Color { Weave.line }
+    var soft: Color { Weave.soft }
+    var shadow: Color { AppleTokens.Colors.controlShadow.opacity(AppleTokens.Opacity.controlShadowLight) }
+    #else
     var surface: Color { AppleTokens.Colors.controlSurface }
     var canvas: Color { AppleTokens.Colors.controlCanvas }
     var ink: Color { AppleTokens.Colors.controlInk }
@@ -29,6 +41,7 @@ struct ServiceControlPalette {
     var line: Color { AppleTokens.Colors.controlLine.opacity(dark ? AppleTokens.Opacity.controlLineDark : AppleTokens.Opacity.opaque) }
     var soft: Color { AppleTokens.Colors.controlSoft.opacity(dark ? AppleTokens.Opacity.controlSoftDark : AppleTokens.Opacity.opaque) }
     var shadow: Color { AppleTokens.Colors.controlShadow.opacity(dark ? AppleTokens.Opacity.controlShadowDark : AppleTokens.Opacity.controlShadowLight) }
+    #endif
 }
 struct ServiceActionStyle: ButtonStyle {
     var primary=false
@@ -36,7 +49,7 @@ struct ServiceActionStyle: ButtonStyle {
     @Environment(\.colorScheme) private var scheme
     func makeBody(configuration: Configuration) -> some View {
         let colors=ServiceControlPalette(dark:scheme == .dark)
-        configuration.label.font(.system(size:AppleTokens.FontSize.f15,weight:.medium)).foregroundStyle(primary ? colors.onAccent : colors.secondary)
+        configuration.label.font(AppleTokens.Fonts.callout.weight(.medium)).foregroundStyle(primary ? colors.onAccent : colors.secondary)
             .padding(.horizontal,AppleTokens.Space.p18).frame(minHeight:serviceControlHeight).frame(maxWidth:.infinity)
             .background(primary ? colors.accent : configuration.isPressed ? colors.soft : colors.surface,in:RoundedRectangle(cornerRadius:serviceControlRadius))
             .overlay(RoundedRectangle(cornerRadius:serviceControlRadius).stroke(primary ? .clear : colors.line,lineWidth:AppleTokens.Space.p1))
@@ -49,13 +62,17 @@ struct ServiceSwitch: View {
     @Environment(\.colorScheme) private var scheme
     var body: some View {
         let colors=ServiceControlPalette(dark:scheme == .dark)
+        #if os(iOS)
+        Toggle(title, isOn: $enabled).tint(Weave.accent).font(AppleTokens.Fonts.body)
+        #else
         Button { enabled.toggle() } label: {
             HStack {
-                Text(title).font(.system(size:AppleTokens.FontSize.f15,weight:.medium)).foregroundStyle(colors.ink);Spacer()
+                Text(title).font(AppleTokens.Fonts.body.weight(.medium)).foregroundStyle(colors.ink);Spacer()
                 Capsule().fill(enabled ? colors.accent : colors.muted).frame(width:AppleTokens.Space.pcontrol_switch_width,height:AppleTokens.Space.p26)
                     .overlay(alignment:enabled ? .trailing : .leading) { Circle().fill(enabled ? colors.onAccent : colors.surface).frame(width:AppleTokens.Space.p20,height:AppleTokens.Space.p20).padding(AppleTokens.Space.p3) }
             }.frame(minHeight:serviceControlHeight).contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityLabel(title).accessibilityValue(enabled ? "已开启" : "已关闭").accessibilityAddTraits(.isButton)
+        #endif
     }
 }
 struct ServiceMenuRow: View {
@@ -69,8 +86,8 @@ struct ServiceMenuRow: View {
         Button(action:action) {
             HStack(spacing:AppleTokens.Space.p8) {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p3) {
-                    Text(title).font(.system(size:AppleTokens.FontSize.f15,weight:.medium)).lineLimit(1).truncationMode(.middle)
-                    if let subtitle { Text(subtitle).font(.system(size:AppleTokens.FontSize.f12)).foregroundStyle(colors.muted) }
+                    Text(title).font(AppleTokens.Fonts.body.weight(.medium)).lineLimit(1).truncationMode(.middle)
+                    if let subtitle { Text(subtitle).font(AppleTokens.Fonts.caption).foregroundStyle(colors.muted) }
                 };Spacer(minLength:AppleTokens.Space.p8)
                 if selected { WeftIcon("allow",size:AppleTokens.Space.p18) }
             }.foregroundStyle(colors.ink).frame(maxWidth:.infinity,minHeight:serviceControlHeight,alignment:.leading).contentShape(Rectangle())

@@ -47,6 +47,37 @@ private func automaticTrustReply(installation: SecKey, recipient: CloudDeviceKey
 }
 
 @Suite struct CloudAuthTests {
+    @Test func pairingRequiresTheScannedInstallationKeyBeforeSavingSession() async throws {
+        let recipient = try CloudDeviceKey(softwareStore: MemoryStore())
+        func installation() -> SecKey { SecKeyCreateRandomKey([kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeySizeInBits: 256] as CFDictionary, nil)! }
+        let expected = installation(), replacement = installation()
+        let fields: [String: Any] = ["hostId": "host-one", "challenge": String(repeating: "a", count: 43),
+            "tlsSpki": String(repeating: "A", count: 43), "expiresIn": 120, "origin": "https://host.example.com",
+            "publicJwk": try ECPublicKey(publicKey: SecKeyCopyPublicKey(expected)!).parameters]
+        let pairing = try HostPairing.parse(JSONSerialization.data(withJSONObject: fields))
+        for matches in [false, true] {
+            let store = MemoryStore(), pins = HostPinStore(store: MemoryStore())
+            let transport = CloudTestTransport([try cloudReply(["nonce": "pairing-nonce"]),
+                try automaticTrustReply(installation: matches ? expected : replacement, recipient: recipient),
+                try cloudReply(["ownerId": "owner-one", "hostId": "host-one"])])
+            let client = PersonalClient(credentialStore: store, transport: transport)
+            if matches {
+                let result = try await client.exchangeCloudSession(server: ServerConfiguration(input: pairing.origin), hostID: pairing.hostId,
+                    accessToken: "synthetic", deviceName: "Synthetic", key: recipient, pairing: pairing, trustSubject: "subject-one", hostPins: pins)
+                guard case .authenticated = result else { Issue.record("Matching QR must establish a session"); return }
+            } else {
+                await #expect(throws: APIFailure.identityMismatch) {
+                    try await client.exchangeCloudSession(server: ServerConfiguration(input: pairing.origin), hostID: pairing.hostId,
+                        accessToken: "synthetic", deviceName: "Synthetic", key: recipient, pairing: pairing, trustSubject: "subject-one", hostPins: pins)
+                }
+                #expect(await client.currentSession() == nil && store.count == 0)
+            }
+            let requests = await transport.recorded()
+            #expect(requests[1].url?.path == "/personal/v1/cloud/pairings/redeem")
+            let body = try JSONSerialization.jsonObject(with: requests[1].httpBody!) as! [String: String]
+            #expect(body["challenge"] == pairing.challenge)
+        }
+    }
     @Test func automaticHostDeliveryPinsBeforePersistingAndRejectsChangedInstallation() async throws {
         let recipient = try CloudDeviceKey(softwareStore: MemoryStore())
         func installation() -> SecKey { SecKeyCreateRandomKey([kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeySizeInBits: 256] as CFDictionary, nil)! }
