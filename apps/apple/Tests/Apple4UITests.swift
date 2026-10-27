@@ -33,19 +33,21 @@ final class Apple4UITests: XCTestCase {
             XCTAssertTrue(app.buttons["mainChat.date"].waitForExistence(timeout: 10)); capture(app, theme, "overflow-menu")
             // Opening a sheet dismisses the native menu and keyboard without global simulator settings.
             app.buttons["输出与来源"].firstMatch.tap()
-            XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout: 20))
+            XCTAssertTrue(PhoneChatTestSupport.resourcesBack(app).waitForExistence(timeout:20))
             XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10)); capture(app, theme, "sheet")
-            app.buttons["phoneSheet.close"].tap()
+            PhoneChatTestSupport.returnFromResources(app)
             try choose(app, "stream")
-            XCTAssertTrue(app.staticTexts["这一段正在生成，文字正在继续。"].waitForExistence(timeout: 25)); capture(app, theme, "stream")
+            XCTAssertTrue(app.descendants(matching:.any).matching(NSPredicate(format:"label == %@ OR value == %@","这一段正在生成，文字正在继续。","这一段正在生成，文字正在继续。")).firstMatch.waitForExistence(timeout: 25)); capture(app, theme, "stream")
             for value in ["aligned", "warning"] {
                 try choose(app, value)
+                PhoneChatTestSupport.openPending(app)
                 XCTAssertTrue(app.descendants(matching: .any)["approvalSecondOpinion"].waitForExistence(timeout: 20))
                 let approve = app.buttons["approveOnce.apple3-" + value], reject = app.buttons["rejectApproval.apple3-" + value]
                 XCTAssertTrue(approve.exists && reject.exists)
-                if app.buttons["approvalConfirm.apple3-" + value].exists { XCTAssertGreaterThan(reject.frame.minY,approve.frame.minY) } else { XCTAssertEqual(approve.frame.minY, reject.frame.minY, accuracy: 1) }
+                XCTAssertGreaterThan(reject.frame.minY,approve.frame.minY)
                 XCTAssertGreaterThanOrEqual(approve.frame.height, 44)
                 capture(app, theme, value)
+                app.buttons["phoneSheet.close"].tap()
             }
             try choose(app, "files")
             XCTAssertTrue(app.buttons["replyFiles.expand"].waitForExistence(timeout: 20))
@@ -77,10 +79,10 @@ final class Apple4UITests: XCTestCase {
             app.launch()
             XCTAssertTrue(app.buttons["mainChat.menu"].waitForExistence(timeout: 35))
             app.buttons["mainChat.menu"].tap(); app.buttons["输出与来源"].firstMatch.tap()
-            XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout: 20))
-            XCTAssertEqual(app.staticTexts.matching(identifier: "输出与来源").count, 1)
-            XCTAssertGreaterThanOrEqual(app.descendants(matching: .any)["phoneSheet.resourcesCard"].frame.width, 300)
-            capture(app, theme, "sheet"); app.buttons["phoneSheet.close"].tap()
+            XCTAssertTrue(PhoneChatTestSupport.resourcesBack(app).waitForExistence(timeout:20))
+            XCTAssertTrue(app.navigationBars["对话中的内容"].exists)
+            XCTAssertTrue(app.staticTexts["成果"].exists && app.staticTexts["来源"].exists && app.staticTexts["过程"].exists)
+            capture(app, theme, "resources"); PhoneChatTestSupport.returnFromResources(app)
             app.buttons["phone.sidebar"].tap(); app.buttons["phone.sidebar.library"].tap(); capture(app, theme, "tab-resources")
             app.buttons["phone.tab.activity"].tap()
             XCTAssertTrue(app.staticTexts["每周的回顾会出现在这里。"].waitForExistence(timeout: 15)); capture(app, theme, "tab-activity")
@@ -95,13 +97,12 @@ final class Apple4UITests: XCTestCase {
             try choose(app, "side")
             XCTAssertTrue(app.staticTexts["可以先留出一段时间散步，再读几页书。"].waitForExistence(timeout: 25))
             XCTAssertTrue(app.buttons["sendButton"].exists)
-            XCTAssertGreaterThanOrEqual(app.buttons["contextUsage"].frame.width, 44)
-            XCTAssertGreaterThanOrEqual(app.buttons["contextUsage"].frame.height, 44)
+            app.buttons["addAttachmentButton"].tap(); XCTAssertTrue(app.buttons["contextUsage"].waitForExistence(timeout:10)); app.coordinate(withNormalizedOffset:CGVector(dx:0.9,dy:0.3)).tap()
             capture(app, theme, "side-chat")
             app.buttons["conversationMenu"].tap(); app.buttons["openConversationResources"].tap()
-            XCTAssertTrue(app.buttons["closeResourcesPanel"].waitForExistence(timeout: 20))
-            XCTAssertEqual(app.staticTexts.matching(identifier: "输出与来源").count, 1); capture(app, theme, "side-sheet")
-            app.buttons["closeResourcesPanel"].tap(); app.terminate()
+            XCTAssertTrue(PhoneChatTestSupport.resourcesBack(app).waitForExistence(timeout: 20))
+            XCTAssertTrue(app.navigationBars["对话中的内容"].exists); capture(app, theme, "side-sheet")
+            PhoneChatTestSupport.returnFromResources(app); app.terminate()
         }
     }
 

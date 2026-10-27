@@ -8,16 +8,23 @@ struct Apple4Fixture: View {
     @ObservedObject var health: DailyHealthModel
     @State private var ready = false
     @State private var scenario = "final"
-    private let scenarios = ["empty", "final", "stream", "aligned", "warning", "two", "long", "question", "files", "side"]
+    @State private var query = ""
+    private let scenarios = ["empty", "final", "stream", "aligned", "warning", "two", "long", "question", "files", "side", "conversations", "search", "history", "work", "projects", "resources", "task", "stream-long"]
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
             if ready {
-                HStack {
-                    Menu { ForEach(scenarios, id: \.self) { value in Button(value) { Task { await select(value) } } } }
-                        label: { Text("合成场景") }.buttonStyle(PhoneActionStyle()).accessibilityIdentifier("apple4.scenarios")
+                if !ProcessInfo.processInfo.arguments.contains("--ios-ui-2-capture") { HStack {
+                    Menu { ForEach(scenarios, id: \.self) { value in Button(value) { Task { await select(value) } } } } label: { Text("合成场景") }.buttonStyle(PhoneActionStyle()).accessibilityIdentifier("apple4.scenarios")
                     Spacer()
-                }.padding(.horizontal, AppleTokens.Space.p8)
-                if scenario == "side", let row = app.conversations.first(where: { !$0.isMainChat }) {
+                }.padding(.horizontal, AppleTokens.Space.p8) }
+                if ["conversations","search"].contains(scenario) {
+                    NavigationStack { PhoneConversationsPage(app:app,phone:app.phoneChat,query:$query) }
+                } else if scenario == "history" { NavigationStack { MainChatView(app:app,initialDate:Date()) } }
+                else if scenario == "work" { NavigationStack { PhoneNewConversation(app:app,mode:.work) } }
+                else if scenario == "projects" { NavigationStack { PhoneProjectsPage(app:app) } }
+                else if scenario == "resources" { NavigationStack { MainChatResourcesView(app:app,model:app.mainChat,embedded:true) } }
+                else if scenario == "task" { NavigationStack { PhoneTaskProcessPage(app:app,sessionID:app.mainChat.chat?.activeSessionId ?? "",events:app.mainChat.nativeEvents) } }
+                else if scenario == "side", let row = app.conversations.first(where: { !$0.isMainChat }) {
                     NavigationStack { ConversationView(model: app, conversation: row) }
                 } else { PhoneWorkspace(model: app).id(scenario) }
             } else { Text(app.authError ?? "正在连接合成账号…") }
@@ -41,6 +48,8 @@ struct Apple4Fixture: View {
         _ = try? await URLSession.shared.data(for: request)
         app.mainChat.invalidate(); await app.mainChat.configure(); await app.mainChat.read(replace: true)
         await app.refresh()
+        query=value == "search" ? "合成" : ""
+        if value == "resources" { await app.mainChat.loadResources() }
         scenario = value
     }
 }

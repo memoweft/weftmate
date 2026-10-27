@@ -8,6 +8,19 @@ import UIKit
 struct MessageBodyView: View {
     let text: String
     let messageID: String
+    var streaming = false
+    var body: some View {
+        #if os(iOS)
+        PhoneMessageBody(text: text, messageID: messageID, streaming: streaming).equatable()
+        #else
+        MessageBodyContent(text: text, messageID: messageID)
+        #endif
+    }
+}
+
+struct MessageBodyContent: View, Equatable {
+    let text: String
+    let messageID: String
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p14) {
             ForEach(MessageMarkdown.parts(text)) { part in
@@ -18,6 +31,22 @@ struct MessageBodyView: View {
                 case .code(let language):
                     MessageCodeView(code: part.text, language: language,
                                     identifier: "copyCode.\(messageID).\(part.id)")
+                case .table:
+                    let lines=part.text.components(separatedBy:"\n")
+                    let rows=([lines[0]]+Array(lines.dropFirst(2))).map(MessageMarkdown.cells)
+                    ScrollView(.horizontal) {
+                        VStack(alignment:.leading,spacing:0) {
+                            ForEach(rows.indices,id:\.self) { row in
+                                HStack(alignment:.top,spacing:AppleTokens.Space.p12) {
+                                    ForEach(rows[row].indices,id:\.self) { column in
+                                        Text(markdown(rows[row][column])).font(row == 0 ? AppleTokens.Fonts.body.weight(.semibold) : AppleTokens.Fonts.body)
+                                            .frame(width:AppleTokens.Space.p64*2,alignment:.leading).textSelection(.enabled)
+                                    }
+                                }.padding(AppleTokens.Space.p12)
+                                Divider()
+                            }
+                        }
+                    }.background(Weave.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
                 }
             }
         }

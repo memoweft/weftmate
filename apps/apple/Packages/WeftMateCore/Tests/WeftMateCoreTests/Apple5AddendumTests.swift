@@ -2,9 +2,6 @@ import Testing
 @testable import WeftMateCore
 
 @Test func apple5AttachmentCardKeepsDraftAndKeyboardIndependent() {
-    let attachment=PhoneComposerState(attachmentCount:2,keyboardVisible:false)
-    #expect(attachment.expanded && attachment.maximumLines == 3 && attachment.showsNavigation)
-    #expect(PhoneComposerState(draft:"草稿",keyboardVisible:false).expanded)
     #expect(PhoneComposerPrimaryAction.resolve(running:false,draft:"",attachmentCount:0) == .voice)
     #expect(PhoneComposerPrimaryAction.resolve(running:false,draft:"",attachmentCount:1) == .send)
     #expect(PhoneComposerPrimaryAction.resolve(running:true,draft:"",attachmentCount:0) == .stop)

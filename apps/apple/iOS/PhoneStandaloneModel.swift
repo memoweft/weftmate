@@ -130,6 +130,22 @@ import WeftMateCore
     }
     #endif
     var messages: [PhoneChatMessage] { state.threads.first { $0.id == state.selected }?.messages ?? [] }
+    /// Only an unstarted slot can be withdrawn. Persist the edit before publishing it.
+    func withdrawQueued(_ id: String, edit: Bool) {
+        var next=state
+        guard let user=next.withdrawQueuedReply(id) else { return }
+        if edit {
+            guard draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty, attachments.isEmpty else {
+                notice="先发送或清空当前草稿，再修改排队消息。"; return
+            }
+            if next.pending == nil { next.pending = .init() }
+            next.pending?.text=user.text; next.pending?.attachments=user.attachments ?? []
+        }
+        do {
+            try save(next); queuedModels.removeValue(forKey:id)
+            if edit { draft=user.text }
+        } catch { notice="排队消息没有改动，请重试。" }
+    }
     var currentModel: PhoneModelConfiguration? {
         guard var value=models.first(where: { $0.id == modelID }) ?? models.first else { return nil }
         if value.deepThinking?.supported == true { value.thinkingEnabled=thinkingEnabled };return value

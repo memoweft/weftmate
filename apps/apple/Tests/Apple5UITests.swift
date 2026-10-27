@@ -28,7 +28,7 @@ final class Apple5UITests: XCTestCase {
             capture(app,theme,"composer-multiline-above-keyboard")
             // Use the existing bounded resource sheet to finish input; the SE date popover is taller than the screen.
             app.buttons["mainChat.menu"].tap(); app.buttons["输出与来源"].firstMatch.tap()
-            XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout:15)); app.buttons["phoneSheet.close"].tap()
+            XCTAssertTrue(PhoneChatTestSupport.resourcesBack(app).waitForExistence(timeout:15)); PhoneChatTestSupport.returnFromResources(app)
             XCTAssertTrue(app.buttons["phone.tab.health"].waitForExistence(timeout:15))
             app.buttons["phone.tab.health"].tap()
             XCTAssertTrue(app.descendants(matching:.any)["health.scoreGrid"].waitForExistence(timeout:20))
