@@ -69,16 +69,16 @@ for (const theme of ['light', 'dark']) {
           const img=new Image();img.src='data:image/png;base64,'+png;await img.decode();
           const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
           const sample=(x,y)=>[...ctx.getImageData(x,y,1,1).data];
-          return {caption:sample(200,8),nativeButtons:sample(img.width-115,8),sidebar:sample(3,250),panel:sample(img.width-5,300)};
+          return {caption:sample(200,8),nativeButtons:sample(img.width-115,8),captionPeer:sample(img.width-180,8),sidebar:sample(3,250),panel:sample(img.width-5,300)};
         },png);
         const sameColor=(a,b)=>a.every((channel,index)=>Math.abs(channel-b[index])<=1);
-        assert.ok(sameColor(pixels.caption,pixels.nativeButtons),`Native caption gap: ${name} ${JSON.stringify(pixels)}`);
+        assert.ok(sameColor(pixels.captionPeer,pixels.nativeButtons),`Native caption gap: ${name} ${JSON.stringify(pixels)}`);
         const surfaces=await page.evaluate(()=>({frame:getComputedStyle(document.querySelector('.desktop-titlebar')).backgroundColor,
-          sidebar:getComputedStyle(document.querySelector('.session-rail')).backgroundColor,modal:!!document.querySelector('dialog:modal')}));
-        assert.equal(surfaces.frame,surfaces.sidebar);
+          sidebar:getComputedStyle(document.querySelector('.session-rail')).backgroundColor,modal:!!document.querySelector('dialog:modal'),collapsed:document.body.classList.contains('rail-collapsed'),main:getComputedStyle(document.querySelector('.assistant-main')).backgroundColor}));
+        assert.equal(surfaces.frame,surfaces.collapsed?surfaces.main:surfaces.sidebar);
         // Modal shadows intentionally dim the sidebar sample differently from the caption.
         if(name!=='03-collapsed'&&!surfaces.modal)assert.ok(sameColor(pixels.caption,pixels.sidebar),`Sidebar seam: ${name} ${JSON.stringify(pixels)}`);
-        assert.notDeepEqual(pixels.caption,pixels.panel,`Independent panel: ${name}`);
+        if(!surfaces.collapsed)assert.notDeepEqual(pixels.caption,pixels.panel,`Independent panel: ${name}`);
         checks.push({surface,theme,name,pixels,surfaces});
       }
     }

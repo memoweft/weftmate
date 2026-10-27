@@ -106,16 +106,16 @@ try {
     await page.evaluate(()=>progressCore.refreshSessions());assert.equal(await row.locator('.is-completed').count(),1);
   });
   await row.locator('.session-more').click();await page.getByRole('menuitemcheckbox',{name:/标记为已读/}).click();
-  await check('tooltip follows control and flips at viewport edges',async()=>{
-    await row.locator('.session-more').hover();const tip=page.getByRole('tooltip').filter({hasText:'更多操作'});await tip.waitFor();
-    const a=await row.locator('.session-more').boundingBox(),r=await tip.boundingBox();assert.ok(Math.abs(r.y+r.height-a.y-(-8))<2);
-    const flipped=await page.evaluate(()=>{const control=document.createElement('button');Object.assign(control.style,{position:'fixed',left:'8px',top:'48px',width:'32px',height:'32px'});document.body.append(control);const tip=document.querySelector('.control-tooltip');WeftPopover.position(tip,control);const r=tip.getBoundingClientRect(),a=control.getBoundingClientRect();const result=r.top>=a.bottom&&r.left>=8&&r.right<=innerWidth-8;control.remove();return result;});assert.equal(flipped,true);
+  await check('more control keeps an accessible name without an overlay over the list',async()=>{
+    await row.locator('.session-more').hover();
+    assert.match(await row.locator('.session-more').getAttribute('aria-label'),/更多操作/);
+    assert.equal(await page.locator('.control-tooltip').count(),0);
   });
   for(const theme of ['light','dark']){
     await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await page.mouse.move(1100,700);await capture('sidebar-'+theme);
     await row.locator('.session-more').click();const menu=page.getByRole('menu',{name:'对话操作',exact:true});
     await menu.waitFor();const a=await row.locator('.session-more').boundingBox(),r=await menu.boundingBox();assert.ok(Math.abs(r.y-a.y-a.height-8)<2||Math.abs(r.y+r.height-a.y+8)<2,'anchored button menu');
-    await capture('menu-'+theme);await menu.getByRole('menuitem',{name:'打开方式',exact:true}).click();await page.getByRole('menuitem',{name:'在当前窗口打开'}).waitFor();await page.keyboard.press('Escape');await page.keyboard.press('Escape');
+    await capture('menu-'+theme);assert.equal(await menu.getByRole('menuitem',{name:'打开方式',exact:true}).count(),0);await menu.getByRole('menuitem',{name:'记忆与保留',exact:true}).click();await page.getByRole('menuitemcheckbox',{name:'使用已有记忆',exact:true}).waitFor();await page.keyboard.press('Escape');await page.keyboard.press('Escape');
   }
   await check('short window menu scrolls to final memory item; header keeps first line visible',async()=>{
     await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(900,560));

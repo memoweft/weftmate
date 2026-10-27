@@ -98,7 +98,7 @@ test('publish command refuses stale generated assets before creating a release',
   await copyFile(path.join(sourceDir, uiCoreSourceAsset('model-service-catalog.mjs')), path.join(isolatedRepository, 'src/model-service-catalog.mjs'))
   for (const name of ['src/personal-access-ui/components/data.js','src/personal-access-ui/data.css','apps/mobile-ui/www/components/data.js','apps/mobile-ui/www/data.css','scripts/build-release-notes.mjs', 'src/personal-access-ui/components/help-view.js', 'src/personal-access-ui/help.css', 'apps/mobile-ui/www/components/help-view.js', 'apps/mobile-ui/www/help.css', 'src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
     'src/personal-access-ui/permission.css', 'apps/mobile-ui/www/permission.css',
-    ...['timeline.js','components/steps.js','components/artifacts.js','phone-files.js','phone-files.css','phone-pdf.js'].flatMap(name=>[`src/personal-access-ui/${name}`,`apps/mobile-ui/www/${name}`]),
+    ...['chat-process.css','timeline.js','components/steps.js','components/artifacts.js','phone-files.js','phone-files.css','phone-pdf.js'].flatMap(name=>[`src/personal-access-ui/${name}`,`apps/mobile-ui/www/${name}`]),
     'src/personal-access-ui/system-bars.js', 'apps/mobile-ui/www/system-bars.js',
     'src/personal-access-ui/components/presence.js', 'src/personal-access-ui/presence.css', 'apps/mobile-ui/www/components/presence.js', 'apps/mobile-ui/www/presence.css',
     'src/personal-access-ui/components/notifications.js', 'apps/mobile-ui/www/components/notifications.js',

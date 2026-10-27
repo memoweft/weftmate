@@ -954,7 +954,7 @@ test('synthetic conversation progress attaches to the exact dotted RPC receipt a
   assert.ok(card)
   assert.equal(rows[0].dataset.receiptId, source.receiptId)
   assert.equal(rows[1], card, 'progress belongs to the exact receipt, even when message text repeats')
-  assert.match(visibleText(card), /运行命令 · 后台运行中.*读取文件 · 执行结束/)
+  assert.match(visibleText(card), /后台运行中.*运行命令.*读取文件 · 执行结束/)
   assert.doesNotMatch(visibleText(card), /搜索内容|目标已完成|已核验|rpc:|exec-/)
   assert.equal(page.requests.some((row) => row.url.endsWith('/tasks/follow-inline')), false)
   card.children.at(-1)!.children[0].fire('click')
@@ -1011,7 +1011,7 @@ test('orphan stop observation ends its progress without inventing history or hid
   assert.equal(page.get('timeline-status').textContent, '')
   const progress = page.get('transcript').children.find((row: any) => row.querySelector('.execution-block'))
   assert.ok(progress)
-  assert.match(visibleText(progress), /处理了 1 步/)
+  assert.match(visibleText(progress), /已完成.*读取了 1 个文件/)
   assert.doesNotMatch(visibleText(progress), /失败|正在继续/)
   assert.equal(progress.dataset.running, 'false')
   assert.equal(events.some(event => event.type === 'turn.ended'), false)
@@ -1150,7 +1150,7 @@ test('synthetic cached progress becomes visibly stale and a late receipt moves i
   assert.match(visibleText(card), /后台已停止.*已停止/)
   delete taskDetails[source.commandId]
   page.tick(); for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(card), /待更新.*运行命令 · 后台已停止/)
+  assert.match(visibleText(card), /待更新.*后台已停止.*运行命令/)
   assert.doesNotMatch(visibleText(card), /电脑已核对这件事的实际停止/)
   assert.equal(page.requests.filter((row) => row.options.method === 'POST').length, 0)
 })
@@ -2029,7 +2029,7 @@ test('task15-question-client preserves native order, exact labels and drafts thr
   assert.equal(f.page.requests.filter(row=>row.options.method==='POST'&&row.url.includes('/approvals/')).length,0);
   f.questions.A[0]=questionAnswered(f.question,bodies[0].requestId,bodies[0].answer);
   post.resolve(reply({requestId:bodies[0].requestId,question:f.questions.A[0]}));for(let i=0;i<15;i++)await flush();
-  assert.equal(f.page.get('question-bar').hidden,true);assert.match(visibleText(questionCard(f.page)!),/已回答：/);assert.equal(f.page.get('message-text').value,'聊天草稿保留');
+  assert.equal(f.page.get('question-bar').hidden,true);assert.match(visibleText(questionCard(f.page)!),/选择报告说明用词。\s+已提交：\s*同意/);assert.equal(f.page.get('message-text').value,'聊天草稿保留');
 });
 
 test('task15-question-client rereads uncertainty and reuses the exact answer request without losing native acceptance', async () => {

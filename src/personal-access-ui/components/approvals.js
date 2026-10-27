@@ -150,8 +150,8 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         bar.classList.toggle('work-switch-host', row.intent === 'work-switch');
         if (row.intent === 'work-switch' && ui.renderWorkSwitch) {
             delete bar.dataset.signature;
-            if (bar.dataset.workSignature !== JSON.stringify([row, core.state.projects, core.state.computers, entry.notice, core.conversationApprovals.operations.has(row.approvalId)])) {
-                bar.dataset.workSignature = JSON.stringify([row, core.state.projects, core.state.computers, entry.notice, core.conversationApprovals.operations.has(row.approvalId)]);
+            if (bar.dataset.workSignature !== JSON.stringify([context, row, core.state.projects, core.state.computers, entry.notice, core.conversationApprovals.operations.has(row.approvalId)])) {
+                bar.dataset.workSignature = JSON.stringify([context, row, core.state.projects, core.state.computers, entry.notice, core.conversationApprovals.operations.has(row.approvalId)]);
                 ui.renderWorkSwitch(context, row, bar, !!entry.notice || !entry.authoritative || core.conversationApprovals.operations.has(row.approvalId));
             }
             return;

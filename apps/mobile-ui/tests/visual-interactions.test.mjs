@@ -40,7 +40,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
           {sessionId:'approve',source:'host',title:'整理临时文件',sendAvailable:true,attention:'approval',lastOutcome:null,modelDisplayName:'当前模型'}],
         histories:{report:[{seq:1,type:'user.message',at:now,data:{text:'整理这周的项目进展，写一份简洁的报告。'}},step(3),
           {seq:4,type:'artifact.created',at:now,data:artifact},{seq:5,type:'assistant.message',at:now,data:{text:'# 项目进展\n\n已整理本周的记录。\n\n- 完成手机审批模式\n- 统一会话与来源阅读\n- 下一步：核对跨设备体验\n\n报告已保存，点文件即可查看。'}},
-          {seq:6,type:'assistant.message',at:now,data:{text:'## 待核对\n\n保留每项工作的验证结果。\n\n'+Array(12).fill('可在原会话继续补充，相关来源也会保留。').join('\n\n')}}],
+          {seq:6,type:'assistant.message',at:now,data:{text:'## 待核对\n\n保留每项工作的验证结果。\n\n'+Array(12).fill('可在原会话继续补充，相关来源也会保留。').join('\n\n')}},{seq:7,type:'turn.ended',at:now,data:{turn:1,reason:'completed'}}],
           running:[{seq:1,type:'user.message',at:now,data:{text:'帮我安排下周的工作，先整理现有的计划。'}},{seq:2,type:'turn.started',at:now,data:{turn:1}},step(3,'running')],
           approve:[{seq:1,type:'user.message',at:now,data:{text:'整理临时文件，删除之前让我确认。'}},{seq:2,type:'approval.requested',at:now,data:{approvalId:approval.approvalId,taskId:'cmd-demo',summary:approval.reason}},
             {seq:3,type:'assistant.message',at:now,data:{text:'这三个文件已经不再使用。确认后，我会继续整理。'}}]}};
@@ -88,7 +88,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
     for(const theme of ['light','dark']){
       await page.evaluate(value=>applyTheme(value),theme);await capture(`${theme}-list.png`);
       await page.locator('#home-conversations [data-id="running"]').click();await page.locator('[data-timeline^="steps-"][data-running="true"] .execution-block > summary').waitFor();assert.equal(await page.locator('.shared-turn-state').count(),0);
-      assert.equal(await page.locator('.execution-block').evaluate(n=>n.open),false);await capture(`${theme}-running.png`);
+      assert.equal(await page.locator('.execution-block').evaluate(n=>n.open),true);await capture(`${theme}-running.png`);
       assert.equal(await page.getByRole('button',{name:'停止回复',exact:true}).isVisible(),true);await page.locator('#page-back').click();
       await page.locator('#home-conversations [data-id="approve"]').click();await page.evaluate(()=>refreshToolApprovals());
       await page.getByRole('button',{name:'批准',exact:true}).waitFor();await capture(`${theme}-approval.png`);await page.locator('#page-back').click();
@@ -126,7 +126,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
     await page.evaluate(()=>{updateComposer();renderSharedConversation()});
     assert.equal(await page.locator('#chat-content .message[data-seq="0"]').count(),1);
     await page.getByText('更早的项目记录',{exact:true}).waitFor();
-    assert.equal(await page.evaluate(()=>state.sharedNextSeq),6);
+    assert.equal(await page.evaluate(()=>state.sharedNextSeq),7);
     // A smaller visual viewport models the layout response; it does not claim an Android IME test.
     await page.setViewportSize({width:390,height:500});await page.locator('#draft').focus();
     const bounds=await page.locator('#composer-dock').boundingBox();assert.ok(bounds.y+bounds.height<=500);
