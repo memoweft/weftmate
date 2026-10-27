@@ -301,14 +301,36 @@
     setTimeout(()=>{if(!closed)document.addEventListener('pointerdown',outside)},0);
     return {menu,close};
   }
+  const autosizes = new WeakMap();
   function autosize(field) {
-    if (!field || !field.getClientRects().length) return;
-    const style=getComputedStyle(field), line=parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.6;
-    const padding=parseFloat(style.paddingTop)+parseFloat(style.paddingBottom);
-    field.rows=1;field.style.height='auto';
-    const maximum=line*8+padding;
-    field.style.height=`${Math.min(maximum,Math.max(line+padding,field.scrollHeight))}px`;
-    field.style.overflowY=field.scrollHeight>maximum?'auto':'hidden';
+    if (!field) return;
+    let state = autosizes.get(field);
+    if (!state) {
+      state = { signature: null, frame: null, width: null };
+      autosizes.set(field, state);
+      const observer = new ResizeObserver(entries => {
+        const width = entries[0].contentRect.width;
+        if (width === state.width) return;
+        state.width = width; state.signature = null; autosize(field);
+      });
+      observer.observe(field);
+      document.addEventListener('weft:personalization', () => { state.signature = null; autosize(field); });
+    }
+    const signature = JSON.stringify([field.value, field.placeholder]);
+    if (state.signature === signature) return;
+    state.signature = signature;
+    if (state.frame !== null) return;
+    state.frame = requestAnimationFrame(() => {
+      state.frame = null;
+      if (!field.isConnected || !field.getClientRects().length) { state.signature = null; return; }
+      const style=getComputedStyle(field), line=parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.6;
+      const padding=parseFloat(style.paddingTop)+parseFloat(style.paddingBottom);
+      field.rows=1;field.style.height='auto';
+      const maximum=line*8+padding;
+      const height = field.scrollHeight;
+      field.style.height=`${Math.min(maximum,Math.max(line+padding,height))}px`;
+      field.style.overflowY=height>maximum?'auto':'hidden';
+    });
   }
   function modelGate({ missing, field, send, empty, content, composer, openSettings }) {
     let card=content.querySelector(':scope > .model-empty-card'), bar=composer.querySelector(':scope > .model-required-bar');

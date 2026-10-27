@@ -176,7 +176,7 @@
           void options.readDetail(seq).then(data => {
             const args = {...globalThis.WeftUiCore.toolArguments(data.text),...(typeof data.description==='string'?{description:data.description}:{})}
             row.progressDetails.set(seq, Object.keys(args).length ? {summary: globalThis.WeftUiCore.toolSummary(step.toolName, args, block.language), arguments: args, interrupted: globalThis.WeftUiCore.interruptionFromDetail(data.text,step)} : {summary: step.summary})
-            if (row.isConnected && row.dataset.signature === signature) { delete row.dataset.signature; renderCurrent() }
+            if (row.isConnected && list.contains(row)) { delete row.dataset.signature; renderCurrent() }
           }).catch(() => { row.progressDetails.set(seq, {summary: step.summary}) })
         }
       }
@@ -251,6 +251,13 @@
       row.dataset.running = String(running)
       row.classList.toggle('has-failure', !!view.failed)
       const summary = details.querySelector('summary') || node('summary', 'inline-progress-summary')
+      if (!previous) details.addEventListener('click', event => {
+        if (event.defaultPrevented || event.target.closest?.('summary') !== summary || event.target.closest?.('a,button,input,select,textarea') || details.open) return
+        // Populate before the shared disclosure motion measures its open size.
+        details.open = true
+        delete row.dataset.signature; renderCurrent()
+        details.open = false
+      }, true)
       summary.title=[view.text,elapsed].filter(Boolean).join(' · ');
       summary.setAttribute('role', 'button')
       const text = summary.querySelector('.inline-progress-text') || node('span', 'inline-progress-text')
@@ -266,11 +273,14 @@
         summary.append(arrow)
       }
       details.progressAccessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${text.textContent}${block.language === 'en' ? details.open ? ', expanded' : ', collapsed' : details.open ? '，已展开' : '，已收起'}`) }
-      if (!previous) details.addEventListener('toggle', () => { details.progressAccessibility(); if (details.open && details.isConnected) renderCurrent() }); details.progressAccessibility()
+      if (!previous) details.addEventListener('toggle', () => { details.progressAccessibility(); if (details.open && details.isConnected && !details.querySelector('.execution-records')?.children.length) { delete row.dataset.signature; renderCurrent() } }); details.progressAccessibility()
       const records = details.querySelector('.execution-records') || node('div', 'execution-records')
       // unfold is owned by details::details-content, not a second closed grid.
       if (!summary.parentNode) details.append(summary)
       if (!records.parentNode) details.append(records)
+      // A collapsed process needs only its summary. Build its records when the
+      // reader opens it instead of mounting an entire hidden tool history.
+      if (details.open) {
       const savedGroups = new Map([...records.querySelectorAll('[data-step-group]')].map(detail => [detail.dataset.stepGroup, detail]))
       const savedNotes = new Map([...records.querySelectorAll('[data-progress-note]')].map(detail => [detail.dataset.progressNote,detail]))
       const recordNodes=WeftUiCore.groupConsecutiveSteps(block.steps).flatMap(group => /^(shell|bash|pwsh|powershell|exec_command|run_command|__progress)$/.test(group.kind) ? group.steps.map(step=>({...group,steps:[step]})) : [group]).map(group => {
@@ -316,6 +326,7 @@
         recordNodes.push(activity);
       }
       reconcile(records,recordNodes);
+      }
       const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
       if (!previous) row.replaceChildren(details)
       if(globalThis.WeftMotion?.visibility)WeftMotion.details(details);

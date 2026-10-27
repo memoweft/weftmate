@@ -2,6 +2,8 @@
 
 `layout.js` 组装左侧导航、中间对话和右侧面板；`components/` 绑定现有动作。`desktop.js` 管标签、侧栏与键盘，`workspace.css` 管三块布局和输入区外层，`design/tokens/tokens.json` 是颜色、字体、尺寸、圆角与动效的唯一来源。消息、步骤、提问、审批内容仍由各自组件呈现。
 
+桌面对话统一由 `components/main-chat.js` 按可视区和相邻一屏挂载消息；同一帧的历史、审批和输入区更新合成一次呈现。折叠的过程先画摘要，展开再建步骤。切换只保留最近八段对话的尺寸、展开状态和阅读锚点，原文仍重新读取，身份变化即清空这些位置。输入框尺寸跟随内容与宽度变化，隐藏的建议栏不测布局。回归与同条件帧采样见 `tests/integration/perf-switch.mjs`。
+
 ## 面板
 
 `index.html` 在 `desktop.js` 后加载 `panels/<kind>.js`。每个脚本调用：

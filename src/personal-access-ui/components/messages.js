@@ -225,7 +225,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 completeMessageBody(row, event, sessionId);
             }
             WeftContent.messageCompletionNotice(row, core, event, sessionId);
-            if (!event.data?.live) ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
+            if (!event.data?.live && !targetList) ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
             if (incremental && events.length <= 20 && event.type === 'assistant.message') {
                 globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-text'),'arrival');
                 globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-actions'),'arrival');

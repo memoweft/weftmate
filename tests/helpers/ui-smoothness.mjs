@@ -16,6 +16,10 @@ export async function measureUi(page, name, action, ready) {
       if (ready.kind === 'tab') return document.querySelector('.preview-tab-select[aria-selected=true]')?.textContent === ready.title;
       if (ready.kind === 'width') return Math.abs(document.querySelector('.timeline-preview').getBoundingClientRect().width - ready.before) > 2;
       if (ready.kind === 'conversation') return testCore.state.selectedSessionId === ready.id && !testCore.state.newConversation && document.getElementById('transcript').textContent.includes('报告已保存');
+      if (ready.kind === 'conversation-anchor') {
+        const row = [...document.querySelectorAll('#transcript > [data-event-id]')].find(row => row.dataset.eventId === ready.key);
+        return testCore.state.selectedSessionId === ready.id && row && Math.abs(row.getBoundingClientRect().top - document.getElementById('chat-scroll').getBoundingClientRect().top - ready.offset) < 2;
+      }
       if (ready.kind === 'draft') return testCore.state.newConversation;
       if (ready.kind === 'scroll') return document.getElementById('session-list').scrollTop !== ready.before;
       return true;
