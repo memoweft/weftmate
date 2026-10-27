@@ -39,6 +39,8 @@ WeftPanels.register('terminal', {
 
 浏览器由 `panels/browser.js` 登记，桌面通过预加载桥使用宿主 `personal-browser/desktop.mjs` 的真实 `WebContentsView`，Agent 的 `browser` 工具使用同一对话实例。`workDir` 异步补齐、执行段变化均复用原逻辑对话标签；切换上下文使旧命令响应失效。切账号仍由容器 `dispose()` 全部标签。手机和远程网页显示在电脑打开的说明。真实入口验收见 `tests/integration/desktop-browser-panel.mjs`。
 
+终端使用 `panels/terminal.js` 和现有宿主登录通道。`workDir` 为 `null` 时仍由宿主按对话的项目登记解析真实目录，异步目录更新不会重开已运行的 shell；草稿与手机原话未绑定电脑执行会话时显示说明。面板以 `ownerId`、`identityGeneration`、逻辑对话和稳定 `tabId` 隔离状态，旧结果只归属原视图。创建响应交付一个仅能关闭该终端的随机凭据，保存在实例内存中；切账号或关标签用它调用同源 `/terminals/:id/release`，不依赖新账号的 Cookie（登录会话），不授予输入或读取能力。`dispose()` 等待在途创建交付后再释放；请求断开而响应尚未交付时，宿主直接收回终端。
+
 ## 尺寸与键盘
 
 宽窗口为三列；1100px 以下只保留最后明确打开的左侧或右侧，右侧保持至少 420px 中间阅读空间。720px 以下面板为全屏子页，收起回到对话。放大占用正文区域，拖宽受中间最小宽度限制。

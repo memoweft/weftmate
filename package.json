@@ -43,12 +43,17 @@
     "beforePack": "scripts/release/installer-assets.cjs",
     "afterPack": "scripts/release/memory-runtime-after-pack.cjs",
     "asarUnpack": [
+      "node_modules/node-pty/**/*",
       "node_modules/get-windows/**/*"
     ],
     "files": [
       "src/**/*",
       "runtime/**/*",
       "package.json",
+      "!node_modules/node-pty/**/*.pdb",
+      "!node_modules/node-pty/src/**/*",
+      "!node_modules/node-pty/deps/**/*",
+      "!node_modules/node-pty/third_party/**/*",
       "!node_modules/get-windows/build/**/*"
     ],
     "extraResources": [
@@ -121,6 +126,8 @@
     "@modelcontextprotocol/sdk": "^1.32.1",
     "@root/acme": "3.1.0",
     "@root/csr": "0.8.1",
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0",
     "electron-updater": "^6.8.9",
     "get-windows": "^9.3.0",
     "ical.js": "2.2.1",
@@ -128,8 +135,10 @@
     "jose": "6.2.12",
     "mailparser": "3.9.38",
     "markdown-it": "14.3.3",
+    "node-pty": "1.1.0",
     "nodemailer": "10.1.0",
-    "tsdav": "2.4.0"
+    "tsdav": "2.4.0",
+    "ws": "8.21.3"
   },
   "overrides": {
     "@mapbox/node-pre-gyp": "2.0.3",
@@ -146,7 +155,6 @@
     "pdfjs-dist": "6.4.299",
     "playwright": "^1.63.0",
     "smtp-server": "3.19.21",
-    "typescript": "^5.9.3",
-    "ws": "^8.21.3"
+    "typescript": "^5.9.3"
   }
 }

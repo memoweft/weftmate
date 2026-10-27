@@ -86,7 +86,7 @@ export function createPersonalDesktop({ browserReader = null, computerUsageServi
   const updateStatus = next => { Object.assign(status, next); onStatus({ ...status }); };
   const trusted = event => event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame &&
     new URL(event.senderFrame.url).origin === origin && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
-  desktopSession.webRequest.onBeforeSendHeaders({ urls: [origin + '/personal/v1/*'] }, (details, callback) => {
+  desktopSession.webRequest.onBeforeSendHeaders({ urls: [origin + '/personal/v1/*', origin.replace('http:', 'ws:') + '/personal/v1/terminals/*/connect'] }, (details, callback) => {
     const localWindow = nativeWindowRequest(details, win, origin);
     callback({ requestHeaders: { ...details.requestHeaders,
       ...(localWindow ? { Origin: origin, 'X-WeftMate-Desktop': libraryDesktopToken } : {}) } });
