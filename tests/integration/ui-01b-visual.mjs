@@ -67,7 +67,7 @@ try {
     observations.push(measured);assert.equal(measured.uiFont,'14px');assert.equal(measured.navFont,'14px');assert.equal(measured.inputFont,'14px');assert.equal(measured.top,0);assert.equal(measured.launcherIcon,20);assert.ok(measured.launcherHeight>=50);assert.equal(measured.overflow,false);if(w===1280)assert.equal(measured.railWidth,256);
     await capture(`workspace-${theme}-${w}`);
   }
-  await size(390,844);await page.evaluate(()=>WeftPanels.hide(false));await page.locator('#message-text').fill('窄窗口输入');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await capture('narrow-composer');
+  await size(390,844);await page.evaluate(()=>WeftPanels.hide(false));await page.locator('#message-text').fill('窄窗口输入');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await capture('narrow-composer');await page.getByRole('button',{name:'切换会话侧栏',exact:true}).click();await rail.waitFor();await page.waitForFunction(()=>document.getElementById('session-rail').getBoundingClientRect().width===256);assert.equal(await rail.evaluate(el=>document.getElementById('rail-brand-actions').getBoundingClientRect().right<=el.getBoundingClientRect().right),true);await page.getByRole('button',{name:'切换会话侧栏',exact:true}).click();
   if(process.env.WEFTMATE_SMOOTHNESS_FILE){
     const samples=[];const panel=page.locator('.timeline-preview');
     for(const [width,height] of [[1280,800],[900,700]]){
@@ -100,6 +100,8 @@ try {
   phoneFixture=await startTimelineCandidate({historyCount:0,interactive:true,systemManager:{status:async()=>({components:[],metrics:{},queue:{}})}});
   await phoneFixture.request('/projects',{requestId:'ui01b-phone-project',name:'秋季发布与产品资料',rootPath:folder,permission:'write'});
   await phone.goto(phoneFixture.origin+'/personal/v1/ui');await localUiSession(phone,phoneFixture.credentials,'UI01B touch',{mainChat:true});
+  const phoneFilter=phone.getByRole('button',{name:'筛选最近对话',exact:true,includeHidden:true});await phoneFilter.waitFor({state:'attached'});
+  const phoneRailToggle=phone.getByRole('button',{name:'切换会话侧栏',exact:true});if(await phoneRailToggle.getAttribute('aria-expanded')!=='true')await phoneRailToggle.click();await phone.locator('#session-rail').waitFor();assert.equal(await phone.locator('#session-rail').evaluate(el=>document.getElementById('rail-brand-actions').getBoundingClientRect().right<=el.getBoundingClientRect().right),true);await phoneFilter.click();await phone.getByRole('menu',{name:'最近对话类型',exact:true}).getByRole('menuitemradio',{name:'全部',exact:true}).click();await phone.keyboard.press('Control+b');await phone.locator('#session-rail').waitFor({state:'hidden'});
   await phone.keyboard.press('Control+n');
   const phoneModes=phone.getByRole('tablist',{name:'新对话模式',exact:true});await phoneModes.waitFor();
   assert.equal(await phoneModes.evaluate(el=>el.parentElement.id),'chat-intro');

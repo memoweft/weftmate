@@ -122,7 +122,7 @@ html.weftmate-desktop:has(.assistant-active) { overflow:hidden; scrollbar-gutter
 .session-list .session-group-toggle { font-size:var(--wm-font-size-12); }
 .composer-actions .conversation-mode-switch { display:flex; flex:none; width:auto; gap:0; margin:0; padding:0; background:transparent; }
 .composer-actions .conversation-mode-switch button { display:flex; min-height:var(--wm-space-32); padding:var(--wm-space-4) var(--wm-space-6); gap:var(--wm-space-4); font-size:var(--wm-font-size-12); }
-@media(max-width:720px) { .session-rail { padding-top:var(--wm-space-12); } .weftmate-desktop .session-rail { padding-top:var(--wm-size-workspace-header); } .composer-actions .conversation-mode-switch button { font-size:0; gap:0; } .work-mode-toolbar .work-mode-hint { display:none; } }
+@media(max-width:720px) { .session-rail { --rail-width:min(var(--wm-size-sidebar),calc(100vw - var(--wm-space-52))); width:var(--rail-width); padding-top:var(--wm-space-12); } .weftmate-desktop .session-rail { padding-top:var(--wm-size-workspace-header); } .composer-actions .conversation-mode-switch button { font-size:0; gap:0; } .work-mode-toolbar .work-mode-hint { display:none; } }
 
 .session-rail .rail-message:empty { display:none; }
 .new-conversation-page #conversation-pane.chat-workspace { justify-content:center; gap:var(--wm-space-16); }

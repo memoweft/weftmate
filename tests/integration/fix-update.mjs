@@ -62,7 +62,7 @@ try {
   }
   await application.evaluate(() => globalThis.fixUpdateFixture.desktop.window.setContentSize(480, 800));
   const noticeBounds = await notice.boundingBox(), toggleBounds = await page.locator('#rail-open').boundingBox();
-  assert.ok(noticeBounds.x >= toggleBounds.x + toggleBounds.width, 'update notice must not cover the sidebar toggle in a narrow window');
+  assert.ok(noticeBounds.y >= toggleBounds.y + toggleBounds.height || noticeBounds.x >= toggleBounds.x + toggleBounds.width, 'update notice must not cover the sidebar toggle in a narrow window');
   // Exercise the production load-health callback with a failed trial and a
   // throwing rollback. The same native process must reload the bundled UI.
   await application.evaluate(() => {
