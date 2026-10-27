@@ -1,0 +1,97 @@
+// Real HTTP host + production Electron, synthetic repository, no model or daily profile.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-ui04';
+import assert from 'node:assert/strict';
+import { _electron } from 'playwright';
+import { createRequire } from 'node:module';
+import { execFileSync } from 'node:child_process';
+import { mkdtemp, mkdir, writeFile, readFile, rm, open, unlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve, relative, isAbsolute } from 'node:path';
+import { createPersonalAccessService } from '../helpers/personal-access-fixture.mjs';
+import { waitForCommand } from '../helpers/wait-for-command.mjs';
+import { bindConversationWork } from '../../src/personal-access/work-and-chat.mjs';
+import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
+
+const out = process.env.WEFTMATE_EVIDENCE_DIR, locks = process.env.WEFTMATE_HEAVY_LOCK_DIR;
+if (!out || !locks) throw Error('Set external evidence and heavy-lock directories.');
+await mkdir(out, { recursive: true });
+const root = await mkdtemp(join(tmpdir(), 'weftmate-ui04-electron-')), folder = join(root, 'work');
+const report = { productionElectron: true, hidden: true, passed: false, screenshots: [], errors: [], containerIntegrated: false };
+let host, app, lock, timeout, page;
+try {
+  for (const slot of [1, 2, 3]) {
+    const candidate = join(locks, `heavy-${slot}.lock`);
+    try { const handle = await open(candidate, 'wx'); await handle.writeFile(`UI-04-REVIEW-FILES ${new Date().toISOString()} Electron`); await handle.close(); lock = candidate; break; }
+    catch (error) { if (error.code !== 'EEXIST') throw error; }
+  }
+  if (!lock) throw Error('All heavy slots are occupied.');
+  await mkdir(folder); const git = (...args) => execFileSync('git', ['-C', folder, ...args], { windowsHide: true, encoding: 'utf8' });
+  git('init', '-q'); git('config', 'user.email', 'synthetic@example.invalid'); git('config', 'user.name', 'Synthetic'); git('config', 'core.autocrlf', 'false');
+  await writeFile(join(folder, 'README.md'), '# 合成工作目录\n\n原有内容。\n'); await mkdir(join(folder, 'src')); await writeFile(join(folder, 'src', 'example.js'), 'export const answer = 1;\n');
+  git('add', '.'); git('commit', '-qm', 'fixture'); await writeFile(join(folder, 'README.md'), '# 合成工作目录\n\n更新后的内容。\n新增一行。\n'); await writeFile(join(folder, 'notes.txt'), '待整理的合成笔记。\n');
+  const sessions = new Set();
+  const backend = { getStatus: async () => ({ runtime: 'ready', capabilities: { chat: { available: true } } }),
+    listModels: async () => [{ id: 'synthetic', configured: true, name: '合成模型' }], preflight: async () => ({}),
+    createSession: async ({ sessionId }) => { sessions.add(sessionId); return { sessionId }; },
+    describeSession: async sessionId => sessions.has(sessionId) ? { sessionId, agentPreset: 'personal-remote', modelProfileId: 'synthetic' } : null,
+    readEvents: async () => ({ events: [], nextSeq: -1, hasMore: false }), sendMessage: async () => ({}), cancelSession: async () => ({}) };
+  host = await createPersonalAccessService({ root: join(root, 'host'), port: 0, backend, uiHandler: servePersonalAccessUi });
+  const { origin, hostId } = await host.start(); await host.__testContext.activity.close();
+  let auth = { origin, 'content-type': 'application/json' };
+  const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: auth,
+    body: JSON.stringify({ grant: (await host.issueSetupGrant()).grant, username: 'SyntheticUiFour', password: 'Synthetic UI04 password', deviceName: 'Synthetic' }) });
+  assert.equal(setup.status, 201); const cookie = setup.headers.get('set-cookie').split(';')[0], csrf = (await setup.json()).csrfToken;
+  auth = { ...auth, cookie, 'x-weftmate-csrf': csrf };
+  const request = async (route, body) => { const res = await fetch(origin + '/personal/v1' + route, { method: body ? 'POST' : 'GET', headers: auth, body: body ? JSON.stringify(body) : undefined }); const data = await res.json(); assert.ok(res.ok, JSON.stringify(data)); return data; };
+  const project = (await request('/projects', { requestId: 'ui04-register', name: '合成工作目录', rootPath: folder, permission: 'write' })).project;
+  const created = (await request('/commands', { requestId: 'ui04-create', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'synthetic' })).command;
+  await waitForCommand(async () => (await request('/commands/' + created.commandId)).command);
+  const ctx = host.__testContext, ownerId = Object.keys(ctx.rootState.accounts)[0];
+  await ctx.serial(() => ctx.mutate(ownerId, next => bindConversationWork({ ...next, hostId }, created.sessionId, project.projectId)));
+  const env = { ...process.env, UI04_PROFILE: join(root, 'profile'), UI04_ORIGIN: origin, UI04_DESKTOP_TOKEN: host.libraryDesktopToken };
+  delete env.ELECTRON_RUN_AS_NODE;
+  app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: resolve('.'),
+    args: ['tests/integration/workspace-files-electron-entry.mjs', `--user-data-dir=${join(root, 'profile')}`, '--disable-backgrounding-occluded-windows'], env, timeout: 30000 });
+  timeout = setTimeout(() => { void app?.close(); void host?.close(); }, 120000);
+  page = await app.firstWindow(); page.setDefaultTimeout(12000); page.on('pageerror', error => report.errors.push(error.message));
+  await page.context().addCookies([{ name: 'wm_personal_session', value: cookie.slice(cookie.indexOf('=') + 1), url: origin }]);
+  await page.addInitScript(() => {
+    let coreModule;
+    Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true, get: () => coreModule, set(value) { coreModule = value; const original = value.create; value.create = (...args) => { globalThis.ui04Core = original(...args); return ui04Core; }; } });
+    globalThis.ui04Definitions = new Map();
+    // Before UI-01 merges, exercise the specified create(ctx) contract inside the production preview shell.
+    globalThis.WeftPanels = { services: {}, register: (kind, definition) => ui04Definitions.set(kind, definition) };
+  });
+  await page.goto(origin + '/personal/v1/ui/');
+  await page.waitForFunction(() => globalThis.__WeftUiStarted && globalThis.ui04Core?.state.csrfToken && Array.isArray(ui04Core.state.chats) && ui04Core.state.sessions?.length);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.evaluate(async sid => { await ui04Core.selectSession(sid); }, created.sessionId);
+  const panelContext = { ownerId, identityGeneration: 1, conversationId: created.sessionId, sessionId: created.sessionId, mode: 'work', computerId: hostId, projectId: project.projectId, workDir: null };
+  async function mount(kind) {
+    await page.evaluate(({ kind, ctx }) => {
+      globalThis.ui04Instance?.dispose(); WeftDesktop.closePreview(false);
+      const target = WeftDesktop.openPreview(kind === 'review' ? '审查' : '文件', document.activeElement, 'ui04-' + kind);
+      ui04Instance = ui04Definitions.get(kind).create(ctx); target.content.replaceChildren(ui04Instance.el); ui04Instance.show();
+    }, { kind, ctx: panelContext });
+  }
+  async function capture(name) { for (const theme of ['light', 'dark']) { await page.evaluate(theme => WeftDesktop.setAppearance({ theme }), theme); const file = `${name}-${theme}.png`; await page.screenshot({ path: join(out, file) }); report.screenshots.push(file); } }
+  await mount('review'); await page.getByRole('button', { name: /README.md/ }).waitFor(); await page.locator('.diff-add').first().waitFor(); await capture('review');
+  await mount('files'); await page.getByText('src', { exact: true }).click(); await page.getByRole('button', { name: 'example.js', exact: true }).click(); await page.getByRole('button', { name: '编辑文本', exact: true }).click();
+  await page.getByRole('textbox', { name: '文件文本', exact: true }).fill('export const answer = 2;\n');
+  await writeFile(join(folder, 'src', 'example.js'), 'export const external = 3;\n');
+  await page.getByRole('button', { name: '刷新文件', exact: true }).click(); await page.getByRole('button', { name: '查看新版本', exact: true }).waitFor();
+  assert.equal(await page.getByRole('textbox', { name: '文件文本', exact: true }).inputValue(), 'export const answer = 2;\n');
+  await page.getByRole('button', { name: '查看新版本', exact: true }).click(); await capture('files-conflict');
+  await page.getByRole('button', { name: '保留草稿继续编辑', exact: true }).click(); await page.getByRole('button', { name: '保存', exact: true }).click(); await page.getByText('已保存。', { exact: true }).waitFor();
+  assert.equal(await readFile(join(folder, 'src', 'example.js'), 'utf8'), 'export const answer = 2;\n'); await capture('files-saved');
+  report.passed = true; assert.deepEqual(report.errors, []);
+} catch (error) { report.failure = error.message; if (page) await page.screenshot({ path: join(out, 'failure.png') }).catch(() => {}); throw error; }
+finally {
+  clearTimeout(timeout); await app?.close().catch(() => {}); await host?.close();
+  if (lock) await unlink(lock);
+  await writeFile(join(out, 'report.json'), JSON.stringify(report, null, 2));
+  const target = resolve(root), rel = relative(resolve(tmpdir()), target);
+  if (!rel || rel.startsWith('..') || isAbsolute(rel)) throw Error('Fixture cleanup escaped temporary directory.');
+  await rm(target, { recursive: true, force: true });
+}
+console.log(JSON.stringify(report));

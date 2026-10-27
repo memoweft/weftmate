@@ -7,6 +7,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun workspaceReviewAndFilesUseConversationScopedRoutes() {
+        for (suffix in listOf("review/status", "review/diff", "files/list", "files/search", "files/read", "files/save"))
+            assertTrue(validBusinessPath("/personal/v1/workspaces/session-one/$suffix"))
+        for (route in listOf("/personal/v1/workspaces/session-one/files/delete", "/personal/v1/workspaces/browser-session/files/delete", "/personal/v1/workspaces/session-one/files/read?path=../outside", "/personal/v1/workspaces/../files/read", "/personal/v1/workspaces/session-one/review/raw", "/personal/v1/workspaces/session-one/files%2Fread"))
+            assertFalse(route, validBusinessPath(route))
+        assertTrue(businessHttpResponseLimit("/personal/v1/workspaces/session-one/files/read") >= 12 * 1024 * 1024)
+    }
     @Test fun projectFolderChangeKeepsExactProjectPath() {
         assertTrue(validBusinessPath("/personal/v1/projects/project-folder"))
         assertTrue(validBusinessMethod("/personal/v1/projects/project-folder", "PATCH"))
