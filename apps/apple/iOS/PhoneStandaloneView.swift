@@ -8,10 +8,9 @@ struct PhoneStandaloneChat: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var model: PhoneStandaloneModel
     @ObservedObject private var cloud: CloudLoginModel
-    @Binding var tab: PhoneTab
-    init(app: AppleAppModel, model: PhoneStandaloneModel, tab: Binding<PhoneTab> = .constant(.chat)) { self.app=app; self.model=model; cloud=app.cloudLogin; _tab=tab }
+    init(app: AppleAppModel, model: PhoneStandaloneModel) { self.app=app; self.model=model; cloud=app.cloudLogin }
     @State private var modelsOpen=false
-    @State private var sidebar=false
+    @Environment(\.phoneSidebar) private var sidebar
     @State private var photos=false
     @State private var importing=false
     @State private var camera=false
@@ -44,7 +43,7 @@ struct PhoneStandaloneChat: View {
     }
     @FocusState private var focused: Bool
     var body: some View {
-        NavigationStack {
+        Group {
             VStack(spacing:AppleTokens.Space.p0) {
                 if model.messages.isEmpty {
                     ScrollView {
@@ -105,16 +104,15 @@ struct PhoneStandaloneChat: View {
                             if model.busy { Button { model.stop() } label: { WeftIcon("stop") }.phoneIcon().accessibilityLabel("停止回复").accessibilityIdentifier("phoneChat.stop") }
                             Button { model.send() } label: { WeftIcon("send") }.phoneIcon(primary:true).disabled(model.draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && model.attachments.isEmpty).accessibilityLabel(model.busy ? "排队发送" : "发送").accessibilityIdentifier("phoneChat.send")
                         }
-                    }.padding(AppleTokens.Space.p12).background(Weave.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r24)).padding(AppleTokens.Space.p12)
+                    }.padding(AppleTokens.Space.p12).background(Weave.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Phone.composerRadius)).padding(AppleTokens.Space.p12)
                 }
-            }.background(Weave.canvas).allowsHitTesting(!sidebar).opacity(sidebar ? 0 : 1).navigationTitle("WeftMate").navigationBarTitleDisplayMode(.inline)
+            }.background(Weave.canvas).navigationTitle("WeftMate").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement:.principal) { VStack(spacing:AppleTokens.Space.p3) { Text("WeftMate").font(AppleTokens.Fonts.headline); Text("手机自己答的").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) } }
-                    ToolbarItem(placement:.topBarLeading) { Button { focused=false; sidebar=true } label: { WeftIcon("sidebar") }.phoneIcon().accessibilityLabel("对话列表").accessibilityIdentifier("phoneChat.sidebar") }
+                    ToolbarItem(placement:.topBarLeading) { Button { focused=false; sidebar?() } label: { WeftIcon("sidebar") }.phoneIcon().accessibilityLabel("对话列表").accessibilityIdentifier("phoneChat.sidebar") }
                     ToolbarItem(placement:.topBarTrailing) { PhoneAccountMenu(model:app) }
                 }
                 .navigationDestination(isPresented:$modelsOpen) { PhoneModelsView(model:model) }
-                .overlay(alignment:.leading) { if sidebar { PhoneLocalDrawer(app:app,model:model,tab:$tab,close:{sidebar=false}) } }
         }.fileImporter(isPresented:$importing,allowedContentTypes:[.item],allowsMultipleSelection:true,onCompletion:fileCompletion)
         .photosPicker(isPresented:$photos,selection:$selection,maxSelectionCount:PhoneAttachment.imageCount,matching:.images)
         .onChange(of:selection) { _,items in
@@ -164,7 +162,7 @@ struct PhoneStandaloneChat: View {
         { result in Task { @MainActor in complete(result) } }
     }
     private var plusMenu: some View {
-        Menu {
+        PhoneActionMenu {
             Button(model.currentModel?.supportsImages == false ? "拍照 · 当前模型看不了图片" : "拍照",image:ImageResource(name:"wm-camera",bundle:.main)) { openCamera() }.disabled(model.currentModel?.supportsImages == false).accessibilityIdentifier("phoneChat.camera")
             Button(model.currentModel?.supportsImages == false ? "照片图库 · 当前模型看不了图片" : "照片图库",image:ImageResource(name:"wm-image",bundle:.main)) { captureScope();photos=true }.disabled(model.currentModel?.supportsImages == false).accessibilityIdentifier("phoneChat.photos")
             Button("文件",image:ImageResource(name:"wm-file",bundle:.main)) { captureScope();importing=true }
@@ -180,49 +178,6 @@ struct PhoneStandaloneChat: View {
                 }
             }
         }
-    }
-}
-struct PhoneLocalDrawer: View {
-    @ObservedObject var app: AppleAppModel
-    @ObservedObject var model: PhoneStandaloneModel
-    @Binding var tab: PhoneTab
-    var close: () -> Void
-    @State private var search=""
-    @AppStorage("phone.conversationMode") private var savedMode="chat"
-    private var mode: ConversationMode { ConversationMode(rawValue:savedMode) ?? .chat }
-    private var modeBinding: Binding<ConversationMode> { Binding(get:{mode},set:{savedMode=$0.rawValue}) }
-    var body: some View {
-        ZStack(alignment:.leading) {
-            Color.black.opacity(0.65).ignoresSafeArea().onTapGesture(perform:close).accessibilityLabel("关闭侧栏")
-            VStack(spacing:AppleTokens.Space.p12) {
-                HStack { Text("WeftMate").font(AppleTokens.Fonts.headline); Spacer(); PhoneAccountMenu(model:app); Button(action:close) { WeftIcon("deny") }.phoneIcon().accessibilityLabel("关闭侧栏") }.padding(AppleTokens.Space.p16)
-                PhoneConversationModes(selection:modeBinding)
-                if app.session != nil {
-                    Button("打开电脑对话与任务") { app.openedSessionID=nil;close() }
-                        .buttonStyle(OutlineActionStyle()).accessibilityIdentifier("phoneChat.computer")
-                }
-                ScrollView {
-                    VStack(alignment:.leading,spacing:AppleTokens.Space.p4) {
-                        ForEach(PhoneTab.allCases) { item in
-                            Button { tab=item; close() } label: { HStack(spacing:AppleTokens.Space.p12) { WeftIcon(item.icon); Text(item.title); Spacer(minLength:AppleTokens.Space.p0) }.frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p44,alignment:.leading).padding(.horizontal,AppleTokens.Space.p12).background(tab == item ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12)) }.buttonStyle(.plain)
-                        }
-                        if mode == .work, app.cloudLogin.authenticated, app.offline.hostOffline, app.offline.workSnapshot?.taskRecipient != nil, app.cloudLogin.offlineWorkAuthorization?.supportsTasks == true { PhoneOfflineWork(app:app) }
-                        else if mode == .work { Text(WorkAndChat.noComputer).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).padding(AppleTokens.Space.p12) }
-                        else {
-                        if app.cloudLogin.multipleComputers { ComputerConversationList(cloud:app.cloudLogin,query:search,close:close) }
-                        Text("手机上的对话").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p12)
-                        ForEach(model.state.threads.filter { search.isEmpty || $0.title.localizedCaseInsensitiveContains(search) }) { thread in
-                            Button { model.select(thread.id); app.openedSessionID=thread.id; close() } label: { HStack(spacing:AppleTokens.Space.p12) { WeftIcon("chat"); Text(thread.title).lineLimit(2); Spacer(minLength:AppleTokens.Space.p0) }.frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p44,alignment:.leading).padding(.horizontal,AppleTokens.Space.p12).background(thread.id == model.state.selected ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12)) }.buttonStyle(.plain)
-                        }
-                        }
-                    }.padding(.horizontal,AppleTokens.Space.p12)
-                }
-                HStack(spacing:AppleTokens.Space.p8) {
-                    HStack { WeftIcon("search"); TextField("搜索对话",text:$search).textFieldStyle(.plain) }.padding(.horizontal,AppleTokens.Space.p12).frame(minHeight:AppleTokens.Space.p44).background(Weave.surface,in:Capsule())
-                    Button { model.newThread(); app.openedSessionID=model.state.selected; close() } label: { WeftIcon("plus") }.phoneIcon().accessibilityLabel("新建对话").accessibilityIdentifier("phoneChat.new").disabled(mode == .work)
-                }.padding(AppleTokens.Space.p12)
-            }.frame(maxWidth:320).background(Weave.soft)
-        }.gesture(DragGesture().onEnded { value in if value.translation.width < -50 { close() } })
     }
 }
 struct PhoneModelsView: View {

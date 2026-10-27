@@ -64,9 +64,9 @@ final class Apple6UITests: XCTestCase {
         try tap(app,"phoneChat.copy");try tap(app,"phoneChat.regenerate")
         try expect(app.buttons["phoneChat.send"]);try await Task.sleep(for:.milliseconds(400));try tap(app,"phoneChat.send")
         try expect(app.staticTexts["已停止，已收到的内容保留。"]);try await shot(app,theme+"-stopped")
-        for label in ["动态","健康","目标","成果库","聊天"] {
-            let button=app.buttons["phone.tab."+["聊天":"chat","动态":"activity","健康":"health","目标":"goals","成果库":"resources"][label]!];try expect(button);button.tap();XCTAssertTrue(button.isSelected)
-            try await shot(app,theme+"-tab-"+["动态":"activity","健康":"health","目标":"goals","成果库":"library","聊天":"chat"][label]!)
+        for label in ["动态","健康","聊天"] {
+            let button=app.buttons["phone.tab."+["聊天":"chat","动态":"activity","健康":"health"][label]!];try expect(button);button.tap();XCTAssertTrue(button.isSelected)
+            try await shot(app,theme+"-tab-"+["动态":"activity","健康":"health","聊天":"chat"][label]!)
         }
         try tap(app,"phoneChat.sidebar");try await shot(app,theme+"-sidebar")
         app.buttons["关闭侧栏"].firstMatch.tap()
@@ -107,7 +107,7 @@ final class Apple6UITests: XCTestCase {
             try await shot(app,theme+"-health-vitals")
             try tap(app,"phone.tab.chat");try tap(app,"phone.sidebar")
             try expect(app.buttons["phone.sidebar.close"]);try await shot(app,theme+"-connected-sidebar")
-            XCTAssertTrue(app.otherElements["phone.bottomTabs"].exists);try tap(app,"phone.sidebar.close")
+            XCTAssertFalse(app.buttons["phone.tab.chat"].isHittable);try tap(app,"phone.sidebar.close")
             try tap(app,"phoneAccountMenu");try await shot(app,theme+"-connected-settings-zero-cost")
             app.terminate()
         }

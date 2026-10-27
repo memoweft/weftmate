@@ -1129,10 +1129,6 @@ final class AppleAppModel: ObservableObject {
     var canDeleteConversation: Bool { !lifecycleBusy && (!forgetConversationMemories || conversationForget.canConfirm) }
 
     @Published var deletionInSettings = false
-    @Published var sessionMenuCandidate: ConversationSummary?
-    #if os(iOS)
-    @Published var temporaryExpiryCandidate: ConversationSummary?
-    #endif
     @Published var deletionCandidate: ConversationSummary?
     @Published var forgetConversationMemories = false
     @Published var lifecycleBusy = false
@@ -1723,7 +1719,6 @@ final class AppleAppModel: ObservableObject {
             taskControlSessions = try await client.taskControlSessionIDs(includeArchived: true)
             guard actionEpoch == epoch else { return }
             conversations = result
-            if let candidate = sessionMenuCandidate { sessionMenuCandidate = result.first { $0.id == candidate.id } }
             for row in result where !row.temporaryState.cacheAllowed { await clearLocalHistory(row) }
             if let selectedConversation {
                 if let updated = result.first(where: { $0.id == selectedConversation.id }) {
@@ -2327,10 +2322,7 @@ final class AppleAppModel: ObservableObject {
         timelineRootCommands = []; stoppingActiveTask = false
         subtaskStepTarget = nil; thinking = .init(); thinkingConversation = nil; thinkingError = nil; archiveUndo = nil; hoveredSession = nil; expandedProjectRows = []; projectThinking = false; projectCreatedSessionID = nil
         projects = []; projectCanManage = false; projectsError = nil; projectEditor = nil; projectConversation = nil; projectModels = []; projectBusy = false; projectError = nil; executionAccount = nil; sessionProjectNotices = [:]; collapsedProjects = []
-        sessionGroups = []; collapsedSessionGroups = []; openedSessionID = nil; phoneLibrarySelection = nil; renamingSessionID = nil; groupCandidate = nil; sessionMenuCandidate = nil; deletionInSettings = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
-        #if os(iOS)
-        temporaryExpiryCandidate = nil
-        #endif
+        sessionGroups = []; collapsedSessionGroups = []; openedSessionID = nil; phoneLibrarySelection = nil; renamingSessionID = nil; groupCandidate = nil; deletionInSettings = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
         queueNotice = nil; queueBusy = []; queueCancelRequests = [:]; canceledQueuedTasks = []
         attachmentDrafts.values.flatMap { $0 }.forEach { $0.removeTemporaryFiles() }
         attachmentDrafts = [:]; attachmentAttempts = [:]; attachmentMessageIDs = [:]; attachmentSessionIDs = [:]

@@ -1,5 +1,6 @@
 #if DEBUG && targetEnvironment(simulator)
 import SwiftUI
+import UIKit
 import UserNotifications
 import WeftMateCore
 
@@ -18,6 +19,7 @@ struct PhoneReminderTestFixture: View {
 
             } else { ProgressView("准备提醒检查…") }
         }.preferredColorScheme(dark ? .dark : .light)
+            .environment(\.accessibilityReduceMotion, UIAccessibility.isReduceMotionEnabled || ProcessInfo.processInfo.arguments.contains("--ios-ui-reduce-motion"))
             .overlay(alignment:.top) { Text("setup="+setupPhase+" "+systemStatus).font(AppleTokens.Fonts.caption2).accessibilityIdentifier("reminders.systemEvidence") }
             .task {
                 await app.start();setupPhase="restored";app.phoneChat.activate(app:app)

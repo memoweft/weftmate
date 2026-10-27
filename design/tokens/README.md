@@ -129,6 +129,8 @@ Windows 外壳使用 `shared.size.sidebar`（232px）和 `reading`（760px）；
 
 `apps/apple/Scripts/generate_project.py` 把 `design/tokens/generated/apple/DesignTokens.swift` 作为三个原生 App 的共享编译源，工程不复制它，也不手改生成文件。先在根目录运行 `npm run tokens:generate`，新增工程源文件时再运行 `python3 apps/apple/Scripts/generate_project.py`；两者可重复生成，`--check` 校验 Swift 与 JSON 和其他平台产物。
 
+iPhone 已认可的增量来自 `ios-prototype.json`：生成器只在 iOS 条件分支使用系统背景与中性文字色，并输出 `AppleTokens.Phone` 的几何、字号与侧栏弹簧参数；Apple JSON 同时携带 `ios` 源值供核对。macOS、Watch、安卓与网页仍使用基础色板。原生调用、公共菜单和弹层用法见 `design/ios/README.md`。
+
 | 母版 / Swift 引用 | 保留的行为 |
 |---|---|
 | `apple.colors` → `AppleTokens.Colors` → `Weave` | A4c 实际使用的 12 对浅深颜色；继续使用原来的 `NSColor` / `UIColor` 动态提供器和 RGB / 255 转换，响应浅色、深色和系统外观 |
