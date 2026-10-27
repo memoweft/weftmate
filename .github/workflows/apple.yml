@@ -43,6 +43,11 @@ jobs:
         run: |
           set -o pipefail
           swift test --package-path Packages/WeftMateCore --scratch-path "$RUNNER_TEMP/apple-core" --jobs 2 2>&1 | tee "$RUNNER_TEMP/apple-results/core.log"
+      - name: Window project and process checks
+        run: |
+          python3 -m unittest discover -s Tests -p 'test_window_*.py'
+          python3 Scripts/generate_project.py
+          git diff --exit-code -- WeftMate.xcodeproj
       - name: Standalone state checks
         id: state
         if: ${{ !cancelled() }}

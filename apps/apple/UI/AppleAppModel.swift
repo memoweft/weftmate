@@ -769,19 +769,45 @@ final class AppleAppModel: ObservableObject {
         #endif
         return try await cloudLogin.offlineAuthorization(hostID: hostID)
     }
+    func refreshMemoryReplicaAfterMutation() async {
+        #if os(iOS)
+        do { try offline.invalidateMemory();try phoneChat.refreshComputerMemory() }
+        catch { authError="电脑操作已生效，手机副本清理待重试。" }
+        await pollOffline()
+        #endif
+    }
     func pollOffline() async {
-        guard let session, let directory = timelineStateDirectory else { return }
+        guard let directory = timelineStateDirectory else { return }
+        let offlineDirectory=directory.appendingPathComponent("Offline")
+        let offlineKeys=KeychainCredentialStore(service:cloudNamespace+".offline")
+        guard let session else {
+            #if os(iOS)
+            phoneChat.activate(app:self)
+            do {
+                if let identity=try cloudLogin.savedOfflineIdentity(),phoneChat.permitsComputerReplica(identity.hostId) {
+                    await offline.restore(identity:identity,directory:offlineDirectory,store:offlineKeys,allowLoopback:permitsSyntheticLoopback,multipleComputers:cloudLogin.multiHost,control:offlineAuthorization)
+                } else { offline.suspend() }
+            } catch { offline.suspend() }
+            phoneChat.activate(app:self)
+            #endif
+            return
+        }
         #if os(iOS)
         let phoneFirst=true
+        phoneChat.activate(app:self)
+        guard phoneChat.permitsComputerReplica(session.hostId) else { offline.removeComputer(session.hostId);return }
+        let transcriptExclusions=phoneChat.state.transcriptSync
         let supportsWork=mainChat.capabilities.supports("workAndChat")
         #else
         let phoneFirst=false
+        let transcriptExclusions: PhoneTranscriptSync?=nil
         let supportsWork=false
         #endif
-        await offline.poll(session: session, client: client, directory: directory.appendingPathComponent("Offline"),
-            store: KeychainCredentialStore(service: cloudNamespace + ".offline"),
-            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, multipleComputers:cloudLogin.multiHost, workAndChat:supportsWork, control: offlineAuthorization)
+        await offline.poll(session: session, client: client, directory: offlineDirectory,
+            store: offlineKeys,
+            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, multipleComputers:cloudLogin.multiHost, workAndChat:supportsWork, transcriptExclusions:transcriptExclusions, control: offlineAuthorization)
         #if os(iOS)
+        if self.session == session { try? cloudLogin.rememberOfflineIdentity(session) }
         await phoneChat.synchronize(app:self)
         if offline.hostOffline { _ = await watchSnapshotBytes() }
         #endif
@@ -1642,7 +1668,11 @@ final class AppleAppModel: ObservableObject {
     }
 
     func removeComputerReplica(_ host: String) {
+        #if os(iOS)
+        phoneChat.computerRemoved(host)
+        #endif
         offline.removeComputer(host)
+        try? cloudLogin.forgetOfflineIdentity(hostID:host)
         guard let directory=timelineStateDirectory else { return }
         do { try OfflineVault.clearComputer(hostID:host,directory:directory.appendingPathComponent("Offline"),store:KeychainCredentialStore(service:cloudNamespace+".offline")) }
         catch { authError="这台电脑的手机副本没能清除，请重试。" }
@@ -2438,6 +2468,24 @@ private final class CaptureCredentials: CredentialStore, @unchecked Sendable {
     func load(key: String) -> Data? { lock.withLock { values[key] } }
     func save(_ data: Data, key: String) { lock.withLock { values[key] = data } }
     func delete(key: String) { lock.withLock { values[key] = nil } }
+}
+#endif
+
+#if DEBUG && os(iOS)
+extension AppleAppModel {
+    func seedPhoneWindowFixture(scene: String) throws {
+        let args=ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"),args.contains("--phone-window-fixture") else { return }
+        if scene != "no-copy" {
+            let value: [String:Any] = ["server":["origin":"https://window.example.invalid"],
+                "account":["ownerId":"window-owner","username":"synthetic","displayName":"合成账号"],
+                "device":["id":"window-device","name":"苹果测试"],"hostId":"window-computer","verification":"verified"]
+            session=try JSONDecoder().decode(AccountSession.self,from:JSONSerialization.data(withJSONObject:value))
+            cloudLogin.seedPhoneWindowAccount()
+            try offline.seedPhoneWindowReplica(disconnected:scene == "unreachable")
+        }
+        restoring=false
+    }
 }
 #endif
 
