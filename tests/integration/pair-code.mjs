@@ -74,6 +74,18 @@ try {
   offset=0;await page.locator('#pairing-restart').click();await page.waitForFunction(()=>document.getElementById('pairing-code').value.startsWith('wm1.'));
   const closed=JSON.parse(Buffer.from((await page.locator('#pairing-code').inputValue()).slice(4),'base64url').toString());await page.keyboard.press('Escape');
   await page.locator('#pairing-dialog').waitFor({state:'hidden'});assert.equal((await fixture.request('/cloud/pairings/status',{challenge:closed.challenge})).state,'cancelled');
+  const old=await start();let releaseCancellation, cancellationReceived;
+  const cancelledAtServer=new Promise(resolve=>{cancellationReceived=resolve;}),release=new Promise(resolve=>{releaseCancellation=resolve;});
+  const decisionRoute=async route=>{const response=await route.fetch();cancellationReceived();await release;await route.fulfill({response});};
+  await page.route('**/personal/v1/cloud/pairings/decision',decisionRoute);
+  await page.evaluate(()=>{globalThis.pairCodeOldCancellation=testUi.cloudUi.cancel();});await cancelledAtServer;
+  const newer=await start();assert.notEqual(old.challenge,newer.challenge);
+  releaseCancellation();await page.evaluate(()=>pairCodeOldCancellation);await page.unroute('**/personal/v1/cloud/pairings/decision',decisionRoute);
+  assert.equal(await page.locator('#pairing-dialog').evaluate(el=>el.open),true,'old cancellation must not close a newer dialog');
+  assert.ok((await page.locator('#pairing-code').inputValue()).startsWith('wm1.'));
+  await page.evaluate(()=>testCore.clearSession());
+  await page.locator('#pairing-dialog').waitFor({state:'hidden'});assert.equal(await page.locator('#pairing-code').inputValue(),'');
+  assert.equal(await page.locator('#pairing-number').textContent(),'—');
   assert.deepEqual(errors,[]);
   const result={protocol:'v2 commit-reveal',independentPhoneCode:code,realRequests:true,states:['waiting','comparing','confirmed','completed','cancelled','expired'],themes:['light','dark'],pageErrors:errors};
   if(process.env.WEFTMATE_EVIDENCE_DIR)await writeFile(join(process.env.WEFTMATE_EVIDENCE_DIR,'ui-result.json'),JSON.stringify(result,null,2));

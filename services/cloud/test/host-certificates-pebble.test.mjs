@@ -123,6 +123,8 @@ test(`Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
         try { return (await readFile(path.join(hostRoot,'relay/frpc.toml'),'utf8')).includes('localPort'); } catch { return false; }
       }, 'certificate and TLS adapter installed');
       const pairing = (await direct('/cloud/pairings',{},auth)).data;
+      // Certificate preview must not leave an active desktop-confirmation gate.
+      assert.equal((await direct('/cloud/pairings/decision',{challenge:pairing.challenge,decision:'cancel'},auth)).data.state,'cancelled');
       const domain = new URL(pairing.relay.baseUrl).hostname;
       const original = await readFile(certFile);
       assert.equal(tlsSpki(original),pairing.tlsSpki);

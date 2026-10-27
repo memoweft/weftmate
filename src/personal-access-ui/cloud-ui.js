@@ -19,22 +19,24 @@
       $('pairing-panel').remove(); document.body.append(dialog);
       const pairingRequest = (action, body, challenge = activePairing?.challenge) => accessApi('/cloud/pairings/' + action,
         { method: 'POST', protectedWrite: true, body: { challenge, ...body } });
-      function clearPairing() { pairingGeneration++; clearTimeout(pairingTimer); clearInterval(pairingClock); activePairing = null; $('pairing-code').value = ''; $('pairing-qr').removeAttribute('src'); }
+      function clearPairing() { pairingGeneration++; clearTimeout(pairingTimer); clearInterval(pairingClock); activePairing = null;
+        $('pairing-code').value = ''; $('pairing-qr').removeAttribute('src'); $('pairing-number').textContent = '—'; $('pairing-device').textContent = ''; $('pairing-countdown').textContent = ''; }
       async function stopPairing() {
         if (closingPairing) return closingPairing;
         const challenge = activePairing?.challenge;
-        const ticket = ++pairingGeneration; clearTimeout(pairingTimer); clearInterval(pairingClock); $('pairing-confirm').disabled = true;
+        const ticket = ++pairingGeneration; clearTimeout(pairingTimer); $('pairing-confirm').disabled = true;
         closingPairing = (async () => {
           // Keep the cancellation visible and retryable if the server cannot receive it.
           if (challenge && !['completed','cancelled','expired'].includes(pairingState)) {
             try { await pairingRequest('decision', { decision: 'cancel' }, challenge); }
-            catch (error) { $('pairing-error').textContent = message(error); void pollPairing(ticket); return false; }
+            catch (error) { if (ticket === pairingGeneration) { $('pairing-error').textContent = message(error); void pollPairing(ticket); } return false; }
           }
-          clearPairing(); dialog.close(); return true;
+          if (ticket === pairingGeneration) { clearPairing(); dialog.close(); } return true;
         })();
         try { return await closingPairing; } finally { closingPairing = null; }
       }
-      function cancel() { generation++; clearTimeout(waitTimer); stopPairing(); if (client) void client.forget().catch(() => {}); client = null; }
+      function cancel() { generation++; clearTimeout(waitTimer); const closing = stopPairing(); clearPairing(); dialog.close();
+        if (client) void client.forget().catch(() => {}); client = null; return closing; }
       function failure(error) {
         const code = error.message || error.code;
         const terminal = ['DEVICE_NOT_TRUSTED', 'CLOUD_TOKEN_INVALID', 'PAIRING_INVALID', 'CLOUD_NOT_BOUND'].includes(code);
@@ -125,6 +127,7 @@
         if (copy[result.state]) $('pairing-status').textContent = copy[result.state];
         $('pairing-scan').hidden = result.state !== 'waiting';
         if (['completed','cancelled','expired'].includes(result.state)) {
+          pairingGeneration++;
           clearTimeout(pairingTimer); clearInterval(pairingClock);
           $('pairing-title').textContent = {completed:'配对成功',cancelled:'已取消配对',expired:'配对已过期'}[result.state];
           $('pairing-confirm').hidden = true; $('pairing-cancel').hidden = true; $('pairing-restart').hidden = false;

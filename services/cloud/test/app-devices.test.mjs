@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { fixture, P, EMAIL, PASSWORD, NEXT_PASSWORD, generateKeyPair, exportJWK, SignJWT, jwtVerify, importJWK } from './identity-helpers.mjs';
 
 import { registration, appDevice, proof, control, refresh, hostFixture } from './app-helpers.mjs';
+import { calculateJwkThumbprint } from 'jose';
 
 test('app registration verifies email before password; tickets have purpose, expiry and single-use authority', async t => {
   const f = await fixture(t);
@@ -89,7 +90,7 @@ test('device directory is account-scoped; cloud DPoP checks key, URL, hash and r
   assert.deepEqual((await control(b, '/devices')).data.devices.map(d => d.id), ['phone']);
 });
 
-test('real cloud process + isolated host: native owner → cloud bind → verified phone login → directory → optional legacy QR + signed host handoff', { timeout: 90000 }, async t => {
+test('real cloud process + isolated host: native owner → cloud bind → verified phone login → desktop-confirmed QR + signed host handoff', { timeout: 90000 }, async t => {
   const f = await fixture(t, { realProcess: true }); await registration(f);
   const desktop = await appDevice(f, 'desktop');
   const { host, started, hostApi, exchange } = await hostFixture(f, t);
@@ -138,6 +139,19 @@ test('real cloud process + isolated host: native owner → cloud bind → verifi
   const qr = `wm1.${Buffer.from(JSON.stringify(pairing.data)).toString('base64url')}`;
   const scanned = JSON.parse(Buffer.from(qr.slice(4), 'base64url'));
   await refresh(phone, connect.resource);
+  const phoneNonce=randomBytes(32).toString('base64url'),jkt=await calculateJwkThumbprint(phone.publicJwk);
+  const H=value=>createHash('sha256').update(JSON.stringify(value)).digest();
+  const joined=await exchange(phone,'/cloud/pairings/join',{challenge:scanned.challenge,
+    phoneCommitment:H(['wm-pair-phone-v2',scanned.challenge,phone.deviceId,jkt,phoneNonce]).toString('base64url')});
+  assert.equal(joined.status,200,JSON.stringify(joined));assert.equal(joined.csrfToken,undefined);
+  const transcript=[2,scanned.issuer,scanned.sub,scanned.hostId,scanned.tlsSpki,await calculateJwkThumbprint(scanned.publicJwk),
+    scanned.challenge,scanned.expiresAt,scanned.origin,scanned.relay?.baseUrl||''];
+  assert.equal(H(['wm-pair-host-v2',...transcript,joined.hostNonce]).toString('base64url'),scanned.hostCommitment);
+  assert.equal((await exchange(phone,'/cloud/pairings/reveal',{challenge:scanned.challenge,phoneNonce})).status,200);
+  const sas=(H(['wm-pair-sas-v2',...transcript,joined.hostNonce,phone.deviceId,jkt,phoneNonce]).readUInt32BE(0)%1000000).toString().padStart(6,'0');
+  assert.equal((await hostApi('/cloud/pairings/status',{challenge:scanned.challenge},local)).verificationCode,sas);
+  assert.equal((await exchange(phone,'/cloud/pairings/redeem',{challenge:scanned.challenge})).status,403);
+  assert.equal((await hostApi('/cloud/pairings/decision',{challenge:scanned.challenge,decision:'confirm',verificationCode:sas},local)).status,200);
   const session = await exchange(phone, '/cloud/pairings/redeem', { challenge: scanned.challenge });
   assert.equal(session.status, 200, JSON.stringify(session));
   assert.equal(session.account.ownerId, local.account.ownerId);

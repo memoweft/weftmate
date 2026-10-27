@@ -14,7 +14,7 @@ const enabled = process.env.WEFTMATE_WEB_E2E === 'true';
 const button = (page, name) => page.getByRole('button', { name, exact: true });
 const field = (page, name) => page.getByLabel(name, { exact: true }).filter({ visible: true });
 
-test('AUTH-1 real browser: password or email-code login → immediate session → directory/rename/offline; legacy pairing and unlink remain protected', { skip: !enabled, timeout: 180000 }, async t => {
+test('AUTH-1 real browser: password or email-code login → session → directory/rename/offline; desktop-confirmed pairing and unlink stay protected', { skip: !enabled, timeout: 180000 }, async t => {
   const { chromium } = await import('../../../apps/mobile-ui/node_modules/playwright/index.mjs');
   const reserved = createServer(); reserved.listen(0, '127.0.0.1'); await once(reserved, 'listening');
   const port = reserved.address().port; await new Promise(resolve => reserved.close(resolve));
@@ -166,10 +166,26 @@ test('AUTH-1 real browser: password or email-code login → immediate session �
   await phone.getByText(/这台设备/).filter({ visible: true }).first().waitFor();
   await phone.screenshot({ path: '.local/s1c-web/remote-devices.png' });
 
-  // New UI does not expose pairing material. Keep the legacy one-use/owner
-  // compatibility assertions through the real browser's existing client API.
-  // Only the directly authenticated computer can create pairing material.
+  // The phone independently computes SAS; only the direct computer can confirm.
   const pairing = await hostApi('/cloud/pairings', {}, local, 201);
+  const sas=await phone.evaluate(async pairing=>{
+    const client = new WeftUiCore.CloudAuthClient({ fetch: (...args) => fetch(...args), crypto,
+      credentials: (...args) => WeftCloud.storage(...args), vendor: WeftCloudVendor, host: location.origin });
+    await client.configure();const key=await client.key(),saved=await client.saved();
+    const jkt=await client.hash(JSON.stringify({crv:key.publicJwk.crv,kty:key.publicJwk.kty,x:key.publicJwk.x,y:key.publicJwk.y}));
+    const bytes=crypto.getRandomValues(new Uint8Array(32)),nonce=btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const token=await client.access(client.base+'/hosts/'+client.config.hostId);
+    const send=async(path,body)=>{const n=await client.request(client.host+'/personal/v1/auth/cloud-nonce',{method:'POST',body:{}});
+      const url=client.host+'/personal/v1'+path,proof=await client.proof(url,{token,nonce:n.nonce});
+      return client.request(url,{method:'POST',headers:{DPoP:proof},body:{accessToken:token,deviceName:saved.deviceName||'Browser',challenge:pairing.challenge,...body}});};
+    const joined=await send('/cloud/pairings/join',{phoneCommitment:await client.hash(JSON.stringify(['wm-pair-phone-v2',pairing.challenge,key.deviceId,jkt,nonce]))});
+    const hostJkt=await client.hash(JSON.stringify({crv:pairing.publicJwk.crv,kty:pairing.publicJwk.kty,x:pairing.publicJwk.x,y:pairing.publicJwk.y}));
+    const T=[2,pairing.issuer,pairing.sub,pairing.hostId,pairing.tlsSpki,hostJkt,pairing.challenge,pairing.expiresAt,pairing.origin,pairing.relay?.baseUrl||''];
+    if(await client.hash(JSON.stringify(['wm-pair-host-v2',...T,joined.hostNonce]))!==pairing.hostCommitment)throw Error('HOST_COMMITMENT_MISMATCH');
+    await send('/cloud/pairings/reveal',{phoneNonce:nonce});
+    const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(['wm-pair-sas-v2',...T,joined.hostNonce,key.deviceId,jkt,nonce])));
+    return (new DataView(digest).getUint32(0,false)%1000000).toString().padStart(6,'0');
+  },pairing);
   const redeem=()=>phone.evaluate(async pairing=>{
     const client = new WeftUiCore.CloudAuthClient({ fetch: (...args) => fetch(...args), crypto,
       credentials: (...args) => WeftCloud.storage(...args), vendor: WeftCloudVendor, host: location.origin });
@@ -177,6 +193,9 @@ test('AUTH-1 real browser: password or email-code login → immediate session �
     try { const result=await client.exchange(false,pairing); return {ownerId:result.account.ownerId}; }
     catch(error){return {error:error.code};}
   },pairing);
+  assert.equal((await redeem()).error,'PAIRING_CONFIRMATION_REQUIRED');
+  assert.equal((await hostApi('/cloud/pairings/status',{challenge:pairing.challenge},local)).verificationCode,sas);
+  await hostApi('/cloud/pairings/decision',{challenge:pairing.challenge,decision:'confirm',verificationCode:sas},local);
   assert.equal((await redeem()).ownerId,local.account.ownerId);
   assert.equal((await redeem()).error,'PAIRING_INVALID');
   await phone.reload(); await loggedIn(phone);

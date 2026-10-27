@@ -75,6 +75,8 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       await waitFor(()=>host.relayStatus().state==='online', 'frpc did not become online: '+JSON.stringify(host.relayStatus()));
       diagnostics.mark('host.initial-online.ok');
       const pairing = await direct('/cloud/pairings',{},local); assert.equal(pairing.status,201);
+      // Close the pin preview before the independent ordinary cloud login below.
+      assert.equal((await direct('/cloud/pairings/decision',{challenge:pairing.data.challenge,decision:'cancel'},local)).data.state,'cancelled');
       const base = host.relayStatus().baseUrl, domain = new URL(base).hostname;
       const ca = await readFile(path.join(root,'host','relay-tls','development-ca.pem'));
       const peerCert = await readFile(path.join(root,'host','relay-tls','development-host.pem'));

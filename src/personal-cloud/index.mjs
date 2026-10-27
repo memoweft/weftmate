@@ -63,11 +63,16 @@ export async function createHostCloudIdentity(context, options) {
     if (!isHost && Object.values(next.devices).some(d => d.bindingKey === key &&
         d.cloudDeviceId === identity.device_id && ['denied', 'revoked'].includes(d.status)))
       throw failure('DEVICE_NOT_TRUSTED', 403);
-    if (!isHost && !pairingConfirmed && Object.values(next.devices).some(d => d.bindingKey === key &&
-        d.cloudDeviceId === identity.device_id && d.pairingRequired))
-      throw failure('PAIRING_CONFIRMATION_REQUIRED', 403);
+    if (!isHost && !pairingConfirmed) {
+      const trusted = Object.values(next.devices).some(d => d.bindingKey === key && d.cloudDeviceId === identity.device_id && d.jkt === proof.jkt && d.status === 'trusted');
+      const pairingOpen = Object.values(next.pairings).some(p => p.version === 2 && p.ownerId === binding.ownerId &&
+        !['completed', 'cancelled', 'expired'].includes(pairingState(p, context.timestamp())));
+      if (pairingOpen && !trusted || Object.values(next.devices).some(d => d.bindingKey === key &&
+          d.cloudDeviceId === identity.device_id && (d.pairingRequired || d.pairedJkt && d.pairedJkt !== proof.jkt)))
+        throw failure('PAIRING_CONFIRMATION_REQUIRED', 403);
+    }
     if (pairingConfirmed) for (const d of Object.values(next.devices))
-      if (d.bindingKey === key && d.cloudDeviceId === identity.device_id) delete d.pairingRequired;
+      if (d.bindingKey === key && d.cloudDeviceId === identity.device_id) { delete d.pairingRequired; d.pairedJkt = proof.jkt; }
     let trustId = Object.keys(next.devices).find(id => {
       const d = next.devices[id]; return d.bindingKey === key && d.jkt === proof.jkt && d.cloudDeviceId === identity.device_id;
     });
@@ -152,7 +157,7 @@ export async function createHostCloudIdentity(context, options) {
     const binding = store.state.bindings[session.bindingKey];
     const device = store.state.devices[session.trustId];
     if (!binding || binding.status !== 'active' || binding.ownerId !== ownerId ||
-        device?.status !== 'trusted' || device.ownerId !== ownerId ||
+        device?.status !== 'trusted' || device.ownerId !== ownerId || device.pairedJkt && device.pairedJkt !== device.jkt ||
         session.epoch < (store.state.epochs[session.bindingKey] ?? 0)) throw failure('UNAUTHORIZED', 401);
   }
   async function applyEvents(encoded) {
@@ -608,6 +613,7 @@ export async function createHostCloudIdentity(context, options) {
           return { session: await issueSession(transition.trustId, identity, name), transition };
         });
         if (result.pending) { context.json(response, 200, result.pending); return true; }
+        closeInvalidResponses();
         await notifyNewDevice(result.transition, name);
         void syncRevocations().catch(() => {});
         sessionReply(response, request, { ...result.session, hostTrust: await hostTrust(result.transition.trustId) });

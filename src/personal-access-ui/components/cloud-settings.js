@@ -1,6 +1,6 @@
 /* Account/device presentation; all requests and credential handling live in ui-core. */
 globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
-    let pairingTimer, directoryTimer, tab = 'account', editingId = null, editingGeneration = -1, directoryGeneration = 0, pairingGeneration = 0, localGeneration = 0;
+    let directoryTimer, tab = 'account', editingId = null, editingGeneration = -1, directoryGeneration = 0, localGeneration = 0;
     const button = (label, action, style = 'secondary') => { const node = ui.element('button', `button ${style}`, label); node.type = 'button'; node.addEventListener('click', action); return node; };
     function error(error) { ui.byId('cloud-settings-status').textContent = core.cloudError(error); }
     async function act(action) { try { ui.byId('cloud-settings-status').textContent = ''; await action(); return true; } catch (failure) { error(failure); return false; } }
@@ -197,7 +197,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
             container.replaceChildren();
         }).finally(() => { submit.disabled = false; if (current) current.value = ''; if (password) password.value = ''; if (confirmation) confirmation.value = ''; }); });
     }
-    function stopPairing() { pairingGeneration++; clearTimeout(pairingTimer); void ui.cloudUi.stopPairing(); }
+    function stopPairing() { void ui.cloudUi.stopPairing(); }
     function paintCloudPending() {
         // Device login notifications use the shared activity/notification feed.
         const banner = ui.byId('cloud-access-banner'); if (banner) { banner.hidden = true; banner.replaceChildren(); }

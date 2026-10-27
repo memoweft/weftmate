@@ -401,8 +401,15 @@ async function confirmPairing(f: any, p: any, token: string, key: any, deviceId 
 
 test('PAIR-CODE real requests require desktop comparison before redemption and bind every transcript contribution', async t => {
   const f=await fixture(t);await f.bind();const key=await generateKeyPair('ES256');const token=await f.access('cloud-a','phone',key);
+  const existingKey=await generateKeyPair('ES256'),existingToken=await f.access('cloud-a','existing-phone',existingKey);
+  assert.equal((await f.exchange(existingToken,existingKey)).result.status,200);
   const p=await f.requests('POST','/cloud/pairings',{},f.a);
   assert.equal(p.version,2); assert.equal(p.hostNonce,undefined,'host secret must stay hidden until phone commits');
+  for(const route of ['/auth/cloud-session','/auth/cloud-channel']) {
+    const bypass=(await f.exchange(token,key,route)).result;
+    assert.equal(bypass.status,403,'new device cannot preempt join with ordinary login');assert.equal(bypass.cookie,undefined);assert.equal(bypass.token,undefined);
+  }
+  assert.equal((await f.exchange(existingToken,existingKey)).result.status,200,'existing trusted device remains usable');
   const before=await f.exchange(token,key,'/cloud/pairings/redeem',{challenge:p.challenge});assert.equal(before.result.status,401);
   const s=await submitPairing(f,p,token,key);
   const status=await f.requests('POST','/cloud/pairings/status',{challenge:p.challenge},f.a);
@@ -453,6 +460,23 @@ test('PAIR-CODE cancellation, expiry, replacement, account boundaries and commit
   await confirmPairing(f,newer,token,key);
   const results=await Promise.all([f.exchange(token,key,'/cloud/pairings/redeem',{challenge:newer.challenge}),f.exchange(token,key,'/cloud/pairings/redeem',{challenge:newer.challenge})]);
   assert.deepEqual(results.map(x=>x.result.status).sort(),[200,401]);
+});
+
+test('PAIR-CODE confirming a replacement key never authorizes cancelled or superseded keys', async t => {
+  const f=await fixture(t);await f.bind();
+  const a=await generateKeyPair('ES256'),at=await f.access('cloud-a','phone',a);
+  const oldSession=(await f.exchange(at,a)).result;assert.equal(oldSession.status,200);
+  const p1=await f.requests('POST','/cloud/pairings',{},f.a);await submitPairing(f,p1,at,a);
+  await f.requests('POST','/cloud/pairings/decision',{challenge:p1.challenge,decision:'cancel'},f.a);
+  assert.equal((await f.exchange(at,a)).result.status,403);
+  const b=await generateKeyPair('ES256'),bt=await f.access('cloud-a','phone',b);
+  const p2=await f.requests('POST','/cloud/pairings',{},f.a);await confirmPairing(f,p2,bt,b);
+  const fresh=(await f.exchange(bt,b,'/cloud/pairings/redeem',{challenge:p2.challenge})).result;
+  assert.equal(fresh.status,200);assert.equal((await f.exchange(bt,b)).result.status,200);
+  assert.equal((await f.exchange(at,a)).result.status,403,'cancelled A cannot inherit B confirmation');
+  assert.equal((await f.requests('GET','/sessions',undefined,oldSession)).status,401,'superseded key session is rejected');
+  const c=await generateKeyPair('ES256');assert.equal((await f.exchange(await f.access('cloud-a','phone',c),c)).result.status,403);
+  await f.restart();assert.equal((await f.exchange(at,a)).result.status,403);
 });
 
 test('pairing is local, owner-scoped, expires and consumes once; unlink preserves local login and all stored data', async t => {
