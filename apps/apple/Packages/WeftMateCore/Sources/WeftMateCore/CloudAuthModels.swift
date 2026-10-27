@@ -101,8 +101,7 @@ public struct HostPairing: Codable, Sendable, Equatable {
               pair.challenge.range(of: "^[A-Za-z0-9_-]{20,256}$", options: .regularExpression) != nil,
               pair.hostId.range(of: "^[A-Za-z0-9_.:-]{1,128}$", options: .regularExpression) != nil,
               pair.tlsSpki.range(of: "^[A-Za-z0-9_-]{43}$", options: .regularExpression) != nil,
-              pair.publicJwk["kty"] == "EC", pair.publicJwk["crv"] == "P-256", pair.publicJwk["d"] == nil,
-              (try? ServerConfiguration(input: pair.origin, allowLoopbackHTTP: allowLoopbackHTTP)) != nil else { throw CloudLoginFailure.pairing }
+              pair.publicJwk["kty"] == "EC", pair.publicJwk["crv"] == "P-256", pair.publicJwk["d"] == nil else { throw CloudLoginFailure.pairing }
         if let base = pair.relay?.baseUrl { _ = try ServerConfiguration(input: base) }
         return pair
     }
