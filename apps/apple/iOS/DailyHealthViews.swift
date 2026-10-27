@@ -32,6 +32,17 @@ struct DailyHealthSettingsRow: View {
                 Text("读取步数、睡眠、静息心率和运动，只把每天的汇总送到你自己的电脑，随时可以关。")
                     .font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
             }.accessibilityElement(children: .contain)
+            NavigationLink {
+                Form {
+                    Section("读取项目") {
+                        ForEach(["步数","睡眠与分期","静息心率与心率变异性","呼吸频率、血氧与手腕温度","运动、能量与最大摄氧量"],id:\.self) { Text($0) }
+                        Text("只读不写。每项读取权限由系统健康面板管理；没有测量时保留空白。").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
+                        Button("选择读取权限") { Task { await health.expand(app:app) } }.disabled(health.busy || !health.reader.available).accessibilityIdentifier("health.readItemsAuthorize")
+                    }
+                }.navigationTitle("选择读取项目")
+            } label: { Text("选择读取项目") }
+            Button("更新摘要") { Task { await health.activate(app:app) } }.disabled(health.busy || !health.state.enabled).accessibilityIdentifier("health.updateSummary")
+            if health.busy { ProgressView("正在读取…") }
             }
         }
     }

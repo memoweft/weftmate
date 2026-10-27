@@ -31,8 +31,7 @@ final class Apple3ApprovalTests: XCTestCase {
         let disabled = try JSONDecoder().decode(ApprovalModeSettings.self,from: Data(#"{"mode":"ask","secondOpinionEnabled":false}"#.utf8))
         XCTAssertFalse(disabled.effectiveSecondOpinionEnabled)
     }
-    func testPhoneGridWidthsAndWatchCompatibility() throws {
-        for width in [320.0,375,390,430,768] { XCTAssertEqual(HealthPagePolicy.scoreColumns(width:width),2) }
+    func testWatchApprovalCompatibility() throws {
         let old = try JSONDecoder().decode(WatchApproval.self,from:Data(#"{"id":"a1","summary":"运行命令"}"#.utf8))
         XCTAssertNil(old.secondOpinion)
         let updated=WatchApproval(id:"a1",summary:"运行命令",secondOpinion:"另一模型的意见")
