@@ -72,6 +72,13 @@ final class CloudLoginModel: ObservableObject {
         if args.contains("--ui-testing"), let i = args.firstIndex(of: "--s1c-cloud-url"), args.indices.contains(i + 1) { cloudAddress = args[i + 1] }
         #endif
     }
+    #if DEBUG && os(iOS)
+    func seedPhoneWindowAccount() {
+        let args=ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"),args.contains("--phone-window-fixture") else { return }
+        subject="window-account";authenticated=true;identityRestored=true
+    }
+    #endif
     private var allowLoopback: Bool {
         #if DEBUG
         ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver") || ProcessInfo.processInfo.arguments.contains("--lg2-cloud"))
@@ -206,9 +213,27 @@ final class CloudLoginModel: ObservableObject {
             offlineWorkAuthorization=result;return result
         }
         #endif
+        let ticket=operation,subject=self.subject
         let result=try await accountClient().offlineStatus(hostID: hostID)
+        guard ticket == operation,subject == self.subject,result.accountId == subject,result.hostId == hostID,result.generation >= 0 else { throw OfflineFailure.authorization }
         offlineWorkAuthorization=result
         return result
+    }
+    private var offlineBindingKey: String { "offline-binding:"+cloudAddress+"|"+(subject ?? "") }
+    func rememberOfflineIdentity(_ session: AccountSession) throws {
+        guard authenticated,let subject,app?.offline.memoryHostID == session.hostId,app?.offline.memoryAccountID == subject else { return }
+        let binding=OfflineBinding(issuer:cloudAddress,subject:subject,identity:.init(ownerId:session.account.ownerId,hostId:session.hostId,deviceId:session.device.id))
+        try store.save(JSONEncoder().encode(binding),key:offlineBindingKey)
+    }
+    func savedOfflineIdentity() throws -> OfflineIdentity? {
+        guard authenticated,let subject,let bytes=try store.load(key:offlineBindingKey) else { return nil }
+        let binding=try JSONDecoder().decode(OfflineBinding.self,from:bytes)
+        guard binding.matches(issuer:cloudAddress,subject:subject,hostID:requestedComputerID ?? hostID) else { return nil }
+        return binding.identity
+    }
+    func forgetOfflineIdentity(hostID: String) throws {
+        guard let bytes=try store.load(key:offlineBindingKey),let binding=try? JSONDecoder().decode(OfflineBinding.self,from:bytes),binding.identity.hostId == hostID else { return }
+        try store.delete(key:offlineBindingKey)
     }
     func submitOfflineWork(_ task: OfflineWorkTask) async throws -> OfflineTaskReceipt {
         let authorization=try await offlineAuthorization(hostID:task.hostId)
@@ -258,6 +283,7 @@ final class CloudLoginModel: ObservableObject {
                 }
                 await refreshComputerConversations()
             } else { requestedComputerID=nil;computerConversations=[];computerClients=[:];computerLists=[:] }
+            guard ticket == operation,authenticated,subject == self.subject else { return }
             #if os(iOS)
             if let app { app.phoneChat.activate(app:app);app.phoneChat.computerDirectoryChanged(hostIDs:Set(directory.hosts.map { $0.hostId ?? $0.id })) }
             #endif
@@ -498,6 +524,7 @@ final class CloudLoginModel: ObservableObject {
             let config = CloudConfiguration(server: try ServerConfiguration(input: cloud, allowLoopbackHTTP: allowLoopback))
             try store.delete(key: CloudAccountClient.credentialKey(configuration: config))
         }
+        try store.delete(key:offlineBindingKey)
         offlineWorkAuthorization=nil
         subject = nil; identityRestored=true; waiting = false;multiHost=false;computerConversations=[];computerClients=[:];computerLists=[:];requestedComputerID=nil
         client = nil; key = nil; cloudSignedIn = false; authenticated = false; devices = []; hosts = []; email = ""; emailChangeChallenge = nil; selectedHost = nil; form.reset(to: .login)

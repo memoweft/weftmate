@@ -136,13 +136,13 @@ private func receipt(_ intent: MemoryMutationIntent, revision: Int, cleanup: Boo
 @main private struct MemoryWorkspaceChecks {
     @MainActor static func main() async throws {
         let base = URL(fileURLWithPath: CommandLine.arguments[1])
-        func setup(_ name: String, http: MemoryHTTP = MemoryHTTP()) async throws -> (MemoryHTTP, PersonalClient, Scope, LocalMemoryOperationStore, MemoryWorkspaceModel) {
+        func setup(_ name: String, http: MemoryHTTP = MemoryHTTP(),refreshReplica: @escaping @MainActor () async -> Void = {}) async throws -> (MemoryHTTP, PersonalClient, Scope, LocalMemoryOperationStore, MemoryWorkspaceModel) {
             let client = PersonalClient(credentialStore: Credentials(), transport: http)
             let scope = Scope()
             scope.session = try await client.login(server: ServerConfiguration(input: "https://unit.weftmate.example:8443"), username: "test", password: "synthetic-only", deviceName: "Mac")
             let journal = try LocalMemoryOperationStore(directory: base.appendingPathComponent(name))
             let model = MemoryWorkspaceModel(client: client, journal: journal, accountEpoch: scope.epoch,
-                currentEpoch: { scope.epoch }, currentSession: { scope.session })
+                currentEpoch: { scope.epoch }, currentSession: { scope.session },refreshReplica:refreshReplica)
             await model.reload()
             return (http, client, scope, journal, model)
         }
@@ -153,6 +153,18 @@ private func receipt(_ intent: MemoryMutationIntent, revision: Int, cleanup: Boo
         func action(_ model: MemoryWorkspaceModel, _ kind: MemoryMutationKind) throws -> MemoryActionContext {
             guard let value = model.actionContext(kind) else { throw Failed(message: "Missing enabled action context") }; return value
         }
+
+        var replicaRefreshes=0,publishedBeforeRefresh=false
+        var observedModel: MemoryWorkspaceModel?
+        let (_,_,_,_,refreshModel)=try await setup("replica-refresh",refreshReplica:{
+            replicaRefreshes+=1
+            publishedBeforeRefresh=observedModel?.operations.values.contains { $0.record.receipt?.effectApplied == true } == true
+        })
+        observedModel=refreshModel
+        await refreshModel.open(refreshModel.items[0]);refreshModel.setCorrection("Synthetic corrected text",token:refreshModel.editorToken)
+        await refreshModel.mutate(try action(refreshModel,.correct))
+        try check(replicaRefreshes == 1 && !publishedBeforeRefresh,"Confirmed mutation published before refreshing phone replica")
+        pass("PASS confirmed computer mutation refreshes phone replica before publishing applied result")
 
         let (previewHTTP, _, _, _, previewModel) = try await setup("forget-preview")
         await previewModel.open(previewModel.items[0]); let forget = try action(previewModel, .deleteItem)

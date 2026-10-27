@@ -27,7 +27,7 @@
 | Windows 默认完整语义层，基础层可单独构建。应用元数据固定组件清单散列，启动核对文件后接入；组件异常只停用记忆，聊天和数据保留。实际新装/升级验收仍按地图记录 | `src/personal-memory/bundled-runtime.mjs`、`scripts/memory-runtime/README.md`；D106 / D110 |
 | 记忆页：桌面 `src/personal-access-ui/components/memory.js`，共用逻辑 `src/ui-core/memory.js`，手机网页 `apps/mobile-ui/www/components/memory.js` | — |
 | 旧插件 `src/plugins/weftmate-memory.mjs`（约 1240 行）仍写在 DSH 配置模板 R7–R10 里。按文件头注释，它只在 `WEFTMATE_MEMOWEFT_ENABLED=1` 时工作；个人宿主模式下设这个变量，程序会拒绝启动。默认路径写死了一个本机目录 | `src/dsh-web-runtime.ts`、`src/main.mjs` 约第 172 行 |
-| 安卓与手机网页只存对话原话、读电脑同步来的记忆副本；旧容器里的手机轻量记忆字段读入即丢弃，不上传。苹果端旧实现尚待后续移除 | `src/ui-core/offline.js`、`apps/mobile-ui/www/components/memory.js`；苹果旧代码 `apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneMemory.swift` |
+| 安卓、手机网页和 iPhone 只存对话原话、读当前账号与电脑的获准记忆副本。iPhone 旧容器原地升级，轻量正文丢弃且不上传，仅保留旧遗忘的来源 ID/摘要作为禁止重交记录；原话交收与副本读取独立 | `src/ui-core/offline.js`、`apps/mobile-ui/www/components/memory.js`；苹果 `apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhoneTranscriptSync.swift`、`ComputerMemoryContext.swift`、`apps/apple/iOS/PhoneMemoryView.swift` |
 | CI 里接真实 MemoWeft 的作业固定到 Core 主线的一个提交；内核修好合进主线后，再用单独的 PR 换这里和随包运行时的版本 | `.github/workflows/ci.yml` 的 `observed-core`、`scripts/memory-runtime/lock.json` |
 
 G9 新英文召回合同以首行 `Memory:` / `Memory (past):` 定格式并用 LF 分隔条目：生产端须在正文中任何以 `记忆：`、`记忆（过往）：`、`Memory:`、`Memory (past):` 或反斜杠 `\` 开头的行前再加一个 `\`，解析端只按未转义英文条目头切分并逐行还原一层合法转义，日期及正文空白原样保留，首行不是条目头、条数与 ID 数不符、出现未转义中文条目头或非法转义时按原预算保留完整原文而不配 ID，不跨格式回退，首行旧中文格式仍逐字沿用旧规则且不作转义还原。
@@ -49,3 +49,7 @@ E2 的 `selected_item_ids` 是整段召回的依赖，`count` 统计全部依赖
 安卓与手机网页每条消息只请求一次聊天模型；使用手机自配模型或电脑下发模型时，都从 `/offline/sync` 的 `snapshot.items` 选取相关记忆作为背景。没有电脑副本时如实说明记忆在电脑上形成、连上电脑后才有。手机不提炼、纠正或遗忘记忆；离线要求忘掉时，提示连上电脑后再说一次或去记忆页忘掉。
 
 连着电脑时沿用电脑记忆页；断开后只读展示副本与上次同步时间，提示「电脑连上后可以修改和忘掉」。从没连过电脑时提示「记忆在电脑上形成。连上电脑后，这里会显示 WeftMate 记得的事。」原始对话加密保存在手机，连上电脑自动按原批次与轮次 ID 回传，不再按 100 轮或 256 KiB 要求手机确认；电脑回执确认前保留待交原话。旧 `phoneMemory` 字段丢弃不影响对话原话。
+
+iPhone 收到 `reset/remove`、授权代次变化或设备目录确认电脑已移除时，保留本地原话、原日期、草稿和独立提醒；清除失效副本、派生上下文、冻结上交正文及分片。助手正文按 `memoryRefs/dependencyComplete` 清理，依赖不完整按遗忘规则清理。已交和失效待交轮次保留必要 ID 作为禁止重交记录，跨代次、换电脑和重开均不自动重交，旧遗忘屏蔽继续生效。原话可查看；已失效轮次不再自动带入模型历史，防止通过新回复间接重新整理。删除通知先持久化到原话容器，再确认副本侧通知，清理中途退出后仍会补完。
+
+云授权暂不可核实时，iPhone 隐藏且不注入旧副本，仍可用自配模型普通聊天；不在手机形成记忆。流式回复的账号和副本修订发生变化时丢弃迟到正文。目录请求超时不算移除电脑；只有成功核对设备目录才执行移除清理。在线纠正和遗忘继续调用电脑接口，收到内核生效回执后先清理并刷新手机副本，再展示操作结果。

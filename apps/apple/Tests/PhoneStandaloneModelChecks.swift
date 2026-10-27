@@ -103,7 +103,7 @@ import WeftMateCore
         app.offline.synced=Set(app.offline.enqueued.map(\.id));await model.synchronize(app:app)
         try require(model.state.migrations?["synthetic-computer"]?.accepted == app.offline.synced,"receipts-confirm-synced-turns")
         app.controlGeneration=2;app.offline.generation=2;await model.synchronize(app:app)
-        try require(model.state.threads.isEmpty,"new-delete-generation-clears-offered-history")
+        try require(!model.state.threads.isEmpty && model.state.migrations?["synthetic-computer"]?.turns.isEmpty == true,"new-delete-generation-keeps-originals-and-retires-frozen-bodies")
         model.removeModel(config.id);try require(model.models.isEmpty,"model-delete")
         let deleted=PhoneStandaloneModel(testCredentials:keys,testLoopback:true);deleted.activate(app:app)
         try require(deleted.models.isEmpty,"model-delete-persists")

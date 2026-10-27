@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import time
+from bounded_process import run_bounded
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_MODEL = ["OfflineChatModel", "A14TestSupport", "CloudBrowser", "CloudLoginModel", "AppleAppModel", "MainChatModel", "ConversationSendState", "ConversationAdoptionState", "ConversationAttachmentState", "TaskWorkspaceModel"]
@@ -15,7 +16,9 @@ CHECKS = {
     "PhoneAttachmentModelChecks": [],
     "PhoneStandaloneModelChecks": [],
     "PhoneReminderModelChecks": [],
-    "PhoneMemoryModelChecks": [],
+    "PhoneWindowModelChecks": [],
+    "PhoneSyncModelChecks": ["OfflineChatModel"],
+    "PhoneReplicaErasureChecks": ["OfflineChatModel"],
     "Mode2IFixStateChecks": APP_MODEL,
     "A16ChatStateChecks": APP_MODEL,
     "AppleUX23StateChecks": APP_MODEL,
@@ -48,8 +51,8 @@ def main():
     build = ["swift", "build", "--package-path", str(ROOT / "Packages/WeftMateCore"),
              "--scratch-path", str(scratch), "--jobs", "2"]
     with (run / "core-build.log").open("w") as log:
-        subprocess.run(build, stdout=log, stderr=subprocess.STDOUT, check=True)
-    products = Path(subprocess.check_output(build + ["--show-bin-path"], text=True).strip())
+        run_bounded(build, stdout=log, stderr=subprocess.STDOUT, check=True)
+    products = Path(run_bounded(build + ["--show-bin-path"], stdout=subprocess.PIPE, text=True, timeout=60, check=True).stdout.strip())
     objects = sorted((products / "WeftMateCore.build").glob("*.swift.o")) + sorted((products / "JOSESwift.build").glob("*.swift.o"))
     results = []
     print(f"Artifacts: {run}", flush=True)
@@ -73,26 +76,28 @@ def main():
             sources.append(ROOT / "UI/ConversationResourcesModel.swift")
         if name == "DesignTokenChecks":
             sources.append(ROOT.parent.parent / "design/tokens/generated/apple/DesignTokens.swift")
-        if name in ("PhoneModelServicesModelChecks", "PhoneStandaloneModelChecks", "PhoneReminderModelChecks", "PhoneMemoryModelChecks", "PhoneAttachmentModelChecks"):
+        if name in ("PhoneModelServicesModelChecks", "PhoneStandaloneModelChecks", "PhoneReminderModelChecks", "PhoneWindowModelChecks", "PhoneAttachmentModelChecks"):
             sources.append(ROOT / "iOS/PhoneStandaloneModel.swift")
-        if name in ("PhoneModelServicesModelChecks", "PhoneStandaloneModelChecks", "PhoneReminderModelChecks", "PhoneAttachmentModelChecks"):
+        if name in ("PhoneModelServicesModelChecks", "PhoneStandaloneModelChecks", "PhoneReminderModelChecks", "PhoneWindowModelChecks", "PhoneAttachmentModelChecks"):
             sources.append(ROOT / "Tests/PhoneStandaloneCheckSupport.swift")
         if name == "PhoneAttachmentModelChecks":
             sources.append(ROOT / "iOS/PhoneAttachmentInput.swift")
+        if name in ("PhoneSyncModelChecks", "PhoneReplicaErasureChecks"):
+            sources += [ROOT / "iOS/PhoneStandaloneModel.swift", ROOT / "Tests/PhoneSyncCheckSupport.swift"]
         sources.append(ROOT / "Tests" / (name + ".swift"))
         compile_command = ["swiftc", "-swift-version", "6", "-D", "DEBUG", "-parse-as-library",
                            "-I", str(products / "Modules"), *map(str, sources),
                            *map(str, objects), "-o", str(executable)]
         start = time.monotonic()
         with (run / (name + "-compile.log")).open("w") as log:
-            compiled = subprocess.run(compile_command, stdout=log, stderr=subprocess.STDOUT)
+            compiled = run_bounded(compile_command, stdout=log, stderr=subprocess.STDOUT)
         row = {"check": name, "compileCommand": compile_command, "compileExit": compiled.returncode}
         if compiled.returncode == 0:
             data = run / (name + "-data")
             data.mkdir(mode=0o700)
             command = [str(executable), str(data)]
             with (run / (name + ".log")).open("w") as log:
-                tested = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT,
+                tested = run_bounded(command, stdout=log, stderr=subprocess.STDOUT,
                                         env={**os.environ, "TMPDIR": str(data) + "/"})
             row.update(runCommand=command, runExit=tested.returncode)
         row["seconds"] = round(time.monotonic() - start, 2)

@@ -19,7 +19,7 @@ struct WeftMatePhoneApp: App {
             if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple11-fixture") { PhoneReminderTestFixture(app:model) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple9-fixture") { PhoneServiceScreenshotFixture(app:model) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple8-fixture") { PhoneAttachmentScreenshotFixture(app:model) }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple7-fixture") { PhoneMemoryScreenshotFixture(app:model) }
+            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--phone-window-fixture") { PhoneWindowTestFixture(app:model) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-addendum") { Apple5AddendumFixture(health:health) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-fixture") { Apple5Fixture(health:health) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple4-fixture") { Apple4Fixture(health: health) }
@@ -33,7 +33,7 @@ struct WeftMatePhoneApp: App {
             content
             #endif
         }
-        .onChange(of: logScenePhase) { _, phase in RunLogRuntime.shared.phase(phase);if phase == .background || phase == .active { model.phoneChat.finishConversation() } }
+        .onChange(of: logScenePhase) { _, phase in RunLogRuntime.shared.phase(phase) }
     }
     private var healthContent: some View {
         #if WEFTMATE_WINDOW_TEST

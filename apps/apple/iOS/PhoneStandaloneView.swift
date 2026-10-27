@@ -141,6 +141,7 @@ struct PhoneStandaloneChat: View {
         } message: { Text("在设置里允许 WeftMate 使用相机；照片图库和文件仍可添加。") }
         .fullScreenCover(item:$preview) { attachment in PhoneStandaloneAttachmentPreview(attachment:attachment,close:{preview=nil}) }
         .onChange(of:app.phoneAccountIdentity) { _,_ in preview=nil;camera=false;photos=false;importing=false;selection=[] }
+        .onChange(of:model.state.selected) { _,id in if let id { app.openedSessionID=id } }
         .task(id:"\(cloud.cloudAddress)|\(cloud.subject ?? "device-local")") { model.activate(app:app) }
     }
     private var fileCompletion: @Sendable (Result<[URL],Error>) -> Void {
@@ -196,6 +197,10 @@ struct PhoneLocalDrawer: View {
             VStack(spacing:AppleTokens.Space.p12) {
                 HStack { Text("WeftMate").font(AppleTokens.Fonts.headline); Spacer(); PhoneAccountMenu(model:app); Button(action:close) { WeftIcon("deny") }.phoneIcon().accessibilityLabel("关闭侧栏") }.padding(AppleTokens.Space.p16)
                 PhoneConversationModes(selection:modeBinding)
+                if app.session != nil {
+                    Button("打开电脑对话与任务") { app.openedSessionID=nil;close() }
+                        .buttonStyle(OutlineActionStyle()).accessibilityIdentifier("phoneChat.computer")
+                }
                 ScrollView {
                     VStack(alignment:.leading,spacing:AppleTokens.Space.p4) {
                         ForEach(PhoneTab.allCases) { item in
@@ -207,14 +212,14 @@ struct PhoneLocalDrawer: View {
                         if app.cloudLogin.multipleComputers { ComputerConversationList(cloud:app.cloudLogin,query:search,close:close) }
                         Text("手机上的对话").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p12)
                         ForEach(model.state.threads.filter { search.isEmpty || $0.title.localizedCaseInsensitiveContains(search) }) { thread in
-                            Button { model.select(thread.id); close() } label: { HStack(spacing:AppleTokens.Space.p12) { WeftIcon("chat"); Text(thread.title).lineLimit(2); Spacer(minLength:AppleTokens.Space.p0) }.frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p44,alignment:.leading).padding(.horizontal,AppleTokens.Space.p12).background(thread.id == model.state.selected ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12)) }.buttonStyle(.plain)
+                            Button { model.select(thread.id); app.openedSessionID=thread.id; close() } label: { HStack(spacing:AppleTokens.Space.p12) { WeftIcon("chat"); Text(thread.title).lineLimit(2); Spacer(minLength:AppleTokens.Space.p0) }.frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p44,alignment:.leading).padding(.horizontal,AppleTokens.Space.p12).background(thread.id == model.state.selected ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12)) }.buttonStyle(.plain)
                         }
                         }
                     }.padding(.horizontal,AppleTokens.Space.p12)
                 }
                 HStack(spacing:AppleTokens.Space.p8) {
                     HStack { WeftIcon("search"); TextField("搜索对话",text:$search).textFieldStyle(.plain) }.padding(.horizontal,AppleTokens.Space.p12).frame(minHeight:AppleTokens.Space.p44).background(Weave.surface,in:Capsule())
-                    Button { model.newThread(); close() } label: { WeftIcon("plus") }.phoneIcon().accessibilityLabel("新建对话").accessibilityIdentifier("phoneChat.new").disabled(mode == .work)
+                    Button { model.newThread(); app.openedSessionID=model.state.selected; close() } label: { WeftIcon("plus") }.phoneIcon().accessibilityLabel("新建对话").accessibilityIdentifier("phoneChat.new").disabled(mode == .work)
                 }.padding(AppleTokens.Space.p12)
             }.frame(maxWidth:320).background(Weave.soft)
         }.gesture(DragGesture().onEnded { value in if value.translation.width < -50 { close() } })
@@ -225,7 +230,6 @@ struct PhoneModelsView: View {
     @ObservedObject var model: PhoneStandaloneModel
     var body: some View {
         VStack(spacing:AppleTokens.Space.p12) {
-            ServiceSwitch(title:"在手机上记住我说过的事",enabled:Binding(get:{model.memory.enabled},set:{model.setMemoryEnabled($0)})).padding(.horizontal,AppleTokens.Space.p20)
             Text("每段对话会多用一次小的模型请求。连上电脑后，由电脑负责记忆。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p20)
             ModelServicesSettingsView(store:ModelServiceSettingsModel(app:nil,phone:model))
             Button("清除手机上的模型、对话与记忆") { clearing=true }.buttonStyle(ServiceActionStyle()).padding(.horizontal,AppleTokens.Space.p20).accessibilityIdentifier("phoneModel.clearLocalData")
