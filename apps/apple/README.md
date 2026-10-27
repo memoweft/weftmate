@@ -12,7 +12,7 @@ iPhone 只加密保存原话、附件、日期、草稿、模型配置和原话�
 
 记忆页展示当前账号、当前电脑的获准副本和来源，空副本就显示空状态。手机模型可在原话交接尚未完成或选择稍后交时读取副本；账号切换或电脑移除不会恢复手机自记。电脑在线时，“修改或忘掉电脑记忆”进入现有电脑接口；电脑不可达时只读获准副本。未连接过电脑也可用已配置模型聊天，排队、停止、原话同步、提醒来源和电脑任务入口保持可用。
 
-生成器同时提供 `WindowTest`、`WindowTestRelease` 配置和 `WeftMatePhoneWindowTest` / `WeftMateWatchWindowTest` / `WeftMateMacWindowTest` Scheme（构建方案）。手机身份为 `com.weftmate.apple.windowtest`，Watch 为 `com.weftmate.apple.windowtest.watch`，伴随绑定匹配，显示名均为“WeftMate 苹果测试”。第 5 包沿此配置签名；`WindowTestRelease` 使用空 entitlement（能力声明）供聊天和同步试用，健康能力的签名与真机验收另行处理。模拟器使用 `apple-1-window-*` 名称，界面用例使用独立随机 namespace（命名空间）。
+生成器同时提供 `DebugWindowTest`、`WindowTestRelease` 配置和 `WeftMatePhoneWindowTest` / `WeftMateWatchWindowTest` / `WeftMateMacWindowTest` Scheme（构建方案）。调试配置名保留 Debug，使 Xcode 同时按 Debug 构建共享 Swift 包。手机身份为 `com.weftmate.apple.windowtest`，Watch 为 `com.weftmate.apple.windowtest.watch`，伴随绑定匹配，显示名均为“WeftMate 苹果测试”。第 5 包沿此配置签名；`WindowTestRelease` 使用空 entitlement（能力声明）供聊天和同步试用，健康能力的签名与真机验收另行处理。模拟器使用 `apple-1-window-*` 名称，界面用例使用独立随机 namespace（命名空间）。
 
 Windows 可运行 `python apps/apple/Scripts/generate_project.py` 和 `python -m unittest discover -s apps/apple/Tests -p 'test_window_*.py'`。Swift 与原生界面结果须在 Mac 实测；源码和项目生成成功不代表已编译通过。Mac 单独一个执行会话先运行：
 
