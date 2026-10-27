@@ -92,9 +92,9 @@
       } };
       if(data.modelThinking && display!=='hidden') result.push(thought);
       if(data.text && interim && !data.images?.length) {
-        if(language!=='en' && WeftUiCore.textLanguage(data.text)==='en') {
-          if(display!=='hidden')result.push({...thought,seq:anchor,data:{...thought.data,stepId:`interim-thinking-${data.streamSeq ?? event.seq}`,modelThinking:data.text,state:'completed',thinkingActive:false}});
-        } else result.push({...event,type:'step.completed',data:{
+        // Public assistant text is narration regardless of its language. Only
+        // the native reasoning field is governed by the thinking preference.
+        result.push({...event,type:'step.completed',data:{
           taskId:taskId || `progress-${anchor}`,stepId:`progress-${data.streamSeq ?? event.seq}`,toolName:'__progress',
           state:'completed',summary:language==='en'?'Progress update':'进展说明',progressText:data.text}});
       } else if(data.text || data.images?.length) result.push(event);
@@ -174,7 +174,7 @@
         } else if (Number.isSafeInteger(seq) && !cached && options.readDetail && (expandedForObjects || step === currentForObjects || step.state === 'failed')) {
           row.progressDetails.set(seq, 'loading')
           void options.readDetail(seq).then(data => {
-            const args = globalThis.WeftUiCore.toolArguments(data.text)
+            const args = {...globalThis.WeftUiCore.toolArguments(data.text),...(typeof data.description==='string'?{description:data.description}:{})}
             row.progressDetails.set(seq, Object.keys(args).length ? {summary: globalThis.WeftUiCore.toolSummary(step.toolName, args, block.language), arguments: args, interrupted: globalThis.WeftUiCore.interruptionFromDetail(data.text,step)} : {summary: step.summary})
             if (row.isConnected && row.dataset.signature === signature) { delete row.dataset.signature; renderCurrent() }
           }).catch(() => { row.progressDetails.set(seq, {summary: step.summary}) })
@@ -273,7 +273,7 @@
       if (!records.parentNode) details.append(records)
       const savedGroups = new Map([...records.querySelectorAll('[data-step-group]')].map(detail => [detail.dataset.stepGroup, detail]))
       const savedNotes = new Map([...records.querySelectorAll('[data-progress-note]')].map(detail => [detail.dataset.progressNote,detail]))
-      const recordNodes=WeftUiCore.groupConsecutiveSteps(block.steps).flatMap(group => /^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(group.kind) ? group.steps.map(step=>({...group,steps:[step]})) : [group]).map(group => {
+      const recordNodes=WeftUiCore.groupConsecutiveSteps(block.steps).flatMap(group => /^(shell|bash|pwsh|powershell|exec_command|run_command|__progress)$/.test(group.kind) ? group.steps.map(step=>({...group,steps:[step]})) : [group]).map(group => {
         const children = group.steps.map(step => {
           if(step.toolName==='__thinking')return thinkingCard(step,savedSteps.get(String(step.stepId)),options);
           if(step.toolName==='__progress') {
@@ -313,7 +313,7 @@
         const other=tools.filter(step=>!isCommand(step) && !(files.size && /^(edit|write)$/.test(step.toolName)));
         const label=[files.size?(block.language==='en'?`Edited ${files.size} file(s)`:`已编辑 ${files.size} 个文件`):'',commands.length?(block.language==='en'?`Ran ${commands.length} command(s)`:`已运行 ${commands.length} 条命令`):'',WeftUiCore.progressText(other,{terminal:true,reason:'ended',language:block.language}).text].filter(Boolean).join(' · ');
         if(activity.textContent!==label)activity.textContent=label;
-        recordNodes.unshift(activity);
+        recordNodes.push(activity);
       }
       reconcile(records,recordNodes);
       const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
@@ -345,8 +345,8 @@
           const question = options.questions?.find(question => question.observedSeq === start.seq);
           row.hidden = question ? question.status === 'pending' : !resolved;
           row.className = 'timeline-entry question-record';
-          row.replaceChildren();
-          if (!row.hidden) row.append(node('span', '', question && globalThis.WeftQuestionBar ? WeftQuestionBar.record(question) : '已回答'));
+          if (!row.hidden && question) WeftQuestionBar.renderRecord(row,question);
+          else if (!row.hidden) row.replaceChildren(node('span','','已回答'));
           return;
         }
         if (family === 'artifact') {

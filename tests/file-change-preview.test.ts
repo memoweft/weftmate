@@ -31,5 +31,7 @@ test('same-path reviews in different turns retain their source and ignore revoke
     {state:'completed',jobState:'running'}, {state:'completed',jobState:'stopping'}, {state:'pending'}, {state:'running',approvalStatus:'pending'}
   ].map((state,index)=>{const el=WeftTimelineCards.step({stepId:String(index),toolName:'pwsh',summary:'检查合成结果',...state},null,true,{});return {state:el.dataset.state,label:el.querySelector('.step-status').textContent};}));
   assert.deepEqual(states,[{state:'running',label:'后台运行中'},{state:'running',label:'后台正在停止'},{state:'pending',label:'等待执行'},{state:'running',label:'等待批准'}]);
+  const readOnly=await page.evaluate(()=>{const el=WeftTimelineCards.step({stepId:'editor-view',toolName:'str_replace_editor',state:'completed',summary:'修改文件',arguments:{command:'view',path:'report.md'}},null,false,{});return {label:el.querySelector('.step-status').textContent,icon:el.querySelector('.step-type-icon').dataset.icon,title:el.querySelector('.step-title').textContent};});
+  assert.deepEqual(readOnly,{label:'',icon:'file',title:'查看 report.md'});
  }finally{await browser.close();}
 });

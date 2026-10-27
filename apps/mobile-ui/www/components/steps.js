@@ -12,10 +12,10 @@
         const detail = saved || node('details', 'execution-step');
         detail.stepModel = step; detail.stepOptions = options;
         if (!saved) {
-            const label=node('summary'), state=node('span','step-state'), status=node('span','step-status'), title=node('span','step-title'), time=node('time','step-time');
-            state.setAttribute('aria-hidden','true');
+            const label=node('summary'), icon=node('span','step-type-icon'), status=node('span','step-status'), title=node('span','step-title'), time=node('time','step-time');
+            icon.setAttribute('aria-hidden','true');
             const arrow=node('span','progress-chevron');arrow.setAttribute('aria-hidden','true');arrow.append(WeftIcons.create('chevron',16));
-            label.append(state,status,title,time,arrow);
+            label.append(icon,status,title,arrow,time);
             const body=node('div','execution-step-body'), output=node('div','step-detail-content'), actions=node('div','progress-detail-actions');
             const copy=progress.detailAction(english?'Copy step details':'复制步骤详情','copy',()=>void progress.copyFeedback(copy,()=>
                 (detail.stepOptions.copyText || (text=>navigator.clipboard.writeText(text)))(WeftUiCore.executionDetailText(detail.rawText || '',detail.stepModel.language))));
@@ -84,14 +84,21 @@
         const state=WeftUiCore.executionState(step);
         if(state==='failed' && detail.dataset.state!=='failed')detail.open=true;
         detail.dataset.step=String(step.stepId);detail.dataset.state=state;detail.dataset.detailSeq=seq;detail.dataset.motion='unfold';
+        const args=WeftUiCore.toolArguments(step.arguments),editor=step.toolName==='str_replace_editor',viewing=editor && args.command==='view';
         const command=/^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(step.toolName);
-        const status=detail.querySelector('.step-status');status.hidden=!command;
+        const editing=/^(edit|write|write_file|create_file|apply_patch)$/.test(step.toolName) || editor && ['create','str_replace','insert'].includes(args.command);
+        const iconName=command?'terminal':editing?'edit':viewing || /read|file/.test(step.toolName)?'file':/search|grep|glob/.test(step.toolName)?'search':/web|browser|fetch/.test(step.toolName)?'web':'tool';
+        const icon=detail.querySelector('.step-type-icon');
+        if(icon.dataset.icon!==iconName){icon.replaceChildren(WeftIcons.create(iconName,16));icon.dataset.icon=iconName;}
+        const status=detail.querySelector('.step-status');status.hidden=!command && !editing;
         const jobText=step.jobState && (english?{running:'Running in background',stopping:'Stopping background job',completed:'Background job completed',failed:'Background job failed',killed:'Background job stopped'}:{running:'后台运行中',stopping:'后台正在停止',completed:'后台已完成',failed:'后台执行失败',killed:'后台已停止'})[step.jobState];
-        status.textContent=command ? step.approvalStatus==='pending' ? english?'Awaiting approval':'等待批准' : jobText || (state==='failed' ? english?'Failed':'执行失败' : state==='pending' ? english?'Waiting':'等待执行' : state==='running' ? running ? english?'Running':'正在执行' : english?'Unconfirmed':'结果未确认' : state==='cancelled' ? english?'Stopped':'已停止' : state==='rejected' ? english?'Declined':'已拒绝' : english?'Executed':'已执行') : '';
-        const description=WeftUiCore.toolArguments(step.arguments).description;
-        const summary=command && typeof description==='string' && description.trim() ? description.trim().slice(0,180) : step.summary;
-        const title=`${summary || (english?'Tool execution':'工具执行')}${command?'':step.statusText?` · ${step.statusText}`:state==='failed'?english?' · Encountered an issue':' · 遇到问题':state==='cancelled'?english?' · Stopped':' · 已停止':state==='running'?english?' · Running':' · 运行中':''}${step.approvalText?` · ${step.approvalText}`:''}`;
+        status.textContent=command || editing ? step.approvalStatus==='pending' ? english?'Awaiting approval':'等待批准' : jobText || (state==='failed' ? english?'Failed':'执行失败' : state==='pending' ? english?'Waiting':'等待执行' : state==='running' ? running ? english?command?'Running command':'Editing':command?'正在执行命令':'正在编辑' : english?'Unconfirmed':'结果未确认' : state==='cancelled' ? english?'Stopped':'已停止' : state==='rejected' ? english?'Declined':'已拒绝' : english?command?'Executed command':'Edited':command?'已执行命令':'已编辑') : '';
+        const description=args.description;
+        const path=args.file_path || args.filePath || args.path || step.fileChanges?.[0]?.path;
+        const summary=typeof description==='string' && description.trim() ? description.trim().slice(0,180) : viewing ? `${english?'View':'查看'} ${typeof path==='string'?path.split(/[\\/]/).at(-1):english?'file':'文件'}` : editing && typeof path==='string' ? path.split(/[\\/]/).at(-1) : step.summary;
+        const title=`${summary || (english?'Tool execution':'工具执行')}${command || editing?'':step.statusText?` · ${step.statusText}`:state==='failed'?english?' · Encountered an issue':' · 遇到问题':state==='cancelled'?english?' · Stopped':' · 已停止':state==='running'?english?' · Running':' · 运行中':''}${step.approvalText && step.approvalStatus!=='pending'?` · ${step.approvalText}`:''}`;
         const titleNode=detail.querySelector('.step-title');if(titleNode.textContent!==title)titleNode.textContent=title;
+        titleNode.title=title;
         const at=new Date(step.at),ms=Date.parse(step.endAt)-Date.parse(step.at),time=detail.querySelector('time');
         const recorded=Number.isFinite(at.getTime());
         const stamp=recorded?new Intl.DateTimeFormat(english?'en-GB':'zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(at):english?'Time unavailable':'时间未记录';
