@@ -218,7 +218,9 @@
         view.running=false;
       }
       const running = view.running
-      const elapsed = view.duration || (running ? `${Math.max(0,Math.floor((Date.now()-Date.parse(started?.at || current?.at))/1000)) || 0} ${block.language==='en'?'s':'秒'}` : '')
+      const startedAt=Date.parse(started?.at || current?.at);
+      const elapsed = view.duration || (running ? Number.isFinite(startedAt) ? `${Math.max(0,Math.floor((Date.now()-startedAt)/1000))} ${block.language==='en'?'s':'秒'}`
+        : /\d+ (?:秒|s)$/.exec(waiting || '')?.[0] || (block.language==='en'?'duration unavailable':'用时未记录') : '')
       if (running) view.text = view.text.replace(/\s*\d+ (?:秒|s)$/, '')
       const signature = JSON.stringify([block, outcome, stopView])
       row.dataset.running = String(running)
@@ -239,12 +241,12 @@
       const savedSteps = new Map([...row.querySelectorAll('.execution-step')].map(detail => [detail.dataset.step, detail]))
       // stepCard mutates reused nodes, so compare with their state before paint.
       const savedStepStates = new Map([...savedSteps].map(([key, detail]) => [key, detail.dataset.state]))
-      row.dataset.failed = String(!!view.failed)
+      const newFailure=view.failed && row.dataset.failed!=='true';row.dataset.failed = String(!!view.failed)
       const details = previous || node('details', 'execution-block')
       if (!previous) details.dataset.replyProcess = 'true'
       details.dataset.motion = 'unfold'
       const justFinished = terminal && details.dataset.terminal === 'false';
-      details.open = !previous ? !terminal : justFinished ? false : previous.open;
+      details.open = newFailure || (!previous ? !terminal : justFinished && !view.failed ? false : previous.open);
       details.dataset.terminal = String(!!terminal);
       row.dataset.running = String(running)
       row.classList.toggle('has-failure', !!view.failed)
