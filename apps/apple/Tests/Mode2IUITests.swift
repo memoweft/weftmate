@@ -40,6 +40,26 @@ final class Mode2IUITests: XCTestCase {
         XCTAssertTrue(app.buttons["phoneSheet.close"].exists)
         app.terminate()
     }
+    @MainActor func testUpwardHistoryLoadsWithoutAButtonAndPreservesReadingPosition() throws {
+        let app=XCUIApplication()
+        app.launchArguments=["--ui-testing","--apple-contract-fixture","--mode2i-fixture","--ios-work-turn-history",
+            "--server-url","https://a2-ui.unit.example","--ui-testing-namespace","ios-work-history-"+UUID().uuidString]
+        app.launch();defer { app.terminate() }
+        XCTAssertTrue(app.buttons["phone.sidebar"].waitForExistence(timeout:30))
+        try openDirectory(app);app.buttons["phone.mode.chat"].tap();app.buttons["computer.conversation.host-fixture|main"].tap()
+        XCTAssertFalse(app.buttons["查看更早记录"].exists)
+        let scroll=app.scrollViews.firstMatch
+        for _ in 0..<8 {
+            scroll.swipeDown()
+            if app.activityIndicators["mainChat.older.loading"].isHittable { break }
+        }
+        let anchor=try XCTUnwrap(app.staticTexts.allElementsBoundByIndex.first { $0.label.hasPrefix("较近记录") && $0.isHittable })
+        let y=anchor.frame.minY
+        let older=app.staticTexts.matching(NSPredicate(format:"label BEGINSWITH %@","较早记录")).firstMatch
+        XCTAssertTrue(older.waitForExistence(timeout:10))
+        XCTAssertEqual(anchor.frame.minY,y,accuracy:4,"Prepending history moved the reader")
+        XCTAssertFalse(app.buttons["查看更早记录"].exists)
+    }
     @MainActor func testFix5HealthFollowupPopulatesNewChatInput() throws {
         let app=connected("light")
         XCTAssertTrue(app.descendants(matching:.any).matching(identifier:"phone.new.text").firstMatch.waitForExistence(timeout:30))
@@ -63,8 +83,8 @@ final class Mode2IUITests: XCTestCase {
             app.buttons["phone.work.project"].tap();app.buttons["phone.work.project.project-b"].tap()
             capture(theme+"-work-selection")
             app.buttons["phone.work.computer"].tap()
-            XCTAssertTrue(app.buttons["随身电脑"].exists)
-            XCTAssertFalse(app.buttons["备用电脑 · 不在线"].isEnabled)
+            XCTAssertTrue(app.buttons["phone.work.computer.second-computer"].exists)
+            XCTAssertFalse(app.buttons["phone.work.computer.offline-computer"].isEnabled)
             capture(theme+"-computer-choice")
             app.terminate()
         }
@@ -87,30 +107,41 @@ final class Mode2IUITests: XCTestCase {
             XCTAssertTrue(app.buttons["phone.work.project"].waitForExistence(timeout: 5))
             XCTAssertTrue(app.buttons["phone.work.computer"].exists)
             app.buttons["phone.work.computer"].tap()
-            XCTAssertTrue(app.buttons["随身电脑"].exists)
-            XCTAssertFalse(app.buttons["备用电脑 · 不在线"].isEnabled)
+            XCTAssertTrue(app.buttons["phone.work.computer.second-computer"].exists)
+            XCTAssertFalse(app.buttons["phone.work.computer.offline-computer"].isEnabled)
             capture(theme+"-computer-choice")
-            app.buttons["工作电脑"].tap()
-            XCTAssertFalse(app.buttons["phone.new.send"].isEnabled)
+            app.buttons["phone.work.computer.host-fixture"].tap()
+            XCTAssertFalse(app.buttons["phone.work.start"].isEnabled)
             app.buttons["phone.work.project"].tap()
             app.buttons["phone.work.project.project-b"].tap()
             capture(theme + "-work-selection")
             app.descendants(matching:.any).matching(identifier:"phone.new.text").firstMatch.tap(); app.descendants(matching:.any).matching(identifier:"phone.new.text").firstMatch.typeText("整理合成周报")
-            app.buttons["phone.new.send"].tap()
+            app.buttons["phone.work.start"].tap()
             XCTAssertTrue(app.descendants(matching:.any).matching(identifier:"mainChat.draft").firstMatch.waitForExistence(timeout: 20))
             capture(theme + "-created-work")
             try openDirectory(app); app.buttons["phone.mode.chat"].tap()
             app.buttons["computer.conversation.host-fixture|main"].tap()
             XCTAssertTrue(app.buttons["phone.work.accept"].waitForExistence(timeout: 20))
-            XCTAssertFalse(app.buttons["phone.work.accept"].isEnabled)
+            XCTAssertTrue(app.buttons["phone.work.accept"].isEnabled)
             capture(theme + "-switch-card")
-            app.buttons["phone.work.project"].firstMatch.tap(); app.buttons["phone.work.project.project-a"].tap()
             app.buttons["phone.work.accept"].tap()
+            let carried=app.staticTexts["phone.work.firstMessage"]
+            XCTAssertTrue(carried.waitForExistence(timeout:10))
+            XCTAssertEqual(carried.label,"请整理这份合成资料")
+            XCTAssertFalse(app.buttons["phone.work.start"].isEnabled)
+            XCTAssertTrue(app.buttons["phone.work.computer"].exists)
+            XCTAssertFalse(app.buttons["phone.new.send"].exists)
+            app.buttons["phone.work.project"].tap(); app.buttons["phone.work.project.project-a"].tap()
+            app.buttons["phone.work.start"].tap()
             XCTAssertTrue(app.staticTexts["请整理这份合成资料"].waitForExistence(timeout: 10))
             try openDirectory(app)
             XCTAssertEqual(app.buttons["phone.mode.work"].value as? String, "已选择")
-            XCTAssertTrue(app.buttons["computer.conversation.host-fixture|main"].waitForExistence(timeout: 5))
-            capture(theme + "-converted-history-list")
+            XCTAssertTrue(app.buttons["computer.conversation.host-fixture|proposal-work"].waitForExistence(timeout: 5))
+            XCTAssertFalse(app.buttons["computer.conversation.host-fixture|main"].exists)
+            app.buttons["phone.mode.chat"].tap()
+            XCTAssertTrue(app.buttons["computer.conversation.host-fixture|main"].exists)
+            XCTAssertFalse(app.buttons["查看更早记录"].exists)
+            capture(theme + "-original-chat-preserved")
             app.terminate()
 
             let rejected = connected(theme)

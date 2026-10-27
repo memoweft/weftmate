@@ -25,6 +25,8 @@ private actor CommandHTTP: HTTPTransport {
     var dropLostRecord = false
     var pausePost = false
     var holdEnd = false
+    var failAfterTerminalTail = false
+    var badIncrements = 0
     var offline = false
     var gate: CheckedContinuation<Void, Never>?
     var posts: [Data] = []
@@ -32,9 +34,10 @@ private actor CommandHTTP: HTTPTransport {
     var lookupReads = 0
     var receipt: [String: String]?
     func options(configured: Bool = true, omitProfile: Bool = false, lostReply: Bool = false,
-                 dropLostRecord: Bool = false, pausePost: Bool = false, holdEnd: Bool = false) {
+                 dropLostRecord: Bool = false, pausePost: Bool = false, holdEnd: Bool = false, failAfterTerminalTail: Bool = false) {
         self.configured = configured; self.omitProfile = omitProfile; self.lostReply = lostReply
         self.dropLostRecord = dropLostRecord; self.pausePost = pausePost; self.holdEnd = holdEnd
+        self.failAfterTerminalTail=failAfterTerminalTail
     }
     func release() { gate?.resume(); gate = nil }
     func finishTurn() { holdEnd = false }
@@ -44,6 +47,7 @@ private actor CommandHTTP: HTTPTransport {
     func submitted() -> [Data] { posts }
     func eventReadCount() -> Int { eventReads }
     func lookupReadCount() -> Int { lookupReads }
+    func badIncrementCount() -> Int { badIncrements }
     private var running = false
     func setRunning() { running = true }
     func send(_ request: URLRequest) async throws -> HTTPResponse {
@@ -91,7 +95,11 @@ private actor CommandHTTP: HTTPTransport {
             else { status = 404; object = ["error": ["code": "NOT_FOUND"]] }
         case "/personal/v1/sessions/session-host/events":
             eventReads += 1
-            let after = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "afterSeq" }?.value.flatMap(Int.init) ?? -1
+            let cursor = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "afterSeq" }?.value.flatMap(Int.init)
+            if failAfterTerminalTail, cursor != nil, !posts.isEmpty {
+                badIncrements += 1; throw APIFailure.invalidResponse
+            }
+            let after = cursor ?? -1
             var events: [[String: Any]] = []
             if let bytes = posts.first {
                 let payload = try JSONSerialization.jsonObject(with: bytes) as! [String: String]
@@ -248,6 +256,17 @@ private actor CommandHTTP: HTTPTransport {
             foreground: true, cancelled: false), "Changed owner remained enabled")
         print("PASS observation continues beyond old tick boundary with bounded backoff and lifecycle cancellation")
 
+        let terminalHTTP = CommandHTTP()
+        await terminalHTTP.options(failAfterTerminalTail:true); await terminalHTTP.setRunning()
+        let terminal=try model(terminalHTTP,directory:base.appendingPathComponent("terminal-tail"))
+        let terminalConversation=try await opened(terminal)
+        terminal.setDraft("completed proposal",for:terminalConversation,accountEpoch:terminal.accountEpoch)
+        await terminal.send(terminalConversation,accountEpoch:terminal.accountEpoch)
+        try await wait { terminal.commandRows(for:terminalConversation).first?.progress == .completed }
+        try check(await terminalHTTP.badIncrementCount() == 0,"Completed tail was followed by an unnecessary request that lost completion")
+        try check(terminal.conversations.first(where:{$0.id == terminalConversation.id})?.running == false,"Completed tail left the composer running")
+        print("PASS IOS-WORK-TURN completed tail restores send before any invalid incremental response")
+
         let lifecycleHTTP = CommandHTTP()
         await lifecycleHTTP.options(holdEnd: true)
         let lifecycle = try model(lifecycleHTTP, directory: base.appendingPathComponent("lifecycle"))
@@ -303,6 +322,6 @@ private actor CommandHTTP: HTTPTransport {
             app.setForeground(false)
         }
         print("PASS D36 account preference reaches actual queue and steer command bodies")
-        print("12 controlled send-flow checks passed; real HTTP/model/GUI/Keychain: 0")
+        print("13 controlled send-flow checks passed; real HTTP/model/GUI/Keychain: 0")
     }
 }

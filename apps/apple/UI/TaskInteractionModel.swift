@@ -237,8 +237,12 @@ private struct SavedTaskResponse: Codable {
         let key = "approval:" + approval.id
         guard canRespond(key), approvals.contains(approval), let scope = try? scope() else { return }
         do {
+            let proposalTask: TaskSnapshot?
+            if accept { proposalTask = try await client.taskDetail(taskID: approval.sourceCommandId) }
+            else { proposalTask = nil }
+            guard isCurrent else { return }
             let intent = try WorkAndChat.switchDecision(scope: scope, approval: approval,
-                capabilities: capabilities, project: project, accept: accept, requestID: UUID().uuidString)
+                capabilities: capabilities, project: project, accept: accept, requestID: UUID().uuidString, proposalTask: proposalTask)
             try save(SavedTaskResponse(approval: intent, question: nil))
             await submit(key)
         } catch { errors[key] = ProjectPresentation.error(error) }
@@ -275,8 +279,9 @@ private struct SavedTaskResponse: Codable {
         do {
             record.attempted = true; try save(record)
             if let intent = record.approval {
-                _ = try await client.submitApproval(intent)
+                let receipt = try await client.submitApproval(intent)
                 guard isCurrent, token == generation else { return }
+                mergeApprovals([receipt.approval])
             } else if let intent = record.question {
                 _ = try await client.submitQuestionAnswer(intent)
                 guard isCurrent, token == generation else { return }

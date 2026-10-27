@@ -97,10 +97,14 @@ private struct PhoneChoiceLabel: View {
     }
 }
 struct PhonePendingDecision: View {
+    @Environment(\.phoneWorkApp) private var app
     @ObservedObject var model: TaskInteractionModel
     var events: [TimelineEvent]
     var body: some View {
-        if let approval=model.pendingApprovals.first { PhoneApprovalSummary(model:model,approval:approval,events:events) }
+        if let approval=model.pendingApprovals.first {
+            if approval.isWorkSwitch, let app { PhoneWorkSwitchCard(app:app,model:model,approval:approval) }
+            else { PhoneApprovalSummary(model:model,approval:approval,events:events) }
+        }
         else if let question=model.pendingQuestions.first { PhoneQuestionSummary(model:model,batch:question) }
         else if let question=model.questions.first(where:{($0.status == .answered || $0.status == .resolved || model.isRegistered("question:"+$0.id))}),let receipt=model.answeredSummary(question) { Text(receipt).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("answeredQuestion."+question.id) }
         else if let approval=model.approvals.first(where:{receipt($0) != nil}),let summary=receipt(approval) { WeftLabel(summary,icon:"approval").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("approvalSummary."+approval.id) }
@@ -119,12 +123,13 @@ struct PhonePendingDecisionNotice: View {
     var events: [TimelineEvent] = []
     var open: () -> Void = {}
     @State private var presented = false
+    private var workProposal: Bool { model.pendingApprovals.first?.isWorkSwitch == true }
     var body: some View {
         if !model.pendingApprovals.isEmpty || !model.pendingQuestions.isEmpty {
             Button { open(); presented=true } label: {
                 HStack {
-                    WeftIcon(model.pendingApprovals.isEmpty ? "plan" : "approval", size: 16)
-                    Text(model.pendingApprovals.isEmpty ? "有问题等你回答" : "有一项等你批准").lineLimit(1)
+                    WeftIcon(workProposal ? "folder" : model.pendingApprovals.isEmpty ? "plan" : "approval", size: 16)
+                    Text(workProposal ? "可以切换到工作" : model.pendingApprovals.isEmpty ? "有问题等你回答" : "有一项等你批准").lineLimit(1)
                     Spacer(); WeftIcon("right", size: 16)
                 }.frame(minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
             }.font(AppleTokens.Fonts.callout).buttonStyle(.plain).foregroundStyle(Weave.secondary)
@@ -135,7 +140,7 @@ struct PhonePendingDecisionNotice: View {
                         if let approval=model.pendingApprovals.first { PhoneApprovalCard(model:model,approval:approval,events:events) }
                         else if let batch=model.pendingQuestions.first { PhoneQuestionCard(model:model,batch:batch) }
                         else { Text("这一项已处理").padding(AppleTokens.Space.p20) }
-                    } }.phoneSheet(model.pendingApprovals.isEmpty ? "回答问题" : "批准操作", close: { presented=false })
+                    } }.phoneSheet(workProposal ? "切换到工作" : model.pendingApprovals.isEmpty ? "回答问题" : "批准操作", close: { presented=false })
                 }
         }
     }

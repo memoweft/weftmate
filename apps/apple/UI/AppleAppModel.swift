@@ -405,6 +405,23 @@ extension AppleAppModel {
         defer { if accountEpoch == epoch { preparingConversations.remove(key); preparingMessages[key] = nil } }
         do {
             guard await flushDrafts(), accountEpoch == epoch else { return }
+            if mainChat.capabilities.supports("workAndChat"), WorkAndChat.mode(conversation) == .chat {
+                guard let chatID=conversation.chatId else {
+                    continuationNotices[key]="请新建一段对话后继续聊天。"; return
+                }
+                // The logical chat owns mode policy and its durable request journal.
+                // Never send a chat phrase directly to the raw task-message endpoint.
+                let chat=MainChatModel(app:self,chatID:chatID)
+                await chat.configure(); chat.restoreRequest()
+                guard accountEpoch == epoch else { return }
+                guard chat.pending == nil else {
+                    continuationNotices[key]="还有一条消息等待核对，请打开对话后继续原请求。"; return
+                }
+                chat.draft=text; await chat.send()
+                guard accountEpoch == epoch else { return }
+                continuationNotices[key]=chat.error
+                return
+            }
             var selectedFiles = attachmentDrafts[key] ?? []
             if !selectedFiles.isEmpty {
                 if let previousSession = attachmentSessionIDs[key], previousSession != target.sessionID {
@@ -639,17 +656,26 @@ extension AppleAppModel {
                 let seedIDs = await self.client.cachedTimelineMessageIDs(sessionID: sessionID)
                 guard self.observationVisible(conversation, accountEpoch: accountEpoch), !Task.isCancelled else { return }
                 self.timeline.apply(tail)
+                self.updateTimelineActivity(conversation)
                 self.timelineMessageIDs = seedIDs
                 for message in seedMessages {
                     if let index = self.messages.firstIndex(where: { $0.id == message.id }) { self.messages[index] = message }
                     else { self.messages.append(message) }
                 }
+                self.observedUserReceipts.formUnion(seed.events.filter { $0.type == "user.message" }.compactMap { $0.data.receiptId })
+                let initialProgress = tracker.progress(for: currentReceipt)
+                self.commandPresentations[id] = .init(record: currentRecord, receipt: currentReceipt, progress: initialProgress,
+                    note: nil, lookupNotFound: false)
+                // A completed tail is already proof. A later network failure cannot erase it.
+                if initialProgress.isTerminal { return }
                 while self.observationVisible(conversation, accountEpoch: accountEpoch) {
                     try Task.checkCancellation()
                     let page = try await self.client.sharedHistory(sessionID: sessionID, afterSeq: tracker.nextSeq)
 
                     try tracker.apply(page)
                     guard self.epoch == accountEpoch, !Task.isCancelled else { return }
+                    self.timeline.apply(page.timelinePage)
+                    self.updateTimelineActivity(conversation)
                     self.observedUserReceipts.formUnion((seed.events + page.events).filter { $0.type == "user.message" }.compactMap { $0.data.receiptId })
                     let progress = tracker.progress(for: currentReceipt)
                     self.commandPresentations[id] = .init(record: currentRecord, receipt: currentReceipt, progress: progress,
@@ -673,7 +699,7 @@ extension AppleAppModel {
                             }
                         }
                     }
-                    if [.completed, .aborted, .failed, .blocked].contains(progress) { return }
+                    if progress.isTerminal { return }
                     if !page.hasMore {
                         try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty))
                     }
@@ -948,6 +974,7 @@ final class AppleAppModel: ObservableObject {
     @Published var projectEditor: AppleProjectEditor?
     @Published var phoneNewConversationDraft = ""
     @Published var phoneCreatingWork = false
+    @Published var phoneStartingConversation = false
     @Published var projectConversation: Project?
     @Published var projectModelID = ""
     @Published var projectModels: [SharedHostModel] = []

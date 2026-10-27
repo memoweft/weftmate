@@ -1,0 +1,24 @@
+{
+  "approvals": [
+    {
+      "approvalId": "6f6e8907-a9f1-4063-b621-bab68119b423",
+      "sessionId": "session-c766f2d5-27c8-49f8-a311-f0d55cb797cc",
+      "taskId": "cmd-bdd4dedb-b2ef-4fa1-8f89-14f64ea07bed",
+      "sourceCommandId": "cmd-bdd4dedb-b2ef-4fa1-8f89-14f64ea07bed",
+      "sourceReceiptId": "3e7ed87b-f057-4348-a031-a7fbe6ae6ddb",
+      "turn": 1,
+      "callId": "switch-17c3a544-afaf-46af-a3e3-849762dd7f4d",
+      "rootCallId": "switch-17c3a544-afaf-46af-a3e3-849762dd7f4d",
+      "toolName": "pwsh",
+      "reason": "[weftmate:work-switch] 这件事需要在电脑上做。要切换到工作吗？",
+      "createdAt": "2026-10-27T08:25:29.723Z",
+      "status": "pending",
+      "operationCategories": [],
+      "canAlwaysAllow": false,
+      "intent": "work-switch",
+      "riskCategories": []
+    }
+  ],
+  "nextBefore": null,
+  "hasMore": false
+}

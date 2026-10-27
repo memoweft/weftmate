@@ -23,9 +23,13 @@ struct ConversationTimelineView: View {
     }
     private var displayEvents: [TimelineEvent] {
         #if os(iOS)
-        appModel.timeline.displayEvents
+        if WorkAndChat.mode(conversation) == .chat {
+            let calls = WorkAndChat.proposedCallIDs(events: appModel.timeline.events, approvals: interactions.approvals)
+            return appModel.timeline.displayEvents.filter { WorkAndChat.showsChatEvent(type: $0.type, data: $0.data, proposedCalls: calls) }
+        }
+        return appModel.timeline.displayEvents
         #else
-        appModel.timeline.events
+        return appModel.timeline.events
         #endif
     }
     private var phoneEntries: [TimelineEntry] {
@@ -111,9 +115,6 @@ struct ConversationTimelineView: View {
         // Original sync messages are outside the DSH sequence space.
         ForEach(appModel.messages.filter { !$0.id.hasPrefix("host|") && $0.pendingContext }) { message in
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
-        }
-        if commands.hasMore {
-            Button("查看更早记录") { Task { await commands.loadMore(); publishRootCommands() } }.font(AppleTokens.Fonts.caption)
         }
         if let error = interactions.approvalError ?? interactions.questionError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
         if let error = interactions.persistenceError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }

@@ -76,6 +76,8 @@ public struct SessionApproval: Codable, Equatable, Sendable, Identifiable {
     public let status: SessionInteractionStatus
     public let riskCategories: [String]?
     public var intent: String? = nil
+    public var workSessionId: String? = nil
+    public var workCreateCommandId: String? = nil
     public var isWorkSwitch: Bool { intent == "work-switch" }
     public var secondOpinion: ApprovalSecondOpinion? = nil
     public var operationCategories: [String]? = nil
@@ -99,6 +101,8 @@ public struct SessionApproval: Codable, Equatable, Sendable, Identifiable {
             receipt: sourceReceiptId, turn: turn, createdAt: createdAt)
         try SharedValidation.require(!callId.isEmpty && (rootCallId.map { !$0.isEmpty } ?? true) && !toolName.isEmpty &&
             !status.rawValue.isEmpty && (decisionRequestId.map(SharedValidation.request) ?? true) &&
+            (workSessionId.map { SharedValidation.id($0) && $0 != sessionId } ?? true) &&
+            (workCreateCommandId.map(SharedValidation.id) ?? true) &&
             [answeredAt, resolvedAt].allSatisfy { $0.map(MemoryValidation.time) ?? true })
     }
     func matchesIdentity(_ other: Self) -> Bool {
@@ -185,6 +189,9 @@ public struct ApprovalDecisionReceipt: Codable, Equatable, Sendable {
         try SharedValidation.require(wire.approval.status == .answered && wire.approval.decisionRequestId == intent.requestId &&
             wire.approval.decisionOutcome?.rawValue == intent.outcome.rawValue && wire.approval.answeredAt != nil &&
             (wire.approval.decisionScope ?? "once") == (intent.decisionScope ?? .once).rawValue)
+        if intent.approval.isWorkSwitch, intent.outcome == .allowedOnce {
+            try SharedValidation.require(wire.approval.workSessionId != nil && wire.approval.workCreateCommandId != nil)
+        }
         return .init(scope: intent.scope, approval: wire.approval, requestId: wire.requestId)
     }
 }

@@ -37,6 +37,20 @@ private struct Drafts: AppleDraftPersisting {
             print("PASS FIX-2 creation missing/accepted lookup and original retry after restart")
         } catch { failures.append("FIX-2: \(error)");print("FAIL FIX-2: \(error)") }
         do {
+            let (app,transport)=try await make(directory.appendingPathComponent("chat-first-message"))
+            await app.mainChat.createSide(fresh:true)
+            guard let id=app.openedSessionID,let row=app.conversations.first(where:{$0.id == id}) else { throw Failure(text:"No new chat") }
+            await app.open(row)
+            app.setDraft("创建一个文件夹叫 她",for:row,accountEpoch:app.accountEpoch)
+            await app.send(row,accountEpoch:app.accountEpoch)
+            let posts=await transport.recorded().filter { $0.httpMethod == "POST" && $0.url?.path.hasSuffix("/commands") == true }
+            let bodies=try posts.map { try JSONDecoder().decode(JSONValue.self,from:$0.httpBody!) }
+            guard bodies.contains(where:{$0["kind"]?.string == "chat.message" && $0["text"]?.string == "创建一个文件夹叫 她"}),
+                  !bodies.contains(where:{$0["kind"]?.string == "session.message"}),
+                  app.draftText(for:row,accountEpoch:app.accountEpoch).isEmpty else { throw Failure(text:"Chat did not complete through the logical message channel") }
+            print("PASS IOS-WORK-TURN first chat phrase uses chat.message only")
+        } catch { failures.append("chat route: \(error)");print("FAIL chat route: \(error)") }
+        do {
             let (app,_)=try await make(directory.appendingPathComponent("attachments"))
             let first=MainChatModel(app:app,chatID:"main");await first.configure()
             let file=directory.appendingPathComponent("synthetic-draft.txt");try Data("synthetic attachment bytes".utf8).write(to:file)

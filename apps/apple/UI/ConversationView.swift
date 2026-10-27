@@ -85,6 +85,9 @@ struct ConversationView: View {
     @FocusState private var draftFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var visibleMessageID: String?
+    @State private var olderRestore: ChatAnchor?
+    @State private var olderRequest: Int?
+    @State private var pixelScroll: ((Double) -> Void)?
     @State private var follow = ConversationFollowState()
     @State private var viewportHeight: CGFloat = 0
     @State private var contentHeight: CGFloat = 0
@@ -258,13 +261,11 @@ struct ConversationView: View {
                     SideChatSourceView(app: model, conversation: conversation)
                     if !conversation.temporaryState.notice().isEmpty { Text(conversation.temporaryState.notice()).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("temporaryChat.title") }
 
-                    if model.timeline.hasOlder {
-                        Button(model.olderBusy ? "正在读取…" : "读取更早的记录") {
-                            // Keep the current named record in view when earlier history is prepended.
-                            Task { await readOlder(proxy: proxy) }
-                        }.disabled(model.olderBusy).accessibilityIdentifier("loadOlderTimeline")
-                        .id("older")
-                    }
+                    ProgressView().controlSize(.small)
+                        .frame(maxWidth: .infinity).frame(height: AppleTokens.Space.p20)
+                        .opacity(model.olderBusy ? 1 : 0).accessibilityHidden(!model.olderBusy)
+                        .accessibilityIdentifier("conversation.older.loading")
+                        .background(MainChatEventPosition(eventID: "history.top", onPosition: trackPhonePosition))
                     if let cachedAt = model.historyCachedAt {
                         Text("离线记录 · \(DeviceDateText.timestamp(cachedAt))，等待核对最新状态。")
                             .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
@@ -296,6 +297,7 @@ struct ConversationView: View {
                     } else {
                         ForEach(model.messages) { message in
                             MessageView(model: model, message: message, openAttachment: openAttachment).id(message.id)
+                                .background(MainChatEventPosition(eventID: message.id, onPosition: trackPhonePosition))
                         }
                     }
                     optimisticMessages
@@ -309,7 +311,7 @@ struct ConversationView: View {
                     if !model.timeline.events.contains(where: { $0.type.hasPrefix("approval.") || $0.type.hasPrefix("question.") }) { PhonePendingDecision(model:interactions,events:model.timeline.events).id("phone.pendingDecision")
                         .background(MainChatEventPosition(eventID:"phone.pendingDecision",onPosition:trackPhonePosition)) }
                     #endif
-                    commandStatusCards
+                    if WorkAndChat.mode(conversation) == .work || !interactions.pendingApprovals.contains(where: \.isWorkSwitch) { commandStatusCards }
                     adoptionStatusCards
                     AppleTokens.Colors.clear.frame(height: 1).id("latest")
                         .background(MainChatEventPosition(eventID:"phone.end",onPosition:trackPhonePosition))
@@ -322,6 +324,7 @@ struct ConversationView: View {
                 .scrollTargetLayout()
                 .padding(.horizontal, AppleTokens.Space.p24).padding(.vertical, AppleTokens.Space.p26)
                 .frame(maxWidth: 760).frame(maxWidth: .infinity)
+                .background(ChatPixelScroll(onReady: { pixelScroll = $0 }).frame(width: 0, height: 0))
             }
               .modifier(ConversationScrollTracking(visibleID: $visibleMessageID, follow: $follow))
         .onChange(of: model.subtaskStepTarget) { _, seq in
@@ -481,12 +484,12 @@ struct ConversationView: View {
         .accessibilityIdentifier("conversationDetail")
     }
 
-    private func readOlder(proxy: ScrollViewProxy) async {
+    private func readOlder() async {
         let epoch = model.accountEpoch
-        let anchor = visibleMessageID == "older" ? TimelineProjection.entries(model.timeline.events).first?.id : visibleMessageID
+        let anchor = visibleMessageID.flatMap { id in phonePositions.frames[id].map { ChatAnchor(eventID: id, pixelOffset: Double($0.minY)) } }
         await model.loadOlder(conversation)
         guard model.accountEpoch == epoch, model.selectedConversation?.id == conversation.id else { return }
-        if let anchor { proxy.scrollTo(anchor, anchor: .top) }
+        olderRestore = anchor
     }
 
     private func endDraftFocus() {
@@ -692,9 +695,20 @@ struct ConversationView: View {
     }
     private var pendingDecisionID: String? { interactions.pendingApprovals.first?.id ?? interactions.pendingQuestions.first?.id }
     private func trackPhonePosition(_ id: String,_ frame: CGRect?,_ height: CGFloat,_ userScrolling: Bool) {
-        #if os(iOS)
         phonePositions.frames[id]=frame
         let actualHeight=height>0 ? height : viewportHeight
+        if let anchor = olderRestore, anchor.eventID == id, let frame {
+            olderRestore = nil; pixelScroll?(Double(frame.minY) - anchor.pixelOffset)
+        }
+        if id == "history.top", let frame {
+            if frame.maxY <= 0, olderRequest != nil { olderRequest = nil }
+            if userScrolling, frame.maxY > 0, frame.minY < actualHeight, !model.historyBusy,
+               !model.olderBusy, model.timeline.hasOlder, let before = model.timeline.beforeSeq, olderRequest != before {
+                olderRequest = before; follow.userScrolled(distanceFromBottom: 49)
+                Task { await readOlder() }
+            }
+        }
+        #if os(iOS)
         if actualHeight != viewportHeight { viewportHeight=actualHeight }
         let end=phonePositions.frames["phone.end"]
         let distance=end.map { max(0,$0.maxY-actualHeight) } ?? .greatestFiniteMagnitude
@@ -704,8 +718,8 @@ struct ConversationView: View {
         }
         if id == "phone.end" { phonePositions.previousEndTop=end?.minY }
         if atBottom != (distance <= 48) { atBottom=distance <= 48 }
-        if let first=phonePositions.frames.filter({ $0.key != "phone.end" && $0.value.maxY > 0 && $0.value.minY < actualHeight }).min(by:{ $0.value.minY < $1.value.minY }),visibleMessageID != first.key { visibleMessageID=first.key }
         #endif
+        if let first=phonePositions.frames.filter({ !["history.top", "phone.end", "phone.pendingDecision"].contains($0.key) && $0.value.maxY > 0 && $0.value.minY < actualHeight }).min(by:{ $0.value.minY < $1.value.minY }),visibleMessageID != first.key { visibleMessageID=first.key }
     }
     private var phoneDraftInput: some View {
         TextField(conversation.running ? (model.runningMessageMode == .queue ? "排队到下一条…" : "引导当前回复…") : "向 WeftMate 说说你的目标",
