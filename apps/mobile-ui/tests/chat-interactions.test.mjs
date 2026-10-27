@@ -1726,7 +1726,11 @@ test('M1-0 ended mobile execution folds once and retains calls across a card bou
   assert.equal(blocks.length,1);assert.equal(blocks[0].querySelector('details').open,false);
   assert.equal(blocks[0].querySelector('.inline-progress-text').textContent,'已结束');
   assert.equal(blocks[0].querySelector('.progress-elapsed').textContent,'用时未记录');
-  assert.equal(blocks[0].querySelectorAll('.execution-step').length,2);
+  assert.equal(blocks[0].querySelectorAll('.execution-step').length,0,'closed records are built on first expansion');
+  const details=blocks[0].querySelector('details');details.open=true;details.fire('toggle');
+  assert.deepEqual(blocks[0].querySelectorAll('.execution-step').map(step=>step.dataset.step),['s1','s2']);
+  details.open=false;details.fire('toggle');
+  assert.equal(blocks[0].querySelectorAll('.execution-step').length,2,'a later collapse retains the mounted calls');
   assert.equal(h.node('chat-content').children.some(node=>node.dataset.timelineApproval==='approval-one'),false);
   const counts=h.node('chat-content').children.length;h.run('renderTimeline()');assert.equal(h.node('chat-content').children.length,counts);
 })

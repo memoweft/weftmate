@@ -89,7 +89,11 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
 
   console.log('UI02 functional interactions passed');
   const metrics=await page.evaluate(async()=>{
-    const box=document.getElementById('chat-scroll'),list=document.getElementById('transcript');
+    // Measure the scroll helper independently of the live virtual-list owner.
+    const host=document.getElementById('chat-scroll'),box=host.cloneNode(false),list=document.getElementById('transcript').cloneNode(false);
+    box.removeAttribute('id');list.removeAttribute('id');
+    Object.assign(box.style,{position:'fixed',left:'0',top:'0',width:`${host.clientWidth}px`,height:`${host.clientHeight}px`,overflow:'auto'});
+    box.append(list);document.body.append(box);
     const row=document.createElement('li');row.className='message assistant';const body=WeftContent.create('稳定前文\n\n','message-text markdown-body');row.append(body);list.append(row);
     const scroll=WeftConversationScroll(box,list,document.createElement('button'));
     scroll.latest();await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
@@ -106,13 +110,14 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
     WeftContent.update(body,text+'追加的内容'.repeat(300),{streaming:true});await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
     const held=Math.abs(box.scrollTop-top)<2;scroll.latest();
     active=false;long.disconnect();shift.disconnect();frames.sort((a,b)=>a-b);
+    box.remove();
     return {stable,follows,held,p95:frames[Math.floor(frames.length*.95)],maxFrame:frames.at(-1),longTasks:longTasks.length,streamCls:shifts.filter(e=>e.at<readingStart).reduce((a,b)=>a+b.value,0),readingCls:shifts.filter(e=>e.at>=readingStart).reduce((a,b)=>a+b.value,0)};
   });
   assert.equal(metrics.stable,true);assert.equal(metrics.follows,true);assert.equal(metrics.held,true);
   if(evidence){await mkdir(evidence,{recursive:true});await writeFile(join(evidence,'weftmate-metrics.json'),JSON.stringify(metrics,null,2));
     for(const [width,height] of [[1280,800],[900,700],[390,844]])for(const theme of ['light','dark']){
       await app.evaluate(({BrowserWindow},{width,height})=>BrowserWindow.getAllWindows()[0].setContentSize(width,height),{width,height});
-      await page.evaluate(theme=>{WeftDesktop.setAppearance({theme});document.querySelector('#transcript > .message.assistant:last-child')?.remove();},theme);
+      await page.evaluate(theme=>WeftDesktop.setAppearance({theme}),theme);
       await page.evaluate(()=>{if(innerWidth<640)WeftDesktop.toggleRail(true);document.querySelectorAll('.execution-step').forEach(el=>el.open=false);const box=document.getElementById('chat-scroll');box.dispatchEvent(new WheelEvent('wheel',{deltaY:-120,bubbles:true}));box.scrollTop=0;});
       await page.evaluate(async()=>{for(const a of document.getAnimations())if(a.effect?.getTiming().iterations!==Infinity){try{a.finish();}catch{}}await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
       await page.screenshot({path:join(evidence,`weftmate-${width}-${theme}.png`)});

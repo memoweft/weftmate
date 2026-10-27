@@ -72,8 +72,10 @@ try {
     assert.equal(await page.locator('#assistant-view').evaluate(node => node===globalThis.__motionWorkspace),true,'settings preserves the existing workspace');
     assert.equal(await page.locator('#assistant-view').evaluate(node => node.getAnimations().some(animation => animation.animationName === 'm-enter-rise' && animation.playState === 'running')), false, 'returning from a modal must not replay the retained workspace');
     const result = await page.evaluate(async () => {
+      const list = document.createElement('ol'); list.className = 'transcript'; list.style.position = 'absolute';
+      document.getElementById('conversation-pane').append(list);
       const body = WeftContent.create('', 'message-text markdown-body');
-      const row = document.createElement('li'); row.className = 'message assistant'; row.dataset.motion = 'enter-rise'; row.append(body); document.getElementById('transcript').append(row);
+      const row = document.createElement('li'); row.className = 'message assistant'; row.dataset.motion = 'enter-rise'; row.append(body); list.append(row);
       const text = '你好🙂，这段**合成回复**按帧流入。';
       WeftContent.update(body, text, { streaming: true });
       const before = body._renderText || '';
@@ -82,7 +84,8 @@ try {
       WeftContent.update(body, text + '完成。', { streaming: false });
       const samples = [first];
       while (body._renderText !== text + '完成。') { await new Promise(requestAnimationFrame); samples.push(body._renderText); }
-      return { before, first, samples, text: body.textContent, html: body.innerHTML, rowAnimation: getComputedStyle(row).animationName };
+      const result = { before, first, samples, text: body.textContent, html: body.innerHTML, rowAnimation: getComputedStyle(row).animationName };
+      list.remove(); return result;
     });
     assert.equal(result.before, ''); assert.equal(result.first, '你好🙂，这段**合成回复**按帧流入。');
     for (let i = 1; i < result.samples.length; i++) assert.ok(result.samples[i].startsWith(result.samples[i - 1]));
