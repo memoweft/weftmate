@@ -23,8 +23,8 @@ public enum HostTrustDelivery {
                   payload.tlsSpki.range(of: "^[A-Za-z0-9_-]{43}$", options: .regularExpression) != nil else { throw CloudLoginFailure.pairing }
             let members = ["kty", "crv", "x", "y"]
             guard members.allSatisfy({ payload.publicJwk[$0] == trustedPublicJwk[$0] }) else { throw CloudLoginFailure.pairing }
-            _ = try ServerConfiguration(input: payload.origin, allowLoopbackHTTP: allowLoopbackHTTP)
-            if let base = payload.relay?.baseUrl { _ = try ServerConfiguration(input: base, allowLoopbackHTTP: allowLoopbackHTTP) }
+            // origin identifies the desktop's local listener; only relay.baseUrl is a transport URL.
+            if let base = payload.relay?.baseUrl { _ = try ServerConfiguration(input: base) }
             return payload
         } catch { throw CloudLoginFailure.pairing }
     }
