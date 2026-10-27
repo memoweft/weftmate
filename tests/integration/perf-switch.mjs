@@ -144,10 +144,12 @@ try {
     await page.waitForFunction(() => testCore.state.newConversation);
     live = []; liveRevision++;
     put('assistant.message', { text: '合成最终回复，已更正。', turn: 151, streamSeq: liveSeq }); put('turn.ended', { turn: 151, reason: 'completed' });
+    // Native relay history can omit a timestamp; its sequence still orders it.
+    delete history.at(-2).at;
     await page.evaluate(id => testCore.selectSession(id), fixture.source);
     await page.getByText('合成最终回复，已更正。', { exact: true }).waitFor();
     assert.equal(await page.getByText('合成流式第一段，第二段', { exact: true }).count(), 0);
-    await writeFile(join(out, 'behavior.json'), JSON.stringify({ anchorRestored: true, draftRestored: true, loadedHundreds: true, streamRowReused: true, hiddenCompletionRead: true }, null, 2));
+    await writeFile(join(out, 'behavior.json'), JSON.stringify({ anchorRestored: true, draftRestored: true, loadedHundreds: true, streamRowReused: true, hiddenCompletionRead: true, undatedNativeMessageRead:true }, null, 2));
     assert.equal(samples.reduce((n, row) => n + row.longTaskCount, 0), 0, 'Switching must not cause long tasks');
     assert.ok(samples.every(row => row.frameP95Ms <= 16.81), 'Switching frame p95 <=16.8ms');
   }
