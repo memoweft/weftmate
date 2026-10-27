@@ -50,9 +50,9 @@
     preview.launcher.replaceChildren(node('h2', '', '工作面板'))
     for (const [kind, entry] of registry) {
       const button = node('button', 'panel-launcher-item'); button.type = 'button'; button.dataset.panelKind = kind
-      button.append(icon(entry.icon), node('span', '', entry.title))
+      button.append(WeftIcons.create(entry.icon, 20), node('span', '', entry.title))
       const binding = globalThis.WeftShortcuts?.rows.find(row => row.id === `panel-${kind}`)
-      if (binding) button.append(node('kbd', '', binding.keys.join(' ')))
+      if (binding) button.append(node('kbd', '', binding.keys.map(key => key === 'Ctrl / ⌘' ? (globalThis.weftmateDesktop?.platform === 'darwin' ? '⌘' : 'Ctrl') : key).join(' ')))
       button.onclick = () => openPanel(kind, button); preview.launcher.append(button)
     }
   }

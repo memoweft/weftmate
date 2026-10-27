@@ -161,8 +161,8 @@ test('Relay phone first input and file task', {
     const select = async session => {
       const toggle = phone.getByRole('button', { name: '切换会话侧栏', exact: true });
       if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
-      const mode = await phone.evaluate(id => { const row = globalThis.__ciR1Core.state.sessions.find(item => item.sessionId === id); return row?.mode || (row?.projectId ? 'work' : 'chat'); }, session.sessionId);
-      await phone.getByRole('tab', {name:mode === 'work' ? '工作' : '对话',exact:true}).click();
+      await phone.getByRole('button',{name:'筛选最近对话',exact:true}).click();
+      await phone.getByRole('menu',{name:'最近对话类型',exact:true}).getByRole('menuitemradio',{name:'全部',exact:true}).click();
       const row = phone.locator(`[data-session-id="${session.sessionId}"]`);
       const visibleTitle = await phone.evaluate(id => globalThis.__ciR1Core.state.sessions.find(s => s.sessionId === id)?.title, session.sessionId) ?? session.title;
       const button = row.getByRole('button', { name: visibleTitle, exact: true });

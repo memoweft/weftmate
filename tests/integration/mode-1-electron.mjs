@@ -139,9 +139,9 @@ try {
     await until(() => page.evaluate(() => [...mode1Core.state.historyEvents.values()].filter(e => e.type === 'user.message').length >= 2), 'two chat messages');
     const before = await page.evaluate(() => ({ id: mode1Core.state.selectedSessionId, chat: mode1Core.state.selectedChatId }));
     await api(`/sessions/${before.id}/approval-mode`, { mode: 'ask' }, 'PATCH');
-    await capture(page, kind, 'sidebar-chat', p=>p.getByRole('tab',{name:'对话',exact:true}).click());
-    await capture(page, kind, 'sidebar-work', p=>p.getByRole('tab',{name:'工作',exact:true}).click());
-    await page.evaluate(()=>mode1Core.chooseSidebarMode('chat'));
+    await capture(page, kind, 'sidebar-chat', async p=>{await p.getByRole('button',{name:'筛选最近对话',exact:true}).click();await p.getByRole('menu',{name:'最近对话类型',exact:true}).getByRole('menuitemradio',{name:'对话',exact:true}).click();});
+    await capture(page, kind, 'sidebar-work', async p=>{await p.getByRole('button',{name:'筛选最近对话',exact:true}).click();await p.getByRole('menu',{name:'最近对话类型',exact:true}).getByRole('menuitemradio',{name:'工作',exact:true}).click();});
+    await page.getByRole('button',{name:'筛选最近对话',exact:true}).click();await page.getByRole('menu',{name:'最近对话类型',exact:true}).getByRole('menuitemradio',{name:'对话',exact:true}).click();
     assert.equal(await page.locator('.rail-main-chat:not([hidden])').count(),0);
     await page.evaluate(()=>mode1Core.selectMainChat());
     await page.locator('#message-text').fill('MODE1_ORIGINAL_HISTORY_'+kind+'_'+randomUUID());await page.locator('#send-message').click();
