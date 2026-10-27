@@ -52,18 +52,19 @@ function fixture(queuedFrames = false) {
     tick() { const batch = [...frames.values()]; frames.clear(); batch.forEach(fn => fn()); } };
 }
 
-test('stream-type reveals 1–3 Unicode characters per frame and drains after completion without jumping', () => {
+test('stream chunks coalesce once per frame and completion never queues stale text', () => {
   const f = fixture(true), body = f.element(), seen: string[] = [];
   const render = (node: any, text: string) => { node.textContent = text; node._renderText = text; seen.push(text); };
   const text = '你好🙂这是一段分批到达的回复。';
   f.api.stream(body, text.slice(0, 8), { streaming: true }, render);
   assert.equal(body.textContent, '');
-  f.tick(); assert.ok(Array.from(body.textContent).length >= 1 && Array.from(body.textContent).length <= 3);
+  f.api.stream(body, text, { streaming: true }, render);
+  f.tick(); assert.equal(body.textContent, text);
+  assert.equal(seen.length, 1);
   f.api.stream(body, text, { streaming: false }, render);
-  assert.notEqual(body.textContent, text);
+  assert.equal(body.textContent, text);
   for (let n = 0; n < 20 && f.frames.size; n++) f.tick();
   assert.equal(body.textContent, text);
-  for (let n = 1; n < seen.length; n++) assert.ok(Array.from(seen[n]).length - Array.from(seen[n - 1]).length <= 3);
   assert.equal(f.frames.size, 0);
 });
 

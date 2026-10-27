@@ -636,7 +636,7 @@
             "at": "2026-10-14T05:20:00.000Z",
             "endAt": "2026-10-14T05:20:00.000Z",
             "approvalText": "",
-            "statusText": "遇到问题",
+            "statusText": "执行失败",
             "attention": true
           },
           {

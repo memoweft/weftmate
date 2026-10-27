@@ -155,6 +155,12 @@ export function validToolApprovals(command, store) {
   return rows.every(row => {
     if (row?.intent !== undefined && row.intent !== 'work-switch' || row?.workProjectId !== undefined &&
         (row.intent !== 'work-switch' || !validId(row.workProjectId) || row.decisionOutcome !== 'allowed-once')) return false;
+    if (['workSessionId', 'workCreateCommandId', 'workCommandId'].some(key => row?.[key] !== undefined &&
+        (row.intent !== 'work-switch' || row.decisionOutcome !== 'allowed-once' || !validId(row[key]))) ||
+        row.workSessionId !== undefined && (store.commands[row.workCreateCommandId]?.kind !== 'session.create' ||
+          store.commands[row.workCreateCommandId]?.sessionId !== row.workSessionId) ||
+        row.workCommandId !== undefined && (store.commands[row.workCommandId]?.kind !== 'session.message' ||
+          store.commands[row.workCommandId]?.sessionId !== row.workSessionId)) return false;
     if (row?.decisionScope !== undefined && (!['once', 'conversation-category', 'global-category'].includes(row.decisionScope) ||
         ['conversation-category', 'global-category'].includes(row.decisionScope) && row.decisionOutcome !== 'allowed-once') ||
         row?.riskCategories !== undefined && (!Array.isArray(row.riskCategories) || row.riskCategories.some(x => ![...RISK_CATEGORIES, 'read', 'network'].includes(x)))) return false;
@@ -210,6 +216,7 @@ export function toolApprovals(account) {
 }
 
 export function invalidateToolApproval(row, reason, at) {
+  if (row.intent === 'work-switch' && ['runtime_unavailable','runtime_replaced','service_recovered','service_closing'].includes(reason)) return false;
   if (!['pending', 'answered'].includes(row.status)) return false;
   row.status = 'unavailable';
   row.outcome = reason === 'task_stopped' ? 'cancelled' : 'unavailable';

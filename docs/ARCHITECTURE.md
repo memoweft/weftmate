@@ -71,8 +71,22 @@ flowchart TD
 个人宿主组合使用产品自己的预设及插件；普通命令、文件、搜索、浏览器、上下文压缩、子任务、调度与审批优先沿 DSH 原生能力（D2、D87）。WeftMate 增加账户、设备、项目、模式、记忆和产品呈现，不另造一套通用执行器。
 
 - [weftmate-personal-desktop.mjs](../src/plugins/weftmate-personal-desktop.mjs) 把工具生命周期接到账户与项目策略；[personal-work-mode.mjs](../src/plugins/personal-work-mode.mjs) 判断对话能否执行该工具；[personal-approval-policy.mjs](../src/plugins/personal-approval-policy.mjs) 处理原风险与审批规则。
-- [work-and-chat.mjs](../src/personal-access/work-and-chat.mjs) 保存模式与项目绑定。D92 只允许工作操作电脑；切换卡片确认工作范围，不能代替具体工具批准。
+- [work-and-chat.mjs](../src/personal-access/work-and-chat.mjs) 投影模式与项目绑定。D92 只允许工作操作电脑；对话里的电脑调用在进入原生工具事件前转为提议并结束回合，输入框恢复发送。提议沿原审批查询接口保存，但不等待原生工具审批。确认后由 `approvals.mjs` 持久创建独立工作，在所选电脑和文件夹提交原话一次；原对话仍是对话。答复与后续查询中的 `workSessionId`、`workCreateCommandId`、`workCommandId` 分别用于打开新工作、核对创建、核对首条消息。先不用只关闭提议，工作里的具体工具权限与审批照旧。
 - 模型配置和凭据由主进程管理；运行时通过专用 IPC 获取所需秘密。模型服务与按会话选模见 [model-services.mjs](../src/personal-access/model-services.mjs)、[account-models.mjs](../src/personal-access/account-models.mjs) 与 CLIENT_API 第 3.10 节。
+
+### 桌面嵌入浏览器
+
+`personal-browser/desktop.mjs` 的 `DesktopBrowser` 组合现有读取器接口与 Electron `WebContentsView`：桌面面板 `personal-access-ui/panels/browser.js` 通过受鉴权的 `wm:desktop:browser` 预加载桥创建、导航和定位真实网页；Agent 的 `browser` 工具仍经账户业务调用同一个 `browserReader.read()`，使用这个对话最近展示的标签。网络仍经过 `personal-browser/network.mjs` 的地址校验、固定解析代理、下载和权限限制；每个新文档重置同样的网络字节预算，同时最多两次 Agent 读取。无桌面窗口的宿主继续使用原隐藏读取器。
+
+宿主按账户和逻辑 `chatId` 管理标签，执行段 `sessionId` 通过账户内的对话索引归到同一逻辑对话。创建先预留标签，再等待独立持久分区、代理和真实渲染器登记完成，面板与立即到来的工具调用等待同一个就绪结果。面板通过自身矩形更新视图位置，收起和切换只隐藏；关闭标签、删除对话、窗口关闭或退出释放视图与代理。网页分区与桌面程序界面的身份和数据分开。远程网页和手机只显示在电脑打开的说明。新增桥接不增加 `/personal/v1` 业务路由。
+
+### 人手输入的终端面板
+
+`personal-access-ui/panels/terminal.js` 按 `WeftPanels` 标签生命周期创建 xterm.js（终端视图）。`personal-access/terminals.mjs` 在现有 `/personal/v1/terminals` 上创建和关闭终端，同一宿主 HTTP（网页传输协议）服务升级 `/terminals/{terminalId}/connect` 为 WebSocket（双向连接）。不另开端口；创建、读取与输入沿现有账户、设备、来源与 CSRF（跨站请求伪造防护）校验，连接首帧再次证明同一登录身份，之后定期核验登录是否仍有效。桌面主窗口只给本机终端升级请求附加既有桌面能力。创建响应另交付 256 位随机关闭凭据，只能在同源 `/terminals/{terminalId}/release` 释放这一终端，不能读取或输入；标签关闭和切账号清理不依赖已经轮换的登录 Cookie（登录会话）。
+
+`personal-terminal/index.mjs` 按账户、设备、对话和标签保存进程与有界输出缓冲；每段输出带递增游标，重连只补漏收内容，超过保留范围时明确提示。`worker.mjs` 独占 node-pty（伪终端组件）的原生句柄和 ConPTY（Windows 伪控制台）线程；自然退出与关闭标签都能释放线程，程序退出关闭全部终端。隐藏与切标签保活；切对话保存各自的视图和进程，关闭标签释放该标签在各对话中开的终端。
+
+起始目录由宿主按对话绑定解析：工作对话使用已登记项目，对话模式使用用户主目录；网页不接受任意目录、命令或环境变量作为创建参数。用户可以在交互 shell 中自行 `cd`。这是本人直接输入的电脑终端；助手的命令与工具仍沿 DSH 原生审批执行。远程网页使用同一宿主登录和双向连接，安卓业务路径允许创建与关闭接口，原生安卓没有新增终端界面。
 
 ## 4. 逻辑对话、历史与记忆
 

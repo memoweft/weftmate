@@ -158,6 +158,15 @@
     if (globalThis.WeftReplyMotion?.stream) return WeftReplyMotion.stream(content, text, options, renderUpdate);
     return renderUpdate(content, text, options);
   }
+  function appendInline(previous, next) {
+    // Keep selected prose and already rendered emphasis mounted while the tail
+    // grows. Structural Markdown changes still go through the parser below.
+    const compatible=(a,b)=>a.nodeType===b.nodeType && (a.nodeType===3 ? b.data.startsWith(a.data) :
+      a.nodeType===1 && a.tagName===b.tagName && /^(P|STRONG|EM|S|CODE|BR)$/.test(a.tagName) && a.childNodes.length===b.childNodes.length && [...a.childNodes].every((child,i)=>compatible(child,b.childNodes[i])));
+    if(!compatible(previous,next))return false;
+    const append=(a,b)=>{if(a.nodeType===3){if(b.data.length>a.data.length)a.appendData(b.data.slice(a.data.length));}else [...a.childNodes].forEach((child,i)=>append(child,b.childNodes[i]));};
+    append(previous,next);return true;
+  }
   function renderUpdate(content, text, options = {}) {
     if (content._renderText === text) { if(options.streaming!==undefined)globalThis.WeftReplyMotion?.indicator(content,options.streaming); return content; }
     const previousText=content._renderText;
@@ -224,6 +233,7 @@
     for (let i=0;i<fresh.length;i++) {
       const next=fresh[i], previous=old[i]; if(next===previous)continue; const html=next.outerHTML;
       if (previous?._sourceHTML===html) { previous._renderHTML=next._renderHTML; continue; }
+      if (previous && appendInline(previous,next)) { previous._sourceHTML=html;previous._renderHTML=next._renderHTML;continue; }
       if (previous?.classList.contains('render-code') && next.tagName==='PRE' && previous.dataset.language===next.dataset.language) { previous._update(next); previous._sourceHTML=html; previous._renderHTML=next._renderHTML; continue; }
       next._sourceHTML=html; const beforeText=previous?.textContent || '';
       if(previous) { if(previous.previousElementSibling?.classList.contains('render-table-actions'))previous.previousElementSibling.remove(); previous.replaceWith(next); }

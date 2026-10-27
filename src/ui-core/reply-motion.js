@@ -16,13 +16,11 @@
       return render(content, text, options);
     }
     if (!state) {
-      state = { content, shown: content._renderText || '', frame: null };
+      state = { content, frame: null };
       streams.set(content, state); pendingStreams.add(state);
     }
-    // Transport may deliver a paragraph at once. Keep the small-chunk cadence,
-    // but bound each burst's visual queue to one transition instead of seconds.
-    if (state.text !== text || state.options?.streaming && !options.streaming)
-      state.framesLeft = Math.ceil((milliseconds('replyChange') || 420) / (1000 / 60));
+    // Coalesce transport bursts into one paint. An extra typewriter queue would
+    // repeatedly parse the same Markdown and lag behind the authoritative reply.
     Object.assign(state, { text, options, render });
     if (state.frame === null) state.frame = requestAnimationFrame(() => tickStream(state));
     return content;
@@ -36,17 +34,8 @@
     state.frame = null;
     if (!state.content.isConnected) { finishStream(state, false); return; }
     if (reduced() || paused()) { finishStream(state, true); return; }
-    const target = Array.from(state.text), shown = Array.from(state.shown);
-    let common = 0;
-    while (common < shown.length && shown[common] === target[common]) common++;
-    // Corrections replace the changed suffix; never split a surrogate pair.
-    const remaining = target.length - common;
-    const count = Math.max(3, Math.ceil(remaining / Math.max(1, state.framesLeft--)));
-    state.shown = target.slice(0, common + Math.min(count, remaining)).join('');
-    const complete = state.shown === state.text;
-    state.render(state.content, state.shown, { ...state.options, streaming: !complete || state.options.streaming === true, motionFrame: true });
-    if (complete) finishStream(state, false);
-    else state.frame = requestAnimationFrame(() => tickStream(state));
+    state.render(state.content, state.text, { ...state.options, motionFrame: true });
+    finishStream(state, false);
   }
   // Motion tokens are shared constants. Read once before updates, avoiding a style
   // flush between replacing the newest paragraph and measuring the finished frame.

@@ -200,6 +200,7 @@ object DesignTokens {
     const val radiuscontrol = 8
     const val radiuscard = 12
     const val radiuspanel = 16
+    const val radiuscomposer = 20
     const val durationFast = 130L
     const val durationBase = 320L
     const val durationSlow = 420L

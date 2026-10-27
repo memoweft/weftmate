@@ -1,4 +1,5 @@
 import { migratePermissionRules } from '../plugins/personal-permission-rules.mjs';
+import { browserConversationScope } from '../personal-browser/scope.mjs';
 import { conversationMode } from './work-and-chat.mjs';
 import { createConnectors } from '../personal-connectors/index.mjs';
 import { connectorExecution } from '../personal-connectors/access.mjs';
@@ -49,6 +50,7 @@ import { createAccountModelOperations } from './account-models.mjs';
 import { createModelServiceOperations } from './model-services.mjs';
 import { createArtifactOperations } from './artifacts.mjs';
 import { createNativeBrowserOperations } from './native-browser.mjs';
+import { createTerminalOperations } from './terminals.mjs';
 import { createHttpHandler } from './http.mjs';
 import { createMemoryHttpHandler } from './memory-http.mjs';
 import { createPersonalHealthStore } from '../personal-health/index.mjs';
@@ -256,6 +258,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get chats() { return chats; },
     get chatTimeline() { return chatTimeline; },
     get sideChats() { return sideChats; },
+    get terminals() { return terminals; },
     get mainChat() { return mainChat; },
     get chatLifecycle() { return chatLifecycle; },
     eraseChatCopies,
@@ -301,6 +304,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get androidPackageEntry() { return androidPackageEntry; },
     get androidPackagePath() { return androidPackagePath; },
     get answerToolApproval() { return answerToolApproval; },
+    get continueWorkProposal() { return continueWorkProposal; },
     get answerUserQuestion() { return answerUserQuestion; },
     get approvalLivenessChecks() { return approvalLivenessChecks; },
     get artifactStore() { return artifactStore; },
@@ -457,7 +461,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const approvals = createApprovalOperations(context);
   const {
     requireToolRuntime, personalExecutionSource, approvalMatches, approvalUnavailableReason,
-    liveToolApprovalSource, refreshToolApprovals, answerToolApproval,
+    liveToolApprovalSource, refreshToolApprovals, answerToolApproval, continueWorkProposal,
   } = approvals;
   const tasks = createTaskOperations(context);
   const {
@@ -481,6 +485,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const modelServices = createModelServiceOperations(context);
   const artifacts = createArtifactOperations(context);
   const nativeBrowser = createNativeBrowserOperations(context);
+  const terminals = createTerminalOperations(context);
   const http = createHttpHandler(context);
   const { handle, handleScoped } = http;
   const { handleMemoryHttp } = createMemoryHttpHandler(context);
@@ -915,6 +920,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         response.once('finish', () => { if (closing) candidate.closeIdleConnections(); });
         return handle(request, response);
       });
+      candidate.on('upgrade', terminals.upgrade);
       try {
         await new Promise((resolve, reject) => {
           candidate.once('error', reject);
@@ -954,6 +960,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
         for (const command of Object.values(account.commands)) {
           if (command.state === 'pending') schedule(ownerId, command.commandId);
+          if (command.kind === 'session.create' && command.state === 'accepted_by_dsh') {
+            void continueWorkProposal(ownerId, command.sessionId).catch(() => {});
+          }
           if (command.taskControl?.state === 'stop_requested') {
             driveTaskStop(ownerId, command.commandId).catch(() => {});
           }
@@ -1050,6 +1059,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     attachSession: sessions.attachSession,
     projectForSession: workspaces.projectForSession,
     browserForSession: workspaces.browserForSession,
+    browserScope(ownerId, conversationId, allowDeleting = false) {
+      if (!hostOwner(ownerId)) throw failure('BROWSER_UNAVAILABLE', 403);
+      return browserConversationScope(accountState(ownerId), conversationId, allowDeleting);
+    },
     submitToolProject: workspaces.submitToolProject,
     submitToolBrowser: workspaces.submitToolBrowser,
     /** Trusted current-child snapshots only; information answers never grant execution authority. */
@@ -1077,6 +1090,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        await terminals.close();
         const modelServicesClosed = modelServices.close();
         await connectors?.close();
         await dataControls.close();

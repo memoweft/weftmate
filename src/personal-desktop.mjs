@@ -75,7 +75,7 @@ export function preparePersonalDesktopWindow() {
   return { window: win, stateFile, saved, desktopSession, palette, restoreBounds, lifecycle, close };
 }
 
-export function createPersonalDesktop({ computerUsageService, systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {}, preparedWindow = preparePersonalDesktopWindow() }) {
+export function createPersonalDesktop({ browserReader = null, computerUsageService, systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {}, preparedWindow = preparePersonalDesktopWindow() }) {
   const { window: win, stateFile, saved, desktopSession, palette, restoreBounds, lifecycle } = preparedWindow;
   let resolvedPalette = null;
 
@@ -86,7 +86,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   const updateStatus = next => { Object.assign(status, next); onStatus({ ...status }); };
   const trusted = event => event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame &&
     new URL(event.senderFrame.url).origin === origin && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
-  desktopSession.webRequest.onBeforeSendHeaders({ urls: [origin + '/personal/v1/*'] }, (details, callback) => {
+  desktopSession.webRequest.onBeforeSendHeaders({ urls: [origin + '/personal/v1/*', origin.replace('http:', 'ws:') + '/personal/v1/terminals/*/connect'] }, (details, callback) => {
     const localWindow = nativeWindowRequest(details, win, origin);
     callback({ requestHeaders: { ...details.requestHeaders,
       ...(localWindow ? { Origin: origin, 'X-WeftMate-Desktop': libraryDesktopToken } : {}) } });
@@ -108,6 +108,22 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     if (!response.ok) throw new Error('Session unavailable');
     return response.json();
   };
+  let browserOwner = null;
+  handle('wm:desktop:browser', async (action, input) => {
+    if (contentOrigin !== origin || !browserReader?.request) throw new Error('BROWSER_LOCAL_DESKTOP_REQUIRED');
+    const { account } = await jsonLocal('/auth/me');
+    if (browserOwner && browserOwner !== account.ownerId) await browserReader.releaseAll();
+    browserOwner = account.ownerId;
+    return browserReader.request(account.ownerId, action, input);
+  });
+  const browserChanged = state => {
+    if (state.ownerId !== browserOwner || contentOrigin !== origin || win.isDestroyed()) return;
+    const { ownerId, ...publicState } = state;
+    win.webContents.send('wm:desktop:browser-state', publicState);
+  };
+  browserReader?.on?.('change', browserChanged);
+  const hideBrowsers = () => browserReader?.hideAll?.();
+  win.webContents.on('did-start-navigation', hideBrowsers);
   const diagnosticOwner = async () => {
     const [me, system] = await Promise.all([jsonLocal('/auth/me'), jsonLocal('/system')]);
     if (!systemManager || contentOrigin !== origin || !system.canRestart) throw new Error('LOCAL_HOST_REQUIRED');
@@ -262,6 +278,16 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     return result;
   });
   handle('wm:desktop:project-info', async projectId => (await nativeProjects()).find(row => row.projectId === projectId) || null);
+  handle('wm:desktop:project-relocate', async (projectId, fields) => {
+    const auth = await jsonLocal('/auth/me'), owner = auth.ownerId || auth.account?.ownerId;
+    if (contentOrigin !== origin || !selectedFolders.has(fields?.rootPath) || selectedFolders.get(fields.rootPath) !== owner)
+      throw new Error('PROJECT_NATIVE_SELECTION_REQUIRED');
+    const response = await fetchLocal(`/projects/${encodeURIComponent(projectId)}`, { method: 'PATCH', headers: {
+      'content-type': 'application/json', origin: contentOrigin, 'x-weftmate-csrf': auth.csrfToken, 'x-weftmate-desktop': libraryDesktopToken,
+    }, body: JSON.stringify(fields) });
+    const result = await response.json(); if (!response.ok) throw new Error(result.error?.code || result.code || 'PROJECT_UNAVAILABLE');
+    return result;
+  });
   handle('wm:desktop:project-show', async projectId => {
     const project = (await nativeProjects()).find(row => row.projectId === projectId && !row.revoked);
     if (!project) throw new Error('PROJECT_UNAVAILABLE');
@@ -309,6 +335,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     const target = new URL(baseUrl);
     if (target.origin !== origin && !peerOrigins.has(target.origin)) throw new Error('HOST_TRUST_INVALID');
     contentOrigin = target.origin;
+    hideBrowsers();
   });
   handle('wm:desktop:fetch', async (url, options = {}, requestId) => {
     const target = new URL(url);
@@ -328,6 +355,8 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   });
   handle('wm:desktop:fetch-abort', requestId => networkRequests.get(requestId)?.abort());
   handle('wm:desktop:clear-sessions', async () => {
+    browserOwner = null;
+    await browserReader?.releaseAll?.();
     for (const request of networkRequests.values()) request.abort();
     for (const cookie of await desktopSession.cookies.get({ name: 'wm_personal_session' })) {
       await desktopSession.cookies.remove(`${cookie.secure ? 'https' : 'http'}://${cookie.domain.replace(/^\./, '')}${cookie.path}`, cookie.name);
@@ -607,6 +636,10 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   }, sendTo, ready, async close() {
     lifecycle.stopped = true; clearTimeout(timer);
     await preparedWindow.close();
+    browserReader?.removeListener?.('change', browserChanged);
+    win.webContents.removeListener('did-start-navigation', hideBrowsers);
+    await browserReader?.releaseAll?.();
+    ipcMain.removeHandler('wm:desktop:browser');
     await computerUsage?.close();
     if (computerUsage) computerUsageService.setComputerUsageCheckpoint(null);
     for (const notification of notifications) notification.close();
@@ -618,7 +651,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     ipcMain.removeHandler('wm:desktop:system-export');
     for(const channel of ['wm:desktop:data-export','wm:desktop:data-status','wm:desktop:data-show-export'])ipcMain.removeHandler(channel);
     for (const request of networkRequests.values()) request.abort();
-    for (const channel of ['wm:desktop:cloud-credentials-present', 'wm:desktop:open-logs', 'wm:desktop:history-import', 'wm:desktop:recovery-export', 'wm:desktop:memory-export', 'wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-choice', 'wm:desktop:project-create', 'wm:desktop:project-info', 'wm:desktop:project-show', 'wm:desktop:project-drop', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
+    for (const channel of ['wm:desktop:cloud-credentials-present', 'wm:desktop:open-logs', 'wm:desktop:history-import', 'wm:desktop:recovery-export', 'wm:desktop:memory-export', 'wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-choice', 'wm:desktop:project-create', 'wm:desktop:project-relocate', 'wm:desktop:project-info', 'wm:desktop:project-show', 'wm:desktop:project-drop', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
   } };
 }

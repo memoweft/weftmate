@@ -12,6 +12,7 @@ import { describeTool, toolArguments } from './timeline.mjs'
 import { sourceRange } from './source-range.mjs'
 import { claimedInputsAt, indexInboxTimeline, turnReceiptAt } from './inbox-timeline.mjs'
 import { liveMessages, thinkingDuration } from './live-messages.mjs'
+import { appliedFileChanges, fileChangeDetails } from './file-changes.mjs'
 
 const SAFE_ERROR_CODES = new Set([
   'session-not-found',
@@ -209,6 +210,7 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
           ...(background ? { id: background[1], background: true } : child ? { id: child[1], background: true } : {}) } } : {}),
         ...(Number.isSafeInteger(data.turn) ? { turn: data.turn } : {}),
         ...(type === 'tool/result' ? { state: data.error || part?.isError ? 'failed' : 'completed' } : { state: 'running' }),
+        ...(type === 'tool/result' && !data.error && /^(edit|write)$/.test(toolName) ? {fileChanges: appliedFileChanges({isError:part?.isError,meta:data.meta},args)} : {}),
         ...(asked && type === 'tool/call' ? { questions: boundedTimelineValue(toolArguments(data.arguments).questions ?? []) } : {}),
       } }
     }
@@ -606,13 +608,15 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       return { ...projectedPage(sessionId, entries, options), ...(beforeSeq === undefined ? { liveSeq: (entries.at(-1)?.event ?? entries.at(-1))?.seq ?? -1, liveEvents: liveMessages(entries, text => safeHistoryText(text, Infinity).text, options.includeThinking === true) } : {}) };
     },
 
-    async historyDetail(sessionId, seq) {
+    async historyDetail(sessionId, seq, {outputOffset} = {}) {
+      if(outputOffset!==undefined && (!Number.isSafeInteger(outputOffset) || outputOffset<0))throw new TypeError('invalid output cursor');
       if (!Number.isSafeInteger(seq) || seq < 0) throw new TypeError('invalid detail seq')
       await ordinaryNative(sessionId)
       const entries = await logFor(sessionId), index = lowerBound(entries, seq)
       const event = entries[index]?.event ?? entries[index]
       const messageType = event?.seq === seq ? projectHistoryEvent(event)?.type : null;
       if (['user.message', 'assistant.message'].includes(messageType)) {
+        if(outputOffset!==undefined)throw new TypeError('output requires a tool result');
         const message = event.data?.message ?? event.data;
         const raw = (message.content ?? []).filter(part => part.type === 'text').map(part => part.text).join('');
         return { seq, type: messageType, text: safeHistoryText(raw, Infinity).text,
@@ -625,9 +629,19 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       const visibleParts = parts => Array.isArray(parts) ? parts.filter(part => !['reasoning', 'reasoning-delta'].includes(part?.type))
         .map(part => Array.isArray(part.content) ? { ...part, content: visibleParts(part.content) } : part) : parts
       const output = event.type === 'tool/result' ? visibleParts(event.data?.message?.content) : undefined
+      const collect=parts=>(parts || []).flatMap(part=>part.type==='text'?[part.text || '']:part.content?collect(part.content):[]);
+      const outputText=collect(output).join('\n'), offset=outputOffset ?? 0;
+      let end=Math.min(outputText.length,offset+64000);
+      if(end<outputText.length && /[\uD800-\uDBFF]/.test(outputText[end-1]) && /[\uDC00-\uDFFF]/.test(outputText[end]))end--;
+      const outputPage={output:outputText.slice(offset,end),nextOutputOffset:end<outputText.length?end:null};
+      if(outputOffset!==undefined) {
+        if(event.type!=='tool/result')throw new TypeError('output requires a tool result');
+        return {seq,...outputPage};
+      }
+      const args=toolArguments(call?.data?.arguments), command=args.command ?? args.cmd ?? args.script;
       const raw = JSON.stringify({ arguments: call?.data?.arguments, output, approval: event.type.startsWith('approval/') ? event.data : undefined }, null, 2)
       const text = raw.slice(0, 64_000)
-      return { seq, text, ...(raw.length > text.length ? { truncated: true } : {}) }
+      return { seq, text, ...(typeof command==='string'?{command}:{}), ...(typeof args.description==='string'?{description:args.description.trim().slice(0,180)}:{}), ...(event.type==='tool/result'?{...outputPage,fileDiffs:fileChangeDetails(event.data?.meta)}:{}), ...(raw.length > text.length ? { truncated: true } : {}) }
     },
 
     /** Internal source evidence cut at the original subscribed/question watermark. */

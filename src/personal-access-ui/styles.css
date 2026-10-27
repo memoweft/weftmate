@@ -716,6 +716,15 @@ kbd { font: inherit; font-size: var(--wm-font-size-10); color: var(--ink-muted);
 #pairing-panel { max-width: 420px; margin: var(--wm-space-16) 0; }
 #pairing-qr { display: block; max-width: 100%; height: auto; background: var(--wm-color-white); }
 #pairing-code, #cloud-pairing-input { width: 100%; overflow-wrap: anywhere; }
+.pairing-dialog { width: min(480px, calc(100% - 32px)); }
+.pairing-dialog .dialog-body { display: grid; gap: var(--wm-space-20); }
+.pairing-dialog .dialog-footer { flex-wrap: wrap; }
+.pairing-dialog #pairing-qr { margin-inline: auto; }
+.pairing-dialog #pairing-code { padding: var(--wm-space-12); background: var(--surface-soft); color: var(--ink); border: 1px solid var(--line); border-radius: var(--wm-radius-12); font: inherit; }
+.pairing-dialog summary { cursor: pointer; padding-block: var(--wm-space-8); }
+.pairing-comparison { text-align: center; }
+.pairing-comparison output { display: block; padding-block: var(--wm-space-12); font-size: var(--wm-font-size-30); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .12em; }
+.pairing-dialog #pairing-error:empty { display: none; }
 #cloud-wait-status { min-height: 48px; }
 /* Approval controls share the existing composer typography and popover surface. */
 .approval-picker { position: relative; }

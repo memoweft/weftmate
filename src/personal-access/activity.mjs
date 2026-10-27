@@ -124,7 +124,7 @@ export function createActivity(context) {
         }));await memoryDigest.refresh(ownerId,memory);}
       await dailyDigest.refresh(ownerId);
       const update=await context.updateStatus();
-      for(const layer of update?.layers??[])if(layer.availableVersion&&layer.availableVersion!==layer.currentVersion)await record(ownerId,{key:`update:${layer.layer}:${layer.availableVersion}`,type:'system.update.available',title:'更新可用',summary:`新版本 ${layer.availableVersion} 已可用。`,level:'normal',actions:[{kind:'view_settings',label:'查看更新',target:{category:'about'}}]});
+      for(const layer of update?.layers??[])if(layer.availableVersion&&layer.availableVersion!==layer.currentVersion)await record(ownerId,{key:`update:${layer.availableVersion}`,type:'system.update.available',title:'更新可用',summary:`新版本 ${layer.availableVersion} 已可用。`,level:'normal',actions:[{kind:'view_settings',label:'查看更新',target:{category:'about'}}]});
       await context.sideChats.reconcile(ownerId);
       await context.serial(()=>context.mutate(ownerId,()=>{}));
     })().finally(()=>flights.delete(ownerId));flights.set(ownerId,work);return work;

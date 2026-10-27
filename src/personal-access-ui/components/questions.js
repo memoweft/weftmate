@@ -22,10 +22,10 @@ globalThis.WeftUiComponents.factories.questions = (core, ui) => {
             const row = entry.row;
             const event = core.timelineEventsForContext(context).filter(event => event.type === 'question.asked' && event.data?.turn === row.turn && event.seq <= row.observedSeq).at(-1);
             const anchor = event && [...list.children].find(node => node.dataset?.timelineQuestion === event.data.callId);
-            if (anchor) { anchor.hidden = row.status === 'pending'; if (!anchor.hidden) anchor.textContent = WeftQuestionBar.record(row); }
+            if (anchor) { anchor.hidden = row.status === 'pending'; if (!anchor.hidden) WeftQuestionBar.renderRecord(anchor,row); }
             const old = [...list.children].find(node => node.dataset?.conversationQuestion === row.questionRpcId);
             if (old) old.remove();
-            if (!anchor && row.status !== 'pending') { const receipt = [...list.children].find(node => node.dataset?.receiptId === row.sourceReceiptId); if (receipt) { const record = ui.element('li', 'question-record', WeftQuestionBar.record(row)); record.dataset.conversationQuestion = row.questionRpcId; receipt.after(record); } }
+            if (!anchor && row.status !== 'pending') { const receipt = [...list.children].find(node => node.dataset?.receiptId === row.sourceReceiptId); if (receipt) { const record = ui.element('li', 'question-record'); WeftQuestionBar.renderRecord(record,row);record.dataset.conversationQuestion = row.questionRpcId; receipt.after(record); } }
         }
         if (!pending.length) return;
         const entry = pending[0], row = entry.row, marker = core.questionMarker(context, row), operation = core.conversationQuestions.operations.get(row.questionRpcId);
