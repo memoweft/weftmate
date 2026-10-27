@@ -1,10 +1,13 @@
 /** Static, public account shell. All account data comes from authenticated API calls. */
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { randomBytes } from 'node:crypto'
 import { uiCoreBrowserAssets as uiCoreAssets, uiCoreSourceAsset } from '../ui-core/manifest.mjs'
 import renderAssets from './render-assets.json' with {type: 'json'};
 
 const files = new Map([
+  ...['panels/terminal.css', 'vendor/terminal/xterm.js', 'vendor/terminal/addon-fit.js', 'vendor/terminal/xterm.css'].map(name =>
+    [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/pages.css', ['pages.css','text/css; charset=utf-8']],
   ['/personal/v1/ui/components/computers.js', ['components/computers.js','text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/work-and-chat.js', ['components/work-and-chat.js','text/javascript; charset=utf-8']],
@@ -157,8 +160,13 @@ self.addEventListener('fetch',event=>{const u=new URL(event.request.url);if(even
   if (!asset) return false
   try {
     const resource = resourceName(url.pathname, asset[0])
-    const body = await verifiedResource?.(resource) ?? await readFile(join(import.meta.dirname, asset[0]))
+    let body = await verifiedResource?.(resource) ?? await readFile(join(import.meta.dirname, asset[0]))
     const headers = { ...securityHeaders };
+    if (asset[0] === 'index.html') {
+      const nonce = randomBytes(18).toString('base64');
+      body = Buffer.from(body.toString().replace('__WEFT_STYLE_NONCE__', nonce));
+      headers['content-security-policy'] = headers['content-security-policy'].replace("style-src 'self'", `style-src 'self' 'nonce-${nonce}'`);
+    }
     if (url.pathname.endsWith('/computer-channel.html')) {
       delete headers['x-frame-options'];
       headers['content-security-policy'] = "default-src 'none'; script-src 'self'; connect-src 'self'; frame-ancestors *; base-uri 'none'; form-action 'none'; object-src 'none'";

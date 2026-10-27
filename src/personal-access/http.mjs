@@ -175,6 +175,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, context.publicAuth(current.ownerId, current.deviceId,
           current.device, current.csrfToken));
       }
+      if (await context.terminals.handleRelease(request, response, url)) return;
       if (ownerId && context.dataControls.isLocked(ownerId) && !pathname.startsWith('/personal/v1/data') &&
           !['/personal/v1/auth/me','/personal/v1/auth/state','/personal/v1/auth/logout'].includes(pathname) &&
           !(request.method==='GET'&&pathname.startsWith('/personal/v1/activity'))) throw failure('SESSION_BUSY',409);
@@ -308,6 +309,7 @@ export function createHttpHandler(context) {
       const { deviceId, ownerId: authenticatedOwnerId } = context.authenticate(request,
         write ? 'commands:write' : 'sessions:read');
       if (authenticatedOwnerId !== ownerId) throw failure('UNAUTHORIZED', 401);
+      if (await context.terminals.handle(request, response, url)) return;
       if (pathname === '/personal/v1/library' && request.method === 'GET') {
         const result = await context.library.list(ownerId, url.searchParams);
         context.authenticate(request, 'sessions:read');
