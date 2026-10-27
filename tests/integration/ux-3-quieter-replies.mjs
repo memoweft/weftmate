@@ -67,7 +67,7 @@ try{
      await p.getByText('文件已做好',{exact:true}).waitFor();assert.equal(await p.locator('.artifact-file-row:visible').count(),1);assert.equal(await p.getByRole('button',{name:'还有 2 个',exact:true}).count(),0);await shot(p,surface,theme,'single');
     }else if(source.key==='recovered'){
      await p.getByText(/中途有 1 步重试/).waitFor();assert.equal(await p.locator('.has-failure').count(),0);await shot(p,surface,theme,'recovered');
-     const group=p.locator('.execution-block').first();await group.locator('summary').first().click();await p.getByText(/已换办法继续/).first().waitFor();await shot(p,surface,theme,'recovered-details');
+     const group=p.locator('.execution-block').first();await group.locator('summary').first().click();await p.getByText(/执行失败/).first().waitFor();await shot(p,surface,theme,'recovered-details');
     }else if(source.key==='interrupted'){
      await p.getByText('已中断',{exact:true}).first().waitFor();assert.equal(await p.locator('.has-failure').count(),0);await shot(p,surface,theme,'interrupted');
     }else if(source.key==='failed'){
