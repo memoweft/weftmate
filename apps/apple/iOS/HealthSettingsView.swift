@@ -8,7 +8,6 @@ struct HealthSettingsView: View {
     @State private var deleting = false
     var body: some View {
         Form {
-            HealthMetricsView(summaries: Array(model.state.summaries.values))
             Section {
                 Text("只读取你选择的项目，在手机上计算指标，汇总为每日与小时摘要。手表记录会通过“健康”同步到 iPhone。")
                 Text("Apple 不公开读取权限状态。若无数据或已撤权，请到“健康” → 头像 → App → WeftMate 检查权限。")
@@ -47,6 +46,9 @@ struct HealthSettingsView: View {
                 })) { ForEach(SelfAssessmentFrequency.allCases, id: \.self) { Text($0.title).tag($0) } }
                 Text("自评询问将在后续版本提供。").font(AppleTokens.Fonts.footnote).foregroundStyle(AppleTokens.Styles.secondary)
             }
+            Section("查看测量") {
+                NavigationLink("指标与趋势") { Form { HealthMetricsView(summaries:Array(model.state.summaries.values)) }.navigationTitle("测量与趋势") }
+            }
             Section("每日摘要") {
                 if let summary = model.latest {
                     Text(DeviceDateText.day(summary.date))
@@ -75,7 +77,7 @@ struct HealthSettingsView: View {
                     .font(AppleTokens.Fonts.footnote).foregroundStyle(AppleTokens.Styles.secondary)
             }
         }
-        .navigationTitle("健康")
+        .scrollContentBackground(.hidden).background(Weave.grouped).navigationTitle("每日摘要与范围")
         .disabled(model.busy || model.uploading)
         .confirmationDialog("健康数据是否可用于云端模型？", isPresented: $choosingCloud, titleVisibility: .visible) {
             Button("仅供本地模型使用（默认）") { Task { await model.authorize(cloudAllowed: false, app: app) } }

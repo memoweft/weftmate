@@ -12,7 +12,16 @@ struct MemoryWorkspaceView: View {
     @State private var confirmingMute = false
 
     private let phoneRouting: Bool
-    init(appModel: AppleAppModel, phoneRouting: Bool = true) {
+    private let phoneSelection: OfflineMemory?
+    @State private var showingCleanup=false
+    #if os(iOS)
+    @ObservedObject private var phoneOffline: OfflineChatModel
+    #endif
+    init(appModel: AppleAppModel, phoneRouting: Bool = true, phoneSelection: OfflineMemory? = nil) {
+        self.phoneSelection=phoneSelection
+        #if os(iOS)
+        phoneOffline=appModel.offline
+        #endif
         self.phoneRouting=phoneRouting
         self.appModel = appModel
         _model = StateObject(wrappedValue: MemoryWorkspaceModel(client: appModel.assistantClient,
@@ -25,11 +34,68 @@ struct MemoryWorkspaceView: View {
 
     var body: some View {
         #if os(iOS)
-        if phoneRouting { PhoneMemoryWorkspaceView(app:appModel) } else { computerBody }
+        if phoneRouting { PhoneMemoryWorkspaceView(app:appModel) } else { phoneComputerBody }
         #else
         computerBody
         #endif
     }
+    #if os(iOS)
+    private var phoneComputerBody: some View {
+        ScrollView {
+            LazyVStack(alignment:.leading,spacing:AppleTokens.Space.p16) {
+                Text("由电脑处理修改；确认范围后才会遗忘。").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                if phoneOffline.hostOffline { InlineNotice(message:"电脑不在线，暂时只读。返回记忆页可查看上次同步的获准副本。") }
+                controls
+                if let notice=model.notice { InlineNotice(message:notice).accessibilityIdentifier("memoryNotice") }
+                if let error=model.error { InlineNotice(message:error,isError:true);Button("重试") { Task { await model.reload() } } }
+                if model.loading { ProgressView("正在读取电脑记忆…") }
+                if !model.loading,model.items.isEmpty,model.error == nil { Text("当前类别没有匹配的记忆。").foregroundStyle(Weave.muted).accessibilityIdentifier("memoryEmptyState") }
+                ForEach(model.items) { item in
+                    Button { showingDetail=true;expandedSources=false;Task { await model.open(item) } } label: {
+                        VStack(spacing:0) {
+                            PhoneFeatureRow(title:item.text,subtitle:(item.lifecycle.mutedAt != nil ? "已停用" : item.currentState == .current ? "当前有效" : "已不是当前版本")+" · "+String(item.sourceCount)+" 个来源")
+                            Divider()
+                        }
+                    }.buttonStyle(.plain).accessibilityIdentifier("memoryItem."+item.id)
+                }
+                if model.hasMore { Button("加载更多") { Task { await model.loadMore() } }.disabled(model.loading) }
+                Button { showingCleanup=true } label: { PhoneFeatureRow(icon:"sync",title:"同步与清理回执",subtitle:"每一处处理都有可见的状态") }.accessibilityIdentifier("memory.cleanup")
+            }.padding(AppleTokens.Space.p20)
+        }.background(Weave.canvas).navigationTitle("电脑记忆").navigationBarTitleDisplayMode(.large)
+            .disabled(phoneOffline.hostOffline)
+            .task {
+                if let phoneSelection,let kind=MemoryKind(rawValue:phoneSelection.kind) { model.kind=kind }
+                await model.reload()
+                if let phoneSelection {
+                    while model.hasMore,!model.items.contains(where:{ $0.id == phoneSelection.id }),!Task.isCancelled {
+                        let count=model.items.count;await model.loadMore();if model.items.count == count { break }
+                    }
+                    if let item=model.items.first(where:{ $0.id == phoneSelection.id }) { await model.open(item);showingDetail=true }
+                }
+            }
+            .refreshable { await model.reload() }
+            .onDisappear { clearPresentation();model.invalidate() }
+            .onChange(of:appModel.accountEpoch) { _,_ in clearPresentation();model.invalidate() }
+            .onChange(of:phoneOffline.hostOffline) { _,offline in if offline { clearPresentation();model.invalidate() } }
+            .onChange(of:model.detail?.item.id) { old,new in if old != nil && new == nil { showingDetail=false;expandedSources=false;pendingAction=nil } }
+            .onChange(of:scenePhase) { _,phase in
+                if phase != .active { clearPresentation();model.invalidate() } else { Task { await model.reload() } }
+            }
+            .sheet(isPresented:$showingDetail,onDismiss:{ model.closeDetail();expandedSources=false;pendingAction=nil }) { detailPage.presentationDetents([.large]).presentationDragIndicator(.visible) }
+            .sheet(isPresented:$showingCleanup) {
+                NavigationStack {
+                    ScrollView {
+                        VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
+                            Text("每一处处理都有可见的状态。").foregroundStyle(Weave.muted)
+                            if model.visibleOperations.isEmpty { Text("还没有电脑记忆的操作回执。尚未收到回执时，不代表已经清理。") }
+                            operationHistory
+                            Text("电脑回执与此手机的获准副本分开核对。其他设备尚无逐台回执时，清理状态保持待确认。").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
+                        }.padding(AppleTokens.Space.p20)
+                    }.phoneSheet("遗忘进度",close:{ showingCleanup=false })
+                }
+            }.accessibilityIdentifier("memoryWorkspace")
+    }
+    #endif
     private var computerBody: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
@@ -159,7 +225,11 @@ struct MemoryWorkspaceView: View {
                 }.padding(AppleTokens.Space.p24).frame(maxWidth: 720, alignment: .leading).frame(maxWidth: .infinity)
             }
             .background(Weave.canvas).navigationTitle("记忆详情")
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { showingDetail = false; model.closeDetail() } } }
+            #if os(iOS)
+            .phoneSheet("记忆详情",close:{ showingDetail=false;model.closeDetail() })
+            #else
+            .toolbar { ToolbarItem(placement:.cancellationAction) { Button("完成") { showingDetail=false;model.closeDetail() } } }
+            #endif
             .sheet(isPresented: Binding(get: { pendingAction?.operation.isDeletion == true }, set: { if !$0 { pendingAction = nil; model.cancelForget() } })) {
                 if let context = pendingAction {
                     VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
@@ -178,6 +248,9 @@ struct MemoryWorkspaceView: View {
                         }
                     }.padding(AppleTokens.Space.p24).frame(maxWidth: 600).background(Weave.surface)
                     .task { await model.prepareForget(context) }
+                    #if os(iOS)
+                    .presentationDetents([.medium,.large]).presentationDragIndicator(.visible)
+                    #endif
                     #if os(macOS)
                     .frame(minWidth: 440, idealWidth: 580, minHeight: 460)
                     #endif
@@ -258,6 +331,13 @@ struct MemoryWorkspaceView: View {
                     VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
                         Text(row.title).font(AppleTokens.Fonts.callout.weight(.semibold))
                         Text(row.status).font(AppleTokens.Fonts.caption).accessibilityIdentifier("memoryOperationStatus.\(row.id)")
+                        #if os(iOS)
+                        if row.record.identity.operation.isDeletion {
+                            Text("电脑记忆："+(row.record.receipt?.effectApplied == true ? "遗忘已生效" : "等待确认"))
+                            Text("电脑存储："+(row.record.receipt?.cleanupConfirmedComplete == true ? "清理已确认" : row.record.cleanupPending ? "等待清理" : "尚未收到清理完成回执"))
+                            Text("其他设备：尚无逐台回执，无法核实").foregroundStyle(Weave.muted)
+                        }
+                        #endif
                         if let note = row.note { Text(note).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                         HStack {
                             Button("重新确认") { Task { await model.reconcile(row.id) } }
@@ -285,6 +365,6 @@ struct MemoryWorkspaceView: View {
     }
     private func clearPresentation() {
         showingDetail = false; expandedSources = false; pendingAction = nil
-        confirmingItemDeletion = false; confirmingMute = false
+        confirmingItemDeletion = false; confirmingMute = false; showingCleanup=false
     }
 }

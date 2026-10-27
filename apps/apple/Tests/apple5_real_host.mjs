@@ -10,6 +10,7 @@ import {randomUUID,createHash} from 'node:crypto';
 import {canonicalCommand} from '../../../src/personal-access/command-policy.mjs';
 import {putActivity} from '../../../src/personal-access/activity-store.mjs';
 import {reconcileChatIdentity} from '../../../src/personal-access/chat-identity.mjs';
+import {createPagesMemoryFixture} from './ios_ui_pages_memory_fixture.mjs';
 import {validateStore} from '../../../src/personal-access/store.mjs';
 const root=await realpath(await mkdtemp(join(tmpdir(),'weftmate-apple5-')));
 const healthZone=process.env.WEFTMATE_APPLE6_HEALTH_ZONE ?? 'UTC';
@@ -36,7 +37,8 @@ const backend={
     },
     modelCompletion:async input=>{modelCalls++;if(JSON.parse(input.body.messages[1].content).scope==='vital:hrvSdnnMs')await new Promise(resolve=>setTimeout(resolve,800));return Response.json({choices:[{message:{content:JSON.stringify({text:'汇总数字已整理，可以按自己的节奏安排。',points:[],basis:JSON.parse(input.body.messages[1].content).basis})}}]});},
 };
-let service=await createPersonalAccessService({root,port:0,backend,clock:()=>now});
+const memoryManager=process.env.WEFTMATE_IOS_UI_PAGES==='1'?createPagesMemoryFixture():null;
+let service=await createPersonalAccessService({root,port:0,backend,memoryManager,clock:()=>now});
 let {origin}=await service.start();const grant=await service.issueSetupGrant();
 const username='Apple5Synthetic',password='Synthetic-'+randomUUID()+randomUUID();
 const setup=await fetch(origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,username,password,deviceName:'合成电脑'})});
@@ -57,15 +59,17 @@ account.commands['apple5-file']=command('apple5-file',{kind:INTERNAL_ARTIFACT_KI
 for(const [id,type,title,summary,source,actions,extra] of [
     ['apple5-complete','task.completed','周末计划已整理','做好了一份可以带走的计划。',{sessionId,taskId:'apple5-task'},[{kind:'view_library',label:'查看成果',target:{id:'apple5-file'}},{kind:'open_chat',label:'打开对话',target:{sessionId}}],{}],
     ['apple5-week','memory.report','这周回顾','睡眠和活动已经有了连续记录。',{sessionId},[{kind:'open_chat',label:'打开对话',target:{sessionId}}],{weeklyInsight:{from:'2026-10-05',to:day,timeZone:'UTC',text:'完成了周末计划，留了时间散步。',health:{text:'这周睡眠和运动已有记录。'}}}],
-    ['apple5-memory','memory.report','记忆周报','这周记下了新的阅读计划。',{sessionId},[{kind:'view_memory',label:'查看记忆',target:{}}],{memoryDigest:{summary:'这周的记忆变化',added:[{kind:'claim',id:'synthetic-memory',text:'周末留一点时间阅读。'}]}}],
+    ['apple5-memory','memory.report','记忆周报','这周记下了新的阅读计划。',{sessionId},[{kind:'view_memory',label:'查看记忆',target:{}}],{memoryDigest:{summary:'这周的记忆变化',corrected:[],review:[],added:[{kind:'claim',id:'synthetic-memory',text:'周末留一点时间阅读。'}]}}],
     ['apple5-remind','reminder.triggered','出去走走','提醒你下午留点时间散步。',{sessionId,scheduleId},[{kind:'open_chat',label:'打开对话',target:{sessionId}}],{}],
 ])putActivity(account,id,{id,at:day+'T10:00:00.000Z',type,title,summary,source,actions,...extra});
 reconcileChatIdentity(account,store.hostId,day+"T08:00:00.000Z");
 validateStore(store);
 await writeFile(storeFile,JSON.stringify(store));
-service=await createPersonalAccessService({root,port:0,backend,clock:()=>now});({origin}=await service.start());
+service=await createPersonalAccessService({root,port:0,backend,memoryManager,clock:()=>now});({origin}=await service.start());
 goals.set(sessionId,{id:goalId,revision:1,objective:'每周留出阅读时间\n先完成这周的计划',phase:'active',roundsStarted:2,maxGoalRounds:20,createdAt:now,updatedAt:now});
 schedules.set(scheduleId,{id:scheduleId,sessionId,text:'下午出去走走',kind:'reminder',timeZone:'UTC',state:'active',createdAt:day+'T08:00:00.000Z',nextRunAt:day+'T15:00:00Z',revision:1,lastResult:{state:'delivered'}});
 const output=resolve(process.argv[2]);await writeFile(output,JSON.stringify({origin,username,password,day,sessionId,fixture,records:sequence.items,profile:sequence.profile}),{mode:0o600});
 console.log(JSON.stringify({ready:true,syntheticOnly:true,realPersonalHost:true}));
 let closing=false;const close=async()=>{if(closing)return;closing=true;await service.close();await rm(root,{recursive:true,force:true});await rm(output,{force:true});process.exit(0);};process.on('SIGTERM',close);process.on('SIGINT',close);
+
+if(process.env.WEFTMATE_IOS_UI_PAGES==='1'){process.stdin.setEncoding('utf8');process.stdin.on('data',value=>{if(value.trim()==='stop')void close();});}
