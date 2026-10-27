@@ -51,5 +51,5 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
         let json: [String:Any]=["authorized":true,"hostId":host,"accountId":cloudLogin.subject ?? "", "generation":controlGeneration]
         return try JSONDecoder().decode(OfflineAuthorization.self,from:JSONSerialization.data(withJSONObject:json))
     }
-    func removeComputerReplica(_ host: String) { offline.erase();offline.memoryRevision=UUID() }
+    func removeComputerReplica(_ host: String) { if offline.replicaHostID == host { offline.erase();offline.memoryRevision=UUID() } }
 }

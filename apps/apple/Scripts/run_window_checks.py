@@ -62,7 +62,7 @@ def main():
     if args.phase in ["state", "all"]:
         for check in ["PhoneWindowModelChecks", "PhoneStandaloneModelChecks", "PhoneReminderModelChecks", "PhoneAttachmentModelChecks", "PhoneModelServicesModelChecks"]:
             record(check, ["python3", str(ROOT / "Scripts/run_state_checks.py"), "--artifacts", str(run / "State"), "--core-build", core, "--check", check])
-    common = ["xcodebuild", "-project", str(ROOT / "WeftMate.xcodeproj"), "-configuration", "WindowTest", "-derivedDataPath", str(run / "DerivedData"), "-jobs", "4", "-parallel-testing-enabled", "NO", "-maximum-concurrent-test-simulator-destinations", "1", "CODE_SIGNING_ALLOWED=NO"]
+    common = ["xcodebuild", "-project", str(ROOT / "WeftMate.xcodeproj"), "-configuration", "DebugWindowTest", "-derivedDataPath", str(run / "DerivedData"), "-jobs", "4", "-parallel-testing-enabled", "NO", "-maximum-concurrent-test-simulator-destinations", "1", "CODE_SIGNING_ALLOWED=NO"]
     if args.phase in ["mac", "all"]:
         record("mac-build", common + ["-scheme", "WeftMateMacWindowTest", "-destination", "platform=macOS", "build"])
     if args.phase in ["ui", "all"] and not any(row["exit"] != 0 for row in results):

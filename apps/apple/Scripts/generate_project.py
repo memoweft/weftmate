@@ -47,16 +47,18 @@ target_attrs = {}
 
 def configs(name, settings, is_project=False):
     ids = []
-    for config in ["Debug", "Release", "WindowTest", "WindowTestRelease"]:
+    # Xcode maps package dependencies to Debug by the configuration name.
+    # Keep Debug in this name so the app and WeftMateCore expose the same APIs.
+    for config in ["Debug", "Release", "DebugWindowTest", "WindowTestRelease"]:
         build = dict(settings)
-        if config in ["Debug", "WindowTest"]:
+        if config in ["Debug", "DebugWindowTest"]:
             build.update(SWIFT_OPTIMIZATION_LEVEL="-Onone", DEBUG_INFORMATION_FORMAT="dwarf", SWIFT_ACTIVE_COMPILATION_CONDITIONS="$(inherited) DEBUG", ENABLE_TESTABILITY="YES", ONLY_ACTIVE_ARCH="YES")
             if name == "WeftMatePhone":
                 build["INFOPLIST_FILE"] = "Config/SimulatorTestInfo.plist"
                 build["INFOPLIST_KEY_NSHealthUpdateUsageDescription"] = "仅在隔离模拟器 XCTest 中写入合成样本，日用功能不写健康数据。"
         else:
             build.update(SWIFT_OPTIMIZATION_LEVEL="-O", DEBUG_INFORMATION_FORMAT="dwarf-with-dsym", ONLY_ACTIVE_ARCH="NO")
-        if config.startswith("WindowTest") and not is_project:
+        if config in ["DebugWindowTest", "WindowTestRelease"] and not is_project:
             build["PRODUCT_BUNDLE_IDENTIFIER"] = "com.weftmate.apple.windowtest." + name.lower()
             build["INFOPLIST_KEY_CFBundleDisplayName"] = "WeftMate 苹果测试"
             if name == "WeftMatePhone":
@@ -176,13 +178,14 @@ data = "// !$*UTF8*$!\n{\n\tarchiveVersion = 1;\n\tclasses = {};\n\tobjectVersio
 for key, fields in OBJECTS.items():
     data += "\t\t" + key + " = " + encode(fields) + ";\n"
 data += "\t};\n\trootObject = " + ref("project") + ";\n}\n"
-(PROJECT / "project.pbxproj").write_text(data, encoding="utf-8", newline="\n")
+with (PROJECT / "project.pbxproj").open("w", encoding="utf-8", newline="\n") as stream:
+    stream.write(data)
 schemes = PROJECT / "xcshareddata/xcschemes"
 schemes.mkdir(parents=True, exist_ok=True)
 for scheme_name, name, debug_config, release_config in [
     (name, name, "Debug", "Release") for name in ["WeftMateMac", "WeftMatePhone", "WeftMateWatch"]
 ] + [
-    (name + "WindowTest", name, "WindowTest", "WindowTestRelease") for name in ["WeftMateMac", "WeftMatePhone", "WeftMateWatch"]
+    (name + "WindowTest", name, "DebugWindowTest", "WindowTestRelease") for name in ["WeftMateMac", "WeftMatePhone", "WeftMateWatch"]
 ]:
     test = name + "UITests"
     def buildable(target_name, extension="app"):
@@ -196,5 +199,6 @@ for scheme_name, name, debug_config, release_config in [
  <ProfileAction buildConfiguration="{release_config}" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES"><BuildableProductRunnable runnableDebuggingMode="0">{buildable(name)}</BuildableProductRunnable></ProfileAction>
  <AnalyzeAction buildConfiguration="{debug_config}"/><ArchiveAction buildConfiguration="{release_config}" revealArchiveInOrganizer="YES"/>
 </Scheme>'''
-    (schemes / (scheme_name + ".xcscheme")).write_text(xml, encoding="utf-8", newline="\n")
+    with (schemes / (scheme_name + ".xcscheme")).open("w", encoding="utf-8", newline="\n") as stream:
+        stream.write(xml)
 print("Generated WeftMate.xcodeproj with", len(ui), "shared UI sources and three native app targets.")

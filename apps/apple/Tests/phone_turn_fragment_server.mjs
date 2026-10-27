@@ -1,7 +1,7 @@
 // Isolated real desktop /offline/sync + /offline/turns routes for Swift and Node.
 import {createServer} from 'node:http';
 import {once} from 'node:events';
-import {mkdtemp,rm,mkdir,writeFile} from 'node:fs/promises';
+import {mkdtemp,realpath,rm,mkdir,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,basename} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -10,7 +10,7 @@ import {createOfflineService} from '../../../src/personal-offline/index.mjs';
 import {createPhoneHistory} from '../../../src/personal-access/phone-history.mjs';
 
 export async function startPhoneTurnFragmentServer(){
-  const root=await mkdtemp(join(tmpdir(),'apple-3-fragments-'));
+  const root=await realpath(await mkdtemp(join(tmpdir(),'apple-3-fragments-')));
   const identity={ownerId:'owner-test',hostId:'host-test',deviceId:'device-test'};
   const account={sessions:{},commands:{}},config={generation:1};
   const report={sync:[],turns:[],raw:[],accepted:[],assemblies:[],handovers:[],chats:[]};
