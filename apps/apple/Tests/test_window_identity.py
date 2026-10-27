@@ -39,8 +39,8 @@ class WindowIdentityProjectTests(unittest.TestCase):
             for settings in [phone, watch]:
                 self.assertEqual(settings["INFOPLIST_KEY_CFBundleDisplayName"], "WeftMate 苹果测试")
             if configuration == "WindowTestRelease":
-                self.assertEqual(phone["CODE_SIGN_ENTITLEMENTS"], "Config/WeftMateWindowTest.entitlements")
-                self.assertEqual(watch["CODE_SIGN_ENTITLEMENTS"], "Config/WeftMateWindowTest.entitlements")
+                self.assertEqual(phone["CODE_SIGN_ENTITLEMENTS"], "Config/WeftMatePhoneHealth.entitlements")
+                self.assertEqual(watch["CODE_SIGN_ENTITLEMENTS"], "Config/WeftMateHealth.entitlements")
 
     def test_existing_identity_and_test_schemes(self):
         self.assertEqual(self.settings("WeftMatePhone", "Release")["PRODUCT_BUNDLE_IDENTIFIER"], "com.weftmate.apple.weftmatephone")

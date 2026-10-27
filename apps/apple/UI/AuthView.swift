@@ -13,7 +13,7 @@ struct AuthView: View {
             .disabled(model.busy).sheet(item: $legal) { LegalDocumentView(document: $0) }
             .accessibilityIdentifier("authRoot")
         #if WEFTMATE_WINDOW_TEST
-            .onAppear { PhoneWindowLaunch.recordLoginVisible() }
+            .onAppear { PhoneWindowLaunch.recordLoginVisible(server: model.cloudAddress) }
         #endif
         #if os(iOS)
             .scrollDismissesKeyboard(.interactively)

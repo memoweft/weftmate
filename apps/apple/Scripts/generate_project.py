@@ -66,10 +66,8 @@ def configs(name, settings, is_project=False):
             elif name == "WeftMateWatch":
                 build["PRODUCT_BUNDLE_IDENTIFIER"] = "com.weftmate.apple.windowtest.watch"
                 build["INFOPLIST_KEY_WKCompanionAppBundleIdentifier"] = "com.weftmate.apple.windowtest"
-            # Personal Team cannot sign HealthKit. Keep the simulator's Debug capability;
-            # the device trial configuration is chat/sync only until paid signing is available.
-            if config == "WindowTestRelease" and name in ["WeftMatePhone", "WeftMateWatch"]:
-                build["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMateWindowTest.entitlements"
+            # HealthKit is available to Apple Developer accounts, including Personal Teams.
+            # The actual device profile is verified during signing.
         fields = dict(isa="XCBuildConfiguration", buildSettings=build, name=config)
         if not is_project:
             fields["baseConfigurationReference"] = base_config
@@ -141,10 +139,10 @@ def target(name, platform, sources, testing=None):
         if platform == "iphoneos":
             settings["INFOPLIST_KEY_NSCameraUsageDescription"] = "拍摄你选择的图片作为对话附件，或扫描电脑上的一次性配对二维码。"
         settings["INFOPLIST_KEY_NSLocalNetworkUsageDescription"] = "WeftMate 连接你选择的个人服务器，以便同步账户和会话。"
-    if not is_test and platform in ["iphoneos", "watchos"] and name != "WeftMatePhoneWindowTest":
+    if not is_test and platform in ["iphoneos", "watchos"]:
         settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMateHealth.entitlements"
         settings["INFOPLIST_KEY_NSHealthShareUsageDescription"] = "WeftMate 只读取你选择的健康项目，在设备上汇总每日摘要，用于个人陪伴。"
-        if name == "WeftMatePhone":
+        if name in ["WeftMatePhone", "WeftMatePhoneWindowTest"]:
             settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMatePhoneHealth.entitlements"
             settings["INFOPLIST_KEY_NSHealthShareUsageDescription"] = "WeftMate 会读取你的步数、睡眠、心率和运动，把每天的汇总送到你自己的电脑，用来回答『我最近睡得怎么样』这类问题。"
     if name == "WeftMatePhoneWindowTest":
@@ -156,6 +154,8 @@ def target(name, platform, sources, testing=None):
     tid = obj("target:" + name, isa="PBXNativeTarget", buildConfigurationList=cfg, buildPhases=phases, buildRules=[], dependencies=deps, name=name, packageProductDependencies=packages, productName=name, productReference=product, productType="com.apple.product-type.bundle.ui-testing" if is_test else "com.apple.product-type.application")
     targets.append(tid)
     target_attrs[tid] = {"CreatedOnToolsVersion": "26.3"}
+    if name == "WeftMatePhoneWindowTest":
+        target_attrs[tid]["SystemCapabilities"] = {"com.apple.HealthKit": {"enabled": 1}, "com.apple.BackgroundModes": {"enabled": 1}}
     if is_test:
         target_attrs[tid]["TestTargetID"] = ref("target:" + testing)
     return tid
