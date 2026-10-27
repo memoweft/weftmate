@@ -321,7 +321,7 @@ export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, di
           const limitRaw = requestUrl.searchParams.get('limit') ?? '50';
           if (afterRaw !== null && !/^-?\d+$/.test(afterRaw) || beforeRaw !== null && !/^\d+$/.test(beforeRaw) || !/^\d+$/.test(limitRaw)) throw new TypeError('invalid history cursor');
           const result = requestUrl.searchParams.has('detailSeq')
-            ? await sessions.historyDetail(sessionId, Number(requestUrl.searchParams.get('detailSeq')))
+            ? await sessions.historyDetail(sessionId, Number(requestUrl.searchParams.get('detailSeq')), {outputOffset:requestUrl.searchParams.has('outputOffset')?Number(requestUrl.searchParams.get('outputOffset')):undefined})
             : await sessions.historyPage(sessionId, { ...(afterRaw === null ? {} : { afterSeq: Number(afterRaw) }),
               ...(beforeRaw === null ? {} : { beforeSeq: Number(beforeRaw) }), limit: Number(limitRaw),
               includeThinking: requestUrl.searchParams.get('includeThinking') === 'true' });

@@ -550,10 +550,11 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       const query = `includeThinking=true&limit=${limit}${afterSeq === undefined ? '' : `&afterSeq=${afterSeq}`}${beforeSeq === undefined ? '' : `&beforeSeq=${beforeSeq}`}`
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/history?${query}`)
     },
-    async readEventDetail({ sessionId, seq }) {
+    async readEventDetail({ sessionId, seq, outputOffset }) {
       requireRuntime()
       if (!idPattern.test(sessionId) || !Number.isSafeInteger(seq) || seq < 0) fail('INVALID_COMMAND')
-      return gateway(`/sessions/${encodeURIComponent(sessionId)}/history?detailSeq=${seq}`)
+      if(outputOffset!==undefined && (!Number.isSafeInteger(outputOffset) || outputOffset<0))fail('INVALID_COMMAND');
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/history?detailSeq=${seq}${outputOffset===undefined?'':`&outputOffset=${outputOffset}`}`)
     },
     async describeSession(sessionId) {
       requireRuntime()

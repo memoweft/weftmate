@@ -120,7 +120,7 @@
       event.preventDefault();
       const opening=!(folds.get(element)??element.open);
       summary.setAttribute('aria-expanded',String(opening));
-      resize(element,opening,open=>{element.open=open;});
+      resize(element,opening,open=>{element.open=open;},element.matches('.execution-block,.execution-step,.execution-step-group')?'dur-1':'dur-5');
     });
     element.addEventListener('toggle',()=>{if(!folds.has(element))summary.setAttribute('aria-expanded',String(element.open));});
   }

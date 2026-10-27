@@ -8,7 +8,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     const fixedTitle = () => document.body.classList.contains('health-open') ? '健康' : document.body.classList.contains('help-open') ? document.querySelector('.help-surface')?.dataset.title || '帮助与小技巧' : document.body.classList.contains('library-open') ? '成果库' : document.body.classList.contains('goals-open') ? '目标' : document.body.classList.contains('activity-open') ? '动态' : 'WeftMate';
     const main = () => (core.inLogicalTimeline?.() ?? core.inMainChat?.()) === true;
     const detailKey = detail => detail.dataset.step || (detail.dataset.stepGroup ? `steps:${detail.dataset.stepGroup}` : detail.closest('[data-inline-decision]') ? `decision:${detail.closest('[data-inline-decision]').id}:${detail.className}` : detail.classList.contains('model-thinking') ? 'thinking' : 'process');
-    const detailState = detail => ({ key: detailKey(detail), open: detail.open, active: detail.dataset.active });
+    const detailState = detail => ({ key: detailKey(detail), open: detail.open, active: detail.dataset.active, terminal: detail.dataset.terminal });
     const timelineChat = () => core.currentTimelineChat?.() || core.state.mainChat;
     const button = (text, name, action, className = 'button quiet small') => {
         const node = ui.element('button', className, text); node.type = 'button'; node.setAttribute('aria-label', name || text);
@@ -123,6 +123,8 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             globalThis.WeftReplyMotion?.indicator(row.querySelector('.message-text,.markdown'),!complete && spec.event.type==='assistant.message');
             if(complete)globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-actions'),'arrival');
             highlight(row);
+        } else if (spec.kind === 'changes') {
+            WeftTimelineCards.change(row,WeftTimelineCards.changes(spec.events),{openChange:ui.openFileChange});
         } else if (spec.kind === 'result') {
             const result = spec.event.data, summary = globalThis.WeftUiCore.sideResultText(result);
             row.classList.add('side-result'); row.replaceChildren();
@@ -146,11 +148,10 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             }
         } else {
             const nested = row.querySelector('ol') || ui.element('ol', 'chat-progress'); if (!nested.parentNode) row.replaceChildren(nested);
-            const decisions=[...core.conversationApprovals.entries.values(),...core.conversationQuestions.entries.values()].map(entry=>entry.row).filter(row=>row.status==='pending');
-            const decisionAnchor=decisions.length ? decisions.some(row=>spec.process?.taskId===`${row.sessionId}:turn-${row.turn}`) : spec===rows.findLast(row=>row.process?.started);
-            globalThis.WeftTimeline.render(spec.events, nested, { decisionAnchor, processKey:()=>spec.key, processes:spec.process ? [spec.process] : undefined, waiting:spec.waiting, quietFailure:spec.finalTaskBlock===false, stopViews:Object.fromEntries([...core.conversationTasks.entries.values()].filter(entry=>entry.payload?.control?.state==='stopped'||entry.payload?.control?.stopStatus==='stopped').map(entry=>[`${entry.sessionId}:turn-${entry.payload?.source?.dshTurn??entry.payload?.replyEvidence?.turn}`,{terminal:true,text:'已停止'}])), executions:[...core.conversationTasks.entries.values()].flatMap(entry=>entry.payload?core.relatedExecutionSteps(entry.payload).map(row=>({...row,sessionId:entry.sessionId})):[]), approvals: [...core.conversationApprovals.entries.values()].map(entry=>entry.row),
+            globalThis.WeftTimeline.render(spec.events, nested, { processKey:()=>spec.key, processes:spec.process ? [spec.process] : undefined, waiting:spec.waiting, quietFailure:spec.finalTaskBlock===false, stopViews:Object.fromEntries([...core.conversationTasks.entries.values()].filter(entry=>entry.payload?.control?.state==='stopped'||entry.payload?.control?.stopStatus==='stopped').map(entry=>[`${entry.sessionId}:turn-${entry.payload?.source?.dshTurn??entry.payload?.replyEvidence?.turn}`,{terminal:true,text:'已停止'}])), executions:[...core.conversationTasks.entries.values()].flatMap(entry=>entry.payload?core.relatedExecutionSteps(entry.payload).map(row=>({...row,sessionId:entry.sessionId})):[]), approvals: [...core.conversationApprovals.entries.values()].map(entry=>entry.row),
                 thinkingDisplay:core.state.personalization?.thinkingDisplay,
                 readDetail: seq => { const event = spec.events.find(event => event.sourceRef?.seq === seq || event.data?.detailRef?.seq === seq); return event ? core.readTimelineDetail(event.sourceRef.sessionId, seq) : Promise.reject({ code: 'SOURCE_UNAVAILABLE' }); },
+                readOutput:(seq,offset)=>{const event=spec.events.find(event=>event.data?.detailRef?.seq===seq);return core.readTimelineOutput(event.sourceRef.sessionId,seq,offset);},
                 questions: [...core.conversationQuestions.entries.values()].map(entry => {const event=spec.events.find(event=>event.sourceRef?.seq===entry.row.observedSeq);return {...entry.row,observedSeq:event?.seq??entry.row.observedSeq};}),
                 readArtifact:id=>core.accessApi(`/library/${encodeURIComponent(id)}`),
                 openAllArtifacts:()=>ui.openLibrary(),
@@ -161,7 +162,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         }
         for (const state of expanded.get(spec.key) || []) {
             const detail = [...row.querySelectorAll('details')].find(detail => detailKey(detail) === state.key);
-            if (detail && (!detail.classList.contains('model-thinking') || state.active === detail.dataset.active)) detail.open = state.open;
+            if (detail && state.terminal === detail.dataset.terminal && (!detail.classList.contains('model-thinking') || state.active === detail.dataset.active)) detail.open = state.open;
         }
         if (focus && !row.contains(document.activeElement)) ([...row.querySelectorAll('[aria-label]')].find(node => node.getAttribute('aria-label') === focusName) || row).focus({ preventScroll: true });
     }
@@ -229,6 +230,11 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             specs.push({kind:'progress',key:`progress:${process.key}`,events:process.events,process,estimate:48,
                 waiting:core.processingStageLabel(timelineChat().processing)});
             units.push({at:process.at,seq:process.position,specs});
+            if(globalThis.WeftTimelineCards?.changes(process.events).length) {
+                const answer=WeftTimeline.replyForProcess(mapped,process);
+                const last=answer || process.events.at(-1);
+                units.push({at:last.at,seq:last.seq+0.2,specs:[{kind:'changes',key:`changes:${process.key}`,events:process.events,estimate:90}]});
+            }
         }
         for (const event of mapped.filter(event=>['assistant.message','side.result'].includes(event.type)))
             units.push({at:event.at,seq:event.seq,specs:[{kind:event.type==='side.result'?'result':'message',key:core.messagePresentationKey(event),event,estimate:100}]});
