@@ -12,6 +12,16 @@ globalThis.WeftMobileCloudSettings = (core, ui) => {
         const help=ui.element('p','muted','在电脑上安装 WeftMate 并用同一个账号登录，就会出现在这里。');
         const website=ui.element('a','button secondary','WeftMate 官网');website.href='https://weftmate.com';website.target='_blank';website.rel='noopener';
         ui.byId('cloud-devices-panel').append(help,website);
+        const pairing = ui.element('form', 'cloud-account-form'); pairing.id = 'cloud-pairing-form';
+        pairing.innerHTML = '<h3>连接电脑</h3><p class="muted">扫描电脑上的二维码，或粘贴 wm1. 配对码，然后核对两边的六位数字。</p><label for="cloud-pairing-input">输入电脑的配对码</label><textarea id="cloud-pairing-input" rows="3" spellcheck="false" autocapitalize="off" required></textarea><div class="actions"><button type="button" class="button secondary" id="cloud-pairing-scan">扫描二维码</button><button type="submit" class="button primary" id="cloud-pairing-connect">配对连接</button></div><p class="form-error" role="alert" id="cloud-pairing-error"></p>';
+        ui.byId('cloud-devices-panel').append(pairing);
+        ui.byId('cloud-pairing-scan').addEventListener('click', () => void ui.scanPairing());
+        pairing.addEventListener('submit', async event => {
+            event.preventDefault(); ui.byId('cloud-pairing-error').textContent = ''; ui.setBusy(pairing, true);
+            try { await core.cloudRedeemPairing(ui.byId('cloud-pairing-input').value); ui.byId('cloud-pairing-input').value = ''; await core.enterAssistant(); }
+            catch (failure) { ui.byId('cloud-pairing-error').textContent = core.cloudError(failure); }
+            finally { ui.setBusy(pairing, false); }
+        });
         const refresh = ui.byId('cloud-directory-refresh'); refresh.className = 'icon-button'; refresh.replaceChildren(WeftIcons.create('sync', 18)); refresh.setAttribute('aria-label', '刷新设备');
         ui.byId('cloud-account-tab').addEventListener('click', () => select('account'));
         ui.byId('cloud-devices-tab').addEventListener('click', () => { select('devices'); void refreshDirectory(); });
@@ -98,7 +108,7 @@ globalThis.WeftMobileCloudSettings = (core, ui) => {
             if (device.type === 'computer' && !device.isCurrent) actions.append(button('连接', () => void act(async () => {
                 const result = await core.cloudConnect(device.hostId);
                 if (result.status !== 'online') { ui.byId('cloud-settings-status').textContent = '这台电脑离线，请稍后重试。'; return; }
-                if (result.pairingRequired) { ui.byId('cloud-settings-status').textContent = '这台电脑需要更新，请更新后重新连接。'; return; }
+                if (result.pairingRequired) { ui.byId('cloud-settings-status').textContent = '请扫描这台电脑上的二维码，核对六位数字后连接。'; ui.byId('cloud-pairing-input').focus(); return; }
                 await core.cloudConnectTrusted(result); await core.enterAssistant();
             })));
             if (!device.hostOnly || device.hostId&&core.state.cloudAuth.multiHostSupported) {
