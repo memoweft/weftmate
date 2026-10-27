@@ -22,6 +22,7 @@ globalThis.WeftPanels?.register('files', {
     states.set(contextKey, state); const cache = new Map();
     const active = (token, seq) => !disposed && token === generation && (seq === undefined || seq === readSeq);
     function currentDraft() { return state.drafts.get(state.selected); }
+    function fitPanel() { const width = el.clientWidth; if (state.selected && width > 0 && width < 360 && !navigation.hidden) toggleNav.click(); }
     function controls() {
       const draft = currentDraft(), editing = !!draft?.editing, changed = editing && draft.text !== draft.baseText;
       editor.hidden = !editing; display.hidden = editing; edit.hidden = !draft || draft.data.kind !== 'text' || editing;
@@ -54,7 +55,7 @@ globalThis.WeftPanels?.register('files', {
     }
     async function readFile(file, quiet = false) {
       const token = generation, seq = ++readSeq, scope = current;
-      if (!quiet) { state.selected = file; paint(); if (el.clientWidth < 360 && !navigation.hidden) toggleNav.click(); if (!currentDraft()) feedback.textContent = '正在读取文件…'; }
+      if (!quiet) { state.selected = file; paint(); fitPanel(); if (!currentDraft()) feedback.textContent = '正在读取文件…'; }
       try {
         const data = await request(scope, 'files/read', { path: file });
         if (!active(token, seq) || state.selected !== file) return;
@@ -136,6 +137,7 @@ globalThis.WeftPanels?.register('files', {
       void loadResources();
     }
     function initialize() { notice.textContent = ''; search.value = ''; delete tree._workspaceSignature; tree.replaceChildren(); controls(); paint(); void refreshAll(); }
+    const sizeObserver = new ResizeObserver(fitPanel); sizeObserver.observe(el);
     initialize();
     return { el, show() { if (!timer) timer = setInterval(() => { if (state.selected && !saving && ready(current)) void readFile(state.selected, true); }, 4000); if (state.selected) void readFile(state.selected, true); },
       hide() { clearInterval(timer); timer = null; },
@@ -145,6 +147,6 @@ globalThis.WeftPanels?.register('files', {
         generation++; readSeq++; searchSeq++; resourceSeq++; clearTimeout(debounce); cache.clear(); saving = false;
         current = next; contextKey = key(next); state = states.get(contextKey) || { selected: null, drafts: new Map(), expanded: new Set() }; states.set(contextKey, state); initialize();
       },
-      dispose() { disposed = true; generation++; clearInterval(timer); clearTimeout(debounce); states.clear(); cache.clear(); el.replaceChildren(); } };
+      dispose() { disposed = true; generation++; sizeObserver.disconnect(); clearInterval(timer); clearTimeout(debounce); states.clear(); cache.clear(); el.replaceChildren(); } };
   },
 });

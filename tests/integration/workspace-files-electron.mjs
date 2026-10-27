@@ -20,6 +20,8 @@ if (!out || !locks) throw Error('Set external evidence and heavy-lock directorie
 await mkdir(out, { recursive: true });
 const root = await mkdtemp(join(tmpdir(), 'weftmate-ui04-electron-')), folder = join(root, 'work');
 const report = { productionElectron: !browserOnly, hidden: true, passed: false, screenshots: [], errors: [], containerIntegrated: false, performance: [],
+  captureChecks: [],
+  captureMethod: browserOnly ? 'Playwright page.screenshot' : 'Playwright WebContents.capturePage(stayHidden)',
   performanceMode: skipPerformance ? 'visual-only; hidden Electron frame throttling is not a foreground performance baseline' : 'renderer-observation' };
 let host, app, lock, timeout, page;
 try {
@@ -81,10 +83,28 @@ try {
   async function resize(width, height) {
     if (browserOnly) await page.setViewportSize({ width, height });
     else await app.evaluate(({ BrowserWindow }, size) => BrowserWindow.getAllWindows()[0].setContentSize(size.width, size.height), { width, height });
+    await page.waitForFunction(() => { const panel = document.querySelector('.panel-files'), file = panel?.querySelector('.workspace-file-title');
+      return !panel || !file?.textContent?.includes('/') || panel.clientWidth >= 360 || panel.querySelector('.files-navigation').hidden; });
   }
   async function capture(name) { for (const [width, height] of [[1280, 800], [900, 700]]) { await resize(width, height); for (const theme of ['light', 'dark']) {
     await page.evaluate(theme => WeftDesktop.setAppearance({ theme }), theme); const file = `${name}-${width}x${height}-${theme}.png`;
-    await page.screenshot({ path: join(out, file) }); report.screenshots.push(file);
+    if (browserOnly) await page.screenshot({ path: join(out, file) });
+    else {
+      await page.evaluate(() => document.fonts.ready);
+      // A hidden window can still return the previous compositor surface. Warm
+      // the capturer, then wait for new renderer frames instead of trusting DOM alone.
+      await app.evaluate(async ({ BrowserWindow }) => { await BrowserWindow.getAllWindows()[0].webContents.capturePage(undefined, { stayHidden: true }); });
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      const snapshot = await app.evaluate(async ({ BrowserWindow }) => {
+        const image = await BrowserWindow.getAllWindows()[0].webContents.capturePage(undefined, { stayHidden: true });
+        const size = image.getSize(), bitmap = image.toBitmap(), offset = (Math.floor(size.height / 2) * size.width + Math.floor(size.width / 2)) * 4;
+        return { png: image.toPNG().toString('base64'), brightness: (bitmap[offset] + bitmap[offset + 1] + bitmap[offset + 2]) / 3 };
+      });
+      assert.ok(theme === 'light' ? snapshot.brightness > 150 : snapshot.brightness < 100, `compositor theme mismatch: ${file}`);
+      report.captureChecks.push({ file, theme, centerBrightness: snapshot.brightness });
+      await writeFile(join(out, file), Buffer.from(snapshot.png, 'base64'));
+    }
+    report.screenshots.push(file);
   } } }
   await mount('review'); await page.getByRole('button', { name: /README.md/ }).waitFor(); await page.locator('.diff-add').first().waitFor(); await capture('review');
   await resize(1280, 800); await mount('files'); await page.getByText('src', { exact: true }).click(); await page.getByRole('button', { name: 'example.js', exact: true }).click(); await page.getByRole('button', { name: '编辑文本', exact: true }).click();

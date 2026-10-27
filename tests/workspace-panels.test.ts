@@ -119,7 +119,6 @@ test('files lazy navigation, real code preview, protected draft, conflict recove
   await page.getByRole('button', { name: 'code.js', exact: true }).click();
   assert.equal(await page.getByRole('textbox', { name: '文件文本', exact: true }).inputValue(), 'retained on failure');
   await page.setViewportSize({ width: 320, height: 700 });
-  await page.getByRole('button', { name: 'code.js', exact: true }).click();
   await page.getByRole('button', { name: '展开导航', exact: true }).waitFor();
   const narrowEditor = await page.getByRole('textbox', { name: '文件文本', exact: true }).boundingBox();
   assert.ok(narrowEditor && narrowEditor.width > 250, 'narrow panels give the selected file the available width');
