@@ -156,6 +156,7 @@ try {
   assert.deepEqual(errors, []);
   await writeFile(join(out, 'smoothness.json'), JSON.stringify({ complete:true, samples, mounted, syntheticMessages:300, syntheticEvents:history.length }, null, 2));
 } catch (error) {
+  await writeFile(join(out, 'smoothness.json'), JSON.stringify({ complete:false, samples, syntheticMessages:300, syntheticEvents:fixture?.logs.get(fixture.source)?.length }, null, 2));
   if (page) {
     await page.screenshot({ path: join(out, 'failure.png') }).catch(() => {});
     console.error(JSON.stringify(await page.evaluate(() => ({ errors: [], selected: testCore.state.selectedSessionId, events: testCore.state.historyEvents.size,
