@@ -81,12 +81,13 @@
             detail.querySelector('.progress-detail-actions > button').hidden=true;
         }
         detail.querySelector('.step-resources').hidden=!options.openStep;
-        const state=step.state;
+        const state=WeftUiCore.executionState(step);
         if(state==='failed' && detail.dataset.state!=='failed')detail.open=true;
         detail.dataset.step=String(step.stepId);detail.dataset.state=state;detail.dataset.detailSeq=seq;detail.dataset.motion='unfold';
         const command=/^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(step.toolName);
         const status=detail.querySelector('.step-status');status.hidden=!command;
-        status.textContent=command ? state==='failed' ? english?'Failed':'执行失败' : state==='running' ? running ? english?'Running':'正在执行' : english?'Unconfirmed':'结果未确认' : state==='cancelled' ? english?'Stopped':'已停止' : state==='rejected' ? english?'Declined':'已拒绝' : english?'Executed':'已执行' : '';
+        const jobText=step.jobState && (english?{running:'Running in background',stopping:'Stopping background job',completed:'Background job completed',failed:'Background job failed',killed:'Background job stopped'}:{running:'后台运行中',stopping:'后台正在停止',completed:'后台已完成',failed:'后台执行失败',killed:'后台已停止'})[step.jobState];
+        status.textContent=command ? step.approvalStatus==='pending' ? english?'Awaiting approval':'等待批准' : jobText || (state==='failed' ? english?'Failed':'执行失败' : state==='pending' ? english?'Waiting':'等待执行' : state==='running' ? running ? english?'Running':'正在执行' : english?'Unconfirmed':'结果未确认' : state==='cancelled' ? english?'Stopped':'已停止' : state==='rejected' ? english?'Declined':'已拒绝' : english?'Executed':'已执行') : '';
         const description=WeftUiCore.toolArguments(step.arguments).description;
         const summary=command && typeof description==='string' && description.trim() ? description.trim().slice(0,180) : step.summary;
         const title=`${summary || (english?'Tool execution':'工具执行')}${command?'':step.statusText?` · ${step.statusText}`:state==='failed'?english?' · Encountered an issue':' · 遇到问题':state==='cancelled'?english?' · Stopped':' · 已停止':state==='running'?english?' · Running':' · 运行中':''}${step.approvalText?` · ${step.approvalText}`:''}`;

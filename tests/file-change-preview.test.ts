@@ -25,5 +25,11 @@ test('same-path reviews in different turns retain their source and ignore revoke
    return {tabs:tabs.size,text,revoked:document.body.textContent.includes('revoked-result')};
   });
   assert.equal(result.tabs,3);assert.match(result.text[0],/old-turn/);assert.match(result.text[1],/latest-turn/);assert.equal(result.revoked,false);
+  await page.evaluate(()=>{globalThis.WeftUiCore={factories:{}};globalThis.WeftIcons={create:()=>document.createElement('span')};globalThis.WeftTimeline={detailAction:()=>document.createElement('button')};});
+  for(const file of ['src/ui-core/timeline-model.js','src/personal-access-ui/components/steps.js'])await page.addScriptTag({content:readFileSync(file,'utf8')});
+  const states=await page.evaluate(()=>[
+    {state:'completed',jobState:'running'}, {state:'completed',jobState:'stopping'}, {state:'pending'}, {state:'running',approvalStatus:'pending'}
+  ].map((state,index)=>{const el=WeftTimelineCards.step({stepId:String(index),toolName:'pwsh',summary:'检查合成结果',...state},null,true,{});return {state:el.dataset.state,label:el.querySelector('.step-status').textContent};}));
+  assert.deepEqual(states,[{state:'running',label:'后台运行中'},{state:'running',label:'后台正在停止'},{state:'pending',label:'等待执行'},{state:'running',label:'等待批准'}]);
  }finally{await browser.close();}
 });
