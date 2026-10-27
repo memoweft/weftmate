@@ -19,11 +19,11 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         return true;
     };
     function closeResourcePreview() {
-        window.WeftDesktop?.closePreview(false);
+        globalThis.WeftPanels?.update(ui.workspaceContext());
     }
     function removeResourcePreview() {
         if(globalThis.WeftPhoneUnify?.isPhone())globalThis.WeftPhoneFiles?.close(false);
-        document.querySelector('.timeline-preview')?.remove();
+        globalThis.WeftPanels?.update(ui.workspaceContext());
     }
     function inlineTaskInfo(taskId, button) {
         const context = core.conversationTaskContext(), entry = core.conversationTasks.entries.get(taskId);
@@ -120,7 +120,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
                 }
             }
             catch {
-                if (preview.content.isConnected)
+                if (core.conversationTaskCurrent(context) && preview.content.isConnected)
                     preview.content.textContent = '暂时无法读取。关闭后重试。';
             }
             return;

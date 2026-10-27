@@ -7,6 +7,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun projectFolderChangeKeepsExactProjectPath() {
+        assertTrue(validBusinessPath("/personal/v1/projects/project-folder"))
+        assertTrue(validBusinessMethod("/personal/v1/projects/project-folder", "PATCH"))
+        assertFalse(validBusinessPath("/personal/v1/projects/project-folder/relocate"))
+        assertFalse(validBusinessPath("/personal/v1/projects/project-folder?rootPath=another"))
+    }
+
     @Test fun slashCommandsUseExactSessionRoute() {
         assertEquals(125_000, businessReadTimeout("/personal/v1/sessions/session-one/slash-commands", "POST"))
         assertEquals(20_000, businessReadTimeout("/personal/v1/sessions/session-one/slash-commands", "GET"))

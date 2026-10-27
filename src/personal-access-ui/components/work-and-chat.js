@@ -27,21 +27,19 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     for (const b of modes.children) { const selected = b.dataset.mode === core.sidebarConversationMode(); b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1; }
     ui.byId('new-session').setAttribute('aria-label','新建对话');
     const form = ui.byId('message-form'), phoneLayout = globalThis.WeftPhoneUnify?.isPhone() === true;
-    if(freshPage&&!phoneLayout) {if(toolbar.parentElement!==ui.byId('chat-intro'))ui.byId('chat-intro').append(toolbar);}
-    else if (phoneLayout && toolbar.nextSibling !== form) form.before(toolbar);
+    if (phoneLayout && toolbar.nextSibling !== form) form.before(toolbar);
     else if (!phoneLayout && toolbar.previousSibling !== form) form.after(toolbar);
     const approval = ui.byId('approval-picker');
-    if (enabled && working && !phoneLayout) {
-      if (approval.parentElement !== toolbar) toolbar.insertBefore(approval, error);
-    } else if (approval.parentElement === toolbar) ui.byId('model-picker').before(approval);
+    if (approval.parentElement !== ui.byId('model-picker').parentElement) ui.byId('model-picker').before(approval);
     const fresh = core.state.newConversation, selected = project(), id = (fresh ? core.state.workDraftHostId : null) || core.currentExecutionComputer?.() || core.state.hostId;
     const showToolbar=enabled&&working&&core.state.activeChatSource!=='phone';
     if (showToolbar) {
       const choices = core.workComputers(), online = choices.filter(row => row.online);
-      selectLabel(computer,computerName(id),'desktop');computer.hidden = fresh && online.length === 1;
+      selectLabel(computer,computerName(id),'desktop');computer.hidden = false;
       computer.disabled = !fresh || !choices.length; computer.setAttribute('aria-label', `电脑：${computerName(id)}`);
       selectLabel(folder,selected?.name || '选择项目或文件夹','folder');
       folder.setAttribute('aria-label', selected ? `项目或文件夹：${selected.name}` : '选择项目或文件夹');
+      folder.title = selected ? `${selected.name}\n${selected.rootPath || selected.pathHint || ''}` : '选择项目或文件夹';
       folder.disabled = core.state.online === false || !!core.folderChoiceBusy?.();
       error.textContent = !online.length ? '电脑暂时不在线。连接后就能在文件夹里工作。' : !selected ? '只在你选的文件夹里工作，写入仍按权限设置确认。' : selected.permission==='write'?'可读写 · 写入仍按权限设置确认':'只读 · 可以查看和整理文件内容';
       error.hidden = !error.textContent;
@@ -50,7 +48,7 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     else if(lastDraftMode===undefined||!freshPage)toolbar.hidden=!showToolbar;
     lastDraftMode=working;
     const phone = core.state.activeChatSource === 'phone';
-    subtitle.textContent = enabled || phone ? working ? `${computerName(id)} · ${selected?.name || '选择项目或文件夹'}`
+    subtitle.textContent = enabled || phone ? working ? ''
       : phone ? '手机自己答的' : `由 ${computerName(id)} 回答` : '';
     subtitle.hidden = !subtitle.textContent;
     document.body.classList.toggle('work-mode-active', enabled && working);
@@ -145,7 +143,7 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     computer = button('电脑', 'desktop', trigger => WeftPopover.openMenu(trigger, core.workComputers().map(row => ({ name: row.displayName || row.name, icon: 'desktop',
       checked: row.hostId === core.state.workDraftHostId, description: row.online ? '在线' : '不在线', disabled: !row.online,
       action: () => core.chooseWorkComputer(row.hostId) })), { label: '选择电脑' }));
-    folder = button('选择项目或文件夹', 'folder', chooseFolder); error = node('p', 'work-mode-hint'); error.setAttribute('role', 'status');
+    folder = button('选择项目或文件夹', 'folder', chooseFolder); ui.bindWorkspaceInfo(folder, () => ({title:project()?.name || '选择项目或文件夹',project:project()})); error = node('p', 'work-mode-hint'); error.setAttribute('role', 'status');
     toolbar.append(computer, folder, error); ui.byId('message-form').after(toolbar);
     subtitle = node('p', 'conversation-mode-subtitle'); subtitle.setAttribute('role', 'status'); ui.byId('assistant-title').after(subtitle);
     const update = ui.updateAvailability; ui.updateAvailability = (...args) => { const result = update(...args); paintWorkMode(); return result; };

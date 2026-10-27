@@ -262,6 +262,16 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     return result;
   });
   handle('wm:desktop:project-info', async projectId => (await nativeProjects()).find(row => row.projectId === projectId) || null);
+  handle('wm:desktop:project-relocate', async (projectId, fields) => {
+    const auth = await jsonLocal('/auth/me'), owner = auth.ownerId || auth.account?.ownerId;
+    if (contentOrigin !== origin || !selectedFolders.has(fields?.rootPath) || selectedFolders.get(fields.rootPath) !== owner)
+      throw new Error('PROJECT_NATIVE_SELECTION_REQUIRED');
+    const response = await fetchLocal(`/projects/${encodeURIComponent(projectId)}`, { method: 'PATCH', headers: {
+      'content-type': 'application/json', origin: contentOrigin, 'x-weftmate-csrf': auth.csrfToken, 'x-weftmate-desktop': libraryDesktopToken,
+    }, body: JSON.stringify(fields) });
+    const result = await response.json(); if (!response.ok) throw new Error(result.error?.code || result.code || 'PROJECT_UNAVAILABLE');
+    return result;
+  });
   handle('wm:desktop:project-show', async projectId => {
     const project = (await nativeProjects()).find(row => row.projectId === projectId && !row.revoked);
     if (!project) throw new Error('PROJECT_UNAVAILABLE');
@@ -618,7 +628,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     ipcMain.removeHandler('wm:desktop:system-export');
     for(const channel of ['wm:desktop:data-export','wm:desktop:data-status','wm:desktop:data-show-export'])ipcMain.removeHandler(channel);
     for (const request of networkRequests.values()) request.abort();
-    for (const channel of ['wm:desktop:cloud-credentials-present', 'wm:desktop:open-logs', 'wm:desktop:history-import', 'wm:desktop:recovery-export', 'wm:desktop:memory-export', 'wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-choice', 'wm:desktop:project-create', 'wm:desktop:project-info', 'wm:desktop:project-show', 'wm:desktop:project-drop', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
+    for (const channel of ['wm:desktop:cloud-credentials-present', 'wm:desktop:open-logs', 'wm:desktop:history-import', 'wm:desktop:recovery-export', 'wm:desktop:memory-export', 'wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-choice', 'wm:desktop:project-create', 'wm:desktop:project-relocate', 'wm:desktop:project-info', 'wm:desktop:project-show', 'wm:desktop:project-drop', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
   } };
 }

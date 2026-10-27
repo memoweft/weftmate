@@ -84,11 +84,13 @@
 
 `shared.space.<数值>` 输出 `--wm-space-<数值>`，供 padding（内边距）、margin（外边距）、gap（间隙）及焦点偏移使用；数字名称表示当前阶梯位置，精修可以改变对应值。常用阶梯为 2 / 4 / 6 / 8 / 12 / 16 / 20 / 24 / 32 / 48 / 64；其余项保留现有界面的细微差异。`shared.size` 是相关布局计算的宽度基准与标题栏保留区域。
 
-Windows 外壳使用 `shared.size.sidebar`（232px）和 `reading`（760px）；设置默认外框 880×660px、导航 196px、内容 620px。它们是排版基准，随窗口和内容适配。默认浅色为纸白与暖灰，默认深色为中性石墨；颜色预设与使用者字号选择保留。
+Windows 外壳使用 `shared.size.sidebar`（248px）和 `reading`（760px）；设置默认外框 880×660px、导航 196px、内容 620px。它们是排版基准，随窗口和内容适配。默认浅色为纸白与暖灰，默认深色为中性石墨；颜色预设与使用者字号选择保留。
 
 `shared.radius.<数值>` 输出 `--wm-radius-<数值>`。8–12 常用于控件，14–16 常用于卡片和浮层，18–32 为已有输入区 / 抽屉 / 图片卡；`999` 为胶囊，`circle` 为 `50%` 圆形。圆角和间距分组独立，原生抽屉顶部角引用圆角值。
 
 `android.dimensions` 是原生辅助函数实际使用的布局 / 字号值，记录数值与单位；生成的整数 dp 常量保留原有截断计算，字体常量保留 Float（浮点数），不会改变现有缩放行为。`fallbackPadding / fallbackTop` 保留错误回退页原有的物理 px 内边距。
+
+工作区使用 `workspace-row`（32px）、`workspace-header`（48px）、`workspace-menu`（208px）与 `workspace-panel`（380px），输入框外层圆角为 `shared.radius.composer`（20px）。
 
 ## 阴影
 

@@ -232,7 +232,8 @@
       "circle": "50%",
       "control": "8px",
       "card": "12px",
-      "panel": "16px"
+      "panel": "16px",
+      "composer": "20px"
     },
     "fontSize": {
       "10": "10px",
@@ -344,8 +345,12 @@
       "search-width": "680px",
       "search-meta": "120px",
       "settings-content": "620px",
-      "sidebar": "232px",
-      "reading": "760px"
+      "sidebar": "248px",
+      "reading": "760px",
+      "workspace-row": "32px",
+      "workspace-header": "48px",
+      "workspace-menu": "208px",
+      "workspace-panel": "380px"
     },
     "fontRelative": {
       "body": "1rem",
@@ -400,14 +405,15 @@
             "--window-frame": "var(--canvas)",
             "--sidebar": "var(--window-frame)",
             "--panel": "var(--surface)",
-            "--panel-divider": "transparent",
+            "--panel-divider": "var(--line)",
             "--search-highlight-bg": "#fff1a8",
             "--search-highlight-ink": "#302507",
             "--syntax-keyword": "#31579b",
             "--syntax-string": "#206449",
             "--syntax-comment": "#63695e",
             "--syntax-number": "#8a3972",
-            "--syntax-title": "#795615"
+            "--syntax-title": "#795615",
+            "--composer-surface": "var(--surface)"
           }
         },
         {
@@ -434,14 +440,15 @@
             "--window-frame": "var(--canvas)",
             "--sidebar": "var(--window-frame)",
             "--panel": "var(--surface)",
-            "--panel-divider": "transparent",
+            "--panel-divider": "var(--line)",
             "--search-highlight-bg": "#66521c",
             "--search-highlight-ink": "#ffffff",
             "--syntax-keyword": "#B9D2FF",
             "--syntax-string": "#A7E7CF",
             "--syntax-comment": "#a0a397",
             "--syntax-number": "#eab9dd",
-            "--syntax-title": "#ead598"
+            "--syntax-title": "#ead598",
+            "--composer-surface": "var(--surface-soft)"
           }
         },
         {
@@ -575,7 +582,8 @@
             "--mobile-body-leading": "var(--wm-line-height-1_9)",
             "--mobile-control-radius": "var(--wm-radius-999)",
             "--mobile-header-size": "calc(var(--wm-space-64) + var(--wm-space-16))",
-            "--mobile-body-offset": "var(--wm-space-2)"
+            "--mobile-body-offset": "var(--wm-space-2)",
+            "--composer-surface": "var(--surface)"
           }
         },
         {

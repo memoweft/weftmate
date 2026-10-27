@@ -1213,6 +1213,9 @@ export function createHttpHandler(context) {
         const current = context.authenticate(request, 'account:manage');
         if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
         const body = await context.readJson(request);
+        // Changing folder ownership uses the native picker, just like registration.
+        if (body?.rootPath !== undefined && request.headers['x-weftmate-desktop'] !== context.libraryDesktopToken)
+          throw failure('PROJECT_NATIVE_SELECTION_REQUIRED', 403);
         return context.json(response, 200, await createProjectOperations(context)(ownerId, projectSettingsMatch[1], request.method, body, () => {
           const latest = context.authenticate(request, 'account:manage');
           if (latest.ownerId !== ownerId || latest.deviceId !== current.deviceId) throw failure('UNAUTHORIZED', 401);
