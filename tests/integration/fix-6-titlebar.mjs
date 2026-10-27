@@ -65,15 +65,15 @@ try {
       await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '外观', exact: true }).click();
       await page.getByRole('button', { name: theme === 'light' ? '浅色' : '深色', exact: true }).click();
       await page.waitForTimeout(350);
-      const expected = await page.evaluate(() => {
-        const style = getComputedStyle(document.querySelector('.desktop-titlebar'));
+      const expected = await page.evaluate(phase => {
+        const style = getComputedStyle(document.querySelector(phase === 'after' && document.body.classList.contains('assistant-active') ? '.assistant-main' : '.desktop-titlebar'));
         const scrim = getComputedStyle(document.querySelector('dialog:modal'), '::backdrop').backgroundColor;
         const mix = color => {
           const base = color.match(/[\d.]+/g).map(Number), overlay = scrim.match(/[\d.]+/g).map(Number), alpha = overlay[3] ?? 1;
           return `rgb(${base.slice(0, 3).map((value, i) => Math.round(value * (1 - alpha) + overlay[i] * alpha)).join(', ')})`;
         };
         return { base: { color: style.backgroundColor, symbolColor: style.color }, mixed: { color: mix(style.backgroundColor), symbolColor: mix(style.color) }, scrim };
-      });
+      }, phase);
       const opened = await until(async () => { const p = await lastPalette(); return p?.color === (phase === 'after' ? expected.mixed.color : expected.base.color) && p; });
       assert.equal(opened.symbolColor, phase === 'after' ? expected.mixed.symbolColor : expected.base.symbolColor);
       await screenshot(`${phase}-${theme}-settings-open.png`);
