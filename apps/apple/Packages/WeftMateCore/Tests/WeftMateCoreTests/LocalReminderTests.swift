@@ -228,15 +228,18 @@ struct LocalReminderTests {
         #expect(PhoneReminderCommand.parse("2分钟后提醒我",now:now,calendar:calendar) == nil)
         #expect(PhoneReminderCommand.parse("999999999999999999999999999天后提醒我溢出",now:now,calendar:calendar) == nil)
     }
-    @Test func erasedSourceConversationWithdrawsItsReminders() {
+    @Test func generationKeepsOriginalConversationRemindersAndWithdrawsComputerReminders() {
         var state=PhoneChatState(),thread=PhoneChatThread()
         thread.messages=[.init(role:"user",text:"合成原话")];state.threads=[thread]
         _=state.prepareMigration(host:"host",generation:1)
         state.reminders=[.init(text:"原对话提醒",fireAt:now,sessionID:thread.id),.init(text:"手动提醒",fireAt:now)]
         state.computerReminders=["host":[.init(text:"电脑提醒",fireAt:now,hostID:"host")]]
+        let originalThreads=state.threads,originalReminders=state.reminders
         state.applyMigrationGeneration(host:"host",generation:2)
-        #expect(state.reminders?.count == 1);#expect(state.reminders?.first?.sessionID == nil)
+        #expect(state.threads == originalThreads)
+        #expect(state.reminders == originalReminders)
         #expect(state.computerReminders?["host"] == nil)
+        #expect(state.reminderCancellations?.contains { $0.target == .computer(hostID:"host") } == true)
     }
     @Test func encryptedReminderStorageAndLegacyCompatibility() throws {
         let dir=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

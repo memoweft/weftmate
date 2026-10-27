@@ -29,7 +29,9 @@ import Foundation
             state.retiredPhoneTurnIDs=retired
             state.erasure = .init(hostID:vault.identity.hostId,removedIDs:Array(Set((previous?.removedIDs ?? [])+removedIDs)).sorted(),reset:reset || previous?.reset == true)
         }
-        state.turns=[];state.contexts=[:];state.workTasks=nil
+        state.turns=[];state.contexts=[:]
+        // A memory erasure is not a receipt for an independently queued command.
+        // Keep its opaque ciphertext and identity until explicit completion or clear().
         state.phoneHandovers=nil;state.pendingSubmission=nil;state.phoneTurnFragments=nil
         if !phoneFirst { state.synced=[] }
         state.snapshot=nil
