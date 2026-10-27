@@ -32,15 +32,15 @@ test('#660 refusal copy names the action without repeating an internal approval 
   const f=timeline(), result=f.WeftUiCore.progressText([{toolName:'write',approvalOutcome:'rejected',approvalSummary:'这件事需要在电脑上做。要切换到工作吗？'}],{terminal:true,reason:'completed'});
   assert.equal(result.text,'写入文件被你拒绝了');
 });
-test('#660 English interim reasoning stays behind the thinking disclosure in a Chinese turn',()=>{
+test('UI02b English public narration is not relabeled as hidden thinking in a Chinese turn',()=>{
   const f=timeline(),events=[{seq:0,type:'turn.started',data:{turn:1}},
     {seq:1,type:'user.message',data:{text:'请整理资料。'}},
     {seq:2,type:'assistant.message',data:{text:'Now write the file.'}},
     {seq:3,type:'step.completed',data:{taskId:'turn-1',stepId:'write',toolName:'write'}},
     {seq:4,type:'assistant.message',data:{text:'已经整理好了。'}}];
   const prepared=f.WeftTimeline.prepare(events);
-  assert.equal(prepared.some(e=>e.data?.toolName==='__progress' && /Now write/.test(e.data.progressText)),false);
-  assert.equal(prepared.find(e=>e.data?.modelThinking==='Now write the file.').data.summary,'思考过程');
+  assert.equal(prepared.some(e=>e.data?.toolName==='__progress' && /Now write/.test(e.data.progressText)),true);
+  assert.equal(prepared.some(e=>e.data?.modelThinking==='Now write the file.'),false);
 });
 test('#660 late tool completion stays above the final reply rather than swallowing it',()=>{
   const f=timeline(),events=[{seq:0,type:'turn.started',data:{turn:1}},

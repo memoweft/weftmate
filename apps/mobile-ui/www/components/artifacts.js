@@ -23,16 +23,19 @@
         row.classList.add('file-changes');row.setAttribute('aria-label','本轮文件改动');
         const signature=JSON.stringify(files);if(row.dataset.changes===signature)return;
         row.dataset.changes=signature;
-        const heading=document.createElement('strong');heading.className='file-changes-title';heading.textContent=`已改动 ${files.length} 个文件`;
-        row.replaceChildren(heading);
+        row.replaceChildren();
         for(const file of files) {
             const line=document.createElement('div');line.className='file-change-row';
             const name=document.createElement('span');name.className='file-change-name';name.textContent=file.path.split(/[\\/]/).at(-1);name.title=file.path;
+            const icon=document.createElement('span');icon.className='file-change-icon';icon.append(WeftIcons.create('file',16));
+            const copy=document.createElement('div');copy.className='file-change-copy';
+            const title=document.createElement('div');title.className='file-change-title';
+            const verb=document.createElement('span');verb.className='file-change-verb';verb.textContent='已编辑';title.append(verb,name);
             const counts=document.createElement('span');counts.className='file-change-counts';
             if(file.added===null)counts.textContent='行数未记录';
             else {const add=document.createElement('span'),remove=document.createElement('span');add.className='change-added';remove.className='change-removed';add.textContent=`+${file.added}`;remove.textContent=`−${file.removed}`;counts.append(add,remove);counts.setAttribute('aria-label',`增加 ${file.added} 行，删除 ${file.removed} 行`);}
-            const review=document.createElement('button');review.type='button';review.className='button quiet small';review.textContent='审阅';review.setAttribute('aria-label',`审阅 ${name.textContent}`);review.onclick=()=>options.openChange(file,review);
-            line.append(WeftIcons.create('file',16),name,counts,review);row.append(line);
+            const review=document.createElement('button');review.type='button';review.className='button secondary small file-change-review';review.textContent='审阅';review.setAttribute('aria-label',`审阅 ${name.textContent}`);review.onclick=()=>options.openChange(file,review);
+            copy.append(title,counts);line.append(icon,copy,review);row.append(line);
         }
     }
     globalThis.WeftTimelineCards = { ...globalThis.WeftTimelineCards, artifact: artifactCard, changes, change:changeCard };

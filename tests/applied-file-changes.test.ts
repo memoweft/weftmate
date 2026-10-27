@@ -15,7 +15,7 @@ test('applied hunks exclude context and preserve separate replacements and unkno
 });
 test('DSH history projects real applied metadata, not the requested replacement',async()=>{
   const entries=[{seq:0,time:1,type:'turn/start',data:{turn:1}},
-    {seq:1,time:2,type:'tool/call',data:{turn:1,callId:'edit-1',name:'edit',arguments:JSON.stringify({file_path:'report.md',old_string:'old',new_string:'new'})}},
+    {seq:1,time:2,type:'tool/call',data:{turn:1,callId:'edit-1',name:'edit',arguments:JSON.stringify({file_path:'report.md',old_string:'old',new_string:'new',description:'更新合成报告'})}},
     {seq:2,time:3,type:'tool/result',data:{turn:1,meta:{diffs:[{path:'report.md',oldText:'old\nkeep\nold',newText:'new\nkeep\nnew'}]},message:{source:{kind:'tool',callId:'edit-1'},content:[{type:'tool-result',toolCallId:'edit-1',content:[{type:'text',text:'Updated.'}]}]}}}];
   const api=createDshSessionAdapter({sessions:{list:async()=>({result:{ok:true,value:{items:[{sessionId:'synthetic',origin:'user'}]}}})},events:{}},{readLog:async()=>entries});
   const page=await api.historyPage('synthetic');
@@ -31,5 +31,6 @@ test('DSH history projects real applied metadata, not the requested replacement'
   entries[2].data.message.content[0].content[0].text=output;
   const first=await api.historyDetail('synthetic',2), second=await api.historyDetail('synthetic',2,{outputOffset:64000}),third=await api.historyDetail('synthetic',2,{outputOffset:128000});
   assert.equal(first.output+second.output+third.output,output);
+  assert.equal(first.description,'更新合成报告','a truncated raw detail still retains its human description');
   assert.equal(first.nextOutputOffset,64000);assert.equal(second.nextOutputOffset,128000);assert.equal(third.nextOutputOffset,null);
 });

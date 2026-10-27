@@ -31,7 +31,9 @@ const processSummary=phase=>phase==='before'?page.getByText('执行了 2 步 · 
 async function settleDisclosure() {
   await page.evaluate(async()=>{
     const detail=document.querySelector('.execution-block');
-    await Promise.allSettled(detail.getAnimations({subtree:true}).filter(animation=>Number.isFinite(animation.effect.getTiming().iterations)).map(animation=>animation.finished));
+    // Closing native details can suspend a descendant opacity transition. It
+    // cannot affect the closed geometry; wait for the visible disclosure only.
+    await Promise.allSettled(detail.getAnimations({subtree:true}).filter(animation=>Number.isFinite(animation.effect.getTiming().iterations) && animation.effect.target.checkVisibility()).map(animation=>animation.finished));
     await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
   });
 }
@@ -98,6 +100,11 @@ try {
   application = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: repository, args, env, timeout: 90000 });
   console.log('Electron launched');
   page = await application.firstWindow({ timeout: 90000 }); page.setDefaultTimeout(30000);
+  // Exercise UI-01's compact workspace on every runner, regardless of its screen.
+  if (fixture) {
+    await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setContentSize(1000, 960));
+    await page.waitForFunction(() => innerWidth === 1000);
+  }
   page.on('pageerror', error => errors.push(error.message));
   await page.waitForURL(url => url.pathname.startsWith('/personal/v1/ui'));
   await page.addInitScript(() => {
@@ -190,7 +197,13 @@ try {
       await page.waitForTimeout(240);
       await page.getByRole('button', { name: '收起右侧面板', exact: true }).evaluate(button => button.click());
     });
-    if (phase !== 'before') await page.getByRole('button',{name:'搜索',exact:true}).click();
+    if (phase !== 'before') {
+      const rail = page.locator('#rail-open');
+      if (fixture) assert.equal(await rail.getAttribute('aria-expanded'), 'false', 'compact panels keep the sidebar collapsed after closing');
+      if (await rail.getAttribute('aria-expanded') === 'false') await rail.click();
+      assert.equal(await page.locator('#session-rail').getAttribute('aria-hidden'), 'false');
+      await page.getByRole('button',{name:'搜索',exact:true}).click();
+    }
     const search = phase === 'before' ? page.getByRole('searchbox', { name: '搜索会话', exact: true }) : page.getByRole('combobox',{name:'搜索内容',exact:true});
     await frames(phase, 'session-list', () => search.fill('项目'));
     await search.fill('');

@@ -2029,7 +2029,7 @@ test('task15-question-client preserves native order, exact labels and drafts thr
   assert.equal(f.page.requests.filter(row=>row.options.method==='POST'&&row.url.includes('/approvals/')).length,0);
   f.questions.A[0]=questionAnswered(f.question,bodies[0].requestId,bodies[0].answer);
   post.resolve(reply({requestId:bodies[0].requestId,question:f.questions.A[0]}));for(let i=0;i<15;i++)await flush();
-  assert.equal(f.page.get('question-bar').hidden,true);assert.match(visibleText(questionCard(f.page)!),/选择报告说明用词。\n已提交：同意/);assert.equal(f.page.get('message-text').value,'聊天草稿保留');
+  assert.equal(f.page.get('question-bar').hidden,true);assert.match(visibleText(questionCard(f.page)!),/选择报告说明用词。\s+已提交：\s*同意/);assert.equal(f.page.get('message-text').value,'聊天草稿保留');
 });
 
 test('task15-question-client rereads uncertainty and reuses the exact answer request without losing native acceptance', async () => {
