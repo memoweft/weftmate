@@ -188,9 +188,23 @@ try {
     await page.getByRole('button', { name: '再打开一项' }).click();
     if (phase !== 'before') await page.getByRole('menu', { name: '打开面板', exact: true }).getByRole('menuitem', { name: '文件', exact: true }).click();
     await page.getByRole('button', { name: '项目进度报告.md', exact: true }).click();
+    // Files previews stay inside their registered tab. Wait for the real report
+    // before measuring tab motion, then verify that switching preserves its DOM.
+    const reportView = phase === 'before' ? null : page.locator('.panel-files .files-resource-preview');
+    if (reportView) {
+      await reportView.getByRole('heading', { name: '项目进度报告', exact: true }).waitFor();
+      await reportView.getByText('已读取 3 个文件。42 项测试通过。', { exact: true }).waitFor();
+      await reportView.evaluate(element => { window.__motionReportView = element; });
+      assert.equal(await page.getByRole('tab', { name: '文件', exact: true }).count(), 1);
+    }
     const sourceTab = page.getByRole('tab', { name: 'README.md', exact: true });
     await frames(phase, 'panel-tab', () => sourceTab.evaluate(button => button.click()));
-    if (phase === 'after') await measure('panel-tab', async () => { await page.getByRole('tab', { name: '项目进度报告.md', exact: true }).evaluate(button => button.click()); await page.waitForTimeout(240); await sourceTab.evaluate(button => button.click()); });
+    if (phase === 'after') await measure('panel-tab', async () => {
+      await page.getByRole('tab', { name: '文件', exact: true }).evaluate(button => button.click());
+      assert.equal(await reportView.evaluate(element => element === window.__motionReportView && element.checkVisibility()), true, 'the files tab restores the same visible report preview');
+      await page.waitForTimeout(240);
+      await sourceTab.evaluate(button => button.click());
+    });
     await frames(phase, 'panel-close', () => page.getByRole('button', { name: '收起右侧面板', exact: true }).evaluate(button => button.click()));
     if (phase === 'after') await measure('panel-open-close', async () => {
       await page.evaluate(() => window.WeftDesktop.openPreview('性能合成预览'));
