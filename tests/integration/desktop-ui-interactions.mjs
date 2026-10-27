@@ -129,6 +129,10 @@ try {
     await page.reload(); await page.getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).waitFor()
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), theme)
     assert.equal(await page.evaluate(() => document.documentElement.dataset.accent), 'green')
+    await page.waitForFunction(() => {
+      const body=document.querySelector('#transcript .markdown-body');
+      return body?.isConnected && getComputedStyle(body).fontSize==='17px';
+    })
     assert.equal(await page.locator('.markdown-body').first().evaluate(element => getComputedStyle(element).fontSize), '17px')
     assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize), '14px')
     // Paste/drop target semantic controls; neither operation depends on their layout slot.

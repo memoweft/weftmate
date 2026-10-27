@@ -1,5 +1,6 @@
 /* Shared model label presentation; the composer feature layer stays DOM-free. */
 globalThis.WeftModelLabel = (label, name) => {
+    if (label.dataset.modelName === name) return;
     label.dataset.modelName = name; label.title = name;
     const fit = () => {
         const full = label.dataset.modelName; label.textContent = full;

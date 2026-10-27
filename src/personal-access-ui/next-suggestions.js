@@ -19,7 +19,14 @@
             connection: '.presence-bar,#connection-status,#connection-banner,#connection-bar,.connection-status-bar,.composer-connection-status,.composer-connection',
             subtasks: '#composer-subtasks'
         };
-        let signature = '', announced = '', painting = false, lastGesture = null;
+        let signature = '', announced = '', painting = false, lastGesture = null, overflowFrame = null;
+        function measureOverflow() {
+            if (bar.hidden || overflowFrame !== null) return;
+            overflowFrame = requestAnimationFrame(() => {
+                overflowFrame = null;
+                if (!bar.hidden) scroller.classList.toggle('has-overflow', scroller.scrollWidth > scroller.clientWidth + 1);
+            });
+        }
         const visible = element => !element.hidden && !!element.textContent.trim();
         function priority() {
             const value = {};
@@ -72,7 +79,7 @@
                         chip.setAttribute('aria-label', `${text}，填入输入框`); chip.addEventListener('click', () => fill(text)); scroller.append(chip);
                     });
                 }
-                scroller.classList.toggle('has-overflow', scroller.scrollWidth > scroller.clientWidth + 1);
+                measureOverflow();
                 const showCompletion = value.inlineCompletionEnabled && !['approval', 'question', 'connection'].includes(selected) && !field.disabled &&
                     !!value.completion && field.value === value.draft && field.selectionStart === field.value.length && field.selectionEnd === field.value.length;
                 if (ghost.hidden !== !showCompletion) ghost.hidden = !showCompletion;
@@ -127,14 +134,14 @@
         const observer = new MutationObserver(changes => {
             if (changes.some(change => !bar.contains(change.target) && !ghost.contains(change.target) && change.target !== announcement)) sync();
         }); observer.observe(area, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'disabled'], characterData: true });
-        const resize = globalThis.ResizeObserver ? new ResizeObserver(positionGhost) : null; resize?.observe(field);
+        const resize = globalThis.ResizeObserver ? new ResizeObserver(() => { positionGhost(); measureOverflow(); }) : null; resize?.observe(field); resize?.observe(scroller);
         window.addEventListener('resize', positionGhost);
         document.addEventListener('weft:personalization', sync);
         // Generation completion paints without modifying history or drafting accepted text.
         const previousPaint = core._nextSuggestionsPaint;
         core._nextSuggestionsPaint = () => { previousPaint?.(); paint(); };
         sync();
-        return { sync, paint, fill, acceptCompletion, priority, destroy() { observer.disconnect(); resize?.disconnect(); core.cancelNextSuggestions(); } };
+        return { sync, paint, fill, acceptCompletion, priority, destroy() { observer.disconnect(); resize?.disconnect(); if (overflowFrame !== null) cancelAnimationFrame(overflowFrame); core.cancelNextSuggestions(); } };
     }
     globalThis.WeftNextSuggestionsView = { mount };
 })();
