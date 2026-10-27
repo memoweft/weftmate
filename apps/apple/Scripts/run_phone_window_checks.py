@@ -137,8 +137,8 @@ def ui(evidence, device):
         summary = json.loads((evidence.path / "ui-summary.log").read_text())
         counts = {key: summary[key] for key in ["totalTestCount", "passedTests", "failedTests", "skippedTests"]}
         evidence.meta["testCounts"] = counts; evidence.save()
-        if counts["totalTestCount"] < 3 or counts["totalTestCount"] != counts["passedTests"]:
-            raise RuntimeError("Expected memory-route and both install tests, all passing with no skips")
+        if counts["totalTestCount"] < 4 or counts["totalTestCount"] != counts["passedTests"]:
+            raise RuntimeError("Expected memory-route, both chat install tests and manual login, all passing with no skips")
         if code:
             raise RuntimeError("window-ui failed, exit " + str(code))
     finally:

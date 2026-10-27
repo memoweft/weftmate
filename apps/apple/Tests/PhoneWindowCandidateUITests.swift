@@ -81,4 +81,14 @@ final class PhoneWindowInstallUITests: XCTestCase {
         XCTAssertEqual(starts.filter { $0 == queued }.count, 1)
         capture("window-queue-completed", app: app)
     }
+
+    @MainActor func testInstallationLaunchOpensRealLoginForTheOwner() {
+        let app = XCUIApplication(); defer { app.terminate() }
+        app.launchArguments = ["--window-manual-login", "--window-install-id", UUID().uuidString]
+        app.launch()
+        XCTAssertTrue(app.textFields["accountEmail"].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.buttons["accountSubmit"].exists)
+        XCTAssertTrue(app.staticTexts["登录 WeftMate"].exists)
+        capture("window-manual-login", app: app)
+    }
 }

@@ -125,6 +125,9 @@ struct WeftMateRootView: View {
             }
             #endif
             await model.start()
+            #if WEFTMATE_WINDOW_TEST
+            PhoneWindowLaunch.present(in: model)
+            #endif
             #if DEBUG && os(macOS)
             if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--diag3-native-review") {
                 await DIAG3MacReview.run(); return
