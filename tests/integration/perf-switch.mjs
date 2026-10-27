@@ -45,7 +45,7 @@ try {
   await page.addInitScript(() => { Object.defineProperty(document, 'visibilityState', { get: () => 'visible' }); Object.defineProperty(document, 'hidden', { get: () => false }); });
   await page.route('**/personal/v1/ui/app.js', async route => route.fulfill({ contentType: 'text/javascript', body: (await readFile(join(root, 'src/personal-access-ui/app.js'), 'utf8')).replace('ui.loadAttachmentHasher =', 'globalThis.testCore=core;globalThis.testUi=ui;ui.loadAttachmentHasher =') }));
   if (process.argv.includes('--original')) {
-    for (const file of ['components/main-chat.js', 'components/messages.js', 'components/steps.js', 'composer-subtasks.js', 'next-suggestions.js', 'popovers.js', 'timeline.js', 'ui-core/model-label.js', 'ui-core/main-chat.js', 'ui-core/work-and-chat.js']) {
+    for (const file of ['components/main-chat.js', 'components/messages.js', 'components/steps.js', 'composer-subtasks.js', 'next-suggestions.js', 'popovers.js', 'timeline.js', 'ui-core/composer.js', 'ui-core/model-label.js', 'ui-core/main-chat.js', 'ui-core/work-and-chat.js']) {
       const path = file.startsWith('ui-core/') ? `src/${file}` : `src/personal-access-ui/${file}`;
       const body = execFileSync('git', ['show', `${process.env.WEFTMATE_PERF_SWITCH_BASE || 'HEAD'}:${path}`], { cwd: root, encoding: 'utf8' });
       await page.route(`**/personal/v1/ui/${file}`, route => route.fulfill({ contentType: 'text/javascript', body }));
