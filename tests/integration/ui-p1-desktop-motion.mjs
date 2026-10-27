@@ -31,7 +31,9 @@ const processSummary=phase=>phase==='before'?page.getByText('执行了 2 步 · 
 async function settleDisclosure() {
   await page.evaluate(async()=>{
     const detail=document.querySelector('.execution-block');
-    await Promise.allSettled(detail.getAnimations({subtree:true}).filter(animation=>Number.isFinite(animation.effect.getTiming().iterations)).map(animation=>animation.finished));
+    // Closing native details can suspend a descendant opacity transition. It
+    // cannot affect the closed geometry; wait for the visible disclosure only.
+    await Promise.allSettled(detail.getAnimations({subtree:true}).filter(animation=>Number.isFinite(animation.effect.getTiming().iterations) && animation.effect.target.checkVisibility()).map(animation=>animation.finished));
     await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
   });
 }
