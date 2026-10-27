@@ -82,6 +82,7 @@ import WeftMateCore
     }
     /// Called only after a successful authenticated account directory read, never on a network failure.
     func computerDirectoryChanged(hostIDs: Set<String>) {
+        if let host=app?.offline.memoryHostID,!hostIDs.contains(host) { app?.removeComputerReplica(host) }
         for host in Set((state.computerReminders ?? [:]).keys).union((state.reminderReads ?? [:]).keys) where !hostIDs.contains(host) { state.removeComputerReminders(hostID:host) }
         try? persist()
         guard let host=handoffHost,!hostIDs.contains(host) else { return }

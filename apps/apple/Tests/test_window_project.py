@@ -30,7 +30,7 @@ class WindowProjectTests(unittest.TestCase):
         return self.objects[self.generated["ident"](target + ":config:" + config)]["buildSettings"]
 
     def test_isolated_phone_watch_identity_and_companion_match(self):
-        for configuration in ["WindowTest", "WindowTestRelease"]:
+        for configuration in ["DebugWindowTest", "WindowTestRelease"]:
             phone = self.settings("WeftMatePhone", configuration)
             watch = self.settings("WeftMateWatch", configuration)
             self.assertEqual(phone["PRODUCT_BUNDLE_IDENTIFIER"], "com.weftmate.apple.windowtest")
@@ -45,7 +45,7 @@ class WindowProjectTests(unittest.TestCase):
     def test_existing_identity_and_test_schemes(self):
         self.assertEqual(self.settings("WeftMatePhone", "Release")["PRODUCT_BUNDLE_IDENTIFIER"], "com.weftmate.apple.weftmatephone")
         scheme = ElementTree.parse(self.root / "WeftMate.xcodeproj/xcshareddata/xcschemes/WeftMatePhoneWindowTest.xcscheme")
-        self.assertEqual(scheme.find("TestAction").get("buildConfiguration"), "WindowTest")
+        self.assertEqual(scheme.find("TestAction").get("buildConfiguration"), "DebugWindowTest")
         self.assertEqual(scheme.find("ArchiveAction").get("buildConfiguration"), "WindowTestRelease")
 
     def test_source_paths_and_window_ui_registration(self):
