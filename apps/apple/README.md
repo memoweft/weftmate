@@ -167,7 +167,7 @@ python3 Scripts/run_phone_window_checks.py --phase build --artifacts "$EVIDENCE"
 python3 Scripts/run_phone_window_checks.py --phase ui --device "$PHONE_ID" --artifacts "$EVIDENCE"
 ```
 
-状态阶段不传 `--check` 时执行全部已注册检查；`--check` 用于定点复测。UI 批次一起选择候选的 `PhoneWindowInstallUITests` 和 APPLE-1 的 `PhoneWindowUITests`；后者尚未集成时脚本拒绝最终 UI 验证，合入后须重新生成工程。至少执行这两组的四条测试，跳过或缺计数均不算通过。安装套件验证真实聊天控制器的排队、停止、队列依次执行、普通无参数重开、前后台恢复和本人登录入口；仅 HTTP/SSE 回复时序使用合成替身。它不证明真实电脑的记忆形成、纠正或遗忘。
+状态阶段不传 `--check` 时执行全部已注册检查；`--check` 用于定点复测。UI 批次一起选择候选的 `PhoneWindowInstallUITests` 和 APPLE-1 的 `PhoneWindowUITests`；后者尚未集成时脚本拒绝最终 UI 验证，合入后须重新生成工程。至少执行这两组的四条测试，跳过或缺计数均不算通过。模拟器 UI 包使用本机 ad-hoc 签名以运行真实钥匙串，并在批次开始时仅重置所选模拟器中的合成测试候选容器；真机覆盖安装不做这项重置。安装套件验证真实聊天控制器的排队、停止、队列依次执行、普通无参数重开、前后台恢复和本人登录入口；仅 HTTP/SSE 回复时序使用合成替身。它不证明真实电脑的记忆形成、纠正或遗忘。
 
 装机后可用 `--window-manual-login --window-install-id <本次随机 UUID>` 启动独立候选，待本机状态恢复后打开真实登录表单，账号密码由本人输入。该参数只在独立测试目标中生效，并且每个进程只打开一次；普通重开保持本机工作区入口。登录页实际出现时，在应用缓存的 `WindowInstall/login-visible.json` 记录本次 UUID、bundle ID 和出现标记，供 Mac 核对；文件不含表单、账户或聊天内容。
 

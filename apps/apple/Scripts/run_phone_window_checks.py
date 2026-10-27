@@ -108,13 +108,22 @@ def ui(evidence, device, derived_data=None):
     derived = derived_data.resolve() if derived_data else evidence.path / "DerivedData"
     base = xcode("platform=iOS Simulator,id=" + device, derived)
     evidence.run("build-for-testing", [*base, "-project", "WeftMate.xcodeproj", "-scheme", SCHEME,
-                 "-configuration", "Debug", "CODE_SIGNING_ALLOWED=NO", "build-for-testing"])
+                 "-configuration", "Debug", "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-",
+                 "CODE_SIGNING_REQUIRED=NO", "build-for-testing"])
     runs = list((derived / "Build/Products").glob("*.xctestrun"))
     if len(runs) != 1:
         raise RuntimeError("Expected one candidate xctestrun")
     processes, logs = [], []
     run = runs[0].with_name("window-fixture.xctestrun")
     try:
+        # These are controlled synthetic tests in the explicitly selected simulator.
+        # Start a fresh candidate container; the relaunch tests then prove its real
+        # Keychain-backed storage survives ordinary reopen within this installation.
+        evidence.run("boot", ["xcrun", "simctl", "boot", device], timeout=60, allow_failure=True)
+        evidence.run("boot-ready", ["xcrun", "simctl", "bootstatus", device, "-b"], timeout=180)
+        evidence.run("reset-synthetic-candidate", ["xcrun", "simctl", "uninstall", device,
+                     "com.weftmate.apple.windowtest"], timeout=60, allow_failure=True)
+        evidence.meta["freshSyntheticCandidateContainer"] = True; evidence.save()
         config = start_node("phone_window_model_server.mjs", evidence.path, processes, logs)
         payload = plistlib.loads(runs[0].read_bytes())
         targets = ([t for c in payload["TestConfigurations"] for t in c.get("TestTargets", [])]
