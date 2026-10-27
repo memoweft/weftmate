@@ -27,7 +27,7 @@ export async function startTimelineCandidate(options = {}) {
   const eventWaiters=new Set();
   const append = (type, data) => { const event = { seq: events.length, time: options.digest ? options.clock() + events.length * 500 : baseTime + events.length * 500, type, data }; events.push(event);for(const wake of eventWaiters)wake(sessionId,event.seq); return event }
   const call = (name, id, args) => append('tool/call', { turn: 1, callId: id, name, arguments: JSON.stringify(args) })
-  const result = (id, text, isError = false) => append('tool/result', { turn: 1, message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError, content: [{ type: 'text', text }] }] } })
+  const result = (id, text, isError = false, meta) => append('tool/result', { turn: 1, ...(meta ? {meta} : {}), message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError, content: [{ type: 'text', text }] }] } })
   const showThinking = options.thinking === true;
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
   const notificationRows = [];
@@ -108,12 +108,12 @@ export async function startTimelineCandidate(options = {}) {
     cancelSession: async () => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false } return { accepted: true } },
     describeSession: async id => options.daily && dailySessions.has(id) ? {sessionId:id,running:id===sessionId?running:dailySessions.get(id).running,processing,agentPreset:'personal-remote',modelProfileId:'local',title:dailySessions.get(id).title} : id === sessionId ? { sessionId, running, processing, agentPreset: 'personal-remote', modelProfileId: 'local', title: '项目进度报告', ...(contextUsage ? {contextUsage} : {}) } : null,
     readEvents: async ({ sessionId: id, ...options }) => {if(dailySessions.has(id))return createDshSessionAdapter({sessions:{list:async()=>ok({items:[...dailySessions.keys()].map(sessionId=>({sessionId,origin:'user'}))})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyPage(id,options);return adapter.historyPage(id, { includeThinking: showThinking, ...options })},
-    readEventDetail: async ({ sessionId: id, seq }) => dailySessions.has(id) ? createDshSessionAdapter({sessions:{list:async()=>ok({items:[{sessionId:id,origin:'user'}]})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyDetail(id,seq) : adapter.historyDetail(id, seq),
+    readEventDetail: async ({ sessionId: id, seq, outputOffset }) => dailySessions.has(id) ? createDshSessionAdapter({sessions:{list:async()=>ok({items:[{sessionId:id,origin:'user'}]})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyDetail(id,seq,{outputOffset}) : adapter.historyDetail(id, seq,{outputOffset}),
     getTaskReplyEvidence: async ({sessionId:id}) => ({ status: options.daily && dailySessions.get(id)?.events.at(-1)?.type==='turn/end'
       ? ({completed:'completed',error:'failed',aborted:'aborted'}[dailySessions.get(id).events.at(-1).data.reason.kind]||'completed') : (options.daily ? dailySessions.get(id)?.running : running) ? 'waiting' : 'completed', turn: 1,
       assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }),
     listUserQuestions: async () => ({ runtimeId, questions: setupComplete ? [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] : [] }),
-    respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; result(frame.callId || 'question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
+    respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; operations.push({kind:'answer',answer:input.answer}); result(frame.callId || 'question-1', JSON.stringify(input.answer)); return { accepted: true } },
   }
   if(options.digestModel)backend.modelCompletion=options.digestModel;
   if(options.verifyModelProfile)backend.verifyModelProfile=options.verifyModelProfile;
