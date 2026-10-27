@@ -43,6 +43,7 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
     var phoneAccountIdentity: String { "https://cloud.example.com|"+(cloudLogin.subject ?? "device-local") }
     var controlGeneration=1
     init(directory: URL) { healthStateDirectory=directory.appendingPathComponent("Health") }
+    func removeComputerReplica(_ host: String) { if offline.memoryHostID == host { offline.erase() } }
     func offlineAuthorization(_ host: String) async throws -> OfflineAuthorization {
         let json: [String:Any]=["authorized":true,"hostId":host,"accountId":cloudLogin.subject ?? "", "generation":controlGeneration]
         return try JSONDecoder().decode(OfflineAuthorization.self,from:JSONSerialization.data(withJSONObject:json))
