@@ -19,6 +19,7 @@ final class PhoneSyncKeys: CredentialStore,@unchecked Sendable {
     var generation=1
     var authorizationAvailable=true
     init(directory: URL) { healthStateDirectory=directory.appendingPathComponent("Health") }
+    func removeComputerReplica(_ host: String) { offline.removeComputer(host) }
     func offlineAuthorization(_ host: String) async throws -> OfflineAuthorization {
         guard authorizationAvailable else { throw APIFailure.transport(.unavailable) }
         return try JSONDecoder().decode(OfflineAuthorization.self,from:JSONSerialization.data(withJSONObject:["authorized":true,"hostId":host,"accountId":cloudLogin.subject ?? "","generation":generation]))
