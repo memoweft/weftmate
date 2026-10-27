@@ -7,6 +7,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @org.junit.Test fun pairingStaysOutsideBusinessBridge() {
+        for (suffix in listOf("", "/join", "/reveal", "/status", "/decision", "/redeem"))
+            assertFalse(validBusinessPath("/personal/v1/cloud/pairings$suffix"))
+    }
     @Test fun terminalRoutesKeepExactIdentities() {
         assertTrue(validBusinessPath("/personal/v1/terminals"))
         assertTrue(validBusinessPath("/personal/v1/terminals/terminal-00000000-0000-4000-8000-000000000001"))
