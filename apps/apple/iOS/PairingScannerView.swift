@@ -18,7 +18,7 @@ struct PairingScannerView: View {
         NavigationStack {
             VStack(spacing: AppleTokens.Space.p18) {
                 Text("扫描电脑上刚生成的 WeftMate 二维码").font(AppleTokens.Fonts.headline)
-                Text("扫描后先核对电脑身份，确认后才会配对。").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                Text("扫描后核对两边的六位数字，在电脑上确认后连接。").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
                 if authorized && DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
                     CameraScanner(receive: receive, failure: { error = $0 }).id(scannerRevision)
                         .clipShape(RoundedRectangle(cornerRadius: AppleTokens.Phone.groupRadius)).frame(minHeight: 280)

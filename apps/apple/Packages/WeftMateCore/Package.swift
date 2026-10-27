@@ -10,6 +10,6 @@ let package = Package(
     targets: [
         .target(name: "WeftMateCore", dependencies: [.product(name: "JOSESwift", package: "JOSESwift")]),
         .executableTarget(name: "AppleAcceptance", dependencies: ["WeftMateCore"]),
-        .testTarget(name: "WeftMateCoreTests", dependencies: ["WeftMateCore"])
+        .testTarget(name: "WeftMateCoreTests", dependencies: ["WeftMateCore"], resources: [.copy("Fixtures")])
     ]
 )

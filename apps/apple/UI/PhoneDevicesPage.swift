@@ -91,8 +91,6 @@ struct PhonePairingPage: View {
     @State private var address = ""
     @State private var code = ""
     @State private var pending: HostPairing?
-    @State private var originalCode = ""
-    @State private var receivedAt = Date()
     @State private var subject: String?
     @State private var error: String?
     var body: some View {
@@ -107,7 +105,11 @@ struct PhonePairingPage: View {
                 Button("手动输入地址与配对码") { manual = true }.buttonStyle(OutlineActionStyle()).disabled(!cloud.authenticated).accessibilityIdentifier("pairing.manual")
                 Button("稍后添加，先聊天") { dismiss() }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("pairing.later")
                 if !cloud.authenticated { Text("添加电脑前，请先登录账号。").foregroundStyle(Weave.muted); Button("登录") { cloud.requireLogin() } }
-                if let error { InlineNotice(message: error, isError: true) }
+                if let error {
+                    InlineNotice(message: error, isError: true)
+                    Button("重新扫码") { self.error = nil; scanner = true }
+                        .buttonStyle(OutlineActionStyle()).accessibilityIdentifier("pairing.scanAgain")
+                }
             }.padding(AppleTokens.Space.p20)
         }.background(Weave.canvas).navigationTitle("添加电脑").navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $scanner) { PairingScannerView(receive: { receive($0) }) }
@@ -122,7 +124,9 @@ struct PhonePairingPage: View {
             }
             .navigationDestination(isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } })) {
                 if let pending {
-                    PhonePairConfirmation(app: app, cloud: cloud, pairing: pending, originalCode: originalCode, receivedAt: receivedAt, subject: subject, cancel: { self.pending = nil }, finish: { self.pending = nil; dismiss() })
+                    PhonePairConfirmation(cloud: cloud, pairing: pending, subject: subject,
+                        cancel: { self.pending = nil }, rescan: { self.pending = nil; scanner = true },
+                        finish: { self.pending = nil; dismiss() })
                 }
             }
     }
@@ -130,48 +134,53 @@ struct PhonePairingPage: View {
         do {
             let pair = try cloud.previewPairing(bytes)
             if !address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                let server = try ServerConfiguration(input: address)
+                let server = try ServerConfiguration(input: address, allowLoopbackHTTP: true)
                 guard server.originString == pair.origin || server.originString == pair.relay?.baseUrl else { throw CloudLoginFailure.pairing }
             }
-            let raw = String(data: bytes, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if let fragment = URLComponents(string: raw)?.fragment,
-               let encoded = URLComponents(string: "https://pair.invalid/?" + fragment)?.queryItems?.first(where: { $0.name == "pair" })?.value {
-                originalCode = "wm1." + encoded
-            } else { originalCode = raw }
-            error = nil; scanner = false; manual = false; receivedAt = Date(); subject = cloud.subject; pending = pair
-        } catch { scanner = false; self.error = "配对码无效或不属于这个账号的电脑。请在电脑上重新生成后重试。" }
+            error = nil; scanner = false; manual = false; subject = cloud.subject; pending = pair
+        } catch { scanner = false; self.error = (error as? PairingFailure)?.localizedDescription ?? "配对码无效或不属于这个账号的电脑。请在电脑上重新生成后重试。" }
     }
 }
 
 private struct PhonePairConfirmation: View {
-    @ObservedObject var app: AppleAppModel
     @ObservedObject var cloud: CloudLoginModel
     let pairing: HostPairing
-    let originalCode: String
-    let receivedAt: Date
     let subject: String?
     let cancel: () -> Void
+    let rescan: () -> Void
     let finish: () -> Void
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p24) {
                 Text("确认是你的电脑").font(AppleTokens.Fonts.largeTitle.weight(.semibold))
-                Text("请核对电脑身份和配对码，再完成连接。").foregroundStyle(Weave.muted)
+                Text("请在电脑上核对这六位数字并确认").foregroundStyle(Weave.muted)
                 PhoneSettingsLabel(title: cloud.hosts.first { ($0.hostId ?? $0.id) == pairing.hostId }?.computerName ?? "你的电脑", subtitle: pairing.origin, icon: "desktop", disclosure: false).phoneCard()
-                Text("配对码").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                Text(pairing.challenge).font(AppleTokens.Fonts.title2.monospaced()).textSelection(.enabled).accessibilityIdentifier("pairing.confirmCode")
-                DisclosureGroup("核对电脑上的完整连接码") { Text(originalCode).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled) }
-                Text("两边的完整连接码一致再确认。不认识这台电脑，取消即可。").foregroundStyle(Weave.muted)
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    let expired = context.date.timeIntervalSince(receivedAt) >= Double(pairing.expiresIn)
-                    if expired { InlineNotice(message: "配对码已过期，请返回电脑重新生成。", isError: true) }
-                    Button("一致，完成配对") { Task { if await cloud.completePairing(pairing, receivedAt: receivedAt, subject: subject) { finish() } } }
-                        .buttonStyle(PrimaryActionStyle()).disabled(cloud.busy || expired || cloud.subject != subject).accessibilityIdentifier("pairing.confirm")
+                if let code = cloud.pairingCode {
+                    Text(String(code.prefix(3)) + " " + String(code.suffix(3)))
+                        .font(AppleTokens.Fonts.largeTitle.weight(.semibold)).monospacedDigit()
+                        .tracking(AppleTokens.Space.p4).lineLimit(1).minimumScaleFactor(0.6)
+                        .frame(maxWidth: .infinity).padding(.vertical, AppleTokens.Space.p24)
+                        .accessibilityLabel("六位核对数字").accessibilityValue(code.map(String.init).joined(separator: " "))
+                        .accessibilityIdentifier("pairing.confirmCode")
                 }
+                Text("两边数字一致，再在电脑上确认。不一致或不认识这台电脑，请取消。").foregroundStyle(Weave.muted)
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    let expired = context.date.timeIntervalSince1970 * 1000 >= Double(pairing.expiresAt)
+                    if expired {
+                        if cloud.error == nil { InlineNotice(message: "配对码已过期，请在电脑上重新生成，然后重新扫码。", isError: true) }
+                    }
+                    else if cloud.busy && cloud.error == nil {
+                        HStack { ProgressView(); Text(cloud.pairingCode == nil ? "正在核对电脑…" : "等待电脑确认…") }
+                            .accessibilityIdentifier("pairing.waiting")
+                    }
+                }
+                Button("重新扫码", action: rescan).buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("pairing.rescan")
                 Button("不是这台电脑", action: cancel).buttonStyle(OutlineActionStyle()).accessibilityIdentifier("pairing.cancel")
                 if let error = cloud.error { InlineNotice(message: error, isError: true) }
             }.padding(AppleTokens.Space.p20)
         }.background(Weave.canvas).navigationTitle("确认配对").navigationBarTitleDisplayMode(.inline).accessibilityIdentifier("pairing.confirmPage")
+            .task { if await cloud.completePairing(pairing, subject: subject) && !Task.isCancelled { finish() } }
+            .onDisappear { cloud.cancelPairing() }
     }
 }
 #endif

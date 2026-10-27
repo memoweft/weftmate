@@ -50,6 +50,7 @@ final class CloudLoginModel: ObservableObject {
     @Published private(set) var waiting = false
     @Published private(set) var cloudSignedIn = false
     @Published private(set) var error: String?
+    @Published private(set) var pairingCode: String?
     private weak var app: AppleAppModel?
     private let namespace: String
     private let pins: HostPinStore
@@ -431,39 +432,48 @@ final class CloudLoginModel: ObservableObject {
     func previewPairing(_ bytes: Data) throws -> HostPairing {
         guard authenticated, subject != nil else { throw APIFailure.notAuthenticated }
         let pair = try HostPairing.parse(bytes, allowLoopbackHTTP: allowLoopback)
-        guard hosts.contains(where: { ($0.hostId ?? $0.id) == pair.hostId }) else { throw APIFailure.identityMismatch }
+        let configuration = CloudConfiguration(server: try ServerConfiguration(input: cloudAddress, allowLoopbackHTTP: allowLoopback))
+        guard let subject, hosts.contains(where: { ($0.hostId ?? $0.id) == pair.hostId }) else { throw APIFailure.identityMismatch }
+        try pair.validate(issuer: configuration.issuer, subject: subject, hostID: pair.hostId)
         return pair
     }
-    /// The QR is inspected before any network or pin write; only the confirmation calls this.
-    func completePairing(_ pair: HostPairing, receivedAt: Date, subject: String?) async -> Bool {
-        guard !busy, authenticated, subject != nil, subject == self.subject,
-              Date().timeIntervalSince(receivedAt) < Double(pair.expiresIn), let app else { return false }
+    func cancelPairing() {
+        operation = UUID(); busy = false; waiting = false; pairingCode = nil
+    }
+    /// The phone displays its own SAS; only a decision on the computer can authorize redemption.
+    func completePairing(_ pair: HostPairing, subject: String?) async -> Bool {
+        guard !busy, authenticated, subject != nil, subject == self.subject, let app else { return false }
         let ticket = operation
-        busy = true; error = nil
+        busy = true; waiting = false; error = nil; pairingCode = nil
         defer { if ticket == operation { busy = false } }
         do {
             let account = try accountClient()
             guard let key else { throw APIFailure.notAuthenticated }
-            let token = try await account.accessToken(hostID: pair.hostId)
-            guard ticket == operation, subject == self.subject else { return false }
-            let base = pair.relay?.baseUrl ?? pair.origin
-            let server = try ServerConfiguration(input: base, allowLoopbackHTTP: allowLoopback)
-            if base == pair.origin, server.origin.scheme == "https" { try pins.save(pair.tlsSpki, for: server.originString) }
-            let result = try await app.assistantClient.exchangeCloudSession(server: server, hostID: pair.hostId, accessToken: token,
-                deviceName: cloudDeviceName(deviceName), key: key, pairing: pair, trustSubject: subject, hostPins: pins)
-            guard ticket == operation, subject == self.subject else {
-                if case .authenticated(let session) = result { await app.assistantClient.discardCloudSession(session) }
-                return false
-            }
-            switch result {
-            case .pending: error = "请先在电脑上确认这次连接，再重新生成配对码。"; return false
-            case .authenticated(let session):
+            _ = try await account.pairingConnection(pair, allowLoopbackHTTP: allowLoopback)
+            let identity = try await account.pairingIdentity(hostID: pair.hostId)
+            guard ticket == operation, subject == self.subject, identity.subject == subject, !Task.isCancelled else { return false }
+            let comparison = try await app.assistantClient.beginCloudPairing(pair, identity: identity,
+                deviceName: cloudDeviceName(deviceName), key: key, hostPins: pins, allowLoopbackHTTP: allowLoopback)
+            guard ticket == operation, subject == self.subject, !Task.isCancelled else { return false }
+            pairingCode = comparison.verificationCode
+            while !Task.isCancelled {
+                try pair.checkExpiry()
+                let identity = try await account.pairingIdentity(hostID: pair.hostId)
+                guard ticket == operation, subject == self.subject, !Task.isCancelled else { return false }
+                let session = try await app.assistantClient.redeemCloudPairing(comparison, identity: identity,
+                    deviceName: cloudDeviceName(deviceName), key: key, hostPins: pins)
+                guard ticket == operation, subject == self.subject, !Task.isCancelled else {
+                    if let session { await app.assistantClient.discardCloudSession(session) }
+                    return false
+                }
+                guard let session else { try await Task.sleep(for: .seconds(1)); continue }
                 hostID = pair.hostId; requestedComputerID = pair.hostId; waiting = false
                 try store.save(JSONEncoder().encode(["hostId": pair.hostId, "cloud": cloudAddress]), key: "trusted-host")
                 await app.acceptCloudSession(session)
                 return true
             }
-        } catch { if ticket == operation { self.error = accountMessage(error) }; return false }
+        } catch { if ticket == operation && !Task.isCancelled { self.error = accountMessage(error) } }
+        return false
     }
     #endif
     func changePassword(current: String, password: String, repeatPassword: String) async {
@@ -527,6 +537,7 @@ final class CloudLoginModel: ObservableObject {
         if !authenticated { showAccount = false; showDevices = false }
     }
     private func accountMessage(_ error: Error) -> String {
+        if let error = error as? PairingFailure { return error.localizedDescription }
         if let error = error as? AppAccountError { return error.localizedDescription }
         if let error = error as? CloudLoginFailure { return error == .hostOffline ? "电脑没开或没联网。打开电脑上的 WeftMate 后再试一次。" : error.localizedDescription }
         if case APIFailure.server(_, "LOGIN_UPGRADE_REQUIRED") = error { return "请更新电脑上的 WeftMate 后再连接。" }
@@ -570,7 +581,7 @@ final class CloudLoginModel: ObservableObject {
         }
     }
     func cancel() {
-        operation = UUID(); task?.cancel(); busy = false; error = nil; showLogin = false; form.reset(to: .login)
+        operation = UUID(); task?.cancel(); busy = false; error = nil; pairingCode = nil; showLogin = false; form.reset(to: .login)
         if let client { Task { await client.cancel() } }
     }
     func signOut() async throws {
