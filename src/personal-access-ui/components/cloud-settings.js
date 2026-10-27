@@ -10,6 +10,8 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const panel = ui.element('section', 'card group cloud-settings'); panel.id = 'cloud-settings'; panel.hidden = true;
         panel.innerHTML = '<nav class="actions" aria-label="设置分类"><button class="button secondary" type="button" id="cloud-account-tab">账户</button><button class="button secondary" type="button" id="cloud-devices-tab">设备</button></nav><p id="cloud-settings-status" class="form-error" role="status"></p><section id="cloud-account-panel" aria-label="账户"><h2>账户</h2><p class="account-row"><span>邮箱</span><strong id="cloud-email"></strong></p><p id="cloud-login-needed" class="muted"></p><div id="cloud-local-accounts" hidden></div><div class="actions" id="cloud-login-actions"></div><div class="actions" id="cloud-account-actions"></div><div id="cloud-account-flow"></div></section><section id="cloud-devices-panel" aria-label="设备" hidden><div class="group-heading"><h2>设备</h2><button class="button secondary" type="button" id="cloud-directory-refresh">刷新设备</button></div><p id="cloud-directory-status" class="muted" role="status"></p><div class="actions" id="cloud-directory-login"></div><ul id="cloud-directory" class="device-list" aria-live="polite"></ul></section>';
         const refresh = panel.querySelector('#cloud-directory-refresh'); refresh.className='icon-button'; refresh.replaceChildren(WeftIcons.create('sync',18)); refresh.setAttribute('aria-label','刷新设备'); refresh.title='刷新设备';
+        const addDevice = button('添加设备', () => void ui.cloudUi.openPairing()); addDevice.id = 'cloud-pairing-open'; addDevice.hidden = true;
+        panel.querySelector('#cloud-devices-panel .group-heading').append(addDevice);
         account.prepend(panel);
         const signedIn = globalThis.WeftControls.tag('已登录'); signedIn.id = 'cloud-login-state';
         panel.querySelector('#cloud-account-panel > h2').textContent='远程访问';
@@ -57,6 +59,12 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     function paintCloudSettings() {
         if (!ui.byId('cloud-settings')) return;
         const active = core.state.cloudAuth.mode === 'authenticated', view = core.cloudAuthView();
+        const pairingOwner = core.state.ownerId, pairingIdentity = core.state.identityGeneration;
+        const pairingCurrent = () => pairingIdentity === core.state.identityGeneration && pairingOwner === core.state.ownerId;
+        void core.accessApi('/cloud/binding').then(binding => {
+            if (pairingCurrent())
+                ui.byId('cloud-pairing-open').hidden = !binding.canManage || binding.status !== 'active';
+        }).catch(() => { if (pairingCurrent()) ui.byId('cloud-pairing-open').hidden = true; });
         ui.byId('cloud-account-panel').dataset.signedIn = String(active);
         ui.byId('cloud-login-state').hidden = !active;
         ui.byId('cloud-settings').hidden = false;
@@ -189,7 +197,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
             container.replaceChildren();
         }).finally(() => { submit.disabled = false; if (current) current.value = ''; if (password) password.value = ''; if (confirmation) confirmation.value = ''; }); });
     }
-    function stopPairing() { pairingGeneration++; clearTimeout(pairingTimer); }
+    function stopPairing() { pairingGeneration++; clearTimeout(pairingTimer); void ui.cloudUi.stopPairing(); }
     function paintCloudPending() {
         // Device login notifications use the shared activity/notification feed.
         const banner = ui.byId('cloud-access-banner'); if (banner) { banner.hidden = true; banner.replaceChildren(); }
