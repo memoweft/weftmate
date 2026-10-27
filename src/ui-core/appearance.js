@@ -1,7 +1,7 @@
 /* Device appearance preferences; applying them to a DOM is the renderer's job. */
 (() => {
     const defaults = { theme: 'system', accent: 'neutral', fontSize: '14', accentLight: 'neutral', accentDark: 'neutral', codeFontSize: '12',
-        uiFontSize: '13', themePreset: 'default', themePresetLight: 'default', themePresetDark: 'default', font: 'system', fontLight: 'system', fontDark: 'system',
+        uiFontSize: '14', themePreset: 'default', themePresetLight: 'default', themePresetDark: 'default', font: 'system', fontLight: 'system', fontDark: 'system',
         backgroundLight: '', backgroundDark: '', foregroundLight: '', foregroundDark: '',
         separateModes: true, contrast: '60', translucentSidebar: false, fullWidth: false };
     function normalize(value = {}) {

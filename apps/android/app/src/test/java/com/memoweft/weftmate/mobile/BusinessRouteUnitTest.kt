@@ -14,6 +14,15 @@ class BusinessRouteUnitTest {
             assertFalse(route, validBusinessPath(route))
         assertTrue(businessHttpResponseLimit("/personal/v1/workspaces/session-one/files/read") >= 12 * 1024 * 1024)
     }
+
+    @Test fun terminalRoutesKeepExactIdentities() {
+        assertTrue(validBusinessPath("/personal/v1/terminals"))
+        assertTrue(validBusinessPath("/personal/v1/terminals/terminal-00000000-0000-4000-8000-000000000001"))
+        assertTrue(validBusinessPath("/personal/v1/terminals/terminal-00000000-0000-4000-8000-000000000001/release"))
+        assertFalse(validBusinessPath("/personal/v1/terminals?ownerId=other"))
+        assertFalse(validBusinessPath("/personal/v1/terminals/../auth/desktop"))
+        assertFalse(validBusinessPath("/personal/v1/terminals/raw/connect"))
+    }
     @Test fun projectFolderChangeKeepsExactProjectPath() {
         assertTrue(validBusinessPath("/personal/v1/projects/project-folder"))
         assertTrue(validBusinessMethod("/personal/v1/projects/project-folder", "PATCH"))

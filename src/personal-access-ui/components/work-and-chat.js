@@ -1,5 +1,5 @@
 globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
-  let toolbar, subtitle, computer, folder, error, modes, draftModes, introCopy, lastDraftMode;
+  let toolbar, subtitle, computer, folder, error, draftModes, lastDraftMode;
   const node = ui.element;
   const project = () => core.currentFolderProject?.();
   function selectLabel(control, label, icon) {if(control.dataset.label===label)return;control.dataset.label=label;
@@ -10,25 +10,22 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
   function paintWorkMode() {
     if (!toolbar) return;
     const enabled = core.supportsWorkModes(), working = core.currentConversationMode() === 'work';
-    modes.hidden = !enabled;
     draftModes.hidden = !enabled || !core.state.newConversation;
     const freshPage=!!core.state.newConversation;
     document.body.classList.toggle('new-conversation-page',freshPage);
-    introCopy.hidden=!freshPage;
-    const description=working?'选一个文件夹，再把要做的事交给我。':'问个问题、整理想法，或聊聊今天。';
     if(freshPage)ui.byId('chat-intro').querySelector('h1').textContent=working?'让电脑帮你完成':'今天，从哪里开始？';
-    if(introCopy.textContent!==description)introCopy.textContent=description;
     for (const b of draftModes.children) {
       const selected = b.dataset.draftMode === core.currentConversationMode();
       b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1;
       b.disabled = !!core.state.submitting || !!core.state.unresolvedSubmission;
     }
     const newLabel = ui.byId('new-session').querySelector('.rail-new-label'); if (newLabel) newLabel.textContent = '新对话';
-    for (const b of modes.children) { const selected = b.dataset.mode === core.sidebarConversationMode(); b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1; }
     ui.byId('new-session').setAttribute('aria-label','新建对话');
     const form = ui.byId('message-form'), phoneLayout = globalThis.WeftPhoneUnify?.isPhone() === true;
     if (phoneLayout && toolbar.nextSibling !== form) form.before(toolbar);
-    else if (!phoneLayout && toolbar.previousSibling !== form) form.after(toolbar);
+    else if (!phoneLayout && toolbar.nextSibling !== form.querySelector('.composer-actions')) form.querySelector('.composer-actions').before(toolbar);
+    if(phoneLayout&&draftModes.parentElement!==ui.byId('chat-intro'))ui.byId('chat-intro').append(draftModes);
+    else if(!phoneLayout&&draftModes.nextSibling!==ui.byId('approval-picker'))ui.byId('approval-picker').before(draftModes);
     const approval = ui.byId('approval-picker');
     if (approval.parentElement !== ui.byId('model-picker').parentElement) ui.byId('model-picker').before(approval);
     const fresh = core.state.newConversation, selected = project(), id = (fresh ? core.state.workDraftHostId : null) || core.currentExecutionComputer?.() || core.state.hostId;
@@ -41,7 +38,8 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
       folder.setAttribute('aria-label', selected ? `项目或文件夹：${selected.name}` : '选择项目或文件夹');
       folder.title = selected ? `${selected.name}\n${selected.rootPath || selected.pathHint || ''}` : '选择项目或文件夹';
       folder.disabled = core.state.online === false || !!core.folderChoiceBusy?.();
-      error.textContent = !online.length ? '电脑暂时不在线。连接后就能在文件夹里工作。' : !selected ? '只在你选的文件夹里工作，写入仍按权限设置确认。' : selected.permission==='write'?'可读写 · 写入仍按权限设置确认':'只读 · 可以查看和整理文件内容';
+      error.textContent = !online.length ? '电脑不在线' : !selected ? '先选文件夹' : selected.permission==='write'?'可读写':'只读';
+      toolbar.title = !online.length ? '电脑暂时不在线。连接后就能在文件夹里工作。' : '只在所选文件夹里工作，写入仍按权限设置确认。';
       error.hidden = !error.textContent;
     }
     if(lastDraftMode!==working&&freshPage&&globalThis.WeftMotion)WeftMotion.visibility(toolbar,showToolbar);
@@ -109,24 +107,20 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     card.append(status, actions); target.replaceChildren(card); return card;
   }
   function mountWorkMode() {
-    modes = node('div', 'rail-mode-switch'); modes.setAttribute('role', 'tablist'); modes.setAttribute('aria-label', '对话模式');
-    for (const [mode, name, icon] of [['chat','对话','chat'], ['work','工作','folder']]) {
-      const b = node('button', '', name); b.type = 'button'; b.dataset.mode = mode; b.setAttribute('role','tab'); b.setAttribute('aria-label',name);
-      b.setAttribute('aria-controls','session-list'); b.prepend(WeftIcons.create(icon,18)); b.onclick = () => {if(core.sidebarConversationMode()!==mode)core.chooseSidebarMode(mode);}; modes.append(b);
-    }
-    modes.onkeydown = event => { if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return; event.preventDefault();
-      const index = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - [...modes.children].indexOf(document.activeElement);
-      modes.children[index]?.focus(); modes.children[index]?.click(); };
-    modes.classList.add('rail-history-modes');ui.byId('session-list').before(modes);
     const rail=ui.byId('session-rail'),navigation=ui.fixedPageNavigation?.(),top=rail.querySelector('.rail-top'),search=rail.querySelector('.search-entry');
-    if(navigation&&search){navigation.classList.add('shell-navigation');rail.prepend(top);top.after(search);search.after(navigation);navigation.after(modes);}
-    draftModes = modes.cloneNode(true); draftModes.className = 'rail-mode-switch conversation-mode-switch';
-    draftModes.setAttribute('aria-label', '新对话模式');
+    const brand=ui.byId('rail-brand-row'),brandActions=ui.byId('rail-brand-actions');
+    if(search){search.setAttribute('aria-label','搜索');search.title='搜索 · Ctrl K';brandActions.append(search);}
+    const notices=node('button','rail-brand-notices');notices.type='button';notices.setAttribute('aria-label','查看动态通知');notices.title='动态通知';notices.append(WeftIcons.create('bell',18));notices.onclick=()=>ui.openActivity?.();brandActions.append(notices);
+    const badge=node('span','rail-brand-badge');notices.append(badge);
+    const paintBadge=()=>{const count=core.activity?.unreadCount||0;badge.hidden=!count;badge.textContent=count>99?'99+':String(count);notices.setAttribute('aria-description',count?`${count} 条未读`:'');notices.hidden=core.state.personalCapabilities?.activity!==1;};
+    const activityBadge=ui.renderActivityBadge,activityPaint=ui.renderActivity;ui.renderActivityBadge=(...args)=>{activityBadge?.(...args);paintBadge();};ui.renderActivity=(...args)=>{activityPaint?.(...args);paintBadge();};paintBadge();
+    rail.prepend(brand);brand.after(top);if(navigation){navigation.classList.add('shell-navigation');top.after(navigation);}
+    draftModes=node('div','rail-mode-switch conversation-mode-switch');draftModes.setAttribute('role','tablist');draftModes.setAttribute('aria-label','新对话模式');
+    for(const [mode,label,icon] of [['chat','对话','chat'],['work','工作','folder']]) {const b=node('button','',label);b.type='button';b.dataset.mode=mode;b.setAttribute('role','tab');b.prepend(WeftIcons.create(icon,16));draftModes.append(b);}
     for (const b of draftModes.children) {
       b.dataset.draftMode = b.dataset.mode; delete b.dataset.mode;
       b.setAttribute('aria-label', `新对话：${b.dataset.draftMode === 'work' ? '工作' : '对话'}`);
       b.setAttribute('aria-controls', 'conversation-pane');
-      b.append(node('small','mode-choice-description',b.dataset.draftMode==='work'?'在文件夹里做事':'问答与想法'));
       b.onclick = async () => { if(core.currentConversationMode()===b.dataset.draftMode)return;core.cancelNextSuggestions?.();
         const draft=ui.readMessageDraft();
         try {await (b.dataset.draftMode==='work'?core.startNewWork():core.startNewConversation());
@@ -136,15 +130,14 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     draftModes.onkeydown = event => { if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return; event.preventDefault();
       const index = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - [...draftModes.children].indexOf(document.activeElement);
       draftModes.children[index]?.focus(); draftModes.children[index]?.click(); };
-    const intro=ui.byId('chat-intro'),choices=node('div','new-conversation-choices');choices.append(draftModes);intro.append(choices);
-    const learn=intro.querySelector(':scope > button');if(learn){learn.classList.add('new-conversation-help');intro.append(learn);}
-    introCopy=node('p','new-conversation-description');intro.querySelector('h1').after(introCopy);
+    const intro=ui.byId('chat-intro');ui.byId('approval-picker').before(draftModes);
+    const learn=intro.querySelector(':scope > button');if(learn){learn.className='composer-help';ui.byId('message-form').after(learn);}
     toolbar = node('div', 'work-mode-toolbar'); toolbar.setAttribute('aria-label', '工作电脑与文件夹'); toolbar.hidden = true;
     computer = button('电脑', 'desktop', trigger => WeftPopover.openMenu(trigger, core.workComputers().map(row => ({ name: row.displayName || row.name, icon: 'desktop',
       checked: row.hostId === core.state.workDraftHostId, description: row.online ? '在线' : '不在线', disabled: !row.online,
       action: () => core.chooseWorkComputer(row.hostId) })), { label: '选择电脑' }));
     folder = button('选择项目或文件夹', 'folder', chooseFolder); ui.bindWorkspaceInfo(folder, () => ({title:project()?.name || '选择项目或文件夹',project:project()})); error = node('p', 'work-mode-hint'); error.setAttribute('role', 'status');
-    toolbar.append(computer, folder, error); ui.byId('message-form').after(toolbar);
+    toolbar.append(computer, folder, error); ui.byId('message-form').querySelector('.composer-actions').before(toolbar);
     subtitle = node('p', 'conversation-mode-subtitle'); subtitle.setAttribute('role', 'status'); ui.byId('assistant-title').after(subtitle);
     const update = ui.updateAvailability; ui.updateAvailability = (...args) => { const result = update(...args); paintWorkMode(); return result; };
     const paint = ui.paintSelectedSession; ui.paintSelectedSession = (...args) => { const result = paint(...args); paintWorkMode(); return result; };

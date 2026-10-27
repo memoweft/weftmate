@@ -12,6 +12,10 @@ test('AUTH-1 only the native own main frame receives its capability; subframes a
   const window = { webContents: { id: 7, mainFrame: frame } }
   const details = { webContentsId: 7, frame, initiatorOrigin: origin, url: origin + '/personal/v1/auth/desktop' }
   assert.equal(nativeWindowRequest(details, window, origin), true)
+  const terminal = origin.replace('http:', 'ws:') + '/personal/v1/terminals/terminal-00000000-0000-4000-8000-000000000001/connect'
+  assert.equal(nativeWindowRequest({ ...details, url: terminal }, window, origin), true)
+  assert.equal(nativeWindowRequest({ ...details, url: terminal, frame: null }, window, origin), false)
+  assert.equal(nativeWindowRequest({ ...details, url: origin.replace('http:', 'ws:') + '/personal/v1/auth/desktop' }, window, origin), false)
   for (const changed of [{ frame: null }, { frame: { url: frame.url } }, { webContentsId: 8 },
     { initiatorOrigin: 'https://public.example.invalid' }, { url: 'https://public.example.invalid/personal/v1/auth/desktop' }])
     assert.equal(nativeWindowRequest({ ...details, ...changed }, window, origin), false)

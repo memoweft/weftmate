@@ -23,10 +23,15 @@ import WeftMateCore
     var workSnapshot: OfflineSnapshot? { ready ? replica?.state.snapshot : nil }
     @Published private(set) var polling = false
     func authorizeMemory(control: (String) async throws -> OfflineAuthorization) async throws {
-        guard let replica,ready else { throw OfflineFailure.notReady }
-        do { try await replica.check(control:control);publish(replica) }
-        catch { publish(replica);ready=false;throw error }
+        guard let engine=replica,ready else { throw OfflineFailure.notReady }
+        do {
+            try await engine.check(control:control)
+            guard replica === engine else { throw OfflineFailure.notReady }
+            publish(engine)
+        } catch { if replica === engine { publish(engine);ready=false };throw error }
     }
+    var memoryHostID: String? { ready ? identity?.hostId : nil }
+    var memoryAccountID: String? { ready ? replica?.state.snapshot?.control.accountId : nil }
     var memoryItems: [OfflineMemory] { ready ? replica?.state.snapshot?.items ?? [] : [] }
     var generation: Int? { replica?.state.snapshot?.generation }
     func enqueuePhoneTurns(_ turns: [OfflineTurn], generation: Int) throws {
@@ -63,7 +68,7 @@ import WeftMateCore
         if !ready { draft = ""; recentID = nil }
     }
     func poll(session: AccountSession, client: PersonalClient, directory: URL, store: any CredentialStore,
-              allowLoopback: Bool, phoneFirst: Bool = false, multipleComputers: Bool = false, workAndChat: Bool = false, control: (String) async throws -> OfflineAuthorization) async {
+              allowLoopback: Bool, phoneFirst: Bool = false, multipleComputers: Bool = false, workAndChat: Bool = false, transcriptExclusions: PhoneTranscriptSync? = nil, control: (String) async throws -> OfflineAuthorization) async {
         guard !polling, !busy else { return }; polling = true; defer { polling = false }
         do {
             let next = OfflineIdentity(ownerId: session.account.ownerId, hostId: session.hostId, deviceId: session.device.id)
@@ -73,6 +78,7 @@ import WeftMateCore
                 identity = next
             }
             guard let engine = replica else { return }
+            if let transcriptExclusions { try engine.excludeUnsubmittedPhoneTurns(transcriptExclusions) }
             engine.workAndChat=workAndChat
             // A cached replica is never rendered after process launch until cloud authorization succeeds.
             if engine.state.snapshot != nil {
@@ -114,6 +120,19 @@ import WeftMateCore
         } catch { notice = (error as? LocalizedError)?.errorDescription ?? "离线副本无法读取。" }
     }
     #if DEBUG
+    func seedPhoneWindowReplica(disconnected: Bool) throws {
+        let args=ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"),args.contains("--phone-window-fixture") else { return }
+        let identity=OfflineIdentity(ownerId:"window-owner",hostId:"window-computer",deviceId:"window-device")
+        let directory=FileManager.default.temporaryDirectory.appendingPathComponent("apple-1-window-"+UUID().uuidString)
+        let vault=try OfflineVault(identity:identity,directory:directory,store:Mode2IOfflineFixtureKeys())
+        let data: [String:Any] = ["generation":1,"reset":false,
+            "items":[["id":"window-memory","kind":"cognition","text":"合成电脑记忆：我喜欢清淡的茶。","sources":[["id":"window-source","summary":"合成对话原话"]],"currentState":"current"]],
+            "remove":[],"hashes":["window-memory":String(repeating:"a",count:64)],"truncated":false,"recent":[],
+            "control":["accountId":"window-account","hostId":"window-computer","generation":1]]
+        var state=OfflineState();state.snapshot=try JSONDecoder().decode(OfflineSnapshot.self,from:JSONSerialization.data(withJSONObject:data))
+        try vault.save(state);let engine=try OfflineReplica(vault:vault);replica=engine;self.identity=identity;hostOffline=disconnected;publish(engine)
+    }
     func seedMode2IOfflineFixture(disconnected: Bool = true) throws {
         let args=ProcessInfo.processInfo.arguments
         guard args.contains("--ui-testing"),args.contains("--mode2i-offline") else { return }
