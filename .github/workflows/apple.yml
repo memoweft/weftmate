@@ -39,6 +39,12 @@ jobs:
           mkdir -p "$RUNNER_TEMP/apple-results"
       - name: Isolated project generation checks
         run: python3 -m unittest discover -s Tests -p 'test_*window*.py' -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Host route fixture dependencies
+        working-directory: .
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Swift package tests
         run: |
           set -o pipefail
