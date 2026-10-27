@@ -84,6 +84,8 @@ final class Apple6UITests: XCTestCase {
             app.launchArguments=["--ui-testing","--apple5-addendum","--apple5-reset-presentation","--health4-render-only","--a5-local-server","--server-url",try XCTUnwrap(env["WEFTMATE_APPLE5_ORIGIN"]),"--ui-testing-namespace","apple6-media-"+UUID().uuidString,theme]
             app.launchEnvironment=["WEFTMATE_APPLE5_USERNAME":try XCTUnwrap(env["WEFTMATE_APPLE5_USERNAME"]),"WEFTMATE_APPLE5_PASSWORD":try XCTUnwrap(env["WEFTMATE_APPLE5_PASSWORD"])]
             app.launch();try expect(app.buttons["apple5add.scenarios"],timeout:40)
+            try tap(app,"phone.sidebar");try tap(app,"phone.sidebar.main")
+            try expect(app.buttons["mainChat.plus"])
             try await shot(app,theme+"-connected-composer-collapsed")
             app.textFields["mainChat.draft"].tap();app.textFields["mainChat.draft"].typeText("合成输入");try expect(app.buttons["mainChat.model"])
             XCTAssertGreaterThanOrEqual(app.buttons["mainChat.model"].frame.width,44)
@@ -107,8 +109,8 @@ final class Apple6UITests: XCTestCase {
             try await shot(app,theme+"-health-vitals")
             try tap(app,"phone.tab.chat");try tap(app,"phone.sidebar")
             try expect(app.buttons["phone.sidebar.close"]);try await shot(app,theme+"-connected-sidebar")
-            XCTAssertFalse(app.buttons["phone.tab.chat"].isHittable);try tap(app,"phone.sidebar.close")
-            try tap(app,"phoneAccountMenu");try await shot(app,theme+"-connected-settings-zero-cost")
+            XCTAssertFalse(app.buttons["phone.tab.chat"].isHittable)
+            try tap(app,"phone.sidebar.settings");try await shot(app,theme+"-connected-settings-zero-cost")
             app.terminate()
         }
     }

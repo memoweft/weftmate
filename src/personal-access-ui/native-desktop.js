@@ -23,7 +23,7 @@ function blendDesktopColor(base, scrim) {
   updateNotice.type = 'button'; updateNotice.className = 'desktop-update-notice'; updateNotice.hidden = true;
   updateNotice.setAttribute('aria-live', 'polite');
   updateNotice.addEventListener('click', () => globalThis.WeftSettingsNavigation?.open('about'));
-  bar.append(updateNotice);
+  document.querySelector('.rail-footer').prepend(updateNotice);
   let completedVersion = null, updateEpoch = 0;
   const paintUpdate = value => {
     if (value.completedVersion) completedVersion = value.completedVersion;
@@ -46,7 +46,7 @@ function blendDesktopColor(base, scrim) {
     const header = document.querySelector('.site-header');
     const workspace = header && getComputedStyle(header).display === 'none' ? 'full' : 'classic';
     if (document.documentElement.dataset.nativeWorkspace !== workspace) document.documentElement.dataset.nativeWorkspace = workspace;
-    const style = getComputedStyle(bar);
+    const style = getComputedStyle(document.body.classList.contains('assistant-active') ? document.querySelector('.assistant-main') : bar);
     modals = modals.filter(dialog => dialog.isConnected && dialog.matches(':modal'));
     const top = modals.at(-1);
     // Read the actual token-backed backdrop, so theme/token changes and special

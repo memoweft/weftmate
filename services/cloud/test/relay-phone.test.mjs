@@ -48,6 +48,8 @@ test('Relay phone first input and file task', {
     await waitFor(() => host.relayStatus().state === 'online', 'relay not online');
     const base = host.relayStatus().baseUrl, domain = new URL(base).hostname;
     const pairing = await direct('/cloud/pairings', {}, local); assert.equal(pairing.status, 201);
+    // This test uses the QR certificate pin, then exercises ordinary cloud login.
+    assert.equal((await direct('/cloud/pairings/decision', {challenge:pairing.data.challenge,decision:'cancel'}, local)).data.state,'cancelled');
     browser = await chromium.launch({ headless: true, args: ['--no-proxy-server', `--host-resolver-rules=MAP ${domain} 127.0.0.1`,
       `--ignore-certificate-errors-spki-list=${Buffer.from(pairing.data.tlsSpki, 'base64url').toString('base64')}`] });
     phone = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -161,8 +163,8 @@ test('Relay phone first input and file task', {
     const select = async session => {
       const toggle = phone.getByRole('button', { name: '切换会话侧栏', exact: true });
       if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
-      const mode = await phone.evaluate(id => { const row = globalThis.__ciR1Core.state.sessions.find(item => item.sessionId === id); return row?.mode || (row?.projectId ? 'work' : 'chat'); }, session.sessionId);
-      await phone.getByRole('tab', {name:mode === 'work' ? '工作' : '对话',exact:true}).click();
+      await phone.getByRole('button',{name:'筛选最近对话',exact:true}).click();
+      await phone.getByRole('menu',{name:'最近对话类型',exact:true}).getByRole('menuitemradio',{name:'全部',exact:true}).click();
       const row = phone.locator(`[data-session-id="${session.sessionId}"]`);
       const visibleTitle = await phone.evaluate(id => globalThis.__ciR1Core.state.sessions.find(s => s.sessionId === id)?.title, session.sessionId) ?? session.title;
       const button = row.getByRole('button', { name: visibleTitle, exact: true });

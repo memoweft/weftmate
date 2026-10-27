@@ -85,7 +85,10 @@ final class Apple4UITests: XCTestCase {
             capture(app, theme, "resources"); PhoneChatTestSupport.returnFromResources(app)
             app.buttons["phone.sidebar"].tap(); app.buttons["phone.sidebar.library"].tap(); capture(app, theme, "tab-resources")
             app.buttons["phone.tab.activity"].tap()
-            XCTAssertTrue(app.staticTexts["每周的回顾会出现在这里。"].waitForExistence(timeout: 15)); capture(app, theme, "tab-activity")
+            XCTAssertTrue(app.segmentedControls["activity.filter"].waitForExistence(timeout: 15))
+            // This legacy host fixture does not implement the newer activity endpoint.
+            XCTAssertTrue(app.staticTexts["更新电脑上的 WeftMate 后可使用这项功能。"].waitForExistence(timeout: 15))
+            capture(app, theme, "tab-activity")
             app.buttons["phone.tab.chat"].tap(); app.buttons["phone.tab.chat"].tap(); app.buttons["phone.sidebar"].tap()
             let sidebar = app.descendants(matching: .any)["phone.sidebar.panel"]
             sidebar.buttons["phone.sidebar.settings"].firstMatch.tap()
@@ -97,7 +100,12 @@ final class Apple4UITests: XCTestCase {
             try choose(app, "side")
             XCTAssertTrue(app.staticTexts["可以先留出一段时间散步，再读几页书。"].waitForExistence(timeout: 25))
             XCTAssertTrue(app.buttons["sendButton"].exists)
-            app.buttons["addAttachmentButton"].tap(); XCTAssertTrue(app.buttons["contextUsage"].waitForExistence(timeout:10)); app.coordinate(withNormalizedOffset:CGVector(dx:0.9,dy:0.3)).tap()
+            let attachments = app.buttons["addAttachmentButton"]
+            XCTAssertGreaterThanOrEqual(attachments.frame.width, 44)
+            XCTAssertGreaterThanOrEqual(attachments.frame.height, 44)
+            attachments.tap()
+            XCTAssertTrue(app.buttons["contextUsage"].waitForExistence(timeout: 10))
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.3)).tap()
             capture(app, theme, "side-chat")
             app.buttons["conversationMenu"].tap(); app.buttons["openConversationResources"].tap()
             XCTAssertTrue(PhoneChatTestSupport.resourcesBack(app).waitForExistence(timeout: 20))

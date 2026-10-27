@@ -168,13 +168,14 @@ try {
   };
   await snapshot('initial-empty-chat');
   assert.equal(await page.locator('#assistant-view .conversation-mode-switch').isVisible(), true,
-    '#622 the empty conversation has its own mode choice at the top');
-  assert.equal(await page.getByRole('tab', { name: '对话', exact: true }).count(), 1, 'sidebar and draft mode controls have distinct accessible names');
+    '#622 the empty conversation has its own mode choice in the composer');
+  assert.equal(await page.getByRole('button', { name: '筛选最近对话', exact: true }).count(), 1, 'recent filtering and draft mode controls have distinct accessible names');
   await page.getByRole('button', { name: '成果库', exact: true }).click();
   await page.locator('.library-surface').waitFor({ state: 'visible' });
   assert.equal(await page.locator('.conversation-mode-switch').isVisible(), false, 'the draft mode choice belongs only to the conversation');
   await snapshot('library-before-new');
-  await page.locator('#session-rail [data-mode="chat"]').click();
+  await page.getByRole('button',{name:'筛选最近对话',exact:true}).click();
+  await page.getByRole('menu',{name:'最近对话类型',exact:true}).getByRole('menuitemradio',{name:'对话',exact:true}).click();
   await page.locator('#new-session').click();
   const actual = await snapshot('new-chat-after-library');
   assert.equal(actual.title, '新对话', 'new chat must replace the fixed-page title');
@@ -274,8 +275,8 @@ try {
   await page.getByRole('menuitemradio', { name: /合成项目/ }).click();
   await page.locator('#message-text').fill('合成工作草稿，不发送');
   assert.equal(await page.locator('#send-message').isEnabled(), true);
-  assert.equal(await toolbar.locator('#approval-picker').isVisible(), true);
-  await toolbar.locator('#approval-mode-trigger').click();
+  assert.equal(await page.locator('.composer-actions #approval-picker').isVisible(), true);
+  await page.locator('.composer-actions #approval-mode-trigger').click();
   await page.locator('#approval-mode-menu [data-mode="ask"]').click();
   await page.waitForFunction(() => emptyChatCore.state.newConversationApprovalMode === 'ask');
   await snapshot('work-choices');

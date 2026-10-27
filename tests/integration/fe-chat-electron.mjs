@@ -111,7 +111,7 @@ try {
     const finish=outcome==='end'?async()=>{append('assistant.message',{text:'合成回答正在逐步出现。现在已经完成。',streamSeq:seq});live=[];append('turn.ended',{turn,reason:'completed'});await refresh()}:async()=>{append('assistant.message',{text:'合成回答正在逐步出现。',streamSeq:seq});live=[];await page.locator('#send-message').click();await refresh()};
     const frames=await capture(theme+'-'+outcome,finish);
     assert.equal(await page.evaluate(()=>savedProcess===[...document.querySelectorAll('#transcript .execution-block')].at(-1)&&savedSummary===savedProcess.querySelector('summary')&&savedAnswer===[...document.querySelectorAll('#transcript .message.assistant .message-text')].at(-1)),true,'completion keeps process and answer nodes');
-    assert.match(await page.locator('#transcript .execution-block > summary').last().innerText(),outcome==='stop'?/已停止/:/处理了/);
+    assert.match(await page.locator('#transcript .execution-block > summary').last().innerText(),outcome==='stop'?/已停止/:/已完成/);
     const positions=frames.filter(f=>f.line);assert.ok(Math.max(...positions.map(f=>f.line.y))-Math.min(...positions.map(f=>f.line.y))<=1,theme+' process stays at its original top '+JSON.stringify(positions.map(f=>[f.line.y,f.scroll,f.text])));
     assert.ok(positions.every(f=>f.background==='rgba(0, 0, 0, 0)'),'no transient process background');
     const geometry=await page.evaluate(()=>{const a=savedSummary.getBoundingClientRect(),b=savedAnswer.getBoundingClientRect();return {left:Math.abs(a.left-b.left),width:Math.abs(a.width-b.width)}});
@@ -196,15 +196,15 @@ try {
     });await capture('stream-prose',()=>work,900);const result=await work;
     assert.equal(result.paragraph,true);assert.equal(result.text,true);assert.equal(result.content,'这是已经读到的前文。现在继续出现后面的回答。');
   });
-  await check('inline decisions keep the original controls through parking and reattachment',async()=>{
+  await check('composer decisions keep the original controls through history refreshes',async()=>{
     const result=await page.evaluate(()=>{
       const approval=WeftTimeline.decisionSurface('approval-bar'),question=WeftTimeline.decisionSurface('question-bar');
       const button=document.createElement('button');button.textContent='合成决定';let submitted=0;button.onclick=()=>submitted++;approval.append(button);approval.hidden=false;
-      WeftTimeline.placeDecisions();const adjacent=!!approval.closest('#transcript .timeline-entry');
+      WeftTimeline.placeDecisions();const atComposer=approval.parentElement===question.parentElement&&!approval.closest('#transcript');
       button.focus();WeftTimeline.placeDecisions(document.getElementById('transcript'),true);const parked=approval.isConnected&&!approval.closest('#transcript');
       WeftTimeline.placeDecisions();button.click();const retained=approval.querySelector('button')===button&&question.isConnected;
-      approval.hidden=true;button.remove();return {adjacent,parked,retained,submitted};
-    });assert.deepEqual(result,{adjacent:true,parked:true,retained:true,submitted:1});
+      approval.hidden=true;button.remove();return {atComposer,parked,retained,submitted};
+    });assert.deepEqual(result,{atComposer:true,parked:true,retained:true,submitted:1});
   });
   await check('manual upward scrolling holds its reading position while a long reply grows',async()=>{
     const result=await page.evaluate(async()=>{

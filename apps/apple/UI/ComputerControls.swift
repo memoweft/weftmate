@@ -23,12 +23,23 @@ struct ComputerMenuButton: View {
 }
 struct ComputerConversationList: View {
     @ObservedObject var cloud: CloudLoginModel
+    var currentHostID: String? = nil
+    var currentConversations: [ConversationSummary] = []
     var query=""
     var mode: ConversationMode? = nil
     var archived: Bool? = nil
     var groups: [SessionGroup] = []
+    private var conversations: [ComputerConversation] {
+        guard let currentHostID, let host = cloud.hosts.first(where: { ($0.hostId ?? $0.id) == currentHostID }) else {
+            return cloud.computerConversations
+        }
+        // The active connection already has fresh metadata; other hosts can still be refreshing.
+        return cloud.computerConversations.filter { $0.hostId != currentHostID } + currentConversations.map {
+            ComputerConversation(hostId: currentHostID, name: host.computerName, online: host.online, conversation: $0)
+        }
+    }
     private var sections: [ComputerConversationSection] {
-        let rows=cloud.computerConversations.filter { (mode == nil || WorkAndChat.mode($0.conversation) == mode) && (archived == nil || $0.conversation.archived == archived) && (query.isEmpty || $0.conversation.title.localizedCaseInsensitiveContains(query)) }
+        let rows=conversations.filter { (mode == nil || WorkAndChat.mode($0.conversation) == mode) && (archived == nil || $0.conversation.archived == archived) && (query.isEmpty || $0.conversation.title.localizedCaseInsensitiveContains(query)) }
         if mode == .chat {
             return WorkAndChat.sections(rows:rows.map(\.conversation),groups:groups,mode:.chat,query:query,archived:archived ?? false).map { section in
                 .init(id:section.id,title:section.title,rows:section.rows.flatMap { item in rows.filter { $0.conversation.id == item.id } })

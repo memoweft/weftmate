@@ -61,8 +61,12 @@ try {
     await capture('ready', theme);
   }
   await application.evaluate(() => globalThis.fixUpdateFixture.desktop.window.setContentSize(480, 800));
+  await page.waitForFunction(() => innerWidth === 480);
+  const railToggle = page.getByRole('button', { name: '切换会话侧栏', exact: true });
+  if (await railToggle.getAttribute('aria-expanded') !== 'true') await railToggle.click();
+  await notice.waitFor();
   const noticeBounds = await notice.boundingBox(), toggleBounds = await page.locator('#rail-open').boundingBox();
-  assert.ok(noticeBounds.x >= toggleBounds.x + toggleBounds.width, 'update notice must not cover the sidebar toggle in a narrow window');
+  assert.ok(noticeBounds.y >= toggleBounds.y + toggleBounds.height || noticeBounds.x >= toggleBounds.x + toggleBounds.width, 'update notice must not cover the sidebar toggle in a narrow window');
   // Exercise the production load-health callback with a failed trial and a
   // throwing rollback. The same native process must reload the bundled UI.
   await application.evaluate(() => {

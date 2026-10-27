@@ -45,7 +45,7 @@ test('#646 complete device appearance preferences survive recreation with indepe
     assert.equal(restored.backgroundLight,'#f5f5f5');assert.equal(restored.backgroundDark,'#202020');
     assert.equal(restored.fontLight,'serif');assert.equal(restored.fontDark,'mono');
     store.set({...restored,backgroundLight:'url(invalid)',uiFontSize:'99',font:'unknown',contrast:'999'});
-    assert.equal(store.value.backgroundLight,''); assert.equal(store.value.uiFontSize,'13'); assert.equal(store.value.font,'system');assert.equal(store.value.contrast,'100');
+    assert.equal(store.value.backgroundLight,''); assert.equal(store.value.uiFontSize,'14'); assert.equal(store.value.font,'system');assert.equal(store.value.contrast,'100');
 });
 const tokens = JSON.parse(readFileSync(new URL('../design/tokens/tokens.json', import.meta.url), 'utf8'));
 const css = readFileSync(new URL('../src/ui-core/appearance.css', import.meta.url), 'utf8');

@@ -21,6 +21,15 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         expandedProjects.set(expansionKey(projectId), expanded);
         try { environment.storage.setItem(expansionKey(projectId), String(expanded)); } catch { /* Device storage may be unavailable. */ }
     }
+    const pinKey = () => `weftmate-pinned-projects:${core.state.ownerId}`;
+    function projectPinned(projectId) {
+        try { return JSON.parse(environment.storage.getItem(pinKey()) || '[]').includes(projectId); } catch { return false; }
+    }
+    function pinProject(projectId, pinned) {
+        let ids; try { ids = JSON.parse(environment.storage.getItem(pinKey()) || '[]'); } catch { ids = []; }
+        const next = new Set(ids); pinned ? next.add(projectId) : next.delete(projectId);
+        environment.storage.setItem(pinKey(), JSON.stringify([...next])); effects.renderSessions();
+    }
     function projectConversations(projectId, sessions = core.sessionList()) {
         return sessions.filter(row => !row.archived && row.projectId === projectId).sort((a, b) =>
             (Date.parse(b.updatedAt || b.lastMessageAt || b.createdAt || b.attachedAt) || 0) - (Date.parse(a.updatedAt || a.lastMessageAt || a.createdAt || a.attachedAt) || 0));
@@ -277,7 +286,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return result;
     }
-    return { markVisibleSessionRead, sidebarStatus, folderMutationPending, registerFolderChoice, partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
+    return { projectPinned, pinProject, markVisibleSessionRead, sidebarStatus, folderMutationPending, registerFolderChoice, partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
 };
 globalThis.WeftUiCore.sessionMenuItems = session => [
     {id:'pin',label:session.pinned?'取消置顶':'置顶',key:'P'},

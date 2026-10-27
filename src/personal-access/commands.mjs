@@ -385,9 +385,11 @@ export function createCommandOperations(context) {
             ? result?.observed === true ? 'observed' : 'accepted_by_host'
             : 'accepted_by_dsh';
           if (snapshot.kind === 'session.create') {
+            const proposal = Object.values(next.commands).flatMap(item => item.toolApprovals ?? []).find(row => row.workSessionId === snapshot.sessionId);
+            const previous = proposal && next.sessions[proposal.sessionId];
             next.sessions[snapshot.sessionId] = { ownerId: next.ownerId, attachedAt: new Date().toISOString(),
-              approvalMode: next.defaultApprovalMode ?? 'auto',
-              deepThinking: defaultThinking,
+              approvalMode: (previous && (chatForSession(next, proposal.sessionId)?.approvalMode ?? previous.approvalMode)) ?? next.defaultApprovalMode ?? 'auto',
+              deepThinking: previous ? chatForSession(next, proposal.sessionId)?.deepThinking ?? previous.deepThinking ?? false : defaultThinking,
               ...initialMemorySettings(snapshot.payload, context.timestamp()),
               origin: !['password', 'cloud', 'desktop'].includes(next.devices[snapshot.sourceDeviceId]?.authKind)
                 ? 'legacy-local' : context.hostOwner(ownerId) ? 'personal-remote' : 'shared-chat',
@@ -433,6 +435,9 @@ export function createCommandOperations(context) {
         }
         command.updatedAt = new Date().toISOString();
       }));
+      if (snapshot.kind === 'session.create' && context.accountState(ownerId).commands[commandId]?.state === 'accepted_by_dsh') {
+        await context.continueWorkProposal(ownerId, snapshot.sessionId);
+      }
       if (snapshot.kind === 'session.message' && snapshot.payload.attachments &&
           context.accountState(ownerId).commands[commandId]?.state === 'accepted_by_dsh') {
         await context.sharedAttachmentStores.get(ownerId).release({ sessionId: snapshot.payload.attachmentSessionId ?? snapshot.sessionId,
