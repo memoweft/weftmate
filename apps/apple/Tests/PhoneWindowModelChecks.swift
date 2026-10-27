@@ -75,7 +75,7 @@ import WeftMateCore
         var large=PhoneChatState()
         for i in 0..<100 { var thread=PhoneChatThread();thread.messages=[.init(role:"user",text:"合成第\(i)轮")];large.threads.append(thread) }
         let store=try PhoneChatStore(account:app.phoneAccountIdentity,directory:root.appendingPathComponent("PhoneChats"),credentials:keys)
-        try store.save(large);model.activate(app:app);await model.synchronize(app:app)
+        try store.save(large);model.activate(app:app);try model.saveModel(config);await model.synchronize(app:app)
         try require(model.handoffCount == 100 && app.offline.enqueued.isEmpty,"large-original-transfer-asks-before-enqueue")
         model.handoffLater();await model.synchronize(app:app)
         try require(model.handoffDeferred && !model.computerMemory.isEmpty,"deferred-transfer-still-allows-computer-copy")
@@ -86,6 +86,7 @@ import WeftMateCore
         app.offline.synced=Set(app.offline.enqueued.map(\.id));await model.synchronize(app:app)
         try require(model.handoffCount == 0 && model.state.threads.count == 100,"all-receipts-retain-originals-and-clear-transfer-banner")
         app.controlGeneration=2
+        try require(model.currentModel != nil,"new-account-has-model-before-revocation")
         model.newThread();try await chat("绘画")
         try require(model.messages.last?.replyStatus == .failed && model.computerMemory.isEmpty,"revoked-generation-cannot-reach-model-with-old-copy")
         let final=try await report()

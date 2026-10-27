@@ -4,6 +4,7 @@ import unittest
 import tempfile
 import json
 import io
+import os
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
@@ -22,6 +23,19 @@ class WindowRunnerTests(unittest.TestCase):
     def test_timeout_returns_control(self):
         with self.assertRaises(subprocess.TimeoutExpired):
             run_bounded([sys.executable, "-c", "import time; time.sleep(30)"], timeout=0.1)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process liveness")
+    def test_timeout_reaps_the_child(self):
+        with tempfile.TemporaryDirectory(prefix="apple-1-window-timeout-") as directory:
+            pid_file = Path(directory) / "child.pid"
+            command = [sys.executable, "-c",
+                       "import os,sys,time; from pathlib import Path; "
+                       "Path(sys.argv[1]).write_text(str(os.getpid())); time.sleep(30)", str(pid_file)]
+            with self.assertRaises(subprocess.TimeoutExpired):
+                run_bounded(command, timeout=0.5)
+            self.assertTrue(pid_file.exists(), "The child must start before the timeout")
+            with self.assertRaises(ProcessLookupError):
+                os.kill(int(pid_file.read_text()), 0)
 
     def test_failed_core_does_not_boot_simulator(self):
         calls = []
