@@ -1,0 +1,17 @@
+{
+  "status": "proposal-for-owner-review",
+  "description": "iPhone prototype additions; existing product generators do not consume these until design approval.",
+  "layout": {
+    "phone-width": "393px", "phone-height": "852px", "status-height": "54px",
+    "nav-height": "52px", "tab-height": "60px", "safe-bottom": "24px",
+    "drawer-width": "328px", "sheet-max": "88%", "page-inset": "20px",
+    "row-min": "52px", "composer-max": "132px", "home-width": "134px"
+  },
+  "color": {
+    "light": { "canvas": "{apple.colors.controlCanvas}", "surface": "{apple.colors.controlSurface}", "ink": "{apple.colors.controlInk}", "secondary": "{apple.colors.controlSecondary}", "muted": "{apple.colors.controlMuted}", "accent": "{apple.colors.controlAccent}", "on-accent": "{apple.colors.controlOnAccent}", "soft": "{apple.colors.controlSoft}", "line": "{apple.colors.controlLine}", "scrim": "rgba(0,0,0,.26)", "glass": "rgba(250,249,247,.94)" },
+    "dark": { "canvas": "{apple.colors.controlCanvas}", "surface": "{apple.colors.controlSurface}", "ink": "{apple.colors.controlInk}", "secondary": "{apple.colors.controlSecondary}", "muted": "{apple.colors.controlMuted}", "accent": "{apple.colors.controlAccent}", "on-accent": "{apple.colors.controlOnAccent}", "soft": "#303033", "line": "#454549", "scrim": "rgba(0,0,0,.52)", "glass": "rgba(28,28,30,.94)" }
+  },
+  "type": { "body-leading": "1.65", "compact-leading": "1.4", "title-weight": "650", "health-score-size": "52px" },
+  "motion": { "stream-ms-per-grapheme": 28, "stream-max-batch": 8, "follow-threshold": 48, "edge-width": 24, "gesture-commit": 96, "spring-response": 0.42, "spring-damping": 0.88, "spring-blend": 0.08 },
+  "shadow": { "frame": "0 24px 80px rgba(0,0,0,.16)", "sheet": "0 -8px 36px rgba(0,0,0,.12)" }
+}
