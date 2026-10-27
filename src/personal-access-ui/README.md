@@ -37,6 +37,8 @@ WeftPanels.register('terminal', {
 
 文件当前复用 `components/resources.js`，通过 `WeftPanels.services.resources()` 与 `openResource(item, trigger)` 读取成果/来源及原预览。子任务订阅 `composer-subtasks.js` 的 `weftmate:subtasks` 事件与快照，状态来自 `ui-core/subtasks.js`，点击回到原步骤。后续面板替换对应登记脚本即可。
 
+浏览器由 `panels/browser.js` 登记，桌面通过预加载桥使用宿主 `personal-browser/desktop.mjs` 的真实 `WebContentsView`，Agent 的 `browser` 工具使用同一对话实例。`workDir` 异步补齐、执行段变化均复用原逻辑对话标签；切换上下文使旧命令响应失效。切账号仍由容器 `dispose()` 全部标签。手机和远程网页显示在电脑打开的说明。真实入口验收见 `tests/integration/desktop-browser-panel.mjs`。
+
 ## 尺寸与键盘
 
 宽窗口为三列；1100px 以下只保留最后明确打开的左侧或右侧，右侧保持至少 420px 中间阅读空间。720px 以下面板为全屏子页，收起回到对话。放大占用正文区域，拖宽受中间最小宽度限制。

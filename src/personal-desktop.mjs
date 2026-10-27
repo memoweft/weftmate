@@ -75,7 +75,7 @@ export function preparePersonalDesktopWindow() {
   return { window: win, stateFile, saved, desktopSession, palette, restoreBounds, lifecycle, close };
 }
 
-export function createPersonalDesktop({ computerUsageService, systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {}, preparedWindow = preparePersonalDesktopWindow() }) {
+export function createPersonalDesktop({ browserReader = null, computerUsageService, systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {}, preparedWindow = preparePersonalDesktopWindow() }) {
   const { window: win, stateFile, saved, desktopSession, palette, restoreBounds, lifecycle } = preparedWindow;
   let resolvedPalette = null;
 
@@ -108,6 +108,22 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     if (!response.ok) throw new Error('Session unavailable');
     return response.json();
   };
+  let browserOwner = null;
+  handle('wm:desktop:browser', async (action, input) => {
+    if (contentOrigin !== origin || !browserReader?.request) throw new Error('BROWSER_LOCAL_DESKTOP_REQUIRED');
+    const { account } = await jsonLocal('/auth/me');
+    if (browserOwner && browserOwner !== account.ownerId) await browserReader.releaseAll();
+    browserOwner = account.ownerId;
+    return browserReader.request(account.ownerId, action, input);
+  });
+  const browserChanged = state => {
+    if (state.ownerId !== browserOwner || contentOrigin !== origin || win.isDestroyed()) return;
+    const { ownerId, ...publicState } = state;
+    win.webContents.send('wm:desktop:browser-state', publicState);
+  };
+  browserReader?.on?.('change', browserChanged);
+  const hideBrowsers = () => browserReader?.hideAll?.();
+  win.webContents.on('did-start-navigation', hideBrowsers);
   const diagnosticOwner = async () => {
     const [me, system] = await Promise.all([jsonLocal('/auth/me'), jsonLocal('/system')]);
     if (!systemManager || contentOrigin !== origin || !system.canRestart) throw new Error('LOCAL_HOST_REQUIRED');
@@ -319,6 +335,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     const target = new URL(baseUrl);
     if (target.origin !== origin && !peerOrigins.has(target.origin)) throw new Error('HOST_TRUST_INVALID');
     contentOrigin = target.origin;
+    hideBrowsers();
   });
   handle('wm:desktop:fetch', async (url, options = {}, requestId) => {
     const target = new URL(url);
@@ -338,6 +355,8 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   });
   handle('wm:desktop:fetch-abort', requestId => networkRequests.get(requestId)?.abort());
   handle('wm:desktop:clear-sessions', async () => {
+    browserOwner = null;
+    await browserReader?.releaseAll?.();
     for (const request of networkRequests.values()) request.abort();
     for (const cookie of await desktopSession.cookies.get({ name: 'wm_personal_session' })) {
       await desktopSession.cookies.remove(`${cookie.secure ? 'https' : 'http'}://${cookie.domain.replace(/^\./, '')}${cookie.path}`, cookie.name);
@@ -617,6 +636,10 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   }, sendTo, ready, async close() {
     lifecycle.stopped = true; clearTimeout(timer);
     await preparedWindow.close();
+    browserReader?.removeListener?.('change', browserChanged);
+    win.webContents.removeListener('did-start-navigation', hideBrowsers);
+    await browserReader?.releaseAll?.();
+    ipcMain.removeHandler('wm:desktop:browser');
     await computerUsage?.close();
     if (computerUsage) computerUsageService.setComputerUsageCheckpoint(null);
     for (const notification of notifications) notification.close();

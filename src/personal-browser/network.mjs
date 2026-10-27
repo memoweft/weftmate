@@ -215,6 +215,9 @@ export function createPinnedProxy({ resolver = (hostname) => dns.lookup(hostname
     get violation() { return violation; },
     get selectedAddress() { return selectedAddress; },
     get bytes() { return bytes; },
+    // An embedded tab outlives a document. Each main-frame navigation gets the
+    // same bounded network budget as a fresh reader document.
+    resetDocument() { bytes = 0; violation = null; },
     async close() {
       closed = true;
       closeSockets();
