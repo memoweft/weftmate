@@ -1678,11 +1678,12 @@ export function createHttpHandler(context) {
       const detailMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/events\/(\d+)\/detail$/.exec(pathname);
       if (request.method === 'GET' && detailMatch) {
         const sessionId = id(detailMatch[1]), seq = Number(detailMatch[2]);
-        if (url.search || !Number.isSafeInteger(seq)) throw failure('INVALID_REQUEST');
+        const outputRaw=url.searchParams.get('outputOffset'),outputOffset=outputRaw===null?undefined:Number(outputRaw);
+        if ((url.search && !/^\?outputOffset=\d+$/.test(url.search)) || !Number.isSafeInteger(seq) || outputOffset!==undefined && !Number.isSafeInteger(outputOffset)) throw failure('INVALID_REQUEST');
         if (!Object.hasOwn(state.sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
         if (typeof context.backend.readEventDetail !== 'function') throw failure('BACKEND_UNAVAILABLE', 503);
         if (state.sessions[sessionId].forgottenSeqs?.includes(seq)) throw failure('SOURCE_UNAVAILABLE', 404);
-        const detail = await context.callBackend(() => context.backend.readEventDetail({ sessionId, seq, ownerId }));
+        const detail = await context.callBackend(() => context.backend.readEventDetail({ sessionId, seq, ownerId, ...(outputOffset===undefined?{}:{outputOffset}) }));
         const current = context.authenticate(request, 'sessions:read');
         if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
         const latest = context.accountState(ownerId).sessions[sessionId];

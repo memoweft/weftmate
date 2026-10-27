@@ -105,6 +105,9 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     var phoneArchive by mutableStateOf(false)
     var canRegenerate by mutableStateOf(false)
     var canRetryQueue by mutableStateOf(false)
+    var canRetryPhoneReply by mutableStateOf(false)
+    private var phoneRetryText = ""
+    private var phoneReplyFailure = ""
     var dark by mutableStateOf(false)
     var textSize by mutableFloatStateOf(DesignTokens.font15)
     var codeSize by mutableFloatStateOf(DesignTokens.font13)
@@ -306,6 +309,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         }.apply()
         rows = emptyList(); approvals = emptyList(); questions = emptyList(); uncertain = emptyList(); phoneLive = ""; focused = false
         canRegenerate = false; canRetryQueue = false
+        canRetryPhoneReply = false; phoneRetryText = ""; phoneReplyFailure = ""
         var approvalSelectionRevision = approvalModeRevision
         try {
         call("native.conversation", JSONObject().put("id", chatId))
@@ -437,6 +441,10 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                 val p = call("conversations.messages", JSONObject().put("conversationId", chatId)); if (g != generation) return
                 rows = p.optJSONArray("messages")?.objects().orEmpty().map { m -> JSONObject().put("eventId", m.optString("id")).put("type", "${m.optString("role")}.message").put("data", m) }
                 running = p.optString("turnStatus") in listOf("running", "streaming")
+                phoneReplyFailure = if (p.optString("turnStatus") == "failed") "回复没能完成，请检查网络或模型设置后重试。" else ""
+                phoneRetryText = if (phoneReplyFailure.isNotEmpty()) p.optJSONArray("messages")?.objects().orEmpty()
+                    .lastOrNull { it.optString("role") == "user" }?.optString("text").orEmpty() else ""
+                canRetryPhoneReply = !running && phoneRetryText.isNotBlank()
                 if (running && phoneLive.isNotBlank()) rows = rows + JSONObject().put("eventId","phone-live").put("type","assistant.delta").put("data",JSONObject().put("text",phoneLive))
             } else {
                 val path = if (older) "/chats/$chatId/events?before=${java.net.URLEncoder.encode(olderCursor, "UTF-8")}&limit=100"
@@ -485,7 +493,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                     }
                 }
             }
-            connected = true; computerOffline = false; error = ""
+            connected = true; computerOffline = false; error = if (phone) phoneReplyFailure else ""
         } catch (e: CancellationException) { throw e
         } catch (e: Exception) {
             if (g != generation) return
@@ -568,6 +576,15 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     fun stop() = launch { if (phoneArchive) environment.phone("stop", phoneParams()) else if (phone) call("chat.stop") else if (sessionId.isNotBlank()) call("shared.stop", JSONObject().put("sessionId", sessionId).put("requestId", "stop-${UUID.randomUUID()}")); refresh() }
     fun regenerate() = launch { if (canRegenerate) { scrollVersion++;environment.phone("regenerate", phoneParams()); refresh() } }
     fun retryQueue() = launch { if (standalone && phoneArchive && canRetryQueue) { scrollVersion++;environment.phone("retryQueue",phoneParams());refresh() } }
+    fun retryPhoneReply() = launch {
+        if (!phone || !canRetryPhoneReply || running || sending) return@launch
+        val g = generation; val text = phoneRetryText
+        sending = true; canRetryPhoneReply = false; scrollVersion++
+        try {
+            call("chat.send", JSONObject().put("conversationId",chatId).put("text",text).put("attachmentIds",JSONArray()))
+            if (g == generation) refresh()
+        } finally { if (g == generation) sending = false }
+    }
     fun copyReply(text:String) = launch { call("clipboard.copy",JSONObject().put("text",text));copyVersion++ }
     fun checkDelivery() = launch { call("shared.outbox.reconcile"); refresh() }
     private suspend fun writeApprovalMode(selected: String, session: String, chat: String): String {
