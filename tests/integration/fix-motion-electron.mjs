@@ -52,8 +52,8 @@ try {
     await page.evaluate(theme => { document.documentElement.dataset.theme = theme; document.body.dataset.theme = theme; }, theme);
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.evaluate(() => { WeftReplyMotion.setPreference('system'); document.querySelector('.activity-entry').click(); });
-    assert.equal(await page.locator('.activity-surface').getAttribute('data-motion'), 'view-enter');
-    assert.equal(await page.locator('.activity-surface').evaluate(node => getComputedStyle(node).animationName), 'm-enter-rise');
+    assert.equal(await page.locator('.activity-surface:not([inert])').getAttribute('data-motion'), 'view-enter');
+    assert.equal(await page.locator('.activity-surface:not([inert])').evaluate(node => getComputedStyle(node).animationName), 'm-enter-rise');
     for (const view of ['library', 'goals', 'health']) {
       await page.locator('.' + view + '-entry').evaluate(button => button.click());
       const surface = page.locator('.' + view + '-surface');
@@ -83,8 +83,8 @@ try {
       while (body._renderText !== text + '完成。') { await new Promise(requestAnimationFrame); samples.push(body._renderText); }
       return { before, first, samples, text: body.textContent, html: body.innerHTML, rowAnimation: getComputedStyle(row).animationName };
     });
-    assert.equal(result.before, ''); assert.ok(Array.from(result.first).length >= 1 && Array.from(result.first).length <= 3);
-    for (let i = 1; i < result.samples.length; i++) assert.ok(Array.from(result.samples[i]).length - Array.from(result.samples[i - 1]).length <= 3);
+    assert.equal(result.before, ''); assert.equal(result.first, '你好🙂，这段**合成回复**按帧流入。');
+    for (let i = 1; i < result.samples.length; i++) assert.ok(result.samples[i].startsWith(result.samples[i - 1]));
     assert.equal(result.text, '你好🙂，这段合成回复按帧流入。完成。'); assert.match(result.html, /<strong>合成回复<\/strong>/);
     assert.equal(result.rowAnimation, 'm-enter-rise');
     const css = await page.evaluate(() => {
@@ -126,7 +126,7 @@ try {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     assert.equal(await page.evaluate(() => WeftReplyMotion.reduced), true);
     await page.evaluate(() => document.querySelector('.activity-entry').click());
-    assert.equal(await page.locator('.activity-surface').evaluate(node => getComputedStyle(node).animationName), 'none');
+    assert.equal(await page.locator('.activity-surface:not([inert])').evaluate(node => getComputedStyle(node).animationName), 'none');
     assert.equal(await page.evaluate(() => { const body = WeftContent.create('立即显示', 'markdown-body', { streaming: true }); return body.textContent; }), '立即显示');
     assert.deepEqual(await page.evaluate(() => {
       const result = {};
@@ -181,7 +181,7 @@ try {
     checkProgress(choice);
     assert.equal(choice.preference, 'full'); assert.equal(choice.reduced, false);
     assert.equal(choice.animation, 'm-enter-rise'); assert.equal(choice.immediate, '');
-    assert.ok(Array.from(choice.first).length >= 1 && Array.from(choice.first).length <= 3);
+    assert.equal(choice.first, choice.text);
     assert.equal(await page.evaluate(() => {
       WeftSettingsNavigation.open('general');
       return document.querySelector('.settings-category[data-category=general]').getAnimations().some(animation => animation.playState === 'running');

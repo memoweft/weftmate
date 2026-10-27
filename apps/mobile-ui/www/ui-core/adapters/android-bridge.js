@@ -62,7 +62,9 @@
         if (result.source !== 'host' || result.sessionId !== sessionId) throw new Error('COMMAND_RECEIPT_INVALID');
         return result;
       }
-      if ((row = match(/^\/personal\/v1\/sessions\/([^/]+)\/events\/(\d+)\/detail$/))) return call('shared.sessions.eventDetail', { sessionId: decodeURIComponent(row[1]), seq: Number(row[2]) });
+      if ((row = match(/^\/personal\/v1\/sessions\/([^/]+)\/events\/(\d+)\/detail$/))) return query.has('outputOffset')
+        ? call('host.business',{path:pathname+url.search,method:'GET'})
+        : call('shared.sessions.eventDetail', { sessionId: decodeURIComponent(row[1]), seq: Number(row[2]) });
       if ((row = match(/^\/personal\/v1\/sessions\/([^/]+)\/(approvals|questions)(?:\/([^/]+))?$/))) {
         const sessionId = decodeURIComponent(row[1]), kind = row[2];
         return call(`shared.${kind}.${method === 'GET' ? 'list' : kind === 'approvals' ? 'decide' : 'answer'}`, {

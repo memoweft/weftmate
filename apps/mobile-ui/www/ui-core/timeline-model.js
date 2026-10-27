@@ -262,11 +262,10 @@
             approvalText: ({'已批准':'Approved','已拒绝':'Declined','已取消':'Cancelled','已失效':'Expired','等待批准':'Awaiting approval'})[step.approvalText] || step.approvalText };
         if (rejected) return outcome?.humanCopy ? { ...step, state:'rejected', summary:english ? `You declined ${toolSummary(step.toolName,step.arguments,'en')}`:`${toolSummary(step.toolName,step.arguments)}被你拒绝了`,statusText:'',approvalText:'' }
             : { ...step,state:'rejected',statusText:english?'Declined; not performed':'你拒绝了，没有做' };
-        if (state === 'cancelled' || progress.state === 'stopped' && ['running','pending','failed'].includes(state))
+        if (state === 'cancelled' || progress.state === 'stopped' && ['running','pending'].includes(state))
             return { ...step, state: 'cancelled', statusText: english ? 'Interrupted' : '已中断' };
-        if (state === 'failed') return { ...step, state: progress.state === 'failed' ? 'failed' : 'issue',
-            statusText: english ? progress.state === 'completed' ? 'Continued another way' : progress.terminal ? 'Encountered an issue' : 'Encountered an issue; continuing'
-                : progress.state === 'completed' ? '已换办法继续' : progress.terminal ? '遇到问题' : '遇到问题，正在继续' };
+        if (state === 'failed') return { ...step, state: 'failed',
+            statusText: english ? 'Failed' : '执行失败' };
         return { ...step, statusText: state === 'running' && !progress.terminal ? english ? 'Running' : '运行中' : '' };
     }
     function progressText(steps, outcome = false) {

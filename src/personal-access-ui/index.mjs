@@ -44,6 +44,7 @@ const files = new Map([
   ['/personal/v1/ui/message-actions.css', ['message-actions.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/controls.css', ['controls.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/main-chat.js', ['components/main-chat.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/chat-process.css', ['chat-process.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/main-chat.css', ['main-chat.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/composer-subtasks.js', ['composer-subtasks.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/next-suggestions.js', ['next-suggestions.js', 'text/javascript; charset=utf-8']],

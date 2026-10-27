@@ -14,6 +14,12 @@ class BusinessRouteUnitTest {
         assertFalse(validBusinessPath("/personal/v1/projects/project-folder?rootPath=another"))
     }
 
+    @Test fun commandOutputUsesBoundedDetailPages() {
+        val detail="/personal/v1/sessions/session-one/events/12/detail"
+        assertTrue(validBusinessPath(detail))
+        assertTrue(validBusinessPath("$detail?outputOffset=64000"))
+        for (query in listOf("outputOffset=-1", "outputOffset=1&ownerId=other", "outputOffset=x", "outputOffset=9999999999999999")) assertFalse(validBusinessPath("$detail?$query"))
+    }
     @Test fun slashCommandsUseExactSessionRoute() {
         assertEquals(125_000, businessReadTimeout("/personal/v1/sessions/session-one/slash-commands", "POST"))
         assertEquals(20_000, businessReadTimeout("/personal/v1/sessions/session-one/slash-commands", "GET"))

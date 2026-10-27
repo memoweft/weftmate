@@ -11,7 +11,7 @@ test('#678 ordinary work sessions retain each message/process pair', {timeout:30
   try {
     const page=await browser.newPage();
     const coreSource=uiCoreAssets.map(name=>readFileSync('src/ui-core/'+name,'utf8')).join('\n;\n');
-    const viewSource=['timeline.js','components/steps.js','components/messages.js','components/resources.js','components/shell.js','components/approvals.js'].map(name=>readFileSync('src/personal-access-ui/'+name,'utf8')).join('\n;\n');
+    const viewSource=['timeline.js','components/steps.js','components/artifacts.js','components/messages.js','components/resources.js','components/shell.js','components/approvals.js'].map(name=>readFileSync('src/personal-access-ui/'+name,'utf8')).join('\n;\n');
     async function setup(creating=false){
       await page.setContent('<div id="chat-scroll"><ol id="transcript"></ol></div><div id="chat-intro"></div><div id="timeline-status"></div><button id="load-older"></button><input id="message-text"><section id="approval-bar" hidden></section><p id="model-hint"></p>');
       await page.evaluate(()=>{const g=globalThis as any;Object.defineProperty(g,"localStorage",{configurable:true,value:{getItem:()=>null,setItem:()=>{},removeItem:()=>{}}});Object.assign(g,{WeftUiComponents:{factories:{}},WeftIcons:{create:()=>document.createElement('span')},WeftControls:{skeleton:()=>{const n=document.createElement('li');n.className='wm-skeleton';return n;}},WeftContent:{closeGallery:()=>{},create:(text:string,cls:string)=>{const n=document.createElement('div');n.className=cls;n.textContent=text;return n;},update:(n:HTMLElement,text:string)=>n.textContent=text,messageCompletionNotice:()=>{}}});});
@@ -76,14 +76,14 @@ test('#678 ordinary work sessions retain each message/process pair', {timeout:30
         f.append(61,'task.queued',{tasks:[{requestId:c,receiptId:'receipt-c',text:'同文连发'},{requestId:d,receiptId:'receipt-d',text:'同文连发'}]});f.check([a,b,c,d],'queued burst');
         f.core.conversationApprovals.entries.set('synthetic-approval',{row:{approvalId:'synthetic-approval',sessionId:'session-work',turn:3,status:'pending'}});
         const bar=document.getElementById('approval-bar');bar.hidden=false;f.ui.renderTimeline();
-        if(bar.closest('.timeline-entry')?.getAttribute('data-timeline')!==`steps-request:${b}`)throw Error('queued messages stole the active approval surface');
+        if(bar.closest('#transcript'))throw Error('approval must remain above the composer');
         f.core.conversationApprovals.entries.clear();bar.hidden=true;
         const disclosure=f.saved.get(b)[1],summary=f.saved.get(b)[2];disclosure.open=true;summary.focus();
         f.append(65,'step.started',{taskId:'turn-3',stepId:'synthetic-read',toolName:'read',state:'running',arguments:{path:'synthetic.txt'}});f.check([a,b,c,d],'B tool');
         const step=disclosure.querySelector('[data-step="synthetic-read"]');if(!step)throw Error('tool detail disappeared');
         f.append(72,'turn.ended',{turn:3,reason:'completed'});f.ack(b,'receipt-b');f.ack(d,'receipt-d');await Promise.all(f.deliveries);f.check([a,b,c,d],'late HTTP acknowledgements');
         f.append(73,'step.completed',{taskId:'turn-3',stepId:'synthetic-read',toolName:'read',state:'completed'});f.check([a,b,c,d],'late owned tool completion');
-        if(step!==disclosure.querySelector('[data-step="synthetic-read"]') || !disclosure.open || document.activeElement!==summary)throw Error('tool update lost expansion, detail or focus');
+        if(step!==disclosure.querySelector('[data-step="synthetic-read"]') || disclosure.open || document.activeElement!==summary)throw Error('completion must fold in place without losing detail or focus');
         if(!/已停止/.test(f.saved.get(a)[2].textContent) || /已停止/.test(f.saved.get(b)[2].textContent))throw Error('stop crossed message ownership');
       });
     });
