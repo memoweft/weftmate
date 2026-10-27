@@ -33,6 +33,7 @@ internal fun validBusinessPath(path: String): Boolean {
     if (path.length > if (route.startsWith("/personal/v1/chats") || route == "/personal/v1/sessions" || route.startsWith("/personal/v1/library") || route.startsWith("/personal/v1/activity") || route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/suggestions"))) 4096 else 512) return false
     if (path == "/personal/v1/sessions/temporary") return true
     val query = path.substringAfter('?', "")
+    if (query.isEmpty() && route.matches(Regex("/personal/v1/terminals(/terminal-[0-9a-f-]{36})?"))) return true
     if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/events/[0-9]+/detail"))) return query.isEmpty() || query.matches(Regex("outputOffset=[0-9]{1,15}"))
     if (query.isEmpty() && route.matches(Regex("/personal/v1/model-services(/(check|model-service-[0-9a-f-]{36}(/(refresh|select))?))?"))) return true
     if (route == "/personal/v1/execution-records" && query.matches(Regex("[A-Za-z0-9._~=&%+-]*"))) return true

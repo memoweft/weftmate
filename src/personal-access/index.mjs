@@ -50,6 +50,7 @@ import { createAccountModelOperations } from './account-models.mjs';
 import { createModelServiceOperations } from './model-services.mjs';
 import { createArtifactOperations } from './artifacts.mjs';
 import { createNativeBrowserOperations } from './native-browser.mjs';
+import { createTerminalOperations } from './terminals.mjs';
 import { createHttpHandler } from './http.mjs';
 import { createMemoryHttpHandler } from './memory-http.mjs';
 import { createPersonalHealthStore } from '../personal-health/index.mjs';
@@ -257,6 +258,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get chats() { return chats; },
     get chatTimeline() { return chatTimeline; },
     get sideChats() { return sideChats; },
+    get terminals() { return terminals; },
     get mainChat() { return mainChat; },
     get chatLifecycle() { return chatLifecycle; },
     eraseChatCopies,
@@ -482,6 +484,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const modelServices = createModelServiceOperations(context);
   const artifacts = createArtifactOperations(context);
   const nativeBrowser = createNativeBrowserOperations(context);
+  const terminals = createTerminalOperations(context);
   const http = createHttpHandler(context);
   const { handle, handleScoped } = http;
   const { handleMemoryHttp } = createMemoryHttpHandler(context);
@@ -916,6 +919,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         response.once('finish', () => { if (closing) candidate.closeIdleConnections(); });
         return handle(request, response);
       });
+      candidate.on('upgrade', terminals.upgrade);
       try {
         await new Promise((resolve, reject) => {
           candidate.once('error', reject);
@@ -1082,6 +1086,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        await terminals.close();
         const modelServicesClosed = modelServices.close();
         await connectors?.close();
         await dataControls.close();

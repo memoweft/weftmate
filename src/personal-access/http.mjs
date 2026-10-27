@@ -308,6 +308,7 @@ export function createHttpHandler(context) {
       const { deviceId, ownerId: authenticatedOwnerId } = context.authenticate(request,
         write ? 'commands:write' : 'sessions:read');
       if (authenticatedOwnerId !== ownerId) throw failure('UNAUTHORIZED', 401);
+      if (await context.terminals.handle(request, response, url)) return;
       if (pathname === '/personal/v1/library' && request.method === 'GET') {
         const result = await context.library.list(ownerId, url.searchParams);
         context.authenticate(request, 'sessions:read');

@@ -7,6 +7,7 @@ module.exports = async context => {
   // and npmRebuild:false. Never depend on npm postinstall having run.
   const {pathToFileURL} = require('node:url');
   await (await import('../patch-root-csr.mjs')).applyRootCsrPatch({requireFrom:pathToFileURL(join(context.packager.projectDir,'package.json')).href});
+  require('./terminal-native.cjs').verifyTerminalNative(context);
   if (context.electronPlatformName !== 'win32') return;
   await (await import('../memory-runtime-package.mjs')).beforeWindowsMemoryPack(context);
   const root=context.packager.projectDir, out=join(root,'.local/installer-ui');

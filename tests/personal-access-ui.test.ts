@@ -36,6 +36,19 @@ test('account UI serves only its fixed public GET assets with restrictive header
   }
 })
 
+test('terminal grid styles receive a fresh response nonce while the script policy stays self-only', async () => {
+  const nonces: string[] = [];
+  for (let i = 0; i < 2; i++) {
+    const res = response(); await servePersonalAccessUi({ method: 'GET', url: '/personal/v1/ui/' }, res);
+    const nonce = res.result.body!.toString().match(/name="weft-style-nonce" content="([^"]+)"/)![1];
+    assert.match(nonce, /^[A-Za-z0-9+/]{24}$/);
+    const policy = res.result.headers!['content-security-policy'];
+    assert.ok(policy.includes(`style-src 'self' 'nonce-${nonce}'`));
+    assert.match(policy, /script-src 'self';/); nonces.push(nonce);
+  }
+  assert.notEqual(nonces[0], nonces[1]);
+});
+
 test('public account shell keeps secrets out of markup and code-generated HTML', () => {
   const html = desktopHtml()
   const app = desktopFeatureSource()
