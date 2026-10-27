@@ -24,7 +24,7 @@
     const meta = node('div', 'browser-meta'); meta.append(title, status);
     el.append(bar, meta, viewport);
     const bindings = new Map();
-    let current, shown = false, disposed = false, frame = 0, lastLayout = '', layoutQueue = Promise.resolve();
+    let current, shown = false, disposed = false, frame = 0, generation = 0, lastLayout = '', layoutQueue = Promise.resolve();
     const errors = {
       BROWSER_URL_INVALID: '网址格式不对，请输入完整的网页地址。',
       BROWSER_TARGET_BLOCKED: '这个地址暂不支持，请打开公开网页。',
@@ -102,16 +102,17 @@
       await binding.ready;
     }
     async function command(action, extra = {}) {
-      const binding = current;
+      const binding = current, requestGeneration = generation;
       if (!binding) return;
       try {
         await binding.ready;
-        if (disposed || current !== binding || !binding.state?.registered) return;
+        if (disposed || requestGeneration !== generation || current !== binding || !binding.state?.registered) return;
         binding.error = null;
         const state = await bridge.browser(action, { conversationId: binding.conversationId, tabId: binding.state.tabId, ...extra });
+        if (disposed || requestGeneration !== generation || current !== binding) return;
         binding.state = state;
-      } catch (error) { binding.error = error; }
-      if (!disposed && current === binding) render();
+      } catch (error) { if (requestGeneration === generation && current === binding) binding.error = error; }
+      if (!disposed && requestGeneration === generation && current === binding) render();
     }
     bar.onsubmit = event => {
       event.preventDefault();
@@ -136,10 +137,10 @@
     return { el,
       show() { if (disposed || shown) return; shown = true; render(); tick(); },
       hide() { shown = false; cancelAnimationFrame(frame); return sendLayout(current, false); },
-      update(next) { sendLayout(current, false); ctx = next; current = null; lastLayout = ''; void connect(); },
+      update(next) { generation++; sendLayout(current, false); ctx = next; current = null; lastLayout = ''; void connect(); },
       async dispose() {
         if (disposed) return;
-        disposed = true; shown = false; cancelAnimationFrame(frame); resize.disconnect(); unsubscribe?.();
+        disposed = true; generation++; shown = false; cancelAnimationFrame(frame); resize.disconnect(); unsubscribe?.();
         document.removeEventListener('visibilitychange', visibility);
         await layoutQueue;
         await Promise.all([...bindings.values()].map(async binding => {
@@ -150,7 +151,5 @@
       },
     };
   } };
-  // UI-01 supplies the registry. Tests can load this script after their registry
-  // and call create(ctx) directly before the workspace shell is merged.
-  globalThis.WeftPanels?.register('browser', definition);
+  WeftPanels.register('browser', definition);
 })();

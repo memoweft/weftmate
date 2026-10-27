@@ -5,7 +5,6 @@ import { uiCoreBrowserAssets as uiCoreAssets, uiCoreSourceAsset } from '../ui-co
 import renderAssets from './render-assets.json' with {type: 'json'};
 
 const files = new Map([
-  ...['panels/browser.js', 'panels/browser.css'].map(name => [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/pages.css', ['pages.css','text/css; charset=utf-8']],
   ['/personal/v1/ui/components/computers.js', ['components/computers.js','text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/work-and-chat.js', ['components/work-and-chat.js','text/javascript; charset=utf-8']],
@@ -99,6 +98,7 @@ const files = new Map([
   ['/personal/v1/ui/panels/review.js', ['panels/review.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/terminal.js', ['panels/terminal.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/browser.js', ['panels/browser.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/panels/browser.css', ['panels/browser.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/panels/files.js', ['panels/files.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/chat.js', ['panels/chat.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/subtasks.js', ['panels/subtasks.js', 'text/javascript; charset=utf-8']],
