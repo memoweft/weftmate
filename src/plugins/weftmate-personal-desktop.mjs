@@ -18,7 +18,7 @@ import PlanModeController, { foldPlanMode } from '@deepseek-ai/dsh-plan-mode';
 import { approvalRequired, approvalPrompt, classifyPersonalRisk, RISK_LABELS } from './personal-approval-policy.mjs';
 import { installCommandEncoding } from './personal-command-encoding.mjs';
 import { reviewSourceLocations } from './personal-review-sources.mjs';
-import { toolNeedsComputer, chatModePrompt, workContinuationPrompt, workFailureNeedsContinuation, applyWorkDirectoryChoice, WORK_SWITCH_REASON } from './personal-work-mode.mjs';
+import { toolNeedsComputer, chatModePrompt, WORK_SWITCH_REASON } from './personal-work-mode.mjs';
 
 export const name = 'weftmate-personal-desktop';
 export const PERSONAL_DESKTOP_PROTOCOL = 'weftmate.personal-desktop.v1';
@@ -162,7 +162,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     if (request.agent?.session?.header?.origin === 'subagent' ||
         request.agent?.session?.header?.agentPreset !== 'personal-remote') return next();
     if (closed || !liveAgent(request.agent)) return 'unavailable';
-    if (policyFor && !request.reason?.startsWith('[weftmate:work-switch]')) {
+    if (policyFor) {
       const policy = await policyFor(request.agent);
       const identity = callsByAgent.get(request.agent)?.get(request.callId);
       const risks = /\[weftmate:([^\]]+)\]/.exec(request.reason ?? '')?.[1].split(',') ?? [];
@@ -682,22 +682,10 @@ export function personalToolAvailability(tools, exec) {
     reason: `Unknown tool "${exec.name}". Use a tool name from the available tool definitions.` };
 }
 
-export async function requestPersonalWorkMode(ctx, exec, { policy, policyFor, approvals, declinedWork, delegated, connector }) {
+export async function requestPersonalWorkMode(ctx, exec, { policy, proposeWork, delegated, connector }) {
   if (!(policy.conversationMode === 'chat' || policy.conversationMode === 'work' && !policy.project) || !toolNeedsComputer(exec.name, exec.arguments, connector)) return { policy };
-  const owner = delegated?.agent ?? exec.agent, source = personalExecutionIdentity(delegated ?? exec);
-  if (declinedWork.get(owner) === source.receiptId) return { policy, decision: { kind: 'deny', reason: '本轮已经选择先不用。停止这件事，用一句话说明需要切换到工作，不要改用其他工具再次询问。' } };
-  const outcome = await ctx.approval.request({ agent: owner, toolName: delegated?.name ?? exec.name,
-    callId: delegated?.callId ?? exec.callId, reason: WORK_SWITCH_REASON, signal: exec.signal });
-  if (outcome !== 'allowed-once') {
-    declinedWork.set(owner, source.receiptId);
-    return { policy, decision: { kind: 'deny', reason: '用户选择先不用。这件事需要切换到工作才能做，本轮不再询问。' } };
-  }
-  await approvals.beforeExecution(delegated ?? exec); policy = await policyFor(owner);
-  if (policy.conversationMode !== 'work' || !policy.project) return { policy, decision: { kind: 'deny', reason: '请先选择电脑上的项目或文件夹，再切换到工作。' } };
-  const previousDirectory=executionDirectory(exec.agent.session);
-  await selectProjectContext(exec.agent, policy);applyWorkDirectoryChoice(exec,previousDirectory,policy.project.rootPath);routeProjectTool(exec);
-  const decision = await projectToolDecision(exec); if (decision) return { policy, decision };
-  await approvals.rememberCall(exec); return { policy };
+  await proposeWork(delegated ?? exec);
+  return { policy, decision: { kind: 'deny', reason: WORK_SWITCH_REASON } };
 }
 
 export function apply(ctx) {
@@ -712,7 +700,7 @@ export function apply(ctx) {
   installConversationReasoning(ctx, policyFor);
   installPersonalization(ctx, policyFor);
   const selectedModes = new WeakMap();
-  const declinedWork = new WeakMap();
+  const proposedWork = new WeakMap(), workRequests = new WeakMap();
   const webExecution = new AsyncLocalStorage();
   const delegatedExecutions = new WeakMap();
   const fileProvenance = createNativeFileProvenance(personalExecutionIdentity);
@@ -744,33 +732,74 @@ export function apply(ctx) {
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
-    const continuation = workContinuationPrompt(step.agent.session, policy);
-    return { ...decision, messages: [...decision.messages.filter(message => !['weftmate-approval-mode', 'weftmate-project', 'weftmate-work-mode', 'weftmate-work-continuation'].includes(message.source?.plugin)),
+    return { ...decision, messages: [...decision.messages.filter(message => !['weftmate-approval-mode', 'weftmate-project', 'weftmate-work-mode'].includes(message.source?.plugin)),
       ...(policy.conversationMode ? [createUserMessage({ content: [{ type: 'text', text: chatModePrompt(policy.conversationMode) }],
         source: { kind: 'plugin', plugin: 'weftmate-work-mode' } })] : []),
       createUserMessage({ content: [{ type: 'text', text: approvalPrompt(policy.mode) }],
         source: { kind: 'plugin', plugin: 'weftmate-approval-mode' } }),
       ...(projectNotice ? [createUserMessage({ content: [{ type: 'text', text: projectNotice }],
-        source: { kind: 'plugin', plugin: 'weftmate-project' } })] : []),
-      ...(continuation ? [createUserMessage({ content: [{ type: 'text', text: continuation }],
-        source: { kind: 'plugin', plugin: 'weftmate-work-continuation' } })] : [])] };
+        source: { kind: 'plugin', plugin: 'weftmate-project' } })] : [])] };
   }, { prepend: true });
-  const continuedWorkFailures = new WeakMap();
-  ctx.on('agent/turn-stopping', async ({ agent, turn, signal }) => {
-    if (signal.aborted || agent.session.header.agentPreset !== 'personal-remote' || agent.session.header.origin === 'subagent' ||
-        continuedWorkFailures.get(agent) === turn || agent.inbox.nextStep.length) return;
-    const start = agent.session.events.findLastIndex(event => event.type === 'turn/start');
-    if (!agent.session.events.slice(start + 1).some(event => event.type === 'approval/asked' && event.data.reason === WORK_SWITCH_REASON)) return;
-    const policy = await policyFor(agent);
-    if (signal.aborted || agent.inbox.nextStep.length || !workFailureNeedsContinuation(agent.session, policy)) return;
-    continuedWorkFailures.set(agent, turn);
-    const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
-    if (signal.aborted || agent.inbox.nextStep.length) return;
-    // DSH re-reads nextStep before committing turn/end. Keep the real user
-    // receipt and original turn, rather than submitting a synthetic new task.
-    agent.steer(createUserMessage({ source: { kind: 'plugin', plugin: 'weftmate-work-recovery' },
-      content: [{ type: 'text', text: `刚才的电脑操作未完成，但切换和文件夹选择已经成功。请在原回合自动恢复一次：先检查实际状态，不重复已完成的操作；再加载当前任务所需工具继续原请求，核对结果。文件任务直接使用文件或命令工具，不走设备转交。不要让用户再次切换或重发指令；权限、审批、拒绝和停止决定照旧。${workContinuationPrompt(agent.session, policy)}` }] }));
-  });
+  // A work proposal is a completed chat reply. Never publish or execute the
+  // computer call in chat, and never wait for a tool approval to end this turn.
+  const proposeWork = async exec => {
+    const session = exec.agent.session;
+    const start = session.events.findLastIndex(event => event.type === 'turn/start');
+    const turn = session.events[start]?.data.turn;
+    if (proposedWork.get(exec.agent)?.turn === turn) return proposedWork.get(exec.agent).promise;
+    const users = session.events.slice(start + 1).filter(event => event.type === 'user/message' && event.data.source?.kind === 'user');
+    if (users.length !== 1) throw refused('TOOL_SOURCE_UNAVAILABLE');
+    const user = users[0].data;
+    const promise = bridge.request({ action: 'register_approval', sessionId: session.id, turn,
+      callId: exec.callId, rootCallId: exec.rootCallId ?? exec.callId, toolName: exec.name,
+      receiptId: user.source.rpcId, messageHash: createHash('sha256').update(user.content.filter(part => part.type === 'text').map(part => part.text).join('')).digest('hex'),
+      argumentsHash: executionHash(exec.arguments), approvalId: randomUUID(), reason: WORK_SWITCH_REASON }, exec.signal);
+    const pending = { turn, promise };
+    proposedWork.set(exec.agent, pending);
+    try { await promise; }
+    catch (error) { if (proposedWork.get(exec.agent) === pending) proposedWork.delete(exec.agent); throw error; }
+  };
+  ctx.on('agent/request', async (payload, next) => {
+    const config = await next();
+    if (payload.agent.session.header.agentPreset === 'personal-remote' && payload.agent.session.header.origin !== 'subagent') workRequests.set(payload.signal, payload.agent);
+    return config;
+  }, { global: true });
+  ctx.on('llm/stream', (options, next) => {
+    const agent = options.signal && workRequests.get(options.signal);
+    if (!agent || options.sessionId !== agent.id || options.purpose !== undefined) return next();
+    return (async function* () {
+      const { isAgentLoopRequest } = await import('@deepseek-ai/dsh-llm');
+      if (!isAgentLoopRequest(options)) { yield* next(); return; }
+      const turn = agent.session.events.findLast(event => event.type === 'turn/start')?.data.turn;
+      const policy = await policyFor(agent);
+      if (policy.conversationMode !== 'chat' && (policy.conversationMode !== 'work' || policy.project)) { yield* next(); return; }
+      let proposed = proposedWork.get(agent)?.turn === turn, held = null;
+      if (proposed) await proposedWork.get(agent).promise;
+      if (!proposed) {
+        for await (const chunk of next()) {
+          if (held || chunk.type === 'block-start' && chunk.blockType === 'tool-call') (held ??= []).push(chunk);
+          else yield chunk;
+        }
+        if (!held) return;
+        const finish = held.findLast(chunk => chunk.type === 'finish')?.reason.kind;
+        const call = held.find(chunk => {
+          if (chunk.type !== 'block-end' || chunk.block.type !== 'tool-call' || !ctx.tools.get(chunk.block.name, agent)) return false;
+          try { return toolNeedsComputer(chunk.block.name, JSON.parse(chunk.block.arguments), connectorToolFor(agent, chunk.block.name)); }
+          catch { return false; } // Native argument validation owns malformed calls.
+        })?.block;
+        if (!call || !['tool-calls','completed','stop'].includes(finish)) { yield* held; return; }
+        await proposeWork({ agent, name: call.name, arguments: call.arguments, callId: call.id, signal: options.signal });
+        proposed = true;
+      }
+      options.signal.throwIfAborted();
+      const message = WORK_SWITCH_REASON.replace('[weftmate:work-switch] ', '');
+      const index = held?.find(chunk => chunk.type === 'block-start')?.index ?? 0;
+      yield { type: 'block-start', index, blockType: 'text' };
+      yield { type: 'text-delta', index, text: message };
+      yield { type: 'block-end', index, block: { type: 'text', text: message } };
+      yield { type: 'finish', reason: { kind: 'completed' } };
+    })();
+  }, { global: true });
   // The pinned driver copies static AgentOptions, while the personal UI selects
   // models through DSH's scoped selection. Initialize a native child before its
   // loop starts, using the parent's actual request configuration and DSH's helper.
@@ -806,7 +835,7 @@ export function apply(ctx) {
     const owner = delegated?.agent ?? exec.agent;
     let policy = await policyFor(owner);
     const connector = connectorToolFor(exec.agent, exec.name);
-    const workMode = await requestPersonalWorkMode(ctx, exec, { policy, policyFor, approvals, declinedWork, delegated, connector });
+    const workMode = await requestPersonalWorkMode(ctx, exec, { policy, proposeWork, delegated, connector });
     policy = workMode.policy; if (workMode.decision) return workMode.decision;
     const decision = await next();
     if (decision.kind === 'deny') return decision;

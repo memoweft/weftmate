@@ -369,6 +369,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             if (core.state.personalCapabilities?.sessionStatus === 1 && core.approvalContextCurrent(context)) void core.refreshSessions?.();
             effects.renderConversationApprovals();
             await core.refreshConversationApprovals(context, true);
+            return receipt;
         }
         catch (error) {
             if (!core.approvalContextCurrent(context) || core.conversationApprovals.operations.get(id) !== operation)
