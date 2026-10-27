@@ -322,10 +322,11 @@ public actor PersonalClient {
             let anchorKey = "installation-key:" + hostID
             let old = try store.load(key: anchorKey).map { try JSONDecoder().decode([String: String].self, from: $0) }
             if let old, old != material.hostTrust.publicJwk { throw APIFailure.identityMismatch }
+            if let pairing, pairing.publicJwk != material.hostTrust.publicJwk { throw APIFailure.identityMismatch }
             // First contact has passed system CA + hostname verification. After saving the
             // signed pin, /status below must pass the pin too before a content session persists.
             let pin = try HostTrustDelivery.verify(token: material.hostTrust.trustToken,
-                trustedPublicJwk: old ?? material.hostTrust.publicJwk, hostID: hostID, subject: trustSubject,
+                trustedPublicJwk: old ?? pairing?.publicJwk ?? material.hostTrust.publicJwk, hostID: hostID, subject: trustSubject,
                 deviceID: "apple-" + key.thumbprint, thumbprint: key.thumbprint,
                 allowLoopbackHTTP: server.origin.scheme == "http" && ["127.0.0.1", "localhost"].contains(server.origin.host))
             guard pin.origin == server.originString || pin.relay?.baseUrl == server.originString else { throw APIFailure.identityMismatch }

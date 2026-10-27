@@ -121,7 +121,7 @@ import WeftMateCore
     func summary(_ category: String) -> String {
         guard let app else { return "" }
         switch category {
-        case "general": return "简体中文"
+        case "general": return "回复与回顾"
         case "appearance": return AppleAppearance(rawValue: app.appearanceMode)?.title ?? "跟随系统"
         case "account": return app.cloudLogin.authenticated ? app.cloudLogin.email : app.accountName
         case "devices":
@@ -136,7 +136,9 @@ import WeftMateCore
         case "memory": return "记忆与来源"
         case "about": return installedVersion + " / " + installedBuild
         case "schedules": return "提醒与任务"
-        case "system": return app.verificationPending ? "等待连接" : "已连接"
+        case "system": return app.session == nil ? "还没连接电脑" : app.verificationPending ? "等待连接" : "已连接"
+        case "healthData": return "读取与使用范围"
+        case "phone-chats": return "保存在这台手机"
         case "backups": return "电脑本地备份"
         default: return ""
         }

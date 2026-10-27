@@ -35,6 +35,26 @@ private final class LogClock: @unchecked Sendable {
         #expect(!result.shouldNotify); #expect(result.previous?.clean == true)
         #expect(await second.records().filter { $0.event == .previousUncleanExit }.isEmpty)
     }
+    @Test func recordingPreferenceSurvivesRestartAndClearOnlyRemovesOwnedRecords() async throws {
+        let url = try root(); defer { try? FileManager.default.removeItem(at: url) }
+        let first = logger(url); await first.start()
+        await first.record(.syncFailure, fields: ["phase": "sync", "code": "UNAVAILABLE"])
+        try await first.setRecordingEnabled(false)
+        let second = logger(url); await second.start()
+        #expect(await second.isRecordingEnabled() == false)
+        let old = await second.records()
+        await second.record(.failure); await second.diagnostic(.crash, fields: [:]); await second.state("foreground")
+        #expect(await second.records() == old)
+        let unrelated = url.appendingPathComponent("keep.txt")
+        try Data("keep".utf8).write(to: unrelated)
+        try await second.clearRecords()
+        #expect(await second.records().isEmpty)
+        #expect(FileManager.default.fileExists(atPath: unrelated.path))
+        try await second.setRecordingEnabled(true)
+        await second.record(.syncFailure, fields: ["phase": "sync", "code": "UNAVAILABLE"])
+        #expect(await second.records().contains { $0.event == .syncFailure })
+        #expect(await second.snapshot().shouldNotify == false)
+    }
     @Test func backgroundReclamationIsNotCrashNotice() async throws {
         let url = try root(); defer { try? FileManager.default.removeItem(at: url) }
         let first = logger(url); await first.start(); await first.state("background")

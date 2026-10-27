@@ -586,5 +586,12 @@
     "api": "urlSession",
     "sha256": "1960411c4a90d129f600348491cb80faaf99263d210a5d0416bf23db8290a0c5",
     "reason": "Non-actor URLSession completion delegate takes NSRecursiveLock, finishes the Sendable stream once, and cancels the owned network task. It does not access the product controller or UI actor."
+  },
+  {
+    "file": "apps/apple/iOS/PairingScannerView.swift",
+    "line": 89,
+    "api": "dataScanner",
+    "sha256": "2cc0cf5ff5fd046dcf609df48c7caf09c53c9af2659039aa740bb19fa6cb7728",
+    "reason": "VisionKit declares DataScannerViewControllerDelegate @MainActor. The unavailable callback only updates the scanner error on that SDK-isolated UI actor. https://developer.apple.com/documentation/visionkit/datascannerviewcontrollerdelegate"
   }
 ]

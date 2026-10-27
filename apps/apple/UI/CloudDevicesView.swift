@@ -9,7 +9,10 @@ struct CloudDevicesView: View {
     @State private var newName = ""
     @State private var computerRename: CloudDirectoryDevice?
     @State private var computerRemove: CloudDirectoryDevice?
-    var body: some View {
+    @ViewBuilder var body: some View {
+        #if os(iOS)
+        PhoneDevicesPage(app: app, cloud: cloud)
+        #else
         ScrollView {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
                 if let notice = cloud.newDeviceNotice {
@@ -66,6 +69,7 @@ struct CloudDevicesView: View {
                 Button("将设备下线", role: .destructive) { if let device = removeTarget { Task { await cloud.removeDevice(device) } }; removeTarget = nil }
                 Button("取消", role: .cancel) { removeTarget = nil }
             }
+        #endif
     }
     private static func date(_ value: String) -> String {
         let parser = ISO8601DateFormatter()

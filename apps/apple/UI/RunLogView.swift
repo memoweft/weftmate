@@ -13,6 +13,8 @@ struct RunLogView: View {
     @ObservedObject private var runtime = RunLogRuntime.shared
     @Environment(\.scenePhase) private var scenePhase
     @State private var peer = false
+    @State private var recording = true
+    @State private var clearConfirmation = false
     @State private var summary = ""
     @State private var preview: Preview?
     @State private var detail: RunLogRecord?
@@ -40,7 +42,7 @@ struct RunLogView: View {
     }
     private var canExport: Bool {
         guard let snapshot, snapshot.readable else { return false }
-        return peer ? snapshot.summary.appVersion != "unknown" : snapshot.current != nil
+        return peer ? snapshot.summary.appVersion != "unknown" : snapshot.current != nil || !recording
     }
     var body: some View {
         #if os(macOS)
@@ -56,7 +58,8 @@ struct RunLogView: View {
             }
         }
         #else
-        page.navigationTitle("运行记录").toolbar { phoneDone }
+        page.scrollContentBackground(.hidden).background(Weave.grouped).navigationTitle("运行记录").toolbar { phoneDone }
+            .task { recording = await runtime.store.isRecordingEnabled() }
             .navigationDestination(isPresented: Binding(get: { detail != nil }, set: { if !$0 { detail = nil } })) {
                 if let detail { RunLogDetail(record: detail, records: snapshot?.summary.recentAbnormalRecords ?? []).navigationTitle("记录详情").toolbar { phoneDone } }
             }
@@ -71,6 +74,9 @@ struct RunLogView: View {
         Form {
             #if os(iOS)
             Section {
+                Toggle("记录运行信息", isOn: Binding(get: { recording }, set: { value in
+                    Task { do { try await runtime.store.setRecordingEnabled(value); recording = value; await runtime.reload() } catch { notice = "记录设置未能保存，请重试。" } }
+                })).accessibilityIdentifier("runLog.recording")
                 Picker("记录来自", selection: $peer) { Text("iPhone").tag(false); Text("手表").tag(true) }
                     .pickerStyle(.segmented).accessibilityIdentifier("runLogSource")
             }
@@ -130,6 +136,27 @@ struct RunLogView: View {
             } else {
                 Section { ProgressView("正在读取运行记录…") }
             }
+            #if os(iOS)
+            Section {
+                Button("清空这台手机的记录", role: .destructive) { clearConfirmation = true }.disabled(peer).accessibilityIdentifier("runLog.clear")
+                    .phonePopover(isPresented: $clearConfirmation) {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
+                            Text("清空已有运行记录？之后按当前开关继续记录，已分享的文件需要另行删除。")
+                            Button("清空记录", role: .destructive) {
+                                Task {
+                                    do {
+                                        try await runtime.store.clearRecords()
+                                        summary = ""; logPreview = ""; detail = nil; preview = nil; preparedURL = nil; exportURL = nil
+                                        await runtime.reload(); notice = "旧记录已清空。"
+                                    } catch { notice = "记录未能清空，请重试。" }
+                                    clearConfirmation = false
+                                }
+                            }.accessibilityIdentifier("runLog.confirmClear")
+                            Button("取消") { clearConfirmation = false }
+                        }.padding(AppleTokens.Space.p20).frame(idealWidth: AppleTokens.Phone.menuWidth)
+                    }
+            }
+            #endif
             if let notice { Section { InlineNotice(message: notice) } }
         }.formStyle(.grouped).foregroundStyle(Weave.ink).tint(Weave.accent)
             .accessibilityIdentifier("runLogPage")
