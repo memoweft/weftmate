@@ -41,6 +41,7 @@
     renderConversationTasks,renderConversationApprovals,renderConversationQuestions,
     beginOlderHistory:()=>{},restoreOlderHistoryPosition:()=>{},scrollToLatest:()=>scrollBottom(true),
     updateAvailability:updateComposer, openTimelinePreview:(context,path,title)=>openTimelinePreview(context,()=>uiCore.readResource(path),title),
+    openFileChange,
     appendResourceArtifactActions:()=>{},
     openLibrary:()=>selectMobileTab('library'),
     downloadTimelineArtifact:artifact=>call('shared.artifacts.save',{artifactId:artifact.artifactId}),

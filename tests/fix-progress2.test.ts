@@ -53,3 +53,19 @@ test('reply actions belong only to the final answer of each turn, never interim 
   assert.equal(finalReply(legacy,commentary),true,'older message-only history retains each turn final reply');
   assert.equal(finalReply(history,{...commentary,data:{text:'独立提醒',reminder:true}},true),true);
 });
+
+test('UI02b visible narration stays between attempts even when thinking is hidden',()=>{
+  const f=fixture(),events=[
+    {seq:0,type:'turn.started',data:{turn:1}},
+    {seq:1,type:'user.message',data:{text:'请整理合成报告'}},
+    {seq:2,type:'assistant.message',data:{text:'先检查资料。'}},
+    {seq:3,type:'step.completed',data:{taskId:'turn-1',stepId:'first',toolName:'pwsh',state:'failed'}},
+    {seq:4,type:'assistant.message',data:{text:'PowerShell syntax failed; I will retry with a corrected command.'}},
+    {seq:5,type:'step.completed',data:{taskId:'turn-1',stepId:'retry',toolName:'pwsh',state:'completed'}},
+    {seq:6,type:'assistant.message',data:{text:'报告已整理好。'}},
+    {seq:7,type:'turn.ended',data:{turn:1,reason:'completed'}}
+  ];
+  const prepared=f.WeftTimeline.prepare(events,'hidden'),steps=f.WeftUiCore.projectTimeline(prepared,[],true).groups[0].steps;
+  assert.deepEqual(Array.from(steps,step=>step.progressText || step.stepId),['先检查资料。','first',events[4].data.text,'retry']);
+  assert.equal(prepared.filter(event=>event.type==='assistant.message')[0].data.text,'报告已整理好。');
+});

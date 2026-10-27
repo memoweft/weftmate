@@ -232,6 +232,7 @@
   --wm-radius-control: 8px;
   --wm-radius-card: 12px;
   --wm-radius-panel: 16px;
+  --wm-radius-composer: 20px;
   --wm-font-size-10: 10px;
   --wm-font-size-11: 11px;
   --wm-font-size-12: 12px;
@@ -329,8 +330,16 @@
   --wm-size-search-width: 680px;
   --wm-size-search-meta: 120px;
   --wm-size-settings-content: 620px;
-  --wm-size-sidebar: 232px;
+  --wm-size-sidebar: 256px;
   --wm-size-reading: 760px;
+  --wm-size-workspace-row: 36px;
+  --wm-size-workspace-header: 52px;
+  --wm-size-workspace-menu: 208px;
+  --wm-size-workspace-panel: 380px;
+  --wm-size-workspace-nav-row: 38px;
+  --wm-size-composer-measure: 790px;
+  --wm-size-panel-launcher-row: 52px;
+  --wm-size-composer-input: 70px;
   --wm-font-relative-body: 1rem;
   --wm-font-relative-heading1: 1.6rem;
   --wm-font-relative-heading2: 1.25rem;
@@ -341,9 +350,9 @@
   --wm-type-secondary: 12px;
   --wm-type-heading: 18px;
   --wm-type-title: 22px;
-  --wm-type-sidebar: 13px;
-  --wm-type-menu: 13px;
-  --wm-type-button: 13px;
+  --wm-type-sidebar: 14px;
+  --wm-type-menu: 14px;
+  --wm-type-button: 14px;
   --wm-control-pointer: 32px;
   --wm-control-touch: 44px;
   --wm-control-switch-width: 36px;
@@ -373,7 +382,7 @@
   --window-frame: var(--canvas);
   --sidebar: var(--window-frame);
   --panel: var(--surface);
-  --panel-divider: transparent;
+  --panel-divider: var(--line);
   --search-highlight-bg: #fff1a8;
   --search-highlight-ink: #302507;
   --syntax-keyword: #31579b;
@@ -381,6 +390,7 @@
   --syntax-comment: #63695e;
   --syntax-number: #8a3972;
   --syntax-title: #795615;
+  --composer-surface: var(--surface);
 }
 :root[data-theme="dark"] {
   --canvas: #202020;
@@ -404,7 +414,7 @@
   --window-frame: var(--canvas);
   --sidebar: var(--window-frame);
   --panel: var(--surface);
-  --panel-divider: transparent;
+  --panel-divider: var(--line);
   --search-highlight-bg: #66521c;
   --search-highlight-ink: #ffffff;
   --syntax-keyword: #B9D2FF;
@@ -412,6 +422,7 @@
   --syntax-comment: #a0a397;
   --syntax-number: #eab9dd;
   --syntax-title: #ead598;
+  --composer-surface: var(--surface-soft);
 }
 :root[data-accent="blue"] {
   --accent: #365eab;

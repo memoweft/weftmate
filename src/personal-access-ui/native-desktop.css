@@ -1,5 +1,5 @@
 /* Reserve native Windows caption buttons and a dedicated non-interactive drag area. */
-.weftmate-desktop body { padding-top: var(--desktop-caption-height, var(--wm-space-44)); }
+.weftmate-desktop body:not(.assistant-active) { padding-top: var(--desktop-caption-height, var(--wm-space-44)); }
 .weftmate-desktop .desktop-titlebar {
   position: fixed; inset: 0 0 auto; height: 44px; box-sizing: border-box;
   padding: var(--wm-space-12) var(--wm-size-160) var(--wm-space-12) var(--wm-space-16); z-index: 1000;
@@ -8,7 +8,7 @@
 }
 .weftmate-desktop .page { min-height: calc(100dvh - var(--desktop-caption-height, var(--wm-space-44))); }
 .weftmate-desktop .assistant-shell { height: min(820px, calc(100dvh - 176px)); }
-.weftmate-desktop[data-native-workspace="full"] .assistant-shell { height: calc(100dvh - var(--desktop-caption-height, var(--wm-space-44))); }
+.weftmate-desktop[data-native-workspace="full"] .assistant-shell { height: 100dvh; }
 @media (max-width: 640px) {
   .weftmate-desktop .timeline-preview {
     top: var(--desktop-caption-height, var(--wm-space-44));
@@ -18,10 +18,9 @@
 .weftmate-desktop .desktop-startup { display: flex; align-items: center; }
 .weftmate-desktop .desktop-update-notice {
   -webkit-app-region: no-drag;
-  position: absolute; inset-inline-end: var(--wm-size-160); top: 50%; transform: translateY(-50%);
-  box-sizing: border-box; max-width: min(45vw, 420px, calc(100% - var(--wm-size-160) - var(--wm-size-160)));
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  padding: var(--wm-space-4) var(--wm-space-8); border: 0; border-radius: var(--wm-space-4);
+  position:static; box-sizing:border-box; width:100%; max-width:100%; margin-bottom:var(--wm-space-8);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  padding:var(--wm-space-6) var(--wm-space-8); border:0; border-radius:var(--wm-radius-control);
   background: transparent; color: var(--ink-secondary); font: inherit; cursor: pointer;
 }
 .weftmate-desktop .desktop-update-notice:hover { background: var(--surface-soft); color: var(--ink); }
@@ -66,3 +65,17 @@
 
 .weftmate-desktop .rail-top { flex-wrap: wrap; }
 .weftmate-desktop #new-temporary-session { order: 1; flex-basis: 100%; }
+
+/* Assistant chrome shares the first workspace row with native caption controls. */
+.weftmate-desktop body.assistant-active { padding-top:0; }
+.weftmate-desktop .assistant-active .page { height:100dvh; min-height:0; }
+.weftmate-desktop .assistant-active .desktop-titlebar { width:var(--wm-size-sidebar); padding:var(--wm-space-6) var(--wm-space-14); font-size:0; }
+.weftmate-desktop .assistant-active .desktop-titlebar > .wm-brand { display:none; }
+.weftmate-desktop .assistant-active.rail-collapsed .desktop-titlebar { width:var(--wm-space-52); background:var(--panel); }
+.weftmate-desktop .assistant-active .titlebar-rail-toggle { margin:0; }
+.weftmate-desktop .assistant-active .assistant-topbar { -webkit-app-region:drag; padding-right:var(--wm-size-160); }
+.weftmate-desktop .assistant-active.preview-open .assistant-topbar { padding-right:var(--wm-space-16); }
+.weftmate-desktop .assistant-active.rail-collapsed .assistant-topbar { padding-left:var(--wm-space-56); }
+.weftmate-desktop .assistant-active .preview-heading { -webkit-app-region:drag; padding-right:var(--wm-size-160); }
+.weftmate-desktop :is(.assistant-topbar,.preview-heading,.rail-brand-row) :is(button,input,a) { -webkit-app-region:no-drag; }
+.weftmate-desktop .rail-brand-row { -webkit-app-region:drag; }

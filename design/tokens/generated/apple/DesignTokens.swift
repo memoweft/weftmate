@@ -72,7 +72,8 @@ public enum WeftDesignTokens {
         "999": 999,
         "control": 8,
         "card": 12,
-        "panel": 16
+        "panel": 16,
+        "composer": 20
     ]
     public static let fontSize: [String: Double] = [
         "10": 10,
@@ -394,6 +395,7 @@ public enum AppleTokens {
         public static let rcontrol: CGFloat = 8
         public static let rcard: CGFloat = 12
         public static let rpanel: CGFloat = 16
+        public static let rcomposer: CGFloat = 20
     }
     public enum FontSize {
         public static let f10: CGFloat = 10

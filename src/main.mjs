@@ -29,7 +29,7 @@ import { createHostLog, redactSecretText, diagnosticPlatform } from './host-log.
 import { readLocalServiceKey } from './local-service-key.mjs';
 import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady, createBackgroundRouteRecorder } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, net, crashReporter, powerMonitor } from 'electron';
+import { app, BrowserWindow, WebContentsView, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, net, crashReporter, powerMonitor } from 'electron';
 import { stageCloudVaultRestore, reconcileCloudVaultRestore, finishCloudVaultRestore } from './personal-cloud-backup/vault-restore.mjs';
 import { privateNetworkOnPower } from './personal-cloud-backup/upload-conditions.mjs';
 import packageInfo from '../package.json' with { type: 'json' };
@@ -3260,6 +3260,13 @@ async function bootstrap() {
   personalBrowserReader = accessPort === null ? null :
     (await import('./personal-browser/index.mjs')).createPersonalBrowserReader({ BrowserWindow, session,
       ...syntheticBrowserFixtureSettings(process.env, userDataDir) });
+  if (personalBrowserReader && desktopRequested) {
+    const { DesktopBrowser } = await import('./personal-browser/desktop.mjs');
+    personalBrowserReader = new DesktopBrowser({ WebContentsView, session,
+      fallbackReader: personalBrowserReader, getParent: () => personalDesktop?.window,
+      resolveScope: (ownerId, id, allowDeleting) => personalAccessService.browserScope(ownerId, id, allowDeleting),
+      ...syntheticBrowserFixtureSettings(process.env, userDataDir) });
+  }
   const accessBackend = accessPort === null ? null : createPersonalAccessBackend({
     currentOrigin: () => runtimeOrigin,
     getRuntimeId: () => webRuntime?.currentPersonalRuntimeId() ?? null,
@@ -3707,7 +3714,7 @@ async function bootstrap() {
           await desktopStartup?.ready;
           if (isQuitting) return;
           desktopStartup?.adopt();
-          personalDesktop = createPersonalDesktop({ preparedWindow: preparedDesktopWindow, computerUsageService: personalAccessService, systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
+          personalDesktop = createPersonalDesktop({ browserReader: personalBrowserReader, preparedWindow: preparedDesktopWindow, computerUsageService: personalAccessService, systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
             startInTray: true, // Preserve the startup shell's visibility, including a user closing it.
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
           win = personalDesktop.window;

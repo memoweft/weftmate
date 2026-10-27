@@ -377,6 +377,108 @@ test('JWT signature/audience/algorithm/expiry/type and DPoP possession/method/UR
   assert.equal((await f.requests('POST', '/auth/cloud-session', { accessToken: token, deviceName: 'Repeat' }, undefined, { dpop: good.proof })).status, 401)
 })
 
+const phoneNonce = () => createHash('sha256').update(randomUUID()).digest('base64url');
+const phoneCommit = (p: any, deviceId: string, jkt: string, nonce: string) => hash(JSON.stringify(['wm-pair-phone-v2', p.challenge, deviceId, jkt, nonce]));
+async function submitPairing(f: any, p: any, token: string, key: any, deviceId = 'phone') {
+  p.transcript = [p.version,p.issuer,p.sub,p.hostId,p.tlsSpki,
+    await calculateJwkThumbprint(p.publicJwk),p.challenge,p.expiresAt,p.origin,p.relay?.baseUrl || ''];
+  const nonce = phoneNonce(), jkt = await calculateJwkThumbprint(await exportJWK(key.publicKey));
+  const joined = (await f.exchange(token, key, '/cloud/pairings/join', {challenge:p.challenge, phoneCommitment:phoneCommit(p,deviceId,jkt,nonce)})).result;
+  assert.equal(joined.status, 200, JSON.stringify(joined));
+  assert.equal(joined.cookie, undefined);
+  assert.equal(hash(JSON.stringify(['wm-pair-host-v2', ...p.transcript, joined.hostNonce])), p.hostCommitment);
+  const revealed = (await f.exchange(token,key,'/cloud/pairings/reveal',{challenge:p.challenge,phoneNonce:nonce})).result;
+  assert.equal(revealed.status,200,JSON.stringify(revealed)); assert.equal(revealed.cookie,undefined);
+  const sas = (transcript = p.transcript, hn = joined.hostNonce, pn = nonce, did = deviceId, thumb = jkt) =>
+    (createHash('sha256').update(JSON.stringify(['wm-pair-sas-v2',...transcript,hn,did,thumb,pn])).digest().readUInt32BE(0) % 1_000_000).toString().padStart(6,'0');
+  return {nonce,jkt,joined,sas};
+}
+async function confirmPairing(f: any, p: any, token: string, key: any, deviceId = 'phone') {
+  const submitted = await submitPairing(f,p,token,key,deviceId);
+  const decision = await f.requests('POST','/cloud/pairings/decision',{challenge:p.challenge,decision:'confirm',verificationCode:submitted.sas()},f.a);
+  assert.equal(decision.status,200,JSON.stringify(decision)); return submitted;
+}
+
+test('PAIR-CODE real requests require desktop comparison before redemption and bind every transcript contribution', async t => {
+  const f=await fixture(t);await f.bind();const key=await generateKeyPair('ES256');const token=await f.access('cloud-a','phone',key);
+  const existingKey=await generateKeyPair('ES256'),existingToken=await f.access('cloud-a','existing-phone',existingKey);
+  assert.equal((await f.exchange(existingToken,existingKey)).result.status,200);
+  const p=await f.requests('POST','/cloud/pairings',{},f.a);
+  assert.equal(p.version,2); assert.equal(p.hostNonce,undefined,'host secret must stay hidden until phone commits');
+  for(const route of ['/auth/cloud-session','/auth/cloud-channel']) {
+    const bypass=(await f.exchange(token,key,route)).result;
+    assert.equal(bypass.status,403,'new device cannot preempt join with ordinary login');assert.equal(bypass.cookie,undefined);assert.equal(bypass.token,undefined);
+  }
+  assert.equal((await f.exchange(existingToken,existingKey)).result.status,200,'existing trusted device remains usable');
+  const before=await f.exchange(token,key,'/cloud/pairings/redeem',{challenge:p.challenge});assert.equal(before.result.status,401);
+  const s=await submitPairing(f,p,token,key);
+  const status=await f.requests('POST','/cloud/pairings/status',{challenge:p.challenge},f.a);
+  assert.equal(status.verificationCode,s.sas());assert.equal(status.state,'comparing');assert.match(status.verificationCode,/^\d{6}$/);
+  for(const route of ['/cloud/pairings/redeem','/auth/cloud-session','/auth/cloud-channel']) {
+    const result=(await f.exchange(token,key,route,route.endsWith('redeem')?{challenge:p.challenge}:{})).result;
+    assert.equal(result.status,403,JSON.stringify(result));assert.equal(result.cookie,undefined);assert.equal(result.token,undefined);
+  }
+  for(let i=0;i<p.transcript.length;i++){const changed=[...p.transcript];changed[i]=String(changed[i])+'x';assert.notEqual(s.sas(changed),s.sas());}
+  assert.notEqual(s.sas(p.transcript,phoneNonce()),s.sas());assert.notEqual(s.sas(p.transcript,s.joined.hostNonce,phoneNonce()),s.sas());
+  assert.notEqual(s.sas(p.transcript,s.joined.hostNonce,s.nonce,'other-device'),s.sas());
+  assert.notEqual(s.sas(p.transcript,s.joined.hostNonce,s.nonce,'phone',phoneNonce()),s.sas());
+  const second=await generateKeyPair('ES256'),other=await f.access('cloud-a','phone',second);
+  assert.equal((await f.exchange(other,second)).result.status,403,'key rotation cannot bypass an in-progress pairing');
+  assert.equal((await f.requests('POST','/cloud/pairings/decision',{challenge:p.challenge,decision:'confirm',verificationCode:'wrong'},f.a)).status,409);
+  await f.restart();
+  assert.equal((await f.requests('POST','/cloud/pairings/status',{challenge:p.challenge},f.a)).verificationCode,s.sas());
+  assert.equal((await f.requests('POST','/cloud/pairings/decision',{challenge:p.challenge,decision:'confirm',verificationCode:s.sas()},f.a)).status,200);
+  assert.equal((await f.exchange(other,second,'/cloud/pairings/redeem',{challenge:p.challenge})).result.status,401);
+  const session=(await f.exchange(token,key,'/cloud/pairings/redeem',{challenge:p.challenge})).result;
+  assert.equal(session.status,200);assert.ok(session.cookie);assert.equal((await f.requests('GET','/auth/me',undefined,session)).status,200);
+  assert.equal((await f.exchange(token,key,'/cloud/pairings/redeem',{challenge:p.challenge})).result.status,401);
+});
+
+test('PAIR-CODE cancellation, expiry, replacement, account boundaries and commitment lock survive real requests', async t => {
+  const f=await fixture(t);await f.bind();await f.bind(f.b,'cloud-b');
+  const key=await generateKeyPair('ES256'),token=await f.access('cloud-a','phone',key);
+  const p=await f.requests('POST','/cloud/pairings',{},f.a),s=await submitPairing(f,p,token,key);
+  assert.equal((await f.requests('POST','/cloud/pairings/status',{challenge:p.challenge},f.b)).status,401);
+  assert.equal((await f.requests('POST','/cloud/pairings/decision',{challenge:p.challenge,decision:'confirm',verificationCode:s.sas()},f.b)).status,401);
+  const wrongAccount=await f.access('cloud-b','phone',key);
+  assert.equal((await f.exchange(wrongAccount,key,'/cloud/pairings/reveal',{challenge:p.challenge,phoneNonce:s.nonce})).result.status,401);
+  const different=phoneNonce();
+  assert.equal((await f.exchange(token,key,'/cloud/pairings/join',{challenge:p.challenge,phoneCommitment:phoneCommit(p,'phone',s.jkt,different)})).result.status,409);
+  assert.equal((await f.exchange(token,key,'/cloud/pairings/reveal',{challenge:p.challenge,phoneNonce:different})).result.status,401);
+  assert.equal((await f.requests('POST','/cloud/pairings/decision',{challenge:p.challenge,decision:'cancel'},f.a)).state,'cancelled');
+  await f.restart();
+  assert.equal((await f.exchange(token,key,'/cloud/pairings/redeem',{challenge:p.challenge})).result.status,401);
+  assert.equal((await f.exchange(token,key)).result.status,403,'cancellation cannot be bypassed by ordinary login');
+  const expired=await f.requests('POST','/cloud/pairings',{},f.a);await submitPairing(f,expired,token,key);
+  f.advance(120_001);
+  assert.equal((await f.requests('POST','/cloud/pairings/status',{challenge:expired.challenge},f.a)).state,'expired');
+  assert.equal((await f.requests('POST','/cloud/pairings/decision',{challenge:expired.challenge,decision:'confirm',verificationCode:'000000'},f.a)).status,401);
+  assert.equal((await f.exchange(token,key,'/cloud/pairings/redeem',{challenge:expired.challenge})).result.status,401);
+  assert.equal((await f.exchange(token,key)).result.status,403);
+  const old=await f.requests('POST','/cloud/pairings',{},f.a),newer=await f.requests('POST','/cloud/pairings',{},f.a);
+  assert.equal((await f.requests('POST','/cloud/pairings/status',{challenge:old.challenge},f.a)).state,'cancelled');
+  await confirmPairing(f,newer,token,key);
+  const results=await Promise.all([f.exchange(token,key,'/cloud/pairings/redeem',{challenge:newer.challenge}),f.exchange(token,key,'/cloud/pairings/redeem',{challenge:newer.challenge})]);
+  assert.deepEqual(results.map(x=>x.result.status).sort(),[200,401]);
+});
+
+test('PAIR-CODE confirming a replacement key never authorizes cancelled or superseded keys', async t => {
+  const f=await fixture(t);await f.bind();
+  const a=await generateKeyPair('ES256'),at=await f.access('cloud-a','phone',a);
+  const oldSession=(await f.exchange(at,a)).result;assert.equal(oldSession.status,200);
+  const p1=await f.requests('POST','/cloud/pairings',{},f.a);await submitPairing(f,p1,at,a);
+  await f.requests('POST','/cloud/pairings/decision',{challenge:p1.challenge,decision:'cancel'},f.a);
+  assert.equal((await f.exchange(at,a)).result.status,403);
+  const b=await generateKeyPair('ES256'),bt=await f.access('cloud-a','phone',b);
+  const p2=await f.requests('POST','/cloud/pairings',{},f.a);await confirmPairing(f,p2,bt,b);
+  const fresh=(await f.exchange(bt,b,'/cloud/pairings/redeem',{challenge:p2.challenge})).result;
+  assert.equal(fresh.status,200);assert.equal((await f.exchange(bt,b)).result.status,200);
+  assert.equal((await f.exchange(at,a)).result.status,403,'cancelled A cannot inherit B confirmation');
+  assert.equal((await f.requests('GET','/sessions',undefined,oldSession)).status,401,'superseded key session is rejected');
+  const c=await generateKeyPair('ES256');assert.equal((await f.exchange(await f.access('cloud-a','phone',c),c)).result.status,403);
+  await f.restart();assert.equal((await f.exchange(at,a)).result.status,403);
+});
+
 test('pairing is local, owner-scoped, expires and consumes once; unlink preserves local login and all stored data', async t => {
   const f = await fixture(t); await f.bind(); await f.bind(f.b, 'cloud-b')
   const key = await generateKeyPair('ES256')
@@ -385,6 +487,7 @@ test('pairing is local, owner-scoped, expires and consumes once; unlink preserve
   const bToken = await f.access('cloud-b', 'phone', key)
   assert.equal((await f.exchange(bToken, key, '/cloud/pairings/redeem', { challenge: pairing.challenge })).result.status, 401)
   const token = await f.access('cloud-a', 'phone', key)
+  await confirmPairing(f,pairing,token,key)
   const session = (await f.exchange(token, key, '/cloud/pairings/redeem', { challenge: pairing.challenge })).result
   assert.equal(session.status, 200)
   assert.equal((await f.exchange(token, key, '/cloud/pairings/redeem', { challenge: pairing.challenge })).result.status, 401)
@@ -417,10 +520,12 @@ test('local device revoke closes active responses; signed cloud epoch/device rev
   assert.equal((await f.exchange(await f.access('cloud-a', 'phone', rotated), rotated)).result.status, 403,
     'a new proof key cannot revive the same revoked cloud device ID')
   const revokedPair = await f.requests('POST', '/cloud/pairings', {}, f.a)
-  assert.equal((await f.exchange(token, key, '/cloud/pairings/redeem', {challenge:revokedPair.challenge})).result.status, 403,
+  assert.equal((await f.exchange(token, key, '/cloud/pairings/join', {challenge:revokedPair.challenge,
+    phoneCommitment:phoneCommit(revokedPair,'phone',await calculateJwkThumbprint(await exportJWK(key.publicKey)),phoneNonce())})).result.status, 403,
     'an old pairing path cannot revive an offlined device')
   const fresh = await generateKeyPair('ES256'), freshToken = await f.access('cloud-a', 'second-phone', fresh)
   const pair = await f.requests('POST', '/cloud/pairings', {}, f.a)
+  await confirmPairing(f,pair,freshToken,fresh,'second-phone')
   const second = (await f.exchange(freshToken, fresh, '/cloud/pairings/redeem', { challenge: pair.challenge })).result
   const epochStream = await f.stream(second)
   const epochClosed = assert.rejects(epochStream.read())

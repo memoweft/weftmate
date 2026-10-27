@@ -92,19 +92,19 @@ export function browserCaptureVersion(url, bytes) {
   return createHash('sha256').update('weftmate-browser-capture/v1\0').update(url)
     .update('\0').update(bytes).digest('hex');
 }
-function captureText(value) {
+export function captureText(value) {
   const bytes = Buffer.from(typeof value === 'string' ? value : '', 'utf8');
   const end = utf8Boundary(bytes, 0, CAPTURE_PAYLOAD_LIMIT);
   const captured = bytes.subarray(0, end);
   return { bytes: captured, truncated: end < bytes.length };
 }
-function boundedOutline(value) {
+export function boundedOutline(value) {
   const lines = Array.isArray(value) ? value.filter((item) => typeof item === 'string')
     .slice(0, 80).map((item) => item.replace(/\s+/g, ' ').trim().slice(0, 160)) : [];
   const bytes = Buffer.from(lines.filter(Boolean).join('\n'), 'utf8');
   return bytes.subarray(0, utf8Boundary(bytes, 0, MAX_OUTLINE_BYTES)).toString('utf8');
 }
-function boundedLinks(value, syntheticFixture) {
+export function boundedLinks(value, syntheticFixture) {
   if (!Array.isArray(value)) return [];
   const links = [], seen = new Set();
   for (const row of value) {
