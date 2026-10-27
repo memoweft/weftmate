@@ -8,7 +8,7 @@ struct PhoneAttachmentScreenshotFixture: View {
     @State private var ready=false
     private func argument(_ flag: String) -> String? { let args=ProcessInfo.processInfo.arguments;guard let i=args.firstIndex(of:flag),args.indices.contains(i+1) else { return nil };return args[i+1] }
     var body: some View {
-        Group { if ready { PhoneStandaloneChat(app:app,model:model) } else { ProgressView("准备合成附件…") } }
+        Group { if ready { PhoneWorkspace(model:app,phone:model) } else { ProgressView("准备合成附件…") } }
             .preferredColorScheme(argument("--apple8-theme") == "dark" ? .dark : .light)
             .task {
                 model.activate(app:app);model.clearLocalData()

@@ -56,11 +56,10 @@ final class Apple4UITests: XCTestCase {
             XCTAssertTrue(app.buttons["phone.sidebar"].waitForExistence(timeout: 20)); app.buttons["phone.sidebar"].tap()
             XCTAssertTrue(app.textFields["phone.sidebar.search"].waitForExistence(timeout: 10)); capture(app, theme, "sidebar")
             let sidebar = app.descendants(matching: .any)["phone.sidebar.panel"]
-            sidebar.buttons["phoneAccountMenu"].firstMatch.tap()
+            sidebar.buttons["phone.sidebar.settings"].firstMatch.tap()
             XCTAssertTrue(app.buttons["settings.accountCard"].waitForExistence(timeout: 20)); capture(app, theme, "settings")
             app.buttons["closeAuxiliarySheetButton"].firstMatch.tap()
-            app.buttons["phone.sidebar.close"].tap()
-            for tab in ["chat", "activity", "health", "goals", "resources"] {
+            for tab in ["chat", "activity", "health"] {
                 let button = app.buttons["phone.tab." + tab]
                 XCTAssertTrue(button.waitForExistence(timeout: 15)); button.tap()
                 XCTAssertGreaterThanOrEqual(button.frame.width, 44)
@@ -82,17 +81,17 @@ final class Apple4UITests: XCTestCase {
             XCTAssertEqual(app.staticTexts.matching(identifier: "输出与来源").count, 1)
             XCTAssertGreaterThanOrEqual(app.descendants(matching: .any)["phoneSheet.resourcesCard"].frame.width, 300)
             capture(app, theme, "sheet"); app.buttons["phoneSheet.close"].tap()
-            app.buttons["phone.tab.resources"].tap(); capture(app, theme, "tab-resources")
+            app.buttons["phone.sidebar"].tap(); app.buttons["phone.sidebar.library"].tap(); capture(app, theme, "tab-resources")
             app.buttons["phone.tab.activity"].tap()
             XCTAssertTrue(app.staticTexts["每周的回顾会出现在这里。"].waitForExistence(timeout: 15)); capture(app, theme, "tab-activity")
-            app.buttons["phone.tab.chat"].tap(); app.buttons["phone.sidebar"].tap()
+            app.buttons["phone.tab.chat"].tap(); app.buttons["phone.tab.chat"].tap(); app.buttons["phone.sidebar"].tap()
             let sidebar = app.descendants(matching: .any)["phone.sidebar.panel"]
-            sidebar.buttons["phoneAccountMenu"].firstMatch.tap()
+            sidebar.buttons["phone.sidebar.settings"].firstMatch.tap()
             XCTAssertTrue(app.buttons["settings.accountCard"].waitForExistence(timeout: 20))
             let logout = app.buttons["settings.logout"]
             for _ in 0..<8 where !logout.isHittable { app.swipeUp() }
             XCTAssertTrue(logout.isHittable); capture(app, theme, "settings-bottom")
-            app.buttons["closeAuxiliarySheetButton"].firstMatch.tap(); app.buttons["phone.sidebar.close"].tap()
+            app.buttons["closeAuxiliarySheetButton"].firstMatch.tap()
             try choose(app, "side")
             XCTAssertTrue(app.staticTexts["可以先留出一段时间散步，再读几页书。"].waitForExistence(timeout: 25))
             XCTAssertTrue(app.buttons["sendButton"].exists)

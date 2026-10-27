@@ -18,6 +18,8 @@
 
 ## 导航结构
 
+原生外壳接入（IOS-UI-1-SHELL）：`PhoneWorkspace` 负责三标签各自的导航栈、统一侧栏与侧栏手势，`PhoneSidebarDestination` 是共用导航配置；`PhoneChatWorkspace` / `PhoneStandaloneChat` 只保留内容。后续界面包沿用 `PhoneActionMenu`（短动作）、`.phonePopover`（日期与短确认，窄屏保持浮窗）、`.phoneSheet`（表单与长内容，提供中/大档位和拖柄）。令牌生成器现已读取 `ios-prototype.json`，只在 `#if os(iOS)` 中替换原生色板并输出 `AppleTokens.Phone`；系统导航、菜单、弹层采用系统动画，自定义侧栏与标签读取减少动态效果。账号和设置本包继续用现有设置弹层，内容页后续重做；Windows 检查不代表原生编译或截图验收。
+
 ```mermaid
 flowchart TD
   A[登录 / 注册 / 找回密码] --> B[邮箱验证]
@@ -206,7 +208,7 @@ Button("选择日期") { choosingDate = true }
 
 ## 令牌与资源
 
-[tokens.json](../tokens/tokens.json) 仍是基础；[ios-prototype.json](../tokens/ios-prototype.json) 是**待确认的 iOS 增量**，不进入现有产品生成器，避免影响并行的电脑端工作。原型的 [generate-assets.mjs](prototype/generate-assets.mjs) 从两者生成 [tokens.css](prototype/tokens.css)，并从 `design/icons/ui/` 生成本地内联图标 [assets.js](prototype/assets.js)，保证 `file://` 直接打开也不依赖跨源读取。
+[tokens.json](../tokens/tokens.json) 仍是基础；[ios-prototype.json](../tokens/ios-prototype.json) 是**本人已认可的 iOS 增量**，原生生成器只在 iOS 条件分支读取，不改变电脑、安卓与手表。原型的 [generate-assets.mjs](prototype/generate-assets.mjs) 从两者生成 [tokens.css](prototype/tokens.css)，并从 `design/icons/ui/` 生成本地内联图标 [assets.js](prototype/assets.js)，保证 `file://` 直接打开也不依赖跨源读取。
 
 | 类别 | 使用 / 新增 |
 |---|---|

@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const source = JSON.parse(await readFile(join(root, 'design/tokens/tokens.json'), 'utf8'));
+const ios = JSON.parse(await readFile(join(root, 'design/tokens/ios-prototype.json'), 'utf8'));
 // Resolve native values from the same canonical motion scale; CSS keeps aliases.
 const resolveValue = value => typeof value === 'string' && value.startsWith('{motion.')
   ? value.slice(1, -1).split('.').reduce((object, key) => object[key], source) : value;
@@ -73,7 +74,7 @@ await put('apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTok
 // Apple compiles this generated Swift source directly; the manifest is also available for tooling.
 await put('design/tokens/generated/apple/DesignTokens.json', JSON.stringify({
   format: 'weftmate.design-tokens.apple.v1', units: { dimensions: 'pt', duration: 'ms' },
-  shared: tokens.shared, surfaces: tokens.surfaces, android: tokens.android, apple: tokens.apple,
+  shared: tokens.shared, surfaces: tokens.surfaces, android: tokens.android, apple: tokens.apple, ios,
 }, null, 2) + '\n');
 const dictionary = values => entries(values).length === 0 ? '[:]' : `[\n${entries(values).map(([name, value]) =>
   `        ${JSON.stringify(name)}: ${typeof value === 'string' ? JSON.stringify(value) : value}`).join(',\n')}\n    ]`;
@@ -87,6 +88,16 @@ for (const [surface, { themes }] of entries(tokens.surfaces)) {
   }
 }
 const apple = tokens.apple;
+// iPhone additions are scoped at compile time; desktop and Watch keep the base palette.
+const iosColors = {
+  accent: 'accent', accentSoft: 'soft', ink: 'ink', secondary: 'secondary', muted: 'muted',
+  canvas: 'canvas', surface: 'surface', soft: 'soft', line: 'line', onAccent: 'on-accent',
+  controlCanvas: 'canvas', controlSurface: 'surface', controlInk: 'ink', controlSecondary: 'secondary',
+  controlMuted: 'muted', controlAccent: 'accent', controlOnAccent: 'on-accent', controlLine: 'line', controlSoft: 'soft'
+};
+const iosSystemColors = { canvas: 'systemBackground', grouped: 'systemGroupedBackground', surface: 'secondarySystemGroupedBackground' };
+const iosColor = key => iosSystemColors[key] ? `Color(uiColor: .${iosSystemColors[key]})`
+  : `adaptive(light: 0x${ios.color.light[iosColors[key]].slice(1)}, dark: 0x${ios.color.dark[iosColors[key]].slice(1)})`;
 const swiftID = value => value.replace(/[^A-Za-z0-9_]/g, '_');
 const constants = (name, values, type, expression = value => value) =>
   `    public enum ${name} {\n${entries(values).map(([key, value]) => `        public static let ${key}: ${type} = ${expression(value)}`).join('\n')}\n    }\n`;
@@ -113,13 +124,32 @@ const nativeSwift = `\n// Native A4c recipes. System text styles retain Dynamic 
   constants('Tracking', apple.tracking, 'CGFloat') +
   constants('Opacity', apple.opacity, 'Double') +
   constants('Scale', apple.scale, 'CGFloat') +
+  `    #if os(iOS)\n    public enum Phone {\n` +
+  entries({ drawerWidth: parseFloat(ios.layout['drawer-width']), edgeWidth: ios.motion['edge-width'], gestureCommit: ios.motion['gesture-commit'], menuWidth: 276,
+    menuGap: 8, rowHeight: parseFloat(ios.layout['row-min']), tabHeight: parseFloat(ios.layout['tab-height']), pageInset: parseFloat(ios.layout['page-inset']),
+    composerRadius: parseFloat(tokens.shared.radius['20']), groupRadius: parseFloat(tokens.shared.radius['16']), sheetRadius: parseFloat(tokens.shared.radius['26']),
+    bodySize: parseFloat(tokens.shared.fontSize['16']), listSize: parseFloat(tokens.shared.fontSize['15']), navigationSize: parseFloat(tokens.shared.fontSize['17']),
+    titleSize: parseFloat(tokens.shared.fontSize['28']), healthScoreSize: parseFloat(ios.type['health-score-size']),
+    bodyLeading: Number(ios.type['body-leading']), compactLeading: Number(ios.type['compact-leading']) })
+    .map(([key, value]) => `        public static let ${key}: CGFloat = ${value}`).join('\n') + '\n' +
+  entries({ springResponse: ios.motion['spring-response'], springDamping: ios.motion['spring-damping'], springBlend: ios.motion['spring-blend'], menuDuration: parseFloat(tokens.motion.duration['dur-2']) / 1000,
+    lightScrim: Number(ios.color.light.scrim.match(/,([.\d]+)\)$/)[1]), darkScrim: Number(ios.color.dark.scrim.match(/,([.\d]+)\)$/)[1]) }).map(([key, value]) => `        public static let ${key}: Double = ${value}`).join('\n') +
+  '\n' + entries(tokens.motion.easing).map(([key, curve]) => {
+    const name = { 'ease-out': 'easeOut', 'ease-in-out': 'easeInOut', 'ease-in': 'easeIn', 'ease-linear': 'linear' }[key];
+    const points = curve.match(/^cubic-bezier\(([^)]+)\)$/)?.[1].split(',').map(Number).join(', ');
+    return `        public static func ${name}(_ duration: TimeInterval) -> Animation { ${points ? `.timingCurve(${points}, duration: duration)` : '.linear(duration: duration)'} }`;
+  }).join('\n') +
+  `\n        public static let grouped = Color(uiColor: .systemGroupedBackground)\n    }\n    #endif\n` +
   `    public enum Motion {\n` + entries(tokens.shared.duration).map(([key, value]) =>
     `        public static let ${/^\d/.test(key) ? 'd' + key : key}: TimeInterval = ${parseFloat(value) * (value.endsWith('ms') ? 0.001 : 1)}`).join('\n') + '\n' +
     entries(apple.animation).map(([key, recipe]) => `        public static let ${key}: Animation = ${animation(recipe)}`).join('\n') + '\n    }\n' +
   `    public enum Colors {\n` +
     entries(apple.systemColors).map(([key, value]) => `        public static let ${key}: Color = .${value}`).join('\n') + '\n' +
     `        #if os(macOS) || os(iOS)\n` +
-    entries(apple.colors).map(([key, { light, dark }]) => `        public static let ${key} = adaptive(light: 0x${light.slice(1)}, dark: 0x${dark.slice(1)})`).join('\n') + `
+    entries(apple.colors).map(([key, { light, dark }]) => {
+      const base = `        public static let ${key} = adaptive(light: 0x${light.slice(1)}, dark: 0x${dark.slice(1)})`;
+      return iosColors[key] ? `        #if os(iOS)\n        public static let ${key} = ${iosColor(key)}\n        #else\n${base}\n        #endif` : base;
+    }).join('\n') + `
         private static func adaptive(light: UInt32, dark: UInt32) -> Color {
             #if os(macOS)
             return Color(nsColor: NSColor(name: nil) { appearance in
@@ -143,7 +173,7 @@ const nativeSwift = `\n// Native A4c recipes. System text styles retain Dynamic 
 `;
 
 await put('design/tokens/generated/apple/DesignTokens.swift',
-  `// ${banner}\n// Native dimensions are points; manifest durations are milliseconds.\nimport SwiftUI\n#if os(macOS)\nimport AppKit\n#elseif os(iOS)\nimport UIKit\n#endif\n` +
+  `// ${banner}\n// iPhone additions: design/tokens/ios-prototype.json (iOS only).\n// Native dimensions are points; manifest durations are milliseconds.\nimport SwiftUI\n#if os(macOS)\nimport AppKit\n#elseif os(iOS)\nimport UIKit\n#endif\n` +
   `public enum WeftDesignTokens {\n` +
   entries({ spacing: numeric(tokens.shared.space), radius: numeric(Object.fromEntries(entries(tokens.shared.radius).filter(([, v]) => v.endsWith('px')))),
     fontSize: numeric(tokens.shared.fontSize), lineHeight: numeric(tokens.shared.lineHeight),
