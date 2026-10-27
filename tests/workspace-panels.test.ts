@@ -46,6 +46,10 @@ test('review discards slow A after B and late responses after conversation switc
   await page.evaluate(() => (globalThis as any).resolveA());
   assert.equal(await page.getByText('late A', { exact: true }).count(), 0);
   assert.equal(await page.locator('.diff-add').getAttribute('aria-label'), '新增第 1 行：current B');
+  await page.evaluate(() => { const g: any = globalThis; g.originalRow = document.querySelector('.review-file'); g.originalDiff = document.querySelector('.diff-lines'); });
+  await page.getByRole('button', { name: '刷新变更', exact: true }).click();
+  await page.waitForFunction(() => !(document.querySelector('.panel-review button') as HTMLButtonElement).disabled);
+  assert.equal(await page.evaluate(() => { const g: any = globalThis; return g.originalRow === document.querySelector('.review-file') && g.originalDiff === document.querySelector('.diff-lines'); }), true, 'unchanged snapshots retain mounted rows and diff');
   await page.evaluate(() => { const g: any = globalThis; g.instance.update({ ...g.ctx, conversationId: 'chat-two', sessionId: 'session-two', mode: 'chat', projectId: null }); });
   await page.getByText('先在工作模式里选一个工作目录。', { exact: true }).waitFor();
   await page.evaluate(() => (globalThis as any).resolveA());
@@ -77,9 +81,15 @@ test('files lazy navigation, real code preview, protected draft, conflict recove
   assert.equal(await page.evaluate(() => (globalThis as any).calls.filter((call: any) => call.body?.path === 'nested').length), 0);
   await page.getByText('nested', { exact: true }).click(); await page.getByRole('button', { name: 'code.js', exact: true }).click();
   await page.locator('.files-preview .render-code').waitFor();
-  assert.match(await page.locator('.files-preview').first().innerText(), /const answer = 1/);
+  assert.match(await page.locator('.files-current-preview').innerText(), /const answer = 1/);
+  await page.evaluate(() => { const g: any = globalThis; g.originalTree = document.querySelector('.files-branch'); g.originalCode = document.querySelector('.files-current-preview .render-code'); });
+  await page.getByRole('button', { name: '刷新文件', exact: true }).click();
+  await page.waitForFunction(() => { const g: any = globalThis; return g.calls.filter((call: any) => call.action === 'files/read').length >= 2; });
+  assert.equal(await page.evaluate(() => { const g: any = globalThis; return g.originalTree === document.querySelector('.files-branch') && g.originalCode === document.querySelector('.files-current-preview .render-code'); }), true, 'unchanged refresh preserves tree, preview and scroll ownership');
   await page.getByRole('button', { name: '编辑文本', exact: true }).click();
   await page.getByRole('textbox', { name: '文件文本', exact: true }).fill('const draft = 2;');
+  await page.evaluate(() => { const g: any = globalThis; g.instance.hide(); g.instance.show(); });
+  assert.equal(await page.getByRole('textbox', { name: '文件文本', exact: true }).inputValue(), 'const draft = 2;', 'hiding a panel retains its editor');
   await page.evaluate(() => { (globalThis as any).disk = { text: 'const external = 3;', version: 'version-two' }; });
   await page.getByRole('button', { name: '刷新文件', exact: true }).click();
   await page.getByRole('button', { name: '查看新版本', exact: true }).waitFor();
@@ -87,6 +97,8 @@ test('files lazy navigation, real code preview, protected draft, conflict recove
   assert.equal(await page.getByRole('button', { name: '保存', exact: true }).isDisabled(), true);
   await page.getByRole('button', { name: '查看新版本', exact: true }).click();
   assert.match(await page.locator('.files-disk-version').innerText(), /const external = 3/);
+  const versionBox = await page.locator('.files-disk-version .render-code').boundingBox();
+  assert.ok(versionBox && versionBox.y >= 0 && versionBox.y + versionBox.height <= 900, 'new version is inside the visible viewport after the click');
   await page.getByRole('button', { name: '保留草稿继续编辑', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click(); await page.getByText('已保存。', { exact: true }).waitFor();
   assert.deepEqual(await page.evaluate(() => (globalThis as any).disk), { text: 'const draft = 2;', version: 'saved-version' });
@@ -106,6 +118,11 @@ test('files lazy navigation, real code preview, protected draft, conflict recove
   assert.equal(await page.locator('.files-resource-preview').innerText(), '合成成果');
   await page.getByRole('button', { name: 'code.js', exact: true }).click();
   assert.equal(await page.getByRole('textbox', { name: '文件文本', exact: true }).inputValue(), 'retained on failure');
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.getByRole('button', { name: 'code.js', exact: true }).click();
+  await page.getByRole('button', { name: '展开导航', exact: true }).waitFor();
+  const narrowEditor = await page.getByRole('textbox', { name: '文件文本', exact: true }).boundingBox();
+  assert.ok(narrowEditor && narrowEditor.width > 250, 'narrow panels give the selected file the available width');
   await page.evaluate(() => { const g: any = globalThis; g.instance.update({ ...g.ctx, mode: 'chat', projectId: null }); });
   await page.getByText('先在工作模式里选一个工作目录。', { exact: true }).waitFor();
 }));
@@ -122,7 +139,7 @@ test('files invalidates search at input time and reads at selection/context chan
     }; g.mount('files');
   });
   await page.getByRole('button', { name: 'A.txt', exact: true }).click(); await page.getByRole('button', { name: 'B.txt', exact: true }).click();
-  await page.locator('.files-preview').first().getByText('current B', { exact: true }).waitFor();
+  await page.locator('.files-current-preview').getByText('current B', { exact: true }).waitFor();
   await page.evaluate(() => (globalThis as any).resolveA());
   assert.equal(await page.getByText('late A', { exact: true }).count(), 0);
   await page.getByRole('searchbox', { name: '按文件名搜索' }).fill('old'); await page.waitForFunction(() => (globalThis as any).searches?.old);

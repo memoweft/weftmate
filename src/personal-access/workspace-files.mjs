@@ -68,7 +68,7 @@ async function read(project, rel) {
     const limit = type ? MAX_PREVIEW : MAX_WORKSPACE_TEXT;
     if (size > limit) return { ...base, reason: 'too-large' };
     // Bounded handle read, including files growing after stat.
-    const data = await boundedRead(file, limit);
+    const data = await boundedRead(file, Math.min(size, limit));
     if (data.length > limit) return { ...base, reason: 'too-large' };
     const after = await file.stat({ bigint: true });
     if (after.mtimeNs !== info.mtimeNs || after.ctimeNs !== info.ctimeNs || after.size !== info.size) throw failure('WORKSPACE_FILE_CHANGED', 409);
@@ -124,7 +124,7 @@ async function save(project, input, authorize) {
     try {
       const info = await file.stat({ bigint: true });
       if (!info.isFile() || Number(info.size) > MAX_WORKSPACE_TEXT) throw failure('WORKSPACE_FILE_CHANGED', 409);
-      const data = await boundedRead(file, MAX_WORKSPACE_TEXT);
+      const data = await boundedRead(file, Number(info.size));
       const named = await lstat(target, { bigint: true });
       await checkedPath(project, input.path);
       authorize();
@@ -185,22 +185,34 @@ async function status(project, known) {
     let name = match[3]; if (!name) { i++; name = countParts[++i]; }
     stats.set(name, { additions: match[1] === '-' ? null : Number(match[1]), deletions: match[2] === '-' ? null : Number(match[2]) });
   }
-  const parts = raw.split('\0'), files = []; let truncated = false;
+  const parts = raw.split('\0'), files = [], untracked = []; let truncated = false;
   for (let index = 0; index < parts.length; index++) {
     const part = parts[index]; if (!part) continue;
     const state = part.slice(0, 2), repoPath = part.slice(3);
     const oldPath = /[RC]/.test(state) ? parts[++index] : null;
     if (!repoPath.startsWith(prefix)) continue;
     const rel = repoPath.slice(prefix.length); try { relativePath(rel); } catch { continue; }
-    let count = stats.get(rel) ?? { additions: 0, deletions: 0 };
+    const count = stats.get(rel) ?? { additions: 0, deletions: 0 };
     if (state === '??' || !head) {
-      try { const content = await read(project, rel); count = content.kind === 'text'
-        ? { additions: content.text ? content.text.split('\n').length - Number(content.text.endsWith('\n')) : 0, deletions: 0 }
-        : { additions: null, deletions: null }; } catch { count = { additions: null, deletions: null }; }
+      untracked.push(files.length);
     }
     files.push({ path: rel, status: state, ...count, ...(oldPath?.startsWith(prefix) ? { oldPath: oldPath.slice(prefix.length) } : {}) });
     if (files.length === MAX_ENTRIES) { truncated = true; break; }
   }
+  // Independent handle reads use bounded concurrency; a large untracked tree must
+  // not turn one refresh into hundreds of serial filesystem round trips.
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(12, untracked.length) }, async () => {
+    while (next < untracked.length) {
+      const file = files[untracked[next++]];
+      try {
+        const content = media.has(path.extname(file.path).toLowerCase()) ? null : await read(project, file.path);
+        Object.assign(file, content?.kind === 'text'
+          ? { additions: content.text ? content.text.split('\n').length - Number(content.text.endsWith('\n')) : 0, deletions: 0 }
+          : { additions: null, deletions: null });
+      } catch { Object.assign(file, { additions: null, deletions: null }); }
+    }
+  }));
   return { files, truncated };
 }
 

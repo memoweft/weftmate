@@ -8,16 +8,17 @@ globalThis.WeftPanels?.register('review', {
     notice.setAttribute('role', 'status'); list.setAttribute('aria-label', '变更文件'); detail.setAttribute('aria-label', '逐行差异'); detail.tabIndex = 0;
     const refresh = button('刷新变更', () => void load()); toolbar.append(refresh);
     el.append(toolbar, notice, list, detail);
-    let current = ctx, contextKey = key(ctx), listSeq = 0, diffSeq = 0, selected = null, disposed = false, timer;
+    let current = ctx, contextKey = key(ctx), listSeq = 0, diffSeq = 0, selected = null, disposed = false, timer, listSignature, diffSignature;
     const labels = { M: '修改', A: '新增', D: '删除', R: '重命名', C: '复制', U: '冲突', '?': '未跟踪', T: '类型改变' };
     const valid = (seq, kind) => !disposed && seq === (kind === 'list' ? listSeq : diffSeq);
     function paintSelection() { for (const row of list.children) row.setAttribute('aria-pressed', String(row.dataset.path === selected)); }
     async function select(file, quiet = false) {
-      selected = file; paintSelection(); const seq = ++diffSeq, scope = current;
-      if (!quiet) detail.replaceChildren(node('p', 'workspace-empty', '正在读取差异…'));
+      const changed = selected !== file; selected = file; paintSelection(); const seq = ++diffSeq, scope = current;
+      if (!quiet && changed) detail.replaceChildren(node('p', 'workspace-empty', '正在读取差异…'));
       try {
         const data = await request(scope, 'review/diff', { path: file });
         if (!valid(seq, 'diff') || selected !== file || key(scope) !== contextKey) return;
+        const signature = JSON.stringify([file, data]); if (signature === diffSignature) return; diffSignature = signature;
         const markers = WeftPanels.services.diffMarkers?.() || globalThis.WeftDesktop?.getAppearance?.().diffMarkers || 'color';
         detail.dataset.diffMarkers = markers;
         detail.replaceChildren(node('h3', 'workspace-file-title', file));
@@ -33,7 +34,7 @@ globalThis.WeftPanels?.register('review', {
           lines.append(row);
         }
         detail.append(lines);
-      } catch (error) { if (valid(seq, 'diff') && selected === file) detail.replaceChildren(node('p', 'workspace-empty', message(error)), button('重试差异', () => void select(file))); }
+      } catch (error) { if (valid(seq, 'diff') && selected === file) { diffSignature = null; detail.replaceChildren(node('p', 'workspace-empty', message(error)), button('重试差异', () => void select(file))); } }
     }
     async function load() {
       const seq = ++listSeq, scope = current;
@@ -42,22 +43,24 @@ globalThis.WeftPanels?.register('review', {
       try {
         const data = await request(scope, 'review/status');
         if (!valid(seq, 'list') || key(scope) !== contextKey) return;
-        list.replaceChildren(); notice.textContent = data.files.length ? `${data.files.length} 个变更文件${data.truncated ? '，仅显示前一部分' : ''}` : '工作目录没有变更。';
+        notice.textContent = data.files.length ? `${data.files.length} 个变更文件${data.truncated ? '，仅显示前一部分' : ''}` : '工作目录没有变更。';
+        const signature = JSON.stringify(data); if (signature !== listSignature) { listSignature = signature; list.replaceChildren();
         for (const file of data.files) {
           const label = file.status.includes('U') || ['AA', 'DD'].includes(file.status) ? '冲突' : labels[file.status.trim()[0]] || '变更';
           const row = button('', () => void select(file.path), 'review-file'); row.dataset.path = file.path;
+          row.title = file.oldPath ? `${file.oldPath} → ${file.path}` : file.path;
           row.append(node('span', 'review-state', label), node('span', 'review-path', file.oldPath ? `${file.oldPath} → ${file.path}` : file.path));
           row.append(node('span', 'review-count', file.additions === null || file.deletions === null ? '二进制 / 未知' : `+${file.additions} −${file.deletions}`)); list.append(row);
-        }
-        if (!data.files.length) { selected = null; diffSeq++; empty(detail, '修改文件后，可以在这里查看差异。'); }
+        } }
+        if (!data.files.length) { selected = null; diffSignature = null; diffSeq++; empty(detail, '修改文件后，可以在这里查看差异。'); }
         else await select(data.files.some(file => file.path === selected) ? selected : data.files[0].path, true);
-      } catch (error) { if (valid(seq, 'list')) { diffSeq++; list.replaceChildren(); detail.replaceChildren(); notice.textContent = message(error); } }
+      } catch (error) { if (valid(seq, 'list')) { listSignature = diffSignature = null; diffSeq++; list.replaceChildren(); detail.replaceChildren(); notice.textContent = message(error); } }
       finally { if (valid(seq, 'list')) refresh.disabled = false; }
     }
     void load();
     return { el, show() { if (!timer) timer = setInterval(() => { if (!refresh.disabled) void load(); }, 5000); void load(); },
       hide() { clearInterval(timer); timer = null; },
-      update(next) { const changed = key(next) !== contextKey; current = next; if (!changed) return; contextKey = key(next); selected = null; diffSeq++; list.replaceChildren(); detail.replaceChildren(); void load(); },
+      update(next) { const changed = key(next) !== contextKey; current = next; if (!changed) return; contextKey = key(next); listSignature = diffSignature = null; selected = null; diffSeq++; list.replaceChildren(); detail.replaceChildren(); void load(); },
       dispose() { disposed = true; listSeq++; diffSeq++; clearInterval(timer); el.replaceChildren(); } };
   },
 });

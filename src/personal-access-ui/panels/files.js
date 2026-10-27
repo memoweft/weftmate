@@ -5,16 +5,18 @@ globalThis.WeftPanels?.register('files', {
     const { node, button, key, ready, message, empty, request, preview } = WeftWorkspacePanel;
     const el = node('section', 'workspace-panel panel-files'), toolbar = node('div', 'workspace-toolbar');
     const search = node('input', 'workspace-search'); search.type = 'search'; search.placeholder = '按文件名搜索'; search.setAttribute('aria-label', '按文件名搜索'); search.maxLength = 200;
-    const refresh = button('刷新文件', () => void refreshAll()), notice = node('p', 'workspace-notice'); notice.setAttribute('role', 'status');
+    const refresh = button('刷新文件', () => void refreshAll()), toggleNav = button('收起导航', () => { const hidden = navigation.hidden = !navigation.hidden; toggleNav.textContent = hidden ? '展开导航' : '收起导航'; toggleNav.setAttribute('aria-expanded', String(!hidden)); layout.classList.toggle('navigation-hidden', hidden); }), notice = node('p', 'workspace-notice'); notice.setAttribute('role', 'status');
+    toggleNav.setAttribute('aria-expanded', 'true');
+    const layout = node('div', 'files-layout');
     const navigation = node('div', 'files-navigation'), tree = node('div', 'files-tree'), resources = node('div', 'files-resources');
     const content = node('div', 'files-content'), header = node('div', 'workspace-toolbar'), title = node('h3', 'workspace-file-title', '选择一个文件');
     const edit = button('编辑文本', () => startEdit()), save = button('保存', () => void saveDraft(), 'button primary small'), cancel = button('放弃草稿', () => discardDraft());
     const latest = button('查看新版本', () => showLatest()), adopt = button('采用新版本', () => adoptLatest()), keep = button('保留草稿继续编辑', () => keepDraft());
-    const feedback = node('p', 'workspace-notice'), display = node('div', 'files-preview'), diskPreview = node('details', 'files-disk-version'), diskBody = node('div', 'files-preview');
+    const feedback = node('p', 'workspace-notice'), display = node('div', 'files-preview files-current-preview'), diskPreview = node('details', 'files-disk-version'), diskBody = node('div', 'files-preview');
     feedback.setAttribute('role', 'status'); diskPreview.append(node('summary', '', '磁盘上的新版本'), diskBody);
     const editor = node('textarea', 'files-editor'); editor.spellcheck = false; editor.setAttribute('aria-label', '文件文本');
-    toolbar.append(search, refresh); navigation.append(tree, resources); header.append(title, edit, save, cancel, latest, adopt);
-    header.append(keep); content.append(header, feedback, display, editor, diskPreview); el.append(toolbar, notice, navigation, content);
+    toolbar.append(toggleNav, refresh); navigation.append(search, tree, resources); header.append(title, edit, save, cancel, latest, adopt);
+    header.append(keep); content.append(header, feedback, diskPreview, display, editor); layout.append(navigation, content); el.append(toolbar, notice, layout);
     let current = ctx, contextKey = key(ctx), generation = 0, readSeq = 0, searchSeq = 0, resourceSeq = 0, disposed = false, timer, debounce, saving = false;
     const states = new Map(); let state = { selected: null, drafts: new Map(), expanded: new Set() };
     states.set(contextKey, state); const cache = new Map();
@@ -43,7 +45,7 @@ globalThis.WeftPanels?.register('files', {
       const draft = currentDraft(); if (!draft || saving) return;
       const data = draft.latest || draft.data; state.drafts.set(state.selected, { data, text: data.text, baseText: data.text, version: data.version, editing: false }); paint();
     }
-    function showLatest() { const draft = currentDraft(); if (!draft?.latest) return; preview(diskBody, draft.latest, state.selected); diskPreview.hidden = false; diskPreview.open = true; }
+    function showLatest() { const draft = currentDraft(); if (!draft?.latest) return; preview(diskBody, draft.latest, state.selected); diskPreview.hidden = false; diskPreview.open = true; diskBody.scrollIntoView({ block: 'nearest' }); }
     function adoptLatest() { if (!currentDraft()?.latest || saving) return; discardDraft(); }
     function keepDraft() {
       const draft = currentDraft(); if (!draft?.latest || draft.latest.kind !== 'text' || saving) return;
@@ -52,7 +54,7 @@ globalThis.WeftPanels?.register('files', {
     }
     async function readFile(file, quiet = false) {
       const token = generation, seq = ++readSeq, scope = current;
-      if (!quiet) { state.selected = file; paint(); if (!currentDraft()) feedback.textContent = '正在读取文件…'; }
+      if (!quiet) { state.selected = file; paint(); if (el.clientWidth < 360 && !navigation.hidden) toggleNav.click(); if (!currentDraft()) feedback.textContent = '正在读取文件…'; }
       try {
         const data = await request(scope, 'files/read', { path: file });
         if (!active(token, seq) || state.selected !== file) return;
@@ -78,11 +80,11 @@ globalThis.WeftPanels?.register('files', {
       } finally { if (active(token)) { saving = false; controls(); } }
     }
     async function directory(rel, host) {
-      const token = generation, queryAtStart = searchSeq; host.replaceChildren(node('p', 'muted', '正在读取…'));
+      const token = generation, queryAtStart = searchSeq; if (!host.childNodes.length) host.replaceChildren(node('p', 'muted', '正在读取…'));
       try {
         const data = cache.get(rel) || await request(current, 'files/list', { path: rel });
         if (!active(token) || queryAtStart !== searchSeq || !host.isConnected) return;
-        cache.set(rel, data); host.replaceChildren();
+        cache.set(rel, data); const signature = JSON.stringify(data); if (host._workspaceSignature === signature) return; host._workspaceSignature = signature; host.replaceChildren();
         if (!data.entries.length) host.append(node('p', 'muted', '这个文件夹是空的。'));
         for (const entry of data.entries) {
           if (entry.type === 'directory') {
@@ -97,7 +99,7 @@ globalThis.WeftPanels?.register('files', {
       } catch (error) { if (active(token) && queryAtStart === searchSeq) host.replaceChildren(node('p', 'muted', message(error)), button('重试目录', () => void directory(rel, host))); }
     }
     async function find(query, seq) {
-      const token = generation; tree.replaceChildren(node('p', 'muted', '正在搜索…'));
+      const token = generation; delete tree._workspaceSignature; tree.replaceChildren(node('p', 'muted', '正在搜索…'));
       try {
         const data = await request(current, 'files/search', { query });
         if (!active(token) || seq !== searchSeq) return;
@@ -130,10 +132,10 @@ globalThis.WeftPanels?.register('files', {
     async function refreshAll() {
       cache.clear(); searchSeq++; const seq = searchSeq, query = search.value.trim();
       if (ready(current)) { notice.textContent = ''; void (query ? find(query, seq) : directory('', tree)); if (state.selected && !saving) void readFile(state.selected, true); }
-      else empty(tree);
+      else { notice.textContent = '先在工作模式里选一个工作目录。'; tree.replaceChildren(); }
       void loadResources();
     }
-    function initialize() { notice.textContent = ''; search.value = ''; controls(); paint(); void refreshAll(); }
+    function initialize() { notice.textContent = ''; search.value = ''; delete tree._workspaceSignature; tree.replaceChildren(); controls(); paint(); void refreshAll(); }
     initialize();
     return { el, show() { if (!timer) timer = setInterval(() => { if (state.selected && !saving && ready(current)) void readFile(state.selected, true); }, 4000); if (state.selected) void readFile(state.selected, true); },
       hide() { clearInterval(timer); timer = null; },

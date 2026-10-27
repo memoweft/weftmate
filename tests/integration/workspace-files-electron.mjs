@@ -1,7 +1,7 @@
 // Real HTTP host + production Electron, synthetic repository, no model or daily profile.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-ui04';
 import assert from 'node:assert/strict';
-import { _electron } from 'playwright';
+import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, writeFile, readFile, rm, open, unlink } from 'node:fs/promises';
@@ -11,20 +11,24 @@ import { createPersonalAccessService } from '../helpers/personal-access-fixture.
 import { waitForCommand } from '../helpers/wait-for-command.mjs';
 import { bindConversationWork } from '../../src/personal-access/work-and-chat.mjs';
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
+import { measureUiAction } from '../helpers/ui-frame-probe.mjs';
 
 const out = process.env.WEFTMATE_EVIDENCE_DIR, locks = process.env.WEFTMATE_HEAVY_LOCK_DIR;
+const browserOnly = process.argv.includes('--browser-only');
+const skipPerformance = process.argv.includes('--skip-performance');
 if (!out || !locks) throw Error('Set external evidence and heavy-lock directories.');
 await mkdir(out, { recursive: true });
 const root = await mkdtemp(join(tmpdir(), 'weftmate-ui04-electron-')), folder = join(root, 'work');
-const report = { productionElectron: true, hidden: true, passed: false, screenshots: [], errors: [], containerIntegrated: false };
+const report = { productionElectron: !browserOnly, hidden: true, passed: false, screenshots: [], errors: [], containerIntegrated: false, performance: [],
+  performanceMode: skipPerformance ? 'visual-only; hidden Electron frame throttling is not a foreground performance baseline' : 'renderer-observation' };
 let host, app, lock, timeout, page;
 try {
-  for (const slot of [1, 2, 3]) {
+  for (const slot of browserOnly ? [] : [1, 2, 3]) {
     const candidate = join(locks, `heavy-${slot}.lock`);
     try { const handle = await open(candidate, 'wx'); await handle.writeFile(`UI-04-REVIEW-FILES ${new Date().toISOString()} Electron`); await handle.close(); lock = candidate; break; }
     catch (error) { if (error.code !== 'EEXIST') throw error; }
   }
-  if (!lock) throw Error('All heavy slots are occupied.');
+  if (!lock && !browserOnly) throw Error('All heavy slots are occupied.');
   await mkdir(folder); const git = (...args) => execFileSync('git', ['-C', folder, ...args], { windowsHide: true, encoding: 'utf8' });
   git('init', '-q'); git('config', 'user.email', 'synthetic@example.invalid'); git('config', 'user.name', 'Synthetic'); git('config', 'core.autocrlf', 'false');
   await writeFile(join(folder, 'README.md'), '# 合成工作目录\n\n原有内容。\n'); await mkdir(join(folder, 'src')); await writeFile(join(folder, 'src', 'example.js'), 'export const answer = 1;\n');
@@ -50,10 +54,10 @@ try {
   await ctx.serial(() => ctx.mutate(ownerId, next => bindConversationWork({ ...next, hostId }, created.sessionId, project.projectId)));
   const env = { ...process.env, UI04_PROFILE: join(root, 'profile'), UI04_ORIGIN: origin, UI04_DESKTOP_TOKEN: host.libraryDesktopToken };
   delete env.ELECTRON_RUN_AS_NODE;
-  app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: resolve('.'),
-    args: ['tests/integration/workspace-files-electron-entry.mjs', `--user-data-dir=${join(root, 'profile')}`, '--disable-backgrounding-occluded-windows'], env, timeout: 30000 });
-  timeout = setTimeout(() => { void app?.close(); void host?.close(); }, 120000);
-  page = await app.firstWindow(); page.setDefaultTimeout(12000); page.on('pageerror', error => report.errors.push(error.message));
+  app = browserOnly ? await chromium.launch({ headless: true }) : await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: resolve('.'),
+    args: ['tests/integration/workspace-files-electron-entry.mjs', `--user-data-dir=${join(root, 'profile')}`, '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-features=CalculateNativeWinOcclusion', '--force-device-scale-factor=1'], env, timeout: 30000 });
+  timeout = setTimeout(() => { void app?.close(); void host?.close(); }, 240000);
+  page = browserOnly ? await app.newPage({ viewport: { width: 1360, height: 960 } }) : await app.firstWindow(); page.setDefaultTimeout(12000); page.on('pageerror', error => report.errors.push(error.message));
   await page.context().addCookies([{ name: 'wm_personal_session', value: cookie.slice(cookie.indexOf('=') + 1), url: origin }]);
   await page.addInitScript(() => {
     let coreModule;
@@ -74,9 +78,16 @@ try {
       ui04Instance = ui04Definitions.get(kind).create(ctx); target.content.replaceChildren(ui04Instance.el); ui04Instance.show();
     }, { kind, ctx: panelContext });
   }
-  async function capture(name) { for (const theme of ['light', 'dark']) { await page.evaluate(theme => WeftDesktop.setAppearance({ theme }), theme); const file = `${name}-${theme}.png`; await page.screenshot({ path: join(out, file) }); report.screenshots.push(file); } }
+  async function resize(width, height) {
+    if (browserOnly) await page.setViewportSize({ width, height });
+    else await app.evaluate(({ BrowserWindow }, size) => BrowserWindow.getAllWindows()[0].setContentSize(size.width, size.height), { width, height });
+  }
+  async function capture(name) { for (const [width, height] of [[1280, 800], [900, 700]]) { await resize(width, height); for (const theme of ['light', 'dark']) {
+    await page.evaluate(theme => WeftDesktop.setAppearance({ theme }), theme); const file = `${name}-${width}x${height}-${theme}.png`;
+    await page.screenshot({ path: join(out, file) }); report.screenshots.push(file);
+  } } }
   await mount('review'); await page.getByRole('button', { name: /README.md/ }).waitFor(); await page.locator('.diff-add').first().waitFor(); await capture('review');
-  await mount('files'); await page.getByText('src', { exact: true }).click(); await page.getByRole('button', { name: 'example.js', exact: true }).click(); await page.getByRole('button', { name: '编辑文本', exact: true }).click();
+  await resize(1280, 800); await mount('files'); await page.getByText('src', { exact: true }).click(); await page.getByRole('button', { name: 'example.js', exact: true }).click(); await page.getByRole('button', { name: '编辑文本', exact: true }).click();
   await page.getByRole('textbox', { name: '文件文本', exact: true }).fill('export const answer = 2;\n');
   await writeFile(join(folder, 'src', 'example.js'), 'export const external = 3;\n');
   await page.getByRole('button', { name: '刷新文件', exact: true }).click(); await page.getByRole('button', { name: '查看新版本', exact: true }).waitFor();
@@ -84,6 +95,49 @@ try {
   await page.getByRole('button', { name: '查看新版本', exact: true }).click(); await capture('files-conflict');
   await page.getByRole('button', { name: '保留草稿继续编辑', exact: true }).click(); await page.getByRole('button', { name: '保存', exact: true }).click(); await page.getByText('已保存。', { exact: true }).waitFor();
   assert.equal(await readFile(join(folder, 'src', 'example.js'), 'utf8'), 'export const answer = 2;\n'); await capture('files-saved');
+  report.visualAssertionsPassed = true;
+  if (!skipPerformance) {
+  await resize(1280, 800);
+  if (await page.getByRole('button', { name: '展开导航', exact: true }).count()) await page.getByRole('button', { name: '展开导航', exact: true }).click();
+  report.performance.push(await measureUiAction(page, 'file-navigation-collapse-expand', async () => {
+    await page.getByRole('button', { name: '收起导航', exact: true }).click(); await page.getByRole('button', { name: '展开导航', exact: true }).click();
+  }));
+  report.performance.push(await measureUiAction(page, 'panel-hide-restore', async () => {
+    await page.getByRole('button', { name: '收起右侧面板', exact: true }).click();
+    await page.evaluate(() => WeftDesktop.openPreview('文件', document.activeElement, 'ui04-files'));
+    await page.locator('.panel-files').waitFor({ state: 'visible' });
+  }));
+  report.performance.push(await measureUiAction(page, 'file-A-B-switch', async () => {
+    await page.getByRole('button', { name: 'notes.txt', exact: true }).click(); await page.getByRole('button', { name: '编辑文本', exact: true }).waitFor();
+    if (await page.getByRole('button', { name: '展开导航', exact: true }).count()) await page.getByRole('button', { name: '展开导航', exact: true }).click();
+    await page.getByRole('button', { name: 'example.js', exact: true }).click(); await page.getByRole('textbox', { name: '文件文本', exact: true }).waitFor();
+  }));
+  // Large-list workload stays synthetic and is read through the real workspace API.
+  await mkdir(join(folder, 'many')); await Promise.all(Array.from({ length: 500 }, (_, index) => writeFile(join(folder, 'many', `item-${String(index).padStart(4, '0')}.txt`), 'synthetic\n')));
+  if (await page.getByRole('button', { name: '展开导航', exact: true }).count()) await page.getByRole('button', { name: '展开导航', exact: true }).click();
+  await page.getByRole('button', { name: '刷新文件', exact: true }).click(); await page.getByText('many', { exact: true }).waitFor();
+  report.performance.push(await measureUiAction(page, 'file-directory-expand-500', async () => {
+    await page.getByText('many', { exact: true }).click(); await page.getByRole('button', { name: 'item-0499.txt', exact: true }).waitFor({ state: 'attached' });
+  }));
+  report.performance.push(await measureUiAction(page, 'file-list-scroll-500', () => page.evaluate(async () => {
+    const view = document.querySelector('.files-navigation'); for (let frame = 0; frame < 30; frame++) { view.scrollTop = (view.scrollHeight - view.clientHeight) * frame / 29; await new Promise(requestAnimationFrame); }
+  })));
+  await mount('review'); await page.waitForFunction(() => document.querySelectorAll('.review-file').length > 500);
+  report.performance.push(await measureUiAction(page, 'review-list-scroll-500', () => page.evaluate(async () => {
+    const view = document.querySelector('.review-files'); for (let frame = 0; frame < 30; frame++) { view.scrollTop = (view.scrollHeight - view.clientHeight) * frame / 29; await new Promise(requestAnimationFrame); }
+  })));
+  report.performance.push(await measureUiAction(page, 'review-unchanged-refresh', async () => {
+    await page.locator('.panel-review > .workspace-toolbar button').click(); await page.waitForFunction(() => !document.querySelector('.panel-review button').disabled);
+  }));
+  report.performance.push(await measureUiAction(page, 'panel-divider-drag', async () => {
+    const box = await page.locator('.preview-resize').boundingBox(); assert.ok(box);
+    await page.mouse.move(box.x + box.width / 2, box.y + 100); await page.mouse.down();
+    await page.mouse.move(box.x - 80, box.y + 100, { steps: 20 }); await page.mouse.move(box.x, box.y + 100, { steps: 20 }); await page.mouse.up();
+  }));
+  }
+  if (skipPerformance) await mount('review');
+  await page.evaluate(ctx => ui04Instance.update({ ...ctx, mode: 'chat', projectId: null, workDir: null }), panelContext);
+  await capture('review-no-directory');
   report.passed = true; assert.deepEqual(report.errors, []);
 } catch (error) { report.failure = error.message; if (page) await page.screenshot({ path: join(out, 'failure.png') }).catch(() => {}); throw error; }
 finally {
