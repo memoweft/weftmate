@@ -98,6 +98,7 @@ const files = new Map([
   ['/personal/v1/ui/panels/review.js', ['panels/review.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/terminal.js', ['panels/terminal.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/browser.js', ['panels/browser.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/panels/browser.css', ['panels/browser.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/panels/files.js', ['panels/files.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/chat.js', ['panels/chat.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/subtasks.js', ['panels/subtasks.js', 'text/javascript; charset=utf-8']],

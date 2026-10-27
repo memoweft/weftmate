@@ -1,4 +1,5 @@
 import { migratePermissionRules } from '../plugins/personal-permission-rules.mjs';
+import { browserConversationScope } from '../personal-browser/scope.mjs';
 import { conversationMode } from './work-and-chat.mjs';
 import { createConnectors } from '../personal-connectors/index.mjs';
 import { connectorExecution } from '../personal-connectors/access.mjs';
@@ -1050,6 +1051,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     attachSession: sessions.attachSession,
     projectForSession: workspaces.projectForSession,
     browserForSession: workspaces.browserForSession,
+    browserScope(ownerId, conversationId, allowDeleting = false) {
+      if (!hostOwner(ownerId)) throw failure('BROWSER_UNAVAILABLE', 403);
+      return browserConversationScope(accountState(ownerId), conversationId, allowDeleting);
+    },
     submitToolProject: workspaces.submitToolProject,
     submitToolBrowser: workspaces.submitToolBrowser,
     /** Trusted current-child snapshots only; information answers never grant execution authority. */
