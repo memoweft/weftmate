@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
 import { execFile, fork } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -53,7 +53,7 @@ export function createTerminalManager({ shell = terminalShell(), maxBufferBytes 
       terminalSize(cols, rows);
       const prior = [...terminals.values()].find(t => t.ownerId === ownerId && t.deviceId === deviceId &&
         t.conversationId === conversationId && t.tabId === tabId);
-      if (prior) { await prior.started; return project(prior); }
+      if (prior) { await prior.started; return { ...project(prior), releaseToken: prior.releaseToken }; }
       if ([...terminals.values()].filter(t => t.ownerId === ownerId).length >= 24) throw failure('SESSION_BUSY', 409);
       // Do not put host model/connector credentials in a user shell's environment.
       const env = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
@@ -65,6 +65,7 @@ export function createTerminalManager({ shell = terminalShell(), maxBufferBytes 
       processHandle.stderr.resume();
       let resolveExit, resolveStarted, rejectStarted;
       const t = { id: `terminal-${randomUUID()}`, ownerId, deviceId, conversationId, tabId, cwd, cols, rows,
+        releaseToken: randomBytes(32).toString('base64url'),
         process: processHandle, listeners: new Set(), chunks: [], bytes: 0, seq: 0, exited: false,
         exit: new Promise(resolve => { resolveExit = resolve; }),
         started: new Promise((resolve, reject) => { resolveStarted = resolve; rejectStarted = reject; }) };
@@ -88,7 +89,7 @@ export function createTerminalManager({ shell = terminalShell(), maxBufferBytes 
         env: { ...env, TERM: 'xterm-256color', COLORTERM: 'truecolor' } });
       const deadline = setTimeout(() => rejectStarted(failure('BACKEND_UNAVAILABLE', 503)), 10000);
       try { await t.started; } catch (error) { await destroy(t); throw error; } finally { clearTimeout(deadline); }
-      return project(t);
+      return { ...project(t), releaseToken: t.releaseToken };
     },
     info(ownerId, deviceId, id) { return project(get(ownerId, deviceId, id)); },
     subscribe(ownerId, deviceId, id, after, notify) {
@@ -113,6 +114,12 @@ export function createTerminalManager({ shell = terminalShell(), maxBufferBytes 
       Object.assign(t, { cols, rows });
     },
     destroy(ownerId, deviceId, id) { return destroy(get(ownerId, deviceId, id)); },
+    async release(id, token) {
+      const t = terminals.get(id);
+      if (!t) return;
+      if (!timingSafeEqual(Buffer.from(token), Buffer.from(t.releaseToken))) throw failure('FORBIDDEN', 403);
+      await destroy(t);
+    },
     async close() { closing = true; await Promise.all([...terminals.values()].map(destroy)); },
   };
 }

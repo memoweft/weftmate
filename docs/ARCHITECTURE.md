@@ -82,7 +82,7 @@ flowchart TD
 
 ### 人手输入的终端面板
 
-`personal-access-ui/panels/terminal.js` 按 `WeftPanels` 标签生命周期创建 xterm.js（终端视图）。`personal-access/terminals.mjs` 在现有 `/personal/v1/terminals` 上创建和关闭终端，同一宿主 HTTP（网页传输协议）服务升级 `/terminals/{terminalId}/connect` 为 WebSocket（双向连接）。不另开端口；请求沿现有账户、设备、来源与 CSRF（跨站请求伪造防护）校验，连接首帧再次证明同一登录身份，之后定期核验登录是否仍有效。桌面主窗口只给本机终端升级请求附加既有桌面能力。
+`personal-access-ui/panels/terminal.js` 按 `WeftPanels` 标签生命周期创建 xterm.js（终端视图）。`personal-access/terminals.mjs` 在现有 `/personal/v1/terminals` 上创建和关闭终端，同一宿主 HTTP（网页传输协议）服务升级 `/terminals/{terminalId}/connect` 为 WebSocket（双向连接）。不另开端口；创建、读取与输入沿现有账户、设备、来源与 CSRF（跨站请求伪造防护）校验，连接首帧再次证明同一登录身份，之后定期核验登录是否仍有效。桌面主窗口只给本机终端升级请求附加既有桌面能力。创建响应另交付 256 位随机关闭凭据，只能在同源 `/terminals/{terminalId}/release` 释放这一终端，不能读取或输入；标签关闭和切账号清理不依赖已经轮换的登录 Cookie（登录会话）。
 
 `personal-terminal/index.mjs` 按账户、设备、对话和标签保存进程与有界输出缓冲；每段输出带递增游标，重连只补漏收内容，超过保留范围时明确提示。`worker.mjs` 独占 node-pty（伪终端组件）的原生句柄和 ConPTY（Windows 伪控制台）线程；自然退出与关闭标签都能释放线程，程序退出关闭全部终端。隐藏与切标签保活；切对话保存各自的视图和进程，关闭标签释放该标签在各对话中开的终端。
 

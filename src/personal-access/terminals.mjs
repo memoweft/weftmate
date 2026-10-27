@@ -46,7 +46,10 @@ export function createTerminalOperations(context) {
       const latest = context.accountState(ownerId);
       if (latest.sessions[sessionId] !== session || latest.projects?.[session.projectId] !== account.projects?.[session.projectId])
         throw failure('SESSION_BUSY', 409);
+      let abandoned = false;
+      response.once('close', () => { if (!response.writableFinished) abandoned = true; });
       const result = await manager.create({ ownerId, deviceId, ...body, cwd });
+      if (abandoned || response.destroyed) { await manager.destroy(ownerId, deviceId, result.terminalId); return true; }
       try { current(request); } catch (error) { await manager.destroy(ownerId, deviceId, result.terminalId); throw error; }
       context.json(response, 201, result);
     } else if (request.method === 'DELETE' && match[1]) {
@@ -102,7 +105,20 @@ export function createTerminalOperations(context) {
       socket.end(`HTTP/1.1 ${error.status ?? 403} Rejected\r\nConnection: close\r\n\r\n`);
     }
   }
-  return { handle, upgrade, async close() {
+  async function handleRelease(request, response, url) {
+    const match = /^\/personal\/v1\/terminals\/(terminal-[0-9a-f-]{36})\/release$/.exec(url.pathname);
+    if (!match) return false;
+    if (request.method !== 'POST' || url.search) throw failure('INVALID_REQUEST');
+    context.requireBrowserOrigin(request);
+    const body = await context.readJson(request);
+    exactKeys(body, ['releaseToken'], ['releaseToken']);
+    if (typeof body.releaseToken !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(body.releaseToken)) throw failure('INVALID_REQUEST');
+    // This unguessable, release-only proof came from the original authenticated
+    // creation. It conveys no input/output authority and survives cookie rotation.
+    await manager.release(match[1], body.releaseToken);
+    context.json(response, 200, { closed: true }); return true;
+  }
+  return { handle, handleRelease, upgrade, async close() {
     for (const ws of sockets.clients) ws.terminate();
     await manager.close(); sockets.close();
   } };

@@ -30,8 +30,9 @@
     if (!response.ok) throw new Error('UNAUTHORIZED');
     return response.json();
   }
-  async function request(path, method, body) {
+  async function request(path, method, body, ownerId) {
     const me = await auth();
+    if (ownerId && me.account.ownerId !== ownerId) throw new Error('UNAUTHORIZED');
     const response = await fetch(`${base}${path}`, { method, credentials: 'same-origin',
       headers: { 'content-type': 'application/json', 'x-weftmate-csrf': me.csrfToken },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
@@ -40,10 +41,12 @@
     return result;
   }
   function create(initialContext) {
-    let ctx = initialContext, active, disposed = false;
+    let ctx = initialContext, active, disposed = false, generation = 0;
+    const identity = [ctx.ownerId, ctx.identityGeneration];
     const tabId = ctx.tabId || `tab-${crypto.randomUUID()}`, sessions = new Map();
     const el = document.createElement('section'); el.className = 'terminal-panel'; el.setAttribute('aria-label', '交互终端');
     const host = document.createElement('div'); host.className = 'terminal-sessions'; el.append(host);
+    const empty = document.createElement('p'); empty.className = 'terminal-directory'; host.append(empty);
     function makeSession(key, context) {
       const wrap = document.createElement('div'); wrap.className = 'terminal-session';
       const toolbar = document.createElement('div'); toolbar.className = 'terminal-toolbar';
@@ -59,7 +62,7 @@
       retry.addEventListener('click', async () => {
         retry.hidden = true;
         if (s.exited) {
-          try { await request(`/terminals/${s.id}`, 'DELETE'); }
+          try { await request(`/terminals/${s.id}`, 'DELETE', undefined, identity[0]); }
           catch { status.textContent = '旧终端未能关闭，请重试。'; retry.hidden = false; return; }
           s.id = null; s.creation = null; s.cursor = 0; s.exited = false; s.attempt++; s.terminal.reset();
         }
@@ -68,7 +71,7 @@
       return s;
     }
     function theme(s) {
-      if (!s.terminal) return;
+      if (!s?.terminal) return;
       const style = getComputedStyle(el), color = name => style.getPropertyValue(name).trim();
       const palette = ['--surface', '--danger', '--success', '--warning', '--brand', '--syntax-number', '--syntax-string', '--ink'];
       const names = ['black','red','green','yellow','blue','magenta','cyan','white'];
@@ -83,6 +86,7 @@
     function send(s, message) { if (s.ready && s.socket?.readyState === WebSocket.OPEN) s.socket.send(JSON.stringify(message)); }
     async function connect(s) {
       if (s.closed || disposed || s.connecting) return;
+      const requestGeneration = generation;
       clearTimeout(s.timer); s.connecting = true; s.ready = false; s.status.textContent = s.id ? '正在重新连接…' : '正在打开终端…';
       try {
         await loadAssets();
@@ -97,12 +101,14 @@
         if (!s.id) {
           s.creation = request('/terminals', 'POST', { conversationId: s.context.conversationId,
             tabId: `${tabId}-${s.attempt}`, ...(s.context.computerId ? { computerId: s.context.computerId } : {}),
-            cols: s.terminal.cols, rows: s.terminal.rows });
+            cols: s.terminal.cols, rows: s.terminal.rows }, identity[0]);
           const result = await s.creation;
-          s.id = result.terminalId; s.directory.textContent = `起始目录：${result.cwd}`; s.directory.title = result.cwd;
+          s.id = result.terminalId; s.releaseToken = result.releaseToken; s.cwd = result.cwd;
+          if (requestGeneration === generation && active === s) { s.directory.textContent = `起始目录：${result.cwd}`; s.directory.title = result.cwd; }
           if (s.closed || disposed) return;
         }
         const me = await auth();
+        if (identity[0] && me.account.ownerId !== identity[0]) throw new Error('UNAUTHORIZED');
         if (s.closed || disposed) return;
         const url = new URL(`${base}/terminals/${s.id}/connect`, location.href); url.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
         const ws = new WebSocket(url); s.socket = ws;
@@ -114,6 +120,7 @@
           if (message.type === 'output' && message.seq > s.cursor) { s.terminal.write(message.data); s.cursor = message.seq; }
           if (message.type === 'gap') { s.terminal.reset(); s.terminal.writeln('较早的输出已超出保留范围，以下为最近的内容。'); }
           if (message.type === 'ready') {
+            if (active === s && s.cwd) { s.directory.textContent = `起始目录：${s.cwd}`; s.directory.title = s.cwd; }
             s.ready = true; s.reconnects = 0; s.connecting = false; s.exited = message.state === 'exited';
             s.terminal.resize(message.cols, message.rows);
             s.terminal.options.disableStdin = s.exited;
@@ -149,11 +156,18 @@
     }
     function select(context) {
       if (disposed) return;
+      generation++;
+      if (identity[0] !== context.ownerId || identity[1] !== context.identityGeneration) { void dispose(); return; }
       ctx = context;
       if (active) active.wrap.hidden = true;
-      if (!ctx.conversationId) return;
+      active = null;
+      const unavailable = !ctx.conversationId || /^(draft:|phone:)/.test(ctx.conversationId);
+      empty.hidden = !unavailable;
+      if (unavailable) { empty.textContent = ctx.conversationId?.startsWith('draft:') ? '先发送一条消息保存这个对话，再打开终端。' : '请选择电脑上的对话，再打开终端。'; return; }
       const key = `${ctx.computerId || ''}:${ctx.conversationId}`;
       active = sessions.get(key) || makeSession(key, ctx); active.wrap.hidden = false;
+      active.context = ctx;
+      if (active.cwd) { active.directory.textContent = `起始目录：${active.cwd}`; active.directory.title = active.cwd; }
       if (!active.id && !active.connecting) void connect(active);
       theme(active); fit(active);
     }
@@ -162,18 +176,28 @@
     const appearance = new MutationObserver(() => { for (const s of sessions.values()) theme(s); });
     appearance.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });
     select(ctx);
+    async function dispose() {
+      if (disposed) return;
+      disposed = true; generation++; clearTimeout(resizeTimer); resize.disconnect(); appearance.disconnect();
+      el.remove();
+      await Promise.all([...sessions.values()].map(async s => {
+        s.closed = true; clearTimeout(s.timer); s.terminal?.dispose();
+        // Finish an in-flight creation so its release proof is never lost.
+        const created = await s.creation?.catch(() => null);
+        const id = s.id || created?.terminalId, token = s.releaseToken || created?.releaseToken;
+        if (id && token) {
+          const released = await fetch(`${base}/terminals/${id}/release`, { method:'POST', credentials:'same-origin', keepalive:true,
+            headers:{'content-type':'application/json'}, body:JSON.stringify({releaseToken:token}) });
+          if (!released.ok) throw new Error('TERMINAL_RELEASE_FAILED');
+        }
+        s.socket?.close();
+      }));
+    }
     return { el,
       show() { el.hidden = false; theme(active); fit(active); active?.terminal?.focus(); },
       hide() { el.hidden = true; },
       update: select,
-      async dispose() {
-        disposed = true; clearTimeout(resizeTimer); resize.disconnect(); appearance.disconnect();
-        await Promise.all([...sessions.values()].map(async s => {
-          s.closed = true; clearTimeout(s.timer); s.socket?.close(); s.terminal?.dispose();
-          const created = await s.creation?.catch(() => null);
-          if (s.id || created?.terminalId) await request(`/terminals/${s.id || created.terminalId}`, 'DELETE');
-        })); el.remove();
-      },
+      dispose,
     };
   }
   const panel = { title: '终端', icon: 'terminal', create };

@@ -175,6 +175,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, context.publicAuth(current.ownerId, current.deviceId,
           current.device, current.csrfToken));
       }
+      if (await context.terminals.handleRelease(request, response, url)) return;
       if (ownerId && context.dataControls.isLocked(ownerId) && !pathname.startsWith('/personal/v1/data') &&
           !['/personal/v1/auth/me','/personal/v1/auth/state','/personal/v1/auth/logout'].includes(pathname) &&
           !(request.method==='GET'&&pathname.startsWith('/personal/v1/activity'))) throw failure('SESSION_BUSY',409);

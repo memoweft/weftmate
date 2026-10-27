@@ -54,6 +54,13 @@ test('authenticated host terminal: directories, conversation/tab isolation, curs
     await reconnected.wait(rows => rows.some(e => e.type === 'output' && e.data.includes('断线输出')));
     assert.ok(reconnected.messages.filter(e => e.type === 'output').every(e => e.seq > cursor));
     assert.equal((await f.api(`/terminals/${a.body.terminalId}`, 'DELETE')).status, 200);
+    const closing = connection(f, b.body.terminalId); clients.push(closing.ws);
+    await closing.wait(rows => rows.some(e => e.type === 'ready'));
+    assert.equal((await f.api(`/terminals/${b.body.terminalId}/release`, 'POST', {releaseToken:'A'.repeat(43)})).status, 403);
+    assert.equal((await f.api(`/terminals/${b.body.terminalId}/release`, 'POST', {releaseToken:b.body.releaseToken}, {origin:'https://foreign.example.invalid'})).status, 403);
+    await f.service.revokeDevice(f.me.device.id);
+    assert.equal((await f.api(`/terminals/${b.body.terminalId}/release`, 'POST', {releaseToken:b.body.releaseToken})).status, 200);
+    await closing.wait(rows => rows.some(e => e.type === 'closed'));
     await f.service.close(); // live work shell and all upgraded sockets are drained.
   } finally { for (const ws of clients) ws.terminate(); await f.close(); }
 });

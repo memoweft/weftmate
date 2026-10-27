@@ -41,6 +41,7 @@ test('terminal grid styles receive a fresh response nonce while the script polic
   for (let i = 0; i < 2; i++) {
     const res = response(); await servePersonalAccessUi({ method: 'GET', url: '/personal/v1/ui/' }, res);
     const nonce = res.result.body!.toString().match(/name="weft-style-nonce" content="([^"]+)"/)![1];
+    assert.equal(res.result.body!.toString().match(/src="\/personal\/v1\/ui\/panels\/terminal\.js"/g)?.length, 1);
     assert.match(nonce, /^[A-Za-z0-9+/]{24}$/);
     const policy = res.result.headers!['content-security-policy'];
     assert.ok(policy.includes(`style-src 'self' 'nonce-${nonce}'`));
