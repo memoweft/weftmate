@@ -37,7 +37,10 @@ import Testing
     }
     @Test func boundsEntireJSONIncludingEscapesAndMetadata() async throws {
         let f=try await PhoneSyncFixture();defer { f.close() };try await f.sync()
-        try f.enqueue(12,text:String(repeating:"\"\\\n茶😀/",count:1400))
+        let text=String(repeating:"\"\\\n茶😀/",count:1800)
+        #expect(text.utf16.count <= 16384)
+        #expect(try JSONEncoder().encode(text).count * 12 > 256*1024)
+        try f.enqueue(12,text:text)
         try await f.sync()
         let report=try await f.report(),raw=report["raw"] as! [String]
         #expect(raw.count > 1)
