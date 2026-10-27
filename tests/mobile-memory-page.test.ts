@@ -145,6 +145,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   const animationFrames: Array<(time: number) => unknown> = []
   let deferOwner = options.deferItemsFor ?? ''
   let deferMore = options.deferMore ?? false
+  let offline = false
   const itemsByOwner: Record<string, MemoryItem[]> = {
     A: [{ id: 'memory-A', kind: 'cognition', text: 'A memory private to A', currentState: 'current', lifecycle: { invalidAt: null, archivedAt: null, mutedAt: null }, sourceCount: 1 }],
     B: [{ id: 'memory-B', kind: 'cognition', text: 'B memory private to B', currentState: 'current', lifecycle: { invalidAt: null, archivedAt: null, mutedAt: null }, sourceCount: 1 }],
@@ -154,6 +155,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   const status = options.status ?? ((owner: string) => ({ ownerId: rawOwners[owner], state: 'ready', worldRevision: 10,
     capabilities: { list: true, source: true, inject: true }, pendingBoundaryCount: 0, blockedBoundaryCount: 0, discardedBoundaryCount: 0 }))
   function business(path: string, owner: string, method = 'GET', body?: any) {
+    if(offline)throw new Error('NETWORK');
     businessPaths.push({ owner, path, method, body })
     if (method !== 'GET') return options.write?.(owner, path, method, body) ?? Promise.reject(new Error('METHOD_NOT_ALLOWED'))
     if (path === '/personal/v1/model-services') return { services: [], canManage: true }
@@ -287,13 +289,13 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
       removeItem: (key: string) => storage.delete(key),
     } }
   // Browser scripts read viewport metrics as bare globals as well as window properties.
-  runInNewContext(source, { document, window, addEventListener:window.addEventListener.bind(window),
+  const disconnect = runInNewContext(source+'\n;Object.assign(()=>{uiCore.stopConnection();uiCore.connectionNetwork(false)},{view:()=>({kind:uiCore.connectionView().kind,flow:state.memory.flow,error:state.memory.error})})', { document, window, addEventListener:window.addEventListener.bind(window),
     innerHeight: window.innerHeight, innerWidth: 390, localStorage: timers.localStorage, setTimeout: timers.setTimeout, setInterval:()=>1, clearInterval(){},
     clearTimeout: timers.clearTimeout, requestAnimationFrame: timers.requestAnimationFrame, URLSearchParams,
     console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, AbortSignal, TextEncoder,
     ResizeObserver:class { observe(){} unobserve(){} disconnect(){} } })
   readyListener?.({}); // Like deferred browser scripts, finish registering every component before DOMContentLoaded.
-  return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, setDeferredOwner: (owner: string) => { deferOwner = owner },
+  return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, connection:disconnect.view, disconnect:()=>{offline=true;disconnect()}, setDeferredOwner: (owner: string) => { deferOwner = owner },
     flushAnimationFrames() { for (const frame of animationFrames.splice(0)) frame(0) },
     setDeferMore: () => { deferMore = true }, resolveDeferred(index: number, value: object) { deferred[index].resolve(value) },
     rejectDeferred(index: number, code: string) { deferred[index].reject(new Error(code)) },
@@ -388,6 +390,22 @@ test('memory status distinguishes ready, degraded, disabled and unavailable; abs
 })
 
 function appOwner(owner: string) { return owner === 'A' ? 'account-A-raw' : 'account-B-raw' }
+
+test('a delayed computer memory response cannot replace the replica page after disconnecting',async()=>{
+  const app=harness({deferItemsFor:'A'});
+  await waitUntil(()=>app.calls.some(call=>call.method==='app.ready'),'bootstrap did not finish');
+  for(let index=0;index<20;index++)await flush();
+  await openMemory(app,'A');
+  await waitUntil(()=>app.deferred.length===1,'computer list was not delayed');
+  app.disconnect();
+  const empty='记忆在电脑上形成。连上电脑后，这里会显示 WeftMate 记得的事。';
+  assert.ok(app.get('page-content').textContent.includes(empty),JSON.stringify(app.connection())+app.get('page-content').textContent);
+  app.resolveDeferred(0,{ownerId:app.rawOwners.A,worldRevision:10,searchScope:'account_snapshot',
+    items:app.itemsByOwner.A,nextCursor:null,hasMore:false});
+  for(let index=0;index<20;index++)await flush();
+  assert.ok(app.get('page-content').textContent.includes(empty),JSON.stringify(app.connection())+app.get('page-content').textContent);
+  assert.doesNotMatch(app.get('page-content').textContent,/A memory private to A/);
+});
 
 test('a delayed A list success after B is displayed cannot replace or append to B', async () => {
   const app = harness({ deferItemsFor: 'A' })
