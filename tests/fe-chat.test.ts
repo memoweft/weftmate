@@ -18,24 +18,24 @@ function streaming() {
   return {body,seen,api:context.WeftReplyMotion,render,frames,tick(){const batch=[...frames.values()];frames.clear();batch.forEach(fn=>fn());}};
 }
 
-test('FE-CHAT a burst drains within one short transition without a full first-frame jump',()=>{
+test('FE-CHAT a transport burst paints once on the next frame',()=>{
   const f=streaming(),text='合成🙂回复'.repeat(300);
   f.api.stream(f.body,text,{streaming:true},f.render);
   assert.equal(f.body.textContent,'');
   f.tick();
   assert.ok(Array.from(f.body.textContent).length>3,'catch up with transport bursts');
-  assert.ok(f.body.textContent.length<text.length,'retain an incremental arrival');
+  assert.equal(f.body.textContent,text,'no artificial typewriter backlog');
   f.api.stream(f.body,text,{streaming:false},f.render);
   for(let frame=0;frame<30&&f.frames.size;frame++)f.tick();
   assert.equal(f.body.textContent,text,'no seconds-long queue after the model completes');
   assert.ok(f.seen.every((text,index)=>!index||text.startsWith(f.seen[index-1])),'existing text never disappears');
 });
 
-test('FE-CHAT a long streamed burst keeps incremental arrival instead of bypassing motion at 4000 characters',()=>{
+test('FE-CHAT a long streamed burst has the same one-frame delivery as a small chunk',()=>{
   const f=streaming(),text='长回复'.repeat(2000);
   f.api.stream(f.body,text,{streaming:true},f.render);
   assert.equal(f.body.textContent,'');
-  f.tick();assert.ok(f.body.textContent.length>0&&f.body.textContent.length<text.length);
+  f.tick();assert.equal(f.body.textContent,text);
   for(let frame=0;frame<30&&f.frames.size;frame++)f.tick();
   assert.equal(f.body.textContent,text);
 });

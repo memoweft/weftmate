@@ -54,6 +54,14 @@ test('shared offline content: parsing, injection set, streaming, controls and fa
     assert.match(result.good,/katex/);assert.match(result.good,/math-block/);assert.match(result.bad,/math-fallback/);assert.match(result.bad,/\$\\unknown\{a\}\$/);
     assert.match(result.root,/<svg/);
   });
+  await t.test('formatted streaming prose retains emphasis and text nodes across punctuation',async()=>{
+    const result=await page.evaluate(()=>{
+      const body=WeftContent.create('**结论**：第一段。','markdown-body',{streaming:true});document.body.append(body);
+      const paragraph=body.querySelector('p'),strong=body.querySelector('strong'),tail=paragraph.lastChild;
+      WeftContent.update(body,'**结论**：第一段。继续生成更多内容！',{streaming:true});
+      return {stable:body.querySelector('p')===paragraph&&body.querySelector('strong')===strong&&paragraph.lastChild===tail,text:paragraph.textContent};
+    });assert.equal(result.stable,true);assert.equal(result.text,'结论：第一段。继续生成更多内容！');
+  });
   await t.test('Mermaid graph and failed/injected syntax fallback without links or scripts',async()=>{
     await page.evaluate(()=>{document.body.replaceChildren(WeftContent.create('```mermaid\ngraph LR\n A[开始] --> B[完成]\n```'));});
     await page.locator('.render-diagram img').waitFor();assert.equal(await page.locator('.diagram-failed').count(),0);

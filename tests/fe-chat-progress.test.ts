@@ -39,13 +39,13 @@ test('FE-CHAT process and in-place question controls', {timeout:30000}, async t=
         const config={row:{questionRpcId:'synthetic-question',questions:[{question:'选择接下来做什么',options:[{label:'整理内容'},{label:'继续解释'}]}]},draft,
           locked:false,current:()=>true,focusComposer:()=>{},choose:(_index:number,label:string)=>draft.answers[0]={selected:[label],custom:''},custom:()=>draft.answers[0],submit:()=>submits++};
         bar.dataset.scope='synthetic-scope';scope.WeftQuestionBar.paint(bar,config);bar.hidden=false;
-        scope.WeftTimeline.placeDecisions();const adjacent=!!bar.closest('#transcript .timeline-entry');
+        scope.WeftTimeline.placeDecisions();const atComposer=bar.parentElement===document.getElementById('approval-bar').parentElement && !bar.closest('#transcript');
         bar.querySelector('.question-choice').click();const submit=bar.querySelector('[data-question-control=submit]');submit.click();
         scope.WeftQuestionBar.paint(bar,{...config,locked:true,submitting:true});submit.click();
         scope.WeftTimeline.placeDecisions(document.getElementById('transcript'),true);scope.WeftTimeline.placeDecisions();
-        return {adjacent,submits,selected:draft.answers[0].selected,locked:submit.disabled,same:submit===bar.querySelector('[data-question-control=submit]')};
+        return {atComposer,submits,selected:draft.answers[0].selected,locked:submit.disabled,same:submit===bar.querySelector('[data-question-control=submit]')};
       });
-      assert.deepEqual(result,{adjacent:true,submits:1,selected:['整理内容'],locked:true,same:true});
+      assert.deepEqual(result,{atComposer:true,submits:1,selected:['整理内容'],locked:true,same:true});
     });
   } finally { await browser.close(); }
 });

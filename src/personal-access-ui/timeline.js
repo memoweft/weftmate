@@ -11,8 +11,8 @@
     }
     for(const child of [...parent.childNodes])if(!children.includes(child))child.remove();
   }
-  // Keep the original actionable nodes, listeners and authority checks when
-  // presenting decisions beside the process. Home anchors survive chat resets.
+  // Keep the original actionable nodes, listeners and authority checks in the
+  // composer slot. Home anchors also support standalone message surfaces.
   const decisionSurfaces=new Map();
   function decisionSurface(id, supplied) {
     const found=supplied || document.getElementById(id);
@@ -23,15 +23,15 @@
     }
     return decisionSurfaces.get(id)?.element || found;
   }
-  function placeDecisions(list=document.getElementById('transcript'), park=false) {
+  function placeDecisions(list=document.getElementById('transcript')) {
     if(!list || globalThis.WeftPhoneUnify?.isPhone())return;
     decisionSurface('approval-bar');decisionSurface('question-bar');
-    const process=park?null:[...list.querySelectorAll('.execution-block[data-decision-anchor="true"]')].at(-1)?.parentElement;
+    const slot=document.getElementById('composer-above-slot');
     for(const {element,home} of decisionSurfaces.values()) {
-      const parent=process || home.parentNode;if(!parent)continue;
-      const before=process?null:home.nextSibling;
-      element.dataset.inlineDecision=String(!!process);
-      if(element.parentNode===parent && (process || element===before))continue;
+      const parent=slot || home.parentNode;if(!parent)continue;
+      const before=slot?slot.querySelector('#next-suggestions'):home.nextSibling;
+      element.dataset.inlineDecision='false';
+      if(element.parentNode===parent && (slot || element===before))continue;
       const active=document.activeElement,focused=element.contains(active);
       if(parent.moveBefore && element.isConnected && parent.isConnected)parent.moveBefore(element,before);
       else parent.insertBefore(element,before);
@@ -106,6 +106,13 @@
     row.classList.toggle('thinking-only', !event.data.text && !event.data.images?.length);
     row.hidden = row.classList.contains('thinking-only');
 
+  }
+  function replyForProcess(events, process) {
+    const turn=String(process.taskId).split('turn-').at(-1), session=process.sessionId || process.steps?.[0]?.sessionId || String(process.taskId).split(':turn-')[0];
+    const belongs=event=>!session || !(event.sourceRef?.sessionId || event.sessionId) || (event.sourceRef?.sessionId || event.sessionId)===session;
+    const start=events.findLast(event=>belongs(event) && event.type==='turn.started' && String(event.data.turn)===turn);
+    const next=events.find(event=>belongs(event) && event.type==='turn.started' && event.seq>(start?.seq ?? process.position));
+    return events.findLast(event=>belongs(event) && event.type==='assistant.message' && event.seq>(start?.seq ?? process.position ?? process.seq) && (!next || event.seq<next.seq));
   }
   function thinkingCard(step, saved, options) {
     const detail = saved || node('details', 'execution-step model-thinking');
@@ -201,7 +208,7 @@
         const end=ordered.find(event=>['turn.ended','task.ended'].includes(event.type)&&WeftUiCore.turnOutcome([event],block.taskId).terminal);
         const ms=Date.parse(end?.at)-Date.parse(start?.at || block.steps[0]?.at);
         const duration=Number.isFinite(ms)?`${Math.max(0,Math.round(ms/1000))} ${block.language==='en'?'s':'秒'}`:block.language==='en'?'duration unavailable':'用时未记录';
-        view.text=['aborted','cancelled','canceled','stopped','killed'].includes(outcome.reason) ? (block.language==='en'?'Stopped':'已停止') : tools.length ? block.language==='en'?`Processed ${tools.length} steps`:`处理了 ${tools.length} 步` : block.language==='en'?'Completed':'已完成';
+        view.text=['aborted','cancelled','canceled','stopped','killed'].includes(outcome.reason) ? (block.language==='en'?'Stopped':'已停止') : outcome.reason==='completed' ? block.language==='en'?'Completed':'已完成' : block.language==='en'?'Ended':'已结束';
         view.duration=duration;
         view.running=false;
       }
@@ -211,7 +218,9 @@
         view.running=false;
       }
       const running = view.running
-      const elapsed = view.duration || (running ? /\d+ (?:秒|s)$/.exec(waiting || '')?.[0] || `${Math.max(0,Math.floor((Date.now()-Date.parse(current?.at || started?.at))/1000)) || 0} ${block.language==='en'?'s':'秒'}` : '')
+      const startedAt=Date.parse(started?.at || current?.at);
+      const elapsed = view.duration || (running ? Number.isFinite(startedAt) ? `${Math.max(0,Math.floor((Date.now()-startedAt)/1000))} ${block.language==='en'?'s':'秒'}`
+        : /\d+ (?:秒|s)$/.exec(waiting || '')?.[0] || (block.language==='en'?'duration unavailable':'用时未记录') : '')
       if (running) view.text = view.text.replace(/\s*\d+ (?:秒|s)$/, '')
       const signature = JSON.stringify([block, outcome, stopView])
       row.dataset.running = String(running)
@@ -232,13 +241,13 @@
       const savedSteps = new Map([...row.querySelectorAll('.execution-step')].map(detail => [detail.dataset.step, detail]))
       // stepCard mutates reused nodes, so compare with their state before paint.
       const savedStepStates = new Map([...savedSteps].map(([key, detail]) => [key, detail.dataset.state]))
-      const newFailure = view.failed && row.dataset.failed !== 'true'; row.dataset.failed = String(!!view.failed)
+      const newFailure=view.failed && row.dataset.failed!=='true';row.dataset.failed = String(!!view.failed)
       const details = previous || node('details', 'execution-block')
-      const decisions=[...(options.approvals || []),...(options.questions || [])].filter(row=>row.status==='pending');
-      details.dataset.decisionAnchor=String(options.decisionAnchor ?? (decisions.length ? decisions.some(row=>block.taskId===`turn-${row.turn}` || block.taskId===`${row.sessionId}:turn-${row.turn}`) : block===lastStarted));
       if (!previous) details.dataset.replyProcess = 'true'
       details.dataset.motion = 'unfold'
-      details.open = newFailure || previous?.open === true
+      const justFinished = terminal && details.dataset.terminal === 'false';
+      details.open = newFailure || (!previous ? !terminal : justFinished && !view.failed ? false : previous.open);
+      details.dataset.terminal = String(!!terminal);
       row.dataset.running = String(running)
       row.classList.toggle('has-failure', !!view.failed)
       const summary = details.querySelector('summary') || node('summary', 'inline-progress-summary')
@@ -264,7 +273,7 @@
       if (!records.parentNode) details.append(records)
       const savedGroups = new Map([...records.querySelectorAll('[data-step-group]')].map(detail => [detail.dataset.stepGroup, detail]))
       const savedNotes = new Map([...records.querySelectorAll('[data-progress-note]')].map(detail => [detail.dataset.progressNote,detail]))
-      const recordNodes=WeftUiCore.groupConsecutiveSteps(block.steps).map(group => {
+      const recordNodes=WeftUiCore.groupConsecutiveSteps(block.steps).flatMap(group => /^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(group.kind) ? group.steps.map(step=>({...group,steps:[step]})) : [group]).map(group => {
         const children = group.steps.map(step => {
           if(step.toolName==='__thinking')return thinkingCard(step,savedSteps.get(String(step.stepId)),options);
           if(step.toolName==='__progress') {
@@ -295,6 +304,16 @@
       if(view.failed) {
         const failure=records.querySelector('.execution-failure') || node('p','execution-failure');
         if(failure.textContent!==view.text)failure.textContent=view.text;recordNodes.unshift(failure);
+      }
+      if (tools.length) {
+        const activity=records.querySelector('.execution-activity') || node('p','execution-activity');
+        const isCommand=step=>/^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(step.toolName);
+        const commands=tools.filter(step=>isCommand(step) && !['running','pending','rejected'].includes(step.state));
+        const files=new Set(tools.flatMap(step=>step.state==='completed'?(step.fileChanges || []).map(file=>file.path):[]));
+        const other=tools.filter(step=>!isCommand(step) && !(files.size && /^(edit|write)$/.test(step.toolName)));
+        const label=[files.size?(block.language==='en'?`Edited ${files.size} file(s)`:`已编辑 ${files.size} 个文件`):'',commands.length?(block.language==='en'?`Ran ${commands.length} command(s)`:`已运行 ${commands.length} 条命令`):'',WeftUiCore.progressText(other,{terminal:true,reason:'ended',language:block.language}).text].filter(Boolean).join(' · ');
+        if(activity.textContent!==label)activity.textContent=label;
+        recordNodes.unshift(activity);
       }
       reconcile(records,recordNodes);
       const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
@@ -354,6 +373,13 @@
         row.append(node('p', '', ({ 'allowed-once': '已允许本次', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[resolved?.data?.outcome] || (family === 'question' ? data.questions?.map(q => q.question).join('\n') : '') || data.summary || ''))
       })
     }
+    if(options.openChange)for(const block of groups) {
+      const events=block.events || WeftUiCore.progressEvents(ordered,block), files=WeftTimelineCards.changes(events);
+      if(!files.length)continue;
+      const answer=replyForProcess(ordered,block);
+      put(`changes-${block.presentationKey || block.taskId}`, (answer?.seq ?? events.at(-1)?.seq ?? block.seq)+0.2,
+        row=>WeftTimelineCards.change(row,files,options));
+    }
     for (const [key, row] of existing) if (!seen.has(key)) row.remove()
     for(const block of groups) if(block.messageKey) {
       const anchor=[...list.children].find(row=>row.dataset.messageKey===block.messageKey)
@@ -365,5 +391,5 @@
     }
     if(list.closest('#transcript'))placeDecisions();
   }
-  window.WeftTimeline = { render, prepare, thinking, detailAction, copyFeedback, isFinalReply, decisionSurface, placeDecisions }
+  window.WeftTimeline = { render, prepare, thinking, replyForProcess, detailAction, copyFeedback, isFinalReply, decisionSurface, placeDecisions }
 })()

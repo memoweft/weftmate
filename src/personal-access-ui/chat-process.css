@@ -1,0 +1,41 @@
+/* Message-local presentation. The workspace owns outer layout and palette. */
+#conversation-pane.chat-workspace .execution-block > .inline-progress-summary { width:fit-content; gap:var(--wm-space-8); }
+#conversation-pane.chat-workspace .progress-elapsed { opacity:1; color:var(--ink-secondary,var(--secondary)); font-variant-numeric:tabular-nums; }
+#conversation-pane.chat-workspace .execution-records { margin:var(--wm-space-8) 0 var(--wm-space-16); padding:var(--wm-space-8) 0 0; border:0; border-top:1px solid var(--line); }
+.execution-activity { margin:0 0 var(--wm-space-8); color:var(--ink-secondary,var(--secondary)); font-size:var(--wm-font-size-12); }
+#conversation-pane.chat-workspace .execution-records .execution-step > summary { min-height:var(--wm-space-32); padding:var(--wm-space-4) 0; gap:var(--wm-space-8); }
+.step-status { flex:none; color:var(--ink-secondary,var(--secondary)); font-size:var(--wm-font-size-12); }
+[data-state=failed] > summary .step-status { color:var(--danger); }
+#conversation-pane.chat-workspace .execution-step .step-title { flex:0 1 auto; }
+.step-detail-content :is(.step-output,.timeline-raw), .step-command .render-code pre { max-height:220px; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.step-detail-content .step-output { white-space:pre; font-size:var(--wm-font-size-12); line-height:var(--wm-line-height-1_5); }
+.question-bar-header { display:flex; align-items:start; gap:var(--wm-space-12); }
+.question-bar-title { flex:1; }
+.question-bar-header > button { flex:none; }
+.question-bar-fields { display:flex; flex-direction:column; gap:var(--wm-space-12); }
+.question-bar-fields[hidden] { display:none; }
+.question-bar .question-bar-options { display:flex; flex-direction:column; gap:var(--wm-space-6); }
+.question-bar .question-choice { width:100%; justify-content:start; text-align:start; gap:var(--wm-space-12); }
+.question-choice-number { display:grid; place-items:center; flex:none; min-width:var(--wm-space-24); height:var(--wm-space-24); border:1px solid var(--line); border-radius:var(--wm-radius-4); font-variant-numeric:tabular-nums; color:var(--ink-secondary,var(--secondary)); }
+.question-choice-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:var(--wm-space-4); }
+.question-choice [hidden] { display:none; }
+.question-choice-description { color:var(--ink-secondary,var(--secondary)); font-size:var(--wm-font-size-12); line-height:var(--wm-line-height-1_5); }
+.question-bar .question-choice[aria-checked=true],.question-bar .question-choice[aria-pressed=true] { border-color:var(--accent); background:var(--accent-soft); }
+.question-bar .question-bar-custom { align-items:stretch; flex-direction:column; font-size:var(--wm-font-size-12); color:var(--ink-secondary,var(--secondary)); }
+.question-bar .question-actions { justify-content:flex-end; }
+.question-bar .question-actions > :first-child { margin-inline-end:auto; }
+.question-record { white-space:pre-wrap; color:var(--ink-secondary,var(--secondary)); font-size:var(--wm-font-size-13); line-height:var(--wm-line-height-1_5); }
+.file-changes { border:1px solid var(--line); border-radius:var(--wm-radius-12); padding:var(--wm-space-12) var(--wm-space-16); background:var(--surface); }
+#conversation-pane.chat-workspace .main-chat-row.file-changes { padding:var(--wm-space-12) var(--wm-space-16); }
+.file-changes-title { display:block; font-size:var(--wm-font-size-13); margin-bottom:var(--wm-space-8); }
+.file-change-row { display:flex; align-items:center; gap:var(--wm-space-8); min-width:0; }
+.file-change-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:var(--wm-font-size-13); }
+.file-change-counts { display:flex; gap:var(--wm-space-8); flex:none; font-size:var(--wm-font-size-12); font-variant-numeric:tabular-nums; }
+.change-added { color:var(--success,var(--wm-color-success)); }
+.change-removed { color:var(--danger); }
+.file-change-preview pre { overflow:auto; max-height:40vh; }
+@media (max-width:640px) {
+  #conversation-pane.chat-workspace .execution-records .execution-step > summary { min-height:var(--wm-space-44); }
+  .question-bar .question-bar-fields { max-height:50vh; overflow:auto; }
+  .file-change-row { flex-wrap:wrap; }
+}

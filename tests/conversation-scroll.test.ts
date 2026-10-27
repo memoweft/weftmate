@@ -9,7 +9,7 @@ function fixture(smooth=false){
  const box=node(),content=node(),button=node();box.scrollTop=1000;
  let actualTop=box.scrollTop;Object.defineProperty(box,'scrollTop',{get:()=>actualTop,set:(value:number)=>{actualTop=Math.max(0,Math.min(value,box.scrollHeight-box.clientHeight))}});
  let time=0;
- const context:any={document:{hidden:false,documentElement:{}},performance:{now:()=>time},getComputedStyle:()=>({getPropertyValue:()=>''}),matchMedia:()=>({matches:!smooth}),requestAnimationFrame:(fn:Function)=>{frames.push(fn);return fn},cancelAnimationFrame:(fn:Function)=>{const i=frames.indexOf(fn);if(i>=0)frames.splice(i,1)},addEventListener:(name:string,fn:Function)=>events.set(name,fn),visualViewport:{addEventListener:(name:string,fn:Function)=>viewport.set(name,fn)},ResizeObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}},MutationObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}}};
+ const context:any={document:{hidden:false,documentElement:{}},performance:{now:()=>time},getComputedStyle:(target:any)=>({overflowY:target?.overflowY,getPropertyValue:()=>''}),matchMedia:()=>({matches:!smooth}),requestAnimationFrame:(fn:Function)=>{frames.push(fn);return fn},cancelAnimationFrame:(fn:Function)=>{const i=frames.indexOf(fn);if(i>=0)frames.splice(i,1)},addEventListener:(name:string,fn:Function)=>events.set(name,fn),visualViewport:{addEventListener:(name:string,fn:Function)=>viewport.set(name,fn)},ResizeObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}},MutationObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}}};
  vm.runInNewContext(source,context);const scroll=context.WeftConversationScroll(box,content,button);
  const flush=()=>{while(frames.length)frames.shift()!(0);};
  const fire=(name:string,event:any={})=>box.listeners.get(name)?.(event);
@@ -19,6 +19,17 @@ function fixture(smooth=false){
 test('streaming follows the current bottom in one frame without smooth chasing',()=>{
  const f=fixture(true);f.scroll.latest();
  for(let i=0;i<10;i++){f.box.scrollHeight+=20;f.scroll.changed();f.tick();assert.equal(f.box.scrollTop,f.box.scrollHeight-f.box.clientHeight);}
+});
+test('wheel and touch over the output itself scroll it without unpinning the conversation',()=>{
+ for(const kind of ['wheel','touch']) {
+  const f=fixture(),target={parentElement:f.box,scrollTop:300,scrollHeight:2000,clientHeight:220,overflowY:'auto'};
+  if(kind==='wheel')f.fire('wheel',{target,deltaY:-100});
+  else {f.fire('touchstart',{target,touches:[{clientY:100}]});f.fire('touchmove',{target,touches:[{clientY:140}]});}
+  assert.equal(f.scroll.pinned,true,kind);
+  target.scrollTop=0;
+  if(kind==='wheel')f.fire('wheel',{target,deltaY:-100});else f.fire('touchmove',{target,touches:[{clientY:180}]});
+  assert.equal(f.scroll.pinned,false,kind+' at output top');
+ }
 });
 
 test('opening and closing details preserves bottom following or an explicitly unpinned reader',()=>{

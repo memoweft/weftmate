@@ -56,6 +56,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     setAttribute(key,value){this.attrs[key]=value}
     getAttribute(key){return this.attrs[key]??null}
     hasAttribute(key){return Object.hasOwn(this.attrs,key)}
+    toggleAttribute(key,force){const enabled=force??!this.hasAttribute(key);if(enabled)this.setAttribute(key,'');else this.removeAttribute(key);return enabled;}
     removeAttribute(key){delete this.attrs[key];if(key==='id')this.id='';if(key==='src')this.src='';}
     cloneNode(deep=false){const copy=new Node(this.id);copy.tagName=this.tagName;copy.className=this.className;copy.attrs={...this.attrs};copy.textContent=this.textContent;copy.hidden=this.hidden;if(deep)copy.append(...this.children.map(child=>child instanceof Node?child.cloneNode(true):child instanceof TextNode?new TextNode(child.data):child));return copy;}
     getBoundingClientRect(){return {top:500,height:132}}
@@ -1277,7 +1278,7 @@ test('task15-question-client sequential single, multiple and free answers preser
   assert.deepEqual(Object.keys(params).sort(),['answer','questionRpcId','requestId','sessionId']);assert.deepEqual(params.answer,{answers:[{id:'plan',selected:['同意']},{id:'repeated-id',selected:['文字记录','源文件'],custom:'保留一份简短目录'},{id:'repeated-id',selected:[],custom:'按这段原话填写'}]});
   assert.equal(h.bridge.some(item=>item.method==='shared.approvals.decide'),false);
   const answered=answeredQuestion(row,params.requestId,params.answer);h.reply(request,{question:answered,requestId:params.requestId});await h.flush();h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[answered],nextBefore:null,hasMore:false});await h.flush();
-  assert.equal(h.node('question-bar').hidden,true);assert.match(allText(questionCard(h)),/已回答：同意；文字记录、源文件、保留一份简短目录；按这段原话填写/);
+  assert.equal(h.node('question-bar').hidden,true);assert.match(allText(questionCard(h)),/是否按这份计划继续？\n已提交：同意\n\n需要保留哪些成果？\n已提交：文字记录、源文件、保留一份简短目录\n\n补充一个说明\n已提交：按这段原话填写/);
   await readQuestions(h,[{...answered,status:'resolved',outcome:'answered',resolvedAt:'2026-10-06T14:02:00.000Z',answerAcceptedAt:'2026-10-06T14:02:00.000Z'}]);
   assert.equal(h.node('draft').value,'聊天草稿仍在');assert.equal(h.node('chat-scroll').scrollTop,163);
 });
@@ -1323,7 +1324,7 @@ test('task15-question-client a replayed answered snapshot cannot downgrade nativ
   const answered=answeredQuestion(row,requestId,answer),final={...answered,status:'resolved',outcome:'answered',
     resolvedAt:'2026-10-06T14:02:00.000Z',answerAcceptedAt:'2026-10-06T14:02:00.000Z'};
   await readQuestions(h,[final]);h.reply(request,{question:answered,requestId});await h.flush();
-  assert.match(allText(questionCard(h)),/已回答：未作选择/);
+  assert.match(allText(questionCard(h)),/补充\n已回答：已跳过/);
   h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[final],nextBefore:null,hasMore:false});await deciding;
   const cancelled=harness();prepareApprovalChat(cancelled);await readQuestions(cancelled,[{...row,status:'resolved',outcome:'cancelled',resolvedAt:'2026-10-06T14:02:00.000Z'}]);
   assert.match(allText(questionCard(cancelled)),/提问已取消/);assert.equal(questionCard(cancelled).querySelector('.question-actions'),null);
@@ -1713,7 +1714,7 @@ test('MOB-3 two choices answer in one tap and a custom answer retains its explic
   assert.deepEqual(custom.bridge.findLast(item=>item.method==='shared.questions.answer').params.answer.answers,[{id:'two',selected:[],custom:'只看今天的安排'}]);
 });
 
-test('M1-0 mobile execution is collapsed by default, groups calls once, and ends across a card boundary',()=>{
+test('M1-0 ended mobile execution folds once and retains calls across a card boundary',()=>{
   const h=harness();prepareSyntheticTaskChat(h);
   h.run(`state.sharedEvents=[
     {seq:1,type:'step.started',at:'2026-10-07T00:00:00Z',data:{taskId:'turn-1',stepId:'s1',summary:'读取文件',state:'running',detailRef:{seq:1}}},
@@ -1723,7 +1724,7 @@ test('M1-0 mobile execution is collapsed by default, groups calls once, and ends
     {seq:5,type:'task.ended',data:{taskId:'turn-1'}}];renderSharedConversation()`);
   const blocks=h.node('chat-content').children.filter(node=>node.dataset.timeline?.startsWith('steps-'));
   assert.equal(blocks.length,1);assert.equal(blocks[0].querySelector('details').open,false);
-  assert.equal(blocks[0].querySelector('.inline-progress-text').textContent,'处理了 2 步');
+  assert.equal(blocks[0].querySelector('.inline-progress-text').textContent,'已结束');
   assert.equal(blocks[0].querySelector('.progress-elapsed').textContent,'用时未记录');
   assert.equal(blocks[0].querySelectorAll('.execution-step').length,2);
   assert.equal(h.node('chat-content').children.some(node=>node.dataset.timelineApproval==='approval-one'),false);
@@ -1781,7 +1782,7 @@ test('consecutive steps show readable descriptions before their raw detail',()=>
     {seq:1,type:'step.completed',data:{taskId:'turn-1',stepId:'read-a',toolName:'read',groupHint:'read',summary:'读取文件',state:'completed',detailRef:{seq:1}}},
     {seq:2,type:'step.completed',data:{taskId:'turn-1',stepId:'read-b',toolName:'read_file',groupHint:'read_file',summary:'读取文件',state:'completed',detailRef:{seq:2}}}];renderSharedConversation()`);
   const subgroup=h.node('chat-content').querySelector('.execution-block');assert.ok(subgroup);
-  assert.match(allText(subgroup),/读取了 2 个文件/);assert.equal(subgroup.open,false);
+  assert.match(allText(subgroup),/读取了 2 个文件/);assert.equal(subgroup.open,true,'without a terminal event the process stays expanded');
   assert.equal(subgroup.querySelector('.execution-records').querySelectorAll('.execution-step').length,2);
 })
 
