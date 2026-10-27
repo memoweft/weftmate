@@ -12,6 +12,9 @@ struct AuthView: View {
         ScrollView { accountContent }.background(Weave.canvas).foregroundStyle(Weave.ink)
             .disabled(model.busy).sheet(item: $legal) { LegalDocumentView(document: $0) }
             .accessibilityIdentifier("authRoot")
+        #if WEFTMATE_WINDOW_TEST
+            .onAppear { PhoneWindowLaunch.recordLoginVisible() }
+        #endif
         #if os(iOS)
             .scrollDismissesKeyboard(.interactively)
             .toolbar {
