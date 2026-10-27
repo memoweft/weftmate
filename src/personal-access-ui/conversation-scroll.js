@@ -66,12 +66,21 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     globalThis.addEventListener?.('pointerup',endScrollbarDrag);
     globalThis.addEventListener?.('pointercancel',endScrollbarDrag);
     box.addEventListener('scroll', scrolled, {passive:true});
+    const nestedConsumes = (target, deltaY) => {
+        for(;target && target!==box;target=target.parentElement) {
+            if(target.scrollHeight>target.clientHeight && /auto|scroll/.test(getComputedStyle(target).overflowY) &&
+                (deltaY<0 ? target.scrollTop>0 : target.scrollTop+target.clientHeight<target.scrollHeight))return true;
+        }
+        return false;
+    };
     box.addEventListener('wheel', event => {
+        // A command output scrolls locally before the wheel reaches the chat.
+        if(nestedConsumes(event.target,event.deltaY))return;
         if (event.deltaY < 0) { stop(); pinned = false; followingTop = null; paint(); }
     }, {passive:true});
     let touchY = null;
     box.addEventListener('touchstart', event => {touchY=event.touches[0]?.clientY;}, {passive:true});
-    box.addEventListener('touchmove', event => {const y=event.touches[0]?.clientY;if(touchY!==null && y>touchY){stop();pinned=false;followingTop=null;paint();}touchY=y;}, {passive:true});
+    box.addEventListener('touchmove', event => {const y=event.touches[0]?.clientY;if(touchY!==null && y>touchY && !nestedConsumes(event.target,touchY-y)){stop();pinned=false;followingTop=null;paint();}touchY=y;}, {passive:true});
     box.addEventListener('keydown', event => {if(['ArrowUp','PageUp','Home'].includes(event.key) && !event.target.closest?.('input,textarea,[contenteditable=true]')){stop();pinned=false;followingTop=null;paint();}});
     globalThis.addEventListener?.('weft-reply-motion-change', () => {if((globalThis.WeftReplyMotion?.paused ?? document.hidden) || reduced()) {stop();if(pinned)follow();}});
     const latest = () => { pinned = true; newContent = false; follow(); };
