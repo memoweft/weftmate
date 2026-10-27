@@ -13,6 +13,7 @@ public struct WorkDirectory: Codable, Equatable, Sendable {
 }
 
 public enum WorkAndChat {
+    public static let switchPrompt = "这件事需要在电脑上做。要切换到工作吗？"
     public static let noComputer = "连上电脑后可以让它动手"
     public static func mode(_ row: ConversationSummary) -> ConversationMode {
         // A read-only phone record never becomes executable by its placement in a list.
@@ -32,13 +33,35 @@ public enum WorkAndChat {
     }
     public static func switchDecision(scope: SessionInteractionScope, approval: SessionApproval,
                                       capabilities: ChatCapabilities, project: Project?, accept: Bool,
-                                      requestID: String) throws -> ApprovalDecisionIntent {
+                                      requestID: String, proposalTask: TaskSnapshot? = nil) throws -> ApprovalDecisionIntent {
         guard capabilities.supports("workAndChat"), approval.isWorkSwitch else { throw APIFailure.platformCapabilityUnavailable }
         if accept {
+            // preview.19 resumes the suspended tool in the original chat. Never approve that path.
+            guard let proposalTask, isEndedProposal(approval: approval, task: proposalTask) else { throw APIFailure.platformCapabilityUnavailable }
             guard let project, !project.revoked else { throw APIFailure.server(status: 409, code: "PROJECT_NOT_SELECTED") }
             return try .init(scope: scope, approval: approval, outcome: .allowedOnce, requestID: requestID, workProjectId: project.id)
         }
         return try .init(scope: scope, approval: approval, outcome: .rejected, requestID: requestID)
+    }
+    public static func proposalText(approval: SessionApproval, task: TaskSnapshot) throws -> String {
+        guard approval.isWorkSwitch, task.taskId == approval.sourceCommandId, task.sessionId == approval.sessionId,
+              task.source.receiptId == approval.sourceReceiptId, !task.sourceText.isEmpty else { throw APIFailure.identityMismatch }
+        return task.sourceText
+    }
+    public static func isEndedProposal(approval: SessionApproval, task: TaskSnapshot) -> Bool {
+        (try? proposalText(approval: approval, task: task)) != nil &&
+            task.replyEvidence.status == .completed && task.replyEvidence.turn == approval.turn
+    }
+    public static func proposedCallIDs(events: [TimelineEvent], approvals: [SessionApproval]) -> Set<String> {
+        let approvals = approvals.filter(\.isWorkSwitch).flatMap { [$0.callId, $0.rootCallId].compactMap { $0 } }
+        let events = events.filter { $0.type == "approval.requested" && $0.data["summary"]?.string?.hasPrefix("[weftmate:work-switch]") == true }
+            .compactMap { $0.data["stepId"]?.string }
+        return Set(approvals + events)
+    }
+    public static func showsChatEvent(type: String, data: JSONValue, proposedCalls: Set<String>) -> Bool {
+        if type == "assistant.message", !proposedCalls.isEmpty, data["text"]?.string == switchPrompt { return false }
+        guard type.hasPrefix("step.") else { return true }
+        return ![data["callId"]?.string, data["stepId"]?.string].compactMap { $0 }.contains { proposedCalls.contains($0) }
     }
     public static func sections(rows: [ConversationSummary], groups: [SessionGroup], mode: ConversationMode,
                                 query: String = "", archived: Bool = false) -> [SessionSidebarSection] {

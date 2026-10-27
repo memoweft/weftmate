@@ -1,0 +1,124 @@
+{
+  "cacheAllowed": true,
+  "liveSeq": 39,
+  "liveEvents": [],
+  "events": [
+    {
+      "seq": 4,
+      "type": "task.queued",
+      "at": "2026-10-27T08:12:13.459Z",
+      "data": {
+        "taskId": "cmd-838e0ce6-a388-4d21-b6be-63738dbe583e",
+        "receiptId": "dd3968a1-56e2-41c3-a821-2b6c1c6d8702",
+        "text": "创建一个文件夹叫 她",
+        "commandId": "cmd-838e0ce6-a388-4d21-b6be-63738dbe583e",
+        "requestId": "830a71c7-d39b-44eb-9a5f-50f345300c38"
+      }
+    },
+    {
+      "seq": 5,
+      "type": "turn.started",
+      "at": "2026-10-27T08:12:13.460Z",
+      "data": {
+        "turn": 1
+      }
+    },
+    {
+      "seq": 7,
+      "type": "task.started",
+      "at": "2026-10-27T08:12:13.518Z",
+      "data": {
+        "taskId": "cmd-838e0ce6-a388-4d21-b6be-63738dbe583e",
+        "turn": 1,
+        "receiptId": "dd3968a1-56e2-41c3-a821-2b6c1c6d8702",
+        "commandId": "cmd-838e0ce6-a388-4d21-b6be-63738dbe583e",
+        "requestId": "830a71c7-d39b-44eb-9a5f-50f345300c38",
+        "turnTaskId": "turn-1"
+      }
+    },
+    {
+      "seq": 8,
+      "type": "user.message",
+      "at": "2026-10-27T08:12:13.519Z",
+      "data": {
+        "text": "创建一个文件夹叫 她",
+        "receiptId": "dd3968a1-56e2-41c3-a821-2b6c1c6d8702"
+      }
+    },
+    {
+      "seq": 24,
+      "type": "step.started",
+      "at": "2026-10-27T08:12:13.652Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "switch-8d5f2aeb-f94d-4c65-b824-fe2326ab9064",
+        "callId": "switch-8d5f2aeb-f94d-4c65-b824-fe2326ab9064",
+        "toolName": "load_tools",
+        "summary": "准备可用工具",
+        "groupHint": "load_tools",
+        "detailRef": {
+          "seq": 24
+        },
+        "turn": 1,
+        "state": "running"
+      }
+    },
+    {
+      "seq": 26,
+      "type": "step.completed",
+      "at": "2026-10-27T08:12:13.673Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "switch-8d5f2aeb-f94d-4c65-b824-fe2326ab9064",
+        "callId": "switch-8d5f2aeb-f94d-4c65-b824-fe2326ab9064",
+        "toolName": "load_tools",
+        "summary": "准备可用工具",
+        "groupHint": "load_tools",
+        "detailRef": {
+          "seq": 26
+        },
+        "turn": 1,
+        "state": "completed"
+      }
+    },
+    {
+      "seq": 38,
+      "type": "step.started",
+      "at": "2026-10-27T08:12:13.734Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "switch-1a776e97-d8f5-4579-ad82-465668349bf4",
+        "callId": "switch-1a776e97-d8f5-4579-ad82-465668349bf4",
+        "toolName": "pwsh",
+        "summary": "运行命令 New-Item -ItemType Directory -Path 她 | Select-Object FullName",
+        "groupHint": "pwsh",
+        "detailRef": {
+          "seq": 38
+        },
+        "turn": 1,
+        "state": "running"
+      }
+    },
+    {
+      "seq": 39,
+      "type": "approval.requested",
+      "at": "2026-10-27T08:12:13.752Z",
+      "data": {
+        "taskId": "turn-1",
+        "approvalId": "74b9a3ed-cadd-4d52-a7ab-ca3481584b34",
+        "stepId": "switch-1a776e97-d8f5-4579-ad82-465668349bf4",
+        "toolName": "pwsh",
+        "turn": 1,
+        "summary": "[weftmate:work-switch] 这件事需要在电脑上做。要切换到工作吗？",
+        "detailRef": {
+          "seq": 39
+        }
+      }
+    }
+  ],
+  "nextSeq": 39,
+  "hasMore": false,
+  "nextBeforeSeq": 4,
+  "hasOlder": false,
+  "latestSeq": 39
+}

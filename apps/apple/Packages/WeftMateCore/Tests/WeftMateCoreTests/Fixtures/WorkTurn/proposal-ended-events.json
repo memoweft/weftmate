@@ -1,0 +1,123 @@
+{
+  "cacheAllowed": true,
+  "liveSeq": 38,
+  "liveEvents": [],
+  "events": [
+    {
+      "seq": 4,
+      "type": "task.queued",
+      "at": "2026-10-27T08:29:48.986Z",
+      "data": {
+        "taskId": "cmd-19939d34-9d91-4289-ad39-49dab0f87e15",
+        "receiptId": "71bb06c1-065e-4c2d-acb0-e5262457cb85",
+        "text": "创建一个文件夹叫 她",
+        "commandId": "cmd-19939d34-9d91-4289-ad39-49dab0f87e15",
+        "requestId": "c0ac8165-d2d6-459d-8259-f30b1645e81b"
+      }
+    },
+    {
+      "seq": 5,
+      "type": "turn.started",
+      "at": "2026-10-27T08:29:48.987Z",
+      "data": {
+        "turn": 1
+      }
+    },
+    {
+      "seq": 7,
+      "type": "task.started",
+      "at": "2026-10-27T08:29:49.026Z",
+      "data": {
+        "taskId": "cmd-19939d34-9d91-4289-ad39-49dab0f87e15",
+        "turn": 1,
+        "receiptId": "71bb06c1-065e-4c2d-acb0-e5262457cb85",
+        "commandId": "cmd-19939d34-9d91-4289-ad39-49dab0f87e15",
+        "requestId": "c0ac8165-d2d6-459d-8259-f30b1645e81b",
+        "turnTaskId": "turn-1"
+      }
+    },
+    {
+      "seq": 8,
+      "type": "user.message",
+      "at": "2026-10-27T08:29:49.027Z",
+      "data": {
+        "text": "创建一个文件夹叫 她",
+        "receiptId": "71bb06c1-065e-4c2d-acb0-e5262457cb85"
+      }
+    },
+    {
+      "seq": 25,
+      "type": "step.started",
+      "at": "2026-10-27T08:29:49.137Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "switch-362386bc-7a3d-4455-afe0-ae830355b379",
+        "callId": "switch-362386bc-7a3d-4455-afe0-ae830355b379",
+        "toolName": "load_tools",
+        "summary": "准备可用工具",
+        "groupHint": "load_tools",
+        "detailRef": {
+          "seq": 25
+        },
+        "turn": 1,
+        "state": "running"
+      }
+    },
+    {
+      "seq": 26,
+      "type": "step.completed",
+      "at": "2026-10-27T08:29:49.151Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "switch-362386bc-7a3d-4455-afe0-ae830355b379",
+        "callId": "switch-362386bc-7a3d-4455-afe0-ae830355b379",
+        "toolName": "load_tools",
+        "summary": "准备可用工具",
+        "groupHint": "load_tools",
+        "detailRef": {
+          "seq": 26
+        },
+        "turn": 1,
+        "state": "completed"
+      }
+    },
+    {
+      "seq": 36,
+      "type": "assistant.message",
+      "at": "2026-10-27T08:29:49.203Z",
+      "data": {
+        "text": "这件事需要在电脑上做。要切换到工作吗？",
+        "streamSeq": 32
+      }
+    },
+    {
+      "seq": 37,
+      "type": "task.ended",
+      "at": "2026-10-27T08:29:49.203Z",
+      "data": {
+        "taskId": "cmd-19939d34-9d91-4289-ad39-49dab0f87e15",
+        "turn": 1,
+        "reason": "completed",
+        "nativeTurnEndSeq": 38,
+        "receiptId": "71bb06c1-065e-4c2d-acb0-e5262457cb85",
+        "commandId": "cmd-19939d34-9d91-4289-ad39-49dab0f87e15",
+        "requestId": "c0ac8165-d2d6-459d-8259-f30b1645e81b",
+        "turnTaskId": "turn-1"
+      }
+    },
+    {
+      "seq": 38,
+      "type": "turn.ended",
+      "at": "2026-10-27T08:29:49.204Z",
+      "data": {
+        "reason": "completed",
+        "turn": 1
+      }
+    }
+  ],
+  "nextSeq": 38,
+  "hasMore": false,
+  "nextBeforeSeq": 4,
+  "hasOlder": false,
+  "latestSeq": 38
+}

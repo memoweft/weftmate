@@ -71,7 +71,7 @@ flowchart TD
 | `chat` | 54 pt 状态区 + 52 pt 导航；过程在上、回答在下；轻用户气泡；底部输入框与三标签 | `iOS/PhoneStandaloneView.swift`、`UI/MainChatView.swift`、`UI/ConversationView.swift`：统一手机聊天外壳，保留各模型的命令与状态边界；移除开侧栏时让内容 `opacity` 归零的做法 |
 | 侧栏 | 328 pt 宽，搜索置顶，新对话、对话定位、长期内容、项目、底部账号；中间独立滚动 | `UI/WeftMateRootView.swift` 的 `PhoneChatWorkspace`、`iOS/PhoneStandaloneView.swift` 的本机侧栏：同一份导航配置；删除禁用重复入口 |
 | `conversations` / `search` / `history` | 对话与工作过滤、组别、状态、搜索结果分类、按日期定位；无结果说明恢复路径 | `UI/WeftMateRootView.swift`、`UI/SessionActions.swift`、`UI/MainChatView.swift`、`UI/MainChatPositionTracking.swift`：复用查询与定位行为，只换呈现 |
-| `work` / `projects` | 首条之前选电脑、项目与读写范围；工作后不切回对话；离线可暂存 | `iOS/PhoneWorkAndChat.swift`、`UI/ProjectsView.swift`、`UI/ComputerControls.swift`、`iOS/PhoneOfflineWork.swift`：手机用推进页面选择，不挤在输入区 |
+| `work` / `projects` | 首条之前选电脑、项目与读写范围；对话里的提议进入新建工作页，携带原话，开始后才执行；原对话保留；工作后不切回对话；离线可暂存 | `iOS/PhoneWorkAndChat.swift`、`UI/ProjectsView.swift`、`UI/ComputerControls.swift`、`iOS/PhoneOfflineWork.swift`：手机用推进页面选择，不挤在输入区；原提议回合有明确结束证据才确认并接收新工作身份；旧宿主悬住的提议或另选电脑先结束原提议，再复用新建工作流程 |
 | `resources` / `task` | 成果、来源、过程三节；执行步骤可展开输出和复制，返回原消息 | `UI/MainChatResourcesView.swift`、`UI/ConversationResourcesView.swift`、`UI/ConversationTimelineView.swift`：手机完整子页；保留成果版本、来源锚点及任务交互 |
 | 输入区 / 附件菜单 | 草稿一至五行，附件在草稿上方；加号与模型使用按钮旁小菜单，位置固定；有回复时同一主操作位停止 | `UI/MainChatView.swift::composerTools/legacyModelSelection` 保留 `Menu`；系统选图、相机、文件权限与错误继续 `UI/ComposerMedia.swift`、`iOS/PhoneAttachmentInput.swift`、`PhoneAttachmentBlock.swift`、`PhoneStandaloneMedia.swift` 的实现 |
 | 批准 / 提问 / 队列弹层 | 正文显示影响，当前批准只一项；提问选项和补充文本；队列可改或撤回 | `UI/ConversationApprovalBar.swift`、`ConversationQuestionBar.swift`、`TaskInteractionView.swift`、`iOS/PhoneDecisionCards.swift`：主聊天中输入框上方保留待处理摘要，点击展开；原型由动态/导览进入完整弹层 |

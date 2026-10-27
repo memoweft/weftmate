@@ -49,29 +49,53 @@ private func modeClient(version: Int? = 1, host: String = "host-fixture") async 
     }
 }
 
-@Test func mode2iAcceptSwitchPreservesWholeHistoryAndMovesSameRow() async throws {
+@Test func mode2iAcceptSwitchCreatesWorkAndLeavesOriginalChatAndHistory() async throws {
     let (client, transport, account) = try await modeClient()
     let before = try await client.logicalChat()
     let page = try await client.chatPage(id: before.id)
     let approval = try await client.approvals(sessionID: "session-main").approvals[0]
     let project = try await client.projects().projects[0]
     let caps = try await client.chatCapabilities()
+    let task = try await client.taskDetail(taskID: approval.sourceCommandId)
     let intent = try WorkAndChat.switchDecision(scope: SessionInteractionScope(session: account, sessionID: "session-main"),
-        approval: approval, capabilities: caps, project: project, accept: true, requestID: "switch-accept")
+        approval: approval, capabilities: caps, project: project, accept: true, requestID: "switch-accept", proposalTask: task)
     let restored = try JSONDecoder().decode(ApprovalDecisionIntent.self, from: JSONEncoder().encode(intent))
     #expect(restored.payload == intent.payload && restored.workProjectId == project.id)
-    _ = try await client.submitApproval(restored)
+    let receipt = try await client.submitApproval(restored)
+    #expect(receipt.approval.workSessionId == "session-proposal-work")
+    #expect(receipt.approval.workSessionId != before.activeSessionId)
+    let created = try await client.workCreation(approval: receipt.approval)
+    #expect(created.state == .acceptedByDSH && created.sessionId == receipt.approval.workSessionId)
     let after = try await client.logicalChat()
     let afterPage = try await client.chatPage(id: after.id)
     #expect(before.id == after.id && before.activeSessionId == after.activeSessionId && before.kind == after.kind)
     #expect(page.items == afterPage.items && after.logicalHistory == true)
     let rows = try await client.conversations()
-    #expect(!WorkAndChat.sections(rows: rows, groups: [], mode: .chat).flatMap(\.rows).contains { $0.id == before.id })
-    #expect(WorkAndChat.sections(rows: rows, groups: [], mode: .work).flatMap(\.rows).contains { $0.id == before.id })
+    #expect(WorkAndChat.sections(rows: rows, groups: [], mode: .chat).flatMap(\.rows).contains { $0.id == before.id })
+    #expect(WorkAndChat.sections(rows: rows, groups: [], mode: .work).flatMap(\.rows).contains { $0.sessionId == receipt.approval.workSessionId })
+    #expect(!WorkAndChat.sections(rows: rows, groups: [], mode: .work).flatMap(\.rows).contains { $0.id == before.id })
     let posts = (await transport.recorded()).filter { $0.httpMethod == "POST" && $0.url!.path.contains("/approvals/") }
     #expect(posts.count == 1)
     let body = try JSONDecoder().decode(JSONValue.self, from: posts[0].httpBody!)
     #expect(body["workProjectId"]?.string == project.id && body["outcome"]?.string == "allowed-once" && body["scope"] == nil)
+}
+
+@Test func mode2iPreview19CannotResumeTheOldToolThroughAnApproval() async throws {
+    let transport = Mode2ITransport(proposalEndsTurn: false)
+    let client = PersonalClient(credentialStore: Mode2IKeys(), transport: transport)
+    let account = try await client.login(server: ServerConfiguration(input: "https://a2-ui.unit.example"), username: "synthetic", password: "synthetic-only", deviceName: "Synthetic")
+    let approval = try await client.approvals(sessionID: "session-main").approvals[0]
+    let project = try await client.projects().projects[0], caps = try await client.chatCapabilities()
+    let task = try await client.taskDetail(taskID: approval.sourceCommandId)
+    #expect(throws: APIFailure.platformCapabilityUnavailable) {
+        try WorkAndChat.switchDecision(scope: SessionInteractionScope(session: account, sessionID: approval.sessionId),
+            approval: approval, capabilities: caps, project: project, accept: true, requestID: "blocked-old-switch", proposalTask: task)
+    }
+    // A journal made by an older client must be blocked at the network boundary too.
+    let old = try ApprovalDecisionIntent(scope: SessionInteractionScope(session: account, sessionID: approval.sessionId),
+        approval: approval, outcome: .allowedOnce, requestID: "old-journal", workProjectId: project.id)
+    await #expect(throws: APIFailure.platformCapabilityUnavailable) { try await client.submitApproval(old) }
+    #expect(!(await transport.recorded()).contains { $0.httpMethod == "POST" && $0.url!.path.contains("/approvals/") })
 }
 
 @Test func mode2iRejectSwitchLeavesChatAndSendsNoProject() async throws {
@@ -91,9 +115,10 @@ private func modeClient(version: Int? = 1, host: String = "host-fixture") async 
     let (client, _, account) = try await modeClient()
     let approval = try await client.approvals(sessionID: "session-main").approvals[0]
     let caps = try await client.chatCapabilities()
+    let task = try await client.taskDetail(taskID: approval.sourceCommandId)
     #expect(throws: APIFailure.server(status: 409, code: "PROJECT_NOT_SELECTED")) {
         try WorkAndChat.switchDecision(scope: SessionInteractionScope(session: account, sessionID: "session-main"),
-            approval: approval, capabilities: caps, project: nil, accept: true, requestID: "switch-missing")
+            approval: approval, capabilities: caps, project: nil, accept: true, requestID: "switch-missing", proposalTask: task)
     }
     let removed = ConversationSummary(id: "work-removed", title: "原工作", conversationId: nil, sessionId: "session-removed",
         running: false, sendAvailable: true, originalModelLabel: nil, chatId: "work-removed", chatKind: "side", mode: .work, workHostId: "host-fixture", logicalHistory: true)

@@ -15,6 +15,7 @@ struct PhoneWorkspace: View {
     @State private var visibleRoots: Set<PhoneTab> = []
     @State private var stackIDs = Dictionary(uniqueKeysWithValues: PhoneTab.allCases.map { ($0, UUID()) })
     @State private var chatRoot = UUID()
+    @State private var workProposal: PhoneWorkProposal?
     @State private var keyboardVisible = false
     @State private var sidebar = false
     @State private var search = ""
@@ -43,6 +44,9 @@ struct PhoneWorkspace: View {
         }
         .environment(\.phoneSidebar, { openSidebar() })
         .environment(\.phoneOpenConversation, { openConversation($0) })
+        .environment(\.phoneOpenWorkProposal, { proposal in
+            workProposal = proposal; closeSidebar(); tab = .chat; chatPath = ["shell.work-proposal"]
+        })
         .sheet(isPresented: $settingsOpen) {
             SettingsView(model: model, route: settingsAccount ? .init(categoryID: "account") : nil, onClose: { settingsOpen = false })
         }
@@ -51,8 +55,10 @@ struct PhoneWorkspace: View {
         .onChange(of: cloud.subject) { _, _ in
             dismissPhonePreviewKeyboard(); keyboardVisible = false; sidebar = false
             chatPath = []; activityPath = []; healthPath = []; settingsOpen = false; search = ""
+            workProposal = nil
         }
-        .onChange(of: model.openedSessionID) { _, id in openConversation(id) }
+        .onChange(of: model.openedSessionID) { _, id in if !model.phoneStartingConversation { openConversation(id) } }
+        .onChange(of: model.phoneStartingConversation) { _, starting in if !starting { openConversation(model.openedSessionID) } }
         .onChange(of: reminders.openedReminder) { _, route in navigateReminder(route) }
         .onAppear { openConversation(model.openedSessionID); navigateReminder(reminders.openedReminder) }
         .onChange(of: model.phoneLibrarySelection) { _, id in if id != nil { navigate(.library) } }
@@ -114,6 +120,9 @@ struct PhoneWorkspace: View {
             case .memory: PhoneMemoryWorkspaceView(app: model)
             case .projects: PhoneProjectsPage(app: model)
             }
+        } else if id == "shell.work-proposal", let workProposal {
+            PhoneWorkProposalStart(app: model, proposal: workProposal)
+                .environment(\.phoneNavigationBack, { chatPath = [workProposal.approval.sessionId] })
         } else if id == "shell.work" {
             if model.offline.hostOffline, cloud.offlineWorkAuthorization?.supportsTasks == true, model.offline.workSnapshot?.taskRecipient != nil {
                 ScrollView { PhoneOfflineWork(app: model).padding(AppleTokens.Phone.pageInset) }.navigationTitle("新建工作")
@@ -125,7 +134,8 @@ struct PhoneWorkspace: View {
         } else if id == "daily-review" { DailyReviewView(app: model) }
         else if id == "health" { HealthPageView(app: model, ask: { text in Task { await ask(text) } }) }
         else if let row = model.conversations.first(where: { $0.id == id }) {
-            if row.isMainChat || model.mainChat.capabilities.supports("workAndChat") && row.logicalHistory == true {
+            if row.isMainChat || model.mainChat.capabilities.supports("workAndChat") &&
+                (row.logicalHistory == true || WorkAndChat.mode(row) == .chat && row.chatId != nil) {
                 MainChatView(app: model, chatID: model.mainChat.capabilities.supports("workAndChat") ? row.chatId : nil).id(row.id)
             } else {
                 ConversationView(model: model, conversation: row).id(row.id + (row.sessionId ?? model.taskSessionID(for: row, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(row.chatContentRevision ?? 0))

@@ -308,6 +308,38 @@ public struct SharedHistoryEvent: Codable, Equatable, Sendable, Identifiable {
     public let type: String
     public let at: String?
     public let data: SharedHistoryData
+    /// Preserve the wire payload, including events introduced by a newer computer.
+    public let rawData: JSONValue
+    enum CodingKeys: String, CodingKey { case seq, type, at, data }
+    public init(from decoder: any Decoder) throws {
+        let box = try decoder.container(keyedBy: CodingKeys.self)
+        seq = try box.decode(Int.self, forKey: .seq)
+        type = try box.decode(String.self, forKey: .type)
+        at = try box.decodeIfPresent(String.self, forKey: .at)
+        rawData = try box.decode(JSONValue.self, forKey: .data)
+        // A step or a future event may use text/turn/tasks for unrelated metadata.
+        // Only decode the fields owned by the event whose semantics we consume.
+        let fields: Set<String>
+        switch type {
+        case "user.message", "assistant.message":
+            fields = ["text", "images", "originalAttachments", "attachmentMessageId", "unpreviewedOriginalImageIds", "receiptId", "truncated", "turn"]
+        case "task.queued", "task.started", "task.ended", "turn.started", "turn.ended":
+            fields = ["receiptId", "turn", "reason", "tasks"]
+        default: fields = []
+        }
+        let projection: [String: JSONValue]
+        if fields.isEmpty { projection = [:] }
+        else {
+            guard case .object(let value) = rawData else { throw APIFailure.invalidResponse }
+            projection = value.filter { fields.contains($0.key) }
+        }
+        data = try JSONDecoder().decode(SharedHistoryData.self, from: JSONEncoder().encode(projection))
+    }
+    public func encode(to encoder: any Encoder) throws {
+        var box = encoder.container(keyedBy: CodingKeys.self)
+        try box.encode(seq, forKey: .seq); try box.encode(type, forKey: .type)
+        try box.encodeIfPresent(at, forKey: .at); try box.encode(rawData, forKey: .data)
+    }
     func validate() throws {
         try SharedValidation.require(seq >= 0 && seq <= SharedValidation.maximumSequence && !type.isEmpty && type.utf8.count <= 128 &&
             at.map { $0.utf8.count <= 64 } ?? true && data.text.map { $0.utf16.count <= 16_384 } ?? true &&
@@ -326,8 +358,9 @@ public struct SharedHistoryEvent: Codable, Equatable, Sendable, Identifiable {
             try SharedValidation.require(!(data.text ?? "").isEmpty || !images.isEmpty ||
                 (type == "user.message" && !(data.originalAttachments ?? []).isEmpty))
         }
-        if type == "turn.ended" {
-            try SharedValidation.require(["completed", "aborted", "error", "blocked", "unknown"].contains(data.reason ?? ""))
+        if type == "turn.ended" || type == "task.ended" {
+            // A new reason is readable but does not establish a known terminal outcome.
+            try SharedValidation.require(!(data.reason ?? "").isEmpty)
         }
     }
     public func chatMessage(sessionID: String) -> ChatMessage? {
@@ -348,6 +381,11 @@ public struct SharedHistoryPage: Equatable, Sendable {
     public let hasMore: Bool
     public var cacheAllowed: Bool? = nil
     public var messages: [ChatMessage] { events.compactMap { $0.chatMessage(sessionID: sessionId) } }
+    public var timelinePage: TimelinePage {
+        .init(events: events.map { .init(seq: $0.seq, type: $0.type, at: $0.at, data: $0.rawData) },
+              nextSeq: nextSeq, hasMore: hasMore, nextBeforeSeq: nil, hasOlder: nil, latestSeq: nil,
+              cacheAllowed: cacheAllowed)
+    }
     public static func decode(_ data: Data, sessionID: String, afterSeq: Int, limit: Int = 100) throws -> Self {
         try SharedValidation.require(SharedValidation.id(sessionID) && afterSeq >= -1 && afterSeq <= SharedValidation.maximumSequence && (1...100).contains(limit))
         guard data.count <= 1_048_576 else { throw APIFailure.responseTooLarge }
@@ -367,6 +405,7 @@ public struct SharedHistoryPage: Equatable, Sendable {
 
 public enum SharedTurnProgress: Equatable, Sendable {
     case pending, accepted, running, completed, aborted, failed, blocked, unknown
+    public var isTerminal: Bool { [.completed, .aborted, .failed, .blocked].contains(self) }
 }
 /// Receipt-to-turn correlation is conservative. An uncorrelated end never completes an accepted request.
 public struct SharedTurnTracker: Sendable {

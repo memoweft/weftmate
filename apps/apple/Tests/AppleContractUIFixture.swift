@@ -8,7 +8,9 @@ enum AppleContractUIFixture {
     static let attachmentID = "attachment-33333333-3333-4333-8333-333333333333"
     static func makeClient() -> PersonalClient {
         #if os(iOS)
-        if ProcessInfo.processInfo.arguments.contains("--mode2i-fixture") { return PersonalClient(credentialStore: Mode2IKeys(), transport: Mode2ITransport()) }
+        if ProcessInfo.processInfo.arguments.contains("--mode2i-fixture") {
+            return PersonalClient(credentialStore: Mode2IKeys(), transport: Mode2ITransport(pagedHistory: ProcessInfo.processInfo.arguments.contains("--ios-work-turn-history")))
+        }
         #endif
         return PersonalClient(credentialStore: Credentials(), transport: Transport())
     }

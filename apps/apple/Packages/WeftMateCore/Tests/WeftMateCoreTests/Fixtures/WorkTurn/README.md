@@ -1,0 +1,9 @@
+# Work-turn wire evidence
+
+All records use isolated identities and synthetic content. No owner data, credentials, or request headers are included.
+
+- `preview19-events.json`, `preview19-task.json`, `preview19-approvals.json`: unchanged response bodies captured by WORK-SWITCH against desktop source `0389aba1c` (0.2.0-preview.19). The chat has reached a suspended computer tool; it has not ended.
+- `proposal-ended-events.json`, `proposal-ended-approvals.json`, `proposal-ended-task.json`, `proposal-accepted.json`, `work-ended-events.json`, `work-ended-task.json`: unchanged responses captured by WORK-SWITCH for PR #721 (`e09f3651b`). The original receipt has matching `task.ended` and `turn.ended`; the proposed computer command is absent. The pending proposal coexists with a completed reply and an active task-control object. Its accepted decision names a distinct work session and creation command, and the work receives the original phrase.
+- `preview19-phone-requests.json`: IOS-WORK-TURN's additional capture against `0389aba1c`, using the real personal HTTP service and pinned DSH with a scripted synthetic model. It includes both `events?limit=100` and `events?afterSeq=…&limit=100`, empty increments, command reads, approvals and the root task. The envelope contains the source commit and requested relative paths; each `body` is the actual response.
+
+These captures reproduce the premature task dispatch and suspended proposal. They do **not** establish which field caused the owner's original Swift decode failure. `WorkTurnWireTests` replays the actual pages and separately tests schema evolution (unknown object/array/null payloads, additional fields and unknown end reasons). The latter are deliberately derived mutations, not claimed to be captured failures. Swift execution still requires macOS.

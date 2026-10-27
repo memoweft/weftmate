@@ -1,0 +1,159 @@
+{
+  "cacheAllowed": true,
+  "liveSeq": 55,
+  "liveEvents": [],
+  "events": [
+    {
+      "seq": 4,
+      "type": "task.queued",
+      "at": "2026-10-27T08:29:58.113Z",
+      "data": {
+        "taskId": "cmd-18c632c0-834b-4b74-80c4-b1e84fd66680",
+        "receiptId": "c90636cd-b66e-4017-9536-c879e14b2b58",
+        "text": "创建一个文件夹叫 她",
+        "commandId": "cmd-18c632c0-834b-4b74-80c4-b1e84fd66680",
+        "requestId": "work-message-ccceaca4-28f6-4cc8-9fc4-9db585ad795c"
+      }
+    },
+    {
+      "seq": 5,
+      "type": "turn.started",
+      "at": "2026-10-27T08:29:58.113Z",
+      "data": {
+        "turn": 1
+      }
+    },
+    {
+      "seq": 7,
+      "type": "task.started",
+      "at": "2026-10-27T08:29:58.175Z",
+      "data": {
+        "taskId": "cmd-18c632c0-834b-4b74-80c4-b1e84fd66680",
+        "turn": 1,
+        "receiptId": "c90636cd-b66e-4017-9536-c879e14b2b58",
+        "commandId": "cmd-18c632c0-834b-4b74-80c4-b1e84fd66680",
+        "requestId": "work-message-ccceaca4-28f6-4cc8-9fc4-9db585ad795c",
+        "turnTaskId": "turn-1"
+      }
+    },
+    {
+      "seq": 8,
+      "type": "user.message",
+      "at": "2026-10-27T08:29:58.175Z",
+      "data": {
+        "text": "创建一个文件夹叫 她",
+        "receiptId": "c90636cd-b66e-4017-9536-c879e14b2b58"
+      }
+    },
+    {
+      "seq": 26,
+      "type": "step.started",
+      "at": "2026-10-27T08:29:58.197Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "switch-67e1a60b-6e13-4824-86fc-6ac0dab83338",
+        "callId": "switch-67e1a60b-6e13-4824-86fc-6ac0dab83338",
+        "toolName": "load_tools",
+        "summary": "准备可用工具",
+        "groupHint": "load_tools",
+        "detailRef": {
+          "seq": 26
+        },
+        "turn": 1,
+        "state": "running"
+      }
+    },
+    {
+      "seq": 27,
+      "type": "step.completed",
+      "at": "2026-10-27T08:29:58.207Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "switch-67e1a60b-6e13-4824-86fc-6ac0dab83338",
+        "callId": "switch-67e1a60b-6e13-4824-86fc-6ac0dab83338",
+        "toolName": "load_tools",
+        "summary": "准备可用工具",
+        "groupHint": "load_tools",
+        "detailRef": {
+          "seq": 27
+        },
+        "turn": 1,
+        "state": "completed"
+      }
+    },
+    {
+      "seq": 41,
+      "type": "step.started",
+      "at": "2026-10-27T08:29:58.229Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "switch-ae569f01-5846-483f-ab1c-cf5ecdfc0a32",
+        "callId": "switch-ae569f01-5846-483f-ab1c-cf5ecdfc0a32",
+        "toolName": "pwsh",
+        "summary": "运行命令 New-Item -ItemType Directory -Path 她 | Select-Object FullName",
+        "groupHint": "pwsh",
+        "detailRef": {
+          "seq": 41
+        },
+        "turn": 1,
+        "state": "running"
+      }
+    },
+    {
+      "seq": 42,
+      "type": "step.completed",
+      "at": "2026-10-27T08:29:58.771Z",
+      "data": {
+        "taskId": "turn-1",
+        "stepId": "switch-ae569f01-5846-483f-ab1c-cf5ecdfc0a32",
+        "callId": "switch-ae569f01-5846-483f-ab1c-cf5ecdfc0a32",
+        "toolName": "pwsh",
+        "summary": "运行命令 New-Item -ItemType Directory -Path 她 | Select-Object FullName",
+        "groupHint": "pwsh",
+        "detailRef": {
+          "seq": 42
+        },
+        "turn": 1,
+        "state": "completed"
+      }
+    },
+    {
+      "seq": 53,
+      "type": "assistant.message",
+      "at": "2026-10-27T08:29:58.813Z",
+      "data": {
+        "text": "已处理。",
+        "streamSeq": 48
+      }
+    },
+    {
+      "seq": 54,
+      "type": "task.ended",
+      "at": "2026-10-27T08:29:58.813Z",
+      "data": {
+        "taskId": "cmd-18c632c0-834b-4b74-80c4-b1e84fd66680",
+        "turn": 1,
+        "reason": "completed",
+        "nativeTurnEndSeq": 55,
+        "receiptId": "c90636cd-b66e-4017-9536-c879e14b2b58",
+        "commandId": "cmd-18c632c0-834b-4b74-80c4-b1e84fd66680",
+        "requestId": "work-message-ccceaca4-28f6-4cc8-9fc4-9db585ad795c",
+        "turnTaskId": "turn-1"
+      }
+    },
+    {
+      "seq": 55,
+      "type": "turn.ended",
+      "at": "2026-10-27T08:29:58.814Z",
+      "data": {
+        "reason": "completed",
+        "turn": 1
+      }
+    }
+  ],
+  "nextSeq": 55,
+  "hasMore": false,
+  "nextBeforeSeq": 4,
+  "hasOlder": false,
+  "latestSeq": 55
+}
