@@ -88,6 +88,8 @@ test('files lazy navigation, real code preview, protected draft, conflict recove
   assert.equal(await page.evaluate(() => { const g: any = globalThis; return g.originalTree === document.querySelector('.files-branch') && g.originalCode === document.querySelector('.files-current-preview .render-code'); }), true, 'unchanged refresh preserves tree, preview and scroll ownership');
   await page.getByRole('button', { name: '编辑文本', exact: true }).click();
   await page.getByRole('textbox', { name: '文件文本', exact: true }).fill('const draft = 2;');
+  await page.evaluate(() => { const g: any = globalThis; g.ctx = { ...g.ctx, workDir: '/synthetic/project' }; g.instance.update(g.ctx); });
+  assert.equal(await page.getByRole('textbox', { name: '文件文本', exact: true }).inputValue(), 'const draft = 2;', 'resolving workDir must not discard an existing draft');
   await page.evaluate(() => { const g: any = globalThis; g.instance.hide(); g.instance.show(); });
   assert.equal(await page.getByRole('textbox', { name: '文件文本', exact: true }).inputValue(), 'const draft = 2;', 'hiding a panel retains its editor');
   await page.evaluate(() => { (globalThis as any).disk = { text: 'const external = 3;', version: 'version-two' }; });
@@ -122,6 +124,10 @@ test('files lazy navigation, real code preview, protected draft, conflict recove
   await page.getByRole('button', { name: '展开导航', exact: true }).waitFor();
   const narrowEditor = await page.getByRole('textbox', { name: '文件文本', exact: true }).boundingBox();
   assert.ok(narrowEditor && narrowEditor.width > 250, 'narrow panels give the selected file the available width');
+  await page.getByRole('button', { name: '展开导航', exact: true }).click();
+  await page.getByRole('textbox', { name: '文件文本', exact: true }).evaluate(el => { el.style.height = (el.clientHeight + 80) + 'px'; });
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  assert.equal(await page.getByRole('searchbox', { name: '按文件名搜索' }).isVisible(), true, 'explicitly reopening narrow navigation must stay open for search');
   await page.evaluate(() => { const g: any = globalThis; g.instance.update({ ...g.ctx, mode: 'chat', projectId: null }); });
   await page.getByText('先在工作模式里选一个工作目录。', { exact: true }).waitFor();
 }));
@@ -179,4 +185,16 @@ test('resource component shares its real preview and targets the explicit comput
     return g.WeftPanels.services.workspaceRequest(g.ctx, 'review/status');
   });
   assert.deepEqual(local, { local: true });
+}));
+
+test('work drafts without an execution session do not send logical IDs to workspace routes', async () => surface(async page => {
+  await page.evaluate(() => {
+    const g: any = globalThis; g.ctx = { ...g.ctx, conversationId: 'draft:synthetic', sessionId: null };
+    g.WeftPanels.services.workspaceRequest = async (...args: any[]) => { g.calls.push(args); throw Error('draft has no workspace session'); };
+    g.mount('review');
+  });
+  assert.equal(await page.evaluate(() => (globalThis as any).calls.length), 0);
+  await page.evaluate(() => (globalThis as any).mount('files'));
+  assert.equal(await page.evaluate(() => (globalThis as any).calls.length), 0);
+  await page.getByText('先在这个工作目录开始一段对话，再查看文件。', { exact: true }).waitFor();
 }));

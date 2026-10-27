@@ -2,8 +2,12 @@
 (() => {
   const node = (tag, cls = '', text = '') => { const el = document.createElement(tag); el.className = cls; el.textContent = text; return el; };
   const button = (label, action, cls = 'button quiet small') => { const el = node('button', cls, label); el.type = 'button'; el.onclick = action; return el; };
-  const key = ctx => JSON.stringify([ctx.ownerId, ctx.identityGeneration, ctx.conversationId, ctx.sessionId, ctx.computerId, ctx.projectId, ctx.mode, ctx.workDir]);
-  const ready = ctx => ctx.mode === 'work' && !!(ctx.sessionId || ctx.conversationId) && !!(ctx.projectId || ctx.workDir);
+  // workDir is asynchronously resolved display metadata. The host authorizes
+  // every read/write against sessionId + projectId, including remote computers.
+  const key = ctx => JSON.stringify([ctx.ownerId, ctx.identityGeneration, ctx.conversationId, ctx.sessionId, ctx.computerId, ctx.projectId, ctx.mode]);
+  const ready = ctx => ctx.mode === 'work' && !!ctx.sessionId && !!ctx.projectId;
+  const contextHelp = ctx => ctx.mode === 'work' && ctx.projectId && !ctx.sessionId
+    ? '先在这个工作目录开始一段对话，再查看文件。' : '先在工作模式里选一个工作目录。';
   const messages = {
     PROJECT_NOT_SELECTED: '先在工作模式里选一个工作目录。', PROJECT_REVOKED: '目录授权已改变，请重新选择工作目录。',
     WORKSPACE_NOT_GIT: '这个工作目录不是 Git 仓库。', WORKSPACE_GIT_UNAVAILABLE: '这台电脑还不能读取 Git，请安装 Git 后重试。',
@@ -22,5 +26,5 @@
     }
     WeftContent.preview(el, { ...data, data: data.base64 ?? data.data }, { name });
   }
-  globalThis.WeftWorkspacePanel = { node, button, key, ready, message, empty, request, preview };
+  globalThis.WeftWorkspacePanel = { node, button, key, ready, contextHelp, message, empty, request, preview };
 })();

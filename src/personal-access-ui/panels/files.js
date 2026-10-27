@@ -1,8 +1,8 @@
 /* Navigation, disk snapshots and drafts have separate lifetimes. */
-globalThis.WeftPanels?.register('files', {
+WeftPanels.register('files', {
   title: '文件', icon: 'folder',
   create(ctx) {
-    const { node, button, key, ready, message, empty, request, preview } = WeftWorkspacePanel;
+    const { node, button, key, ready, contextHelp, message, empty, request, preview } = WeftWorkspacePanel;
     const el = node('section', 'workspace-panel panel-files'), toolbar = node('div', 'workspace-toolbar');
     const search = node('input', 'workspace-search'); search.type = 'search'; search.placeholder = '按文件名搜索'; search.setAttribute('aria-label', '按文件名搜索'); search.maxLength = 200;
     const refresh = button('刷新文件', () => void refreshAll()), toggleNav = button('收起导航', () => { const hidden = navigation.hidden = !navigation.hidden; toggleNav.textContent = hidden ? '展开导航' : '收起导航'; toggleNav.setAttribute('aria-expanded', String(!hidden)); layout.classList.toggle('navigation-hidden', hidden); }), notice = node('p', 'workspace-notice'); notice.setAttribute('role', 'status');
@@ -114,7 +114,7 @@ globalThis.WeftPanels?.register('files', {
     async function loadResources() {
       const token = generation, seq = ++resourceSeq;
       try {
-        const data = await WeftPanels.services.resources(current);
+        const data = await WeftPanels.services.resources();
         if (!active(token) || seq !== resourceSeq) return;
         resources.replaceChildren();
         for (const [name, rows] of [['成果', data.outputs], ['来源', data.sources]]) {
@@ -133,16 +133,17 @@ globalThis.WeftPanels?.register('files', {
     async function refreshAll() {
       cache.clear(); searchSeq++; const seq = searchSeq, query = search.value.trim();
       if (ready(current)) { notice.textContent = ''; void (query ? find(query, seq) : directory('', tree)); if (state.selected && !saving) void readFile(state.selected, true); }
-      else { notice.textContent = '先在工作模式里选一个工作目录。'; tree.replaceChildren(); }
+      else { notice.textContent = contextHelp(current); tree.replaceChildren(); }
       void loadResources();
     }
     function initialize() { notice.textContent = ''; search.value = ''; delete tree._workspaceSignature; tree.replaceChildren(); controls(); paint(); void refreshAll(); }
-    const sizeObserver = new ResizeObserver(fitPanel); sizeObserver.observe(el);
+    let observedWidth = 0;
+    const sizeObserver = new ResizeObserver(([entry]) => { const width = entry.contentRect.width; if (width === observedWidth) return; observedWidth = width; fitPanel(); }); sizeObserver.observe(el);
     initialize();
     return { el, show() { if (!timer) timer = setInterval(() => { if (state.selected && !saving && ready(current)) void readFile(state.selected, true); }, 4000); if (state.selected) void readFile(state.selected, true); },
       hide() { clearInterval(timer); timer = null; },
       update(next) {
-        if (key(next) === contextKey) { current = next; return; }
+        if (key(next) === contextKey) { const directoryResolved = current.workDir !== next.workDir; current = next; if (directoryResolved) void refreshAll(); return; }
         if (next.ownerId !== current.ownerId || next.identityGeneration !== current.identityGeneration) states.clear();
         generation++; readSeq++; searchSeq++; resourceSeq++; clearTimeout(debounce); cache.clear(); saving = false;
         current = next; contextKey = key(next); state = states.get(contextKey) || { selected: null, drafts: new Map(), expanded: new Set() }; states.set(contextKey, state); initialize();

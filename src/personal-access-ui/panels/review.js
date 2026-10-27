@@ -1,8 +1,8 @@
 /* A review is a projection of Git, independent of execution approvals. */
-globalThis.WeftPanels?.register('review', {
+WeftPanels.register('review', {
   title: '审查', icon: 'approval',
   create(ctx) {
-    const { node, button, key, ready, message, empty, request } = WeftWorkspacePanel;
+    const { node, button, key, ready, contextHelp, message, empty, request } = WeftWorkspacePanel;
     const el = node('section', 'workspace-panel panel-review'), toolbar = node('div', 'workspace-toolbar');
     const notice = node('p', 'workspace-notice'), list = node('div', 'review-files'), detail = node('div', 'review-diff');
     notice.setAttribute('role', 'status'); list.setAttribute('aria-label', '变更文件'); detail.setAttribute('aria-label', '逐行差异'); detail.tabIndex = 0;
@@ -38,7 +38,7 @@ globalThis.WeftPanels?.register('review', {
     }
     async function load() {
       const seq = ++listSeq, scope = current;
-      if (!ready(scope)) { diffSeq++; list.replaceChildren(); empty(detail); notice.textContent = ''; refresh.disabled = true; return; }
+      if (!ready(scope)) { diffSeq++; list.replaceChildren(); empty(detail, contextHelp(scope)); notice.textContent = ''; refresh.disabled = true; return; }
       refresh.disabled = true; notice.textContent = '正在读取变更…';
       try {
         const data = await request(scope, 'review/status');
@@ -60,7 +60,7 @@ globalThis.WeftPanels?.register('review', {
     void load();
     return { el, show() { if (!timer) timer = setInterval(() => { if (!refresh.disabled) void load(); }, 5000); void load(); },
       hide() { clearInterval(timer); timer = null; },
-      update(next) { const changed = key(next) !== contextKey; current = next; if (!changed) return; contextKey = key(next); listSignature = diffSignature = null; selected = null; diffSeq++; list.replaceChildren(); detail.replaceChildren(); void load(); },
+      update(next) { const changed = key(next) !== contextKey, directoryResolved = current.workDir !== next.workDir; current = next; if (!changed) { if (directoryResolved) void load(); return; } contextKey = key(next); listSignature = diffSignature = null; selected = null; diffSeq++; list.replaceChildren(); detail.replaceChildren(); void load(); },
       dispose() { disposed = true; listSeq++; diffSeq++; clearInterval(timer); el.replaceChildren(); } };
   },
 });

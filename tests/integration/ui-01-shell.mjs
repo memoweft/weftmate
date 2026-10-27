@@ -49,12 +49,12 @@ try {
   await page.getByRole('button', {name:'打开工作面板',exact:true}).click();
   assert.equal(await panel.locator('[data-panel-kind]').count(), 6);
   await panel.locator('[data-panel-kind=review]').click();
-  await panel.getByRole('heading', {name:'这项正在做'}).waitFor();
+  await panel.locator('.panel-review').getByText('先在工作模式里选一个工作目录。',{exact:true}).waitFor();
   await panel.getByRole('button', {name:'再打开一项',exact:true}).click();
   const menu = page.getByRole('menu', {name:'打开面板',exact:true});
   assert.equal(await menu.getByRole('menuitem').count(), 6);
   await menu.getByRole('menuitem', {name:'文件',exact:true}).click();
-  await panel.getByRole('heading', {name:'成果',exact:true}).waitFor();
+  await panel.locator('.files-resource-group summary').filter({hasText:/^成果 ·/}).waitFor();
   const before = await panel.boundingBox();
   await panel.getByRole('separator', {name:'调整预览宽度'}).press('ArrowLeft');
   assert.ok((await panel.boundingBox()).width > before.width);
@@ -103,6 +103,7 @@ try {
   });
   await page.keyboard.press('Control+n');
   await page.evaluate(() => releaseOldFiles());
+  await panel.locator('.files-resource-group summary').filter({hasText:/^成果 ·/}).click();
   await panel.getByText('这段对话还没有成果。',{exact:true}).waitFor();
   assert.equal(await page.getByText('旧对话迟到文件',{exact:true}).count(),0);
   await page.evaluate(() => restoreFiles());

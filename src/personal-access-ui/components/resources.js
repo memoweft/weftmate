@@ -337,7 +337,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
     }
     if (globalThis.WeftPanels) Object.assign(WeftPanels.services, {
         workspaceRequest(ctx, action, body) {
-            const route = `/workspaces/${encodeURIComponent(ctx.sessionId || ctx.conversationId)}/${action}`;
+            const route = `/workspaces/${encodeURIComponent(ctx.sessionId)}/${action}`;
             const options = body === undefined ? {} : { method: 'POST', body, protectedWrite: true };
             if (ctx.computerId && core.canUseComputerChannel?.()) return core.computerApi(ctx.computerId, route, options);
             if (ctx.computerId && ctx.computerId !== core.state.hostId) throw { code: 'COMPUTER_OFFLINE' };
