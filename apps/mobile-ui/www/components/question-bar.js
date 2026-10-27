@@ -117,6 +117,24 @@
         }).join('\n\n');
         return row.outcome === 'cancelled' ? '提问已取消' : '提问已结束';
     }
+    function renderRecord(target,row) {
+        const signature=signatureOf([row.questions,row.answer,row.outcome,row.answerAcceptedAt]);
+        if(target.dataset.questionRecord===signature)return;
+        target.dataset.questionRecord=signature;
+        target.replaceChildren();
+        if(!row.answer){target.textContent=record(row);return;}
+        row.questions.forEach((question,index)=>{
+            const answer=row.answer.answers[index],text=[...answer.selected.map(label=>label || '空白选项'),answer.custom].filter(Boolean).join('、') || '已跳过';
+            const card=node('article','','question-answer-card');
+            const title=node('p',question.question || question.header,'question-record-question');
+            const value=node('p','','question-record-answer');
+            const state=node('span',row.answerAcceptedAt?'已回答：':'已提交：',row.answerAcceptedAt?'sr-only':'question-record-status');
+            value.append(state,document.createTextNode(text));
+            card.append(title,document.createTextNode('\n'),value);
+            if(index)target.append(document.createTextNode('\n\n'));
+            target.append(card);
+        });
+    }
     function ensure(approval) {
         let bar = globalThis.WeftTimeline?.decisionSurface('question-bar') || document.getElementById('question-bar');
         if (!bar) { bar = node('div', '', 'approval-bar question-bar'); bar.id = 'question-bar'; bar.setAttribute('role', 'region'); bar.setAttribute('aria-label', '待回答问题'); bar.hidden = true; approval.after(bar); }
@@ -129,5 +147,5 @@
         if (!note) { note = node('small', '', 'question-waiting approval-remaining'); approval.append(note); }
         note.textContent = `另有 ${count} 个问题，处理审批后回答`;
     }
-    globalThis.WeftQuestionBar = { paint, record, ensure, waiting, retainInteraction, signatureOf };
+    globalThis.WeftQuestionBar = { paint, record, renderRecord, ensure, waiting, retainInteraction, signatureOf };
 })();

@@ -641,7 +641,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       const args=toolArguments(call?.data?.arguments), command=args.command ?? args.cmd ?? args.script;
       const raw = JSON.stringify({ arguments: call?.data?.arguments, output, approval: event.type.startsWith('approval/') ? event.data : undefined }, null, 2)
       const text = raw.slice(0, 64_000)
-      return { seq, text, ...(typeof command==='string'?{command}:{}), ...(event.type==='tool/result'?{...outputPage,fileDiffs:fileChangeDetails(event.data?.meta)}:{}), ...(raw.length > text.length ? { truncated: true } : {}) }
+      return { seq, text, ...(typeof command==='string'?{command}:{}), ...(typeof args.description==='string'?{description:args.description.trim().slice(0,180)}:{}), ...(event.type==='tool/result'?{...outputPage,fileDiffs:fileChangeDetails(event.data?.meta)}:{}), ...(raw.length > text.length ? { truncated: true } : {}) }
     },
 
     /** Internal source evidence cut at the original subscribed/question watermark. */

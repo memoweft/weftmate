@@ -30,14 +30,18 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
   await refresh();
   await page.locator('.execution-block').first().waitFor();
   assert.equal(await page.locator('.execution-block').first().evaluate(el=>el.open),true,'running process opens');
+  host.progress.text('我先检查项目，再整理报告。');
   host.progress.call('pwsh','fail',{command:'npm test',description:'检查项目'});
   host.progress.result('fail','First attempt failed.',true);
+  host.progress.text('第一次检查没有通过，我会调整命令再试。');
   host.progress.call('pwsh','retry',{command:'npm test -- --run',description:'重新检查项目'});
   host.progress.result('retry','Pass\n'.repeat(20000));
+  host.progress.text('检查已通过，现在更新报告。');
   host.progress.call('edit','edit-report',{file_path:'report.md',old_string:'old',new_string:'new'});
   host.progress.result('edit-report','Updated file.',false,{diffs:[{path:'report.md',oldText:'heading\nold\nkeep\nold2\nend',newText:'heading\nnew\nkeep\nnew2\nextra\nend'}]});
   for(const kind of ['choice','custom','skip']) {
-    host.progress.ask([{id:kind,question:`合成问题 ${kind}`,options:[{label:'简要说明',description:'只保留结论'},{label:'详细说明',description:'包含每一步的依据'}]}]);
+    const questionText={choice:'报告需要保留哪些内容？',custom:'还有什么要补充？',skip:'需要附上参考资料吗？'}[kind];
+    host.progress.ask([{id:kind,question:questionText,options:[{label:'简要说明',description:'只保留结论'},{label:'详细说明',description:'包含每一步的依据'}]}]);
     await refresh();const bar=page.getByRole('region',{name:'待回答问题'});await bar.waitFor();
     assert.equal(await bar.evaluate(el=>!el.closest('#transcript')),true,'question stays above composer');
     await bar.getByRole('button',{name:'收起问题',exact:true}).click();
@@ -53,20 +57,27 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
     const receipt=page.waitForResponse(response=>response.request().method()==='POST'&&/\/questions\//.test(response.url()));
     await bar.getByRole('button',{name:kind==='skip'?'跳过':'提交回答',exact:true}).click();
     assert.equal((await receipt).status(),200);await bar.waitFor({state:'hidden'});
-    await page.locator('.question-record').filter({hasText:`合成问题 ${kind}`}).filter({hasText:kind==='choice'?'详细说明':kind==='custom'?'使用我写的说明':'已跳过'}).waitFor();
+    await page.locator('.question-record').filter({hasText:questionText}).filter({hasText:kind==='choice'?'详细说明':kind==='custom'?'使用我写的说明':'已跳过'}).waitFor();
   }
-  host.progress.text('已经整理好报告，下面是最后回答。');host.progress.finish('completed');
+  host.progress.text('项目已检查完毕，报告已更新。');host.progress.finish('completed');
   await refresh();
   await page.waitForFunction(()=>document.querySelector('.execution-block')?.dataset.terminal==='true');
   assert.equal(await page.locator('.execution-block').first().evaluate(el=>el.open),false,'completed process folds');
-  await page.getByText('已经整理好报告，下面是最后回答。',{exact:true}).waitFor();
+  await page.getByText('项目已检查完毕，报告已更新。',{exact:true}).waitFor();
   await page.locator('.execution-block > summary').first().click();
   assert.deepEqual(await page.locator('.execution-step').evaluateAll(nodes=>nodes.map(el=>[el.dataset.step,el.dataset.state])),[['fail','failed'],['retry','completed'],['edit-report','completed']]);
+  assert.deepEqual(await page.locator('.execution-records > .execution-note,.execution-records > .execution-step').evaluateAll(nodes=>nodes.map(el=>el.dataset.step || el.textContent)),['我先检查项目，再整理报告。','fail','第一次检查没有通过，我会调整命令再试。','retry','检查已通过，现在更新报告。','edit-report']);
+  assert.equal(await page.locator('.step-type-icon[data-icon="terminal"] svg').count(),2);
+  assert.equal(await page.locator('.step-type-icon[data-icon="edit"] svg').count(),1);
+  assert.equal(await page.locator('.step-state').count(),0);
+  assert.equal(await page.locator('.question-answer-card').count(),3);
+  assert.equal(await page.locator('.file-change-title').textContent(),'已编辑report.md');
   assert.equal(await page.locator('.execution-step-group .execution-step').count(),0,'commands are individual rows');
   await page.locator('[data-step="retry"] > summary').click();
   await page.locator('[data-step="retry"] .step-output').waitFor();
   await page.getByRole('button',{name:'继续读取输出',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('[data-step="retry"] .step-output')?.textContent.length===100000);
+  assert.equal(await page.locator('[data-step="retry"] .step-title').textContent(),'重新检查项目');
   assert.equal(await page.locator('[data-step="retry"] .step-output').evaluate(el=>el.clientHeight<=221 && el.scrollHeight>el.clientHeight),true);
   assert.equal(await page.locator('.file-changes').count(),1);
   assert.equal(await page.getByLabel('增加 3 行，删除 2 行').count(),1);
@@ -102,9 +113,21 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
     for(const [width,height] of [[1280,800],[900,700],[390,844]])for(const theme of ['light','dark']){
       await app.evaluate(({BrowserWindow},{width,height})=>BrowserWindow.getAllWindows()[0].setContentSize(width,height),{width,height});
       await page.evaluate(theme=>{WeftDesktop.setAppearance({theme});document.querySelector('#transcript > .message.assistant:last-child')?.remove();},theme);
-      await page.evaluate(()=>{if(innerWidth<640)WeftDesktop.toggleRail(true);document.querySelectorAll('.execution-step').forEach(el=>el.open=false);document.getElementById('chat-scroll').scrollTop=0;});
+      await page.evaluate(()=>{if(innerWidth<640)WeftDesktop.toggleRail(true);document.querySelectorAll('.execution-step').forEach(el=>el.open=false);const box=document.getElementById('chat-scroll');box.dispatchEvent(new WheelEvent('wheel',{deltaY:-120,bubbles:true}));box.scrollTop=0;});
       await page.evaluate(async()=>{for(const a of document.getAnimations())if(a.effect?.getTiming().iterations!==Infinity){try{a.finish();}catch{}}await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
       await page.screenshot({path:join(evidence,`weftmate-${width}-${theme}.png`)});
+      if(width===1280){
+        for(const [selector,name] of [['.execution-block','process'],['.question-answer-card','answered'],['.file-changes','changes']]){
+          const target=page.locator(selector).first();
+          if(name==='changes'){if(await page.locator('#jump-latest').isVisible())await page.locator('#jump-latest').click();}
+          else await target.evaluate(el=>{const box=document.getElementById('chat-scroll');box.dispatchEvent(new WheelEvent('wheel',{deltaY:-120,bubbles:true}));box.scrollTop+=el.getBoundingClientRect().top-box.getBoundingClientRect().top-24;});
+          await page.evaluate(async()=>{await new Promise(requestAnimationFrame);for(const a of document.getAnimations())if(a.effect?.getTiming().iterations!==Infinity){try{a.finish();}catch{}}await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
+          if(name==='changes')await writeFile(join(evidence,`changes-capture-${theme}.json`),JSON.stringify(await target.evaluate(el=>({card:el.getBoundingClientRect().toJSON(),scroll:document.getElementById('chat-scroll').scrollTop,scrollHeight:document.getElementById('chat-scroll').scrollHeight,clientHeight:document.getElementById('chat-scroll').clientHeight,jump:[...document.querySelectorAll('button')].filter(button=>button.textContent.includes('回到底部')).map(button=>({hidden:button.hidden,classes:button.className,rect:button.getBoundingClientRect().toJSON()}))})),null,2));
+          await target.screenshot({path:join(evidence,`${name}-detail-${theme}-1x.png`)});
+        }
+        const typography=await page.evaluate(()=>({devicePixelRatio,body:getComputedStyle(document.querySelector('.execution-note')).fontSize,step:getComputedStyle(document.querySelector('.step-title')).fontSize,rowHeight:document.querySelector('.execution-step > summary').getBoundingClientRect().height}));
+        await writeFile(join(evidence,`typography-${theme}.json`),JSON.stringify(typography,null,2));
+      }
       if(width!==390){await page.locator('.execution-block').first().evaluate(el=>el.open=false);await page.screenshot({path:join(evidence,`collapsed-${width}-${theme}.png`)});await page.locator('.execution-block').first().evaluate(el=>el.open=true);}
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     }

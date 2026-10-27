@@ -1147,7 +1147,7 @@ test('sync completion refreshes only the current phone conversation and drops an
   assert.equal(h.node('toast').hidden,true,'background refresh stays quiet');
 });
 
-function allText(node){return [node.textContent,...node.children.flatMap(allText)].join(' ')}
+function allText(node){return node.children ? [node.textContent,...node.children.flatMap(allText)].join(' ') : node.textContent ?? node.data;}
 
 function syntheticConversationTask(){
   const source={commandId:'root-inline',kind:'session.message',state:'accepted_by_dsh',sessionId:'s1',receiptId:'rpc:root.1'};
