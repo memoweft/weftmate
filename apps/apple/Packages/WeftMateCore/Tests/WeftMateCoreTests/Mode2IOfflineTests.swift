@@ -59,4 +59,6 @@ import CryptoKit
     #expect(restarted.state.workTasks?.first?.id == task.id)
     #expect(restarted.state.workTasks?.first?.envelope.ciphertext == task.envelope.ciphertext)
     #expect(restarted.state.workTasks?.first?.state == "sending")
+    #expect(restarted.state.snapshot?.items.isEmpty == true)
+    #expect(restarted.state.pendingSubmission == nil && restarted.state.phoneTurnFragments == nil)
 }

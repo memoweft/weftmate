@@ -5,3 +5,4 @@ xcuserdata/
 *.xcresult
 *.xctestrun
 .DS_Store
+__pycache__/

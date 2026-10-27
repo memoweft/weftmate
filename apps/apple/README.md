@@ -12,20 +12,13 @@ iPhone 只加密保存原话、附件、日期、草稿、模型配置和原话�
 
 记忆页展示当前账号、当前电脑的获准副本和来源，空副本就显示空状态。手机模型可在原话交接尚未完成或选择稍后交时读取副本；账号切换或电脑移除不会恢复手机自记。电脑在线时，“修改或忘掉电脑记忆”进入现有电脑接口；电脑不可达时只读获准副本。未连接过电脑也可用已配置模型聊天，排队、停止、原话同步、提醒来源和电脑任务入口保持可用。
 
-生成器同时提供 `DebugWindowTest`、`WindowTestRelease` 配置和 `WeftMatePhoneWindowTest` / `WeftMateWatchWindowTest` / `WeftMateMacWindowTest` Scheme（构建方案）。调试配置名保留 Debug，使 Xcode 同时按 Debug 构建共享 Swift 包。手机身份为 `com.weftmate.apple.windowtest`，Watch 为 `com.weftmate.apple.windowtest.watch`，伴随绑定匹配，显示名均为“WeftMate 苹果测试”。第 5 包沿此配置签名；`WindowTestRelease` 使用空 entitlement（能力声明）供聊天和同步试用，健康能力的签名与真机验收另行处理。模拟器使用 `apple-1-window-*` 名称，界面用例使用独立随机 namespace（命名空间）。
+最终手机候选使用独立的 `WeftMatePhoneWindowTest` 目标和 Scheme（构建方案），身份固定为 `com.weftmate.apple.windowtest`，显示名为“WeftMate 苹果测试”，不嵌入 Watch，启用只读 HealthKit、后台送达与健康后台注册。它在 Debug、Release 与隔离配置中保持同一测试身份。原三端另保留 `DebugWindowTest`、`WindowTestRelease` 配置，Mac/Watch 保留对应的 WindowTest Scheme；调试配置名保留 Debug，使 Xcode 同时按 Debug 构建共享 Swift 包。Watch 的隔离身份为 `com.weftmate.apple.windowtest.watch`，伴随绑定匹配。
 
-Windows 可运行 `python apps/apple/Scripts/generate_project.py` 和 `python -m unittest discover -s apps/apple/Tests -p 'test_window_*.py'`。Swift 与原生界面结果须在 Mac 实测；源码和项目生成成功不代表已编译通过。Mac 单独一个执行会话先运行：
-
-```sh
-python3 apps/apple/Scripts/run_window_checks.py --phase core --artifacts <包的evidence目录>
-python3 apps/apple/Scripts/run_window_checks.py --phase state --artifacts <包的evidence目录>
-python3 apps/apple/Scripts/run_window_checks.py --phase mac --artifacts <包的evidence目录>
-python3 apps/apple/Scripts/run_window_checks.py --phase ui --phone-id <本包模拟器实际UUID> --artifacts <包的evidence目录>
-```
+Windows 可运行 `python apps/apple/Scripts/generate_project.py` 和 `python -m unittest discover -s apps/apple/Tests -p 'test_*window*.py'`。Swift 与原生界面结果须在 Mac 实测；源码和项目生成成功不代表已编译通过。整合后的候选统一按下方 APPLE-5 的 `run_phone_window_checks.py` 步骤串行检查，状态阶段默认执行全部 24 组状态检查，修复时才用 --check 定点复测。
 
 核心阶段运行 `swift test --package-path apps/apple/Packages/WeftMateCore --jobs 2`；状态阶段注册新的 `PhoneWindowModelChecks`，并运行 `PhoneStandaloneModelChecks`、`PhoneReminderModelChecks`、附件和模型服务回归。前者用真实合成 HTTP/SSE（服务器推送流）计数，跨过原 20 秒停顿、换会话和重新激活，断言只有显式聊天请求；同时覆盖未交完即可读副本、部分收据、大量交接稍后再交、账号/电脑隔离与授权变更。旧容器迁移用例直接构造旧加密文件，核对原话、日期、草稿、模型和收据保留，且旧正文不再落盘。
 
-UI 阶段只跑 `PhoneWindowUITests/testMemoryRoutes`：无副本、有副本、电脑不可达，以及本地编辑入口消失，应用截图保存在 `PhoneWindow.xcresult`。脚本每条命令限 20 分钟并回收本次进程组，采用 `-jobs 4 -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1`，不开 `Simulator.app`；批后 `shutdown all` 并休息 3 分钟，发现新 `gpuRestart` 报告再等 10 分钟。新应用崩溃报告或无法读取诊断目录会分别记录；完整闭环和真机签名、后台行为留给后续设备验收。
+记忆页的 `PhoneWindowUITests/testMemoryRoutes` 覆盖无副本、有副本、电脑不可达，以及本地编辑入口消失；整合后与安装套件在同一批无界面 UI 测试运行，截图保存到 `window.xcresult`。采用 `-jobs 4 -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1`，不开 `Simulator.app`；批后 `shutdown all` 并休息 3 分钟，发现新 `gpuRestart` 报告再等 10 分钟。新应用崩溃报告或无法读取诊断目录会分别记录；完整 Core 闭环、真机签名和后台行为分别验收。
 
 ## 常规构建与打开
 
@@ -44,7 +37,7 @@ make test-phone
 
 工程和共享 Scheme 已提交，普通构建不用先生成。添加 Swift 源码后执行 `make project` 同步项目文件；生成器仅使用 Python 标准库，不下载依赖。默认 iPhone 是已安装 iOS 26.3 的 iPhone 17，Watch 是 watchOS 26.2 的 Series 11（46mm）。通过 `PHONE_ID=<UUID>` 和 `WATCH_ID=<UUID>` 指定其他可用模拟器，使用 `xcrun simctl list devices available` 取得 UUID。
 
-`make test-core` 执行共享包 Swift 单元测试；`make test-state` 编译并运行 `Tests/*Checks.swift` 的十一组状态检查，使用合成账户、受控 HTTP 和独立临时目录，不访问日用数据、后端或系统钥匙串。每次的编译/执行日志与 `results.json` 保存到受忽略的 `Build/StateChecks/apple-state-*`。需要源码外的证据目录时运行 `python3 Scripts/run_state_checks.py --artifacts <目录>`；`--core-build <隔离的 SwiftPM scratch 目录>` 可复用已构建的核心对象。`make test-mac` / `make test-phone` 属于 UI 验证，真实服务用例另需隔离 fixture。
+`make test-core` 执行共享包 Swift 单元测试；`make test-state` 编译并运行 `Tests/*Checks.swift` 的全部 24 组状态检查，使用合成账户、受控 HTTP 和独立临时目录，不访问日用数据、后端或系统钥匙串。每次的编译/执行日志与 `results.json` 保存到受忽略的 `Build/StateChecks/apple-state-*`。需要源码外的证据目录时运行 `python3 Scripts/run_state_checks.py --artifacts <目录>`；`--core-build <隔离的 SwiftPM scratch 目录>` 可复用已构建的核心对象。`make test-mac` / `make test-phone` 属于 UI 验证，真实服务用例另需隔离 fixture。
 
 `make run-mac`、`make run-phone`、`make run-watch` 构建、安装并启动对应候选。模拟器首次启动需要等待系统初始化；脚本等待实际启动结果。Mac App 使用沙盒网络客户端权限，以及用户在系统文件窗口选定位置的读写权限，用于保存已校验的成果。真实系统操作按后续正式能力逐项接入。
 
@@ -148,7 +141,41 @@ python3 Scripts/package_mac_trial.py --artifacts /private/path/apple-delivery
 
 当前源码按服务器和账户保存草稿、已读取的会话缓存与不可变请求记录。界面分别显示保存状态、缓存读取时间和服务端回执；未知请求重开时先查询原身份，用户明确继续才复用原内容。主仓源码合并不会自动发布或更新官网安装包。
 
-### iPhone 与 Watch 真实设备的最后准备
+## iPhone 与 Watch 真实设备的最后准备
+
+### 独立 iPhone 测试候选（APPLE-5）
+
+生成器另外提供 `WeftMatePhoneWindowTest` 和对应 UI 测试目标。候选固定为 `com.weftmate.apple.windowtest`，主屏幕显示“WeftMate 苹果测试”；使用独立应用容器、固定的测试 Keychain service、偏好 suite 与本机状态目录。普通手动重开仍使用这些测试存储，不需要保留 Xcode 启动参数。原 Phone、Mac、Watch 目标仍分别构建。
+
+此目标支持手机聊天、同步和健康读取：保留独立存储，不嵌入 Watch，也不启动 WatchConnectivity。使用 HealthKit 与 background-delivery entitlement，注册健康后台任务并启用 fetch；首次主动进入健康页时请求只读授权（toShare 为空），登录或启动时不请求健康授权。提醒的前台与本机通知逻辑仍在，提醒后台刷新仍不注册。`Config/Local.xcconfig` 沿用受忽略的本机团队配置；不要把团队或凭据写进生成器。云登录继续使用已登记的回调 URI。
+
+Windows 可先验证并生成项目，连续生成两次应无差异：
+
+```sh
+python3 -m unittest discover -s apps/apple/Tests -p 'test_*window*.py' -v
+node --test apps/apple/Tests/phone_window_model_server.test.mjs
+python3 apps/apple/Scripts/generate_project.py
+```
+
+Mac 确认只有本次执行会话后，在 `apps/apple` 中运行下面各步。`EVIDENCE` 指向源码外的私有证据目录，`PHONE_ID` 使用本次选定的实际 iPhone 模拟器 UUID：
+
+```sh
+python3 Scripts/run_phone_window_checks.py --phase preflight --artifacts "$EVIDENCE"
+python3 Scripts/run_phone_window_checks.py --phase core --artifacts "$EVIDENCE"
+python3 Scripts/run_phone_window_checks.py --phase state --artifacts "$EVIDENCE"
+python3 Scripts/run_phone_window_checks.py --phase build --artifacts "$EVIDENCE"
+python3 Scripts/run_phone_window_checks.py --phase ui --device "$PHONE_ID" --artifacts "$EVIDENCE"
+```
+
+状态阶段不传 `--check` 时执行全部已注册检查；`--check` 用于定点复测。UI 批次一起选择候选的 `PhoneWindowInstallUITests` 和 APPLE-1 的 `PhoneWindowUITests`；后者尚未集成时脚本拒绝最终 UI 验证，合入后须重新生成工程。至少执行这两组的四条测试，跳过或缺计数均不算通过。模拟器 UI 包使用本机 ad-hoc 签名以运行真实钥匙串，并在批次开始时仅重置所选模拟器中的合成测试候选容器；真机覆盖安装不做这项重置。安装套件验证真实聊天控制器的排队、停止、队列依次执行、普通无参数重开、前后台恢复和本人登录入口；仅 HTTP/SSE 回复时序使用合成替身。它不证明真实电脑的记忆形成、纠正或遗忘。
+
+装机后可用 `--window-manual-login --window-install-id <本次随机 UUID>` 启动独立候选，待本机状态恢复后打开真实登录表单，账号密码由本人输入。该参数只在独立测试目标中生效，并且每个进程只打开一次；普通重开保持本机工作区入口。登录页实际出现时，在应用缓存的 `WindowInstall/login-visible.json` 记录本次 UUID、bundle ID 和出现标记，供 Mac 核对；文件不含表单、账户或聊天内容。
+
+脚本每次建独立证据和构建目录，记录提交、工作区状态、命令、退出码、XCTest 计数摘要、截图结果包与新增崩溃报告。Swift 测试及每条状态检查限 20 分钟，构建和 UI 批次各限 30 分钟；结束收本次进程组。UI 批后关闭全部模拟器，等待 3 分钟；本批新 `gpuRestart` 则等 10 分钟，不打开 Simulator.app。诊断目录不可读记为未知。
+
+Mac 上用本人的免费 Personal Team 实际签名，核对描述文件包含 HealthKit 与后台送达，再安装到已信任且开启开发者模式的 iPhone；签名失败须保留 Xcode 原始错误并写回 PR，确认不能签健康后才安装无健康降级版。登录服务器为 https://api.weftmate.com，由本人输入账号密码和确认健康授权。Apple 说明 Personal Team 的安装描述文件有效期为 7 天，到期需用同一团队重新构建安装；本项目不自动续签。Apple 官方能力表将 HealthKit 列为免费 Apple Developer 账号可用；本机仍以实际签名与描述文件核验为准。续签时用同一台 Mac、同一 Apple ID 和 WeftMatePhoneWindowTest Scheme 再 Run 覆盖安装，实际核对容器测试文件保留；不卸载、不清理原数据。参见 [Apple 免费设备测试说明](https://developer.apple.com/help/account/basics/about-your-developer-account)及[支持的 iOS 能力](https://developer.apple.com/help/account/reference/supported-capabilities-ios)。
+
+### 原 Phone 与 Watch 目标
 
 在 Xcode 设置的 Apple Accounts 中确认本人账户可用；Phone 和 Watch 两个 target 的 Signing & Capabilities 选择同一个已有团队并保留 Automatically manage signing。将解锁的 iPhone 连接到 Mac，在设备提示中信任这台电脑；Watch 使用与该手机的真实配对。按设备提示开启 Developer Mode，然后在 Scheme 的运行目标中选择真实 iPhone 或 Watch，执行 Run。Xcode 此时创建所需开发签名与描述文件；尚未完成这一步时，不提供未签名 IPA 下载。个人设备开发试用可以采用 Personal Team；TestFlight 和公开发行需要另行核实对应开发者资格。本工程不自动注册收费账号或修改本人团队选择。
 

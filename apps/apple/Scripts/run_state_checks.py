@@ -17,6 +17,8 @@ CHECKS = {
     "PhoneStandaloneModelChecks": [],
     "PhoneReminderModelChecks": [],
     "PhoneWindowModelChecks": [],
+    "PhoneSyncModelChecks": ["OfflineChatModel"],
+    "PhoneReplicaErasureChecks": ["OfflineChatModel"],
     "Mode2IFixStateChecks": APP_MODEL,
     "A16ChatStateChecks": APP_MODEL,
     "AppleUX23StateChecks": APP_MODEL,
@@ -80,6 +82,8 @@ def main():
             sources.append(ROOT / "Tests/PhoneStandaloneCheckSupport.swift")
         if name == "PhoneAttachmentModelChecks":
             sources.append(ROOT / "iOS/PhoneAttachmentInput.swift")
+        if name in ("PhoneSyncModelChecks", "PhoneReplicaErasureChecks"):
+            sources += [ROOT / "iOS/PhoneStandaloneModel.swift", ROOT / "Tests/PhoneSyncCheckSupport.swift"]
         sources.append(ROOT / "Tests" / (name + ".swift"))
         compile_command = ["swiftc", "-swift-version", "6", "-D", "DEBUG", "-parse-as-library",
                            "-I", str(products / "Modules"), *map(str, sources),
