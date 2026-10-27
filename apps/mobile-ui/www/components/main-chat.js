@@ -311,8 +311,9 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         for(const event of projected.cards.filter(event=>/^(artifact.|question.)/.test(event.type)))
             units.push({at:event.at,seq:event.seq,specs:[{kind:'progress',key:`output:${event.eventId || event.seq}`,events:[{...event,data:{...event.data,completedStep:undefined}},...mapped.filter(end=>['task.ended','turn.ended'].includes(end.type)&&WeftUiCore.turnOutcome([end],event.data.taskId).terminal)],estimate:70}]});
         const byDay=new Map();
-        for(const unit of units.sort((a,b)=>Date.parse(a.at)-Date.parse(b.at) || a.seq-b.seq)) {
-            const date=logical() ? WeftUiCore.ChatWindow.day(unit.at,core.state.chatWindow.timeZone) : '';
+        const chronological = logical();
+        for(const unit of units.sort((a,b)=>(chronological ? Date.parse(a.at)-Date.parse(b.at) : 0) || a.seq-b.seq)) {
+            const date=chronological ? WeftUiCore.ChatWindow.day(unit.at,core.state.chatWindow.timeZone) : '';
             if(!byDay.has(date))byDay.set(date,[]);
             byDay.get(date).push(...unit.specs);
         }

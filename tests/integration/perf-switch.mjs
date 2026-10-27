@@ -149,7 +149,18 @@ try {
     await page.evaluate(id => testCore.selectSession(id), fixture.source);
     await page.getByText('合成最终回复，已更正。', { exact: true }).waitFor();
     assert.equal(await page.getByText('合成流式第一段，第二段', { exact: true }).count(), 0);
-    await writeFile(join(out, 'behavior.json'), JSON.stringify({ anchorRestored: true, draftRestored: true, loadedHundreds: true, streamRowReused: true, hiddenCompletionRead: true, undatedNativeMessageRead:true }, null, 2));
+    put('turn.started', {turn:152}); put('user.message', {text:'合成顺序问题',receiptId:'synthetic-order',turn:152});
+    put('assistant.message', {text:'较早时间戳的最新消息',turn:152}); history.at(-1).at='2000-01-01T00:00:00Z';
+    put('turn.ended', {turn:152,reason:'completed'});
+    await page.evaluate(() => testCore.refreshHistory());
+    await page.evaluate(() => testUi.scrollToLatest());
+    await page.getByText('较早时间戳的最新消息', {exact:true}).waitFor();
+    assert.equal(await page.evaluate(() => {
+      const messages=[...document.querySelectorAll('#transcript .message')];
+      const question=messages.find(row=>row.textContent.includes('合成顺序问题')), answer=messages.find(row=>row.textContent.includes('较早时间戳的最新消息'));
+      return !!(question?.compareDocumentPosition(answer) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }),true,'Native sequence determines order even when clocks differ');
+    await writeFile(join(out, 'behavior.json'), JSON.stringify({ anchorRestored: true, draftRestored: true, loadedHundreds: true, streamRowReused: true, hiddenCompletionRead: true, undatedNativeMessageRead:true, nativeSequenceOrder:true }, null, 2));
     assert.equal(samples.reduce((n, row) => n + row.longTaskCount, 0), 0, 'Switching must not cause long tasks');
     assert.ok(samples.every(row => row.frameP95Ms <= 16.81), 'Switching frame p95 <=16.8ms');
   }
