@@ -301,6 +301,7 @@ export function createSessionOperations(context) {
         if (context.backend.schedules) await context.backend.schedules({ sessionId, ownerId, action: 'erase' });
         if (context.backend.goals) await context.backend.goals({ sessionId, ownerId, action: 'erase' });
         await context.callBackend(() => context.backend.deleteSession({ sessionId, ownerId }));
+        await context.browserReader?.releaseSession?.(ownerId, sessionId);
         context.sessionOperations.invalidate(ownerId,sessionId);
         await context.offline?.invalidate(ownerId);
         await context.sharedAttachmentStores?.get(ownerId)?.removeSession(sessionId);
@@ -316,6 +317,12 @@ export function createSessionOperations(context) {
           for (const field of ['commands', 'toolApprovals', 'userQuestions', 'projectSources', 'browserSources', 'conversationBindings'])
             for (const [key, value] of Object.entries(next[field] ?? {}))
               if (value.sessionId === sessionId) delete next[field][key];
+          for (const command of Object.values(next.commands)) for (const proposal of command.toolApprovals ?? []) {
+            if (proposal.workSessionId !== sessionId) continue;
+            delete proposal.workSessionId;
+            delete proposal.workCreateCommandId;
+            delete proposal.workCommandId;
+          }
         }));
         return { sessionId, deleted: true, forgetMemories, forgottenEvidenceCount };
       } catch (error) {

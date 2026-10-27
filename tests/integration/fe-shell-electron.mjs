@@ -147,7 +147,7 @@ try {
   await check('shell remains usable in a narrow Windows window',async()=>{
     await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(760,680));await page.evaluate(async()=>{await __feedbackSessionCore.startNewConversation();document.querySelector('#new-session').click();});await page.waitForFunction(()=>!document.querySelector('#conversation-pane').hidden);await settle();await capture('narrow-new-dark');
     assert.equal(await page.locator('.assistant-shell').evaluate(n=>n.scrollWidth<=n.clientWidth+1),true);
-    assert.equal(await page.locator('.session-rail').evaluate(n=>n.querySelector('.rail-mode-switch').getBoundingClientRect().right<=n.getBoundingClientRect().right),true,'both history modes stay inside the narrow sidebar');
+    assert.equal(await page.locator('.session-rail').evaluate(n=>n.querySelector('[aria-label="筛选最近对话"]').getBoundingClientRect().right<=n.getBoundingClientRect().right),true,'the recent filter stays inside the narrow sidebar');
     await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1200,800));
   });
   await check('account change clears previous usage before refresh',async()=>{

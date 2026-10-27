@@ -612,7 +612,7 @@ test('memory reads discard a response for another account and reset authenticate
 
 const expectedAppearanceDefaults = {
   theme:'system',accent:'neutral',fontSize:'14',accentLight:'neutral',accentDark:'neutral',codeFontSize:'12',
-  uiFontSize:'13',themePreset:'default',themePresetLight:'default',themePresetDark:'default',
+  uiFontSize:'14',themePreset:'default',themePresetLight:'default',themePresetDark:'default',
   font:'system',fontLight:'system',fontDark:'system',backgroundLight:'',backgroundDark:'',foregroundLight:'',foregroundDark:'',
   separateModes:true,contrast:'60',translucentSidebar:false,fullWidth:false,
 }
