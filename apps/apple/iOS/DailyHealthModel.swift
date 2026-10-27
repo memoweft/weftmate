@@ -101,6 +101,13 @@ import WeftMateCore
         let requestedAgain = activationPending; activationPending = false
         if (token != generation || requestedAgain), app.session != nil { await activate(app: app) }
     }
+    /// Created only after the owner explicitly navigates to Health.
+    func enteredHealthPage(app: AppleAppModel) async {
+        do { guard try prepare(app) else { return } }
+        catch { log(0, success: false, category: "storage"); return }
+        if !state.connected { await connect(app: app) }
+        else { await activate(app: app) }
+    }
     /// The SDK-facing callback has no inherited UI executor; UI references are dereferenced only after the hop.
     nonisolated private static func makeObserverUpdate(model: DailyHealthModel, app: AppleAppModel) -> @Sendable () async -> Void {
         { @Sendable [weak model, weak app] in

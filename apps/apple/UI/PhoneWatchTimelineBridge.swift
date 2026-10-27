@@ -9,7 +9,9 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
     private let session = WCSession.default
     @MainActor init(model: AppleAppModel) {
         self.model = model; super.init()
+        #if !WEFTMATE_WINDOW_TEST
         if WCSession.isSupported() { session.delegate = self; session.activate() }
+        #endif
     }
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}

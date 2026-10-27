@@ -56,10 +56,11 @@ import WeftMateCore
     private var handoffApproved=false
     private var transferring=false
     var handoffHost: String? { state.transcriptSync?.hostID }
+    func permitsComputerReplica(_ host: String) -> Bool { state.transcriptSync?.removedHostIDs?.contains(host) != true }
     private var hasComputerReplica: Bool {
-        guard let app,account == app.phoneAccountIdentity,let host=app.session?.hostId,
+        guard let app,account == app.phoneAccountIdentity,let host=app.session?.hostId ?? app.offline.memoryHostID,
               let subject=app.cloudLogin.subject,app.cloudLogin.authenticated else { return false }
-        return app.offline.memoryHostID == host && app.offline.memoryAccountID == subject
+        return permitsComputerReplica(host) && app.offline.memoryHostID == host && app.offline.memoryAccountID == subject
     }
     var computerMemory: [OfflineMemory] {
         guard hasComputerReplica else { return [] }
@@ -82,11 +83,29 @@ import WeftMateCore
     }
     /// Called only after a successful authenticated account directory read, never on a network failure.
     func computerDirectoryChanged(hostIDs: Set<String>) {
-        for host in Set((state.computerReminders ?? [:]).keys).union((state.reminderReads ?? [:]).keys) where !hostIDs.contains(host) { state.removeComputerReminders(hostID:host) }
-        try? persist()
-        guard let host=handoffHost,!hostIDs.contains(host) else { return }
-        state.transcriptSync?.hostID=nil;handoffApproved=false;handoffCount=0;handoffBytes=0
-        try? persist()
+        if let removed=state.transcriptSync?.removedHostIDs,!removed.isDisjoint(with:hostIDs) {
+            state.transcriptSync?.removedHostIDs=removed.subtracting(hostIDs);try? persist()
+        }
+        let known=Set((state.computerReminders ?? [:]).keys).union((state.reminderReads ?? [:]).keys).union((state.migrations ?? [:]).keys).union([handoffHost,app?.offline.replicaHostID].compactMap { $0 })
+        for host in known where !hostIDs.contains(host) { computerRemoved(host);app?.removeComputerReplica(host) }
+    }
+    func computerRemoved(_ host: String) {
+        guard state.transcriptSync?.removedHostIDs?.contains(host) != true else { return }
+        state.invalidateComputerMemory(host:host,removedIDs:[],reset:true)
+        state.transcriptSync?.removedHostIDs=(state.transcriptSync?.removedHostIDs ?? []).union([host])
+        if handoffHost == host { state.transcriptSync?.hostID=nil }
+        stop();handoffApproved=false;handoffCount=0;handoffBytes=0
+        do { try persist() } catch { notice="电脑副本清理暂未保存，请重试。" }
+    }
+    /// Apply durable replica erasures even while a streamed answer is in progress.
+    func refreshComputerMemory() throws {
+        guard let app else { return }
+        guard account == app.phoneAccountIdentity else { activate(app:app);throw OfflineFailure.authorization }
+        guard let erasure=app.offline.memoryErasure else { return }
+        do {
+            if state.applyReplicaErasure(erasure) { stop();try persist() }
+            try app.offline.acknowledgeMemoryErasure(erasure.id)
+        } catch { state.replicaErasures?[erasure.hostID]=nil;throw error }
     }
     func handoffNow() { handoffDeferred=false;handoffApproved=true; if let app { Task { await synchronize(app:app) } } }
     func handoffLater() { handoffDeferred=true;handoffApproved=false }
@@ -117,7 +136,9 @@ import WeftMateCore
     }
     private var allowLoopback: Bool {
         #if DEBUG
-        loopbackOverride || (ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--apple6-fixture"))
+        loopbackOverride || (ProcessInfo.processInfo.arguments.contains("--ui-testing") &&
+            (ProcessInfo.processInfo.arguments.contains("--apple6-fixture") ||
+             (Bundle.main.bundleIdentifier == AppleStorageProfile.windowBundleID && ProcessInfo.processInfo.arguments.contains("--phone-window-chat-fixture"))))
         #else
         false
         #endif
@@ -136,9 +157,10 @@ import WeftMateCore
         } catch { notice="本机内容暂时打不开，请重试。" }
     }
     func synchronize(app: AppleAppModel) async {
-        guard !transferring, !busy, app.session?.verification == .verified,
-              let host=app.session?.hostId, let subject=app.cloudLogin.subject, app.cloudLogin.authenticated else { return }
         activate(app:app)
+        do { try refreshComputerMemory() } catch { notice="电脑副本清理暂未保存，请重试。";return }
+        guard !transferring, !busy, app.session?.verification == .verified,
+              let host=app.session?.hostId,permitsComputerReplica(host), let subject=app.cloudLogin.subject, app.cloudLogin.authenticated else { return }
         transferring=true;let ticket=epoch
         defer { transferring=false }
         do {
@@ -148,38 +170,36 @@ import WeftMateCore
             let generation=control.generation
             state.applyMigrationGeneration(host:host,generation:generation)
             if app.offline.memoryHostID == host,app.offline.memoryAccountID == subject {
-                state.acknowledgeMigration(host:host,ids:app.offline.synced)
+                state.acknowledgeMigration(host:host,generation:app.offline.generation ?? -1,ids:app.offline.synced)
             }
             try persist()
             guard app.offline.memoryHostID == host,app.offline.memoryAccountID == subject,
-                  !app.offline.hostOffline,app.offline.generation == generation else { return }
+                  !app.offline.hostOffline,app.offline.generation == generation,app.offline.memoryAuthorityReady else { return }
             // Readiness is the authenticated M3-A snapshot + matching cloud authorization.
             if handoffHost != host { if state.transcriptSync == nil { state.transcriptSync = .init() };state.transcriptSync?.hostID=host;try persist() }
             let pending=state.prepareMigration(host:host,generation:generation);try persist()
-            handoffCount=pending.count;handoffBytes=pending.reduce(0) { $0+$1.messages.reduce(0) { $0+$1.text.utf8.count } }
+            handoffCount=pending.count;handoffBytes=state.migrations?[host]?.handover?.bytes ?? 0
             if pending.isEmpty {
                 handoffCount=0;handoffBytes=0;handoffApproved=false;handoffDeferred=false
             } else if (pending.count >= 100 || handoffBytes >= 256*1024),!handoffApproved { return }
-            if pending.contains(where: { $0.messages.contains { $0.text.utf16.count > 16384 } }) {
-                notice="有一段对话比较长，电脑更新后会继续接过来。这里的原话仍然保留。";return
+            if !pending.isEmpty,let migration=state.migrations?[host] {
+                let ids=Set(migration.handoverTurnIDs ?? pending.map(\.id))
+                try app.offline.enqueuePhoneTurns(migration.turns.filter { ids.contains($0.id) },generation:generation,handover:migration.handover)
             }
-            if !pending.isEmpty { try app.offline.enqueuePhoneTurns(pending,generation:generation) }
         } catch { if ticket == epoch { notice="本机对话仍在这里，电脑准备好后会自动同步。" } }
     }
     private func authorizeTransferredHistory(ticket: UUID) async throws {
         guard let app else { return }
+        try refreshComputerMemory()
         if hasComputerReplica {
-            try await app.offline.authorizeMemory(control:app.offlineAuthorization)
-            guard ticket == epoch,account == app.phoneAccountIdentity else { throw OfflineFailure.authorization }
+            // A cloud outage locks the replica, while the configured phone model remains usable.
+            do { try await app.offline.authorizeMemory(control:app.offlineAuthorization) }
+            catch { try refreshComputerMemory() }
         }
-        guard let migrations=state.migrations,!migrations.isEmpty else { return }
-        let subject=app.cloudLogin.subject
-        for (host,migration) in migrations where migration.conversationIDs.contains(state.selected ?? "") {
-            let control=try await app.offlineAuthorization(host)
-            guard ticket == epoch,account == app.phoneAccountIdentity,control.authorized,control.accountId == subject,control.hostId == host else { throw OfflineFailure.authorization }
-            if migration.generation != control.generation {
-                state.applyMigrationGeneration(host:host,generation:control.generation);try persist();throw OfflineFailure.authorization
-            }
+        guard ticket == epoch,account == app.phoneAccountIdentity else { throw OfflineFailure.authorization }
+        if let host=app.offline.memoryHostID,let generation=app.offline.generation,
+           let migration=state.migrations?[host],migration.generation != generation {
+            state.applyMigrationGeneration(host:host,generation:generation);stop();try persist();throw OfflineFailure.authorization
         }
     }
     private func saveLibrary(_ next: PhoneModelLibrary) throws {
@@ -359,12 +379,14 @@ import WeftMateCore
             #else
             let confirmation = "已记下："+command.text+"，"+command.date.formatted(date:.abbreviated,time:.shortened)+"提醒你。通知是否弹出，可在目标页查看。"
             #endif
-            next.threads[index].messages.append(.init(role:"assistant",text:confirmation))
+            var reply=PhoneChatMessage(role:"assistant",text:confirmation);reply.memoryRefs=[];reply.dependencyComplete=true
+            next.threads[index].messages.append(reply)
             next.pending = .init();try save(next);draft="";notice=nil
         } catch { state=original;try? persist();notice="提醒没能保存，请检查本机存储后重试。" }
         return true
     }
     func send(regenerate: Bool = false) {
+        do { try refreshComputerMemory() } catch { notice="电脑副本清理暂未保存，请重试。";return }
         guard !regenerate || !busy else { return }
         // Local reminder commands do not wait for the model or interrupt its active reply.
         if !regenerate,draft.utf16.count <= 16384,attachments.isEmpty,sendReminderCommand(draft.trimmingCharacters(in:.whitespacesAndNewlines)) { return }
@@ -400,25 +422,32 @@ import WeftMateCore
         }
     }
     private func reply(to reply: PhoneQueuedReply, model: PhoneModelConfiguration, ticket: UUID) async {
-        let history=state.replyHistory(reply),text=state.replyHistory(reply).last?.text ?? ""
+        var history: [PhoneChatMessage]=[]
         var received="",publishedAt=Date.distantPast,savedAt=Date.distantPast
         state.updateReply(reply,status:.replying)
         do {
             try persist();try await authorizeTransferredHistory(ticket:ticket)
             try Task.checkCancellation();guard ticket == epoch else { return }
+            history=state.replyHistory(reply,allowComputerMemory:hasComputerReplica,memoryHostID:app?.offline.memoryHostID)
+            guard history.last?.role == "user" else { throw OfflineFailure.authorization }
+            let text=history.last?.text ?? ""
+            let memoryRevision=app?.offline.memoryRevision,usesReplica=hasComputerReplica
             let computerItems=OfflineReplica.recall(computerMemory,query:text)
             if let t=state.threads.firstIndex(where: { $0.id == reply.threadID }),let m=state.threads[t].messages.firstIndex(where: { $0.id == reply.replyID }) {
                 let refs=computerItems.map { OfflineMemoryRef(kind:$0.kind,id:$0.id) }
                 let inherited=history.flatMap { $0.memoryRefs ?? [] }
                 let all=Set(refs+inherited).sorted { $0.kind+$0.id < $1.kind+$1.id }
                 state.threads[t].messages[m].memoryRefs=Array(all.prefix(64))
-                state.threads[t].messages[m].dependencyComplete=all.count <= 64 && history.allSatisfy { $0.dependencyComplete != false }
+                state.threads[t].messages[m].dependencyComplete=all.count <= 64 && history.allSatisfy { $0.role != "assistant" || $0.dependencyComplete == true }
+                state.threads[t].messages[m].memoryHostID=app?.offline.memoryHostID
             }
             let context=computerItems.map { ($0.text,$0.sources.map(\.id)) }
             let system=ComputerMemoryContext.prompt(context,computerOffline:app?.offline.hostOffline == true)
             let request=try model.attachmentRequest(messages:history,system:system,stream:true,allowLoopback:allowLoopback)
             for try await line in PhoneReplyStream.lines(request:request,model:model,timeout:replyTimeout) {
+                try refreshComputerMemory()
                 try Task.checkCancellation();guard ticket == epoch else { return }
+                guard account == app?.phoneAccountIdentity, memoryRevision == app?.offline.memoryRevision, !usesReplica || hasComputerReplica else { throw OfflineFailure.authorization }
                 if history.contains(where: { ($0.attachments ?? []).contains(where: \.isImage) }),line.contains("\"error\""),PhoneAttachmentFailure.isVisionRejection(status:400,body:line) { throw PhoneAttachmentFailure.vision }
                 if let delta=try model.streamText(line) {
                     received += delta
@@ -432,11 +461,14 @@ import WeftMateCore
             }
             try await authorizeTransferredHistory(ticket:ticket)
             try Task.checkCancellation();guard ticket == epoch else { return }
+            guard memoryRevision == app?.offline.memoryRevision,!usesReplica || hasComputerReplica else { throw OfflineFailure.authorization }
             guard !received.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty else { throw OfflineFailure.model }
             state.updateReply(reply,text:received,status:.complete);try persist()
         } catch {
             guard ticket == epoch else { return }
-            state.updateReply(reply,text:received,status:.failed)
+            if case OfflineFailure.authorization = error {
+                state.updateReply(reply,text:"",status:.failed)
+            } else { state.updateReply(reply,text:received,status:.failed) }
             if error as? PhoneAttachmentFailure == .vision,received.isEmpty,draft.isEmpty,
                let t=state.threads.firstIndex(where: { $0.id == reply.threadID }),state.threads[t].messages.last?.id == reply.replyID,
                let user=history.last,!(user.attachments ?? []).isEmpty {

@@ -85,7 +85,7 @@ private actor InteractionHTTP: HTTPTransport {
     }
     private func secondApproval() -> [String: Any] {
         var row = identity("approval-second", field: "approvalId")
-        row["riskCategories"] = ["execute"]; row["callId"] = "call-second"; row["toolName"] = "Synthetic"; row["reason"] = "[weftmate:execute] 合成检查。\n{\"command\":\"npm run verify\"}"
+        row["riskCategories"] = ["execute"]; row["callId"] = "call-second"; row["toolName"] = "Synthetic"; row["reason"] = "[weftmate:execute] 合成检查。\n{\"command\":\"npm run verify\",\"description\":\"校验合成项目\"}"
         return row
     }
     private func question(resolved: Bool) -> [String: Any] {
@@ -238,7 +238,8 @@ private actor InteractionHTTP: HTTPTransport {
         try require(queueModel.pendingApprovals.count == 2 && queueModel.pendingApprovals.first?.id == "approval-check", "Approval queue ordering incorrect")
         await queueModel.decide(queueModel.pendingApprovals[0], outcome: .allowedOnce)
         try require(queueModel.pendingApprovals.count == 1 && queueModel.pendingApprovals.first?.id == "approval-second", "Next approval did not replace registered first item")
-        try require(queueModel.approvalHeadline(queueModel.pendingApprovals[0]) == "要运行命令：npm run verify", "Approval target missing before asynchronous detail read")
+        try require(queueModel.approvalHeadline(queueModel.pendingApprovals[0]) == "要运行一条命令：校验合成项目", "Approval target missing before asynchronous detail read")
+        try require(!queueModel.approvalHeadline(queueModel.pendingApprovals[0]).contains("npm run verify"), "Raw command leaked into the immediate human headline")
         print("PASS 11 two-item queue advances after matched receipt; immediate target and uncertain read failure retained")
         print("TaskInteractionChecks: 11/11 passed; journal=" + directory.path)
     }

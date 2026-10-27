@@ -80,6 +80,8 @@ private actor AdoptionHTTP: HTTPTransport {
         case "/personal/v1/models":
             object = ["models": [["id": "first-profile", "name": "First", "model": "first-model", "configured": true],
                 ["id": "chosen-profile", "name": "Chosen", "model": "chosen-model", "configured": configured]]]
+        case "/personal/v1/model-services":
+            status = 404; object = ["error": ["code": "NOT_FOUND"]]
         case "/personal/v1/sync/capabilities": object = ["deviceId": "device-Mac", "platform": "macos", "sharedConversations": 1]
         case "/personal/v1/sync/conversations/original-conversation/shared":
             if request.httpMethod == "POST" {
