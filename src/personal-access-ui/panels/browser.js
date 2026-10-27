@@ -12,8 +12,8 @@
     const back = button('后退', 'back'), forward = button('前进', 'right'), reload = button('刷新', 'sync');
     const address = node('input', 'browser-address'); address.type = 'text'; address.inputMode = 'url';
     address.setAttribute('aria-label', '网址'); address.placeholder = '输入网址'; address.autocomplete = 'off'; address.spellcheck = false;
-    const go = node('button', 'browser-go', '打开'); go.type = 'submit';
-    bar.append(back, forward, reload, address, go);
+    const go = button('打开', 'right'); go.classList.add('browser-go'); go.type = 'submit';
+    bar.append(back, forward, address, reload, go);
     const title = node('div', 'browser-page-title', '新网页');
     const status = node('div', 'browser-status'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
     const viewport = node('div', 'browser-viewport');
@@ -21,7 +21,8 @@
     const explanation = node('p', 'browser-explanation');
     const retry = node('button', 'browser-retry', '重试'); retry.type = 'button';
     message.append(WeftIcons.create('web', 24), explanation, retry); viewport.append(message);
-    el.append(bar, title, status, viewport);
+    const meta = node('div', 'browser-meta'); meta.append(title, status);
+    el.append(bar, meta, viewport);
     const bindings = new Map();
     let current, shown = false, disposed = false, frame = 0, lastLayout = '', layoutQueue = Promise.resolve();
     const errors = {
@@ -44,10 +45,13 @@
       back.disabled = !ready || !state.canGoBack; forward.disabled = !ready || !state.canGoForward;
       reload.disabled = !ready || !state.url;
       address.disabled = go.disabled = !ready;
-      title.textContent = state?.title || '新网页'; title.title = state?.url || '';
-      if (document.activeElement !== address) address.value = state?.url || '';
-      status.textContent = error ? '加载失败' : !desktop ? '电脑浏览器' : !ctx.conversationId ? '尚未选择对话'
+      const pageTitle = state?.title || '新网页', url = state?.url || '';
+      if (title.textContent !== pageTitle) title.textContent = pageTitle;
+      title.title = url;
+      if (document.activeElement !== address && address.value !== url) address.value = url;
+      const statusText = error ? '加载失败' : !desktop ? '电脑浏览器' : !ctx.conversationId ? '尚未选择对话'
         : !ready ? '正在准备浏览器…' : state.loading ? '正在加载…' : state.url ? '已打开' : '等待打开网页';
+      if (status.textContent !== statusText) status.textContent = statusText;
       el.setAttribute('aria-busy', String(desktop && !!ctx.conversationId && (!ready || !!state?.loading) && !error));
       explanation.textContent = !desktop ? '请在电脑上的 WeftMate 中打开网页；手机暂不嵌入浏览器。'
         : !ctx.conversationId ? '先选择一个对话，再打开网页。' : error ? errorText(error)
