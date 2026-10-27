@@ -90,6 +90,12 @@ test('D92 completed chat proposal starts a separate work once, preserves refusal
       assert.equal(sessions.find((s:any)=>s.sessionId===workId).projectId,project.projectId);
       if(scenario==='restart'){assert.equal(sessions.find((s:any)=>s.sessionId===workId).temporary,true);assert.equal(sessions.find((s:any)=>s.sessionId===workId).recallEnabled,false);}
       assert.equal((await api(`/commands/${current.workCommandId}`)).command.kind,'session.message');
+      if(scenario==='accept') {
+        await api(`/sessions/${workId}`,{},'DELETE');
+        const retained=(await api(`/sessions/${id}/approvals`)).approvals.find((r:any)=>r.approvalId===card.approvalId);
+        assert.equal(retained.workSessionId,undefined,'deleting work removes the old proposal link');
+        assert.equal(host.getApprovalPolicy({sessionId:id}).conversationMode,'chat');
+      }
     }
   } finally {await runtime?.close();await host?.close();await links(root);await rm(root,{recursive:true,force:true});}
 });
