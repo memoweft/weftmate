@@ -9,7 +9,6 @@ import { tmpdir } from 'node:os';
 import { join, resolve, relative, isAbsolute } from 'node:path';
 import { createPersonalAccessService } from '../helpers/personal-access-fixture.mjs';
 import { waitForCommand } from '../helpers/wait-for-command.mjs';
-import { bindConversationWork } from '../../src/personal-access/work-and-chat.mjs';
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
 import { measureUiAction } from '../helpers/ui-frame-probe.mjs';
 
@@ -59,10 +58,8 @@ try {
   auth = { ...auth, cookie, 'x-weftmate-csrf': csrf };
   const request = async (route, body) => { const res = await fetch(origin + '/personal/v1' + route, { method: body ? 'POST' : 'GET', headers: auth, body: body ? JSON.stringify(body) : undefined }); const data = await res.json(); assert.ok(res.ok, JSON.stringify(data)); return data; };
   const project = (await request('/projects', { requestId: 'ui04-register', name: '合成工作目录', rootPath: folder, permission: 'write' })).project;
-  const created = (await request('/commands', { requestId: 'ui04-create', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'synthetic' })).command;
+  const created = (await request(`/projects/${project.projectId}/sessions`, { requestId: 'ui04-create', modelProfileId: 'synthetic' })).command;
   await waitForCommand(async () => (await request('/commands/' + created.commandId)).command);
-  const ctx = host.__testContext, ownerId = Object.keys(ctx.rootState.accounts)[0];
-  await ctx.serial(() => ctx.mutate(ownerId, next => bindConversationWork({ ...next, hostId }, created.sessionId, project.projectId)));
   const chat = (await request('/commands', { requestId: 'ui04-create-chat', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'synthetic' })).command;
   await waitForCommand(async () => (await request('/commands/' + chat.commandId)).command);
   const env = { ...process.env, UI04_PROFILE: join(root, 'profile'), UI04_ORIGIN: origin, UI04_DESKTOP_TOKEN: host.libraryDesktopToken };

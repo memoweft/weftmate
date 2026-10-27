@@ -7,7 +7,6 @@ import { execFileSync } from 'node:child_process';
 import './helpers/posix-project-fixture.mjs';
 import { createPersonalAccessService } from './helpers/personal-access-fixture.mjs';
 import { waitForCommand } from './helpers/wait-for-command.mjs';
-import { bindConversationWork } from '../src/personal-access/work-and-chat.mjs';
 import { diffLines } from '../src/personal-access/workspace-files.mjs';
 
 test('workspace APIs read real Git/files, enforce the conversation grant and save against the read version', { timeout: 90000 }, async t => {
@@ -31,8 +30,8 @@ test('workspace APIs read real Git/files, enforce the conversation grant and sav
   try {
     const { origin, hostId } = await service.start(); await service.__testContext.activity.close();
     let headers: any = { origin, 'content-type': 'application/json' };
-    const request = async (route: string, body?: any, auth = true) => {
-      const response = await fetch(origin + '/personal/v1' + route, { method: body === undefined ? 'GET' : 'POST',
+    const request = async (route: string, body?: any, auth = true, method = body === undefined ? 'GET' : 'POST') => {
+      const response = await fetch(origin + '/personal/v1' + route, { method,
         headers: auth ? headers : { origin, 'content-type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
       return { status: response.status, body: await response.json() };
     };
@@ -41,14 +40,14 @@ test('workspace APIs read real Git/files, enforce the conversation grant and sav
     assert.equal(setup.status, 201); headers = { ...headers, cookie: setup.headers.get('set-cookie')!.split(';')[0], 'x-weftmate-csrf': (await setup.json()).csrfToken };
     const registered = await request('/projects', { requestId: 'register-files', name: '合成目录', rootPath: folder, permission: 'write' });
     assert.equal(registered.status, 201, JSON.stringify(registered.body));
-    const created = await request('/commands', { requestId: 'create-files', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'local' });
+    const plain = await request('/commands', { requestId: 'create-chat', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'local' });
+    assert.equal(plain.status, 202, JSON.stringify(plain.body));
+    await waitForCommand(async () => (await request('/commands/' + plain.body.command.commandId)).body.command);
+    assert.equal((await request(`/workspaces/${plain.body.command.sessionId}/review/status`)).body.error.code, 'PROJECT_NOT_SELECTED');
+    const created = await request(`/projects/${registered.body.project.projectId}/sessions`, { requestId: 'create-files', modelProfileId: 'local' });
     assert.equal(created.status, 202, JSON.stringify(created.body));
     await waitForCommand(async () => (await request('/commands/' + created.body.command.commandId)).body.command);
     const sid = created.body.command.sessionId, base = `/workspaces/${sid}`;
-    assert.equal((await request(base + '/review/status')).body.error.code, 'PROJECT_NOT_SELECTED');
-    const ctx = service.__testContext, accountOwner = Object.keys(ctx.rootState.accounts)[0];
-    // Bind with the same production operation used when a user chooses a folder.
-    await ctx.serial(() => ctx.mutate(accountOwner, (next: any) => bindConversationWork({ ...next, hostId }, sid, registered.body.project.projectId)));
     const status = await request(base + '/review/status'); assert.equal(status.status, 200, JSON.stringify(status.body));
     const alpha = status.body.files.find((file: any) => file.path === 'alpha.txt');
     assert.deepEqual([alpha.status, alpha.additions, alpha.deletions], [' M', 2, 1]);
@@ -91,17 +90,18 @@ test('workspace APIs read real Git/files, enforce the conversation grant and sav
       assert.equal((await request(base + '/files/list', { path: 'escape' })).body.error.code, 'WORKSPACE_UNSAFE_PATH');
       assert.equal((await request(base + '/review/status', undefined, false)).status, 401);
       assert.equal((await request('/workspaces/session-other/review/status')).status, 404);
-      await ctx.serial(() => ctx.mutate(accountOwner, (next: any) => { next.projects[registered.body.project.projectId].permission = 'read-only'; }));
+      const readOnly = await request(`/projects/${registered.body.project.projectId}`, { expectedRevision: registered.body.project.revision, permission: 'read-only' }, true, 'PATCH');
+      assert.equal(readOnly.status, 200, JSON.stringify(readOnly.body));
       assert.equal((await request(base + '/files/save', { path: 'alpha.txt', text: 'forbidden', version: currentVersion })).body.error.code, 'WORKSPACE_READ_ONLY');
       await rm(join(folder, 'escape')); // Remove our junction before deleting the fixture tree.
     });
     const nestedProject = (await request('/projects', { requestId: 'register-nested', name: '合成子目录', rootPath: join(folder, 'nested'), permission: 'write' })).body.project;
-    await ctx.serial(() => ctx.mutate(accountOwner, (next: any) => bindConversationWork({ ...next, hostId }, sid, nestedProject.projectId)));
+    assert.equal((await request(`/sessions/${sid}/metadata`, { projectId: nestedProject.projectId }, true, 'PATCH')).status, 200);
     await writeFile(join(folder, 'nested', 'code.js'), 'const answer = 2;\n');
     const scoped = await request(base + '/review/status');
     assert.deepEqual(scoped.body.files.map((row: any) => row.path), ['code.js'], 'Git repository ancestor never exposes sibling changes');
     assert.equal((await request(base + '/review/diff', { path: 'code.js' })).body.lines.filter((row: any) => row.type === 'add')[0].text, 'const answer = 2;');
-    await ctx.serial(() => ctx.mutate(accountOwner, (next: any) => bindConversationWork({ ...next, hostId }, sid, registered.body.project.projectId)));
+    assert.equal((await request(`/sessions/${sid}/metadata`, { projectId: registered.body.project.projectId }, true, 'PATCH')).status, 200);
     git('add', '.'); git('commit', '-qm', 'clean'); assert.deepEqual((await request(base + '/review/status')).body.files, []);
     await rm(join(folder, '.git'), { recursive: true }); assert.equal((await request(base + '/review/status')).body.error.code, 'WORKSPACE_NOT_GIT');
     git('init', '-q'); assert.ok((await request(base + '/review/status')).body.files.length > 0, 'unborn repository');
