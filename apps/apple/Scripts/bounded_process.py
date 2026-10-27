@@ -2,7 +2,6 @@
 import os
 import signal
 import subprocess
-import time
 
 
 def run_bounded(command, *, timeout=1200, check=False, **kwargs):
@@ -24,7 +23,12 @@ def run_bounded(command, *, timeout=1200, check=False, **kwargs):
                 except ProcessLookupError:
                     break
                 if sig == signal.SIGTERM:
-                    time.sleep(0.2)
+                    # Reap the group leader before escalating. Darwin reports
+                    # EPERM for a process group containing only its zombie.
+                    try:
+                        process.wait(timeout=0.2)
+                    except subprocess.TimeoutExpired:
+                        pass
         elif process.poll() is None:
             process.kill()
         process.wait()
