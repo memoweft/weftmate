@@ -53,30 +53,6 @@ test('SEC-1 the first HTTP approval read waits for the in-flight review registra
 });
 const code = (expected: string) => (error: any) => error.code === expected
 
-test('MODE-1 a real approval receipt moves this same conversation to work and requires a project even for legacy clients', async () => {
-  const f = await fixture();
-  try {
-    const directory = join(f.root, 'synthetic-work'); mkdirSync(directory);
-    const added = await f.request('projects', { requestId: 'mode-project', name: '合成工作', rootPath: realpathSync(directory), permission: 'write' });
-    assert.equal(added.status, 201, JSON.stringify(added.body));
-    const projectId = added.body.project.projectId;
-    const before = JSON.stringify(f.source.payload);
-    const row = await f.register({ reason: '[weftmate:work-switch] 这件事需要在电脑上做。要切换到工作吗？' });
-    assert.equal(row.intent, 'work-switch'); assert.deepEqual(row.riskCategories, []);
-    const path = `${f.approvalsPath}/${f.input.approvalId}`;
-    assert.equal((await f.request(path, { requestId: 'legacy-mode-answer', outcome: 'allowed-once' })).status, 409);
-    const answer = { requestId: 'mode-answer', outcome: 'allowed-once', workProjectId: projectId };
-    assert.equal((await f.request(path, answer)).status, 200);
-    assert.equal((await f.request(path, answer)).status, 200);
-    assert.equal(f.service.getApprovalPolicy({ sessionId: f.input.sessionId }).conversationMode, 'work');
-    assert.equal(f.service.getApprovalPolicy({ sessionId: f.input.sessionId }).project.projectId, projectId);
-    const session = (await f.request('sessions')).body.sessions.find((s: any) => s.sessionId === f.input.sessionId);
-    assert.equal(session.mode, 'work'); assert.equal(session.workHostId, f.hostId); assert.equal(session.projectId, projectId);
-    assert.equal(JSON.stringify(f.source.payload), before);
-    await f.resolve('allowed-once');
-    assert.equal((await f.authorize({ argumentsHash: hash('resolved-project-arguments') })).state, 'running');
-  } finally { await f.close(); }
-});
 
 async function fixture({ useReplyEvidence = true, clockFn = Date.now, newExecutionOwner = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'personal-tool-approvals-'))

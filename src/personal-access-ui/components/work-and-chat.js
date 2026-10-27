@@ -98,10 +98,10 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     card.append(choices);
     const actions = node('div', 'work-switch-actions'), status = node('p', 'form-error'); status.setAttribute('role', 'status'); status.hidden = true;
     const later = node('button', 'button secondary', '先不用'); later.type = 'button'; later.disabled = locked;
-    later.onclick = () => core.submitApproval(context, row, 'rejected');
+    later.onclick = () => core.submitApproval(core.approvalContext(), row, 'rejected');
     const start = node('button', 'button primary', '切换到工作'); start.type = 'button'; start.disabled = locked || !online || !selected;
     start.onclick = async () => { start.disabled = later.disabled = true;
-      try { await core.switchConversationWork(context, row, selected); } catch (cause) { status.textContent = core.failureMessage(cause); status.hidden = false; start.disabled = later.disabled = false; } };
+      try { await core.switchConversationWork(context, row, selected); } catch (cause) { status.textContent = core.failureMessage(cause); status.hidden = false; ui.toast(status.textContent); start.disabled = later.disabled = false; } };
     actions.append(later, start);
     if (!online && core.offlineWorkReady?.()) { start.hidden=true;const queue=node('button','button primary','交给电脑，上线后做');queue.type='button';
       queue.onclick=()=>core.openOfflineWorkMode(core.conversationTasks.entries.get(row.taskId)?.task?.sourceText || ui.readMessageDraft());actions.append(queue); }

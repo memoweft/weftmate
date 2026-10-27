@@ -1,16 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import './helpers/posix-project-fixture.mjs';
 
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 const {createPersonalAccessService}=await import('../src/personal-access/index.mjs');
-const {bindConversationWork}=await import('../src/personal-access/work-and-chat.mjs');
-const {validateStore}=await import('../src/personal-access/store.mjs');
 
-test('MODE-1 converted task accepts steer, supplement and stopped-task resume without rewriting its source',async t=>{
+test('MODE-1 new work task accepts steer, supplement and stopped-task resume without rewriting its source',async t=>{
   for(const action of ['steer','supplement','resume'])await t.test(action,async()=>{
     const root=mkdtempSync(join(tmpdir(),'mode1-controls-'));
     const sessions=new Set<string>();let events:any[]=[],sends:any[]=[];
@@ -37,18 +35,13 @@ test('MODE-1 converted task accepts steer, supplement and stopped-task resume wi
       assert.equal(setup.status,201);auth={cookie:setup.headers.get('set-cookie')!.split(';')[0],'x-weftmate-csrf':(await setup.json()).csrfToken};
       const folder=join(root,'SyntheticProject');mkdirSync(folder);
       const project=await request('/projects',{requestId:'register-project',name:'合成工作',rootPath:folder,permission:'write'});assert.equal(project.status,201,JSON.stringify(project.body));
-      const created=await request('/commands',{requestId:'create-session',kind:'session.create',targetDeviceId:started.hostId,modelProfileId:'local'});
+      const created=await request(`/projects/${project.body.project.projectId}/sessions`,{requestId:'create-session',modelProfileId:'local'});
       assert.equal(created.status,202);const sessionId=created.body.command.sessionId;await settled(created.body.command.commandId);
       const source=await request('/commands',{requestId:'original-work',kind:'session.message',targetDeviceId:started.hostId,sessionId,text:'Synthetic original work'});
       assert.equal(source.status,202);const taskId=source.body.command.commandId;assert.equal((await settled(taskId)).state,'accepted_by_dsh');
-      await service.close();
       const file=join(root,'store.json'),store=JSON.parse(readFileSync(file,'utf8'));
       const account:any=Object.values(store.accounts)[0],original=structuredClone(account.commands[taskId]);
-      bindConversationWork({...account,hostId:store.hostId},sessionId,project.body.project.projectId,{at:new Date().toISOString(),commandId:taskId});
-      validateStore(store);
-      writeFileSync(file,JSON.stringify(store));
       events=[{seq:1,type:'turn.started',data:{turn:0}},{seq:2,type:'user.message',data:{text:'Synthetic original work',receiptId:'receipt-1'}}];
-      service=await createPersonalAccessService({root,port:0,backend});origin=(await service.start()).origin;
       if(action==='resume'){
         const stopped=await request(`/tasks/${taskId}/stop`,{requestId:'stop-original'});assert.equal(stopped.status,202);
         events.push({seq:3,type:'turn.ended',data:{turn:0,reason:'aborted'}});

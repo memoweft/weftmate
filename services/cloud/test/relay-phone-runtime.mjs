@@ -12,7 +12,7 @@ export function scenarioUserText(messages) {
 }
 
 export async function phoneRuntime(root, logs, options = {}) {
-  const project = join(root, 'project'); await mkdir(project);
+  const project = join(root, 'project'); await mkdir(project, { recursive: true });
   const input = join(project, 'input.txt'), output = join(project, 'result.txt');
   const content = 'CI_R1_SYNTHETIC_FILE_CONTENT\n'; await writeFile(input, content);
   const requests = [];
@@ -66,7 +66,7 @@ export async function phoneRuntime(root, logs, options = {}) {
     });
   });
   await new Promise(r => model.listen(0, '127.0.0.1', r));
-  const home = join(root, 'dsh-home'); await mkdir(home);
+  const home = join(root, 'dsh-home'); await mkdir(home, { recursive: true });
   const patch = join(home, 'model.yml');
   await writeFile(patch, `- id: llm-pi-ai\n  config:\n    providers:\n      relay-fixture:\n        api: openai-completions\n        apiKeyEnv: FIXTURE_API_KEY\n        baseURL: http://127.0.0.1:${model.address().port}/v1\n        models:\n          - id: synthetic\n            contextWindow: 32768\n            maxTokens: 4096\n- id: credentials\n  disabled: true\n- insert:\n    - id: weftmate-safe-credentials\n      name: ./plugins/weftmate-credentials.mjs\n    - id: weftmate-personal-model-idle\n      name: ./plugins/weftmate-personal-model-idle.mjs\n- id: api-gateway\n  disabled: true\n- insert:\n    - id: weftmate-personal-api-gateway\n      name: ./plugins/weftmate-personal-api-proxy.mjs\n    - id: weftmate-personal-reply-evidence\n      name: ./plugins/weftmate-personal-reply-evidence.mjs\n`);
   if (options.baseUrl || options.modelId) {
@@ -110,6 +110,7 @@ export async function phoneRuntime(root, logs, options = {}) {
     getRuntimeId: () => runtime.currentPersonalRuntimeId(),
     ...(options.nativeTaskStop ? { taskStop: input => runtime.stopPersonalTask(input) } : {}),
     sessionProfileId: id => bindings.get(id), sessionProfileIds: () => Object.fromEntries(bindings),
+    ownerForSession: id => host?.ownerForSession(id)?.ownerId ?? null,
     replyEvidence: input => runtime.readPersonalReplyEvidence(input), sessionWorkspaceRoot: join(root, 'workspaces'),
     inferenceVerified: () => true,
   });

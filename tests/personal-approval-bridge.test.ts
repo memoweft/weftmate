@@ -91,9 +91,9 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   ctx.on('tools/execute', (exec: any, next: any) => plugin.trackPersonalExecution(bridge, exec, next, null, approvals))
   ctx.on('tools/pre-execute', (exec: any, next: any) => plugin.personalToolAvailability(ctx.get('tools'), exec) ??
     (stage === 'gate' && exec.name === toolName ? { kind: 'ask', reason: 'Allow exactly this fixture action' } : next()))
-  if(workPolicy){const declinedWork=new WeakMap();ctx.on('tools/pre-execute',async(exec:any,next:any)=>{
+  if(workPolicy){ctx.on('tools/pre-execute',async(exec:any,next:any)=>{
     const decision=await next();if(decision.kind==='deny')return decision;
-    const result=await plugin.requestPersonalWorkMode(ctx,exec,{policy:workPolicy,policyFor:async()=>workPolicy,approvals,declinedWork});return result.decision??decision;
+    const result=await plugin.requestPersonalWorkMode(ctx,exec,{policy:workPolicy,proposeWork:async(call:any)=>bridge.request({...plugin.personalExecutionIdentity(call),action:'register_approval',approvalId:randomUUID(),toolName:call.name,reason:'[weftmate:work-switch]'})});return result.decision??decision;
   });}
   ctx.get('tools').register(tools.defineTool({ name: toolName, description: 'Isolated approval fixture', parameters: { command: { type: 'string' } },
     output: { schema: { type: 'json' }, render: (_args: any, value: any) => [{ type: 'text', text: JSON.stringify(value) }] },
@@ -117,7 +117,7 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
       await ctx.fiber.dispose(); rmSync(root, { recursive: true, force: true }) } }
 }
 
-test('MODE-1 a native run_code nested call pauses before any effect even in allow-all, then continues after choosing work',async()=>{
+test('MODE-1 a native run_code nested computer call ends with a proposal and no effects even in allow-all',async()=>{
   const policy:any={mode:'allow-all',allowedCategories:[],conversationMode:'chat'};
   const f=await nativeFixture({stage:'automatic',initialStatus:'pending',toolsMode:'both',workPolicy:policy});
   try{
@@ -125,9 +125,7 @@ test('MODE-1 a native run_code nested call pauses before any effect even in allo
     const executing=f.ctx.get('tools').execute({name:'run_code',arguments:{code:"return await tools.fixture_action({command:'synthetic action'});",description:'合成嵌套工作'},agent:f.agent,callId:'mode-code',signal:f.controller.signal});
     await Promise.race([until(()=>f.frames.some(frame=>frame.action==='register_approval')),executing.then((result:any)=>{if(result.isError)throw Error(JSON.stringify(result.content));})]);
     const card=f.frames.find(frame=>frame.action==='register_approval');assert.match(card.reason,/work-switch/);assert.equal(card.toolName,'fixture_action');assert.equal(card.rootCallId,'mode-code');assert.equal(f.effects,0);
-    policy.conversationMode='work';policy.project={rootPath:f.root,name:'合成工作',permission:'write'};
-    f.states.set(card.approvalId,{approvalId:card.approvalId,status:'answered',decisionOutcome:'allowed-once'});
-    assert.equal((await executing).isError,false);assert.equal(f.effects,1);assert.equal(f.frames.filter(frame=>frame.action==='register_approval').length,1);
+    assert.equal((await executing).isError,true);assert.equal(f.effects,0);assert.equal(f.frames.filter(frame=>frame.action==='register_approval').length,1);
   }finally{await f.close();}
 });
 
@@ -140,9 +138,7 @@ test('MODE-1 chat risk review does not read a computer script before the user ch
     f.session.append('tool/call',{turn:1,step:2,callId:'mode-script',name:'pwsh',arguments:JSON.stringify({command:`pwsh -File '${file}'`})});
     const executing=f.ctx.get('tools').execute({name:'pwsh',arguments:{command:`pwsh -File '${file}'`},agent:f.agent,callId:'mode-script',signal:f.controller.signal});
     await until(()=>f.frames.some(frame=>frame.action==='register_approval'));assert.equal(scriptReads,0);assert.equal(f.effects,0);
-    policy.conversationMode='work';policy.project={rootPath:f.root,name:'合成工作',permission:'write'};const card=f.frames.find(frame=>frame.action==='register_approval');
-    f.states.set(card.approvalId,{approvalId:card.approvalId,status:'answered',decisionOutcome:'allowed-once'});
-    assert.equal((await executing).isError,false);assert.ok(scriptReads>0);assert.equal(f.effects,1);
+    assert.equal((await executing).isError,true);assert.equal(scriptReads,0);assert.equal(f.effects,0);
   }finally{fs.readFileSync=read;syncBuiltinESMExports();await f.close();}
 });
 

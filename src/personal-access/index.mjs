@@ -302,6 +302,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get androidPackageEntry() { return androidPackageEntry; },
     get androidPackagePath() { return androidPackagePath; },
     get answerToolApproval() { return answerToolApproval; },
+    get continueWorkProposal() { return continueWorkProposal; },
     get answerUserQuestion() { return answerUserQuestion; },
     get approvalLivenessChecks() { return approvalLivenessChecks; },
     get artifactStore() { return artifactStore; },
@@ -458,7 +459,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const approvals = createApprovalOperations(context);
   const {
     requireToolRuntime, personalExecutionSource, approvalMatches, approvalUnavailableReason,
-    liveToolApprovalSource, refreshToolApprovals, answerToolApproval,
+    liveToolApprovalSource, refreshToolApprovals, answerToolApproval, continueWorkProposal,
   } = approvals;
   const tasks = createTaskOperations(context);
   const {
@@ -955,6 +956,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
         for (const command of Object.values(account.commands)) {
           if (command.state === 'pending') schedule(ownerId, command.commandId);
+          if (command.kind === 'session.create' && command.state === 'accepted_by_dsh') {
+            void continueWorkProposal(ownerId, command.sessionId).catch(() => {});
+          }
           if (command.taskControl?.state === 'stop_requested') {
             driveTaskStop(ownerId, command.commandId).catch(() => {});
           }

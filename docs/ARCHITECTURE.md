@@ -71,7 +71,7 @@ flowchart TD
 个人宿主组合使用产品自己的预设及插件；普通命令、文件、搜索、浏览器、上下文压缩、子任务、调度与审批优先沿 DSH 原生能力（D2、D87）。WeftMate 增加账户、设备、项目、模式、记忆和产品呈现，不另造一套通用执行器。
 
 - [weftmate-personal-desktop.mjs](../src/plugins/weftmate-personal-desktop.mjs) 把工具生命周期接到账户与项目策略；[personal-work-mode.mjs](../src/plugins/personal-work-mode.mjs) 判断对话能否执行该工具；[personal-approval-policy.mjs](../src/plugins/personal-approval-policy.mjs) 处理原风险与审批规则。
-- [work-and-chat.mjs](../src/personal-access/work-and-chat.mjs) 保存模式与项目绑定。D92 只允许工作操作电脑；切换卡片确认工作范围，不能代替具体工具批准。
+- [work-and-chat.mjs](../src/personal-access/work-and-chat.mjs) 投影模式与项目绑定。D92 只允许工作操作电脑；对话里的电脑调用在进入原生工具事件前转为提议并结束回合，输入框恢复发送。提议沿原审批查询接口保存，但不等待原生工具审批。确认后由 `approvals.mjs` 持久创建独立工作，在所选电脑和文件夹提交原话一次；原对话仍是对话。答复与后续查询中的 `workSessionId`、`workCreateCommandId`、`workCommandId` 分别用于打开新工作、核对创建、核对首条消息。先不用只关闭提议，工作里的具体工具权限与审批照旧。
 - 模型配置和凭据由主进程管理；运行时通过专用 IPC 获取所需秘密。模型服务与按会话选模见 [model-services.mjs](../src/personal-access/model-services.mjs)、[account-models.mjs](../src/personal-access/account-models.mjs) 与 CLIENT_API 第 3.10 节。
 
 ### 桌面嵌入浏览器
