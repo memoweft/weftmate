@@ -103,7 +103,6 @@ try {
   });
   await page.keyboard.press('Control+n');
   await page.evaluate(() => releaseOldFiles());
-  await panel.locator('.files-resource-group summary').filter({hasText:/^成果 ·/}).click();
   await panel.getByText('这段对话还没有成果。',{exact:true}).waitFor();
   assert.equal(await page.getByText('旧对话迟到文件',{exact:true}).count(),0);
   await page.evaluate(() => restoreFiles());

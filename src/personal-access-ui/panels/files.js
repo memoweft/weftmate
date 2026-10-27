@@ -118,7 +118,7 @@ WeftPanels.register('files', {
         if (!active(token) || seq !== resourceSeq) return;
         resources.replaceChildren();
         for (const [name, rows] of [['成果', data.outputs], ['来源', data.sources]]) {
-          const section = node('details', 'files-resource-group'); section.append(node('summary', '', `${name} · ${rows?.length || 0}`));
+          const section = node('details', 'files-resource-group'); section.open = true; section.append(node('summary', '', `${name} · ${rows?.length || 0}`));
           for (const item of rows || []) section.append(button(item.name, () => void openResource(item), 'files-entry'));
           if (!rows?.length) section.append(node('p', 'muted', `这段对话还没有${name}。`)); resources.append(section);
         }

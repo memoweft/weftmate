@@ -116,7 +116,7 @@ test('files lazy navigation, real code preview, protected draft, conflict recove
   await page.evaluate(() => { (globalThis as any).failSave = 'WORKSPACE_READ_FAILED'; });
   await page.getByRole('button', { name: '保存', exact: true }).click(); await page.getByText('暂时无法读取或保存，请重试。', { exact: true }).waitFor();
   assert.equal(await page.getByRole('textbox', { name: '文件文本', exact: true }).inputValue(), 'retained on failure');
-  await page.getByText('成果 · 1', { exact: true }).click(); await page.getByRole('button', { name: '合成成果', exact: true }).click();
+  await page.getByRole('button', { name: '合成成果', exact: true }).click();
   assert.equal(await page.locator('.files-resource-preview').innerText(), '合成成果');
   await page.getByRole('button', { name: 'code.js', exact: true }).click();
   assert.equal(await page.getByRole('textbox', { name: '文件文本', exact: true }).inputValue(), 'retained on failure');
@@ -197,4 +197,40 @@ test('work drafts without an execution session do not send logical IDs to worksp
   await page.evaluate(() => (globalThis as any).mount('files'));
   assert.equal(await page.evaluate(() => (globalThis as any).calls.length), 0);
   await page.getByText('先在这个工作目录开始一段对话，再查看文件。', { exact: true }).waitFor();
+}));
+
+test('applied change review reads the recorded tool result even when live Git review is registered', async () => surface(async page => {
+  await page.evaluate(() => { (globalThis as any).WeftUiComponents = { factories: {} }; });
+  await page.addScriptTag({ path: fileURLToPath(new URL('../src/personal-access-ui/components/resources.js', import.meta.url)) });
+  await page.evaluate(async () => {
+    const g: any = globalThis; g.liveGitOpens = 0; g.recordedReads = [];
+    g.WeftPanels.entries = [{ kind: 'review' }]; g.WeftPanels.open = () => { g.liveGitOpens++; };
+    g.WeftDesktop = { openPreview() { const content = document.createElement('section'); document.querySelector('main')!.append(content); return { content }; } };
+    const core = { conversationTaskContext: () => ({ sessionId: 'current-session' }), conversationTaskCurrent: () => true,
+      readTimelineDetail: async (sid: string, seq: number) => { g.recordedReads.push([sid, seq]); return { fileDiffs: [{ path: 'report.md', oldText: 'recorded before', newText: 'recorded after' }] }; } };
+    const ui: any = { element: (tag: string, cls = '', text = '') => { const el = document.createElement(tag); el.className = cls; el.textContent = text; return el; } };
+    Object.assign(ui, g.WeftUiComponents.factories.resources(core, ui));
+    await ui.openFileChange({ path: 'report.md', steps: [{ sessionId: 'recorded-session', detailRef: { seq: 9 } }] });
+  });
+  assert.equal(await page.evaluate(() => (globalThis as any).liveGitOpens), 0, 'a captured applied change must not be replaced by the current Git tree');
+  assert.deepEqual(await page.evaluate(() => (globalThis as any).recordedReads), [['recorded-session', 9]]);
+  await page.getByRole('heading', { name: '改动前', exact: true }).waitFor();
+  await page.getByRole('heading', { name: '改动后', exact: true }).waitFor();
+  assert.equal(await page.getByText('recorded before', { exact: true }).isVisible(), true);
+  assert.equal(await page.getByText('recorded after', { exact: true }).isVisible(), true);
+}));
+
+test('conversation outputs and sources remain directly discoverable when the files panel opens', async () => surface(async page => {
+  await page.evaluate(() => {
+    const g: any = globalThis; g.ctx = { ...g.ctx, mode: 'chat', projectId: null };
+    g.WeftPanels.services.resources = async () => ({ outputs: [{ name: 'existing-report.md' }], sources: [{ name: 'existing source' }] });
+    g.mount('files');
+  });
+  await page.getByText('成果 · 1', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'existing-report.md', exact: true }).isVisible(), true);
+  assert.equal(await page.getByRole('button', { name: 'existing source', exact: true }).isVisible(), true);
+  await page.getByText('成果 · 1', { exact: true }).click();
+  assert.equal(await page.getByRole('button', { name: 'existing-report.md', exact: true }).isVisible(), false);
+  await page.getByText('成果 · 1', { exact: true }).click();
+  assert.equal(await page.getByRole('button', { name: 'existing-report.md', exact: true }).isVisible(), true);
 }));

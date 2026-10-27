@@ -241,9 +241,8 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
     }
     async function openFileChange(file, trigger) {
         const context=core.conversationTaskContext();
-        if(globalThis.WeftPanels?.entries.some(entry=>entry.kind==='review') && globalThis.WeftWorkspacePanel) {
-            WeftPanels.open('review',trigger);return;
-        }
+        // Applied-change cards describe the recorded tool result. Its before/after
+        // content remains useful when the live Git working tree has changed.
         const key=JSON.stringify([context.sessionId,file.path,file.steps.map(step=>[step.sessionId,step.detailRef.seq])]);
         const preview=WeftDesktop.openPreview(file.path.split(/[\\/]/).at(-1),trigger,`change:${key}`,'file');
         const render=async()=>{
