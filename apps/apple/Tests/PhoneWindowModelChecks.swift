@@ -92,6 +92,7 @@ import WeftMateCore
         try require(model.currentModel != nil,"new-account-has-model-before-revocation")
         model.newThread();try await chat("绘画")
         try require(model.messages.last?.replyStatus != .complete && model.computerMemory.isEmpty,"revoked-generation-cannot-reach-model-with-old-copy")
+        try require(model.messages.contains { $0.role == "user" && $0.text == "绘画" },"revoked-attempt-retains-original")
         let final=try await report()
         try require(final["requests"] as? Int == 4 && final["streams"] as? Int == 4 && final["nonStreaming"] as? Int == 0,"only-four-explicit-chats-zero-extraction")
         model.clearLocalData();try require(model.state.threads.isEmpty && model.models.isEmpty,"clear-removes-local-originals-and-models")
