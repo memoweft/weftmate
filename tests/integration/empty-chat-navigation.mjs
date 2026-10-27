@@ -274,8 +274,8 @@ try {
   await page.getByRole('menuitemradio', { name: /合成项目/ }).click();
   await page.locator('#message-text').fill('合成工作草稿，不发送');
   assert.equal(await page.locator('#send-message').isEnabled(), true);
-  assert.equal(await toolbar.locator('#approval-picker').isVisible(), true);
-  await toolbar.locator('#approval-mode-trigger').click();
+  assert.equal(await page.locator('.composer-actions #approval-picker').isVisible(), true);
+  await page.locator('.composer-actions #approval-mode-trigger').click();
   await page.locator('#approval-mode-menu [data-mode="ask"]').click();
   await page.waitForFunction(() => emptyChatCore.state.newConversationApprovalMode === 'ask');
   await snapshot('work-choices');

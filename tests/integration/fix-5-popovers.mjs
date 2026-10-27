@@ -35,7 +35,7 @@ try {
   writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
   app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: root, env, timeout: 90000,
     args: fixture ? ['tests/integration/desktop-ui-1.cjs', candidate.origin + '/personal/v1/ui/'] : ['.', '--personal-host', '--access-port=0', `--user-data-dir=${profile}`, '--force-device-scale-factor=1'] });
-  const page = await app.firstWindow(); if (fixture) await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows()[0].show()); page.setDefaultTimeout(30000); page.on('pageerror', e => errors.push(e.message));
+  const page = await app.firstWindow(); if (fixture) await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows()[0].webContents.setBackgroundThrottling(false)); page.setDefaultTimeout(30000); page.on('pageerror', e => errors.push(e.message));
   if (!fixture) {
     await page.waitForURL(url => url.pathname.startsWith('/personal/v1/ui'));
     await page.route('**/personal/v1/**', async route => {
@@ -81,8 +81,8 @@ try {
       await check(page, page.getByRole('dialog', { name: '输出与来源' }), 'resources', size, enforce);
       await page.getByRole('dialog', { name: '输出与来源' }).getByRole('button', { name: /README/ }).click();
       await page.getByRole('button', { name: '再打开一项' }).click();
-      await check(page, page.getByRole('dialog', { name: '输出与来源' }), 'panel-menu', size, enforce);
-      await page.getByRole('button', { name: '关闭列表' }).click(); await page.getByRole('button', { name: '收起右侧面板' }).click();
+      await check(page, enforce ? page.getByRole('menu', { name: '打开面板', exact: true }) : page.getByRole('dialog', { name: '输出与来源' }), 'panel-menu', size, enforce);
+      if (enforce) await page.keyboard.press('Escape'); else await page.getByRole('button', { name: '关闭列表' }).click(); await page.getByRole('button', { name: '收起右侧面板' }).click();
       if (enforce) {
         const catalogRead = page.waitForResponse(response => response.request().method() === 'GET' && new URL(response.url()).pathname === '/personal/v1/model-services');
         await modelTrigger.click();

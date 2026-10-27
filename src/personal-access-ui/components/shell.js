@@ -402,7 +402,6 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             projectId: project?.projectId || null, workDir: workspaceFolderPath };
     }
     function mountShell() {
-        Object.assign(globalThis.WeftPanels.services, { resources: core.loadConversationResources, openResource: ui.openConversationResource });
         ui.byId('account-menu-trigger').setAttribute('aria-label', '账户菜单');
         const menu = ui.byId('account-menu');
         menu.setAttribute('aria-label', '账户选项'); menu.setAttribute('role', 'region');

@@ -5,7 +5,7 @@ import { join,resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
-process.env.WEFTMATE_MANAGED_TEMP_ROOT=resolve('.local/ui01-phone');
+process.env.WEFTMATE_MANAGED_TEMP_ROOT ??=resolve('.local/ui01-phone');
 let fixture,browser;const errors=[];
 try {
   fixture=await startTimelineCandidate({historyCount:0,interactive:true,inlineProgress:true});

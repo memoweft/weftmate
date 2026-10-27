@@ -503,7 +503,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             if (query && !core.phoneDisplayTitle(record).normalize('NFKC').toLocaleLowerCase().includes(query))
                 continue;
             matches++;
-            const row = ui.element('li');
+            const row = ui.element('li'); row.dataset.phoneId = record.id;
             const button = ui.element('button', core.state.activeChatSource === 'phone' &&
                 record.id === core.state.selectedPhoneConversationId ? 'is-current' : '');
             button.type = 'button';
@@ -523,8 +523,9 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const nextRows = [...list.children].map((row,index) => {
             const session = core.state.sessions.find(item=>item.sessionId===row.dataset.sessionId);
             const project = core.state.projects?.find(item=>item.projectId===row.dataset.projectId);
-            const key = row.dataset.sessionId ? `session:${row.dataset.sessionId}` : row.dataset.projectId ? `project:${row.dataset.projectId}` : row.dataset.groupId ? `group:${row.dataset.groupId}` : `other:${index}`;
-            const signature = JSON.stringify([core.state.ownerId,core.state.identityGeneration,row.innerHTML,session,project,project?core.projectConversations(project.projectId):null]);
+            const phone = row.dataset.phoneId ? core.phoneConversations().find(item=>item.id===row.dataset.phoneId) : null;
+            const key = row.dataset.phoneId ? `phone:${row.dataset.phoneId}` : row.dataset.sessionId ? `session:${row.dataset.sessionId}` : row.dataset.projectId ? `project:${row.dataset.projectId}` : row.dataset.groupId ? `group:${row.dataset.groupId}` : `other:${index}`;
+            const signature = JSON.stringify([core.state.ownerId,core.state.identityGeneration,row.innerHTML,session,phone,project,project?core.projectConversations(project.projectId):null]);
             const old = previousRows.get(key);
             if (old && sidebarRows.get(old)?.signature === signature) return old;
             sidebarRows.set(row,{key,signature}); return row;

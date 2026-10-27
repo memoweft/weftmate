@@ -89,7 +89,7 @@ html.weftmate-desktop:has(.assistant-active) { overflow:hidden; scrollbar-gutter
   .composer-actions { flex-wrap:nowrap; }
   .composer-actions .model-picker { max-width:38%; }
   .composer-actions .composer-spacer { display:block; }
-  .composer-actions #approval-mode-label { display:none; }
+  .composer-actions #approval-mode-label { display:block; position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
   .conversation-mode-subtitle { display:none; }
   #conversation-resources { font-size:0; min-width:var(--wm-space-32); padding:var(--wm-space-6); }
 }

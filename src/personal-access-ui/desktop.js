@@ -285,6 +285,7 @@
   }
   function init(callbacks) {
     actions = callbacks
+    Object.assign(globalThis.WeftPanels.services, { resources: callbacks.resources, openResource: callbacks.openResource })
     const panelButton = byId('workspace-panels')
     panelButton.onclick = () => preview && !preview.panel.hidden ? hidePreview() : showPanels(panelButton)
     window.addEventListener('resize', () => {
