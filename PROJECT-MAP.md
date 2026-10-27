@@ -20,7 +20,7 @@
 | 分区 | 代码入口 | 先读 |
 |---|---|---|
 | 桌面宿主：启动、窗口、托盘、执行、更新 | `src/main.mjs`、`host-mode.mjs`、`personal-desktop.mjs`、`personal-access-backend.mjs` → `src/runtime/`；DSH 进程 `dsh-web-runtime.ts`；更新 `src/personal-update/` | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
-| 界面：桌面与手机网页共用 | 页面 `src/personal-access-ui/`；共用状态与动作 `src/ui-core/`；手机网页 `apps/mobile-ui/`（`www/ui-core/` 由 `build-ui-core.mjs` 生成）；设计令牌与图标 `design/` | 直接读代码；颜色动效只从 `design/tokens/` 取 |
+| 界面：桌面与手机网页共用 | 页面 `src/personal-access-ui/`；共用状态与动作 `src/ui-core/`；手机网页 `apps/mobile-ui/`（`www/ui-core/` 由 `build-ui-core.mjs` 生成）；设计令牌与图标 `design/` | [工作区与面板](src/personal-access-ui/README.md)，然后直接读代码；颜色动效只从 `design/tokens/` 取 |
 | 记忆 | `src/plugins/weftmate-personal-memory.mjs` → `src/personal-access/memory-ingestion.mjs` → `src/personal-memory/` → MemoWeft Core；随包运行时 `scripts/memory-runtime/` | [docs/MEMORY.md](docs/MEMORY.md) |
 | 手机与同步 | 安卓 `apps/android/`（`NativeActivity` 原生入口，聊天经隐藏网页调 `WeftPhone`）；手机离线引擎 `src/ui-core/offline.js`；电脑一侧 `src/personal-offline/`、`src/personal-sync/`、`src/personal-access/history-import.mjs` | [docs/ANDROID_NATIVE.md](docs/ANDROID_NATIVE.md) |
 | 宿主接口、云与中继 | `/personal/v1`：`src/personal-access/index.mjs` 组装、`http.mjs` 分发全部路由；`src/personal-cloud/`、`personal-relay/`；云服务 `services/cloud/` | 读路由代码 |

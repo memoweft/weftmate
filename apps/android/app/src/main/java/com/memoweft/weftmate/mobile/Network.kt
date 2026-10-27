@@ -37,6 +37,7 @@ internal fun validBusinessPath(path: String): Boolean {
     if (query.isEmpty() && route.matches(Regex("/personal/v1/model-services(/(check|model-service-[0-9a-f-]{36}(/(refresh|select))?))?"))) return true
     if (route == "/personal/v1/execution-records" && query.matches(Regex("[A-Za-z0-9._~=&%+-]*"))) return true
     if (query.isEmpty() && (route.matches(Regex("/personal/v1/account/models(/(check|by-request/[A-Za-z0-9_.:-]{1,128}|[A-Za-z0-9_-]{1,128}(/(test|stop-using|transfer))?))?")) ||
+        // Folder relocation uses PATCH on the same project path; native picker proof is checked by the host.
         route.matches(Regex("/personal/v1/projects(/[A-Za-z0-9_-]{1,128}(/(sessions|revoke))?)?")) ||
         route.matches(Regex("/personal/v1/artifacts/[A-Za-z0-9_-]{1,128}")) ||
         route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/forget-preview")) ||

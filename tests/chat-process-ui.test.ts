@@ -72,7 +72,7 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
   assert.equal(await page.getByLabel('增加 3 行，删除 2 行').count(),1);
   assert.equal(await page.locator('.file-changes').evaluate(el=>el.compareDocumentPosition([...document.querySelectorAll('.message.assistant')].at(-1))&Node.DOCUMENT_POSITION_PRECEDING),2);
   await page.getByRole('button',{name:'审阅 report.md',exact:true}).click();
-  await page.getByRole('complementary',{name:'成果与来源预览'}).getByRole('heading',{name:'改动前',exact:true}).waitFor();
+  await page.getByRole('complementary',{name:'工作面板'}).getByRole('heading',{name:'改动前',exact:true}).waitFor();
   if(evidence)await page.screenshot({path:join(evidence,'review-diff.png')});
   await page.getByRole('button',{name:'收起右侧面板',exact:true}).click();
 

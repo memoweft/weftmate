@@ -161,7 +161,7 @@ async function scenario(page, surface) {
     if (decision === 'allow') {
       await page.getByRole('button', { name: '输出与来源', exact: true }).click();
       await page.getByRole('button', { name: /pwsh.*调用/ }).click();
-      const panel = page.getByRole('complementary', { name: '成果与来源预览' });
+      const panel = page.getByRole('complementary', { name: '工作面板' });
       await panel.getByText(/运行命令 Remove-Item/).click();
       await panel.getByText(/运行命令：Remove-Item/).waitFor();
       assert.equal(await panel.getByText('详情', { exact: true }).count(), 1);

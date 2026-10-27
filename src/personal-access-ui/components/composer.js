@@ -74,7 +74,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         ui.byId('thinking-badge').hidden = !thinking.supported || !thinking.enabled;
         if (value.attachmentsDisabled) closeComposerMenu();
         globalThis.WeftComposerSubtasks?.paint(ui.byId('composer-subtasks'),
-            globalThis.WeftUiCore.composerSubtasks(core.timelineEventsForContext()),
+            globalThis.WeftUiCore.composerSubtasks(core.timelineEventsForContext(), Date.now(), {includeSettled:true}),
             {scope:`${core.state.ownerId}/${core.state.identityGeneration}/${core.state.selectedSessionId}`, root:ui.byId('transcript')});
         ui.nextSuggestions?.sync();
     }

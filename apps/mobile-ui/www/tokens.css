@@ -232,6 +232,7 @@
   --wm-radius-control: 8px;
   --wm-radius-card: 12px;
   --wm-radius-panel: 16px;
+  --wm-radius-composer: 20px;
   --wm-font-size-10: 10px;
   --wm-font-size-11: 11px;
   --wm-font-size-12: 12px;
@@ -329,8 +330,12 @@
   --wm-size-search-width: 680px;
   --wm-size-search-meta: 120px;
   --wm-size-settings-content: 620px;
-  --wm-size-sidebar: 232px;
+  --wm-size-sidebar: 248px;
   --wm-size-reading: 760px;
+  --wm-size-workspace-row: 32px;
+  --wm-size-workspace-header: 48px;
+  --wm-size-workspace-menu: 208px;
+  --wm-size-workspace-panel: 380px;
   --wm-font-relative-body: 1rem;
   --wm-font-relative-heading1: 1.6rem;
   --wm-font-relative-heading2: 1.25rem;
@@ -387,6 +392,7 @@
   --mobile-control-radius: var(--wm-radius-999);
   --mobile-header-size: calc(var(--wm-space-64) + var(--wm-space-16));
   --mobile-body-offset: var(--wm-space-2);
+  --composer-surface: var(--surface);
 }
 :root[data-theme=dark] {
   --accent: #e0e3da;
