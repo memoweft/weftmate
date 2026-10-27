@@ -30,6 +30,10 @@ test('Android bridge maps core history tail, older and detail requests to native
   assert.equal(h.messages[2].method, 'shared.sessions.eventDetail')
   h.reply(2, { text: 'synthetic detail' })
   assert.equal((await (await detail).json()).text, 'synthetic detail')
+  const output = h.bridge.fetch('/personal/v1/sessions/s1/events/8/detail?outputOffset=64000');
+  assert.equal(h.messages[3].method,'host.business');
+  assert.deepEqual(h.messages[3].params,{path:'/personal/v1/sessions/s1/events/8/detail?outputOffset=64000',method:'GET'});
+  h.reply(3,{output:'tail',nextOutputOffset:null});assert.equal((await (await output).json()).output,'tail');
 })
 
 test('Android bridge forwards decisions with the same request ID and keeps credentials native', async () => {

@@ -14,9 +14,11 @@
         FORBIDDEN: '离线副本同步没有权限，请重新连接电脑。',
         INVALID_REQUEST: '离线副本同步未完成，请重新连接电脑。' })[code] || '离线副本同步未完成，请稍后重试。' };
     },
-    mount({ core, goalsCore=core, nativeCall, nativeTaskVault = false, identity: readIdentity, host, desktop = false, openConversation = () => {} }) {
+    mount({ core, goalsCore=core, nativeCall, nativeTaskVault = false, identity: readIdentity, host, desktop = false, openConversation = () => {}, onMemoryReplicaChanged = () => {} }) {
       if (desktop) return;
       let engine, scope, identity, polling = false, offline = false, selected = null, error = '', showHistory = false, taskMode=false;
+      goalsCore.offlineMemoryReplica = () => identity?.ownerId === core.state.ownerId ? engine?.view().snapshot ?? null : null;
+      let memoryReplica;
       const section = element('section', '', 'offline-chat'); section.hidden = true; section.setAttribute('aria-label', '离线对话');
       const header = element('header'), title = element('h1', '离线模式'), mode = element('p', explanation);
       const close = element('button', '返回'), fresh = element('button', '新对话'); close.type = fresh.type = 'button';
@@ -47,6 +49,8 @@
       (document.getElementById?.('chat-scroll') || document.body).append(notice);
       function paint() {
         const view = engine?.view();
+        const replica=goalsCore.offlineMemoryReplica();
+        if(replica!==memoryReplica){memoryReplica=replica;onMemoryReplicaChanged();}
         if(!view?.taskReady)taskMode=false;
         const scrollTop=messages.scrollTop||0,atBottom=messages.scrollHeight-messages.clientHeight-scrollTop<8;
         if (core.connectionView) {const kind=core.connectionView().kind;offline=kind==='host_offline'||kind==='connecting'&&offline;}
