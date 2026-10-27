@@ -1,0 +1,725 @@
+{
+  "source": "0389aba1c",
+  "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb",
+  "records": [
+    {
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "body": {
+        "command": {
+          "commandId": "cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+          "requestId": "4728f7fb-ab95-47e0-be5c-37c04a87670e",
+          "kind": "session.create",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "pending",
+          "createdAt": "2026-10-27T08:11:49.149Z",
+          "updatedAt": "2026-10-27T08:11:49.149Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/commands/cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+      "status": 200,
+      "body": {
+        "command": {
+          "commandId": "cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+          "requestId": "4728f7fb-ab95-47e0-be5c-37c04a87670e",
+          "kind": "session.create",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "pending",
+          "createdAt": "2026-10-27T08:11:49.149Z",
+          "updatedAt": "2026-10-27T08:11:49.149Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/commands/cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+      "status": 200,
+      "body": {
+        "command": {
+          "commandId": "cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+          "requestId": "4728f7fb-ab95-47e0-be5c-37c04a87670e",
+          "kind": "session.create",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "dispatching",
+          "createdAt": "2026-10-27T08:11:49.149Z",
+          "updatedAt": "2026-10-27T08:11:49.166Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/commands/cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+      "status": 200,
+      "body": {
+        "command": {
+          "commandId": "cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+          "requestId": "4728f7fb-ab95-47e0-be5c-37c04a87670e",
+          "kind": "session.create",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "dispatching",
+          "createdAt": "2026-10-27T08:11:49.149Z",
+          "updatedAt": "2026-10-27T08:11:49.166Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/commands/cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+      "status": 200,
+      "body": {
+        "command": {
+          "commandId": "cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+          "requestId": "4728f7fb-ab95-47e0-be5c-37c04a87670e",
+          "kind": "session.create",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "dispatching",
+          "createdAt": "2026-10-27T08:11:49.149Z",
+          "updatedAt": "2026-10-27T08:11:49.166Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/commands/cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+      "status": 200,
+      "body": {
+        "command": {
+          "commandId": "cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+          "requestId": "4728f7fb-ab95-47e0-be5c-37c04a87670e",
+          "kind": "session.create",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "dispatching",
+          "createdAt": "2026-10-27T08:11:49.149Z",
+          "updatedAt": "2026-10-27T08:11:49.166Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/commands/cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+      "status": 200,
+      "body": {
+        "command": {
+          "commandId": "cmd-916bb4b2-37c7-4d06-896c-bfe4400e02e7",
+          "requestId": "4728f7fb-ab95-47e0-be5c-37c04a87670e",
+          "kind": "session.create",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-27T08:11:49.149Z",
+          "updatedAt": "2026-10-27T08:11:49.331Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "body": {
+        "command": {
+          "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+          "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd",
+          "kind": "session.message",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "pending",
+          "createdAt": "2026-10-27T08:11:49.381Z",
+          "updatedAt": "2026-10-27T08:11:49.381Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb",
+          "intent": "queue",
+          "taskLabel": "创建一个文件夹叫 她"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/commands/cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+      "status": 200,
+      "body": {
+        "command": {
+          "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+          "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd",
+          "kind": "session.message",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "pending",
+          "createdAt": "2026-10-27T08:11:49.381Z",
+          "updatedAt": "2026-10-27T08:11:49.381Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb",
+          "intent": "queue",
+          "taskLabel": "创建一个文件夹叫 她"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/commands/cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+      "status": 200,
+      "body": {
+        "command": {
+          "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+          "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd",
+          "kind": "session.message",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-27T08:11:49.381Z",
+          "updatedAt": "2026-10-27T08:11:49.420Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb",
+          "intent": "queue",
+          "taskLabel": "创建一个文件夹叫 她",
+          "receiptId": "396d79e0-2956-4bca-984d-37263435b63c"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sessions/session-4c509334-0b77-4f85-b9bd-2d24534130cb/events?afterSeq=-1&limit=100",
+      "status": 200,
+      "body": {
+        "cacheAllowed": true,
+        "liveSeq": 14,
+        "liveEvents": [],
+        "events": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-27T08:11:49.414Z",
+            "data": {
+              "taskId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c",
+              "text": "创建一个文件夹叫 她",
+              "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd"
+            }
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-27T08:11:49.415Z",
+            "data": {
+              "turn": 1
+            }
+          }
+        ],
+        "nextSeq": 6,
+        "hasMore": false,
+        "nextBeforeSeq": 4,
+        "hasOlder": false,
+        "latestSeq": 6
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sessions/session-4c509334-0b77-4f85-b9bd-2d24534130cb/events?limit=100",
+      "status": 200,
+      "body": {
+        "cacheAllowed": true,
+        "liveSeq": 17,
+        "liveEvents": [],
+        "events": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-27T08:11:49.414Z",
+            "data": {
+              "taskId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c",
+              "text": "创建一个文件夹叫 她",
+              "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd"
+            }
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-27T08:11:49.415Z",
+            "data": {
+              "turn": 1
+            }
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-27T08:11:49.447Z",
+            "data": {
+              "taskId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "turn": 1,
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c",
+              "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd",
+              "turnTaskId": "turn-1"
+            }
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-27T08:11:49.447Z",
+            "data": {
+              "text": "创建一个文件夹叫 她",
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c"
+            }
+          }
+        ],
+        "nextSeq": 17,
+        "hasMore": false,
+        "nextBeforeSeq": 4,
+        "hasOlder": false,
+        "latestSeq": 17
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sessions/session-4c509334-0b77-4f85-b9bd-2d24534130cb/approvals",
+      "status": 200,
+      "body": {
+        "approvals": [],
+        "nextBefore": null,
+        "hasMore": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sessions/session-4c509334-0b77-4f85-b9bd-2d24534130cb/events?afterSeq=6&limit=100",
+      "status": 200,
+      "body": {
+        "cacheAllowed": true,
+        "liveSeq": 17,
+        "liveEvents": [],
+        "events": [
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-27T08:11:49.447Z",
+            "data": {
+              "taskId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "turn": 1,
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c",
+              "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd",
+              "turnTaskId": "turn-1"
+            }
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-27T08:11:49.447Z",
+            "data": {
+              "text": "创建一个文件夹叫 她",
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c"
+            }
+          }
+        ],
+        "nextSeq": 17,
+        "hasMore": false,
+        "nextBeforeSeq": 7,
+        "hasOlder": false,
+        "latestSeq": 17
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sessions/session-4c509334-0b77-4f85-b9bd-2d24534130cb/events?limit=100",
+      "status": 200,
+      "body": {
+        "cacheAllowed": true,
+        "liveSeq": 24,
+        "liveEvents": [],
+        "events": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-27T08:11:49.414Z",
+            "data": {
+              "taskId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c",
+              "text": "创建一个文件夹叫 她",
+              "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd"
+            }
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-27T08:11:49.415Z",
+            "data": {
+              "turn": 1
+            }
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-27T08:11:49.447Z",
+            "data": {
+              "taskId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "turn": 1,
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c",
+              "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd",
+              "turnTaskId": "turn-1"
+            }
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-27T08:11:49.447Z",
+            "data": {
+              "text": "创建一个文件夹叫 她",
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c"
+            }
+          },
+          {
+            "seq": 24,
+            "type": "step.started",
+            "at": "2026-10-27T08:11:49.567Z",
+            "data": {
+              "taskId": "turn-1",
+              "stepId": "synthetic-ac880de8-4afe-4cf8-9614-be41df0c7784",
+              "callId": "synthetic-ac880de8-4afe-4cf8-9614-be41df0c7784",
+              "toolName": "load_tools",
+              "summary": "准备可用工具",
+              "groupHint": "load_tools",
+              "detailRef": {
+                "seq": 24
+              },
+              "turn": 1,
+              "state": "running"
+            }
+          }
+        ],
+        "nextSeq": 24,
+        "hasMore": false,
+        "nextBeforeSeq": 4,
+        "hasOlder": false,
+        "latestSeq": 24
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sessions/session-4c509334-0b77-4f85-b9bd-2d24534130cb/approvals",
+      "status": 200,
+      "body": {
+        "approvals": [],
+        "nextBefore": null,
+        "hasMore": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sessions/session-4c509334-0b77-4f85-b9bd-2d24534130cb/events?afterSeq=17&limit=100",
+      "status": 200,
+      "body": {
+        "cacheAllowed": true,
+        "liveSeq": 39,
+        "liveEvents": [],
+        "events": [
+          {
+            "seq": 24,
+            "type": "step.started",
+            "at": "2026-10-27T08:11:49.567Z",
+            "data": {
+              "taskId": "turn-1",
+              "stepId": "synthetic-ac880de8-4afe-4cf8-9614-be41df0c7784",
+              "callId": "synthetic-ac880de8-4afe-4cf8-9614-be41df0c7784",
+              "toolName": "load_tools",
+              "summary": "准备可用工具",
+              "groupHint": "load_tools",
+              "detailRef": {
+                "seq": 24
+              },
+              "turn": 1,
+              "state": "running"
+            }
+          },
+          {
+            "seq": 26,
+            "type": "step.completed",
+            "at": "2026-10-27T08:11:49.593Z",
+            "data": {
+              "taskId": "turn-1",
+              "stepId": "synthetic-ac880de8-4afe-4cf8-9614-be41df0c7784",
+              "callId": "synthetic-ac880de8-4afe-4cf8-9614-be41df0c7784",
+              "toolName": "load_tools",
+              "summary": "准备可用工具",
+              "groupHint": "load_tools",
+              "detailRef": {
+                "seq": 26
+              },
+              "turn": 1,
+              "state": "completed"
+            }
+          },
+          {
+            "seq": 38,
+            "type": "step.started",
+            "at": "2026-10-27T08:11:49.616Z",
+            "data": {
+              "taskId": "turn-1",
+              "stepId": "synthetic-d35cecc6-1b1c-46ae-84eb-f9714e5ffec2",
+              "callId": "synthetic-d35cecc6-1b1c-46ae-84eb-f9714e5ffec2",
+              "toolName": "pwsh",
+              "summary": "运行命令 New-Item -ItemType Directory -Path 她 | Select-Object FullName",
+              "groupHint": "pwsh",
+              "detailRef": {
+                "seq": 38
+              },
+              "turn": 1,
+              "state": "running"
+            }
+          },
+          {
+            "seq": 39,
+            "type": "approval.requested",
+            "at": "2026-10-27T08:11:49.619Z",
+            "data": {
+              "taskId": "turn-1",
+              "approvalId": "2b311158-d26b-4737-a29a-60ec751de51c",
+              "stepId": "synthetic-d35cecc6-1b1c-46ae-84eb-f9714e5ffec2",
+              "toolName": "pwsh",
+              "turn": 1,
+              "summary": "[weftmate:work-switch] 这件事需要在电脑上做。要切换到工作吗？",
+              "detailRef": {
+                "seq": 39
+              }
+            }
+          }
+        ],
+        "nextSeq": 39,
+        "hasMore": false,
+        "nextBeforeSeq": 24,
+        "hasOlder": false,
+        "latestSeq": 39
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sessions/session-4c509334-0b77-4f85-b9bd-2d24534130cb/events?limit=100",
+      "status": 200,
+      "body": {
+        "cacheAllowed": true,
+        "liveSeq": 39,
+        "liveEvents": [],
+        "events": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-27T08:11:49.414Z",
+            "data": {
+              "taskId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c",
+              "text": "创建一个文件夹叫 她",
+              "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd"
+            }
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-27T08:11:49.415Z",
+            "data": {
+              "turn": 1
+            }
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-27T08:11:49.447Z",
+            "data": {
+              "taskId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "turn": 1,
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c",
+              "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+              "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd",
+              "turnTaskId": "turn-1"
+            }
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-27T08:11:49.447Z",
+            "data": {
+              "text": "创建一个文件夹叫 她",
+              "receiptId": "396d79e0-2956-4bca-984d-37263435b63c"
+            }
+          },
+          {
+            "seq": 24,
+            "type": "step.started",
+            "at": "2026-10-27T08:11:49.567Z",
+            "data": {
+              "taskId": "turn-1",
+              "stepId": "synthetic-ac880de8-4afe-4cf8-9614-be41df0c7784",
+              "callId": "synthetic-ac880de8-4afe-4cf8-9614-be41df0c7784",
+              "toolName": "load_tools",
+              "summary": "准备可用工具",
+              "groupHint": "load_tools",
+              "detailRef": {
+                "seq": 24
+              },
+              "turn": 1,
+              "state": "running"
+            }
+          },
+          {
+            "seq": 26,
+            "type": "step.completed",
+            "at": "2026-10-27T08:11:49.593Z",
+            "data": {
+              "taskId": "turn-1",
+              "stepId": "synthetic-ac880de8-4afe-4cf8-9614-be41df0c7784",
+              "callId": "synthetic-ac880de8-4afe-4cf8-9614-be41df0c7784",
+              "toolName": "load_tools",
+              "summary": "准备可用工具",
+              "groupHint": "load_tools",
+              "detailRef": {
+                "seq": 26
+              },
+              "turn": 1,
+              "state": "completed"
+            }
+          },
+          {
+            "seq": 38,
+            "type": "step.started",
+            "at": "2026-10-27T08:11:49.616Z",
+            "data": {
+              "taskId": "turn-1",
+              "stepId": "synthetic-d35cecc6-1b1c-46ae-84eb-f9714e5ffec2",
+              "callId": "synthetic-d35cecc6-1b1c-46ae-84eb-f9714e5ffec2",
+              "toolName": "pwsh",
+              "summary": "运行命令 New-Item -ItemType Directory -Path 她 | Select-Object FullName",
+              "groupHint": "pwsh",
+              "detailRef": {
+                "seq": 38
+              },
+              "turn": 1,
+              "state": "running"
+            }
+          },
+          {
+            "seq": 39,
+            "type": "approval.requested",
+            "at": "2026-10-27T08:11:49.619Z",
+            "data": {
+              "taskId": "turn-1",
+              "approvalId": "2b311158-d26b-4737-a29a-60ec751de51c",
+              "stepId": "synthetic-d35cecc6-1b1c-46ae-84eb-f9714e5ffec2",
+              "toolName": "pwsh",
+              "turn": 1,
+              "summary": "[weftmate:work-switch] 这件事需要在电脑上做。要切换到工作吗？",
+              "detailRef": {
+                "seq": 39
+              }
+            }
+          }
+        ],
+        "nextSeq": 39,
+        "hasMore": false,
+        "nextBeforeSeq": 4,
+        "hasOlder": false,
+        "latestSeq": 39
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sessions/session-4c509334-0b77-4f85-b9bd-2d24534130cb/approvals",
+      "status": 200,
+      "body": {
+        "approvals": [
+          {
+            "approvalId": "2b311158-d26b-4737-a29a-60ec751de51c",
+            "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb",
+            "taskId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+            "sourceCommandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+            "sourceReceiptId": "396d79e0-2956-4bca-984d-37263435b63c",
+            "turn": 1,
+            "callId": "synthetic-d35cecc6-1b1c-46ae-84eb-f9714e5ffec2",
+            "rootCallId": "synthetic-d35cecc6-1b1c-46ae-84eb-f9714e5ffec2",
+            "toolName": "pwsh",
+            "reason": "[weftmate:work-switch] 这件事需要在电脑上做。要切换到工作吗？",
+            "createdAt": "2026-10-27T08:11:49.638Z",
+            "status": "pending",
+            "operationCategories": [],
+            "canAlwaysAllow": false,
+            "intent": "work-switch",
+            "riskCategories": []
+          }
+        ],
+        "nextBefore": null,
+        "hasMore": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/tasks/cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+      "status": 200,
+      "body": {
+        "taskId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+        "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb",
+        "sourceText": "创建一个文件夹叫 她",
+        "source": {
+          "commandId": "cmd-73f24125-b5b3-48ca-a228-10d28cfff248",
+          "requestId": "0fd58d55-6028-4a27-bdf0-bb3ef18f74cd",
+          "kind": "session.message",
+          "targetDeviceId": "host-cc455344-cee4-48bb-82aa-df1fa7f9c0d6",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-27T08:11:49.381Z",
+          "updatedAt": "2026-10-27T08:11:49.420Z",
+          "sessionId": "session-4c509334-0b77-4f85-b9bd-2d24534130cb",
+          "intent": "queue",
+          "taskLabel": "创建一个文件夹叫 她",
+          "receiptId": "396d79e0-2956-4bca-984d-37263435b63c"
+        },
+        "artifacts": [],
+        "steps": [],
+        "executionSteps": [],
+        "sources": [],
+        "replyEvidence": {
+          "status": "unconfirmed",
+          "turn": null,
+          "assistantChunks": 0,
+          "textChunks": 0,
+          "reasoningChunks": 0,
+          "assistantMessages": 0,
+          "toolSaveObserved": false
+        },
+        "supplements": [],
+        "resumes": [],
+        "control": {
+          "state": "active",
+          "updatedAt": "2026-10-27T08:11:49.420Z",
+          "backgroundJobs": {
+            "active": 0,
+            "unconfirmed": 0
+          },
+          "canSupplement": true,
+          "canStop": true,
+          "canResume": false
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/sessions/session-4c509334-0b77-4f85-b9bd-2d24534130cb/events?afterSeq=39&limit=100",
+      "status": 200,
+      "body": {
+        "cacheAllowed": true,
+        "liveSeq": 39,
+        "liveEvents": [],
+        "events": [],
+        "nextSeq": 39,
+        "hasMore": false,
+        "nextBeforeSeq": null,
+        "hasOlder": false,
+        "latestSeq": 39
+      }
+    }
+  ]
+}

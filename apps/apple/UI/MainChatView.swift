@@ -28,6 +28,7 @@ struct MainChatView: View {
     @State private var importGeneration: UUID?
     @State private var restore: ChatAnchor?
     @State private var pixelScroll: ((Double) -> Void)?
+    @State private var olderRequest: String?
     @FocusState private var draftFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var stopping = false
@@ -238,15 +239,19 @@ struct MainChatView: View {
                     } else if model.window.events.isEmpty && model.error == nil && model.configurationError == nil {
                         EmptyState(symbol: "chat", title: "从这里开始", message: "交代一个目标，或聊聊今天想做的事。")
                     }
-                    if model.window.hasOlder {
-                        Button("查看更早记录") {
-                            let anchor = model.visibleAnchor
-                            Task { await model.read(before: model.window.olderCursor); restore = anchor }
-                        }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.older")
-                    }
+                    ProgressView().controlSize(.small)
+                        .frame(maxWidth: .infinity).frame(height: AppleTokens.Space.p20)
+                        .opacity(model.loading && !model.window.events.isEmpty ? 1 : 0)
+                        .accessibilityHidden(!model.loading)
+                        .accessibilityIdentifier("mainChat.older.loading")
+                        .background(MainChatEventPosition(eventID: "history.top", onPosition: trackPosition))
                     ForEach(days) { section in
                         let day = section.date
-                        let rows = section.events.filter { ["user.message", "assistant.message", "assistant.delta", "side.result", "step.started", "artifact.created", "turn.ended", "task.ended"].contains($0.type) }
+                        let calls = WorkAndChat.proposedCallIDs(events: model.nativeEvents, approvals: interactions.approvals)
+                        let rows = section.events.filter {
+                            ["user.message", "assistant.message", "assistant.delta", "side.result", "step.started", "artifact.created", "turn.ended", "task.ended"].contains($0.type) &&
+                            (model.chat?.mode == .work || WorkAndChat.showsChatEvent(type: $0.type, data: $0.data, proposedCalls: calls))
+                        }
                         let expanded = day == today || model.window.expandedDays.contains(day)
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                         Button {
@@ -278,7 +283,6 @@ struct MainChatView: View {
                         }
                         }
                     }
-                    if model.loading && !model.window.events.isEmpty { ProgressView() }
                     if model.window.hasNewer {
                         Button("查看后续记录") { Task { await model.read(after: model.window.newerCursor) } }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.newer")
                     }
@@ -289,7 +293,7 @@ struct MainChatView: View {
                     AppleTokens.Colors.clear.frame(height: 1).id("latest")
                         .background(MainChatEventPosition(eventID:"phone.end",onPosition:trackPosition))
                 }.padding(AppleTokens.Space.p20).frame(maxWidth: 760).frame(maxWidth: .infinity)
-                .background(MainChatPixelScroll(onReady: { pixelScroll = $0 }).frame(width: 0, height: 0))
+                .background(ChatPixelScroll(onReady: { pixelScroll = $0 }).frame(width: 0, height: 0))
             }
             #if os(iOS)
             .scrollDismissesKeyboard(.interactively)
@@ -345,6 +349,15 @@ struct MainChatView: View {
         if userScrolling { positions.following = false }
         #endif
         positions.frames[id] = frame
+        if id == "history.top", let frame {
+            if frame.maxY <= 0, olderRequest != nil { olderRequest = nil }
+            if userScrolling, frame.maxY > 0, frame.minY < height, model.window.hasOlder,
+               !model.loading, let cursor = model.window.olderCursor, olderRequest != cursor {
+                olderRequest = cursor; positions.following = false
+                let anchor = model.visibleAnchor
+                Task { await model.read(before: cursor); restore = anchor }
+            }
+        }
         if let anchor = restore, anchor.eventID == id, let frame {
             restore = nil; pixelScroll?(Double(frame.minY) - anchor.pixelOffset)
         }
@@ -364,7 +377,7 @@ struct MainChatView: View {
         let bottom = distance <= 48
         if atBottom != bottom { atBottom=bottom }
         #endif
-        if let first = positions.frames.filter({ $0.value.maxY > 0 && $0.value.minY < height }).min(by: { $0.value.minY < $1.value.minY }) {
+        if let first = positions.frames.filter({ !["history.top", "phone.end", "phone.pendingDecision"].contains($0.key) && $0.value.maxY > 0 && $0.value.minY < height }).min(by: { $0.value.minY < $1.value.minY }) {
             model.visibleAnchor = .init(eventID: first.key, pixelOffset: Double(first.value.minY))
         }
     }
@@ -775,7 +788,7 @@ struct MainChatEventRow: View {
     }
 }
 #if os(macOS)
-private struct MainChatPixelScroll: NSViewRepresentable {
+struct ChatPixelScroll: NSViewRepresentable {
     let onReady: (@escaping (Double) -> Void) -> Void
     final class Coordinator { var connected = false }
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -793,7 +806,7 @@ private struct MainChatPixelScroll: NSViewRepresentable {
     }
 }
 #else
-private struct MainChatPixelScroll: UIViewRepresentable {
+struct ChatPixelScroll: UIViewRepresentable {
     let onReady: (@escaping (Double) -> Void) -> Void
     final class Coordinator { var connected = false }
     func makeCoordinator() -> Coordinator { Coordinator() }

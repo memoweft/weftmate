@@ -1,0 +1,28 @@
+{
+  "approval": {
+    "approvalId": "ccceaca4-28f6-4cc8-9fc4-9db585ad795c",
+    "sessionId": "session-359d4917-28e0-4ac7-8892-138833c4ee68",
+    "taskId": "cmd-19939d34-9d91-4289-ad39-49dab0f87e15",
+    "sourceCommandId": "cmd-19939d34-9d91-4289-ad39-49dab0f87e15",
+    "sourceReceiptId": "71bb06c1-065e-4c2d-acb0-e5262457cb85",
+    "turn": 1,
+    "callId": "switch-da9c14c3-a9dd-4ae6-9499-8cd4aee08222",
+    "rootCallId": "switch-da9c14c3-a9dd-4ae6-9499-8cd4aee08222",
+    "toolName": "pwsh",
+    "reason": "[weftmate:work-switch] 这件事需要在电脑上做。要切换到工作吗？",
+    "createdAt": "2026-10-27T08:29:49.192Z",
+    "status": "answered",
+    "operationCategories": [],
+    "canAlwaysAllow": false,
+    "intent": "work-switch",
+    "workProjectId": "project-b5bc739c-ff0f-45d2-af26-47e7c1bd8a74",
+    "workSessionId": "session-dd754671-a8d7-4462-9c7a-69f030d111f5",
+    "workCreateCommandId": "cmd-685096aa-0022-4947-9dff-309388167183",
+    "decisionOutcome": "allowed-once",
+    "decisionRequestId": "af359218-602d-43ee-8c54-1f9849214958",
+    "decisionScope": "once",
+    "riskCategories": [],
+    "answeredAt": "2026-10-27T08:29:57.059Z"
+  },
+  "requestId": "af359218-602d-43ee-8c54-1f9849214958"
+}

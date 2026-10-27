@@ -1,0 +1,88 @@
+{
+  "taskId": "cmd-18c632c0-834b-4b74-80c4-b1e84fd66680",
+  "sessionId": "session-dd754671-a8d7-4462-9c7a-69f030d111f5",
+  "sourceText": "创建一个文件夹叫 她",
+  "source": {
+    "commandId": "cmd-18c632c0-834b-4b74-80c4-b1e84fd66680",
+    "requestId": "work-message-ccceaca4-28f6-4cc8-9fc4-9db585ad795c",
+    "kind": "session.message",
+    "targetDeviceId": "host-7e7b3e0d-d7ae-4062-83b8-540af8c6c900",
+    "state": "accepted_by_dsh",
+    "createdAt": "2026-10-27T08:29:57.622Z",
+    "updatedAt": "2026-10-27T08:29:58.115Z",
+    "sessionId": "session-dd754671-a8d7-4462-9c7a-69f030d111f5",
+    "intent": "queue",
+    "taskLabel": "创建一个文件夹叫 她",
+    "projectId": "project-b5bc739c-ff0f-45d2-af26-47e7c1bd8a74",
+    "projectRevision": 1,
+    "receiptId": "c90636cd-b66e-4017-9536-c879e14b2b58"
+  },
+  "artifacts": [],
+  "steps": [],
+  "executionSteps": [
+    {
+      "executionId": "exec-1287643887b949a90cb862c5121ce14de543b1f6537f9939",
+      "sourceCommandId": "cmd-18c632c0-834b-4b74-80c4-b1e84fd66680",
+      "sourceReceiptId": "c90636cd-b66e-4017-9536-c879e14b2b58",
+      "rootCallId": "switch-ae569f01-5846-483f-ab1c-cf5ecdfc0a32",
+      "callId": "switch-ae569f01-5846-483f-ab1c-cf5ecdfc0a32",
+      "toolName": "pwsh",
+      "turn": 1,
+      "state": "completed",
+      "argumentsHash": "686889b18c036fbe8f416b59dc70e40664afa45206c4b31e5d7d1fb67ba0ef75",
+      "permission": {
+        "types": [
+          "command"
+        ],
+        "decision": "allow",
+        "source": "default",
+        "summary": "pwsh · New-Item -ItemType Directory -Path 她 | Select-Object FullName"
+      },
+      "runtimeId": "aa9dc982-b578-4e04-bb8c-c8cd33b353a8",
+      "startedAt": "2026-10-27T08:29:58.246Z",
+      "updatedAt": "2026-10-27T08:29:58.751Z",
+      "resultHash": "9bac4e925993621b1e41297c1770356b6de9e79a62d794721b7a132c3647e0c4",
+      "finishedAt": "2026-10-27T08:29:58.751Z"
+    }
+  ],
+  "sources": [],
+  "replyEvidence": {
+    "status": "completed",
+    "turn": 1,
+    "assistantChunks": 15,
+    "textChunks": 1,
+    "reasoningChunks": 0,
+    "assistantMessages": 3,
+    "toolSaveObserved": false,
+    "step": 3,
+    "startedAt": "2026-10-27T08:29:58.113Z",
+    "observedAt": "2026-10-27T08:29:58.814Z",
+    "terminalAt": "2026-10-27T08:29:58.814Z",
+    "firstChunkAt": "2026-10-27T08:29:58.194Z",
+    "lastChunkAt": "2026-10-27T08:29:58.813Z"
+  },
+  "project": {
+    "projectId": "project-b5bc739c-ff0f-45d2-af26-47e7c1bd8a74",
+    "name": "Desktop",
+    "revision": 1,
+    "permissionRules": {},
+    "instructions": "",
+    "permission": "write",
+    "revoked": false,
+    "createdAt": "2026-10-27T08:29:45.217Z",
+    "pathHint": "weftmate-work-switch-VMV3SG / Desktop"
+  },
+  "supplements": [],
+  "resumes": [],
+  "control": {
+    "state": "active",
+    "updatedAt": "2026-10-27T08:29:58.115Z",
+    "backgroundJobs": {
+      "active": 0,
+      "unconfirmed": 0
+    },
+    "canSupplement": true,
+    "canStop": true,
+    "canResume": false
+  }
+}

@@ -11,6 +11,24 @@ extension EnvironmentValues {
     }
 }
 
+struct PhoneWorkProposal: Identifiable, Sendable {
+    var id: String { approval.id }
+    let approval: SessionApproval
+    let source: AccountSession
+    let text: String
+    let cloudSubject: String?
+}
+private struct PhoneOpenWorkProposalKey: EnvironmentKey {
+    static let defaultValue: @MainActor (PhoneWorkProposal) -> Void = { _ in }
+}
+extension EnvironmentValues {
+    var phoneOpenWorkProposal: @MainActor (PhoneWorkProposal) -> Void {
+        get { self[PhoneOpenWorkProposalKey.self] }
+        set { self[PhoneOpenWorkProposalKey.self] = newValue }
+    }
+}
+enum PhoneWorkStartResult: Sendable { case created, createNormally, failed(String) }
+
 struct PhoneConversationModes: View {
     @Binding var selection: ConversationMode
     var body: some View {
@@ -35,29 +53,16 @@ struct PhoneWorkSelection: View {
     @ObservedObject private var cloud: CloudLoginModel
     @Binding var projectID: String
     var allowsComputer = true
-    init(app: AppleAppModel, projectID: Binding<String>, allowsComputer: Bool = true) {
+    var beforeChangingComputer: (@MainActor () async -> Bool)?
+    init(app: AppleAppModel, projectID: Binding<String>, allowsComputer: Bool = true, beforeChangingComputer: (@MainActor () async -> Bool)? = nil) {
         self.app = app; cloud = app.cloudLogin; _projectID = projectID; self.allowsComputer = allowsComputer
+        self.beforeChangingComputer = beforeChangingComputer
     }
     var body: some View {
         VStack(spacing:0) {
             if allowsComputer {
                 NavigationLink {
-                    List {
-                        ForEach(cloud.hosts) { host in
-                            Button {
-                                if (host.hostId ?? host.id) != app.session?.hostId {
-                                    projectID=""; Task { await cloud.connectHost(id:host.hostId ?? host.id) }
-                                }
-                            } label: {
-                                HStack {
-                                    PhoneChatPageRow(title:host.computerName,subtitle:host.online ? "在线" : "不在线",icon:"desktop")
-                                    if (host.hostId ?? host.id) == app.session?.hostId { WeftIcon("allow",size:16) }
-                                }
-                            }.buttonStyle(.plain).disabled(!host.online).accessibilityIdentifier("phone.work.computer."+host.id)
-                        }
-                        if cloud.hosts.isEmpty { Text("从设置里添加电脑，再回到这里。") }
-                        if let error=cloud.error { Text(error).foregroundStyle(Weave.danger) }
-                    }.navigationTitle("选择电脑").toolbar(.visible,for:.navigationBar).background(Weave.grouped)
+                    PhoneWorkComputers(app:app,projectID:$projectID,beforeChangingComputer:beforeChangingComputer)
                 } label: { PhoneChatPageRow(title:cloud.selectedComputerName,subtitle:app.offline.hostOffline ? "电脑暂时不在线" : "当前连接的电脑",icon:"desktop") }
                     .accessibilityIdentifier("phone.work.computer")
                 Divider()
@@ -70,6 +75,41 @@ struct PhoneWorkSelection: View {
             }.accessibilityIdentifier("phone.work.project")
         }.buttonStyle(.plain).padding(.horizontal,AppleTokens.Space.p16)
             .background(Weave.surface,in:RoundedRectangle(cornerRadius:AppleTokens.Phone.groupRadius))
+    }
+}
+private struct PhoneWorkComputers: View {
+    @ObservedObject var app: AppleAppModel
+    @ObservedObject private var cloud: CloudLoginModel
+    @Binding var projectID: String
+    let beforeChangingComputer: (@MainActor () async -> Bool)?
+    @State private var changing = false
+    @Environment(\.dismiss) private var dismiss
+    init(app: AppleAppModel, projectID: Binding<String>, beforeChangingComputer: (@MainActor () async -> Bool)?) {
+        self.app=app; cloud=app.cloudLogin; _projectID=projectID; self.beforeChangingComputer=beforeChangingComputer
+    }
+    var body: some View {
+        List {
+            ForEach(cloud.hosts) { host in
+                Button {
+                    Task {
+                        guard !changing else { return }
+                        let id=host.hostId ?? host.id
+                        if id == app.session?.hostId { dismiss(); return }
+                        changing=true; defer { changing=false }
+                        if let beforeChangingComputer, !(await beforeChangingComputer()) { return }
+                        projectID=""; await cloud.connectHost(id:id)
+                        if app.session?.hostId == id { dismiss() }
+                    }
+                } label: {
+                    HStack {
+                        PhoneChatPageRow(title:host.computerName,subtitle:host.online ? "在线" : "不在线",icon:"desktop")
+                        if (host.hostId ?? host.id) == app.session?.hostId { WeftIcon("allow",size:16) }
+                    }
+                }.buttonStyle(.plain).disabled(!host.online || changing).accessibilityIdentifier("phone.work.computer."+host.id)
+            }
+            if cloud.hosts.isEmpty { Text("从设置里添加电脑，再回到这里。") }
+            if let error=cloud.error { Text(error).foregroundStyle(Weave.danger) }
+        }.navigationTitle("选择电脑").toolbar(.visible,for:.navigationBar).background(Weave.grouped)
     }
 }
 private struct PhoneWorkProjects: View {
@@ -102,7 +142,16 @@ struct PhoneNewConversation: View {
     @ObservedObject var app: AppleAppModel
     var mode: ConversationMode
     @ObservedObject private var catalogue: MainChatModel
-    init(app: AppleAppModel, mode: ConversationMode, initialProjectID:String = "") { self.app=app; self.mode=mode; catalogue=app.mainChat; _projectID=State(initialValue:initialProjectID) }
+    private let initialText: String?
+    @State private var sourceSubject: String?
+    private let beforeChangingComputer: (@MainActor () async -> Bool)?
+    private let startWork: (@MainActor (Project) async -> PhoneWorkStartResult)?
+    init(app: AppleAppModel, mode: ConversationMode, initialProjectID:String = "", initialText: String? = nil,
+         beforeChangingComputer: (@MainActor () async -> Bool)? = nil, startWork: (@MainActor (Project) async -> PhoneWorkStartResult)? = nil) {
+        self.app=app; self.mode=mode; catalogue=app.mainChat; _projectID=State(initialValue:initialProjectID)
+        self.initialText=initialText; _sourceSubject=State(initialValue:app.cloudLogin.subject)
+        self.beforeChangingComputer=beforeChangingComputer; self.startWork=startWork
+    }
     @State private var files: [ConversationAttachmentDraft] = []
     @State private var importing=false
     @State private var camera=false
@@ -129,8 +178,12 @@ struct PhoneNewConversation: View {
                         Text("开始一件工作").font(AppleTokens.Fonts.largeTitle.bold())
                         Text("先选好电脑和项目，再交代事情。").foregroundStyle(Weave.muted)
                         Text("这次在哪里做").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                        PhoneWorkSelection(app:app,projectID:$projectID)
-                        composer
+                        PhoneWorkSelection(app:app,projectID:$projectID,beforeChangingComputer:beforeChangingComputer)
+                        if initialText != nil {
+                            Text("这次要做的事").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                            Text(text).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                                .accessibilityIdentifier("phone.work.firstMessage")
+                        } else { composer }
                         Text("开始工作后，这段对话保持工作模式；想纯聊天可以另开一段。")
                             .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
                         Button(busy ? "正在开始…" : "开始工作") { focused=false; Task { await send() } }
@@ -170,7 +223,11 @@ struct PhoneNewConversation: View {
                     photoSelection=[]
                 }
             }
-            .onChange(of:app.accountEpoch) { _,_ in files.forEach { $0.removeTemporaryFiles() };files=[];text="";importing=false;photos=false }
+            .onChange(of:app.accountEpoch) { _,_ in
+                files.forEach { $0.removeTemporaryFiles() };files=[];importing=false;photos=false
+                text = app.cloudLogin.subject == sourceSubject ? initialText ?? "" : ""
+            }
+            .task { if let initialText { text = initialText } }
             .sheet(isPresented:$camera) { ComposerCamera { url in camera=false; if let url,importEpoch == app.accountEpoch { addFiles([url]);try? FileManager.default.removeItem(at:url) } } }
             .sheet(isPresented: $modelsOpen) { SettingsView(model: app, route: .init(categoryID: "models"), onClose: { modelsOpen = false }) }
             .onChange(of: app.session?.hostId) { _, _ in projectID = "" }
@@ -238,12 +295,21 @@ struct PhoneNewConversation: View {
     }
     private func send() async {
         busy = true; defer { busy = false }
+        app.phoneStartingConversation=true
+        defer { app.phoneStartingConversation=false }
         let draft = text, epoch = app.accountEpoch
         app.openedSessionID = nil
         app.phoneCreatingWork = mode == .work
         defer { app.phoneCreatingWork = false }
         if mode == .work {
             guard let project = app.projects.first(where: { $0.id == projectID }), canWork else { return }
+            if let startWork {
+                switch await startWork(project) {
+                case .created: return
+                case .failed(let message): error=message; return
+                case .createNormally: break
+                }
+            }
             await app.beginProjectConversation(project)
             if app.projectModels.contains(where: { $0.id == app.mainChat.modelID }) { app.projectModelID = app.mainChat.modelID }
             // The selection remains in the composer; the existing creation flow owns retries and receipts.
@@ -272,35 +338,117 @@ struct PhoneWorkDirectoryLine: View {
     }
 }
 
+/// A stable navigation destination: changing computers must not destroy the carried first message.
+struct PhoneWorkProposalStart: View {
+    @ObservedObject var app: AppleAppModel
+    let proposal: PhoneWorkProposal
+    @StateObject private var responses: TaskInteractionModel
+    @State private var sourceDeclined = false
+    @State private var error: String?
+    init(app: AppleAppModel, proposal: PhoneWorkProposal) {
+        self.app=app; self.proposal=proposal
+        _responses=StateObject(wrappedValue: TaskInteractionModel(client: app.assistantClient, account: proposal.source,
+            epoch: app.accountEpoch, stateDirectory: app.assistantStateDirectory,
+            currentEpoch: { [weak app] in app?.accountEpoch ?? UUID() }, currentSession: { [weak app] in app?.session }))
+    }
+    var body: some View {
+        PhoneNewConversation(app: app, mode: .work, initialText: proposal.text,
+            beforeChangingComputer: declineSource, startWork: start)
+            .safeAreaInset(edge: .top) { if let error { InlineNotice(message: error, isError: true).padding(.horizontal, AppleTokens.Space.p16) } }
+    }
+    private func declineSource() async -> Bool {
+        if sourceDeclined { return true }
+        guard app.session?.hostId == proposal.source.hostId, app.cloudLogin.subject == proposal.cloudSubject else { return false }
+        responses.activate(); await responses.refreshTimeline(sessionID: proposal.approval.sessionId)
+        guard let approval = responses.approvals.first(where: { $0.id == proposal.id }) else { error="原提议暂时无法核对，请返回对话后重试。"; return false }
+        if approval.decisionOutcome == .rejected { sourceDeclined=true; return true }
+        guard approval.canDecide else { error="这条提议已处理，请返回对话查看工作。"; return false }
+        let key="approval:"+approval.id
+        if responses.hasSaved(key) { await responses.continueOriginal(key) }
+        else { await responses.switchToWork(approval, capabilities: app.mainChat.capabilities, project: nil, accept: false) }
+        sourceDeclined = responses.approvals.first(where: { $0.id == approval.id })?.decisionOutcome == .rejected
+        if !sourceDeclined { error=responses.errors[key] ?? "原提议还没处理好，请重试。" }
+        return sourceDeclined
+    }
+    private func start(_ project: Project) async -> PhoneWorkStartResult {
+        error=nil
+        guard app.cloudLogin.subject == proposal.cloudSubject else { return .failed("账户已改变，请重新打开提议。") }
+        // A different computer uses its existing new-work flow. End the source proposal before switching hosts.
+        if sourceDeclined { return .createNormally }
+        guard app.session?.hostId == proposal.source.hostId else { return .failed("请重新选择电脑。") }
+        // Old hosts suspend an executable tool. Decline it, then create a separate work session.
+        let sourceTask: TaskSnapshot
+        do { sourceTask=try await app.assistantClient.taskDetail(taskID:proposal.approval.sourceCommandId) }
+        catch { return .failed("原提议暂时无法核对，请重试。") }
+        guard WorkAndChat.isEndedProposal(approval:proposal.approval,task:sourceTask) else {
+            return await declineSource() ? .createNormally : .failed(error ?? "原提议还没处理好，请重试。")
+        }
+        responses.activate(); await responses.refreshTimeline(sessionID: proposal.approval.sessionId)
+        guard let approval=responses.approvals.first(where: { $0.id == proposal.id }) else { return .failed("原提议暂时无法核对，请重试。") }
+        let key="approval:"+approval.id, epoch=app.accountEpoch
+        if responses.hasSaved(key) { await responses.continueOriginal(key) }
+        else if approval.canDecide { await responses.switchToWork(approval,capabilities:app.mainChat.capabilities,project:project,accept:true) }
+        guard let registered=responses.approvals.first(where: { $0.id == proposal.id }),let workID=registered.workSessionId else {
+            return .failed(responses.errors[key] ?? "工作还没创建好，请重试核对原请求。")
+        }
+        // The host owns creation and the first message. Never submit the carried phrase a second time.
+        for _ in 0..<100 {
+            guard epoch == app.accountEpoch, !Task.isCancelled else { return .failed("连接已改变，请重新核对工作。") }
+            do {
+                let command=try await app.assistantClient.workCreation(approval:registered)
+                if command.state == .acceptedByDSH {
+                    await app.refresh()
+                    if let row=app.conversations.first(where: { $0.sessionId == workID }), WorkAndChat.mode(row) == .work,
+                       row.projectId == project.id, row.workHostId == proposal.source.hostId {
+                        app.phoneNewConversationDraft=""; app.openedSessionID=row.id
+                        return .created
+                    }
+                } else if command.state != .pending && command.state != .dispatching { return .failed("工作还没创建成功，请重试核对原请求。") }
+            } catch { return .failed("工作创建状态暂时无法核对，请重试原请求。") }
+            do { try await Task.sleep(for: .milliseconds(150)) } catch { return .failed("工作仍在创建，请返回后重试核对。") }
+        }
+        return .failed("工作仍在创建，请重试核对原请求。")
+    }
+}
+
 struct PhoneWorkSwitchCard: View {
+    @Environment(\.phoneOpenWorkProposal) private var openProposal
     @ObservedObject var app: AppleAppModel
     @ObservedObject var model: TaskInteractionModel
     var approval: SessionApproval
-    @State private var projectID = ""
+    @State private var preparing = false
+    @State private var error: String?
     private var key: String { "approval:" + approval.id }
-    private func decide(accept: Bool) async {
-        await model.switchToWork(approval,capabilities:app.mainChat.capabilities,project:app.projects.first { $0.id == projectID },accept:accept)
-        if model.isRegistered(key) { await app.refresh() }
+    private func openWork() async {
+        guard let account=app.session else { return }
+        preparing=true; defer { preparing=false }
+        let epoch=app.accountEpoch
+        do {
+            let task=try await app.assistantClient.taskDetail(taskID:approval.sourceCommandId)
+            let text=try WorkAndChat.proposalText(approval:approval,task:task)
+            guard epoch == app.accountEpoch else { return }
+            openProposal(.init(approval:approval,source:account,text:text,cloudSubject:app.cloudLogin.subject))
+        } catch { self.error="原话暂时没能读取，请重试。" }
     }
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
-            Text("这件事需要在电脑上做。要切换到工作吗？").font(AppleTokens.Fonts.headline)
-            Text("由 " + app.cloudLogin.selectedComputerName + " 接着做，保留这段对话。电脑操作仍会按原来的权限询问。")
+            Text(WorkAndChat.switchPrompt).font(AppleTokens.Fonts.headline)
+            Text("选好电脑和项目后，会另开工作，把这句话带过去。这段对话仍保留。")
                 .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
             if app.offline.hostOffline {
                 Text("需要一台在线的电脑").foregroundStyle(Weave.muted)
                 if app.cloudLogin.authenticated, app.offline.workSnapshot?.taskRecipient != nil, app.cloudLogin.offlineWorkAuthorization?.supportsTasks == true { PhoneOfflineWork(app:app) }
             }
-            else { PhoneWorkSelection(app: app, projectID: $projectID, allowsComputer: false) }
             HStack {
                 Spacer()
-                Button("继续对话") { Task { await decide(accept:false) } }.buttonStyle(OutlineActionStyle())
-                    .disabled(!model.canRespond(key)).accessibilityIdentifier("phone.work.reject")
-                Button("切换到工作") { Task { await decide(accept:true) } }
-                    .buttonStyle(PrimaryActionStyle()).disabled(!model.canRespond(key) || app.offline.hostOffline || !app.projects.contains { $0.id == projectID })
+                Button("继续对话") { Task { await model.switchToWork(approval,capabilities:app.mainChat.capabilities,project:nil,accept:false) } }.buttonStyle(OutlineActionStyle())
+                    .disabled(preparing || !model.canRespond(key)).accessibilityIdentifier("phone.work.reject")
+                Button(preparing ? "正在读取原话…" : "切换到工作") { Task { await openWork() } }
+                    .buttonStyle(PrimaryActionStyle()).disabled(preparing || !model.canRespond(key) || app.offline.hostOffline)
                     .accessibilityIdentifier("phone.work.accept")
             }
             if let error = model.errors[key] { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
+            if let error { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
             if model.hasSaved(key) { Button("核对并继续原提交") { Task { await model.continueOriginal(key); await app.refresh() } } }
         }.padding(AppleTokens.Space.p16).background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24))
             .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r24).strokeBorder(Weave.line))

@@ -891,6 +891,11 @@ public actor PersonalClient {
         defer { interactionOperations.remove(key) }
         try await verify(auth, generation)
         if let receipt = approvalDecisionReceipts[intent.requestId] { return receipt }
+        if intent.approval.isWorkSwitch, intent.outcome == .allowedOnce {
+            let task = try await taskDetail(taskID: intent.sourceCommandId)
+            try check(generation)
+            guard WorkAndChat.isEndedProposal(approval: intent.approval, task: task) else { throw APIFailure.platformCapabilityUnavailable }
+        }
         let response = try await sharedAuthorizedRequest(auth, generation, path: "/sessions/\(session)/approvals/\(approval)",
             method: "POST", body: intent.payload)
         try SharedValidation.require(response.status == 200)
@@ -1186,6 +1191,22 @@ public actor PersonalClient {
         try SharedValidation.require(SharedValidation.request(requestID))
         try await verify(auth, generation)
         return try await lookupSharedCommand(auth, generation, requestID: requestID)
+    }
+
+    /// The answered proposal names a separate creation command. Acceptance of the proposal is not creation.
+    public func workCreation(approval: SessionApproval) async throws -> SharedCommandReceipt {
+        let (auth, generation) = try snapshot()
+        try approval.validate(scope: SessionInteractionScope(session: auth.session, sessionID: approval.sessionId))
+        guard approval.isWorkSwitch, approval.decisionOutcome == .allowedOnce,
+              let commandID=approval.workCreateCommandId, let sessionID=approval.workSessionId else { throw APIFailure.invalidResponse }
+        try await verify(auth,generation)
+        let response=try await sharedAuthorizedRequest(auth,generation,path:"/commands/\(commandID)")
+        struct Reply: Decodable { let command: SharedCommandReceipt }
+        let reply: Reply = try decode(response.body)
+        try reply.command.validateStructure()
+        guard reply.command.commandId == commandID, reply.command.kind == .create,
+              reply.command.sessionId == sessionID, reply.command.targetDeviceId == auth.session.hostId else { throw APIFailure.identityMismatch }
+        return reply.command
     }
 
     /// The caller must durably persist intent before permitting a POST. An uncertain POST is never retried here.

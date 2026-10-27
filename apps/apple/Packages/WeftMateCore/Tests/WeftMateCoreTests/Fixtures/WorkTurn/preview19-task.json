@@ -1,0 +1,44 @@
+{
+  "taskId": "cmd-838e0ce6-a388-4d21-b6be-63738dbe583e",
+  "sessionId": "session-55033c0a-c2b3-409b-9d71-aadcaa00474e",
+  "sourceText": "创建一个文件夹叫 她",
+  "source": {
+    "commandId": "cmd-838e0ce6-a388-4d21-b6be-63738dbe583e",
+    "requestId": "830a71c7-d39b-44eb-9a5f-50f345300c38",
+    "kind": "session.message",
+    "targetDeviceId": "host-c0a9fc6f-7363-42a2-a438-45cc4b04990c",
+    "state": "accepted_by_dsh",
+    "createdAt": "2026-10-27T08:12:13.406Z",
+    "updatedAt": "2026-10-27T08:12:13.467Z",
+    "sessionId": "session-55033c0a-c2b3-409b-9d71-aadcaa00474e",
+    "intent": "queue",
+    "taskLabel": "创建一个文件夹叫 她",
+    "receiptId": "dd3968a1-56e2-41c3-a821-2b6c1c6d8702"
+  },
+  "artifacts": [],
+  "steps": [],
+  "executionSteps": [],
+  "sources": [],
+  "replyEvidence": {
+    "status": "unconfirmed",
+    "turn": null,
+    "assistantChunks": 0,
+    "textChunks": 0,
+    "reasoningChunks": 0,
+    "assistantMessages": 0,
+    "toolSaveObserved": false
+  },
+  "supplements": [],
+  "resumes": [],
+  "control": {
+    "state": "active",
+    "updatedAt": "2026-10-27T08:12:13.467Z",
+    "backgroundJobs": {
+      "active": 0,
+      "unconfirmed": 0
+    },
+    "canSupplement": true,
+    "canStop": true,
+    "canResume": false
+  }
+}
