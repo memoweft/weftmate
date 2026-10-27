@@ -8,7 +8,7 @@ import {startTimelineCandidate} from './integration/timeline-ui-candidate.mjs';
 import {localUiSession} from './helpers/local-ui-session.mjs';
 
 test('phone web coarse-pointer entry keeps questions, receipts and applied change review usable',{timeout:60000},async()=>{
- const root=await mkdtemp(join(tmpdir(),'weftmate-ui02-phone-'));process.env.WEFTMATE_MANAGED_TEMP_ROOT=join(root,'managed');
+ const root=await mkdtemp(join(tmpdir(),'weftmate-ui02-phone-'));if(!process.env.WEFTMATE_TEST_TEMP_SCOPE)process.env.WEFTMATE_MANAGED_TEMP_ROOT=join(root,'managed');
  const host=await startTimelineCandidate({historyCount:0,inlineProgress:true,interactive:true,baseTime:Date.now()});
  const browser=await chromium.launch({headless:true,...(process.env.CI?{}:{channel:'chrome'})});
  try {

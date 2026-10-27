@@ -12,11 +12,12 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
   const evidence=process.env.WEFTMATE_UI02_EVIDENCE;
   if(evidence)await mkdir(evidence,{recursive:true});
   const profile=await mkdtemp(join(tmpdir(),'weftmate-ui02-'));
-  process.env.WEFTMATE_MANAGED_TEMP_ROOT=join(profile,'managed');
-  const host=await startTimelineCandidate({historyCount:0,inlineProgress:true,interactive:true,baseTime:Date.now()-70000});
+  let host,app;
+  t.after(async()=>{await app?.close();await host?.close();await rm(profile,{recursive:true,force:true});});
+  if(!process.env.WEFTMATE_TEST_TEMP_SCOPE)process.env.WEFTMATE_MANAGED_TEMP_ROOT=join(profile,'managed');
+  host=await startTimelineCandidate({historyCount:0,inlineProgress:true,interactive:true,baseTime:Date.now()-70000});
   const env={...process.env,UI02_PROFILE:profile};delete env.ELECTRON_RUN_AS_NODE;
-  const app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:[resolve('tests/helpers/chat-process-electron.cjs'),host.origin+'/personal/v1/ui/'],env});
-  t.after(async()=>{await app.close();await host.close();await rm(profile,{recursive:true,force:true});});
+  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:[resolve('tests/helpers/chat-process-electron.cjs'),host.origin+'/personal/v1/ui/'],env});
   const page=await app.firstWindow();page.setDefaultTimeout(15000);const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(()=>{
