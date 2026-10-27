@@ -125,6 +125,9 @@ struct WeftMateRootView: View {
             }
             #endif
             await model.start()
+            #if DEBUG && os(iOS) && targetEnvironment(simulator)
+            PhoneWindowUIFixture.configure(app: model)
+            #endif
             #if WEFTMATE_WINDOW_TEST
             PhoneWindowLaunch.present(in: model)
             #endif

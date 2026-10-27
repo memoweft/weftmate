@@ -9,9 +9,6 @@ struct WeftMatePhoneApp: App {
     @MainActor init() {
         let app=AppleAppModel();_model=StateObject(wrappedValue:app)
         DailyHealthBackground.register();PhoneReminderBackground.register();PhoneReminderNotifications.shared.attach(app)
-        #if DEBUG && targetEnvironment(simulator)
-        PhoneWindowUIFixture.configure(app: app)
-        #endif
     }
     var body: some Scene {
         WindowGroup {

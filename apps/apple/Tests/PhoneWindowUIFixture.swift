@@ -15,7 +15,16 @@ import WeftMateCore
         do {
             try app.phoneChat.saveModel(PhoneModelConfiguration(id: "window-synthetic-model", name: "合成聊天模型",
                 baseURL: url.absoluteString, model: "synthetic-stream", apiKey: "synthetic-state-key"))
-        } catch { app.phoneChat.notice = "测试模型没能保存，请查看本次测试记录。" }
+            record(models: app.phoneChat.models.count, error: nil)
+        } catch {
+            record(models: app.phoneChat.models.count, error: String(describing: error))
+            app.phoneChat.notice = "测试模型没能保存，请查看本次测试记录。"
+        }
+    }
+    private static func record(models: Int, error: String?) {
+        let payload: [String: Any] = ["models": models, "error": error ?? ""]
+        guard let file = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.appendingPathComponent("window-fixture.json") else { return }
+        try? JSONSerialization.data(withJSONObject: payload).write(to: file, options: .atomic)
     }
 }
 #endif
