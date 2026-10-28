@@ -188,7 +188,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (generation !== selectionGeneration || identity !== core.state.identityGeneration) return;
             const chat = core.state.chats?.find(row => row.activeSessionId === id);
             core.state.selectedChatId = chat?.chatId || null;
-            effects.restoreMainChatDraft?.(drafts.get(chat?.chatId || id) || ''); effects.renderChatOrigin?.(chat);
+            if (!creating) effects.restoreMainChatDraft?.(drafts.get(chat?.chatId || id) || '');
+            effects.renderChatOrigin?.(chat);
         } finally {
             if (generation === selectionGeneration && identity === core.state.identityGeneration) { core.state.sessionSelecting = false; notify(); }
         }
