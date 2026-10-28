@@ -33,6 +33,7 @@
     ui.loadAttachmentHasher = () => import('./file-sha256.js');
     for (const factory of Object.values(globalThis.WeftUiComponents.factories))
         Object.assign(ui, factory(core, ui));
+    if (globalThis.WeftPanels) WeftPanels.services.createChatScope = (effects, tabId, computerId) => core.createChatScope(effects, tabId, computerId);
     ui.cloudUi = globalThis.WeftCloudUi.create({ acceptSession: core.acceptSession, enterAssistant: core.enterAssistant,
         openAccount: core.openAccount, show: core.show, accessApi: core.accessApi, toast: ui.toast,
         bindDesktop: core.cloudBindDesktop });
