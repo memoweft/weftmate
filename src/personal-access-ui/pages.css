@@ -1,4 +1,19 @@
 /* Auxiliary workspaces: one reading measure, quiet rows, stable page chrome. */
+.goals-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--wm-space-16); }
+.goals-tabs { display:flex; gap:var(--wm-space-20); max-width:100%; overflow-x:auto; border-bottom:1px solid var(--line); }
+.goals-tab { position:relative; flex:none; padding:var(--wm-space-8) 0 var(--wm-space-12); min-height:var(--wm-space-40); border:0; border-radius:0; background:transparent; color:var(--ink-secondary); font:inherit; font-size:var(--wm-type-button); }
+.goals-tab::after { content:''; position:absolute; inset:auto 0 0; height:var(--wm-space-2); background:var(--ink); border-radius:var(--wm-radius-2); transform:scaleX(0); transition:transform var(--dur-3) var(--ease-out); }
+.goals-tab[aria-selected=true] { color:var(--ink); font-weight:500; }
+.goals-tab[aria-selected=true]::after { transform:scaleX(1); }
+.goals-search { box-sizing:border-box; flex:1 1 180px; max-width:260px; min-width:0; padding:var(--wm-space-8) var(--wm-space-12); border:1px solid transparent; border-radius:var(--wm-radius-control); background:var(--surface-soft); color:var(--ink); font:inherit; font-size:var(--wm-type-button); }
+.goals-search::placeholder { color:var(--ink-secondary); }
+.goals-search:focus { border-color:var(--accent); }
+.memory-device-cleanup { display:flex; align-items:flex-start; flex-wrap:wrap; gap:var(--wm-space-12); padding:var(--wm-space-16); margin-bottom:var(--wm-space-20); border-radius:var(--wm-radius-control); background:var(--surface-soft); }
+.memory-device-cleanup>div { flex:1 1 240px; min-width:0; }
+.memory-device-cleanup strong { font-size:var(--wm-type-body); font-weight:500; }
+.memory-device-cleanup p { margin:var(--wm-space-4) 0 0; color:var(--ink-secondary); font-size:var(--wm-type-secondary); }
+[data-reduced-motion] .goals-tab::after { transition:none; }
+@media(prefers-reduced-motion:reduce) { html:not([data-motion-full]) .goals-tab::after { transition:none; } }
 :is(.activity-page,.library-page,.goals-page,.health-page,.help-page) {
   --aux-width:840px;
   box-sizing:border-box; width:100%; max-width:none; margin:0;
@@ -88,12 +103,12 @@
 .health-page .health-segments { width:fit-content; border-radius:var(--wm-radius-control); }
 .health-page .health-segments button { min-width:56px; }
 /* Memory is a reading workspace, with provenance beside each understanding. */
-#memory-view.auxiliary-memory-page { box-sizing:border-box; width:100%; max-width:840px; margin-inline:auto; padding:8px 0 32px; color:var(--ink); font-size:var(--wm-type-body); }
+#memory-view.auxiliary-memory-page { box-sizing:border-box; width:100%; max-width:none; margin:0; padding:32px max(28px,calc((100% - 840px)/2)) 64px; color:var(--ink); background:var(--panel,var(--surface)); font-size:var(--wm-type-body); min-height:0; overflow:auto; scrollbar-gutter:stable; }
+.memory-open :is(.main-chat-tools,#conversation-resources,.usage-title-button,#temporary-chat-notice) { display:none; }
+.memory-open .assistant-topbar :is(.conversation-mode-subtitle,#assistant-connection) { display:none; }
 .memory-heading { display:flex; align-items:center; gap:8px; min-height:36px; }
 .memory-heading h1 { margin:0; flex:1; font-size:var(--wm-type-title); font-weight:550; letter-spacing:-.025em; }
 .memory-heading .memory-back { margin-left:-6px; }
-.settings-dialog .memory-heading :is(h1,.memory-back) { display:none; }
-.settings-dialog .memory-heading { justify-content:flex-end; min-height:32px; }
 .memory-intro { margin:8px 0 24px; max-width:65ch; color:var(--ink-secondary); font-size:var(--wm-type-button); line-height:1.65; }
 .auxiliary-memory-page .memory-panel { min-height:0; border:0; padding:0; background:transparent; box-shadow:none; }
 .auxiliary-memory-page #memory-heading { margin:0; font-size:var(--wm-type-body); font-weight:550; }
@@ -155,6 +170,7 @@ dialog.search-palette:not(.shortcuts-panel) { width:min(680px,calc(100dvw - 32px
 .search-palette.is-searching .search-palette-head::after { content:''; width:12px; height:12px; flex:none; border:2px solid var(--line); border-top-color:var(--ink-secondary); border-radius:50%; animation:sidebar-spin var(--dur-5) linear infinite; }
 :is(.activity-page,.library-page,.goals-page,.health-page,.help-page,.auxiliary-memory-page) :is(button,input,textarea,summary):focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 @media(max-width:800px) {
+  #memory-view.auxiliary-memory-page { padding:24px 20px 48px; }
   :is(.activity-page,.library-page,.goals-page,.health-page,.help-page) { padding:24px 20px 48px; }
   .library-toolbar { grid-template-columns:minmax(0,1fr) auto; }
   .library-toolbar .library-search { grid-column:1/-1; }
