@@ -66,3 +66,5 @@ dialog.cloud-settings::backdrop{background:var(--wm-color-mobile-scrim)}
 .cloud-device-dialog label{display:block;margin:0 0 var(--wm-space-12);font-weight:500}
 .cloud-device-dialog label input{display:block;margin-top:var(--wm-space-8)}
 .cloud-device-dialog .form-error:empty{display:none}
+.pairing-verification{font-size:var(--wm-font-size-36);font-weight:600;font-variant-numeric:tabular-nums;text-align:center;margin:var(--wm-space-16) 0;color:var(--ink)}
+#cloud-pairing-form textarea{width:100%;min-width:0;padding:var(--wm-space-12);border:1px solid var(--line);border-radius:var(--wm-radius-10);background:var(--surface);color:var(--ink);caret-color:var(--accent);resize:vertical;overflow-wrap:anywhere}

@@ -1772,15 +1772,18 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             savedIdentityView(identity).put("backgroundSync", SyncJobService.status(this))
         }
         "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
+            .put("nativePairingV2", 1)
             .put("nativeEmailCodeLogin", true)
             .put("nativeOfflineTasks", 1)
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
-            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.fix36qa", "com.memoweft.weftmate.mobile.and9qa", "com.memoweft.weftmate.mobile.and8qa", "com.memoweft.weftmate.mobile.and5qa", "com.memoweft.weftmate.mobile.and12qa", "com.memoweft.weftmate.mobile.and6qa", "com.memoweft.weftmate.mobile.and7qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.mob4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
+            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.andpairqa", "com.memoweft.weftmate.mobile.fix36qa", "com.memoweft.weftmate.mobile.and9qa", "com.memoweft.weftmate.mobile.and8qa", "com.memoweft.weftmate.mobile.and5qa", "com.memoweft.weftmate.mobile.and12qa", "com.memoweft.weftmate.mobile.and6qa", "com.memoweft.weftmate.mobile.and7qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.mob4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
                 else secrets.host()?.takeIf { it.authSource == "local" }?.origin ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
         "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))
         "cloud.app.key" -> CloudAppKeys(secrets).get(params.getString("id"), params.optBoolean("clear"))
         "cloud.app.sign" -> CloudAppKeys(secrets).sign(params.getString("id"), params.getString("input"))
+        "cloud.app.pairing.hash" -> JSONObject().put("digest", cloudPairingDigest(params.getJSONArray("values")))
+        "cloud.app.pairing.pin" -> CloudAppLogin(secrets, api).pairingPin(params)
         "cloud.app.credentials" -> CloudAppLogin(secrets, api).credentials(params)
         "cloud.app.request" -> CloudAppLogin(secrets, api).request(params)
         "cloud.app.status" -> {
