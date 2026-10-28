@@ -1,8 +1,12 @@
 .connectors-view { display: grid; gap: var(--wm-space-16); }
 .capabilities-browser { display:grid; gap:var(--wm-space-20); min-width:0; }
-.capabilities-tabs { display:flex; gap:var(--wm-space-16); border-bottom:1px solid var(--line); }
-.capabilities-tabs [role=tab] { border:0; border-radius:0; padding:var(--wm-space-8) 0; color:var(--ink-secondary); background:transparent; border-bottom:2px solid transparent; }
-.capabilities-tabs [aria-selected=true] { border-bottom-color:var(--ink); color:var(--ink); font-weight:600; }
+.capabilities-tabs { display:flex; gap:var(--wm-space-24); border-bottom:1px solid var(--line); }
+.capabilities-tabs [role=tab] { position:relative; border:0; border-radius:0; padding:var(--wm-space-8) 0 var(--wm-space-12); color:var(--ink-secondary); background:transparent; font-size:var(--wm-type-heading); font-weight:500; }
+.capabilities-tabs [role=tab]::after { content:''; position:absolute; inset:auto 0 -1px; height:var(--wm-space-2); border-radius:var(--wm-radius-2); background:var(--ink); transform:scaleX(0); transition:transform var(--dur-3) var(--ease-out); }
+.capabilities-tabs [aria-selected=true] { color:var(--ink); }
+.capabilities-tabs [aria-selected=true]::after { transform:scaleX(1); }
+@media(prefers-reduced-motion:reduce) { html:not([data-motion-full]) .capabilities-tabs [role=tab]::after { transition:none; } }
+[data-reduced-motion] .capabilities-tabs [role=tab]::after { transition:none; }
 .capabilities-toolbar { display:flex; align-items:center; gap:var(--wm-space-12); min-width:0; }
 .capabilities-search { flex:1; width:0; min-width:0; }
 .capabilities-toolbar > :last-child { flex:none; }

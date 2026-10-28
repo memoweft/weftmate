@@ -25,7 +25,9 @@ export async function startTimelineCandidate(options = {}) {
   const approvalReason = `${options.riskApproval ? '[weftmate:overwrite] ' : ''}覆盖项目中的 progress.md。原文件将被替换，可从 Git 恢复。`
   const operations = [], baseTime = options.baseTime || Date.parse('2026-10-07T08:00:00Z')
   const eventWaiters=new Set();
-  const append = (type, data) => { const event = { seq: events.length, time: options.digest ? options.clock() + events.length * 500 : baseTime + events.length * 500, type, data }; events.push(event);for(const wake of eventWaiters)wake(sessionId,event.seq); return event }
+  const append = (type, data) => {
+    if (type === 'assistant/message' && options.memoryUsed) data = { ...data, memoryUsed: options.memoryUsed };
+    const event = { seq: events.length, time: options.digest ? options.clock() + events.length * 500 : baseTime + events.length * 500, type, data }; events.push(event);for(const wake of eventWaiters)wake(sessionId,event.seq); return event }
   const call = (name, id, args) => append('tool/call', { turn: 1, callId: id, name, arguments: JSON.stringify(args) })
   const result = (id, text, isError = false, meta) => append('tool/result', { turn: 1, ...(meta ? {meta} : {}), message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError, content: [{ type: 'text', text }] }] } })
   const showThinking = options.thinking === true;

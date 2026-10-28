@@ -67,10 +67,11 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     target.classList.add('work-switch-host');
     const card = node('section', 'work-switch-card'); card.setAttribute('aria-label', '切换到工作'); card.dataset.workSwitch = row.approvalId;
     card.hidden = core.state.workProjectSelecting === row.approvalId;
-    card.append(node('h3', '', '这件事需要在电脑上做。要切换到工作吗？'));
+    const heading=node('header','work-switch-heading'),copy=node('div','work-switch-copy');
+    copy.append(node('h3', '', '这件事需要在电脑上做。要切换到工作吗？'));heading.append(WeftIcons.create('desktop',20),copy);card.append(heading);
     const hostId = core.currentExecutionComputer?.() || core.state.hostId, computers = core.workComputers(), online = computers.some(r => r.hostId === hostId && r.online);
-    card.append(node('p', 'muted', online ? `在 ${computerName(hostId)} 上做，原来的消息都会保留。` : computers.length ? '需要一台在线的电脑' : '在电脑上安装 WeftMate，用同一账号登录，就能在电脑上做事。'));
-    const choices = node('div', 'work-choice-list'); choices.setAttribute('role', 'group'); choices.setAttribute('aria-label', '选择项目或文件夹');
+    copy.append(node('p', 'muted', online ? `在 ${computerName(hostId)} 上做，原来的消息都会保留。` : computers.length ? '需要一台在线的电脑' : '在电脑上安装 WeftMate，用同一账号登录，就能在电脑上做事。'));
+    const choices = node('div', 'work-choice-list'); choices.setAttribute('role', 'radiogroup'); choices.setAttribute('aria-label', '选择项目或文件夹');
     let selected = project()?.projectId || core.defaultFolderProject?.()?.projectId || null;
     const projects = (core.state.projects || []).filter(r => !r.revoked && (!r.hostId || r.hostId === hostId));
     if (!projects.some(p => p.projectId === selected)) selected = projects[0]?.projectId || null;
@@ -93,7 +94,7 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
         finally {core.state.workProjectSelecting=null;const bar=ui.byId('approval-bar');delete bar.dataset.workSignature;
           for(const child of bar.children)delete child.dataset.signature;ui.renderConversationApprovals();} }; choices.append(pick);
     }
-    card.append(choices);
+    card.append(node('p','work-switch-label','选择项目或文件夹'),choices);
     const actions = node('div', 'work-switch-actions'), status = node('p', 'form-error'); status.setAttribute('role', 'status'); status.hidden = true;
     const later = node('button', 'button secondary', '先不用'); later.type = 'button'; later.disabled = locked;
     later.onclick = () => core.submitApproval(core.approvalContext(), row, 'rejected');
@@ -108,6 +109,7 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
   }
   function mountWorkMode() {
     const rail=ui.byId('session-rail'),navigation=ui.fixedPageNavigation?.(),top=rail.querySelector('.rail-top'),search=rail.querySelector('.search-entry');
+    if(navigation){const memory=ui.byId('rail-memory');memory.hidden=false;navigation.prepend(memory);navigation.setAttribute('aria-label','记忆、动态、健康、目标与成果库');}
     const brand=ui.byId('rail-brand-row'),brandActions=ui.byId('rail-brand-actions');
     if(search){search.setAttribute('aria-label','搜索');search.title='搜索 · Ctrl K';brandActions.append(search);}
     const notices=node('button','rail-brand-notices');notices.type='button';notices.setAttribute('aria-label','查看动态通知');notices.title='动态通知';notices.append(WeftIcons.create('bell',18));notices.onclick=()=>ui.openActivity?.();brandActions.append(notices);

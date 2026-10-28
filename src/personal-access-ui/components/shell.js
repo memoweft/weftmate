@@ -371,17 +371,24 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function paintScreen(view) {
         void ui.checkCloudBackupPrompt?.();
+        const wasMemory=ui.motionView==='memory';
         for (const name of ui.views)
-            ui.byId(`${name}-view`).hidden = name !== view && !(['account', 'memory'].includes(view) && name === 'assistant') && !(view === 'memory' && name === 'account');
+            ui.byId(`${name}-view`).hidden = name !== view && !(['account', 'memory'].includes(view) && name === 'assistant');
         const retainedWorkspace=view==='assistant'&&['account','memory'].includes(ui.motionView);
         if (ui.motionView !== view&&!retainedWorkspace) globalThis.WeftMotion?.enter(ui.byId(`${view}-view`), view === 'account' || view === 'memory' ? 'enter-fade' : 'view-enter');
         ui.motionView = view;
         document.body.classList.toggle('assistant-active', ['assistant', 'account', 'memory'].includes(view));
-        if (view === 'account' || view === 'memory') {
+        if (view === 'account') {
             ui.showSettingsDialog?.(); ui.byId('assistant-view').setAttribute('aria-hidden', 'true');
         } else {
             ui.byId('assistant-view').setAttribute('aria-hidden', 'false'); ui.hideSettingsDialog?.();
         }
+        document.body.classList.toggle('memory-open',view==='memory');
+        ui.byId('rail-memory').setAttribute('aria-current',view==='memory'?'page':'false');
+        if(view==='memory'){
+            document.dispatchEvent(new CustomEvent('weftmate:fixed-page',{detail:'memory'}));
+            ui.byId('conversation-pane').hidden=true;ui.byId('assistant-title').textContent='记忆';
+        }else if(wasMemory)ui.byId('conversation-pane').hidden=false;
         document.body.classList.toggle('cloud-auth-active', view === 'login' || view === 'cloud-wait');
     }
     let workspaceFolderKey, workspaceFolderPath;
@@ -433,8 +440,8 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         help.addEventListener('click', openHelp);
         help.addEventListener('keydown', event => { if (event.key === 'ArrowRight') { event.preventDefault(); openHelp(); } });
         new MutationObserver(() => { if (menu.hidden) { accountHelp?.close(false); accountHelp = null; } }).observe(menu, {attributes:true,attributeFilter:['hidden']});
-        // Memory and devices remain available through their D31 settings categories.
-        ui.byId('rail-memory').hidden = true; ui.byId('rail-devices').hidden = true;
+        // Memory moves into the fixed navigation; devices stay in settings.
+        ui.byId('rail-devices').hidden = true;
         const logout = add('退出登录', 'logout', () => {
             const token = core.accountToken(), dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', '退出登录');
             const body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', '退出当前设备？'), ui.element('p', '', '退出后需要重新登录。电脑上的对话与文件会保留。'));

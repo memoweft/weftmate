@@ -8,9 +8,20 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
     const refresh=iconButton('刷新目标','sync',()=>core.readGoals());
     const head=el('div','goals-heading'),title=el('h1','','目标');title.tabIndex=-1;head.append(title,refresh);
     target.classList.add('goals-page');target.replaceChildren(head,el('p','goals-intro','正在做的事、之后的安排，都有着落。'));
+    let selectedSection='tasks',query='';
+    const toolbar=el('div','goals-toolbar'),tabs=el('div','goals-tabs'),search=el('input','goals-search');
+    tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','目标分类');search.type='search';search.placeholder='搜索目标与安排';search.setAttribute('aria-label','搜索目标与安排');
+    toolbar.append(tabs,search);target.append(toolbar);
     const sections={};for(const [id,name]of [['tasks','进行中'],['schedules','定时任务'],['goals','长期目标']]){
         const section=el('section','goals-section'),header=el('div','goals-heading'),heading=el('h2','',name),list=el('div','goals-list');section.setAttribute('aria-label',name);header.append(heading);section.append(header,list);target.append(section);sections[id]={section,header,list};
+        const tab=button(id==='schedules'?'提醒与定时任务':name,()=>selectSection(id),'goals-tab');tab.id=`goals-tab-${id}`;tab.setAttribute('role','tab');tab.setAttribute('aria-controls',`goals-panel-${id}`);tabs.append(tab);
+        section.id=`goals-panel-${id}`;section.setAttribute('role','tabpanel');section.setAttribute('aria-labelledby',tab.id);
     }
+    function selectSection(id){selectedSection=id;for(const [key,{section}]of Object.entries(sections))section.hidden=key!==id;for(const tab of tabs.children){const active=tab.id===`goals-tab-${id}`;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;}}
+    tabs.onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const controls=[...tabs.children],index=controls.indexOf(document.activeElement),next=event.key==='Home'?0:event.key==='End'?controls.length-1:(index+(event.key==='ArrowRight'?1:-1)+controls.length)%controls.length;controls[next].click();controls[next].focus();};
+    search.oninput=()=>{query=search.value.trim().toLocaleLowerCase();render();};
+    const matches=row=>!query||[row.title,row.text,row.description,row.conversationTitle].some(value=>value?.toLocaleLowerCase().includes(query));
+    selectSection(selectedSection);
     const recent=el('div','goals-recent'),recentList=el('div','goals-list');recentList.hidden=true;recentList.id=`goals-recent-${crypto.randomUUID()}`;
     const offlineSection=el('section','goals-section'),offlineList=el('div','goals-list');offlineSection.setAttribute('aria-label','等电脑上线');offlineSection.append(el('h3','','等电脑上线'),offlineList);sections.tasks.section.append(offlineSection);offlineSection.hidden=true;
     core.offlineTasksChanged=()=>{render();};
@@ -87,18 +98,21 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
     }
     function menuButton(row,entries){const n=iconButton(`更多操作 ${row.title??row.text}`,'more',()=>WeftPopover.menu(n,entries,message=>notify(core.failureMessage(message))));n.setAttribute('aria-haspopup','menu');n.setAttribute('aria-expanded','false');return n;}
     function contentButton(row,action){const copy=button('',action,'goals-row-content');copy.setAttribute('aria-label',`${row.text?'编辑':'查看'} ${row.title??row.text}`);copy.append(el('h3','',row.title??row.text));return copy;}
+    const taskMeta=row=>`${row.offlineSource?'手机离线交代 · ':''}${stateNames[row.status]??'处理中'} · ${row.startedAt?'已运行':'已等待'} ${Math.floor(row.elapsedSeconds/60)} 分钟`;
+    const taskSource=row=>[row.conversationTitle,row.offlineSource?(row.startedAt||row.offlineSource.startedAt?'电脑已开始':'电脑已收到'):null].filter(Boolean).join(' · ');
+    const stopLabel=row=>row.offlineSource&&row.status==='queued'?'取消这件事':'停止';
     function taskRow(row){
         const key=`${core.state.identityGeneration}:${row.taskId}`;
         let record=taskRows.get(key);
-        if(record){record.row=row;record.title.textContent=row.title;record.meta.textContent=`${stateNames[row.status]??'处理中'} · ${row.startedAt?'已运行':'已等待'} ${Math.floor(row.elapsedSeconds/60)} 分钟`;record.step.textContent=row.step;record.source.textContent=row.conversationTitle;record.stop.hidden=!row.canStop;record.stop.disabled=core.goalsPage.busy.has(row.taskId);return record.item;}
+        if(record){record.row=row;record.title.textContent=row.title;record.meta.textContent=taskMeta(row);record.step.textContent=row.step;record.source.textContent=taskSource(row);record.stop.textContent=stopLabel(row);record.stop.hidden=!row.canStop;record.stop.disabled=core.goalsPage.busy.has(row.taskId);return record.item;}
         record={row};
         const item=el('article','goals-row');item.setAttribute('aria-label',row.title);item.dataset.goalKey=row.taskId;
         const body=el('div','goals-task-copy'),detail=el('div','goals-task-detail');detail.hidden=true;detail.id=`goal-progress-${crypto.randomUUID()}`;
         const copy=contentButton(row,()=>WeftAuxiliaryMotion.expand(detail,copy.getAttribute('aria-expanded')!=='true',copy));copy.setAttribute('aria-label',`展开进展 ${row.title}`);copy.setAttribute('aria-expanded','false');copy.setAttribute('aria-controls',detail.id);
-        copy.append(el('span','goals-meta',`${stateNames[row.status]??'处理中'} · ${row.startedAt?'已运行':'已等待'} ${Math.floor(row.elapsedSeconds/60)} 分钟`),WeftIcons.create('chevron',14));
-        const step=el('p','goals-step',row.step),source=el('p','goals-source',row.conversationTitle);
+        copy.append(el('span','goals-meta',taskMeta(row)),WeftIcons.create('chevron',14));
+        const step=el('p','goals-step',row.step),source=el('p','goals-source',taskSource(row));
         detail.append(step,source,button('打开对话与步骤',()=>open(record.row),'button quiet small'));body.append(copy,detail);
-        const actions=el('div','goals-row-actions'),stop=button('停止',()=>core.stopOverviewTask(record.row));stop.hidden=!row.canStop;stop.disabled=core.goalsPage.busy.has(row.taskId);actions.append(stop,menuButton(row,[{name:'打开对话与步骤',action:()=>open(record.row)}]));item.append(body,actions);
+        const actions=el('div','goals-row-actions'),stop=button(stopLabel(row),()=>core.stopOverviewTask(record.row));stop.hidden=!row.canStop;stop.disabled=core.goalsPage.busy.has(row.taskId);actions.append(stop,menuButton(row,[{name:'打开对话与步骤',action:()=>open(record.row)}]));item.append(body,actions);
         Object.assign(record,{item,title:copy.querySelector('h3'),meta:copy.querySelector('.goals-meta'),step,source,stop});taskRows.set(key,record);return item;
     }
     function stateBlock(kind,key,message){
@@ -113,21 +127,22 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
         const model=core.goalsPage;refresh.disabled=model.loading;newSchedule.disabled=core.state.personalCapabilities?.scheduleEditing!==1||!model.sessions.some(s=>s.taskAvailable!==false);newGoal.disabled=core.state.personalCapabilities?.goals!==1||!model.sessions.some(s=>s.taskAvailable!==false);
         const offlineTasks=(core.offlineTasksView?.()||[]).filter(t=>['waiting','claimed','sending','expired'].includes(t.state));
         for(const {list}of Object.values(sections))list.setAttribute('aria-busy',String(model.loading));
-        const next=JSON.stringify([!model.tasks.length||!model.schedules.length||!model.goals.length?model.loading:null,model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy],offlineTasks]);
+        const next=JSON.stringify([query,!model.tasks.length||!model.schedules.length||!model.goals.length?model.loading:null,model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy],offlineTasks]);
         // Per-section snapshots keep task buttons in place while empty siblings load.
         if(signature===next)return;signature=next;
         offlineSection.hidden=!offlineTasks.length;offlineList.replaceChildren();
-        for(const task of offlineTasks){
+        for(const task of offlineTasks.filter(matches)){
           const item=el('article','goals-row'),copy=button('',()=>core.openOfflineTask(task),'goals-row-content');copy.setAttribute('aria-label',`查看 ${task.text}`);
           copy.append(el('h3','',Array.from(task.text).slice(0,72).join('')),el('span','goals-meta',new Intl.DateTimeFormat('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(task.createdAt))),el('span','goals-meta',task.state==='expired'?'过期了，没做':task.state==='sending'?'还没确认记下，请回对话重试':'等电脑上线'));
           const actions=el('div','goals-row-actions');if(['waiting','claimed'].includes(task.state))actions.append(menuButton({title:task.text},[{name:'打开对话',action:()=>core.openOfflineTask(task)},{name:'取消这件事',danger:true,action:()=>confirmDelete('取消等电脑做的这件事？',async()=>{await core.cancelOfflineTask(task.id);render();},true)}]));item.append(copy,actions);offlineList.append(item);
         }
         const focused=document.activeElement,focusedLabel=focused?.getAttribute('aria-label')??focused?.textContent,focusedRow=focused?.closest('article')?.dataset.goalKey;
         for(const [key,{list}]of Object.entries(sections)){
-            const sectionSignature=JSON.stringify([model[key],model.errors[key],[...model.busy],model[key].length?null:model.loading,model.sessions,model.timeZone]);
+            const sectionSignature=JSON.stringify([query,model[key],model.errors[key],model.errors.offlineSources,[...model.busy],model[key].length?null:model.loading,model.sessions,model.timeZone]);
             if(list.dataset.snapshot===sectionSignature)continue;list.dataset.snapshot=sectionSignature;
             const nextRows=[];list.setAttribute('aria-busy',String(model.loading));if(model.errors[key]){nextRows.push(stateBlock('error',key,model.errors[key]+(model[key].length?' · 下面保留上次读取的结果。':'')));if(!model[key].length){list.replaceChildren(...nextRows);continue;}}
-            const rows=key==='tasks'?model.tasks:model[key];if(!rows.length)nextRows.push(stateBlock(model.loading?'loading':'empty',key,{tasks:'交代助手做事后，可以在这里展开查看进展。',schedules:core.state.personalCapabilities?.scheduleEditing===1?'按你设定的时间提醒，也可以在对话里直接交代。':'连接支持定时任务的电脑后，可以安排之后要做的事。',goals:core.state.personalCapabilities?.goals===1?'把想持续推进的事关联到一个对话。':'连接支持目标的电脑后，可以接着推进长期计划。'}[key]));
+            if(key==='tasks'&&model.errors.offlineSources)nextRows.push(stateBlock('error',key,model.errors.offlineSources));
+            const rows=model[key].filter(matches);if(!rows.length)nextRows.push(query?el('p','goals-empty','没有匹配的内容，试试其他关键词。'):stateBlock(model.loading?'loading':'empty',key,{tasks:'交代助手做事后，可以在这里展开查看进展。',schedules:core.state.personalCapabilities?.scheduleEditing===1?'按你设定的时间提醒，也可以在对话里直接交代。':'连接支持定时任务的电脑后，可以安排之后要做的事。',goals:core.state.personalCapabilities?.goals===1?'把想持续推进的事关联到一个对话。':'连接支持目标的电脑后，可以接着推进长期计划。'}[key]));
             for(const row of rows){
                 if(key==='tasks'){nextRows.push(taskRow(row));continue;}
                 const rowKey=`${core.state.identityGeneration}:${key}:${row.id}`,snapshot=JSON.stringify([row,model.busy.has(row.id)]),previous=otherRows.get(rowKey);if(previous?.snapshot===snapshot){nextRows.push(previous.item);continue;}
@@ -148,9 +163,9 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
             }
             WeftControls.reconcile(list,nextRows);
         }
-        const recentSignature=JSON.stringify(model.recent);if(recentList.dataset.snapshot!==recentSignature){recentList.dataset.snapshot=recentSignature;WeftControls.reconcile(recentList,model.recent.length?model.recent.map(taskRow):[el('p','goals-empty','最近 7 天还没有完成的任务。')]);}
+        const recentSignature=JSON.stringify([query,model.recent]);if(recentList.dataset.snapshot!==recentSignature){recentList.dataset.snapshot=recentSignature;const rows=model.recent.filter(matches);WeftControls.reconcile(recentList,rows.length?rows.map(taskRow):[el('p','goals-empty',query?'没有匹配的内容。':'最近 7 天还没有完成的任务。')]);}
         for(const [key,record]of taskRows)if(!record.item.isConnected)taskRows.delete(key);for(const [key,record]of otherRows)if(!record.item.isConnected)otherRows.delete(key);
         if(focusedRow){const article=[...target.querySelectorAll('article')].find(n=>n.dataset.goalKey===focusedRow);[...article?.querySelectorAll('button,input')??[]].find(n=>(n.getAttribute('aria-label')??n.textContent)===focusedLabel)?.focus({preventScroll:true});}
     }
-    return {render,reset(){form?.remove();form=null;signature='';taskRows.clear();otherRows.clear();WeftPopover.closeMenu();render();},focus:()=>title.focus(),close(){WeftPopover.closeMenu();target.querySelector('dialog')?.close();}};
+    return {render,reset(){form?.remove();form=null;signature='';query='';search.value='';selectSection('tasks');taskRows.clear();otherRows.clear();WeftPopover.closeMenu();render();},focus:()=>title.focus(),close(){WeftPopover.closeMenu();target.querySelector('dialog')?.close();}};
 }};
