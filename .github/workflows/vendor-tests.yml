@@ -9,6 +9,57 @@ concurrency:
   group: vendor-tests-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  tray-approvals:
+    name: Windows tray approvals (pinned DSH)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      WEFTMATE_TEST_HOST_NAME: synthetic-host
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/tray-approvals-evidence
+    steps:
+      - name: Preserve source and patch line endings
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Materialize versioned Electron binary
+        run: node node_modules/electron/install.js
+      - name: Read production DSH pin
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('tests/contract/dsh-pin.json')); fs.appendFileSync(process.env.GITHUB_ENV, 'DSH_PIN='+p.commit+'\n');"
+      - uses: actions/checkout@v4
+        with:
+          repository: deepseek-ai/deepseek-harness
+          ref: ${{ env.DSH_PIN }}
+          path: .local/tray-dsh
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - name: Cache patched vendor runtime
+        uses: actions/cache@v4
+        with:
+          path: .local/dsh-cache
+          key: vendor-runtime-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch', 'scripts/vendor-dsh.mjs', 'scripts/dsh-runtime-identity.mjs') }}-v1
+      - name: Assemble and verify pinned vendor
+        run: |
+          npm run vendor:dsh
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run vendor:verify
+        env:
+          WEFTMATE_DSH_CHECKOUT: ${{ github.workspace }}/.local/tray-dsh
+      - name: Approve consecutive requests received in the tray
+        run: node --test tests/second-approval.test.ts
+      - name: Upload synthetic tray approval evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tray-approvals-windows
+          path: .local/tray-approvals-evidence
+          if-no-files-found: warn
   vendor:
     name: Pinned DSH vendor unit tests
     runs-on: ubuntu-latest
