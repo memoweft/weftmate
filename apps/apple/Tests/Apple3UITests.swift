@@ -14,14 +14,15 @@ final class Apple3UITests: XCTestCase {
         let origin = ProcessInfo.processInfo.environment["WEFTMATE_APPLE3_ORIGIN"]!
         for theme in ["light", "dark"] {
             let app = XCUIApplication();app.launchArguments = ["--ui-testing", "--apple3-fixture", "--health4-render-only", "--a5-local-server", "--server-url", origin, "--ui-testing-namespace", "apple3-" + UUID().uuidString, "--a5-theme", theme, theme];app.launch()
-            XCTAssertTrue(app.staticTexts["这一段正在生成，文字正在继续。"].waitForExistence(timeout: 35));capture(app,theme,"stream")
+            XCTAssertTrue(app.descendants(matching:.any).matching(NSPredicate(format:"label == %@ OR value == %@","这一段正在生成，文字正在继续。","这一段正在生成，文字正在继续。")).firstMatch.waitForExistence(timeout: 35));capture(app,theme,"stream")
             XCTAssertTrue(app.buttons["mainChat.send"].label == "停止")
             try choose(app,"final")
             XCTAssertTrue(app.staticTexts["这一段正在生成，这是最终完整回复。"].waitForExistence(timeout: 20));capture(app,theme,"final")
             for value in ["aligned", "warning"] {
                 try choose(app,value)
+                PhoneChatTestSupport.openPending(app)
                 XCTAssertTrue(app.descendants(matching:.any)["approvalSecondOpinion"].waitForExistence(timeout: 20))
-                XCTAssertTrue(app.buttons["approvalAlwaysAllow"].exists);capture(app,theme,value)
+                XCTAssertTrue(app.buttons["approvalMore.apple3-"+value].exists);capture(app,theme,value); app.buttons["phoneSheet.close"].tap()
             }
             try choose(app,"files")
             let expand=app.buttons["replyFiles.expand"]

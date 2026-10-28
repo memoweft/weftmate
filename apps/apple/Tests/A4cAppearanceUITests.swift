@@ -29,12 +29,13 @@ final class A4cAppearanceUITests: XCTestCase {
             assertComposerFits(app)
             if scenario == "running" {
                 XCTAssertTrue(app.buttons["executionBlock.3"].waitForExistence(timeout: 20))
-                XCTAssertEqual(app.buttons["executionBlock.3"].value as? String, "已收起")
+                XCTAssertEqual(app.buttons["executionBlock.3"].value as? String, "已展开")
             } else if scenario == "completed" {
                 XCTAssertTrue(app.buttons["memoryUsed.3"].waitForExistence(timeout: 20))
             } else {
+                PhoneChatTestSupport.openPending(app)
                 XCTAssertTrue(app.buttons["approveOnce.00000001-1111-4111-8111-111111111111"].waitForExistence(timeout: 20))
-                XCTAssertTrue(app.buttons["approveCategory.00000001-1111-4111-8111-111111111111"].isEnabled)
+                XCTAssertTrue(app.buttons["approvalMore.00000001-1111-4111-8111-111111111111"].isEnabled)
                 XCTAssertTrue(app.buttons["rejectApproval.00000001-1111-4111-8111-111111111111"].isEnabled)
             }
             screenshot(app, "\(style)-\(scenario)")
@@ -59,7 +60,7 @@ final class A4cAppearanceUITests: XCTestCase {
                 app.buttons["resourceSource.tool:read"].tap()
                 XCTAssertTrue(app.staticTexts["调用 2 次"].waitForExistence(timeout: 10))
                 screenshot(app, "\(style)-source")
-                app.buttons["closeResourcesPanel"].tap()
+                PhoneChatTestSupport.returnFromResources(app)
                 XCTAssertTrue(draft.waitForExistence(timeout: 10))
                 XCTAssertEqual(draft.value as? String, "Continue with the next step")
                 app.buttons["previewArtifact.2"].tap()

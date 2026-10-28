@@ -607,5 +607,12 @@
     "api": "fileExporter",
     "sha256": "e27970f07fda87679ff5b1e5827fa6fb126178336c6ad526a438c652192701ab",
     "reason": "The file exporter completion is produced by the named nonisolated exportCompletion factory with an explicit Sendable function type. It only inspects the completion result on the SDK executor, discards error and URL payloads there, and invokes the Sendable failure action inside a Task explicitly isolated to MainActor; cancellation captures no state."
+  },
+  {
+    "file": "apps/apple/UI/PhoneChatContent.swift",
+    "line": 63,
+    "api": "sizeThatFits",
+    "sha256": "97745677695e1ab08ad9f7af7a2b2367b750c3bbf00c7e05118e05a4e2fe95be",
+    "reason": "UIViewRepresentable.sizeThatFits is an explicitly MainActor protocol requirement in the installed iOS SDK. This explicitly MainActor witness only measures its supplied UIKit text view using the proposed width; no background executor, model capture or asynchronous UI access."
   }
 ]

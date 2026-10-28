@@ -4,6 +4,48 @@ import WeftMateCore
 import AppKit
 #endif
 
+#if os(iOS)
+struct PhoneProjectsPage: View {
+    @ObservedObject var app: AppleAppModel
+    var body: some View {
+        List {
+            Section {
+                Text("一个项目对应电脑上的一个文件夹，工作前先确定读写范围。")
+                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                    .listRowBackground(Color.clear).listRowInsets(EdgeInsets(top:0,leading:0,bottom:AppleTokens.Space.p8,trailing:0))
+                ProjectsEmpty(app:app)
+            }
+            Section {
+                ForEach(app.projects.filter { !$0.revoked }) { project in
+                    NavigationLink {
+                        List {
+                            Section("读写范围") {
+                                Text(project.permission.title)
+                                if !project.instructions.isEmpty { Text(project.instructions).textSelection(.enabled) }
+                                Text("文件夹和权限在电脑上管理，危险操作继续按对话审批模式处理。")
+                                    .foregroundStyle(Weave.muted)
+                            }
+                            Section("项目对话") {
+                                ForEach(app.projectRows(project,query:"")) { row in
+                                    Button { app.openedSessionID=row.id } label: { PhoneChatPageRow(title:row.title,subtitle:row.running ? "正在处理" : "接着上次",icon:"chat") }.buttonStyle(.plain)
+                                }
+                                ProjectMoreRows(app:app,project:project,search:"")
+                            }
+                            Section {
+                                NavigationLink("在这里开始工作") { PhoneNewConversation(app:app,mode:.work,initialProjectID:project.id) }
+                                    .accessibilityIdentifier("projectNewConversation."+project.id)
+                            }
+                        }.navigationTitle(project.name).listStyle(.insetGrouped)
+                    } label: { PhoneChatPageRow(title:project.name,subtitle:"项目 · "+project.permission.title,icon:"folder",showsChevron:false) }
+                        .accessibilityIdentifier("phone.project."+project.id)
+                }
+            }
+        }.listStyle(.insetGrouped).scrollContentBackground(.hidden).background(Weave.grouped)
+            .navigationTitle("项目").navigationBarTitleDisplayMode(.large).refreshable { await app.refresh() }.accessibilityIdentifier("phone.projects")
+    }
+}
+#endif
+
 #if os(macOS)
 @MainActor enum ProjectFolderPicker {
     static var panel: NSOpenPanel?

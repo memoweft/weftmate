@@ -198,6 +198,14 @@ public struct PhoneChatMigration: Codable, Sendable {
     public var handoverTurnIDs: [String]? = nil
 }
 extension PhoneChatState {
+    public mutating func withdrawQueuedReply(_ id: String) -> PhoneChatMessage? {
+        guard let t=threads.firstIndex(where: { $0.id == selected }),
+              let m=threads[t].messages.firstIndex(where: { $0.id == id && $0.replyStatus == .queued }),
+              m > 0, threads[t].messages[m-1].role == "user" else { return nil }
+        let user=threads[t].messages[m-1]
+        threads[t].messages.removeSubrange((m-1)...m)
+        return user
+    }
     public mutating func prepareMigration(host: String, generation: Int) -> [OfflineTurn] {
         applyMigrationGeneration(host:host,generation:generation)
         let prior=migrations?[host]
