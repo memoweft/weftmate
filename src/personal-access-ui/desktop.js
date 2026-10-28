@@ -17,10 +17,11 @@
     if (!preview || preview.panel.hidden) return
     lifecycle(tabs.get(preview.active), 'hide')
     preview.panel.hidden = true
-    document.querySelector('.assistant-main').inert = false
+    byId('conversation-pane').inert = false
     document.body.classList.remove('preview-open', 'preview-expanded')
     preview.expand.setAttribute('aria-pressed','false');preview.expand.setAttribute('aria-label','放大右侧面板');preview.expand.title='放大右侧面板';preview.expand.replaceChildren(icon('expand'))
     byId('workspace-panels')?.setAttribute('aria-expanded', 'false')
+    byId('workspace-panels')?.setAttribute('aria-label','打开工作面板')
     if (restore) (returnFocus?.isConnected && returnFocus.getClientRects().length ? returnFocus : byId('workspace-panels'))?.focus({ preventScroll: true })
   }
   function updateContext(next) {
@@ -62,8 +63,9 @@
     if (compact()) toggleRail(true)
     const opening = preview.panel.hidden
     preview.panel.hidden = false; document.body.classList.add('preview-open')
-    document.querySelector('.assistant-main').inert = window.innerWidth <= 720 || document.body.classList.contains('preview-expanded')
+    byId('conversation-pane').inert = window.innerWidth <= 720 || document.body.classList.contains('preview-expanded')
     byId('workspace-panels')?.setAttribute('aria-expanded', 'true')
+    byId('workspace-panels')?.setAttribute('aria-label','收起右侧面板')
     if (opening) globalThis.WeftMotion?.reveal(preview.panel, 'slow')
     if (opening && notify) lifecycle(tabs.get(preview.active), 'show')
     renderLauncher()
@@ -222,17 +224,16 @@
     const resize = node('div', 'preview-resize'); resize.setAttribute('role', 'separator'); resize.setAttribute('aria-orientation', 'vertical'); resize.setAttribute('aria-label', '调整预览宽度'); resize.tabIndex = 0
     const header = node('div', 'preview-heading'), tablist = node('div', 'preview-tabs'); tablist.setAttribute('role', 'tablist'); tablist.setAttribute('aria-label', '工作面板标签页')
     const control = (name, glyph, run, cls = '') => { const b = node('button', `library-icon ${cls}`); b.type = 'button'; b.title = name; b.setAttribute('aria-label', name); b.append(icon(glyph)); b.onclick = run; return b }
-    const close = control('收起右侧面板', 'sidebar', () => hidePreview())
     const add = control('再打开一项', 'plus', () => panelMenu(add), 'preview-add'); add.setAttribute('aria-haspopup', 'menu')
     const expand = control('放大右侧面板', 'expand', () => {
       const expanded = document.body.classList.toggle('preview-expanded')
-      document.querySelector('.assistant-main').inert = expanded || window.innerWidth <= 720
+      byId('conversation-pane').inert = expanded || window.innerWidth <= 720
       expand.replaceChildren(icon(expanded ? 'collapse' : 'expand')); expand.setAttribute('aria-pressed', String(expanded)); expand.setAttribute('aria-label', expanded ? '还原右侧面板' : '放大右侧面板')
       expand.title = expand.getAttribute('aria-label')
     }); expand.setAttribute('aria-pressed', 'false')
     const overflow = control('更多面板标签', 'chevron', () => WeftPopover.openMenu(overflow, [...tabs].map(([key, tab]) => ({ name: tab.select.textContent, icon: 'file', action: () => selectTab(key, true) })), { label: '面板标签' }))
     overflow.setAttribute('aria-haspopup', 'menu')
-    const launcher = node('div', 'panel-launcher'); header.append(tablist, overflow, add, expand, close); panel.append(resize, header, launcher)
+    const launcher = node('div', 'panel-launcher'); header.append(tablist, overflow, add, expand); panel.append(resize, header, launcher)
     globalThis.WeftUiLayout.mountPreview(panel)
     preview = { panel, tablist, launcher, expand }
     const maximum = () => Math.max(300, window.innerWidth - (compact() || document.body.classList.contains('rail-collapsed') ? 0 : byId('session-rail').getBoundingClientRect().width) - 420)
@@ -290,7 +291,7 @@
     panelButton.onclick = () => preview && !preview.panel.hidden ? hidePreview() : showPanels(panelButton)
     window.addEventListener('resize', () => {
       if (compact() && preview && !preview.panel.hidden) { if (lastSide === 'right') toggleRail(true); else hidePreview(false) }
-      if (preview) { preview.setWidth(); document.querySelector('.assistant-main').inert = !preview.panel.hidden && (window.innerWidth <= 720 || document.body.classList.contains('preview-expanded')) }
+      if (preview) { preview.setWidth(); byId('conversation-pane').inert = !preview.panel.hidden && (window.innerWidth <= 720 || document.body.classList.contains('preview-expanded')) }
     })
     const rail = byId('session-rail')
     let wasNarrow = !!railMedia?.matches

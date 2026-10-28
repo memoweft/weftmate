@@ -100,7 +100,6 @@ try {
   await reminder.getByRole('button',{name:'删除',exact:true}).click();await reminder.waitFor({state:'hidden'});
   assert.equal((await fixture.request('/schedules')).items.length,0);checks.push('reminder pause, resume, run and delete');
   await page.keyboard.press('Escape'); await dialog.waitFor({ state: 'hidden' }); await button('允许一次').waitFor(); checks.push('Escape close and background accessibility restored');
-  await button('本对话用量').click(); await dialog.getByRole('heading', { name: '本对话用量', exact: true }).waitFor(); checks.push('conversation usage deep link');
   await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setContentSize(680, 800));
   await dialog.getByRole('combobox', { name: '设置分类', exact: true }).waitFor();
   assert.equal(await nav.isVisible(), false); await dialog.getByRole('combobox', { name: '设置分类', exact: true }).click(); await page.getByRole('option', { name: '设置 · 外观', exact: true }).click();

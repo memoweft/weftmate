@@ -100,8 +100,8 @@ globalThis.WeftModelThinking = (core, row, event) => {
     if (fresh || details.dataset.active === 'true' && !active) details.open = active && display === 'expanded';
     details.dataset.active = String(active);
     details.hidden = display === 'hidden';
-    const duration = Number.isFinite(event.data.thinkingMs) ? `${Math.round(event.data.thinkingMs / 1000)} 秒` : '用时未记录';
-    details.querySelector('summary').textContent = `思考过程 · ${active ? '正在思考' : duration}`;
+    const duration = Number.isFinite(event.data.thinkingMs) ? `${Math.round(event.data.thinkingMs / 1000)} 秒` : '';
+    details.querySelector('summary').textContent = [active?'正在思考…':'思考过程',duration].filter(Boolean).join(' · ');
     details.querySelector('p').textContent = text;
     if (!globalThis.WeftThinkingListener) {
         globalThis.WeftThinkingListener = true;

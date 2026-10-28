@@ -9,7 +9,7 @@ import { readFileSync, rmSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
-export async function startFixture({ phone = false, longReply = false, auth1 = false, cloud, bindingDevice } = {}) {
+export async function startFixture({ phone = false, longReply = false, auth1 = false, cloud, bindingDevice, usageSamples = false } = {}) {
   const root=mkdtempSync(join(tmpdir(),'weftmate-ux4-fixture-')),logs=new Map(),titles=new Map(),calls=[];
   const model={id:'synthetic',name:'合成模型',model:'synthetic',configured:true};
   const backend={getStatus:async()=>({runtime:'ready',referenceScan:'ready',capabilities:{chat:{available:true}}}),
@@ -44,6 +44,10 @@ export async function startFixture({ phone = false, longReply = false, auth1 = f
   async function command(body){let {command}=await request('/commands',{targetDeviceId:hostId,...body});while(['pending','dispatching','preflight'].includes(command.state)){await new Promise(resolve=>setTimeout(resolve,20));command=(await request('/commands/'+command.commandId)).command;}assert.equal(command.state,'accepted_by_dsh');return command;}
   const source=(await command({requestId:'create',kind:'session.create',modelProfileId:'synthetic'})).sessionId;
   await command({requestId:'message',kind:'session.message',sessionId:source,text:'请给出一条合成答复。',mode:'queue'});
+  if(usageSamples) {
+    const usage=await service.beginUsage({sessionId:source,profileId:'synthetic'});
+    await service.finishUsage({...usage,usage:{prompt_tokens:1000,completion_tokens:100}});
+  }
   let mobileRequest=request,mobileAuth=auth,mobileCookie;
   if(auth1){
     const {appDevice,control,refresh,proof}=await import('../../services/cloud/test/app-helpers.mjs');

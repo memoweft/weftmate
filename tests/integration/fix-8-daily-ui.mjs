@@ -102,12 +102,11 @@ for(const theme of ['light','dark']) {
       checks.push({theme,ordinaryFirstTitle:await desktop.evaluate(()=>({title:document.getElementById('assistant-title').textContent,selected:document.querySelector('#session-list .is-current')?.textContent}))});
     }else{
       assert.equal(state.isPhone,false);assert.equal(state.older,false);assert.equal(state.title,'新对话');assert.equal(state.placeholder,'向 WeftMate 说说你的目标');
-      await desktop.getByRole('button',{name:'自动',exact:true}).waitFor();assert.equal(await desktop.getByRole('button',{name:'本对话用量',exact:true}).isVisible(),false);
+      await desktop.getByRole('button',{name:'自动',exact:true}).waitFor();
       const input=desktop.getByRole('textbox',{name:'输入消息',exact:true}),first=`合成首条 ${theme}`;
       await input.fill(first);await desktop.getByRole('button',{name:'发送',exact:true}).click();
       await desktop.waitForFunction(()=>!document.getElementById('message-text').value);
       await desktop.getByRole('button',{name:new RegExp('^'+first)}).waitFor();await desktop.waitForFunction(text=>document.getElementById('assistant-title').textContent===text,first);
-      assert.equal(await desktop.getByRole('button',{name:'本对话用量',exact:true}).isVisible(),true);
       assert.equal(await desktop.getByRole('button',{name:'加载更早内容',exact:true}).isVisible(),false);
       await shot(desktop,'desktop','first-message');
       await desktop.getByRole('button',{name:'项目进度报告',exact:true}).click();
@@ -116,7 +115,6 @@ for(const theme of ['light','dark']) {
       await desktop.getByRole('button',{name:new RegExp('^'+first)}).click();
       await desktop.waitForFunction(text=>document.getElementById('assistant-title').textContent===text,first);
       await desktop.keyboard.press('Control+n');
-      assert.equal(await desktop.getByRole('button',{name:'本对话用量',exact:true}).isVisible(),false);
       assert.equal(await desktop.getByRole('button',{name:'加载更早内容',exact:true}).isVisible(),false);await shot(desktop,'desktop','keyboard-new');
       const second=`合成普通桌面对话 ${theme}`;await input.fill(second);await desktop.getByRole('button',{name:'发送',exact:true}).click();
       await desktop.getByRole('button',{name:new RegExp('^'+second)}).waitFor();

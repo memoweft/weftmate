@@ -12,7 +12,7 @@
 .personalization-form > .button { margin-top: var(--wm-space-20); }
 .model-thinking { margin: var(--wm-space-12) 0; color: var(--ink-secondary, var(--muted)); font-size: var(--wm-font-size-13); }
 .model-thinking summary { cursor: pointer; }
-.model-thinking p { white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--wm-space-12) 0; }
+.model-thinking p { white-space:pre-wrap; overflow-wrap:anywhere; color:var(--ink-secondary,var(--muted)); padding:0; margin:var(--wm-space-4) 0; }
 @media (max-width: 600px) {
   .personalization-form .settings-row { flex-direction: column; align-items: stretch; gap: var(--wm-space-12); }
   .personalization-form .settings-select-trigger { width: 100%; max-width: none; }
