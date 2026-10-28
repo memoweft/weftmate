@@ -95,10 +95,24 @@ struct ServiceModelMenuButton: View {
     @State private var query=""
     @Environment(\.colorScheme) private var scheme
     private var colors: ServiceControlPalette { .init(dark:scheme == .dark) }
+    private var menuWidth: CGFloat {
+        #if os(iOS)
+        AppleTokens.Phone.menuWidth
+        #else
+        AppleTokens.Space.pmodel_menu_extent
+        #endif
+    }
     var body: some View {
-        Button { open.toggle();all=false;query="";refresh() } label: { WeftIcon("model",size:serviceControlHeight == AppleTokens.Space.p32 ? AppleTokens.Space.p18 : AppleTokens.Space.p22).frame(width:serviceControlHeight,height:serviceControlHeight).contentShape(Circle()) }
+        Button { open.toggle();all=false;query="";refresh() } label: {
+            #if os(iOS)
+            HStack(spacing: AppleTokens.Space.p4) { Text(label).font(AppleTokens.Fonts.caption).lineLimit(1); WeftIcon("chevron",size:AppleTokens.Space.p12) }
+                .frame(minWidth:AppleTokens.Space.p44, maxWidth:AppleTokens.Space.p64 * 3, minHeight:AppleTokens.Space.p44).contentShape(Rectangle())
+            #else
+            WeftIcon("model",size:serviceControlHeight == AppleTokens.Space.p32 ? AppleTokens.Space.p18 : AppleTokens.Space.p22).frame(width:serviceControlHeight,height:serviceControlHeight).contentShape(Circle())
+            #endif
+        }
             .buttonStyle(.plain).foregroundStyle(colors.secondary).accessibilityLabel("模型："+label).accessibilityIdentifier(identifier)
-            .popover(isPresented:$open,arrowEdge:.bottom) { menuContent.presentationCompactAdaptation(.popover).presentationBackground(.clear).presentationCornerRadius(AppleTokens.Radius.r12) }
+            .phonePopover(isPresented:$open) { menuContent }
     }
     private var listHeight: CGFloat {
         let rows=services.reduce(0) { $0+ModelCatalog.menuModels($1.models,current:current,all:all,query:query).count }
@@ -115,7 +129,7 @@ struct ServiceModelMenuButton: View {
             }
             Divider()
             ServiceMenuRow(title:"添加模型服务…") { open=false;add() }.accessibilityIdentifier("modelServices.add")
-        }.padding(AppleTokens.Space.p12).frame(width:AppleTokens.Space.pmodel_menu_extent).foregroundStyle(colors.ink).background(colors.surface,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
+        }.padding(AppleTokens.Space.p12).frame(width:menuWidth).foregroundStyle(colors.ink).background(colors.surface,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
             .overlay(RoundedRectangle(cornerRadius:AppleTokens.Radius.r12).stroke(colors.line,lineWidth:AppleTokens.Space.p1))
             .shadow(color:colors.shadow,radius:AppleTokens.Space.p24,y:AppleTokens.Space.p12)
     }

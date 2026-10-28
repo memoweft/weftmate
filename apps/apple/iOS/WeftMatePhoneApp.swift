@@ -12,23 +12,25 @@ struct WeftMatePhoneApp: App {
     }
     var body: some Scene {
         WindowGroup {
-            #if DEBUG && targetEnvironment(simulator)
-            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple11-fixture") { PhoneReminderTestFixture(app:model) }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple9-fixture") { PhoneServiceScreenshotFixture(app:model) }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple8-fixture") { PhoneAttachmentScreenshotFixture(app:model) }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--phone-window-fixture") { PhoneWindowTestFixture(app:model) }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-addendum") { Apple5AddendumFixture(health:health) }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-fixture") { Apple5Fixture(health:health) }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple4-fixture") { Apple4Fixture(health: health) }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple3-fixture") { Apple3Fixture(health:health) }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--health4-double-model") { Health4BackgroundRegistrationFixture() }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--health4-fixture") { Health4Fixture(health:health) }
-            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--h1-healthkit-fixture") {
-                HealthKitUIFixture()
-            } else { content }
-            #else
-            content
-            #endif
+            Group {
+                #if DEBUG && targetEnvironment(simulator)
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple11-fixture") { PhoneReminderTestFixture(app:model).environmentObject(health) }
+                else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple9-fixture") { PhoneServiceScreenshotFixture(app:model) }
+                else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple8-fixture") { PhoneAttachmentScreenshotFixture(app:model) }
+                else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--phone-window-fixture") { PhoneWindowTestFixture(app:model) }
+                else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-addendum") { Apple5AddendumFixture(health:health) }
+                else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-fixture") { Apple5Fixture(health:health) }
+                else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple4-fixture") { Apple4Fixture(health: health) }
+                else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple3-fixture") { Apple3Fixture(health:health) }
+                else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--health4-double-model") { Health4BackgroundRegistrationFixture() }
+                else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--health4-fixture") { Health4Fixture(health:health) }
+                else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--h1-healthkit-fixture") {
+                    HealthKitUIFixture()
+                } else { content }
+                #else
+                content
+                #endif
+            }.environmentObject(health)
         }
         .onChange(of: logScenePhase) { _, phase in RunLogRuntime.shared.phase(phase) }
     }

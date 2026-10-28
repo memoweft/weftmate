@@ -12,6 +12,8 @@ final class Apple5UITests: XCTestCase {
             app.launchArguments=["--ui-testing","--apple5-fixture","--health4-render-only","--a5-local-server","--server-url",origin,"--ui-testing-namespace","apple5-"+UUID().uuidString,"--a5-theme",theme,theme]
             app.launchEnvironment=["WEFTMATE_APPLE5_USERNAME":try XCTUnwrap(env["WEFTMATE_APPLE5_USERNAME"]),"WEFTMATE_APPLE5_PASSWORD":try XCTUnwrap(env["WEFTMATE_APPLE5_PASSWORD"])]
             app.launch()
+            XCTAssertTrue(app.buttons["phone.sidebar"].waitForExistence(timeout: 35))
+            app.buttons["phone.sidebar"].tap(); app.buttons["phone.sidebar.main"].tap()
             XCTAssertTrue(app.buttons["mainChat.plus"].waitForExistence(timeout:35))
             let input=app.descendants(matching:.any)["mainChat.draft"]
             XCTAssertTrue(input.waitForExistence(timeout:10))
@@ -36,14 +38,16 @@ final class Apple5UITests: XCTestCase {
             app.swipeUp(); capture(app,theme,"health-today-lower")
             app.buttons["phone.tab.activity"].tap()
             let activity=app.buttons["activity.row.apple5-complete"]
-            XCTAssertTrue(activity.waitForExistence(timeout:20)); capture(app,theme,"activity-list"); activity.tap()
+            XCTAssertTrue(activity.waitForExistence(timeout:20))
+            for _ in 0..<6 where !activity.isHittable { app.swipeUp() }
+            XCTAssertTrue(activity.isHittable); capture(app,theme,"activity-list"); activity.tap()
             XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout:10)); capture(app,theme,"activity-detail"); app.buttons["phoneSheet.close"].tap()
-            app.buttons["phone.tab.goals"].tap()
+            app.buttons["phone.tab.chat"].tap(); app.buttons["phone.sidebar"].tap(); app.buttons["phone.sidebar.goals"].tap()
             let schedule=app.buttons["goals.schedule.apple5-reminder"]
             for _ in 0..<3 where !schedule.isHittable { app.swipeUp() }
             XCTAssertTrue(schedule.waitForExistence(timeout:20)); capture(app,theme,"goals-list"); schedule.tap()
             XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout:10)); capture(app,theme,"goals-detail"); app.buttons["phoneSheet.close"].tap()
-            app.buttons["phone.tab.resources"].tap()
+            app.buttons["phone.tab.chat"].tap(); app.buttons["phone.tab.chat"].tap(); app.buttons["phone.sidebar"].tap(); app.buttons["phone.sidebar.library"].tap()
             let file=app.buttons["library.row.apple5-file"]
             XCTAssertTrue(file.waitForExistence(timeout:20)); capture(app,theme,"library-list"); file.tap()
             XCTAssertTrue(app.descendants(matching:.any)["attachmentPreviewPanel"].waitForExistence(timeout:15)); XCTAssertTrue(app.buttons["filePreview.more"].exists)

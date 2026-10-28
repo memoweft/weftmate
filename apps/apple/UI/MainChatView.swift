@@ -410,7 +410,7 @@ struct MainChatView: View {
     }
     private var composerTools: some View {
             HStack {
-                Menu {
+                PhoneActionMenu {
                     Button("文件", image: ImageResource(name: "wm-file", bundle: .main)) { captureImportScope(); DispatchQueue.main.async { importing = true } }
                     #if os(iOS)
                     Button("相机", image: ImageResource(name: "wm-camera", bundle: .main)) {

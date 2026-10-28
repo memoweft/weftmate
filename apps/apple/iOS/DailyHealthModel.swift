@@ -103,6 +103,10 @@ import WeftMateCore
     }
     /// Created only after the owner explicitly navigates to Health.
     func enteredHealthPage(app: AppleAppModel) async {
+        #if DEBUG && targetEnvironment(simulator)
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("--ui-testing"), args.contains("--health4-render-only") { return }
+        #endif
         do { guard try prepare(app) else { return } }
         catch { log(0, success: false, category: "storage"); return }
         if !state.connected { await connect(app: app) }

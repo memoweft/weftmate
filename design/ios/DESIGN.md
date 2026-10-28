@@ -12,7 +12,7 @@
 
 ## Colors
 
-颜色的规范来源仍是 [tokens.json](../tokens/tokens.json)；局部映射和待确认增量在 [ios-prototype.json](../tokens/ios-prototype.json)。后者不进入现有产品生成器，不改变电脑或安卓的主题。[generate-assets.mjs](prototype/generate-assets.mjs) 将两份令牌生成到 [tokens.css](prototype/tokens.css)，生成文件不作为第二份可手改的色板。
+颜色的规范来源仍是 [tokens.json](../tokens/tokens.json)；局部映射和已认可的 iOS 增量在 [ios-prototype.json](../tokens/ios-prototype.json)。后者只进入 Apple 生成器的 iOS 条件分支，不改变电脑、安卓或手表的主题。[generate-assets.mjs](prototype/generate-assets.mjs) 将两份令牌生成到 [tokens.css](prototype/tokens.css)，生成文件不作为第二份可手改的色板。
 
 画布、分组背景、卡片和文字采用下表 iOS 增量，不再映射电脑端的暖色 `controlCanvas`。系统原生实现用语义颜色，浏览器用固定值展示默认深浅色。遮罩与栏背景半透明色仅属于本原型。健康指标继续使用已有 `apple.colors.health*`，错误和状态使用 `danger`、`status`，不借健康颜色替换应用强调色。
 

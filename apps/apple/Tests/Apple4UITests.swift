@@ -12,6 +12,19 @@ final class Apple4UITests: XCTestCase {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "apple4-" + theme + "-" + name; attachment.lifetime = .keepAlways; add(attachment)
     }
+    @MainActor func testCandidatePreferencesOpenAcrossFixtureRelaunches() throws {
+        let origin = try XCTUnwrap(ProcessInfo.processInfo.environment["WEFTMATE_APPLE3_ORIGIN"])
+        for index in 0..<3 {
+            let app = XCUIApplication()
+            app.launchArguments = ["--ui-testing", "--apple4-fixture", "--health4-render-only",
+                "--a5-local-server", "--server-url", origin, "--ui-testing-namespace", "prefs-" + UUID().uuidString]
+            app.launch()
+            XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "mainChat.draft").firstMatch.waitForExistence(timeout: 30))
+            XCTAssertFalse(app.staticTexts["无法打开测试存储，请检查启动参数。"].exists)
+            capture(app, "storage", "preferences-relaunch-" + String(index))
+            app.terminate()
+        }
+    }
     @MainActor func testSmallScreenRefreshBatch() throws {
         let origin = ProcessInfo.processInfo.environment["WEFTMATE_APPLE3_ORIGIN"]!
         for theme in ["light", "dark"] {
@@ -56,11 +69,10 @@ final class Apple4UITests: XCTestCase {
             XCTAssertTrue(app.buttons["phone.sidebar"].waitForExistence(timeout: 20)); app.buttons["phone.sidebar"].tap()
             XCTAssertTrue(app.textFields["phone.sidebar.search"].waitForExistence(timeout: 10)); capture(app, theme, "sidebar")
             let sidebar = app.descendants(matching: .any)["phone.sidebar.panel"]
-            sidebar.buttons["phoneAccountMenu"].firstMatch.tap()
+            sidebar.buttons["phone.sidebar.settings"].firstMatch.tap()
             XCTAssertTrue(app.buttons["settings.accountCard"].waitForExistence(timeout: 20)); capture(app, theme, "settings")
             app.buttons["closeAuxiliarySheetButton"].firstMatch.tap()
-            app.buttons["phone.sidebar.close"].tap()
-            for tab in ["chat", "activity", "health", "goals", "resources"] {
+            for tab in ["chat", "activity", "health"] {
                 let button = app.buttons["phone.tab." + tab]
                 XCTAssertTrue(button.waitForExistence(timeout: 15)); button.tap()
                 XCTAssertGreaterThanOrEqual(button.frame.width, 44)
@@ -82,20 +94,25 @@ final class Apple4UITests: XCTestCase {
             XCTAssertEqual(app.staticTexts.matching(identifier: "输出与来源").count, 1)
             XCTAssertGreaterThanOrEqual(app.descendants(matching: .any)["phoneSheet.resourcesCard"].frame.width, 300)
             capture(app, theme, "sheet"); app.buttons["phoneSheet.close"].tap()
-            app.buttons["phone.tab.resources"].tap(); capture(app, theme, "tab-resources")
+            app.buttons["phone.sidebar"].tap(); app.buttons["phone.sidebar.library"].tap(); capture(app, theme, "tab-resources")
             app.buttons["phone.tab.activity"].tap()
-            XCTAssertTrue(app.staticTexts["每周的回顾会出现在这里。"].waitForExistence(timeout: 15)); capture(app, theme, "tab-activity")
-            app.buttons["phone.tab.chat"].tap(); app.buttons["phone.sidebar"].tap()
+            XCTAssertTrue(app.segmentedControls["activity.filter"].waitForExistence(timeout: 15))
+            // This legacy host fixture does not implement the newer activity endpoint.
+            XCTAssertTrue(app.staticTexts["更新电脑上的 WeftMate 后可使用这项功能。"].waitForExistence(timeout: 15))
+            capture(app, theme, "tab-activity")
+            app.buttons["phone.tab.chat"].tap(); app.buttons["phone.tab.chat"].tap(); app.buttons["phone.sidebar"].tap()
             let sidebar = app.descendants(matching: .any)["phone.sidebar.panel"]
-            sidebar.buttons["phoneAccountMenu"].firstMatch.tap()
+            sidebar.buttons["phone.sidebar.settings"].firstMatch.tap()
             XCTAssertTrue(app.buttons["settings.accountCard"].waitForExistence(timeout: 20))
             let logout = app.buttons["settings.logout"]
             for _ in 0..<8 where !logout.isHittable { app.swipeUp() }
             XCTAssertTrue(logout.isHittable); capture(app, theme, "settings-bottom")
-            app.buttons["closeAuxiliarySheetButton"].firstMatch.tap(); app.buttons["phone.sidebar.close"].tap()
+            app.buttons["closeAuxiliarySheetButton"].firstMatch.tap()
             try choose(app, "side")
             XCTAssertTrue(app.staticTexts["可以先留出一段时间散步，再读几页书。"].waitForExistence(timeout: 25))
             XCTAssertTrue(app.buttons["sendButton"].exists)
+            app.descendants(matching: .any).matching(identifier: "conversationDraft").firstMatch.tap()
+            XCTAssertTrue(app.buttons["contextUsage"].waitForExistence(timeout: 10))
             XCTAssertGreaterThanOrEqual(app.buttons["contextUsage"].frame.width, 44)
             XCTAssertGreaterThanOrEqual(app.buttons["contextUsage"].frame.height, 44)
             capture(app, theme, "side-chat")

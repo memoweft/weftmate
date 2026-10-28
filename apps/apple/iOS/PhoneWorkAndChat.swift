@@ -142,11 +142,11 @@ struct PhoneNewConversation: View {
                     TextField(mode == .chat ? "聊一聊…" : "让电脑做什么…", text: $app.phoneNewConversationDraft, axis: .vertical)
                         .lineLimit(1...6).focused($focused).accessibilityIdentifier("phone.new.text")
                     composerTools
-                }.padding(AppleTokens.Space.p12).background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24)).padding(AppleTokens.Space.p12)
+                }.padding(AppleTokens.Space.p12).background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Phone.composerRadius)).padding(AppleTokens.Space.p12)
     }
     private var composerTools: some View {
                     HStack {
-                        Menu {
+                        PhoneActionMenu {
                             if UIImagePickerController.isSourceTypeAvailable(.camera) { Button("拍照") { focused=false;importEpoch=app.accountEpoch;camera=true } }
                             Button("照片图库") { focused=false;importEpoch=app.accountEpoch;photos=true }
                             Button("选择文件") { focused=false;importEpoch=app.accountEpoch;importing=true }
