@@ -15,6 +15,10 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     const inMain = () => inHome() || !!core.state.workTimeline && core.state.selectedChatId === core.state.workTimeline.chatId && core.state.activeChatSource === 'desktop';
     const scope = () => `${core.state.identityGeneration}:${core.state.ownerId}:${core.state.historyGeneration}:${core.state.selectedChatId}`;
     const notify = () => { effects.renderMainChat?.(); effects.renderOlderControl(); effects.updateAvailability(); };
+    function rememberConversationDraft() {
+        if (!core.state.sessionSelecting && !core.state.sideCreating)
+            drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
+    }
     function clearLogical(purge = false) {
         core.historyWaitAbort?.abort();
         sideWaitScope=null;sideWaitCursor=null;sideWaitRevision=0;
@@ -127,7 +131,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         }
         core.state.workTimeline = null;
         unavailableChatId = null;
-        if (!core.state.sessionSelecting && !core.state.sideCreating) drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
+        rememberConversationDraft();
         selectionGeneration++; core.state.sessionSelecting = false;core.state.sideCreating=null;
         core.cancelAttachmentUpload(); core.state.activeChatSource = 'desktop'; core.state.selectedPhoneConversationId = null;
         core.state.selectedChatId = core.state.mainChat.chatId; core.state.selectedSessionId = core.state.mainChat.activeSessionId;
@@ -152,18 +156,22 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             effects.showConversation(); effects.closeRail(); return;
         }
         if (core.state.mainChat?.activeSessionId === id) return selectMainChat();
+        rememberConversationDraft();
         const logical = core.state.chats?.find(row => row.activeSessionId === id && row.logicalHistory);
         if (logical) {
-            selectionGeneration++; core.state.sessionSelecting = false; core.state.sideCreating = null;
+            const generation = ++selectionGeneration, identity = core.state.identityGeneration;
+            core.state.sessionSelecting = false; core.state.sideCreating = null;
             core.cancelAttachmentUpload(); core.state.workTimeline = logical; core.state.activeChatSource = 'desktop';
             core.state.selectedPhoneConversationId = null; core.state.selectedSessionId = id; core.state.selectedChatId = logical.chatId;
             core.state.modelProfileId = logical.modelProfileId || logical.selectedModelProfileId || core.state.modelProfileId;
             core.state.newConversation = false; core.state.historyEvents.clear(); core.state.seenSeq.clear(); clearLogical();
             effects.paintSelectedSession(id); effects.renderSessions(); effects.showConversation(); effects.closeRail();
-            await readPage({}, 'tail'); effects.scrollToLatest(); await core.refreshConversationTasks(); return;
+            await readPage({}, 'tail');
+            if (generation !== selectionGeneration || identity !== core.state.identityGeneration) return;
+            effects.restoreMainChatDraft?.(drafts.get(logical.chatId) || '');
+            effects.scrollToLatest(); await core.refreshConversationTasks(); return;
         }
         core.state.workTimeline = null;
-        if (!core.state.sessionSelecting && !core.state.sideCreating) drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
         if(!creating)core.state.sideCreating=null;
         const generation = ++selectionGeneration, identity = core.state.identityGeneration;
         core.state.sessionSelecting = true; core.cancelAttachmentUpload(); notify();
@@ -254,7 +262,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     async function refreshHistory(reset = false, waitForChange = false) {
         if (!reset && !core.historyReadAllowed()) return core.state.historyReadResult;
         if (!inMain()) {
-            if (waitForChange && core.canWaitForReply() && core.state.selectedChatId && !core.conversationRunning(core.state.selectedSessionId) && core.state.turnStatus !== 'running' && !reset) {
+            if (waitForChange && core.canWaitForReply() && core.state.selectedChatId && !reset) {
                 if (sideWaitRead) return sideWaitRead;
                 const token = scope(), chatId = core.state.selectedChatId, controller = new AbortController();
                 core.historyWaitAbort = controller;
@@ -311,7 +319,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const token = scope(), generation = historyWindow.state.generation;
         let outcome;
         try {
-            const waiting = waitForChange && core.canWaitForReply() && (!core.mainReplyActive() || !(historyWindow.state.liveEvents || []).length) && !core.state.submitting && !core.state.unresolvedSubmission;
+            const waiting = waitForChange && core.canWaitForReply() && !core.state.submitting && !core.state.unresolvedSubmission;
             const controller = waiting ? new AbortController() : null;
             if (controller) core.historyWaitAbort = controller;
             const page = await core.readChatChanges(core.state.selectedChatId, historyWindow.state.syncCursor, 200,
@@ -560,7 +568,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         } while (cursor);
         return { outputs: core.deduplicateOutputs([...outputs.values()]), sources: [...sources.values()] };
     }
-    return { markLatestChatRead, cancelSessionSelection, pageSessions, searchSessions, supportsChat: supports, inMainChat: inHome, inLogicalTimeline: inMain, currentTimelineChat: timelineChat, refreshLogicalSessions: refreshSessions, selectLogicalSession: selectSession, selectMainChat, refreshLogicalHistory: refreshHistory, loadOlderLogicalHistory: loadOlderHistory, jumpChatDate, searchMainChat, moveSearchHit,
+    return { rememberConversationDraft, markLatestChatRead, cancelSessionSelection, pageSessions, searchSessions, supportsChat: supports, inMainChat: inHome, inLogicalTimeline: inMain, currentTimelineChat: timelineChat, refreshLogicalSessions: refreshSessions, selectLogicalSession: selectSession, selectMainChat, refreshLogicalHistory: refreshHistory, loadOlderLogicalHistory: loadOlderHistory, jumpChatDate, searchMainChat, moveSearchHit,
         mainChatDays: () => historyWindow.days(),
         mainReplyActive: () => {const last=historyWindow.ordered().filter(event=>['user.message','assistant.message','turn.started','turn.ended'].includes(event.type)).at(-1);return inMain()&&(timelineChat().running||last?.data?.live===true||['user.message','turn.started'].includes(last?.type));}, expandChatDay: date => { historyWindow.state.expanded.add(date); notify(); }, openSideChat,
         startChatConversation: () => supports('sideChats') && core.state.mainChat ? openSideChat({ entry: 'composer', parent: {kind:'main',id:core.state.mainChat.chatId} }).catch(error => effects.toast(core.failureMessage(error))) : (core.state.selectedChatId = null, legacy.startNewConversation(true)),

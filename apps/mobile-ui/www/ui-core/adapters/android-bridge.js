@@ -178,6 +178,9 @@
       get: id => bridge.call('cloud.app.key', { id }),
       sign: async (id, input) => (await bridge.call('cloud.app.sign', { id, input })).signature,
       clear: id => bridge.call('cloud.app.key', { id, clear: true }),
+      pairingDigest: async values => (await bridge.call('cloud.app.pairing.hash', { values })).digest,
+      pinPairing: (origin, pin) => bridge.call('cloud.app.pairing.pin', { origin, pin }),
+      clearPairingPin: (origin, pin, lease, completed) => bridge.call('cloud.app.pairing.pin', { origin, pin, lease, completed, clear: true }),
     } : undefined };
   };
   globalThis.WeftUiCore.adaptMobileCloudClient = (client, connected = async () => {}) => {
@@ -207,6 +210,7 @@
         return await exchange(...args);
       }
       catch (error) {
+        if (error.status === 403 && error.code === 'PAIRING_CONFIRMATION_REQUIRED') return { status: 'cloud_only', pairingRequired: true };
         if (error.status === 404 && ['HOST_NOT_FOUND', 'NOT_FOUND'].includes(error.code)) return { status: 'cloud_only' };
         throw error;
       }

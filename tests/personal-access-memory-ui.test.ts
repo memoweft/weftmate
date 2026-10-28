@@ -395,12 +395,12 @@ test('memory view preserves chat draft and discards a successful response for an
     createComment: (text: string) => { const node = new Node(); node.tagName = '#COMMENT'; node.textContent = text; return node },
     createElementNS: (_namespace: string, tag: string) => { const node = new Node(); node.tagName = tag.toUpperCase(); return node },
     querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : selector === 'section.settings-category[data-category="general"]' ? get('general-panel') : null,
-    querySelectorAll: () => [], addEventListener() {} }
+    querySelectorAll: () => [], addEventListener() {}, dispatchEvent() { return true } }
   const matchMedia = (media: string) => ({ media, matches: false, addEventListener() {}, removeEventListener() {} })
   const window = { location: { hash: '', pathname: '/personal/v1/ui', search: '' },
     history: { replaceState() {} }, addEventListener() {}, matchMedia, WeftIcons: null as any }
   mountDesktopTestTree(document, get)
-  const context = { document, window, matchMedia, location: { ...window.location, protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl, Event,
+  const context = { document, window, matchMedia, location: { ...window.location, protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl, Event, CustomEvent,
     MutationObserver: class { constructor(_callback: () => void) {} observe() {} disconnect() {} },
     Option: class extends Node { constructor(text: string, value: string) { super(); this.tagName = 'OPTION'; this.textContent = text; this.value = value } },
     crypto: { randomUUID: () => `synthetic-${++requestSequence}` },

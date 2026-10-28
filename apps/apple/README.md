@@ -145,7 +145,9 @@ python3 Scripts/package_mac_trial.py --artifacts /private/path/apple-delivery
 
 ### 独立 iPhone 测试候选（APPLE-5）
 
-生成器另外提供 `WeftMatePhoneWindowTest` 和对应 UI 测试目标。候选固定为 `com.weftmate.apple.windowtest`，主屏幕显示“WeftMate 苹果测试”；使用独立应用容器、固定的测试 Keychain service、偏好 suite 与本机状态目录。普通手动重开仍使用这些测试存储，不需要保留 Xcode 启动参数。原 Phone、Mac、Watch 目标仍分别构建。
+生成器另外提供 `WeftMatePhoneWindowTest` 和对应 UI 测试目标。候选固定为 `com.weftmate.apple.windowtest`，主屏幕显示“WeftMate 苹果测试”；使用独立应用容器、固定的测试 Keychain service、应用偏好域与本机状态目录。普通手动重开仍使用这些测试存储，不需要保留 Xcode 启动参数。原 Phone、Mac、Watch 目标仍分别构建。
+
+只有 Debug 模拟器自动测试显式传入 `--ui-testing --ui-testing-namespace <独立名称>` 时，候选才使用该命名空间隔离合成账号、偏好和草稿；同名重启恢复，不同名称互不读取。实体 iPhone 与普通 Xcode／主屏幕启动继续使用固定候选存储，覆盖安装不改其数据域。
 
 此目标支持手机聊天、同步和健康读取：保留独立存储，不嵌入 Watch，也不启动 WatchConnectivity。使用 HealthKit 与 background-delivery entitlement，注册健康后台任务并启用 fetch；首次主动进入健康页时请求只读授权（toShare 为空），登录或启动时不请求健康授权。提醒的前台与本机通知逻辑仍在，提醒后台刷新仍不注册。`Config/Local.xcconfig` 沿用受忽略的本机团队配置；不要把团队或凭据写进生成器。云登录继续使用已登记的回调 URI。
 

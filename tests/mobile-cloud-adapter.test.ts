@@ -48,6 +48,15 @@ test('mobile adapter preserves native trust and token errors without inventing d
   const invalid = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, authorized: async () => ({status:'online'}), exchange: async () => { throw { code: 'CLOUD_TOKEN_INVALID' }; } });
   await assert.rejects(invalid.exchange(), error => error.code === 'CLOUD_TOKEN_INVALID');
 });
+test('a verified mobile cloud account can enter phone mode while the computer requires v2 comparison', async () => {
+  const api = context();
+  const client = api.adaptMobileCloudClient({ host: 'https://relay.example', config: { hostId: 'host-example' },
+    authorized: async () => ({ status: 'online' }),
+    exchange: async () => { throw { status: 403, code: 'PAIRING_CONFIRMATION_REQUIRED' }; } });
+  const result = await client.exchange();
+  assert.equal(result.status, 'cloud_only'); assert.equal(result.pairingRequired, true);
+  assert.equal(result.hostTrust, undefined); assert.equal(result.account, undefined);
+});
 
 test('cached native content restores without a server request or cloud credentials', async () => {
   const profile = { owner: 'cached-owner', username: 'Synthetic', device: { id: 'cached-device' }, connectionVerified: false };

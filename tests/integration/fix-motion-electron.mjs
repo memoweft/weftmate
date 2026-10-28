@@ -72,8 +72,10 @@ try {
     assert.equal(await page.locator('#assistant-view').evaluate(node => node===globalThis.__motionWorkspace),true,'settings preserves the existing workspace');
     assert.equal(await page.locator('#assistant-view').evaluate(node => node.getAnimations().some(animation => animation.animationName === 'm-enter-rise' && animation.playState === 'running')), false, 'returning from a modal must not replay the retained workspace');
     const result = await page.evaluate(async () => {
+      const list = document.createElement('ol'); list.className = 'transcript'; list.style.position = 'absolute';
+      document.getElementById('conversation-pane').append(list);
       const body = WeftContent.create('', 'message-text markdown-body');
-      const row = document.createElement('li'); row.className = 'message assistant'; row.dataset.motion = 'enter-rise'; row.append(body); document.getElementById('transcript').append(row);
+      const row = document.createElement('li'); row.className = 'message assistant'; row.dataset.motion = 'enter-rise'; row.append(body); list.append(row);
       const text = '你好🙂，这段**合成回复**按帧流入。';
       WeftContent.update(body, text, { streaming: true });
       const before = body._renderText || '';
@@ -82,12 +84,29 @@ try {
       WeftContent.update(body, text + '完成。', { streaming: false });
       const samples = [first];
       while (body._renderText !== text + '完成。') { await new Promise(requestAnimationFrame); samples.push(body._renderText); }
-      return { before, first, samples, text: body.textContent, html: body.innerHTML, rowAnimation: getComputedStyle(row).animationName };
+      const result = { before, first, samples, text: body.textContent, html: body.innerHTML, rowAnimation: getComputedStyle(row).animationName };
+      list.remove(); return result;
     });
     assert.equal(result.before, ''); assert.equal(result.first, '你好🙂，这段**合成回复**按帧流入。');
     for (let i = 1; i < result.samples.length; i++) assert.ok(result.samples[i].startsWith(result.samples[i - 1]));
     assert.equal(result.text, '你好🙂，这段合成回复按帧流入。完成。'); assert.match(result.html, /<strong>合成回复<\/strong>/);
     assert.equal(result.rowAnimation, 'm-enter-rise');
+    const burst = await page.evaluate(async () => {
+      const body = WeftContent.create('1. 已读条目\n2. 尾部', 'message-text markdown-body', { streaming: true });
+      document.getElementById('conversation-pane').append(body);
+      await new Promise(requestAnimationFrame);
+      const list = body.querySelector('ol'), first = list.firstElementChild, tail = list.lastElementChild.firstChild;
+      const range = document.createRange(); range.selectNodeContents(first); getSelection().removeAllRanges(); getSelection().addRange(range);
+      const text = '1. 已读条目\n2. 尾部' + '新增🙂e\u0301'.repeat(2000) + '\n3. 新条目';
+      WeftContent.update(body, text.slice(0, 50), { streaming: true });
+      WeftContent.update(body, text, { streaming: true });
+      await new Promise(requestAnimationFrame);
+      const result = { exact: body._renderText === text, list: body.querySelector('ol') === list,
+        first: list.firstElementChild === first, tail: list.children[1].firstChild === tail,
+        selection: getSelection().toString(), items: list.children.length, text: list.children[1].textContent };
+      body.remove(); return result;
+    });
+    assert.deepEqual(burst, { exact: true, list: true, first: true, tail: true, selection: '已读条目', items: 3, text: '尾部' + '新增🙂e\u0301'.repeat(2000) });
     const css = await page.evaluate(() => {
       const style = getComputedStyle(document.documentElement);
       return ['dur-1', 'dur-2', 'dur-3', 'dur-4', 'dur-5', 'ease-out', 'ease-in-out', 'ease-in', 'ease-linear'].map(key => style.getPropertyValue('--' + key).trim());

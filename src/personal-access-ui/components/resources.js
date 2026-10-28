@@ -90,11 +90,11 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         globalThis.WeftDesktopUI?.appendArtifactActions(line, artifact, ui.toast);
         parent.append(line);
     }
-    async function openTimelinePreview(context, path, title, versions = []) {
+    async function openTimelinePreview(context, path, title, versions = [], target = null) {
         if (!core.conversationTaskCurrent(context))
             return;
         if (window.WeftDesktop) {
-            const preview = window.WeftDesktop.openPreview(title, document.activeElement, path);
+            const preview = target || window.WeftDesktop.openPreview(title, document.activeElement, path);
             const phone=globalThis.WeftPhoneUnify?.isPhone();
             const configurePhoneFile=artifact=>{if(!phone)return;const menu=preview.panel.querySelector('.phone-file-topbar button:last-child'),id=artifact?.artifactId||artifact?.id||String(path).match(/\/(?:artifacts|library)\/([^/]+)\/preview$/)?.[1];
                 if(menu)WeftPhoneFiles.attach({menu,name:title,getBlob:id?()=>WeftPhoneFiles.readBlob(core.artifactDownloadUrl(id)):undefined,
@@ -169,15 +169,14 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             }
         } catch {if(core.conversationTaskCurrent(context) && pending.isConnected)pending.textContent='来源暂时无法读取，请重新打开。'}
     }
-    function openConversationResource(item, trigger = document.activeElement, showExcerpt = false) {
+    function openConversationResource(item, trigger = document.activeElement, showExcerpt = false, previewTarget = null) {
         const context = core.conversationTaskContext();
         if (!core.conversationTaskCurrent(context))
             return;
         if (item.artifact) {
-            void ui.openTimelinePreview(context, core.artifactPreviewPath(item.artifact.artifactId), item.name, item.versions);
-            return;
+            return ui.openTimelinePreview(context, core.artifactPreviewPath(item.artifact.artifactId), item.name, item.versions, previewTarget);
         }
-        const target = window.WeftDesktop.openPreview(item.name, trigger, item.key, item.kind);
+        const target = previewTarget || window.WeftDesktop.openPreview(item.name, trigger, item.key, item.kind);
         target.content.replaceChildren(ui.element('h2', '', item.name), ui.element('p', 'muted', window.WeftDesktop.usageText(item)));
         if(item.memory)return openMemorySource(item.memory,target.content,context);
         if (item.location)
@@ -189,7 +188,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             address.setAttribute('aria-label', '网页地址');
             target.content.append(address);
         }
-        for (const use of item.uses) {
+        for (const use of item.uses || []) {
             const line = ui.element('details', 'resource-usage');
             const time = use.at && Number.isFinite(Date.parse(use.at)) ? core.dateText(use.at) : '';
             const summary = ui.element('summary', '', `${use.summary}${time ? ` · ${time}` : ''}`);
@@ -242,9 +241,8 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
     }
     async function openFileChange(file, trigger) {
         const context=core.conversationTaskContext();
-        if(globalThis.WeftPanels?.entries.some(entry=>entry.kind==='review') && globalThis.WeftWorkspacePanel) {
-            WeftPanels.open('review',trigger);return;
-        }
+        // Applied-change cards describe the recorded tool result. Its before/after
+        // content remains useful when the live Git working tree has changed.
         const key=JSON.stringify([context.sessionId,file.path,file.steps.map(step=>[step.sessionId,step.detailRef.seq])]);
         const preview=WeftDesktop.openPreview(file.path.split(/[\\/]/).at(-1),trigger,`change:${key}`,'file');
         const render=async()=>{
@@ -336,5 +334,16 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         if (core.state.activeChatSource === 'phone')
             ui.renderSelectedPhoneConversation();
     }
+    if (globalThis.WeftPanels) Object.assign(WeftPanels.services, {
+        workspaceRequest(ctx, action, body) {
+            const route = `/workspaces/${encodeURIComponent(ctx.sessionId)}/${action}`;
+            const options = body === undefined ? {} : { method: 'POST', body, protectedWrite: true };
+            if (ctx.computerId && core.canUseComputerChannel?.()) return core.computerApi(ctx.computerId, route, options);
+            if (ctx.computerId && ctx.computerId !== core.state.hostId) throw { code: 'COMPUTER_OFFLINE' };
+            return core.accessApi(route, options);
+        },
+        resources: core.loadConversationResources,
+        previewResource: (item, content) => openConversationResource(item, undefined, true, { content, panel: content }),
+    });
     return { closeResourcePreview, removeResourcePreview, inlineTaskInfo, appendTimelineArtifact, openTimelinePreview, openFileChange, appendResourceArtifactActions, openConversationResource, renderTimeline, showConversation };
 };

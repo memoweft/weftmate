@@ -86,6 +86,7 @@ import { buildConversationContext } from '../personal-conversations/context.mjs'
 import { defaultUsagePrice } from './usage.mjs';
 import { usageResponse } from './usage-response.mjs';
 import { chatForSession, protectMainSession } from './chat-identity.mjs';
+import { handleWorkspaceFiles } from './workspace-files.mjs';
 
 export function createHttpHandler(context) {
   const bootId = randomUUID(), startedAt = new Date().toISOString();
@@ -237,6 +238,18 @@ export function createHttpHandler(context) {
         if (url.search) throw failure('INVALID_REQUEST');
         context.authenticate(request, 'account:manage');
         return context.json(response, 200, { account: await context.updateAccountProfile(request, await context.readJson(request, 192 * 1024)) });
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/devices/sync') {
+        if(url.search)throw failure('INVALID_REQUEST');
+        const current=context.authenticate(request,'account:manage');
+        const devices=Object.entries(state.devices).filter(([,device])=>!device.revoked).map(([deviceId])=>{
+          const cloudDeviceId=context.cloudIdentity?.cloudDeviceId(current.ownerId,deviceId);
+          let syncDeviceId=deviceId;try{syncDeviceId=context.cloudIdentity?.offlineDeviceId?.(ownerId,deviceId)??deviceId;}catch{}
+          const offline=context.offline.deviceStatus(ownerId,syncDeviceId),legacy=context.syncStores.get(ownerId)?.deviceStatus(deviceId);
+          const sync=offline??legacy;
+          return {deviceId,...(cloudDeviceId?{cloudDeviceId}:{}),sync};
+        });
+        return context.json(response,200,{devices});
       }
       if (request.method === 'GET' && pathname === '/personal/v1/auth/devices') {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -1154,6 +1167,7 @@ export function createHttpHandler(context) {
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
           canManage: context.hostOwner(ownerId) && current.via === 'cookie' && current.device.scopes.includes('account:manage') });
       }
+      if (await handleWorkspaceFiles(context, request, response, ownerId, url)) return;
       if (request.method === 'GET' && pathname === '/personal/v1/workspaces/browser') {
         if (url.search) throw failure('INVALID_REQUEST');
         context.authenticate(request, 'sessions:read');

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import { tamperCiphertext } from './helpers/tamper-ciphertext.mjs';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { webcrypto, randomBytes } from 'node:crypto';
@@ -39,6 +39,56 @@ async function fixture(t: any) {
   const host = (route: string, body: any) => service.handle({ method: 'POST', body }, {}, new URL('http://127.0.0.1/personal/v1' + route), identity.ownerId);
   return { service, host, context, root, accepted, generation: () => generation, remove: () => { items = []; } };
 }
+
+test('forgetting waits for the device to acknowledge the new replica generation, including after restart', async t => {
+  const f=await fixture(t),vault=await W.browserVault('purge-status',{indexedDB:new IDBFactory(),crypto:webcrypto});
+  const publicJwk=await vault.key();
+  await f.host('/offline/sync',{publicJwk,generation:0,hashes:{}});
+  const authenticate=f.context.authenticate;
+  f.context.authenticate=()=>({...authenticate(),deviceId:'another-device'});
+  await f.host('/offline/sync',{publicJwk,generation:1,hashes:{}});
+  f.context.authenticate=authenticate;
+  await f.service.invalidate(identity.ownerId);
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).cleanup.state,'waiting_device');
+  // Providing the new replica is not a receipt from the phone.
+  await f.host('/offline/sync',{publicJwk,generation:1,hashes:{}});
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).cleanup.state,'waiting_device');
+  const reopened=await createOfflineService(f.context);t.after(()=>reopened.close());
+  assert.equal(reopened.deviceStatus(identity.ownerId,identity.deviceId).cleanup.state,'waiting_device');
+  await f.host('/offline/sync',{publicJwk,generation:2,hashes:{}});
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).cleanup.state,'acknowledged');
+  assert.equal(f.service.deviceStatus(identity.ownerId,'another-device').cleanup.state,'waiting_device','one device cannot acknowledge the other device');
+  assert.ok(!JSON.stringify(f.service.deviceStatus(identity.ownerId,identity.deviceId)).includes('publicJwk'));
+  const replacement=await W.browserVault('replacement-key',{indexedDB:new IDBFactory(),crypto:webcrypto});
+  await f.host('/offline/sync',{publicJwk:await replacement.key(),generation:0,hashes:{}});
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).cleanup.state,'waiting_device','a replacement key cannot inherit the previous replica receipt');
+});
+
+test('device sync summary counts acknowledged originals once and keeps receipt separate from memory formation', async t => {
+  const f=await fixture(t),vault=await W.browserVault('device-status',{indexedDB:new IDBFactory(),crypto:webcrypto});
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId),null);
+  await f.host('/offline/sync',{publicJwk:await vault.key(),generation:0,hashes:{}});
+  const turn={id:'status-turn',conversationId:'status-chat',timestamp:Date.now(),messages:[{role:'user',text:'private-original'}]};
+  await f.host('/offline/turns',{generation:1,turns:[turn]});
+  await f.host('/offline/turns',{generation:1,turns:[turn]});
+  const status=f.service.deviceStatus(identity.ownerId,identity.deviceId);
+  assert.equal(status.receivedOriginals,1);assert.ok(status.lastReceivedAt);assert.ok(status.replicaPublishedAt);
+  assert.equal(status.memoryState,'submitted');
+  assert.ok(!JSON.stringify(status).includes('private-original'));
+  const reopened=await createOfflineService(f.context);t.after(()=>reopened.close());
+  assert.deepEqual(reopened.deviceStatus(identity.ownerId,identity.deviceId),status);
+  await f.service.invalidate(identity.ownerId);
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).receivedOriginals,0);
+});
+
+test('existing phone imports supply real per-device counts without inventing a receipt timestamp',async t=>{
+  const f=await fixture(t);
+  await writeFile(path.join(f.root,'offline-metadata.json'),JSON.stringify({version:1,owners:{[identity.ownerId]:{generation:1,devices:{[identity.deviceId]:{phoneFirst:true}},receipts:{},phoneOwners:{'old-chat':[identity.deviceId]}}}}));
+  f.context.accountState=()=>({historyImports:[{id:'old-import',app:'phone',state:'running',items:[{id:'old-chat',turnId:'old-one',done:true},{id:'old-chat',turnId:'old-two',done:false},{id:'other-phone',turnId:'other',done:true}]}]});
+  const service=await createOfflineService(f.context);t.after(()=>service.close());
+  const status=service.deviceStatus(identity.ownerId,identity.deviceId);
+  assert.equal(status.receivedOriginals,2);assert.equal(status.processed,1);assert.equal(status.lastReceivedAt,null);assert.equal(status.memoryState,'running');
+});
 
 test('device envelope authenticates contents and identity; storage is encrypted and key replacement removes old values', async () => {
   const indexedDB = new IDBFactory(), vault = await W.browserVault('test', { indexedDB, crypto: webcrypto });

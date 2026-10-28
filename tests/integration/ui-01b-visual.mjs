@@ -9,7 +9,7 @@ import { measureUi } from '../helpers/ui-smoothness.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 const root=resolve(import.meta.dirname,'../..'),temp=join(root,'.local/ui01b');await mkdir(temp,{recursive:true});
-process.env.WEFTMATE_MANAGED_TEMP_ROOT??=join(temp,'fixtures');
+if (!process.env.WEFTMATE_TEST_TEMP_SCOPE) process.env.WEFTMATE_MANAGED_TEMP_ROOT??=join(temp,'fixtures');
 let app,fixture,page,lock,watchdog,browser,phoneFixture;const errors=[],observations=[];
 const kill=()=>{const pid=app?.process()?.pid;if(pid)spawnSync('taskkill',['/PID',String(pid),'/T','/F'],{windowsHide:true,timeout:10000,stdio:'ignore'});};
 const capture=async name=>{assert.equal(await page.locator('#toast').isVisible(),false,'capture has no transient error toast');if(process.env.WEFTMATE_EVIDENCE_DIR&&!process.argv.includes('--no-capture')){await mkdir(process.env.WEFTMATE_EVIDENCE_DIR,{recursive:true});await page.screenshot({path:join(process.env.WEFTMATE_EVIDENCE_DIR,name+'.png'),animations:'disabled'});}};

@@ -274,9 +274,10 @@ export function createModelServiceOperations(context) {
     return response;
   }
   async function select(ownerId, serviceId, body) {
-    exactKeys(body, ['modelId', 'sessionId', 'requestId'], ['modelId']);
+    exactKeys(body, ['modelId', 'sessionId', 'requestId', 'preference'], ['modelId']);
     if (!MODEL_ID.test(body.modelId) || body.sessionId !== undefined && !/^[A-Za-z0-9_-]{1,128}$/.test(body.sessionId) ||
-        body.requestId !== undefined && !/^[A-Za-z0-9_.:-]{1,128}$/.test(body.requestId)) throw failure('INVALID_REQUEST');
+        body.requestId !== undefined && !/^[A-Za-z0-9_.:-]{1,128}$/.test(body.requestId) ||
+        body.preference !== undefined && body.preference !== 'conversation') throw failure('INVALID_REQUEST');
     let service = requireService(ownerId, serviceId), selected = service.models.find(row => row.modelId === body.modelId && row.enabled);
     if (!selected) throw failure('MODEL_UNAVAILABLE', 422);
     if (!selected.profileId) {
@@ -291,7 +292,8 @@ export function createModelServiceOperations(context) {
     await context.serial(() => context.mutate(ownerId, next => {
       const record = next.modelServices[serviceId], row = record.models.find(model => model.modelId === body.modelId);
       if (!row.enabled || record.status !== 'active') throw failure('MODEL_UNAVAILABLE', 422);
-      record.selectedModelId = row.modelId; row.lastUsedAt = now(); next.defaultModelProfileId = row.profileId;
+      row.lastUsedAt = now();
+      if (body.preference !== 'conversation') { record.selectedModelId = row.modelId; next.defaultModelProfileId = row.profileId; }
       if (body.sessionId) next.sessions[body.sessionId].pendingModelProfileId = row.profileId;
     }));
     service = requireService(ownerId, serviceId);

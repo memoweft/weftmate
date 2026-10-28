@@ -600,5 +600,12 @@
     "api": "onGeometryChange",
     "sha256": "40401f6b8146b1942261d3bb7d85bddd4916482e71ff0eeab21a4502f41aa86f",
     "reason": "The geometry transform is explicitly @Sendable and reads only the supplied proxy width. A nonisolated widthChanged factory returns an @Sendable action that hops to MainActor before invoking the explicitly MainActor UI update closure; no geometry callback reads drawer state."
+  },
+  {
+    "file": "apps/apple/UI/PhoneChatContent.swift",
+    "line": 63,
+    "api": "sizeThatFits",
+    "sha256": "97745677695e1ab08ad9f7af7a2b2367b750c3bbf00c7e05118e05a4e2fe95be",
+    "reason": "UIViewRepresentable.sizeThatFits is an explicitly MainActor protocol requirement in the installed iOS SDK. This explicitly MainActor witness only measures its supplied UIKit text view using the proposed width; no background executor, model capture or asynchronous UI access."
   }
 ]

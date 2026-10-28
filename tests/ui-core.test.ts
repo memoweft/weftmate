@@ -531,9 +531,10 @@ test('FIX-31 a side-chat wait baseline catches up messages and approvals already
     assert.equal(f.core.state.afterSeq,39);
     const result = await read;
     assert.equal(result.kind,'changed');assert.equal(result.immediateRenew,true);
+    f.core.state.turnStatus='running';
     const renewal = f.core.refreshLiveConversation();
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(waits,1,'subsequent reads retain the normal long wait');
+    assert.equal(waits,1,'a running reply retains the native change wait instead of returning to polling');
     wait.resolve({nextCursor:'next',liveRevision:0,upserts:[],removals:[],waitOutcome:'timeout'});
     assert.equal((await renewal).kind,'unchanged');
   } finally {
@@ -614,7 +615,7 @@ const expectedAppearanceDefaults = {
   theme:'system',accent:'neutral',fontSize:'14',accentLight:'neutral',accentDark:'neutral',codeFontSize:'12',
   uiFontSize:'14',themePreset:'default',themePresetLight:'default',themePresetDark:'default',
   font:'system',fontLight:'system',fontDark:'system',backgroundLight:'',backgroundDark:'',foregroundLight:'',foregroundDark:'',
-  separateModes:true,contrast:'60',translucentSidebar:false,fullWidth:false,
+  separateModes:true,contrast:'60',translucentSidebar:false,fullWidth:false,pointerCursor:false,diffMarkers:'color',
 }
 test('appearance persistence and session sorting work without a window or DOM', () => {
   const f = fixture(), prefs = f.core.appearance
@@ -635,6 +636,17 @@ test('system settings are read once as data and sent through the existing protec
   assert.equal(f.requests.at(-1)!.options.headers['X-WeftMate-CSRF'], 'synthetic-csrf')
   assert.deepEqual(JSON.parse(f.requests.at(-1)!.options.body), { backgroundModelProfileId: 'local' })
 })
+
+test('model preferences load independently of unavailable system diagnostics and discard another identity', async()=>{
+  const f=fixture(path=>response(path.endsWith('/settings/models')?{defaultModelProfileId:'local'}:{models:[{id:'local',configured:true}]}));
+  f.core.state.currentView='account';await f.core.refreshModelSettings();
+  assert.equal(f.core.state.modelSettings.defaultModelProfileId,'local');
+  assert.ok(f.paints.some(p=>p.name==='paintModelSettings'));
+  assert.ok(f.requests.every(row=>!row.path.endsWith('/system')));
+  const gate=deferred(),late=fixture(()=>gate.promise);late.core.state.currentView='account';
+  const read=late.core.refreshModelSettings();late.core.state.identityGeneration++;gate.resolve(response({models:[],defaultModelProfileId:'old'}));await read;
+  assert.equal(late.paints.some(p=>p.name==='paintModelSettings'),false);
+});
 
 test('source references parse nested native arguments, deduplicate values and tolerate unavailable details', () => {
   const f = fixture()

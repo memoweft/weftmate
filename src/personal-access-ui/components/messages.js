@@ -8,7 +8,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             contentType: blob.type.startsWith('image/') ? 'image/png' : 'text/markdown',
             bytes: new Uint8Array(await blob.arrayBuffer()), ownerId: core.state.ownerId }) : undefined,
         title: () => core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.title });
-    globalThis.WeftProblemFeedback = trigger => ui.messageActions.openFeedback(trigger);
+    if (!ui.scopedChat) globalThis.WeftProblemFeedback = trigger => ui.messageActions.openFeedback(trigger);
     function clearHistoryView(loading = false) {
         globalThis.WeftContent?.closeGallery(false);
         const list = ui.byId('transcript');
@@ -225,7 +225,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 completeMessageBody(row, event, sessionId);
             }
             WeftContent.messageCompletionNotice(row, core, event, sessionId);
-            if (!event.data?.live) ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
+            if (!event.data?.live && !targetList) ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
             if (incremental && events.length <= 20 && event.type === 'assistant.message') {
                 globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-text'),'arrival');
                 globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-actions'),'arrival');

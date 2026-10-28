@@ -11,6 +11,11 @@ class BusinessRouteUnitTest {
         for (suffix in listOf("", "/join", "/reveal", "/status", "/decision", "/redeem"))
             assertFalse(validBusinessPath("/personal/v1/cloud/pairings$suffix"))
     }
+    @Test fun deviceSyncSummaryIsAnExactBusinessPath() {
+        assertTrue(validBusinessPath("/personal/v1/devices/sync"))
+        assertFalse(validBusinessPath("/personal/v1/devices/sync?ownerId=other"))
+        assertFalse(validBusinessPath("/personal/v1/devices/sync/raw"))
+    }
     @Test fun terminalRoutesKeepExactIdentities() {
         assertTrue(validBusinessPath("/personal/v1/terminals"))
         assertTrue(validBusinessPath("/personal/v1/terminals/terminal-00000000-0000-4000-8000-000000000001"))
@@ -54,6 +59,8 @@ class BusinessRouteUnitTest {
         val service = "/personal/v1/model-services/model-service-00000000-0000-4000-8000-000000000001"
         for (route in listOf("/personal/v1/model-services", "/personal/v1/model-services/check", service, "$service/refresh", "$service/select")) assertTrue(route, validBusinessPath(route))
         for (route in listOf("/personal/v1/model-services?ownerId=other", "/personal/v1/model-services/check/raw", "/personal/v1/model-services/model-one/select", "$service/secret", "$service/select?modelId=other", "/personal/v1/model-services%2Fcheck", "/personal/v1/model-services/../select")) assertFalse(route, validBusinessPath(route))
+        assertTrue(validBusinessPath("$service/select"))
+        assertFalse(validBusinessPath("$service/select?preference=conversation"))
     }
     @Test fun phoneMemoryHandoverAndErasureKeepTheExistingExactRoutes() {
         for (route in listOf("/personal/v1/offline/sync", "/personal/v1/offline/turns", "/personal/v1/memory/status", "/personal/v1/memory/backfill")) assertTrue(route, validBusinessPath(route))
@@ -219,4 +226,13 @@ class BusinessRouteUnitTest {
             "/personal/v1/memory/items/entity/memory%5Ca",
         )) assertFalse(path, validBusinessPath(path))
     }
+
+    @Test fun workspaceReviewAndFilesUseConversationScopedRoutes() {
+        for (suffix in listOf("review/status", "review/diff", "files/list", "files/search", "files/read", "files/save"))
+            assertTrue(validBusinessPath("/personal/v1/workspaces/session-one/$suffix"))
+        for (route in listOf("/personal/v1/workspaces/session-one/files/delete", "/personal/v1/workspaces/browser-session/files/delete", "/personal/v1/workspaces/session-one/files/read?path=../outside", "/personal/v1/workspaces/../files/read", "/personal/v1/workspaces/session-one/review/raw", "/personal/v1/workspaces/session-one/files%2Fread"))
+            assertFalse(route, validBusinessPath(route))
+        assertTrue(businessHttpResponseLimit("/personal/v1/workspaces/session-one/files/read") >= 12 * 1024 * 1024)
+    }
+
 }

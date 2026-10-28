@@ -2,6 +2,10 @@
 
 `layout.js` 组装左侧导航、中间对话和右侧面板；`components/` 绑定现有动作。`desktop.js` 管标签、侧栏与键盘，`workspace.css` 管三块布局和输入区外层，`design/tokens/tokens.json` 是颜色、字体、尺寸、圆角与动效的唯一来源。消息、步骤、提问、审批内容仍由各自组件呈现。
 
+桌面对话统一由 `components/main-chat.js` 按可视区和相邻一屏挂载消息；同一帧的历史、审批和输入区更新合成一次呈现。折叠的过程先画摘要，展开再建步骤。切换只保留最近八段对话的尺寸、展开状态和阅读锚点，原文仍重新读取，身份变化即清空这些位置。输入框尺寸跟随内容与宽度变化，隐藏的建议栏不测布局。回归与同条件帧采样见 `tests/integration/perf-switch.mjs`。
+
+流式正文持续使用原生变化等待；不支持等待的通道按 8ms 读取，覆盖 120Hz 画面的帧间隔，呈现由 `ui-core/reply-motion.js` 合并同一帧的输入，下一帧一次追加全部已到文字，不暂存尾字或分帧慢放。虚拟列表已在帧内呈现时，正文同帧写入，不再另排一帧。完整传递最新快照，不在呈现端切分 emoji 或组合字符；跨帧续到的字符由原文字节点继续追加。普通长列表只解析当前条目，已完成条目和选区保持原节点。每帧文字写入和虚拟行调整后同步跟随，消息外边距与空过程行的实测零高度都计入虚拟列表；固定滚动条预留位置，避免开始溢出时整列横移；往上翻后保持阅读锚点。回归见 `tests/integration/perf-stream.mjs`。
+
 ## 面板
 
 `index.html` 在 `desktop.js` 后加载 `panels/<kind>.js`。每个脚本调用：
@@ -35,11 +39,19 @@ WeftPanels.register('terminal', {
 
 切标签和收起调用 `hide()`，DOM（文档节点）、滚动和输入保留；显示调用 `show()`。关闭标签调用 `dispose()`，只释放该标签拥有的资源；最后一个关闭回到入口页。切对话调用 `update(ctx)`，内容适配器必须递增自己的请求代次，丢弃旧请求结果；`hide` 不取消任务。身份重置会销毁标签，重开再创建。
 
-文件当前复用 `components/resources.js`，通过 `WeftPanels.services.resources()` 与 `openResource(item, trigger)` 读取成果/来源及原预览。子任务订阅 `composer-subtasks.js` 的 `weftmate:subtasks` 事件与快照，状态来自 `ui-core/subtasks.js`，点击回到原步骤。后续面板替换对应登记脚本即可。
+审查与文件调用 `WeftPanels.services.workspaceRequest(ctx, action, body)`，通过当前 `computerId` 的既有通道访问 `/workspaces/:sessionId/review/*` 和 `/workspaces/:sessionId/files/*`。宿主按执行会话绑定的项目授权解析相对路径；`workDir` 只作异步补齐的目录信息，从 `null` 更新为真实路径时保留选择与编辑稿。尚未创建执行会话的工作草稿显示下一步提示，不把逻辑对话 ID 当作 `sessionId` 请求。
+
+文件成果/来源仍通过无参数的 `WeftPanels.services.resources()` 读取，并用 `previewResource(item, content)` 在同一文件面板复用 `components/resources.js` 的预览；`openResource(item, trigger)` 保留原资源入口。子任务订阅 `composer-subtasks.js` 的 `weftmate:subtasks` 事件与快照，状态来自 `ui-core/subtasks.js`，点击回到原步骤。后续面板替换对应登记脚本即可。
+
+过程文件卡的“审阅”从该次工具记录读取改动前后内容，保留历史已应用的改动证据；右侧“审查”入口读取当前工作目录的实时 Git 差异。文件面板默认展开本对话的成果与来源，已有报告可直接打开。
 
 浏览器由 `panels/browser.js` 登记，桌面通过预加载桥使用宿主 `personal-browser/desktop.mjs` 的真实 `WebContentsView`，Agent 的 `browser` 工具使用同一对话实例。`workDir` 异步补齐、执行段变化均复用原逻辑对话标签；切换上下文使旧命令响应失效。切账号仍由容器 `dispose()` 全部标签。手机和远程网页显示在电脑打开的说明。真实入口验收见 `tests/integration/desktop-browser-panel.mjs`。
 
 终端使用 `panels/terminal.js` 和现有宿主登录通道。`workDir` 为 `null` 时仍由宿主按对话的项目登记解析真实目录，异步目录更新不会重开已运行的 shell；草稿与手机原话未绑定电脑执行会话时显示说明。面板以 `ownerId`、`identityGeneration`、逻辑对话和稳定 `tabId` 隔离状态，旧结果只归属原视图。创建响应交付一个仅能关闭该终端的随机凭据，保存在实例内存中；切账号或关标签用它调用同源 `/terminals/:id/release`，不依赖新账号的 Cookie（登录会话），不授予输入或读取能力。`dispose()` 等待在途创建交付后再释放；请求断开而响应尚未交付时，宿主直接收回终端。
+
+侧边聊天由 `panels/chat.js` 使用 `ui-core/chat-scope.js` 创建独立功能实例，复用同一套发送、附件、停止、UI-02 消息与过程呈现、滚动和模型选择器。读取复用共享的原生等待、流式间隔和失败退避，任务状态独立读取，不阻塞回复。每个标签有独立草稿、请求凭据、历史游标和流式状态；首次发送才创建执行会话，同时迁移附件草稿、发送凭据和分组。主视图切对话不会切走侧聊；侧聊固定使用创建时的电脑。收起继续接收回复，关闭释放读取、观察器和草稿，已创建的会话仍可从左侧打开。身份变化由容器销毁标签，迟到响应失效。
+
+侧聊选模型通过既有 `POST /model-services/:id/select` 的 `preference: 'conversation'` 请求体字段准备模型；已有会话只更新自己的下一条消息选择，不修改账户默认模型或模型服务的默认选项。省略此字段继续使用原默认选择行为；路径不变，安卓仍只放行原 `/select` 路径。该宿主契约随完整安装包发布。真实并行验收与帧采样见 `tests/integration/ui-07-side-chat.mjs`。
 
 ## 尺寸与键盘
 
@@ -52,6 +64,16 @@ Windows 的中间页头、右侧标签和原生窗口按钮共用顶部一行，
 快捷键在 `src/ui-core/shortcuts.js`：`Ctrl/⌘ Alt P` 开合右侧，`Ctrl/⌘ Alt 1–6` 打开六项。标签支持左右、Home/End、Delete，拖宽分隔条支持左右、Home/End；Esc 优先关闭浮层或收起面板。收起恢复外部触发点，不停止后台任务。
 
 ## 项目与验证
+
+设置沿用 `ui-core/settings-registry.js` 的 21 类，搜索按关键字定位行，分类保留已挂载控件并按身份代次重载。页面加载失败在当前分类重试；模型偏好独立于系统诊断读取。设备偏好使用原 `createAppearance`，保存失败恢复原值；动态效果沿用 `WeftReplyMotion`。字号在失焦时取整并限制到 10–24，空值恢复默认。
+
+能力页复用连接器配置、模型目录与当前执行会话的 DSH 工具、技能、命令清单。工具描述来自 DSH 的 `systemPrompt.assemble({scope:agent}).tools`，不返回工具参数 schema。搜索、筛选和标签切换保留浏览状态；工具规则和凭据仍走原接口。审查面板读取外观的 `diffMarkers: color | sign`，监听 `weftmate:appearance` 原地更新标记。
+
+设备页通过 `/devices/sync` 读取当前账户的同步摘要，只含条数、接收时间、整理状态及副本提供时间。收到原话和完成记忆整理分别显示，副本时间明确标注“电脑已提供”，未知历史不计作零；配对沿用已有核对数字弹窗。验证入口为 `tests/integration/ui-03-settings.mjs`，截图留在外部证据目录。
+
+自有功能继续从侧栏的记忆、动态、健康、目标、成果库，以及账号菜单里的数据、帮助和设置到达原业务。目标页以“进行中 / 提醒与定时任务 / 长期目标”切换，分类保留已挂载内容，搜索只筛选当前已读取的数据。电脑从现有 `/commands` 的分页记录补齐任务的手机离线来源，按身份缓存来源信息，进度与取消仍使用 `/tasks` 和原停止接口；不新增离线任务接收或调度能力。
+
+记忆页和设备页显示遗忘清理状态。`/devices/sync` 的可选 `sync.cleanup` 只含 `state: waiting_device | acknowledged` 和 `requestedAt`；宿主发出新副本后仍等待，直到设备在后续同步中带回当前副本代次。该状态与电脑本地的记忆删除、存储清理回执分别显示。未知、读取失败与已确认分开，失败可检查状态重试。真实 Electron 验证入口为 `tests/integration/ui-08-own-features.mjs`。
 
 项目置顶是当前账号在本设备的侧栏偏好；归档使用原会话归档接口，可在设置恢复。更改文件夹位置通过系统选择器与原生桥，对原 `/projects/:id` 执行 `PATCH`；宿主验证原生身份、目录、修订号与运行状态。只更改登记，文件不会搬动。公开网页响应仍不暴露完整路径。
 

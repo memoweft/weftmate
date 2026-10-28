@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 
-function setup() {
+function setup(chatScope = false) {
   const WeftUiCore:any={factories:{}};
   let now=0;
   runInNewContext(readFileSync(new URL('../src/ui-core/model-services.js',import.meta.url),'utf8'),{globalThis:{WeftUiCore},Date:{now:()=>now}});
   const calls:any[]=[],storage=new Map(),state:any={ownerId:'synthetic-a',identityGeneration:1,personalCapabilities:{modelServices:1},models:[],modelProfileId:null,selectedSessionId:'synthetic-session'};
   const service={serviceId:'synthetic-service',name:'Synthetic',models:[{modelId:'a',name:'A',profileId:'route-a'},{modelId:'b',name:'B',profileId:'route-b',capabilities:{vision:false}}]};
   const core:any={state,async accessApi(path:string,options:any){calls.push({path,options});return path.endsWith('/select')?{profileId:'route-b',service,models:[{id:'route-b',name:'B',configured:true}]}:{services:[service],canManage:true};},async refreshModels(){},currentAttachmentDrafts:()=>[{mimeType:'image/png'}]};
-  Object.assign(core,WeftUiCore.factories.modelServices(core,{}, {storage:{getItem:(k:string)=>storage.get(k),setItem:(k:string,v:string)=>storage.set(k,v)},crypto:{randomUUID:()=>crypto.randomUUID()}}));
+  Object.assign(core,WeftUiCore.factories.modelServices(core,{}, {chatScope,storage:{getItem:(k:string)=>storage.get(k),setItem:(k:string,v:string)=>storage.set(k,v)},crypto:{randomUUID:()=>crypto.randomUUID()}}));
   return {core,calls,storage,service,advance:(ms:number)=>now+=ms};
 }
 test('model picker reads cached services and selection submits conversation plus persistent default',async()=>{
@@ -28,6 +28,14 @@ test('old computer without a directory declaration keeps legacy models and makes
   const {core,calls}=setup();core.state.personalCapabilities={};
   assert.equal(await core.refreshModelServices(),null);assert.equal(calls.length,0);
   await assert.rejects(core.selectServiceModel({serviceId:'synthetic-service',modelId:'b'}),error=>error.code==='COMPUTER_UPDATE_REQUIRED');assert.equal(calls.length,0);
+});
+
+test('side draft materializes its model without changing the persistent default',async()=>{
+  const {core,calls}=setup(true);core.state.newConversation=true;core.state.selectedSessionId=null;core.state.modelSettings={defaultModelProfileId:'route-a'};
+  await core.refreshModelServices();await core.selectServiceModel({serviceId:'synthetic-service',modelId:'b'});
+  const body=calls.find(c=>c.path.endsWith('/select')).options.body;
+  assert.equal(body.preference,'conversation');assert.equal(body.sessionId,undefined);
+  assert.equal(core.state.modelProfileId,'route-b');assert.equal(core.state.modelSettings.defaultModelProfileId,'route-a');
 });
 test('late service list from previous account cannot appear after account switch',async()=>{
   const {core}=setup();let complete:any;

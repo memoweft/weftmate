@@ -1,6 +1,12 @@
 /** Presentation helper shared by the desktop and mobile scroll surfaces. */
 globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) => {
-    let pinned = true, pending = false, followingTop = null, newContent = false;
+    let pinned = true, pending = false, followingTop = null, newContent = false, disposed = false;
+    const removals = [];
+    const listen = (target, type, handler, options) => {
+        target?.addEventListener?.(type, handler, options);
+        removals.push(() => target?.removeEventListener?.(type, handler, options));
+    };
+    let mutation, resize;
     let scrollbarDrag=false,lastTop=box.scrollTop;
     let moving = null, frame = null;
     const stop = () => { if (frame !== null) cancelAnimationFrame(frame); frame = null; moving = null; };
@@ -46,11 +52,12 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
         paint();
     };
     const changed = () => {
+        if (disposed) return;
         if (!pinned) newContent = true;
         if (pending) return;
         // stream-type: follow the current layout, without a second animation
         // chasing the text frames. User scrolling still unpins immediately.
-        pending = true; requestAnimationFrame(() => { pending = false; follow(); });
+        pending = true; requestAnimationFrame(() => { pending = false; if (!disposed) follow(); });
     };
     const scrolled = () => {
         const top = box.scrollTop;
@@ -61,11 +68,11 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
         // reduce scrollTop without user intent. Only input handlers unpin.
         lastTop=top;paint();
     };
-    box.addEventListener('pointerdown',event=>{const gutter=box.offsetWidth-box.clientWidth;scrollbarDrag=event.pointerType!=='touch'&&gutter>0&&event.clientX>=box.getBoundingClientRect().right-gutter;lastTop=box.scrollTop;});
+    listen(box, 'pointerdown',event=>{const gutter=box.offsetWidth-box.clientWidth;scrollbarDrag=event.pointerType!=='touch'&&gutter>0&&event.clientX>=box.getBoundingClientRect().right-gutter;lastTop=box.scrollTop;});
     const endScrollbarDrag=()=>{scrollbarDrag=false;};
-    globalThis.addEventListener?.('pointerup',endScrollbarDrag);
-    globalThis.addEventListener?.('pointercancel',endScrollbarDrag);
-    box.addEventListener('scroll', scrolled, {passive:true});
+    listen(globalThis, 'pointerup',endScrollbarDrag);
+    listen(globalThis, 'pointercancel',endScrollbarDrag);
+    listen(box, 'scroll', scrolled, {passive:true});
     const nestedConsumes = (target, deltaY) => {
         for(;target && target!==box;target=target.parentElement) {
             if(target.scrollHeight>target.clientHeight && /auto|scroll/.test(getComputedStyle(target).overflowY) &&
@@ -73,30 +80,31 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
         }
         return false;
     };
-    box.addEventListener('wheel', event => {
+    listen(box, 'wheel', event => {
         // A command output scrolls locally before the wheel reaches the chat.
         if(nestedConsumes(event.target,event.deltaY))return;
         if (event.deltaY < 0) { stop(); pinned = false; followingTop = null; paint(); }
     }, {passive:true});
     let touchY = null;
-    box.addEventListener('touchstart', event => {touchY=event.touches[0]?.clientY;}, {passive:true});
-    box.addEventListener('touchmove', event => {const y=event.touches[0]?.clientY;if(touchY!==null && y>touchY && !nestedConsumes(event.target,touchY-y)){stop();pinned=false;followingTop=null;paint();}touchY=y;}, {passive:true});
-    box.addEventListener('keydown', event => {if(['ArrowUp','PageUp','Home'].includes(event.key) && !event.target.closest?.('input,textarea,[contenteditable=true]')){stop();pinned=false;followingTop=null;paint();}});
-    globalThis.addEventListener?.('weft-reply-motion-change', () => {if((globalThis.WeftReplyMotion?.paused ?? document.hidden) || reduced()) {stop();if(pinned)follow();}});
+    listen(box, 'touchstart', event => {touchY=event.touches[0]?.clientY;}, {passive:true});
+    listen(box, 'touchmove', event => {const y=event.touches[0]?.clientY;if(touchY!==null && y>touchY && !nestedConsumes(event.target,touchY-y)){stop();pinned=false;followingTop=null;paint();}touchY=y;}, {passive:true});
+    listen(box, 'keydown', event => {if(['ArrowUp','PageUp','Home'].includes(event.key) && !event.target.closest?.('input,textarea,[contenteditable=true]')){stop();pinned=false;followingTop=null;paint();}});
+    listen(globalThis, 'weft-reply-motion-change', () => {if((globalThis.WeftReplyMotion?.paused ?? document.hidden) || reduced()) {stop();if(pinned)follow();}});
     const latest = () => { pinned = true; newContent = false; follow(); };
-    button.addEventListener('click', latest);
-    if (globalThis.MutationObserver) new MutationObserver(changed).observe(content, {subtree:true, childList:true, characterData:true});
+    listen(button, 'click', latest);
+    listen(content, 'weft-stream-frame', () => { if (!pinned) newContent = true; follow(); });
+    if (globalThis.MutationObserver) { mutation = new MutationObserver(changed); mutation.observe(content, {subtree:true, childList:true, characterData:true}); }
     if (globalThis.ResizeObserver) {
-        const resize = new ResizeObserver(changed); resize.observe(content); resize.observe(box);
+        resize = new ResizeObserver(changed); resize.observe(content); resize.observe(box);
     }
-    globalThis.visualViewport?.addEventListener('resize', changed);
-    globalThis.addEventListener?.('resize', changed);
-    content.addEventListener('load', changed, true);
+    listen(globalThis.visualViewport, 'resize', changed);
+    listen(globalThis, 'resize', changed);
+    listen(content, 'load', changed, true);
     // A disclosure changes geometry, not the reader's bottom-follow intent.
     const beforeToggle = event => { if (event.target.closest?.('summary')) {stop();followingTop=null;paint();} };
-    content.addEventListener('pointerdown', beforeToggle, true);
-    content.addEventListener('keydown', event=>{if(['Enter',' '].includes(event.key))beforeToggle(event)}, true);
-    content.addEventListener('toggle', changed, true);
+    listen(content, 'pointerdown', beforeToggle, true);
+    listen(content, 'keydown', event=>{if(['Enter',' '].includes(event.key))beforeToggle(event)}, true);
+    listen(content, 'toggle', changed, true);
     paint();
-    return {latest, changed, follow, scrolled, hold() {stop();pinned=false; followingTop=null; paint();}, get pinned() {return pinned;}};
+    return {latest, changed, follow, scrolled, dispose() { disposed = true; stop(); mutation?.disconnect(); resize?.disconnect(); removals.forEach(remove => remove()); }, hold() {stop();pinned=false; followingTop=null; paint();}, get pinned() {return pinned;}};
 };

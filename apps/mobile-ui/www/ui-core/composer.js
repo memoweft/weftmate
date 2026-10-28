@@ -135,9 +135,14 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                 assignments.get(entry).push({block,facts});
             }
         }
+        const userByEntry = new Map();
+        for (const event of events) if (event.type === 'user.message') {
+            const entry = canonicalEntry(messageEntry({...event.data,sessionId:eventSession(event)},event,conversation));
+            if (!userByEntry.has(entry)) userByEntry.set(entry,event);
+        }
         return [...new Set([...entries].map(canonicalEntry))].map(entry=>{
             const assigned=assignments.get(entry) || [], latest=assigned.at(-1);
-            const user=events.find(event=>event.type==='user.message' && messageEntry({...event.data,sessionId:eventSession(event)},event,conversation)===entry);
+            const user=userByEntry.get(entry);
             const local=pending.find(row=>rememberTurnRequest(row)===entry) || (!entry.userSeen && entry.pending);
             let facts=assigned.flatMap(({facts})=>facts);
             // A message owns one disclosure, even when a continuation has more
@@ -303,8 +308,10 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             if (row.projectId) await core.updateSession(row.sessionId, {projectId:row.projectId});
             if (row.attachments) {
                 const oldKey = `${row.ownerId}|new`;
-                const drafts = core.state.attachmentDrafts.get(oldKey);
-                if (drafts) { core.state.attachmentDrafts.set(`${row.ownerId}|${row.sessionId}`, drafts); core.state.attachmentDrafts.delete(oldKey); }
+                const newKey = `${row.ownerId}|${row.sessionId}`;
+                for (const entries of [core.state.attachmentDrafts, core.state.attachmentAttempts, core.state.attachmentGroups]) {
+                    if (entries.has(oldKey)) { entries.set(newKey, entries.get(oldKey)); entries.delete(oldKey); }
+                }
             }
             // The creation receipt already identifies the durable session.
             // Reading every older conversation is not a prerequisite for

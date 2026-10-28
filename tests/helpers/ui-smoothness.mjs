@@ -13,9 +13,14 @@ export async function measureUi(page, name, action, ready) {
     }
     const visible = () => {
       if (ready.kind === 'panel') return !!document.querySelector('.timeline-preview:not([hidden])') === ready.visible;
+      if (ready.kind === 'parallelStream') return document.querySelector('#transcript')?.textContent.includes('主线流式') && document.querySelector('.panel-chat .transcript')?.textContent.includes('侧聊流式');
       if (ready.kind === 'tab') return document.querySelector('.preview-tab-select[aria-selected=true]')?.textContent === ready.title;
       if (ready.kind === 'width') return Math.abs(document.querySelector('.timeline-preview').getBoundingClientRect().width - ready.before) > 2;
       if (ready.kind === 'conversation') return testCore.state.selectedSessionId === ready.id && !testCore.state.newConversation && document.getElementById('transcript').textContent.includes('报告已保存');
+      if (ready.kind === 'conversation-anchor') {
+        const row = [...document.querySelectorAll('#transcript > [data-event-id]')].find(row => row.dataset.eventId === ready.key);
+        return testCore.state.selectedSessionId === ready.id && row && Math.abs(row.getBoundingClientRect().top - document.getElementById('chat-scroll').getBoundingClientRect().top - ready.offset) < 2;
+      }
       if (ready.kind === 'draft') return testCore.state.newConversation;
       if (ready.kind === 'scroll') return document.getElementById('session-list').scrollTop !== ready.before;
       return true;
@@ -45,6 +50,6 @@ export async function measureUi(page, name, action, ready) {
   },ready);
   await action();
   const sample=await page.evaluate(()=>finishUiSample());
-  if(sample.frames<20||sample.feedbackMs===null)throw Error(`No representative visual feedback for ${name}`);
+  if(sample.frames<20||sample.feedbackMs===null)throw Error(`No representative visual feedback for ${name}: ${JSON.stringify(sample)}`);
   return { name,...sample };
 }
