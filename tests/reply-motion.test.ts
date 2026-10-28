@@ -52,20 +52,50 @@ function fixture(queuedFrames = false) {
     tick() { const batch = [...frames.values()]; frames.clear(); batch.forEach(fn => fn()); } };
 }
 
-test('stream chunks coalesce once per frame and completion never queues stale text', () => {
+test('stream chunks advance in small frame steps and completion never queues stale text', () => {
   const f = fixture(true), body = f.element(), seen: string[] = [];
   const render = (node: any, text: string) => { node.textContent = text; node._renderText = text; seen.push(text); };
   const text = '你好🙂这是一段分批到达的回复。';
   f.api.stream(body, text.slice(0, 8), { streaming: true }, render);
   assert.equal(body.textContent, '');
   f.api.stream(body, text, { streaming: true }, render);
-  f.tick(); assert.equal(body.textContent, text);
-  assert.equal(seen.length, 1);
+  f.tick(); assert.ok(text.startsWith(body.textContent)); assert.ok(body.textContent.length > 0 && body.textContent.length < text.length);
   f.api.stream(body, text, { streaming: false }, render);
   assert.equal(body.textContent, text);
   for (let n = 0; n < 20 && f.frames.size; n++) f.tick();
   assert.equal(body.textContent, text);
   assert.equal(f.frames.size, 0);
+});
+
+test('stream frames keep emoji, combining marks and split transport graphemes whole', () => {
+  const f=fixture(true), body=f.element(), seen:string[]=[];
+  const render=(node:any,text:string)=>{node._renderText=text;node.textContent=text;seen.push(text);};
+  const text='开头👨‍👩‍👧‍👦e\u0301🇨🇳结尾';
+  const boundaries=new Set([0,...[...new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(text)].map(s=>s.index+s.segment.length)]);
+  f.api.stream(body,text.slice(0,4),{streaming:true},render);f.tick();
+  f.api.stream(body,text,{streaming:true},render);
+  for(let n=0;n<30&&f.frames.size;n++)f.tick();
+  assert.ok(seen.every(value=>boundaries.has(value.length)),JSON.stringify(seen));
+  f.api.stream(body,text,{streaming:false},render);f.tick();assert.equal(body.textContent,text);
+});
+
+test('two simultaneous reply bodies advance independently and finishing one leaves the other running',()=>{
+  const f=fixture(true),main=f.element(),side=f.element();
+  const render=(node:any,text:string)=>{node.textContent=text;node._renderText=text;};
+  const a='主对话里的连续回复。'.repeat(30),b='侧边聊天里的连续回复。'.repeat(30);
+  f.api.stream(main,a,{streaming:true},render);f.api.stream(side,b,{streaming:true},render);f.tick();
+  assert.ok(main.textContent.length>0&&main.textContent.length<a.length);
+  assert.ok(side.textContent.length>0&&side.textContent.length<b.length);
+  const before=side.textContent.length;f.api.stream(main,a,{streaming:false},render);f.tick();
+  assert.equal(main.textContent,a);assert.ok(side.textContent.length>before);
+  f.api.stream(side,b,{streaming:false},render);assert.equal(side.textContent,b);assert.equal(f.frames.size,0);
+});
+
+test('a quiet transport flushes its last complete grapheme without waiting for another chunk',()=>{
+  const f=fixture(true),body=f.element();
+  f.api.stream(body,'第一段完整文字🙂',{streaming:true},(node:any,text:string)=>{node.textContent=text;node._renderText=text;});
+  for(let n=0;n<30&&f.frames.size;n++)f.tick();
+  assert.equal(body.textContent,'第一段完整文字🙂');assert.equal(f.frames.size,0);
 });
 
 test('stream-type flushes on reduced motion or hidden window, cancels detached content and keeps history immediate', () => {

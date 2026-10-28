@@ -20,6 +20,14 @@ test('streaming follows the current bottom in one frame without smooth chasing',
  const f=fixture(true);f.scroll.latest();
  for(let i=0;i<10;i++){f.box.scrollHeight+=20;f.scroll.changed();f.tick();assert.equal(f.box.scrollTop,f.box.scrollHeight-f.box.clientHeight);}
 });
+test('a stream paint follows before that frame ends, and upward reading stays held',()=>{
+ const f=fixture(true);f.box.scrollHeight+=35;
+ f.content.listeners.get('weft-stream-frame')();
+ assert.equal(f.box.scrollTop,1035);
+ f.fire('wheel',{deltaY:-100});f.box.scrollTop=600;f.box.scrollHeight+=35;
+ f.content.listeners.get('weft-stream-frame')();
+ assert.equal(f.box.scrollTop,600);assert.equal(f.scroll.pinned,false);
+});
 test('wheel and touch over the output itself scroll it without unpinning the conversation',()=>{
  for(const kind of ['wheel','touch']) {
   const f=fixture(),target={parentElement:f.box,scrollTop:300,scrollHeight:2000,clientHeight:220,overflowY:'auto'};

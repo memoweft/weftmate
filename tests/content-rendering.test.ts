@@ -31,6 +31,30 @@ test('shared offline content: parsing, injection set, streaming, controls and fa
     const result=await page.evaluate(()=>{const rows=[['a','b'],['x|y','say "hi",\nnext']];return {md:WeftContent.tableCopy(rows),csv:WeftContent.tableCopy(rows,'csv')};});
     assert.equal(result.md,'| a | b |\n| --- | --- |\n| x\\|y | say "hi",<br>next |');assert.equal(result.csv,'"a","b"\r\n"x|y","say ""hi"",\nnext"');
   });
+  await t.test('streaming lists retain completed items, the growing text node and the reading selection',async()=>{
+    const result=await page.evaluate(()=>{
+      const body=WeftContent.create('1. 第一项\n2. 第二项','markdown-body',{streaming:true});document.body.append(body);
+      const list=body.querySelector('ol'),first=list.firstElementChild,second=list.lastElementChild,tail=second.firstChild;
+      const selection=getSelection(),range=document.createRange();range.selectNodeContents(first);selection.removeAllRanges();selection.addRange(range);
+      WeftContent.update(body,'1. 第一项\n2. 第二项继续\n3. 第三项',{streaming:true});
+      return {list:body.querySelector('ol')===list,first:body.querySelector('li')===first,second:body.querySelectorAll('li')[1]===second,tail:second.firstChild===tail,selection:selection.toString(),text:second.textContent};
+    });
+    assert.deepEqual(result,{list:true,first:true,second:true,tail:true,selection:'第一项',text:'第二项继续'});
+  });
+  await t.test('a long streamed list parses only the open item while its last text grows',async()=>{
+    const result=await page.evaluate(()=>{
+      let text=Array.from({length:2000},(_,i)=>`${i+1}. 合成清单 ${i+1}`).join('\n');
+      const body=WeftContent.create(text,'markdown-body',{streaming:true});document.body.append(body);
+      const first=body.querySelector('li'),tail=body.querySelector('ol').lastElementChild.firstChild;
+      const render=WeftFormat.render,blocks=WeftFormat.renderBlocks,lengths=[];
+      WeftFormat.render=(value,options)=>{lengths.push(value.length);return render(value,options);};
+      WeftFormat.renderBlocks=(value,options)=>{lengths.push(value.length);return blocks(value,options);};
+      try {for(let i=0;i<20;i++){text+='继续';WeftContent.update(body,text,{streaming:true});}}
+      finally {WeftFormat.render=render;WeftFormat.renderBlocks=blocks;}
+      return {maxParsed:Math.max(...lengths),stable:body.querySelector('li')===first&&body.querySelector('ol').lastElementChild.firstChild===tail,items:body.querySelectorAll('li').length,exact:tail.textContent==='合成清单 2000'+'继续'.repeat(20)};
+    });
+    assert.ok(result.maxParsed<100,JSON.stringify(result));assert.equal(result.stable,true);assert.equal(result.items,2000);assert.equal(result.exact,true);
+  });
   await t.test('plain streaming tails retain completed blocks and Markdown transitions still reparse references, lists and fences',async()=>{
     const prefix=await page.evaluate(()=>{const body=WeftContent.create('#','markdown-body',{streaming:true});const first=body.textContent;WeftContent.update(body,'# 标题',{streaming:true});return {first,heading:body.querySelector('h1')?.textContent};});
     assert.equal(prefix.first.replace(/\u200b/g,''),'#');assert.equal(prefix.heading,'标题');

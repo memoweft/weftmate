@@ -531,9 +531,10 @@ test('FIX-31 a side-chat wait baseline catches up messages and approvals already
     assert.equal(f.core.state.afterSeq,39);
     const result = await read;
     assert.equal(result.kind,'changed');assert.equal(result.immediateRenew,true);
+    f.core.state.turnStatus='running';
     const renewal = f.core.refreshLiveConversation();
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(waits,1,'subsequent reads retain the normal long wait');
+    assert.equal(waits,1,'a running reply retains the native change wait instead of returning to polling');
     wait.resolve({nextCursor:'next',liveRevision:0,upserts:[],removals:[],waitOutcome:'timeout'});
     assert.equal((await renewal).kind,'unchanged');
   } finally {

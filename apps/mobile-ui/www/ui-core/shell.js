@@ -2,7 +2,7 @@
 // Shared request cadence. Hidden surfaces keep only the presence probe; view
 // timers check foreground before reading. Native facts, rather than body
 // repainting, trigger task/approval/question refreshes.
-globalThis.WeftUiCore.polling = Object.freeze({stream:250,idle:1500,legacy:3000,overview:4500,presence:15000,background:60000,settings:30000,configuration:30000,readRetryBase:1500,readRetryCap:1750,releaseRetry:30000,waitWeb:30000,waitNative:15000});
+globalThis.WeftUiCore.polling = Object.freeze({stream:16,idle:1500,legacy:3000,overview:4500,presence:15000,background:60000,settings:30000,configuration:30000,readRetryBase:1500,readRetryCap:1750,releaseRetry:30000,waitWeb:30000,waitNative:15000});
 globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
     let overviewRead, factsRead, factsScope, factsSignature;
     let configurationRead, configurationAt = 0, configurationIdentity, accountSnapshot, historyRetryScope;

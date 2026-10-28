@@ -162,14 +162,34 @@
     // Keep selected prose and already rendered emphasis mounted while the tail
     // grows. Structural Markdown changes still go through the parser below.
     const compatible=(a,b)=>a.nodeType===b.nodeType && (a.nodeType===3 ? b.data.startsWith(a.data) :
-      a.nodeType===1 && a.tagName===b.tagName && /^(P|STRONG|EM|S|CODE|BR)$/.test(a.tagName) && a.childNodes.length===b.childNodes.length && [...a.childNodes].every((child,i)=>compatible(child,b.childNodes[i])));
+      a.nodeType===1 && a.tagName===b.tagName && /^(P|OL|UL|LI|BLOCKQUOTE|H[1-6]|STRONG|EM|S|CODE|BR)$/.test(a.tagName) &&
+      a.attributes.length===b.attributes.length && [...a.attributes].every(attr=>b.getAttribute(attr.name)===attr.value) &&
+      a.childNodes.length<=b.childNodes.length && [...a.childNodes].every((child,i)=>compatible(child,b.childNodes[i])));
     if(!compatible(previous,next))return false;
-    const append=(a,b)=>{if(a.nodeType===3){if(b.data.length>a.data.length)a.appendData(b.data.slice(a.data.length));}else [...a.childNodes].forEach((child,i)=>append(child,b.childNodes[i]));};
+    const append=(a,b)=>{if(a.nodeType===3){if(b.data.length>a.data.length)a.appendData(b.data.slice(a.data.length));}else {const count=a.childNodes.length;[...a.childNodes].forEach((child,i)=>append(child,b.childNodes[i]));a.append(...[...b.childNodes].slice(count));}};
     append(previous,next);return true;
   }
   function renderUpdate(content, text, options = {}) {
     if (content._renderText === text) { if(options.streaming!==undefined)globalThis.WeftReplyMotion?.indicator(content,options.streaming); return content; }
     const previousText=content._renderText;
+    // Ordinary single-line list items are the common long-reply case. Parse
+    // only the open item/new items, never the completed hundreds above them.
+    if (previousText && text.startsWith(previousText)) {
+      const last=content.lastElementChild?.classList.contains('reply-indicator') ? content.lastElementChild.previousElementSibling : content.lastElementChild;
+      const line=previousText.slice(previousText.lastIndexOf('\n')+1), match=/^(?:\d+[.)]|[-+*]) (.+)$/.exec(line), item=last?.lastElementChild;
+      const suffix=text.slice(previousText.length);
+      if (/^(OL|UL)$/.test(last?.tagName) && match && item?.tagName==='LI' && item.childNodes.length===1 && item.firstChild.nodeType===3 && item.textContent===match[1] &&
+          !/[\\`*_~\[\]<>!&:/|@$]/.test(line+suffix)) {
+        const template=node('div');template.innerHTML=WeftFormat.render(line+suffix,{prefix:content._renderId});
+        const next=template.firstElementChild;
+        if (template.children.length===1 && next.tagName===last.tagName && next.children.length && appendInline(item,next.firstElementChild)) {
+          for (const child of [...next.children].slice(1)) last.append(child);
+          content._renderText=text;delete last._sourceHTML;delete last._renderHTML;
+          if(options.streaming!==undefined)globalThis.WeftReplyMotion?.indicator(content,options.streaming);
+          return content;
+        }
+      }
+    }
     // Appending plain prose to an existing paragraph must preserve its text
     // node and selection. Markdown boundaries still use the normal parser.
     if (previousText && text.startsWith(previousText)) {
