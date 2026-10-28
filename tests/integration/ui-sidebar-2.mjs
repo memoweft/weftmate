@@ -176,7 +176,10 @@ try {
     let section=null;if(phone.length){let owner=phone[0];while(owner.parentElement&&owner.parentElement!==list)owner=owner.parentElement;for(const child of list.children){if(child.dataset.sectionId)section=child.dataset.sectionId;if(child===owner)break;}}
     return {label,session:session?{sessionId:session.sessionId,pinned:session.pinned,projectId:session.projectId??null,groupId:session.groupId??null}:null,
       binding:{status:view?.status,sessionId:testCore.phoneBinding(id)?.sessionId},records:testCore.phoneConversations().filter(row=>row.id===id).length,
-      phoneRows:phone.length,nativeRows:rows.filter(row=>row.dataset.sessionId===sid).length,section,activeChatSource:testCore.state.activeChatSource,selectedPhoneConversationId:testCore.state.selectedPhoneConversationId};
+      phoneRows:phone.length,nativeRows:rows.filter(row=>row.dataset.sessionId===sid).length,
+      pairedRows:rows.filter(row=>row.dataset.phoneId===id&&row.dataset.sessionId===sid).length,
+      logicalRows:rows.filter(row=>row.dataset.phoneId===id||row.dataset.sessionId===sid).length,
+      section,activeChatSource:testCore.state.activeChatSource,selectedPhoneConversationId:testCore.state.selectedPhoneConversationId};
   },{id:phoneId,sid:phoneSessionId,label});
   const refreshPhone=async(label,{pinned,projectId=null,groupId=null,section='pinned',visible=true}={})=>{
     const states=[];
@@ -190,6 +193,7 @@ try {
     }
     for(const state of states){
       assert.equal(state.phoneRows,visible?1:0,JSON.stringify(state));assert.equal(state.nativeRows,visible?1:0,'phone and execution identities share one row');
+      assert.equal(state.pairedRows,visible?1:0);assert.equal(state.logicalRows,visible?1:0,'one logical phone conversation has only one reachable entry');
       if(visible)assert.equal(state.section,section);
     }
   };
