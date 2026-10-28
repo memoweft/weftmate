@@ -89,6 +89,8 @@ class Element {
     const bubbles = ['click', 'input', 'change', 'submit', 'keydown'].includes(name);
     for (const node of bubbles ? path : [this]) {
       event.currentTarget = node;
+      const handler = (node as any)[`on${name}`];
+      if (typeof handler === 'function') handler.call(node, event);
       for (const listener of node.listeners.get(name) ?? []) listener(event);
       if (stopped) break;
     }
@@ -520,6 +522,8 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
   TextEncoder, TextDecoder, Blob, File, AbortController, DOMException, queueMicrotask, Event, CustomEvent,
   MutationObserver: class { constructor(_callback: () => void) {} observe() {} disconnect() {} },
+  // Layout observation is a browser API; actual geometry and callbacks run in Electron.
+  ResizeObserver: class { constructor(_callback: () => void) {} observe() {} unobserve() {} disconnect() {} },
   Option: class extends Element { constructor(text: string, value: string) { super('', 'option'); this.textContent = text; this.value = value } },
   __weftmateTestHashBlobSha256: hashBlobSha256, crypto: { randomUUID: () => config.uuidForSync
     ? `00000000-0000-4000-8000-${(++sequence).toString(16).padStart(12, '0')}` : `request-${++sequence}` }, AbortSignal: config.abortSignal ?? AbortSignal, Intl, Date, btoa,

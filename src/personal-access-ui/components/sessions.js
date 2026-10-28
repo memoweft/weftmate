@@ -3,11 +3,43 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     const collapsedGroups = new Set();
     let activeMenu, activeSubmenu, menuTrigger, manualUnreadSession;
     const collapsedProjects = new Set(), collapsedSections = new Set();
-    let recentFilter = 'all';
+    let recentFilter = 'all', expandedProjectList = false;
     let sidebarSignature;
     const sidebarRows = new WeakMap();
     const priorStatuses = new Map();
     let hoverCard, hoverTimer, hoverTrigger;
+    function sidebarTitle(value) {
+        const viewport = ui.element('span', 'session-title sidebar-title-viewport');
+        viewport.append(ui.element('span', 'sidebar-title-text', value));
+        return viewport;
+    }
+    function measureTitles() {
+        for (const viewport of ui.byId('session-list').querySelectorAll('.sidebar-title-viewport')) {
+            const distance = Math.max(0, viewport.firstElementChild.scrollWidth - viewport.clientWidth);
+            viewport.dataset.overflow = String(distance > 1);
+            viewport.style.setProperty('--sidebar-title-distance', `${distance}px`);
+            viewport.style.setProperty('--sidebar-title-travel', String(Math.max(4, distance / 32)));
+        }
+    }
+    function conversationRow(session, nested = false) {
+        const title = session.title || '新对话';
+        const row = ui.element('li', 'session-row' + (session.unread ? ' is-unread' : ''));
+        row.dataset.sessionId = session.sessionId;
+        const button = ui.element('button', core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === session.sessionId ? 'is-current' : '');
+        button.type = 'button'; button.title = title; button.setAttribute('aria-label', title);
+        if (!nested) button.append(WeftIcons.create('chat', 16));
+        button.append(sidebarTitle(title));
+        button.onclick = () => {
+            const select = () => core.selectSession(session.sessionId);
+            const current = core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === session.sessionId && !core.state.newConversation;
+            void Promise.resolve(!current && globalThis.WeftMotion ? WeftMotion.handoff(ui.byId('chat-scroll'), select) : select()).catch(error => ui.toast(core.failureMessage(error)));
+        };
+        const more = ui.element('button', 'session-more'); more.type = 'button'; more.setAttribute('aria-haspopup', 'menu');
+        more.setAttribute('aria-label', `更多操作 ${title}`); more.append(WeftIcons.create('more', 16));
+        more.onclick = () => sessionMenu(session, more);
+        row.append(button); appendStatus(row, session); row.append(more); bindRowActions(row, session, more);
+        return row;
+    }
     function relativeActivity(value) {
         if (!value || !Number.isFinite(Date.parse(value))) return '未记录';
         const minutes = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 60000));
@@ -192,18 +224,19 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         catch (error) { ui.byId('sessions-status').textContent = projectError(error); }
         finally { button.disabled = false; }
     }
-    function renderSidebarProjects(list, query) {
-        const projects = (core.state.projects || []).filter(project => !project.revoked).sort((a,b) => Number(core.projectPinned(b.projectId)) - Number(core.projectPinned(a.projectId))); let projectMatches = 0;
-        if (!projects.length) list.append(ui.element('li', 'project-empty', core.state.projectsError || (core.state.projectCanManage ? '添加一个文件夹，开始工作。' : '在电脑上添加项目后，可在这里开始工作。')));
+    function renderSidebarProjects(list, query, projects) {
+        let projectMatches = 0;
         for (const project of projects) {
             const sessions = core.projectConversations(project.projectId);
             if (query && !project.name.toLocaleLowerCase().includes(query) && !sessions.some(session => (session.title || '新对话').toLocaleLowerCase().includes(query))) continue;
             projectMatches++;
             const row = ui.element('li', 'sidebar-project'); row.dataset.projectId = project.projectId;
             const title = ui.element('div', 'sidebar-project-heading');
-            const toggle = ui.element('button', 'sidebar-project-toggle'); toggle.type = 'button'; toggle.setAttribute('aria-expanded', String(!collapsedProjects.has(project.projectId))); toggle.append(WeftIcons.create(collapsedProjects.has(project.projectId) ? 'folder' : 'folder-open', 16), ui.element('span', '', project.name));
+            const toggle = ui.element('button', 'sidebar-project-toggle'); toggle.type = 'button'; toggle.title = project.name; toggle.setAttribute('aria-label', project.name); toggle.setAttribute('aria-expanded', String(!collapsedProjects.has(project.projectId)));
+            const icon = ui.element('span', 'sidebar-project-icon'); icon.append(WeftIcons.create(collapsedProjects.has(project.projectId) ? 'folder' : 'folder-open', 16), WeftIcons.create('chevron', 16));
+            toggle.append(icon, sidebarTitle(project.name));
 
-            toggle.onclick = () => { collapsedProjects.has(project.projectId) ? collapsedProjects.delete(project.projectId) : collapsedProjects.add(project.projectId); renderSessions(); };
+            toggle.onclick = () => { const focused = document.activeElement === toggle; collapsedProjects.has(project.projectId) ? collapsedProjects.delete(project.projectId) : collapsedProjects.add(project.projectId); renderSessions(); if (focused) [...ui.byId('session-list').querySelectorAll('.sidebar-project')].find(row => row.dataset.projectId === project.projectId)?.querySelector('.sidebar-project-toggle').focus({preventScroll:true}); };
             const add = ui.element('button', 'project-action'); add.type = 'button'; add.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); add.append(WeftIcons.create('plus', 16)); add.disabled = !core.state.models.length; add.onclick = () => newProjectConversation(project, add); title.append(toggle); if (collapsedProjects.has(project.projectId)) { title.dataset.statusKey = `project:${project.projectId}`; appendStatus(title, core.sidebarStatus('projects',project.projectId,sessions)); } title.append(add);
             bindWorkspaceInfo(toggle, () => ({ title:project.name, project, details:core.computerName?.(project.hostId || core.state.hostId) }));
             const safe = action => async () => { try { await action(); } catch (error) { ui.toast(projectError(error)); } };
@@ -226,16 +259,13 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             toggle.addEventListener('click', event => { if (projectPressed) { event.preventDefault(); event.stopImmediatePropagation(); projectPressed = false; } }, true);
             toggle.oncontextmenu = event => { event.preventDefault(); projectMenu(toggle); };
             toggle.addEventListener('keydown', event => { if (event.key === 'ContextMenu' || event.key === 'F10' && event.shiftKey) { event.preventDefault(); projectMenu(toggle); } });
-            if (canManageProjectFolders()) { const settings = ui.element('button', 'project-action'); settings.type = 'button'; settings.setAttribute('aria-label', `项目菜单 ${project.name}`); settings.setAttribute('aria-haspopup', 'menu'); settings.append(WeftIcons.create('more', 16)); settings.onclick = () => projectMenu(settings); title.insertBefore(settings, add); }
+            const settings = ui.element('button', 'project-action'); settings.type = 'button'; settings.setAttribute('aria-label', `项目菜单 ${project.name}`); settings.setAttribute('aria-haspopup', 'menu'); settings.append(WeftIcons.create('more', 16)); settings.onclick = () => projectMenu(settings); title.insertBefore(settings, add);
             row.append(title);
             if (!collapsedProjects.has(project.projectId) || query) {
                 const children = ui.element('ul', 'project-conversations');
                 for (const session of query || core.projectExpanded(project.projectId) ? sessions : sessions.slice(0, 5)) {
                     if (query && !project.name.toLocaleLowerCase().includes(query) && !(session.title || '新对话').toLocaleLowerCase().includes(query)) continue;
-                    const child = ui.element('li', 'session-row' + (session.unread ? ' is-unread' : '')); child.dataset.sessionId = session.sessionId;
-                    const button = ui.element('button', core.state.selectedSessionId === session.sessionId ? 'is-current' : ''); button.type = 'button'; button.append(ui.element('span', 'session-title', session.title || '新对话'));
-                    button.onclick = () => core.selectSession(session.sessionId);
-                    const more = ui.element('button', 'session-more'); more.type = 'button'; more.setAttribute('aria-label', `更多操作 ${session.title || '新对话'}`); more.append(WeftIcons.create('more', 16)); more.onclick = () => sessionMenu(session, more); child.append(button); appendStatus(child, session); child.append(more); bindRowActions(child, session, more); children.append(child);
+                    children.append(conversationRow(session, true));
                 }
                 if (!query && sessions.length > 5) {
                     const expanded = core.projectExpanded(project.projectId), item = ui.element('li');
@@ -246,7 +276,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                         [...ui.byId('session-list').querySelectorAll('.project-expand')].find(button => button.dataset.projectExpand === project.projectId)?.focus(); };
                     item.append(more); children.append(item);
                 }
-                if (!sessions.length) { const empty = ui.element('li', 'project-empty'); const button = ui.element('button', '', '新建工作'); button.type = 'button'; button.onclick = () => newProjectConversation(project, button); empty.append(button); children.append(empty); }
+                if (!sessions.length) children.append(ui.element('li', 'project-empty', '暂无对话'));
                 row.append(children);
             }
             list.append(row);
@@ -432,7 +462,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             core.state.activeChatSource, core.state.selectedPhoneConversationId, core.state.models.length,
             core.state.projectCanManage, core.state.projectsError, core.state.sessions, core.state.projects,
             core.state.sessionGroups, core.state.sessionListNextCursor, core.state.sessionListCursor, core.state.sessionStatusSummary, core.phoneConversations(), core.state.sessionListQuery, core.sidebarConversationMode?.(),
-            [...collapsedGroups], [...collapsedProjects], [...collapsedSections], recentFilter, (core.state.projects || []).map(p => core.projectPinned(p.projectId)), (core.state.projects || []).map(p => core.projectExpanded(p.projectId))]);
+            [...collapsedGroups], [...collapsedProjects], [...collapsedSections], recentFilter, expandedProjectList, (core.state.projects || []).map(p => core.projectPinned(p.projectId)), (core.state.projects || []).map(p => core.projectExpanded(p.projectId))]);
         // Live updates often repaint the same sidebar. Keep its hovered / focused
         // rows mounted so the half-second detail timer and keyboard path survive.
         if (signature === sidebarSignature && ui.byId('session-list').children.length) return;
@@ -443,7 +473,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const liveList = ui.byId('session-list'), previousRows = new Map([...liveList.children].map(row => [sidebarRows.get(row)?.key, row]));
         const list = ui.element('ul');
         const phone = (collapsedSections.has('recent') || recentFilter === 'work' ? [] : core.phoneConversations()).filter(record => !core.state.sessions.find(session =>
-            session.sessionId === core.phoneBinding(record.id)?.sessionId)?.projectId);
+            session.sessionId === core.phoneBinding(record.id)?.sessionId && (session.projectId || session.pinned)));
         const linkedSessionIds = new Set(phone.map((record) => core.phoneBinding(record.id)?.sessionId).filter(Boolean));
 
         ui.byId('sessions-status').textContent = '';
@@ -458,21 +488,50 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                 const filter=ui.element('button','project-action');filter.type='button';filter.setAttribute('aria-label','筛选最近对话');filter.setAttribute('aria-haspopup','menu');filter.append(WeftIcons.create('more',16));
                 filter.onclick=()=>WeftPopover.openMenu(filter,[['all','全部'],['chat','对话'],['work','工作']].map(([value,name])=>({name,checked:recentFilter===value,action:()=>{if(recentFilter!==value){recentFilter=value;renderSessions();}}})),{label:'最近对话类型'});row.append(filter);
             }
+            if ((id === 'projects' && canManageProjectFolders()) || id === 'recent') {
+                const add = ui.element('button', 'project-action'); add.type = 'button';
+                add.setAttribute('aria-label', id === 'projects' ? '新建项目' : '新建独立对话'); add.append(WeftIcons.create(id === 'projects' ? 'plus' : 'compose', 16));
+                add.onclick = () => id === 'projects' ? editProject() : core.startNewConversation().catch(error => ui.toast(core.failureMessage(error)));
+                row.append(add);
+            }
             list.append(row);
         };
         const allSessions=core.sessionList();
-        heading('projects','项目',(core.state.projects||[]).filter(project=>!project.revoked).map(project=>core.sidebarStatus('projects',project.projectId,core.projectConversations(project.projectId))));
-        const projectMatches=collapsedSections.has('projects')&&!query?0:renderSidebarProjects(list,query);
-        heading('recent','最近',allSessions.filter(row=>!row.projectId));
-        const sessions = collapsedSections.has('recent')&&!query ? [] : allSessions.filter(session => !session.projectId && (recentFilter==='all'||core.conversationMode?.(session)===recentFilter));
+        const projects = (core.state.projects || []).filter(project => !project.revoked);
+        const pinnedProjects = projects.filter(project => core.projectPinned(project.projectId));
+        const otherProjects = projects.filter(project => !core.projectPinned(project.projectId));
+        const pinnedSessions = allSessions.filter(session => session.pinned && !session.projectId);
+        heading('pinned', '置顶', [...pinnedSessions, ...pinnedProjects.map(project => core.sidebarStatus('projects', project.projectId, core.projectConversations(project.projectId)))]);
+        let projectMatches = 0;
+        if (!collapsedSections.has('pinned') || query) {
+            projectMatches += renderSidebarProjects(list, query, pinnedProjects);
+            for (const session of WeftUiCore.sortSessions(pinnedSessions)) {
+                if (!core.sessionIdPattern.test(session.sessionId) || query && !(session.title || '新对话').normalize('NFKC').toLocaleLowerCase().includes(query)) continue;
+                list.append(conversationRow(session)); matches++;
+            }
+            if (!pinnedProjects.length && !pinnedSessions.length && !query) list.append(ui.element('li', 'project-empty', '常用项目和对话可在菜单中置顶。'));
+        }
+        heading('projects', '项目', otherProjects.map(project => core.sidebarStatus('projects', project.projectId, core.projectConversations(project.projectId))));
+        if (!collapsedSections.has('projects') || query) {
+            projectMatches += renderSidebarProjects(list, query, query || expandedProjectList ? otherProjects : otherProjects.slice(0, 5));
+            if (!projects.length) list.append(ui.element('li', 'project-empty', core.state.projectsError || (core.state.projectCanManage ? '添加一个文件夹，开始工作。' : '在电脑上添加项目后，可在这里开始工作。')));
+            if (!query && otherProjects.length > 5) {
+                const row = ui.element('li'), more = ui.element('button', 'project-expand', expandedProjectList ? '收起项目' : `展开显示（${otherProjects.length - 5}）`);
+                more.type = 'button'; more.dataset.expandProjects = ''; more.setAttribute('aria-expanded', String(expandedProjectList));
+                more.onclick = () => { expandedProjectList = !expandedProjectList; renderSessions(); ui.byId('session-list').querySelector('[data-expand-projects]')?.focus({preventScroll:true}); };
+                row.append(more); list.append(row);
+            }
+        }
+        heading('recent','最近',allSessions.filter(row=>!row.projectId && !row.pinned));
+        const sessions = collapsedSections.has('recent')&&!query ? [] : allSessions.filter(session => !session.projectId && !session.pinned && (recentFilter==='all'||core.conversationMode?.(session)===recentFilter));
         for (const session of globalThis.WeftUiCore.sortSessions(sessions).sort(globalThis.WeftUiCore.compareSessionGroups)) {
             if (!core.sessionIdPattern.test(session.sessionId) || linkedSessionIds.has(session.sessionId))
                 continue;
             const title = typeof session.title === 'string' && session.title ? session.title : '新对话';
             if (query && !title.normalize('NFKC').toLocaleLowerCase().includes(query))
                 continue;
-            const group = session.pinned ? '已置顶' : (core.state.sessionGroups || []).find(item => item.id === session.groupId)?.name || '未分组';
-            const groupId = session.pinned ? 'pinned' : session.groupId || 'ungrouped';
+            const group = (core.state.sessionGroups || []).find(item => item.id === session.groupId)?.name || '未分组';
+            const groupId = session.groupId || 'ungrouped';
             if (groupId !== currentGroup) {
                 const heading = ui.element('li','session-group');heading.dataset.groupId=groupId;const toggle=ui.element('button','session-group-toggle',group);toggle.type='button';toggle.setAttribute('aria-expanded',String(!collapsedGroups.has(groupId)));
                 toggle.onclick=()=>{collapsedGroups.has(groupId)?collapsedGroups.delete(groupId):collapsedGroups.add(groupId);renderSessions();};heading.append(toggle);
@@ -486,26 +545,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             }
             matches++;
             if(collapsedGroups.has(groupId) && !query) continue;
-            const row = ui.element('li');
-            const button = ui.element('button', core.state.activeChatSource === 'desktop' &&
-                session.sessionId === core.state.selectedSessionId ? 'is-current' : '');
-            button.type = 'button';
-            const label = ui.element('span', 'session-title');
-            label.append(ui.element('span', 'session-title-text', title));
-
-            button.append(label);
-            button.addEventListener('click', () => {
-                const select=()=>core.selectSession(session.sessionId);
-                const current=core.state.activeChatSource==='desktop'&&core.state.selectedSessionId===session.sessionId&&!core.state.newConversation;
-                void Promise.resolve(!current&&globalThis.WeftMotion?WeftMotion.handoff(ui.byId('chat-scroll'),select):select()).catch(error=>ui.toast(core.failureMessage(error)));
-            });
-            row.append(button);
-            appendStatus(row, session);
-            row.className = 'session-row' + (session.unread ? ' is-unread' : ''); row.dataset.sessionId = session.sessionId;
-            const more = ui.element('button', 'session-more'); more.append(globalThis.WeftIcons.create('more',16)); more.type = 'button'; more.setAttribute('aria-haspopup','menu'); more.setAttribute('aria-label', `更多操作 ${title}`);
-            more.addEventListener('click', () => sessionMenu(session, more)); row.append(more); bindRowActions(row, session, more);
-            if (session.archived) button.setAttribute('aria-label', `${title}，已归档`);
-            list.append(row);
+            list.append(conversationRow(session));
         }
         for (const record of phone) {
             if (query && !core.phoneDisplayTitle(record).normalize('NFKC').toLocaleLowerCase().includes(query))
@@ -515,7 +555,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const button = ui.element('button', core.state.activeChatSource === 'phone' &&
                 record.id === core.state.selectedPhoneConversationId ? 'is-current' : '');
             button.type = 'button';
-            button.append(ui.element('span', 'session-title', core.phoneDisplayTitle(record)));
+            button.title = core.phoneDisplayTitle(record); button.append(WeftIcons.create('phone', 16), sidebarTitle(core.phoneDisplayTitle(record)));
             const native = core.state.sessions.find(session=>session.sessionId===core.phoneBinding(record.id)?.sessionId);
             row.className = 'session-row'; if(native) { row.dataset.sessionId=native.sessionId; }
             button.addEventListener('click', () => { core.selectPhoneConversation(record.id); });
@@ -540,6 +580,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const retained = new Set(nextRows);
         for (const row of [...liveList.children]) if (!retained.has(row)) row.remove();
         nextRows.forEach((row,index)=>{if(liveList.children[index]!==row)liveList.insertBefore(row,liveList.children[index]||null);});
+        requestAnimationFrame(measureTitles);
         if (hoverTrigger && !hoverTrigger.isConnected) closeHoverCard();
         if (focusId) {
             const replacement = [...liveList.querySelectorAll('.session-row')].find(row => row.dataset.sessionId === focusId);
@@ -551,6 +592,9 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     }
     function mountSessions() {
         globalThis.WeftPopover.bindTooltips();
+        new ResizeObserver(measureTitles).observe(ui.byId('session-list'));
+        ui.byId('session-list').addEventListener('focusin', measureTitles);
+        ui.byId('session-list').addEventListener('pointerover', measureTitles);
         ui.byId('chat-scroll').addEventListener('scroll',acknowledgeVisibleConversation,{passive:true});
 
         ui.byId('load-older').addEventListener('click', () => { void core.loadOlderHistory(); });
