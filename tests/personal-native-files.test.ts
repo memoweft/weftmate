@@ -76,13 +76,14 @@ test('one browser capability opens model-selected URLs, reads captures and follo
     sessionOperations: {executionOwnerForSession: () => 'owner'}, rootState: { legacyOwnerId: 'owner' }, accountState: () => account,
     personalExecutionSource: () => ({ root: { commandId: 'cmd-native' } }), browserReader: { read: async ({ url }: any) => {
       urls.push(url)
-      return { url, title: 'Fixture', capturedText: 'Full captured page', links: [{ linkId: 'next', url: 'https://example.org/next' }], outline: [], captureTruncated: false }
+      return { url, title: 'Fixture', capturedText: 'Full captured page', links: [{ label: '下一页', url: 'https://example.org/next' }], outline: [], captureTruncated: false }
     } } })
   const opened = await browser.browse({ sessionId: 'conversation', browserAction: 'open', url: 'https://example.org/discovered' })
   assert.equal(opened.text, 'Full captured page')
   const segment = await browser.browse({ sessionId: 'conversation', browserAction: 'read', snapshotId: opened.snapshotId, turn: 2 })
   assert.equal(segment.text, opened.text)
-  await browser.browse({ sessionId: 'conversation', browserAction: 'follow', snapshotId: opened.snapshotId, linkId: 'next', turn: 3 })
+  assert.equal(typeof opened.links[0].linkId, 'string', 'real reader links receive a usable capture-scoped identity')
+  await browser.browse({ sessionId: 'conversation', browserAction: 'follow', snapshotId: opened.snapshotId, linkId: opened.links[0].linkId, turn: 3 })
   assert.deepEqual(urls, ['https://example.org/discovered', 'https://example.org/next'])
   await assert.rejects(browser.browse({ sessionId: 'other', browserAction: 'read', snapshotId: opened.snapshotId }),
     (error: any) => error.code === 'BROWSER_SOURCE_UNVERIFIED')

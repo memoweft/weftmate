@@ -2,6 +2,12 @@
 
 本文只记录当前 DSH 打包接缝，不定义产品路线。
 
+## 交互终端依赖
+
+宿主固定使用 `node-pty` 1.1.0（MIT），Windows x64 使用随包 Node-API（稳定原生扩展接口）预编译模块与 ConPTY DLL；保留 `npmRebuild:false`，`asarUnpack` 解包该依赖及工作线程程序。所有打包入口的 `scripts/release/terminal-native.cjs` 在 `beforePack` 核对原生模块和控制台文件，不能借开发目录的文件启动。PTY 在单独的受管 Node 子进程里运行，退出连进程树收掉。
+
+界面固定使用 `@xterm/xterm` 6.0.0 与 `@xterm/addon-fit` 0.11.0（均 MIT）。运行 `node scripts/build-terminal-assets.mjs` 从锁定依赖生成 `src/personal-access-ui/vendor/terminal/` 的网页资源与许可证；它们随界面资源清单和安装包一起交付，不从 CDN（公共内容分发网络）动态下载。升级依赖时重新生成并核对许可证。
+
 ## 来源
 
 - DSH 版本由 `tests/contract/dsh-pin.json` 固定；

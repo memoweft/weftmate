@@ -11,7 +11,8 @@ app.commandLine.appendSwitch('force-device-scale-factor', '1')
 app.disableHardwareAcceleration()
 app.whenReady().then(async () => {
   const window = new BrowserWindow({ width: 1440, height: 960, useContentSize: true, show: false,
-    webPreferences: { contextIsolation: true, nodeIntegration: false, backgroundThrottling: false } })
+    webPreferences: { contextIsolation: true, nodeIntegration: false, backgroundThrottling: false, offscreen: true } })
+  window.webContents.setFrameRate(60); window.webContents.on('paint', () => {});
   await window.loadURL(process.argv.find(value => value.startsWith('http://127.0.0.1:')))
 })
 // The fixture matches the former suite's explicit window destruction at teardown.

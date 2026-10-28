@@ -2,8 +2,10 @@
 globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     const collapsedGroups = new Set();
     let activeMenu, activeSubmenu, menuTrigger, manualUnreadSession;
-    const collapsedProjects = new Set();
+    const collapsedProjects = new Set(), collapsedSections = new Set();
+    let recentFilter = 'all';
     let sidebarSignature;
+    const sidebarRows = new WeakMap();
     const priorStatuses = new Map();
     let hoverCard, hoverTimer, hoverTrigger;
     function relativeActivity(value) {
@@ -40,7 +42,6 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         });
     }
     function bindRowActions(row, session, more) {
-        more.dataset.tooltip = '更多操作';
         row.addEventListener('contextmenu', event => {
             event.preventDefault(); sessionMenu(session, more, false, {x:event.clientX,y:event.clientY});
         });
@@ -60,9 +61,10 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                 device.setAttribute('aria-label', session.hostId && session.hostId !== core.state.hostId ? '其它设备' : '这台电脑');
                 head.append(device, ui.element('span', 'session-hover-time', relativeActivity(details.activity))); hoverCard.append(head);
                 const project = core.state.projects?.find(item => item.projectId === session.projectId);
+                hoverCard.append(ui.element('p', '', `${core.computerName?.(session.hostId || core.state.hostId) || details.device}${session.computerOffline ? ' · 不在线' : ''}`));
                 const state = WeftUiCore.sessionStatus(session);
                 if (state.label) hoverCard.append(ui.element('p', 'session-hover-state', state.label));
-                if (project) { const location = ui.element('p', 'session-hover-project'); location.append(WeftIcons.create('folder', 16), ui.element('span', '', project.name)); hoverCard.append(location); }
+                if (project) { const location = ui.element('p', 'session-hover-project'); location.append(WeftIcons.create('folder', 16), ui.element('span', '', project.name)); hoverCard.append(location); if (project.pathHint) hoverCard.append(ui.element('p', '', project.rootPath || project.pathHint)); }
                 document.body.append(hoverCard); globalThis.WeftPopover.position(hoverCard, row, {side:'right'});
             }, 500);
         };
@@ -138,6 +140,51 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             catch (error) { notice.textContent = projectError(error); } finally { save.disabled = false; } };
         dialog.onclose = () => dialog.remove(); document.body.append(dialog); globalThis.WeftPopover.bindSettingsSelect(permission); dialog.showModal(); (folder || name).focus();
     }
+    function bindWorkspaceInfo(trigger, read) {
+        const show = () => {
+            closeHoverCard();
+            hoverTimer = setTimeout(async () => {
+                const value = read(); if (!value || !trigger.isConnected) return;
+                const card = ui.element('div','session-hover-card'); card.id='workspace-info'; card.setAttribute('role','tooltip');
+                card.append(ui.element('strong','',value.title));
+                if(value.details)card.append(ui.element('p','',value.details));
+                const path = ui.element('p','',value.project?.rootPath || value.project?.pathHint || ''); card.append(path);
+                hoverCard=card;hoverTrigger=trigger;trigger.setAttribute('aria-describedby',card.id);document.body.append(card);WeftPopover.position(card,trigger,{side:'right'});
+                if(value.project && canManageProjectFolders())try{const info=await globalThis.weftmateDesktop.projectFolderInfo(value.project.projectId);if(card.isConnected&&info){path.textContent=info.rootPath;WeftPopover.position(card,trigger,{side:'right'});}}catch{}
+            },400);
+        };
+        trigger.addEventListener('pointerenter',show);trigger.addEventListener('pointerleave',closeHoverCard);
+        trigger.addEventListener('focus',show);trigger.addEventListener('blur',closeHoverCard);
+        trigger.addEventListener('click',closeHoverCard);
+        trigger.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();closeHoverCard();}});
+    }
+    function manageProjectConversations(project, all = false) {
+        const dialog=ui.element('dialog','dialog project-dialog');dialog.setAttribute('aria-label','管理项目对话');
+        const body=ui.element('div','dialog-body');body.append(ui.element('h2','',all?'归档项目里的对话':'批量管理'));
+        const list=ui.element('div','project-batch-list'), selected=new Set();
+        for(const session of core.projectConversations(project.projectId)){
+            const label=ui.element('label'),check=ui.element('input');check.type='checkbox';check.checked=all;if(all)selected.add(session.sessionId);
+            check.onchange=()=>{check.checked?selected.add(session.sessionId):selected.delete(session.sessionId);};label.append(check,ui.element('span','',session.title||'新对话'));list.append(label);
+        }
+        const notice=ui.element('p','form-error');notice.setAttribute('role','status');body.append(list,notice);
+        const footer=ui.element('div','dialog-footer'),cancel=ui.element('button','button secondary','取消'),archive=ui.element('button','button primary','归档所选');
+        cancel.onclick=()=>dialog.close();archive.onclick=async()=>{archive.disabled=true;const identity=core.accountToken();try{for(const id of [...selected]){if(!core.accountIdentityCurrent(identity))return;await core.archiveSession(id,true);selected.delete(id);list.querySelectorAll('input').forEach(input=>input.disabled=true);}dialog.close();ui.toast('所选对话已归档，可在设置里恢复。');}catch(error){notice.textContent=core.failureMessage(error);archive.disabled=false;}};
+        footer.append(cancel,archive);dialog.append(body,footer);dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();cancel.focus();
+    }
+    async function changeProjectFolder(project) {
+        const identity=core.accountToken();
+        try {
+            const rootPath=await globalThis.weftmateDesktop.pickProjectFolder();if(!rootPath||!core.accountIdentityCurrent(identity))return;
+            const info=await globalThis.weftmateDesktop.inspectProjectFolder(rootPath);if(!core.accountIdentityCurrent(identity))return;
+            const dialog=ui.element('dialog','dialog confirm-dialog');dialog.setAttribute('aria-label','更改文件夹位置');
+            const body=ui.element('div','dialog-body');body.append(ui.element('h2','','更改文件夹位置'),ui.element('p','',`此项目以后使用 ${rootPath}。现有文件不会移动或删除。`));
+            if(info.warning)body.append(ui.element('p','',info.warning+' 本次改为只读。'));
+            const notice=ui.element('p','form-error');body.append(notice);
+            const footer=ui.element('div','dialog-footer'),cancel=ui.element('button','button secondary','取消'),save=ui.element('button','button primary','使用这个文件夹');
+            cancel.onclick=()=>dialog.close();save.onclick=async()=>{if(!core.accountIdentityCurrent(identity))return;save.disabled=true;try{await globalThis.weftmateDesktop.relocateProjectFolder(project.projectId,{rootPath,expectedRevision:project.revision,...(info.warning?{permission:'read-only'}:{})});await core.refreshSessions();dialog.close();}catch(error){notice.textContent=projectError(error);save.disabled=false;}};
+            footer.append(cancel,save);dialog.append(body,footer);dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();cancel.focus();
+        } catch(error) { ui.toast(projectError(error)); }
+    }
     async function newProjectConversation(project, button) {
         button.disabled = true;
         try { const sessionId = await core.createProjectConversation(project, core.state.modelProfileId || core.state.models[0]?.id);
@@ -146,14 +193,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         finally { button.disabled = false; }
     }
     function renderSidebarProjects(list, query) {
-        if (!core.supportsWorkModes?.()) { const heading = ui.element('li', 'project-section-heading'); heading.append(ui.element('span', '', '项目')); list.append(heading); }
-        for (const session of core.sessionList().filter(row => core.conversationMode?.(row) === 'work' && !row.projectId)) {
-            const row=ui.element('li','session-row');row.dataset.sessionId=session.sessionId;
-            const open=ui.element('button',core.state.selectedSessionId===session.sessionId?'is-current':'',session.title||'工作');open.type='button';open.onclick=()=>core.selectSession(session.sessionId);
-            const more=ui.element('button','session-more');more.type='button';more.setAttribute('aria-label',`更多操作 ${session.title||'工作'}`);more.append(WeftIcons.create('more',16));more.onclick=()=>sessionMenu(session,more);
-            row.append(open);appendStatus(row,session);row.append(more);bindRowActions(row,session,more);list.append(row);
-        }
-        const projects = (core.state.projects || []).filter(project => !project.revoked); let projectMatches = 0;
+        const projects = (core.state.projects || []).filter(project => !project.revoked).sort((a,b) => Number(core.projectPinned(b.projectId)) - Number(core.projectPinned(a.projectId))); let projectMatches = 0;
         if (!projects.length) list.append(ui.element('li', 'project-empty', core.state.projectsError || (core.state.projectCanManage ? '添加一个文件夹，开始工作。' : '在电脑上添加项目后，可在这里开始工作。')));
         for (const project of projects) {
             const sessions = core.projectConversations(project.projectId);
@@ -162,13 +202,23 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const row = ui.element('li', 'sidebar-project'); row.dataset.projectId = project.projectId;
             const title = ui.element('div', 'sidebar-project-heading');
             const toggle = ui.element('button', 'sidebar-project-toggle'); toggle.type = 'button'; toggle.setAttribute('aria-expanded', String(!collapsedProjects.has(project.projectId))); toggle.append(WeftIcons.create(collapsedProjects.has(project.projectId) ? 'folder' : 'folder-open', 16), ui.element('span', '', project.name));
-            if(core.hasMultipleComputers?.())toggle.append(ui.element('small','session-computer-name',`${core.computerName(project.hostId)}${project.computerOffline?' · 不在线':''}`));
+
             toggle.onclick = () => { collapsedProjects.has(project.projectId) ? collapsedProjects.delete(project.projectId) : collapsedProjects.add(project.projectId); renderSessions(); };
             const add = ui.element('button', 'project-action'); add.type = 'button'; add.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); add.append(WeftIcons.create('plus', 16)); add.disabled = !core.state.models.length; add.onclick = () => newProjectConversation(project, add); title.append(toggle); if (collapsedProjects.has(project.projectId)) { title.dataset.statusKey = `project:${project.projectId}`; appendStatus(title, core.sidebarStatus('projects',project.projectId,sessions)); } title.append(add);
+            bindWorkspaceInfo(toggle, () => ({ title:project.name, project, details:core.computerName?.(project.hostId || core.state.hostId) }));
+            const safe = action => async () => { try { await action(); } catch (error) { ui.toast(projectError(error)); } };
             const projectMenu = trigger => WeftPopover.openMenu(trigger, [
-                {name:'新建工作',icon:'compose',disabled:!core.state.models.length,action:()=>newProjectConversation(project, add)},
-                ...(canManageProjectFolders() ? [{name:'项目设置',icon:'settings',action:()=>editProject(project)},
-                    {name:'移除项目',icon:'trash',danger:true,action:()=>confirmRemoveProject(project)}] : [])
+                {name:'重命名',icon:'edit',disabled:!canManageProjectFolders(),action:()=>editName('重命名项目',project.name,name=>core.saveProject(project,{name}))},
+                {name:core.projectPinned(project.projectId)?'取消置顶':'置顶',icon:'pin',action:safe(()=>core.pinProject(project.projectId,!core.projectPinned(project.projectId)))},
+                {name:'归档项目里的对话',icon:'archive',disabled:!sessions.length,action:()=>manageProjectConversations(project,true)},
+                {name:'批量管理',icon:'list',disabled:!sessions.length,action:()=>manageProjectConversations(project)},
+                {separator:true},
+                {name:'在文件资源管理器中显示',icon:'folder-open',disabled:!canManageProjectFolders(),action:safe(()=>globalThis.weftmateDesktop.showProjectFolder(project.projectId))},
+                {name:'复制工作目录',icon:'copy',disabled:!canManageProjectFolders(),action:safe(async()=>{const info=await globalThis.weftmateDesktop.projectFolderInfo(project.projectId);await navigator.clipboard.writeText(info.rootPath);ui.toast('已复制工作目录。');})},
+                {name:'更改文件夹位置',icon:'folder',disabled:!canManageProjectFolders(),action:()=>changeProjectFolder(project)},
+                {name:'项目设置',icon:'settings',disabled:!canManageProjectFolders(),action:()=>editProject(project)},
+                {separator:true},
+                {name:'移除',icon:'trash',danger:true,disabled:!canManageProjectFolders(),action:()=>confirmRemoveProject(project)}
             ], {label:'项目操作'});
             let projectPress, projectPressed = false;
             toggle.addEventListener('pointerdown', event => { if (event.pointerType === 'touch') { projectPressed = false; projectPress = setTimeout(() => { projectPressed = true; projectMenu(toggle); }, 500); } });
@@ -193,7 +243,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                     more.dataset.projectExpand = project.projectId;
                     more.type = 'button'; more.setAttribute('aria-label', `${more.textContent} ${project.name}`); more.setAttribute('aria-expanded', String(expanded));
                     more.onclick = () => { core.setProjectExpanded(project.projectId, !expanded); renderSessions();
-                        [...list.querySelectorAll('.project-expand')].find(button => button.dataset.projectExpand === project.projectId)?.focus(); };
+                        [...ui.byId('session-list').querySelectorAll('.project-expand')].find(button => button.dataset.projectExpand === project.projectId)?.focus(); };
                     item.append(more); children.append(item);
                 }
                 if (!sessions.length) { const empty = ui.element('li', 'project-empty'); const button = ui.element('button', '', '新建工作'); button.type = 'button'; button.onclick = () => newProjectConversation(project, button); empty.append(button); children.append(empty); }
@@ -237,9 +287,8 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     function sessionMenu(session, trigger, groupsOnly = false, point = null) {
         closeHoverCard();
         if(groupsOnly){activeSubmenu?.remove();}else closeMenu();
-        const menu = ui.element('div', 'session-menu'); if(groupsOnly)activeSubmenu=menu;else activeMenu = menu; menu.setAttribute('role','menu'); menu.setAttribute('aria-label',groupsOnly === 'open' ? '打开方式' : groupsOnly === 'retention' ? '自动删除期限' : groupsOnly === 'project' ? '移至项目' : groupsOnly?'移至分组':'对话操作');
+        const menu = ui.element('div', 'session-menu'); if(groupsOnly)activeSubmenu=menu;else activeMenu = menu; menu.setAttribute('role','menu'); menu.setAttribute('aria-label',groupsOnly === 'memory' ? '记忆与保留' : groupsOnly === 'retention' ? '自动删除期限' : groupsOnly === 'project' ? '移至项目' : groupsOnly?'移至分组':'对话操作');
         const notice = ui.element('p','form-error'); notice.setAttribute('role','alert');
-        const actionSeparator = () => {const line=ui.element('div','session-menu-separator');line.setAttribute('role','separator');menu.append(line);};
         const action = (label, run, options = {}) => {
             if(options.separator){const line=ui.element('div','session-menu-separator');line.setAttribute('role','separator');menu.append(line);}
             const button = ui.element('button', options.danger?'session-menu-item danger':'session-menu-item'); button.type='button';button.setAttribute('role',options.role || 'menuitem');
@@ -252,11 +301,18 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         };
         if(groupsOnly === 'retention') {
             for (const days of [1,7,30,null]) action(days===null?'不自动删除':`${days} 天后自动删除`,async()=>{await core.updateSession(session.sessionId,{autoDeleteDays:days});closeMenu();paintSelectedSession(core.state.selectedSessionId);},{role:'menuitemradio',checked:(session.autoDeleteDays ?? (session.autoDeleteDays === null ? null : 30)) === days});
-        } else if(groupsOnly === 'open') {
-            action('在当前窗口打开',()=>{closeMenu();return core.selectSession(session.sessionId);});
+
         } else if(groupsOnly === 'project') {
             for (const project of core.state.projects.filter(project => !project.revoked)) action(project.name, async () => { await core.updateSession(session.sessionId, { projectId: project.projectId }); closeMenu(); await core.refreshSessions(); if (core.state.selectedSessionId === session.sessionId) paintSelectedSession(session.sessionId); },{role:'menuitemradio',checked:session.projectId===project.projectId});
             action('移出项目', async () => { await core.updateSession(session.sessionId, { projectId: null }); closeMenu(); await core.refreshSessions(); },{role:'menuitemradio',checked:!session.projectId});
+        } else if(groupsOnly === 'memory') {
+                const toggle = action('此对话不形成记忆', async () => { await core.updateSession(session.sessionId, {memoryMode: session.memoryMode === 'off' ? 'on' : 'off'}); closeMenu(); paintSelectedSession(core.state.selectedSessionId); ui.toast('从下一回合生效。之前形成的记忆保留，可去记忆页遗忘。'); });
+                toggle.setAttribute('role', 'menuitemcheckbox'); toggle.setAttribute('aria-checked', String(session.memoryMode === 'off'));
+                const toggleCheck=WeftIcons.create('allow',16);toggleCheck.classList.add('session-menu-check');toggleCheck.style.visibility=session.memoryMode==='off'?'visible':'hidden';toggle.append(toggleCheck);
+                const recall = action('使用已有记忆', async () => { await core.updateSession(session.sessionId, {recallEnabled: session.recallEnabled === false}); closeMenu(); });
+                recall.setAttribute('role', 'menuitemcheckbox'); recall.setAttribute('aria-checked', String(session.recallEnabled !== false));
+                const recallCheck=WeftIcons.create('allow',16);recallCheck.classList.add('session-menu-check');recallCheck.style.visibility=session.recallEnabled!==false?'visible':'hidden';recall.append(recallCheck);
+                if (session.memoryMode === 'off') { const retention=action(`自动删除：${session.autoDeleteDays === null ? '不自动删除' : (session.autoDeleteDays ?? 30)+' 天'}`,()=>sessionMenu(session,trigger,'retention'),{submenu:true}); }
         } else if(groupsOnly){
             for(const group of core.state.sessionGroups || []) action(group.name,async()=>{await core.updateSession(session.sessionId,{groupId:group.id});closeMenu();},{role:'menuitemradio',checked:session.groupId===group.id});
             action('新建分组…',()=>{closeMenu();editName('新建分组','',async name=>{const result=await core.sessionGroupAction('POST',null,name);if(result)await core.updateSession(session.sessionId,{groupId:result.group.id});});},{separator:true});
@@ -273,20 +329,11 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const runs={project:()=>sessionMenu(session,menu.querySelector('[data-project-menu]'),'project'),pin:async()=>{await core.updateSession(session.sessionId,{pinned:!session.pinned});closeMenu();},unread:async()=>{manualUnreadSession=!session.unread?session.sessionId:null;await core.updateSession(session.sessionId,{unread:!session.unread});closeMenu();},
                 rename:()=>{closeMenu();renameInline(session);},fork:async()=>{const child=await core.forkSession(session.sessionId);closeMenu();if(!child)return;await core.refreshSessions();await core.selectSession(child.sessionId);},
                 group:()=>sessionMenu(session,menu.querySelector('[data-group-menu]'),true),archive:async()=>{if(session.archived)await core.archiveSession(session.sessionId,false);else await archiveWithUndo(session);closeMenu();},delete:()=>{closeMenu();confirmDelete(session);}};
-            const open=action('打开方式',()=>sessionMenu(session,open,'open'),{submenu:true});
             const buttons = new Map();
             for(const item of globalThis.WeftUiCore.sessionMenuItems(session)){ const button = action(item.id==='group'?'移至分区':item.label,runs[item.id],{...item,...(['pin','unread'].includes(item.id)?{role:'menuitemcheckbox',checked:!!session[item.id==='pin'?'pinned':'unread']}:{})}); if (item.id === 'project') button.dataset.projectMenu = ''; if (item.id === 'group') button.dataset.groupMenu = ''; buttons.set(item.id,button); }
             if (session.kind === 'main') action('这次别记：开临时对话', () => { closeMenu(); core.startNewConversation(false, true); });
-            else {
-                actionSeparator();
-                const toggle = action('此对话不形成记忆', async () => { await core.updateSession(session.sessionId, {memoryMode: session.memoryMode === 'off' ? 'on' : 'off'}); closeMenu(); paintSelectedSession(core.state.selectedSessionId); ui.toast('从下一回合生效。之前形成的记忆保留，可去记忆页遗忘。'); });
-                toggle.setAttribute('role', 'menuitemcheckbox'); toggle.setAttribute('aria-checked', String(session.memoryMode === 'off'));
-                const toggleCheck=WeftIcons.create('allow',16);toggleCheck.classList.add('session-menu-check');toggleCheck.style.visibility=session.memoryMode==='off'?'visible':'hidden';toggle.append(toggleCheck);
-                const recall = action('使用已有记忆', async () => { await core.updateSession(session.sessionId, {recallEnabled: session.recallEnabled === false}); closeMenu(); });
-                recall.setAttribute('role', 'menuitemcheckbox'); recall.setAttribute('aria-checked', String(session.recallEnabled !== false));
-                const recallCheck=WeftIcons.create('allow',16);recallCheck.classList.add('session-menu-check');recallCheck.style.visibility=session.recallEnabled!==false?'visible':'hidden';recall.append(recallCheck);
-                if (session.memoryMode === 'off') { const retention=action(`自动删除：${session.autoDeleteDays === null ? '不自动删除' : (session.autoDeleteDays ?? 30)+' 天'}`,()=>sessionMenu(session,retention,'retention'),{submenu:true}); }
-            }
+            else { const memory = action('记忆与保留', () => sessionMenu(session, memory, 'memory'), { submenu:true, separator:true }); }
+
             menu.onkeydown = event => {
                 if(event.ctrlKey || event.altKey || event.metaKey)return;
                 const id=globalThis.WeftUiCore.sessionMenuKey(event.key);if(id){event.preventDefault();buttons.get(id)?.click();}
@@ -348,6 +395,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         ui.byId('chat-intro').hidden = false;
         ui.byId('desktop-action').hidden = true;
         const selected = core.state.sessions.find((item) => item.sessionId === sessionId);
+        ui.byId('assistant-title').title = selected?.title || '新对话';
         ui.byId('assistant-title').textContent = selected?.title || (core.state.newConversation && core.currentConversationMode?.() === 'work' ? '新建工作' : '新对话');
         const temporary = selected?.memoryMode === 'off' || !selected && core.state.newConversationTemporary;
         let memoryNotice = ui.byId('temporary-chat-notice');
@@ -383,8 +431,8 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const signature = JSON.stringify([core.state.ownerId, core.state.identityGeneration, core.state.selectedSessionId,
             core.state.activeChatSource, core.state.selectedPhoneConversationId, core.state.models.length,
             core.state.projectCanManage, core.state.projectsError, core.state.sessions, core.state.projects,
-            core.state.sessionGroups, core.state.sessionStatusSummary, core.phoneConversations(), core.state.sessionListQuery, core.sidebarConversationMode?.(),
-            [...collapsedGroups], [...collapsedProjects], (core.state.projects || []).map(p => core.projectExpanded(p.projectId))]);
+            core.state.sessionGroups, core.state.sessionListNextCursor, core.state.sessionListCursor, core.state.sessionStatusSummary, core.phoneConversations(), core.state.sessionListQuery, core.sidebarConversationMode?.(),
+            [...collapsedGroups], [...collapsedProjects], [...collapsedSections], recentFilter, (core.state.projects || []).map(p => core.projectPinned(p.projectId)), (core.state.projects || []).map(p => core.projectExpanded(p.projectId))]);
         // Live updates often repaint the same sidebar. Keep its hovered / focused
         // rows mounted so the half-second detail timer and keyboard path survive.
         if (signature === sidebarSignature && ui.byId('session-list').children.length) return;
@@ -392,18 +440,31 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const focused = document.activeElement, focusRow = focused?.closest?.('.session-row');
         const focusId = focusRow?.dataset.sessionId;
         const focusMore = focused?.className?.split(' ').includes('session-more');
-        closeHoverCard();
-        const list = ui.byId('session-list');
-        list.replaceChildren();
-        const workingList = core.supportsWorkModes?.() && core.sidebarConversationMode() === 'work';
-        const phone = (workingList ? [] : core.phoneConversations()).filter(record => !core.state.sessions.find(session =>
+        const liveList = ui.byId('session-list'), previousRows = new Map([...liveList.children].map(row => [sidebarRows.get(row)?.key, row]));
+        const list = ui.element('ul');
+        const phone = (collapsedSections.has('recent') || recentFilter === 'work' ? [] : core.phoneConversations()).filter(record => !core.state.sessions.find(session =>
             session.sessionId === core.phoneBinding(record.id)?.sessionId)?.projectId);
         const linkedSessionIds = new Set(phone.map((record) => core.phoneBinding(record.id)?.sessionId).filter(Boolean));
 
         ui.byId('sessions-status').textContent = '';
         const query = (core.state.sessionListQuery || '').normalize('NFKC').trim().toLocaleLowerCase();
         let currentGroup = null, matches = 0;
-        const sessions = workingList ? [] : core.sessionList().filter(session => core.conversationMode?.(session) !== 'work' && !session.projectId);
+        const heading = (id, label, rows) => {
+            const row=ui.element('li','sidebar-section-heading');row.dataset.sectionId=id;
+            const toggle=ui.element('button','sidebar-section-toggle',label);toggle.type='button';toggle.setAttribute('aria-expanded',String(!collapsedSections.has(id)));
+            toggle.append(WeftIcons.create('chevron',14));toggle.onclick=()=>{const focused=document.activeElement===toggle;collapsedSections.has(id)?collapsedSections.delete(id):collapsedSections.add(id);renderSessions();if(focused)ui.byId('session-list').querySelector(`[data-section-id="${id}"] button`)?.focus({preventScroll:true});};row.append(toggle);
+            if(collapsedSections.has(id)){row.dataset.statusKey=`section:${id}`;appendStatus(row,WeftUiCore.aggregateSessionStatus(rows));}
+            if(id==='recent'){
+                const filter=ui.element('button','project-action');filter.type='button';filter.setAttribute('aria-label','筛选最近对话');filter.setAttribute('aria-haspopup','menu');filter.append(WeftIcons.create('more',16));
+                filter.onclick=()=>WeftPopover.openMenu(filter,[['all','全部'],['chat','对话'],['work','工作']].map(([value,name])=>({name,checked:recentFilter===value,action:()=>{if(recentFilter!==value){recentFilter=value;renderSessions();}}})),{label:'最近对话类型'});row.append(filter);
+            }
+            list.append(row);
+        };
+        const allSessions=core.sessionList();
+        heading('projects','项目',(core.state.projects||[]).filter(project=>!project.revoked).map(project=>core.sidebarStatus('projects',project.projectId,core.projectConversations(project.projectId))));
+        const projectMatches=collapsedSections.has('projects')&&!query?0:renderSidebarProjects(list,query);
+        heading('recent','最近',allSessions.filter(row=>!row.projectId));
+        const sessions = collapsedSections.has('recent')&&!query ? [] : allSessions.filter(session => !session.projectId && (recentFilter==='all'||core.conversationMode?.(session)===recentFilter));
         for (const session of globalThis.WeftUiCore.sortSessions(sessions).sort(globalThis.WeftUiCore.compareSessionGroups)) {
             if (!core.sessionIdPattern.test(session.sessionId) || linkedSessionIds.has(session.sessionId))
                 continue;
@@ -413,7 +474,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const group = session.pinned ? '已置顶' : (core.state.sessionGroups || []).find(item => item.id === session.groupId)?.name || '未分组';
             const groupId = session.pinned ? 'pinned' : session.groupId || 'ungrouped';
             if (groupId !== currentGroup) {
-                const heading = ui.element('li','session-group');const toggle=ui.element('button','session-group-toggle',group);toggle.type='button';toggle.setAttribute('aria-expanded',String(!collapsedGroups.has(groupId)));
+                const heading = ui.element('li','session-group');heading.dataset.groupId=groupId;const toggle=ui.element('button','session-group-toggle',group);toggle.type='button';toggle.setAttribute('aria-expanded',String(!collapsedGroups.has(groupId)));
                 toggle.onclick=()=>{collapsedGroups.has(groupId)?collapsedGroups.delete(groupId):collapsedGroups.add(groupId);renderSessions();};heading.append(toggle);
                 if (collapsedGroups.has(groupId)) { heading.dataset.statusKey = `group:${groupId}`; appendStatus(heading, core.sidebarStatus('groups',groupId,sessions.filter(row => (row.pinned ? 'pinned' : row.groupId || 'ungrouped') === groupId))); }
                 if(!['pinned','ungrouped'].includes(groupId)) {
@@ -421,7 +482,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                     manage.onclick=()=>{editName('重命名分组',group,name=>core.sessionGroupAction('PATCH',groupId,name));};
                     const remove=ui.element('button','session-group-manage');remove.type='button';remove.setAttribute('aria-label',`删除分组 ${group}`);remove.append(globalThis.WeftIcons.create('trash',16));remove.onclick=()=>{void core.sessionGroupAction('DELETE',groupId).then(()=>core.refreshSessions()).catch(error=>{ui.byId('sessions-status').textContent=core.failureMessage(error);});};heading.append(manage,remove);
                 }
-                list.append(heading);currentGroup=groupId;
+                if(groupId!=='ungrouped')list.append(heading);currentGroup=groupId;
             }
             matches++;
             if(collapsedGroups.has(groupId) && !query) continue;
@@ -431,7 +492,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             button.type = 'button';
             const label = ui.element('span', 'session-title');
             label.append(ui.element('span', 'session-title-text', title));
-            if(core.hasMultipleComputers?.())label.append(ui.element('small','session-computer-name',`${core.computerName(session.hostId)}${session.computerOffline?' · 不在线':''}`));
+
             button.append(label);
             button.addEventListener('click', () => {
                 const select=()=>core.selectSession(session.sessionId);
@@ -450,7 +511,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             if (query && !core.phoneDisplayTitle(record).normalize('NFKC').toLocaleLowerCase().includes(query))
                 continue;
             matches++;
-            const row = ui.element('li');
+            const row = ui.element('li'); row.dataset.phoneId = record.id;
             const button = ui.element('button', core.state.activeChatSource === 'phone' &&
                 record.id === core.state.selectedPhoneConversationId ? 'is-current' : '');
             button.type = 'button';
@@ -461,18 +522,32 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             row.append(button); appendStatus(row, native ?? record);
             list.append(row);
         }
-        if (core.state.sessionListNextCursor || core.state.sessionListCursor) {
+        if ((!collapsedSections.has('recent') || query) && (core.state.sessionListNextCursor || core.state.sessionListCursor)) {
             const row = ui.element('li'), more = ui.element('button','',core.state.sessionListNextCursor ? '更早的对话' : '最近对话');
             more.type='button';more.onclick=()=>core.pageSessions(!!core.state.sessionListNextCursor).catch(error=>ui.byId('sessions-status').textContent=core.failureMessage(error));row.append(more);list.append(row);
         }
-        const projectMatches = workingList || !core.supportsWorkModes?.() ? renderSidebarProjects(list, query) : 0;
+        // Retain unchanged rows (and their focus/hover state) across polling.
+        const nextRows = [...list.children].map((row,index) => {
+            const session = core.state.sessions.find(item=>item.sessionId===row.dataset.sessionId);
+            const project = core.state.projects?.find(item=>item.projectId===row.dataset.projectId);
+            const phone = row.dataset.phoneId ? core.phoneConversations().find(item=>item.id===row.dataset.phoneId) : null;
+            const key = row.dataset.sectionId ? `section:${row.dataset.sectionId}` : row.dataset.phoneId ? `phone:${row.dataset.phoneId}` : row.dataset.sessionId ? `session:${row.dataset.sessionId}` : row.dataset.projectId ? `project:${row.dataset.projectId}` : row.dataset.groupId ? `group:${row.dataset.groupId}` : `other:${index}`;
+            const signature = JSON.stringify([core.state.ownerId,core.state.identityGeneration,row.innerHTML,session,phone,project,project?core.projectConversations(project.projectId):null]);
+            const old = previousRows.get(key);
+            if (old && sidebarRows.get(old)?.signature === signature) return old;
+            sidebarRows.set(row,{key,signature}); return row;
+        });
+        const retained = new Set(nextRows);
+        for (const row of [...liveList.children]) if (!retained.has(row)) row.remove();
+        nextRows.forEach((row,index)=>{if(liveList.children[index]!==row)liveList.insertBefore(row,liveList.children[index]||null);});
+        if (hoverTrigger && !hoverTrigger.isConnected) closeHoverCard();
         if (focusId) {
-            const replacement = [...list.querySelectorAll('.session-row')].find(row => row.dataset.sessionId === focusId);
+            const replacement = [...liveList.querySelectorAll('.session-row')].find(row => row.dataset.sessionId === focusId);
             (focusMore ? replacement?.querySelector('.session-more') : replacement?.children[0])?.focus({preventScroll:true});
         }
-        ui.byId('sessions-status').textContent = matches || projectMatches ? '' : query ? '没有找到会话。' : workingList ? '还没有工作，点新建开始。' : '还没有对话，点新建开始。';
-        if (matches <= 20) globalThis.WeftMotion?.changed(list, JSON.stringify([query, sessions.map(row => row.sessionId)]), 'base');
-        else globalThis.WeftMotion?.cancel(list);
+        ui.byId('sessions-status').textContent = matches || projectMatches ? '' : query ? '没有找到会话。' : allSessions.length || core.state.projects?.length || core.phoneConversations().length ? '' : '还没有对话，点新建开始。';
+        if (matches <= 20) globalThis.WeftMotion?.changed(liveList, JSON.stringify([query, sessions.map(row => row.sessionId)]), 'base');
+        else globalThis.WeftMotion?.cancel(liveList);
     }
     function mountSessions() {
         globalThis.WeftPopover.bindTooltips();
@@ -495,7 +570,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     function showSettingsArchived(target) {
         const search=ui.element('input','settings-search');search.type='search';search.setAttribute('aria-label','搜索已归档对话');search.placeholder='搜索已归档对话';
         const list=ui.element('div','archived-session-list'),notice=ui.element('p','muted');notice.setAttribute('role','status');target.replaceChildren(search,list,notice);
-        const draw=()=>{list.replaceChildren();for(const session of core.sessionList(true).filter(item=>(!core.supportsWorkModes?.() || core.conversationMode(item)===core.sidebarConversationMode()) && (item.title||'').toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase()))){
+        const draw=()=>{list.replaceChildren();for(const session of core.sessionList(true).filter(item=>(recentFilter==='all'||core.conversationMode(item)===recentFilter) && (item.title||'').toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase()))){
             const row=ui.element('div','archived-session-row');row.append(ui.element('span','',session.title||'新对话'));
             const restore=ui.element('button','button secondary','恢复');restore.type='button';restore.onclick=async()=>{restore.disabled=true;try{await core.archiveSession(session.sessionId,false);draw();}catch(error){notice.textContent=core.failureMessage(error);restore.disabled=false;}};
             const remove=ui.element('button','button danger','删除');remove.type='button';remove.onclick=()=>confirmDelete(session);row.append(restore,remove);list.append(row);}
@@ -504,5 +579,5 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         archivedRedraw=draw;
     }
     let archivedRedraw;
-    return { appendSessionStatus: appendStatus, canManageProjectFolders, editProject, paintSelectedSession, renderSessions, mountSessions, showSettingsArchived };
+    return { bindWorkspaceInfo, appendSessionStatus: appendStatus, canManageProjectFolders, editProject, paintSelectedSession, renderSessions, mountSessions, showSettingsArchived };
 };

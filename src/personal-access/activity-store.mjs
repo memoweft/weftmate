@@ -42,7 +42,8 @@ export function nativeTaskActivity(account,sessionId,terminal){
 export function putActivity(account, key, input) {
   const state=activityState(account);
   const priorTask=input.source?.taskId && input.type?.startsWith('task.') ? Object.values(state.items).find(row=>row.source.taskId===input.source.taskId&&row.type.startsWith('task.')&&(row.type==='task.started')===(input.type==='task.started')) : null;
-  const id=priorTask?.id ?? input.id ?? `activity-${digest(key)}`, previous=state.items[id];
+  const priorUpdate=input.type==='system.update.available' ? Object.values(state.items).find(row=>row.type===input.type&&row.summary===short(input.summary)) : null;
+  const id=priorTask?.id ?? priorUpdate?.id ?? input.id ?? `activity-${digest(key)}`, previous=state.items[id];
   if(state.suppressed?.[id] || input.source?.taskId&&state.suppressed?.[`task:${input.source.taskId}`])return null;
   if(input.source?.sessionId&&state.erasedBefore?.[input.source.sessionId]&&input.at<=state.erasedBefore[input.source.sessionId])return null;
   const privateSource=input.source?.sessionId && hasPrivateContent(account.sessions[input.source.sessionId]);
@@ -70,6 +71,8 @@ export function removeActivity(account, predicate) {
 }
 export function reconcileActivity(account) {
   const state=activityState(account);
+  const versions=new Set();
+  removeActivity(account,row=>{if(row.type!=='system.update.available')return false;if(versions.has(row.summary))return true;versions.add(row.summary);return false;});
   // Correct badges already persisted by older versions, and publish the correction
   // through the existing changes feed so an open activity page updates as well.
   for (const row of Object.values(state.items)) if (!row.read && !needsAttention(row)) {

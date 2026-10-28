@@ -3,6 +3,8 @@
   const definitions = [
     ['new','全局','新建旁聊','n',true],['search','全局','搜索','k',true],
     ['settings','全局','打开设置',',',true],['shortcuts','全局','快捷键一览','/',true],
+    ['panels','侧栏','展开或收起工作面板','p',true,false,true],
+    ...['review','terminal','browser','files','chat','subtasks'].map((kind,index)=>[`panel-${kind}`,'侧栏',`打开${['审查','终端','浏览器','文件','侧边聊天','子任务'][index]}`,String(index+1),true,false,true]),
     ['sidebar','侧栏','展开或收起侧栏','b',true],['escape','对话','关闭当前浮层，或停止回复','Escape'],
     ['send','输入框','发送消息','Enter'],['queue','输入框','排队发送下一条','Enter',true],
     ['newline','输入框','换行','Enter',false,true],['complete','输入框','接受灰色补全','Tab'],

@@ -2,7 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdir, chmod } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-const PROJECTION_VERSION = ':thinking-v2:stream-v1:original-text-v1';
+const PROJECTION_VERSION = ':thinking-v2:stream-v1:original-text-v1:file-changes-v1';
 
 /** Rebuildable public-history projection, never a native log decoder. Native
  * persistence owns decoding/recovery; this cache supports bounded SQL ranges. */

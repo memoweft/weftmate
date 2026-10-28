@@ -175,6 +175,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, context.publicAuth(current.ownerId, current.deviceId,
           current.device, current.csrfToken));
       }
+      if (await context.terminals.handleRelease(request, response, url)) return;
       if (ownerId && context.dataControls.isLocked(ownerId) && !pathname.startsWith('/personal/v1/data') &&
           !['/personal/v1/auth/me','/personal/v1/auth/state','/personal/v1/auth/logout'].includes(pathname) &&
           !(request.method==='GET'&&pathname.startsWith('/personal/v1/activity'))) throw failure('SESSION_BUSY',409);
@@ -308,6 +309,7 @@ export function createHttpHandler(context) {
       const { deviceId, ownerId: authenticatedOwnerId } = context.authenticate(request,
         write ? 'commands:write' : 'sessions:read');
       if (authenticatedOwnerId !== ownerId) throw failure('UNAUTHORIZED', 401);
+      if (await context.terminals.handle(request, response, url)) return;
       if (pathname === '/personal/v1/library' && request.method === 'GET') {
         const result = await context.library.list(ownerId, url.searchParams);
         context.authenticate(request, 'sessions:read');
@@ -1213,6 +1215,9 @@ export function createHttpHandler(context) {
         const current = context.authenticate(request, 'account:manage');
         if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
         const body = await context.readJson(request);
+        // Changing folder ownership uses the native picker, just like registration.
+        if (body?.rootPath !== undefined && request.headers['x-weftmate-desktop'] !== context.libraryDesktopToken)
+          throw failure('PROJECT_NATIVE_SELECTION_REQUIRED', 403);
         return context.json(response, 200, await createProjectOperations(context)(ownerId, projectSettingsMatch[1], request.method, body, () => {
           const latest = context.authenticate(request, 'account:manage');
           if (latest.ownerId !== ownerId || latest.deviceId !== current.deviceId) throw failure('UNAUTHORIZED', 401);
@@ -1678,11 +1683,12 @@ export function createHttpHandler(context) {
       const detailMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/events\/(\d+)\/detail$/.exec(pathname);
       if (request.method === 'GET' && detailMatch) {
         const sessionId = id(detailMatch[1]), seq = Number(detailMatch[2]);
-        if (url.search || !Number.isSafeInteger(seq)) throw failure('INVALID_REQUEST');
+        const outputRaw=url.searchParams.get('outputOffset'),outputOffset=outputRaw===null?undefined:Number(outputRaw);
+        if ((url.search && !/^\?outputOffset=\d+$/.test(url.search)) || !Number.isSafeInteger(seq) || outputOffset!==undefined && !Number.isSafeInteger(outputOffset)) throw failure('INVALID_REQUEST');
         if (!Object.hasOwn(state.sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
         if (typeof context.backend.readEventDetail !== 'function') throw failure('BACKEND_UNAVAILABLE', 503);
         if (state.sessions[sessionId].forgottenSeqs?.includes(seq)) throw failure('SOURCE_UNAVAILABLE', 404);
-        const detail = await context.callBackend(() => context.backend.readEventDetail({ sessionId, seq, ownerId }));
+        const detail = await context.callBackend(() => context.backend.readEventDetail({ sessionId, seq, ownerId, ...(outputOffset===undefined?{}:{outputOffset}) }));
         const current = context.authenticate(request, 'sessions:read');
         if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
         const latest = context.accountState(ownerId).sessions[sessionId];

@@ -36,3 +36,11 @@ struct AppleStorageProfileTests {
         #expect(a.stateSubdirectory != b.stateSubdirectory)
     }
 }
+
+@Test func candidateUsesItsOwnDefaultsWithoutAnInvalidSelfNamedSuite() {
+    let candidate = AppleStorageProfile(bundleID: AppleStorageProfile.windowBundleID, uiTesting: false)
+    #expect(candidate.preferencesSuite == nil)
+    #expect(candidate.credentials == AppleStorageProfile.windowBundleID + ".credentials")
+    #expect(candidate.cloud == AppleStorageProfile.windowBundleID + ".cloud")
+    #expect(candidate.stateSubdirectory == "WeftMate/WindowTest/LocalState")
+}

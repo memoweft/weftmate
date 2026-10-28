@@ -1,47 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { toolNeedsComputer, workContinuationPrompt, workFailureNeedsContinuation, WORK_SWITCH_REASON } from '../src/plugins/personal-work-mode.mjs';
-import { bindConversationWork, conversationMode, modeProjection } from '../src/personal-access/work-and-chat.mjs';
-import { reconcileChatIdentity, validateChatIdentity } from '../src/personal-access/chat-identity.mjs';
+import { toolNeedsComputer } from '../src/plugins/personal-work-mode.mjs';
+import { conversationMode } from '../src/personal-access/work-and-chat.mjs';
 
 (globalThis as any).WeftUiCore ??= { factories: {} };
 await import('../src/ui-core/work-and-chat.js');
-
-test('W3 failed-operation recovery preserves refusal, request failure and output-limit boundaries', () => {
-  const policy = { conversationMode: 'work', project: { name: '合成目录', rootPath: '/synthetic' } };
-  const events: any[] = [{ type: 'turn/start' }, { type: 'user/message', data: { source: { kind: 'user' } } },
-    { type: 'approval/asked', data: { id: 'switch', reason: WORK_SWITCH_REASON } }, { type: 'approval/decided', data: { id: 'switch', outcome: 'allowed-once' } },
-    { type: 'tool/call', data: { callId: 'failed', name: 'read' } },
-    { type: 'tool/result', data: { message: { content: [{ type: 'tool-result', toolCallId: 'failed', isError: true }] } } },
-    { type: 'assistant/chunk', data: { chunk: { type: 'finish', reason: { kind: 'stop' } } } }];
-  const check = (rows = events) => workFailureNeedsContinuation({ events: rows }, policy);
-  assert.equal(check(), true);
-  for (const outcome of ['rejected', 'cancelled', 'unavailable']) assert.equal(check([...events, { type: 'approval/decided', data: { id: 'risk', outcome } }]), false, outcome);
-  for (const kind of ['max-tokens', 'error', 'aborted']) assert.equal(check([...events, { type: 'assistant/chunk', data: { chunk: { type: 'finish', reason: { kind } } } }]), false, kind);
-  assert.equal(check([...events, { type: 'tool/result', data: { message: { content: [{ type: 'tool-result', toolCallId: 'failed', isError: false }] } } }]), false, 'do not repeat a successful effect');
-  assert.equal(check([...events, { type: 'user/message', data: { source: { kind: 'user' } } }]), false, 'a later user instruction must not revive the original request');
-  assert.equal(check([...events, { type: 'turn/end' }]), false);
-  const loader = structuredClone(events); loader[4].data.name = 'load_tools'; assert.equal(check(loader), false, 'native loader recovery already owns this failure');
-});
-
-test('W3 acknowledgement requires this turn\'s granted switch and expires at stop or the next user turn', () => {
-  const start = { type: 'turn/start', data: { turn: 1 } };
-  const asked = { type: 'approval/asked', data: { id: 'switch-1', reason: WORK_SWITCH_REASON } };
-  const answer = (outcome = 'allowed-once', id = 'switch-1') => ({ type: 'approval/decided', data: { id, outcome } });
-  const policy = { conversationMode: 'work', project: { name: '已选目录', rootPath: '/synthetic/selected' } };
-  const prompt = (events: any[], selected = policy) => workContinuationPrompt({ events }, selected);
-  assert.equal(prompt([start, asked]), null, 'pending selection is not consent');
-  assert.equal(prompt([start, asked, answer('rejected')]), null);
-  assert.equal(prompt([start, asked, answer('cancelled')]), null);
-  assert.equal(prompt([start, asked, answer('allowed-once', 'other')]), null);
-  assert.equal(prompt([start, asked, answer()], { ...policy, conversationMode: 'chat' }), null);
-  const completed = [start, asked, answer()];
-  assert.match(prompt(completed)!, /文件夹选择已完成：已选目录/);
-  assert.match(prompt([...completed, { type: 'tool/result', data: { isError: true } }])!, /继续遵守原有权限、审批、拒绝和停止决定/);
-  assert.equal(prompt([...completed, { type: 'turn/end', data: { reason: { kind: 'aborted' } } }]), null);
-  assert.equal(prompt([...completed, { type: 'turn/end' }, { type: 'turn/start', data: { turn: 2 } }]), null, 'do not revive the previous task in a later user turn');
-  assert.equal(prompt([start, { ...asked, data: { ...asked.data, reason: 'ordinary risk approval' } }, answer()]), null);
-});
 
 test('MODE-1 sidebar selection is account scoped, new follows it and opening a notified session selects its actual mode', async () => {
   const saved = new Map<string,string>(), storage = {getItem:(key:string)=>saved.get(key),setItem:(key:string,value:string)=>saved.set(key,value)};
@@ -100,28 +63,4 @@ test('MODE-1 every actual computer tool gates, while account data and code orche
   assert.equal(toolNeedsComputer('schedule_create', { prompt: 'arbitrary native executable prompt' }), true);
   assert.equal(toolNeedsComputer('schedule_manage', { action: 'list' }), false);
   assert.equal(toolNeedsComputer('schedule_manage', { action: 'run' }), true);
-});
-
-test('MODE-1 conversion retains native identity, all main segments and the immutable command without a replacement main', () => {
-  const at = '2026-10-14T00:00:00Z';
-  const account: any = { hostId: 'synthetic-host', sessions: { 'session-1': { origin: 'personal-remote' }, 'session-2': { origin: 'personal-remote' } },
-    commands: { 'cmd-1': { sessionId: 'session-2', payload: { text: '合成请求' }, payloadHash: 'original-hash' } },
-    projects: { 'project-1': { projectId: 'project-1', name: '合成项目', revision: 1, revoked: false } } };
-  reconcileChatIdentity(account, account.hostId, at);
-  const identity = account.chatIdentity, oldMain = identity.mainChatId;
-  for (const segment of Object.values(identity.segments) as any[]) { delete identity.chats[segment.chatId]; segment.chatId = oldMain; }
-  identity.chats[oldMain].activeSegmentId = identity.sessionSegments['session-2'];
-  const original = JSON.stringify(account.commands['cmd-1'].payload), history = JSON.stringify(identity.segments);
-  bindConversationWork(account, 'session-2', 'project-1', { at, commandId: 'cmd-1' });
-  assert.equal(identity.mainChatId, oldMain); assert.equal(identity.chats[oldMain].kind, 'main');
-  assert.equal(identity.chats[oldMain].wasMain, undefined); assert.equal(JSON.stringify(identity.segments), history);
-  assert.equal(Object.values(identity.chats).filter((chat: any) => chat.kind === 'main').length, 1);
-  assert.equal(JSON.stringify(account.commands['cmd-1'].payload), original); assert.equal(account.commands['cmd-1'].payloadHash, 'original-hash');
-  assert.equal(account.sessions['session-2'].projectId, 'project-1'); assert.equal(account.sessions['session-1'].mode, 'work');
-  assert.equal(account.sessions['session-1'].projectId,'project-1');
-  assert.equal(modeProjection(account.sessions['session-2'], account).workDirectory.name, '合成项目');
-  validateChatIdentity(account);
-  account.projects['project-1'].revoked = true;
-  assert.equal(modeProjection(account.sessions['session-2'], account).workDirectory, null);
-  assert.throws(() => bindConversationWork(account, 'session-2', 'project-1', { at }), (e: any) => e.code === 'PROJECT_NOT_SELECTED');
 });

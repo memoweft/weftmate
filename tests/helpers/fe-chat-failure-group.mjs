@@ -30,7 +30,7 @@ export async function verifyFailureGroup(page, capture) {
       failureGroupEvents.push({seq:3,at:'2026-10-26T01:00:01Z',type:'step.completed',data:{taskId:'turn-41',stepId:'read-b',toolName:'read',arguments:{path:'synthetic-b.txt'},state:'failed',detailRef:{seq:3}}});
       renderFailureGroup();
     });
-    assert.equal(await page.evaluate(()=>savedFailureStep.dataset.state),'issue','a nonterminal failure is still presented as continuing');
+    assert.equal(await page.evaluate(()=>savedFailureStep.dataset.state),'failed','the failed attempt keeps its actual result while the round continues');
     await page.evaluate(()=>{
       failureGroupEvents.push({seq:4,at:'2026-10-26T01:00:02Z',type:'turn.ended',data:{turn:41,reason:'error'}});
       renderFailureGroup();

@@ -593,5 +593,12 @@
     "api": "dataScanner",
     "sha256": "2cc0cf5ff5fd046dcf609df48c7caf09c53c9af2659039aa740bb19fa6cb7728",
     "reason": "VisionKit declares DataScannerViewControllerDelegate @MainActor. The unavailable callback only updates the scanner error on that SDK-isolated UI actor. https://developer.apple.com/documentation/visionkit/datascannerviewcontrollerdelegate"
+  },
+  {
+    "file": "apps/apple/UI/PhoneShellComponents.swift",
+    "line": 62,
+    "api": "onGeometryChange",
+    "sha256": "40401f6b8146b1942261d3bb7d85bddd4916482e71ff0eeab21a4502f41aa86f",
+    "reason": "The geometry transform is explicitly @Sendable and reads only the supplied proxy width. A nonisolated widthChanged factory returns an @Sendable action that hops to MainActor before invoking the explicitly MainActor UI update closure; no geometry callback reads drawer state."
   }
 ]

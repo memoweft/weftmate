@@ -24,7 +24,7 @@ final class Mode2IUITests: XCTestCase {
     }
     @MainActor private func connected(_ theme: String) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing", "--apple-contract-fixture", "--mode2i-fixture", "--server-url", "https://a2-ui.unit.example",
+        app.launchArguments = ["--ui-testing", "--apple-contract-fixture", "--mode2i-fixture", "--health4-render-only", "--server-url", "https://a2-ui.unit.example",
                                "--ui-testing-namespace", "mode2i-" + UUID().uuidString, "--a5-theme", theme]
         app.launch(); return app
     }
@@ -39,6 +39,40 @@ final class Mode2IUITests: XCTestCase {
         XCTAssertTrue(app.buttons["选择工作对话"].exists)
         XCTAssertTrue(app.buttons["phoneSheet.close"].exists)
         app.terminate()
+    }
+    @MainActor func testHealthDetailSurvivesTabSwitchAndReselectReturnsToRoot() throws {
+        let app = connected("light"); defer { app.terminate() }
+        XCTAssertTrue(app.buttons["phone.tab.health"].waitForExistence(timeout: 30))
+        app.buttons["phone.tab.health"].tap()
+        let score = app.buttons["health.score.sleep"]
+        XCTAssertTrue(score.waitForExistence(timeout: 20))
+        for _ in 0..<4 where !score.isHittable { app.swipeUp() }
+        score.tap()
+        let range = app.segmentedControls["health.range"]
+        XCTAssertTrue(range.waitForExistence(timeout: 10))
+        range.buttons["14 天"].tap()
+        app.buttons["phone.tab.chat"].tap()
+        let draft = app.descendants(matching: .any).matching(identifier: "phone.new.text").firstMatch
+        XCTAssertTrue(draft.waitForExistence(timeout: 10))
+        XCTAssertTrue(draft.isHittable, "The active chat must receive touches above the retained health stack")
+        draft.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10))
+        // Isolate navigation/input ownership from the system IME; Chinese input is also covered by the standalone shell journey.
+        let expectedDraft = "709-health-draft"
+        draft.typeText(expectedDraft)
+        let entered = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", expectedDraft), object: draft)
+        XCTAssertEqual(XCTWaiter.wait(for: [entered], timeout: 10), .completed, "Verify committed input before testing tab retention")
+        try openSidebar(app); app.buttons["phone.sidebar.close"].tap()
+        XCTAssertTrue(app.buttons["phone.tab.health"].waitForExistence(timeout: 10))
+        app.buttons["phone.tab.health"].tap()
+        XCTAssertTrue(range.waitForExistence(timeout: 10))
+        XCTAssertTrue(range.buttons["14 天"].isSelected, "Health detail selection must survive a tab switch")
+        app.buttons["phone.tab.health"].tap()
+        XCTAssertFalse(range.exists)
+        XCTAssertTrue(app.buttons["health.ask"].waitForExistence(timeout: 10))
+        app.buttons["phone.tab.chat"].tap()
+        XCTAssertTrue(draft.waitForExistence(timeout: 10))
+        XCTAssertEqual(draft.value as? String, expectedDraft)
     }
     @MainActor func testFix5HealthFollowupPopulatesNewChatInput() throws {
         let app=connected("light")
@@ -106,6 +140,10 @@ final class Mode2IUITests: XCTestCase {
             capture(theme + "-switch-card")
             app.buttons["phone.work.project"].firstMatch.tap(); app.buttons["phone.work.project.project-a"].tap()
             app.buttons["phone.work.accept"].tap()
+            // Synthetic history is intentionally dated; older days start collapsed.
+            let history = app.buttons["mainChat.day.2026-10-14"]
+            XCTAssertTrue(history.waitForExistence(timeout: 10))
+            if history.value as? String == "已折叠" { history.tap() }
             XCTAssertTrue(app.staticTexts["请整理这份合成资料"].waitForExistence(timeout: 10))
             try openDirectory(app)
             XCTAssertEqual(app.buttons["phone.mode.work"].value as? String, "已选择")

@@ -7,6 +7,12 @@ function onNotice(callback) { noticeListener = callback; for (const notice of pe
 contextBridge.exposeInMainWorld('weftmateDesktop', {
   platform: process.platform,
   onNotice,
+  browser: (action, input) => ipcRenderer.invoke('wm:desktop:browser', action, input),
+  onBrowserState: callback => {
+    const listener = (_event, state) => callback(state);
+    ipcRenderer.on('wm:desktop:browser-state', listener);
+    return () => ipcRenderer.removeListener('wm:desktop:browser-state', listener);
+  },
   closeNotice: id => ipcRenderer.send('wm:ui:notice-closed', id),
   clipboardImage: () => ipcRenderer.invoke('wm:desktop:clipboard-image'),
   captureRegion: () => ipcRenderer.invoke('wm:desktop:capture-region'),
@@ -29,6 +35,7 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   inspectProjectFolder: path => ipcRenderer.invoke('wm:desktop:project-choice', path),
   createFolderProject: fields => ipcRenderer.invoke('wm:desktop:project-create', fields),
   projectFolderInfo: id => ipcRenderer.invoke('wm:desktop:project-info', id),
+  relocateProjectFolder: (id, fields) => ipcRenderer.invoke('wm:desktop:project-relocate', id, fields),
   showProjectFolder: id => ipcRenderer.invoke('wm:desktop:project-show', id),
   droppedProjectFolder: file => { const path = webUtils.getPathForFile(file); return path ? ipcRenderer.invoke('wm:desktop:project-drop', path) : Promise.resolve(null); },
   identity: () => ipcRenderer.invoke('wm:desktop:identity'),
