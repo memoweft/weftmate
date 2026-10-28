@@ -11,7 +11,7 @@
     const browser=node('div','capabilities-browser'),tabs=node('div','capabilities-tabs'),toolbar=node('div','capabilities-toolbar'),groups=node('div','capabilities-groups');
     tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','能力类型');
     for(const [value,label]of [['connectors','连接器'],['skills','技能']]){
-      const tab=button(label,()=>{browseTab=value;paintCatalog();},'quiet');tab.setAttribute('role','tab');tab.dataset.tab=value;tabs.append(tab);
+      const tab=button(label,()=>{browseTab=value;paintCatalog();});tab.className='capability-tab';tab.setAttribute('role','tab');tab.dataset.tab=value;tabs.append(tab);
       tab.onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const next=[...tabs.children].find(item=>item!==tab);next.focus();next.click();};
     }
     const search=node('input','capabilities-search');search.type='search';search.placeholder='搜索连接器、模型与技能';search.setAttribute('aria-label','搜索能力');

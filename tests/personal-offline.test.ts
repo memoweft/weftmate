@@ -40,6 +40,30 @@ async function fixture(t: any) {
   return { service, host, context, root, accepted, generation: () => generation, remove: () => { items = []; } };
 }
 
+test('forgetting waits for the device to acknowledge the new replica generation, including after restart', async t => {
+  const f=await fixture(t),vault=await W.browserVault('purge-status',{indexedDB:new IDBFactory(),crypto:webcrypto});
+  const publicJwk=await vault.key();
+  await f.host('/offline/sync',{publicJwk,generation:0,hashes:{}});
+  const authenticate=f.context.authenticate;
+  f.context.authenticate=()=>({...authenticate(),deviceId:'another-device'});
+  await f.host('/offline/sync',{publicJwk,generation:1,hashes:{}});
+  f.context.authenticate=authenticate;
+  await f.service.invalidate(identity.ownerId);
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).cleanup.state,'waiting_device');
+  // Providing the new replica is not a receipt from the phone.
+  await f.host('/offline/sync',{publicJwk,generation:1,hashes:{}});
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).cleanup.state,'waiting_device');
+  const reopened=await createOfflineService(f.context);t.after(()=>reopened.close());
+  assert.equal(reopened.deviceStatus(identity.ownerId,identity.deviceId).cleanup.state,'waiting_device');
+  await f.host('/offline/sync',{publicJwk,generation:2,hashes:{}});
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).cleanup.state,'acknowledged');
+  assert.equal(f.service.deviceStatus(identity.ownerId,'another-device').cleanup.state,'waiting_device','one device cannot acknowledge the other device');
+  assert.ok(!JSON.stringify(f.service.deviceStatus(identity.ownerId,identity.deviceId)).includes('publicJwk'));
+  const replacement=await W.browserVault('replacement-key',{indexedDB:new IDBFactory(),crypto:webcrypto});
+  await f.host('/offline/sync',{publicJwk:await replacement.key(),generation:0,hashes:{}});
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).cleanup.state,'waiting_device','a replacement key cannot inherit the previous replica receipt');
+});
+
 test('device sync summary counts acknowledged originals once and keeps receipt separate from memory formation', async t => {
   const f=await fixture(t),vault=await W.browserVault('device-status',{indexedDB:new IDBFactory(),crypto:webcrypto});
   assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId),null);

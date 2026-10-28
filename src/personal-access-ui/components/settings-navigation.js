@@ -136,7 +136,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const strip = ui.byId('settings-usage-strip');
         const ready = WeftControls.loading(strip, { rows: 1, compact: true });
         void core.loadUsageStrip().then(text => { if (text && dialog.open && ready()) strip.textContent = text; }).catch(() => { if (dialog.open && ready()) strip.textContent = '本月用量暂时无法读取，点此重试。'; });
-        selectSettings(core.state.currentView === 'memory' ? 'memory' : selected);
+        selectSettings(selected);
         if(phoneSettings())showSettingsList();
         if(selected==='about')void renderSettingsUpdates();
     }
@@ -252,7 +252,6 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         for (const id of ['general', 'personalization', 'assistant', 'appearance', 'account', 'devices', 'usage', 'models', 'approvals', 'memory', 'schedules', 'resources', 'system', 'backups', 'about']) {
             const panel = node('section', 'settings-category'); panel.dataset.category = id; panel.hidden = true; panels.set(id, panel); content.append(panel);
         }
-        WeftPopover.pullRefresh(panels.get('memory'),()=>core.openMemory(),()=>selected==='memory'&&dialog.open);
         const move = (id, element) => { if (element) panels.get(id).append(element); };
         move('approvals', ui.byId('approval-settings-heading').closest('section'));
         move('appearance', ui.byId('appearance-heading').closest('section'));
@@ -327,7 +326,9 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         panels.get('general').append(WeftSettingsControls.row('语言','目前提供简体中文。',language));WeftSettingsControls.select(language);
         panels.get('appearance').replaceChildren(node('p', 'muted', '保存到这台设备。'));
         WeftDesktopAppearanceControls.mount(panels.get('appearance'), { get: WeftDesktop.getAppearance, set: WeftDesktop.setAppearance, toast: ui.toast });
-        move('memory', ui.byId('memory-view'));
+        ui.byId('conversation-pane').after(ui.byId('memory-view'));
+        const memoryLink=node('button','button secondary','打开记忆');memoryLink.type='button';memoryLink.onclick=()=>core.openMemory();
+        panels.get('memory').append(WeftSettingsControls.row('记忆','查看记住的事、原话与来源，纠正或忘掉内容。',memoryLink));
 
         const updates = node('section', 'settings-updates'); updates.id = 'settings-updates'; panels.get('about').append(updates);
         for (const [label,action] of [['更新内容',()=>ui.openReleases()],['帮助与小技巧',()=>ui.openHelp()]]) {
@@ -365,7 +366,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             assistant: () => globalThis.WeftPersonalizationView(core, panels.get('assistant'), 'assistant', {toast:ui.toast}),
             account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },
             devices: () => { ui.selectCloudSettings?.('devices'); ui.paintCloudSettings?.(); },
-            memory: () => { if (core.state.currentView !== 'memory') void core.openMemory(); },
+            memory: () => {},
             backups: () => ui.showSettingsBackups(),
             schedules: () => ui.showSettingsSchedules(),
             usage: options => ui.showSettingsUsage(options),
