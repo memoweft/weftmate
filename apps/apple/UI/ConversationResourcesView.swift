@@ -1,6 +1,61 @@
 import SwiftUI
 import WeftMateCore
 
+#if os(iOS)
+struct PhoneConversationResourcesPage: View {
+    @ObservedObject var app: AppleAppModel
+    @ObservedObject var resources: ConversationResourcesModel
+    private var memories: [TimelineEvent] { app.timeline.events.filter { !UsedMemory.references(in:$0).isEmpty } }
+    var body: some View {
+        List {
+            Section("成果") {
+                if resources.window.outputs.isEmpty { Text("还没有成果").foregroundStyle(Weave.muted) }
+                ForEach(resources.window.outputs) { output in
+                    Button { resources.open(.output(output.id,output.fileName ?? "成果")) } label: {
+                        PhoneChatPageRow(title:output.fileName ?? "成果",subtitle:"最新版本",icon:"file")
+                    }.buttonStyle(.plain).accessibilityIdentifier("resourceOutput."+output.id)
+                    let older=resources.window.olderVersions(of:output)
+                    if !older.isEmpty {
+                        DisclosureGroup("查看旧版本") {
+                            ForEach(older) { old in
+                                Button(old.createdAt.map { DeviceDateText.timestamp($0) } ?? "旧版本") { resources.open(.output(old.id,old.fileName ?? "成果")) }
+                                    .frame(minHeight:AppleTokens.Space.p44)
+                            }
+                        }
+                    }
+                }
+            }
+            Section("来源") {
+                ForEach(resources.window.sources) { source in
+                    Button { resources.open(.source(source.key,source.displayName)) } label: {
+                        PhoneChatPageRow(title:source.displayName,subtitle:"打开原始内容",icon:"source")
+                    }.buttonStyle(.plain).accessibilityIdentifier("resourceSource."+source.key)
+                }
+                ForEach(memories) { event in
+                    Button { resources.open(.memory(event.seq,UsedMemory.references(in:event))) } label: {
+                        PhoneChatPageRow(title:"这条回复的记忆来源",subtitle:"主动打开时查看理解和原话",icon:"memory")
+                    }.buttonStyle(.plain).accessibilityIdentifier("resourceMemory.\(event.seq)")
+                }
+                if resources.window.sources.isEmpty && memories.isEmpty { Text("还没有来源").foregroundStyle(Weave.muted) }
+            }
+            Section("过程") {
+                NavigationLink {
+                    PhoneTaskProcessPage(app:app,sessionID:resources.sessionID,events:app.timeline.events)
+                } label: { PhoneChatPageRow(title:"执行详情",subtitle:"查看步骤、输出和批准记录",icon:"code") }
+                    .accessibilityIdentifier("resources.process")
+            }
+            if resources.loading { ProgressView("正在读取…") }
+            if let error=resources.error { Section { Text(error).foregroundStyle(Weave.danger); Button("重试") { Task { await resources.refresh() } } } }
+        }.listStyle(.plain).scrollContentBackground(.hidden).background(Weave.canvas).navigationTitle("对话中的内容")
+            .navigationBarTitleDisplayMode(.large).toolbar(.visible,for:.navigationBar).task { await resources.refresh() }
+            .navigationDestination(isPresented:Binding(get:{resources.activeTab != nil && !resources.showingList},set:{if !$0 { resources.showingList=true }})) {
+                if let tab=resources.activeTab { ResourceTabContent(app:app,resources:resources,tab:tab).navigationTitle(tab.name).navigationBarTitleDisplayMode(.inline) }
+            }.accessibilityIdentifier("conversationResourcesPanel")
+    }
+}
+#endif
+
+#if os(macOS)
 struct ConversationResourceList: View {
     @ObservedObject var resources: ConversationResourcesModel
     let memories: [TimelineEvent]
@@ -102,6 +157,7 @@ struct ConversationResourcesPanel: View {
         .accessibilityElement(children: .contain).accessibilityIdentifier("conversationResourcesPanel")
     }
 }
+#endif
 private struct ResourceTabContent: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var resources: ConversationResourcesModel

@@ -51,13 +51,14 @@ final class A13ConsistencyUITests: XCTestCase {
         _ = try await get("/prepare"); let ready = try await get("/ready")
         let app = XCUIApplication(); app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "a13-" + UUID().uuidString.prefix(8), "--a5-local-server", "--a5-theme", theme, "--server-url", ready["host"] as! String, "--a12-live-session", ready["sessionID"] as! String]
         app.launch(); defer { app.terminate() }
+        PhoneChatTestSupport.openPending(app)
         try expect(pendingApprovalElement(app))
         try expect(app.staticTexts["处理审批后还有 3 个问题"])
         XCTAssertFalse(app.descendants(matching: .any)["questionBar"].exists)
         keep(app, "approval-priority", theme)
         for _ in 0..<2 {
             let button = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "approveOnce.")).firstMatch
-            try tap(button); if app.buttons["approvalConfirm."+String(button.identifier.dropFirst("approveOnce.".count))].exists { try tap(app.buttons["approvalConfirm."+String(button.identifier.dropFirst("approveOnce.".count))]) }; try await Task.sleep(for: .seconds(1))
+            try tap(button);  try await Task.sleep(for: .seconds(1))
         }
         try await gone(pendingApprovalElement(app))
         try tap(app.buttons["questionOption.format.简要报告"])
@@ -88,6 +89,7 @@ final class A13ConsistencyUITests: XCTestCase {
         XCTAssertEqual(answers.map { $0["id"] as! String }, ["format", "sections", "note"])
         XCTAssertEqual(answers[0]["selected"] as? [String], []); XCTAssertEqual(answers[1]["selected"] as? [String], ["摘要", "步骤"])
         _ = try await get("/retry-batch")
+        PhoneChatTestSupport.openPending(app)
         try tap(app.buttons["questionOption.format.完整记录"]); try tap(app.buttons["questionNext"])
         try tap(app.buttons["questionOption.sections.摘要"]); try tap(app.buttons["questionNext"])
         let retryInput = app.textFields["questionCustom.note"]; try tap(retryInput); retryInput.typeText("合成重试回答")
@@ -95,13 +97,13 @@ final class A13ConsistencyUITests: XCTestCase {
         let retry = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "continueInteraction.question:")).firstMatch
         if retry.waitForExistence(timeout: 4) { keep(app, "retry", theme); try tap(retry) }
         try await gone(app.descendants(matching: .any)["questionBar"]); keep(app, "retry-reconciled", theme)
-        try tap(app.buttons["openConversationResources"]); try expect(app.descendants(matching: .any)["conversationResourceList"])
+        try tap(app.buttons["openConversationResources"]); try expect(app.descendants(matching: .any)["conversationResourcesPanel"])
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "准备可用工具")).firstMatch.exists)
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "扩展服务")).firstMatch.exists)
         keep(app, "chinese-sources", theme)
         try tap(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "扩展服务")).firstMatch)
         try tap(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "详情")).firstMatch); try expect(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "附加信息")).firstMatch)
-        keep(app, "chinese-detail", theme); try tap(app.buttons["closeResourcesPanel"])
+        keep(app, "chinese-detail", theme); PhoneChatTestSupport.returnFromResources(app)
         try tap(app.navigationBars.buttons.firstMatch)
         try tap(app.buttons["phoneAccountMenu"]); try tap(app.buttons["phoneMenu.settings"])
         try tap(app.buttons["settingsCategory.usage"])

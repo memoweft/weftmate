@@ -18,7 +18,7 @@ struct TimelineInteractionCard: View {
                 if let approval = model.approvals.first(where: { $0.id == entry.event.data["approvalId"]?.string }) {
                     #if os(iOS)
                     if let summary=PhoneDecisionReceiptPolicy.approval(status:approval.status,summary:approval.decisionSummary,registered:model.isRegistered("approval:"+approval.id),savedOutcome:model.savedApprovalOutcome(approval)) { WeftLabel(summary,icon:"approval").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("approvalSummary."+approval.id) }
-                    else if approval.canDecide && entry.resolved == nil { PhoneApprovalCard(model:model,approval:approval,events:events) }
+                    else if approval.canDecide && entry.resolved == nil { PhoneApprovalSummary(model:model,approval:approval,events:events) }
                     else { WeftLabel(approval.decisionSummary,icon:"approval").font(AppleTokens.Fonts.caption).accessibilityIdentifier("approvalSummary."+approval.id) }
                     #else
                     if approval.canDecide && entry.resolved == nil {
@@ -35,7 +35,7 @@ struct TimelineInteractionCard: View {
             } else if let batch = questionBatch {
                 #if os(iOS)
                 if let summary = model.answeredSummary(batch) { Text(summary).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("answeredQuestion." + batch.id) }
-                else if batch.status == .pending { PhoneQuestionCard(model:model,batch:batch) }
+                else if batch.status == .pending { PhoneQuestionSummary(model:model,batch:batch) }
                 #else
                 if let summary = model.answeredSummary(batch) { Text(summary).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("answeredQuestion." + batch.id) }
                 #endif

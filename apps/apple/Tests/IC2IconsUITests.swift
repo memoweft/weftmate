@@ -19,6 +19,7 @@ final class IC2IconsUITests: XCTestCase {
             capture(app.screenshot(), "\(style)-sidebar")
             row.tap()
             if fixture == "a4a" {
+                PhoneChatTestSupport.openPending(app)
                 XCTAssertTrue(app.buttons["approveOnce.00000001-1111-4111-8111-111111111111"].waitForExistence(timeout: 20))
                 capture(app.screenshot(), "\(style)-approval-composer")
             } else {

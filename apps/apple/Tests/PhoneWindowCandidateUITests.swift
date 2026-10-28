@@ -28,7 +28,7 @@ final class PhoneWindowInstallUITests: XCTestCase {
         draft.tap(); draft.typeText(text); app.buttons["phoneChat.send"].tap()
     }
     @MainActor private func text(_ value: String, app: XCUIApplication) -> XCUIElement {
-        app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", value)).firstMatch
+        app.descendants(matching:.any).matching(NSPredicate(format:"label CONTAINS %@ OR value CONTAINS %@",value,value)).firstMatch
     }
     @MainActor private func capture(_ name: String, app: XCUIApplication) {
         let item = XCTAttachment(screenshot: app.screenshot()); item.name = name; item.lifetime = .keepAlways; add(item)
@@ -49,8 +49,8 @@ final class PhoneWindowInstallUITests: XCTestCase {
         let before = try await report()
         XCTAssertFalse(before.starts.contains(queued), "Queued work must not start before the active reply ends")
         capture("window-queued", app: app)
-        app.buttons["phoneChat.stop"].tap()
-        XCTAssertTrue(app.buttons["phoneChat.stop"].waitForNonExistence(timeout: 10))
+        XCTAssertEqual(app.buttons["phoneChat.send"].label,"停止回复"); app.buttons["phoneChat.send"].tap()
+        XCTAssertTrue(app.buttons["phoneChat.send"].waitForExistence(timeout:10)); XCTAssertNotEqual(app.buttons["phoneChat.send"].label,"停止回复")
         capture("window-stopped", app: app)
         app.terminate()
         // Same installed app, no test arguments or environment: equivalent to a manual reopen.
@@ -58,7 +58,7 @@ final class PhoneWindowInstallUITests: XCTestCase {
         XCTAssertTrue(app.buttons["phoneChat.send"].waitForExistence(timeout: 30))
         XCTAssertTrue(text(queued, app: app).waitForExistence(timeout: 10))
         XCTAssertTrue(text("Started:" + slow, app: app).exists)
-        XCTAssertFalse(app.buttons["phoneChat.stop"].exists)
+        XCTAssertNotEqual(app.buttons["phoneChat.send"].label,"停止回复")
         capture("window-manual-reopen", app: app)
         XCUIDevice.shared.press(.home); app.activate()
         XCTAssertTrue(app.buttons["phoneChat.send"].waitForExistence(timeout: 10))
