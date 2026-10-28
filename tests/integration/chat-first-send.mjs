@@ -12,9 +12,10 @@ const root = resolve(import.meta.dirname, '../..');
 const out = process.env.WEFTMATE_FIRST_SEND_OUTPUT || await mkdtemp(join(tmpdir(), 'weftmate-first-send-'));
 const before = process.argv.includes('--before'), record = process.env.WEFTMATE_FIRST_SEND_RECORD === '1';
 await mkdir(out, { recursive: true });
-process.env.WEFTMATE_MANAGED_TEMP_ROOT = join(out, 'fixtures');
+if (!process.env.WEFTMATE_TEST_TEMP_SCOPE) process.env.WEFTMATE_MANAGED_TEMP_ROOT ??= join(out, 'fixtures');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-const report = { before, checks: [], scenarios: [] }, timers = new Set();
+const report = { before, ci: process.env.CI === 'true', inheritedTempScope: !!process.env.WEFTMATE_TEST_TEMP_SCOPE,
+  sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), checks: [], scenarios: [] }, timers = new Set();
 let app, fixture, lock, cdp, recording, writes = [];
 const check = (name, value) => { report.checks.push({ name, value }); };
 const later = (ms, fn) => { const timer = setTimeout(() => { timers.delete(timer); fn(); }, ms); timers.add(timer); };
