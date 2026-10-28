@@ -183,7 +183,7 @@ try {
     for(let cycle=0;cycle<3;cycle++){
       await page.evaluate(async id=>{await testCore.refreshSessions();await testCore.refreshPhoneRecords();await testCore.refreshPhoneBinding(id);},phoneId);
       const state=await phoneSnapshot(`${label}:${cycle}`);report.phoneEntry.push(state);states.push(state);
-      await writeFile(join(out,'phone-entry-report.json'),JSON.stringify({sourceCommit:report.sourceCommit,states:report.phoneEntry},null,2));
+      await writeFile(join(out,'phone-entry-report.json'),JSON.stringify({sourceCommit:report.sourceCommit,beforeFold:report.phoneEntryBeforeFold,states:report.phoneEntry},null,2));
       assert.deepEqual(state.session,{sessionId:phoneSessionId,pinned,projectId,groupId},'the full session metadata is present before checking its entry');
       assert.deepEqual(state.binding,{status:'active',sessionId:phoneSessionId});assert.equal(state.records,1);
       if(cycle===0)await shot('phone-entry-'+label);
@@ -193,6 +193,15 @@ try {
       if(visible)assert.equal(state.section,section);
     }
   };
+  await page.evaluate(async id=>{await testCore.refreshSessions();await testCore.refreshPhoneRecords();await testCore.refreshPhoneBinding(id);},phoneId);
+  report.phoneEntryBeforeFold=await phoneSnapshot('full-state-before-fold');
+  assert.deepEqual(report.phoneEntryBeforeFold.session,{sessionId:phoneSessionId,pinned:true,projectId:null,groupId:null});
+  assert.deepEqual(report.phoneEntryBeforeFold.binding,{status:'active',sessionId:phoneSessionId});
+  assert.equal(report.phoneEntryBeforeFold.records,1);
+  // A real fold/reopen must reconcile the entry from the complete state even
+  // when the binding arrived after an earlier cached sidebar presentation.
+  await page.locator('[data-section-id="pinned"] .sidebar-section-toggle').click();
+  await page.locator('[data-section-id="pinned"] .sidebar-section-toggle').click();
   await refreshPhone('coherent-pinned',{pinned:true});
   await page.evaluate(()=>{globalThis.phoneEntryNativeSelections=[];const select=testCore.selectSession;testCore.selectSession=(id,...args)=>{phoneEntryNativeSelections.push(id);return select(id,...args);};});
   const readPhone=async()=>{
