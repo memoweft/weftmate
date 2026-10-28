@@ -16,6 +16,7 @@ struct MainChatView: View {
     @State private var dictationPopover = false
     @State private var showingUsage = false
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var choosingDate = false
     @State private var chosenDate = Date()
@@ -37,7 +38,8 @@ struct MainChatView: View {
     @StateObject private var positions = MainChatPositionTracker()
     init(app: AppleAppModel, chatID: String? = nil, initialDate: Date? = nil, initialQuery: String? = nil) {
         self.initialDate=initialDate; self.initialQuery=initialQuery;
-        self.app = app; _model = StateObject(wrappedValue: chatID == nil ? app.mainChat : MainChatModel(app: app, chatID: chatID))
+        self.app = app; _model = StateObject(wrappedValue: initialDate != nil ? MainChatModel(app:app,chatID:chatID) : chatID == nil ? app.mainChat : MainChatModel(app: app, chatID: chatID))
+        _chosenDate = State(initialValue:initialDate ?? Date())
         _interactions = StateObject(wrappedValue: TaskInteractionModel(client: app.assistantClient, account: app.session,
             epoch: app.accountEpoch, stateDirectory: app.assistantStateDirectory,
             currentEpoch: { [weak app] in app?.accountEpoch ?? UUID() }, currentSession: { [weak app] in app?.session }))
@@ -53,6 +55,7 @@ struct MainChatView: View {
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
             #if os(iOS)
+            if initialDate == nil {
             PhoneChatHeader(title: model.capabilities.supports("workAndChat") ? (model.chat?.displayTitle ?? model.chat?.title ?? "对话") : PhonePresentation.title(main:true,assistant:"小纬",conversation:model.chat?.title ?? ""), status: model.capabilities.supports("workAndChat") ? (model.chat.map { WorkAndChat.subtitle($0.summary, computer: app.cloudLogin.selectedComputerName) } ?? app.phoneConnectionStatus) : app.phoneConnectionStatus) {
                 Menu {
                     Button("跳日期", image: ImageResource(name: "wm-clock", bundle: .main)) { draftFocused = false; choosingDate = true }.accessibilityIdentifier("mainChat.date")
@@ -61,6 +64,7 @@ struct MainChatView: View {
                     Button("本对话用量", image: ImageResource(name: "wm-chart", bundle: .main)) { draftFocused = false; showingUsage = true }
                     Button("刷新记录", image: ImageResource(name: "wm-sync", bundle: .main)) { Task { await model.read() } }
                 } label: { WeftIcon("more").phoneMenuLabel(circle: true) }.accessibilityLabel("对话菜单").accessibilityIdentifier("mainChat.menu")
+            }
             }
             #else
             HStack {
@@ -73,9 +77,16 @@ struct MainChatView: View {
                     .buttonStyle(.plain).disabled(!model.capabilities.supports("chatResources")).accessibilityLabel("输出与来源").accessibilityIdentifier("mainChat.resources")
             }.padding(AppleTokens.Space.p12)
             #endif
-            if let initialDate {
-                Text(DeviceDateText.chatDay(ChatDay.key(initialDate,timeZone:model.timeZone),timeZone:TimeZone(identifier:model.timeZone) ?? .gmt))
-                    .font(AppleTokens.Fonts.title2).frame(maxWidth:.infinity,alignment:.leading).padding(.horizontal,AppleTokens.Space.p20)
+            if initialDate != nil {
+                VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
+                    Text(DeviceDateText.chatDay(ChatDay.key(chosenDate,timeZone:model.timeZone),timeZone:TimeZone(identifier:model.timeZone) ?? .gmt))
+                        .font(AppleTokens.Fonts.largeTitle.bold())
+                    Text("连续主对话 · 已定位到这一天").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                    #if os(iOS)
+                    Button { draftFocused=false; choosingDate=true } label: { Text("选择其他日期").frame(maxWidth:.infinity) }
+                        .buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.historyChooseDate")
+                    #endif
+                }.frame(maxWidth:.infinity,alignment:.leading).padding(.horizontal,AppleTokens.Phone.pageInset)
                     .accessibilityIdentifier("mainChat.historyDate")
             }
             if searching { searchBar }
@@ -109,12 +120,19 @@ struct MainChatView: View {
             #endif
         }
         #if os(iOS)
-        .safeAreaInset(edge: .bottom, spacing: 0) { composer }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if initialDate == nil { composer }
+            else {
+                Button { Task { await app.mainChat.returnToLatest(); dismiss() } } label: { Text("回到最新对话").frame(maxWidth:.infinity) }
+                    .buttonStyle(OutlineActionStyle()).frame(maxWidth:.infinity)
+                    .padding(AppleTokens.Phone.pageInset).accessibilityIdentifier("mainChat.historyReturn")
+            }
+        }
         #endif
         #if os(iOS)
-        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(initialDate == nil ? .hidden : .visible, for: .navigationBar)
         #endif
-        .background(Weave.canvas).navigationTitle("WeftMate")
+        .background(Weave.canvas).navigationTitle(initialDate == nil ? "WeftMate" : "")
         .task(id: "\(model.chat?.activeSessionId ?? "")|\(model.modelID)") { await model.refreshThinking() }
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -295,6 +313,7 @@ struct MainChatView: View {
             .scrollDismissesKeyboard(.interactively)
             #endif
             .coordinateSpace(name: "mainChatScroll")
+            .accessibilityIdentifier("mainChat.scroll")
              #if os(iOS)
             .onChange(of:latestJump) { _,_ in positions.following=true; Task { await model.returnToLatest(); proxy.scrollTo("latest",anchor:.bottom) } }
             .onChange(of:scrollHeight) { _,_ in
@@ -304,7 +323,7 @@ struct MainChatView: View {
                 if value.translation.height > 0 { positions.following = false }
             })
             .overlay(alignment: .bottom) {
-                if !positions.following && (!atBottom || model.target != nil) {
+                if initialDate == nil && !positions.following && (!atBottom || model.target != nil) {
                     PhoneLatestReplyButton { draftFocused=false; latestJump += 1 }
                         .accessibilityIdentifier("mainChat.latest")
                 }
@@ -345,6 +364,10 @@ struct MainChatView: View {
         if userScrolling { positions.following = false }
         #endif
         positions.frames[id] = frame
+        // Dismantling a UIKit/AppKit marker happens while SwiftUI invalidates its
+        // graph. Remove only non-published bookkeeping; writing @State here can
+        // reenter GraphHost.invalidate and abort with a Swift access conflict.
+        guard frame != nil else { return }
         if let anchor = restore, anchor.eventID == id, let frame {
             restore = nil; pixelScroll?(Double(frame.minY) - anchor.pixelOffset)
         }
@@ -370,7 +393,7 @@ struct MainChatView: View {
     }
     private var pendingDecisionID: String? { interactions.pendingApprovals.first?.id ?? interactions.pendingQuestions.first?.id }
     private var composerPlaceholder: String {
-        if model.models.contains(where: \.configured) { return "和 WeftMate 聊聊" }
+        if model.models.contains(where: \.configured) { return "接着聊，或者交代一件事…" }
         if model.configurationError != nil { return "模型未就绪" }
         return model.hasLoadedModels ? "先添加模型" : "读取模型中…"
     }
@@ -537,8 +560,13 @@ struct MainChatView: View {
                 }
                 Button("配置模型") { showingModels = true }
             } label: {
-                WeftIcon("model").phoneMenuLabel(circle:true,onCard:true)
-            }.phoneIcon().phoneComposerControl(circle:true).accessibilityLabel("模型选择，"+(model.models.first(where: { $0.id == (model.chat?.modelProfileId ?? model.modelID) })?.name ?? "尚未配置")).accessibilityIdentifier("mainChat.model")
+                HStack(spacing:AppleTokens.Space.p4) {
+                    Text(model.models.first(where: { $0.id == (model.chat?.modelProfileId ?? model.modelID) })?.name ?? "尚未配置")
+                        .font(AppleTokens.Fonts.caption).lineLimit(1)
+                    WeftIcon("chevron",size:AppleTokens.Space.p12)
+                }.frame(minWidth:AppleTokens.Space.p44,maxWidth:AppleTokens.Space.p64 * 2,minHeight:AppleTokens.Space.p44)
+                    .contentShape(Rectangle())
+            }.buttonStyle(.plain).foregroundStyle(Weave.secondary).accessibilityLabel("模型选择，"+(model.models.first(where: { $0.id == (model.chat?.modelProfileId ?? model.modelID) })?.name ?? "尚未配置")).accessibilityIdentifier("mainChat.model")
         }
         #else
         if model.models.contains(where: \.configured) {

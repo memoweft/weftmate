@@ -14,8 +14,10 @@ struct PhoneConversationsPage: View {
     @State private var ascending = false
     @State private var grouped = true
     @State private var dateOpen = false
+    @State private var searchPresented = false
     @State private var date = Date()
     @State private var historyOpen = false
+    @State private var historyRequested = false
     private var rows: [ConversationSummary] {
         app.conversations.filter {
             $0.archived == archived && (!unread || $0.unread) &&
@@ -42,6 +44,7 @@ struct PhoneConversationsPage: View {
                 Section {
                     Text("对话和工作，各自接着上次。").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
                         .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top:0,leading:0,bottom:AppleTokens.Space.p8,trailing:0))
                     Picker("对话范围", selection:$mode) {
                         Text("全部").tag("all"); Text("对话").tag("chat"); Text("工作").tag("work")
                     }.pickerStyle(.segmented).listRowBackground(Color.clear).accessibilityIdentifier("conversations.mode")
@@ -57,7 +60,7 @@ struct PhoneConversationsPage: View {
                 }
                 if app.cloudLogin.multipleComputers {
                     Section("电脑上的对话") {
-                        ComputerConversationList(cloud:app.cloudLogin,query:query,mode:ConversationMode(rawValue:mode),archived:archived,groups:app.sessionGroups)
+                        ComputerConversationList(cloud:app.cloudLogin,currentHostID:app.session?.hostId,currentConversations:app.conversations,query:query,mode:ConversationMode(rawValue:mode),archived:archived,groups:app.sessionGroups)
                     }
                 } else {
                     ForEach(sections) { section in
@@ -88,19 +91,30 @@ struct PhoneConversationsPage: View {
                 Section { Text(error).foregroundStyle(Weave.danger); Button("重试") { Task { await app.refresh() } } }
             }
             Section {
-                Button { dateOpen=true } label: { PhoneChatPageRow(title:"按日期查看对话",subtitle:"定位到主对话的那一天",icon:"clock") }
+                Button { searchPresented=false; dismissPhonePreviewKeyboard(); dateOpen=true } label: { PhoneChatPageRow(title:"按日期查看对话",subtitle:"定位到主对话的那一天",icon:"clock") }
                     .buttonStyle(.plain).accessibilityIdentifier("conversations.date")
                     .phonePopover(isPresented:$dateOpen) {
                         VStack {
                             DatePicker("选择日期",selection:$date,displayedComponents:.date).datePickerStyle(.graphical)
+                                .fixedSize(horizontal:false,vertical:true)
                                 .environment(\.timeZone,TimeZone(identifier:app.mainChat.timeZone) ?? .gmt)
-                            Button("查看这一天") { dateOpen=false; historyOpen=true }.buttonStyle(PrimaryActionStyle())
-                        }.padding(AppleTokens.Space.p16).frame(idealWidth:320).accessibilityIdentifier("conversations.datePicker")
+                            Button("查看这一天") { historyRequested=true; dateOpen=false }.buttonStyle(PrimaryActionStyle())
+                                .accessibilityIdentifier("conversations.showDate")
+                        }.padding(AppleTokens.Space.p16).frame(idealWidth:320).accessibilityElement(children:.contain).accessibilityIdentifier("conversations.datePicker")
+                            .onDisappear {
+                                // Push only after the popover content has left its presentation
+                                // graph; changing both bindings together can orphan the calendar.
+                                Task { @MainActor in
+                                    if historyRequested { historyRequested=false; historyOpen=true }
+                                }
+                            }
                     }.disabled(app.session == nil)
             }
-        }.listStyle(.insetGrouped).scrollContentBackground(.hidden).background(Weave.grouped)
+        }.listStyle(.insetGrouped).scrollContentBackground(.hidden).background(query.isEmpty ? Weave.grouped : Weave.canvas)
             .navigationTitle(query.isEmpty ? "全部对话" : "搜索")
-            .searchable(text:$query,prompt:"搜索对话、记忆和成果")
+            .navigationBarTitleDisplayMode(.large)
+            .searchable(text:$query,isPresented:$searchPresented,placement:.navigationBarDrawer(displayMode:.always),prompt:"搜索对话、记忆和成果")
+            .onSubmit(of:.search) { searchPresented=false; dismissPhonePreviewKeyboard() }
             .toolbar {
                 ToolbarItem(placement:.topBarTrailing) {
                     PhoneActionMenu {
@@ -134,6 +148,7 @@ struct PhoneChatPageRow: View {
     let title: String
     var subtitle: String? = nil
     var icon = "file"
+    var showsChevron = true
     var body: some View {
         HStack(spacing:AppleTokens.Space.p12) {
             WeftIcon(icon,size:20).foregroundStyle(Weave.secondary)
@@ -142,7 +157,7 @@ struct PhoneChatPageRow: View {
                 if let subtitle { Text(subtitle).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineLimit(2) }
             }
             Spacer(minLength:AppleTokens.Space.p4)
-            WeftIcon("right",size:12).foregroundStyle(Weave.muted)
+            if showsChevron { WeftIcon("right",size:12).foregroundStyle(Weave.muted) }
         }.frame(maxWidth:.infinity,minHeight:AppleTokens.Phone.rowHeight,alignment:.leading).contentShape(Rectangle())
     }
 }
@@ -170,12 +185,12 @@ private struct PhoneChatSearchResults: View {
                 Button { select(row.id) } label: { PhoneChatPageRow(title:row.title,subtitle:"对话",icon:"chat") }.buttonStyle(.plain)
             }
             if app.mainChat.capabilities.supports("chatSearch") {
-                NavigationLink { PhoneSearchMainChatPage(app:app,query:query) } label: { PhoneChatPageRow(title:"在主对话正文里查找",subtitle:query,icon:"search") }
+                NavigationLink { PhoneSearchMainChatPage(app:app,query:query) } label: { PhoneChatPageRow(title:"在主对话正文里查找",subtitle:query,icon:"search",showsChevron:false) }
             }
         }
         Section("记忆") {
             ForEach(memories) { item in
-                NavigationLink { PhoneMemoryWorkspaceView(app:app) } label: { PhoneChatPageRow(title:item.text,subtitle:"电脑同步来的获准副本",icon:"memory") }
+                NavigationLink { PhoneMemoryWorkspaceView(app:app) } label: { PhoneChatPageRow(title:item.text,subtitle:"电脑同步来的获准副本",icon:"memory",showsChevron:false) }
             }
             if memories.isEmpty { Text("获准副本里没有匹配的记忆").foregroundStyle(Weave.muted) }
         }

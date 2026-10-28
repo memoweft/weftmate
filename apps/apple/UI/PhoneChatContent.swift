@@ -53,14 +53,14 @@ private struct PhoneLiveBlock: View {
 private struct PhoneLiveReply: UIViewRepresentable {
     let text: String
     var monospaced = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.phoneReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var scheme
     @Environment(\.dynamicTypeSize) private var typeSize
     func makeUIView(context: Context) -> LiveText { LiveText() }
     func updateUIView(_ view: LiveText, context: Context) {
         view.receive(text, color: UIColor(Weave.ink), monospaced:monospaced, reduceMotion: reduceMotion)
     }
-    func sizeThatFits(_ proposal: ProposedViewSize, uiView: LiveText, context: Context) -> CGSize? {
+    @MainActor func sizeThatFits(_ proposal: ProposedViewSize, uiView: LiveText, context: Context) -> CGSize? {
         guard let width = proposal.width else { return nil }
         return uiView.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
     }

@@ -122,7 +122,9 @@ struct PhoneNewConversation: View {
     private var canWork: Bool { WorkAndChat.canCreateWork(connected: app.session?.verification == .verified && !app.offline.hostOffline && !app.cloudLogin.selectedComputerUnavailable, taskAvailable: app.executionAccount) }
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
-            PhoneChatHeader(title: mode == .work ? "新建工作" : "新建对话", status: mode == .work ? app.cloudLogin.selectedComputerName : "由 " + app.cloudLogin.selectedComputerName + " 回答") { EmptyView() }
+            if mode == .chat {
+                PhoneChatHeader(title:"新建对话", status:"由 " + app.cloudLogin.selectedComputerName + " 回答") { EmptyView() }
+            }
             if mode == .work {
                 ScrollView {
                     VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
@@ -133,7 +135,7 @@ struct PhoneNewConversation: View {
                         composer
                         Text("开始工作后，这段对话保持工作模式；想纯聊天可以另开一段。")
                             .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
-                        Button(busy ? "正在开始…" : "开始工作") { focused=false; Task { await send() } }
+                        Button { focused=false; Task { await send() } } label: { Text(busy ? "正在开始…" : "开始工作").frame(maxWidth:.infinity) }
                             .buttonStyle(PrimaryActionStyle()).disabled(busy || !canWork || !app.projects.contains { $0.id == projectID } || text.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && files.isEmpty)
                             .accessibilityIdentifier("phone.work.start")
                         if !canWork {
@@ -154,7 +156,9 @@ struct PhoneNewConversation: View {
             }
 
         }.safeAreaInset(edge:.bottom,spacing:0) { if mode == .chat { composer } }
-            .background(mode == .work ? Weave.grouped : Weave.canvas).toolbar(.hidden, for: .navigationBar)
+            .background(mode == .work ? Weave.grouped : Weave.canvas)
+            .navigationTitle("").navigationBarTitleDisplayMode(.inline)
+            .toolbar(mode == .work ? .visible : .hidden, for: .navigationBar)
             .fileImporter(isPresented:$importing,allowedContentTypes:[.item],allowsMultipleSelection:true,onCompletion:importCallback)
             .photosPicker(isPresented:$photos,selection:$photoSelection,maxSelectionCount:4,matching:.images)
             .onChange(of:photoSelection) { _,items in

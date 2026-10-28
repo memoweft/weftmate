@@ -23,9 +23,9 @@ struct PhoneApprovalCard: View {
             if let opinion=approval.secondOpinion { Text(opinion.text).font(AppleTokens.Fonts.callout).foregroundStyle(opinion.recommendsRejection ? Weave.danger : Weave.muted).accessibilityIdentifier("approvalSecondOpinion") }
             Text(approval.reversalNotice).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
             VStack(spacing: AppleTokens.Space.p8) {
-                Button("允许这一次") { submit(.once) }.buttonStyle(PrimaryActionStyle())
+                Button("允许这一次") { submit(.once) }.buttonStyle(PhoneDecisionActionStyle(primary:true))
                     .disabled(!model.canRespond(key)).accessibilityIdentifier("approveOnce."+approval.id)
-                Button("拒绝") { submit(.reject) }.buttonStyle(OutlineActionStyle())
+                Button("拒绝") { submit(.reject) }.buttonStyle(PhoneDecisionActionStyle(primary:false))
                     .disabled(!model.canRespond(key)).accessibilityIdentifier("rejectApproval."+approval.id)
                 if hasCategory {
                     PhoneActionMenu {
@@ -43,6 +43,22 @@ struct PhoneApprovalCard: View {
             .task(id:approval.id) { await model.readApprovalPresentation(approval,events:events) }
     }
     private func submit(_ choice: PhoneApprovalChoice) { Task { await model.decide(approval,outcome:choice.outcome,decisionScope:choice.scope(global:approval.offersAlwaysAllow)) } }
+}
+
+/// Full-width decision actions match the approved sheet. The 48-point body also
+/// keeps the visible target above 44 points in the system's inset sheet card.
+private struct PhoneDecisionActionStyle: ButtonStyle {
+    let primary: Bool
+    @Environment(\.isEnabled) private var enabled
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.font(AppleTokens.Fonts.callout.weight(.semibold))
+            .frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p48)
+            .foregroundStyle(primary ? Weave.onAccent : Weave.ink)
+            .background(primary ? Weave.accent : Weave.surface,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
+            .overlay(RoundedRectangle(cornerRadius:AppleTokens.Radius.r12).strokeBorder(primary ? Color.clear : Weave.line))
+            .contentShape(RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
+            .opacity(!enabled ? AppleTokens.Opacity.disabled : configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
+    }
 }
 struct PhoneQuestionCard: View {
     @ObservedObject var model: TaskInteractionModel

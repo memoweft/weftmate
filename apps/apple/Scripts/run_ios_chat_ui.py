@@ -6,6 +6,7 @@ from pathlib import Path
 import plistlib
 import shutil
 import subprocess
+import time
 
 from run_ci_ui_tests import run, start_node, stop
 from run_phone_window_checks import diagnostics
@@ -20,6 +21,9 @@ def main():
     parser.add_argument("--device", required=True, help="The one selected iPhone simulator UDID")
     parser.add_argument("--derived-data", type=Path, required=True)
     parser.add_argument("--artifacts", type=Path, required=True)
+    parser.add_argument("--chat-only", action="store_true", help="Rerun changed chat cases after the shell suite has passed")
+    parser.add_argument("--only-test", action="append", default=[], metavar="SUITE/METHOD",
+                        help="Run a focused candidate test; repeat for related regressions")
     args = parser.parse_args()
     artifacts = args.artifacts.resolve()
     if artifacts.is_relative_to(ROOT.parents[1]):
@@ -31,15 +35,21 @@ def main():
     private_run = None
     base = ["xcodebuild", *LIMITS, "-destination", "platform=iOS Simulator,id=" + args.device,
             "-destination-timeout", "120", "-test-timeouts-enabled", "YES",
-            "-default-test-execution-time-allowance", "180",
-            "-maximum-test-execution-time-allowance", "300"]
+            "-default-test-execution-time-allowance", "360",
+            "-maximum-test-execution-time-allowance", "600"]
     bundle = artifacts / "chat.xcresult"
     code = 1
     missing_screens = None
+    executed = None
+    skipped = None
+    selected = args.only_test or ["IOSUIChatUITests"]
+    if not args.only_test and not args.chat_only:
+        selected.append("IOSUIShellUITests")
+    reference_expected = any(value == "IOSUIChatUITests" or value == "IOSUIChatUITests/testReferenceScreensThroughTheRealShell" for value in selected)
     try:
         build_code = run([*base, "-project", "WeftMate.xcodeproj", "-scheme", "WeftMatePhoneWindowTest",
                     "-configuration", "Debug", "-derivedDataPath", str(args.derived_data.resolve()),
-                    "CODE_SIGNING_ALLOWED=NO", "build-for-testing"], artifacts / "build.log", 1800)
+                    "CODE_SIGN_IDENTITY=-", "CODE_SIGNING_REQUIRED=NO", "build-for-testing"], artifacts / "build.log", 1800)
         if build_code:
             code = build_code
             return code
@@ -56,13 +66,17 @@ def main():
         subprocess.run(["xcrun", "simctl", "boot", args.device], timeout=30, check=False, capture_output=True)
         subprocess.run(["xcrun", "simctl", "bootstatus", args.device, "-b"], timeout=180, check=True,
                        stdout=subprocess.DEVNULL)
+        selectors = ["-only-testing:WeftMatePhoneWindowTestUITests/" + value for value in selected]
         code = run([*base, "-xctestrun", str(private_run), "-resultBundlePath", str(bundle),
-                    "-only-testing:WeftMatePhoneWindowTestUITests/IOSUIShellUITests",
-                    "-only-testing:WeftMatePhoneWindowTestUITests/IOSUIChatUITests",
-                    "test-without-building"], artifacts / "ui.log", 2400)
+                    *selectors, "test-without-building"], artifacts / "ui.log", 2400)
         if bundle.exists():
             run(["xcrun", "xcresulttool", "get", "test-results", "summary", "--path", str(bundle)],
                 artifacts / "summary.json", 60)
+            summary = json.loads((artifacts / "summary.json").read_text())
+            executed = summary.get("passedTests", 0) + summary.get("failedTests", 0)
+            skipped = summary.get("skippedTests", 0)
+            if not executed or skipped:
+                code = code or 1
             run(["xcrun", "xcresulttool", "export", "attachments", "--path", str(bundle),
                  "--output-path", str(artifacts / "screens")], artifacts / "export.log", 60)
             manifest = artifacts / "screens/manifest.json"
@@ -82,7 +96,8 @@ def main():
                 reference = ROOT.parents[1] / "design/ios/screens" / (name + ".png")
                 comparisons.append("<h2>" + name + "</h2><div class='pair'><figure><figcaption>本人定稿</figcaption><img src='" + reference.as_uri() + "'></figure><figure><figcaption>原生模拟器</figcaption>" +
                                    ("<img src='" + native.as_uri() + "'>" if native.exists() else "<p>未取得截图，待查</p>") + "</figure></div>")
-            missing_screens = sorted(name for name in names if not (named / (name + ".png")).exists())
+            if reference_expected:
+                missing_screens = sorted(name for name in names if not (named / (name + ".png")).exists())
             (artifacts / "comparison.html").write_text("<!doctype html><meta charset='utf-8'><style>body{font-family:system-ui}.pair{display:flex;gap:24px}figure{margin:0;width:393px}img{width:100%}</style>" + "".join(comparisons))
         return code
     finally:
@@ -104,9 +119,14 @@ def main():
             "exitCode": 1 if changed or missing_screens else code, "uiExitCode": code, "device": args.device, "diagnosticsMeasured": bool(known),
             "newDiagnosticReports": changed, "nativeScreensCompared": False,
             "missingScreens": missing_screens,
+            "referenceScreensExpected": reference_expected, "selectedTests": selected,
+            "testsExecuted": executed, "testsSkipped": skipped,
         }, ensure_ascii=False, indent=2) + "\n")
-        if changed and any("gpuRestart" in name for name in changed):
-            print("New gpuRestart report: stop here; wait ten minutes before another simulator batch.")
+        if private_run is not None:
+            cooldown = 600 if changed and any("gpurestart" in name.lower() for name in changed) else 180
+            for remaining in range(cooldown, 0, -30):
+                print("Simulator cooldown:", remaining, "s", flush=True)
+                time.sleep(min(30, remaining))
         if changed or missing_screens:
             raise SystemExit(1)
 

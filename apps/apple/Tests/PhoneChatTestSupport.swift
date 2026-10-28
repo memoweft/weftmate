@@ -11,7 +11,9 @@ import XCTest
     }
     static func openPending(_ app:XCUIApplication) {
         #if os(iOS)
-        if app.descendants(matching:.any).matching(NSPredicate(format:"identifier BEGINSWITH %@","approvalCard.")).firstMatch.exists || app.descendants(matching:.any)["questionBar"].exists { return }
+        let approval=app.descendants(matching:.any).matching(NSPredicate(format:"identifier BEGINSWITH %@","approvalCard.")).firstMatch
+        let question=app.descendants(matching:.any)["questionBar"]
+        if approval.exists && approval.isHittable || question.exists && question.isHittable { return }
         let summary=app.buttons.matching(identifier:"phone.pendingDecision.open").firstMatch
         XCTAssertTrue(summary.waitForExistence(timeout:20)); summary.tap()
         #endif
