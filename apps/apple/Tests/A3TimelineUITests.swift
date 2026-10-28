@@ -24,12 +24,10 @@ final class A3TimelineUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "按需读取")).firstMatch.waitForExistence(timeout: 10))
         screenshot(app, "02-execution-detail")
         step.tap(); block.tap()
+        PhoneChatTestSupport.openPending(app)
         let approval = app.buttons["approveOnce.11111111-1111-4111-8111-111111111111"]
         reach(approval, app: app); XCTAssertTrue(approval.isEnabled); screenshot(app, "03-approval"); approval.tap()
-        #if os(iOS)
-        let confirmation=app.buttons["approvalConfirm.11111111-1111-4111-8111-111111111111"]
-        if confirmation.exists { reach(confirmation,app:app); confirmation.tap() }
-        #endif
+        PhoneChatTestSupport.openPending(app)
         let option = app.buttons["questionOption.22222222-2222-4222-8222-222222222222.format.纯文本"]
         XCTAssertTrue(option.waitForExistence(timeout: 20)); reach(option, app: app); option.tap()
         let submit = app.buttons["submitQuestion.22222222-2222-4222-8222-222222222222"]

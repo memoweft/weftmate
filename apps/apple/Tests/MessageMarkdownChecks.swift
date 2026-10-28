@@ -15,6 +15,9 @@ import Foundation
         precondition(prose.count == 1 && prose[0].kind == .text)
         let windows = MessageMarkdown.parts("```\r\nline\r\n```\r")
         precondition(windows.count == 1 && windows[0].text == "line\r")
-        print("6 Markdown code-boundary checks passed; GUI/clipboard: not run")
+        let table=MessageMarkdown.parts("说明\n\n| 名称 | 数量 |\n| --- | ---: |\n| 合成内容 | 2 |\n\n后记")
+        precondition(table.count == 3 && table[1].kind == .table && table[2].text.contains("后记"))
+        precondition(MessageMarkdown.cells("| a\\|b | `x|y` |").count == 2)
+        print("8 Markdown boundary/table checks passed; GUI/clipboard: not run")
     }
 }
