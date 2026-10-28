@@ -1,5 +1,6 @@
 #if DEBUG && targetEnvironment(simulator)
 import SwiftUI
+import UIKit
 import UserNotifications
 import WeftMateCore
 
@@ -9,6 +10,7 @@ struct PhoneReminderTestFixture: View {
     @State private var ready=false
     @State private var systemStatus=""
     @State private var setupPhase="starting"
+    private var shell: Bool { ProcessInfo.processInfo.arguments.contains("--ios-ui-shell-fixture") }
     private var dark: Bool { ProcessInfo.processInfo.arguments.contains("--apple11-dark") }
     var body: some View {
         Group {
@@ -18,9 +20,11 @@ struct PhoneReminderTestFixture: View {
 
             } else { ProgressView("准备提醒检查…") }
         }.preferredColorScheme(dark ? .dark : .light)
-            .overlay(alignment:.top) { Text("setup="+setupPhase+" "+systemStatus).font(AppleTokens.Fonts.caption2).accessibilityIdentifier("reminders.systemEvidence") }
+            .environment(\.phoneReduceMotionOverride, ProcessInfo.processInfo.arguments.contains("--ios-ui-reduce-motion"))
+            .overlay(alignment:.top) { if !shell { Text("setup="+setupPhase+" "+systemStatus).font(AppleTokens.Fonts.caption2).accessibilityIdentifier("reminders.systemEvidence") } }
             .task {
                 await app.start();setupPhase="restored";app.phoneChat.activate(app:app)
+                if shell { app.phoneChat.draft = "" }
                 do {
                     if app.phoneChat.models.isEmpty { try app.phoneChat.saveModel(.init(name:"合成模型",baseURL:"https://model.example.invalid/v1",model:"synthetic",apiKey:UUID().uuidString)) }
                     setupPhase="ready";ready=true

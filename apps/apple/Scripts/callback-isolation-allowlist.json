@@ -586,5 +586,12 @@
     "api": "urlSession",
     "sha256": "1960411c4a90d129f600348491cb80faaf99263d210a5d0416bf23db8290a0c5",
     "reason": "Non-actor URLSession completion delegate takes NSRecursiveLock, finishes the Sendable stream once, and cancels the owned network task. It does not access the product controller or UI actor."
+  },
+  {
+    "file": "apps/apple/UI/PhoneShellComponents.swift",
+    "line": 62,
+    "api": "onGeometryChange",
+    "sha256": "40401f6b8146b1942261d3bb7d85bddd4916482e71ff0eeab21a4502f41aa86f",
+    "reason": "The geometry transform is explicitly @Sendable and reads only the supplied proxy width. A nonisolated widthChanged factory returns an @Sendable action that hops to MainActor before invoking the explicitly MainActor UI update closure; no geometry callback reads drawer state."
   }
 ]

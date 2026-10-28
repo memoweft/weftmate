@@ -5,65 +5,230 @@ struct PhoneWorkspace: View {
     @ObservedObject var model: AppleAppModel
     @ObservedObject private var cloud: CloudLoginModel
     @ObservedObject private var phone: PhoneStandaloneModel
-    init(model: AppleAppModel) { self.model=model; cloud=model.cloudLogin;phone=model.phoneChat }
-    @ObservedObject private var reminders=PhoneReminderNotifications.shared
+    init(model: AppleAppModel, phone: PhoneStandaloneModel? = nil) { self.model = model; cloud = model.cloudLogin; self.phone = phone ?? model.phoneChat }
+    @ObservedObject private var reminders = PhoneReminderNotifications.shared
+    @Environment(\.phoneReduceMotion) private var reduceMotion
     @State private var tab: PhoneTab = .chat
+    @State private var visited: Set<PhoneTab> = [.chat]
+    @State private var chatPath: [String] = []
+    @State private var activityPath: [String] = []
+    @State private var healthPath: [String] = []
+    @State private var visibleRoots: Set<PhoneTab> = []
+    @State private var stackIDs = Dictionary(uniqueKeysWithValues: PhoneTab.allCases.map { ($0, UUID()) })
     @State private var chatRoot = UUID()
     @State private var keyboardVisible = false
-    @State private var visited: Set<PhoneTab> = [.chat]
+    @State private var sidebar = false
+    @State private var search = ""
+    @State private var settingsOpen = false
+    @State private var settingsAccount = false
+    @AppStorage("phone.conversationMode") private var savedMode = "chat"
+    private var currentPath: Binding<[String]> {
+        switch tab { case .chat: $chatPath; case .activity: $activityPath; case .health: $healthPath }
+    }
+    private var openedMode: ConversationMode? {
+        model.conversations.first { $0.id == model.openedSessionID }.map { WorkAndChat.mode($0) }
+    }
     var body: some View {
-        VStack(spacing:AppleTokens.Space.p0) {
-            PhoneTranscriptHandoffBanner(model:model.phoneChat)
-            ZStack {
-                ForEach(PhoneTab.allCases.filter { visited.contains($0) }) { item in
-                    page(item).opacity(tab == item ? 1 : 0).allowsHitTesting(tab == item).accessibilityHidden(tab != item)
+        VStack(spacing: AppleTokens.Space.p0) {
+            PhoneTranscriptHandoffBanner(model: phone)
+            TabView(selection: $tab) {
+                ForEach(PhoneTab.allCases) { item in
+                    Group {
+                        if visited.contains(item) || tab == item {
+                            stack(item, path: navigationPath(for: item))
+                        } else { Color.clear }
+                    }.tag(item)
                 }
-            }.frame(maxWidth:.infinity,maxHeight:.infinity)
-            if !keyboardVisible { PhoneBottomTabs(selection:$tab).background(Weave.canvas) }
+            }
+            if !keyboardVisible {
+                PhoneBottomTabs(selection: $tab, reselect: resetCurrentTab).background(Weave.canvas)
+            }
         }
-        .onChange(of:tab) { _,value in visited.insert(value) }
-        // UIKit notifications are delivered as values; only the explicit MainActor task changes UI state.
+        .phoneDrawer(open: $sidebar, canOpenFromEdge: visibleRoots.contains(tab) && currentPath.wrappedValue.isEmpty && !keyboardVisible) {
+            PhoneSidebar(app: model, phone: phone, search: $search, close: { closeSidebar() }, newConversation: newConversation, newWork: newWork, mainConversation: mainConversation, navigate: navigate, settings: { account in
+                closeSidebar(); settingsAccount = account; settingsOpen = true
+            })
+        }
+        .environment(\.phoneSidebar, { openSidebar() })
+        .environment(\.phoneOpenConversation, { openConversation($0) })
+        .sheet(isPresented: $settingsOpen) {
+            SettingsView(model: model, route: settingsAccount ? .init(categoryID: "account") : nil, onClose: { settingsOpen = false })
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = true } }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = false } }
-        .onChange(of:cloud.subject) { _,_ in dismissPhonePreviewKeyboard(); keyboardVisible=false }
-        .onChange(of:model.openedSessionID) { _,id in if id != nil { tab = .chat } }
-        .onChange(of:reminders.openedReminder) { _,route in navigateReminder(route) }
-        .onAppear { navigateReminder(reminders.openedReminder) }
-        .onChange(of:model.phoneLibrarySelection) { _,id in if id != nil { tab = .resources } }
+        .onChange(of: tab) { _, value in visited.insert(value) }
+        .onChange(of: cloud.subject) { _, _ in
+            dismissPhonePreviewKeyboard(); keyboardVisible = false; sidebar = false
+            chatPath = []; activityPath = []; healthPath = []; settingsOpen = false; search = ""
+        }
+        .onChange(of: model.openedSessionID) { _, id in openConversation(id) }
+        .onChange(of: openedMode) { _, mode in if let mode { savedMode = mode.rawValue } }
+        .onChange(of: reminders.openedReminder) { _, route in navigateReminder(route) }
+        .onAppear { openConversation(model.openedSessionID); navigateReminder(reminders.openedReminder) }
+        .onChange(of: model.phoneLibrarySelection) { _, id in if id != nil { navigate(.library) } }
         .background(Weave.canvas).tint(Weave.accent).buttonStyle(PhoneActionStyle())
+    }
+    private func stack(_ item: PhoneTab, path: Binding<[String]>) -> some View {
+        NavigationStack(path: path) {
+            page(item).onAppear { visibleRoots.insert(item) }.onDisappear { visibleRoots.remove(item) }
+                .navigationDestination(for: String.self) { id in
+                    destination(id)
+                        .toolbar(PhoneSidebarDestination(rawValue: id) != nil || id == "a16-side-list" ? .visible : .automatic, for: .navigationBar)
+                        .toolbar {
+                            if PhoneSidebarDestination(rawValue: id) != nil || id == "a16-side-list" {
+                                ToolbarItem(placement: .topBarTrailing) { PhoneSidebarButton() }
+                            }
+                        }
+                }
+                .toolbar {
+                    if item != .chat {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button { openSidebar() } label: { WeftIcon("sidebar") }.phoneIcon(quiet: true)
+                                .accessibilityLabel("打开侧栏").accessibilityIdentifier("phone.sidebar")
+                        }
+                    }
+                }
+        }
+        // Bar visibility flows upward from the selected tab's content to its native container.
+        .toolbar(.hidden, for: .tabBar)
+        .id(stackIDs[item])
+    }
+    private func navigationPath(for item: PhoneTab) -> Binding<[String]> {
+        switch item { case .chat: $chatPath; case .activity: $activityPath; case .health: $healthPath }
     }
     @ViewBuilder private func page(_ item: PhoneTab) -> some View {
         switch item {
         case .chat:
             Group {
-                if phone.showsLocalConversation(connected:model.session != nil,openedSessionID:model.openedSessionID) { PhoneStandaloneChat(app:model,model:model.phoneChat,tab:$tab) }
-                else if model.offline.hostOffline || model.offline.showHistory { OfflineChatView(app:model,model:model.offline) }
-                else { PhoneChatWorkspace(model:model,tab:$tab) }
+                if phone.showsLocalConversation(connected: model.session != nil, openedSessionID: model.openedSessionID) { PhoneStandaloneChat(app: model, model: phone) }
+                else if model.offline.hostOffline || model.offline.showHistory {
+                    OfflineChatView(app: model, model: model.offline).toolbar {
+                        ToolbarItem(placement: .topBarLeading) { Button { openSidebar() } label: { WeftIcon("sidebar") }.accessibilityLabel("打开侧栏").accessibilityIdentifier("phone.sidebar") }
+                    }
+                } else { PhoneChatWorkspace(model: model) }
             }.id(chatRoot)
-        case .activity: NavigationStack { if model.session == nil { PhoneComputerEmptyPage(app:model,title:"动态",explanation:"这里会显示提醒、任务进展和回顾。") } else { PhoneActivityView(app:model) } }
-        case .health: NavigationStack { if model.session == nil { PhoneLocalHealthView(app:model) } else { HealthPageView(app:model,ask:{text in Task { await ask(text) }}).toolbar { PhoneAccountMenu(model:model) } } }
-        case .goals: NavigationStack { PhoneGoalsView(app:model) }
-        case .resources: if model.session == nil { NavigationStack { PhoneComputerEmptyPage(app:model,title:"成果库",explanation:"这里会保存电脑完成的文件。") } } else { PhoneLibraryView(app:model) }
+        case .activity:
+            if model.session == nil { PhoneComputerEmptyPage(app: model, title: "动态", explanation: "这里会显示提醒、任务进展和回顾。") }
+            else { PhoneActivityView(app: model) }
+        case .health:
+            if model.session == nil { PhoneLocalHealthView(app: model) }
+            else { HealthPageView(app: model, ask: { text in Task { await ask(text) } }).toolbar { PhoneAccountMenu(model: model) } }
+        }
+    }
+    @ViewBuilder private func destination(_ id: String) -> some View {
+        if let route = PhoneSidebarDestination(rawValue: id) {
+            switch route {
+            case .conversations:
+                ScrollView { PhoneConversationDirectory(app: model, phone: phone, query: search, close: { closeSidebar() }) }
+                    .searchable(text: $search, prompt: "搜索对话").navigationTitle("全部对话").background(Weave.canvas)
+                    .accessibilityIdentifier("conversationList")
+            case .goals: PhoneGoalsView(app: model)
+            case .library:
+                if model.session == nil { PhoneComputerEmptyPage(app: model, title: "成果库", explanation: "这里会保存电脑完成的文件。") }
+                else { PhoneLibraryView(app: model) }
+            case .memory: PhoneMemoryWorkspaceView(app: model)
+            case .projects: PhoneProjectsPage(app: model)
+            }
+        } else if id == "shell.work" {
+            if model.offline.hostOffline, cloud.offlineWorkAuthorization?.supportsTasks == true, model.offline.workSnapshot?.taskRecipient != nil {
+                ScrollView { PhoneOfflineWork(app: model).padding(AppleTokens.Phone.pageInset) }.navigationTitle("新建工作")
+            } else {
+                PhoneNewConversation(app: model, mode: .work).environment(\.phoneNavigationBack, { if !chatPath.isEmpty { chatPath.removeLast() } })
+            }
+        } else if id == "a16-side-list" {
+            ScrollView { PhoneConversationDirectory(app: model, phone: phone, query: search, close: { closeSidebar() }) }
+                .searchable(text: $search, prompt: "搜索对话").navigationTitle("全部对话").accessibilityIdentifier("conversationList")
+        } else if id == "daily-review" { DailyReviewView(app: model) }
+        else if id == "health" { HealthPageView(app: model, ask: { text in Task { await ask(text) } }) }
+        else if let row = model.conversations.first(where: { $0.id == id }) {
+            if row.isMainChat || model.mainChat.capabilities.supports("workAndChat") && row.logicalHistory == true {
+                MainChatView(app: model, chatID: row.isMainChat ? nil : row.chatId).id(row.id)
+            } else {
+                ConversationView(model: model, conversation: row).id(row.id + (row.sessionId ?? model.taskSessionID(for: row, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(row.chatContentRevision ?? 0))
+            }
+        } else { EmptyState(symbol: "chat", title: "会话已变更", message: "返回会话列表后刷新。") }
+    }
+    private func openSidebar() {
+        dismissPhonePreviewKeyboard()
+        withAnimation(PhoneMotion.drawer(reduce: reduceMotion)) { sidebar = true }
+    }
+    private func resetCurrentTab() {
+        if currentPath.wrappedValue.isEmpty {
+            // Existing content also uses destination-based NavigationLinks, whose path is opaque.
+            // Only an explicit reselect resets their stack; ordinary tab switches keep it mounted.
+            stackIDs[tab] = UUID()
+        } else { currentPath.wrappedValue = [] }
+    }
+    private func closeSidebar() { withAnimation(PhoneMotion.drawer(reduce: reduceMotion)) { sidebar = false } }
+    private func navigate(_ route: PhoneSidebarDestination) {
+        closeSidebar()
+        if currentPath.wrappedValue.last != route.rawValue { currentPath.wrappedValue.append(route.rawValue) }
+    }
+    private func newConversation() {
+        closeSidebar(); tab = .chat; chatPath = []; savedMode = "chat"
+        if model.session == nil || phone.showsLocalConversation(connected: model.session != nil, openedSessionID: model.openedSessionID) {
+            phone.newThread(); model.openedSessionID = phone.state.selected
+        } else if model.offline.hostOffline { model.offline.newConversation() }
+        else if model.mainChat.capabilities.supports("workAndChat") { model.openedSessionID = nil }
+        else { Task { await model.mainChat.createSide() } }
+    }
+    private func newWork() {
+        closeSidebar(); tab = .chat; savedMode = "work"; chatPath = ["shell.work"]
+    }
+    private func mainConversation() {
+        closeSidebar(); tab = .chat; chatPath = []
+        if let main = model.conversations.first(where: \.isMainChat) {
+            if model.openedSessionID == main.id { openConversation(main.id) } else { model.openedSessionID = main.id }
+        }
+        else if model.session != nil { savedMode = "chat"; model.openedSessionID = nil }
+        else if let id = phone.state.threads.first?.id { phone.select(id); model.openedSessionID = id }
+    }
+    private func openConversation(_ id: String?) {
+        guard let id else { return }; closeSidebar(); tab = .chat
+        if phone.state.threads.contains(where: { $0.id == id }) { chatPath = []; return }
+        let epoch = model.accountEpoch
+        Task {
+            if let resolved = await model.resolveOpenedConversation(id), model.accountEpoch == epoch, model.openedSessionID == id {
+                if let row = model.conversations.first(where: { $0.id == resolved }) { savedMode = WorkAndChat.mode(row).rawValue }
+                chatPath = [resolved]
+            }
         }
     }
     private func navigateReminder(_ route: ReminderRoute?) {
         guard route != nil else { return }
-        tab=reminders.opensConversation ? .chat : .goals;visited.insert(tab)
-        if reminders.opensConversation { reminders.openedReminder=nil }
+        if reminders.opensConversation { tab = .chat; chatPath = []; reminders.openedReminder = nil }
+        else { navigate(.goals) }
     }
     private func ask(_ text: String) async {
         if model.session == nil {
-            phone.newThread();phone.draft=text;model.openedSessionID=phone.state.selected;chatRoot=UUID();tab = .chat;return
+            phone.newThread(); phone.draft = text; model.openedSessionID = phone.state.selected; chatPath = []; tab = .chat; return
         }
         let token = model.accountEpoch
         if !model.offline.hostOffline { await model.mainChat.configure() }
         guard token == model.accountEpoch else { return }
-        model.openedSessionID=nil
+        model.openedSessionID = nil
         if model.offline.hostOffline {
-            model.offline.newConversation(recent: model.mainChat.chat?.id ?? model.conversations.first(where: \.isMainChat)?.id)
-            model.offline.draft = text
-        } else if model.mainChat.capabilities.supports("workAndChat") { model.phoneNewConversationDraft=text }
+            model.offline.newConversation(recent: model.mainChat.chat?.id ?? model.conversations.first(where: \.isMainChat)?.id); model.offline.draft = text
+        } else if model.mainChat.capabilities.supports("workAndChat") { model.phoneNewConversationDraft = text }
         else { model.mainChat.setDraft(text) }
-        chatRoot = UUID(); tab = .chat
+        chatPath = []; chatRoot = UUID(); tab = .chat
+    }
+}
+
+private struct PhoneProjectsPage: View {
+    @ObservedObject var app: AppleAppModel
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
+                ProjectsEmpty(app: app)
+                ForEach(app.projects) { project in
+                    ProjectHeading(app: app, project: project)
+                    ForEach(app.projectRows(project, query: "")) { row in
+                        Button(row.title) { app.openedSessionID = row.id }.buttonStyle(.plain).frame(minHeight: AppleTokens.Phone.rowHeight)
+                    }
+                    ProjectMoreRows(app: app, project: project, search: "")
+                }
+            }.padding(AppleTokens.Phone.pageInset)
+        }.background(Weave.canvas).navigationTitle("项目")
     }
 }

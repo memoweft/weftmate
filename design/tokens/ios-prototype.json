@@ -1,6 +1,6 @@
 {
-  "status": "proposal-for-owner-review",
-  "description": "iPhone prototype additions; existing product generators do not consume these until design approval.",
+  "status": "owner-approved-ios-shell",
+  "description": "Approved iPhone additions; the Apple generator consumes these for iOS only. Desktop, Android and Watch retain base tokens.",
   "layout": {
     "phone-width": "393px", "phone-height": "852px", "status-height": "54px",
     "nav-height": "52px", "tab-height": "60px", "safe-bottom": "24px",

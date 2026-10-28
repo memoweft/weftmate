@@ -64,35 +64,6 @@ struct WeftMateRootView: View {
         })
         .overlay { CloudAccessPresenter(app: model, cloud: model.cloudLogin) }
         .sheet(item: Binding(get: { model.deletionInSettings ? nil : model.deletionCandidate }, set: { model.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: model).phoneSheet("删除对话", close: { model.deletionCandidate = nil }) }
-        #if os(iOS)
-        .sheet(item: $model.temporaryExpiryCandidate) { row in
-            NavigationStack {
-                List {
-                    ForEach([1, 7, 30, 0], id: \.self) { days in
-                        Button {
-                            model.temporaryExpiryCandidate = nil
-                            Task { await model.mainChat.temporarySetting(row, fields: ["autoDeleteDays": days == 0 ? .null : .number(Double(days))]) }
-                        } label: {
-                            HStack {
-                                Text(days == 0 ? "不自动删除" : "\(days) 天")
-                                Spacer()
-                                if (row.temporaryState.autoDeleteDays ?? 0) == days { WeftIcon("allow") }
-                            }
-                        }.accessibilityLabel(days == 0 ? "不自动删除" : "\(days) 天")
-                            .accessibilityValue((row.temporaryState.autoDeleteDays ?? 0) == days ? "已选择" : "")
-                    }
-                }.navigationTitle("自动删除").navigationBarTitleDisplayMode(.inline)
-                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消") { model.temporaryExpiryCandidate = nil } } }
-            }.toolbar(.hidden, for: .navigationBar).phoneSheet("自动删除", close: { model.temporaryExpiryCandidate = nil }).presentationDetents([.medium])
-        }
-        .sheet(item: $model.sessionMenuCandidate) { row in
-            NavigationStack {
-                List { SessionActions(app: model, conversation: row, onSelect: { model.sessionMenuCandidate = nil }) }
-                    .listStyle(.insetGrouped).listRowSeparator(.hidden).navigationTitle("对话操作").navigationBarTitleDisplayMode(.inline)
-                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button { model.sessionMenuCandidate = nil } label: { WeftIcon("deny") }.accessibilityLabel("关闭对话操作") } }
-            }.toolbar(.hidden, for: .navigationBar).phoneSheet("对话操作", close: { model.sessionMenuCandidate = nil }).presentationDetents([.medium, .large])
-        }
-        #endif
         .sheet(item: $model.projectEditor) { _ in ProjectEditorSheet(app: model).phoneSheet("项目", close: { model.projectEditor = nil }) }
         .sheet(item: Binding(get: { model.phoneCreatingWork ? nil : model.projectConversation }, set: { model.projectConversation = $0 })) { _ in ProjectConversationSheet(app: model).phoneSheet("新建对话", close: { model.projectConversation = nil }) }
         .sheet(item: $model.groupCandidate) { _ in SessionGroupSheet(app: model).phoneSheet("新建分组", close: { model.groupCandidate = nil }) }
@@ -472,173 +443,30 @@ struct MacWorkspace: View {
 #else
 struct PhoneChatWorkspace: View {
     @ObservedObject var model: AppleAppModel
-    @Environment(\.scenePhase) private var scenePhase
-    @Binding var tab: PhoneTab
-    @State private var showingSidebar = false
-    @State private var search = ""
     @AppStorage("phone.conversationMode") private var savedMode = "chat"
-    @State private var newMode: ConversationMode = .chat
-    @State private var archived = false
     private var mode: ConversationMode { ConversationMode(rawValue: savedMode) ?? .chat }
-    private var modern: Bool { model.mainChat.capabilities.supports("workAndChat") }
-    private var modeBinding: Binding<ConversationMode> { Binding(get: { mode }, set: { savedMode = $0.rawValue }) }
-    init(model: AppleAppModel, tab: Binding<PhoneTab> = .constant(.chat)) { self.model = model; _tab = tab }
-    @State private var path: [String] = []
     var body: some View {
-        NavigationStack(path: $path) {
-            Group {
-                if modern { PhoneNewConversation(app: model, mode: newMode) }
-                else if model.conversations.contains(where: \.isMainChat) {
-                    MainChatView(app: model)
-                } else { sideList }
-            }
-                .safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) }
-                .navigationDestination(for: String.self) { id in
-                    if id == "a16-side-list" {
-                        sideList.toolbar {
-                            ToolbarItem(placement: .primaryAction) { PhoneAccountMenu(model: model) }
-                            ToolbarItem(placement: .primaryAction) {
-                                Button { Task { await model.refresh() } } label: { WeftLabel("刷新会话", icon: "sync") }
-                                    .disabled(model.refreshing)
-                            }
-                        }
-                    }
-                    else if id == "daily-review" { DailyReviewView(app: model) }
-                    else if id == "health" { HealthPageView(app:model,ask:{ text in if modern { model.phoneNewConversationDraft=text;newMode = .chat } else { model.mainChat.setDraft(text) }; path=[] }) }
-                    else if let conversation = model.conversations.first(where: { $0.id == id }) {
-                        if conversation.isMainChat || modern && conversation.logicalHistory == true { MainChatView(app: model, chatID: modern ? conversation.chatId : nil).id(conversation.id) } else {
-                        ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(conversation.chatContentRevision ?? 0))
-                        }
-                    } else {
-                        EmptyState(symbol: "chat", title: "会话已变更", message: "返回会话列表后刷新。")
-                    }
-                }
-                .refreshable { await model.refresh() }
-                .accessibilityElement(children: .contain)
-        }
-        .allowsHitTesting(!showingSidebar)
-        .opacity(showingSidebar ? 0 : 1)
-        .environment(\.phoneSidebar, { dismissPhonePreviewKeyboard(); showingSidebar = true })
-        .overlay(alignment: .leading) {
-            if showingSidebar {
-                ZStack(alignment: .leading) {
-                    Color.black.opacity(0.65).ignoresSafeArea()
-                        .onTapGesture { showingSidebar = false }.accessibilityLabel("关闭侧栏")
-                    VStack(spacing: AppleTokens.Space.p0) {
-                        HStack {
-                            BrandMark(size: AppleTokens.Space.p28)
-                            Text("WeftMate").font(AppleTokens.Fonts.headline); Spacer()
-                            PhoneAccountMenu(model: model)
-                            Button { showingSidebar = false } label: { WeftIcon("deny") }.phoneIcon().accessibilityLabel("关闭侧栏").accessibilityIdentifier("phone.sidebar.close")
-                        }.padding(AppleTokens.Space.p16)
-                        if modern { PhoneConversationModes(selection: modeBinding) }
-                        sideList
-                        HStack(spacing: AppleTokens.Space.p8) {
-                            HStack(spacing: AppleTokens.Space.p8) {
-                                WeftIcon("search", size: AppleTokens.Space.p16).foregroundStyle(Weave.muted)
-                                TextField(modern ? "搜索" + mode.title : "搜索旁聊", text: $search).textFieldStyle(.plain).accessibilityIdentifier("phone.sidebar.search")
-                            }.padding(.horizontal, AppleTokens.Space.p12).frame(minHeight: AppleTokens.Space.p44).background(Weave.soft, in: Capsule())
-                            Button { if modern { newMode = mode; path = []; showingSidebar = false } else { Task { await model.mainChat.createSide(); showingSidebar = false } } } label: { WeftIcon("plus") }
-                                .phoneIcon().disabled(modern ? mode == .work && !WorkAndChat.canCreateWork(connected: !model.offline.hostOffline && model.session != nil, taskAvailable: model.executionAccount) : !model.mainChat.capabilities.supports("sideChats")).accessibilityLabel(modern ? "新建" + mode.title : "新建旁聊").accessibilityIdentifier("phone.sidebar.new")
-                        }.padding(AppleTokens.Space.p12)
-                    }.frame(maxWidth: AppleTokens.Space.p64 * 5).background(Weave.soft)
-                        .accessibilityElement(children: .contain).accessibilityIdentifier("phone.sidebar.panel")
-                }
-            }
-        }
-        .gesture(DragGesture().onEnded { value in if showingSidebar && value.translation.width < -50 { showingSidebar=false } })
-        .onChange(of: path) { _, _ in showingSidebar = false }
-        .onChange(of: model.openedSessionID) { _, id in
-            guard let id else { return }; let epoch = model.accountEpoch
-            Task {
-                if let resolved = await model.resolveOpenedConversation(id), model.accountEpoch == epoch, model.openedSessionID == id {
-                    if modern, let row = model.conversations.first(where: { $0.id == resolved }) { savedMode = WorkAndChat.mode(row).rawValue; path = [resolved] }
-                    else if model.conversations.first(where: { $0.id == resolved })?.isMainChat == true { path = [] }
-                    else { path = (path.first == "a16-side-list" ? ["a16-side-list"] : []) + [resolved] }
-                }
-            }
-        }
-        #if DEBUG
-        .task {
-            let args = ProcessInfo.processInfo.arguments
-            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a12-live-session"), args.indices.contains(index + 1) {
-                for _ in 0..<100 {
-                    if let row = model.conversations.first(where: { $0.sessionId == args[index + 1] }) { path = [row.id]; break }
-                    try? await Task.sleep(for: .milliseconds(100))
-                }
-            }
-        }
-        #endif
-        .onChange(of: model.conversations) { _, rows in
-            #if DEBUG
-            try? model.cloudLogin.seedMode2IDirectory()
-            #endif
-            if modern, let id=path.last, let row=rows.first(where: { $0.id == id }) { savedMode=WorkAndChat.mode(row).rawValue }
-        }
-        .onChange(of: model.renamingSessionID) { _, id in if id != nil { path = model.conversations.contains(where: \.isMainChat) ? ["a16-side-list"] : [] } }
-
-    }
-
-    private var sideList: some View {
-        ScrollView {
-            VStack(alignment:.leading,spacing:AppleTokens.Space.p4) {
-                ForEach(PhoneTab.allCases) { item in
-                    Button { tab=item; path=[]; showingSidebar=false } label: {
-                        HStack(spacing:AppleTokens.Space.p12) { WeftIcon(item.icon); Text(item.title); Spacer(minLength:0) }
-                            .frame(maxWidth:.infinity,minHeight:44,alignment:.leading).padding(.horizontal,AppleTokens.Space.p12)
-                            .background(tab == item && path.isEmpty ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
-                    }.buttonStyle(.plain).accessibilityIdentifier("phone.sidebar.tab."+item.id)
-                }
-                if modern {
-                    if mode == .work && model.offline.hostOffline { Text(WorkAndChat.noComputer).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).padding(AppleTokens.Space.p12) }
-                    Button(archived ? "查看当前" : "查看归档") { archived.toggle() }.buttonStyle(.plain).font(AppleTokens.Fonts.caption).frame(minHeight:44)
-                    if model.cloudLogin.multipleComputers { ComputerConversationList(cloud:model.cloudLogin,query:search,mode:mode,archived:archived,groups:model.sessionGroups,close:{showingSidebar=false}) }
-                    else {
-                        ForEach(WorkAndChat.sections(rows:model.conversations,groups:model.sessionGroups,mode:mode,query:search,archived:archived)) { section in
-                            Text(section.title).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(AppleTokens.Space.p12)
-                            ForEach(section.rows) { row in drawerRow(row) }
-                        }
-                    }
-                } else if model.cloudLogin.multipleComputers {
-                    ComputerConversationList(cloud:model.cloudLogin,query:search,close:{showingSidebar=false})
-                } else {
-                if let main=model.conversations.first(where: \.isMainChat) { drawerRow(main) }
-                ForEach(model.sections(query:search)) { section in
-                    Text(section.title).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p12).padding(.top,AppleTokens.Space.p12)
-                    ForEach(section.rows) { row in drawerRow(row) }
-                }
-                ForEach(model.projects.filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) || !model.projectRows($0,query:search).isEmpty }) { project in
-                    Text(project.name).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p12).padding(.top,AppleTokens.Space.p12)
-                    ForEach(model.projectRows(project,query:search)) { row in drawerRow(row) }
-                    ProjectMoreRows(app:model,project:project,search:search).buttonStyle(.plain)
-                }
-                }
-                if model.conversations.isEmpty { Text("还没有旁聊").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).padding(AppleTokens.Space.p12) }
-            }.padding(.horizontal,AppleTokens.Space.p12)
-        }.background(Weave.soft).toolbar(.hidden,for:.navigationBar)
-            .accessibilityElement(children:.contain).accessibilityIdentifier("conversationList")
-    }
-    private func drawerRow(_ row: ConversationSummary) -> some View {
         Group {
-        if model.renamingSessionID == row.id { EditableSessionRow(app:model,conversation:row).frame(minHeight:44).padding(.horizontal,AppleTokens.Space.p12) }
-        else { Button {
-            if modern { savedMode = WorkAndChat.mode(row).rawValue; path = [row.id] }
-            else if row.isMainChat { path=[] } else { path.append(row.id) }; showingSidebar=false
-        } label: {
-            HStack(spacing:AppleTokens.Space.p12) {
-                WeftIcon(modern ? WorkAndChat.mode(row).icon : "chat")
-                Text(row.title.isEmpty ? "未命名对话" : row.title).lineLimit(2).frame(maxWidth:.infinity,alignment:.leading)
-                if row.pinned { WeftIcon("pin",size:20).foregroundStyle(Weave.muted) }
-                if row.unread { Circle().fill(Weave.accent).frame(width:8,height:8) }
-            }.frame(minHeight:44).padding(.horizontal,AppleTokens.Space.p12)
-                .background((row.isMainChat ? path.isEmpty : path.last == row.id) ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
-        }.buttonStyle(.plain).contextMenu { SessionActions(app:model,conversation:row) }.accessibilityIdentifier("conversationRow."+row.id)
-        }
-        }
-    }
-
-    private var filteredConversations: [WeftMateCore.ConversationSummary] {
-        search.isEmpty ? model.visibleConversations : model.visibleConversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
+            if model.mainChat.capabilities.supports("workAndChat") { PhoneNewConversation(app: model, mode: mode) }
+            else if model.conversations.contains(where: \.isMainChat) { MainChatView(app: model) }
+            else {
+                ScrollView { PhoneConversationDirectory(app: model, phone: model.phoneChat, query: "", close: {}) }
+                    .navigationTitle("全部对话")
+                    .toolbar { ToolbarItem(placement: .topBarLeading) { PhoneSidebarButton() } }
+            }
+        }.safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) }
+            .refreshable { await model.refresh() }
+            #if DEBUG
+            .task {
+                let args = ProcessInfo.processInfo.arguments
+                if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a12-live-session"), args.indices.contains(index + 1) {
+                    for _ in 0..<100 {
+                        if let row = model.conversations.first(where: { $0.sessionId == args[index + 1] }) { model.openedSessionID = row.id; break }
+                        try? await Task.sleep(for: .milliseconds(100))
+                    }
+                }
+            }
+            #endif
     }
 }
 #endif
