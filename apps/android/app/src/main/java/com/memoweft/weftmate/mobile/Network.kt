@@ -39,6 +39,7 @@ internal fun validBusinessPath(path: String): Boolean {
         return query.isEmpty() && route.matches(Regex("/personal/v1/workspaces/[A-Za-z0-9_-]{1,128}/(review/(status|diff)|files/(list|search|read|save))"))
     if (query.isEmpty() && route.matches(Regex("/personal/v1/terminals(/terminal-[0-9a-f-]{36}(/release)?)?"))) return true
     if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/events/[0-9]+/detail"))) return query.isEmpty() || query.matches(Regex("outputOffset=[0-9]{1,15}"))
+    // Conversation-only selection is a POST body option on the same exact /select path.
     if (query.isEmpty() && route.matches(Regex("/personal/v1/model-services(/(check|model-service-[0-9a-f-]{36}(/(refresh|select))?))?"))) return true
     if (route == "/personal/v1/execution-records" && query.matches(Regex("[A-Za-z0-9._~=&%+-]*"))) return true
     if (query.isEmpty() && (route.matches(Regex("/personal/v1/account/models(/(check|by-request/[A-Za-z0-9_.:-]{1,128}|[A-Za-z0-9_-]{1,128}(/(test|stop-using|transfer))?))?")) ||

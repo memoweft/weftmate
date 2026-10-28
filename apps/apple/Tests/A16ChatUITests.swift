@@ -73,7 +73,7 @@ final class A16ChatUITests: XCTestCase {
         continueAfterFailure=false;let ready=try await get("/ready") as! [String:Any]
         let app=XCUIApplication();app.launchArguments=["--ui-testing","--ui-testing-namespace","a16-export-"+UUID().uuidString,"--a5-local-server","--a5-theme","light","--server-url",ready["host"] as! String,"--a16-driver",ProcessInfo.processInfo.environment["WEFTMATE_A16_DRIVER"]!]
         app.launch();defer{app.terminate()}
-        try tap(element(app,"mainChat.latest"))
+        if element(app,"mainChat.latest").exists { try tap(element(app,"mainChat.latest")) }
         let reply=element(app,"mainChat.event."+(ready["tailAssistantEventID"] as! String))
         for _ in 0..<4 { if reply.isHittable { break };app.scrollViews.firstMatch.swipeDown() }
         reply.press(forDuration:1);try tap(app.buttons["导出"].firstMatch)
@@ -83,7 +83,7 @@ final class A16ChatUITests: XCTestCase {
         // Opening is the assertion here. The system file-service Cancel action is
         // separately documented as unverified on this SDK's unstable remote AX tree.
         app.terminate(); app.launch()
-        XCTAssertTrue(element(app,"mainChat.latest").waitForExistence(timeout:30))
+        XCTAssertTrue(element(app,"mainChat").waitForExistence(timeout:30))
     }
     @MainActor func testLightMainChat() async throws {try await run("light")}
     @MainActor func testDarkMainChat() async throws {try await run("dark")}
@@ -139,9 +139,9 @@ final class A16ChatUITests: XCTestCase {
         continueAfterFailure=false;let ready=try await get("/ready") as! [String:Any]
         let app=XCUIApplication();app.launchArguments=["--ui-testing","--ui-testing-namespace","a16-"+UUID().uuidString.prefix(8),"--a5-local-server","--a5-theme",theme,"--server-url",ready["host"] as! String,"--a16-driver",ProcessInfo.processInfo.environment["WEFTMATE_A16_DRIVER"]!]
         app.launch();defer{app.terminate()}
-        try tap(element(app,"mainChat.latest"));keep(app,"first-screen",theme)
+        XCTAssertTrue(element(app,"mainChat").waitForExistence(timeout:30));keep(app,"first-screen",theme)
         XCTAssertTrue(element(app,"mainChat").exists)
-        try tap(element(app,"mainChat.resources"));XCTAssertTrue(app.staticTexts["输出内容"].waitForExistence(timeout:15));keep(app,"resources",theme)
+        try tap(element(app,"mainChat.resources"));XCTAssertTrue(app.staticTexts[PhoneChatTestSupport.outputTitle].waitForExistence(timeout:15));keep(app,"resources",theme)
         try tap(app.buttons["完成"].firstMatch)
         // Native menu and calendar, without substituting model callbacks for UI actions.
         try tap(element(app,"mainChat.date"));XCTAssertTrue(element(app,"mainChat.datePicker").waitForExistence(timeout:10));keep(app,"native-date-picker",theme)
@@ -192,10 +192,10 @@ final class A16ChatUITests: XCTestCase {
             // Restore only this isolated app after capturing the system file service;
             // do not count restart as a successful system Cancel or file write.
             app.terminate(); app.launch()
-            XCTAssertTrue(element(app,"mainChat.latest").waitForExistence(timeout:30))
+            XCTAssertTrue(element(app,"mainChat").waitForExistence(timeout:30))
         }
         // Returning to the root and refreshing reads the host's tail, including real result cards.
-        try tap(element(app,"mainChat.latest"))
+        if element(app,"mainChat.latest").exists { try tap(element(app,"mainChat.latest")) }
         if let result=(ready["resultIDs"] as? [String])?.first {
             let card=element(app,"mainChat.result."+result)
             for _ in 0..<12 {if card.isHittable{break};app.scrollViews.firstMatch.swipeUp()}
@@ -207,10 +207,10 @@ final class A16ChatUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["A16-synthetic.txt"].waitForExistence(timeout:10))
         let draft=element(app,"mainChat.draft");try tap(draft);draft.typeText("A16 合成主对话发送")
         try tap(element(app,"mainChat.send"));keep(app,"sent",theme)
-        XCTAssertTrue(pendingApprovalElement(app).waitForExistence(timeout:30));keep(app,"approval",theme)
+        PhoneChatTestSupport.openPending(app); XCTAssertTrue(pendingApprovalElement(app).waitForExistence(timeout:30));keep(app,"approval",theme)
         let report=try await get("/report") as! [String:Any]
         if let approval=(report["approvals"] as? [[String:Any]])?.first(where:{$0["resolved"] as? Bool==false})?["id"] as? String{
-            try tap(element(app,"approveOnce."+approval)); if app.buttons["approvalConfirm."+approval].exists { try tap(app.buttons["approvalConfirm."+approval]) };_=try await get("/consume")
+            try tap(element(app,"approveOnce."+approval)); _=try await get("/consume")
         }
         let previousPolicies = try await get("/temporary") as! [[String: Any]]
         let previousTemporaryIDs = Set(previousPolicies.compactMap { $0["chatId"] as? String })

@@ -1407,7 +1407,15 @@ final class AppleAppModel: ObservableObject {
                 configurationError = "测试存储命名空间无效，请检查启动参数。"
             }
         }
-        let storage = AppleStorageProfile(bundleID: Bundle.main.bundleIdentifier, uiTesting: uiTesting, testNamespace: testNamespace)
+        #if DEBUG && os(iOS) && targetEnvironment(simulator)
+        // An explicit automation namespace must isolate synthetic accounts even
+        // in the installable candidate. Ordinary Xcode/Home Screen launches and
+        // all physical-device launches keep the candidate's stable data domain.
+        let storageBundleID: String? = uiTesting && args.contains("--ui-testing-namespace") ? nil : Bundle.main.bundleIdentifier
+        #else
+        let storageBundleID = Bundle.main.bundleIdentifier
+        #endif
+        let storage = AppleStorageProfile(bundleID: storageBundleID, uiTesting: uiTesting, testNamespace: testNamespace)
         let preferences: UserDefaults?
         if let suite = storage.preferencesSuite { preferences = UserDefaults(suiteName: suite) }
         else { preferences = UserDefaults.standard }

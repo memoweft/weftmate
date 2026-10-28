@@ -89,13 +89,14 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
                 sessionId=chat?.chat?.activeSessionId||chat?.chat?.sessionId;
             }
             const result = await core.accessApi(`/model-services/${encodeURIComponent(serviceId)}/select`, {method:'POST',protectedWrite:true,
-                body:{modelId,requestId:environment.crypto.randomUUID(),...(sessionId ? {sessionId} : {})}, timeoutMs:60000});
+                body:{modelId,requestId:environment.crypto.randomUUID(),...(sessionId ? {sessionId} : {}),...(environment.chatScope ? {preference:'conversation'} : {})}, timeoutMs:60000});
             if (identity !== scope()) return false;
             if (!result.profileId) throw {code:'MODEL_UNAVAILABLE'};
             retryAt = 0;
             if (result.models) core.state.models = result.models.filter(m => m.configured);
             await core.refreshModels(); if (identity !== scope()) return false;
-            core.state.modelProfileId = result.profileId; core.state.modelSettings = {...core.state.modelSettings,defaultModelProfileId:result.profileId};
+            core.state.modelProfileId = result.profileId;
+            if (!environment.chatScope) core.state.modelSettings = {...core.state.modelSettings,defaultModelProfileId:result.profileId};
             if (result.service) core.state.modelServices = core.state.modelServices.map(s => s.serviceId === serviceId ? result.service : s);
             try { let recent = JSON.parse(environment.storage.getItem(recentKey()) || '[]'); const key = `${serviceId}/${modelId}`; environment.storage.setItem(recentKey(), JSON.stringify([key,...recent.filter(k => k !== key)].slice(0,20))); } catch {}
             effects.paintModels?.(); effects.updateAvailability?.(); return true;

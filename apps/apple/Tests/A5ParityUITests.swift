@@ -64,9 +64,9 @@ final class A5ParityUITests: XCTestCase {
                 if ["conversation", "approval", "question", "outputs-sources", "session-menu", "composer-context", "composer-menu"].contains(scene) {
                     try row(app, (ids["chatIDs"] as! [String:String])["review"]!)
                     try expect(app.buttons["openConversationResources"])
-                    if scene == "approval" { let control = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "approveOnce.")).firstMatch; reveal(app, control); try expect(control) }
+                    if scene == "approval" { PhoneChatTestSupport.openPending(app); let control = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "approveOnce.")).firstMatch; reveal(app, control); try expect(control) }
                     if scene == "question" { let control = app.staticTexts["报告要采用哪种格式？"]; reveal(app, control); try expect(control) }
-                    if scene == "outputs-sources" { try tap(app, "openConversationResources"); try expect(app.staticTexts["输出内容"]) }
+                    if scene == "outputs-sources" { try tap(app, "openConversationResources"); try expect(app.staticTexts[PhoneChatTestSupport.outputTitle]) }
                     if scene == "session-menu" { try tap(app, "对话菜单"); try expect(app.buttons["归档"]) }
                     if scene == "composer-context" { try tap(app, "contextUsage"); try expect(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "背景信息窗口")).firstMatch) }
                     if scene == "composer-menu" { try tap(app, "addAttachmentButton"); try expect(app.buttons["composer.file"]) }
@@ -115,7 +115,7 @@ final class A5ParityUITests: XCTestCase {
         for scene in ["conversation","approval","question"] {
             app.launchArguments=["--ui-testing","--ui-testing-namespace",namespace,"--a5-local-server","--a5-theme",theme,"--a5-review-scene",scene,"--server-url",ready["host"] as! String]
             app.launch();try openSideList(app);try row(app,(ids["chatIDs"] as! [String:String])["review"]!)
-            if scene == "approval" { try expect(app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","approveOnce.")).firstMatch) }
+            if scene == "approval" { PhoneChatTestSupport.openPending(app); try expect(app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","approveOnce.")).firstMatch) }
             else if scene == "question" { try expect(app.staticTexts["报告要采用哪种格式？"]) }
             else { try expect(app.buttons["openConversationResources"]) }
             try await Task.sleep(for:.seconds(1))
@@ -163,31 +163,31 @@ final class A5ParityUITests: XCTestCase {
             // The real host projection is polled until both queued goals have been consumed in order.
             var final:[String:Any]=[:]
             for _ in 0..<100 {
-                final=try await get("/a5/report")
-                let starts=(final["operations"] as! [[String:Any]]).filter { $0["kind"] as? String == "started" }.compactMap { $0["text"] as? String }
+                finalReport=try await get("/a5/report")
+                let starts=(finalReport["operations"] as! [[String:Any]]).filter { $0["kind"] as? String == "started" }.compactMap { $0["text"] as? String }
                 if starts.contains("A5_EDIT-changed") { break };try await Task.sleep(for:.milliseconds(200))
             }
-            let starts=(final["operations"] as! [[String:Any]]).filter { $0["kind"] as? String == "started" }.compactMap { $0["text"] as? String }
+            let starts=(finalReport["operations"] as! [[String:Any]]).filter { $0["kind"] as? String == "started" }.compactMap { $0["text"] as? String }
             XCTAssertEqual(starts.filter { $0.hasPrefix("A5_QUEUE_") },["A5_QUEUE_1","A5_QUEUE_2"])
             XCTAssertFalse(starts.contains("A5_CANCEL"));XCTAssertFalse(starts.contains("A5_EDIT"));XCTAssertTrue(starts.contains("A5_EDIT-changed"));XCTAssertFalse(starts.contains("A5_STEER supplemental instruction"))
             try back(app)
         }
         try row(app,(ids["chatIDs"] as! [String:String])["review"]!)
         try expect(app.buttons["openConversationResources"]);keep(app,"conversation",theme)
+        PhoneChatTestSupport.openPending(app)
         let allow=app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","approveOnce.")).firstMatch
         reveal(app,allow)
         try expect(allow);keep(app,"approval",theme)
         if behavior {
-            XCTAssertTrue(app.staticTexts["删除合成草稿文件"].exists);allow.tap(); if app.buttons["approvalConfirm."+String(allow.identifier.dropFirst("approveOnce.".count))].exists { app.buttons["approvalConfirm."+String(allow.identifier.dropFirst("approveOnce.".count))].tap() }
-            let deny=try await get("/a5/deny");try tap(app,"refreshHistoryButton")
+            XCTAssertTrue(app.staticTexts["删除合成草稿文件"].exists);allow.tap(); let deny=try await get("/a5/deny");try tap(app,"refreshHistoryButton")
+            PhoneChatTestSupport.openPending(app)
             let reject=app.buttons["rejectApproval." + (deny["approvalId"] as! String)]
             reveal(app,reject)
-            try expect(reject);reject.tap(); if app.buttons["approvalConfirm."+String(reject.identifier.dropFirst("rejectApproval.".count))].exists { app.buttons["approvalConfirm."+String(reject.identifier.dropFirst("rejectApproval.".count))].tap() }
-        }
+            try expect(reject);reject.tap(); }
         let question=app.staticTexts["报告要采用哪种格式？"]
         reveal(app,question)
         try expect(question);keep(app,"question",theme)
-        try tap(app,"openConversationResources");try expect(app.staticTexts["输出内容"]);keep(app,"outputs-sources",theme);try tap(app,"closeResourcesPanel")
+        try tap(app,"openConversationResources");try expect(app.staticTexts[PhoneChatTestSupport.outputTitle]);keep(app,"outputs-sources",theme);PhoneChatTestSupport.returnFromResources(app)
         try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.memory");try expect(app.staticTexts["我的记忆"]);keep(app,"memory",theme);try tap(app,"closeAuxiliarySheetButton")
         try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.settings");try tap(app,"settingsCategory.appearance");try expect(app.segmentedControls["appearancePicker"]);keep(app,"appearance",theme)
         try tap(app,"设置");try tap(app,"settingsCategory.usage");try expect(app.descendants(matching:.any)["usageTotalCost"].firstMatch);keep(app,"usage",theme)
@@ -212,8 +212,8 @@ final class A5ParityUITests: XCTestCase {
             let checkedResult=await XCTWaiter.fulfillment(of:[checked],timeout:10);XCTAssertEqual(checkedResult,.completed)
             guard checkedResult == .completed else { throw NSError(domain:"A5ForgetSelection",code:1) }
             try expect(app.staticTexts["forgetPreviewSummary"]);try tap(app,"confirmDeleteConversation")
-            let final=try await get("/a5/report");XCTAssertEqual((final["memoryDeletes"] as! [[String:Any]]).count,1)
-            let exists=final["workspaceExists"] as! [String:Bool];XCTAssertEqual(exists["deletion"],false);XCTAssertEqual(exists["forget"],false)
+            let finalReport=try await get("/a5/report");XCTAssertEqual((finalReport["memoryDeletes"] as! [[String:Any]]).count,1)
+            let exists=finalReport["workspaceExists"] as! [String:Bool];XCTAssertEqual(exists["deletion"],false);XCTAssertEqual(exists["forget"],false)
         }
         if !behavior { try tap(app,"closeAuxiliarySheetButton") }
         if behavior { try back(app);try row(app,(ids["chatIDs"] as! [String:String])["review"]!) }

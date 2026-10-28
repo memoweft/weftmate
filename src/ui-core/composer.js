@@ -308,8 +308,10 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             if (row.projectId) await core.updateSession(row.sessionId, {projectId:row.projectId});
             if (row.attachments) {
                 const oldKey = `${row.ownerId}|new`;
-                const drafts = core.state.attachmentDrafts.get(oldKey);
-                if (drafts) { core.state.attachmentDrafts.set(`${row.ownerId}|${row.sessionId}`, drafts); core.state.attachmentDrafts.delete(oldKey); }
+                const newKey = `${row.ownerId}|${row.sessionId}`;
+                for (const entries of [core.state.attachmentDrafts, core.state.attachmentAttempts, core.state.attachmentGroups]) {
+                    if (entries.has(oldKey)) { entries.set(newKey, entries.get(oldKey)); entries.delete(oldKey); }
+                }
             }
             // The creation receipt already identifies the durable session.
             // Reading every older conversation is not a prerequisite for
