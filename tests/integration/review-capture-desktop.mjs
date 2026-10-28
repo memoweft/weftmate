@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import {renderingSample} from '../helpers/rendering-sample.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { startMainChatCandidate } from './main-chat-candidate.mjs';
-import { nativeFixtureFetchOptions } from '../helpers/local-ui-session.mjs';
+import { prepareGoalsScene } from './review-goals-scene.mjs';
 import { loadNativeReviewSession } from '../helpers/review-native-session.mjs';
 import { redactEvidenceText } from '../helpers/process-evidence.mjs';
 import { exposeUx7Desktop, mockUx7Requests, prepareUx7Suggestions } from './ux-7-scenes.mjs';
@@ -18,7 +18,7 @@ import { repository, outDirectory, runScene, catalog } from '../../scripts/revie
 const out = outDirectory();
 const sceneIndex = process.argv.indexOf('--scene'), onlyScene = sceneIndex < 0 ? null : process.argv[sceneIndex + 1];
 for (const theme of ['light', 'dark']) {
-  const fixture = await startTimelineCandidate({goals:true, historyCount: 0, interactive: true, riskApproval: true, composer:true, composerMenu:true, baseTime: Date.parse('2026-10-08T08:00:00Z') });
+  const fixture = await startTimelineCandidate({goals:true, historyCount: 0, interactive: true, riskApproval: true, composer:true, composerMenu:true, memoryUsed: [{ id: 'synthetic-memory', kind: 'cognition', summary: '使用中文说明' }], baseTime: Date.parse('2026-10-08T08:00:00Z') });
   const profile = await mkdtemp(join(tmpdir(), 'weftmate-review-desktop-'));
   const profiles = [profile];
   const env = { ...process.env };
@@ -78,23 +78,6 @@ for (const theme of ['light', 'dark']) {
     }, { theme, origin: fixture.origin });
     await page.route('**/personal/v1/memory/items/cognition/synthetic-memory', route => route.fulfill({ json: { ownerId, item: { text: '使用中文说明' } } }));
     await page.route('**/personal/v1/memory/items/**/sources', route => route.fulfill({ json: { ownerId, sources: [{ recordedAt: '2026-10-08T08:00:00Z', contentAvailable: true, rawContent: '合成偏好：使用中文说明。' }] } }));
-    const projectionPage = page;
-    let projectionDocumentEpoch = 0;
-    projectionPage.on('framenavigated', frame => { if (frame === projectionPage.mainFrame()) projectionDocumentEpoch++; });
-    await projectionPage.route('**/personal/v1/sessions/*/events?*', async route => {
-      const documentEpoch = projectionDocumentEpoch;
-      try {
-        const response = await route.fetch(nativeFixtureFetchOptions(route, fixture)), data = await response.json();
-        for (const event of data.events || []) if (event.type === 'assistant.message') event.data.memoryUsed = [{ id: 'synthetic-memory', kind: 'cognition', summary: '使用中文说明' }];
-        await route.fulfill({ response, json: data });
-      } catch (error) {
-        const cancelledDocument = documentEpoch !== projectionDocumentEpoch || projectionPage.isClosed() ||
-          route.request().failure()?.errorText === 'net::ERR_ABORTED';
-        if (!cancelledDocument) errors.push({ source: 'event-projection', code: error.code || error.name || 'ROUTE_FAILED',
-          message: redactEvidenceText(error.message.split('\n')[0]) });
-        await route.abort().catch(() => {});
-      }
-    });
     ownerId = await loadNativeReviewSession(page, fixture);
     console.log('Desktop fixture loaded.');
     const button = name => page.getByRole('button', { name, exact: typeof name === 'string' });
@@ -140,7 +123,7 @@ for (const theme of ['light', 'dark']) {
     const settings = async () => { await home(); await button('账户菜单').click(); await button('设置').click(); };
     const preparations = {
       rendering:async()=>{if(!renderingSeeded){fixture.progress.text(renderingSample);renderingSeeded=true;}await home();await page.getByRole('heading',{name:'公式与图表',exact:true}).scrollIntoViewIfNeeded();await page.locator('.render-diagram img').waitFor();},
-      goals: async () => { await home(); await button('目标').click(); await page.getByRole('heading',{name:'目标',exact:true}).waitFor(); await page.getByRole('article',{name:'提交合成报告',exact:true}).waitFor(); },
+      goals: async () => { await home(); await button('目标').click(); await prepareGoalsScene(page); },
       onboarding: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '常规', exact: true }).click(); await button('重新查看引导').click(); await page.getByRole('heading', { name: '你好，我是 WeftMate', exact: true }).waitFor(); },
       'search-palette': async () => { await home(); await button('搜索').click();await page.getByRole('dialog',{name:'搜索',exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('#search-results')?.getAttribute('aria-busy')==='false'); },
       library: async () => { await home(); await button('成果库').click(); await button('预览 项目进度报告.md').click(); await page.getByRole('heading',{name:'项目进度报告',exact:true}).waitFor(); },
@@ -148,7 +131,12 @@ for (const theme of ['light', 'dark']) {
       sessions: async () => { await home(); await button('搜索').waitFor(); },
       'composer-menu': async()=>{await home();await button('添加图片或文件').click();await page.getByRole('menu',{name:'添加附件与深入思考'}).waitFor();await page.getByRole('menuitemcheckbox',{name:'深入思考'}).waitFor();},
       'composer-context': async()=>{await home();await button('背景信息窗口：86% 已用').focus();await page.getByRole('tooltip').waitFor();},
-      conversation: async () => { await home(); await page.getByRole('button', {name:'读取了 3 个文件、已运行 1 个命令，已收起',exact:true}).click(); await page.getByText(/^读取 3 个文件/).evaluate(node => node.scrollIntoView({ block: 'center' })); },
+      conversation: async () => {
+        await home(); const process = page.locator('.execution-block').first(); await process.waitFor();
+        if (!await process.evaluate(node => node.open)) await process.locator(':scope > summary').click();
+        await page.getByText(/^读取 3 个文件/).evaluate(node => node.scrollIntoView({ block: 'center' }));
+        await page.getByText('运行命令：npm test', { exact: true }).waitFor();
+      },
       approval: async () => { await home(); await button('批准').evaluate(node => node.scrollIntoView({ block: 'center' })); },
       question: async () => {
         const decisions = [];
@@ -190,10 +178,15 @@ for (const theme of ['light', 'dark']) {
         } finally { page.off('response', decisionResponse); }
       },
       'outputs-sources': async () => { await home(); await button('输出与来源').click(); await page.getByRole('button', { name: /README.md.*读取/ }).waitFor(); },
-      memory: async () => { await home(); await button('查看这条回复参考的 1 条记忆来源').click(); await page.getByText('合成偏好：使用中文说明。', { exact: true }).waitFor(); },
+      memory: async () => { await home(); await button('输出与来源').click(); await button(/^记忆来源 引用/).click(); await page.getByText('使用中文说明', { exact: true }).waitFor(); await page.getByText('合成偏好：使用中文说明。', { exact: true }).waitFor(); },
       appearance: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '外观', exact: true }).click(); await page.getByRole('group', { name: '颜色模式' }).waitFor(); },
       general: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '助手', exact: true }).click(); await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).waitFor(); },
-      usage: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '用量', exact: true }).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
+      usage: async () => {
+        await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '用量', exact: true }).click();
+        await page.getByRole('heading', { name: '用量', exact: true }).waitFor();
+        await page.locator('.settings-category[data-category="usage"] .usage-total').waitFor();
+        await page.getByRole('combobox', { name: '统计月份', exact: true }).waitFor(); await button('刷新用量').waitFor();
+      },
       'session-menu': async () => { await home(); await button('项目进度报告').click({button:'right'}); await page.getByRole('menu', { name: '对话操作', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '归档 A', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '删除 D', exact: true }).waitFor(); },
     };
     for (const scene of catalog.scenes.filter(row => !['login','main-chat','next-suggestions'].includes(row.id) && (!onlyScene || row.id === onlyScene)).sort((a,b)=>Number(a.id==='question')-Number(b.id==='question'))) {
