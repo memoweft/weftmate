@@ -7,6 +7,7 @@ import { startFe1bFixture } from './fe-1b-fixture.mjs';
 import {startRenderingCandidate} from './ux-5-fixture.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { startMainChatCandidate } from './main-chat-candidate.mjs';
+import { prepareGoalsScene } from './review-goals-scene.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { mockUx7Requests, prepareUx7Suggestions, ux7Replies } from './ux-7-scenes.mjs';
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
@@ -147,7 +148,7 @@ try {
       },questionPage);
       await shot('library', async () => { await navigate(questionPage, candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^成果库(?:，|$)/}).click();await questionPage.getByRole('button',{name:'预览 项目进度报告.md',exact:true}).waitFor(); },questionPage);
       await shot('goals', async () => {
-        await navigate(questionPage, candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^目标(?:，|$)/}).click();await questionPage.getByRole('heading',{name:'目标',exact:true}).waitFor();await questionPage.getByRole('article',{name:'提交合成报告',exact:true}).waitFor();
+        await navigate(questionPage, candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^目标(?:，|$)/}).click();await prepareGoalsScene(questionPage);
       },questionPage);
       await shot('activity', async () => {
         await candidate.recordActivity({key:'gallery-paused',type:'memory.paused',title:'记忆已暂停',summary:'记忆暂时无法更新，可在记忆页查看状态。',level:'normal'});

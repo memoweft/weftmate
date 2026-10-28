@@ -4,6 +4,23 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     let importsView, importsOwner, importsTools;
     const memoryRows = new Map();
     let renderedScope;
+    let deviceCleanup,deviceCleanupGeneration=0;
+    async function readDeviceCleanup(){
+        if(!deviceCleanup||!core.readDeviceSync)return;
+        const token=core.memoryIdentity(),generation=++deviceCleanupGeneration;
+        try{
+            const payload=await core.readDeviceSync();
+            if(generation!==deviceCleanupGeneration||!core.memoryIdentityCurrent(token))return;
+            const cleanups=payload.devices.filter(row=>row.sync?.cleanup),waiting=cleanups.filter(row=>row.sync.cleanup.state==='waiting_device');
+            deviceCleanup.hidden=!cleanups.length;
+            deviceCleanup.querySelector('strong').textContent=waiting.length?'等待设备回执':'设备已确认清理';
+            deviceCleanup.querySelector('p').textContent=waiting.length?`${waiting.length} 台设备尚未确认遗忘清理。设备重新连接并完成同步后，这里会更新。`:'已收到设备对本次遗忘清理的确认。';
+        }catch{
+            if(generation!==deviceCleanupGeneration||!core.memoryIdentityCurrent(token))return;
+            deviceCleanup.hidden=false;deviceCleanup.querySelector('strong').textContent='设备清理状态暂时无法读取';
+            deviceCleanup.querySelector('p').textContent='请检查连接后重试。';
+        }
+    }
     const listScope = () => `${core.state.identityGeneration}|${core.state.account?.ownerId ?? core.state.ownerId}|${core.memory.kind}|${core.memory.query}|${JSON.stringify(core.memory.weekFilter)}`;
     function mountHistoryImports() {
         const owner = core.state.account?.ownerId;
@@ -269,6 +286,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             void core.recoverMemoryReceipt();
     }
     function resetMemoryControls() {
+        deviceCleanupGeneration++;if(deviceCleanup)deviceCleanup.hidden=true;
         memoryRows.clear();
         resetIngestion();
         ui.byId('memory-kind').value = 'all'; ui.syncMemoryFilters?.();
@@ -406,6 +424,12 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ui.byId('memory-refresh').addEventListener('click', () => { void refresh(); });
     }
     function mountMemory() {
+        deviceCleanup=ui.element('section','memory-device-cleanup');deviceCleanup.hidden=true;deviceCleanup.setAttribute('aria-label','设备遗忘清理');deviceCleanup.setAttribute('role','status');
+        const copy=ui.element('div');copy.append(ui.element('strong'),ui.element('p'));
+        const retry=ui.element('button','button secondary small','检查状态');retry.type='button';retry.onclick=async()=>{retry.disabled=true;try{await readDeviceCleanup();}finally{retry.disabled=false;}};
+        const devices=ui.element('button','button quiet small','查看设备');devices.type='button';devices.onclick=()=>ui.openSettings('devices');
+        deviceCleanup.append(WeftIcons.create('sync',18),copy,retry,devices);ui.byId('memory-search-form').before(deviceCleanup);
+        const refreshStatus=core.refreshMemoryStatus;core.refreshMemoryStatus=async(...args)=>{const result=await refreshStatus(...args);if(core.state.currentView==='memory')await readDeviceCleanup();return result;};
         mountIngestion();
         ui.byId('memory-view').classList.add('auxiliary-memory-page');
         const understanding = ui.element('h3', 'memory-understanding-title', '当前理解');
