@@ -2,6 +2,38 @@ package com.memoweft.weftmate.mobile
 
 import java.security.MessageDigest
 import java.util.Base64
+import org.json.JSONArray
+
+/** JSON.stringify's scalar array encoding: UTF-8, no whitespace or slash/non-ASCII escaping. */
+internal fun cloudPairingDigest(values: JSONArray): String {
+    require(values.length() in 5..16 && values.optString(0) in setOf("wm-pair-host-v2", "wm-pair-phone-v2", "wm-pair-sas-v2"))
+    fun quote(value: String): String = buildString {
+        append('"')
+        for (c in value) when (c) {
+            '"' -> append("\\\""); '\\' -> append("\\\\")
+            '\b' -> append("\\b"); '\u000c' -> append("\\f"); '\n' -> append("\\n"); '\r' -> append("\\r"); '\t' -> append("\\t")
+            else -> if (c < ' ') append("\\u" + c.code.toString(16).padStart(4, '0')) else append(c)
+        }
+        append('"')
+    }
+    val text = (0 until values.length()).joinToString(",", "[", "]") {
+        when (val value = values.get(it)) {
+            is String -> quote(value)
+            is Int, is Long -> value.toString()
+            else -> throw IllegalArgumentException("Invalid pairing transcript")
+        }
+    }
+    require(text.toByteArray(Charsets.UTF_8).size <= 16384)
+    return cloudBase64(MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8)))
+}
+
+/** A host's own loopback origin is signed metadata, never the phone's request destination. */
+internal fun cloudPairingMetadataOrigin(value: String): String {
+    val url = java.net.URI(value)
+    require(url.scheme == "https" || url.scheme == "http" && url.host in setOf("127.0.0.1", "localhost", "[::1]"))
+    require(url.host != null && url.rawUserInfo == null && url.rawQuery == null && url.rawFragment == null && url.rawPath.isNullOrEmpty())
+    return value
+}
 
 internal fun cloudBase64(bytes: ByteArray): String = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
 internal fun cloudKeyAlias(id: String): String = "weftmate-app-p256-" + cloudBase64(MessageDigest.getInstance("SHA-256").digest(id.toByteArray()))
@@ -76,5 +108,5 @@ internal fun cloudAppRouteAllowed(target: String, method: String, host: String, 
         "/auth/logout", "/auth/logout/others", "/auth/account/delete", "/auth/email/change/request",
         "/auth/email/change/confirm", "/auth/devices/revoke", "/devices/rename", "/hosts/connect", "/hosts/rename", "/hosts/remove")
     return cloudPaths.any { target == cloud + it } || setOf("/auth/cloud-nonce", "/auth/cloud-session", "/auth/cloud-channel",
-        "/cloud/pairings/redeem").any { target == "$host/personal/v1$it" }
+        "/cloud/pairings/join", "/cloud/pairings/reveal", "/cloud/pairings/redeem").any { target == "$host/personal/v1$it" }
 }

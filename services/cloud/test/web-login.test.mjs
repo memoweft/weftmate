@@ -168,6 +168,7 @@ test('AUTH-1 real browser: password or email-code login → session → director
 
   // The phone independently computes SAS; only the direct computer can confirm.
   const pairing = await hostApi('/cloud/pairings', {}, local, 201);
+  const pairingCookies = await phoneContext.cookies(origin);
   const sas=await phone.evaluate(async pairing=>{
     const client = new WeftUiCore.CloudAuthClient({ fetch: (...args) => fetch(...args), crypto,
       credentials: (...args) => WeftCloud.storage(...args), vendor: WeftCloudVendor, host: location.origin });
@@ -177,7 +178,9 @@ test('AUTH-1 real browser: password or email-code login → session → director
     const token=await client.access(client.base+'/hosts/'+client.config.hostId);
     const send=async(path,body)=>{const n=await client.request(client.host+'/personal/v1/auth/cloud-nonce',{method:'POST',body:{}});
       const url=client.host+'/personal/v1'+path,proof=await client.proof(url,{token,nonce:n.nonce});
-      return client.request(url,{method:'POST',headers:{DPoP:proof},body:{accessToken:token,deviceName:saved.deviceName||'Browser',challenge:pairing.challenge,...body}});};
+      const result=await client.request(url,{method:'POST',headers:{DPoP:proof},body:{accessToken:token,deviceName:saved.deviceName||'Browser',challenge:pairing.challenge,...body}});
+      if(result.account || result.csrfToken || result.hostTrust)throw Error('PAIRING_CREATED_SESSION_BEFORE_CONFIRMATION');
+      return result;};
     const joined=await send('/cloud/pairings/join',{phoneCommitment:await client.hash(JSON.stringify(['wm-pair-phone-v2',pairing.challenge,key.deviceId,jkt,nonce]))});
     const hostJkt=await client.hash(JSON.stringify({crv:pairing.publicJwk.crv,kty:pairing.publicJwk.kty,x:pairing.publicJwk.x,y:pairing.publicJwk.y}));
     const T=[2,pairing.issuer,pairing.sub,pairing.hostId,pairing.tlsSpki,hostJkt,pairing.challenge,pairing.expiresAt,pairing.origin,pairing.relay?.baseUrl||''];
@@ -190,14 +193,32 @@ test('AUTH-1 real browser: password or email-code login → session → director
     const client = new WeftUiCore.CloudAuthClient({ fetch: (...args) => fetch(...args), crypto,
       credentials: (...args) => WeftCloud.storage(...args), vendor: WeftCloudVendor, host: location.origin });
     await client.configure();
-    try { const result=await client.exchange(false,pairing); return {ownerId:result.account.ownerId}; }
-    catch(error){return {error:error.code};}
+    const saved=await client.saved(),token=await client.access(client.base+'/hosts/'+client.config.hostId);
+    const nonce=await client.request(client.host+'/personal/v1/auth/cloud-nonce',{method:'POST',body:{}});
+    const url=client.host+'/personal/v1/cloud/pairings/redeem',proof=await client.proof(url,{token,nonce:nonce.nonce});
+    try {
+      const result=await client.request(url,{method:'POST',headers:{DPoP:proof},
+        body:{accessToken:token,deviceName:saved.deviceName||'Browser',challenge:pairing.challenge}});
+      await client.acceptHostTrust(result,saved,pairing);
+      return {ownerId:result.account.ownerId};
+    }
+    catch(error){return {error:error.code,status:error.status};}
   },pairing);
-  assert.equal((await redeem()).error,'PAIRING_CONFIRMATION_REQUIRED');
+  assert.deepEqual(await redeem(),{error:'PAIRING_CONFIRMATION_REQUIRED',status:403});
+  assert.deepEqual(await phoneContext.cookies(origin),pairingCookies,'join, reveal and rejected redeem must not issue a session');
   assert.equal((await hostApi('/cloud/pairings/status',{challenge:pairing.challenge},local)).verificationCode,sas);
-  await hostApi('/cloud/pairings/decision',{challenge:pairing.challenge,decision:'confirm',verificationCode:sas},local);
+  const phoneAuth=await (await phoneContext.request.get(origin+'/personal/v1/auth/me')).json();
+  const remoteDecision=await phoneContext.request.post(origin+'/personal/v1/cloud/pairings/decision',{
+    headers:{origin,'x-weftmate-csrf':phoneAuth.csrfToken},
+    data:{challenge:pairing.challenge,decision:'confirm',verificationCode:sas}});
+  assert.equal(remoteDecision.status(),403,'phone sessions cannot confirm pairing');
+  assert.equal((await remoteDecision.json()).error.code,'LOCAL_SESSION_REQUIRED');
+  const confirmed=await hostApi('/cloud/pairings/decision',{challenge:pairing.challenge,decision:'confirm',verificationCode:sas},local);
+  assert.equal(confirmed.state,'confirmed');
+  assert.equal(confirmed.cookie,undefined,'computer confirmation alone must not issue a session');
+  assert.deepEqual(await phoneContext.cookies(origin),pairingCookies);
   assert.equal((await redeem()).ownerId,local.account.ownerId);
-  assert.equal((await redeem()).error,'PAIRING_INVALID');
+  assert.deepEqual(await redeem(),{error:'PAIRING_INVALID',status:401});
   await phone.reload(); await loggedIn(phone);
 
   const { context: revokedContext, page: revoked } = await pageFor();
@@ -205,6 +226,11 @@ test('AUTH-1 real browser: password or email-code login → session → director
   await openSettings(owner); await offline(owner,'Revoked browser');
   assert.equal((await revokedContext.request.get(origin + '/personal/v1/sessions')).status(),401);
   await owner.screenshot({path:'.local/s1c-web/device-offlined.png'});
+  const pairedAuth=await (await phoneContext.request.get(origin+'/personal/v1/auth/me')).json();
+  const remoteUnlink=await phoneContext.request.delete(origin+'/personal/v1/cloud/binding',{
+    headers:{origin,'x-weftmate-csrf':pairedAuth.csrfToken},data:{}});
+  assert.equal(remoteUnlink.status(),403,'phone sessions cannot unlink the cloud account');
+  assert.equal((await remoteUnlink.json()).error.code,'LOCAL_SESSION_REQUIRED');
   await hostApi('/cloud/binding', {}, local, 200, 'DELETE');
   assert.equal((await phoneContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
   assert.equal((await ownerContext.request.get(origin + '/personal/v1/sessions')).status(), 401);

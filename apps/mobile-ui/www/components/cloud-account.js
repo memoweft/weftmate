@@ -107,6 +107,7 @@
     core = WeftUiCore.create({ effects, ...transport, hostOrigin, initialPairing, crypto: globalThis.crypto, storage: localStorage,
       cloudVendor: WeftCloudVendor, desktop: false, bindDesktop: false, retainNativeCache: native, automaticHostTrust: native,
       nativeEmailCodeLogin: identity.nativeEmailCodeLogin,
+      nativePairingV2: identity.nativePairingV2,
       deviceType: native ? 'android' : 'web', deviceName: identity.deviceName });
     const accept = core.acceptSession;
     core.acceptSession = payload => {
