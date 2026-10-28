@@ -1,7 +1,7 @@
 /* Account/device presentation; all requests and credential handling live in ui-core. */
 globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     let directoryTimer, tab = 'account', editingId = null, editingGeneration = -1, directoryGeneration = 0, localGeneration = 0;
-    let syncDirectory=[],directorySnapshot='';
+    let syncDirectory=[],directorySnapshot='',syncNotice='';
     const button = (label, action, style = 'secondary') => { const node = ui.element('button', `button ${style}`, label); node.type = 'button'; node.addEventListener('click', action); return node; };
     function error(error) { ui.byId('cloud-settings-status').textContent = core.cloudError(error); }
     async function act(action) { try { ui.byId('cloud-settings-status').textContent = ''; await action(); return true; } catch (failure) { error(failure); return false; } }
@@ -94,7 +94,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
             if(generation!==core.state.identityGeneration||request!==directoryGeneration)return;
             if(directoryResult.status==='rejected')throw directoryResult.reason;
             syncDirectory=syncResult.status==='fulfilled'?syncResult.value.devices:[];
-            status.textContent=syncResult.status==='rejected'?'原话与记忆状态暂时无法读取，点刷新重试。':'';
+            syncNotice=syncResult.status==='rejected'?'原话与记忆状态暂时无法读取，点刷新重试。':'';
             list.setAttribute('aria-busy','false');renderDirectory(directoryResult.value);
         }
         catch (failure) { if (generation === core.state.identityGeneration && request === directoryGeneration) { list.setAttribute('aria-busy', 'false'); for (const row of list.querySelectorAll('.library-skeleton-row')) row.remove(); status.textContent = '设备暂时无法读取。请点刷新重试。'; if (showError) error(failure); } }
@@ -143,6 +143,8 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         if (editingId && editingGeneration === core.state.identityGeneration) return;
         editingId = null;
         const identity=core.state.identityGeneration,list=ui.byId('cloud-directory');
+        const noComputer=core.state.cloudAuth.mode==='authenticated'&&!hosts.length?'这个账号还没有连上电脑。在电脑上用同一个账号登录后，这里会出现。':'';
+        ui.byId('cloud-directory-status').textContent=[noComputer,syncNotice].filter(Boolean).join(' ');
         const snapshot=JSON.stringify([identity,devices,hosts,syncDirectory]);if(snapshot===directorySnapshot&&list.children.length)return;
         directorySnapshot=snapshot;list.replaceChildren();
         const currentHost = hosts.find(host => host.isCurrent), currentDevice = devices.find(device => device.isCurrent), linked = new Set();

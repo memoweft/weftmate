@@ -46,7 +46,7 @@
         if (options.onlyTheme) { sync(); mounted.add({target,sync,connected:target.isConnected}); return; }
         motion = node('input'); motion.type = 'checkbox'; motion.id = 'appearance-reduced-motion'; motion.setAttribute('aria-label', '减少动态效果'); WeftSettingsControls.toggle(motion);
         const motionTarget = node('label', 'appearance-switch-target'); motionTarget.htmlFor = motion.id; motionTarget.append(motion);
-        const motionRow = WeftSettingsControls.row('减少动态效果', '', motionTarget); motionHelp = motionRow.querySelector('p'); motionRow.querySelector('label').htmlFor = motion.id;
+        const motionRow = WeftSettingsControls.row('减少动态效果', '减少动画效果，或跟随系统设置。', motionTarget); motionHelp = motionRow.querySelector('p'); motionRow.querySelector('label').htmlFor = motion.id;
         motionRow.classList.add('appearance-motion-row');
         function saveMotion(value) {try{globalThis.WeftReplyMotion.setPreference(value);}catch{options.toast?.('动态效果偏好未保存，请重试。');}sync();}
         motion.addEventListener('change', () => saveMotion(motion.checked ? 'reduce' : 'full'));
