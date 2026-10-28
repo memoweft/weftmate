@@ -249,7 +249,7 @@ try {
   await capturePhonePopup('device-menu', phoneMore);
   await capturePhonePopup('device-details', () => phoneOwnRow().getByRole('button', { name: '查看 这个浏览器', exact: true }).click());
   await capturePhonePopup('rename-device', async () => { await phoneMore(); await phone.getByRole('menuitem', { name: '修改名称', exact: true }).click(); });
-  await capturePhonePopup('logout-device', async () => { await phoneMore(); await phone.getByRole('menuitem', { name: '让设备下线', exact: true }).click(); });
+  await capturePhonePopup('logout-device', async () => { await phoneMore(); await phone.getByRole('menuitem', { name: '移除设备', exact: true }).click(); });
   await phone.getByRole('button', { name: '关闭设置', exact: true }).click();
   await phone.locator('#rail-open').click();
   await phone.getByRole('button', { name: /^动态(?:，|$)/ }).click();
@@ -271,8 +271,8 @@ try {
   await captureNativePopup(page, 'device-menu', more);
   await captureNativePopup(page, 'device-details', () => phoneRow().getByRole('button', { name: '查看 这个浏览器', exact: true }).click());
   await captureNativePopup(page, 'rename-device', async () => { await more(); await page.getByRole('menuitem', { name: '修改名称', exact: true }).click(); });
-  await captureNativePopup(page, 'logout-device', async () => { await more(); await page.getByRole('menuitem', { name: '让设备下线', exact: true }).click(); });
-  await more(); await page.getByRole('menuitem', { name: '让设备下线', exact: true }).click();
+  await captureNativePopup(page, 'logout-device', async () => { await more(); await page.getByRole('menuitem', { name: '移除设备', exact: true }).click(); });
+  await more(); await page.getByRole('menuitem', { name: '移除设备', exact: true }).click();
   await page.getByRole('button', { name: '确认下线', exact: true }).click();
   await page.getByRole('dialog', { name: '让设备下线', exact: true }).waitFor({ state: 'hidden' });
   assert.equal(await phone.evaluate(async () => (await fetch('/personal/v1/auth/me')).status), 401);

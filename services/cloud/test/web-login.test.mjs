@@ -132,7 +132,7 @@ test('AUTH-1 real browser: password or email-code login → session → director
   }
   async function offline(page,name) {
     await page.getByRole('button',{name:`${name}的更多操作`,exact:true}).click();
-    await page.getByRole('menuitem',{name:'让设备下线',exact:true}).click();
+    await page.getByRole('menuitem',{name:'移除设备',exact:true}).click();
     const confirm=page.getByRole('dialog',{name:'让设备下线',exact:true}); await confirm.waitFor();
     await confirm.getByRole('button',{name:'确认下线',exact:true}).click();
     await confirm.waitFor({state:'hidden'}); await host.syncCloudRevocations();
