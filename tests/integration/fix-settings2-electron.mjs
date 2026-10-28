@@ -52,7 +52,7 @@ try {
   await open('general');await capture('initial-general');
   if(!process.argv.includes('--baseline')) {
     const shell=await page.locator('#settings-dialog').boundingBox();assert.ok(shell.width<=880&&shell.height<=660,'settings shell is smaller than the old 1000 by 760 window');
-    assert.equal(await page.locator('#settings-dialog').evaluate(el=>getComputedStyle(el).transitionDuration.split(',')[0].trim()),'0.42s','opening and closing use the shared slow motion');
+    assert.equal(await page.locator('#settings-dialog').evaluate(el=>parseFloat(getComputedStyle(el).transitionDuration)*1000),await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-1'))),'settings use the shared short transition');
   }
   await open('account');await capture('initial-account');
   await page.getByRole('button',{name:'关闭设置',exact:true}).click();

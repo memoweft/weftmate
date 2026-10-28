@@ -171,6 +171,11 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
         }
         paintPerformance(system.metrics);
         paintDiagnosticExport(system);
+        paintModelSettings(settings,catalog);
+        ui.byId('system-notice').textContent = system.queue?.backgroundPending
+            ? `${system.queue.backgroundPending} 项后台请求排队中` : '';
+    }
+    function paintModelSettings(settings,catalog) {
         const services=core.state.modelServices||[];
         catalog={...catalog,models:catalog.models.map(model=>{const found=services.flatMap(s=>s.models).find(row=>row.profileId===model.id||row.profileIds?.includes(model.id));return found?{...model,name:found.name}:model;})};
         const select = ui.byId('background-model-select');
@@ -192,8 +197,6 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
         }
         select.value = settings.backgroundModelProfileId ?? '';
         select.disabled = false;
-        ui.byId('system-notice').textContent = system.queue?.backgroundPending
-            ? `${system.queue.backgroundPending} 项后台请求排队中` : '';
     }
     function paintPerformance(metrics) {
         const section = ui.byId('system-metrics'); section.replaceChildren(ui.element('h3', '', '运行表现'));
@@ -309,27 +312,32 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
         ui.byId('system-refresh').addEventListener('click', () => { void core.refreshSystem(); });
         ui.byId('background-model-select').addEventListener('change', async (event) => {
             const token = core.accountToken(), select = event.target;
+            const previous=core.state.modelSettings?.backgroundModelProfileId??'';
             select.disabled = true;
             try {
                 await core.saveBackgroundModel(select.value || null);
-                if (core.accountCurrent(token))
+                if (core.accountCurrent(token)) {
+                    core.state.modelSettings={...core.state.modelSettings,backgroundModelProfileId:select.value||null};
                     ui.byId('background-model-notice').textContent = '后台模型已保存';
+                }
             }
             catch {
-                if (core.accountCurrent(token))
-                    ui.byId('background-model-notice').textContent = '保存失败，请刷新后重试。';
+                if (core.accountCurrent(token)) {
+                    select.value=previous;select.dispatchEvent(new Event('weft:sync'));
+                    ui.byId('background-model-notice').textContent = '保存失败，已恢复原来的后台模型。请重试。';
+                }
             }
             finally {
                 if (core.accountCurrent(token))
                     select.disabled = false;
             }
         });
-        ui.byId('account-models-refresh').addEventListener('click', () => { void core.refreshModelServices(true).catch(()=>ui.toast('模型服务暂时无法读取，请重试。')); });
+        ui.byId('account-models-refresh').addEventListener('click', () => { void Promise.all([core.refreshModelServices(true),core.refreshModelSettings()]).catch(()=>ui.toast('模型服务暂时无法读取，请重试。')); });
         document.addEventListener('change', async event => {
             if (event.target.id !== 'default-model-select') return;
-            const token = core.accountToken(); event.target.disabled = true;
+            const token = core.accountToken(),previous=core.state.modelSettings?.defaultModelProfileId??''; event.target.disabled = true;
             try { await core.saveDefaultModel(event.target.value || null); if (core.accountCurrent(token)) ui.byId('background-model-notice').textContent = '对话默认模型已保存'; }
-            catch { if (core.accountCurrent(token)) ui.byId('background-model-notice').textContent = '保存失败，请刷新后重试。'; }
+            catch { if (core.accountCurrent(token)) {event.target.value=previous;event.target.dispatchEvent(new Event('weft:sync'));ui.byId('background-model-notice').textContent = '保存失败，已恢复原来的默认模型。请重试。';} }
             finally { if (core.accountCurrent(token)) event.target.disabled = false; }
         });
         ui.byId('account-model-add').addEventListener('click', () => { openModelServiceEditor(); });
@@ -361,5 +369,5 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
     function resetProjectDraft() { ui.byId('project-name').value = ''; ui.byId('project-root').value = ''; }
     function browserDraftBusy(busy) { ui.byId('browser-workspace-form').querySelector('button[type="submit"]').disabled = busy; }
     function showBrowserNotice() { ui.byId('browser-workspace-status').hidden = false; }
-    return { renderModelServices, openModelServiceEditor, modelDraftCheckResult, paintSystem, systemVisible, systemLoading, systemNotice, updateOtherDeviceInstall, resetOtherDeviceInstall, element, mountSettings, accountModelFormNotice, accountModelFormBusy, resetAccountModelForm, projectDraftNotice, projectDraftBusy, resetProjectDraft, browserDraftBusy, showBrowserNotice };
+    return { renderModelServices, openModelServiceEditor, modelDraftCheckResult, paintModelSettings, paintSystem, systemVisible, systemLoading, systemNotice, updateOtherDeviceInstall, resetOtherDeviceInstall, element, mountSettings, accountModelFormNotice, accountModelFormBusy, resetAccountModelForm, projectDraftNotice, projectDraftBusy, resetProjectDraft, browserDraftBusy, showBrowserNotice };
 };

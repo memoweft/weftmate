@@ -36,6 +36,7 @@ globalThis.WeftUiCore.factories.client = (core) => {
         readProfile: () => core.api('/me'),
         saveProfile: body => authWrite('/profile', body, 'PATCH'),
         readDevices: () => core.api('/devices'),
+        readDeviceSync: () => core.accessApi('/devices/sync'),
         renameDevice: (id, name) => authWrite(`/devices/${encodeURIComponent(id)}`, { name }, 'PATCH'),
         revokeDevice: id => authWrite(`/devices/${encodeURIComponent(id)}`, undefined, 'DELETE'),
         readPendingDevices: () => core.accessApi('/cloud/devices/pending'),

@@ -50,6 +50,12 @@ test('review discards slow A after B and late responses after conversation switc
   await page.getByRole('button', { name: '刷新变更', exact: true }).click();
   await page.waitForFunction(() => !(document.querySelector('.panel-review button') as HTMLButtonElement).disabled);
   assert.equal(await page.evaluate(() => { const g: any = globalThis; return g.originalRow === document.querySelector('.review-file') && g.originalDiff === document.querySelector('.diff-lines'); }), true, 'unchanged snapshots retain mounted rows and diff');
+  await page.evaluate(()=>{const g:any=globalThis;g.WeftDesktop={getAppearance:()=>({diffMarkers:g.markers})};g.markers='sign';dispatchEvent(new Event('weftmate:appearance'));});
+  assert.equal(await page.locator('.review-diff').getAttribute('data-diff-markers'),'sign');
+  assert.equal(await page.locator('.diff-add .diff-sign').evaluate(el=>getComputedStyle(el).visibility),'visible');
+  await page.evaluate(()=>{(globalThis as any).markers='color';dispatchEvent(new Event('weftmate:appearance'));});
+  assert.equal(await page.locator('.diff-add .diff-sign').evaluate(el=>getComputedStyle(el).visibility),'hidden');
+  assert.equal(await page.evaluate(()=>(globalThis as any).originalDiff===document.querySelector('.diff-lines')),true,'changing markers retains the mounted diff');
   await page.evaluate(() => { const g: any = globalThis; g.instance.update({ ...g.ctx, conversationId: 'chat-two', sessionId: 'session-two', mode: 'chat', projectId: null }); });
   await page.getByText('先在工作模式里选一个工作目录。', { exact: true }).waitFor();
   await page.evaluate(() => (globalThis as any).resolveA());
