@@ -250,7 +250,8 @@
       if (event.type === 'user.message') {
         copyButton.replaceWith(button('复制消息','copy',()=>void guarded(()=>copyMessage('plain'))));
         bar.prepend(time);
-        const bubble=el('div','message-user-bubble');bubble.append(...row.childNodes);row.append(bubble);
+        let bubble=row.querySelector(':scope > .message-user-bubble');
+        if(!bubble){bubble=el('div','message-user-bubble');bubble.append(...row.childNodes);row.append(bubble);}
         const quoteMessage=async()=>{const value=local?event:await core.completeMessageEvent(id,event);const field=draft();field.value=value.data.text.split('\n').map(line=>'> '+line).join('\n')+'\n\n'+field.value;field.dispatchEvent(new Event('input',{bubbles:true}));field.focus();};
         let timer, start, held=false;
         row.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||e.target.closest('button,a'))return;start={x:e.clientX,y:e.clientY};held=false;timer=setTimeout(()=>{held=true;menu(bubble,[{name:'复制',icon:'copy',action:()=>copyMessage('plain')},{name:'引用',icon:'quote',action:quoteMessage}]);},500);});

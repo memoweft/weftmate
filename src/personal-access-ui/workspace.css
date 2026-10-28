@@ -134,10 +134,11 @@ html.weftmate-desktop:has(.assistant-active) { overflow:hidden; scrollbar-gutter
 
 .session-rail .rail-message:empty { display:none; }
 .weftmate-desktop .composer-area { position:relative; }
-.weftmate-desktop #conversation-pane.chat-workspace .composer-area > .chat-intro { position:absolute; bottom:calc(100% - var(--wm-space-40)); left:var(--wm-space-28); right:var(--wm-space-28); width:auto; margin:0; padding:0; text-align:center; opacity:1; visibility:visible; transition:opacity var(--dur-3) var(--ease-out),visibility var(--dur-3) allow-discrete; }
-.weftmate-desktop #conversation-pane.chat-workspace .composer-area > .chat-intro[hidden] { display:block !important; opacity:0; visibility:hidden; pointer-events:none; }
-.weftmate-desktop #conversation-pane.chat-workspace .composer-area > .chat-intro h1 { margin:0; }
-.weftmate-desktop #conversation-pane.chat-workspace .composer-area > .chat-intro p { margin:var(--wm-space-4) auto 0; }
+.weftmate-desktop #conversation-pane.chat-workspace .chat-scroll { position:relative; }
+.weftmate-desktop #conversation-pane.chat-workspace .chat-scroll > .chat-intro { position:absolute; top:var(--wm-space-48); left:50%; transform:translateX(-50%); width:calc(100% - 2 * var(--chat-gutter)); margin:0; padding:0; text-align:left; opacity:1; visibility:visible; transition:opacity var(--dur-3) var(--ease-out),visibility var(--dur-3) allow-discrete; }
+.weftmate-desktop #conversation-pane.chat-workspace .chat-scroll > .chat-intro[hidden] { display:block !important; opacity:0; visibility:hidden; pointer-events:none; }
+.weftmate-desktop #conversation-pane.chat-workspace .chat-scroll > .chat-intro h1 { margin:0; }
+.weftmate-desktop #conversation-pane.chat-workspace .chat-scroll > .chat-intro p { margin:var(--wm-space-8) 0 0; }
 .composer-help { display:block; width:max-content; min-height:0; padding:0; margin:var(--wm-space-6) auto 0; border:0; background:transparent; color:var(--ink-muted); font:inherit; font-size:var(--wm-font-size-11); }
 .assistant-topbar #assistant-title { font-size:var(--ui-size,var(--wm-font-size-14)); }
 @media(max-width:1100px) {

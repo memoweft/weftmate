@@ -7,7 +7,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     const listStart = () => list().getBoundingClientRect().top - box().getBoundingClientRect().top + box().scrollTop;
     const fixedTitle = () => document.body.classList.contains('health-open') ? '健康' : document.body.classList.contains('help-open') ? document.querySelector('.help-surface')?.dataset.title || '帮助与小技巧' : document.body.classList.contains('library-open') ? '成果库' : document.body.classList.contains('goals-open') ? '目标' : document.body.classList.contains('activity-open') ? '动态' : 'WeftMate';
     const logical = () => (core.inLogicalTimeline?.() ?? core.inMainChat?.()) === true;
-    const main = () => logical() || !ui.mobile && core.state.activeChatSource === 'desktop' && !!core.state.selectedSessionId && !core.state.newConversation;
+    const main = () => logical() || !ui.mobile && core.state.activeChatSource === 'desktop' && (!!core.state.selectedSessionId || core.state.newConversation);
     const historyState = () => logical() ? core.state.chatWindow : core.state;
     const detailKey = detail => detail.dataset.step || (detail.dataset.stepGroup ? `steps:${detail.dataset.stepGroup}` : detail.closest('[data-inline-decision]') ? `decision:${detail.closest('[data-inline-decision]').id}:${detail.className}` : detail.classList.contains('model-thinking') ? 'thinking' : 'process');
     const detailState = detail => ({ key: detailKey(detail), open: detail.open, active: detail.dataset.active, terminal: detail.dataset.terminal });
@@ -117,7 +117,10 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         }
         // Move only rows out of order; never detach the focused control on a stream update.
         let previous = top;
-        for (const spec of visible) { const row = mounted.get(spec.key); if (previous.nextSibling !== row) previous.after(row); previous = row; }
+        for (const spec of visible) {
+            const row = mounted.get(spec.key); if (previous.nextSibling !== row) previous.after(row); previous = row;
+            if(row.dataset.motionSent==='pending'){row.dataset.motionSent='true';globalThis.WeftReplyMotion?.reveal(row,'send');}
+        }
         if (previous.nextSibling !== bottom) previous.after(bottom);
         globalThis.WeftTimeline?.placeDecisions(list());
         if (restoring && !restoring.pinned) restoreAnchor(restoring.anchor);
@@ -147,6 +150,19 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 renderMainChat();
             }, 'chat-day-toggle'); action.setAttribute('aria-expanded', String(!spec.collapsed)); row.append(action);
         } else if (spec.kind === 'message') {
+            // Acceptance adds actions and metadata to the existing sent bubble.
+            // Keep its text and geometry through the optimistic/history handoff.
+            if (spec.event.type === 'user.message' && row.querySelector('.message-user-bubble') && row.dataset.userText === spec.event.data.text &&
+                !spec.event.data.images?.length && !spec.event.data.originalAttachments?.length) {
+                row.classList.add('message','user');
+                row.querySelector('.message-actions')?.remove();
+                row.querySelector(':scope > button')?.remove();
+                row.dataset.seq = String(spec.event.sourceRef?.seq ?? spec.event.seq);
+                row.dataset.messageKey = core.messagePresentationKey(spec.event);
+                row.dataset.messageType = spec.event.type;
+                row.dataset.memorySession = spec.event.sourceRef?.sessionId || '';
+                bindMessage(row, spec.event); highlight(row); return;
+            }
             if (spec.event.type==='assistant.message' && row.dataset.messageType==='assistant.message' && row.dataset.streamSearch===core.state.chatWindow.search.query && row.querySelector('.message-text,.markdown,.model-thinking')) {
                 row.classList.add('message','assistant');
                 row.setAttribute('aria-label',`助手消息：${Array.from(spec.event.data.text).slice(0,80).join('')}`);
@@ -203,10 +219,15 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             highlight(row);
         } else if (spec.kind === 'optimistic') {
             row.classList.add('message', 'user');
-            const bubble=ui.element('div','message-user-bubble');bubble.append(WeftContent.create(spec.event.text || (spec.event.files || []).join('、') || '附件','message-text markdown-body'));
-            const actions=ui.element('div','message-actions'),status=ui.element('small','message-time',spec.event.status === 'undelivered' ? '未送达' : ['failed','confirming'].includes(spec.event.status) ? '发送结果待核对，草稿已保留' : spec.event.status === 'accepted' ? '已发送' : '发送中');
-            status.setAttribute('role','status');actions.append(status);row.replaceChildren(bubble,actions);
-            if(!row.dataset.motionSent){row.dataset.motionSent='true';requestAnimationFrame(()=>globalThis.WeftReplyMotion?.reveal(row,'send'));}
+            row.dataset.messageKey=spec.key;
+            let bubble=row.querySelector('.message-user-bubble');
+            if(!bubble){bubble=ui.element('div','message-user-bubble');row.append(bubble);}
+            if(row.dataset.userText!==spec.event.text){bubble.replaceChildren(WeftContent.create(spec.event.text || (spec.event.files || []).join('、') || '附件','message-text markdown-body'));row.dataset.userText=spec.event.text;}
+            let actions=row.querySelector('.message-actions');if(!actions){actions=ui.element('div','message-actions');row.append(actions);}
+            const status=ui.element('small','message-time',spec.event.status === 'undelivered' ? '未送达' : ['failed','confirming'].includes(spec.event.status) ? '发送结果待核对，草稿已保留' : spec.event.status === 'accepted' ? '已发送' : '发送中');
+            status.setAttribute('role','status');actions.replaceChildren(status);
+            for(const button of row.querySelectorAll(':scope > button'))button.remove();
+            if(!row.dataset.motionSent)row.dataset.motionSent='pending';
             if (['failed','confirming','undelivered'].includes(spec.event.status)) {
                 const retry = button(spec.event.status === 'undelivered' ? '重试发送' : '检查状态', '检查状态', () => logical() ? core.retryMainRequest(spec.event.requestId) : core.retryOptimistic(spec.event.requestId));
                 retry.disabled = !!spec.event.retrying || !core.state.online;row.append(retry);
@@ -277,7 +298,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         }
         list().classList.add('is-main-chat');
         if (logical() && !ui.scopedChat) { ui.byId('assistant-title').textContent = core.state.workTimeline ? timelineChat().title || '工作' : fixedTitle(); origin.hidden = true; }
-        if (!ui.scopedChat) ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？';
+        if (!ui.scopedChat && !core.state.newConversation) ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？';
         const saved = restoring?.anchor || (ui.conversationScroll?.pinned ? null : rememberAnchor());
         const loading = logical() ? core.state.logicalHistoryLoading && !core.state.chatWindow.events.size
             : core.state.historyInFlight?.generation === core.state.historyGeneration && !core.state.historyEvents.size && !core.optimisticMessages().length;
@@ -289,7 +310,11 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         // Establish ownership across the loaded window before splitting days.
         // Each user and its process are inserted as one adjacent unit.
         const days=logical() ? core.mainChatDays() : [{events: core.timelineEventsForContext()}], optimistic=core.optimisticMessages();
-        const source=days.flatMap(group=>group.events);
+        // A newly created session can expose its first native user event before
+        // the send receipt identifies it. Keep the local echo until that receipt
+        // arrives; retain the event in state, without guessing a match by text.
+        const awaitingReceipt=optimistic.some(row=>row.createdSession && !row.receiptId && row.status==='sending');
+        const source=days.flatMap(group=>group.events).filter(event=>!awaitingReceipt || event.type!=='user.message');
         const waiting = core.processingStageLabel(timelineChat().processing);
         const config = JSON.stringify([logical(), core.state.selectedSessionId, core.state.personalization?.thinkingDisplay, optimistic,
             core.state.chatWindow.timeZone, days.map(({date, collapsed, label}) => [date, collapsed, label]), [...core.state.chatWindow.dayCounts]]);
@@ -340,7 +365,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         }
         }
         for (const row of rows) if (row.kind === 'progress') row.waiting = waiting;
-        if (!top?.isConnected) { top = ui.element('li', 'chat-spacer'); bottom = ui.element('li', 'chat-spacer'); top.setAttribute('aria-hidden', 'true'); bottom.setAttribute('aria-hidden', 'true'); list().replaceChildren(top, bottom); list().setAttribute('aria-live','off'); mounted.clear(); }
+        if (!top?.isConnected) { top = ui.element('li', 'chat-spacer'); bottom = ui.element('li', 'chat-spacer'); top.setAttribute('aria-hidden', 'true'); bottom.setAttribute('aria-hidden', 'true'); list().replaceChildren(top, ...mounted.values(), bottom); list().setAttribute('aria-live','off'); }
         const total = measureOffsets();
         if (restoring && !restoring.pinned && saved && !rows.some(row => row.key === saved.key) && historyState().hasOlder && !core.state.olderLoading) void core.loadOlderHistory();
         if (ui.conversationScroll?.pinned && !mounted.has(rows.at(-1)?.key)) {
@@ -387,7 +412,16 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         for (const child of nested.children) delete child.dataset.signature;
         WeftTimeline.render(nested.progressRender.events, nested, nested.progressRender.options);
     }
-    function resetMainChatView() { globalThis.WeftTimeline?.placeDecisions(list(),true); generation++; projectionSource = []; projectionConfig = ''; rows = []; offsets = []; heights.clear(); expanded.clear(); mounted.clear(); top = bottom = null; observer?.disconnect(); list().classList.remove('is-main-chat'); list().setAttribute('aria-live','polite'); if (searchPanel) { searchPanel.querySelector('input').value = ''; searchPanel.querySelector('[role=status]').textContent = ''; } }
+    function resetMainChatView() {
+        globalThis.WeftTimeline?.placeDecisions(list(),true);
+        const pending=new Set(core.optimisticMessages().flatMap(row=>{const key=core.rememberTurnRequest(row).key;return [key.startsWith('request:')?key.slice(8):key,`progress:${key}`];}));
+        for(const key of mounted.keys())if(!pending.has(key)){mounted.delete(key);heights.delete(key);expanded.delete(key);}
+        generation++; projectionSource=[];projectionConfig='';rows=[];offsets=[];
+        if(!mounted.size){heights.clear();expanded.clear();}
+        top=bottom=null;observer?.disconnect();for(const row of mounted.values())observer?.observe(row);
+        list().classList.remove('is-main-chat');list().setAttribute('aria-live','polite');
+        if(searchPanel){searchPanel.querySelector('input').value='';searchPanel.querySelector('[role=status]').textContent='';}
+    }
     function renderChatOrigin(chat) {
         if (ui.scopedChat) return;
         origin.replaceChildren(); origin.hidden = !chat?.contextTransfer?.sourceDeleted && !chat?.contextTransfer?.sourceRefs?.length && !chat?.originRefs?.length; if (origin.hidden) return;

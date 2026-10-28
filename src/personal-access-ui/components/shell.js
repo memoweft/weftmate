@@ -210,7 +210,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.renderConversationUsage?.();
         ui.byId('show-phone').hidden = true;
         ui.byId('rail-phone').hidden = true;
-        ui.byId('chat-intro').hidden = value.phoneChat || ui.byId('transcript').children.length > 0;
+        ui.byId('chat-intro').hidden = value.phoneChat || [...ui.byId('transcript').children].some(row=>!row.classList.contains('chat-spacer'));
         ui.byId('new-session').disabled = value.newSessionDisabled;
         ui.byId('new-temporary-session').disabled = value.newSessionDisabled;
         if (value.phoneChat) {

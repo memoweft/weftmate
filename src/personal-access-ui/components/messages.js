@@ -18,7 +18,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         const pending=new Set(core.optimisticMessages().map(row=>core.rememberTurnRequest(row).key));
         for(const child of [...list.children]) {
             const key=child.dataset.messageKey;
-            if(!pending.has(key?.startsWith('request:')?key:`request:${key}`) && !pending.has(key) && ![...pending].some(key=>child.dataset.timeline===`steps-${key}`))child.remove();
+            if(!pending.has(key?.startsWith('request:')?key:`request:${key}`) && !pending.has(key) && ![...pending].some(key=>child.dataset.timeline===`steps-${key}` || child.dataset.eventId===`progress:${key}`))child.remove();
         }
         if(loading && !list.children.length)list.append(WeftControls.skeleton({tag:'li'}));
         if (loading) { list.setAttribute('aria-busy', 'true'); ui.byId('chat-intro').hidden = true; }
