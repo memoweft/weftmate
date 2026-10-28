@@ -69,7 +69,7 @@ try {
     assert.ok(Math.abs(welcome.intro.left-welcome.transcript.left)<=1&&welcome.align==='left',`welcome aligns with the content column: ${JSON.stringify(welcome)}`);
     const welcomeInset=welcome.intro.top-welcome.scroll.top;
     assert.ok(welcomeInset>=32&&welcomeInset<=64,`welcome has a top inset: ${welcomeInset}`);
-    assert.ok(welcome.form.top-welcome.intro.bottom>=32,'welcome is separated from the bottom composer');
+    assert.ok(welcome.form.top-welcome.intro.bottom>=100,'welcome is separated from the bottom composer');
     await capture(`empty-${theme}-${w}`);
     await modes.getByRole('tab',{name:'新对话：工作',exact:true}).click();await page.locator('.work-mode-toolbar').waitFor();await capture(`work-${theme}-${w}`);await modes.getByRole('tab',{name:'新对话：对话',exact:true}).click();
     await page.evaluate(id=>visualCore.selectSession(id),fixture.sessionId);await page.getByText('报告已保存，测试全部通过。',{exact:true}).waitFor();
