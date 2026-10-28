@@ -3,7 +3,7 @@ import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { mkdtemp, mkdir, open, unlink, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
@@ -15,7 +15,7 @@ if (!process.env.WEFTMATE_TEST_TEMP_SCOPE) process.env.WEFTMATE_MANAGED_TEMP_ROO
 const before = process.argv.includes('--before');
 const out = process.env.WEFTMATE_EVIDENCE_DIR || join(temp, 'evidence'); await mkdir(out, {recursive:true});
 let application, fixture, lock, page, watchdog, cdp;
-const errors = [], report = {before, geometry:[], updates:[]};
+const errors = [], report = {before, sourceCommit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(), geometry:[], updates:[], phoneEntry:[]};
 const stopTree = () => { const pid = application?.process()?.pid; if (pid) spawnSync('taskkill', ['/PID',String(pid),'/T','/F'], {windowsHide:true,stdio:'ignore',timeout:10000}); };
 const b = name => page.getByRole('button', {name,exact:true});
 const shot = async name => {
@@ -152,6 +152,10 @@ try {
   const last=page.locator('#session-list > .session-row').last();await last.locator('button').first().focus();await last.scrollIntoViewIfNeeded();
   assert.equal(await last.evaluate(el=>{const row=el.getBoundingClientRect(),list=el.closest('#session-list').getBoundingClientRect();return row.top>=list.top&&row.bottom<=list.bottom;}),true);
   await shot('low-height-last-row');await resize(1280,800);
+  // Finish the existing overview before introducing phone metadata. Assertions
+  // below require the actual full snapshot, rather than a temporarily absent session.
+  await page.evaluate(async()=>{testCore.stopAssistantRefresh();await testCore.refreshAssistantOverview();testCore.stopAssistantRefresh();});
+  await page.waitForFunction(()=>!testCore.state.refreshing&&!testCore.state.phoneLoading);
   const phoneId='conversation-'+randomUUID(),at=new Date().toISOString();
   await fixture.request('/sync/capabilities',{sharedConversations:1,nativeVersionCode:11});
   await fixture.request('/sync/events',{events:[
@@ -164,11 +168,61 @@ try {
   let binding=await fixture.request(shared);const bindDeadline=Date.now()+10000;
   while(binding.status!=='active') {assert.ok(Date.now()<bindDeadline);await page.waitForTimeout(20);binding=await fixture.request(shared);}
   await fixture.request(`/sessions/${binding.binding.sessionId}/metadata`,{pinned:true},'PATCH');
-  await page.evaluate(async id=>{await testCore.refreshSessions();await testCore.refreshPhoneRecords();await testCore.refreshPhoneBinding(id);testUi.renderSessions();},phoneId);
   const phoneRow=page.locator(`.session-row[data-phone-id="${phoneId}"]`);
-  assert.equal(await phoneRow.count(),1,'a pinned phone binding keeps its phone-record entry');
-  await phoneRow.locator('button').first().click();
-  assert.deepEqual(await page.evaluate(()=>[testCore.state.activeChatSource,testCore.state.selectedPhoneConversationId]),['phone',phoneId]);
+  const phoneSessionId=binding.binding.sessionId;
+  const phoneSnapshot=label=>page.evaluate(({id,sid,label})=>{
+    const session=testCore.state.sessions.find(row=>row.sessionId===sid),view=testCore.state.phoneBindings.get(id),list=document.getElementById('session-list');
+    const rows=[...list.querySelectorAll('.session-row')],phone=rows.filter(row=>row.dataset.phoneId===id);
+    let section=null;if(phone.length){let owner=phone[0];while(owner.parentElement&&owner.parentElement!==list)owner=owner.parentElement;for(const child of list.children){if(child.dataset.sectionId)section=child.dataset.sectionId;if(child===owner)break;}}
+    return {label,session:session?{sessionId:session.sessionId,pinned:session.pinned,projectId:session.projectId??null,groupId:session.groupId??null}:null,
+      binding:{status:view?.status,sessionId:testCore.phoneBinding(id)?.sessionId},records:testCore.phoneConversations().filter(row=>row.id===id).length,
+      phoneRows:phone.length,nativeRows:rows.filter(row=>row.dataset.sessionId===sid).length,section,activeChatSource:testCore.state.activeChatSource,selectedPhoneConversationId:testCore.state.selectedPhoneConversationId};
+  },{id:phoneId,sid:phoneSessionId,label});
+  const refreshPhone=async(label,{pinned,projectId=null,groupId=null,section='pinned',visible=true}={})=>{
+    for(let cycle=0;cycle<3;cycle++){
+      await page.evaluate(async id=>{await testCore.refreshSessions();await testCore.refreshPhoneRecords();await testCore.refreshPhoneBinding(id);},phoneId);
+      const state=await phoneSnapshot(`${label}:${cycle}`);report.phoneEntry.push(state);
+      await writeFile(join(out,'phone-entry-report.json'),JSON.stringify({sourceCommit:report.sourceCommit,states:report.phoneEntry},null,2));
+      assert.deepEqual(state.session,{sessionId:phoneSessionId,pinned,projectId,groupId},'the full session metadata is present before checking its entry');
+      assert.deepEqual(state.binding,{status:'active',sessionId:phoneSessionId});assert.equal(state.records,1);
+      if(cycle===0)await shot('phone-entry-'+label);
+      assert.equal(state.phoneRows,visible?1:0,JSON.stringify(state));assert.equal(state.nativeRows,visible?1:0,'phone and execution identities share one row');
+      if(visible)assert.equal(state.section,section);
+    }
+  };
+  await refreshPhone('coherent-pinned',{pinned:true});
+  await page.evaluate(()=>{globalThis.phoneEntryNativeSelections=[];const select=testCore.selectSession;testCore.selectSession=(id,...args)=>{phoneEntryNativeSelections.push(id);return select(id,...args);};});
+  const readPhone=async()=>{
+    await phoneRow.locator('button').first().click();
+    await page.waitForFunction(id=>testCore.state.activeChatSource==='phone'&&testCore.state.selectedPhoneConversationId===id,phoneId);
+    await page.locator('#transcript').getByText('保留手机记录入口',{exact:true}).waitFor();
+    assert.equal(await page.evaluate(sid=>phoneEntryNativeSelections.includes(sid),phoneSessionId),false,'the phone entry never opens the desktop execution history');
+  };
+  await readPhone();await refreshPhone('after-read',{pinned:true});
+  const sectionToggle=id=>page.locator(`[data-section-id="${id}"] .sidebar-section-toggle`);
+  await sectionToggle('recent').click();await refreshPhone('recent-folded',{pinned:true});await sectionToggle('recent').click();
+  await sectionToggle('pinned').click();await refreshPhone('pinned-folded',{pinned:true,visible:false});await sectionToggle('pinned').click();await refreshPhone('pinned-reopened',{pinned:true});
+  await phoneRow.locator('.session-more').click();await page.getByRole('menuitemcheckbox',{name:/^取消置顶/}).click();
+  await page.waitForFunction(sid=>testCore.state.sessions.find(row=>row.sessionId===sid)?.pinned===false,phoneSessionId);
+  await refreshPhone('unpinned',{pinned:false,section:'recent'});await readPhone();
+  await sectionToggle('recent').click();await refreshPhone('unpinned-folded',{pinned:false,section:'recent',visible:false});await sectionToggle('recent').click();await refreshPhone('unpinned-reopened',{pinned:false,section:'recent'});
+  const group=(await fixture.request('/session-groups',{name:'手机入口分组'})).group;
+  await fixture.request(`/sessions/${phoneSessionId}/metadata`,{groupId:group.id},'PATCH');
+  await refreshPhone('grouped',{pinned:false,groupId:group.id,section:'recent'});
+  await b('手机入口分组').click();await refreshPhone('group-folded',{pinned:false,groupId:group.id,section:'recent',visible:false});await b('手机入口分组').click();await refreshPhone('group-reopened',{pinned:false,groupId:group.id,section:'recent'});
+  await fixture.request(`/sessions/${phoneSessionId}/metadata`,{groupId:null,projectId:projects[1].projectId},'PATCH');
+  await page.evaluate(()=>testCore.refreshSessions());
+  if(await sectionToggle('projects').getAttribute('aria-expanded')==='false')await sectionToggle('projects').click();
+  const phoneProject=page.locator(`.sidebar-project[data-project-id="${projects[1].projectId}"]`);
+  if(!await phoneProject.count())await page.locator('[data-expand-projects]').click();
+  await refreshPhone('project',{pinned:false,projectId:projects[1].projectId,section:'projects'});await readPhone();
+  await phoneProject.locator('.sidebar-project-toggle').click();await refreshPhone('project-folded',{pinned:false,projectId:projects[1].projectId,section:'projects',visible:false});
+  await phoneProject.locator('.sidebar-project-toggle').click();await refreshPhone('project-reopened',{pinned:false,projectId:projects[1].projectId,section:'projects'});
+  await fixture.request(`/sessions/${phoneSessionId}/metadata`,{projectId:null,pinned:true},'PATCH');
+  await refreshPhone('repinned',{pinned:true});await readPhone();
+  await page.locator(`.session-row[data-session-id="${fixture.sessionId}"] > button`).first().click();
+  await page.waitForFunction(sid=>testCore.state.activeChatSource==='desktop'&&testCore.state.selectedSessionId===sid,fixture.sessionId);
+  await refreshPhone('after-desktop-switch',{pinned:true});
   await shot('pinned-phone-record');
   for(const [state,expected] of [
     [{status:'not-available'},''],
@@ -186,7 +240,9 @@ try {
   await writeFile(join(out,'after-report.json'),JSON.stringify(report,null,2));
   console.log('UI-SIDEBAR-2: grouping, native layout, actions, titles and update bridge passed');
 } catch(error) {
+  report.error=String(error.stack||error);report.errors=errors;await writeFile(join(out,'after-report.json'),JSON.stringify(report,null,2));
   if(page && !page.isClosed()) {
+    await shot('failure').catch(()=>{});
     await writeFile(join(out,'failure.json'),JSON.stringify(await page.evaluate(()=>({sessions:testCore.state.sessions,selected:testCore.state.selectedSessionId,menus:[...document.querySelectorAll('[role=menu]')].map(el=>({text:el.innerText,html:el.outerHTML}))})),null,2));
   }
   throw error;
