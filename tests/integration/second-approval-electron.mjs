@@ -7,12 +7,12 @@ import {createInstalledSmokeResponder, installedSmokePrompt, installedSmokeReque
 
 const out = resolve(process.env.WEFTMATE_EVIDENCE_DIR || '.local/second-approval');
 mkdirSync(out, {recursive: true});
-const report = {realElectron: true, realDsh: true, decisions: [], restorations: []};
+const report = {realElectron: true, realDsh: true, decisions: [], restorations: [], commandReceipts: []};
 let h, sessionId;
 try {
   const respond = createInstalledSmokeResponder();
   const released = new Set();
-  h = await migrationHost({nativeSession: true, startInTray: true, showWindow: false, entry: resolve('tests/integration/second-approval-entry.mjs'), respond: async input => {
+  h = await migrationHost({nativeSession: true, startInTray: true, entry: resolve('tests/integration/second-approval-entry.mjs'), respond: async input => {
     const message = await respond(input);
     // Hold each model response until the real window is hidden, so both native
     // approval requests originate in the tray rather than racing a hide call.
@@ -20,6 +20,11 @@ try {
       await until(() => released.has(call.function.name));
     return message;
   }});
+  h.page.on('response', async response => {
+    if (!response.url().endsWith('/personal/v1/commands') || response.request().method() !== 'POST') return;
+    const receipt = await response.json().catch(() => ({}));
+    report.commandReceipts.push({kind:response.request().postDataJSON()?.kind, status:response.status(), state:receipt.command?.state});
+  });
   await h.page.addInitScript(() => {
     let module;
     Object.defineProperty(globalThis, 'WeftUiCore', {configurable: true, get: () => module, set: value => {
