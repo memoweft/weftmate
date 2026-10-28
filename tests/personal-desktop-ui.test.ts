@@ -9,12 +9,12 @@ const repository = fileURLToPath(new URL('../', import.meta.url))
 const source = ['ui-core/store.js', 'ui-core/timeline-model.js', 'ui-core/appearance.js', 'personal-access-ui/components/settings-appearance.js', 'personal-access-ui/desktop.js'].map(path => readFileSync(new URL('../src/' + path, import.meta.url), 'utf8')).join('\n;\n')
 function presentation(saved: object | null = null, dark = false) {
   const root = { dataset: {} as Record<string, string>, toggleAttribute() {}, style: { setProperty(name: string, value: string) { values.set(name, value) }, removeProperty(name: string) { values.delete(name) } } }
-  const values = new Map<string, string>(), window: Record<string, any> = {}
+  const values = new Map<string, string>(), window: Record<string, any> = {}, events: CustomEvent[] = []
   const document = { documentElement: root, getElementById: () => null }
   runInNewContext(source, { window, document, localStorage: { getItem: () => JSON.stringify(saved) },
-    addEventListener() {}, Date, URL, location: { href: 'http://127.0.0.1/' } })
+    addEventListener() {}, dispatchEvent(event:CustomEvent){events.push(event);return true},CustomEvent, Date, URL, location: { href: 'http://127.0.0.1/' } })
   window.matchMedia = () => ({ matches: dark })
-  return { api: window.WeftDesktop, root, values }
+  return { api: window.WeftDesktop, root, values, events }
 }
 
 test('desktop time groups use real dates, preserve undated sessions, and never mutate server order', () => {
@@ -32,7 +32,8 @@ test('desktop time groups use real dates, preserve undated sessions, and never m
 })
 
 test('desktop appearance restores device preferences and artifact labels hide MIME parameters', () => {
-  const { api, root, values } = presentation({ theme: 'dark', accent: 'purple', fontSize: '17' })
+  const { api, root, values, events } = presentation({ theme: 'dark', accent: 'purple', fontSize: '17' })
+  assert.equal(events[0].type,'weftmate:appearance');assert.equal(events[0].detail.diffMarkers,'color')
   assert.equal(root.dataset.theme, 'dark'); assert.equal(root.dataset.accent, 'purple')
   assert.equal(values.get('--text-size'), 'var(--wm-font-size-17, 17px)')
   assert.equal(api.fileLabel({ fileName: '报告.md', contentType: 'text/plain; charset=utf-8', size: 68 }), 'Markdown · 68 字节')

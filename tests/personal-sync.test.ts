@@ -15,6 +15,22 @@ const event = (n: number, clientSeq = n) => ({ eventId: `event-${uuid(n)}`,
   occurredAt: '2026-09-26T13:00:00.000Z',
   payload: { messageId: `message-${uuid(n)}`, role: n % 2 ? 'user' : 'assistant', text: `synthetic ${n}` } })
 
+test('device summary uses durable computer receipt time and excludes assistant messages and retries', async () => {
+  const root=mkdtempSync(join(tmpdir(),'personal-sync-summary-'));
+  try {
+    const store=await createPersonalSyncStore({root,ownerId:'summary-owner'});
+    assert.equal(store.deviceStatus('phone-one'),null);
+    await store.append({events:[event(1),event(2)],sourceDeviceId:'phone-one'});
+    await store.append({events:[event(1)],sourceDeviceId:'phone-one'});
+    const summary=store.deviceStatus('phone-one');assert.equal(summary.receivedOriginals,1);
+    assert.ok(Date.parse(summary.lastReceivedAt)>Date.parse(event(1).occurredAt));
+    assert.equal(summary.memoryState,'received');assert.ok(!JSON.stringify(summary).includes('synthetic'));
+    assert.equal('receivedAt' in store.page().events[0],false,'receipt bookkeeping does not change the event protocol');
+    await store.close();const reopened=await createPersonalSyncStore({root,ownerId:'summary-owner'});
+    assert.deepEqual(reopened.deviceStatus('phone-one'),summary);await reopened.close();
+  } finally {rmSync(root,{recursive:true,force:true});}
+});
+
 for (const variant of ['authorization', 'closed']) test(`sync commit guard rejects ${variant} changes during final private-file validation`, () => {
   const env = { ...process.env }
   delete env.NODE_TEST_CONTEXT

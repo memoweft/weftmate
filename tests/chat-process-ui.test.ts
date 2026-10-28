@@ -19,6 +19,13 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
   const env={...process.env,UI02_PROFILE:profile};delete env.ELECTRON_RUN_AS_NODE;
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:[resolve('tests/helpers/chat-process-electron.cjs'),host.origin+'/personal/v1/ui/'],env});
   const page=await app.firstWindow();page.setDefaultTimeout(15000);const errors=[];
+  async function scrollHistory(edge) {
+    await page.locator('#chat-scroll').evaluate((box,edge)=>{
+      box.dispatchEvent(new WheelEvent('wheel',{deltaY:edge==='start'?-100:100,bubbles:true}));
+      box.scrollTop=edge==='start'?0:box.scrollHeight;
+    },edge);
+    await page.evaluate(async()=>{await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
+  }
   page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(()=>{
     let api;
@@ -64,14 +71,13 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
   await page.waitForFunction(()=>document.querySelector('.execution-block')?.dataset.terminal==='true');
   assert.equal(await page.locator('.execution-block').first().evaluate(el=>el.open),false,'completed process folds');
   await page.getByText('项目已检查完毕，报告已更新。',{exact:true}).waitFor();
+  await scrollHistory('start');
   await page.locator('.execution-block > summary').first().click();
   assert.deepEqual(await page.locator('.execution-step').evaluateAll(nodes=>nodes.map(el=>[el.dataset.step,el.dataset.state])),[['fail','failed'],['retry','completed'],['edit-report','completed']]);
   assert.deepEqual(await page.locator('.execution-records > .execution-note,.execution-records > .execution-step').evaluateAll(nodes=>nodes.map(el=>el.dataset.step || el.textContent)),['我先检查项目，再整理报告。','fail','第一次检查没有通过，我会调整命令再试。','retry','检查已通过，现在更新报告。','edit-report']);
   assert.equal(await page.locator('.step-type-icon[data-icon="terminal"] svg').count(),2);
   assert.equal(await page.locator('.step-type-icon[data-icon="edit"] svg').count(),1);
   assert.equal(await page.locator('.step-state').count(),0);
-  assert.equal(await page.locator('.question-answer-card').count(),3);
-  assert.equal(await page.locator('.file-change-title').textContent(),'已编辑report.md');
   assert.equal(await page.locator('.execution-step-group .execution-step').count(),0,'commands are individual rows');
   await page.locator('[data-step="retry"] > summary').click();
   await page.locator('[data-step="retry"] .step-output').waitFor();
@@ -79,9 +85,16 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
   await page.waitForFunction(()=>document.querySelector('[data-step="retry"] .step-output')?.textContent.length===100000);
   assert.equal(await page.locator('[data-step="retry"] .step-title').textContent(),'重新检查项目');
   assert.equal(await page.locator('[data-step="retry"] .step-output').evaluate(el=>el.clientHeight<=221 && el.scrollHeight>el.clientHeight),true);
-  assert.equal(await page.locator('.file-changes').count(),1);
-  assert.equal(await page.getByLabel('增加 3 行，删除 2 行').count(),1);
-  assert.equal(await page.locator('.file-changes').evaluate(el=>el.compareDocumentPosition([...document.querySelectorAll('.message.assistant')].at(-1))&Node.DOCUMENT_POSITION_PRECEDING),2);
+  for (const [width,height] of [[1280,800],[900,700]]) {
+    await app.evaluate(({BrowserWindow},[width,height])=>BrowserWindow.getAllWindows()[0].setContentSize(width,height),[width,height]);
+    await scrollHistory('end');
+    await page.locator('.file-change-title').waitFor();
+    assert.equal(await page.locator('.question-answer-card').count(),3);
+    assert.equal(await page.locator('.file-change-title').textContent(),'已编辑report.md');
+    assert.equal(await page.locator('.file-changes').count(),1);
+    assert.equal(await page.getByLabel('增加 3 行，删除 2 行').count(),1);
+    assert.equal(await page.locator('.file-changes').evaluate(el=>el.compareDocumentPosition([...document.querySelectorAll('.message.assistant')].at(-1))&Node.DOCUMENT_POSITION_PRECEDING),2);
+  }
   await page.getByRole('button',{name:'审阅 report.md',exact:true}).click();
   await page.getByRole('complementary',{name:'工作面板'}).getByRole('heading',{name:'改动前',exact:true}).waitFor();
   if(evidence)await page.screenshot({path:join(evidence,'review-diff.png')});
@@ -89,7 +102,11 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
 
   console.log('UI02 functional interactions passed');
   const metrics=await page.evaluate(async()=>{
-    const box=document.getElementById('chat-scroll'),list=document.getElementById('transcript');
+    // Measure the scroll helper independently of the live virtual-list owner.
+    const host=document.getElementById('chat-scroll'),box=host.cloneNode(false),list=document.getElementById('transcript').cloneNode(false);
+    box.removeAttribute('id');list.removeAttribute('id');
+    Object.assign(box.style,{position:'fixed',left:'0',top:'0',width:`${host.clientWidth}px`,height:`${host.clientHeight}px`,overflow:'auto'});
+    box.append(list);document.body.append(box);
     const row=document.createElement('li');row.className='message assistant';const body=WeftContent.create('稳定前文\n\n','message-text markdown-body');row.append(body);list.append(row);
     const scroll=WeftConversationScroll(box,list,document.createElement('button'));
     scroll.latest();await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
@@ -106,18 +123,20 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
     WeftContent.update(body,text+'追加的内容'.repeat(300),{streaming:true});await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
     const held=Math.abs(box.scrollTop-top)<2;scroll.latest();
     active=false;long.disconnect();shift.disconnect();frames.sort((a,b)=>a-b);
+    box.remove();
     return {stable,follows,held,p95:frames[Math.floor(frames.length*.95)],maxFrame:frames.at(-1),longTasks:longTasks.length,streamCls:shifts.filter(e=>e.at<readingStart).reduce((a,b)=>a+b.value,0),readingCls:shifts.filter(e=>e.at>=readingStart).reduce((a,b)=>a+b.value,0)};
   });
-  assert.equal(metrics.stable,true);assert.equal(metrics.follows,true);assert.equal(metrics.held,true);
+  assert.equal(metrics.stable,true,JSON.stringify(metrics));assert.equal(metrics.follows,true,JSON.stringify(metrics));assert.equal(metrics.held,true,JSON.stringify(metrics));
   if(evidence){await mkdir(evidence,{recursive:true});await writeFile(join(evidence,'weftmate-metrics.json'),JSON.stringify(metrics,null,2));
     for(const [width,height] of [[1280,800],[900,700],[390,844]])for(const theme of ['light','dark']){
       await app.evaluate(({BrowserWindow},{width,height})=>BrowserWindow.getAllWindows()[0].setContentSize(width,height),{width,height});
-      await page.evaluate(theme=>{WeftDesktop.setAppearance({theme});document.querySelector('#transcript > .message.assistant:last-child')?.remove();},theme);
+      await page.evaluate(theme=>WeftDesktop.setAppearance({theme}),theme);
       await page.evaluate(()=>{if(innerWidth<640)WeftDesktop.toggleRail(true);document.querySelectorAll('.execution-step').forEach(el=>el.open=false);const box=document.getElementById('chat-scroll');box.dispatchEvent(new WheelEvent('wheel',{deltaY:-120,bubbles:true}));box.scrollTop=0;});
       await page.evaluate(async()=>{for(const a of document.getAnimations())if(a.effect?.getTiming().iterations!==Infinity){try{a.finish();}catch{}}await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
       await page.screenshot({path:join(evidence,`weftmate-${width}-${theme}.png`)});
       if(width===1280){
         for(const [selector,name] of [['.execution-block','process'],['.question-answer-card','answered'],['.file-changes','changes']]){
+          await scrollHistory(name==='process'?'start':'end');
           const target=page.locator(selector).first();
           if(name==='changes'){if(await page.locator('#jump-latest').isVisible())await page.locator('#jump-latest').click();}
           else await target.evaluate(el=>{const box=document.getElementById('chat-scroll');box.dispatchEvent(new WheelEvent('wheel',{deltaY:-120,bubbles:true}));box.scrollTop+=el.getBoundingClientRect().top-box.getBoundingClientRect().top-24;});
@@ -125,10 +144,14 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
           if(name==='changes')await writeFile(join(evidence,`changes-capture-${theme}.json`),JSON.stringify(await target.evaluate(el=>({card:el.getBoundingClientRect().toJSON(),scroll:document.getElementById('chat-scroll').scrollTop,scrollHeight:document.getElementById('chat-scroll').scrollHeight,clientHeight:document.getElementById('chat-scroll').clientHeight,jump:[...document.querySelectorAll('button')].filter(button=>button.textContent.includes('回到底部')).map(button=>({hidden:button.hidden,classes:button.className,rect:button.getBoundingClientRect().toJSON()}))})),null,2));
           await target.screenshot({path:join(evidence,`${name}-detail-${theme}-1x.png`)});
         }
+        await scrollHistory('start');
+        const disclosure=page.locator('.execution-block').first();
+        if(!await disclosure.evaluate(el=>el.open))await disclosure.locator(':scope > summary').click();
+        await page.locator('.execution-note').first().waitFor();
         const typography=await page.evaluate(()=>({devicePixelRatio,body:getComputedStyle(document.querySelector('.execution-note')).fontSize,step:getComputedStyle(document.querySelector('.step-title')).fontSize,rowHeight:document.querySelector('.execution-step > summary').getBoundingClientRect().height}));
         await writeFile(join(evidence,`typography-${theme}.json`),JSON.stringify(typography,null,2));
       }
-      if(width!==390){await page.locator('.execution-block').first().evaluate(el=>el.open=false);await page.screenshot({path:join(evidence,`collapsed-${width}-${theme}.png`)});await page.locator('.execution-block').first().evaluate(el=>el.open=true);}
+      if(width!==390){await scrollHistory('start');await page.locator('.execution-block').first().evaluate(el=>el.open=false);await page.screenshot({path:join(evidence,`collapsed-${width}-${theme}.png`)});await page.locator('.execution-block').first().evaluate(el=>el.open=true);}
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     }
   }
@@ -137,7 +160,7 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
     const step=WeftTimelineCards.step({stepId:'paged-read',toolName:'read',state:'completed',summary:'读取合成文件',detailRef:{seq:123}},null,false,{
       readDetail:async()=>({text:'{}',output:'a'.repeat(64000),nextOutputOffset:64000}),
       readOutput:async()=>({output:'b'.repeat(1000),nextOutputOffset:null})
-    });document.getElementById('transcript').append(step);step.open=true;
+    });const probe=document.createElement('ol');probe.className='chat-progress';probe.style.position='absolute';document.getElementById('conversation-pane').append(probe);probe.append(step);step.open=true;
   });
   await page.locator('[data-step="paged-read"]').getByRole('button',{name:'继续读取输出',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('[data-step="paged-read"] .step-output')?.textContent.length===65000);

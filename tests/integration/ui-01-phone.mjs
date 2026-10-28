@@ -18,7 +18,7 @@ try {
   const panel=page.getByRole('complementary',{name:'工作面板',exact:true});
   assert.equal(await panel.locator('[data-panel-kind]').count(),6);
   assert.ok((await panel.boundingBox()).width>=388);
-  await panel.locator('[data-panel-kind=files]').click();await panel.getByRole('heading',{name:'成果',exact:true}).waitFor();
+  await panel.locator('[data-panel-kind=files]').click();await panel.locator('.files-resource-group summary').filter({hasText:/^成果 ·/}).waitFor();
   await panel.getByRole('button',{name:'收起右侧面板',exact:true}).click();assert.equal(await input.inputValue(),'手机草稿');
   for(const theme of ['light','dark']) {
     await page.evaluate(theme=>WeftDesktop.setAppearance({theme}),theme);

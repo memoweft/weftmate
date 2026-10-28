@@ -12,7 +12,7 @@ import { syntheticCloudBinding } from '../helpers/synthetic-cloud-binding.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME = 'pair-code-synthetic';
 const root = resolve(import.meta.dirname, '../..'), profile = await mkdtemp(join(tmpdir(), 'wm-pair-code-'));
-process.env.WEFTMATE_MANAGED_TEMP_ROOT = join(profile,'fixtures');
+if (!process.env.WEFTMATE_TEST_TEMP_SCOPE) process.env.WEFTMATE_MANAGED_TEMP_ROOT ??= join(profile,'fixtures');
 const hash = data => createHash('sha256').update(JSON.stringify(data)).digest();
 let application, fixture, cloud, lock, watchdog, page, offset = 0;
 const errors = [];

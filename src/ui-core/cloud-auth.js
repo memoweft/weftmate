@@ -16,6 +16,89 @@
     }
     async hash(value) { return encode(await this.crypto.subtle.digest('SHA-256', utf8(value))); }
     random() { return encode(this.crypto.getRandomValues(new Uint8Array(32))); }
+    async pairingDigest(values) {
+      return this.nativeKey?.pairingDigest ? this.nativeKey.pairingDigest(values) : this.hash(JSON.stringify(values));
+    }
+    async pairingCode(transcript, hostNonce, deviceId, phoneJkt, phoneNonce) {
+      const digest = await this.pairingDigest(['wm-pair-sas-v2', ...transcript, hostNonce, deviceId, phoneJkt, phoneNonce]);
+      const bytes = Uint8Array.from(atob(digest.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+      return String(new DataView(bytes.buffer).getUint32(0, false) % 1000000).padStart(6, '0');
+    }
+    parsePairing(input) {
+      try {
+        let value = input.trim();
+        if (value.includes('#pair=')) value = new URL(value).hash.slice(6);
+        if (!value.startsWith('wm1.') && !input.includes('#pair=')) fail('PAIRING_INVALID');
+        if (value.startsWith('wm1.')) value = value.slice(4);
+        if (value.length > 16384) fail('PAIRING_INVALID');
+        return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))));
+      } catch { fail('PAIRING_INVALID'); }
+    }
+    async checkPairing(pairing, hostId = this.config.hostId) {
+      const saved = await this.saved();
+      const field = value => typeof value === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value);
+      try {
+        if (pairing.version !== 2 || pairing.issuer !== this.config.issuer || pairing.sub !== saved?.sub ||
+            typeof pairing.hostId !== 'string' || !pairing.hostId || pairing.hostId !== hostId ||
+            !field(pairing.challenge) || !field(pairing.tlsSpki) || !field(pairing.hostCommitment) ||
+            !Number.isSafeInteger(pairing.expiresAt) || pairing.expiresAt > this.now() + 120000) fail('PAIRING_INVALID');
+        for (const value of [pairing.origin, ...(pairing.relay?.baseUrl ? [pairing.relay.baseUrl] : [])]) {
+          if (typeof value !== 'string' || origin(value) !== value) fail('PAIRING_INVALID');
+        }
+        const jwk = pairing.publicJwk;
+        if (jwk.kty !== 'EC' || jwk.crv !== 'P-256' || !field(jwk.x) || !field(jwk.y) || jwk.d) fail('PAIRING_INVALID');
+        await this.crypto.subtle.importKey('jwk', { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y }, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+        const prior = await this.credentials('trusted-host:' + hostId);
+        if (prior && (prior.tlsSpki !== pairing.tlsSpki || await this.jkt(prior.publicJwk) !== await this.jkt(jwk))) fail('PAIRING_INVALID');
+      } catch { fail('PAIRING_INVALID'); }
+      if (pairing.expiresAt <= this.now()) fail('PAIRING_EXPIRED');
+      return [2, pairing.issuer, pairing.sub, pairing.hostId, pairing.tlsSpki, await this.jkt(pairing.publicJwk),
+        pairing.challenge, pairing.expiresAt, pairing.origin, pairing.relay?.baseUrl || ''];
+    }
+    async jkt(jwk) { return this.hash(JSON.stringify({ crv: jwk.crv, kty: jwk.kty, x: jwk.x, y: jwk.y })); }
+    async pair(pairing, { onComparison = () => {}, current = () => true, wait = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
+      const generation = this.generation, host = this.host, transcript = await this.checkPairing(pairing);
+      const check = () => {
+        if (generation !== this.generation || this.host !== host || !current()) fail('PAIRING_STOPPED');
+        if (this.now() >= pairing.expiresAt) fail('PAIRING_EXPIRED');
+      };
+      check();
+      const resource = this.base + '/hosts/' + pairing.hostId, saved = await this.saved(), key = await this.key();
+      const token = await this.access(resource);
+      const access = await this.verify({ token_type: 'DPoP', access_token: token }, { audience: resource, sub: saved.sub });
+      if (access.device_id !== key.deviceId || access.host_id !== pairing.hostId || !access.scope?.split(' ').includes('host:session')) fail('CLOUD_TOKEN_INVALID');
+      const deviceId = access.device_id, phoneJkt = access.cnf.jkt, phoneNonce = this.random();
+      const phoneCommitment = await this.pairingDigest(['wm-pair-phone-v2', pairing.challenge, deviceId, phoneJkt, phoneNonce]);
+      const request = async (action, extra = {}) => {
+        check();
+        const nonce = await this.request(host + '/personal/v1/auth/cloud-nonce', { method: 'POST', body: {} });
+        check();
+        const url = host + '/personal/v1/cloud/pairings/' + action;
+        const proof = await this.proof(url, { token, nonce: nonce.nonce });
+        check();
+        const result = await this.request(url, { method: 'POST', headers: { DPoP: proof },
+          body: { accessToken: token, deviceName: saved.deviceName || '这台手机', challenge: pairing.challenge, ...extra } });
+        check(); return result;
+      };
+      const joined = await request('join', { phoneCommitment });
+      if (joined.state !== 'committed' || joined.expiresAt !== pairing.expiresAt || !/^[A-Za-z0-9_-]{43}$/.test(joined.hostNonce) ||
+          await this.pairingDigest(['wm-pair-host-v2', ...transcript, joined.hostNonce]) !== pairing.hostCommitment) fail('PAIRING_HOST_MISMATCH');
+      const revealed = await request('reveal', { phoneNonce });
+      if (revealed.state !== 'comparing' || revealed.hostNonce !== joined.hostNonce || revealed.expiresAt !== pairing.expiresAt) fail('PAIRING_HOST_MISMATCH');
+      const verificationCode = await this.pairingCode(transcript, joined.hostNonce, deviceId, phoneJkt, phoneNonce);
+      check(); await onComparison({ verificationCode, expiresAt: pairing.expiresAt });
+      for (;;) {
+        try {
+          const result = await request('redeem');
+          if (!result.hostTrust) fail('HOST_TRUST_INVALID');
+          await this.acceptHostTrust(result, saved, pairing, check);
+          check(); return result;
+        } catch (error) {
+          if (error.status !== 403 || error.code !== 'PAIRING_CONFIRMATION_REQUIRED') throw error;
+          check(); await wait(Math.min(1000, pairing.expiresAt - this.now()));
+        }
+      }
+    }
     async request(url, { method = 'GET', body, form, headers = {} } = {}) {
       let response;
       try { response = await this.fetch(url, { method, credentials: 'include', cache: 'no-store', redirect: 'error',
@@ -213,7 +296,7 @@
       await this.credentials('trusted-host:'+connection.hostId,{tlsSpki:payload.tlsSpki,publicJwk:trust.publicJwk,origin:connection.baseUrl});
       return session;
     }
-    async exchange(desktop = false, pairing = null) {
+    async exchange(desktop = false) {
       const generation = this.generation, csrf = desktop ? this.localCsrf?.() : undefined;
       const saved = await this.saved();
       if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
@@ -222,14 +305,18 @@
       const token = await this.access(desktop ? this.base : resource);
       const nonce = await this.request(this.host + '/personal/v1/auth/cloud-nonce', { method: 'POST', body: {} });
       if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
-      const path = desktop ? '/auth/cloud-desktop' : pairing ? '/cloud/pairings/redeem' : '/auth/cloud-session';
+      const path = desktop ? '/auth/cloud-desktop' : '/auth/cloud-session';
       const url = this.host + '/personal/v1' + path;
       const proof = await this.proof(url, { token, nonce: nonce.nonce });
       if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
       const result = await this.request(url, { method: 'POST', headers: { DPoP: proof,
         ...(csrf ? { 'X-WeftMate-CSRF': csrf } : {}) },
-        body: { accessToken: token, deviceName: saved.deviceName || '这台设备', ...(pairing ? { challenge: pairing.challenge } : {}) } });
+        body: { accessToken: token, deviceName: saved.deviceName || '这台设备' } });
       if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
+      await this.acceptHostTrust(result, saved);
+      return result;
+    }
+    async acceptHostTrust(result, saved, pairing, current = () => {}) {
       if (result.hostTrust) {
         const trust = result.hostTrust, key = await this.key();
         const jkt = await this.hash(JSON.stringify({ crv: key.publicJwk.crv, kty: key.publicJwk.kty, x: key.publicJwk.x, y: key.publicJwk.y }));
@@ -246,8 +333,11 @@
         const prior = await this.credentials('trusted-host:' + this.config.hostId);
         if (prior?.publicJwk && await this.hash(JSON.stringify({ crv: prior.publicJwk.crv, kty: prior.publicJwk.kty, x: prior.publicJwk.x, y: prior.publicJwk.y })) !==
             await this.hash(JSON.stringify({ crv: trust.publicJwk.crv, kty: trust.publicJwk.kty, x: trust.publicJwk.x, y: trust.publicJwk.y }))) fail('HOST_TRUST_INVALID');
+        if (pairing && (payload.tlsSpki !== pairing.tlsSpki || await this.jkt(trust.publicJwk) !== await this.jkt(pairing.publicJwk) ||
+            payload.origin !== pairing.origin || (payload.relay?.baseUrl || '') !== (pairing.relay?.baseUrl || ''))) fail('HOST_TRUST_INVALID');
+        current();
         await this.credentials('trusted-host:' + this.config.hostId, { tlsSpki: payload.tlsSpki, publicJwk: trust.publicJwk,
-          origin: payload.origin, relay: payload.relay });
+          origin: payload.origin, relay: payload.relay, connectionOrigin: this.host });
       }
       return result;
     }

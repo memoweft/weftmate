@@ -35,6 +35,8 @@ internal fun validBusinessPath(path: String): Boolean {
     if (path.length > if (route.startsWith("/personal/v1/chats") || route == "/personal/v1/sessions" || route.startsWith("/personal/v1/library") || route.startsWith("/personal/v1/activity") || route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/suggestions"))) 4096 else 512) return false
     if (path == "/personal/v1/sessions/temporary") return true
     val query = path.substringAfter('?', "")
+    if (route.startsWith("/personal/v1/workspaces/") && route != "/personal/v1/workspaces/browser" && !route.startsWith("/personal/v1/workspaces/browser/"))
+        return query.isEmpty() && route.matches(Regex("/personal/v1/workspaces/[A-Za-z0-9_-]{1,128}/(review/(status|diff)|files/(list|search|read|save))"))
     if (query.isEmpty() && route.matches(Regex("/personal/v1/terminals(/terminal-[0-9a-f-]{36}(/release)?)?"))) return true
     if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/events/[0-9]+/detail"))) return query.isEmpty() || query.matches(Regex("outputOffset=[0-9]{1,15}"))
     if (query.isEmpty() && route.matches(Regex("/personal/v1/model-services(/(check|model-service-[0-9a-f-]{36}(/(refresh|select))?))?"))) return true
@@ -60,6 +62,7 @@ internal fun validBusinessPath(path: String): Boolean {
     if (query.isEmpty() && route == "/personal/v1/commands") return true
     // MEM-7 keeps reception, stable receipts and phone erasure on these exact paths.
     if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true
+    if (query.isEmpty() && route == "/personal/v1/devices/sync") return true
     if (query.isEmpty() && (route == "/personal/v1/status" || route == "/personal/v1/commands" ||
         route.matches(Regex("/personal/v1/commands/[A-Za-z0-9_-]{1,128}")) ||
         route.matches(Regex("/personal/v1/chats/(main|[A-Za-z0-9_-]{1,128})")))) return true
@@ -151,6 +154,8 @@ internal fun businessReadTimeout(path: String, method: String): Int {
 }
 
 internal fun businessHttpResponseLimit(path: String): Int = when {
+    path.matches(Regex("/personal/v1/workspaces/[A-Za-z0-9_-]{1,128}/files/read")) -> 12 * 1024 * 1024
+    path.matches(Regex("/personal/v1/workspaces/[A-Za-z0-9_-]{1,128}/review/diff")) -> 24 * 1024 * 1024
     path == "/personal/v1/offline/sync" -> nativeBusinessResponseLimit(path)
     path.matches(Regex("/personal/v1/library/[A-Za-z0-9_-]{1,128}/preview")) -> 28 * 1024 * 1024
     else -> 1024 * 1024

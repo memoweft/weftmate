@@ -11,7 +11,11 @@ import java.util.UUID
 
 /** App-only fixed-origin transport. HttpOnly cookies and actual refresh tokens stay in native storage. */
 internal class CloudAppLogin(private val secrets: SecureSettings, private val api: PersonalApi) {
-    companion object { private val cookies = CookieManager(null, CookiePolicy.ACCEPT_ORIGINAL_SERVER) }
+    companion object {
+        private val cookies = CookieManager(null, CookiePolicy.ACCEPT_ORIGINAL_SERVER)
+        private data class PairingPin(val lease: String, val login: String?)
+        private val pairingPins = java.util.concurrent.ConcurrentHashMap<String, PairingPin>()
+    }
     fun configure(originInput: String): JSONObject {
         val host = Endpoints.hostOrigin(originInput)
         val response = try { JsonHttp().request("$host/personal/v1/cloud/config", "GET") }
@@ -35,6 +39,26 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
     fun hostOrigin(): String? = secrets.appValue("login")?.let { JSONObject(it).getString("host") }
     private fun refreshes() = JSONObject(secrets.appValue("refreshes") ?: "{}")
     private fun values() = JSONObject(secrets.appValue("credentials") ?: "{}")
+    @Synchronized fun pairingPin(params: JSONObject): JSONObject {
+        val origin = Endpoints.hostOrigin(params.getString("origin"))
+        val pin = params.getString("pin")
+        val saved = JSONObject(secrets.cloudValue("pins") ?: "{}").optString(origin)
+        if (saved.isNotBlank() && saved != pin) throw ApiFailure(403, "HOST_PIN_MISMATCH")
+        if (params.optBoolean("clear")) {
+            val entry = pairingPins[origin] ?: return JSONObject()
+            if (params.optString("lease") != entry.lease || !pairingPins.remove(origin, entry)) return JSONObject()
+            if (saved.isNotBlank()) CloudPins.install(origin, saved) else CloudPins.clear(origin)
+            if (!params.optBoolean("completed")) {
+                secrets.saveAppValue("login", entry.login)
+                secrets.saveAppValue("result", null)
+            }
+            return JSONObject()
+        }
+        val lease = UUID.randomUUID().toString()
+        pairingPins[origin] = PairingPin(lease, secrets.appValue("login"))
+        CloudPins.install(origin, pin)
+        return JSONObject().put("lease", lease)
+    }
     @Synchronized fun credentials(params: JSONObject): JSONObject {
         val key = params.getString("key")
         require(key == "offline-account" || listOf("app-tokens:", "trusted-host:", "draft:", "offline-config:").any { key.startsWith(it) })
@@ -64,7 +88,7 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
             }
             if (key.startsWith("trusted-host:")) {
                 require(value is JSONObject)
-                val host = Endpoints.hostOrigin(value.optString("origin").ifBlank { hostOrigin() ?: throw ApiFailure(400, "HOST_TRUST_INVALID") })
+                val host = cloudPairingMetadataOrigin(value.optString("origin").ifBlank { hostOrigin() ?: throw ApiFailure(400, "HOST_TRUST_INVALID") })
                 val pin = value.getString("tlsSpki")
                 val pins = JSONObject(secrets.cloudValue("pins") ?: "{}")
                 if (pins.has(host) && pins.getString(host) != pin) throw ApiFailure(403, "HOST_PIN_MISMATCH")
@@ -73,6 +97,10 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
                 if (relay != null && !relay.isNull("baseUrl") && relay.optString("baseUrl").isNotBlank()) {
                     val relayOrigin = Endpoints.hostOrigin(relay.getString("baseUrl"))
                     CloudPins.install(relayOrigin, pin); pins.put(relayOrigin, pin); secrets.saveCloudValue("pins", pins.toString())
+                }
+                if (value.optString("connectionOrigin").isNotBlank()) {
+                    val connectionOrigin = Endpoints.hostOrigin(value.getString("connectionOrigin"))
+                    CloudPins.install(connectionOrigin, pin); pins.put(connectionOrigin, pin); secrets.saveCloudValue("pins", pins.toString())
                 }
             }
             entries.put(key, value)

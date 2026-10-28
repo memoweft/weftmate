@@ -1,6 +1,27 @@
 /* Phone presentation of the shared account journey. */
 globalThis.WeftMobileCloudForms = (core, ui) => {
-    let screenKey = '', loginDialog, loginHome, loginNext, loginReturnFocus;
+    let screenKey = '', loginDialog, loginHome, loginNext, loginReturnFocus, pairingDialog;
+    function paintPairing(value) {
+        if (!value) { pairingDialog?.close(); return; }
+        if (!pairingDialog) {
+            pairingDialog = ui.element('dialog', 'dialog cloud-device-dialog'); pairingDialog.id = 'cloud-pairing-dialog';
+            pairingDialog.setAttribute('aria-labelledby', 'cloud-pairing-title');
+            pairingDialog.innerHTML = '<div class="dialog-head"><h2 id="cloud-pairing-title">核对电脑</h2></div><div class="dialog-body"><p id="cloud-pairing-number" class="pairing-verification" aria-label="六位核对数字"></p><p id="cloud-pairing-status" role="status" aria-live="polite"></p><p class="muted" id="cloud-pairing-help"></p></div><div class="dialog-footer"><button type="button" class="button secondary" id="cloud-pairing-stop">关闭</button><button type="button" class="button primary" id="cloud-pairing-rescan">重新扫码</button></div>';
+            const stop = () => core.cancelCloudPairing();
+            pairingDialog.querySelector('#cloud-pairing-stop').addEventListener('click', stop);
+            pairingDialog.querySelector('#cloud-pairing-rescan').addEventListener('click', () => { stop(); ui.byId('cloud-pairing-input')?.focus(); void ui.scanPairing(); });
+            pairingDialog.addEventListener('cancel', event => { event.preventDefault(); stop(); });
+            document.body.append(pairingDialog);
+        }
+        ui.byId('cloud-pairing-title').textContent = value.state === 'failed' ? '配对未完成' : '核对电脑';
+        const number = ui.byId('cloud-pairing-number'); number.hidden = !value.verificationCode;
+        number.textContent = value.verificationCode ? value.verificationCode.slice(0, 3) + ' ' + value.verificationCode.slice(3) : '';
+        number.setAttribute('aria-label', '六位核对数字 ' + (value.verificationCode || '').split('').join(' '));
+        ui.byId('cloud-pairing-status').textContent = value.state === 'failed' ? value.error : value.state === 'comparing' ? globalThis.WeftOnboardingCopy.mobileWaiting : '正在核对电脑的配对信息…';
+        ui.byId('cloud-pairing-help').textContent = value.state === 'comparing' ? '两边数字一致后，在电脑上确认。不一致请在电脑上取消。配对码生成后 120 秒内有效。' : '';
+        ui.byId('cloud-pairing-rescan').hidden = value.state !== 'failed';
+        if (!pairingDialog.open) pairingDialog.showModal();
+    }
     const field = (id, label, type = 'text', autocomplete = 'off') => `<label for="${id}">${label}</label><input id="${id}" type="${type}" autocomplete="${autocomplete}" required>`;
     function mountCloudForms() {
         ui.byId('login-view').classList.add('cloud-auth-card');
@@ -47,6 +68,7 @@ globalThis.WeftMobileCloudForms = (core, ui) => {
         ui.byId('legal-reader').inert = false; ui.byId('legal-reader').showModal();
     }
     function paintCloudAuth(value) {
+        paintPairing(value.pairing);
         paintLoginDialog(!!value.modal);
         if (value.localDesktop) {
             for (const id of ['setup-password', 'setup-confirm']) {

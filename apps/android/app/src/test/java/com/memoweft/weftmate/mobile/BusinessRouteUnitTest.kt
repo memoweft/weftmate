@@ -11,6 +11,11 @@ class BusinessRouteUnitTest {
         for (suffix in listOf("", "/join", "/reveal", "/status", "/decision", "/redeem"))
             assertFalse(validBusinessPath("/personal/v1/cloud/pairings$suffix"))
     }
+    @Test fun deviceSyncSummaryIsAnExactBusinessPath() {
+        assertTrue(validBusinessPath("/personal/v1/devices/sync"))
+        assertFalse(validBusinessPath("/personal/v1/devices/sync?ownerId=other"))
+        assertFalse(validBusinessPath("/personal/v1/devices/sync/raw"))
+    }
     @Test fun terminalRoutesKeepExactIdentities() {
         assertTrue(validBusinessPath("/personal/v1/terminals"))
         assertTrue(validBusinessPath("/personal/v1/terminals/terminal-00000000-0000-4000-8000-000000000001"))
@@ -219,4 +224,13 @@ class BusinessRouteUnitTest {
             "/personal/v1/memory/items/entity/memory%5Ca",
         )) assertFalse(path, validBusinessPath(path))
     }
+
+    @Test fun workspaceReviewAndFilesUseConversationScopedRoutes() {
+        for (suffix in listOf("review/status", "review/diff", "files/list", "files/search", "files/read", "files/save"))
+            assertTrue(validBusinessPath("/personal/v1/workspaces/session-one/$suffix"))
+        for (route in listOf("/personal/v1/workspaces/session-one/files/delete", "/personal/v1/workspaces/browser-session/files/delete", "/personal/v1/workspaces/session-one/files/read?path=../outside", "/personal/v1/workspaces/../files/read", "/personal/v1/workspaces/session-one/review/raw", "/personal/v1/workspaces/session-one/files%2Fread"))
+            assertFalse(route, validBusinessPath(route))
+        assertTrue(businessHttpResponseLimit("/personal/v1/workspaces/session-one/files/read") >= 12 * 1024 * 1024)
+    }
+
 }

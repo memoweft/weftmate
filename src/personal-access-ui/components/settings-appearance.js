@@ -35,6 +35,9 @@
         }
         root.toggleAttribute('data-translucent-sidebar', value.translucentSidebar === true);
         root.toggleAttribute('data-page-full-width', value.fullWidth === true);
+        root.toggleAttribute('data-pointer-cursor', value.pointerCursor === true);
+        root.dataset.diffMarkers = value.diffMarkers;
+        globalThis.dispatchEvent(new CustomEvent('weftmate:appearance', {detail:{...value}}));
         for (const entry of mounted) if (entry.target.isConnected) entry.sync();
     }
     function mount(target, options) {
@@ -50,7 +53,7 @@
                 control.dispatchEvent(new Event('weft:sync'));
             }
             for (const button of modes.children) button.setAttribute('aria-pressed', String(button.dataset.value === value.theme));
-            if (motion) for (const button of motion.children) button.setAttribute('aria-pressed', String(button.dataset.value === (globalThis.WeftReplyMotion?.preference || 'system')));
+            if (motion) { motion.value=globalThis.WeftReplyMotion?.preference || 'system'; motion.dispatchEvent(new Event('weft:sync')); }
         };
         async function save(patch) {
             const value = options.get();
@@ -86,7 +89,8 @@
         });
         const modeRow = WeftSettingsControls.row('模式', '', modes); modeRow.classList.add('appearance-mode-row'); visual.append(modeRow);
         if (options.onlyTheme) { sync(); mounted.add({target,sync}); return; }
-        const palette = group(target, '');
+        const advanced = node('details', 'appearance-advanced'); advanced.append(node('summary', '', '更多显示偏好'));
+        const palette = group(advanced, '配色与字体');
         function select(parent, key, label, help, values, perMode = false) {
             const control = node('select'); control.id = 'appearance-' + key; control.setAttribute('aria-label', label);
             for (const [value, text] of values) { const option = node('option', '', text); option.value = value; control.append(option); }
@@ -116,16 +120,40 @@
         }
         color('background','背景色','--canvas'); color('foreground','前景色','--ink');
         select(palette, 'font', '字体', '', fonts, true);
-        const sizes = group(target, '文字大小');
+        const sizes = group(target, '交互与阅读');
+        const pointer = node('input'); pointer.type = 'checkbox'; pointer.id = 'appearance-pointerCursor'; pointer.setAttribute('aria-label','使用指针光标');
+        controls.set('pointerCursor',pointer); WeftSettingsControls.toggle(pointer);
+        pointer.onchange = () => void save({pointerCursor:pointer.checked});
+        sizes.append(WeftSettingsControls.row('使用指针光标','悬停在可点击的控件上时显示手形指针。',pointer));
+        function choice(label,values,onChange) {
+            const wrap=node('div','appearance-choice'),source=node('select');source.setAttribute('aria-label',label);
+            for(const [value,text]of values)source.append(new Option(text,value));
+            wrap.append(source);WeftSettingsControls.segmented(source);source.onchange=()=>onChange(source.value);
+            return {wrap,source};
+        }
+        const motionChoice = choice('减少动态效果', [['system','系统'],['reduce','开启'],['full','关闭']], value => {
+            try { globalThis.WeftReplyMotion.setPreference(value); }
+            catch { options.toast?.('动态效果偏好未保存，请重试。'); }
+            sync();
+        });
+        motion=motionChoice.source;
+        sizes.append(WeftSettingsControls.row('减少动态效果','减少动画效果，或跟随系统设置。',motionChoice.wrap));
         for (const [key,label,help] of [['uiFontSize','界面字号','调整菜单、设置与控件的文字大小。'],['fontSize','内容字号','调整对话正文与输入文字大小。'],['codeFontSize','代码字号','调整代码块与行内代码。']]) {
             const wrap = node('div','appearance-number'), input = node('input'); input.type = 'number'; input.min = '10'; input.max = '24'; input.step = '1'; input.id = 'appearance-' + key; input.setAttribute('aria-label',label);
-            controls.set(key,input); input.addEventListener('change',()=>{if(input.reportValidity())void save({[key]:input.value});}); wrap.append(input,node('span','muted','px')); sizes.append(WeftSettingsControls.row(label,help,wrap));
+            controls.set(key,input);
+            input.addEventListener('blur',()=>{
+                const raw = input.value.trim(), number = Number(raw);
+                const size = raw && Number.isFinite(number) ? Math.min(24,Math.max(10,Math.round(number))) : Number(WeftUiCore.appearanceDefaults[key]);
+                input.value=String(size); if(input.value!==options.get()[key])void save({[key]:input.value});
+            });
+            input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();input.blur();}});
+            wrap.append(input,node('span','muted','px')); sizes.append(WeftSettingsControls.row(label,help,wrap));
         }
-        const advanced = node('details', 'appearance-advanced'); advanced.append(node('summary', '', '更多显示偏好')); target.append(advanced);WeftSettingsControls.details(advanced);
+        const diff = choice('差异标记', [['color','颜色'],['sign','+/−']], value => void save({diffMarkers:value}));
+        controls.set('diffMarkers',diff.source);
+        sizes.append(WeftSettingsControls.row('差异标记','审查改动时使用颜色，或为增删行显示 + 和 −。',diff.wrap));
+        target.append(advanced);WeftSettingsControls.details(advanced);
         const behavior = group(advanced, '显示偏好');
-        motion = node('div','settings-segmented'); motion.setAttribute('role','group'); motion.setAttribute('aria-label','减少动态效果');
-        for (const [value,label] of [['system','系统'],['reduce','开启'],['full','关闭']]) { const button = node('button','',label); button.type = 'button'; button.dataset.value = value; button.onclick = () => { globalThis.WeftReplyMotion?.setPreference(value); sync(); }; motion.append(button); }
-        behavior.append(WeftSettingsControls.row('减少动态效果','减少动画效果或跟随系统设置。',motion));
         function toggle(key,label,help) { const input=node('input');input.type='checkbox';input.id='appearance-'+key;input.setAttribute('aria-label',label);WeftSettingsControls.toggle(input);controls.set(key,input);input.onchange=()=>void save({[key]:input.checked});behavior.append(WeftSettingsControls.row(label,help,input)); }
         toggle('separateModes','分别设置浅色和深色','分别保留各自的强调色、背景、前景与字体。');
         const wrap = node('div','appearance-range'), range=node('input'), output=node('output'); range.type='range';range.min='0';range.max='100';range.setAttribute('aria-label','对比度'); controls.set('contrast',range); range.addEventListener('weft:sync',()=>output.value=range.value);range.oninput=()=>{output.value=range.value;void save({contrast:range.value});};wrap.append(range,output);behavior.append(WeftSettingsControls.row('对比度','调整说明文字和分隔线的清晰度。',wrap));
