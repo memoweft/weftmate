@@ -152,6 +152,24 @@ try {
   const last=page.locator('#session-list > .session-row').last();await last.locator('button').first().focus();await last.scrollIntoViewIfNeeded();
   assert.equal(await last.evaluate(el=>{const row=el.getBoundingClientRect(),list=el.closest('#session-list').getBoundingClientRect();return row.top>=list.top&&row.bottom<=list.bottom;}),true);
   await shot('low-height-last-row');await resize(1280,800);
+  const phoneId='conversation-'+randomUUID(),at=new Date().toISOString();
+  await fixture.request('/sync/capabilities',{sharedConversations:1,nativeVersionCode:11});
+  await fixture.request('/sync/events',{events:[
+    {eventId:'event-'+randomUUID(),conversationId:phoneId,clientSeq:1,kind:'conversation.created',occurredAt:at,payload:{title:'合成手机原话'}},
+    {eventId:'event-'+randomUUID(),conversationId:phoneId,clientSeq:2,kind:'message.created',occurredAt:at,payload:{messageId:'message-'+randomUUID(),role:'user',text:'保留手机记录入口'}},
+    {eventId:'event-'+randomUUID(),conversationId:phoneId,clientSeq:3,kind:'turn.finished',occurredAt:at,payload:{turnId:'turn-'+randomUUID(),status:'completed'}},
+  ]});
+  const shared=`/sync/conversations/${phoneId}/shared`;
+  await fixture.request(shared,{requestId:randomUUID(),modelProfileId:'local',expectedSyncSeq:3});
+  let binding=await fixture.request(shared);const bindDeadline=Date.now()+10000;
+  while(binding.status!=='active') {assert.ok(Date.now()<bindDeadline);await page.waitForTimeout(20);binding=await fixture.request(shared);}
+  await fixture.request(`/sessions/${binding.binding.sessionId}/metadata`,{pinned:true},'PATCH');
+  await page.evaluate(async id=>{await testCore.refreshSessions();await testCore.refreshPhoneRecords();await testCore.refreshPhoneBinding(id);testUi.renderSessions();},phoneId);
+  const phoneRow=page.locator(`.session-row[data-phone-id="${phoneId}"]`);
+  assert.equal(await phoneRow.count(),1,'a pinned phone binding keeps its phone-record entry');
+  await phoneRow.locator('button').first().click();
+  assert.deepEqual(await page.evaluate(()=>[testCore.state.activeChatSource,testCore.state.selectedPhoneConversationId]),['phone',phoneId]);
+  await shot('pinned-phone-record');
   for(const [state,expected] of [
     [{status:'not-available'},''],
     [{status:'available',version:'0.2.0-preview.22'},'发现 0.2.0-preview.22 · 查看更新'],
