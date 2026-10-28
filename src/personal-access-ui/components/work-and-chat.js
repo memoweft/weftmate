@@ -132,7 +132,6 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
       draftModes.children[index]?.focus(); draftModes.children[index]?.click(); };
     const intro=ui.byId('chat-intro');ui.byId('approval-picker').before(draftModes);
     const learn=intro.querySelector(':scope > button');if(learn){learn.className='composer-help';ui.byId('message-form').after(learn);}
-    if(globalThis.weftmateDesktop)ui.byId('message-form').parentElement.prepend(intro);
     fold=node('div','work-mode-fold');const clip=node('div','work-mode-clip');fold.append(clip);
     toolbar = node('div', 'work-mode-toolbar'); toolbar.setAttribute('aria-label', '工作电脑与文件夹');clip.append(toolbar);
     computer = button('电脑', 'desktop', trigger => WeftPopover.openMenu(trigger, core.workComputers().map(row => ({ name: row.displayName || row.name, icon: 'desktop',
