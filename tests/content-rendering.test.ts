@@ -61,8 +61,8 @@ test('shared offline content: parsing, injection set, streaming, controls and fa
       const list=body.querySelector('ol'),first=list.firstElementChild,range=document.createRange();range.selectNodeContents(first);getSelection().removeAllRanges();getSelection().addRange(range);
       let text='1. 已完成的条目\n2. 尾部',stable=true;
       for(const part of '\n3. 新条目'){text+=part;WeftContent.update(body,text,{streaming:true});stable&&=body.querySelector('ol')===list&&body.querySelector('li')===first;}
-      return {stable,selection:getSelection().toString(),items:body.querySelectorAll('li').length};
-    });assert.deepEqual(result,{stable:true,selection:'已完成的条目',items:3});
+      return {stable,selection:getSelection().toString(),items:body.querySelectorAll('li').length,text:body.innerText};
+    });assert.deepEqual(result,{stable:true,selection:'已完成的条目',items:3,text:'已完成的条目\n尾部\n新条目'});
   });
   await t.test('plain streaming tails retain completed blocks and Markdown transitions still reparse references, lists and fences',async()=>{
     const prefix=await page.evaluate(()=>{const body=WeftContent.create('#','markdown-body',{streaming:true});const first=body.textContent;WeftContent.update(body,'# 标题',{streaming:true});return {first,heading:body.querySelector('h1')?.textContent};});

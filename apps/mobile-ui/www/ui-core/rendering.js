@@ -196,9 +196,9 @@
       if (/^(OL|UL)$/.test(last?.tagName) && match && item?.tagName==='LI' && item.childNodes.length===1 && item.firstChild.nodeType===3 && item.textContent===match[1] &&
           !/[\\`*_~\[\]<>!&:/|@$]/.test(line+suffix)) {
         const template=node('div');template.innerHTML=WeftFormat.render(line+suffix,{prefix:content._renderId});
-        const next=template.firstElementChild;
+        const next=template.firstElementChild, itemSource=next?.firstElementChild?.outerHTML;
         if (template.children.length===1 && next.tagName===last.tagName && next.children.length && appendInline(item,next.firstElementChild)) {
-          item._listSource=next.firstElementChild.outerHTML;
+          item._listSource=itemSource;
           for (const child of [...next.children].slice(1)) {child._listSource=child.outerHTML;last.append(child);}
           content._renderText=text;delete last._sourceHTML;delete last._renderHTML;
           if(options.streaming!==undefined)globalThis.WeftReplyMotion?.indicator(content,options.streaming);
