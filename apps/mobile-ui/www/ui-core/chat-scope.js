@@ -48,13 +48,21 @@ globalThis.WeftUiCore.factories.chatScope = (parent, _effects, environment) => {
         let timer, overview, started = false;
         async function refresh() {
             if (!sync()) return;
+            const startedAt = Date.now();
+            let result;
             try {
-                await Promise.all([core.refreshLiveConversation(), core.refreshConversationFacts()]);
+                result = await core.refreshLiveConversation();
+                void core.refreshConversationFacts().catch(() => {});
             } catch { /* Existing history/receipt effects expose retryable failures. */ }
-            if (current() && started) timer = setTimeout(refresh, core.state.turnStatus === 'running' ? 250 : 1500);
+            if (current() && started) {
+                const delay = core.historyPollDelay(result);
+                // Match the main view's stream clock instead of adding another
+                // interval after every completed network read.
+                timer = setTimeout(refresh, delay === core.polling.stream ? Math.max(0, delay - (Date.now() - startedAt)) : delay);
+            }
         }
         return { core, sync,
-            start() { if (!started) { started = true; void refresh(); overview = setInterval(() => { if (sync() && core.state.selectedSessionId) void core.refreshSessions().catch(() => {}); }, 4500); } },
+            start() { if (!started) { started = true; void refresh(); overview = setInterval(() => { if (sync() && core.state.selectedSessionId) void core.refreshSessions().catch(() => {}); }, core.polling.overview); } },
             dispose() {
                 started = false; clearTimeout(timer); clearInterval(overview); lifetime.abort();
                 core.historyWaitAbort?.abort(); core.cancelSessionSelection?.(); core.cancelAttachmentUpload(); core.stopAssistantRefresh();
