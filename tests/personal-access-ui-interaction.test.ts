@@ -99,7 +99,7 @@ class Element {
   dispatchEvent(event: Event) { this.fire(event.type); return true }
   append(...children: Element[]) { for (const child of children) { child.remove(); child.parentNode = this; this.children.push(child) } }
   prepend(...children: Element[]) { for (const child of [...children].reverse()) { child.remove(); child.parentNode = this; this.children.unshift(child) } }
-  replaceChildren(...children: Element[]) { for (const child of [...this.children]) child.remove(); this.children = []; this.append(...children) }
+  replaceChildren(...children: Element[]) { for (const child of [...this.children]) child.remove(); this.children = []; this.html = ''; this.append(...children) }
   cloneNode(deep = false) { const copy=new Element(this.id,this.tagName);copy.ownerDocument=this.ownerDocument;copy.hidden=this.hidden;copy.disabled=this.disabled;copy.value=this.value;copy.textContent=this.textContent;copy.className=this.className;copy.src=this.src;copy.attributes=new Map(this.attributes);copy.dataset={...this.dataset};if(deep)copy.append(...this.children.map(child=>child.cloneNode(true)));return copy }
   setAttribute(name: string, value: string) { this.attributes.set(name, value);if(name==='class')this.className=value }
   getAttribute(name: string) { if (name.startsWith('data-')) return this.dataset[name.slice(5).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] ?? this.attributes.get(name) ?? null; return this.attributes.get(name) ?? null }
@@ -136,6 +136,15 @@ class Element {
   get childNodes() { return this.children }
   get firstChild() { return this.children[0] || null }
   get firstElementChild() { return this.children[0] || null }
+  private html = ''
+  get innerHTML(): string { return this.html + this.escapeHtml(this.textContent) + this.children.map(child => child.outerHTML).join('') }
+  set innerHTML(value: string) { this.replaceChildren(); this.textContent=''; this.html=String(value) }
+  get outerHTML(): string {
+    const attrs=new Map(this.attributes);if(this.id)attrs.set('id',this.id);if(this.className)attrs.set('class',this.className);
+    for(const [name,value] of Object.entries(this.dataset))attrs.set('data-'+name.replace(/[A-Z]/g,letter=>'-'+letter.toLowerCase()),value);
+    return `<${this.tagName.toLowerCase()}${[...attrs].map(([name,value])=>` ${name}="${this.escapeHtml(value)}"`).join('')}>${this.innerHTML}</${this.tagName.toLowerCase()}>`;
+  }
+  private escapeHtml(value: string) { return String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;') }
   get nextSibling() { return this.parentNode?.children[this.parentNode.children.indexOf(this) + 1] ?? null }
   get nextElementSibling() { return this.nextSibling }
   insertBefore(child: Element, next: Element | null) {
@@ -187,7 +196,8 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 function harness(commands: object[] = [], durableEvents: Array<{ seq: number; type: string; data: object }> = [], aRunning = true,
   config: { markers?: object[]; byRequest?: Record<string, object>; storage?: Map<string, string>;
-    sessions?: Array<{ sessionId: string; title: string; sendAvailable: boolean; running?: boolean }>;
+    sessions?: Array<{ sessionId: string; title: string; sendAvailable: boolean; running?: boolean; pinned?: boolean; projectId?: string | null; groupId?: string | null }>;
+    projects?: object[]; sessionGroups?: Array<{id: string; name: string}>;
     eventPageSize?: number; syncAvailable?: boolean; syncEvents?: object[]; downloadAvailable?: boolean;
     conversationViews?: Record<string, object>;
     modelCatalog?: object[];
@@ -373,11 +383,16 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     if (url.endsWith('/settings/personalization')) return Promise.resolve(reply({}));
     if (url.endsWith('/models')) return Promise.resolve(reply({ models: config.modelCatalog ??
       [{ id: 'model-test', name: 'Synthetic', configured: true }] }))
-    if (/\/sessions\/[^/]+\/metadata$/.test(url) && options.method === 'PATCH') return Promise.resolve(reply(JSON.parse(options.body)))
-    if (url.endsWith('/projects') && options.method !== 'POST') return Promise.resolve(reply({ projects: [], canManage: true }))
+    if (/\/sessions\/[^/]+\/metadata$/.test(url) && options.method === 'PATCH') {
+      const patch = JSON.parse(options.body), sessionId = url.split('/').at(-2);
+      const session = config.sessions?.find(row => row.sessionId === sessionId);
+      if (session) Object.assign(session, patch);
+      return Promise.resolve(reply(patch));
+    }
+    if (url.endsWith('/projects') && options.method !== 'POST') return Promise.resolve(reply({ projects: config.projects ?? [], canManage: true }))
     if (url.split('?')[0].endsWith('/sessions')) return Promise.resolve(reply({ sessions: config.sessions ?? [
       { sessionId: 'A', title: 'A', sendAvailable: true, running: aRunning }, { sessionId: 'B', title: 'B', sendAvailable: true },
-    ] }))
+    ], groups: config.sessionGroups ?? [] }))
     if (/\/sessions\/[^/]+\/approvals\//.test(url) && options.method === 'POST') return Promise.resolve(
       config.approvalDecide?.(url, options) ?? reply({ error: { code: 'NOT_FOUND' } }, 404))
     if (/\/sessions\/[^/]+\/approvals\?/.test(url)) {
@@ -1441,6 +1456,59 @@ test('bound phone conversation keeps one rail card and exact receipt renders its
   assert.equal(text.match(/新的电脑追问/g)?.length, 1)
   assert.equal(page.core.composerState(page.get('message-text').value).sendText, '发送到电脑')
 })
+
+test('phone sidebar ownership survives full pinned snapshots, refreshes and section or project folding', async () => {
+  const id='conversation-12121212-1212-4212-8212-121212121212';
+  const sessions=[{sessionId:'A',title:'电脑执行标题',sendAvailable:true,pinned:true,projectId:null as string|null,groupId:null as string|null},
+    {sessionId:'B',title:'独立电脑对话',sendAvailable:true}];
+  const view={source:'host',hostId:'host-test',conversationId:id,status:'active',canAdopt:false,
+    binding:{sessionId:'A',modelProfileId:'model-test',cutoverSyncSeq:2,historyMessageCount:1,truncated:false,omittedImages:0},adoptedMessages:[]};
+  const page=harness([],[],false,{sessions,projects:[{projectId:'project-phone',name:'手机关联项目'}],sessionGroups:[{id:'group-phone',name:'手机分组'}],syncAvailable:true,
+    syncEvents:[{seq:1,conversationId:id,sourceDeviceId:'device-phone',kind:'conversation.created',payload:{title:'手机原话入口'}},
+      {seq:2,conversationId:id,sourceDeviceId:'device-phone',kind:'message.created',payload:{role:'user',text:'手机原话必须保留'}}],conversationViews:{[id]:view}});
+  for(let n=0;n<20&&(!page.core.state.ownerId||page.core.state.refreshing);n++)await flush();
+  const refresh=async()=>{await page.core.refreshSessions();await page.core.refreshPhoneRecords();await page.core.refreshPhoneBinding(id);};
+  const phoneRows=()=>page.get('session-list').querySelectorAll('.session-row').filter(row=>row.dataset.phoneId===id);
+  const nativeRows=()=>page.get('session-list').querySelectorAll('.session-row').filter(row=>row.dataset.sessionId==='A');
+  const sectionOf=(row:Element)=>{let section='';for(const child of page.get('session-list').children){if(child.dataset.sectionId)section=child.dataset.sectionId;if(child===row||child.contains(row))return section;}return '';};
+  const coherent=()=>{assert.equal(page.core.state.sessions.find((s:any)=>s.sessionId==='A')?.pinned,sessions[0].pinned);assert.equal(page.core.phoneBinding(id)?.sessionId,'A');};
+  const one=(section:string)=>{coherent();assert.equal(phoneRows().length,1,JSON.stringify({session:page.core.state.sessions.find((s:any)=>s.sessionId==='A'),binding:page.core.phoneBinding(id)}));assert.equal(nativeRows().length,1);assert.equal(phoneRows()[0],nativeRows()[0]);assert.equal(sectionOf(phoneRows()[0]),section);};
+  for(let n=0;n<3;n++){await refresh();coherent();}
+  await page.core.startNewConversation();
+  one('pinned');
+  phoneRows()[0].children[0].fire('click');assert.equal(page.core.state.activeChatSource,'phone');assert.equal(page.core.state.selectedPhoneConversationId,id);
+  assert.match(visibleText(page.get('transcript')),/手机原话必须保留/);
+  for(let n=0;n<3;n++){await refresh();one('pinned');}
+  page.getByRole('button',{name:'最近'}).fire('click');one('pinned');page.getByRole('button',{name:'最近'}).fire('click');
+  page.getByRole('button',{name:'置顶'}).fire('click');assert.equal(phoneRows().length,0);page.getByRole('button',{name:'置顶'}).fire('click');one('pinned');
+  await page.core.updateSession('A',{pinned:false});for(let n=0;n<3;n++){await refresh();one('recent');}
+  await page.core.updateSession('A',{groupId:'group-phone'});await refresh();one('recent');
+  page.getByRole('button',{name:'手机分组'}).fire('click');assert.equal(phoneRows().length,0);await refresh();assert.equal(phoneRows().length,0);
+  page.getByRole('button',{name:'手机分组'}).fire('click');one('recent');
+  await page.core.updateSession('A',{projectId:'project-phone',groupId:null});await refresh();one('projects');
+  page.getByRole('button',{name:'手机关联项目'}).fire('click');assert.equal(phoneRows().length,0);await refresh();assert.equal(phoneRows().length,0);
+  page.getByRole('button',{name:'手机关联项目'}).fire('click');one('projects');
+  await page.core.updateSession('A',{projectId:null,pinned:true});for(let n=0;n<3;n++){await refresh();one('pinned');}
+  page.getByRole('button',{name:'独立电脑对话'}).fire('click');assert.equal(page.core.state.activeChatSource,'desktop');assert.equal(page.core.state.selectedSessionId,'B');
+});
+
+test('a binding arriving after the record and session invalidates the sidebar presentation cache', async () => {
+  const id='conversation-13131313-1313-4313-8313-131313131313';
+  const views:Record<string,any>={[id]:{source:'host',hostId:'host-test',conversationId:id,status:'unbound',canAdopt:true}};
+  const page=harness([],[],false,{sessions:[{sessionId:'A',title:'执行会话',sendAvailable:true,pinned:true},{sessionId:'B',title:'独立电脑对话',sendAvailable:true}],syncAvailable:true,
+    syncEvents:[{seq:1,conversationId:id,sourceDeviceId:'device-phone',kind:'conversation.created',payload:{title:'迟到绑定的手机记录'}}],conversationViews:views});
+  for(let n=0;n<20&&(!page.core.state.ownerId||page.core.state.refreshing);n++)await flush();
+  await page.core.refreshSessions();await page.core.refreshPhoneRecords();await page.core.refreshPhoneBinding(id);await page.core.startNewConversation();
+  await page.core.accessApi('/status');assert.equal(page.core.state.online,true);
+  const sessions=JSON.stringify(page.core.state.sessions);
+  views[id]={...views[id],status:'active',binding:{sessionId:'A',modelProfileId:'model-test',cutoverSyncSeq:1,historyMessageCount:0,truncated:false,omittedImages:0},adoptedMessages:[]};
+  await page.core.refreshPhoneBinding(id);
+  assert.equal(page.core.phoneBinding(id)?.sessionId,'A',JSON.stringify({online:page.core.state.online,sync:page.core.state.syncAvailable,view:page.core.state.phoneBindings.get(id)}));
+  assert.equal(JSON.stringify(page.core.state.sessions),sessions,'only the binding changed');
+  const rows=page.get('session-list').querySelectorAll('.session-row');
+  const phone=rows.filter(row=>row.dataset.phoneId===id);assert.equal(phone.length,1);assert.equal(phone[0].dataset.sessionId,'A');assert.equal(rows.filter(row=>row.dataset.sessionId==='A').length,1);
+  phone[0].children[0].fire('click');assert.equal(page.core.state.activeChatSource,'phone');
+});
 
 test('phone handoff prefers only one exact original route and never defaults to unrelated Qwen', async () => {
   const conversationId = 'conversation-66666666-6666-4666-8666-666666666666'

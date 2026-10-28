@@ -14,6 +14,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  sidebar-phone-entry-windows:
+    name: Windows phone sidebar entry
+    runs-on: windows-latest
+    timeout-minutes: 8
+    env:
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/evidence/sidebar-phone-entry
+      WEFTMATE_TEST_HOST_NAME: synthetic-host
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Full phone snapshot and repeated sidebar refreshes
+        shell: pwsh
+        run: |
+          @'
+          import { existsSync } from 'node:fs';
+          import { createRequire } from 'node:module';
+          import { managedMkdtempSync, disposeManagedTemp, startManagedTempLease } from './tests/helpers/managed-temp.mjs';
+          import { runManagedTestProcess } from './tests/helpers/managed-test-process.mjs';
+          const scope = managedMkdtempSync('weftmate-phone-sidebar-ci-');
+          const stopLease = startManagedTempLease(scope);
+          try {
+            const run = await runManagedTestProcess(process.execPath, ['--test', 'tests/ui-sidebar-2.test.ts'], {
+              env: { ...process.env, TMPDIR: scope, TMP: scope, TEMP: scope, WEFTMATE_TEST_TEMP_SCOPE: scope },
+              timeoutMs: 180000, commandRoots: [scope, process.cwd()],
+              executables: [process.execPath, createRequire(import.meta.url)('electron')],
+              onOutput: (stream, chunk) => process[stream].write(chunk),
+            });
+            if (run.status !== 0 || run.timedOut) throw Error('Windows phone sidebar regression failed');
+          } finally {
+            stopLease(); disposeManagedTemp(scope);
+            if (existsSync(scope)) throw Error('Phone-sidebar CI temp cleanup failed');
+          }
+          '@ | node --input-type=module
+      - name: Upload synthetic phone sidebar evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidebar-phone-entry-windows-${{ github.sha }}
+          path: .local/evidence/sidebar-phone-entry
+          if-no-files-found: error
+
   chat-first-send-windows:
     name: Windows first conversation send
     runs-on: windows-latest

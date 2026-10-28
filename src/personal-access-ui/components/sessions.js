@@ -21,24 +21,34 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             viewport.style.setProperty('--sidebar-title-travel', String(Math.max(4, distance / 32)));
         }
     }
-    function conversationRow(session, nested = false) {
-        const title = session.title || '新对话';
+    const conversationTitle = (session, phone) => phone ? core.phoneDisplayTitle(phone) : session.title || '新对话';
+    function conversationRow(session, nested = false, phone = null) {
+        const title = conversationTitle(session, phone);
         const row = ui.element('li', 'session-row' + (session.unread ? ' is-unread' : ''));
         row.dataset.sessionId = session.sessionId;
-        const button = ui.element('button', core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === session.sessionId ? 'is-current' : '');
+        if (phone) row.dataset.phoneId = phone.id;
+        const current = () => phone ? core.state.activeChatSource === 'phone' && core.state.selectedPhoneConversationId === phone.id
+            : core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === session.sessionId && !core.state.newConversation;
+        const button = ui.element('button', current() ? 'is-current' : '');
         button.type = 'button'; button.title = title; button.setAttribute('aria-label', title);
-        if (!nested) button.append(WeftIcons.create('chat', 16));
+        if (!nested || phone) button.append(WeftIcons.create(phone ? 'phone' : 'chat', 16));
         button.append(sidebarTitle(title));
         button.onclick = () => {
-            const select = () => core.selectSession(session.sessionId);
-            const current = core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === session.sessionId && !core.state.newConversation;
-            void Promise.resolve(!current && globalThis.WeftMotion ? WeftMotion.handoff(ui.byId('chat-scroll'), select) : select()).catch(error => ui.toast(core.failureMessage(error)));
+            const select = () => phone ? core.selectPhoneConversation(phone.id) : core.selectSession(session.sessionId);
+            void Promise.resolve(!current() && globalThis.WeftMotion ? WeftMotion.handoff(ui.byId('chat-scroll'), select) : select()).catch(error => ui.toast(core.failureMessage(error)));
         };
         const more = ui.element('button', 'session-more'); more.type = 'button'; more.setAttribute('aria-haspopup', 'menu');
         more.setAttribute('aria-label', `更多操作 ${title}`); more.append(WeftIcons.create('more', 16));
         more.onclick = () => sessionMenu(session, more);
-        row.append(button); appendStatus(row, session); row.append(more); bindRowActions(row, session, more);
+        row.append(button); appendStatus(row, session); row.append(more); bindRowActions(row, session, more, phone);
         return row;
+    }
+    function unlistedPhoneRow(record) {
+        const title = core.phoneDisplayTitle(record), row = ui.element('li', 'session-row'); row.dataset.phoneId = record.id;
+        const button = ui.element('button', core.state.activeChatSource === 'phone' && core.state.selectedPhoneConversationId === record.id ? 'is-current' : '');
+        button.type = 'button'; button.title = title; button.setAttribute('aria-label', title);
+        button.append(WeftIcons.create('phone', 16), sidebarTitle(title)); button.onclick = () => core.selectPhoneConversation(record.id);
+        row.append(button); appendStatus(row, record); return row;
     }
     function relativeActivity(value) {
         if (!value || !Number.isFinite(Date.parse(value))) return '未记录';
@@ -73,7 +83,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             if (core.accountIdentityCurrent(token)) await core.archiveSession(session.sessionId, false);
         });
     }
-    function bindRowActions(row, session, more) {
+    function bindRowActions(row, session, more, phone = null) {
         row.addEventListener('contextmenu', event => {
             event.preventDefault(); sessionMenu(session, more, false, {x:event.clientX,y:event.clientY});
         });
@@ -82,15 +92,15 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             hoverTimer = setTimeout(() => {
                 hoverTimer = null;
                 if (!row.isConnected || document.querySelector('.session-menu:not([hidden])')) return;
-                const details = core.sessionHoverDetails(session);
+                const details = { ...core.sessionHoverDetails(session), ...(phone ? {title:core.phoneDisplayTitle(phone)} : {}) };
                 hoverCard = ui.element('div', 'session-hover-card'); hoverCard.setAttribute('role', 'tooltip');
                 hoverCard.id = 'session-hover-details'; hoverTrigger = row.children[0]; hoverTrigger.setAttribute('aria-describedby', hoverCard.id);
                 hoverCard.setAttribute('aria-label', '对话详情');
                 const head = ui.element('div', 'session-hover-head');
                 head.append(ui.element('strong', '', details.title));
-                const device = WeftIcons.create('desktop', 16); device.setAttribute('role', 'img');
+                const device = WeftIcons.create(phone ? 'phone' : 'desktop', 16); device.setAttribute('role', 'img');
                 device.removeAttribute('aria-hidden');
-                device.setAttribute('aria-label', session.hostId && session.hostId !== core.state.hostId ? '其它设备' : '这台电脑');
+                device.setAttribute('aria-label', phone ? '手机原话' : session.hostId && session.hostId !== core.state.hostId ? '其它设备' : '这台电脑');
                 head.append(device, ui.element('span', 'session-hover-time', relativeActivity(details.activity))); hoverCard.append(head);
                 const project = core.state.projects?.find(item => item.projectId === session.projectId);
                 hoverCard.append(ui.element('p', '', `${core.computerName?.(session.hostId || core.state.hostId) || details.device}${session.computerOffline ? ' · 不在线' : ''}`));
@@ -224,11 +234,11 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         catch (error) { ui.byId('sessions-status').textContent = projectError(error); }
         finally { button.disabled = false; }
     }
-    function renderSidebarProjects(list, query, projects) {
+    function renderSidebarProjects(list, query, projects, phonesBySession) {
         let projectMatches = 0;
         for (const project of projects) {
             const sessions = core.projectConversations(project.projectId);
-            if (query && !project.name.toLocaleLowerCase().includes(query) && !sessions.some(session => (session.title || '新对话').toLocaleLowerCase().includes(query))) continue;
+            if (query && !project.name.toLocaleLowerCase().includes(query) && !sessions.some(session => conversationTitle(session, phonesBySession.get(session.sessionId)).toLocaleLowerCase().includes(query))) continue;
             projectMatches++;
             const row = ui.element('li', 'sidebar-project'); row.dataset.projectId = project.projectId;
             const title = ui.element('div', 'sidebar-project-heading');
@@ -264,8 +274,8 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             if (!collapsedProjects.has(project.projectId) || query) {
                 const children = ui.element('ul', 'project-conversations');
                 for (const session of query || core.projectExpanded(project.projectId) ? sessions : sessions.slice(0, 5)) {
-                    if (query && !project.name.toLocaleLowerCase().includes(query) && !(session.title || '新对话').toLocaleLowerCase().includes(query)) continue;
-                    children.append(conversationRow(session, true));
+                    if (query && !project.name.toLocaleLowerCase().includes(query) && !conversationTitle(session, phonesBySession.get(session.sessionId)).toLocaleLowerCase().includes(query)) continue;
+                    children.append(conversationRow(session, true, phonesBySession.get(session.sessionId)));
                 }
                 if (!query && sessions.length > 5) {
                     const expanded = core.projectExpanded(project.projectId), item = ui.element('li');
@@ -317,6 +327,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     function sessionMenu(session, trigger, groupsOnly = false, point = null) {
         closeHoverCard();
         if(groupsOnly){activeSubmenu?.remove();}else closeMenu();
+        const phone = core.phoneConversations().find(record => core.phoneBinding(record.id)?.sessionId === session.sessionId);
         const menu = ui.element('div', 'session-menu'); if(groupsOnly)activeSubmenu=menu;else activeMenu = menu; menu.setAttribute('role','menu'); menu.setAttribute('aria-label',groupsOnly === 'memory' ? '记忆与保留' : groupsOnly === 'retention' ? '自动删除期限' : groupsOnly === 'project' ? '移至项目' : groupsOnly?'移至分组':'对话操作');
         const notice = ui.element('p','form-error'); notice.setAttribute('role','alert');
         const action = (label, run, options = {}) => {
@@ -348,6 +359,11 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             action('新建分组…',()=>{closeMenu();editName('新建分组','',async name=>{const result=await core.sessionGroupAction('POST',null,name);if(result)await core.updateSession(session.sessionId,{groupId:result.group.id});});},{separator:true});
             action('移出分组',async()=>{await core.updateSession(session.sessionId,{groupId:null});closeMenu();},{role:'menuitemradio',checked:!session.groupId});
             action('管理分组',()=>{closeMenu();manageGroups();});
+        }else if(phone){
+            action('打开手机原话',()=>{closeMenu();core.selectPhoneConversation(phone.id);});
+            action(session.pinned?'取消置顶':'置顶',async()=>{await core.updateSession(session.sessionId,{pinned:!session.pinned});closeMenu();},{role:'menuitemcheckbox',checked:!!session.pinned,key:'P'});
+            const project=action('移至项目',()=>sessionMenu(session,project,'project'),{submenu:true});
+            const group=action('移至分区',()=>sessionMenu(session,group,true),{submenu:true});
         }else if(session.kind === 'main' && core.supportsWorkModes?.()){
             action('打开对话',()=>{closeMenu();return core.selectSession(session.sessionId);});
             action(session.unread?'标记为已读':'标记为未读',async()=>{
@@ -458,10 +474,13 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     function renderSessions() {
         acknowledgeVisibleConversation();
         archivedRedraw?.();
+        const phoneRecords = core.phoneConversations();
+        const bindings = phoneRecords.map(record => [record.id, core.phoneBinding(record.id)]);
+        const phonesBySession = new Map(phoneRecords.map((record, index) => [bindings[index][1]?.sessionId, record]).filter(([sessionId]) => sessionId));
         const signature = JSON.stringify([core.state.ownerId, core.state.identityGeneration, core.state.selectedSessionId,
             core.state.activeChatSource, core.state.selectedPhoneConversationId, core.state.models.length,
             core.state.projectCanManage, core.state.projectsError, core.state.sessions, core.state.projects,
-            core.state.sessionGroups, core.state.sessionListNextCursor, core.state.sessionListCursor, core.state.sessionStatusSummary, core.phoneConversations(), core.state.sessionListQuery, core.sidebarConversationMode?.(),
+            core.state.sessionGroups, core.state.sessionListNextCursor, core.state.sessionListCursor, core.state.sessionStatusSummary, phoneRecords, bindings, core.state.sessionListQuery, core.sidebarConversationMode?.(),
             [...collapsedGroups], [...collapsedProjects], [...collapsedSections], recentFilter, expandedProjectList, (core.state.projects || []).map(p => core.projectPinned(p.projectId)), (core.state.projects || []).map(p => core.projectExpanded(p.projectId))]);
         // Live updates often repaint the same sidebar. Keep its hovered / focused
         // rows mounted so the half-second detail timer and keyboard path survive.
@@ -472,9 +491,11 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const focusMore = focused?.className?.split(' ').includes('session-more');
         const liveList = ui.byId('session-list'), previousRows = new Map([...liveList.children].map(row => [sidebarRows.get(row)?.key, row]));
         const list = ui.element('ul');
-        const phone = (collapsedSections.has('recent') || recentFilter === 'work' ? [] : core.phoneConversations()).filter(record => !core.state.sessions.find(session =>
-            session.sessionId === core.phoneBinding(record.id)?.sessionId && (session.projectId || session.pinned)));
-        const linkedSessionIds = new Set(phone.map((record) => core.phoneBinding(record.id)?.sessionId).filter(Boolean));
+        const allSessions = core.sessionList(), sessionIds = new Set(allSessions.map(session => session.sessionId));
+        // A known execution session owns the section; its phone record owns the
+        // title and reading action. Only records without a listed session stand alone.
+        const phone = (collapsedSections.has('recent') || recentFilter === 'work' ? [] : phoneRecords)
+            .filter(record => !sessionIds.has(core.phoneBinding(record.id)?.sessionId));
 
         ui.byId('sessions-status').textContent = '';
         const query = (core.state.sessionListQuery || '').normalize('NFKC').trim().toLocaleLowerCase();
@@ -496,7 +517,6 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             }
             list.append(row);
         };
-        const allSessions=core.sessionList();
         const projects = (core.state.projects || []).filter(project => !project.revoked);
         const pinnedProjects = projects.filter(project => core.projectPinned(project.projectId));
         const otherProjects = projects.filter(project => !core.projectPinned(project.projectId));
@@ -504,16 +524,16 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         heading('pinned', '置顶', [...pinnedSessions, ...pinnedProjects.map(project => core.sidebarStatus('projects', project.projectId, core.projectConversations(project.projectId)))]);
         let projectMatches = 0;
         if (!collapsedSections.has('pinned') || query) {
-            projectMatches += renderSidebarProjects(list, query, pinnedProjects);
+            projectMatches += renderSidebarProjects(list, query, pinnedProjects, phonesBySession);
             for (const session of WeftUiCore.sortSessions(pinnedSessions)) {
-                if (!core.sessionIdPattern.test(session.sessionId) || query && !(session.title || '新对话').normalize('NFKC').toLocaleLowerCase().includes(query)) continue;
-                list.append(conversationRow(session)); matches++;
+                if (!core.sessionIdPattern.test(session.sessionId) || query && !conversationTitle(session, phonesBySession.get(session.sessionId)).normalize('NFKC').toLocaleLowerCase().includes(query)) continue;
+                list.append(conversationRow(session, false, phonesBySession.get(session.sessionId))); matches++;
             }
             if (!pinnedProjects.length && !pinnedSessions.length && !query) list.append(ui.element('li', 'project-empty', '常用项目和对话可在菜单中置顶。'));
         }
         heading('projects', '项目', otherProjects.map(project => core.sidebarStatus('projects', project.projectId, core.projectConversations(project.projectId))));
         if (!collapsedSections.has('projects') || query) {
-            projectMatches += renderSidebarProjects(list, query, query || expandedProjectList ? otherProjects : otherProjects.slice(0, 5));
+            projectMatches += renderSidebarProjects(list, query, query || expandedProjectList ? otherProjects : otherProjects.slice(0, 5), phonesBySession);
             if (!projects.length) list.append(ui.element('li', 'project-empty', core.state.projectsError || (core.state.projectCanManage ? '添加一个文件夹，开始工作。' : '在电脑上添加项目后，可在这里开始工作。')));
             if (!query && otherProjects.length > 5) {
                 const row = ui.element('li'), more = ui.element('button', 'project-expand', expandedProjectList ? '收起项目' : `展开显示（${otherProjects.length - 5}）`);
@@ -525,9 +545,9 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         heading('recent','最近',allSessions.filter(row=>!row.projectId && !row.pinned));
         const sessions = collapsedSections.has('recent')&&!query ? [] : allSessions.filter(session => !session.projectId && !session.pinned && (recentFilter==='all'||core.conversationMode?.(session)===recentFilter));
         for (const session of globalThis.WeftUiCore.sortSessions(sessions).sort(globalThis.WeftUiCore.compareSessionGroups)) {
-            if (!core.sessionIdPattern.test(session.sessionId) || linkedSessionIds.has(session.sessionId))
+            if (!core.sessionIdPattern.test(session.sessionId))
                 continue;
-            const title = typeof session.title === 'string' && session.title ? session.title : '新对话';
+            const title = conversationTitle(session, phonesBySession.get(session.sessionId));
             if (query && !title.normalize('NFKC').toLocaleLowerCase().includes(query))
                 continue;
             const group = (core.state.sessionGroups || []).find(item => item.id === session.groupId)?.name || '未分组';
@@ -545,22 +565,13 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             }
             matches++;
             if(collapsedGroups.has(groupId) && !query) continue;
-            list.append(conversationRow(session));
+            list.append(conversationRow(session, false, phonesBySession.get(session.sessionId)));
         }
         for (const record of phone) {
             if (query && !core.phoneDisplayTitle(record).normalize('NFKC').toLocaleLowerCase().includes(query))
                 continue;
             matches++;
-            const row = ui.element('li'); row.dataset.phoneId = record.id;
-            const button = ui.element('button', core.state.activeChatSource === 'phone' &&
-                record.id === core.state.selectedPhoneConversationId ? 'is-current' : '');
-            button.type = 'button';
-            button.title = core.phoneDisplayTitle(record); button.append(WeftIcons.create('phone', 16), sidebarTitle(core.phoneDisplayTitle(record)));
-            const native = core.state.sessions.find(session=>session.sessionId===core.phoneBinding(record.id)?.sessionId);
-            row.className = 'session-row'; if(native) { row.dataset.sessionId=native.sessionId; }
-            button.addEventListener('click', () => { core.selectPhoneConversation(record.id); });
-            row.append(button); appendStatus(row, native ?? record);
-            list.append(row);
+            list.append(unlistedPhoneRow(record));
         }
         if ((!collapsedSections.has('recent') || query) && (core.state.sessionListNextCursor || core.state.sessionListCursor)) {
             const row = ui.element('li'), more = ui.element('button','',core.state.sessionListNextCursor ? '更早的对话' : '最近对话');
