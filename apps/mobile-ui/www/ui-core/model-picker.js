@@ -7,7 +7,7 @@
         let all = false, query = '', busy = false, revision = 0;
         popup.classList.add('wm-model-menu'); popup.setAttribute('role', 'menu'); popup.setAttribute('aria-label', '选择模型');
         trigger.classList.add('wm-model-trigger'); trigger.setAttribute('aria-haspopup', 'menu');
-        function close(focus = false) { revision++; popup.hidden = true; trigger.setAttribute('aria-expanded', 'false'); if (focus) trigger.focus(); }
+        function close(focus = false) { revision++; globalThis.WeftPopover?.hide(popup); popup.hidden = true; trigger.setAttribute('aria-expanded', 'false'); if (focus) trigger.focus(); }
         function render() {
             const state = view(), services = (state.services || []).filter(service => service.models?.some(model => model.enabled !== false));
             const current = state.selected || {}, rows = services.flatMap(service => service.models.filter(model => model.enabled !== false).map(model => ({ service, model })));
@@ -82,8 +82,9 @@
             event.preventDefault(); event.stopPropagation(); const index = items.indexOf(document.activeElement);
             items[event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
         });
-        document.addEventListener('click', event => { if (!popup.hidden && !popup.contains(event.target) && !trigger.contains(event.target)) close(); });
-        return { open, close, render, update() { const state = view(); const current = (state.services || []).flatMap(s => (s.models || []).map(m => ({s,m}))).find(({s,m}) => s.serviceId === state.selected?.serviceId && m.modelId === state.selected?.modelId); trigger.setAttribute('aria-label', `模型：${current?.m.name || state.modelName || '尚未选择'}`); if (!popup.hidden) render(); } };
+        const outside = event => { if (!popup.hidden && !popup.contains(event.target) && !trigger.contains(event.target)) close(); };
+        document.addEventListener('click', outside);
+        return { open, close, render, dispose() { close(); document.removeEventListener('click', outside); }, update() { const state = view(); const current = (state.services || []).flatMap(s => (s.models || []).map(m => ({s,m}))).find(({s,m}) => s.serviceId === state.selected?.serviceId && m.modelId === state.selected?.modelId); trigger.setAttribute('aria-label', `模型：${current?.m.name || state.modelName || '尚未选择'}`); if (!popup.hidden) render(); } };
     }
     globalThis.WeftModelPicker = { mount };
 })();

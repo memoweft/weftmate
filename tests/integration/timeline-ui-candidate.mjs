@@ -117,6 +117,7 @@ export async function startTimelineCandidate(options = {}) {
     listUserQuestions: async () => ({ runtimeId, questions: setupComplete ? [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] : [] }),
     respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; operations.push({kind:'answer',answer:input.answer}); result(frame.callId || 'question-1', JSON.stringify(input.answer)); return { accepted: true } },
   }
+  options.configureBackend?.(backend);
   if(options.digestModel)backend.modelCompletion=options.digestModel;
   if(options.verifyModelProfile)backend.verifyModelProfile=options.verifyModelProfile;
   const backupSettings = { enabled: true, directory: 'D:/Synthetic/UI-4-Backups', dailyDays: 7, weeklyCopies: 4 }, backupRows = [], backupOperations = [];
@@ -242,6 +243,14 @@ export async function startTimelineCandidate(options = {}) {
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
   return { root, origin, nativeWaitRegistered:()=>eventWaiters.size>0,
+    appendSessionEvent(id, type, data) {
+      const row = dailySessions.get(id); assert.ok(row);
+      const event = {seq:row.events.length,time:Date.now(),type,data}; row.events.push(event);
+      if(type==='turn/end'){row.running=false;if(id===sessionId)running=false;}
+      if(type==='turn/start'){row.running=true;if(id===sessionId)running=true;}
+      for(const wake of eventWaiters)wake(id,event.seq);
+      return event;
+    },
     resolveInitialApproval: async outcome => {
       await service.trackToolApproval({ action: 'resolve_approval', runtimeId, approvalId, sessionId, turn: 1,
         callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh',

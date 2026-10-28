@@ -104,6 +104,7 @@ const files = new Map([
   ['/personal/v1/ui/panels/browser.css', ['panels/browser.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/panels/files.js', ['panels/files.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/panels/chat.js', ['panels/chat.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/panels/chat.css', ['panels/chat.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/panels/subtasks.js', ['panels/subtasks.js', 'text/javascript; charset=utf-8']],
   ...['workspace.js', 'workspace.css'].map(name => [`/personal/v1/ui/panels/${name}`, [`panels/${name}`, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/workspace.css', ['workspace.css', 'text/css; charset=utf-8']],
