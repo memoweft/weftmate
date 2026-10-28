@@ -2,6 +2,8 @@
 globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     let registry, selected = 'general', dialog, search, navigation, content, picker, returnFocus, cloudNotice;
     const panels = new Map();
+    const phoneSettings=()=>!globalThis.weftmateDesktop&&matchMedia('(max-width:600px) and (pointer:coarse)').matches;
+    function showSettingsList(){dialog.dataset.mobilePage='list';ui.byId('settings-title').textContent='设置';}
     let transitions = [];
     function settleCategories() {
         for (const animation of transitions) animation.finish();
@@ -68,6 +70,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (id === 'healthData') id = 'reviewHealth';
         const category = registry.get(id);
         if (!category || !registry.list({ desktop: !!globalThis.weftmateDesktop }).includes(category)) return;
+        if(phoneSettings()){dialog.dataset.mobilePage='category';ui.byId('settings-title').textContent=category.name;}
         const sameScope = id !== 'usage' || usageScope === (options.sessionId || '');
         if (id === selected && sameScope && mountedCategories.get(id) === core.state.identityGeneration && !Object.keys(options).length && !search.value.trim()) return;
         if(id==='models')void core.refreshModelServices?.().catch(()=>ui.toast('模型服务暂时无法读取，请重试。'));
@@ -120,11 +123,12 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (!navigation.children.length) navigation.append(node('p', 'muted settings-empty', '没有匹配的设置，试试“主题”或“费用”。'));
         picker.value = selected;
         for (const button of navigation.querySelectorAll('button')) if (button.dataset.category === selected) { button.classList.add('is-selected'); button.setAttribute('aria-current', 'page'); }
-        if(search.value.trim()&&matches.length){if(!matches.some(category=>category.id===selected))selectSettings(matches[0].id);else locateSetting(panels.get(selected));}
+        if(search.value.trim()&&matches.length&&!(phoneSettings()&&dialog.dataset.mobilePage==='list')){if(!matches.some(category=>category.id===selected))selectSettings(matches[0].id);else locateSetting(panels.get(selected));}
     }
-    function openSettings(id = selected, options = {}) {
+    function openSettings(id, options = {}) {
         if (!dialog.open) { returnFocus = document.activeElement; if (id === 'memory') { void core.openMemory(); return; } core.openAccount(); }
-        selectSettings(id, options);
+        selectSettings(id??selected, options);
+        if(phoneSettings()&&id===undefined)showSettingsList();
     }
     function showSettingsDialog() {
         if (dialog?.open) return;
@@ -133,6 +137,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const ready = WeftControls.loading(strip, { rows: 1, compact: true });
         void core.loadUsageStrip().then(text => { if (text && dialog.open && ready()) strip.textContent = text; }).catch(() => { if (dialog.open && ready()) strip.textContent = '本月用量暂时无法读取，点此重试。'; });
         selectSettings(core.state.currentView === 'memory' ? 'memory' : selected);
+        if(phoneSettings())showSettingsList();
         if(selected==='about')void renderSettingsUpdates();
     }
     function hideSettingsDialog() { if (dialog?.open) {
@@ -225,6 +230,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         const account = ui.byId('account-view');
         dialog = node('dialog', 'settings-dialog'); dialog.id = 'settings-dialog'; dialog.setAttribute('aria-label', '设置');
+        dialog.toggleAttribute('data-phone-settings',phoneSettings());
         const strip = node('button', 'settings-usage-strip'); strip.id = 'settings-usage-strip'; strip.type = 'button'; strip.setAttribute('aria-label', '用量详情'); strip.onclick = () => selectSettings('usage');
         const sidebar = node('aside', 'settings-sidebar');
         const sidebarTitle = node('p', 'settings-sidebar-title', '设置');
@@ -234,7 +240,8 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const main = node('div', 'settings-main'), head = node('header', 'settings-head');
         const title = node('h1', '', '常规'); title.id = 'settings-title'; title.tabIndex = -1;
         const close = node('button', 'icon-close'); close.type = 'button'; close.setAttribute('aria-label', '关闭设置'); close.append(globalThis.WeftIcons.create('deny', 24));
-        head.append(title, close);
+        const back=node('button','icon-button settings-list-back');back.type='button';back.setAttribute('aria-label','返回设置');back.append(WeftIcons.create('chevron',18));back.onclick=showSettingsList;
+        head.append(back,title, close);
         picker = node('select', 'settings-category-picker'); picker.setAttribute('aria-label', '设置分类');
         content = node('div', 'settings-content');
         const bindDisclosures = () => content.querySelectorAll('details').forEach(globalThis.WeftSettingsControls.details);

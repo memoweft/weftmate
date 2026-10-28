@@ -3,7 +3,7 @@
     const defaults = { theme: 'system', accent: 'neutral', fontSize: '14', accentLight: 'neutral', accentDark: 'neutral', codeFontSize: '12',
         uiFontSize: '14', themePreset: 'default', themePresetLight: 'default', themePresetDark: 'default', font: 'system', fontLight: 'system', fontDark: 'system',
         backgroundLight: '', backgroundDark: '', foregroundLight: '', foregroundDark: '',
-        separateModes: true, contrast: '60', translucentSidebar: false, fullWidth: false, pointerCursor: false, diffStyle: 'color' };
+        separateModes: true, contrast: '60', translucentSidebar: false, fullWidth: false, pointerCursor: false, diffMarkers: 'color' };
     function normalize(value = {}) {
         const next = { ...defaults, ...value };
         const color = value => ['neutral', 'blue', 'green', 'purple'].includes(value);
@@ -17,7 +17,7 @@
         if (!['default','paper'].includes(next.themePreset)) next.themePreset = 'default';
         for (const key of ['themePresetLight','themePresetDark']) if (!['default','paper'].includes(next[key])) next[key] = next.themePreset;
         for (const key of ['separateModes','translucentSidebar','fullWidth','pointerCursor']) if (typeof next[key] !== 'boolean') next[key] = defaults[key];
-        if (!['color','symbols'].includes(next.diffStyle)) next.diffStyle = defaults.diffStyle;
+        if (!['color','sign'].includes(next.diffMarkers)) next.diffMarkers = defaults.diffMarkers;
         next.contrast = Number.isFinite(Number(next.contrast)) ? String(Math.min(100, Math.max(0, Math.round(Number(next.contrast))))) : defaults.contrast;
         if (!color(next.accent)) next.accent = defaults.accent;
         for (const key of ['accentLight', 'accentDark']) next[key] = color(value[key]) ? value[key] : next.accent;

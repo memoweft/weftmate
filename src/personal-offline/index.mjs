@@ -67,12 +67,19 @@ export async function createOfflineService(context) {
   return {
     deviceStatus(ownerId,deviceId) {
       const account=state.owners[ownerId],device=account?.devices[deviceId];if(!device)return null;
-      const received=Object.values(device.originals??{}),imports=context.accountState(ownerId).historyImports??[];
+      const imports=context.accountState(ownerId).historyImports??[];
+      const originals=new Map(Object.entries(device.originals??{}));
+      const partial=device.originalsPartial===true||device.originals===undefined;
+      const hasPhoneHistory=device.phoneFirst&&Object.values(account.phoneOwners??{}).some(ids=>ids.includes(deviceId));
+      if(partial&&hasPhoneHistory)for(const job of imports.filter(job=>job.app==='phone'))for(const item of job.items){
+        if(!item.deleted&&account.phoneOwners[item.id]?.includes(deviceId))originals.set(item.turnId,{conversationId:item.id,importId:job.id});
+      }
+      const received=[...originals.values()];
       const jobs=imports.filter(job=>received.some(item=>item.importId===job.id));
       const pending=jobs.find(job=>!['completed','forgotten','cancelled'].includes(job.state));
-      return {receivedOriginals:device.originals&&!device.originalsPartial?received.length:null,lastReceivedAt:device.lastReceivedAt??null,
+      return {receivedOriginals:!partial||hasPhoneHistory?received.length:null,lastReceivedAt:device.lastReceivedAt??null,
         memoryState:pending?.state??(jobs.some(job=>job.state==='cancelled')?'cancelled':jobs.length?'completed':received.length?'submitted':'idle'),
-        processed:jobs.reduce((n,job)=>n+job.items.filter(item=>item.done&&!item.deleted).length,0),
+        processed:jobs.reduce((n,job)=>n+job.items.filter(item=>item.done&&!item.deleted&&originals.has(item.turnId)).length,0),
         replicaPublishedAt:device.replicaPublishedAt??null};
     },
     generation: ownerId => owner(ownerId).generation,

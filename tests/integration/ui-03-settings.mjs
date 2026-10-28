@@ -25,7 +25,7 @@ async function launch(){
   const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
   Object.assign(env,{REVIEW_PROFILE:profile,REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken,REVIEW_THEME:'light',REVIEW_HIDDEN:'1',WEFTMATE_TEST_HOST_NAME:'synthetic-ui03'});
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:[bootstrap,'--disable-backgrounding-occluded-windows','--disable-features=CalculateNativeWinOcclusion'],env,timeout:30000});
-  page=await app.firstWindow();page.setDefaultTimeout(12000);page.on('pageerror',error=>report.errors.push(error.message));
+  page=await app.firstWindow();page.setDefaultTimeout(12000);page.on('pageerror',error=>report.errors.push({surface:'desktop',message:error.message,stack:error.stack}));
   if(baseline)for(const path of ['settings.css','components/settings-navigation.js','components/settings-appearance.js','components/settings.js','components/cloud-settings.js','ui-core/appearance.js','ui-core/settings-registry.js','ui-core/settings.js','ui-core/connector-view.js','ui-core/connectors.css']){
     const source=execFileSync('git',['show','HEAD:src/'+(path.startsWith('ui-core/')?path:'personal-access-ui/'+path)],{encoding:'utf8',windowsHide:true});
     await page.route('**/personal/v1/ui/'+path,route=>route.fulfill({body:source,contentType:path.endsWith('.css')?'text/css':'text/javascript'}));
@@ -34,9 +34,10 @@ async function launch(){
   await page.evaluate(()=>WeftReplyMotion.setVisibility(false));
 }
 try{
-  fixture=await startFixture();fixture.backend.listSlashCommands=async()=>({items:[{kind:'skill',name:'document-reader',description:'阅读指定文档并核对出处。'},{kind:'command',name:'status',description:'查看当前对话状态。'}]});
+  fixture=await startFixture();fixture.backend.listSlashCommands=async()=>({items:[{kind:'skill',name:'document-reader',description:'阅读指定文档并核对出处。'},{kind:'command',name:'status',description:'查看当前对话状态。'}],tools:[{name:'read_file',description:'读取工作目录中的文件。'}]});
   await launch();await open('general');
   assert.equal(await page.locator('.settings-navigation button').count(),21);
+  assert.equal(await page.getByRole('button',{name:'返回设置',exact:true}).count(),0,'desktop has no phone-only back button');
   if(!baseline){
     await page.getByRole('combobox',{name:'语言',exact:true}).click();await page.getByRole('searchbox',{name:'搜索语言',exact:true}).fill('简体');
     assert.equal(await page.getByRole('option',{name:'简体中文',exact:true}).getAttribute('aria-selected'),'true');await capture('language-menu');await page.keyboard.press('Escape');
@@ -48,7 +49,7 @@ try{
     const motion=page.getByRole('group',{name:'减少动态效果',exact:true});await motion.getByRole('button',{name:'开启',exact:true}).click();assert.equal(await page.evaluate(()=>WeftReplyMotion.reduced),true);
     await motion.getByRole('button',{name:'关闭',exact:true}).click();assert.equal(await page.evaluate(()=>WeftReplyMotion.reduced),false);
     await motion.getByRole('button',{name:'系统',exact:true}).click();
-    await page.getByRole('group',{name:'差异标记',exact:true}).getByRole('button',{name:'+/−',exact:true}).click();assert.equal(await page.evaluate(()=>document.documentElement.dataset.diffStyle),'symbols');
+    await page.getByRole('group',{name:'差异标记',exact:true}).getByRole('button',{name:'+/−',exact:true}).click();assert.equal(await page.evaluate(()=>document.documentElement.dataset.diffMarkers),'sign');
     await page.evaluate(()=>{globalThis.__ui03SetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key==='weftmate.desktop.appearance.v1')throw new Error('synthetic storage failure');return __ui03SetItem.call(this,key,value);};});
     await page.getByRole('switch',{name:'使用指针光标',exact:true}).click();assert.equal(await page.getByRole('switch',{name:'使用指针光标',exact:true}).isChecked(),true);
     await page.evaluate(()=>{Storage.prototype.setItem=__ui03SetItem;});report.checks.push('five appearance controls, normalization, persistence failure rollback');
@@ -57,7 +58,9 @@ try{
     const nextModel=await page.locator('#default-model-select').evaluate(el=>[...el.options].find(option=>option.value!==el.value).textContent);
     await page.getByRole('combobox',{name:'对话默认模型',exact:true}).click();await page.getByRole('option',{name:nextModel,exact:true}).click();
     await page.waitForFunction(()=>!document.querySelector('#default-model-select').disabled);assert.equal(await page.locator('#default-model-select').inputValue(),previous);report.checks.push('host save failure restores model selection');
+    await page.evaluate(()=>{const core=__feedbackSessionCore,read=core.readConnectors;core.readConnectors=async()=>({...await read(),connectors:[{id:'synthetic-notes',name:'合成资料连接器',enabled:true,status:'ready',activeToolCount:1,totalToolCount:1,tools:[{name:'mcp__synthetic__read',rawName:'read',description:'读取合成资料。',rule:'allow'}],credentials:[]},{id:'synthetic-calendar',name:'合成日历连接器',enabled:false,status:'idle',activeToolCount:0,totalToolCount:1,tools:[],credentials:[]}]});});
     await open('connectors');await page.locator('.capabilities-tabs').waitFor();await page.getByRole('tab',{name:'技能',exact:true}).click();await page.getByRole('button',{name:'document-reader',exact:true}).waitFor();
+    await page.getByRole('button',{name:'read_file',exact:true}).waitFor();
     await page.getByRole('searchbox',{name:'搜索能力',exact:true}).fill('does-not-exist');await page.getByText('没有匹配的能力，试试其他名称或筛选条件。',{exact:true}).waitFor();
     await page.getByRole('searchbox',{name:'搜索能力',exact:true}).fill('document');await page.getByRole('button',{name:'document-reader的更多操作',exact:true}).click();await page.getByRole('menuitem',{name:'查看技能说明',exact:true}).click();
     await page.getByRole('dialog',{name:'document-reader',exact:true}).getByRole('button',{name:'关闭',exact:true}).last().click();
@@ -80,7 +83,7 @@ try{
   for(const [width,height]of [[1280,800],[900,700]])for(const theme of ['light','dark']){
     await app.evaluate(({BrowserWindow},{width,height})=>BrowserWindow.getAllWindows()[0].setContentSize(width,height),{width,height});
     await page.evaluate(theme=>WeftDesktop.setAppearance({theme}),theme);
-    for(const id of ['general','appearance','connectors','devices']){await open(id);await capture(`${baseline?'before':'after'}-${width}-${theme}-${id}`);assert.ok(await page.locator('#settings-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth));}
+    for(const id of ['general','appearance','connectors','devices']){await open(id);if(!baseline&&id==='connectors'){await page.getByRole('tab',{name:'技能',exact:true}).click();await capture(`after-${width}-${theme}-skills`);await page.getByRole('tab',{name:'连接器',exact:true}).click();}await capture(`${baseline?'before':'after'}-${width}-${theme}-${id}`);assert.ok(await page.locator('#settings-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth));}
   }
   const performance=await page.evaluate(async()=>{
     const longTasks=[],frames=[],shifts=[];const observers=[];
@@ -92,17 +95,29 @@ try{
   });report.performance.push(performance);
   if(!baseline){const saved=await page.evaluate(()=>WeftDesktop.getAppearance());await app.close();app=null;await launch();assert.deepEqual(await page.evaluate(()=>WeftDesktop.getAppearance()),saved);report.checks.push('actual Electron restart preserves appearance');}
   if(!baseline){
-    await app.close();app=null;mobileFixture=await startFixture({auth1:true});browser=await chromium.launch({channel:'chrome',headless:true});
-    page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});page.on('pageerror',error=>report.errors.push(error.message));
+    await app.close();app=null;mobileFixture=await startFixture({auth1:true});browser=await chromium.launch({headless:true});
+    page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});page.on('pageerror',error=>report.errors.push({surface:'phone',message:error.message,stack:error.stack}));
+    await page.addInitScript(()=>{globalThis.__ui03Rejections=[];addEventListener('unhandledrejection',event=>__ui03Rejections.push({code:event.reason?.code,message:event.reason?.message,stack:event.reason?.stack}));});
+    const [cookieName,...cookieValue]=mobileFixture.mobileCookie.split('=');await page.context().addCookies([{name:cookieName,value:cookieValue.join('='),url:mobileFixture.origin,httpOnly:true,sameSite:'Strict'}]);
     await page.goto(mobileFixture.origin+'/personal/v1/ui');await feedbackUiSession(page,mobileFixture);await page.waitForFunction(()=>!!globalThis.WeftSettingsNavigation);
+    // The fixture supplies a verified host Cookie, without control-plane client
+    // credentials. Browse that host session rather than starting a cloud login.
+    await page.evaluate(()=>{__feedbackSessionCore.state.cloudAuth.mode='offline';__feedbackSessionCore.state.cloudAuth.localSession=true;});
+    await page.evaluate(()=>WeftSettingsNavigation.open());
+    await page.locator('#settings-dialog[data-mobile-page=list]').waitFor();await page.locator('.settings-navigation button[data-category=appearance]').click();
+    await page.getByRole('button',{name:'返回设置',exact:true}).click();await page.locator('#settings-dialog[data-mobile-page=list]').waitFor();
+    assert.equal(await page.getByRole('button',{name:'返回设置',exact:true}).count(),0,'phone list has no redundant back button');
+    await page.screenshot({path:join(output,'mobile-settings-list.png')});report.checks.push('phone settings list pushes a category and returns without losing mounted controls');
     for(const theme of ['light','dark'])for(const id of ['appearance','connectors','devices']){
       await page.evaluate(({theme,id})=>{WeftDesktop.setAppearance({theme});WeftSettingsNavigation.open(id);},{theme,id});await page.locator(`.settings-category[data-category=${id}]`).waitFor();
       await page.evaluate(async()=>{for(const animation of document.getAnimations())if(Number.isFinite(animation.effect.getTiming().iterations))animation.finish();await new Promise(requestAnimationFrame);});
       assert.ok(await page.locator('#settings-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth));
+      if(id==='connectors')for(const label of ['已启用','已停用','已配置','全部']){const filter=page.getByRole('combobox',{name:'筛选能力',exact:true});await filter.click();await page.getByRole('option',{name:label,exact:true}).click();assert.ok(await filter.locator('span').evaluate(el=>el.scrollWidth<=el.clientWidth),'filter label remains fully readable');}
       await page.screenshot({path:join(output,`mobile-${theme}-${id}.png`)});
     }
     report.checks.push('authenticated phone web at 390 px in both themes has no horizontal overflow');
   }
-  assert.deepEqual(report.errors,[]);await writeFile(join(output,'verification.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+  if(mobileFixture)report.phoneRejections=await page.evaluate(()=>globalThis.__ui03Rejections);
+  await writeFile(join(output,'verification.json'),JSON.stringify(report,null,2));assert.deepEqual(report.errors,[]);console.log(JSON.stringify(report));
 }catch(error){if(page){await capture('failure').catch(()=>{});await writeFile(join(output,'failure.txt'),(await page.locator('body').innerText()).slice(-6000));}throw error;}
 finally{clearTimeout(deadline);await browser?.close();await app?.close();await mobileFixture?.close();await fixture?.close();await rm(profile,{recursive:true,force:true});}

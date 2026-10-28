@@ -9,7 +9,7 @@
         root.dataset.accent = theme === 'dark' ? value.accentDark : value.accentLight;
         root.style.setProperty('--code-size', `var(--wm-font-size-${value.codeFontSize}, ${value.codeFontSize}px)`);
         root.toggleAttribute('data-pointer-cursor',value.pointerCursor===true);
-        root.dataset.diffStyle=value.diffStyle;
+        root.dataset.diffMarkers=value.diffMarkers;
     }
     function mount(target, options) {
         target.classList.add('appearance-page');

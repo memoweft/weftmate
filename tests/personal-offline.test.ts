@@ -1,7 +1,7 @@
 import test from 'node:test';
 import { tamperCiphertext } from './helpers/tamper-ciphertext.mjs';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { webcrypto, randomBytes } from 'node:crypto';
@@ -55,6 +55,15 @@ test('device sync summary counts acknowledged originals once and keeps receipt s
   assert.deepEqual(reopened.deviceStatus(identity.ownerId,identity.deviceId),status);
   await f.service.invalidate(identity.ownerId);
   assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).receivedOriginals,0);
+});
+
+test('existing phone imports supply real per-device counts without inventing a receipt timestamp',async t=>{
+  const f=await fixture(t);
+  await writeFile(path.join(f.root,'offline-metadata.json'),JSON.stringify({version:1,owners:{[identity.ownerId]:{generation:1,devices:{[identity.deviceId]:{phoneFirst:true}},receipts:{},phoneOwners:{'old-chat':[identity.deviceId]}}}}));
+  f.context.accountState=()=>({historyImports:[{id:'old-import',app:'phone',state:'running',items:[{id:'old-chat',turnId:'old-one',done:true},{id:'old-chat',turnId:'old-two',done:false},{id:'other-phone',turnId:'other',done:true}]}]});
+  const service=await createOfflineService(f.context);t.after(()=>service.close());
+  const status=service.deviceStatus(identity.ownerId,identity.deviceId);
+  assert.equal(status.receivedOriginals,2);assert.equal(status.processed,1);assert.equal(status.lastReceivedAt,null);assert.equal(status.memoryState,'running');
 });
 
 test('device envelope authenticates contents and identity; storage is encrypted and key replacement removes old values', async () => {

@@ -4,7 +4,7 @@
 .capabilities-tabs [role=tab] { border:0; border-radius:0; padding:var(--wm-space-8) 0; color:var(--ink-secondary); background:transparent; border-bottom:2px solid transparent; }
 .capabilities-tabs [aria-selected=true] { border-bottom-color:var(--ink); color:var(--ink); font-weight:600; }
 .capabilities-toolbar { display:flex; align-items:center; gap:var(--wm-space-12); min-width:0; }
-.capabilities-search { width:100%; min-width:0; }
+.capabilities-search { flex:1; width:0; min-width:0; }
 .capabilities-toolbar > :last-child { flex:none; }
 .capabilities-toolbar .settings-select { width:auto; min-width:112px; max-width:none; }
 .capability-group { margin-bottom:var(--wm-space-24); }

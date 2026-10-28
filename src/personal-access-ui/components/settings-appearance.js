@@ -36,7 +36,7 @@
         root.toggleAttribute('data-translucent-sidebar', value.translucentSidebar === true);
         root.toggleAttribute('data-page-full-width', value.fullWidth === true);
         root.toggleAttribute('data-pointer-cursor', value.pointerCursor === true);
-        root.dataset.diffStyle = value.diffStyle;
+        root.dataset.diffMarkers = value.diffMarkers;
         globalThis.dispatchEvent(new CustomEvent('weftmate:appearance', {detail:{...value}}));
         for (const entry of mounted) if (entry.target.isConnected) entry.sync();
     }
@@ -149,8 +149,8 @@
             input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();input.blur();}});
             wrap.append(input,node('span','muted','px')); sizes.append(WeftSettingsControls.row(label,help,wrap));
         }
-        const diff = choice('差异标记', [['color','颜色'],['symbols','+/−']], value => void save({diffStyle:value}));
-        controls.set('diffStyle',diff.source);
+        const diff = choice('差异标记', [['color','颜色'],['sign','+/−']], value => void save({diffMarkers:value}));
+        controls.set('diffMarkers',diff.source);
         sizes.append(WeftSettingsControls.row('差异标记','审查改动时使用颜色，或为增删行显示 + 和 −。',diff.wrap));
         target.append(advanced);WeftSettingsControls.details(advanced);
         const behavior = group(advanced, '显示偏好');

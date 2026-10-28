@@ -59,6 +59,12 @@ Windows 的中间页头、右侧标签和原生窗口按钮共用顶部一行，
 
 ## 项目与验证
 
+设置沿用 `ui-core/settings-registry.js` 的 21 类，搜索按关键字定位行，分类保留已挂载控件并按身份代次重载。页面加载失败在当前分类重试；模型偏好独立于系统诊断读取。设备偏好使用原 `createAppearance`，保存失败恢复原值；动态效果沿用 `WeftReplyMotion`。字号在失焦时取整并限制到 10–24，空值恢复默认。
+
+能力页复用连接器配置、模型目录与当前执行会话的 DSH 工具、技能、命令清单。工具描述来自 DSH 的 `systemPrompt.assemble({scope:agent}).tools`，不返回工具参数 schema。搜索、筛选和标签切换保留浏览状态；工具规则和凭据仍走原接口。审查面板读取外观的 `diffMarkers: color | sign`，监听 `weftmate:appearance` 原地更新标记。
+
+设备页通过 `/devices/sync` 读取当前账户的同步摘要，只含条数、接收时间、整理状态及副本提供时间。收到原话和完成记忆整理分别显示，副本时间明确标注“电脑已提供”，未知历史不计作零；配对沿用已有核对数字弹窗。验证入口为 `tests/integration/ui-03-settings.mjs`，截图留在外部证据目录。
+
 项目置顶是当前账号在本设备的侧栏偏好；归档使用原会话归档接口，可在设置恢复。更改文件夹位置通过系统选择器与原生桥，对原 `/projects/:id` 执行 `PATCH`；宿主验证原生身份、目录、修订号与运行状态。只更改登记，文件不会搬动。公开网页响应仍不暴露完整路径。
 
 面板真实操作检查为 `tests/integration/ui-01-shell.mjs`，通过 `tests/ui-01-shell.test.ts` 纳入测试。使用独立 Electron 身份、临时资料与随机服务端口。生成手机副本运行 `node apps/mobile-ui/src/build-ui-core.mjs`；令牌运行 `node scripts/generate-tokens.mjs`。截图和包清单留在外部证据目录。

@@ -82,6 +82,8 @@
           groups.append(button('添加自定义连接器',()=>form(),'secondary small'));
         }
       }else{
+        const connectorNames=new Set(saved.connectors.flatMap(connector=>connector.tools.map(tool=>tool.name)));
+        group('DSH 工具',(catalog?.tools||[]).filter(tool=>!connectorNames.has(tool.name)).map(tool=>({name:tool.name,description:tool.description,state:'当前对话可用',enabled:true,configured:true,open:()=>skillDetail({...tool,kind:'tool'}),actions:[{name:'查看工具说明',action:()=>skillDetail({...tool,kind:'tool'})}]})));
         group('DSH 技能',(catalog?.items||[]).filter(item=>item.kind==='skill').map(item=>({name:item.name,description:item.description,state:'已安装 · 当前对话可用',enabled:true,configured:true,icon:'folder',open:()=>skillDetail(item),actions:[{name:'查看技能说明',action:()=>skillDetail(item)}]})));
         group('DSH 命令',(catalog?.items||[]).filter(item=>item.kind==='command').map(item=>({name:`/${item.name}`,description:item.description,state:'当前对话可用',enabled:true,configured:true,open:()=>skillDetail(item),actions:[{name:'查看命令说明',action:()=>skillDetail(item)}]})));
         group('连接器工具',saved.connectors.flatMap(connector=>connector.tools.map(tool=>({name:tool.displayName||tool.rawName,description:tool.description,state:`${connector.name} · ${!connector.enabled?'已停用':tool.rule==='deny'?'已禁止':tool.rule==='ask'?'使用前询问':'已启用'}`,enabled:connector.enabled&&tool.rule!=='deny',configured:true,open:()=>{selected=connector.id;draw();},actions:[{name:'查看工具规则',action:()=>{selected=connector.id;draw();}}]}))));
@@ -91,7 +93,7 @@
       if(!count)groups.prepend(node('p','capability-empty muted',query||filter!=='all'?'没有匹配的能力，试试其他名称或筛选条件。':'这里还没有可用项目。'));
     }
     async function addBuiltin(item){if(item.fields.length)return form(item);try{await act({action:'add',builtinId:item.id});toast('连接器已添加');}catch{toast('添加未完成，请重试。');}}
-    function skillDetail(item){const view=dialog(item.name);view.content.append(node('p','',item.description||'此项由 DSH 在当前对话中提供。'),node('p','muted',item.kind==='skill'?'在对话输入 / 后选择这个技能即可使用。':'在对话输入完整命令后发送即可使用。'));view.actions.append(button('关闭',()=>editor.close()));view.form.onsubmit=event=>event.preventDefault();}
+    function skillDetail(item){const view=dialog(item.name);view.content.append(node('p','',item.description||'此项由 DSH 在当前对话中提供。'),node('p','muted',item.kind==='tool'?'助手会按你的请求使用此工具，并遵循当前权限设置。':item.kind==='skill'?'在对话输入 / 后选择这个技能即可使用。':'在对话输入完整命令后发送即可使用。'));view.actions.append(button('关闭',()=>editor.close()));view.form.onsubmit=event=>event.preventDefault();}
     function detail(id) {
       const item=saved.connectors.find(row=>row.id===id);if(!item){selected=null;return draw();}
       body.append(button('返回连接器',()=>{selected=null;draw();}),node('h2','',item.name));if(item.message)body.append(node('p','connector-problem',item.message));

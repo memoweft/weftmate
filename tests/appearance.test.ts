@@ -13,21 +13,21 @@ function fixture(saved?: string) {
 
 test('failed appearance persistence retains the last saved preferences', () => {
     const f = fixture(), store = f.api.createAppearance(f.storage);
-    store.set({ ...store.value, pointerCursor: true, diffStyle: 'symbols' });
+    store.set({ ...store.value, pointerCursor: true, diffMarkers: 'sign' });
     f.storage.setItem = () => { throw new Error('storage full'); };
     assert.throws(() => store.set({ ...store.value, pointerCursor: false }), /storage full/);
     assert.equal(store.value.pointerCursor, true);
-    assert.equal(store.value.diffStyle, 'symbols');
+    assert.equal(store.value.diffMarkers, 'sign');
 });
 
 test('pointer and diff preferences survive reopening and reject invalid external values', () => {
     const f = fixture(), store = f.api.createAppearance(f.storage);
-    store.set({ ...store.value, pointerCursor: true, diffStyle: 'symbols' });
+    store.set({ ...store.value, pointerCursor: true, diffMarkers: 'sign' });
     assert.equal(f.api.createAppearance(f.storage).value.pointerCursor, true);
-    assert.equal(f.api.createAppearance(f.storage).value.diffStyle, 'symbols');
-    store.set({ pointerCursor: 'yes', diffStyle: 'unknown' });
+    assert.equal(f.api.createAppearance(f.storage).value.diffMarkers, 'sign');
+    store.set({ pointerCursor: 'yes', diffMarkers: 'unknown' });
     assert.equal(store.value.pointerCursor, false);
-    assert.equal(store.value.diffStyle, 'color');
+    assert.equal(store.value.diffMarkers, 'color');
 });
 test('appearance defaults, separate accents and code size survive a new device store instance', () => {
     const f = fixture(), store = f.api.createAppearance(f.storage);
