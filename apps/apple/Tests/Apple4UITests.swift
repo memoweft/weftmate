@@ -12,6 +12,19 @@ final class Apple4UITests: XCTestCase {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "apple4-" + theme + "-" + name; attachment.lifetime = .keepAlways; add(attachment)
     }
+    @MainActor func testCandidatePreferencesOpenAcrossFixtureRelaunches() throws {
+        let origin = try XCTUnwrap(ProcessInfo.processInfo.environment["WEFTMATE_APPLE3_ORIGIN"])
+        for index in 0..<3 {
+            let app = XCUIApplication()
+            app.launchArguments = ["--ui-testing", "--apple4-fixture", "--health4-render-only",
+                "--a5-local-server", "--server-url", origin, "--ui-testing-namespace", "prefs-" + UUID().uuidString]
+            app.launch()
+            XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "mainChat.draft").firstMatch.waitForExistence(timeout: 30))
+            XCTAssertFalse(app.staticTexts["无法打开测试存储，请检查启动参数。"].exists)
+            capture(app, "storage", "preferences-relaunch-" + String(index))
+            app.terminate()
+        }
+    }
     @MainActor func testSmallScreenRefreshBatch() throws {
         let origin = ProcessInfo.processInfo.environment["WEFTMATE_APPLE3_ORIGIN"]!
         for theme in ["light", "dark"] {
