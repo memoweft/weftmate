@@ -65,6 +65,16 @@ export async function createOfflineService(context) {
     return result;
   }
   return {
+    deviceStatus(ownerId,deviceId) {
+      const account=state.owners[ownerId],device=account?.devices[deviceId];if(!device)return null;
+      const received=Object.values(device.originals??{}),imports=context.accountState(ownerId).historyImports??[];
+      const jobs=imports.filter(job=>received.some(item=>item.importId===job.id));
+      const pending=jobs.find(job=>!['completed','forgotten','cancelled'].includes(job.state));
+      return {receivedOriginals:device.originals&&!device.originalsPartial?received.length:null,lastReceivedAt:device.lastReceivedAt??null,
+        memoryState:pending?.state??(jobs.some(job=>job.state==='cancelled')?'cancelled':jobs.length?'completed':received.length?'submitted':'idle'),
+        processed:jobs.reduce((n,job)=>n+job.items.filter(item=>item.done&&!item.deleted).length,0),
+        replicaPublishedAt:device.replicaPublishedAt??null};
+    },
     generation: ownerId => owner(ownerId).generation,
     canDispatch:tasks.canDispatch,
     start: tasks.start,
@@ -79,7 +89,7 @@ export async function createOfflineService(context) {
         for(const [id,command] of Object.entries(next.commands))if(command.offlineSource&&command.state==='pending')delete next.commands[id];
       }));
       // No recalled text or source text is kept here, including failed cleanup retries.
-      for (const device of Object.values(current.devices)) device.hashes = {};
+      for (const device of Object.values(current.devices)) { device.hashes = {}; device.originals={};device.originalsPartial=false; device.lastReceivedAt=null; device.replicaPublishedAt=null; }
       await save();
       await fragments.clear(ownerId);
       await context.memoryManager?.discardOfflinePending?.(ownerId);
@@ -141,7 +151,8 @@ export async function createOfflineService(context) {
             payload = { ...replicaDelta(snapshot, known), ...metadata };
           }
           authorize();
-          account.devices[deviceId] = { publicJwk, keyId: hash(publicJwk), phoneFirst:body.phoneFirst === true || model === null };
+          account.devices[deviceId] = { ...account.devices[deviceId], publicJwk, keyId: hash(publicJwk), phoneFirst:body.phoneFirst === true || model === null,
+            originals:account.devices[deviceId]?.originals??{},originalsPartial:account.devices[deviceId]?account.devices[deviceId].originalsPartial??!account.devices[deviceId].originals:false,replicaPublishedAt:metadata.syncedAt };
           await save();
           return sealReplica(payload, publicJwk, { ownerId, hostId: context.rootState.hostId, deviceId: current.deviceId });
         }
@@ -156,6 +167,7 @@ export async function createOfflineService(context) {
           if(ids.some(id=>!account.phoneOwners?.[id]?.includes(deviceId)&&!fragments.owns(ownerId,deviceId,id)))throw failure('FORBIDDEN',403);
           account.forgottenConversations??=[];
           for(const id of ids)if(!account.forgottenConversations.includes(id))account.forgottenConversations.push(id);
+          for(const device of Object.values(account.devices))for(const [key,item]of Object.entries(device.originals??{}))if(ids.includes(item.conversationId))delete device.originals[key];
           await save();
           await context.historyImport.forgetPhone(ownerId,ids);
           // Publish the same erasure generation as every other memory mutation.
@@ -207,6 +219,13 @@ export async function createOfflineService(context) {
           await save();
           for(const receipt of receipts){const map=mapping.find(m=>m.id===receipt.id);if(map)Object.assign(receipt,map,{importId:imported.importId,memoryState:imported.state});}
         }
+        const device=account.devices[deviceId];
+        for(const turn of submitted){
+          const receipt=receipts.find(item=>item.id===turn.id&&item.state==='synced');if(!receipt)continue;
+          device.originals??={};
+          if(!device.originals[turn.id]){device.originals[turn.id]={conversationId:turn.conversationId,...(receipt.importId?{importId:receipt.importId}:{})};device.lastReceivedAt=new Date(context.timestamp()).toISOString();}
+        }
+        await save();
         await fragments.acknowledged(ownerId,deviceId,receipts.map(r=>r.id));
         authorize();
         return { generation: account.generation, receipts, ...(assembled.receipts.length?{fragmentReceipts:assembled.receipts}:{}), ...(body.forgetConversations?{forgottenConversations:body.forgetConversations}:{}) };

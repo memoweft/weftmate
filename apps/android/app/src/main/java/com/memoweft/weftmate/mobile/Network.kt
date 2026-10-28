@@ -62,6 +62,7 @@ internal fun validBusinessPath(path: String): Boolean {
     if (query.isEmpty() && route == "/personal/v1/commands") return true
     // MEM-7 keeps reception, stable receipts and phone erasure on these exact paths.
     if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true
+    if (query.isEmpty() && route == "/personal/v1/devices/sync") return true
     if (query.isEmpty() && (route == "/personal/v1/status" || route == "/personal/v1/commands" ||
         route.matches(Regex("/personal/v1/commands/[A-Za-z0-9_-]{1,128}")) ||
         route.matches(Regex("/personal/v1/chats/(main|[A-Za-z0-9_-]{1,128})")))) return true

@@ -216,7 +216,7 @@
     function open(last = false) {
       if (trigger.disabled) return;
       menu.replaceChildren(); search = null;
-      if (select.options.length > 8) {
+      if (select.options.length > 8 || select.dataset.searchable === 'true') {
         search = document.createElement('input'); search.type = 'search'; search.placeholder = select.dataset.customYear === 'true' ? '输入或搜索年份' : '搜索选项'; search.setAttribute('aria-label', `搜索${label}`);
         search.oninput = () => render(search.value); menu.append(search);
       }

@@ -239,6 +239,18 @@ export function createHttpHandler(context) {
         context.authenticate(request, 'account:manage');
         return context.json(response, 200, { account: await context.updateAccountProfile(request, await context.readJson(request, 192 * 1024)) });
       }
+      if (request.method === 'GET' && pathname === '/personal/v1/devices/sync') {
+        if(url.search)throw failure('INVALID_REQUEST');
+        const current=context.authenticate(request,'account:manage');
+        const devices=Object.entries(state.devices).filter(([,device])=>!device.revoked).map(([deviceId])=>{
+          const cloudDeviceId=context.cloudIdentity?.cloudDeviceId(current.ownerId,deviceId);
+          let syncDeviceId=deviceId;try{syncDeviceId=context.cloudIdentity?.offlineDeviceId?.(ownerId,deviceId)??deviceId;}catch{}
+          const offline=context.offline.deviceStatus(ownerId,syncDeviceId),legacy=context.syncStores.get(ownerId)?.deviceStatus(deviceId);
+          const sync=offline??legacy;
+          return {deviceId,...(cloudDeviceId?{cloudDeviceId}:{}),sync};
+        });
+        return context.json(response,200,{devices});
+      }
       if (request.method === 'GET' && pathname === '/personal/v1/auth/devices') {
         if (url.search) throw failure('INVALID_REQUEST');
         const current = context.authenticate(request, 'account:manage');

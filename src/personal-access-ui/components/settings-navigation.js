@@ -20,7 +20,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         panel.hidden = false; panel.inert = false; panel.removeAttribute('aria-hidden');
         const order = registry.list({desktop:!!globalThis.weftmateDesktop}).map(item=>item.id);
         const direction = order.indexOf(next) > order.indexOf(previous) ? 1 : -1;
-        const timing = globalThis.WeftSettingsControls.timing();
+        const timing = globalThis.WeftSettingsControls.timing('--dur-1');
         const outgoing = old.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:`translateY(${-direction * 8}px)`}],timing);
         const incoming = panel.animate([{opacity:0,transform:`translateY(${direction * 12}px)`},{opacity:1,transform:'translateY(0)'}],timing);
         transitions = [outgoing,incoming];
@@ -29,7 +29,41 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     let updateGeneration = 0;
     let usageScope = '';
     const mountedCategories = new Map();
+    const mountAttempts=new Map();
+    let searchObserver,searchFrame,searchTimer,searchHit;
     const node = (tag, className, text) => ui.element(tag, className, text);
+    function locateSetting(panel) {
+        searchObserver?.disconnect();cancelAnimationFrame(searchFrame);clearTimeout(searchTimer);searchHit?.removeAttribute('data-search-hit');
+        const terms=search.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);if(!terms.length)return;
+        const locate=()=>{
+            const match=[...panel.querySelectorAll('.settings-row,label,.capability-item')].find(row=>terms.every(term=>row.textContent.toLocaleLowerCase().includes(term)));
+            if(!match)return false;
+            searchObserver?.disconnect();
+            for(let parent=match.parentElement;parent&&parent!==panel;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
+            searchFrame=requestAnimationFrame(()=>{searchFrame=requestAnimationFrame(()=>{
+                if(panel.hidden)return;match.scrollIntoView({block:'center',behavior:'instant'});match.dataset.searchHit='true';searchHit=match;
+                searchTimer=setTimeout(()=>match.removeAttribute('data-search-hit'),1600);
+            });});return true;
+        };
+        if(!locate()){searchObserver=new MutationObserver(locate);searchObserver.observe(panel,{childList:true,subtree:true});}
+    }
+    function mountCategory(category,panel,options) {
+        const identity=core.state.identityGeneration;
+        const attempt=(mountAttempts.get(category.id)||0)+1;mountAttempts.set(category.id,attempt);
+        const current=()=>identity===core.state.identityGeneration&&mountAttempts.get(category.id)===attempt;
+        const fail=()=>{
+            if(!current())return;mountedCategories.delete(category.id);
+            panel.querySelector('.settings-load-error')?.remove();
+            const error=node('div','settings-load-error'),retry=node('button','button secondary small','重试');retry.type='button';
+            error.setAttribute('role','status');error.append(node('p','muted',`${category.name}暂时无法打开，请重试。`),retry);panel.append(error);
+            retry.onclick=()=>{error.remove();mountCategory(category,panel,options);};
+        };
+        try {
+            const result=category.mount({...options,target:panel,core,ui});
+            if(result?.then)result.then(()=>{if(current())mountedCategories.set(category.id,identity);},fail);
+            else mountedCategories.set(category.id,identity);
+        }catch{fail();}
+    }
     function selectSettings(id, options = {}) {
         if (id === 'healthData') id = 'reviewHealth';
         const category = registry.get(id);
@@ -58,9 +92,8 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         const cached = mountedCategories.get(id) === core.state.identityGeneration;
         if (!cached || !sameScope || Object.keys(options).length || ['account', 'devices', 'memory', 'about', 'executionRecords', 'connectors'].includes(id))
-            category.mount({ ...options, target: panels.get(id), core, ui });
+            mountCategory(category,panels.get(id),options);
         if (id === 'usage') usageScope = options.sessionId || '';
-        mountedCategories.set(id, core.state.identityGeneration);
         const panel = panels.get(id);
         if (id !== 'appearance') {
             globalThis.WeftSettingsControls.groupRows(panel, category.name);
@@ -70,20 +103,14 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             if (heading.textContent.trim() === category.name && !heading.closest('.settings-group')) heading.classList.add('settings-redundant-title');
         }
         registry.register({...category,keywords:[...new Set([...category.keywords,...[...panel.querySelectorAll('label,.row-label,h3')].map(item=>item.textContent.trim())])]});
-        const query = search.value.trim().toLocaleLowerCase();
-        if (query) {
-            const match = [...panel.querySelectorAll('label,.settings-row')].find(row => row.textContent.toLocaleLowerCase().includes(query));
-            if (match) {
-                for (let parent = match.parentElement; parent && parent !== panel; parent = parent.parentElement) if (parent.tagName === 'DETAILS') parent.open = true;
-                match.scrollIntoView({block:'center'});
-            }
-        }
+        locateSetting(panel);
         transitionCategory(previous,id);
     }
     function renderSettingsNavigation() {
         navigation.replaceChildren(); picker.replaceChildren();
         let group;
-        for (const category of registry.list({ desktop: !!globalThis.weftmateDesktop, query: search.value })) {
+        const matches=registry.list({desktop:!!globalThis.weftmateDesktop,query:search.value});
+        for (const category of matches) {
             if (group !== category.group) { group = category.group; navigation.append(node('h2', 'settings-nav-group', group)); }
             const button = node('button', 'settings-nav-item', category.name); button.type = 'button'; button.dataset.category = category.id;
             button.prepend(globalThis.WeftIcons.create(category.icon, 16));
@@ -93,6 +120,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (!navigation.children.length) navigation.append(node('p', 'muted settings-empty', '没有匹配的设置，试试“主题”或“费用”。'));
         picker.value = selected;
         for (const button of navigation.querySelectorAll('button')) if (button.dataset.category === selected) { button.classList.add('is-selected'); button.setAttribute('aria-current', 'page'); }
+        if(search.value.trim()&&matches.length){if(!matches.some(category=>category.id===selected))selectSettings(matches[0].id);else locateSetting(panels.get(selected));}
     }
     function openSettings(id = selected, options = {}) {
         if (!dialog.open) { returnFocus = document.activeElement; if (id === 'memory') { void core.openMemory(); return; } core.openAccount(); }
@@ -247,7 +275,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const system = ui.byId('system-heading').closest('section');
         const background = ui.byId('background-model-select');
         background.previousElementSibling.remove(); background.nextElementSibling.remove();
-        const defaultModel = node('select'); defaultModel.id = 'default-model-select'; defaultModel.setAttribute('aria-label', '对话默认模型');
+        const defaultModel = node('select'); defaultModel.id = 'default-model-select'; defaultModel.disabled=true; defaultModel.setAttribute('aria-label', '对话默认模型');
         panels.get('models').append(globalThis.WeftSettingsControls.row('对话默认模型', '用于新建对话；已有对话继续使用原模型。', defaultModel));
         const backgroundRow = globalThis.WeftSettingsControls.row('后台模型', '标题、记忆整理和关心使用此模型；本机模型共用一张显卡，后台等待所选模型已加载且聊天空闲，以免触发切换。', background);
         const currentModel = node('p', 'model-current'); currentModel.id = 'background-current-model';
@@ -288,7 +316,8 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             logs.addEventListener('click', async () => { try { await globalThis.weftmateDesktop.openLogs(); } catch { ui.toast('日志文件夹暂时无法打开，请重试。'); } });
             panels.get('general').append(globalThis.WeftSettingsControls.row('运行日志', '保留最近 7 天的运行状态，不记录对话、记忆内容或密钥。', logs));
         }
-        description('general', '语言', '当前界面使用简体中文。', '简体中文');
+        const language=node('select');language.setAttribute('aria-label','语言');language.dataset.searchable='true';language.dataset.checkSelection='true';language.append(new Option('简体中文','zh-CN'));
+        panels.get('general').append(WeftSettingsControls.row('语言','目前提供简体中文。',language));WeftSettingsControls.select(language);
         panels.get('appearance').replaceChildren(node('p', 'muted', '保存到这台设备。'));
         WeftDesktopAppearanceControls.mount(panels.get('appearance'), { get: WeftDesktop.getAppearance, set: WeftDesktop.setAppearance, toast: ui.toast });
         move('memory', ui.byId('memory-view'));
@@ -321,6 +350,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             connectors: ({target}) => globalThis.WeftConnectorsView(core,target,{desktop:!!globalThis.weftmateDesktop,toast:ui.toast}),
             executionRecords: ({target}) => globalThis.WeftExecutionRecordsView(core,target,{current:()=>dialog.open&&selected==='executionRecords',openConversation:async row=>{ui.byId('account-back').click();if(core.state.currentView!=='assistant')await core.enterAssistant();if(row)await core.selectSession(row.sessionId);}}),
             system: () => { void core.refreshSystem(); },
+            models: () => core.refreshModelSettings(),
             data: ({target}) => globalThis.WeftDataView(core,target,{toast:ui.toast}),
             reviewHealth: () => globalThis.WeftNotificationsView(core, panels.get('reviewHealth'), {toast:ui.toast, section:'reviewHealth'}),
             notifications: () => globalThis.WeftNotificationsView(core, panels.get('notifications'), {toast:ui.toast}),

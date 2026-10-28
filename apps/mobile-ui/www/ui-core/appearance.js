@@ -3,7 +3,7 @@
     const defaults = { theme: 'system', accent: 'neutral', fontSize: '14', accentLight: 'neutral', accentDark: 'neutral', codeFontSize: '12',
         uiFontSize: '14', themePreset: 'default', themePresetLight: 'default', themePresetDark: 'default', font: 'system', fontLight: 'system', fontDark: 'system',
         backgroundLight: '', backgroundDark: '', foregroundLight: '', foregroundDark: '',
-        separateModes: true, contrast: '60', translucentSidebar: false, fullWidth: false };
+        separateModes: true, contrast: '60', translucentSidebar: false, fullWidth: false, pointerCursor: false, diffStyle: 'color' };
     function normalize(value = {}) {
         const next = { ...defaults, ...value };
         const color = value => ['neutral', 'blue', 'green', 'purple'].includes(value);
@@ -16,7 +16,8 @@
         for (const key of ['font','fontLight','fontDark']) if (!['system','serif','mono'].includes(next[key])) next[key] = 'system';
         if (!['default','paper'].includes(next.themePreset)) next.themePreset = 'default';
         for (const key of ['themePresetLight','themePresetDark']) if (!['default','paper'].includes(next[key])) next[key] = next.themePreset;
-        for (const key of ['separateModes','translucentSidebar','fullWidth']) if (typeof next[key] !== 'boolean') next[key] = defaults[key];
+        for (const key of ['separateModes','translucentSidebar','fullWidth','pointerCursor']) if (typeof next[key] !== 'boolean') next[key] = defaults[key];
+        if (!['color','symbols'].includes(next.diffStyle)) next.diffStyle = defaults.diffStyle;
         next.contrast = Number.isFinite(Number(next.contrast)) ? String(Math.min(100, Math.max(0, Math.round(Number(next.contrast))))) : defaults.contrast;
         if (!color(next.accent)) next.accent = defaults.accent;
         for (const key of ['accentLight', 'accentDark']) next[key] = color(value[key]) ? value[key] : next.accent;
@@ -31,12 +32,9 @@
             value = { ...defaults };
         }
         return { get value() { return { ...value }; }, set(next, persist = true) {
-                value = normalize(next);
-                if (persist)
-                    try {
-                        storage.setItem(key, JSON.stringify(value));
-                    }
-                    catch { /* Device storage can be unavailable. */ }
+                const normalized = normalize(next);
+                if (persist) storage.setItem(key, JSON.stringify(normalized));
+                value = normalized;
                 return { ...value };
             } };
     }

@@ -113,8 +113,9 @@
   }
   function setVisibility(hidden) { nativeHidden=hidden === true;sync(); }
   function setPreference(value) {
-    preference = ['system','reduce','full'].includes(value) ? value : 'system';
-    try { localStorage.setItem('weftmate.reply-motion.v1', preference); } catch {}
+    const next = ['system','reduce','full'].includes(value) ? value : 'system';
+    localStorage.setItem('weftmate.reply-motion.v1', next);
+    preference = next;
     sync();
   }
   function preferenceControl() {

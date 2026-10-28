@@ -40,6 +40,23 @@ async function fixture(t: any) {
   return { service, host, context, root, accepted, generation: () => generation, remove: () => { items = []; } };
 }
 
+test('device sync summary counts acknowledged originals once and keeps receipt separate from memory formation', async t => {
+  const f=await fixture(t),vault=await W.browserVault('device-status',{indexedDB:new IDBFactory(),crypto:webcrypto});
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId),null);
+  await f.host('/offline/sync',{publicJwk:await vault.key(),generation:0,hashes:{}});
+  const turn={id:'status-turn',conversationId:'status-chat',timestamp:Date.now(),messages:[{role:'user',text:'private-original'}]};
+  await f.host('/offline/turns',{generation:1,turns:[turn]});
+  await f.host('/offline/turns',{generation:1,turns:[turn]});
+  const status=f.service.deviceStatus(identity.ownerId,identity.deviceId);
+  assert.equal(status.receivedOriginals,1);assert.ok(status.lastReceivedAt);assert.ok(status.replicaPublishedAt);
+  assert.equal(status.memoryState,'submitted');
+  assert.ok(!JSON.stringify(status).includes('private-original'));
+  const reopened=await createOfflineService(f.context);t.after(()=>reopened.close());
+  assert.deepEqual(reopened.deviceStatus(identity.ownerId,identity.deviceId),status);
+  await f.service.invalidate(identity.ownerId);
+  assert.equal(f.service.deviceStatus(identity.ownerId,identity.deviceId).receivedOriginals,0);
+});
+
 test('device envelope authenticates contents and identity; storage is encrypted and key replacement removes old values', async () => {
   const indexedDB = new IDBFactory(), vault = await W.browserVault('test', { indexedDB, crypto: webcrypto });
   const jwk = await vault.key(), payload = { secret: 'unique-m3a-private-source' };
