@@ -7,20 +7,28 @@ import {createInstalledSmokeResponder, installedSmokePrompt, installedSmokeReque
 
 const out = resolve(process.env.WEFTMATE_EVIDENCE_DIR || '.local/second-approval');
 mkdirSync(out, {recursive: true});
-const report = {realElectron: true, realDsh: true, decisions: []};
+const report = {realElectron: true, realDsh: true, decisions: [], restorations: []};
 let h, sessionId;
 try {
   const respond = createInstalledSmokeResponder();
-  h = await migrationHost({nativeSession: true, startInTray: true, executable: process.env.WEFTMATE_TEST_EXECUTABLE, respond: async input => {
+  const released = new Set();
+  h = await migrationHost({nativeSession: true, startInTray: true, showWindow: false, entry: resolve('tests/integration/second-approval-entry.mjs'), respond: async input => {
     const message = await respond(input);
-    if (message.tool_calls?.some(call => call.function.name === 'write')) await new Promise(resolve => setTimeout(resolve, 1500));
+    // Hold each model response until the real window is hidden, so both native
+    // approval requests originate in the tray rather than racing a hide call.
+    for (const call of message.tool_calls || []) if (['read', 'write'].includes(call.function.name))
+      await until(() => released.has(call.function.name));
     return message;
   }});
   await h.page.addInitScript(() => {
     let module;
     Object.defineProperty(globalThis, 'WeftUiCore', {configurable: true, get: () => module, set: value => {
       module = value; const create = value.create;
-      value.create = (...args) => { globalThis.approvalTestCore = create(...args); return globalThis.approvalTestCore; };
+      value.create = (...args) => {
+        const effects = args[0].effects;
+        globalThis.approvalTestEffects = effects;
+        globalThis.approvalTestCore = create(...args); return globalThis.approvalTestCore;
+      };
     }});
   });
   await h.mainFirst();
@@ -54,10 +62,35 @@ try {
   await h.page.locator(`.session-row[data-session-id="${sessionId}"] > button`).first().click();
   await h.page.waitForFunction(id => document.querySelector(`.session-row[data-session-id="${id}"] > button`)?.classList.contains('is-current') && !document.querySelector('#message-text')?.disabled, sessionId);
   for (let step = 0; step < 2; step++) {
+    await h.app.evaluate(({BrowserWindow}, url) => BrowserWindow.getAllWindows().find(win => win.webContents.getURL() === url).hide(), h.page.url());
+    await h.page.waitForFunction(() => approvalTestCore.state.background === true);
+    released.add(step === 0 ? 'read' : 'write');
     const pending = await until(async () => (await h.api(`/sessions/${sessionId}/approvals`)).body.approvals?.find(row => row.status === 'pending' && !report.decisions.includes(row.approvalId)));
     assert.equal(existsSync(join(project, 'approved.md')), false, 'writing waits for its own decision');
+    await until(() => h.app.evaluate(({BrowserWindow}, {url, sessionId, step}) => {
+      const win = BrowserWindow.getAllWindows().find(win => win.webContents.getURL() === url);
+      if (win.isVisible()) throw Error('Approval must arrive while the native window is hidden');
+      return globalThis.trayApprovalTest.events.filter(event => event.type === 'approval.requested' && event.sessionId === sessionId).length > step;
+    }, {url: h.page.url(), sessionId, step}));
+    // Observe the production foreground callback. Suppress only the periodic
+    // UI timers while reopening, proving the card does not need the next poll.
+    await h.page.evaluate(() => {
+      clearInterval(approvalTestCore.state.refreshTimer);
+      clearInterval(approvalTestCore.state.liveRefreshTimer);
+      const effects = globalThis.approvalTestEffects, restore = effects.foregroundRestored;
+      globalThis.approvalTestRestored = false;
+      effects.foregroundRestored = async () => { await restore(); globalThis.approvalTestRestored = true; };
+    });
+    const openedAt = Date.now();
+    await h.app.evaluate(({BrowserWindow}, {step, url, sessionId}) => {
+      if (step === 0) globalThis.trayApprovalTest.tray.emit('click');
+      else globalThis.trayApprovalTest.events.filter(event => event.type === 'approval.requested' && event.sessionId === sessionId).at(-1).notification.emit('click');
+      if (!BrowserWindow.getAllWindows().find(win => win.webContents.getURL() === url).isVisible()) throw Error('Native activation did not show the window');
+    }, {step, url: h.page.url(), sessionId});
+    await h.page.waitForFunction(() => approvalTestCore.state.background === false && globalThis.approvalTestRestored);
     const button = h.page.locator(`[data-conversation-approval="${pending.approvalId}"]`).getByRole('button', {name: '批准', exact: true});
     await button.waitFor({state: 'visible', timeout: 15000});
+    report.restorations.push({entry: step === 0 ? 'tray' : 'notification', milliseconds: Date.now() - openedAt, background: false, withoutPeriodicReads: true});
     assert.equal(await button.isEnabled(), true);
     await h.page.mouse.move(900, 400);
     const visible = await h.app.evaluate(({BrowserWindow}, url) => BrowserWindow.getAllWindows().find(win => win.webContents.getURL() === url)?.isVisible(), h.page.url());
@@ -68,6 +101,8 @@ try {
     await button.click();
     await until(async () => !(await h.api(`/sessions/${sessionId}/approvals`)).body.approvals?.some(row => row.approvalId === pending.approvalId && row.status === 'pending'));
     report.decisions.push(pending.approvalId);
+    // Restart the ordinary production read loop for the next native tool.
+    await h.page.evaluate(() => globalThis.approvalTestEffects.startAssistantRefresh());
   }
   await until(() => existsSync(join(project, 'approved.md')));
   assert.equal(readFileSync(join(project, 'approved.md'), 'utf8'), 'FX21 synthetic project file\n');

@@ -90,6 +90,8 @@ $adb = 'D:\Software\MuMuPlayer\nx_main\adb.exe'
 
 三平台使用 Node 24 和锁文件安装；生产发布预检、完整依赖高危审计、依赖兼容冒烟、类型检查与必过单测都阻塞合入。普通 `npm test` 仍保留完整单测与 vendor 契约门。
 
+托盘启动后的连续审批验收 `tests/second-approval.test.ts` 需要真实固定 DSH；归入 vendor 套件，并由独立的 `Windows tray approvals (pinned DSH)` CI 任务准备运行时后执行。Linux 按平台跳过这条原生 Windows 验收；本机 Windows 准备固定 vendor 后可用 `node --test tests/second-approval.test.ts` 单跑。
+
 三种模式均用 `node .github/scripts/ci-unit-tests.mjs <模式>`，失败保留原断言并返回非零退出码：
 
 | 模式 | 在哪里运行 | 保证 |
