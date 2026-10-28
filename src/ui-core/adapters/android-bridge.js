@@ -62,7 +62,9 @@
         if (result.source !== 'host' || result.sessionId !== sessionId) throw new Error('COMMAND_RECEIPT_INVALID');
         return result;
       }
-      if ((row = match(/^\/personal\/v1\/sessions\/([^/]+)\/events\/(\d+)\/detail$/))) return call('shared.sessions.eventDetail', { sessionId: decodeURIComponent(row[1]), seq: Number(row[2]) });
+      if ((row = match(/^\/personal\/v1\/sessions\/([^/]+)\/events\/(\d+)\/detail$/))) return query.has('outputOffset')
+        ? call('host.business',{path:pathname+url.search,method:'GET'})
+        : call('shared.sessions.eventDetail', { sessionId: decodeURIComponent(row[1]), seq: Number(row[2]) });
       if ((row = match(/^\/personal\/v1\/sessions\/([^/]+)\/(approvals|questions)(?:\/([^/]+))?$/))) {
         const sessionId = decodeURIComponent(row[1]), kind = row[2];
         return call(`shared.${kind}.${method === 'GET' ? 'list' : kind === 'approvals' ? 'decide' : 'answer'}`, {
@@ -176,6 +178,9 @@
       get: id => bridge.call('cloud.app.key', { id }),
       sign: async (id, input) => (await bridge.call('cloud.app.sign', { id, input })).signature,
       clear: id => bridge.call('cloud.app.key', { id, clear: true }),
+      pairingDigest: async values => (await bridge.call('cloud.app.pairing.hash', { values })).digest,
+      pinPairing: (origin, pin) => bridge.call('cloud.app.pairing.pin', { origin, pin }),
+      clearPairingPin: (origin, pin, lease, completed) => bridge.call('cloud.app.pairing.pin', { origin, pin, lease, completed, clear: true }),
     } : undefined };
   };
   globalThis.WeftUiCore.adaptMobileCloudClient = (client, connected = async () => {}) => {
@@ -205,6 +210,7 @@
         return await exchange(...args);
       }
       catch (error) {
+        if (error.status === 403 && error.code === 'PAIRING_CONFIRMATION_REQUIRED') return { status: 'cloud_only', pairingRequired: true };
         if (error.status === 404 && ['HOST_NOT_FOUND', 'NOT_FOUND'].includes(error.code)) return { status: 'cloud_only' };
         throw error;
       }

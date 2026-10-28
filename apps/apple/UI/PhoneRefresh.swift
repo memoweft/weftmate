@@ -10,6 +10,7 @@ struct PhoneActionStyle: ButtonStyle {
     var onCard = false
     var horizontalPadding = AppleTokens.Space.p12
     @Environment(\.isEnabled) private var enabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     func makeBody(configuration: Configuration) -> some View {
         let state = PhonePresentation.controlState(selected: selected, pressed: configuration.isPressed, enabled: enabled)
         configuration.label.font(AppleTokens.Fonts.callout.weight(.medium))
@@ -19,6 +20,7 @@ struct PhoneActionStyle: ButtonStyle {
             .background(primary ? Weave.accent : selected ? Weave.accentSoft : onCard ? Weave.surface : Weave.soft, in: Capsule())
             .opacity(state == "disabled" ? AppleTokens.Opacity.disabled : state == "pressed" ? AppleTokens.Opacity.pressed : 1)
             .contentShape(Capsule())
+            .animation(PhoneMotion.feedback(reduce: reduceMotion), value: configuration.isPressed)
     }
 }
 struct PhoneOperationModeIcon: View {
@@ -30,6 +32,7 @@ struct PhoneIconStyle: ButtonStyle {
     var quiet = false
     var onCard = false
     @Environment(\.isEnabled) private var enabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44)
@@ -37,12 +40,13 @@ struct PhoneIconStyle: ButtonStyle {
             .background(primary ? Weave.accent : quiet ? AppleTokens.Colors.clear : onCard ? Weave.surface : Weave.soft, in: Circle())
             .contentShape(Circle())
             .opacity(!enabled ? AppleTokens.Opacity.disabled : configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
+            .animation(PhoneMotion.feedback(reduce: reduceMotion), value: configuration.isPressed)
     }
 }
 struct PhoneCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content.frame(maxWidth: .infinity, alignment: .leading).padding(AppleTokens.Space.p12)
-            .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24, style: .continuous))
+            .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Phone.groupRadius, style: .continuous))
     }
 }
 struct PhoneSheetChrome: ViewModifier {
@@ -59,11 +63,27 @@ struct PhoneSheetChrome: ViewModifier {
             }.padding(AppleTokens.Space.p12)
             content
         }.background(Weave.canvas).tint(Weave.accent).buttonStyle(PhoneActionStyle())
-            .presentationDragIndicator(.visible).presentationCornerRadius(AppleTokens.Radius.r32)
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible).presentationCornerRadius(AppleTokens.Phone.sheetRadius)
+    }
+}
+struct PhoneSidebarButton: View {
+    @Environment(\.phoneSidebar) private var sidebar
+    var body: some View {
+        Button { sidebar?() } label: { WeftIcon("sidebar") }.phoneIcon(quiet: true)
+            .accessibilityLabel("打开侧栏").accessibilityIdentifier("phone.sidebar")
     }
 }
 private struct PhoneSidebarKey: EnvironmentKey { static let defaultValue: (@MainActor () -> Void)? = nil }
+private struct PhoneOpenConversationKey: EnvironmentKey { static let defaultValue: (@MainActor (String) -> Void)? = nil }
+private struct PhoneNavigationBackKey: EnvironmentKey { static let defaultValue: (@MainActor () -> Void)? = nil }
 extension EnvironmentValues {
+    var phoneNavigationBack: (@MainActor () -> Void)? {
+        get { self[PhoneNavigationBackKey.self] } set { self[PhoneNavigationBackKey.self] = newValue }
+    }
+    var phoneOpenConversation: (@MainActor (String) -> Void)? {
+        get { self[PhoneOpenConversationKey.self] } set { self[PhoneOpenConversationKey.self] = newValue }
+    }
     var phoneSidebar: (@MainActor () -> Void)? {
         get { self[PhoneSidebarKey.self] } set { self[PhoneSidebarKey.self] = newValue }
     }
@@ -73,14 +93,15 @@ struct PhoneChatHeader<Actions: View>: View {
     let status: String
     let actions: Actions
     @Environment(\.phoneSidebar) private var sidebar
+    @Environment(\.phoneNavigationBack) private var back
     @Environment(\.dismiss) private var dismiss
     init(title: String, status: String, @ViewBuilder actions: () -> Actions) {
         self.title = title; self.status = status; self.actions = actions()
     }
     var body: some View {
         HStack(spacing: AppleTokens.Space.p8) {
-            Button { if let sidebar { sidebar() } else { dismiss() } } label: { WeftIcon("sidebar") }
-                .buttonStyle(PhoneIconStyle()).accessibilityLabel("打开侧栏").accessibilityIdentifier("phone.sidebar")
+            Button { if let back { back() } else if let sidebar { sidebar() } else { dismiss() } } label: { WeftIcon(back == nil ? "sidebar" : "back") }
+                .buttonStyle(PhoneIconStyle()).accessibilityLabel(back == nil ? "打开侧栏" : "返回").accessibilityIdentifier(back == nil ? "phone.sidebar" : "phone.back")
             VStack(spacing: AppleTokens.Space.p3) {
                 Text(title).font(AppleTokens.Fonts.headline).lineLimit(1)
                 Text(status).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineLimit(1)
@@ -91,21 +112,31 @@ struct PhoneChatHeader<Actions: View>: View {
 }
 struct PhoneBottomTabs: View {
     @Binding var selection: PhoneTab
+    var reselect: () -> Void = {}
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.phoneReduceMotion) private var reduceMotion
     private var items: some View {
         HStack(spacing: AppleTokens.Space.p4) {
             ForEach(PhoneTab.allCases) { tab in
-                Button { selection = tab } label: {
-                    WeftIcon(tab.icon, size: AppleTokens.Space.p24)
-                        .frame(maxWidth: .infinity).frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44)
+                Button {
+                    if selection == tab { reselect() }
+                    else { withAnimation(PhoneMotion.tabs(reduce: reduceMotion)) { selection = tab } }
+                } label: {
+                    VStack(spacing: AppleTokens.Space.p3) {
+                        WeftIcon(tab.icon, size: AppleTokens.Space.p24)
+                            .frame(width: AppleTokens.Space.p64, height: AppleTokens.Space.p28)
+                            .background(selection == tab ? Weave.soft : .clear, in: Capsule())
+                        Text(tab.title).font(AppleTokens.Fonts.caption2)
+                    }.frame(maxWidth: .infinity).frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
                 }.buttonStyle(PhoneTabStyle(selected: selection == tab))
                     .accessibilityLabel(tab.title).accessibilityIdentifier("phone.tab." + tab.id)
                     .accessibilityAddTraits(selection == tab ? .isSelected : [])
             }
-        }.padding(AppleTokens.Space.p4).background(Weave.soft, in: Capsule())
+        }.padding(AppleTokens.Space.p4)
     }
     var body: some View {
         items.padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, AppleTokens.Space.p8)
+            .overlay(alignment: .top) { Weave.line.opacity(0.4).frame(height: AppleTokens.Space.p1) }
             .accessibilityElement(children: .contain).accessibilityIdentifier("phone.bottomTabs")
     }
 }
@@ -114,7 +145,6 @@ private struct PhoneTabStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.foregroundStyle(selected ? Weave.ink : Weave.muted)
-            .background(selected ? Weave.surface : .clear, in: Capsule())
             .opacity(!enabled ? AppleTokens.Opacity.disabled : configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
     }
 }
@@ -197,7 +227,7 @@ extension View {
     }
     @ViewBuilder func phoneComposerCard(expanded: Bool = true) -> some View {
         #if os(iOS)
-        self.padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, expanded ? AppleTokens.Space.p12 : AppleTokens.Space.p4).background(Weave.soft, in: RoundedRectangle(cornerRadius: expanded ? AppleTokens.Radius.r24 : AppleTokens.Radius.r32, style: .continuous))
+        self.padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, expanded ? AppleTokens.Space.p12 : AppleTokens.Space.p4).background(Weave.soft, in: RoundedRectangle(cornerRadius: expanded ? AppleTokens.Phone.composerRadius : AppleTokens.Radius.r32, style: .continuous))
             .padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, AppleTokens.Space.p8)
         #else
         self.padding(AppleTokens.Space.p16).background(Weave.soft)

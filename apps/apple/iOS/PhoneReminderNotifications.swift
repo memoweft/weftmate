@@ -95,7 +95,7 @@ private final class ReminderNotificationDelegate: NSObject, UNUserNotificationCe
         guard route.account == ReminderRoute.accountKey(app.phoneAccountIdentity) else { return }
         app.phoneChat.activate(app:app)
         opensConversation=false
-        if route.hostID == nil,!app.phoneChat.busy,(app.session == nil || app.phoneChat.usesPhoneMemory),let session=route.sessionID,app.phoneChat.state.threads.contains(where:{$0.id == session}) {
+        if route.hostID == nil,!app.phoneChat.busy,let session=route.sessionID,app.phoneChat.containsConversation(session) {
             app.phoneChat.select(session);app.openedSessionID=session;opensConversation=true
         } else if let host=route.hostID,host == app.session?.hostId,let session=route.sessionID {
             app.openedSessionID=session;opensConversation=true
@@ -104,11 +104,13 @@ private final class ReminderNotificationDelegate: NSObject, UNUserNotificationCe
     }
 
     func scheduleRefresh() {
+        #if !WEFTMATE_WINDOW_TEST
         guard let app,let identity=app.phoneReminderAccountIdentity,app.phoneChat.reminderSnapshotAccount == identity else { return }
         let dates=app.phoneChat.allReminders.filter { !$0.completed && $0.fireAt > Date() }.map(\.fireAt).sorted()
         guard let first=dates.first else { BGTaskScheduler.shared.cancel(taskRequestWithIdentifier:Self.refreshID);return }
         let request=BGAppRefreshTaskRequest(identifier:Self.refreshID);request.earliestBeginDate=first.addingTimeInterval(1)
         try? BGTaskScheduler.shared.submit(request)
+        #endif
     }
     func runBackground() async -> Bool {
         guard app != nil else { return false }
@@ -162,7 +164,9 @@ private enum ReminderBackgroundCallbacks {
 @MainActor enum PhoneReminderBackground {
     private static var registered=false
     static func register() {
+        #if !WEFTMATE_WINDOW_TEST
         guard !registered else { return };registered=true
         _=BGTaskScheduler.shared.register(forTaskWithIdentifier:PhoneReminderNotifications.refreshID,using:nil,launchHandler:ReminderBackgroundCallbacks.launch())
+        #endif
     }
 }

@@ -7,7 +7,7 @@ struct PhoneLibraryView: View {
     @StateObject private var model=PhoneFeaturesModel()
     @State private var selected: PhoneLibraryItem?
     var body: some View {
-        NavigationStack {
+        Group {
             ScrollView {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                     HStack { WeftIcon("search"); TextField("搜索文件名",text:$model.search).textFieldStyle(.plain).onSubmit { reload() }.accessibilityIdentifier("library.search"); Button("搜索") { reload() }.buttonStyle(OutlineActionStyle()) }.phoneCard()

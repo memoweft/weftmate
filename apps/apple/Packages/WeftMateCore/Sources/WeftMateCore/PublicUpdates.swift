@@ -302,7 +302,7 @@ struct PublicURLSessionManifestFetcher: PublicManifestFetching {
             case .timedOut: throw PublicUpdateFailure.timeout
             case .cancelled: throw PublicUpdateFailure.cancelled
             case .serverCertificateUntrusted, .serverCertificateHasBadDate, .serverCertificateHasUnknownRoot,
-                 .serverCertificateNotYetValid, .secureConnectionFailed: throw PublicUpdateFailure.certificate
+                 .serverCertificateNotYetValid: throw PublicUpdateFailure.certificate
             default: throw PublicUpdateFailure.network
             }
         } catch {

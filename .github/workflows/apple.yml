@@ -37,10 +37,23 @@ jobs:
           xcodebuild -version
           swift --version
           mkdir -p "$RUNNER_TEMP/apple-results"
+      - name: Isolated project generation checks
+        run: python3 -m unittest discover -s Tests -p 'test_*window*.py' -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Host route fixture dependencies
+        working-directory: .
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Swift package tests
         run: |
           set -o pipefail
           swift test --package-path Packages/WeftMateCore --scratch-path "$RUNNER_TEMP/apple-core" --jobs 2 2>&1 | tee "$RUNNER_TEMP/apple-results/core.log"
+      - name: Window project and process checks
+        run: |
+          python3 -m unittest discover -s Tests -p 'test_window_*.py'
+          python3 Scripts/generate_project.py
+          git diff --exit-code -- WeftMate.xcodeproj
       - name: Standalone state checks
         id: state
         if: ${{ !cancelled() }}
@@ -84,6 +97,10 @@ jobs:
           - platform: macOS
             scheme: WeftMateMac
             destination: platform=macOS
+          - platform: iPhone-window
+            scheme: WeftMatePhoneWindowTest
+            destination: generic/platform=iOS Simulator
+            action: build-for-testing
     defaults:
       run:
         working-directory: apps/apple
@@ -98,11 +115,13 @@ jobs:
         env:
           SCHEME: ${{ matrix.scheme }}
           DESTINATION: ${{ matrix.destination }}
+          BUILD_ACTION: ${{ matrix.action || 'build' }}
         run: |
           set -o pipefail
           xcodebuild -project WeftMate.xcodeproj -scheme "$SCHEME" -configuration Debug \
             -destination "$DESTINATION" -derivedDataPath "$RUNNER_TEMP/apple-build" \
-            -jobs 4 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/apple-results/build.log"
+            -jobs 4 -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1 \
+            CODE_SIGNING_ALLOWED=NO "$BUILD_ACTION" 2>&1 | tee "$RUNNER_TEMP/apple-results/build.log"
       - name: Results
         if: always()
         uses: actions/upload-artifact@v4

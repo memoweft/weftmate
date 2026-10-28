@@ -2,7 +2,7 @@
 globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   const auth = { mode: 'login', step: 'email', email: '', error: '', busy: false, resendAt: 0, retryAt: 0, deviceName: '这台设备', devices: [], hosts: [] };
   core.state.cloudAuth = auth;
-  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight, exchangeTicket, desktopRestore = 0, ownHost, bindingClaim, returnView;
+  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight, exchangeTicket, desktopRestore = 0, ownHost, bindingClaim, returnView, pairingTicket = 0;
   let desktopCloudObserved = false;
   const now = () => environment.now?.() ?? Date.now();
   const paint = () => effects.paintCloudAuth?.(cloudAuthView());
@@ -29,7 +29,12 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       CLOUD_TLS_UNAVAILABLE: '暂时无法确认电脑的安全连接，请稍后重试。',
       CLOUD_TIMEOUT: '电脑连接超时，账号仍已登录，请稍后重试。',
       CLOUD_TRANSPORT_UNAVAILABLE: '电脑暂时连不上，账号仍已登录，请稍后重试。',
-      PAIRING_INVALID: '配对码已失效或不属于这台电脑，请获取新码。', PAIRING_REQUIRED: '请在目标电脑显示二维码，并输入配对码后连接。',
+      PAIRING_INVALID: '电脑已取消配对，或配对码已失效。请重新扫码。', PAIRING_REQUIRED: '请扫描电脑上的二维码，核对六位数字后在电脑上确认。',
+      PAIRING_EXPIRED: '配对码已过期，请在电脑上重新添加设备，再重新扫码。',
+      PAIRING_UPGRADE_REQUIRED: '请更新手机上的 WeftMate 后重新扫码。',
+      PAIRING_CONFLICT: '这个配对码已被另一台设备使用，请在电脑上重新添加设备，再重新扫码。',
+      PAIRING_HOST_MISMATCH: '未能核对电脑的配对信息，已停止连接。请重新扫码。',
+      PAIRING_CONFIRMATION_REQUIRED: '请在电脑上核对这六位数字并确认。', PAIRING_STOPPED: '已停止配对，请重新扫码。',
       HOST_TRUST_INVALID: '无法确认电脑身份，请检查连接后重试。',
       INVALID_DEVICE: '设备名称须为 1–128 个字符。',
       UPDATE_REQUIRED: '请更新电脑上的 WeftMate 后重新登录。',
@@ -207,9 +212,8 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       effects.toast('已绑定 WeftMate 账号。');
       return;
     }
-    const pairing = environment.initialPairing ? parseCloudPairing(environment.initialPairing) : null;
-    if (pairing && pairing.hostId !== client.config.hostId) throw { code: 'PAIRING_INVALID' };
-    const result = await client.exchange(pairing ? false : environment.bindDesktop ?? environment.desktop, pairing);
+    const pairing = environment.initialPairing ? client.parsePairing(environment.initialPairing) : null;
+    const result = pairing ? await connectPairing(pairing) : await client.exchange(environment.bindDesktop ?? environment.desktop);
     if (!current()) return;
     if (restore) {
       auth.restoreAccountMatched = result.account?.ownerId === restore.ownerId;
@@ -231,7 +235,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await effects.preparePhoneAccount?.({ accountId: saved.sub, email: auth.email, deviceId: (await client.key()).deviceId, origin: new URL(client.config.issuer).origin });
     if (!current()) return;
     clearTimeout(waitTimer); waitTimer = null;
-    if (pairing) { await saveCloudPairingPin(pairing); environment.initialPairing = null; }
+    if (pairing) environment.initialPairing = null;
     if (!current()) return;
     auth.mode = 'authenticated'; auth.modal = false; paint();
     if (!auth.localSession) { core.acceptSession(result); await core.enterAssistant(); }
@@ -426,35 +430,62 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return core.accessApi('/cloud/emergency-password', { method: 'POST', protectedWrite: true, body: { password } });
   }
   async function cloudPairing() { const result = await core.accessApi('/cloud/pairings', { method: 'POST', protectedWrite: true, body: {} }); return result; }
-  function parseCloudPairing(input) {
-    let value = input.trim(); if (value.includes('#pair=')) value = new URL(value).hash.slice(6); if (value.startsWith('wm1.')) value = value.slice(4);
-    let pairing;
-    try { pairing = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)))); }
-    catch { throw { code: 'PAIRING_INVALID' }; }
-    if (typeof pairing.hostId !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(pairing.challenge) || !/^[A-Za-z0-9_-]{43}$/.test(pairing.tlsSpki)) throw { code: 'PAIRING_INVALID' };
-    for (const value of [pairing.origin, pairing.relay?.baseUrl].filter(Boolean)) {
-      const url = new URL(value);
-      if (url.username || url.password || url.search || url.hash || !(url.protocol === 'https:' || url.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname))) throw { code: 'PAIRING_INVALID' };
-    }
-    return pairing;
-  }
-  async function saveCloudPairingPin(pairing) {
-    await environment.cloudCredentials('trusted-host:' + pairing.hostId, { tlsSpki: pairing.tlsSpki, publicJwk: pairing.publicJwk, origin: pairing.origin, relay: pairing.relay });
-  }
   async function cloudRedeemPairing(input) {
-    const pairing = parseCloudPairing(input);
-    if (pairing.hostId !== client.config.hostId) {
-      const connection = await cloudConnect(pairing.hostId); await saveCloudPairingPin(pairing);
-      return cloudConnectTrusted({ ...connection, baseUrl: connection.baseUrl || pairing.relay?.baseUrl || pairing.origin }, pairing);
-    }
-    const result = await client.exchange(false, pairing); await saveCloudPairingPin(pairing); core.acceptSession(result); return result;
+    const result = await connectPairing(client.parsePairing(input));
+    auth.cloudOnly = false; auth.mode = 'authenticated';
+    await core.acceptSession(result); return result;
   }
-  async function cloudConnectTrusted(connection, pairing = null) {
+  core.cancelCloudPairing = () => { pairingTicket++; auth.pairing = null; environment.initialPairing = null; paint(); };
+  async function connectPairing(pairing) {
+    if (exchangeInFlight) { try { await exchangeInFlight; } catch {} }
+    const operation = runPairing(pairing); exchangeInFlight = operation;
+    try { return await operation; } finally { if (exchangeInFlight === operation) exchangeInFlight = null; }
+  }
+  async function runPairing(pairing) {
+    const ticket = ++pairingTicket, generation = client.generation, identity = core.state.identityGeneration;
+    const current = () => ticket === pairingTicket && generation === client.generation && identity === core.state.identityGeneration;
+    const previous = { host: client.host, config: client.config };
+    let target, pinLease, completed = false;
+    auth.pairing = { state: 'checking', verificationCode: '', error: '' }; paint();
+    try {
+      if (environment.deviceType === 'android' && environment.nativePairingV2 !== 1) throw { code: 'PAIRING_UPGRADE_REQUIRED' };
+      await client.checkPairing(pairing, pairing.hostId);
+      const connection = await cloudConnect(pairing.hostId);
+      const value = connection.baseUrl || pairing.relay?.baseUrl;
+      const url = new URL(value);
+      const synthetic = new URL(client.config.issuer).protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(new URL(client.config.issuer).hostname);
+      if (connection.hostId !== pairing.hostId || connection.status !== 'online' || url.origin !== value ||
+          url.username || url.password || !(url.protocol === 'https:' || synthetic && url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname)) ||
+          pairing.relay?.baseUrl && pairing.relay.baseUrl !== value) throw { code: 'PAIRING_INVALID' };
+      if (!current()) throw { code: 'PAIRING_STOPPED' };
+      target = { hostId: pairing.hostId, baseUrl: value };
+      if (client.nativeKey?.pinPairing) pinLease = await client.nativeKey.pinPairing(value, pairing.tlsSpki);
+      await effects.openCloudHost?.(target);
+      if (!current()) throw { code: 'PAIRING_STOPPED' };
+      const config = await client.request(value + '/personal/v1/cloud/config');
+      if (config.hostId !== pairing.hostId || config.issuer !== pairing.issuer) throw { code: 'PAIRING_INVALID' };
+      client.host = value; client.config = { ...previous.config, ...config, clientId: previous.config.clientId };
+      const result = await client.pair(pairing, { current, onComparison: comparison => {
+        auth.pairing = { state: 'comparing', ...comparison, error: '' }; paint();
+      } });
+      await effects.activateCloudHost?.(target);
+      core.accessBase = value + '/personal/v1'; core.authBase = core.accessBase + '/auth';
+      completed = true;
+      auth.pairing = null; paint(); return result;
+    } catch (error) {
+      client.host = previous.host; client.config = previous.config;
+      if (current()) { auth.pairing = { state: 'failed', verificationCode: '', error: cloudError(error) }; paint(); }
+      throw error;
+    } finally {
+      if (pinLease) await client.nativeKey.clearPairingPin(target.baseUrl, pairing.tlsSpki, pinLease.lease, completed);
+    }
+  }
+  async function cloudConnectTrusted(connection) {
     if (exchangeInFlight) await exchangeInFlight;
-    const current = applyCloudConnection(connection, pairing); exchangeInFlight = current;
+    const current = applyCloudConnection(connection); exchangeInFlight = current;
     try { return await current; } finally { if (exchangeInFlight === current) exchangeInFlight = null; }
   }
-  async function applyCloudConnection(connection, pairing) {
+  async function applyCloudConnection(connection) {
     if (connection.hostId !== client.config.hostId) {
       const self = ownHost?.hostId === connection.hostId;
       const trusted = self || await environment.cloudCredentials('trusted-host:' + connection.hostId);
@@ -464,7 +495,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       const previous = { host: client.host, hostId: client.config.hostId }, generation = client.generation;
       try {
         client.host = target.baseUrl; client.config.hostId = target.hostId;
-        const session = await client.exchange(pairing ? false : self, pairing);
+        const session = await client.exchange(self);
         if (generation !== client.generation) throw { code: 'CLOUD_TOKEN_INVALID' };
         if (session.status === 'pending_approval') throw { code: 'PAIRING_REQUIRED' };
         await effects.activateCloudHost?.(target);

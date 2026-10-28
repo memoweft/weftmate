@@ -37,9 +37,8 @@ struct SessionActions: View {
                             Button(group.name) { onSelect(); Task { await app.updateMetadata(conversation, groupID: group.id, changeGroup: true) } }
                         }
                         Button("新建分组…") {
-                            let deferSheet = app.sessionMenuCandidate != nil
                             onSelect()
-                            Task { if deferSheet { try? await Task.sleep(for: .milliseconds(350)) }; app.newGroupName = ""; app.groupCandidate = conversation }
+                            app.newGroupName = ""; app.groupCandidate = conversation
                         }
                         Button("移出分组") { onSelect(); Task { await app.updateMetadata(conversation, changeGroup: true) } }
                             .disabled(conversation.groupId == nil)
@@ -60,9 +59,6 @@ struct SessionActions: View {
         }
     }
     private func perform(_ action: SessionMenuAction) {
-        if action == .delete, app.sessionMenuCandidate != nil {
-            onSelect(); Task { try? await Task.sleep(for: .milliseconds(350)); app.askToDelete(conversation) }; return
-        }
         if action == .delete, let onDelete { onDelete(); return }
         onSelect()
         switch action {

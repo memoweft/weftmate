@@ -1,6 +1,18 @@
 /* Shared desktop/phone presentation. Actions open the original timeline step. */
 globalThis.WeftComposerSubtasks = {
+    snapshot: null,
+    openStep(row, root) {
+        root.revealStep?.(row.stepId);
+        const step = [...root.querySelectorAll('.execution-step')].find(detail => detail.dataset.step === String(row.stepId));
+        if (!step) return;
+        for (let ancestor = step.parentElement; ancestor && ancestor !== root; ancestor = ancestor.parentElement) if (ancestor.tagName === 'DETAILS') ancestor.open = true;
+        step.open = true; const summary = step.querySelector('summary'); summary?.focus(); summary?.scrollIntoView({ block: 'center' });
+    },
     paint(container, rows, {scope,root}) {
+        this.snapshot = { rows, scope, root };
+        document.dispatchEvent(new CustomEvent('weftmate:subtasks'));
+        // The compact composer badge remains scoped to active work; the panel also keeps settled rows.
+        if (!rows.some(row => row.state === 'running')) rows = [];
         if (!container) return;
         const changed = container.dataset.scope !== scope;
         container.dataset.scope = scope;
@@ -33,9 +45,7 @@ globalThis.WeftComposerSubtasks = {
             button.setAttribute('aria-label',`${row.name}，${row.status}，${row.duration}，查看步骤`);
             button.onclick = () => {
                 menu.hidden=true;trigger.setAttribute('aria-expanded','false');
-                const step = [...root.querySelectorAll('.execution-step')].find(detail => detail.dataset.step === String(row.stepId));
-                if (step) {for(let ancestor=step.parentElement;ancestor&&ancestor!==root;ancestor=ancestor.parentElement)if(ancestor.tagName==='DETAILS')ancestor.open=true;
-                    step.open=true;const summary=step.querySelector('summary');summary?.focus();summary?.scrollIntoView({block:'center'});}
+                globalThis.WeftComposerSubtasks.openStep(row, root);
             };
             if(!button.parentNode)menu.append(button); if(focused===row.key)button.focus({preventScroll:true});
         }

@@ -769,19 +769,45 @@ final class AppleAppModel: ObservableObject {
         #endif
         return try await cloudLogin.offlineAuthorization(hostID: hostID)
     }
+    func refreshMemoryReplicaAfterMutation() async {
+        #if os(iOS)
+        do { try offline.invalidateMemory();try phoneChat.refreshComputerMemory() }
+        catch { authError="电脑操作已生效，手机副本清理待重试。" }
+        await pollOffline()
+        #endif
+    }
     func pollOffline() async {
-        guard let session, let directory = timelineStateDirectory else { return }
+        guard let directory = timelineStateDirectory else { return }
+        let offlineDirectory=directory.appendingPathComponent("Offline")
+        let offlineKeys=KeychainCredentialStore(service:cloudNamespace+".offline")
+        guard let session else {
+            #if os(iOS)
+            phoneChat.activate(app:self)
+            do {
+                if let identity=try cloudLogin.savedOfflineIdentity(),phoneChat.permitsComputerReplica(identity.hostId) {
+                    await offline.restore(identity:identity,directory:offlineDirectory,store:offlineKeys,allowLoopback:permitsSyntheticLoopback,multipleComputers:cloudLogin.multiHost,control:offlineAuthorization)
+                } else { offline.suspend() }
+            } catch { offline.suspend() }
+            phoneChat.activate(app:self)
+            #endif
+            return
+        }
         #if os(iOS)
         let phoneFirst=true
+        phoneChat.activate(app:self)
+        guard phoneChat.permitsComputerReplica(session.hostId) else { offline.removeComputer(session.hostId);return }
+        let transcriptExclusions=phoneChat.state.transcriptSync
         let supportsWork=mainChat.capabilities.supports("workAndChat")
         #else
         let phoneFirst=false
+        let transcriptExclusions: PhoneTranscriptSync?=nil
         let supportsWork=false
         #endif
-        await offline.poll(session: session, client: client, directory: directory.appendingPathComponent("Offline"),
-            store: KeychainCredentialStore(service: cloudNamespace + ".offline"),
-            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, multipleComputers:cloudLogin.multiHost, workAndChat:supportsWork, control: offlineAuthorization)
+        await offline.poll(session: session, client: client, directory: offlineDirectory,
+            store: offlineKeys,
+            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, multipleComputers:cloudLogin.multiHost, workAndChat:supportsWork, transcriptExclusions:transcriptExclusions, control: offlineAuthorization)
         #if os(iOS)
+        if self.session == session { try? cloudLogin.rememberOfflineIdentity(session) }
         await phoneChat.synchronize(app:self)
         if offline.hostOffline { _ = await watchSnapshotBytes() }
         #endif
@@ -1103,10 +1129,6 @@ final class AppleAppModel: ObservableObject {
     var canDeleteConversation: Bool { !lifecycleBusy && (!forgetConversationMemories || conversationForget.canConfirm) }
 
     @Published var deletionInSettings = false
-    @Published var sessionMenuCandidate: ConversationSummary?
-    #if os(iOS)
-    @Published var temporaryExpiryCandidate: ConversationSummary?
-    #endif
     @Published var deletionCandidate: ConversationSummary?
     @Published var forgetConversationMemories = false
     @Published var lifecycleBusy = false
@@ -1385,17 +1407,17 @@ final class AppleAppModel: ObservableObject {
                 configurationError = "测试存储命名空间无效，请检查启动参数。"
             }
         }
-        let testService = "com.weftmate.apple.ui-tests.\(testNamespace)"
-        let preferences = uiTesting
-            ? UserDefaults(suiteName: testService) : UserDefaults.standard
+        let storage = AppleStorageProfile(bundleID: Bundle.main.bundleIdentifier, uiTesting: uiTesting, testNamespace: testNamespace)
+        let preferences: UserDefaults?
+        if let suite = storage.preferencesSuite { preferences = UserDefaults(suiteName: suite) }
+        else { preferences = UserDefaults.standard }
         if preferences == nil { configurationError = "无法打开测试存储，请检查启动参数。" }
         defaults = preferences
         appearanceMode = preferences?.string(forKey: "appearanceMode") ?? "system"
         #if DEBUG
         if uiTesting, let index = args.firstIndex(of: "--a5-theme"), args.indices.contains(index + 1), ["light", "dark"].contains(args[index + 1]) { appearanceMode = args[index + 1] }
         #endif
-        var store: any CredentialStore = KeychainCredentialStore(service: uiTesting
-            ? "\(testService).credentials" : "com.weftmate.apple.credentials")
+        var store: any CredentialStore = KeychainCredentialStore(service: storage.credentials)
         #if DEBUG && os(macOS)
         if uiTesting, args.contains("--lg2-capture"), let i = args.firstIndex(of: "--a11-local-host-id"), args.indices.contains(i + 1) { self.localHostID = args[i + 1] }
         if uiTesting, args.contains("--lg2-capture"), args.contains("--a5-local-server"),
@@ -1404,7 +1426,7 @@ final class AppleAppModel: ObservableObject {
             store = CaptureCredentials()
         }
         #endif
-        cloudNamespace = uiTesting ? testService + ".cloud" : "com.weftmate.apple.cloud"
+        cloudNamespace = storage.cloud
         var transport: any HTTPTransport = URLSessionTransport(hostPins: HostPinStore(store: KeychainCredentialStore(service: cloudNamespace + ".pins")))
         var routeEnabled = false
         #if DEBUG
@@ -1441,17 +1463,15 @@ final class AppleAppModel: ObservableObject {
         var initialDraftError: String?
         var localDirectory: URL?
         do {
-            if uiTesting {
+            if let subdirectory = storage.stateSubdirectory {
                 guard let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
                     throw CocoaError(.fileNoSuchFile)
                 }
-                if let i = args.firstIndex(of: "--ui-testing-data-dir"), args.indices.contains(i + 1) {
+                if !storage.isWindowTest, let i = args.firstIndex(of: "--ui-testing-data-dir"), args.indices.contains(i + 1) {
                     localDirectory = URL(fileURLWithPath: args[i + 1], isDirectory: true)
                         .appendingPathComponent("LocalState", isDirectory: true)
                 } else {
-                    localDirectory = base.appendingPathComponent("WeftMate/UITests", isDirectory: true)
-                        .appendingPathComponent(testNamespace, isDirectory: true)
-                        .appendingPathComponent("LocalState", isDirectory: true)
+                    localDirectory = base.appendingPathComponent(subdirectory, isDirectory: true)
                 }
             }
             let local = try LocalConversationStore(directory: localDirectory)
@@ -1644,7 +1664,11 @@ final class AppleAppModel: ObservableObject {
     }
 
     func removeComputerReplica(_ host: String) {
+        #if os(iOS)
+        phoneChat.computerRemoved(host)
+        #endif
         offline.removeComputer(host)
+        try? cloudLogin.forgetOfflineIdentity(hostID:host)
         guard let directory=timelineStateDirectory else { return }
         do { try OfflineVault.clearComputer(hostID:host,directory:directory.appendingPathComponent("Offline"),store:KeychainCredentialStore(service:cloudNamespace+".offline")) }
         catch { authError="这台电脑的手机副本没能清除，请重试。" }
@@ -1695,7 +1719,6 @@ final class AppleAppModel: ObservableObject {
             taskControlSessions = try await client.taskControlSessionIDs(includeArchived: true)
             guard actionEpoch == epoch else { return }
             conversations = result
-            if let candidate = sessionMenuCandidate { sessionMenuCandidate = result.first { $0.id == candidate.id } }
             for row in result where !row.temporaryState.cacheAllowed { await clearLocalHistory(row) }
             if let selectedConversation {
                 if let updated = result.first(where: { $0.id == selectedConversation.id }) {
@@ -2299,10 +2322,7 @@ final class AppleAppModel: ObservableObject {
         timelineRootCommands = []; stoppingActiveTask = false
         subtaskStepTarget = nil; thinking = .init(); thinkingConversation = nil; thinkingError = nil; archiveUndo = nil; hoveredSession = nil; expandedProjectRows = []; projectThinking = false; projectCreatedSessionID = nil
         projects = []; projectCanManage = false; projectsError = nil; projectEditor = nil; projectConversation = nil; projectModels = []; projectBusy = false; projectError = nil; executionAccount = nil; sessionProjectNotices = [:]; collapsedProjects = []
-        sessionGroups = []; collapsedSessionGroups = []; openedSessionID = nil; phoneLibrarySelection = nil; renamingSessionID = nil; groupCandidate = nil; sessionMenuCandidate = nil; deletionInSettings = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
-        #if os(iOS)
-        temporaryExpiryCandidate = nil
-        #endif
+        sessionGroups = []; collapsedSessionGroups = []; openedSessionID = nil; phoneLibrarySelection = nil; renamingSessionID = nil; groupCandidate = nil; deletionInSettings = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
         queueNotice = nil; queueBusy = []; queueCancelRequests = [:]; canceledQueuedTasks = []
         attachmentDrafts.values.flatMap { $0 }.forEach { $0.removeTemporaryFiles() }
         attachmentDrafts = [:]; attachmentAttempts = [:]; attachmentMessageIDs = [:]; attachmentSessionIDs = [:]
@@ -2440,6 +2460,24 @@ private final class CaptureCredentials: CredentialStore, @unchecked Sendable {
     func load(key: String) -> Data? { lock.withLock { values[key] } }
     func save(_ data: Data, key: String) { lock.withLock { values[key] = data } }
     func delete(key: String) { lock.withLock { values[key] = nil } }
+}
+#endif
+
+#if DEBUG && os(iOS)
+extension AppleAppModel {
+    func seedPhoneWindowFixture(scene: String) throws {
+        let args=ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"),args.contains("--phone-window-fixture") else { return }
+        if scene != "no-copy" {
+            let value: [String:Any] = ["server":["origin":"https://window.example.invalid"],
+                "account":["ownerId":"window-owner","username":"synthetic","displayName":"合成账号"],
+                "device":["id":"window-device","name":"苹果测试"],"hostId":"window-computer","verification":"verified"]
+            session=try JSONDecoder().decode(AccountSession.self,from:JSONSerialization.data(withJSONObject:value))
+            cloudLogin.seedPhoneWindowAccount()
+            try offline.seedPhoneWindowReplica(disconnected:scene == "unreachable")
+        }
+        restoring=false
+    }
 }
 #endif
 

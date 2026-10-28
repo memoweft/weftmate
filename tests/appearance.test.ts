@@ -10,6 +10,25 @@ function fixture(saved?: string) {
     vm.runInNewContext(source, context);
     return { api: context.WeftUiCore, storage, values };
 }
+
+test('failed appearance persistence retains the last saved preferences', () => {
+    const f = fixture(), store = f.api.createAppearance(f.storage);
+    store.set({ ...store.value, pointerCursor: true, diffMarkers: 'sign' });
+    f.storage.setItem = () => { throw new Error('storage full'); };
+    assert.throws(() => store.set({ ...store.value, pointerCursor: false }), /storage full/);
+    assert.equal(store.value.pointerCursor, true);
+    assert.equal(store.value.diffMarkers, 'sign');
+});
+
+test('pointer and diff preferences survive reopening and reject invalid external values', () => {
+    const f = fixture(), store = f.api.createAppearance(f.storage);
+    store.set({ ...store.value, pointerCursor: true, diffMarkers: 'sign' });
+    assert.equal(f.api.createAppearance(f.storage).value.pointerCursor, true);
+    assert.equal(f.api.createAppearance(f.storage).value.diffMarkers, 'sign');
+    store.set({ pointerCursor: 'yes', diffMarkers: 'unknown' });
+    assert.equal(store.value.pointerCursor, false);
+    assert.equal(store.value.diffMarkers, 'color');
+});
 test('appearance defaults, separate accents and code size survive a new device store instance', () => {
     const f = fixture(), store = f.api.createAppearance(f.storage);
     assert.equal(store.value.theme, 'system'); assert.equal(store.value.codeFontSize, '12');
@@ -29,10 +48,10 @@ test('legacy accent migrates to both modes, unknown density remains harmless and
     const ui = readFileSync(new URL('../src/ui-core/appearance-controls.js', import.meta.url), 'utf8');
     assert.doesNotMatch(ui, /select\('density'|界面密度/);
 });
-test('broken or unavailable device storage does not prevent appearance reads or changes', () => {
+test('broken device storage permits reads and reports a failed save without changing preferences', () => {
     const f = fixture('{broken'); assert.equal(f.api.createAppearance(f.storage).value.theme, 'system');
     const store = f.api.createAppearance({getItem(){throw Error('blocked')},setItem(){throw Error('blocked')}});
-    store.set({theme:'light',codeFontSize:'15'}); assert.equal(store.value.codeFontSize, '15');
+    assert.throws(()=>store.set({theme:'light',codeFontSize:'15'}), /blocked/); assert.equal(store.value.codeFontSize, '12');
 });
 test('#646 complete device appearance preferences survive recreation with independent mode palettes', () => {
     const f = fixture(), store = f.api.createAppearance(f.storage);
@@ -45,7 +64,7 @@ test('#646 complete device appearance preferences survive recreation with indepe
     assert.equal(restored.backgroundLight,'#f5f5f5');assert.equal(restored.backgroundDark,'#202020');
     assert.equal(restored.fontLight,'serif');assert.equal(restored.fontDark,'mono');
     store.set({...restored,backgroundLight:'url(invalid)',uiFontSize:'99',font:'unknown',contrast:'999'});
-    assert.equal(store.value.backgroundLight,''); assert.equal(store.value.uiFontSize,'13'); assert.equal(store.value.font,'system');assert.equal(store.value.contrast,'100');
+    assert.equal(store.value.backgroundLight,''); assert.equal(store.value.uiFontSize,'14'); assert.equal(store.value.font,'system');assert.equal(store.value.contrast,'100');
 });
 const tokens = JSON.parse(readFileSync(new URL('../design/tokens/tokens.json', import.meta.url), 'utf8'));
 const css = readFileSync(new URL('../src/ui-core/appearance.css', import.meta.url), 'utf8');

@@ -19,11 +19,11 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         return true;
     };
     function closeResourcePreview() {
-        window.WeftDesktop?.closePreview(false);
+        globalThis.WeftPanels?.update(ui.workspaceContext());
     }
     function removeResourcePreview() {
         if(globalThis.WeftPhoneUnify?.isPhone())globalThis.WeftPhoneFiles?.close(false);
-        document.querySelector('.timeline-preview')?.remove();
+        globalThis.WeftPanels?.update(ui.workspaceContext());
     }
     function inlineTaskInfo(taskId, button) {
         const context = core.conversationTaskContext(), entry = core.conversationTasks.entries.get(taskId);
@@ -90,11 +90,11 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         globalThis.WeftDesktopUI?.appendArtifactActions(line, artifact, ui.toast);
         parent.append(line);
     }
-    async function openTimelinePreview(context, path, title, versions = []) {
+    async function openTimelinePreview(context, path, title, versions = [], target = null) {
         if (!core.conversationTaskCurrent(context))
             return;
         if (window.WeftDesktop) {
-            const preview = window.WeftDesktop.openPreview(title, document.activeElement, path);
+            const preview = target || window.WeftDesktop.openPreview(title, document.activeElement, path);
             const phone=globalThis.WeftPhoneUnify?.isPhone();
             const configurePhoneFile=artifact=>{if(!phone)return;const menu=preview.panel.querySelector('.phone-file-topbar button:last-child'),id=artifact?.artifactId||artifact?.id||String(path).match(/\/(?:artifacts|library)\/([^/]+)\/preview$/)?.[1];
                 if(menu)WeftPhoneFiles.attach({menu,name:title,getBlob:id?()=>WeftPhoneFiles.readBlob(core.artifactDownloadUrl(id)):undefined,
@@ -120,7 +120,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
                 }
             }
             catch {
-                if (preview.content.isConnected)
+                if (core.conversationTaskCurrent(context) && preview.content.isConnected)
                     preview.content.textContent = '暂时无法读取。关闭后重试。';
             }
             return;
@@ -169,15 +169,14 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             }
         } catch {if(core.conversationTaskCurrent(context) && pending.isConnected)pending.textContent='来源暂时无法读取，请重新打开。'}
     }
-    function openConversationResource(item, trigger = document.activeElement, showExcerpt = false) {
+    function openConversationResource(item, trigger = document.activeElement, showExcerpt = false, previewTarget = null) {
         const context = core.conversationTaskContext();
         if (!core.conversationTaskCurrent(context))
             return;
         if (item.artifact) {
-            void ui.openTimelinePreview(context, core.artifactPreviewPath(item.artifact.artifactId), item.name, item.versions);
-            return;
+            return ui.openTimelinePreview(context, core.artifactPreviewPath(item.artifact.artifactId), item.name, item.versions, previewTarget);
         }
-        const target = window.WeftDesktop.openPreview(item.name, trigger, item.key, item.kind);
+        const target = previewTarget || window.WeftDesktop.openPreview(item.name, trigger, item.key, item.kind);
         target.content.replaceChildren(ui.element('h2', '', item.name), ui.element('p', 'muted', window.WeftDesktop.usageText(item)));
         if(item.memory)return openMemorySource(item.memory,target.content,context);
         if (item.location)
@@ -189,7 +188,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             address.setAttribute('aria-label', '网页地址');
             target.content.append(address);
         }
-        for (const use of item.uses) {
+        for (const use of item.uses || []) {
             const line = ui.element('details', 'resource-usage');
             const time = use.at && Number.isFinite(Date.parse(use.at)) ? core.dateText(use.at) : '';
             const summary = ui.element('summary', '', `${use.summary}${time ? ` · ${time}` : ''}`);
@@ -240,6 +239,37 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             if (showExcerpt && use === item.uses[0]) line.open = true;
         }
     }
+    async function openFileChange(file, trigger) {
+        const context=core.conversationTaskContext();
+        // Applied-change cards describe the recorded tool result. Its before/after
+        // content remains useful when the live Git working tree has changed.
+        const key=JSON.stringify([context.sessionId,file.path,file.steps.map(step=>[step.sessionId,step.detailRef.seq])]);
+        const preview=WeftDesktop.openPreview(file.path.split(/[\\/]/).at(-1),trigger,`change:${key}`,'file');
+        const render=async()=>{
+            const ticket=Symbol();preview.content.changeLoad=ticket;
+            const current=()=>core.conversationTaskCurrent(context) && preview.content.isConnected && preview.content.changeLoad===ticket;
+            preview.content.textContent='正在读取改动…';
+            try {
+                const details=await Promise.all(file.steps.map(step=>core.readTimelineDetail(step.sessionId || context.sessionId,step.detailRef.seq)));
+                if(!current())return;
+                preview.content.replaceChildren();
+                for(const detail of details) {
+                    const hunks=(detail.fileDiffs || []).filter(diff=>diff.path===file.path);
+                    for(const hunk of hunks) {
+                        const section=ui.element('section','file-change-preview');
+                        section.append(ui.element('h3','','改动前'),ui.element('pre','timeline-raw',hunk.oldText ?? '（空）'),ui.element('h3','','改动后'),ui.element('pre','timeline-raw',hunk.newText));preview.content.append(section);
+                        if(hunk.truncated)section.append(ui.element('p','muted','内容较长，仅显示部分改动。'));
+                    }
+                }
+                if(!preview.content.children.length)preview.content.append(ui.element('p','','这次改动的详情未记录。'));
+            } catch {
+                if(!current())return;
+                const retry=ui.element('button','button secondary','重试');retry.type='button';retry.onclick=render;
+                preview.content.replaceChildren(ui.element('p','','改动暂时无法读取。'),retry);
+            }
+        };
+        await render();
+    }
     function renderTimeline(events = core.timelineEventsForContext()) {
         if (!window.WeftTimeline)
             return;
@@ -257,6 +287,8 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             fileLabel: window.WeftDesktop?.fileLabel,
             mobile: window.matchMedia?.('(max-width: 640px)').matches === true,
             readDetail: seq => core.readTimelineDetail(sessionId, seq),
+            readOutput:(seq,offset)=>core.readTimelineOutput(sessionId,seq,offset),
+            openChange:openFileChange,
             openStep: async (step, trigger) => {
                 try {
                     const items = await core.loadConversationResources();
@@ -302,5 +334,16 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         if (core.state.activeChatSource === 'phone')
             ui.renderSelectedPhoneConversation();
     }
-    return { closeResourcePreview, removeResourcePreview, inlineTaskInfo, appendTimelineArtifact, openTimelinePreview, appendResourceArtifactActions, openConversationResource, renderTimeline, showConversation };
+    if (globalThis.WeftPanels) Object.assign(WeftPanels.services, {
+        workspaceRequest(ctx, action, body) {
+            const route = `/workspaces/${encodeURIComponent(ctx.sessionId)}/${action}`;
+            const options = body === undefined ? {} : { method: 'POST', body, protectedWrite: true };
+            if (ctx.computerId && core.canUseComputerChannel?.()) return core.computerApi(ctx.computerId, route, options);
+            if (ctx.computerId && ctx.computerId !== core.state.hostId) throw { code: 'COMPUTER_OFFLINE' };
+            return core.accessApi(route, options);
+        },
+        resources: core.loadConversationResources,
+        previewResource: (item, content) => openConversationResource(item, undefined, true, { content, panel: content }),
+    });
+    return { closeResourcePreview, removeResourcePreview, inlineTaskInfo, appendTimelineArtifact, openTimelinePreview, openFileChange, appendResourceArtifactActions, openConversationResource, renderTimeline, showConversation };
 };

@@ -20,10 +20,24 @@ import Testing
         #expect(headline + 72 + 16 + 128 == width)
     }
 }
-@Test func phoneFiveTabsHaveRoomForLongestLabelAtMinimumWidth() {
-    #expect(PhoneTab.allCases.map(\.title) == ["聊天", "动态", "健康", "目标", "成果库"])
+@Test func phoneThreeTabsHaveRoomForLabelsAtMinimumWidth() {
+    #expect(PhoneTab.allCases.map(\.title) == ["聊天", "动态", "健康"])
     let width = PhonePresentation.tabWidth(width: 320, inset: 16, gap: 4)
     #expect(width >= 44)
-    #expect(width >= Double(PhoneTab.resources.title.count) * 12)
-    #expect(Set(PhoneTab.allCases.map(\.id)).count == 5)
+    #expect(width >= 88)
+    #expect(Set(PhoneTab.allCases.map(\.id)).count == 3)
+}
+@Test func phoneLongLivedPagesBelongToTheSidebar() {
+    #expect(PhoneSidebarDestination.lasting.map(\.title) == ["目标与提醒", "成果库", "记忆"])
+    #expect(PhoneSidebarDestination.allCases.map(\.title) == ["全部对话", "目标与提醒", "成果库", "记忆", "项目"])
+}
+@Test func phoneDrawerTracksCancelsAndPredictsBothDirections() {
+    #expect(PhoneDrawerGesture.progress(open: false, translation: 164, width: 328) == 0.5)
+    #expect(PhoneDrawerGesture.progress(open: true, translation: -164, width: 328) == 0.5)
+    #expect(PhoneDrawerGesture.progress(open: false, translation: -30, width: 328) == 0)
+    #expect(PhoneDrawerGesture.progress(open: true, translation: 40, width: 328) == 1)
+    #expect(!PhoneDrawerGesture.commits(open: false, translation: 40, predicted: 80, threshold: 96))
+    #expect(PhoneDrawerGesture.commits(open: false, translation: 40, predicted: 120, threshold: 96))
+    #expect(PhoneDrawerGesture.commits(open: true, translation: -40, predicted: -80, threshold: 96))
+    #expect(!PhoneDrawerGesture.commits(open: true, translation: -100, predicted: -100, threshold: 96))
 }

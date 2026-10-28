@@ -19,7 +19,7 @@ final class Apple11UITests: XCTestCase {
         XCTAssertTrue(evidence.waitForExistence(timeout:10))
         let queued=NSPredicate(format:"label CONTAINS 'pending=1'")
         expectation(for:queued,evaluatedWith:evidence);waitForExpectations(timeout:15)
-        app.buttons["phone.tab.goals"].tap()
+        app.buttons["phoneChat.sidebar"].tap(); app.buttons["phone.sidebar.goals"].tap()
         XCTAssertTrue(app.buttons["reminders.new"].waitForExistence(timeout:10))
         capture("apple11-light-reminders")
         app.buttons["phone.tab.chat"].tap()
@@ -45,7 +45,7 @@ final class Apple11UITests: XCTestCase {
         app.launchArguments=["--ui-testing","--apple11-fixture","--apple11-dark","--ui-testing-namespace","apple11-dark-"+UUID().uuidString]
         app.launch()
         XCTAssertTrue(app.descendants(matching:.any)["phoneChat.draft"].firstMatch.waitForExistence(timeout:30))
-        app.buttons["phone.tab.goals"].tap()
+        app.buttons["phoneChat.sidebar"].tap(); app.buttons["phone.sidebar.goals"].tap()
         XCTAssertTrue(app.buttons["reminders.new"].waitForExistence(timeout:10))
         capture("apple11-dark-reminders")
         app.terminate()

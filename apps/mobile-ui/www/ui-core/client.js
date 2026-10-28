@@ -15,6 +15,7 @@ globalThis.WeftUiCore.factories.client = (core) => {
         return detailReads.get(key);
     }
     return {
+        readTimelineOutput: (sessionId,seq,outputOffset) => core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/events/${seq}/detail?outputOffset=${outputOffset}`),
         taskSourcePath: (taskId, snapshotId) => `/tasks/${encodeURIComponent(taskId)}/sources/${encodeURIComponent(snapshotId)}`,
         artifactPreviewPath: artifactId => `/artifacts/${encodeURIComponent(artifactId)}/preview`,
         artifactDownloadUrl: artifactId => `${core.accessBase}/artifacts/${encodeURIComponent(artifactId)}/download`,
@@ -35,6 +36,7 @@ globalThis.WeftUiCore.factories.client = (core) => {
         readProfile: () => core.api('/me'),
         saveProfile: body => authWrite('/profile', body, 'PATCH'),
         readDevices: () => core.api('/devices'),
+        readDeviceSync: () => core.accessApi('/devices/sync'),
         renameDevice: (id, name) => authWrite(`/devices/${encodeURIComponent(id)}`, { name }, 'PATCH'),
         revokeDevice: id => authWrite(`/devices/${encodeURIComponent(id)}`, undefined, 'DELETE'),
         readPendingDevices: () => core.accessApi('/cloud/devices/pending'),

@@ -1,5 +1,6 @@
 import { validPermissionRules } from '../plugins/personal-permission-rules.mjs';
 import { failure, publicProject, validProjectName } from '../personal-access/common.mjs';
+import { inspectProjectRoot } from './index.mjs';
 
 export function redactProjectPath(text, rootPath) {
   if (typeof text !== 'string' || !rootPath) return text;
@@ -41,11 +42,14 @@ export function createProjectOperations(context) {
   return async (ownerId, projectId, method, body, assertCurrent = () => {}) => context.serial(async () => {
     const account = context.accountState(ownerId), project = account.projects?.[projectId];
     if (!project || project.removed) throw failure('NOT_FOUND', 404);
-    const keys = method === 'DELETE' ? ['expectedRevision'] : ['name', 'instructions', 'permission', 'permissionRules', 'expectedRevision'];
+    const keys = method === 'DELETE' ? ['expectedRevision'] : ['name', 'instructions', 'permission', 'permissionRules', 'rootPath', 'expectedRevision'];
     if (!body || Object.keys(body).some(key => !keys.includes(key)) ||
         !Number.isSafeInteger(body.expectedRevision)) throw failure('INVALID_REQUEST');
     if (body.expectedRevision !== project.revision) throw failure('PROJECT_REVISION_CHANGED', 409);
     const patch = method === 'DELETE' ? {} : projectSettings(body);
+    if (method === 'PATCH' && body.rootPath !== undefined) {
+      Object.assign(patch, await (context.projectRootInspector ?? inspectProjectRoot)(body.rootPath), { files: {} });
+    }
     if (method !== 'DELETE' && !Object.keys(patch).length) throw failure('INVALID_REQUEST');
     if (Object.values(account.sessions).some(session => session.projectId === projectId && session.deleting)) throw failure('SESSION_BUSY', 409);
     // Do not change a running turn's policy or invalidate its approval receipt.

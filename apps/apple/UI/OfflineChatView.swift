@@ -26,7 +26,7 @@ struct OfflineWorkspace: View {
                 OfflineChatView(app: app, model: model)
             } else {
                 if !model.turns.isEmpty {
-                    Button(model.pending == 0 ? "离线对话 · 已同步" : "离线对话 · 等待同步") { model.showHistory = true }
+                    Button(model.pending == 0 ? "离线对话 · 电脑已收到" : "离线对话 · 等待交给电脑") { model.showHistory = true }
                         .font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p8)
                         .accessibilityIdentifier("offlineHistory")
                 }
@@ -94,7 +94,7 @@ struct OfflineChatView: View {
                                 Text(message.text).font(AppleTokens.Fonts.body).foregroundStyle(message.role == "user" ? Weave.secondary : Weave.ink)
                                     .frame(maxWidth: .infinity, alignment: message.role == "user" ? .trailing : .leading)
                             }
-                            Text(model.synced.contains(turn.id) ? "已同步" : "电脑上线后自动同步")
+                            Text(model.synced.contains(turn.id) ? "电脑已收到" : "电脑上线后自动接收")
                                 .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         }
                     }

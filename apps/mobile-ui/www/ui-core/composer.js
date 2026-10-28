@@ -135,9 +135,14 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                 assignments.get(entry).push({block,facts});
             }
         }
+        const userByEntry = new Map();
+        for (const event of events) if (event.type === 'user.message') {
+            const entry = canonicalEntry(messageEntry({...event.data,sessionId:eventSession(event)},event,conversation));
+            if (!userByEntry.has(entry)) userByEntry.set(entry,event);
+        }
         return [...new Set([...entries].map(canonicalEntry))].map(entry=>{
             const assigned=assignments.get(entry) || [], latest=assigned.at(-1);
-            const user=events.find(event=>event.type==='user.message' && messageEntry({...event.data,sessionId:eventSession(event)},event,conversation)===entry);
+            const user=userByEntry.get(entry);
             const local=pending.find(row=>rememberTurnRequest(row)===entry) || (!entry.userSeen && entry.pending);
             let facts=assigned.flatMap(({facts})=>facts);
             // A message owns one disclosure, even when a continuation has more

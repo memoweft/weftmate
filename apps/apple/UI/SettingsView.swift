@@ -121,7 +121,7 @@ struct SettingsView: View {
                         }.frame(minHeight: AppleTokens.Space.p44).phoneCard().foregroundStyle(Weave.danger)
                     }.buttonStyle(.plain).accessibilityIdentifier("settings.logout")
                 }.padding(AppleTokens.Space.p16)
-            }.background(Weave.canvas).navigationTitle("设置").navigationBarTitleDisplayMode(.inline)
+            }.background(Weave.grouped).navigationTitle("设置").navigationBarTitleDisplayMode(.inline)
                 .navigationDestination(for: AppleSettingsRoute.self) { route in detail(route).toolbar { if route.categoryID != "run-log" { closeButton } } }
                 .toolbar { closeButton }
                 .accessibilityElement(children: .contain).accessibilityIdentifier("settingsRoot")

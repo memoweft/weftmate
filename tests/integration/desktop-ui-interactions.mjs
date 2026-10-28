@@ -42,9 +42,9 @@ try {
     await page.getByRole('button', { name: '设置', exact: true }).click()
     await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '外观', exact: true }).click()
       await page.getByRole('button', { name: theme === 'light' ? '浅色' : '深色', exact: true }).click()
+    await page.locator('.appearance-advanced > summary').click()
     await page.getByRole('combobox', { name: '强调色', exact: true }).click()
     await page.getByRole('option', { name: '松绿', exact: true }).click()
-    await page.locator('.appearance-advanced > summary').click()
     await page.getByRole('spinbutton', { name: '内容字号', exact: true }).fill('17')
     await page.getByRole('spinbutton', { name: '内容字号', exact: true }).press('Tab')
     await page.getByRole('button', { name: '关闭设置', exact: true }).click()
@@ -75,7 +75,12 @@ try {
     await input.fill('下一件事：整理会议记录'); await input.press('Enter')
     await until(() => candidate.operations.some(op => op.text === '下一件事：整理会议记录' && op.mode === 'queue'))
     await until(async () => (await input.inputValue()) === '')
-    const process=page.locator('.execution-block').first();
+    await page.locator('#chat-scroll').evaluate(box=>{
+      box.dispatchEvent(new WheelEvent('wheel',{deltaY:-100,bubbles:true}));box.scrollTop=0;
+    })
+    const goal=page.locator('#transcript > .message.user').filter({hasText:'读取项目资料，运行测试，并保存一份进度报告。'});
+    await goal.waitFor();
+    const process=goal.locator('xpath=following-sibling::*[1]').locator('.execution-block');
     if(!await process.evaluate(node=>node.open))await process.locator(':scope > summary').click();
     for(const group of await process.locator('.execution-step-group').all())if(!await group.evaluate(node=>node.open))await group.locator(':scope > summary').click();
     await process.locator('.execution-step > summary').filter({hasText:/^读取 3 个文件/}).first().click()
@@ -95,7 +100,7 @@ try {
     await page.getByText('报告已保存，测试全部通过。', { exact: true }).waitFor()
     await page.getByRole('button', { name: '发送', exact: true }).waitFor()
     await page.getByRole('button', { name: '打开成果 项目进度报告.md', exact: true }).click()
-    const preview = page.getByRole('complementary', { name: '成果与来源预览' })
+    const preview = page.getByRole('complementary', { name: '工作面板' })
     await preview.getByRole('heading', { name: '项目进度报告', exact: true }).waitFor()
     await preview.getByText('已读取 3 个文件。42 项测试通过。', { exact: true }).waitFor()
     const before = await preview.boundingBox()
@@ -112,10 +117,11 @@ try {
     await preview.getByRole('button', { name: '已复制', exact: true }).waitFor()
     assert.match(await page.evaluate(() => globalThis.syntheticClipboardText), /Read 3 files successfully/)
     await preview.getByRole('button', { name: '再打开一项' }).click()
-    await page.getByRole('dialog', { name: '输出与来源' }).getByRole('button', { name: '项目进度报告.md', exact: true }).click()
-    assert.equal(await preview.getByRole('tab').count(), 2)
+    await page.getByRole('menu', { name: '打开面板', exact:true }).getByRole('menuitem', { name:'文件',exact:true }).click()
+    await preview.getByRole('button', { name: '项目进度报告.md', exact: true }).click()
+    assert.equal(await preview.getByRole('tab').count(), 3)
     await preview.getByRole('button', { name: /关闭标签 README/ }).click()
-    assert.equal(await preview.getByRole('tab').count(), 1)
+    assert.equal(await preview.getByRole('tab').count(), 2)
     await preview.getByRole('button', { name: '收起右侧面板', exact: true }).click()
     await page.keyboard.press('Control+k')
     const search = page.getByRole('combobox', { name: '搜索内容', exact: true })
@@ -128,8 +134,13 @@ try {
     await page.reload(); await page.getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).waitFor()
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), theme)
     assert.equal(await page.evaluate(() => document.documentElement.dataset.accent), 'green')
-    assert.equal(await page.locator('.markdown-body').first().evaluate(element => getComputedStyle(element).fontSize), '17px')
-    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize), '13px')
+    const restoredFont = await page.waitForFunction(() => {
+      const body=document.querySelector('#transcript .markdown-body');
+      const size=body?.isConnected ? getComputedStyle(body).fontSize : '';
+      return size==='17px' ? size : false;
+    })
+    assert.equal(await restoredFont.jsonValue(), '17px')
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize), '14px')
     // Paste/drop target semantic controls; neither operation depends on their layout slot.
     await input.evaluate(element => {
       const files = new DataTransfer(); files.items.add(new File(['synthetic paste'], '粘贴.txt', { type: 'text/plain' }))

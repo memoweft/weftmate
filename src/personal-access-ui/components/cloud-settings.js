@@ -1,6 +1,7 @@
 /* Account/device presentation; all requests and credential handling live in ui-core. */
 globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
-    let pairingTimer, directoryTimer, tab = 'account', editingId = null, editingGeneration = -1, directoryGeneration = 0, pairingGeneration = 0, localGeneration = 0;
+    let directoryTimer, tab = 'account', editingId = null, editingGeneration = -1, directoryGeneration = 0, localGeneration = 0;
+    let syncDirectory=[],directorySnapshot='',syncNotice='';
     const button = (label, action, style = 'secondary') => { const node = ui.element('button', `button ${style}`, label); node.type = 'button'; node.addEventListener('click', action); return node; };
     function error(error) { ui.byId('cloud-settings-status').textContent = core.cloudError(error); }
     async function act(action) { try { ui.byId('cloud-settings-status').textContent = ''; await action(); return true; } catch (failure) { error(failure); return false; } }
@@ -10,6 +11,8 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const panel = ui.element('section', 'card group cloud-settings'); panel.id = 'cloud-settings'; panel.hidden = true;
         panel.innerHTML = '<nav class="actions" aria-label="设置分类"><button class="button secondary" type="button" id="cloud-account-tab">账户</button><button class="button secondary" type="button" id="cloud-devices-tab">设备</button></nav><p id="cloud-settings-status" class="form-error" role="status"></p><section id="cloud-account-panel" aria-label="账户"><h2>账户</h2><p class="account-row"><span>邮箱</span><strong id="cloud-email"></strong></p><p id="cloud-login-needed" class="muted"></p><div id="cloud-local-accounts" hidden></div><div class="actions" id="cloud-login-actions"></div><div class="actions" id="cloud-account-actions"></div><div id="cloud-account-flow"></div></section><section id="cloud-devices-panel" aria-label="设备" hidden><div class="group-heading"><h2>设备</h2><button class="button secondary" type="button" id="cloud-directory-refresh">刷新设备</button></div><p id="cloud-directory-status" class="muted" role="status"></p><div class="actions" id="cloud-directory-login"></div><ul id="cloud-directory" class="device-list" aria-live="polite"></ul></section>';
         const refresh = panel.querySelector('#cloud-directory-refresh'); refresh.className='icon-button'; refresh.replaceChildren(WeftIcons.create('sync',18)); refresh.setAttribute('aria-label','刷新设备'); refresh.title='刷新设备';
+        const addDevice = button('添加设备', () => void ui.cloudUi.openPairing()); addDevice.id = 'cloud-pairing-open'; addDevice.hidden = true;
+        panel.querySelector('#cloud-devices-panel .group-heading').append(addDevice);
         account.prepend(panel);
         const signedIn = globalThis.WeftControls.tag('已登录'); signedIn.id = 'cloud-login-state';
         panel.querySelector('#cloud-account-panel > h2').textContent='远程访问';
@@ -19,6 +22,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         ui.byId('cloud-account-tab').addEventListener('click', () => select('account'));
         ui.byId('cloud-devices-tab').addEventListener('click', () => { select('devices'); void refreshDirectory(); });
         ui.byId('cloud-directory-refresh').addEventListener('click', () => void refreshDirectory());
+        const deviceActions=ui.element('div','actions');ui.byId('cloud-directory-refresh').before(deviceActions);deviceActions.append(addDevice,ui.byId('cloud-directory-refresh'));
         const actions = ui.byId('cloud-account-actions');
         actions.append(button('换绑邮箱', () => accountFlow('email')), button('修改密码', () => accountFlow('password')),
             button('退出登录', () => void act(core.cloudLogout)), button('退出所有其他设备', () => confirmAction('退出所有其他设备', '其他设备将退出登录，当前设备继续可用。', async () => { await core.cloudLogoutOthers(); await refreshDirectory(); })),
@@ -57,6 +61,12 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     function paintCloudSettings() {
         if (!ui.byId('cloud-settings')) return;
         const active = core.state.cloudAuth.mode === 'authenticated', view = core.cloudAuthView();
+        const pairingOwner = core.state.ownerId, pairingIdentity = core.state.identityGeneration;
+        const pairingCurrent = () => pairingIdentity === core.state.identityGeneration && pairingOwner === core.state.ownerId;
+        void core.accessApi('/cloud/binding').then(binding => {
+            if (pairingCurrent())
+                ui.byId('cloud-pairing-open').hidden = !binding.canManage || binding.status !== 'active';
+        }).catch(() => { if (pairingCurrent()) ui.byId('cloud-pairing-open').hidden = true; });
         ui.byId('cloud-account-panel').dataset.signedIn = String(active);
         ui.byId('cloud-login-state').hidden = !active;
         ui.byId('cloud-settings').hidden = false;
@@ -79,7 +89,14 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const generation = core.state.identityGeneration, request = ++directoryGeneration;
         const status = ui.byId('cloud-directory-status'), list = ui.byId('cloud-directory'); list.setAttribute('aria-busy', 'true');
         if (!list.children.length) { status.textContent = ''; list.append(WeftControls.skeleton({tag:'li'})); }
-        try { const directory = await (core.state.cloudAuth.mode === 'authenticated' ? core.cloudDirectory() : core.localDeviceDirectory()); if (generation !== core.state.identityGeneration || request !== directoryGeneration) return; status.textContent = ''; list.setAttribute('aria-busy', 'false'); renderDirectory(directory); }
+        try {
+            const [directoryResult,syncResult]=await Promise.allSettled([core.state.cloudAuth.mode === 'authenticated' ? core.cloudDirectory() : core.localDeviceDirectory(),core.readDeviceSync()]);
+            if(generation!==core.state.identityGeneration||request!==directoryGeneration)return;
+            if(directoryResult.status==='rejected')throw directoryResult.reason;
+            syncDirectory=syncResult.status==='fulfilled'?syncResult.value.devices:[];
+            syncNotice=syncResult.status==='rejected'?'原话与记忆状态暂时无法读取，点刷新重试。':'';
+            list.setAttribute('aria-busy','false');renderDirectory(directoryResult.value);
+        }
         catch (failure) { if (generation === core.state.identityGeneration && request === directoryGeneration) { list.setAttribute('aria-busy', 'false'); for (const row of list.querySelectorAll('.library-skeleton-row')) row.remove(); status.textContent = '设备暂时无法读取。请点刷新重试。'; if (showError) error(failure); } }
     }
     function deviceTime(value) { return core.cloudDeviceTime(value); }
@@ -102,7 +119,12 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const feedback = ui.element('p', 'form-error'); feedback.setAttribute('role', 'alert'); body.append(feedback);
         const save = ui.element('button', 'button primary', '保存名称'); save.type = 'submit'; footer.append(button('取消', () => dialog.close()), save);
         form.append(head, body, footer); dialog.append(form);
-        form.addEventListener('submit', async event => { event.preventDefault(); if (editingGeneration !== core.state.identityGeneration) { dialog.close(); return; } const identity = editingGeneration; save.disabled = true; try { const directory = await (device.hostId&&core.state.cloudAuth.multiHostSupported?core.cloudRenameComputer(device.hostId,input.value):core.cloudRename(device.id, input.value)); if (identity !== core.state.identityGeneration) { dialog.close(); return; } editingId = null; renderDirectory(directory); dialog.close(); ui.toast('设备名称已保存。'); } catch (failure) { feedback.textContent = core.cloudError(failure); } finally { save.disabled = false; } });
+        form.addEventListener('submit', async event => { event.preventDefault(); if (editingGeneration !== core.state.identityGeneration) { dialog.close(); return; } const identity = editingGeneration; save.disabled = true; try {
+            if(core.state.cloudAuth.mode!=='authenticated')await core.renameDevice(device.id,input.value);
+            else if(device.hostId&&core.state.cloudAuth.multiHostSupported)await core.cloudRenameComputer(device.hostId,input.value);
+            else await core.cloudRename(device.id,input.value);
+            if(identity!==core.state.identityGeneration){dialog.close();return;}editingId=null;await refreshDirectory();dialog.close();ui.toast('设备名称已保存。');
+        } catch (failure) { feedback.textContent = core.cloudError(failure); } finally { save.disabled = false; } });
         dialog.addEventListener('close', () => { editingId = null; dialog.remove(); }); document.body.append(dialog); dialog.showModal(); input.focus();
     }
     function showDevice(device) {
@@ -120,23 +142,36 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     function renderDirectory({ devices = [], hosts = [] }) {
         if (editingId && editingGeneration === core.state.identityGeneration) return;
         editingId = null;
-        const identity = core.state.identityGeneration, list = ui.byId('cloud-directory'); list.replaceChildren();
-        ui.byId('cloud-directory-status').textContent = core.state.cloudAuth.mode === 'authenticated' && !hosts.length ? '这个账号还没有连上电脑。在电脑上用同一个账号登录后，这里会出现。' : '';
+        const identity=core.state.identityGeneration,list=ui.byId('cloud-directory');
+        const noComputer=core.state.cloudAuth.mode==='authenticated'&&!hosts.length?'这个账号还没有连上电脑。在电脑上用同一个账号登录后，这里会出现。':'';
+        ui.byId('cloud-directory-status').textContent=[noComputer,syncNotice].filter(Boolean).join(' ');
+        const snapshot=JSON.stringify([identity,devices,hosts,syncDirectory]);if(snapshot===directorySnapshot&&list.children.length)return;
+        directorySnapshot=snapshot;list.replaceChildren();
         const currentHost = hosts.find(host => host.isCurrent), currentDevice = devices.find(device => device.isCurrent), linked = new Set();
         const rows = devices.map(device => {
             const matches = hosts.filter(host => host.name === device.name);
             const host = hosts.length>1&&core.state.cloudAuth.multiHostSupported ? hosts.find(host=>host.hostId===device.hostId) : device === currentDevice ? currentHost : ['windows', 'macos'].includes(device.type) && matches.length === 1 ? matches[0] : null;
             if (host) linked.add(host.hostId);
-            return host ? { ...device, name:host.displayName||host.name, hostId: host.hostId, type: 'computer', online: host.online } : device;
+            const sync=syncDirectory.find(row=>row.deviceId===device.id||row.cloudDeviceId===device.id)?.sync;
+            return host ? { ...device, name:host.displayName||host.name, hostId: host.hostId, type: 'computer', online: host.online } : {...device,sync,...(sync&&!device.isCurrent?{type:['ios','android'].includes(device.type)?device.type:'phone'}:{})};
         });
         for (const device of [...rows.filter(device => !device.revoked), ...hosts.filter(host => !linked.has(host.hostId)).map(host => ({ ...host, name:host.displayName||host.name,hostOnly: true }))]) {
             const row = ui.element('li', 'device-item cloud-device-row'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', device.name);
             const summary = ui.element('button', 'cloud-device-summary'); summary.type = 'button'; summary.setAttribute('aria-label', `查看 ${device.name}`);
-            const icon = globalThis.WeftIcons.create(device.type === 'computer' || ['windows', 'macos'].includes(device.type) ? 'desktop' : ['android', 'ios'].includes(device.type) ? 'phone' : device.type === 'watch' ? 'watch' : 'web', 24);
+            const icon = globalThis.WeftIcons.create(device.hostId || device.type === 'computer' || ['windows', 'macos'].includes(device.type) ? 'desktop' : ['android', 'ios','phone'].includes(device.type) ? 'phone' : device.type === 'watch' ? 'watch' : 'web', 24);
             const content = ui.element('div', 'device-content'), title = ui.element('div', 'device-title'); title.append(ui.element('strong', '', device.name));
             if (device.isCurrent) title.append(ui.element('span', 'badge', '这台设备'));
             content.append(title, ui.element('p', 'device-meta', `首次登录 ${deviceTime(device.firstUsedAt || device.firstLoginAt || device.createdAt || device.confirmedAt || device.enrolledAt)}`),
                 ui.element('p', 'device-meta', `最近使用 ${deviceTime(device.lastUsedAt || device.lastSeenAt)}${device.hostId ? device.online ? ' · 电脑在线' : ' · 电脑离线' : ''}`));
+            if(['ios','android','phone'].includes(device.type)){
+                const sync=device.sync,section=ui.element('div','device-sync');section.setAttribute('aria-label','原话与记忆');section.append(ui.element('strong','','原话与记忆'));
+                const line=(label,value)=>{const row=ui.element('div','device-sync-line');row.append(ui.element('span','',label),ui.element('span','',value));section.append(row);};
+                line('电脑已收到原话',Number.isSafeInteger(sync?.receivedOriginals)?`${sync.receivedOriginals} 条`:'尚无记录');
+                line('最近收到',sync?.lastReceivedAt?deviceTime(sync.lastReceivedAt):'尚无记录');
+                line('记忆整理',({idle:'还没有待整理的原话',receiving:'正在接收原话',running:'正在整理',paused:'已暂停',awaiting_confirmation:'等待电脑模型就绪',completed:'已整理',failed:'整理未完成，请在记忆页重试',submitted:'已提交，整理结果待确认',received:'原话已收到，尚未整理',cancelled:'已停止',forgotten:'已遗忘'}[sync?.memoryState])||'尚无记录');
+                line('副本最近更新',sync?.replicaPublishedAt?`${deviceTime(sync.replicaPublishedAt)} · 电脑已提供`:'尚无记录');
+                content.append(section);
+            }
             summary.append(icon, content); summary.addEventListener('click', () => showDevice(device));
             const actions = ui.element('div', 'actions cloud-device-actions');
             if (device.type === 'computer' && !device.isCurrent) actions.append(button('连接', () => void act(async () => {
@@ -150,8 +185,8 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
             if (!device.hostOnly || device.hostId&&core.state.cloudAuth.multiHostSupported) {
                 const more = ui.element('button', 'icon-button'); more.type = 'button'; more.setAttribute('aria-label', `${device.name}的更多操作`); more.setAttribute('aria-haspopup', 'menu'); more.append(globalThis.WeftIcons.create('more', 18));
                 more.addEventListener('click', () => globalThis.WeftPopover.menu(more, [
-                    ...(core.state.cloudAuth.mode === 'authenticated' ? [{ name: '修改名称', icon: 'edit', action: () => { if (identity === core.state.identityGeneration) renameDevice(device); } }] : []),
-                    { name: device.hostId&&core.hasMultipleComputers?.()?'移除电脑':'让设备下线', icon: 'logout', danger: true, action: () => { if (identity === core.state.identityGeneration) logoutDevice(device); } },
+                    { name: '修改名称', icon: 'edit', action: () => { if (identity === core.state.identityGeneration) renameDevice(device); } },
+                    { name: device.hostId&&core.hasMultipleComputers?.()?'移除电脑':'移除设备', icon: 'logout', danger: true, action: () => { if (identity === core.state.identityGeneration) logoutDevice(device); } },
                 ], failure => error(failure))); actions.append(more);
             }
             row.append(summary, actions); list.append(row);
@@ -189,7 +224,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
             container.replaceChildren();
         }).finally(() => { submit.disabled = false; if (current) current.value = ''; if (password) password.value = ''; if (confirmation) confirmation.value = ''; }); });
     }
-    function stopPairing() { pairingGeneration++; clearTimeout(pairingTimer); }
+    function stopPairing() { void ui.cloudUi.stopPairing(); }
     function paintCloudPending() {
         // Device login notifications use the shared activity/notification feed.
         const banner = ui.byId('cloud-access-banner'); if (banner) { banner.hidden = true; banner.replaceChildren(); }

@@ -14,7 +14,7 @@ const enabled = process.env.WEFTMATE_WEB_E2E === 'true';
 const button = (page, name) => page.getByRole('button', { name, exact: true });
 const field = (page, name) => page.getByLabel(name, { exact: true }).filter({ visible: true });
 
-test('AUTH-1 real browser: password or email-code login → immediate session → directory/rename/offline; legacy pairing and unlink remain protected', { skip: !enabled, timeout: 180000 }, async t => {
+test('AUTH-1 real browser: password or email-code login → session → directory/rename/offline; desktop-confirmed pairing and unlink stay protected', { skip: !enabled, timeout: 180000 }, async t => {
   const { chromium } = await import('../../../apps/mobile-ui/node_modules/playwright/index.mjs');
   const reserved = createServer(); reserved.listen(0, '127.0.0.1'); await once(reserved, 'listening');
   const port = reserved.address().port; await new Promise(resolve => reserved.close(resolve));
@@ -132,7 +132,7 @@ test('AUTH-1 real browser: password or email-code login → immediate session �
   }
   async function offline(page,name) {
     await page.getByRole('button',{name:`${name}的更多操作`,exact:true}).click();
-    await page.getByRole('menuitem',{name:'让设备下线',exact:true}).click();
+    await page.getByRole('menuitem',{name:'移除设备',exact:true}).click();
     const confirm=page.getByRole('dialog',{name:'让设备下线',exact:true}); await confirm.waitFor();
     await confirm.getByRole('button',{name:'确认下线',exact:true}).click();
     await confirm.waitFor({state:'hidden'}); await host.syncCloudRevocations();
@@ -166,19 +166,59 @@ test('AUTH-1 real browser: password or email-code login → immediate session �
   await phone.getByText(/这台设备/).filter({ visible: true }).first().waitFor();
   await phone.screenshot({ path: '.local/s1c-web/remote-devices.png' });
 
-  // New UI does not expose pairing material. Keep the legacy one-use/owner
-  // compatibility assertions through the real browser's existing client API.
-  // Only the directly authenticated computer can create pairing material.
+  // The phone independently computes SAS; only the direct computer can confirm.
   const pairing = await hostApi('/cloud/pairings', {}, local, 201);
+  const pairingCookies = await phoneContext.cookies(origin);
+  const sas=await phone.evaluate(async pairing=>{
+    const client = new WeftUiCore.CloudAuthClient({ fetch: (...args) => fetch(...args), crypto,
+      credentials: (...args) => WeftCloud.storage(...args), vendor: WeftCloudVendor, host: location.origin });
+    await client.configure();const key=await client.key(),saved=await client.saved();
+    const jkt=await client.hash(JSON.stringify({crv:key.publicJwk.crv,kty:key.publicJwk.kty,x:key.publicJwk.x,y:key.publicJwk.y}));
+    const bytes=crypto.getRandomValues(new Uint8Array(32)),nonce=btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const token=await client.access(client.base+'/hosts/'+client.config.hostId);
+    const send=async(path,body)=>{const n=await client.request(client.host+'/personal/v1/auth/cloud-nonce',{method:'POST',body:{}});
+      const url=client.host+'/personal/v1'+path,proof=await client.proof(url,{token,nonce:n.nonce});
+      const result=await client.request(url,{method:'POST',headers:{DPoP:proof},body:{accessToken:token,deviceName:saved.deviceName||'Browser',challenge:pairing.challenge,...body}});
+      if(result.account || result.csrfToken || result.hostTrust)throw Error('PAIRING_CREATED_SESSION_BEFORE_CONFIRMATION');
+      return result;};
+    const joined=await send('/cloud/pairings/join',{phoneCommitment:await client.hash(JSON.stringify(['wm-pair-phone-v2',pairing.challenge,key.deviceId,jkt,nonce]))});
+    const hostJkt=await client.hash(JSON.stringify({crv:pairing.publicJwk.crv,kty:pairing.publicJwk.kty,x:pairing.publicJwk.x,y:pairing.publicJwk.y}));
+    const T=[2,pairing.issuer,pairing.sub,pairing.hostId,pairing.tlsSpki,hostJkt,pairing.challenge,pairing.expiresAt,pairing.origin,pairing.relay?.baseUrl||''];
+    if(await client.hash(JSON.stringify(['wm-pair-host-v2',...T,joined.hostNonce]))!==pairing.hostCommitment)throw Error('HOST_COMMITMENT_MISMATCH');
+    await send('/cloud/pairings/reveal',{phoneNonce:nonce});
+    const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(['wm-pair-sas-v2',...T,joined.hostNonce,key.deviceId,jkt,nonce])));
+    return (new DataView(digest).getUint32(0,false)%1000000).toString().padStart(6,'0');
+  },pairing);
   const redeem=()=>phone.evaluate(async pairing=>{
     const client = new WeftUiCore.CloudAuthClient({ fetch: (...args) => fetch(...args), crypto,
       credentials: (...args) => WeftCloud.storage(...args), vendor: WeftCloudVendor, host: location.origin });
     await client.configure();
-    try { const result=await client.exchange(false,pairing); return {ownerId:result.account.ownerId}; }
-    catch(error){return {error:error.code};}
+    const saved=await client.saved(),token=await client.access(client.base+'/hosts/'+client.config.hostId);
+    const nonce=await client.request(client.host+'/personal/v1/auth/cloud-nonce',{method:'POST',body:{}});
+    const url=client.host+'/personal/v1/cloud/pairings/redeem',proof=await client.proof(url,{token,nonce:nonce.nonce});
+    try {
+      const result=await client.request(url,{method:'POST',headers:{DPoP:proof},
+        body:{accessToken:token,deviceName:saved.deviceName||'Browser',challenge:pairing.challenge}});
+      await client.acceptHostTrust(result,saved,pairing);
+      return {ownerId:result.account.ownerId};
+    }
+    catch(error){return {error:error.code,status:error.status};}
   },pairing);
+  assert.deepEqual(await redeem(),{error:'PAIRING_CONFIRMATION_REQUIRED',status:403});
+  assert.deepEqual(await phoneContext.cookies(origin),pairingCookies,'join, reveal and rejected redeem must not issue a session');
+  assert.equal((await hostApi('/cloud/pairings/status',{challenge:pairing.challenge},local)).verificationCode,sas);
+  const phoneAuth=await (await phoneContext.request.get(origin+'/personal/v1/auth/me')).json();
+  const remoteDecision=await phoneContext.request.post(origin+'/personal/v1/cloud/pairings/decision',{
+    headers:{origin,'x-weftmate-csrf':phoneAuth.csrfToken},
+    data:{challenge:pairing.challenge,decision:'confirm',verificationCode:sas}});
+  assert.equal(remoteDecision.status(),403,'phone sessions cannot confirm pairing');
+  assert.equal((await remoteDecision.json()).error.code,'LOCAL_SESSION_REQUIRED');
+  const confirmed=await hostApi('/cloud/pairings/decision',{challenge:pairing.challenge,decision:'confirm',verificationCode:sas},local);
+  assert.equal(confirmed.state,'confirmed');
+  assert.equal(confirmed.cookie,undefined,'computer confirmation alone must not issue a session');
+  assert.deepEqual(await phoneContext.cookies(origin),pairingCookies);
   assert.equal((await redeem()).ownerId,local.account.ownerId);
-  assert.equal((await redeem()).error,'PAIRING_INVALID');
+  assert.deepEqual(await redeem(),{error:'PAIRING_INVALID',status:401});
   await phone.reload(); await loggedIn(phone);
 
   const { context: revokedContext, page: revoked } = await pageFor();
@@ -186,6 +226,11 @@ test('AUTH-1 real browser: password or email-code login → immediate session �
   await openSettings(owner); await offline(owner,'Revoked browser');
   assert.equal((await revokedContext.request.get(origin + '/personal/v1/sessions')).status(),401);
   await owner.screenshot({path:'.local/s1c-web/device-offlined.png'});
+  const pairedAuth=await (await phoneContext.request.get(origin+'/personal/v1/auth/me')).json();
+  const remoteUnlink=await phoneContext.request.delete(origin+'/personal/v1/cloud/binding',{
+    headers:{origin,'x-weftmate-csrf':pairedAuth.csrfToken},data:{}});
+  assert.equal(remoteUnlink.status(),403,'phone sessions cannot unlink the cloud account');
+  assert.equal((await remoteUnlink.json()).error.code,'LOCAL_SESSION_REQUIRED');
   await hostApi('/cloud/binding', {}, local, 200, 'DELETE');
   assert.equal((await phoneContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
   assert.equal((await ownerContext.request.get(origin + '/personal/v1/sessions')).status(), 401);

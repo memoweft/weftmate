@@ -117,7 +117,7 @@ import WeftMateCore
         app.cloudLogin.subject = nil; app.cloudLogin.authenticated = false
         let model = PhoneStandaloneModel(testCredentials: keys, testLoopback: false)
         defer { model.deactivate() }
-        model.activate(app: app); model.setMemoryEnabled(false)
+        model.activate(app: app)
         let catalog = await model.queryService(baseUrl: "https://api.xiaomimimo.com/v1", apiKey: key, interfaceType: "openai-compatible")
         #expect(catalog.status == "available")
         try model.saveService(existing: nil, name: "MiMo", baseUrl: "https://api.xiaomimimo.com/v1", apiKey: key, interfaceType: "openai-compatible", result: catalog, manual: "mimo-v2.6-flash", selected: "mimo-v2.6-flash", enabled: nil)

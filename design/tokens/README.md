@@ -24,7 +24,7 @@
 | 语义变量 | 用途 |
 |---|---|
 | `--canvas` | 页面 / 导航背景中性色 |
-| `--window-frame` / `--sidebar` | 窗口外框与侧栏；UI-P5 标题栏全宽使用外框，左段与侧栏连续 |
+| `--window-frame` / `--sidebar` | 窗口外框与侧栏；工作区左侧拖动区与侧栏连续，原生窗口按钮跟随主内容与当前弹层 |
 | `--panel` / `--panel-divider` | 独立主面板与侧栏之间的细分隔；桌面与手机网页共用语义 |
 | `--surface` | 内容、输入区与浮层表面；也用于主按钮反色文字 |
 | `--surface-soft`（桌面）、`--soft`（手机） | 次级区域、代码与执行块底色 |
@@ -84,11 +84,13 @@
 
 `shared.space.<数值>` 输出 `--wm-space-<数值>`，供 padding（内边距）、margin（外边距）、gap（间隙）及焦点偏移使用；数字名称表示当前阶梯位置，精修可以改变对应值。常用阶梯为 2 / 4 / 6 / 8 / 12 / 16 / 20 / 24 / 32 / 48 / 64；其余项保留现有界面的细微差异。`shared.size` 是相关布局计算的宽度基准与标题栏保留区域。
 
-Windows 外壳使用 `shared.size.sidebar`（232px）和 `reading`（760px）；设置默认外框 880×660px、导航 196px、内容 620px。它们是排版基准，随窗口和内容适配。默认浅色为纸白与暖灰，默认深色为中性石墨；颜色预设与使用者字号选择保留。
+Windows 外壳使用 `shared.size.sidebar`（256px）和 `reading`（760px）；设置默认外框 880×660px、导航 196px、内容 620px。它们是排版基准，随窗口和内容适配。默认浅色为纸白与暖灰，默认深色为中性石墨；颜色预设与使用者字号选择保留。
 
 `shared.radius.<数值>` 输出 `--wm-radius-<数值>`。8–12 常用于控件，14–16 常用于卡片和浮层，18–32 为已有输入区 / 抽屉 / 图片卡；`999` 为胶囊，`circle` 为 `50%` 圆形。圆角和间距分组独立，原生抽屉顶部角引用圆角值。
 
 `android.dimensions` 是原生辅助函数实际使用的布局 / 字号值，记录数值与单位；生成的整数 dp 常量保留原有截断计算，字体常量保留 Float（浮点数），不会改变现有缩放行为。`fallbackPadding / fallbackTop` 保留错误回退页原有的物理 px 内边距。
+
+工作区使用 `workspace-row`（36px）、`workspace-header`（52px）、`workspace-menu`（208px）与 `workspace-panel`（380px），导航行 `workspace-nav-row` 为38px，输入外宽 `composer-measure` 为790px，右侧入口 `panel-launcher-row` 为52px；输入框外层圆角为 `shared.radius.composer`（20px）。
 
 ## 阴影
 
@@ -121,13 +123,15 @@ Windows 外壳使用 `shared.size.sidebar`（232px）和 `reading`（760px）；
 
 曲线为 `--ease-out`（`cubic-bezier(.16,1,.3,1)`）、`--ease-in-out`（`cubic-bezier(.4,0,.2,1)`）、`--ease-in`（`cubic-bezier(.4,0,1,1)`）、`--ease-linear`（`linear`）。原有 `shared.duration` / `shared.easing` 名称使用 `{motion.duration.dur-…}` / `{motion.easing.ease-…}` 引用；CSS 保留为变量别名，Android 和 Apple 解析为原生数值。新增动效直接用这五档时长和四条曲线。
 
-共用配方在 `src/ui-core/reply-motion.css`：`data-motion="enter-rise"`、`enter-fade`、`stagger-rise`、`view-enter`、`sheet-in`、`unfold`、`text-shimmer`，关键帧统一以 `m-` 开头。`unfold` 用一个子元素包内容，以 `.open` 或 `aria-expanded="true"` 展开；列表错峰延迟复用最短档并封顶。原生 `<details data-motion="unfold">` 通过 `[open]` 和 `::details-content` 展开正文，`summary` 留在原生布局中，正文仍用一个子元素包裹。`stream-type` 由 `WeftReplyMotion.stream` 使用 requestAnimationFrame（逐帧回调）每帧显示 1–3 个 Unicode 字符，继续复用正文渲染器；历史消息直接显示，超过库约定的 4000 字不逐字。流式内容跟随滚动位置，不叠加平滑滚动。
+共用配方在 `src/ui-core/reply-motion.css`：`data-motion="enter-rise"`、`enter-fade`、`stagger-rise`、`view-enter`、`sheet-in`、`unfold`、`text-shimmer`，关键帧统一以 `m-` 开头。`unfold` 用一个子元素包内容，以 `.open` 或 `aria-expanded="true"` 展开；列表错峰延迟复用最短档并封顶。原生 `<details data-motion="unfold">` 通过 `[open]` 和 `::details-content` 展开正文，`summary` 留在原生布局中，正文仍用一个子元素包裹。`stream-type` 由 `WeftReplyMotion.stream` 使用 requestAnimationFrame（逐帧回调）合并同一帧收到的更新，复用正文渲染器和稳定的段落节点，只追加变化的文字；不另排逐字播放队列，历史消息直接显示。流式内容跟随滚动位置，不叠加平滑滚动。
 
 减少动态效果默认跟随 `prefers-reduced-motion`。设置通过全局 `WeftReplyMotion.setPreference('system' | 'reduce' | 'full')` 接入，并同步根元素的 `data-reduced-motion` / `data-motion-full`；`body.calm` 也可减弱 CSS 配方。减弱时消息只留最短档淡入，页面、抽屉、列表和展开直接到位，扫光停为静态文字，正文整段显示；窗口隐藏会暂停视觉反馈并清空逐帧积压。
 
 ## Apple 原生接入（DS-1b）
 
 `apps/apple/Scripts/generate_project.py` 把 `design/tokens/generated/apple/DesignTokens.swift` 作为三个原生 App 的共享编译源，工程不复制它，也不手改生成文件。先在根目录运行 `npm run tokens:generate`，新增工程源文件时再运行 `python3 apps/apple/Scripts/generate_project.py`；两者可重复生成，`--check` 校验 Swift 与 JSON 和其他平台产物。
+
+iPhone 已认可的增量来自 `ios-prototype.json`：生成器只在 iOS 条件分支使用系统背景与中性文字色，并输出 `AppleTokens.Phone` 的几何、字号与侧栏弹簧参数；Apple JSON 同时携带 `ios` 源值供核对。macOS、Watch、安卓与网页仍使用基础色板。原生调用、公共菜单和弹层用法见 `design/ios/README.md`。
 
 | 母版 / Swift 引用 | 保留的行为 |
 |---|---|
@@ -161,4 +165,4 @@ Apple 当前没有手写 `.shadow`，系统菜单 / 导航 / 按钮的原生效�
 
 只替换内容容器，保留侧栏、页头、输入区和分类面板。当前项重复点击直接返回；主动刷新走独立的刷新动作。异步结果仍核对原有身份和请求代次。不要每次刷新都重建控件、重放入场动效。
 
-页面进入 / 展开用 `data-motion="view-enter"` / `unfold`（420ms），浮层和内容替换用 320–420ms；列表第一次出现用 `data-motion="stagger-rise"`，错峰依次用已有时长并封顶。只有悬停和按压用快档，不另写时长和曲线。减少动态效果继续由 `WeftReplyMotion` 统一处理。
+页面进入 / 展开用 `data-motion="view-enter"` / `unfold`（420ms），浮层和内容替换用 320–420ms；列表第一次出现用 `data-motion="stagger-rise"`，错峰依次用已有时长并封顶。悬停、按压和对话内的过程 / 命令局部折叠用快档（`--dur-1`），不另写时长和曲线。减少动态效果继续由 `WeftReplyMotion` 统一处理。

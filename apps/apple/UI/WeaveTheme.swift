@@ -11,11 +11,29 @@ enum Weave {
     static let surface = AppleTokens.Colors.surface
     static let soft = AppleTokens.Colors.soft
     static let line = AppleTokens.Colors.line
+    #if os(iOS)
+    static let grouped = AppleTokens.Phone.grouped
+    #endif
     static let onAccent = AppleTokens.Colors.onAccent
     static let status = AppleTokens.Colors.status
     static let danger = AppleTokens.Colors.danger
 
 }
+
+#if os(iOS)
+/// System navigation, Menu and sheets own their interactive transitions.
+/// Custom shell motion follows the approved iPhone scale and Reduce Motion.
+enum PhoneMotion {
+    static func easeOut(_ duration: Double) -> Animation { AppleTokens.Phone.easeOut(duration) }
+    static func feedback(reduce: Bool) -> Animation { easeOut(AppleTokens.Motion.fast) }
+    static func tabs(reduce: Bool) -> Animation { easeOut(reduce ? AppleTokens.Motion.reduced : AppleTokens.Motion.base) }
+    static func drawer(reduce: Bool, interactive: Bool = false) -> Animation {
+        if reduce { return easeOut(AppleTokens.Motion.reduced) }
+        if interactive { return .interactiveSpring(response: AppleTokens.Phone.springResponse, dampingFraction: AppleTokens.Phone.springDamping, blendDuration: AppleTokens.Phone.springBlend) }
+        return easeOut(AppleTokens.Motion.slow)
+    }
+}
+#endif
 
 struct BrandMark: View {
     var size: CGFloat = 42
@@ -32,7 +50,7 @@ struct WeaveCard<Content: View>: View {
     var body: some View {
         #if os(iOS)
         content.frame(maxWidth: .infinity, alignment: .leading).padding(padding)
-            .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24, style: .continuous))
+            .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Phone.groupRadius, style: .continuous))
         #else
         content
             .frame(maxWidth: .infinity, alignment: .leading)

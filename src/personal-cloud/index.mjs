@@ -5,6 +5,7 @@ import { SESSION_MS } from '../personal-access/constants.mjs';
 import { cloudConfiguration, createCloudVerifier } from './proofs.mjs';
 import { openIdentity } from './storage.mjs';
 import { hashPassword, validPassword } from '../personal-access/password.mjs';
+import { PAIRING_MS, pairingJkt, hostCommitment, phoneCommitment, verificationCode, pairingState, pairingStatus } from './pairing.mjs';
 
 const bindingKey = (issuer, sub) => JSON.stringify([issuer, sub]);
 export function cloudIdentityFromEnvironment(env = process.env) {
@@ -55,13 +56,23 @@ export async function createHostCloudIdentity(context, options) {
     next.outbox[randomUUID()] = { action: '/hosts/devices/status', sub: next.bindings[d.bindingKey].sub,
       deviceId: d.cloudDeviceId, jkt: d.jkt, status: d.status, ...(isHost ? { isHost: true } : {}) };
   }
-  function trustVerifiedDevice(next, key, identity, proof, name, isHost = false) {
+  function trustVerifiedDevice(next, key, identity, proof, name, isHost = false, pairingConfirmed = false) {
     const binding = next.bindings[key];
     // Offlining is durable for this cloud device ID, including key rotation.
     // A legacy pairing challenge cannot turn a revoked/denied device back on.
     if (!isHost && Object.values(next.devices).some(d => d.bindingKey === key &&
         d.cloudDeviceId === identity.device_id && ['denied', 'revoked'].includes(d.status)))
       throw failure('DEVICE_NOT_TRUSTED', 403);
+    if (!isHost && !pairingConfirmed) {
+      const trusted = Object.values(next.devices).some(d => d.bindingKey === key && d.cloudDeviceId === identity.device_id && d.jkt === proof.jkt && d.status === 'trusted');
+      const pairingOpen = Object.values(next.pairings).some(p => p.version === 2 && p.ownerId === binding.ownerId &&
+        !['completed', 'cancelled', 'expired'].includes(pairingState(p, context.timestamp())));
+      if (pairingOpen && !trusted || Object.values(next.devices).some(d => d.bindingKey === key &&
+          d.cloudDeviceId === identity.device_id && (d.pairingRequired || d.pairedJkt && d.pairedJkt !== proof.jkt)))
+        throw failure('PAIRING_CONFIRMATION_REQUIRED', 403);
+    }
+    if (pairingConfirmed) for (const d of Object.values(next.devices))
+      if (d.bindingKey === key && d.cloudDeviceId === identity.device_id) { delete d.pairingRequired; d.pairedJkt = proof.jkt; }
     let trustId = Object.keys(next.devices).find(id => {
       const d = next.devices[id]; return d.bindingKey === key && d.jkt === proof.jkt && d.cloudDeviceId === identity.device_id;
     });
@@ -146,7 +157,7 @@ export async function createHostCloudIdentity(context, options) {
     const binding = store.state.bindings[session.bindingKey];
     const device = store.state.devices[session.trustId];
     if (!binding || binding.status !== 'active' || binding.ownerId !== ownerId ||
-        device?.status !== 'trusted' || device.ownerId !== ownerId ||
+        device?.status !== 'trusted' || device.ownerId !== ownerId || device.pairedJkt && device.pairedJkt !== device.jkt ||
         session.epoch < (store.state.epochs[session.bindingKey] ?? 0)) throw failure('UNAUTHORIZED', 401);
   }
   async function applyEvents(encoded) {
@@ -493,24 +504,59 @@ export async function createHostCloudIdentity(context, options) {
         context.json(response, 200, await hostTrust(trust[1])); return true;
       }
       if (route === '/cloud/pairings') {
-        const current = local(request);
-        context.requireBrowserOrigin(request, true);
-        if (!['password', 'desktop'].includes(current.device.authKind) &&
-            store.state.devices[store.state.sessions[current.deviceId]?.trustId]?.isHost !== true)
-          throw failure('LOCAL_SESSION_REQUIRED', 403);
+        const current = local(request, true);
         exactKeys(body, [], []);
         const challenge = randomBytes(32).toString('base64url');
-        await context.serial(() => edit(next => {
-          local(request);
-          next.pairings[digest(challenge)] = { ownerId: current.ownerId, expiresAt: context.timestamp() + 120_000 };
+        const result = await context.serial(() => edit(next => {
+          local(request, true);
+          const binding = Object.values(next.bindings).find(b => b.ownerId === current.ownerId && b.status === 'active');
+          if (!binding) throw failure('CLOUD_NOT_BOUND', 403);
+          for (const [id, p] of Object.entries(next.pairings)) {
+            if (p.expiresAt < context.timestamp() - 600_000) delete next.pairings[id];
+            else if (p.ownerId === current.ownerId && p.state !== 'completed') p.state = 'cancelled';
+          }
+          const expiresAt = context.timestamp() + PAIRING_MS, origin = context.requestAuthority(request), relay = context.service.relayStatus();
+          const transcript = [2, config.issuer, binding.sub, hostId, next.tls.spki, pairingJkt(next.installation.publicJwk),
+            challenge, expiresAt, origin, relay?.baseUrl || ''];
+          const hostNonce = randomBytes(32).toString('base64url');
+          next.pairings[digest(challenge)] = { version: 2, ownerId: current.ownerId, expiresAt, transcript, hostNonce, state: 'waiting' };
+          return { version: 2, challenge, expiresIn: 120, expiresAt, hostId, tlsSpki: next.tls.spki,
+            publicJwk: next.installation.publicJwk, origin, relay, issuer: config.issuer, sub: binding.sub,
+            hostCommitment: hostCommitment(transcript, hostNonce) };
         }));
-        context.json(response, 201, { challenge, expiresIn: 120, hostId, tlsSpki: store.state.tls.spki,
-          publicJwk: store.state.installation.publicJwk, origin: context.requestAuthority(request),
-          relay: context.service.relayStatus() }); return true;
+        context.json(response, 201, result); return true;
       }
-      if (route === '/auth/cloud-session' || route === '/auth/cloud-channel' || route === '/cloud/pairings/redeem') {
-        const fields = ['accessToken', 'deviceName', ...(route.endsWith('/redeem') ? ['challenge'] : [])];
+      if (route === '/cloud/pairings/status' || route === '/cloud/pairings/decision') {
+        const current = local(request, true), decision = route.endsWith('/decision');
+        exactKeys(body, decision ? ['challenge', 'decision', 'verificationCode'] : ['challenge'], decision ? ['challenge', 'decision'] : ['challenge']);
+        if (typeof body.challenge !== 'string' || decision && !['confirm', 'cancel'].includes(body.decision)) throw failure('INVALID_REQUEST');
+        const result = await context.serial(() => edit(next => {
+          local(request, true);
+          const p = next.pairings[digest(body.challenge)];
+          if (!p || p.version !== 2 || p.ownerId !== current.ownerId) throw failure('PAIRING_INVALID', 401);
+          if (decision) {
+            const state = pairingState(p, context.timestamp());
+            if (['completed', 'cancelled', 'expired'].includes(state)) throw failure('PAIRING_INVALID', 401);
+            if (body.decision === 'cancel') p.state = 'cancelled';
+            else {
+              if (state !== 'comparing' || body.verificationCode !== verificationCode(p)) throw failure('PAIRING_CONFLICT', 409);
+              const binding = next.bindings[bindingKey(config.issuer, p.transcript[2])];
+              if (binding?.status !== 'active' || binding.ownerId !== current.ownerId) throw failure('CLOUD_NOT_BOUND', 403);
+              p.state = 'confirmed';
+            }
+          }
+          return pairingStatus(p, context.timestamp());
+        }));
+        context.json(response, 200, result); return true;
+      }
+      const pairingAction = /^\/cloud\/pairings\/(join|reveal|redeem)$/.exec(route)?.[1];
+      if (route === '/auth/cloud-session' || route === '/auth/cloud-channel' || pairingAction) {
+        const fields = ['accessToken', 'deviceName', ...(pairingAction ? ['challenge'] : []),
+          ...(pairingAction === 'join' ? ['phoneCommitment'] : pairingAction === 'reveal' ? ['phoneNonce'] : [])];
         exactKeys(body, fields, fields);
+        if (pairingAction && (typeof body.challenge !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(body.challenge) ||
+            pairingAction === 'join' && !/^[A-Za-z0-9_-]{43}$/.test(body.phoneCommitment) ||
+            pairingAction === 'reveal' && !/^[A-Za-z0-9_-]{43}$/.test(body.phoneNonce))) throw failure('INVALID_REQUEST');
         // Browsers cannot remove a revoked HttpOnly Cookie. It is never used as
         // exchange authority; only the verified cloud token and device proof count.
         if (request.headers.authorization) throw failure('AMBIGUOUS_AUTH');
@@ -521,7 +567,7 @@ export async function createHostCloudIdentity(context, options) {
         if (proof.jkt !== identity.cnf.jkt) throw failure('DPOP_INVALID', 401);
         const key = bindingKey(config.issuer, identity.sub);
         const result = await context.serial(async () => {
-          let transition;
+          let transition, pending;
           await edit(next => {
             if ((next.nonces[proof.nonce] ?? 0) <= context.timestamp() || next.replays[proof.replayId])
               throw failure('DPOP_REPLAY', 401);
@@ -530,16 +576,44 @@ export async function createHostCloudIdentity(context, options) {
             if (identity.auth_epoch < (next.epochs[key] ?? 0)) throw failure('UNAUTHORIZED', 401);
             for (const [id, expiry] of Object.entries(next.replays)) if (expiry <= context.timestamp()) delete next.replays[id];
             delete next.nonces[proof.nonce]; next.replays[proof.replayId] = context.timestamp() + 120_000;
-            if (route.endsWith('/redeem')) {
-              const pairing = next.pairings[digest(body.challenge)];
-              if (!pairing || pairing.expiresAt <= context.timestamp() || pairing.ownerId !== binding.ownerId)
+            if (pairingAction) {
+              const p = next.pairings[digest(body.challenge)];
+              if (!p || p.version !== 2 || p.expiresAt <= context.timestamp() || p.ownerId !== binding.ownerId || p.transcript[2] !== identity.sub ||
+                  ['cancelled', 'completed'].includes(p.state))
                 throw failure('PAIRING_INVALID', 401);
-              delete next.pairings[digest(body.challenge)];
+              if (pairingAction === 'join') {
+                if (p.phone && (p.phone.deviceId !== identity.device_id || p.phone.jkt !== proof.jkt || p.phone.commitment !== body.phoneCommitment))
+                  throw failure('PAIRING_CONFLICT', 409);
+                if (!p.phone) {
+                  if (Object.values(next.devices).some(d => d.bindingKey === key && d.cloudDeviceId === identity.device_id && ['denied', 'revoked'].includes(d.status)))
+                    throw failure('DEVICE_NOT_TRUSTED', 403);
+                  p.phone = { deviceId: identity.device_id, jkt: proof.jkt, commitment: body.phoneCommitment, name };
+                  p.state = 'committed';
+                  let device = Object.values(next.devices).find(d => d.bindingKey === key && d.cloudDeviceId === identity.device_id && d.jkt === proof.jkt);
+                  if (!device) next.devices[randomUUID()] = device = { ownerId: binding.ownerId, bindingKey: key,
+                    cloudDeviceId: identity.device_id, jkt: proof.jkt, publicJwk: proof.jwk, name,
+                    requestedAt: new Date(context.timestamp()).toISOString(), status: 'pending' };
+                  device.pairingRequired = true;
+                }
+              } else {
+                if (!p.phone || p.phone.deviceId !== identity.device_id || p.phone.jkt !== proof.jkt) throw failure('PAIRING_INVALID', 401);
+                if (pairingAction === 'reveal') {
+                  if (phoneCommitment(body.challenge, identity.device_id, proof.jkt, body.phoneNonce) !== p.phone.commitment) throw failure('PAIRING_INVALID', 401);
+                  if (p.state === 'committed') { p.phone.nonce = body.phoneNonce; p.state = 'comparing'; }
+                } else {
+                  if (p.state !== 'confirmed') throw failure('PAIRING_CONFIRMATION_REQUIRED', 403);
+                  p.state = 'completed';
+                }
+              }
+              if (pairingAction !== 'redeem') { pending = { state: p.state, hostNonce: p.hostNonce, expiresAt: p.expiresAt }; return; }
             }
-            transition = trustVerifiedDevice(next, key, identity, proof, name);
+            transition = trustVerifiedDevice(next, key, identity, proof, name, false, pairingAction === 'redeem');
           });
+          if (pending) return { pending };
           return { session: await issueSession(transition.trustId, identity, name), transition };
         });
+        if (result.pending) { context.json(response, 200, result.pending); return true; }
+        closeInvalidResponses();
         await notifyNewDevice(result.transition, name);
         void syncRevocations().catch(() => {});
         sessionReply(response, request, { ...result.session, hostTrust: await hostTrust(result.transition.trustId) });
@@ -639,6 +713,6 @@ export async function createHostCloudIdentity(context, options) {
 const CLOUD_CODES = new Set(['INVALID_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND', 'METHOD_NOT_ALLOWED',
   'ORIGIN_NOT_ALLOWED', 'UNSUPPORTED_MEDIA_TYPE', 'BODY_TOO_LARGE', 'AMBIGUOUS_AUTH', 'LOCAL_SESSION_REQUIRED',
   'CLOUD_TOKEN_INVALID', 'CLOUD_DEVICE_VERIFICATION_REQUIRED', 'DPOP_INVALID', 'DPOP_REPLAY', 'CLOUD_UNAVAILABLE', 'CLOUD_BINDING_CONFLICT',
-  'CLAIM_INVALID', 'CLOUD_NOT_BOUND', 'DEVICE_NOT_TRUSTED', 'DEVICE_DECISION_CONFLICT', 'PAIRING_INVALID',
+  'CLAIM_INVALID', 'CLOUD_NOT_BOUND', 'DEVICE_NOT_TRUSTED', 'DEVICE_DECISION_CONFLICT', 'PAIRING_INVALID', 'PAIRING_CONFLICT', 'PAIRING_CONFIRMATION_REQUIRED',
   'INVALID_CREDENTIALS', 'LOGIN_RATE_LIMITED', 'DEVICE_LIMIT', 'CAPACITY_LIMIT', 'ACCOUNT_ALREADY_EXISTS',
   'STORAGE_UNAVAILABLE', 'SERVICE_CLOSING']);

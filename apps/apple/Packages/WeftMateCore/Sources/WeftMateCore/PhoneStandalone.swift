@@ -14,14 +14,13 @@ public struct PhoneModelConfiguration: Codable, Equatable, Identifiable, Sendabl
     public init(id: String = UUID().uuidString, name: String, baseURL: String, model: String, apiKey: String) {
         self.id=id; self.name=name; self.baseURL=baseURL; self.model=model; self.apiKey=apiKey
     }
-    public func request(messages: [[String:String]], stream: Bool, allowLoopback: Bool = false, maxTokens: Int? = nil) throws -> URLRequest {
+    public func request(messages: [[String:String]], stream: Bool, allowLoopback: Bool = false) throws -> URLRequest {
         guard let base=URL(string:baseURL), base.user == nil, base.password == nil, base.query == nil, base.fragment == nil,
               base.scheme == "https" || (allowLoopback && base.scheme == "http" && base.host == "127.0.0.1"),
               !model.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty, !apiKey.isEmpty else { throw OfflineFailure.model }
         var r=URLRequest(url:base.appendingPathComponent("chat/completions"),cachePolicy:.reloadIgnoringLocalCacheData,timeoutInterval:180)
         r.httpMethod="POST"; r.setValue("application/json",forHTTPHeaderField:"Content-Type"); r.setValue("Bearer "+apiKey,forHTTPHeaderField:"Authorization")
-        var body: [String:Any]=["model":model,"stream":stream,"messages":messages]
-        if let maxTokens { body["max_tokens"]=maxTokens }
+        let body: [String:Any]=["model":model,"stream":stream,"messages":messages]
         r.httpBody=try JSONSerialization.data(withJSONObject:body); return try adaptRequest(r)
     }
 }
@@ -60,11 +59,6 @@ extension PhoneModelConfiguration {
         }
         request.httpBody=try JSONSerialization.data(withJSONObject:body);return request
     }
-    public func responseText(_ data: Data) throws -> String? {
-        guard let object=try JSONSerialization.jsonObject(with:data) as? [String:Any] else { return nil }
-        if interfaceType == "anthropic" { return (object["content"] as? [[String:Any]])?.filter {$0["type"] as? String == "text"}.compactMap {$0["text"] as? String}.joined() }
-        return ((object["choices"] as? [[String:Any]])?.first?["message"] as? [String:Any])?["content"] as? String
-    }
     public func streamText(_ line: String) throws -> String? {
         if interfaceType != "anthropic" { return try PhoneStreamDelta.text(line) }
         guard line.hasPrefix("data:"),let object=try JSONSerialization.jsonObject(with:Data(line.dropFirst(5).utf8)) as? [String:Any] else { return nil }
@@ -83,6 +77,7 @@ public struct PhoneChatMessage: Codable, Equatable, Identifiable, Sendable {
     public var attachments: [PhoneAttachment]?
     public var memoryRefs: [OfflineMemoryRef]?
     public var dependencyComplete: Bool?
+    public var memoryHostID: String?
     public var replyStatus: PhoneReplyStatus?
     public init(role: String, text: String) { self.role=role; self.text=text }
 }
@@ -105,7 +100,8 @@ public struct PhoneChatState: Codable, Sendable {
     public var reminderReads: [String:ReminderReadToken]?
     public var reminderCancellations: [ReminderCancellation]?
     public var pausedReminderIDs: [String:Set<String>]?
-    public var memory: PhoneMemoryState?
+    public var transcriptSync: PhoneTranscriptSync?
+    public var replicaErasures: [String:String]?
     public init() {}
 }
 /// Account identity is the cloud issuer and subject, never email or a computer ID.
@@ -145,7 +141,10 @@ public final class PhoneChatStore {
         guard FileManager.default.fileExists(atPath:file.path) else { return .init() }
         guard let key=try credentials.load(key:prefix+".aes") else { throw APIFailure.credentialStorage }
         let data=try AES.GCM.open(AES.GCM.SealedBox(combined:Data(contentsOf:file)),using:SymmetricKey(data:key),authenticating:aad)
-        return try JSONDecoder().decode(PhoneChatState.self,from:data)
+        let upgraded=try PhoneTranscriptStorage.upgrade(data)
+        let state=try JSONDecoder().decode(PhoneChatState.self,from:upgraded)
+        if upgraded != data { try save(state) }
+        return state
     }
     public func save(_ state: PhoneChatState) throws {
         let key: SymmetricKey
@@ -195,37 +194,74 @@ public struct PhoneChatMigration: Codable, Sendable {
     public var turns: [OfflineTurn]
     public var accepted: Set<String>
     public var conversationIDs: Set<String>
+    public var handover: OfflineHandover? = nil
+    public var handoverTurnIDs: [String]? = nil
 }
 extension PhoneChatState {
     public mutating func prepareMigration(host: String, generation: Int) -> [OfflineTurn] {
         applyMigrationGeneration(host:host,generation:generation)
         let prior=migrations?[host]
         var migration=prior ?? PhoneChatMigration(generation:generation,turns:[],accepted:[],conversationIDs:[])
-        let offered=Set(migration.turns.map(\.id))
+        let pending=migration.turns.filter { !migration.accepted.contains($0.id) && transcriptSync?.excludes(id:$0.id,text:$0.messages.first?.text ?? "") != true }
+        if migration.handover != nil, !pending.isEmpty { return pending }
+        let offered=Set(migration.turns.map(\.id)).union(migration.accepted)
         for thread in threads {
             guard !(migrations ?? [:]).contains(where: { $0.key != host && $0.value.conversationIDs.contains(thread.id) }) else { continue }
-            for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) {
+            for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) && transcriptSync?.excludes(id:message.id,text:message.text) != true {
                 var messages=[OfflineMessage(role:"user",text:([message.text]+(message.attachments ?? []).map(\.placeholder)).filter { !$0.isEmpty }.joined(separator:"\n"))]
                 if thread.messages.indices.contains(index+1),thread.messages[index+1].role == "assistant",!thread.messages[index+1].text.isEmpty { messages.append(.init(role:"assistant",text:thread.messages[index+1].text)) }
-                migration.turns.append(.init(id:message.id,conversationId:thread.id,timestamp:Int64(message.date.timeIntervalSince1970*1000),messages:messages,memoryRefs:thread.messages.indices.contains(index+1) ? thread.messages[index+1].memoryRefs ?? [] : [],dependencyComplete:thread.messages.indices.contains(index+1) ? thread.messages[index+1].dependencyComplete ?? true : true))
+                let reply=thread.messages.indices.contains(index+1) && thread.messages[index+1].role == "assistant" ? thread.messages[index+1] : nil
+                migration.turns.append(.init(id:message.id,conversationId:thread.id,timestamp:Int64(message.date.timeIntervalSince1970*1000),messages:messages,memoryRefs:reply?.memoryRefs ?? [],dependencyComplete:reply == nil || reply?.dependencyComplete == true))
                 migration.conversationIDs.insert(thread.id)
             }
         }
+        let next=migration.turns.filter { !migration.accepted.contains($0.id) && transcriptSync?.excludes(id:$0.id,text:$0.messages.first?.text ?? "") != true }
+        if !next.isEmpty {
+            // A new cohort begins only after every original in the prior cohort was received.
+            let bytes=(try? JSONEncoder().encode(next).count) ?? 0
+            migration.handover = .init(id:UUID().uuidString.lowercased(),totalTurns:next.count,conversationCount:Set(next.map(\.conversationId)).count,bytes:bytes)
+            migration.handoverTurnIDs=next.map(\.id)
+        }
         if migrations == nil { migrations=[:] };migrations?[host]=migration
-        return migration.turns.filter { !migration.accepted.contains($0.id) }
+        return next
     }
     public mutating func applyMigrationGeneration(host: String,generation: Int) {
         guard let existing=migrations?[host],existing.generation != generation else { return }
-        memory?.items.removeAll { existing.conversationIDs.contains($0.threadID ?? "") }
-        threads.removeAll { existing.conversationIDs.contains($0.id) }
-        for row in reminders ?? [] where existing.conversationIDs.contains(row.sessionID ?? "") { cancelReminder(.reminder(id:row.id,hostID:nil)) }
-        reminders?.removeAll { existing.conversationIDs.contains($0.sessionID ?? "") }
-        removeComputerReminders(hostID:host)
-        if !threads.contains(where: { $0.id == selected }) { selected=nil }
-        migrations?[host]=PhoneChatMigration(generation:generation,turns:[],accepted:[],conversationIDs:[])
+        invalidateComputerMemory(host:host,removedIDs:[],reset:true)
+        migrations?[host]?.generation=generation
     }
-    public mutating func acknowledgeMigration(host: String, ids: Set<String>) {
-        guard var value=migrations?[host] else { return };value.accepted.formUnion(ids.intersection(Set(value.turns.map(\.id))));migrations?[host]=value
+    public mutating func invalidateComputerMemory(host: String,removedIDs: Set<String>,reset: Bool) {
+        if transcriptSync == nil { transcriptSync = .init() }
+        var retired=transcriptSync?.retiredTurnIDs ?? []
+        if var migration=migrations?[host] {
+            retired.formUnion(migration.turns.map(\.id));retired.formUnion(migration.accepted)
+            // Frozen originals and fragments must never be rebuilt under a fresh authorization.
+            migration.turns=[];migration.handover=nil; migration.handoverTurnIDs=nil
+            migrations?[host]=migration
+        }
+        for t in threads.indices {
+            var userID: String?
+            threads[t].messages=threads[t].messages.filter { message in
+                if message.role == "user" { userID=message.id;return true }
+                guard message.role == "assistant",message.memoryHostID == nil || message.memoryHostID == host else { return true }
+                let refs=message.memoryRefs ?? []
+                let affected=message.replyStatus == .queued || message.replyStatus == .replying || message.dependencyComplete != true || (reset ? !refs.isEmpty : refs.contains { removedIDs.contains($0.id) })
+                if affected,let userID { retired.insert(userID) }
+                return !affected
+            }
+        }
+        transcriptSync?.retiredTurnIDs=retired
+        removeComputerReminders(hostID:host)
+    }
+    @discardableResult public mutating func applyReplicaErasure(_ erasure: OfflineReplicaErasure) -> Bool {
+        guard replicaErasures?[erasure.hostID] != erasure.id else { return false }
+        invalidateComputerMemory(host:erasure.hostID,removedIDs:Set(erasure.removedIDs),reset:erasure.reset)
+        if replicaErasures == nil { replicaErasures=[:] };replicaErasures?[erasure.hostID]=erasure.id
+        return true
+    }
+    public mutating func acknowledgeMigration(host: String, generation: Int, ids: Set<String>) {
+        guard var value=migrations?[host],value.generation == generation else { return }
+        value.accepted.formUnion(ids.intersection(Set(value.turns.map(\.id))));migrations?[host]=value
     }
 }
 
@@ -277,10 +313,21 @@ extension PhoneChatState {
         }
         return nil
     }
-    public func replyHistory(_ reply: PhoneQueuedReply) -> [PhoneChatMessage] {
+    public func replyHistory(_ reply: PhoneQueuedReply,allowComputerMemory: Bool = true,memoryHostID: String? = nil) -> [PhoneChatMessage] {
         guard let thread=threads.first(where: { $0.id == reply.threadID }),let end=thread.messages.firstIndex(where: { $0.id == reply.replyID }) else { return [] }
         // A future queued question must never leak into an earlier request.
-        return Array(thread.messages[..<end].filter { $0.role != "assistant" || !$0.text.isEmpty }.suffix(20))
+        let unavailable=Set((migrations ?? [:]).filter { !allowComputerMemory || (memoryHostID != nil && $0.key != memoryHostID) }.values.flatMap { $0.turns.map(\.id)+Array($0.accepted) })
+        var include=true
+        let history=thread.messages[..<end].filter { message in
+            if message.role == "user" {
+                include=transcriptSync?.excludes(id:message.id,text:message.text) != true && !unavailable.contains(message.id)
+                return include
+            }
+            let independent=message.dependencyComplete == true && (message.memoryRefs ?? []).isEmpty
+            let authorized=allowComputerMemory && (memoryHostID == nil || message.memoryHostID == nil || message.memoryHostID == memoryHostID)
+            return include && !message.text.isEmpty && (authorized || independent)
+        }
+        return Array(history.suffix(20))
     }
     public mutating func updateReply(_ reply: PhoneQueuedReply, text: String? = nil, status: PhoneReplyStatus) {
         guard let t=threads.firstIndex(where: { $0.id == reply.threadID }),let m=threads[t].messages.firstIndex(where: { $0.id == reply.replyID }) else { return }
