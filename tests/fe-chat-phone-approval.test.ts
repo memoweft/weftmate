@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {chromium} from 'playwright';
+import {chromium,type Browser,type Page} from 'playwright';
 import {fixture as cloudFixture} from '../services/cloud/test/identity-helpers.mjs';
 import {registration,appDevice,control,refresh,proof} from '../services/cloud/test/app-helpers.mjs';
 import {startTimelineCandidate} from './integration/timeline-ui-candidate.mjs';
@@ -12,10 +12,19 @@ import {approvePhoneOperation} from './helpers/phone-approval.mjs';
 
 test('FE-CHAT phone decisions stay in the scroll flow across suggestion refreshes and submit through the original controls', {timeout:90000}, async t=>{
   const evidence=process.env.WEFTMATE_PHONE_APPROVAL_EVIDENCE;if(evidence)await mkdir(evidence,{recursive:true});
+  let releaseStatus:(()=>void)|undefined,statusRoute:Promise<number>|undefined;
+  let host:Awaited<ReturnType<typeof startTimelineCandidate>>,browser:Browser,page:Page;
+  // Node runs after hooks in registration order; keep both services online until routes drain.
+  t.after(async()=>{
+    try{
+      releaseStatus?.();await page?.unrouteAll({behavior:'wait'});
+      if(statusRoute)assert.equal(await statusRoute,200,'a status request already routed at teardown still reaches the live host');
+    }finally{try{await browser?.close();}finally{await host?.close();}}
+  });
   const cloud=await cloudFixture(t);await registration(cloud);
   const desktop=await appDevice(cloud,'synthetic-approval-desktop');
   let mobileAuth:any,mobileCookie:string;
-  const host=await startTimelineCandidate({historyCount:0,interactive:true,composer:true,
+  host=await startTimelineCandidate({historyCount:0,interactive:true,composer:true,
     cloudIdentity:{issuer:cloud.config.issuer,clientId:'test-native',allowInsecureLoopback:true},
     authenticate:async({service,origin,hostId}:any)=>{
       const nativeResponse=await fetch(origin+'/personal/v1/auth/desktop',{method:'POST',headers:{origin,'content-type':'application/json','x-weftmate-desktop':service.libraryDesktopToken},body:'{}'});
@@ -32,9 +41,8 @@ test('FE-CHAT phone decisions stay in the scroll flow across suggestion refreshe
       assert.equal(response.status,200);mobileAuth=await response.json();assert.equal(mobileAuth.device.authKind,'cloud');mobileCookie=response.headers.get('set-cookie')!.split(';')[0];
       return {auth:mobileAuth,cookie:mobileCookie};
     }});
-  t.after(()=>host.close());
-  const browser=await chromium.launch({headless:true,...(process.env.CI?{}:{channel:'chrome'})});t.after(()=>browser.close());
-  const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});page.setDefaultTimeout(10000);
+  browser=await chromium.launch({headless:true,...(process.env.CI?{}:{channel:'chrome'})});
+  page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});page.setDefaultTimeout(10000);
   const errors:string[]=[],writes:{path:string,body:any}[]=[];page.on('pageerror',e=>errors.push(e.message));
   page.on('request',request=>{const path=new URL(request.url()).pathname;if(request.method()==='POST'&&/\/(approvals|questions)\/[^/]+$/.test(path))writes.push({path,body:request.postDataJSON()});});
   const source=await readFile('src/personal-access-ui/app.js','utf8');
@@ -74,4 +82,14 @@ test('FE-CHAT phone decisions stay in the scroll flow across suggestion refreshe
   assert.deepEqual(writes.find(write=>write.path.endsWith('/questions/'+question.questionRpcId)).body.answer.answers[0].selected,[question.questions[0].options[0].label]);
   assert.equal(await page.evaluate(()=>{const scope=globalThis as any;scope.__approvalUi.nextSuggestions.sync();return scope.originalApproval===document.getElementById('approval-bar')&&scope.originalQuestion===document.getElementById('question-bar')&&!!scope.originalApproval.closest('#chat-scroll')&&!!scope.originalQuestion.closest('#chat-scroll');}),true);
   assert.deepEqual(errors,[]);
+  // Hold one real status request across the test boundary, as background reads can do.
+  const entered=Promise.withResolvers<void>(),gate=Promise.withResolvers<void>(),drained=Promise.withResolvers<number>();
+  releaseStatus=()=>gate.resolve();statusRoute=drained.promise;
+  await page.route('**/personal/v1/status',async route=>{
+    entered.resolve();await gate.promise;
+    try{const response=await route.fetch();await route.fulfill({response});drained.resolve(response.status());}
+    catch(error){drained.reject(error);}
+  });
+  await page.evaluate(()=>{void fetch('/personal/v1/status').catch(()=>{});});
+  await entered.promise;
 });
