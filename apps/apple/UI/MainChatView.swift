@@ -78,6 +78,7 @@ struct MainChatView: View {
             }.padding(AppleTokens.Space.p12)
             #endif
             if initialDate != nil {
+                #if os(iOS)
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                     Text(DeviceDateText.chatDay(ChatDay.key(chosenDate,timeZone:model.timeZone),timeZone:TimeZone(identifier:model.timeZone) ?? .gmt))
                         .font(AppleTokens.Fonts.largeTitle.bold())
@@ -88,6 +89,11 @@ struct MainChatView: View {
                     #endif
                 }.frame(maxWidth:.infinity,alignment:.leading).padding(.horizontal,AppleTokens.Phone.pageInset)
                     .accessibilityIdentifier("mainChat.historyDate")
+                #else
+                Text(DeviceDateText.chatDay(ChatDay.key(chosenDate,timeZone:model.timeZone),timeZone:TimeZone(identifier:model.timeZone) ?? .gmt))
+                    .font(AppleTokens.Fonts.title2).frame(maxWidth:.infinity,alignment:.leading).padding(.horizontal,AppleTokens.Space.p20)
+                    .accessibilityIdentifier("mainChat.historyDate")
+                #endif
             }
             if searching { searchBar }
             if model.indexState != "ready" {
