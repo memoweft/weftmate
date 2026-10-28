@@ -305,6 +305,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             if (!current()) return;
             if (!created?.sessionId || created.state !== 'accepted_by_dsh') { row.status = created && ['pending','dispatching'].includes(created.state) ? 'sending' : 'failed'; effects.renderOptimisticMessages?.(); return; }
             row.sessionId = created.sessionId;
+            row.createdSession = true;
             if (row.projectId) await core.updateSession(row.sessionId, {projectId:row.projectId});
             if (row.attachments) {
                 const oldKey = `${row.ownerId}|new`;
@@ -317,7 +318,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             // Reading every older conversation is not a prerequisite for
             // delivering its first message or observing the native turn.
             void core.refreshSessions().catch(() => {});
-            if (core.state.newConversation && core.state.selectedSessionId === null && core.state.newConversationId === row.draftId) await core.selectSession(row.sessionId);
+            if (core.state.newConversation && core.state.selectedSessionId === null && core.state.newConversationId === row.draftId) await core.selectSession(row.sessionId, {creating:true});
         }
         if(row.approvalMode){
             const modeReceipt = await core.accessApi(`/sessions/${encodeURIComponent(row.sessionId)}/approval-mode`,{method:'PATCH',protectedWrite:true,body:{mode:row.approvalMode}});
@@ -486,7 +487,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             draftId: core.state.newConversationId,
             temporary: core.state.newConversation && core.state.newConversationTemporary === true,
             requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), createRequestId: environment.crypto.randomUUID(),
-            text, attachments: attachments.length > 0, files: attachments.map(item => item.file?.name || '附件'),
+            text, at:new Date().toISOString(), attachments: attachments.length > 0, files: attachments.map(item => item.file?.name || '附件'),
             deepThinking: core.state.newConversation ? thinkingView().supported && thinkingView().enabled : undefined,
             approvalMode: core.state.newConversation ? core.state.newConversationApprovalMode : null,
             intent: intent === 'queue' || intent === 'steer' ? intent : core.composerInputMode(core.state.selectedSessionId), status: 'sending'};

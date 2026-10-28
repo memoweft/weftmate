@@ -14,6 +14,56 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  chat-first-send-windows:
+    name: Windows first conversation send
+    runs-on: windows-latest
+    timeout-minutes: 8
+    env:
+      WEFTMATE_FIRST_SEND_OUTPUT: ${{ github.workspace }}/.local/evidence/chat-first-send
+      WEFTMATE_TEST_HOST_NAME: synthetic-host
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # The fixture stays in a canonical system-drive scope while screenshots
+      # and the isolated Electron profile use the checkout drive, as in shards.
+      - name: First send in the inherited managed CI scope
+        shell: pwsh
+        run: |
+          @'
+          import { existsSync } from 'node:fs';
+          import { createRequire } from 'node:module';
+          import { managedMkdtempSync, disposeManagedTemp, startManagedTempLease } from './tests/helpers/managed-temp.mjs';
+          import { runManagedTestProcess } from './tests/helpers/managed-test-process.mjs';
+          const scope = managedMkdtempSync('weftmate-first-send-ci-');
+          const stopLease = startManagedTempLease(scope);
+          try {
+            const run = await runManagedTestProcess(process.execPath, ['--test', 'tests/chat-first-send.test.ts'], {
+              env: { ...process.env, TMPDIR: scope, TMP: scope, TEMP: scope, WEFTMATE_TEST_TEMP_SCOPE: scope },
+              timeoutMs: 150000, commandRoots: [scope, process.cwd()],
+              executables: [process.execPath, createRequire(import.meta.url)('electron')],
+              onOutput: (stream, chunk) => process[stream].write(chunk),
+            });
+            if (run.status !== 0 || run.timedOut) throw Error('Windows first-send regression failed');
+          } finally {
+            stopLease(); disposeManagedTemp(scope);
+            if (existsSync(scope)) throw Error('First-send CI temp cleanup failed');
+          }
+          '@ | node --input-type=module
+      - name: Upload synthetic first-send evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chat-first-send-windows-${{ github.sha }}
+          path: |
+            .local/evidence/chat-first-send/report.json
+            .local/evidence/chat-first-send/**/*.png
+            .local/evidence/chat-first-send/**/frames.json
+          if-no-files-found: error
+
   test:
     name: test (${{ matrix.os }}, shard ${{ matrix.shard }}/${{ matrix.os == 'windows-latest' && 5 || 3 }})
     runs-on: ${{ matrix.os }}
