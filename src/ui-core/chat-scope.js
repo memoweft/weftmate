@@ -3,10 +3,11 @@ globalThis.WeftUiCore.factories.chatScope = (parent, _effects, environment) => {
     function createChatScope(effects, tabId, computerId = parent.currentExecutionComputer?.() || parent.state.hostId) {
         const identity = parent.state.identityGeneration, owner = parent.state.ownerId;
         const lifetime = new AbortController();
-        const prefix = `weftmate-chat-scope:${owner}:${tabId}:`;
+        const prefix = `weftmate-chat-scope:${owner}:${tabId}:${environment.crypto.randomUUID()}:`;
+        const ownedKeys = new Set();
         const storage = {
             getItem: key => environment.storage.getItem(prefix + key),
-            setItem: (key, value) => environment.storage.setItem(prefix + key, value),
+            setItem: (key, value) => { ownedKeys.add(key); environment.storage.setItem(prefix + key, value); },
             removeItem: key => environment.storage.removeItem(prefix + key),
         };
         const current = () => !lifetime.signal.aborted && parent.state.identityGeneration === identity && parent.state.ownerId === owner;
@@ -61,6 +62,8 @@ globalThis.WeftUiCore.factories.chatScope = (parent, _effects, environment) => {
                 core.state.historyGeneration++; core.state.historyEvents.clear();
                 core.state.chatWindow.events.clear(); core.resetMessageBodies(); core.resetMessageProcesses();
                 core.state.attachmentDrafts.clear(); core.state.attachmentAttempts.clear(); core.state.attachmentGroups.clear();
+                for (const key of ownedKeys) storage.removeItem(key);
+                ownedKeys.clear();
             },
         };
     }

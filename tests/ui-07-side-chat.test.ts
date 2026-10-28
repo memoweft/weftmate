@@ -51,6 +51,11 @@ test('expired side credentials use the owning account login flow',async()=>{
   const scope=f.core.createChatScope(f.effects,'side-tab');await assert.rejects(scope.core.accessApi('/models'));
   assert.equal(expired,1);scope.dispose();
 });
+test('reopening a closed panel cannot adopt its old pending creation',()=>{
+  const f=fixture(),first=f.core.createChatScope(f.effects,'chat');
+  first.core.rememberMarker({requestId:'old-create',kind:'session.create'});first.dispose();
+  const second=f.core.createChatScope(f.effects,'chat');assert.equal(second.core.readMarkers().length,0);second.dispose();
+});
 test('main and side conversations operate together in the Windows Electron shell',{skip:process.platform!=='win32',timeout:180000},()=>{
   const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
   const result=spawnSync(process.execPath,['tests/integration/ui-07-side-chat.mjs'],{env,encoding:'utf8',windowsHide:true,timeout:170000,maxBuffer:2*1024*1024});
