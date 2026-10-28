@@ -359,7 +359,6 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         if (restoring && rows.length && (restoring.pinned ||
             !rows.some(row => row.key === saved?.key) && !historyState().hasOlder && !core.state.olderLoading && !core.state.historyInFlight && !core.state.logicalHistoryLoading)) restoring = null;
         ui.byId('chat-intro').hidden = rows.length > 0;
-        if (historyState().hasNewer) {ui.byId('jump-latest').hidden=false;ui.byId('jump-latest').textContent='回到最近内容';}
         if (!searchPanel) return;
         const search = core.state.chatWindow.search;
         const status = searchPanel.querySelector('[role=status]');
@@ -403,7 +402,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         if (!ui.scopedChat) {
             document.addEventListener('weft:personalization', () => {
                 if (!globalThis.WeftTimeline?.prepare) return;
-                if (main()) { expanded.clear(); renderMainChat(); } else ui.renderTimeline();
+                if (main()) { expanded.clear(); for(const row of mounted.values())delete row.dataset.chatSignature; renderMainChat(); } else ui.renderTimeline();
                 const mode = core.state.personalization?.thinkingDisplay || 'collapsed';
                 for (const detail of list().querySelectorAll('.model-thinking')) detail.open = mode === 'expanded' && detail.dataset.active === 'true';
             });

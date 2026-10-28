@@ -394,7 +394,7 @@ test('memory view preserves chat draft and discards a successful response for an
     createTextNode: (text: string) => { const node = new Node(); node.tagName = '#TEXT'; node.textContent = text; return node },
     createComment: (text: string) => { const node = new Node(); node.tagName = '#COMMENT'; node.textContent = text; return node },
     createElementNS: (_namespace: string, tag: string) => { const node = new Node(); node.tagName = tag.toUpperCase(); return node },
-    querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : selector === 'section.settings-category[data-category="general"]' ? get('general-panel') : null,
+    querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : selector === 'section.settings-category[data-category="general"]' ? get('general-panel') : selector === '.assistant-topbar' ? document.body.querySelector(selector) : null,
     querySelectorAll: () => [], addEventListener() {}, dispatchEvent() { return true } }
   const matchMedia = (media: string) => ({ media, matches: false, addEventListener() {}, removeEventListener() {} })
   const window = { location: { hash: '', pathname: '/personal/v1/ui', search: '' },

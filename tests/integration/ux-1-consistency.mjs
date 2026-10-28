@@ -93,7 +93,7 @@ try {
     // Desktop and remote web share the settings usage category; the Android bundle uses its usage page.
     for (const [surface,page] of surfaces) {
       if (surface==='android-ui') { await page.getByRole('button',{name:'返回对话',exact:true}).click(); await page.getByRole('button',{name:'本对话用量',exact:true}).click(); }
-      else { await page.getByRole('button',{name:'收起右侧面板',exact:true}).click(); await page.getByRole('button',{name:'本对话用量',exact:true}).click(); }
+      else { await page.getByRole('button',{name:'收起右侧面板',exact:true}).click(); await page.evaluate(()=>WeftSettingsNavigation.open('usage')); }
       await page.getByRole('combobox',{name:'统计月份',exact:true}).waitFor();
       await page.getByRole('combobox',{name:'统计月份',exact:true}).click(); await page.getByRole('option',{name:'2026 年 10 月',exact:true}).waitFor();
     }

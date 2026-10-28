@@ -102,9 +102,6 @@ try {
     const providerTotal = upstreamUsage.reduce((sum, row) => { assert.ok(row); for (const field of ['inputTokens', 'cachedInputTokens', 'outputTokens']) sum[field] += row[field]; sum.cost = Math.round((sum.cost + usageCost(row, MIMO_PRICE)) * 1e9) / 1e9; return sum; }, { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, cost: 0 });
     for (const field of Object.keys(providerTotal)) assert.equal(summary.total[field], providerTotal[field], field);
     report.checks.push('native ledger equals actual MiMo usage/cache/cost');
-    await desktop.getByRole('button', { name: '本对话用量', exact: true }).click();
-    await desktop.getByRole('heading', { name: '本对话用量', exact: true }).waitFor(); await nativeScreenshot('01-conversation.png');
-    await desktop.getByRole('button', { name: '关闭设置', exact: true }).click();
     await desktop.getByRole('button', { name: /UsageFixture/ }).click();
     await desktop.getByRole('button', { name: '设置', exact: true }).click();
     await desktop.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '用量', exact: true }).click();

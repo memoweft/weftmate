@@ -169,7 +169,7 @@ try {
       WeftTimeline.render([
         { seq: 0, type: 'turn.started', data: { turn: 1 } },
         ...['read', 'exec'].map((toolName, index) => ({ seq: index + 1, type: 'step.started', at: new Date().toISOString(),
-          data: { taskId: 'motion-task', stepId: `motion-step-${index}`, toolName, state: 'running', summary: '合成进展步骤' } })),
+          data: { taskId: 'turn-1', stepId: `motion-step-${index}`, toolName, state: 'running', summary: '合成进展步骤' } })),
       ], progress);
       const block = progress.querySelector('.execution-block'), step = progress.querySelector('.execution-step');
       block.open = true; step.open = true;

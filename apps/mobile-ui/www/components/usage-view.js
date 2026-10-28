@@ -99,10 +99,8 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
 };
 if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.usage = (core, ui) => {
     let activeScope = null;
-    let conversationButton;
     let phoneProfile;
     function renderConversationUsage() {
-        if (conversationButton) conversationButton.hidden = core.state.newConversation || !core.state.selectedSessionId || core.state.activeChatSource === 'phone' || core.inMainChat?.() === true;
         if(phoneProfile){const avatar=ui.byId('rail-avatar-image').parentElement.cloneNode(true);for(const node of avatar.querySelectorAll('[id]'))node.removeAttribute('id');phoneProfile.replaceChildren(avatar);}
     }
     function showSettingsUsage({ sessionId = '' } = {}) {
@@ -112,21 +110,13 @@ if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.usage = (
         WeftUsageView(core, target, { sessionId, current: () => scope === activeScope && core.accountCurrent(token) && !target.hidden });
     }
     function mountUsage() {
-        const conversation = ui.element('button', 'button quiet small usage-title-button', '本对话用量'); conversation.type = 'button';
-        conversationButton = conversation; renderConversationUsage();
-        conversation.addEventListener('click', () => {
-            if (!core.state.selectedSessionId || core.state.activeChatSource === 'phone') return ui.toast('请先选择一段电脑对话。');
-            ui.openSettings('usage', { sessionId: core.state.selectedSessionId });
-        });
-        globalThis.WeftUiLayout.mountUsage(conversation);
         if(globalThis.weftmateDesktop)return;
         const more=ui.element('button','icon-button phone-conversation-more');more.type='button';more.setAttribute('aria-label','对话操作');more.setAttribute('aria-haspopup','menu');more.append(WeftIcons.create('more',20));
         more.addEventListener('click',()=>WeftPopover.menu(more,[
-            {name:'输出与来源',icon:'folder',action:()=>window.WeftDesktop.showResources(more)},
-            ...(!conversation.hidden?[{name:'本对话用量',icon:'chart',action:()=>conversation.click()}]:[])
+            {name:'输出与来源',icon:'folder',action:()=>window.WeftDesktop.showResources(more)}
         ]));
-        conversation.before(more);
-        phoneProfile=ui.element('button','icon-button phone-header-profile');phoneProfile.type='button';phoneProfile.setAttribute('aria-label','个人资料与设置');phoneProfile.addEventListener('click',()=>WeftPopover.menu(phoneProfile,[{name:'设置',icon:'settings',action:()=>ui.openSettings('account')},{name:'帮助',icon:'info',action:()=>ui.openHelp()},{name:'更新内容',icon:'sync',action:()=>ui.openReleases()}]));conversation.after(phoneProfile);renderConversationUsage();
+        document.querySelector('.assistant-topbar').append(more);
+        phoneProfile=ui.element('button','icon-button phone-header-profile');phoneProfile.type='button';phoneProfile.setAttribute('aria-label','个人资料与设置');phoneProfile.addEventListener('click',()=>WeftPopover.menu(phoneProfile,[{name:'设置',icon:'settings',action:()=>ui.openSettings('account')},{name:'帮助',icon:'info',action:()=>ui.openHelp()},{name:'更新内容',icon:'sync',action:()=>ui.openReleases()}]));more.after(phoneProfile);renderConversationUsage();
     }
     return { mountUsage, showSettingsUsage, renderConversationUsage };
 };
