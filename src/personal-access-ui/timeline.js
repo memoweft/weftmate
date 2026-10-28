@@ -173,7 +173,7 @@
     for (const block of groups) put(`steps-${options.processKey?.(block) || block.presentationKey || block.seq}`, block.position ?? WeftUiCore.progressPosition(ordered, block, true), row => {
       const ordered=block.events || projection.ordered
       const started=ordered.findLast(event=>event.type==='turn.started' && event.seq<=block.seq)
-      const waiting=block.nativeStarted===false ? '等待模型回复…' : options.waiting
+      const waiting=block.nativeStarted===false ? '正在思考…' : options.waiting
       block.steps = block.steps.map(step=>globalThis.WeftUiCore.executionPresentation(step,options.executions))
       const expandedForObjects = row.querySelector('details')?.open === true
       const currentForObjects = block.steps.filter(step => step.state === 'running').at(-1)
@@ -199,11 +199,12 @@
       const displayOutcome = (!lastBlock || options.quietFailure) && ['error','failed','blocked'].includes(outcome.reason) ? {...outcome,reason:'ended'} : outcome
       const tools = block.steps.filter(step=>!['__thinking','__progress'].includes(step.toolName))
       const thought = block.steps.filter(step=>step.toolName === '__thinking').at(-1)
+      const thinkingOnly=!!thought && block.steps.every(step=>step.toolName==='__thinking');
       const current = block.steps.filter(step=>step.state === 'running').at(-1)
       const view = globalThis.WeftUiCore.progressText(tools, {...displayOutcome,language:block.language})
-      if (!block.steps.length && !terminal) { view.text=WeftUiCore.progressWaitingText(waiting || '等待模型回复…',block.language);view.running=true }
+      if (!block.steps.length && !terminal) { view.text=WeftUiCore.progressWaitingText(waiting || '正在思考…',block.language);view.running=true }
       if (current?.toolName === '__thinking' && !terminal) {view.text=block.language==='en'?'Thinking…':'正在思考…';view.running=true}
-      else if (!tools.length && thought) view.text = `思考过程 · ${Number.isFinite(thought.thinkingMs) ? Math.round(thought.thinkingMs/1000)+' 秒' : '用时未记录'}`
+      else if (!tools.length && thought) view.text = block.language==='en'?'Thinking':'思考过程'
       if (stopView && !stopView.terminal) { view.text = `${view.text} · ${WeftUiCore.progressWaitingText(stopView.text, block.language)}`; view.running = true }
       // Keep completed work visible while a real native turn waits for its
       // next model/tool result. The stage comes from host state, not a timer
@@ -218,7 +219,7 @@
         const start=ordered.findLast(event=>event.type==='turn.started' && event.seq<=block.seq && (!session || (event.sessionId||event.sourceRef?.sessionId)===session));
         const end=ordered.find(event=>['turn.ended','task.ended'].includes(event.type)&&WeftUiCore.turnOutcome([event],block.taskId).terminal);
         const ms=Date.parse(end?.at)-Date.parse(start?.at || block.steps[0]?.at);
-        const duration=Number.isFinite(ms)?`${Math.max(0,Math.round(ms/1000))} ${block.language==='en'?'s':'秒'}`:block.language==='en'?'duration unavailable':'用时未记录';
+        const duration=Number.isFinite(ms)?`${Math.max(0,Math.round(ms/1000))} ${block.language==='en'?'s':'秒'}`:'';
         view.text=['aborted','cancelled','canceled','stopped','killed'].includes(outcome.reason) ? (block.language==='en'?'Stopped':'已停止') : outcome.reason==='completed' ? block.language==='en'?'Completed':'已完成' : block.language==='en'?'Ended':'已结束';
         view.duration=duration;
         view.running=false;
@@ -231,9 +232,9 @@
       const running = view.running
       const startedAt=Date.parse(started?.at || current?.at);
       const elapsed = view.duration || (running ? Number.isFinite(startedAt) ? `${Math.max(0,Math.floor((Date.now()-startedAt)/1000))} ${block.language==='en'?'s':'秒'}`
-        : /\d+ (?:秒|s)$/.exec(waiting || '')?.[0] || (block.language==='en'?'duration unavailable':'用时未记录') : '')
+        : /\d+ (?:秒|s)$/.exec(waiting || '')?.[0] || '' : '')
       if (running) view.text = view.text.replace(/\s*\d+ (?:秒|s)$/, '')
-      const signature = JSON.stringify([block, outcome, stopView])
+      const signature = JSON.stringify([block, outcome, stopView, options.thinkingDisplay])
       row.dataset.running = String(running)
       if (row.dataset.signature === signature) {
         // A stage/timer update must not detach a focused or scrolling summary.
@@ -257,7 +258,10 @@
       if (!previous) details.dataset.replyProcess = 'true'
       details.dataset.motion = 'unfold'
       const justFinished = terminal && details.dataset.terminal === 'false';
-      details.open = newFailure || (!previous ? !terminal : justFinished && !view.failed ? false : previous.open);
+      details.open = newFailure || (!previous ? !terminal : justFinished && !view.failed && !thinkingOnly ? false : previous.open);
+      if(thinkingOnly && (!details.classList.contains('thinking-process') || details.dataset.thinkingDisplay!==(options.thinkingDisplay || 'collapsed')))details.open=options.thinkingDisplay==='expanded';
+      details.dataset.thinkingDisplay=options.thinkingDisplay || 'collapsed';
+      details.classList.toggle('thinking-process',thinkingOnly);
       details.dataset.terminal = String(!!terminal);
       row.dataset.running = String(running)
       row.classList.toggle('has-failure', !!view.failed)
@@ -296,7 +300,12 @@
       const savedNotes = new Map([...records.querySelectorAll('[data-progress-note]')].map(detail => [detail.dataset.progressNote,detail]))
       const recordNodes=WeftUiCore.groupConsecutiveSteps(block.steps).flatMap(group => /^(shell|bash|pwsh|powershell|exec_command|run_command|__progress)$/.test(group.kind) ? group.steps.map(step=>({...group,steps:[step]})) : [group]).map(group => {
         const children = group.steps.map(step => {
-          if(step.toolName==='__thinking')return thinkingCard(step,savedSteps.get(String(step.stepId)),options);
+          if(step.toolName==='__thinking') {
+            const card=thinkingCard(step,savedSteps.get(String(step.stepId)),options);
+            if(thinkingOnly){card.open=true;card.querySelector('summary').hidden=true;}
+            else card.querySelector('summary').hidden=false;
+            return card;
+          }
           if(step.toolName==='__progress') {
             const note=savedNotes.get(String(step.stepId)) || WeftContent.create('','execution-note markdown-body');
             note.dataset.progressNote=String(step.stepId);WeftContent.update(note,step.progressText);return note;
@@ -316,10 +325,9 @@
         if(globalThis.WeftMotion?.visibility)WeftMotion.details(detail);
         return detail
       });
-      if(!recordNodes.length) {
+      if(!recordNodes.length && block.submission) {
         const empty=records.querySelector('.execution-empty') || node('p','execution-empty');
-        const text=block.submission ? block.language==='en'?'Your message is kept here. Check delivery before retrying.':'消息仍保留在这里，核对发送状态后可以重试。'
-          : terminal ? block.language==='en'?'No tools were used for this reply.':'这次回复没有调用工具。' : block.language==='en'?'The reply will appear below. Tool activity will be collected here.':'回答会显示在下方；如需调用工具，过程会记录在这里。';
+        const text=block.language==='en'?'Your message is kept here. Check delivery before retrying.':'消息仍保留在这里，核对发送状态后可以重试。';
         if(empty.textContent!==text)empty.textContent=text;recordNodes.push(empty);
       }
       if(view.failed) {

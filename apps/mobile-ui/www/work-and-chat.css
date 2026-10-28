@@ -1,3 +1,6 @@
+.work-mode-fold{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows var(--dur-4) var(--ease-out),opacity var(--dur-3) var(--ease-out)}
+.work-mode-fold.is-open{grid-template-rows:1fr;opacity:1}
+.work-mode-clip{min-height:0;overflow:clip}
 .work-mode-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:var(--wm-space-8);margin:var(--wm-space-8) 0 0;padding:0}
 .work-select{display:inline-flex;align-items:center;gap:var(--wm-space-8);min-width:0;max-width:100%;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis}
 .rail-mode-switch{display:flex;gap:var(--wm-space-2);padding:var(--wm-space-3);margin:var(--wm-space-12) 0 var(--wm-space-4);background:var(--surface-soft);border-radius:var(--wm-radius-8)}

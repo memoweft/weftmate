@@ -75,6 +75,10 @@ html.weftmate-desktop:has(.assistant-active) { overflow:hidden; scrollbar-gutter
 .panel-subtask span { color:var(--ink-secondary); font-size:var(--wm-type-secondary); }
 .preview-expanded .timeline-preview { position:absolute; inset:0 0 0 auto; width:calc(100% - var(--wm-size-sidebar)) !important; z-index:25; }
 .preview-expanded.rail-collapsed .timeline-preview { width:100% !important; }
+.preview-expanded #workspace-panels { position:fixed; top:var(--wm-space-6); right:var(--wm-space-6); z-index:40; }
+.preview-expanded .preview-heading { padding-right:var(--wm-space-44); }
+.weftmate-desktop .assistant-active.preview-expanded #workspace-panels { right:calc(var(--wm-space-48) * 3); }
+.weftmate-desktop .assistant-active.preview-expanded .preview-heading { padding-right:calc(var(--wm-size-160) + var(--wm-space-44)); }
 @media (max-width:1100px) {
   .preview-open .session-rail { display:none; }
   .preview-expanded .timeline-preview { width:100% !important; }
@@ -86,6 +90,10 @@ html.weftmate-desktop:has(.assistant-active) { overflow:hidden; scrollbar-gutter
   .preview-resize { display:none; }
   .preview-heading > button { min-height:var(--wm-space-44); }
   .preview-heading > button[aria-pressed] { display:none; }
+  .preview-open #workspace-panels { position:fixed; top:var(--wm-space-6); right:var(--wm-space-6); z-index:40; }
+  .preview-heading { padding-right:var(--wm-space-44); }
+  .weftmate-desktop .assistant-active.preview-open #workspace-panels { right:calc(var(--wm-space-48) * 3); }
+  .weftmate-desktop .assistant-active.preview-open .preview-heading { padding-right:calc(var(--wm-size-160) + var(--wm-space-44)); }
   .panel-launcher-item { min-height:var(--wm-space-48); }
   .composer-actions { flex-wrap:nowrap; }
   .composer-actions .model-picker { max-width:38%; }
@@ -125,20 +133,15 @@ html.weftmate-desktop:has(.assistant-active) { overflow:hidden; scrollbar-gutter
 @media(max-width:720px) { .session-rail { --rail-width:min(var(--wm-size-sidebar),calc(100vw - var(--wm-space-52))); width:var(--rail-width); padding-top:var(--wm-space-12); } .weftmate-desktop .session-rail { padding-top:var(--wm-size-workspace-header); } .composer-actions .conversation-mode-switch button { font-size:0; gap:0; } .work-mode-toolbar .work-mode-hint { display:none; } }
 
 .session-rail .rail-message:empty { display:none; }
-.new-conversation-page #conversation-pane.chat-workspace { justify-content:center; gap:var(--wm-space-16); }
-.new-conversation-page #conversation-pane.chat-workspace .chat-scroll { flex:0 1 auto; max-height:45%; padding-block:0; }
-.new-conversation-page #conversation-pane.chat-workspace .chat-intro { margin:0 auto; padding:0; }
-.new-conversation-page #conversation-pane.chat-workspace .chat-intro h1 { margin:0; }
-.new-conversation-page #conversation-pane.chat-workspace .chat-intro p { margin:0 auto; }
-.new-conversation-page #conversation-pane.chat-workspace > .composer-area { padding-block:0; }
+.weftmate-desktop .composer-area { position:relative; }
+.weftmate-desktop #conversation-pane.chat-workspace .composer-area > .chat-intro { position:absolute; bottom:calc(100% - var(--wm-space-40)); left:var(--wm-space-28); right:var(--wm-space-28); width:auto; margin:0; padding:0; text-align:center; opacity:1; visibility:visible; transition:opacity var(--dur-3) var(--ease-out),visibility var(--dur-3) allow-discrete; }
+.weftmate-desktop #conversation-pane.chat-workspace .composer-area > .chat-intro[hidden] { display:block !important; opacity:0; visibility:hidden; pointer-events:none; }
+.weftmate-desktop #conversation-pane.chat-workspace .composer-area > .chat-intro h1 { margin:0; }
+.weftmate-desktop #conversation-pane.chat-workspace .composer-area > .chat-intro p { margin:var(--wm-space-4) auto 0; }
 .composer-help { display:block; width:max-content; min-height:0; padding:0; margin:var(--wm-space-6) auto 0; border:0; background:transparent; color:var(--ink-muted); font:inherit; font-size:var(--wm-font-size-11); }
 .assistant-topbar #assistant-title { font-size:var(--ui-size,var(--wm-font-size-14)); }
-.usage-title-button { display:inline-flex; gap:var(--wm-space-6); align-items:center; }
-.usage-title-button svg { width:var(--wm-space-18); height:var(--wm-space-18); flex:none; }
 @media(max-width:1100px) {
   .assistant-topbar #conversation-resources { font-size:0; width:var(--wm-space-32); min-width:var(--wm-space-32); padding:var(--wm-space-6); }
-  .assistant-topbar .usage-title-label { display:none; }
-  .assistant-topbar .usage-title-button { width:var(--wm-space-32); padding:var(--wm-space-6); flex:none; }
   .assistant-topbar .conversation-mode-subtitle { display:none; }
 }
 .phone-unified .chat-intro .conversation-mode-switch { display:flex; width:max-content; gap:var(--wm-space-4); margin:var(--wm-space-12) auto 0; }

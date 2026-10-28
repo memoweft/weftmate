@@ -18,7 +18,7 @@
 .side-chat-model-popover { max-width:calc(100vw - 40px); }
 .side-chat-tools .composer-send { flex-shrink:0; }
 .side-chat-notice { font-size:var(--wm-font-size-12); color:var(--ink-muted); overflow-wrap:anywhere; }
-.side-chat-latest { position:absolute; align-self:center; z-index:2; }
+.side-chat-latest { right:var(--wm-space-16); z-index:2; }
 .panel-chat .composer-attachments { max-height:160px; overflow:auto; }
 .panel-chat .attachment-draft-copy { min-width:0; }
 .panel-chat .attachment-draft-copy strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
