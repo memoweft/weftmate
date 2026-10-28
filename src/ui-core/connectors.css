@@ -1,4 +1,24 @@
 .connectors-view { display: grid; gap: var(--wm-space-16); }
+.capabilities-browser { display:grid; gap:var(--wm-space-20); min-width:0; }
+.capabilities-tabs { display:flex; gap:var(--wm-space-16); border-bottom:1px solid var(--line); }
+.capabilities-tabs [role=tab] { border:0; border-radius:0; padding:var(--wm-space-8) 0; color:var(--ink-secondary); background:transparent; border-bottom:2px solid transparent; }
+.capabilities-tabs [aria-selected=true] { border-bottom-color:var(--ink); color:var(--ink); font-weight:600; }
+.capabilities-toolbar { display:flex; align-items:center; gap:var(--wm-space-12); min-width:0; }
+.capabilities-search { flex:1; width:0; min-width:0; }
+.capabilities-toolbar > :last-child { flex:none; }
+.capabilities-toolbar .settings-select { width:auto; min-width:112px; max-width:none; }
+.capability-group { margin-bottom:var(--wm-space-24); }
+.capability-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--wm-space-12); }
+.capability-item { display:flex; align-items:flex-start; gap:var(--wm-space-12); min-width:0; padding:var(--wm-space-12); border-radius:var(--wm-radius-12); background:var(--surface); }
+.capability-item > svg { flex:none; margin-top:var(--wm-space-4); color:var(--ink-secondary); }
+.capability-copy { flex:1; min-width:0; }
+.capability-copy .capability-open { display:block; min-width:0; max-width:100%; padding:0; min-height:0; text-align:left; font-weight:500; background:transparent; border:0; white-space:normal; overflow-wrap:anywhere; }
+.capability-copy .capability-open:disabled { opacity:1; color:var(--ink); }
+.capability-copy p { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; margin:var(--wm-space-4) 0; }
+.capability-state { font-size:var(--wm-font-size-12); color:var(--ink-secondary); }
+.capability-item > .icon-button { flex:none; }
+.capability-empty { padding-block:var(--wm-space-16); }
+@media(max-width:800px) { .capability-list { grid-template-columns:minmax(0,1fr); } }
 .connectors-view h2 { font-size: var(--wm-font-size-15); margin: 0; }
 .connector-list-row { display: flex; align-items: center; gap: var(--wm-space-12); }
 .connector-list-row .connector-open { flex: 1; min-width: 0; text-align: left; }

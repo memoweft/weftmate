@@ -11,6 +11,8 @@ WeftPanels.register('review', {
     let current = ctx, contextKey = key(ctx), listSeq = 0, diffSeq = 0, selected = null, disposed = false, timer, listSignature, diffSignature;
     const labels = { M: '修改', A: '新增', D: '删除', R: '重命名', C: '复制', U: '冲突', '?': '未跟踪', T: '类型改变' };
     const valid = (seq, kind) => !disposed && seq === (kind === 'list' ? listSeq : diffSeq);
+    const paintMarkers = () => { detail.dataset.diffMarkers = WeftPanels.services.diffMarkers?.() || globalThis.WeftDesktop?.getAppearance?.().diffMarkers || 'color'; };
+    globalThis.addEventListener('weftmate:appearance',paintMarkers);
     function paintSelection() { for (const row of list.children) row.setAttribute('aria-pressed', String(row.dataset.path === selected)); }
     async function select(file, quiet = false) {
       const changed = selected !== file; selected = file; paintSelection(); const seq = ++diffSeq, scope = current;
@@ -18,9 +20,8 @@ WeftPanels.register('review', {
       try {
         const data = await request(scope, 'review/diff', { path: file });
         if (!valid(seq, 'diff') || selected !== file || key(scope) !== contextKey) return;
+        paintMarkers();
         const signature = JSON.stringify([file, data]); if (signature === diffSignature) return; diffSignature = signature;
-        const markers = WeftPanels.services.diffMarkers?.() || globalThis.WeftDesktop?.getAppearance?.().diffMarkers || 'color';
-        detail.dataset.diffMarkers = markers;
         detail.replaceChildren(node('h3', 'workspace-file-title', file));
         if (data.binary) { detail.append(node('p', 'workspace-empty', '二进制文件，无法显示逐行差异。')); return; }
         if (!data.lines.length) { detail.append(node('p', 'workspace-empty', '文件状态有变化，内容没有逐行差异。')); return; }
@@ -61,6 +62,6 @@ WeftPanels.register('review', {
     return { el, show() { if (!timer) timer = setInterval(() => { if (!refresh.disabled) void load(); }, 5000); void load(); },
       hide() { clearInterval(timer); timer = null; },
       update(next) { const changed = key(next) !== contextKey, directoryResolved = current.workDir !== next.workDir; current = next; if (!changed) { if (directoryResolved) void load(); return; } contextKey = key(next); listSignature = diffSignature = null; selected = null; diffSeq++; list.replaceChildren(); detail.replaceChildren(); void load(); },
-      dispose() { disposed = true; listSeq++; diffSeq++; clearInterval(timer); el.replaceChildren(); } };
+      dispose() { disposed = true; listSeq++; diffSeq++; clearInterval(timer); globalThis.removeEventListener('weftmate:appearance',paintMarkers); el.replaceChildren(); } };
   },
 });

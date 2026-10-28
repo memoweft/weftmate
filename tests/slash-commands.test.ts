@@ -33,10 +33,11 @@ test('#659 discovers scoped DSH commands and skills, and executes on the same re
   const calls:any[]=[],agent={session:{id:'s-one'}};
   const commands={list:(target:any)=>{assert.equal(target,agent);return [{name:'compact',description:'Compact history'},{name:'goal',description:'Set goal',input:{hint:'Goal'}}]},
     execute:async(target:any,line:string,signal:AbortSignal)=>{assert.equal(target,agent);assert.equal(signal.aborted,false);calls.push(line);return {commandId:'native-one',result:{kind:'success',text:'完成'}}}};
-  const api=createNativeCommands({lifecycle:{resume:async id=>calls.push(id)},getAgent:()=>agent,getCommands:()=>commands,
+  const api=createNativeCommands({lifecycle:{resume:async id=>calls.push(id)},getAgent:()=>agent,getCommands:()=>commands,getTools:async target=>{assert.equal(target,agent);return [{name:'read_file',description:'Read a file',parameters:{privateSchema:'not exposed'}}]},
     client:{skills:{list:async value=>{assert.deepEqual(value,{sessionId:'s-one'});return {result:{ok:true,value:{skills:[{name:'review',description:'Review changes',modelInvocable:false}]}}}}}}});
   const catalog=await api.list('s-one');
   assert.deepEqual(catalog.items.map(row=>[row.name,row.kind]),[['compact','command'],['goal','command'],['review','skill']]);
+  assert.deepEqual(catalog.tools,[{name:'read_file',description:'Read a file'}]);
   const result=await api.execute('s-one','/compact');assert.equal(result.result.kind,'success');
   assert.deepEqual(calls,['s-one','s-one','/compact']);
   await assert.rejects(api.execute('s-one','ordinary message'));

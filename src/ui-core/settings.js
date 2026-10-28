@@ -89,6 +89,13 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
                 effects.systemNotice('系统状态暂时无法读取，请刷新重试。');
         }
     }
+    async function refreshModelSettings() {
+        const token=core.accountToken();
+        const [settings,catalog]=await Promise.all([core.accessApi('/settings/models'),core.accessApi('/models')]);
+        if(!core.accountCurrent(token))return;
+        core.state.modelSettings=settings;effects.paintModelSettings(settings,catalog);
+    }
+    core.refreshModelSettings=refreshModelSettings;
     function openAccount() {
         core.stopAssistantRefresh();
         effects.closeRail();

@@ -127,7 +127,8 @@ function validateStore(store, ownerId) {
   for (let index = 0; index < store.events.length; index++) {
     const row = store.events[index];
     try {
-      optionalExact(row, ['seq', 'sourceDeviceId', 'digest', 'eventId', 'conversationId', 'clientSeq', 'kind', 'occurredAt', 'payload'], []);
+      optionalExact(row, ['seq', 'sourceDeviceId', 'digest', 'eventId', 'conversationId', 'clientSeq', 'kind', 'occurredAt', 'payload'], ['receivedAt']);
+      if(row.receivedAt!==undefined)when(row.receivedAt);
       if (row.seq !== index + 1 || typeof row.sourceDeviceId !== 'string' || !DEVICE_ID.test(row.sourceDeviceId) ||
           typeof row.digest !== 'string' || !/^[a-f0-9]{64}$/.test(row.digest) ||
           ids.has(row.eventId)) throw new Error('invalid sync row');
@@ -239,7 +240,7 @@ export async function createPersonalSyncStore({ root, ownerId }) {
             if (!await validateAttachment({ attachment, conversationId: event.conversationId,
               messageId: event.payload.messageId })) throw new PersonalSyncError('ATTACHMENT_NOT_FOUND', 400);
           }
-          const row = { seq: ++next.lastSeq, sourceDeviceId, digest: hash, ...event };
+          const row = { seq: ++next.lastSeq, sourceDeviceId, digest: hash, ...event, receivedAt:new Date().toISOString() };
           next.events.push(row);
           byId.set(event.eventId, row);
           used.add(event.clientSeq);
@@ -262,17 +263,23 @@ export async function createPersonalSyncStore({ root, ownerId }) {
       });
     },
     get watermark() { return state.lastSeq; },
+    deviceStatus(deviceId) {
+      const originals=state.events.filter(row=>row.sourceDeviceId===deviceId&&row.kind==='message.created'&&row.payload.role==='user');
+      if(!originals.length)return null;
+      return {receivedOriginals:new Set(originals.map(row=>row.payload.messageId)).size,lastReceivedAt:originals.at(-1).receivedAt??null,
+        memoryState:'received',processed:0,replicaPublishedAt:null};
+    },
     page({ afterSeq = 0, limit = 100 } = {}) {
       if (!Number.isSafeInteger(afterSeq) || afterSeq < 0 || afterSeq > state.lastSeq ||
           !Number.isSafeInteger(limit) || limit < 1 || limit > 200) invalid();
-      const events = state.events.slice(afterSeq, afterSeq + limit).map(({ digest: _digest, ...row }) => row);
+      const events = state.events.slice(afterSeq, afterSeq + limit).map(({ digest: _digest, receivedAt:_receivedAt, ...row }) => row);
       const nextSeq = events.at(-1)?.seq ?? afterSeq;
       return { events, nextSeq, hasMore: nextSeq < state.lastSeq };
     },
     conversationSnapshot(conversationId) {
       uuid(conversationId);
       const events = state.events.filter((row) => row.conversationId === conversationId)
-        .map(({ digest: _digest, ...row }) => structuredClone(row));
+        .map(({ digest: _digest, receivedAt:_receivedAt, ...row }) => structuredClone(row));
       const created = events.filter((row) => row.kind === 'conversation.created');
       const devices = new Map();
       for (const row of events) {
