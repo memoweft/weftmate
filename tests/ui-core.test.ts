@@ -376,7 +376,7 @@ test('observed phases remain available to the message process without a duplicat
     [{ phase: 'queued', ahead: 2 }, '模型排队中，前面还有 2 个请求'],
     [{ phase: 'reasoning' }, '正在思考…'],
     [{ phase: 'answering' }, '正在回复…'],
-    [null, '等待模型回复…'],
+    [null, '正在思考…'],
   ]) {
     session.processing = processing
     const view = f.core.composerState('')

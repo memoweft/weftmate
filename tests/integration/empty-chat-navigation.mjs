@@ -282,7 +282,10 @@ try {
   await snapshot('work-choices');
   await draftModes.getByRole('tab', { name: '新对话：对话', exact: true }).click();
   await page.waitForFunction(() => emptyChatCore.currentConversationMode() === 'chat');
-  assert.equal(await toolbar.isVisible(), false);
+  const fold=page.locator('.work-mode-fold');
+  assert.equal(await fold.evaluate(el=>el.inert && el.getAttribute('aria-hidden')==='true'),true);
+  await page.waitForFunction(()=>document.querySelector('.work-mode-fold').getBoundingClientRect().height<1);
+  assert.equal(await toolbar.getByRole('button').count(),0,'collapsed work controls are inaccessible and fully clipped');
   assert.equal(await page.locator('#approval-mode-trigger').isVisible(), true);
   // Real suggestion controller + presentation, with only the optional model
   // response replaced. Typing and clearing must perform no second request.

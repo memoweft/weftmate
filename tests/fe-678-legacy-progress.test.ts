@@ -105,7 +105,7 @@ test('#678 ordinary work sessions retain each message/process pair', {timeout:30
       await setup();
       const result=await page.evaluate(()=>{
         const f=(globalThis as any).f,c=f.core,hint=document.getElementById('model-hint');
-        hint.textContent='等待模型回复…';hint.hidden=true;c.state.sessions[0].running=false;c.state.turnStatus='running';
+        hint.textContent='正在思考…';hint.hidden=true;c.state.sessions[0].running=false;c.state.turnStatus='running';
         f.ui.renderConversationApprovals();
         const waiting={hidden:hint.hidden,text:hint.textContent};c.state.models=[];f.ui.renderConversationApprovals();
         return {waiting,configuration:{hidden:hint.hidden,text:hint.textContent}};
@@ -131,7 +131,7 @@ test('#678 ordinary work sessions retain each message/process pair', {timeout:30
         const rejection={kind:'session.message',requestId:id,sessionId:'session-work',state:'rejected',errorCode:'MODEL_NOT_CONFIGURED'};
         f.releases.get(id)(rejection);await f.deliveries.at(-1);f.check([id],'rejected without native start');
         const [row,details,summary]=f.saved.get(id);
-        if(row.dataset.running!=='false' || !row.classList.contains('has-failure') || !/未.*发送|发送.*失败/.test(summary.textContent) || /等待模型/.test(summary.textContent))throw Error('unaccepted failed submission still waits for the model');
+        if(row.dataset.running!=='false' || !row.classList.contains('has-failure') || !/未.*发送|发送.*失败/.test(summary.textContent) || /等待模型|正在思考|正在回复/.test(summary.textContent))throw Error('unaccepted failed submission still waits for the model');
         f.core.state.models=[];f.ui.renderModelHint();
         const hint=document.getElementById('model-hint');
         if(hint.hidden || !/模型/.test(hint.textContent) || /MODEL_NOT_CONFIGURED/.test(hint.textContent+summary.textContent))throw Error('configuration failure did not keep readable model guidance');
@@ -155,9 +155,9 @@ test('#678 ordinary work sessions retain each message/process pair', {timeout:30
         const f=(globalThis as any).f,id=f.send('需要核对发送结果的合成消息');f.check([id],'send before uncertain result');
         f.releases.get(id)({kind:'session.message',requestId:id,sessionId:'session-work',state:'uncertain',receiptId:'uncertain-receipt'});await f.deliveries.at(-1);
         f.check([id],'uncertain result');const [row,,summary]=f.saved.get(id);
-        if(row.classList.contains('has-failure') || /等待模型|未能发送/.test(summary.textContent) || !/核对/.test(summary.textContent))throw Error('uncertain delivery was mistaken for a definite failure or model response');
+        if(row.classList.contains('has-failure') || /等待模型|正在思考|正在回复|未能发送/.test(summary.textContent) || !/核对/.test(summary.textContent))throw Error('uncertain delivery was mistaken for a definite failure or model response');
         f.append(30,'task.queued',{requestId:id,receiptId:'uncertain-receipt',text:'需要核对发送结果的合成消息'});f.check([id],'native acceptance after uncertain lookup');
-        if(row.dataset.running!=='true' || row.classList.contains('has-failure') || !/等待模型/.test(summary.textContent))throw Error('real native acceptance lost to the local failed snapshot');
+        if(row.dataset.running!=='true' || row.classList.contains('has-failure') || !/正在思考/.test(summary.textContent))throw Error('real native acceptance lost to the local failed snapshot');
         f.append(31,'turn.started',{turn:3});f.append(33,'task.started',{requestId:id,receiptId:'uncertain-receipt',turn:3,turnTaskId:'turn-3'});f.check([id],'native start despite failed local status');
         f.append(34,'user.message',{receiptId:'uncertain-receipt',text:'需要核对发送结果的合成消息'});f.append(38,'turn.ended',{turn:3,reason:'completed'});f.check([id],'uncertain request completed');
         if(!/已完成/.test(summary.textContent))throw Error('uncertain request did not retain its actual native terminal state');
