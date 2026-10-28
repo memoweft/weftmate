@@ -179,13 +179,16 @@ try {
       phoneRows:phone.length,nativeRows:rows.filter(row=>row.dataset.sessionId===sid).length,section,activeChatSource:testCore.state.activeChatSource,selectedPhoneConversationId:testCore.state.selectedPhoneConversationId};
   },{id:phoneId,sid:phoneSessionId,label});
   const refreshPhone=async(label,{pinned,projectId=null,groupId=null,section='pinned',visible=true}={})=>{
+    const states=[];
     for(let cycle=0;cycle<3;cycle++){
       await page.evaluate(async id=>{await testCore.refreshSessions();await testCore.refreshPhoneRecords();await testCore.refreshPhoneBinding(id);},phoneId);
-      const state=await phoneSnapshot(`${label}:${cycle}`);report.phoneEntry.push(state);
+      const state=await phoneSnapshot(`${label}:${cycle}`);report.phoneEntry.push(state);states.push(state);
       await writeFile(join(out,'phone-entry-report.json'),JSON.stringify({sourceCommit:report.sourceCommit,states:report.phoneEntry},null,2));
       assert.deepEqual(state.session,{sessionId:phoneSessionId,pinned,projectId,groupId},'the full session metadata is present before checking its entry');
       assert.deepEqual(state.binding,{status:'active',sessionId:phoneSessionId});assert.equal(state.records,1);
       if(cycle===0)await shot('phone-entry-'+label);
+    }
+    for(const state of states){
       assert.equal(state.phoneRows,visible?1:0,JSON.stringify(state));assert.equal(state.nativeRows,visible?1:0,'phone and execution identities share one row');
       if(visible)assert.equal(state.section,section);
     }
