@@ -55,6 +55,15 @@ test('shared offline content: parsing, injection set, streaming, controls and fa
     });
     assert.ok(result.maxParsed<100,JSON.stringify(result));assert.equal(result.stable,true);assert.equal(result.items,2000);assert.equal(result.exact,true);
   });
+  await t.test('an unfinished next list marker never replaces the completed list or its selection',async()=>{
+    const result=await page.evaluate(()=>{
+      const body=WeftContent.create('1. 已完成的条目\n2. 尾部','markdown-body',{streaming:true});document.body.append(body);
+      const list=body.querySelector('ol'),first=list.firstElementChild,range=document.createRange();range.selectNodeContents(first);getSelection().removeAllRanges();getSelection().addRange(range);
+      let text='1. 已完成的条目\n2. 尾部',stable=true;
+      for(const part of '\n3. 新条目'){text+=part;WeftContent.update(body,text,{streaming:true});stable&&=body.querySelector('ol')===list&&body.querySelector('li')===first;}
+      return {stable,selection:getSelection().toString(),items:body.querySelectorAll('li').length};
+    });assert.deepEqual(result,{stable:true,selection:'已完成的条目',items:3});
+  });
   await t.test('plain streaming tails retain completed blocks and Markdown transitions still reparse references, lists and fences',async()=>{
     const prefix=await page.evaluate(()=>{const body=WeftContent.create('#','markdown-body',{streaming:true});const first=body.textContent;WeftContent.update(body,'# 标题',{streaming:true});return {first,heading:body.querySelector('h1')?.textContent};});
     assert.equal(prefix.first.replace(/\u200b/g,''),'#');assert.equal(prefix.heading,'标题');

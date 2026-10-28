@@ -169,6 +169,21 @@
     const append=(a,b)=>{if(a.nodeType===3){if(b.data.length>a.data.length)a.appendData(b.data.slice(a.data.length));}else {const count=a.childNodes.length;[...a.childNodes].forEach((child,i)=>append(child,b.childNodes[i]));a.append(...[...b.childNodes].slice(count));}};
     append(previous,next);return true;
   }
+  function updateList(previous, next) {
+    if (!previous || previous.tagName!==next.tagName || !/^(OL|UL)$/.test(next.tagName) || previous.attributes.length!==next.attributes.length ||
+        [...next.attributes].some(attr=>previous.getAttribute(attr.name)!==attr.value)) return false;
+    const old=[...previous.children], items=[...next.children];
+    for (const [index,item] of items.entries()) {
+      const before=old[index], source=item._listSource;
+      if (!before) previous.append(item);
+      else if (before._listSource!==source) {
+        if (!appendInline(before,item)) before.replaceWith(item);
+        else before._listSource=source;
+      }
+    }
+    for (const item of old.slice(items.length)) item.remove();
+    return true;
+  }
   function renderUpdate(content, text, options = {}) {
     if (content._renderText === text) { if(options.streaming!==undefined)globalThis.WeftReplyMotion?.indicator(content,options.streaming); return content; }
     const previousText=content._renderText;
@@ -183,7 +198,8 @@
         const template=node('div');template.innerHTML=WeftFormat.render(line+suffix,{prefix:content._renderId});
         const next=template.firstElementChild;
         if (template.children.length===1 && next.tagName===last.tagName && next.children.length && appendInline(item,next.firstElementChild)) {
-          for (const child of [...next.children].slice(1)) last.append(child);
+          item._listSource=next.firstElementChild.outerHTML;
+          for (const child of [...next.children].slice(1)) {child._listSource=child.outerHTML;last.append(child);}
           content._renderText=text;delete last._sourceHTML;delete last._renderHTML;
           if(options.streaming!==undefined)globalThis.WeftReplyMotion?.indicator(content,options.streaming);
           return content;
@@ -252,7 +268,9 @@
     // Preserve unchanged blocks, live code controls, horizontal offsets and diagram views.
     for (let i=0;i<fresh.length;i++) {
       const next=fresh[i], previous=old[i]; if(next===previous)continue; const html=next.outerHTML;
+      for (const item of next.querySelectorAll('li')) item._listSource=item.outerHTML;
       if (previous?._sourceHTML===html) { previous._renderHTML=next._renderHTML; continue; }
+      if (updateList(previous,next)) { previous._sourceHTML=html;previous._renderHTML=next._renderHTML;continue; }
       if (previous && appendInline(previous,next)) { previous._sourceHTML=html;previous._renderHTML=next._renderHTML;continue; }
       if (previous?.classList.contains('render-code') && next.tagName==='PRE' && previous.dataset.language===next.dataset.language) { previous._update(next); previous._sourceHTML=html; previous._renderHTML=next._renderHTML; continue; }
       next._sourceHTML=html; const beforeText=previous?.textContent || '';
