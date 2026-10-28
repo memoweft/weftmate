@@ -5,20 +5,51 @@ import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('../src/personal-access-ui/conversation-scroll.js',import.meta.url),'utf8');
 function fixture(smooth=false){
  const frames:Function[]=[],observers:Function[]=[],viewport=new Map(),events=new Map();
- const node=()=>({scrollTop:0,scrollHeight:1500,clientHeight:500,clientWidth:300,offsetWidth:308,getBoundingClientRect:()=>({right:308}),hidden:true,textContent:'',listeners:new Map(),setAttribute(){},addEventListener(name:string,fn:Function){this.listeners.set(name,fn);}});
+ const node=()=>({scrollTop:0,scrollHeight:1500,clientHeight:500,clientWidth:300,offsetWidth:308,getBoundingClientRect:()=>({right:308}),hidden:true,textContent:'',listeners:new Map(),setAttribute(){},addEventListener(name:string,fn:Function){this.listeners.set(name,fn);},removeEventListener(name:string,fn:Function){if(this.listeners.get(name)===fn)this.listeners.delete(name);}});
  const box=node(),content=node(),button=node();box.scrollTop=1000;
  let actualTop=box.scrollTop;Object.defineProperty(box,'scrollTop',{get:()=>actualTop,set:(value:number)=>{actualTop=Math.max(0,Math.min(value,box.scrollHeight-box.clientHeight))}});
  let time=0;
- const context:any={document:{hidden:false,documentElement:{}},performance:{now:()=>time},getComputedStyle:(target:any)=>({overflowY:target?.overflowY,getPropertyValue:()=>''}),matchMedia:()=>({matches:!smooth}),requestAnimationFrame:(fn:Function)=>{frames.push(fn);return fn},cancelAnimationFrame:(fn:Function)=>{const i=frames.indexOf(fn);if(i>=0)frames.splice(i,1)},addEventListener:(name:string,fn:Function)=>events.set(name,fn),visualViewport:{addEventListener:(name:string,fn:Function)=>viewport.set(name,fn)},ResizeObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}},MutationObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}}};
+ const context:any={document:{hidden:false,documentElement:{}},performance:{now:()=>time},getComputedStyle:(target:any)=>({overflowY:target?.overflowY,getPropertyValue:()=>''}),matchMedia:()=>({matches:!smooth}),requestAnimationFrame:(fn:Function)=>{frames.push(fn);return fn},cancelAnimationFrame:(fn:Function)=>{const i=frames.indexOf(fn);if(i>=0)frames.splice(i,1)},addEventListener:(name:string,fn:Function)=>events.set(name,fn),visualViewport:{addEventListener:(name:string,fn:Function)=>viewport.set(name,fn)},ResizeObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}disconnect(){}},MutationObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}disconnect(){}}};
  vm.runInNewContext(source,context);const scroll=context.WeftConversationScroll(box,content,button);
  const flush=()=>{while(frames.length)frames.shift()!(0);};
  const fire=(name:string,event:any={})=>box.listeners.get(name)?.(event);
  const tick=()=>{time+=16;const batch=frames.splice(0);batch.forEach(fn=>fn(time));return box.scrollTop;};
- return {box,content,button,scroll,flush,fire,observers,viewport,events,tick};
+ return {box,content,button,scroll,flush,fire,observers,viewport,events,tick,node,createScroll:context.WeftConversationScroll};
 }
 test('streaming follows the current bottom in one frame without smooth chasing',()=>{
  const f=fixture(true);f.scroll.latest();
  for(let i=0;i<10;i++){f.box.scrollHeight+=20;f.scroll.changed();f.tick();assert.equal(f.box.scrollTop,f.box.scrollHeight-f.box.clientHeight);}
+});
+test('a stream paint follows before that frame ends, and upward reading stays held',()=>{
+ const f=fixture(true);f.box.scrollHeight+=35;
+ f.content.listeners.get('weft-stream-frame')();
+ assert.equal(f.box.scrollTop,1035);
+ f.fire('wheel',{deltaY:-100});f.box.scrollTop=600;f.box.scrollHeight+=35;
+ f.content.listeners.get('weft-stream-frame')();
+ assert.equal(f.box.scrollTop,600);assert.equal(f.scroll.pinned,false);
+});
+
+test('main and side stream frames keep independent follow intent and disposing the side releases its frame listener',()=>{
+ const main=fixture(true),box=main.node(),content=main.node(),button=main.node();
+ box.scrollTop=1000;
+ let sidePaints=0;
+ const side=main.createScroll(box,content,button,()=>sidePaints++);
+ main.fire('wheel',{deltaY:-100});main.box.scrollTop=600;
+ main.box.scrollHeight+=100;box.scrollHeight+=100;
+ main.content.listeners.get('weft-stream-frame')();content.listeners.get('weft-stream-frame')();
+ assert.equal(main.box.scrollTop,600);assert.equal(main.scroll.pinned,false);
+ assert.equal(box.scrollTop,1100);assert.equal(side.pinned,true);
+ side.hold();box.scrollTop=700;main.scroll.latest();
+ main.box.scrollHeight+=100;box.scrollHeight+=100;
+ main.content.listeners.get('weft-stream-frame')();content.listeners.get('weft-stream-frame')();
+ assert.equal(main.box.scrollTop,1200);assert.equal(main.scroll.pinned,true);
+ assert.equal(box.scrollTop,700);assert.equal(side.pinned,false);
+ side.latest();side.changed();side.dispose();const paints=sidePaints,top=box.scrollTop;
+ box.scrollHeight+=100;content.listeners.get('weft-stream-frame')?.();main.tick();
+ assert.equal(box.scrollTop,top);assert.equal(sidePaints,paints);
+ main.box.scrollHeight+=100;main.content.listeners.get('weft-stream-frame')();
+ assert.equal(main.box.scrollTop,1300);assert.equal(main.scroll.pinned,true);
+ main.scroll.dispose();
 });
 test('wheel and touch over the output itself scroll it without unpinning the conversation',()=>{
  for(const kind of ['wheel','touch']) {

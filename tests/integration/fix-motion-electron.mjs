@@ -91,6 +91,22 @@ try {
     for (let i = 1; i < result.samples.length; i++) assert.ok(result.samples[i].startsWith(result.samples[i - 1]));
     assert.equal(result.text, '你好🙂，这段合成回复按帧流入。完成。'); assert.match(result.html, /<strong>合成回复<\/strong>/);
     assert.equal(result.rowAnimation, 'm-enter-rise');
+    const burst = await page.evaluate(async () => {
+      const body = WeftContent.create('1. 已读条目\n2. 尾部', 'message-text markdown-body', { streaming: true });
+      document.getElementById('conversation-pane').append(body);
+      await new Promise(requestAnimationFrame);
+      const list = body.querySelector('ol'), first = list.firstElementChild, tail = list.lastElementChild.firstChild;
+      const range = document.createRange(); range.selectNodeContents(first); getSelection().removeAllRanges(); getSelection().addRange(range);
+      const text = '1. 已读条目\n2. 尾部' + '新增🙂e\u0301'.repeat(2000) + '\n3. 新条目';
+      WeftContent.update(body, text.slice(0, 50), { streaming: true });
+      WeftContent.update(body, text, { streaming: true });
+      await new Promise(requestAnimationFrame);
+      const result = { exact: body._renderText === text, list: body.querySelector('ol') === list,
+        first: list.firstElementChild === first, tail: list.children[1].firstChild === tail,
+        selection: getSelection().toString(), items: list.children.length, text: list.children[1].textContent };
+      body.remove(); return result;
+    });
+    assert.deepEqual(burst, { exact: true, list: true, first: true, tail: true, selection: '已读条目', items: 3, text: '尾部' + '新增🙂e\u0301'.repeat(2000) });
     const css = await page.evaluate(() => {
       const style = getComputedStyle(document.documentElement);
       return ['dur-1', 'dur-2', 'dur-3', 'dur-4', 'dur-5', 'ease-out', 'ease-in-out', 'ease-in', 'ease-linear'].map(key => style.getPropertyValue('--' + key).trim());
