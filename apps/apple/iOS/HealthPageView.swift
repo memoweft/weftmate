@@ -145,11 +145,16 @@ struct HealthPageView: View {
         let deep=o.sleep?.deepMinutes ?? page.cache.series["deepMinutes-7"]?.points.last?.value
         let rem=o.sleep?.remMinutes ?? page.cache.series["remMinutes-7"]?.points.last?.value
         if let total=o.sleep?.minutes,total > 0,let deep,let rem {
-            GeometryReader { geometry in
+            let deepFraction=min(1,deep/total)
+            let remFraction=min(max(0,1-deep/total),rem/total)
+            let deepColor=AppleTokens.Colors.healthSleep
+            let remColor=deepColor.opacity(0.55)
+            let remainderColor=Weave.line
+            GeometryReader { @Sendable geometry in
                 HStack(spacing:AppleTokens.Space.p2) {
-                    Rectangle().fill(AppleTokens.Colors.healthSleep).frame(width:max(0,geometry.size.width-4)*min(1,deep/total))
-                    Rectangle().fill(AppleTokens.Colors.healthSleep.opacity(0.55)).frame(width:max(0,geometry.size.width-4)*min(max(0,1-deep/total),rem/total))
-                    Rectangle().fill(Weave.line)
+                    Rectangle().fill(deepColor).frame(width:max(0,geometry.size.width-4)*deepFraction)
+                    Rectangle().fill(remColor).frame(width:max(0,geometry.size.width-4)*remFraction)
+                    Rectangle().fill(remainderColor)
                 }
             }.frame(height:AppleTokens.Space.p16).accessibilityHidden(true)
             Text("深睡 "+minutes(deep)+" · 快速眼动 "+minutes(rem)).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
@@ -321,14 +326,6 @@ struct HealthTrendChart: View {
                     }
                 }.chartYAxis(compact ? .hidden : .automatic)
                 .chartXSelection(value:$selected)
-                .chartOverlay { proxy in
-                    GeometryReader { geometry in
-                        Rectangle().fill(.clear).contentShape(Rectangle()).gesture(SpatialTapGesture().onEnded { tap in
-                            guard !compact,let frame=proxy.plotFrame else { return }
-                            selected=proxy.value(atX:tap.location.x-geometry[frame].origin.x,as:Int.self)
-                        })
-                    }
-                }
                 .allowsHitTesting(!compact).accessibilityHidden(compact)
                 .accessibilityLabel("逐日趋势").accessibilityValue(points.map { ($0.day ?? "")+" "+number($0.value) }.joined(separator:"，"))
             if !compact,let selected,points.indices.contains(selected) { Text((points[selected].day.map(DeviceDateText.day) ?? "")+" · "+number(points[selected].value)).font(AppleTokens.Fonts.callout).accessibilityIdentifier("health.selectedDay") }

@@ -4,7 +4,7 @@ import argparse,json,os,plistlib,shutil,subprocess,tempfile,time
 from pathlib import Path
 root=Path(__file__).resolve().parents[3]
 p=argparse.ArgumentParser();p.add_argument('--xctestrun',type=Path,required=True);p.add_argument('--simulator',required=True);p.add_argument('--result',type=Path,required=True);p.add_argument('--addendum',action='store_true');p.add_argument('--fix',action='store_true');p.add_argument('--pages',action='store_true');p.add_argument('--evidence',type=Path);a=p.parse_args()
-evidence=a.evidence or root/('apps/apple/Tests/Evidence/APPLE-5/Fix' if a.fix else 'apps/apple/Tests/Evidence/APPLE-5');evidence.mkdir(parents=True,exist_ok=True)
+evidence=a.evidence or root/('apps/apple/Tests/Evidence/APPLE-5/Fix' if a.fix else 'apps/apple/Tests/Evidence/APPLE-5');evidence.mkdir(parents=True,exist_ok=True);evidence.chmod(0o700)
 ledger=evidence/('fix-simulator-count.json' if a.fix else 'addendum-simulator-count.json' if a.addendum else 'simulator-count.json')
 prior=json.loads(ledger.read_text()) if ledger.exists() else {'boots':0}
 if prior['boots']>=(2 if a.fix or a.addendum else 5):raise RuntimeError('APPLE-5 simulator budget exhausted')
@@ -40,7 +40,7 @@ try:
     subprocess.run(['xcrun','simctl','bootstatus',a.simulator,'-b'],check=True,stdout=subprocess.DEVNULL)
     with tempfile.NamedTemporaryFile(suffix='.xctestrun',dir=a.xctestrun.parent) as run:
         run.write(plistlib.dumps(config));run.flush()
-        result=subprocess.run(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',run.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/'+('Apple5UITests/testPagesLightAndDark' if a.pages else 'Apple5FixUITests' if a.fix else 'Apple5AddendumUITests' if a.addendum else 'Apple5UITests/testFeatureBatch'),*(['-only-testing:WeftMatePhoneUITests/PhoneWindowUITests/testMemoryRoutes','-only-testing:WeftMatePhoneUITests/IOSUIShellUITests/testShellLightAndDark','-only-testing:WeftMatePhoneUITests/Apple11UITests/testReminderPageDark'] if a.pages else []),'-resultBundlePath',str(a.result)],stdout=open('/private/tmp/apple5-ui.log','w'),stderr=subprocess.STDOUT)
+        result=subprocess.run(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-test-timeouts-enabled','YES','-default-test-execution-time-allowance','600','-maximum-test-execution-time-allowance','900','-xctestrun',run.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/'+('Apple5UITests/testPagesLightAndDark' if a.pages else 'Apple5FixUITests' if a.fix else 'Apple5AddendumUITests' if a.addendum else 'Apple5UITests/testFeatureBatch'),*(['-only-testing:WeftMatePhoneUITests/PhoneWindowUITests/testMemoryRoutes','-only-testing:WeftMatePhoneUITests/IOSUIShellUITests/testShellLightAndDark','-only-testing:WeftMatePhoneUITests/Apple11UITests/testReminderPageDark'] if a.pages else []),'-resultBundlePath',str(a.result)],stdout=open('/private/tmp/apple5-ui.log','w'),stderr=subprocess.STDOUT,timeout=2700)
     summary=json.loads(subprocess.check_output(['xcrun','xcresulttool','get','test-results','summary','--path',str(a.result)],text=True))
     with tempfile.TemporaryDirectory() as out:
         subprocess.run(['xcrun','xcresulttool','export','attachments','--path',str(a.result),'--output-path',out],check=True,stdout=subprocess.DEVNULL)
@@ -58,4 +58,7 @@ finally:
     service.terminate();service.wait(timeout=20)
     if presentation: presentation.terminate();presentation.wait(timeout=20)
     if booted:
-        for _ in range(3):time.sleep(60)
+        finalGpu=list(Path('/Library/Logs/DiagnosticReports').glob('*gpuRestart*'))+list((Path.home()/'Library/Logs/DiagnosticReports').glob('*gpuRestart*'))
+        cooldown=600 if set(finalGpu)-set(reports) else 180
+        for remaining in range(cooldown,0,-30):
+            print('Simulator cooldown:',remaining,'s',flush=True);time.sleep(min(30,remaining))

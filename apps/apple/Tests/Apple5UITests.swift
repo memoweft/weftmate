@@ -67,6 +67,7 @@ final class Apple5UITests: XCTestCase {
         XCTAssertTrue(element.isHittable,id);element.tap()
     }
     @MainActor private func pageCapture(_ app: XCUIApplication,_ theme: String,_ name: String) {
+        Thread.sleep(forTimeInterval:1)
         let shot=XCTAttachment(screenshot:app.screenshot());shot.name=name+"-"+theme;shot.lifetime = .keepAlways;add(shot)
     }
     @MainActor private func root(_ app: XCUIApplication,_ route: String) {
@@ -93,6 +94,10 @@ final class Apple5UITests: XCTestCase {
             XCTAssertTrue(pageControl(app,"health.secondaryMetrics").waitForExistence(timeout:20));pageCapture(app,theme,"health")
             pageTap(app,"health.sleepDuration")
             XCTAssertTrue(pageControl(app,"health.range").waitForExistence(timeout:20));pageCapture(app,theme,"health-detail")
+            let trend=pageControl(app,"health.trend")
+            for _ in 0..<4 where !trend.isHittable { app.swipeUp() }
+            trend.coordinate(withNormalizedOffset:CGVector(dx:0.6,dy:0.45)).tap()
+            XCTAssertTrue(pageControl(app,"health.selectedDay").waitForExistence(timeout:10),"The native chart selection must show the chosen day's value")
             pageTap(app,"phone.tab.health") // Reselect the current tab to pop to its root.
             app.buttons["健康设置"].tap()
             XCTAssertTrue(pageControl(app,"health.settings").waitForExistence(timeout:15));pageCapture(app,theme,"health-settings")

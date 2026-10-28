@@ -106,8 +106,14 @@ private struct PhoneLibraryDetailView: View {
         }.background(Weave.canvas).navigationTitle("成果详情").navigationBarTitleDisplayMode(.inline)
             .task(id:"\(app.accountEpoch)-\(attempt)") { await load() }
             .onDisappear { cleanup() }
-            .fileExporter(isPresented:$exporting,item:file.map { AttachmentExport(file:$0) },contentTypes:[.data],defaultFilename:current.fileName,onCompletion:{ @Sendable result in Task { @MainActor in if case .failure = result { error="文件未保存，请重试。" } } },onCancellation:{})
+            .fileExporter(isPresented:$exporting,item:file.map { AttachmentExport(file:$0) },contentTypes:[.data],defaultFilename:current.fileName,onCompletion:Self.exportCompletion { error="文件未保存，请重试。" },onCancellation:{})
             .accessibilityIdentifier("library.detail")
+    }
+    nonisolated private static func exportCompletion(_ failed: @escaping @MainActor @Sendable () -> Void) -> @Sendable (Result<URL,any Error>) -> Void {
+        { @Sendable result in
+            guard case .failure = result else { return }
+            Task { @MainActor in failed() }
+        }
     }
     private func openSource() { Task { await PhoneFeaturesModel().open(current.source,app:app,navigate:openConversation) } }
     private func load() async {
