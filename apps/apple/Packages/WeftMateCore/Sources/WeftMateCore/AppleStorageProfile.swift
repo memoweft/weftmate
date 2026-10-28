@@ -12,7 +12,9 @@ public struct AppleStorageProfile: Equatable, Sendable {
     public init(bundleID: String?, uiTesting: Bool, testNamespace: String = "default") {
         isWindowTest = bundleID == Self.windowBundleID
         if isWindowTest {
-            preferencesSuite = Self.windowBundleID
+            // Standard defaults already use this app's independent bundle domain.
+            // Foundation forbids passing the current bundle identifier as a suite name.
+            preferencesSuite = nil
             credentials = Self.windowBundleID + ".credentials"
             cloud = Self.windowBundleID + ".cloud"
             stateSubdirectory = "WeftMate/WindowTest/LocalState"
