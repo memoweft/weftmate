@@ -67,6 +67,8 @@ export const SAFE_CODES = new Set([
 ]);
 
 export const PUBLIC_CODES = new Set([
+  'WORKSPACE_UNSAFE_PATH', 'WORKSPACE_FILE_CHANGED', 'WORKSPACE_READ_ONLY',
+  'WORKSPACE_READ_FAILED', 'WORKSPACE_NOT_GIT', 'WORKSPACE_GIT_UNAVAILABLE',
   'IMPORT_FORMAT_UNKNOWN', 'IMPORT_SOURCE_UNAVAILABLE', 'IMPORT_SOURCE_CHANGED', 'IMPORT_NATIVE_SELECTION_REQUIRED',
   'IMPORT_MODEL_CHANGED', 'IMPORT_JOB_ACTIVE', 'IMPORT_PAUSE_REQUIRED', 'IMPORT_RECEIPT_UNAVAILABLE',
   'IMPORT_FORGET_FAILED', 'IMPORT_FORGET_CLEANUP_PENDING', 'MEMORY_PREVIEW_REQUIRED', 'MEMORY_JOB_NOT_FOUND',
@@ -139,7 +141,7 @@ export const APPROVAL_STATES = new Set(['pending', 'answered', 'resolved', 'unav
 
 export const APPROVAL_PUBLIC_FIELDS = ['approvalId', 'sessionId', 'taskId', 'sourceCommandId', 'sourceReceiptId',
   'turn', 'callId', 'rootCallId', 'toolName', 'reason', 'createdAt', 'status',
-  'operationCategories', 'canAlwaysAllow', 'secondOpinion', 'intent', 'workProjectId', 'decisionOutcome', 'decisionRequestId', 'decisionScope', 'riskCategories', 'answeredAt', 'outcome', 'resolvedAt'];
+  'operationCategories', 'canAlwaysAllow', 'secondOpinion', 'intent', 'workProjectId', 'workSessionId', 'workCreateCommandId', 'workCommandId', 'decisionOutcome', 'decisionRequestId', 'decisionScope', 'riskCategories', 'answeredAt', 'outcome', 'resolvedAt'];
 
 export const APPROVAL_FIELDS = [...APPROVAL_PUBLIC_FIELDS, 'messageHash', 'argumentsHash', 'runtimeId',
   'invalidatedAt', 'invalidationReason'];

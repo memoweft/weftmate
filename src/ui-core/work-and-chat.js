@@ -35,6 +35,7 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
   }
   async function startNewWork(hostId, project) {
     if (core.state.submitting || core.state.unresolvedSubmission) return;
+    core.rememberConversationDraft?.();
     if (hostId) {
       await core.selectExecutionComputer?.(hostId);
       if (hostId !== (core.currentExecutionComputer?.() || core.state.hostId)) throw { code: 'TARGET_UNAVAILABLE' };
@@ -56,13 +57,22 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
     await startNewWork(id); effects.restoreMainChatDraft?.(draft);
   }
   async function switchConversationWork(context, row, projectId) {
-    const result = await core.submitApproval(context, row, 'allowed-once', 'once', { workProjectId: projectId });
-    const fresh = core.conversationApprovals.entries.get(row.approvalId)?.row;
-    if (fresh?.decisionOutcome === 'allowed-once') {
-      await core.refreshSessions();
-      await core.selectSession(row.sessionId);
+    const current = core.approvalContext();
+    if (!['ownerId','identity','deviceId','source','sessionId','conversationId'].every(key => current[key] === context[key])) throw { code: 'REQUEST_FAILED' };
+    const result = await core.submitApproval(current, row, 'allowed-once', 'once', { workProjectId: projectId });
+    if (!result?.approval?.workSessionId) throw { code: 'REQUEST_FAILED' };
+    for (let attempt = 0; attempt < 100; attempt++) {
+      if (!['ownerId','identity','deviceId','source','sessionId','conversationId'].every(key => core.approvalContext()[key] === current[key])) return;
+      const { command } = await core.accessApi(`/commands/${encodeURIComponent(result.approval.workCreateCommandId)}`);
+      if (command.state === 'accepted_by_dsh') {
+        await core.refreshSessions();
+        await core.selectSession(result.approval.workSessionId);
+        return result;
+      }
+      if (!['pending','dispatching'].includes(command.state)) throw { code: command.errorCode || 'REQUEST_FAILED' };
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
-    return result;
+    throw { code: 'REQUEST_FAILED' };
   }
   core.composerState = (...args) => {
     const state = originalState(...args);
@@ -72,6 +82,7 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
     return state;
   };
   core.startNewConversation = async (...args) => {
+    core.rememberConversationDraft?.();
     core.state.newConversationMode = 'chat';
     if (enabled()) { core.state.selectedChatId = null; core.state.workTimeline = null; chooseSidebarMode('chat'); return newConversation(true, args[1]); }
     return newConversation(...args);

@@ -1,9 +1,11 @@
 import { PERMISSION_TYPES, riskPermissionType } from '../plugins/personal-permission-rules.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
-import { bindConversationWork, isWorkSwitch } from './work-and-chat.mjs';
+import { isWorkSwitch } from './work-and-chat.mjs';
+import { randomUUID } from 'node:crypto';
+import { hasPrivateContent } from './temporary-chats.mjs';
 import { readSourceEvents } from './source-history.mjs';
-import { exactKeys, failure, validId, withDeadline } from './common.mjs';
-import { sourceMessageHash } from './command-policy.mjs';
+import { digest, exactKeys, failure, validId, withDeadline } from './common.mjs';
+import { canonicalCommand, sourceMessageHash } from './command-policy.mjs';
 import { approvalCategories } from '../plugins/personal-approval-policy.mjs';
 import { chatForSession } from './chat-identity.mjs';
 import { createSecondOpinion } from './second-opinion.mjs';
@@ -20,6 +22,7 @@ import {
   APPROVAL_OUTCOMES,
   GENERAL_TOOL_NAME,
   MAX_COMMAND_TOOL_APPROVALS,
+  MAX_COMMANDS,
   MAX_TOOL_APPROVALS,
   REQUEST_ID,
   TOOL_RUNTIME_ID
@@ -66,6 +69,8 @@ export function createApprovalOperations(context) {
   }
 
   function approvalUnavailableReason(account, row) {
+    // Work suggestions outlive the completed turn and its native runtime.
+    if (isWorkSwitch(row)) return account.sessions[row.sessionId]?.deleting ? 'source_unavailable' : null;
     if (row.status === 'pending' && context.timestamp() - Date.parse(row.createdAt) >= 600_000) return 'approval_timeout';
     if (context.closedToolRuntimeIds.has(row.runtimeId)) return 'runtime_unavailable';
     try { personalExecutionSource(account, { ...row, receiptId: row.sourceReceiptId }, true); }
@@ -116,7 +121,7 @@ export function createApprovalOperations(context) {
     const account = context.accountState(ownerId);
     if (!account.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
     const rows = toolApprovals(account).filter(row => row.sessionId === sessionId &&
-      ['pending', 'answered'].includes(row.status));
+      !isWorkSwitch(row) && ['pending', 'answered'].includes(row.status));
     if (!rows.length) return;
     let described, unavailable = null;
     const live = new Map();
@@ -167,7 +172,7 @@ export function createApprovalOperations(context) {
     const replay = prior.decisionRequestId === body.requestId;
     if (!replay) await refreshToolApprovals(ownerId, sessionId, true);
     const assertCurrent = () => {
-      if (!replay && context.closedToolRuntimeIds.has(prior.runtimeId)) throw failure('APPROVAL_NOT_PENDING', 409);
+      if (!replay && !isWorkSwitch(prior) && context.closedToolRuntimeIds.has(prior.runtimeId)) throw failure('APPROVAL_NOT_PENDING', 409);
     };
     const receipt = await context.serial(() => context.mutate(ownerId, next => {
       const current = context.authenticate(request, 'commands:write');
@@ -181,7 +186,20 @@ export function createApprovalOperations(context) {
       if (context.requestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
       if (row.status !== 'pending' || approvalUnavailableReason(next, row)) throw failure('APPROVAL_NOT_PENDING', 409);
       if (isWorkSwitch(row) && body.outcome === 'allowed-once') {
-        bindConversationWork(next, sessionId, body.workProjectId, { at: new Date(context.timestamp()).toISOString(), commandId: row.sourceCommandId });
+        const project = next.projects[body.workProjectId], session = next.sessions[sessionId];
+        if (!project || project.revoked) throw failure('PROJECT_NOT_SELECTED', 409);
+        if (!context.modelSelectable(ownerId, session.modelProfileId)) throw failure('MODEL_UNAVAILABLE', 409);
+        const workSessionId = `session-${randomUUID()}`, commandId = `cmd-${randomUUID()}`;
+        const payload = canonicalCommand({ requestId: `work-${row.approvalId}`, kind: 'session.create', targetDeviceId: next.hostId,
+          modelProfileId: session.modelProfileId, projectId: project.projectId, projectRevision: project.revision,
+          ...(hasPrivateContent(session) ? { temporary: true, recallEnabled: session.recallEnabled !== false,
+            autoDeleteDays: session.autoDeleteDays === undefined ? 30 : session.autoDeleteDays } : {}) }, next.hostId, true);
+        if (Object.keys(next.commands).length >= MAX_COMMANDS) throw failure('CAPACITY_LIMIT', 429);
+        const at = new Date(context.timestamp()).toISOString();
+        next.commands[commandId] = { commandId, ownerId, requestId: payload.requestId, payload, payloadHash: digest(JSON.stringify(payload)),
+          sourceDeviceId: deviceId, sourceAuthEpoch: next.devices[deviceId].authEpoch,
+          targetDeviceId: next.hostId, kind: payload.kind, sessionId: workSessionId, state: 'pending', createdAt: at, updatedAt: at };
+        row.workSessionId = workSessionId; row.workCreateCommandId = commandId;
         row.workProjectId = body.workProjectId;
       }
       row.status = 'answered'; row.decisionOutcome = body.outcome; row.decisionRequestId = body.requestId;
@@ -200,10 +218,38 @@ export function createApprovalOperations(context) {
       return approvalDecisionReceipt(row);
     }, assertCurrent));
     assertCurrent();
+    if (isWorkSwitch(prior) && body.outcome === 'allowed-once') {
+      const row = toolApprovals(context.accountState(ownerId)).find(item => item.approvalId === approvalId);
+      context.schedule(ownerId, row.workCreateCommandId);
+      await continueWorkProposal(ownerId, row.workSessionId);
+    }
     return receipt;
   }
 
+  async function continueWorkProposal(ownerId, sessionId) {
+    const row = toolApprovals(context.accountState(ownerId)).find(item => item.workSessionId === sessionId);
+    if (!row || row.workCommandId || !context.accountState(ownerId).sessions[sessionId]) return;
+    const commandId = await context.serial(() => context.mutate(ownerId, next => {
+      const current = toolApprovals(next).find(item => item.approvalId === row.approvalId);
+      if (current.workCommandId) return current.workCommandId;
+      const source = next.commands[current.sourceCommandId], create = next.commands[current.workCreateCommandId];
+      if (create.state !== 'accepted_by_dsh') return null;
+      const session = next.sessions[sessionId];
+      const payload = canonicalCommand({ requestId: `work-message-${row.approvalId}`, kind: 'session.message', targetDeviceId: next.hostId,
+        sessionId, text: source.payload.text, mode: 'queue', projectId: session.projectId, projectRevision: session.projectRevision }, next.hostId, true);
+      if (Object.keys(next.commands).length >= MAX_COMMANDS) throw failure('CAPACITY_LIMIT', 429);
+      const id = `cmd-${randomUUID()}`, at = new Date(context.timestamp()).toISOString();
+      next.commands[id] = { commandId: id, ownerId, requestId: payload.requestId, payload, payloadHash: digest(JSON.stringify(payload)),
+        sourceDeviceId: create.sourceDeviceId, sourceAuthEpoch: create.sourceAuthEpoch, targetDeviceId: next.hostId,
+        kind: payload.kind, sessionId, state: 'pending', createdAt: at, updatedAt: at };
+      current.workCommandId = id;
+      return id;
+    }));
+    if (commandId) context.schedule(ownerId, commandId);
+  }
+
   const operations = {
+    continueWorkProposal,
     requireToolRuntime,
     personalExecutionSource,
     approvalMatches,
@@ -331,7 +377,7 @@ export function createApprovalOperations(context) {
         let invalidatedCount = 0;
         for (const account of Object.values(nextRoot.accounts)) for (const command of Object.values(account.commands)) {
           for (const row of command.userQuestions ?? []) if (row.runtimeId === runtimeId) invalidateUserQuestion(row, reasonCode, at);
-          for (const row of command.toolApprovals ?? []) if (row.runtimeId === runtimeId &&
+          for (const row of command.toolApprovals ?? []) if (!isWorkSwitch(row) && row.runtimeId === runtimeId &&
               invalidateToolApproval(row, reasons[reasonCode], at)) invalidatedCount++;
           for (const row of command.toolExecutions ?? []) if (row.runtimeId === runtimeId) {
             if (row.state === 'running') { row.state = 'uncertain'; row.updatedAt = at; }

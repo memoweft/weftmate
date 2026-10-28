@@ -75,7 +75,12 @@ try {
     await input.fill('下一件事：整理会议记录'); await input.press('Enter')
     await until(() => candidate.operations.some(op => op.text === '下一件事：整理会议记录' && op.mode === 'queue'))
     await until(async () => (await input.inputValue()) === '')
-    const process=page.locator('.execution-block').first();
+    await page.locator('#chat-scroll').evaluate(box=>{
+      box.dispatchEvent(new WheelEvent('wheel',{deltaY:-100,bubbles:true}));box.scrollTop=0;
+    })
+    const goal=page.locator('#transcript > .message.user').filter({hasText:'读取项目资料，运行测试，并保存一份进度报告。'});
+    await goal.waitFor();
+    const process=goal.locator('xpath=following-sibling::*[1]').locator('.execution-block');
     if(!await process.evaluate(node=>node.open))await process.locator(':scope > summary').click();
     for(const group of await process.locator('.execution-step-group').all())if(!await group.evaluate(node=>node.open))await group.locator(':scope > summary').click();
     await process.locator('.execution-step > summary').filter({hasText:/^读取 3 个文件/}).first().click()
@@ -129,7 +134,12 @@ try {
     await page.reload(); await page.getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).waitFor()
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), theme)
     assert.equal(await page.evaluate(() => document.documentElement.dataset.accent), 'green')
-    assert.equal(await page.locator('.markdown-body').first().evaluate(element => getComputedStyle(element).fontSize), '17px')
+    const restoredFont = await page.waitForFunction(() => {
+      const body=document.querySelector('#transcript .markdown-body');
+      const size=body?.isConnected ? getComputedStyle(body).fontSize : '';
+      return size==='17px' ? size : false;
+    })
+    assert.equal(await restoredFont.jsonValue(), '17px')
     assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize), '14px')
     // Paste/drop target semantic controls; neither operation depends on their layout slot.
     await input.evaluate(element => {

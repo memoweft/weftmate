@@ -69,7 +69,7 @@ test('folder-selection responder recognizes equivalent prohibitions without acce
   }
 });
 
-test('#363 first request with failed tool preparation switches and resumes file writes without a follow-up', { timeout: 60000 }, async () => {
+test('#363 first request with failed tool preparation ends chat and starts file writes in a new work without a follow-up', { timeout: 60000 }, async () => {
   const root = await mkdtemp(join(tmpdir(), 'w4-first-switch-'));
   let runtime: any, host: any;
   const until = async (read: () => Promise<any>) => {
@@ -111,23 +111,27 @@ test('#363 first request with failed tool preparation switches and resumes file 
     assert.equal(card?.intent, 'work-switch', 'the first user request must recover preparation and open a card');
     assert.equal(first.events.some((e: any) => e.type === 'question.asked'), false);
     assert.deepEqual((await readdir(folder)).sort(), ['a.txt', 'b.csv']);
-    await api(`/sessions/${id}/approvals/${card.approvalId}`, { requestId: randomUUID(), outcome: 'allowed-once', workProjectId: project.projectId });
+    await until(async () => (await api(`/sessions/${id}/events?limit=100`)).events.some((e:any)=>e.type==='turn.ended'));
+    const decision = await api(`/sessions/${id}/approvals/${card.approvalId}`, { requestId: randomUUID(), outcome: 'allowed-once', workProjectId: project.projectId });
+    const workId = decision.approval.workSessionId; assert.notEqual(workId,id);
+    await until(async () => (await api('/commands/'+decision.approval.workCreateCommandId)).command.state==='accepted_by_dsh');
     await until(async () => {
-      for (const approval of (await api(`/sessions/${id}/approvals`)).approvals.filter((a: any) => a.status === 'pending')) {
-        await api(`/sessions/${id}/approvals/${approval.approvalId}`, { requestId: randomUUID(), outcome: 'allowed-once' });
+      for (const approval of (await api(`/sessions/${workId}/approvals`)).approvals.filter((a: any) => a.status === 'pending')) {
+        await api(`/sessions/${workId}/approvals/${approval.approvalId}`, { requestId: randomUUID(), outcome: 'allowed-once' });
       }
       return await readFile(join(folder, 'txt', 'a.txt'), 'utf8').catch(() => null) === 'text'
         && await readFile(join(folder, 'csv', 'b.csv'), 'utf8').catch(() => null) === 'csv';
     }).catch(async error => {
-      const rows = (await api(`/sessions/${id}/events?limit=100`)).events;
+      const rows = (await api(`/sessions/${workId}/events?limit=100`)).events;
       const failed = rows.findLast((e: any) => e.type === 'step.completed' && e.data.state === 'failed');
-      throw new Error(error.message + ': ' + JSON.stringify(failed && await api(`/sessions/${id}/events/${failed.seq}/detail`)));
+      throw new Error(error.message + ': ' + JSON.stringify(failed && await api(`/sessions/${workId}/events/${failed.seq}/detail`)));
     });
     assert.equal(await readFile(join(folder, 'csv', 'b.csv'), 'utf8'), 'csv');
-    const events = await until(async () => { const rows = (await api(`/sessions/${id}/events?limit=100`)).events; return rows.some((e: any) => e.type === 'turn.ended') && rows; });
+    const events = await until(async () => { const rows = (await api(`/sessions/${workId}/events?limit=100`)).events; return rows.some((e: any) => e.type === 'turn.ended') && rows; });
     assert.equal(events.filter((e: any) => e.type === 'user.message').length, 1);
     assert.equal(events.filter((e: any) => e.type === 'step.completed' && e.data.toolName === 'load_tools' && e.data.state === 'failed').length, 1);
-    assert.equal((await api('/sessions')).sessions.find((s: any) => s.sessionId === id).mode, 'work');
+    assert.equal((await api('/sessions')).sessions.find((s:any)=>s.sessionId===id).mode,'chat');
+    assert.equal((await api('/sessions')).sessions.find((s: any) => s.sessionId === workId).mode, 'work');
   } finally {
     await runtime?.close(); await host?.close();
     const rel = relative(resolve(tmpdir()), resolve(root)); assert.ok(rel && !rel.startsWith('..') && !isAbsolute(rel));

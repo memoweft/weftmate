@@ -86,6 +86,7 @@ import { buildConversationContext } from '../personal-conversations/context.mjs'
 import { defaultUsagePrice } from './usage.mjs';
 import { usageResponse } from './usage-response.mjs';
 import { chatForSession, protectMainSession } from './chat-identity.mjs';
+import { handleWorkspaceFiles } from './workspace-files.mjs';
 
 export function createHttpHandler(context) {
   const bootId = randomUUID(), startedAt = new Date().toISOString();
@@ -1154,6 +1155,7 @@ export function createHttpHandler(context) {
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
           canManage: context.hostOwner(ownerId) && current.via === 'cookie' && current.device.scopes.includes('account:manage') });
       }
+      if (await handleWorkspaceFiles(context, request, response, ownerId, url)) return;
       if (request.method === 'GET' && pathname === '/personal/v1/workspaces/browser') {
         if (url.search) throw failure('INVALID_REQUEST');
         context.authenticate(request, 'sessions:read');
