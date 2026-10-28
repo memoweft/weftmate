@@ -80,7 +80,8 @@ export async function createOfflineService(context) {
       return {receivedOriginals:!partial||hasPhoneHistory?received.length:null,lastReceivedAt:device.lastReceivedAt??null,
         memoryState:pending?.state??(jobs.some(job=>job.state==='cancelled')?'cancelled':jobs.length?'completed':received.length?'submitted':'idle'),
         processed:jobs.reduce((n,job)=>n+job.items.filter(item=>item.done&&!item.deleted&&originals.has(item.turnId)).length,0),
-        replicaPublishedAt:device.replicaPublishedAt??null};
+        replicaPublishedAt:device.replicaPublishedAt??null,
+        ...(account.purgedAt?{cleanup:{state:device.acknowledgedGeneration===account.generation?'acknowledged':'waiting_device',requestedAt:new Date(account.purgedAt).toISOString()}}:{})};
     },
     generation: ownerId => owner(ownerId).generation,
     canDispatch:tasks.canDispatch,
@@ -159,7 +160,10 @@ export async function createOfflineService(context) {
           }
           authorize();
           account.devices[deviceId] = { ...account.devices[deviceId], publicJwk, keyId: hash(publicJwk), phoneFirst:body.phoneFirst === true || model === null,
-            originals:account.devices[deviceId]?.originals??{},originalsPartial:account.devices[deviceId]?account.devices[deviceId].originalsPartial??!account.devices[deviceId].originals:false,replicaPublishedAt:metadata.syncedAt };
+            originals:account.devices[deviceId]?.originals??{},originalsPartial:account.devices[deviceId]?account.devices[deviceId].originalsPartial??!account.devices[deviceId].originals:false,replicaPublishedAt:metadata.syncedAt,
+            // Only the device's next request with the new generation confirms
+            // that it applied the reset. Sending the reset cannot acknowledge it.
+            acknowledgedGeneration:body.generation===generation?generation:account.devices[deviceId]?.keyId===hash(publicJwk)?account.devices[deviceId].acknowledgedGeneration??null:null };
           await save();
           return sealReplica(payload, publicJwk, { ownerId, hostId: context.rootState.hostId, deviceId: current.deviceId });
         }

@@ -170,6 +170,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
                 line('最近收到',sync?.lastReceivedAt?deviceTime(sync.lastReceivedAt):'尚无记录');
                 line('记忆整理',({idle:'还没有待整理的原话',receiving:'正在接收原话',running:'正在整理',paused:'已暂停',awaiting_confirmation:'等待电脑模型就绪',completed:'已整理',failed:'整理未完成，请在记忆页重试',submitted:'已提交，整理结果待确认',received:'原话已收到，尚未整理',cancelled:'已停止',forgotten:'已遗忘'}[sync?.memoryState])||'尚无记录');
                 line('副本最近更新',sync?.replicaPublishedAt?`${deviceTime(sync.replicaPublishedAt)} · 电脑已提供`:'尚无记录');
+                if(sync?.cleanup)line('遗忘清理',sync.cleanup.state==='acknowledged'?'设备已确认清理':'等待设备回执');
                 content.append(section);
             }
             summary.append(icon, content); summary.addEventListener('click', () => showDevice(device));
