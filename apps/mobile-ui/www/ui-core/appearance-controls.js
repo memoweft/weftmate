@@ -8,6 +8,8 @@
         root.style.setProperty('--text-size', `var(--wm-font-size-${value.fontSize}, ${value.fontSize}px)`);
         root.dataset.accent = theme === 'dark' ? value.accentDark : value.accentLight;
         root.style.setProperty('--code-size', `var(--wm-font-size-${value.codeFontSize}, ${value.codeFontSize}px)`);
+        root.toggleAttribute('data-pointer-cursor',value.pointerCursor===true);
+        root.dataset.diffMarkers=value.diffMarkers;
     }
     function mount(target, options) {
         target.classList.add('appearance-page');
@@ -44,11 +46,12 @@
         if (options.onlyTheme) { sync(); mounted.add({target,sync,connected:target.isConnected}); return; }
         motion = node('input'); motion.type = 'checkbox'; motion.id = 'appearance-reduced-motion'; motion.setAttribute('aria-label', '减少动态效果'); WeftSettingsControls.toggle(motion);
         const motionTarget = node('label', 'appearance-switch-target'); motionTarget.htmlFor = motion.id; motionTarget.append(motion);
-        const motionRow = WeftSettingsControls.row('减少动态效果', '', motionTarget); motionHelp = motionRow.querySelector('p'); motionRow.querySelector('label').htmlFor = motion.id;
+        const motionRow = WeftSettingsControls.row('减少动态效果', '减少动画效果，或跟随系统设置。', motionTarget); motionHelp = motionRow.querySelector('p'); motionRow.querySelector('label').htmlFor = motion.id;
         motionRow.classList.add('appearance-motion-row');
-        motion.addEventListener('change', () => { globalThis.WeftReplyMotion.setPreference(motion.checked ? 'reduce' : 'full'); sync(); });
+        function saveMotion(value) {try{globalThis.WeftReplyMotion.setPreference(value);}catch{options.toast?.('动态效果偏好未保存，请重试。');}sync();}
+        motion.addEventListener('change', () => saveMotion(motion.checked ? 'reduce' : 'full'));
         reset = node('button', 'button quiet appearance-motion-reset', '恢复跟随系统'); reset.type = 'button';
-        reset.addEventListener('click', () => { globalThis.WeftReplyMotion.setPreference('system'); sync(); }); motionRow.firstChild.append(reset); target.append(motionRow);
+        reset.addEventListener('click', () => saveMotion('system')); motionRow.firstChild.append(reset); target.append(motionRow);
         function select(key, label, help, values) {
             const control = node('select'); control.id = 'appearance-' + key; control.setAttribute('aria-label', label);
             for (const [value, text] of values) { const option = node('option', '', text); option.value = value; control.append(option); }

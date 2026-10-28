@@ -49,12 +49,12 @@ try {
   await page.getByRole('button', {name:'打开工作面板',exact:true}).click();
   assert.equal(await panel.locator('[data-panel-kind]').count(), 6);
   await panel.locator('[data-panel-kind=review]').click();
-  await panel.getByRole('heading', {name:'这项正在做'}).waitFor();
+  await panel.locator('.panel-review').getByText('先在工作模式里选一个工作目录。',{exact:true}).waitFor();
   await panel.getByRole('button', {name:'再打开一项',exact:true}).click();
   const menu = page.getByRole('menu', {name:'打开面板',exact:true});
   assert.equal(await menu.getByRole('menuitem').count(), 6);
   await menu.getByRole('menuitem', {name:'文件',exact:true}).click();
-  await panel.getByRole('heading', {name:'成果',exact:true}).waitFor();
+  await panel.locator('.files-resource-group summary').filter({hasText:/^成果 ·/}).waitFor();
   const before = await panel.boundingBox();
   await panel.getByRole('separator', {name:'调整预览宽度'}).press('ArrowLeft');
   assert.ok((await panel.boundingBox()).width > before.width);
@@ -214,6 +214,9 @@ try {
         record({width,repetition,...await measureUi(page,'switch-conversation',()=>page.locator(`.session-row[data-session-id="${fixture.sessionId}"] > button`).first().click(),{kind:'conversation',id:fixture.sessionId})});
       }
       await page.evaluate(()=>{
+        // Match UI-01B's controlled synthetic-list sample: a background list
+        // refresh must not replace the 200 fixture-only rows during scrolling.
+        testCore.connectionVisibility(true);
         const source=testCore.state.sessions.find(row=>row.sessionId===testCore.state.selectedSessionId);
         for(let i=0;i<200;i++)testCore.state.sessions.push({...source,sessionId:`session-ui01-scroll-${i}`,chatId:undefined,title:`合成列表会话 ${i+1}`,updatedAt:new Date(Date.now()-i*1000).toISOString()});
         testCore.setProjectExpanded(source.projectId,true);testCore.chooseSidebarMode('work');testUi.renderSessions();WeftDesktop.toggleRail(false);
@@ -223,7 +226,7 @@ try {
         await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
         record({width,repetition,syntheticRows:200,...await measureUi(page,'long-list-scroll',()=>page.mouse.wheel(0,650),{kind:'scroll',before})});
       }
-      await page.evaluate(()=>testCore.refreshSessions());
+      await page.evaluate(async()=>{await testCore.refreshSessions();testCore.connectionVisibility(false);});
     }
     await mkdir(resolve(process.env.WEFTMATE_SMOOTHNESS_FILE,'..'),{recursive:true});
     await writeFile(process.env.WEFTMATE_SMOOTHNESS_FILE,JSON.stringify({application:'WeftMate',complete:true,sampleWindowMs:750,repetitions:3,visibility:'Electron offscreen rendering at 60fps with background throttling disabled; no visible window',samples},null,2));

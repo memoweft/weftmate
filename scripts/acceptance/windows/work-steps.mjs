@@ -6,7 +6,8 @@ import {join} from 'node:path';
 import {prepareWorkFixture} from './scenarios.mjs';
 export async function startWork(ctx,{directory='w1-fixture',name='W1验收文件夹'}={}){
  const fixture=await prepareWorkFixture(ctx,{directory});
- await ctx.page.getByRole('tab',{name:'工作',exact:true}).click();await ctx.page.locator('#new-session').click();
+ await ctx.page.getByRole('button',{name:'新建对话',exact:true}).click();
+ await ctx.page.getByRole('tablist',{name:'新对话模式',exact:true}).getByRole('tab',{name:'新对话：工作',exact:true}).click();
  await ctx.page.getByRole('button',{name:'选择项目或文件夹',exact:true}).click();await ctx.page.getByRole('menuitem',{name:/选择文件夹/}).click();
  await confirmFolder(ctx,name);await ctx.shot('w1-fresh-work-folder');
  await ctx.page.locator('#model-trigger').click();await ctx.page.getByRole('menuitemradio',{name:'MiMo v2.6 Flash',exact:true}).click();

@@ -2,7 +2,7 @@ import {unwrap} from './sessions.mjs';
 export const SLASH_COMMAND_TIMEOUT_MS=120000;
 
 // DSH owns discovery, scope, command admission, lifecycle and skill injection.
-export function createNativeCommands({client,lifecycle,getAgent,getCommands}) {
+export function createNativeCommands({client,lifecycle,getAgent,getCommands,getTools}) {
   async function receivingAgent(sessionId) {
     await lifecycle.resume(sessionId);
     const agent=getAgent(sessionId);
@@ -14,9 +14,10 @@ export function createNativeCommands({client,lifecycle,getAgent,getCommands}) {
     async list(sessionId) {
       return use(sessionId,async agent=>{
       const commands=getCommands().list(agent);
-      const {skills}=await unwrap(await client.skills.list({sessionId}),'skill.list');
+      const [tools,{skills}]=await Promise.all([getTools(agent),unwrap(await client.skills.list({sessionId}),'skill.list')]);
       return {items:[...commands.map(item=>({...item,kind:'command'})),
-        ...skills.filter(skill=>!commands.some(command=>command.name===skill.name)).map(item=>({...item,kind:'skill'}))]};
+        ...skills.filter(skill=>!commands.some(command=>command.name===skill.name)).map(item=>({...item,kind:'skill'}))],
+        tools:tools.map(({name,description})=>({name,description}))};
       });
     },
     async execute(sessionId,line) {

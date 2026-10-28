@@ -2,6 +2,8 @@
 
 `layout.js` 组装左侧导航、中间对话和右侧面板；`components/` 绑定现有动作。`desktop.js` 管标签、侧栏与键盘，`workspace.css` 管三块布局和输入区外层，`design/tokens/tokens.json` 是颜色、字体、尺寸、圆角与动效的唯一来源。消息、步骤、提问、审批内容仍由各自组件呈现。
 
+桌面对话统一由 `components/main-chat.js` 按可视区和相邻一屏挂载消息；同一帧的历史、审批和输入区更新合成一次呈现。折叠的过程先画摘要，展开再建步骤。切换只保留最近八段对话的尺寸、展开状态和阅读锚点，原文仍重新读取，身份变化即清空这些位置。输入框尺寸跟随内容与宽度变化，隐藏的建议栏不测布局。回归与同条件帧采样见 `tests/integration/perf-switch.mjs`。
+
 ## 面板
 
 `index.html` 在 `desktop.js` 后加载 `panels/<kind>.js`。每个脚本调用：
@@ -35,7 +37,11 @@ WeftPanels.register('terminal', {
 
 切标签和收起调用 `hide()`，DOM（文档节点）、滚动和输入保留；显示调用 `show()`。关闭标签调用 `dispose()`，只释放该标签拥有的资源；最后一个关闭回到入口页。切对话调用 `update(ctx)`，内容适配器必须递增自己的请求代次，丢弃旧请求结果；`hide` 不取消任务。身份重置会销毁标签，重开再创建。
 
-文件当前复用 `components/resources.js`，通过 `WeftPanels.services.resources()` 与 `openResource(item, trigger)` 读取成果/来源及原预览。子任务订阅 `composer-subtasks.js` 的 `weftmate:subtasks` 事件与快照，状态来自 `ui-core/subtasks.js`，点击回到原步骤。后续面板替换对应登记脚本即可。
+审查与文件调用 `WeftPanels.services.workspaceRequest(ctx, action, body)`，通过当前 `computerId` 的既有通道访问 `/workspaces/:sessionId/review/*` 和 `/workspaces/:sessionId/files/*`。宿主按执行会话绑定的项目授权解析相对路径；`workDir` 只作异步补齐的目录信息，从 `null` 更新为真实路径时保留选择与编辑稿。尚未创建执行会话的工作草稿显示下一步提示，不把逻辑对话 ID 当作 `sessionId` 请求。
+
+文件成果/来源仍通过无参数的 `WeftPanels.services.resources()` 读取，并用 `previewResource(item, content)` 在同一文件面板复用 `components/resources.js` 的预览；`openResource(item, trigger)` 保留原资源入口。子任务订阅 `composer-subtasks.js` 的 `weftmate:subtasks` 事件与快照，状态来自 `ui-core/subtasks.js`，点击回到原步骤。后续面板替换对应登记脚本即可。
+
+过程文件卡的“审阅”从该次工具记录读取改动前后内容，保留历史已应用的改动证据；右侧“审查”入口读取当前工作目录的实时 Git 差异。文件面板默认展开本对话的成果与来源，已有报告可直接打开。
 
 浏览器由 `panels/browser.js` 登记，桌面通过预加载桥使用宿主 `personal-browser/desktop.mjs` 的真实 `WebContentsView`，Agent 的 `browser` 工具使用同一对话实例。`workDir` 异步补齐、执行段变化均复用原逻辑对话标签；切换上下文使旧命令响应失效。切账号仍由容器 `dispose()` 全部标签。手机和远程网页显示在电脑打开的说明。真实入口验收见 `tests/integration/desktop-browser-panel.mjs`。
 
@@ -52,6 +58,12 @@ Windows 的中间页头、右侧标签和原生窗口按钮共用顶部一行，
 快捷键在 `src/ui-core/shortcuts.js`：`Ctrl/⌘ Alt P` 开合右侧，`Ctrl/⌘ Alt 1–6` 打开六项。标签支持左右、Home/End、Delete，拖宽分隔条支持左右、Home/End；Esc 优先关闭浮层或收起面板。收起恢复外部触发点，不停止后台任务。
 
 ## 项目与验证
+
+设置沿用 `ui-core/settings-registry.js` 的 21 类，搜索按关键字定位行，分类保留已挂载控件并按身份代次重载。页面加载失败在当前分类重试；模型偏好独立于系统诊断读取。设备偏好使用原 `createAppearance`，保存失败恢复原值；动态效果沿用 `WeftReplyMotion`。字号在失焦时取整并限制到 10–24，空值恢复默认。
+
+能力页复用连接器配置、模型目录与当前执行会话的 DSH 工具、技能、命令清单。工具描述来自 DSH 的 `systemPrompt.assemble({scope:agent}).tools`，不返回工具参数 schema。搜索、筛选和标签切换保留浏览状态；工具规则和凭据仍走原接口。审查面板读取外观的 `diffMarkers: color | sign`，监听 `weftmate:appearance` 原地更新标记。
+
+设备页通过 `/devices/sync` 读取当前账户的同步摘要，只含条数、接收时间、整理状态及副本提供时间。收到原话和完成记忆整理分别显示，副本时间明确标注“电脑已提供”，未知历史不计作零；配对沿用已有核对数字弹窗。验证入口为 `tests/integration/ui-03-settings.mjs`，截图留在外部证据目录。
 
 项目置顶是当前账号在本设备的侧栏偏好；归档使用原会话归档接口，可在设置恢复。更改文件夹位置通过系统选择器与原生桥，对原 `/projects/:id` 执行 `PATCH`；宿主验证原生身份、目录、修订号与运行状态。只更改登记，文件不会搬动。公开网页响应仍不暴露完整路径。
 

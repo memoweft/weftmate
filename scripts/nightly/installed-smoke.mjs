@@ -1,6 +1,6 @@
 /** Packaged paths and real main gateway. Synthetic account/model, no daily data. */
 import assert from 'node:assert/strict';
-import {generateKeyPairSync,createHash,randomUUID} from 'node:crypto';
+import {generateKeyPairSync,createHash} from 'node:crypto';
 import {mkdirSync,writeFileSync,readFileSync,existsSync,rmSync,realpathSync,readdirSync} from 'node:fs';
 import {managedMkdtempSync} from '../../tests/helpers/managed-temp.mjs';
 import {join,resolve,parse} from 'node:path';
@@ -78,18 +78,33 @@ try {
   await until(async()=>{const card=h.page.getByRole('region',{name:'在文件夹里工作',exact:true});const error=h.page.getByText('项目已创建，对话尚未移入，请重试',{exact:true});if(await error.isVisible())throw Error('Folder registered but project conversation failed: '+JSON.stringify(report.folderCommands));return await h.page.locator('.folder-confirm').count()===0;});
   const me=(await h.api('/auth/me')).body;
   const patched=await h.api('/projects/'+registered.projectId,{expectedRevision:registered.revision,permission:'write'},'PATCH');assert.equal(patched.status,200);
-  const creation=await h.api(`/projects/${registered.projectId}/sessions`,{requestId:randomUUID(),modelProfileId:h.modelId});const session=await h.receipt(creation.body.command);
+  await h.page.getByRole('button',{name:'新建对话',exact:true}).click();
+  await h.page.getByRole('tablist',{name:'新对话模式',exact:true}).getByRole('tab',{name:'新对话：工作',exact:true}).click();
+  await h.page.getByRole('button',{name:'电脑：synthetic-host',exact:true}).click();
+  await h.page.getByRole('menu',{name:'选择电脑',exact:true}).getByRole('menuitemradio',{name:'synthetic-host',exact:true}).click();
+  await h.page.getByRole('button',{name:'选择项目或文件夹',exact:true}).click();
+  await h.page.getByRole('menu',{name:'选择项目或文件夹',exact:true}).getByRole('menuitemradio',{name:/^synthetic-project/}).click();
+  await h.page.getByRole('button',{name:'自动',exact:true}).click();
+  await h.page.getByRole('menu',{name:'审批模式',exact:true}).getByRole('menuitemradio',{name:/^每次询问/}).click();
+  await h.page.getByRole('textbox',{name:'输入消息',exact:true}).fill(installedSmokePrompt);
+  const [response]=await Promise.all([
+    h.page.waitForResponse(response=>response.request().method()==='POST'&&new URL(response.url()).pathname==='/personal/v1/commands'&&response.request().postDataJSON()?.kind==='session.message'),
+    h.page.getByRole('button',{name:'发送',exact:true}).click(),
+  ]);
+  assert.equal(response.status(),202);
+  const sent={body:await response.json()},session=await h.receipt(sent.body.command);
+  assert.equal(response.request().postDataJSON().targetDeviceId,h.hostId);
+  const workSession=await until(async()=>{const rows=(await h.api('/sessions')).body.sessions;return rows?.find(row=>row.sessionId===session.sessionId);});
+  assert.equal(workSession.projectId,registered.projectId);assert.equal(workSession.mode,'work');
   await h.page.reload();await h.page.locator('#assistant-view').waitFor({state:'visible'});
-  await h.page.getByRole('tab',{name:'工作',exact:true}).click();
   await h.page.locator(`.session-row[data-session-id="${session.sessionId}"] > button`).first().click();
-  // Clicking starts an asynchronous history selection. The synthetic provider
-  // must not emit its approval into a page still loading another conversation.
+  // Restore the created work conversation before reviewing its pending approval.
   await h.page.waitForFunction(id=>{
     const row=document.querySelector(`.session-row[data-session-id="${id}"] > button`);
     return row?.classList.contains('is-current') && !document.querySelector('#message-text')?.disabled;
   },session.sessionId);
-  assert.equal((await h.api(`/sessions/${session.sessionId}/approval-mode`,{mode:'ask'},'PATCH')).status,200);
-  const sent=await h.api('/commands',{requestId:randomUUID(),kind:'session.message',targetDeviceId:h.hostId,sessionId:session.sessionId,text:installedSmokePrompt});await h.receipt(sent.body.command);
+  assert.equal((await h.api(`/sessions/${session.sessionId}/approval-mode`)).body.mode,'ask');
+  report.checks.push('new-work-draft-first-message-through-ui');
   const decisions=[];
   report.approvals=decisions; // Preserve already-approved cards even if the later wait fails.
   await until(async()=>{
@@ -120,8 +135,11 @@ try {
   await h.page.locator('#account-menu-trigger').click();await h.page.locator('#rail-account').click();
   await h.page.getByRole('button',{name:'助手',exact:true}).click();
   await h.page.locator('#personalization-nextSuggestionsEnabled').waitFor();
+  await h.page.getByRole('dialog',{name:'设置',exact:true}).evaluate(async dialog=>{
+    await Promise.all(dialog.getAnimations().map(animation=>animation.finished));
+  });
   const switches=await h.page.locator('.personalization-form input.settings-switch').evaluateAll(nodes=>nodes.map(n=>({width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height})));
-  // Measured while the settings dialog may still be easing in; sub-pixel drift is not a size change.
+  // Measure the settled dialog; retain the original control-size tolerance.
   assert.ok(switches.length>0&&switches.every(s=>Math.abs(s.width-36)<0.5&&Math.abs(s.height-22)<0.5),JSON.stringify(switches));
   assert.equal(await h.page.getByText('已同步 · 从下一次回复开始生效',{exact:true}).count(),0);
   for(const theme of ['light','dark']){await h.page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await h.page.screenshot({path:join(out,`assistant-settings-${theme}.png`)});}

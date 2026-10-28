@@ -103,7 +103,7 @@ internal class CloudLogin(private val secrets: SecureSettings, private val api: 
         requireLegacyCloudRequestWithoutToken(target, issuer)
         val method = params.optString("method", "GET")
         require(method in setOf("GET", "POST"))
-        val hostRoutes = setOf("/cloud/config", "/auth/cloud-nonce", "/auth/cloud-session", "/cloud/pairings/redeem")
+        val hostRoutes = setOf("/cloud/config", "/auth/cloud-nonce", "/auth/cloud-session", "/cloud/pairings/join", "/cloud/pairings/reveal", "/cloud/pairings/redeem")
         require(hostRoutes.any { target == "$host/personal/v1$it" } || target in setOf("$issuer/token", "$issuer/jwks"))
         val headers = params.optJSONObject("headers") ?: JSONObject()
         require(headers.keys().asSequence().all { it.lowercase() in setOf("content-type", "dpop") })
