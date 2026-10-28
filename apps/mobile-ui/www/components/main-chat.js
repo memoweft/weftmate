@@ -162,7 +162,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                         if(body.isConnected && identity===core.state.identityGeneration && owner===core.state.ownerId)
                             WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId, true);
                     });
-                } else if (body && !spec.event.data.truncated) WeftContent.update(body, spec.event.data.text, { streaming: spec.event.data.streaming === true });
+                } else if (body && !spec.event.data.truncated) WeftContent.update(body, spec.event.data.text, { streaming: spec.event.data.streaming === true, motionFrame: true });
                 WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId);
                 (globalThis.WeftTimeline?.thinking || globalThis.WeftModelThinking)?.(core,row,spec.event);
                 if (!spec.event.data.live) { bindMessage(row,spec.event); ui.appendReplyMemory?.(row,spec.event); }
@@ -172,6 +172,9 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             row.tabIndex=0;row.setAttribute('role','group');row.setAttribute('aria-label',`${spec.event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(spec.event.data?.text||'附件').slice(0,80).join('')}`);
             const temporary = ui.element('ol'); ui.paintHistoryMessages([spec.event], temporary); const message = temporary.firstElementChild;
             row.replaceChildren(); if (message) { row.className += ' ' + message.className; row.append(...message.childNodes); }
+            // This virtual row is already being painted in the shared frame.
+            // Flush its initial live body here instead of deferring another frame.
+            if (spec.event.data?.live && spec.event.data.text) WeftContent.update(row.querySelector('.message-text,.markdown'), spec.event.data.text, { streaming: spec.event.data.streaming === true, motionFrame: true });
             row.dataset.seq = String(spec.event.sourceRef?.seq ?? spec.event.seq);
             row.dataset.messageKey = core.messagePresentationKey(spec.event);
             WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId);

@@ -7,31 +7,20 @@
   try { preference = localStorage.getItem('weftmate.reply-motion.v1') || 'system'; } catch {}
   const reduced = () => preference === 'reduce' || preference === 'system' && (media?.matches || nativeReduced);
   const streams = new WeakMap(), pendingStreams = new Set();
-  const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
   // Each body owns its frame queue; concurrent replies cannot starve each other.
-  // Keep only the latest authoritative snapshot and its unread tail.
+  // Coalesce arrivals into the latest snapshot, never an artificial text backlog.
   function stream(content, text, options, render) {
     let state = streams.get(content);
-    if (!options.streaming || reduced() || paused()) {
+    if (!options.streaming || options.motionFrame || reduced() || paused()) {
       if (state) finishStream(state, false);
       return render(content, text, options);
     }
     if (!state) {
-      state = { content, frame: null, time: null };
+      state = { content, frame: null };
       streams.set(content, state); pendingStreams.add(state);
     }
-    const shown = content._renderText || '';
-    if (state.text !== text) {
-      state.ends = [];
-      if (text.startsWith(shown)) {
-        for (const part of graphemes.segment(text.slice(shown.length))) state.ends.push(shown.length + part.index + part.segment.length);
-        // The transport can split a surrogate, ZWJ emoji or combining sequence.
-        // Briefly hold the provisional last grapheme across transport chunks.
-      }
-      state.index = 0; state.quietMs = 0;
-    }
     Object.assign(state, { text, options, render });
-    if (state.frame === null) state.frame = requestAnimationFrame(time => tickStream(state, time));
+    if (state.frame === null) state.frame = requestAnimationFrame(() => tickStream(state));
     return content;
   }
   function finishStream(state, flush) {
@@ -39,24 +28,15 @@
     state.frame = null; streams.delete(state.content); pendingStreams.delete(state);
     if (flush && state.content.isConnected) state.render(state.content, state.text, state.options);
   }
-  function tickStream(state, time) {
+  function tickStream(state) {
     state.frame = null;
-    if (!state.content.isConnected) { finishStream(state, false); return; }
-    if (reduced() || paused()) { finishStream(state, true); return; }
-    const elapsed = state.time === null || !Number.isFinite(time) ? 16 : Math.max(1, Math.min(32, time - state.time));
-    state.time = time;
-    state.quietMs += elapsed;
-    const incomplete = /[\uD800-\uDBFF\u200D]$/.test(state.text);
-    const available = Math.max(0, state.ends.length - (state.quietMs < 32 || incomplete ? 1 : 0));
-    const remaining = available - state.index;
-    state.index = Math.min(available, state.index + Math.max(1, Math.ceil(remaining * elapsed / 32)));
-    const next = state.text.startsWith(state.content._renderText || '')
-      ? state.text.slice(0, state.ends[Math.min(state.index, state.ends.length) - 1] ?? (state.content._renderText || '').length) : state.text;
-    state.render(state.content, next, { ...state.options, motionFrame: true });
+    finishStream(state, false);
+    if (!state.content.isConnected) return;
+    // Do not slice graphemes or hold the last character for a future chunk.
+    // The incremental renderer appends everything received by this frame.
+    state.render(state.content, state.text, { ...state.options, motionFrame: true });
     // Bottom-follow belongs to this paint, before the later resize notification.
     state.content.dispatchEvent?.(new CustomEvent('weft-stream-frame', { bubbles: true }));
-    if (state.index < state.ends.length && !(incomplete && state.index === available)) state.frame = requestAnimationFrame(time => tickStream(state, time));
-    else finishStream(state, false);
   }
   // Motion tokens are shared constants. Read once before updates, avoiding a style
   // flush between replacing the newest paragraph and measuring the finished frame.

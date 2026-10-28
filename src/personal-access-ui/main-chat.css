@@ -53,7 +53,7 @@
 
 /* Windows chat workspace: one reading column, process first, answer on paper. */
 #conversation-pane.chat-workspace { --chat-measure:var(--wm-size-reading,760px); --chat-gutter:clamp(16px,3vw,40px); }
-#conversation-pane.chat-workspace .chat-scroll { padding:20px var(--chat-gutter) 12px; scroll-padding-block:24px; overflow-anchor:none; }
+#conversation-pane.chat-workspace .chat-scroll { padding:20px var(--chat-gutter) 12px; scroll-padding-block:24px; overflow-anchor:none; scrollbar-gutter:stable; }
 #conversation-pane.chat-workspace .transcript { width:100%; max-width:var(--chat-measure); margin-inline:auto; gap:0; }
 #conversation-pane.chat-workspace .main-chat-row { padding:0; }
 #conversation-pane.chat-workspace .chat-day { padding-block:8px 20px; text-align:start; }

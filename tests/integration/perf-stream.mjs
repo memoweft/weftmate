@@ -43,17 +43,23 @@ try {
   await page.evaluate(async id=>{await testCore.selectSession(id);testCore.stopAssistantRefresh();},fixture.source);
   await page.evaluate(()=>{
     globalThis.streamSamples=[];globalThis.streamIndex=0;
-    const sample=()=>{const box=document.getElementById('chat-scroll');streamSamples.push({at:performance.now(),index:streamIndex,top:box.scrollTop,height:box.scrollHeight,gap:box.scrollHeight-box.clientHeight-box.scrollTop,pinned:testUi.conversationScroll.pinned});globalThis.streamSampleFrame=requestAnimationFrame(sample);};sample();
+    const sample=()=>{const box=document.getElementById('chat-scroll');streamSamples.push({at:performance.now(),index:streamIndex,top:box.scrollTop,height:box.scrollHeight,gap:box.scrollHeight-box.clientHeight-box.scrollTop,pinned:testUi.conversationScroll.pinned,x:document.getElementById('transcript').getBoundingClientRect().left});globalThis.streamSampleFrame=requestAnimationFrame(sample);};sample();
     globalThis.grow=async count=>{
       for(let n=0;n<count;n++){
         streamIndex++;
         const text=Array.from({length:streamIndex},(_,i)=>`${i+1}. 合成清单第 ${i+1} 项。`).join('\n');
         testCore.appendHistory([],[{seq:2,type:'assistant.delta',sessionId:testCore.state.selectedSessionId,at:new Date().toISOString(),data:{text,streaming:true,turn:1}}],streamIndex);
-        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        await new Promise((resolve,reject)=>requestAnimationFrame(()=>{
+          const body=document.querySelector('#transcript .message.assistant .message-text');
+          if(body?._renderText!==text)reject(new Error(`Stream snapshot ${streamIndex} missed its first frame`));
+          else requestAnimationFrame(resolve);
+        }));
       }
     };
   });
   await page.evaluate(()=>grow(100));
+  const lefts=await page.evaluate(()=>streamSamples.filter(s=>s.index>0).map(s=>s.x));
+  assert.ok(Math.max(...lefts)-Math.min(...lefts)<=.5,`Streaming scrollbar moved the reading column: ${Math.max(...lefts)-Math.min(...lefts)}px`);
   const followed=await page.evaluate(()=>streamSamples.filter(s=>s.index>25));
   await writeFile(join(out,'follow.json'),JSON.stringify(followed,null,2));
   assert.ok(followed.every(s=>Math.abs(s.gap)<=2),`Streaming bottom gap: ${Math.max(...followed.map(s=>s.gap))}`);
