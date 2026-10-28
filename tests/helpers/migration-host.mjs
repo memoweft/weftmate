@@ -30,7 +30,7 @@ export async function nativeOwnerSession(page) {
   assert.ok(me.account?.ownerId);
   return me;
 }
-export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir(), processEvidence, cloudIdentity, respond } = {}) {
+export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), entry, old = false, tempRoot = tmpdir(), processEvidence, cloudIdentity, respond, startInTray = false } = {}) {
   const root = realpathSync.native(mkdtempSync(join(tempRoot, 'weftmate-fx21-'))), profile = join(root, 'profile');
   mkdirSync(profile); writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
   const h = { root, profile, app: null, requests: [], source, executable, old, respond };
@@ -66,10 +66,21 @@ export async function migrationHost({ nativeSession = false, executable, source 
     if(cloudIdentity){env.WEFTMATE_CLOUD_ISSUER=cloudIdentity.issuer;env.WEFTMATE_CLOUD_ALLOW_INSECURE_LOOPBACK=String(cloudIdentity.allowInsecureLoopback===true);}
     const passwordStore = process.platform === 'linux' ? ['--password-store=gnome-libsecret'] : [];
     const launchStartedAt = Date.now();
-    h.app = await _electron.launch({executablePath:h.executable || createRequire(import.meta.url)('electron'),args:h.executable?[...passwordStore,`--desktop-config=${config}`]:[h.source,...passwordStore,`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],cwd:h.source,env,timeout:90000});
+    const tray = startInTray ? ['--start-in-tray','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-backgrounding-occluded-windows'] : [];
+    h.app = await _electron.launch({executablePath:h.executable || createRequire(import.meta.url)('electron'),args:h.executable?[...tray,...passwordStore,`--desktop-config=${config}`]:[entry || h.source,...tray,...passwordStore,`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],cwd:h.source,env,timeout:90000});
     evidence?.track(h.app.process(), { executable: h.executable || createRequire(import.meta.url)('electron'), label: 'installed-electron' });
     h.stderr = []; h.app.process().stderr?.on('data', chunk => { h.stderr.push(String(chunk)); if (h.stderr.length > 200) h.stderr.shift(); });
     h.page = await waitForPersonalWindow({ app: h.app, profile, launchStartedAt, stderr: h.stderr });
+    // Interactive setup needs the visible window. Approval scenarios hide it
+    // again before releasing the model's next native tool request.
+    await h.app.evaluate(({BrowserWindow}, {url, startInTray}) => {
+      const win = BrowserWindow.getAllWindows().find(win => win.webContents.getURL() === url);
+      if (!win) throw new Error('MIGRATION_SMOKE_WINDOW_MISSING');
+      if (startInTray && win.isVisible()) throw new Error('MIGRATION_SMOKE_WINDOW_ALREADY_VISIBLE');
+      if (win.isMinimized()) win.restore();
+      win.show();
+    }, {url:h.page.url(), startInTray});
+    await h.page.waitForFunction(() => document.visibilityState === 'visible');
     if (nativeSession) await nativeOwnerSession(h.page);
     else await localUiSession(h.page,h.credentials,'FX21',{mainChat:!h.old});
     // A fresh native owner sees model setup until the synthetic model below exists.

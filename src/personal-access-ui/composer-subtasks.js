@@ -2,6 +2,7 @@
 globalThis.WeftComposerSubtasks = {
     snapshot: null,
     openStep(row, root) {
+        root.revealStep?.(row.stepId);
         const step = [...root.querySelectorAll('.execution-step')].find(detail => detail.dataset.step === String(row.stepId));
         if (!step) return;
         for (let ancestor = step.parentElement; ancestor && ancestor !== root; ancestor = ancestor.parentElement) if (ancestor.tagName === 'DETAILS') ancestor.open = true;

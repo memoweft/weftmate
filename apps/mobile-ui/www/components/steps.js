@@ -67,7 +67,10 @@
                 try {
                     const data=await detail.stepOptions.readDetail(step.detailRef.seq);
                     if(!detail.isConnected || detail.dataset.detailSeq!==seq)return;
+                    detail.detailMetadata = { ...(data.command ? {command:data.command} : {}), ...(data.description ? {description:data.description} : {}) };
                     detail.rawText=data.text;detail.paintDetail(data.text || '',data.truncated,data);copy.hidden=false;detail.dataset.loaded='true';
+                    if (data.description && /^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(detail.stepModel.toolName))
+                        detail.querySelector('.step-title').textContent = data.description;
                 } catch {
                     if(detail.dataset.detailSeq!==seq)return;
                     output.textContent=english?'Could not load. Collapse and reopen to retry.':'暂时无法读取，收起后可重试。';delete detail.dataset.loaded;
@@ -77,6 +80,7 @@
         }
         const seq=String(step.detailRef?.seq ?? '');
         if(saved && detail.dataset.detailSeq!==seq) {
+            detail.detailMetadata = null;
             delete detail.dataset.loaded;detail.rawText='';detail.querySelector('.step-detail-content').replaceChildren();
             detail.querySelector('.progress-detail-actions > button').hidden=true;
         }
@@ -84,7 +88,7 @@
         const state=WeftUiCore.executionState(step);
         if(state==='failed' && detail.dataset.state!=='failed')detail.open=true;
         detail.dataset.step=String(step.stepId);detail.dataset.state=state;detail.dataset.detailSeq=seq;detail.dataset.motion='unfold';
-        const args=WeftUiCore.toolArguments(step.arguments),editor=step.toolName==='str_replace_editor',viewing=editor && args.command==='view';
+        const args={...WeftUiCore.toolArguments(step.arguments),...detail.detailMetadata},editor=step.toolName==='str_replace_editor',viewing=editor && args.command==='view';
         const command=/^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(step.toolName);
         const editing=/^(edit|write|write_file|create_file|apply_patch)$/.test(step.toolName) || editor && ['create','str_replace','insert'].includes(args.command);
         const iconName=command?'terminal':editing?'edit':viewing || /read|file/.test(step.toolName)?'file':/search|grep|glob/.test(step.toolName)?'search':/web|browser|fetch/.test(step.toolName)?'web':'tool';

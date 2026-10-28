@@ -47,7 +47,7 @@ export function apply(ctx) {
   const client = new InProcessApiClient(toFetchHandler(apiProxy));
   const gatewayV1 = createGatewayV1({
     client,
-    nativeCommands:createNativeCommands({client,lifecycle,getAgent:id=>ctx.get('agents')?.get(id),getCommands:()=>ctx.get('commands')}),
+    nativeCommands:createNativeCommands({client,lifecycle,getAgent:id=>ctx.get('agents')?.get(id),getCommands:()=>ctx.get('commands'),getTools:async agent=>(await ctx.systemPrompt.assemble({scope:agent})).tools}),
     readLog,
     lifecycle,
     // P1-05 diagnostics deps：pin 由打包/启动方注入（env），不自行推断。

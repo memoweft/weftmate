@@ -35,6 +35,7 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
   }
   async function startNewWork(hostId, project) {
     if (core.state.submitting || core.state.unresolvedSubmission) return;
+    core.rememberConversationDraft?.();
     if (hostId) {
       await core.selectExecutionComputer?.(hostId);
       if (hostId !== (core.currentExecutionComputer?.() || core.state.hostId)) throw { code: 'TARGET_UNAVAILABLE' };
@@ -81,6 +82,7 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
     return state;
   };
   core.startNewConversation = async (...args) => {
+    core.rememberConversationDraft?.();
     core.state.newConversationMode = 'chat';
     if (enabled()) { core.state.selectedChatId = null; core.state.workTimeline = null; chooseSidebarMode('chat'); return newConversation(true, args[1]); }
     return newConversation(...args);

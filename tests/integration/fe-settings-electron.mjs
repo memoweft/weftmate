@@ -119,8 +119,9 @@ try {
     for(const id of ['appearance','general']){
       await page.evaluate(id=>WeftSettingsNavigation.open(id),id);
       const values=await page.evaluate(()=>document.querySelector('.settings-content').getAnimations({subtree:true}).map(a=>({duration:a.effect.getTiming().duration,frames:a.effect.getKeyframes()})));
-      assert.ok(values.some(a=>a.duration===420));
-      for(const elapsed of [0,80,180,300,419]) { await page.evaluate(elapsed=>{for(const a of document.querySelector('.settings-content').getAnimations({subtree:true})){a.pause();a.currentTime=elapsed;}},elapsed);await capture(`motion-${id}-${elapsed}`,false); }
+      const duration=await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-1')));
+      assert.ok(values.some(a=>a.duration===duration));assert.ok(duration<=180,'settings use a short, responsive transition');
+      for(const elapsed of [0,Math.round(duration*.2),Math.round(duration*.5),Math.round(duration*.75),duration-1]) { await page.evaluate(elapsed=>{for(const a of document.querySelector('.settings-content').getAnimations({subtree:true})){a.pause();a.currentTime=elapsed;}},elapsed);await capture(`motion-${id}-${elapsed}`,false); }
       await finishMotion();
     }
   });

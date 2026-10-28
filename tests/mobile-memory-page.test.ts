@@ -71,6 +71,11 @@ class FakeElement {
   removeAttribute(name: string) { this.attributes.delete(name) }
   getAttribute(name: string) { return this.attributes.get(name) ?? null }
   hasAttribute(name: string) { return this.attributes.has(name) }
+  toggleAttribute(name: string, force?: boolean) {
+    const enabled=force??!this.hasAttribute(name);
+    if(enabled)this.setAttribute(name,'');else this.removeAttribute(name);
+    return enabled;
+  }
   get parentElement() { return this.parentNode }
   get isConnected(): boolean { return this.id==='body'||htmlIds.has(this.id)||this.parentNode?.isConnected===true }
   replaceWith(...nodes: FakeElement[]) {const parent=this.parentNode;if(!parent)return;const index=parent.children.indexOf(this);parent.children.splice(index,1,...nodes);for(const node of nodes)node.parentNode=parent;this.parentNode=null;}
@@ -295,7 +300,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
     console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, AbortSignal, TextEncoder,
     ResizeObserver:class { observe(){} unobserve(){} disconnect(){} } })
   readyListener?.({}); // Like deferred browser scripts, finish registering every component before DOMContentLoaded.
-  return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, connection:disconnect.view, disconnect:()=>{offline=true;disconnect()}, setDeferredOwner: (owner: string) => { deferOwner = owner },
+  return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, root:document.documentElement, connection:disconnect.view, disconnect:()=>{offline=true;disconnect()}, setDeferredOwner: (owner: string) => { deferOwner = owner },
     flushAnimationFrames() { for (const frame of animationFrames.splice(0)) frame(0) },
     setDeferMore: () => { deferMore = true }, resolveDeferred(index: number, value: object) { deferred[index].resolve(value) },
     rejectDeferred(index: number, code: string) { deferred[index].reject(new Error(code)) },
@@ -315,6 +320,12 @@ async function waitUntil(predicate: () => boolean, message: string) {
   for (let index = 0; index < 100; index++) { if (predicate()) return; await flush() }
   assert.fail(message)
 }
+test('mobile bootstrap applies shared appearance attributes before acknowledging readiness',async()=>{
+  const app=harness();await waitUntil(()=>app.calls.some(call=>call.method==='app.ready'),'mobile app bootstrap did not finish');
+  assert.equal(app.calls.some(call=>call.method==='app.failed'),false);
+  assert.equal(app.root.hasAttribute('data-pointer-cursor'),false);
+  assert.equal(app.root.dataset.diffMarkers,'color');
+});
 async function openMemory(app: ReturnType<typeof harness>, owner: 'A' | 'B' = 'A') {
   await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app bootstrap did not finish')
   app.setOwner(owner)

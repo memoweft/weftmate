@@ -41,11 +41,13 @@ class MobileUiBundles(private val context: Context) {
     init {
         // Code 21 removes the old refresh-token bridge: cached pages using it must boot the new built-in UI.
         if (mobileUiNeedsNativeLoginUpgrade(prefs.getInt("nativeLoginUiVersion", 0), BuildConfig.VERSION_CODE) ||
-            !prefs.getBoolean("verifiedAccountLoginUi", false)) {
+            !prefs.getBoolean("verifiedAccountLoginUi", false) || !prefs.getBoolean("pairingV2Ui", false)) {
+            // Cached single-step redeem pages cannot complete the v2 protocol.
             // The built-in page remains usable even if this preference cannot
             // be persisted; the next launch can repeat the same migration.
             prefs.edit().putString("active", builtIn).putString("previous", builtIn)
-                .remove("staged").putInt("nativeLoginUiVersion", 21).putBoolean("verifiedAccountLoginUi", true).commit()
+                .remove("staged").putInt("nativeLoginUiVersion", 21).putBoolean("verifiedAccountLoginUi", true)
+                .putBoolean("pairingV2Ui", true).commit()
             activeId = builtIn
         }
         if (activeId != builtIn && !verify(activeId)) {
