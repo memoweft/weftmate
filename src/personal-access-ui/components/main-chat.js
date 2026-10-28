@@ -72,7 +72,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             .sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top)[0];
         if (visible) return {key:visible.dataset.eventId,offset:viewport.top-visible.getBoundingClientRect().top};
         const top = box().scrollTop - listStart();
-        const index = Math.max(0, offsets.findIndex((offset, i) => offset + (heights.get(rows[i]?.key) || rows[i]?.estimate || 90) > top));
+        const index = Math.max(0, offsets.findIndex((offset, i) => offset + (heights.get(rows[i]?.key) ?? rows[i]?.estimate ?? 90) > top));
         return rows[index] ? { key: rows[index].key, offset: top - offsets[index] } : null;
     }
     function restoreAnchor(saved) {
@@ -86,7 +86,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         const index = rows.findIndex(row => row.key === saved.key);
         if (index >= 0) box().scrollTop = listStart() + offsets[index] + saved.offset;
     }
-    function measureOffsets() { let total = 0; offsets = rows.map(row => { const offset = total; total += heights.get(row.key) || row.estimate; return offset; }); return total; }
+    function measureOffsets() { let total = 0; offsets = rows.map(row => { const offset = total; total += heights.get(row.key) ?? row.estimate; return offset; }); return total; }
     function rememberRow(row) {
         if(row.querySelector('[data-inline-decision="true"]'))globalThis.WeftTimeline?.placeDecisions(list(),true);
         expanded.set(row.dataset.eventId, [...row.querySelectorAll('details')].map(detailState));
@@ -97,7 +97,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         if (restoring && !restoring.pinned) ui.conversationScroll?.hold();
         const total = measureOffsets(), scroll = box().scrollTop - listStart(), viewport = box().clientHeight;
         const from = Math.max(0, scroll - viewport), to = scroll + viewport * 2;
-        let first = offsets.findIndex((offset, i) => offset + (heights.get(rows[i].key) || rows[i].estimate) >= from);
+        let first = offsets.findIndex((offset, i) => offset + (heights.get(rows[i].key) ?? rows[i].estimate) >= from);
         if (first < 0) first = Math.max(0, rows.length - 1);
         let end = first; while (end < rows.length && offsets[end] < to) end++;
         const visible = rows.slice(first, end), keys = new Set(visible.map(row => row.key));
@@ -121,6 +121,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         if (previous.nextSibling !== bottom) previous.after(bottom);
         globalThis.WeftTimeline?.placeDecisions(list());
         if (restoring && !restoring.pinned) restoreAnchor(restoring.anchor);
+        ui.conversationScroll?.follow();
     }
     function buildRow() { return ui.element('li', 'main-chat-row'); }
     function highlight(row) {
@@ -161,7 +162,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                         if(body.isConnected && identity===core.state.identityGeneration && owner===core.state.ownerId)
                             WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId, true);
                     });
-                } else if (body && !spec.event.data.truncated) WeftContent.update(body, spec.event.data.text, { streaming: spec.event.data.streaming === true });
+                } else if (body && !spec.event.data.truncated) WeftContent.update(body, spec.event.data.text, { streaming: spec.event.data.streaming === true, motionFrame: true });
                 WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId);
                 (globalThis.WeftTimeline?.thinking || globalThis.WeftModelThinking)?.(core,row,spec.event);
                 if (!spec.event.data.live) { bindMessage(row,spec.event); ui.appendReplyMemory?.(row,spec.event); }
@@ -171,6 +172,9 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             row.tabIndex=0;row.setAttribute('role','group');row.setAttribute('aria-label',`${spec.event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(spec.event.data?.text||'附件').slice(0,80).join('')}`);
             const temporary = ui.element('ol'); ui.paintHistoryMessages([spec.event], temporary); const message = temporary.firstElementChild;
             row.replaceChildren(); if (message) { row.className += ' ' + message.className; row.append(...message.childNodes); }
+            // This virtual row is already being painted in the shared frame.
+            // Flush its initial live body here instead of deferring another frame.
+            if (spec.event.data?.live && spec.event.data.text) WeftContent.update(row.querySelector('.message-text,.markdown'), spec.event.data.text, { streaming: spec.event.data.streaming === true, motionFrame: true });
             row.dataset.seq = String(spec.event.sourceRef?.seq ?? spec.event.seq);
             row.dataset.messageKey = core.messagePresentationKey(spec.event);
             WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId);
@@ -339,12 +343,12 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         if (!top?.isConnected) { top = ui.element('li', 'chat-spacer'); bottom = ui.element('li', 'chat-spacer'); top.setAttribute('aria-hidden', 'true'); bottom.setAttribute('aria-hidden', 'true'); list().replaceChildren(top, bottom); list().setAttribute('aria-live','off'); mounted.clear(); }
         const total = measureOffsets();
         if (restoring && !restoring.pinned && saved && !rows.some(row => row.key === saved.key) && historyState().hasOlder && !core.state.olderLoading) void core.loadOlderHistory();
-        if (ui.conversationScroll?.pinned) {
+        if (ui.conversationScroll?.pinned && !mounted.has(rows.at(-1)?.key)) {
             top.style.height = '0px'; bottom.style.height = `${total}px`;
             box().scrollTop = listStart() + total;
         }
-        else {
-            if (saved && (rebuild || !mounted.get(saved.key)?.isConnected)) {
+        else if (!ui.conversationScroll?.pinned) {
+            if (saved && !mounted.get(saved.key)?.isConnected) {
                 top.style.height = '0px'; bottom.style.height = `${total}px`;
                 const index = rows.findIndex(row => row.key === saved.key);
                 if (index >= 0) box().scrollTop = listStart() + offsets[index] + saved.offset;
@@ -433,8 +437,15 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             if (ui.mobile) { const side = button('开对话', '开对话', () => core.openSideChat({ entry: 'composer' })); side.id = 'open-side-chat'; side.prepend(WeftIcons.create('compose', 20)); side.setAttribute('role','menuitem'); side.addEventListener('click',ui.closeAttachmentMenu); ui.byId('attachment-popover').append(side); }
         }
         observer = new ResizeObserver(entries => {
-            if (!main()) return; const saved = restoring?.anchor || (ui.conversationScroll?.pinned ? null : rememberAnchor()); let changed = false;
-            for (const entry of entries) { const height = entry.target.getBoundingClientRect().height; if (height && Math.abs((heights.get(entry.target.dataset.eventId) || 0) - height) > 1) { heights.set(entry.target.dataset.eventId, height); changed = true; } }
+            if (!main() || !box().clientHeight) return; const saved = restoring?.anchor || (ui.conversationScroll?.pinned ? null : rememberAnchor()); let changed = false;
+            // Flex-row margins occupy space too (the user bubble has 52px).
+            // Keep measured zeroes for empty processes instead of old estimates.
+            for (const entry of entries) {
+                const key=entry.target.dataset.eventId;
+                if (mounted.get(key)!==entry.target) continue;
+                const style=getComputedStyle(entry.target), height=entry.target.getBoundingClientRect().height + parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+                if (!heights.has(key) || Math.abs(heights.get(key) - height) > 1) { heights.set(key, height); changed = true; }
+            }
             if (changed) { measureOffsets(); restoreAnchor(saved); schedule(); }
         });
         const schedule = () => { if (frame === null) frame = requestAnimationFrame(() => { frame = null; renderVisible(); }); };

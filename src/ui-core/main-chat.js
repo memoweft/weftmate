@@ -262,7 +262,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     async function refreshHistory(reset = false, waitForChange = false) {
         if (!reset && !core.historyReadAllowed()) return core.state.historyReadResult;
         if (!inMain()) {
-            if (waitForChange && core.canWaitForReply() && core.state.selectedChatId && !core.conversationRunning(core.state.selectedSessionId) && core.state.turnStatus !== 'running' && !reset) {
+            if (waitForChange && core.canWaitForReply() && core.state.selectedChatId && !reset) {
                 if (sideWaitRead) return sideWaitRead;
                 const token = scope(), chatId = core.state.selectedChatId, controller = new AbortController();
                 core.historyWaitAbort = controller;
@@ -319,7 +319,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const token = scope(), generation = historyWindow.state.generation;
         let outcome;
         try {
-            const waiting = waitForChange && core.canWaitForReply() && (!core.mainReplyActive() || !(historyWindow.state.liveEvents || []).length) && !core.state.submitting && !core.state.unresolvedSubmission;
+            const waiting = waitForChange && core.canWaitForReply() && !core.state.submitting && !core.state.unresolvedSubmission;
             const controller = waiting ? new AbortController() : null;
             if (controller) core.historyWaitAbort = controller;
             const page = await core.readChatChanges(core.state.selectedChatId, historyWindow.state.syncCursor, 200,

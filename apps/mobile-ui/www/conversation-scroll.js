@@ -92,6 +92,7 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     listen(globalThis, 'weft-reply-motion-change', () => {if((globalThis.WeftReplyMotion?.paused ?? document.hidden) || reduced()) {stop();if(pinned)follow();}});
     const latest = () => { pinned = true; newContent = false; follow(); };
     listen(button, 'click', latest);
+    listen(content, 'weft-stream-frame', () => { if (!pinned) newContent = true; follow(); });
     if (globalThis.MutationObserver) { mutation = new MutationObserver(changed); mutation.observe(content, {subtree:true, childList:true, characterData:true}); }
     if (globalThis.ResizeObserver) {
         resize = new ResizeObserver(changed); resize.observe(content); resize.observe(box);

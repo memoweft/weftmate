@@ -5,10 +5,10 @@ import { runInNewContext } from 'node:vm';
 import { spawnSync } from 'node:child_process';
 import { uiCoreAssets } from '../src/ui-core/manifest.mjs';
 
-function fixture(fetch = async (_url: string, _options: any) => ({ok:true,status:200,json:async()=>({})})) {
+function fixture(fetch = async (_url: string, _options: any) => ({ok:true,status:200,json:async()=>({})}), timers = {}) {
   const values = new Map(); let counter=0;
   const environment = { fetch, storage:{getItem:(key: string)=>values.get(key)??null,setItem:(key: string,value: string)=>values.set(key,value),removeItem:(key: string)=>values.delete(key)}, crypto:{randomUUID:()=>`00000000-0000-4000-8000-${String(++counter).padStart(12,'0')}`} };
-  const context:any={AbortController,AbortSignal,URL,URLSearchParams,TextEncoder,Blob,DOMException,Intl,setTimeout,clearTimeout,setInterval,clearInterval};
+  const context:any={AbortController,AbortSignal,URL,URLSearchParams,TextEncoder,Blob,DOMException,Intl,setTimeout,clearTimeout,setInterval,clearInterval,...timers};
   runInNewContext(uiCoreAssets.map(name=>readFileSync(new URL('../src/ui-core/'+name,import.meta.url),'utf8')).join('\n;\n'),context);
   const effects = new Proxy({}, {get:()=>()=>{}});
   const core=context.WeftUiCore.create({...environment,effects});
@@ -56,6 +56,30 @@ test('reopening a closed panel cannot adopt its old pending creation',()=>{
   first.core.rememberMarker({requestId:'old-create',kind:'session.create'});first.dispose();
   const second=f.core.createChatScope(f.effects,'chat');assert.equal(second.core.readMarkers().length,0);second.dispose();
 });
+test('side streaming renews native waits and shares the main read cadence and failure backoff',async()=>{
+  const scheduled:any[]=[],cleared:any[]=[];
+  let now=0;
+  const f=fixture(undefined,{Date:class extends Date {static now(){return now;}},setTimeout:(callback,delay)=>{const timer={callback,delay};scheduled.push(timer);return timer;},clearTimeout:timer=>cleared.push(timer),setInterval:()=>null,clearInterval:()=>{}});
+  const scope=f.core.createChatScope(f.effects,'stream-side'),side=scope.core;
+  Object.assign(side.state,{personalCapabilities:{replyStreaming:1},turnStatus:'running'});
+  const outcomes=[{kind:'changed',cost:0},{kind:'changed',cost:12},{kind:'unchanged',immediateRenew:true,cost:20},{kind:'failed',cost:0}];
+  side.refreshLiveConversation=async()=>{const result=outcomes.shift();now+=result.cost;if(result.kind==='failed')side.historyReadResult('failed');return result;};
+  // An unrelated slow task read must not hold up streamed text.
+  side.refreshConversationFacts=()=>new Promise(()=>{});
+  try {
+    scope.start();await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(scheduled.at(-1)?.delay,side.polling.stream);
+    await scheduled.at(-1).callback();
+    assert.equal(scheduled.at(-1).delay,0);
+    await scheduled.at(-1).callback();
+    assert.equal(scheduled.at(-1).delay,0);
+    await scheduled.at(-1).callback();
+    assert.ok(scheduled.at(-1).delay>=side.polling.readRetryBase);
+    assert.ok(scheduled.at(-1).delay<=side.polling.readRetryCap);
+  } finally {scope.dispose();}
+  assert.ok(cleared.includes(scheduled.at(-1)));
+});
+
 test('main and side conversations operate together in the Windows Electron shell',{skip:process.platform!=='win32',timeout:180000},()=>{
   const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
   const result=spawnSync(process.execPath,['tests/integration/ui-07-side-chat.mjs'],{env,encoding:'utf8',windowsHide:true,timeout:170000,maxBuffer:2*1024*1024});

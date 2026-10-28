@@ -7,11 +7,11 @@
   try { preference = localStorage.getItem('weftmate.reply-motion.v1') || 'system'; } catch {}
   const reduced = () => preference === 'reduce' || preference === 'system' && (media?.matches || nativeReduced);
   const streams = new WeakMap(), pendingStreams = new Set();
-  // stream-type: one rAF queue per body, coalescing transport chunks (also the
-  // terminal snapshot). Render Markdown through the normal incremental renderer.
+  // Each body owns its frame queue; concurrent replies cannot starve each other.
+  // Coalesce arrivals into the latest snapshot, never an artificial text backlog.
   function stream(content, text, options, render) {
     let state = streams.get(content);
-    if ((!options.streaming && !state) || reduced() || paused()) {
+    if (!options.streaming || options.motionFrame || reduced() || paused()) {
       if (state) finishStream(state, false);
       return render(content, text, options);
     }
@@ -19,8 +19,6 @@
       state = { content, frame: null };
       streams.set(content, state); pendingStreams.add(state);
     }
-    // Coalesce transport bursts into one paint. An extra typewriter queue would
-    // repeatedly parse the same Markdown and lag behind the authoritative reply.
     Object.assign(state, { text, options, render });
     if (state.frame === null) state.frame = requestAnimationFrame(() => tickStream(state));
     return content;
@@ -32,10 +30,13 @@
   }
   function tickStream(state) {
     state.frame = null;
-    if (!state.content.isConnected) { finishStream(state, false); return; }
-    if (reduced() || paused()) { finishStream(state, true); return; }
-    state.render(state.content, state.text, { ...state.options, motionFrame: true });
     finishStream(state, false);
+    if (!state.content.isConnected) return;
+    // Do not slice graphemes or hold the last character for a future chunk.
+    // The incremental renderer appends everything received by this frame.
+    state.render(state.content, state.text, { ...state.options, motionFrame: true });
+    // Bottom-follow belongs to this paint, before the later resize notification.
+    state.content.dispatchEvent?.(new CustomEvent('weft-stream-frame', { bubbles: true }));
   }
   // Motion tokens are shared constants. Read once before updates, avoiding a style
   // flush between replacing the newest paragraph and measuring the finished frame.
