@@ -26,16 +26,19 @@ public enum PhoneReplyPresentation {
             let isFence = indent <= 3 && (character == "`" || character == "~") && count >= 3
             // The final line may still be growing, including a closing fence.
             let ended = index < source.count - 1 || !streaming
+            var closedFence = false
             if ended, isFence, let character {
                 if let open = fence {
-                    if character == open.0 && count >= open.1 && body.dropFirst(count).trimmingCharacters(in: .whitespaces).isEmpty { fence = nil }
+                    if character == open.0 && count >= open.1 && body.dropFirst(count).trimmingCharacters(in: .whitespaces).isEmpty {
+                        fence = nil; closedFence = true
+                    }
                 } else if !(character == "`" && body.dropFirst(count).contains("`")) {
                     if !lines.isEmpty { flush(complete:true) }
                     fence = (character, count)
                 }
             }
             lines.append(line); offset += line.utf16.count + 1
-            if ended, fence == nil, line.isEmpty { flush(complete: true) }
+            if closedFence || ended && fence == nil && line.isEmpty { flush(complete: true) }
         }
         flush(complete: !streaming)
         return blocks

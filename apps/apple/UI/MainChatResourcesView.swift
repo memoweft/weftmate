@@ -65,11 +65,11 @@ struct MainChatResourcesView: View {
             Section("过程") {
                 if let sessionID=model.chat?.activeSessionId {
                     NavigationLink { PhoneTaskProcessPage(app:app,sessionID:sessionID,events:model.nativeEvents) } label: {
-                        PhoneChatPageRow(title:"执行详情",subtitle:"步骤、输出和批准记录",icon:"code")
+                        PhoneChatPageRow(title:"执行详情",subtitle:"步骤、输出和批准记录",icon:"code",showsChevron:false)
                     }.accessibilityIdentifier("resources.process")
                 } else { Text("还没有执行记录").foregroundStyle(Weave.muted) }
             }
-        }.listStyle(.plain).scrollContentBackground(.hidden).background(Weave.canvas)
+        }.listStyle(.insetGrouped).scrollContentBackground(.hidden).background(Weave.canvas)
             .navigationTitle("对话中的内容").navigationBarTitleDisplayMode(.large).toolbar(.visible,for:.navigationBar)
             .navigationDestination(isPresented:Binding(get:{selected != nil},set:{if !$0 { clear() }})) {
                 if let row=selected, let artifact=row["artifactId"]?.string {

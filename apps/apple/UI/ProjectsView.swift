@@ -12,10 +12,11 @@ struct PhoneProjectsPage: View {
             Section {
                 Text("一个项目对应电脑上的一个文件夹，工作前先确定读写范围。")
                     .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                    .listRowBackground(Color.clear).listRowInsets(EdgeInsets(top:0,leading:0,bottom:AppleTokens.Space.p8,trailing:0))
                 ProjectsEmpty(app:app)
             }
-            ForEach(app.projects.filter { !$0.revoked }) { project in
-                Section(project.name) {
+            Section {
+                ForEach(app.projects.filter { !$0.revoked }) { project in
                     NavigationLink {
                         List {
                             Section("读写范围") {
@@ -35,12 +36,12 @@ struct PhoneProjectsPage: View {
                                     .accessibilityIdentifier("projectNewConversation."+project.id)
                             }
                         }.navigationTitle(project.name).listStyle(.insetGrouped)
-                    } label: { PhoneChatPageRow(title:project.name,subtitle:"项目 · "+project.permission.title,icon:"folder") }
+                    } label: { PhoneChatPageRow(title:project.name,subtitle:"项目 · "+project.permission.title,icon:"folder",showsChevron:false) }
                         .accessibilityIdentifier("phone.project."+project.id)
                 }
             }
         }.listStyle(.insetGrouped).scrollContentBackground(.hidden).background(Weave.grouped)
-            .navigationTitle("项目").refreshable { await app.refresh() }.accessibilityIdentifier("phone.projects")
+            .navigationTitle("项目").navigationBarTitleDisplayMode(.large).refreshable { await app.refresh() }.accessibilityIdentifier("phone.projects")
     }
 }
 #endif

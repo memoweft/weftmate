@@ -39,10 +39,13 @@ struct PhoneMainChatQueue: View {
                             Text(row.text).fixedSize(horizontal:false,vertical:true)
                             HStack {
                                 Button("修改") { Task { await withdraw(row,edit:true) } }
+                                    .accessibilityIdentifier("mainChat.queueEdit."+row.id)
                                 Spacer()
                                 Button("撤回",role:.destructive) { Task { await withdraw(row,edit:false) } }
+                                    .accessibilityIdentifier("mainChat.queueRetract."+row.id)
                             }.frame(minHeight:AppleTokens.Space.p44)
                         }.disabled(busy.contains(row.id) || !directory.scopeIsCurrent)
+                            .accessibilityElement(children:.contain)
                             .accessibilityIdentifier("mainChat.queued."+row.id)
                         Divider()
                     }

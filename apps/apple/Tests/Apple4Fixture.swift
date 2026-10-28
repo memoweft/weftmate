@@ -1,5 +1,6 @@
 #if DEBUG && os(iOS) && targetEnvironment(simulator)
 import SwiftUI
+import UIKit
 import WeftMateCore
 
 /// The production phone workspace with synthetic loopback data and isolated account state.
@@ -9,12 +10,32 @@ struct Apple4Fixture: View {
     @State private var ready = false
     @State private var scenario = "final"
     @State private var query = ""
-    private let scenarios = ["empty", "final", "stream", "aligned", "warning", "two", "long", "question", "files", "side", "conversations", "search", "history", "work", "projects", "resources", "task", "stream-long"]
+    private let scenarios = ["stream-long", "queue", "empty", "final", "stream", "aligned", "warning", "two", "long", "question", "files", "side"]
+    private let pages = ["conversations", "search", "history", "work", "projects", "resources", "task"]
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
             if ready {
+                if ProcessInfo.processInfo.arguments.contains("--ios-ui-2-glyph-probe") {
+                    let sample="e\u{301} 👨‍👩‍👧‍👦 🚶🏽‍♀️"
+                    VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
+                        Text("系统文字").font(AppleTokens.Fonts.headline)
+                        Text(sample).accessibilityIdentifier("glyph.system")
+                        Text("完整回答").font(AppleTokens.Fonts.headline)
+                        MessageBodyContent(text:sample,messageID:"glyph-complete")
+                            .accessibilityElement(children:.combine).accessibilityIdentifier("glyph.complete")
+                        Text("流式回答").font(AppleTokens.Fonts.headline)
+                        PhoneMessageBody(text:sample,messageID:"glyph-probe",streaming:true)
+                        Text("Emoji 字体："+UIFont.familyNames.filter{$0.localizedCaseInsensitiveContains("emoji")}.joined(separator:", "))
+                            .font(AppleTokens.Fonts.caption)
+                    }.font(AppleTokens.Fonts.body).padding(AppleTokens.Phone.pageInset)
+                } else {
                 if !ProcessInfo.processInfo.arguments.contains("--ios-ui-2-capture") { HStack {
-                    Menu { ForEach(scenarios, id: \.self) { value in Button(value) { Task { await select(value) } } } } label: { Text("合成场景") }.buttonStyle(PhoneActionStyle()).accessibilityIdentifier("apple4.scenarios")
+                    Menu {
+                        Menu("页面") {
+                            ForEach(pages, id: \.self) { value in Button(value) { Task { await select(value) } } }
+                        }.accessibilityIdentifier("apple4.pages")
+                        ForEach(scenarios, id: \.self) { value in Button(value) { Task { await select(value) } } }
+                    } label: { Text("合成场景") }.buttonStyle(PhoneActionStyle()).accessibilityIdentifier("apple4.scenarios").accessibilityValue(scenario)
                     Spacer()
                 }.padding(.horizontal, AppleTokens.Space.p8) }
                 if ["conversations","search"].contains(scenario) {
@@ -27,6 +48,7 @@ struct Apple4Fixture: View {
                 else if scenario == "side", let row = app.conversations.first(where: { !$0.isMainChat }) {
                     NavigationStack { ConversationView(model: app, conversation: row) }
                 } else { PhoneWorkspace(model: app).id(scenario) }
+                }
             } else { Text(app.authError ?? "正在连接合成账号…") }
         }.environmentObject(health).tint(Weave.accent).buttonStyle(PhoneActionStyle())
             .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("dark") ? .dark : .light)
@@ -37,7 +59,7 @@ struct Apple4Fixture: View {
                     if ProcessInfo.processInfo.arguments.contains("--apple5-reset-presentation"),let origin=app.session?.server.origin {
                         var request=URLRequest(url:origin.appendingPathComponent("fixture/apple3"));request.httpMethod="POST";request.httpBody=try? JSONSerialization.data(withJSONObject:["reset":true]);_=try? await URLSession.shared.data(for:request)
                     }
-                    await select("final"); ready = true
+                    await select(ProcessInfo.processInfo.arguments.contains("--ios-ui-2-capture") ? "rich" : "final"); ready = true
                 }
             }
     }
