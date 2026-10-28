@@ -62,7 +62,14 @@ try {
     await page.getByRole('button',{name:'打开工作面板',exact:true}).click();
     const emptyBottom=await page.locator('#message-form').evaluate(el=>el.getBoundingClientRect().bottom);
     assert.ok(emptyBottom>=h-80&&emptyBottom<=h,'the empty composer stays at the viewport bottom');
-    const emptyGap=await page.evaluate(()=>document.getElementById('message-form').getBoundingClientRect().top-document.querySelector('#chat-intro h1').getBoundingClientRect().bottom);assert.ok(emptyGap<110,`welcome and composer stay together: ${emptyGap}`);
+    const welcome=await page.evaluate(()=>{
+      const rect=selector=>document.querySelector(selector).getBoundingClientRect().toJSON();
+      return {intro:rect('#chat-intro'),scroll:rect('#chat-scroll'),transcript:rect('#transcript'),form:rect('#message-form'),align:getComputedStyle(document.getElementById('chat-intro')).textAlign};
+    });
+    assert.ok(Math.abs(welcome.intro.left-welcome.transcript.left)<=1&&welcome.align==='left',`welcome aligns with the content column: ${JSON.stringify(welcome)}`);
+    const welcomeInset=welcome.intro.top-welcome.scroll.top;
+    assert.ok(welcomeInset>=32&&welcomeInset<=64,`welcome has a top inset: ${welcomeInset}`);
+    assert.ok(welcome.form.top-welcome.intro.bottom>=100,'welcome is separated from the bottom composer');
     await capture(`empty-${theme}-${w}`);
     await modes.getByRole('tab',{name:'新对话：工作',exact:true}).click();await page.locator('.work-mode-toolbar').waitFor();await capture(`work-${theme}-${w}`);await modes.getByRole('tab',{name:'新对话：对话',exact:true}).click();
     await page.evaluate(id=>visualCore.selectSession(id),fixture.sessionId);await page.getByText('报告已保存，测试全部通过。',{exact:true}).waitFor();
@@ -71,7 +78,7 @@ try {
     await page.evaluate(()=>{WeftPanels.hide(false);WeftDesktop.toggleRail(false);});await page.getByRole('button',{name:'打开工作面板',exact:true}).click();
     if(w===1280)await page.waitForFunction(()=>document.getElementById('session-rail').getBoundingClientRect().width===256);
     const measured=await page.evaluate(()=>{const css=el=>getComputedStyle(el),rect=el=>el.getBoundingClientRect();return {authKind:visualCore.state.device.authKind,width:innerWidth,theme:document.documentElement.dataset.theme,uiFont:css(document.documentElement).fontSize,navFont:css(document.querySelector('.shell-navigation .rail-link')).fontSize,railWidth:rect(document.getElementById('session-rail')).width,top:rect(document.querySelector('.assistant-main')).top,launcherIcon:rect(document.querySelector('.panel-launcher-item svg')).width,launcherHeight:rect(document.querySelector('.panel-launcher-item')).height,launcherGap:css(document.querySelector('.panel-launcher')).gap,inputFont:css(document.getElementById('message-text')).fontSize,overflow:document.documentElement.scrollWidth>innerWidth};});
-    observations.push(measured);assert.equal(measured.uiFont,'14px');assert.equal(measured.navFont,'14px');assert.equal(measured.inputFont,'14px');assert.equal(measured.top,0);assert.equal(measured.launcherIcon,20);assert.ok(measured.launcherHeight>=50);assert.equal(measured.overflow,false);if(w===1280)assert.equal(measured.railWidth,256);
+    observations.push({...measured,welcome});assert.equal(measured.uiFont,'14px');assert.equal(measured.navFont,'14px');assert.equal(measured.inputFont,'14px');assert.equal(measured.top,0);assert.equal(measured.launcherIcon,20);assert.ok(measured.launcherHeight>=50);assert.equal(measured.overflow,false);if(w===1280)assert.equal(measured.railWidth,256);
     await capture(`workspace-${theme}-${w}`);
   }
   await size(390,844);await page.evaluate(()=>WeftPanels.hide(false));await page.locator('#message-text').fill('窄窗口输入');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await capture('narrow-composer');await page.getByRole('button',{name:'切换会话侧栏',exact:true}).click();await rail.waitFor();await page.waitForFunction(()=>document.getElementById('session-rail').getBoundingClientRect().width===256);assert.equal(await rail.evaluate(el=>document.getElementById('rail-brand-actions').getBoundingClientRect().right<=el.getBoundingClientRect().right),true);await page.getByRole('button',{name:'切换会话侧栏',exact:true}).click();

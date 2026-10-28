@@ -203,7 +203,7 @@ test('memory view preserves chat draft and discards a successful response for an
       if (text) { const child = new Node(); child.tagName = '#TEXT'; child.data = String(text); this.append(child) }
     }
     className = ''
-    style: Record<string, string> = {}
+    style = { setProperty(name: string, value: string) { this[name] = value } }
     dataset: Record<string, string> = {}
     // Mirrors DOMTokenList closely enough for class-driven visibility checks.
     classList = {
@@ -402,6 +402,8 @@ test('memory view preserves chat draft and discards a successful response for an
   mountDesktopTestTree(document, get)
   const context = { document, window, matchMedia, location: { ...window.location, protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl, Event, CustomEvent,
     MutationObserver: class { constructor(_callback: () => void) {} observe() {} disconnect() {} },
+    ResizeObserver: class { constructor(_callback: () => void) {} observe() {} unobserve() {} disconnect() {} },
+    requestAnimationFrame: (callback: (time: number) => void) => { callback(0); return 1 },
     Option: class extends Node { constructor(text: string, value: string) { super(); this.tagName = 'OPTION'; this.textContent = text; this.value = value } },
     crypto: { randomUUID: () => `synthetic-${++requestSequence}` },
     localStorage: { getItem: (key: string) => storage.get(key) ?? null,
