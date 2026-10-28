@@ -63,7 +63,11 @@ final class Apple5UITests: XCTestCase {
     }
     @MainActor private func pageTap(_ app: XCUIApplication,_ id: String) {
         let element=pageControl(app,id);XCTAssertTrue(element.waitForExistence(timeout:20),id)
-        for _ in 0..<8 where !element.isHittable { app.swipeUp() }
+        for _ in 0..<8 where !element.isHittable {
+            let start=app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:0.78))
+            let end=app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:0.28))
+            start.press(forDuration:0.05,thenDragTo:end)
+        }
         XCTAssertTrue(element.isHittable,id);element.tap()
     }
     @MainActor private func pageCapture(_ app: XCUIApplication,_ theme: String,_ name: String) {
@@ -73,6 +77,13 @@ final class Apple5UITests: XCTestCase {
     @MainActor private func root(_ app: XCUIApplication,_ route: String) {
         pageTap(app,"phone.tab.chat");pageTap(app,"phone.tab.chat")
         pageTap(app,"phone.sidebar");pageTap(app,"phone.sidebar."+route)
+    }
+    @MainActor private func expectFixtureSource(_ app:XCUIApplication) {
+        XCTAssertTrue(pageControl(app,"conversationDetail").waitForExistence(timeout:15),"Open the artifact's actual legacy session")
+        XCTAssertTrue(app.staticTexts["整理周末计划"].waitForExistence(timeout:15),"The returned conversation must contain the artifact's source message")
+        XCTAssertTrue(app.buttons["phone.back"].isHittable)
+        let nativeBack=app.navigationBars.buttons.firstMatch
+        XCTAssertFalse(nativeBack.exists && nativeBack.isHittable,"The source chat has one header and one return action")
     }
     @MainActor func testPagesLightAndDark() throws {
         continueAfterFailure=false
@@ -86,26 +97,44 @@ final class Apple5UITests: XCTestCase {
             XCTAssertTrue(pageControl(app,"activity.row.apple5-complete").waitForExistence(timeout:20));pageCapture(app,theme,"activity")
             pageTap(app,"activity.row.apple5-complete")
             XCTAssertTrue(pageControl(app,"library.preview").waitForExistence(timeout:20),"Activity must return to the real artifact")
+            XCTAssertTrue(app.staticTexts["散步半小时，读几页书。"].waitForExistence(timeout:10),"Keep the artifact's actual paragraph separate from its heading")
+            XCTAssertTrue(app.staticTexts["合成周末计划"].exists)
+            XCTAssertFalse(app.staticTexts.matching(NSPredicate(format:"label CONTAINS %@","# 合成周末计划")).firstMatch.exists,"Markdown headings are rendered rather than exposing the file's control syntax")
             pageCapture(app,theme,"library-detail")
-            pageTap(app,"library.source");XCTAssertTrue(pageControl(app,"mainChat.plus").waitForExistence(timeout:15))
+            pageTap(app,"library.source")
+            pageCapture(app,theme,"source-return")
+            let sourceTree=XCTAttachment(string:app.debugDescription);sourceTree.name="source-return-tree-"+theme;sourceTree.lifetime = .keepAlways;add(sourceTree)
+            expectFixtureSource(app)
             root(app,"library");pageTap(app,"library.row.apple5-file");pageTap(app,"library.source")
-            XCTAssertTrue(pageControl(app,"mainChat.plus").waitForExistence(timeout:15),"The same source must still return to chat")
+            expectFixtureSource(app)
             pageTap(app,"phone.tab.health")
             XCTAssertTrue(pageControl(app,"health.secondaryMetrics").waitForExistence(timeout:20));pageCapture(app,theme,"health")
+            XCTAssertTrue(app.navigationBars["健康"].exists,"The health root keeps its visible page title after returning from a source conversation")
             pageTap(app,"health.sleepDuration")
             XCTAssertTrue(pageControl(app,"health.range").waitForExistence(timeout:20));pageCapture(app,theme,"health-detail")
             let trend=pageControl(app,"health.trend")
-            for _ in 0..<4 where !trend.isHittable { app.swipeUp() }
+            XCTAssertTrue(trend.waitForExistence(timeout:10))
+            for _ in 0..<8 {
+                let top=app.navigationBars.firstMatch.frame.maxY+8
+                let bottom=app.buttons["phone.tab.health"].frame.minY-12
+                if trend.frame.minY >= top && trend.frame.maxY <= bottom { break }
+                let down=trend.frame.minY < top
+                let start=app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:down ? 0.3 : 0.75))
+                let end=app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:down ? 0.75 : 0.3))
+                start.press(forDuration:0.05,thenDragTo:end)
+            }
+            let trendFrame=XCTAttachment(string:trend.debugDescription);trendFrame.name="trend-hit-frame-"+theme;trendFrame.lifetime = .keepAlways;add(trendFrame)
             trend.coordinate(withNormalizedOffset:CGVector(dx:0.6,dy:0.45)).tap()
             XCTAssertTrue(pageControl(app,"health.selectedDay").waitForExistence(timeout:10),"The native chart selection must show the chosen day's value")
             pageTap(app,"phone.tab.health") // Reselect the current tab to pop to its root.
             app.buttons["健康设置"].tap()
             XCTAssertTrue(pageControl(app,"health.settings").waitForExistence(timeout:15));pageCapture(app,theme,"health-settings")
             root(app,"goals");XCTAssertTrue(pageControl(app,"goals.reminders").waitForExistence(timeout:20));pageCapture(app,theme,"goals")
-            pageTap(app,"goals.reminders");pageCapture(app,theme,"reminders")
+            pageTap(app,"goals.reminders")
             pageTap(app,"reminders.new");pageTap(app,"reminders.text");app.typeText("带水出门")
             pageTap(app,"reminders.save")
             XCTAssertTrue(app.staticTexts["带水出门"].waitForExistence(timeout:10))
+            pageCapture(app,theme,"reminders")
             root(app,"goals");pageTap(app,"goals.schedules")
             XCTAssertTrue(pageControl(app,"goals.schedule.apple5-reminder").waitForExistence(timeout:20));pageCapture(app,theme,"schedules")
             app.buttons["暂停"].firstMatch.tap();XCTAssertTrue(app.buttons["恢复"].firstMatch.waitForExistence(timeout:15));app.buttons["恢复"].firstMatch.tap()
@@ -126,7 +155,11 @@ final class Apple5UITests: XCTestCase {
                 XCTAssertEqual(XCTWaiter.wait(for:[enabled],timeout:20),.completed)
                 pageCapture(app,theme,"sheet-forget-memory");confirm.tap()
                 XCTAssertTrue(pageControl(app,"memory.cleanup").waitForExistence(timeout:15));pageTap(app,"memory.cleanup")
-                XCTAssertTrue(app.staticTexts["电脑存储：等待清理"].waitForExistence(timeout:15));pageCapture(app,theme,"memory-cleanup")
+                let pending=app.staticTexts["电脑存储：等待清理"]
+                for _ in 0..<6 where !pending.isHittable {
+                    app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:0.78)).press(forDuration:0.05,thenDragTo:app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:0.28)))
+                }
+                XCTAssertTrue(pending.waitForExistence(timeout:15));XCTAssertTrue(pending.isHittable);pageCapture(app,theme,"memory-cleanup")
                 XCTAssertTrue(app.staticTexts["其他设备：尚无逐台回执，无法核实"].exists)
             } else {
                 pageTap(app,"muteMemoryButton")

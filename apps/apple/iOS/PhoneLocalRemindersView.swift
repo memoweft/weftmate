@@ -31,8 +31,7 @@ struct PhoneLocalRemindersSection: View {
     @State private var error: String?
     var body: some View {
         VStack(alignment:.leading,spacing:AppleTokens.Space.p16) {
-            HStack { Text(notifications.notificationsEnabled ? "通知已开启" : "通知未开启").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted);Spacer();Button("新建提醒") { creating=true }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("reminders.new") }
-            Text("提醒按手机当地时间显示："+TimeZone.current.identifier).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+            Text(notifications.notificationsEnabled ? "通知已开启" : "通知未开启").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
             if !notifications.notificationsEnabled {
                 Text("没开通知，到点不会弹。请在 iPhone 设置 → 通知 → WeftMate 中开启。").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted).accessibilityIdentifier("reminders.permission")
                 Button(notifications.denied ? "去系统设置" : "开启通知") {
@@ -63,6 +62,8 @@ struct PhoneLocalRemindersSection: View {
                 Divider()
             }
             }
+            Button { creating=true } label: { Text("新建提醒").frame(maxWidth:.infinity) }.buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("reminders.new")
+            Text("提醒按手机当地时间显示："+TimeZone.current.identifier).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             if let error { Text(error).foregroundStyle(Weave.muted) }
         }
         .sheet(isPresented:$creating) { PhoneReminderEditor(phone:phone,row:nil,close:{creating=false}) }

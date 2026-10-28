@@ -177,7 +177,7 @@ struct PhoneGoalsView: View {
                         Button { manage(row,.run) } label: { PhoneFeatureRow(icon:"play",title:"立即运行") }.disabled(row.state == "completed").accessibilityIdentifier("schedules.run."+row.id)
                         Divider()
                         Button(role:.destructive) { deleting=row } label: { PhoneFeatureRow(icon:"trash",title:"删除定时任务") }
-                    }.disabled(model.busy.contains(row.identity))
+                    }.buttonStyle(.plain).disabled(model.busy.contains(row.identity))
                 }
                 Text("新增或调整定时任务，在来源对话里告诉 WeftMate。同一项安排只在这里管理。").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
             }.padding(AppleTokens.Space.p20)
@@ -207,7 +207,6 @@ struct PhoneGoalsView: View {
         let current=model.goals.first { $0.id == row.id } ?? row
         return ScrollView {
             VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
-                Text(current.title).font(AppleTokens.Fonts.title.bold())
                 Text("长期目标 · "+PhoneFeaturePolicy.goalStatus(current.phase)).foregroundStyle(Weave.muted)
                 Text(current.progress).accessibilityIdentifier("goals.progress")
                 if let description=current.description { PhoneSectionHeading(title:"目标说明");Text(description) }
@@ -215,17 +214,17 @@ struct PhoneGoalsView: View {
                 Text("打开来源对话，查看或调整下一步安排。").accessibilityIdentifier("goals.nextStep")
                 PhoneSectionHeading(title:"相关安排与进展")
                 ForEach(model.schedules.filter { current.scheduleIds?.contains($0.id) == true }) { schedule in
-                    NavigationLink { scheduleDetail(schedule) } label: { PhoneFeatureRow(icon:"clock",title:schedule.text,subtitle:schedule.nextRunAt.map(phoneFeatureTime) ?? "暂无下次执行时间") }
+                    NavigationLink { scheduleDetail(schedule) } label: { PhoneFeatureRow(icon:"clock",title:schedule.text,subtitle:schedule.nextRunAt.map(phoneFeatureTime) ?? "暂无下次执行时间") }.buttonStyle(.plain)
                 }
                 ForEach(model.tasks.filter { $0.source.sessionId == current.source.sessionId }) { task($0) }
-                Button("打开来源对话") { Task { await model.open(current.source,app:app,navigate:openConversation) } }.buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("goals.source")
+                Button { Task { await model.open(current.source,app:app,navigate:openConversation) } } label: { Text("打开来源对话").frame(maxWidth:.infinity) }.buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("goals.source")
                 PhoneActionMenu {
                     if current.phase != "complete" { Button("标为完成") { goal(current,.complete) } }
                     Button("移出目标列表",role:.destructive) { archiving=current }
                 } label: { Text("管理目标").frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p44) }.buttonStyle(OutlineActionStyle()).disabled(model.busy.contains(row.id))
                 if let error=model.errors["goals"] { InlineNotice(message:error,isError:true);Button("重试") { reload() } }
             }.padding(AppleTokens.Space.p20)
-        }.background(Weave.canvas).navigationTitle("目标详情").accessibilityIdentifier("goals.detail")
+        }.background(Weave.canvas).navigationTitle(current.title).navigationBarTitleDisplayMode(.large).accessibilityIdentifier("goals.detail")
     }
     private func reload() { Task { await model.read("goals",app:app) } }
     private func manage(_ row: ManagedSchedule,_ action: ScheduleAction) {

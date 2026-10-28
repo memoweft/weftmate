@@ -83,9 +83,16 @@ private struct PhoneLibraryDetailView: View {
                 if loading { ProgressView("正在读取成果…").frame(maxWidth:.infinity,minHeight:180) }
                 if let file {
                     Group {
-                        if preview?.contentType == "application/pdf" { PhonePDFPreview(file:file) }
-                        else { NativeAttachmentPreview(file:file) }
-                    }.frame(height:360).clipShape(RoundedRectangle(cornerRadius:AppleTokens.Radius.r12)).accessibilityIdentifier("library.preview")
+                        if let preview,let text=preview.text,["markdown","text","code"].contains(preview.kind) {
+                            Group {
+                                if preview.kind == "markdown" { PhoneLibraryMarkdown(text:text) }
+                                else { Text(text).font(preview.kind == "code" ? AppleTokens.Fonts.body.monospaced() : AppleTokens.Fonts.body).textSelection(.enabled) }
+                            }.frame(maxWidth:.infinity,alignment:.leading)
+                                .padding(AppleTokens.Space.p16).background(Weave.surface)
+                                .overlay(RoundedRectangle(cornerRadius:AppleTokens.Radius.r12).stroke(Weave.line))
+                        } else if preview?.contentType == "application/pdf" { PhonePDFPreview(file:file).frame(height:360) }
+                        else { NativeAttachmentPreview(file:file).frame(height:360) }
+                    }.clipShape(RoundedRectangle(cornerRadius:AppleTokens.Radius.r12)).accessibilityIdentifier("library.preview")
                     HStack {
                         Button { exporting=true } label: { WeftLabel("保存文件",icon:"download") }.buttonStyle(PrimaryActionStyle(fillsWidth:false)).accessibilityIdentifier("library.save")
                         Spacer()
@@ -135,5 +142,29 @@ private struct PhoneLibraryDetailView: View {
     private func cleanup() {
         if let file { try? FileManager.default.removeItem(at:file.deletingLastPathComponent()) }
         file=nil;preview=nil;error=nil;exporting=false
+    }
+}
+
+private struct PhoneLibraryMarkdown: View {
+    let text: String
+    var body: some View {
+        VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
+            ForEach(MessageMarkdown.parts(text.replacingOccurrences(of:"\r\n",with:"\n").replacingOccurrences(of:"\r",with:"\n"))) { part in
+                switch part.kind {
+                case .text:
+                    ForEach(Array(part.text.components(separatedBy:"\n\n").enumerated()),id:\.offset) { _,paragraph in
+                        let marks=paragraph.prefix { $0 == "#" }.count
+                        let heading=(1...6).contains(marks) && paragraph.dropFirst(marks).hasPrefix(" ")
+                        Text((try? AttributedString(markdown:paragraph)) ?? AttributedString(paragraph))
+                            .font(heading ? AppleTokens.Fonts.title3.weight(.semibold) : AppleTokens.Fonts.body)
+                            .textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading)
+                    }
+                case .code:
+                    ScrollView(.horizontal) { Text(part.text).font(AppleTokens.Fonts.body.monospaced()).textSelection(.enabled) }
+                case .table:
+                    MessageBodyContent(text:part.text,messageID:"library-table-"+String(part.id))
+                }
+            }
+        }
     }
 }

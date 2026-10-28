@@ -6,9 +6,9 @@ export function createPagesMemoryFixture() {
     lifecycle:muted?{muted_at:at}:{},value:{content:text},provenance:[{evidence_id:'ios-ui-source'}]});
   const missing=()=>{throw Object.assign(new Error('Synthetic source missing'),{code:'world_item_not_found'});};
   return {
-    enabled:false,
+    enabled:true,
     status:async()=>({state:'ready',worldRevision:revision,capabilities:{list:true,source:true,correct:true,mute:true,inject:false,deleteEvidence:true,deleteWorldItem:true}}),
-    peek:async()=>({}),
+    peek:()=> 'connected',
     query:async(_owner,method,input)=>{
       if(method==='query_jobs')return {world_revision:revision,jobs:[]};
       if(method==='query_world') {

@@ -5,6 +5,7 @@ import {once} from 'node:events';
 import {mkdtemp,readFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {generateKeyPairSync} from 'node:crypto';
 import {createInterface} from 'node:readline';
 
 test('page fixtures exercise real goals, schedules, library, source permissions and pending cleanup', {timeout:30000}, async()=>{
@@ -45,6 +46,12 @@ test('page fixtures exercise real goals, schedules, library, source permissions 
     assert.equal((await request('/memory/items?kind=cognition&query=')).items.length,0);
     const reconciled=await request('/memory/commands/by-request/pages-delete');assert.equal(reconciled.receipt.storageCleanup.state,'pending');
     const clean=await request('/memory/commands/by-request/pages-delete/retry-cleanup','POST',{});assert.equal(clean.receipt.storageCleanup.state,'complete');
+    // Native mutation refreshes use phoneFirst. The synthetic memory adapter is
+    // available; the deliberately absent cloud binding must remain the boundary.
+    const publicJwk=generateKeyPairSync('rsa',{modulusLength:2048}).publicKey.export({format:'jwk'});
+    const sync=await fetch(meta.origin+'/personal/v1/offline/sync',{method:'POST',headers:{origin:meta.origin,cookie,'x-weftmate-csrf':auth.csrfToken,'content-type':'application/json'},body:JSON.stringify({publicJwk,generation:0,hashes:{},phoneFirst:true})});
+    assert.equal(sync.status,409,'A supported memory refresh must not falsely mark this reachable host unavailable');
+    assert.equal((await sync.json()).error.code,'OFFLINE_CLOUD_REQUIRED');
     assert.equal(failure,'');
   } finally {
     const exited=once(child,'exit');child.stdin.end('stop\n');await exited;lines.close();await rm(directory,{recursive:true,force:true});

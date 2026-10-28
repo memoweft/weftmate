@@ -27,7 +27,6 @@ struct HealthPageView: View {
                 }
             }.padding(AppleTokens.Space.p20)
         }.background(Weave.canvas).navigationTitle("健康").navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(Weave.canvas,for:.navigationBar).toolbarBackground(.visible,for:.navigationBar)
             .toolbar {
                 ToolbarItem(placement:.primaryAction) {
                     Button { Task { await health.activate(app:app); await page.refresh(app:app) } } label: { WeftIcon("sync") }
@@ -261,10 +260,6 @@ struct HealthDetailView: View {
                 if id == "sleepMinutes" { HealthDurationNumber(minutes:series?.points.last?.value) }
                 else { HealthScoreNumber(text:PhoneHealthText.number(series?.points.last?.value,metric:id),unit:unit(id)) }
                 Text(page.updatedText).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                if let low=series?.points.last?.low, let high=series?.points.last?.high {
-                    Text("你平时的范围 "+number(low)+" — "+number(high)).foregroundStyle(.secondary)
-                    Gauge(value:series?.points.last?.value ?? low,in:min(low,series?.points.last?.value ?? low)...max(high,low+0.1,series?.points.last?.value ?? high)) { Text("相对平时的位置") }.tint(Weave.accent)
-                } else { Text("再戴几天就有对比了").foregroundStyle(.secondary) }
                 if let overview=page.cache.overview,let score=HealthPagePolicy.score(id,in:overview),let reasons=score.reasons,!reasons.isEmpty {
                     DisclosureGroup("依据") {
                         ForEach(Array(reasons.enumerated()),id:\.offset) { _,reason in Text(reason.text).font(AppleTokens.Fonts.callout) }
@@ -272,7 +267,11 @@ struct HealthDetailView: View {
                 }
                 Picker("时间范围",selection:$days) { ForEach([7,14,30,60],id:\.self) { Text("\($0) 天").tag($0) } }.pickerStyle(.segmented).accessibilityIdentifier("health.range")
                 if loading { ProgressView("正在读取变化…") }
-                HealthTrendChart(series:series,overlay:overlays ? overlay : nil,compact:false).accessibilityIdentifier("health.trend")
+                Text("\(days) 天内的每日测量").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
+                HealthTrendChart(series:series,overlay:overlays ? overlay : nil,compact:false)
+                if let low=series?.points.last?.low,let high=series?.points.last?.high {
+                    Text("你平时的范围 "+number(low)+" — "+number(high)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
+                } else { Text("再戴几天就有对比了").font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
                 HealthFormalBasis(overview:page.cache.overview,id:id)
                 Text("灰色是你常见的范围，虚线是这段时间的平均；点按或按住图表可以看某一天。").font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
                 Toggle("叠加深夜使用时长",isOn:$overlays).accessibilityIdentifier("health.overlay")
@@ -297,14 +296,15 @@ struct HealthTrendChart: View {
     var series: HealthMetricSeries?; var overlay: HealthMetricSeries?; var compact: Bool
     @State private var selected: Int?
     private var points: [HealthMetricPoint] { series?.points ?? [] }
+    private var trendColor: Color { series?.id == "sleepMinutes" ? AppleTokens.Colors.healthSleep : Weave.accent }
     var body: some View {
         VStack(alignment:.leading) {
             Chart {
                 ForEach(Array(points.enumerated()),id:\.offset) { i,p in
                     if let low=p.low,let high=p.high { AreaMark(x:.value("日期",i),yStart:.value("常见范围下界",low),yEnd:.value("常见范围上界",high)).foregroundStyle(Color.gray.opacity(0.15)) }
                     if let v=p.value {
-                        LineMark(x:.value("日期",i),y:.value("数值",v)).lineStyle(StrokeStyle(lineWidth:AppleTokens.Space.p4,lineCap:.round,lineJoin:.round)).foregroundStyle(Weave.accent)
-                        PointMark(x:.value("日期",i),y:.value("数值",v)).foregroundStyle(Weave.accent)
+                        LineMark(x:.value("日期",i),y:.value("数值",v)).lineStyle(StrokeStyle(lineWidth:AppleTokens.Space.p4,lineCap:.round,lineJoin:.round)).foregroundStyle(trendColor)
+                        PointMark(x:.value("日期",i),y:.value("数值",v)).foregroundStyle(trendColor)
                     }
                 }
                 if let average=series?.average { RuleMark(y:.value("平均",average)).lineStyle(StrokeStyle(lineWidth:1,dash:[4,4])).foregroundStyle(.secondary) }
@@ -316,7 +316,7 @@ struct HealthTrendChart: View {
                         }
                     }
                 }
-            }.frame(height:compact ? 56 : 240)
+            }.frame(height:compact ? 56 : 180)
                 .chartXAxis {
                     if !compact {
                         AxisMarks(values:Array(stride(from:0,to:points.count,by:max(1,points.count/4)))) { value in
@@ -326,6 +326,12 @@ struct HealthTrendChart: View {
                     }
                 }.chartYAxis(compact ? .hidden : .automatic)
                 .chartXSelection(value:$selected)
+                .chartGesture { proxy in
+                    DragGesture(minimumDistance:0).onChanged { value in
+                        proxy.selectXValue(at:value.location.x)
+                    }
+                }
+                .accessibilityIdentifier("health.trend")
                 .allowsHitTesting(!compact).accessibilityHidden(compact)
                 .accessibilityLabel("逐日趋势").accessibilityValue(points.map { ($0.day ?? "")+" "+number($0.value) }.joined(separator:"，"))
             if !compact,let selected,points.indices.contains(selected) { Text((points[selected].day.map(DeviceDateText.day) ?? "")+" · "+number(points[selected].value)).font(AppleTokens.Fonts.callout).accessibilityIdentifier("health.selectedDay") }

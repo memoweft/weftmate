@@ -23,6 +23,7 @@ const backend={
     listModels:async()=>[{id:'local',name:'合成模型',model:'synthetic',configured:true}],preflight:async()=>({ok:true}),
     createSession:async({sessionId})=>({sessionId}),sendMessage:async()=>({accepted:true,receiptId:'synthetic-'+(++sends)}),cancelSession:async()=>({accepted:true}),
     readEvents:async()=>({events:nativeEvents,nextSeq:1,hasMore:false}),
+    listUserQuestions:async()=>({runtimeId:'apple5-synthetic-runtime',questions:[]}),
     describeSession:async id=>({sessionId:id,title:'合成周末计划',agentPreset:'personal-remote',modelProfileId:'local'}),
     goals:async input=>{
         if(input.action==='list')return {goal:goals.get(input.sessionId)??null};

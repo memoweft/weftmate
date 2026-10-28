@@ -24,7 +24,7 @@ struct PhoneMemoryWorkspaceView: View {
                     Text("记忆由电脑整理，手机查看同步副本。").accessibilityIdentifier("phoneMemory.explanation")
                     Text("原话收到与记忆形成分开显示；纠正、停用和遗忘由电脑处理。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                 }.padding(AppleTokens.Space.p16).background(Weave.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
-                if !computerOnline { Text("电脑现在不在线。这里只读上次同步的获准副本，连接电脑后才能修改。").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted).accessibilityIdentifier("phoneMemory.offline") }
+                if !computerOnline,app.session != nil || offline.hostOffline || !items.isEmpty { Text("电脑现在不在线。这里只读上次同步的获准副本，连接电脑后才能修改。").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted).accessibilityIdentifier("phoneMemory.offline") }
                 if let notice=offline.notice { InlineNotice(message:notice).accessibilityIdentifier("phoneMemory.notice") }
                 HStack { WeftIcon("search");TextField("搜索记忆",text:$query).textFieldStyle(.plain).accessibilityIdentifier("phoneMemory.search") }.padding(AppleTokens.Space.p12).background(Weave.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
                 Picker("记忆类别",selection:$kind) {

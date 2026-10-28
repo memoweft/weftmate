@@ -92,7 +92,7 @@ struct MemoryWorkspaceView: View {
                             Text("电脑回执与此手机的获准副本分开核对。其他设备尚无逐台回执时，清理状态保持待确认。").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
                         }.padding(AppleTokens.Space.p20)
                     }.phoneSheet("遗忘进度",close:{ showingCleanup=false })
-                }
+                }.presentationDetents([.large])
             }.accessibilityIdentifier("memoryWorkspace")
     }
     #endif
@@ -227,6 +227,7 @@ struct MemoryWorkspaceView: View {
             .background(Weave.canvas).navigationTitle("记忆详情")
             #if os(iOS)
             .phoneSheet("记忆详情",close:{ showingDetail=false;model.closeDetail() })
+            .toolbar(.hidden,for:.navigationBar)
             #else
             .toolbar { ToolbarItem(placement:.cancellationAction) { Button("完成") { showingDetail=false;model.closeDetail() } } }
             #endif
