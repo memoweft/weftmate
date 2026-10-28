@@ -23,6 +23,7 @@ struct PhoneSidebar: View {
             HStack {
                 WeftIcon("search", size: AppleTokens.Space.p16).foregroundStyle(Weave.muted)
                 TextField("搜索对话与内容", text: $search).textFieldStyle(.plain)
+                    .frame(minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
                     .submitLabel(.search).onSubmit { navigate(.conversations) }.accessibilityIdentifier("phone.sidebar.search")
             }.padding(.horizontal, AppleTokens.Space.p12).frame(minHeight: AppleTokens.Space.p44)
                 .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
@@ -35,7 +36,7 @@ struct PhoneSidebar: View {
                     } label: {
                         HStack(spacing: AppleTokens.Space.p12) { WeftIcon("compose"); Text("新建对话"); Spacer(minLength: 0) }
                             .frame(maxWidth: .infinity, minHeight: AppleTokens.Space.p44, alignment: .leading).padding(.horizontal, AppleTokens.Space.p12)
-                    }.accessibilityIdentifier("phone.sidebar.new")
+                    }.buttonStyle(.plain).accessibilityIdentifier("phone.sidebar.new")
                     heading("你的对话")
                     row("主对话", icon: "chat", id: "phone.sidebar.main", action: mainConversation)
                     destination(.conversations)
@@ -55,7 +56,7 @@ struct PhoneSidebar: View {
                             Text(app.cloudLogin.authenticated ? "我的账号" : "登录账号")
                             Text("个人空间").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         }
-                    }.frame(maxWidth: .infinity, minHeight: AppleTokens.Space.p52, alignment: .leading)
+                    }.frame(maxWidth: .infinity, minHeight: AppleTokens.Space.p52, alignment: .leading).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityIdentifier("phone.sidebar.account")
                 Button { settings(false) } label: { WeftIcon("settings") }.phoneIcon(quiet: true)
                     .accessibilityLabel("设置").accessibilityIdentifier("phone.sidebar.settings")
@@ -109,7 +110,7 @@ struct PhoneConversationDirectory: View {
                 }
             }
             if app.cloudLogin.multipleComputers && !recentOnly {
-                ComputerConversationList(cloud: app.cloudLogin, query: query, mode: mode, archived: archived, groups: app.sessionGroups, close: close)
+                ComputerConversationList(cloud: app.cloudLogin, currentHostID: app.session?.hostId, currentConversations: app.conversations, query: query, mode: mode, archived: archived, groups: app.sessionGroups, close: close)
             } else {
                 ForEach(Array(sections.flatMap(\.rows).prefix(recentOnly ? 3 : Int.max))) { row in
                     if app.renamingSessionID == row.id { EditableSessionRow(app: app, conversation: row) }

@@ -90,9 +90,6 @@
 #conversation-pane.chat-workspace .execution-group-records > .execution-step { margin:0; }
 #conversation-pane.chat-workspace .step-title { flex:1; min-width:0; overflow-wrap:anywhere; }
 #conversation-pane.chat-workspace .step-group-title { flex:1; }
-#conversation-pane.chat-workspace .step-state { flex:none; width:5px; height:5px; border-radius:50%; background:var(--ink-muted); opacity:.65; }
-#conversation-pane.chat-workspace [data-state=running] > summary > .step-state { background:var(--ink); opacity:1; animation:m-reply-breathe var(--dur-5) var(--ease-in-out) infinite; }
-#conversation-pane.chat-workspace :is([data-state=failed],[data-state=issue]) > summary > .step-state { background:var(--danger); }
 #conversation-pane.chat-workspace .step-time { opacity:0; flex:none; color:var(--ink-secondary); font-size:11px; font-variant-numeric:tabular-nums; transition:opacity var(--dur-3) var(--ease-out); }
 #conversation-pane.chat-workspace summary:is(:hover,:focus-visible) > .step-time { opacity:1; }
 #conversation-pane.chat-workspace .progress-elapsed { opacity:0; transition:opacity var(--dur-3) var(--ease-out); font-size:12px; }

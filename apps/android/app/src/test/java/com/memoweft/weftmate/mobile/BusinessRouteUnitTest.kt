@@ -7,6 +7,31 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @org.junit.Test fun pairingStaysOutsideBusinessBridge() {
+        for (suffix in listOf("", "/join", "/reveal", "/status", "/decision", "/redeem"))
+            assertFalse(validBusinessPath("/personal/v1/cloud/pairings$suffix"))
+    }
+    @Test fun terminalRoutesKeepExactIdentities() {
+        assertTrue(validBusinessPath("/personal/v1/terminals"))
+        assertTrue(validBusinessPath("/personal/v1/terminals/terminal-00000000-0000-4000-8000-000000000001"))
+        assertTrue(validBusinessPath("/personal/v1/terminals/terminal-00000000-0000-4000-8000-000000000001/release"))
+        assertFalse(validBusinessPath("/personal/v1/terminals?ownerId=other"))
+        assertFalse(validBusinessPath("/personal/v1/terminals/../auth/desktop"))
+        assertFalse(validBusinessPath("/personal/v1/terminals/raw/connect"))
+    }
+    @Test fun projectFolderChangeKeepsExactProjectPath() {
+        assertTrue(validBusinessPath("/personal/v1/projects/project-folder"))
+        assertTrue(validBusinessMethod("/personal/v1/projects/project-folder", "PATCH"))
+        assertFalse(validBusinessPath("/personal/v1/projects/project-folder/relocate"))
+        assertFalse(validBusinessPath("/personal/v1/projects/project-folder?rootPath=another"))
+    }
+
+    @Test fun commandOutputUsesBoundedDetailPages() {
+        val detail="/personal/v1/sessions/session-one/events/12/detail"
+        assertTrue(validBusinessPath(detail))
+        assertTrue(validBusinessPath("$detail?outputOffset=64000"))
+        for (query in listOf("outputOffset=-1", "outputOffset=1&ownerId=other", "outputOffset=x", "outputOffset=9999999999999999")) assertFalse(validBusinessPath("$detail?$query"))
+    }
     @Test fun slashCommandsUseExactSessionRoute() {
         assertEquals(125_000, businessReadTimeout("/personal/v1/sessions/session-one/slash-commands", "POST"))
         assertEquals(20_000, businessReadTimeout("/personal/v1/sessions/session-one/slash-commands", "GET"))

@@ -1,0 +1,21 @@
+{
+  "transcript": [
+    2,
+    "https://cloud.example.test/personal/v1/cloud/oidc",
+    "synthetic-account",
+    "synthetic-host",
+    "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+    "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+    "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+    1800000120000,
+    "https://host.example.test",
+    ""
+  ],
+  "hostNonce": "BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ",
+  "phoneNonce": "BQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU",
+  "deviceId": "synthetic-phone",
+  "phoneJkt": "BgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgY",
+  "hostCommitment": "RosgXhl7i-wqerIGgV02bXRAo8pSFR9mTB7SwiGEHOY",
+  "phoneCommitment": "B3yrek-9dEZG8Yqt17X29hHl46SXygFaAphKKTncSB0",
+  "verificationCode": "309281"
+}

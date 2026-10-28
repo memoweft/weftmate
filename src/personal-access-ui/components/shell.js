@@ -204,6 +204,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             control.disabled = busy;
     }
     function updateAvailability() {
+        globalThis.WeftPanels?.update(workspaceContext());
         ui.messageActions?.refresh();
         const value = core.composerState(ui.readMessageDraft());
         ui.renderConversationUsage?.();
@@ -323,6 +324,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('revoke-confirm').disabled = false;
     }
     function resetIdentityControls() {
+        globalThis.WeftPanels?.reset();
         globalThis.WeftMotion?.resetIdentity();
         ui.byId('account-name').textContent = '';
         ui.byId('rail-account-name').textContent = '我的账户';
@@ -381,6 +383,23 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             ui.byId('assistant-view').setAttribute('aria-hidden', 'false'); ui.hideSettingsDialog?.();
         }
         document.body.classList.toggle('cloud-auth-active', view === 'login' || view === 'cloud-wait');
+    }
+    let workspaceFolderKey, workspaceFolderPath;
+    function workspaceContext() {
+        const selected = core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId);
+        const project = core.currentFolderProject?.();
+        const folderKey = `${core.state.identityGeneration}/${project?.projectId}/${project?.revision}`;
+        if(folderKey !== workspaceFolderKey) {
+            workspaceFolderKey = folderKey; workspaceFolderPath = project?.rootPath || null;
+            if(project && globalThis.weftmateDesktop?.projectFolderInfo && !core.remoteComputerSelected?.())
+                void globalThis.weftmateDesktop.projectFolderInfo(project.projectId).then(info => {
+                    if(folderKey === workspaceFolderKey) {workspaceFolderPath=info?.rootPath || null;globalThis.WeftPanels.update(workspaceContext());}
+                }).catch(()=>{});
+        }
+        return { ownerId: core.state.ownerId, identityGeneration: core.state.identityGeneration,
+            conversationId: core.state.newConversation ? `draft:${core.state.newConversationId}` : core.state.activeChatSource === 'phone' ? `phone:${core.state.selectedPhoneConversationId}` : core.state.selectedChatId || selected?.chatId || core.state.selectedSessionId || null, sessionId: core.state.selectedSessionId,
+            mode: core.currentConversationMode?.() || 'chat', computerId: core.currentExecutionComputer?.() || core.state.hostId,
+            projectId: project?.projectId || null, workDir: workspaceFolderPath };
     }
     function mountShell() {
         ui.byId('account-menu-trigger').setAttribute('aria-label', '账户菜单');
@@ -541,5 +560,5 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
                 void core.refreshPendingDevices();
         }, core.polling.presence);
     }
-    return { updateModelPicker, paintConnection, paintOperation, approvalModeReadFailed, closeModelMenu, openModelMenu, stopVoiceInput, startVoiceInput, takeSetupGrant, errorAt, toast, clearPasswords, setBusy, updateAvailability, renderModelHint, startAssistantRefresh, showRegistration, cancelCloudLogin, resetAccountControls, resetIdentityControls, resetConversationControls, closeAccountMenu, stopCloudPairing, paintScreen, mountShell };
+    return { workspaceContext, updateModelPicker, paintConnection, paintOperation, approvalModeReadFailed, closeModelMenu, openModelMenu, stopVoiceInput, startVoiceInput, takeSetupGrant, errorAt, toast, clearPasswords, setBusy, updateAvailability, renderModelHint, startAssistantRefresh, showRegistration, cancelCloudLogin, resetAccountControls, resetIdentityControls, resetConversationControls, closeAccountMenu, stopCloudPairing, paintScreen, mountShell };
 };

@@ -7,8 +7,9 @@ struct PhoneWorkspace: View {
     @ObservedObject private var phone: PhoneStandaloneModel
     init(model: AppleAppModel, phone: PhoneStandaloneModel? = nil) { self.model = model; cloud = model.cloudLogin; self.phone = phone ?? model.phoneChat }
     @ObservedObject private var reminders = PhoneReminderNotifications.shared
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.phoneReduceMotion) private var reduceMotion
     @State private var tab: PhoneTab = .chat
+    @State private var visited: Set<PhoneTab> = [.chat]
     @State private var chatPath: [String] = []
     @State private var activityPath: [String] = []
     @State private var healthPath: [String] = []
@@ -24,14 +25,21 @@ struct PhoneWorkspace: View {
     private var currentPath: Binding<[String]> {
         switch tab { case .chat: $chatPath; case .activity: $activityPath; case .health: $healthPath }
     }
+    private var openedMode: ConversationMode? {
+        model.conversations.first { $0.id == model.openedSessionID }.map { WorkAndChat.mode($0) }
+    }
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
             PhoneTranscriptHandoffBanner(model: phone)
             TabView(selection: $tab) {
-                stack(.chat, path: $chatPath).tag(PhoneTab.chat)
-                stack(.activity, path: $activityPath).tag(PhoneTab.activity)
-                stack(.health, path: $healthPath).tag(PhoneTab.health)
-            }.toolbar(.hidden, for: .tabBar)
+                ForEach(PhoneTab.allCases) { item in
+                    Group {
+                        if visited.contains(item) || tab == item {
+                            stack(item, path: navigationPath(for: item))
+                        } else { Color.clear }
+                    }.tag(item)
+                }
+            }
             if !keyboardVisible {
                 PhoneBottomTabs(selection: $tab, reselect: resetCurrentTab).background(Weave.canvas)
             }
@@ -48,11 +56,13 @@ struct PhoneWorkspace: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = true } }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = false } }
+        .onChange(of: tab) { _, value in visited.insert(value) }
         .onChange(of: cloud.subject) { _, _ in
             dismissPhonePreviewKeyboard(); keyboardVisible = false; sidebar = false
             chatPath = []; activityPath = []; healthPath = []; settingsOpen = false; search = ""
         }
         .onChange(of: model.openedSessionID) { _, id in openConversation(id) }
+        .onChange(of: openedMode) { _, mode in if let mode { savedMode = mode.rawValue } }
         .onChange(of: reminders.openedReminder) { _, route in navigateReminder(route) }
         .onAppear { openConversation(model.openedSessionID); navigateReminder(reminders.openedReminder) }
         .onChange(of: model.phoneLibrarySelection) { _, id in if id != nil { navigate(.library) } }
@@ -78,10 +88,13 @@ struct PhoneWorkspace: View {
                         }
                     }
                 }
-        }.opacity(tab == item ? 1 : 0.45)
-            .offset(y: reduceMotion || tab == item ? 0 : AppleTokens.Space.p6)
-            .animation(PhoneMotion.tabs(reduce: reduceMotion), value: tab)
-            .id(stackIDs[item])
+        }
+        // Bar visibility flows upward from the selected tab's content to its native container.
+        .toolbar(.hidden, for: .tabBar)
+        .id(stackIDs[item])
+    }
+    private func navigationPath(for item: PhoneTab) -> Binding<[String]> {
+        switch item { case .chat: $chatPath; case .activity: $activityPath; case .health: $healthPath }
     }
     @ViewBuilder private func page(_ item: PhoneTab) -> some View {
         switch item {
@@ -129,7 +142,7 @@ struct PhoneWorkspace: View {
         else if id == "health" { HealthPageView(app: model, ask: { text in Task { await ask(text) } }) }
         else if let row = model.conversations.first(where: { $0.id == id }) {
             if row.isMainChat || model.mainChat.capabilities.supports("workAndChat") && row.logicalHistory == true {
-                MainChatView(app: model, chatID: model.mainChat.capabilities.supports("workAndChat") ? row.chatId : nil).id(row.id)
+                MainChatView(app: model, chatID: row.isMainChat ? nil : row.chatId).id(row.id)
             } else {
                 ConversationView(model: model, conversation: row).id(row.id + (row.sessionId ?? model.taskSessionID(for: row, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(row.chatContentRevision ?? 0))
             }
