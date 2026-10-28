@@ -13,6 +13,7 @@ export async function measureUi(page, name, action, ready) {
     }
     const visible = () => {
       if (ready.kind === 'panel') return !!document.querySelector('.timeline-preview:not([hidden])') === ready.visible;
+      if (ready.kind === 'parallelStream') return document.querySelector('#transcript')?.textContent.includes('主线流式') && document.querySelector('.panel-chat .transcript')?.textContent.includes('侧聊流式');
       if (ready.kind === 'tab') return document.querySelector('.preview-tab-select[aria-selected=true]')?.textContent === ready.title;
       if (ready.kind === 'width') return Math.abs(document.querySelector('.timeline-preview').getBoundingClientRect().width - ready.before) > 2;
       if (ready.kind === 'conversation') return testCore.state.selectedSessionId === ready.id && !testCore.state.newConversation && document.getElementById('transcript').textContent.includes('报告已保存');

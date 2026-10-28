@@ -8,7 +8,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             contentType: blob.type.startsWith('image/') ? 'image/png' : 'text/markdown',
             bytes: new Uint8Array(await blob.arrayBuffer()), ownerId: core.state.ownerId }) : undefined,
         title: () => core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.title });
-    globalThis.WeftProblemFeedback = trigger => ui.messageActions.openFeedback(trigger);
+    if (!ui.scopedChat) globalThis.WeftProblemFeedback = trigger => ui.messageActions.openFeedback(trigger);
     function clearHistoryView(loading = false) {
         globalThis.WeftContent?.closeGallery(false);
         const list = ui.byId('transcript');

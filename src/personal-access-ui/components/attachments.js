@@ -5,7 +5,8 @@ globalThis.WeftUiComponents.factories.attachments = (core, ui) => {
     function clearThumbnails(keep = new Set()) {
         for (const [id, value] of thumbnails) if (!keep.has(id)) { URL.revokeObjectURL(value.url); thumbnails.delete(id); }
     }
-    globalThis.addEventListener?.('pagehide', () => clearThumbnails());
+    const releaseThumbnails = () => clearThumbnails();
+    globalThis.addEventListener?.('pagehide', releaseThumbnails);
     function paintPhoneAttachmentState(message) {
         if (!phone()) return;
         const uploading = !!core.state.attachmentUpload;
@@ -65,5 +66,5 @@ globalThis.WeftUiComponents.factories.attachments = (core, ui) => {
         ui.paintAttachmentStatus(core.state.attachmentStatus);
         ui.syncPhoneComposer?.();
     }
-    return { paintAttachmentStatus, renderAttachmentDrafts };
+    return { paintAttachmentStatus, renderAttachmentDrafts, disposeAttachmentDraftView() { clearThumbnails(); globalThis.removeEventListener?.('pagehide', releaseThumbnails); } };
 };
