@@ -9,7 +9,7 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { measureUi } from '../helpers/ui-smoothness.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const root = resolve(import.meta.dirname, '../..');
-process.env.WEFTMATE_MANAGED_TEMP_ROOT ??= join(root,'.local','ui07-fixtures');
+if (!process.env.WEFTMATE_TEST_TEMP_SCOPE) process.env.WEFTMATE_MANAGED_TEMP_ROOT ??= join(root,'.local','ui07-fixtures');
 const out = process.env.WEFTMATE_EVIDENCE_DIR;
 let app, fixture, lock, page, profile;
 const errors = [], samples = [];
