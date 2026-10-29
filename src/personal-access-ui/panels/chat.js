@@ -30,7 +30,7 @@ WeftPanels.register('chat', {
       clearMessageDraft() { input.value = ''; resizeInput(); },
       restoreMainChatDraft(text) { input.value = text; resizeInput(); },
       loadAttachmentHasher: () => import('../file-sha256.js'),
-      paintModels: () => update(), paintConnection: () => update(), paintOperation: () => update(),
+      paintModels: () => update(), paintConnection: () => update(), paintOperation: () => update(), clearOperation: () => update(),
       setApprovalModeBusy: () => update(), renderApprovalMode: () => update(), approvalModeReadFailed: () => ui.toast('审批方式暂时无法读取，请重试。'),
       closeApprovalMenu() {}, closeResourcePreview() {},
       updateModelPicker: () => picker?.update(),

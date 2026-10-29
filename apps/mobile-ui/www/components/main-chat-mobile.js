@@ -58,7 +58,7 @@
     closePhoneImagePreview:()=>closeImagePreview({restoreFocus:false}),
     clearHistoryView:()=>{state.sharedEvents=[];$('chat-content').replaceChildren();},
     historyNotice:view.historyNotice,paintCommandOperation:message=>status(message),renderOperation:message=>status(message),
-    paintOperation:message=>status(message),setApprovalModeBusy:busy=>{$('approval-mode-button').disabled=busy;},
+    paintOperation:message=>status(message),clearOperation:()=>{$('chat-status').replaceChildren();$('chat-status').classList.remove('error');},setApprovalModeBusy:busy=>{$('approval-mode-button').disabled=busy;},
     paintHistoryMessages:events=>{for(const event of events)trackSharedAcceptedTurn(event);if(state.logicalChats&&!main()){
       state.sharedEvents=[...uiCore.state.historyEvents.values()].sort((a,b)=>a.seq-b.seq);renderSharedConversation();}},
     paintAttachmentStatus:message=>status(message),

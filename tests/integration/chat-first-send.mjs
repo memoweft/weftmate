@@ -117,7 +117,8 @@ try {
           session: testCore.state.selectedSessionId, selecting: testCore.state.sessionSelecting, submitting: testCore.state.submitting,
           intro: { hidden: intro.hidden, opacity: Number(style.opacity), visibility: style.visibility, text: intro.textContent, rect: rect(intro) },
           form: rect(document.getElementById('message-form')), draft: document.getElementById('message-text').value,
-          operation: { text: document.getElementById('operation-status').textContent, hidden: document.getElementById('operation-status').hidden },
+          operation: { text: document.getElementById('operation-status').textContent, hidden: document.getElementById('operation-status').hidden,
+            rect:rect(document.getElementById('operation-status')),reviewRect:rect(document.getElementById('reset-operation')) },
           timelineTime: document.timeline.currentTime, generation: testCore.state.historyGeneration, afterSeq: testCore.state.afterSeq,
           native: [...testCore.state.historyEvents.values()].map(event => ({ seq: event.seq, type: event.type, turn: event.data?.turn, live: event.data?.live })),
           users: users.map(node => ({ id: id(node), bodyId: id(node.querySelector('.message-text')), bubbleId: id(node.querySelector('.message-user-bubble')),
@@ -193,6 +194,7 @@ try {
     check(`${name}: first message stays in place from its first visible frame`,summary.allFrameDisplacement<=1);
     const visibleIntro=frames.filter(frame=>frame.intro.opacity>.01);
     check(`${name}: welcome copy stays stable while fading`,new Set(visibleIntro.map(frame=>frame.intro.text)).size<=1);
+    check(`${name}: no bottom progress or reserved space`,frames.every(frame=>frame.operation.hidden && !frame.operation.text && frame.operation.rect.height===0 && frame.operation.reviewRect.height===0));
     check(`${theme}: created and sent exactly once`, summary.creates === 1 && summary.sends === 1);
     check(`${theme}: message never vanishes`, summary.missing === 0);
     check(`${theme}: exactly one user message in every frame`, summary.duplicates === 0);
@@ -222,11 +224,15 @@ try {
   await page.waitForFunction(() => testCore.optimisticMessages().some(row => row.status === 'failed'));
   check('failure retains the draft', await page.locator('#message-text').inputValue() === '失败后保留的合成草稿');
   check('failure offers retry', await page.getByRole('button', { name: '检查状态', exact: true }).isVisible());
+  check('real failure remains visible above the composer', await page.locator('#operation-status').isVisible() && !!await page.locator('#operation-status').textContent());
+  await page.screenshot({path:join(out,'failure-feedback.png')});
   scenario.fail = false;
   await page.getByRole('button', { name: '检查状态', exact: true }).click();
   await page.waitForFunction(() => testCore.state.turnStatus === 'completed');
   check('retry reuses the created session', scenario.creates === 1);
   check('retry sends once after the failed attempt', scenario.sends === 2);
+  check('successful retry clears the resolved notice without a slot', await page.locator('#operation-status').evaluate(node=>node.hidden && !node.textContent && node.getBoundingClientRect().height===0));
+  await page.screenshot({path:join(out,'retry-completed.png')});
   check('no renderer errors', errors.length === 0); report.errors = errors;
   if (!before) assert.deepEqual(report.checks.filter(check => !check.value), [], 'First-send invariants');
 } catch (error) {
