@@ -120,6 +120,8 @@ try {
       turnStatus: testCore.state.turnStatus, liveRefreshing: testCore.state.liveRefreshing,
       historyAllowed: testCore.historyReadAllowed(), historyRead: testCore.state.historyReadResult?.kind,
       events: [...testCore.state.historyEvents.values()].map(event => ({ seq: event.seq, type: event.type, turn: event.data?.turn, live: event.data?.live })),
+      operation:{text:document.getElementById('operation-status').textContent,hidden:document.getElementById('operation-status').hidden,
+        height:document.getElementById('operation-status').getBoundingClientRect().height,reviewHeight:document.getElementById('reset-operation').getBoundingClientRect().height},
       transcript: document.getElementById('transcript').textContent }); globalThis.handoffFrame = requestAnimationFrame(tick); }; tick();
   });
   const input = page.getByRole('textbox', { name: '输入消息', exact: true });
@@ -144,6 +146,7 @@ try {
   report.backend = [...sessions].map(([sessionId, state]) => ({ sessionId, turn: state.turn, watermark: state.watermark, running: state.running, completedAt: state.completedAt }));
   check('exactly two messages were accepted', report.native.filter(row => row.kind === 'message-accepted').length === 2);
   check('backend durably ended both native turns', report.native.filter(row => row.kind === 'durable-terminal').length === 2);
+  check('both normal sends have no bottom notice or reserved space',report.samples.every(sample=>sample.operation.hidden && !sample.operation.text && sample.operation.height===0 && sample.operation.reviewHeight===0));
   const ended = report.native.find(row => row.kind === 'durable-terminal' && row.turn === 2)?.at;
   check('the UI does not invent completion before the second native end', !report.samples.some(sample => sample.events.some(event => event.type === 'turn.started' && event.turn === 2) && sample.epoch < ended && sample.turnStatus === 'completed'));
   check('no renderer errors', report.errors.length === 0);

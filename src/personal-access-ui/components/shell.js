@@ -16,6 +16,11 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         output.textContent = visibleMessage || '';
         ui.byId('reset-operation').hidden = core.state.reviewableRequests.size === 0;
     }
+    function clearOperation() {
+        ui.byId('operation-status').replaceChildren();
+        ui.byId('operation-status').hidden = true;
+        ui.byId('reset-operation').hidden = true;
+    }
     function approvalModeReadFailed() {
         ui.byId('approval-mode-trigger').title = '无法读取审批模式，请重新打开对话';
     }
@@ -567,5 +572,5 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
                 void core.refreshPendingDevices();
         }, core.polling.presence);
     }
-    return { workspaceContext, updateModelPicker, paintConnection, paintOperation, approvalModeReadFailed, closeModelMenu, openModelMenu, stopVoiceInput, startVoiceInput, takeSetupGrant, errorAt, toast, clearPasswords, setBusy, updateAvailability, renderModelHint, startAssistantRefresh, showRegistration, cancelCloudLogin, resetAccountControls, resetIdentityControls, resetConversationControls, closeAccountMenu, stopCloudPairing, paintScreen, mountShell };
+    return { workspaceContext, updateModelPicker, paintConnection, paintOperation, clearOperation, approvalModeReadFailed, closeModelMenu, openModelMenu, stopVoiceInput, startVoiceInput, takeSetupGrant, errorAt, toast, clearPasswords, setBusy, updateAvailability, renderModelHint, startAssistantRefresh, showRegistration, cancelCloudLogin, resetAccountControls, resetIdentityControls, resetConversationControls, closeAccountMenu, stopCloudPairing, paintScreen, mountShell };
 };
