@@ -537,7 +537,7 @@ select { color: var(--ink); background: var(--surface); }
 @keyframes m-surface-exit { to { opacity:0; transform:translateY(-4px); } }
 .motion-details::details-content { transition:none; }
 .motion-selection { position:relative; }
-.motion-selection-marker { position:absolute; z-index:1; display:block; height:var(--wm-space-2); margin-top:calc(-1 * var(--wm-space-2)); border-radius:var(--wm-radius-2); background:var(--ink); transform-origin:left; pointer-events:none; }
+.motion-selection-marker { position:absolute; z-index:1; display:block; height:var(--wm-space-2); margin-top:calc(-1 * var(--wm-space-2)); border-radius:var(--wm-radius-4); background:var(--ink); transform-origin:left; pointer-events:none; }
 .motion-selection .goals-tab::after { content:none; }
 :is(.goals-tab,.activity-filters button,.library-type,.preview-tab,.rail-link,.chat-day-toggle,.memory-type-filter,.search-type) { transition:color var(--dur-1) var(--ease-out),background-color var(--dur-1) var(--ease-out),border-color var(--dur-1) var(--ease-out); }
 @media(prefers-reduced-motion:reduce) { .startup-mark .wm-icon { animation:none; } }
