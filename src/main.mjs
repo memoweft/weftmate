@@ -3722,7 +3722,7 @@ async function bootstrap() {
           setupTray();
           await personalDesktop.ready;
           if (pendingWindowsSendTo.length) personalDesktop.sendTo(pendingWindowsSendTo.splice(0));
-          await desktopUpdates.confirmAppStartup(() => personalDesktop.show());
+          await desktopUpdates.confirmAppStartup(() => personalDesktop.showAfterUpdate());
         }
         hostLog.write('host.ready', { durationMs: Math.round(performance.now() - bootStartedAt) });
       }

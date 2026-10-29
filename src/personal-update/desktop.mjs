@@ -123,12 +123,12 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
   if (feed || updateState().enabled) { checkTimer = setInterval(() => void check(), 60 * 60 * 1000); checkTimer.unref(); void check(); }
   return { store, state, check, reopen, attach, restart, async confirmAppStartup(showWindow) {
     if (appStartupConfirmed || !await window.webContents.executeJavaScript('globalThis.__WeftUiStarted === true')) return false;
-    await appBootSignal('healthy');
     appStartupConfirmed = true;
     // The watchdog's hidden launch and any pending tray/minimized shell must
     // hand off to the ready updated app once. Ordinary startup and UI trials
     // keep their existing visibility; subsequent loads never take focus again.
-    if (completedVersion) showWindow();
+    if (completedVersion) await showWindow();
+    await appBootSignal('healthy');
     return true;
   }, async prepareWindow() {
     if (await isIdle()) try { await store.activate({ idle: true }); } catch { await rollback(); }

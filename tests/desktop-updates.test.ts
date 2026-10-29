@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { EventEmitter } from 'node:events';
 import { registerHooks } from 'node:module';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
@@ -120,4 +120,21 @@ test('successful app startup shows once after UI health, while ordinary tray sta
       if (updated) process.argv.splice(process.argv.lastIndexOf('--updated'), 1);
     }
   }
+});
+
+test('the watchdog health receipt waits for the single asynchronous update activation', async () => {
+  const recovery = join(root, 'WeftMate', 'app-recovery'); await mkdir(recovery, { recursive: true });
+  const token = 'synthetic-activation', pending = join(recovery, 'pending.json'), healthy = join(recovery, 'healthy.json');
+  await writeFile(pending, JSON.stringify({ token, nextVersion: electron.app.getVersion(), executable: process.execPath }));
+  const desktop = await createDesktopUpdates({ root: join(root, 'activation-checkpoint'), feed: null, trustedKeys, isIdle: async () => true });
+  desktop.attach(Object.assign(new EventEmitter(), { isDestroyed: () => false, webContents: Object.assign(new EventEmitter(), { isLoading: () => true, executeJavaScript: async () => true }) }));
+  let activate;
+  try {
+    const confirming = desktop.confirmAppStartup(() => new Promise(resolve => { activate = resolve; }));
+    await new Promise(resolve => setImmediate(resolve));
+    await assert.rejects(readFile(healthy), { code: 'ENOENT' });
+    assert.equal(await desktop.confirmAppStartup(() => assert.fail('activation repeated')), false);
+    activate(); await confirming;
+    assert.equal(JSON.parse(await readFile(healthy, 'utf8')).token, token);
+  } finally { desktop.close(); await rm(pending, { force: true }); await rm(healthy, { force: true }); }
 });
