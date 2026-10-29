@@ -30,6 +30,14 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Prepare the pinned Electron runtime before the bounded UI test
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:WEFTMATE_MOTION2_OUTPUT | Out-Null
+          node -e "const fs=require('node:fs');console.time('electron-prepare');const executable=require('electron');if(!fs.existsSync(executable))throw Error('Electron runtime is missing');console.timeEnd('electron-prepare');console.log('Pinned Electron runtime prepared');" *> (Join-Path $env:WEFTMATE_MOTION2_OUTPUT 'runtime-prepare.log')
+          $runtimeExit = $LASTEXITCODE
+          Get-Content (Join-Path $env:WEFTMATE_MOTION2_OUTPUT 'runtime-prepare.log')
+          exit $runtimeExit
       - name: Native disclosure, loading states and switch inventory
         shell: pwsh
         run: node --test tests/ui-motion-2.test.ts tests/ui-motion-2-goals.test.ts tests/ui-motion-2-memory.test.ts

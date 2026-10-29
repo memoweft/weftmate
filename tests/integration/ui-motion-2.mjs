@@ -15,8 +15,8 @@ const dialogsOnly=process.argv.includes('--dialogs-only');
 const bootOnly=process.argv.includes('--boot-only');
 const out=resolve(process.env.WEFTMATE_MOTION2_OUTPUT||'.local/evidence/ui-motion-2');
 await mkdir(out,{recursive:true});
-const report={before,commit:null,dirty:null,phase:'module-loaded',checks:[],samples:[],performance:[],errors:[],console:[]};
-const phase=async name=>{report.phase=name;await writeFile(join(out,'report.json'),JSON.stringify(report,null,2));};
+const report={before,commit:null,dirty:null,phase:'module-loaded',phases:[],checks:[],samples:[],performance:[],errors:[],console:[]};
+const phase=async name=>{report.phase=name;report.phases.push({name,at:new Date().toISOString()});await writeFile(join(out,'report.json'),JSON.stringify(report,null,2));};
 const check=(name,value,details)=>{report.checks.push({name,pass:!!value,details});if(!before)assert.ok(value,`${name}: ${JSON.stringify(details)}`);};
 let app,page,fixture,scope,lock;
 async function capture(name){
@@ -41,7 +41,9 @@ try{
     const asset=source.replace('src/personal-access-ui/','').replace('src/ui-core/','ui-core/');
     await page.route(`**/personal/v1/ui/${asset}`,route=>route.fulfill({contentType:source.endsWith('.css')?'text/css':'text/javascript',body:execFileSync('git',['show',`825edad9e:${source}`],{cwd:root,encoding:'utf8'})}));
   }
-  await phase('authorization');await page.waitForURL('**/personal/v1/ui');await localUiSession(page,fixture.credentials,'UI-MOTION-2 synthetic',{mainChat:true});
+  await phase('initial-navigation');await page.waitForURL('**/personal/v1/ui');
+  await phase('login');await localUiSession(page,fixture.credentials,'UI-MOTION-2 synthetic',{mainChat:true});
+  await phase('ui-boot');
   await page.waitForFunction(()=>globalThis.__WeftUiStarted&&globalThis.testCore?.state.sessions.length>0);
   await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.showInactive();w.webContents.setBackgroundThrottling(false);});
   await page.evaluate(()=>WeftReplyMotion.setVisibility(false));
@@ -232,17 +234,31 @@ try{
       parent.setAttribute('data-motion-native-close','');parent.close();parent.remove();return result;
     });
     check('select-menu exit remains above its parent dialog and restores focus',menuLayered.visibleCopy&&menuLayered.value==='1'&&menuLayered.parentOpen&&menuLayered.parentY===0&&menuLayered.focus&&menuLayered.cleaned,menuLayered);
-    await page.evaluate(()=>{globalThis.motion2ReadConnectors=testCore.readConnectors;testCore.readConnectors=async()=>({connectors:[],builtinConnectors:[],canManageConnectors:true});testUi.openSettings('connectors');});
+    await page.evaluate(()=>{globalThis.motion2ReadConnectors=testCore.readConnectors;testCore.readConnectors=async()=>({connectors:[],builtinConnectors:[],canManageConnectors:true});document.getElementById('account-menu-trigger').focus();testUi.openSettings('connectors');});
     await page.getByRole('button',{name:'添加自定义连接器',exact:true}).click();
     const connector=page.locator('dialog.connector-editor');await connector.waitFor({state:'visible'});
-    await page.evaluate(()=>{globalThis.motion2Connector=document.querySelector('dialog.connector-editor');globalThis.motion2Settings=document.getElementById('settings-dialog');for(const a of motion2Settings.getAnimations())a.finish();});
+    await page.evaluate(()=>{globalThis.motion2Connector=document.querySelector('dialog.connector-editor');globalThis.motion2Settings=document.getElementById('settings-dialog');for(const a of motion2Settings.getAnimations())a.finish();globalThis.motion2ParentRect=motion2Settings.getBoundingClientRect().toJSON();});
     await connector.getByRole('button',{name:'关闭',exact:true}).click();await page.evaluate(()=>new Promise(requestAnimationFrame));
     const dynamic=await page.evaluate(async()=>{
-      const copy=document.querySelector('.motion-dialog-copy');const result={removed:!motion2Connector.isConnected,parentOpen:motion2Settings.open,visibleCopy:!!copy?.matches(':popover-open')&&copy.getBoundingClientRect().width>0,focus:document.activeElement?.textContent==='添加自定义连接器'};
+      const copy=document.querySelector('.motion-dialog-copy'),rect=motion2Settings.getBoundingClientRect();const result={removed:!motion2Connector.isConnected,parentOpen:motion2Settings.open,parentStable:['x','y','width','height'].every(key=>Math.abs(rect[key]-motion2ParentRect[key])<1),copies:document.querySelectorAll('.motion-dialog-copy').length,visibleCopy:!!copy?.matches(':popover-open')&&copy.getBoundingClientRect().width>0&&copy.inert,focus:document.activeElement?.textContent==='添加自定义连接器'};
       await Promise.all(copy?.getAnimations().map(a=>a.finished.catch(()=>{}))||[]);result.cleaned=!document.querySelector('.motion-dialog-copy');return result;
     });
-    check('actual connector editor can remove its source DOM while the exit remains visible above settings',dynamic.removed&&dynamic.parentOpen&&dynamic.visibleCopy&&dynamic.focus&&dynamic.cleaned,dynamic);
-    await page.evaluate(()=>{testCore.readConnectors=motion2ReadConnectors;testUi.closeSettings?.();document.getElementById('settings-dialog').close();});
+    check('actual connector editor can remove its source DOM while the exit remains visible above settings',dynamic.removed&&dynamic.parentOpen&&dynamic.parentStable&&dynamic.copies===1&&dynamic.visibleCopy&&dynamic.focus&&dynamic.cleaned,dynamic);
+    await page.evaluate(()=>{testCore.readConnectors=motion2ReadConnectors;testUi.openSettings('models');});
+    await page.locator('#account-model-add').click();await page.locator('#account-model-dialog').waitFor({state:'visible'});
+    await page.evaluate(()=>{for(const a of motion2Settings.getAnimations())a.finish();globalThis.motion2ParentRect=motion2Settings.getBoundingClientRect().toJSON();});
+    await page.keyboard.press('Escape');
+    const settingsNative=await page.evaluate(async()=>{
+      const editor=document.getElementById('account-model-dialog'),frames=[];
+      for(let i=0;i<10;i++){const style=getComputedStyle(editor),rect=motion2Settings.getBoundingClientRect();frames.push({open:editor.open,display:style.display,overlay:style.overlay,opacity:Number(style.opacity),copies:document.querySelectorAll('.motion-dialog-copy').length,parentStable:['x','y','width','height'].every(key=>Math.abs(rect[key]-motion2ParentRect[key])<1)});await new Promise(requestAnimationFrame);}
+      await new Promise(r=>setTimeout(r,180));return {marked:editor.hasAttribute('data-motion-native-close'),parentMarked:motion2Settings.hasAttribute('data-motion-native-close'),frames,focus:document.activeElement.id==='account-model-add',cleaned:getComputedStyle(editor).overlay==='none'&&!document.querySelector('.motion-dialog-copy')};
+    });
+    await writeFile(join(out,'settings-native-editor-frames.json'),JSON.stringify(settingsNative,null,2));
+    check('combined account-model native exit is visible without a second copy or parent movement',settingsNative.marked&&settingsNative.parentMarked&&settingsNative.frames.some(f=>!f.open&&f.display!=='none'&&f.opacity>0&&f.overlay==='auto')&&settingsNative.frames.every(f=>f.copies===0&&f.parentStable)&&settingsNative.focus&&settingsNative.cleaned,settingsNative);
+    await page.getByRole('button',{name:'关闭设置',exact:true}).click();
+    const settingsRoot=await page.evaluate(async()=>{const frames=[];for(let i=0;i<10;i++){const s=getComputedStyle(motion2Settings);frames.push({open:motion2Settings.open,display:s.display,overlay:s.overlay,opacity:Number(s.opacity),copies:document.querySelectorAll('.motion-dialog-copy').length});await new Promise(requestAnimationFrame);}await new Promise(r=>setTimeout(r,180));return {frames,focus:document.activeElement.id==='account-menu-trigger',cleaned:getComputedStyle(motion2Settings).overlay==='none'&&!document.querySelector('.motion-dialog-copy')};});
+    await writeFile(join(out,'settings-native-root-frames.json'),JSON.stringify(settingsRoot,null,2));
+    check('combined settings native exit remains visible and returns focus without a visual duplicate',settingsRoot.frames.some(f=>!f.open&&f.display!=='none'&&f.opacity>0&&f.overlay==='auto')&&settingsRoot.frames.every(f=>f.copies===0)&&settingsRoot.focus&&settingsRoot.cleaned,settingsRoot);
     await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>WeftReplyMotion.setPreference('system'));
     const reduced=await page.evaluate(()=>{const el=document.getElementById('message-form');WeftMotion.content(el,Symbol());return {reduced:WeftMotion.reduced,frames:el.getAnimations().flatMap(a=>a.effect.getKeyframes())};});
     check('reduced motion retains opacity feedback without spatial movement',reduced.reduced&&reduced.frames.some(f=>f.opacity)&&reduced.frames.every(f=>!f.transform&&!f.height),reduced);
