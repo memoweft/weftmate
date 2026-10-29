@@ -14,7 +14,7 @@ function selectionFixture() {
   runInNewContext(readFileSync('src/ui-core/main-chat.js','utf8'),context);
   const core: any = {state:{identityGeneration:0,ownerId:'synthetic',historyGeneration:0,selectedSessionId:'s0',sessions:[],chats:[{chatId:'c1',activeSessionId:'s1'},{chatId:'c2',activeSessionId:'s2'}]},
     conversationTasks:{generation:0,entries:new Map()},resetConversationApprovals:noop,resetConversationQuestions:noop,
-    selectSession:async(id:string)=>{core.state.selectedSessionId=id;await waits.get(id)!.promise;},composerState:()=>({messageDisabled:false,sendDisabled:false}),
+    selectNativeSession:async(id:string)=>{core.state.selectedSessionId=id;await waits.get(id)!.promise;},composerState:()=>({messageDisabled:false,sendDisabled:false}),
     cancelAttachmentUpload:noop};
   const effects:any=new Proxy({readMessageDraft:()=>text,restoreMainChatDraft:(value:string)=>{text=value;}},{get:(target,key)=>target[key]||noop});
   const actions=context.WeftUiCore.factories.mainChat(core,effects,{});

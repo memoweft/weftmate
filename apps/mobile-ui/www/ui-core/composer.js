@@ -155,7 +155,9 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             const ended=entry.ended && (!latest || String(entry.ended.data?.turn)===String(turn)) ? entry.ended : null;
             const end=latest?.facts.findLast(event=>['turn.ended','task.ended'].includes(event.type)) || ended;
             const anchor=user || entry.queued;
-            const position=user?.seq ?? anchor?.seq ?? Math.max(-1,...events.map(event=>event.seq))+1+Math.max(0,pending.indexOf(local));
+            // A first send owns the beginning of the session it just created.
+            // Early reply events must not move its unconfirmed echo behind them.
+            const position=user?.seq ?? anchor?.seq ?? (local?.createdSession ? -1 : Math.max(-1,...events.map(event=>event.seq))+1+Math.max(0,pending.indexOf(local)));
             const at=entry.at || user?.at || local?.at || start?.at;
             const first={...(start || {}),seq:(facts[0]?.seq ?? position)-0.1,at:start?.at || at,type:'turn.started',sourceRef:{...start?.sourceRef,sessionId:session},data:{turn,pendingRequestId:entry.requestId}};
             const last=end && {...end,seq:Math.max(first.seq,...facts.map(event=>event.seq))+0.1,type:'turn.ended',data:{...end.data,turn}};
