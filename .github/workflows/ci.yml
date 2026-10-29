@@ -99,6 +99,15 @@ jobs:
             if (existsSync(scope)) throw Error('First-send CI temp cleanup failed');
           }
           '@ | node --input-type=module
+      - name: Existing desktop chat and streaming regressions
+        shell: pwsh
+        run: |
+          $env:WEFTMATE_CHAT_POLISH_OUTPUT = Join-Path $env:GITHUB_WORKSPACE '.local/evidence/chat-polish'
+          $env:WEFTMATE_PERF_STREAM_OUTPUT = Join-Path $env:GITHUB_WORKSPACE '.local/evidence/perf-stream'
+          node tests/integration/chat-polish.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/integration/perf-stream.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Upload synthetic first-send evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -114,6 +123,10 @@ jobs:
             .local/evidence/chat-terminal-handoff/**/*.png
             .local/evidence/report.json
             .local/evidence/side-*.png
+            .local/evidence/chat-polish/report.json
+            .local/evidence/chat-polish/*-geometry.json
+            .local/evidence/chat-polish/*.png
+            .local/evidence/perf-stream/*.png
           if-no-files-found: error
 
   test:
