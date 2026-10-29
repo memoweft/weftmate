@@ -8,6 +8,7 @@ import { resolve, join, relative, isAbsolute } from 'node:path';
 import { spawnSync, execFileSync } from 'node:child_process';
 import { startFixture } from './ux-4-fixture.mjs';
 import { feedbackUiSession } from '../helpers/feedback-ui-session.mjs';
+import { nativeFixtureFetchOptions } from '../helpers/local-ui-session.mjs';
 
 const baseline = process.argv.includes('--before');
 const refreshBaseline=process.argv.includes('--refresh-before');
@@ -21,7 +22,7 @@ await writeFile(bootstrap, `import {createRequire} from 'node:module';
 const {app}=createRequire(${JSON.stringify(new URL('../../package.json',import.meta.url).href)})('electron');
 app.setName('WeftMate FE Shell Test');app.setAppUserModelId('com.memoweft.weftmate.test.fe-shell');app.disableHardwareAcceleration();
 await import(${JSON.stringify(new URL('../../scripts/review-gallery/electron.mjs',import.meta.url).href)});`);
-let app, fixture, child;
+let app, fixture, child, page, releaseTeardown, teardownResult;
 const kill = () => { if(child?.exitCode === null) {
   if(process.platform==='win32')spawnSync('taskkill.exe',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore',timeout:5000});
   else child.kill('SIGKILL');
@@ -35,7 +36,7 @@ try {
   Object.assign(env,{REVIEW_PROFILE:profile,REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken,REVIEW_THEME:'light',REVIEW_HIDDEN:'1',WEFTMATE_TEST_HOST_NAME:'synthetic-host'});
   app = await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:[bootstrap,'--disable-backgrounding-occluded-windows','--disable-features=CalculateNativeWinOcclusion'],env,timeout:30000});
   child=app.process();child.stdout?.resume();child.stderr?.resume();
-  const page=await app.firstWindow();page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push(e.message));
+  page=await app.firstWindow();page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push(e.message));
   if(baseline||refreshBaseline){const source=execFileSync('git',['show','HEAD:src/ui-core/controls.js'],{encoding:'utf8',windowsHide:true});await page.route('**/personal/v1/ui/ui-core/controls.js',route=>route.fulfill({body:source,contentType:'text/javascript'}));}
   await feedbackUiSession(page,fixture,{native:true});await page.unroute('**/personal/v1/status');
   await page.evaluate(async()=>{await __feedbackSessionCore.refreshStatus();await __feedbackSessionCore.refreshSessions();WeftReplyMotion.setVisibility(false);});
@@ -191,4 +192,15 @@ try {
   });
   }
   assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().some(w=>w.isVisible())),false);assert.deepEqual(errors,[]);assert.deepEqual(failures,[]);
-} finally {await app?.close().catch(()=>{});kill();await fixture?.close();clearTimeout(deadline);const rel=relative(tmpdir(),profile);assert.ok(rel&&!isAbsolute(rel)&&!rel.startsWith('..')&&rel.startsWith('weftmate-fe-shell-'));await rm(profile,{recursive:true,force:true});}
+  let entered,complete;const gate=new Promise(resolve=>{releaseTeardown=resolve;}),started=new Promise(resolve=>{entered=resolve;});teardownResult=new Promise(resolve=>{complete=resolve;});
+  await page.route('**/personal/v1/status',async route=>{if(route.request().headers()['x-ci-probe']!=='teardown'){await route.fallback();return;}entered();await gate;try{const response=await route.fetch(nativeFixtureFetchOptions(route,fixture));await route.fulfill({response});complete({status:response.status()});}catch(error){complete({status:0,error:error.message});}});
+  await page.evaluate(()=>{void fetch('/personal/v1/status',{headers:{'x-ci-probe':'teardown'}}).catch(()=>{});});await started;
+} finally {
+  try{
+    const draining=page?.unrouteAll({behavior:'wait'});
+    if(releaseTeardown)setTimeout(releaseTeardown,150);
+    await draining;
+    await app?.close().catch(()=>{});
+    if(teardownResult){const result=await teardownResult,drainOutput=output||(process.env.WEFTMATE_EVIDENCE_DIR?join(process.env.WEFTMATE_EVIDENCE_DIR,'fe-shell'):null);if(drainOutput){await mkdir(drainOutput,{recursive:true});await writeFile(join(drainOutput,narrowOnly?'narrow-route-drain.json':'route-drain.json'),JSON.stringify(result,null,2));}assert.equal(result.status,200,JSON.stringify(result));console.log('PASS routed status drain completed with 200');}
+  }finally{kill();await fixture?.close();clearTimeout(deadline);const rel=relative(tmpdir(),profile);assert.ok(rel&&!isAbsolute(rel)&&!rel.startsWith('..')&&rel.startsWith('weftmate-fe-shell-'));await rm(profile,{recursive:true,force:true});}
+}
