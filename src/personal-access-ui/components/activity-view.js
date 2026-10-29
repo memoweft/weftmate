@@ -66,11 +66,11 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
         if(rest.length){const more=button(`更多来源（${rest.length}）`,()=>{});more.setAttribute('aria-haspopup','menu');more.disabled=core.activity.busy.has(item.id);more.onclick=()=>WeftPopover.menu(more,rest.map(source=>({name:source.title,icon:source.artifactId?'file':'chat',action:()=>invoke(source)})),error=>notice.textContent=core.failureMessage(error));sources.append(more);}
         body.append(sources);return body;
     }
-    function render(){
+    function paint(){
         const model=core.activity,nextSignature=JSON.stringify([model.items,model.filter,model.loading,model.error,model.unreadCount,model.actionableCount,model.snapshotCursor,model.nextCursor,[...model.busy],timeZone()]);
         if(renderSignature===nextSignature)return;renderSignature=nextSignature;
         all.disabled=!model.snapshotCursor||!model.unreadCount||model.loading;
-        for(const el of filters.children){el.setAttribute('aria-current',el.dataset.filter===model.filter?'true':'false');el.disabled=model.loading;}
+        for(const el of filters.children){el.setAttribute('aria-current',el.dataset.filter===model.filter?'true':'false');}
         notice.textContent=model.error?`${model.error}${model.items.length?' · 仍显示上次的动态':''}`:model.loading&&model.items.length?'正在更新…':model.loading?'':model.actionableCount?`${model.actionableCount} 项待处理${model.unreadCount?` · ${model.unreadCount} 条未读`:''}`:model.unreadCount?`${model.unreadCount} 条未读`:'没有待处理的事';
         more.hidden=!model.nextCursor;more.disabled=model.loading;
         list.setAttribute('aria-busy',String(model.loading));
@@ -123,5 +123,6 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
         for(const [id]of mounted)if(!model.items.some(row=>row.id===id))mounted.delete(id);
         if(focusedId){const row=mounted.get(focusedId);const focus=[...(row?.querySelectorAll('button')??[])].find(el=>el.textContent===focusedText);(focus??row)?.focus({preventScroll:true});}
     }
+    function render(){paint();if(!core.activity.loading)globalThis.WeftMotion?.content(list,core.activity.filter);}
     return {render,destroy(){mounted.clear();mountedDays.clear();target.replaceChildren();}};
 }};

@@ -266,13 +266,11 @@
       row.dataset.running = String(running)
       row.classList.toggle('has-failure', !!view.failed)
       const summary = details.querySelector('summary') || node('summary', 'inline-progress-summary')
-      if (!previous) details.addEventListener('click', event => {
-        if (event.defaultPrevented || event.target.closest?.('summary') !== summary || event.target.closest?.('a,button,input,select,textarea') || details.open) return
-        // Populate before the shared disclosure motion measures its open size.
-        details.open = true
-        delete row.dataset.signature; renderCurrent()
-        details.open = false
-      }, true)
+      // The phone uses native details/CSS rather than desktop WeftMotion.
+      if(!previous&&!globalThis.WeftMotion?.visibility)details.addEventListener('click',event=>{
+        if(event.defaultPrevented||event.target.closest('summary')!==summary||event.target.closest('a,button,input,select,textarea')||details.open)return;
+        details.open=true;delete row.dataset.signature;renderCurrent();details.open=false;
+      },true);
       summary.title=[view.text,elapsed].filter(Boolean).join(' · ');
       summary.setAttribute('role', 'button')
       const text = summary.querySelector('.inline-progress-text') || node('span', 'inline-progress-text')
@@ -348,7 +346,7 @@
       }
       const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
       if (!previous) row.replaceChildren(details)
-      if(globalThis.WeftMotion?.visibility)WeftMotion.details(details);
+      if(globalThis.WeftMotion?.visibility)WeftMotion.details(details,()=>{delete row.dataset.signature;renderCurrent()});
       if (!previous) requestAnimationFrame(()=>globalThis.WeftReplyMotion?.reveal(summary,'status'))
       if (hadFocus) (focusStep ? [...records.querySelectorAll('.execution-step')].find(detail => detail.dataset.step === focusStep)?.querySelector('summary') : summary)?.focus({ preventScroll: true })
       globalThis.WeftMotion?.dismiss(collapse, true)

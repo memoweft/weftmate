@@ -182,6 +182,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         for (const [key, value] of memoryRows) if (!rows.includes(value.row)) memoryRows.delete(key);
         ui.byId('memory-more').hidden = !core.memory.hasMore;
         ui.paintMemoryHealth?.(core.memory.status);
+        globalThis.WeftMotion?.content(list,JSON.stringify(memoryFilterInput()));
     }
     function renderMemorySources(sources) {
         const list = ui.byId('memory-sources');
@@ -272,6 +273,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         const scope = document.getElementById('memory-forget-scope'); if (scope) scope.hidden = mode !== 'delete';
         ui.byId('memory-confirm-action').disabled = !!core.memory.activeOperation || !!core.memory.unresolvedMarker || !!core.memory.selected?.stale
             || mode === 'delete' && !core.memory.forgetPreview;
+        globalThis.WeftMotion?.content(ui.byId('memory-detail-body').parentElement,mode);
     }
     function handleMemoryReceiptAction() {
         const unknown = core.storedMemoryMarker(core.memoryMarkerKey()) ?? core.memory.unresolvedMarker;

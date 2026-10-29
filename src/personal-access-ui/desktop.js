@@ -16,7 +16,7 @@
     hidePicker()
     if (!preview || preview.panel.hidden) return
     lifecycle(tabs.get(preview.active), 'hide')
-    preview.panel.hidden = true
+    if(globalThis.WeftMotion)WeftMotion.hide(preview.panel);else preview.panel.hidden = true
     byId('conversation-pane').inert = false
     document.body.classList.remove('preview-open', 'preview-expanded')
     preview.expand.setAttribute('aria-pressed','false');preview.expand.setAttribute('aria-label','放大右侧面板');preview.expand.title='放大右侧面板';preview.expand.replaceChildren(icon('expand'))
@@ -66,7 +66,7 @@
     byId('conversation-pane').inert = window.innerWidth <= 720 || document.body.classList.contains('preview-expanded')
     byId('workspace-panels')?.setAttribute('aria-expanded', 'true')
     byId('workspace-panels')?.setAttribute('aria-label','收起右侧面板')
-    if (opening) globalThis.WeftMotion?.reveal(preview.panel, 'slow')
+    if (opening) globalThis.WeftMotion?.content(preview.panel, Symbol())
     if (opening && notify) lifecycle(tabs.get(preview.active), 'show')
     renderLauncher()
     if (!tabs.size) preview.launcher.querySelector('button')?.focus({ preventScroll: true })
@@ -175,7 +175,7 @@
       tab.content.hidden = id !== key; tab.select.setAttribute('aria-selected', String(id === key)); tab.select.tabIndex = id === key ? 0 : -1
     }
     if (previous !== selected || !wasVisible) lifecycle(selected, 'show')
-    if (previous !== selected) globalThis.WeftMotion?.reveal(selected.content, 'base')
+    if (previous !== selected) globalThis.WeftMotion?.content(selected.content, Symbol())
     selected.select.scrollIntoView({ block: 'nearest', inline: 'nearest' })
     if (focus) selected.select.focus({ preventScroll: true })
   }

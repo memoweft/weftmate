@@ -44,6 +44,7 @@ html.weftmate-desktop:has(.assistant-active) { overflow:hidden; scrollbar-gutter
 :root .composer-actions #model-trigger.wm-model-trigger, :root[data-native-platform] .composer-actions #model-trigger.wm-model-trigger { display:flex; width:auto; min-width:0; max-width:100%; padding-inline:var(--wm-space-8); gap:var(--wm-space-6); }
 .composer-actions #model-trigger #model-label { position:static; width:auto; height:auto; margin:0; padding:0; clip-path:none; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:var(--wm-type-button); order:1; }
 .composer-actions #model-trigger svg { flex:none; }
+.composer-actions #model-trigger #model-label { line-height:var(--wm-line-height-1_5); }
 .composer-actions .wm-model-trigger-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .composer-actions .composer-spacer { min-width:0; flex:1; }
 .composer-actions #voice-input,.composer-actions #send-message { flex:0 0 var(--wm-space-32); width:var(--wm-space-32); }

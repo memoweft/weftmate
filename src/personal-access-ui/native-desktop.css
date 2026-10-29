@@ -79,3 +79,8 @@
 .weftmate-desktop .assistant-active .preview-heading { -webkit-app-region:drag; padding-right:var(--wm-size-160); }
 .weftmate-desktop :is(.assistant-topbar,.preview-heading,.rail-brand-row) :is(button,input,a) { -webkit-app-region:no-drag; }
 .weftmate-desktop .rail-brand-row { -webkit-app-region:drag; }
+/* Fixed pages replace the workspace header, so their actions need its safe area. */
+.weftmate-desktop[data-native-platform="win32"] :is(.activity-page,.library-page,.goals-page,.health-page,.help-page) {
+  padding-top:calc(var(--desktop-caption-height) + var(--wm-space-16));
+}
+.weftmate-desktop :is(.activity-page,.library-page,.goals-page,.health-page,.help-page) :is(button,input,select,a) { -webkit-app-region:no-drag; }

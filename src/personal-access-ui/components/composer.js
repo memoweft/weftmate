@@ -2,7 +2,7 @@
 globalThis.WeftUiComponents.factories.composer = (core, ui) => {
     let folderChoice;
     function closeComposerMenu(focus = false) {
-        ui.byId('composer-menu').hidden = true;
+        globalThis.WeftPopover.hide(ui.byId('composer-menu'));
         ui.byId('attachment-add').setAttribute('aria-expanded', 'false');
         if (focus) ui.byId('attachment-add').focus();
     }

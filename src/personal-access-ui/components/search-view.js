@@ -12,7 +12,7 @@ globalThis.WeftSearchView = {
   },mount({core,open,menu,notice,mobile=false}) {
   const el=(tag,cls='',text='')=>{const node=document.createElement(tag);node.className=cls;node.textContent=text;return node;};
   const icon=name=>globalThis.WeftIcons.create(name,20);
-  const dialog=el('dialog','dialog search-palette');dialog.setAttribute('aria-label','搜索');if(mobile)dialog.classList.add('search-fullscreen');
+  const dialog=el('dialog','dialog search-palette');dialog.setAttribute('aria-label','搜索');dialog.setAttribute('data-motion-native-close','');if(mobile)dialog.classList.add('search-fullscreen');
   const header=el('div','search-palette-head'),input=el('input','search-palette-input');input.type='search';input.maxLength=120;input.placeholder='搜索对话、项目、成果…';input.setAttribute('aria-label','搜索内容');
   input.setAttribute('role','combobox');input.setAttribute('aria-expanded','true');input.setAttribute('aria-controls','search-results');input.setAttribute('aria-autocomplete','list');
   const close=el('button','icon-button search-palette-close');close.type='button';close.setAttribute('aria-label','关闭搜索');close.append(icon('deny'));close.onclick=()=>core.closeSearch();header.append(icon('search'),input,close);
@@ -35,10 +35,10 @@ globalThis.WeftSearchView = {
     catch(error){if(token===`${core.state.identityGeneration}:${core.state.ownerId}`)notice(core.failureMessage?.(error)||'暂时无法打开，请重试。');}}
   function rowMenu(row,trigger){menu?.(row,trigger);}
   function select(){const rows=[...results.querySelectorAll('[role=option]')];rows.forEach((node,index)=>{node.setAttribute('aria-selected',String(index===core.search.selected));node.classList.toggle('is-selected',index===core.search.selected);});const current=rows[core.search.selected];if(current){input.setAttribute('aria-activedescendant',current.id);current.scrollIntoView({block:'nearest'});}else input.removeAttribute('aria-activedescendant');}
-  function render(){if(!core.search.open)return;const model=core.search;if(input.value!==model.query)input.value=model.query;
+  function paint(){if(!core.search.open)return;const model=core.search;if(input.value!==model.query)input.value=model.query;
     for(const tab of tabs.children){const chosen=tab.dataset.type===model.type;tab.setAttribute('aria-selected',String(chosen));tab.setAttribute('aria-pressed',String(chosen));tab.tabIndex=chosen?0:-1;}
     results.setAttribute('aria-busy',String(model.loading));results.inert=model.loading;dialog.classList.toggle('is-searching',model.loading);feedback.textContent=model.loading?'正在搜索…':'';
-    if(model.loading&&results.querySelector('[role=option]'))return;
+    if(model.loading&&results.childNodes.length)return;
     const signature=JSON.stringify([model.query,model.type,model.groups,model.error,model.loading]);if(signature===renderSignature){select();return;}renderSignature=signature;results.replaceChildren();
     if(model.loading){results.append(WeftControls.skeleton({rows:4}));return;}
     if(model.error){const error=el('div','search-error');error.setAttribute('role','alert');const retry=el('button','button secondary small','重试');retry.type='button';retry.onclick=()=>void core.readSearch();error.append(el('span','',model.error),retry);results.append(error);}
@@ -72,5 +72,6 @@ globalThis.WeftSearchView = {
     const navigation=Object.fromEntries(['searchClose','searchUp','searchDown','searchFirst','searchLast','searchLeft','searchRight'].map(id=>[id,(e,row)=>{if(['Home','End'].includes(row.key)&&e.target===input)return false;e.stopPropagation();core.navigateSearch(row.key);} ]));
     WeftShortcuts.dispatch(event,{...navigation,searchOpen:()=>{if(event.target!==input)return false;const row=core.search.rows[core.search.selected];if(row)void activate(row);},searchMenu:()=>{if(event.target!==input)return false;const row=core.search.rows[core.search.selected],target=results.querySelectorAll('[role=option]')[core.search.selected]?.querySelector('.search-result-more');if(row&&target)rowMenu(row,target);}});
   });
+  function render(){paint();if(core.search.open&&!core.search.loading)globalThis.WeftMotion?.content(results,JSON.stringify([core.search.type,core.search.query]));}
   return {show,hide,render,select,activate,dialog};
 }};

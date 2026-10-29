@@ -16,7 +16,8 @@
   function cancel(element) { const animation=owners.get(element);if(animation){settlers.get(animation)?.(true);animation.cancel();} }
   function play(element, frames, name = 'base', index = 0, cleanup) {
     cancel(element);
-    if (reduced() || paused() || !element?.isConnected || !element.animate) { cleanup?.(false); return; }
+    if (paused() || !element?.isConnected || !element.animate) { cleanup?.(false); return; }
+    if(reduced()){cleanup?.(false);return frames.some(frame=>'opacity' in frame)?feedback(element):undefined;}
     const animation = element.animate(frames, timing(name, index));
     owners.set(element, animation); active.add(animation);
     let settled = false;
@@ -30,7 +31,8 @@
   function enter(element, pattern = 'view-enter') {
     if (!element) return;
     element.dataset.motion = pattern;
-    if (reduced() || paused()) return;
+    if (paused()) return;
+    if (reduced()) return feedback(element);
     // Imperative enter keeps its old replay contract. Automatic page detection
     // only calls this on a real visibility edge, never on a polling repaint.
     for(const animation of element.getAnimations())if(animation.animationName?.startsWith('m-')&&animation.playState==='finished'){
@@ -49,6 +51,9 @@
     const source=[element,...element.querySelectorAll('*')], target=[copy,...copy.querySelectorAll('*')];
     source.forEach((node,i)=>{if(node.scrollTop)target[i].scrollTop=node.scrollTop;if(node.scrollLeft)target[i].scrollLeft=node.scrollLeft;
       if(node.matches('input,textarea,select'))target[i].value=node.value;if(node.matches('input'))target[i].checked=node.checked;});
+    // A select menu can close while its parent dialog remains modal. Retain
+    // that visual in the same native layer instead of fading under the parent.
+    if(element.matches(':popover-open')){copy.style.font=getComputedStyle(element).font;copy.setAttribute('popover','manual');copy.showPopover();}
     return copy;
   }
   function dismiss(copy, crop = false) { if(!copy)return;return play(copy,[{opacity:1,transform:'translateY(0)',clipPath:'inset(0)'},{opacity:0,transform:'translateY(-4px)',clipPath:crop?'inset(0 0 100% 0)':'inset(0)'}],'dur-4',0,()=>copy.remove()); }
@@ -91,40 +96,86 @@
     current.finished.then(state.restore,state.restore);
     return current.updateCallbackDone.then(()=>result);
   }
-  const folds=new WeakMap();
-  function resize(element, opening, setOpen, name='dur-5') {
+  const folds=new WeakMap(), disclosureContent=new WeakMap();
+  function resize(element, opening, setOpen, name='dur-2', prepare) {
     const height=element.hidden?0:element.getBoundingClientRect().height;
     cancel(element);
     const previous={height:element.style.height,overflow:element.style.overflow};
-    setOpen(true);element.style.height='auto';
+    setOpen(true);if(opening)prepare?.();element.style.height='auto';
     const full=element.getBoundingClientRect().height;
     const summary=element.tagName==='DETAILS'?element.querySelector(':scope > summary'):null;
     const end=opening?full:summary?summary.getBoundingClientRect().height+parseFloat(getComputedStyle(element).paddingTop)+parseFloat(getComputedStyle(element).paddingBottom):0;
-    if(reduced()||paused()){setOpen(opening);folds.delete(element);return;}
+    if(reduced()||paused()){element.style.height=previous.height;element.style.overflow=previous.overflow;setOpen(opening);folds.delete(element);if(reduced())feedback(element);return;}
     element.style.overflow='clip';element.style.height=`${height}px`;
-    folds.set(element,opening);
-    return play(element,[{height:`${height}px`},{height:`${end}px`}],name,0,cancelled=>{
-      element.style.height=previous.height;element.style.overflow=previous.overflow;
-      if(!cancelled){setOpen(opening);folds.delete(element);}
+    const state={opening};folds.set(element,state);
+    let destination=end,animation;
+    // Observe the natural children, not the animated box. Streaming thinking
+    // can grow during a reveal; retarget from the current frame before paint.
+    const observer=new ResizeObserver(()=>{
+      if(!opening||!animation?.effect||folds.get(element)!==state)return;
+      const from=element.getBoundingClientRect().height,effect=animation.effect;
+      animation.effect=null;element.style.height='auto';
+      const next=element.getBoundingClientRect().height;
+      element.style.height=`${height}px`;animation.effect=effect;
+      if(Math.abs(next-destination)<=1)return;destination=next;
+      const remaining=Math.max(timing('dur-1').duration,Number(effect.getTiming().duration)-Number(animation.currentTime));
+      effect.setKeyframes([{height:`${from}px`},{height:`${next}px`}]);effect.updateTiming({duration:remaining});animation.currentTime=0;
     });
+    animation=play(element,[{height:`${height}px`},{height:`${end}px`}],name,0,cancelled=>{
+      observer.disconnect();
+      element.style.height=previous.height;element.style.overflow=previous.overflow;
+      if(folds.get(element)===state){folds.delete(element);if(!cancelled)setOpen(opening);}
+    });
+    if(animation)for(const child of element.children)observer.observe(child);
+    return animation;
   }
-  function visibility(element, visible, {duration='dur-5'} = {}) {
-    if(!element || (folds.get(element)??!element.hidden)===visible)return;
+  function visibility(element, visible, {duration='dur-2'} = {}) {
+    if(!element || (folds.get(element)?.opening??!element.hidden)===visible)return;
     return resize(element,visible,open=>{element.hidden=!open;},duration);
   }
-  function details(element) {
+  function details(element, prepare) {
+    if(prepare)disclosureContent.set(element,prepare);
     if(!element||boundDetails.has(element))return;const summary=element.querySelector(':scope > summary');if(!summary)return;
     boundDetails.add(element);element.classList.add('motion-details');
     summary.addEventListener('click',event=>{
       if(event.defaultPrevented||event.target.closest('a,button,input,select,textarea'))return;
       event.preventDefault();
-      const opening=!(folds.get(element)??element.open);
+      const opening=!(folds.get(element)?.opening??element.open);
       summary.setAttribute('aria-expanded',String(opening));
-      resize(element,opening,open=>{element.open=open;},element.matches('.execution-block,.execution-step,.execution-step-group')?'dur-1':'dur-5');
+      resize(element,opening,open=>{element.open=open;},'dur-2',disclosureContent.get(element));
     });
     element.addEventListener('toggle',()=>{if(!folds.has(element))summary.setAttribute('aria-expanded',String(element.open));});
   }
   function changed(element,key,name='base') {if(!element||element.dataset.motionKey===key)return;element.dataset.motionKey=key;return reveal(element,name);}
+  // Reduced motion retains a short opacity acknowledgment without movement.
+  function feedback(element) {
+    if(!element?.isConnected||paused()||!element.animate)return;
+    cancel(element);const animation=element.animate([{opacity:.88},{opacity:1}],timing('dur-1'));
+    owners.set(element,animation);active.add(animation);
+    const finish=()=>{active.delete(animation);if(owners.get(element)===animation)owners.delete(element);animation.cancel();};
+    settlers.set(animation,()=>{active.delete(animation);if(owners.get(element)===animation)owners.delete(element);});
+    animation.finished.then(finish,()=>{active.delete(animation);});return animation;
+  }
+  function content(element,key) {
+    if(!element||transitionKeys.get(element)===key)return;
+    transitionKeys.set(element,key);return reduced()?feedback(element):reveal(element,'dur-2');
+  }
+  const indicators=new WeakMap();
+  function selection(container,selected) {
+    if(!container?.isConnected||!selected)return;
+    let state=indicators.get(container);
+    if(!state){const marker=document.createElement('span');marker.className='motion-selection-marker';marker.setAttribute('aria-hidden','true');container.classList.add('motion-selection');container.append(marker);state={marker};indicators.set(container,state);const observer=new ResizeObserver(()=>{if(container.isConnected)selection(container,state.selected);else observer.disconnect();});observer.observe(container);}
+    state.selected=selected;
+    const rect=selected.getBoundingClientRect(),parent=container.getBoundingClientRect();
+    const next={left:rect.left-parent.left+container.scrollLeft,width:rect.width,top:rect.bottom-parent.top+container.scrollTop};
+    if(state.rect&&Object.keys(next).every(key=>next[key]===state.rect[key]))return;
+    const visual=state.marker.getBoundingClientRect(),old=state.rect?{left:visual.left-parent.left+container.scrollLeft,width:visual.width}:null;
+    state.rect=next;state.marker.style.cssText=`left:${next.left}px;top:${next.top}px;width:${next.width}px`;
+    if(old&&(old.left!==next.left||old.width!==next.width)){
+      if(reduced())feedback(state.marker);
+      else play(state.marker,[{transform:`translateX(${old.left-next.left}px) scaleX(${old.width/next.width})`},{transform:'translateX(0) scaleX(1)'}],'dur-2');
+    }
+  }
   function menu(element,opening=true) {
     if(!element)return;
     if(!opening){element.inert=true;return play(element,[{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(3px) scale(.985)'}],'dur-3',0);}
@@ -135,7 +186,8 @@
     const nativeClose=element.close.bind(element);
     element.close=value=>{
       if(!element.open)return;
-      const captured=snapshot(element);
+      // A native discrete-overlay exit already owns its retained top layer.
+      const captured=element.hasAttribute('data-motion-native-close')?null:snapshot(element);
       if(captured){
         // A closed <dialog> has browser-owned painting rules. A plain visual
         // surface keeps the complete captured frame while native close fires.
@@ -145,7 +197,10 @@
         copy.inert=true;copy.style.display='block';copy.classList.add('motion-dialog-copy');
         const backdrop=document.createElement('div'),style=getComputedStyle(element,'::backdrop');
         backdrop.className='motion-dialog-backdrop';backdrop.inert=true;backdrop.setAttribute('aria-hidden','true');
-        Object.assign(backdrop.style,{background:style.backgroundColor,backdropFilter:style.backdropFilter});copy.before(backdrop);
+        Object.assign(backdrop.style,{inset:'0',margin:'0',width:'100vw',height:'100vh',maxWidth:'none',maxHeight:'none',padding:'0',border:'0',background:style.backgroundColor,backdropFilter:style.backdropFilter});copy.before(backdrop);
+        // Body stacking cannot paint above a still-open parent modal. These
+        // inert presentation surfaces share the browser's top layer instead.
+        for(const layer of [backdrop,copy]){layer.setAttribute('popover','manual');layer.showPopover();}
         play(backdrop,[{opacity:1},{opacity:0}],'dur-4',0,()=>backdrop.remove());
         play(copy,[{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(8px) scale(.985)'}],'dur-4',0,()=>copy.remove());
       }
@@ -153,12 +208,13 @@
       // Only an inert visual survives; an animation never gates a request.
       nativeClose(value??'');
     };
-    element.addEventListener('cancel',event=>{event.preventDefault();element.close();});
+    element.addEventListener('cancel',event=>{if(event.defaultPrevented)return;event.preventDefault();element.close();});
   }
   const pages='.activity-surface,.library-surface,.goals-surface,.health-surface,#conversation-pane';
   function rememberPage(page) {if(!page.hidden){const r=page.getBoundingClientRect();if(r.width&&r.height)pageRects.set(page,r);}pageVisibility.set(page,!page.hidden);}
   const resizeObserver=new ResizeObserver(entries=>{for(const {target} of entries)if(!target.hidden)rememberPage(target);});
   function mount(root) {
+    for(const modal of [root,...root.querySelectorAll('dialog')])if(modal.matches('dialog'))dialog(modal);
     for(const detail of [root,...root.querySelectorAll('details')])if(detail.matches('details'))details(detail);
     for(const page of [root,...root.querySelectorAll(pages)])if(page.matches(pages)&&!pageVisibility.has(page)){rememberPage(page);resizeObserver.observe(page);enter(page);}
   }
@@ -169,6 +225,7 @@
       if(record.type==='childList')for(const node of record.addedNodes)if(node.nodeType===1&&!node.closest('.motion-copy'))mount(node);
       if(record.type==='attributes'&&record.target.matches(pages))changedPages.add(record.target);
     }
+    if(changedPages.size)for(const copy of document.querySelectorAll('.motion-page-copy')){cancel(copy);copy.remove();}
     for(const page of changedPages){const visible=!page.hidden,wasVisible=pageVisibility.get(page);
       if(visible!==wasVisible){if(!visible){const copy=snapshot(page,pageRects.get(page),true);if(copy){copy.classList.add('motion-page-copy');dismiss(copy);}}
         else enter(page);rememberPage(page);}
@@ -178,5 +235,5 @@
   mount(document.body);pushBack();
   preference.addEventListener('change',()=>{if(reduced())for(const animation of [...active])animation.finish();});
   addEventListener('weft-reply-motion-change',()=>{for(const a of [...active]){if(reduced())a.finish();else if(paused())a.pause();else a.play();}});
-  globalThis.WeftMotion={reveal,enter,snapshot,dismiss,remove,hide,details,changed,cancel,listLimit,transition,swap,handoff,visibility,menu,dialog,resetIdentity,timing,get reduced(){return reduced();}};
+  globalThis.WeftMotion={reveal,enter,snapshot,dismiss,remove,hide,details,changed,content,selection,feedback,cancel,listLimit,transition,swap,handoff,visibility,menu,dialog,resetIdentity,timing,get reduced(){return reduced();}};
 })();

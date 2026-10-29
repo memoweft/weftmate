@@ -240,14 +240,24 @@ try {
       await page.getByText('报告已保存，测试全部通过。', { exact: true }).scrollIntoViewIfNeeded();
     });
     if (phase === 'reduced') {
-      assert.equal(await page.evaluate(() => document.getAnimations().length), 0);
+      const assertReducedFeedback=async()=>{
+        const state=await page.evaluate(()=>({budget:parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-1')),
+          animations:document.getAnimations().map(animation=>({timing:animation.effect.getTiming(),frames:animation.effect.getKeyframes()}))}));
+        const allowed=new Set(['offset','computedOffset','easing','composite','opacity','color','backgroundColor','borderColor']);
+        for(const animation of state.animations){
+          assert.ok(animation.frames.every(frame=>Object.keys(frame).every(key=>allowed.has(key))),'reduced motion permits only non-spatial state feedback');
+          assert.equal(animation.timing.iterations,1);assert.equal(animation.timing.delay,0);
+          assert.ok(typeof animation.timing.duration==='number'&&animation.timing.duration<=state.budget,'feedback stays within the short motion token');
+        }
+      };
+      await assertReducedFeedback();
       assert.equal(await page.locator('.motion-copy').count(), 0);
       // Switching the preference while a dismissal is running must cancel and clean it up.
       await page.emulateMedia({ reducedMotion: 'no-preference' });
       await page.evaluate(() => { const detail = document.querySelector('.execution-block'); detail.open = true; window.WeftMotion.dismiss(window.WeftMotion.snapshot(detail), true); });
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await until(async () => await page.locator('.motion-copy').count() === 0);
-      assert.equal(await page.evaluate(() => document.getAnimations().length), 0);
+      await assertReducedFeedback();
     }
     // ResizeObserver follows the bottom on the next frame. macOS legitimately
     // moves 0 -> 72 when the expanded content first overflows; absolute scrollTop
