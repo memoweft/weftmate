@@ -86,6 +86,19 @@ test('single status: non-chat operations still use their shared feedback outlet'
   assert.ok(f.paints.some(row=>row.name==='paintOperation' && row.args[0]));
 });
 
+test('single status: a cancel POST keeps earlier uncertainty locked until its real receipt', async () => {
+  let release!: (value: any) => void;
+  const post = new Promise(resolve => { release = resolve; });
+  const f = fixture(() => post); f.core.refreshTasks = async () => {};
+  f.core.operation('合成停止结果尚未确认', true, 'synthetic-cancel');
+  const sending = f.core.submitCommand('session.cancel', { sessionId: 'session-test' }, 'session-test', 'synthetic-cancel');
+  assert.equal(f.core.state.unresolvedSubmission, true);
+  assert.ok(f.core.state.reviewableRequests.has('synthetic-cancel'));
+  release(response({ command: { kind: 'session.cancel', requestId: 'synthetic-cancel', commandId: 'synthetic-command', sessionId: 'session-test', state: 'accepted_by_dsh' } }));
+  await sending;
+  assert.equal(f.core.state.unresolvedSubmission, false);
+});
+
 const cases = [
   ['folder mutation', c => c.folderMutationPending = () => true],
   ['submission', c => c.state.submitting = true],

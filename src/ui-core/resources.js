@@ -218,7 +218,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             const requestId = fixedRequestId || environment.crypto.randomUUID();
             const marker = { requestId, kind, ...(sessionId ? { sessionId } : {}) };
             core.rememberMarker(marker); // Durable ID before the network request; body stays in memory.
-            if (chatCommand(kind)) core.trackRequestState(false, requestId, false);
+            if (chatCommand(kind)) core.trackRequestState();
             else core.operation('正在提交请求。');
             try {
                 const body = { requestId, kind, targetDeviceId: core.state.hostId, ...fields };
