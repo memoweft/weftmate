@@ -22,6 +22,7 @@ import { nativeEventNotification } from './personal-access/notification-content.
 import { createWindowsSendTo, windowsApprovalNotification, actOnWindowsApproval } from './windows-system-integration.mjs';
 import { nativeWindowRequest } from './personal-desktop-request.mjs';
 import { createWindowsDesktopBoundsRestore } from './windows-desktop-bounds.mjs';
+import { activateWindowsDesktopWindow } from './windows-desktop-activation.mjs';
 import { restoreDesktopBounds } from './desktop-window-bounds.mjs';
 export { restoreDesktopBounds } from './desktop-window-bounds.mjs';
 
@@ -628,7 +629,14 @@ export function createPersonalDesktop({ browserReader = null, computerUsageServi
     if (showRequested || !confirmed) show();
     if (!lifecycle.stopped && !win.isDestroyed()) return win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : ''));
   }).then(() => { if (!startInTray) show(); });
-  return { window: win, show, openSettings() {
+  return { window: win, show, async showAfterUpdate() {
+    show();
+    if (process.platform === 'win32' && !lifecycle.stopped && !win.isDestroyed()) {
+      try {
+        if (!await activateWindowsDesktopWindow(win)) throw Object.assign(new Error('WINDOW_ACTIVATION_UNAVAILABLE'), { code: 'WINDOW_ACTIVATION_UNAVAILABLE' });
+      } catch (error) { createHostLog(app.getPath('userData')).failure('updated-window-activation', error); }
+    }
+  }, openSettings() {
     show();
     void ready.then(() => {
       if (!lifecycle.stopped && !win.isDestroyed()) return win.webContents.executeJavaScript("globalThis.WeftSettingsNavigation?.open('general')");

@@ -30,7 +30,7 @@ export async function nativeOwnerSession(page) {
   assert.ok(me.account?.ownerId);
   return me;
 }
-export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), entry, old = false, tempRoot = tmpdir(), processEvidence, cloudIdentity, respond, startInTray = false } = {}) {
+export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), entry, old = false, tempRoot = tmpdir(), processEvidence, cloudIdentity, respond, startInTray = false, updateBaseUrl, accessPort = 0 } = {}) {
   const root = realpathSync.native(mkdtempSync(join(tempRoot, 'weftmate-fx21-'))), profile = join(root, 'profile');
   mkdirSync(profile); writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
   const h = { root, profile, app: null, requests: [], source, executable, old, respond };
@@ -57,7 +57,7 @@ export async function migrationHost({ nativeSession = false, executable, source 
     finally { await prep.close(); }
   }
   const config = join(root,'desktop-config.json');
-  writeFileSync(config,JSON.stringify({schemaVersion:1,dataDirectory:profile,accessPort:0,updates:{channel:'preview'}}));
+  writeFileSync(config,JSON.stringify({schemaVersion:1,dataDirectory:profile,accessPort,updates:{channel:'preview',...(updateBaseUrl?{baseUrl:updateBaseUrl}:{})}}));
   h.launch = async () => {
     const env = {...process.env};
     for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key];

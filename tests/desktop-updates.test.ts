@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { EventEmitter } from 'node:events';
 import { registerHooks } from 'node:module';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
@@ -90,5 +90,51 @@ test('old watchdog startup authorization supplies the updated version before its
   try {
     await rm(file);
     assert.equal((await desktop.state()).completedVersion, electron.app.getVersion());
+    const contents = Object.assign(new EventEmitter(), { isLoading: () => true, executeJavaScript: async () => true });
+    desktop.attach(Object.assign(new EventEmitter(), { isDestroyed: () => false, webContents: contents }));
+    let shown = 0;
+    await desktop.confirmAppStartup(() => shown++);
+    assert.equal(shown, 1, 'an older watchdog remains eligible after removing its pending authorization');
   } finally { desktop.close(); }
+});
+
+test('successful app startup shows once after UI health, while ordinary tray startup and UI reloads stay hidden', async () => {
+  for (const updated of [true, false]) {
+    if (updated) process.argv.push('--updated');
+    let healthy = false, shown = 0;
+    const desktop = await createDesktopUpdates({ root: join(root, `foreground-${updated}`), feed: null, trustedKeys, isIdle: async () => true });
+    const contents = Object.assign(new EventEmitter(), { isLoading: () => true, executeJavaScript: async () => healthy });
+    const window = Object.assign(new EventEmitter(), { isDestroyed: () => false, webContents: contents });
+    desktop.attach(window);
+    try {
+      assert.equal(await desktop.confirmAppStartup(() => shown++), false);
+      assert.equal(shown, 0, 'an unready version cannot surface as an update success');
+      healthy = true;
+      assert.equal(await desktop.confirmAppStartup(() => shown++), true);
+      assert.equal(shown, updated ? 1 : 0);
+      assert.equal(await desktop.confirmAppStartup(() => shown++), false);
+      contents.emit('did-finish-load');
+      assert.equal(shown, updated ? 1 : 0, 'later loads cannot repeatedly steal focus');
+    } finally {
+      desktop.close();
+      if (updated) process.argv.splice(process.argv.lastIndexOf('--updated'), 1);
+    }
+  }
+});
+
+test('the watchdog health receipt waits for the single asynchronous update activation', async () => {
+  const recovery = join(root, 'WeftMate', 'app-recovery'); await mkdir(recovery, { recursive: true });
+  const token = 'synthetic-activation', pending = join(recovery, 'pending.json'), healthy = join(recovery, 'healthy.json');
+  await writeFile(pending, JSON.stringify({ token, nextVersion: electron.app.getVersion(), executable: process.execPath }));
+  const desktop = await createDesktopUpdates({ root: join(root, 'activation-checkpoint'), feed: null, trustedKeys, isIdle: async () => true });
+  desktop.attach(Object.assign(new EventEmitter(), { isDestroyed: () => false, webContents: Object.assign(new EventEmitter(), { isLoading: () => true, executeJavaScript: async () => true }) }));
+  let activate;
+  try {
+    const confirming = desktop.confirmAppStartup(() => new Promise(resolve => { activate = resolve; }));
+    await new Promise(resolve => setImmediate(resolve));
+    await assert.rejects(readFile(healthy), { code: 'ENOENT' });
+    assert.equal(await desktop.confirmAppStartup(() => assert.fail('activation repeated')), false);
+    activate(); await confirming;
+    assert.equal(JSON.parse(await readFile(healthy, 'utf8')).token, token);
+  } finally { desktop.close(); await rm(pending, { force: true }); await rm(healthy, { force: true }); }
 });
