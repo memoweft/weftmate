@@ -90,5 +90,34 @@ test('old watchdog startup authorization supplies the updated version before its
   try {
     await rm(file);
     assert.equal((await desktop.state()).completedVersion, electron.app.getVersion());
+    const contents = Object.assign(new EventEmitter(), { isLoading: () => true, executeJavaScript: async () => true });
+    desktop.attach(Object.assign(new EventEmitter(), { isDestroyed: () => false, webContents: contents }));
+    let shown = 0;
+    await desktop.confirmAppStartup(() => shown++);
+    assert.equal(shown, 1, 'an older watchdog remains eligible after removing its pending authorization');
   } finally { desktop.close(); }
+});
+
+test('successful app startup shows once after UI health, while ordinary tray startup and UI reloads stay hidden', async () => {
+  for (const updated of [true, false]) {
+    if (updated) process.argv.push('--updated');
+    let healthy = false, shown = 0;
+    const desktop = await createDesktopUpdates({ root: join(root, `foreground-${updated}`), feed: null, trustedKeys, isIdle: async () => true });
+    const contents = Object.assign(new EventEmitter(), { isLoading: () => true, executeJavaScript: async () => healthy });
+    const window = Object.assign(new EventEmitter(), { isDestroyed: () => false, webContents: contents });
+    desktop.attach(window);
+    try {
+      assert.equal(await desktop.confirmAppStartup(() => shown++), false);
+      assert.equal(shown, 0, 'an unready version cannot surface as an update success');
+      healthy = true;
+      assert.equal(await desktop.confirmAppStartup(() => shown++), true);
+      assert.equal(shown, updated ? 1 : 0);
+      assert.equal(await desktop.confirmAppStartup(() => shown++), false);
+      contents.emit('did-finish-load');
+      assert.equal(shown, updated ? 1 : 0, 'later loads cannot repeatedly steal focus');
+    } finally {
+      desktop.close();
+      if (updated) process.argv.splice(process.argv.lastIndexOf('--updated'), 1);
+    }
+  }
 });
