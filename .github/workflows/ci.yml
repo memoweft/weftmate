@@ -86,7 +86,7 @@ jobs:
           const scope = managedMkdtempSync('weftmate-first-send-ci-');
           const stopLease = startManagedTempLease(scope);
           try {
-            const run = await runManagedTestProcess(process.execPath, ['--test', 'tests/chat-first-send.test.ts'], {
+            const run = await runManagedTestProcess(process.execPath, ['--test', 'tests/chat-first-send.test.ts', 'tests/chat-terminal-handoff.test.ts'], {
               env: { ...process.env, TMPDIR: scope, TMP: scope, TEMP: scope, WEFTMATE_TEST_TEMP_SCOPE: scope },
               timeoutMs: 150000, commandRoots: [scope, process.cwd()],
               executables: [process.execPath, createRequire(import.meta.url)('electron')],
@@ -104,9 +104,13 @@ jobs:
         with:
           name: chat-first-send-windows-${{ github.sha }}
           path: |
-            .local/evidence/chat-first-send/report.json
+            .local/evidence/chat-first-send/**/report.json
             .local/evidence/chat-first-send/**/*.png
             .local/evidence/chat-first-send/**/frames.json
+            .local/evidence/chat-first-send/**/screencast.json
+            .local/evidence/chat-first-send/**/*.jpg
+            .local/evidence/chat-terminal-handoff/**/*.json
+            .local/evidence/chat-terminal-handoff/**/*.png
           if-no-files-found: error
 
   test:

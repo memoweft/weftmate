@@ -3,15 +3,16 @@ import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, open, unlink, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { startFixture } from './ux-4-fixture.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
-const out = process.env.WEFTMATE_FIRST_SEND_OUTPUT || await mkdtemp(join(tmpdir(), 'weftmate-first-send-'));
-const before = process.argv.includes('--before'), record = process.env.WEFTMATE_FIRST_SEND_RECORD === '1';
-await mkdir(out, { recursive: true });
+const parent = process.env.WEFTMATE_FIRST_SEND_OUTPUT || evidencePath('chat-first-send');
+await mkdir(parent, { recursive: true });
+const out = await mkdtemp(join(parent, 'run-'));
+const before = process.argv.includes('--before'), record = process.env.WEFTMATE_FIRST_SEND_RECORD !== '0';
 if (!process.env.WEFTMATE_TEST_TEMP_SCOPE) process.env.WEFTMATE_MANAGED_TEMP_ROOT ??= join(out, 'fixtures');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const report = { before, ci: process.env.CI === 'true', inheritedTempScope: !!process.env.WEFTMATE_TEST_TEMP_SCOPE,
@@ -109,15 +110,23 @@ try {
           session: testCore.state.selectedSessionId, selecting: testCore.state.sessionSelecting, submitting: testCore.state.submitting,
           intro: { hidden: intro.hidden, opacity: Number(style.opacity), visibility: style.visibility, text: intro.textContent, rect: rect(intro) },
           form: rect(document.getElementById('message-form')), draft: document.getElementById('message-text').value,
+          operation: { text: document.getElementById('operation-status').textContent, hidden: document.getElementById('operation-status').hidden },
+          timelineTime: document.timeline.currentTime, generation: testCore.state.historyGeneration, afterSeq: testCore.state.afterSeq,
+          native: [...testCore.state.historyEvents.values()].map(event => ({ seq: event.seq, type: event.type, turn: event.data?.turn, live: event.data?.live })),
           users: users.map(node => ({ id: id(node), bodyId: id(node.querySelector('.message-text')), bubbleId: id(node.querySelector('.message-user-bubble')),
             rect: rect(node), body: rect(node.querySelector('.message-text')), opacity: getComputedStyle(node).opacity, text: node.textContent,
-            key: node.dataset.eventId || node.dataset.messageKey, transform: getComputedStyle(node).transform })),
+            key: node.dataset.eventId || node.dataset.messageKey, transform: getComputedStyle(node).transform,
+            animations: node.getAnimations({ subtree: true }).map(animation => ({ pending: animation.pending, playState: animation.playState,
+              currentTime: animation.currentTime, startTime: animation.startTime, target: animation.effect?.target?.className,
+              progress: animation.effect?.getComputedTiming().progress, localTime: animation.effect?.getComputedTiming().localTime })) })),
           skeleton: !!document.querySelector('#transcript .wm-skeleton'), status: document.getElementById('timeline-status').textContent,
           transcript: document.getElementById('transcript').textContent });
         globalThis.firstSendFrame = requestAnimationFrame(tick);
       }; tick();
     });
-    await page.waitForTimeout(120); await action(); await finish(); await page.waitForTimeout(300);
+    let actionError;
+    try { await page.waitForTimeout(120); await action(); await finish(); await page.waitForTimeout(300); }
+    catch (error) { actionError = error; }
     const frames = await page.evaluate(() => { cancelAnimationFrame(firstSendFrame); return firstSendFrames; });
     if (cdp) await cdp.send('Page.stopScreencast'); recording = null; await Promise.all(writes); writes = [];
     await writeFile(join(out, name, 'frames.json'), JSON.stringify(frames));
@@ -133,7 +142,9 @@ try {
       introRestarts: active.filter((frame, index) => index > 0 && frame.intro.opacity > active[index - 1].intro.opacity + .01).length,
       userY: [...new Set(active.flatMap(frame => frame.users.map(user => Math.round(user.body.y))))],
       formY: [...new Set(frames.map(frame => Math.round(frame.form.y)))] };
-    report.scenarios.push(summary); return { frames, active, summary };
+    report.scenarios.push(summary);
+    if (actionError) throw actionError;
+    return { frames, active, summary };
   }
   async function welcome(name) {
     const geometry = await page.evaluate(() => ({ intro: document.getElementById('chat-intro').getBoundingClientRect().toJSON(),
