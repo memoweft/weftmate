@@ -8,7 +8,7 @@ import { manualUpdateMessage } from '../desktop-installation.mjs';
 import { configureUpdateEnvironment, saveDesktopConfig, defaultUpdateChannel } from '../desktop-config.mjs';
 import { createMobileUiPublisher } from '../personal-access/mobile-ui-release.mjs';
 import { installPreparedUpdate } from '../update-policy.ts';
-import { cancelAppRollback, appUpdateVersionAtBoot } from './app-rollback.mjs';
+import { cancelAppRollback, appUpdateVersionAtBoot, appBootSignal } from './app-rollback.mjs';
 
 export async function updateTrustedKeys({ development = false, feed = null } = {}) {
   // Packaged applications never accept an environment-provided trust root.
@@ -28,7 +28,7 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
     allowedPaths: new Set(personalAccessUiResources.keys()), builtInFile: name => personalAccessUiResources.get(name) }).init();
   setPersonalAccessUiResourceReader(name => store.resource(name));
   const mobile = mobileUiDir ? createMobileUiPublisher({ root: mobileUiDir, trustedKeys: store.trustedKeys, hostVersion: appVersion }) : null;
-  let window = null, switching = false, checkTimer = null, healthTimer = null, startFailed = false;
+  let window = null, switching = false, checkTimer = null, healthTimer = null, startFailed = false, appStartupConfirmed = false;
   const state = async () => {
     let mobileManifest = null, mobileError = null;
     try { mobileManifest = await mobile?.current(); } catch { mobileError = '手机界面包清单校验失败'; }
@@ -121,7 +121,16 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
     ipcMain.handle(channelName, (event, value) => { if (!trusted(event)) throw new Error('Desktop update unavailable'); return handler(value); });
   }
   if (feed || updateState().enabled) { checkTimer = setInterval(() => void check(), 60 * 60 * 1000); checkTimer.unref(); void check(); }
-  return { store, state, check, reopen, attach, restart, async prepareWindow() {
+  return { store, state, check, reopen, attach, restart, async confirmAppStartup(showWindow) {
+    if (appStartupConfirmed || !await window.webContents.executeJavaScript('globalThis.__WeftUiStarted === true')) return false;
+    appStartupConfirmed = true;
+    // The watchdog's hidden launch and any pending tray/minimized shell must
+    // hand off to the ready updated app once. Ordinary startup and UI trials
+    // keep their existing visibility; subsequent loads never take focus again.
+    if (completedVersion) await showWindow();
+    await appBootSignal('healthy');
+    return true;
+  }, async prepareWindow() {
     if (await isIdle()) try { await store.activate({ idle: true }); } catch { await rollback(); }
   },
     close() { clearInterval(checkTimer); clearTimeout(healthTimer); setPersonalAccessUiResourceReader(null);
