@@ -65,6 +65,7 @@ jobs:
     timeout-minutes: 8
     env:
       WEFTMATE_FIRST_SEND_OUTPUT: ${{ github.workspace }}/.local/evidence/chat-first-send
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/evidence
       WEFTMATE_TEST_HOST_NAME: synthetic-host
     steps:
       - uses: actions/checkout@v4
@@ -86,7 +87,7 @@ jobs:
           const scope = managedMkdtempSync('weftmate-first-send-ci-');
           const stopLease = startManagedTempLease(scope);
           try {
-            const run = await runManagedTestProcess(process.execPath, ['--test', 'tests/chat-first-send.test.ts', 'tests/chat-terminal-handoff.test.ts'], {
+            const run = await runManagedTestProcess(process.execPath, ['--test', 'tests/chat-first-send.test.ts', 'tests/chat-terminal-handoff.test.ts', 'tests/ui-07-side-chat.test.ts'], {
               env: { ...process.env, TMPDIR: scope, TMP: scope, TEMP: scope, WEFTMATE_TEST_TEMP_SCOPE: scope },
               timeoutMs: 150000, commandRoots: [scope, process.cwd()],
               executables: [process.execPath, createRequire(import.meta.url)('electron')],
@@ -111,6 +112,8 @@ jobs:
             .local/evidence/chat-first-send/**/*.jpg
             .local/evidence/chat-terminal-handoff/**/*.json
             .local/evidence/chat-terminal-handoff/**/*.png
+            .local/evidence/report.json
+            .local/evidence/side-*.png
           if-no-files-found: error
 
   test:

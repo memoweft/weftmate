@@ -833,6 +833,19 @@ test('created-session selection keeps its logical identity and forwards creation
     'a creation-options object must not bypass logical selection as a legacy boolean');
 });
 
+test('an unconfirmed first message stays before early native replies in its newly created session', () => {
+  const f = fixture();
+  const pending = f.core.beginOptimistic({ requestId: 'synthetic-first-request', sessionId: 'session-test', createdSession: true, text: '合成首条' });
+  const events = [
+    { seq: 0, type: 'turn.started', data: { turn: 1 } },
+    { seq: 1, type: 'assistant.message', data: { text: '合成的提前回复' } },
+  ];
+  const process = f.core.messageProcesses(events, [pending]).find((row: any) => row.requestId === pending.requestId);
+  assert.ok(process.position < events[1].seq, 'receipt latency must not move the first user message below its answer');
+  events.push({ seq: 8, type: 'assistant.message', data: { text: '合成的后续片段' } });
+  assert.equal(f.core.messageProcesses(events, [pending]).find((row: any) => row.requestId === pending.requestId).position, process.position);
+});
+
 test('D36 account preferences survive recreation, isolate accounts and preserve temporary send overrides', async () => {
   const f = fixture(); f.core.state.sessions[0].running = true;
   assert.equal(f.core.composerInputMode('session-test'), 'queue');

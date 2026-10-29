@@ -186,12 +186,12 @@ try {
     }
     scenario = { creates: 0, sends: 0, stages: [], timing };
     await page.getByRole('textbox', { name: '输入消息', exact: true }).fill('你好');
-    const { active, summary } = await capture(`${name}-first-send`, () => page.getByRole('button', { name: '发送', exact: true }).click(),
+    const { frames, active, summary } = await capture(`${name}-first-send`, () => page.getByRole('button', { name: '发送', exact: true }).click(),
       () => page.waitForFunction(() => document.querySelector('#transcript').textContent.includes('你好！这是合成的第一段回答。') && testCore.state.turnStatus === 'completed' && !document.getElementById('message-text').value));
     const allY=active.flatMap(frame=>frame.users.map(user=>user.body.y));
     summary.allFrameDisplacement=Math.max(...allY)-Math.min(...allY);
     check(`${name}: first message stays in place from its first visible frame`,summary.allFrameDisplacement<=1);
-    const visibleIntro=active.filter(frame=>frame.intro.opacity>.01);
+    const visibleIntro=frames.filter(frame=>frame.intro.opacity>.01);
     check(`${name}: welcome copy stays stable while fading`,new Set(visibleIntro.map(frame=>frame.intro.text)).size<=1);
     check(`${theme}: created and sent exactly once`, summary.creates === 1 && summary.sends === 1);
     check(`${theme}: message never vanishes`, summary.missing === 0);
