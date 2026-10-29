@@ -1,0 +1,222 @@
+// Actual native desktop, isolated synthetic account and profile. Evidence survives cleanup.
+import assert from 'node:assert/strict';
+import {_electron} from 'playwright';
+import {createRequire} from 'node:module';
+import {execFileSync} from 'node:child_process';
+import {mkdir,readFile,writeFile,open,unlink} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {startFixture} from './ux-4-fixture.mjs';
+import {localUiSession} from '../helpers/local-ui-session.mjs';
+import {managedMkdtempSync,disposeManagedTemp} from '../helpers/managed-temp.mjs';
+import {measureUi} from '../helpers/ui-smoothness.mjs';
+
+const root=resolve(import.meta.dirname,'../..'),before=process.argv.includes('--before');
+const dialogsOnly=process.argv.includes('--dialogs-only');
+const out=resolve(process.env.WEFTMATE_MOTION2_OUTPUT||'.local/evidence/ui-motion-2');
+await mkdir(out,{recursive:true});
+const report={before,commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),checks:[],samples:[],performance:[],errors:[]};
+const check=(name,value,details)=>{report.checks.push({name,pass:!!value,details});if(!before)assert.ok(value,`${name}: ${JSON.stringify(details)}`);};
+let app,page,fixture,scope,lock;
+try{
+  if(process.env.WEFTMATE_HEAVY_LOCK_DIR){for(const n of [1,2,3]){const path=join(process.env.WEFTMATE_HEAVY_LOCK_DIR,`heavy-${n}.lock`);try{const f=await open(path,'wx');await f.writeFile(`UI-MOTION-2 ${new Date().toISOString()}`);await f.close();lock=path;break;}catch(e){if(e.code!=='EEXIST')throw e;}}assert.ok(lock,'No heavy slot');}
+  scope=managedMkdtempSync('weftmate-motion2-',{prune:false});fixture=await startFixture();
+  const env={...process.env,REVIEW_PROFILE:join(scope,'profile'),REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken};delete env.ELECTRON_RUN_AS_NODE;
+  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:root,args:['tests/helpers/ui-motion-2-electron.mjs'],env,recordVideo:{dir:out,size:{width:1280,height:800}},timeout:30000});
+  for(const stream of [app.process().stdout,app.process().stderr])stream?.resume();
+  page=await app.firstWindow();page.setDefaultTimeout(12000);page.on('pageerror',e=>report.errors.push(e.message));
+  await page.route('**/personal/v1/ui/app.js',async route=>route.fulfill({contentType:'text/javascript',body:(await readFile(join(root,'src/personal-access-ui/app.js'),'utf8')).replace('ui.loadAttachmentHasher =','globalThis.testCore=core;globalThis.testUi=ui;ui.loadAttachmentHasher =')}));
+  if(before)for(const file of ['motion.js','timeline.js','components/main-chat.js','components/goals-view.js','components/activity-view.js','components/library-view.js','desktop.js','chat-process.css','workspace.css','composer-extras.css','native-desktop.css','styles.css','ui-core/goals.js']){
+    const source=file.startsWith('ui-core/')?`src/${file}`:`src/personal-access-ui/${file}`;
+    await page.route(`**/personal/v1/ui/${file}`,route=>route.fulfill({contentType:file.endsWith('.css')?'text/css':'text/javascript',body:execFileSync('git',['show',`825edad9e:${source}`],{cwd:root,encoding:'utf8'})}));
+  }
+  await page.waitForURL('**/personal/v1/ui');await localUiSession(page,fixture.credentials,'UI-MOTION-2 synthetic',{mainChat:true});
+  await page.waitForFunction(()=>globalThis.__WeftUiStarted&&globalThis.testCore?.state.sessions.length>0);
+  await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.showInactive();w.webContents.setBackgroundThrottling(false);});
+  await page.evaluate(()=>WeftReplyMotion.setVisibility(false));
+  const settle=()=>page.waitForTimeout(380);
+  async function sample(name,action){
+    await page.evaluate(()=>{globalThis.motion2Frames=[];const tick=()=>{const d=document.querySelector('#transcript .execution-block'),s=d?.querySelector(':scope > summary'),b=d?.querySelector('.execution-records');motion2Frames.push({at:performance.now(),height:d?.getBoundingClientRect().height,y:s?.getBoundingClientRect().y,body:b?.getBoundingClientRect().height,scroll:document.getElementById('chat-scroll').scrollTop,open:d?.open,animations:d?.getAnimations().map(a=>({state:a.playState,frames:a.effect.getKeyframes()}))});globalThis.motion2Raf=requestAnimationFrame(tick);};motion2Raf=requestAnimationFrame(tick);});
+    await action();await page.waitForTimeout(720);
+    const frames=await page.evaluate(()=>{cancelAnimationFrame(motion2Raf);return motion2Frames;});
+    await writeFile(join(out,`${name}-frames.json`),JSON.stringify(frames,null,2));report.samples.push({name,frames:frames.length});return frames;
+  }
+  async function thinking(lines,streaming=false){
+    await page.evaluate(async({id,lines,streaming})=>{
+      await testCore.selectSession(id);testCore.stopAssistantRefresh();testCore.refreshConversationFacts=async()=>{};testCore.state.historyGeneration++;
+      testCore.state.personalization={...testCore.state.personalization,thinkingDisplay:'collapsed'};
+      testCore.state.historyEvents.clear();testCore.state.seenSeq.clear();testCore.state.liveMessageSeq=-1;testUi.resetMainChatView();
+      const at=new Date().toISOString(),ev=(seq,type,data)=>({seq,type,data,at,sessionId:id});
+      const text=Array.from({length:lines},(_,i)=>`第 ${i+1} 段合成思考，核对展开与阅读位置。`).join('\n\n');
+      testCore.appendHistory([ev(0,'turn.started',{turn:1}),ev(1,'user.message',{text:'合成问题',turn:1}),...(!streaming?[ev(2,'assistant.message',{text:'合成回答，正文保留。',modelThinking:text,thinkingMs:2000,turn:1}),ev(3,'turn.ended',{turn:1,reason:'completed'})]:[])],streaming?[ev(2,'assistant.delta',{text:'',modelThinking:text,thinkingActive:true,streaming:true,turn:1})]:[],4);
+    },{id:fixture.source,lines,streaming});await settle();
+    await page.locator('#transcript .execution-block > summary').first().scrollIntoViewIfNeeded();
+  }
+  if(!dialogsOnly){
+  for(const theme of ['light','dark']){
+    await app.evaluate(({nativeTheme},t)=>nativeTheme.themeSource=t,theme);await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
+    for(const [name,lines,streaming]of [['short',3,false],['long',35,false],['stream',12,true]]){
+      await thinking(lines,streaming);
+      const frames=await sample(`${theme}-${name}-open`,async()=>{await page.locator('#transcript .execution-block > summary').first().click();if(streaming){await page.waitForTimeout(40);await page.evaluate(id=>{const text=Array.from({length:24},(_,i)=>`第 ${i+1} 段合成思考，核对展开与阅读位置。`).join('\n\n');testCore.appendHistory([],[{seq:2,type:'assistant.delta',sessionId:id,at:new Date().toISOString(),data:{text:'',modelThinking:text,thinkingActive:true,streaming:true,turn:1}}],5);},fixture.source);}});
+      const visible=frames.filter(f=>f.open&&f.height>0),end=visible.at(-1)?.height;
+      const jumps=visible.slice(1).map((f,i)=>Math.abs(f.height-visible[i].height));
+      check(`${theme}/${name}: expands continuously without a final height jump`,visible.length>4&&Math.max(0,...jumps)<Math.max(32,end*.4),{end,maxJump:Math.max(0,...jumps)});
+      check(`${theme}/${name}: summary stays anchored`,Math.max(...frames.map(f=>f.y))-Math.min(...frames.map(f=>f.y))<=2);
+      check(`${theme}/${name}: full thinking remains readable`,await page.locator('#transcript .thinking-body p').textContent().then(t=>t.includes(`第 ${lines} 段`)));
+      await sample(`${theme}-${name}-interrupt`,async()=>{const s=page.locator('#transcript .execution-block > summary').first();await s.click();await page.waitForTimeout(35);await s.click();await page.waitForTimeout(25);await s.click();});
+      check(`${theme}/${name}: interrupted close releases sizing`,await page.locator('#transcript .execution-block').first().evaluate(d=>!d.open&&!d.style.height&&!d.style.overflow));
+    }
+    for(const [width,height,zoom]of [[1280,800,1],[900,700,1.25],[720,650,1.5]]){
+      await app.evaluate(({BrowserWindow},{width,height,zoom})=>{const w=BrowserWindow.getAllWindows()[0];w.setContentSize(width,height);w.webContents.setZoomFactor(zoom);},{width,height,zoom});
+      await page.evaluate(()=>testUi.openActivity());await settle();
+      const caption=await page.getByRole('button',{name:'全部已读',exact:true}).evaluate(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(document.documentElement),safe=parseFloat(s.getPropertyValue('--desktop-caption-height'))||44;return {top:r.top,safe,hit:el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)),drag:getComputedStyle(el).webkitAppRegion};});
+      check(`${theme}/${width}/${zoom}: activity action clears native caption`,caption.top>=caption.safe&&caption.hit&&caption.drag!=='drag',caption);
+      await page.screenshot({path:join(out,`${theme}-${width}-${zoom}-activity.png`)});
+      await page.evaluate(()=>testCore.startNewConversation());await settle();
+      const text=await page.evaluate(()=>{const b=document.querySelector('.thinking-badge');b.hidden=false;b.textContent='深入思考';const m=document.getElementById('model-label');m.textContent='合成模型名字很长以核对省略';const range=e=>{const r=document.createRange();r.selectNodeContents(e);return r.getBoundingClientRect().toJSON();};return {badge:range(b),model:range(m),badgeBox:b.getBoundingClientRect().toJSON(),font:getComputedStyle(b).fontSize,modelFont:getComputedStyle(m).fontSize,send:document.getElementById('send-message').getBoundingClientRect().toJSON(),width:innerWidth};});
+      check(`${theme}/${width}/${zoom}: thinking label aligns and is not clipped`,text.font===text.modelFont&&Math.abs(text.badge.y-text.model.y)<=2&&text.badgeBox.width>=text.badge.width-1&&text.send.right<=text.width,text);
+      await page.screenshot({path:join(out,`${theme}-${width}-${zoom}-composer.png`)});
+    }
+    await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.webContents.setZoomFactor(1);w.setContentSize(1280,800);});
+  }
+  await page.evaluate(async()=>{await testUi.openGoals();await testCore.readGoals();});await settle();
+  await page.evaluate(()=>{
+    testCore.resetGoals();testCore.state.personalCapabilities={...testCore.state.personalCapabilities,taskOverview:1,scheduleEditing:1,goals:1};
+    globalThis.motion2Api=testCore.accessApi;globalThis.motion2Pending={};testCore.accessApi=path=>['/tasks','/schedules','/goals','/sessions'].includes(path)?new Promise((resolve,reject)=>motion2Pending[path]={resolve,reject}):motion2Api(path);
+    testCore.readGoals();
+  });await page.waitForFunction(()=>Object.keys(motion2Pending).length===4);
+  await page.evaluate(()=>motion2Pending['/schedules'].resolve({items:[]}));
+  await page.getByRole('tab',{name:'提醒与定时任务',exact:true}).click();await settle();
+  check('fast empty schedules do not wait for slow sibling requests',await page.locator('#goals-panel-schedules .goals-state-empty').count()===1);
+  await page.evaluate(()=>{for(const [path,p]of Object.entries(motion2Pending))p.resolve(path==='/tasks'?{items:[],recent:[]}:{items:[]});});await settle();
+  await page.evaluate(()=>{void testCore.readGoals();});await page.waitForTimeout(80);
+  check('background refresh preserves confirmed empty state',await page.locator('#goals-panel-schedules .goals-state-empty').count()===1&&await page.locator('#goals-panel-schedules .goals-state-loading').count()===0);
+  await page.evaluate(()=>{motion2Pending['/schedules'].reject(Error('合成读取失败'));for(const [path,p]of Object.entries(motion2Pending))if(path!=='/schedules')p.resolve(path==='/tasks'?{items:[],recent:[]}:{items:[]});});await settle();
+  check('failed read exposes retry',await page.locator('#goals-panel-schedules').getByRole('button',{name:'重试',exact:true}).count()===1);
+  await page.screenshot({path:join(out,'goals-failed.png')});
+  await page.locator('#goals-panel-schedules').getByRole('button',{name:'重试',exact:true}).click();await page.waitForTimeout(80);
+  await page.evaluate(()=>{for(const [path,p]of Object.entries(motion2Pending))p.resolve(path==='/tasks'?{items:[],recent:[]}:{items:[]});});await settle();
+  check('retry clears the real error',await page.locator('#goals-panel-schedules .goals-state-error').count()===0);
+  await page.screenshot({path:join(out,'goals-recovered.png')});
+  await page.evaluate(()=>{testCore.accessApi=motion2Api;});
+  }
+  if(!before||dialogsOnly){
+    // Exercise actual entry controls, retaining their live content, draft and focus.
+    if(!dialogsOnly)for(const theme of ['light','dark']){
+      await page.evaluate(t=>{document.documentElement.dataset.theme=t;},theme);
+      await page.evaluate(()=>WeftDesktop.toggleRail(false));await settle();
+      await page.locator('.goals-entry').click();
+      for(const id of ['tasks','schedules','goals','tasks','goals']){
+        await page.locator(`#goals-tab-${id}`).click();
+        check(`${theme}: goal tab ${id} owns visible content`,await page.locator(`#goals-panel-${id}`).isVisible()&&await page.locator(`#goals-tab-${id}`).getAttribute('aria-selected')==='true');
+      }
+      await page.locator('#goals-tab-tasks').focus();await page.keyboard.press('ArrowRight');
+      check(`${theme}: goal keyboard selection`,await page.locator('#goals-tab-schedules').getAttribute('aria-selected')==='true');
+      report.performance.push(await measureUi(page,`${theme}-goal-switch`,()=>page.locator('#goals-tab-goals').click(),{}));
+      await page.locator('.activity-entry').click();
+      for(const id of ['all','actionable','task','reminder','memory','all']){
+        await page.locator(`.activity-filters [data-filter="${id}"]`).click();
+        await page.waitForFunction(id=>testCore.activity.filter===id&&!testCore.activity.loading,id);
+        check(`${theme}: activity ${id} selected`,await page.locator(`.activity-filters [data-filter="${id}"]`).getAttribute('aria-current')==='true');
+      }
+      await page.locator('.library-entry').click();
+      for(const id of ['','document','spreadsheet','image','code','other','']){
+        const control=page.locator(`.library-type[data-type="${id}"]`);
+        await control.click();await page.waitForFunction(id=>testCore.library.type===id&&!testCore.library.loading,id);
+        check(`${theme}: library ${id||'all'} selected`,await control.getAttribute('aria-pressed')==='true');
+      }
+      for(const view of ['grid','list','grid']){
+        await page.locator(`[data-view="${view}"]`).click();
+        check(`${theme}: library ${view} content`,await page.locator('.library-list').evaluate((el,view)=>el.classList.contains('is-grid')===(view==='grid'),view));
+      }
+      await page.getByRole('combobox',{name:'按时间筛选',exact:true}).click();await page.getByRole('option',{name:/最近 7 天/}).click();
+      await page.waitForFunction(()=>!testCore.library.loading&&testCore.library.time==='7');
+      check(`${theme}: library time filter committed`,await page.locator('select[aria-label="按时间筛选"]').inputValue()==='7');
+      await page.evaluate(()=>{
+        globalThis.motion2LibraryApi=testCore.accessApi;globalThis.motion2LibraryReads=[];
+        testCore.accessApi=path=>path.startsWith('/library?')?new Promise(resolve=>motion2LibraryReads.push({path,resolve})):motion2LibraryApi(path);
+      });
+      await page.locator('.library-type[data-type="code"]').click();await page.locator('.library-type[data-type="image"]').click();
+      await page.waitForFunction(()=>motion2LibraryReads.length===2);
+      await page.evaluate(()=>motion2LibraryReads[1].resolve({items:[],projects:[],total:0,nextCursor:null}));await page.waitForFunction(()=>!testCore.library.loading);
+      await page.evaluate(()=>motion2LibraryReads[0].resolve({items:[],projects:[],total:99,nextCursor:null}));await page.waitForTimeout(40);
+      check(`${theme}: late filter response stays with its original request`,await page.evaluate(()=>testCore.library.type==='image'&&testCore.library.total===0));
+      await page.evaluate(()=>{testCore.accessApi=motion2LibraryApi;});
+      await page.locator('.health-entry').click();await page.locator('.health-surface').waitFor({state:'visible'});
+      check(`${theme}: health navigation retains surface`,await page.locator('.health-surface').isVisible());
+      await page.evaluate(()=>{void testUi.openHelp();});await page.locator('.help-surface').waitFor({state:'visible'});
+      const help=page.locator('.help-surface details > summary').first();if(await help.count()){await help.click();check(`${theme}: help disclosure`,await help.evaluate(el=>el.parentElement.open));}
+      await page.evaluate(()=>{void testCore.startNewConversation();});await settle();
+      await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('UI-MOTION-2 保留的合成草稿');
+      for(const mode of ['工作','对话']){
+        await page.getByRole('tab',{name:`新对话：${mode}`,exact:true}).click();
+        check(`${theme}: draft survives ${mode} switch`,await page.getByRole('textbox',{name:'输入消息',exact:true}).inputValue()==='UI-MOTION-2 保留的合成草稿');
+      }
+      const entries=await page.evaluate(()=>WeftPanels.entries.map(({kind,title})=>({kind,title})));
+      for(const {kind,title}of entries){
+        await page.evaluate(kind=>{WeftPanels.open(kind);},kind);
+        await page.getByRole('tab',{name:title,exact:true}).waitFor();
+        check(`${theme}: ${kind} panel selected`,await page.getByRole('tab',{name:title,exact:true}).getAttribute('aria-selected')==='true');
+      }
+      const tabs=page.locator('.preview-tab-select');await tabs.first().focus();await page.keyboard.press('End');
+      check(`${theme}: panel keyboard focus selected`,await tabs.last().getAttribute('aria-selected')==='true');
+      await page.keyboard.press('Escape');await settle();
+      check(`${theme}: panel close keeps draft`,await page.getByRole('textbox',{name:'输入消息',exact:true}).inputValue()==='UI-MOTION-2 保留的合成草稿');
+      await page.evaluate(()=>WeftPanels.reset());
+      for(const collapsed of [true,false,true,false]){await page.evaluate(value=>WeftDesktop.toggleRail(value),collapsed);check(`${theme}: sidebar ${collapsed}`,await page.locator('body').evaluate((el,value)=>el.classList.contains('rail-collapsed')===value,collapsed));}
+      await page.locator('#attachment-add').click();check(`${theme}: attachment menu opens`,await page.locator('.composer-menu').isVisible());await page.keyboard.press('Escape');
+      await page.locator('#model-trigger').click();check(`${theme}: model menu opens`,await page.locator('#model-popover').isVisible());await page.keyboard.press('Escape');
+      await page.locator('#account-menu-trigger').click();check(`${theme}: account menu opens`,await page.locator('#account-menu').isVisible());await page.keyboard.press('Escape');
+      await page.locator('#search-entry').click();
+      for(const id of ['all','chats','projects','library','schedules','memory','all']){
+        await page.locator(`.search-type[data-type="${id}"]`).click();await page.waitForFunction(id=>testCore.search.type===id&&!testCore.search.loading,id);
+        check(`${theme}: search ${id} selected`,await page.locator(`.search-type[data-type="${id}"]`).getAttribute('aria-selected')==='true');
+      }
+      await page.keyboard.press('Escape');await page.locator('.search-palette').waitFor({state:'hidden'});
+      await page.locator('#rail-memory').click();await page.locator('#memory-view').waitFor({state:'visible'});
+      for(const kind of await page.locator('.memory-type-filter').evaluateAll(nodes=>nodes.map(n=>n.dataset.kind))){
+        await page.locator(`.memory-type-filter[data-kind="${kind}"]`).click();
+        check(`${theme}: memory ${kind} selected`,await page.locator(`.memory-type-filter[data-kind="${kind}"]`).getAttribute('aria-pressed')==='true');
+      }
+      await page.evaluate(()=>{void testCore.startNewConversation();});await settle();
+      await page.screenshot({path:join(out,`${theme}-switch-inventory.png`)});
+    }
+    const layered=await page.evaluate(async()=>{
+      const content=document.createElement('div'),trigger=document.createElement('button');trigger.textContent='打开合成子弹窗';content.append(trigger);
+      const parent=WeftControls.dialog({title:'合成父弹窗',content,actions:[]});parent.openPanel();trigger.focus();
+      const child=WeftControls.dialog({title:'合成子弹窗',content:document.createTextNode('子层内容'),actions:[]});child.openPanel();
+      const before=parent.getBoundingClientRect().toJSON();child.close();
+      const copy=document.querySelector('.motion-dialog-copy'),backdrop=document.querySelector('.motion-dialog-backdrop');
+      const result={childClosed:!child.open,parentOpen:parent.open,visibleCopy:!!copy?.matches(':popover-open')&&copy.getBoundingClientRect().width>0,visibleBackdrop:!!backdrop?.matches(':popover-open'),parentY:parent.getBoundingClientRect().y-before.y,focus:document.activeElement===trigger};
+      await Promise.all([copy,backdrop].flatMap(el=>el?.getAnimations().map(a=>a.finished.catch(()=>{}))||[]));result.cleaned=!document.querySelector('.motion-dialog-copy,.motion-dialog-backdrop');parent.close();child.remove();parent.remove();return result;
+    });
+    check('nested dialog exit stays above parent, restores focus, and releases visual copies',layered.childClosed&&layered.parentOpen&&layered.visibleCopy&&layered.visibleBackdrop&&layered.parentY===0&&layered.focus&&layered.cleaned,layered);
+    await page.route('**/personal/v1/ui/motion2-native-test.css',route=>route.fulfill({contentType:'text/css',body:'dialog.motion2-native { animation:none; opacity:0; transition:opacity var(--dur-2),display var(--dur-2) allow-discrete,overlay var(--dur-2) allow-discrete; } dialog.motion2-native[open] {display:block;opacity:1;}'}));
+    const nativeExitStyle=await page.addStyleTag({url:fixture.origin+'/personal/v1/ui/motion2-native-test.css'});
+    const nativeLayered=await page.evaluate(async()=>{
+      for(const a of document.getAnimations())if(Number.isFinite(a.effect.getTiming().iterations))a.finish();await new Promise(requestAnimationFrame);
+      const content=document.createElement('button');content.textContent='合成父层焦点';const parent=WeftControls.dialog({title:'原生退出父层',content});parent.openPanel();content.focus();
+      const child=WeftControls.dialog({title:'原生退出子层',content:document.createTextNode('合成原生退出')});child.classList.add('motion2-native');child.setAttribute('data-motion-native-close','');child.openPanel();await new Promise(r=>setTimeout(r,250));
+      for(const a of parent.getAnimations())a.finish();await new Promise(requestAnimationFrame);
+      const y=parent.getBoundingClientRect().y;child.close();await new Promise(requestAnimationFrame);
+      const frames=[];for(let i=0;i<10;i++){frames.push({opacity:Number(getComputedStyle(child).opacity),display:getComputedStyle(child).display,overlay:getComputedStyle(child).overlay,parentY:parent.getBoundingClientRect().y-y,focus:document.activeElement===content,copies:document.querySelectorAll('.motion-dialog-copy').length});await new Promise(requestAnimationFrame);}
+      child.openPanel();child.close();child.openPanel();child.close();await new Promise(r=>setTimeout(r,300));
+      const result={frames,noResidue:getComputedStyle(child).overlay==='none'&&getComputedStyle(child).display==='none'&&!document.querySelector('.motion-dialog-copy'),parentOpen:parent.open,focus:document.activeElement===content};
+      parent.setAttribute('data-motion-native-close','');parent.close();parent.remove();child.remove();return result;
+    });
+    await nativeExitStyle.evaluate(el=>el.remove());
+    await writeFile(join(out,'nested-native-exit-frames.json'),JSON.stringify(nativeLayered,null,2));
+    check('marked native dialog has a visible exit, stable parent and correct rapid-close cleanup',nativeLayered.frames.some(f=>f.opacity>0&&f.display!=='none'&&f.overlay==='auto')&&nativeLayered.frames.every(f=>f.parentY===0&&f.copies===0)&&nativeLayered.noResidue&&nativeLayered.parentOpen&&nativeLayered.focus,nativeLayered);
+    await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>WeftReplyMotion.setPreference('system'));
+    const reduced=await page.evaluate(()=>{const el=document.getElementById('message-form');WeftMotion.content(el,Symbol());return {reduced:WeftMotion.reduced,frames:el.getAnimations().flatMap(a=>a.effect.getKeyframes())};});
+    check('reduced motion retains opacity feedback without spatial movement',reduced.reduced&&reduced.frames.some(f=>f.opacity)&&reduced.frames.every(f=>!f.transform&&!f.height),reduced);
+    await page.emulateMedia({reducedMotion:'no-preference'});
+  }
+  check('no page errors',report.errors.length===0,report.errors);
+}catch(error){report.failure=error.stack;await page?.screenshot({path:join(out,'failure.png')}).catch(()=>{});throw error;}
+finally{
+  await writeFile(join(out,'report.json'),JSON.stringify(report,null,2));
+  if(page)await page.unrouteAll({behavior:'wait'}).catch(()=>{});
+  if(app)await app.close();if(fixture)await fixture.close();
+  if(scope)disposeManagedTemp(scope);if(lock)await unlink(lock);
+}
+console.log(JSON.stringify({out,checks:report.checks.length,failures:report.checks.filter(c=>!c.pass)}));

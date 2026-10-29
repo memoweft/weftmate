@@ -47,7 +47,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             if (!selectionCapture || selectionCapture.key !== viewKey) rememberView();
             const capture = { key: viewKey }; selectionCapture = capture;
             const done = () => { if (selectionCapture === capture) selectionCapture = null; };
-            try { return Promise.resolve(action.apply(this, args)).finally(done); }
+            try { const result=name.startsWith('startNew')&&globalThis.WeftMotion?WeftMotion.handoff(box(),()=>action.apply(this,args)):action.apply(this,args);return Promise.resolve(result).then(value=>{if(name.startsWith('startNew'))globalThis.WeftMotion?.content(box(),Symbol());return value;}).finally(done); }
             catch (error) { done(); throw error; }
         };
     }
@@ -148,7 +148,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 const state = core.state.chatWindow;
                 if (spec.collapsed) { state.expanded.add(spec.date); state.collapsed.delete(spec.date); }
                 else { state.expanded.delete(spec.date); state.collapsed.add(spec.date); }
-                renderMainChat();
+                renderMainChat();globalThis.WeftMotion?.content(list(),`${spec.date}:${!spec.collapsed}`);
             }, 'chat-day-toggle'); action.setAttribute('aria-expanded', String(!spec.collapsed)); row.append(action);
         } else if (spec.kind === 'message') {
             // Acceptance adds actions and metadata to the existing sent bubble.

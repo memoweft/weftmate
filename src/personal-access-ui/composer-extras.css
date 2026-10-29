@@ -4,7 +4,7 @@
 .session-computer-name { color:var(--ink-muted); font-size:var(--wm-font-size-11); margin-left:var(--wm-space-8); }
 .composer-menu .model-option { display:flex; align-items:center; gap:var(--wm-space-12); min-height:var(--wm-space-44); }
 .composer-menu [role=menuitemcheckbox] { border-top:1px solid var(--line); }
-.thinking-badge { color:var(--accent); font-size:var(--wm-font-size-12); white-space:nowrap; }
+.thinking-badge { display:inline-flex; align-items:center; flex:none; color:var(--accent); font-size:var(--wm-type-button); line-height:var(--wm-line-height-1_5); white-space:nowrap; }
 .composer-subtasks { display:flex; justify-content:center; margin:var(--wm-space-8) 0; }
 .composer-subtasks[hidden],.thinking-badge[hidden] { display:none; }
 .subtasks-trigger { font:inherit; font-size:var(--wm-font-size-13); color:var(--ink-secondary); background:var(--surface-soft); border:1px solid var(--line); border-radius:var(--wm-radius-999); padding:var(--wm-space-8) var(--wm-space-16); min-height:var(--wm-space-44); }
@@ -15,7 +15,6 @@
 .subtasks-popover .is-failed span { color:var(--danger); }
 .subtasks-popover button:hover { background:var(--surface-soft); }
 .subtasks-trigger:focus-visible,.subtasks-popover button:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }
-@media(max-width:600px) { .thinking-badge { max-width:var(--wm-space-44); overflow:hidden; } }
 
 /* The input is the quiet continuation of the reading column. */
 #conversation-pane.chat-workspace .composer-area { box-sizing:border-box; width:100%; max-width:calc(var(--chat-measure) + 2 * var(--chat-gutter)); margin-inline:auto; padding:8px var(--chat-gutter) 16px; border:0; background:transparent; }

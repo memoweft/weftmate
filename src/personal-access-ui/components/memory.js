@@ -78,6 +78,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     function memoryStatus(message, error = false) {
         const node = ui.byId('memory-status');
         ui.paintMemoryHealth?.(core.memory.status);
+        globalThis.WeftMotion?.content(list,JSON.stringify(memoryFilterInput()));
         if (core.memory.status?.state === 'disabled') {
             // Rich status content must not inherit the plain-text loading animation.
             node.classList.remove('reply-status', 'reply-working');
@@ -272,6 +273,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         const scope = document.getElementById('memory-forget-scope'); if (scope) scope.hidden = mode !== 'delete';
         ui.byId('memory-confirm-action').disabled = !!core.memory.activeOperation || !!core.memory.unresolvedMarker || !!core.memory.selected?.stale
             || mode === 'delete' && !core.memory.forgetPreview;
+        globalThis.WeftMotion?.content(ui.byId('memory-detail-body').parentElement,mode);
     }
     function handleMemoryReceiptAction() {
         const unknown = core.storedMemoryMarker(core.memoryMarkerKey()) ?? core.memory.unresolvedMarker;

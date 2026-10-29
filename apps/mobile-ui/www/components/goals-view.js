@@ -17,8 +17,8 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
         const tab=button(id==='schedules'?'提醒与定时任务':name,()=>selectSection(id),'goals-tab');tab.id=`goals-tab-${id}`;tab.setAttribute('role','tab');tab.setAttribute('aria-controls',`goals-panel-${id}`);tabs.append(tab);
         section.id=`goals-panel-${id}`;section.setAttribute('role','tabpanel');section.setAttribute('aria-labelledby',tab.id);
     }
-    function selectSection(id){selectedSection=id;for(const [key,{section}]of Object.entries(sections))section.hidden=key!==id;for(const tab of tabs.children){const active=tab.id===`goals-tab-${id}`;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;}}
-    tabs.onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const controls=[...tabs.children],index=controls.indexOf(document.activeElement),next=event.key==='Home'?0:event.key==='End'?controls.length-1:(index+(event.key==='ArrowRight'?1:-1)+controls.length)%controls.length;controls[next].click();controls[next].focus();};
+    function selectSection(id){const changed=selectedSection!==id;selectedSection=id;for(const [key,{section}]of Object.entries(sections))section.hidden=key!==id;for(const tab of tabs.querySelectorAll('[role=tab]')){const active=tab.id===`goals-tab-${id}`;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;}if(changed)globalThis.WeftMotion?.content(sections[id].section,Symbol());globalThis.WeftMotion?.selection(tabs,tabs.querySelector('[aria-selected=true]'));}
+    tabs.onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const controls=[...tabs.querySelectorAll('[role=tab]')],index=controls.indexOf(document.activeElement),next=event.key==='Home'?0:event.key==='End'?controls.length-1:(index+(event.key==='ArrowRight'?1:-1)+controls.length)%controls.length;controls[next].click();controls[next].focus();};
     search.oninput=()=>{query=search.value.trim().toLocaleLowerCase();render();};
     const matches=row=>!query||[row.title,row.text,row.description,row.conversationTitle].some(value=>value?.toLocaleLowerCase().includes(query));
     selectSection(selectedSection);
@@ -124,10 +124,11 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
         return block;
     }
     function render(){
+        globalThis.WeftMotion?.selection(tabs,tabs.querySelector('[aria-selected=true]'));
         const model=core.goalsPage;refresh.disabled=model.loading;newSchedule.disabled=core.state.personalCapabilities?.scheduleEditing!==1||!model.sessions.some(s=>s.taskAvailable!==false);newGoal.disabled=core.state.personalCapabilities?.goals!==1||!model.sessions.some(s=>s.taskAvailable!==false);
         const offlineTasks=(core.offlineTasksView?.()||[]).filter(t=>['waiting','claimed','sending','expired'].includes(t.state));
-        for(const {list}of Object.values(sections))list.setAttribute('aria-busy',String(model.loading));
-        const next=JSON.stringify([query,!model.tasks.length||!model.schedules.length||!model.goals.length?model.loading:null,model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy],offlineTasks]);
+        for(const [key,{list}]of Object.entries(sections))list.setAttribute('aria-busy',String(!!model.pending[key]));
+        const next=JSON.stringify([query,model.pending,model.loaded,model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy],offlineTasks]);
         // Per-section snapshots keep task buttons in place while empty siblings load.
         if(signature===next)return;signature=next;
         offlineSection.hidden=!offlineTasks.length;offlineList.replaceChildren();
@@ -138,11 +139,11 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
         }
         const focused=document.activeElement,focusedLabel=focused?.getAttribute('aria-label')??focused?.textContent,focusedRow=focused?.closest('article')?.dataset.goalKey;
         for(const [key,{list}]of Object.entries(sections)){
-            const sectionSignature=JSON.stringify([query,model[key],model.errors[key],model.errors.offlineSources,[...model.busy],model[key].length?null:model.loading,model.sessions,model.timeZone]);
+            const sectionSignature=JSON.stringify([query,model[key],model.errors[key],model.errors.offlineSources,[...model.busy],model.pending[key],model.loaded[key],model.sessions,model.timeZone]);
             if(list.dataset.snapshot===sectionSignature)continue;list.dataset.snapshot=sectionSignature;
-            const nextRows=[];list.setAttribute('aria-busy',String(model.loading));if(model.errors[key]){nextRows.push(stateBlock('error',key,model.errors[key]+(model[key].length?' · 下面保留上次读取的结果。':'')));if(!model[key].length){list.replaceChildren(...nextRows);continue;}}
+            const nextRows=[];if(model.errors[key]){nextRows.push(stateBlock('error',key,model.errors[key]+(model[key].length?' · 下面保留上次读取的结果。':'')));if(!model[key].length){list.replaceChildren(...nextRows);continue;}}
             if(key==='tasks'&&model.errors.offlineSources)nextRows.push(stateBlock('error',key,model.errors.offlineSources));
-            const rows=model[key].filter(matches);if(!rows.length)nextRows.push(query?el('p','goals-empty','没有匹配的内容，试试其他关键词。'):stateBlock(model.loading?'loading':'empty',key,{tasks:'交代助手做事后，可以在这里展开查看进展。',schedules:core.state.personalCapabilities?.scheduleEditing===1?'按你设定的时间提醒，也可以在对话里直接交代。':'连接支持定时任务的电脑后，可以安排之后要做的事。',goals:core.state.personalCapabilities?.goals===1?'把想持续推进的事关联到一个对话。':'连接支持目标的电脑后，可以接着推进长期计划。'}[key]));
+            const rows=model[key].filter(matches);if(!rows.length)nextRows.push(query?el('p','goals-empty','没有匹配的内容，试试其他关键词。'):stateBlock(model.pending[key]&&!model.loaded[key]?'loading':'empty',key,{tasks:'交代助手做事后，可以在这里展开查看进展。',schedules:core.state.personalCapabilities?.scheduleEditing===1?'按你设定的时间提醒，也可以在对话里直接交代。':'连接支持定时任务的电脑后，可以安排之后要做的事。',goals:core.state.personalCapabilities?.goals===1?'把想持续推进的事关联到一个对话。':'连接支持目标的电脑后，可以接着推进长期计划。'}[key]));
             for(const row of rows){
                 if(key==='tasks'){nextRows.push(taskRow(row));continue;}
                 const rowKey=`${core.state.identityGeneration}:${key}:${row.id}`,snapshot=JSON.stringify([row,model.busy.has(row.id)]),previous=otherRows.get(rowKey);if(previous?.snapshot===snapshot){nextRows.push(previous.item);continue;}

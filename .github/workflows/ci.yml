@@ -14,6 +14,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  ui-motion-2-windows:
+    name: Windows motion and page states
+    runs-on: windows-latest
+    timeout-minutes: 8
+    env:
+      WEFTMATE_MOTION2_OUTPUT: ${{ github.workspace }}/.local/evidence/ui-motion-2
+      WEFTMATE_TEST_HOST_NAME: synthetic-host
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Native disclosure, loading states and switch inventory
+        shell: pwsh
+        run: node --test tests/ui-motion-2.test.ts tests/ui-motion-2-goals.test.ts
+      - name: Upload synthetic motion evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-motion-2-windows-${{ github.sha }}
+          path: .local/evidence/ui-motion-2
+          if-no-files-found: error
+
   sidebar-phone-entry-windows:
     name: Windows phone sidebar entry
     runs-on: windows-latest
