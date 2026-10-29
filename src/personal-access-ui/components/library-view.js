@@ -56,14 +56,14 @@ globalThis.WeftLibraryView={mount({target,core,desktop=false,openPreview,configu
     const skeleton = () => WeftControls.skeleton({ rows: 4 });
     function empty(message,id='folder',retry=false){const box=node('div','library-empty');box.append(WeftIcons.create(id,24),node('p','',message));if(retry)box.append(button('重试',()=>core.readLibrary(),'button secondary small'));return box;}
     function dateLabel(value){const date=new Date(value),now=new Date();return new Intl.DateTimeFormat('zh-CN',date.toDateString()===now.toDateString()?{hour:'numeric',minute:'2-digit',hourCycle:'h23'}:{month:'long',day:'numeric',...(date.getFullYear()!==now.getFullYear()?{year:'numeric'}:{})}).format(date);}
-    function render(){
+    function paint(){
         const model=core.library;refresh.disabled=model.loading;more.hidden=!model.nextCursor;more.disabled=model.loading;
         reset.hidden=!(model.type||model.search||model.projectId||model.time!=='all');
         status.textContent=model.error?`${model.error}${model.items.length?' · 仍显示上次读取的文件':''}`:model.loading&&model.items.length?'正在更新文件…':model.loading?'':`${model.total} 个文件`;list.setAttribute('aria-busy',String(model.loading));
-        for(const el of filters.children){el.setAttribute('aria-pressed',String(el.dataset.type===model.type));el.disabled=model.loading;}
+        for(const el of filters.children){el.setAttribute('aria-pressed',String(el.dataset.type===model.type));}
         for(const el of views.children)el.setAttribute('aria-pressed',String(el.dataset.view===model.view));
         const projects=JSON.stringify(model.projects);if(project.dataset.items!==projects){project.dataset.items=projects;project.replaceChildren();for(const row of [{id:'',name:'全部项目'},...model.projects]){const option=node('option','',row.name);option.value=row.id;project.append(option);}}
-        project.value=model.projectId;time.value=model.time;project.disabled=time.disabled=model.loading;project.dispatchEvent(new Event('weft:sync'));time.dispatchEvent(new Event('weft:sync'));
+        project.value=model.projectId;time.value=model.time;project.dispatchEvent(new Event('weft:sync'));time.dispatchEvent(new Event('weft:sync'));
         list.classList.toggle('is-grid',desktop&&model.view==='grid');const signature=JSON.stringify([model.items,model.view,model.type,model.search,model.projectId,model.time,model.items.length?null:[model.loading,model.error]]);if(signature===rowSignature)return;rowSignature=signature;
         if(!model.items.length){mounted.clear();list.replaceChildren(model.loading?skeleton():model.error?empty(model.error,'warn',true):empty(model.type||model.search||model.projectId||model.time!=='all'?'没有找到符合条件的文件。试试其他筛选或文件名。':'还没有成果。对话里做好的文件，会出现在这里。'));return;}
         const rows=[];
@@ -78,6 +78,7 @@ globalThis.WeftLibraryView={mount({target,core,desktop=false,openPreview,configu
         }
         WeftControls.reconcile(list,rows);for(const [key,value]of mounted)if(!rows.includes(value.row))mounted.delete(key);
     }
+    function render(){paint();const model=core.library;if(!model.loading)globalThis.WeftMotion?.content(list,JSON.stringify([model.type,model.search,model.projectId,model.time,model.view]));}
     const autoRefresh=setInterval(()=>{if(target.isConnected&&!target.hidden&&document.visibilityState==='visible'&&core.foreground())void core.readLibrary();},core.polling.overview);
     return {render,preview,deactivate(){previewEpoch++;clearTimeout(searchTimer);WeftPopover.closeMenu();},dispose(){previewEpoch++;clearTimeout(searchTimer);clearInterval(autoRefresh);WeftPopover.closeMenu();},focus(){title.focus();}};
 }};

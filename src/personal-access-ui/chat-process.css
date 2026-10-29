@@ -1,4 +1,6 @@
 /* Message-local presentation. The workspace owns outer layout and palette. */
+/* Opening records must not reintroduce the old timeline row's 12px padding. */
+.chat-progress > .timeline-entry:has(> .execution-block) { padding-block:0; }
 #conversation-pane.chat-workspace .execution-block > .inline-progress-summary { width:fit-content; gap:var(--wm-space-8); }
 #conversation-pane.chat-workspace .progress-elapsed { opacity:1; color:var(--ink-secondary,var(--secondary)); font-variant-numeric:tabular-nums; }
 #conversation-pane.chat-workspace .execution-records { margin:var(--wm-space-8) 0 var(--wm-space-16); padding:var(--wm-space-8) 0 0; border:0; border-top:1px solid var(--line); }
