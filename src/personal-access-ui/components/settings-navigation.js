@@ -3,11 +3,16 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     let registry, selected = 'general', dialog, search, navigation, content, picker, returnFocus, cloudNotice;
     const panels = new Map();
     const phoneSettings=()=>!globalThis.weftmateDesktop&&matchMedia('(max-width:600px) and (pointer:coarse)').matches;
-    function showSettingsList(){dialog.dataset.mobilePage='list';ui.byId('settings-title').textContent='设置';}
+    function showSettingsList(){
+        const changed=dialog.dataset.mobilePage!=='list';
+        dialog.dataset.mobilePage='list';ui.byId('settings-title').textContent='设置';
+        if(changed)globalThis.WeftMotion.reveal(dialog.querySelector('.settings-sidebar'),'dur-1');
+    }
     let transitions = [];
     function settleCategories() {
-        for (const animation of transitions) animation.finish();
+        const running=transitions;
         transitions = [];
+        for (const animation of running) { animation.finish(); animation.cancel(); }
         for (const [key, panel] of panels) {
             panel.hidden = key !== selected; panel.inert = key !== selected;
             if (key === selected) panel.removeAttribute('aria-hidden'); else panel.setAttribute('aria-hidden','true');
@@ -22,7 +27,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         panel.hidden = false; panel.inert = false; panel.removeAttribute('aria-hidden');
         const order = registry.list({desktop:!!globalThis.weftmateDesktop}).map(item=>item.id);
         const direction = order.indexOf(next) > order.indexOf(previous) ? 1 : -1;
-        const timing = globalThis.WeftSettingsControls.timing('--dur-1');
+        const timing = { ...globalThis.WeftMotion.timing('dur-1'), fill:'none' };
         const outgoing = old.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:`translateY(${-direction * 8}px)`}],timing);
         const incoming = panel.animate([{opacity:0,transform:`translateY(${direction * 12}px)`},{opacity:1,transform:'translateY(0)'}],timing);
         transitions = [outgoing,incoming];
@@ -77,6 +82,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (!panels.has(id)) { const panel = node('section', 'settings-category'); panel.dataset.category = id; panels.set(id, panel); content.append(panel); }
         settleCategories();
         const previous = selected;
+        const moveFocus=previous!==id&&panels.get(previous)?.contains(document.activeElement);
         if(id!=='about')clearTimeout(renderSettingsUpdates.timer);
         if (panels.get(selected)?.querySelector('.wm-skeleton,[aria-busy=true]')) mountedCategories.delete(selected);
         if (selected === 'devices' && id !== 'devices') ui.stopCloudPairing();
@@ -88,6 +94,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (cloudNotice) cloudNotice.hidden = core.state.cloudAuth.mode !== 'authenticated' || !['account', 'devices'].includes(id);
         for (const [key, panel] of panels) { panel.hidden = key !== id; panel.inert = key !== id; }
         ui.byId('settings-title').textContent = category.name;
+        if(moveFocus)ui.byId('settings-title').focus({preventScroll:true});
         picker.value = id; picker.dispatchEvent(new Event('weft:sync'));
         for (const button of navigation.querySelectorAll('button')) {
             button.classList.toggle('is-selected', button.dataset.category === id);
@@ -230,6 +237,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         const account = ui.byId('account-view');
         dialog = node('dialog', 'settings-dialog'); dialog.id = 'settings-dialog'; dialog.setAttribute('aria-label', '设置');
+        dialog.dataset.motionNativeClose='true';
         dialog.toggleAttribute('data-phone-settings',phoneSettings());
         const strip = node('button', 'settings-usage-strip'); strip.id = 'settings-usage-strip'; strip.type = 'button'; strip.setAttribute('aria-label', '用量详情'); strip.onclick = () => selectSettings('usage');
         const sidebar = node('aside', 'settings-sidebar');
@@ -244,6 +252,13 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         head.append(back,title, close);
         picker = node('select', 'settings-category-picker'); picker.setAttribute('aria-label', '设置分类');
         content = node('div', 'settings-content');
+        // The capability browser owns selection and DOM; its action runs first.
+        content.addEventListener('click', event => {
+            const tab=event.target.closest('.capability-tab');
+            if(!tab||tab.getAttribute('aria-selected')==='true')return;
+            const groups=tab.closest('.capabilities-browser').querySelector('.capabilities-groups');
+            queueMicrotask(()=>globalThis.WeftMotion.reveal(groups,'dur-1'));
+        },true);
         const bindDisclosures = () => content.querySelectorAll('details').forEach(globalThis.WeftSettingsControls.details);
         new MutationObserver(bindDisclosures).observe(content,{childList:true,subtree:true});
         addEventListener('weft-reply-motion-change', () => { if(globalThis.WeftSettingsControls.reduced())settleCategories(); });
@@ -290,6 +305,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         move('system', system); move('models', ui.byId('account-model-section'));
         const form = ui.byId('account-model-form'), editor = node('dialog', 'dialog model-editor-dialog');
         editor.id = 'account-model-dialog'; editor.setAttribute('aria-labelledby', 'model-editor-title');
+        editor.dataset.motionNativeClose='true';
         const editorHead = node('div', 'dialog-head'), editorTitle = node('h2', '', '添加模型'); editorTitle.id = 'model-editor-title';
         const editorClose = node('button', 'icon-close'); editorClose.type = 'button'; editorClose.setAttribute('aria-label', '关闭模型表单'); editorClose.append(globalThis.WeftIcons.create('deny', 24));
         editorClose.addEventListener('click', () => editor.close()); editorHead.append(editorTitle, editorClose);
