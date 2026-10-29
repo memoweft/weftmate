@@ -31,9 +31,9 @@ try{
   page=await app.firstWindow();page.setDefaultTimeout(12000);page.on('pageerror',e=>report.errors.push(e.message));
   page.on('console',message=>{if(message.type()==='error')report.console.push(message.text());});
   await page.route('**/personal/v1/ui/app.js',async route=>route.fulfill({contentType:'text/javascript',body:(await readFile(join(root,'src/personal-access-ui/app.js'),'utf8')).replace('ui.loadAttachmentHasher =','globalThis.testCore=core;globalThis.testUi=ui;ui.loadAttachmentHasher =')}));
-  if(before)for(const file of ['motion.js','timeline.js','components/main-chat.js','components/goals-view.js','components/activity-view.js','components/library-view.js','desktop.js','chat-process.css','workspace.css','composer-extras.css','native-desktop.css','styles.css','ui-core/goals.js']){
-    const source=file.startsWith('ui-core/')?`src/${file}`:`src/personal-access-ui/${file}`;
-    await page.route(`**/personal/v1/ui/${file}`,route=>route.fulfill({contentType:file.endsWith('.css')?'text/css':'text/javascript',body:execFileSync('git',['show',`825edad9e:${source}`],{cwd:root,encoding:'utf8'})}));
+  if(before)for(const source of execFileSync('git',['diff','--name-only','825edad9e','--','src/personal-access-ui','src/ui-core'],{cwd:root,encoding:'utf8'}).trim().split('\n').filter(file=>/\.(js|css)$/.test(file))){
+    const asset=source.replace('src/personal-access-ui/','').replace('src/ui-core/','ui-core/');
+    await page.route(`**/personal/v1/ui/${asset}`,route=>route.fulfill({contentType:source.endsWith('.css')?'text/css':'text/javascript',body:execFileSync('git',['show',`825edad9e:${source}`],{cwd:root,encoding:'utf8'})}));
   }
   await page.waitForURL('**/personal/v1/ui');await localUiSession(page,fixture.credentials,'UI-MOTION-2 synthetic',{mainChat:true});
   await page.waitForFunction(()=>globalThis.__WeftUiStarted&&globalThis.testCore?.state.sessions.length>0);
