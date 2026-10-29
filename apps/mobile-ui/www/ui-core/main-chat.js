@@ -410,7 +410,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const creating=core.state.sideCreating ||= {requestId:intent.requestId,identity:core.state.identityGeneration};notify();
         try {
         core.rememberMarker({requestId:intent.requestId,kind:'session.side.create'});
-        core.operation('正在创建对话。',true,intent.requestId);
+        core.trackRequestState(true,intent.requestId);
         let command;
         try { command = (await core.accessApi(`/commands/by-request/${encodeURIComponent(intent.requestId)}`)).command; }
         catch (error) { if (error.code !== 'NOT_FOUND') throw error; }
@@ -451,6 +451,10 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             drafts.set(sourceDraftId,'');if(sourceAttachmentKey)core.state.attachmentDrafts.delete(sourceAttachmentKey);
             effects.renderAttachmentDrafts(); effects.renderChatOrigin?.(created);
         } finally { if(selectedScope===scope()){core.state.sessionSelecting=false;notify();} }
+        } catch(error) {
+            if(creating.identity===core.state.identityGeneration && core.sideCreateIntent===intent)
+                core.operation('对话创建结果尚未确认，请核对后重试。',true,intent.requestId);
+            throw error;
         } finally {if(core.state.sideCreating===creating){core.state.sideCreating=null;notify();}}
     }
     async function checkMainRequest(row) {
@@ -490,11 +494,11 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             await checkMainRequest(row); // Always query before replay; never generate a new request ID.
             if (token !== core.state.identityGeneration || row.status !== 'undelivered') return;
             row.status = 'sending';notify();
-            core.operation('正在重试原消息。',true,requestId,false);
+            core.trackRequestState(true,requestId,false);
             const command = core.originalMessageBody(requestId) ? await core.replayOriginalMessage(requestId)
                 : environment.mobileState && row.nativeFields ? await effects.sendMainNativeMessage(row.nativeFields)
                 : row.attachmentSnapshot && inMain() && row.chatId === core.state.selectedChatId
-                    ? (core.operation('正在重试原附件。',false,requestId), await core.sendDesktopMessageWithAttachments(row.text,requestId,row.nativeFields.intent,row.attachmentSnapshot)) : null;
+                    ? (core.trackRequestState(false,requestId), await core.sendDesktopMessageWithAttachments(row.text,requestId,row.nativeFields.intent,row.attachmentSnapshot)) : null;
             if (!command) row.status = 'undelivered';
             else await checkMainRequest(row);
             await refreshHistory();
