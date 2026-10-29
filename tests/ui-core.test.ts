@@ -824,6 +824,15 @@ test('D36 switching conversations preserves the account running-input preference
   assert.equal(f.core.composerInputMode('next-session'), 'steer')
 })
 
+test('created-session selection keeps its logical identity and forwards creation options', async () => {
+  const f = fixture(), selected: any[] = [];
+  f.core.selectLogicalSession = async (...args: any[]) => { selected.push(args); };
+  f.core.refreshHistory = async () => {};
+  await f.core.selectSession('session-created', { creating: true });
+  assert.deepEqual(selected, [['session-created', { creating: true }]],
+    'a creation-options object must not bypass logical selection as a legacy boolean');
+});
+
 test('D36 account preferences survive recreation, isolate accounts and preserve temporary send overrides', async () => {
   const f = fixture(); f.core.state.sessions[0].running = true;
   assert.equal(f.core.composerInputMode('session-test'), 'queue');

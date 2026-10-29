@@ -125,6 +125,10 @@ try {
   const input = page.getByRole('textbox', { name: '输入消息', exact: true });
   phase = 'first-send'; await input.fill('你好'); await page.getByRole('button', { name: '发送', exact: true }).click();
   await page.waitForFunction(() => testCore.state.turnStatus === 'completed' && document.getElementById('transcript').textContent.includes('合成第一轮问候已经完成。'));
+  const bound = await page.evaluate(() => ({ sessionId: testCore.state.selectedSessionId, chatId: testCore.state.selectedChatId }));
+  const durable = await fixture.request(`/sessions/${bound.sessionId}/chat`);
+  report.boundIdentity = bound;
+  check('the first public send binds the durable logical chat', !!bound.chatId && bound.chatId === durable.chatId);
   await page.screenshot({ path: join(out, 'first-completed.png') });
   phase = 'idle-wait';
   const idleAt = Date.now(), chatId = await page.evaluate(() => testCore.state.selectedChatId);
@@ -134,11 +138,14 @@ try {
   phase = 'second-send'; await input.fill('123'); await page.getByRole('button', { name: '发送', exact: true }).click();
   await page.waitForFunction(() => testCore.state.turnStatus === 'completed' && document.getElementById('transcript').textContent.includes('合成第二轮已经完成。'), null, { timeout: 10000 }).catch(() => {});
   check('second terminal and body reach state and UI', await page.evaluate(() => testCore.state.turnStatus === 'completed' && testCore.state.historyEvents.has(130) && document.getElementById('transcript').textContent.includes('合成第二轮已经完成。')));
+  check('thinking clears only after receiving the native terminal', await page.evaluate(() => testCore.state.historyEvents.has(130) && !document.querySelector('#transcript .inline-progress-text.is-running')));
   await page.screenshot({ path: join(out, 'second-observed.png') });
   report.samples = await page.evaluate(() => { cancelAnimationFrame(handoffFrame); return handoffSamples; });
   report.backend = [...sessions].map(([sessionId, state]) => ({ sessionId, turn: state.turn, watermark: state.watermark, running: state.running, completedAt: state.completedAt }));
   check('exactly two messages were accepted', report.native.filter(row => row.kind === 'message-accepted').length === 2);
   check('backend durably ended both native turns', report.native.filter(row => row.kind === 'durable-terminal').length === 2);
+  const ended = report.native.find(row => row.kind === 'durable-terminal' && row.turn === 2)?.at;
+  check('the UI does not invent completion before the second native end', !report.samples.some(sample => sample.events.some(event => event.type === 'turn.started' && event.turn === 2) && sample.epoch < ended && sample.turnStatus === 'completed'));
   check('no renderer errors', report.errors.length === 0);
   assert.deepEqual(report.checks.filter(row => !row.value), [], 'Terminal handoff invariants');
 } catch (error) { report.error = error.stack; throw error; }

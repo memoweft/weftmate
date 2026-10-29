@@ -2,7 +2,7 @@
 globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     // IA-4 opts in after supplying logical-chat presentation effects.
     if (environment.mobileState && environment.logicalChats !== true) return {};
-    const legacy = Object.fromEntries(['refreshSessions', 'selectSession', 'refreshHistory', 'loadOlderHistory', 'startNewConversation',
+    const legacy = Object.fromEntries(['refreshSessions', 'refreshHistory', 'loadOlderHistory', 'startNewConversation',
         'sendDraft', 'optimisticMessages', 'observeOptimistic', 'composerState', 'attachmentDraftKey', 'loadConversationResources', 'clearSession'].map(key => [key, core[key]]));
     const historyWindow = globalThis.WeftUiCore.ChatWindow.create();
     const pending = new Map(), drafts = new Map();
@@ -184,7 +184,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
                 core.state.chats.push(chat);
             }
             if (environment.mobileState) await effects.selectNativeSideSession(id, empty, () => generation === selectionGeneration && identity === core.state.identityGeneration);
-            else await legacy.selectSession(id, true, !empty);
+            else await core.selectNativeSession(id, !empty);
             if (generation !== selectionGeneration || identity !== core.state.identityGeneration) return;
             const chat = core.state.chats?.find(row => row.activeSessionId === id);
             core.state.selectedChatId = chat?.chatId || null;
