@@ -23,6 +23,8 @@ jobs:
       WEFTMATE_TEST_HOST_NAME: synthetic-host
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -30,12 +32,12 @@ jobs:
       - run: npm ci
       - name: Native disclosure, loading states and switch inventory
         shell: pwsh
-        run: node --test tests/ui-motion-2.test.ts tests/ui-motion-2-goals.test.ts
+        run: node --test tests/ui-motion-2.test.ts tests/ui-motion-2-goals.test.ts tests/ui-motion-2-memory.test.ts
       - name: Upload synthetic motion evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-motion-2-windows-${{ github.sha }}
+          name: ui-motion-2-windows-${{ github.event.pull_request.head.sha || github.sha }}
           path: .local/evidence/ui-motion-2
           if-no-files-found: error
 

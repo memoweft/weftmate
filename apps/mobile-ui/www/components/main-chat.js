@@ -47,7 +47,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             if (!selectionCapture || selectionCapture.key !== viewKey) rememberView();
             const capture = { key: viewKey }; selectionCapture = capture;
             const done = () => { if (selectionCapture === capture) selectionCapture = null; };
-            try { const result=name.startsWith('startNew')&&globalThis.WeftMotion?WeftMotion.handoff(box(),()=>action.apply(this,args)):action.apply(this,args);return Promise.resolve(result).then(value=>{if(name.startsWith('startNew'))globalThis.WeftMotion?.content(box(),Symbol());return value;}).finally(done); }
+            try { const result=name.startsWith('startNew')&&globalThis.WeftMotion?globalThis.WeftMotion.handoff(box(),()=>action.apply(this,args)):action.apply(this,args);return Promise.resolve(result).then(value=>{if(name.startsWith('startNew'))globalThis.WeftMotion?.content(box(),Symbol());return value;}).finally(done); }
             catch (error) { done(); throw error; }
         };
     }
