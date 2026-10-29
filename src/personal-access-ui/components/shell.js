@@ -14,12 +14,10 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         const output = ui.byId('operation-status');
         output.hidden = !visibleMessage;
         output.textContent = visibleMessage || '';
-        ui.byId('reset-operation').hidden = core.state.reviewableRequests.size === 0;
     }
     function clearOperation() {
         ui.byId('operation-status').replaceChildren();
         ui.byId('operation-status').hidden = true;
-        ui.byId('reset-operation').hidden = true;
     }
     function approvalModeReadFailed() {
         ui.byId('approval-mode-trigger').title = '无法读取审批模式，请重新打开对话';
@@ -209,6 +207,8 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             control.disabled = busy;
     }
     function updateAvailability() {
+        const operation = ui.byId('operation-status');
+        ui.byId('reset-operation').hidden = operation.hidden || !operation.textContent || core.state.reviewableRequests.size === 0;
         globalThis.WeftPanels?.update(workspaceContext());
         ui.messageActions?.refresh();
         const value = core.composerState(ui.readMessageDraft());
