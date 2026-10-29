@@ -12,7 +12,7 @@ globalThis.WeftSearchView = {
   },mount({core,open,menu,notice,mobile=false}) {
   const el=(tag,cls='',text='')=>{const node=document.createElement(tag);node.className=cls;node.textContent=text;return node;};
   const icon=name=>globalThis.WeftIcons.create(name,20);
-  const dialog=el('dialog','dialog search-palette');dialog.setAttribute('aria-label','搜索');if(mobile)dialog.classList.add('search-fullscreen');
+  const dialog=el('dialog','dialog search-palette');dialog.setAttribute('aria-label','搜索');dialog.setAttribute('data-motion-native-close','');if(mobile)dialog.classList.add('search-fullscreen');
   const header=el('div','search-palette-head'),input=el('input','search-palette-input');input.type='search';input.maxLength=120;input.placeholder='搜索对话、项目、成果…';input.setAttribute('aria-label','搜索内容');
   input.setAttribute('role','combobox');input.setAttribute('aria-expanded','true');input.setAttribute('aria-controls','search-results');input.setAttribute('aria-autocomplete','list');
   const close=el('button','icon-button search-palette-close');close.type='button';close.setAttribute('aria-label','关闭搜索');close.append(icon('deny'));close.onclick=()=>core.closeSearch();header.append(icon('search'),input,close);

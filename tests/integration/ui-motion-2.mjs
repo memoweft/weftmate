@@ -15,7 +15,8 @@ const dialogsOnly=process.argv.includes('--dialogs-only');
 const bootOnly=process.argv.includes('--boot-only');
 const out=resolve(process.env.WEFTMATE_MOTION2_OUTPUT||'.local/evidence/ui-motion-2');
 await mkdir(out,{recursive:true});
-const report={before,commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),checks:[],samples:[],performance:[],errors:[],console:[]};
+const report={before,commit:null,dirty:null,phase:'module-loaded',checks:[],samples:[],performance:[],errors:[],console:[]};
+const phase=async name=>{report.phase=name;await writeFile(join(out,'report.json'),JSON.stringify(report,null,2));};
 const check=(name,value,details)=>{report.checks.push({name,pass:!!value,details});if(!before)assert.ok(value,`${name}: ${JSON.stringify(details)}`);};
 let app,page,fixture,scope,lock;
 async function capture(name){
@@ -23,8 +24,13 @@ async function capture(name){
   await writeFile(join(out,name),Buffer.from(png,'base64'));
 }
 try{
+  await phase('source-metadata');
+  report.commit=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000}).trim();
+  report.dirty=!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000}).trim();
+  await phase('fixture');
   if(process.env.WEFTMATE_HEAVY_LOCK_DIR){for(const n of [1,2,3]){const path=join(process.env.WEFTMATE_HEAVY_LOCK_DIR,`heavy-${n}.lock`);try{const f=await open(path,'wx');await f.writeFile(`UI-MOTION-2 ${new Date().toISOString()}`);await f.close();lock=path;break;}catch(e){if(e.code!=='EEXIST')throw e;}}assert.ok(lock,'No heavy slot');}
   scope=managedMkdtempSync('weftmate-motion2-',{prune:false});fixture=await startFixture();
+  await phase('electron-launch');
   const env={...process.env,REVIEW_PROFILE:join(scope,'profile'),REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken};delete env.ELECTRON_RUN_AS_NODE;
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:root,args:['tests/helpers/ui-motion-2-electron.mjs'],env,recordVideo:{dir:out,size:{width:1280,height:800}},timeout:30000});
   for(const stream of [app.process().stdout,app.process().stderr])stream?.resume();
@@ -35,10 +41,11 @@ try{
     const asset=source.replace('src/personal-access-ui/','').replace('src/ui-core/','ui-core/');
     await page.route(`**/personal/v1/ui/${asset}`,route=>route.fulfill({contentType:source.endsWith('.css')?'text/css':'text/javascript',body:execFileSync('git',['show',`825edad9e:${source}`],{cwd:root,encoding:'utf8'})}));
   }
-  await page.waitForURL('**/personal/v1/ui');await localUiSession(page,fixture.credentials,'UI-MOTION-2 synthetic',{mainChat:true});
+  await phase('authorization');await page.waitForURL('**/personal/v1/ui');await localUiSession(page,fixture.credentials,'UI-MOTION-2 synthetic',{mainChat:true});
   await page.waitForFunction(()=>globalThis.__WeftUiStarted&&globalThis.testCore?.state.sessions.length>0);
   await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.showInactive();w.webContents.setBackgroundThrottling(false);});
   await page.evaluate(()=>WeftReplyMotion.setVisibility(false));
+  await phase('native-acceptance');
   if(!bootOnly){
   const settle=()=>page.waitForTimeout(380);
   async function sample(name,action){
@@ -107,6 +114,7 @@ try{
   await page.evaluate(()=>{testCore.accessApi=motion2Api;});
   }
   if(!before||dialogsOnly){
+    await phase('switch-inventory');
     // Exercise actual entry controls, retaining their live content, draft and focus.
     if(!dialogsOnly)for(const theme of ['light','dark']){
       await page.evaluate(t=>{document.documentElement.dataset.theme=t;},theme);
@@ -187,7 +195,7 @@ try{
       await page.evaluate(()=>{void testCore.startNewConversation();});await settle();
       await capture(`${theme}-switch-inventory.png`);
     }
-    const layered=await page.evaluate(async()=>{
+    await phase('layered-overlays');const layered=await page.evaluate(async()=>{
       const content=document.createElement('div'),trigger=document.createElement('button');trigger.textContent='打开合成子弹窗';content.append(trigger);
       const parent=WeftControls.dialog({title:'合成父弹窗',content,actions:[]});parent.openPanel();trigger.focus();
       const child=WeftControls.dialog({title:'合成子弹窗',content:document.createTextNode('子层内容'),actions:[]});child.openPanel();
@@ -224,6 +232,17 @@ try{
       parent.setAttribute('data-motion-native-close','');parent.close();parent.remove();return result;
     });
     check('select-menu exit remains above its parent dialog and restores focus',menuLayered.visibleCopy&&menuLayered.value==='1'&&menuLayered.parentOpen&&menuLayered.parentY===0&&menuLayered.focus&&menuLayered.cleaned,menuLayered);
+    await page.evaluate(()=>{globalThis.motion2ReadConnectors=testCore.readConnectors;testCore.readConnectors=async()=>({connectors:[],builtinConnectors:[],canManageConnectors:true});testUi.openSettings('connectors');});
+    await page.getByRole('button',{name:'添加自定义连接器',exact:true}).click();
+    const connector=page.locator('dialog.connector-editor');await connector.waitFor({state:'visible'});
+    await page.evaluate(()=>{globalThis.motion2Connector=document.querySelector('dialog.connector-editor');globalThis.motion2Settings=document.getElementById('settings-dialog');for(const a of motion2Settings.getAnimations())a.finish();});
+    await connector.getByRole('button',{name:'关闭',exact:true}).click();await page.evaluate(()=>new Promise(requestAnimationFrame));
+    const dynamic=await page.evaluate(async()=>{
+      const copy=document.querySelector('.motion-dialog-copy');const result={removed:!motion2Connector.isConnected,parentOpen:motion2Settings.open,visibleCopy:!!copy?.matches(':popover-open')&&copy.getBoundingClientRect().width>0,focus:document.activeElement?.textContent==='添加自定义连接器'};
+      await Promise.all(copy?.getAnimations().map(a=>a.finished.catch(()=>{}))||[]);result.cleaned=!document.querySelector('.motion-dialog-copy');return result;
+    });
+    check('actual connector editor can remove its source DOM while the exit remains visible above settings',dynamic.removed&&dynamic.parentOpen&&dynamic.visibleCopy&&dynamic.focus&&dynamic.cleaned,dynamic);
+    await page.evaluate(()=>{testCore.readConnectors=motion2ReadConnectors;testUi.closeSettings?.();document.getElementById('settings-dialog').close();});
     await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>WeftReplyMotion.setPreference('system'));
     const reduced=await page.evaluate(()=>{const el=document.getElementById('message-form');WeftMotion.content(el,Symbol());return {reduced:WeftMotion.reduced,frames:el.getAnimations().flatMap(a=>a.effect.getKeyframes())};});
     check('reduced motion retains opacity feedback without spatial movement',reduced.reduced&&reduced.frames.some(f=>f.opacity)&&reduced.frames.every(f=>!f.transform&&!f.height),reduced);
@@ -231,6 +250,7 @@ try{
   }
   }
   check('no page errors',report.errors.length===0,report.errors);
+  await phase('complete');
 }catch(error){report.failure=error.stack;if(page)report.failureState=await page.evaluate(()=>({url:location.pathname,started:globalThis.__WeftUiStarted,view:globalThis.testCore?.state.currentView,account:!!globalThis.testCore?.state.account,sessions:globalThis.testCore?.state.sessions.length,csrf:!!globalThis.testCore?.state.csrfToken,cloudError:globalThis.testCore?.state.cloudAuth?.error,body:document.body.innerText.slice(-1800)})).catch(()=>null);if(app)await capture('failure.png').catch(()=>{});throw error;}
 finally{
   await writeFile(join(out,'report.json'),JSON.stringify(report,null,2));

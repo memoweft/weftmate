@@ -208,12 +208,13 @@
       // Only an inert visual survives; an animation never gates a request.
       nativeClose(value??'');
     };
-    element.addEventListener('cancel',event=>{event.preventDefault();element.close();});
+    element.addEventListener('cancel',event=>{if(event.defaultPrevented)return;event.preventDefault();element.close();});
   }
   const pages='.activity-surface,.library-surface,.goals-surface,.health-surface,#conversation-pane';
   function rememberPage(page) {if(!page.hidden){const r=page.getBoundingClientRect();if(r.width&&r.height)pageRects.set(page,r);}pageVisibility.set(page,!page.hidden);}
   const resizeObserver=new ResizeObserver(entries=>{for(const {target} of entries)if(!target.hidden)rememberPage(target);});
   function mount(root) {
+    for(const modal of [root,...root.querySelectorAll('dialog')])if(modal.matches('dialog'))dialog(modal);
     for(const detail of [root,...root.querySelectorAll('details')])if(detail.matches('details'))details(detail);
     for(const page of [root,...root.querySelectorAll(pages)])if(page.matches(pages)&&!pageVisibility.has(page)){rememberPage(page);resizeObserver.observe(page);enter(page);}
   }
