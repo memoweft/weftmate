@@ -25,10 +25,12 @@ try {
  app.process().stdout?.resume();app.process().stderr?.resume();
  const page=await app.firstWindow();page.setDefaultTimeout(10000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/personal/v1/ui/app.js',async route=>route.fulfill({contentType:'text/javascript',body:(await readFile(join(root,'src/personal-access-ui/app.js'),'utf8')).replace('ui.loadAttachmentHasher =','globalThis.testCore=core;globalThis.testUi=ui;ui.loadAttachmentHasher =')}));
+ if(before){
  const baseline=process.env.WEFTMATE_CHAT_POLISH_BASE || execFileSync('git',['merge-base','HEAD','origin/main'],{cwd:root,encoding:'utf8'}).trim();
- if(before)for(const file of execFileSync('git',['diff','--name-only',baseline,'--','src/personal-access-ui','src/ui-core'],{cwd:root,encoding:'utf8'}).trim().split('\n').filter(Boolean)) {
+ for(const file of execFileSync('git',['diff','--name-only',baseline,'--','src/personal-access-ui','src/ui-core'],{cwd:root,encoding:'utf8'}).trim().split('\n').filter(Boolean)) {
   const asset=file.replace('src/personal-access-ui/','').replace('src/ui-core/','ui-core/');
   await page.route(`**/personal/v1/ui/${asset}`,route=>route.fulfill({contentType:file.endsWith('.css')?'text/css':'text/javascript',body:execFileSync('git',['show',`${baseline}:${file}`],{cwd:root,encoding:'utf8'})}));
+ }
  }
  await page.waitForURL('**/personal/v1/ui');await localUiSession(page,fixture.credentials,'CHAT-POLISH synthetic',{mainChat:true});
  await page.waitForFunction(()=>globalThis.__WeftUiStarted&&globalThis.testCore?.state.sessions.length>0);
