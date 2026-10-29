@@ -124,6 +124,7 @@ struct PhonePreferencePage: View {
         case "system":
             Section("电脑连接") {
                 LabeledContent(app.cloudLogin.selectedComputerName, value: app.session == nil ? "还没连接电脑" : app.phoneConnectionStatus)
+                    .accessibilityElement(children:.combine).accessibilityIdentifier("settings.system.connection")
                 NavigationLink("管理电脑", value: AppleSettingsRoute(categoryID: "devices"))
             }
             Section("服务状态") {

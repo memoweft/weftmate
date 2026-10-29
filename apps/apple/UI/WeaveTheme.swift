@@ -91,7 +91,7 @@ struct PrimaryActionStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         #if os(iOS)
-        PhoneActionStyle(primary: true).makeBody(configuration: configuration).frame(maxWidth: fillsWidth ? .infinity : nil)
+        PhoneActionStyle(primary: true, fillsWidth: fillsWidth).makeBody(configuration: configuration)
         #else
         configuration.label
             .font(.system(AppleTokens.TextStyle.body, design: .default, weight: .semibold))

@@ -9,9 +9,8 @@ struct AuthView: View {
     private enum Field: Hashable { case email, password, repeated, code, name }
     @FocusState private var focus: Field?
     var body: some View {
-        ScrollView { accountContent }.background(Weave.canvas).foregroundStyle(Weave.ink)
+        ScrollView { accountContent.accessibilityElement(children:.contain).accessibilityIdentifier("authRoot") }.background(Weave.canvas).foregroundStyle(Weave.ink)
             .disabled(model.busy).sheet(item: $legal) { LegalDocumentView(document: $0) }
-            .accessibilityIdentifier("authRoot")
         #if WEFTMATE_WINDOW_TEST
             .onAppear { PhoneWindowLaunch.recordLoginVisible(server: model.cloudAddress) }
         #endif
@@ -143,7 +142,7 @@ struct AuthView: View {
                 }.pickerStyle(.segmented).accessibilityIdentifier("loginMethod")
                     .onChange(of: model.form.loginMethod) { _, _ in model.form.password = "" }
             } else {
-                Text(verifying ? "看一下你的邮箱" : title).font(AppleTokens.Fonts.largeTitle.weight(.semibold))
+                Text(verifying ? "看一下你的邮箱" : model.form.page == .registration ? "创建账号" : title).font(AppleTokens.Fonts.largeTitle.weight(.semibold))
                 Text(verifying ? model.form.email : model.form.page == .recovery ? "验证邮箱后再设置新密码。" : "用邮箱把自己的设备连起来。")
                     .foregroundStyle(Weave.muted).textSelection(.enabled)
             }
@@ -173,7 +172,7 @@ struct AuthView: View {
                 NavigationLink("隐私政策") { PhoneLegalReader(document: .privacy) }
             }.font(AppleTokens.Fonts.callout).frame(minHeight: AppleTokens.Space.p44)
         }.padding(AppleTokens.Space.p20).frame(maxWidth: 468).frame(maxWidth: .infinity)
-            .navigationTitle(verifying ? "验证邮箱" : title).navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(model.form.page == .login ? title : "").navigationBarTitleDisplayMode(.inline)
     }
     #endif
     private var actionTitle: String {

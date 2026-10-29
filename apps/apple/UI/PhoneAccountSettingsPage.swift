@@ -64,14 +64,15 @@ private struct PhoneAccountEmailPage: View {
                     Button(seconds > 0 ? "\(seconds) 秒后可重发" : "发送新邮箱验证码") { Task { await cloud.requestEmailChange(email) } }
                         .disabled(cloud.busy || email.isEmpty || seconds > 0).accessibilityIdentifier("account.sendEmailCode")
                 }
+                TextField("新邮箱验证码", text: $code).keyboardType(.numberPad).textContentType(.oneTimeCode)
+                    .disabled(cloud.emailChangeChallenge == nil || cloud.busy).accessibilityIdentifier("account.newEmailCode")
                 if cloud.emailChangeChallenge != nil {
-                    TextField("新邮箱验证码", text: $code).keyboardType(.numberPad).textContentType(.oneTimeCode)
-                        .accessibilityIdentifier("account.newEmailCode")
                     Button("换一个邮箱") { cloud.cancelEmailChange(); code = "" }.disabled(cloud.busy)
                 }
             } footer: { Text("验证新邮箱后，账号内容继续保留。换绑成功后需要重新登录。") }
             Section {
                 Button("确认换绑邮箱") { Task { await cloud.confirmEmailChange(email, code: code); code = "" } }
+                    .buttonStyle(PrimaryActionStyle())
                     .disabled(cloud.busy || cloud.emailChangeChallenge == nil || code.count != 6 || !code.allSatisfy(\.isNumber)).accessibilityIdentifier("account.confirmEmail")
             }
             PhoneAccountFeedback(cloud: cloud)
@@ -100,7 +101,7 @@ private struct PhoneAccountPasswordPage: View {
             Section {
                 Button("保存新密码") {
                     Task { await cloud.changePassword(current: current, password: password, repeatPassword: repeated); current = ""; password = ""; repeated = "" }
-                }.disabled(cloud.busy || current.isEmpty || password.count < 15 || password != repeated).accessibilityIdentifier("account.savePassword")
+                }.buttonStyle(PrimaryActionStyle()).disabled(cloud.busy || current.isEmpty || password.count < 15 || password != repeated).accessibilityIdentifier("account.savePassword")
             }
             PhoneAccountFeedback(cloud: cloud)
         }.scrollContentBackground(.hidden).background(Weave.grouped).navigationTitle("修改密码").scrollDismissesKeyboard(.interactively)

@@ -123,7 +123,7 @@ struct ModelServicesSettingsView: View {
             }
             if let notice = store.notice { Section { InlineNotice(message: notice, isError: true); Button("重试") { Task { await store.load(force: true) } } } }
         }.scrollContentBackground(.hidden).background(Weave.grouped).navigationTitle("模型服务").task { await store.load() }
-            .navigationDestination(isPresented: $editor) { ModelServiceEditor(store: store, existing: editing, onClose: { editor = false }) }
+            .navigationDestination(isPresented: $editor) { ModelServiceEditor(store: store, existing: editing, onClose: { editor = false }, pushed:true) }
     }
     #endif
 
@@ -133,6 +133,8 @@ struct ModelServiceEditor: View {
     var existing: ModelService?
     var onClose: () -> Void = {}
     var embedded = false
+    var pushed = false
+    @Environment(\.dismiss) private var dismiss
     private var editorCanvas: Color {
         #if os(macOS)
         AppleTokens.Colors.controlCanvas
@@ -245,7 +247,13 @@ struct ModelServiceEditor: View {
                 }
             }.padding(AppleTokens.Space.p20)
         }.background(editorCanvas).navigationTitle(embedded ? "WeftMate" : existing == nil ? "添加模型服务" : editTitle)
-            .toolbar { if !embedded { ToolbarItem(placement:.cancellationAction) { Button("关闭") { key="";onClose() }.foregroundStyle(Weave.secondary) } } }
+            .toolbar {
+                #if os(iOS)
+                if !embedded && !pushed { ToolbarItem(placement:.confirmationAction) { Button { key="";onClose();dismiss() } label:{WeftIcon("deny")}.phoneIcon().accessibilityLabel("关闭") } }
+                #else
+                if !embedded { ToolbarItem(placement:.cancellationAction) { Button("关闭") { key="";onClose() }.foregroundStyle(Weave.secondary) } }
+                #endif
+            }
             .onAppear { guard !initialized else { return }; initialized = true; if let existing { name=existing.name;base=existing.baseUrl;type=existing.interfaceType;selected=existing.selectedModelId;enabled=Set(existing.models.filter(\.enabled).map(\.modelId)) } }
             #if DEBUG
             .onAppear {

@@ -8,17 +8,23 @@ final class IOSUISettingsUITests: XCTestCase {
     }
     @MainActor private func tap(_ app: XCUIApplication, _ id: String) {
         let item = control(app, id)
-        XCTAssertTrue(item.waitForExistence(timeout: 20), id)
-        for _ in 0..<6 { if item.isHittable { break }; app.swipeUp() }
+        _ = item.waitForExistence(timeout: 3)
+        for _ in 0..<8 {
+            if item.exists && item.isHittable { break }
+            app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:0.78)).press(forDuration:0.05,thenDragTo:app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:0.28)))
+        }
+        XCTAssertTrue(item.waitForExistence(timeout:20),id)
+        XCTAssertTrue(item.isHittable,id)
         item.tap()
     }
     @MainActor private func shot(_ app: XCUIApplication, _ page: String, _ theme: String) {
+        Thread.sleep(forTimeInterval:1)
         let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = page + "-" + theme
         attachment.lifetime = .keepAlways; add(attachment)
     }
     @MainActor private func launch(_ theme: String, preview: Bool = true, authPage: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing", "--apple11-fixture", "--health4-render-only", "--ui-testing-namespace", "ios-ui-4-" + UUID().uuidString, "--a5-theme", theme]
+        app.launchArguments = ["--ui-testing", "--apple11-fixture", "--ios-ui-shell-fixture", "--health4-render-only", "--ui-testing-namespace", "ios-ui-4-" + UUID().uuidString, "--a5-theme", theme]
         if preview { app.launchArguments.append("--ios-ui-settings-preview") }
         if theme == "dark" { app.launchArguments.append("--apple11-dark") }
         if let authPage { app.launchArguments += ["--ios-ui-auth-page", authPage] }
@@ -43,7 +49,7 @@ final class IOSUISettingsUITests: XCTestCase {
             shot(app, "settings", theme)
             category(app, "system", query: "系统")
             shot(app, "system", theme)
-            XCTAssertTrue(app.staticTexts["还没连接电脑"].exists)
+            XCTAssertTrue(control(app,"settings.system.connection").label.contains("还没连接电脑"))
             XCTAssertFalse(app.buttons["重启修复"].exists)
             app.navigationBars.buttons.firstMatch.tap()
             category(app, "appearance", query: "外观")
@@ -61,7 +67,7 @@ final class IOSUISettingsUITests: XCTestCase {
                 if id == "models" {
                     tap(app, "modelServices.new"); shot(app, "model-edit", theme)
                     XCTAssertTrue(control(app, "modelServices.address").exists)
-                    app.buttons["关闭"].tap()
+                    app.navigationBars.buttons.firstMatch.tap()
                 }
                 app.navigationBars.buttons.firstMatch.tap()
             }
@@ -118,17 +124,19 @@ final class IOSUISettingsUITests: XCTestCase {
         }
     }
     @MainActor func testAboutLegalAndLogPreviewUseTheSettingsStack() {
-        let app = launch("light")
-        category(app, "about", query: "关于"); shot(app, "about", "light")
-        tap(app, "settings.legal"); shot(app, "legal", "light")
-        app.buttons["服务条款"].tap()
-        XCTAssertTrue(app.navigationBars["服务条款"].waitForExistence(timeout: 10))
-        app.navigationBars.buttons.firstMatch.tap(); app.navigationBars.buttons.firstMatch.tap()
-        tap(app, "openRunLog"); shot(app, "diagnostics", "light")
-        XCTAssertTrue(control(app, "runLog.recording").exists)
-        tap(app, "runLog.clear")
-        XCTAssertTrue(app.buttons["runLog.confirmClear"].waitForExistence(timeout: 10))
-        app.buttons["取消"].tap()
-        app.terminate()
+        for theme in ["light","dark"] {
+            let app = launch(theme)
+            category(app, "about", query: "关于"); shot(app, "about", theme)
+            tap(app, "settings.legal"); shot(app, "legal", theme)
+            app.buttons["服务条款"].tap()
+            XCTAssertTrue(app.navigationBars["服务条款"].waitForExistence(timeout: 10))
+            app.navigationBars.buttons.firstMatch.tap(); app.navigationBars.buttons.firstMatch.tap()
+            tap(app, "openRunLog"); shot(app, "diagnostics", theme)
+            XCTAssertTrue(control(app, "runLog.recording").exists)
+            tap(app, "runLog.clear")
+            XCTAssertTrue(app.buttons["runLog.confirmClear"].waitForExistence(timeout: 10))
+            app.buttons["取消"].tap()
+            app.terminate()
+        }
     }
 }

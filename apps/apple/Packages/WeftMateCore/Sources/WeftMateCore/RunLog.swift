@@ -249,6 +249,9 @@ public actor RunLog {
         }
     }
     public func records() -> [RunLogRecord] {
+        // A failed active-run start must keep its failure until explicit recovery.
+        // Stopped recording can still read the previously retained log files.
+        guard marker != nil || !recordingEnabled else { return [] }
         do {
             let rows = try files().flatMap { url in
                 try Data(contentsOf: url).split(separator: 10).map { try JSONDecoder().decode(RunLogRecord.self, from: Data($0)) }

@@ -62,11 +62,11 @@ final class CloudLoginModel: ObservableObject {
 
     init(app: AppleAppModel, namespace: String) {
         self.app = app; self.namespace = namespace; deviceName = app.deviceName
+        store = KeychainCredentialStore(service: namespace)
+        pins = HostPinStore(store: KeychainCredentialStore(service: namespace + ".pins"))
         #if os(iOS)
         form.loginMethod = .emailCode
         #endif
-        store = KeychainCredentialStore(service: namespace)
-        pins = HostPinStore(store: KeychainCredentialStore(service: namespace + ".pins"))
         if let data = try? store.load(key: "trusted-host"), let ref = try? JSONDecoder().decode([String: String].self, from: data) {
             hostID = ref["hostId"]; cloudAddress = ref["cloud"] ?? cloudAddress
         }
@@ -428,30 +428,60 @@ final class CloudLoginModel: ObservableObject {
     #endif
     func dismissNewDeviceNotice() { newDeviceNotice = nil }
     #if os(iOS)
+    @Published private(set) var pairingVerificationCode:String?
+    private var pairingAttempt:PairingV2Attempt?
+    private var pairingServer:ServerConfiguration?
+    private var pairingTicket=UUID()
+    func cancelPairing() {
+        pairingTicket=UUID();pairingAttempt=nil;pairingServer=nil;pairingVerificationCode=nil
+    }
     func previewPairing(_ bytes: Data) throws -> HostPairing {
         guard authenticated, subject != nil else { throw APIFailure.notAuthenticated }
         let pair = try HostPairing.parse(bytes, allowLoopbackHTTP: allowLoopback)
+        guard pair.version == 2 else {throw APIFailure.nativeUpdateRequired("请在新版电脑 WeftMate 上重新生成配对码。")}
         guard hosts.contains(where: { ($0.hostId ?? $0.id) == pair.hostId }) else { throw APIFailure.identityMismatch }
         return pair
     }
-    /// The QR is inspected before any network or pin write; only the confirmation calls this.
+    func preparePairing(_ pair:HostPairing) async {
+        if pairingAttempt?.pairing == pair,pairingVerificationCode != nil { return }
+        cancelPairing();let ticket=pairingTicket,identity=subject
+        guard !busy,authenticated,let identity,let app else { return }
+        busy=true;error=nil
+        defer {busy=false}
+        do {
+            let account=try accountClient();guard let key else {throw APIFailure.notAuthenticated}
+            let issuer=CloudConfiguration(server:try ServerConfiguration(input:cloudAddress,allowLoopbackHTTP:allowLoopback)).issuer
+            let deviceID=await account.deviceID
+            let attempt=try PairingV2Attempt(pairing:pair,issuer:issuer,subject:identity,hostID:pair.hostId,deviceID:deviceID,phoneJKT:key.thumbprint)
+            let connection=try await account.connect(hostID:pair.hostId)
+            guard connection.status == "online",let base=connection.baseUrl else {throw CloudLoginFailure.hostOffline}
+            let server=try ServerConfiguration(input:base,allowLoopbackHTTP:allowLoopback)
+            guard base == pair.relay?.baseUrl || base == pair.origin else {throw CloudLoginFailure.pairing}
+            let token=try await account.accessToken(hostID:pair.hostId)
+            guard ticket == pairingTicket,identity == subject else {return}
+            pairingAttempt=attempt;pairingServer=server
+            let code=try await app.assistantClient.preparePairingV2(server:server,accessToken:token,deviceName:cloudDeviceName(deviceName),key:key,attempt:attempt)
+            guard ticket == pairingTicket,identity == subject,!Task.isCancelled else {return}
+            pairingVerificationCode=code
+        } catch {if ticket == pairingTicket {self.error=accountMessage(error)}}
+    }
+    /// Join/reveal grant no content session. Only explicit confirmation attempts redemption.
     func completePairing(_ pair: HostPairing, receivedAt: Date, subject: String?) async -> Bool {
         guard !busy, authenticated, subject != nil, subject == self.subject,
-              Date().timeIntervalSince(receivedAt) < Double(pair.expiresIn), let app else { return false }
+              pairingAttempt?.pairing == pair,pairingVerificationCode != nil,let server=pairingServer,
+              let expires=pair.expiresAt,expires > Int64(Date().timeIntervalSince1970*1000),let app else { return false }
         let ticket = operation
+        let pairTicket=pairingTicket
         busy = true; error = nil
         defer { if ticket == operation { busy = false } }
         do {
             let account = try accountClient()
             guard let key else { throw APIFailure.notAuthenticated }
             let token = try await account.accessToken(hostID: pair.hostId)
-            guard ticket == operation, subject == self.subject else { return false }
-            let base = pair.relay?.baseUrl ?? pair.origin
-            let server = try ServerConfiguration(input: base, allowLoopbackHTTP: allowLoopback)
-            if base == pair.origin, server.origin.scheme == "https" { try pins.save(pair.tlsSpki, for: server.originString) }
+            guard ticket == operation,pairTicket == pairingTicket, subject == self.subject else { return false }
             let result = try await app.assistantClient.exchangeCloudSession(server: server, hostID: pair.hostId, accessToken: token,
                 deviceName: cloudDeviceName(deviceName), key: key, pairing: pair, trustSubject: subject, hostPins: pins)
-            guard ticket == operation, subject == self.subject else {
+            guard ticket == operation,pairTicket == pairingTicket, subject == self.subject else {
                 if case .authenticated(let session) = result { await app.assistantClient.discardCloudSession(session) }
                 return false
             }
@@ -463,7 +493,13 @@ final class CloudLoginModel: ObservableObject {
                 await app.acceptCloudSession(session)
                 return true
             }
-        } catch { if ticket == operation { self.error = accountMessage(error) }; return false }
+        } catch {
+            if ticket == operation {
+                if case APIFailure.server(_,"PAIRING_CONFIRMATION_REQUIRED") = error {self.error="请先在电脑上核对并确认这六位数字，再完成连接。"}
+                else {self.error=accountMessage(error)}
+            }
+            return false
+        }
     }
     #endif
     func changePassword(current: String, password: String, repeatPassword: String) async {

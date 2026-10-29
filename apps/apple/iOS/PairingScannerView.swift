@@ -57,6 +57,10 @@ struct PairingScannerView: View {
 /// Shared by image picker and simulator synthetic-image acceptance.
 enum PairingQRDecoder {
     static func decode(_ bytes: Data) throws -> Data {
+        #if targetEnvironment(simulator)
+        if let image=CIImage(data:bytes),let detector=CIDetector(ofType:CIDetectorTypeQRCode,context:CIContext(options:[.useSoftwareRenderer:true]),options:[CIDetectorAccuracy:CIDetectorAccuracyHigh]),
+           let value=(detector.features(in:image).first as? CIQRCodeFeature)?.messageString {return Data(value.utf8)}
+        #endif
         let request = VNDetectBarcodesRequest(); request.symbologies = [.qr]
         try? VNImageRequestHandler(data: bytes).perform([request])
         if let value = request.results?.first?.payloadStringValue { return Data(value.utf8) }

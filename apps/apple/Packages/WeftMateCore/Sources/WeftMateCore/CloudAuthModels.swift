@@ -71,6 +71,11 @@ public struct CloudAuthorization: Sendable {
 
 /// Exact /cloud/pairings response, carried as JSON in the QR. Cloud never supplies this pin.
 public struct HostPairing: Codable, Sendable, Equatable {
+    public let version: Int?
+    public let issuer: String?
+    public let sub: String?
+    public let expiresAt: Int64?
+    public let hostCommitment: String?
     public let challenge: String
     public let expiresIn: Int
     public let hostId: String
@@ -78,6 +83,10 @@ public struct HostPairing: Codable, Sendable, Equatable {
     public let publicJwk: [String: String]
     public let origin: String
     public let relay: Relay?
+    public init(challenge:String,expiresIn:Int,hostId:String,tlsSpki:String,publicJwk:[String:String],origin:String,relay:Relay?,version:Int?=nil,issuer:String?=nil,sub:String?=nil,expiresAt:Int64?=nil,hostCommitment:String?=nil) {
+        self.challenge=challenge;self.expiresIn=expiresIn;self.hostId=hostId;self.tlsSpki=tlsSpki;self.publicJwk=publicJwk;self.origin=origin;self.relay=relay
+        self.version=version;self.issuer=issuer;self.sub=sub;self.expiresAt=expiresAt;self.hostCommitment=hostCommitment
+    }
     public struct Relay: Codable, Sendable, Equatable { public let state: String; public let baseUrl: String? }
     public static func parse(_ data: Data, allowLoopbackHTTP: Bool = false) throws -> Self {
         let input = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
