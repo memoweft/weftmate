@@ -31,34 +31,41 @@ try {
   }
   fixture = await startFixture();
   const create = fixture.backend.createSession, describe = fixture.backend.describeSession, read = fixture.backend.readEvents;
-  const running = new Set(), live = new Map();
+  const running = new Set(), live = new Map(), watermarks = new Map(), waiters = new Set();
+  const wake = (sessionId, seq) => { watermarks.set(sessionId, seq); for (const row of waiters) if (row.sessionId === sessionId && seq > row.seq) row.resolve(); };
   let scenario;
   fixture.backend.createSession = async input => {
     scenario.creates++; scenario.stages.push({ name: 'create-start', at: Date.now() });
-    await pause(350); const result = await create(input);
+    await pause(scenario.timing?.create ?? 350); const result = await create(input); watermarks.set(input.sessionId, -1);
     scenario.stages.push({ name: 'create-accepted', at: Date.now() }); return result;
   };
   fixture.backend.describeSession = async id => ({ ...await describe(id), running: running.has(id) });
   fixture.backend.readEvents = async input => {
-    if (input.sessionId !== fixture.source && !(fixture.logs.get(input.sessionId)?.length)) await pause(160);
-    return { ...await read(input), liveEvents: live.has(input.sessionId) ? [live.get(input.sessionId)] : [], liveSeq: live.get(input.sessionId)?.revision || 0 };
+    if (input.sessionId !== fixture.source && !(fixture.logs.get(input.sessionId)?.length)) await pause(scenario?.timing?.emptyRead ?? 160);
+    const page = await read(input), seq = Math.max(page.nextSeq, watermarks.get(input.sessionId) ?? -1);
+    return { ...page, nextSeq: seq, liveEvents: live.has(input.sessionId) ? [live.get(input.sessionId)] : [], liveSeq: seq };
+  };
+  fixture.backend.waitForEvents = async ({sessionId,seq,timeoutMs,signal}) => {
+    let release; const pending = new Promise(resolve => { release = resolve; }), row = {sessionId,seq,resolve:release};
+    const abort=()=>release(), timer=setTimeout(release,timeoutMs); waiters.add(row);signal?.addEventListener('abort',abort,{once:true});
+    try {if(signal?.aborted||(watermarks.get(sessionId)??fixture.logs.get(sessionId)?.at(-1)?.seq??-1)>seq)return;await pending;}
+    finally{clearTimeout(timer);waiters.delete(row);signal?.removeEventListener('abort',abort);}
   };
   fixture.backend.sendMessage = async input => {
     scenario.sends++; const current = scenario, sessionId = input.sessionId;
     current.stages.push({ name: 'send-start', at: Date.now() });
     const list = fixture.logs.get(sessionId), receiptId = `synthetic-first-${current.sends}`;
-    const append = (type, data) => list.push({ seq: (list.at(-1)?.seq ?? -1) + 1, type, data, at: new Date().toISOString(), sessionId });
-    await pause(250);
-    if (current.fail) return { accepted: false, rejected: true, errorCode: 'IMAGE_REJECTED', imageReasonCode: 'UNSUPPORTED_FORMAT' };
-    running.add(sessionId);
-    append('turn.started', { turn: 1 }); append('user.message', { text: input.text, receiptId, turn: 1 });
-    current.stages.push({ name: 'user-event', at: Date.now() });
-    later(220, () => { live.set(sessionId, { seq: 2, type: 'assistant.delta', at: new Date().toISOString(), sessionId,
-      revision: 1, data: { text: '', modelThinking: '先理解问候，再简洁回答。', thinkingActive: true, streaming: true, turn: 1 } }); current.stages.push({ name: 'thinking', at: Date.now() }); });
-    later(650, () => { live.set(sessionId, { ...live.get(sessionId), revision: 2,
-      data: { text: '你好！这是合成的第一段回答。', modelThinking: '先理解问候，再简洁回答。', thinkingActive: false, streaming: true, turn: 1 } }); current.stages.push({ name: 'first-text', at: Date.now() }); });
-    later(1000, () => { live.delete(sessionId); append('assistant.message', { text: '你好！这是合成的第一段回答。', streamSeq: 2, turn: 1 }); append('turn.ended', { turn: 1, reason: 'completed' }); running.delete(sessionId); current.stages.push({ name: 'completed', at: Date.now() }); });
-    await pause(450); current.stages.push({ name: 'send-accepted', at: Date.now() });
+    const append = (seq,type,data) => {list.push({seq,type,data,at:new Date().toISOString(),sessionId});wake(sessionId,seq);};
+    if (current.fail) {await pause(250);return { accepted: false, rejected: true, errorCode: 'IMAGE_REJECTED', imageReasonCode: 'UNSUPPORTED_FORMAT' };}
+    const timing=current.timing||{native:250,thinking:220,text:650,end:1000,accept:700};
+    later(timing.native,()=>{
+      running.add(sessionId);append(0,'turn.started',{turn:1});append(1,'user.message',{text:input.text,receiptId,turn:1});current.stages.push({name:'user-event',at:Date.now()});
+      later(timing.thinking,()=>{live.set(sessionId,{seq:2,type:'assistant.delta',at:new Date().toISOString(),sessionId,
+        data:{text:'',modelThinking:'先理解问候，再简洁回答。',thinkingActive:true,streaming:true,turn:1}});wake(sessionId,10);current.stages.push({name:'thinking',at:Date.now()});});
+      later(timing.text,()=>{live.set(sessionId,{...live.get(sessionId),data:{text:'你好！这是合成的第一段回答。',modelThinking:'先理解问候，再简洁回答。',thinkingActive:false,streaming:true,turn:1}});wake(sessionId,20);current.stages.push({name:'first-text',at:Date.now()});});
+      later(timing.end,()=>{live.delete(sessionId);append(21,'assistant.message',{text:'你好！这是合成的第一段回答。',streamSeq:2,turn:1});append(22,'turn.ended',{turn:1,reason:'completed'});running.delete(sessionId);current.stages.push({name:'completed',at:Date.now()});});
+    });
+    await pause(timing.accept); current.stages.push({ name: 'send-accepted', at: Date.now() });
     return { accepted: true, receiptId };
   };
   const env = { ...process.env, REVIEW_PROFILE: join(out, 'profile'), REVIEW_ORIGIN: fixture.origin, REVIEW_LIBRARY_TOKEN: fixture.libraryDesktopToken };
@@ -157,22 +164,35 @@ try {
     check(`${name}: welcome is separated from the composer`, geometry.form.top - geometry.intro.bottom >= 100);
     return geometry;
   }
-  for (const theme of ['dark', 'light']) {
+  const timings = [
+    {name:'usual',create:350,emptyRead:160,native:250,thinking:220,text:650,end:1000,accept:700},
+    {name:'events-before-receipt',create:0,emptyRead:0,native:0,thinking:5,text:80,end:300,accept:450},
+    {name:'receipt-before-events',create:0,emptyRead:0,native:500,thinking:250,text:550,end:800,accept:20},
+  ];
+  for (const theme of ['light', 'dark']) for (const timing of timings) {
+    const name=`${theme}-${timing.name}`;
     await page.evaluate(theme => { document.documentElement.dataset.theme = theme; WeftReplyMotion.setPreference('full'); }, theme);
     await app.evaluate(({ nativeTheme }, theme) => nativeTheme.themeSource = theme, theme);
     await page.getByRole('button', { name: '新建对话', exact: true }).click();
     await page.waitForFunction(() => testCore.state.newConversation && !testCore.state.selectedSessionId && !testCore.optimisticMessages().length);
     await page.waitForTimeout(350);
-    check(`${theme}: welcome starts visible`, await page.locator('#chat-intro').evaluate(node => getComputedStyle(node).opacity === '1'));
+    check(`${name}: welcome starts visible`, await page.locator('#chat-intro').evaluate(node => getComputedStyle(node).opacity === '1'));
+    if(timing.name==='usual'){
     await welcome(`${theme}-empty-chat`);
     await page.getByRole('tab', { name: '新对话：工作', exact: true }).click();
     await page.waitForTimeout(350); await welcome(`${theme}-empty-work`);
     check(`${theme}: work welcome uses the selected mode`, await page.locator('#chat-intro h1').innerText() === '让电脑帮你完成');
     await page.getByRole('tab', { name: '新对话：对话', exact: true }).click(); await page.waitForTimeout(350);
-    scenario = { creates: 0, sends: 0, stages: [] };
+    }
+    scenario = { creates: 0, sends: 0, stages: [], timing };
     await page.getByRole('textbox', { name: '输入消息', exact: true }).fill('你好');
-    const { active, summary } = await capture(`${theme}-first-send`, () => page.getByRole('button', { name: '发送', exact: true }).click(),
-      () => page.waitForFunction(() => document.querySelector('#transcript').textContent.includes('你好！这是合成的第一段回答。') && testCore.state.turnStatus === 'completed'));
+    const { active, summary } = await capture(`${name}-first-send`, () => page.getByRole('button', { name: '发送', exact: true }).click(),
+      () => page.waitForFunction(() => document.querySelector('#transcript').textContent.includes('你好！这是合成的第一段回答。') && testCore.state.turnStatus === 'completed' && !document.getElementById('message-text').value));
+    const allY=active.flatMap(frame=>frame.users.map(user=>user.body.y));
+    summary.allFrameDisplacement=Math.max(...allY)-Math.min(...allY);
+    check(`${name}: first message stays in place from its first visible frame`,summary.allFrameDisplacement<=1);
+    const visibleIntro=active.filter(frame=>frame.intro.opacity>.01);
+    check(`${name}: welcome copy stays stable while fading`,new Set(visibleIntro.map(frame=>frame.intro.text)).size<=1);
     check(`${theme}: created and sent exactly once`, summary.creates === 1 && summary.sends === 1);
     check(`${theme}: message never vanishes`, summary.missing === 0);
     check(`${theme}: exactly one user message in every frame`, summary.duplicates === 0);
