@@ -602,6 +602,20 @@
     "reason": "The geometry transform is explicitly @Sendable and reads only the supplied proxy width. A nonisolated widthChanged factory returns an @Sendable action that hops to MainActor before invoking the explicitly MainActor UI update closure; no geometry callback reads drawer state."
   },
   {
+    "file": "apps/apple/iOS/HealthPageView.swift",
+    "line": 153,
+    "api": "GeometryReader",
+    "sha256": "fa0214e1faedc184939645a301af5a65fa99a1e876f0852b2b7842335d26577f",
+    "reason": "Explicit Sendable geometry builder captures only immutable numeric sleep-stage display fractions and Sendable color snapshots prepared by View.body. The callback reads geometry and constructs primitive views; it never reads the page model, Binding or mutable UI state. Native chartXSelection now owns chart selection and removes the actor-state-writing geometry overlay."
+  },
+  {
+    "file": "apps/apple/iOS/PhoneLibraryView.swift",
+    "line": 109,
+    "api": "fileExporter",
+    "sha256": "e27970f07fda87679ff5b1e5827fa6fb126178336c6ad526a438c652192701ab",
+    "reason": "The file exporter completion is produced by the named nonisolated exportCompletion factory with an explicit Sendable function type. It only inspects the completion result on the SDK executor, discards error and URL payloads there, and invokes the Sendable failure action inside a Task explicitly isolated to MainActor; cancellation captures no state."
+  },
+  {
     "file": "apps/apple/UI/PhoneChatContent.swift",
     "line": 63,
     "api": "sizeThatFits",

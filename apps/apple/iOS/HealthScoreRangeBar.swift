@@ -9,7 +9,7 @@ struct HealthScoreNumber: View {
         HStack(alignment:.firstTextBaseline,spacing:AppleTokens.Space.p4) {
             Text(text).font(.system(size:size,weight:.bold,design:.rounded)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
             if !unit.isEmpty { Text(unit).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineLimit(1) }
-        }.frame(maxWidth:.infinity,alignment:.leading)
+        }
     }
 }
 struct HealthScoreRangeBar: View {
@@ -49,6 +49,6 @@ struct HealthDurationNumber: View {
                 if total >= 60 { HealthScoreNumber(text:String(total/60),unit:"小时") }
                 HealthScoreNumber(text:String(total%60),unit:"分")
             } else { HealthScoreNumber(text:"—") }
-        }
+        }.frame(maxWidth:.infinity,alignment:.leading)
     }
 }

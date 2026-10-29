@@ -237,7 +237,7 @@ private struct NativeAttachmentPreview: NSViewRepresentable {
     func updateNSView(_ view: QLPreviewView, context: Context) { view.previewItem = file as NSURL }
 }
 #else
-private struct NativeAttachmentPreview: UIViewControllerRepresentable {
+struct NativeAttachmentPreview: UIViewControllerRepresentable {
     let file: URL
     final class Coordinator: NSObject, QLPreviewControllerDataSource {
         var file: URL
@@ -261,7 +261,7 @@ private struct NativeAttachmentPreview: UIViewControllerRepresentable {
     #endif
 }
 #if os(iOS)
-private struct PhonePDFPreview: View {
+struct PhonePDFPreview: View {
     let file: URL
     @State private var pages=0
     @State private var loading=true

@@ -23,6 +23,10 @@ import WeftMateCore
     private var generation = UUID()
     private var requestIDs: [String:String] = [:]
     private var queries: [String:String] = [:]
+    var orderedActivity: [PhoneActivity] {
+        // Preserve server order within each priority, including across loaded pages.
+        activity.filter { $0.state == "pending" } + activity.filter { $0.state != "pending" }
+    }
     func prepare(_ app: AppleAppModel) {
         guard epoch != app.accountEpoch else { return }
         epoch=app.accountEpoch; generation=UUID(); loading=false; busy=[]; errors=[:]; requestIDs=[:]; queries=[:]
@@ -44,7 +48,12 @@ import WeftMateCore
             let status=try await app.assistantClient.nativeUpdateStatus()
             guard token == app.accountEpoch, generation == version, !Task.isCancelled else { return }
             capabilities=(status.personalCapabilities ?? [:]).compactMapValues(\.int)
-        } catch { if token == app.accountEpoch { errors[page]=PhoneFeaturePolicy.failure(error) }; return }
+        } catch {
+            if token == app.accountEpoch, generation == version {
+                for part in page == "goals" ? ["tasks","schedules","goals"] : [page] { errors[part]=PhoneFeaturePolicy.failure(error) }
+            }
+            return
+        }
         let parts = page == "goals" ? ["tasks","schedules","goals"] : [page]
         for part in parts {
             let cap = part == "tasks" ? "taskOverview" : part == "schedules" ? "scheduleEditing" : part
@@ -54,7 +63,7 @@ import WeftMateCore
                 case "activity":
                     let page=try await app.assistantClient.phoneActivity(filter:filter,cursor:more ? nextActivity : nil)
                     guard token == app.accountEpoch, generation == version, !Task.isCancelled else { return }
-                    activity=more ? activity+page.items : page.items; nextActivity=page.nextCursor
+                    activity=more ? merging(activity,page.items) : page.items; nextActivity=page.nextCursor
                     // HEALTH-5 owns weekly health; it is independent from the activity summary.
                     let week=try? await app.assistantClient.healthWeekly()
                     guard token == app.accountEpoch, generation == version, !Task.isCancelled else { return }; weekly=week
@@ -71,7 +80,7 @@ import WeftMateCore
                     let page=try await app.assistantClient.phoneGoals(); guard token == app.accountEpoch, generation == version else { return }; goals=page.items
                 default:
                     let page=try await app.assistantClient.phoneLibrary(type:type,search:search,cursor:more ? nextLibrary : nil)
-                    guard token == app.accountEpoch, generation == version, !Task.isCancelled else { return }; files=more ? files+page.items : page.items; nextLibrary=page.nextCursor
+                    guard token == app.accountEpoch, generation == version, !Task.isCancelled else { return }; files=more ? merging(files,page.items) : page.items; nextLibrary=page.nextCursor
                 }
                 errors[part]=nil
             } catch {
@@ -83,6 +92,11 @@ import WeftMateCore
             }
         }
     }
+    private func merging<T: Identifiable>(_ current: [T], _ incoming: [T]) -> [T] {
+        let replacements=Dictionary(incoming.map { ($0.id,$0) },uniquingKeysWith:{ _,new in new })
+        let ids=Set(current.map(\.id))
+        return current.map { replacements[$0.id] ?? $0 } + incoming.filter { !ids.contains($0.id) }
+    }
     func write(_ key: String, page: String, app: AppleAppModel, operation: (String) async throws -> Void) async {
         prepare(app); guard !busy.contains(key) else { return }
         let token=app.accountEpoch; busy.insert(key)
@@ -91,12 +105,12 @@ import WeftMateCore
         do { try await operation(id); guard token == app.accountEpoch else { return }; requestIDs[key]=nil; errors[page]=nil; await read(page,app:app) }
         catch { if token == app.accountEpoch { errors[page]=PhoneFeaturePolicy.failure(error) } }
     }
-    func open(_ source: PhoneSource, app: AppleAppModel) async {
-        guard let session=source.sessionId else { return }
-        app.openedSessionID=source.chatId ?? session
+    func open(_ source: PhoneSource, app: AppleAppModel, navigate: (@MainActor (String) -> Void)? = nil) async {
+        guard let destination=source.chatId ?? source.sessionId else { return }
+        app.openedSessionID=destination; navigate?(destination)
         if let chat=source.chatId, let event=source.eventId {
             await app.mainChat.returnToSource(.object(["chatId":.string(chat),"eventId":.string(event),"seq":.number(Double(source.seq ?? 0))]))
-        } else if let seq=source.seq, let row=app.conversations.first(where: { $0.sessionId == session }) {
+        } else if let seq=source.seq, let row=app.conversations.first(where: { $0.sessionId == source.sessionId }) {
             await app.locateNativeSource(row,sequence:seq)
         }
     }

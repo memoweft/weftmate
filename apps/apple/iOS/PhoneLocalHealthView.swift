@@ -4,6 +4,7 @@ import WeftMateCore
 struct PhoneLocalHealthView: View {
     @ObservedObject var app: AppleAppModel
     @EnvironmentObject private var health: DailyHealthModel
+    @StateObject private var page=HealthPageModel()
     private var latest: DailyHealth? { health.state.pending.sorted { $0.key > $1.key }.first(where: { $0.value.status == "available" })?.value }
     var body: some View {
         ScrollView {
@@ -15,7 +16,7 @@ struct PhoneLocalHealthView: View {
                 } else {
                     Button("更新本机测量") { Task { await health.activate(app:app) } }.disabled(health.busy).buttonStyle(OutlineActionStyle())
                     if let value=latest {
-                        LazyVGrid(columns:[GridItem(.flexible()),GridItem(.flexible())],spacing:AppleTokens.Space.p12) {
+                        VStack(spacing:0) {
                             metric("步数",value.steps.map(Double.init),"步")
                             metric("昨晚睡眠",value.sleepMinutes,"分钟")
                             metric("静息心率",value.restingHeartRateBpm,"次/分")
@@ -27,14 +28,13 @@ struct PhoneLocalHealthView: View {
                 }
                 if health.busy { ProgressView("正在读取本机测量…") }
             }.padding(AppleTokens.Space.p20)
-        }.background(Weave.canvas).navigationTitle("健康").toolbar { PhoneAccountMenu(model:app) }
+        }.background(Weave.canvas).navigationTitle("健康").navigationBarTitleDisplayMode(.large).toolbar { ToolbarItem(placement:.primaryAction) { NavigationLink { HealthPageSettingsView(app:app,page:page) } label: { WeftIcon("settings") }.accessibilityLabel("健康设置") } }
             .task(id:app.phoneAccountIdentity) { await health.enteredHealthPage(app:app) }
     }
     private func metric(_ title: String,_ value: Double?,_ unit: String) -> some View {
-        VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
-            Text(title).font(AppleTokens.Fonts.headline)
-            if title == "昨晚睡眠" { HealthDurationNumber(minutes:value) }
-            else { HStack(alignment:.firstTextBaseline,spacing:AppleTokens.Space.p4) { Text(PhoneHealthText.number(value)).font(AppleTokens.Fonts.title.bold()); Text(unit).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) } }
-        }.frame(maxWidth:.infinity,minHeight:100,alignment:.leading).phoneCard()
+        VStack(spacing:0) {
+            PhoneFeatureRow(title:title,subtitle:value == nil ? "暂时没有测量，请检查健康读取权限。" : nil,value:PhoneHealthText.number(value)+" "+unit,chevron:false)
+            Divider()
+        }
     }
 }

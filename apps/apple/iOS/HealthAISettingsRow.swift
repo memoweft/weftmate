@@ -6,6 +6,8 @@ struct HealthAISettingsRow: View {
     @State private var settings: HealthPageSettings?
     @State private var message: String?
     @State private var updating=false
+    @State private var attempt=0
+    @State private var loading=false
     var body: some View {
         if app.session == nil { Text("分数和 AI 解读，连上电脑后可用。").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted) }
         else if let settings {
@@ -15,13 +17,17 @@ struct HealthAISettingsRow: View {
             }
             Text("汇总和模型解读用于了解趋势，不是医学结论；模型只接收汇总数字，各项分析展开时才生成。") .font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
         }
-        if let message { Text(message).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
-        Color.clear.frame(height:0).task(id:app.accountEpoch) {
+        if loading { ProgressView("正在读取解读设置…") }
+        if let message { Text(message).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary);Button("重试") { attempt += 1 }.disabled(updating) }
+        Color.clear.frame(height:0).task(id:"\(app.accountEpoch)-\(attempt)") {
+            let token=app.accountEpoch;settings=nil;message=nil;updating=false
             guard app.session != nil else { return }
-            let token=app.accountEpoch; settings=nil; message=nil
-            if let reply=try? await app.assistantClient.healthPageSettings(),token == app.accountEpoch { settings=reply.settings }
+            loading=true;defer { if token == app.accountEpoch { loading=false } }
+            do { let reply=try await app.assistantClient.healthPageSettings();if token == app.accountEpoch,!Task.isCancelled { settings=reply.settings } }
+            catch { if token == app.accountEpoch,!Task.isCancelled { message="解读设置暂时读不到，请连接电脑后重试。" } }
         }
     }
+
     private func change(top: Bool? = nil,item: Bool? = nil) async {
         let token=app.accountEpoch;updating=true;defer { if token == app.accountEpoch { updating=false } }
         do {

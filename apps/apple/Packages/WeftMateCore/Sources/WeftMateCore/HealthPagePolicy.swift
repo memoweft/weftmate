@@ -1,8 +1,6 @@
 import Foundation
 
 public enum HealthPagePolicy {
-    /// iPhone score cards keep two columns at every supported phone width.
-    public static func scoreColumns(width: Double) -> Int { 2 }
     public enum StatusTint: Equatable, Sendable { case green, amber, muted }
     public static func statusTint(_ state: String?) -> StatusTint {
         switch state {
@@ -31,9 +29,6 @@ public enum HealthPagePolicy {
         if case APIFailure.server(409,"HEALTH_DATA_CHANGED") = error { return ("健康数据刚更新，请刷新后再分析。",false) }
         if offline || error is URLError { return ("电脑不在线，连接后再来看看。",false) }
         return ("这次没能分析好，点一下再试。",false)
-    }
-    public static func visibleOptionalCards(_ overview: HealthOverview) -> [String] {
-        [("stress",overview.stress != nil),("energy",overview.energy != nil),("fitnessAge",overview.fitnessAge != nil)].compactMap { id,present in present ? id : nil }
     }
 }
 
