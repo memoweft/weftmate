@@ -12,11 +12,16 @@ import {measureUi} from '../helpers/ui-smoothness.mjs';
 
 const root=resolve(import.meta.dirname,'../..'),before=process.argv.includes('--before');
 const dialogsOnly=process.argv.includes('--dialogs-only');
+const bootOnly=process.argv.includes('--boot-only');
 const out=resolve(process.env.WEFTMATE_MOTION2_OUTPUT||'.local/evidence/ui-motion-2');
 await mkdir(out,{recursive:true});
-const report={before,commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),checks:[],samples:[],performance:[],errors:[]};
+const report={before,commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),checks:[],samples:[],performance:[],errors:[],console:[]};
 const check=(name,value,details)=>{report.checks.push({name,pass:!!value,details});if(!before)assert.ok(value,`${name}: ${JSON.stringify(details)}`);};
 let app,page,fixture,scope,lock;
+async function capture(name){
+  const png=await app.evaluate(async({BrowserWindow})=>(await BrowserWindow.getAllWindows()[0].capturePage(undefined,{stayHidden:true,stayAwake:true})).toPNG().toString('base64'));
+  await writeFile(join(out,name),Buffer.from(png,'base64'));
+}
 try{
   if(process.env.WEFTMATE_HEAVY_LOCK_DIR){for(const n of [1,2,3]){const path=join(process.env.WEFTMATE_HEAVY_LOCK_DIR,`heavy-${n}.lock`);try{const f=await open(path,'wx');await f.writeFile(`UI-MOTION-2 ${new Date().toISOString()}`);await f.close();lock=path;break;}catch(e){if(e.code!=='EEXIST')throw e;}}assert.ok(lock,'No heavy slot');}
   scope=managedMkdtempSync('weftmate-motion2-',{prune:false});fixture=await startFixture();
@@ -24,6 +29,7 @@ try{
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:root,args:['tests/helpers/ui-motion-2-electron.mjs'],env,recordVideo:{dir:out,size:{width:1280,height:800}},timeout:30000});
   for(const stream of [app.process().stdout,app.process().stderr])stream?.resume();
   page=await app.firstWindow();page.setDefaultTimeout(12000);page.on('pageerror',e=>report.errors.push(e.message));
+  page.on('console',message=>{if(message.type()==='error')report.console.push(message.text());});
   await page.route('**/personal/v1/ui/app.js',async route=>route.fulfill({contentType:'text/javascript',body:(await readFile(join(root,'src/personal-access-ui/app.js'),'utf8')).replace('ui.loadAttachmentHasher =','globalThis.testCore=core;globalThis.testUi=ui;ui.loadAttachmentHasher =')}));
   if(before)for(const file of ['motion.js','timeline.js','components/main-chat.js','components/goals-view.js','components/activity-view.js','components/library-view.js','desktop.js','chat-process.css','workspace.css','composer-extras.css','native-desktop.css','styles.css','ui-core/goals.js']){
     const source=file.startsWith('ui-core/')?`src/${file}`:`src/personal-access-ui/${file}`;
@@ -33,6 +39,7 @@ try{
   await page.waitForFunction(()=>globalThis.__WeftUiStarted&&globalThis.testCore?.state.sessions.length>0);
   await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.showInactive();w.webContents.setBackgroundThrottling(false);});
   await page.evaluate(()=>WeftReplyMotion.setVisibility(false));
+  if(!bootOnly){
   const settle=()=>page.waitForTimeout(380);
   async function sample(name,action){
     await page.evaluate(()=>{globalThis.motion2Frames=[];const tick=()=>{const d=document.querySelector('#transcript .execution-block'),s=d?.querySelector(':scope > summary'),b=d?.querySelector('.execution-records');motion2Frames.push({at:performance.now(),height:d?.getBoundingClientRect().height,y:s?.getBoundingClientRect().y,body:b?.getBoundingClientRect().height,scroll:document.getElementById('chat-scroll').scrollTop,open:d?.open,animations:d?.getAnimations().map(a=>({state:a.playState,frames:a.effect.getKeyframes()}))});globalThis.motion2Raf=requestAnimationFrame(tick);};motion2Raf=requestAnimationFrame(tick);});
@@ -70,11 +77,11 @@ try{
       await page.evaluate(()=>testUi.openActivity());await settle();
       const caption=await page.getByRole('button',{name:'全部已读',exact:true}).evaluate(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(document.documentElement),safe=parseFloat(s.getPropertyValue('--desktop-caption-height'))||44;return {top:r.top,safe,hit:el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)),drag:getComputedStyle(el).webkitAppRegion};});
       check(`${theme}/${width}/${zoom}: activity action clears native caption`,caption.top>=caption.safe&&caption.hit&&caption.drag!=='drag',caption);
-      await page.screenshot({path:join(out,`${theme}-${width}-${zoom}-activity.png`)});
+      await capture(`${theme}-${width}-${zoom}-activity.png`);
       await page.evaluate(()=>testCore.startNewConversation());await settle();
       const text=await page.evaluate(()=>{const b=document.querySelector('.thinking-badge');b.hidden=false;b.textContent='深入思考';const m=document.getElementById('model-label');m.textContent='合成模型名字很长以核对省略';const range=e=>{const r=document.createRange();r.selectNodeContents(e);return r.getBoundingClientRect().toJSON();};return {badge:range(b),model:range(m),badgeBox:b.getBoundingClientRect().toJSON(),font:getComputedStyle(b).fontSize,modelFont:getComputedStyle(m).fontSize,send:document.getElementById('send-message').getBoundingClientRect().toJSON(),width:innerWidth};});
       check(`${theme}/${width}/${zoom}: thinking label aligns and is not clipped`,text.font===text.modelFont&&Math.abs(text.badge.y-text.model.y)<=2&&text.badgeBox.width>=text.badge.width-1&&text.send.right<=text.width,text);
-      await page.screenshot({path:join(out,`${theme}-${width}-${zoom}-composer.png`)});
+      await capture(`${theme}-${width}-${zoom}-composer.png`);
     }
     await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.webContents.setZoomFactor(1);w.setContentSize(1280,800);});
   }
@@ -92,11 +99,11 @@ try{
   check('background refresh preserves confirmed empty state',await page.locator('#goals-panel-schedules .goals-state-empty').count()===1&&await page.locator('#goals-panel-schedules .goals-state-loading').count()===0);
   await page.evaluate(()=>{motion2Pending['/schedules'].reject(Error('合成读取失败'));for(const [path,p]of Object.entries(motion2Pending))if(path!=='/schedules')p.resolve(path==='/tasks'?{items:[],recent:[]}:{items:[]});});await settle();
   check('failed read exposes retry',await page.locator('#goals-panel-schedules').getByRole('button',{name:'重试',exact:true}).count()===1);
-  await page.screenshot({path:join(out,'goals-failed.png')});
+  await capture('goals-failed.png');
   await page.locator('#goals-panel-schedules').getByRole('button',{name:'重试',exact:true}).click();await page.waitForTimeout(80);
   await page.evaluate(()=>{for(const [path,p]of Object.entries(motion2Pending))p.resolve(path==='/tasks'?{items:[],recent:[]}:{items:[]});});await settle();
   check('retry clears the real error',await page.locator('#goals-panel-schedules .goals-state-error').count()===0);
-  await page.screenshot({path:join(out,'goals-recovered.png')});
+  await capture('goals-recovered.png');
   await page.evaluate(()=>{testCore.accessApi=motion2Api;});
   }
   if(!before||dialogsOnly){
@@ -178,7 +185,7 @@ try{
         check(`${theme}: memory ${kind} selected`,await page.locator(`.memory-type-filter[data-kind="${kind}"]`).getAttribute('aria-pressed')==='true');
       }
       await page.evaluate(()=>{void testCore.startNewConversation();});await settle();
-      await page.screenshot({path:join(out,`${theme}-switch-inventory.png`)});
+      await capture(`${theme}-switch-inventory.png`);
     }
     const layered=await page.evaluate(async()=>{
       const content=document.createElement('div'),trigger=document.createElement('button');trigger.textContent='打开合成子弹窗';content.append(trigger);
@@ -211,8 +218,9 @@ try{
     check('reduced motion retains opacity feedback without spatial movement',reduced.reduced&&reduced.frames.some(f=>f.opacity)&&reduced.frames.every(f=>!f.transform&&!f.height),reduced);
     await page.emulateMedia({reducedMotion:'no-preference'});
   }
+  }
   check('no page errors',report.errors.length===0,report.errors);
-}catch(error){report.failure=error.stack;await page?.screenshot({path:join(out,'failure.png')}).catch(()=>{});throw error;}
+}catch(error){report.failure=error.stack;if(page)report.failureState=await page.evaluate(()=>({url:location.pathname,started:globalThis.__WeftUiStarted,view:globalThis.testCore?.state.currentView,account:!!globalThis.testCore?.state.account,sessions:globalThis.testCore?.state.sessions.length,csrf:!!globalThis.testCore?.state.csrfToken,cloudError:globalThis.testCore?.state.cloudAuth?.error,body:document.body.innerText.slice(-1800)})).catch(()=>null);if(app)await capture('failure.png').catch(()=>{});throw error;}
 finally{
   await writeFile(join(out,'report.json'),JSON.stringify(report,null,2));
   if(page)await page.unrouteAll({behavior:'wait'}).catch(()=>{});

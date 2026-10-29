@@ -78,7 +78,6 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     function memoryStatus(message, error = false) {
         const node = ui.byId('memory-status');
         ui.paintMemoryHealth?.(core.memory.status);
-        globalThis.WeftMotion?.content(list,JSON.stringify(memoryFilterInput()));
         if (core.memory.status?.state === 'disabled') {
             // Rich status content must not inherit the plain-text loading animation.
             node.classList.remove('reply-status', 'reply-working');
@@ -183,6 +182,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         for (const [key, value] of memoryRows) if (!rows.includes(value.row)) memoryRows.delete(key);
         ui.byId('memory-more').hidden = !core.memory.hasMore;
         ui.paintMemoryHealth?.(core.memory.status);
+        globalThis.WeftMotion?.content(list,JSON.stringify(memoryFilterInput()));
     }
     function renderMemorySources(sources) {
         const list = ui.byId('memory-sources');
