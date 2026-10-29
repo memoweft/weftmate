@@ -10,6 +10,7 @@ test('update activation preserves the native handle and process identity, and re
       calls++;
       assert.deepEqual(JSON.parse(options.env.WEFTMATE_UPDATED_WINDOW), { handle: '81985529216486895', pid: process.pid });
       assert.equal(options.timeoutMs, 5000);
+      assert.equal(options.windowsHide, true);
       return { stdout: answer };
     } });
     assert.equal(result, answer === 'True'); assert.equal(calls, 1);

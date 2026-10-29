@@ -47,6 +47,6 @@ export async function activateWindowsDesktopWindow(window, { execute = boundedCo
   const request = { handle: handle.readBigUInt64LE().toString(), pid: process.pid };
   const result = await execute(join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
     ['-NoProfile', '-NonInteractive', '-Sta', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
-    { timeoutMs: 5000, maxBuffer: 8192, env: { ...process.env, WEFTMATE_UPDATED_WINDOW: JSON.stringify(request) } });
+    { windowsHide: true, timeoutMs: 5000, maxBuffer: 8192, env: { ...process.env, WEFTMATE_UPDATED_WINDOW: JSON.stringify(request) } });
   return result.stdout.trim() === 'True';
 }
