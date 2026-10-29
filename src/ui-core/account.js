@@ -6,13 +6,6 @@ globalThis.WeftUiCore.accountLabel = (account = {}, email = '') => {
 };
 globalThis.WeftUiCore.factories.account = (core, effects, environment) => {
     function profileName() { return [core.state.account?.displayName, core.state.account?.username].find(value => value && value !== 'local-owner') || '我的账户'; }
-    function avatarSignature(bytes, mimeType) {
-        const png = bytes.length >= 16 && [137, 80, 78, 71, 13, 10, 26, 10].every((byte, index) => bytes[index] === byte);
-        const jpeg = bytes.length >= 16 && bytes[0] === 255 && bytes[1] === 216 && bytes.at(-2) === 255 && bytes.at(-1) === 217;
-        const webp = bytes.length >= 16 && String.fromCharCode(...bytes.subarray(0, 4)) === 'RIFF'
-            && String.fromCharCode(...bytes.subarray(8, 12)) === 'WEBP';
-        return mimeType === 'image/png' && png || mimeType === 'image/jpeg' && jpeg || mimeType === 'image/webp' && webp;
-    }
     function accountModelMarkerKey() { return `weftmate:account-model-operation:${core.state.ownerId || 'none'}`; }
     function savedAccountModelMarker() {
         try {
@@ -763,5 +756,5 @@ globalThis.WeftUiCore.factories.account = (core, effects, environment) => {
                 : error.code === 'NETWORK' ? '电脑暂时不可达，重连后可核对原网页任务。' : '网页阅读状态暂不可核对。');
         }
     }
-    return { modelConnectionSteps, checkModelDraft, profileName, avatarSignature, accountModelMarkerKey, savedAccountModelMarker, storeAccountModelMarker, forgetAccountModelMarker, accountModelReceipt, submitAccountModelControl, browserIntentKey, savedBrowserIntent, reconcileBrowserIntent, refreshAccountModels, refreshProjects, saveAccountModelDraft, saveProfileDraft, registerProjectDraft, startBrowserDraft, profileDraftDirty, refreshPendingDevices, refreshProfile, refreshDevices, refreshBrowserWorkspace };
+    return { modelConnectionSteps, checkModelDraft, profileName, accountModelMarkerKey, savedAccountModelMarker, storeAccountModelMarker, forgetAccountModelMarker, accountModelReceipt, submitAccountModelControl, browserIntentKey, savedBrowserIntent, reconcileBrowserIntent, refreshAccountModels, refreshProjects, saveAccountModelDraft, saveProfileDraft, registerProjectDraft, startBrowserDraft, profileDraftDirty, refreshPendingDevices, refreshProfile, refreshDevices, refreshBrowserWorkspace };
 };
