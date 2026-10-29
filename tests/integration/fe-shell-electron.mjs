@@ -175,9 +175,19 @@ try {
     });
     assert.deepEqual(result,{before:1,after:0,marked:false,settled:0});
   });
-  await check('reduced motion settles layout immediately',async()=>{
+  await check('reduced motion settles layout immediately with opacity-only feedback',async()=>{
     await page.emulateMedia({reducedMotion:'reduce'});
-    const state=await page.evaluate(()=>{const d=document.querySelector('#shell-details-probe')||document.createElement('details');if(!d.isConnected){d.innerHTML='<summary>合成</summary><div>内容</div>';document.body.append(d);WeftMotion.details(d);}d.querySelector('summary').click();const result={open:d.open,animations:d.getAnimations().length};d.remove();return result;});assert.deepEqual(state,{open:true,animations:0});
+    const state=await page.evaluate(()=>{
+      const d=document.querySelector('#shell-details-probe')||document.createElement('details');
+      if(!d.isConnected){d.innerHTML='<summary>合成</summary><div>内容</div>';document.body.append(d);WeftMotion.details(d);}
+      d.querySelector('summary').click();const height=d.getBoundingClientRect().height,animations=d.getAnimations();
+      const result={open:d.open,height:d.style.height,overflow:d.style.overflow,bodyHeight:d.querySelector('div').getBoundingClientRect().height,
+        frames:animations.flatMap(a=>a.effect.getKeyframes()),durations:animations.map(a=>a.effect.getTiming().duration),budget:parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-1')),drift:0};
+      for(const animation of animations)animation.finish();result.drift=d.getBoundingClientRect().height-height;d.remove();return result;
+    });
+    assert.equal(state.open,true);assert.equal(state.height,'');assert.equal(state.overflow,'');assert.ok(state.bodyHeight>0);assert.ok(Math.abs(state.drift)<=1,'opacity feedback must not defer or move layout');
+    assert.ok(state.frames.every(frame=>!('height'in frame)&&!('width'in frame)&&!('transform'in frame)),'reduction removes spatial animation');
+    assert.ok(state.durations.every(duration=>typeof duration==='number'&&duration<=state.budget),'remaining feedback uses the short token');
   });
   }
   assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().some(w=>w.isVisible())),false);assert.deepEqual(errors,[]);assert.deepEqual(failures,[]);

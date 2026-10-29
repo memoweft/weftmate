@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {_electron} from 'playwright';
 import {createRequire} from 'node:module';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
 import {mkdir,readFile,writeFile,open,unlink} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {startFixture} from './ux-4-fixture.mjs';
@@ -18,9 +18,12 @@ await mkdir(out,{recursive:true});
 const report={before,commit:null,dirty:null,phase:'module-loaded',phases:[],checks:[],samples:[],performance:[],errors:[],console:[]};
 const phase=async name=>{report.phase=name;report.phases.push({name,at:new Date().toISOString()});await writeFile(join(out,'report.json'),JSON.stringify(report,null,2));};
 const check=(name,value,details)=>{report.checks.push({name,pass:!!value,details});if(!before)assert.ok(value,`${name}: ${JSON.stringify(details)}`);};
-let app,page,fixture,scope,lock;
+let app,page,fixture,scope,lock,cdp,recording=false;
+const screencast=[],frameWrites=[];
+async function bounded(promise,ms){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(`Diagnostic deadline ${ms}ms`)),ms);})]);}finally{clearTimeout(timer);}}
+const nativeState=()=>app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];return {visible:w.isVisible(),minimized:w.isMinimized(),focused:w.isFocused(),zoom:w.webContents.getZoomFactor(),bounds:w.getContentBounds()};});
 async function capture(name){
-  const png=await app.evaluate(async({BrowserWindow})=>(await BrowserWindow.getAllWindows()[0].capturePage(undefined,{stayHidden:true,stayAwake:true})).toPNG().toString('base64'));
+  const png=await bounded(app.evaluate(async({BrowserWindow})=>(await BrowserWindow.getAllWindows()[0].capturePage(undefined,{stayHidden:true,stayAwake:true})).toPNG().toString('base64')),8000);
   await writeFile(join(out,name),Buffer.from(png,'base64'));
 }
 try{
@@ -32,7 +35,7 @@ try{
   scope=managedMkdtempSync('weftmate-motion2-',{prune:false});fixture=await startFixture();
   await phase('electron-launch');
   const env={...process.env,REVIEW_PROFILE:join(scope,'profile'),REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken};delete env.ELECTRON_RUN_AS_NODE;
-  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:root,args:['tests/helpers/ui-motion-2-electron.mjs'],env,recordVideo:{dir:out,size:{width:1280,height:800}},timeout:30000});
+  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:root,args:['tests/helpers/ui-motion-2-electron.mjs'],env,timeout:30000});
   for(const stream of [app.process().stdout,app.process().stderr])stream?.resume();
   page=await app.firstWindow();page.setDefaultTimeout(12000);page.on('pageerror',e=>report.errors.push(e.message));
   page.on('console',message=>{if(message.type()==='error')report.console.push(message.text());});
@@ -41,12 +44,21 @@ try{
     const asset=source.replace('src/personal-access-ui/','').replace('src/ui-core/','ui-core/');
     await page.route(`**/personal/v1/ui/${asset}`,route=>route.fulfill({contentType:source.endsWith('.css')?'text/css':'text/javascript',body:execFileSync('git',['show',`825edad9e:${source}`],{cwd:root,encoding:'utf8'})}));
   }
-  await phase('initial-navigation');await page.waitForURL('**/personal/v1/ui');
+  await phase('initial-navigation');await page.waitForURL('**/personal/v1/ui',{timeout:12000});
   await phase('login');await localUiSession(page,fixture.credentials,'UI-MOTION-2 synthetic',{mainChat:true});
   await phase('ui-boot');
   await page.waitForFunction(()=>globalThis.__WeftUiStarted&&globalThis.testCore?.state.sessions.length>0);
   await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.showInactive();w.webContents.setBackgroundThrottling(false);});
   await page.evaluate(()=>WeftReplyMotion.setVisibility(false));
+  report.windowAtStart=await nativeState();
+  // Recording starts after native navigation and login so capture setup
+  // cannot gate startup or hide a native-window bootstrap failure.
+  cdp=await page.context().newCDPSession(page);recording=true;
+  cdp.on('Page.screencastFrame',event=>{
+    if(recording){const file=`capture-${String(screencast.length).padStart(5,'0')}.jpg`;screencast.push({file,timestamp:event.metadata.timestamp,width:event.metadata.deviceWidth,height:event.metadata.deviceHeight});frameWrites.push(writeFile(join(out,file),Buffer.from(event.data,'base64')).catch(error=>{report.errors.push(`screencast: ${error.message}`);}));}
+    void cdp.send('Page.screencastFrameAck',{sessionId:event.sessionId}).catch(()=>{});
+  });
+  await cdp.send('Page.startScreencast',{format:'jpeg',quality:72,maxWidth:1280,maxHeight:800,everyNthFrame:3});
   await phase('native-acceptance');
   if(!bootOnly){
   const settle=()=>page.waitForTimeout(380);
@@ -54,7 +66,7 @@ try{
     await page.evaluate(()=>{globalThis.motion2Frames=[];const tick=()=>{const d=document.querySelector('#transcript .execution-block'),s=d?.querySelector(':scope > summary'),b=d?.querySelector('.execution-records');motion2Frames.push({at:performance.now(),height:d?.getBoundingClientRect().height,y:s?.getBoundingClientRect().y,body:b?.getBoundingClientRect().height,scroll:document.getElementById('chat-scroll').scrollTop,open:d?.open,animations:d?.getAnimations().map(a=>({state:a.playState,frames:a.effect.getKeyframes()}))});globalThis.motion2Raf=requestAnimationFrame(tick);};motion2Raf=requestAnimationFrame(tick);});
     await action();await page.waitForTimeout(720);
     const frames=await page.evaluate(()=>{cancelAnimationFrame(motion2Raf);return motion2Frames;});
-    await writeFile(join(out,`${name}-frames.json`),JSON.stringify(frames,null,2));report.samples.push({name,frames:frames.length});return frames;
+    await writeFile(join(out,`${name}-frames.json`),JSON.stringify(frames,null,2));report.samples.push({name,frames:frames.length,native:await nativeState(),document:await page.evaluate(()=>({visibility:document.visibilityState,focused:document.hasFocus()}))});return frames;
   }
   async function thinking(lines,streaming=false){
     await page.evaluate(async({id,lines,streaming})=>{
@@ -128,7 +140,7 @@ try{
       }
       await page.locator('#goals-tab-tasks').focus();await page.keyboard.press('ArrowRight');
       check(`${theme}: goal keyboard selection`,await page.locator('#goals-tab-schedules').getAttribute('aria-selected')==='true');
-      report.performance.push(await measureUi(page,`${theme}-goal-switch`,()=>page.locator('#goals-tab-goals').click(),{}));
+      report.performance.push({...await measureUi(page,`${theme}-goal-switch`,()=>page.locator('#goals-tab-goals').click(),{}),native:await nativeState()});
       await page.locator('.activity-entry').click();
       for(const id of ['all','actionable','task','reminder','memory','all']){
         await page.locator(`.activity-filters [data-filter="${id}"]`).click();
@@ -267,11 +279,17 @@ try{
   }
   check('no page errors',report.errors.length===0,report.errors);
   await phase('complete');
-}catch(error){report.failure=error.stack;if(page)report.failureState=await page.evaluate(()=>({url:location.pathname,started:globalThis.__WeftUiStarted,view:globalThis.testCore?.state.currentView,account:!!globalThis.testCore?.state.account,sessions:globalThis.testCore?.state.sessions.length,csrf:!!globalThis.testCore?.state.csrfToken,cloudError:globalThis.testCore?.state.cloudAuth?.error,body:document.body.innerText.slice(-1800)})).catch(()=>null);if(app)await capture('failure.png').catch(()=>{});throw error;}
+}catch(error){report.failure=error.stack;report.pageUrl=page?.url();await phase('failure');if(page)report.failureState=await bounded(page.evaluate(()=>({url:location.pathname,started:globalThis.__WeftUiStarted,view:globalThis.testCore?.state.currentView,account:!!globalThis.testCore?.state.account,sessions:globalThis.testCore?.state.sessions.length,csrf:!!globalThis.testCore?.state.csrfToken,cloudError:globalThis.testCore?.state.cloudAuth?.error,body:document.body?.innerText.slice(-1800)})),3000).catch(()=>null);if(app)await capture('failure.png').catch(()=>{});throw error;}
 finally{
+  recording=false;
+  if(cdp){await bounded(cdp.send('Page.stopScreencast'),3000).catch(()=>{});await bounded(cdp.detach(),3000).catch(()=>{});}
+  await Promise.all(frameWrites);report.screencastFrames=screencast.length;await writeFile(join(out,'screencast.json'),JSON.stringify(screencast,null,2));
   await writeFile(join(out,'report.json'),JSON.stringify(report,null,2));
-  if(page)await page.unrouteAll({behavior:'wait'}).catch(()=>{});
-  if(app)await app.close();if(fixture)await fixture.close();
+  if(page)await bounded(page.unrouteAll({behavior:'wait'}),5000).catch(()=>{});
+  if(app){const child=app.process();try{await bounded(app.close(),10000);}catch{if(child.exitCode===null&&child.signalCode===null)spawnSync('taskkill.exe',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,timeout:10000});}}
+  if(fixture)await fixture.close();
   if(scope)disposeManagedTemp(scope);if(lock)await unlink(lock);
 }
+assert.equal(report.errors.length,0,JSON.stringify(report.errors));
+if(!bootOnly)assert.ok(report.screencastFrames>10,'continuous native frames must survive the test');
 console.log(JSON.stringify({out,checks:report.checks.length,failures:report.checks.filter(c=>!c.pass)}));

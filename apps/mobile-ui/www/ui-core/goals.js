@@ -17,7 +17,10 @@ globalThis.WeftUiCore.factories.goals = (core,effects,environment) => {
                     if(cap&&core.state.personalCapabilities?.[cap]!==1)throw {code:'CAPABILITY_UNAVAILABLE'};
                     const result=await core.accessApi(path);if(!current())return;
                     model[key]=result.items??result.sessions??[];model.loaded[key]=true;
-                    if(key==='tasks'){model.recent=result.recent;model.timeZone=result.timeZone;}
+                    if(key==='tasks'){
+                        model.recent=result.recent;model.timeZone=result.timeZone;
+                        for(const row of [...model.tasks,...model.recent])if(commandSources.has(row.taskId))row.offlineSource=commandSources.get(row.taskId);
+                    }
                     delete model.errors[key];
                 }catch(error){if(!current())return;const unavailable=error?.code==='CAPABILITY_UNAVAILABLE';
                     if(unavailable){model[key]=[];delete model.loaded[key];if(key==='tasks')model.recent=[];}

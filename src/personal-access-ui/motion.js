@@ -105,7 +105,7 @@
     const full=element.getBoundingClientRect().height;
     const summary=element.tagName==='DETAILS'?element.querySelector(':scope > summary'):null;
     const end=opening?full:summary?summary.getBoundingClientRect().height+parseFloat(getComputedStyle(element).paddingTop)+parseFloat(getComputedStyle(element).paddingBottom):0;
-    if(reduced()||paused()){setOpen(opening);folds.delete(element);if(reduced())feedback(element);return;}
+    if(reduced()||paused()){element.style.height=previous.height;element.style.overflow=previous.overflow;setOpen(opening);folds.delete(element);if(reduced())feedback(element);return;}
     element.style.overflow='clip';element.style.height=`${height}px`;
     const state={opening};folds.set(element,state);
     let destination=end,animation;
