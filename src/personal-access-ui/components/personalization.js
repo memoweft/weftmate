@@ -22,9 +22,9 @@ globalThis.WeftPersonalizationView = (core, target, category, {toast = () => {}}
         if (multiline) field.rows = key === 'fixedInstructions' ? 5 : 3;
         const wrapper = node('div', 'personalization-field'), count = node('small', 'muted');
         const expandable = ['toneInstructions','fixedInstructions','writingStyle'].includes(key);
-        const editor = expandable ? node('details','settings-editor') : null, summary = expandable ? node('summary','',label) : null;
+        const editor = expandable ? node('details','settings-editor') : null, summary = expandable ? node('summary') : null;
         const value = expandable ? node('span','settings-editor-value muted') : null;
-        if(editor){summary.append(value);editor.append(summary);}
+        if(editor){summary.append(node('span','settings-editor-label',label),value);editor.append(summary);}
         count.id = field.id + '-count'; field.setAttribute('aria-describedby', count.id);
         const update = () => { const length = [...field.value].length, limit = globalThis.WeftPersonalization.limits[key]; count.textContent = `${length} / ${limit} 字`; if(value)value.textContent=length?`已填写 ${length} 字`:'未设置';field.setCustomValidity(length > limit ? `最多填写 ${limit} 字。` : ''); };
         field.addEventListener('input', update); wrapper.append(field, count);
