@@ -3,6 +3,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
     // Original files stay local. Only a decoded, bounded raster enters profile storage.
     async function normalizeAvatar(file, current) {
         const image = document.createElement('img'), url = URL.createObjectURL(file);
+        const vector = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name);
         try {
             image.src = url;
             await image.decode();
@@ -12,7 +13,8 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
             // Drawing an SVG through an image keeps it in the browser's image context;
             // scripts and external resources are never inserted into the document.
             while (true) {
-                const scale = Math.min(1, edge / Math.max(image.naturalWidth, image.naturalHeight));
+                let scale = edge / Math.max(image.naturalWidth, image.naturalHeight);
+                if (!vector) scale = Math.min(1, scale);
                 canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
                 canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
                 const context = canvas.getContext('2d');

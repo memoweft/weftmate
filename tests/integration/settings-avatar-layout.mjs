@@ -40,6 +40,10 @@ const select=async(file)=>{
   await page.waitForFunction(()=>!__feedbackSessionCore.state.avatarChecking);
 };
 const save=async()=>{await page.locator('#profile-save').click();await page.waitForFunction(()=>!__feedbackSessionCore.state.profileSaving);assert.equal(await page.locator('#profile-error').innerText(),'');};
+const avatarVisible=async()=>{
+  await page.waitForFunction(()=>{const image=document.querySelector('#profile-avatar-image');return document.querySelector('#profile-status').textContent!=='正在读取资料…'&&!image.hidden&&image.complete&&image.naturalWidth>0;});
+  assert.equal(await page.locator('#profile-avatar-image').isVisible(),true);
+};
 async function motion(name,action){
   const firstFrame=sequence;
   await page.evaluate(()=>{globalThis.__settingsFrames=[];globalThis.__settingsSampling=true;const start=performance.now();const frame=time=>{
@@ -76,7 +80,7 @@ try{
       await save();const readback=await fixture.request('/auth/me');assert.deepEqual(readback.account.avatar,draft);
       if(images[i].transparent)assert.equal(await page.evaluate(async a=>{const image=new Image();image.src=`data:${a.mimeType};base64,${a.dataBase64}`;await image.decode();const c=document.createElement('canvas'),ctx=c.getContext('2d');ctx.drawImage(image,0,0);return ctx.getImageData(0,0,1,1).data[3];},draft),0);
       await page.getByRole('button',{name:'关闭设置',exact:true}).click();await open('account');
-      assert.equal(await page.locator('#profile-avatar-image').isVisible(),true);
+      await avatarVisible();
       report.images[i].storedBytes=Buffer.from(draft.dataBase64,'base64').length;report.images[i].storedType=draft.mimeType;
     }
     const svg=join(profile,'synthetic-avatar.svg');
@@ -87,10 +91,10 @@ try{
     const stored=(await fixture.request('/auth/me')).account.avatar;assert.equal(stored.mimeType,'image/webp');
     const pixel=await page.evaluate(async avatar=>{const image=new Image();image.src=`data:${avatar.mimeType};base64,${avatar.dataBase64}`;await image.decode();const c=document.createElement('canvas');c.width=image.naturalWidth;c.height=image.naturalHeight;const x=c.getContext('2d');x.drawImage(image,0,0);return {width:c.width,height:c.height,alpha:x.getImageData(0,0,1,1).data[3]};},stored);
     assert.equal(pixel.alpha,0);assert.ok(pixel.width<=384);assert.equal(pixel.width/pixel.height,4/3);report.checks.push('large PNG/JPEG/WebP and SVG normalize, save, reopen; SVG scripts/external resources inactive; transparency/aspect retained');
-    await select({name:'invalid.png',mimeType:'image/png',buffer:Buffer.from('broken image')});assert.match(await page.locator('#profile-avatar-status').innerText(),/无法|有效/);assert.deepEqual((await fixture.request('/auth/me')).account.avatar,stored);assert.equal(await page.locator('#profile-avatar-image').isVisible(),true);
+    await select({name:'invalid.png',mimeType:'image/png',buffer:Buffer.from('broken image')});assert.match(await page.locator('#profile-avatar-status').innerText(),/无法|有效/);assert.deepEqual((await fixture.request('/auth/me')).account.avatar,stored);await avatarVisible();
     await select(files[0]);await page.locator('#profile-cancel').click();assert.equal(await page.locator('#profile-save').isDisabled(),true);assert.deepEqual((await fixture.request('/auth/me')).account.avatar,stored);
     await page.locator('#profile-avatar-file').setInputFiles([]);assert.equal(await page.locator('#profile-save').isDisabled(),true);
-    await app.close();app=null;await launch();await open('account');assert.deepEqual((await fixture.request('/auth/me')).account.avatar,stored);assert.equal(await page.locator('#profile-avatar-image').isVisible(),true);await capture('avatar-svg-restarted');
+    await app.close();app=null;await launch();await open('account');assert.deepEqual((await fixture.request('/auth/me')).account.avatar,stored);await avatarVisible();await capture('avatar-svg-restarted');
     await page.locator('#profile-avatar-remove').click();await save();assert.equal((await fixture.request('/auth/me')).account.avatar,null);report.checks.push('invalid image preserves prior avatar; cancel, empty picker, restart and removal');
     // A real EXIF orientation tag must rotate the decoded image before resizing.
     const jpeg=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=160;c.height=80;c.getContext('2d').fillRect(0,0,160,80);return c.toDataURL('image/jpeg').split(',')[1];});
@@ -98,6 +102,13 @@ try{
     await select({name:'oriented.jpg',mimeType:'image/jpeg',buffer:Buffer.concat([raw.subarray(0,2),exif,raw.subarray(2)])});
     const orientation=await page.evaluate(async()=>{const a=__feedbackSessionCore.state.profileDraftAvatar,i=new Image();i.src=`data:${a.mimeType};base64,${a.dataBase64}`;await i.decode();return [i.naturalWidth,i.naturalHeight];});assert.deepEqual(orientation,[80,160]);
     await page.locator('#profile-cancel').click();report.checks.push('JPEG EXIF orientation retained');
+    const smallSvg=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="9" fill="#267ea6"/></svg>');
+    await select({name:'small-vector.svg',mimeType:'image/svg+xml',buffer:smallSvg});
+    const vectorSize=await page.evaluate(async()=>{const a=__feedbackSessionCore.state.profileDraftAvatar,i=new Image();i.src=`data:${a.mimeType};base64,${a.dataBase64}`;await i.decode();return [i.naturalWidth,i.naturalHeight];});
+    const vectorAvatar=await page.evaluate(()=>__feedbackSessionCore.state.profileDraftAvatar);
+    report.smallSvg={sourcePixels:[24,24],sourceBytes:smallSvg.length,storedPixels:vectorSize,storedBytes:Buffer.from(vectorAvatar.dataBase64,'base64').length,storedType:vectorAvatar.mimeType};
+    assert.deepEqual(vectorSize,[384,384],'small vectors rasterize at avatar resolution');await save();assert.deepEqual((await fixture.request('/auth/me')).account.avatar,vectorAvatar);
+    await app.close();app=null;await launch();await open('account');await avatarVisible();assert.deepEqual((await fixture.request('/auth/me')).account.avatar,vectorAvatar);await capture('small-svg-restarted');report.checks.push('24px SVG rasterizes at avatar resolution, saves and survives restart');
   }
   await open('personalization');await page.locator('#personalization-preferredName:not(:disabled)').waitFor();await capture(baseline?'baseline-personalization':'personalization');
   if(!baseline){
