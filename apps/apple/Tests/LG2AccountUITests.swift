@@ -11,17 +11,35 @@ final class LG2AccountUITests: XCTestCase {
     }
     @MainActor private func control(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
     @MainActor private func expect(_ item: XCUIElement, timeout: TimeInterval = 20) throws {
-        guard item.waitForExistence(timeout: timeout) else { XCTFail("Missing native account control"); throw NSError(domain: "LG2UI", code: 1) }
+        guard item.exists || item.waitForExistence(timeout: timeout) else { throw NSError(domain: "LG2UI", code: 1,userInfo:[NSLocalizedDescriptionKey:"Missing required native account control"]) }
     }
     @MainActor private func reveal(_ app: XCUIApplication, _ item: XCUIElement) {
-        for up in [true, false] { for _ in 0..<6 { if item.exists && item.isHittable { return }; if up { app.swipeUp() } else { app.swipeDown() } } }
+        for up in [true, false] { for _ in 0..<6 {
+            if item.exists && app.frame.contains(item.frame) && item.isHittable { return }
+            app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:up ? 0.78 : 0.28)).press(forDuration:0.05,thenDragTo:app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:up ? 0.28 : 0.78)))
+        } }
     }
-    @MainActor private func tap(_ app: XCUIApplication, _ id: String) throws { let item = control(app, id); reveal(app, item); try expect(item); item.tap() }
+    @MainActor private func tap(_ app: XCUIApplication, _ id: String) throws {
+        let item=app.buttons[id]
+        if !item.exists {_ = item.waitForExistence(timeout:3)}
+        if !item.exists {reveal(app,item)}
+        try expect(item)
+        if !app.frame.contains(item.frame) {reveal(app,item)}
+        item.tap()
+    }
     @MainActor private func fill(_ app: XCUIApplication, _ id: String, _ value: String, secure: Bool = false) throws {
         let item = secure ? app.secureTextFields[id] : app.textFields[id]
-        reveal(app, item); try expect(item); item.tap()
-        if let old=item.value as? String,!old.isEmpty {item.typeText(String(repeating:XCUIKeyboardKey.delete.rawValue,count:old.count))}
+        reveal(app, item); try expect(item)
+        if !secure,item.value as? String == value {return}
+        item.tap()
+        if let old=item.value as? String,!old.isEmpty {
+            // A centre tap puts the caret inside an existing email. Move to
+            // its trailing edge before deleting the complete fixture value.
+            item.coordinate(withNormalizedOffset:CGVector(dx:0.95,dy:0.5)).tap()
+            item.typeText(String(repeating:XCUIKeyboardKey.delete.rawValue,count:old.count))
+        }
         item.typeText(value)
+        if !secure,item.value as? String != value {throw NSError(domain:"LG2TypedValue",code:1,userInfo:[NSLocalizedDescriptionKey:"Typed value did not replace field "+id])}
         if app.buttons["dismissAccountKeyboard"].exists { app.buttons["dismissAccountKeyboard"].tap() }
     }
     @MainActor private func keep(_ app: XCUIApplication, _ name: String) { let image = XCTAttachment(screenshot: app.screenshot()); image.name = name; image.lifetime = .keepAlways; add(image) }
@@ -57,6 +75,19 @@ final class LG2AccountUITests: XCTestCase {
         guard outcome == .completed else{throw NSError(domain:"LG2Landing",code:1)}
         try account(app);try expect(control(app,"signedInEmail"),timeout:30)
     }
+    @MainActor private func loggedOut(_ app:XCUIApplication) async throws {
+        // Account changes dismiss the old settings sheet. Reopen from the
+        // stable workspace rather than observing the briefly visible AuthView.
+        let root=XCTNSPredicateExpectation(predicate:NSPredicate(format:"hittable == true"),object:app.buttons["phoneAccountMenu"])
+        guard await XCTWaiter.fulfillment(of:[root],timeout:30) == .completed else {throw NSError(domain:"LG2LogoutLanding",code:1)}
+        try account(app);try expect(control(app,"authRoot"))
+    }
+    @MainActor private func logout(_ app:XCUIApplication) async throws {
+        try tap(app,"accountLogout")
+        try expect(app.buttons["退出登录"],timeout:10)
+        keep(app,"ios-logout-confirmation")
+        try tap(app,"退出登录");try await loggedOut(app)
+    }
     @MainActor private func registered(_ app: XCUIApplication, credentials: [String: String]) async throws {
         try login(app); try tap(app, "accountRegistration")
         if (app.textFields["accountEmail"].value as? String) != credentials["email"]! { try fill(app, "accountEmail", credentials["email"]!) }
@@ -79,7 +110,7 @@ final class LG2AccountUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "WeftMate 服务条款")).firstMatch.exists)
         app.navigationBars.buttons.firstMatch.tap(); try tap(app, "account.backToLogin")
         try await registered(app, credentials: credentials); keep(app, "ios-registered")
-        try tap(app, "accountLogout"); try tap(app, "退出登录"); try login(app)
+        try await logout(app)
         try tap(app, "accountRecovery")
         if (app.textFields["accountEmail"].value as? String) != credentials["email"]! { try fill(app, "accountEmail", credentials["email"]!) }
         try tap(app, "accountSubmit"); try fill(app, "accountCode", try await get("/code")["code"]!); try tap(app, "accountSubmit")
@@ -103,15 +134,17 @@ final class LG2AccountUITests: XCTestCase {
         let revokedDevice = control(app, "device.actions." + device)
         let removed = NSPredicate { _, _ in !revokedDevice.exists }
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: removed, object: nil)], timeout: 20), .completed)
-        try account(app); try tap(app, "account.logoutOthers"); try tap(app, "退出其他设备"); try expect(app.staticTexts["其他设备已退出。"])
+        try account(app); try tap(app, "account.logoutOthers"); try tap(app, "退出其他设备")
+        let logoutNotice=app.staticTexts["其他设备已退出。"].firstMatch
+        reveal(app,logoutNotice);try expect(logoutNotice)
         try tap(app, "account.changeEmail"); try fill(app, "account.newEmail", "lg2-renamed@example.com")
         try tap(app, "account.sendEmailCode"); try fill(app, "account.newEmailCode", try await get("/code")["code"]!); try tap(app, "account.confirmEmail")
-        try login(app); try expect(app.staticTexts["邮箱已更新，请用新邮箱登录。"])
+        try await loggedOut(app); try expect(app.staticTexts["邮箱已更新，请用新邮箱登录。"])
         XCTAssertEqual(app.textFields["accountEmail"].value as? String, "lg2-renamed@example.com")
         try passwordLogin(app, password: credentials["password"]!); try await confirmDevice(app);try await signedIn(app)
         try tap(app, "account.delete"); try fill(app, "account.deletePassword", credentials["password"]!, secure: true)
         try tap(app, "account.confirmDelete"); try tap(app, "永久注销账号")
-        try login(app); try expect(app.staticTexts["账号已注销，本机对话与记忆保留。"], timeout: 30); keep(app, "ios-account-deleted")
+        try await loggedOut(app); try expect(app.staticTexts["账号已注销，本机对话与记忆保留。"], timeout: 30); keep(app, "ios-account-deleted")
     }
     @MainActor func testRealWrongExpiredCodeAndResendCooldown() async throws {
         let credentials=try await get("/credentials"),(app,_)=try await launch();defer{app.terminate()}
@@ -135,12 +168,12 @@ final class LG2AccountUITests: XCTestCase {
         try fill(app,"account.currentPassword",credentials["password"]!,secure:true)
         try fill(app,"account.newPassword",credentials["nextPassword"]!,secure:true)
         try fill(app,"account.repeatPassword",credentials["nextPassword"]!,secure:true);try tap(app,"account.savePassword")
-        try login(app);try fill(app,"accountEmail",credentials["email"]!);try passwordLogin(app,password:credentials["nextPassword"]!);try await confirmDevice(app)
+        try await loggedOut(app);try fill(app,"accountEmail",credentials["email"]!);try passwordLogin(app,password:credentials["nextPassword"]!);try await confirmDevice(app)
         try await signedIn(app);keep(app,"real-password-changed")
     }
     @MainActor func testRealOfflineLoginCanRetryWithoutLosingEmail() async throws {
         let credentials=try await get("/credentials"),(app,_)=try await launch();defer{app.terminate()}
-        try await registered(app,credentials:credentials);try tap(app,"accountLogout");try tap(app,"退出登录");try login(app)
+        try await registered(app,credentials:credentials);try await logout(app)
         try fill(app,"accountEmail",credentials["email"]!)
         _ = try await get("/cloud-offline")
         try tap(app,"accountSubmit")

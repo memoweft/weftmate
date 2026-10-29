@@ -10,18 +10,22 @@ final class A6SettingsUITests: XCTestCase {
         return try JSONSerialization.jsonObject(with: data) as! [String: Any]
     }
     @MainActor private func expect(_ element: XCUIElement) throws {
-        XCTAssertTrue(element.exists || element.waitForExistence(timeout: 30), "Missing required native control")
-        if !element.exists { throw NSError(domain: "A6UI", code: 1) }
+        guard element.exists || element.waitForExistence(timeout:30) else {throw NSError(domain:"A6UI",code:1,userInfo:[NSLocalizedDescriptionKey:"Missing required native control"])}
     }
     @MainActor private func tap(_ app: XCUIApplication, _ name: String) throws {
-        let element = app.buttons[name]; reveal(app,element); try expect(element)
-        if !element.isEnabled || !element.isHittable {
-            let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true AND hittable == true"), object: element)
-            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed)
+        let element = app.buttons[name]
+        if !element.exists {_ = element.waitForExistence(timeout:3)}
+        if !element.exists {reveal(app,element)}
+        try expect(element)
+        if !app.frame.contains(element.frame) {reveal(app,element)}
+        if !element.isEnabled {
+            let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: element)
+            let outcome=XCTWaiter.wait(for:[ready],timeout:30)
+            XCTAssertEqual(outcome,.completed);guard outcome == .completed else{throw NSError(domain:"A6Control",code:1)}
         }
-        // Native iOS menus can expose an invalid AX activation point even
-        // while hittable. Use the centre of the identified control's frame.
-        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        // Let XCTest choose an uncovered hit point, including in a scrolling
+        // native menu. Its first row's geometric centre may be covered by chrome.
+        element.tap()
     }
     @MainActor private func fill(_ app: XCUIApplication, _ name: String, _ value: String, secure: Bool = false) throws {
         let field = secure ? app.secureTextFields[name] : app.textFields[name]
@@ -32,8 +36,8 @@ final class A6SettingsUITests: XCTestCase {
     @MainActor private func reveal(_ app: XCUIApplication, _ element: XCUIElement) {
         for up in [true, false] {
             for _ in 0..<6 {
-                if element.exists && element.isHittable { return }
-                if up { app.swipeUp() } else { app.swipeDown() }
+                if element.exists && app.frame.contains(element.frame) && element.isHittable { return }
+                app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:up ? 0.78 : 0.28)).press(forDuration:0.05,thenDragTo:app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:up ? 0.28 : 0.78)))
             }
         }
     }
@@ -160,6 +164,7 @@ final class A6SettingsUITests: XCTestCase {
         try await searchAndDeepLink(app, ids: ids, theme: theme)
     }
     @MainActor private func searchAndDeepLink(_ app: XCUIApplication, ids: [String: Any], theme: String = "light") async throws {
+        _ = try await get("/a6/seed-usage")
         let search = app.textFields["settingsSearch"]
         for _ in 0..<3 { if search.isHittable { break }; app.swipeDown() }
         try expect(search); search.tap(); search.typeText("月度 上限\n")
@@ -174,8 +179,6 @@ final class A6SettingsUITests: XCTestCase {
         try expect(row); row.tap()
         try tap(app, "对话菜单")
         keep(app, "conversation-menu", theme)
-        let menuTree = XCTAttachment(string: app.debugDescription)
-        menuTree.name = "a6-menu-accessibility"; menuTree.lifetime = .keepAlways; add(menuTree)
         try tap(app, "conversationUsage")
         keep(app, "conversation-usage-opened", theme)
         let focus = app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH %@", "本对话：")).firstMatch
@@ -185,8 +188,17 @@ final class A6SettingsUITests: XCTestCase {
         let report = try await get("/a5/report")
         let rows = (report["usage"] as! [String: Any])["sessions"] as! [[String: Any]]
         let ledger = rows.first { $0["sessionId"] as? String == ids["review"] as? String }!
-        let expected = String(format: "¥%.6f", ledger["cost"] as! Double)
-        XCTAssertTrue(app.staticTexts["usageTotalCost"].label.contains(expected), "Conversation usage must match its host ledger")
+        let expected = String(format: "¥%.2f", ledger["cost"] as! Double)
+        let total=(report["usage"] as! [String:Any])["total"] as! [String:Any]
+        XCTAssertNotEqual(expected,String(format:"¥%.2f",total["cost"] as! Double),"Fixture must distinguish current-conversation and all-conversation costs")
+        XCTAssertEqual(app.staticTexts["usageTotalCost"].label,expected,"Displayed conversation cost must match its real host ledger at the phone's currency precision")
+        let requestCount=ledger["requests"] as! Int
+        XCTAssertGreaterThan(requestCount,1)
+        XCTAssertGreaterThan(total["requests"] as! Int,requestCount)
+        let requests=app.descendants(matching:.any)["usage.requests"].firstMatch
+        reveal(app,requests);try expect(requests)
+        let requestText=requests.label+" "+(requests.value as? String ?? "")
+        XCTAssertNotNil(requestText.range(of:"(?<![0-9])\(requestCount) 次",options:.regularExpression),"Conversation request count must match the scoped ledger: "+requestText)
     }
     @MainActor func testFocusedSearchAndConversationUsage() async throws {
         let (app, ids) = try await launch("light")

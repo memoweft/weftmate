@@ -13,7 +13,7 @@ struct PhoneServiceScreenshotFixture: View {
         Group {
             if !ready { ProgressView("准备合成模型服务…") }
             else if scene == "settings" { NavigationStack { PhoneModelsView(model:model) } }
-            else if scene == "add" || scene == "addQueried" { NavigationStack { PhoneModelEditor(model:model) } }
+            else if scene == "add" || scene == "addQueried" { NavigationStack { ModelServicesSettingsView(store:ModelServiceSettingsModel(app:nil,phone:model)) } }
             else { PhoneWorkspace(model:app,phone:model) }
         }.preferredColorScheme(argument("--apple9-theme") == "dark" ? .dark : .light)
             .task {

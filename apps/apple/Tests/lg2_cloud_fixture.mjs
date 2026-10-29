@@ -19,8 +19,8 @@ const password = randomBytes(24).toString('base64url'), nextPassword = randomByt
 const email = 'lg2-synthetic@example.com';
 async function port() { const s = tcpServer(); s.listen(0,'127.0.0.1'); await once(s,'listening'); const p=s.address().port; await new Promise(r=>s.close(r)); return p; }
 const cloudOrigin = `http://127.0.0.1:${await port()}`;
-const internalPort=await port();let hostOrigin;
-const cloudRoute=await localCloudRoute({origin:cloudOrigin,upstreamPort:internalPort,hostOrigin:()=>hostOrigin});
+const internalPort=await port();let hostOrigin,networkOffline=false;
+const cloudRoute=await localCloudRoute({origin:cloudOrigin,upstreamPort:internalPort,hostOrigin:()=>hostOrigin,dropConnections:()=>networkOffline});
 const child = spawn(process.execPath, ['services/cloud/src/main.mjs'], { cwd: resolve('.'), env: { ...process.env,
     CLOUD_TRUST_PROXY:'true', CLOUD_PORT: String(internalPort), CLOUD_DATA_DIR: cloudDir, CLOUD_ISSUER: cloudOrigin+P+'/oidc', CLOUD_MAIL_TRANSPORT:'file',
     CLOUD_OIDC_CLIENTS: JSON.stringify([{client_id:'weftmate-apple',redirect_uris:['com.weftmate.apple:/oauth/callback']}]) }, stdio:['ignore','ignore','pipe'] });
@@ -86,9 +86,9 @@ const driver = createServer(async(req,res)=>{
             const challenge=db.prepare('SELECT id FROM email_challenges WHERE consumed=0 ORDER BY rowid DESC LIMIT 1').get();
             db.prepare('UPDATE email_challenges SET expires_at=? WHERE id=?').run(Date.now()-1,challenge.id);result={ok:'true'};
         } else if(path==='/cloud-offline'){
-            child.kill('SIGSTOP');result={ok:'true'};
+            networkOffline=true;result={ok:'true'};
         } else if(path==='/cloud-online'){
-            child.kill('SIGCONT');result={ok:'true'};
+            networkOffline=false;result={ok:'true'};
         } else if(path==='/bootstrap'){
             await desktopLogin();
             local=await direct('/auth/desktop',{deviceName:'LG2 测试电脑'},null,{'x-weftmate-desktop':host.libraryDesktopToken});
@@ -96,7 +96,7 @@ const driver = createServer(async(req,res)=>{
             local=await direct('/auth/cloud-desktop',{accessToken:desktopTokens.access_token,deviceName:'LG2 测试电脑'},local,
                 {'x-weftmate-desktop':host.libraryDesktopToken,dpop:await proof(started.origin+'/personal/v1/auth/cloud-desktop',desktopTokens.access_token,nonce.nonce)});
             if(local.status!==200)throw new Error('desktop binding failed');
-            await host.syncCloudRevocations(); result={ok:true};
+            await host.syncCloudRevocations(); result={ok:'true'};
         } else if(path==='/pairing.png'){
             const pair=await direct('/cloud/pairings',{}); const png=join(root,'pair.png');
             await new Promise((resolve,reject)=>{const proc=spawn(qrBinary,[png]);proc.stdin.end('wm1.'+Buffer.from(JSON.stringify(pair)).toString('base64url'));proc.once('exit',c=>c===0?resolve():reject(new Error('QR failed')));});
@@ -114,5 +114,5 @@ const driver = createServer(async(req,res)=>{
 });
 driver.listen(0,'127.0.0.1');await once(driver,'listening');
 console.log(JSON.stringify({root,driver:`http://127.0.0.1:${driver.address().port}`}));
-async function close(){child.kill('SIGCONT');await host.close();await new Promise(r=>driver.close(r));await cloudRoute.close();db.close();child.kill('SIGTERM');await once(child,'exit');await rm(root,{recursive:true,force:true});}
+async function close(){await host.close();await new Promise(r=>driver.close(r));await cloudRoute.close();db.close();child.kill('SIGTERM');await once(child,'exit');await rm(root,{recursive:true,force:true});}
 process.once('SIGTERM',()=>close().then(()=>process.exit()));process.once('SIGINT',()=>close().then(()=>process.exit()));

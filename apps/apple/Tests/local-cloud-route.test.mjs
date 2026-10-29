@@ -30,3 +30,20 @@ test('local discovery preserves authorization failures and forwards authoritativ
     assert.equal(seen.at(-1).body,'unchanged');assert.equal(seen.at(-1).proof,secret);assert.equal(audit.length,3);
   } finally {await route.close();upstream.closeAllConnections();await new Promise(resolve=>upstream.close(resolve));}
 });
+
+test('network outage drops the local connection without queuing an authentication request',async()=>{
+  let dropped=true,requests=0;
+  const upstream=createServer((req,res)=>{requests++;res.writeHead(401,{'content-type':'application/json'});res.end('{"error":{"code":"REAL_UPSTREAM"}}');});
+  upstream.listen(0,'127.0.0.1');await once(upstream,'listening');
+  const reserve=createServer();reserve.listen(0,'127.0.0.1');await once(reserve,'listening');const port=reserve.address().port;await new Promise(resolve=>reserve.close(resolve));
+  const origin='http://127.0.0.1:'+port;
+  const route=await localCloudRoute({origin,upstreamPort:upstream.address().port,hostOrigin:()=>null,dropConnections:()=>dropped});
+  try {
+    await assert.rejects(fetch(origin+'/personal/v1/cloud/auth/login',{method:'POST',body:'{}'}));
+    assert.equal(requests,0,'No delayed login can be processed after the network is restored');
+    dropped=false;
+    const restored=await fetch(origin+'/personal/v1/cloud/auth/login',{method:'POST',body:'{}'});
+    assert.equal(restored.status,401);assert.deepEqual(await restored.json(),{error:{code:'REAL_UPSTREAM'}});
+    assert.equal(requests,1);
+  } finally {await route.close();upstream.closeAllConnections();await new Promise(resolve=>upstream.close(resolve));}
+});

@@ -131,6 +131,7 @@ struct UsageView: View {
                         Text("按已配置单价估算；没有价格的部分单列。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                     }.padding(.vertical, AppleTokens.Space.p12)
                     LabeledContent("已统计请求", value: "\(value.total.requests) 次")
+                        .accessibilityElement(children: .combine).accessibilityIdentifier("usage.requests")
                     LabeledContent("未配置单价", value: "\(value.total.unpricedRequests) 次").accessibilityIdentifier("usage.unpriced")
                     LabeledContent("用量尚未核对", value: "\(value.total.unknownRequests) 次").accessibilityIdentifier("usage.unknown")
                     if let notice = value.total.uncertaintyNotice { Text(notice).foregroundStyle(Weave.muted) }
