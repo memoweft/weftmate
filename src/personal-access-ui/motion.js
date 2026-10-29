@@ -51,6 +51,9 @@
     const source=[element,...element.querySelectorAll('*')], target=[copy,...copy.querySelectorAll('*')];
     source.forEach((node,i)=>{if(node.scrollTop)target[i].scrollTop=node.scrollTop;if(node.scrollLeft)target[i].scrollLeft=node.scrollLeft;
       if(node.matches('input,textarea,select'))target[i].value=node.value;if(node.matches('input'))target[i].checked=node.checked;});
+    // A select menu can close while its parent dialog remains modal. Retain
+    // that visual in the same native layer instead of fading under the parent.
+    if(element.matches(':popover-open')){copy.style.font=getComputedStyle(element).font;copy.setAttribute('popover','manual');copy.showPopover();}
     return copy;
   }
   function dismiss(copy, crop = false) { if(!copy)return;return play(copy,[{opacity:1,transform:'translateY(0)',clipPath:'inset(0)'},{opacity:0,transform:'translateY(-4px)',clipPath:crop?'inset(0 0 100% 0)':'inset(0)'}],'dur-4',0,()=>copy.remove()); }

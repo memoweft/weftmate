@@ -213,6 +213,17 @@ try{
     await nativeExitStyle.evaluate(el=>el.remove());
     await writeFile(join(out,'nested-native-exit-frames.json'),JSON.stringify(nativeLayered,null,2));
     check('marked native dialog has a visible exit, stable parent and correct rapid-close cleanup',nativeLayered.frames.some(f=>f.opacity>0&&f.display!=='none'&&f.overlay==='auto')&&nativeLayered.frames.every(f=>f.parentY===0&&f.copies===0)&&nativeLayered.noResidue&&nativeLayered.parentOpen&&nativeLayered.focus,nativeLayered);
+    const menuLayered=await page.evaluate(async()=>{
+      const source=document.createElement('select');source.setAttribute('aria-label','合成层内选择');for(const [value,text]of [['0','合成选项一'],['1','合成选项二']])source.append(new Option(text,value));
+      const parent=WeftControls.dialog({title:'合成菜单父层',content:source});parent.openPanel();WeftControls.select(source);
+      for(const a of parent.getAnimations())a.finish();await new Promise(requestAnimationFrame);
+      const trigger=parent.querySelector('[role=combobox]');trigger.click();const menu=parent.querySelector('.settings-select-menu'),y=parent.getBoundingClientRect().y;
+      menu.querySelectorAll('[role=option]')[1].click();const copy=document.querySelector('.motion-copy');
+      const result={visibleCopy:!!copy?.matches(':popover-open')&&copy.getBoundingClientRect().width>0,value:source.value,parentOpen:parent.open,parentY:parent.getBoundingClientRect().y-y,focus:document.activeElement===trigger};
+      await Promise.all(copy?.getAnimations().map(a=>a.finished.catch(()=>{}))||[]);result.cleaned=!copy?.isConnected;
+      parent.setAttribute('data-motion-native-close','');parent.close();parent.remove();return result;
+    });
+    check('select-menu exit remains above its parent dialog and restores focus',menuLayered.visibleCopy&&menuLayered.value==='1'&&menuLayered.parentOpen&&menuLayered.parentY===0&&menuLayered.focus&&menuLayered.cleaned,menuLayered);
     await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>WeftReplyMotion.setPreference('system'));
     const reduced=await page.evaluate(()=>{const el=document.getElementById('message-form');WeftMotion.content(el,Symbol());return {reduced:WeftMotion.reduced,frames:el.getAnimations().flatMap(a=>a.effect.getKeyframes())};});
     check('reduced motion retains opacity feedback without spatial movement',reduced.reduced&&reduced.frames.some(f=>f.opacity)&&reduced.frames.every(f=>!f.transform&&!f.height),reduced);
