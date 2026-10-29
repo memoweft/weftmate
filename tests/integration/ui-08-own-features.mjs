@@ -16,7 +16,7 @@ await mkdir(output,{recursive:true});
 const profile=await mkdtemp(join(tmpdir(),'weftmate-ui08-')),bootstrap=join(profile,'ui08-shell.mjs');
 if(!process.env.WEFTMATE_TEST_TEMP_SCOPE)process.env.WEFTMATE_MANAGED_TEMP_ROOT=join(profile,'fixtures');
 await writeFile(bootstrap,`import {createRequire} from 'node:module';const {app}=createRequire(${JSON.stringify(new URL('../../package.json',import.meta.url).href)})('electron');app.setName('WeftMate UI08 Test');app.setAppUserModelId('com.memoweft.weftmate.test.ui08');app.disableHardwareAcceleration();await import(${JSON.stringify(new URL('../../scripts/review-gallery/electron.mjs',import.meta.url).href)});`);
-let app,page,fixture,lock,mimo;
+let app,page,fixture,lock;
 const report={checks:[],performance:[],errors:[],boundaryFixtures:['offline provenance on a real queued task','device cleanup summary','memory list/detail/source payloads'],screenshots:[]};
 const watchdog=setTimeout(()=>{const child=app?.process();if(child?.exitCode===null)spawnSync('taskkill.exe',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});process.exitCode=1;},280000);
 const capture=async name=>{
@@ -100,17 +100,7 @@ try{
   report.performance.push(await measureUi(page,'open-goals',()=>page.locator('.goals-entry').click(),{}));
   report.performance.push(await measureUi(page,'switch-goal-tab',()=>page.getByRole('tab',{name:'长期目标',exact:true}).click(),{}));
   report.performance.push(await measureUi(page,'open-health',()=>page.locator('.health-entry').click(),{}));
-  // Independent profile only. If the vendor's singleton or login blocks it,
-  // retain the supplied private references and report that timing is unmeasured.
-  try{
-    mimo=await _electron.launch({executablePath:'D:\\Software\\Xiaomi MiMo\\Xiaomi MiMo.exe',args:[`--user-data-dir=${join(output,'mimo-profile')}`],env,timeout:12000});
-    const reference=await mimo.firstWindow({timeout:12000});
-    await reference.waitForFunction(()=>document.body?.innerText?.trim().length>30,{},{timeout:15000});
-    await reference.screenshot({path:join(output,'mimo-isolated.png')});
-    const preparing=await reference.getByText('正在准备 MiMo',{exact:true}).count()>0;
-    report.mimo={status:preparing?'independent startup remained at resource preparation':'isolated content opened',loginRequired:await reference.getByText(/登录|Sign in/i).count()>0,performance:'unmeasured; supplied private screenshots used'};
-  }catch{report.mimo={status:'independent launch did not provide a usable content window',performance:'unmeasured; supplied private screenshots used'};}
   assert.deepEqual(report.errors,[]);report.checks.push('all own-feature pages at 1280x800 / 900x700 in light / dark');
   console.log(JSON.stringify(report));
 }catch(error){if(page){await capture('failure').catch(()=>{});await writeFile(join(output,'failure.txt'),(await page.locator('body').innerText()).slice(-7000));}throw error;}
-finally{clearTimeout(watchdog);await writeFile(join(output,'verification.json'),JSON.stringify(report,null,2));await mimo?.close();await app?.close();await fixture?.close();await rm(profile,{recursive:true,force:true});if(lock)await unlink(lock);}
+finally{clearTimeout(watchdog);await writeFile(join(output,'verification.json'),JSON.stringify(report,null,2));await app?.close();await fixture?.close();await rm(profile,{recursive:true,force:true});if(lock)await unlink(lock);}

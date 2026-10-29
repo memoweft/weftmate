@@ -155,7 +155,9 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             const ended=entry.ended && (!latest || String(entry.ended.data?.turn)===String(turn)) ? entry.ended : null;
             const end=latest?.facts.findLast(event=>['turn.ended','task.ended'].includes(event.type)) || ended;
             const anchor=user || entry.queued;
-            const position=user?.seq ?? anchor?.seq ?? Math.max(-1,...events.map(event=>event.seq))+1+Math.max(0,pending.indexOf(local));
+            // A first send owns the beginning of the session it just created.
+            // Early reply events must not move its unconfirmed echo behind them.
+            const position=user?.seq ?? anchor?.seq ?? (local?.createdSession ? -1 : Math.max(-1,...events.map(event=>event.seq))+1+Math.max(0,pending.indexOf(local)));
             const at=entry.at || user?.at || local?.at || start?.at;
             const first={...(start || {}),seq:(facts[0]?.seq ?? position)-0.1,at:start?.at || at,type:'turn.started',sourceRef:{...start?.sourceRef,sessionId:session},data:{turn,pendingRequestId:entry.requestId}};
             const last=end && {...end,seq:Math.max(first.seq,...facts.map(event=>event.seq))+0.1,type:'turn.ended',data:{...end.data,turn}};
@@ -305,6 +307,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             if (!current()) return;
             if (!created?.sessionId || created.state !== 'accepted_by_dsh') { row.status = created && ['pending','dispatching'].includes(created.state) ? 'sending' : 'failed'; effects.renderOptimisticMessages?.(); return; }
             row.sessionId = created.sessionId;
+            row.createdSession = true;
             if (row.projectId) await core.updateSession(row.sessionId, {projectId:row.projectId});
             if (row.attachments) {
                 const oldKey = `${row.ownerId}|new`;
@@ -317,7 +320,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             // Reading every older conversation is not a prerequisite for
             // delivering its first message or observing the native turn.
             void core.refreshSessions().catch(() => {});
-            if (core.state.newConversation && core.state.selectedSessionId === null && core.state.newConversationId === row.draftId) await core.selectSession(row.sessionId);
+            if (core.state.newConversation && core.state.selectedSessionId === null && core.state.newConversationId === row.draftId) await core.selectSession(row.sessionId, {creating:true});
         }
         if(row.approvalMode){
             const modeReceipt = await core.accessApi(`/sessions/${encodeURIComponent(row.sessionId)}/approval-mode`,{method:'PATCH',protectedWrite:true,body:{mode:row.approvalMode}});
@@ -486,7 +489,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             draftId: core.state.newConversationId,
             temporary: core.state.newConversation && core.state.newConversationTemporary === true,
             requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), createRequestId: environment.crypto.randomUUID(),
-            text, attachments: attachments.length > 0, files: attachments.map(item => item.file?.name || '附件'),
+            text, at:new Date().toISOString(), attachments: attachments.length > 0, files: attachments.map(item => item.file?.name || '附件'),
             deepThinking: core.state.newConversation ? thinkingView().supported && thinkingView().enabled : undefined,
             approvalMode: core.state.newConversation ? core.state.newConversationApprovalMode : null,
             intent: intent === 'queue' || intent === 'steer' ? intent : core.composerInputMode(core.state.selectedSessionId), status: 'sending'};
@@ -612,7 +615,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (core.state.connection && core.state.connection.kind !== 'online') return `${core.state.connection.label} · 等待接续`;
         if (value?.phase === 'loading') return `正在加载模型${value.modelName ? ` ${value.modelName}` : ''}…`;
         if (value?.phase === 'queued' && Number.isSafeInteger(value.ahead) && value.ahead > 0) return `模型排队中，前面还有 ${value.ahead} 个请求`;
-        return { memory: '正在读取记忆…', retrying: '模型响应慢，正在重试…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
+        return { memory: '正在读取记忆…', retrying: '模型响应慢，正在重试…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '正在思考…';
     }
     function executionAccountHint() {
         if (core.state.executionAccount !== false) return '';

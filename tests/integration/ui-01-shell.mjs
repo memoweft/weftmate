@@ -76,7 +76,7 @@ try {
   await panel.getByRole('tab', {name:'文件',exact:true}).click();
   await panel.getByRole('tab', {name:'终端',exact:true}).click();
   assert.equal(await panel.getByRole('textbox', {name:'合成终端输入'}).inputValue(), '保留终端输入');
-  await panel.getByRole('button', {name:'收起右侧面板',exact:true}).click();
+  await page.getByRole('button', {name:'收起右侧面板',exact:true}).click();
   await panel.waitFor({state:'hidden'}); await page.keyboard.press('Control+Alt+p');
   assert.equal(await panel.getByRole('textbox', {name:'合成终端输入'}).inputValue(), '保留终端输入');
   await page.keyboard.press('Control+Alt+2'); assert.equal(await panel.getByRole('tab', {name:'终端',exact:true}).count(), 1);
@@ -91,7 +91,7 @@ try {
   await page.locator('#session-rail').waitFor({state:'hidden'});
   assert.ok((await page.locator('.assistant-main').boundingBox()).width >= 420);
   await resize(390,844); assert.ok((await panel.boundingBox()).width >= 388,JSON.stringify(await panel.evaluate(el=>({rect:el.getBoundingClientRect().toJSON(),width:getComputedStyle(el).width,position:getComputedStyle(el).position,parentTransform:getComputedStyle(el.parentElement).transform,sheets:[...document.styleSheets].map(s=>s.href).filter(x=>x?.includes('workspace'))}))));
-  await panel.getByRole('button', {name:'收起右侧面板',exact:true}).click();
+  await page.getByRole('button', {name:'收起右侧面板',exact:true}).click();
   await page.getByRole('textbox', {name:'输入消息',exact:true}).fill('窄窗口仍能输入');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   await resize(1440); await page.evaluate(() => WeftDesktop.toggleRail(false)); await page.locator('#session-rail').waitFor({state:'visible'});

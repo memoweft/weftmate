@@ -122,7 +122,7 @@ try {
     assert.equal(await preview.getByRole('tab').count(), 3)
     await preview.getByRole('button', { name: /关闭标签 README/ }).click()
     assert.equal(await preview.getByRole('tab').count(), 2)
-    await preview.getByRole('button', { name: '收起右侧面板', exact: true }).click()
+    await page.getByRole('button', {name:'收起右侧面板', exact: true }).click()
     await page.keyboard.press('Control+k')
     const search = page.getByRole('combobox', { name: '搜索内容', exact: true })
     await search.waitFor()

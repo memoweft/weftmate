@@ -8,6 +8,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
     let overviewRead, factsRead, factsScope, factsSignature;
     let configurationRead, configurationAt = 0, configurationIdentity, accountSnapshot, historyRetryScope;
     let historyRetryAt = 0;
+    let operationNotice = null;
     let historyAuthorizationIdentity = null;
     const historyBackoff = globalThis.WeftUiCore.Presence.create({ random: environment.random || Math.random });
     const retryScope = () => [core.state.identityGeneration, core.state.historyGeneration, core.state.selectedChatId, core.state.selectedSessionId].join(':');
@@ -242,7 +243,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         effects.paintConnection(online);
         effects.updateAvailability();
     }
-    function operation(message, locked = false, requestId = null, reviewable = locked) {
+    function updateRequestState(locked, requestId, reviewable) {
         if (requestId) {
             if (locked) {
                 core.state.unresolvedRequests.add(requestId);
@@ -262,9 +263,21 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             }
         }
         core.state.unresolvedSubmission = core.state.unresolvedRequests.size > 0;
+    }
+    function trackRequestState(locked = false, requestId = null, reviewable = locked) {
+        updateRequestState(locked, requestId, reviewable);
+        if (operationNotice !== null) {
+            if (core.state.unresolvedSubmission) effects.paintOperation(operationNotice);
+            else { operationNotice = null; effects.clearOperation(); }
+        }
+        effects.updateAvailability();
+    }
+    function operation(message, locked = false, requestId = null, reviewable = locked) {
+        updateRequestState(locked, requestId, reviewable);
         const visibleMessage = core.state.unresolvedSubmission && !locked
             ? core.state.reviewableRequests.size ? '仍有请求结果待核对；不会自动重复发送。请查看事情记录后确认。'
                 : '仍有请求正在处理；会继续核对原请求。' : message;
+        operationNotice = visibleMessage || null;
         effects.paintOperation(visibleMessage);
         effects.updateAvailability();
     }
@@ -350,7 +363,8 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             // Receipts and native history control the composer. Model settings,
             // host diagnostics and the complete session list must not delay them.
             const [result] = await Promise.all([core.refreshHistory(false,false,true), ...core.readMarkers()
-                .filter(marker => ['session.create', 'session.message', 'session.cancel', 'chat.message', 'session.side.create'].includes(marker.kind))
+                // Let the original POST own its receipt until it returns.
+                .filter(marker => !core.state.submitting && !core.state.cancelSubmitting && core.state.sideCreating?.requestId !== marker.requestId && ['session.create', 'session.message', 'session.cancel', 'chat.message', 'session.side.create'].includes(marker.kind))
                 .map(marker => core.lookupRequest(marker))]);
             return result;
         } finally { core.state.liveRefreshing = false; }
@@ -569,5 +583,5 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         effects.paintScreen(view);
     }
-    return { polling, historyReadAllowed, historyReadResult, historyPollDelay, refreshConfiguration, acceptAccountChanges, canWaitForReply, replyWaitMilliseconds, foreground, refreshAssistantOverview, refreshConversationFacts, failureMessage, requestJson, accessApi, acceptSession, accountToken, accountCurrent, setOnline, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
+    return { polling, historyReadAllowed, historyReadResult, historyPollDelay, refreshConfiguration, acceptAccountChanges, canWaitForReply, replyWaitMilliseconds, foreground, refreshAssistantOverview, refreshConversationFacts, failureMessage, requestJson, accessApi, acceptSession, accountToken, accountCurrent, setOnline, trackRequestState, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
 };

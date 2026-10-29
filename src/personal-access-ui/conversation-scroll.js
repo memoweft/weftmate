@@ -1,6 +1,6 @@
 /** Presentation helper shared by the desktop and mobile scroll surfaces. */
 globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) => {
-    let pinned = true, pending = false, followingTop = null, newContent = false, disposed = false;
+    let pinned = true, pending = false, followingTop = null, disposed = false;
     const removals = [];
     const listen = (target, type, handler, options) => {
         target?.addEventListener?.(type, handler, options);
@@ -12,10 +12,13 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     const stop = () => { if (frame !== null) cancelAnimationFrame(frame); frame = null; moving = null; };
     const reduced = () => globalThis.WeftReplyMotion?.reduced ?? globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
     const gap = () => box.scrollHeight - box.clientHeight - box.scrollTop;
+    button.textContent = '';
+    if (globalThis.WeftIcons) { const arrow=WeftIcons.create('send',20); arrow.style.transform='rotate(180deg)'; button.append(arrow); }
+    button.setAttribute('aria-label', '回到底部');
+    button.title = '回到底部';
     const paint = () => {
-        button.hidden = pinned;
-        button.textContent = newContent ? '有新内容 · 回到底部' : '回到底部';
-        button.setAttribute('aria-label', '回到底部');
+        // Visibility is geometry, never an input gesture or a "new content" flag.
+        button.hidden = gap() <= Math.max(48, box.clientHeight * .15);
         onPinned(pinned);
     };
     const follow = (smooth = false) => {
@@ -47,13 +50,11 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
                     frame=requestAnimationFrame(tick);
                 }
             } else { stop(); followingTop = null; }
-            newContent = false;
         }
         paint();
     };
     const changed = () => {
         if (disposed) return;
-        if (!pinned) newContent = true;
         if (pending) return;
         // stream-type: follow the current layout, without a second animation
         // chasing the text frames. User scrolling still unpins immediately.
@@ -63,7 +64,7 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
         const top = box.scrollTop;
         if(scrollbarDrag&&top<lastTop-1){stop();pinned=false;followingTop=null;}
         if (followingTop !== null && Math.abs(top - followingTop) <= 1) { if (!moving) followingTop = null; }
-        else if (gap() <= (pinned ? 48 : 1)) { pinned = true; newContent = false; }
+        else if (gap() <= (pinned ? 48 : 1)) { pinned = true; }
         // Layout clamping (keyboard, composer/approval resize, virtual rows) can
         // reduce scrollTop without user intent. Only input handlers unpin.
         lastTop=top;paint();
@@ -83,16 +84,16 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     listen(box, 'wheel', event => {
         // A command output scrolls locally before the wheel reaches the chat.
         if(nestedConsumes(event.target,event.deltaY))return;
-        if (event.deltaY < 0) { stop(); pinned = false; followingTop = null; paint(); }
+        if (event.deltaY < 0 && box.scrollTop > 0) { stop(); pinned = false; followingTop = null; }
     }, {passive:true});
     let touchY = null;
     listen(box, 'touchstart', event => {touchY=event.touches[0]?.clientY;}, {passive:true});
-    listen(box, 'touchmove', event => {const y=event.touches[0]?.clientY;if(touchY!==null && y>touchY && !nestedConsumes(event.target,touchY-y)){stop();pinned=false;followingTop=null;paint();}touchY=y;}, {passive:true});
-    listen(box, 'keydown', event => {if(['ArrowUp','PageUp','Home'].includes(event.key) && !event.target.closest?.('input,textarea,[contenteditable=true]')){stop();pinned=false;followingTop=null;paint();}});
+    listen(box, 'touchmove', event => {const y=event.touches[0]?.clientY;if(touchY!==null && y>touchY && box.scrollTop>0 && !nestedConsumes(event.target,touchY-y)){stop();pinned=false;followingTop=null;}touchY=y;}, {passive:true});
+    listen(box, 'keydown', event => {if(box.scrollTop>0 && ['ArrowUp','PageUp','Home'].includes(event.key) && !event.target.closest?.('input,textarea,[contenteditable=true]')){stop();pinned=false;followingTop=null;}});
     listen(globalThis, 'weft-reply-motion-change', () => {if((globalThis.WeftReplyMotion?.paused ?? document.hidden) || reduced()) {stop();if(pinned)follow();}});
-    const latest = () => { pinned = true; newContent = false; follow(); };
-    listen(button, 'click', latest);
-    listen(content, 'weft-stream-frame', () => { if (!pinned) newContent = true; follow(); });
+    const latest = () => { pinned = true; follow(); };
+    listen(button, 'click', () => { pinned = true; follow(true); });
+    listen(content, 'weft-stream-frame', () => follow());
     if (globalThis.MutationObserver) { mutation = new MutationObserver(changed); mutation.observe(content, {subtree:true, childList:true, characterData:true}); }
     if (globalThis.ResizeObserver) {
         resize = new ResizeObserver(changed); resize.observe(content); resize.observe(box);

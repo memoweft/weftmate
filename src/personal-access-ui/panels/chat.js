@@ -9,7 +9,7 @@ WeftPanels.register('chat', {
     const older = node('button', 'chat-more-button', '加载更早内容'); older.type = 'button'; older.hidden = true;
     const notice = node('p', 'side-chat-notice'); notice.setAttribute('role', 'status'); notice.hidden = true;
     scroll.append(older, intro, transcript, notice);
-    const latest = node('button', 'button secondary small side-chat-latest', '回到底部'); latest.type = 'button'; latest.hidden = true;
+    const latest = node('button', 'jump-latest side-chat-latest'); latest.type = 'button'; latest.hidden = true;
     const composer = node('form', 'side-chat-composer'); composer.setAttribute('aria-label', '侧边聊天输入区');
     const attachmentRoot = node('div', 'composer-attachments'); attachmentRoot.hidden = true;
     const attachmentList = node('div', 'attachment-draft-list'), attachmentStatus = node('p', 'attachment-status'); attachmentStatus.setAttribute('role', 'status'); attachmentRoot.append(attachmentList, attachmentStatus);
@@ -30,7 +30,7 @@ WeftPanels.register('chat', {
       clearMessageDraft() { input.value = ''; resizeInput(); },
       restoreMainChatDraft(text) { input.value = text; resizeInput(); },
       loadAttachmentHasher: () => import('../file-sha256.js'),
-      paintModels: () => update(), paintConnection: () => update(), paintOperation: () => update(),
+      paintModels: () => update(), paintConnection: () => update(), paintOperation: () => update(), clearOperation: () => update(),
       setApprovalModeBusy: () => update(), renderApprovalMode: () => update(), approvalModeReadFailed: () => ui.toast('审批方式暂时无法读取，请重试。'),
       closeApprovalMenu() {}, closeResourcePreview() {},
       updateModelPicker: () => picker?.update(),

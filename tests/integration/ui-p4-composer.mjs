@@ -78,7 +78,7 @@ for (const theme of ['light','dark']) {
       const incoming=`合成新内容 ${surface} ${theme}：阅读历史时保持位置。`;fixture.progress.text(incoming);
       await page.getByText(incoming,{exact:true}).first().waitFor(); await shot('02-history');
       if(!before){assert.ok(Math.abs(await page.evaluate(()=>document.getElementById('chat-scroll').scrollTop)-prior)<3);
-        const jump=page.getByRole('button',{name:'回到底部',exact:true});assert.equal(await jump.isVisible(),true);assert.match(await jump.textContent(),/有新内容/);
+        const jump=page.getByRole('button',{name:'回到底部',exact:true});assert.equal(await jump.isVisible(),true);assert.equal((await jump.textContent()).trim(),'');
         await jump.click();await bottom(page);await shot('02-returned-bottom');
         const id=`p4-tool-${surface}-${theme}`;fixture.progress.call('read',id,{path:'合成设置.md'});fixture.progress.result(id,'合成详情\n'.repeat(14));
         const progress=page.getByRole('button',{name:/已读取|读取了 1 个文件.*已收起/}).last();

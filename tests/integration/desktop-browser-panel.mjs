@@ -78,7 +78,7 @@ try {
   await panel.getByRole('tab', { name: '浏览器', exact: true }).click();
   await waitHost(() => [...browserTest.browser.tabs.values()].some(tab => tab.view.getVisible()));
   assert.equal(await guest("document.querySelector('#draft').value+':'+scrollY"), '保留网页草稿:300');
-  await panel.getByRole('button', { name: '收起右侧面板', exact: true }).click(); await panel.waitFor({ state: 'hidden' });
+  await page.getByRole('button', {name:'收起右侧面板', exact: true }).click(); await panel.waitFor({ state: 'hidden' });
   await waitHost(() => [...browserTest.browser.tabs.values()].every(tab => !tab.view.getVisible()));
   await page.getByRole('button', { name: '打开工作面板', exact: true }).click();
   await waitHost(() => [...browserTest.browser.tabs.values()].some(tab => tab.view.getVisible()));

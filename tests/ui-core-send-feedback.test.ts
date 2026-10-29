@@ -27,6 +27,78 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
   return { core, api, effects, environment, requests, paints, values }
 }
 
+test('single status: normal chat command receipts update locks without painting a bottom notice', () => {
+  for (const kind of ['session.create', 'session.side.create', 'session.message', 'chat.message', 'session.cancel']) {
+    const f = fixture(); f.core.creatingOptimisticSession = true;
+    for (const state of ['pending', 'dispatching', 'accepted_by_dsh']) {
+      const requestId = `synthetic-${kind}`;
+      f.core.rememberMarker({ kind, requestId });
+      f.core.updateFromCommand({ kind, requestId, commandId: 'synthetic-command', sessionId: 'session-test', state });
+      assert.equal(f.core.state.unresolvedSubmission, state !== 'accepted_by_dsh');
+    }
+    assert.deepEqual(f.paints.filter(row => row.name === 'paintOperation'), [], kind);
+  }
+});
+
+test('single status: an active chat POST is not treated as a missing receipt', async () => {
+  let release!: (value: any) => void;
+  const post = new Promise(resolve => { release = resolve; });
+  const f = fixture((_path, options) => options.method === 'POST' ? post : response({ error: { code: 'NOT_FOUND' } }, 404));
+  f.core.creatingOptimisticSession = true; f.core.refreshTasks = async () => {};
+  f.core.refreshHistory = async () => f.core.historyReadResult('unchanged');
+  const sending = f.core.submitCommand('session.create', { modelProfileId: 'local' }, null, 'synthetic-post');
+  await f.core.refreshLiveConversation();
+  assert.equal(f.requests.filter(row => row.options.method !== 'POST').length, 0);
+  assert.deepEqual(f.paints.filter(row => row.name === 'paintOperation'), []);
+  release(response({ command: { kind: 'session.create', requestId: 'synthetic-post', commandId: 'synthetic-command', sessionId: 'session-test', state: 'accepted_by_dsh' } }));
+  await sending;
+  assert.deepEqual(f.paints.filter(row => row.name === 'paintOperation'), []);
+});
+
+test('single status: genuine failure and uncertain receipts retain feedback and recovery clears it', () => {
+  for (const state of ['failed', 'rejected', 'uncertain']) {
+    const f = fixture(), requestId = 'synthetic-error';
+    f.core.rememberMarker({ kind: 'session.message', requestId });
+    f.core.updateFromCommand({ kind: 'session.message', requestId, commandId: 'synthetic-command', sessionId: 'session-test', state });
+    assert.ok(f.paints.some(row => row.name === 'paintOperation' && row.args[0]));
+    if (state === 'uncertain') {
+      assert.ok(f.core.state.reviewableRequests.has(requestId));
+      f.core.updateFromCommand({ kind: 'session.message', requestId, commandId: 'synthetic-command', sessionId: 'session-test', state: 'accepted_by_dsh' });
+      assert.equal(f.core.state.unresolvedSubmission, false);
+      assert.equal(f.core.state.reviewRequestId, null);
+      assert.ok(f.paints.some(row => row.name === 'clearOperation'));
+    }
+  }
+});
+
+test('single status: a failed POST still reports the uncertain delivery without resending', async () => {
+  const f = fixture((_path, options) => { if (options.method === 'POST') throw Error('synthetic disconnect'); return response({ error: { code: 'NOT_FOUND' } }, 404); });
+  await f.core.submitCommand('session.message', { text: '合成消息' }, 'session-test', 'synthetic-uncertain');
+  assert.equal(f.requests.filter(row => row.options.method === 'POST').length, 1);
+  assert.ok(f.paints.some(row => row.name === 'paintOperation' && row.args[0]));
+  assert.ok(f.core.state.reviewableRequests.has('synthetic-uncertain'));
+});
+
+test('single status: non-chat operations still use their shared feedback outlet', () => {
+  const f = fixture();
+  f.core.rememberMarker({ kind: 'desktop.open_app', requestId: 'synthetic-desktop' });
+  f.core.updateFromCommand({ kind: 'desktop.open_app', requestId: 'synthetic-desktop', commandId: 'synthetic-command', state: 'dispatching' });
+  assert.ok(f.paints.some(row=>row.name==='paintOperation' && row.args[0]));
+});
+
+test('single status: a cancel POST keeps earlier uncertainty locked until its real receipt', async () => {
+  let release!: (value: any) => void;
+  const post = new Promise(resolve => { release = resolve; });
+  const f = fixture(() => post); f.core.refreshTasks = async () => {};
+  f.core.operation('合成停止结果尚未确认', true, 'synthetic-cancel');
+  const sending = f.core.submitCommand('session.cancel', { sessionId: 'session-test' }, 'session-test', 'synthetic-cancel');
+  assert.equal(f.core.state.unresolvedSubmission, true);
+  assert.ok(f.core.state.reviewableRequests.has('synthetic-cancel'));
+  release(response({ command: { kind: 'session.cancel', requestId: 'synthetic-cancel', commandId: 'synthetic-command', sessionId: 'session-test', state: 'accepted_by_dsh' } }));
+  await sending;
+  assert.equal(f.core.state.unresolvedSubmission, false);
+});
+
 const cases = [
   ['folder mutation', c => c.folderMutationPending = () => true],
   ['submission', c => c.state.submitting = true],

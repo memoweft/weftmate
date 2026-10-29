@@ -34,7 +34,7 @@ try {
   await command('node -i');await output('Welcome to Node.js');await command("'交互结果'+(6*7)");await output('交互结果42');await command('.exit');
   await panel.getByRole('button',{name:'再打开一项',exact:true}).click();await page.getByRole('menuitem',{name:'审查',exact:true}).click();
   await panel.getByRole('tab',{name:'终端',exact:true}).click();await command('Write-Output ($ui05+1)');await output('801');
-  await panel.getByRole('button',{name:'收起右侧面板',exact:true}).click();await page.getByRole('button',{name:'打开工作面板',exact:true}).click();
+  await page.getByRole('button', {name:'收起右侧面板',exact:true}).click();await page.getByRole('button',{name:'打开工作面板',exact:true}).click();
   await command('Write-Output ($ui05+2)');await output('802');
   const cols=await screen().evaluate(el=>el.parentElement.clientWidth);await panel.getByRole('separator',{name:'调整预览宽度'}).press('ArrowLeft');
   await page.waitForFunction(width=>document.querySelector('.terminal-session:not([hidden]) .xterm-screen').clientWidth>width,cols);

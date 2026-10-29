@@ -16,6 +16,16 @@ function fixture(smooth=false){
  const tick=()=>{time+=16;const batch=frames.splice(0);batch.forEach(fn=>fn(time));return box.scrollTop;};
  return {box,content,button,scroll,flush,fire,observers,viewport,events,tick,node,createScroll:context.WeftConversationScroll};
 }
+
+test('empty and short conversations never offer a jump after wheel, touch or keyboard input',()=>{
+ for(const height of [100,500])for(const input of ['wheel','touch','keyboard']) {
+  const f=fixture();f.box.scrollHeight=height;f.box.scrollTop=0;f.scroll.changed();f.flush();
+  if(input==='wheel')f.fire('wheel',{deltaY:-120});
+  if(input==='touch'){f.fire('touchstart',{touches:[{clientY:100}]});f.fire('touchmove',{touches:[{clientY:180}]});}
+  if(input==='keyboard')f.fire('keydown',{key:'PageUp',target:{closest:()=>null}});
+  assert.equal(f.button.hidden,true,`${height}, ${input}`);
+ }
+});
 test('streaming follows the current bottom in one frame without smooth chasing',()=>{
  const f=fixture(true);f.scroll.latest();
  for(let i=0;i<10;i++){f.box.scrollHeight+=20;f.scroll.changed();f.tick();assert.equal(f.box.scrollTop,f.box.scrollHeight-f.box.clientHeight);}
@@ -116,7 +126,7 @@ test('touch, wheel and keyboard upward input stop following until bottom or a fr
   if(input==='keyboard')f.fire('keydown',{key:'PageUp',target:{closest:()=>null}});
   if(input==='scrollbar')f.fire('pointerdown',{pointerType:'mouse',clientX:305});
   f.box.scrollTop=600;f.fire('scroll');assert.equal(f.scroll.pinned,false,input);
-  f.box.scrollHeight+=200;f.scroll.changed();f.flush();assert.equal(f.box.scrollTop,600);assert.equal(f.button.hidden,false);assert.match(f.button.textContent,/有新内容/);
+  f.box.scrollHeight+=200;f.scroll.changed();f.flush();assert.equal(f.box.scrollTop,600);assert.equal(f.button.hidden,false);assert.equal(f.button.textContent,'');
   f.scroll.latest();assert.equal(f.scroll.pinned,true);assert.equal(f.box.scrollTop,1200);assert.equal(f.button.hidden,true);
  }
 });

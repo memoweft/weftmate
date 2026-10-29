@@ -1725,7 +1725,7 @@ test('M1-0 ended mobile execution folds once and retains calls across a card bou
   const blocks=h.node('chat-content').children.filter(node=>node.dataset.timeline?.startsWith('steps-'));
   assert.equal(blocks.length,1);assert.equal(blocks[0].querySelector('details').open,false);
   assert.equal(blocks[0].querySelector('.inline-progress-text').textContent,'已结束');
-  assert.equal(blocks[0].querySelector('.progress-elapsed').textContent,'用时未记录');
+  assert.equal(blocks[0].querySelector('.progress-elapsed').textContent,'');
   assert.equal(blocks[0].querySelectorAll('.execution-step').length,0,'closed records are built on first expansion');
   const details=blocks[0].querySelector('details');details.open=true;details.fire('toggle');
   assert.deepEqual(blocks[0].querySelectorAll('.execution-step').map(step=>step.dataset.step),['s1','s2']);

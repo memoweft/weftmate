@@ -203,7 +203,7 @@ test('memory view preserves chat draft and discards a successful response for an
       if (text) { const child = new Node(); child.tagName = '#TEXT'; child.data = String(text); this.append(child) }
     }
     className = ''
-    style: Record<string, string> = {}
+    style = { setProperty(name: string, value: string) { this[name] = value } }
     dataset: Record<string, string> = {}
     // Mirrors DOMTokenList closely enough for class-driven visibility checks.
     classList = {
@@ -394,7 +394,7 @@ test('memory view preserves chat draft and discards a successful response for an
     createTextNode: (text: string) => { const node = new Node(); node.tagName = '#TEXT'; node.textContent = text; return node },
     createComment: (text: string) => { const node = new Node(); node.tagName = '#COMMENT'; node.textContent = text; return node },
     createElementNS: (_namespace: string, tag: string) => { const node = new Node(); node.tagName = tag.toUpperCase(); return node },
-    querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : selector === 'section.settings-category[data-category="general"]' ? get('general-panel') : null,
+    querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : selector === 'section.settings-category[data-category="general"]' ? get('general-panel') : selector === '.assistant-topbar' ? document.body.querySelector(selector) : null,
     querySelectorAll: () => [], addEventListener() {}, dispatchEvent() { return true } }
   const matchMedia = (media: string) => ({ media, matches: false, addEventListener() {}, removeEventListener() {} })
   const window = { location: { hash: '', pathname: '/personal/v1/ui', search: '' },
@@ -402,6 +402,8 @@ test('memory view preserves chat draft and discards a successful response for an
   mountDesktopTestTree(document, get)
   const context = { document, window, matchMedia, location: { ...window.location, protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl, Event, CustomEvent,
     MutationObserver: class { constructor(_callback: () => void) {} observe() {} disconnect() {} },
+    ResizeObserver: class { constructor(_callback: () => void) {} observe() {} unobserve() {} disconnect() {} },
+    requestAnimationFrame: (callback: (time: number) => void) => { callback(0); return 1 },
     Option: class extends Node { constructor(text: string, value: string) { super(); this.tagName = 'OPTION'; this.textContent = text; this.value = value } },
     crypto: { randomUUID: () => `synthetic-${++requestSequence}` },
     localStorage: { getItem: (key: string) => storage.get(key) ?? null,

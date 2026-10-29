@@ -103,11 +103,14 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }catch{if(current())effects.historyNotice('默认审批模式暂时无法读取，仍可在菜单里选择。');}
         finally{if(current()){core.state.approvalModeLoading=false;effects.setApprovalModeBusy(false);}}
     }
-    async function selectSession(sessionId, legacy = false, initialHistory = true) {
-        if (core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === sessionId && !core.state.newConversation) {
+    async function selectSession(sessionId, options = {}) {
+        if (!options.creating && core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === sessionId && !core.state.newConversation) {
             effects.showConversation(); effects.closeRail(); return;
         }
-        if (!legacy && core.selectLogicalSession) return core.selectLogicalSession(sessionId);
+        if (core.selectLogicalSession) return core.selectLogicalSession(sessionId, options);
+        return selectNativeSession(sessionId);
+    }
+    async function selectNativeSession(sessionId, initialHistory = true) {
         if (!core.sessionIdPattern.test(sessionId))
             return;
         effects.closeResourcePreview();
@@ -404,5 +407,5 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
                 effects.defaultApprovalNotice('无法读取默认模式，请刷新设置。');
         }
     }
-    return { approvalReview, refreshNewConversationApprovalMode, approvalPresentation, readApprovalPresentation, refreshApprovalMode, saveApprovalMode, selectSession, resetConversationApprovals, approvalContext, approvalContextCurrent, approvalIdentity, sameApproval, validApproval, approvalMarkerKey, approvalMarkers, approvalMarker, saveApprovalMarker, clearApprovalMarker, approvalSource, mergeApproval, refreshConversationApprovals, approvalStatusText, submitApproval, refreshApprovalSettings };
+    return { approvalReview, refreshNewConversationApprovalMode, approvalPresentation, readApprovalPresentation, refreshApprovalMode, saveApprovalMode, selectSession, selectNativeSession, resetConversationApprovals, approvalContext, approvalContextCurrent, approvalIdentity, sameApproval, validApproval, approvalMarkerKey, approvalMarkers, approvalMarker, saveApprovalMarker, clearApprovalMarker, approvalSource, mergeApproval, refreshConversationApprovals, approvalStatusText, submitApproval, refreshApprovalSettings };
 };

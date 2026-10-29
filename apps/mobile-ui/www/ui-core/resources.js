@@ -1,6 +1,7 @@
 /* Shared resources state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
     const messageBodies = new Map();
+    const chatCommand = kind => ['session.create','session.side.create','session.message','chat.message','session.cancel'].includes(kind);
     function capturedSourceText(raw) {
         const parse = value => { try { return JSON.parse(value); } catch { return null; } };
         const collect = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(collect)
@@ -156,8 +157,9 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             core.forgetMarker(command.requestId);
         }
         const locked = command.kind !== 'desktop.open_app' && (pending || command.state === 'uncertain');
-        const turnFeedback=['session.message','chat.message','session.cancel'].includes(command.kind) && ['pending','dispatching','accepted_by_dsh','observed'].includes(command.state);
-        core.operation(turnFeedback || command.state === 'accepted_by_dsh' && ['session.create','session.side.create'].includes(command.kind) ? '' : core.commandStatus(command), locked, command.requestId, command.state === 'uncertain');
+        if (chatCommand(command.kind) && ['pending','dispatching','accepted_by_dsh','observed'].includes(command.state))
+            core.trackRequestState(locked, command.requestId, false);
+        else core.operation(core.commandStatus(command), locked, command.requestId, command.state === 'uncertain');
         if (command.kind === 'session.create' && command.state === 'accepted_by_dsh' && command.sessionId && !core.creatingOptimisticSession && !optimisticCreate) {
             void core.refreshSessions().then(() => core.selectSession(command.sessionId));
         }
@@ -216,7 +218,8 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             const requestId = fixedRequestId || environment.crypto.randomUUID();
             const marker = { requestId, kind, ...(sessionId ? { sessionId } : {}) };
             core.rememberMarker(marker); // Durable ID before the network request; body stays in memory.
-            core.operation(['session.message','chat.message','session.cancel'].includes(kind) ? '' : '正在提交请求。');
+            if (chatCommand(kind)) core.trackRequestState();
+            else core.operation('正在提交请求。');
             try {
                 const body = { requestId, kind, targetDeviceId: core.state.hostId, ...fields };
                 if (['session.message', 'chat.message'].includes(kind)) messageBodies.set(`${core.state.ownerId}:${requestId}`, body);

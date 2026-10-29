@@ -2,6 +2,17 @@
 #conversation-pane.chat-workspace .execution-block > .inline-progress-summary { width:fit-content; gap:var(--wm-space-8); }
 #conversation-pane.chat-workspace .progress-elapsed { opacity:1; color:var(--ink-secondary,var(--secondary)); font-variant-numeric:tabular-nums; }
 #conversation-pane.chat-workspace .execution-records { margin:var(--wm-space-8) 0 var(--wm-space-16); padding:var(--wm-space-8) 0 0; border:0; border-top:1px solid var(--line); }
+.thinking-process > .execution-records,
+#conversation-pane.chat-workspace .thinking-process > .execution-records { margin:0 0 var(--wm-space-4); padding:0; border:0; }
+.thinking-process .model-thinking > summary[hidden] { display:none; }
+.execution-records:empty { display:none; }
+.execution-block:has(> .execution-records:empty) > summary .progress-chevron { display:none; }
+.model-thinking .thinking-body { position:relative; }
+.model-thinking .thinking-body > .progress-detail-actions { position:absolute; inset:auto 0 100% auto; opacity:0; transition:opacity var(--dur-3) var(--ease-out); }
+.model-thinking:is(:hover,:focus-within) .progress-detail-actions { opacity:1; }
+.model-thinking .thinking-body p,
+#conversation-pane.chat-workspace .model-thinking .thinking-body p { margin:var(--wm-space-4) 0; padding:0; color:var(--ink-secondary,var(--muted)); line-height:var(--wm-line-height-1_65); }
+#conversation-pane.chat-workspace .thinking-process .thinking-body { padding:0; }
 .execution-activity { margin:var(--wm-space-8) 0 0; color:var(--ink-secondary,var(--secondary)); font-size:var(--wm-type-body); line-height:var(--wm-line-height-1_5); }
 .execution-block .execution-step > summary,
 #conversation-pane.chat-workspace .execution-records .execution-step > summary { min-height:var(--wm-space-32); padding:var(--wm-space-4) 0; gap:var(--wm-space-6); font-size:var(--wm-type-body); line-height:var(--wm-line-height-1_5); }
