@@ -2297,6 +2297,8 @@ test('late account fetch and avatar decode from A cannot change B after logout a
   const image = page.get('profile-avatar-image')
   const decode = deferred<void>()
   image.decodeHandler = () => decode.promise
+  const createElement = page.document.createElement
+  page.document.createElement = (tag: string) => tag === 'img' ? image : createElement(tag)
   const bytes = Uint8Array.from(readFileSync(new URL('./fixtures/personal-access-profile/synthetic-avatar.png', import.meta.url)))
   const file = { type: 'image/png', size: bytes.byteLength, arrayBuffer: async () => bytes.buffer }
   page.get('profile-avatar-file').files = [file]

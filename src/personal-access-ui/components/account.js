@@ -1,5 +1,44 @@
 /* Desktop account component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.account = (core, ui) => {
+    // Original files stay local. Only a decoded, bounded raster enters profile storage.
+    async function normalizeAvatar(file, current) {
+        const image = document.createElement('img'), url = URL.createObjectURL(file);
+        const vector = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name);
+        try {
+            image.src = url;
+            await image.decode();
+            if (!current()) return;
+            let edge = 384;
+            const canvas = document.createElement('canvas');
+            // Drawing an SVG through an image keeps it in the browser's image context;
+            // scripts and external resources are never inserted into the document.
+            while (true) {
+                let scale = edge / Math.max(image.naturalWidth, image.naturalHeight);
+                if (!vector) scale = Math.min(1, scale);
+                canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+                canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+                const context = canvas.getContext('2d');
+                context.imageSmoothingQuality = 'high';
+                context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', .9));
+                if (!blob) throw new Error('图片无法处理，请重新选择有效图片。');
+                // This is the existing profile representation budget, never a file-selection gate.
+                if (blob.size <= 128 * 1024) {
+                    const bytes = new Uint8Array(await blob.arrayBuffer());
+                    let binary = '';
+                    for (let index = 0; index < bytes.length; index += 8192)
+                        binary += String.fromCharCode(...bytes.subarray(index, index + 8192));
+                    return { mimeType: blob.type, dataBase64: btoa(binary) };
+                }
+                edge = Math.max(1, Math.floor(edge / 2));
+            }
+        }
+        catch (error) {
+            if (error instanceof Error && /[\u4e00-\u9fff]/.test(error.message)) throw error;
+            throw new Error('图片无法解码，请选择 SVG、PNG、JPEG、WebP 等有效图片。');
+        }
+        finally { image.src = ''; URL.revokeObjectURL(url); }
+    }
     function profileDirty() {
         return core.profileDraftDirty(ui.byId('profile-display-name').value);
     }
@@ -15,7 +54,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
             URL.revokeObjectURL(core.state.avatarObjectUrl);
         core.state.avatarObjectUrl = null;
     }
-    async function paintAvatar(avatar, token, file = null) {
+    async function paintAvatar(avatar, token) {
         const generation = ++core.state.avatarGeneration;
         const current = () => core.accountCurrent(token) && generation === core.state.avatarGeneration;
         const image = ui.byId('profile-avatar-image');
@@ -31,10 +70,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
             return true;
         }
         try {
-            const url = file ? URL.createObjectURL(file) : `data:${avatar.mimeType};base64,${avatar.dataBase64}`;
-            if (file)
-                core.state.avatarObjectUrl = url;
-            image.src = url;
+            image.src = `data:${avatar.mimeType};base64,${avatar.dataBase64}`;
             if (typeof image.decode === 'function')
                 await image.decode();
             else
@@ -65,7 +101,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
         core.state.profileConflict = false;
         ui.byId('profile-display-name').value = core.profileName();
         ui.byId('profile-avatar-file').value = '';
-        ui.byId('profile-avatar-status').textContent = core.state.account?.avatar ? '当前头像。选择新图片或移除后再保存。' : '未设置头像。支持 PNG、JPEG 或 WebP，最多 128 KiB。';
+        ui.byId('profile-avatar-status').textContent = core.state.account?.avatar ? '当前头像。选择新图片或移除后再保存。' : '未设置头像。可直接选择 SVG、PNG、JPEG、WebP 等图片，程序会自动处理。';
         ui.byId('profile-reload').hidden = true;
         ui.errorAt('profile-error', '');
         ui.byId('profile-status').textContent = '';
@@ -360,35 +396,19 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
                 return;
             const token = core.accountToken();
             const selection = ++core.state.avatarSelectionGeneration;
+            const previousAvatar = core.state.profileDraftAvatar;
             core.state.profileDraftGeneration++;
             core.state.avatarGeneration++;
-            ui.releaseAvatarUrl();
-            ui.byId('profile-avatar-image').removeAttribute?.('src');
-            ui.byId('profile-avatar-image').hidden = true;
-            ui.byId('profile-avatar-placeholder').hidden = false;
             core.state.avatarChecking = true;
-            core.state.profileDraftAvatar = undefined;
             ui.profileControls();
             ui.byId('profile-status').textContent = '';
             ui.byId('profile-avatar-status').textContent = '正在检查并预览头像…';
             ui.errorAt('profile-error', '');
             try {
-                if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type))
-                    throw new Error('头像仅支持 PNG、JPEG 或 WebP。');
-                if (file.size < 16 || file.size > 128 * 1024)
-                    throw new Error('头像不能超过 128 KiB，且须为有效图片。');
-                const bytes = new Uint8Array(await file.arrayBuffer());
+                const avatar = await normalizeAvatar(file, () => core.accountCurrent(token) && selection === core.state.avatarSelectionGeneration);
                 if (!core.accountCurrent(token) || selection !== core.state.avatarSelectionGeneration)
                     return;
-                if (!core.avatarSignature(bytes, file.type))
-                    throw new Error('图片格式与文件内容不符，请选择有效图片。');
-                let binary = '';
-                for (let index = 0; index < bytes.length; index += 8192)
-                    binary += String.fromCharCode(...bytes.subarray(index, index + 8192));
-                const avatar = { mimeType: file.type, dataBase64: btoa(binary) };
-                if (!core.accountCurrent(token) || selection !== core.state.avatarSelectionGeneration)
-                    return;
-                const previewed = await ui.paintAvatar(avatar, token, file);
+                const previewed = await ui.paintAvatar(avatar, token);
                 if (!core.accountCurrent(token) || selection !== core.state.avatarSelectionGeneration)
                     return;
                 if (!previewed)
@@ -400,11 +420,11 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
                 if (!core.accountCurrent(token) || selection !== core.state.avatarSelectionGeneration)
                     return;
                 ui.byId('profile-avatar-status').textContent = error instanceof Error && /[\u4e00-\u9fff]/.test(error.message) ? core.interfaceText(error.message) : '无法读取这张图片，请重新选择。';
-                ui.byId('profile-avatar-file').value = '';
-                void ui.paintAvatar(core.state.account?.avatar ?? null, token);
+                void ui.paintAvatar(previousAvatar === undefined ? core.state.account?.avatar ?? null : previousAvatar, token);
             }
             finally {
                 if (core.accountCurrent(token) && selection === core.state.avatarSelectionGeneration) {
+                    ui.byId('profile-avatar-file').value = '';
                     core.state.avatarChecking = false;
                     ui.profileControls();
                 }
