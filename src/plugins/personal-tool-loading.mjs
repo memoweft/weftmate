@@ -1,5 +1,5 @@
 /** Recover one failed catalog load through the native agent step, with corrected model arguments. */
-const TOOL_LOADING_UNAVAILABLE = '电脑暂时没准备好，稍后再试。';
+const TOOL_LOADING_UNAVAILABLE = '这次未能加载所需工具，任务还没有完成。';
 const LOAD = 'load_tools';
 const openTurn = agent => agent.session.events.findLast(event => event.type === 'turn/start' || event.type === 'turn/end');
 

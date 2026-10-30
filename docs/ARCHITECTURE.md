@@ -74,6 +74,8 @@ flowchart TD
 个人宿主组合使用产品自己的预设及插件；普通命令、文件、搜索、浏览器、上下文压缩、子任务、调度与审批优先沿 DSH 原生能力（D2、D87）。WeftMate 增加账户、设备、项目、模式、记忆和产品呈现，不另造一套通用执行器。
 
 - [weftmate-personal-desktop.mjs](../src/plugins/weftmate-personal-desktop.mjs) 把工具生命周期接到账户与项目策略；[personal-work-mode.mjs](../src/plugins/personal-work-mode.mjs) 判断对话能否执行该工具；[personal-approval-policy.mjs](../src/plugins/personal-approval-policy.mjs) 处理原风险与审批规则。
+- 工具失败的模型反馈与用户回复分开：`personal-reply-content.mjs` 保留有界、去凭据的诊断，区分参数未执行、取消、权限禁止和结果未知；明确拒绝仍以原生审批记录为准，未知结果不允许盲目重放副作用。记忆后端失败沿原隐私回执，模型参数错误仍可纠正。`personal-native-files.mjs` 仅观察写入/编辑/命令工具；直接写入只检查目标，命令目录观察有时间与条目上限，读取失败或成果登记失败不改写工具执行结果。浏览器、查询、加载工具等不扫描工作目录。
+- 提醒查询与管理同属账号范围；模型删除、暂停、恢复或立即运行必须携带列表里的 `sessionId` 和 `id`，宿主重新验证来源设备、写权限与目标归属。模型入口与原生调度执行器分开，管理器内部仍调用固定 DSH 原生调度，不递归进入模型入口。
 - [work-and-chat.mjs](../src/personal-access/work-and-chat.mjs) 投影模式与项目绑定。D92 只允许工作操作电脑；对话里的电脑调用在进入原生工具事件前转为提议并结束回合，输入框恢复发送。提议沿原审批查询接口保存，但不等待原生工具审批。确认后由 `approvals.mjs` 持久创建独立工作，在所选电脑和文件夹提交原话一次；原对话仍是对话。答复与后续查询中的 `workSessionId`、`workCreateCommandId`、`workCommandId` 分别用于打开新工作、核对创建、核对首条消息。先不用只关闭提议，工作里的具体工具权限与审批照旧。
 - 模型配置和凭据由主进程管理；运行时通过专用 IPC 获取所需秘密。模型服务与按会话选模见 [model-services.mjs](../src/personal-access/model-services.mjs)、[account-models.mjs](../src/personal-access/account-models.mjs) 与 CLIENT_API 第 3.10 节。
 

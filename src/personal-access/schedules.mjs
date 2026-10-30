@@ -19,11 +19,20 @@ export function createScheduleOperations(context) {
     const ownerId = context.sessionOperations.ownerForSession(input.sessionId)?.ownerId;
     if (!ownerId || !context.hostOwner(ownerId)) throw failure('SESSION_UNAVAILABLE', 404);
     const row = session(ownerId, input.sessionId);
-    if(input.action==='health_query' || input.action==='schedule_list') {
+    if(input.action==='health_query' || input.action==='schedule_list' || input.action==='schedule_manage') {
       const source=Object.values(context.accountState(ownerId).commands).find(c=>c.sessionId===input.sessionId&&c.receiptId===input.sourceReceiptId&&c.state==='accepted_by_dsh');
       const device=source&&context.accountState(ownerId).devices[source.sourceDeviceId];
       if(!source||!device||device.revoked||device.expiresAt&&Date.parse(device.expiresAt)<=context.timestamp()||!device.scopes.includes('sessions:read')||source.sourceAuthEpoch!==undefined&&source.sourceAuthEpoch!==device.authEpoch||context.dataControls?.isLocked(ownerId))throw failure('FORBIDDEN',403);
       if (input.action === 'schedule_list') return { scope: 'account', items: await listAccount(ownerId) };
+      if (input.action === 'schedule_manage') {
+        if (!device.scopes.includes('commands:write')) throw failure('FORBIDDEN',403);
+        if (source.taskControl?.state === 'stop_requested') throw failure('TASK_NOT_READY',409);
+        if (!['delete','pause','resume','run'].includes(input.operation) || typeof input.targetSessionId !== 'string' || typeof input.scheduleId !== 'string' || !REQUEST_ID.test(input.targetSessionId) || !REQUEST_ID.test(input.scheduleId)) throw failure('INVALID_REQUEST');
+        session(ownerId,input.targetSessionId);
+        if (context.accountState(ownerId).memoryCleanupPending) throw failure('SESSION_BUSY',409);
+        const value=await context.backend.schedules({ownerId,sessionId:input.targetSessionId,id:input.scheduleId,action:input.operation});
+        return {...value,scope:'account',sessionId:input.targetSessionId};
+      }
       return context.healthOperations.query(ownerId,input.query);
     }
     if(input.action==='memory_digest'){const status=await context.memoryManager?.status(ownerId);if(status)await context.activity.memoryDigest.refresh(ownerId,status,{arm:false});return {accepted:true};}

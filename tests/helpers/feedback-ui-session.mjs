@@ -9,7 +9,11 @@ export async function feedbackUiSession(page, fixture, { native = false } = {}) 
     let value;
     Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true, get: () => value, set(next) {
       value = next; const create = next.create;
-      next.create = function (...args) { const core = create.apply(this, args); globalThis.__feedbackSessionCore = core; return core; };
+      next.create = function (...args) {
+        const core = create.apply(this, args), enter=core.enterAssistant;
+        core.enterAssistant=function(...args){const pending=enter.apply(this,args);globalThis.__feedbackSessionLoaded=Promise.resolve(pending);return pending;};
+        globalThis.__feedbackSessionCore = core; return core;
+      };
     } });
   });
   await page.route('**/personal/v1/status', async route => {
@@ -35,5 +39,9 @@ export async function feedbackUiSession(page, fixture, { native = false } = {}) 
     assert.equal(kind, 'cloud');
   } else {
     await page.waitForFunction(() => globalThis.__feedbackSessionCore?.state.device?.authKind === 'desktop');
+    // Authentication precedes the initial conversation load. Await its actual
+    // completion so a late startup show('assistant') cannot close test settings.
+    await page.waitForFunction(()=>!!globalThis.__feedbackSessionLoaded);
+    await page.evaluate(()=>globalThis.__feedbackSessionLoaded);
   }
 }
