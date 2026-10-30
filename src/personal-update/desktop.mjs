@@ -93,13 +93,22 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
   }
   const trusted = event => window && event.sender === window.webContents && event.senderFrame === window.webContents.mainFrame &&
     event.senderFrame.url === window.webContents.getURL() && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
-  async function restart() {
+  async function restart(onPreparationFailure) {
     if (requiresManualAppInstall() && updateState().status === 'downloaded') {
       showPreparedInstaller();
       return false;
     }
     const result = await installPreparedUpdate({ ready: () => updateState().status === 'downloaded', idle: isIdle,
-      beforeInstall: beforeAppInstall, install: () => { try { onAppInstall(); } catch { /* diagnostics cannot block installation */ } return quitAndInstall(); } });
+      beforeInstall: async () => {
+        try { await beforeAppInstall(); }
+        catch (error) {
+          if (error?.code === 'BACKUP_PAUSE_TIMEOUT') onPreparationFailure?.({
+            stage: 'backup', code: 'BACKUP_PAUSE_TIMEOUT',
+            reason: '更新前备份未完成，暂未开始安装。当前程序继续运行，请稍后重试。',
+          });
+          throw error;
+        }
+      }, install: () => { try { onAppInstall(); } catch { /* diagnostics cannot block installation */ } return quitAndInstall(); } });
     if (!result && app.isPackaged) await cancelAppRollback();
     return result;
   }
@@ -117,7 +126,11 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
   }
   for (const [channelName, handler] of [['wm:desktop:update-state', state], ['wm:desktop:update-check', check],
     ['wm:desktop:update-channel', setChannel],
-    ['wm:desktop:update-restart', async () => { const restarted = await restart(); return { restarted, ...(restarted ? {} : { reason: requiresManualAppInstall() && updateState().status === 'downloaded' ? manualUpdateMessage : '更新尚未就绪、任务仍在运行或更新前备份未完成，请稍后重试' }) }; }]]) {
+    ['wm:desktop:update-restart', async () => {
+      let preparationFailure;
+      const restarted = await restart(failure => { preparationFailure = failure; });
+      return { restarted, ...(restarted ? {} : preparationFailure ?? { reason: requiresManualAppInstall() && updateState().status === 'downloaded' ? manualUpdateMessage : '更新尚未就绪、任务仍在运行或更新前备份未完成，请稍后重试' }) };
+    }]]) {
     ipcMain.handle(channelName, (event, value) => { if (!trusted(event)) throw new Error('Desktop update unavailable'); return handler(value); });
   }
   if (feed || updateState().enabled) { checkTimer = setInterval(() => void check(), 60 * 60 * 1000); checkTimer.unref(); void check(); }

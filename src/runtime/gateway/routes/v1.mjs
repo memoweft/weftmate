@@ -143,7 +143,7 @@ export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, di
       }
     }
   }
-  async function dispatch(req, res) {
+  async function dispatch(req, res, operation) {
     if (!requestAllowed(req)) return writeJson(res, 403, { error: { code: 'origin-forbidden', message: 'Gateway request failed' } })
     const requestUrl = new URL(req.url ?? '/', 'http://gateway')
     const pathname = decodeURIComponent(requestUrl.pathname)
@@ -309,8 +309,14 @@ export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, di
             if (closing || readLog?.closed) return writeJson(res, 503, { error: { code: 'SERVICE_CLOSING' } });
             if (res.destroyed || controller.signal.aborted) return;
             // The native waiter registers then atomically rechecks its source.
-            if ((snapshot.liveSeq ?? snapshot.nextSeq) <= seq && readLog?.waitForChange)
+            if ((snapshot.liveSeq ?? snapshot.nextSeq) <= seq && readLog?.waitForChange) {
+              // A pure change listener owns no native transaction. Keep its
+              // response/cancellation owner, but let backup drain actual work.
+              operation.park();
               await readLog.waitForChange(sessionId, seq, ms, controller.signal);
+              if (!res.destroyed && !controller.signal.aborted && !closing && !readLog?.closed && !await operation.resume())
+                return writeJson(res, 503, { error: { code: 'SERVICE_CLOSING' } });
+            }
           }
           if (res.destroyed) return;
           if (closing || readLog?.closed) return writeJson(res, 503, { error: { code: 'SERVICE_CLOSING' } });
@@ -429,13 +435,28 @@ export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, di
         return writeJson(res, 409, { error: { code: error.code === 'agent-busy' ? 'SESSION_BUSY' : error.code ?? 'STORAGE_UNAVAILABLE' } })
       }
     }
-    if (capture) await capture.ready
-    const operation = dispatch(req, res)
-    operations.add(operation)
-    try { return await operation } finally { operations.delete(operation) }
+    while (capture) await capture.ready
+    if (closing) return writeJson(res, 503, { error: { code: 'SERVICE_CLOSING' } });
+    const admit = () => {
+      let resolve;
+      const drained = new Promise(done => { resolve = done; });
+      operations.add(drained);
+      return () => { operations.delete(drained); resolve(); };
+    };
+    let release = admit();
+    const operation = {
+      park() { release(); release = () => {}; },
+      async resume() {
+        while (capture) await capture.ready;
+        if (closing) return false;
+        release = admit(); return true;
+      },
+    };
+    try { return await dispatch(req, res, operation) } finally { release() }
   }
   return { handle, emitForTest: emit, reconcileForTest: reconcile, close() {
     closing = true;
+    capture?.release();
     for (const controller of waitingReads) controller.abort();
     questionPump?.controller.abort(); questionPump = null; questions.close();
     return Promise.allSettled([...operations, ...readResponses]);
