@@ -170,8 +170,8 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if(view.attemptStatus.getAttribute('role')!==role)view.attemptStatus.setAttribute('role',role);
         if(view.attemptStatus.textContent!==message)view.attemptStatus.textContent=message;
         view.attemptStatus.dataset.state=state||'';view.attemptStatus.hidden=!message;
-        view.restart.disabled=busy;view.restart.hidden=!value.canRestart;
-        view.restart.textContent=busy?'正在准备更新…':value.manualInstall?'打开安装包':'重启并更新';
+        view.restart.disabled=busy||state==='requested';view.restart.hidden=!value.canRestart;
+        view.restart.textContent=busy?'正在准备更新…':state==='requested'?'正在重启…':value.manualInstall?'打开安装包':'重启并更新';
         view.hint.textContent=value.canRestart?(value.manualInstall?'打开安装包后按提示完成更新。':'重启前会等待进行中的任务结束，并创建备份。'):'';
         view.hint.hidden=!!message;view.actions.hidden=!value.canRestart&&!message;
         if(reveal&&message&&dialog.open&&selected==='about') {
@@ -201,7 +201,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const restart=node('button','button primary small','重启并更新');restart.type='button';restart.hidden=true;restart.setAttribute('aria-describedby',attemptStatus.id);
         restart.addEventListener('click',async()=>{
             const view=updateView;
-            if(pendingRestart||view.restart!==restart||!view.value?.canRestart)return;
+            if(pendingRestart||view.attempt?.state==='requested'||view.restart!==restart||!view.value?.canRestart)return;
             const attempt={token:core.accountToken(),target:view.targetKey,state:'pending'};
             pendingRestart=attempt;view.attempt=attempt;paintRestartAttempt(view,true);
             try {
