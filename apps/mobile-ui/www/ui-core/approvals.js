@@ -105,12 +105,12 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
     }
     async function selectSession(sessionId, options = {}) {
         if (!options.creating && core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === sessionId && !core.state.newConversation) {
-            effects.showConversation(); effects.closeRail(); return;
+            effects.showConversation({ restore: options.restore }); if (!options.restore) effects.closeRail(); return;
         }
         if (core.selectLogicalSession) return core.selectLogicalSession(sessionId, options);
-        return selectNativeSession(sessionId);
+        return selectNativeSession(sessionId, true, options);
     }
-    async function selectNativeSession(sessionId, initialHistory = true) {
+    async function selectNativeSession(sessionId, initialHistory = true, { restore = false } = {}) {
         if (!core.sessionIdPattern.test(sessionId))
             return;
         effects.closeResourcePreview();
@@ -141,8 +141,8 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         effects.closePhoneImagePreview();
         effects.paintSelectedSession(sessionId);
         effects.renderSessions();
-        effects.showConversation();
-        effects.closeRail();
+        effects.showConversation({ restore });
+        if (!restore) effects.closeRail();
         if (core.state.ownerId) {
             try {
                 environment.storage.setItem(core.sessionKey(), sessionId);

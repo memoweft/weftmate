@@ -33,7 +33,7 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
     if (!core.state.hostId || core.state.hostId === 'unconnected' || core.state.cloudAuth?.cloudOnly) return [];
     return [{ hostId: core.state.hostId, name: core.state.hostName || core.computerName?.(core.state.hostId) || '这台电脑', online: core.state.online !== false }];
   }
-  async function startNewWork(hostId, project) {
+  async function startNewWork(hostId, project, { restore = false } = {}) {
     if (core.state.submitting || core.state.unresolvedSubmission) return;
     core.rememberConversationDraft?.();
     if (hostId) {
@@ -41,15 +41,15 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
       if (hostId !== (core.currentExecutionComputer?.() || core.state.hostId)) throw { code: 'TARGET_UNAVAILABLE' };
     }
     core.state.selectedChatId = null; core.state.workTimeline = null;
-    await newConversation(true);
+    await newConversation(true, false, { restore });
     core.state.newConversationMode = 'work';
     chooseSidebarMode('work');
     core.state.newConversationProjectId = project?.projectId || null;
     core.state.workDraftHostId = hostId || core.currentExecutionComputer?.() || core.state.hostId;
     effects.paintSelectedSession?.(null); effects.updateAvailability(); effects.paintWorkMode?.();
   }
-  async function startSidebarConversation() {
-    return enabled() && sidebarConversationMode() === 'work' ? startNewWork() : core.startNewConversation();
+  async function startSidebarConversation({ restore = false } = {}) {
+    return enabled() && sidebarConversationMode() === 'work' ? startNewWork(undefined, undefined, { restore }) : core.startNewConversation(false, false, { restore });
   }
   async function chooseWorkComputer(id) {
     if (!workComputers().find(row => row.hostId === id)?.online) throw { code: 'COMPUTER_OFFLINE' };
@@ -84,15 +84,15 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
   core.startNewConversation = async (...args) => {
     core.rememberConversationDraft?.();
     core.state.newConversationMode = 'chat';
-    if (enabled()) { core.state.selectedChatId = null; core.state.workTimeline = null; chooseSidebarMode('chat'); return newConversation(true, args[1]); }
+    if (enabled()) { core.state.selectedChatId = null; core.state.workTimeline = null; chooseSidebarMode('chat'); return newConversation(true, args[1], args[2]); }
     return newConversation(...args);
   };
   if (selectSession) core.selectSession = async (id, ...args) => {
-    if (core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === id && !core.state.newConversation) { effects.showConversation(); effects.closeRail(); return; }
+    if (core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === id && !core.state.newConversation) { effects.showConversation({ restore: args[0]?.restore }); if (!args[0]?.restore) effects.closeRail(); return; }
     const result = await selectSession(id, ...args);
     if (enabled() && core.state.selectedSessionId === id) chooseSidebarMode(currentMode()); return result; };
   if (selectMain) core.selectMainChat = async (...args) => {
-    if (!args[0] && core.state.activeChatSource === 'desktop' && core.state.mainChat && core.state.selectedChatId === core.state.mainChat.chatId && !core.state.newConversation) { effects.showConversation(); effects.closeRail(); return; }
+    if (!args[0] && core.state.activeChatSource === 'desktop' && core.state.mainChat && core.state.selectedChatId === core.state.mainChat.chatId && !core.state.newConversation) { effects.showConversation({ restore: args[1]?.restore }); if (!args[1]?.restore) effects.closeRail(); return; }
     const result = await selectMain(...args);
     if (enabled() && core.state.selectedChatId === core.state.mainChat?.chatId) chooseSidebarMode(currentMode()); return result; };
   if (selectPhone) core.selectPhoneConversation = (...args) => { const result = selectPhone(...args); if (enabled()) chooseSidebarMode('chat'); return result; };

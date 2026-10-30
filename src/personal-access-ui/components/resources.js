@@ -323,7 +323,8 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             downloadArtifact: artifact => { const link = ui.element('a'); link.href = core.artifactDownloadUrl(artifact.artifactId); link.download = artifact.fileName || '成果文件'; link.click(); },
         });
     }
-    function showConversation() {
+    function showConversation({ restore = false } = {}) {
+        if (restore) return;
         if (core.state.activeChatSource !== 'phone' && core.state.currentView === 'assistant' && !ui.byId('conversation-pane').hidden) { ui.closeRail(); return; }
         core.show('assistant');
         document.dispatchEvent(new CustomEvent('weftmate:fixed-page', { detail: 'conversation' }));

@@ -50,6 +50,7 @@ try{
     ipcMain.handle('wm:desktop:update-restart',()=>{__feedbackProbe.calls++;if(__feedbackProbe.mode==='hold')return new Promise((resolve,reject)=>{__feedbackProbe.pending={resolve,reject};});if(__feedbackProbe.mode==='reject')throw Error('C:\\Synthetic\\private credential=synthetic-only');return structuredClone(__feedbackProbe.result);});
   },{legacyReason});
   await app.evaluate(async()=>{await __reviewDesktop.ready;return true;});await page.goto(fixture.origin+'/personal/v1/ui');await feedbackUiSession(page,fixture,{native:true});await page.evaluate(()=>WeftReplyMotion.setVisibility(false));
+  await page.waitForFunction(id=>{const core=__feedbackSessionCore;return core.state.currentView==='assistant'&&core.state.selectedSessionId===id&&!core.state.refreshing;},fixture.source);
   await app.evaluate(({BrowserWindow})=>{const win=BrowserWindow.getAllWindows()[0];win.showInactive();win.webContents.setBackgroundThrottling(false);});
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(900,700));
   await open();await button().waitFor();await page.locator('[data-update-layer=app] .settings-update-notes > summary').click();

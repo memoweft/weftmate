@@ -52,7 +52,7 @@
   Object.assign(mobileEffects,presentation,{
     renderMainChat(){if(!state.logicalChats)return;if(main()){state.sharedSessionId=uiCore.state.selectedSessionId;state.sharedRunning=!!uiCore.state.mainChat.running;ensureList();}presentation.renderMainChat();if(main()&&state.scrollPinned&&!uiCore.state.chatWindow.hasNewer)scrollBottom();},
     paintSelectedSession:id=>presentation.paintSelectedSession(id),
-    showConversation:()=>{if(main())ensureList();if(['activity','goals','library'].includes(state.page)&&!state.tabSource&&!state.selectingMainTab)return;page('chat');scheduleSharedPoll();},closeRail:closeDrawer,
+    showConversation:({restore=false}={})=>{if(main())ensureList();if(restore&&state.page!=='chat')return;if(['activity','goals','library'].includes(state.page)&&!state.tabSource&&!state.selectingMainTab)return;if(!restore)page('chat');scheduleSharedPoll();},closeRail:closeDrawer,
     paintModels:()=>updateComposer(),paintDesktopComposer:()=>{},paintSessionApprovalMode:()=>updateApprovalModeButton(),
     removeResourcePreview:()=>closeResourcePage({restoreFocus:false}),closeResourcePreview:()=>closeResourcePage({restoreFocus:false}),
     closePhoneImagePreview:()=>closeImagePreview({restoreFocus:false}),

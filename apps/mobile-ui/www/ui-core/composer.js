@@ -255,7 +255,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             }
         }
     }
-    function startNewConversation(legacy = false, temporary = false) {
+    function startNewConversation(legacy = false, temporary = false, { restore = false } = {}) {
         if (!legacy && !temporary && core.startChatConversation) return core.startChatConversation();
         if (temporary) core.state.selectedChatId = null;
         if (core.state.submitting || core.state.unresolvedSubmission) return;
@@ -288,7 +288,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         effects.paintSelectedSession(null);
         effects.renderOlderControl(); effects.closePhoneImagePreview(); effects.removeResourcePreview();
         effects.clearHistoryView(); effects.renderSessions(); effects.updateAvailability();
-        effects.showConversation(); effects.closeRail();
+        effects.showConversation({ restore }); if (!restore) effects.closeRail();
         effects.scrollToLatest();
         void core.refreshNewConversationApprovalMode();
     }

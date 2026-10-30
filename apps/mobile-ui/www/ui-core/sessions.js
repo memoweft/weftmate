@@ -59,7 +59,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             catch { /* no preference storage */ }
             const chosen = core.state.sessions.find((item) => item.sessionId === saved && !item.archived) ?? core.state.sessions.find(item => !item.archived);
             if (chosen?.sessionId)
-                await core.selectSession(chosen.sessionId);
+                await core.selectSession(chosen.sessionId, { restore: true });
         }
         else {
             effects.renderSessions();
