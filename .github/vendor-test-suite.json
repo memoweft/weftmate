@@ -377,58 +377,6 @@
       "name": "rejected 和 allowed-once 均通过 DSH 的真实 /api/respond schema，并拒绝缺失 discriminant 的旧形状"
     },
     {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "40 real pre-steps retain one guide while preserving all user messages"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "pending decision and restored session guides deduplicate, while another session gets its own guide"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "compaction removes the active guide and the next pre-step restores exactly one copy"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "outdated guide or identical text from another plugin cannot suppress the current WeftMod guide"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "new user goals retrieve candidates once per real message, including repeated wording after a save"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "turn-stopping steers an unverified pending workflow at most three times and new user input suspends it"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "WeftMod definitions and native image output execute through the fixed vendor ToolRuntime"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "top-level observe defaults to compact while legacy nested scripts retain XML unless explicit"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "saved scripts use real nested ToolRuntime calls, canonical values, image context, and second-run reuse"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "after a failed script, the same conversation can top-level resume its device and capture a repair pending workflow"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "script help exposes exact registered output schemas and scripts consume their typed structure"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "a rejected desktop action fails its script and cannot create a successful reusable receipt"
-    },
-    {
-      "file": "tests/weftmod-plugin.test.ts",
-      "name": "same-origin panel control stops a running script and rejects other-session or cross-origin control"
-    },
-    {
       "file": "tests/personal-memory-plugin-ipc.test.ts",
       "name": "forked plugin hook callbacks use owner-bound IPC and replace stale account memory"
     },
@@ -477,6 +425,7 @@
     "tests/st-7b-native.test.ts",
     "tests/personal-cloud-backup-snapshot-vendor.test.ts",
     "tests/work-and-chat-runtime.test.ts",
-    "tests/fix-36-title-vendor.test.ts"
+    "tests/fix-36-title-vendor.test.ts",
+    "tests/weftmod-plugin.test.ts"
   ]
 }
