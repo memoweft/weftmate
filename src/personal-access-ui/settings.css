@@ -225,7 +225,10 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog .settings-update-notes > summary { padding:5px 0; font-size:12px; }
 .settings-update-notes p { white-space:pre-wrap; overflow-wrap:anywhere; font-size:13px; color:var(--ink-secondary); }
 .settings-update-actions { display:flex; align-items:center; gap:16px; justify-content:space-between; padding-top:16px; }
-.settings-update-actions > p { margin:0; flex:1; }
+.settings-update-feedback { display:grid; gap:var(--wm-space-8); flex:1; min-width:0; }
+.settings-update-feedback > p { margin:0; }
+.settings-update-attempt { color:var(--ink-secondary); font-size:var(--settings-small); overflow-wrap:anywhere; }
+.settings-update-attempt[data-state=failed] { color:var(--danger); }
 .settings-update-actions > button { flex:none; }
 /* Model choices stay readable; their editor is an intentional secondary surface. */
 .settings-dialog #account-model-section { margin-top:24px; }
@@ -284,7 +287,7 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
   .settings-dialog .avatar-controls .actions { margin-top:0; }
   .settings-dialog .cloud-account-form > label { grid-template-columns:1fr; gap:6px; }
   .settings-dialog .settings-update-actions { flex-wrap:wrap; }
-  .settings-dialog .settings-update-actions > p { flex-basis:100%; }
+  .settings-dialog .settings-update-feedback { flex-basis:100%; }
   #settings-dialog[data-phone-settings] { flex-direction:column; border-radius:0; width:100vw; height:100dvh; }
   #settings-dialog[data-phone-settings][open] { display:flex; }
   #settings-dialog[data-phone-settings] .settings-category-picker { display:none; }
