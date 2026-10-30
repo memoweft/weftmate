@@ -84,7 +84,7 @@ test('tool preparation correction preserves native request retries and terminal 
         const events = handle.agent.session.events;
         const chunks = events.filter((event: any) => event.type === 'assistant/chunk').map((event: any) => event.data.chunk);
         const end = events.findLast((event: any) => event.type === 'turn/end').data.reason;
-        assert.equal(JSON.stringify(chunks).includes('电脑暂时没准备好'), false, 'non-normal request outcomes must not become a successful fallback');
+        assert.equal(JSON.stringify(chunks).includes('这次未能加载所需工具'), false, 'non-normal request outcomes must not become a successful fallback');
         if (scenario === 'MAX_TOKENS') {
           assert.equal(end.kind, 'max-tokens'); assert.equal(calls, 2); assert.equal(loaded, 0);
           assert.deepEqual(chunks.at(-1), { type: 'finish', reason: { kind: 'max-tokens' } });
@@ -184,7 +184,7 @@ test('cold chat first file request opens work card; failed preparation retries o
         assert.equal(result.approvals.length, 0);
         assert.equal(result.events.filter((e: any) => e.type === 'step.completed' && e.data.toolName === 'load_tools' && e.data.state === 'failed').length,
           scenario === 'TWICE' ? 2 : 1);
-        assert.match(result.events.filter((e: any) => e.type === 'assistant.message').at(-1)?.data.text ?? '', /电脑暂时没准备好，稍后再试/);
+        assert.match(result.events.filter((e: any) => e.type === 'assistant.message').at(-1)?.data.text ?? '', /这次未能加载所需工具，任务还没有完成/);
         assert.equal(seen.get(user), 1, 'only one automatic retry');
       } else {
         const card = result.approvals.find((a: any) => a.status === 'pending');

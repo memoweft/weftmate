@@ -11,3 +11,13 @@ export function installAccountScheduleQuery(tools, agent, request) {
     presentCall: () => ({ card: 'generic', title: '查看提醒与定时任务', kind: 'other' }),
   });
 }
+
+export function installAccountScheduleDelete(tools, agent, request) {
+  Object.assign(tools.get('schedule_delete',agent), {
+    description:'Delete one reminder selected from schedule_list. Always pass both its sessionId and id; ids repeat across conversations.',
+    parameters:{type:'object',properties:{sessionId:{type:'string'},id:{type:'string'}},required:['sessionId','id'],additionalProperties:false},
+    output:{schema:{},render:(_args,value)=>[{type:'text',text:JSON.stringify(value)}]},
+    execute:(args,exec)=>request({action:'schedule_manage',operation:'delete',sessionId:exec.agent.id,
+      targetSessionId:args.sessionId,scheduleId:args.id,sourceReceiptId:scheduleSourceReceipt(exec)}),
+  });
+}

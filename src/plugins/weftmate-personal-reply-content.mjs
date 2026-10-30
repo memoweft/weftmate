@@ -39,7 +39,7 @@ export async function apply(ctx) {
     const content = modelToolFailure(exec.name, result, { approvalOutcome: nativeApprovalOutcome(exec.agent.session, exec.callId) });
     if (!content) return result;
     ctx.logger?.warn?.(`tool failure code=${failureCodes(result)}`);
-    return result.isError ? {...result,content,error:{...result.error,message:content[0].text}}
+    return result.isError ? {...result,content,error:{...result.error,message:content.map(part=>part.text).join('\n')}}
       : {...result,value:modelToolFailureValue(result,content)};
   }, { prepend:true });
   // Nested Code Mode calls also receive plain errors before their parent can quote them.

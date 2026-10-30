@@ -15,6 +15,7 @@ import { nextCalendarInput, scheduleContent } from '../src/personal-access/sched
 import { createScheduleOperations } from '../src/personal-access/schedules.mjs';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
 import { scheduledCommandSource } from '../src/personal-access/schedules-authorization.mjs';
+import { installAccountScheduleDelete } from '../src/plugins/personal-schedule-query.mjs';
 
 test('schedule creation binds the latest claimed steer without changing file-tool authorization', () => {
   const exec = { callId: 'schedule-call', agent: { session: { events: [
@@ -81,9 +82,18 @@ async function fixture(t: any, timeZone = 'Asia/Shanghai') {
     const record = await definitions.get('schedule_create').execute(input, { agent, signal: new AbortController().signal });
     assert.ok(record.id, JSON.stringify(record)); await manager.register(agent, record); return record;
   };
-  return { agent, events, calls, create, get manager() { return manager; },
+  return { agent, events, calls, create, tools:ctx.tools, get manager() { return manager; },
     advance(ms: number) { now += ms; }, async restart() { await manager.close(); manager = await make(); }, now: () => now };
 }
+
+test('account delete presentation cannot replace the manager native deletion primitive', nativeFixture, async t => {
+  const f=await fixture(t);const row=await f.create({prompt:'synthetic',after_seconds:300});
+  f.manager.bindNativeTools(f.agent);
+  installAccountScheduleDelete(f.tools,f.agent,async()=>{throw Error('must not recursively call account IPC');});
+  await f.manager.manage(f.agent,'delete',row.id);
+  assert.deepEqual((await f.manager.manage(f.agent,'list')).items,[]);
+  assert.equal(native.foldScheduleEvents(f.agent.session.events,0).active.length,0);
+});
 
 test('one-shot dispatch survives restart and only delivers once with missed time', nativeFixture, async t => {
   const f = await fixture(t);

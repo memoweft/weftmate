@@ -5,6 +5,23 @@ import { installAccountScheduleQuery } from '../src/plugins/personal-schedule-qu
 const native = await import(new URL('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-schedule/lib/index.js', import.meta.url).href)
   .catch(error => { if (error.code === 'ERR_MODULE_NOT_FOUND') return null; throw error; });
 
+test('account management targets the selected conversation and rejects foreign or unscoped mutation', async () => {
+  const calls:any[]=[];
+  const account:any={sessions:{current:{origin:'personal-remote'},old:{origin:'personal-remote'}},
+    commands:{source:{sessionId:'current',receiptId:'receipt',state:'accepted_by_dsh',sourceDeviceId:'device',sourceAuthEpoch:1}},
+    devices:{device:{authEpoch:1,scopes:['sessions:read','commands:write']}}};
+  const ops=createScheduleOperations({sessionOperations:{ownerForSession:()=>({ownerId:'owner'})},hostOwner:()=>true,accountState:()=>account,timestamp:Date.now,
+    backend:{schedules:async input=>{calls.push(input);return {deleted:true,id:input.id};}}});
+  const input={action:'schedule_manage',sessionId:'current',sourceReceiptId:'receipt',operation:'delete',targetSessionId:'old',scheduleId:'schedule-1'};
+  await ops.handleRuntime(input);assert.equal(calls[0].sessionId,'old');assert.equal(calls[0].id,'schedule-1');
+  await assert.rejects(ops.handleRuntime({...input,targetSessionId:'foreign'}),{code:'SESSION_UNAVAILABLE'});
+  await assert.rejects(ops.handleRuntime({...input,targetSessionId:undefined}),{code:'INVALID_REQUEST'});
+  account.commands.source.taskControl={state:'stop_requested'};
+  await assert.rejects(ops.handleRuntime(input),{code:'TASK_NOT_READY'});delete account.commands.source.taskControl;
+  account.devices.device.scopes=['sessions:read'];
+  await assert.rejects(ops.handleRuntime(input),{code:'FORBIDDEN'});assert.equal(calls.length,1);
+});
+
 test('native list definition accepts and renders account output through the real DSH output contract', {
   skip: native ? false : 'prebuilt DSH vendor fixture unavailable',
 }, async () => {

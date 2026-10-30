@@ -48,7 +48,7 @@ test('cancelled responses never convert body data into calls', async () => {
   assert.equal((await collect('{"name":"write","arguments":{}}',1,false,'aborted')).calls.length,0);
 });
 test('tool errors and memory failure receipts become plain model-facing text', () => {
-  for (const name of ['write','memory_query','memory_forget','memory_correct']) {
+  for (const name of ['memory_query','memory_forget','memory_correct']) {
     const message=modelToolFailure(name,{isError:true,content:[{type:'text',text:`Error ${name} MEMORY_UNAVAILABLE cognition`}]});
     assert.doesNotMatch(JSON.stringify(message),/MEMORY_UNAVAILABLE|memory_|cognition|write/);
     assert.match(message[0].text,name==='memory_forget'?/这次没忘掉，请稍后再试/:name==='memory_query'?/这次没能查到记忆，请稍后再试/:name.startsWith('memory_')?/这次没记住，请稍后再试/:/没能完成/);

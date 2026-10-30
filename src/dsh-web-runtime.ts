@@ -409,6 +409,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'personal-command-encoding.mjs'), join(dir, 'plugins', 'personal-command-encoding.mjs')],
     [join(PLUGINS_DIR, 'personal-permission-rules.mjs'), join(dir, 'plugins', 'personal-permission-rules.mjs')],
     [join(PLUGINS_DIR, 'personal-connectors.mjs'), join(dir, 'plugins', 'personal-connectors.mjs')],
+    [join(PLUGINS_DIR, 'personal-desktop-schema.mjs'), join(dir, 'plugins', 'personal-desktop-schema.mjs')],
     [join(PLUGINS_DIR, '../personal-connectors/policy.mjs'), join(dir, 'personal-connectors', 'policy.mjs')],
     [join(PLUGINS_DIR, 'personal-review-sources.mjs'), join(dir, 'plugins', 'personal-review-sources.mjs')],
     [join(PLUGINS_DIR, 'personal-write-targets.mjs'), join(dir, 'plugins', 'personal-write-targets.mjs')],
@@ -2299,16 +2300,17 @@ export class DshWebRuntime {
     const row = message as Record<string, unknown>
     if (row.protocol !== 'weftmate.personal-schedules.v1' || typeof row.id !== 'string' ||
         !/^schedule-[0-9a-f-]{36}$/.test(row.id) || typeof row.sessionId !== 'string' ||
-        !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) || !['context', 'execute', 'health_query', 'schedule_list'].includes(String(row.action))) return
+        !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) || !['context', 'execute', 'health_query', 'schedule_list','schedule_manage'].includes(String(row.action))) return
     if (this.closed || this.child !== child || this.closedChildren.has(child) || !this.opts.personalScheduleHandler) return
     const respond = (value: object) => { if (child.connected && this.child === child) child.send({ protocol: row.protocol, id: row.id, ...value }) }
     const input = { action: row.action as string, sessionId: row.sessionId,
       ...(typeof row.text === 'string' ? { text: row.text } : {}),
       ...(typeof row.deliveryId === 'string' ? { deliveryId: row.deliveryId } : {}),
+      ...(row.action === 'schedule_manage' ? {operation:row.operation,targetSessionId:row.targetSessionId,scheduleId:row.scheduleId} : {}),
       ...(row.action === 'health_query' && row.query && typeof row.query === 'object' && !Array.isArray(row.query) ? { query: row.query } : {}),
       ...(typeof row.sourceReceiptId === 'string' ? { sourceReceiptId: row.sourceReceiptId } : {}) }
     void this.opts.personalScheduleHandler(input).then(result => respond({ ok: true, result }),
-      () => respond({ ok: false }))
+      error => respond({ ok: false, error:['FORBIDDEN','SESSION_UNAVAILABLE','SESSION_BUSY','TASK_NOT_READY','INVALID_REQUEST','NOT_FOUND'].includes(error?.code ?? error?.message) ? error.code ?? error.message : 'SCHEDULE_HOST_UNAVAILABLE' }))
   }
 
   private handlePersonalConversationContextMessage(child: ChildProcess, message: unknown): void {
