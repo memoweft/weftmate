@@ -150,7 +150,10 @@ test('BL-29b M3 native cancellation during first storage read clears listeners b
   controllers.forEach(controller=>controller.abort());
   await Promise.all(pending);
   for (const controller of controllers) assert.equal(getEventListeners(controller.signal,'abort').length,0);
-  await read.close(); release();
+  let closed=false;const closing=read.close().then(()=>{closed=true;});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(closed,false,'reader close still owns the uncancellable physical storage reads');
+  release();await closing;assert.equal(closed,true);
 });
 
 test('BL-29b M1 real Electron empty main keeps eight immediate errors within old changes budget', {timeout:120000}, () => {
