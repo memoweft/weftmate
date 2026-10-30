@@ -145,14 +145,40 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         void core.loadUsageStrip().then(text => { if (text && dialog.open && ready()) strip.textContent = text; }).catch(() => { if (dialog.open && ready()) strip.textContent = '本月用量暂时无法读取，点此重试。'; });
         selectSettings(selected);
         if(phoneSettings())showSettingsList();
-        if(selected==='about')void renderSettingsUpdates();
+        if(selected==='about')void renderSettingsUpdates(false,true);
     }
     function hideSettingsDialog() { if (dialog?.open) {
         settleCategories(); clearTimeout(renderSettingsUpdates.timer);
         for (const id of ['executionRecords', 'connectors']) mountedCategories.delete(id);
         dialog.inert = true; dialog.close();
     } }
-    let updateView, updateIdentity;
+    let updateView, updateIdentity, pendingRestart;
+    function updateTarget(value) {
+        const app=value?.layers?.find(layer=>layer.layer==='app');
+        return JSON.stringify([value?.channel||app?.channel,app?.currentVersion,app?.availableVersion||app?.version]);
+    }
+    function restartAttemptCurrent(view,attempt) {
+        return view===updateView&&view.attempt===attempt&&core.accountIdentityCurrent(attempt.token)&&attempt.target===view.targetKey;
+    }
+    function paintRestartAttempt(view,reveal=false) {
+        if(view!==updateView||updateIdentity!==core.state.identityGeneration)return;
+        if(view.attempt&&!restartAttemptCurrent(view,view.attempt))view.attempt=null;
+        const value=view.value||{},attempt=view.attempt,busy=!!pendingRestart;
+        const state=busy?'pending':attempt?.state;
+        const message=busy?'正在准备更新…重启前需要等待任务结束并完成备份。':attempt?.message||'';
+        const role=state==='failed'?'alert':'status';
+        if(view.attemptStatus.getAttribute('role')!==role)view.attemptStatus.setAttribute('role',role);
+        if(view.attemptStatus.textContent!==message)view.attemptStatus.textContent=message;
+        view.attemptStatus.dataset.state=state||'';view.attemptStatus.hidden=!message;
+        view.restart.disabled=busy||state==='requested';view.restart.hidden=!value.canRestart;
+        view.restart.textContent=busy?'正在准备更新…':state==='requested'?'正在重启…':value.manualInstall?'打开安装包':'重启并更新';
+        view.hint.textContent=value.canRestart?(value.manualInstall?'打开安装包后按提示完成更新。':'重启前会等待进行中的任务结束，并创建备份。'):'';
+        view.hint.hidden=!!message;view.actions.hidden=!value.canRestart&&!message;
+        if(reveal&&message&&dialog.open&&selected==='about') {
+            const area=view.actions.getBoundingClientRect(),viewport=panels.get('about').getBoundingClientRect();
+            if(area.top<viewport.top||area.bottom>viewport.bottom)view.actions.scrollIntoView({block:'nearest',behavior:'instant'});
+        }
+    }
     function updatesView() {
         const target = ui.byId('settings-updates');
         if (updateView && updateIdentity === core.state.identityGeneration) return updateView;
@@ -170,18 +196,36 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             try { await core.setUpdateChannel(channel.value); if(core.accountIdentityCurrent(token)&&view===updateView)await renderSettingsUpdates(); }
             catch { if(core.accountIdentityCurrent(token)&&view===updateView){notice.textContent='更新通道暂时无法切换，请等下载完成后重试。';channel.value=previous;channel.disabled=!view.value?.canChangeChannel;} }
         });
-        const actions=node('div','settings-update-actions'), hint=node('p','muted'), restart=node('button','button primary small','重启并更新');restart.type='button';restart.hidden=true;
+        const actions=node('div','settings-update-actions'), feedback=node('div','settings-update-feedback'), hint=node('p','muted'), attemptStatus=node('p','settings-update-attempt');
+        attemptStatus.id='settings-update-attempt';attemptStatus.hidden=true;attemptStatus.setAttribute('role','status');attemptStatus.setAttribute('aria-atomic','true');
+        const restart=node('button','button primary small','重启并更新');restart.type='button';restart.hidden=true;restart.setAttribute('aria-describedby',attemptStatus.id);
         restart.addEventListener('click',async()=>{
-            const token=core.accountToken();restart.disabled=true;
-            try { const result=await core.restartForUpdate();if(!core.accountIdentityCurrent(token))return;if(!result?.restarted)notice.textContent=result?.reason||'更新尚未就绪，请重新检查。'; }
-            catch { if(core.accountIdentityCurrent(token))notice.textContent='更新未完成，请重新检查。'; }
-            finally { if(core.accountIdentityCurrent(token))restart.disabled=false; }
-        });actions.append(hint,restart);
+            const view=updateView;
+            if(pendingRestart||view.attempt?.state==='requested'||view.restart!==restart||!view.value?.canRestart)return;
+            const attempt={token:core.accountToken(),target:view.targetKey,state:'pending'};
+            pendingRestart=attempt;view.attempt=attempt;paintRestartAttempt(view,true);
+            try {
+                const result=await core.restartForUpdate();
+                if(!restartAttemptCurrent(view,attempt))return;
+                if(result?.restarted===true){attempt.state='requested';attempt.message='重启请求已发出，正在等待程序退出；尚未确认新版启动。';}
+                else {
+                    attempt.state='failed';
+                    attempt.message=result?.stage==='backup'&&result?.code==='BACKUP_PAUSE_TIMEOUT'?'更新前备份未完成，暂未开始安装。当前程序继续运行，请稍后重试。'
+                        :typeof result?.reason==='string'&&result.reason.trim()?result.reason:'更新尚未开始，请重新检查。当前程序仍在运行。';
+                }
+            }
+            catch { if(restartAttemptCurrent(view,attempt)){attempt.state='failed';attempt.message='更新请求未完成，请重试。当前版本仍在运行。';} }
+            finally {
+                if(pendingRestart===attempt)pendingRestart=null;
+                paintRestartAttempt(updateView,restartAttemptCurrent(view,attempt));
+            }
+        });feedback.append(hint,attemptStatus);actions.append(feedback,restart);
         target.replaceChildren(head,notice,layers,channelRow,actions);
-        updateView={target,notice,refresh,layers,channel,channelRow,actions,hint,restart,rows:new Map(),value:null};
+        updateView={target,notice,refresh,layers,channel,channelRow,actions,hint,restart,attemptStatus,attempt:null,targetKey:null,rows:new Map(),value:null};
+        paintRestartAttempt(updateView);
         return updateView;
     }
-    async function renderSettingsUpdates(check = false) {
+    async function renderSettingsUpdates(check = false,revealAttempt = false) {
         const view=updatesView(), token=core.accountToken(), generation=++updateGeneration;
         clearTimeout(renderSettingsUpdates.timer);
         const current=()=>core.accountIdentityCurrent(token)&&generation===updateGeneration&&dialog.open&&selected==='about';
@@ -192,7 +236,9 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         try {value=await(check?core.checkUpdates():core.readUpdateState());}
         catch {if(current()){view.refresh.disabled=false;view.refresh.textContent='重试读取';view.notice.textContent='暂时无法读取更新状态。请检查网络后重试；当前版本仍可使用。';}return;}
         if(!current())return;
-        view.value=value;view.refresh.disabled=false;
+        const target=updateTarget(value);
+        if(view.targetKey!==target)view.attempt=null;
+        view.targetKey=target;view.value=value;view.refresh.disabled=false;
         const names={ui:'电脑界面',app:'Windows 程序','mobile-ui':'手机界面'};
         const bytes=n=>n>=1048576?`${(n/1048576).toFixed(1)} MB`:`${Math.ceil(n/1024)} KB`;
         let failed=false,downloading=false;
@@ -225,9 +271,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         view.notice.textContent=failed?'更新未完成，当前版本仍可继续使用。':value.canRestart?'新版已准备好。':downloading?'更新正在下载，你可以继续使用 WeftMate。':value.layers?.length?'版本状态已同步。':'暂时没有可用的更新信息。你可以稍后重新检查。';
         view.channelRow.hidden=!value.channel;
         if(value.channel){if(document.activeElement!==view.channel)view.channel.value=value.channel;view.channel.disabled=!value.canChangeChannel;view.channel.dispatchEvent(new Event('weft:sync'));}
-        view.restart.hidden=!value.canRestart;view.restart.textContent=value.manualInstall?'打开安装包':'重启并更新';
-        view.hint.textContent=value.canRestart?(value.manualInstall?'打开安装包后按提示完成更新。':'重启前会等待进行中的任务结束，并创建备份。'):'';
-        view.actions.hidden=!value.canRestart;
+        paintRestartAttempt(view,revealAttempt);
         if(value.layers?.some(layer=>['checking','available','downloading'].includes(layer.status)))renderSettingsUpdates.timer=setTimeout(()=>{if(current())void renderSettingsUpdates();},1500);
     }
     function mountSettingsNavigation() {
@@ -387,7 +431,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             schedules: () => ui.showSettingsSchedules(),
             usage: options => ui.showSettingsUsage(options),
             archived: () => ui.showSettingsArchived(panels.get('archived')),
-            about: () => { version.textContent = core.state.system?.host?.version || '版本未知'; void renderSettingsUpdates(); },
+            about: () => { version.textContent = core.state.system?.host?.version || '版本未知'; void renderSettingsUpdates(false,true); },
         });
         search.addEventListener('input', renderSettingsNavigation); picker.addEventListener('change', () => selectSettings(picker.value));
         close.addEventListener('click', () => ui.byId('account-back').click());
