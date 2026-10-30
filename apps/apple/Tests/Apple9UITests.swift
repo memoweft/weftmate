@@ -51,9 +51,12 @@ final class Apple9UITests: XCTestCase {
                     XCTAssertTrue(saved.waitForExistence(timeout:20));saved.tap()
                     XCTAssertEqual(app.textFields["modelServices.name"].value as? String,"合成模型服务")
                     XCTAssertEqual(app.textFields["modelServices.address"].value as? String,ProcessInfo.processInfo.environment["APPLE9_MODEL_URL"])
+                    let key=app.secureTextFields["modelServices.key"]
+                    XCTAssertTrue((key.value as? String ?? "").isEmpty || key.value as? String == key.placeholderValue,"Reopening a saved service must keep its key private")
+                    let top=XCTAttachment(screenshot:app.screenshot());top.name="apple9-"+theme+"-saved-editor";top.lifetime = .keepAlways;add(top)
                     let selected=app.buttons["modelServices.default.mimo-v2.6-pro"]
                     reveal(app,selected);XCTAssertEqual(selected.value as? String,"当前选择")
-                    let reopened=XCTAttachment(screenshot:app.screenshot());reopened.name="apple9-"+theme+"-saved-editor";reopened.lifetime = .keepAlways;add(reopened)
+                    let reopened=XCTAttachment(screenshot:app.screenshot());reopened.name="apple9-"+theme+"-saved-editor-models";reopened.lifetime = .keepAlways;add(reopened)
                 }
                 app.terminate()
             }

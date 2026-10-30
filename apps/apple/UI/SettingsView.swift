@@ -146,6 +146,8 @@ private struct SettingsCategoryView: View {
         #if os(iOS)
         if route.categoryID == "legal" { return "隐私与条款" }
         if route.categoryID == "account" { return "账号与安全" }
+        if route.categoryID == "account-email" { return "换绑邮箱" }
+        if route.categoryID == "account-password" { return "修改密码" }
         if route.categoryID == "models" || route.categoryID == "phone-models" { return "模型服务" }
         #endif
         return AppleSettingsRegistry.category(route.categoryID)?.name ?? "设置"
@@ -215,6 +217,10 @@ private struct SettingsCategoryView: View {
     }
     @ViewBuilder private var standardContent: some View {
         switch route.categoryID {
+        #if os(iOS)
+        case "account-email": PhoneAccountEmailPage(cloud:app.cloudLogin)
+        case "account-password": PhoneAccountPasswordPage(cloud:app.cloudLogin)
+        #endif
         case "account":
             #if os(iOS)
             if app.session == nil || app.cloudLogin.authenticated { PhoneAccountSettingsContent(cloud:app.cloudLogin) } else { LocalAccountSettingsView(app:app) }

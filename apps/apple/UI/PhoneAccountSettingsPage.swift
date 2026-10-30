@@ -11,8 +11,8 @@ struct PhoneAccountSettingsPage: View {
         Form {
             Section {
                 PhoneSettingsLabel(title: "你的账号", subtitle: cloud.email, icon: "account", disclosure: false).accessibilityIdentifier("signedInEmail")
-                NavigationLink("换绑邮箱") { PhoneAccountEmailPage(cloud: cloud) }.accessibilityIdentifier("account.changeEmail")
-                NavigationLink("修改密码") { PhoneAccountPasswordPage(cloud: cloud) }.accessibilityIdentifier("account.changePassword")
+                NavigationLink("换绑邮箱",value:AppleSettingsRoute(categoryID:"account-email")).accessibilityIdentifier("account.changeEmail")
+                NavigationLink("修改密码",value:AppleSettingsRoute(categoryID:"account-password")).accessibilityIdentifier("account.changePassword")
                 NavigationLink("登录设备", value: AppleSettingsRoute(categoryID: "devices"))
             }
             Section("会话与账号") {
@@ -50,7 +50,7 @@ private struct PhoneAccountFeedback: View {
     }
 }
 
-private struct PhoneAccountEmailPage: View {
+struct PhoneAccountEmailPage: View {
     @ObservedObject var cloud: CloudLoginModel
     @State private var email = ""
     @State private var code = ""
@@ -81,7 +81,7 @@ private struct PhoneAccountEmailPage: View {
     }
 }
 
-private struct PhoneAccountPasswordPage: View {
+struct PhoneAccountPasswordPage: View {
     @ObservedObject var cloud: CloudLoginModel
     @State private var current = ""
     @State private var password = ""
