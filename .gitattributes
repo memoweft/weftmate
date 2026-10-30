@@ -11,3 +11,10 @@ apps/android/app/src/main/res/values-night/design_colors.xml text eol=lf
 apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTokens.kt text eol=lf
 design/tokens/generated/apple/* text eol=lf
 apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/OperationNames.swift text eol=lf
+
+# Entry docs stay LF so local byte limits match on Windows.
+AGENTS.md text eol=lf
+PROJECT-MAP.md text eol=lf
+docs/PLAN.md text eol=lf
+docs/DECISIONS.md text eol=lf
+docs/OWNER_CHANGES.md text eol=lf
