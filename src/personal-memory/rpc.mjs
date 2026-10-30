@@ -48,6 +48,12 @@ export class MemoWeftRpc {
       stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true,
     });
     this.child = child;
+    // A closed stdio pipe reports errors asynchronously on the stream. Route
+    // them through the manager's existing finite retry budget, never uncaught.
+    for (const stream of [child.stdin,child.stdout,child.stderr]) stream.on('error', cause => {
+      this.failAll('MEMORY_PROCESS_UNAVAILABLE', executionFailure(cause));
+      child.kill();
+    });
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (part) => this.consume(String(part)));
     // RPC stderr may contain private source text. It is never forwarded to HTTP or logs.

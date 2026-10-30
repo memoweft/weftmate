@@ -16,7 +16,7 @@
 | 网页 | 复用页面读取、快照、网络限制与引用路径 | `personal-browser-*.test.ts`、真实模型与真实 Chromium 读取隔离网页 |
 | 目标、待办与任务 | 保留原生目标状态、轮次、后台作业和子任务结果收取 | `personal-goals.test.ts`、`personal-goal-round-driver.test.ts`、`personal-delegation-results.test.ts`、真实模型目标/作业 |
 | 提问、审批与取消 | 回答不是执行许可；拒绝不可换工具绕过；停止与执行失败区分 | `personal-user-question*.test.ts`、`personal-approval-*.test.ts`、真实模型拒绝/停止 |
-| 记忆与健康 | 通用参数纠错覆盖；记忆版本冲突、禁用召回和忘记边界保留 | `personal-forget-loop.test.ts`、模型反馈原生运行时回归；不使用真实个人记录 |
+| 记忆与健康 | 通用参数纠错覆盖；记忆版本冲突、禁用召回和忘记边界保留；记忆管道异步错误进入现有有限恢复流程 | `personal-forget-loop.test.ts`、`personal-memory-transport.test.ts`、`desktop-memory-startup-failure.test.ts`；不使用真实个人记录 |
 | 手机与外部服务 | 检查工具输入、输出和原生执行链；设备操作/外部账号依赖仍需对应环境 | `weftmod-plugin.test.ts`、连接器原生测试；不把模拟设备结果当真机验收 |
 
 ## 真实模型运行器
