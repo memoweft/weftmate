@@ -6,6 +6,15 @@ import { conversationMode } from '../src/personal-access/work-and-chat.mjs';
 (globalThis as any).WeftUiCore ??= { factories: {} };
 await import('../src/ui-core/work-and-chat.js');
 
+test('MODE-1 main selection preserves the page for restoration and navigates for an explicit selection',async()=>{
+  const state:any={currentView:'account',personalCapabilities:{workAndChat:1},activeChatSource:'desktop',mainChat:{chatId:'main'},selectedChatId:'main',newConversation:false};
+  const core:any={state,composerState:()=>({}),startNewConversation(){},sendDraft(){},clearSession(){},selectMainChat(){}};
+  const effects={showConversation:({restore=false}={})=>{if(!restore)state.currentView='assistant';},closeRail(){}};
+  Object.assign(core,(globalThis as any).WeftUiCore.factories.workAndChat(core,effects,{}));
+  await core.selectMainChat(undefined,{restore:true});assert.equal(state.currentView,'account');
+  await core.selectMainChat();assert.equal(state.currentView,'assistant');
+});
+
 test('MODE-1 sidebar selection is account scoped, new follows it and opening a notified session selects its actual mode', async () => {
   const saved = new Map<string,string>(), storage = {getItem:(key:string)=>saved.get(key),setItem:(key:string,value:string)=>saved.set(key,value)};
   const make = (ownerId: string) => {
