@@ -61,7 +61,11 @@ import WeftMateCore
 struct UsageView: View {
     @StateObject private var model: UsageModel
     init(app: AppleAppModel, sessionID: String? = nil) { _model = StateObject(wrappedValue: UsageModel(app: app, sessionID: sessionID)) }
-    var body: some View {
+    @State private var budget = false
+    @ViewBuilder var body: some View {
+        #if os(iOS)
+        phoneContent
+        #else
         ScrollView {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
                 HStack {
@@ -111,7 +115,61 @@ struct UsageView: View {
                 Button("刷新用量") { Task { await model.refresh() } }.disabled(model.loading)
             }.padding(AppleTokens.Space.p24).frame(maxWidth: 700).frame(maxWidth: .infinity)
         }.background(Weave.canvas).navigationTitle("用量").task { await model.refresh() }.accessibilityIdentifier("usagePage")
+        #endif
     }
+    #if os(iOS)
+    private var phoneContent: some View {
+        Form {
+            Section {
+                UsageMonthPicker(month: $model.month).disabled(model.loading)
+                Button("读取月份") { Task { await model.refresh() } }.disabled(model.loading).accessibilityIdentifier("readUsageMonth")
+            }
+            if let value = model.summary {
+                Section {
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
+                        Text(UsageModel.money(value.total.cost)).font(AppleTokens.Fonts.largeTitle.weight(.semibold)).monospacedDigit().accessibilityIdentifier("usageTotalCost")
+                        Text("按已配置单价估算；没有价格的部分单列。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                    }.padding(.vertical, AppleTokens.Space.p12)
+                    LabeledContent("已统计请求", value: "\(value.total.requests) 次")
+                        .accessibilityElement(children: .combine).accessibilityIdentifier("usage.requests")
+                    LabeledContent("未配置单价", value: "\(value.total.unpricedRequests) 次").accessibilityIdentifier("usage.unpriced")
+                    LabeledContent("用量尚未核对", value: "\(value.total.unknownRequests) 次").accessibilityIdentifier("usage.unknown")
+                    if let notice = value.total.uncertaintyNotice { Text(notice).foregroundStyle(Weave.muted) }
+                    if let notice = value.budget.notice { InlineNotice(message: notice, isError: value.budget.state == "blocked").accessibilityIdentifier("usageBudgetNotice") }
+                } header: { Text(DeviceDateText.month(value.month)) }
+                Section("按模型") { ForEach(value.models) { row in usageRow(model.modelName(row.profileId), totals: row.totals) } }
+                Section {
+                    DisclosureGroup("按天") { ForEach(value.days) { row in usageRow(DeviceDateText.day(row.day ?? ""), totals: row.totals) } }
+                    DisclosureGroup("按对话排行") { ForEach(value.sessions) { row in usageRow(model.sessionName(row.sessionId), totals: row.totals) } }
+                }
+            }
+            Section("费用提醒") {
+                Button { budget = true } label: {
+                    LabeledContent("月度费用上限", value: model.settings?.monthlyLimit.map(UsageModel.money) ?? "未设置")
+                }.disabled(model.settings == nil).accessibilityIdentifier("usage.editBudget")
+            }
+            if model.loading { ProgressView("正在读取…") }
+            if let error = model.error { InlineNotice(message: error, isError: true) }
+            Button("刷新用量") { Task { await model.refresh() } }.disabled(model.loading)
+        }.scrollContentBackground(.hidden).background(Weave.grouped).navigationTitle("用量").task { await model.refresh() }.accessibilityIdentifier("usagePage")
+            .onChange(of: model.month) { _, _ in Task { await model.refresh() } }
+            .sheet(isPresented: $budget) {
+                Form {
+                    Section("月度上限 · 元") {
+                        TextField("留空表示不限", text: $model.monthlyInput).keyboardType(.decimalPad).accessibilityIdentifier("usageMonthlyLimit")
+                        Button("保存月度上限") { Task { await model.save(temporary: false) } }.disabled(model.loading || model.settings?.canManage != true)
+                    }
+                    Section("仅本月") {
+                        TextField("临时金额，留空清除", text: $model.temporaryInput).keyboardType(.decimalPad).accessibilityIdentifier("usageTemporaryLimit")
+                        Button("保存本月临时上限") { Task { await model.save(temporary: true) } }.disabled(model.loading || model.settings?.canManage != true)
+                    }
+                    Text("达到 80% 时提示；达到 100% 后暂停新的云端请求。本地模型不受限。临时金额仅覆盖当前账号时区的月份。")
+                        .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                    if let error = model.error { InlineNotice(message: error, isError: true) }
+                }.phoneSheet("费用上限", close: { budget = false })
+            }
+    }
+    #endif
     private func usageRow(_ name: String, totals: UsageTotals) -> some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p5) {
             LabeledContent(name, value: UsageModel.money(totals.cost))

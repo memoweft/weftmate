@@ -10,7 +10,6 @@ struct SettingsView: View {
     @ObservedObject var model: AppleAppModel
     @StateObject private var settings: AppleSettingsModel
     @State private var search = ""
-    @State private var confirmingLogout = false
     @State private var availableWidth: CGFloat = 1000
     @State private var phonePath: [AppleSettingsRoute]
     #if os(macOS)
@@ -72,63 +71,10 @@ struct SettingsView: View {
         .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme).tint(Weave.accent)
         #else
         NavigationStack(path: $phonePath) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: AppleTokens.Space.p24) {
-                    NavigationLink(value: AppleSettingsRoute(categoryID: "account")) {
-                        HStack(spacing: AppleTokens.Space.p16) {
-                            WeftIcon("account", size: AppleTokens.Space.p28).foregroundStyle(Weave.accent)
-                                .frame(width: AppleTokens.Space.p56, height: AppleTokens.Space.p56).background(Weave.surface, in: Circle())
-                            VStack(alignment: .leading, spacing: AppleTokens.Space.p6) {
-                                Text(model.accountName).font(AppleTokens.Fonts.headline).foregroundStyle(Weave.ink)
-                                Text(model.cloudLogin.authenticated ? model.cloudLogin.email : "本机账户")
-                                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                                AccountUsageBar(app: model)
-                            }.frame(maxWidth: .infinity, alignment: .leading)
-                            WeftIcon("right", size: AppleTokens.Space.p16).foregroundStyle(Weave.muted)
-                        }.phoneCard()
-                    }.buttonStyle(.plain).accessibilityIdentifier("settings.accountCard")
-                    HStack(spacing: AppleTokens.Space.p8) {
-                        WeftIcon("search", size: AppleTokens.Space.p16).foregroundStyle(Weave.muted)
-                        TextField("搜索设置", text: $search).textFieldStyle(.plain).accessibilityIdentifier("settingsSearch")
-                    }.padding(.horizontal, AppleTokens.Space.p16).frame(minHeight: AppleTokens.Space.p44).background(Weave.soft, in: Capsule())
-                    ForEach(["设置", "助手", "关于"], id: \.self) { group in
-                        let rows = categories.filter { $0.group == group }
-                        if !rows.isEmpty {
-                            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-                                Text(group).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal, AppleTokens.Space.p12)
-                                VStack(spacing: AppleTokens.Space.p4) {
-                                    ForEach(rows) { category in
-                                        NavigationLink(value: AppleSettingsRoute(categoryID: category.id)) {
-                                            HStack(spacing: AppleTokens.Space.p12) {
-                                                WeftIcon(category.icon).foregroundStyle(Weave.accent)
-                                                Text(category.name).foregroundStyle(Weave.ink)
-                                                Spacer(minLength: AppleTokens.Space.p4)
-                                                Text(settings.summary(category.id)).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineLimit(1)
-                                                WeftIcon("right", size: AppleTokens.Space.p12).foregroundStyle(Weave.muted)
-                                            }.font(AppleTokens.Fonts.body).frame(minHeight: AppleTokens.Space.p56)
-                                                .padding(.horizontal, AppleTokens.Space.p8).contentShape(Rectangle())
-                                        }.buttonStyle(.plain).accessibilityIdentifier("settingsCategory." + category.id)
-                                    }
-                                }.phoneCard()
-                            }
-                        }
-                    }
-                    NavigationLink(value: AppleSettingsRoute(categoryID:"phone-chats")) { WeftLabel("手机上的对话",icon:"chat").frame(maxWidth:.infinity,minHeight:44,alignment:.leading).phoneCard() }.buttonStyle(.plain).accessibilityIdentifier("settings.phoneChats")
-                    if categories.isEmpty { Text("没有匹配的设置").foregroundStyle(Weave.muted) }
-                    Button { confirmingLogout = true } label: {
-                        HStack(spacing: AppleTokens.Space.p12) {
-                            WeftIcon("logout"); Text("退出登录"); Spacer()
-                        }.frame(minHeight: AppleTokens.Space.p44).phoneCard().foregroundStyle(Weave.danger)
-                    }.buttonStyle(.plain).accessibilityIdentifier("settings.logout")
-                }.padding(AppleTokens.Space.p16)
-            }.background(Weave.grouped).navigationTitle("设置").navigationBarTitleDisplayMode(.inline)
+            PhoneSettingsIndex(app: model, settings: settings, search: $search)
                 .navigationDestination(for: AppleSettingsRoute.self) { route in detail(route).toolbar { if route.categoryID != "run-log" { closeButton } } }
                 .toolbar { closeButton }
                 .accessibilityElement(children: .contain).accessibilityIdentifier("settingsRoot")
-        }
-        .confirmationDialog("退出登录？本机对话与记忆保留。", isPresented: $confirmingLogout, titleVisibility: .visible) {
-            Button("退出登录", role: .destructive) { Task { await model.signOut() } }
-            Button("取消", role: .cancel) {}
         }
         .buttonStyle(PhoneActionStyle())
         .presentationDragIndicator(.visible).presentationCornerRadius(AppleTokens.Radius.r32)
@@ -196,7 +142,16 @@ private struct SettingsCategoryView: View {
     #if os(iOS)
     @EnvironmentObject private var dailyHealth: DailyHealthModel
     #endif
-    private var title: String { AppleSettingsRegistry.category(route.categoryID)?.name ?? "设置" }
+    private var title: String {
+        #if os(iOS)
+        if route.categoryID == "legal" { return "隐私与条款" }
+        if route.categoryID == "account" { return "账号与安全" }
+        if route.categoryID == "account-email" { return "换绑邮箱" }
+        if route.categoryID == "account-password" { return "修改密码" }
+        if route.categoryID == "models" || route.categoryID == "phone-models" { return "模型服务" }
+        #endif
+        return AppleSettingsRegistry.category(route.categoryID)?.name ?? "设置"
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p0) {
             #if os(macOS)
@@ -238,15 +193,18 @@ private struct SettingsCategoryView: View {
     }
     @ViewBuilder private var content: some View {
         #if os(iOS)
-        if route.categoryID == "phone-models" || (route.categoryID == "models" && app.session == nil) {
-            PhoneModelsView(model:app.phoneChat).task(id:app.phoneAccountIdentity) { app.phoneChat.activate(app:app) }
+        if ["general", "appearance", "approvals", "system", "about", "legal"].contains(route.categoryID) {
+            PhonePreferencePage(app: app, settings: settings, category: route.categoryID)
+        } else if route.categoryID == "phone-models" || (route.categoryID == "models" && app.session == nil) {
+            ModelServicesSettingsView(store: ModelServiceSettingsModel(app: nil, phone: app.phoneChat))
+                .task(id: app.phoneAccountIdentity) { app.phoneChat.activate(app: app) }
         } else if route.categoryID == "models" {
             VStack(spacing:AppleTokens.Space.p12) {
                 NavigationLink("手机上的模型",value:AppleSettingsRoute(categoryID:"phone-models")).buttonStyle(OutlineActionStyle()).padding(.horizontal,AppleTokens.Space.p16)
                 if app.modelServicesSupported == true { ModelServicesSettingsView(store:ModelServiceSettingsModel(app:app)) }
                 else { standardContent }
             }.task { _ = try? await app.readModelCatalogue() }
-        } else if app.session == nil && ["usage","approvals","schedules","backups","system","archived"].contains(route.categoryID) {
+        } else if app.session == nil && ["usage","schedules","backups","archived"].contains(route.categoryID) {
             PhoneComputerEmptyPage(app:app,title:title,explanation:"这里显示电脑保存的内容和设置。")
         } else if route.categoryID == "phone-chats" {
             PhoneStandaloneChat(app:app,model:app.phoneChat)
@@ -259,6 +217,10 @@ private struct SettingsCategoryView: View {
     }
     @ViewBuilder private var standardContent: some View {
         switch route.categoryID {
+        #if os(iOS)
+        case "account-email": PhoneAccountEmailPage(cloud:app.cloudLogin)
+        case "account-password": PhoneAccountPasswordPage(cloud:app.cloudLogin)
+        #endif
         case "account":
             #if os(iOS)
             if app.session == nil || app.cloudLogin.authenticated { PhoneAccountSettingsContent(cloud:app.cloudLogin) } else { LocalAccountSettingsView(app:app) }
@@ -267,9 +229,19 @@ private struct SettingsCategoryView: View {
             else { LocalAccountSettingsView(app: app) }
             #endif
         case "devices":
+            #if os(iOS)
+            if !app.cloudLogin.authenticated { PhonePairingPage(app: app, cloud: app.cloudLogin) }
+            else { CloudDevicesView(app: app, cloud: app.cloudLogin) }
+            #else
             if app.cloudLogin.authenticated { CloudDevicesView(app: app, cloud: app.cloudLogin) }
             else { DevicesView(model: app) }
-        case "archived": ArchivedSessionsView(app: app, openConversation: openConversation)
+            #endif
+        case "archived":
+            #if os(iOS)
+            PhoneArchivedSettingsPage(app: app, openConversation: openConversation)
+            #else
+            ArchivedSessionsView(app: app, openConversation: openConversation)
+            #endif
         case "usage":
             VStack(spacing: AppleTokens.Space.p0) {
                 if let id = route.sessionID {

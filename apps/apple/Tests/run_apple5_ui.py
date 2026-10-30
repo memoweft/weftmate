@@ -3,8 +3,8 @@
 import argparse,json,os,plistlib,shutil,subprocess,tempfile,time
 from pathlib import Path
 root=Path(__file__).resolve().parents[3]
-p=argparse.ArgumentParser();p.add_argument('--xctestrun',type=Path,required=True);p.add_argument('--simulator',required=True);p.add_argument('--result',type=Path,required=True);p.add_argument('--addendum',action='store_true');p.add_argument('--fix',action='store_true');a=p.parse_args()
-evidence=root/('apps/apple/Tests/Evidence/APPLE-5/Fix' if a.fix else 'apps/apple/Tests/Evidence/APPLE-5');evidence.mkdir(parents=True,exist_ok=True)
+p=argparse.ArgumentParser();p.add_argument('--xctestrun',type=Path,required=True);p.add_argument('--simulator',required=True);p.add_argument('--result',type=Path,required=True);p.add_argument('--addendum',action='store_true');p.add_argument('--fix',action='store_true');p.add_argument('--pages',action='store_true');p.add_argument('--page-journey-only',action='store_true');p.add_argument('--evidence',type=Path);a=p.parse_args()
+evidence=a.evidence or root/('apps/apple/Tests/Evidence/APPLE-5/Fix' if a.fix else 'apps/apple/Tests/Evidence/APPLE-5');evidence.mkdir(parents=True,exist_ok=True);evidence.chmod(0o700)
 ledger=evidence/('fix-simulator-count.json' if a.fix else 'addendum-simulator-count.json' if a.addendum else 'simulator-count.json')
 prior=json.loads(ledger.read_text()) if ledger.exists() else {'boots':0}
 if prior['boots']>=(2 if a.fix or a.addendum else 5):raise RuntimeError('APPLE-5 simulator budget exhausted')
@@ -16,12 +16,13 @@ if reports:
 with open('/private/tmp/apple5-preboot.log','w') as log:
     subprocess.run(['sh','-c','ls /Library/Logs/DiagnosticReports/ | grep gpuRestart | tail -1; uptime'],stdout=log,stderr=subprocess.STDOUT)
 crashes=set((Path.home()/'Library/Logs/DiagnosticReports').glob('*[Ww]eft[Mm]ate*'))
-metadata=Path('/private/tmp/apple5-ui-private.json')
-service=subprocess.Popen(['node','apps/apple/Tests/apple5_real_host.mjs',str(metadata)],cwd=root,stdout=subprocess.PIPE,stderr=open('/private/tmp/apple5-ui-host.log','w'),text=True)
+metadata=evidence.parent/'private-ui.json'
+service=subprocess.Popen(['node','apps/apple/Tests/apple5_real_host.mjs',str(metadata)],cwd=root,env={**os.environ,**({'WEFTMATE_IOS_UI_PAGES':'1'} if a.pages else {})},stdout=subprocess.PIPE,stderr=open(evidence.parent/'host.log','w'),text=True)
 booted=False
 presentation=None
 try:
     ready=json.loads(service.stdout.readline());assert ready.get('realPersonalHost')
+    print('Synthetic personal host ready',flush=True)
     meta=json.loads(metadata.read_text());config=plistlib.loads(a.xctestrun.read_bytes())
     variables={'WEFTMATE_APPLE5_ORIGIN':meta['origin'],'WEFTMATE_APPLE5_USERNAME':meta['username'],'WEFTMATE_APPLE5_PASSWORD':meta['password']}
     def inject(value):
@@ -36,26 +37,34 @@ try:
     inject(config)
     prior.update(boots=prior['boots']+1,smallDevice='iPhone SE (3rd generation)',windowOpened=False,concurrentSimulators=1)
     ledger.write_text(json.dumps(prior,indent=2)+'\n')
-    subprocess.run(['xcrun','simctl','boot',a.simulator],check=True,stdout=subprocess.DEVNULL);booted=True
-    subprocess.run(['xcrun','simctl','bootstatus',a.simulator,'-b'],check=True,stdout=subprocess.DEVNULL)
+    print('Booting selected simulator',flush=True)
+    subprocess.run(['xcrun','simctl','boot',a.simulator],check=True,stdout=subprocess.DEVNULL,timeout=60);booted=True
+    subprocess.run(['xcrun','simctl','bootstatus',a.simulator,'-b'],check=True,stdout=subprocess.DEVNULL,timeout=180)
+    print('Simulator ready; running native UI cases',flush=True)
     with tempfile.NamedTemporaryFile(suffix='.xctestrun',dir=a.xctestrun.parent) as run:
         run.write(plistlib.dumps(config));run.flush()
-        result=subprocess.run(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',run.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/'+('Apple5FixUITests' if a.fix else 'Apple5AddendumUITests' if a.addendum else 'Apple5UITests/testFeatureBatch'),'-resultBundlePath',str(a.result)],stdout=open('/private/tmp/apple5-ui.log','w'),stderr=subprocess.STDOUT)
+        result=subprocess.run(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-test-timeouts-enabled','YES','-default-test-execution-time-allowance','900','-maximum-test-execution-time-allowance','900','-xctestrun',run.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/'+('Apple5UITests/testPagesLightAndDark' if a.pages else 'Apple5FixUITests' if a.fix else 'Apple5AddendumUITests' if a.addendum else 'Apple5UITests/testFeatureBatch'),*(['-only-testing:WeftMatePhoneUITests/PhoneWindowUITests/testMemoryRoutes','-only-testing:WeftMatePhoneUITests/IOSUIShellUITests/testShellLightAndDark','-only-testing:WeftMatePhoneUITests/Apple11UITests/testReminderPageDark'] if a.pages and not a.page_journey_only else []),'-resultBundlePath',str(a.result)],stdout=open(evidence.parent/'ui.log','w'),stderr=subprocess.STDOUT,timeout=2700)
     summary=json.loads(subprocess.check_output(['xcrun','xcresulttool','get','test-results','summary','--path',str(a.result)],text=True))
     with tempfile.TemporaryDirectory() as out:
         subprocess.run(['xcrun','xcresulttool','export','attachments','--path',str(a.result),'--output-path',out],check=True,stdout=subprocess.DEVNULL)
         for item in json.loads((Path(out)/'manifest.json').read_text()):
             for attachment in item['attachments']:
                 name=attachment['suggestedHumanReadableName'].split('_0_')[0]
-                if name.startswith('apple5fix-' if a.fix else 'apple5add-' if a.addendum else 'apple5-'):shutil.copyfile(Path(out)/attachment['exportedFileName'],evidence/(name+'.png'))
+                if (a.pages and name.endswith(('-light','-dark'))) or name.startswith('apple5fix-' if a.fix else 'apple5add-' if a.addendum else 'apple5-'):
+                    source=Path(out)/attachment['exportedFileName']
+                    with source.open('rb') as probe:png=probe.read(8)==b'\x89PNG\r\n\x1a\n'
+                    shutil.copyfile(source,evidence/(name+('.png' if png else '.txt')))
     gpuAfter=list(Path('/Library/Logs/DiagnosticReports').glob('*gpuRestart*'))+list((Path.home()/'Library/Logs/DiagnosticReports').glob('*gpuRestart*'))
     crashAfter=set((Path.home()/'Library/Logs/DiagnosticReports').glob('*[Ww]eft[Mm]ate*'))
     info={'passed':summary['passedTests'],'failed':summary['failedTests'],'skipped':summary['skippedTests'],'realPersonalHost':True,'syntheticNativeAdapter':True,'realCloud':False,'realHealthKit':False,'syntheticPresentationService':a.addendum or a.fix,'boots':prior['boots'],'gpuResetsAdded':len(set(gpuAfter)-set(reports)),'weftmateCrashesAdded':len(crashAfter-crashes)}
     (evidence/(('fix-ui-validation-boot-' if a.fix else 'addendum-ui-validation-boot-' if a.addendum else 'ui-validation-boot-')+str(prior['boots'])+'.json')).write_text(json.dumps(info,indent=2)+'\n');print(json.dumps(info),flush=True)
-    if result.returncode or info['passed']!=(2 if a.addendum or a.fix else 1) or info['failed'] or info['skipped']:raise RuntimeError('UI batch incomplete; see private log')
+    if result.returncode or info['passed']!=(4 if a.pages and not a.page_journey_only else 2 if a.addendum or a.fix else 1) or info['failed'] or info['skipped']:raise RuntimeError('UI batch incomplete; see private log')
 finally:
     subprocess.run(['xcrun','simctl','shutdown','all'],capture_output=True)
     service.terminate();service.wait(timeout=20)
     if presentation: presentation.terminate();presentation.wait(timeout=20)
     if booted:
-        for _ in range(3):time.sleep(60)
+        finalGpu=list(Path('/Library/Logs/DiagnosticReports').glob('*gpuRestart*'))+list((Path.home()/'Library/Logs/DiagnosticReports').glob('*gpuRestart*'))
+        cooldown=600 if set(finalGpu)-set(reports) else 180
+        for remaining in range(cooldown,0,-30):
+            print('Simulator cooldown:',remaining,'s',flush=True);time.sleep(min(30,remaining))

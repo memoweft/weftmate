@@ -261,7 +261,7 @@ struct PhoneModelsView: View {
 struct PhoneModelEditor: View {
     @ObservedObject var model: PhoneStandaloneModel
     var existing: PhoneModelConfiguration? = nil
-    var body: some View { ModelServiceEditor(store:ModelServiceSettingsModel(app:nil,phone:model),existing:nil) }
+    var body: some View { ModelServiceEditor(store:ModelServiceSettingsModel(app:nil,phone:model),existing:nil,embedded:true) }
 }
 struct PhoneComputerEmptyPage: View {
     @ObservedObject var app: AppleAppModel

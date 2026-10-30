@@ -322,12 +322,14 @@ public actor PersonalClient {
             let anchorKey = "installation-key:" + hostID
             let old = try store.load(key: anchorKey).map { try JSONDecoder().decode([String: String].self, from: $0) }
             if let old, old != material.hostTrust.publicJwk { throw APIFailure.identityMismatch }
+            if let pairing, pairing.publicJwk != material.hostTrust.publicJwk { throw APIFailure.identityMismatch }
             // First contact has passed system CA + hostname verification. After saving the
             // signed pin, /status below must pass the pin too before a content session persists.
             let pin = try HostTrustDelivery.verify(token: material.hostTrust.trustToken,
-                trustedPublicJwk: old ?? material.hostTrust.publicJwk, hostID: hostID, subject: trustSubject,
+                trustedPublicJwk: old ?? pairing?.publicJwk ?? material.hostTrust.publicJwk, hostID: hostID, subject: trustSubject,
                 deviceID: "apple-" + key.thumbprint, thumbprint: key.thumbprint,
                 allowLoopbackHTTP: server.origin.scheme == "http" && ["127.0.0.1", "localhost"].contains(server.origin.host))
+            if let pairing { guard pairing.tlsSpki == pin.tlsSpki else { throw APIFailure.identityMismatch } }
             guard pin.origin == server.originString || pin.relay?.baseUrl == server.originString else { throw APIFailure.identityMismatch }
             if server.origin.scheme == "https" { try hostPins.save(pin.tlsSpki, for: server.originString) }
             try store.save(JSONEncoder().encode(material.hostTrust.publicJwk), key: anchorKey)
@@ -343,6 +345,31 @@ public actor PersonalClient {
         try requireNativeCompatibility(status)
         try persist(provisional); credential = provisional
         return .authenticated(provisional.session)
+    }
+
+    /// Join/reveal carry no session authority. Validate the host commitment before revealing the phone contribution.
+    public func preparePairingV2(server:ServerConfiguration,accessToken:String,deviceName:String,key:CloudDeviceKey,attempt:PairingV2Attempt) async throws -> String {
+        let generation=epoch
+        struct Nonce:Decodable {let nonce:String}
+        struct Reply:Decodable {let state:String;let hostNonce:String;let expiresAt:Int64}
+        func post(_ action:String,_ field:String,_ contribution:String) async throws -> Reply {
+            let nonceResponse=try await rawRequest(server:server,path:"/auth/cloud-nonce",method:"POST",body:Data("{}".utf8))
+            try check(generation);try Task.checkCancellation()
+            let nonce:Nonce=try decode(nonceResponse.body)
+            let path="/cloud/pairings/"+action
+            let proof=try key.proof(url:URL(string:server.originString+"/personal/v1"+path)!,accessToken:accessToken,nonce:nonce.nonce)
+            let body=["accessToken":accessToken,"deviceName":deviceName,"challenge":attempt.pairing.challenge,field:contribution]
+            let response=try await rawRequest(server:server,path:path,method:"POST",body:JSONEncoder().encode(body),extraHeaders:["DPoP":proof])
+            try check(generation);try Task.checkCancellation()
+            return try decode(response.body)
+        }
+        let joined=try await post("join","phoneCommitment",attempt.phoneCommitment)
+        guard ["committed","comparing"].contains(joined.state) else { throw CloudLoginFailure.pairing }
+        let code=try attempt.verifyHost(nonce:joined.hostNonce,expiresAt:joined.expiresAt)
+        let revealed=try await post("reveal","phoneNonce",attempt.phoneNonce)
+        guard revealed.state == "comparing",revealed.hostNonce == joined.hostNonce,
+              try attempt.verifyHost(nonce:revealed.hostNonce,expiresAt:revealed.expiresAt) == code else { throw CloudLoginFailure.pairing }
+        return code
     }
 
     /// A cancelled browser callback may only discard the exact session it just produced.

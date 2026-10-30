@@ -75,8 +75,9 @@ export function syntheticBackend(root) {
   };
   const memoryReceipts = new Map();
   const memoryManager={
+    enabled:true,
     status:async()=>({state:'ready',worldRevision:1,capabilities:{list:true,source:true,correct:false,mute:false,inject:true,deleteEvidence:true,deleteWorldItem:true}}),
-    peek:async()=>({}),query:async(owner,kind,input)=>{
+    peek:()=> 'connected',query:async(owner,kind,input)=>{
       const item={item_id:'memory-synthetic',object_kind:'cognition',current_state:'current',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),source_count:1,value:{content:'偏好简洁的中文解释。'}};
       if(kind==='query_jobs')return {jobs:[...sessions.values()].map(s=>({acceptance:{parent_session_id:s.id,evidence_ids:['synthetic-'+s.id]}}))};
       if(kind==='preview_forget')return {world_revision:1,item_count:3,evidence_count:1,evidence_ids:['synthetic-'+(input.conversation_id??'memory')],items:[{item_id:'synthetic-person',object_kind:'entity',name:'合成人物蓝色纸鹤',item_type:'person'},{item_id:'synthetic-relation',object_kind:'relationship',name:'合成资料协作关系',item_type:'relationship'},{item_id:'memory-synthetic',object_kind:'cognition',name:'偏好简洁的中文解释。',item_type:'preference'}]};

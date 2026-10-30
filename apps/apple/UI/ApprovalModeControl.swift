@@ -21,7 +21,10 @@ struct ApprovalModeControl: View {
                 showingMenu = true
             } label: {
                 #if os(iOS)
-                PhoneOperationModeIcon()
+                if sessionID == nil {
+                    HStack { Text(settings?.mode.title ?? "尚未读取"); Spacer(); WeftIcon("chevron", size: AppleTokens.Space.p12); if busy { ProgressView() } }
+                        .font(AppleTokens.Fonts.body).frame(maxWidth: .infinity, minHeight: AppleTokens.Space.p44)
+                } else { PhoneOperationModeIcon() }
                 #else
                 HStack(spacing: AppleTokens.Space.p3) {
                     WeftIcon("approval", size: compact ? AppleTokens.Space.p16 : AppleTokens.Space.p20)
@@ -41,7 +44,7 @@ struct ApprovalModeControl: View {
             .accessibilityLabel(sessionID == nil ? "默认审批模式" : "审批模式")
             .accessibilityValue(settings?.mode.title ?? "尚未读取")
             .accessibilityIdentifier(sessionID == nil ? "defaultApprovalMode" : "approvalMode")
-            .popover(isPresented: $showingMenu, arrowEdge: .bottom) {
+            .phonePopover(isPresented: $showingMenu) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: AppleTokens.Space.p5) {
                         Text(sessionID == nil ? "新对话的默认模式" : "本对话的审批模式")
@@ -57,7 +60,7 @@ struct ApprovalModeControl: View {
                     }
                     .padding(AppleTokens.Space.p18)
                 }
-                .frame(idealWidth: 330, maxWidth: 330, maxHeight: 520)
+                .frame(idealWidth: menuWidth, maxWidth: menuWidth, maxHeight: 520)
                 .presentationCompactAdaptation(.popover)
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("approvalModeMenu")
@@ -79,6 +82,13 @@ struct ApprovalModeControl: View {
         } message: {
             Text(ApprovalMode.allowAllWarning + (sessionID == nil ? " 此设置将用于新对话。" : " 此设置只用于本对话。"))
         }
+    }
+    private var menuWidth: CGFloat {
+        #if os(iOS)
+        AppleTokens.Phone.menuWidth
+        #else
+        330
+        #endif
     }
     private func modeButton(_ mode: ApprovalMode, number: Int) -> some View {
         Button {
@@ -138,7 +148,8 @@ private struct ApprovalModeButtonStyle: ButtonStyle {
     let compact: Bool
     func makeBody(configuration: Configuration) -> some View {
         #if os(iOS)
-        PhoneIconStyle(onCard:compact).makeBody(configuration: configuration)
+        if compact { PhoneIconStyle(onCard: true).makeBody(configuration: configuration) }
+        else { configuration.label.foregroundStyle(Weave.ink).opacity(configuration.isPressed ? AppleTokens.Opacity.pressed : 1) }
         #else
         if compact {
             configuration.label.frame(minHeight: AppleTokens.Space.p44).opacity(configuration.isPressed ? AppleTokens.Opacity.pressed : 1)

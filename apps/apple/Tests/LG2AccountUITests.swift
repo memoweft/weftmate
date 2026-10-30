@@ -1,184 +1,196 @@
 import XCTest
 
-/// No fake account endpoints: the runner launches cloud main, file mail and an isolated host.
+/// Uses real cloud main, file mail and an isolated host. No account endpoint is mocked.
 final class LG2AccountUITests: XCTestCase {
     override func setUp() { super.setUp(); continueAfterFailure = false }
     private var driver: String { ProcessInfo.processInfo.environment["WEFTMATE_LG2_DRIVER"]! }
     @MainActor private func get(_ path: String) async throws -> [String: String] {
         let (data, response) = try await URLSession.shared.data(from: URL(string: driver + path)!)
         XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw NSError(domain: "LG2Driver", code: 1) }
-        return (try JSONSerialization.jsonObject(with: data) as? [String: String]) ?? [:]
+        return try JSONSerialization.jsonObject(with: data) as! [String: String]
     }
-    @MainActor private func expect(_ element: XCUIElement, timeout: TimeInterval) throws {
-        let found = element.waitForExistence(timeout: timeout)
-        XCTAssertTrue(found, "Required account control is missing")
-        guard found else { throw NSError(domain: "LG2UIExpectation", code: 1) }
+    @MainActor private func control(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
+    @MainActor private func expect(_ item: XCUIElement, timeout: TimeInterval = 20) throws {
+        guard item.exists || item.waitForExistence(timeout: timeout) else { throw NSError(domain: "LG2UI", code: 1,userInfo:[NSLocalizedDescriptionKey:"Missing required native account control"]) }
     }
-    @MainActor private func reveal(_ app: XCUIApplication, _ element: XCUIElement) {
-        // Native Form virtualizes the newly added S1e rows; scroll by role/name until materialized.
-        for up in [true, false] {
-            for _ in 0..<6 {
-                if element.exists && element.isHittable { return }
-                if up { app.swipeUp() } else { app.swipeDown() }
-            }
-        }
-    }
-    @MainActor private func confirmIfNeeded(_ app: XCUIApplication) async throws {
-        if app.textFields["accountCode"].waitForExistence(timeout: 5) {
-            try fill(app, "accountCode", try await get("/code")["code"]!)
-            try tap(app, "accountSubmit")
-        }
-    }
-    @MainActor private func fill(_ app: XCUIApplication, _ id: String, _ value: String, secure: Bool = false) throws {
-        let field = secure ? app.secureTextFields[id] : app.textFields[id]
-        reveal(app, field)
-        try expect(field, timeout: 15)
-        field.tap(); field.typeText(value)
-        if app.buttons["dismissAccountKeyboard"].exists { app.buttons["dismissAccountKeyboard"].tap() }
+    @MainActor private func reveal(_ app: XCUIApplication, _ item: XCUIElement) {
+        for up in [true, false] { for _ in 0..<6 {
+            if item.exists && app.frame.contains(item.frame) && item.isHittable { return }
+            app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:up ? 0.78 : 0.28)).press(forDuration:0.05,thenDragTo:app.coordinate(withNormalizedOffset:CGVector(dx:0.98,dy:up ? 0.28 : 0.78)))
+        } }
     }
     @MainActor private func tap(_ app: XCUIApplication, _ id: String) throws {
-        let button = app.buttons[id]
-        reveal(app, button)
-        try expect(button, timeout: 15)
-        button.tap()
+        let item=app.buttons[id]
+        if !item.exists {_ = item.waitForExistence(timeout:3)}
+        if !item.exists {reveal(app,item)}
+        try expect(item)
+        if !app.frame.contains(item.frame) {reveal(app,item)}
+        if !item.isEnabled {
+            let ready=XCTNSPredicateExpectation(predicate:NSPredicate(format:"enabled == true"),object:item)
+            guard XCTWaiter.wait(for:[ready],timeout:30) == .completed else {throw NSError(domain:"LG2DisabledControl",code:1,userInfo:[NSLocalizedDescriptionKey:"Required button stayed disabled: "+id])}
+        }
+        item.tap()
     }
-    @MainActor private func keep(_ app: XCUIApplication, _ name: String) {
-        let image = XCTAttachment(screenshot: app.screenshot()); image.name = name; image.lifetime = .keepAlways; add(image)
+    @MainActor private func fill(_ app: XCUIApplication, _ id: String, _ value: String, secure: Bool = false) throws {
+        let item = secure ? app.secureTextFields[id] : app.textFields[id]
+        reveal(app, item); try expect(item)
+        if !secure,item.value as? String == value {return}
+        item.tap()
+        if let old=item.value as? String,!old.isEmpty {
+            // A centre tap puts the caret inside an existing email. Move to
+            // its trailing edge before deleting the complete fixture value.
+            item.coordinate(withNormalizedOffset:CGVector(dx:0.95,dy:0.5)).tap()
+            item.typeText(String(repeating:XCUIKeyboardKey.delete.rawValue,count:old.count))
+        }
+        item.typeText(value)
+        if !secure,item.value as? String != value {throw NSError(domain:"LG2TypedValue",code:1,userInfo:[NSLocalizedDescriptionKey:"Typed value did not replace field "+id])}
+        if app.buttons["dismissAccountKeyboard"].exists { app.buttons["dismissAccountKeyboard"].tap() }
+    }
+    @MainActor private func keep(_ app: XCUIApplication, _ name: String) { let image = XCTAttachment(screenshot: app.screenshot()); image.name = name; image.lifetime = .keepAlways; add(image) }
+    @MainActor private func launch() async throws -> (XCUIApplication, [String: String]) {
+        let ready = try await get("/ready")
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "lg2-" + UUID().uuidString, "--lg2-cloud", "--a5-theme", "light", "--health4-render-only", "--server-url", ready["host"]!, "--s1c-cloud-url", ready["cloud"]!]
+        app.launch(); return (app, ready)
+    }
+    @MainActor private func settings(_ app: XCUIApplication) throws {
+        if app.alerts.buttons["以后再说"].exists {app.alerts.buttons["以后再说"].tap()}
+        if app.buttons["知道了"].exists && app.buttons["知道了"].isHittable {app.buttons["知道了"].tap()}
+        if control(app, "closeAuxiliarySheetButton").exists { try tap(app, "closeAuxiliarySheetButton") }
+        if app.alerts.buttons["以后再说"].exists {app.alerts.buttons["以后再说"].tap()}
+        if app.buttons["知道了"].exists && app.buttons["知道了"].isHittable {app.buttons["知道了"].tap()}
+        if control(app, "phoneAccountMenu").exists { try tap(app, "phoneAccountMenu") }
+        else { try tap(app,app.buttons["phone.sidebar"].exists ? "phone.sidebar" : "phoneChat.sidebar"); try tap(app, "phone.sidebar.settings") }
+        try expect(control(app, "settings.accountCard"))
+    }
+    @MainActor private func account(_ app: XCUIApplication) throws { try settings(app); try tap(app, "settings.accountCard") }
+    @MainActor private func login(_ app: XCUIApplication) throws { if !control(app, "authRoot").exists { try account(app) }; try expect(control(app, "authRoot")) }
+    @MainActor private func passwordLogin(_ app: XCUIApplication, password: String) throws {
+        if !app.secureTextFields["accountPassword"].exists { app.segmentedControls["loginMethod"].buttons["密码"].tap() }
+        try fill(app, "accountPassword", password, secure: true)
+        try tap(app, "accountSubmit")
+    }
+    @MainActor private func confirmDevice(_ app: XCUIApplication) async throws {
+        if app.textFields["accountCode"].waitForExistence(timeout: 5) { try fill(app, "accountCode", try await get("/code")["code"]!); try tap(app, "accountSubmit") }
+    }
+    @MainActor private func signedIn(_ app:XCUIApplication) async throws {
+        try await workspace(app)
+        try account(app);try expect(control(app,"signedInEmail"),timeout:30)
+    }
+    @MainActor private func workspace(_ app:XCUIApplication) async throws {
+        let root=XCTNSPredicateExpectation(predicate:NSPredicate {_,_ in
+            ["phoneAccountMenu","phone.sidebar","phoneChat.sidebar"].contains {id in
+                let button=app.buttons[id];return button.exists && button.isHittable
+            }
+        },object:nil)
+        guard await XCTWaiter.fulfillment(of:[root],timeout:30) == .completed else {throw NSError(domain:"LG2Workspace",code:1)}
+    }
+    @MainActor private func loggedOut(_ app:XCUIApplication) async throws {
+        // Account changes dismiss the old settings sheet. Reopen from the
+        // stable workspace rather than observing the briefly visible AuthView.
+        try await workspace(app)
+        try account(app);try expect(control(app,"authRoot"))
+    }
+    @MainActor private func logout(_ app:XCUIApplication) async throws {
+        try tap(app,"accountLogout")
+        try expect(app.buttons["退出登录"],timeout:10)
+        keep(app,"ios-logout-confirmation")
+        try tap(app,"退出登录");try await loggedOut(app)
+    }
+    @MainActor private func registered(_ app: XCUIApplication, credentials: [String: String]) async throws {
+        try login(app); try tap(app, "accountRegistration")
+        if (app.textFields["accountEmail"].value as? String) != credentials["email"]! { try fill(app, "accountEmail", credentials["email"]!) }
+        try tap(app, "accountSubmit"); try fill(app, "accountCode", try await get("/code")["code"]!); try tap(app, "accountSubmit")
+        try fill(app, "accountPassword", credentials["password"]!, secure: true); try fill(app, "accountRepeatedPassword", credentials["password"]!, secure: true)
+        try tap(app, "accountSubmit"); try expect(app.textFields["accountDeviceName"]); try tap(app, "accountSubmit"); try await confirmDevice(app)
+        try await workspace(app)
+        try account(app)
+        try expect(control(app, "signedInEmail"), timeout: 30)
     }
     @MainActor func testRealRegistrationRecoveryAndLogout() async throws {
-        let ready = try await get("/ready"), credentials = try await get("/credentials")
-        let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "lg2-" + UUID().uuidString.prefix(8),
-            "--lg2-cloud", "--a5-theme", "light", "--server-url", ready["host"]!, "--s1c-cloud-url", ready["cloud"]!, "--s1c-qr-url", driver + "/pairing.png"]
-        app.launch()
-        try tap(app, "openAccountLogin")
-        try expect(app.staticTexts["登录 WeftMate"], timeout: 30)
-        XCTAssertFalse(app.buttons["cloudScan"].exists)
-        XCTAssertFalse(app.textFields["serverURL"].exists)
-        keep(app, "ios-login")
-        try fill(app, "accountEmail", credentials["email"]!)
-        try fill(app, "accountPassword", UUID().uuidString, secure: true)
-        try tap(app, "accountSubmit")
-        try expect(app.staticTexts["邮箱或密码不对，请检查后重试。"], timeout: 20)
-        keep(app, "ios-login-error")
-        try tap(app, "accountRegistration")
-        try tap(app, "《服务条款》")
-        try expect(app.navigationBars["服务条款"], timeout: 10)
+        let credentials = try await get("/credentials"), (app, _) = try await launch(); defer { app.terminate() }
+        try login(app); keep(app, "ios-login")
+        try fill(app, "accountEmail", credentials["email"]!); try passwordLogin(app, password: UUID().uuidString)
+        try expect(app.staticTexts["邮箱或密码不对，请检查后重试。"]); keep(app, "ios-login-error")
+        try tap(app, "accountRegistration"); try tap(app, "服务条款")
+        try expect(app.navigationBars["服务条款"])
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "WeftMate 服务条款")).firstMatch.exists)
-        try tap(app, "完成")
-        try tap(app, "accountSubmit")
-        try expect(app.textFields["accountCode"], timeout: 20)
-        try fill(app, "accountCode", try await get("/code")["code"]!)
-        try tap(app, "accountSubmit")
-        try fill(app, "accountPassword", credentials["password"]!, secure: true)
-        try fill(app, "accountRepeatedPassword", credentials["password"]!, secure: true)
-        try tap(app, "accountSubmit")
-        try expect(app.textFields["accountDeviceName"], timeout: 10)
-        try tap(app, "accountSubmit")
-        try expect(app.textFields["accountCode"], timeout: 20)
-        try fill(app, "accountCode", try await get("/code")["code"]!)
-        try tap(app, "accountSubmit")
-        try expect(app.buttons["retryComputer"], timeout: 30)
-        keep(app, "ios-registered")
-        _ = try await get("/bootstrap")
-        try tap(app, "设置 → 设备")
-        try tap(app, "刷新设备")
-        try expect(app.staticTexts["LG2 测试电脑"], timeout: 20)
-        keep(app, "ios-devices")
-        // AUTH-1 has no scan/approval UI. Direct connection is covered by APPLE2LoginUITests.
-        XCTAssertFalse(app.buttons["cloudRequestApproval"].exists)
-        XCTAssertFalse(app.staticTexts["cloudWaiting"].exists)
-        try tap(app, "closeAuxiliarySheetButton")
-        try tap(app, "设置 → 账户")
-        try expect(app.staticTexts["signedInEmail"], timeout: 15)
-        XCTAssertTrue(app.staticTexts["signedInEmail"].label.contains(credentials["email"]!))
-        keep(app, "ios-account")
-        try tap(app, "accountLogout")
-        let logout = app.sheets.buttons.matching(NSPredicate(format: "label == %@ AND identifier != %@", "退出登录", "accountLogout")).firstMatch
-        try expect(logout, timeout: 5); logout.tap()
-        try tap(app, "openAccountLogin")
-        try expect(app.staticTexts["登录 WeftMate"], timeout: 30)
+        app.navigationBars.buttons.firstMatch.tap(); try tap(app, "account.backToLogin")
+        try await registered(app, credentials: credentials); keep(app, "ios-registered")
+        try await logout(app)
         try tap(app, "accountRecovery")
-        // Successful logout retains only this form's email, never the password/code/ticket.
         if (app.textFields["accountEmail"].value as? String) != credentials["email"]! { try fill(app, "accountEmail", credentials["email"]!) }
-        try tap(app, "accountSubmit")
-        try fill(app, "accountCode", try await get("/code")["code"]!)
-        try tap(app, "accountSubmit")
-        try fill(app, "accountPassword", credentials["nextPassword"]!, secure: true)
-        try fill(app, "accountRepeatedPassword", credentials["nextPassword"]!, secure: true)
-        try tap(app, "accountSubmit")
-        try expect(app.staticTexts["密码已更新，请登录。"], timeout: 20)
+        try tap(app, "accountSubmit"); try fill(app, "accountCode", try await get("/code")["code"]!); try tap(app, "accountSubmit")
+        try fill(app, "accountPassword", credentials["nextPassword"]!, secure: true); try fill(app, "accountRepeatedPassword", credentials["nextPassword"]!, secure: true); try tap(app, "accountSubmit")
+        try expect(app.staticTexts["密码已更新，请登录。"])
         XCTAssertEqual(app.textFields["accountEmail"].value as? String, credentials["email"]!)
-        keep(app, "ios-password-recovered")
-        try fill(app, "accountPassword", credentials["nextPassword"]!, secure: true)
-        try tap(app, "accountSubmit")
-        try await confirmIfNeeded(app)
-        try expect(app.buttons["设置 → 账户"], timeout: 30)
-        keep(app, "ios-recovered-login")
-        app.terminate()
+        keep(app, "ios-password-recovered"); try passwordLogin(app, password: credentials["nextPassword"]!); try await confirmDevice(app)
+        try await signedIn(app); keep(app, "ios-recovered-login")
     }
-
     @MainActor func testRealAccountLifecycleOnFreshCloud() async throws {
-        let ready = try await get("/ready"), credentials = try await get("/credentials")
-        let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "lg2-life-" + UUID().uuidString.prefix(8),
-            "--lg2-cloud", "--a5-theme", "light", "--server-url", ready["host"]!, "--s1c-cloud-url", ready["cloud"]!]
-        app.launch()
-        try tap(app, "openAccountLogin")
-        try expect(app.staticTexts["登录 WeftMate"], timeout: 30)
-        try tap(app, "accountRegistration")
-        try fill(app, "accountEmail", credentials["email"]!)
-        try tap(app, "accountSubmit")
-        try fill(app, "accountCode", try await get("/code")["code"]!)
-        try tap(app, "accountSubmit")
-        try fill(app, "accountPassword", credentials["password"]!, secure: true)
-        try fill(app, "accountRepeatedPassword", credentials["password"]!, secure: true)
-        try tap(app, "accountSubmit"); try tap(app, "accountSubmit")
-        try await confirmIfNeeded(app)
-        try expect(app.buttons["设置 → 设备"], timeout: 30)
+        let credentials = try await get("/credentials"), (app, ready) = try await launch(); defer { app.terminate() }
+        try await registered(app, credentials: credentials)
         _ = try await get("/bootstrap")
-        // S1e was merged while this package was in progress: exercise the newly available UI.
-        try tap(app, "设置 → 设备")
-        try tap(app, "renameDevice." + ready["computerDeviceId"]!)
-        let renamed = "LG2 已改名电脑"
-        let name = app.alerts.textFields.firstMatch
-        try expect(name, timeout: 10); name.tap()
-        name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "LG2 测试电脑".count) + renamed)
-        app.alerts.buttons["保存"].tap()
-        try expect(app.staticTexts[renamed].firstMatch, timeout: 20)
-        keep(app, "ios-device-renamed")
-        try tap(app, "removeDevice." + ready["computerDeviceId"]!)
-        app.sheets.buttons["将设备下线"].firstMatch.tap()
-        let removed = NSPredicate { _, _ in !app.buttons["removeDevice." + ready["computerDeviceId"]!].exists }
+        try settings(app); try tap(app, "settingsCategory.devices"); try tap(app, "devices.refresh")
+        let device = ready["computerDeviceId"]!, renamed = "LG2 已改名电脑"
+        try tap(app, "device.actions." + device); try tap(app, "renameDevice." + device)
+        let field = app.textFields["devices.renameField"]; try expect(field); field.tap()
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: (field.value as? String ?? "").count) + renamed)
+        try tap(app, "devices.saveName"); try expect(app.staticTexts[renamed]); keep(app, "ios-device-renamed")
+        try tap(app, "device.actions." + device); try tap(app, "removeDevice." + device); try tap(app, "devices.confirmRemove")
+        let revokedDevice = control(app, "device.actions." + device)
+        let removed = NSPredicate { _, _ in !revokedDevice.exists }
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: removed, object: nil)], timeout: 20), .completed)
-        try tap(app, "closeAuxiliarySheetButton")
-        try tap(app, "设置 → 账户")
-        try tap(app, "退出所有其他设备")
-        app.sheets.buttons["退出其他设备"].firstMatch.tap()
-        try expect(app.staticTexts["其他设备已退出。"], timeout: 20)
-        let changedEmail = "lg2-renamed@example.com"
-        try fill(app, "新邮箱", changedEmail)
-        try tap(app, "发送新邮箱验证码")
-        reveal(app, app.textFields["新邮箱验证码"])
-        try expect(app.textFields["新邮箱验证码"], timeout: 20)
-        try fill(app, "新邮箱验证码", try await get("/code")["code"]!)
-        try tap(app, "确认换绑邮箱")
-        try tap(app, "openAccountLogin")
-        try expect(app.staticTexts["邮箱已更新，请用新邮箱登录。"], timeout: 20)
-        XCTAssertEqual(app.textFields["accountEmail"].value as? String, changedEmail)
-        try fill(app, "accountPassword", credentials["password"]!, secure: true)
-        try tap(app, "accountSubmit")
-        try await confirmIfNeeded(app)
-        try expect(app.buttons["设置 → 账户"], timeout: 30)
-        try tap(app, "设置 → 账户")
-        try fill(app, "输入密码确认注销", credentials["password"]!, secure: true)
-        try tap(app, "注销账号")
-        let delete = app.sheets.buttons["永久注销账号"].firstMatch
-        try expect(delete, timeout: 10); delete.tap()
-        try tap(app, "openAccountLogin")
-        try expect(app.staticTexts["账号已注销，本机对话与记忆保留。"], timeout: 30)
-        keep(app, "ios-account-deleted")
-        app.terminate()
+        try account(app); try tap(app, "account.logoutOthers"); try tap(app, "退出其他设备")
+        let logoutNotice=app.staticTexts["其他设备已退出。"].firstMatch
+        reveal(app,logoutNotice);try expect(logoutNotice)
+        try tap(app, "account.changeEmail"); try fill(app, "account.newEmail", "lg2-renamed@example.com")
+        try tap(app, "account.sendEmailCode"); try fill(app, "account.newEmailCode", try await get("/code")["code"]!); try tap(app, "account.confirmEmail")
+        try await loggedOut(app); try expect(app.staticTexts["邮箱已更新，请用新邮箱登录。"])
+        XCTAssertEqual(app.textFields["accountEmail"].value as? String, "lg2-renamed@example.com")
+        try passwordLogin(app, password: credentials["password"]!); try await confirmDevice(app);try await signedIn(app)
+        try expect(app.staticTexts["lg2-renamed@example.com"].firstMatch)
+        try tap(app, "account.delete"); try fill(app, "account.deletePassword", credentials["password"]!, secure: true)
+        try tap(app, "account.confirmDelete"); try tap(app, "永久注销账号")
+        try await loggedOut(app); try expect(app.staticTexts["账号已注销，本机对话与记忆保留。"], timeout: 30); keep(app, "ios-account-deleted")
+    }
+    @MainActor func testRealWrongExpiredCodeAndResendCooldown() async throws {
+        let credentials=try await get("/credentials"),(app,_)=try await launch();defer{app.terminate()}
+        try login(app);try tap(app,"accountRegistration");try fill(app,"accountEmail",credentials["email"]!);try tap(app,"accountSubmit")
+        let original=try await get("/code")["code"]!
+        let wrong=(original.first == "0" ? "1" : "0")+String(original.dropFirst())
+        try fill(app,"accountCode",wrong);try tap(app,"accountSubmit")
+        try expect(app.staticTexts["验证码不对，请检查邮件中的 6 位数字。"])
+        XCTAssertFalse(app.buttons["accountResend"].isEnabled)
+        _ = try await get("/expire-code")
+        try fill(app,"accountCode",original);try tap(app,"accountSubmit")
+        try expect(app.staticTexts["验证码不对、已过期或尝试次数已用完，请重新发送验证码。"])
+        let retry=XCTNSPredicateExpectation(predicate:NSPredicate(format:"enabled == true"),object:app.buttons["accountResend"])
+        let ready=await XCTWaiter.fulfillment(of:[retry],timeout:75);XCTAssertEqual(ready,.completed)
+        try tap(app,"accountResend");try fill(app,"accountCode",try await get("/code")["code"]!);try tap(app,"accountSubmit")
+        try expect(app.secureTextFields["accountPassword"]);keep(app,"real-code-retried")
+    }
+    @MainActor func testRealDirectPasswordChange() async throws {
+        let credentials=try await get("/credentials"),(app,_)=try await launch();defer{app.terminate()}
+        try await registered(app,credentials:credentials);try tap(app,"account.changePassword")
+        try fill(app,"account.currentPassword",credentials["password"]!,secure:true)
+        try fill(app,"account.newPassword",credentials["nextPassword"]!,secure:true)
+        try fill(app,"account.repeatPassword",credentials["nextPassword"]!,secure:true);try tap(app,"account.savePassword")
+        try await loggedOut(app);try fill(app,"accountEmail",credentials["email"]!);try passwordLogin(app,password:credentials["nextPassword"]!);try await confirmDevice(app)
+        try await signedIn(app);keep(app,"real-password-changed")
+    }
+    @MainActor func testRealOfflineLoginCanRetryWithoutLosingEmail() async throws {
+        let credentials=try await get("/credentials"),(app,_)=try await launch();defer{app.terminate()}
+        try await registered(app,credentials:credentials);try await logout(app)
+        try fill(app,"accountEmail",credentials["email"]!)
+        app.segmentedControls["loginMethod"].buttons["验证码"].tap()
+        XCTAssertEqual(app.buttons["accountSubmit"].label,"发送验证码")
+        _ = try await get("/cloud-offline")
+        try tap(app,"accountSubmit")
+        try expect(control(app,"authError"),timeout:90)
+        XCTAssertEqual(app.textFields["accountEmail"].value as? String,credentials["email"]!)
+        _ = try await get("/cloud-online")
+        try tap(app,"accountSubmit");try expect(app.textFields["accountCode"],timeout:30)
+        keep(app,"real-network-retry")
     }
 }

@@ -2,9 +2,17 @@ import Foundation
 import Testing
 @testable import WeftMateCore
 
+@Test func phoneSettingsEveryCategoryHasAVisibleSection() {
+    let rows = AppleSettingsRegistry.list(desktop: false)
+    #expect(rows.filter { $0.id != "account" }.allSatisfy { AppleSettingsRegistry.phoneGroups.contains($0.group) })
+    #expect(rows.filter { $0.group == "对话与维护" }.map(\.id) == ["phone-chats", "archived", "system", "about"])
+    #expect(rows.filter { $0.id == "system" }.count == 1)
+    #expect(AppleSettingsRegistry.list(desktop: false, query: "运行 日志").map(\.id) == ["about"])
+}
+
 @Test func a6RegistryMatchesD31OrderAndPlatformScope() {
     #expect(AppleSettingsRegistry.list(desktop: true).map(\.name) == ["常规", "外观", "账户", "设备", "用量", "已归档", "模型", "审批", "记忆", "提醒与定时任务", "系统状态", "备份与恢复", "关于"])
-    #expect(AppleSettingsRegistry.list(desktop: false).count == 13)
+    #expect(AppleSettingsRegistry.list(desktop: false).count == 14)
     #expect(AppleSettingsRegistry.list(desktop: false).allSatisfy { !$0.desktopOnly })
     #expect(Set(AppleSettingsRegistry.categories.map(\.id)).count == 13)
     #expect(AppleSettingsRegistry.category("appearance")?.icon == "palette")

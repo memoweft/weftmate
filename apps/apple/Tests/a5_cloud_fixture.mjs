@@ -9,6 +9,7 @@ import { join, resolve } from 'node:path';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { promisify } from 'node:util';
 import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
+import {localCloudRoute} from './local_cloud_route.mjs';
 import { generateKeyPair, exportJWK, SignJWT } from '../../../services/cloud/node_modules/jose/dist/webapi/index.js';
 import { syntheticBackend } from './a5_synthetic_backend.mjs';
 import { createBackupManager } from '../../../src/personal-backup/index.mjs';
@@ -20,8 +21,10 @@ const password = randomBytes(24).toString('base64url'), nextPassword = randomByt
 const email = 'lg2-synthetic@example.com';
 async function port() { const s = tcpServer(); s.listen(0,'127.0.0.1'); await once(s,'listening'); const p=s.address().port; await new Promise(r=>s.close(r)); return p; }
 const cloudOrigin = `http://127.0.0.1:${await port()}`;
+const internalPort=await port();let hostOrigin;
+const cloudRoute=await localCloudRoute({origin:cloudOrigin,upstreamPort:internalPort,hostOrigin:()=>hostOrigin});
 const child = spawn(process.execPath, ['services/cloud/src/main.mjs'], { cwd: resolve('.'), env: { ...process.env,
-    CLOUD_PORT: new URL(cloudOrigin).port, CLOUD_DATA_DIR: cloudDir, CLOUD_ISSUER: cloudOrigin+P+'/oidc', CLOUD_MAIL_TRANSPORT:'file',
+    CLOUD_TRUST_PROXY:'true', CLOUD_PORT: String(internalPort), CLOUD_DATA_DIR: cloudDir, CLOUD_ISSUER: cloudOrigin+P+'/oidc', CLOUD_MAIL_TRANSPORT:'file',
     CLOUD_OIDC_CLIENTS: JSON.stringify([{client_id:'weftmate-apple',redirect_uris:['com.weftmate.apple:/oauth/callback']}]) }, stdio:['ignore','ignore','pipe'] });
 child.stderr.on('data', () => {});
 for(let i=0;i<100;i++){try{if((await fetch(cloudOrigin+'/healthz')).ok)break;}catch{} await new Promise(r=>setTimeout(r,100));}
@@ -63,12 +66,13 @@ const backupManager = await createBackupManager({root:profile,isIdle:async()=>![
 const host = await createPersonalAccessService({root:join(profile,'personal-access'),port:0,cloudIdentity:{issuer:cloudOrigin+P+'/oidc',allowInsecureLoopback:true},backend:synthetic.backend,memoryManager:synthetic.memoryManager,systemManager,backupManager});
 synthetic.attach(host);
 const started = await host.start();
+hostOrigin=started.origin;
 await backupManager.started();
 const key = await generateKeyPair('ES256'), publicJwk = await exportJWK(key.publicKey);
 const sha = v => createHash('sha256').update(v).digest('base64url');
 async function proof(url, accessToken, nonce) { return new SignJWT({htu:url,htm:'POST',...(accessToken?{ath:sha(accessToken)}:{}),...(nonce?{nonce}:{})})
     .setProtectedHeader({typ:'dpop+jwt',alg:'ES256',jwk:publicJwk}).setIssuedAt().setJti(randomUUID()).sign(key.privateKey); }
-let local, desktopTokens, ids;
+let local, desktopTokens, ids, activePair;
 async function desktopLogin() {
     const jar = new Map();
     async function api(path,body,headers={},form=false) {
@@ -96,7 +100,7 @@ const qrBinary=join(root,'qr'); await run('swiftc',['apps/apple/Tests/s1c_qr_ima
 const ticker=setInterval(()=>synthetic.consumeApprovals().catch(error=>process.stderr.write(error.message+'\n')),200);
 const driver = createServer(async(req,res)=>{
     try {
-        const path=new URL(req.url,'http://127.0.0.1').pathname;
+        const target=new URL(req.url,'http://127.0.0.1'),path=target.pathname;
         let result;
         if(path==='/credentials')result={email,password,nextPassword};
         else if(path==='/a5/setup'){
@@ -122,9 +126,13 @@ const driver = createServer(async(req,res)=>{
             reminderRows.set(ids.review,[{id:'a6-reminder',nativeId:'synthetic-native',text:'合成提醒：检查本周计划',kind:'reminder',timeZone:'America/Los_Angeles',repeat:null,state:'scheduled',nextRunAt:'2050-10-08T20:00:00Z',lastRunAt:null,approvalMode:'auto'}]);
             result={ok:true};
         } else if(path==='/pairing.png'){
-            const pair=await direct('/cloud/pairings',{}); const png=join(root,'pair.png');
+            const pair=await direct('/cloud/pairings',{});activePair=pair;const png=join(root,'pair.png');
             await new Promise((resolve,reject)=>{const proc=spawn(qrBinary,[png]);proc.stdin.end('wm1.'+Buffer.from(JSON.stringify(pair)).toString('base64url'));proc.once('exit',c=>c===0?resolve():reject(new Error('QR failed')));});
             res.writeHead(200,{'content-type':'image/png'});res.end(await readFile(png));return;
+        } else if(path==='/pairing/status'){
+            result=await direct('/cloud/pairings/status',{challenge:activePair.challenge});
+        } else if(path==='/pairing/confirm'||path==='/pairing/cancel'){
+            result=await direct('/cloud/pairings/decision',{challenge:activePair.challenge,decision:path.endsWith('confirm')?'confirm':'cancel',...(path.endsWith('confirm')?{verificationCode:target.searchParams.get('code')}:{})});
         } else if(path==='/approve'){
             const pending=await direct('/cloud/devices/pending');const device=pending.devices.at(-1);
             if(!device)throw new Error('No pending device');
@@ -140,6 +148,15 @@ const driver = createServer(async(req,res)=>{
         else if(path.startsWith('/a8/'))result=await synthetic.a8(path.slice(4),synthetic.sessions.get(ids.review));
         else if(path==='/a5/ids'){const chats=(await direct('/chats?kind=side&archived=all&limit=200')).items;result={...ids,chatIDs:Object.fromEntries(Object.entries(ids).map(([key,id])=>[key,chats.find(c=>c.activeSessionId===id)?.chatId??id]))};}
         else if(path==='/a6/settings-report'){result={schedules:scheduleCalls,backups:await direct('/backups'),system:await direct('/system')};}
+        else if(path==='/a6/seed-usage'){
+            // Distinct real ledger entries make session filtering observable even
+            // though the phone presents currency rounded to two decimal places.
+            for(const [sessionId,prompt_tokens] of [[ids.review,2_000_000],[ids.queue,10_000_000]]){
+                const entry=await host.beginUsage({sessionId,profileId:'mimo'});
+                await host.finishUsage({...entry,usage:{prompt_tokens,completion_tokens:100_000},source:'openai-compatible'});
+            }
+            result={ok:true};
+        }
         else if(path==='/a7/seed-archived'){result=await direct('/sessions/'+ids.deletion+'/archive',{});}
         else if(path==='/a5/report'){result={operations:synthetic.operations,memoryDeletes:synthetic.memoryDeletes,approvalState:await direct('/sessions/'+ids.review+'/approvals'),approvalReasons:Object.values(JSON.parse(await readFile(join(profile,'personal-access','store.json'),'utf8')).accounts).flatMap(account=>Object.values(account.commands).flatMap(command=>(command.toolApprovals??[]).map(row=>({status:row.status,reasonCode:row.invalidationReason,taskId:row.taskId})))),usage:await direct('/usage'),sessions:await direct('/sessions?archived=all'),ids,workspaceExists:Object.fromEntries(await Promise.all(Object.entries(ids??{}).map(async([name,id])=>[name,await access(join(profile,'workspaces',id)).then(()=>true,()=>false)])))};}
         else if(path==='/a5/complete'){const s=synthetic.sessions.get(ids.queue);synthetic.finish(s);result={ok:true};}
@@ -163,5 +180,5 @@ const driver = createServer(async(req,res)=>{
 });
 driver.listen(0,'127.0.0.1');await once(driver,'listening');
 console.log(JSON.stringify({root,driver:`http://127.0.0.1:${driver.address().port}`}));
-async function close(){clearInterval(ticker);await backupManager.stopOnline();await host.close();await new Promise(r=>driver.close(r));db.close();child.kill('SIGTERM');await once(child,'exit');await rm(root,{recursive:true,force:true});}
+async function close(){clearInterval(ticker);await backupManager.stopOnline();await host.close();await new Promise(r=>driver.close(r));await cloudRoute.close();db.close();child.kill('SIGTERM');await once(child,'exit');await rm(root,{recursive:true,force:true});}
 process.once('SIGTERM',()=>close().then(()=>process.exit()));process.once('SIGINT',()=>close().then(()=>process.exit()));

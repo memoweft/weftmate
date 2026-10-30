@@ -8,6 +8,7 @@ struct PhoneActionStyle: ButtonStyle {
     var destructive = false
     var selected = false
     var onCard = false
+    var fillsWidth = false
     var horizontalPadding = AppleTokens.Space.p12
     @Environment(\.isEnabled) private var enabled
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -15,7 +16,7 @@ struct PhoneActionStyle: ButtonStyle {
         let state = PhonePresentation.controlState(selected: selected, pressed: configuration.isPressed, enabled: enabled)
         configuration.label.font(AppleTokens.Fonts.callout.weight(.medium))
             .padding(.horizontal, horizontalPadding)
-            .frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44)
+            .frame(minWidth: AppleTokens.Space.p44, maxWidth: fillsWidth ? .infinity : nil, minHeight: AppleTokens.Space.p44)
             .foregroundStyle(primary ? Weave.onAccent : destructive ? Weave.danger : Weave.accent)
             .background(primary ? Weave.accent : selected ? Weave.accentSoft : onCard ? Weave.surface : Weave.soft, in: Capsule())
             .opacity(state == "disabled" ? AppleTokens.Opacity.disabled : state == "pressed" ? AppleTokens.Opacity.pressed : 1)

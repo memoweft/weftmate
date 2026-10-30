@@ -72,13 +72,11 @@ struct PhoneWorkspace: View {
         NavigationStack(path: path) {
             page(item).onAppear { visibleRoots.insert(item) }.onDisappear { visibleRoots.remove(item) }
                 .navigationDestination(for: String.self) { id in
-                    destination(id)
-                        .toolbar(PhoneSidebarDestination(rawValue: id) != nil || id == "a16-side-list" ? .visible : .automatic, for: .navigationBar)
-                        .toolbar {
-                            if PhoneSidebarDestination(rawValue: id) != nil || id == "a16-side-list" {
+                    if PhoneSidebarDestination(rawValue:id) != nil || id == "a16-side-list" {
+                        destination(id).toolbar(.visible,for:.navigationBar).toolbar {
                                 ToolbarItem(placement: .topBarTrailing) { PhoneSidebarButton() }
-                            }
                         }
+                    } else { destination(id) }
                 }
                 .toolbar {
                     if item != .chat {
@@ -112,7 +110,7 @@ struct PhoneWorkspace: View {
             else { PhoneActivityView(app: model) }
         case .health:
             if model.session == nil { PhoneLocalHealthView(app: model) }
-            else { HealthPageView(app: model, ask: { text in Task { await ask(text) } }).toolbar { PhoneAccountMenu(model: model) } }
+            else { HealthPageView(app: model, ask: { text in Task { await ask(text) } }).toolbar { PhoneAccountMenu(model: model) }.navigationTitle("健康").navigationBarTitleDisplayMode(.large) }
         }
     }
     @ViewBuilder private func destination(_ id: String) -> some View {
@@ -138,11 +136,13 @@ struct PhoneWorkspace: View {
         } else if id == "daily-review" { DailyReviewView(app: model) }
         else if id == "health" { HealthPageView(app: model, ask: { text in Task { await ask(text) } }) }
         else if let row = model.conversations.first(where: { $0.id == id }) {
-            if row.isMainChat || model.mainChat.capabilities.supports("workAndChat") && row.logicalHistory == true {
-                MainChatView(app: model, chatID: row.isMainChat ? nil : row.chatId).id(row.id)
-            } else {
-                ConversationView(model: model, conversation: row).id(row.id + (row.sessionId ?? model.taskSessionID(for: row, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(row.chatContentRevision ?? 0))
-            }
+            Group {
+                if row.isMainChat || model.mainChat.capabilities.supports("workAndChat") && row.logicalHistory == true {
+                    MainChatView(app: model, chatID: row.isMainChat ? nil : row.chatId).id(row.id)
+                } else {
+                    ConversationView(model: model, conversation: row).id(row.id + (row.sessionId ?? model.taskSessionID(for: row, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(row.chatContentRevision ?? 0))
+                }
+            }.environment(\.phoneNavigationBack, { if !chatPath.isEmpty { chatPath.removeLast() } })
         } else { EmptyState(symbol: "chat", title: "会话已变更", message: "返回会话列表后刷新。") }
     }
     private func openSidebar() {

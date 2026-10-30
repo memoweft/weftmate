@@ -127,9 +127,11 @@ public actor RunLog {
     private let encoder: JSONEncoder
     private var sequence = 0
     private var resumePending = false
+    private var recordingEnabled: Bool
     public init(directory: URL, platform: RunPlatform, appVersion: String, osVersion: String,
                 policy: RunLogPolicy = .standard, now: @escaping @Sendable () -> Date = { Date() }) {
         self.directory = directory; self.platform = platform; self.policy = policy; self.now = now
+        recordingEnabled = !FileManager.default.fileExists(atPath: directory.appendingPathComponent("recording-disabled").path)
         // Versions come from trusted bundle / OS metadata, not user input.
         self.appVersion = Self.version(appVersion); self.osVersion = Self.version(osVersion)
         encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
@@ -146,6 +148,7 @@ public actor RunLog {
         try url.setResourceValues(resources)
     }
     @discardableResult public func start() -> RunLogSnapshot {
+        guard recordingEnabled else { return snapshot() }
         guard marker == nil else { return snapshot() }
         do {
             try prepare()
@@ -166,7 +169,7 @@ public actor RunLog {
     }
     public func record(_ event: RunEvent, fields: [String: String] = [:]) { write(event, fields: fields) }
     public func state(_ value: String) {
-        guard ["foreground", "background", "inactive"].contains(value), marker != nil else { return }
+        guard recordingEnabled, ["foreground", "background", "inactive"].contains(value), marker != nil else { return }
         if value == "background" { resumePending = true }
         let resumed = value == "foreground" && resumePending
         if value == "foreground" { resumePending = false }
@@ -182,6 +185,7 @@ public actor RunLog {
         do { try saveMarker() } catch { readable = false }
     }
     public func diagnostic(_ event: RunEvent, fields: [String: String], tree: Data = Data(), begin: Date? = nil, end: Date? = nil, diagnosticVersion: String? = nil) {
+        guard recordingEnabled else { return }
         guard [.crash, .hang, .cpu, .disk].contains(event) else { return }
         if marker == nil { _ = start() } // MetricKit may deliver immediately while the UI boot task is still scheduled.
         var fields = fields
@@ -202,7 +206,7 @@ public actor RunLog {
         write(.reports, fields: ["reportCount": String(safe.count)], reports: Array(safe.suffix(50)))
     }
     @discardableResult private func write(_ event: RunEvent, fields: [String: String], previous: RunLogMarker? = nil, frames: [String]? = nil, reports: [RunReportReference]? = nil, begin: Date? = nil, end: Date? = nil, diagnosticVersion: String? = nil) -> Bool {
-        guard let current = marker else { return false }
+        guard recordingEnabled, let current = marker else { return false }
         do {
             let date = now(); highWater = max(date, highWater ?? date)
             let at = Self.timestamp(date)
@@ -245,7 +249,9 @@ public actor RunLog {
         }
     }
     public func records() -> [RunLogRecord] {
-        guard marker != nil else { return [] }
+        // A failed active-run start must keep its failure until explicit recovery.
+        // Stopped recording can still read the previously retained log files.
+        guard marker != nil || !recordingEnabled else { return [] }
         do {
             let rows = try files().flatMap { url in
                 try Data(contentsOf: url).split(separator: 10).map { try JSONDecoder().decode(RunLogRecord.self, from: Data($0)) }
@@ -280,7 +286,7 @@ public actor RunLog {
         return accepted
     }
     public func receiveWatch(_ data: Data) -> Bool {
-        guard platform == .ios, data.count <= 256 * 1024,
+        guard recordingEnabled, platform == .ios, data.count <= 256 * 1024,
               let incoming = try? JSONDecoder().decode([RunLogRecord].self, from: data), incoming.count <= 150,
               incoming.allSatisfy({ row in
                   row.platform == .watchos && UUID(uuidString: row.runId) != nil &&
@@ -322,5 +328,25 @@ public actor RunLog {
             let url = exportRoot.appendingPathComponent("shared-run-log.jsonl")
             try bytes.write(to: url, options: .atomic); return url
         } catch { readable = false; return nil }
+    }
+    public func isRecordingEnabled() -> Bool { recordingEnabled }
+    public func setRecordingEnabled(_ enabled: Bool) throws {
+        try prepare()
+        let disabled = directory.appendingPathComponent("recording-disabled")
+        if enabled {
+            if FileManager.default.fileExists(atPath: disabled.path) { try FileManager.default.removeItem(at: disabled) }
+            recordingEnabled = true; marker = nil; _ = start()
+        } else {
+            try Data().write(to: disabled, options: .atomic)
+            recordingEnabled = false; marker?.clean = true; try saveMarker()
+        }
+    }
+    /// Remove only this logger's generated files. Unrelated files and Watch records stay intact.
+    public func clearRecords() throws {
+        try prepare()
+        for url in try files() { try FileManager.default.removeItem(at: url) }
+        if FileManager.default.fileExists(atPath: markerURL.path) { try FileManager.default.removeItem(at: markerURL) }
+        marker = nil; previous = nil; highWater = nil; sequence = 0; readable = true
+        if recordingEnabled { _ = start() }
     }
 }

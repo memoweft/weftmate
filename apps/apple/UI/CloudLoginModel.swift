@@ -64,14 +64,31 @@ final class CloudLoginModel: ObservableObject {
         self.app = app; self.namespace = namespace; deviceName = app.deviceName
         store = KeychainCredentialStore(service: namespace)
         pins = HostPinStore(store: KeychainCredentialStore(service: namespace + ".pins"))
+        #if os(iOS)
+        form.loginMethod = .emailCode
+        #endif
         if let data = try? store.load(key: "trusted-host"), let ref = try? JSONDecoder().decode([String: String].self, from: data) {
             hostID = ref["hostId"]; cloudAddress = ref["cloud"] ?? cloudAddress
         }
         #if DEBUG
         let args = ProcessInfo.processInfo.arguments
         if args.contains("--ui-testing"), let i = args.firstIndex(of: "--s1c-cloud-url"), args.indices.contains(i + 1) { cloudAddress = args[i + 1] }
+        #if os(iOS)
+        if settingsPreview {
+            subject = "settings-preview"; identityRestored = true; authenticated = true; email = "hello@example.com"
+            let fixture = Data(#"{"devices":[{"id":"preview-phone","name":"这台 iPhone","type":"ios","online":true,"isCurrent":true}],"hosts":[{"id":"preview-computer","hostId":"preview-computer","name":"示例电脑","type":"computer","online":true,"isCurrent":false}],"capabilities":{"multiHost":1}}"#.utf8)
+            if let directory = try? JSONDecoder().decode(CloudDirectory.self, from: fixture) { devices = directory.devices; hosts = directory.hosts; multiHost = true }
+        }
+        if args.contains("--ui-testing"), let i = args.firstIndex(of: "--ios-ui-auth-page"), args.indices.contains(i + 1) {
+            form.email = "hello@example.com"
+            switch args[i + 1] { case "register": form.page = .registration; case "recovery": form.page = .recovery; case "verify": form.page = .deviceConfirmation; form.loginMethod = .emailCode; form.resendAt = Date().addingTimeInterval(60); default: break }
+        }
+        #endif
         #endif
     }
+    #if DEBUG && os(iOS)
+    private var settingsPreview: Bool { ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--ios-ui-settings-preview") }
+    #endif
     #if DEBUG && os(iOS)
     func seedPhoneWindowAccount() {
         let args=ProcessInfo.processInfo.arguments
@@ -252,6 +269,9 @@ final class CloudLoginModel: ObservableObject {
     }
     func offlineWorkDeviceID() async throws -> String { try await accountClient().deviceID }
     func refreshDirectory() async {
+        #if DEBUG && os(iOS)
+        if settingsPreview { return }
+        #endif
         guard authenticated else { return }
         let ticket=operation
         do {
@@ -372,10 +392,13 @@ final class CloudLoginModel: ObservableObject {
         guard app?.session?.hostId == row.hostId else { return }
         app?.openedSessionID=row.conversation.id
     }
-    func renameComputer(_ host: CloudDirectoryDevice,name: String) async {
-        guard multiHost else { return }
-        do { try await accountClient().renameComputer(hostID:host.hostId ?? host.id,name:name);await refreshDirectory() }
-        catch { self.error="电脑名称没能保存，请重试。" }
+    func renameComputer(_ host: CloudDirectoryDevice, name: String) async {
+        guard multiHost, !busy else { return }
+        let ticket = operation
+        busy = true; error = nil
+        defer { if ticket == operation { busy = false } }
+        do { try await accountClient().renameComputer(hostID: host.hostId ?? host.id, name: name); guard ticket == operation else { return }; await refreshDirectory() }
+        catch { if ticket == operation { self.error = "电脑名称没能保存，请重试。" } }
     }
     func removeComputer(_ host: CloudDirectoryDevice) async {
         guard multiHost else { return };let id=host.hostId ?? host.id
@@ -404,6 +427,81 @@ final class CloudLoginModel: ObservableObject {
     }
     #endif
     func dismissNewDeviceNotice() { newDeviceNotice = nil }
+    #if os(iOS)
+    @Published private(set) var pairingVerificationCode:String?
+    private var pairingAttempt:PairingV2Attempt?
+    private var pairingServer:ServerConfiguration?
+    private var pairingTicket=UUID()
+    func cancelPairing() {
+        pairingTicket=UUID();pairingAttempt=nil;pairingServer=nil;pairingVerificationCode=nil
+    }
+    func previewPairing(_ bytes: Data) throws -> HostPairing {
+        guard authenticated, subject != nil else { throw APIFailure.notAuthenticated }
+        let pair = try HostPairing.parse(bytes, allowLoopbackHTTP: allowLoopback)
+        guard pair.version == 2 else {throw APIFailure.nativeUpdateRequired("请在新版电脑 WeftMate 上重新生成配对码。")}
+        guard hosts.contains(where: { ($0.hostId ?? $0.id) == pair.hostId }) else { throw APIFailure.identityMismatch }
+        return pair
+    }
+    func preparePairing(_ pair:HostPairing) async {
+        if pairingAttempt?.pairing == pair,pairingVerificationCode != nil { return }
+        cancelPairing();let ticket=pairingTicket,identity=subject
+        guard !busy,authenticated,let identity,let app else { return }
+        busy=true;error=nil
+        defer {busy=false}
+        do {
+            let account=try accountClient();guard let key else {throw APIFailure.notAuthenticated}
+            let issuer=CloudConfiguration(server:try ServerConfiguration(input:cloudAddress,allowLoopbackHTTP:allowLoopback)).issuer
+            let deviceID=await account.deviceID
+            let attempt=try PairingV2Attempt(pairing:pair,issuer:issuer,subject:identity,hostID:pair.hostId,deviceID:deviceID,phoneJKT:key.thumbprint)
+            let connection=try await account.connect(hostID:pair.hostId)
+            guard connection.status == "online",let base=connection.baseUrl else {throw CloudLoginFailure.hostOffline}
+            let server=try ServerConfiguration(input:base,allowLoopbackHTTP:allowLoopback)
+            guard base == pair.relay?.baseUrl || base == pair.origin else {throw CloudLoginFailure.pairing}
+            let token=try await account.accessToken(hostID:pair.hostId)
+            guard ticket == pairingTicket,identity == subject else {return}
+            pairingAttempt=attempt;pairingServer=server
+            let code=try await app.assistantClient.preparePairingV2(server:server,accessToken:token,deviceName:cloudDeviceName(deviceName),key:key,attempt:attempt)
+            guard ticket == pairingTicket,identity == subject,!Task.isCancelled else {return}
+            pairingVerificationCode=code
+        } catch {if ticket == pairingTicket {self.error=accountMessage(error)}}
+    }
+    /// Join/reveal grant no content session. Only explicit confirmation attempts redemption.
+    func completePairing(_ pair: HostPairing, receivedAt: Date, subject: String?) async -> Bool {
+        guard !busy, authenticated, subject != nil, subject == self.subject,
+              pairingAttempt?.pairing == pair,pairingVerificationCode != nil,let server=pairingServer,
+              let expires=pair.expiresAt,expires > Int64(Date().timeIntervalSince1970*1000),let app else { return false }
+        let ticket = operation
+        let pairTicket=pairingTicket
+        busy = true; error = nil
+        defer { if ticket == operation { busy = false } }
+        do {
+            let account = try accountClient()
+            guard let key else { throw APIFailure.notAuthenticated }
+            let token = try await account.accessToken(hostID: pair.hostId)
+            guard ticket == operation,pairTicket == pairingTicket, subject == self.subject else { return false }
+            let result = try await app.assistantClient.exchangeCloudSession(server: server, hostID: pair.hostId, accessToken: token,
+                deviceName: cloudDeviceName(deviceName), key: key, pairing: pair, trustSubject: subject, hostPins: pins)
+            guard ticket == operation,pairTicket == pairingTicket, subject == self.subject else {
+                if case .authenticated(let session) = result { await app.assistantClient.discardCloudSession(session) }
+                return false
+            }
+            switch result {
+            case .pending: error = "请先在电脑上确认这次连接，再重新生成配对码。"; return false
+            case .authenticated(let session):
+                hostID = pair.hostId; requestedComputerID = pair.hostId; waiting = false
+                try store.save(JSONEncoder().encode(["hostId": pair.hostId, "cloud": cloudAddress]), key: "trusted-host")
+                await app.acceptCloudSession(session)
+                return true
+            }
+        } catch {
+            if ticket == operation {
+                if case APIFailure.server(_,"PAIRING_CONFIRMATION_REQUIRED") = error {self.error="请先在电脑上核对并确认这六位数字，再完成连接。"}
+                else {self.error=accountMessage(error)}
+            }
+            return false
+        }
+    }
+    #endif
     func changePassword(current: String, password: String, repeatPassword: String) async {
         guard !busy else { return }
         guard password.count >= 15 && password == repeatPassword else { error = "密码至少 15 位，两次输入需一致。"; return }
@@ -413,6 +511,7 @@ final class CloudLoginModel: ObservableObject {
             await app?.signOut(); authenticated = false; form.reset(to: .login); notice = "密码已更新，请重新登录。"
         } catch { await sessionFailure(error) }
     }
+    func cancelEmailChange() { emailChangeChallenge = nil }
     func requestEmailChange(_ address: String) async {
         guard !busy, Date() >= emailResendAt else { return }
         busy = true; defer { busy = false }
@@ -438,7 +537,7 @@ final class CloudLoginModel: ObservableObject {
     }
     func renameDevice(_ device: CloudDirectoryDevice, name: String) async {
         guard !busy else { return }
-        busy = true; defer { busy = false }
+        busy = true; error = nil; defer { busy = false }
         do { try await accountClient().renameDevice(id: device.id, name: name); await refreshDirectory() }
         catch { await sessionFailure(error) }
     }
