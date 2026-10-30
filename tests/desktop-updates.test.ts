@@ -8,10 +8,13 @@ import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
 import { createServer } from 'node:http';
 import { keyId, sha256, signManifest } from '../src/personal-update/manifest.mjs';
+import { createBackupManager } from '../src/personal-backup/index.mjs';
 
 const root = await mkdtemp(join(tmpdir(), 'weftmate-update-unit-'));
+const handlers = new Map(); let quits = 0;
 const electron = { app: { isPackaged: true, getVersion: () => '0.2.0-preview.12', getPath: () => root, quit() {} },
-  ipcMain: { handle() {}, removeHandler() {} }, BrowserWindow: class {}, shell: { showItemInFolder() {} } };
+  ipcMain: { handle(name, handler) { handlers.set(name, handler); }, removeHandler(name) { handlers.delete(name); } }, BrowserWindow: class {}, shell: { showItemInFolder() {} } };
+electron.app.quit = () => { quits++; };
 const updater: any = Object.assign(new EventEmitter(), { setFeedURL() {}, checkForUpdates: async () => {
   updater.emit('update-available', { version: '0.2.0-preview.13' });
 }, downloadUpdate: async () => { updater.emit('download-progress', { percent: 37.5, transferred: 375, total: 1000, bytesPerSecond: 100 }); } });
@@ -137,4 +140,33 @@ test('the watchdog health receipt waits for the single asynchronous update activ
     activate(); await confirming;
     assert.equal(JSON.parse(await readFile(healthy, 'utf8')).token, token);
   } finally { desktop.close(); await rm(pending, { force: true }); await rm(healthy, { force: true }); }
+});
+
+test('restart IPC reports only the real backup timeout and does not retain it across attempts', async () => {
+  let idle = true, failure: any = Object.assign(new Error('synthetic private detail must not escape'), { code: 'BACKUP_PAUSE_TIMEOUT' });
+  const backupRoot = join(root, 'restart-backup'); await mkdir(backupRoot);
+  await writeFile(join(backupRoot, 'synthetic-data.txt'), 'synthetic backup data');
+  const backup = await createBackupManager({ root: backupRoot, isIdle: async () => true, requestRestart() {},
+    captureBoundary: async work => { if (failure) throw failure; await work(); } });
+  const desktop = await createDesktopUpdates({ root: join(root, 'restart-failure'), feed: null, trustedKeys,
+    isIdle: async () => idle, beforeAppInstall: async () => { await backup.request('before-upgrade'); } });
+  const url = 'http://127.0.0.1:12345/personal/v1/ui';
+  const frame = { url }, contents = Object.assign(new EventEmitter(), { mainFrame: frame, getURL: () => url, isLoading: () => true });
+  desktop.attach(Object.assign(new EventEmitter(), { isDestroyed: () => false, webContents: contents }));
+  const invoke = () => handlers.get('wm:desktop:update-restart')({ sender: contents, senderFrame: frame });
+  const download = async () => { await desktop.check(); await updater.listeners('update-downloaded')[0]({ version: manifest.version, downloadedFile: installerFile }); };
+  try {
+    await download(); const before = quits;
+    assert.deepEqual(await invoke(), { restarted: false, stage: 'backup', code: 'BACKUP_PAUSE_TIMEOUT', reason: '更新前备份未完成，暂未开始安装。当前程序继续运行，请稍后重试。' });
+    assert.equal((await backup.view()).status.code, 'BACKUP_PAUSE_TIMEOUT', 'the actual backup exception chain retains its code');
+    assert.equal(quits, before);
+    idle = false; assert.equal((await invoke()).stage, undefined);
+    idle = true; failure = Object.assign(new Error('synthetic private path'), { code: 'UNKNOWN_PREPARATION' });
+    const unknown = await invoke(); assert.equal(unknown.restarted, false); assert.equal(unknown.code, undefined); assert.equal(unknown.stage, undefined);
+    assert.ok(!JSON.stringify(unknown).includes('synthetic private'));
+    updates.changeUpdateChannel(); const notReady = await invoke(); assert.equal(notReady.stage, undefined); assert.equal(notReady.code, undefined);
+    failure = null; await download(); assert.deepEqual(await invoke(), { restarted: true }); assert.equal(quits, before + 1);
+    failure = Object.assign(new Error('timeout'), { code: 'BACKUP_PAUSE_TIMEOUT' });
+    assert.equal(await desktop.restart(), false, 'tray callers retain the boolean API');
+  } finally { desktop.close(); await backup.finishShutdown(); }
 });
