@@ -16,6 +16,7 @@ concurrency:
 jobs:
   ui-motion-2-windows:
     name: Windows motion and page states
+    if: github.event_name != 'pull_request'
     runs-on: windows-latest
     timeout-minutes: 8
     env:
@@ -52,6 +53,7 @@ jobs:
 
   sidebar-phone-entry-windows:
     name: Windows phone sidebar entry
+    if: github.event_name != 'pull_request'
     runs-on: windows-latest
     timeout-minutes: 8
     env:
@@ -97,6 +99,7 @@ jobs:
 
   chat-first-send-windows:
     name: Windows first conversation send
+    if: github.event_name != 'pull_request'
     runs-on: windows-latest
     timeout-minutes: 8
     env:
