@@ -16,25 +16,28 @@ function deferred() {
 /** Real gateway, native timeline waiter and HTTP, with synthetic persistence/RPC. */
 async function fixture(t, options: any = {}) {
   const events: any[] = [], source = new EventEmitter(), enteredWait = deferred(), endedWait = deferred();
-  const enteredRead = deferred(), enteredWrite = deferred(), routeSeen = new Map();
+  const enteredRead = deferred(), enteredWrite = deferred(), routeSeen = new Map(), readStarts = new Map();
   const writeGate = options.writeGate;
-  let reads = 0, flushed = 0, writes = 0, activeWaits = 0, lastSignal;
+  let reads = 0, flushed = 0, writes = 0, activeWaits = 0, activeReads = 0, settledReads = 0, lastSignal;
+  const readStarted = index => { if (!readStarts.has(index)) readStarts.set(index, deferred()); return readStarts.get(index); };
   const native = nativeTimelineLog({
     on: source.on.bind(source), effect() {},
     get(key) {
       if (key === 'sessionPersistence') return { async inspect() {
-        reads++; enteredRead.resolve();
-        if (options.readGateAt === reads) await options.readGate.promise;
-        if (options.readErrorAt === reads) throw Object.assign(new Error('Synthetic native read failed'), { code: 'STORAGE_UNAVAILABLE' });
-        return { events };
+        const index = ++reads; activeReads++; enteredRead.resolve(); readStarted(index).resolve();
+        try {
+          if (options.readGateAt === index) await options.readGate.promise;
+          if (options.readErrorAt === index) throw Object.assign(new Error('Synthetic native read failed'), { code: 'STORAGE_UNAVAILABLE' });
+          return { events };
+        } finally { activeReads--; settledReads++; }
       } };
       return undefined;
     },
   }, { cache: false });
   const wait = native.waitForChange;
-  native.waitForChange = (id, seq, ms, signal) => {
+  native.waitForChange = (id, seq, ms, signal, admission) => {
     activeWaits++; lastSignal = signal;
-    const pending = wait(id, seq, ms, signal);
+    const pending = wait(id, seq, ms, signal, admission);
     enteredWait.resolve();
     return pending.finally(() => { activeWaits--; endedWait.resolve(); });
   };
@@ -59,6 +62,12 @@ async function fixture(t, options: any = {}) {
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   const base = `http://127.0.0.1:${(server.address() as any).port}/weftmate/api/v1`;
   const controllers = new Set<AbortController>(), pending = new Set<Promise<any>>();
+  const abortFixture = () => {
+    options.readGate?.resolve(); writeGate?.resolve();
+    for (const controller of controllers) controller.abort();
+    server.closeAllConnections();
+  };
+  t.signal.addEventListener('abort', abortFixture, { once: true });
   const request = (route, init: any = {}) => {
     const controller = new AbortController(); controllers.add(controller);
     const done = fetch(base + route, { ...init, signal: controller.signal }).then(async response => ({ status: response.status, body: await response.json() }));
@@ -71,9 +80,7 @@ async function fixture(t, options: any = {}) {
   const resume = id => post('backup-resume', { id });
   const seen = (method, route) => { const item = deferred(); routeSeen.set(`${method} /weftmate/api/v1${route}`, item); return item.promise; };
   t.after(async () => {
-    options.readGate?.resolve(); writeGate?.resolve();
-    for (const controller of controllers) controller.abort();
-    server.closeAllConnections();
+    t.signal.removeEventListener('abort', abortFixture); abortFixture();
     await gateway.close(); await native.close();
     await Promise.allSettled([...pending]);
     await new Promise<void>(resolve => server.close(() => resolve()));
@@ -82,7 +89,8 @@ async function fixture(t, options: any = {}) {
     request, post, pause, resume, seen, gateway, native,
     enteredRead: enteredRead.promise, enteredWrite: enteredWrite.promise,
     enteredWait: enteredWait.promise, endedWait: endedWait.promise,
-    counts: () => ({ reads, flushed, writes, activeWaits }),
+    readStarted: index => readStarted(index).promise,
+    counts: () => ({ reads, flushed, writes, activeWaits, activeReads, settledReads }),
     openResponses: () => responses.size,
     signalListeners: () => lastSignal ? getEventListeners(lastSignal, 'abort').length : 0,
     wake() {
@@ -126,6 +134,114 @@ test('the initial native query remains admitted until it finishes', { timeout: 8
   assert.equal((await history.done).status, 200);
   assert.equal((await paused).status, 200); assert.equal(f.counts().flushed, 1);
   await f.resume('synthetic-capture');
+});
+
+test('the native registration recheck remains admitted until its physical read finishes', { timeout: 8000 }, async t => {
+  const gate = deferred(), f = await fixture(t, { readGateAt: 2, readGate: gate });
+  const history = f.request(waitRoute); await f.enteredWait;
+  assert.equal(f.counts().reads, 2);
+  const enteredPause = f.seen('POST', '/backup-pause'), paused = f.pause(); await enteredPause;
+  assert.equal((await f.pause('recheck-probe')).status, 409);
+  assert.equal(f.counts().flushed, 0, 'registration is not yet a pure listener');
+  gate.resolve();
+  assert.equal((await paused).status, 200); assert.equal(f.counts().flushed, 1);
+  f.wake(); await f.endedWait;
+  assert.equal(f.counts().reads, 2, 'wake requery still waits for matching resume');
+  await f.resume('synthetic-capture');
+  assert.equal((await history.done).status, 200);
+});
+
+for (const readErrorAt of [undefined, 2]) test(`disconnect during registration recheck keeps its physical read admitted${readErrorAt ? ' through a late read failure' : ''}`, { timeout: 8000 }, async t => {
+  const gate = deferred(), f = await fixture(t, { readGateAt: 2, readGate: gate, readErrorAt });
+  const history = f.request(waitRoute); await f.readStarted(2);
+  history.abort(); await assert.rejects(history.done, { name: 'AbortError' }); await f.endedWait;
+  assert.equal(f.counts().activeWaits, 0, 'the cancelled response view returns promptly');
+  assert.equal(f.signalListeners(), 0, 'cancellation removes the native waiter listener');
+  assert.equal(f.counts().activeReads, 1, 'cancellation cannot stop the physical persistence read');
+  const enteredPause = f.seen('POST', '/backup-pause'), paused = f.pause(); await enteredPause;
+  assert.equal((await f.pause('cancelled-recheck-probe')).status, 409);
+  assert.equal(f.counts().flushed, 0, 'the detached physical read still blocks capture');
+  gate.resolve();
+  assert.equal((await paused).status, 200); assert.equal(f.counts().activeReads, 0);
+  assert.equal(f.counts().settledReads, 2); assert.equal(f.counts().flushed, 1);
+  await f.resume('synthetic-capture');
+  assert.equal((await f.pause('after-cancelled-recheck')).status, 200, 'settled success or failure releases exactly its own read ticket');
+  await f.resume('after-cancelled-recheck');
+});
+
+for (const cause of ['event', 'timeout']) test(`${cause} during registration recheck cannot flush or requery before the physical read settles and capture resumes`, { timeout: 8000 }, async t => {
+  const gate = deferred(), f = await fixture(t, { readGateAt: 2, readGate: gate });
+  const route = cause === 'timeout' ? `/sessions/${sessionId}/history?waitMs=500&waitSeq=-1` : waitRoute;
+  const history = f.request(route); await f.readStarted(2);
+  const enteredPause = f.seen('POST', '/backup-pause'), paused = f.pause(); await enteredPause;
+  assert.equal((await f.pause('capture-established-probe')).status, 409, 'capture owns admission before event or timer wakes the view');
+  if (cause === 'event') f.wake();
+  await f.endedWait;
+  assert.equal(f.signalListeners(), 0); assert.equal(f.counts().activeWaits, 0);
+  assert.equal((await f.pause('woken-recheck-probe')).status, 409);
+  assert.equal(f.counts().activeReads, 1); assert.equal(f.counts().reads, 2);
+  assert.equal(f.counts().flushed, 0, 'a settled wait view cannot release its outstanding physical read');
+  gate.resolve();
+  assert.equal((await paused).status, 200); assert.equal(f.counts().flushed, 1);
+  assert.equal(f.counts().activeReads, 0); assert.equal(f.counts().reads, 2, 'the final response query remains behind capture');
+  await f.resume('stale-recheck-capture'); assert.equal(f.counts().reads, 2);
+  await f.resume('synthetic-capture');
+  const answer = await history.done; assert.equal(answer.status, 200);
+  if (cause === 'event') assert.ok((answer.body.liveSeq ?? answer.body.nextSeq) >= 0, 'an event during registration is not lost');
+  assert.equal(f.counts().reads, 3); assert.equal(f.counts().activeReads, 0);
+  assert.equal((await f.pause('after-woken-recheck')).status, 200); await f.resume('after-woken-recheck');
+});
+
+test('native close waits for a detached registration read before completing or allowing capture', { timeout: 8000 }, async t => {
+  const gate = deferred(), f = await fixture(t, { readGateAt: 2, readGate: gate });
+  const history = f.request(waitRoute); await f.readStarted(2);
+  const enteredPause = f.seen('POST', '/backup-pause'), paused = f.pause(); await enteredPause;
+  assert.equal((await f.pause('native-close-capture-established')).status, 409);
+  let closed = false; const closing = f.native.close().then(() => { closed = true; });
+  const answer = await history.done;
+  assert.equal(answer.status, 503); assert.equal(answer.body.error.code, 'SERVICE_CLOSING');
+  await f.endedWait;
+  assert.equal(closed, false, 'native close must drain the physical read after its response view settles');
+  assert.equal(f.signalListeners(), 0); assert.equal(f.counts().activeReads, 1);
+  assert.equal((await f.pause('closed-native-recheck-probe')).status, 409);
+  assert.equal(f.counts().flushed, 0); assert.equal(f.counts().reads, 2);
+  gate.resolve(); await closing;
+  assert.equal((await paused).status, 200); assert.equal(f.counts().flushed, 1);
+  assert.equal(closed, true); assert.equal(f.counts().activeReads, 0); assert.equal(f.openResponses(), 0);
+  await f.resume('synthetic-capture');
+});
+
+test('gateway close drains a detached registration read and never flushes an aborted capture', { timeout: 8000 }, async t => {
+  const gate = deferred(), f = await fixture(t, { readGateAt: 2, readGate: gate });
+  const history = f.request(waitRoute); await f.readStarted(2);
+  const enteredPause = f.seen('POST', '/backup-pause'), paused = f.pause(); await enteredPause;
+  assert.equal((await f.pause('closing-gateway-recheck-probe')).status, 409);
+  assert.equal(f.counts().flushed, 0);
+  let closed = false; const closing = f.gateway.close().then(() => { closed = true; });
+  const answer = await history.done;
+  assert.equal(answer.status, 503); assert.equal(answer.body.error.code, 'SERVICE_CLOSING');
+  assert.equal((await paused).status, 409, 'shutdown revokes capture instead of flushing native storage');
+  await f.endedWait;
+  assert.equal(closed, false, 'gateway close must retain the detached read operation');
+  assert.equal(f.counts().activeReads, 1); assert.equal(f.counts().reads, 2);
+  assert.equal(f.counts().flushed, 0); assert.equal(f.signalListeners(), 0);
+  gate.resolve(); await closing;
+  assert.equal(closed, true); assert.equal(f.counts().activeReads, 0);
+  assert.equal(f.counts().flushed, 0); assert.equal(f.openResponses(), 0);
+});
+
+test('registration recheck failure releases admission only after the physical read rejects', { timeout: 8000 }, async t => {
+  const gate = deferred(), f = await fixture(t, { readGateAt: 2, readGate: gate, readErrorAt: 2 });
+  const history = f.request(waitRoute); await f.readStarted(2);
+  const enteredPause = f.seen('POST', '/backup-pause'), paused = f.pause(); await enteredPause;
+  assert.equal((await f.pause('failing-recheck-probe')).status, 409);
+  assert.equal(f.counts().activeReads, 1); assert.equal(f.counts().flushed, 0);
+  gate.resolve();
+  assert.equal((await history.done).status, 400); assert.equal((await paused).status, 200);
+  assert.equal(f.counts().activeReads, 0); assert.equal(f.counts().activeWaits, 0);
+  assert.equal(f.counts().flushed, 1); assert.equal(f.signalListeners(), 0);
+  await f.resume('synthetic-capture');
+  assert.equal((await f.pause('after-failing-recheck')).status, 200); await f.resume('after-failing-recheck');
 });
 
 test('an admitted write still consumes the unchanged two-second pause deadline', { timeout: 8000 }, async t => {

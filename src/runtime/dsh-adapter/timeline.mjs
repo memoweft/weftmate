@@ -7,7 +7,7 @@ import { createHistoryCache } from './history-cache.mjs';
  * persistence.inspect uses DSH's revision-aware prepared-session cache instead.
  */
 export function nativeTimelineLog(ctx, { cache = true } = {}) {
-  const waiters = new Set(), pendingWaits = new Set();
+  const waiters = new Set(), pendingWaits = new Set(), pendingReads = new Set();
   let closed = false, closePromise, history;
   ctx.on?.('session/event',(session,event)=>{for(const wake of waiters)wake(session.id,event.seq);});
   const index = new Map(), changed = new Map(); let initialized;
@@ -40,12 +40,12 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     if (!persistence) throw Object.assign(new Error('session not found'), { code: 'session-not-found' })
     return (await persistence.inspect(sessionId)).events
   }
-  read.waitForChange = (sessionId, seq, ms, signal) => {
+  read.waitForChange = (sessionId, seq, ms, signal, admission) => {
     // An already cancelled request never reads native storage or registers.
     if (signal?.aborted || closed) return Promise.resolve();
     const pending = (async () => {
-      let release;
-      const changed = new Promise(resolve => { release = resolve; });
+      let release, awakened = false;
+      const changed = new Promise(resolve => { release = () => { awakened = true; resolve(); }; });
       const wake = (id, next) => { if (id === null || id === sessionId && next > seq) release(); };
       const abort = () => release();
       // Register both event and cancellation before querying the snapshot.
@@ -55,10 +55,17 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
       try {
         // Recheck after registration so events during the native read wake us.
         if (closed || signal?.aborted) return;
-        const events = await Promise.race([read(sessionId), changed.then(() => null)]);
+        // Cancelling a response does not cancel persistence.inspect. Its own
+        // lease remains admitted until the physical read actually settles.
+        const releaseRead = admission?.onRead();
+        const reading = read(sessionId);
+        pendingReads.add(reading);
+        reading.finally(() => { pendingReads.delete(reading); releaseRead?.(); }).catch(() => {});
+        const events = await Promise.race([reading, changed.then(() => null)]);
         if (events === null) return;
-        if (closed || signal?.aborted || (events.at(-1)?.event ?? events.at(-1))?.seq > seq) return;
+        if (closed || signal?.aborted || awakened || (events.at(-1)?.event ?? events.at(-1))?.seq > seq) return;
         // Wait only if this response's watermark is still current.
+        admission?.onWaiting();
         await changed;
       } finally {
         // Every timeout, cancellation and dispose removes both registrations.
@@ -77,7 +84,7 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     closed = true;
     // Revoke pending waits first; the cache stays available until they settle.
     for (const wake of [...waiters]) wake(null, Infinity);
-    closePromise = Promise.allSettled([...pendingWaits]).then(() => history?.close());
+    closePromise = Promise.allSettled([...pendingWaits, ...pendingReads]).then(() => history?.close());
     return closePromise;
   };
   // cache:false has exactly the same lifecycle as the cached branch.

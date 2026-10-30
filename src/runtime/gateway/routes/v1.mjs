@@ -310,10 +310,14 @@ export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, di
             if (res.destroyed || controller.signal.aborted) return;
             // The native waiter registers then atomically rechecks its source.
             if ((snapshot.liveSeq ?? snapshot.nextSeq) <= seq && readLog?.waitForChange) {
-              // A pure change listener owns no native transaction. Keep its
-              // response/cancellation owner, but let backup drain actual work.
+              // The waiter first registers and physically rechecks storage.
+              // Park only once that read has finished and pure waiting begins.
+              await readLog.waitForChange(sessionId, seq, ms, controller.signal, {
+                onRead: operation.read, onWaiting: operation.park,
+              });
+              // An event/cancellation may end the view before its recheck.
+              // That physical read keeps its independent lease until settled.
               operation.park();
-              await readLog.waitForChange(sessionId, seq, ms, controller.signal);
               if (!res.destroyed && !controller.signal.aborted && !closing && !readLog?.closed && !await operation.resume())
                 return writeJson(res, 503, { error: { code: 'SERVICE_CLOSING' } });
             }
@@ -445,6 +449,7 @@ export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, di
     };
     let release = admit();
     const operation = {
+      read: admit,
       park() { release(); release = () => {}; },
       async resume() {
         while (capture) await capture.ready;
