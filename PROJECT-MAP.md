@@ -12,7 +12,7 @@
 - **代码主线**：`main` = `08254179ab563b02bfaec9f3b2a0f27264d65c89`，最新 main CI 全绿。
 - **已发布基线**：程序/界面 `0.2.0-preview.27`，标签 `v0.2.0-preview.27` = `d53202d9d`。
 - **未发布差异**：main 在 preview.27 之后只多了 #758 的界面修复；UI28/后续发布任务暂停，不自动续跑。
-- **交接**：2026-10-31 15:00（Asia/Shanghai）交给 Claude；私有交接页在 `Runtime/Orchestrator/HANDOFF-2026-10-31-1500.md`。
+- **交接**：2026-10-31 03:00（Asia/Shanghai）交给 Claude；私有交接页在 `Runtime/Orchestrator/HANDOFF-2026-10-31-0300.md`。
 - **暂停中的 PR**：#716、#718、#723、#724（iOS）。没有本人新指令，不合并、不续跑、不重开。
 - **执行原则**：小修走快速通道；不因怕漏而跑全量、做多轮审查或擅自扩项。详见 [AGENTS.md](AGENTS.md) 和 [docs/PLAN.md](docs/PLAN.md)。
 
