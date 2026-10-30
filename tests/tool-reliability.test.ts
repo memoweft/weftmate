@@ -11,6 +11,8 @@ test('model receives actionable argument errors and cancellation without permiss
   const invalid = modelToolFailure('weftmod', { isError:true, error:{name:'ToolArgsError',code:'INVALID_ARGS',message:'invalid arguments: args.desktop must be object'},content:[] });
   assert.match(JSON.stringify(invalid), /args.desktop must be object/);
   assert.match(JSON.stringify(invalid), /not_started/);
+  const parent=modelToolFailure('run_code',{isError:true,error:{info:{name:'CodeRunFailedError',code:'CODE_RUN_FAILED'},message:'nested call failed after an earlier step'},content:invalid});
+  assert.match(JSON.stringify(parent),/verify_before_retry/,'a child argument failure cannot certify that its parent had no effects');
   const memoryInvalid=modelToolFailure('memory_query',{isError:true,error:{info:{name:'ToolArgsError',code:'INVALID_ARGS'},message:'invalid arguments: args.query must be string'},content:[]});
   assert.match(JSON.stringify(memoryInvalid),/args.query must be string/);
   const cancelled = modelToolFailure('pwsh', {isError:true,error:{name:'AbortError',message:'cancelled'},content:[]});

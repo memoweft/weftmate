@@ -138,7 +138,7 @@ export function modelToolFailureValue(result, content) {
 function toolFailureDetails(name, result) {
   for (const part of result.content ?? []) {
     const existing = part.type === 'text' && json(part.text)?.toolFailure;
-    if (existing?.version === 1) return existing;
+    if (existing?.version === 1 && existing.tool === name) return existing;
   }
   const info = result.error?.info ?? result.error ?? {};
   const raw = result.error?.message ?? (result.content ?? []).filter(part=>part.type==='text').map(part=>part.text).join('\n');
