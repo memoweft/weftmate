@@ -1,6 +1,6 @@
 # 记忆 · 现在怎么工作
 
-这一页只写记忆这条链路是什么样、改的时候要知道什么；工作规矩只看 [AGENTS.md](../AGENTS.md)。和 [DECISIONS.md](DECISIONS.md) 冲突时，以 DECISIONS 为准。
+这一页只写记忆这条链路是什么样、改的时候要知道什么。和 [PRODUCT-RULES.md](PRODUCT-RULES.md) 冲突时，以产品规则为准。
 
 ## 1. 方向（2026-10-24）
 
@@ -42,7 +42,7 @@ E2 的 `selected_item_ids` 是整段召回的依赖，`count` 统计全部依赖
 
 安装包带受管 Python、MemoWeft 和完整语义层（D106、D110），用户不用装 Python；组件异常只停用记忆，聊天和数据保留。组件说明见 [scripts/memory-runtime/README.md](../scripts/memory-runtime/README.md)。
 
-改 `/personal/v1/memory` 下的路由，同时改 [CLIENT_API.md](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLIENT_API.md) 和安卓白名单（AGENTS「写代码」）。
+改 `/personal/v1/memory` 下的路由，同时改 [CLIENT_API.md](https://github.com/memoweft/weftmate/blob/archive/2026-10-26/docs/CLIENT_API.md) 和安卓白名单。
 
 ## 5. 手机窗口（D119）
 

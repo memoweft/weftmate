@@ -2,7 +2,7 @@
 
 Shared native Swift core for macOS 14+, iOS 17+ and watchOS 10+, without external dependencies. `PersonalClient` owns account state; views own their presentation generation and keep passwords out of preferences.
 
-The package uses the existing `/personal/v1` client contracts. The main repository's `docs/PLAN.md` tracks their consolidation in M0-5. Auth/device routes are implemented in `src/personal-access/index.mjs`; source event paging comes from `src/personal-sync/index.mjs`. Protocol changes must be coordinated with the host; local transport tests do not establish deployed compatibility.
+The package uses the existing `/personal/v1` client contracts. Auth/device routes are implemented in `src/personal-access/index.mjs`; source event paging comes from `src/personal-sync/index.mjs`. Protocol changes must be coordinated with the host; local transport tests do not establish deployed compatibility.
 
 ## Current candidate
 

@@ -52,8 +52,8 @@ export function repositoryFiles() {
     .toString('utf8').split('\0').filter(Boolean);
 }
 
-// Every session starts by reading these pages, so they stay short.
-export const entryLimits = {'PROJECT-MAP.md': 8_000, 'AGENTS.md': 4_000, 'docs/PLAN.md': 4_000, 'docs/DECISIONS.md': 12_000, 'docs/OWNER_CHANGES.md': 8_000};
+// 入口页保持一致的长度上限，避免又长成一本书。
+export const entryLimits = {'docs/PRODUCT-RULES.md': 12_000};
 // Generated evidence keeps its own historical links.
 const linkExempt = ['apps/apple/Tests/Evidence/'];
 

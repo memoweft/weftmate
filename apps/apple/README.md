@@ -183,7 +183,7 @@ Mac 上用本人的免费 Personal Team 实际签名，核对描述文件包含 
 
 [Apple 真实设备运行说明](https://developer.apple.com/documentation/Xcode/running-your-app-on-simulated-or-physical-devices)、[签名和团队流程](https://help.apple.com/xcode/mac/current/en.lproj/dev60b6fbbc7.html)。
 
-当前工作包见主仓 `docs/PLAN.md`，当前状态见 `PROJECT-MAP.md`；本说明不替代实际联调或用户验收。
+本说明不替代实际联调或用户验收。
 
 ## IC-2 图标
 

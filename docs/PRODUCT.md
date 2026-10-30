@@ -1,6 +1,6 @@
 # 产品边界与授权兼容入口
 
-产品方向见 [VISION.md](VISION.md)，当前状态见 [PROJECT-MAP.md](../PROJECT-MAP.md)。本文件只为许可证契约测试保留授权边界，不维护路线。
+产品方向见 [VISION.md](VISION.md)。本文件只为许可证契约测试保留授权边界，不维护路线。
 
 WeftMate 自有代码、二进制、视觉资产和文档受本仓库 `LICENSE` 专有授权约束。DSH 按 MIT 与上游许可证执行；MemoWeft、WeftMod 和其他组件继续遵循各自许可证。
 
