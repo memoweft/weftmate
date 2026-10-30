@@ -29,6 +29,24 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 const deferred = () => { let resolve!: (value: any) => void; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 
+for (const branch of ['legacy', 'logical']) test(`automatic ${branch} restoration discards the prior identity's delayed session data`, async () => {
+  const delayed=deferred(), reached=deferred();
+  const f=fixture((path:string)=>{
+    if(path.endsWith(branch==='legacy'?'/sessions?archived=all':'/chats/main')){reached.resolve(null);return delayed.promise;}
+    return response({projects:[]});
+  });
+  Object.assign(f.core.state,{selectedSessionId:null,selectedChatId:null,sessions:[],personalCapabilities:branch==='legacy'?{}:{chats:1}});
+  const restoring=f.core.refreshSessions();await reached.promise;
+  f.core.clearSession();
+  f.core.acceptSession({account:{ownerId:'owner-next',username:'Next'},device:{id:'device-next'},csrfToken:'next-csrf'});
+  f.core.state.ownerId='owner-next'; // The DOM-free fixture records paintIdentity; the real view supplies this routing owner.
+  delayed.resolve(response(branch==='legacy'?{sessions:[{sessionId:'prior-session',title:'Prior private conversation'}]}:{chat:{chatId:'prior-main',activeSessionId:'prior-session'}}));
+  await restoring;
+  assert.equal(f.core.state.ownerId,'owner-next');assert.equal(f.core.state.selectedSessionId,null);
+  assert.equal(f.core.state.sessions.some((row:any)=>row.sessionId==='prior-session'),false);
+  assert.notEqual(f.core.state.mainChat?.chatId,'prior-main');
+});
+
 test('#678 clearing the account drops native history before a later process repaint', () => {
   const f=fixture();
   f.core.state.historyEvents.set(1,{seq:1,type:'user.message',data:{text:'合成旧账户消息'}});

@@ -126,7 +126,12 @@
       element.style.height=previous.height;element.style.overflow=previous.overflow;
       if(folds.get(element)===state){folds.delete(element);if(!cancelled)setOpen(opening);}
     });
-    if(animation)for(const child of element.children)observer.observe(child);
+    if(animation){
+      // Size changes need a gentler departure: a delayed first presentation
+      // must not reveal most of the body at once. Keep the existing duration.
+      animation.effect.updateTiming({easing:getComputedStyle(document.documentElement).getPropertyValue('--ease-in-out').trim()});
+      for(const child of element.children)observer.observe(child);
+    }
     return animation;
   }
   function visibility(element, visible, {duration='dur-2'} = {}) {
