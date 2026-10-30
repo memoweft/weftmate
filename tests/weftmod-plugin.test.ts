@@ -124,6 +124,23 @@ const isToolGuide = (message: any) => message.source?.kind === 'plugin' && messa
   && message.source.sections?.some((section: any) => section.name === 'weftmod-tools')
 const isReuseCatalog = (message: any) => message.source?.sections?.some((section: any) => section.name === 'weftmod-reuse')
 
+test('desktop and script argument schemas reject encoded objects before dispatch, then accept correction', async t => {
+  const f=await fixture(t);
+  for(const desktop of ['{"action":"windows"}',{}, {action:'windows',title:42}]) {
+    const bad=await f.execute('weftmod',{action:'desktop',desktop});
+    assert.equal(bad.isError,true);
+  }
+  assert.equal(f.desktopCalls.length,0);
+  for(const args of [{action:'desktop'},{action:'desktop',desktop:{action:'open'}},{action:'desktop',desktop:{action:'click',window_id:'fixture-window'}}]){
+    assert.equal((await f.execute('weftmod',args)).isError,true);
+  }
+  assert.equal(f.desktopCalls.length,0);
+  const good=await f.call('weftmod',{action:'desktop',desktop:{action:'windows',title:'synthetic'}});
+  assert.equal(good.isError,false);assert.equal(f.desktopCalls.length,1);
+  const bad=await f.execute('weftmod_script',{action:'run',code:'return params.text',params:'{"text":"hello"}'});
+  assert.equal(bad.isError,true);
+});
+
 test('40 real pre-steps retain one guide while preserving all user messages', async t => {
   const f = await fixture(t)
   for (let step = 1; step <= 40; step++) {

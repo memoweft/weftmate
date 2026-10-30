@@ -1,3 +1,4 @@
+import { externalConnectorContent } from '../personal-connectors/policy.mjs';
 const registrations = new WeakMap();
 export function connectorToolFor(agent, name) { return registrations.get(agent)?.tools.get(name); }
 function calendarTime(value, accountZone, sourceZone) {
@@ -31,7 +32,8 @@ export function syncConnectorTools(agent, policy, bridge, identityFor) {
   for (const tool of tools.values()) disposers.push(agent.ctx.tools.register({ name: tool.name, description: `${tool.connectorName}：${tool.description}`,
     presentCall: () => ({ card: 'generic', title: `${tool.connectorName} · ${tool.displayName || tool.rawName}`, kind: tool.category === 'read' ? 'read' : 'execute' }),
     parameters: tool.parameters, output: { schema: { type: 'object', properties: { content: { type: 'array', items: {} }, structuredContent: {} }, required: ['content'], additionalProperties: false },
-      render: (_args, result) => result.content.filter(block => block.type === 'text') },
+      render: (_args, result) => [...result.content.filter(block => block.type === 'text'),
+        ...(result.structuredContent === undefined ? [] : [{type:'text',text:externalConnectorContent(tool.connectorName,JSON.stringify({structuredContent:result.structuredContent}))}])] },
     execute: (args, exec) => {
       if (exec.agent.session.header.origin === 'subagent') throw new Error('请在原对话使用这个连接器。');
       return bridge.request({ ...identityFor(exec), action: 'connector_call', connectorId: tool.connectorId, toolName: tool.name, arguments: args }, exec.signal);

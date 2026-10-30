@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import { defineTool, ToolArgsError } from '@deepseek-ai/dsh-tools'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import { AiGameTransport } from '../runtime/ai-game/transport.mjs'
@@ -7,6 +7,7 @@ import { callIdentity, effectivePermissionPreset, AI_GAME_CREDENTIAL_REF, AI_GAM
 import { WeftModService } from '../runtime/weftmod/service.mjs'
 import { desktopCommand } from '../runtime/weftmod/desktop.mjs'
 import { executionDirectory } from './personal-project-context.mjs'
+import { desktopParameter, desktopArgumentViolations } from './personal-desktop-schema.mjs'
 
 export const name = 'weftmate-weftmod'
 export const inject = ['tools', 'approval', 'credentials']
@@ -136,9 +137,13 @@ export function registerWeftMod(ctx, { transport, identity, approve }) {
           x: { type: 'integer' }, y: { type: 'integer' }, end_x: { type: 'integer' }, end_y: { type: 'integer' }, duration_ms: { type: 'integer' },
           text: { type: 'string' }, keycode: { type: 'string', description: 'For keyevent use KEYCODE_BACK, KEYCODE_HOME, KEYCODE_ENTER, KEYCODE_DEL, KEYCODE_TAB, KEYCODE_APP_SWITCH, or KEYCODE_DPAD_*. BACK and HOME aliases are normalized before sending.' }, package: { type: 'string', description: 'Required by open_app: Android package name, for example com.android.settings.' }, component: { type: 'string', description: 'Optional for open_app: relative .ClassName or full package/.ClassName. Use it only after discovery or when known valid; otherwise send package only. It must belong to package.' },
         } } }, command_id: { type: 'string', description: 'For a new ordinary action, omit this and let WeftMod generate a fresh identifier. Reuse the same command_id only when retrying the exact already identified request after observation; never keep one fixed command_id in a reusable action loop, because the device can return its old receipt without performing a new action.' },
-        control: { type: 'string', enum: ['pause', 'resume', 'cancel', 'complete'] }, desktop: { type: 'json', description: 'Object with action. windows: optional process_id/title. inspect/screenshot: window_id. click/invoke/type/keys/scroll: window_id and optional selector {automation_id,name,control_type,element_id}; click alternatively x/y, type text, keys string or array, scroll direction/amount. open: path, optional arguments string array and working_directory. inspect returns controls and truncated.' },
+        control: { type: 'string', enum: ['pause', 'resume', 'cancel', 'complete'] }, desktop: desktopParameter,
       }, output,
-      execute: (args, exec) => service.device(args, exec),
+      execute: (args, exec) => {
+        const violations=desktopArgumentViolations(args);
+        if(violations.length)throw new ToolArgsError(violations);
+        return service.device(args, exec);
+      },
       presentCall: args => ({ card: 'generic', title: `WeftMod · ${args.action}`, kind: ['devices', 'observe', 'inspect'].includes(args.action) ? 'read' : 'execute' }),
     }))
     runtimeCtx.tools.register(defineTool({
@@ -147,7 +152,7 @@ export function registerWeftMod(ctx, { transport, identity, approve }) {
       parameters: {
         action: { type: 'string', required: true, enum: ['help', 'list', 'read', 'save', 'run', 'history', 'inspect', 'control'] },
         script_id: { type: 'string', description: 'Identifier returned by save/list. Required for read or running a saved script. For save or run with code, omit to generate an identifier automatically.' }, code: { type: 'string', description: 'JavaScript async function body. Required for save. Can also be provided to run, which saves the code automatically before execution.' }, description: { type: 'string' },
-        applicability: { type: 'string' }, parameters: { type: 'json' }, params: { type: 'json' }, query: { type: 'string' },
+        applicability: { type: 'string' }, parameters: { type: 'object', additionalProperties:true, description:'Direct parameter schema object.' }, params: { type: 'object', additionalProperties:true, description:'Direct object of script argument values; do not JSON-encode it.' }, query: { type: 'string' },
         run_id: { type: 'string' }, source_device_run_id: { type: 'string', description: 'For a pending direct task, omit only when exactly one matching pending receipt is bound to this script; otherwise pass its source device run id.' }, control: { type: 'string', enum: ['pause', 'cancel'] },
         tool_names: { type: 'array', items: { type: 'string' }, description: 'For help, request exact schemas for these tool names. All available tool names are also returned.' },
       }, output,

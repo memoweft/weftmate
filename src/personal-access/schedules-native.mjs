@@ -27,11 +27,15 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
     await writeFile(temp, JSON.stringify(state)); await rename(temp, file);
   }
   const bucket = sessionId => state.sessions[sessionId] ??= { items: {}, notifications: [] };
+  const nativeTools = new WeakMap();
+  function bindNativeTools(agent) {
+    nativeTools.set(agent, Object.fromEntries(['schedule_create','schedule_delete'].map(name=>[name,ctx.tools.get(name,agent).execute])));
+  }
   const folded = agent => native.foldScheduleEvents(agent.session.events, agent.session.header.seedLength ?? 0).active;
   const call = (agent, name, args) => {
     const tool = ctx.tools.get(name, agent);
     if (!tool) throw new Error('SCHEDULE_UNAVAILABLE');
-    return tool.execute(args, { agent, signal: new AbortController().signal });
+    return (nativeTools.get(agent)?.[name] ?? tool.execute)(args, { agent, signal: new AbortController().signal });
   };
   const requireSuccess = value => { if (!value || value.code) throw Object.assign(new Error(value?.code ?? 'SCHEDULE_UNAVAILABLE'), { code: value?.code }); return value; };
   async function register(agent, record, sourceReceiptId) {
@@ -224,7 +228,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
       if (row) { row.state = 'deleted'; await save(); }
     });
   }
-  return { register, due, manage, deleted, close: () => queue,
+  return { register, due, manage, deleted, bindNativeTools, close: () => queue,
     hasSession: id => !!state.sessions[id],
     restoreSessionIds: () => Object.entries(state.sessions).filter(([, b]) => Object.values(b.items).some(r => r.state === 'scheduled')).map(([id]) => id) };
 }
