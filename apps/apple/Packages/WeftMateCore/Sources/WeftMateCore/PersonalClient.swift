@@ -292,21 +292,84 @@ public actor PersonalClient {
     }
     /// Cloud tokens only enter the dedicated exchange endpoints. Pending never creates a content identity.
     public func exchangeCloudSession(server: ServerConfiguration, hostID: String, accessToken: String,
-                                    deviceName: String, key: CloudDeviceKey, pairing: HostPairing? = nil, trustSubject: String? = nil, hostPins: HostPinStore? = nil) async throws -> CloudSessionExchange {
-        let generation = try transition(server: server, clearSaved: true)
+                                    deviceName: String, key: CloudDeviceKey, trustSubject: String? = nil, hostPins: HostPinStore? = nil) async throws -> CloudSessionExchange {
+        try await establishCloudSession(server: server, hostID: hostID, accessToken: accessToken, deviceName: deviceName,
+            key: key, path: "/auth/cloud-session", pairing: nil, trustSubject: trustSubject, hostPins: hostPins)
+    }
+
+    /// Join cannot disclose the phone nonce. An invalid host contribution stops before reveal.
+    public func beginCloudPairing(_ pairing: HostPairing, identity: CloudPairingIdentity, deviceName: String,
+                                  key: CloudDeviceKey, hostPins: HostPinStore, allowLoopbackHTTP: Bool = false) async throws -> PairingComparison {
+        try pairing.validate(issuer: identity.issuer, subject: identity.subject, hostID: identity.hostID)
+        guard identity.thumbprint == key.thumbprint, identity.deviceID == "apple-" + key.thumbprint else { throw CloudLoginFailure.token }
+        let server = try pairing.requestServer(allowLoopbackHTTP: allowLoopbackHTTP)
+        if server.origin.scheme == "https" { try hostPins.save(pairing.tlsSpki, for: server.originString) }
+        let generation = epoch
+        let phoneNonce = cloudBase64(Data((0..<32).map { _ in UInt8.random(in: 0...255) }))
+        let commitment = try PairingV2.phoneCommitment(challenge: pairing.challenge, deviceID: identity.deviceID,
+            thumbprint: identity.thumbprint, nonce: phoneNonce)
+        let body = ["accessToken": identity.accessToken, "deviceName": deviceName, "challenge": pairing.challenge]
+        struct Contribution: Decodable { let state: String; let hostNonce: String; let expiresAt: Int64 }
+        let joined = try await cloudProofRequest(server: server, path: "/cloud/pairings/join",
+            body: body.merging(["phoneCommitment": commitment]) { _, value in value }, key: key, generation: generation)
+        let host: Contribution = try decode(joined.body)
+        guard host.state == "committed", host.expiresAt == pairing.expiresAt, PairingV2.isNonce(host.hostNonce),
+              try PairingV2.hostCommitment(pairing.transcript(), nonce: host.hostNonce) == pairing.hostCommitment else { throw PairingFailure.commitment }
+        try pairing.checkExpiry()
+        let revealed = try await cloudProofRequest(server: server, path: "/cloud/pairings/reveal",
+            body: body.merging(["phoneNonce": phoneNonce]) { _, value in value }, key: key, generation: generation)
+        let comparison: Contribution = try decode(revealed.body)
+        guard ["comparing", "confirmed"].contains(comparison.state), comparison.expiresAt == pairing.expiresAt,
+              comparison.hostNonce == host.hostNonce else { throw PairingFailure.commitment }
+        try pairing.checkExpiry()
+        return PairingComparison(pairing: pairing, server: server,
+            verificationCode: try PairingV2.code(pairing.transcript(), hostNonce: host.hostNonce,
+                deviceID: identity.deviceID, thumbprint: identity.thumbprint, phoneNonce: phoneNonce),
+            deviceID: identity.deviceID, thumbprint: identity.thumbprint)
+    }
+
+    /// nil means the computer still needs to confirm; no content session or trust has been installed.
+    public func redeemCloudPairing(_ comparison: PairingComparison, identity: CloudPairingIdentity,
+                                   deviceName: String, key: CloudDeviceKey, hostPins: HostPinStore) async throws -> AccountSession? {
+        let pairing = comparison.pairing
+        try pairing.validate(issuer: identity.issuer, subject: identity.subject, hostID: identity.hostID)
+        guard comparison.deviceID == identity.deviceID, comparison.thumbprint == identity.thumbprint,
+              key.thumbprint == identity.thumbprint else { throw CloudLoginFailure.token }
+        do {
+            let result = try await establishCloudSession(server: comparison.server, hostID: pairing.hostId,
+                accessToken: identity.accessToken, deviceName: deviceName, key: key, path: "/cloud/pairings/redeem",
+                pairing: pairing, trustSubject: identity.subject, hostPins: hostPins)
+            guard case .authenticated(let session) = result else { throw PairingFailure.invalid }
+            return session
+        } catch APIFailure.server(status: 403, code: "PAIRING_CONFIRMATION_REQUIRED") { return nil }
+        catch APIFailure.server(status: 401, code: "PAIRING_INVALID") { throw PairingFailure.invalid }
+    }
+
+    private func cloudProofRequest(server: ServerConfiguration, path: String, body: [String: String],
+                                   key: CloudDeviceKey, generation: UInt64) async throws -> HTTPResponse {
         struct Nonce: Decodable { let nonce: String }
         let nonceResponse = try await rawRequest(server: server, path: "/auth/cloud-nonce", method: "POST", body: Data("{}".utf8))
-        try check(generation); try Task.checkCancellation()
+        try check(generation)
         let nonce: Nonce = try decode(nonceResponse.body)
-        let path = pairing == nil ? "/auth/cloud-session" : "/cloud/pairings/redeem"
+        let proof = try key.proof(url: URL(string: server.originString + "/personal/v1" + path)!, accessToken: body["accessToken"], nonce: nonce.nonce)
+        do {
+            let response = try await rawRequest(server: server, path: path, method: "POST", body: JSONEncoder().encode(body), extraHeaders: ["DPoP": proof])
+            try check(generation)
+            return response
+        } catch APIFailure.server(status: 409, code: "PAIRING_CONFLICT") { throw PairingFailure.conflict }
+        catch APIFailure.server(status: 401, code: "PAIRING_INVALID") { throw PairingFailure.invalid }
+    }
+
+    private func establishCloudSession(server: ServerConfiguration, hostID: String, accessToken: String,
+                                      deviceName: String, key: CloudDeviceKey, path: String, pairing: HostPairing?,
+                                      trustSubject: String?, hostPins: HostPinStore?) async throws -> CloudSessionExchange {
+        let generation = try transition(server: server, clearSaved: true)
         var body = ["accessToken": accessToken, "deviceName": deviceName]
         if let pairing {
             guard pairing.hostId == hostID else { throw APIFailure.identityMismatch }
             body["challenge"] = pairing.challenge
         }
-        let proof = try key.proof(url: URL(string: server.originString + "/personal/v1" + path)!, accessToken: accessToken, nonce: nonce.nonce)
-        let response = try await rawRequest(server: server, path: path, method: "POST", body: JSONEncoder().encode(body),
-            extraHeaders: ["DPoP": proof])
+        let response = try await cloudProofRequest(server: server, path: path, body: body, key: key, generation: generation)
         try check(generation); try Task.checkCancellation()
         if response.status == 202 {
             struct Pending: Decodable { let status: String; let requestId: String }
@@ -330,6 +393,10 @@ public actor PersonalClient {
                 deviceID: "apple-" + key.thumbprint, thumbprint: key.thumbprint,
                 allowLoopbackHTTP: server.origin.scheme == "http" && ["127.0.0.1", "localhost"].contains(server.origin.host))
             guard pin.origin == server.originString || pin.relay?.baseUrl == server.originString else { throw APIFailure.identityMismatch }
+            if let pairing {
+                guard pin.tlsSpki == pairing.tlsSpki, pin.origin == pairing.origin,
+                      pin.relay?.baseUrl == pairing.relay?.baseUrl else { throw APIFailure.identityMismatch }
+            }
             if server.origin.scheme == "https" { try hostPins.save(pin.tlsSpki, for: server.originString) }
             try store.save(JSONEncoder().encode(material.hostTrust.publicJwk), key: anchorKey)
         }

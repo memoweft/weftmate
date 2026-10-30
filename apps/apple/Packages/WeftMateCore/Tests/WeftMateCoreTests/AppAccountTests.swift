@@ -71,7 +71,13 @@ private actor NativeAccountTransport: HTTPTransport {
             var access: [String: Any] = ["iss": configuration.issuer, "sub": subject, "aud": resource,
                 "iat": Date().timeIntervalSince1970, "exp": Date().timeIntervalSince1970 + 15, "scope": "cloud:account host:session",
                 "cnf": ["jkt": fault == "key" ? "wrong" : thumbprint]]
-            if resource.contains("/hosts/") { access["device_verified"] = fault != "unverified"; access["host_id"] = "host-one" }
+            if resource.contains("/hosts/") {
+                access["device_verified"] = fault != "unverified"
+                access["host_id"] = fault == "pair-host" ? "other-host" : "host-one"
+                access["device_id"] = fault == "pair-device" ? "other-device" : "apple-" + thumbprint
+                if fault == "pair-key" { access["cnf"] = ["jkt": "other-key"] }
+                if fault == "pair-account" { access["sub"] = "other-account" }
+            }
             var id = access; id["aud"] = configuration.clientID; id["nonce"] = fault == "nonce" ? "wrong" : nonce
             return try reply(["access_token": token(access, type: "at+jwt"), "id_token": token(id),
                 "refresh_token": "rotation-\(rotation)", "token_type": fault == "bearer" ? "Bearer" : "DPoP"])
@@ -85,6 +91,10 @@ private actor NativeAccountTransport: HTTPTransport {
             #expect(request.value(forHTTPHeaderField: "Authorization")?.hasPrefix("DPoP ") == true)
             #expect(request.value(forHTTPHeaderField: "DPoP") != nil)
             return try reply(["devices": [], "hosts": []])
+        }
+        if path.hasSuffix("/hosts/connect") {
+            return try reply(["hostId": "host-one", "baseUrl": fault == "pair-connection" ? "https://other.example.test" : "https://relay.example.test",
+                "status": "online", "resource": configuration.audience + "/hosts/host-one", "approval": "automatic", "pairingRequired": true])
         }
         if path.hasSuffix("/hosts/offline/status") {
             var value: [String:Any] = ["hostId": "host-one", "accountId": subject, "generation": 3, "authorized": true]
@@ -107,6 +117,42 @@ private actor NativeAccountTransport: HTTPTransport {
 }
 
 @Suite struct AppAccountTests {
+    @Test func pairingDestinationMustMatchAuthenticatedCloudConnection() async throws {
+        for fault in [nil, "pair-connection"] as [String?] {
+            let configuration = CloudConfiguration(server: try ServerConfiguration(input: "https://cloud.example.com"))
+            let key = try CloudDeviceKey(softwareStore: MemoryStore())
+            let transport = try NativeAccountTransport(configuration: configuration, thumbprint: key.thumbprint, fault: fault)
+            let client = CloudAccountClient(configuration: configuration, key: key, store: MemoryStore(), transport: transport)
+            try await client.beginAppLogin()
+            let login = try await client.appLogin(email: "synthetic@example.com", password: UUID().uuidString, name: "Synthetic", type: "ios")
+            try await client.finishAppLogin(resumeURL: login.resumeUrl!)
+            let fields: [String: Any] = ["version": 2, "issuer": configuration.issuer, "sub": "synthetic-sub", "hostId": "host-one",
+                "publicJwk": key.publicJwk, "challenge": String(repeating: "A", count: 43), "hostCommitment": String(repeating: "A", count: 43),
+                "tlsSpki": String(repeating: "A", count: 43), "expiresIn": 120, "expiresAt": Int64(Date().timeIntervalSince1970 * 1000) + 119_000,
+                "origin": "http://127.0.0.1:47777", "relay": ["state": "online", "baseUrl": "https://relay.example.test"]]
+            let pairing = try HostPairing.parse(JSONSerialization.data(withJSONObject: fields))
+            if fault == nil { #expect(try await client.pairingConnection(pairing).originString == "https://relay.example.test") }
+            else { await #expect(throws: CloudLoginFailure.pairing) { try await client.pairingConnection(pairing) } }
+        }
+    }
+    @Test func pairingUsesSignatureVerifiedAccountDeviceHostAndActualDPoPKey() async throws {
+        for fault in [nil, "pair-device", "pair-host", "pair-key", "pair-account", "unverified"] as [String?] {
+            let configuration = CloudConfiguration(server: try ServerConfiguration(input: "https://cloud.example.com"))
+            let key = try CloudDeviceKey(softwareStore: MemoryStore())
+            let transport = try NativeAccountTransport(configuration: configuration, thumbprint: key.thumbprint, fault: fault)
+            let client = CloudAccountClient(configuration: configuration, key: key, store: MemoryStore(), transport: transport)
+            try await client.beginAppLogin()
+            let reply = try await client.appLogin(email: "synthetic@example.com", password: UUID().uuidString, name: "Synthetic", type: "ios")
+            try await client.finishAppLogin(resumeURL: reply.resumeUrl!)
+            if fault == nil {
+                let identity = try await client.pairingIdentity(hostID: "host-one")
+                #expect(identity.issuer == configuration.issuer && identity.subject == "synthetic-sub")
+                #expect(identity.hostID == "host-one" && identity.deviceID == "apple-" + key.thumbprint && identity.thumbprint == key.thumbprint)
+            } else {
+                await #expect(throws: CloudLoginFailure.token) { try await client.pairingIdentity(hostID: "host-one") }
+            }
+        }
+    }
     @Test func computerManagementUsesExactAccountRoutesAndStableHostID() async throws {
         let config=CloudConfiguration(server:try ServerConfiguration(input:"https://cloud.example.com"))
         let key=try CloudDeviceKey(softwareStore:MemoryStore()),fixture=try NativeAccountTransport(configuration:config,thumbprint:key.thumbprint)

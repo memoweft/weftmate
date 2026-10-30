@@ -23,7 +23,8 @@ public enum HostTrustDelivery {
                   payload.tlsSpki.range(of: "^[A-Za-z0-9_-]{43}$", options: .regularExpression) != nil else { throw CloudLoginFailure.pairing }
             let members = ["kty", "crv", "x", "y"]
             guard members.allSatisfy({ payload.publicJwk[$0] == trustedPublicJwk[$0] }) else { throw CloudLoginFailure.pairing }
-            _ = try ServerConfiguration(input: payload.origin, allowLoopbackHTTP: allowLoopbackHTTP)
+            // The signed origin describes the computer; loopback metadata is valid over HTTPS relay.
+            _ = try ServerConfiguration(input: payload.origin, allowLoopbackHTTP: true)
             if let base = payload.relay?.baseUrl { _ = try ServerConfiguration(input: base, allowLoopbackHTTP: allowLoopbackHTTP) }
             return payload
         } catch { throw CloudLoginFailure.pairing }

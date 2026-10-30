@@ -316,6 +316,33 @@ public actor CloudAccountClient {
         hostToken = try await refresh(resource: configuration.audience + "/hosts/" + hostID, hostID: hostID, epoch: generation)
         return hostToken!
     }
+    /// Cross-check the QR's destination against the authenticated cloud directory before sending a host token.
+    public func pairingConnection(_ pairing: HostPairing, allowLoopbackHTTP: Bool = false) async throws -> ServerConfiguration {
+        let epoch = generation
+        guard let subject = try savedSubject() else { throw APIFailure.notAuthenticated }
+        try pairing.validate(issuer: configuration.issuer, subject: subject, hostID: pairing.hostId)
+        let connection = try await connect(hostID: pairing.hostId)
+        try check(epoch)
+        guard connection.hostId == pairing.hostId,
+              connection.resource == configuration.audience + "/hosts/" + pairing.hostId else { throw CloudLoginFailure.pairing }
+        guard connection.status == "online", let base = connection.baseUrl else { throw CloudLoginFailure.hostOffline }
+        let server = try ServerConfiguration(input: base, allowLoopbackHTTP: allowLoopbackHTTP)
+        guard server == (try pairing.requestServer(allowLoopbackHTTP: allowLoopbackHTTP)) else { throw CloudLoginFailure.pairing }
+        return server
+    }
+    public func pairingIdentity(hostID: String) async throws -> CloudPairingIdentity {
+        let epoch = generation
+        let token = try await accessToken(hostID: hostID)
+        let payload = try await claims(token, audience: configuration.audience + "/hosts/" + hostID, type: "at+jwt")
+        try check(epoch)
+        guard let subject = saved?.subject, payload["sub"] as? String == subject,
+              payload["host_id"] as? String == hostID, payload["device_id"] as? String == deviceID,
+              (payload["cnf"] as? [String: String])?["jkt"] == key.thumbprint,
+              payload["device_verified"] as? Bool == true,
+              (payload["scope"] as? String)?.split(separator: " ").contains("host:session") == true else { throw CloudLoginFailure.token }
+        return CloudPairingIdentity(accessToken: token, issuer: configuration.issuer, subject: subject,
+            hostID: hostID, deviceID: deviceID, thumbprint: key.thumbprint)
+    }
     private func acquireRotation() async {
         if rotating { await withCheckedContinuation { rotationWaiters.append($0) } }
         else { rotating = true }

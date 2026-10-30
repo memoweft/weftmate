@@ -71,6 +71,11 @@ public struct CloudAuthorization: Sendable {
 
 /// Exact /cloud/pairings response, carried as JSON in the QR. Cloud never supplies this pin.
 public struct HostPairing: Codable, Sendable, Equatable {
+    public let version: Int
+    public let issuer: String
+    public let sub: String
+    public let expiresAt: Int64
+    public let hostCommitment: String
     public let challenge: String
     public let expiresIn: Int
     public let hostId: String
@@ -79,7 +84,7 @@ public struct HostPairing: Codable, Sendable, Equatable {
     public let origin: String
     public let relay: Relay?
     public struct Relay: Codable, Sendable, Equatable { public let state: String; public let baseUrl: String? }
-    public static func parse(_ data: Data, allowLoopbackHTTP: Bool = false) throws -> Self {
+    public static func parse(_ data: Data, allowLoopbackHTTP: Bool = false, now: Date = Date()) throws -> Self {
         let input = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         var encoded: String?
         if input.hasPrefix("wm1.") { encoded = String(input.dropFirst(4)) }
@@ -97,13 +102,15 @@ public struct HostPairing: Codable, Sendable, Equatable {
             json = bytes
         }
         guard let pair = try? JSONDecoder().decode(Self.self, from: json),
-              pair.expiresIn > 0, pair.expiresIn <= 120,
-              pair.challenge.range(of: "^[A-Za-z0-9_-]{20,256}$", options: .regularExpression) != nil,
+              pair.version == 2, pair.expiresIn == 120, !pair.issuer.isEmpty, !pair.sub.isEmpty,
+              PairingV2.isNonce(pair.challenge), PairingV2.isNonce(pair.hostCommitment),
               pair.hostId.range(of: "^[A-Za-z0-9_.:-]{1,128}$", options: .regularExpression) != nil,
               pair.tlsSpki.range(of: "^[A-Za-z0-9_-]{43}$", options: .regularExpression) != nil,
               pair.publicJwk["kty"] == "EC", pair.publicJwk["crv"] == "P-256", pair.publicJwk["d"] == nil,
-              (try? ServerConfiguration(input: pair.origin, allowLoopbackHTTP: allowLoopbackHTTP)) != nil else { throw CloudLoginFailure.pairing }
-        if let base = pair.relay?.baseUrl { _ = try ServerConfiguration(input: base) }
+              (try? pair.publicKeyThumbprint()) != nil,
+              (try? ServerConfiguration(input: pair.origin, allowLoopbackHTTP: true).originString) == pair.origin else { throw CloudLoginFailure.pairing }
+        try pair.checkExpiry(now: now)
+        _ = try pair.requestServer(allowLoopbackHTTP: allowLoopbackHTTP)
         return pair
     }
 }
