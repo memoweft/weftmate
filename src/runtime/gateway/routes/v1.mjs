@@ -445,19 +445,28 @@ export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, di
       let resolve;
       const drained = new Promise(done => { resolve = done; });
       operations.add(drained);
-      return () => { operations.delete(drained); resolve(); };
+      let active = true, reads = 0;
+      const finish = () => {
+        if (!active && reads === 0) { operations.delete(drained); resolve(); }
+      };
+      return {
+        // Capture/close may already hold this request's drain promise. Keep
+        // later physical reads on that same promise, not on a new set member.
+        read() { reads++; return () => { reads--; finish(); }; },
+        park() { active = false; finish(); },
+      };
     };
-    let release = admit();
+    let admission = admit();
     const operation = {
-      read: admit,
-      park() { release(); release = () => {}; },
+      read() { return admission.read(); },
+      park() { admission.park(); },
       async resume() {
         while (capture) await capture.ready;
         if (closing) return false;
-        release = admit(); return true;
+        admission = admit(); return true;
       },
     };
-    try { return await dispatch(req, res, operation) } finally { release() }
+    try { return await dispatch(req, res, operation) } finally { admission.park() }
   }
   return { handle, emitForTest: emit, reconcileForTest: reconcile, close() {
     closing = true;

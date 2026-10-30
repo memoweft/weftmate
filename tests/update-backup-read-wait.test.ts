@@ -17,7 +17,7 @@ function deferred() {
 async function fixture(t, options: any = {}) {
   const events: any[] = [], source = new EventEmitter(), enteredWait = deferred(), endedWait = deferred();
   const enteredRead = deferred(), enteredWrite = deferred(), routeSeen = new Map(), readStarts = new Map();
-  const writeGate = options.writeGate;
+  const writeGate = options.writeGate, readGates = options.readGates ?? {};
   let reads = 0, flushed = 0, writes = 0, activeWaits = 0, activeReads = 0, settledReads = 0, lastSignal;
   const readStarted = index => { if (!readStarts.has(index)) readStarts.set(index, deferred()); return readStarts.get(index); };
   const native = nativeTimelineLog({
@@ -26,7 +26,8 @@ async function fixture(t, options: any = {}) {
       if (key === 'sessionPersistence') return { async inspect() {
         const index = ++reads; activeReads++; enteredRead.resolve(); readStarted(index).resolve();
         try {
-          if (options.readGateAt === index) await options.readGate.promise;
+          const gate = readGates[index] ?? (options.readGateAt === index ? options.readGate : null);
+          if (gate) await gate.promise;
           if (options.readErrorAt === index) throw Object.assign(new Error('Synthetic native read failed'), { code: 'STORAGE_UNAVAILABLE' });
           return { events };
         } finally { activeReads--; settledReads++; }
@@ -64,6 +65,7 @@ async function fixture(t, options: any = {}) {
   const controllers = new Set<AbortController>(), pending = new Set<Promise<any>>();
   const abortFixture = () => {
     options.readGate?.resolve(); writeGate?.resolve();
+    for (const gate of Object.values(readGates) as any[]) gate.resolve();
     for (const controller of controllers) controller.abort();
     server.closeAllConnections();
   };
@@ -242,6 +244,87 @@ test('registration recheck failure releases admission only after the physical re
   assert.equal(f.counts().flushed, 1); assert.equal(f.signalListeners(), 0);
   await f.resume('synthetic-capture');
   assert.equal((await f.pause('after-failing-recheck')).status, 200); await f.resume('after-failing-recheck');
+});
+
+for (const cause of ['event', 'timeout', 'abort']) test(`a ${cause} view cannot drain a recheck derived after capture took its operation snapshot`, { timeout: 8000 }, async t => {
+  const first = deferred(), second = deferred(), f = await fixture(t, { readGates: { 1: first, 2: second } });
+  const route = cause === 'timeout' ? `/sessions/${sessionId}/history?waitMs=500&waitSeq=-1` : waitRoute;
+  const history = f.request(route); await f.readStarted(1);
+  const enteredPause = f.seen('POST', '/backup-pause'), paused = f.pause(); await enteredPause;
+  assert.equal((await f.pause('late-derived-capture-established')).status, 409);
+  assert.equal(f.counts().reads, 1); assert.equal(f.counts().flushed, 0);
+  first.resolve(); await f.readStarted(2);
+  assert.equal(f.counts().activeReads, 1); assert.equal(f.counts().settledReads, 1);
+  if (cause === 'event') f.wake();
+  if (cause === 'abort') { history.abort(); await assert.rejects(history.done, { name: 'AbortError' }); }
+  await f.endedWait;
+  assert.equal((await f.pause('late-derived-still-owned')).status, 409);
+  assert.equal(f.signalListeners(), 0); assert.equal(f.counts().activeWaits, 0);
+  assert.equal(f.counts().reads, 2); assert.equal(f.counts().activeReads, 1);
+  assert.equal(f.counts().flushed, 0, 'the original capture snapshot also owns reads derived from its admitted request');
+  second.resolve();
+  assert.equal((await paused).status, 200); assert.equal(f.counts().flushed, 1);
+  assert.equal(f.counts().activeReads, 0); assert.equal(f.counts().reads, 2);
+  await f.resume('stale-late-derived'); assert.equal(f.counts().reads, 2);
+  await f.resume('synthetic-capture');
+  if (cause !== 'abort') {
+    const answer = await history.done; assert.equal(answer.status, 200);
+    if (cause === 'event') assert.ok((answer.body.liveSeq ?? answer.body.nextSeq) >= 0, 'the event during derived registration is not lost');
+    assert.equal(f.counts().reads, 3);
+  }
+  assert.equal((await f.pause('after-late-derived')).status, 200); await f.resume('after-late-derived');
+});
+
+test('a read derived after capture admission still consumes the original absolute two-second deadline', { timeout: 8000 }, async t => {
+  const first = deferred(), second = deferred(), f = await fixture(t, { readGates: { 1: first, 2: second } });
+  const history = f.request(waitRoute); await f.readStarted(1);
+  const started = Date.now(), deadline = started + 2000;
+  const enteredPause = f.seen('POST', '/backup-pause'), paused = f.pause('late-derived-deadline', deadline); await enteredPause;
+  assert.equal((await f.pause('late-derived-deadline-established')).status, 409);
+  first.resolve(); await f.readStarted(2); f.wake(); await f.endedWait;
+  const answer = await paused;
+  assert.equal(answer.status, 409); assert.equal(answer.body.error.code, 'BACKUP_PAUSE_TIMEOUT');
+  assert.ok(Date.now() - started >= 1900, 'the configured two-second protection remains in force');
+  assert.equal(f.counts().flushed, 0, 'expiry cannot flush while the derived physical read is unfinished');
+  assert.ok(f.counts().activeReads >= 1);
+  second.resolve(); assert.equal((await history.done).status, 200);
+  assert.equal((await f.pause('after-late-derived-expiry')).status, 200); await f.resume('after-late-derived-expiry');
+});
+
+for (const owner of ['native', 'gateway']) test(`${owner} close during the initial read prevents a later registration recheck`, { timeout: 8000 }, async t => {
+  const first = deferred(), second = deferred(), f = await fixture(t, { readGates: { 1: first, 2: second } });
+  const history = f.request(waitRoute); await f.readStarted(1);
+  let closed = false; const closing = f[owner].close().then(() => { closed = true; });
+  if (owner === 'gateway') {
+    assert.equal((await f.request('/sessions').done).status, 503, 'gateway shutdown has started');
+    assert.equal(closed, false, 'the initial admitted read still drains before gateway close completes');
+  } else assert.equal(f.native.closed, true);
+  assert.equal(f.counts().reads, 1); assert.equal(f.counts().activeReads, 1);
+  first.resolve();
+  const answer = await history.done; await closing;
+  assert.equal(answer.status, 503); assert.equal(answer.body.error.code, 'SERVICE_CLOSING');
+  assert.equal(f.counts().reads, 1, 'shutdown cannot derive a new native storage read');
+  assert.equal(f.counts().activeReads, 0); assert.equal(f.counts().activeWaits, 0);
+  assert.equal(f.counts().flushed, 0); assert.equal(f.openResponses(), 0);
+});
+
+for (const owner of ['native', 'gateway']) test(`${owner} close retains an already-started read derived after capture admission`, { timeout: 8000 }, async t => {
+  const first = deferred(), second = deferred(), f = await fixture(t, { readGates: { 1: first, 2: second } });
+  const history = f.request(waitRoute); await f.readStarted(1);
+  const enteredPause = f.seen('POST', '/backup-pause'), paused = f.pause(); await enteredPause;
+  assert.equal((await f.pause('late-derived-close-established')).status, 409);
+  first.resolve(); await f.readStarted(2);
+  let closed = false; const closing = f[owner].close().then(() => { closed = true; });
+  const answer = await history.done; await f.endedWait;
+  assert.equal(answer.status, 503); assert.equal(answer.body.error.code, 'SERVICE_CLOSING');
+  if (owner === 'native') assert.equal((await f.pause('late-derived-native-close-probe')).status, 409);
+  else assert.equal((await paused).status, 409, 'gateway shutdown revokes capture');
+  assert.equal(closed, false, 'close still owns the physical read after its response view settles');
+  assert.equal(f.counts().reads, 2); assert.equal(f.counts().activeReads, 1);
+  assert.equal(f.counts().flushed, 0); assert.equal(f.signalListeners(), 0);
+  second.resolve(); await closing;
+  if (owner === 'native') { assert.equal((await paused).status, 200); await f.resume('synthetic-capture'); }
+  assert.equal(f.counts().activeReads, 0); assert.equal(f.openResponses(), 0);
 });
 
 test('an admitted write still consumes the unchanged two-second pause deadline', { timeout: 8000 }, async t => {
