@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 8
     env:
       WEFTMATE_MOTION2_OUTPUT: ${{ github.workspace }}/.local/evidence/ui-motion-2
+      WEFTMATE_DISCLOSURE_OUTPUT: ${{ github.workspace }}/.local/evidence/ui-motion-2/disclosure-cadence
       WEFTMATE_TEST_HOST_NAME: synthetic-host
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +41,7 @@ jobs:
           exit $runtimeExit
       - name: Native disclosure, loading states and switch inventory
         shell: pwsh
-        run: node --test tests/ui-motion-2.test.ts tests/ui-motion-2-goals.test.ts tests/ui-motion-2-memory.test.ts
+        run: node --test --test-concurrency=1 tests/ui-motion-2.test.ts tests/motion-disclosure-ci.test.ts tests/ui-motion-2-goals.test.ts tests/ui-motion-2-memory.test.ts
       - name: Upload synthetic motion evidence
         if: always()
         uses: actions/upload-artifact@v4
