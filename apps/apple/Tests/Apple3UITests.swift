@@ -40,8 +40,8 @@ final class Apple3UITests: XCTestCase {
             let recovery=app.buttons["health.score.recovery"], sleep=app.buttons["health.score.sleep"]
             for _ in 0..<3 where !recovery.isHittable { app.swipeUp() }
             XCTAssertTrue(recovery.exists);XCTAssertTrue(sleep.exists)
-            XCTAssertLessThan(abs(recovery.frame.minY-sleep.frame.minY),8)
-            XCTAssertLessThan(recovery.frame.minX,sleep.frame.minX);capture(app,theme,"health-grid")
+            XCTAssertLessThan(recovery.frame.minY,sleep.frame.minY)
+            XCTAssertTrue(app.descendants(matching:.any)["health.secondaryMetrics"].exists);capture(app,theme,"health-list")
             recovery.tap()
             XCTAssertTrue(app.buttons["health.analysis.recovery"].waitForExistence(timeout:20))
             app.swipeUp();app.buttons["health.analysis.recovery"].tap()
@@ -78,7 +78,7 @@ final class Apple3UITests: XCTestCase {
             try choose(app,"health")
             XCTAssertTrue(app.buttons["health.score.recovery"].waitForExistence(timeout:25))
             try framePair(app,app.buttons["health.score.recovery"],app.buttons["health.score.sleep"])
-            capture(app,theme,"health-grid")
+            capture(app,theme,"health-list")
             app.terminate()
         }
     }

@@ -98,6 +98,7 @@ final class IOSUIShellUITests: XCTestCase {
             XCTAssertFalse(app.alerts["phone.sidebar.panel"].exists)
             XCTAssertTrue(app.navigationBars.buttons.firstMatch.waitForExistence(timeout: 10))
             if route == "goals" {
+                tap(app, "goals.reminders")
                 tap(app, "reminders.new")
                 XCTAssertTrue(control(app, "reminders.text").waitForExistence(timeout: 10))
                 capture(app, theme + "-reminder-sheet")

@@ -26,8 +26,7 @@ struct HealthPageView: View {
                     }.accessibilityIdentifier("health.disconnected")
                 }
             }.padding(AppleTokens.Space.p20)
-        }.background(Weave.canvas).navigationTitle("健康")
-            .toolbarBackground(Weave.canvas,for:.navigationBar).toolbarBackground(.visible,for:.navigationBar)
+        }.background(Weave.canvas).navigationTitle("健康").navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement:.primaryAction) {
                     Button { Task { await health.activate(app:app); await page.refresh(app:app) } } label: { WeftIcon("sync") }
@@ -48,116 +47,154 @@ struct HealthPageView: View {
             .refreshable { await page.refresh(app:app) }
     }
     @ViewBuilder private func today(_ o: HealthOverview) -> some View {
-        card {
-            Text("今日解读").font(AppleTokens.Fonts.subheadline).foregroundStyle(.secondary)
-            Text(o.insight?.headline ?? "听听身体今天的节奏").font(AppleTokens.Fonts.largeTitle.bold())
+        Text(DeviceDateText.day(o.day)).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+        HStack {
+            Text(page.updatedText).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+            Spacer()
+            NavigationLink("数据与权限") { HealthPageSettingsView(app:app,page:page) }.font(AppleTokens.Fonts.footnote)
+        }
+        NavigationLink { detail("recovery","恢复") } label: {
+            HStack(spacing:AppleTokens.Space.p16) {
+                HealthScoreNumber(text:number(o.recovery?.score)).foregroundStyle(stateColor(o.recovery?.state)).fixedSize(horizontal:true,vertical:false)
+                VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
+                    Text(o.recovery?.score == nil ? "恢复 · —" : o.recovery?.label ?? "恢复").font(AppleTokens.Fonts.headline)
+                    Text(o.recovery?.score == nil ? "测量还没到齐，再戴几天看看。" : o.insight?.headline ?? "看看相对平时的变化").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                }.frame(maxWidth:.infinity,alignment:.leading)
+                WeftIcon("right",size:AppleTokens.Space.p16).foregroundStyle(Weave.muted)
+            }.frame(minHeight:AppleTokens.Space.p44).padding(.vertical,AppleTokens.Space.p12).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityIdentifier("health.score.recovery")
+        Divider()
+        ViewThatFits(in:.horizontal) {
+            HStack(alignment:.top,spacing:AppleTokens.Space.p16) { secondaryMetrics(o) }
+            VStack(alignment:.leading,spacing:AppleTokens.Space.p16) { secondaryMetrics(o) }
+        }.accessibilityIdentifier("health.secondaryMetrics")
+        Divider()
+        NavigationLink { detail("sleepMinutes","睡眠时长") } label: {
+            VStack(alignment:.leading,spacing:AppleTokens.Space.p16) {
+                HStack { Text("昨晚睡眠").font(AppleTokens.Fonts.headline).foregroundStyle(AppleTokens.Colors.healthSleep);Spacer();WeftIcon("right",size:AppleTokens.Space.p16).foregroundStyle(Weave.muted) }
+                HealthDurationNumber(minutes:o.sleep?.minutes)
+                Text(time(o.sleep?.start)+" 入睡 · "+time(o.sleep?.end)+" 起床").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                if let stages=(health.state.pending[o.day] ?? health.state.delivered[o.day])?.sleep?.stages,!stages.isEmpty { PhoneSleepStageTimeline(stages:stages) }
+                sleepStages(o)
+                if let used=o.usage?.lastUsedAt { Text("最近一次向 WeftMate 发消息 "+time(used)).font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted) }
+                else if let late=o.usage?.lateNightMinutes { Text("深夜使用电脑 "+minutes(late)).font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted) }
+                Text("设备本地时间").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+            }.frame(maxWidth:.infinity,alignment:.leading).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityIdentifier("health.sleepDuration")
+        NavigationLink { detail("sleep","睡眠分数") } label: { PhoneFeatureRow(title:"睡眠分数",subtitle:o.sleep?.label ?? "测量还没到齐",value:number(o.sleep?.score)) }.buttonStyle(.plain).accessibilityIdentifier("health.score.sleep")
+        Divider()
+        PhoneSectionHeading(title:"身体指标")
+        VStack(spacing:0) {
+            ForEach(vitalIDs,id:\.self) { id in
+                let metric=o.vital(id)
+                NavigationLink { detail(id,title(id)) } label: {
+                    PhoneFeatureRow(title:title(id),subtitle:metric?.value == nil ? "暂时没有测量，请检查健康读取权限。" : metric?.label,value:PhoneHealthText.number(metric?.value,metric:id)+unit(id))
+                }.buttonStyle(.plain).accessibilityIdentifier("health.vital."+id)
+                Divider()
+            }
+            if let age=o.fitnessAge {
+                NavigationLink { detail("fitnessAge","体能年龄") } label: { PhoneFeatureRow(title:"体能年龄",subtitle:age.label ?? "还没有足够的测量",value:number(age.fitnessAge)+" 岁") }.buttonStyle(.plain).accessibilityIdentifier("health.extra.fitnessAge")
+                Divider()
+            }
+        }
+        PhoneSectionHeading(title:"今天的活动")
+        NavigationLink { detail("steps","步数") } label: {
+            PhoneFeatureRow(title:o.activity?.steps.map { "\($0) 步" } ?? "— 步",subtitle:"活动能量 "+number(o.activity?.activeEnergyKcal)+" 千卡 · 运动 "+minutes(o.activity?.exerciseMinutes))
+        }.buttonStyle(.plain).accessibilityIdentifier("health.activity")
+        ForEach(Array((o.activity?.workouts ?? []).enumerated()),id:\.offset) { _,workout in Text(workout.type+" · "+minutes(workout.minutes)).font(AppleTokens.Fonts.callout) }
+        if let calendar=page.cache.calendar {
+            PhoneSectionHeading(title:"这个月的运动")
+            LazyVGrid(columns:Array(repeating:GridItem(.flexible()),count:7),spacing:AppleTokens.Space.p12) {
+                // Empty leading cells keep each day under its actual weekday.
+                ForEach(0..<calendarLeadingDays(calendar),id:\.self) { _ in Color.clear.frame(height:AppleTokens.Space.p44).accessibilityHidden(true) }
+                ForEach(calendar.days) { day in
+                    VStack { Text(String(day.day.suffix(2)));Circle().fill(day.hasWorkout ? Weave.accent : Weave.line).frame(width:6,height:6) }
+                        .frame(minHeight:AppleTokens.Space.p44).accessibilityElement(children:.ignore).accessibilityLabel(DeviceDateText.day(day.day)+(day.hasWorkout ? "，有运动" : "，没有运动记录"))
+                }
+            }
+        }
+        Divider()
+        VStack(alignment:.leading,spacing:AppleTokens.Space.p16) {
+            Text(o.insight?.headline ?? "今日解读").font(AppleTokens.Fonts.headline)
             Text(o.insight?.text ?? "今天的测量还没到齐，已有的变化先看看。")
             ForEach(o.insight?.suggestions ?? []) { suggestion in
                 HStack(alignment:.top) {
-                    Text(suggestion.text); Spacer()
+                    Text(suggestion.text);Spacer()
                     if suggestion.reminder != nil { Button("提醒我") { Task { await page.remind(suggestion,app:app) } }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("health.remind."+suggestion.id) }
                 }
             }
-            HStack { Spacer(); Button("接着问它") { ask(o.insight?.text ?? "帮我看看今天的健康变化") }.buttonStyle(PrimaryActionStyle(fillsWidth:false)).accessibilityIdentifier("health.ask") }
-        }.accessibilityElement(children:.contain).accessibilityIdentifier("health.insight")
-        LazyVGrid(columns:Array(repeating:GridItem(.flexible(),alignment:.top),count:HealthPagePolicy.scoreColumns(width:0)),alignment:.leading,spacing:AppleTokens.Space.p12) {
-            ForEach(["recovery","sleep","load"],id:\.self) { id in score(id,o) }
-            if HealthPagePolicy.visibleOptionalCards(o).contains("stress"),let value=o.stress { extra("stress","压力",value.score,value.state,value.label) }
-            if HealthPagePolicy.visibleOptionalCards(o).contains("energy"),let value=o.energy { extra("energy","电能",value.current,value.state,value.label) }
-            if HealthPagePolicy.visibleOptionalCards(o).contains("fitnessAge"),let value=o.fitnessAge { extra("fitnessAge","体能年龄",value.fitnessAge,value.state,value.label) }
-        }.accessibilityIdentifier("health.scoreGrid")
-        card {
-            NavigationLink { detail("sleepMinutes","睡眠时长") } label: {
-                VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
-                    Text("昨晚睡眠").font(AppleTokens.Fonts.title2.bold())
-                    HealthDurationNumber(minutes:o.sleep?.minutes)
-                    Text("深睡 "+minutes(o.sleep?.deepMinutes ?? page.cache.series["deepMinutes-7"]?.points.last?.value)+" · 快速眼动 "+minutes(o.sleep?.remMinutes ?? page.cache.series["remMinutes-7"]?.points.last?.value))
-                    Text(time(o.sleep?.start)+" — "+time(o.sleep?.end)).foregroundStyle(.secondary)
-                    if let used=o.usage?.lastUsedAt { Text("最近一次向 WeftMate 发消息 "+time(used)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
-                    else if let late=o.usage?.lateNightMinutes,(o.usage?.activeMinutes ?? 0) > 0 || late > 0 { Text("深夜使用电脑 "+minutes(late)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
-                    Text("设备本地时间").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                }.frame(maxWidth:.infinity,alignment:.leading).contentShape(Rectangle())
-            }.buttonStyle(.plain).accessibilityIdentifier("health.sleepDuration")
-        }
-        Text("身体指标").font(AppleTokens.Fonts.title2.bold())
-        LazyVGrid(columns:[GridItem(.flexible(minimum:0)),GridItem(.flexible(minimum:0))],alignment:.leading,spacing:AppleTokens.Space.p12) {
-                ForEach(vitalIDs,id:\.self) { id in
-                    let metric=o.vital(id)
-                    card {
-                        NavigationLink { detail(id,title(id)) } label: {
-                            VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
-                                Text(title(id)).font(AppleTokens.Fonts.headline)
-                                HealthScoreNumber(text:PhoneHealthText.number(metric?.value,metric:id),unit:unit(id))
-                                HStack { Circle().fill(stateColor(metric?.state)).frame(width:8,height:8); Text(metric?.value == nil ? "暂时没有测量" : metric?.label ?? "再戴几天就有对比了").font(AppleTokens.Fonts.footnote).foregroundStyle(stateColor(metric?.state)) }
-                            }.contentShape(Rectangle())
-                        }.buttonStyle(.plain).accessibilityIdentifier("health.vital."+id)
-                    }.frame(maxWidth:.infinity,minHeight:150,alignment:.topLeading)
-                }
-        }
-        card {
-            NavigationLink { detail("steps","步数") } label: {
-                VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
-                    Text("今天的活动").font(AppleTokens.Fonts.title2.bold())
-                    HealthScoreNumber(text:o.activity?.steps.map { "\($0)" } ?? "—",unit:"步")
-                    Text("活动能量 "+number(o.activity?.activeEnergyKcal)+" 千卡 · 运动 "+minutes(o.activity?.exerciseMinutes))
-                    if o.activity?.steps == nil { Text("还没有读到今天的活动测量。") }
-                    ForEach(Array((o.activity?.workouts ?? []).enumerated()),id:\.offset) { _, workout in Text(workout.type+" · "+minutes(workout.minutes)) }
-                }.contentShape(Rectangle())
-            }.buttonStyle(.plain).accessibilityIdentifier("health.activity")
-        }
-        if let calendar=page.cache.calendar {
-            card {
-                Text("这个月的运动").font(AppleTokens.Fonts.title2.bold())
-                LazyVGrid(columns:Array(repeating:GridItem(.flexible()),count:7),spacing:AppleTokens.Space.p12) {
-                    ForEach(calendar.days) { day in
-                        VStack { Text(String(day.day.suffix(2))); Circle().fill(day.hasWorkout ? Weave.accent : Color.secondary.opacity(0.15)).frame(width:6,height:6) }
-                            .accessibilityElement(children:.ignore).accessibilityLabel(DeviceDateText.day(day.day)+(day.hasWorkout ? "，有运动" : "，没有运动记录"))
-                    }
-                }
-            }
-        }
+            Button("接着问它") { ask(o.insight?.text ?? "帮我看看今天的健康变化") }.buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("health.ask")
+        }.accessibilityIdentifier("health.insight")
     }
-    private func score(_ id: String, _ o: HealthOverview) -> some View {
-        let value=id == "recovery" ? o.recovery : id == "sleep" ? o.sleep : o.load
-        return card {
-            NavigationLink { detail(id,title(id)) } label: {
-                VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
-                    Text(title(id)).font(AppleTokens.Fonts.headline)
-                    Text(value?.label ?? "再戴几天就有对比了").foregroundStyle(stateColor(value?.state)).font(AppleTokens.Fonts.caption)
-                    HealthScoreNumber(text:number(value?.score),unit:"分")
-                    HealthScoreRangeBar(score:value?.score,low:value?.low,high:value?.high,state:value?.state)
-                }.frame(maxWidth:.infinity,minHeight:210,alignment:.topLeading).contentShape(Rectangle())
-            }.buttonStyle(.plain).accessibilityIdentifier("health.score."+id)
-        }
+    @ViewBuilder private func secondaryMetrics(_ o: HealthOverview) -> some View {
+        secondary("stress","压力",o.stress?.score,o.stress?.label,o.stress?.state)
+        secondary("energy","电能",o.energy?.current,o.energy?.label,o.energy?.state)
+        secondary("load","活动负荷",o.load?.score,o.load?.label,o.load?.state)
     }
-    private func extra(_ id: String,_ name: String,_ value: Double?,_ state: String?,_ label: String?) -> some View {
-        card {
-            NavigationLink { detail(id,name) } label: {
-                VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
-                    Text(name).font(AppleTokens.Fonts.headline)
-                    Text(label ?? "还没有足够的测量").foregroundStyle(stateColor(state)).font(AppleTokens.Fonts.caption)
-                    HealthScoreNumber(text:number(value),unit:id == "fitnessAge" ? "岁" : "分")
-                    HealthScoreRangeBar(score:id == "fitnessAge" ? nil : value,low:nil,high:nil,state:state)
-                    if id == "stress" { Text("最近一次测量 "+time(page.cache.overview?.stress?.latest?.time)).font(AppleTokens.Fonts.footnote) }
-                    if id == "energy", let curve=page.cache.overview?.energy?.curve,curve.compactMap(\.value).count >= 2 {
-                        Chart(Array(curve.enumerated()),id:\.offset) { i,p in
-                            if let v=p.value { LineMark(x:.value("时刻",i),y:.value("电能",v)).lineStyle(StrokeStyle(lineWidth:AppleTokens.Space.p4,lineCap:.round,lineJoin:.round)) }
-                        }.chartXAxis(.hidden).chartYAxis(.hidden).frame(height:32).accessibilityLabel("当日电能曲线")
-                    }
-                }.frame(maxWidth:.infinity,minHeight:210,alignment:.topLeading).contentShape(Rectangle())
-            }.buttonStyle(.plain).accessibilityIdentifier("health.extra."+id)
-        }
+    private func secondary(_ id: String,_ name: String,_ value: Double?,_ label: String?,_ state: String?) -> some View {
+        NavigationLink { detail(id,name) } label: {
+            VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
+                Text(name).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                Text(value == nil ? "—" : id == "energy" ? number(value)+" / 100" : label ?? number(value)).font(AppleTokens.Fonts.headline).foregroundStyle(stateColor(state))
+                if value == nil { Text("测量不足").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+            }.frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p44,alignment:.leading).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityIdentifier(id == "load" ? "health.score.load" : "health.extra."+id)
+    }
+    @ViewBuilder private func sleepStages(_ o: HealthOverview) -> some View {
+        let deep=o.sleep?.deepMinutes ?? page.cache.series["deepMinutes-7"]?.points.last?.value
+        let rem=o.sleep?.remMinutes ?? page.cache.series["remMinutes-7"]?.points.last?.value
+        if let total=o.sleep?.minutes,total > 0,let deep,let rem {
+            let deepFraction=min(1,deep/total)
+            let remFraction=min(max(0,1-deep/total),rem/total)
+            let deepColor=AppleTokens.Colors.healthSleep
+            let remColor=deepColor.opacity(0.55)
+            let remainderColor=Weave.line
+            GeometryReader { @Sendable geometry in
+                HStack(spacing:AppleTokens.Space.p2) {
+                    Rectangle().fill(deepColor).frame(width:max(0,geometry.size.width-4)*deepFraction)
+                    Rectangle().fill(remColor).frame(width:max(0,geometry.size.width-4)*remFraction)
+                    Rectangle().fill(remainderColor)
+                }
+            }.frame(height:AppleTokens.Space.p16).accessibilityHidden(true)
+            Text("深睡 "+minutes(deep)+" · 快速眼动 "+minutes(rem)).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+            Text("分期时长汇总；其余时长不推定睡眠阶段。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+        } else { Text("睡眠分期还没到齐。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+    }
+    private func calendarLeadingDays(_ month: HealthCalendarReply) -> Int {
+        guard let first=month.days.first,let date=HealthInputMath.parseISO(first.day+"T12:00:00Z") else { return 0 }
+        let calendar=Calendar.current
+        return (calendar.component(.weekday,from:date)-calendar.firstWeekday+7)%7
     }
     private func detail(_ id: String,_ name: String) -> some View { HealthDetailView(app:app,page:page,id:id,name:name,ask:ask) }
-    private func analysis(_ scope: String) -> some View { HealthAnalysisRow(app:app,page:page,scope:scope,ask:ask) }
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment:.leading,spacing:AppleTokens.Space.p16,content:content).frame(maxWidth:.infinity,alignment:.leading)
-            .padding(AppleTokens.Space.p16).background(Weave.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r24))
+            .padding(AppleTokens.Space.p16).background(Weave.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Phone.groupRadius))
     }
 }
+
+private struct PhoneSleepStageTimeline: View {
+    let stages: [HealthRecordSleepStage]
+    private func color(_ stage: String) -> Color {
+        switch stage {
+        case "deep": AppleTokens.Colors.healthSleepDeep
+        case "core": AppleTokens.Colors.healthSleepCore
+        case "rem": AppleTokens.Colors.healthSleepRem
+        default: AppleTokens.Colors.healthSleepAwake
+        }
+    }
+    var body: some View {
+        Chart(Array(stages.enumerated()),id:\.offset) { _,stage in
+            if let start=HealthInputMath.parseISO(stage.start),let end=HealthInputMath.parseISO(stage.end) {
+                BarMark(xStart:.value("开始",start),xEnd:.value("结束",end),y:.value("阶段",stage.stage)).foregroundStyle(color(stage.stage))
+            }
+        }.chartXAxis(.hidden).chartYAxis(.hidden).frame(height:56)
+            .accessibilityLabel("实际睡眠分期，深睡、核心睡眠、快速眼动和清醒时段")
+    }
+}
+
 private let vitalIDs=["restingHeartRateBpm","hrvSdnnMs","respiratoryRateBrpm","spo2Pct","wristTempC"]
 private func title(_ id: String) -> String {
-    ["recovery":"恢复","sleep":"睡眠","load":"负荷","restingHeartRateBpm":"静息心率","hrvSdnnMs":"心率变异性","respiratoryRateBrpm":"呼吸频率","spo2Pct":"血氧","wristTempC":"手腕温度"][id] ?? "身体变化"
+    ["recovery":"恢复","sleep":"睡眠","load":"负荷","stress":"压力","energy":"电能","fitnessAge":"体能年龄","sleepMinutes":"睡眠时长","steps":"步数","restingHeartRateBpm":"静息心率","hrvSdnnMs":"心率变异性","respiratoryRateBrpm":"呼吸频率","spo2Pct":"血氧","wristTempC":"手腕温度"][id] ?? "身体变化"
 }
 private func unit(_ id: String) -> String { ["restingHeartRateBpm":" 次/分","hrvSdnnMs":" 毫秒","respiratoryRateBrpm":" 次/分","spo2Pct":"%","wristTempC":"°C"][id] ?? "" }
 private func number(_ value: Double?) -> String { PhoneHealthText.number(value) }
@@ -215,15 +252,14 @@ struct HealthDetailView: View {
     @State private var overlay: HealthMetricSeries?
     @State private var overlays=false
     @State private var loading=false
+    @State private var attempt=0
     var body: some View {
         ScrollView {
             VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
                 Text(series?.points.last?.label ?? "看看它相对你平时的变化").font(AppleTokens.Fonts.title2.bold())
-                HealthScoreNumber(text:PhoneHealthText.number(series?.points.last?.value,metric:id),unit:unit(id))
-                if let low=series?.points.last?.low, let high=series?.points.last?.high {
-                    Text("你平时的范围 "+number(low)+" — "+number(high)).foregroundStyle(.secondary)
-                    Gauge(value:series?.points.last?.value ?? low,in:min(low,series?.points.last?.value ?? low)...max(high,low+0.1,series?.points.last?.value ?? high)) { Text("相对平时的位置") }.tint(Weave.accent)
-                } else { Text("再戴几天就有对比了").foregroundStyle(.secondary) }
+                if id == "sleepMinutes" { HealthDurationNumber(minutes:series?.points.last?.value) }
+                else { HealthScoreNumber(text:PhoneHealthText.number(series?.points.last?.value,metric:id),unit:unit(id)) }
+                Text(page.updatedText).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                 if let overview=page.cache.overview,let score=HealthPagePolicy.score(id,in:overview),let reasons=score.reasons,!reasons.isEmpty {
                     DisclosureGroup("依据") {
                         ForEach(Array(reasons.enumerated()),id:\.offset) { _,reason in Text(reason.text).font(AppleTokens.Fonts.callout) }
@@ -231,16 +267,23 @@ struct HealthDetailView: View {
                 }
                 Picker("时间范围",selection:$days) { ForEach([7,14,30,60],id:\.self) { Text("\($0) 天").tag($0) } }.pickerStyle(.segmented).accessibilityIdentifier("health.range")
                 if loading { ProgressView("正在读取变化…") }
-                HealthTrendChart(series:series,overlay:overlays ? overlay : nil,compact:false).accessibilityIdentifier("health.trend")
+                Text("\(days) 天内的每日测量").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
+                HealthTrendChart(series:series,overlay:overlays ? overlay : nil,compact:false)
+                if let low=series?.points.last?.low,let high=series?.points.last?.high {
+                    Text("你平时的范围 "+number(low)+" — "+number(high)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
+                } else { Text("再戴几天就有对比了").font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
                 HealthFormalBasis(overview:page.cache.overview,id:id)
-                Text("灰色是你常见的范围，虚线是这段时间的平均；按住图表可以看某一天。").font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
+                Text("灰色是你常见的范围，虚线是这段时间的平均；点按或按住图表可以看某一天。").font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
                 Toggle("叠加深夜使用时长",isOn:$overlays).accessibilityIdentifier("health.overlay")
                 if overlays { Text("淡色柱按这段时间最长的深夜使用分钟缩放，显示变化关联。").font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
-                if series?.points.allSatisfy({ $0.value == nil }) != false { Text("这段时间没有足够的测量，先看已有的部分。") }
-                HealthAnalysisRow(app:app,page:page,scope:vitalIDs.contains(id) ? "vital:"+id : ["recovery","sleep","load","stress","energy","fitnessAge","activity"].contains(id) ? id : "activity",ask:ask)
+                if !loading,series == nil {
+                    InlineNotice(message:"这段趋势暂时读不到，请连接电脑后重试。",isError:true)
+                    Button("重试") { attempt += 1 }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("health.trendRetry")
+                } else if !loading,series?.points.allSatisfy({ $0.value == nil }) != false { Text("这段时间没有足够的测量，先看已有的部分。") }
+                HealthAnalysisRow(app:app,page:page,scope:vitalIDs.contains(id) ? "vital:"+id : id == "sleepMinutes" ? "sleep" : ["recovery","sleep","load","stress","energy","fitnessAge","activity"].contains(id) ? id : "activity",ask:ask)
             }.padding(AppleTokens.Space.p20)
         }.background(Weave.canvas).navigationTitle(name)
-            .task(id:"\(app.accountEpoch)-\(days)-\(overlays)") {
+            .task(id:"\(app.accountEpoch)-\(days)-\(overlays)-\(attempt)") {
                 let token=app.accountEpoch; loading=true; series=nil; overlay=nil
                 let next=await page.metric(id,days:days,app:app)
                 guard token == app.accountEpoch,!Task.isCancelled else { return }; series=next
@@ -253,14 +296,15 @@ struct HealthTrendChart: View {
     var series: HealthMetricSeries?; var overlay: HealthMetricSeries?; var compact: Bool
     @State private var selected: Int?
     private var points: [HealthMetricPoint] { series?.points ?? [] }
+    private var trendColor: Color { series?.id == "sleepMinutes" ? AppleTokens.Colors.healthSleep : Weave.accent }
     var body: some View {
         VStack(alignment:.leading) {
             Chart {
                 ForEach(Array(points.enumerated()),id:\.offset) { i,p in
                     if let low=p.low,let high=p.high { AreaMark(x:.value("日期",i),yStart:.value("常见范围下界",low),yEnd:.value("常见范围上界",high)).foregroundStyle(Color.gray.opacity(0.15)) }
                     if let v=p.value {
-                        LineMark(x:.value("日期",i),y:.value("数值",v)).lineStyle(StrokeStyle(lineWidth:AppleTokens.Space.p4,lineCap:.round,lineJoin:.round)).foregroundStyle(Weave.accent)
-                        PointMark(x:.value("日期",i),y:.value("数值",v)).foregroundStyle(Weave.accent)
+                        LineMark(x:.value("日期",i),y:.value("数值",v)).lineStyle(StrokeStyle(lineWidth:AppleTokens.Space.p4,lineCap:.round,lineJoin:.round)).foregroundStyle(trendColor)
+                        PointMark(x:.value("日期",i),y:.value("数值",v)).foregroundStyle(trendColor)
                     }
                 }
                 if let average=series?.average { RuleMark(y:.value("平均",average)).lineStyle(StrokeStyle(lineWidth:1,dash:[4,4])).foregroundStyle(.secondary) }
@@ -268,11 +312,11 @@ struct HealthTrendChart: View {
                     ForEach(Array(overlay.points.enumerated()),id:\.offset) { i,p in
                         if let v=p.value {
                             BarMark(x:.value("日期",i),y:.value("深夜使用",v/max(1,overlay.points.compactMap(\.value).max() ?? 1)*(points.compactMap(\.value).max() ?? 100)))
-                                .foregroundStyle(Color.orange.opacity(0.12))
+                                .foregroundStyle(AppleTokens.Colors.healthSleep.opacity(0.12))
                         }
                     }
                 }
-            }.frame(height:compact ? 56 : 240)
+            }.frame(height:compact ? 56 : 180)
                 .chartXAxis {
                     if !compact {
                         AxisMarks(values:Array(stride(from:0,to:points.count,by:max(1,points.count/4)))) { value in
@@ -282,6 +326,12 @@ struct HealthTrendChart: View {
                     }
                 }.chartYAxis(compact ? .hidden : .automatic)
                 .chartXSelection(value:$selected)
+                .chartGesture { proxy in
+                    DragGesture(minimumDistance:0).onChanged { value in
+                        proxy.selectXValue(at:value.location.x)
+                    }
+                }
+                .accessibilityIdentifier("health.trend")
                 .allowsHitTesting(!compact).accessibilityHidden(compact)
                 .accessibilityLabel("逐日趋势").accessibilityValue(points.map { ($0.day ?? "")+" "+number($0.value) }.joined(separator:"，"))
             if !compact,let selected,points.indices.contains(selected) { Text((points[selected].day.map(DeviceDateText.day) ?? "")+" · "+number(points[selected].value)).font(AppleTokens.Fonts.callout).accessibilityIdentifier("health.selectedDay") }
@@ -291,12 +341,56 @@ struct HealthTrendChart: View {
 struct HealthPageSettingsView: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var page: HealthPageModel
+    @EnvironmentObject private var health: DailyHealthModel
+    @StateObject private var summaries=HealthSettingsModel()
+    @State private var stopping=false
     var body: some View {
         Form {
-            DailyHealthSettingsRow(app:app)
-            HealthAISettingsRow(app:app)
-        }.navigationTitle("健康数据")
+            Section { Text("由你决定读取什么、用在哪里。").foregroundStyle(Weave.muted) }
+            DailyHealthSettingsRow(app:app,showsReview:false)
+            Section("解读") { HealthAISettingsRow(app:app) }
+            Section("查看数据") {
+                NavigationLink("每日与小时摘要") { PhoneHealthSummaryView(app:app) }.accessibilityIdentifier("health.summaries")
+                if app.session != nil { NavigationLink("每日摘要与云端范围") { HealthSettingsView(model:summaries,app:app) }.accessibilityIdentifier("health.cloudScope") }
+                else { Text("云端范围与电脑同步设置，连上电脑后可用。").foregroundStyle(Weave.muted) }
+            }
+            Section("停止与清理") {
+                Button("停止读取并撤回电脑摘要",role:.destructive) { stopping=true }.disabled(health.busy).accessibilityIdentifier("health.stopReading")
+                Text(health.state.needsRemoteClear || !health.state.pending.isEmpty && !health.state.enabled ? "撤回尚未确认，连上电脑后会继续处理。" : health.state.enabled ? "停止后不再读取；健康 App 中的原始记录保留。" : "读取已停止。电脑摘要的撤回状态以同步回执为准。")
+                    .font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted).accessibilityIdentifier("health.cleanupReceipt")
+            }
+        }.scrollContentBackground(.hidden).background(Weave.grouped).navigationTitle("健康数据")
+            .confirmationDialog("停止读取并撤回电脑摘要？",isPresented:$stopping,titleVisibility:.visible) {
+                Button("停止并撤回",role:.destructive) { Task { await health.setEnabled(false,app:app);await page.refresh(app:app) } }
+                Button("取消",role:.cancel) {}
+            } message: { Text("不删除健康 App 的原始记录。电脑不在线时保留待撤回状态，连接后继续。") }
             .onDisappear { Task { await page.refresh(app:app) } }
+            .accessibilityIdentifier("health.settings")
+    }
+}
+
+struct PhoneHealthSummaryView: View {
+    @ObservedObject var app: AppleAppModel
+    @EnvironmentObject private var health: DailyHealthModel
+    private var days: [String] { Set(health.state.delivered.keys).union(health.state.pending.keys).sorted(by:>) }
+    var body: some View {
+        List {
+            Section { Text(health.status).foregroundStyle(Weave.muted);Text("每天的汇总和同步状态；不把缺少的测量记成零。").font(AppleTokens.Fonts.footnote) }
+            if days.isEmpty { Text("还没有每日摘要。授权并更新后再来看看。") }
+            ForEach(days,id:\.self) { day in
+                let value=health.state.pending[day] ?? health.state.delivered[day]
+                Section(DeviceDateText.day(day)) {
+                    Text(health.state.pending[day] != nil ? value?.status == "unavailable" ? "等待电脑撤回" : "等待电脑收到" : value?.status == "unavailable" ? "电脑已撤回" : "电脑已收到")
+                    if value?.status == "available" {
+                        LabeledContent("步数",value:value?.steps.map(String.init) ?? "—")
+                        LabeledContent("睡眠",value:minutes(value?.sleepMinutes))
+                        LabeledContent("静息心率",value:number(value?.restingHeartRateBpm)+" 次/分")
+                        LabeledContent("心率变异性",value:number(value?.hrvSdnnMs)+" 毫秒")
+                        Text("小时心率 "+String(value?.heartRateHourly?.compactMap { $0 }.count ?? 0)+" 个时段").font(AppleTokens.Fonts.footnote)
+                    }
+                }
+            }
+        }.navigationTitle("每日摘要").refreshable { await health.activate(app:app) }
     }
 }
 
@@ -321,19 +415,19 @@ private struct HealthFormalBasis: View {
                 Text("最近一次测量 "+time(stress.latest?.time))
                 Text("当天平均 "+number(stress.average)+" · 基线 "+String(stress.baselineDays ?? 0)+" 天")
                 Text((stress.samples ?? []).contains { $0.method == "stressIndex" } ? "根据逐搏间期估计压力，再与你的个人基线比较。" : "根据心率变异性和心率估计，再与你的个人基线比较。")
-                missing(stress.missing); Text(stress.disclaimer ?? "这是趋势估计，不是医学结论。")
+                missing(stress.missing)
             }
             if id == "energy", let energy=overview?.energy {
                 Text("夜间恢复 "+number(energy.nightCharged)+" · 白天消耗 "+number(energy.dayDrained))
                 if energy.degraded == true { Text("部分时段使用每小时心率估计，空缺时段不补测量。") }
                 ForEach(Array((energy.sleepPeriods ?? []).enumerated()),id:\.offset) { _,period in Text("睡眠时段 "+period.start+" — "+period.end) }
-                missing(energy.missing); Text(energy.disclaimer ?? "这是趋势估计，不是医学结论。")
+                missing(energy.missing)
             }
             if id == "fitnessAge", let age=overview?.fitnessAge {
                 if let difference=age.difference { Text("与实际年龄相差 "+number(difference)+" 岁") }
                 if let range=age.referenceRange { Text("同年龄参考范围 "+number(range.low)+" — "+number(range.high)+" 毫升/千克/分钟") }
                 if age.bounded == true { Text("已到参考表边界，只供趋势参考。") }
-                missing(age.missing); Text(age.disclaimer ?? "这是趋势估计，不是医学结论。")
+                missing(age.missing)
             }
             if id == "load", let range=overview?.load?.recommendedRange { Text("建议相对负荷 "+number(range.low)+" — "+number(range.high)) }
         }.font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)

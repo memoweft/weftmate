@@ -16,7 +16,7 @@ struct PhoneWindowTestFixture: View {
             if ready { NavigationStack { PhoneMemoryWorkspaceView(app:app) } }
             else if let failure { Text(failure).accessibilityIdentifier("phoneWindow.failure") }
             else { ProgressView("准备合成副本…") }
-        }.task {
+        }.preferredColorScheme(ProcessInfo.processInfo.arguments.contains("dark") ? .dark : .light).task {
             do { try app.seedPhoneWindowFixture(scene:scene);ready=true }
             catch { failure="合成副本准备失败。" }
         }

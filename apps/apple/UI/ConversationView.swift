@@ -694,6 +694,9 @@ struct ConversationView: View {
     private func trackPhonePosition(_ id: String,_ frame: CGRect?,_ height: CGFloat,_ userScrolling: Bool) {
         #if os(iOS)
         phonePositions.frames[id]=frame
+        // Marker teardown runs inside SwiftUI graph invalidation. Clear only
+        // non-published positions there; the disappearing view must not write State.
+        guard frame != nil else { return }
         let actualHeight=height>0 ? height : viewportHeight
         if actualHeight != viewportHeight { viewportHeight=actualHeight }
         let end=phonePositions.frames["phone.end"]

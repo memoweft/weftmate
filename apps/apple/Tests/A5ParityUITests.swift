@@ -161,7 +161,7 @@ final class A5ParityUITests: XCTestCase {
             try tap(app,"sendButton")
             try tap(app,"stopActiveTask")
             // The real host projection is polled until both queued goals have been consumed in order.
-            var final:[String:Any]=[:]
+            var finalReport:[String:Any]=[:]
             for _ in 0..<100 {
                 finalReport=try await get("/a5/report")
                 let starts=(finalReport["operations"] as! [[String:Any]]).filter { $0["kind"] as? String == "started" }.compactMap { $0["text"] as? String }
