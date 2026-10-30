@@ -23,7 +23,7 @@
 - 界面改动在真实程序看一次，或用一段短录屏证明；不需要全页面矩阵。
 - 推送前只跑改到的测试、`npm run typecheck` 和 `node .github/scripts/public-hygiene.mjs`，其余交给 CI。
 - 不在本地重复跑全量 CI，不重复跑已绿的 job，不为怕漏增加检查层。
-- 任务之外发现的问题记成 issue，标 later，不现场处理。
+- 范围外问题记 issue later，不现场处理。
 
 ## 验证预算与停止条件
 
