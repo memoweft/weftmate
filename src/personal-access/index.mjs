@@ -836,66 +836,69 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           commandIds: Object.entries(account.commands).filter(([, row]) => sourceTexts.some(text => row.payload?.text?.includes(text))).map(([id]) => id),
         } };
       }
-      await serial(() => mutate(ownerId, next => { next.memoryCleanupPending = true; }));
-      // Journal-owned cleanup already runs inside its account serial section.
-      // Re-entering source withdrawal here would deadlock that same operation.
-      if (!journalManaged) await memoryManager?.discardPendingSources?.(ownerId, { sourceTexts });
-      await mainChat.drain(ownerId);
-      await offline.invalidate(ownerId);
-      // Portable backups already exclude this managed migration preimage.
-      // Erasure must also remove its local older access-store copy.
-      await rm(path.join(root, 'chat-identity-v1.before.json'), { force: true });
-      await serial(() => mutate(ownerId, next => {
-        for (const chatId of eraseChatCopies(next, { forgotten: true })) chatTimeline.invalidate(ownerId, chatId);
-      }));
-      const account = accountState(ownerId);
-      const pendingSegment = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
-      for (const sessionId of new Set([...Object.keys(account.sessions), ...(pendingSegment ? [pendingSegment] : []), ...(conversationTargets ?? []).map(target => target.sessionId)])) {
-        // Phone history is authoritative source text, not an executable native
-        // session or a derived memory copy. Its explicit deletion uses
-        // forgetConversations; ordinary memory erasure retains that original.
-        if(account.sessions[sessionId]?.phoneHistory)continue;
-        const target = conversationTargets?.find(row => row.sessionId === sessionId);
-        const receiptIds = [...new Set([...(target?.receiptIds ?? []), ...Object.values(account.commands).filter(row => row.sessionId === sessionId && sourceTexts.some(text => text && row.payload?.text?.includes(text))).map(row => row.receiptId).filter(Boolean)])];
-        const schedulesErased = backend.schedules ? await backend.schedules({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
-        const goalErased = backend.goals ? await backend.goals({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
-        const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets,
-          ...(conversationTargets ? { snippetTargets: target?.snippetTargets ?? [] } : {}),
-          ...(affectedIds.length ? { affectedIds } : {}),
-          ...(schedulesErased?.removedNativeIds?.length ? { scheduleIds: schedulesErased.removedNativeIds } : {}),
-          ...(goalErased?.clearedGoalIds?.length ? { goalIds: goalErased.clearedGoalIds } : {}) }));
-        if (deleteConversationSnippets && conversationTargets && cleaned?.snippetsVerified !== true) throw failure('MEMORY_CLEANUP_PENDING', 503);
-        sessions.invalidate(ownerId,sessionId);
-        if (cleaned?.forgottenSeqs?.length) await serial(() => mutate(ownerId, next => {
-          const session = next.sessions[sessionId];
-          if (session) session.forgottenSeqs = [...new Set([...(session.forgottenSeqs ?? []), ...cleaned.forgottenSeqs])];
+      try {
+        await serial(() => mutate(ownerId, next => { next.memoryCleanupPending = true; }));
+        // Journal-owned cleanup already runs inside its account serial section.
+        // Re-entering source withdrawal here would deadlock that same operation.
+        if (!journalManaged) await memoryManager?.discardPendingSources?.(ownerId, { sourceTexts });
+        await mainChat.drain(ownerId);
+        await offline.invalidate(ownerId);
+        // Portable backups already exclude this managed migration preimage.
+        // Erasure must also remove its local older access-store copy.
+        await rm(path.join(root, 'chat-identity-v1.before.json'), { force: true });
+        await serial(() => mutate(ownerId, next => {
+          for (const chatId of eraseChatCopies(next, { forgotten: true })) chatTimeline.invalidate(ownerId, chatId);
         }));
-        // The activity watermark may already be past all retained messages.
-        // Rebuild this invalidated summary now, outside the list request path.
-        if (accountState(ownerId).sessions[sessionId])
-          await callBackend(() => backend.readEvents({ ownerId, sessionId, limit: 200 }));
-      }
-      if (deleteConversationSnippets && hostTargets) await serial(() => mutate(ownerId, next => {
-        for (const id of hostTargets.sessionIds ?? []) if (next.sessions[id]) next.sessions[id].title = '[已遗忘的原话]';
-        for (const id of hostTargets.commandIds ?? []) if (next.commands[id]?.payload) {
-          next.commands[id].payload.text = '[已遗忘的原话]';
-          next.commands[id].payloadHash = digest(JSON.stringify(next.commands[id].payload));
+        const account = accountState(ownerId);
+        const pendingSegment = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
+        for (const sessionId of new Set([...Object.keys(account.sessions), ...(pendingSegment ? [pendingSegment] : []), ...(conversationTargets ?? []).map(target => target.sessionId)])) {
+          // Phone history is authoritative source text, not an executable native
+          // session or a derived memory copy. Its explicit deletion uses
+          // forgetConversations; ordinary memory erasure retains that original.
+          if(account.sessions[sessionId]?.phoneHistory)continue;
+          const target = conversationTargets?.find(row => row.sessionId === sessionId);
+          const receiptIds = [...new Set([...(target?.receiptIds ?? []), ...Object.values(account.commands).filter(row => row.sessionId === sessionId && sourceTexts.some(text => text && row.payload?.text?.includes(text))).map(row => row.receiptId).filter(Boolean)])];
+          const schedulesErased = backend.schedules ? await backend.schedules({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
+          const goalErased = backend.goals ? await backend.goals({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
+          const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets,
+            ...(conversationTargets ? { snippetTargets: target?.snippetTargets ?? [] } : {}),
+            ...(affectedIds.length ? { affectedIds } : {}),
+            ...(schedulesErased?.removedNativeIds?.length ? { scheduleIds: schedulesErased.removedNativeIds } : {}),
+            ...(goalErased?.clearedGoalIds?.length ? { goalIds: goalErased.clearedGoalIds } : {}) }));
+          if (deleteConversationSnippets && conversationTargets && cleaned?.snippetsVerified !== true) throw failure('MEMORY_CLEANUP_PENDING', 503);
+          sessions.invalidate(ownerId,sessionId);
+          if (cleaned?.forgottenSeqs?.length) await serial(() => mutate(ownerId, next => {
+            const session = next.sessions[sessionId];
+            if (session) session.forgottenSeqs = [...new Set([...(session.forgottenSeqs ?? []), ...cleaned.forgottenSeqs])];
+          }));
+          // The activity watermark may already be past all retained messages.
+          // Rebuild this invalidated summary now, outside the list request path.
+          if (accountState(ownerId).sessions[sessionId])
+            await callBackend(() => backend.readEvents({ ownerId, sessionId, limit: 200 }));
         }
-      }));
-      if (deleteConversationSnippets && sourceTexts.length) await serial(() => mutate(ownerId, next => {
-        for (const session of Object.values(next.sessions)) {
-          if (typeof session.title === 'string') for (const source of sourceTexts.filter(Boolean))
-            session.title = session.title.replaceAll(source, '[已遗忘的原话]');
-        }
-        for (const command of Object.values(next.commands)) {
-          if (typeof command.payload?.text === 'string') {
-            let text = command.payload.text;
-            for (const source of sourceTexts) text = text.replaceAll(source, '[已遗忘的原话]');
-            command.payload.text = text; command.payloadHash = digest(JSON.stringify(command.payload));
+        if (deleteConversationSnippets && hostTargets) await serial(() => mutate(ownerId, next => {
+          for (const id of hostTargets.sessionIds ?? []) if (next.sessions[id]) next.sessions[id].title = '[已遗忘的原话]';
+          for (const id of hostTargets.commandIds ?? []) if (next.commands[id]?.payload) {
+            next.commands[id].payload.text = '[已遗忘的原话]';
+            next.commands[id].payloadHash = digest(JSON.stringify(next.commands[id].payload));
           }
-        }
-      }));
-      await serial(() => mutate(ownerId, next => { delete next.memoryCleanupPending; }));
+        }));
+        if (deleteConversationSnippets && sourceTexts.length) await serial(() => mutate(ownerId, next => {
+          for (const session of Object.values(next.sessions)) {
+            if (typeof session.title === 'string') for (const source of sourceTexts.filter(Boolean))
+              session.title = session.title.replaceAll(source, '[已遗忘的原话]');
+          }
+          for (const command of Object.values(next.commands)) {
+            if (typeof command.payload?.text === 'string') {
+              let text = command.payload.text;
+              for (const source of sourceTexts) text = text.replaceAll(source, '[已遗忘的原话]');
+              command.payload.text = text; command.payloadHash = digest(JSON.stringify(command.payload));
+            }
+          }
+        }));
+      } finally {
+        await serial(() => mutate(ownerId, next => { delete next.memoryCleanupPending; }));
+      }
       for (const command of Object.values(accountState(ownerId).commands)) if (command.state === 'pending') schedule(ownerId, command.commandId);
       return { cleaned: true, snippetsVerified: deleteConversationSnippets === true };
     },

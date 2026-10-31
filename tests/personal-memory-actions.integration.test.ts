@@ -1184,7 +1184,7 @@ test('review-486 real Core: late query selection with different correction text 
   } finally { release(); await pending }
 })
 
-test('M7 real Core: first host cleanup pending cannot report completion while same-account new chat is refused', { skip, timeout: 45000 }, async t => {
+test('M7 real Core: failed host cleanup stays pending while same-account new chat is accepted', { skip, timeout: 45000 }, async t => {
   const accessRoot = await realpath(await mkdtemp(path.join(tmpdir(), 'weftmate-m7-first-cleanup-')))
   const seedText = '记住：我喜欢喝乌龙茶。', independentText = '我周末喜欢散步。'
   const originalEvents = [{ seq: 1, type: 'user/message', data: { content: seedText } }]
@@ -1232,7 +1232,9 @@ test('M7 real Core: first host cleanup pending cannot report completion while sa
   const pendingAction = await action(), command = Object.values(pendingAction.commands)[0] as any
   const pendingReceipt = await f.manager.receiptByRequest(account, command.requestId)
   const pendingJournal = JSON.parse(await readFile(journalFile, 'utf8')).records[command.requestId]
-  const denied = await create('during-cleanup')
+  const acceptedWhilePending = await create('during-cleanup')
+  assert.equal(acceptedWhilePending.status, 202)
+  await wait(async () => (await store()).commands[acceptedWhilePending.body.command.commandId]?.state === 'accepted_by_dsh')
   const pendingAccount = await store()
   const pendingWorld = await f.world()
   const deletedSource = (await f.manager.query(account, 'query_evidence', { operation: 'get', evidence_id: targetSource.evidence_id })).evidence
@@ -1255,7 +1257,7 @@ test('M7 real Core: first host cleanup pending cannot report completion while sa
   const observation = { reproduction: 'first-host-cleanup-pending', core: deletions.map(row => ({ commandId: row.result.receipt.command_id,
     state: row.result.receipt.result_state, storageCleanup: row.result.receipt.storage_cleanup })),
     pending: { tool: result, repeatedTool: repeated, afterRestartTool: afterRestart, receipt: pendingReceipt.receipt, actionResult: pendingAction.result, cleanupPending: pendingAction.cleanupPending,
-      snippetsPending: pendingJournal.cleanup?.snippetsPending, http: denied, gate: pendingAccount.memoryCleanupPending,
+      snippetsPending: pendingJournal.cleanup?.snippetsPending, http: acceptedWhilePending, gate: pendingAccount.memoryCleanupPending,
       acceptedRequests: Object.values(pendingAccount.commands).map((row: any) => ({ requestId: row.requestId, state: row.state })),
       targetPresent: pendingWorld.items.some(item => item.item_id === target.item_id), sourceContentAvailable: deletedSource.content_available },
     recovered: { tool: recoveredTool, actionResult: recoveredAction.result, cleanupPending: recoveredAction.cleanupPending, receipt: recoveredReceipt.receipt,
@@ -1266,10 +1268,8 @@ test('M7 real Core: first host cleanup pending cannot report completion while sa
   assert.equal(deletions[0].result.receipt.result_state, 'applied')
   assert.equal(pendingReceipt.receipt.storage_cleanup.state, 'pending')
   assert.equal(pendingJournal.cleanup.snippetsPending, true)
-  assert.equal(pendingAccount.memoryCleanupPending, true)
-  assert.equal(denied.status, 409)
-  assert.equal(denied.body.error.code, 'SESSION_BUSY')
-  assert.equal(Object.values(pendingAccount.commands).some((row: any) => row.requestId === 'during-cleanup'), false)
+  assert.equal(pendingAccount.memoryCleanupPending, undefined)
+  assert.equal(pendingAccount.commands[acceptedWhilePending.body.command.commandId].state, 'accepted_by_dsh')
   assert.equal(pendingWorld.items.some(item => item.item_id === target.item_id), false)
   assert.ok(pendingWorld.items.some(item => item.item_id === independent.item_id))
   assert.equal(deletedSource.content_available, false); assert.equal(deletedSource.raw_content, null)
@@ -1280,8 +1280,8 @@ test('M7 real Core: first host cleanup pending cannot report completion while sa
   assert.equal(recoveredReceipt.receipt.command_id, pendingReceipt.receipt.command_id)
   assert.equal(recoveredReceipt.receipt.storage_cleanup.state, 'complete')
   assert.equal(recoveredAccount.memoryCleanupPending, undefined)
-  assert.equal(recovered.status, 202); assert.equal(sessions.size, 2)
-  assert.equal(Object.values(recoveredAccount.commands).some((row: any) => row.requestId === 'during-cleanup'), false, 'recovery never replays the refused user message')
+  assert.equal(recovered.status, 202); assert.equal(sessions.size, 3)
+  assert.equal(Object.values(recoveredAccount.commands).filter((row: any) => row.requestId === 'during-cleanup').length, 1, 'cleanup recovery never replays the accepted user message')
   assert.equal(recoveredAction.result.state, 'applied')
   assert.equal(recoveredTool.state, 'applied')
   for (const value of [result, repeated, afterRestart]) {
