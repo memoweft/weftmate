@@ -61,7 +61,8 @@ await put(`${res}/values/design_motion.xml`, xml(entries(tokens.shared.duration)
 // Emit their existing API values too, without duplicating the authoritative data.
 await put('apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTokens.kt',
   `// ${banner}\npackage com.memoweft.weftmate.mobile\n\nobject DesignTokens {\n` +
-  entries({ ...tokens.android.colors, ...webColors, ...nativeDark }).map(([name, value]) =>
+  entries({ ...tokens.android.colors, ...webColors, ...nativeDark, warning: argb(tokens.shared.color['mobile-warning']),
+    brand: argb(tokens.shared.color['brand-light']), darkBrand: argb(tokens.shared.color['brand-dark']) }).map(([name, value]) =>
     `    const val native${name[0].toUpperCase() + name.slice(1)} = 0x${value.slice(1)}.toInt()`).join('\n') + '\n' +
   entries(tokens.shared.color).filter(([name]) => name.startsWith('health-')).map(([name, value]) =>
     `    const val ${name.replace(/-([a-z])/g, (_, c) => c.toUpperCase())} = 0xff${value.slice(1)}.toInt()`).join('\n') + '\n' +
@@ -71,7 +72,9 @@ await put('apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTok
   entries(tokens.shared.duration).map(([name, value]) => {
     const millis = Math.round(parseFloat(value) * (value.endsWith('ms') ? 1 : 1000));
     return `    const val duration${name[0].toUpperCase() + name.slice(1)} = ${millis}L`;
-  }).join('\n') + '\n}\n');
+  }).join('\n') + '\n' +
+  entries({ ...tokens.motion.duration, ...tokens.motion.easing }).map(([name, value]) =>
+    `    const val motion${name.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase())} = ${value.endsWith('ms') ? parseInt(value) : JSON.stringify(value)}`).join('\n') + '\n}\n');
 
 // Apple compiles this generated Swift source directly; the manifest is also available for tooling.
 await put('design/tokens/generated/apple/DesignTokens.json', JSON.stringify({

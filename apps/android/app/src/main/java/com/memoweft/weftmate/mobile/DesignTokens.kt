@@ -44,6 +44,9 @@ object DesignTokens {
     const val nativeDarkOnAccent = 0xff1c1c1e.toInt()
     const val nativeDarkSoftOpaque = 0xff343437.toInt()
     const val nativeDarkFloatOpaque = 0xff28282a.toInt()
+    const val nativeWarning = 0xffb88436.toInt()
+    const val nativeBrand = 0xff0A7AFF.toInt()
+    const val nativeDarkBrand = 0xff4DA3FF.toInt()
     const val healthRecoveryLight = 0xff006E60.toInt()
     const val healthRecoveryDark = 0xff53DEC0.toInt()
     const val healthRecoverySoftLight = 0xffE5F5EF.toInt()
@@ -226,4 +229,13 @@ object DesignTokens {
     const val durationReplyFragment = 130L
     const val durationReplyChange = 320L
     const val durationReplyScroll = 130L
+    const val motionDur1 = 130
+    const val motionDur2 = 220
+    const val motionDur3 = 320
+    const val motionDur4 = 420
+    const val motionDur5 = 640
+    const val motionEaseOut = "cubic-bezier(.16,1,.3,1)"
+    const val motionEaseInOut = "cubic-bezier(.4,0,.2,1)"
+    const val motionEaseIn = "cubic-bezier(.4,0,1,1)"
+    const val motionEaseLinear = "linear"
 }
