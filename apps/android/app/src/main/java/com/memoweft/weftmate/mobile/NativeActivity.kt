@@ -28,7 +28,6 @@ class NativeActivity : HybridActivity() {
     internal var embeddedWebIdentity by mutableStateOf<WebView?>(null)
         private set
     internal var displayedFeedWeb: WebView? = null
-    internal var overlayBack: (() -> Unit)? = null
     private var webRoute="login"
     private var webEmbedded=false
     private var timelineMapperInstalled=false
@@ -166,7 +165,8 @@ class NativeActivity : HybridActivity() {
     override fun onResume() { super.onResume(); nativeForeground = true }
     override fun onPause() { nativeForeground = false; if (::model.isInitialized) model.saveDraft(); super.onPause() }
     @Suppress("DEPRECATION") override fun onBackPressed() {
-        overlayBack?.let { it(); return }
+        // Open menus, the drawer and confirmations register Compose BackHandlers; they go first.
+        if (onBackPressedDispatcher.hasEnabledCallbacks()) { onBackPressedDispatcher.onBackPressed(); return }
         if (!::model.isInitialized || !model.loggedIn) { super.onBackPressed(); return }
         val state = BackState(
             healthCalendar = { health.calendarOpen },
@@ -188,5 +188,5 @@ class NativeActivity : HybridActivity() {
             BackAction.Leave -> moveTaskToBack(true)
         }
     }
-    override fun onDestroy() { overlayBack=null; if (::settings.isInitialized) settings.close(); if (::health.isInitialized) health.close(); if (::goals.isInitialized) goals.close(); if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
+    override fun onDestroy() { if (::settings.isInitialized) settings.close(); if (::health.isInitialized) health.close(); if (::goals.isInitialized) goals.close(); if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
 }

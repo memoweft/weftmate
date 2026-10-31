@@ -93,8 +93,7 @@ import java.time.LocalDate
             var drawer by remember { mutableStateOf(false) }
             fun openDrawer() { focus.clearFocus(); activity.hideKeyboard(); m.focused = false; drawer = true; m.launch { m.refreshChats() } }
             fun openSettings() { focus.clearFocus(); settings.open() }
-            SideEffect { activity.overlayBack = if (drawer) ({ drawer = false }) else settings.confirmation?.dismiss }
-            DisposableEffect(activity) { onDispose { activity.overlayBack = null } }
+            androidx.activity.compose.BackHandler(drawer) { drawer = false }
             val paneAlpha = remember { Animatable(1f) }
             LaunchedEffect(selectedTab) {
                 paneAlpha.snapTo(.8f)
