@@ -5,7 +5,7 @@ import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 
 const out = process.argv[2];
 if (!out) throw new Error('usage: native-chat-host.mjs <info.json>');
-const host = await startTimelineCandidate({ daily: true, inlineProgress: true, historyCount: 0 });
+const host = await startTimelineCandidate({ daily: true, inlineProgress: true, historyCount: 0, autoReply: true });
 writeFileSync(out, JSON.stringify({ origin: host.origin, port: Number(new URL(host.origin).port), sessionId: host.sessionId,
   username: host.credentials.username, password: host.credentials.password }, null, 2));
 console.log('NATIVE_CHAT_HOST_READY', host.origin);

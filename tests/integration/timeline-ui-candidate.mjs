@@ -83,7 +83,9 @@ export async function startTimelineCandidate(options = {}) {
         const rpc='synthetic-'+randomUUID();row.title=input.text===goal?'项目进度报告':input.text;
         if(row.running&&input.mode==='queue')append('agent/inbox/spliced',{target:'next-turn',start:0,inserted:[{id:rpc,source:{kind:'user',rpcId:rpc},content:[{type:'text',text:input.text}]}]});
         else{if(input.text===goal)for(let n=0;n<(options.historyCount??0);n++)append('assistant/message',{content:[{type:'text',text:`历史记录 ${n+1}：已核对项目资料。`}]});append('turn/start',{turn:1});append('user/message',{source:{kind:'user',rpcId:rpc},content:[{type:'text',text:input.text}]});append('step/start',{turn:1,step:1});}
-        row.running=running=true;return {accepted:true,receiptId:rpc};
+        row.running=running=true;
+        if(options.autoReply)setTimeout(()=>{events=row.events;append('assistant/message',{content:[{type:'text',text:'收到：'+input.text+'\n\n这是隔离宿主的合成回复。'}]});append('step/end',{turn:1,step:1});append('turn/end',{turn:1,reason:{kind:'completed'}});row.running=running=false;},800);
+        return {accepted:true,receiptId:rpc};
       }
       if (events.length && options.interactive) {
         const rpc = `synthetic-${randomUUID()}`
