@@ -1,3 +1,4 @@
+// 保护：对话删除必须使用已确认的记忆来源范围，并能恢复被拒绝或尚未清理完的删除。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, readFile, access, rm } from 'node:fs/promises';
@@ -27,7 +28,7 @@ function fixture(root:string) {
   const calls:any[]=[];
   const context:any={root,accountState:(owner:string)=>{assert.equal(owner,'owner');return account},serial:(fn:any)=>fn(),mutate:async(owner:string,fn:any)=>fn(account),callBackend:(fn:any)=>fn(),
     backend:{describeSession:async()=>({running}),cancelSession:async()=>{cancelled=true;running=false},deleteSession:async()=>{deleted=true;return {deleted:true}}},
-    memoryManager:{status:async()=>({capabilities:{deleteEvidence:true}}),query:async(_owner:string,method:string)=>method==='query_jobs'?{jobs:[{acceptance:{parent_session_id:'session-a',evidence_ids:['e-a']}},{acceptance:{parent_session_id:'session-other',evidence_ids:['e-other']}}]}:{world_revision:2},
+    memoryManager:{status:async()=>({capabilities:{deleteEvidence:true}}),query:async(_owner:string,method:string)=>method==='query_jobs'?{jobs:[{acceptance:{parent_session_id:'session-a',evidence_ids:['e-a']}},{acceptance:{parent_session_id:'session-other',evidence_ids:['e-other']}}]}:{world_revision:2,forget_scope:'forget-scope-v1:'+'a'.repeat(64)},
       submitCommand:async(owner:string,command:any)=>{calls.push({owner,command});return {result_state:'applied',storage_cleanup:{state:'complete'}}}}};
   context.sessionOperations = createSessionOperations(context);
   return {account,operations:context.sessionOperations,calls,context,start:()=>{running=true},get cancelled(){return cancelled},get deleted(){return deleted}};
@@ -52,7 +53,7 @@ test('forget option calls MemoWeft true delete only for this account/session sou
 test('conversation preview is read-only; snippet opt-in reaches sources recovered from context',async()=>{
   const f=fixture('unused');
   f.context.memoryManager.query=async(_owner:string,method:string)=>method==='preview_forget'
-    ? {world_revision:2,item_count:2,evidence_count:1,evidence_ids:['e-recovered'],items:[
+    ? {world_revision:2,forget_scope:'forget-scope-v1:'+'a'.repeat(64),item_count:2,evidence_count:1,evidence_ids:['e-recovered'],items:[
       {object_kind:'entity',item_id:'person',name:'王小明'},{object_kind:'relationship',item_id:'rel',name:'好兄弟'}]}
     : method==='query_jobs'?{jobs:[]}:{world_revision:2};
   const before=JSON.stringify(f.account),preview=await f.operations.previewSessionForget('owner','session-a');
@@ -62,7 +63,7 @@ test('conversation preview is read-only; snippet opt-in reaches sources recovere
   assert.equal(f.calls.length,0);assert.equal(f.deleted,false);
   await f.operations.deleteSession('owner','session-a',{forgetMemories:true,deleteConversationSnippets:true,memoryWorldRevision:2});
   assert.equal(f.calls[0].command.targetId,'e-recovered');assert.equal(f.calls[0].command.deleteConversationSnippets,true);
-  assert.deepEqual(f.calls[0].command.payload,{delete_conversation_snippets:true});
+  assert.deepEqual(f.calls[0].command.payload,{delete_conversation_snippets:true,forget_scope:'forget-scope-v1:'+'a'.repeat(64)});
 });
 test('unavailable or rejected true forgetting keeps the conversation available for retry',async()=>{
   const f=fixture('unused');f.context.memoryManager.status=async()=>({capabilities:{deleteEvidence:false}});
@@ -110,10 +111,29 @@ test('pending source erasure keeps its evidence plan when Core has removed the s
   manager.receiptByRequest=async()=>{if(result)return result;throw Object.assign(new Error('not found'),{code:'command_receipt_not_found'})};
   manager.submitCommand=async()=>result={result_state:'applied',storage_cleanup:{state:'pending'}};
   manager.retryCleanupByRequest=async()=>cleanupReady?{result_state:'applied',storage_cleanup:{state:'complete'}}:result;
-  manager.query=async(_owner:string,method:string)=>method==='query_jobs'?{jobs:result?[]:[{acceptance:{parent_session_id:'session-a',evidence_ids:['e-a']}}]}:{world_revision:++revisionReads};
+  manager.query=async(_owner:string,method:string)=>method==='query_jobs'?{jobs:result?[]:[{acceptance:{parent_session_id:'session-a',evidence_ids:['e-a']}}]}:method==='preview_forget'?{world_revision:revisionReads,forget_scope:'forget-scope-v1:'+'a'.repeat(64)}:{world_revision:++revisionReads};
   await assert.rejects(f.operations.deleteSession('owner','session-a',{forgetMemories:true}),{code:'MEMORY_DELETE_CONFLICT'});
   assert.deepEqual(f.account.sessions['session-a'].forgetEvidenceIds,['e-a']);
   cleanupReady=true;
   const deleted=await f.operations.deleteSession('owner','session-a',{forgetMemories:true});
   assert.equal(deleted.forgottenEvidenceCount,1);assert.equal(revisionReads,1);assert.equal(f.deleted,true);
+});
+
+test('a previous unscoped rejection can be retried with the current confirmed source scope',async()=>{
+  const f=fixture('unused');let oldId;
+  f.context.memoryManager.receiptByRequest=async(_owner,id)=>{oldId=id;return {result_state:'rejected',rejection_code:'forget_scope_required'};};
+  f.context.memoryManager.submitCommand=async(_owner,command)=>{
+    assert.equal(command.payload.forget_scope,'forget-scope-v1:'+'a'.repeat(64));assert.notEqual(command.requestId,oldId);
+    return {result_state:'applied',storage_cleanup:{state:'complete'}};
+  };
+  await f.operations.deleteSession('owner','session-a',{forgetMemories:true,memoryWorldRevision:2});
+  assert.equal(f.deleted,true);
+});
+
+test('a source preview from a newer revision cannot expand the confirmed deletion',async()=>{
+  const f=fixture('unused'),query=f.context.memoryManager.query;
+  f.context.memoryManager.query=async(owner,method,args)=>method==='preview_forget'&&args.target_id
+    ?{world_revision:3,forget_scope:'scope-changed'}:query(owner,method,args);
+  await assert.rejects(f.operations.deleteSession('owner','session-a',{forgetMemories:true,memoryWorldRevision:2}),{code:'MEMORY_REVISION_CHANGED'});
+  assert.equal(f.calls.length,0);assert.equal(f.deleted,false);
 });
