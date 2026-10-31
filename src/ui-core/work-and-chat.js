@@ -5,7 +5,7 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
   const originalState = core.composerState, newConversation = core.startNewConversation;
   const send = core.sendDraft;
   const clear = core.clearSession;
-  const selectSession = core.selectSession, selectMain = core.selectMainChat, selectPhone = core.selectPhoneConversation;
+  const selectSession = core.selectSession, selectLogical = core.selectLogicalSession, selectMain = core.selectMainChat, selectPhone = core.selectPhoneConversation;
   const enabled = () => core.state.personalCapabilities?.workAndChat === 1;
   let preferenceOwner, sidebarMode;
   function sidebarConversationMode() {
@@ -35,6 +35,7 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
   }
   async function startNewWork(hostId, project, { restore = false } = {}) {
     if (core.state.submitting || core.state.unresolvedSubmission) return;
+    if (!restore) abandonFollow();
     core.rememberConversationDraft?.();
     if (hostId) {
       await core.selectExecutionComputer?.(hostId);
@@ -56,23 +57,97 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
     const draft = effects.readMessageDraft();
     await startNewWork(id); effects.restoreMainChatDraft?.(draft);
   }
-  async function switchConversationWork(context, row, projectId) {
-    const current = core.approvalContext();
-    if (!['ownerId','identity','deviceId','source','sessionId','conversationId'].every(key => current[key] === context[key])) throw { code: 'REQUEST_FAILED' };
-    const result = await core.submitApproval(current, row, 'allowed-once', 'once', { workProjectId: projectId });
-    if (!result?.approval?.workSessionId) throw { code: 'REQUEST_FAILED' };
-    for (let attempt = 0; attempt < 100; attempt++) {
-      if (!['ownerId','identity','deviceId','source','sessionId','conversationId'].every(key => core.approvalContext()[key] === current[key])) return;
-      const { command } = await core.accessApi(`/commands/${encodeURIComponent(result.approval.workCreateCommandId)}`);
-      if (command.state === 'accepted_by_dsh') {
+  const transfers = new Map();
+  let navigationGeneration=0;
+  function abandonFollow() { navigationGeneration++; transfers.clear(); }
+  const navigationContext=context=>({...context,navigation:context.navigation??navigationGeneration});
+  const contextKeys=['ownerId','identity','deviceId','source','sessionId','conversationId'];
+  const sameContext = context => (context.navigation===undefined || context.navigation===navigationGeneration) && contextKeys.every(key => core.approvalContext()[key] === context[key]);
+  const transferKey = (context, id) => JSON.stringify([...contextKeys.map(key=>context[key]),context.navigation??navigationGeneration,id]);
+  const paintTransfers = () => effects.paintWorkMode?.();
+  function workHandoffs() {
+    if (!enabled() || core.state.newConversation || core.state.activeChatSource !== 'desktop') return [];
+    return (core.state.sessions.find(row=>row.sessionId===core.state.selectedSessionId)?.workHandoffs || []).map(row=>({
+      ...row, ...(row.stage==='ready' ? {} : transfers.get(transferKey(core.approvalContext(),row.approvalId))) }));
+  }
+  async function refreshWorkHandoffs(context=core.approvalContext()) {
+    context=navigationContext(context);
+    if (!sameContext(context)) return;
+    const chatId=context.conversationId || core.state.chats?.find(row=>row.activeSessionId===context.sessionId)?.chatId
+      || (await core.accessApi(`/sessions/${encodeURIComponent(context.sessionId)}/chat`)).chatId;
+    if (!sameContext(context)) return;
+    const {chat}=await core.accessApi(`/chats/${encodeURIComponent(chatId)}`);
+    if (!sameContext(context)) return;
+    if (chat.activeSessionId!==context.sessionId) throw {code:'SOURCE_UNAVAILABLE'};
+    const value=Array.isArray(chat.workHandoffs)?chat.workHandoffs:[];
+    const selected=core.state.sessions.find(row=>row.sessionId===context.sessionId);
+    if (selected) selected.workHandoffs=value;
+    else core.state.sessions.push({...chat,sessionId:context.sessionId,workHandoffs:value});
+    paintTransfers(); return workHandoffs();
+  }
+  async function followWork(context, approvalId, draft) {
+    for (let attempt=0; attempt<20 && sameContext(context); attempt++) {
+      await refreshWorkHandoffs(context);
+      if (!sameContext(context)) return;
+      const transfer=workHandoffs().find(row=>row.approvalId===approvalId);
+      paintTransfers();
+      if (transfer?.stage==='ready' && transfer.workExists) {
         await core.refreshSessions();
-        await core.selectSession(result.approval.workSessionId);
-        return result;
+        if (sameContext(context) && effects.readMessageDraft?.()===draft && workHandoffs()[0]?.approvalId===approvalId)
+          await core.selectSession(transfer.workActiveSessionId || transfer.workSessionId);
+        return;
       }
-      if (!['pending','dispatching'].includes(command.state)) throw { code: command.errorCode || 'REQUEST_FAILED' };
-      await new Promise(resolve => setTimeout(resolve, 100));
+      if (!transfer || ['failed','uncertain'].includes(transfer.stage)) return;
+      await new Promise(resolve=>setTimeout(resolve,500));
     }
-    throw { code: 'REQUEST_FAILED' };
+  }
+  async function transferWork(context, id, submit) {
+    context=navigationContext(context);
+    if (!sameContext(context)) return;
+    const key=transferKey(context,id);
+    if (transfers.get(key)?.busy) return;
+    const draft=effects.readMessageDraft?.();
+    const operation={busy:true,notice:''};transfers.set(key,operation); paintTransfers();
+    try { await submit(); if (sameContext(context)) await followWork(context,id,draft); }
+    catch (cause) {
+      if (!sameContext(context)) return;
+      operation.busy=false;operation.notice=core.failureMessage(cause);
+      await refreshWorkHandoffs(context).catch(()=>{});
+      if (sameContext(context)) effects.toast?.(core.failureMessage(cause));
+    } finally {
+      if (transfers.get(key)===operation && (operation.busy || !sameContext(context))) transfers.delete(key);
+      if (sameContext(context)) paintTransfers();
+    }
+  }
+  async function switchConversationWork(context, row, projectId) {
+    context=navigationContext(context);
+    return transferWork(context,row.approvalId,async()=>{
+      const result=await core.submitApproval(context,row,'allowed-once','once',{workProjectId:projectId});
+      if (!result?.approval?.workSessionId && sameContext(context)) {
+        await refreshWorkHandoffs(context);
+        if (sameContext(context) && !workHandoffs().some(item=>item.approvalId===row.approvalId)) throw {code:'REQUEST_FAILED'};
+      }
+    });
+  }
+  async function resumeWorkHandoff(row) {
+    const context=navigationContext(core.approvalContext());
+    return transferWork(context,row.approvalId,async()=>{
+      await refreshWorkHandoffs(context);
+      if (!sameContext(context)) return;
+      const current=workHandoffs().find(item=>item.approvalId===row.approvalId && item.direction==='outgoing');
+      if (!current || ['failed','uncertain'].includes(current.stage)) throw {code:'SOURCE_UNAVAILABLE'};
+      if (current.stage==='ready') return;
+      await core.accessApi(`/sessions/${encodeURIComponent(current.sourceSessionId)}/approvals/${encodeURIComponent(current.approvalId)}`,{
+        method:'POST',protectedWrite:true,body:{requestId:current.decisionRequestId,outcome:'allowed-once',workProjectId:current.workProjectId}});
+    });
+  }
+  async function openWorkHandoff(row) {
+    const context=navigationContext(core.approvalContext()); await refreshWorkHandoffs(context);
+    if (!sameContext(context)) return;
+    const current=workHandoffs().find(item=>item.approvalId===row.approvalId && item.direction===row.direction);
+    if (!current || current.direction==='outgoing' && !current.workExists) throw {code:'SOURCE_UNAVAILABLE'};
+    await core.refreshSessions();
+    if (sameContext(context)) await core.selectSession(current.direction==='incoming'?(current.sourceActiveSessionId || current.sourceSessionId):(current.workActiveSessionId || current.workSessionId));
   }
   core.composerState = (...args) => {
     const state = originalState(...args);
@@ -82,25 +157,29 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
     return state;
   };
   core.startNewConversation = async (...args) => {
+    if (!args[2]?.restore) abandonFollow();
     core.rememberConversationDraft?.();
     core.state.newConversationMode = 'chat';
     if (enabled()) { core.state.selectedChatId = null; core.state.workTimeline = null; chooseSidebarMode('chat'); return newConversation(true, args[1], args[2]); }
     return newConversation(...args);
   };
   if (selectSession) core.selectSession = async (id, ...args) => {
+    if (!args[0]?.restore) abandonFollow();
     if (core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === id && !core.state.newConversation) { effects.showConversation({ restore: args[0]?.restore }); if (!args[0]?.restore) effects.closeRail(); return; }
     const result = await selectSession(id, ...args);
     if (enabled() && core.state.selectedSessionId === id) chooseSidebarMode(currentMode()); return result; };
   if (selectMain) core.selectMainChat = async (...args) => {
+    if (!args[1]?.restore) abandonFollow();
     if (!args[0] && core.state.activeChatSource === 'desktop' && core.state.mainChat && core.state.selectedChatId === core.state.mainChat.chatId && !core.state.newConversation) { effects.showConversation({ restore: args[1]?.restore }); if (!args[1]?.restore) effects.closeRail(); return; }
     const result = await selectMain(...args);
     if (enabled() && core.state.selectedChatId === core.state.mainChat?.chatId) chooseSidebarMode(currentMode()); return result; };
-  if (selectPhone) core.selectPhoneConversation = (...args) => { const result = selectPhone(...args); if (enabled()) chooseSidebarMode('chat'); return result; };
+  if (selectLogical) core.selectLogicalSession = (id, options={}) => {if(!options.restore)abandonFollow();return selectLogical(id,options);};
+  if (selectPhone) core.selectPhoneConversation = (...args) => { abandonFollow();const result = selectPhone(...args); if (enabled()) chooseSidebarMode('chat'); return result; };
   core.sendDraft = (...args) => {
     if (enabled() && currentMode() === 'work' && !core.currentFolderProject?.()) return effects.toast('先选择项目或文件夹，再开始工作。');
     return send(...args);
   };
-  core.clearSession = (...args) => { core.state.workTimeline = null; core.state.workDraftHostId = null; core.state.workProjectSelecting=null; core.state.newConversationMode = 'chat'; return clear(...args); };
+  core.clearSession = (...args) => { abandonFollow();core.state.workTimeline = null; core.state.workDraftHostId = null; core.state.workProjectSelecting=null; core.state.newConversationMode = 'chat'; return clear(...args); };
   return { supportsWorkModes: enabled, currentConversationMode: currentMode, sidebarConversationMode, chooseSidebarMode, startSidebarConversation, workComputers, startNewWork, chooseWorkComputer,
-    switchConversationWork, conversationMode: mode };
+    switchConversationWork, workHandoffs, refreshWorkHandoffs, resumeWorkHandoff, openWorkHandoff, conversationMode: mode };
 };
