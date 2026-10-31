@@ -9,8 +9,7 @@ import {createPersonalMemoryManager} from '../src/personal-memory/index.mjs';
 const owner='owner-00000000-0000-4000-8000-000000000001';
 test('redaction of an older rejected request can finish without applying that request',async()=>{
  const root=await mkdtemp(join(tmpdir(),'memory-rejected-redaction-'));let attempts=0;
- const journal=createMemoryCommandJournal({root,prepareCleanup:async()=>({conversationTargets:[]}),eraseSnippets:async()=>{
-  if(++attempts===1)throw Error('transient copy failure');return {snippetsVerified:true};}});
+ const journal=createMemoryCommandJournal({root,prepareCleanup:async()=>{if(++attempts===1)throw Error('transient preparation failure');return {conversationTargets:[]};},eraseSnippets:async()=>({notApplied:true})});
  try {
   await journal.reserve({ownerId:owner,requestId:'rejected-request',operation:'delete_evidence',targetKind:'evidence',targetId:'old',expectedWorldRevision:1,payload:{},cleanup:{sourceTexts:['shared source'],deleteConversationSnippets:true}});
   await journal.redactTargets(owner,['old'],{sourceTexts:['shared source']});
@@ -18,6 +17,7 @@ test('redaction of an older rejected request can finish without applying that re
   await journal.retryPendingRedaction(owner,'rejected-request');
   const result=await journal.get(owner,'rejected-request');
   assert.equal(result.cleanup.snippetsPending,undefined);assert.equal(result.cleanupCompleted,undefined);
+  assert.deepEqual(result.cleanup.sourceTexts,[]);
   assert.equal(result.command.target_id,'old');assert.equal(attempts,2);
  }finally{await journal.close();await rm(root,{recursive:true,force:true});}
 });

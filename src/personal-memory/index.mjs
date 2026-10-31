@@ -101,6 +101,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   };
   const eraseConversationSnippets = async (ownerId, record) => {
     const result = await withOwner(ownerId, entry => entry.rpc.request('query_command_receipt', { command_id: record.command.command_id }));
+    if(['rejected','revision_conflict'].includes((result.receipt??result).result_state))return {notApplied:true};
     if (!['applied', 'no_change'].includes((result.receipt ?? result).result_state)) throw error('MEMORY_CLEANUP_PENDING');
     await discardOutboxSources(ownerId, { sourceTexts: record.cleanup.sourceTexts, boundaryIds: record.cleanup.pendingBoundaryIds });
     return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...record.cleanup, affectedIds: [], journalManaged: true }) : { snippetsVerified: true };

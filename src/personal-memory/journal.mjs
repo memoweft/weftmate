@@ -160,7 +160,10 @@ export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseS
         const state=await read(ownerId),record=state.records[requestId];
         if(!record?.cleanup?.snippetsPending)return;
         await prepare(ownerId,state,record);
-        if((await eraseSnippets?.(ownerId,record))?.snippetsVerified!==true)throw failure('MEMORY_CLEANUP_PENDING');
+        const result=await eraseSnippets?.(ownerId,record);
+        if(result?.snippetsVerified!==true && result?.notApplied!==true)throw failure('MEMORY_CLEANUP_PENDING');
+        record.cleanup.sourceTexts=[];
+        if(record.cleanup.sourceRefs)record.cleanup.sourceRefs=[];
         delete record.cleanup.snippetsPending;
         await write(ownerId,state);
       });
@@ -201,7 +204,7 @@ export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseS
                 try {
                   await prepare(ownerId, state, record);
                   const erased = await eraseSnippets(ownerId, record);
-                  if (erased?.snippetsVerified !== true) throw failure('MEMORY_CLEANUP_PENDING');
+                  if (erased?.snippetsVerified !== true && erased?.notApplied !== true) throw failure('MEMORY_CLEANUP_PENDING');
                   delete record.cleanup.snippetsPending;
                 } catch {
                   record.cleanup.snippetsPending = true;
