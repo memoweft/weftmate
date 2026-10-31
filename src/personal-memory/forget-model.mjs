@@ -19,6 +19,15 @@ const fields = (value, names) => value && typeof value === 'object' && !Array.is
   Object.keys(value).length === names.length && names.every(name => Object.hasOwn(value, name));
 const matchesGraphSubject = (candidate, decision) => candidate.graphSubject === null ||
   subject(candidate.graphSubject) && decision.targetSubjects.length === 1 && decision.targetSubjects[0] === candidate.graphSubject;
+function graphSubject(row, entities) {
+  if (row?.object_kind !== 'cognition') return null;
+  if (!row.value.target_entity_id) return 'self';
+  const entity = entities.get(row.value.target_entity_id);
+  if (!entity) return 'unknown';
+  if (entity.canonical_name === '用户') return 'self';
+  // A beverage/place/topic target is what the fact concerns, not who holds it.
+  return entity.kind === 'person' ? entity.canonical_name ? `other:${entity.canonical_name}` : 'unknown' : null;
+}
 
 // Pass Core's existing links to the judge; text similarity never creates a link.
 function revisionChains(rows, candidates) {
@@ -191,13 +200,6 @@ export async function scopedForgetPlan(manager, owner, action, route) {
   if (!Number.isSafeInteger(worldRevision) || worlds.some(world => world.world_revision !== worldRevision)) return changedScope();
   const rows = worlds.flatMap(world => world.items ?? []), byKey = new Map(rows.map(row => [`${row.object_kind}:${row.item_id}`, row]));
   const entities = new Map(rows.filter(row => row.object_kind === 'entity').map(row => [row.item_id, row.value]));
-  const graphSubject = row => {
-    if (row?.object_kind !== 'cognition') return null;
-    if (!row.value.target_entity_id) return 'self'; // Core's absent target is owner_self.
-    const entity = entities.get(row.value.target_entity_id);
-    return entity?.kind === 'topic' || entity?.canonical_name === '用户' ? 'self'
-      : entity?.kind === 'person' && entity.canonical_name ? `other:${entity.canonical_name}` : 'unknown';
-  };
   const readable = sources => sources.length > 0 && sources.every(source => source.evidence?.content_available === true &&
     source.permissions?.allow_inference === true && source.permissions?.[route.modelTier === 'cloud' ? 'allow_cloud_read' : 'allow_local_read'] === true);
   const candidateSources = row => row.object_kind === 'entity' && !row.provenance?.length
@@ -207,7 +209,7 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     version: 2, completionVersion: forgetCompletionVersion, completionState: 'withheld', worldRevision, authorization: request, evidenceIds: [], worldTargets: [], affectedIds: [], sourceTexts: [],
     state: 'withheld', message: '无法在当前权限下确认完整遗忘范围，这次没有执行；独立记忆和原聊天保留。' };
   const candidates = rows.filter(row => !(row.object_kind === 'entity' && row.value.kind === 'topic') && readable(candidateSources(row))).map(row => ({ key: `${row.object_kind}:${row.item_id}`,
-    kind: row.object_kind, text: row.value.content ?? row.value.canonical_name, graphSubject: graphSubject(row),
+    kind: row.object_kind, text: row.value.content ?? row.value.canonical_name, graphSubject: graphSubject(row, entities),
     sourceTexts: [...new Set(candidateSources(row).flatMap(source => [source.evidence.raw_content, source.evidence.summary]).filter(Boolean))] }));
   const snapshot = await manager.query(owner, 'preview_recall', { query: request.topic, model_tier: route.modelTier });
   const jobs = await manager.query(owner, 'query_jobs', { operation: 'list' });
@@ -247,7 +249,7 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     authorization: request, evidenceIds: [], worldTargets: [], affectedIds: [], sourceTexts: [], state: 'withheld',
     message: '相关记忆的归属还不能确认，这次没有执行遗忘；独立记忆和原聊天保留。' };
   const certain = key => {
-    const decision = decisions.get(key), row = byKey.get(key), graph = graphSubject(row);
+    const decision = decisions.get(key), row = byKey.get(key), graph = graphSubject(row, entities);
     return decision?.targetSubjects.length === 1 && decision.targetSubjects[0] === request.subject &&
       (graph === null || graph === request.subject);
   };
@@ -289,7 +291,7 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     }
   } while (changed);
   const other = key => {
-    const graph = graphSubject(byKey.get(key));
+    const graph = graphSubject(byKey.get(key), entities);
     const subjects = decisions.get(key)?.targetSubjects ?? [];
     return subject(graph) && graph !== request.subject || subjects.length > 0 &&
       subjects.every(value => subject(value) && value !== request.subject);
@@ -377,12 +379,6 @@ async function assessForgetCompletion(manager, owner, proposal, route) {
     const newerWorld = worlds.find(world => world.world_revision !== preview.world_revision);
     if (newerWorld) return changed(newerWorld.world_revision);
     const rows = worlds.flatMap(world => world.items ?? []), entities = new Map(rows.filter(row => row.object_kind === 'entity').map(row => [row.item_id, row.value]));
-    const graphSubject = row => {
-      if (row?.object_kind !== 'cognition') return null;
-      const entity = entities.get(row.value.target_entity_id);
-      return !row.value.target_entity_id || entity?.kind === 'topic' || entity?.canonical_name === '用户' ? 'self'
-        : entity?.kind === 'person' && entity.canonical_name ? `other:${entity.canonical_name}` : 'unknown';
-    };
     const sources = new Map();
     for (const row of rows) for (const source of row.provenance ?? []) sources.set(source.evidence_id, source);
     const deletedSources = new Set(preview.evidence_ids ?? []);
@@ -424,7 +420,7 @@ async function assessForgetCompletion(manager, owner, proposal, route) {
     if (targets.some(item => !rows.some(row => row.object_kind === item.object_kind && row.item_id === item.item_id))) return unknown();
     const candidates = items.map(item => {
       const row = rows.find(row => row.object_kind === item.object_kind && row.item_id === item.item_id);
-      return { key: `${targets.includes(item) ? 'target' : 'cascade'}:${item.object_kind}:${item.item_id}`, kind: item.object_kind, text: item.name, graphSubject: graphSubject(row),
+      return { key: `${targets.includes(item) ? 'target' : 'cascade'}:${item.object_kind}:${item.item_id}`, kind: item.object_kind, text: item.name, graphSubject: graphSubject(row, entities),
         sourceTexts: [...new Set((row?.provenance ?? []).flatMap(source => [source.evidence?.raw_content, source.evidence?.summary]).filter(Boolean))] };
     });
     // Selecting an entire Evidence authorizes that source, not every similarly
@@ -445,7 +441,7 @@ async function assessForgetCompletion(manager, owner, proposal, route) {
     if (witnesses.some(row => !row.provenance?.length || row.provenance.some(source => source.evidence?.content_available !== true ||
       source.permissions?.allow_inference !== true || source.permissions?.[route.modelTier === 'cloud' ? 'allow_cloud_read' : 'allow_local_read'] !== true))) return unknown();
     for (const row of witnesses) candidates.push({ key: `witness:${row.object_kind}:${row.item_id}`, kind: row.object_kind,
-      text: row.value.content, graphSubject: graphSubject(row),
+      text: row.value.content, graphSubject: graphSubject(row, entities),
       sourceTexts: [...new Set(row.provenance.flatMap(source => [source.evidence.raw_content, source.evidence.summary]).filter(Boolean))] });
     for (const [id, source] of sources) candidates.push({ key: `evidence:${id}`, kind: 'evidence',
       text: [source.evidence.raw_content, source.evidence.summary].filter(Boolean).join('\n'), graphSubject: null,

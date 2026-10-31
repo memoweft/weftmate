@@ -288,6 +288,10 @@ export function apply(ctx) {
   const requestScopes = new WeakMap();
   const cleanupRequests = new Map();
   const cleanupFlights = new Set();
+  const pendingForgets = new Set(), resumeFlights = new Set();
+  function rememberPendingForget(agent, result) {
+    if (result.state === 'queued' || result.receipt?.storageCleanup?.state === 'pending') pendingForgets.add(agent.id);
+  }
   function rememberReply(agent, turn, message) {
     const previous = actionReplies.get(agent);
     const messages = [...new Set([...(previous?.turn === turn ? previous.messages : []), message])];
@@ -347,6 +351,7 @@ export function apply(ctx) {
           if (!requests) { requests = new Set(); cleanupRequests.set(agent.id, requests); }
           requests.add(result.receipt.requestId);
         }
+        if (tool.name === 'memory_forget') rememberPendingForget(agent, result);
         return result;
       },
       presentCall: () => ({ card: 'generic', title: tool.title, kind: 'other' }),
@@ -396,6 +401,13 @@ export function apply(ctx) {
     if (explicit?.turn === turn) explicit.reported = true;
   });
   ctx.on('agent/status', ({ agent, status }) => {
+    if (status === 'idle' && pendingForgets.has(agent.id) && !resumeFlights.has(agent.id)) {
+      resumeFlights.add(agent.id);
+      void bridge.request('tool', { sessionId: agent.id, turn: 0,
+        tool: { name: 'memory_resume', arguments: {} } }).then(result => {
+        if (result.pending === false) pendingForgets.delete(agent.id);
+      }).catch(() => {}).finally(() => resumeFlights.delete(agent.id));
+    }
     if (status !== 'idle' || !cleanupRequests.size) return;
     for (const [sessionId, requests] of cleanupRequests) for (const requestId of requests) {
       if (cleanupFlights.has(requestId)) continue;
@@ -445,6 +457,7 @@ export function apply(ctx) {
           tool: { name: 'memory_forget_request', arguments: {}, source: input,
             requestId: `memory-tool:${digest(`${session.id}|${turn}|${key}|forget-request`)}` } }, payload.signal)
           .catch(() => ({ state: 'unavailable', message: '这次还没忘掉，请稍后再试。' }));
+        rememberPendingForget(payload.agent, result);
         for (const id of keys) explicit.results.set(id, result);
         // A nomination can be a translation, quotation, condition or question.
         // Such messages still receive the normal model reply, with no deletion receipt.

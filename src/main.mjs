@@ -1985,7 +1985,7 @@ async function bootstrap() {
         writeHostState();
         throw Object.assign(new Error('memory preset mismatch'), { code: 'MEMORY_OWNER_UNAVAILABLE' });
       }
-      if (request.action === 'tool' && request.tool?.name === 'memory_cleanup') {
+      if (request.action === 'tool' && ['memory_cleanup', 'memory_resume'].includes(request.tool?.name)) {
         return handlePersonalMemoryTool(personalMemoryManager, binding.ownerId, request.tool);
       }
       const memoryPolicy = await personalAccessService.memoryTurnPolicy(binding.ownerId, request.sessionId, request.turn);

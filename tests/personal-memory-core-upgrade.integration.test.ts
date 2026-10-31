@@ -1,3 +1,4 @@
+// 保护：真实记忆依赖随转述传播，待来源整理完成后删除必须连同派生回复一起清除。
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
@@ -93,11 +94,16 @@ runpy.run_module('memoweft.integrations.dsh_bridge', run_name='__main__')
     let preview: any;
     const deadline = Date.now() + 15000;
     do {
+      // Other imported replies can still advance the same world revision.
+      const jobs = await manager.query(owner, 'query_jobs', { operation: 'list' });
+      if ((jobs.jobs ?? []).some(job => ['pending','processing','retry'].includes(job.worker?.state))) {
+        await new Promise(resolve => setTimeout(resolve, 50)); continue;
+      }
       try { preview = await manager.query(owner, 'preview_forget', { target_kind: 'evidence', target_id: 'source-glaze' }); break; }
       catch (cause) { if (cause.code !== 'formation_in_progress') throw cause; }
       await new Promise(resolve => setTimeout(resolve, 50));
     } while (Date.now() < deadline);
-    assert.ok(preview.items.some(item => item.object_kind === 'interaction_context'));
+    assert.ok(preview?.items.some(item => item.object_kind === 'interaction_context'), 'formed dependency preview is ready before deleting');
     const deleted = await manager.submit(owner, { schema_version: 1, command_id: 'e2-forget-source', subject_id: owner,
       actor: 'owner', expected_world_revision: preview.world_revision, operation: 'delete_evidence', target_kind: 'evidence',
       target_id: 'source-glaze', payload: { forget_scope: preview.forget_scope }, submitted_at: new Date().toISOString() });

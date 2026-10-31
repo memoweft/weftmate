@@ -268,27 +268,41 @@ export function createSessionOperations(context) {
           }));
           let confirmedRevision = memoryWorldRevision;
           for (const evidenceId of evidenceIds) {
-            const requestId = `session-delete-${digest(`${sessionId}\0${evidenceId}`).slice(0, 48)}`;
+            const requestIds = context.accountState(ownerId).sessions[sessionId].forgetRequestIds;
+            let requestId = requestIds && Object.hasOwn(requestIds, evidenceId) ? requestIds[evidenceId]
+              : `session-delete-${digest(`${sessionId}\0${evidenceId}`).slice(0, 48)}`;
             let result;
             if (manager.receiptByRequest) {
               try { result = await manager.receiptByRequest(ownerId, requestId); }
               catch (error) { if (error.code !== 'command_receipt_not_found') throw error; }
             }
+            const priorReceipt = result?.receipt ?? result;
+            if (priorReceipt?.result_state === 'revision_conflict' || priorReceipt?.result_state === 'rejected' &&
+                ['forget_scope_required', 'forget_scope_changed'].includes(priorReceipt.rejection_code)) result = null;
             if (!result) {
               const revision = await manager.query(ownerId, 'query_world', { operation: 'revision' });
               if (confirmedRevision !== undefined && revision.world_revision !== confirmedRevision)
                 throw failure('MEMORY_REVISION_CHANGED', 409);
+              const scope = await manager.query(ownerId, 'preview_forget', { target_kind: 'evidence', target_id: evidenceId });
+              if (scope.world_revision !== revision.world_revision) throw failure('MEMORY_REVISION_CHANGED', 409);
+              if (!/^forget-scope-v1:[a-f0-9]{64}$/.test(scope.forget_scope ?? ''))
+                throw failure('MEMORY_DELETE_CONFLICT', 409);
+              requestId = `session-delete-${digest(`${sessionId}\0${evidenceId}\0${scope.forget_scope}\0${deleteConversationSnippets}`).slice(0, 48)}`;
+              await context.serial(() => context.mutate(ownerId, next => {
+                next.sessions[sessionId].forgetRequestIds = {
+                  ...next.sessions[sessionId].forgetRequestIds, [evidenceId]: requestId };
+              }));
               result = await manager.submitCommand(ownerId, { requestId,
                 expectedWorldRevision: revision.world_revision, operation: 'delete_evidence',
                 targetKind: 'evidence', targetId: evidenceId,
-                payload: deleteConversationSnippets ? { delete_conversation_snippets: true } : {}, deleteConversationSnippets });
+                payload: { forget_scope: scope.forget_scope, ...(deleteConversationSnippets ? { delete_conversation_snippets: true } : {}) }, deleteConversationSnippets });
             }
             if ((result.receipt ?? result).storage_cleanup?.state === 'pending' && manager.retryCleanupByRequest)
               result = await manager.retryCleanupByRequest(ownerId, requestId);
             const receipt = result.receipt ?? result;
             if (!['applied', 'no_change'].includes(receipt.result_state) || receipt.storage_cleanup?.state === 'pending')
               throw failure('MEMORY_DELETE_CONFLICT', 409);
-            if (confirmedRevision !== undefined) confirmedRevision = receipt.after_revision;
+            if (confirmedRevision !== undefined) confirmedRevision = Math.max(confirmedRevision, receipt.after_revision ?? confirmedRevision);
             forgottenEvidenceCount++;
           }
           if (manager.eraseConversationContext) {

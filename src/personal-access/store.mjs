@@ -268,6 +268,9 @@ export function validateSingleStore(store) {
         (session.groupId !== undefined && session.groupId !== null && !Object.hasOwn(store.sessionGroups ?? {}, session.groupId)) ||
         (session.forgetEvidenceIds !== undefined && (!Array.isArray(session.forgetEvidenceIds) ||
           session.forgetEvidenceIds.some(value => typeof value !== 'string' || !/^[A-Za-z0-9._:-]{1,512}$/.test(value)))) ||
+        (session.forgetRequestIds !== undefined && (!plainObject(session.forgetRequestIds) ||
+          Object.entries(session.forgetRequestIds).some(([key, value]) => !/^[A-Za-z0-9._:-]{1,512}$/.test(key) ||
+            typeof value !== 'string' || !/^session-delete-[a-f0-9]{48}$/.test(value)))) ||
         (session.origin !== undefined && !['personal-remote', 'shared-chat', 'legacy-local', 'local-attached'].includes(session.origin)) ||
         (session.modelProfileId !== undefined && (typeof session.modelProfileId !== 'string' ||
           !MODEL_PROFILE_ID.test(session.modelProfileId))) ||

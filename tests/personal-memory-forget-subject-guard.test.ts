@@ -1,3 +1,4 @@
+// 保护：偏好对象不能误判为未知人物；明确人物归属仍必须与原话授权一致。
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -18,7 +19,7 @@ const e9ddPlan = { version: 2, completionVersion: 1, completionState: 'complete'
   worldTargets: [{ kind: 'cognition', id: 'green' }], affectedIds: ['green', 'green-source'],
   authorization: scope, retainedOtherCount: 2, retainedUncertainCount: 0 };
 
-type Scenario = 'self-conflict' | 'evidence-conflict' | 'other-conflict' | 'other-safe' | 'negative';
+type Scenario = 'self-conflict' | 'evidence-conflict' | 'other-conflict' | 'other-safe' | 'negative' | 'object-target';
 async function fixture(t: any, scenario: Scenario) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-subject-guard-'));
   let revision = 7;
@@ -35,13 +36,17 @@ async function fixture(t: any, scenario: Scenario) {
   let rows = [cognition('green', green, 'green-source'), ...(own ? [cognition('self-red', '用户喜欢喝红茶。', 'mixed-source')]
     : [cognition('mother-tea', '妈妈喜欢喝红茶。', 'mixed-source', 'mother'), cognition('walking', '用户周末喜欢散步。', 'mixed-source')]),
     { item_id: 'mother', object_kind: 'entity', value: { kind: 'person', canonical_name: '妈妈' }, provenance: [] }];
+  if(scenario==='object-target'){
+    rows[0].value.target_entity_id='beverage';
+    rows.push({item_id:'beverage',object_kind:'entity',value:{kind:'beverage',canonical_name:'绿茶'},provenance:[]});
+  }
   const originalChat = [green, mixed];
   const server = createServer(async (req, res) => {
     let text = ''; for await (const part of req) text += part;
     const body = JSON.parse(text), input = JSON.parse(body.messages.at(-1).content);
     inputs.push(input);
     const items = input.candidates.map((candidate: any) => {
-      const inMixed = candidate.sourceTexts.includes(mixed), fact = candidate.text.includes('茶');
+      const inMixed = candidate.sourceTexts.includes(mixed), fact = candidate.kind !== 'entity' && candidate.text.includes('茶');
       const wrong = scenario === 'self-conflict' || scenario === 'other-conflict' || scenario === 'evidence-conflict' && candidate.kind === 'evidence';
       const realSubject = own ? 'self' : 'other:妈妈';
       const targetSubjects = !fact ? [] : !inMixed ? ['self'] : [wrong ? realSubject === 'self' ? 'other:妈妈' : 'self' : realSubject];
@@ -94,7 +99,7 @@ for (const scenario of ['self-conflict', 'evidence-conflict', 'other-conflict'] 
   assert.equal(f.sources.get('mixed-source').raw_content, f.mixed); assert.deepEqual(f.originalChat, chat);
 });
 
-for (const scenario of ['other-safe', 'negative'] as const) test(`${scenario} keeps the other subject source without promoting its unrelated self fact`, async t => {
+for (const scenario of ['other-safe', 'negative', 'object-target'] as const) test(`${scenario} keeps the other subject source without promoting its unrelated self fact`, async t => {
   const f = await fixture(t, scenario);
   assert.equal((await checkForgetCompletion(f.manager, owner, { targetKind: 'cognition', targetId: 'green', expectedWorldRevision: 7 }, f.route)).state, 'complete');
   assert.equal((await f.actions.submit(owner, request)).state, 'applied');

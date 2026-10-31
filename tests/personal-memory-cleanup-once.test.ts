@@ -1,3 +1,4 @@
+// 保护：运行回合结束后必须完成原遗忘清理并解除发送门禁，不能重新删除或重复清理。
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -11,7 +12,7 @@ const owner = 'owner-00000000-0000-4000-8000-000000000001';
 const proposal = { ownerId: owner, requestId: 'forget-tea', operation: 'delete_world_item',
   targetKind: 'cognition', targetId: 'tea', expectedWorldRevision: 1, payload: {} };
 
-for (const mode of ['receipt', 'core-storage-retry']) test(`${mode} after host cleanup cannot make a new conversation return SESSION_BUSY`, { timeout: 20000 }, async () => {
+for (const mode of ['receipt', 'core-storage-retry', 'turn-idle']) test(`${mode} after host cleanup cannot make a new conversation return SESSION_BUSY`, { timeout: 20000 }, async () => {
   const root = await mkdtemp(join(tmpdir(), 'memory-forget-send-'));
   const entered = Promise.withResolvers<void>(), release = Promise.withResolvers<void>();
   const receipts = new Map(), sessions = new Map();
@@ -29,7 +30,7 @@ for (const mode of ['receipt', 'core-storage-retry']) test(`${mode} after host c
       if (method === 'query_world') return { items: [], world_revision: 1 };
       if (method === 'query_provenance') return { provenance: [{ evidence: { evidence_id: 'tea-source', raw_content: 'synthetic tea' } }] };
       if (method === 'submit_command') receipts.set(params.command.command_id, { command_id: params.command.command_id,
-        result_state: 'applied', after_revision: 2, affected_ids: ['tea'], storage_cleanup: { state: mode === 'receipt' ? 'complete' : 'pending' } });
+        result_state: 'applied', after_revision: 2, affected_ids: ['tea'], storage_cleanup: { state: mode === 'core-storage-retry' ? 'pending' : 'complete' } });
       if (method === 'retry_delete_storage_cleanup') receipts.get(params.command_id).storage_cleanup.state = 'complete';
       if (['submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup'].includes(method)) {
         const receipt = receipts.get(params.command?.command_id ?? params.command_id);
@@ -44,7 +45,12 @@ for (const mode of ['receipt', 'core-storage-retry']) test(`${mode} after host c
       preflight: async () => ({ ok: true }), sendMessage: async () => ({ accepted: true }), cancelSession: async () => ({ accepted: true }),
       createSession: async ({ sessionId }) => { sessions.set(sessionId, { sessionId, agentPreset: 'personal-remote', running: false }); return { sessionId }; },
       describeSessions: async ids => ids.map(id => sessions.get(id)).filter(Boolean), describeSession: async id => sessions.get(id),
-      readEvents: async () => ({ events: [] }), cleanupMemoryCopies: async () => { if (++cleanups > 1) { entered.resolve(); await release.promise; } return { cleaned: true }; },
+      readEvents: async () => ({ events: [] }), cleanupMemoryCopies: async () => {
+        cleanups++;
+        if (mode === 'turn-idle' && cleanups === 1) throw Error('agent-busy');
+        if (mode !== 'turn-idle' && cleanups > 1) { entered.resolve(); await release.promise; }
+        return { cleaned: true };
+      },
     };
     service = await createPersonalAccessService({ root: join(root, 'access'), port: 0, backend, memoryManager: manager });
     const started = await service.start(), device = await service.enrollDevice({ name: 'synthetic' });
@@ -61,13 +67,14 @@ for (const mode of ['receipt', 'core-storage-retry']) test(`${mode} after host c
     const { ownerId: _ownerId, ...command } = proposal;
     const result = await manager.submitCommand(started.ownerId, command);
     assert.equal(result.receipt.storage_cleanup.state, mode === 'receipt' ? 'complete' : 'pending');
-    repeated = mode === 'receipt' ? manager.receiptByRequest(started.ownerId, proposal.requestId)
+    if (mode === 'turn-idle') assert.equal((await create('while-forgetting')).status,409);
+    repeated = mode === 'turn-idle' ? manager.resumeAfterTurn(started.ownerId) : mode === 'receipt' ? manager.receiptByRequest(started.ownerId, proposal.requestId)
       : manager.retryCleanupByRequest(started.ownerId, proposal.requestId);
     await Promise.race([repeated, entered.promise]);
     const response = await create('after-forget');
     assert.equal(response.status, 202, JSON.stringify(await response.json()));
-    assert.equal(cleanups, 1);
-    assert.equal((await repeated).receipt.storage_cleanup.state, 'complete');
+    assert.equal(cleanups, mode === 'turn-idle' ? 2 : 1);
+    assert.equal(mode === 'turn-idle' ? (await repeated).pending : (await repeated).receipt.storage_cleanup.state, mode === 'turn-idle' ? false : 'complete');
   } finally {
     release.resolve(); await repeated?.catch(() => {});
     await service?.close(); await manager.close(); await rm(root, { recursive: true, force: true });

@@ -1,4 +1,5 @@
 import './helpers/posix-project-fixture.mjs';
+// 保护：真实运行时必须在遗忘回合结束后恢复清理，且仍能继续普通对话。
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
@@ -39,6 +40,7 @@ async function fixture(t: any, { pendingCleanup = false, queueMemoryAction = fal
   const repeatGate = new Promise<void>(r => { releaseRepeat = r; });
   const repeatReady = new Promise<void>(r => { repeatedStarted = r; });
   const manager: any = {
+    resumeAfterTurn: async () => ({ pending: false }),
     checkForgetCompletion: async (_owner: string, proposal: any) => ({ state: 'complete', worldRevision: proposal.expectedWorldRevision }),
     status: async () => ({ state: 'ready', capabilities: { correct: true, deleteWorldItem: true, deleteEvidence: true } }),
     recall: async (owner: string, input: any = {}) => {
@@ -285,6 +287,14 @@ test('changing results reset repetition and the model consumes the completed res
     'the arguments-only reminder must not urge the model to stop changing results');
   const events = (await f.api(`/sessions/${session}/events`)).events;
   assert.match(events.filter((e: any) => e.type === 'assistant.message').at(-1).data.text, /最后一次结果.*进度 12/);
+});
+
+test('automatic queued forgetting wakes cleanup when the native turn becomes idle', {timeout:60000},async t=>{
+  const f=await fixture(t,{automaticForget:'queued'}),session=await f.create();
+  await f.complete(await f.send(session,'忘掉我喝茶的偏好，另外请计算12×13。'));
+  await until(async()=>f.calls.some(call=>call.name==='memory_resume'));
+  assert.equal(f.calls.filter(call=>call.name==='memory_resume').length,1);
+  assert.equal(f.commands.length,1);
 });
 
 test('when an unchanged loop stops, its last result still reaches a final model response', { timeout: 60000 }, async t => {
