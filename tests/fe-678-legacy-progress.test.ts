@@ -1,3 +1,4 @@
+// 保护：重试和迟到回执必须保留原消息身份，并由原生事件恢复终态。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -84,7 +85,7 @@ test('#678 ordinary work sessions retain each message/process pair', {timeout:30
         f.append(72,'turn.ended',{turn:3,reason:'completed'});f.ack(b,'receipt-b');f.ack(d,'receipt-d');await Promise.all(f.deliveries);f.check([a,b,c,d],'late HTTP acknowledgements');
         f.append(73,'step.completed',{taskId:'turn-3',stepId:'synthetic-read',toolName:'read',state:'completed'});f.check([a,b,c,d],'late owned tool completion');
         if(step!==disclosure.querySelector('[data-step="synthetic-read"]') || disclosure.open || document.activeElement!==summary)throw Error('completion must fold in place without losing detail or focus');
-        if(!/已停止/.test(f.saved.get(a)[2].textContent) || /已停止/.test(f.saved.get(b)[2].textContent))throw Error('stop crossed message ownership');
+        if(!/已停止|已中断/.test(f.saved.get(a)[2].textContent) || /已停止|已中断/.test(f.saved.get(b)[2].textContent))throw Error('stop crossed message ownership');
       });
     });
     await t.test('the first work message survives actual session selection and loading clear',async()=>{
@@ -146,7 +147,7 @@ test('#678 ordinary work sessions retain each message/process pair', {timeout:30
         f.append(20,'task.queued',{requestId:retried.requestId,receiptId:'retry-receipt',text:retried.text});
         f.append(21,'turn.started',{turn:2});f.append(23,'task.started',{requestId:retried.requestId,receiptId:'retry-receipt',turn:2,turnTaskId:'turn-2'});
         f.append(24,'user.message',{receiptId:'retry-receipt',text:retried.text});f.append(28,'turn.ended',{turn:2,reason:'completed'});f.check([id],'retry completed');
-        if(!/已完成/.test(summary.textContent) || details!==row.querySelector('.execution-block'))throw Error('retry lost terminal state or its original details');
+        if(details.dataset.terminal!=='true' || details!==row.querySelector('.execution-block'))throw Error('retry lost terminal state or its original details');
       });
     });
     await t.test('uncertain delivery stays unconfirmed and native acceptance takes precedence over a failed local snapshot',async()=>{
@@ -160,7 +161,7 @@ test('#678 ordinary work sessions retain each message/process pair', {timeout:30
         if(row.dataset.running!=='true' || row.classList.contains('has-failure') || !/正在思考/.test(summary.textContent))throw Error('real native acceptance lost to the local failed snapshot');
         f.append(31,'turn.started',{turn:3});f.append(33,'task.started',{requestId:id,receiptId:'uncertain-receipt',turn:3,turnTaskId:'turn-3'});f.check([id],'native start despite failed local status');
         f.append(34,'user.message',{receiptId:'uncertain-receipt',text:'需要核对发送结果的合成消息'});f.append(38,'turn.ended',{turn:3,reason:'completed'});f.check([id],'uncertain request completed');
-        if(!/已完成/.test(summary.textContent))throw Error('uncertain request did not retain its actual native terminal state');
+        if(row.querySelector('.execution-block').dataset.terminal!=='true')throw Error('uncertain request did not retain its actual native terminal state');
       });
     });
   } finally {await browser.close();}

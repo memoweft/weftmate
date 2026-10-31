@@ -266,7 +266,7 @@
             return { ...step, state: 'cancelled', statusText: english ? 'Interrupted' : '已中断' };
         if (state === 'failed') return { ...step, state: 'failed',
             statusText: english ? 'Failed' : '执行失败' };
-        return { ...step, statusText: state === 'running' && !progress.terminal ? english ? 'Running' : '运行中' : '' };
+        return { ...step, statusText: state === 'running' && (!progress.terminal || ['running','stopping'].includes(step.jobState)) ? english ? 'Running' : '运行中' : '' };
     }
     function progressText(steps, outcome = false) {
         const language = outcome?.language || steps[0]?.language || 'zh', english = language === 'en';
@@ -276,7 +276,7 @@
             const remaining = steps.filter(step => !rejectedStep(step));
             const other = progressText(remaining, outcome);
             const refusal = rejected.map(step => english ? `You declined ${toolSummary(step.toolName,step.arguments,language)}` : `${toolSummary(step.toolName,step.arguments)}被你拒绝了`).join(english ? '; ' : '；');
-            return {...other,text:[refusal,['已完成','工具已就绪','Completed','Tools ready'].includes(other.text) ? '' : other.text].filter(Boolean).join(' · ')};
+            return {...other,text:[refusal,['本轮结束','工具已就绪','Turn ended','Tools ready'].includes(other.text) ? '' : other.text].filter(Boolean).join(' · ')};
         }
         const failed = steps.find(step => executionState(step) === 'failed');
         if (progress.state === 'failed') {
@@ -291,7 +291,8 @@
         if (failed && !progress.terminal) return { text: english ? `Step ${failed.ordinal || steps.indexOf(failed) + 1} encountered an issue; continuing` : `第 ${failed.ordinal || steps.indexOf(failed) + 1} 步遇到问题，正在继续`, running: true };
         if (!progress.terminal && steps.some(step => executionState(step) === 'cancelled') &&
             !steps.some(step => ['running','pending'].includes(executionState(step)))) return { text: english ? 'Interrupted' : '已中断', running: false };
-        const current = (!progress.terminal || steps.some(step=>['running','stopping'].includes(step.jobState))) && steps.filter(step => ['running', 'pending'].includes(executionState(step))).at(-1);
+        const current = steps.filter(step => ['running','pending'].includes(executionState(step)) &&
+            (!progress.terminal || step.approvalStatus === 'pending' || ['running','stopping'].includes(step.jobState))).at(-1);
         if (current) {
             const summary = toolActivity(current.toolName, language)?.summary || (english ? toolSummary(current.toolName,current.arguments,language) : current.summary) || toolSummary(current.toolName, current.arguments);
             if (english) return { text: `${current.approvalStatus === 'pending' ? 'Awaiting approval: ' : current.jobState === 'stopping' ? 'Stopping: ' : ''}${summary}…`, running:current.approvalStatus !== 'pending' };
@@ -299,7 +300,7 @@
         }
         const counts = new Map();
         for (const step of steps) {
-            if (progress.terminal && ['failed','cancelled'].includes(executionState(step))) continue;
+            if (executionState(step) !== 'completed') continue;
             const name = toolName(step.toolName), summary = step.summary || '';
             const activity = toolActivity(name);
             if (activity?.internal) continue;
@@ -321,8 +322,10 @@
             command:['Ran','command'],read:['Read','file'],search:['Performed','search'],write:['Updated','file'],delete:['Deleted','file'],web:['Visited','webpage'],subagent:['Handled','subtask'],
             goal:['Updated','task goal'],goalRead:['Viewed','task goal'],goalCreate:['Created','task goal'],plan:['Organized','execution plan'],schedule:['Handled','scheduling action'],job:['Checked','background command'],code:['Ran','script'],computer:['Performed','computer action'],memory:['Queried or updated','memory item'],question:['Requested','clarification'],extension:['Used','extension'] };
         const text = [...counts].map(([kind, count]) => english ? `${englishLabels[kind][0]} ${count} ${englishLabels[kind][1]}${count === 1 ? '' : kind === 'search' ? 'es' : 's'}` : labels[kind](count)).join(english ? ', ' : '、')
-            || (progress.state === 'completed' ? english ? 'Completed' : '已完成' : steps.length ? english ? 'Tools ready' : '工具已就绪' : '');
-        return { text: text + (progress.state === 'completed' && progress.retries ? english ? ` · ${progress.retries} retried step(s)` : ` · 中途有 ${progress.retries} 步重试` : ''), running: false };
+            || (progress.terminal ? english ? 'Turn ended' : '本轮结束' : steps.length ? english ? 'Tools ready' : '工具已就绪' : '');
+        const unresolved = progress.terminal ? steps.filter(step => ['running','pending'].includes(executionState(step))).length : 0;
+        return { text: text + (unresolved ? english ? ` · ${unresolved} operation result(s) unconfirmed` : ` · ${unresolved} 项操作结果待确认` : '')
+            + (progress.state === 'completed' && progress.retries ? english ? ` · ${progress.retries} retried step(s)` : ` · 中途有 ${progress.retries} 步重试` : ''), running: false };
     }
     function approvalProgress(row) {
         return ({ 'allowed-once': '已批准', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[row?.outcome || row?.decisionOutcome] || (row?.status === 'pending' ? '等待批准' : '');
