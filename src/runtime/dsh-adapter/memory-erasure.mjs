@@ -2,6 +2,41 @@ import { open, rename, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { zstdCompressSync } from 'node:zlib';
 import { relative, resolve, isAbsolute } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
+
+async function writeArtifact(persistence, artifact, content) {
+  const location=persistence.locate(artifact.meta),inside=relative(resolve(persistence.config.root),resolve(location.path));
+  if(!inside || inside.startsWith('..') || isAbsolute(inside))throw new Error('memory source outside session root');
+  const tmp=`${location.path}.${randomUUID()}.tmp`;let file;
+  try {
+    file=await open(tmp,'wx',0o600);
+    const first=content.indexOf('\n');
+    const bytes=location.path.endsWith('.zstd')?Buffer.concat([zstdCompressSync(Buffer.from(content.slice(0,first+1))),
+      ...(content.length>first+1?[zstdCompressSync(Buffer.from(content.slice(first+1)))]:[])]):content;
+    await file.writeFile(bytes);await file.sync();await file.close();file=null;await rename(tmp,location.path);
+  }finally{await file?.close();await rm(tmp,{force:true});}
+}
+
+export async function repairMemoryErasureArtifact(persistence, sessionId) {
+  const artifact=await persistence.readRaw(sessionId);if(!artifact)return {repaired:0};
+  if(!artifact.content.includes('"weftmate-memory-erasure"'))return {repaired:0};
+  let rows;try{rows=artifact.content.split('\n').map(line=>line?JSON.parse(line):null);}catch{return {repaired:0};}
+  const bySeq=new Map(rows.filter(row=>Number.isSafeInteger(row?.seq)).map(row=>[row.seq,row]));
+  const metadata=data=>data?.message?.content?.length===1 ? {...data,message:{...data.message,content:[{...data.message.content[0],content:null}]}} : null;
+  let repaired=0;
+  for(let i=0;i<rows.length;i++) {
+    const row=rows[i],op=row?.surfaceOp;
+    if(row?.type!=='tool/result'||op?.op!=='replace'||op.start!==op.end||row.data?.source?.plugin!=='weftmate-memory-erasure'||
+      !Array.isArray(row.data.content)||row.data.content.length)continue;
+    const original=bySeq.get(op.start);if(original?.type!=='tool/result')continue;
+    const data={...row.data};delete data.source;delete data.content;
+    const before=metadata(original.data),after=metadata(data);
+    if(!before||!after||!isDeepStrictEqual(before,after))continue;
+    rows[i]={...row,data};bySeq.set(row.seq,rows[i]);repaired++;
+  }
+  if(repaired)await writeArtifact(persistence,artifact,rows.map(row=>row?JSON.stringify(row):'').join('\n'));
+  return {repaired};
+}
 
 /** Use the native surface replacement protocol: retained originals remain in
  * human history, but cannot enter future requests or native compaction. */
@@ -108,7 +143,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
       changed = true;
       return { ...value, data: { ...value.data, summary: [], ...(value.data?.rawOutput ? { rawOutput: [] } : {}) } };
     }
-    if (value.surfaceOp?.op === 'replace' && value.data?.source?.plugin !== 'weftmate-memory-erasure') {
+    if (value.type === 'user/message' && value.surfaceOp?.op === 'replace' && value.data?.source?.plugin !== 'weftmate-memory-erasure') {
       changed = true;
       return { ...value, data: { ...value.data, content: [], source: { kind: 'plugin', plugin: 'weftmate-memory-erasure' } } };
     }
@@ -119,26 +154,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
     return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, clean(child, redact, key)]))
   }
   const content = lines.map(row => row ? JSON.stringify(clean(row, affected.has(turns.get(row)))) : '').join('\n')
-  if (changed) {
-    const location = persistence.locate(artifact.meta)
-    const inside = relative(resolve(persistence.config.root), resolve(location.path))
-    if (!inside || inside.startsWith('..') || isAbsolute(inside)) throw new Error('memory source outside session root')
-    const tmp = `${location.path}.${randomUUID()}.tmp`
-    let file
-    try {
-      file = await open(tmp, 'wx', 0o600)
-      // Native compressed logs dedicate the first frame to the header. Cold
-      // listing decodes that frame alone; event frames must remain separate.
-      const firstNewline = content.indexOf('\n')
-      const bytes = location.path.endsWith('.zstd') ? Buffer.concat([
-        zstdCompressSync(Buffer.from(content.slice(0, firstNewline + 1))),
-        ...(content.length > firstNewline + 1 ? [zstdCompressSync(Buffer.from(content.slice(firstNewline + 1)))] : []),
-      ]) : content
-      await file.writeFile(bytes)
-      await file.sync(); await file.close(); file = null
-      await rename(tmp, location.path)
-    } finally { await file?.close(); await rm(tmp, { force: true }) }
-  }
+  if (changed) await writeArtifact(persistence,artifact,content);
   // Re-read the actual artifact, not the transformed in-memory snapshot. A
   // successful write/rename alone is not proof that the source was erased.
   if (options.deleteConversationSnippets) {

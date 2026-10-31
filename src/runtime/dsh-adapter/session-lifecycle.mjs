@@ -3,7 +3,7 @@ import { copySnapshotTree } from './snapshot-files.mjs';
 import { mkdirSync, existsSync } from 'node:fs';
 import { dirname, relative, resolve, isAbsolute } from 'node:path'
 import { rm, readFile, cp, stat } from 'node:fs/promises'
-import { eraseSessionMemoryArtifact, shadowForgottenSurface } from './memory-erasure.mjs'
+import { eraseSessionMemoryArtifact, shadowForgottenSurface, repairMemoryErasureArtifact } from './memory-erasure.mjs'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { readNativeTaskStopState } from './task-stop-state.mjs'
 import { accountFiles, assertAccountPath } from './account-paths.mjs';
@@ -32,6 +32,7 @@ export function nativeSessionLifecycle(ctx) {
     if (handles.has(sessionId)) return
     if (ctx.get('agents')?.get(sessionId)) throw Object.assign(new Error('session lifecycle not owned'), { code: 'agent-busy' })
     const persistence = ctx.get('sessionPersistence')
+    if(resume && persistence.readRaw)await repairMemoryErasureArtifact(persistence,sessionId);
     const meta = resume ? (await persistence.inspect(sessionId)).meta : options
     const presets = ctx.get('agentPresets')
     const reusable = ['personal-remote', 'personal-shared-chat'].includes(meta.agentPreset)
@@ -74,6 +75,7 @@ export function nativeSessionLifecycle(ctx) {
       finally { await ctx.sessions.flush(handle.agent.session); }
     }
     if (ctx.sessions.get(sessionId)) throw Object.assign(new Error('session lifecycle not owned'),{code:'agent-busy'});
+    await repairMemoryErasureArtifact(ctx.get('sessionPersistence'),sessionId);
     const preparation=await ctx.get('sessionPersistence').prepare(sessionId);
     let detach;
     try {
@@ -121,6 +123,8 @@ export function nativeSessionLifecycle(ctx) {
     create: options => serial(options.sessionId, () => ensure(options)),
     resume: sessionId => serial(sessionId, () => ensure({ sessionId }, true)),
     use: (sessionId, task) => serial(sessionId, async () => {
+      if(!ctx.get('sessions')?.get(sessionId) && ctx.get('sessionPersistence').readRaw)
+        await repairMemoryErasureArtifact(ctx.get('sessionPersistence'),sessionId);
       const meta = ctx.get('sessions')?.get(sessionId)?.header ?? (await ctx.get('sessionPersistence').inspect(sessionId)).meta
       if (meta.agentPreset?.startsWith('personal-')) await ensure({ sessionId }, true)
       return task()
