@@ -403,6 +403,7 @@ export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, di
     } catch (error) {
       const nativeCode = typeof error?.code === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(error.code) ? error.code : 'unknown'
       console.error(`[weftmate] gateway ${req.method} failed: ${nativeCode} ${error?.name ?? 'Error'}`)
+      if(Array.isArray(error?.issues))console.error(JSON.stringify({schemaIssues:error.issues.slice(0,8).map(issue=>({code:issue.code,path:issue.path,minimum:issue.minimum,maximum:issue.maximum,expected:issue.expected}))}));
       if (nativeCode === 'unknown') console.error(String(error?.stack ?? '').split('\n').slice(1, 4).join('\n'))
       const safe = await gatewayError(error)
       diagnostics?.recordError(safe.code, safe.details?.digest ?? null)

@@ -17,9 +17,9 @@ test('cold cleanup and deletion work with an unloadable agent preset and without
   host=await createPersonalAccessService({root:join(root,'account'),port:0,backend:runtime.backend});runtime.setHost(host);
   const origin=await runtime.start();await host.start();
   const id='session-'+randomUUID();await runtime.backend.createSession({sessionId:id,modelProfileId:'synthetic',ownerId:host.ownerId});
-  await runtime.backend.cleanupMemoryCopies({sessionId:id,sourceTexts:[],deleteConversationSnippets:false});
   const preset=join(root,'dsh-home/.agent-presets/personal-remote/agent.cordis.yml');
   await writeFile(preset,'- name: missing-cleanup-test-module\n');
+  await runtime.backend.schedules({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});
   const failed=await fetch(origin+'/weftmate/api/v1/sessions/'+id+'/models');assert.notEqual(failed.status,200);
   const calls=runtime.requests.length;
   await runtime.backend.schedules({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});

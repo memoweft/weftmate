@@ -66,14 +66,15 @@ export function nativeSessionLifecycle(ctx) {
     if (compositionStamp) compositions.set(preset, { id: preset, path: resolved.path,
       stamp: compositionStamp, sessionId })
   }
-  async function withStoredSession(sessionId, task) {
+  async function withStoredSession(sessionId, task, storageOnly=false) {
     const agent=ctx.get('agents')?.get(sessionId), handle=handles.get(sessionId);
     if (agent && (agent.status!=='idle' || agent.inbox?.hasPending || handle?.agent!==agent))
       throw Object.assign(new Error('session busy'),{code:'agent-busy'});
-    if (handle) {
+    if (handle && !storageOnly) {
       try { return await task(handle.agent.session,handle.agent); }
       finally { await ctx.sessions.flush(handle.agent.session); }
     }
+    if(handle){await ctx.sessions.flush(handle.agent.session);await handle.dispose();handles.delete(sessionId);}
     if (ctx.sessions.get(sessionId)) throw Object.assign(new Error('session lifecycle not owned'),{code:'agent-busy'});
     await repairMemoryErasureArtifact(ctx.get('sessionPersistence'),sessionId);
     const preparation=await ctx.get('sessionPersistence').prepare(sessionId);
@@ -85,7 +86,7 @@ export function nativeSessionLifecycle(ctx) {
     } finally {detach?.();preparation[Symbol.dispose]();}
   }
   return {
-    withStoredSession: (sessionId,task)=>serial(sessionId,()=>withStoredSession(sessionId,task)),
+    withStoredSession: (sessionId,task)=>serial(sessionId,()=>withStoredSession(sessionId,task,true)),
     storage: sessionId => serial(sessionId, async () => {
       const persistence = ctx.get('sessionPersistence');
       const meta = ctx.get('sessions')?.get(sessionId)?.header ?? (await persistence.inspect(sessionId)).meta;
