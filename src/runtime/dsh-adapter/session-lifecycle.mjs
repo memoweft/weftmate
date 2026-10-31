@@ -166,7 +166,7 @@ export function nativeSessionLifecycle(ctx) {
     remove: sessionId => serial(sessionId, async () => {
       const persistence = ctx.get('sessionPersistence')
       const live = ctx.get('sessions')?.get(sessionId)
-      const meta = live?.header ?? (await persistence.inspect(sessionId)).meta
+      const meta = live?.header ?? (await persistence.readRaw?.(sessionId))?.meta ?? (await persistence.inspect(sessionId)).meta
       const location = persistence.locate(meta)
       // The pinned JSONL backend exposes the exact owned artifact, rather than
       // requiring WeftMate to reconstruct its project-path encoding.

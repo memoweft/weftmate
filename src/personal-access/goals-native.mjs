@@ -50,5 +50,9 @@ export async function createNativeGoalManager({ ctx, foldGoal, file }) {
   async function register(agent, receiptId) {
     const work = queue.then(async () => { const goal = service(agent)?.get(agent); if (goal) { operations[`${agent.id}:source:${goal.id}`] = { receiptId }; await save(); } }); queue = work.catch(() => {}); return work;
   }
-  return { manage, register, close: () => queue };
+  async function eraseStoredSession(id) {
+    const work=queue.then(async()=>{for(const key of Object.keys(operations))if(key.startsWith(`${id}:`))delete operations[key];await save();return {cleared:true,clearedGoalIds:[]};});
+    queue=work.catch(()=>{});return work;
+  }
+  return { manage, register, eraseStoredSession, close: () => queue };
 }

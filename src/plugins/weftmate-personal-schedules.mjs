@@ -117,6 +117,11 @@ export async function apply(ctx) {
       const match = /^\/weftmate\/schedules\/([A-Za-z0-9_-]+)$/.exec(pathname);
       if (!match || req.method !== 'POST') throw Object.assign(new Error('NOT_FOUND'), { status: 404 });
       const id = match[1];
+      if(input.action==='erase'&&!ctx.agents.get(id)) {
+        const stored=await ctx.sessionPersistence.readRaw(id);
+        if(!stored||!personal({session:{header:stored.meta}}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+        const result=await manager.eraseStoredSession(id);res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
+      }
       if (['erase','forget'].includes(input.action)) {
         const result=await lifecycle.withStoredSession(id,async(session,agent)=>{
           const source=agent??{id,session};if(!personal(source))throw Object.assign(new Error('NOT_FOUND'),{status:404});
@@ -143,6 +148,11 @@ export async function apply(ctx) {
       if (!match || req.method !== 'POST') throw Object.assign(new Error('NOT_FOUND'), { status: 404 });
       let body = ''; for await (const part of req) { body += part; if (body.length > 32768) throw Object.assign(new Error('INVALID_REQUEST'), { status: 400 }); }
       const input = JSON.parse(body), id = match[1]; let agent = ctx.agents.get(id);
+      if(input.action==='erase'&&!agent) {
+        const stored=await ctx.sessionPersistence.readRaw(id);
+        if(!stored||!personal({session:{header:stored.meta}}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+        const result=await goalManager.eraseStoredSession(id);res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
+      }
       if (['erase','forget'].includes(input.action)) {
         const result=await lifecycle.withStoredSession(id,async(session,live)=>{
           const source=live??{id,session};if(!personal(source))throw Object.assign(new Error('NOT_FOUND'),{status:404});

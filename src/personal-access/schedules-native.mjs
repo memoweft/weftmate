@@ -232,7 +232,8 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
       if (row) { row.state = 'deleted'; await save(); }
     });
   }
-  return { register, due, manage, deleted, bindNativeTools, close: () => queue,
+  const eraseStoredSession=id=>serial(async()=>{delete state.sessions[id];await save();return {ok:true,removedNativeIds:[]};});
+  return { register, due, manage, deleted, bindNativeTools, eraseStoredSession, close: () => queue,
     hasSession: id => !!state.sessions[id],
     restoreSessionIds: () => Object.entries(state.sessions).filter(([, b]) => Object.values(b.items).some(r => r.state === 'scheduled')).map(([id]) => id) };
 }
