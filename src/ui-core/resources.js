@@ -165,6 +165,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
         }
     }
     async function lookupRequest(marker) {
+        if (!core.readMarkers().some(row => row.requestId === marker.requestId)) return;
         const identity = core.state.identityGeneration, ownerId = core.state.ownerId;
         const current = () => identity === core.state.identityGeneration && ownerId === core.state.ownerId;
         try {
