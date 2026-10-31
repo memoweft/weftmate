@@ -201,6 +201,12 @@ object DesignTokens {
     const val radiuscard = 12
     const val radiuspanel = 16
     const val radiuscomposer = 20
+    const val fontRelativeBody = 1f
+    const val fontRelativeHeading1 = 1.6f
+    const val fontRelativeHeading2 = 1.25f
+    const val fontRelativeHeading3 = 1.1f
+    const val fontRelativeInlineCode = 0.9f
+    const val fontRelativeTable = 0.9f
     const val durationFast = 130L
     const val durationBase = 320L
     const val durationSlow = 420L
