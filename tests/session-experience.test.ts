@@ -105,15 +105,16 @@ test('cold deletion acquires a native lifecycle before removing the session', as
   assert.deepEqual(calls,['POST /sessions/session-cold/resume','DELETE /sessions/session-cold']);
 });
 
-test('pending source erasure keeps its evidence plan when Core has removed the source jobs',async()=>{
+for(const evidenceId of ['e-a','__proto__'])test(`pending source erasure keeps ${evidenceId} when Core has removed the source jobs`,async()=>{
   const f=fixture('unused');let result:any=null,cleanupReady=false,revisionReads=0;
   const manager=f.context.memoryManager;
-  manager.receiptByRequest=async()=>{if(result)return result;throw Object.assign(new Error('not found'),{code:'command_receipt_not_found'})};
+  manager.receiptByRequest=async(_owner,requestId)=>{assert.equal(typeof requestId,'string');if(result)return result;throw Object.assign(new Error('not found'),{code:'command_receipt_not_found'})};
   manager.submitCommand=async()=>result={result_state:'applied',storage_cleanup:{state:'pending'}};
   manager.retryCleanupByRequest=async()=>cleanupReady?{result_state:'applied',storage_cleanup:{state:'complete'}}:result;
-  manager.query=async(_owner:string,method:string)=>method==='query_jobs'?{jobs:result?[]:[{acceptance:{parent_session_id:'session-a',evidence_ids:['e-a']}}]}:method==='preview_forget'?{world_revision:revisionReads,forget_scope:'forget-scope-v1:'+'a'.repeat(64)}:{world_revision:++revisionReads};
+  manager.query=async(_owner:string,method:string)=>method==='query_jobs'?{jobs:result?[]:[{acceptance:{parent_session_id:'session-a',evidence_ids:[evidenceId]}}]}:method==='preview_forget'?{world_revision:revisionReads,forget_scope:'forget-scope-v1:'+'a'.repeat(64)}:{world_revision:++revisionReads};
   await assert.rejects(f.operations.deleteSession('owner','session-a',{forgetMemories:true}),{code:'MEMORY_DELETE_CONFLICT'});
-  assert.deepEqual(f.account.sessions['session-a'].forgetEvidenceIds,['e-a']);
+  assert.deepEqual(f.account.sessions['session-a'].forgetEvidenceIds,[evidenceId]);
+  Object.assign(f.account,JSON.parse(JSON.stringify(f.account)));
   cleanupReady=true;
   const deleted=await f.operations.deleteSession('owner','session-a',{forgetMemories:true});
   assert.equal(deleted.forgottenEvidenceCount,1);assert.equal(revisionReads,1);assert.equal(f.deleted,true);

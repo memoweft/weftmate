@@ -268,8 +268,9 @@ export function createSessionOperations(context) {
           }));
           let confirmedRevision = memoryWorldRevision;
           for (const evidenceId of evidenceIds) {
-            let requestId = context.accountState(ownerId).sessions[sessionId].forgetRequestIds?.[evidenceId]
-              ?? `session-delete-${digest(`${sessionId}\0${evidenceId}`).slice(0, 48)}`;
+            const requestIds = context.accountState(ownerId).sessions[sessionId].forgetRequestIds;
+            let requestId = requestIds && Object.hasOwn(requestIds, evidenceId) ? requestIds[evidenceId]
+              : `session-delete-${digest(`${sessionId}\0${evidenceId}`).slice(0, 48)}`;
             let result;
             if (manager.receiptByRequest) {
               try { result = await manager.receiptByRequest(ownerId, requestId); }
@@ -288,8 +289,8 @@ export function createSessionOperations(context) {
                 throw failure('MEMORY_DELETE_CONFLICT', 409);
               requestId = `session-delete-${digest(`${sessionId}\0${evidenceId}\0${scope.forget_scope}\0${deleteConversationSnippets}`).slice(0, 48)}`;
               await context.serial(() => context.mutate(ownerId, next => {
-                next.sessions[sessionId].forgetRequestIds ??= {};
-                next.sessions[sessionId].forgetRequestIds[evidenceId] = requestId;
+                next.sessions[sessionId].forgetRequestIds = {
+                  ...next.sessions[sessionId].forgetRequestIds, [evidenceId]: requestId };
               }));
               result = await manager.submitCommand(ownerId, { requestId,
                 expectedWorldRevision: revision.world_revision, operation: 'delete_evidence',
