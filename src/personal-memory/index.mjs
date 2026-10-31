@@ -1257,6 +1257,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           { command_id: marker.command.command_id }));
         let result = await query();
         const receipt = result?.receipt ?? result;
+        if(!['applied','no_change'].includes(receipt?.result_state) && marker.cleanup?.snippetsPending)
+          await journal.retryPendingRedaction(ownerId,requestId);
         if (['applied', 'no_change'].includes(receipt?.result_state) &&
             receipt?.storage_cleanup?.state === 'pending') {
           try {

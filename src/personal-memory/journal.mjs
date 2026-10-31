@@ -154,6 +154,17 @@ export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseS
         await write(ownerId, state);
       });
     },
+    async retryPendingRedaction(ownerId, requestId) {
+      check(ownerId,requestId);
+      return queue(ownerId,async()=>{
+        const state=await read(ownerId),record=state.records[requestId];
+        if(!record?.cleanup?.snippetsPending)return;
+        await prepare(ownerId,state,record);
+        if((await eraseSnippets?.(ownerId,record))?.snippetsVerified!==true)throw failure('MEMORY_CLEANUP_PENDING');
+        delete record.cleanup.snippetsPending;
+        await write(ownerId,state);
+      });
+    },
     async redactTargets(ownerId, ids, { sourceTexts = [], sessionId = null } = {}) {
       if (typeof ownerId !== 'string' || !OWNER.test(ownerId) || !Array.isArray(ids) ||
           ids.some((value) => typeof value !== 'string' || value.length > 512)) {

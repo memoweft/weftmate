@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { zstdCompressSync } from 'node:zlib';
 import { relative, resolve, isAbsolute } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+const erasedTitle='[已遗忘的对话]';
 
 async function writeArtifact(persistence, artifact, content) {
   const location=persistence.locate(artifact.meta),inside=relative(resolve(persistence.config.root),resolve(location.path));
@@ -51,6 +52,7 @@ export async function repairMemoryErasureArtifact(persistence, sessionId, {repri
   let repaired=0;
   for(let i=0;i<rows.length;i++) {
     const row=rows[i],op=row?.surfaceOp;
+    if(row?.type==='session/title' && row.data?.title==='') {rows[i]={...row,data:{...row.data,title:erasedTitle}};repaired++;continue;}
     if(row?.type!=='tool/result'||op?.op!=='replace'||op.start!==op.end||row.data?.source?.plugin!=='weftmate-memory-erasure'||
       !Array.isArray(row.data.content)||row.data.content.length)continue;
     const original=bySeq.get(op.start);if(original?.type!=='tool/result')continue;
@@ -138,7 +140,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
     for (const path of target.paths) {
       let parent = row;
       for (const key of path.slice(0, -1)) parent = parent?.[key];
-      if (parent && Object.hasOwn(parent, path.at(-1))) { parent[path.at(-1)] = ''; changed = true; }
+      if (parent && Object.hasOwn(parent, path.at(-1))) { parent[path.at(-1)] = row?.type==='session/title' && path.join('.')==='data.title' ? erasedTitle : ''; changed = true; }
     }
   }
   const clean = (value, redact = false, key = '') => {
@@ -150,6 +152,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
     }
     if (Array.isArray(value)) return value.map(child => clean(child, redact, key))
     if (!value || typeof value !== 'object') return value
+    if(value.type==='session/title' && value.data?.title==='') {changed=true;return {...value,data:{...value.data,title:erasedTitle}};}
     if (value.type === 'goal/change' && options.goalIds?.includes(value.data?.goal?.id)) {
       changed = true;
       return { ...value, data: { ...value.data, goal: { ...value.data.goal, objective: '[已遗忘的目标说明]', ...(value.data.goal.blockedReason ? { blockedReason: { code: value.data.goal.blockedReason.code, message: '[已遗忘的目标说明]' } } : {}) } } };
@@ -200,7 +203,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
       target.paths.some(path => {
         let value = selectedRow(rows, target);
         for (const key of path) value = value?.[key];
-        return value !== undefined && value !== '';
+        return value !== undefined && value !== '' && !(selectedRow(rows,target)?.type==='session/title' && path.join('.')==='data.title' && value===erasedTitle);
       }))) throw new Error('memory cleanup verification failed');
   }
   return { cleaned: true, snippetsVerified: options.deleteConversationSnippets === true };

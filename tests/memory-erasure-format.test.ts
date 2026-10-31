@@ -46,3 +46,17 @@ test('known erasure corruption is repaired once without changing result content'
   assert.deepEqual(await repairMemoryErasureArtifact(f.persistence,f.header.id),{repaired:0});
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
+test('source deletion keeps a valid title and repairs a previously blank erased title',async()=>{
+ const f=await fixture();try{
+  f.events.push({seq:2,time:Date.now(),type:'session/title',data:{title:'private title',source:'user',messageSeqs:[]}});
+  await writeFile(f.file,[f.header,...f.events].map(JSON.stringify).join('\n')+'\n');
+  const {snippetTargets}=await eraseSessionMemoryArtifact(f.persistence,f.header.id,{sourceTexts:['private title'],prepareOnly:true});
+  await eraseSessionMemoryArtifact(f.persistence,f.header.id,{snippetTargets,deleteConversationSnippets:true});
+  let rows=(await readFile(f.file,'utf8')).trim().split('\n').map(JSON.parse);
+  assert.equal(rows.at(-1).data.title,'[已遗忘的对话]');assert.ok(!(await readFile(f.file,'utf8')).includes('private title'));
+  rows.at(-1).data.title='';Object.assign(rows[2].data,{source:{kind:'plugin',plugin:'weftmate-memory-erasure'},content:[]});
+  await writeFile(f.file,rows.map(JSON.stringify).join('\n')+'\n');
+  assert.equal((await repairMemoryErasureArtifact(f.persistence,f.header.id)).repaired,2);
+  rows=(await readFile(f.file,'utf8')).trim().split('\n').map(JSON.parse);assert.ok(rows.at(-1).data.title.length>0);await f.restore();
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
