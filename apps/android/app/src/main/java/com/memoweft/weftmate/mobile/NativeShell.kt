@@ -159,9 +159,9 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 onDrawer={focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch{m.refreshChats()}},
                 onSettings={focus.clearFocus();settings.open()})
             else Row(Modifier.fillMaxWidth().height(DesignTokens.space80.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
-                NativeIconButton(if(selectedTab in listOf("settings","models")) R.drawable.wm_back else R.drawable.wm_panel,if(selectedTab in listOf("settings","models"))"返回聊天" else "打开侧栏",Modifier.nativeFrost(CircleShape)) { if(selectedTab in listOf("settings","models"))m.returnToChat() else { focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch { m.refreshChats() } } }
+                NativeIconButton(if(selectedTab in listOf("settings","models","chats")) R.drawable.wm_back else R.drawable.wm_panel,if(selectedTab in listOf("settings","models","chats"))"返回聊天" else "打开侧栏",Modifier.nativeFrost(CircleShape)) { if(selectedTab in listOf("settings","models","chats"))m.returnToChat() else { focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch { m.refreshChats() } } }
                 Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally) {
-                    Text(if(selectedTab=="chat" || selectedTab=="web-chat")m.title else if(selectedTab=="models")"模型" else if(selectedTab=="web-home")"对话" else if(selectedTab=="help")"帮助" else tabs.find{it.first==selectedTab}?.second?.first ?: "设置",fontSize=DesignTokens.font17.sp,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
+                    Text(if(selectedTab=="chat" || selectedTab=="web-chat")m.title else if(selectedTab=="models")"模型" else if(selectedTab=="web-home")"对话" else if(selectedTab=="chats")"全部对话" else if(selectedTab=="help")"帮助" else tabs.find{it.first==selectedTab}?.second?.first ?: "设置",fontSize=DesignTokens.font17.sp,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
                     if(selectedTab=="chat") Text(m.subtitle,fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=1,overflow=TextOverflow.Ellipsis)
                 }
                 Box {
@@ -178,6 +178,8 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             }
             if(selectedTab=="chat") {
                 Spacer(Modifier.weight(1f))
+            } else if(selectedTab=="chats") {
+                NativeChatList(m,Modifier.weight(1f).fillMaxWidth().alpha(paneAlpha.value))
             } else if(selectedTab=="library") {
                 NativeLibrary(m,activity,Modifier.weight(1f).fillMaxWidth().frostSource(frost).alpha(paneAlpha.value),onPreview={preview=it})
             } else if(selectedTab=="activity") {
@@ -205,7 +207,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             if(selectedTab !in listOf("settings","models")) {
                 Row(Modifier.fillMaxWidth().keyboardNavigation().padding(start=DesignTokens.space12.dp,end=DesignTokens.space12.dp,top=DesignTokens.space4.dp,bottom=DesignTokens.space12.dp).nativeFrost(pill).padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space4.dp),horizontalArrangement=Arrangement.SpaceEvenly) {
                     tabs.forEach{(id,v)->Box(Modifier.weight(1f),contentAlignment=Alignment.Center){
-                        val active=selectedTab==id || id=="activity"&&selectedTab=="activity-web" || id=="goals"&&selectedTab=="goals-web" || id=="health"&&selectedTab=="health-web"
+                        val active=selectedTab==id || id=="chat"&&selectedTab=="chats" || id=="activity"&&selectedTab=="activity-web" || id=="goals"&&selectedTab=="goals-web" || id=="health"&&selectedTab=="health-web"
                         NativeIconButton(v.second,v.first,Modifier.semantics{selected=active},selected=active){focus.clearFocus();m.focused=false;m.tab=id}
                         if(id=="activity" && activity.feed.unread>0)Box(Modifier.align(Alignment.TopEnd).padding(DesignTokens.space4.dp).size(DesignTokens.space8.dp).background(MaterialTheme.colorScheme.primary,CircleShape).semantics{contentDescription="${activity.feed.unread} 条动态未读"})
                     }}
@@ -233,7 +235,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 }
                 if(m.visibleChats.isEmpty())item{Text(if(m.sidebarMode=="work")"还没有工作，选好文件夹就能开始。" else "从新对话开始聊聊。",fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)}
                 item { Spacer(Modifier.height(pad)) }
-                item { NativeSidebarRow("完整对话列表",subtitle="搜索、项目与归档",icon=R.drawable.wm_chat){drawer=false;m.tab="web-home"} }
+                item { NativeSidebarRow("全部对话",subtitle="搜索、置顶与归档",icon=R.drawable.wm_chat){drawer=false;m.tab="chats"} }
                 item { NativeSidebarRow("设置",icon=R.drawable.wm_settings){drawer=false;settings.open()} }
             }
             }
@@ -502,10 +504,10 @@ private fun findNativeActivity(context:android.content.Context):NativeActivity? 
 @Composable private fun NativeSecondary(onClick:()->Unit,modifier:Modifier=Modifier,enabled:Boolean=true,shape:androidx.compose.ui.graphics.Shape=pill,content:@Composable RowScope.()->Unit) {
     OutlinedButton(onClick,modifier.height(touch).alpha(if(enabled)1f else .45f),enabled=enabled,shape=shape,colors=ButtonDefaults.outlinedButtonColors(containerColor=MaterialTheme.colorScheme.surface,contentColor=MaterialTheme.colorScheme.onSurfaceVariant,disabledContainerColor=MaterialTheme.colorScheme.surface,disabledContentColor=MaterialTheme.colorScheme.onSurfaceVariant),contentPadding=PaddingValues(horizontal=DesignTokens.space18.dp),content=content)
 }
-@Composable private fun NativeMenu(expanded:Boolean,onDismissRequest:()->Unit,keepEditorFocus:Boolean=false,content:@Composable ColumnScope.()->Unit) {
+@Composable internal fun NativeMenu(expanded:Boolean,onDismissRequest:()->Unit,keepEditorFocus:Boolean=false,content:@Composable ColumnScope.()->Unit) {
     DropdownMenu(expanded,onDismissRequest,properties=PopupProperties(focusable=!keepEditorFocus),modifier=Modifier.nativeFrost(RoundedCornerShape(DesignTokens.radius12.dp),floating=true),containerColor=Color.Transparent,tonalElevation=0.dp,shape=RoundedCornerShape(DesignTokens.radius12.dp),content=content)
 }
 
-@Composable private fun NativeMenuItem(text:@Composable ()->Unit,onClick:()->Unit,leadingIcon:(@Composable ()->Unit)?=null,trailingIcon:(@Composable ()->Unit)?=null,enabled:Boolean=true) {
+@Composable internal fun NativeMenuItem(text:@Composable ()->Unit,onClick:()->Unit,leadingIcon:(@Composable ()->Unit)?=null,trailingIcon:(@Composable ()->Unit)?=null,enabled:Boolean=true) {
     DropdownMenuItem(text={ProvideTextStyle(MaterialTheme.typography.labelLarge,content=text)},onClick=onClick,modifier=Modifier.height(touch),leadingIcon=leadingIcon,trailingIcon=trailingIcon,enabled=enabled,contentPadding=PaddingValues(horizontal=DesignTokens.space18.dp))
 }

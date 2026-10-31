@@ -22,6 +22,12 @@ class ZafiroQaReceiver : BroadcastReceiver() {
             "error" -> { player?.cancel(); model.running = false; model.canRetryPhoneReply = true; model.error = "模型服务暂时连不上，回复没有完成。" }
             "empty" -> { player?.cancel(); model.running = false; model.canRetryPhoneReply = false; model.error = ""; model.rows = emptyList() }
             "theme" -> model.dark = intent.getBooleanExtra("dark", false)
+            "chats" -> model.scope.launch {
+                model.standalone = !intent.getBooleanExtra("host", false)
+                model.tab = "chats"
+                delay(1500)
+                model.chats = syntheticChats()
+            }
         }
         val state = JSONObject().put("rows", model.rows.size).put("running", model.running).put("dark", model.dark).put("error", model.error).put("loggedIn", model.loggedIn)
         File(context.filesDir, "zafiro-qa.json").writeText(state.toString())
@@ -99,6 +105,23 @@ class ZafiroQaReceiver : BroadcastReceiver() {
         events += event("t1-end", "turn.ended", JSONObject().put("turn", 1).put("reason", "completed"))
         model.running = false
         publish()
+    }
+
+    private fun syntheticChats(): List<JSONObject> {
+        val now = Instant.now()
+        fun chat(id: String, title: String, hoursAgo: Long, preview: String, vararg flags: Pair<String, Any>) = JSONObject().put("chatId", "qa-$id").put("title", title)
+            .put("at", now.minusSeconds(hoursAgo * 3600).toString()).put("revision", 1).put("preview", preview).apply { flags.forEach { (k, v) -> put(k, v) } }
+        return listOf(
+            chat("pin1", "每周健身计划", 200, "下周把有氧换成游泳", "pinned" to true),
+            chat("pin2", "论文第三章", 30, "参考文献已经整理好", "pinned" to true, "unread" to true),
+            chat("a", "整理下载文件夹", 0, "需要你批准删除 42 个文件", "attention" to "approval"),
+            chat("b", "上海出行建议", 1, "正在查日历…", "running" to true),
+            chat("c", "导出 Q4 报表", 2, "表格模板读取失败", "unread" to true, "lastOutcome" to "failed"),
+            chat("d", "翻译合同条款", 26, "已经译完第 4 节", "unread" to true),
+            chat("e", "周末菜单", 28, "按冰箱里的食材排了三顿"),
+            chat("f", "旧手机数据迁移", 120, "照片已经全部转好"),
+            JSONObject().put("id", "phone-1").put("source", "phone").put("nativePhone", true).put("title", "地铁上随手问的")
+        )
     }
 
     private companion object { var player: Job? = null }
