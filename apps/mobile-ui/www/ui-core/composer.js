@@ -165,7 +165,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             const submission=unaccepted && (local?.status==='confirming' || local?.status==='failed' && local.command?.state==='uncertain') ? 'confirming'
                 : unaccepted && ['failed','undelivered'].includes(local?.status) ? 'failed' : undefined;
             return {key:entry.key,messageKey:entry.key.startsWith('request:')?entry.key.slice(8):entry.key,requestId:entry.requestId,started:!!latest,user,pending:local || (!entry.userSeen && entry.text!==undefined ? {requestId:entry.key,text:entry.text,at,status:'accepted'} : null),at,position,
-                events:[first,...(user?[user]:[]),...facts,...(last?[last]:[])],taskId,submission};
+                events:[first,...(user?[user]:[]),...facts,...(last?[last]:[])],taskId,submission,failureCode:local?.failureCode};
         });
     }
     function turnPresentationKey(events, block) {
@@ -295,7 +295,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     async function deliverOptimistic(row) {
         const current = () => row.ownerId === core.state.ownerId && row.identity === core.state.identityGeneration;
         if(!current())return;
-        row.status = 'sending'; effects.renderOptimisticMessages?.();
+        row.status = 'sending';delete row.failureCode; effects.renderOptimisticMessages?.();
         if (!row.sessionId) {
             row.creating = true;
             core.creatingOptimisticSession = true;
@@ -305,7 +305,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             core.creatingOptimisticSession = false;
             row.creating = false;
             if (!current()) return;
-            if (!created?.sessionId || created.state !== 'accepted_by_dsh') { row.status = created && ['pending','dispatching'].includes(created.state) ? 'sending' : 'failed'; effects.renderOptimisticMessages?.(); return; }
+            if (!created?.sessionId || created.state !== 'accepted_by_dsh') { row.status = created && ['pending','dispatching'].includes(created.state) ? 'sending' : 'failed';row.failureCode=created?.errorCode || core.submissionFailure?.(row.createRequestId); effects.renderOptimisticMessages?.(); return; }
             row.sessionId = created.sessionId;
             row.createdSession = true;
             if (row.projectId) await core.updateSession(row.sessionId, {projectId:row.projectId});
@@ -339,7 +339,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             : await core.submitCommand('session.message', {sessionId: row.sessionId, text: row.text, intent: row.intent}, row.sessionId, row.requestId);
         const sent = core.state.tasks.find(command=>command.requestId===row.requestId) || submitted;
         if (!current()) return;
-        if (sent) reconcileOptimistic(sent); else row.status = 'failed';
+        if (sent) reconcileOptimistic(sent); else {row.status = 'failed';row.failureCode=core.submissionFailure?.(row.requestId);}
         if (sent?.state === 'accepted_by_dsh' && core.state.selectedSessionId === row.sessionId) {
             if (effects.readMessageDraft() === row.text) effects.clearMessageDraft();
             await core.refreshHistory();

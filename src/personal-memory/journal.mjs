@@ -125,10 +125,11 @@ export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseS
       check(ownerId,'account-erase');
       return queue(ownerId,async()=>Object.values((await read(ownerId)).records).filter(row=>['delete_evidence','delete_world_item'].includes(row.command.operation)).map(row=>row.requestId));
     },
-    async pendingCleanup(ownerId) {
+    async pendingCleanup(ownerId, includePrepared = false) {
       check(ownerId, 'pending-cleanup');
       return queue(ownerId, async () => Object.values((await read(ownerId)).records)
-        .filter(record => record.cleanup?.snippetsPending === true)
+        .filter(record => record.cleanup?.snippetsPending === true || includePrepared &&
+          ['delete_evidence','delete_world_item'].includes(record.command.operation) && (record.cleanup || record.cleanupCompleted !== true))
         .map(record => ({ requestId: record.requestId, kind: record.command.target_kind, id: record.command.target_id })));
     },
     async finishCleanup(ownerId, requestId, clean) {

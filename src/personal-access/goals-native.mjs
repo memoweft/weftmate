@@ -9,21 +9,27 @@ export async function createNativeGoalManager({ ctx, foldGoal, file }) {
   let queue = Promise.resolve();
   const save = async () => { await mkdir(path.dirname(file), { recursive: true }); const temp = `${file}.${randomUUID()}.tmp`; await writeFile(temp, JSON.stringify(operations)); await rename(temp, file); };
   const service = agent => ctx.get('agentPresets')?.serviceFor(agent, 'goals') ?? ctx.get('goals');
-  async function manage(agent, input) {
+  async function manage(agent, input, {storageOnly=false} = {}) {
     if (input.action === 'list') { const value = foldGoal(agent.session.events); return { goal: value.goal ? { ...value.goal, roundsStarted: value.roundsStarted, createdAt: value.createdAt, updatedAt: value.updatedAt } : null }; }
     const work = queue.then(async () => {
       const key = `${agent.id}:${input.requestId}`, fingerprint = createHash('sha256').update(JSON.stringify(input)).digest('hex'), prior = operations[key];
       if (prior) { if (fingerprint !== prior.fingerprint) throw Object.assign(new Error('REQUEST_CONFLICT'), { status: 409 }); if (prior.result?.erased) throw Object.assign(new Error('SOURCE_UNAVAILABLE'), {status:404}); return prior.result; }
-      const goals = service(agent); if (!goals) throw new Error('CAPABILITY_UNAVAILABLE');
+      const goals = storageOnly ? null : service(agent); if (!goals && !storageOnly) throw new Error('CAPABILITY_UNAVAILABLE');
+      if(storageOnly && !['erase','forget'].includes(input.action)) throw new Error('CAPABILITY_UNAVAILABLE');
       let result;
       if (input.action === 'erase' || input.action === 'forget') {
-        const goal = goals.get(agent), erased = new Set();
+        const folded=storageOnly ? foldGoal(agent.session.events) : null;
+        const goal = storageOnly ? folded.goal : goals.get(agent), erased = new Set();
         for (const event of agent.session.events) if (event.type === 'goal/change' && event.data?.goal) {
           const past = event.data.goal, source = operations[`${agent.id}:source:${past.id}`];
           if (input.action === 'erase' || input.receiptIds?.includes(source?.receiptId) || input.sourceTexts?.some(text => text && past.objective.includes(text))) erased.add(past.id);
         }
         if (goal && (input.action === 'erase' || input.sourceTexts?.some(text=>text && goal.objective.includes(text)))) erased.add(goal.id);
-        if (goal && erased.has(goal.id)) goals.clear(agent, { id: goal.id, revision: goal.revision });
+        if (goal && erased.has(goal.id)) {
+          if(storageOnly) agent.session.append('goal/change',{kind:'goal/change',version:1,operation:'clear',
+            cleared:{id:goal.id,revision:goal.revision+1},clearedAt:Math.max(Date.now(),(folded.updatedAt??0)+1)});
+          else goals.clear(agent, { id: goal.id, revision: goal.revision });
+        }
         for (const [id, operation] of Object.entries(operations)) if (id.startsWith(`${agent.id}:`)) {
           if (input.action === 'erase') delete operations[id];
           else if (erased.has(operation.result?.ref?.id)) operation.result = {erased:true};

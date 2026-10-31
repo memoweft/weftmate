@@ -116,7 +116,7 @@ export async function phoneRuntime(root, logs, options = {}) {
     inferenceVerified: () => true,
   });
   return { backend, project, input, output, content, requests, setHost: value => { host = value; },
-    start: async () => { origin = await runtime.start(); },
+    start: async () => { origin = await runtime.start(); return origin; },
     close: async () => { await runtime.close(); await new Promise(r => { model.close(r); model.closeAllConnections(); }); },
     readOutput: () => readFile(output, 'utf8') };
 }

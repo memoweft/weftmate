@@ -65,7 +65,25 @@ export function nativeSessionLifecycle(ctx) {
     if (compositionStamp) compositions.set(preset, { id: preset, path: resolved.path,
       stamp: compositionStamp, sessionId })
   }
+  async function withStoredSession(sessionId, task) {
+    const agent=ctx.get('agents')?.get(sessionId), handle=handles.get(sessionId);
+    if (agent && (agent.status!=='idle' || agent.inbox?.hasPending || handle?.agent!==agent))
+      throw Object.assign(new Error('session busy'),{code:'agent-busy'});
+    if (handle) {
+      try { return await task(handle.agent.session,handle.agent); }
+      finally { await ctx.sessions.flush(handle.agent.session); }
+    }
+    if (ctx.sessions.get(sessionId)) throw Object.assign(new Error('session lifecycle not owned'),{code:'agent-busy'});
+    const preparation=await ctx.get('sessionPersistence').prepare(sessionId);
+    let detach;
+    try {
+      detach=ctx.sessions.enter(preparation.session);ctx.sessions.announce(preparation.session);
+      try {return await task(preparation.session,null);}
+      finally {await ctx.sessions.flush(preparation.session);}
+    } finally {detach?.();preparation[Symbol.dispose]();}
+  }
   return {
+    withStoredSession: (sessionId,task)=>serial(sessionId,()=>withStoredSession(sessionId,task)),
     storage: sessionId => serial(sessionId, async () => {
       const persistence = ctx.get('sessionPersistence');
       const meta = ctx.get('sessions')?.get(sessionId)?.header ?? (await persistence.inspect(sessionId)).meta;
@@ -114,15 +132,13 @@ export function nativeSessionLifecycle(ctx) {
         console.error(`[weftmate] memory cleanup deferred: status=${agent.status} pending=${agent.inbox?.hasPending} owned=${handles.has(sessionId)}`)
         throw Object.assign(new Error('session busy'), { code: 'agent-busy' })
       }
-      await ensure({ sessionId }, true)
-      const handle = handles.get(sessionId)
       if (prepareOnly) {
-        await ctx.sessions.flush(handle.agent.session)
+        if (agent) await ctx.sessions.flush(agent.session)
         return eraseSessionMemoryArtifact(persistence, sessionId, { sourceTexts, prepareOnly: true })
       }
-      const forgottenSeqs = shadowForgottenSurface(handle.agent.session, snippetTargets ? [] : sourceTexts, createUserMessage, affectedIds, snippetTargets)
-      await ctx.sessions.flush(handle.agent.session)
-      await handle.dispose(); handles.delete(sessionId)
+      const forgottenSeqs = await withStoredSession(sessionId,session=>shadowForgottenSurface(session, snippetTargets ? [] : sourceTexts, createUserMessage, affectedIds, snippetTargets))
+      const handle=handles.get(sessionId)
+      if(handle){await handle.dispose(); handles.delete(sessionId)}
       const erased = await eraseSessionMemoryArtifact(persistence, sessionId, { sourceTexts, affectedIds, deleteConversationSnippets, scheduleIds, goalIds, snippetTargets })
       await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(sessionId)
       return { ...erased, forgottenSeqs }

@@ -135,7 +135,8 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
       }
     });
   }
-  async function manage(agent, action, id, input = {}) {
+  async function manage(agent, action, id, input = {}, {storageOnly=false} = {}) {
+    if(storageOnly && !['erase','forget'].includes(action)) throw new Error('SCHEDULE_UNAVAILABLE');
     if (action === 'list') return { items: items(agent) };
     if (action === 'notifications') return { items: structuredClone(bucket(agent.id).notifications) };
     return serial(async () => {
@@ -168,7 +169,10 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
         for (const row of Object.values(b.items)) {
           if (action === 'forget' && !input.receiptIds?.includes(row.sourceReceiptId) && !input.sourceTexts?.some(text => text && (row.text.includes(text) || text.includes(row.text)))) continue;
           const current = folded(agent).find(r => r.id === row.nativeId);
-          if (current) requireSuccess(await call(agent, 'schedule_delete', { id: row.nativeId }));
+          if (current) {
+            if(storageOnly) agent.session.append('schedule/change',{version:1,operation:'delete',id:row.nativeId});
+            else requireSuccess(await call(agent, 'schedule_delete', { id: row.nativeId }));
+          }
           removed.add(row.id); delete b.items[row.id];
           for (const event of agent.session.events) if (event.type === 'schedule/change' && event.data.operation === 'create' && event.data.schedule?.prompt === row.prompt) nativeIds.add(event.data.schedule.id);
           nativeIds.add(row.nativeId); nativeIds.add(row.record.id);
