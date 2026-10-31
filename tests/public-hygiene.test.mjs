@@ -1,3 +1,4 @@
+// 保护：公开仓库门禁仍拦截被跟踪的证据、当前规则页超限和损坏的相对链接。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
@@ -117,15 +118,14 @@ test('CLI rejects tracked evidence even when ignored or absent, oversized entry 
     rmSync(evidence);
     assert.equal(run().status, 1, 'missing working file is still tracked');
     execFileSync('git', ['rm', '--cached', '-f', 'tests/evidence/capture.png'], {cwd:root});
-    writeFileSync(join(root, 'PROJECT-MAP.md'), '现'.repeat(2667));
-    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /PROJECT-MAP.md exceeds 8 KB/);
-    writeFileSync(join(root, 'PROJECT-MAP.md'), 'a'.repeat(8_000));
+    writeFileSync(join(root, 'docs/PRODUCT-RULES.md'), '现'.repeat(4001));
+    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /PRODUCT-RULES.md exceeds 12 KB/);
+    writeFileSync(join(root, 'docs/PRODUCT-RULES.md'), 'a'.repeat(12_000));
     assert.equal(run().status, 0, 'exact byte limit is allowed');
-    writeFileSync(join(root, 'AGENTS.md'), 'a'.repeat(4_001));
-    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /AGENTS.md exceeds 4 KB/);
-    writeFileSync(join(root, 'AGENTS.md'), '读 [地图](PROJECT-MAP.md)，决定见 [记录](docs/DECISIONS.md)。\n');
-    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /AGENTS.md: broken relative links.*docs\/DECISIONS.md/);
-    writeFileSync(join(root, 'docs/DECISIONS.md'), '# 决定\n');
+    writeFileSync(join(root, 'docs/PRODUCT-RULES.md'), '系统见 [架构](ARCHITECTURE.md)。\n');
+    execFileSync('git', ['add', 'docs/PRODUCT-RULES.md'], {cwd:root});
+    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /PRODUCT-RULES\.md:.*ARCHITECTURE\.md/);
+    writeFileSync(join(root, 'docs/ARCHITECTURE.md'), '# 系统\n');
     assert.equal(run().status, 0, 'every violation recovers without changing checks');
   } finally { rmSync(root, {recursive:true, force:true}); }
 });

@@ -165,9 +165,11 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
         }
     }
     async function lookupRequest(marker) {
+        const identity = core.state.identityGeneration, ownerId = core.state.ownerId;
+        const current = () => identity === core.state.identityGeneration && ownerId === core.state.ownerId;
         try {
             const payload = await core.accessApi(`/commands/by-request/${encodeURIComponent(marker.requestId)}`);
-            if (!core.readMarkers().some((row) => row.requestId === marker.requestId))
+            if (!current() || !core.readMarkers().some((row) => row.requestId === marker.requestId))
                 return;
             if (payload.command) {
                 const index = core.state.tasks.findIndex(item => item.commandId === payload.command.commandId);
@@ -180,7 +182,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             }
         }
         catch (error) {
-            if (!core.readMarkers().some((row) => row.requestId === marker.requestId))
+            if (!current() || !core.readMarkers().some((row) => row.requestId === marker.requestId))
                 return;
             if (error.code === 'NOT_FOUND')
                 core.operation('暂时无法确认这条消息是否送达，不会自动重复发送。请检查连接，核对原消息后重试。', true, marker.requestId);
@@ -227,7 +229,10 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
                 if (!payload.command)
                     throw { code: 'REQUEST_FAILED' };
                 core.updateFromCommand(payload.command);
-                await core.refreshTasks();
+                if (chatCommand(kind)) {
+                    void core.lookupRequest(marker);
+                    void core.refreshTasks();
+                } else await core.refreshTasks();
                 return payload.command;
             }
             catch (error) {
