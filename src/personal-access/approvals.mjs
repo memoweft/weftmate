@@ -1,6 +1,7 @@
 import { PERMISSION_TYPES, riskPermissionType } from '../plugins/personal-permission-rules.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { isWorkSwitch } from './work-and-chat.mjs';
+import { workHandoff } from './work-handoff.mjs';
 import { randomUUID } from 'node:crypto';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { readSourceEvents } from './source-history.mjs';
@@ -227,9 +228,19 @@ export function createApprovalOperations(context) {
   }
 
   async function continueWorkProposal(ownerId, sessionId) {
-    const row = toolApprovals(context.accountState(ownerId)).find(item => item.workSessionId === sessionId);
+    const account = context.accountState(ownerId);
+    const row = toolApprovals(account).find(item => item.workSessionId === sessionId);
     if (!row || row.workCommandId || !context.accountState(ownerId).sessions[sessionId]) return;
-    const commandId = await context.serial(() => context.mutate(ownerId, next => {
+    if (account.commands[row.workCreateCommandId]?.state !== 'accepted_by_dsh') return;
+    const sourceChat = chatForSession(account, row.sessionId), sourceRevision = sourceChat?.contentRevision;
+    const handoff = await workHandoff(context, ownerId, row, account.commands[row.sourceCommandId]);
+    const commandId = await context.serial(async () => {
+      const live = context.accountState(ownerId), proposal = toolApprovals(live).find(item => item.approvalId === row.approvalId);
+      if (!proposal || !live.sessions[sessionId] || !live.sessions[row.sessionId] || live.memoryCleanupPending ||
+          chatForSession(live, row.sessionId)?.contentRevision !== sourceRevision) throw failure('SOURCE_UNAVAILABLE', 409);
+      if (proposal.workCommandId) return proposal.workCommandId;
+      if (handoff) await context.callBackend(() => context.backend.installChatHandoff({ ownerId, sessionId, handoff }));
+      return context.mutate(ownerId, next => {
       const current = toolApprovals(next).find(item => item.approvalId === row.approvalId);
       if (current.workCommandId) return current.workCommandId;
       const source = next.commands[current.sourceCommandId], create = next.commands[current.workCreateCommandId];
@@ -243,8 +254,11 @@ export function createApprovalOperations(context) {
         sourceDeviceId: create.sourceDeviceId, sourceAuthEpoch: create.sourceAuthEpoch, targetDeviceId: next.hostId,
         kind: payload.kind, sessionId, state: 'pending', createdAt: at, updatedAt: at };
       current.workCommandId = id;
+      const segment = next.chatIdentity?.segments[next.chatIdentity.sessionSegments[sessionId]];
+      if (handoff && segment) segment.handoffSourceRefs = handoff.sourceRefs;
       return id;
-    }));
+      });
+    });
     if (commandId) context.schedule(ownerId, commandId);
   }
 
