@@ -319,7 +319,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }
     }
     function approvalStatusText(row) {
-        if (row.intent === 'work-switch') return (row.decisionOutcome || row.outcome) === 'allowed-once' ? '已切换到工作'
+        if (row.intent === 'work-switch') return (row.decisionOutcome || row.outcome) === 'allowed-once' ? '已确认交接到工作'
             : (row.decisionOutcome || row.outcome) === 'rejected' ? '先继续对话' : row.status === 'pending' ? '要切换到工作吗？' : '这次工作选择已失效';
         if (row.status === 'pending')
             return '等待你决定是否允许这次操作。';
