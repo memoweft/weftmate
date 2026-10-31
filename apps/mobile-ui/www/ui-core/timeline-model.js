@@ -410,12 +410,21 @@
         }
         const rows = normalized.filter(event => ['user.message','assistant.message','assistant.delta','artifact.created','approval.requested','question.requested'].includes(event.type))
             .map(event => ({...event, data:{...event.data,completedStep:undefined}, presentationSeq:event.seq}));
+        const users = normalized.filter(event => event.type === 'user.message').map(event => event.seq);
+        // D124: a turn's steps read above its answer, so they sit before the turn's first answer text.
+        const abovePosition = block => {
+            const position = progressPosition(normalized, block), session = block.steps[0]?.sessionId;
+            const start = users.filter(seq => seq <= block.seq).at(-1) ?? -1, end = users.find(seq => seq > block.seq) ?? Infinity;
+            const answer = normalized.find(event => ['assistant.message','assistant.delta'].includes(event.type) && event.seq > start && event.seq < end &&
+                event.data?.text && (!session || (event.sessionId || event.sourceRef?.sessionId || session) === session));
+            return answer && answer.seq < position ? answer.seq - 0.01 : position;
+        };
         for (const block of tasks.values()) {
             const outcome = turnOutcome(normalized,block.taskId), view = progressText(block.steps,outcome);
             const steps = block.steps.map(step => ({...stepPresentation(step,outcome),summary:toolSummary(step.toolName,step.arguments,step.language),
                 attention:!rejectedStep(step) && executionState(step)==='failed' || step.approvalStatus==='pending'}));
             rows.push({eventId:`progress:${block.taskId || block.seq}`,type:'native.progress',at:normalized[block.seq]?.at,
-                sourceRef:normalized[block.seq]?.sourceRef,presentationSeq:progressPosition(normalized,block),
+                sourceRef:normalized[block.seq]?.sourceRef,presentationSeq:abovePosition(block),
                 data:{taskId:block.taskId,summary:view.text || '回复已结束',running:view.running,failed:!!view.failed,steps}});
         }
         for (const [decisions,family,id] of [[approvals,'approval','approvalId'],[questions,'question','questionRpcId']])

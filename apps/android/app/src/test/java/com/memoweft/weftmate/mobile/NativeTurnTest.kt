@@ -9,8 +9,8 @@ class NativeTurnTest {
     private fun rows(mode: String) = fixtures.getJSONArray(mode).objects()
     private fun row(type: String, text: String = "") = JSONObject().put("eventId", "$type:$text").put("type", type).put("data", JSONObject().put("text", text))
 
-    @Test fun finishedStepsMoveAboveTheAnswerAndFold() {
-        val ordered = nativeTurnRows(rows("completed"))
+    @Test fun finishedStepsArriveAboveTheAnswerAndFold() {
+        val ordered = rows("completed")
         assertEquals(listOf("user.message", "native.progress", "assistant.message"), ordered.map { it.getString("type") })
         val progress = ordered[1]
         assertTrue(progress.getString("eventId") in answeredProgress(ordered))
@@ -18,7 +18,7 @@ class NativeTurnTest {
     }
 
     @Test fun workingStepsStayFlatUntilTextArrives() {
-        val ordered = nativeTurnRows(rows("running"))
+        val ordered = rows("running")
         val progress = ordered.single { it.getString("type") == "native.progress" }
         assertFalse(progress.getString("eventId") in answeredProgress(ordered))
         assertEquals(StepLayout.Flat, stepLayout(12, true, false))
@@ -29,8 +29,7 @@ class NativeTurnTest {
         val first = rows("completed")
         val working = rows("running").single { it.getString("type") == "native.progress" }.put("eventId", "progress:turn-2")
         val second = listOf(row("user.message", "再问一次"), row("assistant.delta", ""), working)
-        val ordered = nativeTurnRows(first + second)
-        assertEquals(listOf("user.message", "native.progress", "assistant.message", "user.message", "assistant.delta", "native.progress"), ordered.map { it.getString("type") })
+        val ordered = first + second
         assertEquals(setOf(ordered[1].getString("eventId")), answeredProgress(ordered))
     }
 

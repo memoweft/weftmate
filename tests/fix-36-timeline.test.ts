@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {progressEvents,timelineCore} from './helpers/fix-36-timeline.mjs';
 const core:any=timelineCore();
-test('FIX-36 twelve tool steps become one row below the completed reply',()=>{
+test('FIX-36 twelve tool steps become one row above the completed reply (D124)',()=>{
   const rows=core.nativeTimelineRows(progressEvents()),progress=rows.filter(row=>row.type==='native.progress');
   assert.equal(progress.length,1);assert.equal(progress[0].data.steps.length,12);
-  assert.equal(rows.at(-1).type,'native.progress');assert.equal(rows.at(-2).type,'assistant.message');
+  assert.deepEqual(rows.map(row=>row.type),['user.message','native.progress','assistant.message']);
   assert.match(progress[0].data.summary,/查了健康数据.*查了日历/);assert.doesNotMatch(progress[0].data.summary,/准备可用工具|调用扩展服务/);
   assert.ok(progress[0].data.steps.every(step=>!step.summary.includes('调用扩展服务')));
   assert.ok(core.projectTimeline(progressEvents()).groups.flatMap(group=>group.steps).every(step=>!step.summary.includes('调用扩展服务')));

@@ -32,22 +32,6 @@ import org.json.JSONObject
 
 private fun answerText(row: JSONObject) = row.optString("type") in setOf("assistant.delta", "assistant.message") && row.optJSONObject("data")?.optString("text").orEmpty().isNotBlank()
 
-/** The shared mapper puts a finished turn's progress after its reply; within each turn, steps go above the first answer text (D124). */
-internal fun nativeTurnRows(rows: List<JSONObject>): List<JSONObject> {
-    val result = mutableListOf<JSONObject>()
-    val turn = mutableListOf<JSONObject>()
-    fun flush() {
-        val steps = turn.filter { it.optString("type") == "native.progress" }
-        val rest = turn - steps.toSet()
-        val answer = rest.indexOfFirst(::answerText)
-        result += if (answer < 0) turn else rest.take(answer) + steps + rest.drop(answer)
-        turn.clear()
-    }
-    for (row in rows) { if (row.optString("type") == "user.message") flush(); turn += row }
-    flush()
-    return result
-}
-
 /** Progress rows whose own turn already shows answer text; the next user message starts a new turn. */
 internal fun answeredProgress(rows: List<JSONObject>): Set<String> {
     val answered = mutableSetOf<String>()
