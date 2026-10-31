@@ -27,13 +27,21 @@
 | 端 | 照什么 | 控件从哪来 | 材质 |
 |---|---|---|---|
 | Windows 桌面 + 远程网页 | D124：Claude / Codex 桌面版的紧凑，MiMo 桌面版的布局和右侧六面板 | `src/ui-core/controls.js` 公共控件（按钮、表单、分组、列表行、菜单、对话框、侧滑面板、骨架），用法见 `design/tokens/README.md` 末节 | 实底，浮层用 `--shadow-float` |
-| 安卓 | [zafiro](https://github.com/niki914/zafiro) 那套 Material 3 Expressive：顶栏圆形按钮、大圆角分组卡片、设置列表推子页、底部选项弹层、液态玻璃浮动栏 | `:ui-kit` 模块，以 zafiro 的 `ui-kit` 为蓝本；新控件先进 `:ui-kit` 再用 | 玻璃 / 模糊只给固定栏和浮层，随列表滚动的卡片不模糊；Android 12 以下用实色 |
+| 安卓 | 整体同所有端；**对话界面和流式输出参考 [zafiro](https://github.com/niki914/zafiro) 的聊天页**（见下） | `NativeShell.kt` 里的 `Native*` 公共控件；对话的回合、步骤和流式组件参考 zafiro 的 `app/ui/chat/` | 玻璃 / 模糊只给固定栏和浮层，随列表滚动的卡片不模糊；Android 12 以下用实色 |
 | iPhone | `design/ios/` 本人已认可的原型和 `design/tokens/ios-prototype.json` | SwiftUI 系统控件 + `PhoneActionMenu`、`.phonePopover`、`.phoneSheet` | 系统材质与系统动画 |
 | Mac / 手表 | Mac 用桌面的信息结构、SwiftUI 控件；手表只做短交互（冻结中） | 同 iPhone 共用的 `apps/apple/UI/` | 系统材质 |
 
-安卓配色仍取令牌（`android.colors` / `android.darkColors` 映射成 Material 3 的 `ColorScheme`），zafiro 的动态取色只作外观选项（D14），默认不开。
+**安卓对话界面参考 zafiro 的这几样**，配色、图标和其余页面照所有端统一的来：
 
-zafiro 是 MIT 许可：复制过来的文件保留原版权头，`:ui-kit` 模块根目录放一份它的 `LICENSE`；图标仍用 `design/icons/`（D90），文案自己写。
+- 回合结构：用户消息在上，下面按到达顺序排正文、步骤、错误、重试几种块；错误和重试单独成块，不折叠。
+- 步骤收纳：思考和工具调用都算步骤。流式进行时步骤平铺、带转圈；正文到了或回合结束，连续两个以上的步骤收成「N 个步骤」一行，点开再逐个展开（对上 D35）。
+- 贴底跟随：手指一拖就停止跟随，新内容不抢滚动；滚动停下时在底部才恢复；发送新消息强制恢复。外层列表和步骤里的长文本共用这一套。离开底部时显示回到底部按钮。
+- 正文渲染：Markdown 的标题、列表、表格、代码块；流式时只追加变化的部分，不整段重绘、不闪。
+- 思考过程单独排版：流式时跟随，完成后可全屏看、长按选字，不给复制按钮。
+
+过程在上、回答在下（D124）不变：收纳后的步骤行放在正文上方。
+
+zafiro 是 MIT 许可：复制过来的文件保留原版权头，`apps/android` 下放一份它的 `LICENSE`；图标仍用 `design/icons/`（D90），文案自己写。
 
 ## 三、页面清单
 
@@ -60,7 +68,7 @@ zafiro 是 MIT 许可：复制过来的文件保留原版权头，`:ui-kit` 模�
 
 1. **范围**：写清动哪几端。默认顺序 Windows → 安卓 → iPhone（D118）；只做一端的，写明其他端的去处。
 2. **先逻辑后界面**：新状态、请求和动作进共享逻辑层；手机网页副本用 `apps/mobile-ui` 的 `npm run build` 生成，不手抄。
-3. **只用令牌和图标**：缺值先改 `tokens.json` 再生成；缺图标按 `design/icons/README.md` 画（24 网格、线宽 1.75、只用 `currentColor`）再生成。新控件进各端的公共控件层（网页 `ui-core/controls.js`、安卓 `:ui-kit`、苹果 `apps/apple/UI/`）。
+3. **只用令牌和图标**：缺值先改 `tokens.json` 再生成；缺图标按 `design/icons/README.md` 画（24 网格、线宽 1.75、只用 `currentColor`）再生成。新控件进各端的公共控件层（网页 `ui-core/controls.js`、安卓 `NativeShell.kt` 的 `Native*` 控件、苹果 `apps/apple/UI/`）。
 4. **每页五种状态**：正常、空、加载（骨架）、出错（人话加重试）、离线（电脑不在线或没网，D13）。外加浅色、深色、减少动态效果，窄屏和宽屏。
 5. **文案**：人话，不露内部编号和错误码。
 6. **证据**（`wfm prove`）：每个动到的端，真实程序的浅色和深色截图，加一条真实操作路径（点了什么、看到什么）。
