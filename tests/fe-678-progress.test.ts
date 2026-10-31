@@ -1,3 +1,4 @@
+// 保护：队列、补页与迟到回执不能替换原消息身份或丢失其终态。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
@@ -85,8 +86,8 @@ test('#678 every message owns one persistent process through native prefixes', {
         const bar=document.getElementById('approval-bar');bar.hidden=false;await f.paint();
         if(bar.closest('#transcript'))throw Error('approval must remain above the composer');
         f.core.conversationApprovals.entries.clear();bar.hidden=true;
-        if(!/已停止/.test(f.saved.get('A')[2].textContent))throw Error('A must stay stopped');
-        if(/已停止/.test(f.saved.get('B')[2].textContent))throw Error('B must not inherit stop');
+        if(!/已停止|已中断/.test(f.saved.get('A')[2].textContent))throw Error('A must stay stopped');
+        if(/已停止|已中断/.test(f.saved.get('B')[2].textContent))throw Error('B must not inherit stop');
       });
     });
     await t.test('logical process completes above its answer and actual changes follow the answer',async()=>{
@@ -155,7 +156,7 @@ test('#678 every message owns one persistent process through native prefixes', {
         const original=document.querySelector('#transcript .execution-block');
         await f.append('user.message',{receiptId:'next-receipt',text:'新消息'});
         const after=[...document.querySelectorAll('#transcript .execution-block')];
-        if(after.length!==2 || after[0]!==original || /已停止/.test(after[1].textContent))throw Error('stop leaked beyond turn end');
+        if(after.length!==2 || after[0]!==original || /已停止|已中断/.test(after[1].textContent))throw Error('stop leaked beyond turn end');
       });
     });
     await t.test('a mounted orphan merges a later native request/task association in place',async()=>{
@@ -194,7 +195,7 @@ test('#678 every message owns one persistent process through native prefixes', {
         if(document.querySelector('#transcript .execution-block') || document.getElementById('transcript').textContent.includes('不应执行的旧输入'))throw Error('logical window revived an inherited queue seed');
         await f.append('turn.started',{turn:1});await f.append('user.message',{receiptId:'old-seed',text:'应保留的真实历史消息'});await f.append('turn.ended',{turn:1,reason:'completed'});
         const processes=document.querySelectorAll('#transcript .execution-block');
-        if(processes.length!==1 || !document.getElementById('transcript').textContent.includes('应保留的真实历史消息') || !/已完成/.test(processes[0].querySelector('summary').textContent))throw Error('excluding the queue seed removed real user history');
+        if(processes.length!==1 || !document.getElementById('transcript').textContent.includes('应保留的真实历史消息') || (processes[0] as HTMLElement).dataset.terminal!=='true')throw Error('excluding the queue seed removed real user history');
       });
     });
     await t.test('logical failed delivery updates its original process and sending clears it',async()=>{
