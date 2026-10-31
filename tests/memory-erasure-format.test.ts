@@ -4,8 +4,11 @@ import assert from 'node:assert/strict';
 import {mkdtemp,writeFile,readFile,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
-import {Session,SESSION_FORMAT_VERSION} from '../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-session/lib/index.js';
-import {eraseSessionMemoryArtifact,repairMemoryErasureArtifact} from '../src/runtime/dsh-adapter/memory-erasure.mjs';
+import * as native from '../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-session/lib/index.js';
+import {TokenMeter} from '../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-token-meter/lib/index.js';
+import {contextBreakdownProjectionDefinition as breakdown} from '../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-token-meter/lib/types/breakdown-projection.js';
+import {eraseSessionMemoryArtifact,repairMemoryErasureArtifact,repriceMemoryTokenClaims} from '../src/runtime/dsh-adapter/memory-erasure.mjs';
+const {Session,SESSION_FORMAT_VERSION}=native;
 async function fixture(){
  const root=await mkdtemp(join(tmpdir(),'memory-format-')),file=join(root,'session.jsonl');
  const header={type:'session',version:SESSION_FORMAT_VERSION,id:'session-format',createdAt:Date.now(),cwd:root,agentPreset:'personal-remote'};
@@ -20,6 +23,18 @@ async function fixture(){
 test('forgetting preserves the native tool-result replacement invariant',async()=>{
  const f=await fixture();try{await f.restore();await eraseSessionMemoryArtifact(f.persistence,f.header.id,{sourceTexts:['unrelated'],deleteConversationSnippets:false});
   await assert.doesNotReject(()=>f.restore());
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
+test('erased history reprices stale compaction claims without producing negative native usage',async()=>{
+ const f=await fixture();try{
+  f.events.push({seq:2,time:Date.now(),type:'compaction/prune',data:{shadowedRange:{start:1,end:1},shadowedSeqs:[1],shadowedTokenCount:1000}},
+    {seq:3,time:Date.now(),type:'user/message',data:{id:'erased-message',role:'user',source:{kind:'plugin',plugin:'weftmate-memory-erasure'},content:[{type:'text',text:'erased'}]},surfaceOp:{op:'replace',start:1,end:1},sourceEventSeqs:[1]});
+  await writeFile(f.file,[f.header,...f.events].map(JSON.stringify).join('\n')+'\n');
+  const reprice=rows=>repriceMemoryTokenClaims(rows,{...native,estimateMessage:message=>TokenMeter.prototype.estimateMessage(message)});
+  assert.equal((await repairMemoryErasureArtifact(f.persistence,f.header.id,{reprice})).repriced,1);
+  const events=(await readFile(f.file,'utf8')).trim().split('\n').map(JSON.parse).slice(1).flatMap(native.decodeStorageRecord);
+  let state=breakdown.init();for(const event of events){state=breakdown.apply(state,event);assert.equal(breakdown.schema.safeParse(breakdown.view(state)).success,true);}
+  assert.deepEqual(await repairMemoryErasureArtifact(f.persistence,f.header.id,{reprice}),{repaired:0});
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
 test('known erasure corruption is repaired once without changing result content',async()=>{

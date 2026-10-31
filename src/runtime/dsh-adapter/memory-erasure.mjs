@@ -17,7 +17,32 @@ async function writeArtifact(persistence, artifact, content) {
   }finally{await file?.close();await rm(tmp,{force:true});}
 }
 
-export async function repairMemoryErasureArtifact(persistence, sessionId) {
+export function repriceMemoryTokenClaims(rows, {decodeStorageRecord,foldSurface,deriveEventMessage,estimateMessage}) {
+  const events=rows.filter(row=>row && row.type!=='session').flatMap(decodeStorageRecord);
+  foldSurface(events);
+  const records=new Map(rows.filter(row=>Number.isSafeInteger(row?.seq)).map(row=>[row.seq,row]));
+  const nodes=[],prices=new Map();let claim,repaired=0;
+  for(const event of events) {
+    if(['compaction/summary','compaction/prune'].includes(event.type)){claim=event;continue;}
+    const op=event.surfaceOp;
+    if(op==='append') {const message=deriveEventMessage(event);nodes.push(event.seq);prices.set(event.seq,message?estimateMessage(message):0);}
+    else if(op?.op==='replace') {
+      const start=nodes.indexOf(op.start),end=nodes.indexOf(op.end);
+      const prior=nodes.slice(start,end+1).reduce((sum,id)=>sum+(prices.get(id)||0),0);
+      let price=prior;
+      if(claim && claim.data.shadowedRange.start===op.start && claim.data.shadowedRange.end===op.end) {
+        const row=records.get(claim.seq);
+        if(row.data.shadowedTokenCount!==prior){row.data={...row.data,shadowedTokenCount:prior};repaired++;}
+        const message=deriveEventMessage(event);price=message?estimateMessage(message):0;
+      }
+      nodes.splice(start,end-start+1,event.seq);prices.set(event.seq,price);
+    }
+    claim=undefined;
+  }
+  return repaired;
+}
+
+export async function repairMemoryErasureArtifact(persistence, sessionId, {reprice}={}) {
   const artifact=await persistence.readRaw(sessionId);if(!artifact)return {repaired:0};
   if(!artifact.content.includes('"weftmate-memory-erasure"'))return {repaired:0};
   let rows;try{rows=artifact.content.split('\n').map(line=>line?JSON.parse(line):null);}catch{return {repaired:0};}
@@ -34,8 +59,9 @@ export async function repairMemoryErasureArtifact(persistence, sessionId) {
     if(!before||!after||!isDeepStrictEqual(before,after))continue;
     rows[i]={...row,data};bySeq.set(row.seq,rows[i]);repaired++;
   }
-  if(repaired)await writeArtifact(persistence,artifact,rows.map(row=>row?JSON.stringify(row):'').join('\n'));
-  return {repaired};
+  const repriced=reprice?await reprice(rows):0;
+  if(repaired||repriced)await writeArtifact(persistence,artifact,rows.map(row=>row?JSON.stringify(row):'').join('\n'));
+  return {repaired,...(repriced?{repriced}:{})};
 }
 
 /** Use the native surface replacement protocol: retained originals remain in
@@ -153,7 +179,9 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
     }
     return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, clean(child, redact, key)]))
   }
-  const content = lines.map(row => row ? JSON.stringify(clean(row, affected.has(turns.get(row)))) : '').join('\n')
+  const cleaned=lines.map(row=>row?clean(row,affected.has(turns.get(row))):null);
+  if(options.reprice && await options.reprice(cleaned))changed=true;
+  const content = cleaned.map(row=>row?JSON.stringify(row):'').join('\n')
   if (changed) await writeArtifact(persistence,artifact,content);
   // Re-read the actual artifact, not the transformed in-memory snapshot. A
   // successful write/rename alone is not proof that the source was erased.
