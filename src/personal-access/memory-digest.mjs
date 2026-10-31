@@ -108,16 +108,27 @@ export function createMemoryDigest(context) {
   async function refresh(ownerId,status,{arm=true}={}){
     try{
       const account=context.accountState(ownerId),settings=notificationSettings(account);
-      if(account.memoryCleanupPending||context.dataControls?.isLocked(ownerId))return;
+      if(context.dataControls?.isLocked(ownerId))return;
       if(status.state==='ready'&&context.memoryManager?.receiptByRequest){
         for(const operation of Object.values(account.activity?.memoryDigest?.pending??{})){
-          const result=await context.memoryManager.receiptByRequest(ownerId,operation.requestId).catch(()=>null),state=result?.receipt?.result_state;
+          let result=null;
+          try { result=await context.memoryManager.receiptByRequest(ownerId,operation.requestId); }
+          catch(error){
+            if(error?.code==='command_receipt_not_found'){
+              // This pending digest has no command marker, so it can never gain a
+              // receipt. Retire it instead of retrying on every observation tick.
+              await context.serial(()=>context.mutate(ownerId,next=>{delete memoryDigestState(next).pending[operation.requestId];}));
+              continue;
+            }
+          }
+          const state=result?.receipt?.result_state;
           if(['applied','no_change','revision_conflict','rejected'].includes(state)){
             snapshots.delete(ownerId);epochs.set(ownerId,(epochs.get(ownerId)??0)+1);
             await context.serial(()=>context.mutate(ownerId,next=>{const stored=memoryDigestState(next);if(state==='applied')recordDigestMutation(next,operation);delete stored.pending[operation.requestId];}));
           }
         }
       }
+      if(account.memoryCleanupPending)return;
       const epoch=epochs.get(ownerId)??0,rows=await snapshot(ownerId,status);if(!rows)return;
       await context.serial(()=>context.mutate(ownerId,next=>{
         if((epochs.get(ownerId)??0)!==epoch||next.memoryCleanupPending||context.dataControls?.isLocked(ownerId))return;

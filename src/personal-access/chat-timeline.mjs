@@ -52,7 +52,6 @@ export function createChatTimeline(context) {
     return groups.get(chatId) ?? [];
   }
   function current(ownerId, chatId) {
-    if (context.accountState(ownerId).memoryCleanupPending) throw failure('SESSION_BUSY', 409);
     const chat = context.chats.requireChat(ownerId, chatId), key = `${ownerId}/${chatId}`;
     let index = indexes.get(key);
     if (!index || index.contentRevision !== chat.contentRevision) {
@@ -236,7 +235,7 @@ export function createChatTimeline(context) {
         if (index.retired) throw failure('CURSOR_RESET_REQUIRED', 409);
         backfill(index); return { hits, building: building(index) };
       }));
-      if (revision !== (context.accountState(ownerId).activity?.generation ?? 0) || context.accountState(ownerId).memoryCleanupPending)
+      if (revision !== (context.accountState(ownerId).activity?.generation ?? 0))
         throw failure('CURSOR_RESET_REQUIRED', 409);
       return { hits: pages.flatMap(page => page.hits), indexState: pages.some(page => page.building) ? 'building' : 'ready' };
     },

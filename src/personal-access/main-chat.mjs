@@ -24,7 +24,7 @@ export function createMainChat(context) {
       return context.serial(async()=>{
         const auth=authorize(),account=context.accountState(ownerId),row=chat(ownerId),existing=active(ownerId);if(!context.hostOwner(ownerId))throw failure('FORBIDDEN',403);if(auth&&!['password','cloud','desktop'].includes(account.devices[auth.deviceId]?.authKind))throw failure('SESSION_READ_ONLY',409);
         if(existing&&!account.sessions[existing.sessionId]?.deleting)return existing.sessionId;
-        if(account.memoryCleanupPending||row.relay)throw failure('SESSION_BUSY',409);
+        if(row.relay)throw failure('SESSION_BUSY',409);
         const profile=currentChatProfile(account,id=>context.modelSelectable(ownerId,id))??context.visibleModels(ownerId,await context.callBackend(()=>context.backend.listModels({ownerId}))).find(p=>context.modelSelectable(ownerId,p.id))?.id;
         if(!profile)throw failure('MODEL_UNAVAILABLE',422);
         const sessionId=`session-${randomUUID()}`,segmentId=`segment-${randomUUID()}`,at=new Date(context.timestamp()).toISOString();
@@ -53,7 +53,6 @@ export function createMainChat(context) {
           return publicCommand(previous);
         }
         if (context.requestIdUsed(account, payload.requestId)) throw failure('REQUEST_CONFLICT', 409);
-        if (account.memoryCleanupPending) throw failure('SESSION_BUSY', 409);
         const current = active(ownerId), boundSession = account.sessions[current?.sessionId];
         const profile = boundSession?.pendingModelProfileId ?? boundSession?.modelProfileId ?? payload.modelProfileId ?? account.defaultModelProfileId;
         if (!profile || !context.modelSelectable(ownerId, profile)) throw failure('MODEL_UNAVAILABLE', 422);
@@ -83,7 +82,7 @@ export function createMainChat(context) {
     async bind(ownerId, commandId) {
       const work = (async () => {
       let command = context.accountState(ownerId).commands[commandId];
-      if (command?.kind !== 'chat.message' || command.state !== 'pending' || context.accountState(ownerId).memoryCleanupPending) return;
+      if (command?.kind !== 'chat.message' || command.state !== 'pending') return;
       const request = command.payload, initialRevision = chat(ownerId).contentRevision;
       try {
         const account = context.accountState(ownerId), device = account.devices[command.sourceDeviceId];
@@ -109,7 +108,7 @@ export function createMainChat(context) {
             try {
               const handoff = await context.callBackend(() => context.backend.prepareChatHandoff({ sessionId: relay.sourceSessionId, ownerId }));
               await context.serial(() => context.mutate(ownerId, next => {
-                if (next.memoryCleanupPending || next.chatIdentity.chats[request.chatId].contentRevision !== initialRevision) throw failure('SESSION_BUSY', 409);
+                if (next.chatIdentity.chats[request.chatId].contentRevision !== initialRevision) throw failure('SESSION_BUSY', 409);
                 next.chatIdentity.chats[request.chatId].relay.handoff = handoff;
               }));
               relay.handoff = handoff;
@@ -121,7 +120,7 @@ export function createMainChat(context) {
             }
           }
           if (relay) {
-            if (context.accountState(ownerId).memoryCleanupPending || chat(ownerId).contentRevision !== initialRevision) throw failure('SESSION_BUSY', 409);
+            if (chat(ownerId).contentRevision !== initialRevision) throw failure('SESSION_BUSY', 409);
             const defaultThinking = context.accountState(ownerId).personalization?.defaultDeepThinking === true &&
               (await context.callBackend(() => context.backend.listModels({ ownerId }))).find(model => model.id === relay.modelProfileId)?.deepThinking?.supported === true;
             await context.callBackend(() => context.backend.createSession({ ownerId, sessionId: relay.sessionId,
@@ -131,7 +130,7 @@ export function createMainChat(context) {
             if (relay.handoff) await context.callBackend(() => context.backend.installChatHandoff({ ownerId, sessionId: relay.sessionId, handoff: relay.handoff }));
             await context.serial(() => context.mutate(ownerId, next => {
               const row = next.chatIdentity.chats[request.chatId];
-              if (next.memoryCleanupPending || row.contentRevision !== initialRevision || row.relay?.sessionId !== relay.sessionId) throw failure('SESSION_BUSY', 409);
+              if (row.contentRevision !== initialRevision || row.relay?.sessionId !== relay.sessionId) throw failure('SESSION_BUSY', 409);
               const previous = next.chatIdentity.segments[row.activeSegmentId];
               const now = new Date(context.timestamp()).toISOString();
               next.sessions[relay.sessionId] = { ownerId, origin: 'personal-remote', attachedAt: now, modelProfileId: relay.modelProfileId,
@@ -164,7 +163,7 @@ export function createMainChat(context) {
         }
         await context.callBackend(() => context.backend.preflight({ ...payload, ownerId }));
         await context.serial(() => context.mutate(ownerId, next => {
-          if (next.memoryCleanupPending || next.chatIdentity.chats[chatId].contentRevision !== initialRevision) throw failure('SESSION_BUSY', 409);
+          if (next.chatIdentity.chats[chatId].contentRevision !== initialRevision) throw failure('SESSION_BUSY', 409);
           Object.assign(next.commands[commandId], { kind: 'session.message', sessionId: segment.sessionId, payload, payloadHash: digest(JSON.stringify(payload)) });
         }));
       } catch (error) {
