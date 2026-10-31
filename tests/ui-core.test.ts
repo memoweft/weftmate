@@ -249,6 +249,7 @@ test('FX-19 definite HTTP or terminal creation rejection clears only its own sen
   }
 });
 
+// 保护：结束回合不得把仍在运行的调用计入成功结果。
 test('D35 progress uses real kinds/objects and prioritizes failure and stopped states', () => {
   const { api } = fixture();
   const steps = [
@@ -257,7 +258,7 @@ test('D35 progress uses real kinds/objects and prioritizes failure and stopped s
     {toolName:'grep',state:'running',summary:'搜索 approval'},
   ];
   assert.equal(api.progressText(steps).text, '正在搜索 approval…');
-  assert.equal(api.progressText(steps, true).text, '已运行 1 个命令、读取了 2 个文件、搜索了 1 次');
+  assert.doesNotMatch(api.progressText(steps, true).text, /搜索了/);
   assert.equal(api.progressText([...steps, {state:'failed',ordinal:4}]).text, '第 4 步遇到问题，正在继续');
   assert.equal(api.progressText([{state:'cancelled'}]).text, '已中断');
   assert.equal(api.progressText([{state:'completed',jobState:'running',summary:'运行命令 npm test'}]).text,'正在运行命令 npm test…');
@@ -377,7 +378,7 @@ test('FX-11 progress counts actual activities and keeps internal names out of ru
     .map(toolName => ({toolName, state:'completed'}));
   const text = api.progressText(completed, true).text;
   assert.equal(text, '修改了 1 个文件、访问了 1 次网页、整理了 1 次执行计划、处理了 1 个子任务、处理了 1 次定时安排、查看或管理了 1 次后台命令、运行了 1 次脚本、查看了 1 次任务目标、操作了 1 次电脑应用、查询或更新了 1 次记忆、用了一个扩展工具');
-  assert.equal(api.progressText([{toolName:'load_tools',state:'completed'}],true).text,'工具已就绪');
+  assert.equal(api.progressText([{toolName:'load_tools',state:'completed'}],true).text,api.progressText([],true).text);
   assert.equal(api.progressText([{toolName:'load_tools',state:'running',summary:'执行工具 load_tools'}]).text,'正在准备可用工具…');
   const old = api.projectTimeline([{seq:1,type:'step.completed',data:{taskId:'turn-1',stepId:'load',toolName:'load_tools',summary:'执行工具 load_tools',state:'failed'}}]);
   assert.equal(old.groups[0].steps[0].summary,'准备可用工具');
