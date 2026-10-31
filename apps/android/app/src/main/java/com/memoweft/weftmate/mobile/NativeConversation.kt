@@ -67,7 +67,8 @@ import java.time.LocalDate
     DisposableEffect(frost) { onDispose { frost?.paused=false } }
     val activityForTimeline=LocalContext.current as NativeActivity
     val rows by produceState(emptyList<JSONObject>(),m.chatId,m.rows,m.approvals,m.questions) {
-        value=activityForTimeline.timelinePresentation(m.rows,m.approvals,m.questions)
+        // A mapper failure keeps the last good timeline instead of taking the app down.
+        try { value=activityForTimeline.timelinePresentation(m.rows,m.approvals,m.questions) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (_: Exception) {}
     }
     val progressState=remember(m.chatId) { NativeProgressState() }
     val feed=(LocalContext.current as? NativeActivity)?.feed

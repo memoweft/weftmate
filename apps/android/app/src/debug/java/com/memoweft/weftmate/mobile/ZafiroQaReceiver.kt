@@ -15,7 +15,22 @@ class ZafiroQaReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (context.packageName != "com.memoweft.weftmate.mobile.zafiroqa") return
         val visible = WeftMateApplication::class.java.getDeclaredField("visible").apply { isAccessible = true }.get(context.applicationContext) as Set<*>
-        val model = visible.filterIsInstance<NativeActivity>().firstOrNull()?.model ?: return
+        val activity = visible.filterIsInstance<NativeActivity>().firstOrNull() ?: return
+        val model = activity.model
+        if (intent.getStringExtra("command") == "login") {
+            // Real host login against an isolated fixture; polling stays on.
+            val params = JSONObject().put("origin", intent.getStringExtra("origin")).put("username", intent.getStringExtra("username"))
+                .put("password", intent.getStringExtra("password")).put("deviceName", "Synthetic QA")
+            activity.embeddedWeb.evaluateJavascript("(function login(){if(typeof call==='function' && typeof state!=='undefined' && state.booted)call('auth.login',$params).then(()=>location.reload());else setTimeout(login,100)})()", null)
+            return
+        }
+        if (intent.getStringExtra("command") == "state") {
+            val state = JSONObject().put("loggedIn", model.loggedIn).put("chatId", model.chatId).put("sessionId", model.sessionId).put("rows", model.rows.size)
+                .put("chats", model.chats.size).put("running", model.running).put("error", model.error).put("standalone", model.standalone).put("tab", model.tab)
+            File(context.filesDir, "zafiro-qa.json").writeText(state.toString())
+            resultData = state.toString()
+            return
+        }
         (NativeChatModel::class.java.getDeclaredField("poll").apply { isAccessible = true }.get(model) as Job?)?.cancel()
         when (intent.getStringExtra("command")) {
             "stream" -> { player?.cancel(); player = model.scope.launch { play(model, intent.getLongExtra("pace", 140)) } }

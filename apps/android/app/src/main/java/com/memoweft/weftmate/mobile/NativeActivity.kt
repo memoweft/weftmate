@@ -35,23 +35,24 @@ class NativeActivity : HybridActivity() {
     internal suspend fun timelinePresentation(events: List<JSONObject>, approvals: List<JSONObject>, questions: List<JSONObject>): List<JSONObject> {
         // A shell upgrade may reopen the previous downloaded UI bundle. Load
         // the same shipped shared mapper when that bundle predates this view.
-        while(!timelineMapperInstalled) {
-            val shared=assets.open("ui-core/timeline-model.js").bufferedReader().use { it.readText() }
-            val ready = suspendCancellableCoroutine<Boolean> { continuation ->
-                embeddedWeb.evaluateJavascript("(()=>{if(typeof WeftUiCore==='undefined')return false;if(typeof WeftUiCore.approvalCopy!=='function'){$shared}return typeof WeftUiCore.nativeTimelineRows==='function';})()") { value ->
-                    if(continuation.isActive) continuation.resumeWith(Result.success(value=="true"))
+        while (true) {
+            while(!timelineMapperInstalled) {
+                val shared=assets.open("ui-core/timeline-model.js").bufferedReader().use { it.readText() }
+                val ready = suspendCancellableCoroutine<Boolean> { continuation ->
+                    embeddedWeb.evaluateJavascript("(()=>{if(typeof WeftUiCore==='undefined')return false;if(typeof WeftUiCore.approvalCopy!=='function'){$shared}return typeof WeftUiCore.nativeTimelineRows==='function';})()") { value ->
+                        if(continuation.isActive) continuation.resumeWith(Result.success(value=="true"))
+                    }
                 }
+                timelineMapperInstalled=ready
+                if(!ready) delay(50) // The Compose timeline may mount before the embedded core boots.
             }
-            timelineMapperInstalled=ready
-            if(!ready) delay(50) // The Compose timeline may mount before the embedded core boots.
-        }
-        return suspendCancellableCoroutine { continuation ->
             val script = "JSON.stringify(WeftUiCore.nativeTimelineRows(${org.json.JSONArray(events)},${org.json.JSONArray(approvals)},${org.json.JSONArray(questions)}))"
-            embeddedWeb.evaluateJavascript(script) { value ->
-                if (continuation.isActive) continuation.resumeWith(runCatching {
-                    org.json.JSONArray(org.json.JSONArray("[$value]").getString(0)).objects()
-                })
+            val value = suspendCancellableCoroutine<String> { continuation ->
+                embeddedWeb.evaluateJavascript(script) { if (continuation.isActive) continuation.resumeWith(Result.success(it)) }
             }
+            // The engine reloads on login, account switch and UI bundle updates; wait for it to boot again.
+            if (value == "null") { timelineMapperInstalled = false; delay(50); continue }
+            return org.json.JSONArray(org.json.JSONArray("[$value]").getString(0)).objects()
         }
     }
     internal suspend fun phonePresentation(action: String, params: JSONObject = JSONObject()): JSONObject {

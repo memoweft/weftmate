@@ -43,6 +43,10 @@ export async function startTimelineCandidate(options = {}) {
       try {const rows=id===sessionId?events:dailySessions.get(id)?.events;if(signal?.aborted||(rows?.at(-1)?.seq??-1)>seq)return;await pending;}
       finally{clearTimeout(timer);eventWaiters.delete(wake);signal?.removeEventListener('abort',abort);}
     },
+    // Message branches and forks copy the history before a sequence into a new daily session.
+    ...(options.daily ? { forkSession: async ({sessionId:id, childId, beforeSeq, title}) => { const source=dailySessions.get(id); assert.ok(source);
+      const copied=source.events.filter(event=>beforeSeq===undefined||event.seq<beforeSeq).map(event=>({...event}));
+      dailySessions.set(childId,{events:copied,running:false,title:title||source.title}); return {title:title||source.title,latestSeq:copied.at(-1)?.seq??-1,modelProfileId:'local'}; } } : {}),
     deleteSession: async ({sessionId:id}) => { dailySessions.delete(id); if(id===sessionId){events=[];running=false;} return {deleted:true}; },
     chatRelayState: async () => ({ pending: relayPending, safe: !running }),
     prepareChatHandoff: async ({sessionId}) => ({text:'Synthetic bounded handoff',sourceSessionId:sessionId,throughSeq:1,sourceRefs:[]}),
