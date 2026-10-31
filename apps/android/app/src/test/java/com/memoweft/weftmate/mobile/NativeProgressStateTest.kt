@@ -8,11 +8,11 @@ class NativeProgressStateTest {
     private val fixtures=JSONObject(javaClass.getResource("/fix36-progress.json")!!.readText())
     private fun rows(mode:String)=fixtures.getJSONArray(mode).objects()
     private fun progress(mode:String)=rows(mode).single { it.optString("type")=="native.progress" }
-    @Test fun twelveStepsStartAsOneCollapsedRowAfterReply() {
+    @Test fun twelveStepsStartAsOneCollapsedRowAboveReply() {
         val row=progress("completed");val state=NativeProgressState()
         assertEquals(12,row.getJSONObject("data").getJSONArray("steps").length())
         assertTrue(state.visibleSteps(row).isEmpty());assertFalse(state.isExpanded(row.getString("eventId")))
-        assertEquals("assistant.message",rows("completed").dropLast(1).last().getString("type"))
+        assertEquals("assistant.message",rows("completed").last().getString("type"))
     }
     @Test fun expandingAndCollapsingUsesTheSameStableReplyKey() {
         val row=progress("completed");val key=row.getString("eventId");val state=NativeProgressState()

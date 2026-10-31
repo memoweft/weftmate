@@ -67,7 +67,7 @@ import java.time.LocalDate
     DisposableEffect(frost) { onDispose { frost?.paused=false } }
     val activityForTimeline=LocalContext.current as NativeActivity
     val rows by produceState(emptyList<JSONObject>(),m.chatId,m.rows,m.approvals,m.questions) {
-        value=nativeTurnRows(activityForTimeline.timelinePresentation(m.rows,m.approvals,m.questions))
+        value=activityForTimeline.timelinePresentation(m.rows,m.approvals,m.questions)
     }
     val progressState=remember(m.chatId) { NativeProgressState() }
     val feed=(LocalContext.current as? NativeActivity)?.feed
