@@ -80,6 +80,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const flushFlights = new Map();
   const retryTimers = new Map();
   const retryCounts = new Map();
+  const activeCleanups = new Map();
   const runtimeFailures = new Map();
   const runtimeGenerations = new Map();
   const repairingOwners = new Set();
@@ -622,6 +623,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     if (!['delete_evidence', 'delete_world_item'].includes(command.operation)) return result;
     const receipt = result?.receipt ?? result;
     if (!['applied', 'no_change'].includes(receipt?.result_state)) return result;
+    if (marker?.cleanupCompleted === true && !marker.cleanup) return result;
+    const cleanupKey = `${ownerId}\0${marker?.requestId ?? command.command_id}`;
+    const cleanup = activeCleanups.get(cleanupKey) ?? { ownerId, count: 0,
+      row: { requestId: marker?.requestId ?? command.command_id, kind: command.target_kind, id: command.target_id } };
+    cleanup.count++; activeCleanups.set(cleanupKey, cleanup);
     const ids = [command.target_id, ...(Array.isArray(receipt.affected_ids)
       ? receipt.affected_ids.filter((id) => typeof id === 'string' && id.length <= 512) : [])];
     try {
@@ -642,6 +648,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       const pending = { ...receipt,
         storage_cleanup: { state: 'pending', detail_code: 'host_journal_cleanup_pending' } };
       return result?.receipt ? { ...result, receipt: pending } : pending;
+    } finally {
+      if (--cleanup.count === 0) activeCleanups.delete(cleanupKey);
     }
   }
 
@@ -876,6 +884,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
             && ['restart_recovered', 'shutdown_recovered'].includes(job.worker?.last_error_type)).length;
           const failedFormationCount = jobs.filter(job => ['failed', 'blocked', 'uncertain', 'dead'].includes(job.worker?.state)).length;
           const routeState = processingHealth ? await processingHealth(ownerId).catch(() => 'unavailable') : 'ready';
+          pendingCleanup = [...new Map([...pendingCleanup, ...[...activeCleanups.values()]
+            .filter(cleanup => cleanup.ownerId === ownerId).map(cleanup => cleanup.row)]
+            .map(row => [row.requestId, row])).values()];
           const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount && !formationIssues.length && !pendingCleanup.length;
           if (runtimeCurrent(ownerId, entry.generation)) {
             if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
@@ -889,7 +900,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
               ? { semanticRecall: semanticRecallStatus(health.runtime.semantic_recall) } : {}),
             version: health?.version ?? health?.runtime?.version ?? await readSourceVersion(),
             worldRevision: Number.isSafeInteger(revision) ? revision : null,
-            capabilities: { ...capabilities(entry), inject: entry.routeReady && backlog.pendingBoundaryCount === 0 }, ...backlog,
+            capabilities: { ...capabilities(entry), inject: entry.routeReady && backlog.pendingBoundaryCount === 0 && !pendingCleanup.length }, ...backlog,
             pendingFormationCount, recoveringFormationCount, failedFormationCount, failedCorrectionCount, formationIssues, pendingCleanup,
             ...(!entry.routeReady || routeState === 'unavailable' ? { reasonCode: 'MEMORY_MODEL_UNAVAILABLE' }
               : routeState === 'waiting' ? { reasonCode: 'MEMORY_MODEL_WAITING' }
@@ -1250,6 +1261,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       })();
       commandFlights.set(key, work);
       try { return await work; } finally { commandFlights.delete(key); }
+    },
+    async resumeAfterTurn(ownerId) {
+      owner(ownerId);
+      for (const row of await journal.pendingCleanup(ownerId))
+        await this.retryCleanupByRequest(ownerId, row.requestId).catch(() => {});
+      const pending = (await journal.pendingCleanup(ownerId)).length > 0 || await actions.pending(ownerId);
+      if (pending) {
+        clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
+        scheduleRetry(ownerId, true);
+      }
+      return { pending };
     },
     hasOperation(ownerId, operation) {
       owner(ownerId);

@@ -7,6 +7,10 @@ const failure = code => Object.assign(new Error(code), { code });
 export async function handlePersonalMemoryTool(manager, ownerId, tool, { sessionId, modelTier, memoryPolicy, signal } = {}) {
   const args = tool?.arguments;
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw failure('MEMORY_REQUEST_INVALID');
+  if (tool.name === 'memory_resume') {
+    if (Object.keys(args).length) throw failure('MEMORY_REQUEST_INVALID');
+    return manager.resumeAfterTurn(ownerId);
+  }
   if (tool.name === 'memory_forget_request') {
     if (Object.keys(args).length || typeof tool.source?.text !== 'string' || !tool.source.text.trim() ||
         tool.source.text.length > 16000 || typeof tool.requestId !== 'string' || !/^memory-tool:[a-f0-9]{64}$/.test(tool.requestId)) throw failure('MEMORY_REQUEST_INVALID');
