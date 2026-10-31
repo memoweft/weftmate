@@ -24,6 +24,15 @@ class ZafiroQaReceiver : BroadcastReceiver() {
             activity.embeddedWeb.evaluateJavascript("(function login(){if(typeof call==='function' && typeof state!=='undefined' && state.booted)call('auth.login',$params).then(()=>location.reload());else setTimeout(login,100)})()", null)
             return
         }
+        if (intent.getStringExtra("command") == "core") {
+            // Inspect the embedded shared core; the result lands in files/zafiro-core.json.
+            val expression = intent.getStringExtra("expr").orEmpty()
+            model.scope.launch {
+                val result = runCatching { activity.core.call(expression).toString() }.getOrElse { "{\"failure\":${JSONObject.quote(it.toString())}}" }
+                File(context.filesDir, "zafiro-core.json").writeText(result)
+            }
+            return
+        }
         if (intent.getStringExtra("command") == "state") {
             val state = JSONObject().put("loggedIn", model.loggedIn).put("chatId", model.chatId).put("sessionId", model.sessionId).put("rows", model.rows.size)
                 .put("chats", model.chats.size).put("running", model.running).put("error", model.error).put("standalone", model.standalone).put("tab", model.tab)

@@ -194,6 +194,12 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             throw error;
         }
     }
+    // A native shell signs in and watches the connection itself; the engine takes that identity and online state for
+    // its own protected writes without repainting or running its own reconnection.
+    function adoptNativeSession(payload) {
+        if (typeof payload?.csrfToken !== 'string' || !payload.csrfToken) throw { code: 'REQUEST_FAILED' };
+        core.state.account = payload.account; core.state.device = payload.device; core.state.csrfToken = payload.csrfToken; core.state.online = true;
+    }
     function acceptSession(payload) {
         if (typeof payload?.account?.username !== 'string' || typeof payload?.device?.id !== 'string'
             || typeof payload?.csrfToken !== 'string' || !payload.csrfToken)
@@ -583,5 +589,5 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         effects.paintScreen(view);
     }
-    return { polling, historyReadAllowed, historyReadResult, historyPollDelay, refreshConfiguration, acceptAccountChanges, canWaitForReply, replyWaitMilliseconds, foreground, refreshAssistantOverview, refreshConversationFacts, failureMessage, requestJson, accessApi, acceptSession, accountToken, accountCurrent, setOnline, trackRequestState, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
+    return { polling, historyReadAllowed, historyReadResult, historyPollDelay, refreshConfiguration, acceptAccountChanges, canWaitForReply, replyWaitMilliseconds, foreground, refreshAssistantOverview, refreshConversationFacts, failureMessage, requestJson, accessApi, acceptSession, adoptNativeSession, accountToken, accountCurrent, setOnline, trackRequestState, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
 };

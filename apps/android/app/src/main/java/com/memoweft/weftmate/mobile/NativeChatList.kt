@@ -100,7 +100,23 @@ internal fun chatMatches(row: JSONObject, query: String) = query.isBlank() || ho
 internal fun chatMenu(row: JSONObject, standalone: Boolean): List<String> = when {
     standalone || row.optBoolean("nativePhone") -> emptyList()
     row.optString("kind") == "main" -> listOf("unread")
-    else -> listOf("pin", "unread", "rename", "archive", "more")
+    else -> listOf("pin", "unread", "rename", "group", "fork", "archive", "delete")
+}
+
+/** The session a chat row currently runs, which session-level shared calls address. */
+internal fun chatSession(row: JSONObject) = row.stringOrEmpty("activeSessionId").ifEmpty { row.stringOrEmpty("sessionId") }
+
+/** Shared-core lifecycle calls; failures carry the core's own human wording. */
+internal object ChatScripts {
+    private fun q(value: String) = JSONObject.quote(value)
+    private fun human(body: String) = "try{$body}catch(e){throw {status:e?.status||0,code:e?.code||'NETWORK_FAILED',message:uiCore.sessionLifecycleMessage?.(e)||''};}"
+    fun fork(session: String) = human("return (await uiCore.forkSession(${q(session)}))||{};")
+    fun forgetPreview(session: String) = human("return await uiCore.accessApi('/sessions/'+encodeURIComponent(${q(session)})+'/forget-preview');")
+    fun delete(session: String, forget: Boolean, worldRevision: Long?) =
+        human("await uiCore.deleteSession(${q(session)},$forget,{deleteConversationSnippets:false${worldRevision?.let { ",worldRevision:$it" } ?: ""}});return {};")
+    fun groups() = human("return await uiCore.accessApi('/session-groups');")
+    fun moveToGroup(session: String, group: String?) = human("return (await uiCore.updateSession(${q(session)},{groupId:${group?.let(::q) ?: "null"}}))||{};")
+    fun createGroup(name: String) = human("return (await uiCore.sessionGroupAction('POST',null,${q(name)}))||{};")
 }
 
 internal fun chatWriteBody(row: JSONObject, change: JSONObject = JSONObject()): JSONObject =
@@ -141,9 +157,14 @@ private val easeInOut = tokenEasing(DesignTokens.motionEaseInOut)
     val sections = remember(rows, today) { chatSections(rows, today, zone) }
     val collapsed = remember { mutableStateMapOf<String, Boolean>() }
     var renaming by remember { mutableStateOf<JSONObject?>(null) }
+    var deleting by remember { mutableStateOf<JSONObject?>(null) }
+    var grouping by remember { mutableStateOf<JSONObject?>(null) }
     fun act(row: JSONObject, action: suspend () -> Unit) = m.scope.launch {
         failure = ""
-        runCatching { action(); m.refreshChats(); reload++ }.onFailure { failure = "没能完成，请重试。" }
+        try { action(); m.refreshChats(); reload++ }
+        catch (error: kotlinx.coroutines.CancellationException) { throw error }
+        catch (error: NativeCoreFailure) { failure = error.text.ifBlank { "没能完成，请重试。" } }
+        catch (_: Exception) { failure = "没能完成，请重试。" }
     }
     fun run(row: JSONObject, id: String) {
         val chat = "/chats/${row.stringOrEmpty("chatId")}"
@@ -152,7 +173,13 @@ private val easeInOut = tokenEasing(DesignTokens.motionEaseInOut)
             "unread" -> act(row) { m.business("$chat/metadata", "PATCH", chatWriteBody(row, JSONObject().put("unread", !row.optBoolean("unread")))) }
             "archive" -> act(row) { m.business(if (row.optBoolean("archived")) "$chat/unarchive" else "$chat/archive", "POST", chatWriteBody(row)) }
             "rename" -> renaming = row
-            "more" -> m.tab = "web-home"
+            "group" -> grouping = row
+            "delete" -> deleting = row
+            "fork" -> act(row) {
+                val child = activity.core.write(ChatScripts.fork(chatSession(row))).stringOrEmpty("sessionId")
+                m.refreshChats()
+                m.chats.find { chatSession(it) == child }?.let { m.select(it); m.tab = "chat" }
+            }
         }
     }
 
@@ -209,6 +236,91 @@ private val easeInOut = tokenEasing(DesignTokens.motionEaseInOut)
             confirmButton = { TextButton(enabled = title.isNotBlank(), onClick = { renaming = null; act(row) { m.business("/chats/${row.stringOrEmpty("chatId")}/metadata", "PATCH", chatWriteBody(row, JSONObject().put("title", title.trim()))) } }) { Text("保存") } },
             dismissButton = { TextButton(onClick = { renaming = null }) { Text("取消") } })
     }
+    deleting?.let { row -> NativeDeleteChatDialog(activity, row, onDone = { deleting = null; m.launch { m.refreshChats(); reload++ } }, onDismiss = { deleting = null }) }
+    grouping?.let { row -> NativeGroupChatDialog(activity, row, onDone = { grouping = null; m.launch { m.refreshChats(); reload++ } }, onDismiss = { grouping = null }) }
+}
+
+/** D16: deleting keeps memories by default; ticking the box first shows how many memories will be forgotten. */
+@Composable private fun NativeDeleteChatDialog(activity: NativeActivity, row: JSONObject, onDone: () -> Unit, onDismiss: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var forget by remember { mutableStateOf(false) }
+    var preview by remember { mutableStateOf<JSONObject?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var failure by remember { mutableStateOf("") }
+    LaunchedEffect(forget) {
+        if (forget && preview == null) runCatching { preview = activity.core.call(ChatScripts.forgetPreview(chatSession(row))) }
+            .onFailure { failure = (it as? NativeCoreFailure)?.text?.ifBlank { null } ?: "暂时读不到要忘掉的记忆。" ; forget = false }
+    }
+    AlertDialog(onDismissRequest = { if (!busy) onDismiss() }, title = { Text("删除「${hostChatTitle(row)}」？") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.space8.dp)) {
+                Text("对话会被删除，不能恢复。从这段对话形成的记忆默认保留。", fontSize = DesignTokens.font14.sp)
+                Row(Modifier.fillMaxWidth().clickable(enabled = !busy) { forget = !forget }, verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(forget, { forget = it }, enabled = !busy)
+                    Text("同时忘掉从这段对话形成的记忆", fontSize = DesignTokens.font14.sp)
+                }
+                val count = preview?.optJSONArray("items")?.length() ?: preview?.optInt("count")
+                if (forget && count != null) Text(if (count == 0) "这段对话没有形成记忆。" else "会一起忘掉 $count 条记忆。", fontSize = DesignTokens.font12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (failure.isNotBlank()) Text(failure, fontSize = DesignTokens.font12.sp, color = MaterialTheme.colorScheme.error)
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = !busy && (!forget || preview != null), onClick = {
+                busy = true; failure = ""
+                scope.launch {
+                    try {
+                        val revision = preview?.takeIf { forget }?.let { if (it.has("worldRevision")) it.optLong("worldRevision") else null }
+                        activity.core.write(ChatScripts.delete(chatSession(row), forget, revision)); onDone()
+                    } catch (error: kotlinx.coroutines.CancellationException) { throw error }
+                    catch (error: NativeCoreFailure) { failure = error.text.ifBlank { "没能删除，请重试。" } }
+                    catch (_: Exception) { failure = "没能删除，请重试。" }
+                    finally { busy = false }
+                }
+            }) { Text(if (busy) "正在删除…" else "删除", color = MaterialTheme.colorScheme.error) }
+        },
+        dismissButton = { TextButton(enabled = !busy, onClick = onDismiss) { Text("取消") } })
+}
+
+/** Move a chat into a group, out of all groups, or into a new group named here. */
+@Composable private fun NativeGroupChatDialog(activity: NativeActivity, row: JSONObject, onDone: () -> Unit, onDismiss: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var groups by remember { mutableStateOf<List<JSONObject>?>(null) }
+    var name by remember { mutableStateOf("") }
+    var failure by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) { groups = runCatching { activity.core.call(ChatScripts.groups()).optJSONArray("groups")?.objects().orEmpty() }.getOrElse { failure = "分组暂时读不到。"; emptyList() } }
+    fun move(group: String?) = scope.launch {
+        try { activity.core.write(ChatScripts.moveToGroup(chatSession(row), group)); onDone() }
+        catch (error: kotlinx.coroutines.CancellationException) { throw error }
+        catch (error: NativeCoreFailure) { failure = error.text.ifBlank { "没能移动，请重试。" } }
+        catch (_: Exception) { failure = "没能移动，请重试。" }
+    }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("移到分组") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.space4.dp)) {
+                if (groups == null) CircularProgressIndicator(Modifier.size(DesignTokens.space20.dp), strokeWidth = DesignTokens.space2.dp)
+                groups?.forEach { group ->
+                    val id = group.stringOrEmpty("groupId").ifEmpty { group.stringOrEmpty("id") }
+                    val current = row.stringOrEmpty("groupId") == id
+                    TextButton(onClick = { move(id) }, enabled = !current) { Text(group.stringOrEmpty("name") + if (current) "（当前）" else "") }
+                }
+                if (row.stringOrEmpty("groupId").isNotEmpty()) TextButton(onClick = { move(null) }) { Text("移出分组") }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(name, { name = it }, Modifier.weight(1f), singleLine = true, placeholder = { Text("新分组名称") })
+                    TextButton(enabled = name.isNotBlank(), onClick = {
+                        scope.launch {
+                            try {
+                                val created = activity.core.write(ChatScripts.createGroup(name.trim()))
+                                val id = created.stringOrEmpty("groupId").ifEmpty { created.optJSONObject("group")?.stringOrEmpty("groupId").orEmpty() }
+                                if (id.isNotEmpty()) move(id) else { groups = activity.core.call(ChatScripts.groups()).optJSONArray("groups")?.objects().orEmpty(); name = "" }
+                            } catch (error: kotlinx.coroutines.CancellationException) { throw error }
+                            catch (_: Exception) { failure = "没能新建分组，请重试。" }
+                        }
+                    }) { Text("新建") }
+                }
+                if (failure.isNotBlank()) Text(failure, fontSize = DesignTokens.font12.sp, color = MaterialTheme.colorScheme.error)
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("关闭") } })
 }
 
 @Composable private fun NativeChatSearch(query: String, archived: Boolean, onQuery: (String) -> Unit, onLeaveArchive: () -> Unit) {
@@ -275,8 +387,9 @@ private val easeInOut = tokenEasing(DesignTokens.motionEaseInOut)
         }
         NativeMenu(menuOpen, onDismissRequest = { menuOpen = false }) {
             val label = mapOf("pin" to if (row.optBoolean("pinned")) "取消置顶" else "置顶", "unread" to if (row.optBoolean("unread")) "标为已读" else "标为未读",
-                "rename" to "重命名", "archive" to if (row.optBoolean("archived")) "取消归档" else "归档", "more" to "删除、分叉、分组…")
-            val icon = mapOf("pin" to R.drawable.wm_pin, "unread" to R.drawable.wm_bell, "rename" to R.drawable.wm_edit, "archive" to R.drawable.wm_archive, "more" to R.drawable.wm_more)
+                "rename" to "重命名", "group" to "移到分组", "fork" to "分叉出新对话", "archive" to if (row.optBoolean("archived")) "取消归档" else "归档", "delete" to "删除")
+            val icon = mapOf("pin" to R.drawable.wm_pin, "unread" to R.drawable.wm_bell, "rename" to R.drawable.wm_edit, "group" to R.drawable.wm_folder,
+                "fork" to R.drawable.wm_layers, "archive" to R.drawable.wm_archive, "delete" to R.drawable.wm_trash)
             menu.forEach { id -> NativeMenuItem(text = { Text(label.getValue(id)) }, leadingIcon = { Icon(painterResource(icon.getValue(id)), null, Modifier.size(DesignTokens.iconTouch.dp)) }, onClick = { menuOpen = false; onAction(id) }) }
         }
     }

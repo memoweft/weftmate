@@ -140,10 +140,15 @@ import java.time.LocalDate
         else if(!atEnd) NativeIconButton(R.drawable.wm_down,"回到底部",Modifier.align(Alignment.BottomEnd).padding(bottom=bottom()+nativeGap,start=nativeGap,end=nativeGap).background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)){follow.resume();scope.launch{list.animateScrollToItem(list.layoutInfo.totalItemsCount-1)}}
     }
 }
+@OptIn(ExperimentalFoundationApi::class)
 @Composable internal fun NativeMessage(m: NativeChatModel,e: JSONObject,bubbleMaxWidth:androidx.compose.ui.unit.Dp,onPreview:(JSONObject)->Unit) {
     val d=e.optJSONObject("data") ?: JSONObject(); val user=e.optString("type")=="user.message";val text=d.optString("text")
+    var userMenu by remember(e.optString("eventId")) { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth(),horizontalAlignment=if(user)Alignment.End else Alignment.Start) {
-        Column(Modifier.then(if(user)Modifier.widthIn(max=bubbleMaxWidth).clip(nativeBubble).background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal=DesignTokens.space20.dp,vertical=DesignTokens.space12.dp) else Modifier.fillMaxWidth())) {
+        Box {
+        Column(Modifier.then(if(user)Modifier.widthIn(max=bubbleMaxWidth).clip(nativeBubble).background(MaterialTheme.colorScheme.surfaceVariant)
+            .combinedClickable(onClickLabel=null,onLongClickLabel="消息操作",onLongClick={userMenu=true},onClick={})
+            .padding(horizontal=DesignTokens.space20.dp,vertical=DesignTokens.space12.dp) else Modifier.fillMaxWidth())) {
             val originals=d.optJSONArray("originalAttachments")
             val images=d.optJSONArray("images")
             val attachments=if(originals!=null && images!=null)JSONArray(originals.objects().filter{!it.optString("contentType").startsWith("image/")}+images.objects()) else originals ?: d.optJSONArray("attachments") ?: images ?: d.optJSONArray("thumbnails")
@@ -158,13 +163,18 @@ import java.time.LocalDate
                     }
                 } },false,onPreview,{})
             }
-            SelectionContainer{NativeMarkdown(text,onCopyCode=if(user)null else m::copyReply)}
+            // Your own message is copied, quoted and edited from its long-press menu, so long press is not text selection.
+            if(user) NativeMarkdown(text) else SelectionContainer{NativeMarkdown(text,onCopyCode=m::copyReply)}
             if(user && d.optBoolean("queued")) Text("排队中",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        if(!user && e.optString("type")!="assistant.delta") Row {
-            NativeIconButton(R.drawable.wm_copy,"复制回复",compact=true){m.copyReply(text)}
-            NativeIconButton(R.drawable.wm_chat,"引用回复",compact=true){m.edit("> ${text.take(300).replace("\n","\n> ")}\n\n");m.focused=true}
-            if(m.phoneArchive) { if(m.canRegenerate && e.optString("eventId")==m.rows.lastOrNull()?.optString("eventId")) NativeIconButton(R.drawable.wm_refresh,"重新生成回复",compact=true){m.regenerate()} } else NativeIconButton(R.drawable.wm_more,"消息操作",compact=true){m.tab="web-chat"}
+        if(user) NativeUserMessageMenu(m,e,text,userMenu){userMenu=false}
+        }
+        if(!user && e.optString("type")!="assistant.delta") {
+            if(m.phoneArchive) Row {
+                NativeIconButton(R.drawable.wm_copy,"复制回复",compact=true){m.copyReply(text)}
+                NativeIconButton(R.drawable.wm_chat,"引用回复",compact=true){m.edit("> ${text.take(300).replace("\n","\n> ")}\n\n");m.focused=true}
+                if(m.canRegenerate && e.optString("eventId")==m.rows.lastOrNull()?.optString("eventId")) NativeIconButton(R.drawable.wm_refresh,"重新生成回复",compact=true){m.regenerate()}
+            } else NativeReplyActions(m,e,text)
         }
     }
 }

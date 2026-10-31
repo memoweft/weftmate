@@ -642,6 +642,8 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                 if(standalone) JSONObject().put("id","phone-new").put("nativePhone",true).put("title","小纬") else call("conversations.create")
             } else {
                 val status = business("/status")
+                // A cold start can read the model list before the computer answers; the host refuses a chat without one.
+                if (modelId.isBlank()) refreshHostModels(null)
                 val id = "native-${UUID.randomUUID()}"
                 var command = business("/commands", "POST", JSONObject().put("requestId", id).put("kind", "session.create")
                     .put("targetDeviceId", status.getString("hostId")).put("modelProfileId", modelId)).getJSONObject("command")

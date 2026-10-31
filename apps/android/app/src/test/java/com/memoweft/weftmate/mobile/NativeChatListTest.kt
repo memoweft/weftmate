@@ -33,7 +33,7 @@ class NativeChatListTest {
     }
 
     @Test fun menusOnlyOfferWritesTheHostAccepts() {
-        assertEquals(listOf("pin", "unread", "rename", "archive", "more"), chatMenu(chat("a", ""), standalone = false))
+        assertEquals(listOf("pin", "unread", "rename", "group", "fork", "archive", "delete"), chatMenu(chat("a", ""), standalone = false))
         assertEquals(listOf("unread"), chatMenu(chat("m", "", "kind" to "main"), standalone = false))
         assertTrue(chatMenu(chat("p", "", "nativePhone" to true), standalone = false).isEmpty())
         assertTrue(chatMenu(chat("a", ""), standalone = true).isEmpty())

@@ -11,6 +11,15 @@ import java.util.UUID
  * `{status, code}` becomes an [ApiFailure].
  */
 internal class NativeCore(private val activity: NativeActivity) {
+    /**
+     * Shared writes run as the natively signed-in, connected account: the engine adopts that identity and online
+     * state when it lacks either.
+     */
+    suspend fun write(expression: String, timeoutMs: Long = 120000): JSONObject = call(
+        "if(!uiCore.state.csrfToken||!uiCore.state.online)uiCore.adoptNativeSession(await uiCore.accessApi('/auth/me'));" + expression,
+        timeoutMs,
+    )
+
     suspend fun call(expression: String, timeoutMs: Long = 15000): JSONObject {
         val key = JSONObject.quote(UUID.randomUUID().toString())
         activity.embeddedWeb.evaluateJavascript(
