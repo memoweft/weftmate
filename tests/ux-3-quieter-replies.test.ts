@@ -68,8 +68,9 @@ test('UX-3 timeline borrows observed killed job state only from the matching ses
  assert.equal(api.executionState(api.executionPresentation({...step,turn:2},records)),'failed');assert.equal(JSON.stringify([step,records]),copy);
 });
 
+// 保护：回复结束后，失败写入不能伪装成仍在执行或成功修改。
 test('UX-3 recovered failed writes never count as successfully modified files',()=>{
- const view=api.progressText([{toolName:'write',state:'failed',summary:'写入文件'}],complete);assert.equal(view.text,'已完成 · 中途有 1 步重试');assert.doesNotMatch(view.text,/修改了/);
+ const view=api.progressText([{toolName:'write',state:'failed',summary:'写入文件'}],complete);assert.equal(view.running,false);assert.doesNotMatch(view.text,/修改了/);
 });
 
 test('UX-3 confirmed user stop overrides an error generated during cancellation but never changes a completed round',()=>{

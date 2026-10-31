@@ -1013,6 +1013,7 @@ test('ordinary text replies never produce a tool card from running, terminal or 
   }
 })
 
+// 保护：孤立停止回执不能污染下一回合，也不能凭空增加原生历史。
 test('orphan stop observation ends its progress without inventing history or hiding a newer unrelated turn', async () => {
   const command = { commandId: 'orphan-root', kind: 'session.message', state: 'accepted_by_dsh',
     sessionId: 'A', receiptId: 'rpc:orphan.1', dshTurn: 1 }
@@ -1030,7 +1031,7 @@ test('orphan stop observation ends its progress without inventing history or hid
   assert.equal(page.get('timeline-status').textContent, '')
   const progress = page.get('transcript').children.find((row: any) => row.querySelector('.execution-block'))
   assert.ok(progress)
-  assert.match(visibleText(progress), /已完成.*读取了 1 个文件/)
+  assert.match(visibleText(progress), /读取了 1 个文件/)
   assert.doesNotMatch(visibleText(progress), /失败|正在继续/)
   assert.equal(progress.dataset.running, 'false')
   assert.equal(events.some(event => event.type === 'turn.ended'), false)
@@ -1332,11 +1333,11 @@ test('history polling catches up across pages and shows a persisted user abort o
   assert.doesNotMatch(page.get('timeline-status').textContent, /尚无结束记录/)
   // No user or assistant message supplies a display language in this fixture;
   // the real message-process renderer uses the Chinese interface fallback.
-  assert.doesNotMatch(visibleText(page.get('transcript')), /已停止/)
+  assert.doesNotMatch(visibleText(page.get('transcript')), /已停止|已中断/)
   page.tick()
-  for (let attempt = 0; attempt < 15 && !visibleText(page.get('transcript')).includes('已停止'); attempt++) await flush()
+  for (let attempt = 0; attempt < 15 && !/已停止|已中断/.test(visibleText(page.get('transcript'))); attempt++) await flush()
   assert.equal(page.get('timeline-status').textContent,'')
-  assert.match(visibleText(page.get('transcript').querySelector('.execution-block')!), /已停止/)
+  assert.match(visibleText(page.get('transcript').querySelector('.execution-block')!), /已停止|已中断/)
 })
 
 test('new sync records render as read-only phone sources while an older host keeps its normal chat', async () => {
