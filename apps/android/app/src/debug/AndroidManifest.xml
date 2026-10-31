@@ -3,6 +3,7 @@
         <receiver android:name="com.memoweft.weftmate.mobile.DiagnosticQaReceiver" android:exported="true" />
         <receiver android:name="com.memoweft.weftmate.mobile.And4QaReceiver" android:exported="true" />
         <receiver android:name="com.memoweft.weftmate.mobile.And5QaReceiver" android:exported="true" />
+        <receiver android:name="com.memoweft.weftmate.mobile.ZafiroQaReceiver" android:exported="true" />
         <activity android:name="com.memoweft.weftmate.mobile.And5LegacyActivity" android:exported="false" />
         <activity android:name="com.memoweft.weftmate.mobile.St4RemoteBrowserActivity" android:process=":st4remote" android:exported="true" />
     </application>
