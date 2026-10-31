@@ -12,7 +12,7 @@ import java.io.OutputStream
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
 
-class ApiFailure(val status: Int, val safeCode: String) : Exception(safeCode)
+open class ApiFailure(val status: Int, val safeCode: String) : Exception(safeCode)
 
 /** Transport evidence stays separate from model, authorization and certificate errors. */
 internal fun connectionErrorCode(error: Exception, networkAvailable: Boolean): String? = when (error) {

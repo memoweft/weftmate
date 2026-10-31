@@ -22,6 +22,7 @@ class NativeActivity : HybridActivity() {
     internal lateinit var model: NativeChatModel
     internal lateinit var feed: NativeFeedModel
     internal lateinit var goals: NativeGoalsModel
+    internal val core by lazy { NativeCore(this) }
     internal lateinit var settings: NativeSettingsModel
     internal lateinit var health: NativeHealthModel
     internal var embeddedFeedLoaded: (() -> Unit)? = null
