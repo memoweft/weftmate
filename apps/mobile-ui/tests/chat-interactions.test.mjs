@@ -1714,6 +1714,7 @@ test('MOB-3 two choices answer in one tap and a custom answer retains its explic
   assert.deepEqual(custom.bridge.findLast(item=>item.method==='shared.questions.answer').params.answer.answers,[{id:'two',selected:[],custom:'只看今天的安排'}]);
 });
 
+// 保护：终态重绘保留原操作记录，不用摘要措辞推断是否结束。
 test('M1-0 ended mobile execution folds once and retains calls across a card boundary',()=>{
   const h=harness();prepareSyntheticTaskChat(h);
   h.run(`state.sharedEvents=[
@@ -1724,7 +1725,7 @@ test('M1-0 ended mobile execution folds once and retains calls across a card bou
     {seq:5,type:'task.ended',data:{taskId:'turn-1'}}];renderSharedConversation()`);
   const blocks=h.node('chat-content').children.filter(node=>node.dataset.timeline?.startsWith('steps-'));
   assert.equal(blocks.length,1);assert.equal(blocks[0].querySelector('details').open,false);
-  assert.equal(blocks[0].querySelector('.inline-progress-text').textContent,'已结束');
+  assert.equal(blocks[0].querySelector('details').dataset.terminal,'true');
   assert.equal(blocks[0].querySelector('.progress-elapsed').textContent,'');
   assert.equal(blocks[0].querySelectorAll('.execution-step').length,0,'closed records are built on first expansion');
   const details=blocks[0].querySelector('details');details.open=true;details.fire('toggle');

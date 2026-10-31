@@ -204,7 +204,7 @@
       const view = globalThis.WeftUiCore.progressText(tools, {...displayOutcome,language:block.language})
       if (!block.steps.length && !terminal) { view.text=WeftUiCore.progressWaitingText(waiting || '正在思考…',block.language);view.running=true }
       if (current?.toolName === '__thinking' && !terminal) {view.text=block.language==='en'?'Thinking…':'正在思考…';view.running=true}
-      else if (!tools.length && thought) view.text = block.language==='en'?'Thinking':'思考过程'
+      else if (!tools.length && thought && !terminal) view.text = block.language==='en'?'Thinking':'思考过程'
       if (stopView && !stopView.terminal) { view.text = `${view.text} · ${WeftUiCore.progressWaitingText(stopView.text, block.language)}`; view.running = true }
       // Keep completed work visible while a real native turn waits for its
       // next model/tool result. The stage comes from host state, not a timer
@@ -214,15 +214,13 @@
           block.steps.every(step => globalThis.WeftUiCore.executionState(step) === 'completed')) {
         view.text = WeftUiCore.progressWaitingText(waiting, block.language); view.running = true
       }
-      if(terminal && !view.failed && !tools.some(step=>step.approvalOutcome==='rejected')) {
+      if(terminal && !view.failed && !view.running && !tools.some(step=>step.approvalStatus==='pending' || step.approvalOutcome==='rejected')) {
         const session=block.sessionId || block.steps[0]?.sessionId;
         const start=ordered.findLast(event=>event.type==='turn.started' && event.seq<=block.seq && (!session || (event.sessionId||event.sourceRef?.sessionId)===session));
         const end=ordered.find(event=>['turn.ended','task.ended'].includes(event.type)&&WeftUiCore.turnOutcome([event],block.taskId).terminal);
         const ms=Date.parse(end?.at)-Date.parse(start?.at || block.steps[0]?.at);
         const duration=Number.isFinite(ms)?`${Math.max(0,Math.round(ms/1000))} ${block.language==='en'?'s':'秒'}`:'';
-        view.text=['aborted','cancelled','canceled','stopped','killed'].includes(outcome.reason) ? (block.language==='en'?'Stopped':'已停止') : outcome.reason==='completed' ? block.language==='en'?'Completed':'已完成' : block.language==='en'?'Ended':'已结束';
         view.duration=duration;
-        view.running=false;
       }
       if(block.submission) {
         view.text=block.submission==='failed' ? block.language==='en'?'Message not sent. Please retry.':'消息未能发送，请重试。'
