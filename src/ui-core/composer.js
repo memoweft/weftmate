@@ -230,6 +230,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         rememberTurnRequest(row);
         row.status = ['accepted_by_dsh', 'observed'].includes(command.state) ? 'accepted' :
             ['failed', 'rejected', 'blocked', 'uncertain'].includes(command.state) ? 'failed' : 'sending';
+        if (command.state === 'rejected' && command.errorCode) row.failureCode = command.errorCode;
         if (row.status === 'accepted' && row.sessionId === core.state.selectedSessionId && effects.readMessageDraft() === row.text)
             effects.clearMessageDraft();
         // History can arrive before the send receipt. Consume the placeholder

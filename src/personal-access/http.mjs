@@ -2130,8 +2130,8 @@ export function createHttpHandler(context) {
             state.sessions[payload.sessionId].ownerId !== state.ownerId)) {
           throw failure('SESSION_UNAVAILABLE', 404);
         }
-        if (payload.kind === 'session.message' &&
-            (state.sessions[payload.sessionId].archived === true || state.sessions[payload.sessionId].deleting === true)) throw failure('SESSION_ARCHIVED', 409);
+        if (payload.kind === 'session.message' && state.sessions[payload.sessionId].deleting === true) throw failure('SESSION_UNAVAILABLE', 404);
+        if (payload.kind === 'session.message' && state.sessions[payload.sessionId].archived === true) throw failure('SESSION_ARCHIVED', 409);
         if (payload.kind === 'session.message' &&
             !['personal-remote', 'shared-chat'].includes(state.sessions[payload.sessionId].origin)) {
           throw failure('SESSION_READ_ONLY', 409);
@@ -2240,8 +2240,8 @@ export function createHttpHandler(context) {
               !latest.devices[deviceId].scopes.includes('commands:write')) throw failure('UNAUTHORIZED', 401);
           if (payload.sessionId && (!Object.hasOwn(latest.sessions, payload.sessionId) ||
               latest.sessions[payload.sessionId].ownerId !== ownerId)) throw failure('SESSION_UNAVAILABLE', 404);
-          if (payload.kind === 'session.message' && (latest.sessions[payload.sessionId].archived === true || latest.sessions[payload.sessionId].deleting === true))
-            throw failure('SESSION_ARCHIVED', 409);
+          if (payload.kind === 'session.message' && latest.sessions[payload.sessionId].deleting === true) throw failure('SESSION_UNAVAILABLE', 404);
+          if (payload.kind === 'session.message' && latest.sessions[payload.sessionId].archived === true) throw failure('SESSION_ARCHIVED', 409);
           if (payload.kind === 'session.message' &&
               !['personal-remote', 'shared-chat'].includes(latest.sessions[payload.sessionId].origin)) {
             throw failure('SESSION_READ_ONLY', 409);

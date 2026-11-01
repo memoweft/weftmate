@@ -20,6 +20,17 @@ export function createCommandOperations(context) {
         command.userQuestions?.some(row => row.answerRequestId === requestId));
   }
 
+  /** The real reason a queued message can no longer go to its session, or null. */
+  function sessionMessageRejection(ownerId, session, admitted) {
+    if (!session || session.ownerId !== ownerId || !admitted || session.deleting === true ||
+        session.expiresAt && Date.parse(session.expiresAt) <= context.timestamp() ||
+        session.conversationId !== admitted.conversationId) return 'SESSION_UNAVAILABLE';
+    if (session.archived === true) return 'SESSION_ARCHIVED';
+    if (session.modelProfileId !== admitted.modelProfileId) return 'SESSION_MODEL_CHANGED';
+    if (!context.messageModelUsable(ownerId, session)) return 'MODEL_UNAVAILABLE';
+    return null;
+  }
+
   async function dispatch(ownerId, commandId) {
     try {
       if (context.closing || context.storageFault) return;
@@ -76,12 +87,12 @@ export function createCommandOperations(context) {
         }));
         return;
       }
-      if (pending.kind === 'session.message' &&
-          !context.messageModelUsable(ownerId, context.accountState(ownerId).sessions[pending.sessionId])) {
+      const sessionRejection = pending.kind === 'session.message' ? sessionMessageRejection(ownerId, pendingSession, pendingSession) : null;
+      if (sessionRejection) {
         await context.serial(() => context.mutate(ownerId, (next) => {
           if (next.commands[commandId]?.state !== 'pending') return;
           next.commands[commandId].state = 'rejected';
-          next.commands[commandId].errorCode = 'MODEL_UNAVAILABLE';
+          next.commands[commandId].errorCode = sessionRejection;
           next.commands[commandId].updatedAt = new Date().toISOString();
         }));
         return;
@@ -181,7 +192,9 @@ export function createCommandOperations(context) {
           if (inspected.rootIdentity !== project.rootIdentity || inspected.rootFinalPath !== project.rootFinalPath)
             throw failure('PROJECT_ROOT_CHANGED', 409);
         }
-        await context.callBackend(() => context.backend.preflight({ ...pending.payload, ownerId }));
+        // sendMessage repeats these checks right before the prompt and reports
+        // failures there as definitive, so a message is not preflighted twice.
+        if (pending.kind !== 'session.message') await context.callBackend(() => context.backend.preflight({ ...pending.payload, ownerId }));
       } catch (error) {
         if (context.closing) return;
         await context.serial(async () => {
@@ -236,14 +249,11 @@ export function createCommandOperations(context) {
           }
         }
         if (command.kind === 'session.message') {
-          const session = context.accountState(ownerId).sessions[command.sessionId];
-          if (!session || session.expiresAt && Date.parse(session.expiresAt) <= context.timestamp() || session.archived === true || session.deleting === true || session.ownerId !== ownerId || !pendingSession ||
-              session.modelProfileId !== pendingSession.modelProfileId ||
-              session.conversationId !== pendingSession.conversationId ||
-              !context.messageModelUsable(ownerId, session)) {
+          const errorCode = sessionMessageRejection(ownerId, context.accountState(ownerId).sessions[command.sessionId], pendingSession);
+          if (errorCode) {
             await context.mutate(ownerId, (next) => {
               next.commands[commandId].state = 'rejected';
-              next.commands[commandId].errorCode = 'MODEL_UNAVAILABLE';
+              next.commands[commandId].errorCode = errorCode;
               next.commands[commandId].updatedAt = new Date(context.timestamp()).toISOString();
             });
             return;
@@ -336,6 +346,7 @@ export function createCommandOperations(context) {
             callback = Promise.resolve(context.backend.sendMessage({
               sessionId: snapshot.sessionId, text: modelTextWithAttachments(snapshot.payload.text, staged,
                 snapshot.payload.originalAttachments), mode: snapshot.payload.mode, ownerId,
+              ...(snapshot.payload.modelProfileId ? { modelProfileId: snapshot.payload.modelProfileId } : {}),
               ...((chatForSession(context.accountState(ownerId),snapshot.sessionId)?.deepThinking ?? context.accountState(ownerId).sessions[snapshot.sessionId]?.deepThinking) !== undefined ?
                 { deepThinking: chatForSession(context.accountState(ownerId),snapshot.sessionId)?.deepThinking ?? context.accountState(ownerId).sessions[snapshot.sessionId].deepThinking } : {}),
               attachments: staged.filter((item) => !TEXT_ATTACHMENT_TYPES.has(item.contentType))
@@ -356,7 +367,7 @@ export function createCommandOperations(context) {
         if (context.closing) return;
         await context.serial(() => context.mutate(ownerId, (next) => {
           if (next.commands[commandId].state === 'dispatching') {
-            next.commands[commandId].state = 'uncertain';
+            next.commands[commandId].state = error?.beforeSend === true ? 'rejected' : 'uncertain';
             next.commands[commandId].errorCode = error?.code === 'BACKEND_TIMEOUT' ? 'RECEIPT_TIMEOUT' : safeCode(error);
             next.commands[commandId].updatedAt = new Date().toISOString();
           }

@@ -1745,7 +1745,9 @@ async function bootstrap() {
   const routeMutationQueue = createRouteMutationQueue();
   // One exclusive lane covers the snapshot/rollback transaction *and* any
   // session or settings-file write that could otherwise cross its idle fence.
+  // Per-session sends and cancels share it, so they never cross that fence.
   const enqueueRouteMutation = (work) => routeMutationQueue.run(work);
+  const enqueueSessionWork = (sessionId, work) => routeMutationQueue.runSession(sessionId, work);
   enqueueExclusiveMainOperation = enqueueRouteMutation;
   exclusiveMainQueue = routeMutationQueue;
   function verifiedLegacyCompatibilityProfile(profiles = settingsMod.listModelProfiles().profiles) {
@@ -2459,8 +2461,8 @@ async function bootstrap() {
     if (!profile || !hasProfileCredential(profile)) throw new Error('session model profile is unavailable');
     return { chosen, profile, route: routeForProfile(profile.id) };
   }
-  async function ensureKnownSession(sessionId) {
-    const { chosen, profile, route } = await resolveKnownSession(sessionId);
+  async function ensureKnownSession(sessionId, resolved = null) {
+    const { chosen, profile, route } = resolved?.chosen ? resolved : await resolveKnownSession(sessionId);
     // Header and explicitly-recorded legacy sources are persisted only after
     // resolution succeeds.  Unknown sessions never reach resume/send/cancel.
     if (chosen.source !== 'durable-binding') settingsMod.bindSessionModel(sessionId, chosen.profile.id, true);
@@ -3291,6 +3293,7 @@ async function bootstrap() {
     ensureKnownSession,
     gateway: stageOneGateway,
     queue: enqueueRouteMutation,
+    sessionQueue: enqueueSessionWork,
     bindSession: (sessionId, profileId) => settingsMod.bindSessionModel(sessionId, profileId),
     unbindSession: sessionId => settingsMod.unbindSessionModel(sessionId),
     desktopTask: personalDesktopTask,
