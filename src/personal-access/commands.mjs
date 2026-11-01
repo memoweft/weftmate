@@ -192,9 +192,7 @@ export function createCommandOperations(context) {
           if (inspected.rootIdentity !== project.rootIdentity || inspected.rootFinalPath !== project.rootFinalPath)
             throw failure('PROJECT_ROOT_CHANGED', 409);
         }
-        // sendMessage repeats these checks right before the prompt and reports
-        // failures there as definitive, so a message is not preflighted twice.
-        if (pending.kind !== 'session.message') await context.callBackend(() => context.backend.preflight({ ...pending.payload, ownerId }));
+        await context.callBackend(() => context.backend.preflight({ ...pending.payload, ownerId }));
       } catch (error) {
         if (context.closing) return;
         await context.serial(async () => {
@@ -346,7 +344,6 @@ export function createCommandOperations(context) {
             callback = Promise.resolve(context.backend.sendMessage({
               sessionId: snapshot.sessionId, text: modelTextWithAttachments(snapshot.payload.text, staged,
                 snapshot.payload.originalAttachments), mode: snapshot.payload.mode, ownerId,
-              ...(snapshot.payload.modelProfileId ? { modelProfileId: snapshot.payload.modelProfileId } : {}),
               ...((chatForSession(context.accountState(ownerId),snapshot.sessionId)?.deepThinking ?? context.accountState(ownerId).sessions[snapshot.sessionId]?.deepThinking) !== undefined ?
                 { deepThinking: chatForSession(context.accountState(ownerId),snapshot.sessionId)?.deepThinking ?? context.accountState(ownerId).sessions[snapshot.sessionId].deepThinking } : {}),
               attachments: staged.filter((item) => !TEXT_ATTACHMENT_TYPES.has(item.contentType))
