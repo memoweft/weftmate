@@ -71,3 +71,14 @@ test('forgetting a short hex-like phrase clears its words but never the ids it h
   await assert.doesNotReject(()=>f.restore(),'the native session still loads after forgetting');
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
+test('a cleanup retried with targets prepared before the fix still leaves ids alone',async()=>{
+ const f=await fixture();try{
+  f.events.push({seq:2,time:Date.now(),type:'user/message',data:{id:'msg-e4b0-user',role:'user',source:{kind:'user'},content:[{type:'text',text:'remember e4b'}]},surfaceOp:'append'});
+  await writeFile(f.file,[f.header,...f.events].map(JSON.stringify).join('\n')+'\n');
+  const stale=[{rowIndex:3,seq:2,paths:[['data','id'],['data','content','0','text']]}];
+  await eraseSessionMemoryArtifact(f.persistence,f.header.id,{snippetTargets:stale,deleteConversationSnippets:true});
+  const row=(await readFile(f.file,'utf8')).trim().split('\n').map(JSON.parse).at(-1);
+  assert.equal(row.data.id,'msg-e4b0-user');assert.equal(row.data.content[0].text,'');
+  await assert.doesNotReject(()=>f.restore());
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
