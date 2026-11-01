@@ -79,7 +79,7 @@ for (const orphan of ['我其实更喜欢绿茶','我喜欢散步']) test(`page 
  const row={object_kind:'cognition',item_id:'red',value:{content:'用户喜欢喝红茶'},transition_history:[],provenance:[{evidence_id:'red-source',evidence:red,permissions}]};
  const manager:any={query:async(_owner:string,method:string,p:any)=>{
   if(method==='preview_forget')return{world_revision:1,items:[{object_kind:'cognition',item_id:'red',name:'用户喜欢喝红茶',item_type:'preference'}],evidence_ids:['red-source']};
-  if(method==='query_jobs')return{world_revision:1,jobs:[{acceptance:{evidence_ids:['orphan']},worker:{state:'no_change'}}]};
+  if(method==='query_jobs')return{world_revision:1,evidence_ids:['orphan']};
   if(method==='query_world')return{world_revision:1,items:p.object_kind==='cognition'?[row]:[]};
   if(method==='query_evidence')return{world_revision:1,evidence:p.evidence_id==='red-source'?red:pending};
   throw Error(method);

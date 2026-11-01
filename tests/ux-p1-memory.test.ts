@@ -6,7 +6,7 @@ test('all-type memory paging keeps owner/revision/filter cursors and links nativ
   const calls: any[]=[];
   const manager={query:async(ownerId:string,method:string,params:any)=>{
     calls.push({ownerId,method,params});
-    if(method==='query_jobs')return {world_revision:7,jobs:[{acceptance:{evidence_ids:['e1'],parent_session_id:'synthetic-session'}}]};
+    if(method==='query_jobs')return {world_revision:7,evidence_sessions:[{evidence_id:'e1',parent_session_id:'synthetic-session',result_session_id:'synthetic-session'}]};
     return {world_revision:7,items:[{item_id:'shared-id',object_kind:params.object_kind,value:{content:params.object_kind+' synthetic'},current_state:'current',updated_at:'2026-10-10',provenance:[{evidence_id:'e1'}]}]};
   }};
   async function read(query:string){const url=new URL('http://localhost/personal/v1/memory/items?'+query);return handlePersonalMemoryHttp({manager,ownerId:'owner-a',request:{method:'GET'},pathname:url.pathname,url,readJson:async()=>({})} as any)}
