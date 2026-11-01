@@ -60,3 +60,14 @@ test('source deletion keeps a valid title and repairs a previously blank erased 
   rows=(await readFile(f.file,'utf8')).trim().split('\n').map(JSON.parse);assert.ok(rows.at(-1).data.title.length>0);await f.restore();
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
+test('forgetting a short hex-like phrase clears its words but never the ids it happens to occur in',async()=>{
+ const f=await fixture();try{
+  f.events.push({seq:2,time:Date.now(),type:'user/message',data:{id:'msg-e4b0-user',role:'user',source:{kind:'user'},content:[{type:'text',text:'remember e4b'}]},surfaceOp:'append'});
+  await writeFile(f.file,[f.header,...f.events].map(JSON.stringify).join('\n')+'\n');
+  const {snippetTargets}=await eraseSessionMemoryArtifact(f.persistence,f.header.id,{sourceTexts:['e4b'],prepareOnly:true});
+  await eraseSessionMemoryArtifact(f.persistence,f.header.id,{snippetTargets,deleteConversationSnippets:true});
+  const rows=(await readFile(f.file,'utf8')).trim().split('\n').map(JSON.parse);
+  assert.equal(rows.at(-1).data.id,'msg-e4b0-user');assert.equal(rows.at(-1).data.content[0].text,'');
+  await assert.doesNotReject(()=>f.restore(),'the native session still loads after forgetting');
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
