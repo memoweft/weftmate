@@ -108,7 +108,6 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   };
   const journal = createMemoryCommandJournal({ root, prepareCleanup: prepareConversationCleanup, eraseSnippets: eraseConversationSnippets });
   const commandFlights = new Map();
-  const manualFormationUntil = new Map();
   const actions = createMemoryActions({ root, manager: () => manager, schedule: scheduleRetry,
     redactJournal: (ownerId, row) => journal.redactTargets(ownerId,
       [row.arguments?.id, row.target?.id, row.command?.targetId, ...(row.affectedIds ?? [])].filter(Boolean),
@@ -408,8 +407,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
     if (!backlog.pendingBoundaryCount) boundaryFailures.delete(ownerId);
     else if (!backlog.blockedBoundaryCount) retry();
-    // A delivered boundary may still have a failed Core formation job. Resume
-    // both accepted jobs and durable user actions without requiring a UI read.
+    // Keep polling accepted jobs and durable user actions without requiring a UI read.
     void actions.resume(ownerId).catch(() => retry());
     try {
       if (formationOwners.has(ownerId)) {
@@ -419,16 +417,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           if (!entry.capabilities?.methods?.includes('query_jobs')) return;
           const result = await entry.rpc.request('query_jobs', { operation: 'list' });
           if (!runtimeCurrent(ownerId, generation)) return;
-          let pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
-          for (const item of result.formation_requests ?? []) if (['no_change', 'dead'].includes(item.state)) {
-            if (!runtimeCurrent(ownerId, generation)) return;
-            if (!entry.capabilities.methods.includes('retry_formation')) continue;
-            // An explicit retry owns its just-enqueued successor. Give it one
-            // normal recovery interval before creating another background replay.
-            if ((manualFormationUntil.get(ownerId) ?? 0) > Date.now()) { pending = true; continue; }
-            await entry.rpc.request('retry_formation', { job_id: item.job_id, request_id: `auto:${item.job_id}` });
-            pending = true;
-          }
+          // A settled job is never replayed here; the owner retries it from the memory warning.
+          const pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
           if (pending || await actions.pending(ownerId)) {
             if (!runtimeCurrent(ownerId, generation)) return;
             retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1); retry();
@@ -864,7 +854,6 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         ? 'connected' : 'unknown';
     },
     async retryFormation(ownerId, jobId, requestId) {
-      manualFormationUntil.set(ownerId, Date.now() + 30_000);
       return withOwner(ownerId, entry => entry.rpc.request('retry_formation', { job_id: jobId, request_id: requestId }));
     },
     async status(ownerId) {

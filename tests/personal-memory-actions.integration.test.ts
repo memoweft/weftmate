@@ -972,18 +972,6 @@ for (const name of ['memory_correct', 'memory_forget']) test(`real Core: ${name}
   assert.deepEqual(f.errors, [])
 })
 
-test('real Core: rejected formation automatically reprocesses and leaves degraded after recovery', { skip }, async t => {
-  const f = await fixture(t)
-  f.reject(true)
-  await f.manager.ingest(owner, boundary('不对，纠正成我喜欢喝红茶。', 'natural-correction'))
-  await wait(async () => (await f.manager.status(owner)).failedCorrectionCount === 1)
-  f.reject(false)
-  await f.ready()
-  const recall = await f.manager.recall(owner, { query: '我喜欢喝什么茶？', sessionId: 'recovered', modelTier: 'cloud' })
-  assert.match(recall.contextText, /红茶/); assert.doesNotMatch(recall.contextText, /喜欢喝乌龙茶/)
-  assert.ok(f.calls >= 3); assert.deepEqual(f.errors, [])
-})
-
 test('real Core: one forget removes a failed duplicate correction quote as well as the formal fact', { skip }, async t => {
   const f = await fixture(t), old = (await f.world()).items[0]
   f.reject(true)
