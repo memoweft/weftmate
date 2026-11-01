@@ -122,6 +122,9 @@ export async function apply(ctx) {
         if(!stored||!personal({session:{header:stored.meta}}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
         const result=await manager.eraseStoredSession(id);res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
       }
+      if (input.action==='forget'&&!manager.hasSession(id)) {
+        res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({ok:true,removedIds:[],removedNativeIds:[]}));return;
+      }
       if (['erase','forget'].includes(input.action)) {
         const result=await lifecycle.withStoredSession(id,async(session,agent)=>{
           const source=agent??{id,session};if(!personal(source))throw Object.assign(new Error('NOT_FOUND'),{status:404});
