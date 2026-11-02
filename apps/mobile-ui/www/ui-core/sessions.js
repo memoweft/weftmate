@@ -271,8 +271,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
     async function deleteSession(sessionId, forgetMemories = false, options = {}) {
         const identity = core.state.identityGeneration;
         const result = await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: { forgetMemories,
-            ...(forgetMemories ? { deleteConversationSnippets: options.deleteConversationSnippets === true,
-                ...(options.worldRevision !== undefined ? { memoryWorldRevision: options.worldRevision } : {}) } : {}) }, protectedWrite: true, timeoutMs: 120000 });
+            ...(forgetMemories && options.worldRevision !== undefined ? { memoryWorldRevision: options.worldRevision } : {}) }, protectedWrite: true, timeoutMs: 120000 });
         if (identity !== core.state.identityGeneration) return false;
         core.state.sessions = core.state.sessions.filter(item => item.sessionId !== sessionId);
         if (core.state.selectedSessionId === sessionId) {

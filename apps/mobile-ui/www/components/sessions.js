@@ -514,19 +514,17 @@ function mobileSessionMenu(session,confirming=false){
   }catch(error){notice.textContent=uiCore.sessionLifecycleMessage(error)}finally{button.disabled=false}};
   if(confirming){dialog.append(el('p','',session.projectId ? '这会永久删除对话与执行记录，项目文件夹里的文件不会删除。运行中的对话会先停止。' : '这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
     const label=el('label','session-forget'),check=el('input');check.type='checkbox';label.append(check,document.createTextNode('同时忘掉从这段对话形成的记忆'));dialog.append(label);
-    const snippetsLabel=el('label','session-forget'),snippets=el('input');snippets.type='checkbox';snippetsLabel.hidden=true;
-    snippetsLabel.append(snippets,document.createTextNode('同时删除对话里含这句话的原话'));
-    const summary=el('p');summary.setAttribute('role','status');dialog.append(summary,snippetsLabel);
+    const summary=el('p');summary.setAttribute('role','status');dialog.append(summary);
     let preview=null,generation=0;
     const remove=el('button','danger','永久删除');remove.type='button';
-    check.addEventListener('change',async()=>{const current=++generation;preview=null;snippets.checked=false;snippetsLabel.hidden=!check.checked;
+    check.addEventListener('change',async()=>{const current=++generation;preview=null;
       summary.textContent='';notice.textContent='';remove.disabled=check.checked;if(!check.checked)return;
       summary.textContent='正在读取遗忘范围…';uiCore.syncMobileIdentity();
       try{const result=await uiCore.previewSessionForget(session.sessionId);if(current!==generation||!dialog.open)return;
-        preview=result;summary.textContent=`将一起忘掉 ${result.itemCount} 项记忆，清除 ${result.evidenceCount} 条来源。勾选删除原话也会清除其他对话里的对应片段。`;remove.disabled=false;
+        preview=result;summary.textContent=`将一起忘掉 ${result.itemCount} 项记忆，清除 ${result.evidenceCount} 条来源。其他对话不受影响。`;remove.disabled=false;
       }catch(error){if(current!==generation||!dialog.open)return;summary.textContent='';notice.textContent='无法读取遗忘范围，请取消勾选或重新打开确认框。'}});
     remove.addEventListener('click',()=>{if(check.checked&&!preview)return;
-      void run(remove,()=>uiCore.deleteSession(session.sessionId,check.checked,{deleteConversationSnippets:snippets.checked,worldRevision:preview?.worldRevision}))});dialog.append(remove);
+      void run(remove,()=>uiCore.deleteSession(session.sessionId,check.checked,{worldRevision:preview?.worldRevision}))});dialog.append(remove);
   }else{
     dialog.classList.add('session-action-sheet');dialog.setAttribute('role','dialog');
     const add=(label,action,danger=false,separator=false)=>{if(separator){const line=el('hr','session-menu-separator');dialog.append(line)}
