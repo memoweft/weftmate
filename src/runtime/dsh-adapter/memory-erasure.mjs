@@ -174,7 +174,8 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
       value = { ...value, memoryUsed: [] }; changed = true
     }
     if (value.type === 'compaction/summary') {
-      changed = true;
+      // An already emptied summary is not a change; rewriting it on every forget was.
+      if (value.data?.summary?.length || value.data?.rawOutput?.length) changed = true;
       return { ...value, data: { ...value.data, summary: [], ...(value.data?.rawOutput ? { rawOutput: [] } : {}) } };
     }
     if (value.type === 'user/message' && value.surfaceOp?.op === 'replace' && value.data?.source?.plugin !== 'weftmate-memory-erasure') {
@@ -211,5 +212,5 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
         return value !== undefined && value !== '' && !(selectedRow(rows,target)?.type==='session/title' && path.join('.')==='data.title' && value===erasedTitle);
       }))) throw new Error('memory cleanup verification failed');
   }
-  return { cleaned: true, snippetsVerified: options.deleteConversationSnippets === true };
+  return { cleaned: true, changed, snippetsVerified: options.deleteConversationSnippets === true };
 }

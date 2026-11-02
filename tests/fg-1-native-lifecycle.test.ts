@@ -81,5 +81,6 @@ test('concurrent cold resumes share a native handle and model reads finish befor
   await tick();assert.equal(starts,1);release();await Promise.all([one,two]);assert.equal(starts,1);
   let finish;const model=lifecycle.use('session',()=>new Promise(resolve=>{finish=()=>{calls.push('model-read');resolve()}}));
   await tick();const forgetting=lifecycle.cleanupMemory('session');await tick();assert.deepEqual(calls,[]);
-  finish();await Promise.all([model,forgetting]);assert.deepEqual(calls,['model-read','flush','dispose','cache-delete']);
+  // Nothing was erased, so the projection cache is kept.
+  finish();await Promise.all([model,forgetting]);assert.deepEqual(calls,['model-read','flush','dispose']);
 });

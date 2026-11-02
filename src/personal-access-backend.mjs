@@ -317,7 +317,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     async cleanupMemoryCopies({ sessionId, sourceTexts = [], affectedIds = [], deleteConversationSnippets = false, scheduleIds = [], goalIds = [], prepareOnly = false, snippetTargets }) {
       requireRuntime()
       const listed = await listSessions()
-      if (!listed?.items?.some(item => item.sessionId === sessionId)) return { cleaned: true, snippetsVerified: true, snippetTargets: [] }
+      if (!listed?.items?.some(item => item.sessionId === sessionId)) return { cleaned: true, changed: false, snippetsVerified: true, snippetTargets: [] }
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/memory-cleanup`, { method: 'POST',
         body: JSON.stringify({ sourceTexts, deleteConversationSnippets, scheduleIds, goalIds, prepareOnly, snippetTargets, ...(affectedIds.length ? {affectedIds} : {}) }) })
     },
