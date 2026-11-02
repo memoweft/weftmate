@@ -2232,8 +2232,8 @@ async function bootstrap() {
   // Official DSH also owns first-run setup. The desktop view starts after
   // its exact-origin fence; personal host starts after IPC registration.
   sessionReferenceScan = { state: personalHostMode ? 'pending' : 'ready', error: null };
-  // Kept solely to fail closed for dormant migration-only stage-1 handlers.
-  // The main window never loads this local page once the DSH surface is ready.
+  // The local page no longer ships; this URL only keeps the wipe and desktop-pet
+  // handlers below failing closed, since no renderer can match it.
   const legacyRendererUrl = pathToFileURL(join(import.meta.dirname, 'web', 'weftmate.html')).href;
   const TITLE_BAR_OVERLAY_HEIGHT = 44;
   let dshResolvedTheme = null;
