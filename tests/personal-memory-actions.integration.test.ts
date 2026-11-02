@@ -1334,7 +1334,8 @@ test('review scope real Core: withdrawing an uncorrected source scrubs a pending
   assert.ok(initialMarker.cleanup.sourceTexts.includes(text))
   assert.equal(f.trace.filter(row => row.method === 'submit_command' && row.params.command.operation === 'correct_world_item').length, 0)
   await f.manager.discardPendingSources(owner, { sessionId: 'remember' })
-  await assert.rejects(f.manager.eraseConversationContext(owner, 'remember'), /synthetic host cleanup unavailable/)
+  // Core reports no affected IDs for this context, so no other conversation is swept.
+  await f.manager.eraseConversationContext(owner, 'remember')
   await f.restart(); await f.manager.retryCleanupByRequest(owner, 'uncorrected-delete'); await f.manager.close()
   const hits: string[] = []
   async function scan(directory: string) {
