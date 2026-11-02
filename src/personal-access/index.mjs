@@ -870,6 +870,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             ...(schedulesErased?.removedNativeIds?.length ? { scheduleIds: schedulesErased.removedNativeIds } : {}),
             ...(goalErased?.clearedGoalIds?.length ? { goalIds: goalErased.clearedGoalIds } : {}) }));
           if (deleteConversationSnippets && conversationTargets && cleaned?.snippetsVerified !== true) throw failure('MEMORY_CLEANUP_PENDING', 503);
+          // A conversation the erasure left untouched keeps its summary.
+          if (cleaned?.changed === false) continue;
           sessions.invalidate(ownerId,sessionId);
           if (cleaned?.forgottenSeqs?.length) await serial(() => mutate(ownerId, next => {
             const session = next.sessions[sessionId];

@@ -150,8 +150,9 @@ export function nativeSessionLifecycle(ctx) {
       const handle=handles.get(sessionId)
       if(handle){await handle.dispose(); handles.delete(sessionId)}
       const erased = await eraseSessionMemoryArtifact(persistence, sessionId, { sourceTexts, affectedIds, deleteConversationSnippets, scheduleIds, goalIds, snippetTargets, reprice })
-      await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(sessionId)
-      return { ...erased, forgottenSeqs }
+      const changed = erased.changed || forgottenSeqs?.length > 0
+      if (changed) await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(sessionId)
+      return { ...erased, changed, forgottenSeqs }
     }),
     fork: (sessionId, options) => serial(sessionId, async () => {
       await ensure({ sessionId }, true)

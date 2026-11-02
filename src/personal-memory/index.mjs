@@ -923,7 +923,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       // This is a source-scoped withdrawal, not a request to forget every
       // source/correction sharing one of Core's affected target IDs.
       await journal.redactTargets(ownerId, [], { sessionId });
-      if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
+      // With no affected IDs and no source text there is nothing left to find in
+      // other conversations; each evidence deletion already cleaned its own copies.
+      if (cleanupDeletedMemory && ids.length) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
       return result;
     },
     query(ownerId, method, params) { return withOwner(ownerId, async (entry) => {
