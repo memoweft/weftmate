@@ -634,6 +634,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       // Drain outside the journal lock: a drain may inspect action receipts.
       await flushFlights.get(ownerId)?.catch(() => {});
       if (marker) await journal.finishCleanup(ownerId, marker.requestId, async current => {
+        if (current.cleanup?.conversationId) return { snippetsVerified: true };
         await discardOutboxSources(ownerId, { sourceTexts: current.cleanup?.sourceTexts, boundaryIds: current.cleanup?.pendingBoundaryIds });
         return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...current.cleanup, affectedIds: ids,
           sourceTexts: current.cleanup?.sourceTexts ?? [], deleteConversationSnippets: current.cleanup?.deleteConversationSnippets === true,
@@ -923,9 +924,6 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       // This is a source-scoped withdrawal, not a request to forget every
       // source/correction sharing one of Core's affected target IDs.
       await journal.redactTargets(ownerId, [], { sessionId });
-      // With no affected IDs and no source text there is nothing left to find in
-      // other conversations; each evidence deletion already cleaned its own copies.
-      if (cleanupDeletedMemory && ids.length) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
       return result;
     },
     query(ownerId, method, params) { return withOwner(ownerId, async (entry) => {
@@ -1153,7 +1151,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       let cleanup;
       if (proposal.operation.startsWith('delete_')) {
         const prior = await journal.get(ownerId, proposal.requestId);
-        if (!prior) {
+        // A deleted conversation's sources are not looked up again in, or erased from, other conversations.
+        if (!prior && proposal.conversationId) cleanup = { conversationId: proposal.conversationId };
+        else if (!prior) {
           let sources = [];
           const targets = [{ target_kind: proposal.targetKind, target_id: proposal.targetId },
             ...(proposal.payload?.additional_targets ?? [])];
