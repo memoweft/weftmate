@@ -426,6 +426,8 @@
     "tests/personal-cloud-backup-snapshot-vendor.test.ts",
     "tests/work-and-chat-runtime.test.ts",
     "tests/fix-36-title-vendor.test.ts",
-    "tests/weftmod-plugin.test.ts"
+    "tests/weftmod-plugin.test.ts",
+    "tests/memory-cold-cleanup.test.ts",
+    "tests/memory-erasure-format.test.ts"
   ]
 }
