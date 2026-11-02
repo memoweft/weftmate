@@ -68,7 +68,7 @@ for(const action of ['forget','revoke'])test(`another computer's ${action} clear
   const erased=await W.browserVault(scopeB,{indexedDB,crypto:webcrypto});assert.equal((await erased.load()).snapshot,null);erased.close();engine.close();
 });
 function receiverFixture(){
-  const rows:any[]=[],account:any={ownerId:'owner',hostId:'host',commands:{},sessions:{session:{modelProfileId:'model',approvalMode:'ask'}},devices:{cookie:{scopes:['commands:write'],authKind:'cloud',authEpoch:1,revoked:false,expiresAt:'2020-01-01'}}};
+  const rows:any[]=[],account:any={ownerId:'owner',hostId:'host',commands:{},sessions:{session:{ownerId:'owner',modelProfileId:'model',approvalMode:'ask'}},devices:{cookie:{scopes:['commands:write'],authKind:'cloud',authEpoch:1,revoked:false,expiresAt:'2020-01-01'}}};
   const scheduled:string[]=[],acks:any[]=[],results:any[]=[];let queue=Promise.resolve(),cancel=false;
   const context:any={rootState:{hostId:'host'},ownerIds:()=>['owner'],accountState:()=>account,hostOwner:()=>true,timestamp:Date.now,
     offline:{generation:()=>1},messageModelUsable:()=>true,mainChat:{prepareReminder:async()=> 'session'},
