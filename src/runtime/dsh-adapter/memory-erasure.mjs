@@ -113,8 +113,13 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
   // Text matching is confined to preparation and the legacy direct-call API.
   const texts = options.snippetTargets ? [] : options.sourceTexts ?? [];
   const contentKeys = ['text','texts','content','delta','arguments','argumentsDelta','args','output','summary','rawOutput'];
+  // Identifiers and structure are never user words, however short the forgotten text.
+  const identifier = key => /^(id|seq|type|role|kind|name|provider|model|api|plugin|stopReason)$|Ids?$/.test(key);
+  // Targets prepared before this rule may still point at identifiers; never apply those paths.
+  const contentPath = path => !identifier(String([...path].reverse().find(key => !/^\d+$/.test(String(key))) ?? ''));
   const fields = (value, path = [], found = [], wholeTurn = false, field = '') => {
-    if (typeof value === 'string' && value && (wholeTurn && contentKeys.includes(field) || texts.some(text => text && value.includes(text)))) found.push(path);
+    if (typeof value === 'string' && value && !identifier(field) &&
+        (wholeTurn && contentKeys.includes(field) || texts.some(text => text && value.includes(text)))) found.push(path);
     else if (value && typeof value === 'object') for (const [key, child] of Object.entries(value)) fields(child, [...path, key], found, wholeTurn, Array.isArray(value) ? field : key);
     return found;
   };
@@ -137,7 +142,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
   const selectedRow = (rows, target) => target.seq === undefined ? rows[target.rowIndex] : rows.find(row => (row?.seq ?? row?.seq0) === target.seq);
   if (options.deleteConversationSnippets && options.snippetTargets) for (const target of snippetTargets) {
     const row = selectedRow(lines, target);
-    for (const path of target.paths) {
+    for (const path of target.paths.filter(contentPath)) {
       let parent = row;
       for (const key of path.slice(0, -1)) parent = parent?.[key];
       if (parent && Object.hasOwn(parent, path.at(-1))) { parent[path.at(-1)] = row?.type==='session/title' && path.join('.')==='data.title' ? erasedTitle : ''; changed = true; }
@@ -145,7 +150,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
   }
   const clean = (value, redact = false, key = '') => {
     if (typeof value === 'string') {
-      if (!options.deleteConversationSnippets) return value
+      if (!options.deleteConversationSnippets || identifier(key)) return value
       if (redact && contentKeys.includes(key)) { changed = true; return ''; }
       for (const text of texts) if (value.includes(text)) { value = value.replaceAll(text, '[已遗忘的原话]'); changed = true }
       return value
@@ -200,7 +205,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
       return found;
     });
     if (residual || options.snippetTargets && snippetTargets.some(target =>
-      target.paths.some(path => {
+      target.paths.filter(contentPath).some(path => {
         let value = selectedRow(rows, target);
         for (const key of path) value = value?.[key];
         return value !== undefined && value !== '' && !(selectedRow(rows,target)?.type==='session/title' && path.join('.')==='data.title' && value===erasedTitle);
