@@ -667,9 +667,9 @@ describe('R7 记忆宿主插件契约', () => {
 
   it('profile 接线：补丁层保留试验行、默认关闭、资产复制、main 不注入开发机绝对路径', () => {
     assert.match(runtime, /- id: weftmate-memory\s*\n\s*name: \.\/plugins\/weftmate-memory\.mjs/);
-    assert.match(runtime, /PROFILE_PATCH_TEMPLATE_R3_PICKER/);
+    // Old templates (including R3 picker) upgrade by content digest; fixtures cover each one.
     const upgrade = between(runtime, 'if (existing === PROFILE_PATCH_TEMPLATE) return false', 'return false // owner 手改');
-    assert.match(upgrade, /PROFILE_PATCH_TEMPLATE_R3_PICKER/);
+    assert.match(upgrade, /OLD_PROFILE_PATCH_SHA256\.has\(/);
     assert.match(runtime, /\[join\(PLUGINS_DIR, 'weftmate-memory\.mjs'\), memoryDest\]/);
     assert.match(plugin, /process\.env\.WEFTMATE_MEMOWEFT_ENABLED !== '1'/);
     assert.ok(plugin.indexOf("WEFTMATE_MEMOWEFT_ENABLED !== '1'") < plugin.indexOf('new MemoWeftBridge'));

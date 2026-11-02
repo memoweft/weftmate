@@ -1,0 +1,33 @@
+# WeftMate 补丁层（R14）：官方 DSH 功能、最小桌面扩展与 AI-Game 工具接缝。
+- insert:
+    - id: weftmate-host
+      name: ./plugins/weftmate-host.mjs
+    - id: weftmate-memory
+      name: ./plugins/weftmate-memory.mjs
+    - id: weftmate-aigame-host
+      name: ./plugins/weftmate-aigame-host.mjs
+    - id: weftmate-personal-schedules
+      name: ./plugins/weftmate-personal-schedules.mjs
+    - id: weftmate-personal-conversation-context
+      name: ./plugins/weftmate-personal-conversation-context.mjs
+    - id: weftmate-personal-task-control
+      name: ./plugins/weftmate-personal-task-control.mjs
+    - id: weftmate-personal-memory
+      name: ./plugins/weftmate-personal-memory.mjs
+    - id: weftmate-personal-desktop
+      name: ./plugins/weftmate-personal-desktop.mjs
+    - id: weftmate-weftmod
+      name: ./plugins/weftmate-weftmod.mjs
+    - id: weftmate-mod-projects
+      name: ./plugins/weftmate-mod-projects.mjs
+    - id: '@weftmate/client'
+      name: '@weftmate/client'
+# Credential providers are deliberately absent here. The final host security
+# overlay is the only authority for safeStorage credential IPC.
+- id: directory-picker
+  disabled: true
+- insert:
+    - id: directory-picker-browse
+      name: '@deepseek-ai/dsh-host-directory-picker-browse'
+    - id: ui-directory-picker-browse
+      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'
