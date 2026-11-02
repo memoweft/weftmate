@@ -373,7 +373,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (!response.ok) fail('BACKEND_UNAVAILABLE')
     },
     /** Errors before the prompt carry `beforeSend`: nothing reached the model. */
-    async sendMessage({ sessionId, text, mode = 'queue', ownerId, attachments = [], deepThinking }) {
+    async sendMessage({ sessionId, text, mode = 'queue', ownerId, attachments = [], deepThinking, modelProfileId }) {
       const beforeSend = (error) => { throw Object.assign(error, { beforeSend: true }) }
       try {
         requireRuntime()
@@ -386,6 +386,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         let session
         try {
           session = await requireSession(sessionId, ownerId)
+          if (modelProfileId && session.profile?.id !== modelProfileId) fail('MODEL_UNAVAILABLE')
           const nativeModel = await requireCatalogRoute(session.profile)
           // ensureKnownSession resumes the native session; it needs no second resume.
           try { await ensureKnownSession(sessionId, session) }
