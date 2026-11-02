@@ -19,7 +19,8 @@ test('cold cleanup and deletion work with an unloadable agent preset and without
   const id='session-'+randomUUID();await runtime.backend.createSession({sessionId:id,modelProfileId:'synthetic',ownerId:host.ownerId});
   const preset=join(root,'dsh-home/.agent-presets/personal-remote/agent.cordis.yml');
   await writeFile(preset,'- name: missing-cleanup-test-module\n');
-  await runtime.backend.schedules({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});
+  // A session without schedules no longer loads for a schedule forget; the goal forget still unloads it.
+  await runtime.backend.goals({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});
   const failed=await fetch(origin+'/weftmate/api/v1/sessions/'+id+'/models');assert.notEqual(failed.status,200);
   const calls=runtime.requests.length;
   await runtime.backend.schedules({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});

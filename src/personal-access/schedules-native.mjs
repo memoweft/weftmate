@@ -234,6 +234,8 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
   }
   const eraseStoredSession=id=>serial(async()=>{delete state.sessions[id];await save();return {ok:true,removedNativeIds:[]};});
   return { register, due, manage, deleted, bindNativeTools, eraseStoredSession, close: () => queue,
-    hasSession: id => !!state.sessions[id],
+    // An empty bucket, such as one an earlier forget left behind, has nothing to list or forget.
+    hasSession: id => { const b = state.sessions[id];
+      return !!b && (Object.keys(b.items).length > 0 || b.notifications.length > 0 || Object.keys(b.operations ?? {}).length > 0); },
     restoreSessionIds: () => Object.entries(state.sessions).filter(([, b]) => Object.values(b.items).some(r => r.state === 'scheduled')).map(([id]) => id) };
 }

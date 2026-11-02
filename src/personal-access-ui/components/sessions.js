@@ -430,8 +430,10 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         remove.addEventListener('click', async () => {
             remove.disabled = true; error.textContent = '';
             if (forget.checked && !preview) return;
+            const scope = summary.textContent;
+            if (forget.checked) summary.textContent = '正在删除，并清理其他对话里留下的记忆，对话多时要几十秒…';
             try { await core.deleteSession(session.sessionId, forget.checked, { deleteConversationSnippets: snippets.checked, worldRevision: preview?.worldRevision }); dialog.close(); }
-            catch (cause) { error.textContent = core.sessionLifecycleMessage(cause); }
+            catch (cause) { summary.textContent = scope; error.textContent = core.sessionLifecycleMessage(cause); }
             finally { remove.disabled = forget.checked && !preview; }
         });
         footer.append(cancel, remove); dialog.append(body, footer); dialog.addEventListener('close', () => dialog.remove());

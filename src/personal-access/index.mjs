@@ -858,8 +858,12 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           if(account.sessions[sessionId]?.phoneHistory)continue;
           const target = conversationTargets?.find(row => row.sessionId === sessionId);
           const receiptIds = [...new Set([...(target?.receiptIds ?? []), ...Object.values(account.commands).filter(row => row.sessionId === sessionId && sourceTexts.some(text => text && row.payload?.text?.includes(text))).map(row => row.receiptId).filter(Boolean)])];
-          const schedulesErased = backend.schedules ? await backend.schedules({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
-          const goalErased = backend.goals ? await backend.goals({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
+          // Schedules and goals match only receipts or source text. A goal matches
+          // its own objective text, which the prepared scan has already located.
+          const texts = sourceTexts.some(Boolean);
+          const schedulesErased = backend.schedules && (receiptIds.length || texts) ? await backend.schedules({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
+          const goalErased = backend.goals && (receiptIds.length || texts && (!target || target.snippetTargets.length))
+            ? await backend.goals({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
           const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets,
             ...(conversationTargets ? { snippetTargets: target?.snippetTargets ?? [] } : {}),
             ...(affectedIds.length ? { affectedIds } : {}),
