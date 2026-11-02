@@ -14,7 +14,6 @@ export function createChatOperations(context) {
     const q = (params.get('q') ?? '').trim(), size = params.get('limit') ?? '50';
     if (q.length > 120 || !/^\d+$/.test(size) || Number(size) < 1 || Number(size) > 200) throw failure('INVALID_REQUEST');
     const account = context.accountState(ownerId);
-    if (account.memoryCleanupPending) throw failure('SESSION_BUSY', 409);
     const excluded = new Set();
     for (const segment of Object.values(account.chatIdentity.segments)) { const session = account.sessions[segment.sessionId]; if (!session || session.deleting || hasPrivateContent(session)) excluded.add(segment.chatId); }
     const candidates = Object.values(account.chatIdentity.chats).filter(chat => !excluded.has(chat.chatId));
@@ -69,7 +68,7 @@ export function createChatOperations(context) {
       parent: chat.kind === 'main' ? null : session?.projectId
         ? { kind: 'project', id: session.projectId } : { kind: 'main', id: identity.mainChatId } };
     if (!session) return { ...base, title: 'WeftMate', pinned: true, archived: false,
-      unread: chat.unread, groupId: null, projectId: null, running: false, sendAvailable: !account.memoryCleanupPending,
+      unread: chat.unread, groupId: null, projectId: null, running: false, sendAvailable: true,
       taskAvailable: false, attention: null, lastOutcome: null };
     let described, summary;
     try {
@@ -99,7 +98,7 @@ export function createChatOperations(context) {
       ...(session.conversationId ? { conversationId: session.conversationId } : {}),
       ...(session.workspaceKind ? { workspaceKind: session.workspaceKind } : {}),
       modelProfileId: session.modelProfileId ?? described.modelProfileId ?? null,
-      running: described.running === true, sendAvailable: Boolean(canSend) && !account.memoryCleanupPending, taskAvailable: session.origin === 'personal-remote',
+      running: described.running === true, sendAvailable: Boolean(canSend), taskAvailable: session.origin === 'personal-remote',
       ...(chat.relay ? { contextOrganizing: true } : {}), ...(chat.relayError ? { relayError: chat.relayError } : {}),
       ...(described.contextUsage ? { contextUsage: described.contextUsage } : {}),
       ...(described.running && described.processing ? { processing: described.processing } : {}) };

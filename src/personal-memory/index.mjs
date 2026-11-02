@@ -81,6 +81,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const retryTimers = new Map();
   const retryCounts = new Map();
   const activeCleanups = new Map();
+  const cleanupRecoveryFlights = new Map();
   const runtimeFailures = new Map();
   const runtimeGenerations = new Map();
   const repairingOwners = new Set();
@@ -100,6 +101,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   };
   const eraseConversationSnippets = async (ownerId, record) => {
     const result = await withOwner(ownerId, entry => entry.rpc.request('query_command_receipt', { command_id: record.command.command_id }));
+    if(['rejected','revision_conflict'].includes((result.receipt??result).result_state))return {notApplied:true};
     if (!['applied', 'no_change'].includes((result.receipt ?? result).result_state)) throw error('MEMORY_CLEANUP_PENDING');
     await discardOutboxSources(ownerId, { sourceTexts: record.cleanup.sourceTexts, boundaryIds: record.cleanup.pendingBoundaryIds });
     return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...record.cleanup, affectedIds: [], journalManaged: true }) : { snippetsVerified: true };
@@ -335,7 +337,14 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   function flushPending(ownerId, generation = runtimeGeneration(ownerId)) {
     if (!runtimeCurrent(ownerId, generation)) return Promise.resolve(new Map());
     if (flushFlights.has(ownerId)) return flushFlights.get(ownerId);
-    const work = drainPending(ownerId, generation).finally(() => { if (flushFlights.get(ownerId) === work) flushFlights.delete(ownerId); });
+    const work = drainPending(ownerId, generation).finally(() => {
+      if (flushFlights.get(ownerId) === work) flushFlights.delete(ownerId);
+      if (!closing && runtimeCurrent(ownerId,generation) && !cleanupRecoveryFlights.has(ownerId)) {
+        const recovery=Promise.resolve().then(()=>manager.resumeAfterTurn(ownerId)).catch(()=>scheduleRetry(ownerId))
+          .finally(()=>{if(cleanupRecoveryFlights.get(ownerId)===recovery)cleanupRecoveryFlights.delete(ownerId);});
+        cleanupRecoveryFlights.set(ownerId,recovery);
+      }
+    });
     flushFlights.set(ownerId, work);
     return work;
   }
@@ -1249,6 +1258,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           { command_id: marker.command.command_id }));
         let result = await query();
         const receipt = result?.receipt ?? result;
+        if(!['applied','no_change'].includes(receipt?.result_state) && marker.cleanup?.snippetsPending)
+          await journal.retryPendingRedaction(ownerId,requestId);
         if (['applied', 'no_change'].includes(receipt?.result_state) &&
             receipt?.storage_cleanup?.state === 'pending') {
           try {
@@ -1264,12 +1275,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     },
     async resumeAfterTurn(ownerId) {
       owner(ownerId);
-      for (const row of await journal.pendingCleanup(ownerId))
-        await this.retryCleanupByRequest(ownerId, row.requestId).catch(() => {});
-      const pending = (await journal.pendingCleanup(ownerId)).length > 0 || await actions.pending(ownerId);
+      let retry=false;
+      for (const row of await journal.pendingCleanup(ownerId,true))
+        await this.retryCleanupByRequest(ownerId, row.requestId).catch(cause=>{if(cause.code!=='command_receipt_not_found')retry=true;});
+      const pending = retry || (await journal.pendingCleanup(ownerId)).length > 0 || await actions.pending(ownerId);
       if (pending) {
         clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
-        scheduleRetry(ownerId, true);
+        retryCounts.set(ownerId,(retryCounts.get(ownerId)??0)+1);scheduleRetry(ownerId);
       }
       return { pending };
     },
@@ -1295,6 +1307,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       for (const timer of retryTimers.values()) clearTimeout(timer);
       retryTimers.clear();
       await Promise.allSettled([...flushFlights.values()]);
+      await Promise.allSettled([...cleanupRecoveryFlights.values()]);
       await startQueue.catch(() => {});
       await Promise.allSettled([...repairFlights.values()]);
       await Promise.all([...outboxQueues.values()].map((pending) => pending.catch(() => {})));

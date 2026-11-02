@@ -97,12 +97,12 @@ test('uncertain dispatch and rejected true forgetting do not claim deletion',asy
   await assert.rejects(f.operations.deleteSession('owner','session-a',{forgetMemories:true}),{code:'MEMORY_DELETE_CONFLICT'});assert.ok(f.account.sessions['session-a']);assert.equal(f.account.sessions['session-a'].deleting,undefined);
 });
 
-test('cold deletion acquires a native lifecycle before removing the session', async () => {
+test('cold deletion removes the session without resuming its old model', async () => {
   const calls:string[]=[];
   const backend=createPersonalAccessBackend({currentOrigin:()=> 'http://fixture',profiles:()=>[],listSessions:async()=>({items:[{sessionId:'session-cold'}]}),
     gateway:async(p:string,options:any)=>{calls.push(options.method+' '+p);return {deleted:true}},referenceScan:()=>({})});
   await backend.deleteSession({sessionId:'session-cold',ownerId:'owner'});
-  assert.deepEqual(calls,['POST /sessions/session-cold/resume','DELETE /sessions/session-cold']);
+  assert.deepEqual(calls,['DELETE /sessions/session-cold']);
 });
 
 for(const evidenceId of ['e-a','__proto__'])test(`pending source erasure keeps ${evidenceId} when Core has removed the source jobs`,async()=>{

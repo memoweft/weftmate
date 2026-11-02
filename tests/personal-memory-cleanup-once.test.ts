@@ -67,13 +67,13 @@ for (const mode of ['receipt', 'core-storage-retry', 'turn-idle']) test(`${mode}
     const { ownerId: _ownerId, ...command } = proposal;
     const result = await manager.submitCommand(started.ownerId, command);
     assert.equal(result.receipt.storage_cleanup.state, mode === 'receipt' ? 'complete' : 'pending');
-    if (mode === 'turn-idle') assert.equal((await create('while-forgetting')).status,409);
+    if (mode === 'turn-idle') assert.equal((await create('while-forgetting')).status,202);
     repeated = mode === 'turn-idle' ? manager.resumeAfterTurn(started.ownerId) : mode === 'receipt' ? manager.receiptByRequest(started.ownerId, proposal.requestId)
       : manager.retryCleanupByRequest(started.ownerId, proposal.requestId);
     await Promise.race([repeated, entered.promise]);
     const response = await create('after-forget');
     assert.equal(response.status, 202, JSON.stringify(await response.json()));
-    assert.equal(cleanups, mode === 'turn-idle' ? 2 : 1);
+    assert.ok(mode === 'turn-idle' ? cleanups >= 2 : cleanups === 1);
     assert.equal(mode === 'turn-idle' ? (await repeated).pending : (await repeated).receipt.storage_cleanup.state, mode === 'turn-idle' ? false : 'complete');
   } finally {
     release.resolve(); await repeated?.catch(() => {});

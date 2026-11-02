@@ -1,6 +1,7 @@
 /* Shared resources state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
     const messageBodies = new Map();
+    const submissionFailures = new Map();
     const chatCommand = kind => ['session.create','session.side.create','session.message','chat.message','session.cancel'].includes(kind);
     function capturedSourceText(raw) {
         const parse = value => { try { return JSON.parse(value); } catch { return null; } };
@@ -219,6 +220,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
         effects.updateAvailability();
         try {
             const requestId = fixedRequestId || environment.crypto.randomUUID();
+            const failureKey=`${core.state.ownerId}:${requestId}`;submissionFailures.delete(failureKey);
             const marker = { requestId, kind, ...(sessionId ? { sessionId } : {}) };
             core.rememberMarker(marker); // Durable ID before the network request; body stays in memory.
             if (chatCommand(kind)) core.trackRequestState();
@@ -242,10 +244,13 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
                     await core.lookupRequest(marker);
                 }
                 else if (error.code !== 'UNAUTHORIZED') {
+                    submissionFailures.set(failureKey,error.code);
                     core.forgetMarker(requestId);
-                    core.operation(error.code === 'MODEL_UNAVAILABLE' ? '电脑尚无可用模型，消息未发送。'
+                    const inlineMemoryFailure=error.code==='MEMORY_BUSY' && core.optimisticMessages?.().some(row=>row.requestId===requestId||row.createRequestId===requestId);
+                    core.operation(inlineMemoryFailure ? '' : error.code === 'MODEL_UNAVAILABLE' ? '电脑尚无可用模型，消息未发送。'
                         : error.code === 'SESSION_READ_ONLY' ? '旧会话只供阅读，请新建受限远端会话。'
                             : error.code === 'CAPABILITY_UNAVAILABLE' ? '这项电脑能力目前不可用，请稍后再试。'
+                                : error.code === 'MEMORY_BUSY' ? '记忆清理尚未完成，这条消息未发送。清理结束后可重试。'
                                 : '请求未受理，请检查状态后重试。', false, requestId);
                 }
                 return null;
@@ -261,7 +266,8 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
     }
     return { capturedSourceText, capturedSourceForUrl, deduplicateOutputs, timelineEventsForContext, loadConversationResources, refreshTasks, updateFromCommand, lookupRequest, restoreRequests, submitCommand,
         originalMessageBody: requestId => messageBodies.get(`${core.state.ownerId}:${requestId}`),
-        resetMessageBodies: () => messageBodies.clear(),
+        submissionFailure: requestId => submissionFailures.get(`${core.state.ownerId}:${requestId}`),
+        resetMessageBodies: () => {messageBodies.clear();submissionFailures.clear();},
         replayOriginalMessage: async requestId => {
             const body = messageBodies.get(`${core.state.ownerId}:${requestId}`);
             if (!body) return null;

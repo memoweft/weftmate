@@ -1405,7 +1405,6 @@ export function createHttpHandler(context) {
           if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
           // The catalog can finish after erasure/deletion. Validate the final
           // body generation synchronously, with no asynchronous work afterward.
-          if (context.accountState(ownerId).memoryCleanupPending) throw failure('SESSION_BUSY', 409);
           const chat = context.chats.requireChat(ownerId, chatId);
           if (result.contentRevision !== undefined && chat.contentRevision !== result.contentRevision)
             throw failure('CURSOR_RESET_REQUIRED', 409);
@@ -2202,7 +2201,6 @@ export function createHttpHandler(context) {
             return publicCommand(existing);
           }
           if (payload.sideChat) context.sideChats.validatePrepared(ownerId, payload.sideChat);
-          if (latest.memoryCleanupPending) throw failure('SESSION_BUSY', 409);
           if (adoptionId) {
             const fresh = context.conversationSnapshot(ownerId, adoptionId);
             if (!context.sourceDevicesUpgraded(ownerId, fresh)) {

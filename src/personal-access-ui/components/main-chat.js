@@ -225,12 +225,13 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             if(!bubble){bubble=ui.element('div','message-user-bubble');row.append(bubble);}
             if(row.dataset.userText!==spec.event.text){bubble.replaceChildren(WeftContent.create(spec.event.text || (spec.event.files || []).join('、') || '附件','message-text markdown-body'));row.dataset.userText=spec.event.text;}
             let actions=row.querySelector('.message-actions');if(!actions){actions=ui.element('div','message-actions');row.append(actions);}
-            const status=ui.element('small','message-time',spec.event.status === 'undelivered' ? '未送达' : ['failed','confirming'].includes(spec.event.status) ? '发送结果待核对，草稿已保留' : spec.event.status === 'accepted' ? '已发送' : '发送中');
+            const status=ui.element('small','message-time',spec.event.failureCode ? '未发送，草稿已保留' : spec.event.status === 'undelivered' ? '未送达' : ['failed','confirming'].includes(spec.event.status) ? '发送结果待核对，草稿已保留' : spec.event.status === 'accepted' ? '已发送' : '发送中');
             status.setAttribute('role','status');actions.replaceChildren(status);
             for(const button of row.querySelectorAll(':scope > button'))button.remove();
             if(!row.dataset.motionSent)row.dataset.motionSent=spec.event.createdSession||!spec.event.sessionId?'pending-first':'pending';
             if (['failed','confirming','undelivered'].includes(spec.event.status)) {
-                const retry = button(spec.event.status === 'undelivered' ? '重试发送' : '检查状态', '检查状态', () => logical() ? core.retryMainRequest(spec.event.requestId) : core.retryOptimistic(spec.event.requestId));
+                const retryLabel=spec.event.status==='undelivered'||spec.event.failureCode?'重试发送':'检查状态';
+                const retry = button(retryLabel, retryLabel, () => logical() ? core.retryMainRequest(spec.event.requestId) : core.retryOptimistic(spec.event.requestId));
                 retry.disabled = !!spec.event.retrying || !core.state.online;row.append(retry);
             }
         } else {

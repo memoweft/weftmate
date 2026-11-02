@@ -202,7 +202,6 @@ export function createCommandOperations(context) {
         if(command.offlineSource&&!offlineCommandSource(context,ownerId,command)){
           await context.mutate(ownerId,next=>{next.commands[commandId].state='rejected';next.commands[commandId].errorCode='DEVICE_REVOKED';});return;
         }
-        if (context.accountState(ownerId).memoryCleanupPending) return;
         if (command.payload.projectId && (context.accountState(ownerId).projects?.[command.payload.projectId]?.revoked ||
             context.accountState(ownerId).projects?.[command.payload.projectId]?.revision !== command.payload.projectRevision)) {
           await context.mutate(ownerId, (next) => {

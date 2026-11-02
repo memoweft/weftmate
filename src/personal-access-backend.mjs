@@ -75,11 +75,16 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       fail('SESSION_UNAVAILABLE');
     }
   }
-  const requireSession = async (id, ownerId) => {
+  const requireSessionRecord = async (id, ownerId, optional = false) => {
     if (typeof id !== 'string' || !idPattern.test(id)) fail('SESSION_UNAVAILABLE')
-    const current = await readSession(id)
+    const current = await readSession(id, optional)
+    if (!current && optional) return null;
     if (current?.sessionId !== id) fail('SESSION_UNAVAILABLE')
     if (current.agentPreset !== presetForOwner(ownerId)) fail('SESSION_READ_ONLY')
+    return current;
+  }
+  const requireSession = async (id, ownerId) => {
+    const current = await requireSessionRecord(id, ownerId)
     try { return await resolveSession(id, { items: [current] }) }
     catch { fail('SESSION_UNAVAILABLE') }
   }
@@ -324,9 +329,6 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       requireRuntime()
       const listed = await listSessions()
       if (listed?.items?.some(item => item.sessionId === sessionId)) {
-        // A cold session can be listed/restored without an owned AgentHandle.
-        // Resume through DSH so deletion can drain its native disposer.
-        await gateway(`/sessions/${encodeURIComponent(sessionId)}/resume`, { method: 'POST', body: '{}' })
         const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: '{}' })
         if (result?.deleted !== true) fail('SESSION_UNAVAILABLE')
       }
@@ -342,7 +344,9 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     },
     async schedules({ sessionId, ownerId, ...input }) {
       requireRuntime()
-      await requireSession(sessionId, ownerId)
+      if (['forget','erase'].includes(input.action)) {
+        if (!await requireSessionRecord(sessionId, ownerId, true)) return {ok:true,removedNativeIds:[]};
+      } else await requireSession(sessionId, ownerId)
       const response = await fetch(new URL(`/weftmate/schedules/${encodeURIComponent(sessionId)}`, currentOrigin()), {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) })
       const value = await response.json()
@@ -350,7 +354,10 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       return value
     },
     async goals({ sessionId, ownerId, ...input }) {
-      requireRuntime(); await requireSession(sessionId, ownerId);
+      requireRuntime();
+      if (['forget','erase'].includes(input.action)) {
+        if (!await requireSessionRecord(sessionId, ownerId, true)) return {cleared:true,clearedGoalIds:[]};
+      } else await requireSession(sessionId, ownerId);
       const response = await fetch(new URL(`/weftmate/goals/${encodeURIComponent(sessionId)}`, currentOrigin()), {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) });
       const value = await response.json();
