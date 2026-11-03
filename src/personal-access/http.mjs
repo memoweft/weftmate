@@ -1541,7 +1541,8 @@ export function createHttpHandler(context) {
         const hasMore = offset + limit < ids.length;
         return context.json(response, 200, { sessions, groups: Object.values(state.sessionGroups ?? {}), snapshotAt,
           statusSummary: await context.sessionOperations.statusSummary(ownerId,descriptions),
-          hasMore, nextCursor: hasMore ? selectedIds.at(-1) : null });
+          // Every client polls this list, so it carries account changes now that no main chat read does (D92).
+          accountChanges: await context.accountChanges(ownerId), hasMore, nextCursor: hasMore ? selectedIds.at(-1) : null });
       }
       const groupMatch = /^\/personal\/v1\/session-groups(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
       if (groupMatch && (request.method === 'GET' && !groupMatch[1] || request.method === 'POST' && !groupMatch[1] || ['PATCH', 'DELETE'].includes(request.method) && groupMatch[1])) {

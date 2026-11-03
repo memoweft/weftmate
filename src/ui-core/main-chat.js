@@ -92,6 +92,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         }
         if (listGeneration !== (core.state.sessionListGeneration || 0)) return;
         if (identity !== core.state.identityGeneration) return;
+        core.acceptAccountChanges?.(sessions.accountChanges);
         core.state.chats = chats.items || [];
         if (core.state.workTimeline || core.state.chats.some(row => row.chatId === core.state.selectedChatId && row.logicalHistory))
             core.state.workTimeline = core.state.chats.find(row => row.chatId === core.state.selectedChatId && row.logicalHistory) || null;

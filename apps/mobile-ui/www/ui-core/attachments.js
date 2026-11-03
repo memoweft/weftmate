@@ -359,7 +359,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         try {
             const value = JSON.parse(environment.storage.getItem(key) || '[]');
             return Array.isArray(value) ? value.filter((row) => typeof row?.requestId === 'string' && core.markerId.test(row.requestId) &&
-                ['session.create', 'session.side.create', 'session.message', 'chat.message', 'session.cancel', 'desktop.open_app'].includes(row?.kind) &&
+                ['session.create', 'session.side.create', 'session.message', 'session.cancel', 'desktop.open_app'].includes(row?.kind) &&
                 (row.sessionId === undefined || core.sessionIdPattern.test(row.sessionId)) &&
                 (row.commandId === undefined || core.sessionIdPattern.test(row.commandId)))
                 .slice(-30) : [];
@@ -397,7 +397,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
     }
     function finishAttachmentCommand(command) {
         if (command?.state !== 'accepted_by_dsh') return;
-          if (!['session.message', 'chat.message'].includes(command?.kind) || typeof command.requestId !== 'string')
+          if (command?.kind !== 'session.message' || typeof command.requestId !== 'string')
             return;
         for (const [key, attempt] of core.state.attachmentAttempts) {
             if (attempt.requestId !== command.requestId)

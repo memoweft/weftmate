@@ -231,10 +231,10 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
     function approvalSource(row, fresh = false) {
         const entry = core.conversationTasks.entries.get(row.taskId), payload = entry?.payload;
         if (!payload || fresh && entry.notice || payload.taskId !== row.taskId || payload.sessionId !== row.sessionId ||
-            payload.source?.commandId !== row.taskId || !['session.message','chat.message'].includes(payload.source.kind) || payload.source.rootTaskId)
+            payload.source?.commandId !== row.taskId || payload.source.kind !== 'session.message' || payload.source.rootTaskId)
             return null;
         return [payload.source, ...(Array.isArray(payload.supplements) ? payload.supplements : []),
-            ...(Array.isArray(payload.resumes) ? payload.resumes : [])].find((command) => ['session.message','chat.message'].includes(command?.kind) &&
+            ...(Array.isArray(payload.resumes) ? payload.resumes : [])].find((command) => command?.kind === 'session.message' &&
             command.sessionId === row.sessionId && command.commandId === row.sourceCommandId &&
             command.receiptId === row.sourceReceiptId && (command.commandId === row.taskId && !command.rootTaskId ||
             command.rootTaskId === row.taskId) && (!Number.isSafeInteger(command.dshTurn) || command.dshTurn === row.turn)) || null;
