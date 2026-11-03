@@ -28,7 +28,7 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 }
 
 test('single status: normal chat command receipts update locks without painting a bottom notice', () => {
-  for (const kind of ['session.create', 'session.side.create', 'session.message', 'chat.message', 'session.cancel']) {
+  for (const kind of ['session.create', 'session.side.create', 'session.message', 'session.cancel']) {
     const f = fixture(); f.core.creatingOptimisticSession = true;
     for (const state of ['pending', 'dispatching', 'accepted_by_dsh']) {
       const requestId = `synthetic-${kind}`;

@@ -58,8 +58,8 @@ test('search cursor reset clears old bodies, hits and resource cache before a fr
   f.core.conversationApprovals.entries.set('old',{row:{reason:'已清除正文'}});f.core.conversationQuestions.entries.set('old',{row:{questions:['已清除正文']}});f.core.conversationTasks.entries.set('old',{payload:{text:'已清除正文'}});
   await f.core.searchMainChat('旧内容');assert.equal(freshRead,true);assert.equal(f.core.state.chatWindow.syncCursor,'new');
 });
-test('main approval and question source accepts the bound chat command and rejects another receipt',()=>{
-  const f=setup(()=>({})),source={kind:'chat.message',commandId:'command-main',sessionId:'session-main',receiptId:'receipt-main',dshTurn:1};
+test('approval and question source accepts the bound message command and rejects another receipt',()=>{
+  const f=setup(()=>({})),source={kind:'session.message',commandId:'command-main',sessionId:'session-main',receiptId:'receipt-main',dshTurn:1};
   f.core.conversationTasks.entries.set('command-main',{payload:{taskId:'command-main',sessionId:'session-main',source}});
   const row={taskId:'command-main',sessionId:'session-main',sourceCommandId:'command-main',sourceReceiptId:'receipt-main',turn:1};
   assert.equal(f.core.approvalSource(row),source);assert.equal(f.core.approvalSource({...row,sourceReceiptId:'receipt-other'}),null);
