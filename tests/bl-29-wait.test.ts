@@ -8,9 +8,12 @@ import { waitForCommand } from './helpers/wait-for-command.mjs';
 test('BL-29 existing chat changes wait for a native delta, wake immediately and retain exact cursor semantics',async()=>{
   const f=await startTimelineCandidate({daily:true,inlineProgress:true,historyCount:0,baseTime:Date.now()});
   try{
-    const chat=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
-    const sent=await f.request('/commands',{requestId:'bl29-wait-test',kind:'chat.message',chatId:chat.chatId,text:'synthetic',modelProfileId:'local',targetDeviceId:host});
+    const host=(await f.request('/status')).hostId;
+    const created=await f.request('/commands',{requestId:'bl29-wait-create',kind:'session.create',modelProfileId:'local',targetDeviceId:host});
+    const {sessionId}=await waitForCommand(async()=>(await f.request('/commands/'+created.command.commandId)).command);
+    const sent=await f.request('/commands',{requestId:'bl29-wait-test',kind:'session.message',sessionId,text:'synthetic',targetDeviceId:host});
     await waitForCommand(async()=>(await f.request('/commands/'+sent.command.commandId)).command);
+    const chat=(await f.request('/chats?limit=100')).items.find((row:any)=>row.activeSessionId===sessionId);
     // A native streaming delta needs a live turn. Ending it here lets the
     // activity observer seal the source before the synthetic chunk arrives.
     f.progress.text('已完成。');
@@ -32,17 +35,6 @@ test('BL-29 existing chat changes wait for a native delta, wake immediately and 
     const stable=await f.request(`/chats/${chat.chatId}/changes?cursor=${changed.nextCursor}&limit=100`);
     assert.equal(stable.liveRevision,changed.liveRevision,'an unchanged read cannot manufacture a new live revision');
     assert.equal(stable.upserts.length,0);
-  }finally{await f.close();rmSync(f.root,{recursive:true,force:true});}
-});
-
-test('BL-29 empty main chat wait wakes when another device starts its first task',async()=>{
-  const f=await startTimelineCandidate({daily:true,inlineProgress:true});
-  try{
-    const chat=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
-    const page=await f.request(`/chats/${chat.chatId}/events?limit=100`),at=Date.now();
-    const waiting=f.request(`/chats/${chat.chatId}/changes?cursor=${page.syncCursor}&liveRevision=${page.liveRevision}&waitMs=2000`);
-    await new Promise(r=>setTimeout(r,100));await f.request('/commands',{requestId:'bl29-first-device',kind:'chat.message',chatId:chat.chatId,text:'synthetic',modelProfileId:'local',targetDeviceId:host});
-    await waiting;assert.ok(Date.now()-at<700,'account mutation also wakes an empty conversation');
   }finally{await f.close();rmSync(f.root,{recursive:true,force:true});}
 });
 

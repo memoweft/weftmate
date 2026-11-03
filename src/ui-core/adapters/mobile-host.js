@@ -131,7 +131,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     core.state.hostStatusSnapshot={payload:status,at:cached?.payload===status?cached.at:Date.now(),identity:core.state.identityGeneration};
     core.connectionSucceeded?.(status.presence || {runtime:status.backend?.runtime === 'unavailable' ? 'unavailable' : 'ready'});
     if (owner !== state.owner || epoch !== state.authEpoch) return;
-    const exact = ['chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].every(key => status.personalCapabilities?.[key] === 1);
+    const exact = ['chats','chatTimeline','chatSearch','sideChats','chatResources'].every(key => status.personalCapabilities?.[key] === 1);
     core.state.personalCapabilities = status.personalCapabilities || {};
     core.state.executionAccount = status.executionAccount;core.state.executionAccountName = status.executionAccountName;
     core.state.hostId = status.hostId;core.state.hostName = status.hostName;

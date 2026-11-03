@@ -44,7 +44,7 @@ export function createInstalledSmokeResponder() {
     const source = installedSmokeRequestKind(input);
     let message;
     if (source === 'memory') message = { role: 'assistant', content: JSON.stringify({ schema_version: 8, result: 'no_change' }) };
-    else if (source === 'other') message = { role: 'assistant', content: '主对话首条消息成功，合成回复。' };
+    else if (source === 'other') message = { role: 'assistant', content: '首条消息成功，合成回复。' };
     else {
       const results = projectResults(input);
       const tool = ['load_tools', 'read', 'write'].find(name => !results.has(name));

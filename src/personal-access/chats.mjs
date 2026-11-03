@@ -99,7 +99,6 @@ export function createChatOperations(context) {
       ...(session.workspaceKind ? { workspaceKind: session.workspaceKind } : {}),
       modelProfileId: session.modelProfileId ?? described.modelProfileId ?? null,
       running: described.running === true, sendAvailable: Boolean(canSend), taskAvailable: session.origin === 'personal-remote',
-      ...(chat.relay ? { contextOrganizing: true } : {}), ...(chat.relayError ? { relayError: chat.relayError } : {}),
       ...(described.contextUsage ? { contextUsage: described.contextUsage } : {}),
       ...(described.running && described.processing ? { processing: described.processing } : {}) };
   }

@@ -51,7 +51,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             catch (error) { done(); throw error; }
         };
     }
-    for (const name of ['sendDraft', 'sendMainDraft']) {
+    for (const name of ['sendDraft']) {
         const action = core[name]; if (!action) continue;
         core[name] = function (...args) { if (main()) restoring = null; return action.apply(this,args); };
     }
@@ -231,7 +231,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             if(!row.dataset.motionSent)row.dataset.motionSent=spec.event.createdSession||!spec.event.sessionId?'pending-first':'pending';
             if (['failed','confirming','undelivered'].includes(spec.event.status)) {
                 const retryLabel=spec.event.status==='undelivered'||spec.event.failureCode?'重试发送':'检查状态';
-                const retry = button(retryLabel, retryLabel, () => logical() ? core.retryMainRequest(spec.event.requestId) : core.retryOptimistic(spec.event.requestId));
+                const retry = button(retryLabel, retryLabel, () => core.retryOptimistic(spec.event.requestId));
                 retry.disabled = !!spec.event.retrying || !core.state.online;row.append(retry);
             }
         } else {

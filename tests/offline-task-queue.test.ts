@@ -71,7 +71,7 @@ function receiverFixture(){
   const rows:any[]=[],account:any={ownerId:'owner',hostId:'host',commands:{},sessions:{session:{ownerId:'owner',modelProfileId:'model',approvalMode:'ask'}},devices:{cookie:{scopes:['commands:write'],authKind:'cloud',authEpoch:1,revoked:false,expiresAt:'2020-01-01'}}};
   const scheduled:string[]=[],acks:any[]=[],results:any[]=[];let queue=Promise.resolve(),cancel=false;
   const context:any={rootState:{hostId:'host'},ownerIds:()=>['owner'],accountState:()=>account,hostOwner:()=>true,timestamp:Date.now,
-    offline:{generation:()=>1},messageModelUsable:()=>true,mainChat:{prepareReminder:async()=> 'session'},
+    offline:{generation:()=>1},messageModelUsable:()=>true,reminderChat:{prepare:async()=> 'session'},
     serial:(fn:Function)=>{const work=queue.then(()=>fn());queue=work.catch(()=>{});return work;},mutate:async(_owner:string,fn:Function)=>fn(account),schedule:(_owner:string,id:string)=>scheduled.push(id),activity:{record:async()=>{}},taskDetail:async()=>({replyEvidence:{}}),
     cloudIdentity:{offlineTasksSupported:()=>true,syncRevocations:async()=>{},offlineAccount:()=>({ownerId:'owner',deviceId:'cookie'}),offlineSource:()=> 'cookie',
       relayRequest:async(path:string,body:any)=>{if(path.endsWith('/claim'))return {items:rows};if(path.endsWith('/ack')){const c:any=Object.values(account.commands).find((c:any)=>c.commandId===body.receiptId);assert.ok(c,'persist before cloud deletion');if(!acks.some(a=>a.receiptId===body.receiptId))assert.equal(c.offlineSource.confirmed,false,'first ack must follow a persisted unconfirmed command');acks.push(body);return {accepted:!cancel};}results.push(body);return {accepted:true};}}};

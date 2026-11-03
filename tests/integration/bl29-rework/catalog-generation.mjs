@@ -4,9 +4,10 @@ import {rmSync,writeFileSync} from 'node:fs';
 const f=await startTimelineCandidate({daily:true,inlineProgress:true,historyCount:0}),c=f.debug.service.__reviewContext,owner=f.debug.auth.account.ownerId;
 const pause=ms=>new Promise(r=>setTimeout(r,ms));let release;const report={};
 try{
- const main=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
- const sent=await f.request('/commands',{requestId:'catalog-generation',kind:'chat.message',chatId:main.chatId,text:'Synthetic text selected for erasure',modelProfileId:'local',targetDeviceId:host});
- while((await f.request('/commands/'+sent.command.commandId)).command.state!=='accepted_by_dsh')await pause(5);
+ const host=(await f.request('/status')).hostId,accepted=async command=>{let row;while((row=(await f.request('/commands/'+command.commandId)).command).state!=='accepted_by_dsh')await pause(5);return row;};
+ const {sessionId}=await accepted((await f.request('/commands',{requestId:'catalog-generation-create',kind:'session.create',modelProfileId:'local',targetDeviceId:host})).command);
+ await accepted((await f.request('/commands',{requestId:'catalog-generation',kind:'session.message',sessionId,text:'Synthetic text selected for erasure',targetDeviceId:host})).command);
+ const main=(await f.request('/chats?limit=100')).items.find(row=>row.activeSessionId===sessionId);
  f.progress.text('Synthetic reply selected for erasure');f.progress.finish();
  let entered=false;const gate=new Promise(r=>release=r),models=f.debug.backend.listModels;
  f.debug.backend.listModels=async args=>{entered=true;await gate;return models(args);};

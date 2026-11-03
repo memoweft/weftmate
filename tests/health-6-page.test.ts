@@ -5,7 +5,7 @@ import {runInNewContext} from 'node:vm';
 import {health6Synthetic} from './helpers/health-6-synthetic.mjs';
 async function setup(options:any={}){
  const context:any={WeftUiCore:{factories:{}},Intl,URLSearchParams};runInNewContext(await readFile(new URL('../src/ui-core/human-format.js',import.meta.url),'utf8'),context);runInNewContext(await readFile(new URL('../src/ui-core/health.js',import.meta.url),'utf8'),context);
- const fixture=health6Synthetic(options),quotes:string[]=[],core:any={state:{ownerId:'synthetic-account',identityGeneration:0},accessApi:async(path:string,options:any)=>fixture.reply(path,options),failureMessage:()=> '连接暂时中断',selectMainChat:async()=>{}};
+ const fixture=health6Synthetic(options),quotes:string[]=[],core:any={state:{ownerId:'synthetic-account',identityGeneration:0},accessApi:async(path:string,options:any)=>fixture.reply(path,options),failureMessage:()=> '连接暂时中断',startNewConversation:async()=>{core.state.selectedSessionId=null;}};
  if(options.prior)core.saveHealthSettings=async(patch:any)=>{core.priorWrites??=[];core.priorWrites.push(patch);return fixture.reply('/settings/health',{method:'PATCH',body:patch});};
  Object.assign(core,context.WeftUiCore.factories.health(core,{quoteHealth:(text:string)=>quotes.push(text)},{crypto:{randomUUID:()=> 'synthetic'}}));return {core,fixture,quotes,H:context.WeftHealth};
 }
@@ -19,7 +19,7 @@ test('item analysis is off by default, disclosure never writes, enabling generat
  await core.enableHealthAnalysis('stress');const writes=fixture.calls.filter(c=>c.method!=='GET');assert.equal(writes.length,2);assert.deepEqual(JSON.parse(JSON.stringify(writes[0].body)),{itemAnalysisEnabled:true});assert.deepEqual(JSON.parse(JSON.stringify(writes[1].body)),{scope:'stress',day:'2026-10-12'});assert.equal(core.health.analyses.size,1);
  await core.toggleHealthAnalysis('stress');await core.toggleHealthAnalysis('stress');assert.equal(fixture.calls.filter(c=>c.method==='POST').length,1);
 });
-test('cached statistics and model analyses restore without generation and only fill the main draft',async()=>{
+test('cached statistics and model analyses restore without generation and only fill a new conversation draft',async()=>{
  const {core,fixture,quotes}=await setup();await core.readHealth();await core.enableHealthAnalysis('recovery');await core.saveHealthViewSettings({itemAnalysisEnabled:false});assert.equal(core.health.analyses.has('recovery'),true);
  core.health.analyses.clear();await core.readHealthAnalyses();assert.equal(core.health.analyses.get('recovery').mode,'statistics');await core.askHealthAnalysis('recovery');assert.match(quotes[0],/恢复 AI 分析/);assert.equal(fixture.calls.filter(c=>c.method==='POST').length,1);
 });

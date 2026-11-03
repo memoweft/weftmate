@@ -6,13 +6,13 @@ import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
 
-test('real main gateway and pinned DSH create a fresh main session and answer its first message', {timeout:120000}, async () => {
+test('real gateway and pinned DSH create a fresh conversation and answer its first message', {timeout:120000}, async () => {
   const h = await migrationHost();
-  try { const result=await h.mainFirst(); assert.ok(result.sessionId); assert.ok(h.requests.length>0); }
+  try { const result=await h.firstMessage(); assert.ok(result.sessionId); assert.ok(h.requests.length>0); }
   finally { await h.close(); }
 });
 
-test('f787c3c native data upgrades with preserved side history and a successful first main message',{timeout:180000},async()=>{
+test('f787c3c native data upgrades with preserved side history and a successful first message',{timeout:180000},async()=>{
   const root=mkdtempSync(join(tmpdir(),'weftmate-fx21-upgrade-')),source=join(root,'old');mkdirSync(source);
   let h;
   try {
@@ -29,6 +29,6 @@ test('f787c3c native data upgrades with preserved side history and a successful 
     assert.equal(chats.find(c=>c.activeSessionId===created.sessionId)?.kind,'side');
     const history=await h.api('/sessions/'+created.sessionId+'/events?limit=200');
     assert.ok(history.body.events.some(e=>e.type==='user.message'&&e.data.text==='旧日用版本的合成历史'));
-    assert.ok((await h.mainFirst()).reply);
+    assert.ok((await h.firstMessage()).reply);
   }finally{await h?.close();rmSync(root,{recursive:true,force:true});}
 });

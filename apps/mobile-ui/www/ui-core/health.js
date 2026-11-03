@@ -90,9 +90,8 @@
     async function healthOverlay(enabled){model.overlay=enabled;await readHealthTrend();}
     async function remindHealth(suggestion){sync();if(model.busy.has(suggestion.id)||model.reminders.has(suggestion.id)||!suggestion.reminder)return;
       const token=scope();model.busy.add(suggestion.id);emit();
-      try{const sessionId=core.state.mainChat?.activeSessionId??core.state.selectedSessionId??core.state.sessions?.find(s=>s.taskAvailable!==false&&!s.archived)?.sessionId;
-        if(!sessionId){effects.healthNotice?.('先开始一个对话，再把这条建议设为提醒。');return;}
-        const body=requests.get(suggestion.id)??{sessionId,requestId:env.crypto.randomUUID()};requests.set(suggestion.id,body);
+      // The host delivers it to the account's 「提醒」 conversation.
+      try{const body=requests.get(suggestion.id)??{requestId:env.crypto.randomUUID()};requests.set(suggestion.id,body);
         const result=await core.accessApi(`/health/suggestions/${encodeURIComponent(suggestion.id)}/remind`,{method:'POST',protectedWrite:true,body});
         if(token===scope()){model.reminders.set(suggestion.id,result.item);effects.healthNotice?.('已设提醒');}return result;
       }finally{if(token===scope()){model.busy.delete(suggestion.id);emit();}}
@@ -128,10 +127,10 @@
     async function enableHealthAnalysis(itemScope){const token=scope(),day=model.day;await saveHealthViewSettings({itemAnalysisEnabled:true});
       if(token===scope()&&day===model.day){model.analysisOpen.add(itemScope);if(!model.analyses.has(itemScope))await generateHealthAnalysis(itemScope);}
     }
-    async function askHealthAnalysis(itemScope){const token=scope(),item=model.analyses.get(itemScope);if(!item)return;await core.selectMainChat();if(token!==scope())return;
+    async function askHealthAnalysis(itemScope){const token=scope(),item=model.analyses.get(itemScope);if(!item)return;await core.startNewConversation();if(token!==scope())return;
       effects.quoteHealth?.(`> ${item.day} · ${metrics[itemScope.replace(/^vital:/,'')]?.[0]??'健康'} AI 分析\n> ${item.text.replace(/\n/g,'\n> ')}\n\n`);
     }
-    async function askHealth(){const token=scope(),insight=model.overview?.insight;if(!insight)return;await core.selectMainChat();if(token!==scope())return;
+    async function askHealth(){const token=scope(),insight=model.overview?.insight;if(!insight)return;await core.startNewConversation();if(token!==scope())return;
       const quote=`> ${model.day} · ${insight.headline}\n> ${insight.text.replace(/\n/g,'\n> ')}\n\n`;
       effects.quoteHealth?.(quote);}
     return {health:model,resetHealth,readHealth,readHealthTrend,readHealthCalendar,openHealthMetric,healthOverlay,remindHealth,askHealth,readHealthSettings,saveHealthViewSettings,readHealthAnalyses,toggleHealthAnalysis,enableHealthAnalysis,generateHealthAnalysis,askHealthAnalysis};

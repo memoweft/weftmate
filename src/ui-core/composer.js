@@ -216,8 +216,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         effects.renderOptimisticMessages?.();
         return row;
     }
-    function optimisticMessages(legacy = false) {
-        if (!legacy && core.mainOptimisticMessages) return core.mainOptimisticMessages();
+    function optimisticMessages() {
         return [...messages.values()].filter(row => row.ownerId === core.state.ownerId &&
             row.identity === core.state.identityGeneration && (row.sessionId === core.state.selectedSessionId || core.state.newConversation && core.state.selectedSessionId===null && row.draftId===core.state.newConversationId) &&
             (row.sessionId !== null || row.draftId === core.state.newConversationId));
@@ -238,8 +237,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         observeOptimistic([...core.state.historyEvents.values()], true);
         effects.renderOptimisticMessages?.();
     }
-    function observeOptimistic(events, legacy = false) {
-        if (!legacy && core.observeMainOptimistic) return core.observeMainOptimistic(events);
+    function observeOptimistic(events) {
         observeMessageProcesses(events);
         for (const event of events) if (['task.queued','task.started'].includes(event.type)) for (const data of event.data?.tasks || [event.data || {}]) {
             if(event.type==='task.queued' && event.data?.inherited)continue;
@@ -249,7 +247,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                 {row.receiptId = data.receiptId;rememberTurnRequest(row);}
         }
         for (const event of events) if (event.type === 'user.message' && event.data?.receiptId) {
-            for (const row of optimisticMessages(true)) if (row.receiptId === event.data.receiptId) {
+            for (const row of optimisticMessages()) if (row.receiptId === event.data.receiptId) {
                 row.status = 'accepted';
                 if (effects.readMessageDraft() === row.text) effects.clearMessageDraft();
                 messages.delete(row.requestId);
@@ -451,7 +449,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         try { return await action(); }
         finally { if (intent && core.conversationTaskCurrent(context)) core.state.messageMode = previous; }
     }
-    function sendBlocker(text, main = false) {
+    function sendBlocker(text) {
         if (core.state.approvalModeSaving) return '正在保存审批方式，请稍候再发送。';
         if (core.state.sessionSelecting) return '正在打开对话，请稍候再发送。';
         if (core.state.sideCreating) return '正在创建对话，请稍候再发送。';
@@ -462,11 +460,11 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (!core.state.online || ['restarting','unavailable'].includes(core.state.connection?.host?.runtime)) return '电脑暂时无法连接，消息仍在草稿里。';
         if (core.state.capabilities?.chat?.available !== true) return '暂时无法发送，请稍候再试。';
         if (!core.state.modelProfileId || !core.state.models.some(model => model.id === core.state.modelProfileId)) return '先选择一个模型，再发送消息。';
-        if (main ? core.state.personalCapabilities?.chatSend !== 1 || !core.state.mainChat?.sendAvailable
-            : !core.state.newConversation && core.state.sessions.find(item => item.sessionId === core.state.selectedSessionId)?.sendAvailable !== true)
+        if (core.inMainChat?.() || core.state.workTimeline?.kind === 'main') return '旧主对话只能查看，新建对话继续聊。';
+        if (!core.state.newConversation && core.state.sessions.find(item => item.sessionId === core.state.selectedSessionId)?.sendAvailable !== true)
             return '这段对话暂时无法发送，请重新打开或新建对话。';
         if (thinkingView().busy) return '正在保存模型设置，请稍候再发送。';
-        if (optimisticMessages(main ? false : true).some(row => row.text === text && row.status === 'sending')) return '这条消息正在发送，请稍候。';
+        if (optimisticMessages().some(row => row.text === text && row.status === 'sending')) return '这条消息正在发送，请稍候。';
         if (!text.trim() && !core.currentAttachmentDrafts().length) return '先输入消息或添加附件。';
         return '';
     }
@@ -475,8 +473,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         effects.updateAvailability();
         return { sent: false, reason };
     }
-    async function sendDraft(text = effects.readMessageDraft(), intent, legacy = false) {
-        if (!legacy && core.sendMainDraft) return core.sendMainDraft(text, intent);
+    async function sendDraft(text = effects.readMessageDraft(), intent) {
         if (core.state.activeChatSource === 'phone') {
             if (core.folderMutationPending?.()) return explainSendBlocker('正在准备文件夹，请稍候再发送。');
             return sendIntentAction(() => core.sendPhoneMessage(), intent);

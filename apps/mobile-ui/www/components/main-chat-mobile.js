@@ -62,7 +62,7 @@
     paintHistoryMessages:events=>{for(const event of events)trackSharedAcceptedTurn(event);if(state.logicalChats&&!main()){
       state.sharedEvents=[...uiCore.state.historyEvents.values()].sort((a,b)=>a.seq-b.seq);renderSharedConversation();}},
     paintAttachmentStatus:message=>status(message),
-    restoreMainNativeRequests:async()=>{if(window.weftNative){const rows=await call('shared.outbox.list');uiCore.restoreMainRequests(rows.commands||[]);}await uiCore.restoreRequests();},
+    restoreMainNativeRequests:async()=>{await uiCore.restoreRequests();},
     loadAttachmentHasher:async()=>({hashBlobSha256:async blob=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',await blob.arrayBuffer()))].map(value=>value.toString(16).padStart(2,'0')).join('')}),
     closeApprovalMenu:closeApprovalModeMenu,renderApprovalMode:updateApprovalModeButton,approvalModeReadFailed:()=>status('审批模式暂时无法读取'),
     selectNativeSideSession:async (id, empty, current)=>{
@@ -78,17 +78,6 @@
       await call('attachments.move',{fromConversationId:fromId,conversationId:toId,attachmentIds:files.map(row=>row.attachmentId)});
       if(owner!==state.owner||epoch!==state.authEpoch)return;
       attachmentDrafts.set(attachmentKey(toId),files);attachmentDrafts.delete(attachmentKey(fromId));await refreshAttachmentDrafts();
-    },
-    sendMainNativeMessage:async fields=>{
-      if(!window.weftNative)return fields.attachmentIds.length?uiCore.sendDesktopMessageWithAttachments(fields.text,fields.requestId,fields.intent)
-        :uiCore.submitCommand('chat.message',{chatId:fields.chatId,text:fields.text,modelProfileId:fields.modelProfileId,mode:fields.intent},null,fields.requestId);
-      uiCore.state.submitting=true;uiCore.operation('正在发送…',true,fields.requestId);updateComposer();
-      try {
-        const result=await call('shared.send',fields);if(!result.command)throw Error('COMMAND_UNCONFIRMED');
-        uiCore.updateFromCommand(result.command);
-        if(['accepted_by_dsh','observed'].includes(result.command.state)){clearAcceptedHostAttachments(fields.attachmentIds);await refreshAttachmentDrafts();}
-        return result.command;
-      }finally{uiCore.state.submitting=false;updateComposer();}
     },
   });
   // The shared renderer requires its named draft callback on its own presentation object too.
@@ -109,7 +98,7 @@
     const attachments=currentAttachments().length;state.sharedRunning=running;
     const hasDraft=!!text.trim()||attachments>0;
     try{const key=sharedDraftKey(uiCore.state.selectedChatId);if(text)localStorage.setItem(key,text);else localStorage.removeItem(key);}catch{}
-    return {host:true,processingHint:uiCore.executionAccountHint(),ready:available&&!uiCore.sendBlocker(text,true),sendHidden:running&&!hasDraft,
+    return {host:true,processingHint:uiCore.executionAccountHint(),ready:available&&!uiCore.sendBlocker(text),sendHidden:running&&!hasDraft,
       draftDisabled:!available,placeholder:running?WeftUiCore.runningPlaceholder(uiCore.composerInputMode(state.sharedSessionId)):'和 WeftMate 聊聊…',
       modelName:uiCore.state.mainChat.modelDisplayName||uiCore.state.models.find(row=>row.id===uiCore.state.modelProfileId)?.name||'选择模型',
       modelLabel:'当前模型',modelDisabled:!state.loggedIn||state.transitionPending||state.modelSwitching||!uiCore.state.mainChat.sendAvailable,attachmentsDisabled:!available||!!state.attachmentPick||uiCore.state.submitting,

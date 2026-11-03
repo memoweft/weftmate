@@ -34,18 +34,6 @@ export function createCommandOperations(context) {
   async function dispatch(ownerId, commandId) {
     try {
       if (context.closing || context.storageFault) return;
-      const unbound = context.accountState(ownerId).commands[commandId];
-      if (unbound?.kind === 'chat.message' && unbound.state === 'pending') {
-        const account = context.accountState(ownerId), main = account.chatIdentity.chats[account.chatIdentity.mainChatId];
-        const selectedSessionId = account.chatIdentity.segments[main.activeSegmentId]?.sessionId;
-        const selectedSession = account.sessions[selectedSessionId];
-        const profileId = selectedSession?.pendingModelProfileId ?? selectedSession?.modelProfileId ?? unbound.payload.modelProfileId ?? account.defaultModelProfileId;
-        if (!await context.modelServices.ensureProfile(ownerId, profileId, { allowedPendingModelProfileId: profileId })) {
-          const timer = setTimeout(() => schedule(ownerId, commandId), 250); timer.unref?.(); return;
-        }
-        await context.mainChat.bind(ownerId, commandId);
-      }
-      if (context.accountState(ownerId).commands[commandId]?.kind === 'chat.message') return;
       let snapshot;
       let callback;
       const pending = context.accountState(ownerId).commands[commandId];
@@ -341,7 +329,7 @@ export function createCommandOperations(context) {
           }));
           else if (snapshot.kind === 'session.message') {
             const staged = snapshot.payload.attachments
-              ? await context.sharedAttachmentStores.get(ownerId).resolve({ sessionId: snapshot.payload.attachmentSessionId ?? snapshot.sessionId,
+              ? await context.sharedAttachmentStores.get(ownerId).resolve({ sessionId: snapshot.sessionId,
                 requestId: snapshot.requestId, attachments: snapshot.payload.attachments }) : [];
             callback = Promise.resolve(context.backend.sendMessage({
               sessionId: snapshot.sessionId, text: modelTextWithAttachments(snapshot.payload.text, staged,
@@ -450,7 +438,7 @@ export function createCommandOperations(context) {
       }
       if (snapshot.kind === 'session.message' && snapshot.payload.attachments &&
           context.accountState(ownerId).commands[commandId]?.state === 'accepted_by_dsh') {
-        await context.sharedAttachmentStores.get(ownerId).release({ sessionId: snapshot.payload.attachmentSessionId ?? snapshot.sessionId,
+        await context.sharedAttachmentStores.get(ownerId).release({ sessionId: snapshot.sessionId,
           requestId: snapshot.requestId, attachments: snapshot.payload.attachments });
       }
       if (snapshot.kind === 'session.message') {
@@ -496,12 +484,11 @@ export function createCommandOperations(context) {
     requestIdUsed,
     dispatch,
     schedule,
-    hasUnissuedDshCommands({ allowedPendingSessionId = null, allowedPendingModelProfileId = null } = {}) {
+    hasUnissuedDshCommands({ allowedPendingSessionId = null } = {}) {
       return Object.values(context.rootState.accounts).some((account) =>
         Object.values(account.commands).some((command) =>
           ['pending', 'dispatching'].includes(command.state) && !(command.state === 'pending' &&
-            (command.kind === 'session.message' && command.sessionId === allowedPendingSessionId || command.kind === 'chat.message' &&
-              (command.payload.modelProfileId ?? account.defaultModelProfileId) === allowedPendingModelProfileId))));
+            command.kind === 'session.message' && command.sessionId === allowedPendingSessionId)));
     },
     /** Main-process only: a DSH tool call from an owner-bound restricted turn. */
     async submitToolDesktop({ sessionId, turn, callId, messageHash, appId }) {

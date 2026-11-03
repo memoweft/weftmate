@@ -1,7 +1,6 @@
 /* Shared attachments state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
-    function attachmentDraftKey(sessionId = core.state.selectedSessionId, legacy = false) {
-        if (!legacy && core.mainAttachmentDraftKey) return core.mainAttachmentDraftKey(sessionId);
+    function attachmentDraftKey(sessionId = core.state.selectedSessionId) {
         return core.state.ownerId && (sessionId || core.state.newConversation) ? `${core.state.ownerId}|${sessionId || 'new'}` : null;
     }
     function currentAttachmentDrafts() {
@@ -144,18 +143,17 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         core.state.attachmentAttempts.set(key, attempt);
         return attempt;
     }
-    async function sendDesktopMessageWithAttachments(text, requestId, mode, snapshot) {
+    async function sendDesktopMessageWithAttachments(text, requestId, mode) {
         const sessionId = core.state.selectedSessionId;
         const key = core.attachmentDraftKey(sessionId);
-        const drafts = snapshot?.drafts || (key ? [...core.currentAttachmentDrafts()] : []);
+        const drafts = key ? [...core.currentAttachmentDrafts()] : [];
         if (!key || drafts.length < 1 || drafts.length > 4 || core.state.attachmentUpload)
             return null;
         const scope = core.attachmentScope(sessionId);
         const controller = new AbortController();
         const attempt = core.attachmentAttempt(key, text, drafts);
         if (requestId) attempt.requestId = requestId;
-        const messageId = snapshot?.messageId || core.state.attachmentGroups.get(key) || `message-${environment.crypto.randomUUID()}`;
-        if (snapshot) snapshot.messageId = messageId;
+        const messageId = core.state.attachmentGroups.get(key) || `message-${environment.crypto.randomUUID()}`;
         core.state.attachmentGroups.set(key, messageId);
         const upload = { controller, scope, key, requestId: attempt.requestId };
         core.state.attachmentUpload = upload;
@@ -177,7 +175,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
                 const expected = { ...item, size: item.file.size };
                 core.setAttachmentStatus(`正在保存原件 ${originals.length + 1} / ${drafts.length}…`);
                 const uploaded = await core.uploadAttachmentBlob(`/sync/attachments/${encodeURIComponent(item.attachmentId)}` +
-                    `?conversationId=${encodeURIComponent(core.inMainChat?.() ? core.state.mainChat.chatId : sessionId)}&messageId=${encodeURIComponent(messageId)}` +
+                    `?conversationId=${encodeURIComponent(sessionId)}&messageId=${encodeURIComponent(messageId)}` +
                     `&name=${encodeURIComponent(item.file.name)}`, item.file, item.contentType, item.sha256, scope, controller.signal);
                 const exact = core.exactAttachmentMeta(uploaded, expected);
                 if (!exact)
@@ -201,7 +199,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
                 const stagedHash = blob === item.file ? item.sha256 : await hashBlob(blob, { signal: controller.signal });
                 const expected = { ...item, size: blob.size, sha256: stagedHash };
                 core.setAttachmentStatus(`正在准备模型可读内容 ${staged.length + 1} / ${drafts.length}…`);
-                const uploaded = await core.uploadAttachmentBlob(`${core.inMainChat?.() ? '/chats/' + encodeURIComponent(core.state.mainChat.chatId) : '/sessions/' + encodeURIComponent(sessionId)}/attachments/` +
+                const uploaded = await core.uploadAttachmentBlob(`/sessions/${encodeURIComponent(sessionId)}/attachments/` +
                     `${encodeURIComponent(item.attachmentId)}?requestId=${encodeURIComponent(attempt.requestId)}` +
                     `&name=${encodeURIComponent(item.file.name)}`, blob, item.contentType, stagedHash, scope, controller.signal);
                 const exact = core.exactAttachmentMeta(uploaded, expected);
@@ -217,7 +215,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
             core.state.attachmentUpload = null;
             core.setAttachmentStatus('原件已保存，正在发送消息…');
             effects.updateAvailability();
-            return await core.submitCommand(core.inMainChat?.() ? 'chat.message' : 'session.message', { ...(core.inMainChat?.() ? { chatId: core.state.mainChat.chatId, modelProfileId: snapshot?.modelProfileId || core.state.modelProfileId } : { sessionId }), text, mode: mode || core.composerInputMode(sessionId),
+            return await core.submitCommand('session.message', { sessionId, text, mode: mode || core.composerInputMode(sessionId),
                 ...(staged.length ? { attachments: staged } : {}), attachmentMessageId: messageId,
                 originalAttachments: originals }, sessionId, attempt.requestId);
         }
@@ -361,7 +359,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         try {
             const value = JSON.parse(environment.storage.getItem(key) || '[]');
             return Array.isArray(value) ? value.filter((row) => typeof row?.requestId === 'string' && core.markerId.test(row.requestId) &&
-                ['session.create', 'session.side.create', 'session.message', 'chat.message', 'session.cancel', 'desktop.open_app'].includes(row?.kind) &&
+                ['session.create', 'session.side.create', 'session.message', 'session.cancel', 'desktop.open_app'].includes(row?.kind) &&
                 (row.sessionId === undefined || core.sessionIdPattern.test(row.sessionId)) &&
                 (row.commandId === undefined || core.sessionIdPattern.test(row.commandId)))
                 .slice(-30) : [];
@@ -399,7 +397,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
     }
     function finishAttachmentCommand(command) {
         if (command?.state !== 'accepted_by_dsh') return;
-          if (!['session.message', 'chat.message'].includes(command?.kind) || typeof command.requestId !== 'string')
+          if (command?.kind !== 'session.message' || typeof command.requestId !== 'string')
             return;
         for (const [key, attempt] of core.state.attachmentAttempts) {
             if (attempt.requestId !== command.requestId)

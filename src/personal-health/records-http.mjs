@@ -70,7 +70,7 @@ export function createHealthOperations(context){
       const day=today(owner),s=await persisted(owner,day),o=hydrate(s,owner,day),item=o.insight?.suggestions.find(r=>r.id===suggestion[1]);
       if(!item)throw failure('NOT_FOUND',404);if(!item.reminder||Date.parse(item.reminder.time)<=context.timestamp())throw failure('INVALID_REQUEST');
       const local=localNotificationTime(Date.parse(item.reminder.time),zone(owner));
-      const value=await context.scheduleOperations.createUI(owner,auth,{sessionId:body.sessionId??await context.mainChat.prepareReminder(owner,()=>context.authenticate(request,'account:manage')),requestId:body.requestId,text:item.reminder.title,kind:'reminder',at:{date:local.day,time:local.time+':00'}},()=>context.authenticate(request,'account:manage'));
+      const value=await context.scheduleOperations.createUI(owner,auth,{sessionId:body.sessionId??await context.reminderChat.prepare(owner,()=>context.authenticate(request,'account:manage')),requestId:body.requestId,text:item.reminder.title,kind:'reminder',at:{date:local.day,time:local.time+':00'}},()=>context.authenticate(request,'account:manage'));
       context.json(response,201,value);return true;
     }
     if(request.method!=='GET')throw failure('INVALID_REQUEST');await context.activity?.dailyDigest?.refresh(owner);const s=await context.healthRecords.read(owner);let value;

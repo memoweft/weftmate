@@ -28,7 +28,7 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 }
 
 test('single status: normal chat command receipts update locks without painting a bottom notice', () => {
-  for (const kind of ['session.create', 'session.side.create', 'session.message', 'chat.message', 'session.cancel']) {
+  for (const kind of ['session.create', 'session.side.create', 'session.message', 'session.cancel']) {
     const f = fixture(); f.core.creatingOptimisticSession = true;
     for (const state of ['pending', 'dispatching', 'accepted_by_dsh']) {
       const requestId = `synthetic-${kind}`;
@@ -113,11 +113,9 @@ const cases = [
   ['model missing', c => {c.state.models = []; c.state.modelProfileId = null}],
   ['empty message', () => {}],
 ];
-for (const main of [false, true]) for (const [name, block] of cases) {
-  if (main && name === 'session read only') continue;
-  test(`FIX-32 ${main ? 'main' : 'session'} send explains ${name} without clearing the draft`, async () => {
+for (const [name, block] of cases) {
+  test(`FIX-32 session send explains ${name} without clearing the draft`, async () => {
     const f = fixture();
-    if (main) Object.assign(f.core.state, {personalCapabilities:{chatSend:1},mainChat:{chatId:'main',sendAvailable:true},selectedChatId:'main',activeChatSource:'desktop'});
     block(f.core);
     const text = name === 'empty message' ? '' : '合成草稿';
     const view = f.core.composerState(text);
@@ -135,17 +133,10 @@ test('FIX-32 repeated pending text is visible and disabled',async()=>{
   assert.ok(f.paints.some(p=>p.name==='toast'));assert.equal(f.requests.length,0);
 });
 
-for(const [name,block] of [['chat API unavailable',c=>c.state.personalCapabilities.chatSend=0],['main read only',c=>c.state.mainChat.sendAvailable=false]])test(`FIX-32 main send explains ${name}`,async()=>{
- const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chatSend:1},mainChat:{chatId:'main',sendAvailable:true},selectedChatId:'main',activeChatSource:'desktop'});block(f.core);
- assert.equal(f.core.composerState('保留的草稿').sendDisabled,true);await f.core.sendDraft('保留的草稿');assert.ok(f.paints.some(p=>p.name==='toast'));assert.equal(f.requests.length,0);
-});
-
-test('FIX-32 main duplicate during asynchronous acceptance is disabled and explained',async()=>{
- const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chatSend:1},mainChat:{chatId:'main',sendAvailable:true},selectedChatId:'main',activeChatSource:'desktop'});
- let resolve;const gate=new Promise(done=>resolve=done);let sends=0;
- f.core.submitCommand=()=>{sends++;return gate};f.core.refreshHistory=async()=>{};
- const first=f.core.sendDraft('第一句话');assert.equal(f.core.composerState('第一句话').sendDisabled,true);await f.core.sendDraft('第一句话');assert.equal(sends,1);assert.ok(f.paints.some(p=>p.name==='toast'));
- resolve(null);await first;
+test('FIX-32 the old main chat explains it is read-only without sending',async()=>{
+ const f=fixture();Object.assign(f.core.state,{mainChat:{chatId:'main'},selectedChatId:'main',activeChatSource:'desktop'});
+ assert.equal(f.core.composerState('保留的草稿').sendDisabled,true);await f.core.sendDraft('保留的草稿');
+ assert.ok(f.paints.some(p=>p.name==='toast'&&/旧主对话只能查看/.test(p.args[0])));assert.equal(f.requests.length,0);
 });
 
 test('FIX-32 thinking write disables send and explains a stale activation',async()=>{

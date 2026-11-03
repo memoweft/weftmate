@@ -271,7 +271,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         core.stopAssistantRefresh();
         core.startConnection(async () => {
             await core.refreshAssistant();
-            await Promise.all([core.refreshHistory(), core.reconcileMainRequests(), core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]);
+            await Promise.all([core.refreshHistory(), core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]);
             await core.offlineConnectionRestored?.();
         });
         core.state.refreshTimer = setInterval(() => {

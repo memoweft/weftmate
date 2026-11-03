@@ -210,8 +210,8 @@ test('MODEL-1 failed combined read keeps usable models and does not start immedi
 });
 
 function sideFixture() {
-  const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chats:1,sideChats:1,chatSend:1,creationReceipt:1},
-    mainChat:{chatId:'main',activeSessionId:'session-test',sendAvailable:true},selectedChatId:'main',chats:[]});
+  const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chats:1,sideChats:1,creationReceipt:1},
+    mainChat:{chatId:'main'},selectedChatId:null,chats:[]});
   for(const name of ['refreshHistory','refreshConversationTasks','refreshApprovalMode','updateSession'])f.core[name]=async()=>{};
   return f;
 }
