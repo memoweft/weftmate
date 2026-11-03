@@ -63,19 +63,6 @@ test('M3-1 signing into a new account during an old probe starts a fresh probe a
   const f=fixture();let release:Function=()=>{};f.setTransport(()=>new Promise(r=>release=r));f.core.startConnection(async()=>{});const pending=f.core.retryConnection();f.core.stopConnection();f.core.state.identityGeneration++;f.core.startConnection(async()=>{});
   f.setTransport(()=>({ok:true,status:200,json:async()=>({presence:{runtime:'ready'}})}));release({ok:true,status:200,json:async()=>({presence:{runtime:'unavailable'}})});await pending;assert.equal(f.c.next(),0);await f.c.advance(0);assert.equal(f.core.connectionView().host.runtime,'ready');f.core.stopConnection();
 });
-test('M3-1 lost accepted response reconciles original ID without another generation',async()=>{
-  const f=fixture();let posts=0;const accepted={requestId:'request-original',commandId:'command',kind:'chat.message',state:'accepted_by_dsh',sessionId:'session',receiptId:'receipt'};
-  f.setTransport((path:any,options:any)=>{if(options.method==='POST'){posts++;throw Error('receipt lost');}return {ok:true,status:200,json:async()=>({command:accepted})};});
-  await f.core.sendMainDraft('合成原文');await f.core.reconcileMainRequests();assert.equal(posts,1);assert.equal(f.core.mainOptimisticMessages()[0].status,'accepted');assert.ok(f.requests.filter(r=>r.path.includes('/commands/by-request/')).every(r=>r.path.endsWith('request-original')));
-});
-test('M3-1 unaccepted and duplicate concurrent retry preserve exact original message and attachment body',async()=>{
-  const f=fixture();let accepted=false,first=true,posts=0;const command={requestId:'request-original',commandId:'command',kind:'chat.message',state:'accepted_by_dsh',sessionId:'session',receiptId:'receipt'};
-  f.setTransport((path:any,options:any)=>{if(options.method==='POST'){posts++;if(first){first=false;throw Error('not delivered');}accepted=true;return {ok:true,status:202,json:async()=>({command})};}return accepted?{ok:true,status:200,json:async()=>({command})}:{ok:false,status:404,json:async()=>({error:{code:'NOT_FOUND'}})};});
-  await f.core.sendMainDraft('合成原文');assert.equal(f.core.mainOptimisticMessages()[0].status,'undelivered');
-  const original=f.core.originalMessageBody('request-original');original.originalAttachments=[{attachmentId:'attachment-stable',sha256:'a'.repeat(64)}];original.attachmentMessageId='message-stable';
-  await Promise.all([f.core.retryMainRequest('request-original'),f.core.retryMainRequest('request-original')]);assert.equal(posts,2);const sent=f.requests.filter(r=>r.options.method==='POST').map(r=>JSON.parse(r.options.body));assert.equal(sent[1].requestId,sent[0].requestId);assert.equal(sent[1].text,'合成原文');assert.equal(sent[1].attachmentMessageId,'message-stable');assert.deepEqual(sent[1].originalAttachments,original.originalAttachments);
-  await f.core.retryMainRequest('request-original');assert.equal(posts,2);
-});
 test('M3-1 cursor replay deduplicates chunks/tools/approvals and 409 resets from the existing tail flow',async()=>{
   const f=fixture(),events=[{seq:1,type:'assistant.message',sessionId:'session',data:{text:'第一段'}},{seq:2,type:'step.started',sessionId:'session',data:{callId:'tool'}},{seq:3,type:'approval.requested',sessionId:'session',data:{approvalId:'approval'}}];
   f.core.refreshConversationApprovals=f.core.refreshConversationQuestions=async()=>{};f.core.appendHistory(events);f.core.appendHistory(events);assert.equal(f.core.state.historyEvents.size,3);

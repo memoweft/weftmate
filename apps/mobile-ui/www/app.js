@@ -112,7 +112,7 @@ function startMobileConnection() {
   uiCore.startConnection(async()=>{
     await listSharedSessions();
     if(state.logicalChats) await uiCore.refreshLogicalHistory();else await loadSharedHistory();
-    await Promise.all([uiCore.reconcileMainRequests(),uiCore.refreshConversationTasks(),uiCore.refreshConversationApprovals(),uiCore.refreshConversationQuestions()]);
+    await Promise.all([uiCore.refreshConversationTasks(),uiCore.refreshConversationApprovals(),uiCore.refreshConversationQuestions()]);
     await globalThis.WeftMobileCloud.core?.offlineConnectionRestored?.();
   });
 }
@@ -150,7 +150,7 @@ function mobileHelpPage(kind,target){
   helpView?.close();uiCore.syncMobileIdentity();helpView=WeftHelpView.mount({target,core:uiCore,kind,mobile:true,back:()=>page(state.returnPage||'chat'),run:(action,trigger)=>{
     if(action==='feedback')return mobileMessageActions.openFeedback(trigger,state.chatSource==='phone'?state.conversationId:state.sharedSessionId,state.chatSource==='phone');
     if(action==='sentFeedback')return mobileMessageActions.sentFeedback(trigger);
-    const actions={main:()=>uiCore.selectMainChat(),temporary:()=>mobileNewTemporaryConversation(),memory:()=>page('memory'),goals:()=>page('goals'),devices:()=>page('devices'),approvals:()=>page('approvals'),backups:()=>{page('settings');toast('备份与恢复请在电脑的设置中打开。');},about:()=>page('about')};return actions[action]?.();}});helpView.focus();
+    const actions={new:()=>uiCore.startNewConversation(),temporary:()=>mobileNewTemporaryConversation(),memory:()=>page('memory'),goals:()=>page('goals'),devices:()=>page('devices'),approvals:()=>page('approvals'),backups:()=>{page('settings');toast('备份与恢复请在电脑的设置中打开。');},about:()=>page('about')};return actions[action]?.();}});helpView.focus();
 }
 function mobileProfileMenu(trigger){WeftPopover.menu(trigger,[{name:'设置',icon:'settings',action:()=>page('settings')},{name:'帮助',icon:'info',action:()=>page('help')},{name:'更新内容',icon:'sync',action:()=>page('releases')}],error=>toast(safeError(error),true));}
 

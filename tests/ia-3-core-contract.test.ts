@@ -30,27 +30,10 @@ test('logical sidebar preserves the native snapshot clock so newer side-chat tur
   snapshot='2026-10-10T00:00:02.000Z';await f.core.refreshSessions();
   assert.equal(f.core.conversationRunning('side-session'),false,'newer idle snapshot still supersedes an old start event');
 });
-test('undispatched main send keeps its original request without a native session and only queries on retry', async()=>{
-  let command:any;
-  const f=setup((path,options)=>{
-    if(path.endsWith('/commands')&&options.method==='POST'){const body=JSON.parse(options.body);command={...body,commandId:'command-1',state:'pending'};return {command};}
-    if(path.includes('/commands/by-request/'))return {command};
-    if(path.includes('/commands?'))return {commands:[command]};
-    if(path.includes('/events?'))return {items:[],contentRevision:1,syncCursor:'live',hasOlder:false,hasNewer:false};
-    return {};
-  });
-  await f.core.sendDraft('合成草稿');
-  const row=f.core.optimisticMessages()[0];assert.equal(row.status,'sending');assert.equal(row.command.sessionId,undefined);
-  assert.equal(f.core.readMarkers()[0].requestId,row.requestId);assert.equal(f.core.readMarkers()[0].kind,'chat.message');
-  await f.core.retryMainRequest(row.requestId);
-  const posts=f.requests.filter(row=>row.options.method==='POST');assert.equal(posts.length,1);
-  assert.equal(JSON.parse(posts[0].options.body).kind,'chat.message');assert.equal(f.draft.text,'合成草稿');
-  assert.ok(f.requests.some(request=>request.path.endsWith('/commands/by-request/'+row.requestId)));
-});
-test('unknown capability versions keep main history readable and disable logical sending',()=>{
-  const f=setup(()=>({}));f.core.state.personalCapabilities.chatSend=2;
-  assert.equal(f.core.composerState('文字').messageDisabled,true);assert.equal(f.core.supportsChat('chatSend'),false);
-  f.core.state.personalCapabilities.chatSend=1;assert.equal(f.core.composerState('文字').messageDisabled,false);
+test('the old main chat stays readable but its composer explains it is read-only',async()=>{
+  const f=setup(()=>({}));const view=f.core.composerState('文字');
+  assert.equal(view.messageDisabled,true);assert.equal(view.sendDisabled,true);assert.match(view.hint,/旧主对话只能查看/);
+  await f.core.sendDraft('文字');assert.equal(f.requests.filter((row:any)=>row.options.method==='POST').length,0);
 });
 
 test('temporary composer leaves logical main and sends a private side creation without changing main policy', async()=>{

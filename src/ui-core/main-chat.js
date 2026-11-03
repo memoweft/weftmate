@@ -3,9 +3,9 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     // IA-4 opts in after supplying logical-chat presentation effects.
     if (environment.mobileState && environment.logicalChats !== true) return {};
     const legacy = Object.fromEntries(['refreshSessions', 'refreshHistory', 'loadOlderHistory', 'startNewConversation',
-        'sendDraft', 'optimisticMessages', 'observeOptimistic', 'composerState', 'attachmentDraftKey', 'loadConversationResources', 'clearSession'].map(key => [key, core[key]]));
+        'composerState', 'loadConversationResources', 'clearSession'].map(key => [key, core[key]]));
     const historyWindow = globalThis.WeftUiCore.ChatWindow.create();
-    const pending = new Map(), drafts = new Map();
+    const drafts = new Map();
     let sideWaitScope,sideWaitCursor,sideWaitRevision=0,sideWaitRead;
     let selectionGeneration = 0, unavailableChatId;
     core.state.chatWindow = historyWindow.state;
@@ -23,11 +23,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         core.historyWaitAbort?.abort();
         sideWaitScope=null;sideWaitCursor=null;sideWaitRevision=0;
         if (purge) {
-            for (const row of pending.values()) {
-                if (row.status === 'accepted' && drafts.get(row.chatId) === row.text) drafts.set(row.chatId,'');
-                if (row.status === 'accepted' && inMain() && effects.readMessageDraft() === row.text) effects.clearMessageDraft();
-            }
-            pending.clear();core.resetMessageProcesses?.();core.state.tasks=[];
+            core.resetMessageProcesses?.();core.state.tasks=[];
             effects.removeResourcePreview();effects.closePhoneImagePreview();
         }
         historyWindow.reset(); core.state.historyGeneration++; core.resourceCache = null;
@@ -207,8 +203,6 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
                 page.items = await core.completeHistoryEvents(page.items, historyWindow.state.events);
             if (token !== scope() || generation !== historyWindow.state.generation) return {kind:'cancelled'};
             core.acceptAccountChanges?.(page.accountChanges);
-            await reconcileMainRequests();
-            if (token !== scope() || generation !== historyWindow.state.generation) return {kind:'cancelled'};
             historyWindow.merge(page, direction); core.observeOptimistic(page.items || []); notify();
             void Promise.all([core.refreshConversationApprovals(),core.refreshConversationQuestions()]).catch(()=>{});
             void refreshChatDates().catch(() => {});
@@ -334,8 +328,6 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
                 page.upserts = await core.completeHistoryEvents(page.upserts, historyWindow.state.events);
             if (token !== scope() || generation !== historyWindow.state.generation) return outcome = core.historyReadResult('cancelled');
             const before = JSON.stringify(historyWindow.ordered());
-            await reconcileMainRequests();
-            if (token !== scope()) return core.historyReadResult('cancelled');
             historyWindow.merge(page, 'changes'); core.observeOptimistic(page.upserts || []);
             if (before !== JSON.stringify(historyWindow.ordered())) {
                 if (!(page.upserts?.length || page.removals?.length)) { if (effects.paintLiveChatMessages?.() !== true) effects.renderMainChat?.(); }
@@ -457,102 +449,12 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             throw error;
         } finally {if(core.state.sideCreating===creating){core.state.sideCreating=null;notify();}}
     }
-    async function checkMainRequest(row) {
-        const token = core.state.identityGeneration;
-        let result;
-        try { result = await core.accessApi(`/commands/by-request/${encodeURIComponent(row.requestId)}`); }
-        catch (error) {
-            if (token !== core.state.identityGeneration || row.ownerId !== core.state.ownerId) return;
-            row.status = error.code === 'NOT_FOUND' ? 'undelivered' : 'confirming';
-            notify();return;
-        }
-        if (token !== core.state.identityGeneration || row.ownerId !== core.state.ownerId) return;
-        row.command = result.command; row.receiptId = row.command?.receiptId; row.sessionId = row.command?.sessionId || row.sessionId;
-        core.rememberTurnRequest(row);
-        row.status = ['accepted_by_dsh', 'observed'].includes(row.command?.state) ? 'accepted' : ['rejected', 'failed', 'uncertain'].includes(row.command?.state) ? 'failed' : 'sending';
-        core.updateFromCommand(row.command);
-        if (row.receiptId) observeOptimistic(historyWindow.ordered());
-        if (row.status === 'accepted' && drafts.get(row.chatId) === row.text) drafts.set(row.chatId,'');
-        if (row.status === 'accepted' && inMain() && row.command?.sessionId && core.state.selectedSessionId !== row.command.sessionId) {
-            const chat = await core.readMainChat();
-            if (token !== core.state.identityGeneration || !inMain()) return;
-            installMain(chat.chat);
-            void Promise.all([core.refreshApprovalMode(core.state.selectedSessionId), core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
-        }
-        if (row.status === 'accepted' && inMain() && effects.readMessageDraft() === row.text) effects.clearMessageDraft();
-        notify();
-    }
-    async function reconcileMainRequests() {
-        for (const row of pending.values()) if (row.ownerId === core.state.ownerId && ['sending','confirming','failed'].includes(row.status)) await checkMainRequest(row);
-    }
-    async function retryMainRequest(requestId) {
-        const row = pending.get(requestId);
-        if (!row || row.retrying || row.ownerId !== core.state.ownerId || core.state.submitting) return;
-        row.retrying = true;
-        const token = core.state.identityGeneration;
-        try {
-            await checkMainRequest(row); // Always query before replay; never generate a new request ID.
-            if (token !== core.state.identityGeneration || row.status !== 'undelivered') return;
-            row.status = 'sending';notify();
-            core.trackRequestState(true,requestId,false);
-            const command = core.originalMessageBody(requestId) ? await core.replayOriginalMessage(requestId)
-                : environment.mobileState && row.nativeFields ? await effects.sendMainNativeMessage(row.nativeFields)
-                : row.attachmentSnapshot && inMain() && row.chatId === core.state.selectedChatId
-                    ? (core.trackRequestState(false,requestId), await core.sendDesktopMessageWithAttachments(row.text,requestId,row.nativeFields.intent,row.attachmentSnapshot)) : null;
-            if (!command) row.status = 'undelivered';
-            else await checkMainRequest(row);
-            await refreshHistory();
-        } catch { if (token === core.state.identityGeneration) row.status = 'confirming'; }
-        finally { row.retrying = false;notify(); }
-    }
-    async function sendDraft(text = effects.readMessageDraft(), intent) {
-        if (!inMain() || core.state.workTimeline) return legacy.sendDraft(text, intent, true);
-        const blocker = core.sendBlocker(text, true);
-        if (blocker) return core.explainSendBlocker(blocker);
-        const attachments = core.currentAttachmentDrafts();
-        const row = { ownerId: core.state.ownerId, chatId: core.state.selectedChatId, sessionId:core.state.selectedSessionId, requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), text, at:new Date().toISOString(), status: 'sending', files: attachments.map(item => item.file.name) };
-        core.rememberTurnRequest(row);
-        pending.set(row.requestId, row); notify(); effects.scrollToLatest();
-        row.nativeFields = {chatId:row.chatId,text,requestId:row.requestId,modelProfileId:core.state.modelProfileId,intent:intent || core.composerInputMode(core.state.selectedSessionId),attachmentIds:attachments.map(item=>item.attachmentId)};
-        if(attachments.length && !environment.mobileState)row.attachmentSnapshot={drafts:[...attachments],modelProfileId:row.nativeFields.modelProfileId};
-        if(environment.mobileState && environment.logicalChats) {
-            core.rememberMarker({requestId:row.requestId,kind:'chat.message'});
-        }
-        try {
-            if (historyWindow.state.hasNewer) {
-                historyWindow.state.events.clear(); historyWindow.state.hasNewer = false;
-                await readPage({}, 'tail'); notify(); effects.scrollToLatest();
-            }
-            const command = environment.mobileState ? await effects.sendMainNativeMessage(row.nativeFields) : attachments.length ? await core.sendDesktopMessageWithAttachments(text, row.requestId, row.nativeFields.intent,row.attachmentSnapshot)
-                : await core.submitCommand('chat.message', { chatId: row.chatId, text, modelProfileId: core.state.modelProfileId, mode: intent || core.composerInputMode(core.state.selectedSessionId) }, null, row.requestId);
-            await checkMainRequest(row);
-            await refreshHistory(false,true);
-        } catch { row.status = 'confirming'; } finally { notify(); }
-    }
-    function observeOptimistic(events) {
-        if (core.state.workTimeline) return legacy.observeOptimistic(events, true);
-        legacy.observeOptimistic(events, true);
-        for (const event of events) if (['task.queued','task.started'].includes(event.type)) for (const data of event.data?.tasks || [event.data || {}]) {
-            if(event.type==='task.queued' && event.data?.inherited)continue;
-            const row=pending.get(data.requestId);
-            if (row && row.ownerId===core.state.ownerId && row.chatId===core.state.selectedChatId) {
-                row.receiptId=data.receiptId || row.receiptId;row.sessionId=event.sessionId || event.sourceRef?.sessionId || row.sessionId;
-                core.rememberTurnRequest(row);
-            }
-        }
-        for (const event of events) if (event.type === 'user.message' && event.data?.receiptId) for (const row of pending.values()) if (row.receiptId === event.data.receiptId) {
-            if (row.ownerId === core.state.ownerId && inMain() && (effects.readMessageDraft() === row.text || effects.readMessageDraft() === event.data.text)) effects.clearMessageDraft(); if(drafts.get(row.chatId) === row.text)drafts.set(row.chatId,'');pending.delete(row.requestId);
-        }
-    }
     function composerState(text) {
         const view = legacy.composerState(text, true);
         if (core.state.sessionSelecting || core.state.sideCreating) return { ...view, messageDisabled: true, sendDisabled: true, attachmentsDisabled: true, voiceDisabled: true, hint: core.state.sideCreating?'正在创建对话…':'' };
-        if (!inMain() || core.state.workTimeline) return view;
-        const available = supports('chatSend') && core.state.mainChat.sendAvailable && core.state.models.some(model => model.id === core.state.modelProfileId);
-        return { ...view, messageDisabled: !available || !!core.state.attachmentUpload, attachmentsDisabled: !available || !!core.state.attachmentUpload || core.state.submitting,
-            modelDisabled: view.modelDisabled || !!core.state.mainChat.activeSessionId,
-            sendDisabled: !!core.sendBlocker(text, true),
-            hint: core.executionAccountHint?.() || (core.state.mainChat.contextOrganizing ? '正在整理上下文，消息将继续排队。' : !supports('chatSend') ? '请更新电脑程序以发送主对话消息。' : !core.state.modelProfileId ? '选择模型后开始聊天。' : '') };
+        if (!inMain() || core.state.workTimeline && core.state.workTimeline.kind !== 'main') return view;
+        // D92: the old main chat stays readable; new messages start a new conversation.
+        return { ...view, messageDisabled: true, sendDisabled: true, attachmentsDisabled: true, voiceDisabled: true, hint: '旧主对话只能查看，新建对话继续聊。' };
     }
     async function loadConversationResources() {
         if (!inMain()) return legacy.loadConversationResources(true);
@@ -577,15 +479,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         mainChatDays: () => historyWindow.days(),
         mainReplyActive: () => {const last=historyWindow.ordered().filter(event=>['user.message','assistant.message','turn.started','turn.ended'].includes(event.type)).at(-1);return inMain()&&(timelineChat().running||last?.data?.live===true||['user.message','turn.started'].includes(last?.type));}, expandChatDay: date => { historyWindow.state.expanded.add(date); notify(); }, openSideChat,
         startChatConversation: () => supports('sideChats') && core.state.mainChat ? openSideChat({ entry: 'composer', parent: {kind:'main',id:core.state.mainChat.chatId} }).catch(error => effects.toast(core.failureMessage(error))) : (core.state.selectedChatId = null, legacy.startNewConversation(true)),
-        sendMainDraft: sendDraft, observeMainOptimistic: observeOptimistic, mainComposerState: composerState, loadMainResources: loadConversationResources,
-        mainOptimisticMessages: () => inHome() ? [...pending.values()].filter(row => row.ownerId === core.state.ownerId && row.chatId === core.state.selectedChatId) : legacy.optimisticMessages(true),
-        retryMainRequest, reconcileMainRequests,
-        restoreMainRequests: rows => { for (const row of rows) {
-            if(row.kind!=='chat.message'||!row.chatId||!row.requestId||pending.has(row.requestId)||row.state==='rejected')continue;
-            const restored={...row,at:row.at || row.createdAt || new Date().toISOString(),ownerId:core.state.ownerId,text:row.text||'',status:row.state==='accepted'?'accepted':'failed',receiptId:row.command?.receiptId,sessionId:row.command?.sessionId || row.sessionId};
-            core.rememberTurnRequest(restored);pending.set(row.requestId,restored);
-        } observeOptimistic(historyWindow.ordered());notify(); },
-        mainAttachmentDraftKey: id => inMain() ? `${core.state.ownerId}|${core.state.mainChat.chatId}` : legacy.attachmentDraftKey(id, true),
-        resetLogicalSession: () => { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;core.state.sessionListCursor=null;core.state.chatListCursor=null;core.state.sessionListQuery='';core.state.sessionListGeneration=(core.state.sessionListGeneration||0)+1;historyWindow.reset();core.resourceCache=null;effects.resetMainChatView?.(); pending.clear(); drafts.clear(); core.state.mainChat = null; core.state.workTimeline = null; core.state.selectedChatId = null; core.state.chats = []; core.state.sessionStatusSummary = null; }
+        mainComposerState: composerState, loadMainResources: loadConversationResources,
+        resetLogicalSession: () => { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;core.state.sessionListCursor=null;core.state.chatListCursor=null;core.state.sessionListQuery='';core.state.sessionListGeneration=(core.state.sessionListGeneration||0)+1;historyWindow.reset();core.resourceCache=null;effects.resetMainChatView?.(); drafts.clear(); core.state.mainChat = null; core.state.workTimeline = null; core.state.selectedChatId = null; core.state.chats = []; core.state.sessionStatusSummary = null; }
     };
 };
