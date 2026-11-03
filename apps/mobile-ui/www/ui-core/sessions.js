@@ -193,9 +193,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         const identity = core.state.identityGeneration;
         const operation=folderMutationScope();core.state.folderChanging=operation;effects.updateAvailability();
         try {
-            if ((core.isMainChat?.() || core.inMainChat?.()) && !(core.supportsWorkModes?.() && core.currentConversationMode() === 'work')) {
-                if (project) await core.openSideChat({entry:'composer',parent:{kind:'project',id:project.projectId}});
-            } else if (core.state.newConversation) {
+            if (core.state.newConversation) {
                 core.state.newConversationProjectId = project?.projectId || null;
                 if (project && core.supportsWorkModes?.()) { core.state.newConversationMode = 'work'; core.chooseSidebarMode('work'); }
             } else if (core.state.selectedSessionId) {
@@ -219,7 +217,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             if(!current())return;
             const history=await core.refreshHistory(false);
             if(!current() || !['changed','unchanged'].includes(history?.kind) || core.state.historyHasMore || core.state.chatWindow?.hasNewer || !isVisible())return;
-            if(core.inMainChat?.())await core.markLatestChatRead();
+            if (core.inMainChat?.()) await core.markLatestChatRead();
             else await updateSession(sessionId,{unread:false});
         }
         catch { /* Keep unread when history or acknowledgement fails; a visible refresh retries. */ }

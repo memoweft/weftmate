@@ -1327,9 +1327,6 @@ export function createHttpHandler(context) {
       }
       if (request.method === 'GET' && pathname === '/personal/v1/chats/main') {
         if (url.search) throw failure('INVALID_REQUEST');
-        await context.sideChats.reconcile(ownerId);
-        const current = context.authenticate(request, 'sessions:read');
-        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
         return context.json(response, 200, await context.chats.main(ownerId));
       }
       if (request.method === 'GET' && pathname === '/personal/v1/chats') {
@@ -1356,7 +1353,6 @@ export function createHttpHandler(context) {
           if (context.closing) throw failure('SERVICE_CLOSING', 503);
           const revision = context.accountRevisionFor(ownerId);
           const chatId = chatTimelineMatch[1], action = chatTimelineMatch[2];
-          if (chatId === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
           // Query the response snapshot before deciding whether it can wait.
           let result = await context.chatTimeline.query(ownerId, chatId, action, url.searchParams);
           if (response.destroyed) return;
@@ -1373,7 +1369,6 @@ export function createHttpHandler(context) {
             if (context.closing) throw failure('SERVICE_CLOSING', 503);
             if (controller.signal.aborted) return;
             // Requery facts after wake; never return pre-wait authorization.
-            if (chatId === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
             result = await context.chatTimeline.query(ownerId, chatId, action, url.searchParams);
           } else if (accountChanged) waitOutcome = 'changed';
           const accountChanges = ['events', 'changes'].includes(action) ? await context.accountChanges(ownerId, controller.signal) : undefined;
@@ -1394,15 +1389,6 @@ export function createHttpHandler(context) {
           response.off('close', abort);
           context.closingSignal.removeEventListener('abort', abort);
         }
-      }
-      const sideResultMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/results$/.exec(pathname);
-      if (request.method === 'POST' && sideResultMatch) {
-        if (url.search) throw failure('INVALID_REQUEST');
-        const authorize = () => {
-          const current = context.authenticate(request, 'commands:write');
-          if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
-        };
-        return context.json(response, 201, await context.sideChats.share(ownerId, sideResultMatch[1], await context.readJson(request, 2048), authorize));
       }
       const chatMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)$/.exec(pathname);
       if (request.method === 'PATCH' && chatMatch) {
@@ -2074,7 +2060,6 @@ export function createHttpHandler(context) {
         if (state.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (state.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (state.chatOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
-        if (state.sideOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (Object.values(state.commands).some((command) =>
           command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
           throw failure('REQUEST_CONFLICT', 409);
@@ -2162,7 +2147,6 @@ export function createHttpHandler(context) {
           if (latest.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (latest.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (latest.chatOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
-          if (latest.sideOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (Object.values(latest.commands).some((command) =>
             command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
             throw failure('REQUEST_CONFLICT', 409);

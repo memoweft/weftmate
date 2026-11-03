@@ -41,10 +41,10 @@ async function shot(scene,requested,mode){await page.evaluate(()=>new Promise(r=
  report.screens.push({file,scene,mode,systemTheme:run('shell','cmd','uimode','night').toString().trim(),pageTheme:dom.theme,osVersion:run('shell','getprop','ro.build.version.release').toString().trim(),navigationVisible:n.navigationHeight>0,native:n,dom,difference,iconsMatch:true});
  await writeFile(join(out,'results.json'),JSON.stringify(report,null,2)+'\n');
 }
-async function send(mode,scenario){await page.waitForFunction(()=>state.loggedIn&&state.logicalChats&&uiCore.inMainChat()&&!document.getElementById('draft').disabled);
+async function send(mode,scenario){await page.waitForFunction(()=>state.loggedIn&&state.logicalChats&&!!state.sharedSessionId&&!document.getElementById('draft').disabled);
  const message=`AND2 ${mode} ${scenario}`;await page.locator('#draft').fill(message);await page.getByRole('button',{name:'发送',exact:true}).click();
  try {await page.waitForFunction(text=>document.getElementById('chat-content').innerText.includes('合成回复：'+text),message);}catch(error){console.log(await page.evaluate(()=>({body:document.body.innerText,loggedIn:state.loggedIn,pending:state.sharedPending,shared:state.sharedSessionId,logical:state.logicalChats,chat:uiCore.state.selectedChatId,history:uiCore.state.historyEvents.size})));throw error;}
- return page.evaluate(()=>({loggedIn:state.loggedIn,ownerPresent:!!state.owner,connection:state.connection,authEpoch:state.authEpoch,mainChat:uiCore.inMainChat(),canSend:!document.getElementById('draft').disabled}));
+ return page.evaluate(()=>({loggedIn:state.loggedIn,ownerPresent:!!state.owner,connection:state.connection,authEpoch:state.authEpoch,selected:!!state.sharedSessionId,canSend:!document.getElementById('draft').disabled}));
 }
 try{
  const busy=run('shell','ps','-A').toString().split('\n').filter(line=>line.includes('weftmate')&&!line.includes(pkg));assert.deepEqual(busy,[],'Another package is running');
@@ -82,7 +82,7 @@ try{
      await page.evaluate(()=>page('data'));await page.getByText('本账户共占用',{exact:false}).waitFor();await shot('data-storage',selected,mode);
      await page.evaluate(()=>toast('系统通知说明：可以在设置中选择接收的提醒。'));await shot('data-storage-toast',selected,mode);
      const g=await page.evaluate(()=>({header:document.querySelector('.topbar').getBoundingClientRect().bottom,toast:document.getElementById('toast').getBoundingClientRect().top}));assert.ok(g.toast>=g.header);
-     await page.evaluate(async()=>{closeToast();await uiCore.selectMainChat();page('chat');});
+     await page.evaluate(async()=>{closeToast();await selectConversation(null);});
      const box=await page.locator('#draft').boundingBox(),dpr=await page.evaluate(()=>devicePixelRatio);run('shell','input','tap',String(Math.round((box.x+box.width/2)*dpr)),String(Math.round((box.y+box.height/2)*dpr)));
      if(!(native()?.imeHeight>0)){run('shell','run-as',pkg,'touch','files/and2-show-ime');}
      let keyboardVisible=true;

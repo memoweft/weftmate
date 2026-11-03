@@ -127,13 +127,12 @@ test('approval status updates keep one activity, native response identity and in
   removeActivity(account,()=>true);reconcileActivity(account);assert.equal(Object.keys(account.activity.items).length,0);
 });
 
-test('native terminal task waits for background effects and shares the IA-3 result activity identity',()=>{
+test('native terminal task waits for background effects and retains one activity identity',()=>{
   const account:any={sessions:{a:{origin:'personal-remote'}},commands:{t:{commandId:'t',sessionId:'a',kind:'session.message',state:'accepted_by_dsh',dshTurn:1,toolExecutions:[{state:'completed',jobId:'job',jobState:'running'}]}},
     chatIdentity:{sessionSegments:{a:'seg'},segments:{seg:{chatId:'side'}},chats:{side:{chatId:'side',kind:'side'}}}};
   observeActivityEvents(account,'a',[{seq:0,at:'2026-10-10T01:00:00Z',type:'turn.started',data:{turn:1}},{seq:1,type:'step.completed',data:{}},{seq:2,at:'2026-10-10T01:01:00Z',type:'turn.ended',data:{reason:'completed'}}],2);
   assert.equal(Object.keys(account.activity.items).length,0);account.commands.t.toolExecutions[0].jobState='completed';reconcileActivity(account);
   const first=Object.values(account.activity.items)[0] as any;assert.ok(first.id.startsWith('activity-result-'));assert.equal(first.source.taskId,'t');
-  account.chatResults={result:{activityId:first.id,taskId:'t',sourceChatId:'side',sourceRef:{native:{sessionId:'a'}},sourceEventId:'event-source',at:first.at,state:'completed',summary:'结果已核对'}};
   reconcileActivity(account);assert.equal(Object.keys(account.activity.items).length,1);assert.equal(Object.values(account.activity.items)[0].id,first.id);
 });
 

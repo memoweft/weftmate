@@ -64,7 +64,7 @@
       if(!q){
         const mixed=groups.flatMap(group=>group.rows),byId=new Map(mixed.map(row=>[`${row.type}:${row.id}`,row]));
         const pending=(core.activity?.items??[]).filter(item=>item.state==='pending'&&!privateRow(item)&&['approval.pending','question.pending'].includes(item.type)).map(item=>{
-          const chat=mixed.find(row=>row.type==='chats'&&(item.source?.chatId&&row.chatId===item.source.chatId||item.source?.sessionId&&row.sessionId===item.source.sessionId)) || [...(core.state.sessions??[]),core.state.mainChat].filter(Boolean).find(chat=>item.source?.chatId&&chat.chatId===item.source.chatId||item.source?.sessionId&&(chat.sessionId===item.source.sessionId||chat.activeSessionId===item.source.sessionId));
+          const chat=mixed.find(row=>row.type==='chats'&&(item.source?.chatId&&row.chatId===item.source.chatId||item.source?.sessionId&&row.sessionId===item.source.sessionId)) || (core.state.sessions??[]).find(chat=>item.source?.chatId&&chat.chatId===item.source.chatId||item.source?.sessionId&&(chat.sessionId===item.source.sessionId||chat.activeSessionId===item.source.sessionId));
           if(chat&&Object.hasOwn(chat,'attention')&&!chat.attention)return null;
           return chat?{...chatRow(chat),needsAttention:true,attention:chat.attention||(item.type==='approval.pending'?'approval':'question'),pendingApprovalCount:item.type==='approval.pending'?1:0,pendingQuestionCount:item.type==='question.pending'?1:0}:null;}).filter(Boolean);
         const attention=merge([...mixed.filter(row=>row.needsAttention),...pending]);

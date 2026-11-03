@@ -82,11 +82,11 @@
     }
     function paint() {
       if(lastScope!==scope()){popup?.close(false);const callback=workProjectChoice;workProjectChoice=null;callback?.(null);lastScope=scope();}
-      const project=projectNow(),isMain=(core.isMainChat?.() || core.inMainChat?.());
-      const events=isMain?core.state.chatWindow?.events:core.state.historyEvents;
+      const project=projectNow();
+      const events=core.state.historyEvents;
       const hasUser=events&&[...events.values()].some(event=>event.type==='user.message'||event.role==='user');
-      const empty=onboarding||!isMain&&(core.state.newConversation||!!core.state.selectedSessionId&&!hasUser)&&!core.state.submitting;
-      row.hidden=!empty;current.hidden=onboarding||!project||empty||isMain;hint.hidden=!empty||!!project||(core.state.projects||[]).length>0||core.folderPreference().hintSeen===true;
+      const empty=onboarding||(core.state.newConversation||!!core.state.selectedSessionId&&!hasUser)&&!core.state.submitting;
+      row.hidden=!empty;current.hidden=onboarding||!project||empty;hint.hidden=!empty||!!project||(core.state.projects||[]).length>0||core.folderPreference().hintSeen===true;
       choose.querySelector('span').textContent=project?.name||'选择文件夹';current.querySelector('span').textContent=project?.name||'文件夹';
       current.setAttribute('aria-label',project?`文件夹 ${project.name}`:'文件夹');choose.setAttribute('aria-label',project?`选择文件夹，当前 ${project.name}`:'选择文件夹');
       for(const control of [choose,add])control.disabled=blocked();current.disabled=core.state.online===false;

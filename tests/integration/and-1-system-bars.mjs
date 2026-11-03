@@ -56,9 +56,7 @@ try {
   for (const theme of ['light','dark']) { await page.evaluate(theme => applyTheme(theme),theme); await shot('login',theme); }
   fixture = await startTimelineCandidate({ daily: true, logicalMobile: true, goals: true, sidebar: true, interactive: true, historyCount: 0 });
   const hostPort = new URL(fixture.origin).port; command('reverse',`tcp:${hostPort}`,`tcp:${hostPort}`); reverse.push(hostPort);
-  const main = (await fixture.request('/chats/main')).chat, host = (await fixture.request('/status')).hostId;
-  let seeded = (await fixture.request('/commands', {requestId:crypto.randomUUID(),kind:'chat.message',chatId:main.chatId,targetDeviceId:host,modelProfileId:'local',text:'合成系统栏验证'})).command;
-  for(let i=0;i<100&&seeded.state!=='accepted_by_dsh';i++){await delay(20);seeded=(await fixture.request('/commands/'+seeded.commandId)).command;}
+  const {command:seeded}=await fixture.startChat('合成系统栏验证');
   fixture.seedMainHistory(seeded.sessionId,12);
   const account = await page.evaluate(async input => call('auth.login', input), { origin: fixture.origin, ...fixture.credentials, deviceName: 'AND-1 合成手机' });
   // Keep the actual asset-loader page, native bars and preferences. Only host data
@@ -78,8 +76,9 @@ try {
     // The cloud login was captured above; authenticated scenes use the existing host fixture.
     globalThis.WeftMobileCloud={route:()=>false,active:false};
     document.body.classList.remove('cloud-auth-active');document.getElementById('cloud-auth-page').classList.remove('active');
-    await boot();await uiCore.selectMainChat();page('chat');
+    await boot();
   });
+  await page.evaluate(id=>selectSharedSession(id),seeded.sessionId);
   await page.waitForFunction(()=>state.booted&&state.loggedIn);
   const hiddenNavigation=command('shell','getprop','qemu.hw.mainkeys').toString().trim()==='1';
   for (const mode of hiddenNavigation?['mumu-hidden-navigation']:['threebutton','gestural']) {
@@ -89,22 +88,20 @@ try {
     if (page.isClosed()) {
       for(let i=0;i<100;i++){page=browser.contexts()[0].pages().find(p=>!p.isClosed()&&p.url().includes('appassets'));if(page)break;await delay(200)}
       await page.waitForFunction(()=>typeof state!=='undefined'&&state.booted);
-      await page.evaluate(async()=>{await uiCore.selectMainChat();page('chat')});
+      await page.evaluate(id=>selectSharedSession(id),seeded.sessionId);
     }
     for (const theme of ['light','dark']) {
       await page.evaluate(async theme=>applyAppearancePreference(await call('settings.appearance',{value:theme})),theme);
-      await page.evaluate(async () => { closeDrawer();await uiCore.selectMainChat();page('chat'); });
+      await page.evaluate(async id => {closeDrawer();await selectSharedSession(id)},seeded.sessionId);
       await shot(mode+'-main',theme);
-      await page.evaluate(id=>selectSharedSession(id),fixture.sessionId);await shot(mode+'-side-chat',theme);await page.evaluate(async()=>{await uiCore.selectMainChat();page('chat')});
+      await page.evaluate(id=>selectSharedSession(id),fixture.sessionId);await shot(mode+'-side-chat',theme);await page.evaluate(id=>selectSharedSession(id),seeded.sessionId);
       await page.getByRole('tab',{name:/^动态(?:，|$)/}).click();await shot(mode+'-activity',theme);
       await page.getByRole('tab',{name:/^目标(?:，|$)/}).click();await shot(mode+'-goals',theme);
       await page.getByRole('tab',{name:/^成果库(?:，|$)/}).click();await shot(mode+'-library',theme);
-      await page.evaluate(async () => { await uiCore.selectMainChat();page('chat');openDrawer(); });await shot(mode+'-drawer',theme);await page.evaluate(()=>closeDrawer());
+      await page.evaluate(async id => {await selectSharedSession(id);openDrawer()},seeded.sessionId);await shot(mode+'-drawer',theme);await page.evaluate(()=>closeDrawer());
       await page.evaluate(()=>page('settings'));await shot(mode+'-settings',theme);
       await page.evaluate(()=>page('appearance'));await shot(mode+'-appearance',theme);
-      await page.evaluate(async()=>{await uiCore.selectMainChat();page('chat')});
-      await page.getByRole('button',{name:'搜索主对话',exact:true}).click();await shot(mode+'-search',theme);
-      await page.evaluate(()=>{document.querySelector('.main-chat-search button[aria-label="关闭主对话搜索"]')?.click();document.activeElement?.blur()});await page.evaluate(async()=>{await uiCore.selectMainChat();page('chat')});
+      await page.evaluate(id=>selectSharedSession(id),seeded.sessionId);
       await page.getByRole('button',{name:'添加图片或文件',exact:true}).click();await shot(mode+'-bottom-menu',theme);await page.evaluate(()=>closeAttachmentMenu());
       // Synthetic artwork displayed by the real image viewer, with no private image input.
       await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=600;canvas.height=400;const ctx=canvas.getContext('2d');ctx.fillStyle='#5594c6';ctx.fillRect(0,0,600,400);ctx.fillStyle='#f7db87';ctx.beginPath();ctx.arc(300,180,80,0,2*Math.PI);ctx.fill();WeftContent.openGallery([{url:canvas.toDataURL(),name:'合成图片'}]);});

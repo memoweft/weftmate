@@ -61,7 +61,7 @@ try{
  const normal=await create(false);await turn(normal,'请记住：我给盆栽浇水的量是每次 137 毫升。只需简短确认，不要调用工具。');
  await until(async()=>((await api('/memory/items?kind=cognition')).body.items??[]).some(i=>i.currentState==='current'&&i.text.includes('137')),'ordinary formation',330000);
  const secret='紫金色珊瑚杯';
- await page.evaluate(async()=>{await globalThis.mem2UiCore.refreshSessions();await globalThis.mem2UiCore.selectMainChat();});
+ await page.evaluate(async id=>{await mem2UiCore.refreshSessions();await mem2UiCore.selectSession(id)},normal);
  await page.getByRole('button',{name:'选择新对话类型',exact:true}).click();await page.getByRole('menuitem',{name:'临时对话',exact:true}).click();
  const privateText=`这次只临时说：我喝茶只用${secret}。请告诉我之前说过每次给盆栽浇多少水，不要重复杯子信息，也不要调用工具。`;
  await page.locator('#message-text').fill(privateText);await page.getByRole('button',{name:'发送',exact:true}).click();
@@ -69,8 +69,8 @@ try{
  const privateEvents=await until(async()=>{const rows=(await api(`/sessions/${temporary}/events?limit=100`)).body.events??[];return rows.some(e=>e.type==='turn.ended')&&rows;},'UI temporary turn');
  const recalled=privateEvents.filter(e=>e.type==='assistant.message').map(e=>e.data.text).join('\n');
  report.turns.push({sessionId:temporary,text:privateText,reply:recalled,events:privateEvents});report.checks.push('main to temporary UI creates and sends a private side conversation');
- await page.evaluate(()=>globalThis.mem2UiCore.selectMainChat());
- assert.equal(await page.locator('#temporary-chat-notice').isVisible(),false,'main never inherits the temporary badge');
+ await page.evaluate(id=>mem2UiCore.selectSession(id),normal);
+ assert.equal(await page.locator('#temporary-chat-notice').isVisible(),false,'ordinary conversation never inherits the temporary badge');
  assert.match(recalled,/137/);report.checks.push('temporary recall of ordinary memory');
  for(const mode of ['default','settled']){
    if(mode==='settled')await until(async()=>{

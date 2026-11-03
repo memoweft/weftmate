@@ -242,7 +242,7 @@ function closeImagePreview({restoreFocus=true}={}){globalThis.WeftContent?.close
 function openImagePreview(url,name,button,scope,{original=false,display=false,note='',attachmentId=null,messageId=undefined,draft=false}={}){
   const source=scope?.source||'phone';
   const logical=scope?.logicalSource,logicalEvent=logical&&uiCore.state.chatWindow?.events.get(logical.eventId);
-  if(logical&&(!uiCore.inMainChat?.()||logicalEvent?.sourceRef?.sessionId!==logical.sessionId||scope.conversationId!==uiCore.state.selectedChatId))return;
+  if(logical&&(!uiCore.inLogicalTimeline?.()||logicalEvent?.sourceRef?.sessionId!==logical.sessionId||scope.conversationId!==uiCore.state.selectedChatId))return;
   const safe=source==='host'?(original||display)?(draft
     ?safeImagePreviewUrl(url,attachmentId,scope.conversationId,undefined,display)
     :safeSessionPreviewUrl(url,attachmentId,logical?.sessionId||scope.conversationId)):safeThumbnailDataUrl(url):

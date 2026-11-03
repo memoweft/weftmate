@@ -1,7 +1,7 @@
 import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
-import {randomUUID} from 'node:crypto';
+
 import {createRequire} from 'node:module';
 import {mkdir,writeFile,rm} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
@@ -79,22 +79,6 @@ try{
  }
  await phone.setViewportSize({width:360,height:780});await select(phone,'phone-360',scenes[0]);await phone.evaluate(()=>applyTheme('dark'));await shot(phone,'phone-360','dark','five-collapsed');await phone.getByRole('button',{name:'还有 2 个',exact:true}).click();await shot(phone,'phone-360','dark','five-expanded');
  await select(desktop,'desktop',scenes[0]);await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(480,780));await shot(desktop,'desktop-480','dark','five-collapsed');
- // Exercise the shared main-chat presentation separately from native side conversations.
- const mainChat=(await fixture.request('/chats/main')).chat,mainGoal='主对话整理合成文件';
- let mainCommand=(await fixture.request('/commands',{requestId:randomUUID(),kind:'chat.message',chatId:mainChat.chatId,modelProfileId:'local',text:mainGoal,targetDeviceId:(await fixture.request('/status')).hostId})).command;
- while(mainCommand.state!=='accepted_by_dsh'){await wait(20);mainCommand=(await fixture.request(`/commands/${mainCommand.commandId}`)).command;}
- const mainSource={sessionId:mainCommand.sessionId,receiptId:mainCommand.receiptId,text:mainGoal};
- fixture.progress.call('grep','main-search',{pattern:'合成关键词'});fixture.progress.result('main-search','No matches.',true);fixture.progress.text('再整理合成文件。');
- for(const name of names){const path=join(fixture.root,`主对话-${name}`);await writeFile(path,'主对话合成成果。');await fixture.registerOutput(path,mainSource);}
- fixture.progress.text('主对话文件已整理完成。');fixture.progress.finish();await fixture.request(`/sessions/${mainSource.sessionId}/events`);
- await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1200,800));
- await desktop.unroute('**/personal/v1/status');
- await desktop.addInitScript(()=>{let api;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>api,set(value){api=value;const create=value.create;value.create=(...args)=>{const core=create(...args);globalThis.__ux3Core=core;return core;};}});});
- await localUiSession(desktop,fixture.credentials,undefined,{mainChat:true});await desktop.waitForFunction(()=>globalThis.__ux3Core?.state.mainChat?.chatId);await desktop.evaluate(()=>__ux3Core.selectMainChat());
- fixtureOptions.logicalMobile=true;await phone.reload();await phone.waitForFunction(()=>state.logicalChats&&state.loggedIn);await phone.evaluate(()=>selectMobileTab('chat'));
- for(const [surface,p] of surfaces){await p.evaluate(surface=>{if(surface==='desktop')document.documentElement.dataset.theme='light';else applyTheme('light');},surface);await p.getByText('主对话文件已整理完成。',{exact:true}).waitFor();await p.getByText('这次整理出 5 个文件',{exact:true}).waitFor();assert.equal(await p.locator('.artifact-summary').count(),1);assert.equal(await p.locator('.has-failure').count(),0);
-  await shot(p,surface,'light','main-five-collapsed');await p.getByRole('button',{name:/更多操作 主对话-季度总结-v1.md/}).click();await p.getByRole('menu').waitFor();assert.equal(await p.getByRole('menuitem',{name:'下载',exact:true}).count(),1);await shot(p,surface,'light','main-file-menu');await p.getByRole('menu').press('Escape');await p.getByRole('button',{name:'在成果库中查看全部',exact:true}).click();await p.getByRole('button',{name:'预览 主对话-季度总结-v1.md',exact:true}).waitFor();report.checks.push(`${surface}: main chat groups output once and keeps recovered steps neutral`);
- }
  assert.deepEqual(report.errors,[]);report.completed=true;
 }finally{
  await browser?.close();await app?.close();await fixture?.close();if(profile)disposeManagedTemp(profile);if(fixture)disposeManagedTemp(fixture.root);

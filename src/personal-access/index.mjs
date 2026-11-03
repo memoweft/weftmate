@@ -68,7 +68,7 @@ import { createNextSuggestions } from './next-suggestions.mjs';
 import { createScheduleOperations } from './schedules.mjs';
 import { createGoalOperations } from './goals.mjs';
 import { createOfflineService } from '../personal-offline/index.mjs';
-import { reconcileChatIdentity, chatForSession } from './chat-identity.mjs';
+import { reconcileChatIdentity, retireMainChatResults, chatForSession } from './chat-identity.mjs';
 import { createTemporaryChats } from './temporary-chats.mjs';
 import { createChatOperations } from './chats.mjs';
 import { createChatTimeline } from './chat-timeline.mjs';
@@ -495,7 +495,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     rootState = JSON.parse(await readFile(storeFile, 'utf8'));
     if (rootState.version === VERSION) {
       let upgraded = false;
-      for (const account of Object.values(rootState.accounts)) { const projectsChanged=migrateProjects(account); const rulesChanged=migratePermissionRules(account); if(projectsChanged||rulesChanged) upgraded=true; }
+      for (const account of Object.values(rootState.accounts)) {
+        const projectsChanged=migrateProjects(account), rulesChanged=migratePermissionRules(account);
+        const resultsRemoved=retireMainChatResults(account, new Date(clock()).toISOString());
+        if (projectsChanged || rulesChanged || resultsRemoved) upgraded=true;
+      }
       if (!Object.hasOwn(rootState, 'unknownAuthLimits')) {
         rootState.unknownAuthLimits = { failures: 0, lastFailureAt: 0, lockUntil: 0 };
         upgraded = true;
@@ -508,7 +512,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       validateStore(rootState);
       if (upgraded) await durableWrite(storeFile, rootState);
     }
-    else { migrateProjects(rootState); migratePermissionRules(rootState); validateSingleStore(rootState); }
+    else { migrateProjects(rootState); migratePermissionRules(rootState); retireMainChatResults(rootState, new Date(clock()).toISOString()); validateSingleStore(rootState); }
   } catch (error) {
     if (error?.code !== 'ENOENT') throw failure('STORE_CORRUPT', 500);
     freshInstallation = true;
@@ -1108,7 +1112,6 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         await healthInsights.close();
         await healthOperations.close();
         await healthRecords.close();
-        await sideChats.close();
         await chatTimeline.close();
         await offline.close();
         await hostRelay?.close();

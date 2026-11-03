@@ -13,17 +13,17 @@ function fixture(capabilities:object){
   const core=scope.WeftUiCore.create({mobileState:state,logicalChats:true,effects,crypto:webcrypto,storage:{getItem:(key:string)=>storage.get(key)||null,setItem:(key:string,value:string)=>storage.set(key,value),removeItem:(key:string)=>storage.delete(key)},fetch:async(path:string)=>{paths.push(path);let body:any={};
     if(path.endsWith('/status'))body={hostId:'host-a',personalCapabilities:capabilities};
     else if(path.endsWith('/models'))body={models:[{id:'model-a',name:'Synthetic model',configured:true}]};
-    else if(path.endsWith('/chats/main'))body={chat:{chatId:'chat-main',kind:'main',sendAvailable:true,activeSessionId:null}};
-    else if(path.includes('/chats/chat-main/events'))body={items:[],contentRevision:1,syncCursor:'independent-live',timeZone:'Asia/Shanghai',indexState:'ready'};
     else if(path.includes('/sessions?'))body={sessions:[{sessionId:'legacy-side',source:'host',sendAvailable:true}],source:'host',hostAvailable:true};
     else if(path.includes('/chats?'))body={items:[],hasMore:false};
     else if(path.endsWith('/projects'))body={projects:[]};
     return {ok:true,status:200,json:async()=>body};}});
   return {core,state,paths};
 }
-test('mobile opens the fixed main through the complete supported native contract',async()=>{
-  const f=fixture(versions);await f.core.listMobileSessions();assert.equal(f.state.logicalChats,true);assert.equal(f.core.inMainChat(),true);
-  assert.equal(f.core.state.chatWindow.syncCursor,'independent-live');assert.equal(f.core.state.selectedChatId,'chat-main');
+test('mobile lists ordinary sessions without entering the old main chat',async()=>{
+  const f=fixture(versions);await f.core.listMobileSessions();
+  assert.equal(f.state.logicalChats,true);assert.equal(f.core.state.selectedChatId,null);
+  assert.equal(f.state.sharedSessions[0].sessionId,'legacy-side');
+  assert.equal(f.paths.some(path=>path.endsWith('/chats/main')),false);
 });
 test('missing, boolean and unknown mobile capability versions retain the existing session list',async()=>{
   for(const version of [undefined,true,2]){const f=fixture({...versions,chatSearch:version});await f.core.listMobileSessions();assert.equal(f.state.logicalChats,undefined);assert.equal(f.paths.some(path=>path.endsWith('/chats/main')),false);assert.equal(f.state.sharedSessions[0].sessionId,'legacy-side');}

@@ -8,7 +8,7 @@ try{
  browser=await chromium.launch({headless:true});const p=await browser.newPage({viewport:{width:390,height:844}});let calls=[],caps='old-wait';
  const backendWait=f.debug.backend.waitForEvents;delete f.debug.backend.waitForEvents;
  p.on('request',r=>{if(r.url().endsWith('/bridge')){const m=JSON.parse(r.postData());calls.push({method:m.method,path:m.params?.path});}});
- await p.goto(f.mobileUrl);await p.waitForFunction(()=>state.booted&&state.loggedIn&&uiCore.state.mainChat);await p.evaluate(()=>uiCore.selectMainChat());await pause(700);calls=[];await pause(4500);
+ await p.goto(f.mobileUrl);await p.waitForFunction(()=>state.booted&&state.loggedIn&&state.logicalChats);await p.evaluate(id=>selectSharedSession(id),f.sessionId);await pause(700);calls=[];await pause(4500);
  report.newUiOldHost={capability:await p.evaluate(()=>uiCore.state.personalCapabilities.replyWait),ms:4500,changes:calls.filter(r=>/\/changes\?/.test(r.path||'')).length,waitCalls:calls.filter(r=>/waitMs=/.test(r.path||'')).length};
  f.debug.backend.waitForEvents=backendWait;await p.close();
  const c=f.debug.service.__reviewContext;const initial=await f.request(`/chats/${chat.chatId}/events`);const waiting=fetch(f.origin+`/personal/v1/chats/${chat.chatId}/changes?cursor=${initial.syncCursor}&liveRevision=${initial.liveRevision}&waitMs=1500`,{headers:{cookie:f.debug.cookie}});await pause(70);const at=Date.now();

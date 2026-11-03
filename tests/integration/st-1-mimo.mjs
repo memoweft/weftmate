@@ -61,10 +61,10 @@ try{
  const status=(await api('/status')).body,hostId=status.hostId,modelProfileId=captured.session.modelProfileId;
  const command=async body=>{const r=await api('/commands',{requestId:'st1-'+randomUUID(),targetDeviceId:hostId,...body});assert.equal(r.status,202,JSON.stringify(r.body));return until(async()=>{const row=(await api('/commands/'+r.body.command.commandId)).body.command;assert.ok(!['rejected','failed'].includes(row.state),JSON.stringify(row));return row.state==='accepted_by_dsh'&&row;});};
  const turns=[{kind:'new',reply,thinking:true}];
- const main=(await api('/chats/main')).body.chat;
- const mainCommand=await command({kind:'chat.message',chatId:main.chatId,modelProfileId,text:'用设置里的称呼向我问好。只需一句，不调用工具。'});
+ const ordinary=await command({kind:'session.create',modelProfileId});
+ const mainCommand=await command({kind:'session.message',sessionId:ordinary.sessionId,text:'用设置里的称呼向我问好。只需一句，不调用工具。'});
  const verifyTurn=async(kind,sessionId)=>{const events=await until(async()=>{const rows=(await api(`/sessions/${sessionId}/events?limit=100`)).body.events||[];return rows.some(e=>e.type==='turn.ended')&&rows;});const text=events.filter(e=>e.type==='assistant.message').map(e=>e.data.text).join('\n');assert.match(text,/小合成/);assert.match(text,/—WM\s*$/);turns.push({kind,reply:text,thinking:events.some(e=>e.data?.modelThinking)});};
- await verifyTurn('main',mainCommand.sessionId);
+ await verifyTurn('conversation',mainCommand.sessionId);
  const projectRoot=join(profile,'synthetic-project');mkdirSync(projectRoot);
  const projectResponse=await api('/projects',{requestId:'st1-project',name:'合成项目',rootPath:projectRoot,instructions:'只用中文回答。',permission:'read-only'});
  assert.ok(projectResponse.status<300,JSON.stringify(projectResponse.body));const projectId=projectResponse.body.project.projectId;
@@ -72,7 +72,7 @@ try{
  await command({kind:'session.message',sessionId:projectChat.sessionId,text:'用设置里的称呼向我问好。只需一句，不调用工具。'});await verifyTurn('project',projectChat.sessionId);
 
  for(const [kind,temporary]of [['side',false],['temporary',true]]){
-   const created=await command(temporary?{kind:'session.create',modelProfileId,temporary:true}:{kind:'session.side.create',parent:{kind:'main',id:main.chatId},modelProfileId,title:'合成旁聊'});
+   const created=await command({kind:'session.create',modelProfileId,...(temporary?{temporary:true}:{})});
    await command({kind:'session.message',sessionId:created.sessionId,text:'用设置里的称呼向我问好，并说明我刚才让你做什么。不要调用工具，只需一句。'});
    const events=await until(async()=>{const events=(await api(`/sessions/${created.sessionId}/events?limit=100`)).body.events||[];return events.some(e=>e.type==='turn.ended')&&events;});
    const text=events.filter(e=>e.type==='assistant.message').map(e=>e.data.text).join('\n');assert.match(text,/小合成/);assert.match(text,/—WM\s*$/);turns.push({kind,reply:text,thinking:events.some(e=>e.data?.modelThinking)});

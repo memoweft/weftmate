@@ -43,12 +43,14 @@ async function desktopShots(stage){for(const theme of ['light','dark'])for(const
 async function memory(){await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1200,900));await desktop.evaluate(()=>WeftSettingsNavigation.open('memory'));await desktop.getByRole('heading',{name:'导入聊天记录',exact:true}).waitFor();}
 async function ask(text){
  await desktop.keyboard.press('Escape');await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1200,900));
- const main=(await api('/chats/main')).chat,me=await api('/status'),models=await api('/settings/models'),requestId=randomUUID();
- const created=await api('/commands',{requestId,kind:'chat.message',chatId:main.chatId,targetDeviceId:me.hostId,modelProfileId:models.backgroundModelProfileId||models.defaultModelProfileId,text,intent:'steer'});
+ const me=await api('/status'),models=await api('/settings/models'),requestId=randomUUID();
+ const opened=await api('/commands',{requestId:randomUUID(),kind:'session.create',targetDeviceId:me.hostId,modelProfileId:models.backgroundModelProfileId||models.defaultModelProfileId,waitForReceipt:true});
+ assert.equal(opened.command.state,'accepted_by_dsh');
+ await api('/commands',{requestId,kind:'session.message',sessionId:opened.command.sessionId,targetDeviceId:me.hostId,text,intent:'steer'});
  const command=await until(async()=>{const c=(await api('/commands/by-request/'+requestId)).command;if(c.state==='rejected')throw Error(c.errorCode);return c.state==='accepted_by_dsh'?c:null;},'main command');
  const answer=await until(async()=>{const p=await api('/sessions/'+command.sessionId+'/events?limit=200');const user=p.events.find(e=>e.type==='user.message'&&e.data.receiptId===command.receiptId);if(!user)return null;
    const messages=p.events.filter(e=>e.seq>user.seq),reply=messages.findLast(e=>e.type==='assistant.message');return reply&&messages.some(e=>e.type==='turn.ended')?reply.data.text:null;},'main answer',300000);
- await desktop.getByRole('button',{name:'WeftMate 主对话',exact:true}).first().press('Enter');return answer;
+ await desktop.locator(`[data-session-id="${command.sessionId}"] button`).first().press('Enter');return answer;
 }
 try{
  cloud=await fixture({after:fn=>cleanups.push(fn)},{realProcess:false,serve,transformReply:(path,body)=>hostOrigin?{...body,...(path.endsWith('/hosts/connect')?{status:'online',baseUrl:hostOrigin}:{}),hosts:body.hosts?.map(h=>({...h,status:'online',online:true}))}:body,

@@ -6,7 +6,7 @@ globalThis.WeftUiComponents.factories.help=(core,ui)=>{
   function open(next='help'){if(opened&&kind===next){ui.closeRail();return;}document.dispatchEvent(new CustomEvent('weftmate:fixed-page',{detail:'help'}));core.show('assistant');kind=next;opened=true;panel.hidden=false;chat().hidden=true;document.body.classList.add('help-open');panel.dataset.title=next==='help'?'帮助与小技巧':'更新内容';ui.byId('assistant-title').textContent=panel.dataset.title;ui.closeRail();view?.close();view=WeftHelpView.mount({target:panel,core,kind:next,back:close,run});view.focus();}
   const selected=ui.paintSelectedSession,reset=ui.resetIdentityControls,screen=ui.paintScreen;
   return {mountHelp(){panel=ui.element('section','help-surface');panel.hidden=true;panel.setAttribute('aria-label','帮助与更新');chat().after(panel);
-    for(const name of ['selectSession','selectMainChat','startNewConversation']){const old=core[name];core[name]=(...args)=>{close();return old(...args);};}
+    for(const name of ['selectSession','startNewConversation']){const old=core[name];core[name]=(...args)=>{close();return old(...args);};}
     document.addEventListener('weftmate:fixed-page',event=>{if(event.detail!=='help')close();});
     const learn=ui.element('button','button secondary small','了解更多');learn.type='button';learn.onclick=()=>open('help');ui.byId('chat-intro').append(learn);
     notice=WeftHelpView.notice({target:ui.byId('assistant-view'),core,open:()=>open('releases'),current:()=>core.state.currentView==='assistant'});

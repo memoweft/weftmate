@@ -1,7 +1,7 @@
 import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
-import {createHash,randomUUID} from 'node:crypto';
+import {createHash} from 'node:crypto';
 import {_electron,chromium} from 'playwright';
 import {createRequire} from 'node:module';
 import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
@@ -51,13 +51,12 @@ async function exercise(){try{
   await page.locator('.weekly-insight-sources').getByRole('button',{name:output.fileName,exact:true}).click();await page.waitForFunction(id=>!!document.querySelector(`[data-session-id="${id}"] button.is-current`),output.source.sessionId);await page.locator('#transcript').waitFor({state:'visible'});await shot(page,'electron-weekly-output-source.png');report.checks.push('weekly-output-source-resolves-real-library-receipt');await activity(page);await page.getByRole('heading',{name:'这周回顾',exact:true}).waitFor();
   await page.locator('.weekly-insight-sources button').first().click();await page.locator('#transcript').waitFor({state:'visible'});report.checks.push('desktop-weekly-source-jump');
   // Synthetic model consumes the same owner/receipt-checked background API as production IPC.
-  const question='我这周都在忙什么',main=(await fixture.request('/chats/main')).chat,host=(await fixture.request('/status')).hostId;
-  let source=(await fixture.request('/commands',{requestId:randomUUID(),kind:'chat.message',chatId:main.chatId,targetDeviceId:host,modelProfileId:'local',text:question})).command;
-  while(source.state!=='accepted_by_dsh'){await new Promise(resolve=>setTimeout(resolve,20));source=(await fixture.request(`/commands/${source.commandId}`)).command;assert.notEqual(source.state,'rejected');}await fixture.request('/sessions');
+  const question='我这周都在忙什么';
+  const {command:source}=await fixture.startChat(question);
   const modelInput=await fixture.digestContext({sessionId:source.sessionId,turn:1,step:1,receiptId:source.receiptId,messageHash:createHash('sha256').update(question).digest('hex')});
   assert.match(modelInput.recentContextText,/季度报告/);assert.ok(modelInput.recentContextText.length<=3600);assert.ok(!modelInput.recentContextText.includes('PRIVATE-SYNTHETIC-BODY'));
   const link=/#weftmate:session:[A-Za-z0-9_-]+/.exec(modelInput.recentContextText)[0];fixture.progress.text(`从最近七天的摘要看，你主要在做季度报告、整理项目资料和准备旅行；报告已经有成果。可以回到[季度报告的对话](${link})继续。`);fixture.progress.finish('completed');
-  await page.getByRole('button',{name:/^WeftMate/}).click();await page.getByText(/从最近七天的摘要看/).waitFor();await shot(page,'electron-answer-from-digests.png');await page.getByRole('link',{name:'季度报告的对话',exact:true}).click();await page.waitForFunction(id=>!!document.querySelector(`[data-session-id="${id}"] button.is-current`),link.slice('#weftmate:session:'.length));report.checks.push('main-assistant-synthetic-model-background-answer-and-clickable-source');
+  await page.locator(`[data-session-id="${source.sessionId}"] button`).first().click();await page.getByText(/从最近七天的摘要看/).waitFor();await shot(page,'electron-answer-from-digests.png');await page.getByRole('link',{name:'季度报告的对话',exact:true}).click();await page.waitForFunction(id=>!!document.querySelector(`[data-session-id="${id}"] button.is-current`),link.slice('#weftmate:session:'.length));report.checks.push('main-assistant-synthetic-model-background-answer-and-clickable-source');
   browser=await chromium.launch({channel:'msedge',headless:true});phone=await browser.newPage({viewport:{width:390,height:844}});phone.setDefaultTimeout(20000);phone.on('pageerror',error=>report.errors.push(error.message));await phone.goto(fixture.mobileUrl);await phone.waitForFunction(()=>state.booted&&state.loggedIn);await phone.getByRole('tab',{name:/^动态(?:，|$)/}).click();await phone.getByRole('heading',{name:'这周回顾',exact:true}).waitFor();
   for(const theme of ['light','dark'])for(const [width,height]of [[360,780],[390,844]]){await phone.setViewportSize({width,height});await themes(phone,theme);await phone.getByRole('heading',{name:'这周回顾',exact:true}).evaluate(node=>node.scrollIntoView({block:'start'}));await shot(phone,`phone-web-${width}-${theme}-weekly.png`);await phone.getByRole('button',{name:/^更多来源/}).click();await shot(phone,`phone-web-${width}-${theme}-sources-open.png`);await phone.keyboard.press('Escape');assert.ok(await phone.locator('#page-content').evaluate(node=>node.scrollWidth<=node.clientWidth));}
   await phone.locator('.weekly-insight-sources button').first().click();await phone.waitForFunction(()=>state.page==='chat');report.checks.push('cloud-phone-weekly-visible-and-source-jump');

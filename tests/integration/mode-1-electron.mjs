@@ -143,7 +143,7 @@ try {
     await capture(page, kind, 'sidebar-work', async p=>{await p.getByRole('button',{name:'筛选最近对话',exact:true}).click();await p.getByRole('menu',{name:'最近对话类型',exact:true}).getByRole('menuitemradio',{name:'工作',exact:true}).click();});
     await page.getByRole('button',{name:'筛选最近对话',exact:true}).click();await page.getByRole('menu',{name:'最近对话类型',exact:true}).getByRole('menuitemradio',{name:'对话',exact:true}).click();
     assert.equal(await page.locator('.rail-main-chat:not([hidden])').count(),0);
-    await page.evaluate(()=>mode1Core.selectMainChat());
+    await page.evaluate(()=>mode1Core.startNewConversation());
     await page.locator('#message-text').fill('MODE1_ORIGINAL_HISTORY_'+kind+'_'+randomUUID());await page.locator('#send-message').click();
     await until(()=>page.locator('#transcript').innerText().then(text=>text.includes('合成回复')),'original history readable');
     await capture(page,kind,'original-history');
@@ -205,7 +205,7 @@ try {
     await api('/commands',{requestId:randomUUID(),kind:'session.cancel',targetDeviceId:started.hostId,sessionId:offlineCard});
   }
   stage='desktop-main-conversion';activePage=desktop;
-  await desktop.evaluate(async()=>{for(const row of mode1Core.state.computers)row.online=true;await mode1Core.selectMainChat();});
+  await desktop.evaluate(async()=>{for(const row of mode1Core.state.computers)row.online=true;await mode1Core.startNewConversation();});
   await desktop.locator('#message-text').fill('MODE1_MAIN_HELLO_'+randomUUID());await desktop.locator('#send-message').click();
   await until(()=>desktop.locator('#transcript').innerText().then(text=>text.includes('合成回复')),'main hello');
   const oldMain=await desktop.evaluate(()=>({chatId:mode1Core.state.selectedChatId,sessionId:mode1Core.state.selectedSessionId}));
@@ -214,7 +214,7 @@ try {
   await until(()=>desktop.evaluate(()=>mode1Core.currentConversationMode()==='work'),'main moves to work');
   assert.equal(await desktop.evaluate(()=>mode1Core.state.selectedChatId),oldMain.chatId);assert.equal(await desktop.evaluate(()=>mode1Core.state.selectedSessionId),oldMain.sessionId);
   assert.ok((await desktop.locator('#transcript').innerText()).includes('MODE1_MAIN_HELLO'));
-  assert.equal((await api('/chats/main')).chat.chatId,oldMain.chatId);report.checks.push('desktop: original logical history remains readable in work; no replacement main is created');
+  assert.equal((await api('/sessions/'+oldMain.sessionId+'/chat')).chatId,oldMain.chatId);report.checks.push('desktop: original logical history remains readable in work; conversation identity is retained');
   await capture(desktop,'desktop','main-to-work');
   await api('/commands',{requestId:randomUUID(),kind:'session.cancel',targetDeviceId:started.hostId,sessionId:oldMain.sessionId});
   assert.deepEqual(report.errors, []);

@@ -254,7 +254,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         renderModelHint(value);
         ui.renderTimeline();
         for (const waiting of ui.byId('transcript').querySelectorAll('.inline-waiting .inline-progress-text')) {
-            waiting.textContent = core.processingStageLabel(core.state.mainChat?.processing || core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.processing);
+            waiting.textContent = core.processingStageLabel(core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.processing);
             waiting.classList.toggle('is-running', core.state.online);
         }
         WeftPopover.modelGate({missing:!!core.state.account && core.state.modelsKnown===true && !core.state.models.some(model=>model.configured!==false&&model.available!==false),

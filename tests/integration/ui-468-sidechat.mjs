@@ -49,11 +49,6 @@ async function capture(page, surface, name) {
   report.screenshots.push(file);
 }
 try {
-  const main = (await f.request('/chats/main')).chat;
-  let command = (await f.request('/commands', { requestId: 'ui468-main', kind: 'chat.message', targetDeviceId: f.hostId, chatId: main.chatId, modelProfileId: 'synthetic', text: '旧主对话合成历史仍然可见。', mode: 'queue' })).command;
-  while (['pending', 'dispatching', 'preflight'].includes(command.state)) command = (await f.request('/commands/' + command.commandId)).command;
-  assert.equal(command.state, 'accepted_by_dsh');
-  const before = (await f.request(`/chats/${main.chatId}/events?limit=200`)).items;
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(key) || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
   app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: resolve('.'), args: ['scripts/review-gallery/electron.mjs'], env: { ...env, WEFTMATE_TEST_HOST_NAME: 'synthetic-host', REVIEW_PROFILE: root, REVIEW_ORIGIN: f.origin, REVIEW_LIBRARY_TOKEN: f.libraryDesktopToken, REVIEW_THEME: 'light' } });
@@ -98,30 +93,28 @@ try {
     console.log('Checking', surface);
     page.setDefaultTimeout(15000);
     page.on('pageerror', error => report.errors.push({ surface, message: error.message }));
-    await page.waitForFunction(() => globalThis.ui468Core?.state.mainChat);
-    for (const theme of ['light', 'dark']) for (const kind of ['main', 'ordinary']) {
-      await page.evaluate(async ({ theme, kind, source }) => {
+    await page.waitForFunction(() => globalThis.ui468Core?.state.ownerId);
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(async ({ theme, source }) => {
         document.documentElement.dataset.theme = theme;
-        if (kind === 'main') await ui468Core.selectMainChat();
-        else await ui468Core.selectSession(source);
-      }, { theme, kind, source: f.source });
-      await page.getByText(kind === 'main' ? '旧主对话合成历史仍然可见。' : '请给出一条合成答复。', { exact: true }).waitFor();
+        await ui468Core.selectSession(source);
+      }, { theme, source: f.source });
+      await page.getByText('请给出一条合成答复。', { exact: true }).waitFor();
       const row = page.getByRole('group', { name: /^助手消息：/ }).last();
       await row.focus();
       const more = row.getByRole('button', { name: '更多回复操作', exact: true });
       const moreCount = await more.count();
-      if (moreCount) { await more.click(); await page.getByRole('menu').last().waitFor(); }
-      else assert.equal(kind, 'main', 'Ordinary replies retain regeneration');
+      assert.equal(moreCount,1,'Ordinary replies retain regeneration');
+      await more.click(); await page.getByRole('menu').last().waitFor();
       const entries = await page.getByRole('menuitem').allTextContents();
       const cancelled = entries.filter(text => /旁聊|从这里开对话/.test(text));
-      report.checks.push({ surface, theme, kind, historyVisible: true, cancelled, entries });
-      await capture(page, surface, `${theme}-${kind}-menu`);
+      report.checks.push({ surface, theme, kind: 'ordinary', historyVisible: true, cancelled, entries });
+      await capture(page, surface, `${theme}-ordinary-menu`);
       await page.keyboard.press('Escape');
       const user = page.getByRole('group', { name: /^我的消息：/ }).last();
-      report.checks.push({ surface, theme, kind, userMenuCount: await user.getByLabel('消息菜单', { exact: true }).count() });
+      report.checks.push({ surface, theme, kind: 'ordinary', userMenuCount: await user.getByLabel('消息菜单', { exact: true }).count() });
     }
   }
-  assert.deepEqual(await desktop.evaluate(async id => (await ui468Core.accessApi(`/chats/${id}/events?limit=200`)).items, main.chatId), before);
   report.historyUnchanged = true;
   await writeFile(join(out, 'report.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));

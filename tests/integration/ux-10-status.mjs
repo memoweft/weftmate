@@ -41,16 +41,11 @@ try {
  const projected=(await f.request('/sessions?archived=all')).sessions;
  for(const row of rows){const actual=projected.find(item=>item.sessionId===row.sessionId);assert.ok(actual,row.title);report.checks.push({kind:row.kind,attention:actual.attention,lastOutcome:actual.lastOutcome,unread:actual.unread,running:actual.running});}
  assert.equal(projected.find(row=>row.sessionId===approval.sessionId).attention,'approval');assert.equal(projected.find(row=>row.sessionId===question.sessionId).attention,'question');
- const mainChat=(await f.request('/chats/main')).chat;
- let mainCommand=(await f.request('/commands',{requestId:randomUUID(),kind:'chat.message',chatId:mainChat.chatId,modelProfileId:'local',text:'合成主对话任务',targetDeviceId:(await f.request('/status')).hostId})).command;
- while(mainCommand.state!=='accepted_by_dsh'){await wait(20);mainCommand=(await f.request(`/commands/${mainCommand.commandId}`)).command;}
- f.progress.text('合成主对话已完成。');f.progress.finish();await f.request(`/sessions/${mainCommand.sessionId}/events`);
- assert.equal((await f.request('/chats/main')).chat.unread,true);
  profile=await mkdtemp(join(tmpdir(),'weftmate-ux10-electron-'));
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:['scripts/review-gallery/electron.mjs','--force-device-scale-factor=1'],cwd:resolve('.'),env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light'}});
  const page=await app.firstWindow();page.setDefaultTimeout(15000);page.on('pageerror',error=>report.errors.push(error.message));
  await page.addInitScript(()=>{let api;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>api,set(value){api=value;const create=value.create;value.create=(...args)=>{const core=create(...args);globalThis.__statusCore=core;return core;};}});});
- await localUiSession(page,f.credentials,undefined,{mainChat:true});await page.waitForFunction(()=>globalThis.__statusCore?.state.mainChat?.unread===false);assert.equal((await f.request('/chats/main')).chat.unread,false);report.checks.push({mainLatestReadCleared:true});
+ await localUiSession(page,f.credentials,undefined,{mainChat:true});
  for(const theme of ['light','dark']){
   await page.evaluate(theme=>{document.documentElement.dataset.theme=theme;WeftDesktop.toggleRail(false);document.getElementById('session-list').scrollTop=0;},theme);await page.mouse.move(1100,700);await page.evaluate(()=>document.activeElement?.blur());
   await shot(page,'electron-1200',theme,'all-statuses');

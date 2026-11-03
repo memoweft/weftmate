@@ -17,7 +17,7 @@ try{
     await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);await page.screenshot({path:join(out,`web-${size.width}-signed-out.png`)});assert.equal(await page.getByRole('tablist').isVisible(),false);
     const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}});assert.equal(login.status(),200);const identity=await login.json();
     await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);
-    await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await uiCore.selectMainChat();},identity);
+    await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await selectMobileTab('chat');},identity);
     const tab=name=>page.getByRole('tab',{name:new RegExp(`^${name}(?:，|$)`)}),button=name=>page.getByRole('button',{name,exact:true});
     const shot=async name=>{await page.waitForTimeout(450);await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));await page.screenshot({animations:'disabled',path:join(out,`web-${size.width}-${name}.png`)});};
     await page.getByRole('tablist',{name:'手机主导航'}).waitFor();assert.equal(await tab('聊天').getAttribute('aria-selected'),'true');
@@ -51,7 +51,7 @@ try{
     // Connection failures keep account-scoped activity rows, but explain host-only pages.
     await page.route('**/personal/v1/status',route=>route.abort('internetdisconnected'));
     for(const theme of ['light','dark']){await page.evaluate(theme=>applyTheme(theme),theme);for(const name of ['聊天','动态','目标','成果库']){await tab(name).click();await page.waitForTimeout(350);await shot(`${theme}-offline-${{'聊天':'chat','动态':'activity','目标':'goals','成果库':'library'}[name]}`);}assert.ok(await page.evaluate(()=>uiCore.activity.items.length>0));}
-    await page.unroute('**/personal/v1/status');await tab('聊天').click();await page.evaluate(()=>{uiCore.state.models=[];uiCore.state.modelProfileId=null;uiCore.state.mainChat.modelDisplayName='';updateComposer();});await shot('no-model-chat');assert.equal(await button('发送').isDisabled(),true);report.checks.push(`${size.width}: cached-offline-activity,host-only-goals-library,no-model-send-disabled`);
+    await page.unroute('**/personal/v1/status');await tab('聊天').click();await page.evaluate(()=>{uiCore.state.models=[];uiCore.state.modelProfileId=null;updateComposer();});await shot('no-model-chat');assert.equal(await button('发送').isDisabled(),true);report.checks.push(`${size.width}: cached-offline-activity,host-only-goals-library,no-model-send-disabled`);
     await page.context().close();
   }
   assert.deepEqual(report.errors,[]);await writeFile(join(out,'web-verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));

@@ -7,32 +7,29 @@ globalThis.WeftUiCore.factories.slashCommands=(core,effects,environment)=>{
     if(pending) return pending;
     const identity=core.state.identityGeneration,owner=core.state.ownerId,draft=core.state.newConversationId;
     pending=(async()=>{
-      if(core.supportsChat?.('sideChats') && core.state.mainChat && core.state.newConversationMode!=='work' && !core.state.newConversationProjectId && !core.state.newConversationTemporary) await core.openSideChat({entry:'composer'});
-      else {
-        let result;
-        const requestId=environment.crypto.randomUUID();
-        core.creatingOptimisticSession=true;
-        try {
-          result=await core.submitCommand('session.create',{modelProfileId:core.state.modelProfileId,...(core.state.newConversationTemporary?{temporary:true}:{})},null,requestId);
-          for(let n=0;n<180 && ['pending','dispatching','preflight'].includes(result?.state);n++) {
-            await new Promise(resolve=>setTimeout(resolve,250));
-            if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || draft!==core.state.newConversationId || core.state.selectedSessionId)return null;
-            result=(await core.accessApi(`/commands/by-request/${encodeURIComponent(requestId)}`)).command;
-            core.updateFromCommand(result);
-          }
+      let result;
+      const requestId=environment.crypto.randomUUID();
+      core.creatingOptimisticSession=true;
+      try {
+        result=await core.submitCommand('session.create',{modelProfileId:core.state.modelProfileId,...(core.state.newConversationTemporary?{temporary:true}:{})},null,requestId);
+        for(let n=0;n<180 && ['pending','dispatching','preflight'].includes(result?.state);n++) {
+          await new Promise(resolve=>setTimeout(resolve,250));
+          if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || draft!==core.state.newConversationId || core.state.selectedSessionId)return null;
+          result=(await core.accessApi(`/commands/by-request/${encodeURIComponent(requestId)}`)).command;
+          core.updateFromCommand(result);
         }
-        finally {core.creatingOptimisticSession=false}
-        if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || draft!==core.state.newConversationId) return null;
-        if(result?.state!=='accepted_by_dsh' || !result.sessionId) throw {code:'BACKEND_UNAVAILABLE'};
-        if(core.state.newConversationProjectId) await core.updateSession(result.sessionId,{projectId:core.state.newConversationProjectId});
-        await core.refreshSessions();
-        if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || draft!==core.state.newConversationId || core.state.selectedSessionId)return null;
-        const text=effects.readMessageDraft(),oldKey=core.attachmentDraftKey(),attachments=core.state.attachmentDrafts.get(oldKey);
-        await core.selectSession(result.sessionId);
-        if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || core.state.selectedSessionId!==result.sessionId)return null;
-        if(attachments){const newKey=core.attachmentDraftKey();core.state.attachmentDrafts.set(newKey,attachments);if(newKey!==oldKey)core.state.attachmentDrafts.delete(oldKey);effects.renderAttachmentDrafts?.()}
-        effects.restoreMainChatDraft?.(text);
       }
+      finally {core.creatingOptimisticSession=false}
+      if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || draft!==core.state.newConversationId) return null;
+      if(result?.state!=='accepted_by_dsh' || !result.sessionId) throw {code:'BACKEND_UNAVAILABLE'};
+      if(core.state.newConversationProjectId) await core.updateSession(result.sessionId,{projectId:core.state.newConversationProjectId});
+      await core.refreshSessions();
+      if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || draft!==core.state.newConversationId || core.state.selectedSessionId)return null;
+      const text=effects.readMessageDraft(),oldKey=core.attachmentDraftKey(),attachments=core.state.attachmentDrafts.get(oldKey);
+      await core.selectSession(result.sessionId);
+      if(identity!==core.state.identityGeneration || owner!==core.state.ownerId || core.state.selectedSessionId!==result.sessionId)return null;
+      if(attachments){const newKey=core.attachmentDraftKey();core.state.attachmentDrafts.set(newKey,attachments);if(newKey!==oldKey)core.state.attachmentDrafts.delete(oldKey);effects.renderAttachmentDrafts?.()}
+      effects.restoreMainChatDraft?.(text);
       if(identity!==core.state.identityGeneration || owner!==core.state.ownerId) return null;
       return core.state.selectedSessionId;
     })().finally(()=>{pending=null});

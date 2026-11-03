@@ -25,8 +25,7 @@ try{
   f=await startTimelineCandidate({daily:true,logicalMobile:true,sidebar:true,interactive:true,inlineProgress:true,goals:true,historyCount:0,baseTime:Date.now()-1000});
   const host=(await f.request('/status')).hostId,owner=(await f.request('/auth/me')).account.ownerId;
   async function command(body){let row=(await f.request('/commands',{requestId:randomUUID(),targetDeviceId:host,...body})).command;while(['pending','dispatching','preflight'].includes(row.state)){await wait(20);row=(await f.request(`/commands/${row.commandId}`)).command;}assert.equal(row.state,'accepted_by_dsh');return row;}
-  const main=(await f.request('/chats/main')).chat;
-  const first=await command({kind:'chat.message',chatId:main.chatId,modelProfileId:'local',text:'合成主对话：周末纸船计划'});f.seedMainHistory(first.sessionId,30);
+  const first=await f.startChat('合成对话：周末纸船计划');f.seedMainHistory(first.sessionId,30);
   const projectPath=join(f.root,'synthetic-project');await mkdir(projectPath);const project=(await f.request('/projects',{requestId:randomUUID(),name:'周末研究',rootPath:projectPath})).project;
   const side=await f.newOutputSource('周末纸船：正文定位验收。',project.projectId);await f.request(`/sessions/${side.sessionId}/metadata`,{title:'周末旅行计划'},'PATCH');
   const filePath=join(f.root,'周末计划.md');await writeFile(filePath,'# 周末计划\n\n合成内容。');const artifact=await f.registerOutput(filePath,side);
@@ -36,14 +35,13 @@ try{
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:root,args:['scripts/review-gallery/electron.mjs','--force-device-scale-factor=1'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light'}});
   const p=await app.firstWindow();p.setDefaultTimeout(15000);p.on('pageerror',error=>{report.errors.push(error.message);console.log(error.stack);});
   await p.route('**/personal/v1/memory/**',route=>{const url=new URL(route.request().url());const item={id:'synthetic-memory',kind:'cognition',text:'周末喜欢安静的地方',currentState:'current',sourceCount:0,updatedAt:new Date().toISOString()};return route.fulfill({json:url.pathname.endsWith('/status')?{ownerId:owner,state:'ready',worldRevision:1,capabilities:{list:true,source:true},formedMemoryCount:1}:url.pathname.includes('/items/')?{ownerId:owner,item,worldRevision:1,availableActions:{}}:{ownerId:owner,items:url.searchParams.get('query')&&!item.text.includes(url.searchParams.get('query'))?[]:[item],worldRevision:1,totalCount:1,hasMore:false,nextCursor:null}});});
-  await localUiSession(p,f.credentials,undefined,{mainChat:true});await b(p,'WeftMate 主对话').waitFor();
+  await localUiSession(p,f.credentials,undefined,{mainChat:true});await p.locator('#new-session').waitFor();
   if(!process.argv.includes('--phones')){
   for(const width of [1200,480]){
     await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,800),width);
     for(const theme of ['light','dark']){
       await p.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
       await p.evaluate(()=>WeftDesktop.toggleRail(false));await shot(p,`electron-${width}`,theme,'sidebar-expanded');
-      await b(p,'WeftMate 主对话').focus();assert.equal(await b(p,'WeftMate 主对话').evaluate(node=>getComputedStyle(node).textDecorationLine),'none');await shot(p,`electron-${width}`,theme,'main-chat-focused');
       const expanded=await p.locator('#rail-open').boundingBox();await p.keyboard.press('Control+b');const collapsed=await p.locator('#rail-open').boundingBox();assert.deepEqual(expanded,collapsed);assert.equal(await p.locator('button:has(use[href$="#sidebar"])').count(),1);await shot(p,`electron-${width}`,theme,'sidebar-collapsed');
       await p.keyboard.press('Control+k');await p.getByRole('dialog',{name:'搜索',exact:true}).waitFor();await ready(p);await shot(p,`electron-${width}`,theme,'empty');
       assert.ok(await p.getByRole('heading',{name:'最近使用',exact:true}).count());assert.ok(await p.getByRole('heading',{name:'操作',exact:true}).count());
@@ -78,14 +76,14 @@ try{
       const result=url.pathname.endsWith('/status')?{ownerId:owner,state:'ready',worldRevision:1,capabilities:{list:true,source:true}}:url.pathname.endsWith('/sources')?{ownerId:owner,worldRevision:1,sources:[]}:url.pathname.includes('/items/')?{ownerId:owner,worldRevision:1,item,availableActions:[]}:{ownerId:owner,items:url.searchParams.get('query')&&!item.text.includes(url.searchParams.get('query'))?[]:[item],worldRevision:1,totalCount:1,hasMore:false,nextCursor:null};await route.fulfill({json:{id:input.id,ok:true,result}});return;}await route.fallback();});
     if(surface==='phone-web'){
       await page.route('**/personal/v1/memory/**',route=>{const url=new URL(route.request().url()),item={id:'synthetic-memory',kind:'cognition',text:'周末喜欢安静的地方',currentState:'current',sourceCount:0,updatedAt:new Date().toISOString()};return route.fulfill({json:url.pathname.endsWith('/status')?{ownerId:owner,state:'ready',worldRevision:1,capabilities:{list:true,source:true}}:{ownerId:owner,items:url.searchParams.get('query')&&!item.text.includes(url.searchParams.get('query'))?[]:[item],worldRevision:1,totalCount:1,hasMore:false,nextCursor:null}});});
-      await page.goto(f.origin+'/personal/v1/ui');await localUiSession(page,f.credentials,undefined,{mainChat:true});await page.getByRole('button',{name:'WeftMate 主对话',exact:true,includeHidden:true}).waitFor({state:'attached'});await page.waitForFunction(()=>document.querySelector('#transcript .main-chat-row')&&!document.querySelector('#message-text').disabled);
+      await page.goto(f.origin+'/personal/v1/ui');await localUiSession(page,f.credentials,undefined,{mainChat:true});await page.locator('#new-session').waitFor({state:'attached'});await page.waitForFunction(()=>document.querySelector('#transcript .main-chat-row')&&!document.querySelector('#message-text').disabled);
     }else{await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted&&state.loggedIn);await page.waitForFunction(()=>state.logicalChats);}
     for(const theme of ['light','dark']){
-      if(surface==='android-bundle')await page.evaluate(()=>uiCore.selectMainChat());
+      if(surface==='android-bundle')await page.evaluate(()=>selectMobileTab('chat'));
       await page.evaluate(({theme,surface})=>{if(surface==='android-bundle')applyTheme(theme);else document.documentElement.dataset.theme=theme;},{theme,surface});await b(page,surface==='android-bundle'?'打开导航':'切换会话侧栏').click();await shot(page,`${surface}-${width}`,theme,'sidebar');
       if(surface==='android-bundle'){
-        const layout=await page.evaluate(()=>{const drawer=document.querySelector('#drawer'),search=drawer.querySelector('.search-entry'),main=drawer.querySelector('.rail-main-chat'),create=drawer.querySelector('.drawer-new-group'),headings=[drawer.querySelector('.rail-side-heading'),drawer.querySelector('.session-group-toggle'),drawer.querySelector('.mobile-projects .home-group')].filter(Boolean);return {order:[search,main,create].map(node=>node.getBoundingClientRect().top),insets:[search,main,create].map(node=>node.getBoundingClientRect().left),headingInsets:headings.map(node=>node.getBoundingClientRect().left+parseFloat(getComputedStyle(node).paddingLeft)),recent:drawer.textContent.includes('最近对话')};});
-        assert.ok(layout.order[0]<layout.order[1]&&layout.order[1]<layout.order[2]);assert.ok(Math.max(...layout.insets)-Math.min(...layout.insets)<1,JSON.stringify(layout));assert.ok(Math.max(...layout.headingInsets)-Math.min(...layout.headingInsets)<1,JSON.stringify(layout));assert.equal(layout.recent,false);
+        const layout=await page.evaluate(()=>{const drawer=document.querySelector('#drawer'),search=drawer.querySelector('.search-entry'),create=drawer.querySelector('.drawer-new-group'),headings=[drawer.querySelector('.session-group-toggle'),drawer.querySelector('.mobile-projects .home-group')].filter(Boolean);return {order:[search,create].map(node=>node.getBoundingClientRect().top),insets:[search,create].map(node=>node.getBoundingClientRect().left),headingInsets:headings.map(node=>node.getBoundingClientRect().left+parseFloat(getComputedStyle(node).paddingLeft)),recent:drawer.textContent.includes('最近对话')};});
+        assert.ok(layout.order[0]<layout.order[1]);assert.ok(Math.max(...layout.insets)-Math.min(...layout.insets)<1,JSON.stringify(layout));assert.ok(Math.max(...layout.headingInsets)-Math.min(...layout.headingInsets)<1,JSON.stringify(layout));assert.equal(layout.recent,false);
         await b(page,'选择新对话类型').click();await page.getByRole('menu').waitFor();await shot(page,`${surface}-${width}`,theme,'new-chat-menu-open');await page.keyboard.press('Escape');
       }
       await b(page,'搜索').click();await ready(page);await shot(page,`${surface}-${width}`,theme,'empty');

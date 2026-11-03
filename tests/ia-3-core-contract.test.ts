@@ -11,15 +11,14 @@ function setup(read: (path:string,options:any)=>any) {
   runInNewContext(source,context);
   const core=context.WeftUiCore.create({effects,crypto:{randomUUID:()=> '00000000-0000-4000-8000-000000000001'},storage:{getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)},
     fetch:async(path,options={})=>{requests.push({path,options});const value=await read(path,options);return {ok:value.status!==409,status:value.status||200,json:async()=>value.body||value};}});
-  const main={chatId:'chat-main',sendAvailable:true,activeSessionId:null,contentRevision:1};
-  Object.assign(core.state,{ownerId:'owner',account:{ownerId:'owner'},device:{id:'device'},hostId:'host',csrfToken:'synthetic',online:true,currentView:'assistant',mainChat:main,selectedChatId:main.chatId,modelProfileId:'local',models:[{id:'local'}],capabilities:{chat:{available:true}},personalCapabilities:{chats:1,chatTimeline:1,chatSearch:1,chatSend:1}});
-  return {core,requests,draft,main};
+  const work={chatId:'work-history',sendAvailable:true,activeSessionId:null,contentRevision:1};
+  Object.assign(core.state,{ownerId:'owner',account:{ownerId:'owner'},device:{id:'device'},hostId:'host',csrfToken:'synthetic',online:true,currentView:'assistant',workTimeline:work,selectedChatId:work.chatId,modelProfileId:'local',models:[{id:'local'}],capabilities:{chat:{available:true}},personalCapabilities:{chats:1,chatTimeline:1,chatSearch:1,chatSend:1}});
+  return {core,requests,draft};
 }
 
 test('logical sidebar preserves the native snapshot clock so newer side-chat turn events enable stop immediately',async()=>{
   let snapshot='2026-10-10T00:00:00.000Z';
-  const f=setup(path=>path.includes('/chats/main')?{chat:{chatId:'chat-main',activeSessionId:null}}
-    :path.includes('/sessions?')?{snapshotAt:snapshot,sessions:[{sessionId:'side-session',running:false,sendAvailable:true}]}
+  const f=setup(path=>path.includes('/sessions?')?{snapshotAt:snapshot,sessions:[{sessionId:'side-session',running:false,sendAvailable:true}]}
     :path.includes('/chats?')?{items:[{chatId:'side-chat',kind:'side',activeSessionId:'side-session',running:false}],hasMore:false}
     :path.includes('/projects')?{projects:[],canManage:false}:{});
   Object.assign(f.core.state,{selectedChatId:'side-chat',selectedSessionId:'side-session',activeChatSource:'desktop',turnStatus:'running'});
@@ -30,13 +29,7 @@ test('logical sidebar preserves the native snapshot clock so newer side-chat tur
   snapshot='2026-10-10T00:00:02.000Z';await f.core.refreshSessions();
   assert.equal(f.core.conversationRunning('side-session'),false,'newer idle snapshot still supersedes an old start event');
 });
-test('the old main chat stays readable but its composer explains it is read-only',async()=>{
-  const f=setup(()=>({}));const view=f.core.composerState('文字');
-  assert.equal(view.messageDisabled,true);assert.equal(view.sendDisabled,true);assert.match(view.hint,/旧主对话只能查看/);
-  await f.core.sendDraft('文字');assert.equal(f.requests.filter((row:any)=>row.options.method==='POST').length,0);
-});
-
-test('temporary composer leaves logical main and sends a private side creation without changing main policy', async()=>{
+test('temporary composer leaves the selected conversation and creates a private session', async()=>{
   const f=setup((path,options)=>path.endsWith('/commands')&&options.method==='POST'
     ? {command:{...JSON.parse(options.body),commandId:'private-create',state:'pending'}} : {});
   f.core.startNewConversation(false,true);
@@ -45,7 +38,6 @@ test('temporary composer leaves logical main and sends a private side creation w
   await f.core.sendDraft('临时合成问题');
   const posts=f.requests.filter(row=>row.options.method==='POST').map(row=>JSON.parse(row.options.body));
   assert.equal(posts.length,1);assert.equal(posts[0].kind,'session.create');assert.equal(posts[0].temporary,true);
-  assert.equal(f.main.chatId,'chat-main');
 });
 test('search cursor reset clears old bodies, hits and resource cache before a fresh tail is fetched',async()=>{
   let freshRead=false,f:any;

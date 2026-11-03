@@ -255,8 +255,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         }
     }
     function startNewConversation(legacy = false, temporary = false, { restore = false } = {}) {
-        if (!legacy && !temporary && core.startChatConversation) return core.startChatConversation();
-        if (temporary) core.state.selectedChatId = null;
+        core.state.selectedChatId = null;
         if (core.state.submitting || core.state.unresolvedSubmission) return;
         core.cancelSessionSelection?.();
         const fromPhone = core.state.activeChatSource === 'phone';
@@ -460,7 +459,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (!core.state.online || ['restarting','unavailable'].includes(core.state.connection?.host?.runtime)) return '电脑暂时无法连接，消息仍在草稿里。';
         if (core.state.capabilities?.chat?.available !== true) return '暂时无法发送，请稍候再试。';
         if (!core.state.modelProfileId || !core.state.models.some(model => model.id === core.state.modelProfileId)) return '先选择一个模型，再发送消息。';
-        if (core.inMainChat?.() || core.state.workTimeline?.kind === 'main') return '旧主对话只能查看，新建对话继续聊。';
+        if (core.inMainChat?.()) return '旧主对话只能查看，新建对话继续聊。';
         if (!core.state.newConversation && core.state.sessions.find(item => item.sessionId === core.state.selectedSessionId)?.sendAvailable !== true)
             return '这段对话暂时无法发送，请重新打开或新建对话。';
         if (thinkingView().busy) return '正在保存模型设置，请稍候再发送。';

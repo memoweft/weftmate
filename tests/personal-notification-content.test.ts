@@ -17,7 +17,6 @@ test('host completion uses task name and concise copy while preserving activity 
   assert.equal(row.notification.title, '整理项目资料');
   assert.equal(row.notification.body, '已完成 · 点开查看结果');
   assert.equal(row.summary, '已整理三份资料。');
-  account.chatResults = { result: { taskId: 'task', state: 'completed', at, sourceRef: { native: { sessionId: 'a' } }, summary: '已完成' } };
   reconcileActivity(account);
   assert.equal(Object.keys(account.activity.items).length, 1);
   assert.equal(account.activity.items[row.id].notification.body, '已完成 · 点开查看结果');
@@ -28,7 +27,6 @@ test('failed native turn reports its actual failure and does not replace it with
   observeActivityEvents(account, 'a', [{ seq: 0, at, type: 'turn.started', data: { turn: 1 } }, { seq: 1, type: 'assistant.message', data: { text: '我会读取资料。' } }, { seq: 2, at, type: 'turn.ended', data: { reason: 'failed', error: { message: '文件已被移动，无法读取。' } } }], 2);
   const row = Object.values(account.activity.items)[0] as any;
   assert.equal(row.notification.body, '文件已被移动，无法读取。');
-  account.chatResults = { result: { taskId: 'task', state: 'failed', at, sourceRef: { native: { sessionId: 'a' } }, summary: '执行失败' } };
   reconcileActivity(account);
   assert.equal(account.activity.items[row.id].notification.body, '文件已被移动，无法读取。');
 });
