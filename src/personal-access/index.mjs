@@ -73,7 +73,7 @@ import { createTemporaryChats } from './temporary-chats.mjs';
 import { createChatOperations } from './chats.mjs';
 import { createChatTimeline } from './chat-timeline.mjs';
 import { eraseChatCopies } from './chat-erasure.mjs';
-import { createMainChat } from './main-chat.mjs';
+import { createReminderChat } from './reminder-chat.mjs';
 import { createChatLifecycle } from './chat-lifecycle.mjs';
 import { createSideChats } from './side-chats.mjs';
 import { createActivity } from './activity.mjs';
@@ -259,7 +259,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get chatTimeline() { return chatTimeline; },
     get sideChats() { return sideChats; },
     get terminals() { return terminals; },
-    get mainChat() { return mainChat; },
+    get reminderChat() { return reminderChat; },
     get chatLifecycle() { return chatLifecycle; },
     eraseChatCopies,
     get offline() { return offline; },
@@ -436,7 +436,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const chats = createChatOperations(context);
   const chatTimeline = createChatTimeline(context);
   const sideChats = createSideChats(context);
-  const mainChat = createMainChat(context);
+  const reminderChat = createReminderChat(context);
   const chatLifecycle = createChatLifecycle(context);
   const {
     requireOriginalAttachments, commandReferencesOriginal, publicHistoryEvent,
@@ -822,8 +822,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       prepareOnly = false, conversationTargets, hostTargets, journalManaged = false }) {
       if (prepareOnly) {
         const account = accountState(ownerId), targets = [];
-        const pending = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
-        for (const sessionId of new Set([...Object.keys(account.sessions), ...(pending ? [pending] : [])])) {
+        for (const sessionId of Object.keys(account.sessions)) {
           if (account.sessions[sessionId]?.phoneHistory) continue;
           const prepared = await callBackend(() => backend.cleanupMemoryCopies({ ownerId, sessionId, sourceTexts,
             deleteConversationSnippets: true, prepareOnly: true }));
@@ -841,7 +840,6 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         // Journal-owned cleanup already runs inside its account serial section.
         // Re-entering source withdrawal here would deadlock that same operation.
         if (!journalManaged) await memoryManager?.discardPendingSources?.(ownerId, { sourceTexts });
-        await mainChat.drain(ownerId);
         await offline.invalidate(ownerId);
         // Portable backups already exclude this managed migration preimage.
         // Erasure must also remove its local older access-store copy.
@@ -850,8 +848,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           for (const chatId of eraseChatCopies(next, { forgotten: true })) chatTimeline.invalidate(ownerId, chatId);
         }));
         const account = accountState(ownerId);
-        const pendingSegment = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
-        for (const sessionId of new Set([...Object.keys(account.sessions), ...(pendingSegment ? [pendingSegment] : []), ...(conversationTargets ?? []).map(target => target.sessionId)])) {
+        for (const sessionId of new Set([...Object.keys(account.sessions), ...(conversationTargets ?? []).map(target => target.sessionId)])) {
           // Phone history is authoritative source text, not an executable native
           // session or a derived memory copy. Its explicit deletion uses
           // forgetConversations; ordinary memory erasure retains that original.

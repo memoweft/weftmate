@@ -5,7 +5,6 @@ import { canonicalCommand } from './command-policy.mjs';
 import { scheduleContent } from './schedules-calendar.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { REQUEST_ID } from './constants.mjs';
-import { chatForSession } from './chat-identity.mjs';
 
 export { scheduleContent, nextCalendarInput } from './schedules-calendar.mjs';
 
@@ -52,18 +51,16 @@ export function createScheduleOperations(context) {
       const device = authorization && next.devices[authorization.sourceDeviceId];
       if (!source && (!authorization || authorization.sessionId !== input.sessionId || !device || device.revoked || device.authEpoch !== authorization.sourceAuthEpoch)) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       const origin = source ?? authorization;
-      const chatId = source?.payload?.chatId ?? authorization?.chatId;
       const currentSession = next.sessions[input.sessionId], project = currentSession.projectId ? next.projects?.[currentSession.projectId] : null;
       if (currentSession.projectId && (!project || project.revoked)) throw failure('PROJECT_UNAVAILABLE',409);
-      const payload = canonicalCommand({ requestId, ...(chatId ? { kind: 'chat.message', chatId }
-        : { kind: 'session.message', sessionId: input.sessionId }),
+      const payload = canonicalCommand({ requestId, kind: 'session.message', sessionId: input.sessionId,
         text: input.text, mode: 'queue', targetDeviceId: next.hostId,
-        ...(!chatId && project ? {projectId:project.projectId,projectRevision:project.revision} : {}) }, next.hostId,true);
+        ...(project ? {projectId:project.projectId,projectRevision:project.revision} : {}) }, next.hostId,true);
       const id = `cmd-${randomUUID()}`, at = new Date(context.timestamp()).toISOString();
       next.commands[id] = { commandId: id, ownerId, requestId, payloadHash: digest(JSON.stringify(payload)), payload,
         sourceDeviceId: origin.sourceDeviceId, sourceAuthEpoch: origin.sourceAuthEpoch,
         scheduleSourceId: source?.commandId ?? input.sourceReceiptId, targetDeviceId: next.hostId,
-        kind: payload.kind, ...(!chatId ? { sessionId: input.sessionId } : {}), state: 'pending', createdAt: at, updatedAt: at };
+        kind: payload.kind, sessionId: input.sessionId, state: 'pending', createdAt: at, updatedAt: at };
       return id;
     }));
     context.schedule(ownerId, commandId);
@@ -111,8 +108,7 @@ export function createScheduleOperations(context) {
       const fingerprint = digest(JSON.stringify({ sessionId, id: match?.[2], action: request.method, text: body.text.trim(),kind:body.kind,
         at:body.at ? {date:body.at.date,time:body.at.time} : null,repeat:repeat??null,expectedRevision:body.expectedRevision }));
       if (prior && prior.fingerprint !== fingerprint) throw failure('REQUEST_CONFLICT', 409);
-      const chat = chatForSession(next,sessionId);
-      next.scheduleAuthorizations[sourceReceiptId] ??= { sessionId, fingerprint, ...(chat?.kind==='main'?{chatId:chat.chatId}:{}), sourceDeviceId: auth.deviceId, sourceAuthEpoch: next.devices[auth.deviceId].authEpoch };
+      next.scheduleAuthorizations[sourceReceiptId] ??= { sessionId, fingerprint, sourceDeviceId: auth.deviceId, sourceAuthEpoch: next.devices[auth.deviceId].authEpoch };
     }));
     const value = await context.backend.schedules({ ownerId, sessionId, action: request.method === 'POST' ? 'create' : 'edit', id: match?.[2], requestId: body.requestId,
       expectedRevision: body.expectedRevision, prompt, sourceReceiptId, ...(body.at ? { at: { ...body.at, time_zone: context.usage.settings(ownerId).timeZone } } : {}) });

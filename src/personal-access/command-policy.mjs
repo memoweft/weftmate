@@ -46,22 +46,11 @@ export function explicitNotepadOpenIntent(value) {
 }
 
 export function canonicalCommand(value, hostId, internal = false) {
-  if (value?.kind === 'chat.message') {
-    exactKeys(value, ['requestId','kind','targetDeviceId','chatId','modelProfileId','text','mode','intent','attachments','attachmentSessionId','attachmentMessageId','originalAttachments'],
-      ['requestId','kind','targetDeviceId','chatId','text']);
-    id(value.chatId);
-    if (value.modelProfileId !== undefined) modelProfileId(value.modelProfileId);
-    if (value.attachmentSessionId !== undefined) id(value.attachmentSessionId);
-    const { chatId, modelProfileId: profile, attachmentSessionId, ...raw } = value;
-    const native = canonicalCommand({ ...raw, kind: 'session.message', sessionId: 'session-pending', mode: value.mode ?? value.intent ?? 'queue' }, hostId);
-    delete native.sessionId;
-    return { ...native, kind: 'chat.message', chatId, ...(profile ? { modelProfileId: profile } : {}), ...(attachmentSessionId ? { attachmentSessionId } : {}) };
-  }
   exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'temporary', 'recallEnabled', 'autoDeleteDays', 'modelProfileId', 'sessionId', 'text', 'mode', 'intent', 'appId', 'attachments',
     'attachmentMessageId', 'originalAttachments', 'sourceSyncEventId',
     ...(internal ? ['taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
       'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls',
-      'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat', 'chatId', 'chatRequestHash', 'attachmentSessionId', 'nativeFile'] : [])],
+      'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat', 'nativeFile'] : [])],
     ['requestId', 'kind', 'targetDeviceId']);
   if (typeof value.requestId !== 'string' || !REQUEST_ID.test(value.requestId) ||
       !(KINDS.has(value.kind) || (internal && value.kind === INTERNAL_ARTIFACT_KIND))) {
@@ -119,11 +108,9 @@ export function canonicalCommand(value, hostId, internal = false) {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'sessionId', 'text', 'mode', 'intent', 'attachments',
       'attachmentMessageId', 'originalAttachments', 'sourceSyncEventId',
       ...(internal ? ['rootTaskId', 'taskAction', 'projectId', 'projectRevision', 'workspaceKind',
-        'initialUrls', 'conversationId', 'modelInputHash', 'chatId', 'chatRequestHash', 'attachmentSessionId'] : [])],
+        'initialUrls', 'conversationId', 'modelInputHash'] : [])],
       ['requestId', 'kind', 'targetDeviceId', 'sessionId', 'text']);
     id(value.sessionId);
-    if (value.chatId !== undefined && (!internal || !validId(value.chatId) || !/^[a-f0-9]{64}$/.test(value.chatRequestHash ?? ''))) throw failure('INVALID_REQUEST');
-    if (value.attachmentSessionId !== undefined && (!value.chatId || !validId(value.attachmentSessionId))) throw failure('INVALID_REQUEST');
     if (value.rootTaskId !== undefined && (!internal || !validId(value.rootTaskId) ||
         !['supplement', 'resume'].includes(value.taskAction))) throw failure('INVALID_REQUEST');
     if (value.taskAction !== undefined && value.rootTaskId === undefined) throw failure('INVALID_REQUEST');
@@ -197,7 +184,7 @@ export function canonicalCommand(value, hostId, internal = false) {
     'sourceSyncEventId',
     'taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
     'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls',
-    'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat', 'chatId', 'chatRequestHash', 'attachmentSessionId', 'nativeFile']
+    'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat', 'nativeFile']
     .filter((key) => Object.hasOwn(value, key) || (key === 'mode' && value.kind === 'session.message'))
     .map((key) => [key, key === 'mode' ? (value.intent ?? value.mode ?? 'steer')
       : key === 'attachments' ? value.attachments.map(canonicalSharedAttachment)
@@ -217,7 +204,6 @@ export function publicCommand(command) {
   };
   if (command.sessionId) result.sessionId = command.sessionId;
   if(command.offlineSource)result.offlineSource={id:command.offlineSource.id,submittedAt:command.offlineSource.submittedAt,receivedAt:command.offlineSource.receivedAt,...(command.offlineSource.startedAt?{startedAt:command.offlineSource.startedAt}:{})};
-  if (command.payload?.chatId) { result.chatId = command.payload.chatId; result.kind = 'chat.message'; }
   if (command.payload?.sideChat) {
     result.kind = 'session.side.create'; result.chatId = command.payload.sideChat.chatId;
     result.contextTransfer = structuredClone(command.payload.sideChat.contextTransfer);

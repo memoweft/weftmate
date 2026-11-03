@@ -279,14 +279,6 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       await requireSession(sessionId, ownerId)
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/rename`, { method: 'POST', body: JSON.stringify({ title }) })
     },
-    async chatRelayState({ sessionId, ownerId }) {
-      await requireSession(sessionId, ownerId);
-      return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'state' }) });
-    },
-    async prepareChatHandoff({ sessionId, ownerId }) {
-      await requireSession(sessionId, ownerId);
-      return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'prepare' }) });
-    },
     async installChatHandoff({ sessionId, ownerId, handoff }) {
       await requireSession(sessionId, ownerId);
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'install', handoff }) });

@@ -12,6 +12,7 @@ import {generateHealthSequence} from './helpers/health-sequence.mjs';
 import {dailyWindow,projectDailyDigest,recentDigestContext,clearDailyDigests,createDailyDigest} from '../src/personal-access/daily-digest.mjs';
 import {createPersonalAccessService} from '../src/personal-access/index.mjs';
 import {createPersonalAccessBackend} from '../src/personal-access-backend.mjs';
+import {createReminderChat} from '../src/personal-access/reminder-chat.mjs';
 import {presentPersonalPrompt,isHealthQuestion} from '../src/plugins/personal-prompt.mjs';
 const owner='owner-11111111-1111-4111-8111-111111111111',other='owner-22222222-2222-4222-8222-222222222222',to='2026-10-12',zone='Asia/Shanghai';
 const v1={version:1,status:'available',steps:6000,sleepMinutes:440,restingHeartRateBpm:62,exerciseMinutes:30,workouts:[{type:'步行',minutes:30}]};
@@ -90,8 +91,8 @@ test('assistant compact query, not-connected response, bounded background and we
  }finally{await store.close();await rm(root,{recursive:true,force:true});}
 });
 test('real HTTP health contract: auth/CSRF, v1 readback, 90-day batch, empty reads, reminder idempotence and tool receipt authorization',async t=>{
- const root=await mkdtemp(join(tmpdir(),'weftmate-health-http-')),known=new Set<string>(),calls:any[]=[],events:any[]=[];let sends=0;
- const backend:any={getStatus:async()=>({runtime:'ready',capabilities:{chat:{available:true}}}),listModels:async()=>[{id:'local',name:'Synthetic',model:'synthetic',configured:true}],preflight:async()=>({ok:true}),createSession:async({sessionId}:any)=>{known.add(sessionId);return {sessionId};},sendMessage:async()=>({accepted:true,receiptId:`receipt-${++sends}`}),cancelSession:async()=>({accepted:true}),readEvents:async()=>({events,nextSeq:events.at(-1)?.seq??-1,hasMore:false}),describeSession:async(id:string)=>known.has(id)?{sessionId:id,agentPreset:'personal-remote',modelProfileId:'local'}:null,schedules:async(input:any)=>{calls.push(input);return input.action==='create'?{item:{id:'native-reminder',kind:'reminder',text:JSON.parse(input.prompt).text}}:{items:[]};}};
+ const root=await mkdtemp(join(tmpdir(),'weftmate-health-http-')),known=new Set<string>(),titles=new Map<string,string>(),calls:any[]=[],events:any[]=[];let sends=0;
+ const backend:any={getStatus:async()=>({runtime:'ready',capabilities:{chat:{available:true}}}),listModels:async()=>[{id:'local',name:'Synthetic',model:'synthetic',configured:true}],preflight:async()=>({ok:true}),createSession:async({sessionId,title}:any)=>{known.add(sessionId);if(title)titles.set(sessionId,title);return {sessionId};},sendMessage:async()=>({accepted:true,receiptId:`receipt-${++sends}`}),cancelSession:async()=>({accepted:true}),readEvents:async()=>({events,nextSeq:events.at(-1)?.seq??-1,hasMore:false}),describeSession:async(id:string)=>known.has(id)?{sessionId:id,agentPreset:'personal-remote',modelProfileId:'local'}:null,schedules:async(input:any)=>{calls.push(input);return input.action==='create'?{item:{id:'native-reminder',kind:'reminder',text:JSON.parse(input.prompt).text}}:{items:[]};}};
  const service=await createPersonalAccessService({root,port:0,backend,clock:()=>Date.parse(to+'T02:00:00Z')});t.after(async()=>{await service.close();await rm(root,{recursive:true,force:true});});
  const {origin,hostId}=await service.start(),grant=await service.issueSetupGrant();const setup=await fetch(origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,username:'HealthSynthetic',password:'synthetic health password',deviceName:'Synthetic'})});assert.equal(setup.status,201);const auth=await setup.json(),cookie=setup.headers.get('set-cookie')!.split(';')[0];
  const req=async(path:string,method='GET',body?:any,csrf=true)=>{const r=await fetch(origin+'/personal/v1'+path,{method,headers:{origin,cookie,'content-type':'application/json',...(csrf?{'x-weftmate-csrf':auth.csrfToken}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,body:await r.json()};};
@@ -108,6 +109,9 @@ test('real HTTP health contract: auth/CSRF, v1 readback, 90-day batch, empty rea
  assert.equal((await service.handleScheduleRuntime({action:'health_query',sessionId:command.sessionId,sourceReceiptId:accepted.receiptId,query:{metric:'sleepMinutes'}})).items.length,7);await assert.rejects(service.handleScheduleRuntime({action:'health_query',sessionId:command.sessionId,sourceReceiptId:'other',query:{metric:'overview'}}),{code:'FORBIDDEN'});
  await req('/settings/health','PATCH',{modelInsightsEnabled:false});await req('/daily-summaries/'+to+'/health','PUT',{...v1,sleepMinutes:300});const overview=(await req('/health/overview')).body;const suggestion=overview.insight.suggestions.find((s:any)=>s.reminder);assert.ok(suggestion);assert.equal((await req('/health/overview')).body.insight.suggestions[0].id,suggestion.id);
  const reminder='/health/suggestions/'+suggestion.id+'/remind',input={sessionId:command.sessionId,requestId:'health-reminder'};assert.equal((await req(reminder,'POST',input,false)).status,403);assert.equal((await req(reminder,'POST',input)).status,201);assert.equal((await req(reminder,'POST',input)).status,201);const creates=calls.filter(c=>c.action==='create');assert.equal(creates[0].requestId,creates[1].requestId);assert.equal(creates[0].prompt,creates[1].prompt);assert.equal(JSON.parse(creates[0].prompt).kind,'reminder');
+ assert.equal((await req(reminder,'POST',{requestId:'health-reminder-default'})).status,201);const remindersChat=calls.filter(c=>c.action==='create').at(-1).sessionId;
+ assert.notEqual(remindersChat,command.sessionId);assert.equal(titles.get(remindersChat),'提醒','a reminder without a conversation goes to the 「提醒」 conversation');
+ assert.equal((await req(reminder,'POST',{requestId:'health-reminder-default-2'})).status,201);assert.equal(calls.filter(c=>c.action==='create').at(-1).sessionId,remindersChat);
  await req('/settings/notifications','PATCH',{reviewRetentionDays:7,reviewClear:true});assert.equal((await req('/health/metrics/sleepMinutes?days=90')).body.points.filter((p:any)=>p.value!==null).length,85);await req('/settings/health','PATCH',{clear:true});assert.equal((await req('/health/overview')).body.connected,false);assert.equal((await req(reminder,'POST',input)).status,404);
 });
 test('weekly statistics and model health paragraph use aggregates; disabling keeps health numeric inputs out of model',async()=>{
@@ -130,4 +134,15 @@ test('health questions present the query directly; ordinary greetings defer its 
  assert.equal(isHealthQuestion('你好'),false);const assembly={sections:[],tools:[{name:'load_tools',description:'load',parameters:{}},{name:'health_query',description:'health',parameters:{metric:{type:'string'}}}]};
  const greeting=presentPersonalPrompt(assembly);assert.deepEqual(greeting.tools.map(t=>t.name),['load_tools']);assert.ok(!greeting.sections.some(s=>s.name==='weftmate:health-guidance'));
  const health=presentPersonalPrompt(assembly,new Set(['health_query']));assert.ok(health.tools.some(t=>t.name==='health_query'));assert.match(health.sections.find(s=>s.name==='weftmate:health-guidance').text,/先直接调用 health_query/);
+});
+
+test('reminders without a conversation share one 「提醒」 conversation, recreated after it is deleted',async()=>{
+ const account:any={devices:{},sessions:{},commands:{}},created:any[]=[];
+ const reminders=createReminderChat({serial:(work:any)=>work(),accountState:()=>account,hostOwner:()=>true,modelSelectable:()=>true,visibleModels:(_owner:any,rows:any)=>rows,
+  callBackend:(work:any)=>work(),backend:{listModels:async()=>[{id:'local'}],createSession:async(input:any)=>{created.push(input);return {sessionId:input.sessionId};}},
+  timestamp:Date.now,mutate:async(_owner:any,update:any)=>update(account)});
+ const first=await reminders.prepare('owner');assert.equal(await reminders.prepare('owner'),first);
+ assert.deepEqual(created.map(row=>[row.title,row.modelProfileId]),[['提醒','local']]);assert.equal(account.sessions[first].origin,'personal-remote');
+ delete account.sessions[first];const second=await reminders.prepare('owner');
+ assert.notEqual(second,first);assert.equal(account.reminderSessionId,second);assert.equal(created.length,2);
 });

@@ -127,7 +127,7 @@ export function createModelServiceOperations(context) {
     }
     return null;
   }
-  async function installModels(ownerId, record, models, stageRef = record.stageRef, allowedPendingSessionId = null, allowedPendingModelProfileId = null) {
+  async function installModels(ownerId, record, models, stageRef = record.stageRef, allowedPendingSessionId = null) {
     const missing = models.filter(row => row.enabled !== false && (!row.profileId || row.pendingInstallation === true));
     if (!missing.length) return models;
     await backup();
@@ -140,8 +140,7 @@ export function createModelServiceOperations(context) {
           openAICompatibleEndpoint(record.baseUrl, 'chat/completions').href, row.modelId) } };
     });
     const result = await context.accountModelManager.apply({ ownerId, targets: targets.map(row => row.target), target: targets[0].target,
-      stageRef, previousProfileId: record.credentialProfileId, ...(allowedPendingSessionId ? { allowedPendingSessionId } : {}),
-      ...(allowedPendingModelProfileId ? { allowedPendingModelProfileId } : {}) });
+      stageRef, previousProfileId: record.credentialProfileId, ...(allowedPendingSessionId ? { allowedPendingSessionId } : {}) });
     if (result?.applied === false) throw failure('ACCOUNT_MODEL_ROUTE_UNCONFIRMED', 503);
     await context.serial(() => context.mutate(ownerId, next => {
       next.accountModels ??= {};
@@ -300,12 +299,12 @@ export function createModelServiceOperations(context) {
     return { profileId: selected.profileId, service: publicModelService(service),
       models: context.visibleModels(ownerId, await context.backend.listModels({ ownerId })) };
   }
-  async function ensureProfile(ownerId, profileId, { allowedPendingSessionId = null, allowedPendingModelProfileId = null } = {}) {
+  async function ensureProfile(ownerId, profileId, { allowedPendingSessionId = null } = {}) {
     const service = Object.values(context.accountState(ownerId).modelServices ?? {}).find(record => record.status === 'active' && record.models.some(row => row.profileId === profileId));
     const pendingModel = service?.models.find(row => row.profileId === profileId && row.pendingInstallation);
     if (pendingModel) {
       let installed;
-      try { installed = await installModels(ownerId, service, [pendingModel], service.stageRef, allowedPendingSessionId, allowedPendingModelProfileId); }
+      try { installed = await installModels(ownerId, service, [pendingModel], service.stageRef, allowedPendingSessionId); }
       catch (error) { if (error?.code === 'ACCOUNT_MODEL_BUSY') return false; throw error; }
       await context.serial(() => context.mutate(ownerId, next => {
         const record = next.modelServices[service.serviceId]; Object.assign(record.models.find(row => row.profileId === profileId), installed[0]);
@@ -367,7 +366,7 @@ export function createModelServiceOperations(context) {
     return queryServiceCatalog({ baseUrl, apiKey, interfaceType: body.interfaceType ?? service?.interfaceType ?? 'openai-compatible',
       ...(context.accountModelManager.fetchCatalog ? { fetchImpl: context.accountModelManager.fetchCatalog } : {}), signal: context.closingSignal });
   }
-  return { migrate, list, configure, select, refresh, remove, check, ensureProfile, applyPendingSelection,
+  return { migrate, list, configure, select, refresh, remove, check, applyPendingSelection,
     refreshing: (ownerId, serviceId) => refreshes.has(`${ownerId}|${serviceId}`),
     async close() { await Promise.allSettled([...refreshes.values(), ...migrations.values()]); } };
 }

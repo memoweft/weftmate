@@ -431,21 +431,9 @@ export function createHttpHandler(context) {
         } finally { await opened.handle.close(); }
       }
       const sharedImageMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]{1,128})\/attachments\/((?:attachment-[0-9a-f-]{36})|(?:sha256:[a-f0-9]{64}))$/i.exec(pathname.replace(/%3a/ig, ':'));
-      const chatImageMatch = request.method === 'PUT' && /^\/personal\/v1\/chats\/([A-Za-z0-9_-]{1,128})\/attachments\/(attachment-[0-9a-f-]{36})$/i.exec(pathname);
-      if (sharedImageMatch || chatImageMatch) {
-        let [, sessionId, attachmentId] = sharedImageMatch || chatImageMatch;
-        if (chatImageMatch) {
-          const selected = context.chats.requireChat(ownerId, sessionId);
-          if (selected.kind !== 'main' || !context.hostOwner(ownerId)) throw failure('CHAT_UNAVAILABLE', 404);
-          sessionId = await context.serial(async () => {
-            if (!context.chats.requireChat(ownerId, selected.chatId).attachmentSessionId) await context.mutate(ownerId, next => {
-              next.chatIdentity.chats[selected.chatId].attachmentSessionId = `session-${randomUUID()}`;
-            });
-            return context.chats.requireChat(ownerId, selected.chatId).attachmentSessionId;
-          });
-        }
+      if (sharedImageMatch) {
+        const [, sessionId, attachmentId] = sharedImageMatch;
         const ownedSession = () => {
-          if (chatImageMatch) { context.chats.requireChat(ownerId, chatImageMatch[1]); return; }
           const session = context.accountState(ownerId).sessions[sessionId];
           if (!session || session.ownerId !== ownerId ||
               !['personal-remote', 'shared-chat'].includes(session.origin)) throw failure('SESSION_UNAVAILABLE', 404);
@@ -511,17 +499,7 @@ export function createHttpHandler(context) {
           const latest = context.authenticate(request, 'commands:write');
           if (latest.ownerId !== ownerId || latest.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
         };
-        let conversationId = url.searchParams.get('conversationId');
-        const logicalChat = context.accountState(ownerId).chatIdentity?.chats[conversationId];
-        if (logicalChat) {
-          if (logicalChat.kind !== 'main' || !context.hostOwner(ownerId)) throw failure('CHAT_UNAVAILABLE', 404);
-          conversationId = await context.serial(async () => {
-            if (!context.chats.requireChat(ownerId, logicalChat.chatId).attachmentSessionId) await context.mutate(ownerId, next => {
-              next.chatIdentity.chats[logicalChat.chatId].attachmentSessionId = `session-${randomUUID()}`;
-            });
-            return context.chats.requireChat(ownerId, logicalChat.chatId).attachmentSessionId;
-          });
-        }
+        const conversationId = url.searchParams.get('conversationId');
         const result = await context.attachmentStores.get(ownerId).put({ attachmentId: attachmentMatch[1],
           conversationId,
           messageId: url.searchParams.get('messageId'), name: url.searchParams.get('name'),
@@ -894,7 +872,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, {
           ...context.service.status(ownerId), hostName:hostName(),
           presence: presence(backendStatus),
-          personalCapabilities: { workAndChat: 1, replyWait: typeof context.backend.waitForEvents === 'function' ? 1 : 0, replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1, modelServices: 1 },
+          personalCapabilities: { workAndChat: 1, replyWait: typeof context.backend.waitForEvents === 'function' ? 1 : 0, replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatLifecycle: 1, chatResources: 1, modelServices: 1 },
           executionAccount: context.hostOwner(ownerId),
           executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
@@ -1968,16 +1946,12 @@ export function createHttpHandler(context) {
           context.authenticate(request, 'commands:write');
           return publicCommand(context.accountState(ownerId).commands[command.commandId]);
         };
-        if (['session.message', 'chat.message'].includes(body.kind)) context.nextSuggestions.cancel(ownerId);
+        if (body.kind === 'session.message') context.nextSuggestions.cancel(ownerId);
         if (temporarySessionPath) {
           exactKeys(body, ['requestId','modelProfileId','recallEnabled','autoDeleteDays'], ['requestId','modelProfileId']);
           body = { ...body, kind:'session.create', targetDeviceId:state.hostId, temporary:true };
         }
         if (taskAction) exactKeys(body, ['requestId', 'text'], ['requestId', 'text']);
-        if (pathname === '/personal/v1/commands' && body.kind === 'chat.message') {
-          return context.json(response, 202, { command: await context.mainChat.submit(ownerId, deviceId, body,
-            () => context.authenticate(request, 'commands:write')) });
-        }
         if (projectSessionMatch) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
         if (browserSessionPath) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
         if (sharedConversationMatch) exactKeys(body, ['requestId', 'modelProfileId', 'expectedSyncSeq',
@@ -1987,8 +1961,7 @@ export function createHttpHandler(context) {
         if (rootSource) {
           const segment = state.chatIdentity.segments[state.chatIdentity.sessionSegments[rootSource.sessionId]];
           const logical = state.chatIdentity.chats[segment?.chatId];
-          if (logical?.kind === 'main' && segment.state === 'sealed') throw failure('MAIN_CHAT_ROUTE_REQUIRED', 409);
-          if (logical?.kind === 'main' && logical.relay) throw failure('SESSION_BUSY', 409);
+          if (logical?.kind === 'main') throw failure('MAIN_CHAT_ROUTE_REQUIRED', 409);
         }
         const requestedProjectId = projectSessionMatch ? id(projectSessionMatch[1]) : null;
         const requestedProject = requestedProjectId ? state.projects?.[requestedProjectId] : null;

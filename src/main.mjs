@@ -3156,8 +3156,8 @@ async function bootstrap() {
     if (idle) console.log(`[weftmate] ✓ account-model route gate idle previous=${previous}`);
     else console.warn(`[weftmate] ⚠ account-model route gate blocked reason=${reasonCode}`);
   }
-  async function assertAccountModelReloadSafe(allowedPendingSessionId = null, allowedPendingModelProfileId = null) {
-    if (personalAccessService?.hasUnissuedDshCommands?.({ allowedPendingSessionId, allowedPendingModelProfileId })) {
+  async function assertAccountModelReloadSafe(allowedPendingSessionId = null) {
+    if (personalAccessService?.hasUnissuedDshCommands?.({ allowedPendingSessionId })) {
       noteAccountModelGate('host_command_pending'); throw accountModelBusy();
     }
     try { await assertRouteReloadSafe(); }
@@ -3166,7 +3166,7 @@ async function bootstrap() {
       { idle: false, reason: 'runtime_unavailable' };
     noteAccountModelGate(snapshot?.reason);
     if (snapshot?.idle !== true || snapshot.reason !== 'idle') throw accountModelBusy();
-    if (personalAccessService?.hasUnissuedDshCommands?.({ allowedPendingSessionId, allowedPendingModelProfileId })) {
+    if (personalAccessService?.hasUnissuedDshCommands?.({ allowedPendingSessionId })) {
       noteAccountModelGate('host_command_pending'); throw accountModelBusy();
     }
   }
@@ -3195,7 +3195,7 @@ async function bootstrap() {
         if (!existing) configStoreMod.saveSubmittedCredential(stageRef, apiKey);
       });
     },
-    async apply({ target, targets, stageRef, previousProfileId, allowedPendingSessionId = null, allowedPendingModelProfileId = null }) {
+    async apply({ target, targets, stageRef, previousProfileId, allowedPendingSessionId = null }) {
       const batch = targets ?? [target];
       if (!batch.length || batch.some(item => !item || !/^private-model-[a-f0-9]{40}$/.test(item.profileId)) ||
           (stageRef && !/^pending-model-[a-f0-9]{48}$/.test(stageRef)) ||
@@ -3212,7 +3212,7 @@ async function bootstrap() {
             ? 'reference_scan_failed' : 'reference_scan_incomplete');
           throw accountModelBusy();
         }
-        await assertAccountModelReloadSafe(allowedPendingSessionId, allowedPendingModelProfileId);
+        await assertAccountModelReloadSafe(allowedPendingSessionId);
         const sourceProfile = settingsMod.listModelProfiles().profiles.find(item => item.id === previousProfileId);
         const secret = stageRef ? configStoreMod.getCredential(stageRef)
           : sourceProfile ? credentialForModelProfile(sourceProfile) : null;

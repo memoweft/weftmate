@@ -185,12 +185,6 @@ test('scheduled command inherits conversation owner, source authorization and cu
   assert.equal(account.commands[one.commandId].sourceAuthEpoch, 7);
   assert.equal(account.commands[one.commandId].payload.mode, 'queue');
   await assert.rejects(ops.handleRuntime({ ...input, sessionId: 'other' }), { code: 'SESSION_UNAVAILABLE' });
-  account.devices = { 'device-a': { authEpoch:7 } };
-  account.scheduleAuthorizations = { 'ui-main': {sessionId:'session-a',chatId:'chat-main',sourceDeviceId:'device-a',sourceAuthEpoch:7} };
-  const main = await ops.handleRuntime({...input,sourceReceiptId:'ui-main',deliveryId:'main-ui'});
-  const mainCommand = account.commands[main.commandId];assert.equal(mainCommand.kind,'chat.message');assert.equal(mainCommand.payload.chatId,'chat-main');
-  assert.equal(scheduledCommandSource(account,mainCommand),true);
-  assert.equal(scheduledCommandSource(account,{...mainCommand,kind:'session.message',sessionId:'next-main-segment'}),true,'a UI main schedule follows its logical main across native segment relay');
   account.sessions['session-a'].projectId='project-p1';account.projects={'project-p1':{projectId:'project-p1',revision:3}};
   const projectRun=await ops.handleRuntime({...input,deliveryId:'project-current'});
   assert.equal(account.commands[projectRun.commandId].payload.projectId,'project-p1');assert.equal(account.commands[projectRun.commandId].payload.projectRevision,3);

@@ -92,7 +92,7 @@ export function createMessageBranches(context) {
         if (command?.payload.attachments) {
           const store = context.sharedAttachmentStores.get(ownerId);
           let staged;
-          try { staged = await store.resolve({ sessionId: command.payload.attachmentSessionId ?? command.sessionId,
+          try { staged = await store.resolve({ sessionId: command.sessionId,
             requestId: command.requestId, attachments: command.payload.attachments }); }
           catch (error) {
             if (error.code !== 'ATTACHMENT_NOT_FOUND') throw error;
