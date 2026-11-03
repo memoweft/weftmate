@@ -169,6 +169,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         core.state.workTimeline = null;
         if(!creating)core.state.sideCreating=null;
         const generation = ++selectionGeneration, identity = core.state.identityGeneration;
+        core.state.selectingDraft = {sessionId:core.state.selectedSessionId,draftId:core.state.newConversationId};
         core.state.sessionSelecting = true; core.cancelAttachmentUpload(); notify();
         core.state.selectedChatId = null; clearLogical();
         try {
@@ -186,7 +187,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (!creating) effects.restoreMainChatDraft?.(drafts.get(chat?.chatId || id) || '');
             effects.renderChatOrigin?.(chat);
         } finally {
-            if (generation === selectionGeneration && identity === core.state.identityGeneration) { core.state.sessionSelecting = false; notify(); }
+            if (generation === selectionGeneration && identity === core.state.identityGeneration) { core.state.sessionSelecting = false; core.state.selectingDraft=null; notify(); }
         }
     }
     async function readPage(params, direction) {
@@ -429,18 +430,22 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         core.state.chats = [created, ...core.state.chats.filter(row => row.chatId !== created.chatId)].slice(0,100);
         core.state.sessions = [{ ...created, sessionId: command.sessionId }, ...core.state.sessions.filter(row => row.sessionId !== command.sessionId && row.kind !== 'main')].slice(0,100);
         const identity = core.state.identityGeneration;
+        creating.sessionId=command.sessionId;
         await selectSession(command.sessionId, {empty:!created.originRefs?.length,creating:true});
         if (identity !== core.state.identityGeneration || core.state.selectedSessionId !== command.sessionId) return;
         const selectedScope=scope();core.state.sessionSelecting=true;notify();
         try {
-            effects.restoreMainChatDraft?.(draft);
-            if (files.length && environment.mobileState) await effects.transferNativeAttachments(sourceAttachmentKey, core.attachmentDraftKey(), files);
-            else if (files.length) core.state.attachmentDrafts.set(core.attachmentDraftKey(), files);
+            const held=creating.heldDraft;
+            effects.restoreMainChatDraft?.(held?.text===draft ? '' : draft);
+            const transfer=held ? files.filter(item=>!held.captured.includes(item)) : files;
+            if (transfer.length && environment.mobileState) await effects.transferNativeAttachments(sourceAttachmentKey, core.attachmentDraftKey(), transfer);
+            else if (transfer.length) core.state.attachmentDrafts.set(core.attachmentDraftKey(), transfer);
             if (selectedScope !== scope()) return;
             drafts.set(sourceDraftId,'');if(sourceAttachmentKey)core.state.attachmentDrafts.delete(sourceAttachmentKey);
             effects.renderAttachmentDrafts(); effects.renderChatOrigin?.(created);
         } finally { if(selectedScope===scope()){core.state.sessionSelecting=false;notify();} }
         } catch(error) {
+            creating.failed=true;
             if(creating.identity===core.state.identityGeneration && core.sideCreateIntent===intent)
                 core.operation('对话创建结果尚未确认，请核对后重试。',true,intent.requestId);
             throw error;
@@ -448,7 +453,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     }
     function composerState(text) {
         const view = legacy.composerState(text, true);
-        if (core.state.sessionSelecting || core.state.sideCreating) return { ...view, messageDisabled: true, sendDisabled: true, attachmentsDisabled: true, voiceDisabled: true, hint: core.state.sideCreating?'正在创建对话…':'' };
+        if (core.state.sessionSelecting || core.state.sideCreating) return { ...view, messageDisabled: true, attachmentsDisabled: true, voiceDisabled: true, hint: core.state.sideCreating?'正在创建对话…':'' };
         if (inHome()) return { ...view, messageDisabled: true, sendDisabled: true, attachmentsDisabled: true, voiceDisabled: true, hint: '旧主对话只能查看，新建对话继续聊。' };
         return view;
     }

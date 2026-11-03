@@ -9,11 +9,11 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
     }
     function attachmentScope(sessionId = core.state.selectedSessionId) {
         return { generation: core.state.identityGeneration, ownerId: core.state.ownerId, deviceId: core.state.device?.id,
-            csrf: core.state.csrfToken, sessionId, view: core.state.currentView };
+            hostId:core.state.hostId, csrf: core.state.csrfToken, sessionId, view: core.state.currentView };
     }
     function attachmentScopeCurrent(scope) {
         return scope.generation === core.state.identityGeneration && scope.ownerId === core.state.ownerId &&
-            scope.deviceId === core.state.device?.id && scope.csrf === core.state.csrfToken && !!scope.csrf &&
+            scope.hostId === core.state.hostId && scope.deviceId === core.state.device?.id && scope.csrf === core.state.csrfToken && !!scope.csrf &&
             scope.sessionId === core.state.selectedSessionId && core.state.activeChatSource === 'desktop' &&
             scope.view === 'assistant' && core.state.currentView === 'assistant';
     }
@@ -68,7 +68,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         const upload = core.state.attachmentUpload;
         if (!upload)
             return;
-        upload.controller.abort();
+        upload.failed=true;upload.controller.abort();
         core.state.attachmentUpload = null;
         if (announce && core.attachmentScopeCurrent(upload.scope))
             core.setAttachmentStatus('已取消上传，所选文件仍保留，可重新发送。');
@@ -143,18 +143,18 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         core.state.attachmentAttempts.set(key, attempt);
         return attempt;
     }
-    async function sendDesktopMessageWithAttachments(text, requestId, mode) {
+    async function sendDesktopMessageWithAttachments(text, requestId, mode, held) {
         const sessionId = core.state.selectedSessionId;
         const key = core.attachmentDraftKey(sessionId);
-        const drafts = key ? [...core.currentAttachmentDrafts()] : [];
+        const drafts = held ? held.captured : key ? [...core.currentAttachmentDrafts()] : [];
         if (!key || drafts.length < 1 || drafts.length > 4 || core.state.attachmentUpload)
             return null;
         const scope = core.attachmentScope(sessionId);
         const controller = new AbortController();
-        const attempt = core.attachmentAttempt(key, text, drafts);
+        const attempt = held || core.attachmentAttempt(key, text, drafts);
         if (requestId) attempt.requestId = requestId;
-        const messageId = core.state.attachmentGroups.get(key) || `message-${environment.crypto.randomUUID()}`;
-        core.state.attachmentGroups.set(key, messageId);
+        const messageId = (held ? held.attachmentGroup : core.state.attachmentGroups.get(key)) || `message-${environment.crypto.randomUUID()}`;
+        if (held) held.attachmentGroup=messageId; else core.state.attachmentGroups.set(key, messageId);
         const upload = { controller, scope, key, requestId: attempt.requestId };
         core.state.attachmentUpload = upload;
         core.setAttachmentStatus('正在核对文件并保存原件…');
@@ -210,16 +210,18 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
                 if (core.attachmentTextTypes.has(item.contentType))
                     stagedTextBytes += blob.size;
             }
-            if (!core.attachmentScopeCurrent(scope))
+            if (!core.attachmentScopeCurrent(scope) || held && (!core.state.online || held.modelProfileId!==core.state.modelProfileId))
                 throw new DOMException('Upload cancelled', 'AbortError');
             core.state.attachmentUpload = null;
             core.setAttachmentStatus('原件已保存，正在发送消息…');
             effects.updateAvailability();
+            if (held) held.posted=true;
             return await core.submitCommand('session.message', { sessionId, text, mode: mode || core.composerInputMode(sessionId),
                 ...(staged.length ? { attachments: staged } : {}), attachmentMessageId: messageId,
                 originalAttachments: originals }, sessionId, attempt.requestId);
         }
         catch (error) {
+            upload.failed=true;
             if (core.attachmentScopeCurrent(scope)) {
                 if (error?.name === 'AbortError')
                     core.setAttachmentStatus('已取消上传，所选文件仍保留，可重新发送。');

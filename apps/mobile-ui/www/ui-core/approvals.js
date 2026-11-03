@@ -79,7 +79,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             effects.focusApprovalMode();
         }
         catch {
-            effects.historyNotice('审批模式未保存，请重试。');
+            saving.failed=true;effects.historyNotice('审批模式未保存，请重试。');
         }
         finally {
             if (core.state.approvalModeSaving === saving) core.state.approvalModeSaving = null;

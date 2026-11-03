@@ -220,11 +220,13 @@ test('FX-19 creation stays locked through the durable receipt and entity read, t
     if(path==='/commands'){posted=options;return receipt.promise}if(path==='/chats/side')return entity.promise;return {}};
   const work=f.core.openSideChat();await new Promise(resolve=>setImmediate(resolve));
   assert.equal(posted.body.waitForReceipt,true);assert.equal(posted.timeoutMs,45000);
-  assert.equal(f.core.composerState('first').messageDisabled,true);assert.equal(f.core.composerState('first').sendDisabled,true);
+  assert.equal(f.core.composerState('first').messageDisabled,true);
+  const messages=[];f.core.submitCommand=async(kind,fields,session,id)=>{messages.push({kind,fields,session,id});};
+  const pending=await f.core.sendDraft('首条草稿');assert.equal(pending.waiting,true);assert.equal(messages.length,0);
   receipt.resolve({command:{kind:'session.side.create',requestId:posted.body.requestId,state:'accepted_by_dsh',sessionId:'session-new',chatId:'side'}});
   await new Promise(resolve=>setImmediate(resolve));assert.equal(f.core.composerState('first').messageDisabled,true,'accepted receipt alone cannot unlock the unfinished selection');
   entity.resolve({chat:{chatId:'side',activeSessionId:'session-new',kind:'side',sendAvailable:true,modelProfileId:'local'}});await work;
-  assert.equal(f.core.state.selectedSessionId,'session-new');assert.equal(f.core.composerState('首条草稿').messageDisabled,false);assert.equal(f.core.composerState('首条草稿').sendDisabled,false);
+  assert.equal(f.core.state.selectedSessionId,'session-new');assert.equal(f.core.composerState('首条草稿').messageDisabled,false);await new Promise(done=>setImmediate(done));assert.equal(messages.length,1);assert.equal(messages[0].session,'session-new');assert.equal(messages[0].id,pending.requestId);
   const restored=f.paints.filter(row=>row.name==='restoreMainChatDraft').length;await new Promise(resolve=>setImmediate(resolve));
   assert.equal(f.paints.filter(row=>row.name==='restoreMainChatDraft').length,restored,'no late restoration can erase the first input');
 });
@@ -234,7 +236,7 @@ test('FX-19 a timed out/disconnected creation releases the input lock and retrie
     f.core.accessApi=async(path,options)=>{if(path.startsWith('/commands/by-request/')){if(!accepted)throw {code:'NOT_FOUND'};return {command:{kind:'session.side.create',requestId,state:'accepted_by_dsh',sessionId:'session-new',chatId:'side'}}}
       if(path==='/commands'){posts++;requestId=options.body.requestId;throw error}if(path==='/chats/side')return {chat:{chatId:'side',activeSessionId:'session-new',sendAvailable:true,modelProfileId:'local'}};return {}};
     await assert.rejects(f.core.openSideChat(),e=>e.code===error.code);
-    assert.equal(f.core.state.sideCreating,null);assert.equal(f.core.composerState('草稿').messageDisabled,false);assert.equal(f.core.composerState('草稿').sendDisabled,true);
+    assert.equal(f.core.state.sideCreating,null);assert.equal(f.core.composerState('草稿').messageDisabled,false);assert.equal(f.core.state.unresolvedSubmission,true);
     assert.equal(f.core.sideCreateIntent.requestId,requestId);accepted=true;await f.core.openSideChat();assert.equal(posts,1);assert.equal(f.core.composerState('草稿').sendDisabled,false);
   }
 });
@@ -588,7 +590,7 @@ test('shared send/stop actions choose steer or queue and block unresolved submis
   await f.core.stopCurrentTurn(); assert.equal(commands.at(-1)[0], 'session.cancel')
   const view = f.core.composerState('未发送的草稿')
   assert.equal(view.running, true); assert.equal(view.sendDisabled, true)
-  f.core.state.unresolvedSubmission = false; assert.equal(f.core.composerState('草稿').sendDisabled, false)
+  f.core.state.unresolvedSubmission = false; f.core.composerState('草稿'); await new Promise(done=>setImmediate(done)); assert.equal(f.core.composerState('草稿').sendDisabled, false)
   f.core.state.online = false; assert.equal(f.core.composerState('草稿').sendDisabled, true)
 })
 
@@ -828,9 +830,9 @@ test('UI-3 attachment shortcuts respect unresolved submissions and restore the s
   const f = fixture(), intents: string[] = []
   f.core.state.sessions[0].running = true
   f.core.currentAttachmentDrafts = () => [{ attachmentId: 'fixture', file: {name:'fixture.txt',size:1,lastModified:1}, contentType:'text/plain' }]
-  f.core.sendDesktopMessageWithAttachments = async () => { intents.push(f.core.composerInputMode('session-test')); return {} }
+  f.core.sendDesktopMessageWithAttachments = async (_text,_id,intent) => { intents.push(intent); return {} }
   f.core.state.unresolvedSubmission = true; await f.core.sendDraft('带附件排队', 'queue'); assert.equal(intents.length, 0)
-  f.core.state.unresolvedSubmission = false; await f.core.sendDraft('带附件排队', 'queue')
+  f.core.state.unresolvedSubmission = false; f.core.composerState(''); await new Promise(done=>setImmediate(done))
   assert.deepEqual(intents, ['queue']); assert.equal(f.core.composerInputMode('session-test'), 'queue')
 })
 
@@ -1042,8 +1044,9 @@ test('FIX-40 a mismatched first-message approval receipt prevents session.messag
 test('FIX-40 a message waits for the selected approval mode write to finish',async()=>{
   const f=fixture(),writing=deferred();f.core.accessApi=()=>writing.promise;
   const saved=f.core.saveApprovalMode('ask');await new Promise(done=>setImmediate(done));
-  assert.match(f.core.sendBlocker('在保存后发送'),/审批方式/);
-  writing.resolve({mode:'ask'});await saved;assert.equal(f.core.state.approvalModeSaving,null);
+  const submitted=[];f.core.submitCommand=async(...args)=>{submitted.push(args);};
+  await f.core.sendDraft('在保存后发送');assert.equal(submitted.length,0);
+  writing.resolve({mode:'ask'});await saved;f.core.composerState('');await new Promise(done=>setImmediate(done));assert.equal(submitted.length,1);
 });
 
 test('UI-P4 starting another new conversation does not display an earlier uncreated failed message',async()=>{
@@ -1150,9 +1153,9 @@ test('MS-1 saved default selects the next new conversation without rebinding the
 test('UX-9 folder registration keeps editing available but blocks a send until project selection is ready',async()=>{
  const f=fixture(),reply=deferred();f.core.refreshSessionProjects=async()=>{};
  const registration=f.core.registerFolderChoice(()=>reply.promise,{});
- assert.equal(f.core.composerState('合成草稿').messageDisabled,false);assert.equal(f.core.composerState('合成草稿').sendDisabled,true);
+ assert.equal(f.core.composerState('合成草稿').messageDisabled,false);assert.equal(f.core.composerState('合成草稿').sendDisabled,false);
  await f.core.sendDraft('合成草稿');assert.equal(f.requests.length,0);
- reply.resolve({project:{projectId:'project-synthetic'}});await registration;assert.equal(f.core.composerState('合成草稿').sendDisabled,false);
+ reply.resolve({project:{projectId:'project-synthetic'}});await registration;f.core.composerState('');await new Promise(done=>setImmediate(done));assert.equal(f.requests.filter(r=>r.options.method==='POST').length,1);
 });
 
 
