@@ -50,13 +50,12 @@ import { createRouteMutationJournal, recoverRouteMutationJournalFiles, runRecove
 import { createRouteMutationQueue } from './route-mutation-queue.ts';
 import { blocksUnexpectedRendererNavigation, isTrustedRendererInvocation } from './renderer-trust.ts';
 import { basename, isAbsolute, join, resolve } from 'node:path';
-import { pathToFileURL, fileURLToPath } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { appendFileSync, writeFileSync, statSync, mkdirSync, readFileSync, existsSync, renameSync, rmSync } from 'node:fs';
 import { tmpdir, release } from 'node:os';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import {
-  createLocalDataWipeMarker,
   localDataWipeLaunchRequest,
   wipeLocalDataFromMarker,
 } from './local-data-wipe.ts';
@@ -403,16 +402,12 @@ let desktopPetLastBehaviorAt = 0;
 let desktopPetLastActivityCheckAt = 0;
 let desktopPetLastCursor = null;
 let desktopPetInteractionUntil = 0;
-let desktopPetComposerActiveUntil = 0;
-let desktopPetPreDockBounds = null;
-let desktopPetDocked = false;
 let desktopPetIgnoreMovedUntil = 0;
 let isQuitting = false; // 是否在真退出(区分"关窗收托盘" vs "退出应用")
 let cleanupDone = false; // shutdown() 是否已跑完(before-quit 二次放行)
 let shutdownPromise = null; // 只允许一个异步退出收尾，避免 before-quit 重入。
 let startupExitCode = 0;
 let startupFailureReported = false;
-let wipeRelaunching = false;
 let webBootReloads = 0; // web boot 失败自愈计数（防抖限次）
 let runtimeOrigin = null; // 当前共享官方 DSH Web 的精确 loopback origin。
 let hostLifecycleState = 'starting';
@@ -762,12 +757,6 @@ function desktopPetFreeActivity() {
   return settingsMod?.getDesktopPetWindowState?.().freeActivity === true;
 }
 
-function notifyDesktopPetVisibility() {
-  if (!win || win.isDestroyed()) return;
-  try { win.webContents.send('wm:pet-visibility', { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() }); } catch { /* 主窗口正在关闭 */ }
-  refreshTrayMenu();
-}
-
 function setDesktopPetFreeActivity(enabled) {
   enqueueSettingsFileWrite('desktop-pet-free-activity', () => {
     const previous = settingsMod?.getDesktopPetWindowState?.() ?? { visible: desktopPetVisible(), freeActivity: false };
@@ -777,9 +766,9 @@ function setDesktopPetFreeActivity(enabled) {
     desktopPetNextWanderAt = Date.now() + 8_000;
     startDesktopPetActivityController();
   } else {
-    stopDesktopPetActivityController(true);
+    stopDesktopPetActivityController();
   }
-  notifyDesktopPetVisibility();
+  refreshTrayMenu();
 }
 
 function sendDesktopCompanion() {
@@ -823,8 +812,6 @@ function clampDesktopPetWindow(save = true) {
 function recoverDesktopPetToCorner() {
   if (!desktopPetWin || desktopPetWin.isDestroyed()) return;
   cancelDesktopPetMotion();
-  desktopPetPreDockBounds = null;
-  desktopPetDocked = false;
   const area = screen.getPrimaryDisplay().workArea;
   desktopPetProgrammaticMove = true;
   desktopPetIgnoreMovedUntil = Date.now() + 500;
@@ -874,7 +861,7 @@ function startDesktopPetMotion(target, reason, save = true) {
       ? { startTime: 0, until: 0, holdMs: 0, done: false }
       : null,
   };
-  sendDesktopPetBehavior(reason === 'restore' ? 'wander' : reason, {
+  sendDesktopPetBehavior(reason, {
     x: target.x + target.width / 2,
     y: target.y + target.height / 2,
   }, Math.round(distance / duration * 1000));
@@ -884,8 +871,6 @@ function completeDesktopPetMotion(motion) {
   if (!desktopPetWin || desktopPetWin.isDestroyed() || desktopPetMotion !== motion) return;
   desktopPetMotion = null;
   desktopPetProgrammaticMove = false;
-  if (motion.reason === 'dock') desktopPetDocked = true;
-  if (motion.reason === 'restore') { desktopPetDocked = false; desktopPetPreDockBounds = null; }
   // 游走收尾允许半隐藏出屏（owner 拍板）：软夹取只防完全跑丢，不把挂边的宠物拽回屏内。
   if (motion.reason === 'wander') {
     const current = desktopPetWin.getBounds();
@@ -963,40 +948,6 @@ function desktopPetMainExclusions() {
   return [win.getBounds()];
 }
 
-function startDesktopPetDock() {
-  if (!desktopPetWin || desktopPetWin.isDestroyed() || !win || win.isDestroyed() || !win.isVisible() || win.isMinimized()) return;
-  if (!desktopPetPreDockBounds) desktopPetPreDockBounds = desktopPetWin.getBounds();
-  const target = pickPetDockTarget(win.getBounds(), PET_WINDOW_SIZE, screen.getAllDisplays().map((item) => item.workArea));
-  if (target && !samePetBounds(desktopPetWin.getBounds(), target)) startDesktopPetMotion(target, 'dock', false);
-  else if (!target) desktopPetPreDockBounds = null;
-}
-
-function restoreDesktopPetFromDock(immediate = false) {
-  if (!desktopPetPreDockBounds || !desktopPetWin || desktopPetWin.isDestroyed()) {
-    desktopPetDocked = false;
-    desktopPetPreDockBounds = null;
-    return;
-  }
-  const target = clampPetBounds(desktopPetPreDockBounds, screen.getAllDisplays().map((item) => item.workArea));
-  if (samePetBounds(desktopPetWin.getBounds(), target)) {
-    desktopPetDocked = false;
-    desktopPetPreDockBounds = null;
-    return;
-  }
-  if (immediate) {
-    cancelDesktopPetMotion();
-    desktopPetProgrammaticMove = true;
-    desktopPetIgnoreMovedUntil = Date.now() + 500;
-    desktopPetWin.setBounds(target);
-    desktopPetProgrammaticMove = false;
-    desktopPetDocked = false;
-    desktopPetPreDockBounds = null;
-    persistDesktopPet(desktopPetWin.isVisible());
-  } else {
-    startDesktopPetMotion(target, 'restore', false);
-  }
-}
-
 function desktopPetActivityTick() {
   if (!desktopPetVisible() || !desktopPetFreeActivity()) return;
   const now = Date.now();
@@ -1004,12 +955,6 @@ function desktopPetActivityTick() {
   if (now - desktopPetLastActivityCheckAt < 80) return;
   desktopPetLastActivityCheckAt = now;
   if (desktopPetDragState) return;
-
-  if (desktopPetComposerActiveUntil > now) {
-    if (!desktopPetDocked && desktopPetMotion?.reason !== 'dock') startDesktopPetDock();
-    return;
-  }
-  if (desktopPetPreDockBounds) { restoreDesktopPetFromDock(false); return; }
 
   const cursor = screen.getCursorScreenPoint();
   const moved = !desktopPetLastCursor || Math.hypot(cursor.x - desktopPetLastCursor.x, cursor.y - desktopPetLastCursor.y) >= 3;
@@ -1044,20 +989,13 @@ function startDesktopPetActivityController() {
   desktopPetActivityTimer.unref?.();
 }
 
-function stopDesktopPetActivityController(restoreDock = false) {
+function stopDesktopPetActivityController() {
   if (desktopPetActivityTimer) clearInterval(desktopPetActivityTimer);
   desktopPetActivityTimer = null;
   cancelDesktopPetMotion();
-  if (restoreDock) restoreDesktopPetFromDock(true);
   desktopPetLastCursor = null;
   desktopPetLastActivityCheckAt = 0;
   sendDesktopPetBehavior('idle');
-}
-
-function noteDesktopPetComposerActivity() {
-  if (!desktopPetVisible() || !desktopPetFreeActivity()) return;
-  desktopPetComposerActiveUntil = Date.now() + 5_000;
-  startDesktopPetActivityController();
 }
 
 function startDesktopPetPresenceLoop() {
@@ -1076,7 +1014,7 @@ function stopDesktopPetPresenceLoop() {
 }
 
 function disposeDesktopPetRuntime() {
-  stopDesktopPetActivityController(false);
+  stopDesktopPetActivityController();
   stopDesktopPetPresenceLoop();
   if (desktopPetMoveTimer) clearTimeout(desktopPetMoveTimer);
   desktopPetMoveTimer = null;
@@ -1091,9 +1029,6 @@ function disposeDesktopPetRuntime() {
   desktopPetLastActivityCheckAt = 0;
   desktopPetLastCursor = null;
   desktopPetInteractionUntil = 0;
-  desktopPetComposerActiveUntil = 0;
-  desktopPetPreDockBounds = null;
-  desktopPetDocked = false;
   desktopPetIgnoreMovedUntil = 0;
 }
 
@@ -1109,8 +1044,6 @@ function beginDesktopPetDrag(point) {
   if (!start || !desktopPetWin || desktopPetWin.isDestroyed()) return;
   desktopPetManualPauseUntil = Date.now() + 20_000;
   cancelDesktopPetMotion();
-  desktopPetPreDockBounds = null;
-  desktopPetDocked = false;
   desktopPetInteractionUntil = Date.now() + 8_000;
   desktopPetDragState = { start, bounds: desktopPetWin.getBounds() };
 }
@@ -1192,8 +1125,8 @@ async function ensureDesktopPetWindow() {
     }, 250);
     desktopPetMoveTimer.unref?.();
   });
-  desktopPetWin.on('show', notifyDesktopPetVisibility);
-  desktopPetWin.on('hide', notifyDesktopPetVisibility);
+  desktopPetWin.on('show', refreshTrayMenu);
+  desktopPetWin.on('hide', refreshTrayMenu);
   desktopPetWin.on('close', (event) => {
     if (isQuitting) return;
     event.preventDefault();
@@ -1218,15 +1151,15 @@ async function wakeDesktopPet(state = desktopCompanion) {
   startDesktopPetPresenceLoop();
   desktopPetNextWanderAt = Date.now() + 8_000;
   startDesktopPetActivityController();
-  notifyDesktopPetVisibility();
+  refreshTrayMenu();
 }
 
 function hideDesktopPet() {
-  stopDesktopPetActivityController(true);
+  stopDesktopPetActivityController();
   stopDesktopPetPresenceLoop();
   if (desktopPetWin && !desktopPetWin.isDestroyed()) desktopPetWin.hide();
   persistDesktopPet(false);
-  notifyDesktopPetVisibility();
+  refreshTrayMenu();
 }
 
 function handleDesktopDisplayChange() {
@@ -2137,9 +2070,6 @@ async function bootstrap() {
   // Official DSH also owns first-run setup. The desktop view starts after
   // its exact-origin fence; personal host starts after IPC registration.
   sessionReferenceScan = { state: personalHostMode ? 'pending' : 'ready', error: null };
-  // The local page no longer ships; this URL only keeps the wipe and desktop-pet
-  // handlers below failing closed, since no renderer can match it.
-  const legacyRendererUrl = pathToFileURL(join(import.meta.dirname, 'web', 'weftmate.html')).href;
   const TITLE_BAR_OVERLAY_HEIGHT = 44;
   let dshResolvedTheme = null;
   let dshSurfaceBackgroundColor = null;
@@ -2759,8 +2689,6 @@ async function bootstrap() {
     });
   };
 
-  const stageOneTrusted = (event) => !!win && isTrustedRendererInvocation({ expectedOrigin: legacyRendererUrl,
-    sender: event.sender, expectedSender: win.webContents, senderFrame: event.senderFrame, mainFrame: win.webContents.mainFrame });
   const dshSurfaceTrusted = (event) => !!win && isTrustedRendererInvocation({ expectedOrigin: trustedRuntimeOrigin,
     sender: event.sender, expectedSender: win.webContents, senderFrame: event.senderFrame, mainFrame: win.webContents.mainFrame });
   // The official DSH page has no product IPC. This one-way visual hint only
@@ -2777,62 +2705,8 @@ async function bootstrap() {
     return { ok: true };
   });
 
-  // ── 删除全部本机数据（v2 遗产，ARCHITECTURE §5 保留）：只走这一个窄 IPC。renderer 不接触
-  //    marker/token/文件系统；主进程创建一次性授权并重启擦除。──
-  ipcMain.handle('wm:delete-all-local-data', async (event, confirmation) => {
-    if (!stageOneTrusted(event)) return { ok: false, code: 'WIPE_UNTRUSTED_SOURCE', error: '请求来源不可信' };
-    if (confirmation !== '删除 WeftMate' && confirmation !== 'Delete WeftMate') return { ok: false, code: 'WIPE_BAD_CONFIRMATION', error: '确认短语不正确' };
-    if (wipeRelaunching) return { ok: false, code: 'WIPE_ALREADY_PREPARING', error: '删除已经在准备中' };
-    try {
-      const marker = createLocalDataWipeMarker({ tempDir: tmpdir(), userData: app.getPath('userData') });
-      const args = process.argv.slice(1).filter((arg) => !arg.startsWith('--weftmate-wipe-marker=') && !arg.startsWith('--weftmate-wipe-token='));
-      args.push(`--weftmate-wipe-marker=${marker.markerPath}`, `--weftmate-wipe-token=${marker.token}`);
-      wipeRelaunching = true;
-      isQuitting = true;
-      app.relaunch({ args });
-      app.quit(); // 仍走既有 before-quit：DSH 运行时收口后才真正退出。
-      return { ok: true, relaunching: true };
-    } catch (error) {
-      return { ok: false, code: 'WIPE_MARKER_FAILED', error: error && error.message ? error.message : String(error) };
-    }
-  });
-
-  // ── 宠物窗口 IPC（宠物窗口自身交互用；R6 恢复完整桌宠机制）──
-  ipcMain.on('wm:pet-sync', (event, state) => {
-    if (!stageOneTrusted(event)) return;
-    const sanitized = sanitizeCompanionState(state);
-    if (!sanitized) return;
-    desktopCompanion = sanitized;
-    sendDesktopCompanion();
-    // 启动自愈：上次宠物可见 + 渲染层已同步状态 → 补唤醒（状态源从旧 UI 换到渲染层后的等价路径）。
-    if (settingsMod?.getDesktopPetWindowState?.().visible && !desktopPetVisible()) {
-      void wakeDesktopPet(sanitized).catch((error) => logCrash('desktop-pet-restore', error));
-    }
-    if (desktopPetNextWanderAt <= Date.now()) desktopPetNextWanderAt = Date.now() + 8_000;
-    startDesktopPetActivityController();
-  });
-  ipcMain.handle('wm:pet-toggle', async (event, state) => {
-    if (!stageOneTrusted(event)) return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
-    const sanitized = sanitizeCompanionState(state);
-    if (!desktopPetVisible() && !sanitized && !desktopCompanion) return { visible: false, freeActivity: desktopPetFreeActivity() };
-    return toggleDesktopPet(sanitized || desktopCompanion);
-  });
-  ipcMain.handle('wm:pet-visibility', (event) => {
-    if (!stageOneTrusted(event)) return { visible: false, freeActivity: false };
-    return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
-  });
-  ipcMain.handle('wm:pet-free-activity', (event, enabled) => {
-    if (!stageOneTrusted(event)) return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
-    setDesktopPetFreeActivity(enabled === true);
-    return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
-  });
-  ipcMain.on('wm:pet-composer-activity', (event) => {
-    if (stageOneTrusted(event)) noteDesktopPetComposerActivity();
-  });
   ipcMain.on('wm:pet-hide', (event) => {
-    const trustedMain = stageOneTrusted(event);
-    const trustedPet = !!desktopPetWin && !desktopPetWin.isDestroyed() && event.sender === desktopPetWin.webContents;
-    if (trustedMain || trustedPet) hideDesktopPet();
+    if (desktopPetWin && !desktopPetWin.isDestroyed() && event.sender === desktopPetWin.webContents) hideDesktopPet();
   });
   ipcMain.on('wm:pet-show-main', (event) => {
     if (desktopPetWin && !desktopPetWin.isDestroyed() && event.sender === desktopPetWin.webContents) showWindow();
