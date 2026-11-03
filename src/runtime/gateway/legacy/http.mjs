@@ -5,6 +5,7 @@
  * 路由顺序即原插件内顺序（status → update → perception → pet → device → 404），
  * 迁移期旧端点保持可用，行为逐字节不变。
  */
+import { readFile } from 'node:fs/promises'
 import { readState } from './state.mjs'
 import { writeUpdateRequest } from './update.mjs'
 import { readPerception, writePerceptionRequest } from './perception.mjs'
@@ -27,6 +28,13 @@ async function readJsonBody(req) {
 /** /weftmate/* 路由：状态面 GET + 动作面 POST；其余 404。 */
 export async function serveWeftmate(req, res) {
   const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname)
+  const shellStyle = /^\/weftmate\/shell\/(skeleton|pages)\.css$/.exec(pathname)
+  if (shellStyle && (req.method === 'GET' || req.method === 'HEAD')) {
+    const css = await readFile(new URL(`../../../plugins/weftmate-client/v2-shell/${shellStyle[1]}-v2.scoped.css`, import.meta.url))
+    res.writeHead(200, { 'content-type': 'text/css; charset=utf-8', 'x-content-type-options': 'nosniff' })
+    res.end(req.method === 'HEAD' ? undefined : css)
+    return
+  }
   if (pathname === '/weftmate/status.json' && (req.method === 'GET' || req.method === 'HEAD')) {
     const body = `${JSON.stringify(readState())}\n`
     res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-cache' })

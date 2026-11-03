@@ -18,7 +18,7 @@ assert.ok(process.env.MIMO_API_KEY,'MIMO_API_KEY must be supplied in the process
 const out=resolve(process.env.WEFTMATE_TOOL_EVIDENCE ?? '.local/tool-reliability');await mkdir(out,{recursive:true});
 const root=await mkdtemp(join(tmpdir(),'weftmate-tools-mimo-'));
 const report={model:'mimo-v2.6-flash',realModel:true,realDsh:true,syntheticAccount:true,cases:[],root,usage:[],injections:[]};
-const sourceFiles=['src/plugins/personal-native-files.mjs','src/plugins/personal-reply-content.mjs','src/plugins/weftmate-personal-reply-content.mjs','src/plugins/personal-connectors.mjs','src/plugins/weftmate-weftmod.mjs','src/plugins/personal-desktop-schema.mjs','src/plugins/personal-schedule-query.mjs','src/plugins/weftmate-personal-schedules.mjs','src/personal-access/schedules-native.mjs','src/personal-access/schedules.mjs','src/dsh-web-runtime.ts'];
+const sourceFiles=['src/plugins/personal-native-files.mjs','src/plugins/personal-reply-content.mjs','src/plugins/weftmate-personal-reply-content.mjs','src/plugins/personal-connectors.mjs','src/plugins/personal-desktop-schema.mjs','src/plugins/personal-schedule-query.mjs','src/plugins/weftmate-personal-schedules.mjs','src/personal-access/schedules-native.mjs','src/personal-access/schedules.mjs','src/dsh-web-runtime.ts'];
 report.sourceHashes=Object.fromEntries(await Promise.all(sourceFiles.map(async file=>[file,createHash('sha256').update(await readFile(file)).digest('hex')])));
 report.toolSchemas={};
 const logs=[];let runtime,host,browserApp,browserServer,browserLock;

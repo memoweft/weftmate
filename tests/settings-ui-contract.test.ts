@@ -34,7 +34,6 @@ describe('R6/R8 设置面收口契约（官方设置页 WeftMate 节）', () => 
     assert.match(reg, /order: 5000/);
     assert.match(reg, /label: 'WeftMate'/);
     assert.match(client, /桌面感知（R6 · opt-in）/);
-    assert.match(client, /记忆与插件/);
     assert.match(client, /桌宠控制/);
     assert.match(client, /设备配对/);
   });
@@ -77,15 +76,6 @@ describe('R6/R8 设置面收口契约（官方设置页 WeftMate 节）', () => 
   });
 });
 
-const connectionStates = runInNewContext(
-  between(client, 'function memoryConnectionStatus(', 'function PhoneDeviceSetup(')
-    + '\n({ memoryConnectionStatus, phoneRuntimeStatus })',
-);
-const memorySummary = runInNewContext(
-  between(client, 'function deriveMemoryUiSummary(', 'function phoneRuntimeStatus(')
-    + '\nderiveMemoryUiSummary',
-);
-
 const providerSave = runInNewContext(
   between(client, 'function isProviderSecretField(', 'function reloadProviders(')
     + '\nproviderSaveValue',
@@ -124,42 +114,10 @@ describe('模型提供方编辑保真', () => {
   });
 });
 
-describe('记忆与插件的真实状态', () => {
-  it('记忆区分本次未启用、读取失败与连接就绪', () => {
-    const memory = connectionStates.memoryConnectionStatus;
-    assert.equal(memory({}, { ready: true }).label, '状态未知');
-    assert.equal(memory({ available: false }, { ready: true }).label, '状态未知');
-    assert.equal(memory({ available: true, memoweft: { enabled: false } }, { ready: true }).label, '本次未启用');
-    const enabled = { available: true, memoweft: { enabled: true } };
-    assert.equal(memory(enabled, { available: false }).ready, false);
-    assert.match(memory(enabled, { available: false }).label, /不可用/);
-    assert.equal(memory(enabled, { available: true, ready: true }).label, '已就绪');
-  });
-
-  it('Weave 统一记忆状态只投影 enabled、health、world 与 jobs 真值', () => {
-    const host = { memoweft: { enabled: true } };
-    assert.equal(memorySummary(null, null, null, null, 'loading').label, '连接中');
-    assert.equal(memorySummary({ memoweft: { enabled: false } }, null, null, null, 'ready').label, '待配置');
-    assert.equal(memorySummary(host, { available: false }, null, null, 'error').label, '不可用');
-    const empty = memorySummary(host, { ready: true }, { cognitions: [] }, { jobs: [] }, 'ready');
-    assert.equal(empty.label, '已连接'); assert.equal(empty.count, 0); assert.match(empty.detail, /暂无长期理解/);
-    const pending = memorySummary(host, { ready: true }, { cognitions: [{ id: 'c1' }] }, { jobs: [{ worker: { state: 'processing' } }] }, 'ready');
-    assert.equal(pending.label, '整理中'); assert.equal(pending.count, 1); assert.equal(pending.pending, 1);
-  });
-
-  it('手机服务就绪不冒充设备可执行，缺字段或未知状态不计为未安装', () => {
-    const phone = connectionStates.phoneRuntimeStatus;
-    assert.equal(phone({}).label, '状态未知');
-    assert.equal(phone({ available: true, aiGame: { state: 'new-state' } }).label, '状态未知');
-    assert.equal(phone({ available: true, aiGame: { state: 'not_installed' } }).label, '未安装');
-    const ready = phone({ available: true, aiGame: { state: 'ready' } });
-    assert.equal(ready.label, '服务就绪');
-    assert.match(ready.detail, /设备连接、授权与任务执行仍需单独确认/);
-  });
-
+describe('状态读取', () => {
   it('状态请求失败清除过期状态，不伪装空设备或持续连接', async () => {
     const fetchState = runInNewContext(
-      between(client, 'function fetchAvailableJson(', '// An enabled startup choice') + '\nfetchAvailableJson',
+      between(client, 'function fetchAvailableJson(', 'var sectionBlockStyle =') + '\nfetchAvailableJson',
       { fetch: async () => ({ ok: false }), AbortSignal },
     );
     let state: any = { available: true, devices: [{ name: 'prior device' }] };

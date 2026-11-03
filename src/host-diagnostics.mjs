@@ -23,7 +23,7 @@ const summaryEnums = {
     'model-route-recovery', 'model-owner-backfill', 'personal-host-startup', 'harness-window-startup', 'crash-reporter',
     'startup-error-dialog', 'host-state-write', 'host-request-poll', 'dsh-surface-navigation', 'diagnostics-export',
     'shutdown', 'shutdown-backup', 'shutdown-desktop-session', 'shutdown-personal-access', 'shutdown-personal-browser',
-    'shutdown-account-memory', 'shutdown-managed-ai-game', 'shutdown-desktop-pet', 'shutdown-perception', 'shutdown-devices',
+    'shutdown-account-memory', 'shutdown-desktop-pet', 'shutdown-perception', 'shutdown-devices',
     'shutdown-dsh-runtime', 'shutdown-model-observer', 'GPU', 'Utility', 'Zygote', 'Sandbox-helper', 'Pepper-Plugin', 'Pepper-Plugin-Broker', 'auxiliary']),
 };
 const isAnomaly = row => ['host.failure', 'host.previous_unclean_exit'].includes(row.event) ||

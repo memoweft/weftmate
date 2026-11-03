@@ -7,7 +7,7 @@ const client = readFileSync(new URL('../src/plugins/weftmate-client/client.js', 
 describe('WeftMate conversation workspace surface', () => {
   it('styles only stable official DSH conversation structure', () => {
     const start = client.indexOf('function installConversationWorkspaceSurface()');
-    const end = client.indexOf('// Stage 4B is a projection', start);
+    const end = client.indexOf('var FALLBACK_STATE', start);
     assert.ok(start >= 0 && end > start, 'conversation surface installer must remain separately auditable');
     const source = client.slice(start, end);
 

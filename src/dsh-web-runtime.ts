@@ -18,7 +18,7 @@
 import { execFile, spawn, type ChildProcess } from 'node:child_process'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, readFile, readdir, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, join, isAbsolute } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -30,7 +30,7 @@ export const DEFAULT_PROFILE_BUNDLES: readonly string[] = [
   '@deepseek-ai/dsh-web-app',
 ]
 
-/** Preserve the pinned minimal preset's tools while giving long WeftMod tasks
+/** Preserve the pinned minimal preset's tools while giving long conversations
  * the same scoped context lifecycle as the shipped standard preset. Generated
  * assets live under this app's profile; vendor and user-authored presets stay
  * owned by their respective sources. */
@@ -55,16 +55,12 @@ export async function writeContextAwareMinimalPreset(shippedRoot: string, target
   }
 }
 
-/** 现行补丁层模板。R1–R18 旧模板只留内容指纹：补丁文件等于其中之一说明 owner 没手改，
+/** 现行补丁层模板。R1–R19 旧模板只留内容指纹：补丁文件等于其中之一说明 owner 没手改，
  * 升级为现行模板；旧模板原文是测试夹具 tests/fixtures/profile-patch/。 */
-export const PROFILE_PATCH_TEMPLATE = `# WeftMate 补丁层（R14）：官方 DSH 功能、最小桌面扩展与 AI-Game 工具接缝。
+export const PROFILE_PATCH_TEMPLATE = `# WeftMate 补丁层：官方 DSH 功能与个人助手扩展。
 - insert:
     - id: weftmate-host
       name: ./plugins/weftmate-host.mjs
-    - id: weftmate-memory
-      name: ./plugins/weftmate-memory.mjs
-    - id: weftmate-aigame-host
-      name: ./plugins/weftmate-aigame-host.mjs
     - id: weftmate-personal-schedules
       name: ./plugins/weftmate-personal-schedules.mjs
     - id: weftmate-personal-conversation-context
@@ -79,10 +75,6 @@ export const PROFILE_PATCH_TEMPLATE = `# WeftMate 补丁层（R14）：官方 DS
       name: ./plugins/weftmate-personal-memory.mjs
     - id: weftmate-personal-desktop
       name: ./plugins/weftmate-personal-desktop.mjs
-    - id: weftmate-weftmod
-      name: ./plugins/weftmate-weftmod.mjs
-    - id: weftmate-mod-projects
-      name: ./plugins/weftmate-mod-projects.mjs
     - id: '@weftmate/client'
       name: '@weftmate/client'
 # Credential providers are deliberately absent here. The final host security
@@ -100,7 +92,9 @@ export const PROFILE_PATCH_TEMPLATE = `# WeftMate 补丁层（R14）：官方 DS
   disabled: true
 `
 
+const PREVIOUS_STANDARD_PATCH = '936db7017c4dc3ca1cef2dfa514a00cd16b24aa9df2cb1601e7661f4a13c307e'
 const OLD_PROFILE_PATCH_SHA256 = new Set([
+  PREVIOUS_STANDARD_PATCH,
   'b41627945187aa2c1646364f08903c05b0640150494d486c3ab82f3847e3d252', // LEGACY
   '582acb40d8c9969a1a473fa46c3de47115c785fe89f1551dcf2097c81f15664b', // R3
   '4f2a5c449d588237b10cd3a5b1330b637d42fd3f8d06bbede6828c2e228c6ee2', // R3_PICKER
@@ -124,17 +118,12 @@ const PLUGINS_DIR = join(here, 'plugins')
 const CLIENT_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-client')
 const HOST_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-host.mjs')
 const PERSONAL_API_PROXY_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-personal-api-proxy.mjs')
-const AI_GAME_HOST_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-aigame-host.mjs')
-const MOD_DEVELOPMENT_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-mod-development.mjs')
 const CREDENTIALS_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-credentials.mjs')
 const SECURE_SNAPSHOT_BOOTSTRAP_SRC = join(PLUGINS_DIR, 'weftmate-secure-snapshot-bootstrap.mjs')
 /** Gateway 运行时源目录（P1-02 起）：宿主插件以相对路径 import，profile 侧同形落位
  *  `profiles/<name>/runtime/gateway/`（插件进程从 profile 副本运行，必须复制过去）。 */
 const GATEWAY_SRC = join(here, 'runtime', 'gateway')
 const DSH_ADAPTER_SRC = join(here, 'runtime', 'dsh-adapter')
-const AI_GAME_RUNTIME_SRC = join(here, 'runtime', 'ai-game')
-const MOD_MAINTAINER_PRESET_ID = 'mod-maintainer'
-const MOD_MAINTAINER_PRESET_METADATA = 'name: Mod 开发维护\ndescription: 受控的单项目 Mod 开发通道。\norder: 90\n'
 const PERSONAL_REMOTE_PRESET_ID = 'personal-remote'
 const PERSONAL_REMOTE_PRESET_METADATA_LEGACY = 'name: 个人远端助手\ndescription: 只允许受控记事本工具的远端会话。\norder: 91\n'
 const PERSONAL_REMOTE_PRESET_METADATA_R9 = 'name: 个人远端助手\ndescription: 允许受控记事本与文档保存工具的远端会话。\norder: 91\n'
@@ -149,7 +138,7 @@ const PERSONAL_SHARED_CHAT_PRESET_METADATA = 'name: 共享模型对话\ndescript
  * selected agent rather than the web host. At a 102,400-token route,
  * retainRatio 0.16 keeps 16,384 recent
  * tokens; a ratio keeps the policy valid for smaller routed context windows. */
-const MOD_MAINTAINER_PRESET_COMPACTION = `
+const PRESET_COMPACTION = `
 - id: compaction
   name: cordis:group
   group: true
@@ -235,11 +224,33 @@ async function copyDirIfChanged(srcDir: string, destDir: string): Promise<boolea
   return changed
 }
 
+// The previous standard install generated this discoverable user preset outside the profile.
+async function retireModPreset(homeDir: string) {
+  const presets = join(homeDir, '.agent-presets')
+  const parent = await lstat(presets).catch((err: NodeJS.ErrnoException) => { if (err.code !== 'ENOENT') throw err })
+  if (!parent?.isDirectory()) return
+  const dir = join(presets, 'mod-maintainer')
+  const stat = await lstat(dir).catch((err: NodeJS.ErrnoException) => { if (err.code !== 'ENOENT') throw err })
+  if (!stat?.isDirectory()) return
+  const entries = await readdir(dir, { withFileTypes: true })
+  const expected = new Map([
+    ['agent.cordis.yml', '62d04d29db6debdde0f3f1058c61da46b91593368d5e265ae49eb7a7c82eb840'],
+    ['preset.yml', '9151c7725c031939b81986c4fa8bda688c7afcb97994b6ccc830d93390fa88be'],
+  ])
+  if (entries.length !== expected.size) return
+  for (const entry of entries) {
+    if (!entry.isFile() || !expected.has(entry.name) ||
+        createHash('sha256').update(await readFile(join(dir, entry.name))).digest('hex') !== expected.get(entry.name)) return
+  }
+  for (const name of expected.keys()) await unlink(join(dir, name))
+  await rmdir(dir)
+}
+
 /**
  * 写补丁层：只在「缺失 或 内容等于已知旧模板」时写为新模板；内容等于新模板或 owner 手改则保留。
  * @returns 是否发生了写入。
  */
-async function writeProfilePatch(patchPath: string): Promise<boolean> {
+async function writeProfilePatch(patchPath: string, homeDir: string): Promise<boolean> {
   let existing: string
   try {
     existing = await readFile(patchPath, 'utf8')
@@ -248,7 +259,9 @@ async function writeProfilePatch(patchPath: string): Promise<boolean> {
     return true
   }
   if (existing === PROFILE_PATCH_TEMPLATE) return false // 已是新模板
-  if (OLD_PROFILE_PATCH_SHA256.has(createHash('sha256').update(existing).digest('hex'))) {
+  const hash = createHash('sha256').update(existing).digest('hex')
+  if (OLD_PROFILE_PATCH_SHA256.has(hash)) {
+    if (hash === PREVIOUS_STANDARD_PATCH) await retireModPreset(homeDir)
     await writeFile(patchPath, PROFILE_PATCH_TEMPLATE, 'utf8')
     return true // 已知旧模板升级
   }
@@ -265,8 +278,6 @@ async function writeProfilePatch(patchPath: string): Promise<boolean> {
 async function writePluginAssets(dir: string): Promise<boolean> {
   const clientDest = join(dir, 'node_modules', '@weftmate', 'client')
   const hostDest = join(dir, 'plugins', 'weftmate-host.mjs')
-  const aiGameHostDest = join(dir, 'plugins', 'weftmate-aigame-host.mjs')
-  const memoryDest = join(dir, 'plugins', 'weftmate-memory.mjs')
   const credentialsDest = join(dir, 'plugins', 'weftmate-credentials.mjs')
   const secureBootstrapDest = join(dir, 'plugins', 'weftmate-secure-snapshot-bootstrap.mjs')
   const gatewayDest = join(dir, 'runtime', 'gateway')
@@ -280,18 +291,13 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(CLIENT_PLUGIN_SRC, 'package.json'), join(clientDest, 'package.json')],
     [join(CLIENT_PLUGIN_SRC, 'index.js'), join(clientDest, 'index.js')],
     [join(CLIENT_PLUGIN_SRC, 'client.js'), join(clientDest, 'client.js')],
-    [join(CLIENT_PLUGIN_SRC, 'mod-projects-client.js'), join(clientDest, 'mod-projects-client.js')],
-    [join(CLIENT_PLUGIN_SRC, 'mod-state.mjs'), join(dir, 'plugins', 'weftmate-client', 'mod-state.mjs')],
     [join(CLIENT_PLUGIN_SRC, 'v2-shell', 'skeleton-v2.scoped.css'), join(dir, 'plugins', 'weftmate-client', 'v2-shell', 'skeleton-v2.scoped.css')],
     [join(CLIENT_PLUGIN_SRC, 'v2-shell', 'pages-v2.scoped.css'), join(dir, 'plugins', 'weftmate-client', 'v2-shell', 'pages-v2.scoped.css')],
-    [join(CLIENT_PLUGIN_SRC, 'mod-window', 'assets.mjs'), join(dir, 'plugins', 'weftmate-client', 'mod-window', 'assets.mjs')],
     [HOST_PLUGIN_SRC, hostDest],
     [PERSONAL_API_PROXY_PLUGIN_SRC, join(dir, 'plugins', 'weftmate-personal-api-proxy.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-model-idle.mjs'), join(dir, 'plugins', 'weftmate-personal-model-idle.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-reply-evidence.mjs'), join(dir, 'plugins', 'weftmate-personal-reply-evidence.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-model-observer.mjs'), join(dir, 'plugins', 'weftmate-personal-model-observer.mjs')],
-    [AI_GAME_HOST_PLUGIN_SRC, aiGameHostDest],
-    [join(PLUGINS_DIR, 'weftmate-weftmod.mjs'), join(dir, 'plugins', 'weftmate-weftmod.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
     [join(PLUGINS_DIR, 'personal-approval-policy.mjs'), join(dir, 'plugins', 'personal-approval-policy.mjs')],
     [join(PLUGINS_DIR, 'personal-work-mode.mjs'), join(dir, 'plugins', 'personal-work-mode.mjs')],
@@ -324,9 +330,6 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(here, 'personal-access', 'goals-native.mjs'), join(dir, 'personal-access', 'goals-native.mjs')],
     [join(here, 'personal-access', 'schedules-calendar.mjs'), join(dir, 'personal-access', 'schedules-calendar.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-shared-chat-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-shared-chat-preset.mjs')],
-    [join(PLUGINS_DIR, 'weftmate-mod-projects.mjs'), join(dir, 'plugins', 'weftmate-mod-projects.mjs')],
-    [MOD_DEVELOPMENT_PLUGIN_SRC, join(dir, 'plugins', 'weftmate-mod-development.mjs')],
-    [join(PLUGINS_DIR, 'weftmate-memory.mjs'), memoryDest],
     [CREDENTIALS_PLUGIN_SRC, credentialsDest],
     [SECURE_SNAPSHOT_BOOTSTRAP_SRC, secureBootstrapDest],
     [join(here, 'process-output.mjs'), join(dir, 'process-output.mjs')],
@@ -357,43 +360,10 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     join(dir, 'personal-reply-evidence'))) changed = true
   if (await copyDirIfChanged(join(here, 'personal-model-observation'),
     join(dir, 'personal-model-observation'))) changed = true
-  if (await copyDirIfChanged(AI_GAME_RUNTIME_SRC, join(dir, 'runtime', 'ai-game'))) changed = true
-  if (await copyDirIfChanged(join(here, 'runtime', 'weftmod'), join(dir, 'runtime', 'weftmod'))) changed = true
-  if (await copyDirIfChanged(join(here, 'runtime', 'mod-projects'), join(dir, 'runtime', 'mod-projects'))) changed = true
   return changed
 }
 
-/** Write the deployment-owned preset consumed before a maintenance agent is published. */
-async function writeModMaintainerPreset(homeDir: string, profileName: string): Promise<boolean> {
-  const presetDir = join(homeDir, '.agent-presets', MOD_MAINTAINER_PRESET_ID)
-  const composition = join(presetDir, 'agent.cordis.yml')
-  const metadata = join(presetDir, 'preset.yml')
-  const compositionText = `- name: ../../profiles/${profileName}/plugins/weftmate-mod-development.mjs\n${MOD_MAINTAINER_PRESET_COMPACTION}`
-  const legacyComposition = '- name: ../../plugins/weftmate-mod-development.mjs\n'
-  const profileOwnedLegacyComposition = `- name: ../../profiles/${profileName}/plugins/weftmate-mod-development.mjs\n`
-  let changed = false
-  await mkdir(presetDir, { recursive: true })
-  const existingComposition = await readFile(composition, 'utf8').catch(() => '')
-  if (existingComposition && existingComposition !== compositionText
-    && existingComposition !== legacyComposition && existingComposition !== profileOwnedLegacyComposition) {
-    throw new Error('mod-maintainer preset conflict: the existing user preset is not owned by this profile and was preserved')
-  }
-  if (existingComposition !== compositionText) {
-    await writeFile(composition, compositionText, 'utf8')
-    changed = true
-  }
-  const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
-  if (existingMetadata && existingMetadata !== MOD_MAINTAINER_PRESET_METADATA) {
-    throw new Error('mod-maintainer preset conflict: the existing user preset metadata is not owned by this profile and was preserved')
-  }
-  if (existingMetadata !== MOD_MAINTAINER_PRESET_METADATA) {
-    await writeFile(metadata, MOD_MAINTAINER_PRESET_METADATA, 'utf8')
-    changed = true
-  }
-  return changed
-}
-
-/** A separate agent-plane composition; no standard/weftmod/pwsh preset rows. */
+/** A separate agent-plane composition; separate from the standard preset. */
 async function writePersonalRemotePreset(homeDir: string, profileName: string): Promise<boolean> {
   const presetDir = join(homeDir, '.agent-presets', PERSONAL_REMOTE_PRESET_ID)
   const composition = join(presetDir, 'agent.cordis.yml')
@@ -507,7 +477,7 @@ async function writePersonalRemotePreset(homeDir: string, profileName: string): 
     '      After a checkpoint, continue pending work without repeating verified effects.\n' +
     '      Read get_goal before updating its exact revision; mark complete only after\n' +
     '      checking every deliverable. Keep reusable methods and pitfalls in this conversation.')
-  const personalCompaction = MOD_MAINTAINER_PRESET_COMPACTION.replace(
+  const personalCompaction = PRESET_COMPACTION.replace(
     "'@deepseek-ai/dsh-compaction-basic'", `../../profiles/${profileName}/plugins/weftmate-compaction.mjs`)
   const previousContextAwareComposition = `${longTaskComposition}${personalCompaction}`
   // Native one-shot jobs expose jobId + job_output, including blocking waits
@@ -518,9 +488,9 @@ async function writePersonalRemotePreset(homeDir: string, profileName: string): 
   await mkdir(presetDir, { recursive: true })
   const existingComposition = (await readFile(composition, 'utf8').catch(() => '')).replace(/\r\n/g, '\n')
   const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
-  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== previousContextAwareComposition && existingComposition !== `${compositionText}${MOD_MAINTAINER_PRESET_COMPACTION}` && existingComposition !== compositionText &&
-      existingComposition !== previousM1Composition && existingComposition !== `${previousM1Composition}${MOD_MAINTAINER_PRESET_COMPACTION}` &&
-      existingComposition !== previousNativeComposition && existingComposition !== `${previousNativeComposition}${MOD_MAINTAINER_PRESET_COMPACTION}` &&
+  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== previousContextAwareComposition && existingComposition !== `${compositionText}${PRESET_COMPACTION}` && existingComposition !== compositionText &&
+      existingComposition !== previousM1Composition && existingComposition !== `${previousM1Composition}${PRESET_COMPACTION}` &&
+      existingComposition !== previousNativeComposition && existingComposition !== `${previousNativeComposition}${PRESET_COMPACTION}` &&
       existingComposition !== boundedCompositionText &&
       existingComposition !== browserCompositionText &&
       existingComposition !== projectCompositionText && existingComposition !== previousCompositionText &&
@@ -631,9 +601,8 @@ export async function writeWebProfile(
   if (result === 'unchanged' && dirty) result = 'repaired'
 
   if (policy === 'weftmate') {
-    if (await writeProfilePatch(join(dir, 'cordis.patch.yml')) && result === 'unchanged') result = 'repaired'
+    if (await writeProfilePatch(join(dir, 'cordis.patch.yml'), homeDir) && result === 'unchanged') result = 'repaired'
     if (await writePluginAssets(dir) && result === 'unchanged') result = 'repaired'
-    if (await writeModMaintainerPreset(homeDir, profileName) && result === 'unchanged') result = 'repaired'
     if (await writePersonalRemotePreset(homeDir, profileName) && result === 'unchanged') result = 'repaired'
     if (await writePersonalSharedChatPreset(homeDir, profileName) && result === 'unchanged') result = 'repaired'
   }
@@ -1238,7 +1207,6 @@ export class DshWebRuntime {
       ? join(this.opts.runtimePath, 'node_modules', '@deepseek-ai', 'dsh', 'config', 'agent-presets')
       : join(this.opts.checkoutPath, 'apps', 'cli', 'config', 'agent-presets')
     const userPresetRoot = join(this.opts.homeDir, '.agent-presets')
-    await writeModMaintainerPreset(this.opts.homeDir, this.opts.profileName)
     await writePersonalRemotePreset(this.opts.homeDir, this.opts.profileName)
     await writePersonalSharedChatPreset(this.opts.homeDir, this.opts.profileName)
     const visit = (value: unknown): void => {
