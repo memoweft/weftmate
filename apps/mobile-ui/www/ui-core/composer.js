@@ -482,7 +482,13 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             row.sessionId ? row.sessionId === t.sessionId : !t.sessionId && row.draftId === t.draftId);
     }
     function sendBlocker(text, files = core.currentAttachmentDrafts(), checkSlot = true) {
-        if (!core.state.account || !core.state.ownerId) return '请先登录，再发送消息。';
+        const mobile=environment.mobileState;
+        if (!core.state.account || !core.state.ownerId || mobile && !mobile.loggedIn) return '请先登录，再发送消息。';
+        if (mobile && !environment.nativeMobile) {
+            if (mobile.transitionPending || mobile.restorePending) return '正在恢复账号与对话，消息仍在草稿里。';
+            if (mobile.modelSwitching) return '正在切换模型，消息仍在草稿里。';
+            if (mobile.sharedOutboxLoading || mobile.sharedPending || mobile.linkedPending) return '手机的原请求仍在核对，消息仍在草稿里。';
+        }
         if (!core.state.online || ['restarting','unavailable'].includes(core.state.connection?.host?.runtime)) return '电脑暂时无法连接，消息仍在草稿里。';
         if (core.state.capabilities?.chat?.available !== true) return '暂时无法发送，请稍候再试。';
         if (!core.state.modelProfileId || !core.state.models.some(model => model.id === core.state.modelProfileId)) return '先选择一个模型，再发送消息。';

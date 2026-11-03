@@ -1,14 +1,16 @@
 /* Keep a composer gesture intact until the browser has dispatched its click. */
 globalThis.WeftComposerPress = {
     paintHeld(input, core, draft) {
-        let strip=input.parentElement.querySelector('[data-held-draft]');
-        if (!draft) {strip?.remove();return;}
+        let strip=this.heldStrips?.get(input);
+        if (!draft) {if (strip) {strip.remove();this.heldStrips.delete(input);} return;}
+        if (!input.parentElement) return;
         if (!strip) {
             strip=document.createElement('div');strip.dataset.heldDraft='';strip.className='attachment-status';
             const note=document.createElement('span');note.setAttribute('role','status');
             const take=document.createElement('button');take.type='button';take.className='button quiet small';take.textContent='取回草稿';
             take.onclick=()=>core.reclaimDraft(strip.dataset.heldDraft);
             strip.append(note,take);input.before(strip);
+            (this.heldStrips ||= new WeakMap()).set(input,strip);
         }
         strip.dataset.heldDraft=draft.requestId;
         const summary=[draft.text,...draft.files].filter(Boolean).join(' · ');
