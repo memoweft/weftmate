@@ -448,8 +448,7 @@ test('close and crash recovery invalidate unanswered or answered rows; historica
 test('current-turn evidence is bounded, caches polling only, and user answering rechecks native terminal state', async () => {
   const now = Date.now(), f = await fixture({ clockFn: () => now })
   try {
-    // Activity's task-detail reader independently requests the same native
-    // evidence. Drain it before counting only approval-cache polling below.
+    // Finish activity's native history reads before counting approval polling.
     await f.service.__stopBackgroundActivity()
     let proofReads = 0, historyReads = 0
     const read = f.backend.getTaskReplyEvidence
@@ -467,26 +466,26 @@ test('current-turn evidence is bounded, caches polling only, and user answering 
   } finally { await f.close() }
 })
 
-test('approval cache measurements wait for an in-flight activity task-detail reader to drain', async () => {
+test('approval cache measurements wait for an in-flight activity history reader to drain', async () => {
   const now=Date.now(),f=await fixture({clockFn:()=>now})
-  const statusEntered=deferred(),statusRelease=deferred(),proofEntered=deferred(),proofRelease=deferred()
+  const statusEntered=deferred(),statusRelease=deferred(),historyEntered=deferred(),historyRelease=deferred()
   let refresh,draining
   try {
     await f.service.__stopBackgroundActivity()
-    const status=f.backend.getStatus,read=f.backend.getTaskReplyEvidence
+    const status=f.backend.getStatus,read=f.backend.readEvents
     f.backend.getStatus=async()=>{statusEntered.resolve();await statusRelease.promise;return status()}
-    f.backend.getTaskReplyEvidence=async input=>{proofEntered.resolve();await proofRelease.promise;return read(input)}
+    f.backend.readEvents=async input=>{historyEntered.resolve();await historyRelease.promise;return read(input)}
     // This real HTTP route invokes the same production activity refresh as its
     // background timer, without relying on when a two-second timer fires.
     refresh=f.request('activity');await statusEntered.promise
     let drained=false
     draining=f.service.__stopBackgroundActivity().then(()=>{drained=true})
-    statusRelease.resolve();await proofEntered.promise
-    assert.equal(drained,false,'stopping observation must wait for the actual task-detail proof')
-    proofRelease.resolve();assert.equal((await refresh).status,200);await draining
+    statusRelease.resolve();await historyEntered.promise
+    assert.equal(drained,false,'stopping observation must wait for the in-flight history read')
+    historyRelease.resolve();assert.equal((await refresh).status,200);await draining
     assert.equal(drained,true)
   } finally {
-    statusRelease.resolve();proofRelease.resolve()
+    statusRelease.resolve();historyRelease.resolve()
     try {await Promise.all([refresh,draining])} finally {await f.close()}
   }
 })
