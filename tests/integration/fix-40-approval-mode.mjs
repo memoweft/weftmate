@@ -66,15 +66,17 @@ try {
     // Prepare the normal main chat in work mode with a real read and its native
     // directory-choice receipt. No scenario output file exists during setup.
     writeFileSync(join(files,'context.txt'),'FIX40_SETUP_CONTEXT');
-    const original=(await h.api('/chats/main')).body.chat;
-    await h.api('/commands',{requestId:'fix40-work',kind:'chat.message',chatId:original.chatId,targetDeviceId:h.hostId,modelProfileId:h.modelId,text:'FIX40_SETUP_WORK'});
-    const created=await until(async()=>{const row=(await h.api('/chats/main')).body.chat;return row.activeSessionId&&row;});
+    const opened=(await h.api('/commands',{requestId:'fix40-open',kind:'session.create',targetDeviceId:h.hostId,modelProfileId:h.modelId,waitForReceipt:true})).body.command;
+    assert.equal(opened.state,'accepted_by_dsh');
+    await h.api('/commands',{requestId:'fix40-work',kind:'session.message',sessionId:opened.sessionId,targetDeviceId:h.hostId,text:'FIX40_SETUP_WORK'});
+    const link=(await h.api('/sessions/'+opened.sessionId+'/chat')).body;
+    const created=(await h.api('/chats/'+link.chatId)).body.chat;
     const switchCard=await until(async()=>(await h.api(`/sessions/${created.activeSessionId}/approvals`)).body.approvals.find(row=>row.status==='pending'&&row.intent==='work-switch'));
     assert.equal((await h.api(`/sessions/${created.activeSessionId}/approvals/${switchCard.approvalId}`,{requestId:'fix40-prepare-directory',outcome:'allowed-once',workProjectId:project.projectId})).status,200);
     await until(()=>h.requests.some(row=>row.messages.some(message=>message.role==='tool'&&JSON.stringify(message.content).includes('FIX40_SETUP_CONTEXT'))));
-    await until(async()=>(await h.api('/chats/main')).body.chat.running===false);
+    await until(async()=>(await h.api('/chats/'+link.chatId)).body.chat.running===false);
     assert.ok(h.requests.some(row=>row.messages.some(message=>message.role==='tool'&&JSON.stringify(message.content).includes('FIX40_SETUP_CONTEXT'))),'the setup really reads the isolated context file');
-    const nativeChat=(await h.api('/chats/main')).body.chat;
+    const nativeChat=(await h.api('/chats/'+link.chatId)).body.chat;
     let phoneOrigin = h.origin, readFault = recovery, writeFault = recovery;
     {
       proxy = createServer(async (request, response) => {

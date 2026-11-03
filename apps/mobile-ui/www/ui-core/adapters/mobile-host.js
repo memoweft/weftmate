@@ -137,10 +137,10 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     core.state.hostId = status.hostId;core.state.hostName = status.hostName;
     core.state.capabilities = status.backend?.capabilities || null;
     if (environment.logicalChats && exact) {
+      if (!state.logicalChats) { core.state.selectedSessionId = null; core.state.selectedChatId = null; }
       state.logicalChats = true; state.sharedHostAvailable = true; core.state.online = true;
       await core.refreshConfiguration();
       core.state.modelProfileId ||= core.state.models[0]?.id;
-      if (!core.state.mainChat) { core.state.selectedSessionId = null; core.state.selectedChatId = null; }
       await core.refreshLogicalSessions();
       await effects.restoreMainNativeRequests?.();
       state.sharedSessions = core.state.sessions.filter(row=>row.kind !== 'main').map(row=>({...row,source:'host'}));

@@ -65,8 +65,7 @@ export function createChatOperations(context) {
       deepThinking: chat.deepThinking ?? session?.deepThinking ?? false,
       selectedModelProfileId: session?.pendingModelProfileId ?? session?.modelProfileId ?? account.defaultModelProfileId ?? null,
       timeZone: identity.timeZone, ...memorySettings(session),
-      parent: chat.kind === 'main' ? null : session?.projectId
-        ? { kind: 'project', id: session.projectId } : { kind: 'main', id: identity.mainChatId } };
+      parent: session?.projectId ? { kind: 'project', id: session.projectId } : null };
     if (!session) return { ...base, title: 'WeftMate', pinned: true, archived: false,
       unread: chat.unread, groupId: null, projectId: null, running: false, sendAvailable: true,
       taskAvailable: false, attention: null, lastOutcome: null };
@@ -170,8 +169,8 @@ export function createChatOperations(context) {
         for (const chat of candidates) {
           const segment = account.chatIdentity.segments[chat.activeSegmentId], session = account.sessions[segment.sessionId];
           if (archived !== 'all' && (session.archived === true) !== (archived === 'true') ||
-              parentKind && parentKind !== (session.projectId ? 'project' : 'main') ||
-              parentId && parentId !== (session.projectId ?? account.chatIdentity.mainChatId)) continue;
+              parentKind && parentKind !== (session.projectId ? 'project' : null) ||
+              parentId && parentId !== session.projectId) continue;
           // Titles remain native; only title search needs description of every candidate.
           const title = q ? session.title ?? searchSnapshot.get(segment.sessionId)?.title ?? '' : '';
           if (q && !title.toLocaleLowerCase().includes(q.toLocaleLowerCase())) continue;

@@ -199,7 +199,7 @@
       core.openOfflineWorkMode = text => { if (!core.offlineWorkReady()) return;taskMode=true;input.value=text;open();paint(); };
       core.offlineConnectionRestored = tick;
       const unsubscribe = core.observeConnection?.(value => {if(value.kind==='online'&&offline)showHistory=false;paint();if(value.kind==='online')void tick().catch(()=>{});});
-      for(const name of ['selectSession','selectMainChat'])if(core[name]){const original=core[name];core[name]=(...args)=>{showHistory=false;paint();return original(...args);};}
+      if(core.selectSession){const original=core.selectSession;core.selectSession=(...args)=>{showHistory=false;paint();return original(...args);};}
       document.addEventListener('visibilitychange', () => void tick());
       const timer = setInterval(() => void tick().catch(() => {}), 15000);
       void tick().catch(() => {});

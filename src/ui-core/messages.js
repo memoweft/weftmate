@@ -191,7 +191,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         }
     }
     async function loadOlderHistory(legacy = false) {
-        if (!legacy && core.inMainChat?.()) return core.loadOlderLogicalHistory();
+        if (!legacy && core.inLogicalTimeline?.()) return core.loadOlderLogicalHistory();
         if (!core.state.hasOlder || core.state.olderLoading)
             return;
         const context = core.conversationTaskContext(), generation = core.state.historyGeneration;

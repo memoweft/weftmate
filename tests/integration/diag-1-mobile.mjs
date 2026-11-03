@@ -90,7 +90,7 @@ try {
             state.loggedIn = true; state.owner = identity.account.ownerId; state.username = identity.account.username;
             state.deviceId = identity.device.id; state.authEpoch++;
             document.body.classList.remove('cloud-auth-active'); $('cloud-auth-page').classList.remove('active');
-            uiCore.syncMobileIdentity(); await listSharedSessions(); await uiCore.selectMainChat(); applyTheme(theme);
+            uiCore.syncMobileIdentity(); await listSharedSessions(); await selectMobileTab('chat'); applyTheme(theme);
           }, { identity, theme });
           await page.waitForFunction(() => typeof globalThis.WeftRunRecords?.mount === 'function');
           await page.evaluate(() => page('general'));

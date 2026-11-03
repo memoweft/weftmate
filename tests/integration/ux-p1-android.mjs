@@ -5,7 +5,7 @@ import {execFileSync,spawn} from 'node:child_process';
 import {createServer} from 'node:net';
 import {mkdir,writeFile,rm} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
-import {randomUUID} from 'node:crypto';
+
 import {chromium} from 'playwright';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 const root=resolve(import.meta.dirname,'../..'),out=evidencePath('ux-p1');await mkdir(out,{recursive:true});
@@ -27,13 +27,12 @@ try{
  await until(async()=>{try{return(await(await fetch(`http://127.0.0.1:${debugPort}/json`)).json()).some(row=>row.url.includes('appassets'))}catch{return false}});
  browser=await chromium.connectOverCDP(`http://127.0.0.1:${debugPort}`,{noDefaults:true});const page=browser.contexts()[0].pages().find(p=>p.url().includes('appassets'));assert.ok(page);page.setDefaultTimeout(15000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.waitForFunction(()=>typeof state!=='undefined'&&state.booted&&!state.transitionPending);
- await page.evaluate(async values=>{await call('auth.login',values);const me=await call('auth.me');WeftMobileCloud.core.acceptSession(await(await androidBridge.fetch('/personal/v1/auth/me')).json());state.loggedIn=true;state.owner=me.owner;state.username=me.username;state.deviceId=me.deviceId||me.device?.id||'';state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await uiCore.selectMainChat();},{origin:f.origin,...f.credentials,deviceName:'UX-P1 合成安卓'});
- const host=(await f.request('/status')).hostId,main=(await f.request('/chats/main')).chat;
- let cmd=(await f.request('/commands',{requestId:randomUUID(),targetDeviceId:host,kind:'chat.message',chatId:main.chatId,modelProfileId:'local',text:'合成安卓首句'})).command;
- await until(async()=>{cmd=(await f.request(`/commands/${cmd.commandId}`)).command;return cmd.state==='accepted_by_dsh'});f.seedMainHistory(cmd.sessionId,320,{total:320});f.progress.finish('completed');await page.evaluate(()=>uiCore.selectMainChat());await page.waitForFunction(()=>document.querySelector('.main-chat-row.message'));
- const b=name=>page.getByRole('button',{name,exact:true});
+ await page.evaluate(async values=>{await call('auth.login',values);const me=await call('auth.me');WeftMobileCloud.core.acceptSession(await(await androidBridge.fetch('/personal/v1/auth/me')).json());state.loggedIn=true;state.owner=me.owner;state.username=me.username;state.deviceId=me.deviceId||me.device?.id||'';state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();},{origin:f.origin,...f.credentials,deviceName:'UX-P1 合成安卓'});
+ const {sessionId}=await f.startChat('合成安卓首句');
+ f.seedMainHistory(sessionId,320,{total:320});f.progress.finish('completed');
+ await page.evaluate(id=>selectSharedSession(id),sessionId);await page.waitForFunction(()=>state.sharedEvents.length>0);
  const shot=async(ids,suffix)=>{for(const id of ids)await writeFile(join(out,`after-${id}-android-native-${suffix}.png`),execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:12*1024*1024}))};
- for(const theme of ['light','dark']){await page.evaluate(t=>applyTheme(t),theme);await delay(250);await shot([13,16],theme);await b('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await page.waitForFunction(()=>document.querySelector('mark'));await b('下一条搜索结果').click();await b('上一条搜索结果').click();await delay(250);await shot([14,15],theme);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await b('关闭主对话搜索').click()}
+ for(const theme of ['light','dark']){await page.evaluate(t=>applyTheme(t),theme);await delay(250);await shot([13,16],theme);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
  assert.deepEqual(errors,[]);await writeFile(join(out,'android-native-checks.json'),JSON.stringify({realAndroid:true,synthetic:true,modelRequests:0,packageName:pkg,versionCode:28,errors},null,2));console.log('UX-P1 real Android passed');
 }finally{
  if(instrumentation){try{run('shell','run-as',pkg,'touch','files/ux-p1-probe.done');await until(()=>instrumentation.exitCode!==null)}catch{instrumentation.kill()}}

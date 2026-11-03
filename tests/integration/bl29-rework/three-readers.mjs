@@ -6,11 +6,9 @@ for(const order of ['native-first','commit-first','same-turn']){
  const f=await startTimelineCandidate({daily:true,inlineProgress:true,historyCount:0});
  const c=f.debug.service.__reviewContext,t=c.chatTimeline,original=t.query;
  try{
-  const main=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
-  const sent=await f.request('/commands',{requestId:'three-readers',kind:'chat.message',chatId:main.chatId,text:'synthetic',modelProfileId:'local',targetDeviceId:host});
-  while((await f.request('/commands/'+sent.command.commandId)).command.state!=='accepted_by_dsh')await pause(5);
+  const chat=await f.startChat('synthetic','three-readers');
   f.progress.text('baseline');f.progress.finish();
-  const page=await f.request(`/chats/${main.chatId}/events?limit=100`),path=`/chats/${main.chatId}/changes?cursor=${page.syncCursor}&liveRevision=${page.liveRevision}&waitMs=1200`;
+  const page=await f.request(`/chats/${chat.chatId}/events?limit=100`),path=`/chats/${chat.chatId}/changes?cursor=${page.syncCursor}&liveRevision=${page.liveRevision}&waitMs=1200`;
   let release,held=false;const gate=new Promise(r=>release=r);
   t.query=async(...args)=>{const v=await original(...args);if(args[2]==='changes'&&!held){held=true;await gate;}return v;};
   const a=f.request(path);while(!held)await pause(1);const b=f.request(path);await pause(10);

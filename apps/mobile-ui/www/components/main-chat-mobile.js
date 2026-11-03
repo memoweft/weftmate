@@ -52,7 +52,7 @@
   Object.assign(mobileEffects,presentation,{
     renderMainChat(){if(!state.logicalChats)return;if(main()){state.sharedSessionId=uiCore.state.selectedSessionId;state.sharedRunning=!!uiCore.state.mainChat.running;ensureList();}presentation.renderMainChat();if(main()&&state.scrollPinned&&!uiCore.state.chatWindow.hasNewer)scrollBottom();},
     paintSelectedSession:id=>presentation.paintSelectedSession(id),
-    showConversation:({restore=false}={})=>{if(main())ensureList();if(restore&&state.page!=='chat')return;if(['activity','goals','library'].includes(state.page)&&!state.tabSource&&!state.selectingMainTab)return;if(!restore)page('chat');scheduleSharedPoll();},closeRail:closeDrawer,
+    showConversation:({restore=false}={})=>{if(main())ensureList();if(restore&&state.page!=='chat')return;if(['activity','goals','library'].includes(state.page)&&!state.tabSource)return;if(!restore)page('chat');scheduleSharedPoll();},closeRail:closeDrawer,
     paintModels:()=>updateComposer(),paintDesktopComposer:()=>{},paintSessionApprovalMode:()=>updateApprovalModeButton(),
     removeResourcePreview:()=>closeResourcePage({restoreFocus:false}),closeResourcePreview:()=>closeResourcePage({restoreFocus:false}),
     closePhoneImagePreview:()=>closeImagePreview({restoreFocus:false}),
@@ -116,12 +116,12 @@
   selectSharedSession=function(id){return state.logicalChats?uiCore.selectLogicalSession(id):nativeSides(id);};
   updatePageHeader=function(){oldHeader();if(state.logicalChats&&state.page==='chat'){$('menu-button').hidden=false;$('page-back').hidden=main();}
     if(main()&&state.page==='chat'){$('header-title').textContent='WeftMate';$('header-subtitle').textContent='主对话';$('page-back').hidden=!state.tabSource;}
-    if(state.page==='chat'&&state.logicalChats){$('menu-button').hidden=false;$('page-back').hidden=true;
+    if(state.page==='chat'&&state.logicalChats){$('menu-button').hidden=false;$('page-back').hidden=main();
       $('header-subtitle').hidden=false;$('header-subtitle').textContent=uiCore.connectionView().kind==='online'?'已连接':connectionLabel();}
     syncMobileTabs();};
   refreshAttachmentDrafts=async function(...args){if(state.logicalChats&&!window.weftNative){renderAttachmentDrafts();updateComposer();return true;}return oldDrafts(...args);};
   removeAttachment=async function(id){if(state.logicalChats&&!window.weftNative)return uiCore.removeAttachmentDraft(id);return oldRemove(id);};
-  selectConversation=function(id){if(state.logicalChats&&id===null)return Promise.resolve(uiCore.startChatConversation()).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
+  selectConversation=function(id){if(state.logicalChats&&id===null)return uiCore.openSideChat({entry:'composer',parent:null}).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
   pickAttachment=async function(kind){if(!state.logicalChats||window.weftNative)return oldPick(kind);
     closeAttachmentMenu();const input=el('input');input.type='file';input.multiple=true;input.accept=kind==='file'?'': 'image/*';if(kind==='camera')input.setAttribute('capture','environment');
     input.addEventListener('change',async()=>{await uiCore.addAttachmentFiles([...input.files]);input.remove();renderAttachmentDrafts();updateComposer();});input.addEventListener('cancel',()=>input.remove());input.hidden=true;document.body.append(input);input.click();};

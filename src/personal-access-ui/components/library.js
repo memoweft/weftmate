@@ -8,12 +8,11 @@ globalThis.WeftUiComponents.factories.library=(core,ui)=>{
         finally{if(generation===opening)pendingOpen=false;}
     }
     const timeline=ui.renderTimeline;let eventSignature;
-    function focusSource(){if(!sourceAnchor)return;if(core.inMainChat?.()){ui.focusMainEvent?.(sourceAnchor.eventId);return;}
+    function focusSource(){if(!sourceAnchor)return;
         const row=ui.byId('transcript').querySelector(`[data-seq="${sourceAnchor.seq}"]`);if(row){row.tabIndex=-1;row.scrollIntoView({block:'center'});row.focus();}}
     const selected=ui.paintSelectedSession,reset=ui.resetIdentityControls,availability=ui.updateAvailability;
     return {mountLibrary(){
         const select=core.selectSession;core.selectSession=(...args)=>{close();return select(...args);};
-        const main=core.selectMainChat;core.selectMainChat=(...args)=>{close();return main(...args);};
         const activity=ui.openActivity;ui.openActivity=(...args)=>{close();return activity(...args);};
         document.addEventListener('weftmate:fixed-page',event=>{if(event.detail!=='library')close();});
         const nav=ui.fixedPageNavigation();nav.hidden=false;

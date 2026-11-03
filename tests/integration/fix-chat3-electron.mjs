@@ -26,8 +26,9 @@ const killTree = () => {
 const deadline = setTimeout(() => { killTree(); process.exitCode = 1; }, 150000);
 try {
   fixture = await startFixture();
-  const main=(await fixture.request('/chats/main')).chat;
-  let mainCommand=(await fixture.request('/commands',{requestId:'chat3-main',kind:'chat.message',chatId:main.chatId,targetDeviceId:fixture.hostId,modelProfileId:'synthetic',text:'合成天气查询'})).command;
+  const opened=(await fixture.request('/commands',{kind:'session.create',requestId:'chat3-open',targetDeviceId:fixture.hostId,modelProfileId:'synthetic',waitForReceipt:true})).command;
+  assert.equal(opened.state,'accepted_by_dsh');
+  let mainCommand=(await fixture.request('/commands',{requestId:'chat3-main',kind:'session.message',sessionId:opened.sessionId,targetDeviceId:fixture.hostId,text:'合成天气查询'})).command;
   while(['pending','dispatching','preflight'].includes(mainCommand.state))mainCommand=(await fixture.request('/commands/'+mainCommand.commandId)).command;
   assert.equal(mainCommand.state,'accepted_by_dsh');fixture.source=mainCommand.sessionId;
   const describe=fixture.backend.describeSession;
@@ -55,7 +56,7 @@ try {
   await feedbackUiSession(page, fixture, { native: true });
   await page.evaluate(async id => { await globalThis.__feedbackSessionCore.selectSession(id); }, fixture.source);
   await page.unroute('**/personal/v1/status');
-  await page.evaluate(async id=>{const core=__feedbackSessionCore;await core.refreshStatus();await core.refreshSessions();await core.selectMainChat();},fixture.source);
+  await page.evaluate(async id=>{const core=__feedbackSessionCore;await core.refreshStatus();await core.refreshSessions();await core.selectSession(id);},fixture.source);
   await page.waitForFunction(()=>__feedbackSessionCore.inLogicalTimeline());
   await page.evaluate(()=>{const core=__feedbackSessionCore;core.currentTimelineChat().running=true;core.currentTimelineChat().processing={phase:'answering'};core.setMessageMode('queue')});
   await page.locator('#transcript .execution-block').waitFor();
@@ -120,8 +121,8 @@ try {
   assert.equal(await page.evaluate(()=>__feedbackSessionCore.currentAttachmentDrafts().length),1);
   await field.press('Escape');
   await page.goto(fixture.mobileUrl);
-  await page.waitForFunction(()=>state.booted && !!uiCore.state.mainChat);
-  await page.evaluate(async()=>{await uiCore.selectMainChat()});
+  await page.waitForFunction(()=>state.booted && state.logicalChats);
+  await page.evaluate(id=>selectSharedSession(id),fixture.source);
   const mobileField=page.locator('#draft');await mobileField.fill('/comp');
   await page.getByRole('menuitem',{name:'/compact',exact:true}).waitFor();
   const menuPosition=await page.evaluate(()=>({bottom:document.querySelector('.slash-command-menu').getBoundingClientRect().bottom,top:document.getElementById('draft').getBoundingClientRect().top}));

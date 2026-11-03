@@ -32,7 +32,7 @@ const deferred = () => { let resolve!: (value: any) => void; const promise = new
 for (const branch of ['legacy', 'logical']) test(`automatic ${branch} restoration discards the prior identity's delayed session data`, async () => {
   const delayed=deferred(), reached=deferred();
   const f=fixture((path:string)=>{
-    if(path.endsWith(branch==='legacy'?'/sessions?archived=all':'/chats/main')){reached.resolve(null);return delayed.promise;}
+    if(path.includes('/sessions?archived=all')){reached.resolve(null);return delayed.promise;}
     return response({projects:[]});
   });
   Object.assign(f.core.state,{selectedSessionId:null,selectedChatId:null,sessions:[],personalCapabilities:branch==='legacy'?{}:{chats:1}});
@@ -40,11 +40,10 @@ for (const branch of ['legacy', 'logical']) test(`automatic ${branch} restoratio
   f.core.clearSession();
   f.core.acceptSession({account:{ownerId:'owner-next',username:'Next'},device:{id:'device-next'},csrfToken:'next-csrf'});
   f.core.state.ownerId='owner-next'; // The DOM-free fixture records paintIdentity; the real view supplies this routing owner.
-  delayed.resolve(response(branch==='legacy'?{sessions:[{sessionId:'prior-session',title:'Prior private conversation'}]}:{chat:{chatId:'prior-main',activeSessionId:'prior-session'}}));
+  delayed.resolve(response({sessions:[{sessionId:'prior-session',title:'Prior private conversation'}]}));
   await restoring;
   assert.equal(f.core.state.ownerId,'owner-next');assert.equal(f.core.state.selectedSessionId,null);
   assert.equal(f.core.state.sessions.some((row:any)=>row.sessionId==='prior-session'),false);
-  assert.notEqual(f.core.state.mainChat?.chatId,'prior-main');
 });
 
 test('#678 clearing the account drops native history before a later process repaint', () => {
@@ -78,14 +77,14 @@ test('FIX-44 fix-1 oversized message detail leaves only that message partial and
 test('FIX-44 fix-1 message detail 404 during logical changes preserves the chat, old messages and next cursor', async () => {
   let available=false;
   const f=fixture(path=>path.endsWith('/11/detail')?(available?response({type:'assistant.message',text:'重试后的全文'}):response({error:{code:'SOURCE_UNAVAILABLE'}},404)):response({}));
-  Object.assign(f.core.state,{personalCapabilities:{chatTimeline:1},selectedChatId:'main',mainChat:{chatId:'main',activeSessionId:'session-test'}});
+  Object.assign(f.core.state,{personalCapabilities:{chatTimeline:1},selectedChatId:'work-history',workTimeline:{chatId:'work-history',activeSessionId:'session-test'}});
   const event=(id,seq,data)=>({eventId:id,revision:1,seq,orderKey:String(seq).padStart(3,'0'),at:new Date().toISOString(),type:'assistant.message',sourceRef:{sessionId:'session-test',seq},data});
   f.core.readChatEvents=async()=>({items:[event('old',1,{text:'已有完整回复'})],syncCursor:'one',contentRevision:1});
   f.core.readChatDates=async()=>({days:[],contentRevision:1});
   f.core.readChatChanges=async()=>({upserts:[event('forgotten',11,{text:'刚被忘掉的消息摘要',truncated:true}),event('new',12,{text:'其他正常回复'})],nextCursor:'two',contentRevision:1});
-  f.core.readMainChat=async()=>({chat:f.core.state.mainChat});
+  f.core.readChat=async()=>({chat:f.core.state.workTimeline});
   await f.core.refreshLogicalHistory(true);await f.core.refreshLogicalHistory();
-  assert.equal(f.core.state.selectedChatId,'main');assert.equal(f.core.state.selectedSessionId,'session-test');
+  assert.equal(f.core.state.selectedChatId,'work-history');assert.equal(f.core.state.selectedSessionId,'session-test');
   assert.equal(f.core.state.chatWindow.events.get('old').data.text,'已有完整回复');
   assert.equal(f.core.state.chatWindow.events.get('forgotten').data.fullTextReadFailed,true);
   assert.equal(f.core.state.chatWindow.events.get('new').data.text,'其他正常回复');
@@ -139,13 +138,13 @@ test('FIX-44 full-text read finishing after a session switch cannot paint into t
 test('FIX-44 main-chat tail and changes hydrate summaries into state and reuse complete bodies', async () => {
   const text='主对话完整回复'.repeat(1000)+'全文终点', f=fixture(path=>path.endsWith('/11/detail')?
     response({type:'assistant.message',text,truncated:false}):response({}));
-  Object.assign(f.core.state,{personalCapabilities:{chatTimeline:1},selectedChatId:'main',mainChat:{chatId:'main',activeSessionId:'session-test'}});
+  Object.assign(f.core.state,{personalCapabilities:{chatTimeline:1},selectedChatId:'work-history',workTimeline:{chatId:'work-history',activeSessionId:'session-test'}});
   const event={eventId:'reply',revision:1,seq:11,orderKey:'01',at:new Date().toISOString(),type:'assistant.message',
     sourceRef:{sessionId:'session-test',seq:11},data:{text:text.slice(0,4000),truncated:true}};
   f.core.readChatEvents=async()=>({items:[event],syncCursor:'one',contentRevision:1});
   f.core.readChatDates=async()=>({days:[],contentRevision:1});
   f.core.readChatChanges=async()=>({upserts:[event],nextCursor:'two',contentRevision:1});
-  f.core.readMainChat=async()=>({chat:f.core.state.mainChat});
+  f.core.readChat=async()=>({chat:f.core.state.workTimeline});
   await f.core.refreshLogicalHistory(true);
   assert.equal(f.core.state.chatWindow.events.get('reply').data.text,text);
   await f.core.refreshLogicalHistory();
@@ -211,7 +210,7 @@ test('MODEL-1 failed combined read keeps usable models and does not start immedi
 
 function sideFixture() {
   const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chats:1,sideChats:1,creationReceipt:1},
-    mainChat:{chatId:'main'},selectedChatId:null,chats:[]});
+    selectedChatId:'project-chat',chats:[{chatId:'project-chat',projectId:'project'}]});
   for(const name of ['refreshHistory','refreshConversationTasks','refreshApprovalMode','updateSession'])f.core[name]=async()=>{};
   return f;
 }
@@ -1157,8 +1156,8 @@ test('UX-9 folder registration keeps editing available but blocks a send until p
 });
 
 
-test('STREAM-1b a new main-chat user message enables live reads until native terminal evidence',()=>{
- const f=fixture();Object.assign(f.core.state,{mainChat:{chatId:'main',running:false},selectedChatId:'main',activeChatSource:'desktop'});
+test('STREAM-1b a new logical work-history user message enables live reads until native terminal evidence',()=>{
+ const f=fixture();Object.assign(f.core.state,{workTimeline:{chatId:'work-history',running:false},selectedChatId:'work-history',activeChatSource:'desktop'});
  assert.equal(f.core.mainReplyActive(),false);
  f.core.state.chatWindow.events.set('user',{eventId:'user',orderKey:'1',type:'user.message',data:{text:'继续'}});
  assert.equal(f.core.mainReplyActive(),true);

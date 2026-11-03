@@ -50,7 +50,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
         });
     }
     function timelineEventsForContext(context = core.conversationTaskContext()) {
-        if (core.inMainChat?.()) return [...core.state.chatWindow.events.values()].filter(event => event.sourceRef?.kind === 'native' && event.sourceRef.sessionId === context.sessionId)
+        if (core.inLogicalTimeline?.()) return [...core.state.chatWindow.events.values()].filter(event => event.sourceRef?.kind === 'native' && event.sourceRef.sessionId === context.sessionId)
             .map(event => ({...event,seq:event.sourceRef.seq,sessionId:event.sourceRef.sessionId}));
         return context.source === 'phone' ? core.state.phoneHostEvents.get(context.conversationId) || [] : [...core.state.historyEvents.values()];
     }

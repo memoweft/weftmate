@@ -22,11 +22,11 @@ const b=(p,name)=>p.getByRole('button',{name,exact:true}).filter({visible:true})
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 try {
  f=await startTimelineCandidate({daily:true,sidebar:true,logicalMobile:true,composerMenu:true,interactive:true,inlineProgress:true,historyCount:0,baseTime:Date.now()-15000});
- const host=(await f.request('/status')).hostId, main=(await f.request('/chats/main')).chat;
+ const host=(await f.request('/status')).hostId;
  async function command(body){let row=(await f.request('/commands',{requestId:randomUUID(),targetDeviceId:host,...body})).command;for(let n=0;n<100;n++){if(row.state==='accepted_by_dsh')return row;assert.notEqual(row.state,'rejected',JSON.stringify(row));await wait(20);row=(await f.request(`/commands/${row.commandId}`)).command;}throw Error('command timeout');}
- const first=await command({kind:'chat.message',chatId:main.chatId,modelProfileId:'local',text:'合成主对话'});
+ const first=await f.startChat('合成对话');
  f.seedMainHistory(first.sessionId,3200,{total:3200});f.progress.finish('completed');
- const side=await command({kind:'session.side.create',parent:{kind:'main',id:main.chatId},modelProfileId:'local',title:'合成旁聊'});
+ const side=await command({kind:'session.create',modelProfileId:'local'});
  await f.request(`/sessions/${side.sessionId}/metadata`,{title:'合成旁聊',memoryMode:'off',autoDeleteDays:30},'PATCH');
  profile=await mkdtemp(join(tmpdir(),'weftmate-ux-p1-'));
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:root,args:['scripts/review-gallery/electron.mjs','--force-device-scale-factor=1'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light'}});
@@ -82,20 +82,17 @@ try {
  await b(p,'开始聊天').click();
  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(480,780));await shot(p,[1,3,4,12],'desktop-480-dark');
  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1200,800));
- await b(p,'搜索主对话').click();await p.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('纸船');await p.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await p.waitForFunction(()=>document.querySelector('mark'));await shot(p,[15],'desktop-dark');
  browser=await chromium.launch({headless:true,channel:'chrome'});
  for(const size of [{width:390,height:844},{width:360,height:780}])for(const web of [true,false]){
   const page=await browser.newPage({viewport:size,isMobile:true,hasTouch:true});page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));
   if(web){await page.route('**/bridge.js',r=>r.fulfill({contentType:'text/javascript',body:'// browser transport'}));await page.route('**/personal/v1/**',async r=>{const u=new URL(r.request().url()),response=await r.fetch({url:f.origin+u.pathname+u.search,headers:{...r.request().headers(),origin:f.origin}});await r.fulfill({response});});
-   const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}}),identity=await login.json();await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await uiCore.selectMainChat();},identity);
+   const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}}),identity=await login.json();await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();},identity);
   }else await page.goto(f.mobileUrl);
-  await page.waitForFunction(()=>uiCore.inMainChat()&&document.querySelector('.main-chat-row.message'));
+  await page.waitForFunction(()=>state.booted&&state.loggedIn);await page.evaluate(id=>selectSharedSession(id),first.sessionId);await page.waitForFunction(()=>state.sharedEvents.length>0);
   const suffix=`${web?'web':'android-chromium'}-${size.width}`;
   for(const theme of ['light','dark']){await page.evaluate(t=>applyTheme(t),theme);await shot(page,[13],suffix+'-'+theme);
    await page.evaluate(()=>{$('chat-status').textContent='请先绑定云账户并批准这台设备。'});await shot(page,[16],suffix+'-'+theme);await page.evaluate(()=>{$('chat-status').textContent=''});
-   await b(page,'搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('纸船');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await page.waitForFunction(()=>document.querySelector('mark'));await shot(page,[14,15],suffix+'-'+theme);await b(page,'下一条搜索结果').click();await b(page,'上一条搜索结果').click();
-   if(phase==='after'){const geometry=await page.getByRole('form',{name:'主对话内搜索'}).evaluate(form=>{const nodes=[...form.children].filter(n=>getComputedStyle(n).position!=='absolute'&&!n.hidden);return nodes.map(n=>n.getBoundingClientRect().top)});assert.ok(Math.max(...geometry)-Math.min(...geometry)<20);checks.push('single-row-'+suffix+'-'+theme);}
-   await b(page,'关闭主对话搜索').click();}
+  }
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.close();checks.push(suffix);
  }
  assert.deepEqual(errors,[]);await writeFile(join(out,phase+'-checks.json'),JSON.stringify({realElectron:true,synthetic:true,modelRequests:0,checks,errors},null,2));console.log('UX-P1 '+phase+' passed');

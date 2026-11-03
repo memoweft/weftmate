@@ -16,6 +16,6 @@ try{
  const main=(await f.request('/chats/main')).chat,events=await f.request(`/chats/${main.chatId}/events`);report.actualOldHost={replyWait:(await f.request('/status')).personalCapabilities.replyWait??null,hasAccountChanges:'accountChanges' in events};
  browser=await chromium.launch({headless:true});const p=await browser.newPage({viewport:{width:390,height:844}});let calls=[];
  p.on('request',r=>{if(r.url().endsWith('/bridge')){const m=JSON.parse(r.postData());if(m.params?.path?.includes('/changes?'))calls.push(m.params.path);}});
- await p.goto(f.mobileUrl);await p.waitForFunction(()=>state.booted&&state.loggedIn&&uiCore.state.mainChat);await p.evaluate(()=>uiCore.selectMainChat());await new Promise(r=>setTimeout(r,700));calls=[];await new Promise(r=>setTimeout(r,4500));
+ await p.goto(f.mobileUrl);await p.waitForFunction(()=>state.booted&&state.loggedIn&&state.logicalChats);await p.evaluate(id=>selectSharedSession(id),f.sessionId);await new Promise(r=>setTimeout(r,700));calls=[];await new Promise(r=>setTimeout(r,4500));
  report.changes=calls.length;report.waitParameters=calls.filter(x=>/waitMs=/.test(x)).length;report.accountRevisionParameters=calls.filter(x=>/accountRevision=/.test(x)).length;report.readOutcome=await p.evaluate(()=>uiCore.state.historyReadResult?.kind);
 }finally{await browser?.close();await f.close();rmSync(f.root,{recursive:true,force:true});writeFileSync(outputPath('old-host.json'),JSON.stringify(report,null,2));}console.log(report);

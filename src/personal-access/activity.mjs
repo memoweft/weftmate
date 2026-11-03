@@ -38,7 +38,7 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
       if(result){const failureReason=result==='failed'&&!hasPrivateContent(session)?nativeFailureReason(data)||scan.failureReason:undefined;
         const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:result==='completed'?completionActivitySummary(scan.summary):scan.summary.slice(0,160),...(result==='completed'?{summaryFormat:'plain'}:{})}:{}),...(failureReason?{failureReason}:{})};
         scan.terminals??={};scan.terminals[scan.taskId??event.seq]=terminal;
-        if(!Object.values(account.chatResults??{}).some(row=>row.taskId===scan.taskId))nativeTaskActivity(account,sessionId,terminal);
+        nativeTaskActivity(account,sessionId,terminal);
       }
       scan.executed=false;delete scan.summary;delete scan.failureReason;
     }
@@ -125,7 +125,6 @@ export function createActivity(context) {
       await dailyDigest.refresh(ownerId);
       const update=await context.updateStatus();
       for(const layer of update?.layers??[])if(layer.availableVersion&&layer.availableVersion!==layer.currentVersion)await record(ownerId,{key:`update:${layer.availableVersion}`,type:'system.update.available',title:'更新可用',summary:`新版本 ${layer.availableVersion} 已可用。`,level:'normal',actions:[{kind:'view_settings',label:'查看更新',target:{category:'about'}}]});
-      await context.sideChats.reconcile(ownerId);
       await context.serial(()=>context.mutate(ownerId,()=>{}));
     })().finally(()=>flights.delete(ownerId));flights.set(ownerId,work);return work;
   }

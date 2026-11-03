@@ -20,7 +20,7 @@ try{
   await app.evaluate(({BrowserWindow},width)=>{const w=BrowserWindow.getAllWindows()[0];w.setMinimumSize(480,640);w.setContentSize(width,900);},width);await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await page.waitForFunction(width=>innerWidth===width,width);
   await page.evaluate(()=>{
    const target=document.querySelector('#view');target.replaceChildren();
-   const core={state:{ownerId:'synthetic-account',identityGeneration:1,selectedChatId:'synthetic-phone',sessions:[]},inMainChat:()=>false,readMessageFeedback:()=>[],messageBusy:()=>false,messageSource:async()=>({kind:'side'}),accessApi:async()=>({groups:[]})};
+   const core={state:{ownerId:'synthetic-account',identityGeneration:1,selectedChatId:'synthetic-phone',sessions:[]},readMessageFeedback:()=>[],messageBusy:()=>false,messageSource:async()=>({kind:'side'}),accessApi:async()=>({groups:[]})};
    const ui={element:(tag,cls='',text='')=>{const e=document.createElement(tag);e.className=cls;e.textContent=text;return e;}};
    globalThis.visualMain=WeftUiComponents.factories.mainChat(core,ui);
    const row=document.createElement('article');row.className='message assistant';row.textContent='手机合成历史仍然可见。';target.append(row);

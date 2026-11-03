@@ -77,10 +77,11 @@ try{
   const created=await api('/commands',{requestId:randomUUID(),targetDeviceId:started.hostId,kind:'session.create',modelProfileId:'synthetic'},auth);
   const complete=await wait(()=>api('/commands/by-request/'+created.command.requestId,undefined,auth),r=>r.command?.state==='accepted_by_dsh');
   const sessionId=complete.command.sessionId,main=(await api('/chats/main',undefined,auth)).chat,side=await api('/sessions/'+sessionId+'/chat',undefined,auth);
-  for(const [kind,chat] of [['main',main],['side',side]]) {
+  for(const [kind,chat] of (baseline ? [['main',main],['side',side]] : [['side',side]])) {
   for(let i=0;i<4;i++){
    const requestId='native-'+randomUUID(),begin=performance.now(),start=b.starts.length;await api('/commands/by-request/'+requestId,undefined,auth);
-   const payload=kind==='main'||baseline?{kind:'chat.message',chatId:chat.chatId,modelProfileId:'synthetic'}:{kind:'session.message',sessionId};
+   // The pinned pre-retirement host expects its historical command.
+   const payload=baseline?{kind:'chat.message',chatId:chat.chatId,modelProfileId:'synthetic'}:{kind:'session.message',sessionId};
    const text=`你好（synthetic-${kind}-${i+1}）`;
    const sent=await api('/commands',{requestId,targetDeviceId:started.hostId,...payload,text,mode:'queue'},auth);
    const result=sent.command?await wait(()=>api('/commands/by-request/'+requestId,undefined,auth),r=>['accepted_by_dsh','rejected','observed'].includes(r.command?.state)):sent;

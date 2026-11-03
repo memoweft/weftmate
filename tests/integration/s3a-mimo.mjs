@@ -12,11 +12,11 @@ try{
  const desktop=h.page;desktop.setDefaultTimeout(30000);shell('shell','pm','clear',pkg);
  p=await phone(new URL(desktop.url()).origin,h.credentials);
  shell('shell','pm','grant',pkg,'android.permission.POST_NOTIFICATIONS');shell('shell','input','keyevent','4');
- await desktop.getByRole('button',{name:'WeftMate 主对话',exact:true}).click();
+ await desktop.locator('#new-session').click();
  await desktop.getByRole('button',{name:/选择模型|ia2b-mimo/}).first().click();await desktop.getByRole('option',{name:'ia2b-mimo',exact:true}).click();
  await desktop.getByRole('textbox',{name:'输入消息',exact:true}).fill('请用原生提醒工具设一个 1 分钟后的提醒，内容是“S3A-SYNTHETIC 核对周末计划”。提醒触发时只提醒，不再调用模型。');
  await desktop.getByRole('button',{name:'发送',exact:true}).click();
- const command=await until(async()=>(await h.api('/commands?limit=20')).body.commands.find(row=>row.kind==='chat.message'&&row.state==='accepted_by_dsh'));
+ const command=await until(async()=>(await h.api('/commands?limit=20')).body.commands.find(row=>row.kind==='session.message'&&row.state==='accepted_by_dsh'));
  await h.complete(command);const schedules=(await h.api('/schedules')).body.items;
  const schedule=schedules.find(row=>row.text.includes('S3A-SYNTHETIC'));assert.ok(schedule);report.checks.push('real-model-native-one-minute-reminder');
  shell('shell','input','keyevent','3');

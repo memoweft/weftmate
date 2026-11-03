@@ -325,8 +325,9 @@ try {
   const memoryModels = (await api('/models')).body.models;
   const selectedMemoryModel = memoryModels.find(m=>m.configured).id;
   assert.equal((await api('/settings/models',{defaultModelProfileId:selectedMemoryModel,backgroundModelProfileId:selectedMemoryModel},'PATCH')).status,200);
-  const mainMemory = (await api('/chats/main')).body.chat;
-  const memorySend=await api('/commands',{requestId:randomUUID(),kind:'chat.message',targetDeviceId:host,chatId:mainMemory.chatId,modelProfileId:selectedMemoryModel,text:'以后请叫我小禾。'});
+  const openedMemory=(await api('/commands',{kind:'session.create',requestId:randomUUID(),modelProfileId:selectedMemoryModel,targetDeviceId:host,waitForReceipt:true})).body.command;
+  assert.equal(openedMemory.state,'accepted_by_dsh');
+  const memorySend=await api('/commands',{requestId:randomUUID(),kind:'session.message',targetDeviceId:host,sessionId:openedMemory.sessionId,text:'以后请叫我小禾。'});
   assert.equal(memorySend.status,202,JSON.stringify(memorySend.body));
   await until(()=>report.memoryInterpretations>0,'real Core interpretation request',60000);
   await until(async()=>{const r=await api('/memory/items?kind=cognition'); return r.status===200 && JSON.stringify(r.body).includes('小禾');},'formed memory via public memory API',60000);
@@ -357,8 +358,7 @@ try {
   await launch();
   await page.locator('#assistant-view').waitFor({ state: 'visible' });
   assert.ok((await api('/models')).body.models.some(m => m.name === '合成 Mac 模型' && m.configured));
-  const main = (await api('/chats/main')).body.chat;
-  const events = (await api('/sessions/' + main.activeSessionId + '/events?limit=200')).body.events;
+  const events = (await api('/sessions/' + openedMemory.sessionId + '/events?limit=200')).body.events;
   assert.ok(events.some(e => e.type === 'assistant.message' && e.data?.text?.includes('M3-3 流式回复成功')));
   assert.ok((await api('/projects')).body.projects.some(p => p.projectId === projectId));
   assert.equal((await api('/memory/items?kind=cognition')).status,200);

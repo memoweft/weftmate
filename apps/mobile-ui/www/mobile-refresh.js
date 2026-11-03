@@ -1,8 +1,7 @@
 /* Phone presentation only; all navigation and settings actions remain existing. */
 (() => {
-  const drawer=$('drawer'),primary=el('div','drawer-primary'),main=drawer.querySelector('.rail-main-chat');
+  const drawer=$('drawer'),primary=el('div','drawer-primary');
   drawer.querySelector('.drawer-brand').after(primary);
-  if(main)primary.append(main);
   for(const [id,name,icon] of [['activity','动态','bell'],['health','健康','health'],['goals','目标','goal'],['library','成果库','folder']]){
     const button=el('button','',name);button.type='button';button.dataset.mobilePage=id;button.prepend(WeftIcons.create(icon,20));
     button.onclick=()=>{closeDrawer();void selectMobileTab(id);};primary.append(button);
@@ -16,7 +15,7 @@
   if(create){create.setAttribute('aria-label','新建旁聊');create.replaceChildren(WeftIcons.create('compose',20));}
   const originalSync=syncMobileTabs;
   syncMobileTabs=function(){originalSync();for(const button of primary.querySelectorAll('button')){
-    const active=button===main?state.page==='chat'&&(!state.logicalChats||uiCore.inMainChat()):state.page===button.dataset.mobilePage;
+    const active=state.page===button.dataset.mobilePage;
     button.classList.toggle('current',active);button.setAttribute('aria-current',active?'page':'false');
   }};
   syncMobileTabs();

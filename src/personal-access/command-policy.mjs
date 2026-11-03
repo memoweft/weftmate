@@ -78,15 +78,17 @@ export function canonicalCommand(value, hostId, internal = false) {
     modelProfileId(value.modelProfileId);
     if (value.sideChat !== undefined) {
       const side = value.sideChat;
-      exactKeys(side, ['chatId','requestHash','parent','title','contextTransfer'], ['chatId','requestHash','parent','contextTransfer']);
-      exactKeys(side.parent, ['kind','id'], ['kind','id']);
+      exactKeys(side, ['chatId','requestHash','parent','title','contextTransfer'], ['chatId','requestHash','contextTransfer']);
+      if (side.parent !== undefined) {
+        exactKeys(side.parent, ['kind','id'], ['kind','id']);
+        if (side.parent.kind !== 'project' || !validId(side.parent.id)) throw failure('INVALID_REQUEST');
+      }
       exactKeys(side.contextTransfer, ['state','sourceRefs','truncated','sourceDeleted'], ['state','sourceRefs','truncated']);
-      if (!validId(side.chatId) || !/^[a-f0-9]{64}$/.test(side.requestHash) || !['main','project'].includes(side.parent.kind) ||
-          !validId(side.parent.id) || side.contextTransfer.state !== 'references_only' || side.contextTransfer.truncated !== false ||
+      if (!validId(side.chatId) || !/^[a-f0-9]{64}$/.test(side.requestHash) || side.contextTransfer.state !== 'references_only' || side.contextTransfer.truncated !== false ||
           !Array.isArray(side.contextTransfer.sourceRefs) || side.contextTransfer.sourceRefs.length > 1 ||
           side.contextTransfer.sourceDeleted !== undefined && (side.contextTransfer.sourceDeleted !== true || side.contextTransfer.sourceRefs.length) ||
           side.title !== undefined && (typeof side.title !== 'string' || !side.title.trim() || side.title.length > 256) ||
-          side.parent.kind === 'project' && value.projectId !== side.parent.id || side.parent.kind === 'main' && value.projectId !== undefined ||
+          side.parent?.id !== value.projectId ||
           value.conversationId !== undefined || value.workspaceKind !== undefined) throw failure('INVALID_REQUEST');
       for (const ref of side.contextTransfer.sourceRefs) {
         exactKeys(ref, ['chatId','eventId','kind','hostId','sessionId','seq','contentRevision'], ['chatId','eventId','kind','hostId','sessionId','seq','contentRevision']);

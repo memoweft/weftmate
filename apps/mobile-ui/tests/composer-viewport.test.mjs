@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {startMainChatCandidate} from '../../../tests/integration/main-chat-candidate.mjs';
+import {startTimelineCandidate} from '../../../tests/integration/timeline-ui-candidate.mjs';
 import {localUiSession} from '../../../tests/helpers/local-ui-session.mjs';
 import {healthPageSynthetic} from '../../../tests/helpers/health-page-synthetic.mjs';
 import {observedRoutes} from './observed-routes.mjs';
 import {withTestCleanup} from './test-cleanup.mjs';
 
 test('remote phone composer remains inside the visual viewport with folders, suggestions, connection bar and keyboard',async()=>{
-  const f=await startMainChatCandidate(10),browser=await chromium.launch({headless:true});
+  const f=await startTimelineCandidate({daily:true}),browser=await chromium.launch({headless:true});
   const out=process.env.FX21_EVIDENCE,geometry=[];
   if(out)await mkdir(out,{recursive:true});
   try {
@@ -46,7 +46,7 @@ test('remote phone composer remains inside the visual viewport with folders, sug
 });
 
 test('mobile bundle keeps the composer and bottom tabs inside safe areas and above the keyboard',async()=>{
-  const f=await startMainChatCandidate(10,{logicalMobile:true}),browser=await chromium.launch({headless:true});
+  const f=await startTimelineCandidate({daily:true,logicalMobile:true}),browser=await chromium.launch({headless:true});
   const out=process.env.FX21_EVIDENCE,geometry=[];
   try {
     const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
@@ -55,7 +55,8 @@ test('mobile bundle keeps the composer and bottom tabs inside safe areas and abo
     await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);
     const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}});assert.equal(login.status(),200);
     const identity=await login.json();
-    await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await uiCore.selectMainChat();},identity);
+    await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();},identity);
+    await page.evaluate(id=>selectSharedSession(id),f.sessionId);
     await page.locator('#draft').waitFor({state:'visible'});
     for(const size of [{width:390,height:844},{width:360,height:780}])for(const theme of ['light','dark'])for(const keyboard of [false,true]) {
       await page.setViewportSize(size);
@@ -72,8 +73,8 @@ test('mobile bundle keeps the composer and bottom tabs inside safe areas and abo
       if(out){await writeFile(resolve(out,'bundle-geometry.json'),JSON.stringify(geometry,null,2));await page.screenshot({path:resolve(out,`bundle-${size.width}-${theme}-${keyboard?'keyboard':'tabs'}.png`)});}
       assert.ok(g.send.bottom<=g.height+1,JSON.stringify(geometry.at(-1)));assert.ok(g.pageHeight<=g.layoutHeight+1);
       assert.ok(g.toast.top>=g.topbar.bottom&&g.toast.bottom<=g.composer.top,JSON.stringify(geometry.at(-1)));
-      if(!keyboard)assert.ok(g.tabs.bottom<=g.height+1&&g.tabs.height>0,JSON.stringify(geometry.at(-1)));
-      if(!keyboard){const tabs=await page.locator('#mobile-bottom-tabs [role=tab]').evaluateAll(nodes=>nodes.map(n=>({text:n.getAttribute('aria-label'),left:n.getBoundingClientRect().left,right:n.getBoundingClientRect().right,height:n.getBoundingClientRect().height,scroll:n.scrollWidth,client:n.clientWidth})));assert.deepEqual(tabs.map(t=>t.text),['聊天','动态','健康','目标','成果库']);assert.ok(tabs.every(t=>t.left>=0&&t.right<=size.width&&t.scroll<=t.client&&t.height>=44),'all five named icon tabs fit the phone and remain touch sized');assert.equal(await page.locator('.mobile-tab-label').count(),0);}
+      if(!keyboard){await page.locator('#page-back').click();const box=await page.locator('#mobile-bottom-tabs').boundingBox();assert.ok(box&&box.y+box.height<=g.height+1&&box.height>0);}
+      if(!keyboard){const tabs=await page.locator('#mobile-bottom-tabs [role=tab]').evaluateAll(nodes=>nodes.map(n=>({text:n.getAttribute('aria-label'),left:n.getBoundingClientRect().left,right:n.getBoundingClientRect().right,height:n.getBoundingClientRect().height,scroll:n.scrollWidth,client:n.clientWidth})));assert.deepEqual(tabs.map(t=>t.text),['聊天','动态','健康','目标','成果库']);assert.ok(tabs.every(t=>t.left>=0&&t.right<=size.width&&t.scroll<=t.client&&t.height>=44),'all five named icon tabs fit the phone and remain touch sized');assert.equal(await page.locator('.mobile-tab-label').count(),0);await page.evaluate(id=>selectSharedSession(id),f.sessionId);}
     }
   }finally{await browser.close();await f.close();}
 });
@@ -82,7 +83,7 @@ test('the fifth mobile tab opens health, keeps other tabs reachable and quotes w
   const health=healthPageSynthetic();let reminders=0;
   let f,browser,routes;
   await withTestCleanup(async()=>{
-    f=await startMainChatCandidate(10,{logicalMobile:true});
+    f=await startTimelineCandidate({daily:true,logicalMobile:true});
     browser=await chromium.launch({headless:true});
     const page=await browser.newPage({viewport:{width:360,height:780},isMobile:true,hasTouch:true});
     routes=observedRoutes(page);
@@ -90,11 +91,11 @@ test('the fifth mobile tab opens health, keeps other tabs reachable and quotes w
     await routes.route('**/personal/v1/**','business',async r=>{const u=new URL(r.request().url());if(/\/health\/(?:overview|calendar)$|\/health\/metrics\/|\/remind$/.test(u.pathname)){if(r.request().method()==='POST')reminders++;return r.fulfill({json:health.reply(u.href)});}const response=await r.fetch({url:f.origin+u.pathname+u.search,headers:{...r.request().headers(),origin:f.origin}});await r.fulfill({response});});
     await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);
     const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}});assert.equal(login.status(),200);
-    await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await uiCore.selectMainChat();},await login.json());
+    await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await selectMobileTab('chat');},await login.json());
     await page.getByRole('tab',{name:'健康',exact:true}).click();await page.getByRole('heading',{name:'把今天的节奏放轻松',exact:true}).waitFor();assert.equal(await page.getByRole('tab',{name:'健康',exact:true}).getAttribute('aria-selected'),'true');
     assert.equal(await page.locator('#header-title').textContent(),'健康');assert.equal(await page.locator('#outputs-button').isVisible(),false);
     await page.getByRole('button',{name:'提醒我',exact:true}).click();await page.getByRole('button',{name:'已设提醒',exact:true}).waitFor();assert.equal(reminders,1);
     await page.getByRole('button',{name:'接着问它',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#draft').value.includes('把今天的节奏放轻松'));assert.match(await page.locator('#draft').inputValue(),/^> /);
-    await page.getByRole('tab',{name:'健康',exact:true}).click();await page.getByRole('button',{name:'恢复，查看详情',exact:true}).click();await page.locator('.health-detail').waitFor();await page.getByRole('button',{name:'返回今日',exact:true}).click();await page.getByRole('tab',{name:'健康',exact:true}).focus();await page.keyboard.press('End');assert.equal(await page.getByRole('tab',{name:'成果库',exact:true}).getAttribute('aria-selected'),'true');
+    await page.locator('#page-back').click();await page.getByRole('tab',{name:'健康',exact:true}).click();await page.getByRole('button',{name:'恢复，查看详情',exact:true}).click();await page.locator('.health-detail').waitFor();await page.getByRole('button',{name:'返回今日',exact:true}).click();await page.getByRole('tab',{name:'健康',exact:true}).focus();await page.keyboard.press('End');assert.equal(await page.getByRole('tab',{name:'成果库',exact:true}).getAttribute('aria-selected'),'true');
   },[()=>routes?.close(),()=>t.diagnostic('route lifecycle='+JSON.stringify(routes?.events??[])),()=>browser?.close(),()=>f?.close()]);
 });

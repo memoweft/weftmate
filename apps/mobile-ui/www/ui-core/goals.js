@@ -45,7 +45,6 @@ globalThis.WeftUiCore.factories.goals = (core,effects,environment) => {
                     delete model.errors.offlineSources;
                 }catch(error){if(!current())return;model.errors.offlineSources='手机任务来源暂时无法读取，请刷新重试。';}
             }
-            if(core.state.mainChat?.activeSessionId&&!model.sessions.some(row=>row.sessionId===core.state.mainChat.activeSessionId))model.sessions.unshift({sessionId:core.state.mainChat.activeSessionId,title:'WeftMate 主对话',taskAvailable:true});
             model.loading=false;effects.renderGoals?.();
         })().finally(()=>{if(flight===work)flight=null;});flight=work;return work;
     }

@@ -23,7 +23,7 @@ await mkdir(out, { recursive: true });
 const report = { realElectron: true, realDsh: true, realModel: 'mimo-v2.6-flash', hidden: true,
   systemBarsVerified: false, scenarios: [], screenshots: [], requests: [] };
 const textOf = m => typeof m.content === 'string' ? m.content : (m.content ?? []).map(p => p.text ?? '').join('');
-let host, runtime, app, proxy, lock, lease, page, api, stage = 'setup', forceRelay = false;
+let host, runtime, app, proxy, lock, lease, page, api, stage = 'setup';
 const logs = [];
 const abort = new AbortController();
 const deadline = setTimeout(() => abort.abort(Error('W4 overall timeout')), 8 * 60 * 1000);
@@ -96,10 +96,6 @@ try {
   await writeFile(modelPatchPath, modelPatch.replace('id: mimo-v2.6-flash\n', 'id: mimo-v2.6-flash\n'
     + `            reasoningEfforts: ${JSON.stringify(declaration.reasoningEfforts)}\n            compat: ${JSON.stringify(declaration.compat)}\n`));
   report.reasoningDeclaration = declaration;
-  const relayState = runtime.backend.chatRelayState;
-  runtime.backend.chatRelayState = async input => { const state = await relayState(input); return forceRelay ? { ...state, pending: true } : state; };
-  const install = runtime.backend.installChatHandoff;
-  runtime.backend.installChatHandoff = async input => { const result = await install(input); forceRelay = false; return result; };
   host = await createPersonalAccessService({ root: join(root, 'account'), port: 0, backend: runtime.backend, uiHandler: servePersonalAccessUi });
   runtime.setHost(host); await runtime.start();
   // A small retained tail makes real native compaction testable without filling
@@ -143,46 +139,21 @@ try {
   await page.waitForFunction(() => w4Core.foreground() && w4Core.state.background === false);
   report.rendererVisibility = 'foreground visibility simulated; OS window remains hidden';
   const events = async id => { const page = await api(`/sessions/${id}/events?limit=200`); return [...page.events, ...(page.liveEvents ?? [])]; };
-  const command = async body => {
-    const submitted = (await api('/commands', { requestId: randomUUID(), targetDeviceId: started.hostId, ...body })).command;
-    return until(async () => { const c = (await api('/commands/' + submitted.commandId)).command;
-      if (c.state === 'rejected') throw Error(c.errorCode); if (c.state === 'accepted_by_dsh') report.lastSessionId = c.sessionId;
-      return c.state === 'accepted_by_dsh' && c; }, 'command accepted');
-  };
-  for (const scenario of (process.env.WEFTMATE_W4_SCENARIOS || '431,363').split(',')) {
+  {
+    const scenario='363';
     stage = scenario;
     console.log(`W4 ${scenario}: starting`);
     const folder = join(root, 'Synthetic' + scenario); await mkdir(folder);
     const originals = { 'note.txt': 'W4 synthetic text\n', 'data.csv': 'name,value\na,1\n', 'readme.md': '# Synthetic W4\n' };
     for (const [name, body] of Object.entries(originals)) await writeFile(join(folder, name), body);
     const project = (await api('/projects', { requestId: randomUUID(), name: '合成文件夹' + scenario, rootPath: folder, permission: 'write' })).project;
-    let before;
-    if (scenario === '431') {
-      await page.evaluate(async () => { await w4Core.refreshLogicalSessions(); await w4Core.selectMainChat(); });
-      const chatId = (await api('/chats/main')).chat.chatId;
-      const long = await command({ kind: 'chat.message', chatId, modelProfileId: 'synthetic', text: '只用纯文字，把“合成测试长回复。”连续重复500遍，不用工具，不要列任务计划，直接开始正文。\n合成背景材料：\n' + '合成记录：这些内容仅用于独立测试对话的上下文整理。\n'.repeat(60) });
-      await page.evaluate(async () => { await w4Core.refreshLogicalSessions(); await w4Core.selectMainChat(); });
-      await until(async () => (await events(long.sessionId)).some(e => e.type === 'assistant.delta' && e.data.streaming === true && e.data.text.length > 200), 'long reply streaming');
-      console.log('W4 431: live long reply observed');
-      const queued = await command({ kind: 'chat.message', chatId, text: 'G7-C3-QUEUE：排队后只回复“排队保留”。', intent: 'queue' });
-      console.log('W4 431: queued request accepted');
-      await api(`/tasks/${long.commandId}/stop`, { requestId: randomUUID() });
-      await until(async () => (await events(long.sessionId)).some(e => e.type === 'turn.ended' && e.data.reason === 'aborted'), 'long reply aborted');
-      console.log('W4 431: native aborted observed');
-      await until(async () => (await events(queued.sessionId)).some(e => e.type === 'assistant.message' && e.data.text.trim() === '排队保留'), 'queued reply');
-      console.log('W4 431: queued reply completed');
-      await until(async () => (await relayState({ sessionId: long.sessionId, ownerId: auth.account.ownerId })).safe, 'idle queue drained');
-      before = { chatId, sessionId: long.sessionId }; forceRelay = true;
-    } else { await page.evaluate(() => w4Core.startNewConversation()); }
-    const request = scenario === '431'
-      ? 'G7-W3：请帮我把一个合成文件夹里的文件按扩展名分别放入子文件夹。需要先切换到工作并由我选择文件夹，只动选定的合成目录，不处理其他位置。'
-      : '请把我接下来选择的合成文件夹中的文件，按扩展名分别放入同名子文件夹，保留文件名和内容，只动选定的目录。请直接在选定目录下创建 txt、csv、md 子文件夹，不再包一层总目录，不新增脚本或报告。';
+    await page.evaluate(() => w4Core.startNewConversation());
+    const request = '请把我接下来选择的合成文件夹中的文件，按扩展名分别放入同名子文件夹，保留文件名和内容，只动选定的目录。请直接在选定目录下创建 txt、csv、md 子文件夹，不再包一层总目录，不新增脚本或报告。';
     await page.locator('#message-text').fill(request); await page.locator('#send-message').click();
     console.log(`W4 ${scenario}: file request sent`);
     const region = page.getByRole('region', { name: '切换到工作', exact: true }); await region.waitFor();
     const identity = await page.evaluate(() => ({ sessionId: w4Core.state.selectedSessionId, chatId: w4Core.state.selectedChatId }));
     report.lastSessionId = identity.sessionId;
-    if (before) { assert.equal(identity.chatId, before.chatId); assert.notEqual(identity.sessionId, before.sessionId); }
     assert.deepEqual(await snapshot(folder), Object.fromEntries(Object.entries(originals).map(([name, body]) => [name, hash(body)])));
     await capture(scenario + '-switch-card');
     await app.evaluate(({ dialog }, folder) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [folder] }); }, folder);
@@ -207,7 +178,7 @@ try {
     const history = await events(identity.sessionId);
     assert.equal(history.filter(e => e.type === 'user.message' && e.data.text === request).length, 1);
     await capture(scenario + '-completed');
-    report.scenarios.push({ issue: scenario, passed: true, sameChat: true, sessionChanged: !!before, files: finalFiles, projectId: project.projectId,
+    report.scenarios.push({ issue: scenario, passed: true, sameChat: true, files: finalFiles, projectId: project.projectId,
       toolCalls: history.filter(e => e.type === 'step.started').map(e => e.data.toolName), turns: history.filter(e => e.type === 'turn.ended').map(e => e.data.reason) });
     console.log(`W4 ${scenario}: card, folder choice, same conversation, 3/3 files sorted`);
   }

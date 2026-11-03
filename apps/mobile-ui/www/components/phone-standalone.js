@@ -126,7 +126,7 @@
       const button = el('button', 'secondary', '重新生成'); button.type = 'button';
       button.onclick = () => void run(() => engine.regenerate(conversation.id)); content.append(button);
     }
-    if(!api.active)content.append(action('回到聊天',()=>state.logicalChats?uiCore.selectMainChat():page('home'),false));
+    if(!api.active)content.append(action('回到聊天',()=>page('home'),false));
     scrollBottom();
   }
   async function run(action) {

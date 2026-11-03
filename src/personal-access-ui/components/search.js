@@ -32,7 +32,6 @@ globalThis.WeftUiComponents.factories.search = (core,ui) => {
     ui.byId('session-rail').prepend(entry);
     // Navigation stays in the existing conversation topbar; a second header pushes the composer off screen.
     const select=core.selectSession;core.selectSession=async(...args)=>{const result=await select(...args),row=core.state.sessions.find(row=>row.sessionId===core.state.selectedSessionId);if(row)core.rememberSearch({...row,type:'chats',id:row.chatId??row.sessionId});return result;};
-    const main=core.selectMainChat;core.selectMainChat=async(...args)=>{const result=await main(...args);if(core.state.mainChat)core.rememberSearch({...core.state.mainChat,type:'chats',id:core.state.mainChat.chatId});return result;};
   },showSearch:()=>{if(window.matchMedia('(max-width:640px)').matches)ui.closeRail();view?.show();},hideSearch:()=>view?.hide(),renderSearch:()=>view?.render(),selectSearchRow:()=>view?.select(),openSearch:()=>core.openSearch(),
     canCreateSearchProject:()=>ui.canManageProjectFolders(),resetIdentityControls(...args){core.closeSearch();return reset(...args);}};
 };

@@ -2,15 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { checkMainHistoryActions, checkTimelineSourceActions, checkPhoneHistoryActions, checkPhoneHistoryPresentation } from './helpers/history-message-scenarios.mjs';
+import { checkTimelineSourceActions, checkPhoneHistoryActions, checkPhoneHistoryPresentation } from './helpers/history-message-scenarios.mjs';
 
 test('D92 historical validation scenarios run against the production message components', { timeout: 30000 }, async t => {
   const browser = await chromium.launch({ headless: true, ...(process.env.CI ? {} : { channel: 'chrome' }) });
   try {
     const cases = [
-      ['ux-4-main-chat', 'assistant', true, checkMainHistoryActions],
       ['ia-3-main-chat', 'user', true, checkTimelineSourceActions],
-      ['ia-4-main-chat', 'assistant', true, checkMainHistoryActions],
       ['ia-4-android', 'user', true, checkTimelineSourceActions],
       ['mem-7-phone-handover', 'assistant', false, checkPhoneHistoryActions],
       ['mem-7-final-ui', 'assistant', false, checkPhoneHistoryPresentation],
@@ -19,7 +17,7 @@ test('D92 historical validation scenarios run against the production message com
       const page = await browser.newPage(); page.setDefaultTimeout(1000);
       try {
         await page.setContent('<main id="chat-content"><ol id="messages"></ol><textarea id="draft"></textarea></main>');
-        const bundle = name === 'ia-4-main-chat' || name === 'ia-4-android' ? 'apps/mobile-ui/www' : 'src/personal-access-ui';
+        const bundle = name === 'ia-4-android' ? 'apps/mobile-ui/www' : 'src/personal-access-ui';
         await page.addScriptTag({ path: fileURLToPath(new URL(`../${bundle}/message-actions.js`, import.meta.url)) });
         await page.evaluate(({ role, main }) => {
           const scope = globalThis as any;
@@ -35,7 +33,7 @@ test('D92 historical validation scenarios run against the production message com
           const text=document.createElement('span');text.className='message-text';text.textContent='合成历史';
           row.append(text); document.getElementById('messages')!.append(row);
           const core = { state: { ownerId: 'synthetic', identityGeneration: 1, sessions: [] },
-            inMainChat: () => main, readMessageFeedback: () => [], messageBusy: () => false,
+            readMessageFeedback: () => [], messageBusy: () => false,
             messageSource: async () => ({ kind: main ? 'main' : 'side' }), accessApi: async () => ({ groups: [], timeZone: 'UTC' }) };
           scope.WeftMessageActions.create({ core, draft: () => document.getElementById('draft'), sessionId: () => 'synthetic', notice() {} })
             .bind(row, { seq: 7, type: `${role}.message`, data: { text: '合成历史', ...(!main ? { phoneSource: true } : {}) } });

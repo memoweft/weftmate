@@ -11,8 +11,6 @@ test('D33 clears result, handoff, side creation copies and search generations wi
   a.commands.create = { payload: { sideChat: { contextTransfer: structuredClone(transfer) } } };
   identity.segments[identity.sessionSegments['native-1']].handoff = { summary: 'private-derived' };
   identity.segments[identity.sessionSegments['native-1']].handoffSourceRefs = transfer.sourceRefs;
-  a.chatResults = { result: { sourceChatId: f.mainId, summary: 'private-derived', artifactRefs: [{ name: 'private-derived' }],
-    requiresResponse: true, resultRevision: 1 } };
   try {
     await f.timeline.ready('owner', f.mainId);
     const before = await f.query('events');
@@ -20,7 +18,6 @@ test('D33 clears result, handoff, side creation copies and search generations wi
     assert.doesNotMatch(JSON.stringify(a), /private-derived/);
     assert.equal(identity.chats[f.mainId].contentRevision, 2);
     assert.equal(Object.keys(identity.segments).length, 3);
-    assert.equal(a.chatResults.result.deleted, true);
     assert.equal(a.sessions['native-2'].sideChat.contextTransfer.sourceRefs.length, 0);
     assert.deepEqual(a.commands.create.payload.sideChat, a.sessions['native-2'].sideChat);
     await assert.rejects(f.query('changes', { cursor: before.syncCursor }), { code: 'CURSOR_RESET_REQUIRED' });

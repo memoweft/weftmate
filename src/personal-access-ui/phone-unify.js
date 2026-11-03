@@ -22,7 +22,7 @@
         let keyboardWasOpen = false;
         const press = WeftComposerPress.mount(send, () => ui.updateAvailability());
         const syncBadges = () => {
-            for (const [id,count,dot] of [['activity',core.activity?.unreadCount || 0,false],['chat',core.state.mainChat?.unread ? 1 : 0,true]]) {
+            for (const [id,count,dot] of [['activity',core.activity?.unreadCount || 0,false],['chat',core.state.sessionStatusSummary?.all?.unread ?? 0,true]]) {
                 const tab = ui.byId(`remote-tab-${id}`); if (!tab) continue;
                 let badge = tab.querySelector('.remote-tab-badge');
                 if (!count) { badge?.remove(); tab.removeAttribute('aria-description'); continue; }

@@ -60,7 +60,7 @@ try {
   checkpoint('desktop native initialization started');
   await initializeDesktopSession(desktop,f,{legacy:stage==='before',deviceName:'BL-29'});
   console.log('desktop logged in');
-  await desktop.waitForFunction(()=>globalThis.__streamCore?.state.mainChat&&!__streamCore.state.refreshing&&!__streamCore.state.sessionSelecting);
+  await desktop.waitForFunction(()=>globalThis.__streamCore?.state.modelsKnown&&!__streamCore.state.refreshing&&!__streamCore.state.sessionSelecting);
   await desktop.evaluate(id=>__streamCore.selectSession(id),f.sessionId);
   checkpoint('desktop ready / mobile launch started');
   browser=await chromium.launch({headless:true});mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});

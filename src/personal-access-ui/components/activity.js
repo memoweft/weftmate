@@ -12,7 +12,6 @@ globalThis.WeftUiComponents.factories.activity=(core,ui)=>{
     const reset=ui.resetIdentityControls;
     return {mountActivity(){
         const select=core.selectSession;core.selectSession=(...args)=>{if(!preparing)close();return select(...args);};
-        const selectMain=core.selectMainChat;core.selectMainChat=(...args)=>{if(!preparing)close();return selectMain(...args);};
         const nav=ui.fixedPageNavigation();nav.hidden=false;
         entry=ui.element('button','rail-link activity-entry');entry.type='button';entry.append(WeftIcons.create('bell',16),ui.element('span','','动态'),ui.element('span','activity-count'));entry.onclick=()=>void open();nav.append(entry);
         panel=ui.element('section','activity-surface');panel.hidden=true;panel.setAttribute('aria-label','动态');chat().after(panel);
@@ -21,9 +20,8 @@ globalThis.WeftUiComponents.factories.activity=(core,ui)=>{
         document.addEventListener('weftmate:activity',event=>void open(event.detail));
     },closeFixedPage:close,openActivity:open,renderActivity(){badge();if(opened)view?.render();},renderActivityBadge:badge,activityVisible:()=>opened,
     async prepareActivityApproval(target){preparing=true;try{await core.selectSession(target.sessionId);}finally{preparing=false;}},
-    async openActivitySource(target,kind){close();if(core.state.currentView!=='assistant')await core.enterAssistant();if(target.chatId&&core.readChat){const chat=(await core.readChat(target.chatId)).chat;if(chat.kind==='main')await core.selectMainChat(target.eventId);else await core.selectSession(target.sessionId??chat.activeSessionId);}else await core.selectSession(target.sessionId);
-        if(!core.inMainChat?.()&&Number.isSafeInteger(target.seq)){while(core.state.hasOlder&&!core.state.historyEvents.has(target.seq))await core.loadOlderHistory();const row=ui.byId('transcript').querySelector(`[data-detail-seq="${target.seq}"], [data-seq="${target.seq}"]`);if(row){row.tabIndex=-1;row.scrollIntoView({block:'center'});row.focus();}}
-        if(target.eventId&&core.inMainChat?.())ui.focusMainEvent?.(target.eventId);
+    async openActivitySource(target,kind){close();if(core.state.currentView!=='assistant')await core.enterAssistant();if(target.chatId&&core.readChat){const chat=(await core.readChat(target.chatId)).chat;await core.selectSession(target.sessionId??chat.activeSessionId);}else await core.selectSession(target.sessionId);
+        if(Number.isSafeInteger(target.seq)){while(core.state.hasOlder&&!core.state.historyEvents.has(target.seq))await core.loadOlderHistory();const row=ui.byId('transcript').querySelector(`[data-detail-seq="${target.seq}"], [data-seq="${target.seq}"]`);if(row){row.tabIndex=-1;row.scrollIntoView({block:'center'});row.focus();}}
         if(Number.isSafeInteger(target.seq)){const step=ui.byId('transcript').querySelector(`[data-detail-seq="${target.seq}"]`)??(target.stepId?[...ui.byId('transcript').querySelectorAll(`[data-step="${CSS.escape(target.stepId)}"]`)].find(node=>Number(node.dataset.detailSeq)>=target.seq):null);if(step){for(let node=step;node;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;step.scrollIntoView({block:'center'});step.querySelector('summary')?.focus();}}if(kind==='answer_question')ui.byId('question-bar')?.querySelector('input,button')?.focus();},
     openActivityMemory:target=>{close();if(target?.from){ui.byId('memory-kind').value='all';ui.byId('memory-query').value='';ui.syncMemoryFilters?.();}return core.openMemory(target);},
     openActivityMemoryItem:async(target,mode)=>{await core.openDigestMemoryDetail(target,mode);if(mode==='correct'&&core.memory.selected)ui.byId('memory-correct-text').focus();},

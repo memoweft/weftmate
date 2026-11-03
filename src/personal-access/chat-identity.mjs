@@ -8,10 +8,30 @@ import { APPROVAL_MODES } from '../plugins/personal-approval-policy.mjs';
 const sessionRevision = session => digest(JSON.stringify(session));
 const makeId = prefix => `${prefix}-${randomUUID()}`;
 
+export function retireMainChatResults(account, now) {
+  const identity = account.chatIdentity;
+  if (identity?.version !== 1) return false;
+  for (const session of Object.values(account.sessions)) {
+    if (session.sideChat?.parent?.kind === 'main') delete session.sideChat.parent;
+  }
+  for (const command of Object.values(account.commands)) {
+    if (command.payload?.sideChat?.parent?.kind !== 'main') continue;
+    if (digest(JSON.stringify(command.payload)) !== command.payloadHash) throw failure('STORE_CORRUPT', 500);
+    delete command.payload.sideChat.parent;
+    command.payloadHash = digest(JSON.stringify(command.payload));
+  }
+  delete account.chatResults;
+  delete account.chatResultCounter;
+  delete account.sideOperations;
+  identity.version = 2;
+  reconcileChatIdentity(account, account.hostId, now);
+  return true;
+}
+
 export function reconcileChatIdentity(account, hostId, now) {
   if (!account.chatIdentity) {
     const mainChatId = makeId('chat');
-    account.chatIdentity = { version: 1, mainChatId, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    account.chatIdentity = { version: 2, mainChatId, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       chats: { [mainChatId]: { chatId: mainChatId, kind: 'main', revision: 1, contentRevision: 1,
         createdAt: now, unread: false, activeSegmentId: null } }, segments: {}, sessionSegments: {} };
   }
@@ -42,18 +62,14 @@ export function reconcileChatIdentity(account, hostId, now) {
     if (chat.kind === 'side' && !remaining.length) delete identity.chats[chat.chatId];
     else if (chat.activeSegmentId === segmentId) { chat.activeSegmentId = remaining.at(-1)?.segmentId ?? null; chat.revision++; }
   }
-  for (const result of Object.values(account.chatResults ?? {})) {
-    if (identity.chats[result.sourceChatId] || result.deleted) continue;
-    result.deleted = true; result.summary = ''; result.artifactRefs = []; result.requiresResponse = false;
-    result.resultRevision++; result.notificationRevision = result.resultRevision;
-  }
+
 }
 
 export function validateChatIdentity(account) {
   const identity = account.chatIdentity;
   if (identity === undefined) return; // Old stores are read before migration.
   const corrupt = () => { throw failure('STORE_CORRUPT', 500); };
-  if (!plainObject(identity) || identity.version !== 1 || !validId(identity.mainChatId) ||
+  if (!plainObject(identity) || identity.version !== 2 || !validId(identity.mainChatId) ||
       !plainObject(identity.chats) || !plainObject(identity.segments) || !plainObject(identity.sessionSegments)) corrupt();
   try { new Intl.DateTimeFormat('en', { timeZone: identity.timeZone }).format(); } catch { corrupt(); }
   if (typeof identity.timeZone !== 'string' || identity.chats[identity.mainChatId]?.kind !== 'main' ||
@@ -95,26 +111,7 @@ export function validateChatIdentity(account) {
           Object.values(account.commands).some(command => command.requestId === requestId)) corrupt();
     }
   }
-  if (account.chatResults !== undefined) {
-    if (!plainObject(account.chatResults)) corrupt();
-    for (const [id, result] of Object.entries(account.chatResults)) {
-      if (!validId(id) || !plainObject(result) || result.resultId !== id || !validId(result.sourceChatId) ||
-          !validId(result.sourceEventId) || !validId(result.mainEventId) || !validId(result.activityId) ||
-          !Number.isSafeInteger(result.resultRevision) || result.resultRevision < 1 ||
-          !['completed','failed','stopped'].includes(result.state) || typeof result.summary !== 'string' ||
-          Array.from(result.summary).length > 160 || !Array.isArray(result.artifactRefs) ||
-          typeof result.orderKey !== 'string' || !plainObject(result.sourceRef) || result.sourceRef.resultId !== id ||
-          result.deleted && (result.summary || result.artifactRefs.length || result.requiresResponse)) corrupt();
-    }
-  }
-  if (account.sideOperations !== undefined) {
-    if (!plainObject(account.sideOperations)) corrupt();
-    for (const [requestId, operation] of Object.entries(account.sideOperations)) {
-      if (!REQUEST_ID.test(requestId) || !/^[a-f0-9]{64}$/.test(operation?.fingerprint ?? '') ||
-          !account.chatResults?.[operation.resultId] || account.chatOperations?.[requestId] ||
-          Object.values(account.commands).some(command => command.requestId === requestId)) corrupt();
-    }
-  }
+
 }
 
 export function chatForSession(account, sessionId) {
