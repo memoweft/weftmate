@@ -186,3 +186,16 @@ test('two open conversations keep separate slots and release only to their origi
  c.state.selectedSessionId='session-test';c.composerState('');await new Promise(done=>setImmediate(done));
  assert.deepEqual(sent,[['second','第二段',b.requestId],['session-test','第一段',a.requestId]]);
 });
+
+test('a click during selection keeps the visible draft with the conversation it came from',async()=>{
+ const {core:c}=fixture(),sent:any[]=[];
+ c.state.sessions.push({sessionId:'second',sendAvailable:true});
+ let finish;const gate=new Promise(done=>finish=done);
+ c.selectNativeSession=async id=>{c.state.selectedSessionId=id;if(id==='second')await gate;};
+ c.submitCommand=async(_kind,fields,_session,id)=>{sent.push([fields.sessionId,fields.text,id]);};
+ const changing=c.selectSession('second');assert.equal(c.state.sessionSelecting,true);
+ const first=await c.sendDraft('先前对话输入的文字');assert.equal(first.waiting,true);
+ finish();await changing;c.composerState('');await new Promise(done=>setImmediate(done));assert.equal(sent.length,0);
+ await c.selectSession('session-test');c.composerState('');await new Promise(done=>setImmediate(done));
+ assert.deepEqual(sent,[['session-test','先前对话输入的文字',first.requestId]]);
+});
