@@ -28,8 +28,7 @@ try{
   const times=await Promise.all([desktop.waitForFunction(title=>document.querySelector('#session-list')?.textContent.includes(title)||document.querySelector('#session-drawer')?.textContent.includes(title)||[...document.querySelectorAll('[data-session-id]')].some(n=>n.textContent.includes(title)),title,{timeout:10000}).then(()=>Date.now()-at).catch(e=>e.message),mobile.waitForFunction(title=>document.querySelector('#drawer').textContent.includes(title),title,{timeout:10000}).then(()=>Date.now()-at).catch(e=>e.message)]);
   report.rows.push({kind:'rename',delayMs:ms,desktop:times[0],mobile:times[1]});
   checkpoint(`rename ${ms}ms`);
-  // A phone's new-message timing was measured on the main chat; on ordinary conversations it is slower (phone batch).
-  for(const [surface,p]of [['desktop',desktop]]){
+  for(const [surface,p]of [['desktop',desktop],['mobile',mobile]]){
    await p.evaluate(()=>{Object.defineProperty(document,'visibilityState',{configurable:true,get:()=> 'hidden'});document.dispatchEvent(new Event('visibilitychange'));});
    await send('hidden message '+surface+ms);f.progress.text('fresh response '+surface+ms);f.progress.finish();await pause(150);const at=Date.now();await p.evaluate(()=>{delete document.visibilityState;document.dispatchEvent(new Event('visibilitychange'));});
    let error;try{await p.getByText('fresh response '+surface+ms,{exact:false}).last().waitFor({state:'visible',timeout:10000});}catch(e){error=e.message;}

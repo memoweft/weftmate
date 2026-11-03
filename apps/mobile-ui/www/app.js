@@ -85,7 +85,7 @@ const mobileEffects = {
   renderConversationTasks: () => renderConversationTasks(),
   renderConversationApprovals: () => renderConversationApprovals(),
   renderConversationQuestions: () => renderConversationQuestions(),
-  scheduleSharedPoll: () => scheduleSharedPoll(), scheduleHandoffPoll: id => scheduleHandoffPoll(id),
+  scheduleSharedPoll: result => scheduleSharedPoll(result), scheduleHandoffPoll: id => scheduleHandoffPoll(id),
   renderMemoryList: (...args) => renderMemoryList(...args), renderMemoryDetail: (...args) => renderMemoryDetail(...args),
   clearHistoryView: () => {}, renderTurnStatus: () => {}, renderOlderControl: () => {},
   beginOlderHistory: () => {}, restoreOlderHistoryPosition: () => {}, renderSelectedPhoneConversation: () => {},

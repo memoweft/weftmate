@@ -103,7 +103,11 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         core.state.sessions = (sessions.sessions || []).map(row => ({ ...row, ...bySession.get(row.sessionId) }));
         if (selected && !core.state.sessions.some(row => row.sessionId === selected.sessionId)) core.state.sessions.push(selected);
         core.state.sessionGroups = sessions.groups || [];
-        await core.refreshSessionProjects(); effects.renderSessions(); effects.paintSelectedSession(core.state.selectedSessionId); notify();
+        await core.refreshSessionProjects(); effects.renderSessions();
+        // A sidebar refresh updates the current row without restarting the phone's selected conversation.
+        if (environment.mobileState) effects.renderSharedConversation();
+        else effects.paintSelectedSession(core.state.selectedSessionId);
+        notify();
     }
     async function pageSessions(older = true) {
         core.state.sessionListGeneration = (core.state.sessionListGeneration || 0) + 1;
