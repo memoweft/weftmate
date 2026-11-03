@@ -247,9 +247,9 @@ describe('weftmate web profile 组合基线（R2-02 安全基线 + G-01 官方�
     // R8：凭据不再进 child env；开启安全 handler 时是专用 Node IPC fd（不是 localhost）。
     assert.match(runtime, /credentialRequestHandler\?: WeftMateCredentialRequestHandler/)
     assert.match(runtime, /stdio: this\.opts\.credentialRequestHandler === undefined \? \['ignore', 'pipe', 'pipe'\] : \['ignore', 'pipe', 'pipe', 'ipc'\]/)
-    assert.match(runtime, /PROFILE_PATCH_TEMPLATE_R8/)
     const templateStart = runtime.indexOf('export const PROFILE_PATCH_TEMPLATE =')
-    const templateEnd = runtime.indexOf('/** R3 旧补丁层模板', templateStart)
+    const templateEnd = runtime.indexOf('const OLD_PROFILE_PATCH_SHA256', templateStart)
+    assert.ok(templateStart > 0 && templateEnd > templateStart)
     assert.doesNotMatch(runtime.slice(templateStart, templateEnd), /weftmate-credentials\.mjs/)
     // R3 真机修复：目录选择器钉 browse（auto 的 win32 native dialog worker 在 Electron 下不可用）。
     assert.match(runtime, /- id: directory-picker\s*\n\s*disabled: true/)

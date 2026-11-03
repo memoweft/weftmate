@@ -55,84 +55,9 @@ export async function writeContextAwareMinimalPreset(shippedRoot: string, target
   }
 }
 
-/** R1 旧补丁层模板（只有注释 + 空列表 `[]`）；仅用于识别并升级 owner 未手改的旧 profile。 */
-export const PROFILE_PATCH_TEMPLATE_LEGACY = `# WeftMate 补丁层（R1）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
-# R3 起在此挂 weftmate 自有宿主/客户端插件行；当前为官方 web 全集基线，无覆盖。
-[]
-`
-
-/** R7 补丁层：仅用于识别并升级尚未手改的 WeftMate 自生成模板。 */
-export const PROFILE_PATCH_TEMPLATE_R7 = `# WeftMate 补丁层（R7）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
-# 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行 + 记忆桥宿主行）。
-- insert:
-    - id: weftmate-host
-      name: ./plugins/weftmate-host.mjs
-    - id: weftmate-memory
-      name: ./plugins/weftmate-memory.mjs
-    - id: '@weftmate/client'
-      name: '@weftmate/client'
-# 目录选择器钉 browse（官方 overlay 语义）：auto 行在 Windows/Electron 下解析到 native，
-# 其 win32 folder dialog worker 在运行时子进程环境下不可用（真机报「win32 folder dialog
-# worker exited before reporting a result」）。disable auto + 插 browse 宿主行与客户端 UI 行。
-- id: directory-picker
-  disabled: true
-- insert:
-    - id: directory-picker-browse
-      name: '@deepseek-ai/dsh-host-directory-picker-browse'
-    - id: ui-directory-picker-browse
-      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'
-`
-
-/** R8 generated template retained only so exact old generated profiles upgrade. */
-export const PROFILE_PATCH_TEMPLATE_R8 = `# WeftMate 补丁层（R8）：官方 DSH 全功能 + WeftMate 安全凭据宿主。
-- insert:
-    - id: weftmate-host
-      name: ./plugins/weftmate-host.mjs
-    - id: weftmate-memory
-      name: ./plugins/weftmate-memory.mjs
-    - id: weftmate-credentials
-      name: ./plugins/weftmate-credentials.mjs
-    - id: '@weftmate/client'
-      name: '@weftmate/client'
-# 只允许一个 credentials provider。官方文件 provider 会落 DSH_HOME/.credentials.yaml，
-# 因而在 WeftMate profile 中明确关闭；上面的 provider 通过 Node child IPC 走 Electron safeStorage。
-- id: credentials
-  disabled: true
-- id: directory-picker
-  disabled: true
-- insert:
-    - id: directory-picker-browse
-      name: '@deepseek-ai/dsh-host-directory-picker-browse'
-    - id: ui-directory-picker-browse
-      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'
-`
-
-/**
- * R9 generated template intentionally contains no credential provider. The
- * host-owned final `--patch` inserts the sole safe provider after every
- * preserved/owner profile patch, so an owner patch cannot omit or replace it.
- */
-export const PROFILE_PATCH_TEMPLATE_R9 = `# WeftMate 补丁层（R9）：官方 DSH 功能与最小桌面扩展。
-- insert:
-    - id: weftmate-host
-      name: ./plugins/weftmate-host.mjs
-    - id: weftmate-memory
-      name: ./plugins/weftmate-memory.mjs
-    - id: '@weftmate/client'
-      name: '@weftmate/client'
-# Credential providers are deliberately absent here. The final host security
-# overlay is the only authority for safeStorage credential IPC.
-- id: directory-picker
-  disabled: true
-- insert:
-    - id: directory-picker-browse
-      name: '@deepseek-ai/dsh-host-directory-picker-browse'
-    - id: ui-directory-picker-browse
-      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'
-`
-
-/** R10 adds one independent official host tool without changing the client graph/details slot. */
-export const PROFILE_PATCH_TEMPLATE_R10 = `# WeftMate 补丁层（R10）：官方 DSH 功能、最小桌面扩展与 AI-Game 工具接缝。
+/** 现行补丁层模板。R1–R18 旧模板只留内容指纹：补丁文件等于其中之一说明 owner 没手改，
+ * 升级为现行模板；旧模板原文是测试夹具 tests/fixtures/profile-patch/。 */
+export const PROFILE_PATCH_TEMPLATE = `# WeftMate 补丁层（R14）：官方 DSH 功能、最小桌面扩展与 AI-Game 工具接缝。
 - insert:
     - id: weftmate-host
       name: ./plugins/weftmate-host.mjs
@@ -140,6 +65,24 @@ export const PROFILE_PATCH_TEMPLATE_R10 = `# WeftMate 补丁层（R10）：官�
       name: ./plugins/weftmate-memory.mjs
     - id: weftmate-aigame-host
       name: ./plugins/weftmate-aigame-host.mjs
+    - id: weftmate-personal-schedules
+      name: ./plugins/weftmate-personal-schedules.mjs
+    - id: weftmate-personal-conversation-context
+      name: ./plugins/weftmate-personal-conversation-context.mjs
+    - id: weftmate-personal-task-control
+      name: ./plugins/weftmate-personal-task-control.mjs
+    - id: weftmate-personal-tool-loop
+      name: ./plugins/weftmate-personal-tool-loop.mjs
+    - id: weftmate-personal-reply-content
+      name: ./plugins/weftmate-personal-reply-content.mjs
+    - id: weftmate-personal-memory
+      name: ./plugins/weftmate-personal-memory.mjs
+    - id: weftmate-personal-desktop
+      name: ./plugins/weftmate-personal-desktop.mjs
+    - id: weftmate-weftmod
+      name: ./plugins/weftmate-weftmod.mjs
+    - id: weftmate-mod-projects
+      name: ./plugins/weftmate-mod-projects.mjs
     - id: '@weftmate/client'
       name: '@weftmate/client'
 # Credential providers are deliberately absent here. The final host security
@@ -151,81 +94,29 @@ export const PROFILE_PATCH_TEMPLATE_R10 = `# WeftMate 补丁层（R10）：官�
       name: '@deepseek-ai/dsh-host-directory-picker-browse'
     - id: ui-directory-picker-browse
       name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'
-`
 
-/** R3 旧补丁层模板（两行 + 目录选择器覆盖，无记忆行）；识别为「未手改旧模板」自动升级。 */
-export const PROFILE_PATCH_TEMPLATE_R11 = PROFILE_PATCH_TEMPLATE_R10.replace('（R10）', '（R11）')
-  .replace("    - id: '@weftmate/client'", "    - id: weftmate-weftmod\n      name: ./plugins/weftmate-weftmod.mjs\n    - id: weftmate-mod-projects\n      name: ./plugins/weftmate-mod-projects.mjs\n    - id: '@weftmate/client'")
-
-/** R12 attempted to add a profile-local root. The official CLI replaces
- * configured roots with its shipped root during final composition, so files in
- * that path never reached the live roster. Retained solely for safe upgrade. */
-export const PROFILE_PATCH_TEMPLATE_R12 = `${PROFILE_PATCH_TEMPLATE_R11}
-# A deployment-owned preset root. Its mod-maintainer composition is written
-# with the profile assets; user preset authoring remains under DSH.
-- id: agent-presets
-  config:
-    default: standard
-    roots:
-      - path: !!js dshHomePath('profiles/weftmate/agent-presets')
-        trust: system
-`
-
-/** Personal remote execution tool is global, but guarded and visible only in its restricted preset. */
-export const PROFILE_PATCH_TEMPLATE_R13 = PROFILE_PATCH_TEMPLATE_R11.replace('（R11）', '（R13）')
-  .replace('    - id: weftmate-weftmod', "    - id: weftmate-personal-desktop\n      name: ./plugins/weftmate-personal-desktop.mjs\n    - id: weftmate-weftmod")
-
-/** R14 adds only the account-scoped memory IPC plugin; the old global bridge stays disabled. */
-export const PROFILE_PATCH_TEMPLATE_R14 = PROFILE_PATCH_TEMPLATE_R13.replace('（R13）', '（R14）')
-  .replace('    - id: weftmate-personal-desktop', "    - id: weftmate-personal-memory\n      name: ./plugins/weftmate-personal-memory.mjs\n    - id: weftmate-personal-desktop")
-
-/** The official profile boot always restores its shipped preset root and then
- * appends `$DSH_HOME/.agent-presets` when `includeUserRoot` is enabled. The
- * deployment-owned Mod composition is therefore written there, using the
- * official discovery mechanism instead of a profile-only root that the final
- * CLI roster discards. */
-export const PROFILE_PATCH_TEMPLATE_R15 = PROFILE_PATCH_TEMPLATE_R14
-  .replace('    - id: weftmate-personal-memory', "    - id: weftmate-personal-task-control\n      name: ./plugins/weftmate-personal-task-control.mjs\n    - id: weftmate-personal-memory")
-export const PROFILE_PATCH_TEMPLATE_R16 = PROFILE_PATCH_TEMPLATE_R15
-  .replace('    - id: weftmate-personal-task-control', "    - id: weftmate-personal-schedules\n      name: ./plugins/weftmate-personal-schedules.mjs\n    - id: weftmate-personal-conversation-context\n      name: ./plugins/weftmate-personal-conversation-context.mjs\n    - id: weftmate-personal-task-control")
-export const PROFILE_PATCH_TEMPLATE_R17 = PROFILE_PATCH_TEMPLATE_R16
-  .replace('    - id: weftmate-personal-memory', "    - id: weftmate-personal-tool-loop\n      name: ./plugins/weftmate-personal-tool-loop.mjs\n    - id: weftmate-personal-memory")
-export const PROFILE_PATCH_TEMPLATE_R18 = `${PROFILE_PATCH_TEMPLATE_R17}
 # Personal tool-loop reuses the official detector with both arguments and results.
 - id: repeat-tool-reminder
   disabled: true
 `
-export const PROFILE_PATCH_TEMPLATE = PROFILE_PATCH_TEMPLATE_R18
-  .replace('    - id: weftmate-personal-memory', "    - id: weftmate-personal-reply-content\n      name: ./plugins/weftmate-personal-reply-content.mjs\n    - id: weftmate-personal-memory")
 
-export const PROFILE_PATCH_TEMPLATE_R3_PICKER = `# WeftMate 补丁层（R3）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
-# 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行）。
-- insert:
-    - id: weftmate-host
-      name: ./plugins/weftmate-host.mjs
-    - id: '@weftmate/client'
-      name: '@weftmate/client'
-# 目录选择器钉 browse（官方 overlay 语义）：auto 行在 Windows/Electron 下解析到 native，
-# 其 win32 folder dialog worker 在运行时子进程环境下不可用（真机报「win32 folder dialog
-# worker exited before reporting a result」）。disable auto + 插 browse 宿主行与客户端 UI 行。
-- id: directory-picker
-  disabled: true
-- insert:
-    - id: directory-picker-browse
-      name: '@deepseek-ai/dsh-host-directory-picker-browse'
-    - id: ui-directory-picker-browse
-      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'
-`
-
-/** R3 旧补丁层模板（挂 weftmate 两行，无目录选择器覆盖）；识别为「未手改旧模板」自动升级。 */
-export const PROFILE_PATCH_TEMPLATE_R3 = `# WeftMate 补丁层（R3）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
-# 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行）。
-- insert:
-    - id: weftmate-host
-      name: ./plugins/weftmate-host.mjs
-    - id: '@weftmate/client'
-      name: '@weftmate/client'
-`
+const OLD_PROFILE_PATCH_SHA256 = new Set([
+  'b41627945187aa2c1646364f08903c05b0640150494d486c3ab82f3847e3d252', // LEGACY
+  '582acb40d8c9969a1a473fa46c3de47115c785fe89f1551dcf2097c81f15664b', // R3
+  '4f2a5c449d588237b10cd3a5b1330b637d42fd3f8d06bbede6828c2e228c6ee2', // R3_PICKER
+  'b72466eeff3f09ef5b783e4c8a5a1ee4d07332792118d64c7e72a76876c30d48', // R7
+  'f2ffbd36868368b78a721aa02c57a6cb9b0e90179e27dde63118eba25453ab3d', // R8
+  '4c03a4740c93314e97a60b188eda83d2063f7ad75c470cf2cbadfce51f956a76', // R9
+  'e3d44b2abbdc4420231f14b895428207cacdec8dcef9879c8e9e2ff4a17b1cb7', // R10
+  'd1b6ff698c6e4c746aeba6e8eb9953dedacde9c3f4d04455f887e047544ec505', // R11
+  'eea62beecc71274e9ef558bc5f11c8642e9c18bc7067f665b9e33a37959ce432', // R12
+  '1c059ce06e435a1c0e634049a345ff8eee6ea73eab96de20252a2f2ddbc00c22', // R13
+  '6fe218f96c9cc6cb1b3e86d31bbff4b0dbf7ff3d7593294c0aad147198c4ad6e', // R14
+  '10d64743a1c376f9b00114c0bce0be4777d47db8ff6feeba6c587b5039867330', // R15
+  'c2abf018c8e0c9ca12780820e952a41db5c627fad8c55e7e45b48e73f35bcccf', // R16
+  'f2b37b5d54ef90c7dfb4ddfbc14e2184aa55431b3a9f7abfd33a6c118dadccd3', // R17
+  '4e9bb14479d94169e935f90f5f1de48553080ee94c29a7ff1d2112dc2f593b43', // R18
+])
 
 /** 插件资产源目录（相对本文件 src/，运行时用 import.meta.url 定位——dev/vendor/测试三形态同源）。 */
 const here = dirname(fileURLToPath(import.meta.url))
@@ -357,9 +248,7 @@ async function writeProfilePatch(patchPath: string): Promise<boolean> {
     return true
   }
   if (existing === PROFILE_PATCH_TEMPLATE) return false // 已是新模板
-  if (existing === PROFILE_PATCH_TEMPLATE_R18 || existing === PROFILE_PATCH_TEMPLATE_R17 || existing === PROFILE_PATCH_TEMPLATE_R16 || existing === PROFILE_PATCH_TEMPLATE_LEGACY || existing === PROFILE_PATCH_TEMPLATE_R3
-    || existing === PROFILE_PATCH_TEMPLATE_R3_PICKER || existing === PROFILE_PATCH_TEMPLATE_R7
-    || existing === PROFILE_PATCH_TEMPLATE_R8 || existing === PROFILE_PATCH_TEMPLATE_R9 || existing === PROFILE_PATCH_TEMPLATE_R10 || existing === PROFILE_PATCH_TEMPLATE_R11 || existing === PROFILE_PATCH_TEMPLATE_R12 || existing === PROFILE_PATCH_TEMPLATE_R13 || existing === PROFILE_PATCH_TEMPLATE_R14 || existing === PROFILE_PATCH_TEMPLATE_R15) {
+  if (OLD_PROFILE_PATCH_SHA256.has(createHash('sha256').update(existing).digest('hex'))) {
     await writeFile(patchPath, PROFILE_PATCH_TEMPLATE, 'utf8')
     return true // 已知旧模板升级
   }

@@ -1,0 +1,3 @@
+# WeftMate 补丁层（R1）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
+# R3 起在此挂 weftmate 自有宿主/客户端插件行；当前为官方 web 全集基线，无覆盖。
+[]

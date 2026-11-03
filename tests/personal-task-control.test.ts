@@ -33,7 +33,6 @@ test('task supplement, stop intent and observed resume keep one root across rest
   let appCalls = 0
   let events: object[] = []
   let running = false
-  let racingPreflights = 0
   let failNextSend = false
   let unblockRace: (() => void) | null = null
   let sawRace: (() => void) | null = null
@@ -42,12 +41,11 @@ test('task supplement, stop intent and observed resume keep one root across rest
   const backend = {
     getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready' }),
     listModels: async () => [{ id: 'local', name: 'Local', model: 'synthetic', configured: true }],
-    preflight: async ({ text }: { text?: string }) => {
-      if (text === 'racing' && ++racingPreflights === 2) { sawRace?.(); await raceGate }
-      return { ok: true }
-    },
+    preflight: async () => ({ ok: true }),
     createSession: async ({ sessionId }: { sessionId: string }) => { sessions.add(sessionId); return { sessionId } },
     sendMessage: async ({ text }: { text: string }) => {
+      // A held send keeps the supplement queued behind it in the same conversation.
+      if (text === 'hold') { sawRace?.(); await raceGate; return { accepted: true, receiptId: 'receipt-hold' } }
       sends.push(text)
       if (failNextSend) { failNextSend = false; return { accepted: false } }
       return { accepted: true, receiptId: `receipt-${sends.length}` }
@@ -158,15 +156,20 @@ test('task supplement, stop intent and observed resume keep one root across rest
       { requestId: 'resume-once', text: 'changed' }, auth)).status, 409)
     assert.equal(sends.length, 3)
     running = true
+    const hold = await request(origin, 'POST', '/personal/v1/commands', { requestId: 'hold-message',
+      kind: 'session.message', targetDeviceId: hostId, sessionId, text: 'hold' }, auth)
+    assert.equal(hold.status, 202)
+    await raceStarted
     const racing = await request(origin, 'POST', `${route}/supplements`,
       { requestId: 'racing-supplement', text: 'racing' }, auth)
     assert.equal(racing.status, 202)
-    await raceStarted
     const stopAgain = await request(origin, 'POST', `${route}/stop`, { requestId: 'stop-again' }, auth)
     assert.equal(stopAgain.status, 202)
     assert.equal(stopAgain.body.task.control.canResume, false)
     unblockRace?.()
     assert.equal((await settled(origin, auth, racing.body.command.commandId)).state, 'rejected')
+    assert.equal((await settled(origin, auth, hold.body.command.commandId)).receiptId, 'receipt-hold')
+    assert.equal(sends.includes('racing'), false, 'a supplement stopped while queued is never sent')
     running = false
     assert.equal((await request(origin, 'GET', route, undefined, auth)).body.control.canResume, false)
     events = [

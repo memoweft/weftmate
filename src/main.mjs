@@ -26,7 +26,6 @@ import { repairWindowsLoginItem } from './desktop-autostart.mjs';
 import { createHostDiagnostics } from './host-diagnostics.mjs';
 import { createSystemStatusManager } from './system-status-runtime.mjs';
 import { createHostLog, redactSecretText, diagnosticPlatform } from './host-log.mjs';
-import { readLocalServiceKey } from './local-service-key.mjs';
 import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady, createBackgroundRouteRecorder } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
 import { app, BrowserWindow, WebContentsView, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, net, crashReporter, powerMonitor } from 'electron';
@@ -36,9 +35,7 @@ import packageInfo from '../package.json' with { type: 'json' };
 import { createBackupManager } from './personal-backup/index.mjs';
 import { windowIcon, trayIcon } from './app-icons.mjs';
 import { normalizeApiBaseUrl } from './stage2-config.ts';
-import { switchActiveModel } from './model-switch-transaction.ts';
 import { discoverOpenAICompatibleModels, verifyOpenAICompatibleModel } from './openai-compatible-client.ts';
-import { resolveModelDiscoveryRequest } from './model-discovery-policy.ts';
 import { resolveModelSaveCredential } from './model-save-policy.ts';
 import { modelCapacityFor, routeForProfile, writeModelRoutesPatch } from './harness-model-routes.ts';
 import { modelReasoning, prepareOfficialModelReasoning } from './model-reasoning.mjs';
@@ -431,8 +428,6 @@ let runtimeOrigin = null; // 当前共享官方 DSH Web 的精确 loopback origi
 let hostLifecycleState = 'starting';
 let writeHostStateForLifecycle = null;
 let trustedRuntimeOrigin = null; // 仅当前 origin + 当前 main frame 才可拥有壳 IPC。
-let stageOneEventsAbort = null;
-const activeStageOneTurns = new Set();
 let ensureSharedRuntime = null;
 let saveModelRoute = null;
 let configureLocalModel = null;
@@ -449,18 +444,6 @@ let exclusiveMainQueue = null;
 // scan is a safety boundary: until it has completed, profile mutation must not
 // be allowed to orphan a session merely because the gateway was unavailable.
 let sessionReferenceScan = { state: 'pending', error: null };
-
-function stageOneFailure(error) {
-  if (['SYSTEM_QUERY_TIMEOUT', 'SYSTEM_QUERY_FAILED', 'CREDENTIAL_STORAGE_NOT_READY'].includes(error?.code)) return { ok: false, error: error.message };
-  if (error?.code === 'approval-not-pending') {
-    return { ok: false, error: '该工具许可已经失效，请重新发起这项操作。' };
-  }
-  if (error?.code === 'session-model-ownership-unknown') {
-    return { ok: false, error: error.message };
-  }
-  const name = error?.name === 'AbortError' ? '连接超时' : '连接或验证失败';
-  return { ok: false, error: `${name}。请检查 API 地址、API Key 和模型后重试。` };
-}
 
 /** Keep unrelated settings writes from being lost to a failed raw-byte rollback. */
 function enqueueSettingsFileWrite(label, work) {
@@ -506,26 +489,8 @@ function publicModelView() {
   return { profiles, activeId: view.activeId, configured: !!active?.hasKey, active };
 }
 
-async function discoverOpenAICompatible({ baseUrl, apiKey }) {
-  return discoverOpenAICompatibleModels({ baseUrl, apiKey });
-}
-
 async function validateStageOneModel({ baseUrl, apiKey, model }) {
   return verifyOpenAICompatibleModel({ baseUrl, apiKey, model });
-}
-
-/**
- * 本机测试便利入口。密钥只经子进程 stdout 管道进入当前主进程栈，
- * 随即完成真实验证并交给 config-store 的 safeStorage；绝不进入 renderer、命令行、
- * 普通配置、日志或错误对象。调用方不得保留返回值。
- */
-async function readCurrentLocalServiceKey() {
-  return readLocalServiceKey({ onFailure: error => logCrash('local-service-key', error) });
-}
-
-async function activateStageOneConfig(clean) {
-  if (!saveModelRoute) throw new Error('模型路由尚未完成安全初始化');
-  return saveModelRoute({ ...clean, provider: 'openai-compatible' });
 }
 
 async function stageOneGateway(path, init = {}) {
@@ -542,20 +507,6 @@ async function stageOneGateway(path, init = {}) {
     throw error;
   }
   return body;
-}
-
-function stopStageOneEvents() { stageOneEventsAbort?.abort(); stageOneEventsAbort = null; }
-function startStageOneEvents(sessionId) {
-  stopStageOneEvents(); const controller = new AbortController(); stageOneEventsAbort = controller;
-  void (async () => { try {
-    if (!runtimeOrigin) throw new Error('session runtime unavailable');
-    const response = await fetch(new URL(`/weftmate/api/v1/sessions/${encodeURIComponent(sessionId)}/events`, runtimeOrigin), { signal: controller.signal });
-    if (!response.ok || !response.body) throw new Error('event stream unavailable');
-    const reader = response.body.getReader(); let pending = '';
-    while (!controller.signal.aborted) { const next = await reader.read(); if (next.done) break; pending += new TextDecoder().decode(next.value, { stream: true }); let boundary;
-      while ((boundary = pending.indexOf('\n\n')) >= 0) { const frame = pending.slice(0, boundary); pending = pending.slice(boundary + 2); const data = frame.split('\n').find((line) => line.startsWith('data: ')); if (!data) continue; try { const event = JSON.parse(data.slice(6)); if (event?.type === 'turn.started') activeStageOneTurns.add(sessionId); if (event?.type === 'turn.stopped') activeStageOneTurns.delete(sessionId); win?.webContents.send('wm:stage1:event', event); } catch {} }
-    }
-  } catch (error) { if (!controller.signal.aborted) win?.webContents.send('wm:stage1:runtime-error', stageOneFailure(error)); } })();
 }
 
 /** 把窗口唤到前台(托盘点击 / 第二实例 / 菜单"显示")。 */
@@ -2281,8 +2232,8 @@ async function bootstrap() {
   // Official DSH also owns first-run setup. The desktop view starts after
   // its exact-origin fence; personal host starts after IPC registration.
   sessionReferenceScan = { state: personalHostMode ? 'pending' : 'ready', error: null };
-  // Kept solely to fail closed for dormant migration-only stage-1 handlers.
-  // The main window never loads this local page once the DSH surface is ready.
+  // The local page no longer ships; this URL only keeps the wipe and desktop-pet
+  // handlers below failing closed, since no renderer can match it.
   const legacyRendererUrl = pathToFileURL(join(import.meta.dirname, 'web', 'weftmate.html')).href;
   const TITLE_BAR_OVERLAY_HEIGHT = 44;
   let dshResolvedTheme = null;
@@ -2315,12 +2266,6 @@ async function bootstrap() {
       catch { /* retain the already-applied renderer theme if native overlay is unavailable */ }
     }
     return palette;
-  };
-  const applyNativeTheme = (theme) => {
-    const value = theme === 'light' || theme === 'dark' ? theme : 'system';
-    nativeTheme.themeSource = value;
-    updateNativeWindowColors();
-    return value;
   };
   let surfaceNavigation = Promise.resolve();
   /**
@@ -2395,9 +2340,6 @@ async function bootstrap() {
   // Active selection is a future-session preference. It never swaps the
   // shared child, so an in-flight/old DSH session retains its own persisted
   // provider+model request header.
-  async function listSharedSessionsForUi() {
-    return stageOneGateway('/sessions').catch(() => ({ items: [] }));
-  }
   let recoveredLifecycleRuntime = null;
   const recoveredLifecycles = new Set();
   async function listSharedSessionsForReferenceGuard() {
@@ -2442,7 +2384,6 @@ async function bootstrap() {
     }
   }
   async function assertRouteReloadSafe() {
-    if (activeStageOneTurns.size > 0) throw new Error('当前仍有生成中的会话。请等待完成或停止后，再修改、添加或删除模型路由。');
     // Renderer SSE is only a convenience signal. Before a route-changing
     // mutation, query the authoritative shared DSH session list. An invalid or
     // unavailable response is treated as unsafe rather than guessing idle.
@@ -2969,115 +2910,6 @@ async function bootstrap() {
     modWindowManager?.syncTheme();
     return { ok: true };
   });
-  ipcMain.handle('wm:stage1:bootstrap', async (event) => stageOneTrusted(event) ? { ...publicModelView(), settings: settingsMod.readProductSettings(), runtimeReady: !!runtimeOrigin } : { configured: false, error: '请求来源不可信。' });
-  ipcMain.handle('wm:stage1:setup', async (event, input) => {
-    if (!stageOneTrusted(event)) return { ok: false, error: '请求来源不可信。' };
-    try { const clean = { name: String(input?.name ?? '').trim(), baseUrl: String(input?.baseUrl ?? '').trim(), apiKey: String(input?.apiKey ?? '').trim(), model: String(input?.model ?? '').trim() }; await activateStageOneConfig(clean); return { ok: true }; } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage1:import-current-local-model', async (event) => {
-    if (!stageOneTrusted(event)) return { ok: false, error: '请求来源不可信。' };
-    try {
-      const apiKey = await readCurrentLocalServiceKey();
-      await activateStageOneConfig({ name: '本机 Qwen', baseUrl: 'http://127.0.0.1:8080/v1', apiKey, model: 'qwen3.8-27b-u' });
-      return { ok: true };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  // Stage 2 model management: only OpenAI-compatible discovery is currently
-  // supported because it performs a real GET /models with the supplied key.
-  // No generic Harness provider directory is used as evidence of credentials.
-  ipcMain.handle('wm:stage2:discover-models', async (event, input) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      if (input?.provider !== 'openai-compatible') return { ok: false, error: '当前只支持 OpenAI-compatible 服务；该协议尚未实现真实发现与验证。', models: [] };
-      const request = resolveModelDiscoveryRequest(input ?? {}, settingsMod.listModelProfiles().profiles,
-        (profileId) => configStoreMod.getCredential(profileId));
-      const models = await discoverOpenAICompatible(request);
-      return { ok: true, models };
-    } catch (error) { return { ...stageOneFailure(error), models: [] }; }
-  });
-  ipcMain.handle('wm:stage2:save-model', async (event, input) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      const profile = await saveModelRoute(input);
-      return { ok: true, profile: { ...profile, hasKey: true }, models: { ...publicModelView(), runtimeReady: !!runtimeOrigin } };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage2:test-model', async (event, id) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === id);
-      const apiKey = profile ? configStoreMod.getCredential(profile.id) : null;
-      if (!profile || !apiKey) throw new Error('missing model credential');
-      await validateStageOneModel({ ...profile, apiKey });
-      return { ok: true };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage2:set-active-model', async (event, id) => {
-    if (!stageOneTrusted(event) || typeof id !== 'string') return stageOneFailure(new Error());
-    try {
-      await enqueueRouteMutation(() => switchActiveModel({
-        id,
-        list: () => settingsMod.listModelProfiles(),
-        hasCredential: (profileId) => !!configStoreMod.getCredential(profileId),
-        setActive: (profileId) => settingsMod.restoreActiveModelProfile(profileId),
-      }));
-      return { ok: true, models: { ...publicModelView(), runtimeReady: !!runtimeOrigin } };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage2:delete-model', async (event, id) => {
-    if (!stageOneTrusted(event) || typeof id !== 'string') return stageOneFailure(new Error());
-    try {
-      await enqueueRouteMutation(async () => {
-        await hydrateLegacySessionBindings();
-        assertSessionReferenceScanComplete();
-        assertModelProfileMutationAllowed({ referenced: settingsMod.profileHasSessionBinding(id), operation: 'delete' });
-        await assertRouteReloadSafe();
-        await mutateModelRouteTransaction(async () => {
-          settingsMod.removeModelProfile(id);
-          configStoreMod.removeCredential(id);
-          await ensureSharedRuntime({ reload: true });
-        });
-      });
-      return { ok: true, models: { ...publicModelView(), runtimeReady: !!runtimeOrigin } };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage2:set-theme', async (event, theme) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      const savedTheme = await enqueueRouteMutation(() => settingsMod.setThemePreference(theme));
-      return { ok: true, theme: applyNativeTheme(savedTheme) };
-    }
-    catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage2:export-diagnostics', async (event) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      return await exportRedactedDiagnosticsFromMain();
-    } catch (error) { return { ok: false, error: '导出失败。请检查保存位置后重试。' }; }
-  });
-  ipcMain.handle('wm:stage1:sessions', async (event) => !stageOneTrusted(event) ? { items: [] } : listSharedSessionsForUi());
-  ipcMain.handle('wm:stage1:create', async (event) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      const created = await enqueueRouteMutation(async () => {
-        const value = await stageOneGateway('/sessions', { method: 'POST', body: '{}' });
-        const profile = activeModelProfile();
-        if (!profile?.model) throw new Error('active model is missing');
-        settingsMod.bindSessionModel(value.sessionId, profile.id);
-        const route = routeForProfile(profile.id);
-        await stageOneGateway(`/sessions/${encodeURIComponent(value.sessionId)}/models`, {
-          method: 'PUT', body: JSON.stringify({ provider: route.provider, model: profile.model,
-            ...(profile.reasoningEffort && profile.reasoningEffort !== 'off' ? { reasoningEffort: profile.reasoningEffort } : {}) }),
-        });
-        return value;
-      });
-      return { ok: true, ...created };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage1:select', async (event, sessionId) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string') return stageOneFailure(new Error()); try { await enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/resume`, { method: 'POST', body: '{}' }); }); startStageOneEvents(sessionId); return { ok: true }; } catch (error) { return stageOneFailure(error); } });
-  ipcMain.handle('wm:stage1:send', async (event, { sessionId, content, mode = 'queue' } = {}) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string' || typeof content !== 'string' || !content.trim()) return stageOneFailure(new Error()); return enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); const value = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/messages`, { method: 'POST', body: JSON.stringify({ content: content.trim(), mode }) }); return { ok: true, ...value }; }).catch(stageOneFailure); });
-  ipcMain.handle('wm:stage1:cancel', async (event, sessionId) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string') return stageOneFailure(new Error()); return enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); const value = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/cancel`, { method: 'POST', body: '{}' }); return { ok: true, ...value }; }).catch(stageOneFailure); });
-  ipcMain.handle('wm:stage1:approval', async (event, { sessionId, rpcId, approvalId, outcome } = {}) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string') return stageOneFailure(new Error()); return enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); const value = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/approval`, { method: 'POST', body: JSON.stringify({ rpcId, approvalId, outcome }) }); return { ok: true, ...value }; }).catch(stageOneFailure); });
 
   // ── 删除全部本机数据（v2 遗产，ARCHITECTURE §5 保留）：只走这一个窄 IPC。renderer 不接触
   //    marker/token/文件系统；主进程创建一次性授权并重启擦除。──
@@ -3577,7 +3409,6 @@ async function bootstrap() {
               installerSha256: preparedInstallerHash(),
               cacheDirectory: join(process.env.LOCALAPPDATA || app.getPath('appData'), packageInfo.name + '-updater') });
           }, isIdle: async () => {
-          if (activeStageOneTurns.size) return false;
           if (!runtimeOrigin) return !activeModelProfile();
           try { assertAuthoritativeSessionsIdle(await listSharedSessionsForReferenceGuard()); return true; }
           catch { return false; }
