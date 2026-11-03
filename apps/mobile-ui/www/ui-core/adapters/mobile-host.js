@@ -65,8 +65,8 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     await core.mobile.reconcileSharedDelivery();
     if (!core.mobile.sharedViewCurrent(owner, epoch, generation, sessionId)) return;
     effects.renderSharedConversation(); void core.refreshConversationFacts();
-    // Attach the ordinary conversation's change wait as soon as its snapshot is on screen.
-    if (!wait && state.logicalChats && !core.historyWaitAbort && core.canWaitForReply() && ['changed','unchanged'].includes(outcome?.kind))
+    // Boot can briefly restore a conversation before opening the list. Only the settled view should claim the native wait.
+    if (!wait && state.booted && state.logicalChats && !core.historyWaitAbort && core.canWaitForReply() && ['changed','unchanged'].includes(outcome?.kind))
       effects.scheduleSharedPoll?.({...outcome, immediateRenew:true});
     return outcome;
   }
