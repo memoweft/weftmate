@@ -237,5 +237,6 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
     // An empty bucket, such as one an earlier forget left behind, has nothing to list or forget.
     hasSession: id => { const b = state.sessions[id];
       return !!b && (Object.keys(b.items).length > 0 || b.notifications.length > 0 || Object.keys(b.operations ?? {}).length > 0); },
+    notificationSources: sessionIds => sessionIds.filter(id => state.sessions[id]?.notifications?.length > 0),
     restoreSessionIds: () => Object.entries(state.sessions).filter(([, b]) => Object.values(b.items).some(r => r.state === 'scheduled')).map(([id]) => id) };
 }

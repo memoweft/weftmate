@@ -134,7 +134,7 @@ export function statisticalInsight(days){
 export function createDailyDigest(context){
   const backgroundModels = createBackgroundModels(context);
   const flights=new Map(),models=new Set(),controllers=new Set();let closed=false;
-  async function refresh(ownerId){
+  async function refresh(ownerId,emptyHistory){
     if(flights.has(ownerId))return flights.get(ownerId);
     const work=(async()=>{
       const initial=context.accountState(ownerId);if(initial.memoryCleanupPending||context.dataControls?.isLocked(ownerId))return;
@@ -147,6 +147,8 @@ export function createDailyDigest(context){
       for(const [sessionId,session]of Object.entries(initial.sessions))if(allowed(initial,sessionId)&&session.origin==='personal-remote'){
         let afterSeq=dailyDigestState(context.accountState(ownerId)).sources[sessionId]?.afterSeq??-1,more=true,changed=false;
         while(more&&current()){
+          // The activity scan already read an empty page at this exact cursor during this refresh.
+          if (emptyHistory?.get(sessionId) === afterSeq && context.accountState(ownerId).dailyDigest?.sources[sessionId]) break;
           let page;try{page=await context.callBackend(()=>context.backend.readEvents({ownerId,sessionId,afterSeq,limit:200}));}catch{return;}
           if(!Array.isArray(page.events)||page.nextSeq<afterSeq)return;
           changed||=page.events.length>0||page.nextSeq>afterSeq;

@@ -357,6 +357,22 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (!response.ok) throw Object.assign(new Error(value.error ?? 'BACKEND_UNAVAILABLE'), { code: value.error, status: response.status });
       return value;
     },
+    async scheduleNotificationSources(sessionIds) {
+      requireRuntime()
+      const sources = new Set()
+      // The private schedules endpoint accepts at most 32 KiB per request.
+      for (let offset = 0; offset < sessionIds.length; offset += 128) {
+        const batch = sessionIds.slice(offset, offset + 128)
+        const response = await fetch(new URL('/weftmate/schedules/notifications/sources', currentOrigin()), {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionIds: batch })
+        })
+        if (!response.ok) fail('BACKEND_UNAVAILABLE')
+        const { sessionIds: recorded } = await response.json()
+        if (!Array.isArray(recorded) || recorded.some(id => !batch.includes(id))) fail('BACKEND_UNAVAILABLE')
+        for (const id of recorded) sources.add(id)
+      }
+      return sources
+    },
     async restoreSchedules(sessionIds) {
       if (!sessionIds.length) return
       requireRuntime()

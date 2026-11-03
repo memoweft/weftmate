@@ -197,3 +197,50 @@ test('FX-18 recovered memory appears as one quiet progress event and completes w
   assert.equal(complete.length,1);assert.equal(complete[0].id,rows[0].id);
   assert.equal(complete[0].title,'上次没做完的记忆已整理完成');assert.equal(complete[0].state,'completed');
 });
+
+test('a quiet conversation picks up a late scheduled notification after its history cursor advances and the service restarts', async t => {
+  const f=await startTimelineCandidate({daily:true,interactive:true,inlineProgress:true,historyCount:0,quietCatalog:true});
+  t.after(()=>f.close());
+  const {sessionId}=await f.startChat('合成提醒来源');
+  f.progress.finish();
+  let reads=0;
+  const notifications:any[]=[];
+  f.debug.backend.scheduleNotificationSources=async ids=>new Set(notifications.length?ids.filter(id=>id===sessionId):[]);
+  f.debug.backend.schedules=async ({sessionId:id,action})=>{
+    if(id!==sessionId||action!=='notifications')return {items:[]};
+    reads++;
+    return {items:notifications};
+  };
+  await f.request('/activity');const warm=reads;
+  await f.request('/activity');assert.equal(reads,warm);
+  const event=f.appendSessionEvent(sessionId,'user/message',{id:'late-reminder',source:{kind:'plugin',plugin:'weftmate-reminder'},content:[{type:'text',text:'合成提醒'}]});
+  const first=await f.request('/activity');
+  assert.equal(reads,warm);assert.ok(!first.items.some(row=>row.source.messageId==='late-reminder'));
+  await f.restartWithCloud(null);
+  await f.request('/activity');
+  notifications.push({id:'schedule-delivery',messageId:'late-reminder',seq:event.seq,kind:'reminder',text:'合成提醒',createdAt:new Date().toISOString()});
+  const delivered=await f.request('/activity');
+  const match=delivered.items.filter(row=>row.source.messageId==='late-reminder');
+  assert.equal(match.length,1);assert.equal(match[0].source.seq,event.seq);assert.equal(match[0].source.scheduleId,'schedule-delivery');
+  const again=await f.request('/activity');assert.equal(again.items.filter(row=>row.source.messageId==='late-reminder').length,1);
+});
+
+test('activity discovers a running native question and settles it after the session goes idle', async t => {
+  const f=await startTimelineCandidate({daily:true,interactive:true,inlineProgress:true,historyCount:0,quietCatalog:true});
+  t.after(()=>f.close());
+  const backend=f.debug.backend, list=backend.listUserQuestions;
+  backend.listUserQuestions=async input=>{
+    const result=await list(input);
+    return {...result,questions:result.questions.filter(row=>row.sessionId===input.sessionId)};
+  };
+  const {sessionId}=await f.startChat('合成待提问对话');
+  const frame=f.progress.ask([{id:'format',question:'选择合成格式',options:[{label:'提纲'}]}]);
+  const items=async()=> (await f.request('/activity')).items.filter(row=>row.type==='question.pending'&&row.source.sessionId===sessionId);
+  let rows=await items();
+  assert.equal(rows.length,1);assert.equal(rows[0].state,'pending');
+  frame.nativeState='answered';f.progress.finish('completed');
+  f.debug.service.__reviewContext.sessionOperations.invalidate(f.debug.auth.account.ownerId,sessionId);
+  rows=await items();
+  assert.equal(rows.length,1);assert.equal(rows[0].state,'completed');
+  assert.ok(!rows[0].actions.some(action=>action.kind==='answer_question'));
+});

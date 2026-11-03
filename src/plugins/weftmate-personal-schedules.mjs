@@ -107,6 +107,12 @@ export async function apply(ctx) {
       let body = '';
       for await (const part of req) { body += part; if (body.length > 32768) throw new Error('INVALID_REQUEST'); }
       const input = body ? JSON.parse(body) : {};
+      if (pathname === '/weftmate/schedules/notifications/sources' && req.method === 'POST') {
+        if (!Array.isArray(input?.sessionIds) || input.sessionIds.some(id => typeof id !== 'string' || !/^[A-Za-z0-9_-]+$/.test(id)))
+          throw Object.assign(new Error('INVALID_REQUEST'), { status: 400 });
+        const sessionIds = manager.notificationSources(input.sessionIds);
+        res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ sessionIds })); return;
+      }
       if (pathname === '/weftmate/schedules/restore' && req.method === 'POST') {
         for (const id of manager.restoreSessionIds().filter(id => input.sessionIds?.includes(id))) {
           if (!ctx.agents.get(id)) await lifecycle.resume(id);
