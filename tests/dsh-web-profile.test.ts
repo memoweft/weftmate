@@ -9,7 +9,7 @@
  */
 import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
-import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -55,6 +55,24 @@ test('the previous managed personal profile upgrades to the tool-loop compositio
   assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE);
   assert.equal(await writeWebProfile(root), 'unchanged');
 });
+
+test('upgrading the standard profile preserves an edited preset even if its metadata is still original', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-edited-preset-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  await writeWebProfile(root)
+  const patch = join(root, 'profiles', 'weftmate', 'cordis.patch.yml')
+  await writeFile(patch, await oldPatch('r19'))
+  const dir = join(root, '.agent-presets', 'mod-maintainer')
+  await mkdir(dir, { recursive: true })
+  const owned = '# owner authored\n- name: ./local-extension.mjs\n'
+  const metadata = 'name: Mod 开发维护\ndescription: 受控的单项目 Mod 开发通道。\norder: 90\n'
+  await writeFile(join(dir, 'agent.cordis.yml'), owned)
+  await writeFile(join(dir, 'preset.yml'), metadata)
+  await writeWebProfile(root)
+  assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE)
+  assert.equal(await readFile(join(dir, 'agent.cordis.yml'), 'utf8'), owned)
+  assert.equal(await readFile(join(dir, 'preset.yml'), 'utf8'), metadata)
+})
 
 test('minimal preset keeps its pinned tools and gets one isolated compactor without changing vendor', async t => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-context-preset-'))
