@@ -91,8 +91,10 @@ try {
     const host=(await f.request('/status')).hostId,chat=(await f.request('/chats?limit=100')).items.find(row=>row.activeSessionId===f.sessionId);
     const send=(text,requestId)=>f.sendTo(f.sessionId,text,requestId);
     const at=Date.now();await send('另一台设备的新消息','bl29-other-message');
-    // A phone's new-message timing was measured on the main chat; on ordinary conversations it is slower (phone batch).
-    for(const [surface,p] of pages.filter(([surface])=>surface!=='mobile')){await p.getByText('另一台设备的新消息',{exact:true}).first().waitFor({state:'visible',timeout:6000});report.checks.push({name:'other-device-message',surface,ms:Date.now()-at});}
+    await Promise.all(pages.map(async ([surface,p])=>{
+      await p.getByText('另一台设备的新消息',{exact:true}).first().waitFor({state:'visible',timeout:6000});
+      report.checks.push({name:'other-device-message',surface,ms:Date.now()-at});
+    }));
     if (process.argv.includes('--approval-commit-delay')) {
       const track=f.debug.service.trackToolApproval;
       f.debug.service.trackToolApproval=async input=>{
