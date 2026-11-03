@@ -46,7 +46,7 @@
     },
     {
       "file": "tests/personal-approval-bridge.test.ts",
-      "name": "the verified WeftMod script approval alias preserves actual execution identity and rejects unrelated names"
+      "name": "an approval request cannot stand in for a different executing tool"
     },
     {
       "file": "tests/personal-approval-bridge.test.ts",
