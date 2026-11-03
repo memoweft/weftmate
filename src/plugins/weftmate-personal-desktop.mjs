@@ -174,10 +174,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
       if (!connector && policy.mode === 'allow-all' && !policy.project && selected.decision === 'allow') return 'allowed-once';
     }
     const identity = callsByAgent.get(request.agent)?.get(request.callId);
-    // The shipped WeftMod script producer asks through its shared "weftmod" approval seam.
-    // Keep the host receipt bound to the actual execution name and arguments.
-    if (!identity || !(identity.toolName === request.toolName ||
-        identity.toolName === 'weftmod_script' && request.toolName === 'weftmod')) return 'unavailable';
+    if (!identity || identity.toolName !== request.toolName) return 'unavailable';
     const events = request.agent.session.events;
     const start = events.findLastIndex(event => event?.type === 'turn/start' || event?.type === 'turn/end');
     if (events[start]?.type !== 'turn/start' || events[start]?.data?.turn !== identity.turn) return 'unavailable';
