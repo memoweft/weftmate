@@ -171,99 +171,10 @@ test('V2 shell column controls report the effective manual, responsive, and deta
   assert.match(client, /'icon-btn' \+ \(columnVisibility\.work \? ' on' : ''\)/)
 })
 
-test('Mods request guard rejects stale async responses, duplicate project actions, and post-unmount updates', async () => {
-  const source = client.slice(client.indexOf('function createModsRequestGuard'), client.indexOf('function V2ModsWorkspace'))
-  const createGuard = new Function(`${source}; return createModsRequestGuard`)() as () => {
-    begin(sessionId: string, scope?: string): { sessionId: string, generation: number }
-    read(sessionId: string, scope: string, channel: string): { sessionId: string, generation: number, channel: string, read: number }
-    current(token: { sessionId: string, generation: number }, sessionId: string): boolean
-    beginAction(sessionId: string, projectId: string): { sessionId: string, projectId: string, generation: number, key: string } | null
-    finishAction(token: { sessionId: string, projectId: string, generation: number, key: string }, sessionId: string): boolean
-    dispose(): void
-  }
-  const guard = createGuard()
-  const oldList = guard.read('session-a', 'list', 'list')
-  const currentList = guard.read('session-b', 'list', 'list')
-  assert.equal(guard.current(oldList, 'session-b'), false, 'a delayed list/detail response cannot update after session switch')
-  assert.equal(guard.current(currentList, 'session-b'), true)
-  const action = guard.beginAction('session-b', 'project-1')
-  assert.ok(action)
-  assert.equal(guard.beginAction('session-b', 'project-1'), null, 'a pending start/stop rejects duplicate requests for the same project')
-  const readOne = guard.read('session-b', 'list', 'detail:project-1')
-  const readTwo = guard.read('session-b', 'list', 'detail:project-1')
-  assert.equal(guard.current(readOne, 'session-b'), false, 'read1 cannot overwrite read2 in the same scope and channel')
-  assert.equal(guard.current(readTwo, 'session-b'), true)
-  assert.equal(guard.finishAction(action, 'session-b'), true, 'repeated same-scope polling or refresh cannot invalidate a pending action')
-  const changedOwnerAction = guard.beginAction('session-b', 'project-1')!
-  let release!: () => void
-  const delayedFailure = new Promise<void>((resolve) => { release = resolve })
-  const lateResult = delayedFailure.then(() => guard.finishAction(changedOwnerAction, 'session-a'))
-  release()
-  assert.equal(await lateResult, false, 'a delayed action failure cannot update after ownership changes')
-  const detailRead = guard.read('session-b', 'project-1', 'detail:project-1')
-  const routeAction = guard.beginAction('session-b', 'project-2')!
-  guard.begin('session-b', 'list')
-  assert.equal(guard.current(detailRead, 'session-b'), false, 'returning to list invalidates a detail read')
-  assert.equal(guard.finishAction(routeAction, 'session-b'), false, 'returning to list rejects a detail-scope action response')
-  guard.dispose()
-  assert.equal(guard.current(currentList, 'session-b'), false, 'unmount invalidates in-flight responses')
-})
-
-test('Mods maintainer navigation permits only the intended session arrival while mounted', () => {
-  const source = client.slice(client.indexOf('function createModsNavigationGuard'), client.indexOf('function currentModProject'))
-  const createNavigationGuard = new Function(`${source}; return createModsNavigationGuard`)() as () => { begin(target: string): { sequence: number, targetSessionId: string }, current(token: { sequence: number, targetSessionId: string }): boolean, dispose(): void }
-  const guard = createNavigationGuard()
-  const normal = guard.begin('maintainer')
-  assert.equal(guard.current(normal), true, 'from owner to target maintainer remains eligible')
-  const laterUserChoice = guard.begin('other')
-  assert.equal(guard.current(normal), false, 'a later navigation invalidates the old completion')
-  assert.equal(guard.current(laterUserChoice), true)
-  guard.dispose()
-  assert.equal(guard.current(laterUserChoice), false, 'unmount prevents a delayed sessions.open completion from navigating')
-})
-
-test('Mods card state takes the same-id detail receipt over stale list state after an action', () => {
-  const source = client.slice(client.indexOf('function currentModProject'), client.indexOf('function V2ModsWorkspace'))
-  const currentProject = new Function(`${source}; return currentModProject`)() as (project: object, detail: object) => { health: string, desiredState: string }
-  const staleList = { projectId: 'project-1', health: 'stopped', desiredState: 'stopped' }
-  const actionReceipt = { project: { projectId: 'project-1', health: 'running', desiredState: 'running' }, controls: { canStart: false, canStop: true } }
-  assert.deepEqual(currentProject(staleList, actionReceipt), actionReceipt.project, 'the post-action detail receipt is the card rendering source')
-  assert.equal(currentProject(staleList, { project: { projectId: 'other', health: 'running' } }), staleList, 'a mismatched detail cannot overwrite another card')
-})
-
-test('V2 shell exposes Chat and real Mods without replacing official conversation behavior or inventing a settings opener', () => {
-  assert.match(client, /function WeftMateV2Shell\(props\)/)
-  assert.match(client, /choose\('chat'\)/)
-  assert.match(client, /choose\('mods'\)/)
-  assert.match(client, /ctx\.slots\.inject\('sidebar\.workspaces'/)
-  assert.match(client, /name: 'sidebar\.workspaces', id: 'weftmate-v2-sessions', priority: -100/)
-  assert.match(client, /\.oC7kBG_footArea\{position:fixed;z-index:30;left:6px;top:var\(--weftmate-v2-settings-top\);bottom:auto;width:48px/)
-  assert.match(client, /\.oC7kBG_logoRow,\.oC7kBG_newSession\{display:none!important\}/)
-  assert.match(client, /\[data-weftmate-v2-sidebar\] \.oC7kBG_settingsArea \.ksvqgW_trigger,\[data-weftmate-v2-sidebar\] \.oC7kBG_settingsArea \.ksvqgW_trigger\.ksvqgW_rail\{border-radius:10px;justify-content:center;flex-direction:column;gap:3px;width:48px/)
-  assert.match(client, /\.ksvqgW_trigger::after\{content:attr\(data-weftmate-settings-label\);line-height:1\}/)
-  assert.match(client, /html\[data-weftmate-v2-page="mods"\] \.weftmate-v2-sessions\{display:none!important\}/)
-  assert.match(client, /\[data-weftmate-v2-sidebar\] \.oC7kBG_root\{box-sizing:border-box!important;width:236px!important;max-width:236px!important;padding:0!important\}/)
-  assert.match(client, /\[data-weftmate-v2-sidebar\] \.oC7kBG_regionArea\{width:236px!important;margin:0!important;padding:0!important\}/)
-  assert.match(client, /\[data-weftmate-v2-sidebar\] \.weftmate-v2-sessions\.sess-col\{box-sizing:border-box;position:relative;z-index:20;width:236px;height:100%;flex-shrink:0;background:var\(--weftmate-surface\);border-right:1px solid var\(--weftmate-hairline\)/)
-  assert.match(client, /\.weftmate-v2-sessions \.sess-node:hover \.mini,\.weftmate-v2-sessions \.sess-node:focus-within \.mini/)
-  assert.doesNotMatch(client, /function openOfficialSettings\(\)/)
-  assert.doesNotMatch(client, /会话列表正在接入正式工作区视图/)
-  assert.match(client, /function V2ModsWorkspace\(props\)/)
-  assert.match(client, /React\.useSyncExternalStore/)
-  assert.match(client, /window\.location\.hash = '\/mod\/'/)
-  assert.match(client, /React\.createElement\(ModBusinessFrame/)
-  assert.match(client, /id: 'weftmate-v2-shell'/)
-  assert.match(client, /installWeftmateV2Style\(\)/)
-  assert.match(client, /installWeftmateV2ShellStyle\(\)/)
-  assert.match(client.slice(client.indexOf('function WeftMateV2Shell'), client.indexOf('\n    return {\n      name:')), /setModProjects\(data\.projects\)/)
-  assert.match(client, /modProjects: modProjects/)
-})
-
 test('V2 session sidebar projects only ready, non-archived top-level sessions once', () => {
   const source = client.slice(client.indexOf('function isSidebarVisibleSession'), client.indexOf('function V2SessionSidebar'))
   const derive = new Function(`${source}; return deriveV2SessionGroups`)() as (sessions: object, workspaces: object) => {
     ready: boolean
-    mods: Array<{ key: string, label: string, sessions: Array<{ id: string }> }>
     projects: Array<{ workspace: { workspaceId: string }, sessions: Array<{ id: string }> }>
     recent: Array<{ id: string }>
   }
@@ -280,15 +191,14 @@ test('V2 session sidebar projects only ready, non-archived top-level sessions on
       'blank-other': { id: 'blank-other', displayTitle: '隐藏空会话', running: false, blank: true, updatedAt: 10 },
     },
   }
-  const result = derive(sessions, { phase: 'ready', archivedSessionIds: ['archived'], items: [{ workspaceId: 'workspace-a', title: '项目 A', sessionIds: ['project', 'mod'] }] }, [{ projectId: 'mod-project', name: '真实 Mod', maintainerSessionId: 'mod' }])
+  const result = derive(sessions, { phase: 'ready', archivedSessionIds: ['archived'], items: [{ workspaceId: 'workspace-a', title: '项目 A', sessionIds: ['project', 'mod'] }] })
   assert.equal(result.ready, true)
-  assert.deepEqual(result.mods.map((group) => [group.label, group.sessions.map((session) => session.id)]), [['真实 Mod', ['mod']]], 'explicit project relation names the Mod node and wins over workspace membership')
-  assert.deepEqual(result.projects[0].sessions.map((session) => session.id), ['project'], 'a Mod session is not duplicated under a project')
+  assert.deepEqual(result.projects[0].sessions.map((session) => session.id), ['project','mod'], 'existing project membership is preserved, including earlier maintenance sessions')
   assert.deepEqual(result.recent.map((session) => session.id), ['recent', 'blank-current'], 'recent receives only remaining visible sessions in newest-first order')
-  assert.equal(new Set([...result.mods.flatMap((group) => group.sessions), ...result.projects[0].sessions, ...result.recent].map((session) => session.id)).size, 4)
-  const groupedOnly = derive({ ...sessions, current: 'project', ids: ['mod', 'project'] }, { phase: 'ready', archivedSessionIds: [], items: [{ workspaceId: 'workspace-a', title: '项目 A', sessionIds: ['project'] }] }, [{ projectId: 'mod-project', name: '真实 Mod', maintainerSessionId: 'mod' }])
+  assert.equal(new Set([...result.projects[0].sessions, ...result.recent].map((session) => session.id)).size, 4)
+  const groupedOnly = derive({ ...sessions, current: 'project', ids: ['mod', 'project'] }, { phase: 'ready', archivedSessionIds: [], items: [{ workspaceId: 'workspace-a', title: '项目 A', sessionIds: ['project','mod'] }] })
   assert.deepEqual(groupedOnly.recent, [], 'all project/Mod sessions leave no redundant global 最近 group')
-  assert.equal(derive({ ...sessions, phase: 'pending' }, { phase: 'ready', archivedSessionIds: [], items: [] }, []).ready, false, 'partial baselines never render an empty tree as authoritative')
+  assert.equal(derive({ ...sessions, phase: 'pending' }, { phase: 'ready', archivedSessionIds: [], items: [] }).ready, false, 'partial baselines never render an empty tree as authoritative')
 })
 
 test('Scoped skeleton mechanically extends the existing shell scope to the real sidebar root without changing its body', () => {
@@ -313,10 +223,6 @@ test('V2 session sidebar keeps the formal action boundary and disabled unavailab
   assert.match(sidebar, /当前没有正式删除会话或取消归档接口/)
   assert.match(sidebar, /当前没有将会话加入或移出项目的正式接口/)
   assert.match(client, /weftmate-v2-session-sidebar/)
-  assert.match(sidebar, /\/weftmate\/mods\/projects\.json\?session_id=/)
-  assert.match(sidebar, /modRelation\.sessionId === current \? modRelation\.projects : \[\]/)
-  assert.match(sidebar, /cancelled = true; controller\.abort\(\)/)
-  assert.match(client, /project && \(project\.maintainerSessionId \|\| project\.maintainer_session_id\)/)
   assert.match(sidebar, /'data-theme': sidebarTheme/)
   assert.match(sidebar, /document\.body\.hasAttribute\('data-ds-dark-theme'\) \? 'dark' : 'light'/)
   assert.match(sidebar, /function toggleWorkspacePin\(id\)/)
@@ -324,26 +230,7 @@ test('V2 session sidebar keeps the formal action boundary and disabled unavailab
   assert.match(sidebar, /pinnedWorkspaces\.has\(b\.workspace\.workspaceId\)/)
   assert.match(sidebar, /function pinIcon\(label\).*M12 16v5/)
   assert.match(sidebar, /function folderIcon\(closed\)/)
-  assert.match(sidebar, /function modIcon\(\)/)
   assert.match(client, /pinnedWorkspaces: value && Array\.isArray\(value\.pinnedWorkspaces\)/)
-})
-
-test('V2 session sidebar keeps project and Mod quick entries on empty roots and uses only formal host operations', () => {
-  const sidebar = client.slice(client.indexOf('function V2SessionSidebar'), client.indexOf('function WeftMateV2Shell'))
-  assert.match(sidebar, /roots\.push\(renderRoot\('projects', '项目'/, 'the project root remains available without an existing workspace')
-  assert.match(sidebar, /roots\.push\(renderRoot\('mods', 'Mod'/, 'the Mod root remains available without an existing Mod')
-  assert.match(sidebar, /props\.workspaces\.listDirectory\(path\)/, 'project creation uses the formal browse directory flow available to browser and desktop hosts')
-  assert.match(sidebar, /props\.workspaces\.create\(\{ path: path \}\)/, 'project registration uses the formal workspace create operation')
-  assert.match(sidebar, /props\.startSession\(workspace\.workspaceId\)/, 'a created project opens through the existing workspace session route')
-  assert.match(sidebar, /options\.workspaceId = targetWorkspace\.workspaceId/, 'a new maintainer avoids inheriting another Mod maintenance directory')
-  assert.match(sidebar, /var sessionId = await props\.sessions\.create\(options\)/, 'the Mod quick entry first uses the formal runtime create so the new session is hydrated')
-  assert.match(sidebar, /api\.agentPresets\.select\(\{ sessionId: sessionId, agentPreset: 'mod-maintainer' \}\)/, 'the host selects the preset through the official blank-session selection flow')
-  assert.match(sidebar, /props\.sessions\.noteAgentPreset\(sessionId, selected\.agentPreset\)/, 'the local projection changes only after the host accepts the preset selection receipt')
-  assert.match(sidebar, /session\.agentPreset === 'mod-maintainer'/, 'the maintenance creation waits for the projected preset receipt')
-  assert.match(sidebar, /setInterval\(function \(\) \{ loadRelation\(false\) \}, 2000\)/, 'the active maintenance session refreshes actual host binding after creation')
-  assert.match(client, /projectId: projectId, maintainerSessionId: maintainerSessionId \|\| null/, 'a concrete Mod relation retains its durable ids for actions')
-  assert.match(sidebar, /window\.location\.hash = '\/mods'/, 'a concrete Mod action opens its existing management page')
-  assert.match(client, /mod:fallback.*projectId: null/, 'preset-only sessions remain a fallback group and do not masquerade as a Mod project')
 })
 
 test('V2 session sidebar action gate rejects two create clicks in one render turn and releases after completion', () => {
@@ -389,7 +276,6 @@ test('V2 session menu reuses the frozen Kimi ctx-menu structure and values', () 
   assert.match(sidebar, /className: 'ctx-item'/)
   assert.match(sidebar, /className: 'ctx-sep'/)
   assert.match(sidebar, /roots\.push\(renderRoot\('projects', '项目'/)
-  assert.match(sidebar, /roots\.push\(renderRoot\('mods', 'Mod'/)
   assert.match(sidebar, /if \(recent\.length\) roots\.push\(renderGroup\('recent', '最近', recent\)\)/)
   assert.doesNotMatch(sidebar, /renderGroup\('recent', '最近', recent\)\)\), feedback/)
   assert.match(sidebar, /React\.createElement\('svg', \{ className: 'chev'/)
@@ -418,15 +304,6 @@ test('V2 session sidebar waits for a formal snapshot echo and surfaces a missing
   const noEcho = wait({ getSnapshot: () => ({ title: 'before' }), subscribe: () => () => {} }, () => false)
   timeout!()
   await assert.rejects(noEcho, /正式列表尚未回显/)
-})
-
-test('V2 settings rail position follows the actual Mods item bottom plus the rail gap', () => {
-  const shell = client.slice(client.indexOf('function WeftMateV2Shell'), client.indexOf('\n    return {\n      name:'))
-  assert.match(shell, /function syncSettingsRailPosition\(\)/)
-  assert.match(shell, /rail\.querySelectorAll\('\.rl-item'\)/)
-  assert.match(shell, /var gap = Math\.max\(0, second\.top - first\.bottom\)/)
-  assert.match(shell, /second\.bottom \+ gap/)
-  assert.match(shell, /--weftmate-v2-settings-top/)
 })
 
 test('V2 settings rail adapter labels the real trigger through collapsed DOM replacement and disconnects cleanly', () => {
@@ -516,19 +393,6 @@ test('V2 chat head uses the real session title while the official header retains
   assert.match(client, /_0_p9YG_headerUtilities\{display:none!important\}/)
 })
 
-test('Mods list keeps the frozen page geometry and exposes only contract-backed controls', () => {
-  const workspace = client.slice(client.indexOf('function V2ModsWorkspace'), client.indexOf('function useV2ColumnVisibility'))
-  assert.match(workspace, /Promise\.all\(\[worker\(\), worker\(\), worker\(\), worker\(\)\]\)/)
-  assert.match(workspace, /entry && entry\.value && entry\.value\.controls/)
-  assert.match(workspace, /className: 'mc-top'/)
-  assert.match(workspace, /role: 'link', tabIndex: 0/)
-  assert.match(workspace, /event\.stopPropagation\(\)/)
-  assert.match(workspace, /推荐目录尚未接入；安装功能当前不可用。/)
-  assert.match(workspace, /disabled: true, 'aria-describedby': 'mod-install-unavailable'/)
-  assert.match(client, /\.weftmate-v2-page\.weftmate-v2-mods \.page-head\{padding:0 22px;background:var\(--weftmate-surface\)\}/)
-  assert.match(client, /\.weftmate-v2-page\.weftmate-v2-mods \.mod-grid\{padding:0\}/)
-})
-
 test('V2 settings accepts only formal DSH envelopes and never fabricates a local revision', () => {
   const source = client.slice(client.indexOf('function dshResultValue'), client.indexOf('function errorText'))
   const unwrap = new Function(`${source}; return dshResultValue`)() as (response: unknown, operation: string) => unknown
@@ -539,21 +403,10 @@ test('V2 settings accepts only formal DSH envelopes and never fabricates a local
   assert.doesNotMatch(client, /setSettingsRev\(function \(r\) \{ return r \+ 1 \}\)/)
 })
 
-test('V2 memory keeps a conflict receipt at HTTP 409 and reuses a stable command id for retry', async () => {
-  const readerSource = client.slice(client.indexOf('function readJsonOrThrow'), client.indexOf('async function submitMemoryCommand'))
-  const read = new Function(`${readerSource}; return readJsonOrThrow`)() as (response: any, label: string) => Promise<any>
-  const receipt = { receipt: { result_state: 'revision_conflict' } }
-  assert.deepEqual(await read({ ok: false, status: 409, json: async () => receipt }, '记忆操作'), receipt)
-  await assert.rejects(read({ ok: false, status: 500, json: async () => ({ error: 'bad' }) }, '记忆操作'), /HTTP 500/)
-  assert.match(client, /command_id: stableCommandId\(key\)/)
-  assert.match(client, /\['applied', 'no_change', 'revision_conflict', 'rejected'\]/)
-})
-
 test('V2 settings persists only the local column view preference and disables host settings without a write API', () => {
-  const settings = client.slice(client.indexOf('function V2SettingsWorkspace'), client.indexOf('function V2MemoryWorkspace'))
+  const settings = client.slice(client.indexOf('function V2SettingsWorkspace'), client.indexOf('function V2Workbench'))
   assert.match(settings, /localStorage\.getItem\('weftmate\.v2\.columns\.expanded'\)/)
   assert.match(settings, /localStorage\.setItem\('weftmate\.v2\.columns\.expanded', String\(next\)\)/)
-  assert.match(settings, /当前宿主没有独立窗口全局设置接口/)
   assert.match(settings, /当前宿主没有权限确认全局设置接口/)
   assert.match(settings, /当前宿主没有自动更新策略设置接口/)
   assert.doesNotMatch(settings, /setSeparateWindow|setConfirmPerm|setAutoUpdate/)
@@ -566,33 +419,12 @@ test('V2 workbench stops a real bound session and command palette awaits session
   assert.match(workbench, /await binding\.session\.cancel\(\)/)
   assert.match(workbench, /if \(!isRunning && feedback\.indexOf\('已请求停止'\) === 0\) setFeedback\('已停止'\)/)
   assert.match(workbench, /setFeedback\(''\).*currentSession && currentSession\.id/s)
-  for (const heading of ['从这里开始', '进行中', '上下文', '可用 Mod']) assert.match(workbench, new RegExp(heading))
   assert.match(workbench, /props\.onNewSession\(\)/)
-  assert.match(workbench, /var modProjects = Array\.isArray\(props\.modProjects\)/)
-  assert.match(workbench, /memory\.label \+ ' · ' \+ memory\.detail/)
   assert.doesNotMatch(workbench, /会话标识：|currentSession\.id\) :/)
   assert.doesNotMatch(workbench, /本周书单|8\.1k 安装|5\.6k 安装|默认四步/)
   assert.match(command, /fn: async function \(\) \{\s*await props\.sessions\.open\(session\.id\)/)
   assert.match(command, /setCommandError\('无法打开会话：' \+ errorText\(error\)\)/)
   assert.match(client, /Ctrl\+K \/ ⌘K/)
-})
-
-test('V2 memory has one Weave entry and settings renders the host product version', () => {
-  const apply = client.slice(client.indexOf('apply: function (ctx)'), client.indexOf('\n      },\n    }', client.indexOf('apply: function (ctx)')))
-  const settings = client.slice(client.indexOf('function V2SettingsWorkspace'), client.indexOf('function V2MemoryWorkspace'))
-  assert.doesNotMatch(apply, /id: 'weftmate-memory'/)
-  assert.match(client, /aria-label': '记忆'.*choose\('memory'\)/s)
-  assert.equal((client.match(/等待宿主状态返回产品版本/g) || []).length, 0)
-  assert.match(settings, /props\.appVersion \|\| '暂不可用'/)
-  assert.match(client, /appVersion: appVersion/)
-  for (const label of ['回顾共同讨论', '来源与处理进度', '记忆上下文记录', '当前理解中没有匹配项']) assert.match(client, new RegExp(label))
-  assert.match(client, /关联记忆已失效；这里只保留历史原文，不再自动召回/)
-  assert.match(client, /if \(!next\.trim\(\)\) setResult\(null\)/)
-  const interactions = client.slice(client.indexOf('function MemoryInteractions'), client.indexOf('function MemoryRecordedInteraction'))
-  assert.match(interactions, /requestRef\.current\.generation \+= 1/)
-  assert.match(interactions, /requestRef\.current\.controller\.abort\(\)/)
-  assert.match(interactions, /setQuery\(event\.target\.value\); setResult\(null\); setBusy\(false\)/)
-  assert.match(interactions, /requestRef\.current\.generation === generation/)
 })
 
 test('new-session helper creates or reuses the trusted personal workspace, preserves explicit projects, and exposes failures', async () => {
@@ -616,7 +448,7 @@ test('new-session helper creates or reuses the trusted personal workspace, prese
   assert.equal(creates, 1); assert.equal(opened.at(-1), 'blank-project-a', 'an explicit project remains the target')
   items.push({ workspaceId: 'maintenance', path: 'D:/dsh-home/mod-projects/projects/mod-1/workspace', sessionIds: ['maintainer'] }); recentWorkspaceId = 'maintenance'
   await start(workspaces, sessions)
-  assert.equal(opened.at(-1), 'blank-personal', 'implicit new chat never inherits the most recent Mod maintenance workspace')
+  assert.equal(opened.at(-1), 'blank-maintenance', 'an existing project remains an ordinary usable workspace')
   const rejected = new Function('fetch', 'AbortSignal', `${source}; return startWorkspaceSession`)(async () => ({ ok: true, json: async () => ({ dataDirs: { workspace: null } }) }), { timeout: () => undefined })
   await assert.rejects(rejected({ list: { getSnapshot: () => ({ items: [], recentWorkspaceId: undefined }) }, create: workspaces.create, connectWorkspace: workspaces.connectWorkspace }, sessions), /个人工作区位置/)
 })

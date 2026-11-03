@@ -5,8 +5,7 @@ ipcRenderer.on('wm:ui:notice', (_event, notice) => { if (noticeListener) noticeL
 function onNotice(callback) { noticeListener = callback; for (const notice of pendingNotices.splice(0)) callback(notice); return () => { if (noticeListener === callback) noticeListener = null; }; }
 
 // The official DSH document is intentionally not given the legacy WeftMate
-// renderer bridge. Its capabilities are bounded theme reporting and managed
-// Mod view navigation; generated Mod frames never receive this bridge.
+// renderer bridge. It only receives UI notices and reports the resolved theme.
 function normalizeSurfaceColor(value) {
   if (typeof value !== 'string') return null;
   const color = value.trim();
@@ -26,11 +25,4 @@ contextBridge.exposeInMainWorld('weftmateSurface', Object.freeze({
     theme: theme === 'dark' ? 'dark' : 'light',
     color: normalizeSurfaceColor(color),
   }),
-  openModWindow: (projectId, sessionId) => ipcRenderer.invoke('wm:mod-window:open', { projectId, sessionId }),
-  onOpenModProject(callback) {
-    if (typeof callback !== 'function') throw new TypeError('callback required')
-    const listener = (_event, target) => callback({ projectId: target?.projectId, sessionId: target?.sessionId })
-    ipcRenderer.on('wm:mod-window:open-project', listener)
-    return () => ipcRenderer.removeListener('wm:mod-window:open-project', listener)
-  },
 }));

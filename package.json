@@ -30,7 +30,6 @@
     "dist:win:candidate": "node scripts/build-windows-candidate.mjs",
     "release:windows": "node scripts/release/windows.mjs",
     "verify:win-package": "node scripts/verify-windows-package.mjs",
-    "verify:mod-window:electron": "electron scripts/verify-mod-window-electron.mjs",
     "verify:dsh-view:electron": "electron scripts/verify-dsh-view-seam.mjs",
     "icons:generate": "node scripts/generate-icons.mjs",
     "tokens:generate": "node scripts/generate-tokens.mjs"

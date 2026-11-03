@@ -46,9 +46,6 @@ const extraTimer=setInterval(async()=>{
       const options={python:request.python,pythonPath:request.pythonPath,env:{PYTHONDONTWRITEBYTECODE:'1'}};
       await writeFile(join(root,'phase.txt'),'python-rpc-venv');
       const rpc=new MemoWeftRpc(options);try{const capabilities=await rpc.request('capabilities');result.pythonRpcV2=capabilities.protocol_version===2;}finally{await rpc.close();}
-      await writeFile(join(root,'phase.txt'),'python-plugin-venv');const {MemoWeftBridge}=await import(pathToFileURL(join(app.getPath('userData'),'dsh-home/profiles/weftmate/plugins/weftmate-memory.mjs')).href);
-      const bridge=new MemoWeftBridge({python:request.python,pythonPath:request.pythonPath,log:{warn(){},info(){}}});
-      try{const capabilities=await bridge.request('capabilities');result.pythonPluginRpcV2=capabilities.protocol_version===2;}finally{await bridge.close();}
       result.pythonVirtualEnvironmentLauncher=true;
     }
   }catch(error){result.failure=String(error.code??error.message).replaceAll(root,'%TEMP%/weftmate-ux2-console');}

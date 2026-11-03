@@ -151,7 +151,6 @@ describe('weftmate web profile 组合基线（R2-02 安全基线 + G-01 官方�
       const withLayer = await runDump(bin, home, false, 150_000)
       assert.equal(withLayer.code, 0, `dump（含补丁层）失败（exit ${withLayer.code}）：\n${withLayer.stderr.slice(-2000)}`)
       assert.match(withLayer.stdout, /- id: weftmate-host\s*\n\s*name: \.\/plugins\/weftmate-host\.mjs/)
-      assert.match(withLayer.stdout, /- id: weftmate-aigame-host\s*\n\s*name: \.\/plugins\/weftmate-aigame-host\.mjs/)
       // R9 profile template does not own credentials. The final host-owned
       // --patch is tested below, so an owner patch cannot omit the safe bridge.
       assert.doesNotMatch(withLayer.stdout, /name: \.\/plugins\/weftmate-credentials\.mjs/)
