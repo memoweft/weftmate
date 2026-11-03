@@ -183,7 +183,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         const operation=folderMutationScope();core.state.folderRegistering=operation;effects.updateAvailability();
         try {const result=await create(fields);if(!folderMutationCurrent(operation))return null;
             await core.refreshSessionProjects();return folderMutationCurrent(operation)?result:null;
-        } finally {if(core.state.folderRegistering===operation)core.state.folderRegistering=null;if(operation.identity===core.state.identityGeneration)effects.updateAvailability();}
+        } catch(error) {operation.failed=true;throw error;} finally {if(core.state.folderRegistering===operation)core.state.folderRegistering=null;if(operation.identity===core.state.identityGeneration)effects.updateAvailability();}
     }
     function folderChoiceBusy() {
         return !!(core.state.submitting || core.state.unresolvedSubmission || core.state.sessionSelecting || core.state.attachmentUpload || core.state.sideCreating || folderMutationPending() || core.state.turnStatus === 'running' || core.state.sessions.find(row=>row.sessionId===core.state.selectedSessionId)?.running);
@@ -201,7 +201,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             }
             if (identity !== core.state.identityGeneration) return;
             rememberFolder(project?.projectId || null);
-        } finally {if(core.state.folderChanging===operation)core.state.folderChanging=null;if(identity===core.state.identityGeneration)effects.updateAvailability();}
+        } catch(error) {operation.failed=true;throw error;} finally {if(core.state.folderChanging===operation)core.state.folderChanging=null;if(identity===core.state.identityGeneration)effects.updateAvailability();}
     }
     let visibleRead;
     async function markVisibleSessionRead(isVisible) {

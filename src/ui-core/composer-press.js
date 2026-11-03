@@ -1,5 +1,22 @@
 /* Keep a composer gesture intact until the browser has dispatched its click. */
 globalThis.WeftComposerPress = {
+    paintHeld(input, core, draft) {
+        let strip=input.parentElement.querySelector('[data-held-draft]');
+        if (!draft) {strip?.remove();return;}
+        if (!strip) {
+            strip=document.createElement('div');strip.dataset.heldDraft='';strip.className='attachment-status';
+            const note=document.createElement('span');note.setAttribute('role','status');
+            const take=document.createElement('button');take.type='button';take.className='button quiet small';take.textContent='取回草稿';
+            take.onclick=()=>core.reclaimDraft(strip.dataset.heldDraft);
+            strip.append(note,take);input.before(strip);
+        }
+        strip.dataset.heldDraft=draft.requestId;
+        const summary=[draft.text,...draft.files].filter(Boolean).join(' · ');
+        const label=(draft.waiting?'等发送：':'未发送，草稿已保留：')+summary.slice(0,64);
+        if (strip.firstChild.textContent!==label) strip.firstChild.textContent=label;
+        strip.lastChild.disabled=!!input.value || !!core.currentAttachmentDrafts().length || !!core.state.attachmentUpload || !!core.state.sideCreating || !!core.state.sessionSelecting;
+        strip.lastChild.title=strip.lastChild.disabled?'当前草稿腾空后可以取回':'取回到当前输入框，不会自动发送';
+    },
     mount(button, repaint) {
         let pointer = null, releaseTimer;
         const release = () => {

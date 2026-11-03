@@ -401,10 +401,16 @@ const coreFolderPending=()=>uiCore.folderMutationPending?.()===true;
 let mobileFolderChoice;
 function updateComposer(){if(composerPress?.active)return;uiCore.syncMobileIdentity();
   if(globalThis.WeftFolderChoice && $('composer-dock')){mobileFolderChoice ||= WeftFolderChoice.create(uiCore,{form:$('draft').closest('.composer')||$('draft').parentElement,tools:$('plus-button').parentElement,toast,mobile:true});mobileFolderChoice.paint();}mobileMessageActions?.refresh();const view=uiCore.mobile.composerState($('draft').value);if(globalThis.WeftPhone?.owns(state.conversationId)&&!WeftPhone.active&&state.chatSource==='phone'){view.ready=false;view.draftDisabled=true;view.placeholder='这段手机对话仍可查看，请回到聊天开始新对话';view.attachmentsDisabled=true;view.voiceDisabled=true;view.modelDisabled=true;}if(globalThis.WeftPhone?.active){view.ready=!WeftPhone.sendBlocker($('draft').value);view.attachmentsDisabled=true;if(!window.weftNative)view.voiceDisabled=true;}reportDraftState();
+  const sharedWeb=state.logicalChats&&!window.weftNative&&state.chatSource==='host';
+  if(sharedWeb){
+    const shared=uiCore.composerState($('draft').value);
+    view.ready=!shared.sendDisabled;view.draftDisabled=shared.messageDisabled;view.mayHold=shared.mayHold;
+    globalThis.WeftComposerPress?.paintHeld($('draft'),uiCore,shared.heldDraft);
+  }else globalThis.WeftComposerPress?.paintHeld($('draft'),uiCore,null);
   renderQueuedTasks();
-  const button=$('send-button'), stop=view.sendHidden||state.sharedRunning||state.busy;
+  const button=$('send-button'), stop=(view.sendHidden||state.sharedRunning||state.busy)&&(!view.mayHold||!$('draft').value.trim()&&!currentAttachments().length);
   globalThis.WeftMobileMotion?.changed(button,String(stop),'160ms');
-  button.hidden=false;button.disabled=stop?!!state.sharedStopping||state.transitionPending:coreFolderPending()||(!view.ready&&!(window.weftNative&&state.loggedIn&&state.connection==='expired'&&$('draft').value.trim()));
+  button.hidden=false;button.disabled=stop?!!state.sharedStopping||state.transitionPending:(!sharedWeb&&coreFolderPending())||(!view.ready&&!(window.weftNative&&state.loggedIn&&state.connection==='expired'&&$('draft').value.trim()));
   button.classList.toggle('ready',stop||view.ready);button.classList.toggle('is-stop',stop);button.dataset.action=stop?'stop':'send';
   const voice=!stop&&!$('draft').value.trim()&&!currentAttachments().length&&!view.voiceDisabled;
   if(voice){button.dataset.action='voice';button.disabled=false;button.classList.add('ready');}

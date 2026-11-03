@@ -47,7 +47,7 @@
             const value = core.composerState(field.value);
             const hasContent = !!field.value.trim() || drafts.length > 0;
             const hasVoice = !!(globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition);
-            const action = value.running ? 'stop' : !hasContent && hasVoice ? 'voice' : 'send';
+            const action = value.running && !(hasContent && value.mayHold) ? 'stop' : !hasContent && hasVoice ? 'voice' : 'send';
             const label = action === 'stop' ? '停止回复' : action === 'voice' ? ui.voiceInput ? '停止语音输入' : '语音输入' : '发送';
             send.type = action === 'voice' ? 'button' : 'submit';
             send.dataset.action = action;

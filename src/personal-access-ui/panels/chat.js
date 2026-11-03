@@ -54,6 +54,7 @@ WeftPanels.register('chat', {
     function update() {
       if (disposed) return;
       const state = core.composerState(input.value);
+      globalThis.WeftComposerPress?.paintHeld(input,core,state.heldDraft);
       send.disabled = state.sendDisabled; stop.hidden = state.cancelHidden; stop.disabled = state.cancelDisabled;
       input.disabled = state.messageDisabled; attach.disabled = state.attachmentsDisabled; model.disabled = state.modelDisabled;
       input.placeholder = state.running ? state.placeholder : '聊点什么…';
