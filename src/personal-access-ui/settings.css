@@ -4,18 +4,28 @@
   max-width:none; max-height:none; margin:auto; padding:0; border:0; overflow:hidden;
   border-radius:16px; background:var(--canvas); color:var(--ink); box-shadow:var(--shadow-float);
   font:400 var(--ui-size,14px)/1.5 var(--wm-font-family-body);
-  animation:none; opacity:0; transform:translateY(12px) scale(.985);
-  transition:opacity var(--dur-1) var(--ease-out),transform var(--dur-1) var(--ease-out),display var(--dur-1) allow-discrete,overlay var(--dur-1) allow-discrete;
   --settings-body:var(--ui-size,14px); --settings-small:calc(var(--settings-body) - 1px);
   --settings-control-width:46%; --settings-content-width:720px;
   grid-template-columns:208px minmax(0,1fr);
 }
-#settings-dialog[open] { display:grid; opacity:1; transform:none; }
-#settings-dialog::backdrop { background:color-mix(in srgb,var(--ink) 15%,transparent); opacity:0; transition:opacity var(--dur-1) var(--ease-out),display var(--dur-1) allow-discrete,overlay var(--dur-1) allow-discrete; }
-#settings-dialog:not([open]), #settings-dialog:not([open])::backdrop { transition-duration:calc(var(--dur-1) / 2); pointer-events:none; }
+#settings-dialog[open] { display:grid; }
+#cloud-login-dialog { flex-direction:column; }
+:is(#settings-dialog,#cloud-login-dialog) {
+  animation:none; opacity:0; transform:translateY(10px) scale(.985);
+  transition:opacity var(--dur-2) var(--ease-in-out),transform var(--dur-2) var(--ease-in-out),display var(--dur-2) allow-discrete,overlay var(--dur-2) allow-discrete;
+}
+:is(#settings-dialog,#cloud-login-dialog)[open] { opacity:1; transform:none; transition-timing-function:var(--ease-out); }
+:is(#settings-dialog,#cloud-login-dialog)::backdrop {
+  opacity:0; transition:opacity var(--dur-2) var(--ease-in-out),display var(--dur-2) allow-discrete,overlay var(--dur-2) allow-discrete;
+}
+#settings-dialog::backdrop { background:color-mix(in srgb,var(--ink) 15%,transparent); }
+:is(#settings-dialog,#cloud-login-dialog):not([open]), :is(#settings-dialog,#cloud-login-dialog):not([open])::backdrop { pointer-events:none; }
 body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-filter:none; }
-#settings-dialog[open]::backdrop { opacity:1; }
-@starting-style { #settings-dialog[open] { opacity:0; transform:translateY(12px) scale(.985); } #settings-dialog[open]::backdrop { opacity:0; } }
+:is(#settings-dialog,#cloud-login-dialog)[open]::backdrop { opacity:1; }
+@starting-style {
+  :is(#settings-dialog,#cloud-login-dialog)[open] { opacity:0; transform:translateY(10px) scale(.985); }
+  :is(#settings-dialog,#cloud-login-dialog)[open]::backdrop { opacity:0; }
+}
 .settings-sidebar { min-height:0; padding:20px 10px 12px; display:flex; flex-direction:column; gap:12px; background:color-mix(in srgb,var(--ink) 2.5%,var(--canvas)); }
 .settings-sidebar-title { margin:0 10px; font-size:16px; font-weight:600; color:var(--ink); }
 .settings-search-box { position:relative; display:flex; align-items:center; margin-inline:2px; }
@@ -39,6 +49,7 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
 .settings-dialog #account-view[hidden] { display:none; }
 /* The shell hides account-view synchronously; retain its painting through native dialog exit. */
 #settings-dialog:not([open]) #account-view[hidden] { display:flex!important; }
+#cloud-login-dialog:not([open]) #login-view[hidden] { display:block!important; }
 .settings-content { flex:1; min-height:0; position:relative; overflow:hidden; display:grid; isolation:isolate; }
 .settings-category { grid-area:1/1; align-self:stretch; box-sizing:border-box; min-width:0; min-height:0; width:100%; margin:0; padding:4px 28px 28px; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; scroll-padding:12px; }
 .settings-category[inert] { pointer-events:none; }
@@ -306,8 +317,8 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
   #settings-dialog[data-phone-settings][data-mobile-page=category] .settings-list-back { display:flex; }
   .settings-list-back > svg { transform:rotate(90deg); }
 }
-html[data-reduced-motion] :is(#settings-dialog,.model-editor-dialog),html[data-reduced-motion] :is(#settings-dialog,.model-editor-dialog)::backdrop { transition:none; transform:none; }
-@media(prefers-reduced-motion:reduce) { html:not([data-motion-full]) :is(#settings-dialog,.model-editor-dialog),html:not([data-motion-full]) :is(#settings-dialog,.model-editor-dialog)::backdrop { transition:none; transform:none; } }
+html[data-reduced-motion] :is(#settings-dialog,#cloud-login-dialog,.model-editor-dialog),html[data-reduced-motion] :is(#settings-dialog,#cloud-login-dialog,.model-editor-dialog)::backdrop { transition:none; transform:none; }
+@media(prefers-reduced-motion:reduce) { html:not([data-motion-full]) :is(#settings-dialog,#cloud-login-dialog,.model-editor-dialog),html:not([data-motion-full]) :is(#settings-dialog,#cloud-login-dialog,.model-editor-dialog)::backdrop { transition:none; transform:none; } }
 
 /* Existing account menu and non-modal controls. */
 #account-menu { width:max-content;min-width:224px;max-width:calc(100vw - var(--wm-space-24));padding:var(--wm-space-6);font-size:var(--wm-type-menu); }
