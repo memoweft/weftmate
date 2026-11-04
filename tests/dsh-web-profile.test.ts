@@ -198,11 +198,15 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.match(current, /weftmate-compaction\.mjs/)
     assert.match(current, /completionDelivery: wakeup/)
     assert.match(current, /backgroundMode: one-shot/)
-    await writeFile(composition, current.replace('completionDelivery: wakeup', 'completionDelivery: quiet')
+    const previousWeb = current.replace('    search: true', '    search: false')
+    await writeFile(composition, previousWeb, 'utf8')
+    assert.equal(await writeWebProfile(root, 'weftmate'), 'repaired')
+    assert.equal(await readFile(composition, 'utf8'), current)
+    await writeFile(composition, previousWeb.replace('completionDelivery: wakeup', 'completionDelivery: quiet')
       .replace('backgroundMode: one-shot', 'backgroundMode: continuable'), 'utf8')
     assert.equal(await writeWebProfile(root, 'weftmate'), 'repaired')
     assert.equal(await readFile(composition, 'utf8'), current)
-    const previousLongTask = current
+    const previousLongTask = previousWeb
       .replace('completionDelivery: wakeup', 'completionDelivery: quiet')
       .replace('backgroundMode: one-shot', 'backgroundMode: continuable')
       .replace(/      For long tasks,[\s\S]*?Keep reusable methods and pitfalls in this conversation\.\n/, '')

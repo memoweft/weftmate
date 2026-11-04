@@ -12,7 +12,7 @@ import { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy';
 import { selectProjectContext, inheritProjectContext, routeProjectTool, installProjectSandbox, projectToolDecision, projectContextNotice, executionDirectory, insideProject } from './personal-project-context.mjs';
 import { shellWriteTargets } from './personal-write-targets.mjs';
 import { trackNativeFiles, appendNativeArtifacts, conversationCreatedFiles, createNativeFileProvenance } from './personal-native-files.mjs';
-import { personalWebFetchProvider } from './personal-web-fetch.mjs';
+import { personalWebFetchProvider, personalWebSearchProvider } from './personal-web-fetch.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
 import PlanModeController, { foldPlanMode } from '@deepseek-ai/dsh-plan-mode';
 import { approvalRequired, approvalPrompt, classifyPersonalRisk, RISK_LABELS } from './personal-approval-policy.mjs';
@@ -701,9 +701,11 @@ export function apply(ctx) {
   const webExecution = new AsyncLocalStorage();
   const delegatedExecutions = new WeakMap();
   const fileProvenance = createNativeFileProvenance(personalExecutionIdentity);
-  const disposeFetch = ctx.web.registerFetchProvider(personalWebFetchProvider(bridge,
-    () => webExecution.getStore(), exec => personalExecutionIdentity(
-      delegatedExecutions.get(exec.agent) ?? exec), exec => policyFor(delegatedExecutions.get(exec.agent)?.agent ?? exec.agent)));
+  const currentWebExecution = () => webExecution.getStore();
+  const webIdentity = exec => personalExecutionIdentity(delegatedExecutions.get(exec.agent) ?? exec);
+  const disposeSearch = ctx.web.registerSearchProvider(personalWebSearchProvider(bridge, currentWebExecution, webIdentity));
+  const disposeFetch = ctx.web.registerFetchProvider(personalWebFetchProvider(bridge, currentWebExecution,
+    webIdentity, exec => policyFor(delegatedExecutions.get(exec.agent)?.agent ?? exec.agent)));
   const initializeFilePolicy = agent => initializePersonalFilePolicy(agent, ctx.get('sandboxPolicy'));
   // Presets can be selected after agent/created, before the first native step.
   ctx.on('agent/pre-step', async (step, next) => {
@@ -869,7 +871,7 @@ export function apply(ctx) {
   ctx.on('tools/execute', (exec, next) => webExecution.run(exec, () => trackNativeFiles(bridge, exec,
     () => trackPersonalExecution(bridge, exec, next, background, approvals), fileProvenance.identity)));
   ctx.on('tools/post-execute', appendNativeArtifacts);
-  ctx.effect(() => () => { disposeProjectSandbox(); disposeFetch(); disposeProof(); approvals.close(); background.close(); bridge.close(); },
+  ctx.effect(() => () => { disposeProjectSandbox(); disposeSearch(); disposeFetch(); disposeProof(); approvals.close(); background.close(); bridge.close(); },
     'weftmate-personal-desktop: lifecycle');
 }
 
