@@ -86,7 +86,27 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
         else ui.byId('legal-text').textContent = '内容暂时无法读取，请重试。';
         ui.byId('legal-reader').inert = false; ui.byId('legal-reader').showModal();
     }
+    let comparison;
+    function paintComparison(pairing) {
+        if (!pairing) { comparison?.close(); return; }
+        if (!comparison) {
+            comparison = ui.element('dialog', 'dialog cloud-device-dialog');
+            comparison.setAttribute('aria-label', '核对入组设备');
+            const number = ui.element('output'); number.id='joining-device-number';
+            const detail = ui.element('p'); detail.setAttribute('role','status');
+            const close = ui.element('button','button secondary','关闭'); close.type='button';
+            close.onclick=()=>core.cancelCloudPairing();
+            comparison.addEventListener('cancel', event=>{event.preventDefault();core.cancelCloudPairing();});
+            comparison.append(ui.element('h2','','核对两台设备的数字'),number,detail,close);
+            document.body.append(comparison);
+        }
+        const code=pairing.verificationCode;
+        comparison.querySelector('output').textContent=code ? code.slice(0,3)+' '+code.slice(3) : '';
+        comparison.querySelector('p').textContent=pairing.error || (code ? '两边数字一致后，请在发出二维码的设备上确认。' : '正在核对设备…');
+        if (!comparison.open) comparison.showModal();
+    }
     function paintCloudAuth(value) {
+        paintComparison(value.pairing);
         paintLoginDialog(!!value.modal);
         if (value.localDesktop) {
             for (const id of ['setup-password', 'setup-confirm']) {

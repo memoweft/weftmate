@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
-import { webcrypto } from 'node:crypto';
+import { webcrypto, randomBytes, createHash } from 'node:crypto';
 import test from 'node:test';
 import { IDBFactory } from 'fake-indexeddb';
 import { SignJWT, jwtVerify, createLocalJWKSet, importJWK, decodeProtectedHeader } from 'jose';
@@ -62,4 +62,19 @@ test('refresh credentials are replaced before exchange and erased after receivin
     return { account: { ownerId: 'test-owner' }, device: { id: 'device-one' }, csrfToken: 'test' };
   };
   await f.client.exchange(); assert.equal(await f.storage(f.client.tokenId), undefined);
+});
+
+test('browser enrollment keeps the first key across concurrent invitations and refuses a mismatched fingerprint', async () => {
+  const f=fixture(), issuer='https://issuer.example', sub='synthetic-account';
+  const stored=()=>f.storage('account-data:'+JSON.stringify([issuer,sub]));
+  const offer=()=>{const raw=randomBytes(32);return {issuer,sub,keyId:createHash('sha256').update(raw).digest('base64url'),secret:raw.toString('base64url')};};
+  const offers=[offer(),offer()], current=()=>{};
+  const results=await Promise.allSettled(offers.map(payload=>f.installAccountKey(payload,current)));
+  assert.equal(results.filter(x=>x.status==='fulfilled').length,1);
+  assert.equal(results.find(x=>x.status==='rejected').reason.code,'ACCOUNT_KEY_CONFLICT');
+  const record=await stored(),winner=offers.find(p=>p.keyId===record.keyId);
+  assert.equal(record.key.extractable,false);
+  await assert.rejects(f.installAccountKey({...winner,secret:offer().secret},current),e=>e.code==='ACCOUNT_KEY_INVALID');
+  assert.equal(await f.installAccountKey(winner,current),winner.keyId);
+  assert.equal((await stored()).keyId,winner.keyId);
 });

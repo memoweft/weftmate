@@ -27,6 +27,46 @@
       tx.onabort = tx.onerror = () => reject(new Error('STORAGE_UNAVAILABLE'));
     });
   }
+  // One non-exportable device-local key per cloud identity. Compare and insert inside one IndexedDB transaction.
+  async function installAccountKey({issuer,sub,keyId,secret}, current) {
+    const bytes = decode(secret);
+    let key;
+    try {
+      if (bytes.length !== 32 || encode(bytes) !== secret || encode(await crypto.subtle.digest('SHA-256', bytes)) !== keyId)
+        throw {code:'ACCOUNT_KEY_INVALID'};
+      key = await crypto.subtle.importKey('raw', bytes, 'AES-GCM', false, ['encrypt','decrypt']);
+    }
+    finally { bytes.fill(0); }
+    const database = await db(), slot='account-data:'+JSON.stringify([issuer,sub]);
+    current();
+    let existing;
+    await new Promise((resolve,reject)=>{
+      const tx=database.transaction('credentials','readwrite'), store=tx.objectStore('credentials');
+      const lookup=store.get(slot);
+      let failure;
+      lookup.onsuccess=()=>{
+        try {
+          current();
+          if (!lookup.result) store.add({keyId,key},slot);
+          else {
+            existing=lookup.result.key;
+            if (lookup.result.keyId!==keyId || existing?.type!=='secret' || existing.extractable || existing.algorithm.name!=='AES-GCM')
+              throw {code:'ACCOUNT_KEY_CONFLICT'};
+          }
+        } catch (error) { failure=error;tx.abort(); }
+      };
+      tx.oncomplete=()=>resolve(keyId);
+      tx.onabort=tx.onerror=()=>reject(failure || {code:'ACCOUNT_KEY_STORAGE_UNAVAILABLE'});
+    });
+    if (existing) {
+      // An existing record must actually open data from the incoming key, even if the saved label matches.
+      const iv=crypto.getRandomValues(new Uint8Array(12));
+      const probe=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new Uint8Array());
+      try { await crypto.subtle.decrypt({name:'AES-GCM',iv},existing,probe); }
+      catch { throw {code:'ACCOUNT_KEY_CONFLICT'}; }
+    }
+    current();return keyId;
+  }
   function secureOrigin(value) {
     const url = new URL(value);
     if (url.username || url.password || url.search || url.hash || !(url.protocol === 'https:' ||
@@ -186,5 +226,5 @@
     }
     async forget() { if (!this.config) await this.configure(); await this.credentialStorage(this.tokenId, undefined, true); await storage('pending:' + this.host, undefined, true); }
   }
-  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage };
+  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, installAccountKey };
 })();

@@ -24,7 +24,7 @@ export async function createHostCloudIdentity(context, options) {
   let poll;
   let syncing = null;
   let offlineTasksSupported=false, cloudBackupSupported=false;
-  let multiHostSupported=false;
+  let multiHostSupported=false, accountKeyRegistry=false;
   const computerLabels = new Map();
   let desktopQueue = Promise.resolve();
   const activeResponses = new Map();
@@ -207,6 +207,7 @@ export async function createHostCloudIdentity(context, options) {
     closeInvalidResponses();
     offlineTasksSupported=envelope.capabilities?.offlineTasks===1;
     multiHostSupported=envelope.capabilities?.multiHost===1;
+    accountKeyRegistry=envelope.capabilities?.accountKeyRegistry===1;
     cloudBackupSupported=envelope.capabilities?.cloudBackup===1;
   }
   async function syncRevocations() {
@@ -288,11 +289,17 @@ export async function createHostCloudIdentity(context, options) {
       if (route === '/cloud/binding' && request.method === 'GET') {
         const current = local(request);
         const binding = Object.values(store.state.bindings).find(b => b.ownerId === current.ownerId && b.status !== 'unbound');
-        context.json(response, 200, { status: binding?.status || 'unbound',
-          canManage: current.via === 'cookie' && (['password', 'desktop'].includes(current.device.authKind) ||
+        const canManage = current.via === 'cookie' && (['password', 'desktop'].includes(current.device.authKind) ||
             store.state.devices[store.state.sessions[current.deviceId]?.trustId]?.isHost === true) &&
             context.requestAuthority(request) === context.origin &&
-            !Object.keys(request.headers).some(k => k === 'forwarded' || k.startsWith('x-forwarded-')), hostId }); return true;
+            !Object.keys(request.headers).some(k => k === 'forwarded' || k.startsWith('x-forwarded-'));
+        let dataAccount;
+        if (canManage && binding?.status === 'active' && accountKeyRegistry && options.accountKeys) {
+          try { dataAccount = {issuer:binding.issuer,sub:binding.sub,keyId:options.accountKeys.status(binding.issuer,binding.sub)}; }
+          catch { dataAccount = {unavailable:true}; }
+        }
+        context.json(response, 200, { status: binding?.status || 'unbound', canManage, hostId, ...(dataAccount ? {dataAccount} : {}) });
+        return true;
       }
       if (route === '/cloud/devices/pending' && request.method === 'GET') {
         const current = local(request);
@@ -503,14 +510,37 @@ export async function createHostCloudIdentity(context, options) {
         if (device.status !== 'trusted') throw failure('DEVICE_NOT_TRUSTED', 403);
         context.json(response, 200, await hostTrust(trust[1])); return true;
       }
+      if (route === '/cloud/account-key/create') {
+        context.requireDirectLocal(request);
+        const current = local(request, true);
+        if (!accountKeyRegistry) throw failure('ACCOUNT_KEY_REGISTRY_UNAVAILABLE',503);
+        exactKeys(body, ['issuer','sub'], ['issuer','sub']);
+        const keyId = await context.serial(async () => {
+          local(request, true);
+          const binding = store.state.bindings[bindingKey(config.issuer, body.sub)];
+          if (!options.accountKeys || body.issuer !== config.issuer || binding?.status !== 'active' || binding.ownerId !== current.ownerId)
+            throw failure('CLOUD_NOT_BOUND', 403);
+          return options.accountKeys.initialize(config.issuer, binding.sub, keyId =>
+            signedRequest('/hosts/account-key/claim', { sub: binding.sub, keyId }).catch(() => {
+              throw failure('ACCOUNT_KEY_REGISTRY_UNAVAILABLE', 503);
+            }));
+        });
+        context.json(response, 200, {keyId}); return true;
+      }
       if (route === '/cloud/pairings') {
         const current = local(request, true);
-        exactKeys(body, [], []);
+        exactKeys(body, ['keyId']);
+        if (body.keyId !== undefined) {
+          context.requireDirectLocal(request);
+          if (typeof body.keyId !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(body.keyId)) throw failure('INVALID_REQUEST');
+        }
         const challenge = randomBytes(32).toString('base64url');
         const result = await context.serial(() => edit(next => {
           local(request, true);
           const binding = Object.values(next.bindings).find(b => b.ownerId === current.ownerId && b.status === 'active');
           if (!binding) throw failure('CLOUD_NOT_BOUND', 403);
+          if (body.keyId && options.accountKeys?.status(config.issuer, binding.sub) !== body.keyId)
+            throw failure('ACCOUNT_KEY_CONFLICT', 409);
           for (const [id, p] of Object.entries(next.pairings)) {
             if (p.expiresAt < context.timestamp() - 600_000) delete next.pairings[id];
             else if (p.ownerId === current.ownerId && p.state !== 'completed') p.state = 'cancelled';
@@ -519,8 +549,11 @@ export async function createHostCloudIdentity(context, options) {
           const transcript = [2, config.issuer, binding.sub, hostId, next.tls.spki, pairingJkt(next.installation.publicJwk),
             challenge, expiresAt, origin, relay?.baseUrl || ''];
           const hostNonce = randomBytes(32).toString('base64url');
-          next.pairings[digest(challenge)] = { version: 2, ownerId: current.ownerId, expiresAt, transcript, hostNonce, state: 'waiting' };
-          return { version: 2, challenge, expiresIn: 120, expiresAt, hostId, tlsSpki: next.tls.spki,
+          // The scanned fingerprint participates in both commitments and the comparison.
+          if (body.keyId) transcript.push(body.keyId);
+          const enrollment = body.keyId ? {keyId: body.keyId} : {};
+          next.pairings[digest(challenge)] = { ...enrollment, version: 2, ownerId: current.ownerId, expiresAt, transcript, hostNonce, state: 'waiting' };
+          return { ...enrollment, version: 2, challenge, expiresIn: 120, expiresAt, hostId, tlsSpki: next.tls.spki,
             publicJwk: next.installation.publicJwk, origin, relay, issuer: config.issuer, sub: binding.sub,
             hostCommitment: hostCommitment(transcript, hostNonce) };
         }));
@@ -534,9 +567,13 @@ export async function createHostCloudIdentity(context, options) {
           local(request, true);
           const p = next.pairings[digest(body.challenge)];
           if (!p || p.version !== 2 || p.ownerId !== current.ownerId) throw failure('PAIRING_INVALID', 401);
+          if (p.keyId) {
+            context.requireDirectLocal(request, 'LOCAL_SESSION_REQUIRED');
+            local(request, true);
+          }
           if (decision) {
             const state = pairingState(p, context.timestamp());
-            if (['completed', 'cancelled', 'expired'].includes(state)) throw failure('PAIRING_INVALID', 401);
+            if (['delivered', 'completed', 'cancelled', 'expired'].includes(state)) throw failure('PAIRING_INVALID', 401);
             if (body.decision === 'cancel') p.state = 'cancelled';
             else {
               if (state !== 'comparing' || body.verificationCode !== verificationCode(p)) throw failure('PAIRING_CONFLICT', 409);
@@ -549,11 +586,12 @@ export async function createHostCloudIdentity(context, options) {
         }));
         context.json(response, 200, result); return true;
       }
-      const pairingAction = /^\/cloud\/pairings\/(join|reveal|redeem)$/.exec(route)?.[1];
+      const pairingAction = /^\/cloud\/pairings\/(join|reveal|key|redeem)$/.exec(route)?.[1];
       if (route === '/auth/cloud-session' || route === '/auth/cloud-channel' || pairingAction) {
         const fields = ['accessToken', 'deviceName', ...(pairingAction ? ['challenge'] : []),
           ...(pairingAction === 'join' ? ['phoneCommitment'] : pairingAction === 'reveal' ? ['phoneNonce'] : [])];
-        exactKeys(body, fields, fields);
+        const extra = pairingAction === 'key' ? ['recipient'] : pairingAction === 'redeem' ? ['receipt'] : [];
+        exactKeys(body, [...fields, ...extra], fields);
         if (pairingAction && (typeof body.challenge !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(body.challenge) ||
             pairingAction === 'join' && !/^[A-Za-z0-9_-]{43}$/.test(body.phoneCommitment) ||
             pairingAction === 'reveal' && !/^[A-Za-z0-9_-]{43}$/.test(body.phoneNonce))) throw failure('INVALID_REQUEST');
@@ -568,7 +606,7 @@ export async function createHostCloudIdentity(context, options) {
         const key = bindingKey(config.issuer, identity.sub);
         const result = await context.serial(async () => {
           let transition, pending;
-          await edit(next => {
+          await edit(async next => {
             if ((next.nonces[proof.nonce] ?? 0) <= context.timestamp() || next.replays[proof.replayId])
               throw failure('DPOP_REPLAY', 401);
             const binding = next.bindings[key];
@@ -601,7 +639,19 @@ export async function createHostCloudIdentity(context, options) {
                   if (phoneCommitment(body.challenge, identity.device_id, proof.jkt, body.phoneNonce) !== p.phone.commitment) throw failure('PAIRING_INVALID', 401);
                   if (p.state === 'committed') { p.phone.nonce = body.phoneNonce; p.state = 'comparing'; }
                 } else {
-                  if (p.state !== 'confirmed') throw failure('PAIRING_CONFIRMATION_REQUIRED', 403);
+                  if (!['confirmed','delivered'].includes(p.state)) throw failure('PAIRING_CONFIRMATION_REQUIRED', 403);
+                  const device = Object.values(next.devices).find(d => d.bindingKey === key && d.cloudDeviceId === identity.device_id && d.jkt === proof.jkt);
+                  const blocked = Object.values(next.devices).some(d => d.bindingKey === key && d.cloudDeviceId === identity.device_id &&
+                    ['denied','revoked'].includes(d.status));
+                  if (!device || blocked) throw failure('DEVICE_NOT_TRUSTED', 403);
+                  if (pairingAction === 'key') {
+                    if (!options.accountKeys || !p.keyId) throw failure('PAIRING_INVALID', 401);
+                    pending = await options.accountKeys.grant(p, body.recipient, context.timestamp);
+                    return;
+                  }
+                  if (p.keyId && (p.state !== 'delivered' || typeof body.receipt !== 'string' ||
+                      body.receipt.length !== 43 || digest(body.receipt) !== p.receiptHash)) throw failure('PAIRING_INVALID', 401);
+                  delete p.envelope; delete p.receiptHash;
                   p.state = 'completed';
                 }
               }
@@ -648,7 +698,11 @@ export async function createHostCloudIdentity(context, options) {
         const keepTrust = next.sessions[keepDeviceId]?.trustId;
         for (const [id,row] of Object.entries(next.devices)) if (row.ownerId===ownerId && (removeBinding || id!==keepTrust)) delete next.devices[id];
         for (const [id,row] of Object.entries(next.pairings)) if (row.ownerId===ownerId) delete next.pairings[id];
-        if (removeBinding) for (const id of bindings) { delete next.bindings[id]; delete next.epochs[id]; }
+        if (removeBinding) for (const id of bindings) {
+          const binding=next.bindings[id];
+          options.accountKeys?.remove(binding.issuer,binding.sub);
+          delete next.bindings[id]; delete next.epochs[id];
+        }
       });
       closeInvalidResponses();
     },
@@ -672,6 +726,16 @@ export async function createHostCloudIdentity(context, options) {
     offlineTasksSupported:()=>offlineTasksSupported,
     computerLabel:ownerId=>computerLabels.get(ownerId),
     cloudBackupSupported:()=>cloudBackupSupported,
+    importAccountKey(ownerId, { issuer, sub, keyId, secret }) {
+      return context.serial(async () => {
+        const binding = store.state.bindings[bindingKey(config.issuer, sub)];
+        if (!options.accountKeys || issuer !== config.issuer || binding?.status !== 'active' || binding.ownerId !== ownerId)
+          throw failure('CLOUD_NOT_BOUND', 403);
+        const registered = await signedRequest('/hosts/account-key/read', {sub});
+        if (!registered.keyId || registered.keyId !== keyId) throw failure('ACCOUNT_KEY_CONFLICT', 409);
+        return options.accountKeys.install(issuer, sub, keyId, secret);
+      });
+    },
     backupAccount(ownerId) {
       const binding=Object.values(store.state.bindings).find(b=>b.ownerId===ownerId&&b.status==='active');
       return binding ? { accountId:binding.sub, issuer:binding.issuer } : null;
@@ -710,7 +774,7 @@ export async function createHostCloudIdentity(context, options) {
   };
 }
 
-const CLOUD_CODES = new Set(['INVALID_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND', 'METHOD_NOT_ALLOWED',
+const CLOUD_CODES = new Set(['ACCOUNT_KEY_REGISTRY_UNAVAILABLE','ACCOUNT_KEY_CONFLICT','ACCOUNT_KEY_INVALID','INVALID_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND', 'METHOD_NOT_ALLOWED',
   'ORIGIN_NOT_ALLOWED', 'UNSUPPORTED_MEDIA_TYPE', 'BODY_TOO_LARGE', 'AMBIGUOUS_AUTH', 'LOCAL_SESSION_REQUIRED',
   'CLOUD_TOKEN_INVALID', 'CLOUD_DEVICE_VERIFICATION_REQUIRED', 'DPOP_INVALID', 'DPOP_REPLAY', 'CLOUD_UNAVAILABLE', 'CLOUD_BINDING_CONFLICT',
   'CLAIM_INVALID', 'CLOUD_NOT_BOUND', 'DEVICE_NOT_TRUSTED', 'DEVICE_DECISION_CONFLICT', 'PAIRING_INVALID', 'PAIRING_CONFLICT', 'PAIRING_CONFIRMATION_REQUIRED',

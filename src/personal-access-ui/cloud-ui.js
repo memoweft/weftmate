@@ -27,7 +27,7 @@
         const ticket = ++pairingGeneration; clearTimeout(pairingTimer); $('pairing-confirm').disabled = true;
         closingPairing = (async () => {
           // Keep the cancellation visible and retryable if the server cannot receive it.
-          if (challenge && !['completed','cancelled','expired'].includes(pairingState)) {
+          if (challenge && !['delivered','completed','cancelled','expired'].includes(pairingState)) {
             try { await pairingRequest('decision', { decision: 'cancel' }, challenge); }
             catch (error) { if (ticket === pairingGeneration) { $('pairing-error').textContent = message(error); void pollPairing(ticket); } return false; }
           }
@@ -92,26 +92,36 @@
           $('pairing-open').hidden = !result.canManage || result.status !== 'active';
         } catch { $('cloud-account').hidden = true; $('pairing-open').hidden = true; }
       }
-      async function pairing() {
+      let invitationKeyId;
+      async function pairing(keyId) {
         if (dialog.open && activePairing && !['completed','cancelled','expired'].includes(pairingState)) return;
         clearPairing();
+        invitationKeyId=keyId;
         const ticket = ++pairingGeneration;
         if (!dialog.open) dialog.showModal();
-        pairingState = 'waiting'; $('pairing-title').textContent = '添加设备'; $('pairing-error').textContent = '';
+        pairingState = 'waiting'; $('pairing-title').textContent = keyId ? '扫码加入数据组' : '添加设备'; $('pairing-error').textContent = '';
         $('pairing-scan').hidden = false; $('pairing-number').textContent = '扫码后显示'; $('pairing-device').textContent = '';
         $('pairing-countdown').textContent = ''; $('pairing-confirm').hidden = false; $('pairing-confirm').disabled = true;
         $('pairing-cancel').hidden = false; $('pairing-restart').hidden = true;
         $('pairing-status').textContent = '正在生成…'; $('pairing-qr').hidden = true; $('pairing-qr').removeAttribute('src'); $('pairing-code').value = '';
         try {
-          const result = await accessApi('/cloud/pairings', { method: 'POST', protectedWrite: true, body: {} });
+          const result = await accessApi('/cloud/pairings', { method: 'POST', protectedWrite: true, body: keyId ? {keyId} : {} });
+          if (keyId && result.keyId !== keyId) throw {code:'ACCOUNT_KEY_INVALID'};
           if (ticket !== pairingGeneration) { await pairingRequest('decision', {decision:'cancel'}, result.challenge); return; }
           activePairing = result;
           const code = WeftCloud.pairingCode(result);
           const url = (result.relay?.baseUrl || result.origin) + '/personal/v1/ui/#pair=' + code.slice(4);
-          const qr = await WeftCloudVendor.QRCode.toDataURL(url, { width: 280, margin: 4, errorCorrectionLevel: 'M' });
+          const qr = await WeftCloudVendor.QRCode.toDataURL(url, { scale: 5, margin: 4, errorCorrectionLevel: 'M' });
           if (ticket !== pairingGeneration) return;
-          $('pairing-qr').src = qr; $('pairing-qr').hidden = false; $('pairing-code').value = code;
-          $('pairing-status').textContent = '用手机扫描二维码。扫码后，请核对电脑和手机显示的六位数字。';
+          const image = $('pairing-qr');
+          if (keyId) {
+            // Fit an integer number of screen pixels per module, including the quiet zone.
+            const modules = WeftCloudVendor.QRCode.create(url, {errorCorrectionLevel:'M'}).modules.size + 8;
+            const available = $('pairing-scan').clientWidth;
+            image.width = modules * Math.max(1, Math.min(5, Math.floor(available / modules)));
+          } else image.width = 280;
+          image.src = qr; image.hidden = false; $('pairing-code').value = code;
+          $('pairing-status').textContent = keyId ? '用要加入的设备扫码。两边数字一致，确认后才会向该设备发送账号钥匙。' : '用手机扫描二维码。扫码后，请核对电脑和手机显示的六位数字。';
           const deadline = Date.now() + result.expiresIn * 1000;
           const tick = () => { const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
             $('pairing-countdown').textContent = seconds ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} 后过期` : '本次配对已过期';
@@ -123,8 +133,10 @@
         pairingState = result.state; $('pairing-confirm').disabled = result.state !== 'comparing';
         $('pairing-device').textContent = result.deviceName ? `正在配对：${result.deviceName}` : '';
         if (result.verificationCode) $('pairing-number').textContent = result.verificationCode.slice(0,3) + ' ' + result.verificationCode.slice(3);
-        const copy = {committed:'手机已扫码，正在准备核对数字…',comparing:'请核对两边的六位数字。只有完全一致时，才确认配对。',confirmed:'已确认，正在等待手机完成连接…',completed:'配对成功，手机现在可以连接这台电脑。',cancelled:'已取消，本次二维码和配对码已作废。',expired:'配对已过期，请重新添加设备。'};
+        const copy = {committed:'手机已扫码，正在准备核对数字…',comparing:'请核对两边的六位数字。只有完全一致时，才确认配对。',confirmed:'已确认，正在等待手机完成连接…',delivered:'钥匙已加密送出，等待新设备保存。',completed:invitationKeyId?'对方已保存账号钥匙，入组完成。':'配对成功，手机现在可以连接这台电脑。',cancelled:'已取消，本次二维码和配对码已作废。',expired:'配对已过期，请重新添加设备。'};
         if (copy[result.state]) $('pairing-status').textContent = copy[result.state];
+        $('pairing-cancel').textContent = result.state === 'delivered' ? '关闭' : '取消配对';
+        if (invitationKeyId && result.state==='comparing') $('pairing-status').textContent='请在两台设备上核对数字。确认后将向这台设备交付账号钥匙。';
         $('pairing-scan').hidden = result.state !== 'waiting';
         if (['completed','cancelled','expired'].includes(result.state)) {
           pairingGeneration++;
@@ -161,7 +173,7 @@
       dialog.addEventListener('cancel', event => { event.preventDefault(); void stopPairing(); });
       $('pairing-confirm').addEventListener('click', () => void decidePairing('confirm'));
       $('pairing-cancel').addEventListener('click', () => void decidePairing('cancel'));
-      $('pairing-restart').addEventListener('click', () => { clearPairing(); void pairing(); });
+      $('pairing-restart').addEventListener('click', () => { clearPairing(); void pairing(invitationKeyId); });
       $('pairing-copy').addEventListener('click', () => navigator.clipboard.writeText($('pairing-code').value)
         .then(() => toast('配对码已复制。'), () => toast('请选中配对码复制。')));
       $('cloud-wait-cancel').addEventListener('click', () => { cancel(); show('login'); });

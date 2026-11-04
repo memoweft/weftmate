@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   showProjectFolder: id => ipcRenderer.invoke('wm:desktop:project-show', id),
   droppedProjectFolder: file => { const path = webUtils.getPathForFile(file); return path ? ipcRenderer.invoke('wm:desktop:project-drop', path) : Promise.resolve(null); },
   identity: () => ipcRenderer.invoke('wm:desktop:identity'),
+  installAccountKey: payload => ipcRenderer.invoke('wm:desktop:install-account-key', payload),
   credentials: (key, value, remove) => ipcRenderer.invoke('wm:desktop:credentials', key, value, remove),
   cloudCredentialsPresent: () => ipcRenderer.invoke('wm:desktop:cloud-credentials-present'),
   cloudKey: (scope) => ipcRenderer.invoke('wm:desktop:key', scope),

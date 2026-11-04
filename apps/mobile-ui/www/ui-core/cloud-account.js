@@ -33,6 +33,10 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       PAIRING_EXPIRED: '配对码已过期，请在电脑上重新添加设备，再重新扫码。',
       PAIRING_UPGRADE_REQUIRED: '请更新手机上的 WeftMate 后重新扫码。',
       PAIRING_CONFLICT: '这个配对码已被另一台设备使用，请在电脑上重新添加设备，再重新扫码。',
+      ACCOUNT_KEY_CONFLICT: '账号钥匙指纹不同。请扫描原持钥设备的入组码，已有钥匙会保留。',
+      ACCOUNT_KEY_REGISTRY_UNAVAILABLE: '暂时无法向账号服务核对钥匙指纹，请确认服务已更新并重试。',
+      ACCOUNT_KEY_INVALID: '无法核实账号钥匙，请重新扫码。',
+      ACCOUNT_KEY_STORAGE_UNAVAILABLE: '设备无法安全保存账号钥匙，请检查本机存储后重新扫码。',
       PAIRING_HOST_MISMATCH: '未能核对电脑的配对信息，已停止连接。请重新扫码。',
       PAIRING_CONFIRMATION_REQUIRED: '请在电脑上核对这六位数字并确认。', PAIRING_STOPPED: '已停止配对，请重新扫码。',
       HOST_TRUST_INVALID: '无法确认电脑身份，请检查连接后重试。',
@@ -213,7 +217,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       return;
     }
     const pairing = environment.initialPairing ? client.parsePairing(environment.initialPairing) : null;
-    const result = pairing ? await connectPairing(pairing) : await client.exchange(environment.bindDesktop ?? environment.desktop);
+    const result = pairing ? await runPairing(pairing) : await client.exchange(environment.bindDesktop ?? environment.desktop);
     if (!current()) return;
     if (restore) {
       auth.restoreAccountMatched = result.account?.ownerId === restore.ownerId;
@@ -423,7 +427,16 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await expireCloudSession(auth.email, {retainCached:false});
   }
   async function cloudLogoutOthers() { return client.authorized('/auth/logout/others', { method: 'POST', body: {} }); }
-  async function cloudDeleteAccount(password, { prepareBackup = true } = {}) { if (auth.localDesktop && prepareBackup) await core.prepareAccountDeletionBackup(); const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } }); await expireCloudSession('', {retainCached:false}); return result; }
+  async function cloudDeleteAccount(password, { prepareBackup = true } = {}) {
+    if (auth.localDesktop && prepareBackup) await core.prepareAccountDeletionBackup();
+    const saved = await client.saved();
+    const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } });
+    try {
+      if (!environment.desktop && saved?.sub)
+        await globalThis.WeftCloud?.storage('account-data:' + JSON.stringify([client.config.issuer, saved.sub]), undefined, true);
+    } finally { await expireCloudSession('', {retainCached:false}); }
+    return result;
+  }
   async function cloudEmergencyPassword(password, confirmation) {
     if (Array.from(password).length < 15 || Array.from(password).length > 128) throw { code: 'EMERGENCY_PASSWORD_INVALID' };
     if (password !== confirmation) throw { code: 'PASSWORD_MISMATCH' };
@@ -450,7 +463,11 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     try {
       if (environment.deviceType === 'android' && environment.nativePairingV2 !== 1) throw { code: 'PAIRING_UPGRADE_REQUIRED' };
       await client.checkPairing(pairing, pairing.hostId);
-      const connection = await cloudConnect(pairing.hostId);
+      // A scanned web link is already on the target. Reopening the page would abandon this comparison.
+      const scannedOrigin = pairing.relay?.baseUrl || pairing.origin;
+      const alreadyHere = !environment.desktop && !client.nativeKey && client.host === environment.hostOrigin &&
+        client.host === scannedOrigin && client.config.hostId === pairing.hostId;
+      const connection = alreadyHere ? {hostId:pairing.hostId,baseUrl:scannedOrigin,status:'online'} : await cloudConnect(pairing.hostId);
       const value = connection.baseUrl || pairing.relay?.baseUrl;
       const url = new URL(value);
       const synthetic = new URL(client.config.issuer).protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(new URL(client.config.issuer).hostname);
@@ -460,7 +477,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       if (!current()) throw { code: 'PAIRING_STOPPED' };
       target = { hostId: pairing.hostId, baseUrl: value };
       if (client.nativeKey?.pinPairing) pinLease = await client.nativeKey.pinPairing(value, pairing.tlsSpki);
-      await effects.openCloudHost?.(target);
+      if (!alreadyHere) await effects.openCloudHost?.(target);
       if (!current()) throw { code: 'PAIRING_STOPPED' };
       const config = await client.request(value + '/personal/v1/cloud/config');
       if (config.hostId !== pairing.hostId || config.issuer !== pairing.issuer) throw { code: 'PAIRING_INVALID' };
@@ -471,7 +488,9 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       await effects.activateCloudHost?.(target);
       core.accessBase = value + '/personal/v1'; core.authBase = core.accessBase + '/auth';
       completed = true;
-      auth.pairing = null; paint(); return result;
+      auth.pairing = null; paint();
+      if (pairing.keyId) effects.toast?.('已加入数据组，账号钥匙已保存在这台设备上。');
+      return result;
     } catch (error) {
       client.host = previous.host; client.config = previous.config;
       if (current()) { auth.pairing = { state: 'failed', verificationCode: '', error: cloudError(error) }; paint(); }
@@ -558,6 +577,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   function initializeCloudAccount() {
     client = new globalThis.WeftUiCore.CloudAuthClient({ fetch: environment.fetch, crypto: environment.crypto,
       credentials: environment.cloudCredentials, vendor: environment.cloudVendor, host: environment.hostOrigin, nativeKey: environment.nativeCloudKey,
+      installAccountKey: environment.installAccountKey || globalThis.WeftCloud?.installAccountKey,
       localCsrf: () => core.state.csrfToken, now });
     const localLoad = core.load, localExpired = core.sessionExpired, localClear = core.clearSession, localLogout = core.logout;
     core.clearSession = () => { bindingClaim = null; localClear(); if (auth.mode === 'offline' && !auth.localSession) startCloudJourney(); };
