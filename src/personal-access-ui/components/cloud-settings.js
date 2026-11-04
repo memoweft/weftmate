@@ -315,5 +315,5 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     }
     const activateCloudHost = target => globalThis.weftmateDesktop?.activateHost(target);
     const clearNativeHostSessions = () => globalThis.weftmateDesktop?.clearHostSessions();
-    return { closeChatDirectory: resetChats, mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, activateCloudHost, clearNativeHostSessions, selectCloudSettings: select, stopAccountPairing: stopPairing };
+    return { mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, activateCloudHost, clearNativeHostSessions, selectCloudSettings: select, stopAccountPairing: stopPairing, closeChatDirectory: resetChats };
 };
