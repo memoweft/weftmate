@@ -518,7 +518,7 @@ select { color: var(--ink); background: var(--surface); }
 .session-rail .rail-footer { flex-shrink:0; }
 .assistant-main { flex:1; position:relative; background:var(--panel); border-radius:var(--wm-radius-12) 0 0 0; }
 .assistant-shell { transition:transform var(--dur-4) var(--ease-out),filter var(--dur-4) var(--ease-out); transform-origin:50% 40%; }
-.motion-modal-open .assistant-shell { transform:scale(.992); filter:blur(1px); }
+.motion-modal-open:not(:where(:has(#settings-dialog[open]))) .assistant-shell { transform:scale(.992); filter:blur(1px); }
 :is(body.calm,:root[data-reduced-motion]) .assistant-shell { transform:none; filter:none; }
 @media(prefers-reduced-motion:reduce) { html:not([data-motion-full]) .assistant-shell { transform:none; filter:none; } }
 .startup-loading { display:grid; justify-items:center; gap:var(--wm-space-12); margin:clamp(60px,18vh,180px) auto; text-align:center; }

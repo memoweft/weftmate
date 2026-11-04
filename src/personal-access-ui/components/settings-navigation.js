@@ -2,6 +2,7 @@
 globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     let registry, selected = 'general', dialog, search, navigation, content, picker, returnFocus, cloudNotice;
     const panels = new Map();
+    let opening;
     const phoneSettings=()=>!globalThis.weftmateDesktop&&matchMedia('(max-width:600px) and (pointer:coarse)').matches;
     function showSettingsList(){
         const changed=dialog.dataset.mobilePage!=='list';
@@ -134,7 +135,12 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if(search.value.trim()&&matches.length&&!(phoneSettings()&&dialog.dataset.mobilePage==='list')){if(!matches.some(category=>category.id===selected))selectSettings(matches[0].id);else locateSetting(panels.get(selected));}
     }
     function openSettings(id, options = {}) {
-        if (!dialog.open) { returnFocus = document.activeElement; if (id === 'memory') { void core.openMemory(); return; } core.openAccount(); }
+        if (!dialog.open) {
+            if (id === 'memory') { void core.openMemory(); return; }
+            opening = { id, options };
+            try { core.openAccount(); } finally { opening = null; }
+            return;
+        }
         selectSettings(id??selected, options);
         if(phoneSettings()&&id===undefined)showSettingsList();
     }
@@ -144,13 +150,14 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const strip = ui.byId('settings-usage-strip');
         const ready = WeftControls.loading(strip, { rows: 1, compact: true });
         void core.loadUsageStrip().then(text => { if (text && dialog.open && ready()) strip.textContent = text; }).catch(() => { if (dialog.open && ready()) strip.textContent = '本月用量暂时无法读取，点此重试。'; });
-        selectSettings(selected);
-        if(phoneSettings())showSettingsList();
-        if(selected==='about')void renderSettingsUpdates(false,true);
+        selectSettings(opening?.id ?? selected, opening?.options);
+        if(phoneSettings() && opening?.id === undefined)showSettingsList();
     }
     function hideSettingsDialog() { if (dialog?.open) {
         settleCategories(); clearTimeout(renderSettingsUpdates.timer);
-        for (const id of ['executionRecords', 'connectors']) mountedCategories.delete(id);
+        for (const id of ['executionRecords','connectors','account','devices','resources','approvals','models','system','about']) {
+            mountedCategories.delete(id); mountAttempts.set(id,(mountAttempts.get(id)||0)+1);
+        }
         dialog.inert = true; dialog.close();
     } }
     let updateView, updateIdentity, pendingRestart;
@@ -237,6 +244,8 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         try {value=await(check?core.checkUpdates():core.readUpdateState());}
         catch {if(current()){view.refresh.disabled=false;view.refresh.textContent='重试读取';view.notice.textContent='暂时无法读取更新状态。请检查网络后重试；当前版本仍可使用。';}return;}
         if(!current())return;
+        const installedVersion=value.layers?.find(layer=>layer.layer==='app')?.currentVersion;
+        if(installedVersion)ui.byId('settings-host-version').textContent=installedVersion;
         const target=updateTarget(value);
         if(view.targetKey!==target)view.attempt=null;
         view.targetKey=target;view.value=value;view.refresh.disabled=false;
@@ -304,8 +313,11 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             const groups=tab.closest('.capabilities-browser').querySelector('.capabilities-groups');
             queueMicrotask(()=>globalThis.WeftMotion.reveal(groups,'dur-1'));
         },true);
-        const bindDisclosures = () => content.querySelectorAll('details').forEach(globalThis.WeftSettingsControls.details);
-        new MutationObserver(bindDisclosures).observe(content,{childList:true,subtree:true});
+        // Shared motion already binds disclosures as their subtrees are inserted.
+        if (!globalThis.WeftMotion?.visibility) {
+            const bindDisclosures = () => content.querySelectorAll('details').forEach(globalThis.WeftSettingsControls.details);
+            new MutationObserver(bindDisclosures).observe(content,{childList:true,subtree:true});
+        }
         addEventListener('weft-reply-motion-change', () => { if(globalThis.WeftSettingsControls.reduced())settleCategories(); });
         matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', () => { if(globalThis.WeftSettingsControls.reduced())settleCategories(); });
         const originals = [...account.children]; account.append(content);
@@ -415,17 +427,18 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         for (const original of originals) if (original.parentNode === account) original.hidden = true;
         account.append(content); main.append(head, strip, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
         registry = globalThis.WeftUiCore.settingsRegistry({
-            approvals: () => { let target=panels.get('approvals').querySelector('.permission-settings'); if(!target){target=node('div','permission-settings');panels.get('approvals').prepend(target);}globalThis.WeftPermissionRulesView(core,target,{toast:ui.toast}); },
+            approvals: () => { void core.refreshApprovalSettings(); let target=panels.get('approvals').querySelector('.permission-settings'); if(!target){target=node('div','permission-settings');panels.get('approvals').prepend(target);}globalThis.WeftPermissionRulesView(core,target,{toast:ui.toast}); },
             connectors: ({target}) => globalThis.WeftConnectorsView(core,target,{desktop:!!globalThis.weftmateDesktop,toast:ui.toast}),
             executionRecords: ({target}) => globalThis.WeftExecutionRecordsView(core,target,{current:()=>dialog.open&&selected==='executionRecords',openConversation:async row=>{ui.byId('account-back').click();if(core.state.currentView!=='assistant')await core.enterAssistant();if(row)await core.selectSession(row.sessionId);}}),
             system: () => { void core.refreshSystem(); },
-            models: () => core.refreshModelSettings(),
+            models: () => Promise.all([core.refreshAccountModels(),core.refreshModelSettings()]),
+            resources: () => Promise.all([core.refreshProjects(),core.refreshModels(),core.refreshBrowserWorkspace()]),
             data: ({target}) => globalThis.WeftDataView(core,target,{toast:ui.toast}),
             reviewHealth: () => globalThis.WeftNotificationsView(core, panels.get('reviewHealth'), {toast:ui.toast, section:'reviewHealth'}),
             notifications: () => globalThis.WeftNotificationsView(core, panels.get('notifications'), {toast:ui.toast}),
             personalization: () => globalThis.WeftPersonalizationView(core, panels.get('personalization'), 'personalization', {toast:ui.toast}),
             assistant: () => globalThis.WeftPersonalizationView(core, panels.get('assistant'), 'assistant', {toast:ui.toast}),
-            account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },
+            account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); return core.refreshProfile(); },
             devices: () => { ui.selectCloudSettings?.('devices'); ui.paintCloudSettings?.(); },
             memory: () => {},
             backups: () => ui.showSettingsBackups(),
@@ -453,5 +466,6 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         globalThis.WeftPopover.bindSettings(editor);
         globalThis.WeftSettingsNavigation = { open: openSettings, register: entry => { registry.register(entry); renderSettingsNavigation(); } };
     }
-    return { mountSettingsNavigation, openSettings, selectSettings, showSettingsDialog, hideSettingsDialog };
+    return { mountSettingsNavigation, openSettings, selectSettings, showSettingsDialog, hideSettingsDialog,
+        settingsCategory: () => dialog?.open ? selected : null };
 };
