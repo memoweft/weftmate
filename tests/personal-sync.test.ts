@@ -26,6 +26,8 @@ test('device summary uses durable computer receipt time and excludes assistant m
     assert.ok(Date.parse(summary.lastReceivedAt)>Date.parse(event(1).occurredAt));
     assert.equal(summary.memoryState,'received');assert.ok(!JSON.stringify(summary).includes('synthetic'));
     assert.equal('receivedAt' in store.page().events[0],false,'receipt bookkeeping does not change the event protocol');
+    await store.append({events:[event(3,1)],sourceDeviceId:'phone-renewed'});
+    assert.equal(store.deviceStatus(['phone-one','phone-renewed']).receivedOriginals,2);
     await store.close();const reopened=await createPersonalSyncStore({root,ownerId:'summary-owner'});
     assert.deepEqual(reopened.deviceStatus('phone-one'),summary);await reopened.close();
   } finally {rmSync(root,{recursive:true,force:true});}

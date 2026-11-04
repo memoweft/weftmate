@@ -782,9 +782,10 @@ export async function createHostCloudIdentity(context, options) {
       if (!response.ok) throw Object.assign(failure(result.error?.code ?? 'CLOUD_UNAVAILABLE',response.status),{usage:result.error?.details?.usage ?? result.error?.usage ?? result.usage});
       return result;
     },
-    cloudDeviceId(ownerId, deviceId) {
+    directoryIdentity(ownerId, deviceId) {
       const session = store.state.sessions[deviceId], device = store.state.devices[session?.trustId];
-      return device?.ownerId === ownerId ? device.cloudDeviceId : undefined;
+      if (device?.ownerId !== ownerId) return null;
+      return { key: JSON.stringify([device.bindingKey, device.cloudDeviceId]), cloudDeviceId: device.cloudDeviceId };
     },
     validSession(ownerId, deviceId) {
       try { assertSession(ownerId, deviceId); return true; } catch { return false; }

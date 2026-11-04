@@ -87,8 +87,11 @@ import { defaultUsagePrice } from './usage.mjs';
 import { usageResponse } from './usage-response.mjs';
 import { chatForSession, protectMainSession } from './chat-identity.mjs';
 import { handleWorkspaceFiles } from './workspace-files.mjs';
+import { deviceDirectory } from './device-directory.mjs';
 
 export function createHttpHandler(context) {
+  const directory = (ownerId, devices, currentId) => deviceDirectory(devices, currentId,
+    id => context.cloudIdentity?.directoryIdentity(ownerId, id));
   const bootId = randomUUID(), startedAt = new Date().toISOString();
   let hostRestarting = false;
   const presence = backend => ({ host: 'online', bootId, startedAt, authorization: 'active',
@@ -242,11 +245,10 @@ export function createHttpHandler(context) {
       if (request.method === 'GET' && pathname === '/personal/v1/devices/sync') {
         if(url.search)throw failure('INVALID_REQUEST');
         const current=context.authenticate(request,'account:manage');
-        const devices=Object.entries(state.devices).filter(([,device])=>!device.revoked).map(([deviceId])=>{
-          const cloudDeviceId=context.cloudIdentity?.cloudDeviceId(current.ownerId,deviceId);
+        const devices=directory(current.ownerId,state.devices,current.deviceId).filter(({row})=>!row.revoked).map(({row,members})=>{
+          const {id:deviceId,cloudDeviceId}=row;
           let syncDeviceId=deviceId;try{syncDeviceId=context.cloudIdentity?.offlineDeviceId?.(ownerId,deviceId)??deviceId;}catch{}
-          const offline=context.offline.deviceStatus(ownerId,syncDeviceId),legacy=context.syncStores.get(ownerId)?.deviceStatus(deviceId);
-          const sync=offline??legacy;
+          const sync=context.offline.deviceStatus(ownerId,syncDeviceId) ?? context.syncStores.get(ownerId)?.deviceStatus(members) ?? null;
           return {deviceId,...(cloudDeviceId?{cloudDeviceId}:{}),sync};
         });
         return context.json(response,200,{devices});
@@ -254,13 +256,7 @@ export function createHttpHandler(context) {
       if (request.method === 'GET' && pathname === '/personal/v1/auth/devices') {
         if (url.search) throw failure('INVALID_REQUEST');
         const current = context.authenticate(request, 'account:manage');
-        const devices = Object.entries(state.devices).map(([deviceId, device]) => ({
-          id: deviceId, name: device.name, createdAt: device.enrolledAt,
-          ...(context.cloudIdentity?.cloudDeviceId(current.ownerId, deviceId) ? { cloudDeviceId: context.cloudIdentity.cloudDeviceId(current.ownerId, deviceId) } : {}),
-          ...(device.lastSeenAt ? { lastSeenAt: device.lastSeenAt } : {}),
-          expiresAt: device.expiresAt ?? null, revoked: device.revoked,
-          current: deviceId === current.deviceId,
-        }));
+        const devices = directory(current.ownerId, state.devices, current.deviceId).map(group => group.row);
         return context.json(response, 200, { devices });
       }
       const deviceMatch = /^\/personal\/v1\/auth\/devices\/([A-Za-z0-9_-]+)$/.exec(pathname);
@@ -275,7 +271,11 @@ export function createHttpHandler(context) {
           const latest = context.authenticate(request, 'account:manage');
           if (latest.ownerId !== current.ownerId || latest.deviceId !== current.deviceId) throw failure('UNAUTHORIZED', 401);
           if (!Object.hasOwn(next.devices, target)) throw failure('NOT_FOUND', 404);
-          next.devices[target].name = name;
+          const group = directory(current.ownerId, next.devices, current.deviceId).find(group => group.members.includes(target));
+          for (const id of group.members) {
+            next.devices[id].name = name;
+            if (group.row.cloudDeviceId) next.devices[id].directoryName = name;
+          }
           return { id: target, name, revoked: next.devices[target].revoked };
         }));
         return context.json(response, 200, { device: renamed });

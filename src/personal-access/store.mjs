@@ -156,7 +156,8 @@ export function validateSingleStore(store) {
   for (const [deviceId, device] of Object.entries(store.devices)) {
     const allowedScopes = store.version === LEGACY_VERSION ? LEGACY_SCOPES : SCOPES;
     if (!validId(deviceId) || !plainObject(device) || !/^[a-f0-9]{64}$/.test(device.tokenHash ?? '') ||
-        typeof device.name !== 'string' || !Array.isArray(device.scopes) ||
+        typeof device.name !== 'string' || (device.directoryName !== undefined && typeof device.directoryName !== 'string') ||
+        !Array.isArray(device.scopes) ||
         device.scopes.some((scope) => !allowedScopes.has(scope)) || typeof device.revoked !== 'boolean' ||
         tokenHashes.has(device.tokenHash)) {
       throw failure('STORE_CORRUPT', 500);

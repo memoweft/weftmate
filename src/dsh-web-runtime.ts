@@ -90,11 +90,15 @@ export const PROFILE_PATCH_TEMPLATE = `# WeftMate 补丁层：官方 DSH 功能�
 # Personal tool-loop reuses the official detector with both arguments and results.
 - id: repeat-tool-reminder
   disabled: true
+- id: web
+  config:
+    searchProvider: weftmate-public-search
 `
 
 const PREVIOUS_STANDARD_PATCH = '936db7017c4dc3ca1cef2dfa514a00cd16b24aa9df2cb1601e7661f4a13c307e'
 const OLD_PROFILE_PATCH_SHA256 = new Set([
   PREVIOUS_STANDARD_PATCH,
+  '213861a179673684b593357a8bca1a971d4dbc3ec268a9dd14f026f764a2d3ec', // before public search
   'b41627945187aa2c1646364f08903c05b0640150494d486c3ab82f3847e3d252', // LEGACY
   '582acb40d8c9969a1a473fa46c3de47115c785fe89f1551dcf2097c81f15664b', // R3
   '4f2a5c449d588237b10cd3a5b1330b637d42fd3f8d06bbede6828c2e228c6ee2', // R3_PICKER
@@ -482,13 +486,14 @@ async function writePersonalRemotePreset(homeDir: string, profileName: string): 
   const previousContextAwareComposition = `${longTaskComposition}${personalCompaction}`
   // Native one-shot jobs expose jobId + job_output, including blocking waits
   // and one completion notice; foreground calls still return results directly.
-  const contextAwareComposition = previousContextAwareComposition
+  const previousWebComposition = previousContextAwareComposition
     .replace('    completionDelivery: quiet', '    completionDelivery: wakeup')
     .replace('    backgroundMode: continuable', '    backgroundMode: one-shot')
+  const contextAwareComposition = previousWebComposition.replace('    search: false', '    search: true')
   await mkdir(presetDir, { recursive: true })
   const existingComposition = (await readFile(composition, 'utf8').catch(() => '')).replace(/\r\n/g, '\n')
   const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
-  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== previousContextAwareComposition && existingComposition !== `${compositionText}${PRESET_COMPACTION}` && existingComposition !== compositionText &&
+  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== previousWebComposition && existingComposition !== previousContextAwareComposition && existingComposition !== `${compositionText}${PRESET_COMPACTION}` && existingComposition !== compositionText &&
       existingComposition !== previousM1Composition && existingComposition !== `${previousM1Composition}${PRESET_COMPACTION}` &&
       existingComposition !== previousNativeComposition && existingComposition !== `${previousNativeComposition}${PRESET_COMPACTION}` &&
       existingComposition !== boundedCompositionText &&
@@ -671,7 +676,7 @@ export interface DshWebRuntimeOptions {
     { id: string, action: 'register_file', sessionId: string, turn: number, callId: string,
       messageHash: string, receiptId: string, filePath: string, sha256: string } |
     { id: string, action: 'browse', sessionId: string, turn: number, callId: string,
-      messageHash: string, receiptId: string, browserAction: 'open' | 'read' | 'follow',
+      messageHash: string, receiptId: string, browserAction: 'open' | 'read' | 'follow' | 'search',
       url?: string, snapshotId?: string, segmentIndex?: number, linkId?: string, query?: string } |
     { id: string, action: 'write_document', sessionId: string, turn: number, callId: string,
       messageHash: string, receiptId?: string, fileName: string, content: string,
@@ -1746,9 +1751,10 @@ export class DshWebRuntime {
       if (typeof row.receiptId !== 'string' || typeof row.filePath !== 'string' || !isAbsolute(row.filePath) ||
           typeof row.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(row.sha256)) return
     } else if (nativeBrowser) {
-      if (typeof row.receiptId !== 'string' || !['open', 'read', 'follow'].includes(row.browserAction as string) ||
+      if (typeof row.receiptId !== 'string' || !['open', 'read', 'follow', 'search'].includes(row.browserAction as string) ||
           (row.browserAction === 'open' && typeof row.url !== 'string') ||
-          (row.browserAction !== 'open' && typeof row.snapshotId !== 'string') ||
+          (row.browserAction === 'search' && (typeof row.query !== 'string' || !row.query.trim() || row.query.length > 2048)) ||
+          (['read', 'follow'].includes(row.browserAction as string) && typeof row.snapshotId !== 'string') ||
           (row.browserAction === 'follow' && typeof row.linkId !== 'string') ||
           (row.query !== undefined && (typeof row.query !== 'string' || !row.query.trim())) ||
           (row.segmentIndex !== undefined && (!Number.isSafeInteger(row.segmentIndex) || (row.segmentIndex as number) < 0))) return
@@ -1837,7 +1843,7 @@ export class DshWebRuntime {
         filePath: row.filePath as string, sha256: row.sha256 as string }
       : nativeBrowser
       ? { ...identity, action: 'browse' as const, receiptId: row.receiptId as string,
-        browserAction: row.browserAction as 'open' | 'read' | 'follow',
+        browserAction: row.browserAction as 'open' | 'read' | 'follow' | 'search',
         ...(row.url === undefined ? {} : { url: row.url as string }),
         ...(row.snapshotId === undefined ? {} : { snapshotId: row.snapshotId as string }),
         ...(row.linkId === undefined ? {} : { linkId: row.linkId as string }),
@@ -1905,6 +1911,7 @@ export class DshWebRuntime {
           // Host-owned captures are in this conversation's workspace. Preserve
           // their recovery path and original metadata for native evidence reads.
           const fields = nativeFile ? ['taskId', 'artifactId', 'fileName', 'contentType', 'size', 'sha256', 'state', 'reasonCode']
+            : row.browserAction === 'search' ? ['sources']
             : ['snapshotId', 'url', 'title', 'capturedAt', 'capturedFragment', 'requestedSectionComplete', 'text', 'links', 'outline', 'segmentIndex', 'segmentCount', 'truncated', 'captureTruncated', 'httpStatus', 'query', 'excerpts', 'sourcePath', 'previewTruncated']
           settle({ ok: true, command: Object.fromEntries(fields.filter(key => value[key] !== undefined).map(key => [key, value[key]])) })
           return

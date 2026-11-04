@@ -313,7 +313,17 @@ test('AUTH-1 verified devices enter only their bound account; historical pending
   const notifications = (await f.requests('GET', '/activity', undefined, f.a)).items.filter((row:any)=>row.type==='system.device.signed_in')
   assert.equal(notifications.length, 1)
   assert.equal(notifications[0].actions[0].target.category, 'devices')
-  assert.equal((await f.exchange(token, key)).result.status, 200)
+  const renewed = (await f.exchange(token, key)).result
+  assert.equal(renewed.status, 200)
+  assert.notEqual(renewed.device.id, session.device.id)
+  const listed = (await f.requests('GET', '/auth/devices', undefined, session)).devices.filter(row => row.cloudDeviceId === 'phone-a')
+  assert.equal(listed.length, 1)
+  assert.equal(listed[0].id, session.device.id)
+  assert.equal(listed[0].current, true)
+  assert.equal((await f.requests('GET', '/devices/sync', undefined, f.a)).devices.filter(row => row.cloudDeviceId === 'phone-a').length, 1)
+  assert.equal((await f.requests('PATCH', '/auth/devices/' + renewed.device.id, { name: '厨房手机' }, f.a)).status, 200)
+  const nextLogin = (await f.exchange(token, key)).result
+  assert.equal((await f.requests('GET', '/auth/devices', undefined, nextLogin)).devices.find(row => row.current).name, '厨房手机')
   assert.equal((await f.requests('GET', '/activity', undefined, f.a)).items.filter((row:any)=>row.type==='system.device.signed_in').length, 1,
     'the same already verified device does not create another new-device notification')
   assert.equal((await f.requests('GET', '/sessions', undefined, session)).status, 200)
