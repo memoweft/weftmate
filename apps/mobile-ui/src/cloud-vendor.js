@@ -1,2 +1,2 @@
-export { compactDecrypt, SignJWT, jwtVerify, createLocalJWKSet } from 'jose';
+export { CompactEncrypt, compactDecrypt, SignJWT, jwtVerify, createLocalJWKSet } from 'jose';
 export { default as QRCode } from 'qrcode';

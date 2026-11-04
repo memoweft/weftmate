@@ -5,6 +5,46 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     const button = (label, action, style = 'secondary') => { const node = ui.element('button', `button ${style}`, label); node.type = 'button'; node.addEventListener('click', action); return node; };
     function error(error) { ui.byId('cloud-settings-status').textContent = core.cloudError(error); }
     async function act(action) { try { ui.byId('cloud-settings-status').textContent = ''; await action(); return true; } catch (failure) { error(failure); return false; } }
+    let chatTicket = 0, chatIdentity, chatSection;
+    function resetChats() {
+        chatTicket++;
+        const section = chatSection;
+        if (!section) return;
+        section.open = false;
+        section.querySelector('ul').replaceChildren();
+        section.querySelector('p').textContent = '';
+        section.querySelector('button').disabled = false;
+    }
+    async function readChats(section) {
+        const ticket = ++chatTicket, generation = core.state.identityGeneration, sub = core.state.cloudAuth.sub;
+        const visible = () => ticket === chatTicket && section.open && !section.hidden && tab === 'devices' &&
+            generation === core.state.identityGeneration && sub === core.state.cloudAuth.sub && core.state.cloudAuth.mode === 'authenticated';
+        const list = section.querySelector('ul'), status = section.querySelector('p'), refresh = section.querySelector('button');
+        let cached = false;
+        refresh.disabled = true;
+        status.textContent = '正在读取对话目录…';
+        try {
+            const result = await core.syncChatDirectory(cache => {
+                cached = true;
+                const rows = cache.rows.filter(row => !row.deleted).sort((a,b) => b.updatedAt.localeCompare(a.updatedAt));
+                list.replaceChildren(...rows.map(row => {
+                    const item = ui.element('li','device-item');
+                    item.append(ui.element('strong','',row.title || '未命名对话'),
+                        ui.element('p','device-meta',cache.label+' · '+deviceTime(row.updatedAt)));
+                    return item;
+                }));
+                status.textContent = '已读取本机目录，正在核对改动…';
+            },visible);
+            if (visible()) status.textContent = result.partial ? '部分标题暂时取不到，已保留上次目录。' :
+                list.childElementCount ? '对话目录已同步。' : '这台电脑还没有可共享的对话。';
+        } catch (failure) {
+            if (!visible()) return;
+            if ([401,403].includes(failure.status) || ['DEVICE_NOT_TRUSTED','UNAUTHORIZED'].includes(failure.code)) {
+                list.replaceChildren(); status.textContent = '设备授权已失效，请重新登录并核对入组状态。';
+            } else if (failure.code === 'DIRECTORY_KEY_REQUIRED') status.textContent = '扫描持钥电脑的入组码后可查看目录。';
+            else status.textContent = cached ? '暂未同步，显示上次保存的目录。' : '未能读取目录，请稍后刷新。';
+        } finally { if (visible()) refresh.disabled = false; }
+    }
     function mountCloudSettings() {
         if (!globalThis.location?.origin) return;
         const account = ui.byId('account-view');
@@ -13,6 +53,13 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const refresh = panel.querySelector('#cloud-directory-refresh'); refresh.className='icon-button'; refresh.replaceChildren(WeftIcons.create('sync',18)); refresh.setAttribute('aria-label','刷新设备'); refresh.title='刷新设备';
         const addDevice = button('添加设备', () => void ui.cloudUi.openPairing()); addDevice.id = 'cloud-pairing-open'; addDevice.hidden = true;
         panel.querySelector('#cloud-devices-panel .group-heading').append(addDevice);
+        const chats = ui.element('details','group'); chats.id = 'cloud-chat-directory'; chats.hidden = true;
+        const refreshChats = button('刷新对话目录',() => void readChats(chats));
+        const chatStatus = ui.element('p','muted'); chatStatus.setAttribute('role','status');
+        chats.append(ui.element('summary','','对话目录'),refreshChats,chatStatus,ui.element('ul','device-list'));
+        chats.addEventListener('toggle',() => { if (chats.open) void readChats(chats); else resetChats(); });
+        panel.querySelector('#cloud-devices-panel').append(chats);
+        chatSection = chats;
         account.prepend(panel);
         const signedIn = globalThis.WeftControls.tag('已登录'); signedIn.id = 'cloud-login-state';
         panel.querySelector('#cloud-account-panel > h2').textContent='远程访问';
@@ -54,6 +101,11 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     function select(value) {
         tab = value; ui.byId('cloud-account-panel').hidden = tab !== 'account'; ui.byId('cloud-devices-panel').hidden = tab !== 'devices';
         ui.byId('cloud-account-tab').setAttribute('aria-pressed', String(tab === 'account')); ui.byId('cloud-devices-tab').setAttribute('aria-pressed', String(tab === 'devices'));
+        const auth = core.state.cloudAuth;
+        const identity = JSON.stringify([core.state.identityGeneration,auth.sub,auth.mode]);
+        if (identity !== chatIdentity || tab !== 'devices') resetChats();
+        chatIdentity = identity;
+        if (chatSection) chatSection.hidden = auth.mode !== 'authenticated' || !!auth.localDesktop;
         if (tab !== 'devices') stopPairing();
     }
     async function paintLocalAccounts() {
@@ -263,5 +315,5 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     }
     const activateCloudHost = target => globalThis.weftmateDesktop?.activateHost(target);
     const clearNativeHostSessions = () => globalThis.weftmateDesktop?.clearHostSessions();
-    return { mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, activateCloudHost, clearNativeHostSessions, selectCloudSettings: select, stopAccountPairing: stopPairing };
+    return { mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, activateCloudHost, clearNativeHostSessions, selectCloudSettings: select, stopAccountPairing: stopPairing, closeChatDirectory: resetChats };
 };

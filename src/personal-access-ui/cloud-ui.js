@@ -121,7 +121,7 @@
             image.width = modules * Math.max(1, Math.min(5, Math.floor(available / modules)));
           } else image.width = 280;
           image.src = qr; image.hidden = false; $('pairing-code').value = code;
-          $('pairing-status').textContent = keyId ? '用要加入的设备扫码。两边数字一致，确认后才会向该设备发送账号钥匙。' : '用手机扫描二维码。扫码后，请核对电脑和手机显示的六位数字。';
+          $('pairing-status').textContent = keyId ? '核对两边数字后再确认。新设备将收到账号钥匙，可以同步这台电脑的对话目录。' : '用手机扫描二维码。扫码后，请核对电脑和手机显示的六位数字。';
           const deadline = Date.now() + result.expiresIn * 1000;
           const tick = () => { const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
             $('pairing-countdown').textContent = seconds ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} 后过期` : '本次配对已过期';

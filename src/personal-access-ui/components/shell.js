@@ -329,6 +329,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('revoke-confirm').disabled = false;
     }
     function resetIdentityControls() {
+        ui.closeChatDirectory?.();
         globalThis.WeftPanels?.reset();
         globalThis.WeftMotion?.resetIdentity();
         ui.byId('account-name').textContent = '';
