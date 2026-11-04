@@ -91,8 +91,10 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
             button('注销账号', () => ui.openSettings('data'), 'danger'));
         ui.byId('cloud-login-actions').append(button('登录以使用远程访问', () => core.startCloudJourney(), 'primary'));
         ui.byId('cloud-directory-login').append(button('登录以使用远程访问', () => core.startCloudJourney(), 'primary'));
-        const original = core.openAccount;
-        core.openAccount = () => { original(); paintCloudSettings(); };
+        if (!ui.settingsCategory) {
+            const original = core.openAccount;
+            core.openAccount = () => { original(); paintCloudSettings(); };
+        }
         ui.byId('rail-devices').addEventListener('click', () => { ui.openSettings('devices'); });
         const banner = ui.element('div', 'cloud-access-banner'); banner.id = 'cloud-access-banner'; banner.hidden = true;
         ui.byId('connection-banner').before(banner);
@@ -126,6 +128,8 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         } catch (failure) { if (generation === localGeneration) error(failure); }
     }
     function paintCloudSettings() {
+        const category = ui.settingsCategory?.();
+        if (ui.settingsCategory && category !== 'account' && category !== 'devices') return;
         if (!ui.byId('cloud-settings')) return;
         const active = core.state.cloudAuth.mode === 'authenticated', view = core.cloudAuthView();
         const pairingOwner = core.state.ownerId, pairingIdentity = core.state.identityGeneration;
@@ -157,22 +161,27 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         if (view.localDesktop) { ui.byId('password-open').hidden = true; ui.byId('logout-button').hidden = true; }
         ui.byId('pending-devices').hidden = true;
         if (!active && !view.localSession) { ui.byId('cloud-directory').replaceChildren(); ui.byId('cloud-directory-status').textContent = '登录后可查看已登录设备，并让不认识的设备下线。'; }
-        void paintLocalAccounts(); select(tab); if (active || view.localSession) void refreshDirectory();
+        if (!category || category === 'account') void paintLocalAccounts();
+        select(tab);
+        if ((!category || category === 'devices') && (active || view.localSession)) void refreshDirectory();
     }
     async function refreshDirectory(showError = true) {
+        if (ui.settingsCategory && ui.settingsCategory() !== 'devices') return;
         if (core.state.cloudAuth.mode !== 'authenticated' && !core.cloudAuthView().localSession) return;
         const generation = core.state.identityGeneration, request = ++directoryGeneration;
+        const current = () => generation === core.state.identityGeneration && request === directoryGeneration &&
+            (!ui.settingsCategory || ui.settingsCategory() === 'devices');
         const status = ui.byId('cloud-directory-status'), list = ui.byId('cloud-directory'); list.setAttribute('aria-busy', 'true');
         if (!list.children.length) { status.textContent = ''; list.append(WeftControls.skeleton({tag:'li'})); }
         try {
             const [directoryResult,syncResult]=await Promise.allSettled([core.state.cloudAuth.mode === 'authenticated' ? core.cloudDirectory() : core.localDeviceDirectory(),core.readDeviceSync()]);
-            if(generation!==core.state.identityGeneration||request!==directoryGeneration)return;
+            if(!current())return;
             if(directoryResult.status==='rejected')throw directoryResult.reason;
             syncDirectory=syncResult.status==='fulfilled'?syncResult.value.devices:[];
             syncNotice=syncResult.status==='rejected'?'原话与记忆状态暂时无法读取，点刷新重试。':'';
             list.setAttribute('aria-busy','false');renderDirectory(directoryResult.value);
         }
-        catch (failure) { if (generation === core.state.identityGeneration && request === directoryGeneration) { list.setAttribute('aria-busy', 'false'); for (const row of list.querySelectorAll('.library-skeleton-row')) row.remove(); status.textContent = '设备暂时无法读取。请点刷新重试。'; if (showError) error(failure); } }
+        catch (failure) { if (current()) { list.setAttribute('aria-busy', 'false'); for (const row of list.querySelectorAll('.library-skeleton-row')) row.remove(); status.textContent = '设备暂时无法读取。请点刷新重试。'; if (showError) error(failure); } }
     }
     function deviceTime(value) { return core.cloudDeviceTime(value); }
     function logoutDevice(device) {

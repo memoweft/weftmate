@@ -99,13 +99,15 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
     function openAccount() {
         core.stopAssistantRefresh();
         effects.closeRail();
-        core.show('account');
+        if (!effects.settingsCategory) core.show('account');
         core.state.deviceEditing = null;
         effects.resetProfileDraft();
+        effects.resetOtherDeviceInstall();
+        // The categorized settings dialog loads each section when selected.
+        if (effects.settingsCategory) { core.show('account'); return; }
         void effects.cloudUi?.refreshBinding();
         void core.refreshProfile();
         void core.refreshDevices();
-        effects.resetOtherDeviceInstall();
         void core.refreshAccountModels();
         void core.refreshSystem();
         void core.refreshProjects();

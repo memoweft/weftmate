@@ -62,6 +62,7 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
         if (open) {
             if (!loginDialog) {
                 loginDialog = ui.element('dialog', 'dialog cloud-login-dialog'); loginDialog.id = 'cloud-login-dialog';
+                loginDialog.dataset.motionNativeClose = 'true';
                 loginDialog.setAttribute('aria-labelledby', 'cloud-login-dialog-title');
                 const head = ui.element('div', 'dialog-head'), title = ui.element('h2', '', '登录以使用云端功能'); title.id = 'cloud-login-dialog-title';
                 const close = ui.element('button', 'icon-close'); close.type = 'button'; close.setAttribute('aria-label', '关闭登录'); close.append(globalThis.WeftIcons.create('deny', 24));
