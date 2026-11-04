@@ -27,6 +27,72 @@
       tx.onabort = tx.onerror = () => reject(new Error('STORAGE_UNAVAILABLE'));
     });
   }
+  async function removeAccountKey(issuer, sub) {
+    const account = JSON.stringify([issuer,sub]);
+    const prefix = 'chat-directory:'+account.slice(0,-1)+',';
+    const opened = await db();
+    return new Promise((resolve,reject) => {
+      const tx = opened.transaction('credentials','readwrite'), store = tx.objectStore('credentials');
+      store.delete('account-data:'+account);
+      store.delete(IDBKeyRange.bound(prefix,prefix+'\uffff'));
+      tx.oncomplete = () => resolve();
+      tx.onabort = tx.onerror = () => reject({code:'STORAGE_UNAVAILABLE'});
+    });
+  }
+  async function saveDirectory(slot, previous, value, current, accountSlot, keyId) {
+    const opened = await db();
+    return new Promise((resolve,reject) => {
+      const tx = opened.transaction('credentials','readwrite'), store = tx.objectStore('credentials');
+      const account = store.get(accountSlot), lookup = store.get(slot);
+      let failure;
+      lookup.onsuccess = () => {
+        try {
+          current();
+          if (account.result?.keyId !== keyId || lookup.result !== previous) throw {code:'DIRECTORY_CHANGED'};
+          if (value === undefined) store.delete(slot);
+          else store.put(value,slot);
+        } catch (error) { failure = error; tx.abort(); }
+      };
+      tx.oncomplete = () => resolve();
+      tx.onabort = tx.onerror = () => reject(failure ?? {code:'STORAGE_UNAVAILABLE'});
+    });
+  }
+  async function syncChatDirectory({issuer,sub,hostId,deviceId,current,pull,showCache}) {
+    const accountSlot = 'account-data:'+JSON.stringify([issuer,sub]), key = await storage(accountSlot);
+    current();
+    if (!key) throw {code:'DIRECTORY_KEY_REQUIRED'};
+    const wire = await import('./ui-core/directory-wire.mjs');
+    const scope = [issuer,sub,key.keyId,hostId], slot = 'chat-directory:'+JSON.stringify(scope);
+    const codec = wire.directoryCodec(globalThis.WeftCloudVendor,key.key,scope);
+    let previous = await storage(slot), cache = previous === undefined ? null : await codec.open('cache',previous);
+    current();
+    if (cache) showCache(cache);
+    let page;
+    do {
+      current();
+      const requestId = random(), cursor = cache?.cursor ?? wire.startCursor();
+      const box = await codec.seal('pull',{deviceId,requestId,cursor,epoch:cache?.epoch ?? null});
+      current();
+      let response;
+      try { response = await pull({box}); }
+      catch (error) {
+        if (error.code === 'DEVICE_NOT_TRUSTED' && previous !== undefined) await saveDirectory(slot,previous,undefined,current,accountSlot,key.keyId);
+        throw error;
+      }
+      page = await codec.open('page',response.box);
+      const next = wire.applyDirectoryPage(cache,page,requestId);
+      current();
+      if (!cache || !wire.equalCursor(cache.cursor,next.cursor) || next.label !== cache.label) {
+        const sealed = await codec.seal('cache',next);
+        await saveDirectory(slot,previous,sealed,current,accountSlot,key.keyId);
+        previous = sealed;
+      }
+      cache = next;
+      current();
+      showCache(cache);
+    } while (page.more);
+    return {partial:page.partial};
+  }
   // One non-exportable device-local key per cloud identity. Compare and insert inside one IndexedDB transaction.
   async function installAccountKey({issuer,sub,keyId,secret}, current) {
     const bytes = decode(secret);
@@ -226,5 +292,5 @@
     }
     async forget() { if (!this.config) await this.configure(); await this.credentialStorage(this.tokenId, undefined, true); await storage('pending:' + this.host, undefined, true); }
   }
-  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, installAccountKey };
+  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, installAccountKey, removeAccountKey, syncChatDirectory };
 })();

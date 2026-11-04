@@ -433,7 +433,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } });
     try {
       if (!environment.desktop && saved?.sub)
-        await globalThis.WeftCloud?.storage('account-data:' + JSON.stringify([client.config.issuer, saved.sub]), undefined, true);
+        await globalThis.WeftCloud?.removeAccountKey(client.config.issuer, saved.sub);
     } finally { await expireCloudSession('', {retainCached:false}); }
     return result;
   }
@@ -635,11 +635,22 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     })(); else if (auth.mode === 'authenticated') void (async () => { try { await finishCloudLogin(); } catch { await expireCloudSession(); } })(); else localExpired(); };
     return client;
   }
+  async function syncChatDirectory(showCache, visible) {
+    const generation = core.state.identityGeneration, sub = auth.sub, hostId = client?.config?.hostId;
+    const current = () => {
+      if (!visible() || generation !== core.state.identityGeneration || auth.mode !== 'authenticated' ||
+          !sub || auth.sub !== sub || !hostId || client.config.hostId !== hostId) throw {code:'DIRECTORY_CHANGED'};
+    };
+    current();
+    const {deviceId} = await client.key();
+    return globalThis.WeftCloud.syncChatDirectory({issuer:client.config.issuer,sub,hostId,deviceId,current,showCache,
+      pull:body => core.accessApi('/cloud/chat-directory',{method:'POST',protectedWrite:true,body})});
+  }
   async function cloudSendFeedback(payload) {
     if (!client || auth.mode !== 'authenticated') throw Object.assign(new Error('FEEDBACK_LOGIN_REQUIRED'), { code: 'FEEDBACK_LOGIN_REQUIRED' });
     return client.authorized('/feedback', { method: 'POST', body: payload });
   }
-  return { cloudSendFeedback, initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
+  return { syncChatDirectory, cloudSendFeedback, initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
     resumeCloudComputer, retryCloudApproval, cancelCloudJourney, renewCloudSession, cloudOfflineLogin, cloudDirectory, cloudRename, cloudRemove, cloudConnect, cloudTrust,
     cloudEmailRequest, cloudEmailConfirm, cloudChangePassword, cloudLogout, cloudLogoutOthers, cloudDeleteAccount, cloudEmergencyPassword, cloudPairing, cloudRedeemPairing, cloudConnectTrusted,
     cloudTrustMaterial, cloudImportTrust, cloudApproveOffline };

@@ -3,6 +3,8 @@ import { importJWK, SignJWT } from 'jose';
 import { csrfForToken, digest, exactKeys, failure } from '../personal-access/common.mjs';
 import { SESSION_MS } from '../personal-access/constants.mjs';
 import { cloudConfiguration, createCloudVerifier } from './proofs.mjs';
+import { createDirectoryPull } from './chat-directory.mjs';
+import { hostName } from '../host-name.mjs';
 import { openIdentity } from './storage.mjs';
 import { hashPassword, validPassword } from '../personal-access/password.mjs';
 import { PAIRING_MS, pairingJkt, hostCommitment, phoneCommitment, verificationCode, pairingState, pairingStatus } from './pairing.mjs';
@@ -160,6 +162,19 @@ export async function createHostCloudIdentity(context, options) {
         device?.status !== 'trusted' || device.ownerId !== ownerId || device.pairedJkt && device.pairedJkt !== device.jkt ||
         session.epoch < (store.state.epochs[session.bindingKey] ?? 0)) throw failure('UNAUTHORIZED', 401);
   }
+  function directoryAccess(request) {
+    const {ownerId,deviceId} = context.authenticate(request,'sessions:read');
+    assertSession(ownerId,deviceId);
+    const session = store.state.sessions[deviceId], trust = store.state.devices[session.trustId];
+    const binding = store.state.bindings[session.bindingKey];
+    const keyId = options.accountKeys?.status(binding.issuer,binding.sub);
+    if (!keyId || !trust.pairedJkt || trust.pairedJkt !== trust.jkt) throw failure('DEVICE_NOT_TRUSTED',403);
+    return {ownerId,deviceId:trust.cloudDeviceId,issuer:binding.issuer,sub:binding.sub,keyId,binding};
+  }
+  const pullDirectory = createDirectoryPull(context,hostId,directoryAccess,
+    (...args) => options.accountKeys.withDirectoryCodec(...args),
+    (scope,box) => edit(next => { next.bindings[scope].directoryBox = box; }),
+    ownerId => computerLabels.get(ownerId) || hostName());
   async function applyEvents(encoded) {
     const envelope = await verifier.events(encoded);
     if (!Array.isArray(envelope.events) || !Number.isSafeInteger(envelope.watermark) || envelope.watermark < 0)
@@ -311,6 +326,11 @@ export async function createHostCloudIdentity(context, options) {
         throw failure('METHOD_NOT_ALLOWED', 405);
       context.requireBrowserOrigin(request);
       const body = await context.readJson(request, 16 * 1024);
+      if (route === '/cloud/chat-directory') {
+        exactKeys(body,['box'],['box']);
+        context.json(response,200,await pullDirectory(request,body.box));
+        return true;
+      }
       if (route === '/auth/cloud-offline') {
         context.requireBrowserOrigin(request, true);
         exactKeys(body, ['cloudAccountId','password','deviceName'], ['cloudAccountId','password','deviceName']);
@@ -447,7 +467,8 @@ export async function createHostCloudIdentity(context, options) {
               claim.sub && claim.sub !== identity.sub) throw failure('CLOUD_BINDING_CONFLICT', 409);
           if (next.bindings[key]?.status === 'active') return;
           next.bindings[key] = { issuer: config.issuer, sub: identity.sub, ownerId: current.ownerId,
-            hostId, claimId: body.claimId, status: 'pending' };
+            hostId, claimId: body.claimId, status: 'pending',
+            ...(next.bindings[key]?.directoryBox ? {directoryBox:next.bindings[key].directoryBox} : {}) };
           claim.sub = identity.sub;
         }));
         const claim = store.state.claims[body.claimId];
@@ -774,7 +795,7 @@ export async function createHostCloudIdentity(context, options) {
   };
 }
 
-const CLOUD_CODES = new Set(['ACCOUNT_KEY_REGISTRY_UNAVAILABLE','ACCOUNT_KEY_CONFLICT','ACCOUNT_KEY_INVALID','INVALID_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND', 'METHOD_NOT_ALLOWED',
+const CLOUD_CODES = new Set(['DIRECTORY_INVALID','DIRECTORY_RESET','CHAT_INITIALIZING','ACCOUNT_KEY_REGISTRY_UNAVAILABLE','ACCOUNT_KEY_CONFLICT','ACCOUNT_KEY_INVALID','INVALID_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND', 'METHOD_NOT_ALLOWED',
   'ORIGIN_NOT_ALLOWED', 'UNSUPPORTED_MEDIA_TYPE', 'BODY_TOO_LARGE', 'AMBIGUOUS_AUTH', 'LOCAL_SESSION_REQUIRED',
   'CLOUD_TOKEN_INVALID', 'CLOUD_DEVICE_VERIFICATION_REQUIRED', 'DPOP_INVALID', 'DPOP_REPLAY', 'CLOUD_UNAVAILABLE', 'CLOUD_BINDING_CONFLICT',
   'CLAIM_INVALID', 'CLOUD_NOT_BOUND', 'DEVICE_NOT_TRUSTED', 'DEVICE_DECISION_CONFLICT', 'PAIRING_INVALID', 'PAIRING_CONFLICT', 'PAIRING_CONFIRMATION_REQUIRED',

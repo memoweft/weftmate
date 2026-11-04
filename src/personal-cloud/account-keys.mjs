@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { CompactEncrypt, importJWK } from 'jose';
+import { CompactEncrypt, compactDecrypt, importJWK } from 'jose';
+import { directoryCodec } from './directory-wire.mjs';
 import { pairingJkt } from './pairing.mjs';
 import { digest, failure } from '../personal-access/common.mjs';
 
@@ -39,6 +40,13 @@ export function createAccountKeys(vault) {
     status(issuer, sub) {
       const row = read(scope(issuer, sub));
       return row?.state === 'active' ? row.keyId : null;
+    },
+    async withDirectoryCodec(issuer, sub, hostId, action) {
+      const row = read(scope(issuer, sub));
+      if (row?.state !== 'active') throw failure('ACCOUNT_KEY_INVALID',403);
+      const bytes = keyBytes(row.secret);
+      try { return await action(directoryCodec({CompactEncrypt,compactDecrypt},bytes,[issuer,sub,row.keyId,hostId])); }
+      finally { bytes.fill(0); }
     },
     async initialize(issuer, sub, claim) {
       const slot = scope(issuer, sub);

@@ -5,6 +5,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     const phoneSettings=()=>!globalThis.weftmateDesktop&&matchMedia('(max-width:600px) and (pointer:coarse)').matches;
     function showSettingsList(){
         const changed=dialog.dataset.mobilePage!=='list';
+        if (selected === 'devices') ui.closeChatDirectory?.();
         dialog.dataset.mobilePage='list';ui.byId('settings-title').textContent='设置';
         if(changed)globalThis.WeftMotion.reveal(dialog.querySelector('.settings-sidebar'),'dur-1');
     }
@@ -85,7 +86,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const moveFocus=previous!==id&&panels.get(previous)?.contains(document.activeElement);
         if(id!=='about')clearTimeout(renderSettingsUpdates.timer);
         if (panels.get(selected)?.querySelector('.wm-skeleton,[aria-busy=true]')) mountedCategories.delete(selected);
-        if (selected === 'devices' && id !== 'devices') ui.stopCloudPairing();
+        if (selected === 'devices' && id !== 'devices') { ui.stopCloudPairing(); ui.closeChatDirectory?.(); }
         selected = id;
         if (id !== 'memory' && core.state.currentView === 'memory') {
             core.show('account');
@@ -439,7 +440,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             if (globalThis.WeftShortcuts.dispatch(event, { new: () => ui.byId('new-session').click() })) event.stopPropagation();
         });
         dialog.addEventListener('cancel', event => { event.preventDefault(); ui.byId('account-back').click(); });
-        dialog.addEventListener('close', () => { ui.stopAccountPairing?.(); returnFocus?.focus(); });
+        dialog.addEventListener('close', () => { ui.stopAccountPairing?.(); ui.closeChatDirectory?.(); returnFocus?.focus(); });
         navigation.addEventListener('keydown', event => {
             if (!['ArrowUp','ArrowDown','Home','End'].includes(event.key)) return;
             const buttons = [...navigation.querySelectorAll('button')], index = buttons.indexOf(document.activeElement);

@@ -1,6 +1,7 @@
 /* Desktop auth component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.auth = (core, ui) => {
     function paintIdentity(payload) {
+        ui.closeChatDirectory?.();
         ui.byId('account-name').textContent = WeftUiCore.accountLabel(payload.account,core.cloudAuthView?.().email);
         const name = [payload.account.displayName,payload.account.username].find(value=>value&&value!=='local-owner') || '我的账户';
         ui.byId('rail-account-name').textContent = name;
