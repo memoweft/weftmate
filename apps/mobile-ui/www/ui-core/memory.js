@@ -712,6 +712,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         effects.closeRail();
         core.show('memory');
         const token = core.memoryIdentity();
+        if (effects.openSyncedMemory && await effects.openSyncedMemory(options,entryGeneration)) return;
+        if (!core.memoryViewCurrent(token) || entryGeneration !== core.memory.entryGeneration) return;
         const filters = options.from?{kind:'all',query:''}:effects.memoryFilterInput();
         core.setMemoryFilters(filters.kind, filters.query);
         core.invalidateMemorySnapshot('正在读取记忆…', false);

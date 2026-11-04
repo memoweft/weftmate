@@ -3,6 +3,7 @@ import { importJWK, SignJWT } from 'jose';
 import { csrfForToken, digest, exactKeys, failure } from '../personal-access/common.mjs';
 import { SESSION_MS } from '../personal-access/constants.mjs';
 import { cloudConfiguration, createCloudVerifier } from './proofs.mjs';
+import { createMemoryExchange } from './memory-replica.mjs';
 import { createDirectoryPull } from './chat-directory.mjs';
 import { hostName } from '../host-name.mjs';
 import { openIdentity } from './storage.mjs';
@@ -162,8 +163,8 @@ export async function createHostCloudIdentity(context, options) {
         device?.status !== 'trusted' || device.ownerId !== ownerId || device.pairedJkt && device.pairedJkt !== device.jkt ||
         session.epoch < (store.state.epochs[session.bindingKey] ?? 0)) throw failure('UNAUTHORIZED', 401);
   }
-  function directoryAccess(request) {
-    const {ownerId,deviceId} = context.authenticate(request,'sessions:read');
+  function groupAccess(request, scope = 'sessions:read') {
+    const {ownerId,deviceId} = context.authenticate(request,scope);
     assertSession(ownerId,deviceId);
     const session = store.state.sessions[deviceId], trust = store.state.devices[session.trustId];
     const binding = store.state.bindings[session.bindingKey];
@@ -171,8 +172,9 @@ export async function createHostCloudIdentity(context, options) {
     if (!keyId || !trust.pairedJkt || trust.pairedJkt !== trust.jkt) throw failure('DEVICE_NOT_TRUSTED',403);
     return {ownerId,deviceId:trust.cloudDeviceId,issuer:binding.issuer,sub:binding.sub,keyId,binding};
   }
-  const pullDirectory = createDirectoryPull(context,hostId,directoryAccess,
-    (...args) => options.accountKeys.withDirectoryCodec(...args),
+  const codecFor = typ => (...args) => options.accountKeys.withDataCodec(typ,...args);
+  const memoryExchange = createMemoryExchange(context,hostId,groupAccess,codecFor('wm-memory-replica+jwe'));
+  const pullDirectory = createDirectoryPull(context,hostId,groupAccess,codecFor('wm-chat-directory+jwe'),
     (scope,box) => edit(next => { next.bindings[scope].directoryBox = box; }),
     ownerId => computerLabels.get(ownerId) || hostName());
   async function applyEvents(encoded) {
@@ -326,6 +328,11 @@ export async function createHostCloudIdentity(context, options) {
         throw failure('METHOD_NOT_ALLOWED', 405);
       context.requireBrowserOrigin(request);
       const body = await context.readJson(request, 16 * 1024);
+      if (route === '/cloud/memory-replica') {
+        exactKeys(body,['box'],['box']);
+        context.json(response,200,await memoryExchange(request,body.box));
+        return true;
+      }
       if (route === '/cloud/chat-directory') {
         exactKeys(body,['box'],['box']);
         context.json(response,200,await pullDirectory(request,body.box));
@@ -795,7 +802,7 @@ export async function createHostCloudIdentity(context, options) {
   };
 }
 
-const CLOUD_CODES = new Set(['DIRECTORY_INVALID','DIRECTORY_RESET','CHAT_INITIALIZING','ACCOUNT_KEY_REGISTRY_UNAVAILABLE','ACCOUNT_KEY_CONFLICT','ACCOUNT_KEY_INVALID','INVALID_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND', 'METHOD_NOT_ALLOWED',
+const CLOUD_CODES = new Set(['MEMORY_UNAVAILABLE','MEMORY_SCOPE_REVIEW','MEMORY_SYNC_INVALID','MEMORY_REVISION_CHANGED','MEMORY_FORMATION_PENDING','MEMORY_FORGET_INCOMPLETE','MEMORY_DELETE_UNAVAILABLE','DIRECTORY_INVALID','DIRECTORY_RESET','CHAT_INITIALIZING','ACCOUNT_KEY_REGISTRY_UNAVAILABLE','ACCOUNT_KEY_CONFLICT','ACCOUNT_KEY_INVALID','INVALID_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND', 'METHOD_NOT_ALLOWED',
   'ORIGIN_NOT_ALLOWED', 'UNSUPPORTED_MEDIA_TYPE', 'BODY_TOO_LARGE', 'AMBIGUOUS_AUTH', 'LOCAL_SESSION_REQUIRED',
   'CLOUD_TOKEN_INVALID', 'CLOUD_DEVICE_VERIFICATION_REQUIRED', 'DPOP_INVALID', 'DPOP_REPLAY', 'CLOUD_UNAVAILABLE', 'CLOUD_BINDING_CONFLICT',
   'CLAIM_INVALID', 'CLOUD_NOT_BOUND', 'DEVICE_NOT_TRUSTED', 'DEVICE_DECISION_CONFLICT', 'PAIRING_INVALID', 'PAIRING_CONFLICT', 'PAIRING_CONFIRMATION_REQUIRED',

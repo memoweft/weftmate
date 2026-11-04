@@ -3,6 +3,126 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     let resetIngestion = () => {};
     let importsView, importsOwner, importsTools;
     const memoryRows = new Map();
+    let replicaPanel, replicaGeneration=0, localReplica, localCache;
+    function closeSyncedMemory() {
+        replicaGeneration++;
+        localReplica=localCache=null;
+        if (replicaPanel) {
+            replicaPanel.parentElement?.removeAttribute('data-synced-memory');
+            replicaPanel.remove();replicaPanel=null;
+        }
+    }
+    function replicaButton(label,action) {
+        const button=ui.element('button','button secondary small',label);
+        button.type='button';button.onclick=action;return button;
+    }
+    function paintReplica(cache) {
+        if (!replicaPanel || (cache.tick??0)<(localCache?.tick??0)) return;
+        localCache=cache;
+        const list=replicaPanel.querySelector('ul'),pending=replicaPanel.querySelector('[data-pending]');
+        const needle=replicaPanel.querySelector('input').value.trim().normalize('NFKC').toLocaleLowerCase();
+        const items=cache.items.filter(row=>row.text.normalize('NFKC').toLocaleLowerCase().includes(needle));
+        list.replaceChildren();
+        for (const item of items) {
+            const row=ui.element('li','device-item');
+            const forget=replicaButton('忘掉',()=>confirmReplicaForget(item,row));
+            forget.disabled=!item.plan.scope;
+            if (forget.disabled) forget.title='请在来源电脑上核对完整遗忘范围';
+            row.append(ui.element('p','',item.text),ui.element('span','muted',core.memoryKinds[item.key.split(':')[0]]),forget);
+            list.append(row);
+        }
+        if (!items.length) list.append(ui.element('li','muted',needle?'没有匹配的记忆。':'本机还没有可显示的记忆。'));
+        const reviews=cache.pending.filter(row=>row.review);
+        pending.textContent=cache.pending.length ? '本机已隐藏 '+cache.pending.length+' 项遗忘请求。'+
+            (reviews.length?'其中 '+reviews.length+' 项的遗忘范围需要重新核对。':'正在等待电脑确认。') : '';
+        for (const intent of reviews) {
+            const review=replicaButton('核对新的遗忘范围',async()=>{
+                const generation=replicaGeneration;
+                try {
+                    const item=await localReplica.review(intent.intentId);
+                    if(generation===replicaGeneration) confirmReplicaForget(item,pending,intent.intentId);
+                } catch { if(generation===replicaGeneration) replicaPanel.querySelector('[role=status]').textContent='暂时无法取得完整范围，请稍后刷新或在来源电脑核对。'; }
+            });
+            pending.append(review);
+        }
+        replicaPanel.querySelector('[data-manage]').disabled=cache.pending.length>0;
+    }
+    function confirmReplicaForget(item,row,intentId) {
+        const replica=localReplica, generation=replicaGeneration;
+        const related=[item,...localCache.items.filter(x=>x.key!==item.key && item.plan.keys.includes(x.key))];
+        const unavailable=item.plan.keys.some(key=>/^(cognition|entity|relationship|event):/.test(key) && !related.some(x=>x.key===key));
+        if(unavailable) {
+            replicaPanel.querySelector('[role=status]').textContent='部分相关记忆尚未取回，请在来源电脑核对完整范围。';return;
+        }
+        const confirmation=ui.element('div','group');
+        confirmation.append(ui.element('strong','','确认遗忘范围'),ui.element('p','',
+          item.plan.keys.length+' 个相关项目，涉及 '+item.plan.evidenceCount+' 条记忆来源。原对话保留。'));
+        for (const record of related) confirmation.append(ui.element('p','',record.text));
+        const confirm=replicaButton('确认忘掉',async()=>{
+            if (generation!==replicaGeneration || core.state.currentView!=='memory') return;
+            confirm.disabled=true;
+            try {
+                const cache=await replica.forget(item.key,item.plan,intentId ? {intentId,item} : undefined);
+                if (generation===replicaGeneration) paintReplica(cache);
+                void core.resumeMemoryForgets();
+            } catch {
+                if (generation===replicaGeneration) {
+                    confirm.disabled=false;replicaPanel.querySelector('[role=status]').textContent='未能保存遗忘操作，请刷新后重试。';
+                }
+            }
+        });
+        confirmation.append(confirm,replicaButton('取消',()=>paintReplica(localCache)));
+        row.replaceChildren(confirmation);confirm.focus();
+    }
+    async function syncedMemoryChanged() {
+        const replica=localReplica,generation=replicaGeneration;
+        if (!replica || core.state.currentView!=='memory') return;
+        try {
+            const cache=await replica.read();
+            if (generation===replicaGeneration) paintReplica(cache);
+        } catch (error) {
+            if (generation===replicaGeneration && error.code==='ACCOUNT_KEY_INVALID') {
+                localCache=localReplica=null;replicaPanel.replaceChildren(ui.element('p','muted','本机账号钥匙已清除。'));
+            }
+        }
+    }
+    async function openSyncedMemory(options,entry) {
+        closeSyncedMemory();
+        if (!core.getMemoryReplica || core.state.cloudAuth?.mode!=='authenticated' || core.state.cloudAuth.localDesktop) return false;
+        const generation=replicaGeneration;
+        const current=()=>generation===replicaGeneration && core.state.currentView==='memory' && entry===core.memory.entryGeneration;
+        let replica;
+        try {
+            replica=await core.getMemoryReplica();
+            if (replica && (options.sourceView || options.from) && !(await replica.read()).pending.length) return !current();
+        }
+        catch { if(current()) ui.memoryStatus('无法读取本机记忆，请稍后再试。',true);return true; }
+        if (!current()) return true;
+        if (!replica) return false;
+        localReplica=replica;
+        const panel=ui.element('section','card group synced-memory');replicaPanel=panel;
+        const page=ui.byId('memory-view');page.dataset.syncedMemory='true';page.append(panel);
+        const status=ui.element('p','muted');status.setAttribute('role','status');
+        const label=ui.element('label','','搜索已同步记忆'),query=ui.element('input');query.type='search';label.append(query);
+        query.oninput=()=>{if(localCache)paintReplica(localCache);};
+        const pending=ui.element('p','muted');pending.dataset.pending='';
+        const manage=replicaButton('在来源电脑上管理',()=>void core.openMemory({sourceView:true}));manage.dataset.manage='';
+        panel.append(ui.element('h2','','已同步记忆'),label,status,pending,ui.element('ul','device-list'),manage);
+        try {
+            const cache=await replica.read();
+            if (!current()) return true;
+            paintReplica(cache);status.textContent='正在核对电脑上的改动…';
+            const synced=await replica.sync(next=>{if(current())paintReplica(next);});
+            if (current()) {paintReplica(synced);status.textContent=synced.pending.length?'记忆已更新，遗忘仍在等待确认。':'已与来源电脑同步。';}
+        } catch(error) {
+            if (current()) {
+                if (['DEVICE_NOT_TRUSTED','UNAUTHORIZED','ACCOUNT_KEY_INVALID'].includes(error.code)) {
+                    localCache=localReplica=null;panel.replaceChildren(ui.element('p','muted','设备授权已失效。'));
+                } else status.textContent='暂未同步，显示本机已保存的记忆。';
+            }
+        }
+        return true;
+    }
     let renderedScope;
     let deviceCleanup,deviceCleanupGeneration=0;
     async function readDeviceCleanup(){
@@ -288,6 +408,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             void core.recoverMemoryReceipt();
     }
     function resetMemoryControls() {
+        closeSyncedMemory();
         deviceCleanupGeneration++;if(deviceCleanup)deviceCleanup.hidden=true;
         memoryRows.clear();
         resetIngestion();
@@ -426,6 +547,8 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ui.byId('memory-refresh').addEventListener('click', () => { void refresh(); });
     }
     function mountMemory() {
+        if (globalThis.location?.origin && !globalThis.weftmateDesktop)
+            globalThis.WeftCloud?.memoryChanges?.()?.addEventListener('message',syncedMemoryChanged);
         deviceCleanup=ui.element('section','memory-device-cleanup');deviceCleanup.hidden=true;deviceCleanup.setAttribute('aria-label','设备遗忘清理');deviceCleanup.setAttribute('role','status');
         const copy=ui.element('div');copy.append(ui.element('strong'),ui.element('p'));
         const retry=ui.element('button','button secondary small','检查状态');retry.type='button';retry.onclick=async()=>{retry.disabled=true;try{await readDeviceCleanup();}finally{retry.disabled=false;}};
@@ -507,6 +630,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         });
         ui.byId('memory-confirm-action').addEventListener('click', () => { void core.submitMemoryAction(); });
         window.addEventListener('online', () => {
+            void core.resumeMemoryForgets?.();
             if (!ui.byId('memory-view').hidden)
                 void core.openMemory();
         });
@@ -514,5 +638,5 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     function memoryFilterInput() {
         return { kind: ui.byId('memory-kind').value, query: ui.byId('memory-query').value.trim().normalize('NFKC') };
     }
-    return { paintMemoryAvailability, exportMemories, memoryStatus, detailStatus, detailError, paintMemoryReceipt, renderMemoryItems, renderMemorySources, renderMemoryMode, handleMemoryReceiptAction, resetMemoryControls, clearMemoryList, setMemoryMoreBusy, beginMemoryDetail, paintMemoryDetail, memoryCommandText, setMemoryConfirmBusy, setMemoryCleanupBusy, readMemoryReceiptId, clearMemoryDetailView, mountMemory, memoryFilterInput };
+    return { paintMemoryAvailability, closeSyncedMemory, openSyncedMemory, syncedMemoryChanged, exportMemories, memoryStatus, detailStatus, detailError, paintMemoryReceipt, renderMemoryItems, renderMemorySources, renderMemoryMode, handleMemoryReceiptAction, resetMemoryControls, clearMemoryList, setMemoryMoreBusy, beginMemoryDetail, paintMemoryDetail, memoryCommandText, setMemoryConfirmBusy, setMemoryCleanupBusy, readMemoryReceiptId, clearMemoryDetailView, mountMemory, memoryFilterInput };
 };
