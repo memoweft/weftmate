@@ -29,17 +29,20 @@
   }
   async function removeAccountKey(issuer, sub) {
     const account = JSON.stringify([issuer,sub]);
-    const prefix = 'chat-directory:'+account.slice(0,-1)+',';
+    const suffix = account.slice(0,-1)+',';
     const opened = await db();
     return new Promise((resolve,reject) => {
       const tx = opened.transaction('credentials','readwrite'), store = tx.objectStore('credentials');
       store.delete('account-data:'+account);
-      store.delete(IDBKeyRange.bound(prefix,prefix+'\uffff'));
-      tx.oncomplete = () => resolve();
+      for (const kind of ['chat-directory:','memory-replica:']) {
+        const prefix=kind+suffix;
+        store.delete(IDBKeyRange.bound(prefix,prefix+'\uffff'));
+      }
+      tx.oncomplete = () => { memoryChanges()?.postMessage('changed'); resolve(); };
       tx.onabort = tx.onerror = () => reject({code:'STORAGE_UNAVAILABLE'});
     });
   }
-  async function saveDirectory(slot, previous, value, current, accountSlot, keyId) {
+  async function saveReplica(slot, previous, value, current, accountSlot, keyId) {
     const opened = await db();
     return new Promise((resolve,reject) => {
       const tx = opened.transaction('credentials','readwrite'), store = tx.objectStore('credentials');
@@ -56,6 +59,42 @@
       tx.oncomplete = () => resolve();
       tx.onabort = tx.onerror = () => reject(failure ?? {code:'STORAGE_UNAVAILABLE'});
     });
+  }
+  let memoryChannel;
+  function memoryChanges() {
+    if (!memoryChannel && typeof BroadcastChannel==='function') memoryChannel=new BroadcastChannel('weftmate-memory-replica');
+    return memoryChannel;
+  }
+  async function memoryReplica({issuer,sub,hostId,deviceId,current,exchange}) {
+    const accountSlot='account-data:'+JSON.stringify([issuer,sub]), key=await storage(accountSlot);
+    current();
+    if (!key) return null;
+    const [{accountDataCodec},{openMemoryReplica}]=await Promise.all([
+      import('./ui-core/directory-wire.mjs'),import('./ui-core/memory-replica.mjs')]);
+    const scope=[issuer,sub,key.keyId,hostId],slot='memory-replica:'+JSON.stringify(scope);
+    const codec=accountDataCodec(globalThis.WeftCloudVendor,key.key,scope,'wm-memory-replica+jwe');
+    const write=async(previous,next)=>{
+      await saveReplica(slot,previous,next,current,accountSlot,key.keyId);
+      memoryChanges()?.postMessage('changed');
+    };
+    async function read() {
+      if ((await storage(accountSlot))?.keyId!==key.keyId) throw {code:'ACCOUNT_KEY_INVALID'};
+      return storage(slot);
+    }
+    async function request(body) {
+      try {return await exchange(body);}
+      catch(error) {
+        if (error.code==='DEVICE_NOT_TRUSTED') {
+          const previous=await read();
+          if (previous!==undefined) {
+            const cache=await codec.open('memory-cache',previous);
+            await write(previous,await codec.seal('memory-cache',{...cache,tick:(cache.tick??0)+1,items:[]}));
+          }
+        }
+        throw error;
+      }
+    }
+    return openMemoryReplica({codec,read,write,current,exchange:request,deviceId,random});
   }
   async function syncChatDirectory({issuer,sub,hostId,deviceId,current,pull,showCache}) {
     const accountSlot = 'account-data:'+JSON.stringify([issuer,sub]), key = await storage(accountSlot);
@@ -76,7 +115,7 @@
       let response;
       try { response = await pull({box}); }
       catch (error) {
-        if (error.code === 'DEVICE_NOT_TRUSTED' && previous !== undefined) await saveDirectory(slot,previous,undefined,current,accountSlot,key.keyId);
+        if (error.code === 'DEVICE_NOT_TRUSTED' && previous !== undefined) await saveReplica(slot,previous,undefined,current,accountSlot,key.keyId);
         throw error;
       }
       page = await codec.open('page',response.box);
@@ -84,7 +123,7 @@
       current();
       if (!cache || !wire.equalCursor(cache.cursor,next.cursor) || next.label !== cache.label) {
         const sealed = await codec.seal('cache',next);
-        await saveDirectory(slot,previous,sealed,current,accountSlot,key.keyId);
+        await saveReplica(slot,previous,sealed,current,accountSlot,key.keyId);
         previous = sealed;
       }
       cache = next;
@@ -292,5 +331,5 @@
     }
     async forget() { if (!this.config) await this.configure(); await this.credentialStorage(this.tokenId, undefined, true); await storage('pending:' + this.host, undefined, true); }
   }
-  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, installAccountKey, removeAccountKey, syncChatDirectory };
+  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, installAccountKey, removeAccountKey, memoryChanges, memoryReplica, syncChatDirectory };
 })();

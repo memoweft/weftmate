@@ -378,6 +378,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     function paintScreen(view) {
         void ui.checkCloudBackupPrompt?.();
         const wasMemory=ui.motionView==='memory';
+        if (wasMemory && view!=='memory') ui.closeSyncedMemory?.();
         for (const name of ui.views)
             ui.byId(`${name}-view`).hidden = name !== view && !(['account', 'memory'].includes(view) && name === 'assistant');
         const retainedWorkspace=view==='assistant'&&['account','memory'].includes(ui.motionView);

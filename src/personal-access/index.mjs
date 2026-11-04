@@ -329,6 +329,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get deviceName() { return deviceName; },
     get driveTaskStop() { return driveTaskStop; },
     get handleMemoryHttp() { return handleMemoryHttp; },
+    get syncedMemoryCommand() { return syncedMemoryCommand; },
     get hashQueue() { return hashQueue; },
     get hashWork() { return hashWork; },
     set hashQueue(value) { hashQueue = value; },
@@ -488,7 +489,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const terminals = createTerminalOperations(context);
   const http = createHttpHandler(context);
   const { handle, handleScoped } = http;
-  const { handleMemoryHttp } = createMemoryHttpHandler(context);
+  const { handleMemoryHttp, syncedMemoryCommand } = createMemoryHttpHandler(context);
 
   try {
     await ensurePrivateFile(storeFile);

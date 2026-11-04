@@ -247,6 +247,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await core.refreshPendingDevices();
     if (!current()) return;
     scheduleRenewal();
+    void resumeMemoryForgets();
     await cloudDirectory().catch(() => {});
     if (!current()) return;
     const draft = await environment.cloudCredentials('draft:' + saved.sub);
@@ -635,6 +636,38 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     })(); else if (auth.mode === 'authenticated') void (async () => { try { await finishCloudLogin(); } catch { await expireCloudSession(); } })(); else localExpired(); };
     return client;
   }
+  let forgetTimer, forgetFlight;
+  async function getMemoryReplica() {
+    if (auth.mode!=='authenticated' || auth.localDesktop || !auth.sub || !client?.config?.hostId ||
+        !globalThis.WeftCloud?.memoryReplica) return null;
+    const generation=core.state.identityGeneration, sub=auth.sub, hostId=client.config.hostId;
+    const current=()=>{
+      if (generation!==core.state.identityGeneration || auth.mode!=='authenticated' || sub!==auth.sub || hostId!==client.config.hostId)
+        throw {code:'DIRECTORY_CHANGED'};
+    };
+    const {deviceId}=await client.key();current();
+    return globalThis.WeftCloud.memoryReplica({issuer:client.config.issuer,sub,hostId,deviceId,current,
+      exchange:body=>core.accessApi('/cloud/memory-replica',{method:'POST',protectedWrite:true,body})});
+  }
+  function resumeMemoryForgets() {
+    if (forgetFlight) return forgetFlight;
+    clearTimeout(forgetTimer);
+    forgetFlight=(async()=>{
+      const replica=await getMemoryReplica();
+      if (!replica) return;
+      const cache=await replica.read();
+      if (!cache.pending.length) return;
+      try {
+        const synced=await replica.sync();
+        if (synced.pending.some(intent=>!intent.review)) forgetTimer=setTimeout(resumeMemoryForgets,30000);
+        effects.syncedMemoryChanged?.();
+      } catch (error) {
+        if (!['UNAUTHORIZED','DEVICE_NOT_TRUSTED'].includes(error.code))
+          forgetTimer=setTimeout(resumeMemoryForgets,30000);
+      }
+    })().catch(()=>{}).finally(()=>{forgetFlight=null;});
+    return forgetFlight;
+  }
   async function syncChatDirectory(showCache, visible) {
     const generation = core.state.identityGeneration, sub = auth.sub, hostId = client?.config?.hostId;
     const current = () => {
@@ -650,7 +683,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (!client || auth.mode !== 'authenticated') throw Object.assign(new Error('FEEDBACK_LOGIN_REQUIRED'), { code: 'FEEDBACK_LOGIN_REQUIRED' });
     return client.authorized('/feedback', { method: 'POST', body: payload });
   }
-  return { syncChatDirectory, cloudSendFeedback, initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
+  return { syncChatDirectory, getMemoryReplica, resumeMemoryForgets, cloudSendFeedback, initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
     resumeCloudComputer, retryCloudApproval, cancelCloudJourney, renewCloudSession, cloudOfflineLogin, cloudDirectory, cloudRename, cloudRemove, cloudConnect, cloudTrust,
     cloudEmailRequest, cloudEmailConfirm, cloudChangePassword, cloudLogout, cloudLogoutOthers, cloudDeleteAccount, cloudEmergencyPassword, cloudPairing, cloudRedeemPairing, cloudConnectTrusted,
     cloudTrustMaterial, cloudImportTrust, cloudApproveOffline };

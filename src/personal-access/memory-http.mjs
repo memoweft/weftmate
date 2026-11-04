@@ -35,12 +35,18 @@ export function createMemoryHttpHandler(context) {
       }
       throw failure('METHOD_NOT_ALLOWED', 405);
     }
+    const result = await runOperation(request,url,pathname,ownerId,context.readJson);
+    return context.json(response, result.status, { ownerId, ...result.body,
+      ...(pathname === '/personal/v1/memory/status' ? { ...context.memoryIngestion.status(ownerId), ...context.historyImport.list(ownerId) } : {}) });
+  }
+  async function runOperation(request,url,pathname,ownerId,readJson,beforeSubmit) {
+    const mutation = request.method !== 'GET';
     if (request.method === 'DELETE') await context.offline?.invalidate(ownerId);
     const match=/\/memory\/(?:items\/(?<kind>cognition|entity|relationship|event)|(?<evidence>evidence))\/(?<id>[^/]+)(?:\/(?<action>correct))?$/.exec(pathname);
     const target=match?{...match.groups,kind:match.groups.kind??'evidence'}:null;
     let body, pending;
     if(target && (request.method==='DELETE'||request.method==='POST'&&target.action==='correct')){
-      body=await context.readJson(request);
+      body=await readJson(request);
       const keys=target.kind==='evidence'?[]:[`${target.kind}:${decodeURIComponent(target.id)}`];
       if(request.method==='DELETE')try{const preview=await context.memoryManager.query(ownerId,'preview_forget',{target_kind:target.kind,target_id:decodeURIComponent(target.id)});
         if(Array.isArray(preview.items))keys.push(...preview.items.map(row=>`${row.object_kind}:${row.item_id}`));
@@ -49,7 +55,7 @@ export function createMemoryHttpHandler(context) {
     }
     let result;
     try{result = await handlePersonalMemoryHttp({ manager: context.memoryManager,
-      ownerId, request, pathname, url, readJson:pending?async()=>body:context.readJson });}
+      ownerId, request, pathname, url, readJson:pending?async()=>body:readJson, beforeSubmit });}
     finally{if(pending&&typeof pending.requestId==='string'&&/^[A-Za-z0-9_.:-]{1,128}$/.test(pending.requestId))await context.serial(()=>context.mutate(ownerId,next=>{
       const state=memoryDigestState(next);state.pending??={};state.pending[pending.requestId]??=pending;
     }));}
@@ -70,8 +76,14 @@ export function createMemoryHttpHandler(context) {
       delete item.sourceEvidenceIds;
       item.sourceConversationIds = item.sourceConversationIds?.filter(id => !id.startsWith('import-'));
     }
-    return context.json(response, result.status, { ownerId, ...result.body,
-      ...(pathname === '/personal/v1/memory/status' ? { ...context.memoryIngestion.status(ownerId), ...context.historyImport.list(ownerId) } : {}) });
+    return result;
   }
-  return { handleMemoryHttp };
+  async function syncedMemoryCommand(ownerId,action,kind,id,requestId,body,authorize) {
+    authorize();
+    const root='/personal/v1/memory/';
+    const pathname=action==='delete' ? root+'items/'+kind+'/'+id : root+'commands/by-request/'+requestId+(action==='cleanup'?'/retry-cleanup':'');
+    const method=action==='delete'?'DELETE':action==='cleanup'?'POST':'GET';
+    return runOperation({method},{search:''},pathname,ownerId,async()=>body??{},authorize);
+  }
+  return { handleMemoryHttp, syncedMemoryCommand };
 }

@@ -111,7 +111,7 @@ function publicReceipt(value, requestId) {
 }
 
 /** Authenticated owner has already been resolved by personal-access. */
-export async function handlePersonalMemoryHttp({ manager, ownerId, request, pathname, url, readJson }) {
+export async function handlePersonalMemoryHttp({ manager, ownerId, request, pathname, url, readJson, beforeSubmit }) {
   const method = request.method;
   const path = canonicalMemoryPathname(pathname);
   if (path === null) throw failure('INVALID_REQUEST');
@@ -297,7 +297,7 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
       const body = await readJson(request, 12 * 1024);
       keys(body, ['requestId', 'expectedWorldRevision', 'deleteConversationSnippets', 'forgetScope'], ['requestId', 'expectedWorldRevision']);
       if (body.deleteConversationSnippets !== undefined && typeof body.deleteConversationSnippets !== 'boolean') throw failure('INVALID_REQUEST');
-      return submit({ manager, ownerId, body, operation: 'delete_world_item', targetKind: kind,
+      return submit({ manager, ownerId, body, beforeSubmit, operation: 'delete_world_item', targetKind: kind,
         targetId: id, payload: { ...(body.deleteConversationSnippets === true ? { delete_conversation_snippets: true } : {}),
           ...(body.forgetScope !== undefined ? { forget_scope: checkedForgetScope(body.forgetScope) } : {}) } });
     }
@@ -339,7 +339,7 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
   throw failure('NOT_FOUND', 404);
 }
 
-async function submit({ manager, ownerId, body, operation, targetKind, targetId, payload }) {
+async function submit({ manager, ownerId, body, operation, targetKind, targetId, payload, beforeSubmit }) {
   if (!REQUEST_ID.test(body.requestId) || !safeNumber(body.expectedWorldRevision)) throw failure('INVALID_REQUEST');
   const status = await manager.status(ownerId);
   if (status.state === 'disabled' || status.state === 'unavailable') throw failure('MEMORY_UNAVAILABLE', 503);
@@ -367,6 +367,7 @@ async function submit({ manager, ownerId, body, operation, targetKind, targetId,
       status: 409, body: { state: 'withheld', error: { code: 'MEMORY_FORGET_INCOMPLETE' },
         message: '这次没有执行遗忘：相关来源仍无法完整处理。独立记忆和原聊天保留。' } };
   }
+  beforeSubmit?.();
   let result;
   try {
     result = await manager.submitCommand(ownerId, { requestId: body.requestId,

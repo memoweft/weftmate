@@ -6,7 +6,10 @@ const number = n => Number.isSafeInteger(n) && n >= 0;
 export const validCursor = c => !!c && number(c.removed) && number(c.changed);
 export const equalCursor = (a,b) => validCursor(a) && validCursor(b) && a.removed === b.removed && a.changed === b.changed;
 export function directoryCodec(vendor, key, scope) {
-  const header = {alg:'dir', enc:'A256GCM', typ:'wm-chat-directory+jwe', kid:scope[2]};
+  return accountDataCodec(vendor,key,scope,'wm-chat-directory+jwe');
+}
+export function accountDataCodec(vendor,key,scope,typ) {
+  const header = {alg:'dir', enc:'A256GCM', typ, kid:scope[2]};
   return {
     async seal(purpose, value) {
       const bytes = new TextEncoder().encode(JSON.stringify([scope,purpose,value]));
