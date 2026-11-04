@@ -5,10 +5,10 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     const button = (label, action, style = 'secondary') => { const node = ui.element('button', `button ${style}`, label); node.type = 'button'; node.addEventListener('click', action); return node; };
     function error(error) { ui.byId('cloud-settings-status').textContent = core.cloudError(error); }
     async function act(action) { try { ui.byId('cloud-settings-status').textContent = ''; await action(); return true; } catch (failure) { error(failure); return false; } }
-    let chatTicket = 0, chatIdentity;
+    let chatTicket = 0, chatIdentity, chatSection;
     function resetChats() {
         chatTicket++;
-        const section = ui.byId('cloud-chat-directory');
+        const section = chatSection;
         if (!section) return;
         section.open = false;
         section.querySelector('ul').replaceChildren();
@@ -59,6 +59,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         chats.append(ui.element('summary','','对话目录'),refreshChats,chatStatus,ui.element('ul','device-list'));
         chats.addEventListener('toggle',() => { if (chats.open) void readChats(chats); else resetChats(); });
         panel.querySelector('#cloud-devices-panel').append(chats);
+        chatSection = chats;
         account.prepend(panel);
         const signedIn = globalThis.WeftControls.tag('已登录'); signedIn.id = 'cloud-login-state';
         panel.querySelector('#cloud-account-panel > h2').textContent='远程访问';
@@ -100,11 +101,11 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     function select(value) {
         tab = value; ui.byId('cloud-account-panel').hidden = tab !== 'account'; ui.byId('cloud-devices-panel').hidden = tab !== 'devices';
         ui.byId('cloud-account-tab').setAttribute('aria-pressed', String(tab === 'account')); ui.byId('cloud-devices-tab').setAttribute('aria-pressed', String(tab === 'devices'));
-        const chats = ui.byId('cloud-chat-directory'), auth = core.state.cloudAuth;
+        const auth = core.state.cloudAuth;
         const identity = JSON.stringify([core.state.identityGeneration,auth.sub,auth.mode]);
         if (identity !== chatIdentity || tab !== 'devices') resetChats();
         chatIdentity = identity;
-        chats.hidden = auth.mode !== 'authenticated' || !!auth.localDesktop;
+        if (chatSection) chatSection.hidden = auth.mode !== 'authenticated' || !!auth.localDesktop;
         if (tab !== 'devices') stopPairing();
     }
     async function paintLocalAccounts() {
