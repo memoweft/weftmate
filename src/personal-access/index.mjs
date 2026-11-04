@@ -1059,6 +1059,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     issueSetupGrant: authentication.issueSetupGrant,
     enrollDevice: authentication.enrollDevice,
     revokeDevice: authentication.revokeDevice,
+    importAccountKey: (ownerId, payload) => hostCloudIdentity?.importAccountKey(ownerId, payload),
     syncCloudRevocations: () => hostCloudIdentity?.syncRevocations(),
     receiveCloudRevocations: (token) => hostCloudIdentity?.applyEvents(token),
     listDevices: authentication.listDevices,

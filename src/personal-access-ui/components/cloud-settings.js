@@ -23,6 +23,21 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         ui.byId('cloud-devices-tab').addEventListener('click', () => { select('devices'); void refreshDirectory(); });
         ui.byId('cloud-directory-refresh').addEventListener('click', () => void refreshDirectory());
         const deviceActions=ui.element('div','actions');ui.byId('cloud-directory-refresh').before(deviceActions);deviceActions.append(addDevice,ui.byId('cloud-directory-refresh'));
+        const enroll = button('创建账号钥匙', () => void act(async () => {
+            const identity = core.state.identityGeneration;
+            const { dataAccount } = await core.accessApi('/cloud/binding');
+            if (!dataAccount || identity !== core.state.identityGeneration) throw {code:'CLOUD_NOT_BOUND'};
+            if (dataAccount.keyId) return ui.cloudUi.openPairing(dataAccount.keyId);
+            confirmAction('在这台电脑创建账号钥匙', '只在建立数据组的第一台电脑上创建。已有持钥设备时，请扫描那台设备的入组码。', async () => {
+                if (identity !== core.state.identityGeneration) throw {code:'PAIRING_STOPPED'};
+                const {keyId} = await core.accessApi('/cloud/account-key/create', {method:'POST',protectedWrite:true,
+                    body:{issuer:dataAccount.issuer,sub:dataAccount.sub}});
+                if (identity !== core.state.identityGeneration) return;
+                enroll.textContent='扫码加入数据组';
+                await ui.cloudUi.openPairing(keyId);
+            }, '创建并显示入组码');
+        }));
+        enroll.id='cloud-key-enroll';enroll.hidden=true;deviceActions.prepend(enroll);
         const actions = ui.byId('cloud-account-actions');
         actions.append(button('换绑邮箱', () => accountFlow('email')), button('修改密码', () => accountFlow('password')),
             button('退出登录', () => void act(core.cloudLogout)), button('退出所有其他设备', () => confirmAction('退出所有其他设备', '其他设备将退出登录，当前设备继续可用。', async () => { await core.cloudLogoutOthers(); await refreshDirectory(); })),
@@ -64,9 +79,17 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const pairingOwner = core.state.ownerId, pairingIdentity = core.state.identityGeneration;
         const pairingCurrent = () => pairingIdentity === core.state.identityGeneration && pairingOwner === core.state.ownerId;
         void core.accessApi('/cloud/binding').then(binding => {
-            if (pairingCurrent())
-                ui.byId('cloud-pairing-open').hidden = !binding.canManage || binding.status !== 'active';
-        }).catch(() => { if (pairingCurrent()) ui.byId('cloud-pairing-open').hidden = true; });
+            if (!pairingCurrent()) return;
+            ui.byId('cloud-pairing-open').hidden = !binding.canManage || binding.status !== 'active';
+            const enroll=ui.byId('cloud-key-enroll');
+            enroll.hidden=!binding.dataAccount;
+            enroll.disabled=binding.dataAccount?.unavailable === true;
+            enroll.textContent=enroll.disabled ? '本机钥匙存储不可用' : binding.dataAccount?.keyId ? '扫码加入数据组' : '创建账号钥匙';
+        }).catch(() => {
+            if (!pairingCurrent()) return;
+            ui.byId('cloud-pairing-open').hidden=true;
+            ui.byId('cloud-key-enroll').hidden=true;
+        });
         ui.byId('cloud-account-panel').dataset.signedIn = String(active);
         ui.byId('cloud-login-state').hidden = !active;
         ui.byId('cloud-settings').hidden = false;
@@ -196,12 +219,12 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
             const empty = ui.element('li', 'cloud-device-empty'); empty.append(globalThis.WeftIcons.create('desktop', 28), ui.element('p', 'muted', '还没有其他已登录设备。')); list.append(empty);
         }
     }
-    function confirmAction(title, description, action) {
+    function confirmAction(title, description, action, confirmLabel = '确认下线') {
         const identity = core.state.identityGeneration;
         const dialog = ui.element('dialog', 'dialog confirm-dialog cloud-device-dialog'); dialog.setAttribute('aria-label', title);
         const head = ui.element('div', 'dialog-head'), body = ui.element('div', 'dialog-body'), footer = ui.element('div', 'dialog-footer'), feedback = ui.element('p', 'form-error'); feedback.setAttribute('role', 'alert');
         head.append(ui.element('h2', '', title)); body.append(ui.element('p', '', description), feedback);
-        const cancel = button('取消', () => dialog.close()), confirm = button('确认下线', async () => { if (identity !== core.state.identityGeneration) { dialog.close(); return; } confirm.disabled = cancel.disabled = true; try { await action(); dialog.close(); } catch (failure) { feedback.textContent = core.cloudError(failure); } finally { confirm.disabled = cancel.disabled = false; } }, 'danger');
+        const cancel = button('取消', () => dialog.close()), confirm = button(confirmLabel, async () => { if (identity !== core.state.identityGeneration) { dialog.close(); return; } confirm.disabled = cancel.disabled = true; try { await action(); dialog.close(); } catch (failure) { feedback.textContent = core.cloudError(failure); } finally { confirm.disabled = cancel.disabled = false; } }, 'danger');
         footer.append(cancel, confirm); dialog.append(head, body, footer);
         dialog.addEventListener('close', () => dialog.remove()); document.body.append(dialog); dialog.showModal(); cancel.focus();
     }

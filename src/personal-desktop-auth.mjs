@@ -4,7 +4,11 @@ import { createHash, generateKeyPairSync, createPrivateKey, randomUUID, sign } f
 export function desktopAuthStorage(file, encryption) {
   const read = () => {
     if (!encryption.isEncryptionAvailable()) throw new Error('STORAGE_UNAVAILABLE');
-    try { return JSON.parse(encryption.decryptString(readFileSync(file))); }
+    try {
+      const data = JSON.parse(encryption.decryptString(readFileSync(file)));
+      if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('STORAGE_UNAVAILABLE');
+      return data;
+    }
     catch (error) { if (error.code === 'ENOENT') return {}; throw new Error('STORAGE_UNAVAILABLE'); }
   };
   const edit = change => {
@@ -14,6 +18,14 @@ export function desktopAuthStorage(file, encryption) {
   };
   const id = value => createHash('sha256').update(value).digest('hex');
   return {
+    accountKeyVault: {
+      read: scope => read()['account-data:' + id(scope)],
+      write: (scope, value) => edit(data => { data['account-data:' + id(scope)] = value; }),
+      remove: scope => {
+        const name = 'account-data:' + id(scope);
+        if (Object.hasOwn(read(), name)) edit(data => { delete data[name]; });
+      },
+    },
     cloudCredentialsPresent(ownerIds = []) {
       const data = read();
       if (!data || typeof data !== 'object' || Array.isArray(data) || !Array.isArray(ownerIds) || ownerIds.some(owner => typeof owner !== 'string')) throw new Error('STORAGE_UNAVAILABLE');
@@ -28,6 +40,8 @@ export function desktopAuthStorage(file, encryption) {
         caches.add(offlineAccount); caches.add('credential:' + id('draft:' + remembered.sub));
       }
       for (const [name, value] of Object.entries(data)) {
+        if (/^account-data:[a-f0-9]{64}$/.test(name) && shape(value, ['state','secret']) &&
+            ['proposed','active'].includes(value.state) && /^[A-Za-z0-9_-]{43}$/.test(value.secret)) continue;
         if (/^key:[a-f0-9]{64}$/.test(name) || caches.has(name)) continue;
         if (!/^credential:[a-f0-9]{64}$/.test(name)) throw new Error('STORAGE_UNAVAILABLE');
         if (value && typeof value === 'object' && ['refreshToken', 'refresh_token', 'access_token', 'id_token', 'cloud', 'host'].some(field => Object.hasOwn(value, field))) return true;

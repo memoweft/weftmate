@@ -27,6 +27,7 @@
         messageModeStorage: native ? (...args) => native.credentials(...args) : undefined,
         feedbackStorage: native ? (...args) => native.credentials(...args) : undefined,
         nativeIdentity: native ? () => native.identity() : undefined,
+        installAccountKey: native ? payload => native.installAccountKey(payload) : globalThis.WeftCloud?.installAccountKey,
         cloudCredentials: native ? (...args) => native.credentials(...args) : (...args) => globalThis.WeftCloud.storage(...args),
         nativeCloudKey: native ? { get: scope => native.cloudKey(scope), sign: (scope, input) => native.cloudProof(scope, input), clear: scope => native.resetCloudKey(scope),
             credentialsPresent: native.cloudCredentialsPresent ? () => native.cloudCredentialsPresent() : undefined } : undefined });

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { calculateJwkThumbprint, importJWK, jwtVerify, SignJWT } from 'jose';
-import { CloudError } from './security.mjs';
+import { CloudError, transaction } from './security.mjs';
 import { createOfflineTasks } from './offline-tasks.mjs';
 import { multiHostCapabilities, createComputerActions, computerNames } from './multi-host.mjs';
 import { accountLifecycle } from './account-lifecycle.mjs';
@@ -29,7 +29,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
       const computers=db.prepare('SELECT h.host_id AS hostId,h.name FROM cloud_hosts h JOIN host_memberships m ON m.host_id=h.host_id WHERE m.account_id=? ORDER BY h.host_id').all(membership.sub);
       if(computers.length>1)membership.computers=computerNames(computers);
     }
-    const eventToken = await new SignJWT({ events, watermark, memberships, capabilities:multiHostCapabilities }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
+    const eventToken = await new SignJWT({ events, watermark, memberships, capabilities:{...multiHostCapabilities,accountKeyRegistry:1} }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
       .setIssuer(config.issuer).setAudience(`${config.audience}/hosts/${hostId}`).setIssuedAt()
       .setExpirationTime('300s').sign(await importJWK(keys.privateJwks.keys[0], 'RS256'));
     return { eventToken };
@@ -172,6 +172,21 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
     }
     const payload = await signed(body);
     if (payload.action !== route) throw new CloudError(401, 'UNAUTHORIZED');
+    if (route === '/hosts/account-key/read') {
+      if (typeof payload.sub !== 'string' || !db.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(body.hostId, payload.sub))
+        throw new CloudError(403, 'FORBIDDEN');
+      return {keyId:db.prepare('SELECT key_id FROM account_data_keys WHERE account_id=?').get(payload.sub)?.key_id ?? null};
+    }
+    if (route === '/hosts/account-key/claim') {
+      if (typeof payload.sub !== 'string' || typeof payload.keyId !== 'string' || (!/^[A-Za-z0-9_-]{43}$/.test(payload.keyId) || Buffer.from(payload.keyId,'base64url').toString('base64url') !== payload.keyId))
+        throw new CloudError(400, 'INVALID_REQUEST');
+      const member = db.prepare('SELECT role FROM host_memberships WHERE host_id=? AND account_id=?').get(body.hostId, payload.sub);
+      if (member?.role !== 'owner') throw new CloudError(403, 'FORBIDDEN');
+      return transaction(db, () => {
+        db.prepare('INSERT INTO account_data_keys(account_id,key_id) VALUES(?,?) ON CONFLICT(account_id) DO NOTHING').run(payload.sub, payload.keyId);
+        return { keyId: db.prepare('SELECT key_id FROM account_data_keys WHERE account_id=?').get(payload.sub).key_id };
+      });
+    }
     if (/^\/hosts\/offline\/tasks\/(claim|ack|result)$/.test(route)) return tasks.host(route,body.hostId,payload);
     db.prepare('UPDATE cloud_hosts SET last_seen=? WHERE host_id=?').run(now(), body.hostId);
     if (route === '/hosts/offline/publish') {

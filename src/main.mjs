@@ -28,7 +28,9 @@ import { createSystemStatusManager } from './system-status-runtime.mjs';
 import { createHostLog, redactSecretText, diagnosticPlatform } from './host-log.mjs';
 import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady, createBackgroundRouteRecorder } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
-import { app, BrowserWindow, WebContentsView, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, net, crashReporter, powerMonitor } from 'electron';
+import { desktopAuthStorage } from './personal-desktop-auth.mjs';
+import { createAccountKeys } from './personal-cloud/account-keys.mjs';
+import { safeStorage, app, BrowserWindow, WebContentsView, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, net, crashReporter, powerMonitor } from 'electron';
 import { stageCloudVaultRestore, reconcileCloudVaultRestore, finishCloudVaultRestore } from './personal-cloud-backup/vault-restore.mjs';
 import { privateNetworkOnPower } from './personal-cloud-backup/upload-conditions.mjs';
 import packageInfo from '../package.json' with { type: 'json' };
@@ -3156,7 +3158,10 @@ async function bootstrap() {
         const relayConfig = relayFromEnvironment();
         const cloudConfig = cloudIdentityFromEnvironment();
         const relayNetwork = cloudConfig || relayConfig ? await createDesktopRelayNetwork({ session, net }) : null;
-        if (cloudConfig) cloudConfig.fetcher = relayNetwork.fetch;
+        if (cloudConfig) {
+          cloudConfig.fetcher = relayNetwork.fetch;
+          cloudConfig.accountKeys = createAccountKeys(desktopAuthStorage(join(userDataDir, 'desktop-auth.enc'), safeStorage).accountKeyVault);
+        }
         if (relayConfig) {
           relayConfig.proxyFor = relayNetwork.proxyFor;
           if (relayConfig.acme) relayConfig.acme.fetcher = relayNetwork.fetch;
