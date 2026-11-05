@@ -323,6 +323,14 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       res.end();
     } else reply(res, 200, { account: accounts.public(account), resumeUrl });
   }
+  async function enrollRegistration(req,res,accountId){
+    let interaction;
+    try{interaction=await provider.interactionDetails(req,res);}catch{/* Standalone registrations have no app interaction. */}
+    if(interaction?.params.wm_app!=='1')return;
+    const device=await accounts.device({deviceId:interaction.params.wm_device_id,publicJwk:JSON.parse(interaction.params.wm_public_jwk)});
+    database.prepare('INSERT OR IGNORE INTO cloud_devices(account_id,fingerprint,device_id,public_jwk,confirmed_at,name,type,last_seen) VALUES(?,?,?,?,?,?,?,?)')
+      .run(accountId,device.fingerprint,device.deviceId,JSON.stringify(device.publicJwk),now(),'WeftMate device','unknown',now());
+  }
   const routes = new Map([
     [CLOUD_PATH+'/password/capabilities','passwordCapabilities'],
     [CLOUD_PATH+'/password/registration','opaqueRegistration'],
@@ -549,7 +557,9 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           switch (route) {
             case 'passwordCapabilities': result=passwords.capabilities();break;
             case 'opaqueRegistration': result=await passwords.registration(body,from,body.passwordTicket?null:await authenticate(req,true));break;
-            case 'opaqueCommit': result=await passwords.commit(body,from,body.passwordTicket?null:await authenticate(req,true));break;
+            case 'opaqueCommit':
+              result=await passwords.commit(body,from,body.passwordTicket?null:await authenticate(req,true));
+              if(result.verified)await enrollRegistration(req,res,result.account.cloudAccountId);break;
             case 'opaqueRead': result=passwords.read(await authenticate(req,true));break;
             case 'opaqueUnlockStart': {const account=await authenticate(req,true);result=passwords.start(body,from,'unlock:'+req.cloudToken.device_fingerprint,account);break;}
             case 'opaqueUnlockFinish': {const account=await authenticate(req,true);const verified=passwords.finish(body,from,'unlock:'+req.cloudToken.device_fingerprint);if(verified.account.id!==account.id)throw new CloudError(401,'UNAUTHORIZED');result={proof:verified.proof};break;}
@@ -566,15 +576,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
               // The registration email has just proved possession. Bind only the
               // device from this app's existing provider interaction cookie;
               // subsequent devices still require their own email confirmation.
-              let registrationInteraction;
-              try { registrationInteraction = await provider.interactionDetails(req, res); } catch { /* compatible standalone registration */ }
               result = await accounts.completePassword(body, 'register', from);
-              if (registrationInteraction?.params.wm_app === '1') {
-                const device = await accounts.device({ deviceId: registrationInteraction.params.wm_device_id,
-                  publicJwk: JSON.parse(registrationInteraction.params.wm_public_jwk) });
-                database.prepare('INSERT OR IGNORE INTO cloud_devices(account_id,fingerprint,device_id,public_jwk,confirmed_at,name,type,last_seen) VALUES(?,?,?,?,?,?,?,?)')
-                  .run(result.account.cloudAccountId, device.fingerprint, device.deviceId, JSON.stringify(device.publicJwk), now(), 'WeftMate device', 'unknown', now());
-              }
+              await enrollRegistration(req,res,result.account.cloudAccountId);
               break;
             }
             case 'appResetComplete': result = await accounts.completePassword(body, 'reset', from); break;

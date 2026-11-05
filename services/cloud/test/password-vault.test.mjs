@@ -78,3 +78,17 @@ test('mailbox reset restores login without revealing the previous data key or pe
  await assert.rejects(openPasswordKey(jose,fresh.exportKey,key.wrappedKey,{issuer:f.config.issuer,sub:d.account.id}));
  assert.equal(f.db.prepare('SELECT key_id FROM account_data_keys').get().key_id,key.keyId);
 });
+
+test('email-verified OPAQUE registration authorizes its original app key without a second email challenge',async t=>{
+ const f=await fixture(t,{env:{CLOUD_REPLICA_ENABLED:'true'}}),client=f.browser(),key=await jose.generateKeyPair('ES256');
+ const d={f,client,key,publicJwk:await jose.exportJWK(key.publicKey),deviceId:'new-app'};
+ await client(P+'/auth/authorization',{method:'POST',status:200,body:{clientId:'test-native',redirectUri:'com.example.weftmate:/callback',deviceId:d.deviceId,publicJwk:d.publicJwk,codeChallenge:hash(randomBytes(32)),state:randomUUID(),nonce:randomUUID()}});
+ const challenge=(await client(P+'/auth/registration/request',{method:'POST',body:{email:EMAIL},status:200})).data;
+ const ticket=(await client(P+'/auth/registration/verify',{method:'POST',body:{challengeId:challenge.challengeId,code:await f.mailCode(challenge.challengeId)},status:200})).data;
+ const password=NEXT_PASSWORD,start=opaque.client.startRegistration({password});
+ const response=(await client(P+'/password/registration',{method:'POST',body:{...ticket,purpose:'register',registrationRequest:start.registrationRequest},status:200})).data;
+ const record=opaque.client.finishRegistration({...start,...response,password,keyStretching:'memory-constrained'});
+ await client(P+'/password/commit',{method:'POST',body:{...ticket,flowId:response.flowId,registrationRecord:record.registrationRecord,wrappedKey:null},status:200});
+ assert.ok(await logged(f,d,password));
+ assert.equal(f.db.prepare("SELECT count(*) AS n FROM email_challenges WHERE purpose='device'").get().n,0);
+});

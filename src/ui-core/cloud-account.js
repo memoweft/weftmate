@@ -10,7 +10,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const retrySeconds = Math.max(0, Math.ceil((auth.retryAt - now()) / 1000));
     const error = auth.retryAt && auth.error.startsWith('尝试太多次')
       ? retrySeconds ? `尝试太多次，请等待 ${retrySeconds} 秒后重试。` : '等待已结束，可以重试。' : auth.error;
-    return { ...auth, error, recoveryHelp: '如果这个邮箱注册过，几分钟内会收到验证码；没收到请检查邮箱是否填对，或直接注册。', codeLoginSupported: environment.deviceType !== 'android' || environment.nativeEmailCodeLogin === true || client?.config?.nativeEmailCodeLogin === true,
+    return { ...auth, error, passwordVault:!!client?.passwordProtocol&&client.config?.capabilities?.passwordVault===1, recoveryHelp: '如果这个邮箱注册过，几分钟内会收到验证码；没收到请检查邮箱是否填对，或直接注册。', codeLoginSupported: environment.deviceType !== 'android' || environment.nativeEmailCodeLogin === true || client?.config?.nativeEmailCodeLogin === true,
       resendSeconds: Math.max(0, Math.ceil((auth.resendAt - now()) / 1000)), retrySeconds };
   }
   function cloudError(error) {
@@ -182,9 +182,8 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       const name = deviceName?.trim() || auth.deviceName;
       if (mode === 'registration' && (!name || name.length > 128)) throw { code: 'INVALID_DEVICE' };
       if(await client.passwordMode()){
-        const {setPassword}=await import('./password-client.mjs');
-        await setPassword(client,{password,passwordTicket:auth.passwordTicket,purpose:mode==='registration'?'register':'reset'});
-      }else await client.publicRequest('/auth/'+mode+'/complete', {passwordTicket:auth.passwordTicket,password});
+        await client.passwordProtocol.set(client,{password,passwordTicket:auth.passwordTicket,purpose:mode==='registration'?'register':'reset'});
+      }else await client.publicRequest(`/auth/${mode}/complete`, {passwordTicket:auth.passwordTicket,password});
       if (ticket !== journey) return;
       auth.passwordTicket = null;
       if (mode === 'recovery') { startCloudJourney(); effects.toast('密码已重设，请登录。新密码无法解开旧数据；已有持钥设备仍可使用。'); return; }
@@ -434,8 +433,8 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const ticket=journey,generation=core.state.identityGeneration;
     const current=()=>{if(ticket!==journey||generation!==core.state.identityGeneration)throw {code:'CANCELLED'};};
     if(enableReplica||await client.passwordMode()){
-      const {setPassword}=await import('./password-client.mjs');
-      result=await setPassword(client,{password,currentPassword,signal,current,wrap:body=>core.accessApi('/cloud/password-wrap',{method:'POST',protectedWrite:true,body})});
+      if(!client.passwordProtocol)throw {code:'LOCAL_KEY_REQUIRED'};
+      result=await client.passwordProtocol.set(client,{password,currentPassword,signal,current,wrap:body=>core.accessApi('/cloud/password-wrap',{method:'POST',protectedWrite:true,body})});
       current();if(enableReplica){
         try{await core.accessApi('/cloud/replica/publish',{method:'POST',protectedWrite:true,body:{enabled:true}});}
         catch{effects.toast('密码已保存，副本同步会在连接恢复后重试。');}
@@ -468,13 +467,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (auth.localDesktop && prepareBackup) await core.prepareAccountDeletionBackup();
     const saved = await client.saved();
     let body={password};
-    if(await client.passwordMode()){
-      const status=await client.authorized('/password/read',{method:'POST',body:{}});
-      if(status.version){const {passwordLogin}=await import('./password-client.mjs');
-        const verified=await passwordLogin(client,{password},(suffix,payload)=>client.authorized('/password/unlock'+suffix,{method:'POST',body:payload}));
-        body={proof:verified.finished.proof};
-      }
-    }
+    if(await client.passwordMode())body=await client.passwordProtocol.deleteProof(client,password);
     const result = await client.authorized('/auth/account/delete', { method: 'POST', body });
     try {
       if (!environment.desktop && saved?.sub)
@@ -623,6 +616,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     client = new globalThis.WeftUiCore.CloudAuthClient({ fetch: environment.fetch, crypto: environment.crypto,
       credentials: environment.cloudCredentials, vendor: environment.cloudVendor, host: environment.hostOrigin, nativeKey: environment.nativeCloudKey,
       installAccountKey: environment.installAccountKey || globalThis.WeftCloud?.installAccountKey,
+      passwordProtocol:environment.passwordProtocol,
       localCsrf: () => core.state.csrfToken, now });
     const localLoad = core.load, localExpired = core.sessionExpired, localClear = core.clearSession, localLogout = core.logout;
     core.clearSession = () => { bindingClaim = null; localClear(); if (auth.mode === 'offline' && !auth.localSession) startCloudJourney(); };
@@ -713,9 +707,9 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return bodyFlight;
   }
   async function serverCopy(current){
-    if(!globalThis.WeftCloud?.serverReplica||!client?.config||!auth.sub)return null;
+    if(!environment.serverReplicaRequest||!globalThis.WeftCloud?.serverReplica||!client?.config||!auth.sub)return null;
     return globalThis.WeftCloud.serverReplica({issuer:client.config.issuer,sub:auth.sub,hostId:client.config.hostId,current,
-      request:body=>client.authorized('/replicas/read',{method:'POST',body})});
+      request:body=>environment.serverReplicaRequest(client,body)});
   }
   function copyExchange(type,current,source){
     return async body=>{

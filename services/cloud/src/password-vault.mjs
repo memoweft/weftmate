@@ -117,7 +117,7 @@ export async function createPasswordVault({database:db,config,accounts,secret,no
     db.prepare("UPDATE cloud_accounts SET password='null',active=1,auth_epoch=auth_epoch+1 WHERE id=?").run(account.id);
     accounts.revoke(account.id);flows.delete(body.flowId);
    });
-   return {passwordChanged:true,version:flow.version+1,account:accounts.public(accounts.get(account.id)),keyAvailable:!!wrapped};
+   return {passwordChanged:true,verified:flow.purpose==='register',version:flow.version+1,account:accounts.public(accounts.get(account.id)),keyAvailable:!!wrapped};
   },
   read(account){guard();const row=credential(account.id);return {version:row?.version??0,wrappedKey:row?.wrapped_key?JSON.parse(row.wrapped_key):null};}
  };

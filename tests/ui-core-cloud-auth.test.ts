@@ -462,6 +462,7 @@ test('browser cold restoration uses its encrypted session only after a transport
 test('an enrolled password never falls back to the plaintext endpoint when its protocol disappears',async()=>{
   const f=await fixture(),original=f.client.fetch;let sent=false;
   await f.client.configure();f.client.config.capabilities={passwordVault:1};
+  f.client.passwordProtocol={mode:(await import('../src/ui-core/password-client.mjs')).passwordMode};
   f.client.fetch=async(url:string,options:any)=>{
     if(url.endsWith('/password/capabilities'))return response({error:{code:'NOT_FOUND'}},404);
     if(url.endsWith('/auth/login'))sent=true;

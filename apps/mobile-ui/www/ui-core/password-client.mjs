@@ -15,6 +15,21 @@ export async function passwordCapabilities(client){
  try{return await client.publicRequest('/password/capabilities',{});}
  catch(error){if(error.status===404)return {enabled:false};throw error;}
 }
+export async function passwordMode(client){
+ if(!client.config)await client.configure();
+ const status=await passwordCapabilities(client);
+ if((client.config.capabilities?.passwordVault===1||await client.credentials('opaque-server:'+client.config.issuer))&&!status.enabled)throw invalid('PASSWORD_UNAVAILABLE');
+ client.config.capabilities={...client.config.capabilities,passwordVault:status.enabled?1:0};
+ return status.enabled===true;
+}
+export const accountPasswordLogin=(client,fields)=>passwordLogin(client,fields,(suffix,body)=>client.publicRequest('/auth/opaque'+suffix,body));
+export async function passwordDeleteProof(client,password){
+ const status=await client.authorized('/password/read',{method:'POST',body:{}});
+ if(!status.version)throw invalid('LOCAL_KEY_REQUIRED');
+ const verified=await passwordLogin(client,{password},(suffix,body)=>client.authorized('/password/unlock'+suffix,{method:'POST',body}));
+ if(typeof verified.finished.proof!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(verified.finished.proof))throw invalid('INVALID_CREDENTIALS');
+ return {proof:verified.finished.proof};
+}
 export async function passwordLogin(client,fields,request,{signal}={}){
  const start=await opaqueCall('startLogin',{password:fields.password},{signal});
  const response=await request('/start',{...fields,password:undefined,startLoginRequest:start.startLoginRequest});

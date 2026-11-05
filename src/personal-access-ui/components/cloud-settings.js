@@ -314,10 +314,10 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const confirmation = password ? input('确认密码', 'password') : null;
         if(password){
             current.autocomplete='current-password';password.autocomplete=confirmation.autocomplete='new-password';
-            form.append(ui.element('p','field-help',kind==='dataPassword'
+            if(kind==='dataPassword'||core.cloudAuthView().passwordVault){form.append(ui.element('p','field-help',kind==='dataPassword'
               ? '请设置一个新密码。之后新设备可用它解锁数据；电脑会向账号服务器保存加密副本。'
-              : '新密码会重新锁住账号钥匙，已有持钥设备仍可使用。'));
-            form.append(ui.element('p','field-help','忘记密码后，邮箱只能找回登录，无法解开旧数据。'));
+              : '已有账号钥匙时，会用新密码重新加锁，持钥设备仍可使用。'));
+            form.append(ui.element('p','field-help','忘记密码后，邮箱只能找回登录，无法解开旧数据。'));}
         }
         if (kind === 'delete') form.append(ui.element('p', 'form-error', '云端账号数据全部删除且不可恢复，本机的对话与记忆仍留在设备上'));
         const submit = ui.element('button', 'button primary', kind === 'email' ? '发送验证码' : kind === 'delete' ? '确认注销' : '保存'); submit.type = 'submit'; form.append(submit, button('取消', () => {operation.abort();container.replaceChildren();}));
