@@ -66,6 +66,8 @@ await put('apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTok
   entries(tokens.shared.color).filter(([name]) => name.startsWith('health-')).map(([name, value]) =>
     `    const val ${name.replace(/-([a-z])/g, (_, c) => c.toUpperCase())} = 0xff${value.slice(1)}.toInt()`).join('\n') + '\n' +
   entries(dimensions).map(([name, { value, unit }]) => `    const val ${name} = ${value}${unit === 'sp' ? 'f' : ''}`).join('\n') + '\n' +
+  entries(tokens.shared.fontRelative).map(([name, value]) =>
+    `    const val fontRelative${name[0].toUpperCase() + name.slice(1)} = ${parseFloat(value)}f`).join('\n') + '\n' +
   entries(tokens.shared.duration).map(([name, value]) => {
     const millis = Math.round(parseFloat(value) * (value.endsWith('ms') ? 1 : 1000));
     return `    const val duration${name[0].toUpperCase() + name.slice(1)} = ${millis}L`;

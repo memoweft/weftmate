@@ -59,8 +59,8 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.LocalDate
 
-private val LocalReadingSize=staticCompositionLocalOf { DesignTokens.font15 }
-private val LocalCodeSize=staticCompositionLocalOf { DesignTokens.font13 }
+internal val LocalReadingSize=staticCompositionLocalOf { DesignTokens.font15 }
+internal val LocalCodeSize=staticCompositionLocalOf { DesignTokens.font13 }
 
 private val gap = DesignTokens.space8.dp
 private val pad = DesignTokens.space16.dp
@@ -261,7 +261,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
     DisposableEffect(frost) { onDispose { frost?.paused=false } }
     val activityForTimeline=LocalContext.current as NativeActivity
     val rows by produceState(emptyList<JSONObject>(),m.chatId,m.rows,m.approvals,m.questions) {
-        value=activityForTimeline.timelinePresentation(m.rows,m.approvals,m.questions)
+        value=nativeTurnRows(activityForTimeline.timelinePresentation(m.rows,m.approvals,m.questions))
     }
     val progressState=remember(m.chatId) { NativeProgressState() }
     val feed=(LocalContext.current as? NativeActivity)?.feed
@@ -269,22 +269,22 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
     val visible by remember { derivedStateOf { list.layoutInfo.visibleItemsInfo.map{it.index} } }
     val atEnd by remember { derivedStateOf { !list.canScrollForward } }
     val dragged by list.interactionSource.collectIsDraggedAsState()
-    var follow by remember(m.chatId) { mutableStateOf(true) }
-    var wasDragged by remember { mutableStateOf(false) }
+    val follow=rememberFollowBottom(list,list.interactionSource,m.chatId)
+    val answered=remember(rows) { answeredProgress(rows) }
     val focus=LocalFocusManager.current
     val activity=LocalContext.current as? NativeActivity
     fun dismissEditor() { focus.clearFocus();m.focused=false;activity?.hideKeyboard() }
-    LaunchedEffect(dragged) { if(dragged){dismissEditor();follow=false;wasDragged=true}else if(wasDragged){follow=atEnd;wasDragged=false} }
-    LaunchedEffect(m.scrollVersion) { follow=true }
-    LaunchedEffect(m.fileAnchor,rows.size) { if(m.fileAnchor.isNotBlank()){val index=rows.indexOfFirst{it.optString("eventId")==m.fileAnchor};if(index>=0){follow=false;list.scrollToItem(index+1);m.fileAnchor=""}} }
+    LaunchedEffect(dragged) { if(dragged)dismissEditor() }
+    LaunchedEffect(m.scrollVersion) { follow.resume() }
+    LaunchedEffect(m.fileAnchor,rows.size) { if(m.fileAnchor.isNotBlank()){val index=rows.indexOfFirst{it.optString("eventId")==m.fileAnchor};if(index>=0){follow.pause();list.scrollToItem(index+1);m.fileAnchor=""}} }
     var lastDecision by remember(m.chatId) { mutableStateOf("") }
-    LaunchedEffect(rows.size,rows.lastOrNull()?.toString(),m.running,m.error) { if(follow && feed?.focusTarget==null && rows.isNotEmpty()){withFrameNanos{};list.scrollToItem((list.layoutInfo.totalItemsCount-1).coerceAtLeast(0))} }
+    LaunchedEffect(rows.size,rows.lastOrNull()?.toString(),m.running,m.error) { if(follow.on && feed?.focusTarget==null && rows.isNotEmpty()){withFrameNanos{};list.scrollToItem((list.layoutInfo.totalItemsCount-1).coerceAtLeast(0))} }
 
-    LaunchedEffect(pending) { if(follow && feed?.focusTarget==null && pending>=0 && rows[pending].optString("eventId")!=lastDecision){lastDecision=rows[pending].optString("eventId");list.animateScrollToItem(pending+1)} }
+    LaunchedEffect(pending) { if(follow.on && feed?.focusTarget==null && pending>=0 && rows[pending].optString("eventId")!=lastDecision){lastDecision=rows[pending].optString("eventId");list.animateScrollToItem(pending+1)} }
     LaunchedEffect(m.chatId,rows.size,feed?.focusTarget) {
         feed?.focusTarget?.let{target->
             val index=rows.indexOfFirst{feedTargetMatches(it,target)}
-            if(index>=0){follow=false;withFrameNanos{};list.scrollToItem(index+1);feed.focusTarget=null}
+            if(index>=0){follow.pause();withFrameNanos{};list.scrollToItem(index+1);feed.focusTarget=null}
         }
     }
     val padding=remember(bottom) { object:PaddingValues {
@@ -300,12 +300,12 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             val geometry=constraints.maxHeight to padding.calculateBottomPadding().roundToPx()
             if(previousViewport[0]!=geometry) {
                 previousViewport[0]=geometry
-                if(follow && feed?.focusTarget==null && list.layoutInfo.totalItemsCount>0) list.requestScrollToItem(list.layoutInfo.totalItemsCount-1)
+                if(follow.on && feed?.focusTarget==null && list.layoutInfo.totalItemsCount>0) list.requestScrollToItem(list.layoutInfo.totalItemsCount-1)
             }
             val child=measurable.measure(constraints)
             layout(child.width,child.height){child.placeRelative(0,0)}
         }.semantics{contentDescription="消息列表"},contentPadding=padding,verticalArrangement=Arrangement.spacedBy(pad)) {
-            item { if(m.hasOlder) NativeSecondary(onClick={follow=false;m.launch{m.refresh(true)}}){Text("较早的消息")} }
+            item { if(m.hasOlder) NativeSecondary(onClick={follow.pause();m.launch{m.refresh(true)}}){Text("较早的消息")} }
             if(rows.isEmpty()) item { Column(Modifier.fillMaxWidth().padding(vertical=DesignTokens.space48.dp),horizontalAlignment=Alignment.CenterHorizontally) {
                 if(m.loading) CircularProgressIndicator() else { Text("今天想做什么？",fontSize=DesignTokens.font28.sp,fontWeight=FontWeight.Medium);FilledTonalButton(onClick={m.tab="help"},colors=ButtonDefaults.filledTonalButtonColors(containerColor=MaterialTheme.colorScheme.surfaceVariant,contentColor=MaterialTheme.colorScheme.onSurface)){Text("了解更多",fontWeight=FontWeight.Normal)}
                     if(m.models.none{it.optBoolean("configured",it.optString("source")=="phone")}) FilledTonalButton(onClick={m.openModels()}){Text("设置对话模型")}
@@ -322,43 +322,15 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                     "artifact.created" -> NativeArtifactFiles(e,m,onPreview)
                     "approval.requested" -> m.approvals.find{it.optString("approvalId")==d.optString("approvalId")}?.let{ if(m.workAndChat && it.stringOrEmpty("intent")=="work-switch")NativeWorkSwitch(m,it) else NativeApproval(it,d.optJSONObject("copy")){outcome,decisionScope->m.decide(it,outcome,decisionScope)} }
                     "question.requested" -> m.questions.find{it.optString("questionRpcId")==d.optString("questionRpcId")}?.let{ NativeQuestion(it){answers->m.answer(it,answers)} }
-                    "native.progress" -> NativeProgress(e,progressState)
+                    "native.progress" -> NativeProgress(e,progressState,e.optString("eventId") in answered)
                 }
             }
             items(m.uncertain){row->Column { Text(row.optString("text"),fontSize=DesignTokens.font18.sp);Text(hostDeliveryMessage(row),color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=DesignTokens.font12.sp);if(row.optString("state")=="uncertain") NativeSecondary(onClick={m.checkDelivery()}){Text("核对消息")} } }
             if((m.phone || m.phoneHistory) && !m.standalone && m.rows.isNotEmpty()) item { Text(if(m.phoneHistory)"这段是在手机上聊的，只供查看。要用电脑的能力，请新开对话。" else "这段是在手机上聊的。要用电脑的能力，请新开对话，或在电脑上继续这段对话。",fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) }
-            item { if(m.error.isNotBlank()) Column(verticalArrangement=Arrangement.spacedBy(gap)) { Text(m.error,fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);if(m.canRetryPhoneReply) NativeSecondary(onClick={m.retryPhoneReply()}){Text("重试")} else if(m.phoneArchive) { if(m.canRetryQueue) NativeSecondary(onClick={m.retryQueue()}){Text("重试排队消息")} else if(m.canRegenerate && m.rows.lastOrNull()?.optString("type")=="user.message") NativeSecondary(onClick={m.regenerate()},modifier=Modifier.semantics{contentDescription="重新生成回复"}){Text("重试回复")} } else NativeSecondary(onClick={m.launch{m.refresh()}}){Text("重试连接")} } else if(m.running)Text("正在回复…",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) }
+            item { if(m.error.isNotBlank()) Column(Modifier.fillMaxWidth().clip(card).background(MaterialTheme.colorScheme.errorContainer).padding(pad).semantics{contentDescription="回复出错"},verticalArrangement=Arrangement.spacedBy(gap)) { Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(gap)){Icon(painterResource(R.drawable.wm_warning),null,Modifier.size(DesignTokens.space16.dp),tint=MaterialTheme.colorScheme.error);Text(m.error,fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurface)};if(m.canRetryPhoneReply) NativeSecondary(onClick={m.retryPhoneReply()}){Text("重试")} else if(m.phoneArchive) { if(m.canRetryQueue) NativeSecondary(onClick={m.retryQueue()}){Text("重试排队消息")} else if(m.canRegenerate && m.rows.lastOrNull()?.optString("type")=="user.message") NativeSecondary(onClick={m.regenerate()},modifier=Modifier.semantics{contentDescription="重新生成回复"}){Text("重试回复")} } else NativeSecondary(onClick={m.launch{m.refresh()}}){Text("重试连接")} } else if(m.running)Text("正在回复…",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         if(pending>=0 && pending+1 !in visible) FilledTonalButton(onClick={scope.launch{list.animateScrollToItem(pending+1)}},modifier=Modifier.align(Alignment.BottomCenter).padding(bottom=bottom()+gap,start=gap,end=gap)){Text("有一项等你决定")}
-        else if(!atEnd) NativeIconButton(R.drawable.wm_down,"回到底部",Modifier.align(Alignment.BottomEnd).padding(bottom=bottom()+gap,start=gap,end=gap).background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)){follow=true;scope.launch{list.animateScrollToItem(list.layoutInfo.totalItemsCount-1)}}
-    }
-}
-@Composable private fun NativeProgress(row: JSONObject, state: NativeProgressState) {
-    val data=row.getJSONObject("data");val key=row.getString("eventId")
-    var expanded by remember(key) { mutableStateOf(state.isExpanded(key)) }
-    val color=if(data.optBoolean("failed")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-    Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().clip(card).clickable(role=Role.Button) { state.toggle(key);expanded=state.isExpanded(key) }
-            .heightIn(min=DesignTokens.space44.dp).padding(vertical=gap)
-            .semantics { contentDescription=if(expanded) "收起回复进展" else "展开回复进展";stateDescription=if(expanded)"已展开" else "已收起" },verticalAlignment=Alignment.CenterVertically) {
-            if(data.optBoolean("running")) CircularProgressIndicator(Modifier.size(DesignTokens.space16.dp),color=color,strokeWidth=1.dp)
-            Text(data.optString("summary"),Modifier.weight(1f).padding(end=gap),maxLines=1,overflow=TextOverflow.Ellipsis,fontSize=DesignTokens.font13.sp,color=color)
-            Icon(painterResource(if(expanded)R.drawable.wm_down else R.drawable.wm_right),null,Modifier.size(DesignTokens.space16.dp),tint=color)
-        }
-        val steps=state.visibleSteps(row)
-        if(steps.isNotEmpty()) Column(Modifier.fillMaxWidth().clip(card).border(1.dp,MaterialTheme.colorScheme.outline,card).padding(pad),verticalArrangement=Arrangement.spacedBy(gap)) {
-            steps.forEach { step ->
-                var detail by remember(key,step.optString("stepId")) { mutableStateOf(step.optBoolean("attention") && step.optString("approvalStatus") != "pending") }
-                Column {
-                    Row(Modifier.fillMaxWidth().clip(card).clickable(role=Role.Button){detail=!detail}.heightIn(min=DesignTokens.space44.dp),verticalAlignment=Alignment.CenterVertically) {
-                        Icon(painterResource(if(step.optBoolean("attention"))R.drawable.wm_warning else R.drawable.wm_check),null,Modifier.size(DesignTokens.space16.dp),tint=if(step.optBoolean("attention"))MaterialTheme.colorScheme.error else color)
-                        Text(listOf(step.optString("summary"),step.optString("statusText"),step.optString("approvalText")).filter{it.isNotBlank()}.joinToString(" · "),Modifier.weight(1f).padding(horizontal=gap),fontSize=DesignTokens.font13.sp,color=color)
-                        Icon(painterResource(if(detail)R.drawable.wm_down else R.drawable.wm_right),if(detail)"收起步骤详情" else "展开步骤详情",Modifier.size(DesignTokens.space16.dp),tint=color)
-                    }
-                    if(detail) SelectionContainer { Text(step.optString("toolName")+step.opt("arguments")?.let{"\n$it"}.orEmpty(),fontSize=DesignTokens.font13.sp,color=color) }
-                }
-            }
-        }
+        else if(!atEnd) NativeIconButton(R.drawable.wm_down,"回到底部",Modifier.align(Alignment.BottomEnd).padding(bottom=bottom()+gap,start=gap,end=gap).background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)){follow.resume();scope.launch{list.animateScrollToItem(list.layoutInfo.totalItemsCount-1)}}
     }
 }
 @Composable private fun NativeMessage(m: NativeChatModel,e: JSONObject,bubbleMaxWidth:androidx.compose.ui.unit.Dp,onPreview:(JSONObject)->Unit) {
@@ -379,7 +351,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                     }
                 } },false,onPreview,{})
             }
-            SelectionContainer{NativeMarkdown(text)}
+            SelectionContainer{NativeMarkdown(text,onCopyCode=if(user)null else m::copyReply)}
             if(user && d.optBoolean("queued")) Text("排队中",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if(!user && e.optString("type")!="assistant.delta") Row {
@@ -389,23 +361,6 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
         }
     }
 }
-@Composable internal fun NativeMarkdown(text:String) {
-    val parts=remember(text) { text.split("```").mapIndexed { i,part ->
-        if(i%2==1) listOf(AnnotatedString(part.substringAfter('\n',part)))
-        else part.trim().split("\n\n").filter{it.isNotBlank()}.map{inlineMarkdown(it.replace(Regex("(?m)^[-*] "),"• "))}
-    } }
-    Column(verticalArrangement=Arrangement.spacedBy(gap)) { parts.forEachIndexed{i,part->
-        if(i%2==1) Text(part.single(),Modifier.fillMaxWidth().clip(card).background(MaterialTheme.colorScheme.surfaceVariant).horizontalScroll(rememberScrollState()).padding(pad),fontFamily=FontFamily.Monospace,fontSize=LocalCodeSize.current.sp)
-        else part.forEach{p->Text(p,fontSize=LocalReadingSize.current.sp,lineHeight=(LocalReadingSize.current * 1.65f).sp)}
-    } }
-}
-private fun inlineMarkdown(text:String):AnnotatedString=buildAnnotatedString {
-    var last=0
-    Regex("\\*\\*(.+?)\\*\\*|`([^`]+)`").findAll(text).forEach{match->
-        append(text.substring(last,match.range.first));withStyle(if(match.groups[1]!=null)SpanStyle(fontWeight=FontWeight.Bold) else SpanStyle(fontFamily=FontFamily.Monospace)){append(match.groups[1]?.value ?: match.groups[2]!!.value)};last=match.range.last+1
-    };append(text.substring(last))
-}
-
 @Composable internal fun NativeApproval(row:JSONObject,copy:JSONObject?=null,onDecide:(String,String)->Unit) {
     val receipt=decisionReceipt(row)
     if(receipt!=null){Text(receipt,fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);return}
