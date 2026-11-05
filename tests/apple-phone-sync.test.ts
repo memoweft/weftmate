@@ -36,7 +36,7 @@ test('APPLE-2 real computer HTTP accepts and idempotently stores originals with 
   const origin=`http://127.0.0.1:${(server.address() as any).port}`,recipient=taskRecipient();
   const post=async(route:string,body:any)=>{const response=await fetch(origin+'/personal/v1/offline/'+route,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});assert.equal(response.status,200);return response.json();};
   const sync=async()=>openTask(await post('sync',{publicJwk:recipient.publicJwk,generation:0,hashes:{},phoneFirst:true}),recipient,identity);
-  const cold=await sync();assert.equal(cold.memoryAuthority.ready,false);assert.equal(cold.model,null);
+  const cold=await sync();assert.equal(cold.memoryAuthority.ready,false);assert.equal(Object.hasOwn(cold,'model'),false);
   ready=true;const snapshot=await sync();assert.equal(snapshot.memoryAuthority.ready,true);assert.deepEqual(snapshot.items,[]);
   assert.equal(snapshot.control.accountId,'synthetic-account');assert.equal(snapshot.memoryAuthority.hostId,snapshot.control.hostId);
   const original={id:'original-1',conversationId:'phone-chat-1',timestamp:Date.UTC(2025,4,1),messages:[{role:'user',text:'合成原话：我喜欢茉莉花茶。'},{role:'assistant',text:'合成回复。'}],memoryRefs:[],dependencyComplete:true};

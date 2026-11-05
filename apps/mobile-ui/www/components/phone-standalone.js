@@ -25,6 +25,19 @@
   }
   async function serviceCall(action,params={}){
     if(!native){
+      const replica=(globalThis.WeftMobileCloud?.core?.getModelReplica ? await globalThis.WeftMobileCloud.core.getModelReplica() : null);
+      if(replica){
+        const existing=(await replica.read()).services.find(s=>s.serviceId===params.serviceId);
+        const body=Object.fromEntries(Object.entries({name:params.name||params.displayName||existing?.name,baseUrl:params.baseUrl||params.endpoint,
+          apiKey:params.apiKey,interfaceType:params.interfaceType,modelId:params.modelId,
+          ...(params.enabledModelIds?{models:existing?.models.map(row=>({modelId:row.modelId,enabled:params.enabledModelIds.includes(row.modelId)}))}:{})
+        }).filter(([,value])=>value!==undefined));
+        const value=action==='list'?await replica.read():action==='configure'?await replica.configure(params.serviceId,body):
+          action==='select'?await replica.select(params.serviceId,params.modelId):action==='remove'?await replica.remove(params.serviceId):
+          action==='refresh'?await replica.sync():await replica.configure(params.serviceId,body);
+        modelServices.adoptReplica(value);state.model=modelServices.selectedView();serviceDirectory=modelServices.view();updateComposer();
+        return action==='select'?state.model:{...serviceDirectory,model:state.model};
+      }
       const key=sessionKey,manager=modelServices;
       const result=action==='list'?manager.view():action==='configure'?await manager.configure(params):action==='refresh'?await manager.refresh(params.serviceId,{force:params.force===true}):
         action==='select'?manager.select(params.serviceId,params.modelId):action==='update'?manager.update(params):manager.remove(params.serviceId);
@@ -142,7 +155,11 @@
       if (engine) { const previous=engine;engine=null;previous.close(); }
       modelServices?.clear();
       sessionKey = next; account = info; memoryModel = null;modelServices=null;serviceDirectory={services:[],selected:null};nativeServices=false;
-      if(!native)modelServices=await WeftPhoneModelServices.create({changed:value=>{if(sessionKey===next)serviceDirectory=value;}});
+      if(!native){
+        modelServices=await WeftPhoneModelServices.create({changed:value=>{if(sessionKey===next)serviceDirectory=value;}});
+        const replica=(globalThis.WeftMobileCloud?.core?.getModelReplica ? await globalThis.WeftMobileCloud.core.getModelReplica() : null);
+        if(replica){modelServices.adoptReplica(await replica.read());try{modelServices.adoptReplica(await replica.sync());}catch{}}
+      }
       if (native && adopt) await nativeCall('phone.adopt', info);
       const phoneScope={accountId:info.accountId,origin:info.origin};
       const vault = native ? {
@@ -151,32 +168,25 @@
           catch(error){nativeError=WeftOffline.phoneHistoryFailure(error)||nativeError;throw error;} },
         clear: () => nativeCall('phone.offline.clear',phoneScope), close() {},
         open: (envelope, identity) => nativeCall('phone.offline.open', { envelope, identity }),
-        complete: async (body, snapshot, signal, onProgress) => {
+        complete: async (body, model, signal, onProgress) => {
           if(signal.aborted)throw new DOMException('CANCELLED','AbortError');
           progress = onProgress; const stop = () => void nativeCall('phone.stop'); signal.addEventListener('abort', stop, { once: true });
-          try { return await nativeCall('phone.complete', { body,serviceId:snapshot.model.serviceId }, 180000); }
+          try { return await nativeCall('phone.complete', { body,serviceId:model.serviceId }, 180000); }
           finally { progress = null; signal.removeEventListener('abort', stop); }
         },
       } : await WeftOffline.browserVault('phone:' + next);
       const complete = vault.complete.bind(vault);
-      vault.complete = async (body, snapshot, signal, onProgress) => {
-        if(snapshot.model.deepThinking?.supported===true&&snapshot.model.deepThinking?.enabled===true){
-          body={...body};const baseUrl=new URL(snapshot.model.baseUrl);
-          if(snapshot.model.interfaceType==='anthropic')body.thinking=snapshot.model.deepThinking.type==='adaptive'?{type:'adaptive'}:{type:'enabled',budget_tokens:2048};
+      vault.complete = async (body, model, signal, onProgress) => {
+        if(model.deepThinking?.supported===true&&model.deepThinking?.enabled===true){
+          body={...body};const baseUrl=new URL(model.baseUrl);
+          if(model.interfaceType==='anthropic')body.thinking=model.deepThinking.type==='adaptive'?{type:'adaptive'}:{type:'enabled',budget_tokens:2048};
           else if(['api.xiaomimimo.com','api.deepseek.com'].includes(baseUrl.hostname))body.thinking={type:'enabled'};
           else if(baseUrl.hostname==='dashscope.aliyuncs.com')body.enable_thinking=true;
           else body.reasoning_effort='high';
         }
-        if(native||snapshot.model.interfaceType!=='anthropic')return complete(body,snapshot,signal,onProgress);
-        const system=body.messages.filter(row=>row.role==='system').map(row=>row.content).join('\n\n');
-        const response=await fetch(snapshot.model.baseUrl+'/messages',{method:'POST',redirect:'error',signal,headers:{'content-type':'application/json','x-api-key':snapshot.model.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify({model:body.model,system,messages:body.messages.filter(row=>row.role!=='system'),max_tokens:Math.max(body.max_tokens||4096,body.thinking?.budget_tokens?body.thinking.budget_tokens+1024:0),stream:false,...(body.thinking?{thinking:body.thinking}:{}),
-            ...(body.tools?.length?{tools:body.tools.map(row=>({name:row.function.name,description:row.function.description,input_schema:row.function.parameters}))}:{})})});
-        if(!response.ok)throw Error('MODEL_UNAVAILABLE');const reply=await response.json();if(reply.stop_reason&&!['end_turn','stop_sequence','tool_use'].includes(reply.stop_reason))throw Error('MODEL_STREAM_INCOMPLETE');const text=reply.content?.filter(row=>row.type==='text').map(row=>row.text).join('')||'';
-        const tools=reply.content?.filter(row=>row.type==='tool_use').map(row=>({id:row.id,type:'function',function:{name:row.name,arguments:JSON.stringify(row.input)}}))||[];
-        if(!text&&!tools.length)throw Error('MODEL_UNAVAILABLE');if(text)onProgress?.(text);return {choices:[{message:{content:text,...(tools.length?{tool_calls:tools}:{})}}]};
+        return complete(body,model,signal,onProgress);
       };
-      engine = await WeftOffline.create({ vault, identity: info, phoneModel: currentModel, workRequests: !native,
+      engine = await WeftOffline.create({ vault, identity: info, phoneModel: currentModel, standalone:true, workRequests: !native,
         accountCheck: async () => {
           if (info.localOnly === true) {
             const current = await nativeCall('phone.identity');
@@ -217,6 +227,7 @@
   }
   async function connected() {
     if (!engine || !account || account.localOnly) return;
+    if(!native){const replica=(globalThis.WeftMobileCloud?.core?.getModelReplica ? await globalThis.WeftMobileCloud.core.getModelReplica() : null);if(replica){try{modelServices.adoptReplica(await replica.sync());state.model=modelServices.selectedView();}catch{}}}
     uiCore.phoneAccountConnection(false);
     const identity = await (native ? nativeCall('offline.identity') : WeftMobileCloud.core.cloudOfflineIdentity());
     if (!identity?.hostId || identity.hostId === 'unconnected') return;
