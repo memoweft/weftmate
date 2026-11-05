@@ -144,7 +144,9 @@
   }
   async function run(action) {
     status(''); nativeError='';
-    try { const result = await action(); if (result) state.conversationId = result.conversationId; }
+    try {
+      if(!native){const replica=await globalThis.WeftMobileCloud?.core?.getModelReplica?.();if(replica){modelServices.adoptReplica(await replica.read());state.model=modelServices.selectedView();}}
+      const result = await action(); if (result) state.conversationId = result.conversationId; }
     catch (error) { const stopped=error.name==='AbortError'||error.message==='CANCELLED';nativeError=WeftOffline.phoneHistoryFailure(error)||(stopped?'已停止，生成的文字已保存。':'回复未完成，已保存生成的文字。请检查网络或模型配置后重试。');status(nativeError,!stopped); }
     finally { show();if(!api.active && engine?.view().turns.length)await connected(); }
   }
@@ -287,6 +289,7 @@
       if (action === 'model') state.model = await nativeCall('phone.models.select', p);
       else if (action === 'composer') await engine.saveComposer(p.conversationId || null, p.draft || '');
       else if (action === 'send' || action === 'regenerate') {
+        if(!native){const replica=await globalThis.WeftMobileCloud?.core?.getModelReplica?.();if(replica){modelServices.adoptReplica(await replica.read());state.model=modelServices.selectedView();}}
         if (!api.active) throw Error('HOST_AVAILABLE');
         const reason=sendBlocker(action==='send'?String(p.text||''):'重新生成', action==='send');
         if(reason){nativeError=reason;sent=false;}
