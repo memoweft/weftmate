@@ -248,7 +248,8 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       if (!job.waitingForChat) await save(ownerId, records => { records.find(j => j.id === job.id).waitingForChat = true; }); return;
     }
     if (job.waitingForChat) await save(ownerId, records => { records.find(j => j.id === job.id).waitingForChat = false; });
-    const ledger = await context.memoryManager.query(ownerId, 'query_jobs', { operation: 'list' });
+    const acceptedJob = async eventId => ((await context.memoryManager.query(ownerId, 'query_jobs',
+      { operation: 'list', boundary_event_ids: [eventId] })).jobs ?? []).find(j => j.acceptance?.boundary_event_id === eventId);
     if (job.coreRetryJob) {
       if(!permit(ownerId,job.routeId))return;
       const receipt=await context.memoryManager.query(ownerId, 'retry_formation', { job_id: job.coreRetryJob, request_id: job.coreRetryRequestId });
@@ -258,7 +259,7 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
     }
     const pending = item.receipts.find(r => !r.done);
     if (pending) {
-      const coreJob = (ledger.jobs ?? []).find(j => j.acceptance?.boundary_event_id === pending.eventId);
+      const coreJob = await acceptedJob(pending.eventId);
       if (!coreJob) throw failure('IMPORT_RECEIPT_UNAVAILABLE', 503);
       if (!pending.evidenceIds?.length && coreJob.acceptance?.evidence_ids?.length) await save(ownerId, records => {
         records.find(j => j.id === job.id).items.find(i => i.key === item.key).receipts.find(r => r.eventId === pending.eventId).evidenceIds = coreJob.acceptance.evidence_ids;
@@ -282,10 +283,10 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       : (await read(job.app, item.file, item.locator)).find(c => importKey(c) === item.key || importKey({...c,fingerprint:c.legacyFingerprint})===item.key);
     if (!c) throw failure('IMPORT_SOURCE_CHANGED', 409);
     const chunks = importChunks(c), boundary = importBoundary({...c,fingerprint:item.fingerprint}, job, chunks[item.cursor], item.cursor);
-    const accepted = (ledger.jobs ?? []).find(j => j.acceptance?.boundary_event_id === boundary.event_id);
+    const accepted = await acceptedJob(boundary.event_id);
     if (!permit(ownerId, job.routeId) || jobs(ownerId).find(j=>j.id===job.id)?.items.find(i=>i.key===item.key)?.deleted) return;
     if (!accepted) await context.memoryManager.ingestImport(ownerId, boundary, job.routeId);
-    const confirmed = accepted ?? (await context.memoryManager.query(ownerId, 'query_jobs', { operation: 'list' })).jobs?.find(j => j.acceptance?.boundary_event_id === boundary.event_id);
+    const confirmed = accepted ?? await acceptedJob(boundary.event_id);
     if (!confirmed) throw failure('IMPORT_RECEIPT_UNAVAILABLE', 503);
     await save(ownerId, records => {
       const j = records.find(j => j.id === job.id), i = j.items.find(i => i.key === item.key);
@@ -307,7 +308,8 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
   async function reconcileStopped(ownerId, job) {
     if (context.dataControls?.isLocked(ownerId) || context.accountState(ownerId).memoryCleanupPending) return;
     if (job.countPending) await refreshCount(ownerId, job.id);
-    const ledger = await context.memoryManager.query(ownerId, 'query_jobs', { operation: 'list' });
+    const ledger = await context.memoryManager.query(ownerId, 'query_jobs', { operation: 'list',
+      boundary_event_ids: job.items.flatMap(i => i.receipts.filter(r => !r.done).map(r => r.eventId)) });
     const completed = new Map((ledger.jobs ?? []).filter(j => terminal(j.worker?.state)).map(j => [j.acceptance?.boundary_event_id, j]));
     if (!job.items.some(i => i.receipts.some(r => !r.done && completed.has(r.eventId)))) return;
     let changed = false;

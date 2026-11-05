@@ -25,10 +25,10 @@ test('workspaces isolate accounts and sessions using the native cwd creation pay
 function fixture(root:string) {
   const account:any={ownerId:'owner',sessions:{'session-a':{ownerId:'owner',origin:'personal-remote'}},commands:{},toolApprovals:{},userQuestions:{}};
   let running=false,cancelled=false,deleted=false;
-  const calls:any[]=[];
+  const calls:any[]=[],sessionSources:any={'session-a':['e-a'],'session-other':['e-other']};
   const context:any={root,accountState:(owner:string)=>{assert.equal(owner,'owner');return account},serial:(fn:any)=>fn(),mutate:async(owner:string,fn:any)=>fn(account),callBackend:(fn:any)=>fn(),
     backend:{describeSession:async()=>({running}),cancelSession:async()=>{cancelled=true;running=false},deleteSession:async()=>{deleted=true;return {deleted:true}}},
-    memoryManager:{status:async()=>({capabilities:{deleteEvidence:true}}),query:async(_owner:string,method:string)=>method==='query_jobs'?{jobs:[{acceptance:{parent_session_id:'session-a',evidence_ids:['e-a']}},{acceptance:{parent_session_id:'session-other',evidence_ids:['e-other']}}]}:{world_revision:2,forget_scope:'forget-scope-v1:'+'a'.repeat(64)},
+    memoryManager:{status:async()=>({capabilities:{deleteEvidence:true}}),query:async(_owner:string,method:string,p:any)=>method==='query_jobs'?{evidence_ids:p.projection==='evidence_ids'?sessionSources[p.session_id]??[]:[]}:{world_revision:2,forget_scope:'forget-scope-v1:'+'a'.repeat(64)},
       submitCommand:async(owner:string,command:any)=>{calls.push({owner,command});return {result_state:'applied',storage_cleanup:{state:'complete'}}}}};
   context.sessionOperations = createSessionOperations(context);
   return {account,operations:context.sessionOperations,calls,context,start:()=>{running=true},get cancelled(){return cancelled},get deleted(){return deleted}};
@@ -112,7 +112,7 @@ for(const evidenceId of ['e-a','__proto__'])test(`pending source erasure keeps $
   manager.receiptByRequest=async(_owner,requestId)=>{assert.equal(typeof requestId,'string');if(result)return result;throw Object.assign(new Error('not found'),{code:'command_receipt_not_found'})};
   manager.submitCommand=async()=>result={result_state:'applied',storage_cleanup:{state:'pending'}};
   manager.retryCleanupByRequest=async()=>cleanupReady?{result_state:'applied',storage_cleanup:{state:'complete'}}:result;
-  manager.query=async(_owner:string,method:string)=>method==='query_jobs'?{jobs:result?[]:[{acceptance:{parent_session_id:'session-a',evidence_ids:[evidenceId]}}]}:method==='preview_forget'?{world_revision:revisionReads,forget_scope:'forget-scope-v1:'+'a'.repeat(64)}:{world_revision:++revisionReads};
+  manager.query=async(_owner:string,method:string)=>method==='query_jobs'?{evidence_ids:result?[]:[evidenceId]}:method==='preview_forget'?{world_revision:revisionReads,forget_scope:'forget-scope-v1:'+'a'.repeat(64)}:{world_revision:++revisionReads};
   await assert.rejects(f.operations.deleteSession('owner','session-a',{forgetMemories:true}),{code:'MEMORY_DELETE_CONFLICT'});
   assert.deepEqual(f.account.sessions['session-a'].forgetEvidenceIds,[evidenceId]);
   Object.assign(f.account,JSON.parse(JSON.stringify(f.account)));

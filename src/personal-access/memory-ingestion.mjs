@@ -62,8 +62,9 @@ export function createMemoryIngestion(context) {
     createdAt: job.createdAt } : null;
   async function preview(ownerId) {
     if (!context.backend.readMemoryBoundaries) throw failure('MEMORY_UNAVAILABLE', 503);
-    const accepted = new Set(await context.memoryManager.acceptedBoundaryIds(ownerId));
-    const rows = (await candidates(ownerId, true)).filter(row => !accepted.has(row.boundary.event_id));
+    const historical = await candidates(ownerId, true);
+    const accepted = new Set(await context.memoryManager.acceptedBoundaryIds(ownerId, historical.map(row => row.boundary.event_id)));
+    const rows = historical.filter(row => !accepted.has(row.boundary.event_id));
     const items = rows.map(row => ({ sessionId: row.sessionId, turn: row.turn, eventId: row.boundary.event_id, at: row.at }));
     const id = createHash('sha256').update(JSON.stringify(items)).digest('hex');
     const characters = rows.reduce((sum, row) => sum + row.boundary.source_messages.reduce((n, m) => n + m.content.length, 0), 0);

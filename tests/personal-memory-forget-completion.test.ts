@@ -16,7 +16,7 @@ const mixed = '我喜欢喝红茶。另记一件独立的事：我周末喜欢�
 async function fixture(t: any) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-forget-completion-'));
   let revision = 7, scheduled = 0, cleanupReceiptReads = 0, maxInputChars = Infinity;
-  let terminalJobs: any[] = [];
+  let terminalSources: string[] = [];
   const commands: any[] = [], receipts = new Map(), judgeInputs: any[] = [], originalChat = [mixed, '记住我喜欢喝红茶', '我其实更喜欢绿茶。'];
   const permissions = { allow_local_read: true, allow_cloud_read: true, allow_inference: true };
   const sources = new Map(['old', 'green', 'mixed'].map((id, index) => [id, { evidence_id: id,
@@ -50,7 +50,7 @@ async function fixture(t: any) {
         : { world_revision: revision, items: params.object_kind === 'cognition' ? worlds : [] };
       if (method === 'query_evidence') return { world_revision: revision, evidence: sources.get(params.evidence_id) };
       if (method === 'preview_recall') return { preview: { recent_evidence: [], pending_corrections: [] } };
-      if (method === 'query_jobs') return { world_revision: revision, formation_requests: [], jobs: terminalJobs };
+      if (method === 'query_jobs') return { world_revision: revision, evidence_ids: terminalSources };
       if (method === 'preview_forget') {
         const items = worlds.filter(row => ['old', 'green'].includes(row.item_id)).map(row => ({ ...row, name: row.value.content }));
         return { world_revision: revision, items, item_count: items.length, evidence_ids: ['old', 'green'], evidence_count: 2 };
@@ -86,7 +86,7 @@ async function fixture(t: any) {
         summary: mode === 'deleted' ? null : text, content_available: mode !== 'deleted',
         currentness_state: mode === 'deleted' ? 'evidence_deleted' : 'current',
         permissions: { allow_local_read: true, allow_cloud_read: mode !== 'local-only', allow_inference: mode !== 'no-inference' } });
-      terminalJobs = [{ acceptance: { evidence_ids: ['terminal'] }, worker: { state: 'no_change' } }];
+      terminalSources = ['terminal'];
       maxInputChars = 16384;
     },
     walkingOnly(summary = mixed) {

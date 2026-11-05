@@ -257,10 +257,8 @@ export function createSessionOperations(context) {
             ? await manager.query(ownerId, 'preview_forget', { conversation_id: sessionId }) : null;
           if (memoryWorldRevision !== undefined && preview.world_revision !== memoryWorldRevision)
             throw failure('MEMORY_REVISION_CHANGED', 409);
-          const jobs = await manager.query(ownerId, 'query_jobs', { operation: 'list' });
-          const evidenceIds = new Set([...(preview?.evidence_ids ?? []), ...(account.sessions[sessionId].forgetEvidenceIds ?? []), ...(jobs.jobs ?? []).filter(job =>
-            job.acceptance?.parent_session_id === sessionId || job.acceptance?.result_session_id === sessionId)
-            .flatMap(job => job.acceptance.evidence_ids ?? [])]);
+          const jobs = await manager.query(ownerId, 'query_jobs', { operation: 'list', session_id: sessionId, projection: 'evidence_ids' });
+          const evidenceIds = new Set([...(preview?.evidence_ids ?? []), ...(account.sessions[sessionId].forgetEvidenceIds ?? []), ...(jobs.evidence_ids ?? [])]);
           // Core removes the source job during erasure. Keep identifiers only
           // until deletion completes so a crash/pending cleanup can still retry.
           await context.serial(() => context.mutate(ownerId, next => {

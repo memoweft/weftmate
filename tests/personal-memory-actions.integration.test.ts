@@ -7,6 +7,7 @@ import test from 'node:test'
 import { createHash } from 'node:crypto'
 import { channel } from 'node:diagnostics_channel'
 import { execFileSync, fork } from 'node:child_process'
+import { DatabaseSync } from 'node:sqlite'
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs'
 import { MemoWeftRpc } from '../src/personal-memory/rpc.mjs'
 import { handlePersonalMemoryTool } from '../src/personal-access/memory-runtime.mjs'
@@ -494,6 +495,43 @@ for (const scenario of ['with current fact', 'orphan only', 'saved v3 plan', 'sa
   assert.doesNotMatch(exported, /红茶|绿茶/); assert.match(exported, /散步/)
   await f.restart()
   assert.equal((await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: greenSource.evidence_id })).evidence.content_available, false)
+  assert.deepEqual(f.errors, [])
+})
+
+test('real Core: status, recall and forgetting stay available after 5000 settled jobs', { skip }, async t => {
+  const f = await fixture(t)
+  const [job] = (await f.manager.query(owner, 'query_jobs', { operation: 'list', states: ['applied'] })).jobs
+  await f.manager.close()
+  // Core keeps a durable job for every accepted turn and replay. Grow the history
+  // as the daily account did: thousands of settled replays of one formed source.
+  const db = new DatabaseSync(path.join(f.root, 'accounts', owner, 'memory-home/memoweft/memoweft.sqlite3'))
+  try {
+    const clone = (table: string, values: (index: number) => Record<string, unknown>) => {
+      const template: any = db.prepare(`SELECT * FROM ${table} WHERE job_id = ?`).get(job.job_id), columns = Object.keys(template)
+      const insert = db.prepare(`INSERT INTO ${table} (${columns}) VALUES (${columns.map(() => '?')})`)
+      for (let index = 0; index < 5000; index++) {
+        const row = { ...template, ...values(index) }
+        insert.run(...columns.map(column => row[column]))
+      }
+    }
+    const replay = (index: number) => ({ job_id: `synthetic-replay-${index}`, boundary_event_id: `weftmate-reprocess-v1:${job.job_id}:${index}` })
+    db.exec('BEGIN')
+    clone('memory_world_job', index => ({ ...replay(index), state: 'no_change', terminal_state: 'no_change', world_result_json: '{"reason":"no_world_mutation"}' }))
+    clone('terminal_outcome', index => ({ ...replay(index), outcome_id: `synthetic-outcome-${index}`, terminal_state: 'no_change' }))
+    db.exec('COMMIT')
+  } finally { db.close() }
+  await f.restart()
+  // The whole job history no longer fits one RPC frame; no host path may read it.
+  await assert.rejects(f.manager.query(owner, 'query_jobs', { operation: 'list' }), { code: 'MEMORY_RESPONSE_TOO_LARGE' })
+  await f.restart(); await f.ready()
+  const status = await f.manager.status(owner)
+  assert.deepEqual([status.pendingFormationCount, status.failedFormationCount, status.formationIssues], [0, 0, []])
+  assert.match((await f.manager.recall(owner, { query: '我喜欢喝什么？', sessionId: 'after-history' })).contextText, /乌龙茶/)
+  const result = await f.tool('memory_forget_request', {}, 'forget-after-history', '请忘掉我喝茶的偏好。')
+  assert.equal(result.state, 'applied')
+  assert.equal((await f.world()).items.some((row: any) => row.value.content.includes('乌龙茶')), false)
+  assert.equal((await f.manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: job.acceptance.evidence_ids[0] })).evidence.content_available, false)
+  await f.ready()
   assert.deepEqual(f.errors, [])
 })
 
