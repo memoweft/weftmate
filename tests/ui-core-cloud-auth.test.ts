@@ -436,3 +436,23 @@ test('mobile cloud bootstrap with no-op effects does not read desktop installati
   f.useClient(core.initializeCloudAccount()); await core.load();
   assert.equal(reads, 0); assert.equal(view, 'login');
 });
+
+test('browser cold restoration uses its encrypted session only after a transport failure with retained sign-in',async()=>{
+  for(const [code,signedIn,expected] of [['NETWORK',true,true],['DEVICE_NOT_TRUSTED',true,false],['NETWORK',false,false]] as const){
+    let reads=0,opened=0;
+    const context:any={WeftUiCore:{factories:{}},URL,btoa,atob,TextEncoder,TextDecoder,setTimeout:()=>0,clearTimeout(){},
+      WeftCloud:{bodySession:async()=>{reads++;return {account:{ownerId:'owner',username:'synthetic'},device:{id:'device'},csrfToken:'csrf'};}}};
+    runInNewContext(source,context);
+    const core:any={state:{identityGeneration:1,currentView:'login'},show(view:string){this.state.currentView=view;},load(){},clearSession(){},sessionExpired(){},
+      acceptSession(session:any){this.state.account=session.account;this.state.identityGeneration++;},openSearch(){opened++;},connectionFailed(){},startConnection(){}};
+    Object.assign(core,context.WeftUiCore.factories.cloudAccount(core,{},{
+      hostOrigin:'https://host.example.com',cloudCredentials:async()=>undefined,crypto:webcrypto,fetch:async()=>{throw Error('unused');}}));
+    const client=core.initializeCloudAccount();
+    client.config={issuer:'https://issuer.example.com/personal/v1/cloud/oidc',hostId:'host',clientId:'web'};
+    client.configure=async()=>client.config;client.saved=async()=>signedIn?{sub:'sub',email:'synthetic@example.test'}:null;
+    client.exchange=async()=>{throw {code};};
+    await core.load();
+    assert.equal(opened,expected?1:0);assert.equal(reads,expected?1:0);
+    assert.equal(core.state.cloudAuth.localReplica===true,expected);
+  }
+});

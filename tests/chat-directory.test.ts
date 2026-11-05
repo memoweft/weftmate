@@ -8,7 +8,7 @@ import { directoryCodec, directoryPage, applyDirectoryPage, startCursor } from '
 const date = '2026-01-01T00:00:00.000Z';
 const empty = () => ({epoch:'feed',seq:0,rows:[]});
 const candidate = (id: string, session = {}) => ({chat:{chatId:id,createdAt:date},session,id});
-const row = (id: string, title: string, seq: number) => ({id,title,updatedAt:date,seq});
+const row = (id: string, title: string, seq: number) => ({id,title,updatedAt:date,contentRevision:1,seq});
 
 test('missing native metadata and a pending delete keep the last title until source removal', () => {
   const reconcile = (feed: any, items: any[], native = new Map()) => reconcileDirectory(feed,items,native,() => date);

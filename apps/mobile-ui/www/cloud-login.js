@@ -34,7 +34,7 @@
     return new Promise((resolve,reject) => {
       const tx = opened.transaction('credentials','readwrite'), store = tx.objectStore('credentials');
       store.delete('account-data:'+account);
-      for (const kind of ['chat-directory:','memory-replica:','settings-replica:','model-replica:']) {
+      for (const kind of ['chat-directory:','memory-replica:','settings-replica:','model-replica:','body-replica:']) {
         const prefix=kind+suffix;
         store.delete(IDBKeyRange.bound(prefix,prefix+'\uffff'));
       }
@@ -42,16 +42,16 @@
       tx.onabort = tx.onerror = () => reject({code:'STORAGE_UNAVAILABLE'});
     });
   }
-  async function saveReplica(slot, previous, value, current, accountSlot, keyId) {
+  async function saveReplica(slot, previous, value, current, accountSlot, keyId, guards = {}) {
     const opened = await db();
     return new Promise((resolve,reject) => {
       const tx = opened.transaction('credentials','readwrite'), store = tx.objectStore('credentials');
-      const account = store.get(accountSlot), lookup = store.get(slot);
+      const account = store.get(accountSlot), checks=Object.entries(guards).map(([key,value])=>({read:store.get(key),value})), lookup = store.get(slot);
       let failure;
       lookup.onsuccess = () => {
         try {
           current();
-          if (account.result?.keyId !== keyId || lookup.result !== previous) throw {code:'DIRECTORY_CHANGED'};
+          if (account.result?.keyId !== keyId || lookup.result !== previous || checks.some(check=>check.read.result!==check.value)) throw {code:'DIRECTORY_CHANGED'};
           if (value === undefined) store.delete(slot);
           else store.put(value,slot);
         } catch (error) { failure = error; tx.abort(); }
@@ -64,6 +64,48 @@
   function memoryChanges() {
     if (!memoryChannel && typeof BroadcastChannel==='function') memoryChannel=new BroadcastChannel('weftmate-memory-replica');
     return memoryChannel;
+  }
+  async function bodySession({issuer,sub,hostId,session}) {
+    const key=await storage('account-data:'+JSON.stringify([issuer,sub]));
+    if(!key)return null;
+    const {accountDataCodec}=await import('./ui-core/directory-wire.mjs'),scope=[issuer,sub,key.keyId,hostId];
+    const codec=accountDataCodec(WeftCloudVendor,key.key,scope,'wm-body-replica+jwe'),slot='body-replica:'+JSON.stringify(scope)+':session';
+    if(session!==undefined){await storage(slot,await codec.seal('body-session',{account:session.account,device:session.device,csrfToken:session.csrfToken}));return session;}
+    const box=await storage(slot);return box===undefined?null:codec.open('body-session',box);
+  }
+  async function bodyReplica({issuer,sub,hostId,deviceId,current,exchange,pullDirectory,readCopy,readFileCopy}) {
+    const accountSlot='account-data:'+JSON.stringify([issuer,sub]), key=await storage(accountSlot);
+    current();if(!key)return null;
+    const [{accountDataCodec},{openBodyReplica}]=await Promise.all([import('./ui-core/directory-wire.mjs'),import('./ui-core/body-replica.mjs')]);
+    const scope=[issuer,sub,key.keyId,hostId],prefix='body-replica:'+JSON.stringify(scope)+':',control=prefix+'epoch';
+    const dirSlot='chat-directory:'+JSON.stringify(scope),dirCodec=accountDataCodec(WeftCloudVendor,key.key,scope,'wm-chat-directory+jwe');
+    const codec=accountDataCodec(WeftCloudVendor,key.key,scope,'wm-body-replica+jwe');
+    async function remove(chatId,all=false) {
+      const opened=await db();
+      current();
+      return new Promise((resolve,reject)=>{
+        const tx=opened.transaction('credentials','readwrite'),store=tx.objectStore('credentials');
+        const scan=store.openCursor(IDBKeyRange.bound(prefix,prefix+'\uffff'));
+        scan.onsuccess=()=>{
+          const cursor=scan.result;if(!cursor)return;
+          const name=String(cursor.key).slice(prefix.length);
+          if(chatId===null ? ['body-cache:','body-size:','body-file:'].some(kind=>name.startsWith(kind)) : name==='body-cache:'+chatId || name==='body-size:'+chatId || name.startsWith('body-file:'+chatId+'/') || all&&name==='body-local:'+chatId)cursor.delete();
+          cursor.continue();
+        };
+        store.put(random(),control);tx.oncomplete=()=>resolve();tx.onabort=tx.onerror=()=>reject({code:'STORAGE_UNAVAILABLE'});
+      });
+    }
+    const directory=async()=>{
+      const box=await storage(dirSlot);current();return {box,cache:box===undefined?null:await dirCodec.open('cache',box)};
+    };
+    return openBodyReplica({codec,current,deviceId,random,exchange,readCopy,readFileCopy,directory,
+      syncDirectory:()=>syncChatDirectory({issuer,sub,hostId,deviceId,current,pull:pullDirectory,showCache:()=>{}}),
+      store:{
+        read:async(kind,id)=>{if((await storage(accountSlot))?.keyId!==key.keyId)throw {code:'ACCOUNT_KEY_INVALID'};return storage(prefix+kind+':'+id);},
+        write:(kind,id,old,next,guards)=>saveReplica(prefix+kind+':'+id,old,next,current,accountSlot,key.keyId,guards),
+        guard:async box=>({[dirSlot]:box,[control]:await storage(control)}),remove,
+        clear:()=>remove(null,false),
+      }});
   }
   async function modelReplica({issuer,sub,hostId,deviceId,current,exchange}) {
     const accountSlot='account-data:'+JSON.stringify([issuer,sub]),key=await storage(accountSlot);
@@ -352,5 +394,5 @@
     }
     async forget() { if (!this.config) await this.configure(); await this.credentialStorage(this.tokenId, undefined, true); await storage('pending:' + this.host, undefined, true); }
   }
-  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, installAccountKey, removeAccountKey, memoryChanges, memoryReplica, settingsReplica, modelReplica, syncChatDirectory };
+  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, installAccountKey, removeAccountKey, memoryChanges, memoryReplica, settingsReplica, bodySession, bodyReplica, modelReplica, syncChatDirectory };
 })();

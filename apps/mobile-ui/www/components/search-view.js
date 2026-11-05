@@ -31,13 +31,15 @@ globalThis.WeftSearchView = {
   const highlight=(text,q)=>{const span=el('span');text=String(text??'');if(!q)return Object.assign(span,{textContent:text});const lower=text.toLowerCase(),needle=q.toLowerCase();let position=0,hit;
     while((hit=lower.indexOf(needle,position))>=0){span.append(document.createTextNode(text.slice(position,hit)),el('mark','search-highlight',text.slice(hit,hit+q.length)));position=hit+q.length;}span.append(document.createTextNode(text.slice(position)));return span;};
   const meta=text=>WeftSearchView.formatDate(text,core.state.account?.timeZone||'Asia/Shanghai');
-  async function activate(row){const token=`${core.state.identityGeneration}:${core.state.ownerId}`;try{core.rememberSearch(row);await core.closeSearch();if(core.search.open||token!==`${core.state.identityGeneration}:${core.state.ownerId}`)return;await open(row);}
+  async function activate(row){
+    if(row.copyChatId){core.closeSearch();await core.openPulledChat(row.copyChatId);return;}
+    if(row.copyMemory){core.closeSearch();await core.openMemory();const query=document.querySelector('.synced-memory input');if(query){query.value=row.title;query.dispatchEvent(new Event('input'));}return;}const token=`${core.state.identityGeneration}:${core.state.ownerId}`;try{core.rememberSearch(row);await core.closeSearch();if(core.search.open||token!==`${core.state.identityGeneration}:${core.state.ownerId}`)return;await open(row);}
     catch(error){if(token===`${core.state.identityGeneration}:${core.state.ownerId}`)notice(core.failureMessage?.(error)||'暂时无法打开，请重试。');}}
   function rowMenu(row,trigger){menu?.(row,trigger);}
   function select(){const rows=[...results.querySelectorAll('[role=option]')];rows.forEach((node,index)=>{node.setAttribute('aria-selected',String(index===core.search.selected));node.classList.toggle('is-selected',index===core.search.selected);});const current=rows[core.search.selected];if(current){input.setAttribute('aria-activedescendant',current.id);current.scrollIntoView({block:'nearest'});}else input.removeAttribute('aria-activedescendant');}
   function paint(){if(!core.search.open)return;const model=core.search;if(input.value!==model.query)input.value=model.query;
     for(const tab of tabs.children){const chosen=tab.dataset.type===model.type;tab.setAttribute('aria-selected',String(chosen));tab.setAttribute('aria-pressed',String(chosen));tab.tabIndex=chosen?0:-1;}
-    results.setAttribute('aria-busy',String(model.loading));results.inert=model.loading;dialog.classList.toggle('is-searching',model.loading);feedback.textContent=model.loading?'正在搜索…':'';
+    results.setAttribute('aria-busy',String(model.loading));results.inert=model.loading;dialog.classList.toggle('is-searching',model.loading);feedback.textContent=model.loading?'正在搜索…':model.copyNotice||(String(model.rows.length)+' 项');
     if(model.loading&&results.childNodes.length)return;
     const signature=JSON.stringify([model.query,model.type,model.groups,model.error,model.loading]);if(signature===renderSignature){select();return;}renderSignature=signature;results.replaceChildren();
     if(model.loading){results.append(WeftControls.skeleton({rows:4}));return;}
@@ -63,7 +65,7 @@ globalThis.WeftSearchView = {
       if(group.indexState==='building'){const refresh=el('button','button quiet small','旧内容正在建立搜索索引 · 更新结果');refresh.type='button';refresh.onclick=()=>void core.readSearch();section.append(refresh);}
       results.append(section);
     }
-    feedback.textContent=`${model.rows.length} 项`;select();
+    feedback.textContent=model.copyNotice || (String(model.rows.length)+' 项');select();
   }
   input.oninput=()=>core.querySearch(input.value);
   dialog.addEventListener('cancel',event=>{event.preventDefault();core.closeSearch();});

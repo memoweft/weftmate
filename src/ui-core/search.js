@@ -47,6 +47,33 @@
       const valid=()=>model.open&&token===scope()&&generation===model.generation;
       model.loading=true;model.error='';emit();
       const all=type==='all', wants=id=>all||type===id;
+      model.copyNotice='';
+      let replica;
+      try{replica=core.state.cloudAuth?.mode==='authenticated'&&!core.state.cloudAuth.localDesktop&&core.getBodyReplica ? await core.getBodyReplica() : null;}
+      catch{if(valid()){model.error='本机副本暂时无法读取，请稍后重试。';model.loading=false;emit();}return;}
+      if(replica && ['all','chats','memory'].includes(type)){
+        try{
+        let copies=await replica.list();
+        if(!copies.length){try{await replica.refresh();copies=await replica.list();}catch{}}
+        if(!valid())return;
+        const needle=q.toLocaleLowerCase(),missing=copies.filter(row=>!row.doc);
+        const chatRows=copies.filter(row=>!needle||row.title.toLocaleLowerCase().includes(needle)||[...(row.doc?.messages??[]),...row.local].some(m=>m.text.toLocaleLowerCase().includes(needle)))
+          .map(row=>({id:row.id,key:'copy:'+row.id,type:'chats',title:row.title||'未命名对话',icon:'chat',copyChatId:row.id,meta:row.device,
+            snippet:needle?[...(row.doc?.messages??[]),...row.local].find(m=>m.text.toLocaleLowerCase().includes(needle))?.text.slice(0,180):undefined}));
+        let memories=[];try{const reader=await core.getMemoryReplica?.();memories=(await reader?.read())?.items??[];}catch{}
+        if(!valid())return;
+        const memoryRows=memories.filter(row=>!needle||row.text.toLocaleLowerCase().includes(needle)).map(row=>({...memoryRow({kind:row.key.split(':')[0],id:row.key.slice(row.key.indexOf(':')+1),text:row.text}),copyMemory:true}));
+        model.groups=[...(wants('chats')?[{id:'chats',title:'对话',rows:chatRows}]:[]),...(wants('memory')?[{id:'memory',title:'记忆',rows:memoryRows}]:[])];
+        model.copyNotice=missing.length?'还有 '+missing.length+' 段不在本机 · 同步后再搜':'本机正文、目录和记忆';
+        model.loading=false;model.selected=0;emit();
+        if(missing.length){
+          let total=0,known=0;
+          for(const row of missing){if(!valid())return;try{total+=await replica.size(row.id);known++;}catch{}}
+          if(valid()){model.copyNotice+=' · '+(known===missing.length?'下载约 '+core.dataSize(total):'大小待来源设备在线后确认');emit();}
+        }
+        }catch{if(valid()){model.error='本机副本暂时无法读取，请稍后重试。';model.loading=false;emit();}}
+        return;
+      }
       const sources=[
         ['chats',() => core.accessApi(`/chats?${new URLSearchParams({scope:'search',limit:q?'200':'30',...(q?{q}:{})})}`),page=>page.items.map(chatRow)],
         ['projects',()=>core.accessApi('/projects'),page=>(page.projects||[]).filter(row=>!row.revoked&&(!q||row.name.toLowerCase().includes(q.toLowerCase()))).map(projectRow)],
