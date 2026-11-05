@@ -167,16 +167,22 @@ test('isolated synthetic memory HTTP contract keeps owners, cursors and receipts
   }
 })
 
-test('memory page keeps scripts external and uses only the candidate static publisher', async () => {
-  const html = desktopHtml()
-  const publisher = await readFile(join(root, 'src', 'personal-access-ui', 'index.mjs'), 'utf8')
-  assert.match(html, /id="rail-memory"/)
-  assert.match(html, /id="memory-view"/)
-  assert.match(html, /id="memory-detail-dialog"/)
-  assert.doesNotMatch(html, /<script(?![^>]*src=)/i)
-  assert.match(publisher, /default-src 'none'; script-src 'self'; style-src 'self';/)
-  assert.match(publisher, /connect-src 'self'/)
-  assert.doesNotMatch(publisher, /script-src[^;]*unsafe-inline/)
+// 保护：公开页面若放宽脚本策略，会让未可信内容执行；WASM 权限仅属于密码 Worker。
+test('public shell keeps same-origin scripts and scopes WebAssembly permission to its password worker',async()=>{
+  const {servePersonalAccessUi}=await import('../src/personal-access-ui/index.mjs');
+  async function served(url:string){
+    let headers:any,body:any;
+    await servePersonalAccessUi({method:'GET',url},{writeHead:(_status:number,value:any)=>{headers=value;},end:(value:any)=>{body=value;}});
+    const policy=new Map(String(headers['content-security-policy']).split(';').map(part=>{
+      const [name,...values]=part.trim().split(/\s+/);return [name,values.join(' ')];
+    }));
+    return {policy,body:String(body)};
+  }
+  const page=await served('/personal/v1/ui/index.html');
+  assert.deepEqual(['default-src','script-src','worker-src'].map(name=>page.policy.get(name)),["'none'","'self'","'self'"]);
+  assert.doesNotMatch(page.body,/<script(?![^>]*src=)/i);
+  const worker=await served('/personal/v1/ui/password-worker.js');
+  assert.deepEqual([worker.policy.get('script-src'),worker.policy.get('connect-src')],["'self' 'wasm-unsafe-eval'","'none'"]);
 })
 
 test('memory view preserves chat draft and discards a successful response for another cookie owner', async () => {

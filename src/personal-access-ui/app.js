@@ -2,6 +2,14 @@
 (() => {
     const ui = globalThis.WeftUiComponents.createContext();
     const native = globalThis.weftmateDesktop;
+    const passwordModule=()=>import('./ui-core/password-client.mjs');
+    const passwordProtocol={
+        mode:client=>passwordModule().then(m=>m.passwordMode(client)),
+        login:(client,fields)=>passwordModule().then(m=>m.accountPasswordLogin(client,fields)),
+        unlock:(client,key,sub,check)=>passwordModule().then(m=>m.unlockPasswordKey(client,key,sub,check)),
+        set:(client,options)=>passwordModule().then(m=>m.setPassword(client,options)),
+        deleteProof:(client,password)=>passwordModule().then(m=>m.passwordDeleteProof(client,password))
+    };
     const initialPairing = globalThis.location?.hash.startsWith('#pair=') ? 'wm1.' + globalThis.location.hash.slice(6) : null;
     ui.pairingJourney = !!initialPairing;
     if (initialPairing) history.replaceState(null, '', location.pathname + location.search);
@@ -23,7 +31,8 @@
     const core = globalThis.WeftUiCore.create({ effects: ui, fetch: request, storage: localStorage, crypto: globalThis.crypto,
         hostOrigin: globalThis.location?.origin, desktop: !!native, deviceType: native?.platform === 'darwin' ? 'macos' : undefined, cloudVendor: globalThis.WeftCloudVendor,
         networkAvailable: () => globalThis.navigator?.onLine,
-        initialPairing,
+        initialPairing,passwordProtocol,
+        serverReplicaRequest:(client,body)=>client.authorized('/replicas/read',{method:'POST',body}),
         messageModeStorage: native ? (...args) => native.credentials(...args) : undefined,
         feedbackStorage: native ? (...args) => native.credentials(...args) : undefined,
         nativeIdentity: native ? () => native.identity() : undefined,

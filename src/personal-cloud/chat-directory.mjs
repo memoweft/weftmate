@@ -3,7 +3,7 @@ import { failure } from '../personal-access/common.mjs';
 import { hasPrivateContent } from '../personal-access/temporary-chats.mjs';
 import { directoryPage, validCursor } from './directory-wire.mjs';
 
-function candidates(account, hostId) {
+export function candidates(account, hostId) {
   const identity = account.chatIdentity;
   if (identity?.version !== 2) throw failure('CHAT_INITIALIZING',503);
   const privateChats = new Set();

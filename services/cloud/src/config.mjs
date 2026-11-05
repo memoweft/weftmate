@@ -81,6 +81,8 @@ export function loadConfig(env = process.env, cwd = process.cwd()) {
     throw new Error('Invalid CLOUD_OIDC_CLIENTS');
   if (new Set(clients.map((client) => client.client_id)).size !== clients.length)
     throw new Error('Duplicate cloud client');
+  if(env.CLOUD_REPLICA_ENABLED!==undefined&&!['true','false'].includes(env.CLOUD_REPLICA_ENABLED))throw new Error('Invalid CLOUD_REPLICA_ENABLED');
+  const replicaEnabled=env.CLOUD_REPLICA_ENABLED==='true';
   const backupLimits = { CLOUD_BACKUP_ACCOUNT_BYTES: 300 * 1024 * 1024, CLOUD_BACKUP_GLOBAL_BYTES: 6 * 1024 * 1024 * 1024 };
   for (const key of Object.keys(backupLimits)) {
     if (env[key] === undefined) continue;
@@ -112,6 +114,7 @@ export function loadConfig(env = process.env, cwd = process.cwd()) {
     host,
     port: Number(portText),
     dataDir,
+    replicaEnabled,
     databasePath: path.join(dataDir, 'cloud.sqlite'),
     mailTransport,
     mailFrom,

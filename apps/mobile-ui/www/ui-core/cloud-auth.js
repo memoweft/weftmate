@@ -9,8 +9,8 @@
     return url.origin;
   }
   class CloudAuthClient {
-    constructor({ fetch, crypto, credentials, vendor, host, redirectUri, nativeKey, installAccountKey, localCsrf, now = Date.now }) {
-      Object.assign(this, { fetch, crypto, credentials, vendor, nativeKey, installAccountKey, localCsrf, now });
+    constructor({ fetch, crypto, credentials, vendor, host, redirectUri, nativeKey, installAccountKey, passwordProtocol, localCsrf, now = Date.now }) {
+      Object.assign(this, { fetch, crypto, credentials, vendor, nativeKey, installAccountKey, passwordProtocol, localCsrf, now });
       this.host = origin(host); this.redirectUri = redirectUri || this.host + '/personal/v1/ui/';
       this.generation = 0;
     }
@@ -198,10 +198,16 @@
       this.pending = { ...pending, interactionUid: interaction.interactionUid, csrfToken: interaction.csrfToken };
       return this.pending;
     }
+    async passwordMode(){return this.passwordProtocol?this.passwordProtocol.mode(this):false;}
     async begin({ email, password, deviceName, deviceType = 'web' }) {
       const pending = await this.prepare(deviceName), key = await this.key();
-      const result = await this.publicRequest('/auth/login', { interactionUid: pending.interactionUid, csrfToken: pending.csrfToken,
-        email, password, deviceId: key.deviceId, publicJwk: key.publicJwk, deviceName, deviceType });
+      const fields={interactionUid:pending.interactionUid,csrfToken:pending.csrfToken,email,password,deviceId:key.deviceId,publicJwk:key.publicJwk,deviceName,deviceType};
+      let result;
+      if(await this.passwordMode()){
+        const opaque=await this.passwordProtocol.login(this,fields);
+        if(pending.generation!==this.generation)fail('CLOUD_TOKEN_INVALID');
+        pending.passwordExportKey=opaque.exportKey;pending.passwordSub=opaque.sub;result=opaque.finished;
+      }else result=await this.publicRequest('/auth/login',fields);
       if (pending.generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
       if (result.confirmationRequired) { this.pending.challengeId = result.challengeId; return result; }
       return this.finish(result);
@@ -264,6 +270,12 @@
       this.pending = null;
       await this.credentials(this.tokenId, { refreshToken: tokens.refresh_token, cloud: { token: tokens.access_token, expiresAt: this.now() + tokens.expires_in * 1000 },
         sub: access.sub, email: result.account?.email, deviceName: pending.deviceName });
+      if(pending.passwordExportKey){
+        if(pending.passwordSub!==access.sub)fail('CLOUD_TOKEN_INVALID');
+        const check=()=>{if(pending.generation!==this.generation)fail('CLOUD_TOKEN_INVALID');};
+        await this.passwordProtocol.unlock(this,pending.passwordExportKey,access.sub,check);check();
+        delete pending.passwordExportKey;
+      }
       return { authenticated: true };
     }
     async saved() { if (!this.config) await this.configure(); return this.credentials(this.tokenId); }
