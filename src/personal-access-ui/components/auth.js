@@ -57,6 +57,17 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
         if (globalThis.weftmateDesktop) void globalThis.weftmateDesktop.identity().then(identity => { core.state.cloudAuth.deviceName = identity.deviceName; });
         paintCloudAuth(core.cloudAuthView());
     }
+    function restoreLoginView() {
+        if (!loginHome) return;
+        if (core.state.currentView === 'login') {
+            loginDialog.close();
+            for (const animation of loginDialog.getAnimations()) animation.finish();
+        }
+        const view = ui.byId('login-view');
+        if (loginNext?.parentNode === loginHome) loginHome.insertBefore(view, loginNext); else loginHome.append(view);
+        loginHome = loginNext = null;
+        view.hidden = core.state.currentView !== 'login';
+    }
     function paintLoginDialog(open) {
         const view = ui.byId('login-view');
         if (open) {
@@ -72,13 +83,22 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
                 document.body.append(loginDialog);
             }
             if (!loginDialog.open) {
-                loginHome = view.parentNode; loginNext = view.nextSibling; loginReturnFocus = document.activeElement;
-                ui.byId('cloud-login-dialog-body').append(view); view.hidden = false; loginDialog.inert = false; loginDialog.showModal();
+                if (!loginHome) {
+                    loginHome = view.parentNode; loginNext = view.nextSibling;
+                    ui.byId('cloud-login-dialog-body').append(view);
+                }
+                loginReturnFocus = document.activeElement;
+                view.hidden = false; loginDialog.inert = false; loginDialog.showModal();
             }
         } else if (loginDialog?.open) {
-            loginDialog.close();
-            if (loginNext?.parentNode === loginHome) loginHome.insertBefore(view, loginNext); else loginHome.append(view);
-            view.hidden = true; loginReturnFocus?.focus?.({ preventScroll: true });
+            loginDialog.inert = true; loginDialog.close();
+            loginReturnFocus?.focus?.({ preventScroll: true });
+            // Keep the live form inside the fading native surface, including on a rapid reopen.
+            const exit = loginDialog.getAnimations();
+            if (!exit.length || core.state.currentView === 'login') restoreLoginView();
+            else Promise.allSettled(exit.map(animation => animation.finished)).then(() => {
+                if (!loginDialog.open && getComputedStyle(loginDialog).display === 'none') restoreLoginView();
+            });
         }
     }
     async function showLegal(kind) {
@@ -169,5 +189,5 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
         if (value.retrySeconds) ui.errorAt('cloud-auth-error', `尝试太多次，请等待 ${value.retrySeconds} 秒后重试。`);
     }
     function restoreCloudDraft(draft) { if (draft) { ui.byId('message-text').value = draft; ui.updateAvailability(); } }
-    return { openLegal: showLegal, paintIdentity, loginBusy, setupBusy, loginError, setupError, loginClearPasswords, setupClearPasswords, mountAuth, paintCloudAuth, restoreCloudDraft };
+    return { openLegal: showLegal, paintIdentity, loginBusy, setupBusy, loginError, setupError, loginClearPasswords, setupClearPasswords, mountAuth, paintCloudAuth, restoreCloudDraft, restoreLoginView };
 };

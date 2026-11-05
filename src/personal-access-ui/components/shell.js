@@ -377,6 +377,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function paintScreen(view) {
         void ui.checkCloudBackupPrompt?.();
+        if (view === 'login') ui.restoreLoginView?.();
         const wasMemory=ui.motionView==='memory';
         if (wasMemory && view!=='memory') ui.closeSyncedMemory?.();
         for (const name of ui.views)

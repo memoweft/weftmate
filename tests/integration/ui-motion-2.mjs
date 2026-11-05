@@ -267,6 +267,24 @@ try{
     });
     await writeFile(join(out,'settings-native-editor-frames.json'),JSON.stringify(settingsNative,null,2));
     check('combined account-model native exit is visible without a second copy or parent movement',settingsNative.marked&&settingsNative.parentMarked&&settingsNative.frames.some(f=>!f.open&&f.display!=='none'&&f.opacity>0&&f.overlay==='auto')&&settingsNative.frames.every(f=>f.copies===0&&f.parentStable)&&settingsNative.focus&&settingsNative.cleaned,settingsNative);
+    const loginExit=await page.evaluate(async()=>{
+      const view=document.getElementById('login-view'),home=view.parentNode,focused=document.activeElement;
+      const auth=testCore.cloudAuthView(),paint=modal=>testUi.paintCloudAuth({...auth,modal,mode:modal?'login':'offline'});
+      paint(true);
+      const dialog=document.getElementById('cloud-login-dialog');
+      const finish=()=>dialog.getAnimations().forEach(animation=>animation.finish());
+      finish();paint(false);
+      const exit=dialog.getAnimations().find(animation=>animation.transitionProperty==='opacity');
+      const result={fadingForm:!!exit&&dialog.contains(view)&&view.getBoundingClientRect().height>0,
+        released:!dialog.open&&dialog.inert&&document.activeElement===focused&&getComputedStyle(dialog).pointerEvents==='none'};
+      paint(true);await new Promise(requestAnimationFrame);
+      result.reopened=dialog.open&&!dialog.inert&&dialog.contains(view);
+      finish();paint(false);await Promise.allSettled(dialog.getAnimations().map(animation=>animation.finished));
+      await new Promise(requestAnimationFrame);
+      result.restored=view.parentNode===home&&view.hidden&&!document.querySelector('.motion-dialog-copy');
+      return result;
+    });
+    check('cloud login keeps its live form during exit and rapid reopen, then restores it',Object.values(loginExit).every(Boolean),loginExit);
     await page.getByRole('button',{name:'关闭设置',exact:true}).click();
     const settingsRoot=await page.evaluate(async()=>{const frames=[];for(let i=0;i<10;i++){const s=getComputedStyle(motion2Settings);frames.push({open:motion2Settings.open,display:s.display,overlay:s.overlay,opacity:Number(s.opacity),copies:document.querySelectorAll('.motion-dialog-copy').length});await new Promise(requestAnimationFrame);}await new Promise(r=>setTimeout(r,180));return {frames,focus:document.activeElement.id==='account-menu-trigger',cleaned:getComputedStyle(motion2Settings).overlay==='none'&&!document.querySelector('.motion-dialog-copy')};});
     await writeFile(join(out,'settings-native-root-frames.json'),JSON.stringify(settingsRoot,null,2));
