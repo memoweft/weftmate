@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { importJWK, SignJWT } from 'jose';
 import { csrfForToken, digest, exactKeys, failure } from '../personal-access/common.mjs';
 import { SESSION_MS } from '../personal-access/constants.mjs';
@@ -7,6 +7,7 @@ import { createBodyExchange } from './body-replica.mjs';
 import { createModelExchange } from './model-replica.mjs';
 import { createSettingsExchange } from './settings-replica.mjs';
 import { createMemoryExchange } from './memory-replica.mjs';
+import {createReplicaPublisher} from './server-replica.mjs';
 import { createDirectoryPull } from './chat-directory.mjs';
 import { hostName } from '../host-name.mjs';
 import { openIdentity } from './storage.mjs';
@@ -30,7 +31,7 @@ export async function createHostCloudIdentity(context, options) {
   let poll;
   let syncing = null;
   let offlineTasksSupported=false, cloudBackupSupported=false;
-  let multiHostSupported=false, accountKeyRegistry=false;
+  let multiHostSupported=false, accountKeyRegistry=false,passwordVaultSupported=false;
   const computerLabels = new Map();
   let desktopQueue = Promise.resolve();
   const activeResponses = new Map();
@@ -184,6 +185,13 @@ export async function createHostCloudIdentity(context, options) {
   const pullDirectory = createDirectoryPull(context,hostId,groupAccess,codecFor('wm-chat-directory+jwe'),
     (scope,box) => edit(next => { next.bindings[scope].directoryBox = box; }),
     ownerId => computerLabels.get(ownerId) || hostName());
+  const publisher=createReplicaPublisher({context,hostId,keys:options.accountKeys,bindings:()=>store.state.bindings,
+    persist:(scope,fields,before)=>context.serial(()=>edit(next=>{
+      const binding=next.bindings[scope];if(binding?.status!=='active'||!binding.replicaEnabled)return;
+      binding.replicaBox=fields.replicaBox;
+      for(const key of ['directoryBox','modelsBox'])if(binding[key]===before[key])binding[key]=fields[key];
+    })),
+    request:signedRequest,bodyExchange,label:ownerId=>computerLabels.get(ownerId)||hostName()});
   async function applyEvents(encoded) {
     const envelope = await verifier.events(encoded);
     if (!Array.isArray(envelope.events) || !Number.isSafeInteger(envelope.watermark) || envelope.watermark < 0)
@@ -232,6 +240,7 @@ export async function createHostCloudIdentity(context, options) {
     offlineTasksSupported=envelope.capabilities?.offlineTasks===1;
     multiHostSupported=envelope.capabilities?.multiHost===1;
     accountKeyRegistry=envelope.capabilities?.accountKeyRegistry===1;
+    passwordVaultSupported=envelope.capabilities?.passwordVault===1;
     cloudBackupSupported=envelope.capabilities?.cloudBackup===1;
   }
   async function syncRevocations() {
@@ -248,6 +257,7 @@ export async function createHostCloudIdentity(context, options) {
       // a deleted account must not leave a failing outbox blocking revocation.
       const result = await signedRequest('/hosts/revocations', { afterSeq: store.state.watermark });
       await applyEvents(result.eventToken);
+      void publisher.run().catch(()=>{});
       let flushed = false;
       for (const [id, event] of Object.entries(store.state.outbox)) {
         const { action = '/hosts/devices/revoke', ...data } = event;
@@ -308,7 +318,7 @@ export async function createHostCloudIdentity(context, options) {
       const route = pathname.replace('/personal/v1', '');
       if (route === '/cloud/config' && request.method === 'GET') {
         context.json(response, 200, { issuer: config.issuer, hostId,
-          clientId: options.clientId || 'weftmate-web', capabilities: { cloudChannel: 1, offlinePhoneFirst: 1 } }); return true;
+          clientId: options.clientId || 'weftmate-web', capabilities: { cloudChannel: 1, offlinePhoneFirst: 1, ...(passwordVaultSupported?{passwordVault:1}:{}) } }); return true;
       }
       if (route === '/cloud/binding' && request.method === 'GET') {
         const current = local(request);
@@ -322,7 +332,7 @@ export async function createHostCloudIdentity(context, options) {
           try { dataAccount = {issuer:binding.issuer,sub:binding.sub,keyId:options.accountKeys.status(binding.issuer,binding.sub)}; }
           catch { dataAccount = {unavailable:true}; }
         }
-        context.json(response, 200, { status: binding?.status || 'unbound', canManage, hostId, ...(dataAccount ? {dataAccount} : {}) });
+        context.json(response, 200, { status: binding?.status || 'unbound', canManage, hostId, ...(dataAccount ? {dataAccount,passwordVault:passwordVaultSupported,replicaEnabled:binding.replicaEnabled===true,replicaStatus:publisher.status(current.ownerId)} : {}) });
         return true;
       }
       if (route === '/cloud/devices/pending' && request.method === 'GET') {
@@ -492,6 +502,7 @@ export async function createHostCloudIdentity(context, options) {
           if (next.bindings[key]?.status === 'active') return;
           next.bindings[key] = { issuer: config.issuer, sub: identity.sub, ownerId: current.ownerId,
             hostId, claimId: body.claimId, status: 'pending',
+            ...(next.bindings[key]?.replicaEnabled ? {replicaEnabled:true,replicaBox:next.bindings[key].replicaBox} : {}),
             ...(next.bindings[key]?.directoryBox ? {directoryBox:next.bindings[key].directoryBox} : {}) };
           claim.sub = identity.sub;
         }));
@@ -571,6 +582,37 @@ export async function createHostCloudIdentity(context, options) {
             }));
         });
         context.json(response, 200, {keyId}); return true;
+      }
+      if(route==='/cloud/password-wrap'){
+        const current=local(request,true);context.requireDirectLocal(request);
+        exactKeys(body,['issuer','sub','salt','secret','registrationRecord','flowId'],['issuer','sub','salt','secret','registrationRecord','flowId']);
+        const binding=store.state.bindings[bindingKey(body.issuer,body.sub)];
+        if(binding?.status!=='active'||binding.ownerId!==current.ownerId)throw failure('FORBIDDEN',403);
+        if(typeof body.registrationRecord!=='string'||body.registrationRecord.length!==256||typeof body.flowId!=='string'||body.flowId.length!==43)throw failure('INVALID_REQUEST');
+        const wrappedKey=await options.accountKeys.wrap(body.issuer,body.sub,body);
+        const proof=await new SignJWT({action:'password-activate',sub:body.sub,flowId:body.flowId,recordHash:createHash('sha256').update(body.registrationRecord).digest('base64url'),wrappedHash:createHash('sha256').update(JSON.stringify(wrappedKey)).digest('base64url')})
+          .setProtectedHeader({alg:'ES256',typ:'wm-host-request+jwt'}).setIssuer(hostId).setAudience(config.issuer).setIssuedAt().setExpirationTime('60s').setJti(randomUUID()).sign(installationKey);
+        context.json(response,200,{wrappedKey,activationProof:{hostId,proof}});return true;
+      }
+      if(route==='/cloud/account-key/enroll'){
+        const {ownerId,deviceId}=context.authenticate(request,'account:manage');assertSession(ownerId,deviceId);
+        exactKeys(body,['box'],['box']);
+        const session=store.state.sessions[deviceId],trust=store.state.devices[session.trustId],binding=store.state.bindings[session.bindingKey];
+        const proof=await options.accountKeys.withDataCodec('wm-password-enroll+jwe',binding.issuer,binding.sub,hostId,codec=>codec.open('enroll',body.box));
+        if(proof.deviceId!==trust.cloudDeviceId||proof.jkt!==trust.jkt||Math.abs(context.timestamp()-proof.at)>60000)throw failure('ACCOUNT_KEY_INVALID',403);
+        await context.serial(()=>edit(next=>{assertSession(ownerId,deviceId);next.devices[session.trustId].pairedJkt=trust.jkt;}));
+        context.json(response,200,{enrolled:true});return true;
+      }
+      if(route==='/cloud/replica/publish'){
+        const current=local(request,true);context.requireDirectLocal(request);
+        exactKeys(body,['enabled'],['enabled']);
+        if(body.enabled!==true)throw failure('INVALID_REQUEST');
+        await context.serial(()=>edit(next=>{
+          const binding=Object.values(next.bindings).find(b=>b.ownerId===current.ownerId&&b.status==='active');
+          if(!binding||!options.accountKeys?.status(binding.issuer,binding.sub))throw failure('ACCOUNT_KEY_INVALID',403);
+          binding.replicaEnabled=true;
+        }));
+        context.json(response,200,{results:await publisher.run(true)});return true;
       }
       if (route === '/cloud/pairings') {
         const current = local(request, true);

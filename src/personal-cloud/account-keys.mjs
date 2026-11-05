@@ -1,6 +1,7 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { CompactEncrypt, compactDecrypt, importJWK } from 'jose';
 import { accountDataCodec } from './directory-wire.mjs';
+import {sealPasswordKey} from '../ui-core/password-key.mjs';
 import { pairingJkt } from './pairing.mjs';
 import { digest, failure } from '../personal-access/common.mjs';
 
@@ -47,6 +48,19 @@ export function createAccountKeys(vault) {
       const bytes = keyBytes(row.secret);
       try { return await action(accountDataCodec({CompactEncrypt,compactDecrypt},bytes,[issuer,sub,row.keyId,hostId],typ)); }
       finally { bytes.fill(0); }
+    },
+    async wrap(issuer,sub,{salt,secret}){
+      const row=read(scope(issuer,sub));if(row?.state!=='active')throw failure('ACCOUNT_KEY_INVALID',403);
+      const key=keyBytes(secret),bytes=keyBytes(row.secret);
+      try{return await sealPasswordKey({CompactEncrypt},key,bytes,{issuer,sub,keyId:row.keyId,salt});}
+      finally{key.fill(0);bytes.fill(0);}
+    },
+    async withReplicaCodec(issuer,sub,hostId,action){
+      const row=read(scope(issuer,sub));if(row?.state!=='active')throw failure('ACCOUNT_KEY_INVALID',403);
+      const bytes=keyBytes(row.secret);
+      try{return await action({...accountDataCodec({CompactEncrypt,compactDecrypt},bytes,[issuer,sub,row.keyId,hostId],'wm-server-replica+jwe'),
+        id:content=>createHmac('sha256',bytes).update(JSON.stringify(['wm-replica-object',issuer,sub,hostId,content])).digest('base64url')});}
+      finally{bytes.fill(0);}
     },
     async initialize(issuer, sub, claim) {
       const slot = scope(issuer, sub);

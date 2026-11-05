@@ -23,34 +23,7 @@ export function createModelExchange(context,hostId,authorize,withCodec,persist) 
       const work=(pending.get(ownerId)||Promise.resolve()).catch(()=>{}).then(async()=>{
         let binding=check();
         const prior=binding.modelsBox?await codec.open('models-source',binding.modelsBox):{rows:{}};
-        async function snapshot(){
-          const list=context.visibleModels(ownerId,await context.backend.listModels({ownerId})), kinds=new Map(list.map(row=>[row.id,row.sourceKind]));
-          const local=list.filter(row=>row.sourceKind==='local').map(row=>({profileId:row.id,name:row.name,requiresOnline:true}));
-          const account=context.accountState(ownerId),rows={},live=[];
-          for(const service of Object.values(account.modelServices??{})){
-            const cloud=service.models.some(row=>kinds.get(row.profileId)==='cloud') || kinds.get(service.credentialProfileId)==='cloud';
-            if(service.status!=='removed'&&!cloud&&!prior.rows[service.serviceId])continue;
-            let value;
-            if(service.status==='removed'||!cloud)value={serviceId:service.serviceId,removed:true};
-            else{
-              const models=cleanModels(service.models.filter(row=>!row.profileId||kinds.get(row.profileId)==='cloud'));
-              const apiKey=await context.modelServices.secretFor(ownerId,service);
-              if(!apiKey)throw failure('STORAGE_UNAVAILABLE',503);
-              value={serviceId:service.serviceId,name:service.name,baseUrl:service.baseUrl,interfaceType:service.interfaceType,
-                models,selectedModelId:service.selectedModelId,apiKey};
-              live.push(...models.filter(row=>row.enabled&&row.profileId).map(row=>row.profileId));
-            }
-            const old=prior.rows[service.serviceId];
-            rows[service.serviceId]=old&&JSON.stringify(old.value)===JSON.stringify(value)?old:
-              {value,at:Math.max(Date.parse(service.updatedAt)||context.timestamp(),(old?.at??0)+1),id:randomUUID()};
-          }
-          const selected=account.defaultModelProfileId;
-          const value=live.includes(selected)||local.some(row=>row.profileId===selected)?selected:live[0]??null;
-          const old=prior.rows.default;
-          rows.default=old&&old.value===value?old:{value,at:Math.max(Date.parse(account.modelDefaultUpdatedAt)||0,(old?.at??0)+1),id:randomUUID()};
-          return {rows,local};
-        }
-        let next=await snapshot();
+        let next=await readModelSnapshot(context,ownerId,prior);
         if(query.action==='check'||query.action==='refresh'){
           check('account:manage');
           const result=query.action==='check'?await context.modelServices.check(ownerId,query.body):
@@ -76,7 +49,7 @@ export function createModelExchange(context,hostId,authorize,withCodec,persist) 
               await context.modelServices.configure(ownerId,{...body,requestId,...(service?{expectedRevision:service.revision}:{})},
                 service?query.serviceId:undefined,true);
             }
-            next=await snapshot();
+            next=await readModelSnapshot(context,ownerId,prior);
             if(next.rows[rowId])next.rows[rowId]={...next.rows[rowId],at,id};
           }
         }
@@ -93,4 +66,32 @@ export function createModelExchange(context,hostId,authorize,withCodec,persist) 
       try{return await work;}finally{if(pending.get(ownerId)===work)pending.delete(ownerId);}
     });
   };
+}
+
+export async function readModelSnapshot(context,ownerId,prior={rows:{}}){
+  const list=context.visibleModels(ownerId,await context.backend.listModels({ownerId})), kinds=new Map(list.map(row=>[row.id,row.sourceKind]));
+  const local=list.filter(row=>row.sourceKind==='local').map(row=>({profileId:row.id,name:row.name,requiresOnline:true}));
+  const account=context.accountState(ownerId),rows={},live=[];
+  for(const service of Object.values(account.modelServices??{})){
+    const cloud=service.models.some(row=>kinds.get(row.profileId)==='cloud') || kinds.get(service.credentialProfileId)==='cloud';
+    if(service.status!=='removed'&&!cloud&&!prior.rows[service.serviceId])continue;
+    let value;
+    if(service.status==='removed'||!cloud)value={serviceId:service.serviceId,removed:true};
+    else{
+      const models=cleanModels(service.models.filter(row=>!row.profileId||kinds.get(row.profileId)==='cloud'));
+      const apiKey=await context.modelServices.secretFor(ownerId,service);
+      if(!apiKey)throw failure('STORAGE_UNAVAILABLE',503);
+      value={serviceId:service.serviceId,name:service.name,baseUrl:service.baseUrl,interfaceType:service.interfaceType,
+        models,selectedModelId:service.selectedModelId,apiKey};
+      live.push(...models.filter(row=>row.enabled&&row.profileId).map(row=>row.profileId));
+    }
+    const old=prior.rows[service.serviceId];
+    rows[service.serviceId]=old&&JSON.stringify(old.value)===JSON.stringify(value)?old:
+      {value,at:Math.max(Date.parse(service.updatedAt)||context.timestamp(),(old?.at??0)+1),id:randomUUID()};
+  }
+  const selected=account.defaultModelProfileId;
+  const value=live.includes(selected)||local.some(row=>row.profileId===selected)?selected:live[0]??null;
+  const old=prior.rows.default;
+  rows.default=old&&old.value===value?old:{value,at:Math.max(Date.parse(account.modelDefaultUpdatedAt)||0,(old?.at??0)+1),id:randomUUID()};
+  return {rows,local};
 }

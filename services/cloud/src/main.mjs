@@ -14,6 +14,7 @@ let database;
 let server;
 let relay;
 let accounts;
+let replicas;
 let stopping = false;
 let maintenance;
 let maintenanceWork = Promise.resolve();
@@ -40,12 +41,13 @@ try {
   const mailer = createMailer(config, { logger });
   await pruneEphemeral(database, mailer);
   maintenance = setInterval(() => {
-    maintenanceWork = maintenanceWork.then(() => pruneEphemeral(database, mailer))
+    maintenanceWork = maintenanceWork.then(async () => { await pruneEphemeral(database, mailer);replicas?.prune(); })
       .catch(() => logger.error('service.cleanup_failed', { code: 'CLEANUP_FAILED' }));
   }, 60000);
   maintenance.unref();
   const identity = await createIdentity({ database, config, mailer, logger, relayDns: dnsFromEnvironment({ database, logger }) });
   accounts = identity.accounts;
+  replicas=identity.replicas;
   relay = identity.relay;
   await relay.start();
   server = createCloudServer({ ...opened, logger, identity });

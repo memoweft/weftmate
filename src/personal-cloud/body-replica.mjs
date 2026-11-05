@@ -54,7 +54,7 @@ export function createBodyExchange(context,hostId,authorize,withCodec) {
     if(documents.size>16)documents.delete(documents.keys().next().value);
     return {version,size:bytes.length,contentRevision:revision,messages:messages.length,attachments};
   }
-  return async(request,box)=>{
+  const exchange=async(request,box)=>{
     const identity=authorize(request),{ownerId,deviceId,issuer,sub,keyId}=identity;
     const check=()=>{
       const live=authorize(request);
@@ -112,4 +112,9 @@ export function createBodyExchange(context,hostId,authorize,withCodec) {
       check();return {box:await codec.seal('body-response',{requestId:query.requestId,action:query.action,chatId:query.chatId,result})};
     });
   };
+  exchange.snapshot=async(ownerId,chatId,check)=>{
+    await build(ownerId,chatId,check);
+    return structuredClone(documents.get(ownerId+'/'+chatId).doc);
+  };
+  return exchange;
 }

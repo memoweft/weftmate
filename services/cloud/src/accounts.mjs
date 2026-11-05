@@ -136,7 +136,8 @@ export class Accounts {
     return { ticket, account };
   }
   async completePassword(body, purpose, source) {
-    this.passwordTicket(body.passwordTicket, purpose, source);
+    const {account:target}=this.passwordTicket(body.passwordTicket,purpose,source);
+    if(this.db.prepare('SELECT 1 FROM opaque_credentials WHERE account_id=?').get(target.id))throw new CloudError(409,'OPAQUE_REQUIRED');
     const record = await hashPassword(body.password);
     const { ticket, account } = this.passwordTicket(body.passwordTicket, purpose, source);
     transaction(this.db, () => {
@@ -315,6 +316,10 @@ export class Accounts {
       this.limiter.fail(keys);
       throw new CloudError(403, 'EMAIL_NOT_VERIFIED');
     }
+    return this.authenticatedLogin(account,body,source,uid);
+  }
+  async authenticatedLogin(account,body,source,uid){
+    const email=account.email;
     const device = await this.loginDevice(body);
     if (this.get(account.id)?.auth_epoch !== account.auth_epoch) throw new CloudError(401, 'INVALID_CREDENTIALS');
     if (
@@ -363,7 +368,8 @@ export class Accounts {
   }
   async reset(body, source) {
     // Derivation is async: recheck the challenge and epoch immediately before committing.
-    this.readChallenge(body.challengeId, 'reset', source, body.code);
+    const {account:target}=this.readChallenge(body.challengeId,'reset',source,body.code);
+    if(this.db.prepare('SELECT 1 FROM opaque_credentials WHERE account_id=?').get(target.id))throw new CloudError(409,'OPAQUE_REQUIRED');
     const record = await hashPassword(body.password);
     const { account } = this.readChallenge(body.challengeId, 'reset', source, body.code);
     transaction(this.db, () => {

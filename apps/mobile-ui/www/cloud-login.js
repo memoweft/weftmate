@@ -34,7 +34,7 @@
     return new Promise((resolve,reject) => {
       const tx = opened.transaction('credentials','readwrite'), store = tx.objectStore('credentials');
       store.delete('account-data:'+account);
-      for (const kind of ['chat-directory:','memory-replica:','settings-replica:','model-replica:','body-replica:']) {
+      for (const kind of ['chat-directory:','memory-replica:','settings-replica:','model-replica:','body-replica:','server-replica:']) {
         const prefix=kind+suffix;
         store.delete(IDBKeyRange.bound(prefix,prefix+'\uffff'));
       }
@@ -64,6 +64,20 @@
   function memoryChanges() {
     if (!memoryChannel && typeof BroadcastChannel==='function') memoryChannel=new BroadcastChannel('weftmate-memory-replica');
     return memoryChannel;
+  }
+  async function passwordEnrollment({issuer,sub,hostId,deviceId,jkt}){
+    const key=await storage('account-data:'+JSON.stringify([issuer,sub]));if(!key)return null;
+    const {accountDataCodec}=await import('./ui-core/directory-wire.mjs');
+    return accountDataCodec(WeftCloudVendor,key.key,[issuer,sub,key.keyId,hostId],'wm-password-enroll+jwe')
+      .seal('enroll',{deviceId,jkt,at:Date.now()});
+  }
+  async function serverReplica({issuer,sub,hostId,current,request}){
+    const accountSlot='account-data:'+JSON.stringify([issuer,sub]),key=await storage(accountSlot);current();if(!key)return null;
+    const [{accountDataCodec,directoryPage},{openServerReplica}]=await Promise.all([import('./ui-core/directory-wire.mjs'),import('./ui-core/server-replica.mjs')]);
+    const scope=[issuer,sub,key.keyId,hostId],slot='server-replica:'+JSON.stringify(scope);
+    const wire=typ=>accountDataCodec(WeftCloudVendor,key.key,scope,typ);
+    return openServerReplica({codec:wire('wm-server-replica+jwe'),wire,directoryPage,request,current,hostId,keyId:key.keyId,
+      read:()=>storage(slot),write:(old,next)=>saveReplica(slot,old,next,current,accountSlot,key.keyId)});
   }
   async function bodySession({issuer,sub,hostId,session}) {
     const key=await storage('account-data:'+JSON.stringify([issuer,sub]));
@@ -394,5 +408,5 @@
     }
     async forget() { if (!this.config) await this.configure(); await this.credentialStorage(this.tokenId, undefined, true); await storage('pending:' + this.host, undefined, true); }
   }
-  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, installAccountKey, removeAccountKey, memoryChanges, memoryReplica, settingsReplica, bodySession, bodyReplica, modelReplica, syncChatDirectory };
+  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, passwordEnrollment, serverReplica, installAccountKey, removeAccountKey, memoryChanges, memoryReplica, settingsReplica, bodySession, bodyReplica, modelReplica, syncChatDirectory };
 })();

@@ -198,10 +198,25 @@
       this.pending = { ...pending, interactionUid: interaction.interactionUid, csrfToken: interaction.csrfToken };
       return this.pending;
     }
+    async passwordMode(){
+      if(!this.config)await this.configure();
+      let status;
+      try{status=await this.publicRequest('/password/capabilities',{});}
+      catch(error){if(error.status!==404)throw error;status={enabled:false};}
+      if(await this.credentials('opaque-server:'+this.config.issuer)&&!status.enabled)fail('PASSWORD_UNAVAILABLE');
+      this.config.capabilities={...this.config.capabilities,passwordVault:status.enabled?1:0};
+      return status.enabled===true;
+    }
     async begin({ email, password, deviceName, deviceType = 'web' }) {
       const pending = await this.prepare(deviceName), key = await this.key();
-      const result = await this.publicRequest('/auth/login', { interactionUid: pending.interactionUid, csrfToken: pending.csrfToken,
-        email, password, deviceId: key.deviceId, publicJwk: key.publicJwk, deviceName, deviceType });
+      const fields={interactionUid:pending.interactionUid,csrfToken:pending.csrfToken,email,password,deviceId:key.deviceId,publicJwk:key.publicJwk,deviceName,deviceType};
+      let result;
+      if(await this.passwordMode()){
+        const {passwordLogin}=await import('./password-client.mjs');
+        const opaque=await passwordLogin(this,fields,(suffix,body)=>this.publicRequest('/auth/opaque'+suffix,body));
+        if(pending.generation!==this.generation)fail('CLOUD_TOKEN_INVALID');
+        pending.passwordExportKey=opaque.exportKey;pending.passwordSub=opaque.sub;result=opaque.finished;
+      }else result=await this.publicRequest('/auth/login',fields);
       if (pending.generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
       if (result.confirmationRequired) { this.pending.challengeId = result.challengeId; return result; }
       return this.finish(result);
@@ -264,6 +279,13 @@
       this.pending = null;
       await this.credentials(this.tokenId, { refreshToken: tokens.refresh_token, cloud: { token: tokens.access_token, expiresAt: this.now() + tokens.expires_in * 1000 },
         sub: access.sub, email: result.account?.email, deviceName: pending.deviceName });
+      if(pending.passwordExportKey){
+        if(pending.passwordSub!==access.sub)fail('CLOUD_TOKEN_INVALID');
+        const {unlockPasswordKey}=await import('./password-client.mjs');
+        const check=()=>{if(pending.generation!==this.generation)fail('CLOUD_TOKEN_INVALID');};
+        await unlockPasswordKey(this,pending.passwordExportKey,access.sub,check);check();
+        delete pending.passwordExportKey;
+      }
       return { authenticated: true };
     }
     async saved() { if (!this.config) await this.configure(); return this.credentials(this.tokenId); }

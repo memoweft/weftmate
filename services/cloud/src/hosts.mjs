@@ -13,7 +13,7 @@ const requireFields = (body, fields) => {
 };
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
 
-export function createHosts({ database: db, config, keys, authenticate, now, relay, provider, accounts }) {
+export function createHosts({ database: db, config, keys, authenticate, now, relay, provider, accounts, replicas }) {
   const tasks = createOfflineTasks({database:db,authenticate,now});
   const computerAction = createComputerActions({database:db,authenticate,now,relay,lifecycle:accountLifecycle({database:db,accounts,relay})});
   async function revocations(hostId, afterSeq) {
@@ -29,7 +29,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
       const computers=db.prepare('SELECT h.host_id AS hostId,h.name FROM cloud_hosts h JOIN host_memberships m ON m.host_id=h.host_id WHERE m.account_id=? ORDER BY h.host_id').all(membership.sub);
       if(computers.length>1)membership.computers=computerNames(computers);
     }
-    const eventToken = await new SignJWT({ events, watermark, memberships, capabilities:{...multiHostCapabilities,accountKeyRegistry:1} }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
+    const eventToken = await new SignJWT({ events, watermark, memberships, capabilities:{...multiHostCapabilities,accountKeyRegistry:1,...(config.replicaEnabled?{passwordVault:1}:{})} }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
       .setIssuer(config.issuer).setAudience(`${config.audience}/hosts/${hostId}`).setIssuedAt()
       .setExpirationTime('300s').sign(await importJWK(keys.privateJwks.keys[0], 'RS256'));
     return { eventToken };
@@ -172,6 +172,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
     }
     const payload = await signed(body);
     if (payload.action !== route) throw new CloudError(401, 'UNAUTHORIZED');
+    if(route.startsWith('/hosts/replicas/'))return replicas.publish(route.slice('/hosts/replicas/'.length),body.hostId,payload);
     if (route === '/hosts/account-key/read') {
       if (typeof payload.sub !== 'string' || !db.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(body.hostId, payload.sub))
         throw new CloudError(403, 'FORBIDDEN');

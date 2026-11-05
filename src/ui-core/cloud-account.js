@@ -45,6 +45,12 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       COMPUTER_UPDATE_REQUIRED: '这台电脑的 WeftMate 需要更新，连接后仍可继续聊天。',
       NATIVE_LOGIN_UPGRADE_REQUIRED: '请更新手机程序后使用这个登录入口。现在可以使用密码登录并确认邮箱。',
       CLOUD_LOGIN_REQUIRED: '请更新客户端并使用邮箱登录，远程访问需要云账号。',
+      LOCAL_KEY_REQUIRED:'请在已有账号钥匙的电脑上启用密码解锁。',
+      PASSWORD_NEW_REQUIRED:'启用密码解锁时，请设置与当前密码不同的新密码。',
+      PASSWORD_SERVER_CHANGED:'账号服务的密码身份已改变，请核对服务配置后再试。',
+      PASSWORD_UNAVAILABLE:'账号服务尚未开启密码解锁，请使用扫码入组。',
+      PASSWORD_TIMEOUT:'本机处理密码超时，请重试。',
+      OPAQUE_REQUIRED:'请使用更新后的密码入口，或通过邮箱登录。',
       PASSWORD_MISMATCH: '两次输入的密码不一致。', EMERGENCY_PASSWORD_INVALID: '离线密码须为 15–128 个字符。',
       INVALID_PASSWORD: '密码须为 8–128 个字符。', MAIL_UNAVAILABLE: '验证码暂时无法发送，请稍后重试。' })[code] || '操作未完成，请重试。';
   }
@@ -175,10 +181,13 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       const mode = auth.mode;
       const name = deviceName?.trim() || auth.deviceName;
       if (mode === 'registration' && (!name || name.length > 128)) throw { code: 'INVALID_DEVICE' };
-      await client.publicRequest(`/auth/${mode}/complete`, { passwordTicket: auth.passwordTicket, password });
+      if(await client.passwordMode()){
+        const {setPassword}=await import('./password-client.mjs');
+        await setPassword(client,{password,passwordTicket:auth.passwordTicket,purpose:mode==='registration'?'register':'reset'});
+      }else await client.publicRequest('/auth/'+mode+'/complete', {passwordTicket:auth.passwordTicket,password});
       if (ticket !== journey) return;
       auth.passwordTicket = null;
-      if (mode === 'recovery') { startCloudJourney(); effects.toast('密码已重设，请登录。'); return; }
+      if (mode === 'recovery') { startCloudJourney(); effects.toast('密码已重设，请登录。新密码无法解开旧数据；已有持钥设备仍可使用。'); return; }
       auth.deviceName = name;
       await beginCloudLogin(auth.email, password);
     });
@@ -244,6 +253,12 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     auth.mode = 'authenticated'; auth.modal = false; paint();
     if (!auth.localSession) {
       core.acceptSession(result);
+      if(client.passwordUnlocked&&!client.nativeKey){
+        const key=await client.key(),jkt=await client.hash(JSON.stringify({crv:key.publicJwk.crv,kty:key.publicJwk.kty,x:key.publicJwk.x,y:key.publicJwk.y}));
+        const box=await globalThis.WeftCloud.passwordEnrollment({issuer:client.config.issuer,sub:saved.sub,hostId:client.config.hostId,deviceId:key.deviceId,jkt});
+        if(!current())return;
+        await core.accessApi('/cloud/account-key/enroll',{method:'POST',protectedWrite:true,body:{box}});
+      }
       if(!client.nativeKey)await globalThis.WeftCloud?.bodySession?.({issuer:client.config.issuer,sub:saved.sub,hostId:client.config.hostId,session:result}).catch(()=>{});
       if(!current())return;
       await core.enterAssistant();
@@ -414,7 +429,20 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   }
   async function cloudEmailRequest(email) { const result = await client.authorized('/auth/email/change/request', { method: 'POST', body: { email } }); auth.emailChange = { email, challengeId: result.challengeId, resendAt: now() + 60000 }; return result; }
   async function cloudEmailConfirm(code) { const result = await client.authorized('/auth/email/change/confirm', { method: 'POST', body: { challengeId: auth.emailChange.challengeId, code } }); auth.emailChange = null; await expireCloudSession(result.account.email, {retainCached:false}); return result; }
-  async function cloudChangePassword(currentPassword, password, confirmation) { validPassword(password, confirmation); const result = await client.authorized('/auth/password/change', { method: 'POST', body: { currentPassword, password } }); await expireCloudSession(auth.email, {retainCached:false}); return result; }
+  async function cloudChangePassword(currentPassword,password,confirmation,enableReplica=false,signal){
+    validPassword(password,confirmation);let result;
+    const ticket=journey,generation=core.state.identityGeneration;
+    const current=()=>{if(ticket!==journey||generation!==core.state.identityGeneration)throw {code:'CANCELLED'};};
+    if(enableReplica||await client.passwordMode()){
+      const {setPassword}=await import('./password-client.mjs');
+      result=await setPassword(client,{password,currentPassword,signal,current,wrap:body=>core.accessApi('/cloud/password-wrap',{method:'POST',protectedWrite:true,body})});
+      current();if(enableReplica){
+        try{await core.accessApi('/cloud/replica/publish',{method:'POST',protectedWrite:true,body:{enabled:true}});}
+        catch{effects.toast('密码已保存，副本同步会在连接恢复后重试。');}
+      }
+    }else result=await client.authorized('/auth/password/change',{method:'POST',body:{currentPassword,password}});
+    current();await expireCloudSession(auth.email,{retainCached:false});return result;
+  }
   async function cloudLogout() {
     const ticket = ++journey, generation = core.state.identityGeneration;
     const current = () => ticket === journey && generation === core.state.identityGeneration;
@@ -439,7 +467,15 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   async function cloudDeleteAccount(password, { prepareBackup = true } = {}) {
     if (auth.localDesktop && prepareBackup) await core.prepareAccountDeletionBackup();
     const saved = await client.saved();
-    const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } });
+    let body={password};
+    if(await client.passwordMode()){
+      const status=await client.authorized('/password/read',{method:'POST',body:{}});
+      if(status.version){const {passwordLogin}=await import('./password-client.mjs');
+        const verified=await passwordLogin(client,{password},(suffix,payload)=>client.authorized('/password/unlock'+suffix,{method:'POST',body:payload}));
+        body={proof:verified.finished.proof};
+      }
+    }
+    const result = await client.authorized('/auth/account/delete', { method: 'POST', body });
     try {
       if (!environment.desktop && saved?.sub)
         await globalThis.WeftCloud?.removeAccountKey(client.config.issuer, saved.sub);
@@ -676,6 +712,17 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     })().catch(()=>{}).finally(()=>{bodyFlight=null;});
     return bodyFlight;
   }
+  async function serverCopy(current){
+    if(!globalThis.WeftCloud?.serverReplica||!client?.config||!auth.sub)return null;
+    return globalThis.WeftCloud.serverReplica({issuer:client.config.issuer,sub:auth.sub,hostId:client.config.hostId,current,
+      request:body=>client.authorized('/replicas/read',{method:'POST',body})});
+  }
+  function copyExchange(type,current,source){
+    return async body=>{
+      const replica=await serverCopy(current);
+      return replica?replica.exchange(type,body.box,source):source(body);
+    };
+  }
   async function getBodyReplica() {
     if (auth.mode!=='authenticated' || auth.localDesktop || !auth.sub || !client?.config?.hostId ||
         !globalThis.WeftCloud?.bodyReplica) return null;
@@ -687,9 +734,9 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const {deviceId}=await client.key();current();
     return globalThis.WeftCloud.bodyReplica({issuer:client.config.issuer,sub,hostId,deviceId,current,
       exchange:body=>core.accessApi('/cloud/body-replica',{method:'POST',protectedWrite:true,body}),
-      pullDirectory:body=>core.accessApi('/cloud/chat-directory',{method:'POST',protectedWrite:true,body}),
-      readCopy:(chatId,metadataOnly=false)=>core.readBodyReplicaCopy?.({issuer:client.config.issuer,sub,hostId,chatId,metadataOnly}),
-      readFileCopy:(chatId,attachmentId,sha256)=>core.readAttachmentReplicaCopy?.({issuer:client.config.issuer,sub,hostId,chatId,attachmentId,sha256})});
+      pullDirectory:copyExchange('directory',current,body=>core.accessApi('/cloud/chat-directory',{method:'POST',protectedWrite:true,body})),
+      readCopy:async(chatId,metadataOnly=false)=>(await serverCopy(current))?.body(chatId,metadataOnly),
+      readFileCopy:async(chatId,attachmentId,sha256)=>(await serverCopy(current))?.file(chatId,attachmentId,sha256)});
   }
   async function getModelReplica() {
     if (auth.mode!=='authenticated' || auth.localDesktop || !auth.sub || !client?.config?.hostId ||
@@ -701,7 +748,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     };
     const {deviceId}=await client.key();current();
     return globalThis.WeftCloud.modelReplica({issuer:client.config.issuer,sub,hostId,deviceId,current,
-      exchange:body=>core.accessApi('/cloud/model-replica',{method:'POST',protectedWrite:true,body})});
+      exchange:copyExchange('models',current,body=>core.accessApi('/cloud/model-replica',{method:'POST',protectedWrite:true,body}))});
   }
   async function getSettingsReplica() {
     if (auth.mode!=='authenticated' || auth.localDesktop || !auth.sub || !client?.config?.hostId ||
@@ -713,7 +760,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     };
     const {deviceId}=await client.key();current();
     return globalThis.WeftCloud.settingsReplica({issuer:client.config.issuer,sub,hostId,deviceId,current,
-      exchange:body=>core.accessApi('/cloud/settings-replica',{method:'POST',protectedWrite:true,body})});
+      exchange:copyExchange('settings',current,body=>core.accessApi('/cloud/settings-replica',{method:'POST',protectedWrite:true,body}))});
   }
   async function getMemoryReplica() {
     if (auth.mode!=='authenticated' || auth.localDesktop || !auth.sub || !client?.config?.hostId ||
@@ -725,7 +772,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     };
     const {deviceId}=await client.key();current();
     return globalThis.WeftCloud.memoryReplica({issuer:client.config.issuer,sub,hostId,deviceId,current,
-      exchange:body=>core.accessApi('/cloud/memory-replica',{method:'POST',protectedWrite:true,body})});
+      exchange:copyExchange('memory',current,body=>core.accessApi('/cloud/memory-replica',{method:'POST',protectedWrite:true,body}))});
   }
   function resumeMemoryForgets() {
     if (forgetFlight) return forgetFlight;
@@ -755,7 +802,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     current();
     const {deviceId} = await client.key();
     return globalThis.WeftCloud.syncChatDirectory({issuer:client.config.issuer,sub,hostId,deviceId,current,showCache,
-      pull:body => core.accessApi('/cloud/chat-directory',{method:'POST',protectedWrite:true,body})});
+      pull:copyExchange('directory',current,body=>core.accessApi('/cloud/chat-directory',{method:'POST',protectedWrite:true,body}))});
   }
   async function cloudSendFeedback(payload) {
     if (!client || auth.mode !== 'authenticated') throw Object.assign(new Error('FEEDBACK_LOGIN_REQUIRED'), { code: 'FEEDBACK_LOGIN_REQUIRED' });

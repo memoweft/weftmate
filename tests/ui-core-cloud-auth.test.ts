@@ -40,6 +40,7 @@ async function fixture() {
     if (url.endsWith('/cloud/config')) return response({ issuer, clientId: 'weftmate-web', hostId: 'host-test' })
     if (url.endsWith('/jwks')) return response({ keys: [publicJwk] })
     if (url.endsWith('/auth/authorization')) { authorization = body; return response({ interactionUid: 'interaction-test', csrfToken: 'csrf-test' }) }
+    if (url.endsWith('/password/capabilities')) return response({enabled:false})
     if (url.endsWith('/auth/login')) return response({ account: { cloudAccountId: 'account-test', email: body.email }, resumeUrl: issuer + '/auth/resume/test' })
     if (url.endsWith('/auth/authorization/resume')) return response({ callbackUrl: callbackOverride || `https://host.example.com/personal/v1/ui/?code=synthetic-code&state=${authorization.state}&iss=${encodeURIComponent(issuer)}` })
     if (url.endsWith('/oidc/token')) {
@@ -455,4 +456,18 @@ test('browser cold restoration uses its encrypted session only after a transport
     assert.equal(opened,expected?1:0);assert.equal(reads,expected?1:0);
     assert.equal(core.state.cloudAuth.localReplica===true,expected);
   }
+});
+
+// 保护：服务降级或断线时，不得把已启用 OPAQUE 的新密码转交旧明文入口。
+test('an enrolled password never falls back to the plaintext endpoint when its protocol disappears',async()=>{
+  const f=await fixture(),original=f.client.fetch;let sent=false;
+  const storage=f.environment.cloudCredentials;
+  await storage('opaque-server:'+issuer,'synthetic-pinned-public-key');
+  f.client.fetch=async(url:string,options:any)=>{
+    if(url.endsWith('/password/capabilities'))return response({error:{code:'NOT_FOUND'}},404);
+    if(url.endsWith('/auth/login'))sent=true;
+    return original(url,options);
+  };
+  await assert.rejects(f.client.begin({email:'synthetic@example.com',password:'synthetic-new-private-password'}),{code:'PASSWORD_UNAVAILABLE'});
+  assert.equal(sent,false);
 });
