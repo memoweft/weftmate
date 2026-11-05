@@ -203,7 +203,7 @@
       let status;
       try{status=await this.publicRequest('/password/capabilities',{});}
       catch(error){if(error.status!==404)throw error;status={enabled:false};}
-      if(await this.credentials('opaque-server:'+this.config.issuer)&&!status.enabled)fail('PASSWORD_UNAVAILABLE');
+      if((this.config.capabilities?.passwordVault===1||await this.credentials('opaque-server:'+this.config.issuer))&&!status.enabled)fail('PASSWORD_UNAVAILABLE');
       this.config.capabilities={...this.config.capabilities,passwordVault:status.enabled?1:0};
       return status.enabled===true;
     }

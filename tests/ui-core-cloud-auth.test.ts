@@ -461,8 +461,7 @@ test('browser cold restoration uses its encrypted session only after a transport
 // 保护：服务降级或断线时，不得把已启用 OPAQUE 的新密码转交旧明文入口。
 test('an enrolled password never falls back to the plaintext endpoint when its protocol disappears',async()=>{
   const f=await fixture(),original=f.client.fetch;let sent=false;
-  const storage=f.environment.cloudCredentials;
-  await storage('opaque-server:'+issuer,'synthetic-pinned-public-key');
+  await f.client.configure();f.client.config.capabilities={passwordVault:1};
   f.client.fetch=async(url:string,options:any)=>{
     if(url.endsWith('/password/capabilities'))return response({error:{code:'NOT_FOUND'}},404);
     if(url.endsWith('/auth/login'))sent=true;
