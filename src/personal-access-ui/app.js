@@ -60,7 +60,7 @@
     const restoreForeground=ui.foregroundRestored;
     ui.foregroundRestored=async()=>{await restoreForeground();await document.querySelector('[data-category="data"]')?.dataView?.refresh();};
     window.addEventListener('offline',()=>core.connectionNetwork(false));
-    window.addEventListener('online',()=>core.connectionNetwork(true));
+    window.addEventListener('online',()=>{core.connectionNetwork(true);void core.resumeSettingsSync?.();});
     window.addEventListener('focus',()=>core.connectionVisibility(nativeHidden||document.visibilityState==='hidden'));
     globalThis.__WeftUiStarted = true;
     if (!native && globalThis.navigator?.serviceWorker) void globalThis.navigator.serviceWorker.register('/personal/v1/ui/offline-worker.js').catch(() => {});

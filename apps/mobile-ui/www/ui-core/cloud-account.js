@@ -248,6 +248,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (!current()) return;
     scheduleRenewal();
     void resumeMemoryForgets();
+    void core.resumeSettingsSync?.();
     await cloudDirectory().catch(() => {});
     if (!current()) return;
     const draft = await environment.cloudCredentials('draft:' + saved.sub);
@@ -637,6 +638,18 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return client;
   }
   let forgetTimer, forgetFlight;
+  async function getSettingsReplica() {
+    if (auth.mode!=='authenticated' || auth.localDesktop || !auth.sub || !client?.config?.hostId ||
+        !globalThis.WeftCloud?.settingsReplica) return null;
+    const generation=core.state.identityGeneration, sub=auth.sub, hostId=client.config.hostId;
+    const current=()=>{
+      if (generation!==core.state.identityGeneration || auth.mode!=='authenticated' || sub!==auth.sub || hostId!==client.config.hostId)
+        throw {code:'DIRECTORY_CHANGED'};
+    };
+    const {deviceId}=await client.key();current();
+    return globalThis.WeftCloud.settingsReplica({issuer:client.config.issuer,sub,hostId,deviceId,current,
+      exchange:body=>core.accessApi('/cloud/settings-replica',{method:'POST',protectedWrite:true,body})});
+  }
   async function getMemoryReplica() {
     if (auth.mode!=='authenticated' || auth.localDesktop || !auth.sub || !client?.config?.hostId ||
         !globalThis.WeftCloud?.memoryReplica) return null;
@@ -683,7 +696,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (!client || auth.mode !== 'authenticated') throw Object.assign(new Error('FEEDBACK_LOGIN_REQUIRED'), { code: 'FEEDBACK_LOGIN_REQUIRED' });
     return client.authorized('/feedback', { method: 'POST', body: payload });
   }
-  return { syncChatDirectory, getMemoryReplica, resumeMemoryForgets, cloudSendFeedback, initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
+  return { syncChatDirectory, getSettingsReplica, getMemoryReplica, resumeMemoryForgets, cloudSendFeedback, initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
     resumeCloudComputer, retryCloudApproval, cancelCloudJourney, renewCloudSession, cloudOfflineLogin, cloudDirectory, cloudRename, cloudRemove, cloudConnect, cloudTrust,
     cloudEmailRequest, cloudEmailConfirm, cloudChangePassword, cloudLogout, cloudLogoutOthers, cloudDeleteAccount, cloudEmergencyPassword, cloudPairing, cloudRedeemPairing, cloudConnectTrusted,
     cloudTrustMaterial, cloudImportTrust, cloudApproveOffline };

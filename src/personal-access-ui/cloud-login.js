@@ -34,7 +34,7 @@
     return new Promise((resolve,reject) => {
       const tx = opened.transaction('credentials','readwrite'), store = tx.objectStore('credentials');
       store.delete('account-data:'+account);
-      for (const kind of ['chat-directory:','memory-replica:']) {
+      for (const kind of ['chat-directory:','memory-replica:','settings-replica:']) {
         const prefix=kind+suffix;
         store.delete(IDBKeyRange.bound(prefix,prefix+'\uffff'));
       }
@@ -64,6 +64,18 @@
   function memoryChanges() {
     if (!memoryChannel && typeof BroadcastChannel==='function') memoryChannel=new BroadcastChannel('weftmate-memory-replica');
     return memoryChannel;
+  }
+  async function settingsReplica({issuer,sub,hostId,deviceId,current,exchange}) {
+    const accountSlot='account-data:'+JSON.stringify([issuer,sub]), key=await storage(accountSlot);
+    current();
+    if (!key) return null;
+    const [{accountDataCodec},{openSettingsReplica}]=await Promise.all([
+      import('./ui-core/directory-wire.mjs'),import('./ui-core/settings-replica.mjs')]);
+    const scope=[issuer,sub,key.keyId,hostId],slot='settings-replica:'+JSON.stringify(scope);
+    return openSettingsReplica({codec:accountDataCodec(globalThis.WeftCloudVendor,key.key,scope,'wm-settings-replica+jwe'),
+      read:async()=>{if((await storage(accountSlot))?.keyId!==key.keyId)throw {code:'ACCOUNT_KEY_INVALID'};return storage(slot);},
+      write:(previous,next)=>saveReplica(slot,previous,next,current,accountSlot,key.keyId),
+      current,exchange,deviceId,random});
   }
   async function memoryReplica({issuer,sub,hostId,deviceId,current,exchange}) {
     const accountSlot='account-data:'+JSON.stringify([issuer,sub]), key=await storage(accountSlot);
@@ -331,5 +343,5 @@
     }
     async forget() { if (!this.config) await this.configure(); await this.credentialStorage(this.tokenId, undefined, true); await storage('pending:' + this.host, undefined, true); }
   }
-  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, installAccountKey, removeAccountKey, memoryChanges, memoryReplica, syncChatDirectory };
+  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, installAccountKey, removeAccountKey, memoryChanges, memoryReplica, settingsReplica, syncChatDirectory };
 })();
