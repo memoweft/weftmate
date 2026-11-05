@@ -1,8 +1,15 @@
-import '../ui-core/personalization.js';
+import { randomUUID } from 'node:crypto';
+import {settingsSnapshot,mergeSettings,changedSettings} from '../ui-core/settings-replica.mjs';
 import { failure } from './common.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 export const personalization = globalThis.WeftPersonalization;
 export function accountPersonalization(account) { return personalization.settings(account.personalization); }
+export function savePersonalizationRows(account,rows) {
+  account.personalization=Object.fromEntries(Object.entries(rows).map(([key,row])=>[key,row.value]));
+  account.personalizationChanges=Object.fromEntries(Object.entries(rows).map(([key,{at,id}])=>[key,{at,id}]));
+  const at=Math.max(...Object.values(rows).map(row=>row.at));
+  account.personalizationUpdatedAt=new Date(at).toISOString();
+}
 export async function handlePersonalization(context, request, response, url, ownerId) {
   const style = url.pathname === '/personal/v1/settings/personalization/style';
   if (url.search || !(style ? request.method === 'POST' : ['GET', 'PATCH'].includes(request.method))) throw failure('INVALID_REQUEST');
@@ -25,8 +32,9 @@ export async function handlePersonalization(context, request, response, url, own
   }
   if (patch) await context.serial(() => context.mutate(ownerId, next => {
     context.authenticate(request, 'account:manage');
-    next.personalization = { ...accountPersonalization(next), ...patch };
-    next.personalizationUpdatedAt = new Date(context.timestamp()).toISOString();
+    const before=settingsSnapshot(next);
+    const changes=changedSettings(before,patch,context.timestamp(),randomUUID());
+    savePersonalizationRows(next,mergeSettings(before,changes));
   }));
   const account = context.accountState(ownerId);
   if (patch && (patch.nextSuggestionsEnabled === false || patch.inlineCompletionEnabled === false)) {
