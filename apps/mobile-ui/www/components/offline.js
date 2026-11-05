@@ -30,7 +30,7 @@
         const [serviceId,modelId]=JSON.parse(modelPicker.value);
         try{modelSnapshot=await modelReplica.select(serviceId,modelId);currentModel=modelSnapshot.current;paint();}catch{error='请连接来源电脑后切换模型。';paint();}
       };
-      header.append(close, title, fresh, mode, referencePicker,modelPicker);
+      header.append(close, title, fresh, mode, modelPicker,referencePicker);
       const messages = element('div', '', 'offline-messages'); messages.setAttribute('role', 'log'); messages.setAttribute('aria-live', 'polite');
       const form = element('form', '', 'offline-composer'), label = element('label', explanation), input = element('textarea');
       input.rows = 2; input.maxLength = 16384; input.placeholder = '继续聊聊…'; input.setAttribute('aria-label', '离线消息'); label.append(input);
@@ -197,7 +197,7 @@
       form.addEventListener('submit', async event => {
         event.preventDefault(); if (!engine || send.disabled) return;
         error = ''; const text = input.value; input.value = ''; paint();
-        try { if(taskMode){await engine.submitTask(text,selected,targetHostId);taskMode=false;}else{const result = await engine.send(text, selected); selected = result.conversationId;} }
+        try { if(taskMode){await engine.submitTask(text,selected,targetHostId);taskMode=false;}else{if(modelReplica){modelSnapshot=await modelReplica.read();currentModel=modelSnapshot.current;}const result = await engine.send(text, selected); selected = result.conversationId;} }
         catch (cause) { error = (cause.code || cause.message) === 'OFFLINE_RESET_REQUIRED'
           ? '内容已清理，电脑上线后会重新读取。' : taskMode?'还没确认记下，请检查网络后重试。':'回复未完成，请检查网络或模型配置后重试。'; }
         paint(); messages.scrollTop = messages.scrollHeight;
