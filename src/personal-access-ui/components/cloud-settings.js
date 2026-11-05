@@ -2,6 +2,15 @@
 globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     let directoryTimer, tab = 'account', editingId = null, editingGeneration = -1, directoryGeneration = 0, localGeneration = 0;
     let syncDirectory=[],directorySnapshot='',syncNotice='';
+    let closePulled;
+    async function openPulledChat(chatId) {
+        const generation=core.state.identityGeneration;
+        const {showBody}=await import('../ui-core/body-view.mjs');
+        if(generation!==core.state.identityGeneration)return;
+        closePulled?.();closePulled=await showBody(core,ui,chatId);
+    }
+    core.openPulledChat=openPulledChat;
+    const closeBodyView=()=>{closePulled?.();closePulled=null;};
     const button = (label, action, style = 'secondary') => { const node = ui.element('button', `button ${style}`, label); node.type = 'button'; node.addEventListener('click', action); return node; };
     function error(error) { ui.byId('cloud-settings-status').textContent = core.cloudError(error); }
     async function act(action) { try { ui.byId('cloud-settings-status').textContent = ''; await action(); return true; } catch (failure) { error(failure); return false; } }
@@ -29,7 +38,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
                 const rows = cache.rows.filter(row => !row.deleted).sort((a,b) => b.updatedAt.localeCompare(a.updatedAt));
                 list.replaceChildren(...rows.map(row => {
                     const item = ui.element('li','device-item');
-                    item.append(ui.element('strong','',row.title || '未命名对话'),
+                    item.append(button(row.title || '未命名对话',()=>void openPulledChat(row.id),'quiet'),
                         ui.element('p','device-meta',cache.label+' · '+deviceTime(row.updatedAt)));
                     return item;
                 }));
@@ -324,5 +333,5 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     }
     const activateCloudHost = target => globalThis.weftmateDesktop?.activateHost(target);
     const clearNativeHostSessions = () => globalThis.weftmateDesktop?.clearHostSessions();
-    return { mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, activateCloudHost, clearNativeHostSessions, selectCloudSettings: select, stopAccountPairing: stopPairing, closeChatDirectory: resetChats };
+    return { mountCloudSettings, closeBodyView, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, activateCloudHost, clearNativeHostSessions, selectCloudSettings: select, stopAccountPairing: stopPairing, closeChatDirectory: resetChats };
 };

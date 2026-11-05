@@ -64,7 +64,7 @@ export function applyDirectoryPage(cache, page, requestId) {
     if (row.deleted === true) rows.set(row.id,{id:row.id,seq:row.seq,deleted:true});
     else {
       if (typeof row.title !== 'string' || !Number.isFinite(Date.parse(row.updatedAt))) throw invalid();
-      rows.set(row.id,{id:row.id,seq:row.seq,title:row.title,updatedAt:row.updatedAt});
+      rows.set(row.id,{id:row.id,seq:row.seq,title:row.title,updatedAt:row.updatedAt,contentRevision:row.contentRevision??1});
     }
   }
   return {epoch:page.epoch,cursor:page.next,label:page.label,rows:[...rows.values()]};

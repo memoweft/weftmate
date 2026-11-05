@@ -242,13 +242,20 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (pairing) environment.initialPairing = null;
     if (!current()) return;
     auth.mode = 'authenticated'; auth.modal = false; paint();
-    if (!auth.localSession) { core.acceptSession(result); await core.enterAssistant(); }
+    if (!auth.localSession) {
+      core.acceptSession(result);
+      if(!client.nativeKey)await globalThis.WeftCloud?.bodySession?.({issuer:client.config.issuer,sub:saved.sub,hostId:client.config.hostId,session:result}).catch(()=>{});
+      if(!current())return;
+      await core.enterAssistant();
+    }
+    auth.localReplica=false;
     returnView = null;
     await core.refreshPendingDevices();
     if (!current()) return;
     scheduleRenewal();
     void resumeMemoryForgets();
     void core.resumeSettingsSync?.();
+    void resumeBodySync();
     await cloudDirectory().catch(() => {});
     if (!current()) return;
     const draft = await environment.cloudCredentials('draft:' + saved.sub);
@@ -629,7 +636,25 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
         const saved = await client.saved();
         if (saved) { auth.email = saved.email || ''; await finishCloudLogin(); }
         else { core.show('login'); paint(); }
-      } catch (error) { if (error.code !== 'NETWORK') await client.forget(); auth.error = cloudError(error); core.show('login'); paint(); }
+      } catch (error) {
+        if(!client.nativeKey && (['NETWORK','CLOUD_TIMEOUT','CLOUD_TRANSPORT_UNAVAILABLE','HOST_OFFLINE','HOST_UNAVAILABLE'].includes(error.code)||error.status>=500)){
+          try{
+            const generation=core.state.identityGeneration,restoring=journey;
+            const saved=await client.saved();
+            const local=saved?.sub&&await globalThis.WeftCloud?.bodySession?.({issuer:client.config.issuer,sub:saved.sub,hostId:client.config.hostId});
+            if(generation!==core.state.identityGeneration||restoring!==journey)return;
+            if(local?.account?.ownerId&&local.device?.id&&local.csrfToken){
+              Object.assign(auth,{mode:'authenticated',modal:false,cloudOnly:false,sub:saved.sub,email:saved.email||'',localReplica:true});
+              core.acceptSession(local);core.state.hostId=client.config.hostId;core.show('assistant');paint();
+              core.connectionFailed?.({code:'NETWORK'});
+              await core.openSearch?.();
+              core.startConnection?.(async()=>{if(auth.localReplica)await finishCloudLogin();});
+              scheduleRenewal();return;
+            }
+          }catch{/* A local key or session failure cannot authorize source requests. */}
+        }
+        if (error.code !== 'NETWORK') await client.forget(); auth.error = cloudError(error); core.show('login'); paint();
+      }
     };
     core.sessionExpired = () => { if (auth.localSession) void (async () => {
       try { core.acceptSession(await core.api('/desktop', { method: 'POST', body: { ownerId: core.state.account?.ownerId, deviceName: auth.deviceName } })); await core.enterAssistant(); }
@@ -638,6 +663,34 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return client;
   }
   let forgetTimer, forgetFlight;
+  let bodyFlight,bodyTimer;
+  function resumeBodySync() {
+    if(bodyFlight)return bodyFlight;
+    clearTimeout(bodyTimer);
+    bodyFlight=(async()=>{
+      const replica=await getBodyReplica();if(!replica)return;
+      const copies=await replica.list();if(!copies.some(row=>row.doc||row.local.length))return;
+      try{await replica.refresh();globalThis.document?.dispatchEvent(new Event('weft:body-copies'));}
+      catch(error){if(['UNAUTHORIZED','DEVICE_NOT_TRUSTED'].includes(error.code)){await replica.clear();globalThis.document?.dispatchEvent(new Event('weft:body-copies'));return;}}
+      bodyTimer=setTimeout(resumeBodySync,30000);
+    })().catch(()=>{}).finally(()=>{bodyFlight=null;});
+    return bodyFlight;
+  }
+  async function getBodyReplica() {
+    if (auth.mode!=='authenticated' || auth.localDesktop || !auth.sub || !client?.config?.hostId ||
+        !globalThis.WeftCloud?.bodyReplica) return null;
+    const generation=core.state.identityGeneration, sub=auth.sub, hostId=client.config.hostId;
+    const current=()=>{
+      if (generation!==core.state.identityGeneration || auth.mode!=='authenticated' || sub!==auth.sub || hostId!==client.config.hostId)
+        throw {code:'DIRECTORY_CHANGED'};
+    };
+    const {deviceId}=await client.key();current();
+    return globalThis.WeftCloud.bodyReplica({issuer:client.config.issuer,sub,hostId,deviceId,current,
+      exchange:body=>core.accessApi('/cloud/body-replica',{method:'POST',protectedWrite:true,body}),
+      pullDirectory:body=>core.accessApi('/cloud/chat-directory',{method:'POST',protectedWrite:true,body}),
+      readCopy:(chatId,metadataOnly=false)=>core.readBodyReplicaCopy?.({issuer:client.config.issuer,sub,hostId,chatId,metadataOnly}),
+      readFileCopy:(chatId,attachmentId,sha256)=>core.readAttachmentReplicaCopy?.({issuer:client.config.issuer,sub,hostId,chatId,attachmentId,sha256})});
+  }
   async function getModelReplica() {
     if (auth.mode!=='authenticated' || auth.localDesktop || !auth.sub || !client?.config?.hostId ||
         !globalThis.WeftCloud?.modelReplica) return null;
@@ -708,7 +761,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (!client || auth.mode !== 'authenticated') throw Object.assign(new Error('FEEDBACK_LOGIN_REQUIRED'), { code: 'FEEDBACK_LOGIN_REQUIRED' });
     return client.authorized('/feedback', { method: 'POST', body: payload });
   }
-  return { syncChatDirectory, getModelReplica, getSettingsReplica, getMemoryReplica, resumeMemoryForgets, cloudSendFeedback, initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
+  return { syncChatDirectory, resumeBodySync, getBodyReplica, getModelReplica, getSettingsReplica, getMemoryReplica, resumeMemoryForgets, cloudSendFeedback, initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
     resumeCloudComputer, retryCloudApproval, cancelCloudJourney, renewCloudSession, cloudOfflineLogin, cloudDirectory, cloudRename, cloudRemove, cloudConnect, cloudTrust,
     cloudEmailRequest, cloudEmailConfirm, cloudChangePassword, cloudLogout, cloudLogoutOthers, cloudDeleteAccount, cloudEmergencyPassword, cloudPairing, cloudRedeemPairing, cloudConnectTrusted,
     cloudTrustMaterial, cloudImportTrust, cloudApproveOffline };
