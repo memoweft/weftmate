@@ -3110,12 +3110,7 @@ async function bootstrap() {
       const profile = settingsMod.listModelProfiles().profiles.find(item => item.id === profileId);
       return profile ? credentialForModelProfile(profile) : null;
     },
-    async readOfflineModel({ profileId }) {
-      const profile = settingsMod.listModelProfiles().profiles.find(item => item.id === profileId);
-      if (!profile || memoryRecallModelTier(profile) !== 'cloud') return null;
-      const apiKey = credentialForModelProfile(profile);
-      return apiKey ? { baseUrl: profile.baseUrl, modelId: profile.model, apiKey } : null;
-    },
+
   };
 
   try {

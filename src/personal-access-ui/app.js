@@ -64,7 +64,7 @@
     window.addEventListener('focus',()=>core.connectionVisibility(nativeHidden||document.visibilityState==='hidden'));
     globalThis.__WeftUiStarted = true;
     if (!native && globalThis.navigator?.serviceWorker) void globalThis.navigator.serviceWorker.register('/personal/v1/ui/offline-worker.js').catch(() => {});
-    if (globalThis.indexedDB && globalThis.matchMedia?.('(max-width: 720px)')?.matches) globalThis.WeftOfflineView?.mount({ core, desktop: !!native,
+    if (globalThis.indexedDB && !native) globalThis.WeftOfflineView?.mount({ core, desktop: !!native,
         openConversation: () => ui.showConversation(),
         identity: async () => core.cloudOfflineIdentity(),
         host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });

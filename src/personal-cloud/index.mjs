@@ -3,6 +3,7 @@ import { importJWK, SignJWT } from 'jose';
 import { csrfForToken, digest, exactKeys, failure } from '../personal-access/common.mjs';
 import { SESSION_MS } from '../personal-access/constants.mjs';
 import { cloudConfiguration, createCloudVerifier } from './proofs.mjs';
+import { createModelExchange } from './model-replica.mjs';
 import { createSettingsExchange } from './settings-replica.mjs';
 import { createMemoryExchange } from './memory-replica.mjs';
 import { createDirectoryPull } from './chat-directory.mjs';
@@ -174,6 +175,8 @@ export async function createHostCloudIdentity(context, options) {
     return {ownerId,deviceId:trust.cloudDeviceId,issuer:binding.issuer,sub:binding.sub,keyId,binding};
   }
   const codecFor = typ => (...args) => options.accountKeys.withDataCodec(typ,...args);
+  const modelExchange = createModelExchange(context,hostId,groupAccess,codecFor('wm-model-replica+jwe'),
+    (scope,box)=>edit(next=>{next.bindings[scope].modelsBox=box;}));
   const settingsExchange = createSettingsExchange(context,hostId,groupAccess,codecFor('wm-settings-replica+jwe'));
   const memoryExchange = createMemoryExchange(context,hostId,groupAccess,codecFor('wm-memory-replica+jwe'));
   const pullDirectory = createDirectoryPull(context,hostId,groupAccess,codecFor('wm-chat-directory+jwe'),
@@ -329,7 +332,10 @@ export async function createHostCloudIdentity(context, options) {
       if (request.method !== 'POST' && !(route === '/cloud/binding' && request.method === 'DELETE'))
         throw failure('METHOD_NOT_ALLOWED', 405);
       context.requireBrowserOrigin(request);
-      const body = await context.readJson(request, route === '/cloud/settings-replica' ? 96 * 1024 : 16 * 1024);
+      const body = await context.readJson(request, ['/cloud/settings-replica','/cloud/model-replica'].includes(route) ? 96 * 1024 : 16 * 1024);
+      if (route === '/cloud/model-replica') {
+        exactKeys(body,['box'],['box']);context.json(response,200,await modelExchange(request,body.box));return true;
+      }
       if (route === '/cloud/settings-replica') {
         exactKeys(body,['box'],['box']);
         context.json(response,200,await settingsExchange(request,body.box));return true;
@@ -809,7 +815,7 @@ export async function createHostCloudIdentity(context, options) {
   };
 }
 
-const CLOUD_CODES = new Set(['SETTINGS_SYNC_INVALID','MEMORY_UNAVAILABLE','MEMORY_SCOPE_REVIEW','MEMORY_SYNC_INVALID','MEMORY_REVISION_CHANGED','MEMORY_FORMATION_PENDING','MEMORY_FORGET_INCOMPLETE','MEMORY_DELETE_UNAVAILABLE','DIRECTORY_INVALID','DIRECTORY_RESET','CHAT_INITIALIZING','ACCOUNT_KEY_REGISTRY_UNAVAILABLE','ACCOUNT_KEY_CONFLICT','ACCOUNT_KEY_INVALID','INVALID_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND', 'METHOD_NOT_ALLOWED',
+const CLOUD_CODES = new Set(['MODEL_SYNC_INVALID','ACCOUNT_MODEL_BUSY','ACCOUNT_MODEL_REVISION_CHANGED','SETTINGS_SYNC_INVALID','MEMORY_UNAVAILABLE','MEMORY_SCOPE_REVIEW','MEMORY_SYNC_INVALID','MEMORY_REVISION_CHANGED','MEMORY_FORMATION_PENDING','MEMORY_FORGET_INCOMPLETE','MEMORY_DELETE_UNAVAILABLE','DIRECTORY_INVALID','DIRECTORY_RESET','CHAT_INITIALIZING','ACCOUNT_KEY_REGISTRY_UNAVAILABLE','ACCOUNT_KEY_CONFLICT','ACCOUNT_KEY_INVALID','INVALID_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND', 'METHOD_NOT_ALLOWED',
   'ORIGIN_NOT_ALLOWED', 'UNSUPPORTED_MEDIA_TYPE', 'BODY_TOO_LARGE', 'AMBIGUOUS_AUTH', 'LOCAL_SESSION_REQUIRED',
   'CLOUD_TOKEN_INVALID', 'CLOUD_DEVICE_VERIFICATION_REQUIRED', 'DPOP_INVALID', 'DPOP_REPLAY', 'CLOUD_UNAVAILABLE', 'CLOUD_BINDING_CONFLICT',
   'CLAIM_INVALID', 'CLOUD_NOT_BOUND', 'DEVICE_NOT_TRUSTED', 'DEVICE_DECISION_CONFLICT', 'PAIRING_INVALID', 'PAIRING_CONFLICT', 'PAIRING_CONFIRMATION_REQUIRED',

@@ -99,9 +99,9 @@ test('host makes zero task requests without explicit cloud support, and enables 
 
 test('phone ignores cached task keys until cloud advertises support; refresh can enable and disable without any 404 probe',async()=>{
   const vault=await W.browserVault('cloud-capability',{indexedDB:new IDBFactory(),crypto:webcrypto});
-  await vault.save({snapshot:{generation:1,items:[],recent:[],model:{modelId:'synthetic'},taskRecipient:recipient.publicJwk,control:{accountId:'account',hostId:'host',capabilities:{offlineTasks:1}}},tasks:[],conversations:[],turns:[]});
+  await vault.save({snapshot:{generation:1,items:[],recent:[],taskRecipient:recipient.publicJwk,control:{accountId:'account',hostId:'host',capabilities:{offlineTasks:1}}},tasks:[],conversations:[],turns:[]});
   let supported=false,requests=0,chats=0;vault.complete=async()=>{chats++;return {choices:[{message:{content:'合成聊天回复'}}]};};
-  const engine=await W.create({vault,identity,host:async()=>{},control:async()=>({authorized:true,hostId:'host',accountId:'account',generation:1,...(supported?{capabilities:{offlineTasks:1}}:{})}),tasks:async()=>{requests++;return {items:[]};},crypto:webcrypto});
+  const engine=await W.create({vault,identity,phoneModel:()=>({modelId:'synthetic'}),host:async()=>{},control:async()=>({authorized:true,hostId:'host',accountId:'account',generation:1,...(supported?{capabilities:{offlineTasks:1}}:{})}),tasks:async()=>{requests++;return {items:[]};},crypto:webcrypto});
   await engine.refreshTasks();assert.equal(engine.view().taskReady,false);assert.equal(requests,0);await engine.send('普通聊天');assert.equal(chats,1);assert.equal(requests,0);
   supported=true;await engine.refreshTasks();assert.equal(engine.view().taskReady,true);assert.equal(requests,1);
   supported=false;await engine.refreshTasks();assert.equal(engine.view().taskReady,false);assert.equal(requests,1);await engine.clearTasks();assert.equal(requests,1);engine.close();

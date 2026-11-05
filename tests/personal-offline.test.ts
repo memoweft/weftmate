@@ -16,6 +16,7 @@ import { csrfForToken, digest } from '../src/personal-access/common.mjs';
 import '../src/ui-core/offline.js';
 
 const W = (globalThis as any).WeftOffline;
+const syncedModel=()=>({baseUrl:'https://model.example/v1',modelId:'mimo',apiKey:'synthetic-secret'});
 const identity = { ownerId: 'owner-test', hostId: 'host-test', deviceId: 'device-test' };
 const permissions = { allow_local_read: true, allow_cloud_read: true, allow_inference: true };
 const memory = (id = 'preferred-tea', text = '用户喝茶喜欢茉莉花茶，不加糖。') => ({ item_id: id, object_kind: 'cognition', current_state: 'current',
@@ -29,7 +30,6 @@ async function fixture(t: any) {
     accountState: () => ({ sessions: {} }), modelSelectable: () => true,
     backend: { listModels: () => [{ id: 'mimo', configured: true, sourceKind: 'cloud', name: 'MiMo' }] },
     service: { currentChatModelProfile: () => 'mimo' },
-    accountModelManager: { readOfflineModel: async () => ({ baseUrl: 'https://model.example/v1', modelId: 'mimo', apiKey: 'synthetic-secret' }) },
     cloudIdentity: { publishOffline: async (_owner: string, value: number) => { generation = value; return { hostId: identity.hostId, accountId: 'account-test', generation, capabilities:{offlineTasks:1} }; } },
     memoryManager: { enabled: true, status: async () => ({ state: 'ready' }), query: async (_: any, _method: any, input: any) => ({ world_revision: generation, ...(input.operation === 'list' ? { items } : {}) }),
       ingest: async (_: any, boundary: any) => { assert.ok(boundary.source_messages.every((m: any) => ['user', 'assistant'].includes(m.role))); accepted.push(boundary); return { state: 'accepted' }; }, discardOfflinePending: async () => {} },
@@ -105,7 +105,7 @@ test('device envelope authenticates contents and identity; storage is encrypted 
 });
 test('native phone composer shares the encrypted conversation vault, restores and clears at the account boundary', async () => {
   const indexedDB = new IDBFactory(), vault = await W.browserVault('native-composer', { indexedDB, crypto: webcrypto });
-  const engine = await W.create({ vault, identity, phoneModel: () => null, accountCheck: async () => ({}), crypto: webcrypto });
+  const engine = await W.create({ phoneModel:syncedModel, vault, identity, standalone:true,phoneModel: () => null, accountCheck: async () => ({}), crypto: webcrypto });
   await engine.saveComposer('phone-conversation', '合成账号的私有草稿');
   await engine.saveComposer('second-conversation', '另一条合成草稿');
   assert.equal((await vault.load()).nativeDrafts['phone-conversation'], '合成账号的私有草稿');
@@ -113,19 +113,19 @@ test('native phone composer shares the encrypted conversation vault, restores an
   assert.deepEqual((await vault.load()).nativeComposer, { conversationId: 'phone-conversation', draft: '合成账号的私有草稿' });
   engine.close();
   const restoredVault = await W.browserVault('native-composer', { indexedDB, crypto: webcrypto });
-  const restored = await W.create({ vault: restoredVault, identity, phoneModel: () => null, accountCheck: async () => ({}), crypto: webcrypto });
+  const restored = await W.create({ vault: restoredVault, identity, standalone:true,phoneModel: () => null, accountCheck: async () => ({}), crypto: webcrypto });
   assert.equal(restored.view().nativeComposer.draft, '合成账号的私有草稿');
   await restored.clear(); assert.equal((await restoredVault.load()).nativeComposer, undefined); restored.close();
 });
-test('S7 text tasks work without a cloud chat model, while old replica callers retain the model-required contract',async t=>{
+test('text tasks and memory synchronization never require or carry a model credential',async t=>{
   const f=await fixture(t),sessions={ 'local-dialogue':{origin:'personal-remote',modelProfileId:'local',title:'合成本地对话'} };
   f.context.accountState=()=>({sessions});f.context.backend.listModels=()=>[{id:'local',configured:true,sourceKind:'local'}];f.context.service.currentChatModelProfile=()=> 'local';
   const vault=await W.browserVault('task-only',{indexedDB:new IDBFactory(),crypto:webcrypto}),jwk=await vault.key();
-  await assert.rejects(f.host('/offline/sync',{publicJwk:jwk,generation:0,hashes:{}}),{code:'OFFLINE_MODEL_REQUIRED'});
+  const plain=await vault.open(await f.host('/offline/sync',{publicJwk:jwk,generation:0,hashes:{}}),identity);assert.equal(Object.hasOwn(plain,'model'),false);
   let uploaded:any;
-  const engine=await W.create({vault,identity,host:f.host,crypto:webcrypto,taskDevice:async()=> 'phone',control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1,capabilities:{offlineTasks:1}}),
+  const engine=await W.create({phoneModel:()=>null,vault,identity,host:f.host,crypto:webcrypto,taskDevice:async()=> 'phone',control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1,capabilities:{offlineTasks:1}}),
     tasks:async(_action:string,body:any)=>{uploaded=body;return {id:body.id,state:'waiting',hostId:body.hostId};}});
-  await engine.sync();assert.equal(engine.view().chatReady,false);assert.equal(engine.view().taskReady,true);assert.equal(engine.view().snapshot.model,null);
+  await engine.sync();assert.equal(engine.view().chatReady,false);assert.equal(engine.view().taskReady,true);assert.equal(Object.hasOwn(engine.view().snapshot,'model'),false);
   await assert.rejects(engine.send('聊天'),{code:'OFFLINE_MODEL_REQUIRED'});await engine.submitTask('上线后读一下合成说明','task:local-dialogue');
   const recipient=JSON.parse(await readFile(path.join(f.root,'cloud-identity/offline-task-recipient.json'),'utf8'));
   const body=openTask(uploaded.envelope,recipient,{purpose:'offline-task',id:uploaded.id,hostId:identity.hostId,accountId:'account-test',deviceId:'phone',generation:1});assert.equal(body.sessionId,'local-dialogue');engine.close();
@@ -155,7 +155,7 @@ test('temporary history never enters the encrypted replica, including a switch d
     if(sessionId==='racing')sessions.racing.hasTemporaryContent=true;
     return {events:[{type:'user.message',data:{text:sessionId==='ordinary'?'ordinary history':'PRIVATE_SENTINEL'}}]};
   };
-  const engine=await W.create({vault,identity,host:f.host,control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1,capabilities:{offlineTasks:1}}),crypto:webcrypto});
+  const engine=await W.create({phoneModel:()=>null,vault,identity,host:f.host,control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1,capabilities:{offlineTasks:1}}),crypto:webcrypto});
   try {
     await engine.sync();
     assert.deepEqual(reads,['racing','ordinary']);
@@ -217,7 +217,7 @@ test('online sync → cloud-only relevant recall → offline preference → idem
   const f = await fixture(t), vault = await W.browserVault('roundtrip', { indexedDB: new IDBFactory(), crypto: webcrypto });
   let lastBody: any;
   vault.complete = async (body: any) => { lastBody = body; return { choices: [{ message: { content: '你喜欢茉莉花茶，不加糖。' } }], usage: { total_tokens: 42 } }; };
-  const engine = await W.create({ vault, identity, host: f.host, control: async () => ({ authorized: true, hostId: identity.hostId, accountId: 'account-test', generation: f.generation() }), crypto: webcrypto });
+  const engine = await W.create({ phoneModel:syncedModel, vault, identity, host: f.host, control: async () => ({ authorized: true, hostId: identity.hostId, accountId: 'account-test', generation: f.generation() }), crypto: webcrypto });
   await engine.sync(); const encrypted = await readFile(path.join(f.root, 'offline-metadata.json'), 'utf8');
   assert.ok(!encrypted.includes('茉莉花茶') && !encrypted.includes('synthetic-secret'));
   const reply = await engine.send('我喝茶喜欢什么？');
@@ -242,7 +242,7 @@ test('encrypted offline replica carries only account personalization and uses th
   const settings={preferredName:'小合成',tone:'concise',fixedInstructions:'末尾加 —WM',webSearch:false};
   f.context.accountState=()=>({sessions:{},personalization:settings});let sent:any;
   vault.complete=async(body:any)=>{sent=body;return {choices:[{message:{content:'好的。\n—WM'}}]}};
-  const engine=await W.create({vault,identity,host:f.host,control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1,capabilities:{offlineTasks:1}}),crypto:webcrypto});
+  const engine=await W.create({phoneModel:syncedModel,vault,identity,host:f.host,control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1,capabilities:{offlineTasks:1}}),crypto:webcrypto});
   try {
     await engine.sync();assert.equal(engine.view().snapshot.personalization.preferredName,'小合成');
     await engine.send('你好');assert.match(sent.messages[0].content,/小合成/);assert.match(sent.messages[0].content,/末尾加 —WM/);assert.equal(sent.tools,undefined);
@@ -254,7 +254,7 @@ test('revocation erases pending conversations, and unavailable control plane sen
   const f = await fixture(t), vault = await W.browserVault('revoke', { indexedDB: new IDBFactory(), crypto: webcrypto });
   let calls = 0, status = 0;
   vault.complete = async () => { calls++; return { choices: [{ message: { content: '已收到' } }] }; };
-  const engine = await W.create({ vault, identity, host: f.host, crypto: webcrypto, control: async () => {
+  const engine = await W.create({ phoneModel:syncedModel, vault, identity, host: f.host, crypto: webcrypto, control: async () => {
     if (status) throw Object.assign(new Error('denied'), { status });
     return { authorized: true, hostId: identity.hostId, accountId: 'account-test', generation: f.generation() };
   } });
@@ -279,7 +279,7 @@ test('renewing a host cookie preserves the physical device import identity and d
   f.context.authenticate = () => ({ ...mutableIdentity, via: 'cookie', device: { authKind: 'cloud',scopes:['sessions:read','commands:write','account:manage'] } });
   const vault = await W.browserVault('renewal', { indexedDB: new IDBFactory(), crypto: webcrypto });
   vault.complete = async () => ({ choices: [{ message: { content: '已收到偏好' } }] });
-  const engine = await W.create({ vault, identity: mutableIdentity, host: f.host,
+  const engine = await W.create({ phoneModel:syncedModel, vault, identity: mutableIdentity, host: f.host,
     control: async () => ({ authorized: true, hostId: identity.hostId, accountId: 'account-test', generation: 1 }), crypto: webcrypto });
   await engine.sync(); await engine.send('新的偏好');
   const turns = structuredClone(engine.view().turns);
@@ -293,7 +293,7 @@ test('another cloud account on the same host cannot authorize use of this replic
   const f = await fixture(t), vault = await W.browserVault('other-account', { indexedDB: new IDBFactory(), crypto: webcrypto });
   let calls = 0;
   vault.complete = async () => { calls++; return {}; };
-  const engine = await W.create({ vault, identity, host: f.host, crypto: webcrypto,
+  const engine = await W.create({ phoneModel:syncedModel, vault, identity, host: f.host, crypto: webcrypto,
     control: async () => ({ authorized: true, hostId: identity.hostId, accountId: 'other-account', generation: 1 }) });
   await engine.sync(); await assert.rejects(engine.send('我喝茶喜欢什么？'), /OFFLINE_RESET_REQUIRED/);
   assert.equal(calls, 0); assert.equal((await vault.load()).snapshot, null); engine.close();

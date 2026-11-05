@@ -25,8 +25,8 @@ test('MODEL-1 and MEM-7 keep the submitted chat model during authorization and u
  const authorization=modelGate(),started=modelGate(),used:any[]=[];let first=true;
  let selected={modelId:'synthetic-chat-a',interfaceType:'openai-compatible'};
  const vault={load:async()=>({snapshot:null,turns:[],conversations:[],tasks:[],forgetConversations:[]}),save:async()=>{},close(){},
-  complete:async(body:any,snapshot:any)=>{used.push({modelId:body.model,interfaceType:snapshot.model.interfaceType});return{choices:[{message:{content:'合成回答'}}]};}};
- const engine=await W.create({vault,identity:{ownerId:'synthetic',hostId:'host',deviceId:'phone'},crypto:webcrypto,phoneModel:()=>selected,
+  complete:async(body:any,snapshot:any)=>{used.push({modelId:body.model,interfaceType:snapshot.interfaceType});return{choices:[{message:{content:'合成回答'}}]};}};
+ const engine=await W.create({vault,identity:{ownerId:'synthetic',hostId:'host',deviceId:'phone'},crypto:webcrypto,standalone:true,phoneModel:()=>selected,
   accountCheck:async()=>{if(first){first=false;started.resolve();await authorization.promise;}return{};}});t.after(()=>engine.close());
  const sending=engine.send('第一条');await started.promise;selected={modelId:'synthetic-chat-b',interfaceType:'anthropic'};authorization.resolve();
  const sent=await sending;await engine.send('下一条',sent.conversationId);
@@ -114,9 +114,9 @@ async function fixed(t:any){
  const settle=async(n=100)=>{for(let i=0;i<n;i++)await ctx.historyImport.tick();};
  return {ctx,call,sync,settle,ledger,sources,activity,get requests(){return requests;},set device(v){device=v;},vault};
 }
-test('MEM-7 phone sync with no cloud model registers receiver, projects ready authority, and preserves legacy model-required response',async t=>{
- const f=await fixed(t),s=await f.sync();assert.equal(s.model,null);assert.equal(s.memoryAuthority.ready,true);assert.ok(s.taskRecipient.n);
- await assert.rejects(f.sync(false),{code:'OFFLINE_MODEL_REQUIRED'});
+test('MEM-7 phone sync with no cloud model registers receiver, projects ready authority, and omits model credentials for every receiver',async t=>{
+ const f=await fixed(t),s=await f.sync();assert.equal(Object.hasOwn(s,'model'),false);assert.equal(s.memoryAuthority.ready,true);assert.ok(s.taskRecipient.n);
+ assert.equal(Object.hasOwn(await f.sync(false),'model'),false);
  f.ctx.memoryManager.peek=()=> 'starting';assert.equal((await f.sync()).memoryAuthority.ready,false);
  f.ctx.memoryManager.enabled=false;await assert.rejects(f.sync(),{code:'MEMORY_UNAVAILABLE'});
 });
@@ -127,7 +127,7 @@ test('D119 task-capable legacy phone sync wakes a cold memory worker before adve
  f.ctx.memoryManager.status=async()=>{starts++;connected=true;return{state:'ready'};};
  const payload=await f.vault.open(await f.call('/sync',{publicJwk:await f.vault.key(),generation:0,hashes:{},taskSupport:1}),
   {ownerId:'a',hostId:'synthetic-host',deviceId:'phone-a'});
- assert.equal(starts,1);assert.equal(payload.model,null);assert.equal(payload.memoryAuthority.ready,true);
+ assert.equal(starts,1);assert.equal(Object.hasOwn(payload,'model'),false);assert.equal(payload.memoryAuthority.ready,true);
  await f.call('/turns',{generation:payload.generation,turns:[turn('cold-start')]});await f.settle();assert.equal(f.requests,1);
 });
 test('MEM-7 stable receipts, split batches and two phones ingest exactly once through MEM-1 with original dates and visible searchable history',async t=>{

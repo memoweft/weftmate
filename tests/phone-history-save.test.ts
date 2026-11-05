@@ -42,7 +42,7 @@ const until=async(predicate:()=>boolean)=>{for(let i=0;i<200&&!predicate();i++)a
 
 test('rejected history save rolls back the unaccepted input and retry sends it exactly once',async t=>{
  let full=true,stored:any,calls=0;
- const engine=await W.create({identity:{},crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
+ const engine=await W.create({identity:{},crypto:webcrypto,standalone:true,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
   load:async()=>({snapshot:null,turns:[],conversations:[]}),close(){},
   save:async(value:any)=>{if(full)throw Object.assign(Error('OFFLINE_STORAGE_TOO_LARGE'),{code:'OFFLINE_STORAGE_TOO_LARGE'});stored=structuredClone(value);},
   complete:async()=>{calls++;return{choices:[{message:{content:'已回复'}}]};}}});
@@ -68,7 +68,7 @@ test('native phone send returns the human capacity error and sent=false to prese
 
 test('capacity failure while saving a reply pauses later inputs with the capacity recovery instruction',async t=>{
  let release!:()=>void,calls=0,full=false;
- const engine=await W.create({identity:{},crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
+ const engine=await W.create({identity:{},crypto:webcrypto,standalone:true,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
   load:async()=>({snapshot:null,turns:[],conversations:[]}),close(){},
   save:async()=>{if(full)throw Object.assign(Error('OFFLINE_STORAGE_TOO_LARGE'),{code:'OFFLINE_STORAGE_TOO_LARGE'});},
   complete:async()=>{calls++;await new Promise<void>(r=>release=r);return{choices:[{message:{content:'完整回复'}}]};}}});

@@ -35,16 +35,6 @@ export async function createOfflineService(context) {
     if (!context.cloudIdentity) throw failure('OFFLINE_CLOUD_REQUIRED', 409);
     return context.cloudIdentity.publishOffline(ownerId, current.generation);
   };
-  async function cloudModel(ownerId) {
-    const models = await context.backend.listModels();
-    const preferred = context.service.currentChatModelProfile(ownerId);
-    const selected = models.filter(m => m.configured && m.sourceKind === 'cloud' && context.modelSelectable(ownerId, m.id))
-      .sort((a, b) => Number(b.id === preferred) - Number(a.id === preferred))[0];
-    if (!selected) throw failure('OFFLINE_MODEL_REQUIRED', 409);
-    const model = await context.accountModelManager?.readOfflineModel?.({ ownerId, profileId: selected.id });
-    if (!model?.apiKey || !model.baseUrl || !model.modelId) throw failure('OFFLINE_MODEL_REQUIRED', 409);
-    return { ...model, profileId: selected.id, name: selected.name };
-  }
   async function recent(ownerId) {
     const result = [];
     const cloudProfiles = new Set((await context.backend.listModels()).filter(model => model.sourceKind === 'cloud').map(model => model.id));
@@ -130,19 +120,13 @@ export async function createOfflineService(context) {
           const publicJwk = publicDeviceKey(body.publicJwk);
           const control = await publish(ownerId);
           const taskSupport=body.taskSupport===1&&control.capabilities?.offlineTasks===1;
-          let model;
-          try { model = await cloudModel(ownerId); }
-          catch (error) { if ((taskSupport || body.phoneFirst === true) && error.code === 'OFFLINE_MODEL_REQUIRED') model = null; else throw error; }
-          const snapshot = model || body.phoneFirst === true ? await memorySnapshot(context.memoryManager, ownerId) : {worldRevision:null,items:[],truncated:false};
-          // A legacy task-capable phone waits for memoryAuthority before it
-          // uploads originals. Without a cloud model the snapshot read above
-          // is skipped, so a cold worker otherwise never gets initialized.
-          if (taskSupport && !model && context.memoryManager?.enabled) await context.memoryManager.status(ownerId);
+          const snapshot = await memorySnapshot(context.memoryManager, ownerId);
+          if (taskSupport && context.memoryManager?.enabled) await context.memoryManager.status(ownerId);
           const generation = account.generation;
           const known = body.generation === generation ? body.hashes ?? {} : {};
-          const recentMessages = model?await recent(ownerId):[];
+          const recentMessages = await recent(ownerId);
           const taskReferences=body.taskSupport===1?Object.entries(context.accountState(ownerId).sessions).filter(([,s])=>s.origin==='personal-remote'&&!s.archived&&!s.deleting&&!hasPrivateContent(s)).slice(-100).map(([id,s])=>({id,title:s.title||'电脑上的对话',...(s.projectId?{projectId:s.projectId}:{})})):undefined;
-          const metadata = { generation, reset: body.generation !== generation, model, recent: recentMessages,
+          const metadata = { generation, reset: body.generation !== generation, recent: recentMessages,
             memoryAuthority: { ready: context.memoryManager?.enabled === true && context.memoryManager.peek?.(ownerId) === 'connected', hostId: context.rootState.hostId },
             phoneImports: (context.historyImport?.list(ownerId).imports??[]).filter(j=>j.app==='phone').map(j=>({id:j.id,handoverId:j.handoverId,state:j.state})),
             taskRecipient:(await recipient()).publicJwk,
@@ -159,7 +143,7 @@ export async function createOfflineService(context) {
             payload = { ...replicaDelta(snapshot, known), ...metadata };
           }
           authorize();
-          account.devices[deviceId] = { ...account.devices[deviceId], publicJwk, keyId: hash(publicJwk), phoneFirst:body.phoneFirst === true || model === null,
+          account.devices[deviceId] = { ...account.devices[deviceId], publicJwk, keyId: hash(publicJwk), phoneFirst:body.phoneFirst === true || !(await context.backend.listModels()).some(row=>row.sourceKind==='cloud'&&row.configured&&context.modelSelectable(ownerId,row.id)),
             originals:account.devices[deviceId]?.originals??{},originalsPartial:account.devices[deviceId]?account.devices[deviceId].originalsPartial??!account.devices[deviceId].originals:false,replicaPublishedAt:metadata.syncedAt,
             // Only the device's next request with the new generation confirms
             // that it applied the reset. Sending the reset cannot acknowledge it.

@@ -106,13 +106,21 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
         const generation = await requireModelServices();
         if (generation !== core.state.identityGeneration) throw {code:'ABORTED'};
         const identity = scope();
-        const result = await core.accessApi('/model-services' + (serviceId ? '/' + encodeURIComponent(serviceId) : ''), {method,protectedWrite:true,body:{requestId:environment.crypto.randomUUID(),...body},timeoutMs:60000});
+        const replica=core.getModelReplica?await core.getModelReplica():null;
+        let result;
+        if(replica){
+            const value=method==='DELETE'?await replica.remove(serviceId):await replica.configure(serviceId,body);
+            const service=value.services.find(row=>row.serviceId===serviceId)||value.services.at(-1);
+            if(service){const {apiKey,...visible}=service;result={service:visible};}else result={removed:true};
+        }else result=await core.accessApi('/model-services' + (serviceId ? '/' + encodeURIComponent(serviceId) : ''), {method,protectedWrite:true,body:{requestId:environment.crypto.randomUUID(),...body},timeoutMs:60000});
         if (identity === scope()) { retryAt = 0; await core.refreshModels(); }
         return result;
     }
     async function checkModelService({baseUrl,apiKey,interfaceType,serviceId}) {
         const generation = await requireModelServices();
         if (generation !== core.state.identityGeneration) throw {code:'ABORTED'};
+        const replica=core.getModelReplica?await core.getModelReplica():null;
+        if(replica)return replica.check({baseUrl,apiKey,interfaceType,serviceId});
         return core.accessApi('/model-services/check', {method:'POST',protectedWrite:true,body:{baseUrl,interfaceType,...(apiKey?{apiKey}:{}),...(serviceId?{serviceId}:{})},timeoutMs:20000});
     }
     return { modelServicesView, refreshModelServices, selectServiceModel, writeModelService, checkModelService, modelServiceFailureMessage, preferredServiceModel };
