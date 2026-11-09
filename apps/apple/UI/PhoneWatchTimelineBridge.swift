@@ -13,6 +13,7 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
         if WCSession.isSupported() { session.delegate = self; session.activate() }
         #endif
     }
+    @MainActor var canPublish: Bool { session.activationState == .activated && session.isPaired && session.isWatchAppInstalled }
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
     nonisolated func sessionDidDeactivate(_ session: WCSession) { session.activate() }
@@ -41,11 +42,11 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
             } else if action == "approval", let sessionID, let approvalID, let outcome {
                 let success = await model.respondFromWatch(sessionID: sessionID, approvalID: approvalID, outcome: outcome)
                 var result: [String: Any] = success ? ["registered": true] : ["error": "决定待核对，请在手机中查看"]
-                if let bytes = await model.watchSnapshotBytes() { result["snapshot"] = bytes }
+                if let bytes = await model.watchSnapshotBytes(requested:true) { result["snapshot"] = bytes }
                 reply.call(result)
             } else {
                 var result: [String:Any]=[:]
-                if let bytes=await model.watchSnapshotBytes() { result["snapshot"]=bytes }
+                if let bytes=await model.watchSnapshotBytes(requested:true) { result["snapshot"]=bytes }
                 else { result["clear"]=true }
                 do { result["chat"]=try await model.watchConversation.snapshot(requestID:chatRequestID).encoded() }
                 catch { result["error"]="暂时读不到手机对话，请刷新。" }
@@ -54,7 +55,7 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
         }
     }
     @MainActor func publish(_ snapshot: WatchTimelineSnapshot?, clearChat: Bool = false) {
-        guard session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else { return }
+        guard canPublish else { return }
         var payload: [String: Any] = snapshot.flatMap { try? JSONEncoder().encode($0) }.map { ["snapshot": $0] } ?? ["clear": true]
         if let key=model?.watchConversation.accountKey { payload["chatAccountKey"]=key }
         if clearChat { payload["clearChat"]=true }

@@ -1987,7 +1987,8 @@ final class AppleAppModel: ObservableObject {
     var watchAllowsLoopback: Bool { permitsSyntheticLoopback }
     func clearWatchConversation() { watchConversation.cancel(); watchBridge.publish(nil,clearChat:true) }
     private var watchDecisionsInFlight = Set<String>()
-    func watchSnapshotBytes() async -> Data? {
+    func watchSnapshotBytes(requested: Bool = false) async -> Data? {
+        guard requested || watchBridge.canPublish else { return nil }
         let actionEpoch = epoch
         guard let session else { return nil }
         if offline.hostOffline || session.verification == .unverifiedOffline {
