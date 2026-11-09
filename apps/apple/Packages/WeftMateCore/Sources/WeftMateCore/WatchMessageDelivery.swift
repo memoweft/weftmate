@@ -15,13 +15,15 @@ public struct WatchMessageReply: Sendable {
     public let snapshot: Data?
     public let error: String?
     public let registered: Bool
+    public let chat: Data?
+    public let clear: Bool
 }
 /// WatchConnectivity invokes replies on its own operation queue. The returned
 /// closures are nonisolated and Sendable; only typed values enter the UI actor.
 public enum WatchMessageDelivery {
     public static func reply(_ receive: @escaping @MainActor @Sendable (WatchMessageReply) -> Void) -> @Sendable ([String: Any]) -> Void {
         { reply in
-            let value = WatchMessageReply(snapshot: reply["snapshot"] as? Data, error: reply["error"] as? String, registered: reply["registered"] as? Bool == true)
+            let value = WatchMessageReply(snapshot: reply["snapshot"] as? Data, error: reply["error"] as? String, registered: reply["registered"] as? Bool == true, chat:reply["chat"] as? Data, clear:reply["clear"] as? Bool == true)
             Task { @MainActor in receive(value) }
         }
     }

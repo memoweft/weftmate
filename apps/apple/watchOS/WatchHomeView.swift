@@ -8,6 +8,10 @@ import WeftMateCore
     @Published var notice: String?
     @Published var busy = false
     @Published var reachable = false
+    @Published var chat: WatchChatSnapshot?
+    @Published var draft = ""
+    private var conversationID=UUID().uuidString.lowercased()
+    private var pendingChat: WatchChatRequest?
     private var feedback = WatchFeedbackTracker()
     private var decisions = WatchDecisionState()
     private let session = WCSession.default
@@ -79,7 +83,38 @@ import WeftMateCore
         transferRunLog()
         // A completion received in the background is announced on the next foreground refresh.
         if let snapshot, let bytes = try? JSONEncoder().encode(snapshot) { apply(bytes) }
-        send(["action": "refresh"])
+        var message: [String:Any]=["action":"refresh"]
+        if let pendingChat { message["chatRequestID"]=pendingChat.id }
+        send(message)
+    }
+    var chatWorking: Bool { chat?.record?.phase.active == true || pendingChat != nil }
+    func newConversation() {
+        guard !chatWorking else { return }
+        conversationID=UUID().uuidString.lowercased(); chat?.record=nil; chat?.answer=""; draft=""
+    }
+    func sendChat(device: WatchAnswerDevice? = nil) {
+        guard let account=chat?.accountKey,!chatWorking,!busy else { return }
+        let text=draft.trimmingCharacters(in:.whitespacesAndNewlines)
+        let request=WatchChatRequest(conversationID:conversationID,accountKey:account,
+                                    text:text.isEmpty ? chat?.record?.text ?? "" : text,device:device)
+        do {
+            try request.validate(); pendingChat=request
+            send(["action":"chat.send","chatRequest":try JSONEncoder().encode(request)])
+        } catch { pendingChat=nil; notice=WatchChatFailure.invalidInput.errorDescription }
+    }
+    private func applyChat(_ data: Data) {
+        guard let value=try? JSONDecoder().decode(WatchChatSnapshot.self,from:data) else { return }
+        if let old=chat,old.accountKey != value.accountKey {
+            conversationID=UUID().uuidString.lowercased(); pendingChat=nil; draft=""
+        }
+        if let pending=pendingChat {
+            if value.record?.request.id == pending.id {
+                if draft.trimmingCharacters(in:.whitespacesAndNewlines) == pending.text { draft="" }
+                pendingChat=nil
+            } else if value.record == nil { pendingChat=nil }
+        }
+        if let record=value.record { conversationID=record.request.conversationID }
+        chat=value
     }
     func decide(_ approval: WatchApproval, allowed: Bool) {
         guard let snapshot, snapshot.approvals.contains(where: { $0.id == approval.id }), !busy,
@@ -111,7 +146,8 @@ import WeftMateCore
             self.busy = false
             if let approvalID { self.decisions.finish(approvalID, registered: registered) }
             self.record("reply", ["registered": registered, "error": error ?? "", "approvalID": approvalID ?? ""])
-            self.apply(data)
+            self.apply(data,clear:reply.clear)
+            if let chat=reply.chat { self.applyChat(chat) }
             self.notice = error ?? (registered ? "决定已登记" : nil)
             if error != nil || (approvalID != nil && !registered) { RunLogRuntime.shared.record(.approvalFailure, ["phase": "approval", "code": "UNCONFIRMED"]) }
             if registered { self.refresh() }
@@ -120,7 +156,7 @@ import WeftMateCore
             if let approvalID { self.decisions.finish(approvalID, registered: false) }
             self.record("transportError")
             RunLogRuntime.shared.record(approvalID == nil ? .syncFailure : .approvalFailure, ["phase": approvalID == nil ? "notification" : "approval", "code": "UNAVAILABLE"])
-            self.notice = "手机未响应，请刷新后重试。"
+            self.notice = self.pendingChat == nil ? "手机未响应，请刷新后重试。" : "送达情况待核对，请刷新。"
         })
     }
 }
@@ -132,6 +168,7 @@ struct WatchHomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
+                    WatchConversationView(model:model)
                     #if DEBUG
                     if ProcessInfo.processInfo.arguments.contains("--diag3-check-marker") {
                         Text("运行记录检查").accessibilityIdentifier("diag3WatchMarker").accessibilityValue(runLog.snapshot?.previous?.clean == false ? "unclean" : "clean")
@@ -155,7 +192,7 @@ struct WatchHomeView: View {
                             }.padding(AppleTokens.Space.p8).background(AppleTokens.Styles.quaternary, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10))
                         }
 
-                    } else { Text("在手机上打开一段对话").font(AppleTokens.Fonts.caption) }
+                    }
                     if let accountKey = model.snapshot?.accountKey { NavigationLink("健康") { WatchHealthView().id(accountKey) } }
                     Button("刷新") { model.refresh() }.disabled(model.busy)
                     if let notice = model.notice { Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary) }
@@ -165,7 +202,14 @@ struct WatchHomeView: View {
                 }.padding(AppleTokens.Space.p8)
             }.navigationTitle("WeftMate").tint(AppleTokens.Colors.primary)
         }
-        .task(id: scenePhase) { if scenePhase == .active { model.refresh() } }
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            model.refresh()
+            while !Task.isCancelled {
+                do { try await Task.sleep(for:.seconds(2)) } catch { return }
+                if model.chatWorking { model.refresh() }
+            }
+        }
         .accessibilityIdentifier("watchHome")
     }
 }

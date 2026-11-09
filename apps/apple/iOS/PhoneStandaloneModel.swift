@@ -426,6 +426,14 @@ import WeftMateCore
         do { try save(next) } catch { notice="对话未保存，请检查本机存储后重试。";return }
         queuedModels[reply.replyID]=model;notice=nil;startReplies(model:model)
     }
+    func saveWatchRecord(_ record: WatchChatRecord) throws {
+        var next=state; try next.retainWatch(record); try save(next)
+    }
+    func sendFromWatch(_ record: WatchChatRecord) throws {
+        guard let model=currentModel else { throw WatchChatFailure.noModel }
+        var next=state; let reply=try next.enqueueWatch(record); try save(next)
+        queuedModels[reply.replyID]=model; startReplies(model:model)
+    }
     private func startReplies(model: PhoneModelConfiguration) {
         guard !busy else { return }
         busy=true;let ticket=epoch
