@@ -5,6 +5,7 @@ import WeftMateCore
     private weak var app: AppleAppModel?
     private var tasks: [String:Task<Void,Never>] = [:]
     init(app: AppleAppModel) { self.app=app }
+    private func taskKey(_ request: WatchChatRequest) -> String { request.accountKey+"|"+request.id }
     var computerSessionID: String? {
         guard let app else { return nil }
         return app.phoneChat.state.watchRequests?.last(where: { $0.device == .computer && $0.hostID == app.session?.hostId && $0.threadID != nil })?.threadID
@@ -41,9 +42,10 @@ import WeftMateCore
         guard !text.isEmpty else { throw WatchChatFailure.invalidInput }
         let record=WatchChatRecord(request:request,text:text,device:request.device ?? explicit?.device ?? WatchContentRouting.rule(text))
         try save(record)
-        tasks[request.id]=Task { [weak self] in
+        let key=taskKey(request)
+        tasks[key]=Task { [weak self] in
             guard let self else { return }
-            defer { tasks[request.id]=nil }
+            defer { tasks[key]=nil }
             await route(record)
         }
     }
@@ -136,8 +138,9 @@ import WeftMateCore
         guard var record=selected else {
             return .init(accountKey:app.phoneAccountIdentity)
         }
+        if tasks[taskKey(record.request)] != nil { return .init(accountKey:app.phoneAccountIdentity,record:record) }
         var answer=""
-        if (record.phase == .routing || record.phase == .sending),tasks[record.request.id] == nil {
+        if record.phase == .routing || record.phase == .sending {
             record.phase = record.command == nil ? .failed : .uncertain
             record.notice="处理被中断，请核对后重新发送。"
         }

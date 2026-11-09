@@ -234,6 +234,10 @@ jobs:
           xcodebuild -project apps/apple/WeftMate.xcodeproj -scheme WeftMatePhone -configuration Debug \
             -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/watch-build" \
             -jobs 4 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/watch-results/build.log"
+      - name: Routing through real phone and computer HTTP
+        run: python3 apps/apple/Scripts/run_state_checks.py --core-build "$RUNNER_TEMP/watch-core" --check WatchRoutingModelChecks --artifacts "$RUNNER_TEMP/watch-results/state"
+      - name: Watch native interaction and screenshots
+        run: python3 apps/apple/Scripts/run_watch_routing_ui.py --derived-data "$RUNNER_TEMP/watch-build" --artifacts "$RUNNER_TEMP/watch-results/ui"
       - name: Results
         if: always()
         uses: actions/upload-artifact@v4
