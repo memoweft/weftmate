@@ -61,6 +61,12 @@ import WeftMateCore
         try require(continuedPC.record?.device == .computer && continuedPC.record?.threadID == pcReply.record?.threadID,"computer follow-up keeps its conversation")
         let long=request("打开电脑上的长历史文件");try await deliver(long);let longReply=try await settled(long)
         try require(longReply.record?.phase == .complete && longReply.answer.contains("合成任务完成"),"reply beyond the first history page remains bound to its request")
+        let hostReads=await app.watchTransport.count()
+        await app.watchTransport.setDelayed(true)
+        let independent=request("你好");try await deliver(independent);let independentReply=try await settled(independent)
+        let afterPhoneReads=await app.watchTransport.count()
+        await app.watchTransport.setDelayed(false)
+        try require(independentReply.record?.phase == .complete && afterPhoneReads == hostReads,"new phone question does not wait for a previous computer request")
         let afterPC=try await counts();try await deliver(pc)
         try require(try await counts()["sends"] == afterPC["sends"],"computer duplicate receipt does not execute again")
         app.offline.hostOffline=true

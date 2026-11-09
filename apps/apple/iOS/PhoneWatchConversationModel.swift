@@ -36,7 +36,11 @@ import WeftMateCore
     func receive(_ data: Data) async throws -> Data {
         guard data.count <= 32_768 else { throw WatchChatFailure.invalidInput }
         let request=try JSONDecoder().decode(WatchChatRequest.self,from:data)
-        _ = try await snapshot()
+        try request.validate()
+        let app=try check(request)
+        if let previous=app.phoneChat.state.watchRequests?.last(where: { $0.request.conversationID == request.conversationID }),previous.phase.active || previous.phase == .uncertain {
+            _ = try await snapshot(requestID:previous.request.id)
+        }
         try send(request)
         return try await snapshot(requestID:request.id).encoded()
     }

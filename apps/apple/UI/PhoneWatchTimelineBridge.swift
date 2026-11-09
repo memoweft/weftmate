@@ -7,6 +7,7 @@ import WeftMateCore
 final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Sendable {
     @MainActor weak var model: AppleAppModel?
     private let session = WCSession.default
+    @MainActor private var projectionReads=Set<UUID>()
     @MainActor init(model: AppleAppModel) {
         self.model = model; super.init()
         #if !WEFTMATE_WINDOW_TEST
@@ -46,12 +47,22 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
                 reply.call(result)
             } else {
                 var result: [String:Any]=[:]
-                if let bytes=await model.watchSnapshotBytes(requested:true) { result["snapshot"]=bytes }
-                else { result["clear"]=true }
                 do { result["chat"]=try await model.watchConversation.snapshot(requestID:chatRequestID).encoded() }
                 catch { result["error"]="暂时读不到手机对话，请刷新。" }
                 reply.call(result)
+                self?.refreshProjection()
             }
+        }
+    }
+    @MainActor private func refreshProjection() {
+        guard let model else { return }
+        let epoch=model.accountEpoch
+        guard projectionReads.insert(epoch).inserted else { return }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            defer { projectionReads.remove(epoch) }
+            let bytes=await model.watchSnapshotBytes(requested:true)
+            if bytes == nil,model.accountEpoch == epoch { publish(nil) }
         }
     }
     @MainActor func publish(_ snapshot: WatchTimelineSnapshot?, clearChat: Bool = false) {
