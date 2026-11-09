@@ -55,6 +55,8 @@ import Testing
     #expect(throws:WatchChatFailure.invalidInput) { try request.validate() }
     let bytes=try WatchChatSnapshot(accountKey:"account-a",answer:String(repeating:"字",count:20000)).encoded()
     #expect(bytes.count < 32768)
+    let emoji=try WatchChatSnapshot(accountKey:"account-a",answer:String(repeating:"👨‍👩‍👧‍👦",count:4000)).encoded()
+    #expect(emoji.count < 32768)
 }
 
 @Test func watchSnapshotNeverExportsPersistedComputerCommand() throws {

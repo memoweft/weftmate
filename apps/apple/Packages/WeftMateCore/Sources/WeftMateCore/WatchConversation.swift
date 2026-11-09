@@ -52,7 +52,11 @@ public struct WatchChatSnapshot: Codable, Equatable, Sendable {
     /// Credentials and persisted command payloads never cross to the watch.
     public func encoded() throws -> Data {
         var value=self; value.record?.command=nil
-        if value.answer.count > 4000 { value.answer=String(value.answer.prefix(4000))+"\n完整回复请在手机对话中查看。" }
+        if value.answer.utf8.count > 16_000 {
+            var prefix=Data(value.answer.utf8.prefix(16_000))
+            while String(data:prefix,encoding:.utf8) == nil { prefix.removeLast() }
+            value.answer=String(data:prefix,encoding:.utf8)!+"\n完整回复请在手机对话中查看。"
+        }
         return try JSONEncoder().encode(value)
     }
 }
