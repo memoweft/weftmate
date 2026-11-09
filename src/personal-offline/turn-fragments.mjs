@@ -15,6 +15,8 @@ export async function createTurnFragments(root){
   const save=()=>durableWrite(file,state);
   return {
     owns(ownerId,deviceId,conversationId){return Object.entries(state.owners[ownerId]?.rows??{}).some(([key,row])=>row.conversationId===conversationId&&key===hash(deviceId+':'+row.id));},
+    ownsTurn(ownerId,deviceId,turnId){return state.owners[ownerId]?.rows?.[hash(deviceId+':'+turnId)]?.id===turnId;},
+    async removeConversations(ownerId,deviceId,ids){const rows=state.owners[ownerId]?.rows;if(!rows)return;for(const [key,row]of Object.entries(rows))if(ids.includes(row.conversationId)&&key===hash(deviceId+':'+row.id))delete rows[key];await save();},
     async accept(ownerId,deviceId,generation,parts){
       if(!Array.isArray(parts)||parts.length>50)throw failure('INVALID_REQUEST');
       // Validate the entire packet before persisting any part.

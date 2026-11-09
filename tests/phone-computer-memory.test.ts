@@ -63,17 +63,6 @@ test('an encrypted old container is rewritten without phone memory, retains orig
   assert.equal((await other.load()).conversations.length,0);
 });
 
-test('without a replica the prompt explains where memory forms and never promises local forgetting',async t=>{
-  const f=await fixture(t,{replica:false});
-  await f.engine.send('忘掉我的合成偏好');
-  assert.equal(f.calls.length,1);
-  const prompt=f.calls[0].messages[0].content;
-  assert.match(prompt,/记忆在电脑上形成/);
-  assert.match(prompt,/连上电脑后才有/);
-  assert.match(prompt,/现在删不了/);
-  assert.match(prompt,/连上电脑后再说一次或去记忆页忘掉/);
-});
-
 test('large and previously deferred handovers upload automatically with stable ids and originals only',async t=>{
   const turns=Array.from({length:101},(_,i)=>({id:`turn-${i}`,conversationId:'original',timestamp:i,messages:[{role:'user',text:'合成原话'.repeat(600)}]}));
   let saved:any={snapshot:null,turns,conversations:[{id:'original',turns}],handover:{id:'stable-handover',totalTurns:101,conversationCount:1,bytes:300000,awaitingConfirmation:true},phoneMemory:{items:[{text:'不上传的旧条目'}]}};

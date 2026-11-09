@@ -152,16 +152,45 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
 }
 
 let memoryPullMounted=false;
+let phoneMemoryFilters={owner:null,query:'',from:'',to:''};
 function renderPhoneMemoryReplica(target,snapshot=globalThis.WeftPhone?.memoryReplica){
   if(state.memory){state.memory.flow++;state.memory.loading=false;}
   target.replaceChildren(heading('记忆'));
-  if(!snapshot){target.append(notice('记忆在电脑上形成。连上电脑后，这里会显示 WeftMate 记得的事。'),action('怎么连上电脑',()=>page('devices'),false));return;}
-  target.append(notice('电脑连上后可以修改和忘掉'));
-  target.append(el('p','muted',`上次同步：${snapshot.syncedAt?timeLabel(snapshot.syncedAt):'时间未知'}`));
-  if(!snapshot.items?.length){target.append(notice('上次同步时还没有记忆。'));return;}
-  const section=group('电脑同步来的记忆',[]),body=section.querySelector('.group-body');
-  for(const item of snapshot.items){const row=el('div','memory-item');row.append(el('p','',item.text));body.append(row);}
-  target.append(section);
+  const api=globalThis.WeftPhone?.hasData?WeftPhone:uiCore;
+  if(!snapshot){target.append(notice('手机会记录你明确说出的事实和偏好，之后的对话也能用到。'));return;}
+  target.append(el('p','muted',snapshot.phoneLocal?'手机记录明确的事实和偏好，电脑整理完成后会自动接替。':'这是上次从电脑同步的记忆。'));
+  if(snapshot.phoneMemoryStatus?.state==='processing')target.append(notice('正在整理刚才的原话…'));
+  if(snapshot.phoneMemoryFailures){target.append(notice(`还有 ${snapshot.phoneMemoryFailures} 条原话尚未记住，请检查模型连接后重试。`),action('重试整理',async()=>{try{await api.retryPhoneMemory();}catch{toast('暂时未能整理，请稍后重试。');}},false));}
+  else if(snapshot.phoneMemoryPending&&snapshot.phoneMemoryStatus?.state!=='processing')target.append(notice('还有原话等待整理，选好模型后会继续。'));
+  if(snapshot.pendingPhoneForget)target.append(notice('本机已忘掉，连接电脑后会继续处理那边的记忆。'));
+  if(phoneMemoryFilters.owner!==state.owner)phoneMemoryFilters={owner:state.owner,query:'',from:'',to:''};
+  const filters=el('form','phone-memory-filters'),searchField=field('关键词','search'),fromField=field('开始日期','date'),toField=field('结束日期','date');
+  const search=searchField.input,from=fromField.input,to=toField.input;searchField.box.classList.add('phone-memory-search');
+  search.placeholder='搜索记忆';search.setAttribute('aria-label','搜索本机记忆');search.value=phoneMemoryFilters.query;search.maxLength=120;from.value=phoneMemoryFilters.from;to.value=phoneMemoryFilters.to;
+  const submit=action('筛选',()=>{},false);submit.type='submit';filters.append(searchField.box,fromField.box,toField.box,submit);target.append(filters);
+  filters.onsubmit=event=>{event.preventDefault();phoneMemoryFilters={owner:state.owner,query:search.value.trim(),from:from.value,to:to.value};renderPhoneMemoryReplica(target);};
+  const fromAt=phoneMemoryFilters.from?new Date(phoneMemoryFilters.from+'T00:00:00').getTime():0,toAt=phoneMemoryFilters.to?new Date(phoneMemoryFilters.to+'T23:59:59.999').getTime():Infinity;
+  if(fromAt>toAt){target.append(notice('结束日期需要晚于或等于开始日期。'));return;}
+  const items=snapshot.phoneLocal?api.searchPhoneMemory(phoneMemoryFilters.query,fromAt,toAt):snapshot.items??[];
+  if(!items.length){target.append(notice(phoneMemoryFilters.query||fromAt||Number.isFinite(toAt)?'没有符合条件的记忆。':'还没有记住内容。可以在对话里告诉我你的偏好。'));return;}
+  for(const producer of ['phone','computer']){
+    const rows=items.filter(item=>(item.producer==='phone')===(producer==='phone'));if(!rows.length)continue;
+    const section=group(producer==='phone'?'本机记录':'电脑整理',[]),body=section.querySelector('.group-body');section.classList.add('phone-memory-list');
+    for(const item of rows){const entry=el('div','memory-item');entry.append(el('p','',item.text),el('p','muted',item.updatedAt?timeLabel(item.updatedAt):''));
+      if(item.producer==='phone'){
+        const actions=el('div','form-actions phone-memory-actions');actions.append(item.sourceRemoved?el('span','muted','原话已删除'):action('原话',()=>{selectConversation(item.conversationId);},false),
+          action('纠正',()=>api.correctPhoneMemory(item),false),action('忘记',()=>{
+            const owner=state.owner,scope=api.phoneMemoryScope(item.id);if(!scope){renderPhoneMemoryReplica(target);return;}
+            const dialog=el('dialog','model-editor-dialog'),content=el('div','model-editor-body'),footer=el('footer','dialog-footer');
+            dialog.setAttribute('aria-label','确认遗忘');content.append(el('h2','','忘掉这句原话形成的记忆？'),el('p','','下面的内容会一起忘掉，聊天原文保留。'));
+            for(const row of scope.items)content.append(el('p','',row.text));
+            const confirm=action('确认忘记',async()=>{if(state.owner!==owner){dialog.close();return;}confirm.disabled=true;try{await api.forgetPhoneMemory(item.id,scope);dialog.close();if(state.owner!==owner)return;if(state.page==='memory')memoryPage(target);toast('本机已忘掉');}catch(error){confirm.disabled=false;if(error.code==='PHONE_MEMORY_STALE'){dialog.close();if(state.page==='memory')memoryPage(target);toast('记忆已经改变，请重新查看遗忘范围。');}else toast('未能保存遗忘，请重试。');}},false);confirm.classList.add('danger');
+            footer.append(action('保留',()=>dialog.close(),false),confirm);dialog.append(content,footer);dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();
+          },false));entry.append(actions);
+      }else entry.append(el('p','muted','连接电脑后可查看来源、纠正和遗忘。'));
+      body.append(entry);
+    }target.append(section);
+  }
 }
 function memoryPage(target){if(globalThis.WeftPhone?.active)return renderPhoneMemoryReplica(target);
   if(state.loggedIn&&state.owner&&!state.transitionPending&&['host_offline','network_unavailable','connecting'].includes(uiCore.connectionView?.().kind))

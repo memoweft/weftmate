@@ -104,6 +104,7 @@
     // Keep the engine live without rebuilding hidden history.
     if(globalThis.weftNativeChatActive===true)return;
     renderConversationList(); if (state.page === 'chat' && state.chatSource === 'phone') render(); updateComposer();
+    if(state.page==='memory'&&!document.activeElement?.closest('.phone-memory-filters'))memoryPage($('page-content'));
   };
   function render() {
     const content = $('chat-content'); clear(content);
@@ -132,8 +133,9 @@
     if(conversation.computerSessionId)content.append(el('p','muted','已在电脑上 · 原手机对话仍保留'));
     const more=action('对话操作',()=>WeftPopover.menu(more,[{name:'删除对话',icon:'trash',danger:true,action:()=>{
       const dialog=el('dialog','model-editor-dialog');dialog.setAttribute('aria-label','删除手机对话');const body=el('div','model-editor-body'),footer=el('footer','dialog-footer');
-      body.append(el('h2','','删除这段手机对话？'),el('p','',conversation.computerSessionId?'手机原文会删除；电脑从这段对话记住的内容也会忘掉。电脑暂不可达时会在下次连接处理。':'手机原文和相关轻量记忆会删除，这段对话不会交给电脑。'));
-      const confirm=action('确认删除',async()=>{confirm.disabled=true;await api.removeConversation(conversation.id);dialog.close();toast('已删除');},false);confirm.classList.add('danger');footer.append(action('保留',()=>dialog.close(),false),confirm);dialog.append(body,footer);dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();
+      body.append(el('h2','','删除这段手机对话？'),el('p','','原文会删除，已经形成的记忆默认保留。电脑上的原文会在下次连接时处理。'));
+      const choice=el('label','phone-memory-delete-choice'),forget=el('input');forget.type='checkbox';choice.append(forget,el('span','','同时忘掉从这段对话形成的记忆'));body.append(choice);
+      const confirm=action('确认删除',async()=>{confirm.disabled=true;try{await api.removeConversation(conversation.id,{forget:forget.checked});dialog.close();toast('已删除');}catch{confirm.disabled=false;toast('未能删除，请重试。');}},false);confirm.classList.add('danger');footer.append(action('保留',()=>dialog.close(),false),confirm);dialog.append(body,footer);dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();
     }}]),false);more.classList.add('icon-button');more.replaceChildren(WeftIcons.create('more',18));more.setAttribute('aria-label','手机对话的更多操作');content.append(more);
     if (api.active && last?.messages.some(m => m.role === 'assistant') && !engine.view().running && !last.synced) {
       const button = el('button', 'secondary', '重新生成'); button.type = 'button';
@@ -319,7 +321,12 @@
     modelCall: (method,p={})=>routeCall(method,p),
     servicesView:()=>serviceDirectory,refreshServices:params=>serviceCall('refresh',params),selectServiceModel:item=>serviceCall('select',item),serviceCall,openModelMenu,catalogMessage,
     get memoryReplica(){return data()?.snapshot || null;},
-    removeConversation:async id=>{await engine.removeConversation(id);if(state.conversationId===id)selectConversation(null);show();if(!api.active)await connected();},
+    searchPhoneMemory:(query,from,to)=>engine?.searchPhoneMemory(query,from,to)??[],
+    phoneMemoryScope:id=>engine?.phoneMemoryScope(id),
+    retryPhoneMemory:()=>engine?.retryPhoneMemory(),
+    forgetPhoneMemory:async(id,scope)=>{const result=await engine.forgetPhoneMemory(id,scope);show();if(!api.active)void connected();return result;},
+    correctPhoneMemory:item=>{selectConversation(engine.view().conversations.some(c=>c.id===item.conversationId)?item.conversationId:null);$('draft').value=`更正一下：${item.text}。现在是：`;updateComposer();$('draft').focus();},
+    removeConversation:async(id,options)=>{const key=sessionKey;await engine.removeConversation(id,options);if(key!==sessionKey)return;if(state.conversationId===id){if(state.page==='chat')selectConversation(null);else state.conversationId=null;}show();if(!api.active)void connected().catch(()=>{});},
     get active() { return state.connection === 'phone' && !!engine; }, get hasData() { return !!data(); }, owns: id => !!data()?.conversations.some(c=>c.id===id), list, start, connected, routeCall, render,
     sendBlocker,
     restoreArchive: async (info, client) => { if (engine) return; try {const identity=window.weftNative?await nativeCall('phone.identity'):info;if(!identity?.accountId)return;await attachEngine(identity,client,false);} catch {} },
