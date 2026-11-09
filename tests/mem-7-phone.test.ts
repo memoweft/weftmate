@@ -1,3 +1,4 @@
+// 保护：手机原话接收、处理回执和遗忘必须隔离账号、设备及来源，并抵抗重试。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp,rm } from 'node:fs/promises';
@@ -119,6 +120,57 @@ test('MEM-7 phone sync with no cloud model registers receiver, projects ready au
  assert.equal(Object.hasOwn(await f.sync(false),'model'),false);
  f.ctx.memoryManager.peek=()=> 'starting';assert.equal((await f.sync()).memoryAuthority.ready,false);
  f.ctx.memoryManager.enabled=false;await assert.rejects(f.sync(),{code:'MEMORY_UNAVAILABLE'});
+});
+
+test('phone memory replacement is published only after all submitted originals finish forming',async t=>{
+ const f=await fixed(t),s=await f.sync();await f.call('/turns',{generation:s.generation,turns:[turn('replace-a')],handover:{id:'replacement',totalTurns:1,conversationCount:1,complete:true}});
+ const status=async()=>{const box=await f.call('/sync',{publicJwk:await f.vault.key(),generation:s.generation,hashes:{},phoneFirst:true,phoneMemoryTurns:['replace-a']});return (await f.vault.open(box,{ownerId:'a',hostId:'synthetic-host',deviceId:'phone-a'})).phoneMemory;};
+ assert.equal((await status()).completed.length,0);await f.settle();assert.equal((await status()).completed[0].turnId,'replace-a');
+});
+
+test('completion after a memory snapshot was read waits for the next snapshot before replacing a draft',async t=>{
+ const f=await fixed(t),s=await f.sync();await f.call('/turns',{generation:s.generation,turns:[turn('late-complete')],handover:{id:'late-complete-job',totalTurns:1,conversationCount:1,complete:true}});
+ const list=f.ctx.backend.listModels;let finish=true;
+ f.ctx.backend.listModels=async()=>{const result=await list();if(finish){finish=false;const job=f.ctx.accountState('a').historyImports[0];job.state='completed';job.items[0].done=true;job.items[0].receipts=[{done:true,evidenceIds:[]}];}return result;};
+ const read=async()=>{const box=await f.call('/sync',{publicJwk:await f.vault.key(),generation:s.generation,hashes:{},phoneFirst:true,phoneMemoryTurns:['late-complete']});return (await f.vault.open(box,{ownerId:'a',hostId:'synthetic-host',deviceId:'phone-a'})).phoneMemory.completed;};
+ assert.equal((await read()).length,0);assert.equal((await read()).length,1);
+});
+
+test('phone source forgetting keeps originals, removes only its evidence, and cannot be replayed into formation',async t=>{
+ const f=await fixed(t),s=await f.sync(),a=turn('keep-original-a'),b=turn('keep-original-b');
+ await f.call('/turns',{generation:s.generation,turns:[a,b],handover:{id:'forget-one',totalTurns:2,conversationCount:2,complete:true}});await f.settle();
+ f.device='stranger';await f.sync();await assert.rejects(f.call('/turns',{generation:s.generation,turns:[],forgetTurns:[a.id]}),{code:'FORBIDDEN'});f.device='phone-a';
+ await f.call('/turns',{generation:s.generation,turns:[],forgetTurns:[a.id]});await f.settle();
+ const before=f.requests;await f.call('/turns',{generation:s.generation,turns:[a],handover:{id:'replay-one',totalTurns:1,conversationCount:1,complete:true}});await f.settle();
+ assert.deepEqual([f.sources.size,Object.keys(f.ctx.accountState('a').phoneHistory).length,f.requests-before],[1,2,0]);
+});
+
+test('excluded phone originals remain readable but cannot be admitted by a later ordinary retry',async t=>{
+ const f=await fixed(t),s=await f.sync(),original=turn('temporary-a');
+ await f.call('/turns',{generation:s.generation,turns:[{...original,memoryExcluded:true}],handover:{id:'excluded',totalTurns:1,conversationCount:1,complete:true}});await f.settle();
+ await f.call('/turns',{generation:s.generation,turns:[original],handover:{id:'excluded-retry',totalTurns:1,conversationCount:1,complete:true}});await f.settle();
+ assert.equal(f.requests,0);assert.equal(f.ctx.accountState('a').phoneHistory[original.conversationId].turns[0].messages[0].text,original.messages[0].text);
+});
+
+test('deleting received originals retains formed memory and rejects a delayed original replay',async t=>{
+ const f=await fixed(t),s=await f.sync(),original=turn('delete-only');await f.call('/turns',{generation:s.generation,turns:[original],handover:{id:'retained-memory',totalTurns:1,conversationCount:1,complete:true}});await f.settle();
+ await f.call('/turns',{generation:s.generation,turns:[],deleteConversations:[original.conversationId]});const replay=await f.call('/turns',{generation:s.generation,turns:[original]});await f.settle();
+ assert.equal(Object.keys(f.ctx.accountState('a').phoneHistory).length,0);assert.equal(f.sources.size,1);assert.equal(replay.receipts[0].state,'deleted');
+});
+
+test('a phone can delete its not-yet-received original without deleting another phone history',async t=>{
+ const f=await fixed(t),s=await f.sync(),original=turn('late-delete');await f.call('/turns',{generation:s.generation,turns:[],deleteConversations:[original.conversationId]});
+ const replay=await f.call('/turns',{generation:s.generation,turns:[original]});assert.equal(replay.receipts[0].state,'deleted');
+ await f.call('/turns',{generation:s.generation,turns:[turn('owned-a')]});f.device='phone-b';await f.sync();await assert.rejects(f.call('/turns',{generation:s.generation,turns:[],deleteConversations:['owned-a']}),{code:'FORBIDDEN'});
+});
+
+test('forgetting an owned partial upload restarts its original safely with formation excluded',async t=>{
+ const f=await fixed(t),s=await f.sync(),original=turn('partial-forget','large-chat','合成原话'.repeat(5000));
+ const parts=(value:any)=>{const raw=Buffer.from(JSON.stringify(value)),sha256=createHash('sha256').update(raw).digest('hex'),mid=Math.floor(raw.length/2);return [raw.subarray(0,mid),raw.subarray(mid)].map((data,index)=>({id:value.id,conversationId:value.conversationId,timestamp:value.timestamp,index,count:2,sha256,encoding:'json-utf8-base64',data:data.toString('base64')}));};
+ await f.call('/turns',{generation:s.generation,turns:[],turnFragments:[parts(original)[0]]});
+ await f.call('/turns',{generation:s.generation,turns:[],forgetTurns:[original.id]});
+ for(const p of parts({...original,memoryExcluded:true}))await f.call('/turns',{generation:s.generation,turns:[],turnFragments:[p]});await f.settle();
+ assert.equal(f.requests,0);assert.equal(f.ctx.accountState('a').phoneHistory[original.conversationId].turns[0].messages[0].text,original.messages[0].text);
 });
 test('D119 task-capable legacy phone sync wakes a cold memory worker before advertising readiness',async t=>{
  const f=await fixed(t);let connected=false,starts=0;

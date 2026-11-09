@@ -267,7 +267,7 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       if (terminal(state)) {
         await save(ownerId, records => {
           const j = records.find(j => j.id === job.id), i = j.items.find(i => i.key === item.key), r = i.receipts.find(r => r.eventId === pending.eventId);
-          r.done = true; i.cursor++; i.done = i.cursor >= i.chunks; j.countPending = true; j.failures = 0; j.error = null;j.attemptLimit=3;j.retryBaseline=0;
+          r.done = true; i.cursor++; i.done = i.sourceRemoved===true||i.cursor >= i.chunks; j.countPending = true; j.failures = 0; j.error = null;j.attemptLimit=3;j.retryBaseline=0;
         });
         await refreshCount(ownerId, job.id); return;
       }
@@ -278,12 +278,14 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       return;
     }
     // A source edit requires another preview and explicit start; never silently import a changed file.
+    if(jobs(ownerId).find(j=>j.id===job.id)?.items.find(i=>i.key===item.key)?.sourceRemoved)return;
     const c = job.app === 'phone' ? context.phoneHistory.read(ownerId,item.key)
       : (await read(job.app, item.file, item.locator)).find(c => importKey(c) === item.key || importKey({...c,fingerprint:c.legacyFingerprint})===item.key);
     if (!c) throw failure('IMPORT_SOURCE_CHANGED', 409);
     const chunks = importChunks(c), boundary = importBoundary({...c,fingerprint:item.fingerprint}, job, chunks[item.cursor], item.cursor);
     const accepted = (ledger.jobs ?? []).find(j => j.acceptance?.boundary_event_id === boundary.event_id);
-    if (!permit(ownerId, job.routeId) || jobs(ownerId).find(j=>j.id===job.id)?.items.find(i=>i.key===item.key)?.deleted) return;
+    const currentItem=jobs(ownerId).find(j=>j.id===job.id)?.items.find(i=>i.key===item.key);
+    if (!permit(ownerId, job.routeId) || currentItem?.deleted||currentItem?.sourceRemoved) return;
     if (!accepted) await context.memoryManager.ingestImport(ownerId, boundary, job.routeId);
     const confirmed = accepted ?? (await context.memoryManager.query(ownerId, 'query_jobs', { operation: 'list' })).jobs?.find(j => j.acceptance?.boundary_event_id === boundary.event_id);
     if (!confirmed) throw failure('IMPORT_RECEIPT_UNAVAILABLE', 503);
@@ -353,7 +355,7 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
     await flight;
   }
   async function receivePhone(ownerId, deviceName, turns, handover) {
-    const model=await modelFor(ownerId), items=turns.map(turn=>{const c=context.phoneHistory.read(ownerId,phoneTurnKey(turn));return {
+    const model=await modelFor(ownerId), items=turns.filter(turn=>!turn.memoryExcluded).map(turn=>{const c=context.phoneHistory.read(ownerId,phoneTurnKey(turn));return {
       key:phoneTurnKey(turn),id:turn.conversationId,turnId:turn.id,at:c.at,until:c.until,characters:c.characters,bytes:Buffer.byteLength(JSON.stringify(turn)),
       chunks:importChunks(c).length,cursor:0,done:false,receipts:[] };});
     let jobId;
@@ -378,24 +380,33 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
     if(job.state==='awaiting_confirmation')await missingPhoneModel(ownerId,job);
     return {importId:jobId,state:job.state};
   }
-  async function forgetPhone(ownerId, conversationIds) {
+  async function forgetPhoneSources(ownerId, matches, key, removeOriginals) {
     // Stop new formation before collecting the already accepted durable sources.
-    await save(ownerId,records=>{for(const j of records.filter(j=>j.app==='phone'))for(const i of j.items)if(conversationIds.includes(i.id))i.deleted=true;});
+    await save(ownerId,records=>{for(const j of records.filter(j=>j.app==='phone'&&!j.phoneErasure))for(const i of j.items)if(matches(i))i.deleted=true;});
     await flight?.catch(()=>{});
     await save(ownerId,records=>{
       for(const original of [...records].filter(j=>j.app==='phone'&&!j.phoneErasure)) {
-        const items=original.items.filter(i=>i.deleted&&conversationIds.includes(i.id));if(!items.length)continue;
-        const id=`phone-forget-${digest(original.id+JSON.stringify(conversationIds)).slice(0,40)}`;
+        const items=original.items.filter(i=>i.deleted&&matches(i));if(!items.length)continue;
+        const id=`phone-forget-${digest(original.id+key).slice(0,40)}`;
         if(records.some(j=>j.id===id))continue;
         records.push({...structuredClone(original),id,items:structuredClone(items),state:'forgetting',phoneErasure:true,originalImportId:original.id,forgetRequested:true,
           forgottenEvidence:[],deleteRequests:{},memoryCount:0,createdAt:now()});
         for(const item of items)item.done=true;
       }
     });
-    await context.phoneHistory.remove(ownerId,conversationIds);
+    await removeOriginals?.();
     void tick().catch(()=>{});
   }
-  return { preview, action, list, source, permit, receivePhone, forgetPhone,
+  const forgetPhone=(ownerId,ids)=>forgetPhoneSources(ownerId,i=>ids.includes(i.id),JSON.stringify(ids),()=>context.phoneHistory.remove(ownerId,ids));
+  const forgetPhoneTurns=(ownerId,ids)=>forgetPhoneSources(ownerId,i=>ids.includes(i.turnId),'turns:'+JSON.stringify([...ids].sort()));
+  async function removePhoneOriginals(ownerId,ids){
+    await flight?.catch(()=>{});
+    await save(ownerId,records=>{for(const job of records.filter(j=>j.app==='phone'&&!j.phoneErasure))for(const item of job.items)if(ids.includes(item.id)){
+      item.sourceRemoved=true;if(!item.receipts.some(r=>!r.done))item.done=true;
+    }});
+    await context.phoneHistory.remove(ownerId,ids);
+  }
+  return { preview, action, list, source, permit, receivePhone, forgetPhone,forgetPhoneTurns,removePhoneOriginals,
     requestLimit: ownerId => MAX_BODY + 2 * Math.ceil((previews.get(ownerId)?.items.length ?? 0) / 8),
     owns: (ownerId, routeId) => jobs(ownerId).some(j => j.routeId === routeId),
     async start() { timer = setInterval(() => void tick().catch(() => {}), pollMs); timer.unref?.(); },

@@ -18,6 +18,11 @@
       if (desktop) return;
       let engine, scope, identity, polling = false, offline = false, selected = null, error = '', showHistory = false, taskMode=false;
       goalsCore.offlineMemoryReplica = () => identity?.ownerId === core.state.ownerId ? engine?.view().snapshot ?? null : null;
+      goalsCore.searchPhoneMemory=(...args)=>engine?.searchPhoneMemory(...args)??[];
+      goalsCore.phoneMemoryScope=id=>engine?.phoneMemoryScope(id);
+      goalsCore.retryPhoneMemory=()=>engine?.retryPhoneMemory();
+      goalsCore.forgetPhoneMemory=(id,scope)=>engine?.forgetPhoneMemory(id,scope);
+      goalsCore.correctPhoneMemory=item=>{selected=item.conversationId;taskMode=false;input.value=`更正一下：${item.text}。现在是：`;open();paint();};
       let memoryReplica, modelReplica, currentModel=null, modelSnapshot;
       const refreshModels=async()=>{modelReplica=await core.getModelReplica?.();if(!modelReplica)return;modelSnapshot=await modelReplica.read();currentModel=modelSnapshot.current;try{modelSnapshot=await modelReplica.sync();currentModel=modelSnapshot.current;}catch{}paint();};
       const section = element('section', '', 'offline-chat'); section.hidden = true; section.setAttribute('aria-label', '离线对话');
