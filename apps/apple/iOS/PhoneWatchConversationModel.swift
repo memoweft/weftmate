@@ -58,7 +58,7 @@ import WeftMateCore
         }
         let text=explicit.map { $0.text.isEmpty ? prior?.text ?? "" : $0.text } ?? request.text
         guard !text.isEmpty else { throw WatchChatFailure.invalidInput }
-        let record=WatchChatRecord(request:request,text:text,device:request.device ?? explicit?.device ?? WatchContentRouting.rule(text))
+        let record=WatchChatRecord(request:request,text:text,device:request.device ?? explicit?.device ?? WatchContentRouting.rule(text,previous:prior?.device))
         try save(record)
         let key=taskKey(request)
         tasks[key]=Task { [weak self] in

@@ -83,9 +83,10 @@ public enum WatchContentRouting {
         }
         return nil
     }
-    public static func rule(_ text: String) -> WatchAnswerDevice? {
+    public static func rule(_ text: String, previous: WatchAnswerDevice? = nil) -> WatchAnswerDevice? {
         if let selected=explicit(text) { return selected.device }
         let value=text.lowercased()
+        if let previous,["继续","接着说","然后呢","再试一次","再来一次","continue","try again"].contains(value.trimmingCharacters(in:.whitespacesAndNewlines.union(.punctuationCharacters))) { return previous }
         if value.range(of:#"^(为什么|什么是|解释|介绍|怎么理解|why\b|what is\b|explain\b)"#,options:.regularExpression) != nil,
            value.range(of:#"(然后|并且|并帮|再帮|and then)"#,options:.regularExpression) == nil { return .phone }
         // Execution and local resources win over a question mark at the end.

@@ -11,6 +11,8 @@ import Testing
         #expect(WatchContentRouting.rule(text) == .phone)
     }
     #expect(WatchContentRouting.rule("帮我处理一下") == nil)
+    #expect(WatchContentRouting.rule("继续",previous:.computer) == .computer)
+    #expect(WatchContentRouting.rule("继续",previous:.phone) == .phone)
 }
 
 @Test func watchExplicitChoiceWinsAndModelCannotInjectAnAction() {
