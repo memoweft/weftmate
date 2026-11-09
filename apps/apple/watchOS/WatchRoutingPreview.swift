@@ -7,6 +7,11 @@ struct WatchRoutingPreview {
     var snapshot: WatchChatSnapshot
     var draft=""
     var reachable=true
+    var approval: WatchTimelineSnapshot? {
+        guard scene == "approval" else { return nil }
+        return .init(accountKey:"synthetic-watch",sessionID:"synthetic-session",taskID:nil,progress:"等待批准",running:true,
+                     assistantSummary:"",approvals:[.init(id:"synthetic-approval",summary:"运行合成脚本")],completedTaskIDs:[])
+    }
     static var current: Self? {
         let args=ProcessInfo.processInfo.arguments
         guard let i=args.firstIndex(of:"--watch-routing-preview"),args.indices.contains(i+1) else { return nil }

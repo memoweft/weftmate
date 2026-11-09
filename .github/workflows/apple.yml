@@ -32,7 +32,7 @@ jobs:
   core:
     if: inputs.focus != 'watch-routing'
     name: Swift core (blocking) and state report
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 45
     defaults:
       run:
@@ -90,7 +90,7 @@ jobs:
   build:
     if: inputs.focus != 'watch-routing'
     name: ${{ matrix.platform }} build (blocking)
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -141,7 +141,7 @@ jobs:
   phone-tests:
     if: inputs.focus != 'watch-routing'
     name: iPhone UI report (${{ matrix.group }})
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 90
     # Preparation failures also remain reporting-only, with missing data called out.
     continue-on-error: true
@@ -235,7 +235,7 @@ jobs:
             -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/watch-build" \
             -jobs 4 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/watch-results/build.log"
       - name: Routing through real phone and computer HTTP
-        run: python3 apps/apple/Scripts/run_state_checks.py --core-build "$RUNNER_TEMP/watch-core" --check WatchRoutingModelChecks --artifacts "$RUNNER_TEMP/watch-results/state"
+        run: python3 apps/apple/Scripts/run_state_checks.py --core-build "$RUNNER_TEMP/watch-core" --check WatchRoutingModelChecks --check TaskInteractionChecks --artifacts "$RUNNER_TEMP/watch-results/state"
       - name: Watch native interaction and screenshots
         run: python3 apps/apple/Scripts/run_watch_routing_ui.py --derived-data "$RUNNER_TEMP/watch-build" --artifacts "$RUNNER_TEMP/watch-results/ui"
       - name: Results

@@ -24,6 +24,7 @@ import WeftMateCore
         #if DEBUG && targetEnvironment(simulator)
         if ProcessInfo.processInfo.arguments.contains("--ui-testing"),let preview=WatchRoutingPreview.current {
             routingPreview=preview.scene; chat=preview.snapshot; draft=preview.draft; reachable=preview.reachable
+            snapshot=preview.approval; decisions.apply(snapshot)
             if let record=chat?.record { conversationID=record.request.conversationID }
             return
         }

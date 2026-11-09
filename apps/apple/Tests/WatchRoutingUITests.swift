@@ -20,7 +20,7 @@ final class WatchRoutingUITests: XCTestCase {
     }
     @MainActor func testLoadingFailureAndOffline() {
         let app=XCUIApplication();defer { app.terminate() }
-        for scene in ["loading","error","offline","answer"] {
+        for scene in ["loading","error","offline","answer","approval"] {
             app.launchArguments=["--ui-testing","--watch-routing-preview",scene];app.launch()
             XCTAssertTrue(app.otherElements["watchHome"].waitForExistence(timeout:20));capture(app,"watch-"+scene);app.terminate()
         }
