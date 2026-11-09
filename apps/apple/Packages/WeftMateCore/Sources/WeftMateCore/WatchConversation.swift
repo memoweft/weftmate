@@ -62,7 +62,7 @@ public enum WatchChatFailure: Error, LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .invalidInput: "这句话没能发送，请缩短后再试。"
-        case .accountChanged: "手机账号已变化，请刷新后再发。"
+        case .accountChanged: "手机状态已变化，请刷新后再发。"
         case .conflict: "原请求内容已变化，请重新发送。"
         case .unavailable: "电脑现在不在线。这次没有排队，在线后可以重新发送。"
         case .busy: "上一句话还在处理，请等回复后再发。"

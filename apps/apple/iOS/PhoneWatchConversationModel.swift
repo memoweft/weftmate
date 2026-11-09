@@ -208,7 +208,10 @@ import WeftMateCore
                         }
                     }
                 } else { record.phase = .uncertain; record.notice=WatchChatFailure.uncertain.errorDescription }
-            } catch { record.notice=(error as? WatchChatFailure)?.errorDescription ?? "暂时读不到电脑回复，请刷新。" }
+            } catch {
+                if record.phase.active { record.phase = .uncertain }
+                record.notice="暂时读不到电脑回复，请刷新核对；也可以新建对话让手机回答。"
+            }
         }
         if record != records.first(where: { $0.request.id == record.request.id }) { try save(record) }
         _ = try check(record.request)
