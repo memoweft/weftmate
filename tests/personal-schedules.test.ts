@@ -1,3 +1,4 @@
+// 保护：原生定时器与日历续期共用受控时钟，重复时段和错过的任务不会因真实日期变化而误判。
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -68,6 +69,7 @@ async function fixture(t: any, timeZone = 'Asia/Shanghai') {
   const root = await mkdtemp(join(tmpdir(), 'weft-schedule-unit-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   let now = Date.now();
+  t.mock.timers.enable({apis:['Date'],now});
   const events: any[] = [], definitions = new Map(), calls: any[] = [];
   const agent: any = { id: 'session-a', session: { header: { seedLength: 0 }, events,
     append(type: string, data: unknown) { const event = { type, data, seq: events.length, timestamp: new Date(now).toISOString() }; events.push(event); return event; } } };
@@ -83,7 +85,7 @@ async function fixture(t: any, timeZone = 'Asia/Shanghai') {
     assert.ok(record.id, JSON.stringify(record)); await manager.register(agent, record); return record;
   };
   return { agent, events, calls, create, tools:ctx.tools, get manager() { return manager; },
-    advance(ms: number) { now += ms; }, async restart() { await manager.close(); manager = await make(); }, now: () => now };
+    advance(ms: number) { now += ms;t.mock.timers.setTime(now); }, async restart() { await manager.close(); manager = await make(); }, now: () => now };
 }
 
 test('account delete presentation cannot replace the manager native deletion primitive', nativeFixture, async t => {
