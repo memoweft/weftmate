@@ -79,7 +79,7 @@ import WeftMateCore
     func clearLocalData() {
         stop()
         do {
-            guard let store else { return };try store.clear();self.store=nil;app?.offline.erase();state = .init();library = .init();models=[];modelID="";draft="";self.store=store;state.cancelReminder(.account);try persist();notice=nil;handoffCount=0;handoffBytes=0
+            guard let store else { return };try store.clear();self.store=nil;app?.offline.erase();state = .init();state.watchGeneration=UUID().uuidString.lowercased();library = .init();models=[];modelID="";draft="";self.store=store;state.cancelReminder(.account);try persist();notice=nil;handoffCount=0;handoffBytes=0
             #if os(iOS)
             app?.clearWatchConversation()
             #endif
@@ -172,6 +172,7 @@ import WeftMateCore
         do {
             let next=try PhoneChatStore(account:identity,directory:app.healthStateDirectory.deletingLastPathComponent().appendingPathComponent("PhoneChats"),credentials:credentialsOverride ?? KeychainCredentialStore(service:app.phoneCredentialNamespace))
             state=try next.load();store=next;state.interruptReplies()
+            if state.watchGeneration == nil { state.watchGeneration=UUID().uuidString.lowercased() }
             do { library=try next.loadLibrary();models=library.services.flatMap(\.configurations);modelID=library.threadSelections?[state.selected ?? ""] ?? library.selectedProfileId ?? models.first?.id ?? "" }
             catch { models=try next.loadModels();library=(try? PhoneModelLibrary.migrate(models)) ?? .init();modelID=models.first?.id ?? "";notice="旧模型仍可使用，模型服务整理暂未完成，稍后再试。" }
             draft=state.pending?.text ?? "";draftTask?.cancel();draftTask=nil;try persist()

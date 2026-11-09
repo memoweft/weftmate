@@ -5,6 +5,11 @@ import WeftMateCore
     private weak var app: AppleAppModel?
     private var tasks: [String:Task<Void,Never>] = [:]
     init(app: AppleAppModel) { self.app=app }
+    var accountKey: String? {
+        guard let app,let generation=app.phoneChat.state.watchGeneration else { return nil }
+        return app.phoneAccountIdentity+"|"+generation
+    }
+    func cancel() { tasks.values.forEach { $0.cancel() }; tasks.removeAll() }
     private func taskKey(_ request: WatchChatRequest) -> String { request.accountKey+"|"+request.id }
     var computerSessionID: String? {
         guard let app else { return nil }
@@ -17,7 +22,8 @@ import WeftMateCore
     }
     private func check(_ request: WatchChatRequest) throws -> AppleAppModel {
         let app=try current()
-        guard app.phoneAccountIdentity == request.accountKey else { throw WatchChatFailure.accountChanged }
+        try Task.checkCancellation()
+        guard accountKey == request.accountKey else { throw WatchChatFailure.accountChanged }
         return app
     }
     private func save(_ record: WatchChatRecord) throws { try check(record.request).phoneChat.saveWatchRecord(record) }
@@ -148,9 +154,10 @@ import WeftMateCore
         let records=app.phoneChat.state.watchRequests ?? []
         let selected=requestID == nil ? records.last : records.first(where: { $0.request.id == requestID })
         guard var record=selected else {
-            return .init(accountKey:app.phoneAccountIdentity)
+            guard let key=accountKey else { throw WatchChatFailure.noConversation }
+            return .init(accountKey:key)
         }
-        if tasks[taskKey(record.request)] != nil { return .init(accountKey:app.phoneAccountIdentity,record:record) }
+        if tasks[taskKey(record.request)] != nil { return .init(accountKey:record.request.accountKey,record:record) }
         var answer=""
         if record.phase == .routing || record.phase == .sending {
             record.phase = record.command == nil ? .failed : .uncertain
@@ -204,6 +211,7 @@ import WeftMateCore
             } catch { record.notice=(error as? WatchChatFailure)?.errorDescription ?? "暂时读不到电脑回复，请刷新。" }
         }
         if record != records.first(where: { $0.request.id == record.request.id }) { try save(record) }
-        return .init(accountKey:try check(record.request).phoneAccountIdentity,record:record,answer:answer)
+        _ = try check(record.request)
+        return .init(accountKey:record.request.accountKey,record:record,answer:answer)
     }
 }

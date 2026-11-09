@@ -92,6 +92,7 @@ public struct PhoneChatThread: Codable, Equatable, Identifiable, Sendable {
 }
 public struct PhoneChatState: Codable, Sendable {
     public var watchRequests: [WatchChatRecord]?
+    public var watchGeneration: String?
     public var threads: [PhoneChatThread] = []
     public var selected: String?
     public var migrations: [String:PhoneChatMigration]?

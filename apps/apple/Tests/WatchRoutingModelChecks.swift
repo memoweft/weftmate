@@ -27,7 +27,7 @@ import WeftMateCore
             guard reply.accountKey == request.accountKey else { throw WatchChatFailure.accountChanged }
         }
         func require(_ value: Bool,_ name: String) throws { guard value else { throw NSError(domain:name,code:1) };print("PASS "+name) }
-        func request(_ text: String,conversation: String = UUID().uuidString) -> WatchChatRequest { .init(conversationID:conversation,accountKey:app.phoneAccountIdentity,text:text) }
+        func request(_ text: String,conversation: String = UUID().uuidString) -> WatchChatRequest { .init(conversationID:conversation,accountKey:router.accountKey!,text:text) }
         func settled(_ request: WatchChatRequest) async throws -> WatchChatSnapshot {
             for _ in 0..<160 {
                 let value=try await router.snapshot(requestID:request.id)
@@ -69,6 +69,13 @@ import WeftMateCore
         try await Task.sleep(for:.milliseconds(600))
         let finalCounts=try await counts()
         try require(app.phoneChat.state.watchRequests?.isEmpty != false && app.phoneChat.state.threads.isEmpty && finalCounts["questions"] == afterRestart["questions"],"late classifier result cannot cross accounts")
+        try app.phoneChat.saveModel(.init(name:"合成手机模型",baseURL:ready["model"]!+"/v1",model:"synthetic",apiKey:"synthetic-watch-key"))
+        let clearing=request("慢速清空检查");try await deliver(clearing,to:restarted)
+        try await Task.sleep(for:.milliseconds(100));app.phoneChat.clearLocalData()
+        try await Task.sleep(for:.milliseconds(600))
+        do { try await deliver(clearing,to:restarted);throw NSError(domain:"OldWatchRequestSurvivedClear",code:1) }
+        catch WatchChatFailure.accountChanged {}
+        try require(app.phoneChat.state.watchRequests?.isEmpty != false && app.phoneChat.state.threads.isEmpty,"cleared storage rejects delayed and replayed watch request")
         let report: [String:Any]=["passed":true,"realPhoneHTTP":true,"realPersonalHost":true,"compiledComputerRuntime":false,"watchConnectivityPairing":false,"counts":try await counts()]
         try JSONSerialization.data(withJSONObject:report,options:[.prettyPrinted,.sortedKeys]).write(to:root.appendingPathComponent("watch-routing-report.json"))
     }
