@@ -8,6 +8,15 @@ import {createPersonalAccessService} from '../../../src/personal-access/index.mj
 import {syntheticBackend} from './a5_synthetic_backend.mjs';
 process.umask(0o077);
 const root=await realpath(await mkdtemp(join(tmpdir(),'wm-watch-routing-'))),runtime=syntheticBackend(root);
+const sendMessage=runtime.backend.sendMessage;
+runtime.backend.sendMessage=async args=>{
+ const receipt=await sendMessage(args);
+ if(args.text.includes('长历史')){
+  const session=runtime.sessions.get(args.sessionId);
+  for(let i=0;i<225;i++)session.events.push({seq:session.events.length,time:Date.now(),type:'assistant/message',data:{content:[{type:'text',text:'合成进度片段 '+i}]}});
+ }
+ return receipt;
+};
 const host=await createPersonalAccessService({root:join(root,'host'),port:0,backend:runtime.backend});runtime.attach(host);
 const started=await host.start(),grant=await host.issueSetupGrant();
 const setup=await fetch(started.origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin:started.origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,username:'watch-tester',password:'synthetic-watch-only',deviceName:'合成电脑'})});
