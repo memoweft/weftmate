@@ -35,11 +35,8 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
             guard let model = self?.model else { reply.call(["error": "手机尚未打开 WeftMate"]); return }
             if action == "chat.send" {
                 do {
-                    guard let chatRequest,chatRequest.count <= 32_768 else { throw WatchChatFailure.invalidInput }
-                    let request=try JSONDecoder().decode(WatchChatRequest.self,from:chatRequest)
-                    _ = try await model.watchConversation.snapshot()
-                    try model.watchConversation.send(request)
-                    reply.call(["chat":try await model.watchConversation.snapshot(requestID:request.id).encoded()])
+                    guard let chatRequest else { throw WatchChatFailure.invalidInput }
+                    reply.call(["chat":try await model.watchConversation.receive(chatRequest)])
                 } catch { reply.call(["error":(error as? WatchChatFailure)?.errorDescription ?? "这句话没能发送，请刷新后重试。"] ) }
             } else if action == "approval", let sessionID, let approvalID, let outcome {
                 let success = await model.respondFromWatch(sessionID: sessionID, approvalID: approvalID, outcome: outcome)
@@ -59,6 +56,7 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
     @MainActor func publish(_ snapshot: WatchTimelineSnapshot?, clearChat: Bool = false) {
         guard session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else { return }
         var payload: [String: Any] = snapshot.flatMap { try? JSONEncoder().encode($0) }.map { ["snapshot": $0] } ?? ["clear": true]
+        if let model { payload["chatAccountKey"]=model.phoneAccountIdentity }
         if clearChat { payload["clearChat"]=true }
         try? session.updateApplicationContext(payload)
         if session.isReachable { session.sendMessage(payload, replyHandler: nil, errorHandler: nil) }

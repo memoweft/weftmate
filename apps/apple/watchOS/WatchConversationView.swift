@@ -25,6 +25,10 @@ struct WatchConversationView: View {
                         Button("电脑") { model.sendChat(device:.computer) }
                     }.disabled(model.busy || !model.reachable)
                 }
+                if record.phase == .failed {
+                    Button("再发一次") { model.sendChat(device:record.device) }
+                        .disabled(model.busy || !model.reachable)
+                }
             } else {
                 Text("想聊些什么？").font(AppleTokens.Fonts.headline)
                 Text("问问题交给手机，电脑操作交给电脑。")
@@ -34,7 +38,7 @@ struct WatchConversationView: View {
                 .accessibilityIdentifier("watchChatInput")
                 .disabled(model.chatWorking)
             Button { model.sendChat() } label: { WeftLabel("发送",icon:"send",size:AppleTokens.Space.p16) }
-                .disabled(model.busy || model.chatWorking || !model.reachable || model.chat == nil || model.draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)
+                .disabled(model.busy || model.chatWorking || model.chat?.record?.phase == .uncertain || !model.reachable || model.chat == nil || model.draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)
                 .accessibilityIdentifier("watchChatSend")
             if model.chat?.record != nil {
                 Button("新对话") { model.newConversation() }.disabled(model.chatWorking || model.busy)

@@ -27,6 +27,13 @@ import WeftMateCore
               !app.cloudLogin.selectedComputerUnavailable,app.phoneChat.permitsComputerReplica(session.hostId) else { throw WatchChatFailure.unavailable }
         return (app,session)
     }
+    func receive(_ data: Data) async throws -> Data {
+        guard data.count <= 32_768 else { throw WatchChatFailure.invalidInput }
+        let request=try JSONDecoder().decode(WatchChatRequest.self,from:data)
+        _ = try await snapshot()
+        try send(request)
+        return try await snapshot(requestID:request.id).encoded()
+    }
     func send(_ request: WatchChatRequest) throws {
         try request.validate()
         let app=try check(request), records=app.phoneChat.state.watchRequests ?? []
@@ -34,10 +41,15 @@ import WeftMateCore
             guard previous.request == request else { throw WatchChatFailure.conflict }
             return
         }
-        guard !records.contains(where: { $0.request.conversationID == request.conversationID && $0.phase.active }) else { throw WatchChatFailure.busy }
+        guard !records.contains(where: { $0.request.conversationID == request.conversationID && ($0.phase.active || $0.phase == .uncertain) }) else { throw WatchChatFailure.busy }
         let explicit=WatchContentRouting.explicit(request.text)
         let prior=records.last(where: { $0.request.conversationID == request.conversationID })
-        if let explicit,explicit.text.isEmpty,prior?.device == explicit.device { return }
+        if let explicit,explicit.text.isEmpty,let prior,prior.device == explicit.device {
+            var existing=WatchChatRecord(request:request,text:prior.text,device:prior.device)
+            existing.phase=prior.phase; existing.threadID=prior.threadID; existing.replyID=prior.replyID
+            existing.hostID=prior.hostID; existing.command=prior.command; existing.notice=prior.notice
+            try save(existing); return
+        }
         let text=explicit.map { $0.text.isEmpty ? prior?.text ?? "" : $0.text } ?? request.text
         guard !text.isEmpty else { throw WatchChatFailure.invalidInput }
         let record=WatchChatRecord(request:request,text:text,device:request.device ?? explicit?.device ?? WatchContentRouting.rule(text))
@@ -160,18 +172,33 @@ import WeftMateCore
                     else if intent.kind == .create,receipt.state.isAccepted {
                         record.threadID=receipt.sessionId; record.phase = .failed; record.command=nil
                         record.notice="对话已建立，原话还没发出，请重新发送。"
-                    } else if intent.kind == .message,receipt.state.isAccepted,let id=record.threadID {
-                        let page=try await app.assistantClient.timelinePage(sessionID:id,limit:200)
+                    } else if intent.kind == .message,receipt.state.isAccepted,let id=record.threadID,let receiptID=receipt.receiptId {
+                        var page=try await app.assistantClient.timelinePage(sessionID:id,limit:200)
                         _ = try check(record.request)
-                        let events=page.events + (page.liveEvents ?? [])
-                        if let start=events.firstIndex(where: { $0.type == "user.message" && $0.data["receiptId"]?.string == receipt.receiptId }) {
+                        var events=page.events + (page.liveEvents ?? [])
+                        for _ in 0..<4 {
+                            if events.contains(where: { $0.type == "user.message" && $0.data["receiptId"]?.string == receiptID }) { break }
+                            guard page.hasOlder == true,let before=page.nextBeforeSeq else { break }
+                            page=try await app.assistantClient.timelinePage(sessionID:id,beforeSeq:before,limit:200)
+                            _ = try check(record.request); events=page.events+events
+                        }
+                        if let start=events.firstIndex(where: { $0.type == "user.message" && $0.data["receiptId"]?.string == receiptID }) {
                             let tail=events[start...].dropFirst(), end=tail.firstIndex(where: { $0.type == "user.message" }) ?? events.endIndex
                             let turn=Array(events[start..<end])
                             answer=try await app.assistantClient.timelineMessages(turn,sessionID:id).filter { $0.role == .assistant }.map(\.text).joined(separator:"\n")
                             let ending=turn.last(where: { $0.type == "turn.ended" || $0.type == "task.ended" })?.data["reason"]?.string
                             record.phase = ending == nil ? .running : ending == "completed" ? .complete : .failed
                             record.notice = record.phase == .failed ? "电脑这次未完成，请在手机查看。" : nil
-                        } else { record.phase = .running; record.notice="电脑已接收，正在准备回复。" }
+                        } else {
+                            let task=try await app.assistantClient.taskDetail(taskID:receipt.commandId)
+                            _ = try check(record.request)
+                            guard task.sessionId == id,task.source.requestId == intent.requestId else { throw WatchChatFailure.conflict }
+                            switch task.replyEvidence.status {
+                            case .completed: record.phase = .complete; record.notice="电脑已回复，请在手机查看完整记录。"
+                            case .failed,.aborted,.blocked: record.phase = .failed; record.notice="电脑这次未完成，请在手机查看。"
+                            default: record.phase = .running; record.notice="电脑已接收，正在准备回复。"
+                            }
+                        }
                     }
                 } else { record.phase = .uncertain; record.notice=WatchChatFailure.uncertain.errorDescription }
             } catch { record.notice=(error as? WatchChatFailure)?.errorDescription ?? "暂时读不到电脑回复，请刷新。" }

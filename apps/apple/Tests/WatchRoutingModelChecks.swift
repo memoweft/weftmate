@@ -21,6 +21,11 @@ import WeftMateCore
         app.phoneChat.newThread();app.phoneChat.draft="手机未发送的草稿"
         let selected=app.phoneChat.state.selected
         let router=PhoneWatchConversationModel(app:app)
+        func deliver(_ request: WatchChatRequest, to receiver: PhoneWatchConversationModel? = nil) async throws {
+            let data=try await (receiver ?? router).receive(JSONEncoder().encode(request))
+            let reply=try JSONDecoder().decode(WatchChatSnapshot.self,from:data)
+            guard reply.accountKey == request.accountKey else { throw WatchChatFailure.accountChanged }
+        }
         func require(_ value: Bool,_ name: String) throws { guard value else { throw NSError(domain:name,code:1) };print("PASS "+name) }
         func request(_ text: String,conversation: String = UUID().uuidString) -> WatchChatRequest { .init(conversationID:conversation,accountKey:app.phoneAccountIdentity,text:text) }
         func settled(_ request: WatchChatRequest) async throws -> WatchChatSnapshot {
@@ -35,34 +40,35 @@ import WeftMateCore
             let (data,_)=try await URLSession.shared.data(from:URL(string:ready["model"]!+"/report")!)
             return try JSONSerialization.jsonObject(with:data) as! [String:Int]
         }
-        let phone=request("你好");try router.send(phone);try router.send(phone)
+        let phone=request("你好");try await deliver(phone);try await deliver(phone)
         let phoneReply=try await settled(phone)
         try require(phoneReply.record?.phase == .complete && phoneReply.record?.device == .phone && phoneReply.answer.contains("手机已经回答"),"phone HTTP streamed answer")
         try require(app.phoneChat.draft == "手机未发送的草稿" && app.phoneChat.state.selected == selected,"phone draft and selection retained")
-        try router.send(phone)
+        try await deliver(phone)
         try require(try await counts()["questions"] == 1,"duplicate delivery never repeats model call")
-        let ambiguous=request("帮我处理一下");try router.send(ambiguous);let classified=try await settled(ambiguous)
+        let ambiguous=request("帮我处理一下");try await deliver(ambiguous);let classified=try await settled(ambiguous)
         try require(classified.record?.device == .phone && classified.record?.phase == .complete,"ambiguous input classified before generation")
-        let unknown=request("无效分类");try router.send(unknown);let choice=try await settled(unknown)
+        let unknown=request("无效分类");try await deliver(unknown);let choice=try await settled(unknown)
         try require(choice.record?.phase == .chooseDevice,"invalid classification asks for device")
         app.session=try await app.assistantClient.login(server:ServerConfiguration(input:ready["host"]!,allowLoopbackHTTP:true),username:"watch-tester",password:"synthetic-watch-only",deviceName:"合成手机")
-        let pc=request("打开电脑上的文件");try router.send(pc);let pcReply=try await settled(pc)
+        let pc=request("打开电脑上的文件");try await deliver(pc);let pcReply=try await settled(pc)
         try require(pcReply.record?.device == .computer && pcReply.record?.phase == .complete && !pcReply.answer.isEmpty,"computer real command and matching reply")
-        let afterPC=try await counts();try router.send(pc)
+        let afterPC=try await counts();try await deliver(pc)
         try require(try await counts()["sends"] == afterPC["sends"],"computer duplicate receipt does not execute again")
         app.offline.hostOffline=true
-        let offline=request("打开电脑软件");try router.send(offline);let unavailable=try await settled(offline)
+        let offline=request("打开电脑软件");try await deliver(offline);let unavailable=try await settled(offline)
         try require(unavailable.record?.phase == .failed && unavailable.record?.command == nil,"offline computer keeps no pending command")
         app.offline.hostOffline=false;_ = try await router.snapshot(requestID:offline.id)
         try require(try await counts()["sends"] == afterPC["sends"],"reconnect does not replay offline task")
         app.phoneChat=PhoneStandaloneModel(testCredentials:keys,testLoopback:true);app.phoneChat.activate(app:app)
-        let restarted=PhoneWatchConversationModel(app:app);try restarted.send(phone);try restarted.send(pc)
+        let restarted=PhoneWatchConversationModel(app:app);try await deliver(phone,to:restarted);try await deliver(pc,to:restarted)
         let afterRestart=try await counts()
         try require(afterRestart["sends"] == afterPC["sends"] && afterRestart["questions"] == afterPC["questions"],"durable duplicate protection after controller restart")
-        let switched=request("慢速模糊请求");try restarted.send(switched)
+        let switched=request("慢速模糊请求");try await deliver(switched,to:restarted)
         try await Task.sleep(for:.milliseconds(100));app.cloudLogin.subject="account-b";app.phoneChat.activate(app:app)
         try await Task.sleep(for:.milliseconds(600))
-        try require(app.phoneChat.state.watchRequests?.isEmpty != false && app.phoneChat.state.threads.isEmpty,"late classifier result cannot cross accounts")
+        let finalCounts=try await counts()
+        try require(app.phoneChat.state.watchRequests?.isEmpty != false && app.phoneChat.state.threads.isEmpty && finalCounts["questions"] == afterRestart["questions"],"late classifier result cannot cross accounts")
         let report: [String:Any]=["passed":true,"realPhoneHTTP":true,"realPersonalHost":true,"compiledComputerRuntime":false,"watchConnectivityPairing":false,"counts":try await counts()]
         try JSONSerialization.data(withJSONObject:report,options:[.prettyPrinted,.sortedKeys]).write(to:root.appendingPathComponent("watch-routing-report.json"))
     }

@@ -3,6 +3,7 @@ import XCTest
 
 final class WatchRoutingUITests: XCTestCase {
     @MainActor private func capture(_ app: XCUIApplication,_ name: String) {
+        Thread.sleep(forTimeInterval:0.4)
         let image=XCTAttachment(screenshot:app.screenshot());image.name=name;image.lifetime = .keepAlways;add(image)
     }
     @MainActor func testSendAndChooseDevice() {
