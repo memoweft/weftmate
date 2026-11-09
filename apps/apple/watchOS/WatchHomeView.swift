@@ -158,7 +158,8 @@ import WeftMateCore
             return
         }
         #endif
-        guard session.isReachable, !busy else { notice = "打开手机上的 WeftMate 后重试。"; return }
+        guard !busy else { return }
+        guard session.isReachable else { notice = "打开手机上的 WeftMate 后重试。"; return }
         busy = true; notice = nil
         let approvalID = message["approvalID"] as? String
         record("send", message)
