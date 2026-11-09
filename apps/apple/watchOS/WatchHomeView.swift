@@ -38,11 +38,11 @@ import WeftMateCore
     }
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         let reachable = session.isReachable, bytes = session.receivedApplicationContext["snapshot"] as? Data
-        Task { @MainActor in self.reachable = reachable; self.apply(bytes); if reachable { self.transferRunLog() } }
+        Task { @MainActor in self.reachable = reachable; self.apply(bytes); if reachable { self.refresh() } }
     }
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
         let reachable = session.isReachable
-        Task { @MainActor in self.reachable = reachable; RunLogRuntime.shared.connection(reachable ? "connecting" : "offline", code: reachable ? nil : "UNAVAILABLE"); if reachable { self.transferRunLog() } }
+        Task { @MainActor in self.reachable = reachable; RunLogRuntime.shared.connection(reachable ? "connecting" : "offline", code: reachable ? nil : "UNAVAILABLE"); if reachable { self.refresh() } }
     }
     nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
         let data = applicationContext["snapshot"] as? Data, clear = applicationContext["clear"] as? Bool == true, clearChat=applicationContext["clearChat"] as? Bool == true, account=applicationContext["chatAccountKey"] as? String
