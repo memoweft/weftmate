@@ -13,6 +13,7 @@ import WeftMateCore
     private var conversationID=UUID().uuidString.lowercased()
     private var pendingChat: WatchChatRequest?
     private var freshConversation=false
+    private var messageEpoch=UUID()
     #if DEBUG && targetEnvironment(simulator)
     private var routingPreview: String?
     #endif
@@ -54,6 +55,7 @@ import WeftMateCore
         Task { @MainActor in self.apply(data, clear: clear); if clearChat || self.chat.map({ account != nil && $0.accountKey != account }) == true { self.resetChat() } }
     }
     private func resetChat() {
+        messageEpoch=UUID(); busy=false
         chat=nil; pendingChat=nil; draft=""; freshConversation=true; conversationID=UUID().uuidString.lowercased()
     }
     private func transferRunLog() {
@@ -118,7 +120,7 @@ import WeftMateCore
     private func applyChat(_ data: Data) {
         guard var value=try? JSONDecoder().decode(WatchChatSnapshot.self,from:data) else { return }
         if let old=chat,old.accountKey != value.accountKey {
-            conversationID=UUID().uuidString.lowercased(); freshConversation=true; pendingChat=nil; draft=""
+            resetChat()
         }
         if let pending=pendingChat {
             if value.record?.request.id == pending.id {
@@ -161,9 +163,11 @@ import WeftMateCore
         guard !busy else { return }
         guard session.isReachable else { notice = "打开手机上的 WeftMate 后重试。"; return }
         busy = true; notice = nil
+        let epoch=messageEpoch
         let approvalID = message["approvalID"] as? String
         record("send", message)
         session.sendMessage(message, replyHandler: WatchMessageDelivery.reply { reply in
+            guard self.messageEpoch == epoch else { return }
             let data = reply.snapshot, error = reply.error, registered = reply.registered
             self.busy = false
             if let approvalID { self.decisions.finish(approvalID, registered: registered) }
@@ -174,6 +178,7 @@ import WeftMateCore
             if error != nil || (approvalID != nil && !registered) { RunLogRuntime.shared.record(.approvalFailure, ["phase": "approval", "code": "UNCONFIRMED"]) }
             if registered { self.refresh() }
         }, errorHandler: WatchMessageDelivery.failure {
+            guard self.messageEpoch == epoch else { return }
             self.busy = false
             if let approvalID { self.decisions.finish(approvalID, registered: false) }
             self.record("transportError")
