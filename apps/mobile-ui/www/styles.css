@@ -696,3 +696,14 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 .approval-risk-actions .danger {background:var(--wm-color-toast-danger);color:var(--wm-color-white);border-radius:var(--wm-radius-12);font-weight:500;}
 .approval-risk-actions .danger:hover {background:var(--wm-color-danger-hover);}
 .approval-risk-actions .danger:active {filter:brightness(.9);}
+.phone-memory-filters {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--wm-space-12);margin-block:var(--wm-space-20);}
+.phone-memory-filters .field {min-width:0;margin:0;}
+.phone-memory-filters .phone-memory-search {grid-column:1/-1;}
+.phone-memory-filters>.button {grid-column:1/-1;justify-self:end;}
+.phone-memory-filters input {box-sizing:border-box;min-width:0;width:100%;}
+.phone-memory-list .group-body {background:transparent;padding-inline:var(--wm-space-16);}
+.phone-memory-list .memory-item {background:transparent;border-radius:0;padding:var(--wm-space-16) 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere;}
+.phone-memory-list .memory-item:last-child {border-bottom:0;}
+.phone-memory-list .phone-memory-actions {gap:var(--wm-space-8);}
+.phone-memory-list .phone-memory-actions button {padding-inline:var(--wm-space-8);white-space:nowrap;}
+.phone-memory-delete-choice {display:flex;align-items:center;gap:var(--wm-space-12);padding-block:var(--wm-space-12);}

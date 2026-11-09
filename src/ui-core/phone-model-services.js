@@ -108,6 +108,11 @@
       if (selected?.serviceId === serviceId) selected = null;
       changed(view()); return { ...view(), model: selectedView() };
     }
+    function adoptReplica(value) {
+      services=structuredClone(value.services).map(service=>({...service,catalog:{status:'not_checked'}}));
+      selected=value.current?{serviceId:value.current.serviceId,modelId:value.current.modelId}:null;
+      changed(view());return view();
+    }
     const clear = () => { for (const service of services) service.apiKey = ''; services = []; selected = null; changed(view()); };
     function setDeepThinking(enabled) {
       if (!selected) return;
@@ -115,7 +120,7 @@
       if (model?.deepThinking?.supported !== true) return;
       model.deepThinking = { ...model.deepThinking, enabled: enabled === true }; changed(view());
     }
-    return { view, configure, refresh, select, update, remove, clear, currentModel, selectedView, setDeepThinking };
+    return { adoptReplica, view, configure, refresh, select, update, remove, clear, currentModel, selectedView, setDeepThinking };
   }
   globalThis.WeftPhoneModelServices = { create };
 })();

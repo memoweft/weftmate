@@ -77,14 +77,15 @@ test('restoring a cached phone waits for host login before replica sync and keep
   connected=true;await mounted.tick();assert.equal(syncs,1);assert.equal(accepted.length,1);mounted.close();
 });
 
-test('native phone vault without seal keeps cloud-supported tasks hidden and offline chat working without bridge errors', async () => {
+test('native phone vault without seal uses the synchronized model and keeps unsupported tasks hidden', async () => {
   const f=fixture(),calls:string[]=[],entries:any[]=[];
   const current={origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'};
   const status={authorized:true,accountId:'account',hostId:'host',generation:1,capabilities:{offlineTasks:1}};
-  const value={snapshot:{generation:1,items:[],recent:[],taskRecipient:{kty:'RSA'},model:{modelId:'synthetic-chat'},control:status},tasks:[],turns:[],conversations:[]};
+  const value={snapshot:{generation:1,items:[],recent:[],taskRecipient:{kty:'RSA'},control:status},tasks:[],turns:[],conversations:[]};
   const W=(globalThis as any).WeftOffline;let engine:any;
   f.environment.WeftOffline={...W,create:async(options:any)=>engine=await W.create(options)};
   f.environment.WeftPopover={menu:(_anchor:any,values:any[])=>entries.splice(0,entries.length,...values)};
+  const models={current:{modelId:'synthetic-chat'},services:[],local:[]};f.core.getModelReplica=async()=>({read:async()=>models,sync:async()=>models});
   f.core.connectionView=()=>({kind:'host_offline'});f.core.cloudOfflineStatus=async()=>status;
   f.core.cloudOfflineTasks=async(action:string)=>{assert.equal(action,'list');return {items:[]};};
   const nativeCall=async(method:string)=>{

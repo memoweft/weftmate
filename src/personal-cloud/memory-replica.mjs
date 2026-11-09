@@ -157,3 +157,15 @@ export function createMemoryExchange(context, hostId, authorize, withCodec) {
     });
   };
 }
+
+export async function readMemorySnapshot(context,ownerId,check){
+  const world=await readWorld(context,ownerId),items=[];
+  for(const row of world.rows.values()){
+    check();const plan=await preview(context.memoryManager,ownerId,row.key);
+    if(plan.revision!==world.revision)throw changed();
+    items.push({...row,plan:sharedPlan(plan,world)});
+  }
+  const head=await context.memoryManager.query(ownerId,'query_world',{operation:'revision'});
+  if(head.world_revision!==world.revision)throw changed();
+  check();return {revision:world.revision,items,retired:world.retired};
+}

@@ -11,6 +11,7 @@ const installed = async () => {
   try {
     await access(`${root}node_modules/oidc-provider/package.json`);
     await access(`${root}node_modules/jose/package.json`);
+    await access(`${root}node_modules/@serenity-kit/opaque/package.json`);
     return true;
   } catch {
     return false;

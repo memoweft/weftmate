@@ -3,7 +3,7 @@ import { failure } from '../personal-access/common.mjs';
 import { hasPrivateContent } from '../personal-access/temporary-chats.mjs';
 import { directoryPage, validCursor } from './directory-wire.mjs';
 
-function candidates(account, hostId) {
+export function candidates(account, hostId) {
   const identity = account.chatIdentity;
   if (identity?.version !== 2) throw failure('CHAT_INITIALIZING',503);
   const privateChats = new Set();
@@ -34,8 +34,9 @@ export function reconcileDirectory(feed, candidates, descriptions, activityTime)
     const title = (session.title ?? nativeTitle ?? prior?.title ?? '').slice(0,256);
     const times = [chat.createdAt,activityTime(id), info?.updatedAt, prior?.updatedAt].map(t => Date.parse(t)).filter(Number.isFinite);
     const updatedAt = new Date(Math.max(...times)).toISOString();
-    if (!prior || title !== prior.title || updatedAt !== prior.updatedAt)
-      rows.set(chat.chatId,{id:chat.chatId,title,updatedAt,seq:++seq});
+    const contentRevision=chat.contentRevision??1;
+    if (!prior || title !== prior.title || updatedAt !== prior.updatedAt || contentRevision!==prior.contentRevision)
+      rows.set(chat.chatId,{id:chat.chatId,title,updatedAt,contentRevision,seq:++seq});
   }
   for (const row of rows.values()) {
     if (!row.deleted && !present.has(row.id)) rows.set(row.id,{id:row.id,seq:++seq,deleted:true});

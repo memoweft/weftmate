@@ -24,7 +24,7 @@ test('new phone model sync uses the declared computer protocol and never sends p
  const context:any=vm.createContext({TextEncoder});vm.runInContext(await readFile('src/ui-core/offline.js','utf8'),context);
  for(const capabilities of [{},{offlinePhoneFirst:1}]){
   const requests:any[]=[];
-  const engine=await context.WeftOffline.create({identity:{hostId:'synthetic'},phoneModel:()=>({modelId:'synthetic'}),hostCapabilities:()=>capabilities,
+  const engine=await context.WeftOffline.create({identity:{hostId:'synthetic'},standalone:true,phoneModel:()=>({modelId:'synthetic'}),hostCapabilities:()=>capabilities,
    vault:{load:async()=>({snapshot:null,turns:[],conversations:[],tasks:[]}),key:async()=>({}),save:async()=>{},close:()=>{},open:async()=>({items:[],remove:[],hashes:{},generation:1,model:null,control:{accountId:'synthetic'}})},
    host:async(path:string,body:any)=>{requests.push({path,body});if(!capabilities.offlinePhoneFirst&&body.phoneFirst)throw {code:'INVALID_REQUEST',status:400};return {};},});
   await engine.sync();assert.equal(requests.length,1);assert.equal(requests[0].path,'/offline/sync');assert.equal(requests[0].body.phoneFirst,capabilities.offlinePhoneFirst?true:undefined);engine.close();
@@ -35,7 +35,7 @@ test('a legacy computer receives the first phone turn with its original fields, 
  const context:any=vm.createContext({TextEncoder});vm.runInContext(await readFile('src/ui-core/offline.js','utf8'),context);
  const turn={id:'synthetic-turn',conversationId:'synthetic-conversation',timestamp:1,messages:[{role:'user',text:'你好'},{role:'assistant',text:'合成回复'}]};
  const requests:any[]=[];
- const engine=await context.WeftOffline.create({identity:{hostId:'synthetic'},phoneModel:()=>({modelId:'synthetic'}),hostCapabilities:()=>({}),
+ const engine=await context.WeftOffline.create({identity:{hostId:'synthetic'},standalone:true,phoneModel:()=>({modelId:'synthetic'}),hostCapabilities:()=>({}),
   vault:{load:async()=>({snapshot:null,turns:[turn],conversations:[],tasks:[]}),key:async()=>({}),save:async()=>{},close:()=>{},open:async()=>({items:[],remove:[],hashes:{},generation:1,model:null,control:{accountId:'synthetic'}})},
   host:async(path:string,body:any)=>{requests.push({path,body});assert.equal(body.phoneFirst,undefined);assert.equal(body.handover,undefined);assert.equal(body.turnFragments,undefined);return path==='/offline/turns'?{generation:1,receipts:[{id:turn.id,state:'synced'}]}:{};},});
  await engine.sync();assert.deepEqual(requests.map(r=>r.path),['/offline/sync','/offline/turns']);assert.deepEqual(Object.keys(requests[1].body).sort(),['generation','turns']);engine.close();

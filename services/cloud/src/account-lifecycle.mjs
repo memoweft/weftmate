@@ -42,10 +42,10 @@ export function accountLifecycle({ database: db, accounts, relay }) {
         ON l.account_id=d.account_id AND l.fingerprint=d.fingerprint WHERE l.account_id=? AND l.host_id=?`).all(account.id, hostId);
       return revokeDevices(account, devices, token?.device_fingerprint);
     },
-    async remove(body, source, account, token) {
-      fields(body, ['password']);
+    async remove(body, source, account, token, passwordVerified=false) {
+      fields(body, passwordVerified?[]:['password']);
       const limits = accounts.check(account.email, source);
-      if (!await verifyPassword(body.password, JSON.parse(account.password))) {
+      if (!passwordVerified && !await verifyPassword(body.password, JSON.parse(account.password))) {
         accounts.limiter.fail(limits); throw new CloudError(401, 'INVALID_CREDENTIALS');
       }
       const current = accounts.get(account.id);
