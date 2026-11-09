@@ -27,6 +27,6 @@ const model=createServer(async(req,res)=>{
  res.end('data: '+JSON.stringify({choices:[{delta:{content}}]})+'\n\ndata: [DONE]\n\n');
 });
 model.listen(0,'127.0.0.1');await once(model,'listening');
-console.log(JSON.stringify({host:started.origin,model:`http://127.0.0.1:${model.address().port}`,root}));
-async function close(){model.closeAllConnections();model.close();await host.stop();await rm(root,{recursive:true,force:true});process.exit();}
+console.log(JSON.stringify({host:started.origin,hostId:started.hostId,model:`http://127.0.0.1:${model.address().port}`,root}));
+async function close(){model.closeAllConnections();model.close();await host.close();await rm(root,{recursive:true,force:true});process.exit();}
 process.once('SIGTERM',()=>void close());process.once('SIGINT',()=>void close());

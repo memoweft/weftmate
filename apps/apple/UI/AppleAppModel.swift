@@ -2368,7 +2368,7 @@ final class AppleAppModel: ObservableObject {
         devices = []
         messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = false; olderBusy = false
         #if os(iOS)
-        watchBridge.publish(nil)
+        watchBridge.publish(nil,clearChat:true)
         #endif
         selectedConversation = nil
         drafts = [:]

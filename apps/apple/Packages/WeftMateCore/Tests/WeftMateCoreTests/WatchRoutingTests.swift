@@ -54,3 +54,12 @@ import Testing
     let bytes=try WatchChatSnapshot(accountKey:"account-a",answer:String(repeating:"字",count:20000)).encoded()
     #expect(bytes.count < 32768)
 }
+
+@Test func watchSnapshotNeverExportsPersistedComputerCommand() throws {
+    let request=WatchChatRequest(conversationID:UUID().uuidString,accountKey:"account-a",text:"打开文件")
+    var record=WatchChatRecord(request:request,text:request.text,device:.computer)
+    record.command=try .init(server:ServerConfiguration(input:"https://example.com"),ownerId:"owner-a",hostId:"host-a",
+                            payload:SharedCommandPayload(requestId:"watch-test",kind:.create,targetDeviceId:"host-a",modelProfileId:"mimo").encoded())
+    let encoded=try WatchChatSnapshot(accountKey:request.accountKey,record:record).encoded()
+    #expect(try JSONDecoder().decode(WatchChatSnapshot.self,from:encoded).record?.command == nil)
+}

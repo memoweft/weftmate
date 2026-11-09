@@ -45,12 +45,15 @@ import WeftMateCore
         Task { @MainActor in self.reachable = reachable; RunLogRuntime.shared.connection(reachable ? "connecting" : "offline", code: reachable ? nil : "UNAVAILABLE"); if reachable { self.transferRunLog() } }
     }
     nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
-        let data = applicationContext["snapshot"] as? Data, clear = applicationContext["clear"] as? Bool == true
-        Task { @MainActor in self.apply(data, clear: clear) }
+        let data = applicationContext["snapshot"] as? Data, clear = applicationContext["clear"] as? Bool == true, clearChat=applicationContext["clearChat"] as? Bool == true
+        Task { @MainActor in self.apply(data, clear: clear); if clearChat { self.resetChat() } }
     }
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
-        let data = message["snapshot"] as? Data, clear = message["clear"] as? Bool == true
-        Task { @MainActor in self.apply(data, clear: clear) }
+        let data = message["snapshot"] as? Data, clear = message["clear"] as? Bool == true, clearChat=message["clearChat"] as? Bool == true
+        Task { @MainActor in self.apply(data, clear: clear); if clearChat { self.resetChat() } }
+    }
+    private func resetChat() {
+        chat=nil; pendingChat=nil; draft=""; freshConversation=true; conversationID=UUID().uuidString.lowercased()
     }
     private func transferRunLog() {
         guard session.isReachable else { return }

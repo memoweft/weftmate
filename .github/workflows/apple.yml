@@ -214,7 +214,7 @@ jobs:
   watch-routing:
     name: Watch routing native acceptance
     if: inputs.focus == 'watch-routing'
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4

@@ -56,9 +56,10 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
             }
         }
     }
-    @MainActor func publish(_ snapshot: WatchTimelineSnapshot?) {
+    @MainActor func publish(_ snapshot: WatchTimelineSnapshot?, clearChat: Bool = false) {
         guard session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else { return }
-        let payload: [String: Any] = snapshot.flatMap { try? JSONEncoder().encode($0) }.map { ["snapshot": $0] } ?? ["clear": true]
+        var payload: [String: Any] = snapshot.flatMap { try? JSONEncoder().encode($0) }.map { ["snapshot": $0] } ?? ["clear": true]
+        if clearChat { payload["clearChat"]=true }
         try? session.updateApplicationContext(payload)
         if session.isReachable { session.sendMessage(payload, replyHandler: nil, errorHandler: nil) }
     }
