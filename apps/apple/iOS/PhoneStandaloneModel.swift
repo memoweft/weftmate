@@ -78,7 +78,12 @@ import WeftMateCore
     }
     func clearLocalData() {
         stop()
-        do { guard let store else { return };try store.clear();self.store=nil;app?.offline.erase();state = .init();library = .init();models=[];modelID="";draft="";self.store=store;state.cancelReminder(.account);try persist();notice=nil;handoffCount=0;handoffBytes=0 }
+        do {
+            guard let store else { return };try store.clear();self.store=nil;app?.offline.erase();state = .init();library = .init();models=[];modelID="";draft="";self.store=store;state.cancelReminder(.account);try persist();notice=nil;handoffCount=0;handoffBytes=0
+            #if os(iOS)
+            app?.clearWatchConversation()
+            #endif
+        }
         catch { notice="本机内容没能清除，请重试。" }
     }
     /// Called only after a successful authenticated account directory read, never on a network failure.

@@ -1985,6 +1985,7 @@ final class AppleAppModel: ObservableObject {
     private lazy var watchBridge = PhoneWatchTimelineBridge(model: self)
     lazy var watchConversation = PhoneWatchConversationModel(app:self)
     var watchAllowsLoopback: Bool { permitsSyntheticLoopback }
+    func clearWatchConversation() { watchBridge.publish(nil,clearChat:true) }
     private var watchDecisionsInFlight = Set<String>()
     func watchSnapshotBytes() async -> Data? {
         let actionEpoch = epoch

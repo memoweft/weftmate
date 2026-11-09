@@ -8,7 +8,7 @@ import WeftMateCore
     private func taskKey(_ request: WatchChatRequest) -> String { request.accountKey+"|"+request.id }
     var computerSessionID: String? {
         guard let app else { return nil }
-        return app.phoneChat.state.watchRequests?.last(where: { $0.device == .computer && $0.hostID == app.session?.hostId && $0.threadID != nil })?.threadID
+        return app.phoneChat.state.watchRequests?.last(where: { $0.device == .computer && $0.hostID == app.session?.hostId && $0.threadID != nil && ($0.phase.active || $0.phase == .uncertain) })?.threadID
     }
     private func current() throws -> AppleAppModel {
         guard let app else { throw WatchChatFailure.accountChanged }
@@ -183,7 +183,7 @@ import WeftMateCore
                             _ = try check(record.request); events=page.events+events
                         }
                         if let start=events.firstIndex(where: { $0.type == "user.message" && $0.data["receiptId"]?.string == receiptID }) {
-                            let tail=events[start...].dropFirst(), end=tail.firstIndex(where: { $0.type == "user.message" }) ?? events.endIndex
+                            let tail=events[start...].dropFirst(), end=tail.firstIndex(where: { $0.type == "turn.started" }) ?? events.endIndex
                             let turn=Array(events[start..<end])
                             answer=try await app.assistantClient.timelineMessages(turn,sessionID:id).filter { $0.role == .assistant }.map(\.text).joined(separator:"\n")
                             let ending=turn.last(where: { $0.type == "turn.ended" || $0.type == "task.ended" })?.data["reason"]?.string
