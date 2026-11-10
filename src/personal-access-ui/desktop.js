@@ -82,17 +82,24 @@
   }
   const media = window.matchMedia?.('(prefers-color-scheme: dark)')
   const railMedia = window.matchMedia?.('(max-width: 640px)')
+  let nativeSystemDark
   function applyAppearance(value = appearance) {
     appearance = { ...defaults, ...value }
     const root = document.documentElement
-    root.dataset.theme = appearance.theme === 'system' ? media?.matches ? 'dark' : 'light' : appearance.theme
+    const systemTheme = (nativeSystemDark ?? media?.matches) ? 'dark' : 'light'
+    root.dataset.theme = appearance.theme === 'system' ? systemTheme : appearance.theme
     root.style.colorScheme = root.dataset.theme
     globalThis.WeftDesktopAppearanceControls.apply(appearance, root.dataset.theme)
     globalThis.WeftSystemBars?.sync()
     root.style.setProperty('--text-size', `var(--wm-font-size-${appearance.fontSize}, ${appearance.fontSize}px)`)
   }
   applyAppearance(appearanceStore.value)
-  media?.addEventListener?.('change', () => { if (appearance.theme === 'system') applyAppearance() })
+  media?.addEventListener?.('change', () => { if (appearance.theme === 'system' && nativeSystemDark === undefined) applyAppearance() })
+  globalThis.weftmateDesktop?.onSystemTheme?.(dark => {
+    if (nativeSystemDark === dark) return
+    nativeSystemDark = dark
+    if (appearance.theme === 'system') applyAppearance()
+  })
   function markdown(text, cls = 'markdown-body', options = {}) { return globalThis.WeftContent.create(text, cls, options) }
   function fileLabel(file) {
     const ext = (file.fileName || '').split('.').pop().toLowerCase()

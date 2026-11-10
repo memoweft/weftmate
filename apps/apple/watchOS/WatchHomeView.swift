@@ -8,12 +8,27 @@ import WeftMateCore
     @Published var notice: String?
     @Published var busy = false
     @Published var reachable = false
+    @Published var chat: WatchChatSnapshot?
+    @Published var draft = ""
+    private var conversationID=UUID().uuidString.lowercased()
+    private var pendingChat: WatchChatRequest?
+    private var freshConversation=false
+    private var messageEpoch=UUID()
+    #if DEBUG && targetEnvironment(simulator)
+    private var routingPreview: String?
+    #endif
     private var feedback = WatchFeedbackTracker()
     private var decisions = WatchDecisionState()
     private let session = WCSession.default
     override init() {
         super.init()
         #if DEBUG && targetEnvironment(simulator)
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing"),let preview=WatchRoutingPreview.current {
+            routingPreview=preview.scene; chat=preview.snapshot; draft=preview.draft; reachable=preview.reachable
+            snapshot=preview.approval; decisions.apply(snapshot)
+            if let record=chat?.record { conversationID=record.request.conversationID }
+            return
+        }
         if ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--ic2-icons-fixture") || ProcessInfo.processInfo.arguments.contains("--a9-watch-fixture")) {
             snapshot = WatchTimelineSnapshot(accountKey: "ic2-synthetic", sessionID: "ic2-fixture", taskID: nil,
                 progress: "已完成", running: false, assistantSummary: "", approvals: [
@@ -25,19 +40,23 @@ import WeftMateCore
     }
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         let reachable = session.isReachable, bytes = session.receivedApplicationContext["snapshot"] as? Data
-        Task { @MainActor in self.reachable = reachable; self.apply(bytes); if reachable { self.transferRunLog() } }
+        Task { @MainActor in self.reachable = reachable; self.apply(bytes); if reachable { self.refresh() } }
     }
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
         let reachable = session.isReachable
-        Task { @MainActor in self.reachable = reachable; RunLogRuntime.shared.connection(reachable ? "connecting" : "offline", code: reachable ? nil : "UNAVAILABLE"); if reachable { self.transferRunLog() } }
+        Task { @MainActor in self.reachable = reachable; RunLogRuntime.shared.connection(reachable ? "connecting" : "offline", code: reachable ? nil : "UNAVAILABLE"); if reachable { self.refresh() } }
     }
     nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
-        let data = applicationContext["snapshot"] as? Data, clear = applicationContext["clear"] as? Bool == true
-        Task { @MainActor in self.apply(data, clear: clear) }
+        let data = applicationContext["snapshot"] as? Data, clear = applicationContext["clear"] as? Bool == true, clearChat=applicationContext["clearChat"] as? Bool == true, account=applicationContext["chatAccountKey"] as? String
+        Task { @MainActor in self.apply(data, clear: clear); if clearChat || self.chat.map({ account != nil && $0.accountKey != account }) == true { self.resetChat() } }
     }
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
-        let data = message["snapshot"] as? Data, clear = message["clear"] as? Bool == true
-        Task { @MainActor in self.apply(data, clear: clear) }
+        let data = message["snapshot"] as? Data, clear = message["clear"] as? Bool == true, clearChat=message["clearChat"] as? Bool == true, account=message["chatAccountKey"] as? String
+        Task { @MainActor in self.apply(data, clear: clear); if clearChat || self.chat.map({ account != nil && $0.accountKey != account }) == true { self.resetChat() } }
+    }
+    private func resetChat() {
+        messageEpoch=UUID(); busy=false
+        chat=nil; pendingChat=nil; draft=""; freshConversation=true; conversationID=UUID().uuidString.lowercased()
     }
     private func transferRunLog() {
         guard session.isReachable else { return }
@@ -79,7 +98,39 @@ import WeftMateCore
         transferRunLog()
         // A completion received in the background is announced on the next foreground refresh.
         if let snapshot, let bytes = try? JSONEncoder().encode(snapshot) { apply(bytes) }
-        send(["action": "refresh"])
+        var message: [String:Any]=["action":"refresh"]
+        if let pendingChat { message["chatRequestID"]=pendingChat.id }
+        send(message)
+    }
+    var chatWorking: Bool { chat?.record?.phase.active == true || pendingChat != nil }
+    func newConversation() {
+        guard !chatWorking else { return }
+        conversationID=UUID().uuidString.lowercased(); freshConversation=true; chat?.record=nil; chat?.answer=""; draft=""
+    }
+    func sendChat(device: WatchAnswerDevice? = nil) {
+        guard let account=chat?.accountKey,!chatWorking,!busy else { return }
+        let text=draft.trimmingCharacters(in:.whitespacesAndNewlines)
+        let request=WatchChatRequest(conversationID:conversationID,accountKey:account,
+                                    text:text.isEmpty ? chat?.record?.text ?? "" : text,device:device)
+        do {
+            try request.validate(); pendingChat=request
+            send(["action":"chat.send","chatRequest":try JSONEncoder().encode(request)])
+        } catch { pendingChat=nil; notice=WatchChatFailure.invalidInput.errorDescription }
+    }
+    private func applyChat(_ data: Data) {
+        guard var value=try? JSONDecoder().decode(WatchChatSnapshot.self,from:data) else { return }
+        if let old=chat,old.accountKey != value.accountKey {
+            resetChat()
+        }
+        if let pending=pendingChat {
+            if value.record?.request.id == pending.id {
+                if draft.trimmingCharacters(in:.whitespacesAndNewlines) == pending.text { draft="" }
+                pendingChat=nil; freshConversation=false
+            } else if value.record == nil { pendingChat=nil }
+        }
+        if freshConversation,value.record?.request.conversationID != conversationID { value.record=nil; value.answer="" }
+        if let record=value.record { conversationID=record.request.conversationID }
+        chat=value
     }
     func decide(_ approval: WatchApproval, allowed: Bool) {
         guard let snapshot, snapshot.approvals.contains(where: { $0.id == approval.id }), !busy,
@@ -102,25 +153,37 @@ import WeftMateCore
         #endif
     }
     private func send(_ message: [String: Any]) {
-        guard session.isReachable, !busy else { notice = "打开手机上的 WeftMate 后重试。"; return }
+        #if DEBUG && targetEnvironment(simulator)
+        if routingPreview != nil {
+            if let bytes=message["chatRequest"] as? Data,let request=try? JSONDecoder().decode(WatchChatRequest.self,from:bytes),
+               let reply=try? WatchRoutingPreview.reply(request).encoded() { applyChat(reply) }
+            return
+        }
+        #endif
+        guard !busy else { return }
+        guard session.isReachable else { notice = "打开手机上的 WeftMate 后重试。"; return }
         busy = true; notice = nil
+        let epoch=messageEpoch
         let approvalID = message["approvalID"] as? String
         record("send", message)
         session.sendMessage(message, replyHandler: WatchMessageDelivery.reply { reply in
+            guard self.messageEpoch == epoch else { return }
             let data = reply.snapshot, error = reply.error, registered = reply.registered
             self.busy = false
             if let approvalID { self.decisions.finish(approvalID, registered: registered) }
             self.record("reply", ["registered": registered, "error": error ?? "", "approvalID": approvalID ?? ""])
-            self.apply(data)
+            self.apply(data,clear:reply.clear)
+            if let chat=reply.chat { self.applyChat(chat) }
             self.notice = error ?? (registered ? "决定已登记" : nil)
             if error != nil || (approvalID != nil && !registered) { RunLogRuntime.shared.record(.approvalFailure, ["phase": "approval", "code": "UNCONFIRMED"]) }
             if registered { self.refresh() }
         }, errorHandler: WatchMessageDelivery.failure {
+            guard self.messageEpoch == epoch else { return }
             self.busy = false
             if let approvalID { self.decisions.finish(approvalID, registered: false) }
             self.record("transportError")
             RunLogRuntime.shared.record(approvalID == nil ? .syncFailure : .approvalFailure, ["phase": approvalID == nil ? "notification" : "approval", "code": "UNAVAILABLE"])
-            self.notice = "手机未响应，请刷新后重试。"
+            self.notice = self.pendingChat == nil ? "手机未响应，请刷新后重试。" : "送达情况待核对，请刷新。"
         })
     }
 }
@@ -155,17 +218,25 @@ struct WatchHomeView: View {
                             }.padding(AppleTokens.Space.p8).background(AppleTokens.Styles.quaternary, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10))
                         }
 
-                    } else { Text("在手机上打开一段对话").font(AppleTokens.Fonts.caption) }
+                    }
+                    WatchConversationView(model:model)
                     if let accountKey = model.snapshot?.accountKey { NavigationLink("健康") { WatchHealthView().id(accountKey) } }
                     Button("刷新") { model.refresh() }.disabled(model.busy)
                     if let notice = model.notice { Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary) }
                     if !model.reachable {
-                        Text("打开手机后可审批").font(AppleTokens.Fonts.caption2).foregroundStyle(AppleTokens.Styles.secondary)
+                        Text("打开手机上的 WeftMate 后再试。").font(AppleTokens.Fonts.caption2).foregroundStyle(AppleTokens.Styles.secondary)
                     }
                 }.padding(AppleTokens.Space.p8)
             }.navigationTitle("WeftMate").tint(AppleTokens.Colors.primary)
         }
-        .task(id: scenePhase) { if scenePhase == .active { model.refresh() } }
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            model.refresh()
+            while !Task.isCancelled {
+                do { try await Task.sleep(for:.seconds(2)) } catch { return }
+                if model.chatWorking { model.refresh() }
+            }
+        }
         .accessibilityIdentifier("watchHome")
     }
 }

@@ -19,26 +19,33 @@
             const body=node('div','execution-step-body'), output=node('div','step-detail-content'), actions=node('div','progress-detail-actions');
             const copy=progress.detailAction(english?'Copy step details':'复制步骤详情','copy',()=>void progress.copyFeedback(copy,()=>
                 (detail.stepOptions.copyText || (text=>navigator.clipboard.writeText(text)))(WeftUiCore.executionDetailText(detail.rawText || '',detail.stepModel.language))));
-            const collapse=progress.detailAction(english?'Collapse':'收起','chevron',()=>{detail.open=false;label.focus();});
+            const collapse=progress.detailAction(english?'Collapse':'收起','chevron',()=>{
+                if (globalThis.WeftMotion?.setDetailsOpen) globalThis.WeftMotion.setDetailsOpen(detail, false);
+                else detail.open=false;
+                label.focus();
+            });
             copy.hidden=true;actions.append(copy,collapse);body.append(actions,output);detail.append(label,body);
             const resources=node('button','timeline-action step-resources',english?'View sources used':'查看使用的来源');resources.type='button';
             resources.addEventListener('click',()=>detail.stepOptions.openStep?.(detail.stepModel,resources));body.append(resources);
             detail.paintDetail = (raw, truncated=false, result={}) => {
                 const step=detail.stepModel,options=detail.stepOptions;
-                output.replaceChildren();detail.dataset.truncated=String(truncated);
+                output.replaceChildren();body.prepend(actions);detail.dataset.truncated=String(truncated);
                 let data;try{data=JSON.parse(raw)}catch{}
                 const args={...WeftUiCore.toolArguments(step.arguments),...WeftUiCore.toolArguments(data)},command=result.command || args.command || args.cmd || args.script;
                 if(typeof command==='string' && /^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(step.toolName)) {
                     const fence='`'.repeat(Math.max(3,...[...command.matchAll(/`+/g)].map(match=>match[0].length+1)));
-                    const language=/pwsh|powershell/.test(step.toolName)?'powershell':'bash';
+                    const language=/pwsh|powershell/.test(step.toolName)?'powershell':step.toolName==='bash'?'bash':'shell';
                     const block=WeftContent.create(`${fence}${language}\n$ ${command}\n${fence}`,'step-command markdown-body',{copy:options.copyText});
                     const codeCopy=progress.detailAction(english?'Copy command':'复制命令','copy',()=>void progress.copyFeedback(codeCopy,()=>
                         (detail.stepOptions.copyText || (text=>navigator.clipboard.writeText(text)))(command)));
-                    block.querySelector('.render-code-actions').replaceChildren(codeCopy);output.append(block);
+                    const frame=block.querySelector('.render-code'), header=frame.querySelector('.render-code-actions');
+                    frame.querySelector('.render-language').textContent = language==='powershell' ? 'PowerShell' : language==='bash' ? 'Bash' : 'Shell';
+                    header.replaceChildren(codeCopy,actions);
+                    output.append(block);
                     const text=WeftUiCore.executionDetailText(raw,step.language),marker=english?'\n\nOutput\n':'\n\n输出\n',at=text.indexOf(marker);
-                    if(typeof result.output==='string')output.append(node('pre','timeline-raw step-output',result.output));
-                    else if(at>=0)output.append(node('pre','timeline-raw step-output',text.slice(at+marker.length)));
-                    else if(!data)output.append(node('pre','timeline-raw step-output',raw));
+                    if(typeof result.output==='string')frame.append(node('pre','timeline-raw step-output',result.output));
+                    else if(at>=0)frame.append(node('pre','timeline-raw step-output',text.slice(at+marker.length)));
+                    else if(!data)frame.append(node('pre','timeline-raw step-output',raw));
                 } else if(typeof result.output==='string') {
                     if(Object.keys(args).length)output.append(node('pre','timeline-raw',JSON.stringify(english?args:WeftUiCore.readableParameters(args),null,2)));
                     output.append(node('pre','timeline-raw step-output',result.output));
@@ -81,6 +88,7 @@
         const seq=String(step.detailRef?.seq ?? '');
         if(saved && detail.dataset.detailSeq!==seq) {
             detail.detailMetadata = null;
+            detail.querySelector('.execution-step-body').prepend(detail.querySelector('.progress-detail-actions'));
             delete detail.dataset.loaded;detail.rawText='';detail.querySelector('.step-detail-content').replaceChildren();
             detail.querySelector('.progress-detail-actions > button').hidden=true;
         }
@@ -99,7 +107,7 @@
         status.textContent=command || editing ? step.approvalStatus==='pending' ? english?'Awaiting approval':'等待批准' : jobText || (state==='failed' ? english?'Failed':'执行失败' : state==='pending' ? english?'Waiting':'等待执行' : state==='running' ? running ? english?command?'Running command':'Editing':command?'正在执行命令':'正在编辑' : english?'Unconfirmed':'结果未确认' : state==='cancelled' ? english?'Stopped':'已停止' : state==='rejected' ? english?'Declined':'已拒绝' : english?command?'Executed command':'Edited':command?'已执行命令':'已编辑') : '';
         const description=args.description;
         const path=args.file_path || args.filePath || args.path || step.fileChanges?.[0]?.path;
-        const summary=typeof description==='string' && description.trim() ? description.trim().slice(0,180) : viewing ? `${english?'View':'查看'} ${typeof path==='string'?path.split(/[\\/]/).at(-1):english?'file':'文件'}` : editing && typeof path==='string' ? path.split(/[\\/]/).at(-1) : step.summary;
+        const summary=typeof description==='string' && description.trim() ? description.trim().slice(0,180) : viewing ? `${english?'View':'查看'} ${typeof path==='string'?path.split(/[\\/]/).at(-1):english?'file':'文件'}` : editing && typeof path==='string' ? path.split(/[\\/]/).at(-1) : command ? step.summary?.replace(/^(?:运行命令|执行命令|Run command)[：:]\s*/i,'') : step.summary;
         const title=`${summary || (english?'Tool execution':'工具执行')}${command || editing?'':step.statusText?` · ${step.statusText}`:state==='failed'?english?' · Encountered an issue':' · 遇到问题':state==='cancelled'?english?' · Stopped':' · 已停止':state==='running'?english?' · Running':' · 运行中':''}${step.approvalText && step.approvalStatus!=='pending'?` · ${step.approvalText}`:''}`;
         const titleNode=detail.querySelector('.step-title');if(titleNode.textContent!==title)titleNode.textContent=title;
         titleNode.title=title;

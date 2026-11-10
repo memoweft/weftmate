@@ -1983,8 +1983,12 @@ final class AppleAppModel: ObservableObject {
     }
     #if os(iOS)
     private lazy var watchBridge = PhoneWatchTimelineBridge(model: self)
+    lazy var watchConversation = PhoneWatchConversationModel(app:self)
+    var watchAllowsLoopback: Bool { permitsSyntheticLoopback }
+    func clearWatchConversation() { watchConversation.cancel(); watchBridge.publish(nil,clearChat:true) }
     private var watchDecisionsInFlight = Set<String>()
-    func watchSnapshotBytes() async -> Data? {
+    func watchSnapshotBytes(requested: Bool = false) async -> Data? {
+        guard requested || watchBridge.canPublish else { return nil }
         let actionEpoch = epoch
         guard let session else { return nil }
         if offline.hostOffline || session.verification == .unverifiedOffline {
@@ -1995,16 +1999,11 @@ final class AppleAppModel: ObservableObject {
             watchBridge.publish(nil); return nil
         }
         do {
-            guard mainChat.capabilities.timeline, let main = try? await client.logicalChat(),
-                  let sessionID = main.activeSessionId else { watchBridge.publish(nil); return nil }
+            guard let sessionID = watchConversation.computerSessionID ?? selectedConversation.flatMap({ $0.temporaryState.cacheAllowed ? $0.sessionId : nil }) else { watchBridge.publish(nil); return nil }
             let page = try await client.timelinePage(sessionID: sessionID)
             let approvals = try await client.approvals(sessionID: sessionID)
             guard actionEpoch == epoch else { return nil }
-            let logical = try await client.chatPage(id: main.id)
-            let results = logical.items.filter { $0.type == "side.result" && $0.data["state"]?.string == "completed" && $0.data["deleted"]?.bool != true }
-            let completed = WatchTimelineProjection.successfulTaskIDs(in: page.events) + results.compactMap { row in
-                row.data["resultId"]?.string.map { $0 + "@" + String(row.data["resultRevision"]?.int ?? 1) }
-            }
+            let completed = WatchTimelineProjection.successfulTaskIDs(in: page.events)
             let ending = page.events.last(where: { $0.type == "task.ended" || $0.type == "turn.ended" })?.data["reason"]?.string
             let endLabel = ending == "completed" ? "已完成" : ending == "aborted" ? "已停止" : ending == "error" || ending == "blocked" ? "需要处理" : "结果待核对"
             let account = try LocalAccountScope(server: session.server, ownerId: session.account.ownerId)
@@ -2020,7 +2019,7 @@ final class AppleAppModel: ObservableObject {
             }
             guard actionEpoch == epoch else { return nil }
             let snapshot = WatchTimelineSnapshot(accountKey: account.cacheKey, sessionID: sessionID,
-                taskID: nil, progress: !watchApprovals.isEmpty ? "等待批准" : ending != nil ? endLabel : !results.isEmpty ? "已完成" : "等待新任务",
+                taskID: nil, progress: !watchApprovals.isEmpty ? "等待批准" : ending != nil ? endLabel : "等待新任务",
                 running: !watchApprovals.isEmpty,
                 assistantSummary: "",
                 approvals: watchApprovals, completedTaskIDs: completed)
@@ -2037,7 +2036,7 @@ final class AppleAppModel: ObservableObject {
         let actionEpoch = epoch
         guard !offline.hostOffline, session?.verification == .verified, let value = ApprovalDecisionOutcome(rawValue: outcome),
               !watchDecisionsInFlight.contains(approvalID) else { return false }
-        guard let main = try? await client.logicalChat(), main.activeSessionId == sessionID else { return false }
+        guard sessionID == (watchConversation.computerSessionID ?? selectedConversation.flatMap({ $0.temporaryState.cacheAllowed ? $0.sessionId : nil })) else { return false }
         watchDecisionsInFlight.insert(approvalID)
         defer { watchDecisionsInFlight.remove(approvalID) }
         let responder = TaskInteractionModel(client: client, account: session, epoch: epoch, stateDirectory: assistantStateDirectory,
@@ -2371,7 +2370,7 @@ final class AppleAppModel: ObservableObject {
         devices = []
         messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = false; olderBusy = false
         #if os(iOS)
-        watchBridge.publish(nil)
+        watchBridge.publish(nil,clearChat:true)
         #endif
         selectedConversation = nil
         drafts = [:]

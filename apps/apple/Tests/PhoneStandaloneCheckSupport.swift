@@ -10,7 +10,21 @@ final class PhoneCheckCredentials: CredentialStore, @unchecked Sendable {
     func delete(key: String) { lock.withLock { data[key]=nil } }
 }
 struct PhoneCheckSession { enum Verification { case verified };var verification: Verification = .verified;var hostId="synthetic-computer" }
-@MainActor final class PhoneCheckCloud { var subject: String?="account-a";var authenticated=true }
+#if WATCH_ROUTING_CHECK
+actor WatchCheckTransport: HTTPTransport {
+    private let base=URLSessionTransport()
+    private var requests=0
+    private var delayed=false
+    func setDelayed(_ value: Bool) { delayed=value }
+    func count() -> Int { requests }
+    func send(_ request: URLRequest) async throws -> HTTPResponse {
+        requests += 1
+        if delayed { try await Task.sleep(for:.seconds(2)) }
+        return try await base.send(request)
+    }
+}
+#endif
+@MainActor final class PhoneCheckCloud { var subject: String?="account-a";var authenticated=true;var selectedComputerUnavailable=false }
 @MainActor final class PhoneCheckOffline {
     var memoryItems: [OfflineMemory]=[]
     var memoryAccountID: String?="account-a"
@@ -39,7 +53,20 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
     }
 }
 @MainActor final class AppleAppModel {
+    #if WATCH_ROUTING_CHECK
+    var session: AccountSession?
+    var phoneChat=PhoneStandaloneModel(testCredentials:PhoneCheckCredentials(),testLoopback:true)
+    let watchTransport=WatchCheckTransport()
+    lazy var assistantClient=PersonalClient(credentialStore:PhoneCheckCredentials(),transport:watchTransport)
+    var serviceModelSettings: ModelServiceSettings?
+    struct Catalogue { var modelID="mimo" }
+    var mainChat=Catalogue()
+    var selectedConversation: ConversationSummary?
+    var watchAllowsLoopback=true
+    func readModelCatalogue() async throws -> [SharedHostModel] { try await assistantClient.hostModels() }
+    #else
     var session: PhoneCheckSession?
+    #endif
     let cloudLogin=PhoneCheckCloud()
     let offline=PhoneCheckOffline()
     let healthStateDirectory: URL

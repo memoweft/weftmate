@@ -295,10 +295,10 @@
   },
   {
     "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
-    "line": 17,
+    "line": 21,
     "api": "session",
-    "sha256": "a92313b0091fa50dcf1d3b324b61082451396b64b924bbb6f5057fbfab1ee95b",
-    "reason": "nonisolated WC callback extracts Data values and wraps reply in Sendable owner; explicit MainActor task handles UI and awaits RunLog actor persistence."
+    "sha256": "65289da5da98eee3c9b85883207c1f4729d9705ff93dc02aa9abd4a5c802339b",
+    "reason": "Nonisolated WC delegate copies Data and String request fields before an explicit MainActor task. The Sendable reply owner carries only the SDK completion; chat delivery and separately coalesced approval projection access app state exclusively on MainActor."
   },
   {
     "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
@@ -323,31 +323,31 @@
   },
   {
     "file": "apps/apple/watchOS/WatchHomeView.swift",
-    "line": 26,
+    "line": 41,
     "api": "session",
-    "sha256": "2db5322515844d9525eb1b0acc2e38b1adb087d86f7342be91158922e4f7c1b0",
-    "reason": "WC delegate callbacks are nonisolated and copy Sendable values before explicit MainActor task; delivery wrappers restore MainActor; log-transfer callbacks capture no state."
+    "sha256": "905e48c283cbfc870bbb98f1dfdc26d5f79f2d09a86e9787688f22764aa434ab",
+    "reason": "Nonisolated WC delegate copies Data, Bool and optional String projections before entering MainActor. Snapshot updates, account-scope reset and handshake refresh never access UI state on the SDK callback executor."
   },
   {
     "file": "apps/apple/watchOS/WatchHomeView.swift",
-    "line": 30,
+    "line": 45,
     "api": "sessionReachabilityDidChange",
-    "sha256": "f67049b19dd2c3486d7f44181b23c6319974988c014e0d1814bc6eac895b6d69",
-    "reason": "Nonisolated WC callbacks extract value projections and explicitly enter MainActor; log transfer SDK callbacks capture only Sendable continuation and return a boolean. No raw SDK errors or UI state cross the callback."
+    "sha256": "4902a163aa70047143b42580166538430c1643c270e6eb277dfe23d653c0233f",
+    "reason": "Nonisolated WC callback snapshots only isReachable. RunLog and refresh access occur inside the explicit MainActor task, including the newly triggered conversation handshake."
   },
   {
     "file": "apps/apple/watchOS/WatchHomeView.swift",
-    "line": 34,
+    "line": 49,
     "api": "session",
-    "sha256": "78c5216e62dad81da30a1fae655793e6e9cabf4416a7f1dc21e0d95e4ac37bb8",
-    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+    "sha256": "3d6e5464c85b64e34447cb8a20120d8541a9c07251bea4026ed696bb82e50b7a",
+    "reason": "Nonisolated WC delegate copies Data, Bool and optional String projections before entering MainActor. Snapshot updates, account-scope reset and handshake refresh never access UI state on the SDK callback executor."
   },
   {
     "file": "apps/apple/watchOS/WatchHomeView.swift",
-    "line": 38,
+    "line": 53,
     "api": "session",
-    "sha256": "4d20b3576106547be5212883ed78994fb9df35a9f1089202d4634ae723e6e4f3",
-    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+    "sha256": "23705aada9947cec4ae89718e1eaa45e2445e530c6fcf60e1555e4beb3ec857e",
+    "reason": "Nonisolated WC delegate copies Data, Bool and optional String projections before entering MainActor. Snapshot updates, account-scope reset and handshake refresh never access UI state on the SDK callback executor."
   },
   {
     "file": "apps/apple/watchOS/WatchHomeView.swift",
@@ -358,10 +358,10 @@
   },
   {
     "file": "apps/apple/watchOS/WatchHomeView.swift",
-    "line": 109,
+    "line": 169,
     "api": "sendMessage",
-    "sha256": "9dd7ba41c5acffb04415e714c78bd607665b180b59c312fe0c1b682cdf35c392",
-    "reason": "WC delegate callbacks are nonisolated and copy Sendable values before explicit MainActor task; delivery wrappers restore MainActor; log-transfer callbacks capture no state."
+    "sha256": "f1b2565f7c57b6436ff7a78e88e96fa14889d40ef8c5c9272c713eb2f68dbb12",
+    "reason": "SDK handlers are created by the nonisolated Sendable WatchMessageDelivery wrappers. Typed values enter their explicit MainActor receivers; the captured UUID is Sendable and stale delivery epochs are rejected before touching watch state."
   },
   {
     "file": "apps/apple/iOS/RunLogPhoneDelegate.swift",

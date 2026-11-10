@@ -449,11 +449,23 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         });
         search.addEventListener('input', renderSettingsNavigation); picker.addEventListener('change', () => selectSettings(picker.value));
         close.addEventListener('click', () => ui.byId('account-back').click());
+        const onBackdrop = event => {
+            if (event.target !== dialog || phoneSettings()) return false;
+            const bounds = dialog.getBoundingClientRect();
+            return event.clientX < bounds.left || event.clientX > bounds.right ||
+                event.clientY < bounds.top || event.clientY > bounds.bottom;
+        };
+        let backdropPressed = false;
+        dialog.addEventListener('pointerdown', event => { backdropPressed = event.button === 0 && onBackdrop(event); });
+        dialog.addEventListener('click', event => {
+            if (backdropPressed && onBackdrop(event)) close.click();
+            backdropPressed = false;
+        });
         dialog.addEventListener('keydown', event => {
             if (globalThis.WeftShortcuts.dispatch(event, { new: () => ui.byId('new-session').click() })) event.stopPropagation();
         });
         dialog.addEventListener('cancel', event => { event.preventDefault(); ui.byId('account-back').click(); });
-        dialog.addEventListener('close', () => { ui.stopAccountPairing?.(); ui.closeChatDirectory?.(); returnFocus?.focus(); });
+        dialog.addEventListener('close', () => { if (!dialog.open) { ui.stopAccountPairing?.(); ui.closeChatDirectory?.(); returnFocus?.focus({preventScroll:true}); } });
         navigation.addEventListener('keydown', event => {
             if (!['ArrowUp','ArrowDown','Home','End'].includes(event.key)) return;
             const buttons = [...navigation.querySelectorAll('button')], index = buttons.indexOf(document.activeElement);

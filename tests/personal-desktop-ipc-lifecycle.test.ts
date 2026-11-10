@@ -43,6 +43,7 @@ const electron = {
   app: Object.assign(new EventEmitter(), { isPackaged: false, getPath: () => profile, getAppPath: () => repository,
     getLoginItemSettings: () => ({ openAtLogin: false }), getVersion: () => '0.1.0' }),
   BrowserWindow: Window,
+  Menu: {},
   ipcMain: { handle: (name: string, callback: Function) => {
     if (handlers.has(name)) throw new Error('duplicate handler: ' + name);
     handlers.set(name, callback);

@@ -21,8 +21,15 @@ export function validateNotificationSettings(patch) {
   }
   return {...patch};
 }
+const timeFormatters=new Map();
+function timeFormatter(timeZone){
+  if(typeof timeZone==='string'&&timeFormatters.has(timeZone))return timeFormatters.get(timeZone);
+  const formatter=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+  if(typeof timeZone==='string'){if(timeFormatters.size>=32)timeFormatters.delete(timeFormatters.keys().next().value);timeFormatters.set(timeZone,formatter);}
+  return formatter;
+}
 export function localNotificationTime(now, timeZone) {
-  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(now)).map(p=>[p.type,p.value]));
+  const parts=Object.fromEntries(timeFormatter(timeZone).formatToParts(new Date(now)).map(p=>[p.type,p.value]));
   return {day:`${parts.year}-${parts.month}-${parts.day}`, time:`${parts.hour}:${parts.minute}`};
 }
 export function inQuietHours(settings, now, timeZone) {
