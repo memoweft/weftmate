@@ -375,8 +375,20 @@ export function createPersonalDesktop({ browserReader = null, computerUsageServi
     }
   });
   handle('wm:desktop:model', name => { if (typeof name === 'string') updateStatus({ model: name }); });
-  handle('wm:desktop:theme', ({ color, symbolColor } = {}) => {
-    if (process.platform === 'win32') { win.setTitleBarOverlay({ color, symbolColor, height: 44 }); resolvedPalette = { color, symbolColor, height: 44 }; }
+  const publishSystemTheme = () => {
+    if (nativeTheme.themeSource === 'system') {
+      win.webContents.send('wm:desktop:system-theme', nativeTheme.shouldUseDarkColors);
+    }
+  };
+  handle('wm:desktop:theme', ({ color, symbolColor, themeSource } = {}) => {
+    if (process.platform !== 'win32') return;
+    const colors = { color, symbolColor, height: 44 };
+    win.setTitleBarOverlay(colors);
+    resolvedPalette = colors;
+    if (['system', 'light', 'dark'].includes(themeSource) && nativeTheme.themeSource !== themeSource) {
+      nativeTheme.themeSource = themeSource;
+    }
+    if (themeSource === 'system') publishSystemTheme();
   });
   handle('wm:desktop:auto-start', enabled => {
     if (typeof enabled !== 'boolean') throw new Error('Invalid startup setting');
@@ -477,6 +489,7 @@ export function createPersonalDesktop({ browserReader = null, computerUsageServi
     if (!win.isDestroyed() && process.platform === 'win32') {
       win.setTitleBarOverlay(resolvedPalette ?? palette());
       win.setIcon(windowIcon(nativeTheme.shouldUseDarkColorsForSystemIntegratedUI));
+      publishSystemTheme();
     }
   };
   nativeTheme.on('updated', updatePalette);
