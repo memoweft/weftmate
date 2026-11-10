@@ -22,36 +22,37 @@ class NativeActivity : HybridActivity() {
     internal lateinit var model: NativeChatModel
     internal lateinit var feed: NativeFeedModel
     internal lateinit var goals: NativeGoalsModel
+    internal val core by lazy { NativeCore(this) }
     internal lateinit var settings: NativeSettingsModel
     internal lateinit var health: NativeHealthModel
     internal var embeddedFeedLoaded: (() -> Unit)? = null
     internal var embeddedWebIdentity by mutableStateOf<WebView?>(null)
         private set
     internal var displayedFeedWeb: WebView? = null
-    internal var overlayBack: (() -> Unit)? = null
     private var webRoute="login"
     private var webEmbedded=false
     private var timelineMapperInstalled=false
     internal suspend fun timelinePresentation(events: List<JSONObject>, approvals: List<JSONObject>, questions: List<JSONObject>): List<JSONObject> {
         // A shell upgrade may reopen the previous downloaded UI bundle. Load
         // the same shipped shared mapper when that bundle predates this view.
-        while(!timelineMapperInstalled) {
-            val shared=assets.open("ui-core/timeline-model.js").bufferedReader().use { it.readText() }
-            val ready = suspendCancellableCoroutine<Boolean> { continuation ->
-                embeddedWeb.evaluateJavascript("(()=>{if(typeof WeftUiCore==='undefined')return false;if(typeof WeftUiCore.approvalCopy!=='function'){$shared}return typeof WeftUiCore.nativeTimelineRows==='function';})()") { value ->
-                    if(continuation.isActive) continuation.resumeWith(Result.success(value=="true"))
+        while (true) {
+            while(!timelineMapperInstalled) {
+                val shared=assets.open("ui-core/timeline-model.js").bufferedReader().use { it.readText() }
+                val ready = suspendCancellableCoroutine<Boolean> { continuation ->
+                    embeddedWeb.evaluateJavascript("(()=>{if(typeof WeftUiCore==='undefined')return false;if(typeof WeftUiCore.approvalCopy!=='function'){$shared}return typeof WeftUiCore.nativeTimelineRows==='function';})()") { value ->
+                        if(continuation.isActive) continuation.resumeWith(Result.success(value=="true"))
+                    }
                 }
+                timelineMapperInstalled=ready
+                if(!ready) delay(50) // The Compose timeline may mount before the embedded core boots.
             }
-            timelineMapperInstalled=ready
-            if(!ready) delay(50) // The Compose timeline may mount before the embedded core boots.
-        }
-        return suspendCancellableCoroutine { continuation ->
             val script = "JSON.stringify(WeftUiCore.nativeTimelineRows(${org.json.JSONArray(events)},${org.json.JSONArray(approvals)},${org.json.JSONArray(questions)}))"
-            embeddedWeb.evaluateJavascript(script) { value ->
-                if (continuation.isActive) continuation.resumeWith(runCatching {
-                    org.json.JSONArray(org.json.JSONArray("[$value]").getString(0)).objects()
-                })
+            val value = suspendCancellableCoroutine<String> { continuation ->
+                embeddedWeb.evaluateJavascript(script) { if (continuation.isActive) continuation.resumeWith(Result.success(it)) }
             }
+            // The engine reloads on login, account switch and UI bundle updates; wait for it to boot again.
+            if (value == "null") { timelineMapperInstalled = false; delay(50); continue }
+            return org.json.JSONArray(org.json.JSONArray("[$value]").getString(0)).objects()
         }
     }
     internal suspend fun phonePresentation(action: String, params: JSONObject = JSONObject()): JSONObject {
@@ -166,18 +167,28 @@ class NativeActivity : HybridActivity() {
     override fun onResume() { super.onResume(); nativeForeground = true }
     override fun onPause() { nativeForeground = false; if (::model.isInitialized) model.saveDraft(); super.onPause() }
     @Suppress("DEPRECATION") override fun onBackPressed() {
-        overlayBack?.let { it(); return }
+        // Open menus, the drawer and confirmations register Compose BackHandlers; they go first.
+        if (onBackPressedDispatcher.hasEnabledCallbacks()) { onBackPressedDispatcher.onBackPressed(); return }
         if (!::model.isInitialized || !model.loggedIn) { super.onBackPressed(); return }
-        if (model.tab == "library-web") { closeOriginalLibrary();return }
-        if (model.tab == "settings" || model.tab == "models") settings.back()
-        else if (model.tab == "health-web") health.closeWeb()
-        else if (model.tab == "health" && health.calendarOpen) health.calendarOpen = false
-        else if (model.tab == "health" && health.view != "today") health.home()
-        else if (model.tab == "goals-web") goals.closeWeb()
-        else if (model.tab == "goals" && (goals.detail != null || goals.draft != null)) goals.closeDetail()
-        else if (model.tab == "activity-web") feed.closeWeb()
-        else if (model.tab == "activity" && feed.detail != null) feed.closeDetail()
-        else if (model.tab != "chat") model.returnToChat() else moveTaskToBack(true)
+        val state = BackState(
+            healthCalendar = { health.calendarOpen },
+            healthAway = { health.view != "today" },
+            goalsDetail = { goals.detail != null || goals.draft != null },
+            feedDetail = { feed.detail != null },
+        )
+        when (nativeBack(model.tab, state)) {
+            BackAction.CloseLibraryWeb -> closeOriginalLibrary()
+            BackAction.Settings -> settings.back()
+            BackAction.CloseHealthWeb -> health.closeWeb()
+            BackAction.CloseHealthCalendar -> health.calendarOpen = false
+            BackAction.HealthHome -> health.home()
+            BackAction.CloseGoalsWeb -> goals.closeWeb()
+            BackAction.CloseGoalsDetail -> goals.closeDetail()
+            BackAction.CloseFeedWeb -> feed.closeWeb()
+            BackAction.CloseFeedDetail -> feed.closeDetail()
+            BackAction.ToChat -> model.returnToChat()
+            BackAction.Leave -> moveTaskToBack(true)
+        }
     }
-    override fun onDestroy() { overlayBack=null; if (::settings.isInitialized) settings.close(); if (::health.isInitialized) health.close(); if (::goals.isInitialized) goals.close(); if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
+    override fun onDestroy() { if (::settings.isInitialized) settings.close(); if (::health.isInitialized) health.close(); if (::goals.isInitialized) goals.close(); if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
 }

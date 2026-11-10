@@ -44,6 +44,8 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     var approvals by mutableStateOf(emptyList<JSONObject>())
     var questions by mutableStateOf(emptyList<JSONObject>())
     var attachments by mutableStateOf(emptyList<JSONObject>())
+    var contextUsage by mutableStateOf<NativeContextUsage?>(null)
+        private set
     var chats by mutableStateOf(emptyList<JSONObject>())
     var models by mutableStateOf(emptyList<JSONObject>())
     var hostModelServices by mutableStateOf(false)
@@ -274,6 +276,17 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                 .put("title", c.optJSONArray("turns")?.optJSONObject(0)?.optJSONArray("messages")?.optJSONObject(0)?.optString("text")?.take(40) ?: "新对话") }
         }
     }
+    fun openMessageVersion(session: String) {
+        if (session.isBlank()) return
+        // Selecting clears the old rows, so the originating message cannot own this coroutine.
+        val current = generation
+        launch {
+            refreshChats()
+            if (generation != current) return@launch
+            val version = chats.find { it.stringOrEmpty("activeSessionId") == session || it.stringOrEmpty("sessionId") == session }
+            if (version != null) select(version) else refresh()
+        }
+    }
     suspend fun select(chat: JSONObject, requestedApprovalMode: String? = null) {
         val sourceHost = chat.stringOrEmpty("workHostId").ifEmpty { chat.stringOrEmpty("hostId") }
         if (!hostChatUsesPhoneStorage(chat) && sourceHost.isNotEmpty() && sourceHost != hostId && computers.any { it.stringOrEmpty("hostId") == sourceHost }) {
@@ -297,6 +310,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         newWork = false
         applyWorkMetadata(chat, true)
         sessionId = chat.optString("activeSessionId").takeUnless { it == "null" } ?: ""
+        contextUsage = nativeContextUsage(chat)
         sendAvailable = phone || chat.optBoolean("sendAvailable")
         title = hostChatTitle(chat)
         timeZone = chat.optString("timeZone", java.time.ZoneId.systemDefault().id)
@@ -468,6 +482,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                 chats = chats.map { if (it.optString("chatId") == chatId) nativeChatMetadata(it, current) else it }
                 applyWorkMetadata(current)
                 sessionId = current.optString("activeSessionId").takeUnless { it == "null" } ?: ""
+                contextUsage = nativeContextUsage(current)
                 sendAvailable = current.optBoolean("sendAvailable")
                 running = current.optBoolean("running") || rows.any { it.optString("type") == "assistant.delta" && it.optJSONObject("data")?.optBoolean("streaming") == true }
                 if (sessionId.isNotBlank()) {
@@ -621,6 +636,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         val startingDraft = if (chatId.isBlank() && conversationMode == productMode) draft else ""
         if(chatId.isNotBlank())draft=""
         chatId="";sessionId="";title="新对话";rows=emptyList();approvals=emptyList();questions=emptyList();uncertain=emptyList();attachments=emptyList()
+        contextUsage = null
         pendingApprovalMode=approvalChoice;approvalModeRevision++;approvalModeBusy=false;mode=approvalChoice ?: "auto"
         running=false;sending=false;sendAvailable=false;loading=false;error="";tab="chat";creatingChat=true
         newWork = workAndChat && productMode == "work"
@@ -642,6 +658,8 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                 if(standalone) JSONObject().put("id","phone-new").put("nativePhone",true).put("title","小纬") else call("conversations.create")
             } else {
                 val status = business("/status")
+                // A cold start can read the model list before the computer answers; the host refuses a chat without one.
+                if (modelId.isBlank()) refreshHostModels(null)
                 val id = "native-${UUID.randomUUID()}"
                 var command = business("/commands", "POST", JSONObject().put("requestId", id).put("kind", "session.create")
                     .put("targetDeviceId", status.getString("hostId")).put("modelProfileId", modelId)).getJSONObject("command")

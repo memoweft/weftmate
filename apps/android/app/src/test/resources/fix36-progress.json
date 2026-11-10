@@ -18,25 +18,6 @@
       "presentationSeq": 0
     },
     {
-      "eventId": "synthetic-session:27",
-      "seq": 26,
-      "orderKey": "00000000000000000027",
-      "type": "assistant.message",
-      "at": "2026-10-14T05:20:00.000Z",
-      "sessionId": "synthetic-session",
-      "sourceRef": {
-        "sessionId": "synthetic-session",
-        "seq": 27
-      },
-      "data": {
-        "text": "现在是下午 1 点 20 分。今天有一项日程，健康记录已查到。",
-        "turn": 1,
-        "taskId": "synthetic-session:turn-1"
-      },
-      "sourceSeq": 27,
-      "presentationSeq": 26
-    },
-    {
       "eventId": "progress:synthetic-session:turn-1",
       "type": "native.progress",
       "at": "2026-10-14T05:20:00.000Z",
@@ -44,7 +25,7 @@
         "sessionId": "synthetic-session",
         "seq": 3
       },
-      "presentationSeq": 26.01,
+      "presentationSeq": 25.99,
       "data": {
         "taskId": "synthetic-session:turn-1",
         "summary": "查了健康数据、查了日历、查看了 1 次当前时间、用了 2 次扩展工具、操作了 2 次电脑应用、读了邮件",
@@ -233,6 +214,25 @@
           }
         ]
       }
+    },
+    {
+      "eventId": "synthetic-session:27",
+      "seq": 26,
+      "orderKey": "00000000000000000027",
+      "type": "assistant.message",
+      "at": "2026-10-14T05:20:00.000Z",
+      "sessionId": "synthetic-session",
+      "sourceRef": {
+        "sessionId": "synthetic-session",
+        "seq": 27
+      },
+      "data": {
+        "text": "现在是下午 1 点 20 分。今天有一项日程，健康记录已查到。",
+        "turn": 1,
+        "taskId": "synthetic-session:turn-1"
+      },
+      "sourceSeq": 27,
+      "presentationSeq": 26
     }
   ],
   "running": [
@@ -471,25 +471,6 @@
       "presentationSeq": 0
     },
     {
-      "eventId": "synthetic-session:27",
-      "seq": 26,
-      "orderKey": "00000000000000000027",
-      "type": "assistant.message",
-      "at": "2026-10-14T05:20:00.000Z",
-      "sessionId": "synthetic-session",
-      "sourceRef": {
-        "sessionId": "synthetic-session",
-        "seq": 27
-      },
-      "data": {
-        "text": "现在是下午 1 点 20 分。今天有一项日程，健康记录已查到。",
-        "turn": 1,
-        "taskId": "synthetic-session:turn-1"
-      },
-      "sourceSeq": 27,
-      "presentationSeq": 26
-    },
-    {
       "eventId": "progress:synthetic-session:turn-1",
       "type": "native.progress",
       "at": "2026-10-14T05:20:00.000Z",
@@ -497,7 +478,7 @@
         "sessionId": "synthetic-session",
         "seq": 3
       },
-      "presentationSeq": 26.01,
+      "presentationSeq": 25.99,
       "data": {
         "taskId": "synthetic-session:turn-1",
         "summary": "未能完成：操作电脑应用遇到问题，可以让我重试或补充说明。",
@@ -686,6 +667,25 @@
           }
         ]
       }
+    },
+    {
+      "eventId": "synthetic-session:27",
+      "seq": 26,
+      "orderKey": "00000000000000000027",
+      "type": "assistant.message",
+      "at": "2026-10-14T05:20:00.000Z",
+      "sessionId": "synthetic-session",
+      "sourceRef": {
+        "sessionId": "synthetic-session",
+        "seq": 27
+      },
+      "data": {
+        "text": "现在是下午 1 点 20 分。今天有一项日程，健康记录已查到。",
+        "turn": 1,
+        "taskId": "synthetic-session:turn-1"
+      },
+      "sourceSeq": 27,
+      "presentationSeq": 26
     }
   ],
   "approval": [
