@@ -78,7 +78,12 @@ import WeftMateCore
     }
     func clearLocalData() {
         stop()
-        do { guard let store else { return };try store.clear();self.store=nil;app?.offline.erase();state = .init();library = .init();models=[];modelID="";draft="";self.store=store;state.cancelReminder(.account);try persist();notice=nil;handoffCount=0;handoffBytes=0 }
+        do {
+            guard let store else { return };try store.clear();self.store=nil;app?.offline.erase();state = .init();state.watchGeneration=UUID().uuidString.lowercased();library = .init();models=[];modelID="";draft="";self.store=store;state.cancelReminder(.account);try persist();notice=nil;handoffCount=0;handoffBytes=0
+            #if os(iOS)
+            app?.clearWatchConversation()
+            #endif
+        }
         catch { notice="本机内容没能清除，请重试。" }
     }
     /// Called only after a successful authenticated account directory read, never on a network failure.
@@ -167,6 +172,7 @@ import WeftMateCore
         do {
             let next=try PhoneChatStore(account:identity,directory:app.healthStateDirectory.deletingLastPathComponent().appendingPathComponent("PhoneChats"),credentials:credentialsOverride ?? KeychainCredentialStore(service:app.phoneCredentialNamespace))
             state=try next.load();store=next;state.interruptReplies()
+            if state.watchGeneration == nil { state.watchGeneration=UUID().uuidString.lowercased() }
             do { library=try next.loadLibrary();models=library.services.flatMap(\.configurations);modelID=library.threadSelections?[state.selected ?? ""] ?? library.selectedProfileId ?? models.first?.id ?? "" }
             catch { models=try next.loadModels();library=(try? PhoneModelLibrary.migrate(models)) ?? .init();modelID=models.first?.id ?? "";notice="旧模型仍可使用，模型服务整理暂未完成，稍后再试。" }
             draft=state.pending?.text ?? "";draftTask?.cancel();draftTask=nil;try persist()
@@ -425,6 +431,14 @@ import WeftMateCore
         var next=state;guard let reply=next.retryReply(id) else { return }
         do { try save(next) } catch { notice="对话未保存，请检查本机存储后重试。";return }
         queuedModels[reply.replyID]=model;notice=nil;startReplies(model:model)
+    }
+    func saveWatchRecord(_ record: WatchChatRecord) throws {
+        var next=state; try next.retainWatch(record); try save(next)
+    }
+    func sendFromWatch(_ record: WatchChatRecord) throws {
+        guard let model=currentModel else { throw WatchChatFailure.noModel }
+        var next=state; let reply=try next.enqueueWatch(record); try save(next)
+        queuedModels[reply.replyID]=model; startReplies(model:model)
     }
     private func startReplies(model: PhoneModelConfiguration) {
         guard !busy else { return }
