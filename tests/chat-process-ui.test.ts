@@ -68,17 +68,20 @@ test('UI02 real page: process, failed retry, applied diff, questions and streami
   }
   host.progress.text('项目已检查完毕，报告已更新。');host.progress.finish('completed');
   await refresh();
-  await page.waitForFunction(()=>document.querySelector('.execution-block')?.dataset.terminal==='true');
-  assert.equal(await page.locator('.execution-block').first().evaluate(el=>el.open),false,'completed process folds');
+  await page.waitForFunction(()=>{
+    const process=document.querySelector('.execution-block') as HTMLDetailsElement|null;
+    return process?.dataset.terminal==='true' && !process.open;
+  });
   await page.getByText('项目已检查完毕，报告已更新。',{exact:true}).waitFor();
   await scrollHistory('start');
   await page.locator('.execution-block > summary').first().click();
   assert.deepEqual(await page.locator('.execution-step').evaluateAll(nodes=>nodes.map(el=>[el.dataset.step,el.dataset.state])),[['fail','failed'],['retry','completed'],['edit-report','completed']]);
-  assert.deepEqual(await page.locator('.execution-records > .execution-note,.execution-records > .execution-step').evaluateAll(nodes=>nodes.map(el=>el.dataset.step || el.textContent)),['我先检查项目，再整理报告。','fail','第一次检查没有通过，我会调整命令再试。','retry','检查已通过，现在更新报告。','edit-report']);
+  assert.deepEqual(await page.locator('.execution-records > .execution-note,.execution-records > .execution-step-group').evaluateAll(nodes=>nodes.map(el=>el.dataset.stepGroup || el.textContent)),['我先检查项目，再整理报告。','fail','第一次检查没有通过，我会调整命令再试。','retry','检查已通过，现在更新报告。','edit-report']);
   assert.equal(await page.locator('.step-type-icon[data-icon="terminal"] svg').count(),2);
   assert.equal(await page.locator('.step-type-icon[data-icon="edit"] svg').count(),1);
   assert.equal(await page.locator('.step-state').count(),0);
-  assert.equal(await page.locator('.execution-step-group .execution-step').count(),0,'commands are individual rows');
+  assert.equal(await page.locator('.execution-step-group .execution-step').count(),3,'calls stay under their process groups');
+  await page.locator('[data-step-group="retry"] > summary').click();
   await page.locator('[data-step="retry"] > summary').click();
   await page.locator('[data-step="retry"] .step-output').waitFor();
   await page.getByRole('button',{name:'继续读取输出',exact:true}).click();

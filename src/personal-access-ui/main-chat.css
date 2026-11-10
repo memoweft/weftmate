@@ -90,8 +90,7 @@
 #conversation-pane.chat-workspace .execution-group-records > .execution-step { margin:0; }
 #conversation-pane.chat-workspace .step-title { flex:1; min-width:0; overflow-wrap:anywhere; }
 #conversation-pane.chat-workspace .step-group-title { flex:1; }
-#conversation-pane.chat-workspace .step-time { opacity:0; flex:none; color:var(--ink-secondary); font-size:11px; font-variant-numeric:tabular-nums; transition:opacity var(--dur-3) var(--ease-out); }
-#conversation-pane.chat-workspace summary:is(:hover,:focus-visible) > .step-time { opacity:1; }
+#conversation-pane.chat-workspace .step-time { display:none; }
 #conversation-pane.chat-workspace .progress-elapsed { opacity:0; transition:opacity var(--dur-3) var(--ease-out); font-size:12px; }
 #conversation-pane.chat-workspace .inline-progress-summary:is(:hover,:focus-visible) .progress-elapsed { opacity:1; }
 #conversation-pane.chat-workspace .execution-failure { margin:8px 0; padding:8px 0; color:var(--danger); font-size:13px; line-height:1.65; }

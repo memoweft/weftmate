@@ -28,6 +28,31 @@
     return animation;
   }
   function reveal(element, name = 'base', index = 0) { return play(element,[{opacity:.65},{opacity:1}],name,index); }
+  function listChange(container, previous, next) {
+    if (reduced() || paused()) return;
+    const viewport = container.getBoundingClientRect();
+    const visible = rect => rect.height && rect.bottom > viewport.top && rect.top < viewport.bottom;
+    const positions = new Map();
+    for (const [key, element] of previous) {
+      const rect = element.getBoundingClientRect();
+      if (visible(rect)) positions.set(key, rect.top);
+    }
+    return () => {
+      if (reduced() || paused()) return;
+      const moves = [];
+      for (const [key, element] of next) {
+        cancel(element);
+        const rect = element.getBoundingClientRect();
+        const from = positions.get(key);
+        if (from !== undefined && Math.abs(from - rect.top) > 1) moves.push({element, delta: from - rect.top});
+        else if (!previous.has(key) && visible(rect)) moves.push({element, delta: 0});
+      }
+      for (const {element, delta} of moves) {
+        if (delta) play(element,[{transform:`translateY(${delta}px)`},{transform:'none'}],'dur-2');
+        else reveal(element,'dur-1');
+      }
+    };
+  }
   function enter(element, pattern = 'view-enter') {
     if (!element) return;
     element.dataset.motion = pattern;
@@ -138,6 +163,11 @@
     if(!element || (folds.get(element)?.opening??!element.hidden)===visible)return;
     return resize(element,visible,open=>{element.hidden=!open;},duration);
   }
+  function setDetailsOpen(element, opening) {
+    if ((folds.get(element)?.opening ?? element.open) === opening) return;
+    element.querySelector(':scope > summary').setAttribute('aria-expanded', String(opening));
+    return resize(element,opening,open=>{element.open=open;},'dur-2',disclosureContent.get(element));
+  }
   function details(element, prepare) {
     if(prepare)disclosureContent.set(element,prepare);
     if(!element||boundDetails.has(element))return;const summary=element.querySelector(':scope > summary');if(!summary)return;
@@ -145,9 +175,7 @@
     summary.addEventListener('click',event=>{
       if(event.defaultPrevented||event.target.closest('a,button,input,select,textarea'))return;
       event.preventDefault();
-      const opening=!(folds.get(element)?.opening??element.open);
-      summary.setAttribute('aria-expanded',String(opening));
-      resize(element,opening,open=>{element.open=open;},'dur-2',disclosureContent.get(element));
+      setDetailsOpen(element,!(folds.get(element)?.opening??element.open));
     });
     element.addEventListener('toggle',()=>{if(!folds.has(element))summary.setAttribute('aria-expanded',String(element.open));});
   }
@@ -240,5 +268,5 @@
   mount(document.body);pushBack();
   preference.addEventListener('change',()=>{if(reduced())for(const animation of [...active])animation.finish();});
   addEventListener('weft-reply-motion-change',()=>{for(const a of [...active]){if(reduced())a.finish();else if(paused())a.pause();else a.play();}});
-  globalThis.WeftMotion={reveal,enter,snapshot,dismiss,remove,hide,details,changed,content,selection,feedback,cancel,listLimit,transition,swap,handoff,visibility,menu,dialog,resetIdentity,timing,get reduced(){return reduced();}};
+  globalThis.WeftMotion={reveal,enter,snapshot,dismiss,remove,hide,details,setDetailsOpen,changed,content,selection,feedback,cancel,listLimit,listChange,transition,swap,handoff,visibility,menu,dialog,resetIdentity,timing,get reduced(){return reduced();}};
 })();

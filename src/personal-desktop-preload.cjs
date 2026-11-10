@@ -51,6 +51,11 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   fetchPersonal: (url, options, id) => ipcRenderer.invoke('wm:desktop:fetch', url, options, id),
   abortPersonalFetch: id => ipcRenderer.invoke('wm:desktop:fetch-abort', id),
   setTheme: (palette) => ipcRenderer.invoke('wm:desktop:theme', palette),
+  onSystemTheme: callback => {
+    const listener = (_event, dark) => callback(dark === true);
+    ipcRenderer.on('wm:desktop:system-theme', listener);
+    return () => ipcRenderer.removeListener('wm:desktop:system-theme', listener);
+  },
   setModelName: (name) => ipcRenderer.invoke('wm:desktop:model', name),
   setAutoStart: (enabled) => ipcRenderer.invoke('wm:desktop:auto-start', enabled),
   artifact: (artifactId, action) => ipcRenderer.invoke('wm:desktop:artifact', { artifactId, action }),
