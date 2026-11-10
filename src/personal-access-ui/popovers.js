@@ -232,6 +232,7 @@
       if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); open(event.key === 'ArrowUp'); }
     };
     menu.onkeydown = event => {
+      if (event.isComposing || event.keyCode === 229) return;
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(true); }
       if (event.key === 'Tab') { close(); trigger.focus(); }
       const buttons = options().filter(button => !button.disabled), index = buttons.indexOf(document.activeElement);

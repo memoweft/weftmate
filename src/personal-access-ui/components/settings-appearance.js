@@ -146,7 +146,7 @@
                 const size = raw && Number.isFinite(number) ? Math.min(24,Math.max(10,Math.round(number))) : Number(WeftUiCore.appearanceDefaults[key]);
                 input.value=String(size); if(input.value!==options.get()[key])void save({[key]:input.value});
             });
-            input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();input.blur();}});
+            input.addEventListener('keydown',event=>{if(event.key==='Enter' && !event.isComposing && event.keyCode!==229){event.preventDefault();input.blur();}});
             wrap.append(input,node('span','muted','px')); sizes.append(WeftSettingsControls.row(label,help,wrap));
         }
         const diff = choice('差异标记', [['color','颜色'],['sign','+/−']], value => void save({diffMarkers:value}));

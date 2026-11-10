@@ -21,6 +21,7 @@ import { windowIcon, notificationIcon } from './app-icons.mjs';
 import { nativeEventNotification } from './personal-access/notification-content.mjs';
 import { createWindowsSendTo, windowsApprovalNotification, actOnWindowsApproval } from './windows-system-integration.mjs';
 import { nativeWindowRequest } from './personal-desktop-request.mjs';
+import { attachWindowsTextMenu } from './desktop-text-menu.mjs';
 import { createWindowsDesktopBoundsRestore } from './windows-desktop-bounds.mjs';
 import { activateWindowsDesktopWindow } from './windows-desktop-activation.mjs';
 import { restoreDesktopBounds } from './desktop-window-bounds.mjs';
@@ -59,6 +60,7 @@ export function preparePersonalDesktopWindow() {
     webPreferences: { session: desktopSession, preload: join(import.meta.dirname, 'personal-desktop-preload.cjs'),
       nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
   });
+  attachWindowsTextMenu(win);
   const lifecycle = { stopped: false, maximizeOnShow: saved.maximized === true };
   const display = Number.isFinite(bounds.x) ? screen.getDisplayMatching(bounds) : null;
   const restoreJob = Number.isFinite(bounds.x) && process.platform === 'win32' && !Number.isInteger(display.scaleFactor)

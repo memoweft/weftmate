@@ -310,9 +310,22 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         const sourced = logical() ? source : source.map(event => ({...event,
             eventId: event.eventId || event.presentationKey || `${core.state.selectedSessionId}:${event.seq}`,
             sourceRef: event.sourceRef || {kind:'native', sessionId:core.state.selectedSessionId, seq:event.seq}}));
-        const mappedEvents=sourced.map((event,seq)=>({...event,seq,progressSeq:seq,data:{...event.data,
-            ...(event.data?.taskId?.startsWith('turn-') ? {taskId:`${event.sourceRef.sessionId}:${event.data.taskId}`} : {}),
-            ...(event.data?.completedStep ? {completedStep:{...event.data.completedStep,taskId:event.data.completedStep.taskId?.startsWith('turn-')?`${event.sourceRef.sessionId}:${event.data.completedStep.taskId}`:event.data.completedStep.taskId}}:{})}}));
+        const activeTurns = new Map();
+        const mappedEvents = sourced.map((event, seq) => {
+            const sessionId = event.sourceRef?.sessionId, data = { ...event.data };
+            const qualify = taskId => sessionId && taskId?.startsWith('turn-') ? `${sessionId}:${taskId}` : taskId;
+            const turn = qualify(`turn-${data.turn}`);
+            if (event.type === 'turn.started') activeTurns.set(sessionId, turn);
+            if (event.type === 'turn.ended' && activeTurns.get(sessionId) === turn) activeTurns.delete(sessionId);
+            const activeTurn = activeTurns.get(sessionId);
+            if (data.taskId) data.taskId = qualify(data.taskId);
+            // Older step records can lack an explicit owner inside a native turn.
+            else if (event.type.startsWith('step.') && activeTurn) data.taskId = activeTurn;
+            if (data.completedStep) {
+                data.completedStep = { ...data.completedStep, taskId: qualify(data.completedStep.taskId) || activeTurn };
+            }
+            return { ...event, seq, progressSeq: seq, data };
+        });
         const mapped=globalThis.WeftTimeline?.prepare ? WeftTimeline.prepare(mappedEvents,core.state.personalization?.thinkingDisplay) : mappedEvents;
         const processes=core.messageProcesses(mapped,optimistic), units=[];
         for (const process of processes) {

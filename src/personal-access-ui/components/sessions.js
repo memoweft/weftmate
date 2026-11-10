@@ -1,7 +1,8 @@
 /* Desktop sessions component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     const collapsedGroups = new Set();
-    let activeMenu, activeSubmenu, menuTrigger, manualUnreadSession;
+    let activeMenu, menuTrigger, manualUnreadSession;
+    const submenus = [];
     const collapsedProjects = new Set(), collapsedSections = new Set();
     let recentFilter = 'all', expandedProjectList = false;
     let sidebarSignature;
@@ -85,6 +86,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     }
     function bindRowActions(row, session, more, phone = null) {
         row.addEventListener('contextmenu', event => {
+            if (event.target.closest('input, textarea, [contenteditable=true]')) return;
             event.preventDefault(); sessionMenu(session, more, false, {x:event.clientX,y:event.clientY});
         });
         const show = () => {
@@ -246,7 +248,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const icon = ui.element('span', 'sidebar-project-icon'); icon.append(WeftIcons.create(collapsedProjects.has(project.projectId) ? 'folder' : 'folder-open', 16), WeftIcons.create('chevron', 16));
             toggle.append(icon, sidebarTitle(project.name));
 
-            toggle.onclick = () => { const focused = document.activeElement === toggle; collapsedProjects.has(project.projectId) ? collapsedProjects.delete(project.projectId) : collapsedProjects.add(project.projectId); renderSessions(); if (focused) [...ui.byId('session-list').querySelectorAll('.sidebar-project')].find(row => row.dataset.projectId === project.projectId)?.querySelector('.sidebar-project-toggle').focus({preventScroll:true}); };
+            toggle.onclick = () => toggleSidebarFold(toggle, collapsedProjects, project.projectId, '.sidebar-project', 'projectId', '.sidebar-project-toggle');
             const add = ui.element('button', 'project-action'); add.type = 'button'; add.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); add.append(WeftIcons.create('plus', 16)); add.disabled = !core.state.models.length; add.onclick = () => newProjectConversation(project, add); title.append(toggle); if (collapsedProjects.has(project.projectId)) { title.dataset.statusKey = `project:${project.projectId}`; appendStatus(title, core.sidebarStatus('projects',project.projectId,sessions)); } title.append(add);
             bindWorkspaceInfo(toggle, () => ({ title:project.name, project, details:core.computerName?.(project.hostId || core.state.hostId) }));
             const safe = action => async () => { try { await action(); } catch (error) { ui.toast(projectError(error)); } };
@@ -282,8 +284,8 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                     const more = ui.element('button', 'project-expand', expanded ? '收起对话' : `展开显示（${sessions.length - 5}）`);
                     more.dataset.projectExpand = project.projectId;
                     more.type = 'button'; more.setAttribute('aria-label', `${more.textContent} ${project.name}`); more.setAttribute('aria-expanded', String(expanded));
-                    more.onclick = () => { core.setProjectExpanded(project.projectId, !expanded); renderSessions();
-                        [...ui.byId('session-list').querySelectorAll('.project-expand')].find(button => button.dataset.projectExpand === project.projectId)?.focus(); };
+                    more.onclick = () => { core.setProjectExpanded(project.projectId, !expanded); renderSessions(true);
+                        [...ui.byId('session-list').querySelectorAll('.project-expand')].find(button => button.dataset.projectExpand === project.projectId)?.focus({preventScroll:true}); };
                     item.append(more); children.append(item);
                 }
                 if (!sessions.length) children.append(ui.element('li', 'project-empty', '暂无对话'));
@@ -293,7 +295,24 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         }
         return projectMatches;
     }
-    function closeMenu() { menuTrigger?.setAttribute('aria-expanded','false'); menuTrigger=null; activeSubmenu?.remove(); activeSubmenu=null; if (activeMenu) { activeMenu.remove(); activeMenu = null; } }
+    function dismissSessionMenu(menu) {
+        WeftPopover.hide(menu);
+        menu.remove();
+    }
+    function closeSubmenus(depth = 0) {
+        while (submenus.length > depth) {
+            const { menu, trigger } = submenus.pop();
+            trigger.setAttribute('aria-expanded', 'false');
+            dismissSessionMenu(menu);
+        }
+    }
+    function closeMenu() {
+        closeSubmenus();
+        menuTrigger?.setAttribute('aria-expanded', 'false');
+        menuTrigger = null;
+        if (activeMenu) dismissSessionMenu(activeMenu);
+        activeMenu = null;
+    }
     function editName(title, initial, save) {
         const dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', title);
         const form = ui.element('form', 'dialog-body'); form.append(ui.element('h2', '', title));
@@ -320,15 +339,21 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const button = row.firstElementChild, input = ui.element('input','session-rename'); input.value = session.title || '新对话'; input.maxLength = 256; input.setAttribute('aria-label','重命名对话');
         button.hidden = true; row.prepend(input); input.focus(); input.select();
         const cancel = () => { input.remove(); button.hidden = false; button.focus(); };
-        input.onkeydown = async event => { if(event.key === 'Escape'){event.preventDefault();cancel();}
+        input.onkeydown = async event => { if(event.isComposing || event.keyCode===229)return; if(event.key === 'Escape'){event.preventDefault();cancel();}
             if(event.key === 'Enter'){event.preventDefault();input.disabled = true;try{await core.updateSession(session.sessionId,{title:input.value});if(core.state.selectedSessionId===session.sessionId)paintSelectedSession(session.sessionId);}catch(error){input.disabled=false;input.setCustomValidity(core.failureMessage(error));input.reportValidity();input.focus();}} };
         input.oninput = () => input.setCustomValidity('');
     }
     function sessionMenu(session, trigger, groupsOnly = false, point = null) {
         closeHoverCard();
-        if(groupsOnly){activeSubmenu?.remove();}else closeMenu();
+        const parent = trigger.closest('[role=menu]');
+        if (groupsOnly) closeSubmenus(submenus.findIndex(entry => entry.menu === parent) + 1);
+        else closeMenu();
         const phone = core.phoneConversations().find(record => core.phoneBinding(record.id)?.sessionId === session.sessionId);
-        const menu = ui.element('div', 'session-menu'); if(groupsOnly)activeSubmenu=menu;else activeMenu = menu; menu.setAttribute('role','menu'); menu.setAttribute('aria-label',groupsOnly === 'memory' ? '记忆与保留' : groupsOnly === 'retention' ? '自动删除期限' : groupsOnly === 'project' ? '移至项目' : groupsOnly?'移至分组':'对话操作');
+        const menu = ui.element('div', 'session-menu');
+        if (groupsOnly) submenus.push({ menu, trigger });
+        else { activeMenu = menu; menuTrigger = trigger; }
+        trigger.setAttribute('aria-expanded', 'true');
+        menu.setAttribute('role','menu'); menu.setAttribute('aria-label',groupsOnly === 'memory' ? '记忆与保留' : groupsOnly === 'retention' ? '自动删除期限' : groupsOnly === 'project' ? '移至项目' : groupsOnly?'移至分组':'对话操作');
         const notice = ui.element('p','form-error'); notice.setAttribute('role','alert');
         const action = (label, run, options = {}) => {
             if(options.separator){const line=ui.element('div','session-menu-separator');line.setAttribute('role','separator');menu.append(line);}
@@ -336,7 +361,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             button.append(ui.element('span','',label));
             if (options.checked !== undefined) { button.setAttribute('aria-checked', String(options.checked)); const icon=options.role==='menuitemradio'?ui.element('span','session-menu-radio'):globalThis.WeftIcons.create('allow',16);icon.setAttribute('aria-hidden','true'); icon.classList.add('session-menu-check');if(options.role!=='menuitemradio')icon.style.visibility=options.checked?'visible':'hidden';button.append(icon); }
             if(options.key)button.append(ui.element('span','session-menu-key',options.key));
-            if(options.submenu){button.setAttribute('aria-haspopup','menu');button.addEventListener('keydown',event=>{if(event.key==='ArrowRight'){event.preventDefault();button.click();}});const icon=globalThis.WeftIcons.create('chevron',16);icon.classList.add('session-submenu-icon');button.append(icon);}
+            if(options.submenu){button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');button.addEventListener('keydown',event=>{if(event.key==='ArrowRight'){event.preventDefault();button.click();}});const icon=globalThis.WeftIcons.create('chevron',16);icon.classList.add('session-submenu-icon');button.append(icon);}
             button.onclick=async()=>{button.disabled=true;try{await run();}catch(error){notice.textContent=core.sessionLifecycleMessage(error);menu.append(notice);}finally{button.disabled=false;}};
             menu.append(button); return button;
         };
@@ -353,7 +378,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
                 const recall = action('使用已有记忆', async () => { await core.updateSession(session.sessionId, {recallEnabled: session.recallEnabled === false}); closeMenu(); });
                 recall.setAttribute('role', 'menuitemcheckbox'); recall.setAttribute('aria-checked', String(session.recallEnabled !== false));
                 const recallCheck=WeftIcons.create('allow',16);recallCheck.classList.add('session-menu-check');recallCheck.style.visibility=session.recallEnabled!==false?'visible':'hidden';recall.append(recallCheck);
-                if (session.memoryMode === 'off') { const retention=action(`自动删除：${session.autoDeleteDays === null ? '不自动删除' : (session.autoDeleteDays ?? 30)+' 天'}`,()=>sessionMenu(session,trigger,'retention'),{submenu:true}); }
+                if (session.memoryMode === 'off') { const retention=action(`自动删除：${session.autoDeleteDays === null ? '不自动删除' : (session.autoDeleteDays ?? 30)+' 天'}`,()=>sessionMenu(session,retention,'retention'),{submenu:true}); }
         } else if(groupsOnly){
             for(const group of core.state.sessionGroups || []) action(group.name,async()=>{await core.updateSession(session.sessionId,{groupId:group.id});closeMenu();},{role:'menuitemradio',checked:session.groupId===group.id});
             action('新建分组…',()=>{closeMenu();editName('新建分组','',async name=>{const result=await core.sessionGroupAction('POST',null,name);if(result)await core.updateSession(session.sessionId,{groupId:result.group.id});});},{separator:true});
@@ -387,16 +412,20 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         }
         menu.addEventListener('keydown', event=>{
             const buttons=[...menu.querySelectorAll('[role=menuitem], [role=menuitemcheckbox], [role=menuitemradio]')];let index=buttons.indexOf(document.activeElement);
-            if(event.key==='Escape'||groupsOnly&&event.key==='ArrowLeft'){event.preventDefault();if(groupsOnly){activeSubmenu?.remove();activeSubmenu=null;}else closeMenu();trigger.focus?.();}
+            if(event.key==='Escape'||groupsOnly&&event.key==='ArrowLeft'){
+                event.preventDefault();event.stopPropagation();
+                if(groupsOnly)closeSubmenus(Math.max(0, submenus.findIndex(entry=>entry.menu===menu)));
+                else closeMenu();
+                trigger.focus({preventScroll:true});
+            }
             else if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();index=event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+(event.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length;buttons[index]?.focus();}
         });
         document.body.append(menu);
-        if(!groupsOnly){menuTrigger=trigger;trigger.setAttribute('aria-expanded','true');}
         const anchor = point ? {isConnected:trigger.isConnected,getBoundingClientRect:()=>({left:point.x,right:point.x,top:point.y,bottom:point.y})} : trigger;
         globalThis.WeftPopover.position(menu,anchor,{side:groupsOnly||point?'right':'bottom'});
         menu.querySelector('button')?.focus({preventScroll:true});
     }
-    document.addEventListener('pointerdown',event=>{if(activeMenu&&!activeMenu.contains(event.target)&&!activeSubmenu?.contains(event.target))closeMenu();});
+    document.addEventListener('pointerdown',event=>{if(activeMenu&&!activeMenu.contains(event.target)&&!submenus.some(({menu})=>menu.contains(event.target)))closeMenu();});
     function confirmDelete(session) {
         const dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', '删除对话');
         const body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', '删除对话？'),
@@ -471,7 +500,29 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     }
     document.addEventListener('visibilitychange',acknowledgeVisibleConversation);
     window.addEventListener('focus',acknowledgeVisibleConversation);
-    function renderSessions() {
+    function toggleSidebarFold(trigger, collapsed, id, rowSelector, key, buttonSelector) {
+        const restoreFocus = document.activeElement === trigger;
+        if (collapsed.has(id)) collapsed.delete(id);
+        else collapsed.add(id);
+        renderSessions(true);
+        if (restoreFocus) {
+            const row = [...ui.byId('session-list').querySelectorAll(rowSelector)].find(item => item.dataset[key] === id);
+            row?.querySelector(buttonSelector)?.focus({preventScroll:true});
+        }
+    }
+    function sidebarLayoutRows(rows) {
+        const result = new Map();
+        for (const row of rows) {
+            const key = sidebarRows.get(row)?.key;
+            if (!key) continue;
+            result.set(key, row.querySelector(':scope > .sidebar-project-heading') || row);
+            for (const child of row.querySelectorAll(':scope > .project-conversations > li')) {
+                result.set(`${key}/${child.dataset.sessionId || (child.querySelector('.project-expand') ? 'more' : 'empty')}`, child);
+            }
+        }
+        return result;
+    }
+    function renderSessions(animateFold = false) {
         acknowledgeVisibleConversation();
         archivedRedraw?.();
         const phoneRecords = core.phoneConversations();
@@ -503,7 +554,9 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const heading = (id, label, rows) => {
             const row=ui.element('li','sidebar-section-heading');row.dataset.sectionId=id;
             const toggle=ui.element('button','sidebar-section-toggle',label);toggle.type='button';toggle.setAttribute('aria-expanded',String(!collapsedSections.has(id)));
-            toggle.append(WeftIcons.create('chevron',14));toggle.onclick=()=>{const focused=document.activeElement===toggle;collapsedSections.has(id)?collapsedSections.delete(id):collapsedSections.add(id);renderSessions();if(focused)ui.byId('session-list').querySelector(`[data-section-id="${id}"] button`)?.focus({preventScroll:true});};row.append(toggle);
+            toggle.append(WeftIcons.create('chevron',14));
+            toggle.onclick=()=>toggleSidebarFold(toggle, collapsedSections, id, '.sidebar-section-heading', 'sectionId', '.sidebar-section-toggle');
+            row.append(toggle);
             if(collapsedSections.has(id)){row.dataset.statusKey=`section:${id}`;appendStatus(row,WeftUiCore.aggregateSessionStatus(rows));}
             if(id==='recent'){
                 const filter=ui.element('button','project-action');filter.type='button';filter.setAttribute('aria-label','筛选最近对话');filter.setAttribute('aria-haspopup','menu');filter.append(WeftIcons.create('more',16));
@@ -538,7 +591,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             if (!query && otherProjects.length > 5) {
                 const row = ui.element('li'), more = ui.element('button', 'project-expand', expandedProjectList ? '收起项目' : `展开显示（${otherProjects.length - 5}）`);
                 more.type = 'button'; more.dataset.expandProjects = ''; more.setAttribute('aria-expanded', String(expandedProjectList));
-                more.onclick = () => { expandedProjectList = !expandedProjectList; renderSessions(); ui.byId('session-list').querySelector('[data-expand-projects]')?.focus({preventScroll:true}); };
+                more.onclick = () => { expandedProjectList = !expandedProjectList; renderSessions(true); ui.byId('session-list').querySelector('[data-expand-projects]')?.focus({preventScroll:true}); };
                 row.append(more); list.append(row);
             }
         }
@@ -554,7 +607,8 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const groupId = session.groupId || 'ungrouped';
             if (groupId !== currentGroup) {
                 const heading = ui.element('li','session-group');heading.dataset.groupId=groupId;const toggle=ui.element('button','session-group-toggle',group);toggle.type='button';toggle.setAttribute('aria-expanded',String(!collapsedGroups.has(groupId)));
-                toggle.onclick=()=>{collapsedGroups.has(groupId)?collapsedGroups.delete(groupId):collapsedGroups.add(groupId);renderSessions();};heading.append(toggle);
+                toggle.onclick=()=>toggleSidebarFold(toggle, collapsedGroups, groupId, '.session-group', 'groupId', '.session-group-toggle');
+                heading.append(toggle);
                 if (collapsedGroups.has(groupId)) { heading.dataset.statusKey = `group:${groupId}`; appendStatus(heading, core.sidebarStatus('groups',groupId,sessions.filter(row => (row.pinned ? 'pinned' : row.groupId || 'ungrouped') === groupId))); }
                 if(!['pinned','ungrouped'].includes(groupId)) {
                     const manage=ui.element('button','session-group-manage');manage.type='button';manage.setAttribute('aria-label',`管理分组 ${group}`);manage.append(globalThis.WeftIcons.create('more',16));
@@ -588,9 +642,15 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             if (old && sidebarRows.get(old)?.signature === signature) return old;
             sidebarRows.set(row,{key,signature}); return row;
         });
+        const animateRows = animateFold === true && globalThis.WeftMotion?.listChange(liveList,
+            sidebarLayoutRows(liveList.children), sidebarLayoutRows(nextRows));
         const retained = new Set(nextRows);
         for (const row of [...liveList.children]) if (!retained.has(row)) row.remove();
         nextRows.forEach((row,index)=>{if(liveList.children[index]!==row)liveList.insertBefore(row,liveList.children[index]||null);});
+        if (animateRows) {
+            WeftMotion.cancel(liveList);
+            animateRows();
+        }
         requestAnimationFrame(measureTitles);
         if (hoverTrigger && !hoverTrigger.isConnected) closeHoverCard();
         if (focusId) {
@@ -598,7 +658,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             (focusMore ? replacement?.querySelector('.session-more') : replacement?.children[0])?.focus({preventScroll:true});
         }
         ui.byId('sessions-status').textContent = matches || projectMatches ? '' : query ? '没有找到会话。' : allSessions.length || core.state.projects?.length || core.phoneConversations().length ? '' : '还没有对话，点新建开始。';
-        if (matches <= 20) globalThis.WeftMotion?.changed(liveList, JSON.stringify([query, sessions.map(row => row.sessionId)]), 'base');
+        if (animateFold !== true && matches <= 20) globalThis.WeftMotion?.changed(liveList, JSON.stringify([query, sessions.map(row => row.sessionId)]), 'base');
         else globalThis.WeftMotion?.cancel(liveList);
     }
     function mountSessions() {
