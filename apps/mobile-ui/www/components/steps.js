@@ -20,7 +20,7 @@
             const copy=progress.detailAction(english?'Copy step details':'复制步骤详情','copy',()=>void progress.copyFeedback(copy,()=>
                 (detail.stepOptions.copyText || (text=>navigator.clipboard.writeText(text)))(WeftUiCore.executionDetailText(detail.rawText || '',detail.stepModel.language))));
             const collapse=progress.detailAction(english?'Collapse':'收起','chevron',()=>{
-                if (globalThis.WeftMotion?.setDetailsOpen) WeftMotion.setDetailsOpen(detail, false);
+                if (globalThis.WeftMotion?.setDetailsOpen) globalThis.WeftMotion.setDetailsOpen(detail, false);
                 else detail.open=false;
                 label.focus();
             });
