@@ -52,7 +52,7 @@
   Object.assign(mobileEffects,presentation,{
     renderMainChat(){if(!state.logicalChats)return;if(main()){state.sharedSessionId=uiCore.state.selectedSessionId;state.sharedRunning=!!uiCore.state.mainChat.running;ensureList();}presentation.renderMainChat();if(main()&&state.scrollPinned&&!uiCore.state.chatWindow.hasNewer)scrollBottom();},
     paintSelectedSession:id=>presentation.paintSelectedSession(id),
-    showConversation:({restore=false}={})=>{if(main())ensureList();if(restore&&state.page!=='chat')return;if(['activity','goals','library'].includes(state.page)&&!state.tabSource&&!state.selectingMainTab)return;if(!restore)page('chat');scheduleSharedPoll();},closeRail:closeDrawer,
+    showConversation:({restore=false}={})=>{if(main())ensureList();if(restore&&state.page!=='chat')return;if(['activity','goals','library'].includes(state.page)&&!state.tabSource)return;if(!restore)page('chat');scheduleSharedPoll();},closeRail:closeDrawer,
     paintModels:()=>updateComposer(),paintDesktopComposer:()=>{},paintSessionApprovalMode:()=>updateApprovalModeButton(),
     removeResourcePreview:()=>closeResourcePage({restoreFocus:false}),closeResourcePreview:()=>closeResourcePage({restoreFocus:false}),
     closePhoneImagePreview:()=>closeImagePreview({restoreFocus:false}),
@@ -62,7 +62,7 @@
     paintHistoryMessages:events=>{for(const event of events)trackSharedAcceptedTurn(event);if(state.logicalChats&&!main()){
       state.sharedEvents=[...uiCore.state.historyEvents.values()].sort((a,b)=>a.seq-b.seq);renderSharedConversation();}},
     paintAttachmentStatus:message=>status(message),
-    restoreMainNativeRequests:async()=>{if(window.weftNative){const rows=await call('shared.outbox.list');uiCore.restoreMainRequests(rows.commands||[]);}await uiCore.restoreRequests();},
+    restoreMainNativeRequests:async()=>{await uiCore.restoreRequests();},
     loadAttachmentHasher:async()=>({hashBlobSha256:async blob=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',await blob.arrayBuffer()))].map(value=>value.toString(16).padStart(2,'0')).join('')}),
     closeApprovalMenu:closeApprovalModeMenu,renderApprovalMode:updateApprovalModeButton,approvalModeReadFailed:()=>status('审批模式暂时无法读取'),
     selectNativeSideSession:async (id, empty, current)=>{
@@ -78,17 +78,6 @@
       await call('attachments.move',{fromConversationId:fromId,conversationId:toId,attachmentIds:files.map(row=>row.attachmentId)});
       if(owner!==state.owner||epoch!==state.authEpoch)return;
       attachmentDrafts.set(attachmentKey(toId),files);attachmentDrafts.delete(attachmentKey(fromId));await refreshAttachmentDrafts();
-    },
-    sendMainNativeMessage:async fields=>{
-      if(!window.weftNative)return fields.attachmentIds.length?uiCore.sendDesktopMessageWithAttachments(fields.text,fields.requestId,fields.intent)
-        :uiCore.submitCommand('chat.message',{chatId:fields.chatId,text:fields.text,modelProfileId:fields.modelProfileId,mode:fields.intent},null,fields.requestId);
-      uiCore.state.submitting=true;uiCore.operation('正在发送…',true,fields.requestId);updateComposer();
-      try {
-        const result=await call('shared.send',fields);if(!result.command)throw Error('COMMAND_UNCONFIRMED');
-        uiCore.updateFromCommand(result.command);
-        if(['accepted_by_dsh','observed'].includes(result.command.state)){clearAcceptedHostAttachments(fields.attachmentIds);await refreshAttachmentDrafts();}
-        return result.command;
-      }finally{uiCore.state.submitting=false;updateComposer();}
     },
   });
   // The shared renderer requires its named draft callback on its own presentation object too.
@@ -109,7 +98,7 @@
     const attachments=currentAttachments().length;state.sharedRunning=running;
     const hasDraft=!!text.trim()||attachments>0;
     try{const key=sharedDraftKey(uiCore.state.selectedChatId);if(text)localStorage.setItem(key,text);else localStorage.removeItem(key);}catch{}
-    return {host:true,processingHint:uiCore.executionAccountHint(),ready:available&&!uiCore.sendBlocker(text,true),sendHidden:running&&!hasDraft,
+    return {host:true,processingHint:uiCore.executionAccountHint(),ready:available&&!uiCore.sendBlocker(text),sendHidden:running&&!hasDraft,
       draftDisabled:!available,placeholder:running?WeftUiCore.runningPlaceholder(uiCore.composerInputMode(state.sharedSessionId)):'和 WeftMate 聊聊…',
       modelName:uiCore.state.mainChat.modelDisplayName||uiCore.state.models.find(row=>row.id===uiCore.state.modelProfileId)?.name||'选择模型',
       modelLabel:'当前模型',modelDisabled:!state.loggedIn||state.transitionPending||state.modelSwitching||!uiCore.state.mainChat.sendAvailable,attachmentsDisabled:!available||!!state.attachmentPick||uiCore.state.submitting,
@@ -127,12 +116,12 @@
   selectSharedSession=function(id){return state.logicalChats?uiCore.selectLogicalSession(id):nativeSides(id);};
   updatePageHeader=function(){oldHeader();if(state.logicalChats&&state.page==='chat'){$('menu-button').hidden=false;$('page-back').hidden=main();}
     if(main()&&state.page==='chat'){$('header-title').textContent='WeftMate';$('header-subtitle').textContent='主对话';$('page-back').hidden=!state.tabSource;}
-    if(state.page==='chat'&&state.logicalChats){$('menu-button').hidden=false;$('page-back').hidden=true;
+    if(state.page==='chat'&&state.logicalChats){$('menu-button').hidden=false;$('page-back').hidden=main();
       $('header-subtitle').hidden=false;$('header-subtitle').textContent=uiCore.connectionView().kind==='online'?'已连接':connectionLabel();}
     syncMobileTabs();};
   refreshAttachmentDrafts=async function(...args){if(state.logicalChats&&!window.weftNative){renderAttachmentDrafts();updateComposer();return true;}return oldDrafts(...args);};
   removeAttachment=async function(id){if(state.logicalChats&&!window.weftNative)return uiCore.removeAttachmentDraft(id);return oldRemove(id);};
-  selectConversation=function(id){if(state.logicalChats&&id===null)return Promise.resolve(uiCore.startChatConversation()).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
+  selectConversation=function(id){if(state.logicalChats&&id===null)return uiCore.openSideChat({entry:'composer',parent:null}).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
   pickAttachment=async function(kind){if(!state.logicalChats||window.weftNative)return oldPick(kind);
     closeAttachmentMenu();const input=el('input');input.type='file';input.multiple=true;input.accept=kind==='file'?'': 'image/*';if(kind==='camera')input.setAttribute('capture','environment');
     input.addEventListener('change',async()=>{await uiCore.addAttachmentFiles([...input.files]);input.remove();renderAttachmentDrafts();updateComposer();});input.addEventListener('cancel',()=>input.remove());input.hidden=true;document.body.append(input);input.click();};

@@ -49,14 +49,6 @@ export function eraseChatCopies(account, { sessionId = null, forgotten = false }
     if (sourceChatId && snapshot.chatId === sourceChatId) operation.response = { chatId: sourceChatId, deleted: true };
     else if (forgotten) { delete snapshot.originRefs; delete snapshot.contextTransfer; }
   }
-  for (const result of Object.values(account.chatResults ?? {})) {
-    if (!forgotten && result.sourceChatId !== sourceChatId && result.sourceRef?.native?.sessionId !== sessionId) continue;
-    result.deleted = true; result.summary = ''; result.artifactRefs = []; result.requiresResponse = false;
-    delete result.contentHash;
-    result.resultRevision++; result.notificationRevision = result.resultRevision;
-    if (forgotten) result.forgotten = true;
-    changed.add(identity.mainChatId);
-  }
   const clearTransfer = side => {
     if (!side?.contextTransfer || !touches(side.contextTransfer.sourceRefs)) return false;
     side.contextTransfer = { state: 'references_only', sourceRefs: [], truncated: false, sourceDeleted: true };
@@ -78,7 +70,6 @@ export function eraseChatCopies(account, { sessionId = null, forgotten = false }
   if (forgotten) for (const id of Object.keys(identity?.chats ?? {})) changed.add(id);
   else if (sourceChatId) changed.add(sourceChatId);
   for (const id of changed) if (identity?.chats[id]) {
-    if (identity.chats[id].relay) delete identity.chats[id].relay.handoff;
     identity.chats[id].contentRevision++; identity.chats[id].revision++;
   }
   return [...changed].filter(Boolean);

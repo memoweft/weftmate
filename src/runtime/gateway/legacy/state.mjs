@@ -20,7 +20,6 @@ export function fallbackState() {
       workspace: process.env.WEFTMATE_WORKSPACE ?? null,
     },
     update: { enabled: false, status: 'disabled', version: null, error: null },
-    memoweft: { enabled: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' },
   }
 }
 

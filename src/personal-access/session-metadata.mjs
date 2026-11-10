@@ -205,7 +205,7 @@ export function createSessionMetadata(context) {
       const row = index.get(key(ownerId, sessionId));
       const latestMessageSeq = Math.max(row?.latestMessageSeq ?? -1, row?.outcomeSeq ?? -1);
       const activityTimes = [metadata.attachedAt, row?.updatedAt].map(value => Date.parse(value)).filter(Number.isFinite);
-      return { ...modeProjection(metadata, context.accountState(ownerId)), ...memorySettings(metadata), pinned: metadata.pinned === true, unread: metadata.unread === true || latestMessageSeq > (metadata.readMessageSeq ?? -1),
+      return { ...modeProjection(metadata, context.accountState(ownerId), sessionId), ...memorySettings(metadata), pinned: metadata.pinned === true, unread: metadata.unread === true || latestMessageSeq > (metadata.readMessageSeq ?? -1),
         attention: attentionIndex(context.accountState(ownerId)).get(sessionId) ?? null, lastOutcome: row?.lastOutcome ?? null,
         ...(activityTimes.length ? { updatedAt: new Date(Math.max(...activityTimes)).toISOString() } : {}),
         groupId: metadata.groupId ?? null, ...(metadata.title ? { title: metadata.title } : {}),

@@ -35,7 +35,18 @@ async function launch(){
 }
 try{
   fixture=await startFixture();fixture.backend.listSlashCommands=async()=>({items:[{kind:'skill',name:'document-reader',description:'阅读指定文档并核对出处。'},{kind:'command',name:'status',description:'查看当前对话状态。'}],tools:[{name:'read_file',description:'读取工作目录中的文件。'}]});
-  await launch();await open('general');
+  await launch();
+  const reads=[];
+  const record=request=>reads.push(new URL(request.url()).pathname);
+  page.on('request',record);
+  await open('general');
+  page.off('request',record);
+  if (!baseline) {
+    assert.ok(!reads.includes('/personal/v1/workspaces/browser'),'opening general must not load resource settings');
+    const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/personal/v1/workspaces/browser'&&r.ok());
+    await open('resources');await response;await open('general');
+    report.checks.push('resource settings load on their first visit');
+  }
   assert.equal(await page.locator('.settings-navigation button').count(),21);
   assert.equal(await page.getByRole('button',{name:'返回设置',exact:true}).count(),0,'desktop has no phone-only back button');
   if(!baseline){

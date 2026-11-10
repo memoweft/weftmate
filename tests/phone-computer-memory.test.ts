@@ -14,7 +14,7 @@ async function fixture(t:any, {replica=true, legacy=false, ownModel=true, linked
     ...(legacy?{phoneMemory:{enabled:true,items:[{id:'obsolete',text:'不应召回的旧手机记忆'}]}}:{})};
   const calls:any[]=[];
   const engine=await W.create({identity:linkedIdentity?{hostId:'host'}:{accountId:'synthetic'},crypto:webcrypto,
-    ...(ownModel?{phoneModel:()=>({modelId:'phone-model'}),accountCheck:async()=>({})}:{}),
+    standalone:ownModel,phoneModel:()=>({modelId:ownModel?'phone-model':'computer-model'}),accountCheck:async()=>({}),
     control:async()=>({authorized:true,accountId:'synthetic',hostId:'host',generation:1}),
     vault:{load:async()=>structuredClone(saved),save:async(value:any)=>{saved=structuredClone(value)},close(){},
       complete:async(body:any)=>{calls.push(structuredClone(body));return {choices:[{message:{content:'合成回复'}}]};}}});
@@ -63,22 +63,11 @@ test('an encrypted old container is rewritten without phone memory, retains orig
   assert.equal((await other.load()).conversations.length,0);
 });
 
-test('without a replica the prompt explains where memory forms and never promises local forgetting',async t=>{
-  const f=await fixture(t,{replica:false});
-  await f.engine.send('忘掉我的合成偏好');
-  assert.equal(f.calls.length,1);
-  const prompt=f.calls[0].messages[0].content;
-  assert.match(prompt,/记忆在电脑上形成/);
-  assert.match(prompt,/连上电脑后才有/);
-  assert.match(prompt,/现在删不了/);
-  assert.match(prompt,/连上电脑后再说一次或去记忆页忘掉/);
-});
-
 test('large and previously deferred handovers upload automatically with stable ids and originals only',async t=>{
   const turns=Array.from({length:101},(_,i)=>({id:`turn-${i}`,conversationId:'original',timestamp:i,messages:[{role:'user',text:'合成原话'.repeat(600)}]}));
   let saved:any={snapshot:null,turns,conversations:[{id:'original',turns}],handover:{id:'stable-handover',totalTurns:101,conversationCount:1,bytes:300000,awaitingConfirmation:true},phoneMemory:{items:[{text:'不上传的旧条目'}]}};
   const requests:any[]=[];
-  const engine=await W.create({identity:{},crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),
+  const engine=await W.create({identity:{},crypto:webcrypto,standalone:true,phoneModel:()=>({modelId:'synthetic'}),
     vault:{load:async()=>structuredClone(saved),save:async(value:any)=>{saved=structuredClone(value)},key:async()=>({}),open:async(value:any)=>value,close(){}},
     host:async(path:string,body:any)=>{
       if(path==='/offline/sync')return {...snapshot,remove:[],memoryAuthority:{ready:true}};
@@ -98,7 +87,7 @@ test('large and previously deferred handovers upload automatically with stable i
 test('lost and partial handover receipts retain original turns for retry while computer recall stays available',async t=>{
   let saved:any={snapshot:null,conversations:[],turns:[]},attempt=0;
   const requests:any[]=[],models:any[]=[];
-  const engine=await W.create({identity:{hostId:'host'},crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),
+  const engine=await W.create({identity:{hostId:'host'},crypto:webcrypto,standalone:true,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),
     control:async()=>({authorized:true,accountId:'synthetic',hostId:'host',generation:1}),
     vault:{load:async()=>saved,save:async(value:any)=>{saved=structuredClone(value)},key:async()=>({}),open:async(value:any)=>value,close(){},
       complete:async(body:any)=>{models.push(body);return {choices:[{message:{content:'合成回复'}}]};}},

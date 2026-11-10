@@ -7,7 +7,6 @@ export function buildRedactedDiagnostics(input: {
   ready: boolean;
   packaged?: boolean;
   safeStorageAvailable?: boolean;
-  aiGame?: { managed?: boolean; state?: string; reasonCode?: string; runtimeVersion?: string | null; apiVersion?: string | null; retryable?: boolean };
   update?: { enabled?: boolean; status?: string; version?: string | null; error?: string | null };
 }) {
   const profiles = input.models.profiles.flatMap((candidate) => {
@@ -34,14 +33,6 @@ export function buildRedactedDiagnostics(input: {
       models: { profiles, activeId: input.models.activeId },
     },
     runtime: { configured: input.configured, ready: input.ready },
-    aiGame: {
-      managed: input.aiGame?.managed === true,
-      state: typeof input.aiGame?.state === 'string' ? input.aiGame.state : 'not_installed',
-      reasonCode: typeof input.aiGame?.reasonCode === 'string' ? input.aiGame.reasonCode : 'runtime_not_installed',
-      runtimeVersion: typeof input.aiGame?.runtimeVersion === 'string' ? input.aiGame.runtimeVersion : null,
-      apiVersion: typeof input.aiGame?.apiVersion === 'string' ? input.aiGame.apiVersion : null,
-      retryable: input.aiGame?.retryable === true,
-    },
     security: {
       safeStorageAvailable: input.safeStorageAvailable === true,
       protectedCredentialProfiles: profiles.filter((profile) => profile.credentialProtected).length,

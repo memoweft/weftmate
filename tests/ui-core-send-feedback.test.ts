@@ -1,3 +1,4 @@
+// 保护：忙时点击的去向、独立草稿与旧回执，防止消息重复或被送往另一段对话。
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
@@ -28,7 +29,7 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 }
 
 test('single status: normal chat command receipts update locks without painting a bottom notice', () => {
-  for (const kind of ['session.create', 'session.side.create', 'session.message', 'chat.message', 'session.cancel']) {
+  for (const kind of ['session.create', 'session.side.create', 'session.message', 'session.cancel']) {
     const f = fixture(); f.core.creatingOptimisticSession = true;
     for (const state of ['pending', 'dispatching', 'accepted_by_dsh']) {
       const requestId = `synthetic-${kind}`;
@@ -100,24 +101,16 @@ test('single status: a cancel POST keeps earlier uncertainty locked until its re
 });
 
 const cases = [
-  ['folder mutation', c => c.folderMutationPending = () => true],
-  ['submission', c => c.state.submitting = true],
-  ['upload', c => c.state.attachmentUpload = {}],
-  ['unresolved receipt', c => c.state.unresolvedSubmission = true],
   ['chat unavailable', c => c.state.capabilities.chat.available = false],
   ['chat loading', c => c.state.capabilities.chat = {}],
   ['session read only', c => c.state.sessions[0].sendAvailable = false],
-  ['session selection', c => c.state.sessionSelecting = true],
-  ['side creation', c => c.state.sideCreating = true],
   ['offline', c => c.state.online = false],
   ['model missing', c => {c.state.models = []; c.state.modelProfileId = null}],
   ['empty message', () => {}],
 ];
-for (const main of [false, true]) for (const [name, block] of cases) {
-  if (main && name === 'session read only') continue;
-  test(`FIX-32 ${main ? 'main' : 'session'} send explains ${name} without clearing the draft`, async () => {
+for (const [name, block] of cases) {
+  test(`FIX-32 session send explains ${name} without clearing the draft`, async () => {
     const f = fixture();
-    if (main) Object.assign(f.core.state, {personalCapabilities:{chatSend:1},mainChat:{chatId:'main',sendAvailable:true},selectedChatId:'main',activeChatSource:'desktop'});
     block(f.core);
     const text = name === 'empty message' ? '' : '合成草稿';
     const view = f.core.composerState(text);
@@ -135,22 +128,74 @@ test('FIX-32 repeated pending text is visible and disabled',async()=>{
   assert.ok(f.paints.some(p=>p.name==='toast'));assert.equal(f.requests.length,0);
 });
 
-for(const [name,block] of [['chat API unavailable',c=>c.state.personalCapabilities.chatSend=0],['main read only',c=>c.state.mainChat.sendAvailable=false]])test(`FIX-32 main send explains ${name}`,async()=>{
- const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chatSend:1},mainChat:{chatId:'main',sendAvailable:true},selectedChatId:'main',activeChatSource:'desktop'});block(f.core);
- assert.equal(f.core.composerState('保留的草稿').sendDisabled,true);await f.core.sendDraft('保留的草稿');assert.ok(f.paints.some(p=>p.name==='toast'));assert.equal(f.requests.length,0);
+test('FIX-32 the old main chat explains it is read-only without sending',async()=>{
+ const f=fixture();Object.assign(f.core.state,{mainChat:{chatId:'main'},selectedChatId:'main',activeChatSource:'desktop'});
+ assert.equal(f.core.composerState('保留的草稿').sendDisabled,true);await f.core.sendDraft('保留的草稿');
+ assert.ok(f.paints.some(p=>p.name==='toast'&&/旧主对话只能查看/.test(p.args[0])));assert.equal(f.requests.length,0);
 });
 
-test('FIX-32 main duplicate during asynchronous acceptance is disabled and explained',async()=>{
- const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chatSend:1},mainChat:{chatId:'main',sendAvailable:true},selectedChatId:'main',activeChatSource:'desktop'});
- let resolve;const gate=new Promise(done=>resolve=done);let sends=0;
- f.core.submitCommand=()=>{sends++;return gate};f.core.refreshHistory=async()=>{};
- const first=f.core.sendDraft('第一句话');assert.equal(f.core.composerState('第一句话').sendDisabled,true);await f.core.sendDraft('第一句话');assert.equal(sends,1);assert.ok(f.paints.some(p=>p.name==='toast'));
- resolve(null);await first;
+test('a busy conversation accepts only its first click and sends the captured text once after release',async()=>{
+ for(const flag of ['approvalModeSaving','sessionSelecting','folderRegistering','submitting','attachmentUpload','unresolvedSubmission']){
+   const {core}=fixture(), sent:any[]=[];
+   core.submitCommand=async(kind,fields,session,id)=>{sent.push({kind,fields,session,id});return {requestId:id,state:'accepted_by_dsh'}};
+   core.refreshHistory=async()=>{};
+   if(flag==='folderRegistering')core.folderMutationPending=()=>core.state[flag];
+   core.state[flag]={};const first=await core.sendDraft('先发这条');
+   assert.equal(first.waiting,true,flag);assert.equal(core.composerState('下一条草稿').sendDisabled,true);
+   await core.sendDraft('下一条草稿');assert.equal(sent.length,0);
+   core.state[flag]=null;core.composerState('下一条草稿');core.composerState('下一条草稿');
+   await new Promise(done=>setImmediate(done));
+   assert.deepEqual(sent.map(r=>[r.fields.text,r.session,r.id]),[['先发这条','session-test',first.requestId]],flag);
+ }
+});
+test('a delayed model save that fails, or a changed account, device, session or network cannot release the original message',async()=>{
+ for (const change of ['save failed','owner','device','host','session','offline']){
+   let finish;const gate=new Promise(done=>finish=done);
+   const f=fixture(path=>path.endsWith('/thinking')?gate:response({})),c=f.core;
+   c.state.models[0].deepThinking={supported:true};
+   const save=c.setDeepThinking(true);const first=await c.sendDraft('可取回');assert.equal(first.waiting,true);
+   if(change==='owner') {c.state.ownerId='different';c.state.identityGeneration++;}
+   if(change==='device')c.state.device={id:'different'};
+   if(change==='host')c.state.hostId='other-host';
+   if(change==='session'){c.state.selectedSessionId='other-session';c.state.sessions=[];}
+   if(change==='offline')c.state.online=false;
+   c.composerState('');finish(change==='save failed'?response({},500):response({enabled:true}));await save;
+   let slot=c.heldDraft();if(change==='owner'){assert.equal(slot,undefined);c.state.ownerId='owner-test';slot=c.heldDraft();}
+   assert.equal(slot.waiting,false,change);assert.equal(slot.text,'可取回');
+   assert.equal(f.requests.some(r=>r.options.method==='POST'),false);
+   c.reclaimDraft(first.requestId);assert.ok(f.paints.some(p=>p.name==='restoreMainChatDraft'&&p.args[0]==='可取回'));assert.equal(c.heldDraft(),undefined);
+ }
+});
+test('a held click looks up the old receipt and never posts while its outcome is unknown',async()=>{
+ let settle;const gate=new Promise(done=>settle=done);const f=fixture(path=>path.includes('/by-request/')?gate:response({})),c=f.core;
+ c.rememberMarker({requestId:'previous',kind:'session.message',sessionId:'session-test'});c.trackRequestState(true,'previous');
+ const sent:any[]=[];c.submitCommand=async(...args)=>{sent.push(args);};const first=await c.sendDraft('等核对');
+ assert.ok(f.requests.some(r=>r.path.endsWith('/commands/by-request/previous')));assert.equal(c.heldDraft().waiting,true);assert.equal(sent.length,0);
+ settle(response({command:{kind:'session.message',requestId:'previous',commandId:'old',state:'accepted_by_dsh',sessionId:'session-test'}}));
+ await new Promise(done=>setImmediate(done));c.composerState('');await new Promise(done=>setImmediate(done));
+ assert.equal(sent.length,1);assert.equal(sent[0][3],first.requestId);
 });
 
-test('FIX-32 thinking write disables send and explains a stale activation',async()=>{
- let resolve;const gate=new Promise(done=>resolve=done);
- const f=fixture(path=>path.endsWith('/thinking')?gate:response({}));f.core.state.models[0].deepThinking={supported:true};
- const save=f.core.setDeepThinking(true);assert.equal(f.core.composerState('保留的草稿').sendDisabled,true);await f.core.sendDraft('保留的草稿');assert.ok(f.paints.some(p=>p.name==='toast'));assert.equal(f.requests.some(r=>r.options.method==='POST'),false);
- resolve(response({session:{sessionId:'session-test',deepThinking:true}}));await save;
+test('two open conversations keep separate slots and release only to their original sessions',async()=>{
+ const {core:c}=fixture();c.state.sessions.push({sessionId:'second',sendAvailable:true});
+ const sent:any[]=[];c.submitCommand=async(_kind,fields,_session,id)=>{sent.push([fields.sessionId,fields.text,id]);};
+ c.state.submitting=true;const a=await c.sendDraft('第一段');c.state.selectedSessionId='second';
+ assert.equal(c.heldDraft(),undefined);const b=await c.sendDraft('第二段');
+ c.state.submitting=false;c.composerState('');await new Promise(done=>setImmediate(done));
+ assert.deepEqual(sent,[['second','第二段',b.requestId]]);
+ c.state.selectedSessionId='session-test';c.composerState('');await new Promise(done=>setImmediate(done));
+ assert.deepEqual(sent,[['second','第二段',b.requestId],['session-test','第一段',a.requestId]]);
+});
+
+test('a click during selection keeps the visible draft with the conversation it came from',async()=>{
+ const {core:c}=fixture(),sent:any[]=[];
+ c.state.sessions.push({sessionId:'second',sendAvailable:true});
+ let finish;const gate=new Promise(done=>finish=done);
+ c.selectNativeSession=async id=>{c.state.selectedSessionId=id;if(id==='second')await gate;};
+ c.submitCommand=async(_kind,fields,_session,id)=>{sent.push([fields.sessionId,fields.text,id]);};
+ const changing=c.selectSession('second');assert.equal(c.state.sessionSelecting,true);
+ const first=await c.sendDraft('先前对话输入的文字');assert.equal(first.waiting,true);
+ finish();await changing;c.composerState('');await new Promise(done=>setImmediate(done));assert.equal(sent.length,0);
+ await c.selectSession('session-test');c.composerState('');await new Promise(done=>setImmediate(done));
+ assert.deepEqual(sent,[['session-test','先前对话输入的文字',first.requestId]]);
 });

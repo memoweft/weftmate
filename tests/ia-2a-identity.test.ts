@@ -96,7 +96,7 @@ test('real HTTP service migrates once, preserves old APIs, isolates accounts and
     assert.notEqual(link.chatId, mainId);
     assert.equal((await request('/sessions/original/events')).body.events[0].data.text, '合成历史');
     const side = (await request(`/chats/${link.chatId}`)).body.chat;
-    assert.deepEqual(side.parent, { kind: 'main', id: mainId });
+    assert.equal(side.parent, null);
     assert.equal(side.groupId, 'group'); assert.equal(side.pinned, true); assert.equal(side.title, '原标题');
     assert.equal((await request('/chats')).body.items.length, 0);
     assert.equal((await request('/chats?archived=all')).body.items.length, 1);

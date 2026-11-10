@@ -5,10 +5,13 @@ import { randomUUID } from 'node:crypto';
 import { snapshot, verify, listBackups, prune, durableWrite, backupError } from './archive.mjs';
 import { beginRestore, rollbackRestore, commitRestore } from './restore.mjs';
 import { validateStore } from '../personal-access/store.mjs';
+import { retireMainChatResults } from '../personal-access/chat-identity.mjs';
 import { cloudVaultRestoreCommitted } from '../personal-cloud-backup/vault-restore.mjs';
 
 export async function createBackupManager({ root, isIdle, requestRestart, clock = Date.now, appVersion = '0', onShutdownFailure = () => {}, captureBoundary = work => work(), pauseTimeoutMs = 2000, validate = async stage => {
-  validateStore(JSON.parse(await readFile(path.join(stage, 'personal-access', 'store.json'), 'utf8')));
+  const store = JSON.parse(await readFile(path.join(stage, 'personal-access', 'store.json'), 'utf8'));
+  for (const account of Object.values(store.accounts ?? {})) retireMainChatResults(account, new Date(clock()).toISOString());
+  validateStore(store);
 } }) {
   const control = path.join(root, 'personal-backup'); await mkdir(control, { recursive: true, mode: 0o700 });
   const configFile = path.join(control, 'settings.json'), pendingFile = path.join(control, 'pending.json'), statusFile = path.join(control, 'status.json');

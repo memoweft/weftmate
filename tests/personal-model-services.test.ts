@@ -8,7 +8,6 @@ import test from 'node:test';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
 import { createModelServiceOperations, mergeLegacyModelServices } from '../src/personal-access/model-services.mjs';
 import { createPersonalAccessBackend } from '../src/personal-access-backend.mjs';
-import { createMainChat } from '../src/personal-access/main-chat.mjs';
 import { createAccountModelOperations } from '../src/personal-access/account-models.mjs';
 import { privateProfileId, publicAccountModel } from '../src/personal-account-models/index.mjs';
 import { createCommandOperations } from '../src/personal-access/commands.mjs';
@@ -42,7 +41,7 @@ test('explicit directory reasoning is retained in settings, DSH declarations and
   assert.equal(reasoningCapability({ ...saved, deepThinking: { supported: false } }).supported, false, 'explicit unsupported remains unsupported');
 });
 
-test('native backend updates only idle routes and the main chat accepts its selected next model', async () => {
+test('native backend updates only idle routes', async () => {
   const profiles = [{ id: 'original-model', model: 'chat-one' }, { id: 'next-model', model: 'chat-two' }];
   const current: any = { sessionId: 'session-one', agentPreset: 'personal-remote', running: true };
   let bound = profiles[0].id; const writes: any[] = [];
@@ -60,35 +59,6 @@ test('native backend updates only idle routes and the main chat accepts its sele
   current.running = false;
   await backend.selectSessionModel({ ownerId: 'owner', sessionId: current.sessionId, modelProfileId: profiles[1].id });
   assert.equal(bound, profiles[1].id); assert.deepEqual(writes, [{ route: '/sessions/session-one/models', body: { provider: 'next-model', model: 'chat-two' } }]);
-
-  const account: any = { hostId: 'host-one', sessions: { 'session-one': { modelProfileId: profiles[0].id, pendingModelProfileId: profiles[1].id } }, commands: {},
-    devices: { 'device-one': { authKind: 'desktop', authEpoch: 0 } }, chatIdentity: { mainChatId: 'chat-main', chats: { 'chat-main': { chatId: 'chat-main', activeSegmentId: 'segment-one' } }, segments: { 'segment-one': { sessionId: 'session-one' } } } };
-  const context: any = { accountState: () => account, serial: (work: any) => work(), hostOwner: () => true, modelSelectable: () => true,
-    backend: { listModels: async () => profiles }, usage: { assertAllowed: () => {} }, requestIdUsed: () => false, timestamp: Date.now,
-    mutate: (_owner: string, update: any) => update(account), schedule: () => {} };
-  const mainChat = createMainChat(context);
-  const receipt = await mainChat.submit('owner', 'device-one', { requestId: 'send-selected-main', kind: 'chat.message', targetDeviceId: 'host-one', chatId: 'chat-main', modelProfileId: profiles[1].id, text: 'Next model.' }, () => ({ ownerId: 'owner', deviceId: 'device-one' }));
-  assert.equal(receipt.state, 'pending'); assert.equal(account.commands[receipt.commandId].payload.modelProfileId, profiles[1].id);
-  assert.equal(account.sessions['session-one'].modelProfileId, profiles[0].id, 'main chat acceptance does not change a running response');
-});
-
-test('a released main-chat client may echo the running model while the pending next model stays authoritative', async () => {
-  const original = 'running-model', selected = 'selected-next-model', modelChecks: string[] = [], usageModels: string[] = [];
-  const account: any = { hostId: 'host-one', defaultModelProfileId: selected, sessions: { 'session-one': { modelProfileId: original, pendingModelProfileId: selected } }, commands: {},
-    devices: { 'device-old': { authKind: 'desktop', authEpoch: 0 } }, chatIdentity: { mainChatId: 'chat-main', chats: { 'chat-main': { chatId: 'chat-main', activeSegmentId: 'segment-one' } }, segments: { 'segment-one': { sessionId: 'session-one' } } } };
-  const context: any = { accountState: () => account, serial: async (work: any) => work(), hostOwner: () => true,
-    modelSelectable: (_owner: string, profile: string) => { modelChecks.push(profile); return true; }, backend: { listModels: async () => [{ id: original }, { id: selected }] },
-    usage: { assertAllowed: (_owner: string, model: any) => { usageModels.push(model.id); } }, requestIdUsed: () => false, timestamp: Date.now,
-    mutate: (_owner: string, update: any) => update(account), schedule: () => {} };
-  const main = createMainChat(context), authorize = () => ({ ownerId: 'owner', deviceId: 'device-old' });
-  const body = { requestId: 'old-client-message', kind: 'chat.message', targetDeviceId: account.hostId, chatId: 'chat-main', modelProfileId: original, text: 'Old client sends while the old response is running.' };
-  const old = await main.submit('owner', 'device-old', body, authorize); assert.equal(old.state, 'pending');
-  const modern = await main.submit('owner', 'device-old', { ...body, requestId: 'modern-client-message', modelProfileId: selected }, authorize); assert.equal(modern.state, 'pending');
-  assert.deepEqual(modelChecks, [selected, selected]); assert.deepEqual(usageModels, [selected, selected]);
-  assert.equal(account.sessions['session-one'].pendingModelProfileId, selected); assert.equal(account.defaultModelProfileId, selected);
-  assert.equal(account.commands[old.commandId].payload.modelProfileId, original, 'the original old-client request remains replayable');
-  const retry = await main.submit('owner', 'device-old', body, authorize); assert.equal(retry.commandId, old.commandId);
-  await assert.rejects(main.submit('owner', 'device-old', { ...body, requestId: 'unrelated-model', modelProfileId: 'different-model' }, authorize), (error: any) => error.code === 'REQUEST_CONFLICT');
 });
 
 test('switching after a runtime reload resumes the cold gateway session before selecting its new model', async () => {
@@ -133,26 +103,15 @@ test('the 500-item legacy projection keeps current, default, background, origina
   assert.equal(account.modelServices.service.models.length, 600, 'the complete service catalog remains searchable');
 });
 
-test('registration may ignore its unissued main-chat message but keeps other pending and dispatched commands blocking reload', () => {
-  const commands: any = { own: { kind: 'chat.message', state: 'pending', payload: { modelProfileId: 'reserved-profile' } } };
-  const operations = createCommandOperations({ rootState: { accounts: { owner: { commands, defaultModelProfileId: 'reserved-profile' } } } });
+test('registration may ignore its unissued message but keeps other pending and dispatched commands blocking reload', () => {
+  const commands: any = { own: { kind: 'session.message', sessionId: 'session-own', state: 'pending', payload: {} } };
+  const operations = createCommandOperations({ rootState: { accounts: { owner: { commands } } } });
   assert.equal(operations.hasUnissuedDshCommands(), true);
-  assert.equal(operations.hasUnissuedDshCommands({ allowedPendingModelProfileId: 'reserved-profile' }), false);
-  commands.other = { kind: 'chat.message', state: 'pending', payload: { modelProfileId: 'other-profile' } };
-  assert.equal(operations.hasUnissuedDshCommands({ allowedPendingModelProfileId: 'reserved-profile' }), true);
+  assert.equal(operations.hasUnissuedDshCommands({ allowedPendingSessionId: 'session-own' }), false);
+  commands.other = { kind: 'session.message', sessionId: 'session-other', state: 'pending', payload: {} };
+  assert.equal(operations.hasUnissuedDshCommands({ allowedPendingSessionId: 'session-own' }), true);
   delete commands.other; commands.own.state = 'dispatching';
-  assert.equal(operations.hasUnissuedDshCommands({ allowedPendingModelProfileId: 'reserved-profile' }), true);
-});
-
-test('a non-busy model preparation failure settles the unissued command without inference or private details', async () => {
-  const account: any = { defaultModelProfileId: 'reserved-profile', sessions: {}, commands: { 'cmd-pending': { kind: 'chat.message', state: 'pending', payload: { modelProfileId: 'reserved-profile' } } },
-    chatIdentity: { mainChatId: 'chat-main', chats: { 'chat-main': { activeSegmentId: null } }, segments: {} } };
-  let inference = 0;
-  const operations = createCommandOperations({ closing: false, storageFault: false, timestamp: Date.now, accountState: () => account,
-    modelServices: { ensureProfile: async () => { throw Object.assign(new Error('private synthetic route detail'), { code: 'BACKEND_UNAVAILABLE' }); } },
-    mainChat: { bind: async () => { inference++; } }, serial: async (work: any) => work(), mutate: async (_owner: string, update: any) => update(account) });
-  await operations.dispatch('owner', 'cmd-pending'); assert.equal(inference, 0); assert.equal(account.commands['cmd-pending'].state, 'rejected');
-  assert.equal(account.commands['cmd-pending'].errorCode, 'BACKEND_UNAVAILABLE'); assert.equal(JSON.stringify(account).includes('private synthetic route detail'), false);
+  assert.equal(operations.hasUnissuedDshCommands({ allowedPendingSessionId: 'session-own' }), true);
 });
 
 test('legacy migration groups exact address and secret, keeps every old reference and is idempotent', () => {
@@ -224,21 +183,20 @@ test('service routes discover multiple models, cache directory, hide models, swi
   const root = await mkdtemp(join(tmpdir(), 'personal-model-services-'));
   const secret = randomBytes(24).toString('hex'), staged = new Map<string, string>(), credentials = new Map<string, string>();
   const profiles = new Map<string, any>(), sessions = new Map<string, any>();
-  const sent: string[] = [], sentThinking: boolean[] = []; let queries = 0, nativeCatalogReads = 0, discoveredExtra = false, discoveredBlank = false, installedWithPendingSession: string | null = null, installedWithPendingProfile: string | null = null;
+  const sent: string[] = [], sentThinking: boolean[] = []; let queries = 0, nativeCatalogReads = 0, discoveredExtra = false, installedWithPendingSession: string | null = null;
   const directory = createServer((request, response) => {
     queries++; assert.equal(request.url, '/v1/models'); assert.equal(request.headers.authorization === `Bearer ${secret}`, true);
-    response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify({ data: [{ id: 'mimo-v2.6-flash' }, { id: 'mimo-v2.6-pro', display_name: 'MiMo Pro', supports_reasoning: true }, { id: 'mimo-v2.5-asr' }, ...(discoveredExtra ? [{ id: 'newly-discovered-chat' }] : []), ...(discoveredBlank ? [{ id: 'new-conversation-chat' }] : [])] }));
+    response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify({ data: [{ id: 'mimo-v2.6-flash' }, { id: 'mimo-v2.6-pro', display_name: 'MiMo Pro', supports_reasoning: true }, { id: 'mimo-v2.5-asr' }, ...(discoveredExtra ? [{ id: 'newly-discovered-chat' }] : [])] }));
   });
   await new Promise<void>(resolve => directory.listen(0, '127.0.0.1', resolve));
   const baseUrl = `http://127.0.0.1:${(directory.address() as any).port}/v1`;
   const manager = { stageSecret: async ({ stageRef, apiKey }: any) => { staged.set(stageRef, apiKey); },
-    apply: async ({ target, targets, stageRef, previousProfileId, allowedPendingSessionId, allowedPendingModelProfileId }: any) => {
+    apply: async ({ target, targets, stageRef, previousProfileId, allowedPendingSessionId }: any) => {
       if ([...sessions.values()].some(session => session.running)) throw Object.assign(new Error('synthetic runtime busy'), { code: 'ACCOUNT_MODEL_BUSY' });
       if (allowedPendingSessionId) installedWithPendingSession = allowedPendingSessionId;
-      if (allowedPendingModelProfileId) installedWithPendingProfile = allowedPendingModelProfileId;
-      if (allowedPendingSessionId || allowedPendingModelProfileId) {
+      if (allowedPendingSessionId) {
         assert.equal(service.hasUnissuedDshCommands(), true, 'the selected next message is still unissued');
-        assert.equal(service.hasUnissuedDshCommands({ allowedPendingSessionId, allowedPendingModelProfileId }), false, 'only the matching unissued message is exempt from reload');
+        assert.equal(service.hasUnissuedDshCommands({ allowedPendingSessionId }), false, 'only the matching unissued message is exempt from reload');
       }
       for (const row of targets ?? [target]) { credentials.set(row.profileId, (stageRef ? staged.get(stageRef) : credentials.get(previousProfileId))!); profiles.set(row.profileId, { id: row.profileId, model: row.modelId, name: row.name, baseUrl: row.baseUrl, deepThinking: row.deepThinking }); }
       if (stageRef) staged.delete(stageRef); return { applied: true };
@@ -319,32 +277,6 @@ test('service routes discover multiple models, cache directory, hide models, swi
     await waitFor(() => api(origin, auth, 'GET', `/commands/${queued.body.command.commandId}`), value => value.body.command.state === 'accepted_by_dsh');
     assert.deepEqual(sent, ['mimo-v2.6-pro', extra.modelId]); assert.equal(installedWithPendingSession, sessionId);
     assert.equal((await api(origin, auth, 'GET', route)).body.service.models.find((row: any) => row.modelId === extra.modelId).pendingInstallation, undefined);
-    const blankChat = (await api(origin, auth, 'GET', '/chats/main')).body.chat;
-    assert.equal(blankChat.activeSessionId, null, 'the main conversation has no execution segment yet');
-    sessions.get(sessionId).running = true; discoveredBlank = true;
-    const blankDiscovery = await api(origin, auth, 'POST', route + '/refresh', {}); assert.equal(blankDiscovery.status, 200);
-    const blankSelection = await api(origin, auth, 'POST', route + '/select', { modelId: 'new-conversation-chat' }); assert.equal(blankSelection.status, 200);
-    assert.equal(blankSelection.body.service.models.find((row: any) => row.modelId === 'new-conversation-chat').pendingInstallation, true);
-    const sessionCount = sessions.size;
-    const blankMessage = await api(origin, auth, 'POST', '/commands', { requestId: 'blank-next-message', kind: 'chat.message', targetDeviceId: hostId,
-      chatId: blankChat.chatId, modelProfileId: blankSelection.body.profileId, text: 'Start the new conversation using the selected model.' });
-    assert.equal(blankMessage.status, 202, JSON.stringify(blankMessage.body));
-    await new Promise(resolve => setTimeout(resolve, 100)); assert.equal(sessions.size, sessionCount); assert.equal(sent.length, 2, 'other native reply keeps registration and the new conversation waiting');
-    sessions.get(sessionId).running = false;
-    const blankSent = await waitFor(() => api(origin, auth, 'GET', `/commands/${blankMessage.body.command.commandId}`), value => value.body.command.state === 'accepted_by_dsh');
-    assert.equal(sessions.size, sessionCount + 1); assert.equal(sessions.get(blankSent.body.command.sessionId).profileId, blankSelection.body.profileId);
-    assert.equal(installedWithPendingProfile, blankSelection.body.profileId); assert.deepEqual(sent, ['mimo-v2.6-pro', extra.modelId, 'new-conversation-chat']);
-    assert.equal((await api(origin, auth, 'GET', route)).body.service.models.find((row: any) => row.modelId === 'new-conversation-chat').pendingInstallation, undefined);
-    const mainSessionId = blankSent.body.command.sessionId;
-    sessions.get(mainSessionId).running = true;
-    assert.equal((await api(origin, auth, 'POST', route + '/select', { modelId: pro.modelId, sessionId: mainSessionId })).status, 200);
-    const oldClientMessage = await api(origin, auth, 'POST', '/commands', { requestId: 'released-client-next-message', kind: 'chat.message', targetDeviceId: hostId,
-      chatId: blankChat.chatId, modelProfileId: blankSelection.body.profileId, text: 'The released client echoes the running model.' });
-    assert.equal(oldClientMessage.status, 202, JSON.stringify(oldClientMessage.body));
-    await new Promise(resolve => setTimeout(resolve, 100)); assert.equal(sent.length, 3, 'the old reply still uses its original model');
-    sessions.get(mainSessionId).running = false;
-    await waitFor(() => api(origin, auth, 'GET', `/commands/${oldClientMessage.body.command.commandId}`), value => value.body.command.state === 'accepted_by_dsh');
-    assert.equal(sent.at(-1), pro.modelId, 'the accepted old-client message uses the authoritative pending model');
     await api(origin, auth, 'POST', route + '/select', { modelId: pro.modelId });
     const hidden = await api(origin, auth, 'PATCH', route, { requestId: 'hide-flash', expectedRevision: 1, models: [{ modelId: flash.modelId, enabled: false }] }); assert.equal(hidden.status, 200, JSON.stringify(hidden.body));
     assert.equal(hidden.body.service.models[0].enabled, false);
@@ -364,7 +296,7 @@ test('service routes discover multiple models, cache directory, hide models, swi
     await service.close(); service = await createPersonalAccessService({ root, port: 0, backend, accountModelManager: manager }); ({ origin } = await service.start());
     const after = await api(origin, { ...auth, origin }, 'GET', route); assert.equal(after.status, 200); assert.equal(after.body.service.selectedModelId, pro.modelId); assert.equal(after.body.service.models[0].enabled, false);
     const restartedBundle = await assertBundledModels({ ...auth, origin }); assert.equal(restartedBundle.modelSettings.defaultModelProfileId, pro.profileId);
-    assert.equal((await api(origin, { ...auth, origin }, 'GET', '/account/models')).body.models.length, 4);
+    assert.equal((await api(origin, { ...auth, origin }, 'GET', '/account/models')).body.models.length, 3);
     const readded = await api(origin, { ...auth, origin }, 'POST', '/model-services', { requestId: 'same-service-again', name: 'MiMo', baseUrl: baseUrl + '/chat/completions', apiKey: secret });
     assert.equal(readded.status, 201); assert.equal(readded.body.service.serviceId, modelService.serviceId);
     assert.equal((await api(origin, { ...auth, origin }, 'GET', '/model-services')).body.services.length, 1, 'same address and same credential reuse the service');

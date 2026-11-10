@@ -223,7 +223,7 @@ function questionMeaning(row,cache,attempt){if(attempt?.busy)return '正在提�
     row.answer?'问题已在执行端回答；这份登记回答是否被接收尚未确认。':'问题已在执行端回答。';
   return '这个问题当前已失效，原任务记录仍可查看。'}
 
-function mobileDecisionContent(){return state.logicalChats&&uiCore.inMainChat()&&$('main-chat-transcript')?.isConnected?$('main-chat-transcript'):$('chat-content');}
+function mobileDecisionContent(){return state.logicalChats&&uiCore.inLogicalTimeline()&&$('main-chat-transcript')?.isConnected?$('main-chat-transcript'):$('chat-content');}
 function parkMobileDecision(bar){const dock=$('composer-dock');if(dock&&bar.parentNode!==dock)dock.append(bar);}
 function placeMobileDecision(bar,row){const content=mobileDecisionContent();
   const anchor=row&&[...content.children].find(node=>row.approvalId&&node.dataset?.timelineApproval===row.approvalId||row.questionRpcId&&node.dataset?.timelineQuestion&&Number(node.dataset.seq)===row.observedSeq);

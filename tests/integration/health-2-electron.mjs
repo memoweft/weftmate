@@ -46,12 +46,14 @@ try{
  await api('/settings/health',{modelInsightsEnabled:true},'PATCH');const health=data.items.at(-1).health;await api('/daily-summaries/'+to+'/health',{...health,steps:health.steps+1},'PUT');
  const modeled=await until(async()=>{const r=(await api('/health/overview')).body;return r.insight?.mode==='model'&&r;},'real background MiMo insight',45000);assert.ok(modeled.insight.text);report.checks.push('real-mimo-background-insight-and-summary-only-input');await api('/settings/notifications',{reviewEnabled:true},'PATCH');
  // The actual native assistant receives the exact question and chooses health_query.
- const main=(await api('/chats/main')).body.chat,created=await api('/commands',{requestId:randomUUID(),kind:'chat.message',chatId:main.chatId,targetDeviceId:status.hostId,modelProfileId:modelId,text:'我最近睡得怎么样',mode:'queue'});assert.equal(created.status,202);
+ const opened=await api('/commands',{requestId:randomUUID(),kind:'session.create',targetDeviceId:status.hostId,modelProfileId:modelId,waitForReceipt:true});
+ assert.equal(opened.body.command.state,'accepted_by_dsh');
+ const sessionId=opened.body.command.sessionId,created=await api('/commands',{requestId:randomUUID(),kind:'session.message',sessionId,targetDeviceId:status.hostId,text:'我最近睡得怎么样',mode:'queue'});assert.equal(created.status,202);
  const accepted=await until(async()=>{const r=(await api('/commands/'+created.body.command.commandId)).body.command;if(['rejected','uncertain'].includes(r.state))throw Error(r.errorCode??r.state);return r.state==='accepted_by_dsh'&&r;},'main chat accepted');
  const events=await until(async()=>{const r=(await api('/sessions/'+accepted.sessionId+'/events?limit=100')).body.events??[];return r.some(e=>e.type==='turn.ended')&&r;},'native assistant health answer',180000);
  assert.ok(events.some(e=>e.type==='step.started'&&e.data?.toolName==='health_query'),JSON.stringify(events.map(e=>({type:e.type,name:e.data?.name??e.data?.toolName}))));
  const healthResult=events.find(e=>e.type==='step.completed'&&e.data?.toolName==='health_query');assert.equal(healthResult?.data?.state,'completed');report.nativeHealthTool={call:events.find(e=>e.type==='step.started'&&e.data?.toolName==='health_query')?.data,resultState:healthResult.data.state};
- const reply=events.filter(e=>e.type==='assistant.message').map(e=>e.data.text).join('\n');assert.match(reply,/睡|分钟|小时/);report.assistant={question:'我最近睡得怎么样',tool:'health_query',reply};report.checks.push('main-chat-real-native-health-query-and-grounded-answer');
+ const reply=events.filter(e=>e.type==='assistant.message').map(e=>e.data.text).join('\n');assert.match(reply,/睡|分钟|小时/);report.assistant={question:'我最近睡得怎么样',tool:'health_query',reply};report.checks.push('conversation-real-native-health-query-and-grounded-answer');
  await page.getByRole('button',{name:/^WeftMate/}).first().click();await page.getByText(reply.slice(0,15),{exact:false}).first().waitFor();
  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1200,900));
  for(const theme of ['light','dark']){await page.evaluate(t=>{document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;},theme);await shot('electron-1200-'+theme+'-assistant.png');}

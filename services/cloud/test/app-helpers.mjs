@@ -61,11 +61,11 @@ export async function refresh(device, resource, status = 200) {
   if (status === 200) device.tokens = result.data;
   return result;
 }
-export async function hostFixture(f, t) {
+export async function hostFixture(f, t, accountKeys) {
   const { createPersonalAccessService } = await import('../../../src/personal-access/index.mjs');
   const root = await realpath(await mkdtemp(join(tmpdir(), 'wm-s1d-host-')));
   const host = await createPersonalAccessService({ root, port: 0,
-    cloudIdentity: { issuer: f.config.issuer, allowInsecureLoopback: true },
+    cloudIdentity: { issuer: f.config.issuer, allowInsecureLoopback: true, accountKeys },
     backend: { getStatus: async () => ({}), listModels: async () => [], preflight: async () => ({ ok: true }),
       createSession: async () => ({}), sendMessage: async () => ({}), cancelSession: async () => ({}),
       readEvents: async () => ({ events: [], nextSeq: -1, hasMore: false }), describeSession: async () => null } });

@@ -79,7 +79,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             effects.focusApprovalMode();
         }
         catch {
-            effects.historyNotice('审批模式未保存，请重试。');
+            saving.failed=true;effects.historyNotice('审批模式未保存，请重试。');
         }
         finally {
             if (core.state.approvalModeSaving === saving) core.state.approvalModeSaving = null;
@@ -231,10 +231,10 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
     function approvalSource(row, fresh = false) {
         const entry = core.conversationTasks.entries.get(row.taskId), payload = entry?.payload;
         if (!payload || fresh && entry.notice || payload.taskId !== row.taskId || payload.sessionId !== row.sessionId ||
-            payload.source?.commandId !== row.taskId || !['session.message','chat.message'].includes(payload.source.kind) || payload.source.rootTaskId)
+            payload.source?.commandId !== row.taskId || payload.source.kind !== 'session.message' || payload.source.rootTaskId)
             return null;
         return [payload.source, ...(Array.isArray(payload.supplements) ? payload.supplements : []),
-            ...(Array.isArray(payload.resumes) ? payload.resumes : [])].find((command) => ['session.message','chat.message'].includes(command?.kind) &&
+            ...(Array.isArray(payload.resumes) ? payload.resumes : [])].find((command) => command?.kind === 'session.message' &&
             command.sessionId === row.sessionId && command.commandId === row.sourceCommandId &&
             command.receiptId === row.sourceReceiptId && (command.commandId === row.taskId && !command.rootTaskId ||
             command.rootTaskId === row.taskId) && (!Number.isSafeInteger(command.dshTurn) || command.dshTurn === row.turn)) || null;
@@ -319,7 +319,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }
     }
     function approvalStatusText(row) {
-        if (row.intent === 'work-switch') return (row.decisionOutcome || row.outcome) === 'allowed-once' ? '已切换到工作'
+        if (row.intent === 'work-switch') return (row.decisionOutcome || row.outcome) === 'allowed-once' ? '已确认交接到工作'
             : (row.decisionOutcome || row.outcome) === 'rejected' ? '先继续对话' : row.status === 'pending' ? '要切换到工作吗？' : '这次工作选择已失效';
         if (row.status === 'pending')
             return '等待你决定是否允许这次操作。';

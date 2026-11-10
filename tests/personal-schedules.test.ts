@@ -1,3 +1,4 @@
+// 保护：原生定时器与日历续期共用受控时钟，重复时段和错过的任务不会因真实日期变化而误判。
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -68,6 +69,7 @@ async function fixture(t: any, timeZone = 'Asia/Shanghai') {
   const root = await mkdtemp(join(tmpdir(), 'weft-schedule-unit-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   let now = Date.now();
+  t.mock.timers.enable({apis:['Date'],now});
   const events: any[] = [], definitions = new Map(), calls: any[] = [];
   const agent: any = { id: 'session-a', session: { header: { seedLength: 0 }, events,
     append(type: string, data: unknown) { const event = { type, data, seq: events.length, timestamp: new Date(now).toISOString() }; events.push(event); return event; } } };
@@ -83,7 +85,7 @@ async function fixture(t: any, timeZone = 'Asia/Shanghai') {
     assert.ok(record.id, JSON.stringify(record)); await manager.register(agent, record); return record;
   };
   return { agent, events, calls, create, tools:ctx.tools, get manager() { return manager; },
-    advance(ms: number) { now += ms; }, async restart() { await manager.close(); manager = await make(); }, now: () => now };
+    advance(ms: number) { now += ms;t.mock.timers.setTime(now); }, async restart() { await manager.close(); manager = await make(); }, now: () => now };
 }
 
 test('account delete presentation cannot replace the manager native deletion primitive', nativeFixture, async t => {
@@ -185,12 +187,6 @@ test('scheduled command inherits conversation owner, source authorization and cu
   assert.equal(account.commands[one.commandId].sourceAuthEpoch, 7);
   assert.equal(account.commands[one.commandId].payload.mode, 'queue');
   await assert.rejects(ops.handleRuntime({ ...input, sessionId: 'other' }), { code: 'SESSION_UNAVAILABLE' });
-  account.devices = { 'device-a': { authEpoch:7 } };
-  account.scheduleAuthorizations = { 'ui-main': {sessionId:'session-a',chatId:'chat-main',sourceDeviceId:'device-a',sourceAuthEpoch:7} };
-  const main = await ops.handleRuntime({...input,sourceReceiptId:'ui-main',deliveryId:'main-ui'});
-  const mainCommand = account.commands[main.commandId];assert.equal(mainCommand.kind,'chat.message');assert.equal(mainCommand.payload.chatId,'chat-main');
-  assert.equal(scheduledCommandSource(account,mainCommand),true);
-  assert.equal(scheduledCommandSource(account,{...mainCommand,kind:'session.message',sessionId:'next-main-segment'}),true,'a UI main schedule follows its logical main across native segment relay');
   account.sessions['session-a'].projectId='project-p1';account.projects={'project-p1':{projectId:'project-p1',revision:3}};
   const projectRun=await ops.handleRuntime({...input,deliveryId:'project-current'});
   assert.equal(account.commands[projectRun.commandId].payload.projectId,'project-p1');assert.equal(account.commands[projectRun.commandId].payload.projectRevision,3);

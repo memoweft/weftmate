@@ -22,7 +22,7 @@
         let keyboardWasOpen = false;
         const press = WeftComposerPress.mount(send, () => ui.updateAvailability());
         const syncBadges = () => {
-            for (const [id,count,dot] of [['activity',core.activity?.unreadCount || 0,false],['chat',core.state.mainChat?.unread ? 1 : 0,true]]) {
+            for (const [id,count,dot] of [['activity',core.activity?.unreadCount || 0,false],['chat',core.state.sessionStatusSummary?.all?.unread ?? 0,true]]) {
                 const tab = ui.byId(`remote-tab-${id}`); if (!tab) continue;
                 let badge = tab.querySelector('.remote-tab-badge');
                 if (!count) { badge?.remove(); tab.removeAttribute('aria-description'); continue; }
@@ -47,7 +47,7 @@
             const value = core.composerState(field.value);
             const hasContent = !!field.value.trim() || drafts.length > 0;
             const hasVoice = !!(globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition);
-            const action = value.running ? 'stop' : !hasContent && hasVoice ? 'voice' : 'send';
+            const action = value.running && !(hasContent && value.mayHold) ? 'stop' : !hasContent && hasVoice ? 'voice' : 'send';
             const label = action === 'stop' ? '停止回复' : action === 'voice' ? ui.voiceInput ? '停止语音输入' : '语音输入' : '发送';
             send.type = action === 'voice' ? 'button' : 'submit';
             send.dataset.action = action;

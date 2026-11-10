@@ -11,3 +11,8 @@ await writeFile(root + 'apps/mobile-ui/www/licenses/cloud.txt',
   'jose 6.2.12\n' + await readFile(root + 'node_modules/jose/LICENSE.md', 'utf8') +
   '\nqrcode 1.5.4\n' + await readFile(root + 'apps/mobile-ui/node_modules/qrcode/license', 'utf8') +
   '\ndijkstrajs 1.0.3\n' + await readFile(root + 'apps/mobile-ui/node_modules/dijkstrajs/LICENSE.md', 'utf8'));
+
+await build({entryPoints:[root+'apps/mobile-ui/src/password-worker.js'],bundle:true,minify:true,format:'iife',platform:'browser',target:'es2022',
+  outfile:root+'src/personal-access-ui/password-worker.js',legalComments:'inline',
+  banner:{js:'/*! @serenity-kit/opaque 1.1.0\n'+await readFile(root+'node_modules/@serenity-kit/opaque/LICENSE','utf8')+'\n*/'}});
+await copyFile(root+'src/personal-access-ui/password-worker.js',root+'apps/mobile-ui/www/password-worker.js');

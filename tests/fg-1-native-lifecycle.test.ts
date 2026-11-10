@@ -8,6 +8,19 @@ const hooks=registerHooks({resolve(specifier,context,next){if(specifier==='@deep
 const {nativeSessionLifecycle}=await import('../src/runtime/dsh-adapter/session-lifecycle.mjs');hooks.deregister();
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 
+// 保护：已确认删除的历史即使正文损坏，也能按受限存储位置移除，不必先加载模型或回放正文。
+test('cold deletion needs only the owned artifact header even when history cannot be replayed',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'weftmate-corrupt-delete-'));let inspections=0;
+  try {
+    await mkdir(join(root,'broken'));await writeFile(join(root,'broken','session.jsonl'),'broken test history');
+    const persistence={config:{root},readRaw:async()=>({meta:{id:'broken'}}),inspect:async()=>{inspections++;throw Error('corrupt history');},
+      locate:()=>({kind:'jsonl',path:join(root,'broken','session.jsonl')}),listSnapshots:async()=>[]};
+    const ctx={get:name=>name==='sessionPersistence'?persistence:null};
+    assert.equal((await nativeSessionLifecycle(ctx).remove('broken')).deleted,true);
+    assert.equal(inspections,0);await assert.rejects(stat(join(root,'broken')),{code:'ENOENT'});
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
 test('personal preset reuse follows file generations, concurrent ids and disposal; other presets resolve normally',async()=>{
   const root=await mkdtemp(join(tmpdir(),'weftmate-fx19-presets-')),file=join(root,'composition.yaml');
   let resolves=0,mounts=0,inherits=0,editDuringMount=false;
@@ -68,5 +81,6 @@ test('concurrent cold resumes share a native handle and model reads finish befor
   await tick();assert.equal(starts,1);release();await Promise.all([one,two]);assert.equal(starts,1);
   let finish;const model=lifecycle.use('session',()=>new Promise(resolve=>{finish=()=>{calls.push('model-read');resolve()}}));
   await tick();const forgetting=lifecycle.cleanupMemory('session');await tick();assert.deepEqual(calls,[]);
-  finish();await Promise.all([model,forgetting]);assert.deepEqual(calls,['model-read','flush','dispose','cache-delete']);
+  // Nothing was erased, so the projection cache is kept.
+  finish();await Promise.all([model,forgetting]);assert.deepEqual(calls,['model-read','flush','dispose']);
 });

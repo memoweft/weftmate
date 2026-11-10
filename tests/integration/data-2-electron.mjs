@@ -48,8 +48,10 @@ try {
   const modelId=(await api('/models')).body.models.find(r=>r.name==='Synthetic MiMo').id;await api('/settings/models',{defaultModelProfileId:modelId},'PATCH');
   // The query may combine usage with an intentionally small synthetic health partition.
   await api('/health/records/batch',{items:days.map(day=>({day,health:{version:1,status:'available',steps:1000,sleepMinutes:420,restingHeartRateBpm:60,exerciseMinutes:10,workouts:[]}}))},'PUT');
-  const main=(await api('/chats/main')).body.chat,question='我昨晚几点还在用电脑？';
-  const created=await api('/commands',{requestId:randomUUID(),kind:'chat.message',chatId:main.chatId,targetDeviceId:status.hostId,modelProfileId:modelId,text:question,mode:'queue'});assert.equal(created.status,202);
+  const opened=await api('/commands',{requestId:randomUUID(),kind:'session.create',targetDeviceId:status.hostId,modelProfileId:modelId,waitForReceipt:true});
+ assert.equal(opened.body.command.state,'accepted_by_dsh');
+ const sessionId=opened.body.command.sessionId,question='我昨晚几点还在用电脑？';
+  const created=await api('/commands',{requestId:randomUUID(),kind:'session.message',sessionId,targetDeviceId:status.hostId,text:question,mode:'queue'});assert.equal(created.status,202);
   const accepted=await until(async()=>{const r=(await api('/commands/'+created.body.command.commandId)).body.command;if(['rejected','uncertain'].includes(r.state))throw Error(r.errorCode??r.state);return r.state==='accepted_by_dsh'&&r;},'native chat accepted');
   const events=await until(async()=>{const events=(await api('/sessions/'+accepted.sessionId+'/events?limit=100')).body.events??[];return events.some(e=>e.type==='turn.ended')&&events;},'MiMo health_query answer',180000);
   assert.ok(events.some(e=>e.type==='step.completed'&&e.data?.toolName==='health_query'&&e.data?.state==='completed'));const reply=events.filter(e=>e.type==='assistant.message').map(e=>e.data.text).join('\n');report.answer={question,reply,tool:'health_query'};assert.match(reply,/(?:^|[^0-9])(?:02:00|2:00)(?![0-9])|凌晨(?:两|二|2|02)\s*点/);report.checks.push('real-cloud-mimo-native-health-query-answers-last-computer-use');

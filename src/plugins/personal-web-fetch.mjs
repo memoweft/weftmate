@@ -1,3 +1,13 @@
+/** Keep search in the native tool registry and execute it on the selected computer. */
+export function personalWebSearchProvider(bridge, currentExecution, executionIdentity) {
+  return {
+    id: 'weftmate-public-search',
+    available: () => currentExecution()?.agent?.session?.header?.agentPreset === 'personal-remote',
+    search: ({ query }, signal) => bridge.request({ ...executionIdentity(currentExecution()),
+      action: 'browse', browserAction: 'search', query }, signal),
+  };
+}
+
 /** Native WebRuntime provider backed by the existing authorized public-page reader. */
 export function personalWebFetchProvider(bridge, currentExecution, executionIdentity, executionPolicy) {
   return {

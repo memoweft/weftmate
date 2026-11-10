@@ -1,3 +1,5 @@
+import { createAccountKeys } from '../src/personal-cloud/account-keys.mjs';
+import { compactDecrypt } from 'jose';
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { waitForCommand } from './helpers/wait-for-command.mjs'
@@ -14,7 +16,7 @@ import { trackNativeFiles, appendNativeArtifacts } from '../src/plugins/personal
 
 const P = '/personal/v1'
 const PASSWORD = 'synthetic local account password'
-async function fixture(t: any, { fresh = false } = {}) {
+async function fixture(t: any, { fresh = false, accountKeys = undefined as ReturnType<typeof createAccountKeys> | undefined } = {}) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'wm-host-cloud-')))
   const signing = await generateKeyPair('RS256')
   const jwk = { ...await exportJWK(signing.publicKey), kid: 'test-cloud-key', alg: 'RS256', use: 'sig' }
@@ -71,7 +73,7 @@ async function fixture(t: any, { fresh = false } = {}) {
   async function start(enabled = true) {
     desktopAuth = null;
     service = await createPersonalAccessService({ root, port: 0, backend, clock: () => Date.now() + timeOffset,
-      cloudIdentity: enabled ? { issuer, allowInsecureLoopback: true } : null })
+      cloudIdentity: enabled ? { issuer, allowInsecureLoopback: true, accountKeys } : null })
     const started = await service.start(); origin = started.origin; hostId = started.hostId
   }
   t.after(async () => {
@@ -311,7 +313,17 @@ test('AUTH-1 verified devices enter only their bound account; historical pending
   const notifications = (await f.requests('GET', '/activity', undefined, f.a)).items.filter((row:any)=>row.type==='system.device.signed_in')
   assert.equal(notifications.length, 1)
   assert.equal(notifications[0].actions[0].target.category, 'devices')
-  assert.equal((await f.exchange(token, key)).result.status, 200)
+  const renewed = (await f.exchange(token, key)).result
+  assert.equal(renewed.status, 200)
+  assert.notEqual(renewed.device.id, session.device.id)
+  const listed = (await f.requests('GET', '/auth/devices', undefined, session)).devices.filter(row => row.cloudDeviceId === 'phone-a')
+  assert.equal(listed.length, 1)
+  assert.equal(listed[0].id, session.device.id)
+  assert.equal(listed[0].current, true)
+  assert.equal((await f.requests('GET', '/devices/sync', undefined, f.a)).devices.filter(row => row.cloudDeviceId === 'phone-a').length, 1)
+  assert.equal((await f.requests('PATCH', '/auth/devices/' + renewed.device.id, { name: '厨房手机' }, f.a)).status, 200)
+  const nextLogin = (await f.exchange(token, key)).result
+  assert.equal((await f.requests('GET', '/auth/devices', undefined, nextLogin)).devices.find(row => row.current).name, '厨房手机')
   assert.equal((await f.requests('GET', '/activity', undefined, f.a)).items.filter((row:any)=>row.type==='system.device.signed_in').length, 1,
     'the same already verified device does not create another new-device notification')
   assert.equal((await f.requests('GET', '/sessions', undefined, session)).status, 200)
@@ -379,10 +391,10 @@ test('JWT signature/audience/algorithm/expiry/type and DPoP possession/method/UR
 
 const phoneNonce = () => createHash('sha256').update(randomUUID()).digest('base64url');
 const phoneCommit = (p: any, deviceId: string, jkt: string, nonce: string) => hash(JSON.stringify(['wm-pair-phone-v2', p.challenge, deviceId, jkt, nonce]));
-async function submitPairing(f: any, p: any, token: string, key: any, deviceId = 'phone') {
+async function submitPairing(f: any, p: any, token: string, key: any, deviceId = 'phone', nonce = phoneNonce()) {
   p.transcript = [p.version,p.issuer,p.sub,p.hostId,p.tlsSpki,
-    await calculateJwkThumbprint(p.publicJwk),p.challenge,p.expiresAt,p.origin,p.relay?.baseUrl || ''];
-  const nonce = phoneNonce(), jkt = await calculateJwkThumbprint(await exportJWK(key.publicKey));
+    await calculateJwkThumbprint(p.publicJwk),p.challenge,p.expiresAt,p.origin,p.relay?.baseUrl || '',...(p.keyId ? [p.keyId] : [])];
+  const jkt = await calculateJwkThumbprint(await exportJWK(key.publicKey));
   const joined = (await f.exchange(token, key, '/cloud/pairings/join', {challenge:p.challenge, phoneCommitment:phoneCommit(p,deviceId,jkt,nonce)})).result;
   assert.equal(joined.status, 200, JSON.stringify(joined));
   assert.equal(joined.cookie, undefined);
@@ -753,3 +765,44 @@ for (const scenario of ['ordinary', 'project', 'phone'] as const) {
     await assert.rejects(f.service.registerNativeFile({...identity,filePath:join(workspace,'first.txt'),sha256:createHash('sha256').update('FX11_FIRST_WRITE').digest('hex')}), (error:any)=>error.code==='TOOL_SOURCE_UNAVAILABLE')
   })
 }
+
+test('only the confirmed recipient gets the data key, and redemption requires its saved-key receipt', async t => {
+  const records = new Map();
+  const keys = createAccountKeys({read:s=>records.get(s),write:(s,v)=>records.set(s,v),remove:s=>records.delete(s)});
+  const f = await fixture(t,{accountKeys:keys}); await f.bind();
+  const keyId = await keys.initialize(f.issuer,'cloud-a', async keyId=>({keyId}));
+  const start = () => f.requests('POST','/cloud/pairings',{keyId},f.a);
+  const sign = await generateKeyPair('ES256'), token = await f.access('cloud-a','phone',sign);
+  const other = await generateKeyPair('ES256'), otherToken = await f.access('cloud-a','another',other);
+  const recipient = await generateKeyPair('ECDH-ES',{crv:'P-256'}), publicJwk=await exportJWK(recipient.publicKey);
+  const foreign = await generateKeyPair('ECDH-ES',{crv:'P-256'});
+  const nonce = await calculateJwkThumbprint(publicJwk);
+  const p = await start();
+  const call = async (action,extra={},who=token,signer=sign) => (await f.exchange(who,signer,'/cloud/pairings/'+action,{challenge:p.challenge,...extra})).result;
+  const {sas} = await submitPairing(f,p,token,sign,'phone',nonce);
+  assert.equal((await call('key',{recipient:publicJwk})).status,403);
+  assert.equal((await f.requests('POST','/cloud/pairings/decision',{challenge:p.challenge,decision:'confirm',verificationCode:sas()},f.a)).status,200);
+  assert.equal((await call('redeem')).status,401);
+  assert.equal((await call('key',{recipient:publicJwk},otherToken,other)).status,401);
+  const wrongAccount = await f.access('cloud-b','phone',sign);
+  const denied = await call('key',{recipient:publicJwk},wrongAccount,sign);
+  assert.ok(denied.status === 401 || denied.status === 403);assert.equal(denied.envelope,undefined);
+  assert.equal((await call('key',{recipient:await exportJWK(foreign.publicKey)})).status,401);
+  const grant=await call('key',{recipient:publicJwk}); assert.equal(grant.status,200);assert.equal(grant.cookie,undefined);
+  assert.equal((await call('key',{recipient:publicJwk})).envelope,grant.envelope);
+  await assert.rejects(compactDecrypt(grant.envelope,foreign.privateKey));
+  const {plaintext}=await compactDecrypt(grant.envelope,recipient.privateKey);
+  const payload=JSON.parse(Buffer.from(plaintext).toString());plaintext.fill(0);
+  assert.equal(payload[1],'cloud-a');assert.equal(payload[3],p.challenge);assert.equal(payload[6],keyId);
+  assert.equal(createHash('sha256').update(Buffer.from(payload[8],'base64url')).digest('base64url'),keyId);
+  assert.equal((await call('redeem',{receipt:'z'.repeat(43)})).status,401);
+  assert.equal((await call('redeem',{receipt:payload[7]})).status,200);
+  assert.equal((await call('key',{recipient:publicJwk})).status,401);
+  const cancelled=await start();await submitPairing(f,cancelled,token,sign,'phone',nonce);
+  await f.requests('POST','/cloud/pairings/decision',{challenge:cancelled.challenge,decision:'cancel'},f.a);
+  assert.equal((await f.exchange(token,sign,'/cloud/pairings/key',{challenge:cancelled.challenge,recipient:publicJwk})).result.status,401);
+  const expired=await start();const waiting=await submitPairing(f,expired,token,sign,'phone',nonce);
+  await f.requests('POST','/cloud/pairings/decision',{challenge:expired.challenge,decision:'confirm',verificationCode:waiting.sas()},f.a);
+  f.advance(120_001);
+  assert.equal((await f.exchange(token,sign,'/cloud/pairings/key',{challenge:expired.challenge,recipient:publicJwk})).result.status,401);
+});

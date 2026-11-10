@@ -4,6 +4,13 @@ import { failure } from '../personal-access/common.mjs';
 export const REPLICA_LIMITS = Object.freeze({ items: 500, text: 2000, source: 240, bytes: 2 * 1024 * 1024, conversations: 10, messages: 20 });
 const permission = p => p?.allow_local_read === true && p.allow_cloud_read === true && p.allow_inference === true;
 
+export function shareableMemory(item) {
+  return item.current_state === 'current' && item.provenance?.length && item.permissions?.length &&
+    item.permissions.every(permission) && !item.value?.redacted && !item.lifecycle?.muted_at &&
+    !item.lifecycle?.archived_at && !item.lifecycle?.invalid_at &&
+    item.provenance.every(s => permission(s.permissions) && s.currentness_state === 'current' && s.evidence?.content_available === true);
+}
+
 /** Core owns permissions and currentness. Never send unrestricted World exports to a model. */
 export async function memorySnapshot(manager, ownerId) {
   if (!manager?.enabled) return { worldRevision: null, items: [], truncated: false };
@@ -11,10 +18,8 @@ export async function memorySnapshot(manager, ownerId) {
   if (!Array.isArray(result.items) || !Number.isSafeInteger(result.world_revision)) throw failure('MEMORY_UNAVAILABLE', 503);
   const items = [];
   for (const item of result.items) {
-    if (item.current_state !== 'current' || !item.provenance?.length || !item.permissions?.length ||
-        !item.permissions.every(permission) || item.value?.redacted || item.lifecycle?.muted_at || item.lifecycle?.archived_at || item.lifecycle?.invalid_at) continue;
+    if (!shareableMemory(item)) continue;
     const sources = item.provenance;
-    if (sources.some(s => !permission(s.permissions) || s.currentness_state !== 'current' || s.evidence?.content_available !== true)) continue;
     const text = item.value.content ?? item.value.canonical_name;
     if (typeof text !== 'string' || !text.trim()) continue;
     items.push({ id: item.item_id, kind: item.object_kind, text: text.slice(0, REPLICA_LIMITS.text),

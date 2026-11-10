@@ -168,23 +168,21 @@ try {
     return {changes,selected:source.value,checked:toggle.checked,stale,fresh,modal,sheet};
   });
   assert.deepEqual(controls,{changes:1,selected:'二',checked:true,stale:false,fresh:true,modal:true,sheet:true});
-  // Restore real capabilities and exercise the logical history path used today.
+  // Restore real capabilities and exercise the conversation history path used today.
   await page.unroute('**/personal/v1/status');
-  await page.evaluate(async () => {
+  const accepted = async command => { while (['pending','dispatching','preflight'].includes(command.state)) command = (await fixture.request('/commands/' + command.commandId)).command; assert.equal(command.state,'accepted_by_dsh'); return command; };
+  const { sessionId } = await accepted((await fixture.request('/commands', { requestId: 'design-chat-create', kind: 'session.create', targetDeviceId: fixture.hostId, modelProfileId: 'synthetic' })).command);
+  await accepted((await fixture.request('/commands', { requestId: 'design-chat-message', kind: 'session.message', sessionId, targetDeviceId: fixture.hostId, text: '合成逻辑对话' })).command);
+  await page.evaluate(async id => {
     await __feedbackSessionCore.refreshStatus(); await __feedbackSessionCore.refreshSessions();
     if (__feedbackSessionCore.state.personalCapabilities.chats !== 1) throw Error('Logical history must be enabled');
-    await __feedbackSessionCore.selectMainChat();
-  });
-  const mainChat = await page.evaluate(() => __feedbackSessionCore.state.mainChat.chatId);
-  let mainCommand = (await fixture.request('/commands', { requestId: 'design-main-message', kind: 'chat.message', chatId: mainChat, targetDeviceId: fixture.hostId, modelProfileId: 'synthetic', text: '合成逻辑对话' })).command;
-  while (['pending','dispatching','preflight'].includes(mainCommand.state)) mainCommand = (await fixture.request('/commands/' + mainCommand.commandId)).command;
-  assert.equal(mainCommand.state,'accepted_by_dsh');
-  await page.evaluate(async () => { await __feedbackSessionCore.refreshSessions(); await __feedbackSessionCore.refreshHistory(); });
-  await page.locator('#transcript .main-chat-row').first().waitFor();
+    await __feedbackSessionCore.selectSession(id);
+  }, sessionId);
+  await page.locator('#transcript').getByText('合成逻辑对话').first().waitFor();
   const logicalRepeat = await page.evaluate(async () => {
     const core = __feedbackSessionCore, transcript = document.getElementById('transcript'), children = [...transcript.children], generation = core.state.historyGeneration;
     let reads = 0; const read = core.readChatEvents; core.readChatEvents = (...args) => { reads++; return read(...args); };
-    await core.selectMainChat(); await core.selectSession(core.state.selectedSessionId); core.readChatEvents = read;
+    await core.selectSession(core.state.selectedSessionId); await core.selectSession(core.state.selectedSessionId); core.readChatEvents = read;
     return {same:children.every((node,index)=>transcript.children[index]===node),sameGeneration:generation===core.state.historyGeneration,reads};
   });
   assert.deepEqual(logicalRepeat,{same:true,sameGeneration:true,reads:0});

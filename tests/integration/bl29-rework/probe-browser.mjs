@@ -11,11 +11,12 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const f=await startTimelineCandidate({daily:true,inlineProgress:true,logicalMobile:true,cloudMobile:true,sidebar:true,historyCount:0});let browser;
 const report={errors:[],cases:[]};
 try{
- const chat=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
- if(!process.argv.includes('--empty-main')){
-  const sent=await f.request('/commands',{requestId:'rev-browser',kind:'chat.message',chatId:chat.chatId,text:'synthetic browser',modelProfileId:'local',targetDeviceId:host});
-  for(let i=0;i<100;i++){if((await f.request('/commands/'+sent.command.commandId)).command.state==='accepted_by_dsh')break;await pause(10);}
-  f.progress.text('synthetic finished');f.progress.finish();
+ const host=(await f.request('/status')).hostId;
+ const {command}=await f.request('/commands',{requestId:'probe-browser-create',kind:'session.create',modelProfileId:'local',targetDeviceId:host,waitForReceipt:true});
+ if(command.state!=='accepted_by_dsh')throw Error('Empty conversation creation was not accepted');
+ const sessionId=command.sessionId;
+ if(!process.argv.includes('--empty-session')){
+  await f.sendTo(sessionId,'synthetic browser');f.progress.text('synthetic finished');f.progress.finish();
  }
  browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:390,height:844}});
  page.on('pageerror',e=>report.errors.push(e.message));
@@ -27,10 +28,10 @@ try{
  await page.route('**/bridge',async route=>{const m=JSON.parse(route.request().postData());
   if(m.method==='host.business'&&/\/changes\?/.test(m.params?.path||'')){requests.push({at:Date.now(),path:m.params.path});if(!failure&&recovering)healthyAt??=Date.now();if(failure)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({error:{code:failure}})});}
   if(delay)await pause(delay);return route.continue();});
- await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted&&state.loggedIn&&uiCore.state.mainChat);await page.evaluate(()=>uiCore.selectMainChat());await pause(1000);
- report.initial=await page.evaluate(()=>({main:uiCore.inMainChat(),wait:uiCore.canWaitForReply(),caps:uiCore.state.personalCapabilities,loading:state.sharedLoading}));
+ await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted&&state.loggedIn&&state.logicalChats);await page.evaluate(id=>selectSharedSession(id),sessionId);await pause(1000);
+ report.initial=await page.evaluate(()=>({selected:!!state.sharedSessionId,wait:uiCore.canWaitForReply(),caps:uiCore.state.personalCapabilities,loading:state.sharedLoading}));
  for(const code of ['NOT_FOUND','CHAT_ARCHIVED','BACKEND_UNAVAILABLE','CURSOR_RESET_REQUIRED','UNAUTHORIZED','NETWORK','HTTP_502','HTTP_504']){
-  recovering=false;healthyAt=null;failure=code;await page.reload();await page.waitForFunction(()=>state.booted&&state.loggedIn&&uiCore.state.mainChat);await page.evaluate(()=>uiCore.selectMainChat());requests=[];
+  recovering=false;healthyAt=null;failure=code;await page.reload();await page.waitForFunction(()=>state.booted&&state.loggedIn&&state.logicalChats);await page.evaluate(id=>selectSharedSession(id),sessionId);requests=[];
   await page.evaluate(()=>{state.sharedLoading=false;state.sharedRunning=false;uiCore.state.submitting=false;uiCore.state.unresolvedSubmission=false;uiCore.presence.success({runtime:'ready'});scheduleSharedPoll();});
   const start=Date.now();await pause(3000);
   report.cases.push({client:'new',code,ms:Date.now()-start,requests:requests.length,rps:requests.length/((Date.now()-start)/1000),state:await page.evaluate(()=>({connection:uiCore.connectionView().kind,loading:state.sharedLoading,poll:!!state.sharedPollTimer})),intervals:requests.slice(1,10).map((r,i)=>r.at-requests[i].at)});
@@ -40,7 +41,7 @@ try{
   }
   await page.evaluate(()=>stopSharedPoll());failure=null;recovering=false;await pause(150);
  }
- failure=null;await page.reload();await page.waitForFunction(()=>state.booted&&state.loggedIn&&uiCore.state.mainChat);await page.evaluate(()=>uiCore.selectMainChat());
+ failure=null;await page.reload();await page.waitForFunction(()=>state.booted&&state.loggedIn&&state.logicalChats);await page.evaluate(id=>selectSharedSession(id),sessionId);
  // Model/settings reads during healthy idle: capture all bridge methods for 31s.
  const all=[];page.on('request',r=>{if(r.url().endsWith('/bridge')){const m=JSON.parse(r.postData());all.push({method:m.method,path:m.params?.path});}});
  await page.evaluate(()=>{uiCore.presence.success({runtime:'ready'});state.sharedLoading=false;scheduleSharedPoll();});await pause(31000);await page.evaluate(()=>stopSharedPoll());
@@ -49,9 +50,9 @@ try{
  // Latency uses probe-latency.mjs: a new user turn and visible final reply.
  delay=0;
  if(!process.argv.includes('--budget-only')){
- clientVersion='old';await page.reload();await page.waitForFunction(()=>state.booted&&state.loggedIn&&uiCore.state.mainChat);await page.evaluate(()=>uiCore.selectMainChat());await pause(500);
+ clientVersion='old';await page.reload();await page.waitForFunction(()=>state.booted&&state.loggedIn&&state.logicalChats);await page.evaluate(id=>selectSharedSession(id),sessionId);await pause(500);
  for(const code of ['NOT_FOUND','CHAT_ARCHIVED','BACKEND_UNAVAILABLE','CURSOR_RESET_REQUIRED','UNAUTHORIZED','NETWORK','HTTP_502','HTTP_504']){
-  failure=code;await page.reload();await page.waitForFunction(()=>state.booted&&state.loggedIn&&uiCore.state.mainChat);await page.evaluate(()=>uiCore.selectMainChat());requests=[];
+  failure=code;await page.reload();await page.waitForFunction(()=>state.booted&&state.loggedIn&&state.logicalChats);await page.evaluate(id=>selectSharedSession(id),sessionId);requests=[];
   await page.evaluate(()=>{state.sharedLoading=false;state.sharedRunning=false;uiCore.state.submitting=false;uiCore.state.unresolvedSubmission=false;uiCore.presence.success({runtime:'ready'});scheduleSharedPoll();});
   const start=Date.now();await pause(3000);await page.evaluate(()=>stopSharedPoll());report.cases.push({client:'old',code,ms:Date.now()-start,requests:requests.length,rps:requests.length/((Date.now()-start)/1000)});failure=null;await pause(150);
  }

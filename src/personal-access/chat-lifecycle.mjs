@@ -77,7 +77,6 @@ export function createChatLifecycle(context) {
       const limit = Number(params.get('limit') ?? 50);
       if (!Number.isInteger(limit) || limit < 1 || limit > 200) throw failure('INVALID_REQUEST');
       const revision = context.chats.requireChat(ownerId, chatId).contentRevision;
-      if (context.accountState(ownerId).memoryCleanupPending) throw failure('SESSION_BUSY', 409);
       const rows = segments(ownerId, chatId); let position = 0, afterSeq = -1, offset = 0;
       if (params.has('cursor')) {
         try {

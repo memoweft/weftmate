@@ -543,10 +543,13 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
     },
     async cleanupMemory(sessionId, options) {
       if (!lifecycle) throw new DshAdapterError('internal', 'memory-cleanup')
-      await readLog?.invalidate?.(sessionId)
       const value = await lifecycle.cleanupMemory(sessionId, options)
-      await readLog?.invalidate?.(sessionId)
-      await readLog?.refreshSession?.(sessionId, () => Promise.resolve(client.sessions.list({})).then(result => unwrap(result, 'list')))
+      // Cached history is checked against the artifact hash on every read, so
+      // only an erased conversation needs its copy removed and its row reloaded.
+      if (value.changed) {
+        await readLog?.invalidate?.(sessionId)
+        await readLog?.refreshSession?.(sessionId, () => Promise.resolve(client.sessions.list({})).then(result => unwrap(result, 'list')))
+      }
       logs.delete(sessionId); callIndexes.delete(sessionId); owned.delete(sessionId)
       return value
     },

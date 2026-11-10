@@ -1,5 +1,5 @@
 globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
-  let toolbar, fold, subtitle, computer, folder, error, draftModes;
+  let toolbar, fold, subtitle, computer, folder, error, draftModes, handoff;
   const node = ui.element;
   const project = () => core.currentFolderProject?.();
   function selectLabel(control, label, icon) {if(control.dataset.label===label)return;control.dataset.label=label;
@@ -49,6 +49,28 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     subtitle.hidden = !subtitle.textContent;
     document.body.classList.toggle('work-mode-active', enabled && working);
     document.body.classList.toggle('work-modes-supported', enabled);
+    paintHandoff();
+  }
+  function paintHandoff() {
+    if (!handoff) return;
+    const row=core.workHandoffs?.()[0]; handoff.hidden=!row;
+    if (!row) {handoff.replaceChildren();delete handoff.dataset.signature;return;}
+    const signature=JSON.stringify([core.approvalContext(),row,core.state.online]);
+    if (handoff.dataset.signature===signature) return;
+    handoff.dataset.signature=signature;
+    const incoming=row.direction==='incoming';
+    const labels={creating:'正在创建工作…',context:'正在接续文字上下文…',sending:'正在把原请求交给工作…',ready:'原请求已接续到工作',
+      uncertain:'原请求是否送达还需核对。请查看工作记录，避免重复执行。',failed:'这次交接未完成。原请求仍保留在原对话中。'};
+    const message=node('p','work-mode-hint',incoming&&row.stage==='ready'?'已接续原请求与最近文字对话。':labels[row.stage]);message.setAttribute('role','status');
+    const actions=node('div','work-switch-actions');
+    const action=(label,invoke)=>{const button=node('button','button secondary small',label);button.type='button';button.disabled=!!row.busy||core.state.online===false;
+      button.onclick=()=>Promise.resolve(invoke()).catch(cause=>ui.toast(core.failureMessage(cause)));actions.append(button);};
+    if (incoming || row.workExists) action(incoming?'返回原对话':row.stage==='ready'?'打开工作':'查看工作',()=>core.openWorkHandoff(row));
+    if (!incoming && !['ready','failed','uncertain'].includes(row.stage)) action(row.busy?'正在交接…':'继续交接',()=>core.resumeWorkHandoff(row));
+    if (['failed','uncertain'].includes(row.stage)) action('重新核对',()=>core.refreshWorkHandoffs());
+    handoff.replaceChildren(message,actions);
+    if (row.notice) handoff.append(node('p','form-error',row.notice));
+    if (core.state.online===false) handoff.append(node('p','work-mode-hint','电脑暂时不在线，连接后可继续核对交接。'));
   }
   async function chooseFolder(trigger) {
     const entries = (core.state.projects || []).filter(row => !row.revoked && (!row.hostId || row.hostId === core.currentExecutionComputer?.() || row.hostId === core.state.hostId))
@@ -68,7 +90,7 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     const heading=node('header','work-switch-heading'),copy=node('div','work-switch-copy');
     copy.append(node('h3', '', '这件事需要在电脑上做。要切换到工作吗？'));heading.append(WeftIcons.create('desktop',20),copy);card.append(heading);
     const hostId = core.currentExecutionComputer?.() || core.state.hostId, computers = core.workComputers(), online = computers.some(r => r.hostId === hostId && r.online);
-    copy.append(node('p', 'muted', online ? `在 ${computerName(hostId)} 上做，原来的消息都会保留。` : computers.length ? '需要一台在线的电脑' : '在电脑上安装 WeftMate，用同一账号登录，就能在电脑上做事。'));
+    copy.append(node('p', 'muted', online ? `在 ${computerName(hostId)} 上接续原请求和最近的文字对话，原消息保留。附件正文需要重新添加。` : computers.length ? '需要一台在线的电脑' : '在电脑上安装 WeftMate，用同一账号登录，就能在电脑上做事。'));
     const choices = node('div', 'work-choice-list'); choices.setAttribute('role', 'radiogroup'); choices.setAttribute('aria-label', '选择项目或文件夹');
     let selected = project()?.projectId || core.defaultFolderProject?.()?.projectId || null;
     const projects = (core.state.projects || []).filter(r => !r.revoked && (!r.hostId || r.hostId === hostId));
@@ -98,7 +120,8 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     later.onclick = () => core.submitApproval(core.approvalContext(), row, 'rejected');
     const start = node('button', 'button primary', '切换到工作'); start.type = 'button'; start.disabled = locked || !online || !selected;
     start.onclick = async () => { start.disabled = later.disabled = true;
-      try { await core.switchConversationWork(context, row, selected); } catch (cause) { status.textContent = core.failureMessage(cause); status.hidden = false; ui.toast(status.textContent); start.disabled = later.disabled = false; } };
+      try { await core.switchConversationWork(context, row, selected); } catch (cause) { status.textContent = core.failureMessage(cause); status.hidden = false; ui.toast(status.textContent); }
+      finally {if(card.isConnected){start.disabled=locked||!online||!selected;later.disabled=locked;}} };
     actions.append(later, start);
     if (!online && core.offlineWorkReady?.()) { start.hidden=true;const queue=node('button','button primary','交给电脑，上线后做');queue.type='button';
       queue.onclick=()=>core.openOfflineWorkMode(core.conversationTasks.entries.get(row.taskId)?.task?.sourceText || ui.readMessageDraft());actions.append(queue); }
@@ -140,6 +163,7 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     folder = button('选择项目或文件夹', 'folder', chooseFolder); ui.bindWorkspaceInfo(folder, () => ({title:project()?.name || '选择项目或文件夹',project:project()})); error = node('p', 'work-mode-hint'); error.setAttribute('role', 'status');
     toolbar.append(computer, folder, error); ui.byId('message-form').querySelector('.composer-actions').before(fold);
     subtitle = node('p', 'conversation-mode-subtitle'); subtitle.setAttribute('role', 'status'); ui.byId('assistant-title').after(subtitle);
+    handoff=node('section','work-handoff');handoff.setAttribute('aria-label','对话与工作交接');handoff.hidden=true;ui.byId('message-form').before(handoff);
     const update = ui.updateAvailability; ui.updateAvailability = (...args) => { const result = update(...args); paintWorkMode(); return result; };
     const paint = ui.paintSelectedSession; ui.paintSelectedSession = (...args) => { const result = paint(...args); paintWorkMode(); return result; };
     paintWorkMode();

@@ -81,6 +81,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const retryTimers = new Map();
   const retryCounts = new Map();
   const activeCleanups = new Map();
+  const cleanupRecoveryFlights = new Map();
   const runtimeFailures = new Map();
   const runtimeGenerations = new Map();
   const repairingOwners = new Set();
@@ -100,13 +101,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   };
   const eraseConversationSnippets = async (ownerId, record) => {
     const result = await withOwner(ownerId, entry => entry.rpc.request('query_command_receipt', { command_id: record.command.command_id }));
+    if(['rejected','revision_conflict'].includes((result.receipt??result).result_state))return {notApplied:true};
     if (!['applied', 'no_change'].includes((result.receipt ?? result).result_state)) throw error('MEMORY_CLEANUP_PENDING');
     await discardOutboxSources(ownerId, { sourceTexts: record.cleanup.sourceTexts, boundaryIds: record.cleanup.pendingBoundaryIds });
     return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...record.cleanup, affectedIds: [], journalManaged: true }) : { snippetsVerified: true };
   };
   const journal = createMemoryCommandJournal({ root, prepareCleanup: prepareConversationCleanup, eraseSnippets: eraseConversationSnippets });
   const commandFlights = new Map();
-  const manualFormationUntil = new Map();
   const actions = createMemoryActions({ root, manager: () => manager, schedule: scheduleRetry,
     redactJournal: (ownerId, row) => journal.redactTargets(ownerId,
       [row.arguments?.id, row.target?.id, row.command?.targetId, ...(row.affectedIds ?? [])].filter(Boolean),
@@ -335,7 +336,14 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   function flushPending(ownerId, generation = runtimeGeneration(ownerId)) {
     if (!runtimeCurrent(ownerId, generation)) return Promise.resolve(new Map());
     if (flushFlights.has(ownerId)) return flushFlights.get(ownerId);
-    const work = drainPending(ownerId, generation).finally(() => { if (flushFlights.get(ownerId) === work) flushFlights.delete(ownerId); });
+    const work = drainPending(ownerId, generation).finally(() => {
+      if (flushFlights.get(ownerId) === work) flushFlights.delete(ownerId);
+      if (!closing && runtimeCurrent(ownerId,generation) && !cleanupRecoveryFlights.has(ownerId)) {
+        const recovery=Promise.resolve().then(()=>manager.resumeAfterTurn(ownerId)).catch(()=>scheduleRetry(ownerId))
+          .finally(()=>{if(cleanupRecoveryFlights.get(ownerId)===recovery)cleanupRecoveryFlights.delete(ownerId);});
+        cleanupRecoveryFlights.set(ownerId,recovery);
+      }
+    });
     flushFlights.set(ownerId, work);
     return work;
   }
@@ -399,8 +407,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
     if (!backlog.pendingBoundaryCount) boundaryFailures.delete(ownerId);
     else if (!backlog.blockedBoundaryCount) retry();
-    // A delivered boundary may still have a failed Core formation job. Resume
-    // both accepted jobs and durable user actions without requiring a UI read.
+    // Keep polling accepted jobs and durable user actions without requiring a UI read.
     void actions.resume(ownerId).catch(() => retry());
     try {
       if (formationOwners.has(ownerId)) {
@@ -410,16 +417,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           if (!entry.capabilities?.methods?.includes('query_jobs')) return;
           const result = await entry.rpc.request('query_jobs', { operation: 'list' });
           if (!runtimeCurrent(ownerId, generation)) return;
-          let pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
-          for (const item of result.formation_requests ?? []) if (['no_change', 'dead'].includes(item.state)) {
-            if (!runtimeCurrent(ownerId, generation)) return;
-            if (!entry.capabilities.methods.includes('retry_formation')) continue;
-            // An explicit retry owns its just-enqueued successor. Give it one
-            // normal recovery interval before creating another background replay.
-            if ((manualFormationUntil.get(ownerId) ?? 0) > Date.now()) { pending = true; continue; }
-            await entry.rpc.request('retry_formation', { job_id: item.job_id, request_id: `auto:${item.job_id}` });
-            pending = true;
-          }
+          // A settled job is never replayed here; the owner retries it from the memory warning.
+          const pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
           if (pending || await actions.pending(ownerId)) {
             if (!runtimeCurrent(ownerId, generation)) return;
             retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1); retry();
@@ -635,6 +634,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       // Drain outside the journal lock: a drain may inspect action receipts.
       await flushFlights.get(ownerId)?.catch(() => {});
       if (marker) await journal.finishCleanup(ownerId, marker.requestId, async current => {
+        if (current.cleanup?.conversationId) return { snippetsVerified: true };
         await discardOutboxSources(ownerId, { sourceTexts: current.cleanup?.sourceTexts, boundaryIds: current.cleanup?.pendingBoundaryIds });
         return cleanupDeletedMemory ? cleanupDeletedMemory(ownerId, { ...current.cleanup, affectedIds: ids,
           sourceTexts: current.cleanup?.sourceTexts ?? [], deleteConversationSnippets: current.cleanup?.deleteConversationSnippets === true,
@@ -855,7 +855,6 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         ? 'connected' : 'unknown';
     },
     async retryFormation(ownerId, jobId, requestId) {
-      manualFormationUntil.set(ownerId, Date.now() + 30_000);
       return withOwner(ownerId, entry => entry.rpc.request('retry_formation', { job_id: jobId, request_id: requestId }));
     },
     async status(ownerId) {
@@ -925,7 +924,6 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       // This is a source-scoped withdrawal, not a request to forget every
       // source/correction sharing one of Core's affected target IDs.
       await journal.redactTargets(ownerId, [], { sessionId });
-      if (cleanupDeletedMemory) await cleanupDeletedMemory(ownerId, { affectedIds: ids, sourceTexts: [], deleteConversationSnippets: false });
       return result;
     },
     query(ownerId, method, params) { return withOwner(ownerId, async (entry) => {
@@ -1153,7 +1151,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       let cleanup;
       if (proposal.operation.startsWith('delete_')) {
         const prior = await journal.get(ownerId, proposal.requestId);
-        if (!prior) {
+        // A deleted conversation's sources are not looked up again in, or erased from, other conversations.
+        if (!prior && proposal.conversationId) cleanup = { conversationId: proposal.conversationId };
+        else if (!prior) {
           let sources = [];
           const targets = [{ target_kind: proposal.targetKind, target_id: proposal.targetId },
             ...(proposal.payload?.additional_targets ?? [])];
@@ -1249,6 +1249,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           { command_id: marker.command.command_id }));
         let result = await query();
         const receipt = result?.receipt ?? result;
+        if(!['applied','no_change'].includes(receipt?.result_state) && marker.cleanup?.snippetsPending)
+          await journal.retryPendingRedaction(ownerId,requestId);
         if (['applied', 'no_change'].includes(receipt?.result_state) &&
             receipt?.storage_cleanup?.state === 'pending') {
           try {
@@ -1264,12 +1266,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     },
     async resumeAfterTurn(ownerId) {
       owner(ownerId);
-      for (const row of await journal.pendingCleanup(ownerId))
-        await this.retryCleanupByRequest(ownerId, row.requestId).catch(() => {});
-      const pending = (await journal.pendingCleanup(ownerId)).length > 0 || await actions.pending(ownerId);
+      let retry=false;
+      for (const row of await journal.pendingCleanup(ownerId,true))
+        await this.retryCleanupByRequest(ownerId, row.requestId).catch(cause=>{if(cause.code!=='command_receipt_not_found')retry=true;});
+      const pending = retry || (await journal.pendingCleanup(ownerId)).length > 0 || await actions.pending(ownerId);
       if (pending) {
         clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
-        scheduleRetry(ownerId, true);
+        retryCounts.set(ownerId,(retryCounts.get(ownerId)??0)+1);scheduleRetry(ownerId);
       }
       return { pending };
     },
@@ -1295,6 +1298,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       for (const timer of retryTimers.values()) clearTimeout(timer);
       retryTimers.clear();
       await Promise.allSettled([...flushFlights.values()]);
+      await Promise.allSettled([...cleanupRecoveryFlights.values()]);
       await startQueue.catch(() => {});
       await Promise.allSettled([...repairFlights.values()]);
       await Promise.all([...outboxQueues.values()].map((pending) => pending.catch(() => {})));

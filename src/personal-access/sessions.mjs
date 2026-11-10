@@ -287,15 +287,17 @@ export function createSessionOperations(context) {
               if (scope.world_revision !== revision.world_revision) throw failure('MEMORY_REVISION_CHANGED', 409);
               if (!/^forget-scope-v1:[a-f0-9]{64}$/.test(scope.forget_scope ?? ''))
                 throw failure('MEMORY_DELETE_CONFLICT', 409);
-              requestId = `session-delete-${digest(`${sessionId}\0${evidenceId}\0${scope.forget_scope}\0${deleteConversationSnippets}`).slice(0, 48)}`;
+              requestId = `session-delete-${digest(`${sessionId}\0${evidenceId}\0${scope.forget_scope}`).slice(0, 48)}`;
               await context.serial(() => context.mutate(ownerId, next => {
                 next.sessions[sessionId].forgetRequestIds = {
                   ...next.sessions[sessionId].forgetRequestIds, [evidenceId]: requestId };
               }));
+              // Deleting a conversation forgets only what Core holds for it.
+              // Copies in other conversations belong to those conversations.
               result = await manager.submitCommand(ownerId, { requestId,
                 expectedWorldRevision: revision.world_revision, operation: 'delete_evidence',
                 targetKind: 'evidence', targetId: evidenceId,
-                payload: { forget_scope: scope.forget_scope, ...(deleteConversationSnippets ? { delete_conversation_snippets: true } : {}) }, deleteConversationSnippets });
+                payload: { forget_scope: scope.forget_scope }, conversationId: sessionId });
             }
             if ((result.receipt ?? result).storage_cleanup?.state === 'pending' && manager.retryCleanupByRequest)
               result = await manager.retryCleanupByRequest(ownerId, requestId);

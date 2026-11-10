@@ -107,6 +107,12 @@ export async function apply(ctx) {
       let body = '';
       for await (const part of req) { body += part; if (body.length > 32768) throw new Error('INVALID_REQUEST'); }
       const input = body ? JSON.parse(body) : {};
+      if (pathname === '/weftmate/schedules/notifications/sources' && req.method === 'POST') {
+        if (!Array.isArray(input?.sessionIds) || input.sessionIds.some(id => typeof id !== 'string' || !/^[A-Za-z0-9_-]+$/.test(id)))
+          throw Object.assign(new Error('INVALID_REQUEST'), { status: 400 });
+        const sessionIds = manager.notificationSources(input.sessionIds);
+        res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ sessionIds })); return;
+      }
       if (pathname === '/weftmate/schedules/restore' && req.method === 'POST') {
         for (const id of manager.restoreSessionIds().filter(id => input.sessionIds?.includes(id))) {
           if (!ctx.agents.get(id)) await lifecycle.resume(id);
@@ -117,6 +123,21 @@ export async function apply(ctx) {
       const match = /^\/weftmate\/schedules\/([A-Za-z0-9_-]+)$/.exec(pathname);
       if (!match || req.method !== 'POST') throw Object.assign(new Error('NOT_FOUND'), { status: 404 });
       const id = match[1];
+      if(input.action==='erase'&&!ctx.agents.get(id)) {
+        const stored=await ctx.sessionPersistence.readRaw(id);
+        if(!stored||!personal({session:{header:stored.meta}}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+        const result=await manager.eraseStoredSession(id);res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
+      }
+      if (input.action==='forget'&&!manager.hasSession(id)) {
+        res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({ok:true,removedIds:[],removedNativeIds:[]}));return;
+      }
+      if (['erase','forget'].includes(input.action)) {
+        const result=await lifecycle.withStoredSession(id,async(session,agent)=>{
+          const source=agent??{id,session};if(!personal(source))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+          return manager.manage(source,input.action,input.id,input,{storageOnly:!agent});
+        });
+        res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
+      }
       if (['list', 'notifications'].includes(input.action) && !manager.hasSession(id)) {
         res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ items: [] })); return;
       }
@@ -136,6 +157,18 @@ export async function apply(ctx) {
       if (!match || req.method !== 'POST') throw Object.assign(new Error('NOT_FOUND'), { status: 404 });
       let body = ''; for await (const part of req) { body += part; if (body.length > 32768) throw Object.assign(new Error('INVALID_REQUEST'), { status: 400 }); }
       const input = JSON.parse(body), id = match[1]; let agent = ctx.agents.get(id);
+      if(input.action==='erase'&&!agent) {
+        const stored=await ctx.sessionPersistence.readRaw(id);
+        if(!stored||!personal({session:{header:stored.meta}}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+        const result=await goalManager.eraseStoredSession(id);res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
+      }
+      if (['erase','forget'].includes(input.action)) {
+        const result=await lifecycle.withStoredSession(id,async(session,live)=>{
+          const source=live??{id,session};if(!personal(source))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+          return goalManager.manage(source,input,{storageOnly:!live});
+        });
+        res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
+      }
       if (!agent && input.action === 'list') { const stored = await ctx.sessionPersistence.inspect(id); agent = { id, session: { header: stored.meta, events: stored.events } }; }
       else if (!agent) { await lifecycle.resume(id); agent = ctx.agents.get(id); }
       if (!personal(agent)) throw Object.assign(new Error('NOT_FOUND'), { status: 404 });

@@ -50,7 +50,7 @@ test('forget option calls MemoWeft true delete only for this account/session sou
   assert.equal(result.forgottenEvidenceCount,1);assert.equal(f.calls[0].owner,'owner');assert.equal(f.calls[0].command.operation,'delete_evidence');assert.equal(f.calls[0].command.targetId,'e-a');
 });
 
-test('conversation preview is read-only; snippet opt-in reaches sources recovered from context',async()=>{
+test('conversation preview is read-only; deletion reaches sources recovered from context and stays in that conversation',async()=>{
   const f=fixture('unused');
   f.context.memoryManager.query=async(_owner:string,method:string)=>method==='preview_forget'
     ? {world_revision:2,forget_scope:'forget-scope-v1:'+'a'.repeat(64),item_count:2,evidence_count:1,evidence_ids:['e-recovered'],items:[
@@ -61,9 +61,10 @@ test('conversation preview is read-only; snippet opt-in reaches sources recovere
   await assert.rejects(f.operations.previewSessionForget('owner','missing'),{code:'SESSION_UNAVAILABLE'});
   await assert.rejects(f.operations.deleteSession('owner','session-a',{forgetMemories:true,memoryWorldRevision:1}),{code:'MEMORY_REVISION_CHANGED'});
   assert.equal(f.calls.length,0);assert.equal(f.deleted,false);
+  // An older client may still send the snippet opt-in; other conversations are never searched.
   await f.operations.deleteSession('owner','session-a',{forgetMemories:true,deleteConversationSnippets:true,memoryWorldRevision:2});
-  assert.equal(f.calls[0].command.targetId,'e-recovered');assert.equal(f.calls[0].command.deleteConversationSnippets,true);
-  assert.deepEqual(f.calls[0].command.payload,{delete_conversation_snippets:true,forget_scope:'forget-scope-v1:'+'a'.repeat(64)});
+  assert.equal(f.calls[0].command.targetId,'e-recovered');assert.equal(f.calls[0].command.conversationId,'session-a');
+  assert.deepEqual(f.calls[0].command.payload,{forget_scope:'forget-scope-v1:'+'a'.repeat(64)});
 });
 test('unavailable or rejected true forgetting keeps the conversation available for retry',async()=>{
   const f=fixture('unused');f.context.memoryManager.status=async()=>({capabilities:{deleteEvidence:false}});
@@ -97,12 +98,12 @@ test('uncertain dispatch and rejected true forgetting do not claim deletion',asy
   await assert.rejects(f.operations.deleteSession('owner','session-a',{forgetMemories:true}),{code:'MEMORY_DELETE_CONFLICT'});assert.ok(f.account.sessions['session-a']);assert.equal(f.account.sessions['session-a'].deleting,undefined);
 });
 
-test('cold deletion acquires a native lifecycle before removing the session', async () => {
+test('cold deletion removes the session without resuming its old model', async () => {
   const calls:string[]=[];
   const backend=createPersonalAccessBackend({currentOrigin:()=> 'http://fixture',profiles:()=>[],listSessions:async()=>({items:[{sessionId:'session-cold'}]}),
     gateway:async(p:string,options:any)=>{calls.push(options.method+' '+p);return {deleted:true}},referenceScan:()=>({})});
   await backend.deleteSession({sessionId:'session-cold',ownerId:'owner'});
-  assert.deepEqual(calls,['POST /sessions/session-cold/resume','DELETE /sessions/session-cold']);
+  assert.deepEqual(calls,['DELETE /sessions/session-cold']);
 });
 
 for(const evidenceId of ['e-a','__proto__'])test(`pending source erasure keeps ${evidenceId} when Core has removed the source jobs`,async()=>{

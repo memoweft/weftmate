@@ -7,7 +7,6 @@ import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { configureMemoWeft } from '../dogfood/memoweft-config.mjs';
 import { assertLoopbackOrigin, observeHostChild, personalPublicOrigin, personalWorkspaceDirectory, PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, validatePersonalHostProfile } from '../src/host-mode.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../src/private-host-storage.mjs';
 import { loadPersonalMemoryConfig } from '../src/personal-memory/config.mjs';
@@ -22,7 +21,6 @@ const trustFlags = args.filter((value) => value === '--trust-loopback-proxy');
 if (trustFlags.length > 1) { console.error('[personal-host] duplicate proxy trust option'); process.exit(2); }
 if (trustFlags.length === 1) args.splice(args.indexOf('--trust-loopback-proxy'), 1);
 let requestedProfile = null;
-let memoryConfig = null;
 let accountMemoryConfig = null;
 let accessPort = null;
 let publicOrigin = null;
@@ -35,7 +33,6 @@ for (let index = 0; index < args.length; index += 2) {
   const value = args[index + 1];
   if (!value || value.startsWith('--')) { console.error(`[personal-host] ${flag} requires a value`); process.exit(2); }
   if (flag === '--user-data-dir' && requestedProfile === null) requestedProfile = value;
-  else if (flag === '--memoweft-config' && memoryConfig === null) memoryConfig = value;
   else if (flag === '--personal-memory-config' && accountMemoryConfig === null) accountMemoryConfig = value;
   else if (flag === '--access-port' && accessPort === null && /^(?:0|[1-9]\d{0,4})$/.test(value) && Number(value) <= 65535) accessPort = Number(value);
   else if (flag === '--public-origin' && publicOrigin === null) publicOrigin = value;
@@ -60,10 +57,6 @@ if (!requestedProfile || !isAbsolute(requestedProfile)) {
   console.error('usage: node scripts/run-personal-host.mjs --user-data-dir <absolute isolated directory> [--workspace-dir <absolute existing directory>] [--access-port <0..65535>] [--public-origin <https-origin> --trust-loopback-proxy] [--android-package-path <absolute android-candidate.apk>] [--mobile-ui-dir <absolute release directory>] [--personal-memory-config <absolute config.json>] [--dry-run]');
   process.exit(2);
 }
-if (memoryConfig !== null) {
-  console.error('[personal-host] account-scoped memory is not connected; --memoweft-config is unavailable');
-  process.exit(2);
-}
 if (accountMemoryConfig !== null) {
   try { await loadPersonalMemoryConfig(accountMemoryConfig); }
   catch { console.error('[personal-host] account memory configuration refused'); process.exit(2); }
@@ -72,8 +65,6 @@ if (accountMemoryConfig !== null) {
 const env = { ...process.env };
 for (const key of Object.keys(env)) if ((key.startsWith('WEFTMATE_') && !key.startsWith('WEFTMATE_RELAY_') && !key.startsWith('WEFTMATE_ACME_') &&
     !key.startsWith('WEFTMATE_CLOUD_') && key !== 'WEFTMATE_FRPC_FILE' && key !== 'WEFTMATE_TEST_HOST_NAME') || key.startsWith('MEMOWEFT_')) delete env[key];
-try { configureMemoWeft(memoryConfig, env); }
-catch (error) { console.error('[personal-host] ' + error.message); process.exit(2); }
 const candidate = resolve(requestedProfile);
 let workspaceDir;
 try {
@@ -100,7 +91,6 @@ setProcessWarningLog((event, data) => createHostLog(profile).write(event, data))
 console.log(`[personal-host] profile=${profile}`);
 console.log(`[personal-host] workspace=${workspaceDir}`);
 console.log('[personal-host] mode=personal-host; DSH address will be OS-assigned loopback');
-console.log(`[personal-host] memoweft=${memoryConfig ? 'explicit-config' : 'disabled'} aiGame=not-configured phoneExecution=disabled`);
 console.log(`[personal-host] accountMemory=${accountMemoryConfig ? 'explicit-config' : 'disabled'}`);
 console.log(`[personal-host] personalAccess=${accessPort === null ? desktopFlags.includes('--headless') ? 'disabled' : 'automatic-desktop-loopback' : `loopback-port-${accessPort}`}`);
 console.log(`[personal-host] publicOrigin=${publicOrigin ?? 'disabled'}`);

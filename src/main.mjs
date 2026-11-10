@@ -26,19 +26,18 @@ import { repairWindowsLoginItem } from './desktop-autostart.mjs';
 import { createHostDiagnostics } from './host-diagnostics.mjs';
 import { createSystemStatusManager } from './system-status-runtime.mjs';
 import { createHostLog, redactSecretText, diagnosticPlatform } from './host-log.mjs';
-import { readLocalServiceKey } from './local-service-key.mjs';
 import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady, createBackgroundRouteRecorder } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
-import { app, BrowserWindow, WebContentsView, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, net, crashReporter, powerMonitor } from 'electron';
+import { desktopAuthStorage } from './personal-desktop-auth.mjs';
+import { createAccountKeys } from './personal-cloud/account-keys.mjs';
+import { safeStorage, app, BrowserWindow, WebContentsView, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, net, crashReporter, powerMonitor } from 'electron';
 import { stageCloudVaultRestore, reconcileCloudVaultRestore, finishCloudVaultRestore } from './personal-cloud-backup/vault-restore.mjs';
 import { privateNetworkOnPower } from './personal-cloud-backup/upload-conditions.mjs';
 import packageInfo from '../package.json' with { type: 'json' };
 import { createBackupManager } from './personal-backup/index.mjs';
 import { windowIcon, trayIcon } from './app-icons.mjs';
 import { normalizeApiBaseUrl } from './stage2-config.ts';
-import { switchActiveModel } from './model-switch-transaction.ts';
 import { discoverOpenAICompatibleModels, verifyOpenAICompatibleModel } from './openai-compatible-client.ts';
-import { resolveModelDiscoveryRequest } from './model-discovery-policy.ts';
 import { resolveModelSaveCredential } from './model-save-policy.ts';
 import { modelCapacityFor, routeForProfile, writeModelRoutesPatch } from './harness-model-routes.ts';
 import { modelReasoning, prepareOfficialModelReasoning } from './model-reasoning.mjs';
@@ -53,14 +52,12 @@ import { createRouteMutationJournal, recoverRouteMutationJournalFiles, runRecove
 import { createRouteMutationQueue } from './route-mutation-queue.ts';
 import { blocksUnexpectedRendererNavigation, isTrustedRendererInvocation } from './renderer-trust.ts';
 import { basename, isAbsolute, join, resolve } from 'node:path';
-import { pathToFileURL, fileURLToPath } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { appendFileSync, writeFileSync, statSync, mkdirSync, readFileSync, existsSync, renameSync, rmSync } from 'node:fs';
 import { tmpdir, release } from 'node:os';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import { loadPhoneExecutionConfig } from './phone-execution-config.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import {
-  createLocalDataWipeMarker,
   localDataWipeLaunchRequest,
   wipeLocalDataFromMarker,
 } from './local-data-wipe.ts';
@@ -92,8 +89,6 @@ import { applyDesktopConfig, desktopConfigPath } from './desktop-config.mjs';
 import { appBootSignal, prepareAppRollback } from './personal-update/app-rollback.mjs';
 import { initPerception } from './perception.ts';
 import { initDevices } from './devices.ts';
-import { ManagedAiGameRuntime, ensureAiGameOwnerIds, AI_GAME_PRINCIPAL_REF, AI_GAME_CONTROLLER_REF } from './managed-ai-game-runtime.mjs';
-import { ModWindowManager } from './mod-window-manager.mjs';
 import { createPersonalAccessBackend } from './personal-access-backend.mjs';
 import { loadPersonalDevelopmentTools } from './personal-development-tools.mjs';
 import { createPersonalDesktopTask } from './personal-desktop-task.mjs';
@@ -173,11 +168,6 @@ const { syntheticStopFixtureRoute, syntheticBrowserFixtureSettings,
 const personalHostMode = !process.argv.includes('--dsh-window');
 const headless = process.argv.includes('--headless');
 const desktopRequested = personalHostMode && !headless;
-if (personalHostMode && process.env.WEFTMATE_MEMOWEFT_ENABLED === '1') {
-  console.error('[weftmate] personal-host refused: account-scoped memory is not connected');
-  recordEarlyStartupFailure('startup-memory', new Error('Account-scoped memory is not connected'), 2);
-  process.exit(2);
-}
 let accessPort = null;
 try { accessPort = personalAccessPort(process.argv, personalHostMode); }
 catch (error) { console.error('[weftmate] personal access refused:', error.message); recordEarlyStartupFailure('startup-access', error, 2); process.exit(2); }
@@ -394,8 +384,6 @@ let personalBrowserReader = null;
 let accountModelRouteGate = { idle: false, reasonCode: 'unknown', changedAt: null };
 const personalMemoryIpc = { recallAttempts: 0, recallRequests: 0,
   recallWithContext: 0, recallReplies: 0, ingestRequests: 0, rejectedBindings: 0 };
-let modWindowManager = null; // 独立 Mod 视图；只管理窗口，不拥有 Mod 生命周期。
-let aiGameRuntime = null; // Electron main-only; never projected with its origin or process details.
 let perceptionRuntime = null; // 桌面感知采集面(R6-01:opt-in 采集→双工文件→运行时宿主插件)
 let devicesRuntime = null; // 设备接缝(R8-01:配对 token/设备登记/手机观察消费)
 let petStoreMod = null; // 宠物 Store(R6-02:userData/weftmate-pets.json→companion 状态)
@@ -416,23 +404,17 @@ let desktopPetLastBehaviorAt = 0;
 let desktopPetLastActivityCheckAt = 0;
 let desktopPetLastCursor = null;
 let desktopPetInteractionUntil = 0;
-let desktopPetComposerActiveUntil = 0;
-let desktopPetPreDockBounds = null;
-let desktopPetDocked = false;
 let desktopPetIgnoreMovedUntil = 0;
 let isQuitting = false; // 是否在真退出(区分"关窗收托盘" vs "退出应用")
 let cleanupDone = false; // shutdown() 是否已跑完(before-quit 二次放行)
 let shutdownPromise = null; // 只允许一个异步退出收尾，避免 before-quit 重入。
 let startupExitCode = 0;
 let startupFailureReported = false;
-let wipeRelaunching = false;
 let webBootReloads = 0; // web boot 失败自愈计数（防抖限次）
 let runtimeOrigin = null; // 当前共享官方 DSH Web 的精确 loopback origin。
 let hostLifecycleState = 'starting';
 let writeHostStateForLifecycle = null;
 let trustedRuntimeOrigin = null; // 仅当前 origin + 当前 main frame 才可拥有壳 IPC。
-let stageOneEventsAbort = null;
-const activeStageOneTurns = new Set();
 let ensureSharedRuntime = null;
 let saveModelRoute = null;
 let configureLocalModel = null;
@@ -449,18 +431,6 @@ let exclusiveMainQueue = null;
 // scan is a safety boundary: until it has completed, profile mutation must not
 // be allowed to orphan a session merely because the gateway was unavailable.
 let sessionReferenceScan = { state: 'pending', error: null };
-
-function stageOneFailure(error) {
-  if (['SYSTEM_QUERY_TIMEOUT', 'SYSTEM_QUERY_FAILED', 'CREDENTIAL_STORAGE_NOT_READY'].includes(error?.code)) return { ok: false, error: error.message };
-  if (error?.code === 'approval-not-pending') {
-    return { ok: false, error: '该工具许可已经失效，请重新发起这项操作。' };
-  }
-  if (error?.code === 'session-model-ownership-unknown') {
-    return { ok: false, error: error.message };
-  }
-  const name = error?.name === 'AbortError' ? '连接超时' : '连接或验证失败';
-  return { ok: false, error: `${name}。请检查 API 地址、API Key 和模型后重试。` };
-}
 
 /** Keep unrelated settings writes from being lost to a failed raw-byte rollback. */
 function enqueueSettingsFileWrite(label, work) {
@@ -506,26 +476,8 @@ function publicModelView() {
   return { profiles, activeId: view.activeId, configured: !!active?.hasKey, active };
 }
 
-async function discoverOpenAICompatible({ baseUrl, apiKey }) {
-  return discoverOpenAICompatibleModels({ baseUrl, apiKey });
-}
-
 async function validateStageOneModel({ baseUrl, apiKey, model }) {
   return verifyOpenAICompatibleModel({ baseUrl, apiKey, model });
-}
-
-/**
- * 本机测试便利入口。密钥只经子进程 stdout 管道进入当前主进程栈，
- * 随即完成真实验证并交给 config-store 的 safeStorage；绝不进入 renderer、命令行、
- * 普通配置、日志或错误对象。调用方不得保留返回值。
- */
-async function readCurrentLocalServiceKey() {
-  return readLocalServiceKey({ onFailure: error => logCrash('local-service-key', error) });
-}
-
-async function activateStageOneConfig(clean) {
-  if (!saveModelRoute) throw new Error('模型路由尚未完成安全初始化');
-  return saveModelRoute({ ...clean, provider: 'openai-compatible' });
 }
 
 async function stageOneGateway(path, init = {}) {
@@ -542,20 +494,6 @@ async function stageOneGateway(path, init = {}) {
     throw error;
   }
   return body;
-}
-
-function stopStageOneEvents() { stageOneEventsAbort?.abort(); stageOneEventsAbort = null; }
-function startStageOneEvents(sessionId) {
-  stopStageOneEvents(); const controller = new AbortController(); stageOneEventsAbort = controller;
-  void (async () => { try {
-    if (!runtimeOrigin) throw new Error('session runtime unavailable');
-    const response = await fetch(new URL(`/weftmate/api/v1/sessions/${encodeURIComponent(sessionId)}/events`, runtimeOrigin), { signal: controller.signal });
-    if (!response.ok || !response.body) throw new Error('event stream unavailable');
-    const reader = response.body.getReader(); let pending = '';
-    while (!controller.signal.aborted) { const next = await reader.read(); if (next.done) break; pending += new TextDecoder().decode(next.value, { stream: true }); let boundary;
-      while ((boundary = pending.indexOf('\n\n')) >= 0) { const frame = pending.slice(0, boundary); pending = pending.slice(boundary + 2); const data = frame.split('\n').find((line) => line.startsWith('data: ')); if (!data) continue; try { const event = JSON.parse(data.slice(6)); if (event?.type === 'turn.started') activeStageOneTurns.add(sessionId); if (event?.type === 'turn.stopped') activeStageOneTurns.delete(sessionId); win?.webContents.send('wm:stage1:event', event); } catch {} }
-    }
-  } catch (error) { if (!controller.signal.aborted) win?.webContents.send('wm:stage1:runtime-error', stageOneFailure(error)); } })();
 }
 
 /** 把窗口唤到前台(托盘点击 / 第二实例 / 菜单"显示")。 */
@@ -821,12 +759,6 @@ function desktopPetFreeActivity() {
   return settingsMod?.getDesktopPetWindowState?.().freeActivity === true;
 }
 
-function notifyDesktopPetVisibility() {
-  if (!win || win.isDestroyed()) return;
-  try { win.webContents.send('wm:pet-visibility', { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() }); } catch { /* 主窗口正在关闭 */ }
-  refreshTrayMenu();
-}
-
 function setDesktopPetFreeActivity(enabled) {
   enqueueSettingsFileWrite('desktop-pet-free-activity', () => {
     const previous = settingsMod?.getDesktopPetWindowState?.() ?? { visible: desktopPetVisible(), freeActivity: false };
@@ -836,9 +768,9 @@ function setDesktopPetFreeActivity(enabled) {
     desktopPetNextWanderAt = Date.now() + 8_000;
     startDesktopPetActivityController();
   } else {
-    stopDesktopPetActivityController(true);
+    stopDesktopPetActivityController();
   }
-  notifyDesktopPetVisibility();
+  refreshTrayMenu();
 }
 
 function sendDesktopCompanion() {
@@ -882,8 +814,6 @@ function clampDesktopPetWindow(save = true) {
 function recoverDesktopPetToCorner() {
   if (!desktopPetWin || desktopPetWin.isDestroyed()) return;
   cancelDesktopPetMotion();
-  desktopPetPreDockBounds = null;
-  desktopPetDocked = false;
   const area = screen.getPrimaryDisplay().workArea;
   desktopPetProgrammaticMove = true;
   desktopPetIgnoreMovedUntil = Date.now() + 500;
@@ -933,7 +863,7 @@ function startDesktopPetMotion(target, reason, save = true) {
       ? { startTime: 0, until: 0, holdMs: 0, done: false }
       : null,
   };
-  sendDesktopPetBehavior(reason === 'restore' ? 'wander' : reason, {
+  sendDesktopPetBehavior(reason, {
     x: target.x + target.width / 2,
     y: target.y + target.height / 2,
   }, Math.round(distance / duration * 1000));
@@ -943,8 +873,6 @@ function completeDesktopPetMotion(motion) {
   if (!desktopPetWin || desktopPetWin.isDestroyed() || desktopPetMotion !== motion) return;
   desktopPetMotion = null;
   desktopPetProgrammaticMove = false;
-  if (motion.reason === 'dock') desktopPetDocked = true;
-  if (motion.reason === 'restore') { desktopPetDocked = false; desktopPetPreDockBounds = null; }
   // 游走收尾允许半隐藏出屏（owner 拍板）：软夹取只防完全跑丢，不把挂边的宠物拽回屏内。
   if (motion.reason === 'wander') {
     const current = desktopPetWin.getBounds();
@@ -1022,40 +950,6 @@ function desktopPetMainExclusions() {
   return [win.getBounds()];
 }
 
-function startDesktopPetDock() {
-  if (!desktopPetWin || desktopPetWin.isDestroyed() || !win || win.isDestroyed() || !win.isVisible() || win.isMinimized()) return;
-  if (!desktopPetPreDockBounds) desktopPetPreDockBounds = desktopPetWin.getBounds();
-  const target = pickPetDockTarget(win.getBounds(), PET_WINDOW_SIZE, screen.getAllDisplays().map((item) => item.workArea));
-  if (target && !samePetBounds(desktopPetWin.getBounds(), target)) startDesktopPetMotion(target, 'dock', false);
-  else if (!target) desktopPetPreDockBounds = null;
-}
-
-function restoreDesktopPetFromDock(immediate = false) {
-  if (!desktopPetPreDockBounds || !desktopPetWin || desktopPetWin.isDestroyed()) {
-    desktopPetDocked = false;
-    desktopPetPreDockBounds = null;
-    return;
-  }
-  const target = clampPetBounds(desktopPetPreDockBounds, screen.getAllDisplays().map((item) => item.workArea));
-  if (samePetBounds(desktopPetWin.getBounds(), target)) {
-    desktopPetDocked = false;
-    desktopPetPreDockBounds = null;
-    return;
-  }
-  if (immediate) {
-    cancelDesktopPetMotion();
-    desktopPetProgrammaticMove = true;
-    desktopPetIgnoreMovedUntil = Date.now() + 500;
-    desktopPetWin.setBounds(target);
-    desktopPetProgrammaticMove = false;
-    desktopPetDocked = false;
-    desktopPetPreDockBounds = null;
-    persistDesktopPet(desktopPetWin.isVisible());
-  } else {
-    startDesktopPetMotion(target, 'restore', false);
-  }
-}
-
 function desktopPetActivityTick() {
   if (!desktopPetVisible() || !desktopPetFreeActivity()) return;
   const now = Date.now();
@@ -1063,12 +957,6 @@ function desktopPetActivityTick() {
   if (now - desktopPetLastActivityCheckAt < 80) return;
   desktopPetLastActivityCheckAt = now;
   if (desktopPetDragState) return;
-
-  if (desktopPetComposerActiveUntil > now) {
-    if (!desktopPetDocked && desktopPetMotion?.reason !== 'dock') startDesktopPetDock();
-    return;
-  }
-  if (desktopPetPreDockBounds) { restoreDesktopPetFromDock(false); return; }
 
   const cursor = screen.getCursorScreenPoint();
   const moved = !desktopPetLastCursor || Math.hypot(cursor.x - desktopPetLastCursor.x, cursor.y - desktopPetLastCursor.y) >= 3;
@@ -1103,20 +991,13 @@ function startDesktopPetActivityController() {
   desktopPetActivityTimer.unref?.();
 }
 
-function stopDesktopPetActivityController(restoreDock = false) {
+function stopDesktopPetActivityController() {
   if (desktopPetActivityTimer) clearInterval(desktopPetActivityTimer);
   desktopPetActivityTimer = null;
   cancelDesktopPetMotion();
-  if (restoreDock) restoreDesktopPetFromDock(true);
   desktopPetLastCursor = null;
   desktopPetLastActivityCheckAt = 0;
   sendDesktopPetBehavior('idle');
-}
-
-function noteDesktopPetComposerActivity() {
-  if (!desktopPetVisible() || !desktopPetFreeActivity()) return;
-  desktopPetComposerActiveUntil = Date.now() + 5_000;
-  startDesktopPetActivityController();
 }
 
 function startDesktopPetPresenceLoop() {
@@ -1135,7 +1016,7 @@ function stopDesktopPetPresenceLoop() {
 }
 
 function disposeDesktopPetRuntime() {
-  stopDesktopPetActivityController(false);
+  stopDesktopPetActivityController();
   stopDesktopPetPresenceLoop();
   if (desktopPetMoveTimer) clearTimeout(desktopPetMoveTimer);
   desktopPetMoveTimer = null;
@@ -1150,9 +1031,6 @@ function disposeDesktopPetRuntime() {
   desktopPetLastActivityCheckAt = 0;
   desktopPetLastCursor = null;
   desktopPetInteractionUntil = 0;
-  desktopPetComposerActiveUntil = 0;
-  desktopPetPreDockBounds = null;
-  desktopPetDocked = false;
   desktopPetIgnoreMovedUntil = 0;
 }
 
@@ -1168,8 +1046,6 @@ function beginDesktopPetDrag(point) {
   if (!start || !desktopPetWin || desktopPetWin.isDestroyed()) return;
   desktopPetManualPauseUntil = Date.now() + 20_000;
   cancelDesktopPetMotion();
-  desktopPetPreDockBounds = null;
-  desktopPetDocked = false;
   desktopPetInteractionUntil = Date.now() + 8_000;
   desktopPetDragState = { start, bounds: desktopPetWin.getBounds() };
 }
@@ -1251,8 +1127,8 @@ async function ensureDesktopPetWindow() {
     }, 250);
     desktopPetMoveTimer.unref?.();
   });
-  desktopPetWin.on('show', notifyDesktopPetVisibility);
-  desktopPetWin.on('hide', notifyDesktopPetVisibility);
+  desktopPetWin.on('show', refreshTrayMenu);
+  desktopPetWin.on('hide', refreshTrayMenu);
   desktopPetWin.on('close', (event) => {
     if (isQuitting) return;
     event.preventDefault();
@@ -1277,15 +1153,15 @@ async function wakeDesktopPet(state = desktopCompanion) {
   startDesktopPetPresenceLoop();
   desktopPetNextWanderAt = Date.now() + 8_000;
   startDesktopPetActivityController();
-  notifyDesktopPetVisibility();
+  refreshTrayMenu();
 }
 
 function hideDesktopPet() {
-  stopDesktopPetActivityController(true);
+  stopDesktopPetActivityController();
   stopDesktopPetPresenceLoop();
   if (desktopPetWin && !desktopPetWin.isDestroyed()) desktopPetWin.hide();
   persistDesktopPet(false);
-  notifyDesktopPetVisibility();
+  refreshTrayMenu();
 }
 
 function handleDesktopDisplayChange() {
@@ -1529,51 +1405,6 @@ async function bootstrap() {
     }
   }
 
-  // Stage 4A development seam: an operator may seed the AI-Game capability
-  // once into safeStorage. The value is deleted from Electron's environment
-  // before the managed DSH child is constructed; only ctx.credentials can
-  // resolve it afterward. Packaged Stage 3 does not start or imply AI-Game.
-  const AI_GAME_CREDENTIAL_REF = 'WEFTMATE_AI_GAME_CAPABILITY_TOKEN';
-  const aiGameDevelopmentToken = app.isPackaged
-    ? undefined
-    : process.env.WEFTMATE_AI_GAME_DEV_TOKEN;
-  delete process.env.WEFTMATE_AI_GAME_DEV_TOKEN;
-  // Legacy source-contract boundary: there is intentionally no development
-  // origin value. The following runtime-root capture replaces ambient origin
-  // adoption, and the DSH child receives neither value.
-  // let aiGameDevelopmentOrigin
-  // Development may point at a fixed, independently reviewed managed artifact.
-  // Capture and immediately remove it; DSH never inherits a runtime path or a
-  // historical ambient origin.
-  const aiGameManagedRuntimeRoot = app.isPackaged ? null : process.env.WEFTMATE_AI_GAME_RUNTIME_ROOT;
-  delete process.env.WEFTMATE_AI_GAME_RUNTIME_ROOT;
-  delete process.env.WEFTMATE_AI_GAME_ORIGIN;
-  const phoneExecutionConfigPath = app.isPackaged ? null : process.env.WEFTMATE_PHONE_EXECUTION_CONFIG;
-  delete process.env.WEFTMATE_PHONE_EXECUTION_CONFIG;
-  function seedManagedCredentials() {
-    if (typeof aiGameDevelopmentToken === 'string'
-      && aiGameDevelopmentToken.length >= 16 && aiGameDevelopmentToken.length <= 4096) {
-      try { configStoreMod?.saveCredential?.(AI_GAME_CREDENTIAL_REF, aiGameDevelopmentToken); }
-      catch { console.warn('[weftmate] AI-Game 开发 capability 未能写入安全凭据库。'); }
-    }
-    // Stable per-installation capability owner pair. These values are
-    // intentionally non-secret, but remain host-only: the credential bridge
-    // keeps them out of renderer state, URLs, ordinary settings, child env, and
-    // logs. The bearer token authenticates requests but never defines ownership.
-    try {
-      ensureAiGameOwnerIds(configStoreMod);
-    } catch {
-      console.warn('[weftmate] AI-Game 本机 owner identity 未能持久化；v2 capability 将保持不可用。');
-    }
-    if (aiGameManagedRuntimeRoot || (app.isPackaged && existsSync(join(process.resourcesPath, 'ai-game-runtime')))) {
-      try {
-        if (!configStoreMod.getCredential(AI_GAME_CREDENTIAL_REF)) {
-          configStoreMod.saveCredential(AI_GAME_CREDENTIAL_REF, randomBytes(32).toString('hex'));
-        }
-      } catch { console.warn('[weftmate] 手机运行组件的本机凭据尚未就绪。'); }
-    }
-  }
-
   // settings.ts 仍驻 main：桌面宠物窗口状态（本机显示偏好）归它。
   try {
     settingsMod = await import('./settings.ts');
@@ -1612,7 +1443,6 @@ async function bootstrap() {
     WEFTMATE_USER_DATA: app.getPath('userData'),
     WEFTMATE_DSH_HOME: dshHome,
     WEFTMATE_WORKSPACE: workspaceDir,
-    WEFTMATE_MEMOWEFT_ENABLED: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' ? '1' : '0',
     WEFTMATE_PERSONAL_MEMORY_ENABLED: personalMemoryRequested ? '1' : '0',
   });
   const writeHostSnapshot = createLatestFileWriter(HOST_STATE_FILE);
@@ -1644,14 +1474,9 @@ async function bootstrap() {
           workspace: workspaceDir,
         },
         update: updateState(),
-        memoweft: { enabled: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' },
         ...(personalHostMode && accessPort !== null
           ? { accountModelRouteGate: { ...accountModelRouteGate } } : {}),
         ...(personalHostMode && personalMemoryRequested ? { accountMemoryIpc: { ...personalMemoryIpc } } : {}),
-        aiGame: (() => {
-          const state = aiGameRuntime?.diagnostics?.() ?? { managed: true, state: 'not_installed', reasonCode: 'runtime_not_installed', runtimeVersion: null, apiVersion: null, retryable: false };
-          return { managed: state.managed === true, state: state.state, reasonCode: state.reasonCode, runtimeVersion: state.runtimeVersion, apiVersion: state.apiVersion, retryable: state.retryable === true };
-        })(),
         // R6-02 · 桌宠状态块：官方 UI 宠物胶囊读这里（唤醒/休息/自由活动展示与动作）。
         pet: {
           name: desktopCompanion?.pet?.name ?? null,
@@ -1745,7 +1570,9 @@ async function bootstrap() {
   const routeMutationQueue = createRouteMutationQueue();
   // One exclusive lane covers the snapshot/rollback transaction *and* any
   // session or settings-file write that could otherwise cross its idle fence.
+  // Per-session sends and cancels share it, so they never cross that fence.
   const enqueueRouteMutation = (work) => routeMutationQueue.run(work);
+  const enqueueSessionWork = (sessionId, work) => routeMutationQueue.runSession(sessionId, work);
   enqueueExclusiveMainOperation = enqueueRouteMutation;
   exclusiveMainQueue = routeMutationQueue;
   function verifiedLegacyCompatibilityProfile(profiles = settingsMod.listModelProfiles().profiles) {
@@ -1791,16 +1618,6 @@ async function bootstrap() {
   };
   const credentialRequestHandler = async ({ operation, ref, value }) => {
     if (!isCredentialRef(ref)) throw new Error('invalid credential ref');
-    const managedRefs = new Set(['WEFTMATE_AI_GAME_MANAGED_STATE', 'WEFTMATE_AI_GAME_MANAGED_ORIGIN']);
-    if (managedRefs.has(ref)) {
-      if (operation === 'resolve') {
-        const state = aiGameRuntime?.diagnostics?.() ?? { state: 'not_installed' };
-        const resolved = ref === 'WEFTMATE_AI_GAME_MANAGED_STATE' ? state.state : aiGameRuntime?.originForHost?.();
-        return resolved ? { value: resolved, source: 'weftmate-managed-ai-game' } : {};
-      }
-      if (operation === 'describe') return { configured: true, source: 'weftmate-managed-ai-game', writable: false };
-      throw new Error('managed AI-GAME refs are read-only');
-    }
     if (operation === 'resolve') {
       const resolved = migrateLegacyCredentialRef(ref);
       return resolved ? { value: resolved, source: 'weftmate-safe-storage' } : {};
@@ -1827,22 +1644,6 @@ async function bootstrap() {
     }
     throw new Error('unsupported credential operation');
   };
-  aiGameRuntime = new ManagedAiGameRuntime({
-    isPackaged: app.isPackaged,
-    resourcesPath: process.resourcesPath,
-    runtimeRoot: aiGameManagedRuntimeRoot,
-    userDataDir: app.getPath('userData'),
-    resolveCredentials: async () => ({
-      capability: configStoreMod?.getCredential?.(AI_GAME_CREDENTIAL_REF),
-      principalId: configStoreMod?.getCredential?.(AI_GAME_PRINCIPAL_REF),
-      controllerId: configStoreMod?.getCredential?.(AI_GAME_CONTROLLER_REF),
-    }),
-    resolveExecution: () => loadPhoneExecutionConfig(phoneExecutionConfigPath, migrateLegacyCredentialRef),
-    onState: () => writeHostState(),
-  });
-  // Deliberately independent: a slow/missing managed runtime must not delay
-  // DSH bootstrap, window creation, or ordinary conversation.
-  // Started only after durable credentials are available below.
   const productDshRuntime = productDshRuntimeDirectory({ packaged: app.isPackaged,
     resourcesPath: process.resourcesPath, appPath: app.getAppPath() });
   if (personalHostMode && process.env.WEFTMATE_SYNTHETIC_STOP_FIXTURE === '1') {
@@ -2051,7 +1852,6 @@ async function bootstrap() {
     const previous = webRuntime;
     runtimeOrigin = null;
     trustedRuntimeOrigin = null;
-    await modWindowManager?.rebind?.(null);
     if (previous) await previous.close();
     webRuntime = createWebRuntime();
     webRuntime.onOrigin = (origin) => {
@@ -2060,12 +1860,10 @@ async function bootstrap() {
       writeHostState();
       if (origin) {
         if (!personalHostMode) void navigateToRuntimeSurface(origin).catch((error) => logCrash('dsh-surface-navigation', error));
-        void modWindowManager?.rebind?.(origin);
       }
       else trustedRuntimeOrigin = null;
     };
     runtimeOrigin = await webRuntime.start();
-    await modWindowManager?.rebind?.(runtimeOrigin);
     return runtimeOrigin;
   }
   async function mutateModelRouteTransaction(mutator) {
@@ -2205,10 +2003,8 @@ async function bootstrap() {
     writeHostState();
     if (origin) {
       if (!personalHostMode) void navigateToRuntimeSurface(origin).catch((error) => logCrash('dsh-surface-navigation', error));
-      void modWindowManager?.rebind?.(origin);
     } else {
       trustedRuntimeOrigin = null;
-      void modWindowManager?.rebind?.(null);
     }
   };
   // Only file preparation and the CLI dump can overlap credential proof.
@@ -2216,8 +2012,7 @@ async function bootstrap() {
   if (isQuitting) return;
   const earlyPreparation = desktopRequested && !personalBackupManager?.isRestoredStartup()
     && !existsSync(join(userDataDir, 'weftmate-model.enc'))
-    && settingsMod.listModelProfiles().profiles.length === 0
-    && !aiGameManagedRuntimeRoot && !existsSync(join(process.resourcesPath, 'ai-game-runtime'));
+    && settingsMod.listModelProfiles().profiles.length === 0;
   if (earlyPreparation) {
     writeModelRoutesPatch(ROUTES_PATCH, []);
     writeCredentialSecurityPatch();
@@ -2234,8 +2029,6 @@ async function bootstrap() {
   startDeviceCapabilities();
   startHostRequestConsumers();
   await startModelScheduler();
-  seedManagedCredentials();
-  void aiGameRuntime.start();
   // The journal was recovered before imports above.  From this point onward
   // every route mutation enters the same queue before it can write one again.
   try {
@@ -2279,9 +2072,6 @@ async function bootstrap() {
   // Official DSH also owns first-run setup. The desktop view starts after
   // its exact-origin fence; personal host starts after IPC registration.
   sessionReferenceScan = { state: personalHostMode ? 'pending' : 'ready', error: null };
-  // Kept solely to fail closed for dormant migration-only stage-1 handlers.
-  // The main window never loads this local page once the DSH surface is ready.
-  const legacyRendererUrl = pathToFileURL(join(import.meta.dirname, 'web', 'weftmate.html')).href;
   const TITLE_BAR_OVERLAY_HEIGHT = 44;
   let dshResolvedTheme = null;
   let dshSurfaceBackgroundColor = null;
@@ -2313,12 +2103,6 @@ async function bootstrap() {
       catch { /* retain the already-applied renderer theme if native overlay is unavailable */ }
     }
     return palette;
-  };
-  const applyNativeTheme = (theme) => {
-    const value = theme === 'light' || theme === 'dark' ? theme : 'system';
-    nativeTheme.themeSource = value;
-    updateNativeWindowColors();
-    return value;
   };
   let surfaceNavigation = Promise.resolve();
   /**
@@ -2393,9 +2177,6 @@ async function bootstrap() {
   // Active selection is a future-session preference. It never swaps the
   // shared child, so an in-flight/old DSH session retains its own persisted
   // provider+model request header.
-  async function listSharedSessionsForUi() {
-    return stageOneGateway('/sessions').catch(() => ({ items: [] }));
-  }
   let recoveredLifecycleRuntime = null;
   const recoveredLifecycles = new Set();
   async function listSharedSessionsForReferenceGuard() {
@@ -2440,7 +2221,6 @@ async function bootstrap() {
     }
   }
   async function assertRouteReloadSafe() {
-    if (activeStageOneTurns.size > 0) throw new Error('当前仍有生成中的会话。请等待完成或停止后，再修改、添加或删除模型路由。');
     // Renderer SSE is only a convenience signal. Before a route-changing
     // mutation, query the authoritative shared DSH session list. An invalid or
     // unavailable response is treated as unsafe rather than guessing idle.
@@ -2459,8 +2239,8 @@ async function bootstrap() {
     if (!profile || !hasProfileCredential(profile)) throw new Error('session model profile is unavailable');
     return { chosen, profile, route: routeForProfile(profile.id) };
   }
-  async function ensureKnownSession(sessionId) {
-    const { chosen, profile, route } = await resolveKnownSession(sessionId);
+  async function ensureKnownSession(sessionId, resolved = null) {
+    const { chosen, profile, route } = resolved?.chosen ? resolved : await resolveKnownSession(sessionId);
     // Header and explicitly-recorded legacy sources are persisted only after
     // resolution succeeds.  Unknown sessions never reach resume/send/cancel.
     if (chosen.source !== 'durable-binding') settingsMod.bindSessionModel(sessionId, chosen.profile.id, true);
@@ -2911,48 +2691,8 @@ async function bootstrap() {
     });
   };
 
-  const stageOneTrusted = (event) => !!win && isTrustedRendererInvocation({ expectedOrigin: legacyRendererUrl,
-    sender: event.sender, expectedSender: win.webContents, senderFrame: event.senderFrame, mainFrame: win.webContents.mainFrame });
   const dshSurfaceTrusted = (event) => !!win && isTrustedRendererInvocation({ expectedOrigin: trustedRuntimeOrigin,
     sender: event.sender, expectedSender: win.webContents, senderFrame: event.senderFrame, mainFrame: win.webContents.mainFrame });
-  const modWindowRequest = async ({ projectId, sessionId, action, frameToken = null, request = null, userInitiated = false }) => {
-    if (!runtimeOrigin) throw new Error('WeftMate runtime is unavailable')
-    const response = await fetch(new URL('/weftmate/mods/request', runtimeOrigin), {
-      method: 'POST',
-      headers: { origin: runtimeOrigin, 'content-type': 'application/json' },
-      body: JSON.stringify({ session_id: sessionId, project_id: projectId, action, ...(frameToken ? { frame_token: frameToken } : {}), ...(request ? { request } : {}), ...(userInitiated ? { user_initiated: true } : {}) }),
-    })
-    const value = await response.json().catch(() => ({}))
-    if (!response.ok) throw new Error(typeof value?.error === 'string' ? value.error : 'Mod request failed')
-    return value
-  }
-  const modWindowSnapshot = async ({ projectId, sessionId, frameToken = null }) => {
-    if (!runtimeOrigin) throw new Error('WeftMate runtime is unavailable')
-    const url = new URL('/weftmate/mods/window/snapshot', runtimeOrigin)
-    url.searchParams.set('project_id', projectId); url.searchParams.set('session_id', sessionId)
-    if (frameToken) url.searchParams.set('frame_token', frameToken)
-    const response = await fetch(url, { headers: { origin: runtimeOrigin } })
-    const value = await response.json().catch(() => ({}))
-    if (!response.ok) throw new Error(typeof value?.error === 'string' ? value.error : 'Mod detail unavailable')
-    return value
-  }
-  modWindowManager = new ModWindowManager({
-    BrowserWindow,
-    ipcMain,
-    getOrigin: () => runtimeOrigin,
-    getTheme: () => dshResolvedTheme ?? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light'),
-    fetchSnapshot: modWindowSnapshot,
-    invoke: ({ projectId, sessionId, frameToken, request }) => modWindowRequest({ projectId, sessionId, action: 'invoke', frameToken, request }),
-    control: ({ projectId, sessionId, action }) => modWindowRequest({ projectId, sessionId, action, userInitiated: action === 'start' }),
-    preload: join(import.meta.dirname, 'mod-window-preload.cjs'),
-    parent: () => win,
-    showWorkspace: showWindow,
-    onOpenWorkspace: ({ projectId, sessionId }) => { if (win && !win.isDestroyed()) win.webContents.send('wm:mod-window:open-project', { projectId, sessionId }); },
-  })
-  ipcMain.handle('wm:mod-window:open', async (event, payload) => {
-    if (!dshSurfaceTrusted(event)) throw new Error('请求来源不可信。')
-    return modWindowManager.open({ projectId: payload?.projectId, sessionId: payload?.sessionId })
-  })
   // The official DSH page has no product IPC. This one-way visual hint only
   // keeps Windows' native titlebar aligned with DSH's resolved light/dark
   // token; persistence remains in official DSH settings, not this bridge.
@@ -2964,175 +2704,11 @@ async function bootstrap() {
     dshResolvedTheme = value;
     dshSurfaceBackgroundColor = background;
     updateNativeWindowColors(value, background);
-    modWindowManager?.syncTheme();
     return { ok: true };
   });
-  ipcMain.handle('wm:stage1:bootstrap', async (event) => stageOneTrusted(event) ? { ...publicModelView(), settings: settingsMod.readProductSettings(), runtimeReady: !!runtimeOrigin } : { configured: false, error: '请求来源不可信。' });
-  ipcMain.handle('wm:stage1:setup', async (event, input) => {
-    if (!stageOneTrusted(event)) return { ok: false, error: '请求来源不可信。' };
-    try { const clean = { name: String(input?.name ?? '').trim(), baseUrl: String(input?.baseUrl ?? '').trim(), apiKey: String(input?.apiKey ?? '').trim(), model: String(input?.model ?? '').trim() }; await activateStageOneConfig(clean); return { ok: true }; } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage1:import-current-local-model', async (event) => {
-    if (!stageOneTrusted(event)) return { ok: false, error: '请求来源不可信。' };
-    try {
-      const apiKey = await readCurrentLocalServiceKey();
-      await activateStageOneConfig({ name: '本机 Qwen', baseUrl: 'http://127.0.0.1:8080/v1', apiKey, model: 'qwen3.8-27b-u' });
-      return { ok: true };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  // Stage 2 model management: only OpenAI-compatible discovery is currently
-  // supported because it performs a real GET /models with the supplied key.
-  // No generic Harness provider directory is used as evidence of credentials.
-  ipcMain.handle('wm:stage2:discover-models', async (event, input) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      if (input?.provider !== 'openai-compatible') return { ok: false, error: '当前只支持 OpenAI-compatible 服务；该协议尚未实现真实发现与验证。', models: [] };
-      const request = resolveModelDiscoveryRequest(input ?? {}, settingsMod.listModelProfiles().profiles,
-        (profileId) => configStoreMod.getCredential(profileId));
-      const models = await discoverOpenAICompatible(request);
-      return { ok: true, models };
-    } catch (error) { return { ...stageOneFailure(error), models: [] }; }
-  });
-  ipcMain.handle('wm:stage2:save-model', async (event, input) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      const profile = await saveModelRoute(input);
-      return { ok: true, profile: { ...profile, hasKey: true }, models: { ...publicModelView(), runtimeReady: !!runtimeOrigin } };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage2:test-model', async (event, id) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === id);
-      const apiKey = profile ? configStoreMod.getCredential(profile.id) : null;
-      if (!profile || !apiKey) throw new Error('missing model credential');
-      await validateStageOneModel({ ...profile, apiKey });
-      return { ok: true };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage2:set-active-model', async (event, id) => {
-    if (!stageOneTrusted(event) || typeof id !== 'string') return stageOneFailure(new Error());
-    try {
-      await enqueueRouteMutation(() => switchActiveModel({
-        id,
-        list: () => settingsMod.listModelProfiles(),
-        hasCredential: (profileId) => !!configStoreMod.getCredential(profileId),
-        setActive: (profileId) => settingsMod.restoreActiveModelProfile(profileId),
-      }));
-      return { ok: true, models: { ...publicModelView(), runtimeReady: !!runtimeOrigin } };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage2:delete-model', async (event, id) => {
-    if (!stageOneTrusted(event) || typeof id !== 'string') return stageOneFailure(new Error());
-    try {
-      await enqueueRouteMutation(async () => {
-        await hydrateLegacySessionBindings();
-        assertSessionReferenceScanComplete();
-        assertModelProfileMutationAllowed({ referenced: settingsMod.profileHasSessionBinding(id), operation: 'delete' });
-        await assertRouteReloadSafe();
-        await mutateModelRouteTransaction(async () => {
-          settingsMod.removeModelProfile(id);
-          configStoreMod.removeCredential(id);
-          await ensureSharedRuntime({ reload: true });
-        });
-      });
-      return { ok: true, models: { ...publicModelView(), runtimeReady: !!runtimeOrigin } };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage2:set-theme', async (event, theme) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      const savedTheme = await enqueueRouteMutation(() => settingsMod.setThemePreference(theme));
-      return { ok: true, theme: applyNativeTheme(savedTheme) };
-    }
-    catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage2:export-diagnostics', async (event) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      return await exportRedactedDiagnosticsFromMain();
-    } catch (error) { return { ok: false, error: '导出失败。请检查保存位置后重试。' }; }
-  });
-  ipcMain.handle('wm:stage1:sessions', async (event) => !stageOneTrusted(event) ? { items: [] } : listSharedSessionsForUi());
-  ipcMain.handle('wm:stage1:create', async (event) => {
-    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
-    try {
-      const created = await enqueueRouteMutation(async () => {
-        const value = await stageOneGateway('/sessions', { method: 'POST', body: '{}' });
-        const profile = activeModelProfile();
-        if (!profile?.model) throw new Error('active model is missing');
-        settingsMod.bindSessionModel(value.sessionId, profile.id);
-        const route = routeForProfile(profile.id);
-        await stageOneGateway(`/sessions/${encodeURIComponent(value.sessionId)}/models`, {
-          method: 'PUT', body: JSON.stringify({ provider: route.provider, model: profile.model,
-            ...(profile.reasoningEffort && profile.reasoningEffort !== 'off' ? { reasoningEffort: profile.reasoningEffort } : {}) }),
-        });
-        return value;
-      });
-      return { ok: true, ...created };
-    } catch (error) { return stageOneFailure(error); }
-  });
-  ipcMain.handle('wm:stage1:select', async (event, sessionId) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string') return stageOneFailure(new Error()); try { await enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/resume`, { method: 'POST', body: '{}' }); }); startStageOneEvents(sessionId); return { ok: true }; } catch (error) { return stageOneFailure(error); } });
-  ipcMain.handle('wm:stage1:send', async (event, { sessionId, content, mode = 'queue' } = {}) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string' || typeof content !== 'string' || !content.trim()) return stageOneFailure(new Error()); return enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); const value = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/messages`, { method: 'POST', body: JSON.stringify({ content: content.trim(), mode }) }); return { ok: true, ...value }; }).catch(stageOneFailure); });
-  ipcMain.handle('wm:stage1:cancel', async (event, sessionId) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string') return stageOneFailure(new Error()); return enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); const value = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/cancel`, { method: 'POST', body: '{}' }); return { ok: true, ...value }; }).catch(stageOneFailure); });
-  ipcMain.handle('wm:stage1:approval', async (event, { sessionId, rpcId, approvalId, outcome } = {}) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string') return stageOneFailure(new Error()); return enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); const value = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/approval`, { method: 'POST', body: JSON.stringify({ rpcId, approvalId, outcome }) }); return { ok: true, ...value }; }).catch(stageOneFailure); });
 
-  // ── 删除全部本机数据（v2 遗产，ARCHITECTURE §5 保留）：只走这一个窄 IPC。renderer 不接触
-  //    marker/token/文件系统；主进程创建一次性授权并重启擦除。──
-  ipcMain.handle('wm:delete-all-local-data', async (event, confirmation) => {
-    if (!stageOneTrusted(event)) return { ok: false, code: 'WIPE_UNTRUSTED_SOURCE', error: '请求来源不可信' };
-    if (confirmation !== '删除 WeftMate' && confirmation !== 'Delete WeftMate') return { ok: false, code: 'WIPE_BAD_CONFIRMATION', error: '确认短语不正确' };
-    if (wipeRelaunching) return { ok: false, code: 'WIPE_ALREADY_PREPARING', error: '删除已经在准备中' };
-    try {
-      const marker = createLocalDataWipeMarker({ tempDir: tmpdir(), userData: app.getPath('userData') });
-      const args = process.argv.slice(1).filter((arg) => !arg.startsWith('--weftmate-wipe-marker=') && !arg.startsWith('--weftmate-wipe-token='));
-      args.push(`--weftmate-wipe-marker=${marker.markerPath}`, `--weftmate-wipe-token=${marker.token}`);
-      wipeRelaunching = true;
-      isQuitting = true;
-      app.relaunch({ args });
-      app.quit(); // 仍走既有 before-quit：DSH 运行时收口后才真正退出。
-      return { ok: true, relaunching: true };
-    } catch (error) {
-      return { ok: false, code: 'WIPE_MARKER_FAILED', error: error && error.message ? error.message : String(error) };
-    }
-  });
-
-  // ── 宠物窗口 IPC（宠物窗口自身交互用；R6 恢复完整桌宠机制）──
-  ipcMain.on('wm:pet-sync', (event, state) => {
-    if (!stageOneTrusted(event)) return;
-    const sanitized = sanitizeCompanionState(state);
-    if (!sanitized) return;
-    desktopCompanion = sanitized;
-    sendDesktopCompanion();
-    // 启动自愈：上次宠物可见 + 渲染层已同步状态 → 补唤醒（状态源从旧 UI 换到渲染层后的等价路径）。
-    if (settingsMod?.getDesktopPetWindowState?.().visible && !desktopPetVisible()) {
-      void wakeDesktopPet(sanitized).catch((error) => logCrash('desktop-pet-restore', error));
-    }
-    if (desktopPetNextWanderAt <= Date.now()) desktopPetNextWanderAt = Date.now() + 8_000;
-    startDesktopPetActivityController();
-  });
-  ipcMain.handle('wm:pet-toggle', async (event, state) => {
-    if (!stageOneTrusted(event)) return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
-    const sanitized = sanitizeCompanionState(state);
-    if (!desktopPetVisible() && !sanitized && !desktopCompanion) return { visible: false, freeActivity: desktopPetFreeActivity() };
-    return toggleDesktopPet(sanitized || desktopCompanion);
-  });
-  ipcMain.handle('wm:pet-visibility', (event) => {
-    if (!stageOneTrusted(event)) return { visible: false, freeActivity: false };
-    return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
-  });
-  ipcMain.handle('wm:pet-free-activity', (event, enabled) => {
-    if (!stageOneTrusted(event)) return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
-    setDesktopPetFreeActivity(enabled === true);
-    return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
-  });
-  ipcMain.on('wm:pet-composer-activity', (event) => {
-    if (stageOneTrusted(event)) noteDesktopPetComposerActivity();
-  });
   ipcMain.on('wm:pet-hide', (event) => {
-    const trustedMain = stageOneTrusted(event);
-    const trustedPet = !!desktopPetWin && !desktopPetWin.isDestroyed() && event.sender === desktopPetWin.webContents;
-    if (trustedMain || trustedPet) hideDesktopPet();
+    if (desktopPetWin && !desktopPetWin.isDestroyed() && event.sender === desktopPetWin.webContents) hideDesktopPet();
   });
   ipcMain.on('wm:pet-show-main', (event) => {
     if (desktopPetWin && !desktopPetWin.isDestroyed() && event.sender === desktopPetWin.webContents) showWindow();
@@ -3282,7 +2858,6 @@ async function bootstrap() {
     hostOwnerId: () => personalAccessService?.executionOwnerId?.() ?? null,
     ownerForSession: (sessionId) => personalAccessService?.ownerForSession?.(sessionId)?.ownerId ?? null,
     modelAllowed: (ownerId, profileId, usage) => personalAccessService?.canUseModelProfile?.(ownerId, profileId, usage) === true,
-    moduleStatus: () => ({ memory: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' ? 'unknown' : 'disabled' }),
     routeForProfile,
     listSessions: listSharedSessionsForReferenceGuard,
     resolveSession: resolveKnownSession,
@@ -3291,6 +2866,7 @@ async function bootstrap() {
     ensureKnownSession,
     gateway: stageOneGateway,
     queue: enqueueRouteMutation,
+    sessionQueue: enqueueSessionWork,
     bindSession: (sessionId, profileId) => settingsMod.bindSessionModel(sessionId, profileId),
     unbindSession: sessionId => settingsMod.unbindSessionModel(sessionId),
     desktopTask: personalDesktopTask,
@@ -3321,8 +2897,8 @@ async function bootstrap() {
     if (idle) console.log(`[weftmate] ✓ account-model route gate idle previous=${previous}`);
     else console.warn(`[weftmate] ⚠ account-model route gate blocked reason=${reasonCode}`);
   }
-  async function assertAccountModelReloadSafe(allowedPendingSessionId = null, allowedPendingModelProfileId = null) {
-    if (personalAccessService?.hasUnissuedDshCommands?.({ allowedPendingSessionId, allowedPendingModelProfileId })) {
+  async function assertAccountModelReloadSafe(allowedPendingSessionId = null) {
+    if (personalAccessService?.hasUnissuedDshCommands?.({ allowedPendingSessionId })) {
       noteAccountModelGate('host_command_pending'); throw accountModelBusy();
     }
     try { await assertRouteReloadSafe(); }
@@ -3331,7 +2907,7 @@ async function bootstrap() {
       { idle: false, reason: 'runtime_unavailable' };
     noteAccountModelGate(snapshot?.reason);
     if (snapshot?.idle !== true || snapshot.reason !== 'idle') throw accountModelBusy();
-    if (personalAccessService?.hasUnissuedDshCommands?.({ allowedPendingSessionId, allowedPendingModelProfileId })) {
+    if (personalAccessService?.hasUnissuedDshCommands?.({ allowedPendingSessionId })) {
       noteAccountModelGate('host_command_pending'); throw accountModelBusy();
     }
   }
@@ -3360,7 +2936,7 @@ async function bootstrap() {
         if (!existing) configStoreMod.saveSubmittedCredential(stageRef, apiKey);
       });
     },
-    async apply({ target, targets, stageRef, previousProfileId, allowedPendingSessionId = null, allowedPendingModelProfileId = null }) {
+    async apply({ target, targets, stageRef, previousProfileId, allowedPendingSessionId = null }) {
       const batch = targets ?? [target];
       if (!batch.length || batch.some(item => !item || !/^private-model-[a-f0-9]{40}$/.test(item.profileId)) ||
           (stageRef && !/^pending-model-[a-f0-9]{48}$/.test(stageRef)) ||
@@ -3377,7 +2953,7 @@ async function bootstrap() {
             ? 'reference_scan_failed' : 'reference_scan_incomplete');
           throw accountModelBusy();
         }
-        await assertAccountModelReloadSafe(allowedPendingSessionId, allowedPendingModelProfileId);
+        await assertAccountModelReloadSafe(allowedPendingSessionId);
         const sourceProfile = settingsMod.listModelProfiles().profiles.find(item => item.id === previousProfileId);
         const secret = stageRef ? configStoreMod.getCredential(stageRef)
           : sourceProfile ? credentialForModelProfile(sourceProfile) : null;
@@ -3534,12 +3110,7 @@ async function bootstrap() {
       const profile = settingsMod.listModelProfiles().profiles.find(item => item.id === profileId);
       return profile ? credentialForModelProfile(profile) : null;
     },
-    async readOfflineModel({ profileId }) {
-      const profile = settingsMod.listModelProfiles().profiles.find(item => item.id === profileId);
-      if (!profile || memoryRecallModelTier(profile) !== 'cloud') return null;
-      const apiKey = credentialForModelProfile(profile);
-      return apiKey ? { baseUrl: profile.baseUrl, modelId: profile.model, apiKey } : null;
-    },
+
   };
 
   try {
@@ -3574,7 +3145,6 @@ async function bootstrap() {
               installerSha256: preparedInstallerHash(),
               cacheDirectory: join(process.env.LOCALAPPDATA || app.getPath('appData'), packageInfo.name + '-updater') });
           }, isIdle: async () => {
-          if (activeStageOneTurns.size) return false;
           if (!runtimeOrigin) return !activeModelProfile();
           try { assertAuthoritativeSessionsIdle(await listSharedSessionsForReferenceGuard()); return true; }
           catch { return false; }
@@ -3583,7 +3153,10 @@ async function bootstrap() {
         const relayConfig = relayFromEnvironment();
         const cloudConfig = cloudIdentityFromEnvironment();
         const relayNetwork = cloudConfig || relayConfig ? await createDesktopRelayNetwork({ session, net }) : null;
-        if (cloudConfig) cloudConfig.fetcher = relayNetwork.fetch;
+        if (cloudConfig) {
+          cloudConfig.fetcher = relayNetwork.fetch;
+          cloudConfig.accountKeys = createAccountKeys(desktopAuthStorage(join(userDataDir, 'desktop-auth.enc'), safeStorage).accountKeyVault);
+        }
         if (relayConfig) {
           relayConfig.proxyFor = relayNetwork.proxyFor;
           if (relayConfig.acme) relayConfig.acme.fetcher = relayNetwork.fetch;
@@ -3780,7 +3353,6 @@ async function exportRedactedDiagnosticsFromMain() {
     ready: !!runtimeOrigin,
     packaged: app.isPackaged,
     safeStorageAvailable: configStoreMod?.encryptionAvailable?.() === true,
-    aiGame: aiGameRuntime?.diagnostics?.(),
     update: updateState(),
   });
   await writeFileAsync(choice.filePath, `${JSON.stringify(redacted, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
@@ -3929,18 +3501,6 @@ app.on('before-quit', (e) => {
         })]);
       } catch (error) { backupSafe = false; logCrash('shutdown-account-memory', error); }
       finally { if (timer) clearTimeout(timer); }
-    }
-    nextShutdownStep('mod-windows');
-    await modWindowManager?.dispose?.();
-    // Revoking manager admission happens synchronously at close entry; wait a
-    // bounded manager close before ending DSH, but never let a failed child
-    // confirmation block application exit forever.
-    nextShutdownStep('ai-game');
-    try {
-      await aiGameRuntime?.close?.();
-    } catch (err) {
-      logCrash('shutdown-managed-ai-game', new Error('managed AI-GAME shutdown could not be confirmed'));
-      console.error('[weftmate] AI-GAME 受管子进程未确认退出(继续关闭 DSH):', err && err.message ? err.message : err);
     }
     nextShutdownStep('desktop-pet');
     try {

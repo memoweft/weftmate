@@ -67,7 +67,7 @@ try {
       assert.equal((await h.api('/backups/settings', { enabled: false }, 'PATCH')).status, 200);
       await h.page.locator('#message-text').fill('更新验收的合成对话');
       await h.page.locator('#message-text').press('Enter');
-      await h.page.getByText('主对话首条消息成功，合成回复。', { exact: true }).last().waitFor();
+      await h.page.getByText('首条消息成功，合成回复。', { exact: true }).last().waitFor();
       await until(async () => !(await h.api('/sessions')).body.sessions?.some(s => s.running));
       row.ownerBefore = (await h.api('/auth/me')).body.account.ownerId;
       row.contextBefore = await h.page.evaluate(() => Object.fromEntries(Object.entries(localStorage).filter(([key]) => /chat|conversation|scope|project/.test(key))));
@@ -141,7 +141,7 @@ try {
       row.contextAfter = await h.page.evaluate(() => Object.fromEntries(Object.entries(localStorage).filter(([key]) => /chat|conversation|scope|project/.test(key))));
       assert.equal(row.ownerAfter, row.ownerBefore);
       assert.deepEqual(row.contextAfter, row.contextBefore);
-      await h.page.getByText('主对话首条消息成功，合成回复。', { exact: true }).last().waitFor();
+      await h.page.getByText('首条消息成功，合成回复。', { exact: true }).last().waitFor();
       row.accountAndConversationRetained = true;
       if (mode === 'rollback') {
         row.rejected = JSON.parse(readFileSync(join(recovery, 'rejected.json'), 'utf8'));

@@ -45,8 +45,6 @@ describe('阶段 0 dogfood 启动器', () => {
     assert.equal(result.config.runtimeEnv.WEFTMATE_DSH_RUNTIME, resolve(repoRoot, 'vendor/dsh-runtime'))
     assert.equal(result.config.userData, resolve(repoRoot, 'dogfood/data/stage-1'))
     assert.equal(result.config.port, 'dynamic-loopback')
-    assert.equal(result.config.memoweft, 'disabled')
-    assert.equal(result.config.aiGame, 'not-configured')
   })
 
   it('Windows 支持 q 经 IPC 走应用内退出，且 Electron 不直接读取终端', () => {

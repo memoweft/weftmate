@@ -1,0 +1,19 @@
+# WeftMate 补丁层（R7）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
+# 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行 + 记忆桥宿主行）。
+- insert:
+    - id: weftmate-host
+      name: ./plugins/weftmate-host.mjs
+    - id: weftmate-memory
+      name: ./plugins/weftmate-memory.mjs
+    - id: '@weftmate/client'
+      name: '@weftmate/client'
+# 目录选择器钉 browse（官方 overlay 语义）：auto 行在 Windows/Electron 下解析到 native，
+# 其 win32 folder dialog worker 在运行时子进程环境下不可用（真机报「win32 folder dialog
+# worker exited before reporting a result」）。disable auto + 插 browse 宿主行与客户端 UI 行。
+- id: directory-picker
+  disabled: true
+- insert:
+    - id: directory-picker-browse
+      name: '@deepseek-ai/dsh-host-directory-picker-browse'
+    - id: ui-directory-picker-browse
+      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'

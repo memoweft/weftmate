@@ -67,16 +67,23 @@ describe('桌面宠物与 Soul 隔离契约（R4 退役后：只锁新基座事�
     assert.match(sanitizer, /appearance: \{[\s\S]*kind: 'procedural'[\s\S]*shape:[\s\S]*primary:[\s\S]*accent:[\s\S]*feature:/);
     assert.doesNotMatch(sanitizer, /systemPrompt|memoryRead|tools?|apiKey|filePath|workspace/);
 
-    const ipc = between(main, "ipcMain.on('wm:pet-sync'", '// 最大化状态变化');
-    const toggleHandler = between(ipc, "ipcMain.handle('wm:pet-toggle'", "ipcMain.handle('wm:pet-visibility'");
-    assert.ok(toggleHandler.indexOf('event.sender !== win.webContents') < toggleHandler.indexOf('sanitizeCompanionState(state)'));
-    assert.match(toggleHandler, /return toggleDesktopPet\(sanitized \|\| desktopCompanion\)/);
+    const ipc = between(main, "ipcMain.on('wm:pet-hide'", '// 最大化状态变化');
     const menuHandler = between(ipc, "ipcMain.on('wm:pet-context-menu'", "ipcMain.on('wm:pet-pointer'");
     assert.ok(menuHandler.indexOf('event.sender === desktopPetWin.webContents') < menuHandler.indexOf('showDesktopPetContextMenu()'));
     const hitTestHandler = between(ipc, "ipcMain.on('wm:pet-hit-test'", "ipcMain.on('wm:pet-interact'");
     assert.ok(hitTestHandler.indexOf('event.sender !== desktopPetWin.webContents') < hitTestHandler.indexOf("typeof state.interactive === 'boolean'"));
     assert.match(hitTestHandler, /!valid \|\| state\.interactive !== true[\s\S]*setIgnoreMouseEvents\(true, \{ forward: true \}\)[\s\S]*setIgnoreMouseEvents\(false\)/);
-    assert.match(ipc, /wm:pet-hide'[\s\S]*trustedMain[\s\S]*trustedPet[\s\S]*if \(trustedMain \|\| trustedPet\) hideDesktopPet\(\)/);
+    const petSender = {};
+    let hidden = 0;
+    const hideScope = {
+      desktopPetWin: { isDestroyed: () => false, webContents: petSender },
+      hideDesktopPet: () => { hidden++; },
+      ipcMain: { on(_name: string, listener: (event: { sender: object }) => void) {
+        listener({ sender: {} }); assert.equal(hidden, 0);
+        listener({ sender: petSender }); assert.equal(hidden, 1);
+      } },
+    };
+    vm.runInNewContext(between(ipc, "ipcMain.on('wm:pet-hide'", "ipcMain.on('wm:pet-show-main'"), hideScope);
     assert.match(ipc, /wm:pet-show-main'[\s\S]*event\.sender === desktopPetWin\.webContents/);
 
     const desktop = runPreload(petPreload);

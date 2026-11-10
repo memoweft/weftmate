@@ -68,6 +68,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         menu.querySelector('button')?.focus();
     }
     function paintComposerExtras(value) {
+        globalThis.WeftComposerPress?.paintHeld(ui.byId('message-text'),core,value.heldDraft);
         ui.byId('message-form').dataset.composerState=core.state.submitting?'sending':value.running?'responding':'ready';
         folderChoice?.paint();
         const thinking = core.thinkingView();

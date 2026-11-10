@@ -112,6 +112,7 @@ const files = new Map([
   ['/personal/v1/ui/format-vendor.js', ['format-vendor.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/cloud-ui.js', ['cloud-ui.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/cloud-login.js', ['cloud-login.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/password-worker.js', ['password-worker.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/cloud-vendor.js', ['cloud-vendor.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/timeline.js', ['timeline.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui', ['index.html', 'text/html; charset=utf-8']],
@@ -138,7 +139,7 @@ export function setPersonalAccessUiResourceReader(reader) { verifiedResource = r
 
 const securityHeaders = {
   'cache-control': 'no-store',
-  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; connect-src 'self' https: blob:; img-src 'self' data: blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; frame-src blob:",
+  'content-security-policy': "default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; connect-src 'self' https: blob:; img-src 'self' data: blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; frame-src blob:",
   'referrer-policy': 'no-referrer',
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'DENY',
@@ -164,6 +165,7 @@ self.addEventListener('fetch',event=>{const u=new URL(event.request.url);if(even
     const resource = resourceName(url.pathname, asset[0])
     let body = await verifiedResource?.(resource) ?? await readFile(join(import.meta.dirname, asset[0]))
     const headers = { ...securityHeaders };
+    if(asset[0]==='password-worker.js')headers['content-security-policy']="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'none'";
     if (asset[0] === 'index.html') {
       const nonce = randomBytes(18).toString('base64');
       body = Buffer.from(body.toString().replace('__WEFT_STYLE_NONCE__', nonce));

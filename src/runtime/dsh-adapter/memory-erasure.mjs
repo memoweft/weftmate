@@ -2,6 +2,69 @@ import { open, rename, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { zstdCompressSync } from 'node:zlib';
 import { relative, resolve, isAbsolute } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
+const erasedTitle='[已遗忘的对话]';
+
+async function writeArtifact(persistence, artifact, content) {
+  const location=persistence.locate(artifact.meta),inside=relative(resolve(persistence.config.root),resolve(location.path));
+  if(!inside || inside.startsWith('..') || isAbsolute(inside))throw new Error('memory source outside session root');
+  const tmp=`${location.path}.${randomUUID()}.tmp`;let file;
+  try {
+    file=await open(tmp,'wx',0o600);
+    const first=content.indexOf('\n');
+    const bytes=location.path.endsWith('.zstd')?Buffer.concat([zstdCompressSync(Buffer.from(content.slice(0,first+1))),
+      ...(content.length>first+1?[zstdCompressSync(Buffer.from(content.slice(first+1)))]:[])]):content;
+    await file.writeFile(bytes);await file.sync();await file.close();file=null;await rename(tmp,location.path);
+  }finally{await file?.close();await rm(tmp,{force:true});}
+}
+
+export function repriceMemoryTokenClaims(rows, {decodeStorageRecord,foldSurface,deriveEventMessage,estimateMessage}) {
+  const events=rows.filter(row=>row && row.type!=='session').flatMap(decodeStorageRecord);
+  foldSurface(events);
+  const records=new Map(rows.filter(row=>Number.isSafeInteger(row?.seq)).map(row=>[row.seq,row]));
+  const nodes=[],prices=new Map();let claim,repaired=0;
+  for(const event of events) {
+    if(['compaction/summary','compaction/prune'].includes(event.type)){claim=event;continue;}
+    const op=event.surfaceOp;
+    if(op==='append') {const message=deriveEventMessage(event);nodes.push(event.seq);prices.set(event.seq,message?estimateMessage(message):0);}
+    else if(op?.op==='replace') {
+      const start=nodes.indexOf(op.start),end=nodes.indexOf(op.end);
+      const prior=nodes.slice(start,end+1).reduce((sum,id)=>sum+(prices.get(id)||0),0);
+      let price=prior;
+      if(claim && claim.data.shadowedRange.start===op.start && claim.data.shadowedRange.end===op.end) {
+        const row=records.get(claim.seq);
+        if(row.data.shadowedTokenCount!==prior){row.data={...row.data,shadowedTokenCount:prior};repaired++;}
+        const message=deriveEventMessage(event);price=message?estimateMessage(message):0;
+      }
+      nodes.splice(start,end-start+1,event.seq);prices.set(event.seq,price);
+    }
+    claim=undefined;
+  }
+  return repaired;
+}
+
+export async function repairMemoryErasureArtifact(persistence, sessionId, {reprice}={}) {
+  const artifact=await persistence.readRaw(sessionId);if(!artifact)return {repaired:0};
+  if(!artifact.content.includes('"weftmate-memory-erasure"'))return {repaired:0};
+  let rows;try{rows=artifact.content.split('\n').map(line=>line?JSON.parse(line):null);}catch{return {repaired:0};}
+  const bySeq=new Map(rows.filter(row=>Number.isSafeInteger(row?.seq)).map(row=>[row.seq,row]));
+  const metadata=data=>data?.message?.content?.length===1 ? {...data,message:{...data.message,content:[{...data.message.content[0],content:null}]}} : null;
+  let repaired=0;
+  for(let i=0;i<rows.length;i++) {
+    const row=rows[i],op=row?.surfaceOp;
+    if(row?.type==='session/title' && row.data?.title==='') {rows[i]={...row,data:{...row.data,title:erasedTitle}};repaired++;continue;}
+    if(row?.type!=='tool/result'||op?.op!=='replace'||op.start!==op.end||row.data?.source?.plugin!=='weftmate-memory-erasure'||
+      !Array.isArray(row.data.content)||row.data.content.length)continue;
+    const original=bySeq.get(op.start);if(original?.type!=='tool/result')continue;
+    const data={...row.data};delete data.source;delete data.content;
+    const before=metadata(original.data),after=metadata(data);
+    if(!before||!after||!isDeepStrictEqual(before,after))continue;
+    rows[i]={...row,data};bySeq.set(row.seq,rows[i]);repaired++;
+  }
+  const repriced=reprice?await reprice(rows):0;
+  if(repaired||repriced)await writeArtifact(persistence,artifact,rows.map(row=>row?JSON.stringify(row):'').join('\n'));
+  return {repaired,...(repriced?{repriced}:{})};
+}
 
 /** Use the native surface replacement protocol: retained originals remain in
  * human history, but cannot enter future requests or native compaction. */
@@ -50,8 +113,13 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
   // Text matching is confined to preparation and the legacy direct-call API.
   const texts = options.snippetTargets ? [] : options.sourceTexts ?? [];
   const contentKeys = ['text','texts','content','delta','arguments','argumentsDelta','args','output','summary','rawOutput'];
+  // Identifiers and structure are never user words, however short the forgotten text.
+  const identifier = key => /^(id|seq|type|role|kind|name|provider|model|api|plugin|stopReason)$|Ids?$/.test(key);
+  // Targets prepared before this rule may still point at identifiers; never apply those paths.
+  const contentPath = path => !identifier(String([...path].reverse().find(key => !/^\d+$/.test(String(key))) ?? ''));
   const fields = (value, path = [], found = [], wholeTurn = false, field = '') => {
-    if (typeof value === 'string' && value && (wholeTurn && contentKeys.includes(field) || texts.some(text => text && value.includes(text)))) found.push(path);
+    if (typeof value === 'string' && value && !identifier(field) &&
+        (wholeTurn && contentKeys.includes(field) || texts.some(text => text && value.includes(text)))) found.push(path);
     else if (value && typeof value === 'object') for (const [key, child] of Object.entries(value)) fields(child, [...path, key], found, wholeTurn, Array.isArray(value) ? field : key);
     return found;
   };
@@ -74,21 +142,22 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
   const selectedRow = (rows, target) => target.seq === undefined ? rows[target.rowIndex] : rows.find(row => (row?.seq ?? row?.seq0) === target.seq);
   if (options.deleteConversationSnippets && options.snippetTargets) for (const target of snippetTargets) {
     const row = selectedRow(lines, target);
-    for (const path of target.paths) {
+    for (const path of target.paths.filter(contentPath)) {
       let parent = row;
       for (const key of path.slice(0, -1)) parent = parent?.[key];
-      if (parent && Object.hasOwn(parent, path.at(-1))) { parent[path.at(-1)] = ''; changed = true; }
+      if (parent && Object.hasOwn(parent, path.at(-1))) { parent[path.at(-1)] = row?.type==='session/title' && path.join('.')==='data.title' ? erasedTitle : ''; changed = true; }
     }
   }
   const clean = (value, redact = false, key = '') => {
     if (typeof value === 'string') {
-      if (!options.deleteConversationSnippets) return value
+      if (!options.deleteConversationSnippets || identifier(key)) return value
       if (redact && contentKeys.includes(key)) { changed = true; return ''; }
       for (const text of texts) if (value.includes(text)) { value = value.replaceAll(text, '[已遗忘的原话]'); changed = true }
       return value
     }
     if (Array.isArray(value)) return value.map(child => clean(child, redact, key))
     if (!value || typeof value !== 'object') return value
+    if(value.type==='session/title' && value.data?.title==='') {changed=true;return {...value,data:{...value.data,title:erasedTitle}};}
     if (value.type === 'goal/change' && options.goalIds?.includes(value.data?.goal?.id)) {
       changed = true;
       return { ...value, data: { ...value.data, goal: { ...value.data.goal, objective: '[已遗忘的目标说明]', ...(value.data.goal.blockedReason ? { blockedReason: { code: value.data.goal.blockedReason.code, message: '[已遗忘的目标说明]' } } : {}) } } };
@@ -105,10 +174,11 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
       value = { ...value, memoryUsed: [] }; changed = true
     }
     if (value.type === 'compaction/summary') {
-      changed = true;
+      // An already emptied summary is not a change; rewriting it on every forget was.
+      if (value.data?.summary?.length || value.data?.rawOutput?.length) changed = true;
       return { ...value, data: { ...value.data, summary: [], ...(value.data?.rawOutput ? { rawOutput: [] } : {}) } };
     }
-    if (value.surfaceOp?.op === 'replace' && value.data?.source?.plugin !== 'weftmate-memory-erasure') {
+    if (value.type === 'user/message' && value.surfaceOp?.op === 'replace' && value.data?.source?.plugin !== 'weftmate-memory-erasure') {
       changed = true;
       return { ...value, data: { ...value.data, content: [], source: { kind: 'plugin', plugin: 'weftmate-memory-erasure' } } };
     }
@@ -118,27 +188,10 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
     }
     return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, clean(child, redact, key)]))
   }
-  const content = lines.map(row => row ? JSON.stringify(clean(row, affected.has(turns.get(row)))) : '').join('\n')
-  if (changed) {
-    const location = persistence.locate(artifact.meta)
-    const inside = relative(resolve(persistence.config.root), resolve(location.path))
-    if (!inside || inside.startsWith('..') || isAbsolute(inside)) throw new Error('memory source outside session root')
-    const tmp = `${location.path}.${randomUUID()}.tmp`
-    let file
-    try {
-      file = await open(tmp, 'wx', 0o600)
-      // Native compressed logs dedicate the first frame to the header. Cold
-      // listing decodes that frame alone; event frames must remain separate.
-      const firstNewline = content.indexOf('\n')
-      const bytes = location.path.endsWith('.zstd') ? Buffer.concat([
-        zstdCompressSync(Buffer.from(content.slice(0, firstNewline + 1))),
-        ...(content.length > firstNewline + 1 ? [zstdCompressSync(Buffer.from(content.slice(firstNewline + 1)))] : []),
-      ]) : content
-      await file.writeFile(bytes)
-      await file.sync(); await file.close(); file = null
-      await rename(tmp, location.path)
-    } finally { await file?.close(); await rm(tmp, { force: true }) }
-  }
+  const cleaned=lines.map(row=>row?clean(row,affected.has(turns.get(row))):null);
+  if(options.reprice && await options.reprice(cleaned))changed=true;
+  const content = cleaned.map(row=>row?JSON.stringify(row):'').join('\n')
+  if (changed) await writeArtifact(persistence,artifact,content);
   // Re-read the actual artifact, not the transformed in-memory snapshot. A
   // successful write/rename alone is not proof that the source was erased.
   if (options.deleteConversationSnippets) {
@@ -153,11 +206,11 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
       return found;
     });
     if (residual || options.snippetTargets && snippetTargets.some(target =>
-      target.paths.some(path => {
+      target.paths.filter(contentPath).some(path => {
         let value = selectedRow(rows, target);
         for (const key of path) value = value?.[key];
-        return value !== undefined && value !== '';
+        return value !== undefined && value !== '' && !(selectedRow(rows,target)?.type==='session/title' && path.join('.')==='data.title' && value===erasedTitle);
       }))) throw new Error('memory cleanup verification failed');
   }
-  return { cleaned: true, snippetsVerified: options.deleteConversationSnippets === true };
+  return { cleaned: true, changed, snippetsVerified: options.deleteConversationSnippets === true };
 }

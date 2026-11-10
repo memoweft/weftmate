@@ -1,7 +1,6 @@
 /* Shared attachments state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
-    function attachmentDraftKey(sessionId = core.state.selectedSessionId, legacy = false) {
-        if (!legacy && core.mainAttachmentDraftKey) return core.mainAttachmentDraftKey(sessionId);
+    function attachmentDraftKey(sessionId = core.state.selectedSessionId) {
         return core.state.ownerId && (sessionId || core.state.newConversation) ? `${core.state.ownerId}|${sessionId || 'new'}` : null;
     }
     function currentAttachmentDrafts() {
@@ -10,11 +9,11 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
     }
     function attachmentScope(sessionId = core.state.selectedSessionId) {
         return { generation: core.state.identityGeneration, ownerId: core.state.ownerId, deviceId: core.state.device?.id,
-            csrf: core.state.csrfToken, sessionId, view: core.state.currentView };
+            hostId:core.state.hostId, csrf: core.state.csrfToken, sessionId, view: core.state.currentView };
     }
     function attachmentScopeCurrent(scope) {
         return scope.generation === core.state.identityGeneration && scope.ownerId === core.state.ownerId &&
-            scope.deviceId === core.state.device?.id && scope.csrf === core.state.csrfToken && !!scope.csrf &&
+            scope.hostId === core.state.hostId && scope.deviceId === core.state.device?.id && scope.csrf === core.state.csrfToken && !!scope.csrf &&
             scope.sessionId === core.state.selectedSessionId && core.state.activeChatSource === 'desktop' &&
             scope.view === 'assistant' && core.state.currentView === 'assistant';
     }
@@ -69,7 +68,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         const upload = core.state.attachmentUpload;
         if (!upload)
             return;
-        upload.controller.abort();
+        upload.failed=true;upload.controller.abort();
         core.state.attachmentUpload = null;
         if (announce && core.attachmentScopeCurrent(upload.scope))
             core.setAttachmentStatus('已取消上传，所选文件仍保留，可重新发送。');
@@ -144,19 +143,18 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         core.state.attachmentAttempts.set(key, attempt);
         return attempt;
     }
-    async function sendDesktopMessageWithAttachments(text, requestId, mode, snapshot) {
+    async function sendDesktopMessageWithAttachments(text, requestId, mode, held) {
         const sessionId = core.state.selectedSessionId;
         const key = core.attachmentDraftKey(sessionId);
-        const drafts = snapshot?.drafts || (key ? [...core.currentAttachmentDrafts()] : []);
+        const drafts = held ? held.captured : key ? [...core.currentAttachmentDrafts()] : [];
         if (!key || drafts.length < 1 || drafts.length > 4 || core.state.attachmentUpload)
             return null;
         const scope = core.attachmentScope(sessionId);
         const controller = new AbortController();
-        const attempt = core.attachmentAttempt(key, text, drafts);
+        const attempt = held || core.attachmentAttempt(key, text, drafts);
         if (requestId) attempt.requestId = requestId;
-        const messageId = snapshot?.messageId || core.state.attachmentGroups.get(key) || `message-${environment.crypto.randomUUID()}`;
-        if (snapshot) snapshot.messageId = messageId;
-        core.state.attachmentGroups.set(key, messageId);
+        const messageId = (held ? held.attachmentGroup : core.state.attachmentGroups.get(key)) || `message-${environment.crypto.randomUUID()}`;
+        if (held) held.attachmentGroup=messageId; else core.state.attachmentGroups.set(key, messageId);
         const upload = { controller, scope, key, requestId: attempt.requestId };
         core.state.attachmentUpload = upload;
         core.setAttachmentStatus('正在核对文件并保存原件…');
@@ -177,7 +175,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
                 const expected = { ...item, size: item.file.size };
                 core.setAttachmentStatus(`正在保存原件 ${originals.length + 1} / ${drafts.length}…`);
                 const uploaded = await core.uploadAttachmentBlob(`/sync/attachments/${encodeURIComponent(item.attachmentId)}` +
-                    `?conversationId=${encodeURIComponent(core.inMainChat?.() ? core.state.mainChat.chatId : sessionId)}&messageId=${encodeURIComponent(messageId)}` +
+                    `?conversationId=${encodeURIComponent(sessionId)}&messageId=${encodeURIComponent(messageId)}` +
                     `&name=${encodeURIComponent(item.file.name)}`, item.file, item.contentType, item.sha256, scope, controller.signal);
                 const exact = core.exactAttachmentMeta(uploaded, expected);
                 if (!exact)
@@ -201,7 +199,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
                 const stagedHash = blob === item.file ? item.sha256 : await hashBlob(blob, { signal: controller.signal });
                 const expected = { ...item, size: blob.size, sha256: stagedHash };
                 core.setAttachmentStatus(`正在准备模型可读内容 ${staged.length + 1} / ${drafts.length}…`);
-                const uploaded = await core.uploadAttachmentBlob(`${core.inMainChat?.() ? '/chats/' + encodeURIComponent(core.state.mainChat.chatId) : '/sessions/' + encodeURIComponent(sessionId)}/attachments/` +
+                const uploaded = await core.uploadAttachmentBlob(`/sessions/${encodeURIComponent(sessionId)}/attachments/` +
                     `${encodeURIComponent(item.attachmentId)}?requestId=${encodeURIComponent(attempt.requestId)}` +
                     `&name=${encodeURIComponent(item.file.name)}`, blob, item.contentType, stagedHash, scope, controller.signal);
                 const exact = core.exactAttachmentMeta(uploaded, expected);
@@ -212,16 +210,18 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
                 if (core.attachmentTextTypes.has(item.contentType))
                     stagedTextBytes += blob.size;
             }
-            if (!core.attachmentScopeCurrent(scope))
+            if (!core.attachmentScopeCurrent(scope) || held && (!core.state.online || held.modelProfileId!==core.state.modelProfileId))
                 throw new DOMException('Upload cancelled', 'AbortError');
             core.state.attachmentUpload = null;
             core.setAttachmentStatus('原件已保存，正在发送消息…');
             effects.updateAvailability();
-            return await core.submitCommand(core.inMainChat?.() ? 'chat.message' : 'session.message', { ...(core.inMainChat?.() ? { chatId: core.state.mainChat.chatId, modelProfileId: snapshot?.modelProfileId || core.state.modelProfileId } : { sessionId }), text, mode: mode || core.composerInputMode(sessionId),
+            if (held) held.posted=true;
+            return await core.submitCommand('session.message', { sessionId, text, mode: mode || core.composerInputMode(sessionId),
                 ...(staged.length ? { attachments: staged } : {}), attachmentMessageId: messageId,
                 originalAttachments: originals }, sessionId, attempt.requestId);
         }
         catch (error) {
+            upload.failed=true;
             if (core.attachmentScopeCurrent(scope)) {
                 if (error?.name === 'AbortError')
                     core.setAttachmentStatus('已取消上传，所选文件仍保留，可重新发送。');
@@ -361,7 +361,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         try {
             const value = JSON.parse(environment.storage.getItem(key) || '[]');
             return Array.isArray(value) ? value.filter((row) => typeof row?.requestId === 'string' && core.markerId.test(row.requestId) &&
-                ['session.create', 'session.side.create', 'session.message', 'chat.message', 'session.cancel', 'desktop.open_app'].includes(row?.kind) &&
+                ['session.create', 'session.side.create', 'session.message', 'session.cancel', 'desktop.open_app'].includes(row?.kind) &&
                 (row.sessionId === undefined || core.sessionIdPattern.test(row.sessionId)) &&
                 (row.commandId === undefined || core.sessionIdPattern.test(row.commandId)))
                 .slice(-30) : [];
@@ -399,7 +399,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
     }
     function finishAttachmentCommand(command) {
         if (command?.state !== 'accepted_by_dsh') return;
-          if (!['session.message', 'chat.message'].includes(command?.kind) || typeof command.requestId !== 'string')
+          if (command?.kind !== 'session.message' || typeof command.requestId !== 'string')
             return;
         for (const [key, attempt] of core.state.attachmentAttempts) {
             if (attempt.requestId !== command.requestId)

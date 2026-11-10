@@ -34,10 +34,10 @@ try {
       if(!/\.(css|js|html)$/.test(name)||name==='bridge.js')return route.fallback();
       try {let body=execFileSync('git',['show',`${baselineCommit}:apps/mobile-ui/www/${name}`]);if(name==='index.html')body=Buffer.from(body.toString().replace('<script defer src="app.js">','<script defer src="bridge.js"></script><script defer src="app.js">'));await route.fulfill({body,contentType:name.endsWith('.css')?'text/css':name.endsWith('.js')?'text/javascript':'text/html'});}catch{await route.fallback();}});
     await p.goto(f.mobileUrl);await p.waitForFunction(()=>state.booted&&state.loggedIn&&state.logicalChats);
-    await p.evaluate(async theme=>{applyTheme(theme);await uiCore.selectMainChat();closeDrawer();stopSharedPoll();},theme);
+    await p.evaluate(async ({theme,id})=>{applyTheme(theme);await selectSharedSession(id);closeDrawer();stopSharedPoll();},{theme,id:f.sessionId});
     await p.waitForFunction(()=>!uiCore.state.sessionSelecting&&!state.sharedLoading);
     const prefix=`phone-${width}-${theme}`;
-    await p.evaluate(()=>{uiCore.state.mainChat.running=false;uiCore.state.chatWindow.events.clear();uiCore.state.chatWindow.loaded=true;mobileEffects.renderMainChat();});
+    await p.evaluate(()=>{uiCore.state.chatWindow.events.clear();uiCore.state.chatWindow.loaded=true;mobileEffects.renderMainChat();});
     await shot(p,prefix,'chat-empty');
     // Use the actual timeline renderer for an existing native side conversation.
     await p.evaluate(async id=>{await uiCore.selectLogicalSession(id);await uiCore.state.historyInFlight?.promise;stopSharedPoll();state.sharedEvents=[{seq:1,type:'user.message',data:{text:'周末想放松一下，帮我安排半天。'}},{seq:2,type:'assistant.message',data:{text:'上午去公园走走，午饭后留一点时间读书。\n\n不用把行程排满，留一段随心安排的时间。'}}];state.sharedRunning=false;state.sharedLoading=false;renderSharedConversation();},f.sessionId);
@@ -80,13 +80,13 @@ try {
     });
     await p.goto(f.origin+'/personal/v1/ui/');await p.waitForFunction(()=>globalThis.__mobLoaded);await p.evaluate(()=>globalThis.__mobLoaded);
     await p.evaluate(async()=>{const me=await(await fetch('/personal/v1/auth/me')).json();if(me.device.authKind!=='cloud')throw Error('Cloud phone fixture required');__mobcore.acceptSession(me);Object.assign(__mobcore.state.cloudAuth,{mode:'offline',localSession:false,modal:false});await __mobcore.enterAssistant();});
-    await p.locator('#assistant-view:not([hidden])').waitFor();await p.waitForFunction(()=>__mobcore.state.mainChat&&!__mobcore.state.refreshing);await p.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
+    await p.locator('#assistant-view:not([hidden])').waitFor();await p.waitForFunction(()=>__mobcore.state.modelsKnown&&!__mobcore.state.refreshing);await p.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
     const prefix=`remote-${width}-${theme}`;await shot(p,prefix,'chat-empty');
     await p.evaluate(async id=>{await __mobcore.selectLogicalSession(id);},f.sessionId);await p.waitForTimeout(400);await shot(p,prefix,'chat-content');
     await p.getByRole('button',{name:'对话操作',exact:true}).click();await shot(p,prefix,'chat-menu');await p.keyboard.press('Escape');
     await p.locator('#message-text').fill('午饭想吃清淡一点');await shot(p,prefix,'composer-focus');await p.locator('#message-text').blur();
     await p.getByRole('button',{name:'切换会话侧栏',exact:true}).click();await shot(p,prefix,'sidebar');await p.evaluate(()=>__mobui.closeRail());
-    for(const [id,action] of [['chat','selectMainChat'],['activity','openActivity'],['goals','openGoals'],['library','openLibrary']]){await p.evaluate(async({id,action})=>{await(id==='chat'?__mobcore[action]():__mobui[action]());},{id,action});await shot(p,prefix,'tab-'+id);}
+    for(const [id,action] of [['chat','startNewConversation'],['activity','openActivity'],['goals','openGoals'],['library','openLibrary']]){await p.evaluate(async({id,action})=>{await(id==='chat'?__mobcore[action]():__mobui[action]());},{id,action});await shot(p,prefix,'tab-'+id);}
     await p.evaluate(()=>__mobui.openSettings('general'));await p.locator('#settings-dialog[open]').waitFor();await shot(p,prefix,'settings');
     await p.evaluate(()=>__mobui.openSettings('appearance'));await shot(p,prefix,'appearance');
     if(!before){assert.equal(await p.locator('.remote-mobile-tabs').count(),1);report.checks.push({prefix,cloudPhone:true,bottomTabs:true});}
@@ -104,7 +104,7 @@ try {
   await p.waitForFunction(()=>globalThis.__mobcore?.state.account&&__mobcore.state.device?.authKind==='desktop'&&__mobcore.state.modelsKnown);
   for(const width of [1200,480])for(const theme of ['light','dark']){
     await app.evaluate(({BrowserWindow,nativeTheme},{width,theme})=>{BrowserWindow.getAllWindows()[0].setContentSize(width,800);nativeTheme.themeSource=theme;},{width,theme});await p.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
-    await p.evaluate(()=>{document.querySelector('#settings-dialog')?.close();__mobcore.selectMainChat();});await shot(p,`electron-${width}-${theme}`,'chat');
+    await p.evaluate(()=>{document.querySelector('#settings-dialog')?.close();__mobcore.startNewConversation();});await shot(p,`electron-${width}-${theme}`,'chat');
     await p.evaluate(()=>__mobui.openSettings('general'));await p.locator('#settings-dialog[open]').waitFor();await shot(p,`electron-${width}-${theme}`,'settings');
   }
   assert.deepEqual(report.errors,[]);if(!desktopOnly)await writeFile(join(out,'verification.json'),JSON.stringify(report,null,2)+'\n');

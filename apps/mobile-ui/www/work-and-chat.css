@@ -35,6 +35,10 @@
 .work-choice small{margin-left:auto}
 .work-choice{overflow-wrap:anywhere}
 .work-switch-actions{display:flex;gap:var(--wm-space-8);justify-content:flex-end;flex-wrap:wrap}
+.work-handoff{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--wm-space-8);margin-bottom:var(--wm-space-8)}
+.work-handoff[hidden]{display:none}
+.work-handoff>.work-mode-hint{flex:1;min-width:0;color:var(--ink-secondary)}
+.work-handoff>.form-error{flex-basis:100%;margin:0}
 .work-modes-supported #assistant-view .folder-start,.work-modes-supported #assistant-view .folder-first-hint,.work-modes-supported #assistant-view .folder-current{display:none}
 @media(max-width:720px){.work-choice{min-height:var(--wm-space-44)}.work-switch-card{padding:var(--wm-space-12)}}
 .phone-unified .work-mode-toolbar{margin:0 0 var(--wm-space-4)}

@@ -9,7 +9,6 @@ import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import {renderingSample} from '../helpers/rendering-sample.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
-import { startMainChatCandidate } from './main-chat-candidate.mjs';
 import { prepareGoalsScene } from './review-goals-scene.mjs';
 import { loadNativeReviewSession } from '../helpers/review-native-session.mjs';
 import { redactEvidenceText } from '../helpers/process-evidence.mjs';
@@ -26,7 +25,7 @@ for (const theme of ['light', 'dark']) {
   env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   Object.assign(env, { REVIEW_PROFILE: profile, REVIEW_THEME: theme, REVIEW_ORIGIN: fixture.origin,
     REVIEW_LIBRARY_TOKEN: fixture.libraryDesktopToken });
-  let application, page, mainFixture, suggestionFixture, renderingSeeded=false, closing = false, ownerId;
+  let application, page, suggestionFixture, renderingSeeded=false, closing = false, ownerId;
   const errors = [];
   const stage = name => console.log(`Desktop ${theme}: ${name}`);
   const closeApplication = async label => {
@@ -189,7 +188,7 @@ for (const theme of ['light', 'dark']) {
       },
       'session-menu': async () => { await home(); await button('项目进度报告').click({button:'right'}); await page.getByRole('menu', { name: '对话操作', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '归档 A', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '删除 D', exact: true }).waitFor(); },
     };
-    for (const scene of catalog.scenes.filter(row => !['login','main-chat','next-suggestions'].includes(row.id) && (!onlyScene || row.id === onlyScene)).sort((a,b)=>Number(a.id==='question')-Number(b.id==='question'))) {
+    for (const scene of catalog.scenes.filter(row => !['login','next-suggestions'].includes(row.id) && (!onlyScene || row.id === onlyScene)).sort((a,b)=>Number(a.id==='question')-Number(b.id==='question'))) {
       await shot(scene.id, preparations[scene.id]);
       if (scene.id === 'onboarding') await page.evaluate(async () => { const me = await (await fetch('/personal/v1/auth/me')).json(); await fetch('/personal/v1/onboarding', { method: 'PATCH', headers: { 'content-type': 'application/json', 'X-WeftMate-CSRF': me.csrfToken }, body: JSON.stringify({ step: 'first', completed: true }) }); });
     }
@@ -206,15 +205,6 @@ for (const theme of ['light', 'dark']) {
       stage('suggestions native init started');await loadNativeReviewSession(page,suggestionFixture);stage('suggestions native init ended');
       await shot('next-suggestions',async()=>{await page.waitForFunction(()=>globalThis.__ux7core?.state.account);await page.evaluate(id=>__ux7core.selectSession(id),suggestionFixture.sessionId);await prepareUx7Suggestions(page);});
     }
-    closing=true;stage('main switch unroute started');await page.unrouteAll({behavior:'ignoreErrors'});stage('main switch unroute ended');
-    await closeApplication('main switch');
-    stage('main fixture started');mainFixture=await startMainChatCandidate();stage('main fixture ready');
-    const mainProfile = await mkdtemp(join(tmpdir(), 'weftmate-review-desktop-main-')); profiles.push(mainProfile);
-    stage('main launch started');
-    application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_PROFILE:mainProfile,REVIEW_ORIGIN:mainFixture.origin,REVIEW_LIBRARY_TOKEN:mainFixture.libraryDesktopToken}});
-    page=await application.firstWindow();page.setDefaultTimeout(30000);closing=false;page.on('pageerror',e=>errors.push({source:'main-page',message:redactEvidenceText(e.message.split('\n')[0])}));stage('main launch ended');
-    await exposeUx7Desktop(page);stage('main native init started');await loadNativeReviewSession(page,mainFixture);stage('main native init ended');
-    await shot('main-chat',async()=>{await page.getByRole('button',{name:'筛选最近对话',exact:true}).click();await page.getByRole('menu',{name:'最近对话类型',exact:true}).getByRole('menuitemradio',{name:'对话',exact:true}).click();await button('小纬').click();await page.waitForFunction(()=>document.querySelector('#transcript .main-chat-row'));await button('搜索对话').click();await page.getByRole('searchbox',{name:'对话搜索关键词'}).fill('合成');await page.getByRole('searchbox',{name:'对话搜索关键词'}).press('Enter');await page.locator('mark').first().waitFor();});
     if (errors.length) { console.error(`Desktop ${theme} actual errors:`, JSON.stringify(errors)); throw Error('Desktop renderer or synthetic projection failed'); }
     console.log(`Desktop ${theme}: scene outcomes recorded.`);
   } finally {
@@ -222,11 +212,9 @@ for (const theme of ['light', 'dark']) {
     stage('finally unroute started');await page?.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {});stage('finally unroute ended');
     await closeApplication('finally');
     stage('finally primary fixture close started');await fixture.close();stage('finally primary fixture close ended');
-    stage('finally main fixture close started');await mainFixture?.close();stage('finally main fixture close ended');
     stage('finally suggestions fixture close started');await suggestionFixture?.close();stage('finally suggestions fixture close ended');
     stage('finally profiles remove started');for(const ownedProfile of profiles)await rm(ownedProfile, { recursive: true, force: true });stage('finally profiles remove ended');
     stage('finally primary root remove started');await rm(fixture.root, { recursive: true, force: true });stage('finally primary root remove ended');
-    if(mainFixture){stage('finally main root remove started');await rm(mainFixture.root,{recursive:true,force:true});stage('finally main root remove ended');}
     if(suggestionFixture){stage('finally suggestions root remove started');await rm(suggestionFixture.root,{recursive:true,force:true});stage('finally suggestions root remove ended');}
   }
 }

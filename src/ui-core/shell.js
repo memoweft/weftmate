@@ -370,7 +370,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             // host diagnostics and the complete session list must not delay them.
             const [result] = await Promise.all([core.refreshHistory(false,false,true), ...core.readMarkers()
                 // Let the original POST own its receipt until it returns.
-                .filter(marker => !core.state.submitting && !core.state.cancelSubmitting && core.state.sideCreating?.requestId !== marker.requestId && ['session.create', 'session.message', 'session.cancel', 'chat.message', 'session.side.create'].includes(marker.kind))
+                .filter(marker => !core.state.submitting && !core.state.cancelSubmitting && core.state.sideCreating?.requestId !== marker.requestId && ['session.create', 'session.message', 'session.cancel', 'session.side.create'].includes(marker.kind))
                 .map(marker => core.lookupRequest(marker))]);
             return result;
         } finally { core.state.liveRefreshing = false; }

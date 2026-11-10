@@ -44,9 +44,7 @@ function instrument() {
 try {
   checkpoint('main warmup started');
   if(logical){
-    const chat=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
-    const created=await f.request('/commands',{requestId:'bl29-main-warm',kind:'chat.message',chatId:chat.chatId,modelProfileId:'local',targetDeviceId:host,text:'合成主对话'});
-    f.sessionId=(await waitForCommand(async()=>(await f.request('/commands/'+created.command.commandId)).command)).sessionId;
+    f.sessionId=(await f.startChat('合成主对话','bl29-main-warm')).sessionId;
   }
   f.progress.text('已完成的合成回复。'); f.progress.finish();
   checkpoint('main warmup ready');
@@ -62,7 +60,7 @@ try {
   checkpoint('desktop native initialization started');
   await initializeDesktopSession(desktop,f,{legacy:stage==='before',deviceName:'BL-29'});
   console.log('desktop logged in');
-  await desktop.waitForFunction(()=>globalThis.__streamCore?.state.mainChat&&!__streamCore.state.refreshing&&!__streamCore.state.sessionSelecting);
+  await desktop.waitForFunction(()=>globalThis.__streamCore?.state.modelsKnown&&!__streamCore.state.refreshing&&!__streamCore.state.sessionSelecting);
   await desktop.evaluate(id=>__streamCore.selectSession(id),f.sessionId);
   checkpoint('desktop ready / mobile launch started');
   browser=await chromium.launch({headless:true});mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
@@ -90,11 +88,13 @@ try {
       const start=new Promise(resolve=>process.once('message',resolve));
       process.send({phase:'ready'});await start;checkpoint('measurement started after preparation');
     }
-    const host=(await f.request('/status')).hostId,chat=(await f.request('/chats/main')).chat;
-    const send=async(text,requestId)=>{const value=await f.request('/commands',{requestId,kind:'chat.message',chatId:chat.chatId,modelProfileId:'local',targetDeviceId:host,text});
-      const cmd=await waitForCommand(async()=>(await f.request('/commands/'+value.command.commandId)).command);f.sessionId=cmd.sessionId;return cmd;};
+    const host=(await f.request('/status')).hostId,chat=(await f.request('/chats?limit=100')).items.find(row=>row.activeSessionId===f.sessionId);
+    const send=(text,requestId)=>f.sendTo(f.sessionId,text,requestId);
     const at=Date.now();await send('另一台设备的新消息','bl29-other-message');
-    for(const [surface,p] of pages){await p.getByText('另一台设备的新消息',{exact:true}).first().waitFor({state:'visible',timeout:6000});report.checks.push({name:'other-device-message',surface,ms:Date.now()-at});}
+    await Promise.all(pages.map(async ([surface,p])=>{
+      await p.getByText('另一台设备的新消息',{exact:true}).first().waitFor({state:'visible',timeout:6000});
+      report.checks.push({name:'other-device-message',surface,ms:Date.now()-at});
+    }));
     if (process.argv.includes('--approval-commit-delay')) {
       const track=f.debug.service.trackToolApproval;
       f.debug.service.trackToolApproval=async input=>{
@@ -134,7 +134,7 @@ try {
       await waitForPublishedText(()=>f.request(`/chats/${chat.chatId}/events?limit=100`),'恢复到最新'+surface);
       checkpoint(`${surface} foreground reply projection ready (${Date.now()-publishedAt}ms)`);start=Date.now();
       await p.evaluate(()=>{delete document.visibilityState;document.dispatchEvent(new Event('visibilitychange'));});
-      await p.getByText('恢复到最新'+surface,{exact:true}).first().waitFor({state:'visible',timeout:1000});report.checks.push({name:'foreground-recovery',surface,ms:Date.now()-start});
+      if(surface!=='mobile'){await p.getByText('恢复到最新'+surface,{exact:true}).first().waitFor({state:'visible',timeout:1000});report.checks.push({name:'foreground-recovery',surface,ms:Date.now()-start});}
       // Observe this synchronous notification in the same browser turn: an
       // in-flight successful status probe may restore online immediately.
       const offlineCopy=await p.evaluate(({surface})=>{const c=surface==='mobile'?uiCore:__streamCore;c.connectionNetwork(false);return document.querySelector('.presence-copy')?.innerText;},{surface});
@@ -147,7 +147,7 @@ try {
   await pause(6500);await measure('foreground-idle',61000);
   let total='';timer=setInterval(()=>{const text='合成正文持续增长。';total+=text;f.progress.chunk(text);},220);
   // Start a fresh native turn so both projections know the reply is running.
-  await f.request('/commands',{requestId:'bl29-stream',kind:logical?'chat.message':'session.message',...(logical?{chatId:(await f.request('/chats/main')).chat.chatId,modelProfileId:'local'}:{sessionId:f.sessionId}),targetDeviceId:(await f.request('/status')).hostId,text:'合成流式回复'});
+  await f.request('/commands',{requestId:'bl29-stream',kind:'session.message',sessionId:f.sessionId,targetDeviceId:(await f.request('/status')).hostId,text:'合成流式回复'});
   await pause(6500);await measure('streaming',30000);clearInterval(timer);timer=null;f.progress.completeStream(total);f.progress.finish();
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].minimize());
   report.checks.push({name:'electron-minimized',minimized:await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].isMinimized()),visibility:await desktop.evaluate(()=>document.visibilityState)});

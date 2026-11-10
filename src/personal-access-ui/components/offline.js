@@ -18,13 +18,24 @@
       if (desktop) return;
       let engine, scope, identity, polling = false, offline = false, selected = null, error = '', showHistory = false, taskMode=false;
       goalsCore.offlineMemoryReplica = () => identity?.ownerId === core.state.ownerId ? engine?.view().snapshot ?? null : null;
-      let memoryReplica;
+      goalsCore.searchPhoneMemory=(...args)=>engine?.searchPhoneMemory(...args)??[];
+      goalsCore.phoneMemoryScope=id=>engine?.phoneMemoryScope(id);
+      goalsCore.retryPhoneMemory=()=>engine?.retryPhoneMemory();
+      goalsCore.forgetPhoneMemory=(id,scope)=>engine?.forgetPhoneMemory(id,scope);
+      goalsCore.correctPhoneMemory=item=>{selected=item.conversationId;taskMode=false;input.value=`更正一下：${item.text}。现在是：`;open();paint();};
+      let memoryReplica, modelReplica, currentModel=null, modelSnapshot;
+      const refreshModels=async()=>{modelReplica=await core.getModelReplica?.();if(!modelReplica)return;modelSnapshot=await modelReplica.read();currentModel=modelSnapshot.current;try{modelSnapshot=await modelReplica.sync();currentModel=modelSnapshot.current;}catch{}paint();};
       const section = element('section', '', 'offline-chat'); section.hidden = true; section.setAttribute('aria-label', '离线对话');
       const header = element('header'), title = element('h1', '离线模式'), mode = element('p', explanation);
       const close = element('button', '返回'), fresh = element('button', '新对话'); close.type = fresh.type = 'button';
       const selector = element('select'); selector.setAttribute('aria-label', '离线对话列表');
       const referencePicker=element('div','','offline-reference');referencePicker.append(selector);
-      header.append(close, title, fresh, mode, referencePicker);
+      const modelPicker=element('select');modelPicker.setAttribute('aria-label','本机聊天模型');
+      modelPicker.onchange=async()=>{
+        const [serviceId,modelId]=JSON.parse(modelPicker.value);
+        try{modelSnapshot=await modelReplica.select(serviceId,modelId);currentModel=modelSnapshot.current;paint();}catch{error='请连接来源电脑后切换模型。';paint();}
+      };
+      header.append(close, title, fresh, mode, modelPicker,referencePicker);
       const messages = element('div', '', 'offline-messages'); messages.setAttribute('role', 'log'); messages.setAttribute('aria-live', 'polite');
       const form = element('form', '', 'offline-composer'), label = element('label', explanation), input = element('textarea');
       input.rows = 2; input.maxLength = 16384; input.placeholder = '继续聊聊…'; input.setAttribute('aria-label', '离线消息'); label.append(input);
@@ -48,14 +59,21 @@
       document.body.append(launcher);
       (document.getElementById?.('chat-scroll') || document.body).append(notice);
       function paint() {
+        if(modelSnapshot){
+          const choices=modelSnapshot.services.flatMap(service=>service.models.filter(row=>row.enabled&&row.profileId).map(row=>({service,row})));
+          modelPicker.replaceChildren(...choices.map(({service,row})=>{
+            const option=element('option',service.name+' · '+row.name);option.value=JSON.stringify([service.serviceId,row.modelId]);option.selected=row.profileId===currentModel?.profileId;return option;
+          }),...modelSnapshot.local.map(row=>{const option=element('option',row.name+' · 需要那台电脑在线');option.disabled=true;return option;}));
+        }
+
         const view = engine?.view();
         const replica=goalsCore.offlineMemoryReplica();
         if(replica!==memoryReplica){memoryReplica=replica;onMemoryReplicaChanged();}
         if(!view?.taskReady)taskMode=false;
         const scrollTop=messages.scrollTop||0,atBottom=messages.scrollHeight-messages.clientHeight-scrollTop<8;
         if (core.connectionView) {const kind=core.connectionView().kind;offline=kind==='host_offline'||kind==='connecting'&&offline;}
-        launcher.hidden = core.connectionView ? true : !offline && !view?.conversations.length;
-        launcher.textContent = offline ? '离线模式' : view?.turns.length ? '离线对话 · 待同步' : '离线对话 · 已同步';
+        launcher.hidden = !currentModel && (core.connectionView ? true : !offline && !view?.conversations.length);
+        launcher.textContent = currentModel ? '在此设备聊天' : offline ? '离线模式' : '离线对话';
         // Polling updates availability, never navigation. Only the user's launcher
         // action opens this page, so pending approvals and settings stay usable.
         section.hidden = !(view && showHistory);
@@ -64,10 +82,11 @@
         notice.textContent = error; notice.hidden = !error || idleCloudSetup || showHistory || !!core.connectionView && core.connectionView().kind !== 'online';
         title.textContent = offline ? '离线模式' : '离线对话';
         mode.textContent = offline ? view?.taskReady?(view.chatReady?explanation:'电脑离线，可以先记下要做的事，等电脑上线后去做。'):'电脑离线，可以继续聊天和使用记忆。' : view?.turns.length ? '电脑已上线，正在同步离线对话' : '已同步';
+        if(currentModel&&!taskMode){title.textContent='在此设备聊天';mode.textContent=currentModel.name||currentModel.modelId;}
         if(taskMode&&!offline)mode.textContent='先记下要做的事，电脑收到后会去做。';
-        label.firstChild.textContent = taskMode?'要交代什么？':offline?'继续聊聊':'电脑已上线，可返回原对话查看进展';
+        label.firstChild.textContent = taskMode?'要交代什么？':'继续聊聊';
         input.placeholder=taskMode?'等电脑上线后，要去做什么？':'继续聊聊…';
-        input.disabled = !offline&&!taskMode || !(taskMode?view?.taskReady:view?.chatReady??view?.ready) || view.running;
+        input.disabled = !currentModel&&!offline&&!taskMode || !(taskMode?view?.taskReady:view?.chatReady??view?.ready) || view.running;
         send.disabled = input.disabled || !input.value.trim();
         if(taskMode&&input.value.length>8192)send.disabled=true;
         more.disabled=!!view?.running||!view?.ready;more.hidden=!view?.ready;
@@ -129,12 +148,13 @@
       }
       async function start(current) {
         const next = JSON.stringify([current.origin, current.ownerId]);
-        if (scope === next) { Object.assign(identity, current); return; }
+        if (scope === next) { Object.assign(identity, current);await refreshModels();return; }
         if (engine) { if(identity?.hostId===current.hostId&&identity?.ownerId!==current.ownerId)await engine.clear();engine.close(); }
         scope = next; identity = current;
         offline = false; showHistory = false; error = '';
+        await refreshModels();
         const vault = nativeCall ? WeftOffline.nativeVault(nativeCall, { tasks: nativeTaskVault }) : await WeftOffline.browserVault(scope);
-        engine = await WeftOffline.create({ vault, identity, host, workRequests: !nativeCall, control: hostId => core.cloudOfflineStatus(hostId),
+        engine = await WeftOffline.create({ vault, identity, host, phoneModel:()=>currentModel, accountCheck:async()=>{if(!modelReplica)throw {code:'OFFLINE_MODEL_REQUIRED'};await modelReplica.read();return core.cloudDirectory();}, workRequests: !nativeCall, control: hostId => core.cloudOfflineStatus(hostId),
           tasks:core.cloudOfflineTasks,taskDevice:core.cloudOfflineTaskDevice,notify:()=>{paint();goalsCore.offlineTasksChanged?.();} });
         targetHostId=engine.view().tasks.at(-1)?.hostId||current.hostId;
         if(engine.view().taskReady&&!engine.view().chatReady)taskMode=true;
@@ -182,7 +202,7 @@
       form.addEventListener('submit', async event => {
         event.preventDefault(); if (!engine || send.disabled) return;
         error = ''; const text = input.value; input.value = ''; paint();
-        try { if(taskMode){await engine.submitTask(text,selected,targetHostId);taskMode=false;}else{const result = await engine.send(text, selected); selected = result.conversationId;} }
+        try { if(taskMode){await engine.submitTask(text,selected,targetHostId);taskMode=false;}else{if(modelReplica){modelSnapshot=await modelReplica.read();currentModel=modelSnapshot.current;}const result = await engine.send(text, selected); selected = result.conversationId;} }
         catch (cause) { error = (cause.code || cause.message) === 'OFFLINE_RESET_REQUIRED'
           ? '内容已清理，电脑上线后会重新读取。' : taskMode?'还没确认记下，请检查网络后重试。':'回复未完成，请检查网络或模型配置后重试。'; }
         paint(); messages.scrollTop = messages.scrollHeight;
@@ -199,7 +219,7 @@
       core.openOfflineWorkMode = text => { if (!core.offlineWorkReady()) return;taskMode=true;input.value=text;open();paint(); };
       core.offlineConnectionRestored = tick;
       const unsubscribe = core.observeConnection?.(value => {if(value.kind==='online'&&offline)showHistory=false;paint();if(value.kind==='online')void tick().catch(()=>{});});
-      for(const name of ['selectSession','selectMainChat'])if(core[name]){const original=core[name];core[name]=(...args)=>{showHistory=false;paint();return original(...args);};}
+      if(core.selectSession){const original=core.selectSession;core.selectSession=(...args)=>{showHistory=false;paint();return original(...args);};}
       document.addEventListener('visibilitychange', () => void tick());
       const timer = setInterval(() => void tick().catch(() => {}), 15000);
       void tick().catch(() => {});

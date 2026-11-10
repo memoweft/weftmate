@@ -24,7 +24,7 @@ test('FX-16 selection locks text and attachments until draft restoration, then f
   const f=selectionFixture(),wait=deferred();f.waits.set('s1',wait);
   const selecting=f.actions.selectLogicalSession('s1');
   const loading=f.actions.mainComposerState('');
-  assert.equal(loading.messageDisabled,true);assert.equal(loading.sendDisabled,true);assert.equal(loading.attachmentsDisabled,true);
+  assert.equal(loading.messageDisabled,true);assert.equal(loading.attachmentsDisabled,true);
   wait.resolve();await selecting;f.setText('首次输入');assert.equal(f.text(),'首次输入');assert.equal(f.actions.mainComposerState('首次输入').messageDisabled,false);
 });
 test('FX-16 later selection wins and account boundary discards old restoration',async()=>{

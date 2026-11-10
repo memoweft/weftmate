@@ -9,19 +9,13 @@
  */
 import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { after, before, describe, test } from 'node:test'
 import {
   DEFAULT_PROFILE_BUNDLES,
-  PROFILE_PATCH_TEMPLATE_LEGACY,
-  PROFILE_PATCH_TEMPLATE_R12,
-  PROFILE_PATCH_TEMPLATE_R13,
-  PROFILE_PATCH_TEMPLATE_R16,
-  PROFILE_PATCH_TEMPLATE_R17,
-  PROFILE_PATCH_TEMPLATE_R18,
   PROFILE_PATCH_TEMPLATE,
   parseWebUrlLine,
   writeWebProfile,
@@ -29,24 +23,56 @@ import {
 } from '../src/dsh-web-runtime.ts'
 
 let dir: string
+// Old R1–R18 patch files, kept only as test fixtures; the runtime recognises them by digest.
+const oldPatch = (name: string) => readFile(new URL(`./fixtures/profile-patch/${name}.yml`, import.meta.url), 'utf8')
+
+test('every known old patch file upgrades to the current template', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-old-patches-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeWebProfile(root);
+  const patch = join(root, 'profiles', 'weftmate', 'cordis.patch.yml');
+  for (const name of await readdir(new URL('./fixtures/profile-patch/', import.meta.url))) {
+    await writeFile(patch, await oldPatch(name.replace(/.yml$/, '')));
+    assert.equal(await writeWebProfile(root), 'repaired', name);
+    assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE, name);
+  }
+});
 
 test('the previous managed personal profile upgrades to the tool-loop composition', async t => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-memory-profile-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   await writeWebProfile(root);
   const patch = join(root, 'profiles', 'weftmate', 'cordis.patch.yml');
-  await writeFile(patch, PROFILE_PATCH_TEMPLATE_R16);
+  await writeFile(patch, await oldPatch('r16'));
   assert.equal(await writeWebProfile(root), 'repaired');
   assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE);
   assert.equal(await writeWebProfile(root), 'unchanged');
-  await writeFile(patch, PROFILE_PATCH_TEMPLATE_R18);
+  await writeFile(patch, await oldPatch('r18'));
   assert.equal(await writeWebProfile(root), 'repaired');
   assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE);
-  await writeFile(patch, PROFILE_PATCH_TEMPLATE_R17);
+  await writeFile(patch, await oldPatch('r17'));
   assert.equal(await writeWebProfile(root), 'repaired');
   assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE);
   assert.equal(await writeWebProfile(root), 'unchanged');
 });
+
+test('upgrading the standard profile preserves an edited preset even if its metadata is still original', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-edited-preset-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  await writeWebProfile(root)
+  const patch = join(root, 'profiles', 'weftmate', 'cordis.patch.yml')
+  await writeFile(patch, await oldPatch('r19'))
+  const dir = join(root, '.agent-presets', 'mod-maintainer')
+  await mkdir(dir, { recursive: true })
+  const owned = '# owner authored\n- name: ./local-extension.mjs\n'
+  const metadata = 'name: Mod 开发维护\ndescription: 受控的单项目 Mod 开发通道。\norder: 90\n'
+  await writeFile(join(dir, 'agent.cordis.yml'), owned)
+  await writeFile(join(dir, 'preset.yml'), metadata)
+  await writeWebProfile(root)
+  assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE)
+  assert.equal(await readFile(join(dir, 'agent.cordis.yml'), 'utf8'), owned)
+  assert.equal(await readFile(join(dir, 'preset.yml'), 'utf8'), metadata)
+})
 
 test('minimal preset keeps its pinned tools and gets one isolated compactor without changing vendor', async t => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-context-preset-'))
@@ -87,8 +113,6 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     const patch = await readFile(join(dir, 'profiles', 'weftmate', 'cordis.patch.yml'), 'utf8')
     assert.ok(patch.includes('id: weftmate-host'))
     assert.ok(patch.includes('name: ./plugins/weftmate-host.mjs'))
-    assert.ok(patch.includes('id: weftmate-aigame-host'))
-    assert.ok(patch.includes('name: ./plugins/weftmate-aigame-host.mjs'))
     assert.ok(!patch.includes('weftmate-credentials'), 'credential provider must be owned by the final host security overlay')
     assert.ok(patch.includes("id: '@weftmate/client'"))
     assert.ok(patch.includes("name: '@weftmate/client'"))
@@ -97,7 +121,6 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'node_modules', '@weftmate', 'client', 'index.js')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'node_modules', '@weftmate', 'client', 'client.js')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-host.mjs')))
-    assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-aigame-host.mjs')))
     assert.ok(patch.includes('id: weftmate-personal-memory'))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-personal-memory.mjs')))
     // P1-02：Gateway 运行时同形落位（宿主插件以相对路径 import）；schemas/ 等 TS 契约不进 profile。
@@ -110,9 +133,6 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'errors', 'gateway-error.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'dsh-adapter', 'sessions.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'dsh-adapter', 'agents.mjs')))
-    assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'ai-game', 'transport.mjs')))
-    assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'ai-game', 'panel.mjs')))
-    assert.ok(!existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'ai-game', 'control-center.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-secure-snapshot-bootstrap.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'personal-permission-rules.mjs')))
     assert.ok(!existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'schemas')))
@@ -146,7 +166,7 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
 
   test('旧模板（只有注释+[]）升级到新模板含 weftmate 行', async () => {
     const patchPath = join(dir, 'profiles', 'weftmate', 'cordis.patch.yml')
-    await writeFile(patchPath, PROFILE_PATCH_TEMPLATE_LEGACY, 'utf8')
+    await writeFile(patchPath, await oldPatch('legacy'), 'utf8')
     assert.equal(await writeWebProfile(dir, 'weftmate'), 'repaired')
     const patch = await readFile(patchPath, 'utf8')
     assert.ok(patch.includes('id: weftmate-host'))
@@ -154,23 +174,9 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.ok(!patch.includes('[]'))
   })
 
-  test('R12 profile-local preset root upgrades to formal DSH_HOME user preset discovery', async () => {
-    const patchPath = join(dir, 'profiles', 'weftmate', 'cordis.patch.yml')
-    await writeFile(patchPath, PROFILE_PATCH_TEMPLATE_R12, 'utf8')
-    assert.equal(await writeWebProfile(dir, 'weftmate'), 'repaired')
-    assert.equal(await readFile(patchPath, 'utf8'), (await import('../src/dsh-web-runtime.ts')).PROFILE_PATCH_TEMPLATE)
-    const preset = await readFile(join(dir, '.agent-presets', 'mod-maintainer', 'agent.cordis.yml'), 'utf8')
-    assert.match(preset, /^- name: \.\.\/\.\.\/profiles\/weftmate\/plugins\/weftmate-mod-development\.mjs$/m)
-    assert.match(preset, /isolate:\s+compaction: true\s+toolResultPruner: true/)
-    assert.match(preset, /name: '@deepseek-ai\/dsh-compaction-basic'\s+config:\s+auto: true\s+thresholdRatio: 0\.85\s+retainRatio: 0\.16\s+maxTokens: 4096/)
-    assert.match(preset, /name: '@deepseek-ai\/dsh-command-compact'/)
-    assert.match(preset, /name: '@deepseek-ai\/dsh-compaction-tool-result-pruner'/)
-    assert.doesNotMatch(preset, /@deepseek-ai\/dsh-tool-/)
-  })
-
   test('known R13 plugin composition upgrades to account-memory R14 without overwriting custom presets', async () => {
     const patchPath = join(dir, 'profiles', 'weftmate', 'cordis.patch.yml')
-    await writeFile(patchPath, PROFILE_PATCH_TEMPLATE_R13, 'utf8')
+    await writeFile(patchPath, await oldPatch('r13'), 'utf8')
     assert.equal(await writeWebProfile(dir, 'weftmate'), 'repaired')
     const upgraded = await readFile(patchPath, 'utf8')
     assert.equal(upgraded.match(/id: weftmate-personal-memory/g)?.length, 1)
@@ -192,11 +198,15 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.match(current, /weftmate-compaction\.mjs/)
     assert.match(current, /completionDelivery: wakeup/)
     assert.match(current, /backgroundMode: one-shot/)
-    await writeFile(composition, current.replace('completionDelivery: wakeup', 'completionDelivery: quiet')
+    const previousWeb = current.replace('    search: true', '    search: false')
+    await writeFile(composition, previousWeb, 'utf8')
+    assert.equal(await writeWebProfile(root, 'weftmate'), 'repaired')
+    assert.equal(await readFile(composition, 'utf8'), current)
+    await writeFile(composition, previousWeb.replace('completionDelivery: wakeup', 'completionDelivery: quiet')
       .replace('backgroundMode: one-shot', 'backgroundMode: continuable'), 'utf8')
     assert.equal(await writeWebProfile(root, 'weftmate'), 'repaired')
     assert.equal(await readFile(composition, 'utf8'), current)
-    const previousLongTask = current
+    const previousLongTask = previousWeb
       .replace('completionDelivery: wakeup', 'completionDelivery: quiet')
       .replace('backgroundMode: one-shot', 'backgroundMode: continuable')
       .replace(/      For long tasks,[\s\S]*?Keep reusable methods and pitfalls in this conversation\.\n/, '')
@@ -254,29 +264,6 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     await writeFile(composition, custom, 'utf8')
     await assert.rejects(() => writeWebProfile(root, 'weftmate'), /personal-shared-chat preset conflict/)
     assert.equal(await readFile(composition, 'utf8'), custom)
-  })
-
-  test('mod-maintainer upgrades both owned one-line compositions idempotently and preserves a user preset conflict', async t => {
-    const root = await mkdtemp(join(tmpdir(), 'weftmate-mod-maintainer-preset-'))
-    t.after(() => rm(root, { recursive: true, force: true }))
-    const composition = join(root, '.agent-presets', 'mod-maintainer', 'agent.cordis.yml')
-    for (const old of [
-      '- name: ../../profiles/weftmate/plugins/weftmate-mod-development.mjs\n',
-      '- name: ../../plugins/weftmate-mod-development.mjs\n',
-    ]) {
-      await writeWebProfile(root, 'weftmate')
-      await writeFile(composition, old, 'utf8')
-      assert.equal(await writeWebProfile(root, 'weftmate'), 'repaired')
-      const upgraded = await readFile(composition, 'utf8')
-      assert.match(upgraded, /thresholdRatio: 0\.85/)
-      assert.equal(await writeWebProfile(root, 'weftmate'), 'unchanged')
-      assert.equal(await readFile(composition, 'utf8'), upgraded)
-    }
-
-    const ownerComposition = '# owner-managed preset\n- name: ./custom-maintainer.mjs\n'
-    await writeFile(composition, ownerComposition, 'utf8')
-    await assert.rejects(() => writeWebProfile(root, 'weftmate'), /mod-maintainer preset conflict/)
-    assert.equal(await readFile(composition, 'utf8'), ownerComposition)
   })
 
   test('owner 手改（非任何已知模板）不覆盖且返回 unchanged', async () => {

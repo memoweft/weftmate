@@ -2,6 +2,7 @@
 import { digest, exactKeys, failure, validTime } from './common.mjs';
 import { randomUUID } from 'node:crypto';
 import { REQUEST_ID } from './constants.mjs';
+import { userQuestions } from './interaction-policy.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { nativeFailureReason } from './notification-content.mjs';
 import { ACTIVITY_TYPES, activityState, activityCounts, activitySource, putActivity, activityToken, readActivityToken, activityMatches, nativeTaskActivity } from './activity-store.mjs';
@@ -38,7 +39,7 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
       if(result){const failureReason=result==='failed'&&!hasPrivateContent(session)?nativeFailureReason(data)||scan.failureReason:undefined;
         const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:result==='completed'?completionActivitySummary(scan.summary):scan.summary.slice(0,160),...(result==='completed'?{summaryFormat:'plain'}:{})}:{}),...(failureReason?{failureReason}:{})};
         scan.terminals??={};scan.terminals[scan.taskId??event.seq]=terminal;
-        if(!Object.values(account.chatResults??{}).some(row=>row.taskId===scan.taskId))nativeTaskActivity(account,sessionId,terminal);
+        nativeTaskActivity(account,sessionId,terminal);
       }
       scan.executed=false;delete scan.summary;delete scan.failureReason;
     }
@@ -70,24 +71,40 @@ export function createActivity(context) {
           }else if(state.runtimeWasReady)state.runtimeOfflineAt??=new Date(context.timestamp()).toISOString();
         }));
       } catch {await context.serial(()=>context.mutate(ownerId,next=>{const state=activityState(next);if(state.runtimeWasReady)state.runtimeOfflineAt??=new Date(context.timestamp()).toISOString();}));}
-      for(const [sessionId,session] of Object.entries(account.sessions)){
-        if(session.origin!=='personal-remote'||session.deleting)continue;
+      const sessions = Object.entries(account.sessions)
+        .filter(([, session]) => session.origin === 'personal-remote' && !session.deleting)
+        .map(([id]) => id);
+      // A question can first appear during a turn and settle after that turn stops.
+      const pendingQuestions = new Set(userQuestions(account)
+        .filter(row => ['pending', 'answered'].includes(row.status)).map(row => row.sessionId));
+      const descriptions = sessions.length && context.backend.listUserQuestions && context.hostOwner(ownerId)
+        ? await context.sessionOperations.describe(ownerId, sessions).catch(() => null) : null;
+      // The index carries IDs only. A failed index read leaves the ordinary source checks in place.
+      const scheduleSources = sessions.length && context.backend.scheduleNotificationSources
+        ? await context.backend.scheduleNotificationSources(sessions).catch(() => null) : null;
+      const emptyHistory = new Map();
+      for (const sessionId of sessions) {
         try{
           const generation=context.accountState(ownerId).activity?.generation??0;
           // Continue from a durable watermark; each round is bounded to one native page.
           const afterSeq=context.accountState(ownerId).activity?.sources[sessionId]?.afterSeq??-1;
           const page=await context.callBackend(()=>context.backend.readEvents({ownerId,sessionId,afterSeq,limit:200}));
           if(!Array.isArray(page.events)||!Number.isSafeInteger(page.nextSeq)||page.nextSeq<afterSeq)throw failure('BACKEND_UNAVAILABLE',503);
+          if (!page.hasMore && !page.events.length && page.nextSeq === afterSeq) emptyHistory.set(sessionId, afterSeq);
           const events=[];for(const event of page.events)events.push(await activitySummaryEvent(context,ownerId,sessionId,event));
           if (page.nextSeq > afterSeq || page.events.length) await context.serial(()=>context.mutate(ownerId,next=>observeActivityEvents(next,sessionId,events.map(event=>context.publicHistoryEvent(ownerId,sessionId,event)),page.nextSeq,!context.backend.schedules),()=>{
             const live=context.accountState(ownerId);if(!live.sessions[sessionId]||live.sessions[sessionId].deleting||live.memoryCleanupPending||(live.activity?.generation??0)!==generation)throw failure('SOURCE_UNAVAILABLE',404);
           }));
-          if(context.backend.schedules){const notices=await context.backend.schedules({ownerId,sessionId,action:'notifications'});
+          if (context.backend.schedules && (!scheduleSources || scheduleSources.has(sessionId))) {
+            const notices=await context.backend.schedules({ownerId,sessionId,action:'notifications'});
             if (notices.items?.length) await context.serial(()=>context.mutate(ownerId,next=>{if(!next.sessions[sessionId]||next.sessions[sessionId].deleting||next.memoryCleanupPending||(next.activity?.generation??0)!==generation)return;
               for(const notice of notices.items??[]){if(Object.values(next.activity?.items??{}).some(row=>row.type==='reminder.triggered'&&row.source.sessionId===sessionId&&row.source.messageId===notice.messageId))continue;putActivity(next,`reminder:${sessionId}:${notice.messageId??notice.id}`,{at:notice.createdAt,type:'reminder.triggered',title:notice.kind==='task'?'定时任务触发':'提醒',summary:notice.text,initiatedBy:notice.initiatedBy==='assistant'?'assistant':'user',
                 source:activitySource(next,sessionId,{messageId:notice.messageId,scheduleId:notice.id,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})}),actions:[{kind:'open_chat',label:'打开对话',target:activitySource(next,sessionId,{messageId:notice.messageId,...(Number.isSafeInteger(notice.seq)?{seq:notice.seq}:{})})}],level:'important'});}
-            }));}
-          await context.refreshToolApprovals(ownerId,sessionId);await context.syncUserQuestions(ownerId,sessionId);
+            }));
+          }
+          await context.refreshToolApprovals(ownerId,sessionId);
+          if (!descriptions || descriptions.get(sessionId)?.running !== false || pendingQuestions.has(sessionId))
+            await context.syncUserQuestions(ownerId, sessionId);
         }catch(error){if(['SERVICE_CLOSING','STORAGE_UNAVAILABLE'].includes(error.code))throw error; /* Offline source keeps its durable watermark. */}
       }
       if(context.memoryManager){const memory=await context.memoryManager.status(ownerId);
@@ -122,10 +139,9 @@ export function createActivity(context) {
             summary:'历史对话已提交整理，形成进度可在记忆页查看。',source:{memoryJobId:job.id},level:'silent',actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});
           state.memoryState=healthKey;
         }));await memoryDigest.refresh(ownerId,memory);}
-      await dailyDigest.refresh(ownerId);
+      await dailyDigest.refresh(ownerId,emptyHistory);
       const update=await context.updateStatus();
       for(const layer of update?.layers??[])if(layer.availableVersion&&layer.availableVersion!==layer.currentVersion)await record(ownerId,{key:`update:${layer.availableVersion}`,type:'system.update.available',title:'更新可用',summary:`新版本 ${layer.availableVersion} 已可用。`,level:'normal',actions:[{kind:'view_settings',label:'查看更新',target:{category:'about'}}]});
-      await context.sideChats.reconcile(ownerId);
       await context.serial(()=>context.mutate(ownerId,()=>{}));
     })().finally(()=>flights.delete(ownerId));flights.set(ownerId,work);return work;
   }

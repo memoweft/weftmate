@@ -14,7 +14,7 @@ async function fixture(initial?: any, options:any = {}) {
   let saved = initial || { snapshot: null, turns: [], conversations: [] };
   const calls: any[] = [], releases: (() => void)[] = [];
   const engine = await W.create({
-    identity: {}, crypto: webcrypto, accountCheck: options.accountCheck || (async () => {}), phoneModel: options.phoneModel || (() => ({ modelId: 'test-model' })),
+    identity: {}, crypto: webcrypto, accountCheck: options.accountCheck || (async () => {}), standalone:true,phoneModel: options.phoneModel || (() => ({ modelId: 'test-model' })),
     vault: { load: async () => structuredClone(saved), save: async (value: any) => { saved = structuredClone(value); }, close() {},
       complete: async (body: any, _snapshot: any, signal: AbortSignal, progress: any) => {
         const text = body.messages.at(-1).content; calls.push(body); progress(`partial:${text}`);
@@ -84,7 +84,7 @@ for (const failure of ['account','model']) test(`explicit retry recovers a prese
   const value={snapshot:null,turns:[],conversations:[{id:'preserved-chat',turns:[]}],pendingMessages:['one','two'].map((text,i)=>({id:`pending-${i}`,conversationId:'preserved-chat',text,timestamp:i}))};
   const f=await fixture(value,{
     accountCheck:async()=>{if(failure==='account'&&broken)throw Error('NETWORK');},
-    phoneModel:()=>failure==='model'&&broken?null:{modelId:'test-model'},
+    standalone:true,phoneModel:()=>failure==='model'&&broken?null:{modelId:'test-model'},
   });
   try {
     f.engine.resumeQueue();await until(()=>!!f.engine.view().queueError&&!f.engine.view().running);

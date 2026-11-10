@@ -305,6 +305,15 @@ export function createPersonalDesktop({ browserReader = null, computerUsageServi
     clientId: process.env.WEFTMATE_CLOUD_DESKTOP_CLIENT_ID || process.env.WEFTMATE_CLOUD_WEB_CLIENT_ID,
     redirectUri: process.env.WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI }));
   handle('wm:desktop:credentials', (key, value, remove) => authStore.credentials(key, value, remove));
+  handle('wm:desktop:install-account-key', async payload => {
+    if (contentOrigin !== origin) throw new Error('LOCAL_HOST_REQUIRED');
+    if (!payload || typeof payload.keyId !== 'string' || typeof computerUsageService?.importAccountKey !== 'function')
+      throw new Error('ACCOUNT_KEY_INVALID');
+    const { account } = await jsonLocal('/auth/me');
+    const installed = await computerUsageService.importAccountKey(account.ownerId, payload);
+    if (installed !== payload.keyId) throw new Error('ACCOUNT_KEY_INVALID');
+    return payload.keyId;
+  });
   handle('wm:desktop:cloud-credentials-present', async () => {
     if (contentOrigin !== origin) throw new Error('LOCAL_HOST_REQUIRED');
     const directory = await jsonLocal('/auth/desktop');
@@ -659,7 +668,7 @@ export function createPersonalDesktop({ browserReader = null, computerUsageServi
     ipcMain.removeHandler('wm:desktop:system-export');
     for(const channel of ['wm:desktop:data-export','wm:desktop:data-status','wm:desktop:data-show-export'])ipcMain.removeHandler(channel);
     for (const request of networkRequests.values()) request.abort();
-    for (const channel of ['wm:desktop:cloud-credentials-present', 'wm:desktop:open-logs', 'wm:desktop:history-import', 'wm:desktop:recovery-export', 'wm:desktop:memory-export', 'wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-choice', 'wm:desktop:project-create', 'wm:desktop:project-relocate', 'wm:desktop:project-info', 'wm:desktop:project-show', 'wm:desktop:project-drop', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
+    for (const channel of ['wm:desktop:install-account-key', 'wm:desktop:cloud-credentials-present', 'wm:desktop:open-logs', 'wm:desktop:history-import', 'wm:desktop:recovery-export', 'wm:desktop:memory-export', 'wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-choice', 'wm:desktop:project-create', 'wm:desktop:project-relocate', 'wm:desktop:project-info', 'wm:desktop:project-show', 'wm:desktop:project-drop', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
   } };
 }

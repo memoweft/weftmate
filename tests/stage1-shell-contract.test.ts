@@ -15,15 +15,14 @@ describe('阶段 1 的 DSH 产品面收敛', () => {
     assert.match(main, /preload: join\(import\.meta\.dirname, 'dsh-surface-preload\.cjs'\)/);
   });
 
-  it('官方页面仅得到主题与受控 Mod 窗口桥，不能调用旧模型或对话 IPC', () => {
+  it('官方页面仅得到主题与通知桥，不能调用旧模型或对话 IPC', () => {
     assert.match(preload, /contextBridge\.exposeInMainWorld\('weftmateSurface'/);
     assert.match(preload, /wm:dsh-surface:theme/);
     for (const forbidden of ['wm:stage1:', 'wm:stage2:', 'runtimeOrigin', 'apiKey', "require('node:"]) {
       assert.doesNotMatch(preload, new RegExp(forbidden.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }
-    assert.deepEqual([...preload.matchAll(/ipcRenderer\.on\('([^']+)'/g)].map(match => match[1]), ['wm:ui:notice', 'wm:mod-window:open-project']);
+    assert.deepEqual([...preload.matchAll(/ipcRenderer\.on\('([^']+)'/g)].map(match => match[1]), ['wm:ui:notice']);
     assert.deepEqual([...preload.matchAll(/ipcRenderer\.send\('([^']+)'/g)].map(match => match[1]), ['wm:ui:notice-closed']);
-    assert.match(preload, /removeListener\('wm:mod-window:open-project', listener\)/);
     assert.match(main, /dshSurfaceTrusted\(event\)/);
   });
 

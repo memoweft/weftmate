@@ -17,12 +17,43 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
         core.state.personalization = value.settings;
         core.state.personalizationOwner = owner();
         if (changed) effects.updateAvailability?.();
+        const syncChanged=core.state.personalizationSynced!==value.synced;
+        core.state.personalizationSynced=value.synced;
+        if(changed || syncChanged)globalThis.document?.dispatchEvent(new CustomEvent('weft:settings-sync',{detail:value}));
         if (oldDisplay !== value.settings.thinkingDisplay) globalThis.document?.dispatchEvent(new Event('weft:personalization'));
         return value;
+    }
+    let syncTimer, syncFlight;
+    function resumeSettingsSync() {
+        if (syncFlight) return syncFlight;
+        clearTimeout(syncTimer);
+        const identity=core.state.identityGeneration, generation=settingsGeneration;
+        syncFlight=(async()=>{
+            const replica=core.getSettingsReplica ? await core.getSettingsReplica() : null;
+            if (!replica) return;
+            try {
+                const value=await replica.sync();
+                if(identity===core.state.identityGeneration && generation===settingsGeneration) acceptPersonalization(value,identity);
+                if(!value.synced) syncTimer=setTimeout(resumeSettingsSync,30000);
+                return value;
+            } catch(error) {
+                if(identity===core.state.identityGeneration && !['DEVICE_NOT_TRUSTED','ACCOUNT_KEY_INVALID','UNAUTHORIZED'].includes(error.code))
+                    syncTimer=setTimeout(resumeSettingsSync,30000);
+                return replica.read();
+            }
+        })().catch(()=>undefined).finally(()=>{syncFlight=null;});
+        return syncFlight;
     }
     async function loadPersonalization() {
         const identity = core.state.identityGeneration;
         const generation = settingsGeneration;
+        const replica=core.getSettingsReplica ? await core.getSettingsReplica() : null;
+        if (replica) {
+            let value=await replica.read();
+            if (!value) value=await replica.sync();
+            else void resumeSettingsSync();
+            return acceptPersonalization(value,identity);
+        }
         const value = await core.accessApi('/settings/personalization');
         if (identity !== core.state.identityGeneration || generation !== settingsGeneration || !value?.settings) return value;
         // Adopt a pre-ST-1 device preference once; subsequent devices read the account value.
@@ -39,10 +70,19 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
         const identity = core.state.identityGeneration, account = owner();
         const action = writes.catch(() => {}).then(async () => {
             if (identity !== core.state.identityGeneration || account !== owner()) throw new Error('ACCOUNT_CHANGED');
-            const value = await core.accessApi('/settings/personalization' + (extract ? '/style' : ''),
-                { method: extract ? 'POST' : 'PATCH', protectedWrite: true, body: extract ? {} : patch });
+            const replica=core.getSettingsReplica ? await core.getSettingsReplica() : null;
+            let value;
+            if (replica && !extract) {
+                value=await replica.edit(patch);
+            } else {
+                value=await core.accessApi('/settings/personalization' + (extract ? '/style' : ''),
+                    { method: extract ? 'POST' : 'PATCH', protectedWrite: true, body: extract ? {} : patch });
+                if(replica)value=await replica.sync();
+            }
             settingsGeneration++;
-            return acceptPersonalization(value, identity);
+            const accepted=acceptPersonalization(value, identity);
+            if(replica && !extract) void resumeSettingsSync();
+            return accepted;
         });
         writes = action;
         return action;
@@ -99,18 +139,20 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
     function openAccount() {
         core.stopAssistantRefresh();
         effects.closeRail();
-        core.show('account');
+        if (!effects.settingsCategory) core.show('account');
         core.state.deviceEditing = null;
         effects.resetProfileDraft();
+        effects.resetOtherDeviceInstall();
+        // The categorized settings dialog loads each section when selected.
+        if (effects.settingsCategory) { core.show('account'); return; }
         void effects.cloudUi?.refreshBinding();
         void core.refreshProfile();
         void core.refreshDevices();
-        effects.resetOtherDeviceInstall();
         void core.refreshAccountModels();
         void core.refreshSystem();
         void core.refreshProjects();
         void core.refreshModels();
         void core.refreshBrowserWorkspace();
     }
-    return { saveSecondOpinion: secondOpinionEnabled => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { secondOpinionEnabled } }), readPermissionRules: () => core.accessApi('/settings/approvals'), savePermissionRules: rules => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { rules } }), readExecutionRecords: params => core.accessApi('/execution-records?' + params), loadNotificationSettings, saveNotificationSettings, loadHealthSettings, saveHealthSettings, persistHealthSettings: saveHealthSettings, sendTestNotification, loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
+    return { resumeSettingsSync, saveSecondOpinion: secondOpinionEnabled => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { secondOpinionEnabled } }), readPermissionRules: () => core.accessApi('/settings/approvals'), savePermissionRules: rules => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { rules } }), readExecutionRecords: params => core.accessApi('/execution-records?' + params), loadNotificationSettings, saveNotificationSettings, loadHealthSettings, saveHealthSettings, persistHealthSettings: saveHealthSettings, sendTestNotification, loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
 };

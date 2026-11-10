@@ -85,7 +85,7 @@ const mobileEffects = {
   renderConversationTasks: () => renderConversationTasks(),
   renderConversationApprovals: () => renderConversationApprovals(),
   renderConversationQuestions: () => renderConversationQuestions(),
-  scheduleSharedPoll: () => scheduleSharedPoll(), scheduleHandoffPoll: id => scheduleHandoffPoll(id),
+  scheduleSharedPoll: result => scheduleSharedPoll(result), scheduleHandoffPoll: id => scheduleHandoffPoll(id),
   renderMemoryList: (...args) => renderMemoryList(...args), renderMemoryDetail: (...args) => renderMemoryDetail(...args),
   clearHistoryView: () => {}, renderTurnStatus: () => {}, renderOlderControl: () => {},
   beginOlderHistory: () => {}, restoreOlderHistoryPosition: () => {}, renderSelectedPhoneConversation: () => {},
@@ -112,7 +112,7 @@ function startMobileConnection() {
   uiCore.startConnection(async()=>{
     await listSharedSessions();
     if(state.logicalChats) await uiCore.refreshLogicalHistory();else await loadSharedHistory();
-    await Promise.all([uiCore.reconcileMainRequests(),uiCore.refreshConversationTasks(),uiCore.refreshConversationApprovals(),uiCore.refreshConversationQuestions()]);
+    await Promise.all([uiCore.refreshConversationTasks(),uiCore.refreshConversationApprovals(),uiCore.refreshConversationQuestions()]);
     await globalThis.WeftMobileCloud.core?.offlineConnectionRestored?.();
   });
 }
@@ -150,7 +150,7 @@ function mobileHelpPage(kind,target){
   helpView?.close();uiCore.syncMobileIdentity();helpView=WeftHelpView.mount({target,core:uiCore,kind,mobile:true,back:()=>page(state.returnPage||'chat'),run:(action,trigger)=>{
     if(action==='feedback')return mobileMessageActions.openFeedback(trigger,state.chatSource==='phone'?state.conversationId:state.sharedSessionId,state.chatSource==='phone');
     if(action==='sentFeedback')return mobileMessageActions.sentFeedback(trigger);
-    const actions={main:()=>uiCore.selectMainChat(),temporary:()=>mobileNewTemporaryConversation(),memory:()=>page('memory'),goals:()=>page('goals'),devices:()=>page('devices'),approvals:()=>page('approvals'),backups:()=>{page('settings');toast('备份与恢复请在电脑的设置中打开。');},about:()=>page('about')};return actions[action]?.();}});helpView.focus();
+    const actions={new:()=>uiCore.startNewConversation(),temporary:()=>mobileNewTemporaryConversation(),memory:()=>page('memory'),goals:()=>page('goals'),devices:()=>page('devices'),approvals:()=>page('approvals'),backups:()=>{page('settings');toast('备份与恢复请在电脑的设置中打开。');},about:()=>page('about')};return actions[action]?.();}});helpView.focus();
 }
 function mobileProfileMenu(trigger){WeftPopover.menu(trigger,[{name:'设置',icon:'settings',action:()=>page('settings')},{name:'帮助',icon:'info',action:()=>page('help')},{name:'更新内容',icon:'sync',action:()=>page('releases')}],error=>toast(safeError(error),true));}
 
@@ -192,7 +192,6 @@ function mountMobileSearch(){
 async function openMobileLibrarySource(source){
   rememberTabSource();
   await listSharedSessions();
-  if(source.chatId&&source.chatId===uiCore.state.mainChat?.chatId){await uiCore.selectMainChat(source.eventId);return;}
   await uiCore.selectLogicalSession(source.sessionId);
   await uiCore.loadMobileHistory();await uiCore.state.historyInFlight?.promise;
   await Promise.all([uiCore.refreshConversationTasks(),uiCore.refreshConversationApprovals(),uiCore.refreshConversationQuestions()]);
@@ -239,7 +238,7 @@ function focusGoalStep(){
 }
 async function openGoalSource(source){
   rememberTabSource();
-  await listSharedSessions();if(state.logicalChats&&source.chatKind==='main')await uiCore.selectMainChat(source.eventId);else await selectSharedSession(source.sessionId);
+  await listSharedSessions();await selectSharedSession(source.sessionId);
   await refreshConversationTasks();
   await Promise.all([refreshToolApprovals(),refreshToolQuestions()]);
   if(Number.isSafeInteger(source.seq)){state.goalStepFocus={seq:source.seq,stepId:source.stepId,chatId:source.chatId,sessionId:source.sessionId,owner:state.owner,epoch:state.authEpoch};focusGoalStep();}
@@ -282,7 +281,7 @@ function syncMobileTabs(){
   const tabs=$('mobile-bottom-tabs');if(!tabs)return;
   const identity=state.loggedIn?`${state.owner}:${state.authEpoch}`:'';
   if(identity!==mobileTabIdentity){mobileTabIdentity=identity;resetMobileTabPages();}
-  const rootChat=state.page==='chat'&&!state.tabSource&&(!state.logicalChats||uiCore.inMainChat());
+  const rootChat=state.page==='home';
   const visible=!!identity&&!document.body.classList.contains('cloud-auth-active')&&(rootChat||['activity','health','goals','library'].includes(state.page))&&!keyboardShown;
   tabs.hidden=!visible;document.body.classList.toggle('mobile-tabs-visible',visible);
   const active=rootChat?'chat':state.page; if(mobilePageNames[active])state.activeTab=active;
@@ -296,7 +295,7 @@ function syncMobileTabs(){
   if(releaseNotice)void releaseNotice.check();
   document.body.classList.toggle('mobile-chat-visible',state.page==='chat');
   const profile=$('header-profile');if(profile){profile.hidden=!identity||state.page==='chat';const avatar=$('drawer-avatar');if(avatar){const copy=avatar.cloneNode(true);copy.removeAttribute('id');profile.replaceChildren(copy);}}
-  if(visible&&state.page!=='chat'){
+  if(visible&&!rootChat){
     $('header-title').textContent=mobilePageNames[state.page];$('header-subtitle').hidden=true;$('page-back').hidden=true;$('menu-button').hidden=false;
     $('outputs-button').hidden=true;$('conversation-usage').hidden=true;$('conversation-more').hidden=true;document.querySelector('.main-chat-tools')?.setAttribute('hidden','');
   }
@@ -304,17 +303,15 @@ function syncMobileTabs(){
 async function selectMobileTab(name){
   if(!state.loggedIn||!mobilePageNames[name])return;
   state.tabSource=null;state.settingsChild=false;
-  if(name==='chat'&&state.logicalChats&&(!uiCore.inMainChat()||state.chatSource==='phone'&&globalThis.WeftPhone?.owns(state.conversationId))){
-    state.selectingMainTab=true;try{await uiCore.selectMainChat();}finally{state.selectingMainTab=false;}
-  }else page(name);
+  page(name==='chat'?'home':name);
   syncMobileTabs();
 }
 function mountMobileTabs(){
-  const tabs=$('mobile-bottom-tabs');if(!tabs)return;tabs.style.setProperty('--mobile-tab-count',String(Object.keys(mobileTabNames).length)); $('app').append(tabs);$('chat-page').setAttribute('role','tabpanel');$('chat-page').setAttribute('aria-labelledby','mobile-tab-chat');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','手机主导航');
+  const tabs=$('mobile-bottom-tabs');if(!tabs)return;tabs.style.setProperty('--mobile-tab-count',String(Object.keys(mobileTabNames).length)); $('app').append(tabs);$('home-page').setAttribute('role','tabpanel');$('home-page').setAttribute('aria-labelledby','mobile-tab-chat');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','手机主导航');
   const icons={chat:'chat',activity:'bell',health:'health',goals:'goal',library:'folder'};
   for(const [id,name]of Object.entries(mobileTabNames)){
     const tab=el('button','mobile-tab');tab.type='button';tab.id=`mobile-tab-${id}`;tab.dataset.tab=id;tab.setAttribute('role','tab');
-    tab.setAttribute('aria-controls',id==='chat'?'chat-page':`mobile-panel-${id}`);
+    tab.setAttribute('aria-controls',id==='chat'?'home-page':`mobile-panel-${id}`);
     const icon=el('span','mobile-tab-icon');icon.append(WeftIcons.create(icons[id],22));const badge=el('span',`mobile-tab-badge${id==='goals'?' is-dot':''}`);badge.setAttribute('aria-hidden','true');badge.hidden=true;icon.append(badge);
     tab.append(icon);tab.onclick=()=>void selectMobileTab(id);tabs.append(tab);
   }
@@ -610,8 +607,7 @@ async function boot(){
     await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});
     await listSharedSessions();
     startMobileConnection();
-    if(state.logicalChats && !info.launchConversationId){if(!uiCore.inMainChat())await uiCore.selectMainChat();}
-    else if(!info.launchConversationId)page('home',{dataLoaded:true});else updatePageHeader();
+    if(!info.launchConversationId)page('home',{dataLoaded:true});else updatePageHeader();
     state.booted=true;
     void resumeCloudLogin();void refreshCloudDevices();
     globalThis.WeftCloudMobile?.observe(refreshCloudDevices);
@@ -817,8 +813,7 @@ function handleBack(){if(window.weftNativeLibraryEntry){void call('native.librar
   if(state.page!=='chat'){if(mobileTabNames[state.page])void selectMobileTab('chat');else page(state.returnPage||'chat');return}
   if(keyboardShown){$('draft').blur();return}
   if(state.tabSource){const origin=state.tabSource;state.tabSource=null;page(origin);return}
-  if(state.logicalChats&&!uiCore.inMainChat()){void selectMobileTab('chat');return}
-  if(window.weftNative)void call('app.exit').catch(error=>toast(safeError(error)));}
+  page('home');}
 document.addEventListener('DOMContentLoaded',()=>{
   globalThis.WeftPresenceView.mount({core:uiCore,badgeTarget:document.querySelector('.topbar .brand'),composerTarget:$('composer-dock'),toast,
     openRunRecords:()=>page('general'),openLogin:()=>globalThis.WeftMobileCloud.core?.startCloudJourney(),openDevices:()=>page('devices'),

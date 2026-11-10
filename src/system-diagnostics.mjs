@@ -143,7 +143,7 @@ const enumFields = {
   status: new Set(['completed', 'failed', 'ready', 'starting', 'unavailable', 'disabled']),
   action: new Set(['shutdown-confirmed', 'ui-rollback-requested', 'no-recovery-requested', 'window-reloaded', 'electron-managed', 'retry', 'restart', 'retry-started', 'restart-succeeded', 'restart-failed', 'give-up', 'respawn-scheduled', 'respawn-succeeded', 'respawn-failed', 'startup-failed', 'startup-retry-scheduled', 'startup-abandoned']),
   processType: new Set(['renderer', 'GPU', 'Utility', 'Zygote', 'Sandbox-helper', 'Pepper-Plugin', 'Pepper-Plugin-Broker', 'auxiliary', 'runtime']),
-  step: new Set(['backup', 'desktop-session', 'personal-access', 'personal-browser', 'account-memory', 'managed-ai-game', 'desktop-pet', 'perception', 'devices', 'dsh-runtime', 'model-observer']),
+  step: new Set(['backup', 'desktop-session', 'personal-access', 'personal-browser', 'account-memory', 'desktop-pet', 'perception', 'devices', 'dsh-runtime', 'model-observer']),
   source: new Set(['startup', 'uncaughtException', 'unhandledRejection', 'harness-startup', 'main-startup', 'personal-host-startup', 'crash-reporter', 'diagnostics-export', 'shutdown', 'shutdown-backup', 'shutdown-account-memory', 'shutdown-dsh-runtime', 'dsh', 'connection-test']),
   code: new Set([...componentCodes, 'RUNTIME_FAILURE', 'RUNTIME_STATE', 'CONNECTION_TEST_FAILED', 'USAGE_LIMIT_REACHED', 'MODEL_SUGGESTION_BUSY', 'MODEL_QUEUE_UNAVAILABLE']),
 };

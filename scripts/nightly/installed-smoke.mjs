@@ -63,7 +63,7 @@ try {
   assert.ok(initialLogs.some(row=>row.event==='host.start'&&row.runId===activeRunId));assert.equal(initialLogs.some(row=>row.event==='host.exit'&&row.runId===activeRunId),false);
   report.diagnostics={runId:activeRunId,logDirectory:'<dataDirectory>/logs',crashDirectory:'<dataDirectory>/Crashpad',uploadToServer:false,runRecordState:system.runRecord.state,hostStartRecorded:true,hostExitRecordedBeforeClose:false};report.checks.push('packaged-local-diagnostic-paths-and-active-run');
   report.nativeBindingLoaded=await h.app.evaluate(({app})=>{const {createRequire}=process.getBuiltinModule('module');const native=createRequire(app.getAppPath()+'/package.json')('get-windows');return typeof native.activeWindowSync==='function'&&typeof native.openWindowsSync==='function';});assert.equal(report.nativeBindingLoaded,true);
-  report.main=await h.mainFirst();report.checks.push('fresh-main-created-and-replied');
+  report.first=await h.firstMessage();report.checks.push('fresh-conversation-created-and-replied');
   await h.page.reload();await h.page.locator('#message-text').waitFor({state:'visible'});
   for(const theme of ['light','dark']){await h.page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await h.page.screenshot({path:join(out,`installed-main-${theme}.png`)});}
   const project=join(h.root,'synthetic-project'),exported=join(h.root,'conversation.md');mkdirSync(project);writeFileSync(join(project,'brief.md'),'FX21 synthetic project file\n');
@@ -127,7 +127,7 @@ try {
   report.readProof=h.requests.some(r=>installedSmokeRequestKind(r)==='project'&&r.messages?.some(m=>m.role==='tool'&&String(m.content).includes('FX21 synthetic project file')));
   assert.ok(report.readProof,'real native read result must reach the synthetic provider');report.checks.push('native-project-read-and-approved-write');
   // Export through the installed native bridge; only the system dialog result is replaced.
-  const history=(await h.api(`/sessions/${report.main.sessionId}/events?limit=200`)).body.events;
+  const history=(await h.api(`/sessions/${report.first.sessionId}/events?limit=200`)).body.events;
   const markdown=history.filter(e=>['user.message','assistant.message'].includes(e.type)).map(e=>`## ${e.type==='user.message'?'本人':'WeftMate'}\n\n${e.data.text}`).join('\n\n');
   const exportedResult=await h.page.evaluate(async ({ownerId,markdown})=>window.weftmateDesktop.exportConversation({contentType:'text/markdown',bytes:new Uint8Array(new TextEncoder().encode(markdown)),ownerId}),{ownerId:me.account.ownerId,markdown});
   assert.ok(exportedResult.exported,JSON.stringify(exportedResult));assert.ok(readFileSync(exported,'utf8').includes('首条消息成功'));report.checks.push('native-conversation-export-written');

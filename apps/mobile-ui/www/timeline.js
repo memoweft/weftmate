@@ -2,6 +2,22 @@
 (() => {
   'use strict'
   const node = (tag, cls, text) => { const n = document.createElement(tag); n.className = cls || ''; if (text) n.textContent = text; return n }
+  // Why a message was not sent: [failure line, hint under the kept message].
+  const SEND_FAILURES = {
+    MEMORY_BUSY: [['记忆清理尚未完成，消息未发送。', '消息和草稿已保留，清理完成后可重试。'], ['Memory cleanup is pending. Message not sent.', 'Your draft is kept. Retry after memory cleanup finishes.']],
+    SESSION_ARCHIVED: [['这段对话已归档，消息未发送。', '在对话菜单中恢复后再发送。'], ['This chat is archived. Message not sent.', 'Unarchive it from the chat menu, then send again.']],
+    SESSION_UNAVAILABLE: [['这段对话已删除或失效，消息未发送。', '消息仍保留在这里，可以新建对话后再发。'], ['This chat was deleted or is no longer available. Message not sent.', 'Your message is kept. Start a new chat to send it.']],
+    SESSION_MODEL_CHANGED: [['对话的模型刚刚更换，消息未发送。', '消息仍保留在这里，确认模型后重试即可。'], ['The chat model just changed. Message not sent.', 'Your message is kept. Retry with the new model.']],
+    MODEL_UNAVAILABLE: [['当前模型不可用，消息未发送。', '在设置里检查模型服务后重试。'], ['The selected model is unavailable. Message not sent.', 'Check the model service in Settings, then retry.']],
+    USAGE_LIMIT_REACHED: [['本月用量已到上限，云端模型已暂停。', '在设置 → 用量提高上限，或换成本地模型。'], ['The monthly usage limit is reached. Cloud models are paused.', 'Raise the limit in Settings → Usage, or switch to a local model.']],
+    DEVICE_REVOKED: [['这台设备的登录已被撤销，消息未发送。', '重新登录后再发送。'], ['This device was signed out. Message not sent.', 'Sign in again, then send.']],
+    SESSION_EXPIRED: [['登录已过期，消息未发送。', '重新登录后再发送。'], ['Your sign-in expired. Message not sent.', 'Sign in again, then send.']],
+    SESSION_REPLACED: [['登录已在别处更新，消息未发送。', '刷新后再发送。'], ['Your sign-in was renewed elsewhere. Message not sent.', 'Refresh, then send again.']],
+    CAPACITY_LIMIT: [['待处理的消息太多，消息未发送。', '等前面的消息处理完再发。'], ['Too many messages are waiting. Message not sent.', 'Send again after earlier messages finish.']],
+    PROJECT_REVOKED: [['项目文件夹已移除或变更，消息未发送。', '重新选择项目文件夹后再发送。'], ['The project folder was removed or changed. Message not sent.', 'Choose the project folder again, then send.']],
+  }
+  SEND_FAILURES.PROJECT_ROOT_CHANGED = SEND_FAILURES.PROJECT_REVOKED
+  const sendFailure = (block, index) => SEND_FAILURES[block.failureCode]?.[block.language === 'en' ? 1 : 0][index]
   function reconcile(parent, children) {
     let next=parent.firstChild;
     for(const child of children) {
@@ -155,7 +171,7 @@
     const groups = options.processes ? options.processes.flatMap(process => {
       const events=prepare(process.events,options.thinkingDisplay)
       const projected=WeftUiCore.projectTimeline(events,options.approvals || [],true)
-      return projected.groups.map(block=>({...block,presentationKey:process.key,messageKey:process.messageKey,nativeStarted:process.started,submission:process.submission,position:process.position+0.1,events:projected.ordered}))
+      return projected.groups.map(block=>({...block,presentationKey:process.key,messageKey:process.messageKey,nativeStarted:process.started,submission:process.submission,failureCode:process.failureCode,position:process.position+0.1,events:projected.ordered}))
     }).sort((a,b)=>a.position-b.position) : projection.groups
     const existing = new Map([...list.children].filter(n => n.dataset.timeline).map(n => [n.dataset.timeline, n]))
     const seen = new Set()
@@ -223,8 +239,9 @@
         view.duration=duration;
       }
       if(block.submission) {
-        view.text=block.submission==='failed' ? block.language==='en'?'Message not sent. Please retry.':'消息未能发送，请重试。'
-          : block.language==='en'?'Delivery needs checking. Please check the send status.':'发送结果待核对，请检查状态。';
+        view.text=sendFailure(block, 0)
+          || (block.submission==='failed' ? block.language==='en'?'Message not sent. Please retry.':'消息未能发送，请重试。'
+          : block.language==='en'?'Delivery needs checking. Please check the send status.':'发送结果待核对，请检查状态。');
         view.running=false;
       }
       const running = view.running
@@ -323,10 +340,11 @@
       });
       if(!recordNodes.length && block.submission) {
         const empty=records.querySelector('.execution-empty') || node('p','execution-empty');
-        const text=block.language==='en'?'Your message is kept here. Check delivery before retrying.':'消息仍保留在这里，核对发送状态后可以重试。';
+        const text=sendFailure(block, 1)
+          || (block.language==='en'?'Your message is kept here. Check delivery before retrying.':'消息仍保留在这里，核对发送状态后可以重试。');
         if(empty.textContent!==text)empty.textContent=text;recordNodes.push(empty);
       }
-      if(view.failed) {
+      if(view.failed && !block.submission) {
         const failure=records.querySelector('.execution-failure') || node('p','execution-failure');
         if(failure.textContent!==view.text)failure.textContent=view.text;recordNodes.unshift(failure);
       }

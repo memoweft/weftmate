@@ -76,9 +76,10 @@ async function runCase(version,method){
    // foreground gate, so establish visibility before waiting for those reads.
    await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.restore();w.show();w.focus();});
    await p.waitForFunction(()=>document.visibilityState==='visible'&&globalThis.__revExitCore.foreground());
-   await p.waitForFunction(()=>{const core=globalThis.__revExitCore;return core?.state.mainChat&&core.state.modelsKnown&&
+   await p.waitForFunction(()=>{const core=globalThis.__revExitCore;return core?.state.ownerId&&core.state.modelsKnown&&
     !core.state.refreshing&&!core.state.sessionSelecting;});
-   if(!await p.evaluate(()=>__revExitCore.inMainChat())) await p.evaluate(()=>__revExitCore.selectMainChat());
+   // Exercise the retained native read during shutdown; ordinary web startup no longer opens it.
+   await p.evaluate(async()=>{const core=__revExitCore;core.state.mainChat=(await core.readMainChat()).chat;await core.selectMainChat();});
    row.nativeReadiness=await nativeReadiness(p);
   }
   stage('login');

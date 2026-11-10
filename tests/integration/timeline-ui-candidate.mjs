@@ -185,12 +185,6 @@ export async function startTimelineCandidate(options = {}) {
   setupComplete = true;
   const bridge = async (method, params) => {
     if (method === 'host.status') { const status=await request('/status'); return options.logicalMobile?status:{...status,personalCapabilities:{...status.personalCapabilities,chats:0}}; }
-    if (options.logicalMobile && method === 'shared.send' && params.chatId) {
-      const {intent,attachmentIds,...fields}=params;
-      const result = await request('/commands', {kind:'chat.message',targetDeviceId:hostId,...fields,
-        ...(intent ? {mode:intent} : {}),...(attachmentIds?.length ? {attachmentIds} : {})}, 'POST');
-      return {command:result.command};
-    }
     if (method === 'cloud.callback') return {};
     if (method === 'shared.send') {
       const row = await command({requestId:params.requestId,kind:'session.message',sessionId:params.sessionId,text:params.text,intent:params.intent,targetDeviceId:hostId});
@@ -249,6 +243,14 @@ export async function startTimelineCandidate(options = {}) {
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
   return { root, origin, nativeWaitRegistered:()=>eventWaiters.size>0,
+    /** Starts an ordinary conversation with one accepted message; daily progress follows it. */
+    async startChat(text, requestId = randomUUID()) {
+      const created = await command({ requestId: requestId + '-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId });
+      const sent = await command({ requestId, kind: 'session.message', sessionId: created.sessionId, targetDeviceId: hostId, text });
+      const chat = (await request('/chats?limit=100')).items.find(row => row.activeSessionId === created.sessionId);
+      return { chatId: chat.chatId, sessionId: created.sessionId, command: sent };
+    },
+    sendTo: (id, text, requestId = randomUUID()) => command({ requestId, kind: 'session.message', sessionId: id, targetDeviceId: hostId, text }),
     appendSessionEvent(id, type, data) {
       const row = dailySessions.get(id); assert.ok(row);
       const event = {seq:row.events.length,time:Date.now(),type,data}; row.events.push(event);

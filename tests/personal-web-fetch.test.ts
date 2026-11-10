@@ -1,6 +1,24 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { personalWebFetchProvider } from '../src/plugins/personal-web-fetch.mjs'
+import { searchPublicWeb } from '../src/personal-browser/public-search.mjs'
+
+test('public search handles a regional feed without following result links or arbitrary redirects', async () => {
+  const calls: string[] = []
+  const feed = '<rss version="2.0"><channel><item><title>A &amp; B</title><link>https://docs.example.org/a</link></item>' +
+    '<item><link>https://docs.example.org/a</link></item><item><link>http://127.0.0.1/private</link></item></channel></rss>'
+  const result = await searchPublicWeb('A & B', async (url, options) => {
+    const target = new URL(url)
+    assert.equal(target.searchParams.get('q'), 'A & B')
+    assert.equal(options.credentials, 'omit')
+    calls.push(target.hostname)
+    return calls.length === 1 ? Response.redirect('https://cn.bing.com/search') : new Response(feed)
+  })
+  assert.deepEqual(calls, ['www.bing.com', 'cn.bing.com'])
+  assert.deepEqual(result.sources.map(({ url, title }) => [url, title]), [['https://docs.example.org/a', 'A & B']])
+  await assert.rejects(searchPublicWeb('test', async () => Response.redirect('https://other.example.org/search')), {code:'BROWSER_NETWORK_ERROR'})
+  await assert.rejects(searchPublicWeb('test', async () => new Response('<html>Unavailable</html>')), {code:'BROWSER_NETWORK_ERROR'})
+})
 
 test('MODE-1 chat fetch queries public material without requiring a project or directing the model to computer files', async () => {
   const frames: any[] = [];

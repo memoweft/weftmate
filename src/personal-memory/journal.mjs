@@ -125,10 +125,11 @@ export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseS
       check(ownerId,'account-erase');
       return queue(ownerId,async()=>Object.values((await read(ownerId)).records).filter(row=>['delete_evidence','delete_world_item'].includes(row.command.operation)).map(row=>row.requestId));
     },
-    async pendingCleanup(ownerId) {
+    async pendingCleanup(ownerId, includePrepared = false) {
       check(ownerId, 'pending-cleanup');
       return queue(ownerId, async () => Object.values((await read(ownerId)).records)
-        .filter(record => record.cleanup?.snippetsPending === true)
+        .filter(record => record.cleanup?.snippetsPending === true || includePrepared &&
+          ['delete_evidence','delete_world_item'].includes(record.command.operation) && (record.cleanup || record.cleanupCompleted !== true))
         .map(record => ({ requestId: record.requestId, kind: record.command.target_kind, id: record.command.target_id })));
     },
     async finishCleanup(ownerId, requestId, clean) {
@@ -151,6 +152,20 @@ export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseS
         delete record.cleanup;
         record.cleanupCompleted = true;
         await write(ownerId, state);
+      });
+    },
+    async retryPendingRedaction(ownerId, requestId) {
+      check(ownerId,requestId);
+      return queue(ownerId,async()=>{
+        const state=await read(ownerId),record=state.records[requestId];
+        if(!record?.cleanup?.snippetsPending)return;
+        await prepare(ownerId,state,record);
+        const result=await eraseSnippets?.(ownerId,record);
+        if(result?.snippetsVerified!==true && result?.notApplied!==true)throw failure('MEMORY_CLEANUP_PENDING');
+        record.cleanup.sourceTexts=[];
+        if(record.cleanup.sourceRefs)record.cleanup.sourceRefs=[];
+        delete record.cleanup.snippetsPending;
+        await write(ownerId,state);
       });
     },
     async redactTargets(ownerId, ids, { sourceTexts = [], sessionId = null } = {}) {
@@ -189,7 +204,7 @@ export function createMemoryCommandJournal({ root, prepareCleanup = null, eraseS
                 try {
                   await prepare(ownerId, state, record);
                   const erased = await eraseSnippets(ownerId, record);
-                  if (erased?.snippetsVerified !== true) throw failure('MEMORY_CLEANUP_PENDING');
+                  if (erased?.snippetsVerified !== true && erased?.notApplied !== true) throw failure('MEMORY_CLEANUP_PENDING');
                   delete record.cleanup.snippetsPending;
                 } catch {
                   record.cleanup.snippetsPending = true;

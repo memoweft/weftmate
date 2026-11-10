@@ -25,6 +25,19 @@
   }
   async function serviceCall(action,params={}){
     if(!native){
+      const replica=(globalThis.WeftMobileCloud?.core?.getModelReplica ? await globalThis.WeftMobileCloud.core.getModelReplica() : null);
+      if(replica){
+        const existing=(await replica.read()).services.find(s=>s.serviceId===params.serviceId);
+        const body=Object.fromEntries(Object.entries({name:params.name||params.displayName||existing?.name,baseUrl:params.baseUrl||params.endpoint,
+          apiKey:params.apiKey,interfaceType:params.interfaceType,modelId:params.modelId,
+          ...(params.enabledModelIds?{models:existing?.models.map(row=>({modelId:row.modelId,enabled:params.enabledModelIds.includes(row.modelId)}))}:{})
+        }).filter(([,value])=>value!==undefined));
+        const value=action==='list'?await replica.read():action==='configure'?await replica.configure(params.serviceId,body):
+          action==='select'?await replica.select(params.serviceId,params.modelId):action==='remove'?await replica.remove(params.serviceId):
+          action==='refresh'?await replica.sync():await replica.configure(params.serviceId,body);
+        modelServices.adoptReplica(value);state.model=modelServices.selectedView();serviceDirectory=modelServices.view();updateComposer();
+        return action==='select'?state.model:{...serviceDirectory,model:state.model};
+      }
       const key=sessionKey,manager=modelServices;
       const result=action==='list'?manager.view():action==='configure'?await manager.configure(params):action==='refresh'?await manager.refresh(params.serviceId,{force:params.force===true}):
         action==='select'?manager.select(params.serviceId,params.modelId):action==='update'?manager.update(params):manager.remove(params.serviceId);
@@ -91,6 +104,7 @@
     // Keep the engine live without rebuilding hidden history.
     if(globalThis.weftNativeChatActive===true)return;
     renderConversationList(); if (state.page === 'chat' && state.chatSource === 'phone') render(); updateComposer();
+    if(state.page==='memory'&&!document.activeElement?.closest('.phone-memory-filters'))memoryPage($('page-content'));
   };
   function render() {
     const content = $('chat-content'); clear(content);
@@ -119,19 +133,22 @@
     if(conversation.computerSessionId)content.append(el('p','muted','已在电脑上 · 原手机对话仍保留'));
     const more=action('对话操作',()=>WeftPopover.menu(more,[{name:'删除对话',icon:'trash',danger:true,action:()=>{
       const dialog=el('dialog','model-editor-dialog');dialog.setAttribute('aria-label','删除手机对话');const body=el('div','model-editor-body'),footer=el('footer','dialog-footer');
-      body.append(el('h2','','删除这段手机对话？'),el('p','',conversation.computerSessionId?'手机原文会删除；电脑从这段对话记住的内容也会忘掉。电脑暂不可达时会在下次连接处理。':'手机原文和相关轻量记忆会删除，这段对话不会交给电脑。'));
-      const confirm=action('确认删除',async()=>{confirm.disabled=true;await api.removeConversation(conversation.id);dialog.close();toast('已删除');},false);confirm.classList.add('danger');footer.append(action('保留',()=>dialog.close(),false),confirm);dialog.append(body,footer);dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();
+      body.append(el('h2','','删除这段手机对话？'),el('p','','原文会删除，已经形成的记忆默认保留。电脑上的原文会在下次连接时处理。'));
+      const choice=el('label','phone-memory-delete-choice'),forget=el('input');forget.type='checkbox';choice.append(forget,el('span','','同时忘掉从这段对话形成的记忆'));body.append(choice);
+      const confirm=action('确认删除',async()=>{confirm.disabled=true;try{await api.removeConversation(conversation.id,{forget:forget.checked});dialog.close();toast('已删除');}catch{confirm.disabled=false;toast('未能删除，请重试。');}},false);confirm.classList.add('danger');footer.append(action('保留',()=>dialog.close(),false),confirm);dialog.append(body,footer);dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();
     }}]),false);more.classList.add('icon-button');more.replaceChildren(WeftIcons.create('more',18));more.setAttribute('aria-label','手机对话的更多操作');content.append(more);
     if (api.active && last?.messages.some(m => m.role === 'assistant') && !engine.view().running && !last.synced) {
       const button = el('button', 'secondary', '重新生成'); button.type = 'button';
       button.onclick = () => void run(() => engine.regenerate(conversation.id)); content.append(button);
     }
-    if(!api.active)content.append(action('回到聊天',()=>state.logicalChats?uiCore.selectMainChat():page('home'),false));
+    if(!api.active)content.append(action('回到聊天',()=>page('home'),false));
     scrollBottom();
   }
   async function run(action) {
     status(''); nativeError='';
-    try { const result = await action(); if (result) state.conversationId = result.conversationId; }
+    try {
+      if(!native){const replica=await globalThis.WeftMobileCloud?.core?.getModelReplica?.();if(replica){modelServices.adoptReplica(await replica.read());state.model=modelServices.selectedView();}}
+      const result = await action(); if (result) state.conversationId = result.conversationId; }
     catch (error) { const stopped=error.name==='AbortError'||error.message==='CANCELLED';nativeError=WeftOffline.phoneHistoryFailure(error)||(stopped?'已停止，生成的文字已保存。':'回复未完成，已保存生成的文字。请检查网络或模型配置后重试。');status(nativeError,!stopped); }
     finally { show();if(!api.active && engine?.view().turns.length)await connected(); }
   }
@@ -142,7 +159,11 @@
       if (engine) { const previous=engine;engine=null;previous.close(); }
       modelServices?.clear();
       sessionKey = next; account = info; memoryModel = null;modelServices=null;serviceDirectory={services:[],selected:null};nativeServices=false;
-      if(!native)modelServices=await WeftPhoneModelServices.create({changed:value=>{if(sessionKey===next)serviceDirectory=value;}});
+      if(!native){
+        modelServices=await WeftPhoneModelServices.create({changed:value=>{if(sessionKey===next)serviceDirectory=value;}});
+        const replica=(globalThis.WeftMobileCloud?.core?.getModelReplica ? await globalThis.WeftMobileCloud.core.getModelReplica() : null);
+        if(replica){modelServices.adoptReplica(await replica.read());try{modelServices.adoptReplica(await replica.sync());}catch{}}
+      }
       if (native && adopt) await nativeCall('phone.adopt', info);
       const phoneScope={accountId:info.accountId,origin:info.origin};
       const vault = native ? {
@@ -151,32 +172,25 @@
           catch(error){nativeError=WeftOffline.phoneHistoryFailure(error)||nativeError;throw error;} },
         clear: () => nativeCall('phone.offline.clear',phoneScope), close() {},
         open: (envelope, identity) => nativeCall('phone.offline.open', { envelope, identity }),
-        complete: async (body, snapshot, signal, onProgress) => {
+        complete: async (body, model, signal, onProgress) => {
           if(signal.aborted)throw new DOMException('CANCELLED','AbortError');
           progress = onProgress; const stop = () => void nativeCall('phone.stop'); signal.addEventListener('abort', stop, { once: true });
-          try { return await nativeCall('phone.complete', { body,serviceId:snapshot.model.serviceId }, 180000); }
+          try { return await nativeCall('phone.complete', { body,serviceId:model.serviceId }, 180000); }
           finally { progress = null; signal.removeEventListener('abort', stop); }
         },
       } : await WeftOffline.browserVault('phone:' + next);
       const complete = vault.complete.bind(vault);
-      vault.complete = async (body, snapshot, signal, onProgress) => {
-        if(snapshot.model.deepThinking?.supported===true&&snapshot.model.deepThinking?.enabled===true){
-          body={...body};const baseUrl=new URL(snapshot.model.baseUrl);
-          if(snapshot.model.interfaceType==='anthropic')body.thinking=snapshot.model.deepThinking.type==='adaptive'?{type:'adaptive'}:{type:'enabled',budget_tokens:2048};
+      vault.complete = async (body, model, signal, onProgress) => {
+        if(model.deepThinking?.supported===true&&model.deepThinking?.enabled===true){
+          body={...body};const baseUrl=new URL(model.baseUrl);
+          if(model.interfaceType==='anthropic')body.thinking=model.deepThinking.type==='adaptive'?{type:'adaptive'}:{type:'enabled',budget_tokens:2048};
           else if(['api.xiaomimimo.com','api.deepseek.com'].includes(baseUrl.hostname))body.thinking={type:'enabled'};
           else if(baseUrl.hostname==='dashscope.aliyuncs.com')body.enable_thinking=true;
           else body.reasoning_effort='high';
         }
-        if(native||snapshot.model.interfaceType!=='anthropic')return complete(body,snapshot,signal,onProgress);
-        const system=body.messages.filter(row=>row.role==='system').map(row=>row.content).join('\n\n');
-        const response=await fetch(snapshot.model.baseUrl+'/messages',{method:'POST',redirect:'error',signal,headers:{'content-type':'application/json','x-api-key':snapshot.model.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify({model:body.model,system,messages:body.messages.filter(row=>row.role!=='system'),max_tokens:Math.max(body.max_tokens||4096,body.thinking?.budget_tokens?body.thinking.budget_tokens+1024:0),stream:false,...(body.thinking?{thinking:body.thinking}:{}),
-            ...(body.tools?.length?{tools:body.tools.map(row=>({name:row.function.name,description:row.function.description,input_schema:row.function.parameters}))}:{})})});
-        if(!response.ok)throw Error('MODEL_UNAVAILABLE');const reply=await response.json();if(reply.stop_reason&&!['end_turn','stop_sequence','tool_use'].includes(reply.stop_reason))throw Error('MODEL_STREAM_INCOMPLETE');const text=reply.content?.filter(row=>row.type==='text').map(row=>row.text).join('')||'';
-        const tools=reply.content?.filter(row=>row.type==='tool_use').map(row=>({id:row.id,type:'function',function:{name:row.name,arguments:JSON.stringify(row.input)}}))||[];
-        if(!text&&!tools.length)throw Error('MODEL_UNAVAILABLE');if(text)onProgress?.(text);return {choices:[{message:{content:text,...(tools.length?{tool_calls:tools}:{})}}]};
+        return complete(body,model,signal,onProgress);
       };
-      engine = await WeftOffline.create({ vault, identity: info, phoneModel: currentModel, workRequests: !native,
+      engine = await WeftOffline.create({ vault, identity: info, phoneModel: currentModel, standalone:true, workRequests: !native,
         accountCheck: async () => {
           if (info.localOnly === true) {
             const current = await nativeCall('phone.identity');
@@ -217,6 +231,7 @@
   }
   async function connected() {
     if (!engine || !account || account.localOnly) return;
+    if(!native){const replica=(globalThis.WeftMobileCloud?.core?.getModelReplica ? await globalThis.WeftMobileCloud.core.getModelReplica() : null);if(replica){try{modelServices.adoptReplica(await replica.sync());state.model=modelServices.selectedView();}catch{}}}
     uiCore.phoneAccountConnection(false);
     const identity = await (native ? nativeCall('offline.identity') : WeftMobileCloud.core.cloudOfflineIdentity());
     if (!identity?.hostId || identity.hostId === 'unconnected') return;
@@ -276,6 +291,7 @@
       if (action === 'model') state.model = await nativeCall('phone.models.select', p);
       else if (action === 'composer') await engine.saveComposer(p.conversationId || null, p.draft || '');
       else if (action === 'send' || action === 'regenerate') {
+        if(!native){const replica=await globalThis.WeftMobileCloud?.core?.getModelReplica?.();if(replica){modelServices.adoptReplica(await replica.read());state.model=modelServices.selectedView();}}
         if (!api.active) throw Error('HOST_AVAILABLE');
         const reason=sendBlocker(action==='send'?String(p.text||''):'重新生成', action==='send');
         if(reason){nativeError=reason;sent=false;}
@@ -305,7 +321,12 @@
     modelCall: (method,p={})=>routeCall(method,p),
     servicesView:()=>serviceDirectory,refreshServices:params=>serviceCall('refresh',params),selectServiceModel:item=>serviceCall('select',item),serviceCall,openModelMenu,catalogMessage,
     get memoryReplica(){return data()?.snapshot || null;},
-    removeConversation:async id=>{await engine.removeConversation(id);if(state.conversationId===id)selectConversation(null);show();if(!api.active)await connected();},
+    searchPhoneMemory:(query,from,to)=>engine?.searchPhoneMemory(query,from,to)??[],
+    phoneMemoryScope:id=>engine?.phoneMemoryScope(id),
+    retryPhoneMemory:()=>engine?.retryPhoneMemory(),
+    forgetPhoneMemory:async(id,scope)=>{const result=await engine.forgetPhoneMemory(id,scope);show();if(!api.active)void connected();return result;},
+    correctPhoneMemory:item=>{selectConversation(engine.view().conversations.some(c=>c.id===item.conversationId)?item.conversationId:null);$('draft').value=`更正一下：${item.text}。现在是：`;updateComposer();$('draft').focus();},
+    removeConversation:async(id,options)=>{const key=sessionKey;await engine.removeConversation(id,options);if(key!==sessionKey)return;if(state.conversationId===id){if(state.page==='chat')selectConversation(null);else state.conversationId=null;}show();if(!api.active)void connected().catch(()=>{});},
     get active() { return state.connection === 'phone' && !!engine; }, get hasData() { return !!data(); }, owns: id => !!data()?.conversations.some(c=>c.id===id), list, start, connected, routeCall, render,
     sendBlocker,
     restoreArchive: async (info, client) => { if (engine) return; try {const identity=window.weftNative?await nativeCall('phone.identity'):info;if(!identity?.accountId)return;await attachEngine(identity,client,false);} catch {} },

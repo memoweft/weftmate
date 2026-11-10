@@ -36,38 +36,7 @@ test('side creation references only the chosen message, requires suggestion conf
   } finally { await f.timeline.close(); }
 });
 
-test('automatic results preserve failed/stopped facts, skip ordinary chat and wait for live background work', async () => {
-  for (const [status, tools, jobs, expected] of [['failed',true,0,'failed'], ['aborted',true,0,'stopped'],
-    ['completed',false,0,null], ['completed',true,1,null]]) {
-    const f = fixture(12), account: any = f.account, context: any = f.context;
-    const sourceChatId = f.mainId, identity = account.chatIdentity;
-    identity.chats[sourceChatId].kind = 'side'; identity.mainChatId = 'main-new';
-    identity.chats['main-new'] = { chatId: 'main-new', kind: 'main', revision: 1, contentRevision: 1,
-      activeSegmentId: null, createdAt: '2020-01-01T00:00:00Z' };
-    account.ownerId = 'owner'; account.hostId = 'host'; account.sessions['native-2'].origin = 'personal-remote';
-    account.commands.task = { commandId: 'task', kind: 'session.message', sessionId: 'native-2', state: 'accepted_by_dsh',
-      createdAt: '2026-10-10T00:00:00Z', receiptId: 'receipt' };
-    Object.assign(context, { chatTimeline: f.timeline, serial: fn => fn(), mutate: (_owner, fn) => fn(account),
-      timestamp: Date.now, taskSource: (_account, id) => account.commands[id], taskChildren: () => [],
-      taskDetail: async () => ({ replyEvidence: { status, turn: 1 }, executionSteps: tools ? [{}] : [], artifacts: [],
-        control: { backgroundJobs: { active: jobs, unconfirmed: 0 } } }),
-    });
-    const sourceRows = [{ seq: 0, type: 'turn.started', data: { turn: 1 }, at: '2026-10-10T00:00:00Z' },
-      { seq: 90, type: 'assistant.message', data: { text: '合成结论' }, at: '2026-10-10T00:00:00Z' },
-      { seq: 91, type: 'turn.ended', data: { reason: status }, at: '2026-10-10T00:00:00Z' }];
-    f.logs.set('native-2', sourceRows);
-    context.backend.readSourceEvents = async () => ({ current: true, events: sourceRows.filter(row => row.type !== 'assistant.message') });
-    const side = createSideChats(context);
-    try {
-      await side.reconcile('owner');
-      const results = Object.values(account.chatResults ?? {}) as any[];
-      assert.equal(results.length, expected ? 1 : 0);
-      if (expected) { assert.equal(results[0].state, expected); assert.equal(results[0].requiresResponse, false); }
-    } finally { await side.close(); await f.timeline.close(); }
-  }
-});
-
-test('real HTTP side command is idempotent, sends nothing; results persist once, share activity identity, update and clear on deletion', async () => {
+test('side creation is idempotent and sends nothing until the user sends a message', async () => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-ia-2a-side-'));
   const logs = new Map<string, any[]>(), titles = new Map<string,string>(); let creates = 0, sends = 0, service;
   const backend = {
@@ -125,43 +94,15 @@ test('real HTTP side command is idempotent, sends nothing; results persist once,
     assert.equal(creates, 1); assert.equal(sends, 0);
     assert.equal((await api('/commands', { ...request, title: 'different' })).status, 409);
     const side = (await api(`/chats/${created.chatId}`)).body.chat;
-    assert.equal(side.title, '合成旁聊'); assert.equal(side.parent.id, main.chatId);
+    assert.equal(side.title, '合成旁聊'); assert.equal(side.parent, null);
     assert.equal((await api('/commands', { requestId: 'do-task', kind: 'session.message', targetDeviceId: hostId, sessionId: created.sessionId, text: '合成目标' })).status, 202);
-    const sent = await wait('do-task');
+    await wait('do-task');
     const answer = (await api(`/chats/${created.chatId}/events`)).body.items.find(row => row.type === 'assistant.message');
-    const manualFirst = await api(`/chats/${created.chatId}/results`, { requestId: 'manual-first', sourceEventId: answer.eventId, expectedRevision: side.revision });
-    assert.equal(manualFirst.status, 201, JSON.stringify(manualFirst.body));
-    const first = await api(`/chats/${main.chatId}/events`);
-    assert.equal(first.status, 200, JSON.stringify(first.body));
-    assert.equal(first.body.items.length, 1);
-    const card = first.body.items[0]; assert.equal(card.type, 'side.result');
-    assert.equal(card.eventId, manualFirst.body.mainEventId);
-    assert.equal(card.data.taskId, sent.commandId); assert.equal(card.sourceRef.kind, 'result');
-    assert.ok(Array.from(card.data.summary).length <= 160); assert.equal(card.seq, undefined);
-    assert.equal((await api(`/chats/${main.chatId}/events`)).body.items.length, 1);
-    const share = { requestId: 'share-result', sourceEventId: card.data.sourceEventId, taskId: sent.commandId, expectedRevision: side.revision };
-    const shared = await api(`/chats/${created.chatId}/results`, share);
-    assert.equal(shared.status, 201, JSON.stringify(shared.body));
-    assert.equal(shared.body.mainEventId, card.eventId); assert.equal(shared.body.activityId, card.data.activityId);
-    assert.equal((await api(`/chats/${created.chatId}/results`, share)).body.mainEventId, card.eventId);
-    const manualAgain = await api(`/chats/${created.chatId}/results`, { requestId: 'manual-again', sourceEventId: answer.eventId, expectedRevision: side.revision });
-    assert.equal(manualAgain.body.result.taskId, sent.commandId);
-    logs.get(created.sessionId)![3].data.text = '更正后的纸船';
-    const corrected = await api(`/chats/${created.chatId}/results`, { ...share, requestId: 'correct-result' });
-    assert.equal(corrected.body.result.resultRevision, card.revision + 1, JSON.stringify(corrected.body));
-    const changes = (await api(`/chats/${main.chatId}/changes?cursor=${encodeURIComponent(first.body.syncCursor)}`)).body;
-    assert.equal(changes.upserts.length, 1); assert.equal(changes.upserts[0].eventId, card.eventId);
-    assert.equal(changes.upserts[0].revision, card.revision + 1);
-    assert.equal((await api(`/chats/${main.chatId}/search?q=${encodeURIComponent('更正')}`)).body.hits.length, 1);
-    assert.equal((await api(`/sessions/${created.sessionId}`, {}, 'DELETE')).status, 200);
-    const deleted = (await api(`/chats/${main.chatId}/events`)).body.items[0];
-    assert.equal(deleted.data.deleted, true); assert.equal(deleted.data.summary, '');
-    assert.equal((await api(`/chats/${main.chatId}/search?q=${encodeURIComponent('更正')}`)).body.hits.length, 0);
-    assert.equal((await api(`/chats/${created.chatId}/results`, share)).body.result.summary, '');
-    await service.close(); service = await createPersonalAccessService({ root, port: 0, backend });
-    ({ origin } = await service.start());
-    assert.equal((await api(`/chats/${main.chatId}/events`)).body.items[0].eventId, card.eventId);
+    assert.ok(answer);
+    assert.equal((await api(`/chats/${created.chatId}/results`, {requestId:'manual-result',sourceEventId:answer.eventId,expectedRevision:side.revision})).status,404);
+    assert.deepEqual((await api(`/chats/${main.chatId}/events`)).body.items,[]);
     const saved = JSON.parse(await readFile(join(root,'store.json'),'utf8'));
-    assert.ok(!JSON.stringify(saved.accounts[saved.legacyOwnerId].chatResults).includes('更正后的纸船'));
+    assert.equal(Object.keys(saved.accounts[saved.legacyOwnerId].chatResults ?? {}).length,0);
+    assert.equal((await api(`/sessions/${created.sessionId}`, {}, 'DELETE')).status,200);
   } finally { await service?.close(); await rm(root, { recursive: true, force: true }); }
 });

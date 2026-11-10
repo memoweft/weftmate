@@ -36,23 +36,32 @@ export async function loadBundledMemoryConfig({ directory, manifestSha256, mode 
         manifest.invocation?.executable !== 'python/python.exe' ||
         JSON.stringify(manifest.invocation?.args) !== JSON.stringify(invocation))
       throw fail('MEMORY_COMPONENT_INVALID');
-    const found = new Set();
+    const found = new Set(), files = [];
     async function visit(directory) {
-      for (const entry of await readdir(directory)) {
-        const file = join(directory, entry), info = await lstat(file);
-        if (info.isSymbolicLink()) throw fail('MEMORY_COMPONENT_INVALID');
-        if (info.isDirectory()) { await visit(file); continue; }
+      for (const entry of await readdir(directory, { withFileTypes: true })) {
+        const file = join(directory, entry.name);
+        if (entry.isSymbolicLink()) throw fail('MEMORY_COMPONENT_INVALID');
+        if (entry.isDirectory()) { await visit(file); continue; }
         const name = relative(root, file).replaceAll('\\', '/');
         if (name === 'MEMORY-RUNTIME.json') continue;
         const expected = manifest.files?.[name];
-        if (!info.isFile() || !expected) throw fail('MEMORY_COMPONENT_INVALID');
-        const content = await readFile(file);
-        if (digest(content) !== expected.sha256) throw fail('MEMORY_COMPONENT_HASH_MISMATCH');
-        if (expected.bytes !== info.size) throw fail('MEMORY_COMPONENT_INVALID');
+        if (!entry.isFile() || !expected) throw fail('MEMORY_COMPONENT_INVALID');
+        files.push({ file, expected });
         found.add(name);
       }
     }
     await visit(root);
+    // A model switch can start a new worker on the chat path. Bound concurrent
+    // reads while verifying every byte against the pinned manifest.
+    for (let i = 0; i < files.length; i += 8) {
+      await Promise.all(files.slice(i, i + 8).map(async ({ file, expected }) => {
+        const info = await lstat(file);
+        if (!info.isFile()) throw fail('MEMORY_COMPONENT_INVALID');
+        const content = await readFile(file);
+        if (digest(content) !== expected.sha256) throw fail('MEMORY_COMPONENT_HASH_MISMATCH');
+        if (expected.bytes !== content.length) throw fail('MEMORY_COMPONENT_INVALID');
+      }));
+    }
     for (const name of Object.keys(manifest.files ?? {})) if (!found.has(name)) {
       if (isAbsolute(name) || name.includes('\\') || name.split('/').includes('..')) throw fail('MEMORY_COMPONENT_INVALID');
       // Obtain ENOENT from the filesystem; a list/metadata discrepancy alone

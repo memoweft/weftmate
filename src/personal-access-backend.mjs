@@ -15,6 +15,7 @@ const fail = (code) => { const error = new Error(code); error.code = code; throw
 
 export function createPersonalAccessBackend({ currentOrigin, referenceScan, profiles, hasCredential,
   routeForProfile, listSessions, resolveSession, ensureKnownSession, gateway, queue, bindSession,
+  sessionQueue = (sessionId, work) => queue(work),
   credentialForProfile = null, modelFetch = async (url, { onStart, priority, ...options }) => { await onStart?.(); return fetch(url, options); }, processingStatus = async () => null,
   prepareModelReasoning = null,
   reasoningSettings = null,
@@ -75,11 +76,16 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       fail('SESSION_UNAVAILABLE');
     }
   }
-  const requireSession = async (id, ownerId) => {
+  const requireSessionRecord = async (id, ownerId, optional = false) => {
     if (typeof id !== 'string' || !idPattern.test(id)) fail('SESSION_UNAVAILABLE')
-    const current = await readSession(id)
+    const current = await readSession(id, optional)
+    if (!current && optional) return null;
     if (current?.sessionId !== id) fail('SESSION_UNAVAILABLE')
     if (current.agentPreset !== presetForOwner(ownerId)) fail('SESSION_READ_ONLY')
+    return current;
+  }
+  const requireSession = async (id, ownerId) => {
+    const current = await requireSessionRecord(id, ownerId)
     try { return await resolveSession(id, { items: [current] }) }
     catch { fail('SESSION_UNAVAILABLE') }
   }
@@ -225,7 +231,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       requireRuntime()
       if (typeof sessionId !== 'string' || !idPattern.test(sessionId)) fail('SESSION_UNAVAILABLE')
       const preset = presetForOwner(ownerId)
-      return queue(async () => {
+      return sessionQueue(sessionId, async () => {
         requireModelAllowed(ownerId, modelProfileId, 'new')
         const profile = modelProfile(modelProfileId)
         await requireCatalogRoute(profile)
@@ -273,14 +279,6 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       await requireSession(sessionId, ownerId)
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/rename`, { method: 'POST', body: JSON.stringify({ title }) })
     },
-    async chatRelayState({ sessionId, ownerId }) {
-      await requireSession(sessionId, ownerId);
-      return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'state' }) });
-    },
-    async prepareChatHandoff({ sessionId, ownerId }) {
-      await requireSession(sessionId, ownerId);
-      return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'prepare' }) });
-    },
     async installChatHandoff({ sessionId, ownerId, handoff }) {
       await requireSession(sessionId, ownerId);
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'install', handoff }) });
@@ -311,7 +309,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     async cleanupMemoryCopies({ sessionId, sourceTexts = [], affectedIds = [], deleteConversationSnippets = false, scheduleIds = [], goalIds = [], prepareOnly = false, snippetTargets }) {
       requireRuntime()
       const listed = await listSessions()
-      if (!listed?.items?.some(item => item.sessionId === sessionId)) return { cleaned: true, snippetsVerified: true, snippetTargets: [] }
+      if (!listed?.items?.some(item => item.sessionId === sessionId)) return { cleaned: true, changed: false, snippetsVerified: true, snippetTargets: [] }
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/memory-cleanup`, { method: 'POST',
         body: JSON.stringify({ sourceTexts, deleteConversationSnippets, scheduleIds, goalIds, prepareOnly, snippetTargets, ...(affectedIds.length ? {affectedIds} : {}) }) })
     },
@@ -324,9 +322,6 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       requireRuntime()
       const listed = await listSessions()
       if (listed?.items?.some(item => item.sessionId === sessionId)) {
-        // A cold session can be listed/restored without an owned AgentHandle.
-        // Resume through DSH so deletion can drain its native disposer.
-        await gateway(`/sessions/${encodeURIComponent(sessionId)}/resume`, { method: 'POST', body: '{}' })
         const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: '{}' })
         if (result?.deleted !== true) fail('SESSION_UNAVAILABLE')
       }
@@ -342,7 +337,9 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     },
     async schedules({ sessionId, ownerId, ...input }) {
       requireRuntime()
-      await requireSession(sessionId, ownerId)
+      if (['forget','erase'].includes(input.action)) {
+        if (!await requireSessionRecord(sessionId, ownerId, true)) return {ok:true,removedNativeIds:[]};
+      } else await requireSession(sessionId, ownerId)
       const response = await fetch(new URL(`/weftmate/schedules/${encodeURIComponent(sessionId)}`, currentOrigin()), {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) })
       const value = await response.json()
@@ -350,12 +347,31 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       return value
     },
     async goals({ sessionId, ownerId, ...input }) {
-      requireRuntime(); await requireSession(sessionId, ownerId);
+      requireRuntime();
+      if (['forget','erase'].includes(input.action)) {
+        if (!await requireSessionRecord(sessionId, ownerId, true)) return {cleared:true,clearedGoalIds:[]};
+      } else await requireSession(sessionId, ownerId);
       const response = await fetch(new URL(`/weftmate/goals/${encodeURIComponent(sessionId)}`, currentOrigin()), {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) });
       const value = await response.json();
       if (!response.ok) throw Object.assign(new Error(value.error ?? 'BACKEND_UNAVAILABLE'), { code: value.error, status: response.status });
       return value;
+    },
+    async scheduleNotificationSources(sessionIds) {
+      requireRuntime()
+      const sources = new Set()
+      // The private schedules endpoint accepts at most 32 KiB per request.
+      for (let offset = 0; offset < sessionIds.length; offset += 128) {
+        const batch = sessionIds.slice(offset, offset + 128)
+        const response = await fetch(new URL('/weftmate/schedules/notifications/sources', currentOrigin()), {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionIds: batch })
+        })
+        if (!response.ok) fail('BACKEND_UNAVAILABLE')
+        const { sessionIds: recorded } = await response.json()
+        if (!Array.isArray(recorded) || recorded.some(id => !batch.includes(id))) fail('BACKEND_UNAVAILABLE')
+        for (const id of recorded) sources.add(id)
+      }
+      return sources
     },
     async restoreSchedules(sessionIds) {
       if (!sessionIds.length) return
@@ -364,29 +380,35 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionIds }) })
       if (!response.ok) fail('BACKEND_UNAVAILABLE')
     },
-    async sendMessage({ sessionId, text, mode = 'queue', ownerId, attachments = [], deepThinking }) {
-      requireRuntime()
-      if (typeof text !== 'string' || (!text.trim() && attachments.length === 0) || text.length > 32_000 ||
-          !['queue', 'steer'].includes(mode) || !Array.isArray(attachments) || attachments.length > 4 ||
-          attachments.some((item) => typeof item?.data !== 'string' || typeof item?.name !== 'string' ||
-            !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(item?.contentType))) fail('INVALID_COMMAND')
-      return queue(async () => {
-        const session = await requireSession(sessionId, ownerId)
-        requireModelAllowed(ownerId, session.profile?.id)
-        const nativeModel = await requireCatalogRoute(session.profile)
-        try { await ensureKnownSession(sessionId) }
-        catch (error) { fail(error?.code === 'session-model-ownership-unknown' ? 'MODEL_ROUTE_BLOCKED' : 'SESSION_UNAVAILABLE') }
-        requireModelAllowed(ownerId, session.profile?.id)
-        await gateway(`/sessions/${encodeURIComponent(sessionId)}/resume`, { method: 'POST', body: '{}' })
-        if (deepThinking === true && (reasoningCapability(session.profile).supported || nativeModel?.reasoning?.efforts?.some(row => row.id === 'high'))) {
-          if (prepareModelReasoning && !await prepareModelReasoning(session.profile)) fail('MODEL_UNAVAILABLE');
-        }
+    /** Errors before the prompt carry `beforeSend`: nothing reached the model. */
+    async sendMessage({ sessionId, text, mode = 'queue', ownerId, attachments = [], deepThinking, modelProfileId }) {
+      const beforeSend = (error) => { throw Object.assign(error, { beforeSend: true }) }
+      try {
+        requireRuntime()
+        if (typeof text !== 'string' || (!text.trim() && attachments.length === 0) || text.length > 32_000 ||
+            !['queue', 'steer'].includes(mode) || !Array.isArray(attachments) || attachments.length > 4 ||
+            attachments.some((item) => typeof item?.data !== 'string' || typeof item?.name !== 'string' ||
+              !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(item?.contentType))) fail('INVALID_COMMAND')
+      } catch (error) { beforeSend(error) }
+      return sessionQueue(sessionId, async () => {
+        let session
+        try {
+          session = await requireSession(sessionId, ownerId)
+          if (modelProfileId && session.profile?.id !== modelProfileId) fail('MODEL_UNAVAILABLE')
+          const nativeModel = await requireCatalogRoute(session.profile)
+          // ensureKnownSession resumes the native session; it needs no second resume.
+          try { await ensureKnownSession(sessionId, session) }
+          catch (error) { fail(error?.code === 'session-model-ownership-unknown' ? 'MODEL_ROUTE_BLOCKED' : 'SESSION_UNAVAILABLE') }
+          if (deepThinking === true && (reasoningCapability(session.profile).supported || nativeModel?.reasoning?.efforts?.some(row => row.id === 'high'))) {
+            if (prepareModelReasoning && !await prepareModelReasoning(session.profile)) fail('MODEL_UNAVAILABLE');
+          }
+          requireModelAllowed(ownerId, session.profile?.id)
+        } catch (error) { beforeSend(error) }
         const content = attachments.length ? [
           ...(text ? [{ type: 'text', text }] : []),
           ...attachments.map((item) => ({ type: 'image', mediaType: item.contentType,
             data: item.data, name: item.name })),
         ] : text
-        requireModelAllowed(ownerId, session.profile?.id)
         const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/messages`, { method: 'POST',
           body: JSON.stringify({ content, mode }) })
         return { accepted: result?.accepted === true,
@@ -414,7 +436,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     },
     async cancelSession({ sessionId }) {
       requireRuntime()
-      return queue(async () => {
+      return sessionQueue(sessionId, async () => {
         const listed = await listSessions()
         if (!listed?.items?.some((item) => item.sessionId === sessionId)) fail('SESSION_UNAVAILABLE')
         const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/cancel`, { method: 'POST', body: '{}' })

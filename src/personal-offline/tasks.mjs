@@ -52,7 +52,7 @@ export function createOfflineTaskReceiver(context, recipient) {
     if(!body||Object.keys(body).some(k=>!['text','sessionId','projectId','createdAt'].includes(k))||typeof body.text!=='string'||!body.text.trim()||body.text.length>8192||!Number.isSafeInteger(body.createdAt)||body.createdAt<0||body.createdAt>8640000000000000||
       [body.sessionId,body.projectId].some(id=>id!==null&&id!==undefined&&(typeof id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(id))))throw failure('OFFLINE_TASK_INVALID');
     let sessionId=body.sessionId;
-    if(!sessionId)sessionId=await context.mainChat.prepareReminder(ownerId);
+    if(!sessionId)sessionId=await context.reminderChat.prepare(ownerId);
     const session=context.accountState(ownerId).sessions[sessionId];
     if(!Object.hasOwn(context.accountState(ownerId).sessions,sessionId)||!session||session.deleting||session.archived||hasPrivateContent(session)||session.projectId!==(body.projectId??undefined))throw failure('SESSION_UNAVAILABLE');
     if(context.usage){const model=(await context.backend.listModels({ownerId})).find(row=>row.id===session.modelProfileId);if(model)context.usage.assertAllowed(ownerId,model);}

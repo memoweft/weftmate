@@ -2,13 +2,10 @@ import { outputPath } from './evidence.mjs';
 import {startTimelineCandidate} from './fixture.mjs';
 import {rmSync,writeFileSync} from 'node:fs';
 import {waitForCondition} from '../../helpers/wait-for-condition.mjs';
-import {waitForCommand} from '../../helpers/wait-for-command.mjs';
 import {waitForPublishedText} from '../../helpers/wait-for-published-text.mjs';
 const f=await startTimelineCandidate({daily:true,inlineProgress:true,historyCount:0});const report={};
 try{
- const c=(await f.request('/chats/main')).chat,h=(await f.request('/status')).hostId;
- const send=await f.request('/commands',{requestId:'http-race',kind:'chat.message',chatId:c.chatId,text:'synthetic',modelProfileId:'local',targetDeviceId:h});
- await waitForCommand(async()=>(await f.request('/commands/'+send.command.commandId)).command);f.progress.text('done');f.progress.finish();
+ const c=await f.startChat('synthetic','http-race');f.progress.text('done');f.progress.finish();
  await waitForPublishedText(()=>f.request(`/chats/${c.chatId}/events?limit=100`),'done');
  const page=await f.request(`/chats/${c.chatId}/events?limit=100`),base=`/chats/${c.chatId}/changes?cursor=${page.syncCursor}&liveRevision=${page.liveRevision}`;
  const timeline=f.debug.service.__reviewContext.chatTimeline,original=timeline.query;let release,held=false;

@@ -2,16 +2,20 @@
 globalThis.WeftPersonalizationView = (core, target, category, {toast = () => {}} = {}) => {
     const controls = globalThis.WeftSettingsControls, fields = new Map(), texts = new Map();
     const identity = core.state.identityGeneration;
-    const current = () => target.isConnected && identity === core.state.identityGeneration;
+    const current = () => target.isConnected && target.contains(form) && identity === core.state.identityGeneration;
     const node = (tag, cls = '', text = '') => { const n = document.createElement(tag); n.className = cls; n.textContent = text; return n; };
     const form = node('form', 'personalization-form'), notice = node('div', 'muted'); notice.setAttribute('role', 'status');
     target.replaceChildren(form); form.append(notice); notice.append(WeftControls.skeleton({rows:1,compact:true}));
     let saved, ready = false;
     const busy = value => { for (const element of form.querySelectorAll('input,textarea,select,button')) element.disabled = value; };
-    const report = (value, justSaved = false) => { if (!current()) return; saved = value.settings; notice.textContent = ''; notice.hidden = true; if (justSaved) toast('已同步 · 从下一次回复开始生效'); };
+    const report = (value, justSaved = false) => { if (!current()) return; saved = value.settings; notice.textContent = value.synced ? '' : '已保存在本机，连接电脑后自动同步。'; notice.hidden = value.synced; if (justSaved) toast(value.synced ? '已同步 · 从下一次回复开始生效' : '已保存在本机，等待同步到电脑'); };
     async function write(patch, extract = false) {
         if (!ready || !current()) return;
-        busy(true); notice.hidden = false; notice.textContent = extract ? '正在本机提炼…' : '正在同步…';
+        if (!extract) {
+            patch=Object.fromEntries(Object.entries(patch).filter(([key,value])=>saved[key]!==value));
+            if (!Object.keys(patch).length) return;
+        }
+        busy(true); notice.hidden = false; notice.textContent = extract ? '正在本机提炼…' : '正在保存…';
         try { const value = await core.savePersonalization(patch, extract); if (current()) { report(value, true); if (extract) { const field = texts.get('writingStyle'); field.value = value.settings.writingStyle; field.updateCount(); fields.get('useWritingStyle').checked = true; } } }
         catch { if (current()) { notice.textContent = '未能同步，修改仍在这里。请重试。'; for (const [key, control] of fields) { if (control.type === 'checkbox') control.checked = saved[key]; else control.value = saved[key]; control.dispatchEvent(new Event('weft:sync')); } } }
         finally { if (current()) busy(false); }
@@ -78,6 +82,21 @@ globalThis.WeftPersonalizationView = (core, target, category, {toast = () => {}}
         for (const [key, control] of fields) { if (control.type === 'checkbox') control.checked = settings[key]; else control.value = settings[key]; control.dispatchEvent(new Event('weft:sync')); }
         for (const [key, control] of texts) { control.value = settings[key]; control.updateCount(); }
     }
+    function receive(event) {
+        if (!current()) {document.removeEventListener('weft:settings-sync',receive);return;}
+        if (!ready || !event.detail?.settings) return;
+        const settings=event.detail.settings;
+        for(const [key,control] of [...fields,...texts]) {
+            const value=control.type==='checkbox' ? control.checked : control.value;
+            if(value!==saved[key]) continue;
+            saved={...saved,[key]:settings[key]};
+            if(control.type==='checkbox')control.checked=settings[key];else control.value=settings[key];
+            control.updateCount?.();control.dispatchEvent(new Event('weft:sync'));
+        }
+        notice.textContent=event.detail.synced ? '' : '已保存在本机，连接电脑后自动同步。';
+        notice.hidden=event.detail.synced;
+    }
+    document.addEventListener('weft:settings-sync',receive);
     form.addEventListener('submit', event => { event.preventDefault(); if (form.reportValidity()) void write(Object.fromEntries([...texts].map(([key, control]) => [key, control.value]))); });
     busy(true);
     void core.loadPersonalization().then(value => { if (current()) { report(value); fill(value.settings); ready = true; busy(false); } }).catch(() => {

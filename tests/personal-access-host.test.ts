@@ -231,7 +231,7 @@ test('host callbacks preflight selected model and ownership before dispatch; cre
   known = true
   const sent = await backend.sendMessage({ sessionId: 'session-a', text: 'hello', mode: 'queue' })
   assert.deepEqual(sent, { accepted: true })
-  assert.deepEqual(calls, ['ownership', 'POST /sessions/session-a/resume', 'POST /sessions/session-a/messages'])
+  assert.deepEqual(calls, ['ownership', 'POST /sessions/session-a/messages'], 'ensureKnownSession owns the one resume')
   calls.length = 0
   await assert.rejects(backend.preflight({ kind: 'session.message', sessionId: 'old-session', text: 'unsafe' }),
     (error: Error & { code?: string }) => error.code === 'SESSION_READ_ONLY')

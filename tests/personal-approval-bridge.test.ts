@@ -251,16 +251,8 @@ test('a tool-body ask waits for the native committed decision receipt before fin
   } finally { f.resolution.resolve(); await f.close() }
 })
 
-test('the verified WeftMod script approval alias preserves actual execution identity and rejects unrelated names', async () => {
-  const alias = await nativeFixture({ toolName: 'weftmod_script', askedName: 'weftmod', stage: 'body' })
-  try {
-    assert.equal((await alias.execute()).isError, false); assert.equal(alias.effects, 1)
-    const registration = alias.frames.find(frame => frame.action === 'register_approval')
-    assert.equal(registration.toolName, 'weftmod_script')
-    assert.equal(alias.session.events.find((event: any) => event.type === 'approval/asked').data.toolName, 'weftmod')
-    assert.equal(registration.argumentsHash, alias.frames.find(frame => frame.action === 'authorize_execution').argumentsHash)
-  } finally { await alias.close() }
-  for (const [toolName, askedName] of [['fixture_action', 'weftmod'], ['weftmod_script', 'pwsh']]) {
+test('an approval request cannot stand in for a different executing tool', async () => {
+  for (const [toolName, askedName] of [['fixture_action', 'write'], ['write', 'pwsh']]) {
     const forged = await nativeFixture({ toolName, askedName, stage: 'body' })
     try {
       assert.equal((await forged.execute()).isError, true); assert.equal(forged.effects, 0)

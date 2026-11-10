@@ -156,7 +156,8 @@ export function validateSingleStore(store) {
   for (const [deviceId, device] of Object.entries(store.devices)) {
     const allowedScopes = store.version === LEGACY_VERSION ? LEGACY_SCOPES : SCOPES;
     if (!validId(deviceId) || !plainObject(device) || !/^[a-f0-9]{64}$/.test(device.tokenHash ?? '') ||
-        typeof device.name !== 'string' || !Array.isArray(device.scopes) ||
+        typeof device.name !== 'string' || (device.directoryName !== undefined && typeof device.directoryName !== 'string') ||
+        !Array.isArray(device.scopes) ||
         device.scopes.some((scope) => !allowedScopes.has(scope)) || typeof device.revoked !== 'boolean' ||
         tokenHashes.has(device.tokenHash)) {
       throw failure('STORE_CORRUPT', 500);
@@ -540,7 +541,6 @@ export function validateSingleStore(store) {
                   command.toolSource.sourceCommandId) ||
                 store.commands[command.taskId]?.kind !== 'session.message' ||
                 store.commands[command.taskId]?.sessionId !== command.toolSource.sessionId))
-            : command.kind === 'chat.message' ? command.sessionId !== undefined || !['pending','rejected'].includes(command.state) || command.appId !== undefined
             : command.kind === INTERNAL_ARTIFACT_KIND ? command.appId !== undefined
             : !validId(command.sessionId) || command.appId !== undefined ||
               ['accepted_by_host'].includes(command.state) ||

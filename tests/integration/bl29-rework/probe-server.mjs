@@ -19,9 +19,7 @@ try{
  // This auth/wait probe controls its wake source; the independent activity
  // observer must not enter the held read or finish a wait before logout.
  await f.debug.service.__stopBackgroundActivity();
- const main=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
- const send=await f.request('/commands',{requestId:'rev-wait',kind:'chat.message',chatId:main.chatId,text:'synthetic',modelProfileId:'local',targetDeviceId:host});
- for(let n=0;n<100;n++){if((await f.request('/commands/'+send.command.commandId)).command.state==='accepted_by_dsh')break;await pause(10);}
+ const main=await f.startChat('synthetic','rev-wait');
  f.progress.text('synthetic done');f.progress.finish();
  const page=await f.request(`/chats/${main.chatId}/events?limit=100`);
  const waitPath=`/chats/${main.chatId}/changes?cursor=${page.syncCursor}&liveRevision=${page.liveRevision}&waitMs=2000`;

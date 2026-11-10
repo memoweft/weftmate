@@ -53,7 +53,7 @@ try {
   await feedbackUiSession(page,fixture,{native:true});
   await page.evaluate(async id=>{await __feedbackSessionCore.selectSession(id)},fixture.source);
   await page.unroute('**/personal/v1/status');
-  await page.evaluate(async()=>{const c=__feedbackSessionCore;await c.refreshStatus();await c.refreshSessions();await c.selectMainChat();c.setMessageMode('queue')});
+  await page.evaluate(async()=>{const c=__feedbackSessionCore;await c.refreshStatus();await c.refreshSessions();c.setMessageMode('queue')});
   const refresh=()=>page.evaluate(async()=>{const c=__feedbackSessionCore;await c.refreshSessions();await c.refreshHistory();c.setMessageMode('queue')});
   let sample=0,expectedProcesses=0;
   async function capture(name,action,duration=1200){
@@ -105,15 +105,15 @@ try {
     assert.ok(positions.every(f=>f.background==='rgba(0, 0, 0, 0)'),'no transient process background');
     const geometry=await page.evaluate(()=>{const a=savedSummary.getBoundingClientRect(),b=savedAnswer.getBoundingClientRect();return {left:Math.abs(a.left-b.left),width:Math.abs(a.width-b.width)}});
     assert.ok(geometry.left<=1&&geometry.width<=1,JSON.stringify(geometry));
-    await capture(theme+'-current',()=>page.evaluate(async()=>{await __feedbackSessionCore.selectMainChat();await __feedbackSessionCore.selectMainChat()}),600);
+    await capture(theme+'-current',()=>page.evaluate(async id=>{await __feedbackSessionCore.selectSession(id);await __feedbackSessionCore.selectSession(id)},fixture.source),600);
     assert.equal(await page.evaluate(()=>savedProcess===[...document.querySelectorAll('#transcript .execution-block')].at(-1)),true);
-    await page.evaluate(async id=>{await __feedbackSessionCore.selectSession(id);await __feedbackSessionCore.selectMainChat()},fixture.source);
+    await page.evaluate(async id=>{await __feedbackSessionCore.startNewConversation();await __feedbackSessionCore.selectSession(id)},fixture.source);
   }
   if(process.argv.includes('--mobile')) {
     await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(390,844));
     await page.goto(fixture.mobileUrl);
-    await page.waitForFunction(()=>state.booted && !!uiCore.state.mainChat);
-    await page.evaluate(async()=>{await uiCore.selectMainChat()});
+    await page.waitForFunction(()=>state.booted && state.logicalChats);
+    await page.evaluate(id=>selectSharedSession(id),fixture.source);
     const summary=page.locator('#chat-content .execution-block > summary');await summary.waitFor();
     assert.equal(await summary.count(),1);
     assert.match(await summary.innerText(),/已停止/);

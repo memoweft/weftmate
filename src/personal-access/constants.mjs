@@ -64,6 +64,7 @@ export const SAFE_CODES = new Set([
   'RUNTIME_UNAVAILABLE', 'MODEL_UNAVAILABLE', 'SESSION_UNAVAILABLE',
   'CAPABILITY_UNAVAILABLE', 'TARGET_UNAVAILABLE', 'MODEL_ROUTE_BLOCKED',
   'INVALID_COMMAND', 'NOT_FOUND', 'CONFLICT', 'SESSION_READ_ONLY', 'SESSION_ARCHIVED', 'SESSION_BUSY',
+  'SESSION_MODEL_CHANGED',
 ]);
 
 export const PUBLIC_CODES = new Set([
@@ -120,7 +121,7 @@ export const LEGACY_SCOPES = new Set(['sessions:read', 'commands:write']);
 
 export const SCOPES = new Set([...LEGACY_SCOPES, 'account:manage']);
 
-export const KINDS = new Set(['session.create', 'session.message', 'chat.message', 'session.cancel', 'desktop.open_app']);
+export const KINDS = new Set(['session.create', 'session.message', 'session.cancel', 'desktop.open_app']);
 
 export const INTERNAL_ARTIFACT_KIND = 'desktop.write_artifact';
 

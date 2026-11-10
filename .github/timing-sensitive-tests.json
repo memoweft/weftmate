@@ -23,12 +23,6 @@
       "failureCount": 7
     },
     {
-      "file": "tests/bl-29-wait.test.ts",
-      "name": "BL-29 empty main chat wait wakes when another device starts its first task",
-      "reason": "Observed failed Date.now()-at<700 account mutation wake assertion.",
-      "failureCount": 1
-    },
-    {
       "file": "tests/personal-desktop-motion.test.ts",
       "name": "desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists",
       "reason": "Observed real Electron performance assertion: zero main-thread tasks exceeding the wall-clock 50ms budget (panel-open-close). Functional motion/accessibility assertions remain unchanged.",

@@ -14,7 +14,6 @@ export function createChatOperations(context) {
     const q = (params.get('q') ?? '').trim(), size = params.get('limit') ?? '50';
     if (q.length > 120 || !/^\d+$/.test(size) || Number(size) < 1 || Number(size) > 200) throw failure('INVALID_REQUEST');
     const account = context.accountState(ownerId);
-    if (account.memoryCleanupPending) throw failure('SESSION_BUSY', 409);
     const excluded = new Set();
     for (const segment of Object.values(account.chatIdentity.segments)) { const session = account.sessions[segment.sessionId]; if (!session || session.deleting || hasPrivateContent(session)) excluded.add(segment.chatId); }
     const candidates = Object.values(account.chatIdentity.chats).filter(chat => !excluded.has(chat.chatId));
@@ -57,7 +56,7 @@ export function createChatOperations(context) {
     const segment = identity.segments[chat.activeSegmentId], session = account.sessions[segment?.sessionId];
     const base = { chatId, kind: chat.kind, revision: chat.revision, contentRevision: chat.contentRevision,
       approvalMode: chat.approvalMode ?? session?.approvalMode ?? account.defaultApprovalMode ?? 'auto',
-      ...modeProjection(session, account), ...(chat.wasMain || chat.kind === 'main' ? { logicalHistory: true } : {}),
+      ...modeProjection(session, account, segment?.sessionId), ...(chat.wasMain || chat.kind === 'main' ? { logicalHistory: true } : {}),
       ...(chat.kind === 'main' ? { displayTitle: session?.title || '小纬' } : {}),
       ...(session?.phoneHistory ? {phoneHistory:true,readOnly:true,source:'phone'} : {}),
       activeSegmentId: segment?.segmentId ?? null, activeSessionId: segment?.sessionId ?? null,
@@ -66,10 +65,9 @@ export function createChatOperations(context) {
       deepThinking: chat.deepThinking ?? session?.deepThinking ?? false,
       selectedModelProfileId: session?.pendingModelProfileId ?? session?.modelProfileId ?? account.defaultModelProfileId ?? null,
       timeZone: identity.timeZone, ...memorySettings(session),
-      parent: chat.kind === 'main' ? null : session?.projectId
-        ? { kind: 'project', id: session.projectId } : { kind: 'main', id: identity.mainChatId } };
+      parent: session?.projectId ? { kind: 'project', id: session.projectId } : null };
     if (!session) return { ...base, title: 'WeftMate', pinned: true, archived: false,
-      unread: chat.unread, groupId: null, projectId: null, running: false, sendAvailable: !account.memoryCleanupPending,
+      unread: chat.unread, groupId: null, projectId: null, running: false, sendAvailable: true,
       taskAvailable: false, attention: null, lastOutcome: null };
     let described, summary;
     try {
@@ -99,8 +97,7 @@ export function createChatOperations(context) {
       ...(session.conversationId ? { conversationId: session.conversationId } : {}),
       ...(session.workspaceKind ? { workspaceKind: session.workspaceKind } : {}),
       modelProfileId: session.modelProfileId ?? described.modelProfileId ?? null,
-      running: described.running === true, sendAvailable: Boolean(canSend) && !account.memoryCleanupPending, taskAvailable: session.origin === 'personal-remote',
-      ...(chat.relay ? { contextOrganizing: true } : {}), ...(chat.relayError ? { relayError: chat.relayError } : {}),
+      running: described.running === true, sendAvailable: Boolean(canSend), taskAvailable: session.origin === 'personal-remote',
       ...(described.contextUsage ? { contextUsage: described.contextUsage } : {}),
       ...(described.running && described.processing ? { processing: described.processing } : {}) };
   }
@@ -172,8 +169,8 @@ export function createChatOperations(context) {
         for (const chat of candidates) {
           const segment = account.chatIdentity.segments[chat.activeSegmentId], session = account.sessions[segment.sessionId];
           if (archived !== 'all' && (session.archived === true) !== (archived === 'true') ||
-              parentKind && parentKind !== (session.projectId ? 'project' : 'main') ||
-              parentId && parentId !== (session.projectId ?? account.chatIdentity.mainChatId)) continue;
+              parentKind && parentKind !== (session.projectId ? 'project' : null) ||
+              parentId && parentId !== session.projectId) continue;
           // Titles remain native; only title search needs description of every candidate.
           const title = q ? session.title ?? searchSnapshot.get(segment.sessionId)?.title ?? '' : '';
           if (q && !title.toLocaleLowerCase().includes(q.toLocaleLowerCase())) continue;

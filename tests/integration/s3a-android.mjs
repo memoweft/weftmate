@@ -28,7 +28,7 @@ export async function phone(origin,credentials){
     await page.addInitScript(()=>Object.defineProperty(globalThis,'WeftMobileCloud',{configurable:true,set(value){value.init=async()=>{};Object.defineProperty(globalThis,'WeftMobileCloud',{value,writable:true,configurable:true});}}));
     await page.evaluate(async({origin,credentials})=>await call('auth.login',{origin,...credentials,deviceName:'S3a synthetic Android'}),{origin,credentials});
     await page.reload();await page.waitForFunction(()=>state.booted&&state.loggedIn);
-    await page.evaluate(async()=>{uiCore.syncMobileIdentity();await listConversations();await listSharedSessions();if(state.logicalChats)await uiCore.selectMainChat();else page('home');await call('app.ready',{owner:state.owner,hasDraft:hasAnyDraft()});});
+    await page.evaluate(async()=>{uiCore.syncMobileIdentity();await listConversations();await listSharedSessions();page('home');await call('app.ready',{owner:state.owner,hasDraft:hasAnyDraft()});});
     return {page,call:(method,params={})=>page.evaluate(async({method,params})=>call(method,params),{method,params}),
       async close(keepReverse=false){try{shell('shell','run-as',pkg,'touch','files/s3a-probe.done');await pause(1200);}finally{await browser?.close();if(forward)shell('forward','--remove',`tcp:${forward}`);if(!keepReverse)shell('reverse','--remove',`tcp:${port}`);if(instrument.exitCode===null)instrument.kill();}assert.ok(!log.includes('FAILURES'),log);},get log(){return log;}};
   }catch(error){instrument.kill();await browser?.close();if(forward)shell('forward','--remove',`tcp:${forward}`);throw Error(error.message+' '+log);}
