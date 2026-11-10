@@ -1153,8 +1153,13 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         }
         "shared.sessions.lifecycle" -> {
             val host = requireHost()
+            val revision = params.opt("memoryWorldRevision")?.let { value ->
+                require(value is Number && value.toDouble() in 0.0..9007199254740991.0 &&
+                    value.toDouble() == value.toLong().toDouble())
+                value.toLong()
+            }
             val result = api.sessionLifecycle(host, params.getString("sessionId"),
-                params.getString("action"), params.optBoolean("forgetMemories", false))
+                params.getString("action"), params.optBoolean("forgetMemories", false), revision)
             sharedChat.sessions(host)
             result
         }

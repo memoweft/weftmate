@@ -12,12 +12,16 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     return sharedPhoneBinding(conversationId);
   }
   function syncMobileIdentity() {
-    if (state.logicalChats && core.state.ownerId === (state.owner || null) && core.state.identityGeneration === state.authEpoch) {
+    const adopted = core.state.nativeSessionAdopted === true;
+    // While the web page is parked, the native action owns the authenticated session.
+    if (adopted && globalThis.weftNativeChatActive === true) return;
+    if (adopted) core.state.nativeSessionAdopted = false;
+    if (!adopted && state.logicalChats && core.state.ownerId === (state.owner || null) && core.state.identityGeneration === state.authEpoch) {
       core.state.currentView = state.page === 'chat' ? 'assistant' : state.page;
       core.state.online = state.sharedHostAvailable;
       return;
     }
-    if (core.state.ownerId !== (state.owner || null)) {
+    if (adopted || core.state.ownerId !== (state.owner || null)) {
       core.closeSearch?.();
       core.state.executionAccount = undefined;core.state.executionAccountName = undefined;core.state.sessionSelecting=false;core.resetLogicalSession?.();
       core.state.models = [];core.state.modelsKnown=false;

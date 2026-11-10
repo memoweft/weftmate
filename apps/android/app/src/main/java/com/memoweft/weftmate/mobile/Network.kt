@@ -914,10 +914,12 @@ class PersonalApi(transport: JsonTransport = JsonHttp()) {
     fun remoteSessions(host: HostIdentity): JSONObject = http.request(
         "${host.origin}/personal/v1/sessions?archived=all", "GET", headers = mapOf("Cookie" to host.cookie)).body
 
-    fun sessionLifecycle(host: HostIdentity, sessionId: String, action: String, forgetMemories: Boolean): JSONObject {
+    fun sessionLifecycle(host: HostIdentity, sessionId: String, action: String, forgetMemories: Boolean, memoryWorldRevision: Long? = null): JSONObject {
         require(sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")) && action in setOf("archive", "unarchive", "delete"))
         val suffix = if (action == "delete") "" else "/$action"
-        val body = if (action == "delete") JSONObject().put("forgetMemories", forgetMemories) else JSONObject()
+        val body = if (action == "delete") JSONObject().put("forgetMemories", forgetMemories).apply {
+            if (forgetMemories && memoryWorldRevision != null) put("memoryWorldRevision", memoryWorldRevision)
+        } else JSONObject()
         return http.request("${host.origin}/personal/v1/sessions/$sessionId$suffix",
             if (action == "delete") "DELETE" else "POST", body, authWriteHeaders(host)).body
     }

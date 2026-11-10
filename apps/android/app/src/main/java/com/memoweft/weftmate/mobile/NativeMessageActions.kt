@@ -82,11 +82,7 @@ internal fun messageVersion(groups: List<JSONObject>, sessionId: String, event: 
         catch (_: Exception) { failure = "没能完成，请重试。" }
         finally { busy = "" }
     }
-    suspend fun openBranch(result: JSONObject) {
-        m.refreshChats()
-        val session = result.stringOrEmpty("sessionId")
-        m.chats.find { it.stringOrEmpty("activeSessionId") == session || it.stringOrEmpty("sessionId") == session }?.let { m.select(it) } ?: m.refresh()
-    }
+    fun openBranch(result: JSONObject) = m.openMessageVersion(result.stringOrEmpty("sessionId"))
     Column {
         NativeReplyVersions(m, ref, e)
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -126,7 +122,6 @@ internal fun messageVersion(groups: List<JSONObject>, sessionId: String, event: 
 @Composable private fun NativeReplyVersions(m: NativeChatModel, ref: MessageRef?, e: JSONObject) {
     ref ?: return
     val activity = LocalContext.current as NativeActivity
-    val scope = rememberCoroutineScope()
     var groups by remember(ref.sessionId) { mutableStateOf(emptyList<JSONObject>()) }
     LaunchedEffect(ref.sessionId, m.rows.size) {
         groups = runCatching { activity.core.call(MessageScripts.versions(ref.sessionId)).optJSONArray("groups")?.objects().orEmpty() }.getOrDefault(emptyList())
@@ -134,14 +129,10 @@ internal fun messageVersion(groups: List<JSONObject>, sessionId: String, event: 
     val sessionEvents = m.rows.filter { (it.optJSONObject("sourceRef")?.stringOrEmpty("sessionId") ?: m.sessionId) == ref.sessionId }
         .map { messageRef(it, m.sessionId)!!.event }
     val (index, sessions) = messageVersion(groups, ref.sessionId, ref.event, sessionEvents) ?: return
-    fun open(session: String) = scope.launch {
-        m.refreshChats()
-        m.chats.find { it.stringOrEmpty("activeSessionId") == session || it.stringOrEmpty("sessionId") == session }?.let { m.select(it) }
-    }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DesignTokens.space4.dp)) {
-        NativeIconButton(R.drawable.wm_back, "上一版", compact = true, enabled = index > 0) { open(sessions[index - 1]) }
+        NativeIconButton(R.drawable.wm_back, "上一版", compact = true, enabled = index > 0) { m.openMessageVersion(sessions[index - 1]) }
         Text("第 ${index + 1} / ${sessions.size} 版", fontSize = DesignTokens.font12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        NativeIconButton(R.drawable.wm_right, "下一版", compact = true, enabled = index < sessions.size - 1) { open(sessions[index + 1]) }
+        NativeIconButton(R.drawable.wm_right, "下一版", compact = true, enabled = index < sessions.size - 1) { m.openMessageVersion(sessions[index + 1]) }
     }
 }
 
@@ -179,8 +170,7 @@ internal fun messageVersion(groups: List<JSONObject>, sessionId: String, event: 
                         try {
                             val branch = activity.core.write(MessageScripts.branch(ref, "edit", draft.trim(), null))
                             editing = false
-                            m.refreshChats()
-                            m.chats.find { it.stringOrEmpty("activeSessionId") == branch.stringOrEmpty("sessionId") }?.let { m.select(it) } ?: m.refresh()
+                            m.openMessageVersion(branch.stringOrEmpty("sessionId"))
                         } catch (error: kotlinx.coroutines.CancellationException) { throw error }
                         catch (error: NativeCoreFailure) { failure = error.text.ifBlank { "没能发送修改，请重试。" } }
                         catch (_: Exception) { failure = "没能发送修改，请重试。" }

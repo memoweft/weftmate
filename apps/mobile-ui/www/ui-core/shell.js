@@ -197,8 +197,17 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
     // A native shell signs in and watches the connection itself; the engine takes that identity and online state for
     // its own protected writes without repainting or running its own reconnection.
     function adoptNativeSession(payload) {
-        if (typeof payload?.csrfToken !== 'string' || !payload.csrfToken) throw { code: 'REQUEST_FAILED' };
-        core.state.account = payload.account; core.state.device = payload.device; core.state.csrfToken = payload.csrfToken; core.state.online = true;
+        const ownerId = payload?.account?.ownerId, deviceId = payload?.device?.id;
+        if (typeof ownerId !== 'string' || !ownerId || typeof deviceId !== 'string' || !deviceId ||
+            typeof payload?.csrfToken !== 'string' || !payload.csrfToken) throw { code: 'REQUEST_FAILED' };
+        if (core.state.ownerId !== ownerId || core.state.device?.id !== deviceId) {
+            core.state.identityGeneration++;
+            core.state.submitting = false;
+        }
+        Object.assign(core.state, {
+            ownerId, account: payload.account, device: payload.device, csrfToken: payload.csrfToken, online: true,
+            nativeSessionAdopted: true,
+        });
     }
     function acceptSession(payload) {
         if (typeof payload?.account?.username !== 'string' || typeof payload?.device?.id !== 'string'
@@ -485,6 +494,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.cachedDevices = [];
         effects.resetAccountControls();
         core.state.csrfToken = null;
+        core.state.nativeSessionAdopted = false;
         core.state.account = null;
         core.state.device = null;
         effects.resetIdentityControls();

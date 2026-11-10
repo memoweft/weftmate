@@ -4,7 +4,12 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
@@ -88,12 +93,22 @@ internal val nativeBubble = RoundedCornerShape(DesignTokens.radius26.dp)
         inverseSurface=ink,inverseOnSurface=surface,inversePrimary=surface,scrim=Color(if(dark)DesignTokens.nativeDarkOverlay else DesignTokens.nativeOverlay))
     MaterialTheme(colorScheme=c,typography=Typography(labelLarge=TextStyle(fontSize=DesignTokens.font15.sp,lineHeight=DesignTokens.space20.sp,fontWeight=FontWeight.Medium))) { CompositionLocalProvider(LocalContentColor provides c.onSurface,LocalNativeDark provides dark,content=content) }
 }
-@Composable internal fun NativeIconButton(icon: Int, label: String, modifier: Modifier = Modifier, solid: Boolean = false, selected: Boolean = false, enabled: Boolean = true, compact: Boolean = false, action: () -> Unit) {
+@Composable internal fun NativeIconButton(icon: Int, label: String, modifier: Modifier = Modifier, solid: Boolean = false, selected: Boolean = false, enabled: Boolean = true, compact: Boolean = false, animateIcon: Boolean = false, action: () -> Unit) {
     val c=MaterialTheme.colorScheme
     val interaction=remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    IconButton(onClick=action,enabled=enabled,interactionSource=interaction,modifier=modifier.size(nativeTouch).graphicsLayer { scaleX=if(pressed).97f else 1f;scaleY=scaleX }.alpha(if(enabled)1f else .45f).clip(CircleShape).background(if(solid)c.primary else if(pressed)c.surfaceVariant else if(selected)Color(if(LocalNativeDark.current)DesignTokens.nativeDarkSelectedOnSoft else DesignTokens.nativeSelectedOnSoft) else Color.Transparent)) {
-        Icon(painterResource(icon),label,Modifier.size(if(compact)DesignTokens.space16.dp else DesignTokens.iconTouch.dp),tint=if(solid)c.onPrimary else if(selected)c.onSurface else c.onSurfaceVariant)
+    val control = if (animateIcon) modifier.semantics { contentDescription = label } else modifier
+    IconButton(onClick=action,enabled=enabled,interactionSource=interaction,modifier=control.size(nativeTouch).graphicsLayer { scaleX=if(pressed).97f else 1f;scaleY=scaleX }.alpha(if(enabled)1f else .45f).clip(CircleShape).background(if(solid)c.primary else if(pressed)c.surfaceVariant else if(selected)Color(if(LocalNativeDark.current)DesignTokens.nativeDarkSelectedOnSoft else DesignTokens.nativeSelectedOnSoft) else Color.Transparent)) {
+        val size = Modifier.size(if (compact) DesignTokens.space16.dp else DesignTokens.iconTouch.dp)
+        val tint = if (solid) c.onPrimary else if (selected) c.onSurface else c.onSurfaceVariant
+        if (animateIcon) {
+            AnimatedContent(icon, transitionSpec = {
+                val timing = tween<Float>(DesignTokens.motionDur1, easing = tokenEasing(DesignTokens.motionEaseOut))
+                (scaleIn(timing, initialScale = .9f) + fadeIn(timing)) togetherWith fadeOut(timing)
+            }, label = "composer-action") { target ->
+                Icon(painterResource(target), null, size, tint = tint)
+            }
+        } else Icon(painterResource(icon), label, size, tint = tint)
     }
 }
 @Composable internal fun NativeDialogBars() {

@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -360,11 +361,12 @@ private val easeInOut = tokenEasing(DesignTokens.motionEaseInOut)
     val pressed by interaction.collectIsPressedAsState()
     val press by animateFloatAsState(if (pressed && !reduced) .97f else 1f, tween(DesignTokens.motionDur1, easing = easeOut), label = "row-press")
     // First appearance rises in a capped stagger; recycled rows stay put.
-    val rise = remember(row.stringOrEmpty("chatId").ifEmpty { row.stringOrEmpty("id") }) { Animatable(if (reduced) 1f else 0f) }
+    val identity = row.stringOrEmpty("chatId").ifEmpty { row.stringOrEmpty("id") }
+    val rise = remember(identity) { Animatable(if (reduced) 1f else 0f) }
     LaunchedEffect(rise) { if (rise.value < 1f) { delay((order.coerceAtMost(8) * DesignTokens.durationStagger / 4)); rise.animateTo(1f, tween(DesignTokens.motionDur4, easing = easeOut)) } }
     var menuOpen by remember { mutableStateOf(false) }
     Box {
-        Row(Modifier.fillMaxWidth().graphicsLayer { scaleX = press; scaleY = press; alpha = rise.value; translationY = (1f - rise.value) * DesignTokens.space12.dp.toPx() }
+        Row(Modifier.fillMaxWidth().testTag("native-chat-row-$identity").graphicsLayer { scaleX = press; scaleY = press; alpha = rise.value; translationY = (1f - rise.value) * DesignTokens.space12.dp.toPx() }
             .clip(RoundedCornerShape(DesignTokens.radiuscard.dp))
             .combinedClickable(interactionSource = interaction, indication = LocalIndication.current, onClick = onOpen, onLongClick = if (menu.isEmpty()) null else ({ menuOpen = true }))
             .heightIn(min = DesignTokens.space56.dp).padding(horizontal = DesignTokens.space12.dp, vertical = DesignTokens.space10.dp),

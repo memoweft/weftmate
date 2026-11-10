@@ -12,13 +12,17 @@ import java.util.UUID
  */
 internal class NativeCore(private val activity: NativeActivity) {
     /**
-     * Shared writes run as the natively signed-in, connected account: the engine adopts that identity and online
-     * state when it lacks either.
+     * Bind each write to the current native account before entering the shared engine.
      */
-    suspend fun write(expression: String, timeoutMs: Long = 120000): JSONObject = call(
-        "if(!uiCore.state.csrfToken||!uiCore.state.online)uiCore.adoptNativeSession(await uiCore.accessApi('/auth/me'));" + expression,
-        timeoutMs,
-    )
+    suspend fun write(expression: String, timeoutMs: Long = 120000): JSONObject {
+        val owner = JSONObject.quote(activity.model.owner)
+        return call(
+            "const nativeSession=await uiCore.accessApi('/auth/me');" +
+                "if(nativeSession?.account?.ownerId!==$owner)throw {code:'UNAUTHORIZED',status:401};" +
+                "uiCore.adoptNativeSession(nativeSession);" + expression,
+            timeoutMs,
+        )
+    }
 
     suspend fun call(expression: String, timeoutMs: Long = 15000): JSONObject {
         val key = JSONObject.quote(UUID.randomUUID().toString())

@@ -58,6 +58,7 @@ import org.json.JSONObject
 import java.time.Instant
 import java.time.ZoneId
 import java.time.LocalDate
+import kotlin.math.roundToLong
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable internal fun NativeComposer(m:NativeChatModel,settings:NativeSettingsModel,onPreview:(JSONObject)->Unit) {
@@ -76,7 +77,8 @@ import java.time.LocalDate
         inputFocus.requestFocus();keyboard?.show()
         android.widget.Toast.makeText(context,"请使用键盘上的语音输入",android.widget.Toast.LENGTH_SHORT).show()
     }
-    Column(Modifier.fillMaxWidth().semantics{contentDescription="聊天输入区"}.padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).nativeFrost(if(expanded)RoundedCornerShape(DesignTokens.radius24.dp) else nativePill).animateContentSize(tween(if(settings.home.optBoolean("reducedMotion"))DesignTokens.durationReduced.toInt() else DesignTokens.durationFast.toInt()),alignment=Alignment.BottomStart).padding(if(expanded)nativeGap else DesignTokens.space4.dp)) {
+    val reducedMotion = settings.home.optBoolean("reducedMotion")
+    Column(Modifier.fillMaxWidth().semantics{contentDescription="聊天输入区"}.padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).nativeFrost(if(expanded)RoundedCornerShape(DesignTokens.radius24.dp) else nativePill).animateContentSize(tween(if(reducedMotion)DesignTokens.durationReduced.toInt() else DesignTokens.durationFast.toInt()),alignment=Alignment.BottomStart).padding(if(expanded)nativeGap else DesignTokens.space4.dp)) {
         if(m.attachments.isNotEmpty())NativeAttachments(m.attachments,true,{onPreview(JSONObject(it.toString()).put("conversationId",m.chatId).put("sessionId",m.sessionId))},m::remove)
         val input:@Composable ()->Unit={BasicTextField(m.draft,onValueChange=m::edit,enabled=!m.workComputerBusy,modifier=Modifier.fillMaxWidth().heightIn(min=if(expanded)DesignTokens.space64.dp else nativeTouch,max=DesignTokens.space150.dp).focusRequester(inputFocus).onFocusChanged{editorFocused=it.isFocused;m.focused=it.isFocused}.padding(if(expanded)nativeGap else DesignTokens.space4.dp).semantics{contentDescription="消息输入"},textStyle=TextStyle(color=MaterialTheme.colorScheme.onSurface,fontSize=LocalReadingSize.current.sp,lineHeight=(LocalReadingSize.current * 1.5f).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),maxLines=5,decorationBox={inner->Box{if(m.draft.isEmpty())Text(if(m.running)"可以继续补充…" else "说说你的目标…",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=LocalReadingSize.current.sp);inner()}})}
         NativeComposerLayout(expanded,input,leading={
@@ -91,9 +93,25 @@ import java.time.LocalDate
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)) {
             val action=m.composer.action
             if(expanded && action==ComposerAction.Send) NativeIconButton(R.drawable.wm_mic,"语音补充草稿",enabled=!m.running){voice()}
-            NativeIconButton(when(action){ComposerAction.Voice->R.drawable.wm_mic;ComposerAction.Send->R.drawable.wm_arrow;ComposerAction.Stop->R.drawable.wm_stop},when(action){ComposerAction.Voice->"语音输入";ComposerAction.Send->"发送消息";ComposerAction.Stop->"停止回复"},solid=true,enabled=if(action==ComposerAction.Voice)!m.running && !m.loading else action==ComposerAction.Stop || m.canSend && !m.submitting && !m.workBusy){when(action){ComposerAction.Send->m.send();ComposerAction.Stop->m.stop();ComposerAction.Voice->voice()}}
+            if (m.loggedIn && m.sessionId.isNotBlank()) m.contextUsage?.let { ContextUsageRing(it) }
+            NativeIconButton(when(action){ComposerAction.Voice->R.drawable.wm_mic;ComposerAction.Send->R.drawable.wm_arrow;ComposerAction.Stop->R.drawable.wm_stop},when(action){ComposerAction.Voice->"语音输入";ComposerAction.Send->"发送消息";ComposerAction.Stop->"停止回复"},solid=true,animateIcon=!reducedMotion,enabled=if(action==ComposerAction.Voice)!m.running && !m.loading else action==ComposerAction.Stop || m.canSend && !m.submitting && !m.workBusy){when(action){ComposerAction.Send->m.send();ComposerAction.Stop->m.stop();ComposerAction.Voice->voice()}}
         }
         })
     }
 }
+
+@Composable private fun ContextUsageRing(usage: NativeContextUsage) {
+    val ratio = usage.ratio
+    val colors = MaterialTheme.colorScheme
+    val label = if (ratio == null) "背景信息窗口已用 ${usage.usedTokens} 标记，上限未知"
+        else "背景信息窗口：${(ratio * 100).roundToLong()}% 已用"
+    CircularProgressIndicator(
+        progress = { ratio?.coerceIn(0.0, 1.0)?.toFloat() ?: 0f },
+        modifier = Modifier.size(DesignTokens.space20.dp).clearAndSetSemantics { contentDescription = label },
+        color = if (ratio != null && ratio >= 0.8) Color(DesignTokens.nativeWarning) else colors.onSurfaceVariant,
+        trackColor = colors.outlineVariant,
+        strokeWidth = DesignTokens.space2.dp,
+    )
+}
+
 internal fun modeName(id:String)=mapOf("auto" to "自动","ask" to "每次询问","accept-edits" to "接受文件修改","plan" to "先出计划","allow-all" to "全部允许")[id] ?: "自动"
