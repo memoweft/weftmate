@@ -223,11 +223,13 @@ try {
   await page.getByRole('button', { name: '发送', exact: true }).click();
   await page.waitForFunction(() => testCore.optimisticMessages().some(row => row.status === 'failed'));
   check('failure retains the draft', await page.locator('#message-text').inputValue() === '失败后保留的合成草稿');
-  check('failure offers retry', await page.getByRole('button', { name: '检查状态', exact: true }).isVisible());
+  const failedMessage = page.locator('#transcript .message.user').filter({ hasText: '失败后保留的合成草稿' });
+  const retry = failedMessage.getByRole('button', { name: '重试发送', exact: true });
+  check('failure offers retry', await retry.isVisible());
   check('real failure remains visible above the composer', await page.locator('#operation-status').isVisible() && !!await page.locator('#operation-status').textContent());
   await page.screenshot({path:join(out,'failure-feedback.png')});
   scenario.fail = false;
-  await page.getByRole('button', { name: '检查状态', exact: true }).click();
+  await retry.click();
   await page.waitForFunction(() => testCore.state.turnStatus === 'completed');
   check('retry reuses the created session', scenario.creates === 1);
   check('retry sends once after the failed attempt', scenario.sends === 2);
