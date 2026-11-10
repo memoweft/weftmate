@@ -39,6 +39,7 @@
                     const codeCopy=progress.detailAction(english?'Copy command':'复制命令','copy',()=>void progress.copyFeedback(codeCopy,()=>
                         (detail.stepOptions.copyText || (text=>navigator.clipboard.writeText(text)))(command)));
                     const frame=block.querySelector('.render-code'), header=frame.querySelector('.render-code-actions');
+                    frame.querySelector('.render-language').textContent = language==='powershell' ? 'PowerShell' : language==='bash' ? 'Bash' : 'Shell';
                     header.replaceChildren(codeCopy,actions);
                     output.append(block);
                     const text=WeftUiCore.executionDetailText(raw,step.language),marker=english?'\n\nOutput\n':'\n\n输出\n',at=text.indexOf(marker);
