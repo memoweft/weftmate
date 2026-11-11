@@ -67,6 +67,18 @@ import java.time.LocalDate
 internal val LocalReadingSize=staticCompositionLocalOf { DesignTokens.font15 }
 internal val LocalCodeSize=staticCompositionLocalOf { DesignTokens.font13 }
 
+@Composable internal fun NativeLoadingState(message: String, modifier: Modifier = Modifier) {
+    Box(modifier.background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(DesignTokens.space16.dp),
+            modifier = Modifier.padding(nativePad).semantics { liveRegion = LiveRegionMode.Polite }) {
+            CircularProgressIndicator(Modifier.size(DesignTokens.space32.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant, strokeWidth = DesignTokens.space2.dp)
+            Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = DesignTokens.font15.sp)
+        }
+    }
+}
+
 internal val nativeGap = DesignTokens.space8.dp
 internal val nativePad = DesignTokens.space16.dp
 internal val nativeTouch = DesignTokens.space44.dp

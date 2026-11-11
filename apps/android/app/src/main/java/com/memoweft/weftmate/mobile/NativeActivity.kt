@@ -29,7 +29,7 @@ class NativeActivity : HybridActivity() {
     internal var embeddedWebIdentity by mutableStateOf<WebView?>(null)
         private set
     internal var displayedFeedWeb: WebView? = null
-    private var webRoute="login"
+    private var webRoute: String? = null
     private var webEmbedded=false
     private var timelineMapperInstalled=false
     internal suspend fun timelinePresentation(events: List<JSONObject>, approvals: List<JSONObject>, questions: List<JSONObject>): List<JSONObject> {
@@ -89,6 +89,7 @@ class NativeActivity : HybridActivity() {
             startActivity(Intent(this, HybridActivity::class.java).apply { data = intent.data; putExtras(intent) }); finish(); return
         }
         model = NativeChatModel(this, nativeScope)
+        model.dark = resolvedAppearanceDark(savedAppearance(this), systemAppearanceDark())
         feed = NativeFeedModel(model, this)
         goals = NativeGoalsModel(model, this)
         settings = NativeSettingsModel(model, this)
@@ -97,6 +98,7 @@ class NativeActivity : HybridActivity() {
         // Compose owns system/IME insets; the embedded page receives a zero local safe area.
         presentationContainer.setPadding(0, 0, 0, 0)
         ViewCompat.setOnApplyWindowInsetsListener(presentationContainer) { _, insets -> insets }
+        parkWeb()
         presentationContainer.addView(ComposeView(this).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent { NativeShell(model, this@NativeActivity) }
@@ -113,10 +115,17 @@ class NativeActivity : HybridActivity() {
         applyWebFrame()
         return web
     }
-    override fun embeddedPageFinished() { timelineMapperInstalled=false;embeddedWebIdentity=embeddedWeb;applyWebFrame();if(::model.isInitialized && model.loggedIn && model.tab=="chat")parkWeb();embeddedFeedLoaded?.invoke() }
+    override fun embeddedPageFinished() {
+        timelineMapperInstalled = false
+        embeddedWebIdentity = embeddedWeb
+        applyWebFrame()
+        if (::model.isInitialized && (webRoute == null || model.loggedIn && model.tab == "chat")) parkWeb()
+        embeddedFeedLoaded?.invoke()
+    }
     internal fun parkWeb() {
         if (!::model.isInitialized || model.tab !in listOf("chat", "activity", "goals", "health", "settings", "models", "library")) return
         coveredHostHistory = true
+        webRoute = null
         val web = embeddedWeb
         (web.parent as? ViewGroup)?.removeView(web)
         // Keep the shared phone engine attached, but stop painting the covered web UI.
@@ -127,7 +136,7 @@ class NativeActivity : HybridActivity() {
     }
     private fun applyWebFrame() {
         val web=embeddedWeb
-        val name=webRoute
+        val name=webRoute ?: return
         val embedded=webEmbedded
         val entry = JSONObject().put("name", name).put("embedded", embedded)
             .put("phone", ::model.isInitialized && model.phone)

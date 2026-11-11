@@ -5,6 +5,11 @@ import android.net.Uri
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
@@ -113,11 +118,27 @@ import java.time.LocalDate
             layout(child.width,child.height){child.placeRelative(0,0)}
         }.semantics{contentDescription="消息列表"},contentPadding=padding,verticalArrangement=Arrangement.spacedBy(nativePad)) {
             item { if(m.hasOlder) NativeSecondary(onClick={follow.pause();m.launch{m.refresh(true)}}){Text("较早的消息")} }
-            if(rows.isEmpty()) item { Column(Modifier.fillMaxWidth().padding(vertical=DesignTokens.space48.dp),horizontalAlignment=Alignment.CenterHorizontally) {
-                if(m.loading) CircularProgressIndicator() else { Text("今天想做什么？",fontSize=DesignTokens.font28.sp,fontWeight=FontWeight.Medium);FilledTonalButton(onClick={m.tab="help"},colors=ButtonDefaults.filledTonalButtonColors(containerColor=MaterialTheme.colorScheme.surfaceVariant,contentColor=MaterialTheme.colorScheme.onSurface)){Text("了解更多",fontWeight=FontWeight.Normal)}
-                    if(m.models.none{it.optBoolean("configured",it.optString("source")=="phone")}) FilledTonalButton(onClick={m.openModels()}){Text("设置对话模型")}
+            if(rows.isEmpty()) item {
+                val duration = if (android.animation.ValueAnimator.areAnimatorsEnabled()) DesignTokens.durationFast.toInt() else 0
+                AnimatedContent(m.loading, modifier = Modifier.fillMaxWidth().padding(vertical=DesignTokens.space48.dp),
+                    transitionSpec = {
+                        (fadeIn(tween(duration, easing=tokenEasing(DesignTokens.motionEaseOut))) togetherWith
+                            fadeOut(tween(duration))).using(SizeTransform(clip=false) { _, _ -> tween(duration) })
+                    }, label = "Conversation readiness") { loading ->
+                    if (loading) NativeLoadingState("正在准备对话…", Modifier.fillMaxWidth())
+                    else Column(horizontalAlignment=Alignment.CenterHorizontally) {
+                        Text("今天想做什么？", fontSize=DesignTokens.font28.sp, fontWeight=FontWeight.Medium)
+                        FilledTonalButton(onClick={m.tab="help"}, colors=ButtonDefaults.filledTonalButtonColors(
+                            containerColor=MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor=MaterialTheme.colorScheme.onSurface)) {
+                            Text("了解更多", fontWeight=FontWeight.Normal)
+                        }
+                        if (m.models.none { it.optBoolean("configured", it.optString("source")=="phone") }) {
+                            FilledTonalButton(onClick={m.openModels()}) { Text("设置对话模型") }
+                        }
+                    }
                 }
-            } }
+            }
             itemsIndexed(rows,key={i,e->e.optString("eventId").ifBlank{"${e.optLong("seq")}:$i"}}){i,e->
                 val d=e.optJSONObject("data") ?: JSONObject();val type=e.optString("type")
                 val zone=runCatching{ZoneId.of(m.timeZone)}.getOrDefault(ZoneId.systemDefault())
