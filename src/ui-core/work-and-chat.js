@@ -5,7 +5,7 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
   const originalState = core.composerState, newConversation = core.startNewConversation;
   const send = core.sendDraft;
   const clear = core.clearSession;
-  const selectSession = core.selectSession, selectLogical = core.selectLogicalSession, selectMain = core.selectMainChat, selectPhone = core.selectPhoneConversation;
+  const selectSession = core.selectSession, selectLogical = core.selectLogicalSession, selectPhone = core.selectPhoneConversation;
   const enabled = () => core.state.personalCapabilities?.workAndChat === 1;
   let preferenceOwner, sidebarMode;
   function sidebarConversationMode() {
@@ -25,8 +25,7 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
   function currentMode() {
     if (core.state.activeChatSource === 'phone') return 'chat';
     if (core.state.newConversation) return core.state.newConversationMode || 'chat';
-    return mode(core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId) ||
-      (core.state.selectedChatId === core.state.mainChat?.chatId ? core.state.mainChat : null));
+    return mode(core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId));
   }
   function workComputers() {
     if (core.state.computers?.length) return core.state.computers;
@@ -168,11 +167,6 @@ globalThis.WeftUiCore.factories.workAndChat = (core, effects, environment) => {
     if (core.state.activeChatSource === 'desktop' && core.state.selectedSessionId === id && !core.state.newConversation) { effects.showConversation({ restore: args[0]?.restore }); if (!args[0]?.restore) effects.closeRail(); return; }
     const result = await selectSession(id, ...args);
     if (enabled() && core.state.selectedSessionId === id) chooseSidebarMode(currentMode()); return result; };
-  if (selectMain) core.selectMainChat = async (...args) => {
-    if (!args[1]?.restore) abandonFollow();
-    if (!args[0] && core.state.activeChatSource === 'desktop' && core.state.mainChat && core.state.selectedChatId === core.state.mainChat.chatId && !core.state.newConversation) { effects.showConversation({ restore: args[1]?.restore }); if (!args[1]?.restore) effects.closeRail(); return; }
-    const result = await selectMain(...args);
-    if (enabled() && core.state.selectedChatId === core.state.mainChat?.chatId) chooseSidebarMode(currentMode()); return result; };
   if (selectLogical) core.selectLogicalSession = (id, options={}) => {if(!options.restore)abandonFollow();return selectLogical(id,options);};
   if (selectPhone) core.selectPhoneConversation = (...args) => { abandonFollow();const result = selectPhone(...args); if (enabled()) chooseSidebarMode('chat'); return result; };
   core.sendDraft = (...args) => {

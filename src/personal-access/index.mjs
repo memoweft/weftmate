@@ -68,12 +68,12 @@ import { createNextSuggestions } from './next-suggestions.mjs';
 import { createScheduleOperations } from './schedules.mjs';
 import { createGoalOperations } from './goals.mjs';
 import { createOfflineService } from '../personal-offline/index.mjs';
-import { reconcileChatIdentity, chatForSession } from './chat-identity.mjs';
+import { reconcileChatIdentity, retireMainChatResults, chatForSession } from './chat-identity.mjs';
 import { createTemporaryChats } from './temporary-chats.mjs';
 import { createChatOperations } from './chats.mjs';
 import { createChatTimeline } from './chat-timeline.mjs';
 import { eraseChatCopies } from './chat-erasure.mjs';
-import { createMainChat } from './main-chat.mjs';
+import { createReminderChat } from './reminder-chat.mjs';
 import { createChatLifecycle } from './chat-lifecycle.mjs';
 import { createSideChats } from './side-chats.mjs';
 import { createActivity } from './activity.mjs';
@@ -259,7 +259,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get chatTimeline() { return chatTimeline; },
     get sideChats() { return sideChats; },
     get terminals() { return terminals; },
-    get mainChat() { return mainChat; },
+    get reminderChat() { return reminderChat; },
     get chatLifecycle() { return chatLifecycle; },
     eraseChatCopies,
     get offline() { return offline; },
@@ -329,6 +329,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get deviceName() { return deviceName; },
     get driveTaskStop() { return driveTaskStop; },
     get handleMemoryHttp() { return handleMemoryHttp; },
+    get syncedMemoryCommand() { return syncedMemoryCommand; },
     get hashQueue() { return hashQueue; },
     get hashWork() { return hashWork; },
     set hashQueue(value) { hashQueue = value; },
@@ -436,7 +437,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const chats = createChatOperations(context);
   const chatTimeline = createChatTimeline(context);
   const sideChats = createSideChats(context);
-  const mainChat = createMainChat(context);
+  const reminderChat = createReminderChat(context);
   const chatLifecycle = createChatLifecycle(context);
   const {
     requireOriginalAttachments, commandReferencesOriginal, publicHistoryEvent,
@@ -488,14 +489,18 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const terminals = createTerminalOperations(context);
   const http = createHttpHandler(context);
   const { handle, handleScoped } = http;
-  const { handleMemoryHttp } = createMemoryHttpHandler(context);
+  const { handleMemoryHttp, syncedMemoryCommand } = createMemoryHttpHandler(context);
 
   try {
     await ensurePrivateFile(storeFile);
     rootState = JSON.parse(await readFile(storeFile, 'utf8'));
     if (rootState.version === VERSION) {
       let upgraded = false;
-      for (const account of Object.values(rootState.accounts)) { const projectsChanged=migrateProjects(account); const rulesChanged=migratePermissionRules(account); if(projectsChanged||rulesChanged) upgraded=true; }
+      for (const account of Object.values(rootState.accounts)) {
+        const projectsChanged=migrateProjects(account), rulesChanged=migratePermissionRules(account);
+        const resultsRemoved=retireMainChatResults(account, new Date(clock()).toISOString());
+        if (projectsChanged || rulesChanged || resultsRemoved) upgraded=true;
+      }
       if (!Object.hasOwn(rootState, 'unknownAuthLimits')) {
         rootState.unknownAuthLimits = { failures: 0, lastFailureAt: 0, lockUntil: 0 };
         upgraded = true;
@@ -508,7 +513,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       validateStore(rootState);
       if (upgraded) await durableWrite(storeFile, rootState);
     }
-    else { migrateProjects(rootState); migratePermissionRules(rootState); validateSingleStore(rootState); }
+    else { migrateProjects(rootState); migratePermissionRules(rootState); retireMainChatResults(rootState, new Date(clock()).toISOString()); validateSingleStore(rootState); }
   } catch (error) {
     if (error?.code !== 'ENOENT') throw failure('STORE_CORRUPT', 500);
     freshInstallation = true;
@@ -822,8 +827,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       prepareOnly = false, conversationTargets, hostTargets, journalManaged = false }) {
       if (prepareOnly) {
         const account = accountState(ownerId), targets = [];
-        const pending = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
-        for (const sessionId of new Set([...Object.keys(account.sessions), ...(pending ? [pending] : [])])) {
+        for (const sessionId of Object.keys(account.sessions)) {
           if (account.sessions[sessionId]?.phoneHistory) continue;
           const prepared = await callBackend(() => backend.cleanupMemoryCopies({ ownerId, sessionId, sourceTexts,
             deleteConversationSnippets: true, prepareOnly: true }));
@@ -841,7 +845,6 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         // Journal-owned cleanup already runs inside its account serial section.
         // Re-entering source withdrawal here would deadlock that same operation.
         if (!journalManaged) await memoryManager?.discardPendingSources?.(ownerId, { sourceTexts });
-        await mainChat.drain(ownerId);
         await offline.invalidate(ownerId);
         // Portable backups already exclude this managed migration preimage.
         // Erasure must also remove its local older access-store copy.
@@ -850,8 +853,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           for (const chatId of eraseChatCopies(next, { forgotten: true })) chatTimeline.invalidate(ownerId, chatId);
         }));
         const account = accountState(ownerId);
-        const pendingSegment = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
-        for (const sessionId of new Set([...Object.keys(account.sessions), ...(pendingSegment ? [pendingSegment] : []), ...(conversationTargets ?? []).map(target => target.sessionId)])) {
+        for (const sessionId of new Set([...Object.keys(account.sessions), ...(conversationTargets ?? []).map(target => target.sessionId)])) {
           // Phone history is authoritative source text, not an executable native
           // session or a derived memory copy. Its explicit deletion uses
           // forgetConversations; ordinary memory erasure retains that original.
@@ -1058,6 +1060,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     issueSetupGrant: authentication.issueSetupGrant,
     enrollDevice: authentication.enrollDevice,
     revokeDevice: authentication.revokeDevice,
+    importAccountKey: (ownerId, payload) => hostCloudIdentity?.importAccountKey(ownerId, payload),
     syncCloudRevocations: () => hostCloudIdentity?.syncRevocations(),
     receiveCloudRevocations: (token) => hostCloudIdentity?.applyEvents(token),
     listDevices: authentication.listDevices,
@@ -1111,7 +1114,6 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         await healthInsights.close();
         await healthOperations.close();
         await healthRecords.close();
-        await sideChats.close();
         await chatTimeline.close();
         await offline.close();
         await hostRelay?.close();

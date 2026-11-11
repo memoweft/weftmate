@@ -1,0 +1,21 @@
+# WeftMate 补丁层（R8）：官方 DSH 全功能 + WeftMate 安全凭据宿主。
+- insert:
+    - id: weftmate-host
+      name: ./plugins/weftmate-host.mjs
+    - id: weftmate-memory
+      name: ./plugins/weftmate-memory.mjs
+    - id: weftmate-credentials
+      name: ./plugins/weftmate-credentials.mjs
+    - id: '@weftmate/client'
+      name: '@weftmate/client'
+# 只允许一个 credentials provider。官方文件 provider 会落 DSH_HOME/.credentials.yaml，
+# 因而在 WeftMate profile 中明确关闭；上面的 provider 通过 Node child IPC 走 Electron safeStorage。
+- id: credentials
+  disabled: true
+- id: directory-picker
+  disabled: true
+- insert:
+    - id: directory-picker-browse
+      name: '@deepseek-ai/dsh-host-directory-picker-browse'
+    - id: ui-directory-picker-browse
+      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'

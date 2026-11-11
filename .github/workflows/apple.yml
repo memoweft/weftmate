@@ -2,6 +2,12 @@ name: Apple
 
 on:
   workflow_dispatch:
+    inputs:
+      focus:
+        description: Native checks to run
+        type: choice
+        options: [all, watch-routing]
+        default: all
   pull_request:
     paths:
       - 'apps/apple/**'
@@ -24,8 +30,9 @@ env:
 
 jobs:
   core:
+    if: inputs.focus != 'watch-routing'
     name: Swift core (blocking) and state report
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 45
     defaults:
       run:
@@ -81,8 +88,9 @@ jobs:
           retention-days: 7
 
   build:
+    if: inputs.focus != 'watch-routing'
     name: ${{ matrix.platform }} build (blocking)
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -131,8 +139,9 @@ jobs:
           retention-days: 7
 
   phone-tests:
+    if: inputs.focus != 'watch-routing'
     name: iPhone UI report (${{ matrix.group }})
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 90
     # Preparation failures also remain reporting-only, with missing data called out.
     continue-on-error: true
@@ -183,7 +192,7 @@ jobs:
 
   report:
     name: Apple baseline summary
-    if: always()
+    if: always() && inputs.focus != 'watch-routing'
     needs: [core, build, phone-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -201,3 +210,38 @@ jobs:
           CORE_RESULT: ${{ needs.core.result }}
           BUILD_RESULT: ${{ needs.build.result }}
         run: python3 apps/apple/Scripts/write_ci_summary.py aggregate --artifacts "$RUNNER_TEMP/apple-reports"
+
+  watch-routing:
+    name: Watch routing native acceptance
+    if: inputs.focus == 'watch-routing'
+    runs-on: macos-26
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Fixture dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Core routing checks
+        run: |
+          mkdir -p "$RUNNER_TEMP/watch-results"
+          set -o pipefail
+          swift test --package-path apps/apple/Packages/WeftMateCore --scratch-path "$RUNNER_TEMP/watch-core" --jobs 2 --filter watch 2>&1 | tee "$RUNNER_TEMP/watch-results/core.log"
+      - name: Phone and watch build
+        run: |
+          set -o pipefail
+          xcodebuild -project apps/apple/WeftMate.xcodeproj -scheme WeftMatePhone -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/watch-build" \
+            -jobs 4 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/watch-results/build.log"
+      - name: Routing through real phone and computer HTTP
+        run: python3 apps/apple/Scripts/run_state_checks.py --core-build "$RUNNER_TEMP/watch-core" --check WatchRoutingModelChecks --check TaskInteractionChecks --artifacts "$RUNNER_TEMP/watch-results/state"
+      - name: Watch native interaction and screenshots
+        run: python3 apps/apple/Scripts/run_watch_routing_ui.py --derived-data "$RUNNER_TEMP/watch-build" --artifacts "$RUNNER_TEMP/watch-results/ui"
+      - name: Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: watch-routing-acceptance
+          path: ${{ runner.temp }}/watch-results
+          retention-days: 7

@@ -36,7 +36,7 @@ async function injectedComposerFailure({ fixtureError } = {}) {
   const replacements = new Map([
     ['node:test', moduleSource(`export default (name, run) => ${readInjection}.register(name, run);`)],
     ['playwright', moduleSource(`export const chromium = { launch: async () => ${readInjection}.browser };`)],
-    ['../../../tests/integration/main-chat-candidate.mjs', moduleSource(`export const startMainChatCandidate = async () => ${readInjection}.fixture;`)],
+    ['../../../tests/integration/timeline-ui-candidate.mjs', moduleSource(`export const startTimelineCandidate = async () => ${readInjection}.fixture;`)],
     ['./observed-routes.mjs', moduleSource(`export const observedRoutes = page => ${readInjection}.routes(page);`)],
   ]);
   const composerUrl = new URL('./composer-viewport.test.mjs', import.meta.url);

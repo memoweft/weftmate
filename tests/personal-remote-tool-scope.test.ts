@@ -80,7 +80,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
       parameters: {}, output: { schema: { type: 'json' }, render: () => [{ type: 'text', text: '{}' }] },
       execute: async () => { effects++; return { ok: true } } })
     for (const name of ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
-      'weftmod', 'weftmod_script', 'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'mod_sdk']) ctx.get('tools').register(fakeTool(name))
+      'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability']) ctx.get('tools').register(fakeTool(name))
     await ctx.plugin(globalPlugin.default)
     const remoteSession = ctx.sessions.create('remote-session', { meta: { agentPreset: 'personal-remote' } })
     remoteSession.append('turn/start', { turn: 1 })
@@ -93,7 +93,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     await scoped.ctx.plugin(preset.default)
     const names = scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name)
     assert.deepEqual(names, ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
-      'weftmod', 'weftmod_script', 'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'exit_plan_mode', 'browser', 'load_tools'])
+      'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'exit_plan_mode', 'browser', 'load_tools'])
     for (const name of ['personal_open_notepad', 'personal_save_document', 'personal_list_project_files',
       'personal_read_project_file', 'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
       assert.equal(names.includes(name), false)
@@ -116,7 +116,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
       agent, messages: [], turn: 1, step: 151, signal: new AbortController().signal,
     }, async () => ({ kind: 'enter', messages: [] }))
     assert.equal(decision.kind, 'enter', 'native calls never trigger a personal turn quota')
-    for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'run_code']) {
+    for (const name of ['pwsh', 'write', 'run_code']) {
       const result = await ctx.get('tools').execute({ name, arguments: {}, agent,
         callId: `deny-${name.replace('_', '-')}`, signal: new AbortController().signal })
       assert.equal(result.isError, true, `${name} cannot execute with a forged or missing source in the remote scope`)
@@ -152,7 +152,7 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
     parameters: {}, output: { schema: { type: 'json' }, render: () => [{ type: 'text', text: '{}' }] },
     execute: async () => ({ ok: true }) })
   for (const name of ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
-    'weftmod', 'weftmod_script', 'mod_sdk', 'personal_open_notepad', 'personal_save_document',
+    'mod_sdk', 'personal_open_notepad', 'personal_save_document',
     'personal_list_project_files', 'personal_read_project_file',
     'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
     ctx.get('tools').register(fakeTool(name))
@@ -166,7 +166,7 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
   await scoped.ctx.plugin(preset.default)
   assert.deepEqual(scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name), [])
   for (const name of ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
-    'weftmod', 'weftmod_script', 'mod_sdk', 'personal_open_notepad', 'personal_save_document',
+    'mod_sdk', 'personal_open_notepad', 'personal_save_document',
     'personal_list_project_files', 'personal_read_project_file',
     'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
     const result = await ctx.get('tools').execute({ name, arguments: {}, agent,

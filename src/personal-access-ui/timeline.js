@@ -130,6 +130,25 @@
     const next=events.find(event=>belongs(event) && event.type==='turn.started' && event.seq>(start?.seq ?? process.position));
     return events.findLast(event=>belongs(event) && event.type==='assistant.message' && event.seq>(start?.seq ?? process.position ?? process.seq) && (!next || event.seq<next.seq));
   }
+  const isCommand = step => /^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(step.toolName);
+  function durationText(ms, english) {
+    if (!Number.isFinite(ms) || ms < 0) return '';
+    const seconds = Math.floor(ms / 1000);
+    const hours = Math.floor(seconds / 3600), minutes = Math.floor(seconds / 60) % 60;
+    if (!seconds) return english ? '<1s' : '不到 1 秒';
+    return [hours && (english ? `${hours}h` : `${hours} 小时`),
+      minutes && (english ? `${minutes}m` : `${minutes} 分钟`),
+      seconds % 60 && (english ? `${seconds % 60}s` : `${seconds % 60} 秒`)].filter(Boolean).join(' ');
+  }
+  function processSegments(steps) {
+    const segments = [];
+    for (const step of steps) {
+      const last = segments.at(-1);
+      if (last && last[0].toolName !== '__progress' && step.toolName !== '__progress') last.push(step);
+      else segments.push([step]);
+    }
+    return segments;
+  }
   function thinkingCard(step, saved, options) {
     const detail = saved || node('details', 'execution-step model-thinking');
     const fresh = !saved;
@@ -140,7 +159,11 @@
       const body = node('div','thinking-body'), actions = node('div','progress-detail-actions');
       const copy = detailAction('复制思考内容','copy',()=>void copyFeedback(copy,()=>
         (options.copyText || (text=>navigator.clipboard.writeText(text)))(detail.querySelector('p').textContent)));
-      const collapse = detailAction('收起','chevron',()=>{detail.open=false;summary.focus();});
+      const collapse = detailAction('收起','chevron',()=>{
+        if (globalThis.WeftMotion?.setDetailsOpen) WeftMotion.setDetailsOpen(detail, false);
+        else detail.open=false;
+        summary.focus();
+      });
       actions.append(copy,collapse); body.append(actions,node('p')); detail.append(summary,body);
     }
     if (fresh) detail.open = step.thinkingActive && options.thinkingDisplay === 'expanded';
@@ -191,14 +214,15 @@
       const started=ordered.findLast(event=>event.type==='turn.started' && event.seq<=block.seq)
       const waiting=block.nativeStarted===false ? '正在思考…' : options.waiting
       block.steps = block.steps.map(step=>globalThis.WeftUiCore.executionPresentation(step,options.executions))
-      const expandedForObjects = row.querySelector('details')?.open === true
+      const previous = row.querySelector('details')
+      const expandedForObjects = new Set(previous?.open ? [...previous.querySelectorAll('.execution-step-group[open] .execution-step')].map(step=>step.dataset.step) : [])
       const currentForObjects = block.steps.filter(step => step.state === 'running').at(-1)
       row.progressDetails ||= new Map()
       for (const step of block.steps) {
         const seq = step.detailRef?.seq, cached = row.progressDetails.get(seq)
         if (cached && cached !== 'loading') {
           step.summary = block.language === 'en' ? globalThis.WeftUiCore.toolSummary(step.toolName, cached.arguments || step.arguments, block.language) : cached.summary; step.arguments = cached.arguments; step.interrupted = cached.interrupted
-        } else if (Number.isSafeInteger(seq) && !cached && options.readDetail && (expandedForObjects || step === currentForObjects || step.state === 'failed')) {
+        } else if (Number.isSafeInteger(seq) && !cached && options.readDetail && (expandedForObjects.has(String(step.stepId)) || step === currentForObjects || step.state === 'failed')) {
           row.progressDetails.set(seq, 'loading')
           void options.readDetail(seq).then(data => {
             const args = {...globalThis.WeftUiCore.toolArguments(data.text),...(typeof data.description==='string'?{description:data.description}:{})}
@@ -207,7 +231,6 @@
           }).catch(() => { row.progressDetails.set(seq, {summary: step.summary}) })
         }
       }
-      const previous = row.querySelector('details')
       const stopView = options.stopViews?.[block.taskId]
       const outcome = block.submission==='failed' ? {terminal:true,reason:'failed'} : globalThis.WeftUiCore.turnOutcome(ordered, block.taskId,stopView)
       const terminal = outcome.terminal || stopView?.terminal
@@ -230,13 +253,13 @@
           block.steps.every(step => globalThis.WeftUiCore.executionState(step) === 'completed')) {
         view.text = WeftUiCore.progressWaitingText(waiting, block.language); view.running = true
       }
-      if(terminal && !view.failed && !view.running && !tools.some(step=>step.approvalStatus==='pending' || step.approvalOutcome==='rejected')) {
+      if(outcome.reason==='completed' && !view.failed && !view.running && !tools.some(step=>step.approvalStatus==='pending' || step.approvalOutcome==='rejected')) {
         const session=block.sessionId || block.steps[0]?.sessionId;
         const start=ordered.findLast(event=>event.type==='turn.started' && event.seq<=block.seq && (!session || (event.sessionId||event.sourceRef?.sessionId)===session));
-        const end=ordered.find(event=>['turn.ended','task.ended'].includes(event.type)&&WeftUiCore.turnOutcome([event],block.taskId).terminal);
+        const end=ordered.findLast(event=>['turn.ended','task.ended'].includes(event.type)&&WeftUiCore.turnOutcome([event],block.taskId).terminal);
         const ms=Date.parse(end?.at)-Date.parse(start?.at || block.steps[0]?.at);
-        const duration=Number.isFinite(ms)?`${Math.max(0,Math.round(ms/1000))} ${block.language==='en'?'s':'秒'}`:'';
-        view.duration=duration;
+        const duration=durationText(ms, block.language==='en');
+        if (duration) view.text=block.language==='en' ? `Took ${duration}` : `用时 ${duration}`;
       }
       if(block.submission) {
         view.text=sendFailure(block, 0)
@@ -246,8 +269,8 @@
       }
       const running = view.running
       const startedAt=Date.parse(started?.at || current?.at);
-      const elapsed = view.duration || (running ? Number.isFinite(startedAt) ? `${Math.max(0,Math.floor((Date.now()-startedAt)/1000))} ${block.language==='en'?'s':'秒'}`
-        : /\d+ (?:秒|s)$/.exec(waiting || '')?.[0] || '' : '')
+      const elapsed = running ? Number.isFinite(startedAt) ? `${Math.max(0,Math.floor((Date.now()-startedAt)/1000))} ${block.language==='en'?'s':'秒'}`
+        : /\d+ (?:秒|s)$/.exec(waiting || '')?.[0] || '' : ''
       if (running) view.text = view.text.replace(/\s*\d+ (?:秒|s)$/, '')
       const signature = JSON.stringify([block, outcome, stopView, options.thinkingDisplay])
       row.dataset.running = String(running)
@@ -263,7 +286,7 @@
         return
       }
       row.dataset.signature = signature
-      const focused = document.activeElement, focusStep = focused?.closest?.('.execution-step')?.dataset.step
+      const focused = document.activeElement
       const hadFocus = row.contains?.(focused)
       const savedSteps = new Map([...row.querySelectorAll('.execution-step')].map(detail => [detail.dataset.step, detail]))
       // stepCard mutates reused nodes, so compare with their state before paint.
@@ -273,11 +296,13 @@
       if (!previous) details.dataset.replyProcess = 'true'
       details.dataset.motion = 'unfold'
       const justFinished = terminal && details.dataset.terminal === 'false';
-      details.open = newFailure || (!previous ? !terminal : justFinished && !view.failed && !thinkingOnly ? false : previous.open);
+      const closing = !!(previous?.open && justFinished && !view.failed && !thinkingOnly && globalThis.WeftMotion?.setDetailsOpen);
+      if (!closing) details.open = newFailure || (!previous ? !terminal : justFinished && !view.failed && !thinkingOnly ? false : previous.open);
       if(thinkingOnly && (!details.classList.contains('thinking-process') || details.dataset.thinkingDisplay!==(options.thinkingDisplay || 'collapsed')))details.open=options.thinkingDisplay==='expanded';
       details.dataset.thinkingDisplay=options.thinkingDisplay || 'collapsed';
       details.classList.toggle('thinking-process',thinkingOnly);
       details.dataset.terminal = String(!!terminal);
+      details.dataset.hasRecords = String(!!(block.steps.length || block.submission || view.failed));
       row.dataset.running = String(running)
       row.classList.toggle('has-failure', !!view.failed)
       const summary = details.querySelector('summary') || node('summary', 'inline-progress-summary')
@@ -311,8 +336,8 @@
       if (details.open) {
       const savedGroups = new Map([...records.querySelectorAll('[data-step-group]')].map(detail => [detail.dataset.stepGroup, detail]))
       const savedNotes = new Map([...records.querySelectorAll('[data-progress-note]')].map(detail => [detail.dataset.progressNote,detail]))
-      const recordNodes=WeftUiCore.groupConsecutiveSteps(block.steps).flatMap(group => /^(shell|bash|pwsh|powershell|exec_command|run_command|__progress)$/.test(group.kind) ? group.steps.map(step=>({...group,steps:[step]})) : [group]).map(group => {
-        const children = group.steps.map(step => {
+      const recordNodes=processSegments(block.steps).flatMap(steps => {
+        const children = steps.map(step => {
           if(step.toolName==='__thinking') {
             const card=thinkingCard(step,savedSteps.get(String(step.stepId)),options);
             if(thinkingOnly){card.open=true;card.querySelector('summary').hidden=true;}
@@ -325,15 +350,33 @@
           }
           return WeftTimelineCards.step(WeftUiCore.stepPresentation(step,{...displayOutcome,language:block.language,humanCopy:true}),savedSteps.get(String(step.stepId)),running,options);
         })
-        if (children.length === 1) return children[0]
-        const key=String(group.steps[0].stepId),savedGroup=savedGroups.get(key);
+        const groupTools = steps.filter(step=>step.toolName!=='__thinking' && step.toolName!=='__progress');
+        if (!groupTools.length) return children;
+        const key=String(steps[0].stepId),savedGroup=savedGroups.get(key);
         const detail=savedGroup || node('details','execution-step-group');detail.dataset.stepGroup=key;detail.dataset.motion='unfold';
+        const commandGroup = groupTools.every(isCommand);
         if(!savedGroup) {
-          const label=node('summary'),title=node('span','step-group-title'),arrow=node('span','progress-chevron');arrow.setAttribute('aria-hidden','true');arrow.append(WeftIcons.create('chevron',16));label.append(title,arrow);
+          const label=node('summary'),icon=node('span','step-type-icon'),title=node('span','step-group-title'),arrow=node('span','progress-chevron');
+          icon.setAttribute('aria-hidden','true');icon.append(WeftIcons.create(commandGroup?'terminal':'tool',16));
+          arrow.setAttribute('aria-hidden','true');arrow.append(WeftIcons.create('chevron',16));label.append(icon,title,arrow);
           detail.append(label,node('div','execution-group-records'));detail.open=children.some(child=>child.open);
+          detail.addEventListener('toggle', () => {
+            if (detail.open && details.open && detail.isConnected) {
+              delete row.dataset.signature;
+              scheduleCurrent(row);
+            }
+          });
         }
         if(children.some(child=>child.dataset.state==='failed' && savedStepStates.get(child.dataset.step)!=='failed'))detail.open=true;
-        if(detail.querySelector('.step-group-title').textContent!==group.summary)detail.querySelector('.step-group-title').textContent=group.summary;
+        const english = block.language==='en';
+        const failed = children.some(child=>child.dataset.state==='failed');
+        const groupView = WeftUiCore.progressText(groupTools,{terminal,reason:terminal?'ended':undefined,language:block.language});
+        const caption = commandGroup && groupTools.every(step=>WeftUiCore.executionState(step)==='completed')
+          ? (english?'Ran commands':'运行了命令')
+          : failed && terminal ? (english?'Tool execution failed':'工具执行失败')
+          : groupView.text;
+        const title = detail.querySelector('.step-group-title');
+        if(title.textContent!==caption)title.textContent=caption;
         reconcile(detail.querySelector('.execution-group-records'),children);
         if(globalThis.WeftMotion?.visibility)WeftMotion.details(detail);
         return detail
@@ -348,29 +391,13 @@
         const failure=records.querySelector('.execution-failure') || node('p','execution-failure');
         if(failure.textContent!==view.text)failure.textContent=view.text;recordNodes.unshift(failure);
       }
-      if (tools.length) {
-        const activity=records.querySelector('.execution-activity') || node('p','execution-activity');
-        const isCommand=step=>/^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(step.toolName);
-        const commands=tools.filter(step=>isCommand(step) && !['running','pending','rejected'].includes(step.state));
-        const files=new Set(tools.flatMap(step=>step.state==='completed'?(step.fileChanges || []).map(file=>file.path):[]));
-        const other=tools.filter(step=>!isCommand(step) && !(files.size && /^(edit|write)$/.test(step.toolName)));
-        const label=[files.size?(block.language==='en'?`Edited ${files.size} file(s)`:`已编辑 ${files.size} 个文件`):'',commands.length?(block.language==='en'?`Ran ${commands.length} command(s)`:`已运行 ${commands.length} 条命令`):'',WeftUiCore.progressText(other,{terminal:true,reason:'ended',language:block.language}).text].filter(Boolean).join(' · ');
-        if(activity.textContent!==label)activity.textContent=label;
-        recordNodes.push(activity);
-      }
       reconcile(records,recordNodes);
       }
-      const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
       if (!previous) row.replaceChildren(details)
       if(globalThis.WeftMotion?.visibility)WeftMotion.details(details,()=>{delete row.dataset.signature;renderCurrent()});
       if (!previous) requestAnimationFrame(()=>globalThis.WeftReplyMotion?.reveal(summary,'status'))
-      if (hadFocus) (focusStep ? [...records.querySelectorAll('.execution-step')].find(detail => detail.dataset.step === focusStep)?.querySelector('summary') : summary)?.focus({ preventScroll: true })
-      globalThis.WeftMotion?.dismiss(collapse, true)
-      if (details.open && block.steps.length <= 20) {
-        let index = 0
-        for (const step of details.querySelectorAll('.execution-step'))
-          if (!savedSteps.has(step.dataset.step)) globalThis.WeftMotion?.reveal(step, 'base', index++)
-      }
+      if (hadFocus && (!row.contains(focused) || closing)) summary.focus({ preventScroll: true })
+      if (closing) WeftMotion.setDetailsOpen(details, false);
     })
     for (const event of cards) {
       if (!/^(question\.|artifact\.|task\.queued)/.test(event.type)) continue

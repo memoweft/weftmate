@@ -30,15 +30,9 @@ describe('main canonical renderer trust wiring', () => {
     assert.match(main, /webContents\.on\('will-redirect', \(event, targetUrl\) => \{\s*if \(blocksUnexpectedRendererNavigation\(targetUrl, trustedRuntimeOrigin\)\) event\.preventDefault\(\);\s*\}\)/);
   });
 
-  it('places session entry and active/theme writes on the exclusive mutation lane', () => {
+  it('keeps route mutations on the exclusive lane and leaves no stage-one chat channel', () => {
     assert.match(main, /const enqueueRouteMutation = \(work\) => routeMutationQueue\.run\(work\)/);
-    assert.match(main, /await enqueueRouteMutation\(\(\) => switchActiveModel/);
-    assert.match(main, /const savedTheme = await enqueueRouteMutation\(\(\) => settingsMod\.setThemePreference\(theme\)\)/);
-    for (const channel of ['wm:stage1:create', 'wm:stage1:select', 'wm:stage1:send']) {
-      const from = main.indexOf(`ipcMain.handle('${channel}'`);
-      const body = main.slice(from, from + 1_800);
-      assert.match(body, /enqueueRouteMutation\(/, `${channel} must not enter after a route idle fence`);
-    }
+    assert.doesNotMatch(main, /wm:stage[12]:/);
     assert.match(main, /const recorded = settingsMod\.legacyCompatibilityProfileId\(\);[\s\S]*const evidence = configStoreMod\.legacyCompatibilityEvidence\(\);[\s\S]*recorded !== evidence\.id/);
     assert.match(main, /credentialRequestHandler,/);
     assert.doesNotMatch(main, /credentialEnvironment\(/);

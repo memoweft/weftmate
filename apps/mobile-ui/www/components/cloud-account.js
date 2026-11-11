@@ -42,7 +42,7 @@
 
     await listSharedSessions();
     startMobileConnection();
-    if(state.logicalChats){if(!uiCore.inMainChat())await uiCore.selectMainChat();}else page('home',{dataLoaded:true});
+    page('home',{dataLoaded:true});
   }
   async function scanPairing() {
     const dialog = element('dialog', 'cloud-camera'); dialog.setAttribute('aria-label', '扫描电脑二维码');

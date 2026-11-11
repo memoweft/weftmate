@@ -87,8 +87,11 @@ import { defaultUsagePrice } from './usage.mjs';
 import { usageResponse } from './usage-response.mjs';
 import { chatForSession, protectMainSession } from './chat-identity.mjs';
 import { handleWorkspaceFiles } from './workspace-files.mjs';
+import { deviceDirectory } from './device-directory.mjs';
 
 export function createHttpHandler(context) {
+  const directory = (ownerId, devices, currentId) => deviceDirectory(devices, currentId,
+    id => context.cloudIdentity?.directoryIdentity(ownerId, id));
   const bootId = randomUUID(), startedAt = new Date().toISOString();
   let hostRestarting = false;
   const presence = backend => ({ host: 'online', bootId, startedAt, authorization: 'active',
@@ -242,11 +245,10 @@ export function createHttpHandler(context) {
       if (request.method === 'GET' && pathname === '/personal/v1/devices/sync') {
         if(url.search)throw failure('INVALID_REQUEST');
         const current=context.authenticate(request,'account:manage');
-        const devices=Object.entries(state.devices).filter(([,device])=>!device.revoked).map(([deviceId])=>{
-          const cloudDeviceId=context.cloudIdentity?.cloudDeviceId(current.ownerId,deviceId);
+        const devices=directory(current.ownerId,state.devices,current.deviceId).filter(({row})=>!row.revoked).map(({row,members})=>{
+          const {id:deviceId,cloudDeviceId}=row;
           let syncDeviceId=deviceId;try{syncDeviceId=context.cloudIdentity?.offlineDeviceId?.(ownerId,deviceId)??deviceId;}catch{}
-          const offline=context.offline.deviceStatus(ownerId,syncDeviceId),legacy=context.syncStores.get(ownerId)?.deviceStatus(deviceId);
-          const sync=offline??legacy;
+          const sync=context.offline.deviceStatus(ownerId,syncDeviceId) ?? context.syncStores.get(ownerId)?.deviceStatus(members) ?? null;
           return {deviceId,...(cloudDeviceId?{cloudDeviceId}:{}),sync};
         });
         return context.json(response,200,{devices});
@@ -254,13 +256,7 @@ export function createHttpHandler(context) {
       if (request.method === 'GET' && pathname === '/personal/v1/auth/devices') {
         if (url.search) throw failure('INVALID_REQUEST');
         const current = context.authenticate(request, 'account:manage');
-        const devices = Object.entries(state.devices).map(([deviceId, device]) => ({
-          id: deviceId, name: device.name, createdAt: device.enrolledAt,
-          ...(context.cloudIdentity?.cloudDeviceId(current.ownerId, deviceId) ? { cloudDeviceId: context.cloudIdentity.cloudDeviceId(current.ownerId, deviceId) } : {}),
-          ...(device.lastSeenAt ? { lastSeenAt: device.lastSeenAt } : {}),
-          expiresAt: device.expiresAt ?? null, revoked: device.revoked,
-          current: deviceId === current.deviceId,
-        }));
+        const devices = directory(current.ownerId, state.devices, current.deviceId).map(group => group.row);
         return context.json(response, 200, { devices });
       }
       const deviceMatch = /^\/personal\/v1\/auth\/devices\/([A-Za-z0-9_-]+)$/.exec(pathname);
@@ -275,7 +271,11 @@ export function createHttpHandler(context) {
           const latest = context.authenticate(request, 'account:manage');
           if (latest.ownerId !== current.ownerId || latest.deviceId !== current.deviceId) throw failure('UNAUTHORIZED', 401);
           if (!Object.hasOwn(next.devices, target)) throw failure('NOT_FOUND', 404);
-          next.devices[target].name = name;
+          const group = directory(current.ownerId, next.devices, current.deviceId).find(group => group.members.includes(target));
+          for (const id of group.members) {
+            next.devices[id].name = name;
+            if (group.row.cloudDeviceId) next.devices[id].directoryName = name;
+          }
           return { id: target, name, revoked: next.devices[target].revoked };
         }));
         return context.json(response, 200, { device: renamed });
@@ -431,21 +431,9 @@ export function createHttpHandler(context) {
         } finally { await opened.handle.close(); }
       }
       const sharedImageMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]{1,128})\/attachments\/((?:attachment-[0-9a-f-]{36})|(?:sha256:[a-f0-9]{64}))$/i.exec(pathname.replace(/%3a/ig, ':'));
-      const chatImageMatch = request.method === 'PUT' && /^\/personal\/v1\/chats\/([A-Za-z0-9_-]{1,128})\/attachments\/(attachment-[0-9a-f-]{36})$/i.exec(pathname);
-      if (sharedImageMatch || chatImageMatch) {
-        let [, sessionId, attachmentId] = sharedImageMatch || chatImageMatch;
-        if (chatImageMatch) {
-          const selected = context.chats.requireChat(ownerId, sessionId);
-          if (selected.kind !== 'main' || !context.hostOwner(ownerId)) throw failure('CHAT_UNAVAILABLE', 404);
-          sessionId = await context.serial(async () => {
-            if (!context.chats.requireChat(ownerId, selected.chatId).attachmentSessionId) await context.mutate(ownerId, next => {
-              next.chatIdentity.chats[selected.chatId].attachmentSessionId = `session-${randomUUID()}`;
-            });
-            return context.chats.requireChat(ownerId, selected.chatId).attachmentSessionId;
-          });
-        }
+      if (sharedImageMatch) {
+        const [, sessionId, attachmentId] = sharedImageMatch;
         const ownedSession = () => {
-          if (chatImageMatch) { context.chats.requireChat(ownerId, chatImageMatch[1]); return; }
           const session = context.accountState(ownerId).sessions[sessionId];
           if (!session || session.ownerId !== ownerId ||
               !['personal-remote', 'shared-chat'].includes(session.origin)) throw failure('SESSION_UNAVAILABLE', 404);
@@ -511,17 +499,7 @@ export function createHttpHandler(context) {
           const latest = context.authenticate(request, 'commands:write');
           if (latest.ownerId !== ownerId || latest.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
         };
-        let conversationId = url.searchParams.get('conversationId');
-        const logicalChat = context.accountState(ownerId).chatIdentity?.chats[conversationId];
-        if (logicalChat) {
-          if (logicalChat.kind !== 'main' || !context.hostOwner(ownerId)) throw failure('CHAT_UNAVAILABLE', 404);
-          conversationId = await context.serial(async () => {
-            if (!context.chats.requireChat(ownerId, logicalChat.chatId).attachmentSessionId) await context.mutate(ownerId, next => {
-              next.chatIdentity.chats[logicalChat.chatId].attachmentSessionId = `session-${randomUUID()}`;
-            });
-            return context.chats.requireChat(ownerId, logicalChat.chatId).attachmentSessionId;
-          });
-        }
+        const conversationId = url.searchParams.get('conversationId');
         const result = await context.attachmentStores.get(ownerId).put({ attachmentId: attachmentMatch[1],
           conversationId,
           messageId: url.searchParams.get('messageId'), name: url.searchParams.get('name'),
@@ -894,7 +872,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, {
           ...context.service.status(ownerId), hostName:hostName(),
           presence: presence(backendStatus),
-          personalCapabilities: { workAndChat: 1, replyWait: typeof context.backend.waitForEvents === 'function' ? 1 : 0, replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1, modelServices: 1 },
+          personalCapabilities: { workAndChat: 1, replyWait: typeof context.backend.waitForEvents === 'function' ? 1 : 0, replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatLifecycle: 1, chatResources: 1, modelServices: 1 },
           executionAccount: context.hostOwner(ownerId),
           executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
@@ -1349,9 +1327,6 @@ export function createHttpHandler(context) {
       }
       if (request.method === 'GET' && pathname === '/personal/v1/chats/main') {
         if (url.search) throw failure('INVALID_REQUEST');
-        await context.sideChats.reconcile(ownerId);
-        const current = context.authenticate(request, 'sessions:read');
-        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
         return context.json(response, 200, await context.chats.main(ownerId));
       }
       if (request.method === 'GET' && pathname === '/personal/v1/chats') {
@@ -1378,7 +1353,6 @@ export function createHttpHandler(context) {
           if (context.closing) throw failure('SERVICE_CLOSING', 503);
           const revision = context.accountRevisionFor(ownerId);
           const chatId = chatTimelineMatch[1], action = chatTimelineMatch[2];
-          if (chatId === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
           // Query the response snapshot before deciding whether it can wait.
           let result = await context.chatTimeline.query(ownerId, chatId, action, url.searchParams);
           if (response.destroyed) return;
@@ -1395,7 +1369,6 @@ export function createHttpHandler(context) {
             if (context.closing) throw failure('SERVICE_CLOSING', 503);
             if (controller.signal.aborted) return;
             // Requery facts after wake; never return pre-wait authorization.
-            if (chatId === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
             result = await context.chatTimeline.query(ownerId, chatId, action, url.searchParams);
           } else if (accountChanged) waitOutcome = 'changed';
           const accountChanges = ['events', 'changes'].includes(action) ? await context.accountChanges(ownerId, controller.signal) : undefined;
@@ -1416,15 +1389,6 @@ export function createHttpHandler(context) {
           response.off('close', abort);
           context.closingSignal.removeEventListener('abort', abort);
         }
-      }
-      const sideResultMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/results$/.exec(pathname);
-      if (request.method === 'POST' && sideResultMatch) {
-        if (url.search) throw failure('INVALID_REQUEST');
-        const authorize = () => {
-          const current = context.authenticate(request, 'commands:write');
-          if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
-        };
-        return context.json(response, 201, await context.sideChats.share(ownerId, sideResultMatch[1], await context.readJson(request, 2048), authorize));
       }
       const chatMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)$/.exec(pathname);
       if (request.method === 'PATCH' && chatMatch) {
@@ -1563,7 +1527,8 @@ export function createHttpHandler(context) {
         const hasMore = offset + limit < ids.length;
         return context.json(response, 200, { sessions, groups: Object.values(state.sessionGroups ?? {}), snapshotAt,
           statusSummary: await context.sessionOperations.statusSummary(ownerId,descriptions),
-          hasMore, nextCursor: hasMore ? selectedIds.at(-1) : null });
+          // Every client polls this list, so it carries account changes now that no main chat read does (D92).
+          accountChanges: await context.accountChanges(ownerId), hasMore, nextCursor: hasMore ? selectedIds.at(-1) : null });
       }
       const groupMatch = /^\/personal\/v1\/session-groups(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
       if (groupMatch && (request.method === 'GET' && !groupMatch[1] || request.method === 'POST' && !groupMatch[1] || ['PATCH', 'DELETE'].includes(request.method) && groupMatch[1])) {
@@ -1968,16 +1933,12 @@ export function createHttpHandler(context) {
           context.authenticate(request, 'commands:write');
           return publicCommand(context.accountState(ownerId).commands[command.commandId]);
         };
-        if (['session.message', 'chat.message'].includes(body.kind)) context.nextSuggestions.cancel(ownerId);
+        if (body.kind === 'session.message') context.nextSuggestions.cancel(ownerId);
         if (temporarySessionPath) {
           exactKeys(body, ['requestId','modelProfileId','recallEnabled','autoDeleteDays'], ['requestId','modelProfileId']);
           body = { ...body, kind:'session.create', targetDeviceId:state.hostId, temporary:true };
         }
         if (taskAction) exactKeys(body, ['requestId', 'text'], ['requestId', 'text']);
-        if (pathname === '/personal/v1/commands' && body.kind === 'chat.message') {
-          return context.json(response, 202, { command: await context.mainChat.submit(ownerId, deviceId, body,
-            () => context.authenticate(request, 'commands:write')) });
-        }
         if (projectSessionMatch) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
         if (browserSessionPath) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
         if (sharedConversationMatch) exactKeys(body, ['requestId', 'modelProfileId', 'expectedSyncSeq',
@@ -1987,8 +1948,7 @@ export function createHttpHandler(context) {
         if (rootSource) {
           const segment = state.chatIdentity.segments[state.chatIdentity.sessionSegments[rootSource.sessionId]];
           const logical = state.chatIdentity.chats[segment?.chatId];
-          if (logical?.kind === 'main' && segment.state === 'sealed') throw failure('MAIN_CHAT_ROUTE_REQUIRED', 409);
-          if (logical?.kind === 'main' && logical.relay) throw failure('SESSION_BUSY', 409);
+          if (logical?.kind === 'main') throw failure('MAIN_CHAT_ROUTE_REQUIRED', 409);
         }
         const requestedProjectId = projectSessionMatch ? id(projectSessionMatch[1]) : null;
         const requestedProject = requestedProjectId ? state.projects?.[requestedProjectId] : null;
@@ -2100,7 +2060,6 @@ export function createHttpHandler(context) {
         if (state.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (state.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (state.chatOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
-        if (state.sideOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (Object.values(state.commands).some((command) =>
           command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
           throw failure('REQUEST_CONFLICT', 409);
@@ -2188,7 +2147,6 @@ export function createHttpHandler(context) {
           if (latest.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (latest.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (latest.chatOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
-          if (latest.sideOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (Object.values(latest.commands).some((command) =>
             command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
             throw failure('REQUEST_CONFLICT', 409);

@@ -17,216 +17,12 @@
       "name": "service context reaches native compaction and ten tool steps use changing wire budgets"
     },
     {
-      "file": "tests/ai-game-tool-contract.test.ts",
-      "name": "DSH turn stop looks up an ambiguous submit and requests one idempotent cancel"
-    },
-    {
-      "file": "tests/ai-game-tool-contract.test.ts",
-      "name": "terminal handoff wakes the owning DSH agent once and deduplicates from durable history"
-    },
-    {
-      "file": "tests/ai-game-tool-contract.test.ts",
-      "name": "fixed vendor ToolRuntime executes the official tool with approval and durable meta"
-    },
-    {
-      "file": "tests/ai-game-v2-host.test.ts",
-      "name": "device setup projects safe fields and saves only an explicit same-origin selection"
-    },
-    {
-      "file": "tests/ai-game-v2-host.test.ts",
-      "name": "a panel pause reaches the existing task directly, with owner and revision checks"
-    },
-    {
-      "file": "tests/ai-game-v2-host.test.ts",
-      "name": "model-visible task results include the revision required by control calls"
-    },
-    {
-      "file": "tests/ai-game-v2-host.test.ts",
-      "name": "freezes the general runner in the trusted host and enforces authoritative controls"
-    },
-    {
-      "file": "tests/ai-game-v2-host.test.ts",
-      "name": "rebuilds the canonical pending question even when a transport stub carries extra fields"
-    },
-    {
-      "file": "tests/ai-game-v2-host.test.ts",
-      "name": "derives one opaque submit key from owner and DSH user turn, not the tool attempt"
-    },
-    {
-      "file": "tests/ai-game-v2-host.test.ts",
-      "name": "turn abort does not look up or cancel a v2 task, while a watcher emits only durable attention notices"
-    },
-    {
       "file": "tests/dsh-web-profile.test.ts",
       "name": "minimal preset keeps its pinned tools and gets one isolated compactor without changing vendor"
     },
     {
-      "file": "tests/memory-plugin-contract.test.ts",
-      "name": "world adapter exposes the formal Core subject_id for V2 command construction without inventing one"
-    },
-    {
-      "file": "tests/memory-plugin-contract.test.ts",
-      "name": "registered memory handler serves world and normalizes command receipts without leaking instance state"
-    },
-    {
-      "file": "tests/memory-plugin-contract.test.ts",
-      "name": "普通聊天行为：只交接真人文本，失败落盘后重启恢复且不重复"
-    },
-    {
-      "file": "tests/memory-plugin-contract.test.ts",
-      "name": "Recall 行为：同问跨会话和新用户序号重新查询，无命中清空旧 snapshot"
-    },
-    {
-      "file": "tests/memory-plugin-contract.test.ts",
-      "name": "纠正写入口只接受精确同源 loopback Origin"
-    },
-    {
-      "file": "tests/memory-plugin-contract.test.ts",
-      "name": "recall_memory uses the real registered tool, fails closed for an unknown/cloud raw route, and reports bridge partial failure"
-    },
-    {
-      "file": "tests/memory-plugin-contract.test.ts",
-      "name": "recall_memory compiles through the real vendor ToolRuntime with required query and canonical output"
-    },
-    {
       "file": "tests/minimal-context-compaction.test.ts",
       "name": "generated minimal compactor automatically reduces pressure at pre-step, preserves original history, and stays in its preset scope"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "official Context/Session/ToolRuntime creates a preset-bound skeleton and keeps projects owner-scoped"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "formal ToolRuntime candidate output is lossless and one call creates exactly one candidate"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "official vendor Context and ToolRuntime hide and deny broad tools before a mod-maintainer first prompt"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a user-selected formal mod-maintainer session safely initializes and restores exactly one bound Mod without reattaching its existing DSH session"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a failed manual initializer resumes its already-marked project instead of creating a second project or rebinding a legacy one"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a manual initializer resumes its recorded first requirement after a restart boundary before it marks creation ready"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "detail derives controls and validation facts from the active version and actual run without granting lifecycle authority"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "official scoped tools.restrict disposer hides creation-turn tools and restores the next turn schema"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "create carries the real owner message into one maintenance requirement and reports generating, not business completion"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "failed preset provisioning is owner-idempotent, structured, and does not block later service recovery"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "server-bound SDK rejects path escape, links, stale writes, and broad create/import while preserving source hashes"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "generic creation can publish a first locally stored favourite through SDK check and complete"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "SDK exposes versioned manifest edits but cannot self-grant host capability access"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "real ToolRuntime behavior-check failures disclose payload shape without replaying payload values, while a passing receipt states its isolated capability boundary"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a checked SDK candidate is invalidated by workspace or manifest changes and never covers a new requirement"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "an SDK check followed by a user stop cannot clear the stop latch during no-argument complete"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "same-origin UI path may explicitly start, but an Agent cannot clear stopLatch; assets/invoke are frame-bound"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "production broker uses maintenance session route, forwards AbortSignal, and never reads maintenance history"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "offline incident remains pending, then resumes once with a stable maintenance message id after flush"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a recorded requirement is durably relayed to the associated maintenance session"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "complete_update executes the requested +2 behavior, preserves live count, resolves once, and is idempotent"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "maintenance outcome is durably appended once to the original owner conversation and does not claim user acceptance"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a same-session maintainer completion suppresses followup durably"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "offline owner outcome ignores unrelated agents and delivers once when the owner agent is created"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "owner delivery backs off before retry, stops after three actual errors, and never rolls back the published Mod"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "Cordis effect disposal clears a scheduled owner delivery timer"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "an invalid candidate fails the update while the old healthy run keeps serving its current behavior"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a passing SDK check cannot false-ready a model-required candidate or pause the healthy old run before host grants are checked"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a new start that writes partial state then fails restores the checkpointed old version and state"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "only a maintenance session captures a real user message during an entering vendor pre-step and injects one current-turn guide"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a user stop while rollback data restoration is suspended keeps stopLatch and never restarts the old version"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a user stop racing the automatic restart remains stopped and cannot be overwritten by complete_update"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "a cancelled maintenance turn after validation cannot switch away from the running version"
-    },
-    {
-      "file": "tests/mods-integration-host.test.ts",
-      "name": "two complete_update calls for one project serialize their activation work and leave the final version running"
     },
     {
       "file": "tests/personal-access-electron.test.ts",
@@ -250,7 +46,7 @@
     },
     {
       "file": "tests/personal-approval-bridge.test.ts",
-      "name": "the verified WeftMod script approval alias preserves actual execution identity and rejects unrelated names"
+      "name": "an approval request cannot stand in for a different executing tool"
     },
     {
       "file": "tests/personal-approval-bridge.test.ts",
@@ -418,7 +214,6 @@
     "tests/bl-29-timing-config.test.ts",
     "tests/vendor-hidden-subprocesses.test.ts",
     "tests/bl-29-runtime-close.test.ts",
-    "tests/weftmod-service.test.ts",
     "tests/migration-first-message.test.ts",
     "tests/dsh-packaged-css-paths.test.ts",
     "tests/personal-connectors-native.test.ts",
@@ -426,7 +221,6 @@
     "tests/personal-cloud-backup-snapshot-vendor.test.ts",
     "tests/work-and-chat-runtime.test.ts",
     "tests/fix-36-title-vendor.test.ts",
-    "tests/weftmod-plugin.test.ts",
     "tests/memory-cold-cleanup.test.ts",
     "tests/memory-erasure-format.test.ts"
   ]

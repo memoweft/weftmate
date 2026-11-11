@@ -14,6 +14,16 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
     const danger = node('section','data-danger'); danger.append(node('h2','','危险操作'),node('p','muted','删除无法撤销。建议先导出；程序、其他账户和项目原件会保留。'));
     const deleteButton = button('删除本账户的全部数据', () => confirmDanger('delete'), 'danger'), closeButton = button('注销账号', () => confirmDanger('close-account'), 'danger'); danger.append(deleteButton,closeButton);
     target.classList.add('data-settings'); target.replaceChildren(header,total,bar,list,accounting,progress,error,actions,danger);
+    if(!desktop && core.state.cloudAuth?.mode==='authenticated' && core.getBodyReplica) {
+        const copies=node('section','group'),status=node('p','muted');
+        const clear=button('清除本机正文与附件副本',async()=>{
+            clear.disabled=true;
+            try{const replica=await core.getBodyReplica();if(!replica)throw Error('KEY_REQUIRED');await replica.clear();status.textContent='本机下载副本已清除。';}
+            catch{status.textContent='暂时无法清理，请重试。';}finally{clear.disabled=false;}
+        });
+        copies.append(node('h2','','本机对话副本'),node('p','muted','清理下载到此设备的正文和附件。来源设备与此设备新写的消息保留。'),clear,status);
+        target.prepend(copies);
+    }
     const identity = () => core.state?.auth?.ownerId ?? core.state?.ownerId ?? core.state?.owner;
     const initialIdentity = identity();
     const current = () => identity() === initialIdentity && target.isConnected;

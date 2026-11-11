@@ -183,7 +183,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         const operation=folderMutationScope();core.state.folderRegistering=operation;effects.updateAvailability();
         try {const result=await create(fields);if(!folderMutationCurrent(operation))return null;
             await core.refreshSessionProjects();return folderMutationCurrent(operation)?result:null;
-        } finally {if(core.state.folderRegistering===operation)core.state.folderRegistering=null;if(operation.identity===core.state.identityGeneration)effects.updateAvailability();}
+        } catch(error) {operation.failed=true;throw error;} finally {if(core.state.folderRegistering===operation)core.state.folderRegistering=null;if(operation.identity===core.state.identityGeneration)effects.updateAvailability();}
     }
     function folderChoiceBusy() {
         return !!(core.state.submitting || core.state.unresolvedSubmission || core.state.sessionSelecting || core.state.attachmentUpload || core.state.sideCreating || folderMutationPending() || core.state.turnStatus === 'running' || core.state.sessions.find(row=>row.sessionId===core.state.selectedSessionId)?.running);
@@ -193,9 +193,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         const identity = core.state.identityGeneration;
         const operation=folderMutationScope();core.state.folderChanging=operation;effects.updateAvailability();
         try {
-            if ((core.isMainChat?.() || core.inMainChat?.()) && !(core.supportsWorkModes?.() && core.currentConversationMode() === 'work')) {
-                if (project) await core.openSideChat({entry:'composer',parent:{kind:'project',id:project.projectId}});
-            } else if (core.state.newConversation) {
+            if (core.state.newConversation) {
                 core.state.newConversationProjectId = project?.projectId || null;
                 if (project && core.supportsWorkModes?.()) { core.state.newConversationMode = 'work'; core.chooseSidebarMode('work'); }
             } else if (core.state.selectedSessionId) {
@@ -203,7 +201,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             }
             if (identity !== core.state.identityGeneration) return;
             rememberFolder(project?.projectId || null);
-        } finally {if(core.state.folderChanging===operation)core.state.folderChanging=null;if(identity===core.state.identityGeneration)effects.updateAvailability();}
+        } catch(error) {operation.failed=true;throw error;} finally {if(core.state.folderChanging===operation)core.state.folderChanging=null;if(identity===core.state.identityGeneration)effects.updateAvailability();}
     }
     let visibleRead;
     async function markVisibleSessionRead(isVisible) {
@@ -219,7 +217,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             if(!current())return;
             const history=await core.refreshHistory(false);
             if(!current() || !['changed','unchanged'].includes(history?.kind) || core.state.historyHasMore || core.state.chatWindow?.hasNewer || !isVisible())return;
-            if(core.inMainChat?.())await core.markLatestChatRead();
+            if (core.inMainChat?.()) await core.markLatestChatRead();
             else await updateSession(sessionId,{unread:false});
         }
         catch { /* Keep unread when history or acknowledgement fails; a visible refresh retries. */ }

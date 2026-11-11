@@ -2,7 +2,7 @@
 globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
     const messageBodies = new Map();
     const submissionFailures = new Map();
-    const chatCommand = kind => ['session.create','session.side.create','session.message','chat.message','session.cancel'].includes(kind);
+    const chatCommand = kind => ['session.create','session.side.create','session.message','session.cancel'].includes(kind);
     function capturedSourceText(raw) {
         const parse = value => { try { return JSON.parse(value); } catch { return null; } };
         const collect = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(collect)
@@ -50,7 +50,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
         });
     }
     function timelineEventsForContext(context = core.conversationTaskContext()) {
-        if (core.inMainChat?.()) return [...core.state.chatWindow.events.values()].filter(event => event.sourceRef?.kind === 'native' && event.sourceRef.sessionId === context.sessionId)
+        if (core.inLogicalTimeline?.()) return [...core.state.chatWindow.events.values()].filter(event => event.sourceRef?.kind === 'native' && event.sourceRef.sessionId === context.sessionId)
             .map(event => ({...event,seq:event.sourceRef.seq,sessionId:event.sourceRef.sessionId}));
         return context.source === 'phone' ? core.state.phoneHostEvents.get(context.conversationId) || [] : [...core.state.historyEvents.values()];
     }
@@ -227,7 +227,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             else core.operation('正在提交请求。');
             try {
                 const body = { requestId, kind, targetDeviceId: core.state.hostId, ...fields };
-                if (['session.message', 'chat.message'].includes(kind)) messageBodies.set(`${core.state.ownerId}:${requestId}`, body);
+                if (kind === 'session.message') messageBodies.set(`${core.state.ownerId}:${requestId}`, body);
                 const payload = await core.accessApi('/commands', { method: 'POST', protectedWrite: true, body });
                 if (!payload.command)
                     throw { code: 'REQUEST_FAILED' };

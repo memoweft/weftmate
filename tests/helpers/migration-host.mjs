@@ -40,7 +40,7 @@ export async function migrationHost({ nativeSession = false, executable, source 
     if (req.method === 'GET') return res.writeHead(200, {'content-type':'application/json'}).end(JSON.stringify({total_slots:1,n_ctx:32768,currentModelId:'synthetic-fx21',switching:false,probe:{health:true}}));
     let raw = ''; for await (const b of req) raw += b;
     const input = JSON.parse(raw); h.requests.push(input);
-    const message = h.respond ? await h.respond(input) : {role:'assistant',content:'主对话首条消息成功，合成回复。'};
+    const message = h.respond ? await h.respond(input) : {role:'assistant',content:'首条消息成功，合成回复。'};
     const usage = {prompt_tokens:20,completion_tokens:10,total_tokens:30};
     if (input.stream) {
       res.writeHead(200, {'content-type':'text/event-stream'});
@@ -98,17 +98,18 @@ export async function migrationHost({ nativeSession = false, executable, source 
     if (['rejected','failed','uncertain'].includes(row.state)) throw new Error(JSON.stringify(row));
     return row.state === 'accepted_by_dsh' && row;
   });
-  h.mainFirst = async () => {
-    const chat = (await h.api('/chats/main')).body.chat;
-    assert.equal(chat.activeSessionId,null);
-    const response = await h.api('/commands',{requestId:randomUUID(),kind:'chat.message',chatId:chat.chatId,targetDeviceId:h.hostId,modelProfileId:h.modelId,text:'合成新账号第一句话'});
+  h.firstMessage = async () => {
+    const created = await h.api('/commands',{requestId:randomUUID(),kind:'session.create',targetDeviceId:h.hostId,modelProfileId:h.modelId});
+    assert.equal(created.status,202,JSON.stringify(created));
+    const { sessionId } = await h.receipt(created.body.command);
+    const response = await h.api('/commands',{requestId:randomUUID(),kind:'session.message',sessionId,targetDeviceId:h.hostId,text:'合成新账号第一句话'});
     assert.equal(response.status,202,JSON.stringify(response));
     const receipt = await h.receipt(response.body.command);
     const events = await until(async () => {
       const r = await h.api('/sessions/'+receipt.sessionId+'/events?limit=200');
-      return r.body.events?.some(e => e.type==='assistant.message' && e.data?.text?.includes('主对话首条消息成功')) && r.body.events.some(e=>e.type==='turn.ended') && r.body.events;
+      return r.body.events?.some(e => e.type==='assistant.message' && e.data?.text?.includes('首条消息成功')) && r.body.events.some(e=>e.type==='turn.ended') && r.body.events;
     });
-    return {chatId:chat.chatId,sessionId:receipt.sessionId,reply:events.find(e=>e.type==='assistant.message').data.text};
+    return {sessionId:receipt.sessionId,reply:events.find(e=>e.type==='assistant.message').data.text};
   };
   h.close = async ({ failed = false, beforeDataRemoval } = {}) => {
     if (failed) evidence?.preserveFailure();

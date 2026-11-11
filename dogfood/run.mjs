@@ -6,14 +6,12 @@
  *   npm run dogfood -- --dsh vendor --dsh-path 'Z:\\独立的dsh-runtime'
  *
  * DSH 使用 `--port 0` 让操作系统分配独立 loopback 端口；没有固定 7788/7899 契约。
- * MemoWeft 试验接缝默认关闭；AI-GAME 由 WeftMate 受管启动，普通 DSH 不依赖它就绪。
  */
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { configureMemoWeft } from './memoweft-config.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const projectRoot = resolve(here, '..')
@@ -22,9 +20,7 @@ const defaultVendor = join(projectRoot, 'vendor', 'dsh-runtime')
 
 function usage() {
   return [
-    '用法：npm run dogfood -- [--dsh vendor] [--dsh-path <独立 vendor runtime 路径>]',
-    '      [--user-data-dir <隔离目录>] [--memoweft-config <本机记忆配置.json>]',
-    '      [--ai-game-runtime-root <受管运行时目录>] [--phone-config <手机配置.json>] [--dry-run]',
+    '用法：npm run dogfood -- [--dsh vendor] [--dsh-path <独立 vendor runtime 路径>] [--user-data-dir <隔离目录>] [--dry-run]',
     '',
     '示例：',
     '  npm run dogfood -- --dsh vendor',
@@ -45,7 +41,7 @@ function optionValue(args, index, name) {
 }
 
 function parseArgs(args) {
-  const out = { dsh: 'vendor', dshPath: null, userData: defaultUserData, memoweftConfig: null, aiGameRuntimeRoot: null, phoneConfig: null, dryRun: false, help: false }
+  const out = { dsh: 'vendor', dshPath: null, userData: defaultUserData, dryRun: false, help: false }
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]
     if (arg === '--dry-run') { out.dryRun = true; continue }
@@ -56,12 +52,6 @@ function parseArgs(args) {
     if (dshPath) { out.dshPath = dshPath.value; index = dshPath.next; continue }
     const userData = optionValue(args, index, '--user-data-dir')
     if (userData) { out.userData = userData.value; index = userData.next; continue }
-    const memoryConfig = optionValue(args, index, '--memoweft-config')
-    if (memoryConfig) { out.memoweftConfig = memoryConfig.value; index = memoryConfig.next; continue }
-    const runtimeRoot = optionValue(args, index, '--ai-game-runtime-root')
-    if (runtimeRoot) { out.aiGameRuntimeRoot = runtimeRoot.value; index = runtimeRoot.next; continue }
-    const phoneConfig = optionValue(args, index, '--phone-config')
-    if (phoneConfig) { out.phoneConfig = phoneConfig.value; index = phoneConfig.next; continue }
     throw new Error(`未知参数：${arg}`)
   }
   if (out.help) return out
@@ -87,20 +77,12 @@ if (options.help) {
 const userDataDir = resolve(projectRoot, options.userData)
 const dshRoot = resolve(projectRoot, options.dshPath ?? defaultVendor)
 const childEnv = { ...process.env }
+for (const key of Object.keys(childEnv)) if (key.startsWith('MEMOWEFT_')) delete childEnv[key]
 delete childEnv.WEFTMATE_DSH_CHECKOUT
 delete childEnv.WEFTMATE_DSH_RUNTIME
 childEnv.WEFTMATE_DSH_RUNTIME = dshRoot
 childEnv.WEFTMATE_USER_DATA = userDataDir
-let memoryConfig
-try { memoryConfig = configureMemoWeft(options.memoweftConfig, childEnv) } catch (error) {
-  console.error('[dogfood] ' + error.message)
-  process.exit(2)
-}
 childEnv.WEFTMATE_DOGFOOD_CONTROL = '1'
-delete childEnv.WEFTMATE_AI_GAME_ORIGIN
-if (options.aiGameRuntimeRoot) childEnv.WEFTMATE_AI_GAME_RUNTIME_ROOT = resolve(projectRoot, options.aiGameRuntimeRoot)
-delete childEnv.WEFTMATE_PHONE_EXECUTION_CONFIG
-if (options.phoneConfig) childEnv.WEFTMATE_PHONE_EXECUTION_CONFIG = resolve(projectRoot, options.phoneConfig)
 
 const config = {
   mode: options.dsh,
@@ -108,10 +90,6 @@ const config = {
   dshRootExists: existsSync(dshRoot),
   userData: userDataDir,
   port: 'dynamic-loopback',
-  memoweft: memoryConfig.enabled ? 'local' : 'disabled',
-  memoryRoute: memoryConfig.enabled ? memoryConfig : null,
-  aiGame: options.aiGameRuntimeRoot ? 'managed-configured' : 'not-configured',
-  phoneExecution: options.phoneConfig ? 'configured' : 'disabled',
   runtimeEnv: {
     WEFTMATE_DSH_CHECKOUT: childEnv.WEFTMATE_DSH_CHECKOUT ?? null,
     WEFTMATE_DSH_RUNTIME: childEnv.WEFTMATE_DSH_RUNTIME ?? null,
@@ -120,9 +98,6 @@ const config = {
 
 console.log('[dogfood] CONFIG ' + JSON.stringify(config))
 console.log('[dogfood] 端口由 OS 动态分配；实际地址以 “[weftmate] ✓ DSH web 运行时就绪” 日志为准。')
-console.log(memoryConfig.enabled
-  ? '[dogfood] MemoWeft 已启用本地记忆，数据保存在本候选目录；凭据通过应用模型设置读取。'
-  : '[dogfood] MemoWeft 已关闭；AI-GAME 由宿主按需受管，普通 DSH 对话不依赖本地端口。')
 
 if (options.dryRun) process.exit(0)
 

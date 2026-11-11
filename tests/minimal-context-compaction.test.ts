@@ -5,7 +5,7 @@ import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { writeContextAwareMinimalPreset, writeWebProfile } from '../src/dsh-web-runtime.ts'
+import { writeContextAwareMinimalPreset } from '../src/dsh-web-runtime.ts'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
 const vendor = join(repository, 'vendor', 'dsh-runtime')
@@ -49,15 +49,6 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
   const generated = parseDocument(await readFile(join(generatedRoot, 'minimal', 'agent.cordis.yml'), 'utf8')).toJS()
   const compaction = generated.find((row: any) => row.id === 'compaction')
   assert.ok(compaction, 'minimal must contain its generated context lifecycle')
-  const maintainerHome = join(root, 'maintainer-home')
-  await writeWebProfile(maintainerHome, 'weftmate')
-  const maintainer = parseDocument(await readFile(join(maintainerHome, '.agent-presets', 'mod-maintainer', 'agent.cordis.yml'), 'utf8')).toJS()
-  const maintainerCompaction = maintainer.find((row: any) => row.id === 'compaction')
-  assert.ok(maintainerCompaction, 'mod-maintainer must contain its generated context lifecycle')
-  assert.deepEqual(maintainerCompaction.isolate, { compaction: true, toolResultPruner: true })
-  assert.deepEqual(maintainerCompaction.config[0].config, {
-    auto: true, thresholdRatio: 0.85, retainRatio: 0.16, maxTokens: 4096,
-  })
   const contextWindow = 10_000
   const summaryCalls: any[] = []
   class FixtureAdapter extends llmModule.LlmAdapter {
@@ -66,8 +57,8 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
     }
     async *stream(options: any) {
       assert.equal(options.purpose, 'compaction', 'the test does not ask for an ordinary model response')
-      assert.equal(options.provider, 'compaction-fixture', 'the summary remains on the maintenance session provider')
-      assert.equal(options.model, 'fixture-model', 'the summary remains on the maintenance session model')
+      assert.equal(options.provider, 'compaction-fixture', 'the summary remains on the current session provider')
+      assert.equal(options.model, 'fixture-model', 'the summary remains on the current session model')
       summaryCalls.push(options)
       const summary = `CHECKPOINT ${options.sessionId}: preserve the current fixture objective and continue from the retained tail.`
       yield { type: 'block-start', index: 0, blockType: 'text' }
@@ -77,7 +68,7 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
   }
   ctx.llm.registerAdapter(['compaction-fixture'], new FixtureAdapter())
 
-  async function agentOn(name: string, mountCompactor: boolean, composition = compaction) {
+  async function agentOn(name: string, mountCompactor: boolean) {
     let parent: object | undefined
     if (mountCompactor) {
       parent = { preset: name }
@@ -86,7 +77,7 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
       const directory = join(root, 'scoped', name)
       await mkdir(directory, { recursive: true })
       const path = join(directory, 'agent.cordis.yml')
-      await writeFile(path, stringify([composition]), 'utf8')
+      await writeFile(path, stringify([compaction]), 'utf8')
       await presetModule.mountPreset(standing.ctx, { id: name, name, path, trust: 'system' })
     }
     const session = ctx.sessions.create(`fixture-${name}`)
@@ -102,22 +93,15 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
   const minimal = await agentOn('minimal', true)
   const standard = await agentOn('standard', true)
   const rootAgent = await agentOn('root', false)
-  const modMaintainer = await agentOn('mod-maintainer', true, maintainerCompaction)
+  const manualAgent = await agentOn('minimal-manual', true)
   const minimalEngine = presetModule.serviceForAgent(ctx, minimal, 'compaction')
   const standardEngine = presetModule.serviceForAgent(ctx, standard, 'compaction')
-  const modMaintainerEngine = presetModule.serviceForAgent(ctx, modMaintainer, 'compaction')
-  assert.ok(minimalEngine && standardEngine && modMaintainerEngine)
+  assert.ok(minimalEngine && standardEngine)
   assert.notEqual(minimalEngine, standardEngine, 'the two presets own separate compaction services')
-  assert.notEqual(modMaintainerEngine, standardEngine, 'mod-maintainer owns an independent compaction service')
   assert.equal(ctx.get('compaction'), undefined, 'there is no process-global fallback compactor')
   assert.equal(minimalEngine.config.auto, true)
   assert.equal(minimalEngine.config.thresholdRatio, 0.8)
-  assert.equal(modMaintainerEngine.config.auto, true)
-  assert.equal(modMaintainerEngine.config.thresholdRatio, 0.85)
-  assert.equal(modMaintainerEngine.config.retainRatio, 0.16)
-  assert.equal(modMaintainerEngine.config.maxTokens, 4096)
   assert.equal(ctx.commands.list(minimal).some((command: any) => command.name === 'compact'), true)
-  assert.equal(ctx.commands.list(modMaintainer).some((command: any) => command.name === 'compact'), true)
   assert.equal(ctx.commands.list(rootAgent).some((command: any) => command.name === 'compact'), false)
 
   function closedTurn(agent: any, turn: number, text: string) {
@@ -151,36 +135,26 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
     agent.session.append('turn/start', { turn: start + 3 })
   }
   // `/compact` is a human command, not a model tool. It succeeds below the
-  // 85% automatic threshold and uses the same current session route.
-  const manualBody = 'manual maintenance history '.repeat(160)
-  for (let turn = 1; turn <= 3; turn++) closedTurn(modMaintainer, turn, manualBody)
-  const beforeManual = ctx.tokenMeter.measure(modMaintainer.session)
-  assert.ok(beforeManual.totalTokens < contextWindow * 0.85)
-  const manual = await ctx.commands.execute(modMaintainer, '/compact', new AbortController().signal)
+  // 80% automatic threshold and uses the same current session route.
+  const manualBody = 'manual conversation history '.repeat(160)
+  for (let turn = 1; turn <= 3; turn++) closedTurn(manualAgent, turn, manualBody)
+  const beforeManual = ctx.tokenMeter.measure(manualAgent.session)
+  assert.ok(beforeManual.totalTokens < contextWindow * 0.8)
+  const manual = await ctx.commands.execute(manualAgent, '/compact', new AbortController().signal)
   assert.equal(manual?.result.kind, 'success')
-  assert.equal(summaryCalls.length, 1, 'manual /compact invokes the maintenance summary route once')
-  assert.equal(summaryCalls[0].sessionId, modMaintainer.id)
+  assert.equal(summaryCalls.length, 1, 'manual /compact invokes the current session summary route once')
+  assert.equal(summaryCalls[0].sessionId, manualAgent.id)
   assert.equal(summaryCalls[0].purpose, 'compaction')
-  assert.ok(ctx.tokenMeter.measure(modMaintainer.session).totalTokens < beforeManual.totalTokens)
-  assert.deepEqual(modMaintainer.session.events.filter((event: any) => event.type === 'command/run' || event.type === 'command/done').map((event: any) => event.type), ['command/run', 'command/done'])
-
-  for (let turn = 4; turn <= 6; turn++) closedTurn(modMaintainer, turn, body)
-  modMaintainer.session.append('turn/start', { turn: 7 })
-  assert.ok(ctx.tokenMeter.measure(modMaintainer.session).totalTokens > contextWindow * 0.85)
-  await preStep(modMaintainer, 7)
-  assert.equal(summaryCalls.length, 2, '85% maintenance pre-step invokes exactly one automatic summary')
-  assert.equal(summaryCalls[1].sessionId, modMaintainer.id)
-  assert.ok(ctx.tokenMeter.measure(modMaintainer.session).totalTokens < contextWindow * 0.85)
-  assert.equal(modMaintainer.session.surface.replaceGeneration, 2, 'manual and automatic compaction both replace the active maintenance surface')
-
+  assert.ok(ctx.tokenMeter.measure(manualAgent.session).totalTokens < beforeManual.totalTokens)
+  assert.deepEqual(manualAgent.session.events.filter((event: any) => event.type === 'command/run' || event.type === 'command/done').map((event: any) => event.type), ['command/run', 'command/done'])
   const beforeMinimal = ctx.tokenMeter.measure(minimal.session)
   assert.ok(beforeMinimal.totalTokens > contextWindow * 0.8)
   const originalEvents = minimal.session.events.map((event: any) => structuredClone(event))
   const originalSurface = [...minimal.session.surface.nodes]
   await preStep(minimal, 6)
   const afterMinimal = ctx.tokenMeter.measure(minimal.session)
-  assert.equal(summaryCalls.length, 3, 'one minimal pre-step invokes exactly one summary')
-  assert.equal(summaryCalls[2].sessionId, minimal.id)
+  assert.equal(summaryCalls.length, 2, 'one minimal pre-step invokes exactly one summary')
+  assert.equal(summaryCalls[1].sessionId, minimal.id)
   assert.ok(afterMinimal.totalTokens < contextWindow * 0.8, `pressure should fall below the default threshold: ${afterMinimal.totalTokens}`)
   assert.equal(minimal.session.surface.replaceGeneration, 1)
   assert.deepEqual(minimal.session.events.slice(0, originalEvents.length), originalEvents, 'compaction retains every original durable event')
@@ -192,14 +166,14 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
 
   // The same pressure on an agent outside either preset has no listener.
   await preStep(rootAgent, 4)
-  assert.equal(summaryCalls.length, 3)
+  assert.equal(summaryCalls.length, 2)
   assert.equal(rootAgent.session.surface.replaceGeneration, 0)
   // Standard's own pre-step gets its one compactor, not minimal's second one.
   await preStep(standard, 4)
-  assert.equal(summaryCalls.length, 4)
-  assert.equal(summaryCalls[3].sessionId, standard.id)
+  assert.equal(summaryCalls.length, 3)
+  assert.equal(summaryCalls[2].sessionId, standard.id)
   assert.equal(standard.session.surface.replaceGeneration, 1)
   assert.equal(minimal.session.surface.replaceGeneration, 1)
   await preStep(minimal, 6)
-  assert.equal(summaryCalls.length, 4, 'a successfully reduced minimal context is not compacted again')
+  assert.equal(summaryCalls.length, 3, 'a successfully reduced minimal context is not compacted again')
 })

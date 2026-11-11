@@ -254,7 +254,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         renderModelHint(value);
         ui.renderTimeline();
         for (const waiting of ui.byId('transcript').querySelectorAll('.inline-waiting .inline-progress-text')) {
-            waiting.textContent = core.processingStageLabel(core.state.mainChat?.processing || core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.processing);
+            waiting.textContent = core.processingStageLabel(core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.processing);
             waiting.classList.toggle('is-running', core.state.online);
         }
         WeftPopover.modelGate({missing:!!core.state.account && core.state.modelsKnown===true && !core.state.models.some(model=>model.configured!==false&&model.available!==false),
@@ -271,7 +271,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         core.stopAssistantRefresh();
         core.startConnection(async () => {
             await core.refreshAssistant();
-            await Promise.all([core.refreshHistory(), core.reconcileMainRequests(), core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]);
+            await Promise.all([core.refreshHistory(), core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]);
             await core.offlineConnectionRestored?.();
         });
         core.state.refreshTimer = setInterval(() => {
@@ -329,6 +329,8 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('revoke-confirm').disabled = false;
     }
     function resetIdentityControls() {
+        ui.closeBodyView?.();
+        ui.closeChatDirectory?.();
         globalThis.WeftPanels?.reset();
         globalThis.WeftMotion?.resetIdentity();
         ui.byId('account-name').textContent = '';
@@ -376,7 +378,9 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function paintScreen(view) {
         void ui.checkCloudBackupPrompt?.();
+        if (view === 'login') ui.restoreLoginView?.();
         const wasMemory=ui.motionView==='memory';
+        if (wasMemory && view!=='memory') ui.closeSyncedMemory?.();
         for (const name of ui.views)
             ui.byId(`${name}-view`).hidden = name !== view && !(['account', 'memory'].includes(view) && name === 'assistant');
         const retainedWorkspace=view==='assistant'&&['account','memory'].includes(ui.motionView);

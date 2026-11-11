@@ -235,3 +235,12 @@ body:has(#app) .drawer .profile-link { font-size:var(--wm-type-sidebar); padding
 :is(html[data-reduced-motion],body.calm) dialog.dialog:not(.settings-dialog) { animation:none; }
 @media(prefers-reduced-motion:reduce) { html:not([data-motion-full]) dialog.dialog:not(.settings-dialog) { animation:none; } }
 .health-enter :is(.health-graphic-grow,.health-graphic-draw,.health-graphic-sweep),.health-day-enter .health-layout { animation-duration:var(--dur-4); animation-timing-function:var(--ease-out); }
+
+#memory-view[data-synced-memory] > :not(.memory-heading):not(.synced-memory) { display: none; }
+.synced-memory .device-item { display: block; }
+
+.pulled-chat { width:min(820px,calc(100vw - 32px)); max-height:calc(100vh - 32px); }
+.pulled-chat .dialog-body { overflow:auto; max-height:60vh; }
+.pulled-chat .dialog-footer { display:flex; flex-wrap:wrap; gap:var(--wm-space-2,8px); }
+.pulled-chat textarea { width:100%; min-height:80px; }
+.pulled-messages .message { display:block; padding:12px 0; }

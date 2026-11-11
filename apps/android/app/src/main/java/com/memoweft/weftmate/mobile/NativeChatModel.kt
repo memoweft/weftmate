@@ -44,6 +44,8 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     var approvals by mutableStateOf(emptyList<JSONObject>())
     var questions by mutableStateOf(emptyList<JSONObject>())
     var attachments by mutableStateOf(emptyList<JSONObject>())
+    var contextUsage by mutableStateOf<NativeContextUsage?>(null)
+        private set
     var chats by mutableStateOf(emptyList<JSONObject>())
     var models by mutableStateOf(emptyList<JSONObject>())
     var hostModelServices by mutableStateOf(false)
@@ -111,6 +113,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     var dark by mutableStateOf(false)
     var textSize by mutableFloatStateOf(DesignTokens.font15)
     var codeSize by mutableFloatStateOf(DesignTokens.font13)
+    var reducedMotion by mutableStateOf(false)
     var olderCursor by mutableStateOf("")
     var hasOlder by mutableStateOf(false)
     var sendAvailable by mutableStateOf(true)
@@ -224,7 +227,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         sendAvailable = modelId.isNotBlank() && !phoneModelSwitching
     }
     private fun phoneParams() = JSONObject().put("owner", phoneOwner).put("conversationId", chatId.takeUnless { it == "phone-new" })
-    private fun readingPreferences(view:JSONObject) { textSize=view.optDouble("fontSize",DesignTokens.font15.toDouble()).toFloat();codeSize=view.optDouble("codeFontSize",DesignTokens.font13.toDouble()).toFloat() }
+    private fun readingPreferences(view:JSONObject) { textSize=view.optDouble("fontSize",DesignTokens.font15.toDouble()).toFloat();codeSize=view.optDouble("codeFontSize",DesignTokens.font13.toDouble()).toFloat();reducedMotion=view.optBoolean("reducedMotion") }
     private fun refreshPhone(view: JSONObject) {
         readingPreferences(view)
         if (!view.optBoolean("ready") || view.optString("owner") != phoneOwner) return
@@ -274,6 +277,17 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                 .put("title", c.optJSONArray("turns")?.optJSONObject(0)?.optJSONArray("messages")?.optJSONObject(0)?.optString("text")?.take(40) ?: "新对话") }
         }
     }
+    fun openMessageVersion(session: String) {
+        if (session.isBlank()) return
+        // Selecting clears the old rows, so the originating message cannot own this coroutine.
+        val current = generation
+        launch {
+            refreshChats()
+            if (generation != current) return@launch
+            val version = chats.find { it.stringOrEmpty("activeSessionId") == session || it.stringOrEmpty("sessionId") == session }
+            if (version != null) select(version) else refresh()
+        }
+    }
     suspend fun select(chat: JSONObject, requestedApprovalMode: String? = null) {
         val sourceHost = chat.stringOrEmpty("workHostId").ifEmpty { chat.stringOrEmpty("hostId") }
         if (!hostChatUsesPhoneStorage(chat) && sourceHost.isNotEmpty() && sourceHost != hostId && computers.any { it.stringOrEmpty("hostId") == sourceHost }) {
@@ -297,6 +311,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         newWork = false
         applyWorkMetadata(chat, true)
         sessionId = chat.optString("activeSessionId").takeUnless { it == "null" } ?: ""
+        contextUsage = nativeContextUsage(chat)
         sendAvailable = phone || chat.optBoolean("sendAvailable")
         title = hostChatTitle(chat)
         timeZone = chat.optString("timeZone", java.time.ZoneId.systemDefault().id)
@@ -416,6 +431,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         }
     }
     suspend fun refresh(older: Boolean = false, wait: Boolean = false) {
+        if (standalone && !phoneArchive) return
         if (newWork && workBusy) return
         if (refreshing && refreshGeneration == generation) return
         refreshing = true
@@ -468,6 +484,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                 chats = chats.map { if (it.optString("chatId") == chatId) nativeChatMetadata(it, current) else it }
                 applyWorkMetadata(current)
                 sessionId = current.optString("activeSessionId").takeUnless { it == "null" } ?: ""
+                contextUsage = nativeContextUsage(current)
                 sendAvailable = current.optBoolean("sendAvailable")
                 running = current.optBoolean("running") || rows.any { it.optString("type") == "assistant.delta" && it.optJSONObject("data")?.optBoolean("streaming") == true }
                 if (sessionId.isNotBlank()) {
@@ -621,6 +638,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         val startingDraft = if (chatId.isBlank() && conversationMode == productMode) draft else ""
         if(chatId.isNotBlank())draft=""
         chatId="";sessionId="";title="新对话";rows=emptyList();approvals=emptyList();questions=emptyList();uncertain=emptyList();attachments=emptyList()
+        contextUsage = null
         pendingApprovalMode=approvalChoice;approvalModeRevision++;approvalModeBusy=false;mode=approvalChoice ?: "auto"
         running=false;sending=false;sendAvailable=false;loading=false;error="";tab="chat";creatingChat=true
         newWork = workAndChat && productMode == "work"
@@ -642,6 +660,8 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
                 if(standalone) JSONObject().put("id","phone-new").put("nativePhone",true).put("title","小纬") else call("conversations.create")
             } else {
                 val status = business("/status")
+                // A cold start can read the model list before the computer answers; the host refuses a chat without one.
+                if (modelId.isBlank()) refreshHostModels(null)
                 val id = "native-${UUID.randomUUID()}"
                 var command = business("/commands", "POST", JSONObject().put("requestId", id).put("kind", "session.create")
                     .put("targetDeviceId", status.getString("hostId")).put("modelProfileId", modelId)).getJSONObject("command")

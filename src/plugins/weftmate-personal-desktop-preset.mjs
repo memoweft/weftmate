@@ -11,7 +11,6 @@ export function apply(ctx) {
   installToolLoadingRecovery(ctx);
   const bridge = new PersonalDesktopBridge();
   const disposeBrowser = registerPersonalBrowserTool(ctx, bridge);
-  const dispose = ctx.tools.restrict({ deny: ['mod_sdk'] });
   const loaded = new WeakMap();
   const schemas = new WeakMap();
   ctx.tools.register(defineTool({ name: LOAD,
@@ -46,6 +45,6 @@ export function apply(ctx) {
     schemas.set(context.scope, assembly.tools);
     return presentPersonalPrompt(assembly, loaded.get(context.scope));
   });
-  ctx.effect(() => () => { disposeBrowser(); dispose(); bridge.close(); }, 'weftmate-personal-desktop-preset: native tools');
+  ctx.effect(() => () => { disposeBrowser(); bridge.close(); }, 'weftmate-personal-desktop-preset: native tools');
 }
 export default { name, inject, apply };

@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   showProjectFolder: id => ipcRenderer.invoke('wm:desktop:project-show', id),
   droppedProjectFolder: file => { const path = webUtils.getPathForFile(file); return path ? ipcRenderer.invoke('wm:desktop:project-drop', path) : Promise.resolve(null); },
   identity: () => ipcRenderer.invoke('wm:desktop:identity'),
+  installAccountKey: payload => ipcRenderer.invoke('wm:desktop:install-account-key', payload),
   credentials: (key, value, remove) => ipcRenderer.invoke('wm:desktop:credentials', key, value, remove),
   cloudCredentialsPresent: () => ipcRenderer.invoke('wm:desktop:cloud-credentials-present'),
   cloudKey: (scope) => ipcRenderer.invoke('wm:desktop:key', scope),
@@ -50,6 +51,11 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   fetchPersonal: (url, options, id) => ipcRenderer.invoke('wm:desktop:fetch', url, options, id),
   abortPersonalFetch: id => ipcRenderer.invoke('wm:desktop:fetch-abort', id),
   setTheme: (palette) => ipcRenderer.invoke('wm:desktop:theme', palette),
+  onSystemTheme: callback => {
+    const listener = (_event, dark) => callback(dark === true);
+    ipcRenderer.on('wm:desktop:system-theme', listener);
+    return () => ipcRenderer.removeListener('wm:desktop:system-theme', listener);
+  },
   setModelName: (name) => ipcRenderer.invoke('wm:desktop:model', name),
   setAutoStart: (enabled) => ipcRenderer.invoke('wm:desktop:auto-start', enabled),
   artifact: (artifactId, action) => ipcRenderer.invoke('wm:desktop:artifact', { artifactId, action }),

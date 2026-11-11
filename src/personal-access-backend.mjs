@@ -279,14 +279,6 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       await requireSession(sessionId, ownerId)
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/rename`, { method: 'POST', body: JSON.stringify({ title }) })
     },
-    async chatRelayState({ sessionId, ownerId }) {
-      await requireSession(sessionId, ownerId);
-      return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'state' }) });
-    },
-    async prepareChatHandoff({ sessionId, ownerId }) {
-      await requireSession(sessionId, ownerId);
-      return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'prepare' }) });
-    },
     async installChatHandoff({ sessionId, ownerId, handoff }) {
       await requireSession(sessionId, ownerId);
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/chat-handoff`, { method: 'POST', body: JSON.stringify({ action: 'install', handoff }) });
@@ -365,6 +357,22 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (!response.ok) throw Object.assign(new Error(value.error ?? 'BACKEND_UNAVAILABLE'), { code: value.error, status: response.status });
       return value;
     },
+    async scheduleNotificationSources(sessionIds) {
+      requireRuntime()
+      const sources = new Set()
+      // The private schedules endpoint accepts at most 32 KiB per request.
+      for (let offset = 0; offset < sessionIds.length; offset += 128) {
+        const batch = sessionIds.slice(offset, offset + 128)
+        const response = await fetch(new URL('/weftmate/schedules/notifications/sources', currentOrigin()), {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionIds: batch })
+        })
+        if (!response.ok) fail('BACKEND_UNAVAILABLE')
+        const { sessionIds: recorded } = await response.json()
+        if (!Array.isArray(recorded) || recorded.some(id => !batch.includes(id))) fail('BACKEND_UNAVAILABLE')
+        for (const id of recorded) sources.add(id)
+      }
+      return sources
+    },
     async restoreSchedules(sessionIds) {
       if (!sessionIds.length) return
       requireRuntime()
@@ -373,7 +381,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (!response.ok) fail('BACKEND_UNAVAILABLE')
     },
     /** Errors before the prompt carry `beforeSend`: nothing reached the model. */
-    async sendMessage({ sessionId, text, mode = 'queue', ownerId, attachments = [], deepThinking }) {
+    async sendMessage({ sessionId, text, mode = 'queue', ownerId, attachments = [], deepThinking, modelProfileId }) {
       const beforeSend = (error) => { throw Object.assign(error, { beforeSend: true }) }
       try {
         requireRuntime()
@@ -386,6 +394,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         let session
         try {
           session = await requireSession(sessionId, ownerId)
+          if (modelProfileId && session.profile?.id !== modelProfileId) fail('MODEL_UNAVAILABLE')
           const nativeModel = await requireCatalogRoute(session.profile)
           // ensureKnownSession resumes the native session; it needs no second resume.
           try { await ensureKnownSession(sessionId, session) }

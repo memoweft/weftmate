@@ -8,6 +8,7 @@ import { hash, publicDeviceKey, sealReplica, taskRecipient } from './crypto.mjs'
 import { createOfflineTaskReceiver } from './tasks.mjs';
 import { createTurnFragments } from './turn-fragments.mjs';
 import { phoneTurnDigest } from '../personal-access/phone-history.mjs';
+import {phoneTurnIds,phoneMemoryState,authorizePhoneForget} from './phone-memory.mjs';
 import { memorySnapshot, offlineBoundary, replicaDelta, REPLICA_LIMITS } from './snapshot.mjs';
 
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
@@ -35,16 +36,6 @@ export async function createOfflineService(context) {
     if (!context.cloudIdentity) throw failure('OFFLINE_CLOUD_REQUIRED', 409);
     return context.cloudIdentity.publishOffline(ownerId, current.generation);
   };
-  async function cloudModel(ownerId) {
-    const models = await context.backend.listModels();
-    const preferred = context.service.currentChatModelProfile(ownerId);
-    const selected = models.filter(m => m.configured && m.sourceKind === 'cloud' && context.modelSelectable(ownerId, m.id))
-      .sort((a, b) => Number(b.id === preferred) - Number(a.id === preferred))[0];
-    if (!selected) throw failure('OFFLINE_MODEL_REQUIRED', 409);
-    const model = await context.accountModelManager?.readOfflineModel?.({ ownerId, profileId: selected.id });
-    if (!model?.apiKey || !model.baseUrl || !model.modelId) throw failure('OFFLINE_MODEL_REQUIRED', 409);
-    return { ...model, profileId: selected.id, name: selected.name };
-  }
   async function recent(ownerId) {
     const result = [];
     const cloudProfiles = new Set((await context.backend.listModels()).filter(model => model.sourceKind === 'cloud').map(model => model.id));
@@ -124,25 +115,22 @@ export async function createOfflineService(context) {
         authorize();
         const account = owner(ownerId), deviceId = context.cloudIdentity?.offlineDeviceId?.(ownerId, current.deviceId) ?? current.deviceId;
         if (route === '/sync') {
-          if (Object.keys(body).some(k => !['publicJwk', 'generation', 'hashes', 'taskSupport', 'phoneFirst'].includes(k)) || body.taskSupport !== undefined && body.taskSupport !== 1 || body.phoneFirst !== undefined && typeof body.phoneFirst !== 'boolean') throw failure('INVALID_REQUEST');
+          if (Object.keys(body).some(k => !['publicJwk', 'generation', 'hashes', 'taskSupport', 'phoneFirst','phoneMemoryTurns'].includes(k)) || body.taskSupport !== undefined && body.taskSupport !== 1 || body.phoneFirst !== undefined && typeof body.phoneFirst !== 'boolean') throw failure('INVALID_REQUEST');
+          if(body.phoneMemoryTurns!==undefined)phoneTurnIds(body.phoneMemoryTurns);
           if (!Number.isSafeInteger(body.generation) || body.generation < 0) throw failure('INVALID_REQUEST');
           if(body.phoneFirst===true&&!context.memoryManager?.enabled)throw failure('MEMORY_UNAVAILABLE',503);
           const publicJwk = publicDeviceKey(body.publicJwk);
           const control = await publish(ownerId);
           const taskSupport=body.taskSupport===1&&control.capabilities?.offlineTasks===1;
-          let model;
-          try { model = await cloudModel(ownerId); }
-          catch (error) { if ((taskSupport || body.phoneFirst === true) && error.code === 'OFFLINE_MODEL_REQUIRED') model = null; else throw error; }
-          const snapshot = model || body.phoneFirst === true ? await memorySnapshot(context.memoryManager, ownerId) : {worldRevision:null,items:[],truncated:false};
-          // A legacy task-capable phone waits for memoryAuthority before it
-          // uploads originals. Without a cloud model the snapshot read above
-          // is skipped, so a cold worker otherwise never gets initialized.
-          if (taskSupport && !model && context.memoryManager?.enabled) await context.memoryManager.status(ownerId);
+          const phoneMemory=body.phoneMemoryTurns?phoneMemoryState(context,ownerId,account,deviceId,body.phoneMemoryTurns):null;
+          const snapshot = await memorySnapshot(context.memoryManager, ownerId);
+          if (taskSupport && context.memoryManager?.enabled) await context.memoryManager.status(ownerId);
           const generation = account.generation;
           const known = body.generation === generation ? body.hashes ?? {} : {};
-          const recentMessages = model?await recent(ownerId):[];
+          const recentMessages = await recent(ownerId);
           const taskReferences=body.taskSupport===1?Object.entries(context.accountState(ownerId).sessions).filter(([,s])=>s.origin==='personal-remote'&&!s.archived&&!s.deleting&&!hasPrivateContent(s)).slice(-100).map(([id,s])=>({id,title:s.title||'电脑上的对话',...(s.projectId?{projectId:s.projectId}:{})})):undefined;
-          const metadata = { generation, reset: body.generation !== generation, model, recent: recentMessages,
+          const metadata = { generation, reset: body.generation !== generation, recent: recentMessages,
+            ...(phoneMemory?{phoneMemory}:{}),
             memoryAuthority: { ready: context.memoryManager?.enabled === true && context.memoryManager.peek?.(ownerId) === 'connected', hostId: context.rootState.hostId },
             phoneImports: (context.historyImport?.list(ownerId).imports??[]).filter(j=>j.app==='phone').map(j=>({id:j.id,handoverId:j.handoverId,state:j.state})),
             taskRecipient:(await recipient()).publicJwk,
@@ -159,7 +147,7 @@ export async function createOfflineService(context) {
             payload = { ...replicaDelta(snapshot, known), ...metadata };
           }
           authorize();
-          account.devices[deviceId] = { ...account.devices[deviceId], publicJwk, keyId: hash(publicJwk), phoneFirst:body.phoneFirst === true || model === null,
+          account.devices[deviceId] = { ...account.devices[deviceId], publicJwk, keyId: hash(publicJwk), phoneFirst:body.phoneFirst === true || !(await context.backend.listModels()).some(row=>row.sourceKind==='cloud'&&row.configured&&context.modelSelectable(ownerId,row.id)),
             originals:account.devices[deviceId]?.originals??{},originalsPartial:account.devices[deviceId]?account.devices[deviceId].originalsPartial??!account.devices[deviceId].originals:false,replicaPublishedAt:metadata.syncedAt,
             // Only the device's next request with the new generation confirms
             // that it applied the reset. Sending the reset cannot acknowledge it.
@@ -167,9 +155,24 @@ export async function createOfflineService(context) {
           await save();
           return sealReplica(payload, publicJwk, { ownerId, hostId: context.rootState.hostId, deviceId: current.deviceId });
         }
-        if (Object.keys(body).some(k => !['generation', 'turns', 'handover', 'forgetConversations', 'turnFragments'].includes(k)) || !Array.isArray(body.turns) || body.turns.length > 50) throw failure('INVALID_REQUEST');
+        if (Object.keys(body).some(k => !['generation', 'turns', 'handover', 'forgetConversations', 'turnFragments','forgetTurns','deleteConversations'].includes(k)) || !Array.isArray(body.turns) || body.turns.length > 50) throw failure('INVALID_REQUEST');
         if (!account.devices[deviceId] || body.generation !== account.generation) throw failure('OFFLINE_RESET_REQUIRED', 409);
         await publish(ownerId);
+        if(body.deleteConversations!==undefined){
+          phoneTurnIds(body.deleteConversations);if(body.deleteConversations.length>50||body.turns.length||body.turnFragments?.length)throw failure('INVALID_REQUEST');
+          if(body.deleteConversations.some(id=>account.phoneOwners?.[id]?.length&&!account.phoneOwners[id].includes(deviceId)&&!fragments.owns(ownerId,deviceId,id)))throw failure('FORBIDDEN',403);
+          account.deletedPhoneConversations=[...new Set([...(account.deletedPhoneConversations??[]),...body.deleteConversations])];await save();
+          await fragments.removeConversations(ownerId,deviceId,body.deleteConversations);
+          await context.historyImport.removePhoneOriginals(ownerId,body.deleteConversations);
+        }
+        if(body.forgetTurns!==undefined){
+          if(body.turns.length||body.turnFragments?.length)throw failure('INVALID_REQUEST');
+          authorizePhoneForget(context,ownerId,account,deviceId,body.forgetTurns,id=>fragments.ownsTurn(ownerId,deviceId,id));
+          account.forgottenPhoneTurns=[...new Set([...(account.forgottenPhoneTurns??[]),...body.forgetTurns])];
+          await save();
+          await fragments.acknowledged(ownerId,deviceId,body.forgetTurns);
+          await context.historyImport.forgetPhoneTurns(ownerId,body.forgetTurns);
+        }
         if((body.turns.length||body.turnFragments?.length)&&!context.memoryManager?.enabled)throw failure('MEMORY_UNAVAILABLE',503);
         if(body.forgetConversations!==undefined){
           if(!Array.isArray(body.forgetConversations)||body.forgetConversations.length>50||body.forgetConversations.some(id=>!ID.test(id)))throw failure('INVALID_REQUEST');
@@ -189,7 +192,7 @@ export async function createOfflineService(context) {
           !Number.isSafeInteger(handover.conversationCount)||handover.conversationCount<0||typeof handover.complete!=='boolean'||
           handover.bytes!==undefined&&(!Number.isSafeInteger(handover.bytes)||handover.bytes<0)||
           Object.keys(handover).some(k=>!['id','totalTurns','conversationCount','bytes','complete'].includes(k))))throw failure('INVALID_REQUEST');
-        const forgottenFragments=(body.turnFragments??[]).filter(p=>account.forgottenConversations?.includes(p.conversationId));
+        const forgottenFragments=(body.turnFragments??[]).filter(p=>account.forgottenConversations?.includes(p.conversationId)||account.deletedPhoneConversations?.includes(p.conversationId));
         const assembled=body.turnFragments?await fragments.accept(ownerId,deviceId,account.generation,body.turnFragments.filter(p=>!forgottenFragments.includes(p))):{complete:[],receipts:[]};
         for(const part of body.turnFragments??[]){account.phoneOwners??={};const owners=account.phoneOwners[part.conversationId]??=[];if(!owners.includes(deviceId))owners.push(deviceId);}
         if(body.turnFragments?.length)await save();
@@ -200,18 +203,22 @@ export async function createOfflineService(context) {
           if (!turn || !ID.test(turn.id) || !ID.test(turn.conversationId) || !Number.isSafeInteger(turn.timestamp) || turn.timestamp < 0 ||
               !Array.isArray(turn.messages) || turn.messages.length < 1 || turn.messages.length > 2 || turn.messages[0]?.role !== 'user' ||
               turn.messages.some((m, i) => m.role !== (i === 0 ? 'user' : 'assistant') || typeof m.text !== 'string' || !m.text.trim() || m.text.length > 16384&&!assembled.complete.includes(turn))) throw failure('INVALID_REQUEST');
+          if(turn.memoryExcluded!==undefined&&typeof turn.memoryExcluded!=='boolean')throw failure('INVALID_REQUEST');
+          if(account.forgottenPhoneTurns?.includes(turn.id))turn.memoryExcluded=true;
           if (turn.dependencyComplete !== undefined && typeof turn.dependencyComplete !== 'boolean' ||
               turn.memoryRefs !== undefined && (!Array.isArray(turn.memoryRefs) || turn.memoryRefs.length > 64 ||
                 turn.memoryRefs.some(ref => !['cognition', 'entity', 'relationship', 'event', 'evidence'].includes(ref?.kind) ||
                   typeof ref.id !== 'string' || !/^[A-Za-z0-9._:-]{1,512}$/.test(ref.id)))) throw failure('INVALID_REQUEST');
           if (new Set((turn.memoryRefs ?? []).map(ref => `${ref.kind}:${ref.id}`)).size !== (turn.memoryRefs ?? []).length) throw failure('INVALID_REQUEST');
           if(account.forgottenConversations?.includes(turn.conversationId)){receipts.push({id:turn.id,state:'forgotten'});continue;}
+          if(account.deletedPhoneConversations?.includes(turn.conversationId)){receipts.push({id:turn.id,state:'deleted'});continue;}
           const phoneFirst=account.devices[deviceId].phoneFirst===true||!!handover||!!body.turnFragments;
           const receiptId = hash(phoneFirst?`phone:${turn.id}`:`${deviceId}:${turn.id}`), digest = phoneFirst?phoneTurnDigest(turn):hash(turn), prior = account.receipts[receiptId];
           if (prior && prior !== digest && prior !== hash(turn)) throw failure('REQUEST_CONFLICT', 409);
+          if(turn.memoryExcluded){account.forgottenPhoneTurns=[...new Set([...(account.forgottenPhoneTurns??[]),turn.id])];await save();}
           if (!prior) {
             if (!context.memoryManager?.enabled) throw failure('MEMORY_UNAVAILABLE', 503);
-            if(!phoneFirst){
+            if(!phoneFirst&&!turn.memoryExcluded){
               const ingest = await context.memoryManager.ingest(ownerId, offlineBoundary(deviceId, turn), { offline: true });
               if (ingest.state !== 'accepted') throw failure('MEMORY_UNAVAILABLE', 503);
               account.receipts[receiptId] = digest; await save();
@@ -219,7 +226,7 @@ export async function createOfflineService(context) {
           }
           receipts.push({ id: turn.id, state: 'synced' });
         }
-        const submitted=body.turns.filter(turn=>!account.forgottenConversations?.includes(turn.conversationId));
+        const submitted=body.turns.filter(turn=>!account.forgottenConversations?.includes(turn.conversationId)&&!account.deletedPhoneConversations?.includes(turn.conversationId));
         if(submitted.length&&(account.devices[deviceId].phoneFirst===true||handover||body.turnFragments)){
           if(!context.memoryManager?.enabled)throw failure('MEMORY_UNAVAILABLE',503);
           const mapping=await context.phoneHistory.receive(ownerId,current.device.name||'手机',submitted);
@@ -239,7 +246,7 @@ export async function createOfflineService(context) {
         await save();
         await fragments.acknowledged(ownerId,deviceId,receipts.map(r=>r.id));
         authorize();
-        return { generation: account.generation, receipts, ...(assembled.receipts.length?{fragmentReceipts:assembled.receipts}:{}), ...(body.forgetConversations?{forgottenConversations:body.forgetConversations}:{}) };
+        return { generation: account.generation, receipts, ...(assembled.receipts.length?{fragmentReceipts:assembled.receipts}:{}), ...(body.forgetConversations?{forgottenConversations:body.forgetConversations}:{}),...(body.forgetTurns?{forgottenTurns:body.forgetTurns}:{}),...(body.deleteConversations?{deletedConversations:body.deleteConversations}:{}) };
       });
       authorize();
       if (route !== '/sync' && !result.receipts?.some(r=>r.importId)) for (const receipt of result.receipts ?? []) await context.activity?.record(ownerId, {

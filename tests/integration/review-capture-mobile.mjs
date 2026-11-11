@@ -6,7 +6,6 @@ import { resolve, extname, join, sep } from 'node:path';
 import { startFe1bFixture } from './fe-1b-fixture.mjs';
 import {startRenderingCandidate} from './ux-5-fixture.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
-import { startMainChatCandidate } from './main-chat-candidate.mjs';
 import { prepareGoalsScene } from './review-goals-scene.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { mockUx7Requests, prepareUx7Suggestions, ux7Replies } from './ux-7-scenes.mjs';
@@ -59,13 +58,13 @@ try {
     const fixture = await startFe1bFixture();
     const candidate = await startTimelineCandidate({daily:true,logicalMobile:true,goals:true, historyCount: 0, interactive: true });
     const context = android ? android.page.context() : await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, colorScheme: theme });
-    const page = android?.page || await context.newPage(), errors = [];let mainFixture,suggestionFixture,renderingFixture,renderingDiagnostics;
+    const page = android?.page || await context.newPage(), errors = [];let suggestionFixture,renderingFixture,renderingDiagnostics;
     try {
       const bridge = mobileBridge(fixture, theme);
       currentBridge = bridge;
       const navigate = async (current, url) => {
         if (!android) return current.goto(url);
-        const source = [candidate, mainFixture, suggestionFixture, renderingFixture].find(fixture=>fixture?.mobileUrl === url);
+        const source = [candidate, suggestionFixture, renderingFixture].find(fixture=>fixture?.mobileUrl === url);
         currentBridge = source ? galleryBridge(source, theme, source === suggestionFixture ? {suggestions:ux7Replies} : {}) : bridge;
         await current.goto(android.entryUrl);
         await current.waitForFunction(() => state.booted && String(window.weftNative?.postMessage).includes('__reviewNative'));
@@ -114,7 +113,21 @@ try {
         sessions: async()=>{await home();await button('打开导航').click();await page.getByRole('navigation',{name:'主导航',exact:true}).waitFor();},
         'composer-menu': async()=>{await report();await button('添加图片或文件').click();await page.getByRole('menu',{name:'添加附件'}).waitFor();await page.getByRole('menuitem',{name:'相机'}).waitFor();},
         'composer-context': async()=>{await report();await button('对话操作').click();await page.getByRole('menuitem',{name:'背景信息',exact:true}).click();await page.getByRole('dialog',{name:'背景信息',exact:true}).waitFor();assert.match(await page.getByRole('dialog',{name:'背景信息',exact:true}).innerText(),/86%/);},
-        conversation: async () => { await report(); const process=page.locator('.execution-block').first();await process.waitFor();if(!await process.evaluate(node=>node.open))await process.locator(':scope > summary').click(); await page.getByText(/^读取(?: 1 个文件|项目记录)/).waitFor(); await page.waitForFunction(()=>document.getElementById('toast').hidden); assert.equal(await page.getByText(/这条记录已不可查看/).count(),0); assert.deepEqual(fixture.missingRequests,[]); },
+        conversation: async () => {
+          await report();
+          const process = page.locator('.execution-block').first();
+          await process.waitFor();
+          if (!await process.evaluate(node => node.open)) await process.locator(':scope > summary').click();
+          const group = process.locator('.execution-step-group').first();
+          await group.waitFor();
+          if (!await group.evaluate(node => node.open)) await group.locator(':scope > summary').click();
+          const step = group.locator('.execution-step > summary').first();
+          await step.waitFor();
+          assert.match(await step.innerText(), /读取|项目记录/);
+          await page.waitForFunction(() => document.getElementById('toast').hidden);
+          assert.equal(await page.getByText(/这条记录已不可查看/).count(), 0);
+          assert.deepEqual(fixture.missingRequests, []);
+        },
         'outputs-sources': async () => { await report(); await button('对话操作').click(); await page.getByRole('menuitem', { name:'输出与来源', exact:true }).click(); await button(/^notes.md 1 次使用$/).waitFor(); },
         approval: async () => { await home(); await conversation('整理临时文件').click(); await button('批准').waitFor(); },
         'search-palette': async () => { await home();await button('打开导航').click();await page.getByRole('navigation',{name:'主导航',exact:true}).getByRole('button',{name:'搜索',exact:true}).click();await page.getByRole('dialog',{name:'搜索',exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('#search-results')?.getAttribute('aria-busy')==='false'); },
@@ -124,7 +137,7 @@ try {
         usage: async () => { await settings(); await button(/^用量 /).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
         'session-menu': async () => { await home();await button('打开导航').click();const row=page.getByRole('navigation',{name:'主导航',exact:true}).getByRole('button',{name:'整理项目进展',exact:true});await row.dispatchEvent('pointerdown',{pointerType:'touch'});await page.getByRole('dialog',{name:'对话操作',exact:true}).waitFor();await row.dispatchEvent('pointerup',{pointerType:'touch'});await button('更多').click();await page.getByRole('dialog',{name:'对话操作',exact:true}).getByRole('button',{name:'删除',exact:true}).waitFor(); },
       };
-      for (const scene of catalog.scenes.filter(row => !['login', 'question','main-chat','activity','goals','library','rendering','next-suggestions'].includes(row.id) && (!onlyScene || row.id === onlyScene))) await shot(scene.id, preparations[scene.id]);
+      for (const scene of catalog.scenes.filter(row => !['login', 'question','activity','goals','library','rendering','next-suggestions'].includes(row.id) && (!onlyScene || row.id === onlyScene))) await shot(scene.id, preparations[scene.id]);
       // FE-1a's real question projection supplies the missing FE-1b question fixture.
       const questionPage = android?.page || await context.newPage(); questionPage.setDefaultTimeout(30000);
       renderingDiagnostics = observePageFailures(questionPage);
@@ -181,18 +194,9 @@ try {
       }
       await shot('next-suggestions', async () => { suggestionFixture=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await suggestionFixture.complete();await mockUx7Requests(questionPage); await navigate(questionPage, suggestionFixture.mobileUrl); await questionPage.waitForFunction(()=>state.booted); await questionPage.evaluate(async id=>{await selectSharedSession(id);closeDrawer()},suggestionFixture.sessionId); try { await prepareUx7Suggestions(questionPage); }
         catch(error) { if(android) console.error('Suggestion readiness:',JSON.stringify(await questionPage.evaluate(()=>({booted:state.booted,loggedIn:state.loggedIn,sharedRunning:state.sharedRunning,sharedLoading:state.sharedLoading,hostAvailable:state.sharedHostAvailable,chatSource:state.chatSource,owner:!!uiCore.state.ownerId,session:!!uiCore.state.selectedSessionId,online:uiCore.state.online,selecting:uiCore.state.sessionSelecting,submitting:uiCore.state.submitting,historyCount:uiCore.state.historyEvents.size,capability:uiCore.state.personalCapabilities?.nextSuggestions,enabled:uiCore.nextSuggestionsView().enabled,replies:uiCore.nextSuggestionsView().suggestions.length,crypto:typeof crypto.randomUUID,abortAny:typeof AbortSignal.any,abortTimeout:typeof AbortSignal.timeout,csrf:!!uiCore.state.csrfToken,coreSource:uiCore.state.activeChatSource,running:uiCore.conversationRunning(uiCore.state.selectedSessionId),lastHistory:[...uiCore.state.historyEvents.values()].slice(-3).map(e=>e.type)}))));throw error; } }, questionPage);
-      const mainPage=android?.page || await context.newPage();
-      await shot('main-chat',async()=>{
-        mainFixture=await startMainChatCandidate(300,{logicalMobile:true});await navigate(mainPage, mainFixture.mobileUrl);
-        await mainPage.waitForFunction(()=>state.booted&&uiCore.state.mainChat);
-        await mainPage.evaluate(()=>uiCore.selectMainChat());
-        await mainPage.getByRole('button',{name:'搜索对话',exact:true}).waitFor();await mainPage.waitForFunction(()=>document.querySelector('.main-chat-row'));
-        await mainPage.evaluate(theme=>applyTheme(theme),theme);
-        await mainPage.getByRole('button',{name:'搜索对话',exact:true}).click();await mainPage.getByRole('searchbox',{name:'对话搜索关键词'}).fill('合成');await mainPage.getByRole('searchbox',{name:'对话搜索关键词'}).press('Enter');await mainPage.locator('mark').first().waitFor();
-      },mainPage);
       if (errors.length) themeErrors.push({theme,errors:errors.map(error => redactEvidenceText(error))});
       console.log(`Mobile ${theme}: scene outcomes recorded.`);
-    } finally { renderingDiagnostics?.dispose(); if (!android) await context.close(); await fixture.close(); await candidate.close();await mainFixture?.close();await suggestionFixture?.close();await renderingFixture?.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});if(suggestionFixture)await rm(suggestionFixture.root,{recursive:true,force:true}); }
+    } finally { renderingDiagnostics?.dispose(); if (!android) await context.close(); await fixture.close(); await candidate.close();await suggestionFixture?.close();await renderingFixture?.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true });if(suggestionFixture)await rm(suggestionFixture.root,{recursive:true,force:true}); }
   }
   if(themeErrors.length) throw Error('Mobile renderer failed: ' + JSON.stringify(themeErrors));
   if(captureFailures.length) throw Error('Mobile scenes failed: ' + JSON.stringify(captureFailures));

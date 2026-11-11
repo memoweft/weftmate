@@ -2,19 +2,24 @@ import { createProfileWriteBarrier } from './write-barrier.mjs';
 import path from 'node:path';
 import { mkdir, readFile, lstat, cp, rename, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { snapshot, verify, listBackups, prune, durableWrite, backupError } from './archive.mjs';
+import { snapshot, verify, prune, durableWrite, backupError } from './archive.mjs';
+import {createBackupCatalog} from './catalog.mjs';
 import { beginRestore, rollbackRestore, commitRestore } from './restore.mjs';
 import { validateStore } from '../personal-access/store.mjs';
+import { retireMainChatResults } from '../personal-access/chat-identity.mjs';
 import { cloudVaultRestoreCommitted } from '../personal-cloud-backup/vault-restore.mjs';
 
 export async function createBackupManager({ root, isIdle, requestRestart, clock = Date.now, appVersion = '0', onShutdownFailure = () => {}, captureBoundary = work => work(), pauseTimeoutMs = 2000, validate = async stage => {
-  validateStore(JSON.parse(await readFile(path.join(stage, 'personal-access', 'store.json'), 'utf8')));
+  const store = JSON.parse(await readFile(path.join(stage, 'personal-access', 'store.json'), 'utf8'));
+  for (const account of Object.values(store.accounts ?? {})) retireMainChatResults(account, new Date(clock()).toISOString());
+  validateStore(store);
 } }) {
   const control = path.join(root, 'personal-backup'); await mkdir(control, { recursive: true, mode: 0o700 });
   const configFile = path.join(control, 'settings.json'), pendingFile = path.join(control, 'pending.json'), statusFile = path.join(control, 'status.json');
   const read = async (file, fallback) => readFile(file, 'utf8').then(JSON.parse).catch(error => { if (error.code === 'ENOENT') return fallback; throw error; });
   let settings = await read(configFile, { enabled: true, directory: path.join(path.dirname(root), 'Backups'), dailyDays: 7, weeklyCopies: 4 });
   const writeBarrier = createProfileWriteBarrier(root);
+  const catalog=createBackupCatalog();let checking;
   let pending = await read(pendingFile, null), status = await read(statusFile, null), timer, busy = false, stopping = false, activeCapture = null, operationDone = Promise.resolve(), finishOperation;
   // If a restore crashed mid-replacement or failed to launch, recover before any writer opens.
   const transaction = await read(path.join(control, 'restore.json'), null);
@@ -86,7 +91,7 @@ export async function createBackupManager({ root, isIdle, requestRestart, clock 
       path.resolve(next.directory).toLowerCase() === path.resolve(root).toLowerCase() ||
       path.resolve(next.directory).toLowerCase().startsWith(path.resolve(root).toLowerCase() + path.sep)) throw backupError('INVALID_REQUEST');
     await mkdir(next.directory, { recursive: true, mode: 0o700 });
-    await durableWrite(configFile, next); settings = next; return settings;
+    await durableWrite(configFile, next);if(next.directory!==settings.directory)catalog.clear();settings = next; return settings;
   }
   async function request(reason = 'manual', file = null) {
     if (busy || pending || stopping) throw backupError('CONFLICT');
@@ -157,10 +162,16 @@ export async function createBackupManager({ root, isIdle, requestRestart, clock 
     } finally { pending = null; await rm(pendingFile, { force: true }); }
     return true;
   }
-  async function checkDaily() {
-    if (!settings.enabled || busy || pending || !await isIdle()) return;
-    const rows = (await listBackups(settings.directory)).filter(row => row.verification === 'valid');
-    if (!rows.some(row => row.createdAt.slice(0, 10) === new Date(clock()).toISOString().slice(0, 10))) await request('daily');
+  function checkDaily() {
+    if(stopping)return Promise.resolve();
+    if(checking)return checking;
+    checking=(async()=>{
+      if(!settings.enabled||busy||pending||!await isIdle())return;
+      const directory=settings.directory,day=new Date(clock()).toISOString().slice(0,10),current=row=>row.verification==='valid'&&row.createdAt.slice(0,10)===day;
+      const rows=await catalog.list(directory,{until:current});
+      if(!stopping&&directory===settings.directory&&settings.enabled&&!busy&&!pending&&!rows.some(current))await request('daily');
+    })().finally(()=>{checking=null;});
+    return checking;
   }
   return {
     // Only a restore stops HTTP admission; online copies queue writers briefly.
@@ -176,7 +187,7 @@ export async function createBackupManager({ root, isIdle, requestRestart, clock 
       await request('before-account-deletion');
       return { ready: true, restartsHost: false };
     },
-    async view() { return { settings, status, backups: await listBackups(settings.directory), excludedCredentials: true, localUnencrypted: true }; },
+    async view() { return { settings, status, backups: await catalog.list(settings.directory), excludedCredentials: true, localUnencrypted: true }; },
     async started() {
       await commitRestore({ root, control }); restoredStartup = false;
       timer = setInterval(() => { void checkDaily().catch(() => {}); }, 60000); timer.unref();

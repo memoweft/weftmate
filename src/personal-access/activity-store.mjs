@@ -93,16 +93,8 @@ export function reconcileActivity(account) {
         actions:[...(pending?[{kind:kind==='approval'?'respond_approval':'answer_question',label:kind==='approval'?'审批':'回答',target}]:[]),{kind:'open_chat',label:'打开对话',target:source}]});
     }
   }
-  for(const result of Object.values(account.chatResults??{})){
-    if(result.deleted){removeActivity(account,row=>row.source.taskId===result.taskId || row.id===result.activityId);continue;}
-    if(!result.taskId)continue; // Sharing ordinary text does not prove task completion.
-    const source=activitySource(account,result.sourceRef?.native?.sessionId??result.sourceRef?.sessionId,{chatId:result.sourceChatId,taskId:result.taskId,eventId:result.sourceEventId});
-    if(!source.sessionId)delete source.sessionId;
-    putActivity(account,`task:${result.taskId??result.resultId}`,{id:result.activityId,at:result.at,type:`task.${result.state}`,source,
-      title:{completed:'任务完成',failed:'任务失败',stopped:'任务已停止'}[result.state],summary:result.summary,summaryFormat:result.summaryFormat,failureReason:state.sources[source.sessionId]?.terminals?.[result.taskId]?.failureReason,actions:[{kind:'open_chat',label:'打开旁聊',target:source}]});
-  }
   for(const [sessionId,scan]of Object.entries(account.activity?.sources??{}))if(account.sessions[sessionId]&&!account.sessions[sessionId].deleting){
-    for(const terminal of Object.values(scan.terminals??{}))if(!Object.values(account.chatResults??{}).some(result=>result.taskId===terminal.taskId))nativeTaskActivity(account,sessionId,terminal);
+    for(const terminal of Object.values(scan.terminals??{}))nativeTaskActivity(account,sessionId,terminal);
   }
 }
 export function activityToken(account,ownerId,value) {

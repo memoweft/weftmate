@@ -1,3 +1,4 @@
+// 保护：切账号或断线后的迟到记忆结果不能覆盖当前账号与本机视图。
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
@@ -409,12 +410,11 @@ test('a delayed computer memory response cannot replace the replica page after d
   await openMemory(app,'A');
   await waitUntil(()=>app.deferred.length===1,'computer list was not delayed');
   app.disconnect();
-  const empty='记忆在电脑上形成。连上电脑后，这里会显示 WeftMate 记得的事。';
-  assert.ok(app.get('page-content').textContent.includes(empty),JSON.stringify(app.connection())+app.get('page-content').textContent);
+  const before=app.get('page-content').textContent;
   app.resolveDeferred(0,{ownerId:app.rawOwners.A,worldRevision:10,searchScope:'account_snapshot',
     items:app.itemsByOwner.A,nextCursor:null,hasMore:false});
   for(let index=0;index<20;index++)await flush();
-  assert.ok(app.get('page-content').textContent.includes(empty),JSON.stringify(app.connection())+app.get('page-content').textContent);
+  assert.equal(app.get('page-content').textContent,before);
   assert.doesNotMatch(app.get('page-content').textContent,/A memory private to A/);
 });
 

@@ -9,8 +9,8 @@
     return url.origin;
   }
   class CloudAuthClient {
-    constructor({ fetch, crypto, credentials, vendor, host, redirectUri, nativeKey, localCsrf, now = Date.now }) {
-      Object.assign(this, { fetch, crypto, credentials, vendor, nativeKey, localCsrf, now });
+    constructor({ fetch, crypto, credentials, vendor, host, redirectUri, nativeKey, installAccountKey, passwordProtocol, localCsrf, now = Date.now }) {
+      Object.assign(this, { fetch, crypto, credentials, vendor, nativeKey, installAccountKey, passwordProtocol, localCsrf, now });
       this.host = origin(host); this.redirectUri = redirectUri || this.host + '/personal/v1/ui/';
       this.generation = 0;
     }
@@ -40,7 +40,7 @@
       try {
         if (pairing.version !== 2 || pairing.issuer !== this.config.issuer || pairing.sub !== saved?.sub ||
             typeof pairing.hostId !== 'string' || !pairing.hostId || pairing.hostId !== hostId ||
-            !field(pairing.challenge) || !field(pairing.tlsSpki) || !field(pairing.hostCommitment) ||
+            Object.hasOwn(pairing,'keyId') && !field(pairing.keyId) || !field(pairing.challenge) || !field(pairing.tlsSpki) || !field(pairing.hostCommitment) ||
             !Number.isSafeInteger(pairing.expiresAt) || pairing.expiresAt > this.now() + 120000) fail('PAIRING_INVALID');
         for (const value of [pairing.origin, ...(pairing.relay?.baseUrl ? [pairing.relay.baseUrl] : [])]) {
           if (typeof value !== 'string' || origin(value) !== value) fail('PAIRING_INVALID');
@@ -53,7 +53,7 @@
       } catch { fail('PAIRING_INVALID'); }
       if (pairing.expiresAt <= this.now()) fail('PAIRING_EXPIRED');
       return [2, pairing.issuer, pairing.sub, pairing.hostId, pairing.tlsSpki, await this.jkt(pairing.publicJwk),
-        pairing.challenge, pairing.expiresAt, pairing.origin, pairing.relay?.baseUrl || ''];
+        pairing.challenge, pairing.expiresAt, pairing.origin, pairing.relay?.baseUrl || '', ...(pairing.keyId ? [pairing.keyId] : [])];
     }
     async jkt(jwk) { return this.hash(JSON.stringify({ crv: jwk.crv, kty: jwk.kty, x: jwk.x, y: jwk.y })); }
     async pair(pairing, { onComparison = () => {}, current = () => true, wait = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
@@ -67,7 +67,16 @@
       const token = await this.access(resource);
       const access = await this.verify({ token_type: 'DPoP', access_token: token }, { audience: resource, sub: saved.sub });
       if (access.device_id !== key.deviceId || access.host_id !== pairing.hostId || !access.scope?.split(' ').includes('host:session')) fail('CLOUD_TOKEN_INVALID');
-      const deviceId = access.device_id, phoneJkt = access.cnf.jkt, phoneNonce = this.random();
+      const deviceId = access.device_id, phoneJkt = access.cnf.jkt;
+      let receiver, publicJwk;
+      if (pairing.keyId) {
+        if (typeof this.installAccountKey !== 'function') fail('ACCOUNT_KEY_STORAGE_UNAVAILABLE');
+        receiver = await this.crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'}, false, ['deriveBits']);
+        const {kty,crv,x,y} = await this.crypto.subtle.exportKey('jwk', receiver.publicKey);
+        publicJwk = {kty,crv,x,y};
+      }
+      // Committing to the ephemeral public key binds the key recipient to the two-screen comparison.
+      const phoneNonce = publicJwk ? await this.jkt(publicJwk) : this.random();
       const phoneCommitment = await this.pairingDigest(['wm-pair-phone-v2', pairing.challenge, deviceId, phoneJkt, phoneNonce]);
       const request = async (action, extra = {}) => {
         check();
@@ -87,9 +96,14 @@
       if (revealed.state !== 'comparing' || revealed.hostNonce !== joined.hostNonce || revealed.expiresAt !== pairing.expiresAt) fail('PAIRING_HOST_MISMATCH');
       const verificationCode = await this.pairingCode(transcript, joined.hostNonce, deviceId, phoneJkt, phoneNonce);
       check(); await onComparison({ verificationCode, expiresAt: pairing.expiresAt });
+      let receipt;
       for (;;) {
         try {
-          const result = await request('redeem');
+          if (receiver && !receipt) {
+            const grant = await request('key', {recipient: publicJwk});
+            receipt = await this.saveEnrollment(grant.envelope, receiver.privateKey, pairing, deviceId, phoneJkt, check);
+          }
+          const result = await request('redeem', receipt ? {receipt} : {});
           if (!result.hostTrust) fail('HOST_TRUST_INVALID');
           await this.acceptHostTrust(result, saved, pairing, check);
           check(); return result;
@@ -98,6 +112,25 @@
           check(); await wait(Math.min(1000, pairing.expiresAt - this.now()));
         }
       }
+    }
+    async saveEnrollment(envelope, privateKey, pairing, deviceId, phoneJkt, check) {
+      const {plaintext, protectedHeader} = await this.vendor.compactDecrypt(envelope, privateKey, {
+        keyManagementAlgorithms: ['ECDH-ES'], contentEncryptionAlgorithms: ['A256GCM'],
+      });
+      try {
+        const payload = JSON.parse(new TextDecoder().decode(plaintext));
+        const scope = [pairing.issuer, pairing.sub, pairing.hostId, pairing.challenge, deviceId, phoneJkt, pairing.keyId];
+        if (protectedHeader.typ !== 'wm-account-key+jwe' || !Array.isArray(payload) || payload.length !== 9 ||
+            !scope.every((value, i) => payload[i] === value)) fail('ACCOUNT_KEY_INVALID');
+        const [, , , , , , keyId, receipt, secret] = payload;
+        if (typeof receipt !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(receipt) ||
+            typeof secret !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(secret)) fail('ACCOUNT_KEY_INVALID');
+        check();
+        const installed = await this.installAccountKey({issuer:pairing.issuer, sub:pairing.sub, keyId, secret}, check);
+        check();
+        if (installed !== keyId) fail('ACCOUNT_KEY_INVALID');
+        return receipt;
+      } finally { plaintext.fill(0); }
     }
     async request(url, { method = 'GET', body, form, headers = {} } = {}) {
       let response;
@@ -165,10 +198,16 @@
       this.pending = { ...pending, interactionUid: interaction.interactionUid, csrfToken: interaction.csrfToken };
       return this.pending;
     }
+    async passwordMode(){return this.passwordProtocol?this.passwordProtocol.mode(this):false;}
     async begin({ email, password, deviceName, deviceType = 'web' }) {
       const pending = await this.prepare(deviceName), key = await this.key();
-      const result = await this.publicRequest('/auth/login', { interactionUid: pending.interactionUid, csrfToken: pending.csrfToken,
-        email, password, deviceId: key.deviceId, publicJwk: key.publicJwk, deviceName, deviceType });
+      const fields={interactionUid:pending.interactionUid,csrfToken:pending.csrfToken,email,password,deviceId:key.deviceId,publicJwk:key.publicJwk,deviceName,deviceType};
+      let result;
+      if(await this.passwordMode()){
+        const opaque=await this.passwordProtocol.login(this,fields);
+        if(pending.generation!==this.generation)fail('CLOUD_TOKEN_INVALID');
+        pending.passwordExportKey=opaque.exportKey;pending.passwordSub=opaque.sub;result=opaque.finished;
+      }else result=await this.publicRequest('/auth/login',fields);
       if (pending.generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
       if (result.confirmationRequired) { this.pending.challengeId = result.challengeId; return result; }
       return this.finish(result);
@@ -231,6 +270,12 @@
       this.pending = null;
       await this.credentials(this.tokenId, { refreshToken: tokens.refresh_token, cloud: { token: tokens.access_token, expiresAt: this.now() + tokens.expires_in * 1000 },
         sub: access.sub, email: result.account?.email, deviceName: pending.deviceName });
+      if(pending.passwordExportKey){
+        if(pending.passwordSub!==access.sub)fail('CLOUD_TOKEN_INVALID');
+        const check=()=>{if(pending.generation!==this.generation)fail('CLOUD_TOKEN_INVALID');};
+        await this.passwordProtocol.unlock(this,pending.passwordExportKey,access.sub,check);check();
+        delete pending.passwordExportKey;
+      }
       return { authenticated: true };
     }
     async saved() { if (!this.config) await this.configure(); return this.credentials(this.tokenId); }

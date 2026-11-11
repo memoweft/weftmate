@@ -40,8 +40,7 @@ test('#678 every message owns one persistent process through native prefixes', {
         const saved=new Map();let sequence=0;
         g.f={core,ui,saved,work,events:[],acks:new Map(),
           async send(id:string,text='同样的合成消息',at='2026-10-26T12:00:00Z'){
-            if(work)core.beginOptimistic({requestId:id,sessionId:'session',text,at});
-            else {core.restoreMainRequests([{kind:'chat.message',chatId:'chat',requestId:id,text,at,state:'accepted'}]);}
+            core.beginOptimistic({requestId:id,sessionId:'session',text,at});
             await this.paint();
           },
           async append(type:string,data:any,at='2026-10-26T12:00:01Z',sessionId='session'){
@@ -196,20 +195,6 @@ test('#678 every message owns one persistent process through native prefixes', {
         await f.append('turn.started',{turn:1});await f.append('user.message',{receiptId:'old-seed',text:'应保留的真实历史消息'});await f.append('turn.ended',{turn:1,reason:'completed'});
         const processes=document.querySelectorAll('#transcript .execution-block');
         if(processes.length!==1 || !document.getElementById('transcript').textContent.includes('应保留的真实历史消息') || (processes[0] as HTMLElement).dataset.terminal!=='true')throw Error('excluding the queue seed removed real user history');
-      });
-    });
-    await t.test('logical failed delivery updates its original process and sending clears it',async()=>{
-      await setup();
-      await page.evaluate(async()=>{
-        const f=(globalThis as any).f;await f.send('logical-rejected');f.check(['logical-rejected'],'initial logical send');
-        const local=f.core.optimisticMessages()[0];local.status='sending';
-        f.core.accessApi=async()=>({command:{requestId:local.requestId,sessionId:'session',state:'failed'}});
-        await f.core.reconcileMainRequests();await f.paint();f.check(['logical-rejected'],'failed logical lookup');
-        const [row,,summary]=f.saved.get('logical-rejected');
-        if(row.querySelector('.timeline-entry').dataset.running!=='false' || !/未.*发送|发送.*失败/.test(summary.textContent) || /等待模型/.test(summary.textContent))throw Error('failed logical message still waits for the model');
-        f.core.accessApi=async()=>({command:{requestId:local.requestId,sessionId:'session',state:'dispatching'}});
-        await f.core.reconcileMainRequests();await f.paint();f.check(['logical-rejected'],'logical sending again');
-        if(row.querySelector('.timeline-entry').dataset.running!=='true' || /未.*发送|发送.*失败/.test(summary.textContent))throw Error('logical retry retained its terminal failure');
       });
     });
   } finally {await browser.close();}

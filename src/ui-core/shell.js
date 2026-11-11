@@ -194,6 +194,21 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             throw error;
         }
     }
+    // A native shell signs in and watches the connection itself; the engine takes that identity and online state for
+    // its own protected writes without repainting or running its own reconnection.
+    function adoptNativeSession(payload) {
+        const ownerId = payload?.account?.ownerId, deviceId = payload?.device?.id;
+        if (typeof ownerId !== 'string' || !ownerId || typeof deviceId !== 'string' || !deviceId ||
+            typeof payload?.csrfToken !== 'string' || !payload.csrfToken) throw { code: 'REQUEST_FAILED' };
+        if (core.state.ownerId !== ownerId || core.state.device?.id !== deviceId) {
+            core.state.identityGeneration++;
+            core.state.submitting = false;
+        }
+        Object.assign(core.state, {
+            ownerId, account: payload.account, device: payload.device, csrfToken: payload.csrfToken, online: true,
+            nativeSessionAdopted: true,
+        });
+    }
     function acceptSession(payload) {
         if (typeof payload?.account?.username !== 'string' || typeof payload?.device?.id !== 'string'
             || typeof payload?.csrfToken !== 'string' || !payload.csrfToken)
@@ -364,7 +379,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             // host diagnostics and the complete session list must not delay them.
             const [result] = await Promise.all([core.refreshHistory(false,false,true), ...core.readMarkers()
                 // Let the original POST own its receipt until it returns.
-                .filter(marker => !core.state.submitting && !core.state.cancelSubmitting && core.state.sideCreating?.requestId !== marker.requestId && ['session.create', 'session.message', 'session.cancel', 'chat.message', 'session.side.create'].includes(marker.kind))
+                .filter(marker => !core.state.submitting && !core.state.cancelSubmitting && core.state.sideCreating?.requestId !== marker.requestId && ['session.create', 'session.message', 'session.cancel', 'session.side.create'].includes(marker.kind))
                 .map(marker => core.lookupRequest(marker))]);
             return result;
         } finally { core.state.liveRefreshing = false; }
@@ -479,6 +494,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.cachedDevices = [];
         effects.resetAccountControls();
         core.state.csrfToken = null;
+        core.state.nativeSessionAdopted = false;
         core.state.account = null;
         core.state.device = null;
         effects.resetIdentityControls();
@@ -583,5 +599,5 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         effects.paintScreen(view);
     }
-    return { polling, historyReadAllowed, historyReadResult, historyPollDelay, refreshConfiguration, acceptAccountChanges, canWaitForReply, replyWaitMilliseconds, foreground, refreshAssistantOverview, refreshConversationFacts, failureMessage, requestJson, accessApi, acceptSession, accountToken, accountCurrent, setOnline, trackRequestState, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
+    return { polling, historyReadAllowed, historyReadResult, historyPollDelay, refreshConfiguration, acceptAccountChanges, canWaitForReply, replyWaitMilliseconds, foreground, refreshAssistantOverview, refreshConversationFacts, failureMessage, requestJson, accessApi, acceptSession, adoptNativeSession, accountToken, accountCurrent, setOnline, trackRequestState, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
 };

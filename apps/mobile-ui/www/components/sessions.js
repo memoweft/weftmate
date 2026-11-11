@@ -498,7 +498,7 @@ function mobileSessionQuickMenu(session) {
   dialog.append(notice, cancel); dialog.onclose = () => dialog.remove(); document.body.append(dialog); dialog.showModal(); cancel.focus();
 }
 function mobileConversationActions(){
-  const session=selectedSharedSession();if(!session||session.kind==='main'||uiCore.inMainChat?.())return [];
+  const session=selectedSharedSession();if(!session||session.kind==='main')return [];
   return [{name:'重命名',icon:'edit',action:()=>mobileEditName('重命名对话',session.title,async title=>{await uiCore.updateSession(session.sessionId,{title});await listSharedSessions();updatePageHeader();})},
     {name:session.pinned?'取消置顶':'置顶',icon:'pin',action:async()=>{await uiCore.updateSession(session.sessionId,{pinned:!session.pinned});await listSharedSessions();}},
     {separator:true},{name:'归档',icon:'archive',action:async()=>{await uiCore.archiveSession(session.sessionId,true);await listSharedSessions();page('home');}},
@@ -583,10 +583,8 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
   renderMobileProjects(target,filter);
   if(!entries.length)target.append(el('p','muted',filter?'没有匹配的对话':state.loggedIn?'还没有对话':'登录后查看对话'));
   target.scrollTop=previousScroll;
-  const mainButton=document.querySelector('.rail-main-chat');
-  if(mainButton){mainButton.querySelector('.mobile-session-status')?.remove();mobileSessionStatus(mainButton,uiCore.state.sessionStatusSummary?.main ?? uiCore.state.mainChat ?? {});}
   const tab=$('mobile-tab-chat');
-  if(tab){tab.setAttribute('aria-label','聊天');tab.removeAttribute('aria-description');tab.querySelector('.chat-attention-dot')?.remove();const attention=uiCore.state.sessionStatusSummary?.all?.attention || [...state.sharedSessions,uiCore.state.mainChat].filter(Boolean).find(row=>row.attention)?.attention;
+  if(tab){tab.setAttribute('aria-label','聊天');tab.removeAttribute('aria-description');tab.querySelector('.chat-attention-dot')?.remove();const attention=uiCore.state.sessionStatusSummary?.all?.attention || state.sharedSessions.find(row=>row.attention)?.attention;
     if(attention){tab.setAttribute('aria-description',attention==='approval'?'等你批准':'等你回答');const dot=el('span','chat-attention-dot');dot.setAttribute('role','img');dot.setAttribute('aria-label',attention==='approval'?'等你批准':'等你回答');tab.append(dot);}}
   if(state.page==='home')renderHome();
 }

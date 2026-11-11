@@ -12,6 +12,7 @@ from bounded_process import run_bounded
 ROOT = Path(__file__).resolve().parents[1]
 APP_MODEL = ["OfflineChatModel", "A14TestSupport", "CloudBrowser", "CloudLoginModel", "AppleAppModel", "MainChatModel", "ConversationSendState", "ConversationAdoptionState", "ConversationAttachmentState", "TaskWorkspaceModel"]
 CHECKS = {
+    "WatchRoutingModelChecks": [],
     "PhoneModelServicesModelChecks": [],
     "PhoneAttachmentModelChecks": [],
     "PhoneStandaloneModelChecks": [],
@@ -85,9 +86,13 @@ def main():
         if name in ("PhoneSyncModelChecks", "PhoneReplicaErasureChecks"):
             sources += [ROOT / "iOS/PhoneStandaloneModel.swift", ROOT / "Tests/PhoneSyncCheckSupport.swift"]
         sources.append(ROOT / "Tests" / (name + ".swift"))
+        if name == "WatchRoutingModelChecks":
+            sources += [ROOT / "iOS/PhoneStandaloneModel.swift", ROOT / "iOS/PhoneWatchConversationModel.swift", ROOT / "Tests/PhoneStandaloneCheckSupport.swift"]
         compile_command = ["swiftc", "-swift-version", "6", "-D", "DEBUG", "-parse-as-library",
                            "-I", str(products / "Modules"), *map(str, sources),
                            *map(str, objects), "-o", str(executable)]
+        if name == "WatchRoutingModelChecks":
+            compile_command += ["-D", "WATCH_ROUTING_CHECK"]
         start = time.monotonic()
         with (run / (name + "-compile.log")).open("w") as log:
             compiled = run_bounded(compile_command, stdout=log, stderr=subprocess.STDOUT)

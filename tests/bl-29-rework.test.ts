@@ -156,7 +156,7 @@ test('BL-29b M3 native cancellation during first storage read clears listeners b
   release();await closing;assert.equal(closed,true);
 });
 
-test('BL-29b M1 real Electron empty main keeps eight immediate errors within old changes budget', {timeout:120000}, () => {
+test('BL-29b M1 real Electron empty conversation keeps eight immediate errors within old changes budget', {timeout:120000}, () => {
   const rows = probe('probe-desktop-errors', 'desktop-errors.json', 110000);
   assert.equal(rows.length, 8);
   for (const row of rows) {
@@ -169,8 +169,8 @@ test('BL-29b M1 real Electron empty main keeps eight immediate errors within old
   }
 });
 
-test('BL-29b M1/S3 shipped mobile full lifecycle empty main budgets errors, recovery and healthy idle', {timeout:150000}, t => {
-  const r = probe('probe-browser', 'browser.json', 140000, ['--budget-only','--empty-main']);
+test('BL-29b M1/S3 shipped mobile full lifecycle empty conversation budgets errors, recovery and healthy idle', {timeout:150000}, t => {
+  const r = probe('probe-browser', 'browser.json', 140000, ['--budget-only','--empty-session']);
   t.diagnostic(JSON.stringify({kind:'healthy-idle-method-census',idleMethods:r.idleMethods,background10s:r.background10s,initial:r.initial}));
   assert.equal(r.failure, undefined); assert.deepEqual(r.errors, []);
   assert.equal(r.cases.length, 8);

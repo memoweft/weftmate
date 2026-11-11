@@ -50,20 +50,7 @@ internal class NativeGoalsModel(private val chat: NativeChatModel, private val a
         else -> when((e as? ApiFailure)?.status){401,403 -> "请重新登录后查看目标。";409 -> "内容已变化，请刷新后再试。";else -> "暂时无法读取，请检查网络后重试。"}
     }
     /** Uses the existing page's M3-2 channel without exporting authentication material. */
-    internal suspend fun presentation(expression:String):JSONObject {
-        val token=UUID.randomUUID().toString(); val key=JSONObject.quote(token)
-        activity.embeddedWeb.evaluateJavascript("""(()=>{window.weftGoalResults??={};window.weftGoalResults[$key]=null;Promise.resolve().then(async()=>{$expression}).then(value=>{if(Object.hasOwn(window.weftGoalResults,$key))window.weftGoalResults[$key]={value}}).catch(e=>{if(Object.hasOwn(window.weftGoalResults,$key))window.weftGoalResults[$key]={error:{status:e.status||0,code:e.code||'NETWORK_FAILED'}}})})()""",null)
-        try { return nativePageRead {
-            while(true) {
-                val result=suspendCancellableCoroutine<JSONObject?> { c -> activity.embeddedWeb.evaluateJavascript("JSON.stringify(window.weftGoalResults?.[$key]||null)") { raw ->
-                    if(c.isActive)c.resumeWith(Result.success(runCatching { if(raw=="null")null else JSONObject(org.json.JSONTokener(raw).nextValue().toString()) }.getOrNull()))
-                } }
-                if(result!=null){result.optJSONObject("error")?.let{throw ApiFailure(it.optInt("status"),it.optString("code"))};return@nativePageRead result.getJSONObject("value")}
-                delay(50)
-            }
-            @Suppress("UNREACHABLE_CODE") JSONObject()
-        }}finally{activity.embeddedWeb.evaluateJavascript("delete window.weftGoalResults?.[$key]",null)}
-    }
+    internal suspend fun presentation(expression:String):JSONObject = activity.core.call(expression)
     private suspend fun api(host:String,path:String,method:String="GET",body:JSONObject?=null):JSONObject {
         if(host.isEmpty()||host==primaryHost)return chat.business(path,method,body)
         return presentation("return await uiCore.computerApi(${JSONObject.quote(host)},${JSONObject.quote(path)},{method:${JSONObject.quote(method)}${if(body!=null)",body:$body" else ""}});")

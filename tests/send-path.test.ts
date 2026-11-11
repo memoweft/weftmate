@@ -75,7 +75,7 @@ function dispatchFixture(session: any, send: () => Promise<any> = async () => ({
     accountState: () => account, serial: (work: any) => work(), mutate: async (_owner: string, change: any) => change(account),
     callBackend: (work: any) => work(), requireOpen: () => {}, messageModelUsable: (_owner: string, row: any) => row?.modelProfileId === 'model',
     scheduled: new Set(), active: new Set(), activeByCommand: new Map(),
-    backend: { preflight: async () => ({ ok: true }), sendMessage: send } };
+    backend: { preflight: async () => { throw new Error('a message is checked by sendMessage, not preflighted again'); }, sendMessage: send } };
   return { account, context, operations: createCommandOperations(context) };
 }
 

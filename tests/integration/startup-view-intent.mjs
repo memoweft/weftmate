@@ -10,7 +10,7 @@ import {nativeFixtureFetchOptions} from '../helpers/local-ui-session.mjs';
 import {startFixture} from './ux-4-fixture.mjs';
 const output=process.env.WEFTMATE_STARTUP_INTENT_OUTPUT||evidencePath('startup-view-intent');await mkdir(output,{recursive:true});
 const report={node:process.version,cases:[],errors:[]};let app,page,fixture,scope;
-const snapshot=()=>page.evaluate(()=>({view:__startupCore.state.currentView,refreshing:__startupCore.state.refreshing,selected:__startupCore.state.selectedSessionId,chat:__startupCore.state.selectedChatId,main:__startupCore.state.mainChat?.chatId,draft:__startupCore.state.newConversation,mode:__startupCore.state.newConversationMode,dialog:document.querySelector('#settings-dialog').open,history:__startupCore.state.historyEvents.size,logicalLoading:__startupCore.state.logicalHistoryLoading,assistantHidden:document.querySelector('#assistant-view').hidden}));
+const snapshot=()=>page.evaluate(()=>({view:__startupCore.state.currentView,refreshing:__startupCore.state.refreshing,selected:__startupCore.state.selectedSessionId,chat:__startupCore.state.selectedChatId,draft:__startupCore.state.newConversation,mode:__startupCore.state.newConversationMode,dialog:document.querySelector('#settings-dialog').open,history:__startupCore.state.historyEvents.size,logicalLoading:__startupCore.state.logicalHistoryLoading,assistantHidden:document.querySelector('#assistant-view').hidden}));
 async function capture(name){const png=await app.evaluate(async({BrowserWindow})=>(await BrowserWindow.getAllWindows()[0].capturePage(undefined,{stayHidden:true,stayAwake:true})).toPNG().toString('base64'));await writeFile(join(output,name+'.png'),Buffer.from(png,'base64'));}
 try{
  for(const branch of ['legacy','logical','work-chat','work-work']){
@@ -24,17 +24,16 @@ try{
   await page.route('**/personal/v1/status',async route=>{const response=await route.fetch(nativeFixtureFetchOptions(route,fixture)),body=await response.json();const capabilities=branch==='legacy'?{}:{...body.personalCapabilities,...(branch==='logical'?{workAndChat:0}:{})};await route.fulfill({response,json:{...body,personalCapabilities:capabilities}});});
   if(branch==='work-work')await page.addInitScript(owner=>{if(location.protocol!=='about:')localStorage.setItem(`weftmate-conversation-mode:${owner}`,'work');},fixture.auth.account.ownerId);
   let release,hit;const gate=new Promise(r=>release=r),reached=new Promise(r=>hit=r);let delivered=0;
-  await page.route('**/personal/v1/**',async route=>{const url=new URL(route.request().url());const match=branch==='legacy'?url.pathname==='/personal/v1/sessions'&&url.searchParams.get('archived')==='all':url.pathname==='/personal/v1/chats/main';if(!match||route.request().method()!=='GET')return route.fallback();const response=await route.fetch(nativeFixtureFetchOptions(route,fixture));hit();await gate;await route.fulfill({response});delivered++;});
+  await page.route('**/personal/v1/**',async route=>{const url=new URL(route.request().url());const match=url.pathname==='/personal/v1/sessions'&&url.searchParams.get('archived')==='all';if(!match||route.request().method()!=='GET')return route.fallback();const response=await route.fetch(nativeFixtureFetchOptions(route,fixture));hit();await gate;await route.fulfill({response});delivered++;});
   await page.goto(fixture.origin+'/personal/v1/ui');await reached;await page.waitForFunction(()=>__startupCore.state.device?.authKind==='desktop'&&__startupCore.state.currentView==='assistant');
   const item={branch,before:await snapshot()};assert.equal(item.before.refreshing,true);assert.equal(item.before.assistantHidden,false);
   await page.getByRole('button',{name:'账户菜单',exact:true}).click();await page.getByRole('button',{name:'设置',exact:true}).click();await page.locator('.settings-navigation button[data-category=about]').click();await page.locator('.settings-update-actions > button').waitFor();item.opened=await snapshot();await capture(branch+'-settings-open');
-  release();await page.waitForFunction(branch=>{const c=__startupCore;return !c.state.refreshing&&(branch==='legacy'?!!c.state.selectedSessionId:branch==='logical'?c.state.selectedChatId===c.state.mainChat?.chatId&&!c.state.logicalHistoryLoading:c.state.newConversation===true);},branch);
+  release();await page.waitForFunction(branch=>{const c=__startupCore;return !c.state.refreshing&&(branch==='legacy'?!!c.state.selectedSessionId:c.state.newConversation===true);},branch);
   item.restored=await snapshot();assert.equal(item.restored.dialog,true,'late automatic restore must preserve user-opened settings');assert.equal(item.restored.view,'account');assert.ok(delivered>0);
   if(branch==='legacy')assert.ok(item.restored.history>0,'legacy initial history still loads behind settings');
   if(branch.startsWith('work-'))assert.equal(item.restored.mode,branch==='work-work'?'work':'chat');
   await page.locator('[data-update-layer=app] .settings-update-notes > summary').click();assert.equal(await page.locator('[data-update-layer=app] .settings-update-notes').evaluate(n=>n.open),true);await capture(branch+'-restored-settings');
-  if(branch==='legacy')await page.evaluate(id=>__startupCore.selectSession(id),fixture.source);
-  else if(branch==='logical')await page.evaluate(()=>__startupCore.selectMainChat());
+  if(branch==='legacy'||branch==='logical')await page.evaluate(id=>__startupCore.selectSession(id),fixture.source);
   else await page.evaluate(()=>__startupCore.startSidebarConversation());
   await page.waitForFunction(()=>__startupCore.state.currentView==='assistant'&&!document.querySelector('#settings-dialog').open);item.explicit=await snapshot();assert.equal(item.explicit.dialog,false,'explicit user navigation must still open chat');report.cases.push(item);
   await app.close();app=null;await fixture.close();fixture=null;disposeManagedTemp(scope,{log(){}});scope=null;

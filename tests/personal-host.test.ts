@@ -121,44 +121,6 @@ test('direct Electron personal-host entry refuses an unmarked synthetic profile 
   }
 })
 
-test('personal-host refuses unscoped MemoWeft config without exposing its auth ref', () => {
-  const root = mkdtempSync(join(tmpdir(), 'weftmate-host-memory-'))
-  try {
-    const pythonPath = join(root, 'py')
-    mkdirSync(join(pythonPath, 'memoweft', 'integrations', 'dsh_bridge'), { recursive: true })
-    writeFileSync(join(root, 'python.exe'), '')
-    writeFileSync(join(pythonPath, 'memoweft', 'integrations', 'dsh_bridge', '__main__.py'), '')
-    const config = join(root, 'memory.json')
-    writeFileSync(config, JSON.stringify({ python: 'python.exe', pythonPath: 'py', baseUrl: 'http://127.0.0.1:19999/v1',
-      model: 'synthetic-model', authRef: 'SYNTHETIC_AUTH_REF' }))
-    const result = spawnSync(process.execPath, [launcher, '--user-data-dir', join(root, 'fresh'), '--memoweft-config', config, '--dry-run'], { encoding: 'utf8' })
-    assert.equal(result.status, 2)
-    assert.match(result.stderr, /account-scoped memory is not connected/)
-    assert.doesNotMatch(result.stdout + result.stderr, /SYNTHETIC_AUTH_REF|synthetic-model/)
-    const disabled = spawnSync(process.execPath, [launcher, '--user-data-dir', join(root, 'fresh'), '--dry-run'], { encoding: 'utf8' })
-    assert.match(disabled.stdout, /memoweft=disabled/)
-    const main = readFileSync(join(repository, 'src', 'main.mjs'), 'utf8')
-    assert.match(main, /personalHostMode && process\.env\.WEFTMATE_MEMOWEFT_ENABLED === '1'/)
-  } finally {
-    rmSync(root, { recursive: true, force: true })
-  }
-})
-
-test('direct personal-host entry refuses the global memory switch before starting DSH', () => {
-  const root = mkdtempSync(join(tmpdir(), 'weftmate-host-memory-guard-'))
-  try {
-    writeFileSync(join(root, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT))
-    const env = { ...process.env, WEFTMATE_USER_DATA: root, WEFTMATE_MEMOWEFT_ENABLED: '1' }
-    delete env.ELECTRON_RUN_AS_NODE
-    const result = spawnSync(require('electron'), ['.', `--user-data-dir=${root}`, '--personal-host'], {
-      cwd: repository, env, encoding: 'utf8', timeout: 15_000,
-    })
-    assert.equal(result.status, 2, result.stderr)
-    assert.match(result.stderr, /account-scoped memory is not connected/)
-    assert.doesNotMatch(result.stdout + result.stderr, /dsh web:|personal-access listening/)
-  } finally { rmSync(root, { recursive: true, force: true }) }
-})
-
 test('host mode disables browser auto-open and writes stopped state without a stale origin', () => {
   const main = readFileSync(join(repository, 'src', 'main.mjs'), 'utf8')
   assert.match(main, /noOpen: personalHostMode/)

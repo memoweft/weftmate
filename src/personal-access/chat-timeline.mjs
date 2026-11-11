@@ -11,7 +11,7 @@ const day = (at, zone) => {
 };
 const dateValid = value => /^\d{4}-\d{2}-\d{2}$/.test(value ?? '') &&
   Number.isFinite(Date.parse(value)) && new Date(value).toISOString().startsWith(value);
-const searchable = type => ['user.message', 'assistant.message', 'side.result'].includes(type);
+const searchable = type => ['user.message', 'assistant.message'].includes(type);
 
 /** Rebuildable locator/search index. Bodies remain in native history. No timer,
  * polling worker, model call, or private native payload is stored here. */
@@ -157,7 +157,7 @@ export function createChatTimeline(context) {
   async function hydrate(index, rows) {
     const bodies = new Map();
     // Coalesce contiguous source ranges; never copy all history to hydrate a page.
-    for (const sessionId of new Set(rows.filter(row => !row.product).map(row => row.sessionId))) {
+    for (const sessionId of new Set(rows.map(row => row.sessionId))) {
       const selected = rows.filter(row => row.sessionId === sessionId).sort((a,b) => a.seq-b.seq);
       const wanted = new Set(selected.map(row => row.seq));
       let afterSeq = selected[0].seq - 1;
@@ -169,16 +169,6 @@ export function createChatTimeline(context) {
       }
     }
     return rows.flatMap(row => {
-      if (row.product) {
-        const result = context.accountState(index.ownerId).chatResults?.[row.resultId];
-        if (!result) return [];
-        return [{ eventId: row.eventId, chatId: index.chatId, orderKey: row.orderKey, revision: row.revision,
-          type: 'side.result', at: row.at, sourceRef: result.sourceRef,
-          data: { resultId: result.resultId, sourceChatId: result.sourceChatId, sourceEventId: result.sourceEventId,
-            ...(result.taskId ? { taskId: result.taskId } : {}), state: result.state, summary: result.summary,
-            resultRevision: result.resultRevision, requiresResponse: result.requiresResponse, artifactRefs: result.artifactRefs,
-            activityId: result.activityId, notificationRevision: result.notificationRevision, ...(result.deleted ? { deleted: true } : {}) } }];
-      }
       const event = bodies.get(`${row.sessionId}/${row.seq}`);
       if (!event) return [];
       return [{ eventId: row.eventId, chatId: index.chatId, orderKey: row.orderKey, revision: row.revision,
@@ -202,21 +192,6 @@ export function createChatTimeline(context) {
     if (row.dateZone !== timeZone) { row.dateZone = timeZone; row.date = day(row.at, timeZone); }
     return row.date;
   }
-  function products(index) {
-    const account = context.accountState(index.ownerId);
-    if (index.chatId !== account.chatIdentity.mainChatId) return;
-    for (const result of Object.values(account.chatResults ?? {})) {
-      const old = index.rows.get(result.mainEventId);
-      if (old?.revision === result.resultRevision) continue;
-      const row = { product: true, resultId: result.resultId, eventId: result.mainEventId, orderKey: result.orderKey,
-        revision: result.resultRevision, type: 'side.result', at: result.at, text: result.deleted ? '' : result.summary,
-        hasArtifact: result.artifactRefs.length > 0, sourceRef: result.sourceRef };
-      index.rows.set(row.eventId, row);
-      if (old) index.ordered[index.ordered.indexOf(old)] = row;
-      else { let lo = 0, hi = index.ordered.length; while (lo < hi) { const mid=(lo+hi)>>>1; if (index.ordered[mid].orderKey < row.orderKey) lo=mid+1; else hi=mid; } index.ordered.splice(lo,0,row); }
-      index.changes.push({ revision: ++index.revision, eventId: row.eventId });
-    }
-  }
   return {
     // Account search uses the same rebuildable index and erasure generation as
     // in-conversation search. It never copies native history into another store.
@@ -225,7 +200,7 @@ export function createChatTimeline(context) {
       const pages = await Promise.all(chatIds.map(async chatId => {
         const index = current(ownerId, chatId);
         const hits = await serial(index, async () => {
-          await seed(index); await refresh(index); products(index);
+          await seed(index); await refresh(index);
           return index.ordered.filter(row => searchable(row.type) && !context.accountState(ownerId).sessions[row.sessionId]?.forgottenSeqs?.includes(row.seq) && row.text.toLowerCase().includes(q.toLowerCase())).map(row => {
             const offset = row.text.toLowerCase().indexOf(q.toLowerCase()), start = Math.max(0, offset - 60);
             return { chatId, eventId: row.eventId, sourceRef: row.sourceRef ?? { kind: 'native', hostId: row.hostId, sessionId: row.sessionId, seq: row.seq },
@@ -238,10 +213,6 @@ export function createChatTimeline(context) {
       if (revision !== (context.accountState(ownerId).activity?.generation ?? 0))
         throw failure('CURSOR_RESET_REQUIRED', 409);
       return { hits: pages.flatMap(page => page.hits), indexState: pages.some(page => page.building) ? 'building' : 'ready' };
-    },
-    async lastOrderKey(ownerId, chatId) {
-      const index = current(ownerId, chatId);
-      return serial(index, async () => { await seed(index); await refresh(index); return index.ordered.findLast(row => !row.product)?.orderKey ?? '!'; });
     },
     async waitForChange(ownerId, chatId, revision, timeoutMs, signal, responseSnapshot) {
       // Register cancellation before inspecting any asynchronous source.
@@ -291,7 +262,7 @@ export function createChatTimeline(context) {
         dates: ['from','to'], locate: ['date'], search: ['q','from','to','role','hasArtifact','cursor','limit'] };
       const limit = parse(params, keys[action] ?? []), index = current(ownerId, chatId);
       const result = await serial(index, async () => {
-        await seed(index); await refresh(index); products(index);
+        await seed(index); await refresh(index);
         const rows = index.ordered;
         if (action === 'events') {
           if (['before','after','around'].filter(key => params.has(key)).length > 1) throw failure('INVALID_REQUEST');

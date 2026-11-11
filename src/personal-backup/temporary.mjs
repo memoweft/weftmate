@@ -24,10 +24,6 @@ export async function omitTemporaryChats(stage) {
       }
     }
     for (const id of sessions) delete account.sessions[id];
-    for (const [id, row] of Object.entries(account.chatResults ?? {})) if (chats.has(row.sourceChatId)) {
-      delete account.chatResults[id];
-      for (const [key, op] of Object.entries(account.sideOperations ?? {})) if (op.resultId === id) delete account.sideOperations[key];
-    }
     for (const [id, op] of Object.entries(account.chatOperations ?? {})) if (chats.has(op.chatId ?? op.response?.chat?.chatId)) delete account.chatOperations[id];
     if (account.chatIdentity) reconcileChatIdentity(account, account.hostId, new Date().toISOString());
   }

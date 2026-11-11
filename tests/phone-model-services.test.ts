@@ -1,3 +1,4 @@
+import {IDBFactory} from 'fake-indexeddb';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes, webcrypto } from 'node:crypto';
@@ -140,7 +141,7 @@ test('phone Claude completion works without a progress callback and preserves it
   const manager = await create({ catalog: { ...catalog, queryServiceCatalog: async () => ({ status: 'available', checkedAt: new Date().toISOString(), models: [{ modelId: 'claude-synthetic', name: '合成 Claude', enabled: true }] }) }, crypto: webcrypto });
   await manager.configure({ endpoint: 'https://model.example/v1', interfaceType: 'anthropic', apiKey: credential });
   let attached: any, requested: any;
-  const vault = { complete: async () => assert.fail('Claude uses its messages transport') };
+  let vault:any;
   const context: any = { window: {}, state: {}, document: { addEventListener() {} }, addEventListener() {},
     androidBridge: { call: async () => assert.fail('browser completion cannot request a native secret') },
     WeftPhoneModelServices: { create: async () => manager },
@@ -152,17 +153,18 @@ test('phone Claude completion works without a progress callback and preserves it
       if (requested.tools?.length) return { ok: true, json: async () => ({ stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'synthetic-work', name: 'computer_work', input: { description: '合成文件工作' } }] }) };
       return { ok: true, json: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: '合成回复' }] }) };
     }, URL, DOMException, AbortController, clearTimeout };
+  vault=await (globalThis as any).WeftOffline.browserVault('claude-transport',{indexedDB:new IDBFactory(),crypto:webcrypto,fetch:context.fetch});
   runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js', import.meta.url), 'utf8'), context);
   await context.WeftPhone.restoreArchive({ origin: 'https://synthetic.example', accountId: 'synthetic', deviceId: 'phone' }, {});
   assert.ok(attached, 'the standalone model service engine is attached');
   const reply = await attached.vault.complete({ model: 'claude-synthetic', stream: false, max_tokens: 1200,
     messages: [{ role: 'system', content: '请回答。' }, { role: 'user', content: '我喜欢茉莉花茶。' }] },
-    { model: attached.phoneModel() }, new AbortController().signal);
-  assert.equal(requested.model, 'claude-synthetic'); assert.equal(requested.max_tokens, 1200);
+    attached.phoneModel(), new AbortController().signal);
+  assert.equal(requested.model, 'claude-synthetic'); assert.equal(requested.max_tokens, 1200);vault.close();
   assert.equal(requested.stream, false); assert.equal(reply.choices[0].message.content, '合成回复');
   const work = await attached.vault.complete({ model: 'claude-synthetic', messages: [{ role: 'user', content: '合成请求' }],
     tools: [{ type: 'function', function: { name: 'computer_work', description: 'Ask to enter work', parameters: { type: 'object', properties: { description: { type: 'string' } } } } }] },
-    { model: attached.phoneModel() }, new AbortController().signal);
+    attached.phoneModel(), new AbortController().signal);
   assert.equal(requested.tools[0].name, 'computer_work'); assert.equal(requested.tools[0].input_schema.type, 'object');
   assert.equal(work.choices[0].message.tool_calls[0].function.name, 'computer_work');
   assert.deepEqual(JSON.parse(work.choices[0].message.tool_calls[0].function.arguments), { description: '合成文件工作' });

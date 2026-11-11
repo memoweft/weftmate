@@ -1,0 +1,32 @@
+# WeftMate 补丁层（R11）：官方 DSH 功能、最小桌面扩展与 AI-Game 工具接缝。
+- insert:
+    - id: weftmate-host
+      name: ./plugins/weftmate-host.mjs
+    - id: weftmate-memory
+      name: ./plugins/weftmate-memory.mjs
+    - id: weftmate-aigame-host
+      name: ./plugins/weftmate-aigame-host.mjs
+    - id: weftmate-weftmod
+      name: ./plugins/weftmate-weftmod.mjs
+    - id: weftmate-mod-projects
+      name: ./plugins/weftmate-mod-projects.mjs
+    - id: '@weftmate/client'
+      name: '@weftmate/client'
+# Credential providers are deliberately absent here. The final host security
+# overlay is the only authority for safeStorage credential IPC.
+- id: directory-picker
+  disabled: true
+- insert:
+    - id: directory-picker-browse
+      name: '@deepseek-ai/dsh-host-directory-picker-browse'
+    - id: ui-directory-picker-browse
+      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'
+
+# A deployment-owned preset root. Its mod-maintainer composition is written
+# with the profile assets; user preset authoring remains under DSH.
+- id: agent-presets
+  config:
+    default: standard
+    roots:
+      - path: !!js dshHomePath('profiles/weftmate/agent-presets')
+        trust: system

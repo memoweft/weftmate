@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
+import { randomBytes, createHash } from 'node:crypto';
+import { createAccountKeys } from '../src/personal-cloud/account-keys.mjs';
 import { desktopAuthStorage } from '../src/personal-desktop-auth.mjs';
 
 function storage() {
@@ -91,4 +93,21 @@ test('the native preload presence query exposes no key or enumeration arguments'
     { require: () => electron, process: { platform: 'win32' } });
   assert.equal(await api.cloudCredentialsPresent('forged-key', ['forged-owner']), false);
   assert.deepEqual(calls, [['wm:desktop:cloud-credentials-present']]);
+});
+
+test('a lost first-device response reuses the encrypted candidate and a second key never overwrites an active one', async () => {
+  const f=storage(), issuer='https://synthetic.invalid', sub='synthetic';
+  try {
+    let first;
+    const keys=createAccountKeys(f.store.accountKeyVault);
+    await assert.rejects(keys.initialize(issuer,sub,async keyId=>{first=keyId;throw Error('lost reply');}));
+    assert.equal(keys.status(issuer,sub),null);
+    const reopened=createAccountKeys(desktopAuthStorage(f.file,f.encryption).accountKeyVault);
+    assert.equal(await reopened.initialize(issuer,sub,async keyId=>{assert.equal(keyId,first);return {keyId};}),first);
+    const other=randomBytes(32),otherId=createHash('sha256').update(other).digest('base64url');
+    assert.throws(()=>reopened.install(issuer,sub,otherId,other.toString('base64url')),e=>e.code==='ACCOUNT_KEY_CONFLICT');
+    assert.equal(reopened.status(issuer,sub),first);
+    assert.equal(reopened.status(issuer,'other'),null);
+    assert.equal(f.store.cloudCredentialsPresent(),false);
+  } finally { f.dispose(); }
 });

@@ -127,28 +127,29 @@ export function createModelServiceOperations(context) {
     }
     return null;
   }
-  async function installModels(ownerId, record, models, stageRef = record.stageRef, allowedPendingSessionId = null, allowedPendingModelProfileId = null) {
+  async function installModels(ownerId, record, models, stageRef = record.stageRef, allowedPendingSessionId = null) {
     const missing = models.filter(row => row.enabled !== false && (!row.profileId || row.pendingInstallation === true));
     if (!missing.length) return models;
     await backup();
+    const source=context.accountModelForProfile?.(ownerId,record.credentialProfileId);
+    const modelTier=source?.revisions?.[String(source.runtimeRevision)]?.modelTier;
     const timestamp = now(), targets = missing.map(row => {
       const existing = row.pendingInstallation && context.accountModelForProfile(ownerId, row.profileId);
       const accountModelId = existing?.accountModelId ?? `account-model-${randomUUID()}`;
       return { row, accountModelId, target: { runtimeRevision: 1, profileId: existing ? row.profileId : privateProfileId(ownerId, accountModelId, 1),
-        baseUrl: record.baseUrl, modelId: row.modelId, name: row.name, interfaceType: record.interfaceType,
+        baseUrl: record.baseUrl, modelId: row.modelId, name: row.name, interfaceType: record.interfaceType,...(modelTier?{modelTier}:{}),
         ...(row.deepThinking ? { deepThinking: { ...row.deepThinking } } : {}), routeFingerprint: modelRouteFingerprint(
           openAICompatibleEndpoint(record.baseUrl, 'chat/completions').href, row.modelId) } };
     });
     const result = await context.accountModelManager.apply({ ownerId, targets: targets.map(row => row.target), target: targets[0].target,
-      stageRef, previousProfileId: record.credentialProfileId, ...(allowedPendingSessionId ? { allowedPendingSessionId } : {}),
-      ...(allowedPendingModelProfileId ? { allowedPendingModelProfileId } : {}) });
+      stageRef, previousProfileId: record.credentialProfileId, ...(allowedPendingSessionId ? { allowedPendingSessionId } : {}) });
     if (result?.applied === false) throw failure('ACCOUNT_MODEL_ROUTE_UNCONFIRMED', 503);
     await context.serial(() => context.mutate(ownerId, next => {
       next.accountModels ??= {};
       for (const { target, accountModelId } of targets) next.accountModels[accountModelId] = {
         accountModelId, ownerId, revision: 1, runtimeRevision: 1, name: target.name, status: 'active',
         revisions: { '1': { revision: 1, profileId: target.profileId, baseUrl: target.baseUrl, modelId: target.modelId,
-          interfaceType: target.interfaceType, ...(target.deepThinking ? { deepThinking: target.deepThinking } : {}), routeFingerprint: target.routeFingerprint, createdAt: timestamp } }, createdAt: timestamp, updatedAt: timestamp };
+          interfaceType: target.interfaceType, ...(target.modelTier?{modelTier:target.modelTier}:{}), ...(target.deepThinking ? { deepThinking: target.deepThinking } : {}), routeFingerprint: target.routeFingerprint, createdAt: timestamp } }, createdAt: timestamp, updatedAt: timestamp };
     }));
     const installed = new Map(targets.map(({ row, target }) => [row.modelId, target.profileId]));
     return models.map(row => { if (!installed.has(row.modelId)) return row; const { pendingInstallation, ...ready } = row;
@@ -221,14 +222,14 @@ export function createModelServiceOperations(context) {
         body.selectedModelId !== undefined && !MODEL_ID.test(body.selectedModelId) ||
         body.models !== undefined && (!Array.isArray(body.models) || body.models.some(row => !plainObject(row) || !MODEL_ID.test(row.modelId) || typeof row.enabled !== 'boolean' || Object.keys(row).some(key => !['modelId', 'enabled'].includes(key))))) throw failure('INVALID_REQUEST');
   }
-  async function configure(ownerId, body, serviceId = null) {
+  async function configure(ownerId, body, serviceId = null, revive = false) {
     validateInput(body, !!serviceId);
     await migrate(ownerId);
     const fingerprint = digest(JSON.stringify({ serviceId, ...body }));
     const previous = context.accountState(ownerId).modelServiceOperations?.[body.requestId];
     if (previous) { if (previous.fingerprint !== fingerprint) throw failure('REQUEST_CONFLICT', 409); return previous.response; }
     if (context.requestIdUsed(context.accountState(ownerId), body.requestId)) throw failure('REQUEST_CONFLICT', 409);
-    let before = serviceId ? requireService(ownerId, serviceId) : null;
+    let before = serviceId ? (revive ? context.accountState(ownerId).modelServices?.[serviceId] : requireService(ownerId, serviceId)) : null;
     if (!before) for (const existing of Object.values(context.accountState(ownerId).modelServices ?? {})) {
       if (existing.status === 'active' && existing.baseUrl === canonicalAccountBaseUrl(body.baseUrl) &&
         existing.interfaceType === (body.interfaceType ?? 'openai-compatible') && await secretFor(ownerId, existing) === body.apiKey) {
@@ -269,7 +270,12 @@ export function createModelServiceOperations(context) {
       next.modelServices[record.serviceId] = record;
       next.modelServiceOperations[body.requestId] = { fingerprint, response };
       const selected = record.models.find(row => row.modelId === record.selectedModelId);
+      const defaultBefore=next.defaultModelProfileId;
+      const previousDefault=before?.models.find(row=>row.profileId===next.defaultModelProfileId||row.profileIds?.includes(next.defaultModelProfileId));
+      const replacement=previousDefault&&record.models.find(row=>row.modelId===previousDefault.modelId);
+      if(replacement?.profileId)next.defaultModelProfileId=replacement.profileId;
       if (!next.defaultModelProfileId && selected?.profileId) next.defaultModelProfileId = selected.profileId;
+      if(defaultBefore!==next.defaultModelProfileId)next.modelDefaultUpdatedAt=now();
     }));
     return response;
   }
@@ -293,19 +299,23 @@ export function createModelServiceOperations(context) {
       const record = next.modelServices[serviceId], row = record.models.find(model => model.modelId === body.modelId);
       if (!row.enabled || record.status !== 'active') throw failure('MODEL_UNAVAILABLE', 422);
       row.lastUsedAt = now();
-      if (body.preference !== 'conversation') { record.selectedModelId = row.modelId; next.defaultModelProfileId = row.profileId; }
+      if (body.preference !== 'conversation') {
+        if(record.selectedModelId!==row.modelId)record.updatedAt=now();
+        if(next.defaultModelProfileId!==row.profileId)next.modelDefaultUpdatedAt=now();
+        record.selectedModelId = row.modelId; next.defaultModelProfileId = row.profileId;
+      }
       if (body.sessionId) next.sessions[body.sessionId].pendingModelProfileId = row.profileId;
     }));
     service = requireService(ownerId, serviceId);
     return { profileId: selected.profileId, service: publicModelService(service),
       models: context.visibleModels(ownerId, await context.backend.listModels({ ownerId })) };
   }
-  async function ensureProfile(ownerId, profileId, { allowedPendingSessionId = null, allowedPendingModelProfileId = null } = {}) {
+  async function ensureProfile(ownerId, profileId, { allowedPendingSessionId = null } = {}) {
     const service = Object.values(context.accountState(ownerId).modelServices ?? {}).find(record => record.status === 'active' && record.models.some(row => row.profileId === profileId));
     const pendingModel = service?.models.find(row => row.profileId === profileId && row.pendingInstallation);
     if (pendingModel) {
       let installed;
-      try { installed = await installModels(ownerId, service, [pendingModel], service.stageRef, allowedPendingSessionId, allowedPendingModelProfileId); }
+      try { installed = await installModels(ownerId, service, [pendingModel], service.stageRef, allowedPendingSessionId); }
       catch (error) { if (error?.code === 'ACCOUNT_MODEL_BUSY') return false; throw error; }
       await context.serial(() => context.mutate(ownerId, next => {
         const record = next.modelServices[service.serviceId]; Object.assign(record.models.find(row => row.profileId === profileId), installed[0]);
@@ -347,11 +357,13 @@ export function createModelServiceOperations(context) {
     const record = requireService(ownerId, serviceId);
     if (record.revision !== body.expectedRevision) throw failure('ACCOUNT_MODEL_REVISION_CHANGED', 409);
     const profileIds = record.models.flatMap(row => row.profileIds ?? (row.profileId ? [row.profileId] : []));
+    const fallback=context.visibleModels(ownerId,await context.backend.listModels({ownerId})).find(row=>row.sourceKind==='cloud'&&!profileIds.includes(row.id))?.id;
     if (context.accountModelManager.disableService) await context.accountModelManager.disableService({ ownerId, profileIds, stageRefs: record.stageRef ? [record.stageRef] : [] });
     else await context.accountModelManager.disable({ ownerId, profileIds: profileIds.filter(id => id.startsWith('private-model-')), stageRefs: record.stageRef ? [record.stageRef] : [] });
     await context.serial(() => context.mutate(ownerId, next => {
       if (next.modelServices[serviceId].revision !== body.expectedRevision) throw failure('ACCOUNT_MODEL_REVISION_CHANGED', 409);
       const service = next.modelServices[serviceId]; service.status = 'removed'; service.revision++; service.updatedAt = now();
+      if(profileIds.includes(next.defaultModelProfileId)){next.modelDefaultUpdatedAt=now();if(fallback)next.defaultModelProfileId=fallback;else delete next.defaultModelProfileId;}
       for (const model of Object.values(next.accountModels ?? {})) if (Object.values(model.revisions).some(row => profileIds.includes(row.profileId))) { model.status = 'removed'; model.revision++; }
       next.modelServiceOperations ??= {}; next.modelServiceOperations[body.requestId] = { fingerprint, response: { removed: true } };
     }));
@@ -367,7 +379,7 @@ export function createModelServiceOperations(context) {
     return queryServiceCatalog({ baseUrl, apiKey, interfaceType: body.interfaceType ?? service?.interfaceType ?? 'openai-compatible',
       ...(context.accountModelManager.fetchCatalog ? { fetchImpl: context.accountModelManager.fetchCatalog } : {}), signal: context.closingSignal });
   }
-  return { migrate, list, configure, select, refresh, remove, check, ensureProfile, applyPendingSelection,
+  return { secretFor, migrate, list, configure, select, refresh, remove, check, applyPendingSelection,
     refreshing: (ownerId, serviceId) => refreshes.has(`${ownerId}|${serviceId}`),
     async close() { await Promise.allSettled([...refreshes.values(), ...migrations.values()]); } };
 }

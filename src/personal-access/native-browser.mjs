@@ -4,6 +4,7 @@ import { failure } from './common.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { sessionWorkspace } from './session-workspace.mjs';
+import { searchPublicWeb } from '../personal-browser/public-search.mjs';
 
 /** A verbatim lead, cut at a paragraph boundary; never a fabricated summary. */
 export function pagePreview(text, limit = 4096) {
@@ -38,8 +39,13 @@ export function createNativeBrowserOperations(context) {
       const ownerId = context.sessionOperations.executionOwnerForSession(sessionId);
       const session = context.accountState(ownerId).sessions[sessionId];
       if (session?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
-      if (!['open', 'read', 'follow'].includes(browserAction)) throw failure('INVALID_COMMAND');
+      if (!['open', 'read', 'follow', 'search'].includes(browserAction)) throw failure('INVALID_COMMAND');
       const { root } = context.personalExecutionSource(context.accountState(ownerId), input, true);
+      if (browserAction === 'search') {
+        const result = await searchPublicWeb(input.query);
+        context.personalExecutionSource(context.accountState(ownerId), input, true);
+        return result;
+      }
       const rootTaskId = root.commandId;
       const prior = captures.get(snapshotId);
       if (browserAction !== 'open' && (!prior || prior.sessionId !== sessionId))

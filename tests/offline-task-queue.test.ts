@@ -71,7 +71,7 @@ function receiverFixture(){
   const rows:any[]=[],account:any={ownerId:'owner',hostId:'host',commands:{},sessions:{session:{ownerId:'owner',modelProfileId:'model',approvalMode:'ask'}},devices:{cookie:{scopes:['commands:write'],authKind:'cloud',authEpoch:1,revoked:false,expiresAt:'2020-01-01'}}};
   const scheduled:string[]=[],acks:any[]=[],results:any[]=[];let queue=Promise.resolve(),cancel=false;
   const context:any={rootState:{hostId:'host'},ownerIds:()=>['owner'],accountState:()=>account,hostOwner:()=>true,timestamp:Date.now,
-    offline:{generation:()=>1},messageModelUsable:()=>true,mainChat:{prepareReminder:async()=> 'session'},
+    offline:{generation:()=>1},messageModelUsable:()=>true,reminderChat:{prepare:async()=> 'session'},
     serial:(fn:Function)=>{const work=queue.then(()=>fn());queue=work.catch(()=>{});return work;},mutate:async(_owner:string,fn:Function)=>fn(account),schedule:(_owner:string,id:string)=>scheduled.push(id),activity:{record:async()=>{}},taskDetail:async()=>({replyEvidence:{}}),
     cloudIdentity:{offlineTasksSupported:()=>true,syncRevocations:async()=>{},offlineAccount:()=>({ownerId:'owner',deviceId:'cookie'}),offlineSource:()=> 'cookie',
       relayRequest:async(path:string,body:any)=>{if(path.endsWith('/claim'))return {items:rows};if(path.endsWith('/ack')){const c:any=Object.values(account.commands).find((c:any)=>c.commandId===body.receiptId);assert.ok(c,'persist before cloud deletion');if(!acks.some(a=>a.receiptId===body.receiptId))assert.equal(c.offlineSource.confirmed,false,'first ack must follow a persisted unconfirmed command');acks.push(body);return {accepted:!cancel};}results.push(body);return {accepted:true};}}};
@@ -99,9 +99,9 @@ test('host makes zero task requests without explicit cloud support, and enables 
 
 test('phone ignores cached task keys until cloud advertises support; refresh can enable and disable without any 404 probe',async()=>{
   const vault=await W.browserVault('cloud-capability',{indexedDB:new IDBFactory(),crypto:webcrypto});
-  await vault.save({snapshot:{generation:1,items:[],recent:[],model:{modelId:'synthetic'},taskRecipient:recipient.publicJwk,control:{accountId:'account',hostId:'host',capabilities:{offlineTasks:1}}},tasks:[],conversations:[],turns:[]});
+  await vault.save({snapshot:{generation:1,items:[],recent:[],taskRecipient:recipient.publicJwk,control:{accountId:'account',hostId:'host',capabilities:{offlineTasks:1}}},tasks:[],conversations:[],turns:[]});
   let supported=false,requests=0,chats=0;vault.complete=async()=>{chats++;return {choices:[{message:{content:'合成聊天回复'}}]};};
-  const engine=await W.create({vault,identity,host:async()=>{},control:async()=>({authorized:true,hostId:'host',accountId:'account',generation:1,...(supported?{capabilities:{offlineTasks:1}}:{})}),tasks:async()=>{requests++;return {items:[]};},crypto:webcrypto});
+  const engine=await W.create({vault,identity,phoneModel:()=>({modelId:'synthetic'}),host:async()=>{},control:async()=>({authorized:true,hostId:'host',accountId:'account',generation:1,...(supported?{capabilities:{offlineTasks:1}}:{})}),tasks:async()=>{requests++;return {items:[]};},crypto:webcrypto});
   await engine.refreshTasks();assert.equal(engine.view().taskReady,false);assert.equal(requests,0);await engine.send('普通聊天');assert.equal(chats,1);assert.equal(requests,0);
   supported=true;await engine.refreshTasks();assert.equal(engine.view().taskReady,true);assert.equal(requests,1);
   supported=false;await engine.refreshTasks();assert.equal(engine.view().taskReady,false);assert.equal(requests,1);await engine.clearTasks();assert.equal(requests,1);engine.close();

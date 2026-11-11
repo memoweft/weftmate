@@ -11,6 +11,17 @@ internal data class NativeComposerState(val text: String, val focused: Boolean, 
     val action get() = when { running && !queueSupported -> ComposerAction.Stop; text.isNotBlank() || attachments > 0 -> ComposerAction.Send; running -> ComposerAction.Stop; else -> ComposerAction.Voice }
 }
 
+internal data class NativeContextUsage(val usedTokens: Long, val contextWindow: Long?) {
+    val ratio get() = contextWindow?.let { usedTokens.toDouble() / it }
+}
+
+internal fun nativeContextUsage(chat: JSONObject): NativeContextUsage? {
+    val usage = chat.optJSONObject("contextUsage") ?: return null
+    val used = usage.optLong("usedTokens", -1).takeIf { it >= 0 } ?: return null
+    val window = usage.optLong("contextWindow", -1).takeIf { it > 0 }
+    return NativeContextUsage(used, window)
+}
+
 /** Public cumulative snapshots replace a node. Neither live watermarks nor anchors are history cursors. */
 internal class NativeTimeline {
     private val durable = linkedMapOf<String, JSONObject>()

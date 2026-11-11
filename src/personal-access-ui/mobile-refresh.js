@@ -13,7 +13,7 @@ globalThis.WeftUiComponents.factories.mobileRefresh=(core,ui)=>({mountMobileRefr
     status.textContent=core.connectionView().kind==='online'?'已连接':core.connectionView().label;
     status.dataset.connectionKind=core.connectionView().kind;
     const tabs=ui.element('nav','remote-mobile-tabs');tabs.setAttribute('aria-label','手机主导航');tabs.setAttribute('role','tablist');
-    const actions={health:()=>ui.openHealth(),chat:()=>core.supportsWorkModes?.()?ui.showConversation():core.selectMainChat(),activity:()=>ui.openActivity(),goals:()=>ui.openGoals(),library:()=>ui.openLibrary()};
+    const actions={health:()=>ui.openHealth(),chat:()=>ui.showConversation(),activity:()=>ui.openActivity(),goals:()=>ui.openGoals(),library:()=>ui.openLibrary()};
     for(const [id,name,icon] of [['chat','聊天','chat'],['activity','动态','bell'],...(WeftHealth.showHealthBottomTab?[['health','健康','health']]:[]),['goals','目标','goal'],['library','成果库','folder']]){
         const button=ui.element('button','remote-mobile-tab');button.type='button';button.id=`remote-tab-${id}`;button.dataset.tab=id;button.setAttribute('role','tab');button.setAttribute('aria-label',name);
         const panel=id==='chat'?ui.byId('conversation-pane'):document.querySelector(`.${id}-surface`);if(panel){panel.id ||= `remote-panel-${id}`;button.setAttribute('aria-controls',panel.id);}
@@ -26,7 +26,7 @@ globalThis.WeftUiComponents.factories.mobileRefresh=(core,ui)=>({mountMobileRefr
         const name=document.body.classList.contains('health-open')?'health':document.body.classList.contains('activity-open')?'activity':document.body.classList.contains('goals-open')?'goals':document.body.classList.contains('library-open')?'library':'chat';
         const height=visualViewport?.height||innerHeight,editing=/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName);
         if(!editing)restHeight=height;
-        tabs.hidden=ui.byId('assistant-view').hidden||editing&&height<restHeight-100||name==='chat'&&!core.inMainChat();
+        tabs.hidden=ui.byId('assistant-view').hidden||editing&&height<restHeight-100;
         for(const button of tabs.children){const selected=button.dataset.tab===name;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;}
     };
     new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class']});

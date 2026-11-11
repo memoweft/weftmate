@@ -13,7 +13,7 @@ export function createCommandOperations(context) {
   const messageDispatches = new Map();
 
   function requestIdUsed(account, requestId) {
-    return !!account.modelServiceOperations?.[requestId] || !!account.messageBranches?.[requestId] || !!account.activity?.operations?.[requestId] || !!account.chatOperations?.[requestId] || !!account.sideOperations?.[requestId] || !!account.modelOperations?.[requestId] || !!account.projectOperations?.[requestId] ||
+    return !!account.modelServiceOperations?.[requestId] || !!account.messageBranches?.[requestId] || !!account.activity?.operations?.[requestId] || !!account.chatOperations?.[requestId] || !!account.modelOperations?.[requestId] || !!account.projectOperations?.[requestId] ||
       Object.values(account.commands).some(command => command.requestId === requestId ||
         command.taskControl?.stopRequests.some(entry => entry.requestId === requestId) ||
         command.toolApprovals?.some(row => row.decisionRequestId === requestId) ||
@@ -34,18 +34,6 @@ export function createCommandOperations(context) {
   async function dispatch(ownerId, commandId) {
     try {
       if (context.closing || context.storageFault) return;
-      const unbound = context.accountState(ownerId).commands[commandId];
-      if (unbound?.kind === 'chat.message' && unbound.state === 'pending') {
-        const account = context.accountState(ownerId), main = account.chatIdentity.chats[account.chatIdentity.mainChatId];
-        const selectedSessionId = account.chatIdentity.segments[main.activeSegmentId]?.sessionId;
-        const selectedSession = account.sessions[selectedSessionId];
-        const profileId = selectedSession?.pendingModelProfileId ?? selectedSession?.modelProfileId ?? unbound.payload.modelProfileId ?? account.defaultModelProfileId;
-        if (!await context.modelServices.ensureProfile(ownerId, profileId, { allowedPendingModelProfileId: profileId })) {
-          const timer = setTimeout(() => schedule(ownerId, commandId), 250); timer.unref?.(); return;
-        }
-        await context.mainChat.bind(ownerId, commandId);
-      }
-      if (context.accountState(ownerId).commands[commandId]?.kind === 'chat.message') return;
       let snapshot;
       let callback;
       const pending = context.accountState(ownerId).commands[commandId];
@@ -192,7 +180,9 @@ export function createCommandOperations(context) {
           if (inspected.rootIdentity !== project.rootIdentity || inspected.rootFinalPath !== project.rootFinalPath)
             throw failure('PROJECT_ROOT_CHANGED', 409);
         }
-        await context.callBackend(() => context.backend.preflight({ ...pending.payload, ownerId }));
+        // sendMessage repeats these checks right before the prompt and reports
+        // failures there as definitive, so a message is not preflighted twice.
+        if (pending.kind !== 'session.message') await context.callBackend(() => context.backend.preflight({ ...pending.payload, ownerId }));
       } catch (error) {
         if (context.closing) return;
         await context.serial(async () => {
@@ -339,11 +329,12 @@ export function createCommandOperations(context) {
           }));
           else if (snapshot.kind === 'session.message') {
             const staged = snapshot.payload.attachments
-              ? await context.sharedAttachmentStores.get(ownerId).resolve({ sessionId: snapshot.payload.attachmentSessionId ?? snapshot.sessionId,
+              ? await context.sharedAttachmentStores.get(ownerId).resolve({ sessionId: snapshot.sessionId,
                 requestId: snapshot.requestId, attachments: snapshot.payload.attachments }) : [];
             callback = Promise.resolve(context.backend.sendMessage({
               sessionId: snapshot.sessionId, text: modelTextWithAttachments(snapshot.payload.text, staged,
                 snapshot.payload.originalAttachments), mode: snapshot.payload.mode, ownerId,
+              ...(snapshot.payload.modelProfileId ? { modelProfileId: snapshot.payload.modelProfileId } : {}),
               ...((chatForSession(context.accountState(ownerId),snapshot.sessionId)?.deepThinking ?? context.accountState(ownerId).sessions[snapshot.sessionId]?.deepThinking) !== undefined ?
                 { deepThinking: chatForSession(context.accountState(ownerId),snapshot.sessionId)?.deepThinking ?? context.accountState(ownerId).sessions[snapshot.sessionId].deepThinking } : {}),
               attachments: staged.filter((item) => !TEXT_ATTACHMENT_TYPES.has(item.contentType))
@@ -447,7 +438,7 @@ export function createCommandOperations(context) {
       }
       if (snapshot.kind === 'session.message' && snapshot.payload.attachments &&
           context.accountState(ownerId).commands[commandId]?.state === 'accepted_by_dsh') {
-        await context.sharedAttachmentStores.get(ownerId).release({ sessionId: snapshot.payload.attachmentSessionId ?? snapshot.sessionId,
+        await context.sharedAttachmentStores.get(ownerId).release({ sessionId: snapshot.sessionId,
           requestId: snapshot.requestId, attachments: snapshot.payload.attachments });
       }
       if (snapshot.kind === 'session.message') {
@@ -493,12 +484,11 @@ export function createCommandOperations(context) {
     requestIdUsed,
     dispatch,
     schedule,
-    hasUnissuedDshCommands({ allowedPendingSessionId = null, allowedPendingModelProfileId = null } = {}) {
+    hasUnissuedDshCommands({ allowedPendingSessionId = null } = {}) {
       return Object.values(context.rootState.accounts).some((account) =>
         Object.values(account.commands).some((command) =>
           ['pending', 'dispatching'].includes(command.state) && !(command.state === 'pending' &&
-            (command.kind === 'session.message' && command.sessionId === allowedPendingSessionId || command.kind === 'chat.message' &&
-              (command.payload.modelProfileId ?? account.defaultModelProfileId) === allowedPendingModelProfileId))));
+            command.kind === 'session.message' && command.sessionId === allowedPendingSessionId)));
     },
     /** Main-process only: a DSH tool call from an owner-bound restricted turn. */
     async submitToolDesktop({ sessionId, turn, callId, messageHash, appId }) {

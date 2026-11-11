@@ -29,8 +29,23 @@ async function enrolled(t) {
       .sign(installation.privateKey);
     return f.api(`${P}${route}`, { method: 'POST', body: { hostId, proof }, status: 200 });
   }
-  return Object.assign(f, { key, publicJwk, logged, account, hostId, claimId, request, claim, confirm, hostRequest });
+  return Object.assign(f, { key, installation, publicJwk, logged, account, hostId, claimId, request, claim, confirm, hostRequest });
 }
+
+test('an account accepts only its first public data-key fingerprint, including competing or retried claims', async t => {
+  const f = await enrolled(t);
+  const sub = f.account.cloudAccountId;
+  assert.equal((await f.confirm()).status, 200);
+  const claim = keyId => f.hostRequest('/hosts/account-key/claim', {sub,keyId});
+  const [first, second] = await Promise.all([claim(Buffer.alloc(32,1).toString('base64url')), claim(Buffer.alloc(32,2).toString('base64url'))]);
+  assert.equal(first.data.keyId, second.data.keyId);
+  assert.equal((await claim(first.data.keyId)).data.keyId, first.data.keyId);
+  assert.deepEqual((await f.hostRequest('/hosts/account-key/read',{sub})).data, {keyId:first.data.keyId});
+  const proof = await new SignJWT({action:'/hosts/account-key/claim',sub:'some-other-account',keyId:Buffer.alloc(32,3).toString('base64url')})
+    .setProtectedHeader({alg:'ES256',typ:'wm-host-request+jwt'}).setIssuer(f.hostId).setAudience(f.config.issuer)
+    .setIssuedAt().setExpirationTime('60s').setJti(randomUUID()).sign(f.installation.privateKey);
+  assert.equal((await f.api(P+'/hosts/account-key/claim',{method:'POST',body:{hostId:f.hostId,proof}})).status,403);
+});
 
 test('host claim requires installation signature and verified account; claimId and memberships survive restart idempotently', async t => {
   const f = await enrolled(t);
@@ -84,7 +99,7 @@ test('installation-authenticated revocation feed carries only member device/epoc
   const { payload } = await jwtVerify(result.data.eventToken, createLocalJWKSet(f.identity.keys.publicJwks), {
     issuer: f.config.issuer, audience: `${f.config.audience}/hosts/${f.hostId}`, algorithms: ['RS256'], typ: 'wm-cloud-revocations+jwt' });
   assert.equal(payload.events.length, 2); assert.equal(payload.events[0].kind, 'device'); assert.equal(payload.events[1].kind, 'epoch');
-  assert.deepEqual(payload.capabilities,{offlineTasks:1,multiHost:1,cloudBackup:1});
+  assert.deepEqual(payload.capabilities,{offlineTasks:1,multiHost:1,cloudBackup:1,accountKeyRegistry:1});
   assert.doesNotMatch(JSON.stringify(payload), /email|password|title|health/);
   const invalid = await f.api(`${P}/hosts/revocations`, { method: 'POST', body: { hostId: f.hostId, proof: 'forged' } });
   assert.equal(invalid.status, 401);

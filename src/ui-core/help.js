@@ -1,7 +1,7 @@
 /* Local help and account-scoped update notices work without a connected host. */
 (() => {
   const topics=[
-    {id:'chats',group:'对话',title:'主对话与旁聊怎么分工',text:'主对话适合接着聊日常的事；旁聊适合专心处理一个题目。需要用电脑文件做事时，可以把旁聊放进项目。',action:'main',tryLabel:'打开主对话'},
+    {id:'chats',group:'对话',title:'对话怎么分',text:'一件事开一个新对话。需要用电脑文件做事时，把对话放进项目。提醒和定时任务会发到「提醒」对话。',action:'new',tryLabel:'新建对话'},
     {id:'temporary',group:'对话',title:'临时对话',text:'有些话只想这次聊，就新建临时对话。这里的内容不会形成长期记忆，也不会出现在跨对话搜索里。',action:'temporary',tryLabel:'新建临时对话'},
     {id:'remember',group:'记忆',title:'让助手记住或忘掉',text:'直接说“请记住我喜欢……”或“请忘掉……”。想确认保存了什么，可以到记忆里查看。',action:'memory',tryLabel:'查看记忆'},
     {id:'correct',group:'记忆',title:'记错了，怎么纠正',text:'直接告诉助手哪里不对，也可以打开那条记忆修改或忘掉它。纠正后，新对话会用更新后的内容。',action:'memory',tryLabel:'整理记忆'},

@@ -16,8 +16,9 @@ const evidence = evidencePath('fix-37'); mkdirSync(evidence, {recursive:true});
 const f = await startFixture(), profile = managedMkdtempSync(join(managedTempRoot(),'weftmate-fix37-'));
 let app, browser; const report = {phase, synthetic:true, surfaces:[], errors:[]};
 try {
- const main = (await f.request('/chats/main')).chat;
- let command = (await f.request('/commands',{requestId:'scroll-main',kind:'chat.message',targetDeviceId:f.hostId,chatId:main.chatId,modelProfileId:'synthetic',text:'弹出一个审批窗口',mode:'queue'})).command;
+ const opened=(await f.request('/commands',{requestId:'scroll-open',kind:'session.create',targetDeviceId:f.hostId,modelProfileId:'synthetic',waitForReceipt:true})).command;
+ assert.equal(opened.state,'accepted_by_dsh');
+ let command = (await f.request('/commands',{requestId:'scroll-main',kind:'session.message',targetDeviceId:f.hostId,sessionId:opened.sessionId,text:'弹出一个审批窗口',mode:'queue'})).command;
  while (['pending','dispatching','preflight'].includes(command.state)) {await new Promise(r=>setTimeout(r,30));command=(await f.request('/commands/'+command.commandId)).command;}
  assert.equal(command.state,'accepted_by_dsh');
  const memories = [{kind:'fact',id:'synthetic-a',summary:'合成记忆一'},{kind:'fact',id:'synthetic-b',summary:'合成记忆二'}];
@@ -37,7 +38,8 @@ try {
  if(baselineScroll)await page.route('**/conversation-scroll.js',route=>route.fulfill({contentType:'text/javascript',body:baselineScroll}));
  await page.route('**/app.js',async route=>{const response=await route.fetch();await route.fulfill({response,body:`const create=WeftUiCore.create;WeftUiCore.create=options=>{globalThis.__ui=options.effects;return globalThis.__core=create(options)};\n${await response.text()}`});});
  await localUiSession(page,f.credentials,'FIX-37 synthetic',{mainChat:true});
- try {await page.waitForFunction(()=>globalThis.__core?.inMainChat()&&document.querySelector('.main-chat-row.message'));}catch(error){console.log(await page.locator('body').innerText());console.log(await page.evaluate(()=>({core:!!globalThis.__core,main:globalThis.__core?.state.mainChat})));throw error;}
+ await page.evaluate(id=>__core.selectSession(id),opened.sessionId);
+ try {await page.waitForFunction(()=>globalThis.__core?.state.selectedSessionId&&document.querySelector('.main-chat-row.message'));}catch(error){console.log(await page.locator('body').innerText());console.log(await page.evaluate(()=>({core:!!globalThis.__core,main:globalThis.__core?.state.mainChat})));throw error;}
  async function measure(page, name) {
   page.on('pageerror',error=>report.errors.push(error.message));
   await page.waitForTimeout(250); // Let initial logical history hydration settle.
@@ -93,8 +95,8 @@ try {
  const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  if(baselineScroll)await mobile.route('**/conversation-scroll.js',route=>route.fulfill({contentType:'text/javascript',body:baselineScroll}));
  await mobile.goto(f.mobileUrl);await mobile.waitForFunction(()=>typeof uiCore!=='undefined'&&state.booted);
- await mobile.evaluate(async()=>{await uiCore.selectMainChat();});
- await mobile.waitForFunction(()=>uiCore.inMainChat()&&document.querySelector('.main-chat-row.message'));
+ await mobile.evaluate(id=>selectSharedSession(id),opened.sessionId);
+ await mobile.waitForFunction(()=>state.sharedSessionId&&document.querySelector('#chat-content .message'));
  await measure(mobile,'mobile-web-390');
  assert.deepEqual(report.errors,[]);
 } finally {writeFileSync(join(evidence,`${phase}.json`),JSON.stringify(report,null,2)+'\n');await browser?.close();await app?.close();await f.close();}

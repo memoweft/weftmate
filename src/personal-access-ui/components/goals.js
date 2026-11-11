@@ -5,7 +5,7 @@ globalThis.WeftUiComponents.factories.goals=(core,ui)=>{
     async function open(){if(opened){ui.closeRail();return;}document.dispatchEvent(new CustomEvent('weftmate:fixed-page',{detail:'goals'}));core.show('assistant');opened=true;panel.hidden=false;chat().hidden=true;document.body.classList.add('goals-open');entry.setAttribute('aria-current','page');ui.byId('assistant-title').textContent='目标';ui.closeRail();await core.readGoals();view.focus();clearInterval(timer);timer=setInterval(()=>{if(opened&&document.visibilityState==='visible'&&core.foreground())void core.readGoals();},core.polling.overview);}
     const selected=ui.paintSelectedSession,reset=ui.resetIdentityControls;
     return {mountGoals(){
-        const select=core.selectSession;core.selectSession=(...args)=>{close();return select(...args);};const main=core.selectMainChat;core.selectMainChat=(...args)=>{close();return main(...args);};
+        const select=core.selectSession;core.selectSession=(...args)=>{close();return select(...args);};
         entry=ui.element('button','rail-link goals-entry');entry.type='button';entry.append(WeftIcons.create('goal',16),ui.element('span','','目标'));entry.onclick=()=>void open();ui.fixedPageNavigation().append(entry);
         panel=ui.element('section','goals-surface');panel.hidden=true;panel.setAttribute('aria-label','目标');chat().after(panel);view=WeftGoalsView.mount({target:panel,core,toast:ui.toast,openSource:target=>{close();return ui.openActivitySource(target,'open_chat');}});
         const paintTimeline=ui.renderTimeline;let eventSignature;

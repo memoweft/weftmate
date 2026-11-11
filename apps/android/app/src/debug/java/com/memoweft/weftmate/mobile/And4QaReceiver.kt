@@ -9,7 +9,7 @@ import java.io.File
 /** Synthetic-package-only readiness probe. No content or credentials enter the report. */
 class And4QaReceiver : BroadcastReceiver() {
     override fun onReceive(context:Context,intent:Intent) {
-        if(context.packageName!="com.memoweft.weftmate.mobile.and4qa")return
+        if(context.packageName !in setOf("com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.startupqa"))return
         if(intent.getStringExtra("command")=="inspect")android.webkit.WebView.setWebContentsDebuggingEnabled(true)
         val visible=WeftMateApplication::class.java.getDeclaredField("visible").apply{isAccessible=true}.get(context.applicationContext) as Set<*>
         val activity=visible.filterIsInstance<NativeActivity>().firstOrNull()

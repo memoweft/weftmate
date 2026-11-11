@@ -244,11 +244,15 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
     const entered = new Promise<void>((resolve) => { enteredPreflight = resolve })
     const createGate = new Promise<void>((resolve) => { releaseCreate = resolve })
     const createEntered = new Promise<void>((resolve) => { enteredCreate = resolve })
-    let preflights = 0, createPreflights = 0
+    let createPreflights = 0
+    // A held send keeps the next message of the same conversation queued behind it.
+    const send = backend.sendMessage
+    backend.sendMessage = async (input: any) => {
+      if (input.text !== 'hold') return send(input)
+      enteredPreflight(); await gate
+      return { accepted: true, receiptId: 'rpc-hold' }
+    }
     backend.preflight = async (command: any) => {
-      if (command.kind === 'session.message' && ++preflights === 2) {
-        enteredPreflight(); await gate
-      }
       if (command.kind === 'session.create' && command.requestId === 'create-delayed-at-preflight' &&
           ++createPreflights === 2) { enteredCreate(); await createGate }
       return { ok: true }
@@ -258,11 +262,15 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
       modelProfileId: updated.model.profileId })
     assert.equal(waitingCreate.status, 202)
     await createEntered
+    const hold = await api(origin, owner, 'POST', '/personal/v1/commands', {
+      requestId: 'message-held-in-send', kind: 'session.message', targetDeviceId: hostId,
+      sessionId: createdSession.sessionId, text: 'hold' })
+    assert.equal(hold.status, 202)
+    await entered
     const waiting = await api(origin, owner, 'POST', '/personal/v1/commands', {
       requestId: 'message-delayed-at-preflight', kind: 'session.message', targetDeviceId: hostId,
       sessionId: createdSession.sessionId, text: 'This must not dispatch after stop intent' })
     assert.equal(waiting.status, 202)
-    await entered
     let releaseSecret!: () => void
     secretWait = new Promise<void>((resolve) => { releaseSecret = resolve })
     const secretEntered = new Promise<void>((resolve) => { enteredSecretRead = resolve })
@@ -300,7 +308,7 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
     assert.equal(rejectedCreate.state, 'rejected')
     assert.equal(rejectedCreate.errorCode, 'MODEL_UNAVAILABLE')
     assert.equal(sessions.size, 1, 'a second session is not created after stop intent')
-    assert.equal(sentCount, 0, 'a stop accepted during dispatch preflight blocks the final send')
+    assert.equal(sentCount, 0, 'a model stopped while the message is queued blocks the final send')
     assert.equal((await api(origin, owner, 'GET',
       `/personal/v1/sessions/${createdSession.sessionId}/events`)).status, 200,
     'the stopped account model does not hide owner-bound historical session reads')

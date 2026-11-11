@@ -1,0 +1,7 @@
+# WeftMate 补丁层（R3）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
+# 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行）。
+- insert:
+    - id: weftmate-host
+      name: ./plugins/weftmate-host.mjs
+    - id: '@weftmate/client'
+      name: '@weftmate/client'

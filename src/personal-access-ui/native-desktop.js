@@ -51,7 +51,8 @@ function blendDesktopColor(base, scrim) {
     // Read the actual token-backed backdrop, so theme/token changes and special
     // dialogs stay in sync. A fullscreen image paints over the titlebar itself.
     const scrim = top && getComputedStyle(top, top.classList.contains('phone-image-preview') ? null : '::backdrop').backgroundColor;
-    const palette = { color: style.backgroundColor, symbolColor: style.color };
+    const palette = { color: style.backgroundColor, symbolColor: style.color,
+      themeSource: globalThis.WeftDesktop?.getAppearance?.()?.theme };
     if (native.platform === 'win32' && scrim) {
       palette.color = blendDesktopColor(palette.color, scrim);
       palette.symbolColor = blendDesktopColor(palette.symbolColor, scrim);

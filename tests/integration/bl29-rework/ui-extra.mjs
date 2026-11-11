@@ -1,22 +1,20 @@
 import { outputPath } from './evidence.mjs';
 import {_electron,chromium} from 'playwright';import {createRequire} from 'node:module';import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';import {join,resolve} from 'node:path';import {tmpdir} from 'node:os';import {pathToFileURL} from 'node:url';import {randomUUID} from 'node:crypto';
 import {startTimelineCandidate} from './fixture.mjs';import {initializeDesktopSession} from './auth.mjs';
-import {waitForCommand} from '../../helpers/wait-for-command.mjs';
 import {waitForPublishedText} from '../../helpers/wait-for-published-text.mjs';
 import {closeTestElectron} from '../../helpers/close-test-electron.mjs';
 const diagnosticStarted=Date.now(),phased=process.argv.includes('--phased');
 const checkpoint=stage=>console.log(`[ui-extra] ${stage} (${Date.now()-diagnosticStarted}ms)`);
 const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate({daily:true,inlineProgress:true,logicalMobile:true,cloudMobile:true,sidebar:true,historyCount:0,baseTime:Date.now()});let app,browser;const report={rows:[],errors:[]};const profile=mkdtempSync(join(tmpdir(),'weftmate-bl29-latency-')),startedAt=Date.now();
 try{
- const main=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
- const send=async text=>{const c=await f.request('/commands',{requestId:randomUUID(),kind:'chat.message',chatId:main.chatId,modelProfileId:'local',targetDeviceId:host,text});return waitForCommand(async()=>(await f.request('/commands/'+c.command.commandId)).command);};
- await send('synthetic start');f.progress.text('initial done');f.progress.finish();
+ const main=await f.startChat('synthetic start'),send=text=>f.sendTo(main.sessionId,text);
+ f.progress.text('initial done');f.progress.finish();
  const entry=join(profile,'entry.cjs');writeFileSync(entry,`const {app}=require('electron');app.setPath('userData',${JSON.stringify(profile)});app.whenReady().then(async()=>{const {createPersonalDesktop}=await import(${JSON.stringify(pathToFileURL(resolve('src/personal-desktop.mjs')).href)});let quitting=false;app.on('before-quit',()=>quitting=true);const d=createPersonalDesktop({origin:${JSON.stringify(f.origin)},libraryDesktopToken:${JSON.stringify(f.libraryDesktopToken)},isQuitting:()=>quitting});globalThis.__bl29ConfigDesktop=d;await d.ready;});`);
  const env={...process.env,WEFTMATE_TEST_HOST_NAME:'synthetic-host'};delete env.ELECTRON_RUN_AS_NODE;
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:[entry],env});const desktop=await app.firstWindow();let delay=0;
  await desktop.route('**/personal/v1/**',async route=>{const path=new URL(route.request().url()).pathname;if(path.endsWith('/ui/app.js'))return route.fulfill({contentType:'text/javascript',body:readFileSync('src/personal-access-ui/app.js','utf8').replace('ui.loadAttachmentHasher =','globalThis.__revCore=core;globalThis.__revUi=ui;ui.loadAttachmentHasher =')});if(!path.includes('/ui/'))await pause(delay);return route.continue();});
- await initializeDesktopSession(desktop,f);await desktop.waitForFunction(()=>globalThis.__revCore?.state.mainChat&&!__revCore.state.refreshing);await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.restore();w.show();});await desktop.evaluate(()=>__revCore.connectionVisibility(false));await desktop.waitForFunction(()=>__revCore.foreground());
- browser=await chromium.launch({headless:true});const mobile=await browser.newPage({viewport:{width:390,height:844}});await mobile.route('**/bridge',async route=>{await pause(delay);return route.continue();});await mobile.goto(f.mobileUrl);await mobile.waitForFunction(()=>state.booted&&state.loggedIn&&uiCore.state.mainChat);await mobile.evaluate(()=>uiCore.selectMainChat());await pause(2000);
+ await initializeDesktopSession(desktop,f);await desktop.evaluate(id=>__revCore.selectSession(id),main.sessionId);await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.restore();w.show();});await desktop.evaluate(()=>__revCore.connectionVisibility(false));await desktop.waitForFunction(()=>__revCore.foreground());
+ browser=await chromium.launch({headless:true});const mobile=await browser.newPage({viewport:{width:390,height:844}});await mobile.route('**/bridge',async route=>{await pause(delay);return route.continue();});await mobile.goto(f.mobileUrl);await mobile.waitForFunction(()=>state.booted&&state.loggedIn&&state.logicalChats);await mobile.evaluate(id=>uiCore.selectLogicalSession(id),main.sessionId);await pause(2000);
  if(phased){const start=new Promise(resolve=>process.once('message',resolve));process.send({phase:'ready'});await start;checkpoint('measurement started');}
  for(const ms of [500]){
   delay=ms;
@@ -56,7 +54,7 @@ try{
  await waitBoth('sessionList',()=>document.body.textContent.includes('Independent rename marker'),()=>f.request('/sessions/'+f.sessionId+'/metadata',{title:'Independent rename marker'},'PATCH'));
  if(phased)process.send({phase:'measured',report});checkpoint('measurement completed');
 
-}catch(e){report.failure=e.message;if(app){const p=await app.firstWindow();report.desktopDebug=await p.evaluate(()=>({models:__revCore.state.models.map(m=>m.id),personalization:__revCore.state.personalization,revision:__revCore.state.accountRevision,result:__revCore.state.historyReadResult}));}if(browser){const p=browser.contexts()[0]?.pages()[0];report.mobileDebug=await p?.evaluate(()=>({models:uiCore.state.models.map(m=>m.id),personalization:uiCore.state.personalization,revision:uiCore.state.accountRevision,result:uiCore.state.historyReadResult,connection:uiCore.connectionView(),main:uiCore.inMainChat()}));}}finally{
+}catch(e){report.failure=e.message;if(app){const p=await app.firstWindow();report.desktopDebug=await p.evaluate(()=>({models:__revCore.state.models.map(m=>m.id),personalization:__revCore.state.personalization,revision:__revCore.state.accountRevision,result:__revCore.state.historyReadResult}));}if(browser){const p=browser.contexts()[0]?.pages()[0];report.mobileDebug=await p?.evaluate(()=>({models:uiCore.state.models.map(m=>m.id),personalization:uiCore.state.personalization,revision:uiCore.state.accountRevision,result:uiCore.state.historyReadResult,connection:uiCore.connectionView(),selected:uiCore.state.selectedSessionId}));}}finally{
  writeFileSync(outputPath('ui-extra.json'),JSON.stringify(report,null,2));checkpoint('teardown started');
  if(browser)for(const p of browser.contexts().flatMap(c=>c.pages())){await p.evaluate(()=>uiCore.stopAssistantRefresh());await p.goto('about:blank');}
  if(app)for(const p of app.windows()){await p.evaluate(()=>globalThis.__revCore?.stopAssistantRefresh());await p.goto('about:blank');}

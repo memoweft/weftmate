@@ -43,6 +43,10 @@ export async function startTimelineCandidate(options = {}) {
       try {const rows=id===sessionId?events:dailySessions.get(id)?.events;if(signal?.aborted||(rows?.at(-1)?.seq??-1)>seq)return;await pending;}
       finally{clearTimeout(timer);eventWaiters.delete(wake);signal?.removeEventListener('abort',abort);}
     },
+    // Message branches and forks copy the history before a sequence into a new daily session.
+    ...(options.daily ? { forkSession: async ({sessionId:id, childId, beforeSeq, title}) => { const source=dailySessions.get(id); assert.ok(source);
+      const copied=source.events.filter(event=>beforeSeq===undefined||event.seq<beforeSeq).map(event=>({...event}));
+      dailySessions.set(childId,{events:copied,running:false,title:title||source.title}); return {title:title||source.title,latestSeq:copied.at(-1)?.seq??-1,modelProfileId:'local'}; } } : {}),
     deleteSession: async ({sessionId:id}) => { dailySessions.delete(id); if(id===sessionId){events=[];running=false;} return {deleted:true}; },
     chatRelayState: async () => ({ pending: relayPending, safe: !running }),
     prepareChatHandoff: async ({sessionId}) => ({text:'Synthetic bounded handoff',sourceSessionId:sessionId,throughSeq:1,sourceRefs:[]}),
@@ -79,7 +83,9 @@ export async function startTimelineCandidate(options = {}) {
         const rpc='synthetic-'+randomUUID();row.title=input.text===goal?'项目进度报告':input.text;
         if(row.running&&input.mode==='queue')append('agent/inbox/spliced',{target:'next-turn',start:0,inserted:[{id:rpc,source:{kind:'user',rpcId:rpc},content:[{type:'text',text:input.text}]}]});
         else{if(input.text===goal)for(let n=0;n<(options.historyCount??0);n++)append('assistant/message',{content:[{type:'text',text:`历史记录 ${n+1}：已核对项目资料。`}]});append('turn/start',{turn:1});append('user/message',{source:{kind:'user',rpcId:rpc},content:[{type:'text',text:input.text}]});append('step/start',{turn:1,step:1});}
-        row.running=running=true;return {accepted:true,receiptId:rpc};
+        row.running=running=true;
+        if(options.autoReply)setTimeout(()=>{events=row.events;append('assistant/message',{content:[{type:'text',text:'收到：'+input.text+'\n\n这是隔离宿主的合成回复。'}]});append('step/end',{turn:1,step:1});append('turn/end',{turn:1,reason:{kind:'completed'}});row.running=running=false;},options.autoReplyDelay??800);
+        return {accepted:true,receiptId:rpc};
       }
       if (events.length && options.interactive) {
         const rpc = `synthetic-${randomUUID()}`
@@ -108,7 +114,13 @@ export async function startTimelineCandidate(options = {}) {
         return {outcomes:receiptIds.map(receiptId=>({receiptId,status:queuedOnly?'queue_removed':'cancel_requested',backgroundJobs:[]}))};}
       if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false; } return { status: 'stopped', receiptIds, jobs: [], executionCancelled: true }; },
     cancelSession: async () => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false } return { accepted: true } },
-    describeSession: async id => options.daily && dailySessions.has(id) ? {sessionId:id,running:id===sessionId?running:dailySessions.get(id).running,processing,agentPreset:'personal-remote',modelProfileId:'local',title:dailySessions.get(id).title} : id === sessionId ? { sessionId, running, processing, agentPreset: 'personal-remote', modelProfileId: 'local', title: '项目进度报告', ...(contextUsage ? {contextUsage} : {}) } : null,
+    describeSession: async id => {
+      const daily = options.daily ? dailySessions.get(id) : null;
+      if (!daily && id !== sessionId) return null;
+      return { sessionId: id, running: id === sessionId ? running : daily.running, processing,
+        agentPreset: 'personal-remote', modelProfileId: 'local', title: daily ? daily.title : '项目进度报告',
+        ...(contextUsage ? { contextUsage } : {}) };
+    },
     readEvents: async ({ sessionId: id, ...options }) => {if(dailySessions.has(id))return createDshSessionAdapter({sessions:{list:async()=>ok({items:[...dailySessions.keys()].map(sessionId=>({sessionId,origin:'user'}))})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyPage(id,options);return adapter.historyPage(id, { includeThinking: showThinking, ...options })},
     readEventDetail: async ({ sessionId: id, seq, outputOffset }) => dailySessions.has(id) ? createDshSessionAdapter({sessions:{list:async()=>ok({items:[{sessionId:id,origin:'user'}]})},events:{}},{readLog:async()=>dailySessions.get(id).events}).historyDetail(id,seq,{outputOffset}) : adapter.historyDetail(id, seq,{outputOffset}),
     getTaskReplyEvidence: async ({sessionId:id}) => ({ status: options.daily && dailySessions.get(id)?.events.at(-1)?.type==='turn/end'
@@ -179,12 +191,6 @@ export async function startTimelineCandidate(options = {}) {
   setupComplete = true;
   const bridge = async (method, params) => {
     if (method === 'host.status') { const status=await request('/status'); return options.logicalMobile?status:{...status,personalCapabilities:{...status.personalCapabilities,chats:0}}; }
-    if (options.logicalMobile && method === 'shared.send' && params.chatId) {
-      const {intent,attachmentIds,...fields}=params;
-      const result = await request('/commands', {kind:'chat.message',targetDeviceId:hostId,...fields,
-        ...(intent ? {mode:intent} : {}),...(attachmentIds?.length ? {attachmentIds} : {})}, 'POST');
-      return {command:result.command};
-    }
     if (method === 'cloud.callback') return {};
     if (method === 'shared.send') {
       const row = await command({requestId:params.requestId,kind:'session.message',sessionId:params.sessionId,text:params.text,intent:params.intent,targetDeviceId:hostId});
@@ -243,6 +249,14 @@ export async function startTimelineCandidate(options = {}) {
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
   return { root, origin, nativeWaitRegistered:()=>eventWaiters.size>0,
+    /** Starts an ordinary conversation with one accepted message; daily progress follows it. */
+    async startChat(text, requestId = randomUUID()) {
+      const created = await command({ requestId: requestId + '-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId });
+      const sent = await command({ requestId, kind: 'session.message', sessionId: created.sessionId, targetDeviceId: hostId, text });
+      const chat = (await request('/chats?limit=100')).items.find(row => row.activeSessionId === created.sessionId);
+      return { chatId: chat.chatId, sessionId: created.sessionId, command: sent };
+    },
+    sendTo: (id, text, requestId = randomUUID()) => command({ requestId, kind: 'session.message', sessionId: id, targetDeviceId: hostId, text }),
     appendSessionEvent(id, type, data) {
       const row = dailySessions.get(id); assert.ok(row);
       const event = {seq:row.events.length,time:Date.now(),type,data}; row.events.push(event);

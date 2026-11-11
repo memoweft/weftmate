@@ -39,7 +39,8 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
       await persist('first', true); conceal();
       if (core.state.account) {
         await core.enterAssistant();
-        if (core.supportsChat?.('chats')) {await core.selectMainChat();if(core.defaultFolderProject?.())await core.openSideChat({entry:'composer',parent:{kind:'project',id:core.defaultFolderProject().projectId}});}
+        if (core.supportsChat?.('chats') && core.defaultFolderProject?.()) await core.openSideChat({entry:'composer',parent:{kind:'project',id:core.defaultFolderProject().projectId}});
+        else await core.startNewConversation();
         showSamples();
         if (draft) ui.byId('message-text').value = draft;
         ui.byId('message-text').focus();

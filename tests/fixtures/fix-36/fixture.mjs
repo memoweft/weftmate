@@ -19,7 +19,7 @@ export async function startProgressFixture() {
       if(!auth.ok)return json(res,{error:{code:'UNAUTHORIZED'}},401);
       const identity=await auth.json();if(req.headers['x-weftmate-csrf']!==identity.csrfToken)return json(res,{error:{code:'FORBIDDEN'}},403);
       let text='';for await(const chunk of req)text+=chunk;const body=JSON.parse(text);
-      if(['session.message','chat.message'].includes(body.kind)) {
+      if(body.kind==='session.message') {
         set('running');const final=progressEvents('completed',sid);final[0].data.receiptId='rpc:fix36';final[0].data.requestId=body.requestId;events=final.slice(0,3);running=true;
         timer=setInterval(()=>{events=final.slice(0,Math.min(final.length,events.length+2));revision++;if(events.length===final.length){clearInterval(timer);running=false;}},180);
       }

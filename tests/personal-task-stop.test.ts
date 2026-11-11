@@ -68,7 +68,7 @@ test('stop freezes exact receipts, ignores same-text unrelated turns, and withdr
   let releaseWait: (() => void) | undefined
   const waiting = new Promise<void>((resolve) => { waitEntered = resolve })
   const waitGate = new Promise<void>((resolve) => { releaseWait = resolve })
-  let waitingPreflights = 0
+  const sentTexts: string[] = []
   let slowEntered: (() => void) | undefined
   let releaseSlow: (() => void) | undefined
   const slowSending = new Promise<void>((resolve) => { slowEntered = resolve })
@@ -77,12 +77,12 @@ test('stop freezes exact receipts, ignores same-text unrelated turns, and withdr
   const backend = {
     getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready' }),
     listModels: async () => [{ id: 'local', name: 'Local', model: 'synthetic', configured: true }],
-    preflight: async ({ text }: { text?: string }) => {
-      if (text === 'waiting' && ++waitingPreflights === 2) { waitEntered?.(); await waitGate }
-      return { ok: true }
-    },
+    preflight: async () => ({ ok: true }),
     createSession: async ({ sessionId }: { sessionId: string }) => { sessions.add(sessionId); return { sessionId } },
     sendMessage: async ({ text }: { text: string }) => {
+      sentTexts.push(text)
+      // A held send keeps the next message of the same conversation queued behind it.
+      if (text === 'hold') { waitEntered?.(); await waitGate; return { accepted: true, receiptId: 'receipt-hold' } }
       if (text === 'slow') { slowEntered?.(); await slowGate }
       return { accepted: true, receiptId: `receipt-${++nextReceipt}` }
     },
@@ -157,13 +157,16 @@ test('stop freezes exact receipts, ignores same-text unrelated turns, and withdr
     assert.equal(observed.body.control.stopStatus, 'stopped')
     assert.equal(observed.body.control.canResume, true)
 
-    const waitingId = await send('pending-root', 'waiting')
+    const holdId = await send('hold-root', 'hold')
     await waiting
+    const waitingId = await send('pending-root', 'waiting')
     const pendingStop = await request(origin, 'POST', `/personal/v1/tasks/${waitingId}/stop`, auth,
       { requestId: 'stop-pending' })
     assert.equal(pendingStop.body.task.control.stopStatus, 'stopped')
     releaseWait?.()
     assert.equal((await settled(origin, auth, waitingId)).state, 'rejected')
+    assert.equal((await settled(origin, auth, holdId)).receiptId, 'receipt-hold')
+    assert.equal(sentTexts.includes('waiting'), false, 'a message stopped while queued is never sent')
     assert.equal(stopCalls.some((call) => call.includes('receipt-2')), false)
 
     const slowId = await send('late-root', 'slow')

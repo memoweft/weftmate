@@ -40,9 +40,47 @@ test('true phone storage limit fails before sending and leaves the previous dura
 const W=(globalThis as any).WeftOffline;
 const until=async(predicate:()=>boolean)=>{for(let i=0;i<200&&!predicate();i++)await new Promise(r=>setTimeout(r,5));assert.ok(predicate(),'queue settled');};
 
+// 保护：本机资料就绪后可先打开聊天，账户切换与资料加载仍保持隔离。
+test('native local history is usable after its vault loads while the covered page is still booting',async t=>{
+ const identity={origin:'https://local.weftmate.invalid',accountId:'startup-local',localOnly:true};
+ const conversation={id:'saved-local-chat',turns:[]};
+ let release!:(value:any)=>void,loading=false,engine:any;
+ const context:any={window:{weftNative:true},weftNativeChatActive:true,
+  state:{booted:false,loggedIn:true,connection:'phone',transitionPending:false},
+  document:{addEventListener(){}},addEventListener(){},clearTimeout,setTimeout:()=>0,
+  uiCore:{syncMobileIdentity(){},messageModePreference:()=>'queue'},
+  WeftOffline:{...W,create:async(options:any)=>(engine=await W.create({...options,crypto:webcrypto}))},
+  androidBridge:{call:async(method:string)=>{
+   if(method==='phone.identity')return identity;
+   if(method==='phone.offline.load'){loading=true;return new Promise(resolve=>{release=resolve;});}
+   if(method==='phone.offline.save')return{saved:true};
+   assert.fail(method);
+  }}};
+ runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js',import.meta.url),'utf8'),context);
+ t.after(()=>engine?.close());
+ const restoring=context.WeftPhone.restoreArchive(identity,{});
+ await until(()=>loading);
+ assert.equal((await context.WeftPhone.presentation('view')).ready,false,'pending storage must remain unavailable');
+ release({snapshot:null,turns:[],conversations:[conversation],nativeComposer:{conversationId:'saved-local-chat',draft:'本机草稿'}});
+ await restoring;
+ const view=await context.WeftPhone.presentation('view');
+ assert.equal(view.ready,true,'local readiness must not wait for the covered page or a computer');
+ assert.equal(view.owner,identity.origin+':'+identity.accountId);
+ assert.equal(view.conversations[0].id,conversation.id);
+ assert.equal(view.composer.draft,'本机草稿');
+ await assert.rejects(context.WeftPhone.presentation('view',{owner:'another-account'}),/ACCOUNT_SWITCHED/);
+ context.state.connection='checking';
+ assert.equal((await context.WeftPhone.presentation('view')).ready,false);
+ context.state.connection='phone';
+ context.state.transitionPending=true;
+ assert.equal((await context.WeftPhone.presentation('view')).ready,false);
+ context.state.transitionPending=false;context.state.loggedIn=false;
+ assert.equal((await context.WeftPhone.presentation('view')).ready,false);
+});
+
 test('rejected history save rolls back the unaccepted input and retry sends it exactly once',async t=>{
  let full=true,stored:any,calls=0;
- const engine=await W.create({identity:{},crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
+ const engine=await W.create({identity:{},crypto:webcrypto,standalone:true,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
   load:async()=>({snapshot:null,turns:[],conversations:[]}),close(){},
   save:async(value:any)=>{if(full)throw Object.assign(Error('OFFLINE_STORAGE_TOO_LARGE'),{code:'OFFLINE_STORAGE_TOO_LARGE'});stored=structuredClone(value);},
   complete:async()=>{calls++;return{choices:[{message:{content:'已回复'}}]};}}});
@@ -68,7 +106,7 @@ test('native phone send returns the human capacity error and sent=false to prese
 
 test('capacity failure while saving a reply pauses later inputs with the capacity recovery instruction',async t=>{
  let release!:()=>void,calls=0,full=false;
- const engine=await W.create({identity:{},crypto:webcrypto,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
+ const engine=await W.create({identity:{},crypto:webcrypto,standalone:true,phoneModel:()=>({modelId:'synthetic'}),accountCheck:async()=>({}),vault:{
   load:async()=>({snapshot:null,turns:[],conversations:[]}),close(){},
   save:async()=>{if(full)throw Object.assign(Error('OFFLINE_STORAGE_TOO_LARGE'),{code:'OFFLINE_STORAGE_TOO_LARGE'});},
   complete:async()=>{calls++;await new Promise<void>(r=>release=r);return{choices:[{message:{content:'完整回复'}}]};}}});

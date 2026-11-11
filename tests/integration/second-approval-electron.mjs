@@ -36,7 +36,7 @@ try {
       };
     }});
   });
-  await h.mainFirst();
+  await h.firstMessage();
   const project = join(h.root, 'synthetic-project');
   mkdirSync(project); writeFileSync(join(project, 'brief.md'), 'FX21 synthetic project file\n');
   await h.app.evaluate(({dialog}, project) => { dialog.showOpenDialog = async () => ({canceled: false, filePaths: [project]}); }, project);

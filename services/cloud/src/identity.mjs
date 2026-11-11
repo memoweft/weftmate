@@ -1,6 +1,8 @@
 import { cloudPush } from './push.mjs';
 import { Provider, interactionPolicy, errors } from 'oidc-provider';
 import { calculateJwkThumbprint, createLocalJWKSet, jwtVerify } from 'jose';
+import {createPasswordVault} from './password-vault.mjs';
+import {createReplicas} from './replicas.mjs';
 import { createHosts } from './hosts.mjs';
 import { computerNames } from './multi-host.mjs';
 import { createRelay } from './relay.mjs';
@@ -321,7 +323,23 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       res.end();
     } else reply(res, 200, { account: accounts.public(account), resumeUrl });
   }
+  async function enrollRegistration(req,res,accountId){
+    let interaction;
+    try{interaction=await provider.interactionDetails(req,res);}catch{/* Standalone registrations have no app interaction. */}
+    if(interaction?.params.wm_app!=='1')return;
+    const device=await accounts.device({deviceId:interaction.params.wm_device_id,publicJwk:JSON.parse(interaction.params.wm_public_jwk)});
+    database.prepare('INSERT OR IGNORE INTO cloud_devices(account_id,fingerprint,device_id,public_jwk,confirmed_at,name,type,last_seen) VALUES(?,?,?,?,?,?,?,?)')
+      .run(accountId,device.fingerprint,device.deviceId,JSON.stringify(device.publicJwk),now(),'WeftMate device','unknown',now());
+  }
   const routes = new Map([
+    [CLOUD_PATH+'/password/capabilities','passwordCapabilities'],
+    [CLOUD_PATH+'/password/registration','opaqueRegistration'],
+    [CLOUD_PATH+'/password/commit','opaqueCommit'],
+    [CLOUD_PATH+'/password/read','opaqueRead'],
+    [CLOUD_PATH+'/password/unlock/start','opaqueUnlockStart'],
+    [CLOUD_PATH+'/password/unlock/finish','opaqueUnlockFinish'],
+    [CLOUD_PATH+'/auth/opaque/start','opaqueStart'],
+    [CLOUD_PATH+'/auth/opaque/finish','opaqueFinish'],
     [`${CLOUD_PATH}/auth/register`, 'register'],
     [`${CLOUD_PATH}/auth/register/resend`, 'resend'],
     [`${CLOUD_PATH}/auth/register/verify`, 'verify'],
@@ -355,7 +373,9 @@ export async function createIdentity({ database, config, mailer, logger, now = D
   ]);
   const relay = createRelay({ database, config, secret: keys.cookieSecret, now, dns: relayDns });
   const lifecycle = accountLifecycle({ database, accounts, relay });
-  const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider, accounts });
+  const passwords=await createPasswordVault({database,config,accounts,secret:keys.cookieSecret,now});
+  const replicas=createReplicas({database,config,authenticate,now});
+  const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider, accounts, replicas });
   const backups = createCloudBackups({ database, config, authenticate, accounts, now });
   const feedback = createFeedback({ config, limiter: new FailureLimiter(database, keys.cookieSecret, now), fetch: feedbackFetch });
   const authorizeInApp = appAuthorization({ config });
@@ -363,6 +383,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     .some(c => c.redirect_uris.some(uri => new URL(uri).origin !== 'null' && new URL(uri).origin === origin));
   return {
     provider,
+    replicas,
+    passwords,
     relay,
     accounts,
     keys,
@@ -402,9 +424,10 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       }
       const match = new RegExp(`^${CLOUD_PATH}/interactions/([A-Za-z0-9_-]+)$`).exec(url.pathname);
       const route = url.pathname === `${CLOUD_PATH}/feedback` ? 'feedback' : routes.get(url.pathname);
+      const replicaRoute=url.pathname===CLOUD_PATH+'/replicas/read';
       const hostRoute = url.pathname.startsWith(`${CLOUD_PATH}/hosts/`);
       const backupRoute = /^\/backups\/(key\/read|key\/write|start|chunk\/upload|complete|list|chunk\/download|delete|clear)$/.test(url.pathname.slice(CLOUD_PATH.length));
-      if (!route && !match && !hostRoute && !backupRoute) return false;
+      if (!route && !match && !hostRoute && !backupRoute && !replicaRoute) return false;
       try {
         if (req.headers.origin && !allowedOrigin(req.headers.origin))
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
@@ -414,6 +437,10 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           const account = await authenticate(req, true);
           reply(res, 201, await feedback(account, await bodyOf(req, 262144)));
           return true;
+        }
+        if(replicaRoute){
+          if(req.method!=='POST'||url.search||!allowedOrigin(req.headers.origin))throw new CloudError(403,'FORBIDDEN');
+          reply(res,200,await replicas.read(req,await bodyOf(req)));return true;
         }
         if (backupRoute) {
           if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
@@ -425,7 +452,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         if (hostRoute) {
           if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
           if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
-          reply(res, 200, await hosts.handle(url.pathname.slice(CLOUD_PATH.length), req, await bodyOf(req, url.pathname.endsWith('/offline/tasks/submit') ? 70 * 1024 : 16384)));
+          reply(res, 200, await hosts.handle(url.pathname.slice(CLOUD_PATH.length), req, await bodyOf(req, url.pathname.includes('/hosts/replicas/') ? 4*1024*1024 : url.pathname.endsWith('/offline/tasks/submit') ? 70 * 1024 : 16384)));
           return true;
         }
         if (match) {
@@ -502,15 +529,17 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           catch { throw new CloudError(400, 'INVALID_DEVICE_KEY'); }
         }
         const from = source(req);
-        if (['login','device','loginCodeRequest','loginCodeConfirm'].includes(route)) {
+        if (['login','device','loginCodeRequest','loginCodeConfirm','opaqueStart','opaqueFinish'].includes(route)) {
           const interaction = await checkedInteraction(req, res, body);
-          if (['login','loginCodeRequest'].includes(route) && interaction.params.wm_app === '1') {
+          if (['login','loginCodeRequest','opaqueStart','opaqueFinish'].includes(route) && interaction.params.wm_app === '1') {
             await accounts.device(body);
             if (!body.publicJwk || body.deviceId !== interaction.params.wm_device_id ||
                 await calculateJwkThumbprint(body.publicJwk) !== await calculateJwkThumbprint(JSON.parse(interaction.params.wm_public_jwk)))
               throw new CloudError(400, 'INVALID_DEVICE_KEY');
           }
+          if(route==='opaqueStart'){reply(res,200,passwords.start(body,from,interaction.uid));return true;}
           const result =
+            route === 'opaqueFinish' ? await accounts.authenticatedLogin(passwords.finish(body,from,interaction.uid).account,body,from,interaction.uid) :
             route === 'login'
               ? await accounts.login(body, from, interaction.uid)
               : route === 'loginCodeRequest'
@@ -526,6 +555,15 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         } else {
           let result;
           switch (route) {
+            case 'passwordCapabilities': result=passwords.capabilities();break;
+            case 'opaqueRegistration': result=await passwords.registration(body,from,body.passwordTicket?null:await authenticate(req,true));break;
+            case 'opaqueCommit':
+              result=await passwords.commit(body,from,body.passwordTicket?null:await authenticate(req,true));
+              if(result.verified)await enrollRegistration(req,res,result.account.cloudAccountId);break;
+            case 'opaqueRead': result=passwords.read(await authenticate(req,true));break;
+            case 'opaqueUnlockStart': {const account=await authenticate(req,true);result=passwords.start(body,from,'unlock:'+req.cloudToken.device_fingerprint,account);break;}
+            case 'opaqueUnlockFinish': {const account=await authenticate(req,true);const verified=passwords.finish(body,from,'unlock:'+req.cloudToken.device_fingerprint);if(verified.account.id!==account.id)throw new CloudError(401,'UNAUTHORIZED');result={proof:verified.proof};break;}
+
             case 'appAuthorize':
               await accounts.device(body);
               result = await authorizeInApp(route, req, res, body); break;
@@ -538,22 +576,19 @@ export async function createIdentity({ database, config, mailer, logger, now = D
               // The registration email has just proved possession. Bind only the
               // device from this app's existing provider interaction cookie;
               // subsequent devices still require their own email confirmation.
-              let registrationInteraction;
-              try { registrationInteraction = await provider.interactionDetails(req, res); } catch { /* compatible standalone registration */ }
               result = await accounts.completePassword(body, 'register', from);
-              if (registrationInteraction?.params.wm_app === '1') {
-                const device = await accounts.device({ deviceId: registrationInteraction.params.wm_device_id,
-                  publicJwk: JSON.parse(registrationInteraction.params.wm_public_jwk) });
-                database.prepare('INSERT OR IGNORE INTO cloud_devices(account_id,fingerprint,device_id,public_jwk,confirmed_at,name,type,last_seen) VALUES(?,?,?,?,?,?,?,?)')
-                  .run(result.account.cloudAccountId, device.fingerprint, device.deviceId, JSON.stringify(device.publicJwk), now(), 'WeftMate device', 'unknown', now());
-              }
+              await enrollRegistration(req,res,result.account.cloudAccountId);
               break;
             }
             case 'appResetComplete': result = await accounts.completePassword(body, 'reset', from); break;
             case 'passwordChange': result = await accounts.changePassword(body, from, await authenticate(req, true)); break;
             case 'accountDelete': {
               const account = await authenticate(req, true);
-              result = await lifecycle.remove(body, from, account, req.cloudToken); break;
+              if(passwords.credential(account.id)){
+                if(Object.keys(body).join()!=='proof'||!passwords.verifyProof(body.proof,account))throw new CloudError(401,'INVALID_CREDENTIALS');
+                result=await lifecycle.remove({},from,account,req.cloudToken,true);
+              }else result = await lifecycle.remove(body, from, account, req.cloudToken);
+              break;
             }
             case 'logoutOthers': {
               const account = await authenticate(req, true);

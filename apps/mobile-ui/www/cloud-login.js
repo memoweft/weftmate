@@ -27,6 +27,228 @@
       tx.onabort = tx.onerror = () => reject(new Error('STORAGE_UNAVAILABLE'));
     });
   }
+  async function removeAccountKey(issuer, sub) {
+    const account = JSON.stringify([issuer,sub]);
+    const suffix = account.slice(0,-1)+',';
+    const opened = await db();
+    return new Promise((resolve,reject) => {
+      const tx = opened.transaction('credentials','readwrite'), store = tx.objectStore('credentials');
+      store.delete('account-data:'+account);
+      for (const kind of ['chat-directory:','memory-replica:','settings-replica:','model-replica:','body-replica:','server-replica:']) {
+        const prefix=kind+suffix;
+        store.delete(IDBKeyRange.bound(prefix,prefix+'\uffff'));
+      }
+      tx.oncomplete = () => { memoryChanges()?.postMessage('changed'); resolve(); };
+      tx.onabort = tx.onerror = () => reject({code:'STORAGE_UNAVAILABLE'});
+    });
+  }
+  async function saveReplica(slot, previous, value, current, accountSlot, keyId, guards = {}) {
+    const opened = await db();
+    return new Promise((resolve,reject) => {
+      const tx = opened.transaction('credentials','readwrite'), store = tx.objectStore('credentials');
+      const account = store.get(accountSlot), checks=Object.entries(guards).map(([key,value])=>({read:store.get(key),value})), lookup = store.get(slot);
+      let failure;
+      lookup.onsuccess = () => {
+        try {
+          current();
+          if (account.result?.keyId !== keyId || lookup.result !== previous || checks.some(check=>check.read.result!==check.value)) throw {code:'DIRECTORY_CHANGED'};
+          if (value === undefined) store.delete(slot);
+          else store.put(value,slot);
+        } catch (error) { failure = error; tx.abort(); }
+      };
+      tx.oncomplete = () => resolve();
+      tx.onabort = tx.onerror = () => reject(failure ?? {code:'STORAGE_UNAVAILABLE'});
+    });
+  }
+  let memoryChannel;
+  function memoryChanges() {
+    if (!memoryChannel && typeof BroadcastChannel==='function') memoryChannel=new BroadcastChannel('weftmate-memory-replica');
+    return memoryChannel;
+  }
+  async function passwordEnrollment({issuer,sub,hostId,deviceId,jkt}){
+    const key=await storage('account-data:'+JSON.stringify([issuer,sub]));if(!key)return null;
+    const {accountDataCodec}=await import('./ui-core/directory-wire.mjs');
+    return accountDataCodec(WeftCloudVendor,key.key,[issuer,sub,key.keyId,hostId],'wm-password-enroll+jwe')
+      .seal('enroll',{deviceId,jkt,at:Date.now()});
+  }
+  async function serverReplica({issuer,sub,hostId,current,request}){
+    const accountSlot='account-data:'+JSON.stringify([issuer,sub]),key=await storage(accountSlot);current();if(!key)return null;
+    const [{accountDataCodec,directoryPage},{openServerReplica}]=await Promise.all([import('./ui-core/directory-wire.mjs'),import('./ui-core/server-replica.mjs')]);
+    const scope=[issuer,sub,key.keyId,hostId],slot='server-replica:'+JSON.stringify(scope);
+    const wire=typ=>accountDataCodec(WeftCloudVendor,key.key,scope,typ);
+    return openServerReplica({codec:wire('wm-server-replica+jwe'),wire,directoryPage,request,current,hostId,keyId:key.keyId,
+      read:()=>storage(slot),write:(old,next)=>saveReplica(slot,old,next,current,accountSlot,key.keyId)});
+  }
+  async function bodySession({issuer,sub,hostId,session}) {
+    const key=await storage('account-data:'+JSON.stringify([issuer,sub]));
+    if(!key)return null;
+    const {accountDataCodec}=await import('./ui-core/directory-wire.mjs'),scope=[issuer,sub,key.keyId,hostId];
+    const codec=accountDataCodec(WeftCloudVendor,key.key,scope,'wm-body-replica+jwe'),slot='body-replica:'+JSON.stringify(scope)+':session';
+    if(session!==undefined){await storage(slot,await codec.seal('body-session',{account:session.account,device:session.device,csrfToken:session.csrfToken}));return session;}
+    const box=await storage(slot);return box===undefined?null:codec.open('body-session',box);
+  }
+  async function bodyReplica({issuer,sub,hostId,deviceId,current,exchange,pullDirectory,readCopy,readFileCopy}) {
+    const accountSlot='account-data:'+JSON.stringify([issuer,sub]), key=await storage(accountSlot);
+    current();if(!key)return null;
+    const [{accountDataCodec},{openBodyReplica}]=await Promise.all([import('./ui-core/directory-wire.mjs'),import('./ui-core/body-replica.mjs')]);
+    const scope=[issuer,sub,key.keyId,hostId],prefix='body-replica:'+JSON.stringify(scope)+':',control=prefix+'epoch';
+    const dirSlot='chat-directory:'+JSON.stringify(scope),dirCodec=accountDataCodec(WeftCloudVendor,key.key,scope,'wm-chat-directory+jwe');
+    const codec=accountDataCodec(WeftCloudVendor,key.key,scope,'wm-body-replica+jwe');
+    async function remove(chatId,all=false) {
+      const opened=await db();
+      current();
+      return new Promise((resolve,reject)=>{
+        const tx=opened.transaction('credentials','readwrite'),store=tx.objectStore('credentials');
+        const scan=store.openCursor(IDBKeyRange.bound(prefix,prefix+'\uffff'));
+        scan.onsuccess=()=>{
+          const cursor=scan.result;if(!cursor)return;
+          const name=String(cursor.key).slice(prefix.length);
+          if(chatId===null ? ['body-cache:','body-size:','body-file:'].some(kind=>name.startsWith(kind)) : name==='body-cache:'+chatId || name==='body-size:'+chatId || name.startsWith('body-file:'+chatId+'/') || all&&name==='body-local:'+chatId)cursor.delete();
+          cursor.continue();
+        };
+        store.put(random(),control);tx.oncomplete=()=>resolve();tx.onabort=tx.onerror=()=>reject({code:'STORAGE_UNAVAILABLE'});
+      });
+    }
+    const directory=async()=>{
+      const box=await storage(dirSlot);current();return {box,cache:box===undefined?null:await dirCodec.open('cache',box)};
+    };
+    return openBodyReplica({codec,current,deviceId,random,exchange,readCopy,readFileCopy,directory,
+      syncDirectory:()=>syncChatDirectory({issuer,sub,hostId,deviceId,current,pull:pullDirectory,showCache:()=>{}}),
+      store:{
+        read:async(kind,id)=>{if((await storage(accountSlot))?.keyId!==key.keyId)throw {code:'ACCOUNT_KEY_INVALID'};return storage(prefix+kind+':'+id);},
+        write:(kind,id,old,next,guards)=>saveReplica(prefix+kind+':'+id,old,next,current,accountSlot,key.keyId,guards),
+        guard:async box=>({[dirSlot]:box,[control]:await storage(control)}),remove,
+        clear:()=>remove(null,false),
+      }});
+  }
+  async function modelReplica({issuer,sub,hostId,deviceId,current,exchange}) {
+    const accountSlot='account-data:'+JSON.stringify([issuer,sub]),key=await storage(accountSlot);
+    current();if(!key)return null;
+    const [{accountDataCodec},{openModelReplica}]=await Promise.all([import('./ui-core/directory-wire.mjs'),import('./ui-core/model-replica.mjs')]);
+    const scope=[issuer,sub,key.keyId,hostId],slot='model-replica:'+JSON.stringify(scope);
+    return openModelReplica({codec:accountDataCodec(WeftCloudVendor,key.key,scope,'wm-model-replica+jwe'),
+      read:async()=>{if((await storage(accountSlot))?.keyId!==key.keyId)throw {code:'ACCOUNT_KEY_INVALID'};return storage(slot);},
+      write:(old,next)=>saveReplica(slot,old,next,current,accountSlot,key.keyId),current,exchange,deviceId,random});
+  }
+  async function settingsReplica({issuer,sub,hostId,deviceId,current,exchange}) {
+    const accountSlot='account-data:'+JSON.stringify([issuer,sub]), key=await storage(accountSlot);
+    current();
+    if (!key) return null;
+    const [{accountDataCodec},{openSettingsReplica}]=await Promise.all([
+      import('./ui-core/directory-wire.mjs'),import('./ui-core/settings-replica.mjs')]);
+    const scope=[issuer,sub,key.keyId,hostId],slot='settings-replica:'+JSON.stringify(scope);
+    return openSettingsReplica({codec:accountDataCodec(globalThis.WeftCloudVendor,key.key,scope,'wm-settings-replica+jwe'),
+      read:async()=>{if((await storage(accountSlot))?.keyId!==key.keyId)throw {code:'ACCOUNT_KEY_INVALID'};return storage(slot);},
+      write:(previous,next)=>saveReplica(slot,previous,next,current,accountSlot,key.keyId),
+      current,exchange,deviceId,random});
+  }
+  async function memoryReplica({issuer,sub,hostId,deviceId,current,exchange}) {
+    const accountSlot='account-data:'+JSON.stringify([issuer,sub]), key=await storage(accountSlot);
+    current();
+    if (!key) return null;
+    const [{accountDataCodec},{openMemoryReplica}]=await Promise.all([
+      import('./ui-core/directory-wire.mjs'),import('./ui-core/memory-replica.mjs')]);
+    const scope=[issuer,sub,key.keyId,hostId],slot='memory-replica:'+JSON.stringify(scope);
+    const codec=accountDataCodec(globalThis.WeftCloudVendor,key.key,scope,'wm-memory-replica+jwe');
+    const write=async(previous,next)=>{
+      await saveReplica(slot,previous,next,current,accountSlot,key.keyId);
+      memoryChanges()?.postMessage('changed');
+    };
+    async function read() {
+      if ((await storage(accountSlot))?.keyId!==key.keyId) throw {code:'ACCOUNT_KEY_INVALID'};
+      return storage(slot);
+    }
+    async function request(body) {
+      try {return await exchange(body);}
+      catch(error) {
+        if (error.code==='DEVICE_NOT_TRUSTED') {
+          const previous=await read();
+          if (previous!==undefined) {
+            const cache=await codec.open('memory-cache',previous);
+            await write(previous,await codec.seal('memory-cache',{...cache,tick:(cache.tick??0)+1,items:[]}));
+          }
+        }
+        throw error;
+      }
+    }
+    return openMemoryReplica({codec,read,write,current,exchange:request,deviceId,random});
+  }
+  async function syncChatDirectory({issuer,sub,hostId,deviceId,current,pull,showCache}) {
+    const accountSlot = 'account-data:'+JSON.stringify([issuer,sub]), key = await storage(accountSlot);
+    current();
+    if (!key) throw {code:'DIRECTORY_KEY_REQUIRED'};
+    const wire = await import('./ui-core/directory-wire.mjs');
+    const scope = [issuer,sub,key.keyId,hostId], slot = 'chat-directory:'+JSON.stringify(scope);
+    const codec = wire.directoryCodec(globalThis.WeftCloudVendor,key.key,scope);
+    let previous = await storage(slot), cache = previous === undefined ? null : await codec.open('cache',previous);
+    current();
+    if (cache) showCache(cache);
+    let page;
+    do {
+      current();
+      const requestId = random(), cursor = cache?.cursor ?? wire.startCursor();
+      const box = await codec.seal('pull',{deviceId,requestId,cursor,epoch:cache?.epoch ?? null});
+      current();
+      let response;
+      try { response = await pull({box}); }
+      catch (error) {
+        if (error.code === 'DEVICE_NOT_TRUSTED' && previous !== undefined) await saveReplica(slot,previous,undefined,current,accountSlot,key.keyId);
+        throw error;
+      }
+      page = await codec.open('page',response.box);
+      const next = wire.applyDirectoryPage(cache,page,requestId);
+      current();
+      if (!cache || !wire.equalCursor(cache.cursor,next.cursor) || next.label !== cache.label) {
+        const sealed = await codec.seal('cache',next);
+        await saveReplica(slot,previous,sealed,current,accountSlot,key.keyId);
+        previous = sealed;
+      }
+      cache = next;
+      current();
+      showCache(cache);
+    } while (page.more);
+    return {partial:page.partial};
+  }
+  // One non-exportable device-local key per cloud identity. Compare and insert inside one IndexedDB transaction.
+  async function installAccountKey({issuer,sub,keyId,secret}, current) {
+    const bytes = decode(secret);
+    let key;
+    try {
+      if (bytes.length !== 32 || encode(bytes) !== secret || encode(await crypto.subtle.digest('SHA-256', bytes)) !== keyId)
+        throw {code:'ACCOUNT_KEY_INVALID'};
+      key = await crypto.subtle.importKey('raw', bytes, 'AES-GCM', false, ['encrypt','decrypt']);
+    }
+    finally { bytes.fill(0); }
+    const database = await db(), slot='account-data:'+JSON.stringify([issuer,sub]);
+    current();
+    let existing;
+    await new Promise((resolve,reject)=>{
+      const tx=database.transaction('credentials','readwrite'), store=tx.objectStore('credentials');
+      const lookup=store.get(slot);
+      let failure;
+      lookup.onsuccess=()=>{
+        try {
+          current();
+          if (!lookup.result) store.add({keyId,key},slot);
+          else {
+            existing=lookup.result.key;
+            if (lookup.result.keyId!==keyId || existing?.type!=='secret' || existing.extractable || existing.algorithm.name!=='AES-GCM')
+              throw {code:'ACCOUNT_KEY_CONFLICT'};
+          }
+        } catch (error) { failure=error;tx.abort(); }
+      };
+      tx.oncomplete=()=>resolve(keyId);
+      tx.onabort=tx.onerror=()=>reject(failure || {code:'ACCOUNT_KEY_STORAGE_UNAVAILABLE'});
+    });
+    if (existing) {
+      // An existing record must actually open data from the incoming key, even if the saved label matches.
+      const iv=crypto.getRandomValues(new Uint8Array(12));
+      const probe=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new Uint8Array());
+      try { await crypto.subtle.decrypt({name:'AES-GCM',iv},existing,probe); }
+      catch { throw {code:'ACCOUNT_KEY_CONFLICT'}; }
+    }
+    current();return keyId;
+  }
   function secureOrigin(value) {
     const url = new URL(value);
     if (url.username || url.password || url.search || url.hash || !(url.protocol === 'https:' ||
@@ -186,5 +408,5 @@
     }
     async forget() { if (!this.config) await this.configure(); await this.credentialStorage(this.tokenId, undefined, true); await storage('pending:' + this.host, undefined, true); }
   }
-  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage };
+  globalThis.WeftCloud = { Client, parsePairing, pairingCode, storage, passwordEnrollment, serverReplica, installAccountKey, removeAccountKey, memoryChanges, memoryReplica, settingsReplica, bodySession, bodyReplica, modelReplica, syncChatDirectory };
 })();

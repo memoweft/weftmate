@@ -29,9 +29,9 @@ try{
  await until(async()=>{try{return(await(await fetch(`http://127.0.0.1:${debugPort}/json`)).json()).some(row=>row.url.includes('appassets'))}catch{return false}});
  browser=await chromium.connectOverCDP(`http://127.0.0.1:${debugPort}`,{noDefaults:true});const page=browser.contexts()[0].pages().find(p=>p.url().includes('appassets'));assert.ok(page);page.setDefaultTimeout(15000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.waitForFunction(()=>typeof state!=='undefined'&&state.booted&&!state.transitionPending);
- await page.evaluate(async values=>{await call('auth.login',values);const me=await call('auth.me');WeftMobileCloud.core.acceptSession(await(await androidBridge.fetch('/personal/v1/auth/me')).json());state.loggedIn=true;state.owner=me.owner;state.username=me.username;state.deviceId=me.deviceId||me.device?.id||'';state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await uiCore.selectMainChat();},{origin:f.origin,...f.credentials,deviceName:'UX-P2 合成安卓'});
+ await page.evaluate(async values=>{await call('auth.login',values);const me=await call('auth.me');WeftMobileCloud.core.acceptSession(await(await androidBridge.fetch('/personal/v1/auth/me')).json());state.loggedIn=true;state.owner=me.owner;state.username=me.username;state.deviceId=me.deviceId||me.device?.id||'';state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await selectMobileTab('chat');},{origin:f.origin,...f.credentials,deviceName:'UX-P2 合成安卓'});
 
- await page.evaluate(()=>uiCore.startChatConversation());
+ await page.evaluate(()=>uiCore.openSideChat({entry:'composer',parent:null}));
  for(const theme of ['light','dark']){
   await page.evaluate(theme=>{document.documentElement.dataset.theme=theme;uiCore.state.hostName='合成电脑';updateComposer();},theme);
   await page.getByRole('button',{name:'选择文件夹',exact:true}).waitFor();await writeFile(join(out,`android-native-${theme}-blank.png`),execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{windowsHide:true}));

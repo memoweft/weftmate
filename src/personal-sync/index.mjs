@@ -263,8 +263,10 @@ export async function createPersonalSyncStore({ root, ownerId }) {
       });
     },
     get watermark() { return state.lastSeq; },
-    deviceStatus(deviceId) {
-      const originals=state.events.filter(row=>row.sourceDeviceId===deviceId&&row.kind==='message.created'&&row.payload.role==='user');
+    deviceStatus(deviceIds) {
+      const sessions = new Set(Array.isArray(deviceIds) ? deviceIds : [deviceIds]);
+      const originals = state.events.filter(row => sessions.has(row.sourceDeviceId) &&
+        row.kind === 'message.created' && row.payload.role === 'user');
       if(!originals.length)return null;
       return {receivedOriginals:new Set(originals.map(row=>row.payload.messageId)).size,lastReceivedAt:originals.at(-1).receivedAt??null,
         memoryState:'received',processed:0,replicaPublishedAt:null};

@@ -75,10 +75,10 @@ async function closeDialogs(page){await page.evaluate(()=>document.querySelector
 try {
  f=await startTimelineCandidate({daily:true,sidebar:true,logicalMobile:true,composerMenu:true,interactive:true,inlineProgress:true,historyCount:0,schedules:true,backups:true,usageSamples:true});
  owner=(await f.request('/auth/me')).account.ownerId;
- const host=(await f.request('/status')).hostId,main=(await f.request('/chats/main')).chat;
+ const host=(await f.request('/status')).hostId;
  async function command(body){let cmd=(await f.request('/commands',{requestId:randomUUID(),targetDeviceId:host,...body})).command;for(let i=0;i<100;i++){if(cmd.state==='accepted_by_dsh')return cmd;assert.notEqual(cmd.state,'rejected');await pause(20);cmd=(await f.request('/commands/'+cmd.commandId)).command;}throw Error('synthetic command timeout');}
- const first=await command({kind:'chat.message',chatId:main.chatId,modelProfileId:'local',text:'合成主对话'});f.seedMainHistory(first.sessionId,30,{total:30});f.progress.finish('completed');
- const side=await command({kind:'session.side.create',parent:{kind:'main',id:main.chatId},modelProfileId:'local',title:'合成旁聊'});sideId=side.sessionId;
+ const first=await f.startChat('合成对话');f.seedMainHistory(first.sessionId,30,{total:30});f.progress.finish('completed');
+ const side=await command({kind:'session.create',modelProfileId:'local'});sideId=side.sessionId;
  await command({kind:'session.message',sessionId:sideId,text:'请记住，我现在喜欢简短的回答。',intent:'queue'});f.progress.text('收到，我会采用简短清晰的表达。');f.progress.finish('completed');
  profile=await mkdtemp(join(tmpdir(),'weftmate-ux-p2-walkthrough-'));
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:root,args:['scripts/review-gallery/electron.mjs','--force-device-scale-factor=1'],env:{...clean,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light'}});
@@ -96,7 +96,6 @@ try {
    if(!before){assert.equal(await p.getByRole('button',{name:/编辑并重发|从这里开旁聊并重发/,includeHidden:true}).count(),0);await user.focus();await shot(p,'user-focus',surface,t);checks.push('D49 external actions '+width+' '+t);}
    await b(p,'添加图片或文件').click();await shot(p,'composer-menu',surface,t);await p.keyboard.press('Escape');
    const field=p.getByRole('textbox',{name:'输入消息',exact:true});await field.fill('第一行\n第二行\n第三行\n第四行\n第五行\n第六行\n第七行\n第八行\n第九行\n第十行');const large=await field.evaluate(n=>n.clientHeight);await shot(p,'composer-long',surface,t,'超长文本');await field.fill('');const small=await field.evaluate(n=>n.clientHeight);if(!before){assert.ok(large>small*2);assert.ok(large<280);checks.push('autosize grow shrink cap '+width+' '+t);}await shot(p,'composer-empty',surface,t,'空输入');
-   await b(p,'搜索主对话').click();await p.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await p.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await p.waitForFunction(()=>document.querySelector('mark'));await shot(p,'main-search',surface,t);await b(p,'关闭主对话搜索').click();
    await b(p,'跳到日期').click();await shot(p,'date-control',surface,t);await p.getByRole('textbox',{name:'跳到日期'}).fill('2026-10-09').catch(()=>{});await p.keyboard.press('Escape');
    if(width<720)await b(p,'切换会话侧栏').click();await b(p,'账户菜单').click();await shot(p,'account-menu',surface,t);await b(p,'设置').click();
    const settings=p.getByRole('dialog',{name:'设置',exact:true});
@@ -115,7 +114,7 @@ try {
    modelMissing=true;await p.reload();await pause(600);await shot(p,'no-model-history',surface,t,'没配模型');
    historyEmpty=true;await p.reload();await pause(600);await shot(p,'no-model-empty',surface,t,'没配模型 / 空对话');if(!before){assert.equal(await field.isDisabled(),true);assert.equal(await field.getAttribute('placeholder'),'先添加一个模型');}
    modelMissing=false;historyEmpty=false;await p.reload();await pause(600);
-   if(width<720)await b(p,'切换会话侧栏').click();await p.getByRole('button',{name:/^动态/}).filter({visible:true}).click();await pause(200);await shot(p,'activity',surface,t,'空列表');if(width<720)await b(p,'切换会话侧栏').click();await b(p,'WeftMate 主对话').click();
+   if(width<720)await b(p,'切换会话侧栏').click();await p.getByRole('button',{name:/^动态/}).filter({visible:true}).click();await pause(200);await shot(p,'activity',surface,t,'空列表');if(width<720)await b(p,'切换会话侧栏').click();await p.locator(`[data-session-id="${first.sessionId}"] button`).first().click();
    // Replay all seven real onboarding steps without any model test call.
    if(width===1200){await b(p,'账户菜单').click();await b(p,'设置').click();await settings.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:'常规',exact:true}).click();await b(p,'重新查看引导').click();
     for(let i=0;i<7;i++){await shot(p,'onboarding-'+i,surface,t);if(i<6)await b(p,'跳过这步').click();}await b(p,'跳过这步').click();}
@@ -126,21 +125,20 @@ try {
   const page=await browser.newPage({viewport:size,isMobile:true,hasTouch:true});page.setDefaultTimeout(12000);page.on('pageerror',e=>{errors.push(e.message);console.error(e.stack)});
   await baseline(page,true);
   if(web){await page.route('**/bridge.js',r=>r.fulfill({contentType:'text/javascript',body:'// browser transport'}));await page.route('**/personal/v1/**',async r=>{const u=new URL(r.request().url());if(u.pathname.includes('/memory/'))return r.fulfill({json:memoryResponse(u.pathname.split('/memory')[1])});const res=await r.fetch({url:f.origin+u.pathname+u.search,headers:{...r.request().headers(),origin:f.origin}});await r.fulfill({response:res}).catch(error=>{if(!/already handled|disposed|closed/.test(error.message))throw error});});
-   const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}}),identity=await login.json();await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await uiCore.selectMainChat();},identity);
+   const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}}),identity=await login.json();await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();},identity);
   } else {await page.route('**/bridge',async r=>{const input=r.request().postDataJSON();if(input.method==='host.business'&&input.params.path.includes('/memory/'))return r.fulfill({json:{result:memoryResponse(input.params.path.split('/memory')[1])}});return r.fallback();});await page.goto(f.mobileUrl);}
-  await page.waitForFunction(()=>uiCore.inMainChat()&&document.querySelector('.main-chat-row.message'));
+  await page.waitForFunction(()=>state.booted&&state.loggedIn);await page.evaluate(id=>selectSharedSession(id),first.sessionId);await page.waitForFunction(()=>state.sharedEvents.length>0);
   const surface=(web?'phone-web':'android-bundle')+'-'+size.width;
   for(const t of ['light','dark']) {
    await theme(page,t,true);await shot(page,'main-history',surface,t);
    const field=page.getByRole('textbox',{name:'输入消息',exact:true});await field.fill('第一行\n第二行\n第三行\n第四行\n第五行\n第六行\n第七行\n第八行\n第九行');const large=await field.evaluate(n=>n.clientHeight);await shot(page,'composer-long',surface,t,'超长文本');await field.fill('');if(!before)assert.ok(large>await field.evaluate(n=>n.clientHeight)*2);
    await b(page,'添加图片或文件').click();await shot(page,'composer-menu',surface,t);await page.keyboard.press('Escape');
-   await b(page,'搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await page.waitForFunction(()=>document.querySelector('mark'));await shot(page,'main-search',surface,t);await b(page,'关闭主对话搜索').click();
    await page.evaluate(()=>page('settings'));await shot(page,'settings-home',surface,t);
    const categories=await page.evaluate(()=>mobileSettingsRegistry.list({desktop:false}).map(cat=>({id:cat.id,name:cat.name})));
    for(const cat of categories){await page.evaluate(id=>page(id),cat.id);await pause(200);await shot(page,'settings-'+cat.id,surface,t);}
    memoryState='rejected';await page.evaluate(()=>page('memory'));await pause(300);await shot(page,'memory-rejected',surface,t);if(!before){await page.locator('#mobile-memory-health').getByRole('button',{name:'查看',exact:true}).click();await shot(page,'memory-rejected-expanded',surface,t);}
-   memoryState='normal';await page.evaluate(async()=>{page('chat');await uiCore.selectMainChat()});
-   if(!before){await page.evaluate(()=>{uiCore.state.models=[];state.model=null;updateComposer()});await shot(page,'no-model-history',surface,t,'没配模型');await page.evaluate(()=>{$('chat-content').replaceChildren();updateComposer()});await shot(page,'no-model-empty',surface,t,'没配模型 / 空对话');assert.equal(await field.isDisabled(),true);await page.evaluate(async()=>{await uiCore.refreshThinkingModels();await uiCore.selectMainChat();updateComposer()});}
+   memoryState='normal';await page.evaluate(id=>selectSharedSession(id),first.sessionId);
+   if(!before){await page.evaluate(()=>{uiCore.state.models=[];state.model=null;updateComposer()});await shot(page,'no-model-history',surface,t,'没配模型');await page.evaluate(()=>{$('chat-content').replaceChildren();updateComposer()});await shot(page,'no-model-empty',surface,t,'没配模型 / 空对话');assert.equal(await field.isDisabled(),true);await page.evaluate(async()=>{await uiCore.refreshThinkingModels();updateComposer()});}
   }
   await page.unrouteAll({behavior:'ignoreErrors'});await page.close();
  }

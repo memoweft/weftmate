@@ -1,6 +1,7 @@
 /* Desktop auth component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.auth = (core, ui) => {
     function paintIdentity(payload) {
+        ui.closeChatDirectory?.();
         ui.byId('account-name').textContent = WeftUiCore.accountLabel(payload.account,core.cloudAuthView?.().email);
         const name = [payload.account.displayName,payload.account.username].find(value=>value&&value!=='local-owner') || '我的账户';
         ui.byId('rail-account-name').textContent = name;
@@ -56,11 +57,23 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
         if (globalThis.weftmateDesktop) void globalThis.weftmateDesktop.identity().then(identity => { core.state.cloudAuth.deviceName = identity.deviceName; });
         paintCloudAuth(core.cloudAuthView());
     }
+    function restoreLoginView() {
+        if (!loginHome) return;
+        if (core.state.currentView === 'login') {
+            loginDialog.close();
+            for (const animation of loginDialog.getAnimations()) animation.finish();
+        }
+        const view = ui.byId('login-view');
+        if (loginNext?.parentNode === loginHome) loginHome.insertBefore(view, loginNext); else loginHome.append(view);
+        loginHome = loginNext = null;
+        view.hidden = core.state.currentView !== 'login';
+    }
     function paintLoginDialog(open) {
         const view = ui.byId('login-view');
         if (open) {
             if (!loginDialog) {
                 loginDialog = ui.element('dialog', 'dialog cloud-login-dialog'); loginDialog.id = 'cloud-login-dialog';
+                loginDialog.dataset.motionNativeClose = 'true';
                 loginDialog.setAttribute('aria-labelledby', 'cloud-login-dialog-title');
                 const head = ui.element('div', 'dialog-head'), title = ui.element('h2', '', '登录以使用云端功能'); title.id = 'cloud-login-dialog-title';
                 const close = ui.element('button', 'icon-close'); close.type = 'button'; close.setAttribute('aria-label', '关闭登录'); close.append(globalThis.WeftIcons.create('deny', 24));
@@ -70,13 +83,22 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
                 document.body.append(loginDialog);
             }
             if (!loginDialog.open) {
-                loginHome = view.parentNode; loginNext = view.nextSibling; loginReturnFocus = document.activeElement;
-                ui.byId('cloud-login-dialog-body').append(view); view.hidden = false; loginDialog.inert = false; loginDialog.showModal();
+                if (!loginHome) {
+                    loginHome = view.parentNode; loginNext = view.nextSibling;
+                    ui.byId('cloud-login-dialog-body').append(view);
+                }
+                loginReturnFocus = document.activeElement;
+                view.hidden = false; loginDialog.inert = false; loginDialog.showModal();
             }
         } else if (loginDialog?.open) {
-            loginDialog.close();
-            if (loginNext?.parentNode === loginHome) loginHome.insertBefore(view, loginNext); else loginHome.append(view);
-            view.hidden = true; loginReturnFocus?.focus?.({ preventScroll: true });
+            loginDialog.inert = true; loginDialog.close();
+            loginReturnFocus?.focus?.({ preventScroll: true });
+            // Keep the live form inside the fading native surface, including on a rapid reopen.
+            const exit = loginDialog.getAnimations();
+            if (!exit.length || core.state.currentView === 'login') restoreLoginView();
+            else Promise.allSettled(exit.map(animation => animation.finished)).then(() => {
+                if (!loginDialog.open && getComputedStyle(loginDialog).display === 'none') restoreLoginView();
+            });
         }
     }
     async function showLegal(kind) {
@@ -86,7 +108,27 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
         else ui.byId('legal-text').textContent = '内容暂时无法读取，请重试。';
         ui.byId('legal-reader').inert = false; ui.byId('legal-reader').showModal();
     }
+    let comparison;
+    function paintComparison(pairing) {
+        if (!pairing) { comparison?.close(); return; }
+        if (!comparison) {
+            comparison = ui.element('dialog', 'dialog cloud-device-dialog');
+            comparison.setAttribute('aria-label', '核对入组设备');
+            const number = ui.element('output'); number.id='joining-device-number';
+            const detail = ui.element('p'); detail.setAttribute('role','status');
+            const close = ui.element('button','button secondary','关闭'); close.type='button';
+            close.onclick=()=>core.cancelCloudPairing();
+            comparison.addEventListener('cancel', event=>{event.preventDefault();core.cancelCloudPairing();});
+            comparison.append(ui.element('h2','','核对两台设备的数字'),number,detail,close);
+            document.body.append(comparison);
+        }
+        const code=pairing.verificationCode;
+        comparison.querySelector('output').textContent=code ? code.slice(0,3)+' '+code.slice(3) : '';
+        comparison.querySelector('p').textContent=pairing.error || (code ? '两边数字一致后，请在发出二维码的设备上确认。' : '正在核对设备…');
+        if (!comparison.open) comparison.showModal();
+    }
     function paintCloudAuth(value) {
+        paintComparison(value.pairing);
         paintLoginDialog(!!value.modal);
         if (value.localDesktop) {
             for (const id of ['setup-password', 'setup-confirm']) {
@@ -147,5 +189,5 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
         if (value.retrySeconds) ui.errorAt('cloud-auth-error', `尝试太多次，请等待 ${value.retrySeconds} 秒后重试。`);
     }
     function restoreCloudDraft(draft) { if (draft) { ui.byId('message-text').value = draft; ui.updateAvailability(); } }
-    return { openLegal: showLegal, paintIdentity, loginBusy, setupBusy, loginError, setupError, loginClearPasswords, setupClearPasswords, mountAuth, paintCloudAuth, restoreCloudDraft };
+    return { openLegal: showLegal, paintIdentity, loginBusy, setupBusy, loginError, setupError, loginClearPasswords, setupClearPasswords, mountAuth, paintCloudAuth, restoreCloudDraft, restoreLoginView };
 };

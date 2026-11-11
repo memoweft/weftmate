@@ -12,12 +12,16 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     return sharedPhoneBinding(conversationId);
   }
   function syncMobileIdentity() {
-    if (state.logicalChats && core.state.ownerId === (state.owner || null) && core.state.identityGeneration === state.authEpoch) {
+    const adopted = core.state.nativeSessionAdopted === true;
+    // While the web page is parked, the native action owns the authenticated session.
+    if (adopted && globalThis.weftNativeChatActive === true) return;
+    if (adopted) core.state.nativeSessionAdopted = false;
+    if (!adopted && state.logicalChats && core.state.ownerId === (state.owner || null) && core.state.identityGeneration === state.authEpoch) {
       core.state.currentView = state.page === 'chat' ? 'assistant' : state.page;
       core.state.online = state.sharedHostAvailable;
       return;
     }
-    if (core.state.ownerId !== (state.owner || null)) {
+    if (adopted || core.state.ownerId !== (state.owner || null)) {
       core.closeSearch?.();
       core.state.executionAccount = undefined;core.state.executionAccountName = undefined;core.state.sessionSelecting=false;core.resetLogicalSession?.();
       core.state.models = [];core.state.modelsKnown=false;
@@ -65,6 +69,9 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     await core.mobile.reconcileSharedDelivery();
     if (!core.mobile.sharedViewCurrent(owner, epoch, generation, sessionId)) return;
     effects.renderSharedConversation(); void core.refreshConversationFacts();
+    // Boot can briefly restore a conversation before opening the list. Only the settled view should claim the native wait.
+    if (!wait && state.booted && state.logicalChats && !core.historyWaitAbort && core.canWaitForReply() && ['changed','unchanged'].includes(outcome?.kind))
+      effects.scheduleSharedPoll?.({...outcome, immediateRenew:true});
     return outcome;
   }
   function mobileOutput(item) {
@@ -131,16 +138,16 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     core.state.hostStatusSnapshot={payload:status,at:cached?.payload===status?cached.at:Date.now(),identity:core.state.identityGeneration};
     core.connectionSucceeded?.(status.presence || {runtime:status.backend?.runtime === 'unavailable' ? 'unavailable' : 'ready'});
     if (owner !== state.owner || epoch !== state.authEpoch) return;
-    const exact = ['chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].every(key => status.personalCapabilities?.[key] === 1);
+    const exact = ['chats','chatTimeline','chatSearch','sideChats','chatResources'].every(key => status.personalCapabilities?.[key] === 1);
     core.state.personalCapabilities = status.personalCapabilities || {};
     core.state.executionAccount = status.executionAccount;core.state.executionAccountName = status.executionAccountName;
     core.state.hostId = status.hostId;core.state.hostName = status.hostName;
     core.state.capabilities = status.backend?.capabilities || null;
     if (environment.logicalChats && exact) {
+      if (!state.logicalChats) { core.state.selectedSessionId = null; core.state.selectedChatId = null; }
       state.logicalChats = true; state.sharedHostAvailable = true; core.state.online = true;
       await core.refreshConfiguration();
       core.state.modelProfileId ||= core.state.models[0]?.id;
-      if (!core.state.mainChat) { core.state.selectedSessionId = null; core.state.selectedChatId = null; }
       await core.refreshLogicalSessions();
       await effects.restoreMainNativeRequests?.();
       state.sharedSessions = core.state.sessions.filter(row=>row.kind !== 'main').map(row=>({...row,source:'host'}));

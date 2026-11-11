@@ -124,7 +124,7 @@
         });
         field.addEventListener('scroll', positionGhost); field.addEventListener('click', paint); field.addEventListener('keyup', paint);
         // Capture before each action starts. Switching away must abort before awaiting history or model reads.
-        for (const name of ['sendDraft', 'sendMainDraft', 'sendPhoneMessage', 'selectSession', 'selectLogicalSession', 'selectMainChat', 'openSideChat', 'startNewConversation', 'startChatConversation', 'clearSession', 'acceptSession']) {
+        for (const name of ['sendDraft', 'sendPhoneMessage', 'selectSession', 'selectLogicalSession', 'openSideChat', 'startNewConversation', 'clearSession', 'acceptSession']) {
             if (typeof core[name] !== 'function') continue;
             const action = core[name]; core[name] = function (...args) { core.cancelNextSuggestions(); return action.apply(this, args); };
         }
