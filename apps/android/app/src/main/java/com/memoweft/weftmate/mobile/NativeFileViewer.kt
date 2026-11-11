@@ -45,8 +45,8 @@ import java.io.File
         loading=true;error=""
         try{
             val loaded=activity.fileActions.load(row)
-            if(useOriginalFileViewer(loaded.kind,history)) { activity.originalFile(row);onClose() }
-            else file=loaded
+
+            file=loaded
         }catch(e:CancellationException){throw e}catch(e:Exception){error=nativeFileFailure(e)}finally{loading=false}
     }
     Dialog(onDismissRequest=onClose,properties=DialogProperties(usePlatformDefaultWidth=false,decorFitsSystemWindows=false)) {
@@ -66,7 +66,6 @@ import java.io.File
                         NativeFileMenuAction("保存到手机",R.drawable.wm_down,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.save(it)}})
                         NativeFileMenuAction("分享",R.drawable.wm_external,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.share(it)}})
                         NativeFileMenuAction("用其它应用打开",R.drawable.wm_external,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.share(it,true)}})
-                        if(row.optString("libraryId").isNotBlank())NativeFileMenuAction("在原网页中查看",R.drawable.wm_external,onClick={menu=false;activity.originalLibrary(row.getString("libraryId"))})
                         if(row.optString("libraryId").isNotBlank())NativeFileMenuAction("在对话中定位",R.drawable.wm_chat,onClick={menu=false;scope.launch{try{NativeLibraryModel(chat,activity).source(row);onClose()}catch(e:Exception){activity.fileActions.notice(nativeFileFailure(e))}}})
                         if(realFileVersions(initial).isNotEmpty())NativeFileMenuAction("查看历史版本",R.drawable.wm_history,onClick={menu=false;history=true})
                     }

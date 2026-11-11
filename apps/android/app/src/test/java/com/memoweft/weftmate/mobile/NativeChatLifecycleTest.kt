@@ -54,6 +54,8 @@ class NativeChatLifecycleTest {
         var directoryHosts = JSONArray()
         var offlineReady=false
         var lastPresentation=""
+        var openedPage:Pair<String,JSONObject>?=null
+        override fun openPage(id:String,params:JSONObject){openedPage=id to params}
         var creations = 0
         var sent = 0
         var phoneMessages = JSONObject().put("messages", JSONArray()).put("turnStatus", "")
@@ -477,8 +479,9 @@ class NativeChatLifecycleTest {
         try{
             f.chat.bootstrap();f.chat.edit("上线后读一下新的说明")
             val chat=f.chat.chatId;val session=f.chat.sessionId;val host=f.chat.hostId
-            f.chat.openOfflineWork();until{f.chat.tab=="web-chat"}
-            assertTrue(e.lastPresentation.contains(JSONObject.quote("上线后读一下新的说明")))
+            f.chat.openOfflineWork();until{e.openedPage!=null}
+            assertEquals("offlineWork",e.openedPage?.first)
+            assertEquals("上线后读一下新的说明",e.openedPage?.second?.getString("text"))
             assertEquals(chat,f.chat.chatId);assertEquals(session,f.chat.sessionId);assertEquals(host,f.chat.hostId)
         }finally{f.close()}
     }

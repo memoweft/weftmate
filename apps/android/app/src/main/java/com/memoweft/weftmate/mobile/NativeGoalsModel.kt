@@ -144,11 +144,11 @@ internal class NativeGoalsModel(private val chat: NativeChatModel, private val a
         }catch(e:CancellationException){throw e}catch(e:Exception){if(g==epoch)recordsError=failure(e)}finally{if(g==epoch)recordsLoading=false}}
     }
     fun closeDetail(){history?.cancel();detail=null;draft=null;showRecords=false;records=emptyList();recordsError="";recordsLoading=false;formError=""}
-    fun openOriginal(row:JSONObject?=null,kind:String="goals") { webPayload=JSONObject().put("page",kind).apply{row?.let{put("row",it)}};chat.tab="goals-web" }
+    fun openOriginal(row:JSONObject?=null,kind:String="goals") { activity.pages.open("offlineWork",from="goals") }
     fun closeWeb(){webPayload=null;chat.tab="goals";refresh()}
     fun openSource(row:JSONObject)=launch {
         val g=epoch
-        if(row.stringOrEmpty("hostId").isNotEmpty()&&row.stringOrEmpty("hostId")!=primaryHost){openOriginal(row,"chat");return@launch}
+        if(row.stringOrEmpty("hostId").isNotEmpty()&&row.stringOrEmpty("hostId")!=primaryHost){activity.openNativeSource(goalSource(row).put("hostId",row.getString("hostId")).put("sessionId",goalSession(row)));closeDetail();return@launch}
         val source=goalSource(row);var id=source.stringOrEmpty("chatId")
         if(id.isEmpty())id=chat.business("/sessions/${encode(goalSession(row))}/chat").stringOrEmpty("chatId")
         val conversation=chat.business("/chats/${encode(id)}").getJSONObject("chat");if(g!=epoch)return@launch;chat.select(conversation);if(g!=epoch)return@launch

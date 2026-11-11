@@ -10,11 +10,12 @@ import java.time.Instant
 import java.time.ZoneId
 
 class NativeLibraryUnitTest {
-    @Test fun markdownAndCodeKeepExistingWebActionsWhileOtherFilesStayNative() {
-        NativeFileKind.entries.forEach { kind ->
-            assertEquals(kind in setOf(NativeFileKind.MARKDOWN,NativeFileKind.CODE),useOriginalFileViewer(kind))
-            assertFalse("Version selection precedes the actual file destination",useOriginalFileViewer(kind,true))
-        }
+    @Test fun nativeMarkdownPreservesHeadingCodeAndTableContents() {
+        val blocks=fileMarkdownBlocks("# 标题\n\n```kotlin\nval x = 1\n```\n\n| A | B |\n| --- | --- |\n| 1 | 2 |")
+        assertEquals("标题",blocks.first().text)
+        assertEquals(1,blocks.first().heading)
+        assertEquals("val x = 1",blocks.first { it.code }.text)
+        assertTrue(blocks.first { it.table }.text.contains("1  │  2"))
     }
     @Test fun phoneOnlyIdentityIsNormalEmptyState() {
         assertTrue(libraryHasNoComputer(JSONObject().put("authSource","phone")))

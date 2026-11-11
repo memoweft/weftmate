@@ -38,7 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -66,12 +65,12 @@ import java.time.LocalDate
     val selectedTab = m.tab
     val route = nativeRoute(selectedTab)
     val settings = activity.settings
-    LaunchedEffect(m.owner, m.loggedIn) { settings.reset() }
+    LaunchedEffect(m.owner, m.loggedIn) { settings.reset(); activity.pages.reset() }
     val signedIn = m.loggedIn
     val account = m.owner
     var preview by remember(account, signedIn) { mutableStateOf<JSONObject?>(null) }
-    val openedFile = preview
-    NativeTheme(m.dark) {
+    val openedFile = preview ?: activity.nativeFile
+    NativeTheme(m.dark,m.palette) {
         val contentLayer = rememberGraphicsLayer()
         val frost = remember(contentLayer) { NativeFrost(contentLayer) }
         val dockHeight = remember { mutableIntStateOf(0) }
@@ -81,15 +80,17 @@ import java.time.LocalDate
         LaunchedEffect(signedIn, account) { activity.health.prepare() }
         if (!signedIn) {
             if (m.loading) NativeLoadingState("正在打开 WeftMate…", Modifier.fillMaxSize())
-            else AndroidView(factory = { activity.webPage("login", false) }, onRelease = { activity.parkWeb() }, modifier = Modifier.fillMaxSize())
+            else {
+                LaunchedEffect(Unit) { activity.pages.open("login",from="chat") }
+                androidx.activity.compose.BackHandler(activity.pages.page!="login") { activity.pages.back() }
+                Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding().imePadding()) {
+                    if(activity.pages.page!="login")NativePageToolbar(activity.pages)
+                    NativePage(activity.pages,Modifier.weight(1f))
+                }
+            }
             return@NativeTheme
         }
         CompositionLocalProvider(LocalNativeFrost provides if (route.frost) frost else null, LocalReadingSize provides m.textSize, LocalCodeSize provides m.codeSize) {
-            if (route.bar == RouteBar.FullScreen) {
-                AndroidView(factory = { activity.originalLibraryPage() }, onRelease = { activity.parkWeb() },
-                    modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).windowInsetsPadding(WindowInsets.systemBars))
-                return@CompositionLocalProvider
-            }
             val focus = LocalFocusManager.current
             var drawer by remember { mutableStateOf(false) }
             fun openDrawer() { focus.clearFocus(); activity.hideKeyboard(); m.focused = false; drawer = true; m.launch { m.refreshChats() } }
@@ -120,8 +121,9 @@ import java.time.LocalDate
                 Column(Modifier.fillMaxSize()) {
                     when (route.bar) {
                         RouteBar.Settings -> NativeSettingsToolbar(settings)
+                        RouteBar.Page -> NativePageToolbar(activity.pages)
                         RouteBar.Feed -> NativeFeedToolbar(activity.feed,
-                            back = { if (selectedTab == "activity-web") activity.feed.closeWeb() else activity.feed.closeDetail() },
+                            back = { activity.feed.closeDetail() },
                             onDrawer = ::openDrawer, onSettings = ::openSettings)
                         RouteBar.Goals -> NativeGoalsToolbar(activity.goals, onDrawer = ::openDrawer, onSettings = ::openSettings)
                         RouteBar.Health -> NativeHealthToolbar(activity.health, onDrawer = ::openDrawer, onSettings = ::openSettings)
@@ -133,15 +135,11 @@ import java.time.LocalDate
                         "chats" -> NativeChatList(m, page.alpha(paneAlpha.value))
                         "library" -> NativeLibrary(m, activity, page.frostSource(frost).alpha(paneAlpha.value), onPreview = { preview = it })
                         "activity" -> NativeFeedPage(activity.feed, Modifier.weight(1f).alpha(paneAlpha.value))
-                        "activity-web" -> NativeFeedWeb(activity.feed, activity, page.alpha(paneAlpha.value))
                         "goals" -> NativeGoalsPage(activity.goals, Modifier.weight(1f).alpha(paneAlpha.value))
-                        "goals-web" -> NativeGoalsWeb(activity.goals, activity, page)
                         "settings", "models" -> NativeSettingsPage(settings, Modifier.weight(1f))
                         "health" -> NativeHealthPage(activity.health, Modifier.weight(1f).alpha(paneAlpha.value))
-                        "health-web" -> NativeHealthWeb(activity.health, activity, page)
-                        else -> key(selectedTab) {
-                            AndroidView(factory = { activity.webPage(route.web ?: selectedTab) }, onRelease = { activity.parkWeb() }, modifier = page.alpha(paneAlpha.value))
-                        }
+                        "native" -> NativePage(activity.pages,page.alpha(paneAlpha.value))
+                        else -> LaunchedEffect(selectedTab) { m.returnToChat() }
                     }
                     Column(Modifier.onSizeChanged { dockHeight.intValue = it.height }) {
                         if (selectedTab == "chat") {
@@ -156,7 +154,7 @@ import java.time.LocalDate
             settings.confirmation?.let { NativeSettingsConfirmationOverlay(it) }
             if (selectedTab == "chat" && settings.menuVisible) NativeModelServiceOverlay(settings, with(density) { dockHeight.intValue.toDp() })
             if (drawer) NativeDrawer(m, settings) { drawer = false }
-            openedFile?.let { row -> NativeFileViewer(row, m, activity, onClose = { preview = null }) }
+            openedFile?.let { row -> NativeFileViewer(row, m, activity, onClose = { preview = null; activity.nativeFile=null }) }
         }
     }
 }
@@ -168,7 +166,7 @@ import java.time.LocalDate
     val library = route.id == "library"
     val focus = LocalFocusManager.current
     Row(
-        Modifier.fillMaxWidth().height(DesignTokens.space80.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),
+        Modifier.fillMaxWidth().heightIn(min=DesignTokens.space56.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (route.bar == RouteBar.Back) NativeIconButton(R.drawable.wm_back, "返回聊天", Modifier.nativeFrost(CircleShape)) { m.returnToChat() }
@@ -184,10 +182,8 @@ import java.time.LocalDate
                     @Composable { NativeMenuItem(text = { Text(label) }, onClick = { overflow = false; action() }, leadingIcon = { Icon(painterResource(icon), null) }) }
                 if (m.running && !library) item("停止回复", R.drawable.wm_stop) { m.stop() }()
                 item("设置", R.drawable.wm_settings) { onSettings() }()
-                if (library) item("打开原网页成果库", R.drawable.wm_layers) { activity.originalLibrary() }()
-                else {
+                if (!library) {
                     item(if (m.workAndChat && m.sidebarMode == "work") "新建工作" else "新建对话", R.drawable.wm_plus) { focus.clearFocus(); activity.hideKeyboard(); m.focused = false; m.newChat() }()
-                    item("完整对话功能", R.drawable.wm_chat) { m.tab = "web-chat" }()
                 }
                 if (route.id == "chat" && !m.connected && m.offlineWorkReady) item("交给电脑，上线后做", R.drawable.wm_clock) { m.openOfflineWork() }()
             }

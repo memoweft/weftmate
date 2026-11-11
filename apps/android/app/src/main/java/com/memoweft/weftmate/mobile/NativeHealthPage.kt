@@ -29,10 +29,9 @@ private val gap=DesignTokens.space12.dp
 @Composable private fun HealthBody(text:String) { SelectionContainer{Text(healthText(text),fontSize=DesignTokens.font15.sp,lineHeight=DesignTokens.font24.sp)} }
 @Composable private fun HealthCard(title:String,modifier:Modifier=Modifier,insight:Boolean=false,contentPadding:Int=DesignTokens.space16,radius:Int=DesignTokens.radius24,hero:String?=null,heroData:JSONObject=JSONObject(),content:@Composable ColumnScope.()->Unit) {
     val dark=LocalNativeDark.current
-    val backdrop=if(hero!=null&&!dark)Modifier.background(Brush.verticalGradient(0f to healthSoftColor(hero,heroData),.85f to Color(DesignTokens.healthCardLight))) else Modifier.background(if(dark)MaterialTheme.colorScheme.surface else Color(DesignTokens.healthCardLight))
-    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(radius.dp)).then(backdrop).then(if(title.isNotBlank())Modifier.semantics{contentDescription=title} else Modifier)) {
+    Box(modifier.fillMaxWidth().then(if(title.isNotBlank())Modifier.semantics{contentDescription=title} else Modifier)) {
         CompositionLocalProvider(LocalContentColor provides Color(if(dark)DesignTokens.nativeDarkInk else DesignTokens.healthInkLight)) {
-            Column(Modifier.padding(contentPadding.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp)) {
+            Column(Modifier.padding(vertical=DesignTokens.space12.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp)) {
                 if(title.isNotBlank()) {
                     if(insight) Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp)){Icon(painterResource(R.drawable.wm_heart),null,Modifier.size(DesignTokens.space18.dp),tint=healthColor("sleep",dark));Text(title,fontSize=DesignTokens.font15.sp,fontWeight=FontWeight.SemiBold,color=Color(if(dark)DesignTokens.nativeDarkSecondary else DesignTokens.healthMutedLight))}
                     else Text(title,fontSize=DesignTokens.font16.sp,fontWeight=FontWeight.SemiBold,color=if(hero!=null)healthColor(hero,dark,heroData) else LocalContentColor.current)
@@ -40,12 +39,12 @@ private val gap=DesignTokens.space12.dp
                 content()
             }
         }
-        if(insight)Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(DesignTokens.space3.dp).background(Brush.horizontalGradient(listOf("recovery","load","sleep","hrvSdnnMs").map{healthColor(it,dark)})))
+        HorizontalDivider(Modifier.align(Alignment.BottomCenter),color=MaterialTheme.colorScheme.outlineVariant)
     }
 }
 @Composable internal fun NativeHealthToolbar(model:NativeHealthModel,onDrawer:()->Unit,onSettings:()->Unit) {
     val sub=model.view!="today"||model.webMetric.isNotEmpty()
-    Row(Modifier.fillMaxWidth().height(DesignTokens.space80.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space56.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
         FeedControlIconButton(if(sub)R.drawable.wm_back else R.drawable.wm_panel,if(sub)"返回健康" else "打开侧栏",floating=true){if(model.webMetric.isNotEmpty())model.closeWeb() else model.home();if(!sub)onDrawer()}
         Text("健康",Modifier.weight(1f),textAlign=TextAlign.Center,fontSize=DesignTokens.font18.sp,fontWeight=FontWeight.SemiBold)
         FeedControlIconButton(R.drawable.wm_user,"打开个人设置",floating=true,action=onSettings)
@@ -57,7 +56,7 @@ private val gap=DesignTokens.space12.dp
     LaunchedEffect(model.view,model.metric,model.day){list.scrollToItem(0)}
     LaunchedEffect(list.isScrollInProgress){frost?.paused=list.isScrollInProgress}
     DisposableEffect(frost){onDispose{frost?.paused=false}}
-    Box(modifier.fillMaxWidth().background(Color(if(model.dark)DesignTokens.nativeDarkCanvas else DesignTokens.healthCanvasLight)).then(if(frost!=null)Modifier.frostSource(frost) else Modifier)) {
+    Box(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).then(if(frost!=null)Modifier.frostSource(frost) else Modifier)) {
         LazyColumn(Modifier.fillMaxSize().semantics{contentDescription="健康内容"},state=list,contentPadding=PaddingValues(DesignTokens.space20.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space16.dp)) {
             item("date"){HealthDateBar(model)}
             if(model.calendarOpen)item("calendar"){HealthCalendar(model)}
@@ -86,7 +85,7 @@ private val gap=DesignTokens.space12.dp
                             }
                         }
                         item("trend"){HealthTrend(model)}
-                        item("original"){FeedControlButton("原网页详情",icon=R.drawable.wm_external,secondary=true){model.openOriginal()}}
+                        item("analysis"){HealthAnalysis(model,model.metric)}
                     }
                     item("updated"){HealthCaption(model.overview?.optString("updatedAt")?.takeIf{it.isNotEmpty()&&it!="null"}?.let{"数据更新于 ${healthClock(it,model.zone)}"} ?: "这一天还没有记录。")}
                 }

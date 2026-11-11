@@ -16,6 +16,7 @@ internal interface NativeChatEnvironment {
     suspend fun presentation(script: String): JSONObject
     suspend fun directory(): JSONObject
     fun showLogin()
+    fun openPage(id: String, params: JSONObject) {}
 }
 
 internal class ActivityNativeChatEnvironment(private val activity: NativeActivity) : NativeChatEnvironment {
@@ -29,4 +30,5 @@ internal class ActivityNativeChatEnvironment(private val activity: NativeActivit
     override suspend fun presentation(script: String) = activity.goals.presentation(script)
     override suspend fun directory() = nativePageRead { NativeSettingsBridge(activity).call("directory") }
     override fun showLogin() = activity.showLogin()
+    override fun openPage(id: String, params: JSONObject) = activity.pages.open(id,params)
 }
