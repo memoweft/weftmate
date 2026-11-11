@@ -209,6 +209,7 @@
     await attachEngine(info,client,adopt);
     const next = `${info.origin}:${info.accountId}`;
     const loaded = native ? await nativeCall('phone.models.list') : null;
+    if (next !== sessionKey) return;
     if (native) state.model = loaded.selected;
     else state.model = modelServices?.selectedView()||modelView(memoryModel);
     await readServices(loaded);

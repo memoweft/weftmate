@@ -47,6 +47,10 @@ class NativeChatLifecycleTest {
         var account = "mode2a-test-owner"
         var configured = true
         var online = true
+        var local = false
+        var phoneReady = true
+        var localHostReads = 0
+        var loginRequests = 0
         var directoryHosts = JSONArray()
         var offlineReady=false
         var lastPresentation=""
@@ -76,13 +80,14 @@ class NativeChatLifecycleTest {
             .put("activeSessionId", "test-session-$identity-$creations").put("mode", if (work) "work" else "chat")
             .put("sendAvailable", true).put("approvalMode", approval).apply { if (work) put("workDirectory", project) }
         override suspend fun request(method: String, params: JSONObject): JSONObject = when (method) {
-            "app.bootstrap" -> JSONObject().put("owner", account).put("loggedIn", true).apply { if (configured) put("model", model) }
+            "app.bootstrap" -> JSONObject().put("owner", account).put("loggedIn", true).apply { if (configured) put("model", model); if (local) put("authSource", "phone-local") }
             "settings.appearance" -> JSONObject().put("value", "light")
             "models.host" -> JSONObject().put("models", if (configured) JSONArray().put(model) else JSONArray())
             "models.selectHost" -> { phoneHostChoice = params.getString("profileId"); JSONObject().put("profileId", phoneHostChoice) }
             "shared.conversations.get" -> JSONObject().put("status", if (boundSession.isEmpty()) "unbound" else "active")
                 .put("cached", false).put("binding", JSONObject().put("sessionId", boundSession))
             "host.business" -> {
+                if (local) { localHostReads++; throw ApiFailure(401, "LOGIN_REQUIRED") }
                 if (!online) throw IOException("synthetic offline")
                 val path = params.getString("path").removePrefix("/personal/v1")
                 val body = params.optJSONObject("body")
@@ -136,10 +141,11 @@ class NativeChatLifecycleTest {
             "conversations.messages" -> phoneMessages
             else -> JSONObject()
         }
-        override suspend fun phone(action: String, params: JSONObject) = JSONObject()
+        override suspend fun phone(action: String, params: JSONObject) = if (local) JSONObject()
+            .put("ready", phoneReady).put("active", true).put("owner", account).put("conversations", JSONArray()) else JSONObject()
         override suspend fun presentation(script: String):JSONObject {lastPresentation=script;return JSONObject().put("ready",offlineReady)}
         override suspend fun directory() = JSONObject().put("hosts",directoryHosts)
-        override fun showLogin() {}
+        override fun showLogin() { loginRequests++ }
     }
     private class Fixture(val environment: Environment) {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
@@ -150,6 +156,20 @@ class NativeChatLifecycleTest {
 
     private val service = JSONObject().put("serviceId", "model-service-00000000-0000-4000-8000-000000000048")
     private val v25 = JSONObject().put("modelId", "mimo-v2.5").put("name", "MiMo v2.5")
+
+    // 保护：本机启动未完成时从设置返回，不访问电脑接口或误判本机登录失效。
+    @Test fun returningFromSettingsDuringLocalStartupKeepsTheLocalAccount() = runBlocking {
+        val e = Environment().apply { local = true; phoneReady = false }; val f = Fixture(e)
+        try {
+            val boot = f.scope.launch { f.chat.bootstrap() }
+            until { f.chat.loggedIn && f.chat.standalone }
+            f.chat.returnToChat()
+            assertEquals(true to 0, f.chat.loggedIn to e.localHostReads)
+            e.phoneReady = true; boot.join()
+            assertTrue(f.chat.loggedIn && f.chat.phoneArchive && !f.chat.loading)
+            assertEquals(0, e.loginRequests)
+        } finally { f.close() }
+    }
 
     @Test fun failedPairedPhoneReplyRemainsVisibleAfterRefreshAndCanRetryWithoutLosingDraft() = runBlocking {
         val e=Environment();val f=Fixture(e)

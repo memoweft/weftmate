@@ -113,6 +113,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     var dark by mutableStateOf(false)
     var textSize by mutableFloatStateOf(DesignTokens.font15)
     var codeSize by mutableFloatStateOf(DesignTokens.font13)
+    var reducedMotion by mutableStateOf(false)
     var olderCursor by mutableStateOf("")
     var hasOlder by mutableStateOf(false)
     var sendAvailable by mutableStateOf(true)
@@ -226,7 +227,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         sendAvailable = modelId.isNotBlank() && !phoneModelSwitching
     }
     private fun phoneParams() = JSONObject().put("owner", phoneOwner).put("conversationId", chatId.takeUnless { it == "phone-new" })
-    private fun readingPreferences(view:JSONObject) { textSize=view.optDouble("fontSize",DesignTokens.font15.toDouble()).toFloat();codeSize=view.optDouble("codeFontSize",DesignTokens.font13.toDouble()).toFloat() }
+    private fun readingPreferences(view:JSONObject) { textSize=view.optDouble("fontSize",DesignTokens.font15.toDouble()).toFloat();codeSize=view.optDouble("codeFontSize",DesignTokens.font13.toDouble()).toFloat();reducedMotion=view.optBoolean("reducedMotion") }
     private fun refreshPhone(view: JSONObject) {
         readingPreferences(view)
         if (!view.optBoolean("ready") || view.optString("owner") != phoneOwner) return
@@ -430,6 +431,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         }
     }
     suspend fun refresh(older: Boolean = false, wait: Boolean = false) {
+        if (standalone && !phoneArchive) return
         if (newWork && workBusy) return
         if (refreshing && refreshGeneration == generation) return
         refreshing = true

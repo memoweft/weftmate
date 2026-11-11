@@ -61,7 +61,7 @@ class NativeActivity : HybridActivity() {
         embeddedWeb.evaluateJavascript("""
           (()=>{window.weftPhoneResults??={};const result=window.weftPhoneResults;result[$key]=null;
           Promise.resolve(globalThis.WeftPhone?.presentation(${JSONObject.quote(action)},$params) || {ready:false})
-            .then(value=>{Object.assign(value,{fontSize:typeof mobileAppearanceStore==='undefined'?${DesignTokens.font15}:mobileAppearanceStore.value.fontSize,codeFontSize:typeof mobileAppearanceStore==='undefined'?${DesignTokens.font13}:mobileAppearanceStore.value.codeFontSize});if(Object.hasOwn(result,$key))result[$key]={value}}).catch(()=>{if(Object.hasOwn(result,$key))result[$key]={error:true}});})()
+            .then(value=>{Object.assign(value,{fontSize:typeof mobileAppearanceStore==='undefined'?${DesignTokens.font15}:mobileAppearanceStore.value.fontSize,codeFontSize:typeof mobileAppearanceStore==='undefined'?${DesignTokens.font13}:mobileAppearanceStore.value.codeFontSize,reducedMotion:globalThis.WeftReplyMotion?.reduced===true});if(Object.hasOwn(result,$key))result[$key]={value}}).catch(()=>{if(Object.hasOwn(result,$key))result[$key]={error:true}});})()
         """.trimIndent(), null)
         try { return withTimeout(15000) {
             while (true) {

@@ -53,11 +53,14 @@ class NativeStartupInstrumentedTest {
             waitFor { activity.model.tab == "chat" && !activity.model.loading }
             result.put("localChatReadyMs", SystemClock.elapsedRealtime() - started)
             onMain {
+                assertTrue(activity.model.loggedIn)
                 assertTrue(activity.model.localOnly)
                 assertTrue(activity.model.standalone)
                 assertTrue(activity.model.phoneArchive)
                 assertFalse(activity.model.canSend)
+                if (InstrumentationRegistry.getArguments().getString("startupReduced") == "1") assertTrue(activity.model.reducedMotion)
             }
+            onMain { result.put("reducedMotion", activity.model.reducedMotion) }
             compose.waitUntil(5_000) {
                 runCatching { compose.onNodeWithText("设置对话模型").assertIsDisplayed() }.isSuccess
             }
@@ -73,9 +76,11 @@ class NativeStartupInstrumentedTest {
             onMain {
                 result.put("activityClass", activity.javaClass.name)
                     .put("foreground", activity.nativeForeground)
+                    .put("loggedIn", activity.model.loggedIn)
                     .put("tab", activity.model.tab)
                     .put("webVisibility", activity.embeddedWeb.visibility)
                     .put("webParent", activity.embeddedWeb.parent?.javaClass?.name)
+                    .put("webRoute", NativeActivity::class.java.getDeclaredField("webRoute").apply { isAccessible = true }.get(activity))
                 val children = org.json.JSONArray()
                 for (index in 0 until activity.presentationContainer.childCount) {
                     val view = activity.presentationContainer.getChildAt(index)

@@ -119,7 +119,7 @@ import java.time.LocalDate
         }.semantics{contentDescription="消息列表"},contentPadding=padding,verticalArrangement=Arrangement.spacedBy(nativePad)) {
             item { if(m.hasOlder) NativeSecondary(onClick={follow.pause();m.launch{m.refresh(true)}}){Text("较早的消息")} }
             if(rows.isEmpty()) item {
-                val duration = if (android.animation.ValueAnimator.areAnimatorsEnabled()) DesignTokens.durationFast.toInt() else 0
+                val duration = if (!m.reducedMotion && android.animation.ValueAnimator.areAnimatorsEnabled()) DesignTokens.durationFast.toInt() else 0
                 AnimatedContent(m.loading, modifier = Modifier.fillMaxWidth().padding(vertical=DesignTokens.space48.dp),
                     transitionSpec = {
                         (fadeIn(tween(duration, easing=tokenEasing(DesignTokens.motionEaseOut))) togetherWith
