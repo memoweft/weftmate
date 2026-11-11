@@ -16,9 +16,9 @@
     const selected=result.selected||state.model;
     return {services:[...grouped.values()],selected:selected&&{serviceId:selected.serviceId||selected.endpoint,modelId:selected.modelId}};
   }
-  async function readServices(){
+  async function readServices(loaded){
     if(!native)return modelServices?.view()||serviceDirectory;
-    const key=sessionKey,result=await nativeCall('phone.models.list');if(key!==sessionKey)return serviceDirectory;nativeServices=Array.isArray(result.services);
+    const key=sessionKey,result=loaded||await nativeCall('phone.models.list');if(key!==sessionKey)return serviceDirectory;nativeServices=Array.isArray(result.services);
     serviceDirectory=nativeServices?{services:result.services,selected:result.selected&&{serviceId:result.selected.serviceId,modelId:result.selected.modelId}}:oldDirectory(result);
     for(const service of serviceDirectory.services)service.catalog={...service.catalog,message:catalogMessage(service.catalog?.status)};
     return serviceDirectory;
@@ -208,9 +208,11 @@
   async function start(info, client, adopt = true) {
     await attachEngine(info,client,adopt);
     const next = `${info.origin}:${info.accountId}`;
-    if (native) state.model = (await nativeCall('phone.models.list')).selected;
+    const loaded = native ? await nativeCall('phone.models.list') : null;
+    if (next !== sessionKey) return;
+    if (native) state.model = loaded.selected;
     else state.model = modelServices?.selectedView()||modelView(memoryModel);
-    await readServices();
+    await readServices(loaded);
     state.authEpoch++; state.loggedIn = true; state.owner = native ? (await nativeCall('app.bootstrap')).owner : next; state.username = info.email; state.deviceId = info.deviceId;
     state.connection = 'phone'; uiCore.phoneAccountConnection(true); state.transitionPending = false; state.chatSource = 'phone'; state.logicalChats = false;
     state.conversationId = engine.view().conversations.at(-1)?.id || null;
@@ -285,7 +287,8 @@
     presentation: async (action, p = {}) => {
       let sent=true;
       const authBusy=!!globalThis.WeftMobileCloud?.core?.cloudAuthView?.()?.busy;
-      if (!state.booted || !state.loggedIn || !engine || !account) return { ready: false, authBusy };
+      // The native shell can use its account vault before the covered webpage finishes booting.
+      if ((!state.booted && !(native && api.active)) || !state.loggedIn || state.transitionPending || !engine || !account) return { ready: false, authBusy };
       if (p.owner && p.owner !== sessionKey) throw Error('ACCOUNT_SWITCHED');
       uiCore.syncMobileIdentity();
       if (action === 'model') state.model = await nativeCall('phone.models.select', p);

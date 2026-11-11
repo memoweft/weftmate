@@ -80,7 +80,8 @@ import java.time.LocalDate
         LaunchedEffect(signedIn, account) { activity.goals.prepare() }
         LaunchedEffect(signedIn, account) { activity.health.prepare() }
         if (!signedIn) {
-            AndroidView(factory = { activity.webPage("login", false) }, onRelease = { activity.parkWeb() }, modifier = Modifier.fillMaxSize())
+            if (m.loading) NativeLoadingState("正在打开 WeftMate…", Modifier.fillMaxSize())
+            else AndroidView(factory = { activity.webPage("login", false) }, onRelease = { activity.parkWeb() }, modifier = Modifier.fillMaxSize())
             return@NativeTheme
         }
         CompositionLocalProvider(LocalNativeFrost provides if (route.frost) frost else null, LocalReadingSize provides m.textSize, LocalCodeSize provides m.codeSize) {
