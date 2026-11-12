@@ -23,12 +23,9 @@ async function readWorld(context, ownerId) {
   const account = context.accountState(ownerId);
   const privateIds=privateSessions(account), privateEvidence=new Set();
   if (privateIds.length) {
-    const jobs=await manager.query(ownerId,'query_jobs',{operation:'list'});
-    if (!Array.isArray(jobs.jobs) || jobs.world_revision!==revision) throw changed();
-    for (const {acceptance} of jobs.jobs) {
-      if (privateIds.includes(acceptance?.parent_session_id) || privateIds.includes(acceptance?.result_session_id))
-        for (const id of acceptance.evidence_ids ?? []) privateEvidence.add(id);
-    }
+    const sources=await Promise.all(privateIds.map(session_id=>manager.query(ownerId,'query_jobs',{operation:'list',session_id,projection:'evidence_ids'})));
+    if (sources.some(list=>!Array.isArray(list.evidence_ids) || list.world_revision!==revision)) throw changed();
+    for (const list of sources) for (const id of list.evidence_ids) privateEvidence.add(id);
   }
   const rows = new Map();
   const retired = new Set((account.activity?.memoryDigest?.changes ?? []).filter(x => x.operation === 'delete').flatMap(x => x.keys).filter(validKey));

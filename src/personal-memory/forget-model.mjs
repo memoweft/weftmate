@@ -212,18 +212,18 @@ export async function scopedForgetPlan(manager, owner, action, route) {
     kind: row.object_kind, text: row.value.content ?? row.value.canonical_name, graphSubject: graphSubject(row, entities),
     sourceTexts: [...new Set(candidateSources(row).flatMap(source => [source.evidence.raw_content, source.evidence.summary]).filter(Boolean))] }));
   const snapshot = await manager.query(owner, 'preview_recall', { query: request.topic, model_tier: route.modelTier });
-  const jobs = await manager.query(owner, 'query_jobs', { operation: 'list' });
+  const jobs = await manager.query(owner, 'query_jobs', { operation: 'list', projection: 'evidence_ids' });
   // A formed independent fact may keep a mixed source out of recent recall and
   // out of the selected correction chain. Inspect its current permitted source
   // too; this nominates a completion boundary, never extra deletion authority.
   const knownSources = candidates.flatMap(candidate => candidateSources(byKey.get(candidate.key)))
     .map(source => ({ id: source.evidence_id, text: source.evidence.raw_content ?? source.evidence.summary }));
   // A no_change job can retain a source without any World item or recent-recall nomination.
-  // Core's durable acceptance IDs survive removal of its failed interpretation.
-  const jobSources = (jobs.jobs ?? []).flatMap(job => (job.acceptance?.evidence_ids ?? []).map(id => ({ id })));
-  const jobSourceIds = new Set(jobSources.map(source => source.id));
-  const provisional = [...knownSources, ...jobSources, ...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? []),
-    ...(jobs.formation_requests ?? []).map(row => ({ id: row.evidence_id, text: row.text }))];
+  // Core's durable acceptance IDs survive removal of its failed interpretation;
+  // they include every unresolved formation request's source.
+  const jobSources = (jobs.evidence_ids ?? []).map(id => ({ id }));
+  const jobSourceIds = new Set(jobs.evidence_ids ?? []);
+  const provisional = [...knownSources, ...jobSources, ...(snapshot.preview?.recent_evidence ?? []), ...(snapshot.preview?.pending_corrections ?? [])];
   for (const item of provisional) {
     const id = item.id ?? item.evidence_id, key = `evidence:${id}`;
     if (byKey.has(key)) continue;
@@ -390,10 +390,10 @@ async function assessForgetCompletion(manager, owner, proposal, route) {
     // A source may still be pending or have ended no_change without a World
     // item. Its original can still be recalled, so World-only witnesses cannot
     // prove complete forgetting. These sources are witnesses, never new targets.
-    const jobs = await manager.query(owner, 'query_jobs', { operation: 'list' });
+    const jobs = await manager.query(owner, 'query_jobs', { operation: 'list', projection: 'evidence_ids' });
     if (!Number.isSafeInteger(jobs.world_revision)) return unknown();
     if (jobs.world_revision !== preview.world_revision) return changed(jobs.world_revision);
-    const jobSources = new Set((jobs.jobs ?? []).flatMap(job => job.acceptance?.evidence_ids ?? []));
+    const jobSources = new Set(jobs.evidence_ids ?? []);
     for (const id of jobSources) {
       if (sources.has(id)) continue;
       const result = await manager.query(owner, 'query_evidence', { operation: 'get', evidence_id: id });

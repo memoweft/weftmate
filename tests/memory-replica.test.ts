@@ -16,7 +16,7 @@ function fixture() {
   const receipts=new Map<string,any>();
   const account={sessions:{'private-session':{temporary:true}},activity:{memoryDigest:{changes:[] as any[]}}};
   const manager={enabled:true,async query(_owner:string,method:string,input:any) {
-    if(method==='query_jobs')return {world_revision:state.revision,jobs:[{acceptance:{parent_session_id:'private-session',evidence_ids:['e-private']}}]};
+    if(method==='query_jobs')return {world_revision:state.revision,evidence_ids:input.session_id==='private-session'&&input.projection==='evidence_ids'?['e-private']:[]};
     if(method==='preview_forget')return {world_revision:state.revision,forget_scope:state.plan,evidence_ids:['e-'+input.target_id],evidence_count:1,item_count:1,
       items:[{object_kind:'cognition',item_id:input.target_id,name:'synthetic '+input.target_id}]};
     if(input.operation==='revision')return {world_revision:state.revision};

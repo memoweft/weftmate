@@ -168,13 +168,14 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
     const page = items.slice(offset, offset + limit);
     if (url.searchParams.get('includeSources') === 'true') {
       let jobs;
-      try { jobs = await manager.query(ownerId,'query_jobs',{operation:'list'}); } catch { /* Older Core versions may lack the job ledger. */ }
+      const pageEvidenceIds = [...new Set(page.flatMap(item => (result.items.find(value => value.object_kind === item.kind && value.item_id === item.id)?.provenance ?? []).map(source => source.evidence_id)))];
+      try { jobs = await manager.query(ownerId,'query_jobs',{operation:'list',evidence_ids:pageEvidenceIds,projection:'evidence_sessions'}); } catch { /* Older Core versions may lack the job ledger. */ }
       if (jobs && jobs.world_revision !== result.world_revision) throw failure('MEMORY_REVISION_CHANGED',409);
       for (const item of page) {
         const raw = result.items.find(value => value.object_kind === item.kind && value.item_id === item.id);
         const evidence = new Set((raw?.provenance ?? []).filter(source => !['evidence_deleted','evidence_missing','evidence_subject_mismatch'].includes(source.currentness_state)).map(source => source.evidence_id));
         item.sourceEvidenceIds=[...evidence];
-        item.sourceConversationIds = [...new Set((jobs?.jobs ?? []).filter(job => job.acceptance?.evidence_ids?.some(id => evidence.has(id))).map(job => job.acceptance.parent_session_id).filter(id => typeof id === 'string' && /^[A-Za-z0-9_.:-]{1,160}$/.test(id)))];
+        item.sourceConversationIds = [...new Set((jobs?.evidence_sessions ?? []).filter(row => evidence.has(row.evidence_id)).map(row => row.parent_session_id).filter(id => typeof id === 'string' && /^[A-Za-z0-9_.:-]{1,160}$/.test(id)))];
       }
     }
     const hasMore = offset + page.length < items.length;
