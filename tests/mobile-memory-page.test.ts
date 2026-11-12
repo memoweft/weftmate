@@ -131,7 +131,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   sharedHistory?: (owner: string, sessionId: string) => object | Promise<object>;
   deferAnimationFrame?: boolean;
   hostTask?: object; hostActivities?: object[];
-  deferItemsFor?: string; deferMore?: boolean } = {}) {
+  deferItemsFor?: string; deferMore?: boolean; timerLimitMs?:number } = {}) {
   const nodes = new Map<string, FakeElement>()
   const hiddenIds = new Set([...html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*\bhidden\b[^>]*>/g)].map(match => match[1]))
   const get = (id: string) => { if (!nodes.has(id)) { const node = new FakeElement('div', id); node.hidden = hiddenIds.has(id); nodes.set(id, node) }; return nodes.get(id)! }
@@ -285,7 +285,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   }
   const window: any = { weftNative: bridge, innerHeight: 844, matchMedia: () => ({ matches: false, addEventListener() {} }),
     addEventListener() {}, WeftFormat: null }
-  const timers: any = { setTimeout: (fn: (...args: any[]) => unknown, delay: number) => { const timer: any = setTimeout(fn, Math.min(delay, 10)); timer.unref?.(); return timer },
+  const timers: any = { setTimeout: (fn: (...args: any[]) => unknown, delay: number) => { const timer: any = setTimeout(fn, Math.min(delay, options.timerLimitMs??10)); timer.unref?.(); return timer },
     clearTimeout, requestAnimationFrame: (fn: (time: number) => unknown) => {
       if (options.deferAnimationFrame) animationFrames.push(fn); else fn(0)
       return animationFrames.length || 1
@@ -295,13 +295,13 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
       removeItem: (key: string) => storage.delete(key),
     } }
   // Browser scripts read viewport metrics as bare globals as well as window properties.
-  const disconnect = runInNewContext(source+'\n;Object.assign(()=>{uiCore.stopConnection();uiCore.connectionNetwork(false)},{view:()=>({kind:uiCore.connectionView().kind,flow:state.memory.flow,error:state.memory.error})})', { document, window, addEventListener:window.addEventListener.bind(window),
+  const disconnect = runInNewContext(source+'\n;Object.assign(()=>{uiCore.stopConnection();uiCore.connectionNetwork(false)},{more:()=>uiCore.mobile.loadMemoryMore("memory"),items:()=>state.memory.items.map(x=>x.id),view:()=>({kind:uiCore.connectionView().kind,flow:state.memory.flow,error:state.memory.error})})', { document, window, addEventListener:window.addEventListener.bind(window),
     innerHeight: window.innerHeight, innerWidth: 390, localStorage: timers.localStorage, setTimeout: timers.setTimeout, setInterval:()=>1, clearInterval(){},
     clearTimeout: timers.clearTimeout, requestAnimationFrame: timers.requestAnimationFrame, URLSearchParams,
     console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, AbortSignal, TextEncoder,
     ResizeObserver:class { observe(){} unobserve(){} disconnect(){} } })
   readyListener?.({}); // Like deferred browser scripts, finish registering every component before DOMContentLoaded.
-  return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, root:document.documentElement, connection:disconnect.view, disconnect:()=>{offline=true;disconnect()}, setDeferredOwner: (owner: string) => { deferOwner = owner },
+  return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, more:disconnect.more, memoryIds:disconnect.items, root:document.documentElement, connection:disconnect.view, disconnect:()=>{offline=true;disconnect()}, setDeferredOwner: (owner: string) => { deferOwner = owner },
     flushAnimationFrames() { for (const frame of animationFrames.splice(0)) frame(0) },
     setDeferMore: () => { deferMore = true }, resolveDeferred(index: number, value: object) { deferred[index].resolve(value) },
     rejectDeferred(index: number, code: string) { deferred[index].reject(new Error(code)) },
@@ -444,6 +444,19 @@ test('a delayed A list failure after B is displayed cannot clear B data or show 
   assert.match(app.get('page-content').textContent, /B memory private to B/)
   assert.doesNotMatch(app.get('page-content').textContent, /这类记忆太多/)
 })
+
+test('one awaited pagination action exposes the next snapshot and ignores a duplicate in-flight action', async () => {
+  const item=(id:string)=>({id,kind:'cognition',text:id,currentState:'current',lifecycle:{},sourceCount:0});
+  const app=harness({deferMore:true,timerLimitMs:500,items:owner=>({ownerId:appOwner(owner),worldRevision:10,searchScope:'account_snapshot',items:[item('first')],nextCursor:'page-two',hasMore:true})});
+  await openMemory(app);
+  await waitUntil(()=>app.memoryIds().includes('first'),'first page was not displayed');
+  let settled=false;const pending=app.more();assert.equal(typeof pending?.then,'function');pending.then(()=>{settled=true;});
+  await waitUntil(()=>app.deferred.length===1,'second page was not requested');
+  assert.equal(app.more(),undefined);await flush();assert.equal(settled,false);
+  assert.equal(app.businessPaths.filter(x=>x.path.includes('after=')).length,1);
+  app.resolveDeferred(0,{ownerId:appOwner('A'),worldRevision:10,searchScope:'account_snapshot',items:[item('first'),item('second')],nextCursor:null,hasMore:false});
+  await pending;assert.equal(settled,true);assert.deepEqual(Array.from(app.memoryIds()),['first','second']);
+});
 
 test('first list page establishes its revision, while a changed later page clears the old snapshot', async () => {
   let itemCalls = 0

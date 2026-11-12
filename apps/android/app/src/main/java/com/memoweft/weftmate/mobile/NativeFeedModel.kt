@@ -95,8 +95,8 @@ internal class NativeFeedModel(private val chat:NativeChatModel,private val acti
         mark(row)
     }
     fun showDetail(row:JSONObject){detail=row;mark(row)}
-    fun openMemoryReview(row:JSONObject){webDetail=JSONObject().put("row",row).put("action",JSONObject().put("kind","native_memory_review"));detail=null;chat.tab="activity-web"}
-    fun openOriginalRow(row:JSONObject){webDetail=JSONObject().put("row",row).put("action",JSONObject().put("kind","native_activity_item"));detail=null;chat.tab="activity-web"}
+    fun openMemoryReview(row:JSONObject){mark(row);activity.pages.open("memory",from="activity")}
+    fun openOriginalRow(row:JSONObject){showDetail(row)}
     fun clearRowFocus(){focusRowId=""}
     fun openMemoryItem(row:JSONObject,value:JSONObject,mode:String?=null) {
         action(row,JSONObject().put("kind","memory_item").put("target",JSONObject().put("kind",value.getString("kind")).put("id",value.getString("id"))),mode)
@@ -144,7 +144,11 @@ internal class NativeFeedModel(private val chat:NativeChatModel,private val acti
                     if(receipt==null||receipt.optString("status")=="pending")throw ApiFailure(409,"APPROVAL_UNAVAILABLE")
                 }
             } else if(kind in listOf("view_memory","memory_item","view_settings","view_library")) {
-                webDetail=JSONObject().put("row",row).put("action",action).apply{outcome?.let{put("outcome",it)}};chat.tab="activity-web"
+                when(kind) {
+                    "view_memory","memory_item" -> activity.pages.open(if(kind=="memory_item")"memoryItem" else "memory",target,from="activity")
+                    "view_settings" -> {val destination=target.optString("page");if(destination in listOf("general","models","account","devices","appearance","about"))activity.settings.open(destination) else activity.pages.open(destination.ifBlank{"system"},from="activity")}
+                    "view_library" -> chat.tab="library"
+                }
             } else return@launch
             if(g==epoch){detail=null;markNow(row,g,kind=="respond_approval"&&outcome!=null)}
         }finally{if(g==epoch)busy=false}

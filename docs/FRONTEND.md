@@ -13,12 +13,12 @@
 |---|---|---|---|
 | 产品规格 | 页面清单（第三节）、交互规则（PRODUCT-RULES「界面」）、文案 | 本页 + PRODUCT-RULES | 只写在某一端的代码里 |
 | 令牌与图标 | 颜色、字体、字号、行高、间距、圆角、阴影、动效；应用与功能图标 | `design/tokens/tokens.json`、`design/icons/`，用 `npm run tokens:generate` / `npm run icons:generate` 生成各端产物 | 手改生成文件；页面里写死色值、尺寸、时长、自画图标 |
-| 共享逻辑 | 状态、请求、动作、恢复、请求身份核对 | 网页 `src/ui-core/`（手机网页副本由 `apps/mobile-ui` 的 `npm run build` 生成）；安卓 `*Model.kt` / `*State.kt`；苹果 `apps/apple/Packages/WeftMateCore` 与 `apps/apple/UI/*Model.swift` | 呈现层自己发请求、存数据、另存一份业务状态 |
+| 共享逻辑 | 状态、请求、动作、恢复、请求身份核对 | 网页 / 安卓 `src/ui-core/`（手机网页副本由 `apps/mobile-ui` 的 `npm run build` 生成）；安卓经 `NativeCore` 调用，原生状态在 `*Model.kt` / `*State.kt`；苹果 `apps/apple/Packages/WeftMateCore` 与 `apps/apple/UI/*Model.swift` | 呈现层自己发请求、存数据、另存一份业务状态 |
 | 各端呈现 | 布局、控件、动效、平台手感 | Windows / 远程网页 `src/personal-access-ui/`；手机网页 `apps/mobile-ui/www/`；安卓 `apps/android/app/.../mobile/Native*.kt`；iPhone `apps/apple/UI/` + `iOS/`（Mac `macOS/`，手表 `watchOS/`） | 改业务语义；自创另一套页面结构 |
 
 功能先落共享逻辑和接口，再画各端。某端还没画的，给一个明确去处（例如「在电脑上打开」或原网页入口），不放半成品。
 
-安卓的页面全部原生画，共享逻辑不在 Kotlin 里重写：原生页面经 `NativeCore` 在内嵌的、看不见的 JS 引擎里调用 `src/ui-core`（本人 2026-10-31）。共享核心缺函数就补在 `src/ui-core`，再生成手机网页副本。
+安卓应用自己的正常页与二级详情全部原生绘制，包括登录、配对、设置、账户和功能详情。共享逻辑不在 Kotlin 里重写：原生页面经 `NativeCore` 在内嵌的、看不见的 JavaScript（脚本）引擎里调用 `src/ui-core`（本人 2026-10-31）。`src/ui-core/native-presentation/` 提供页面数据与命名动作，`NativePageModel.kt` 管导航、草稿和呈现状态，`NativePage.kt` 画公共详情与表单。共享核心缺函数就补在 `src/ui-core`，再生成手机网页副本。外部网页和文档内容预览沿用平台浏览、预览能力。
 
 ## 二、各端视觉语言
 
@@ -29,9 +29,11 @@
 | 端 | 照什么 | 控件从哪来 | 材质 |
 |---|---|---|---|
 | Windows 桌面 + 远程网页 | D124：Claude / Codex 桌面版的紧凑，MiMo 桌面版的布局和右侧六面板 | `src/ui-core/controls.js` 公共控件（按钮、表单、分组、列表行、菜单、对话框、侧滑面板、骨架），用法见 `design/tokens/README.md` 末节 | 实底，浮层用 `--shadow-float` |
-| 安卓 | 整体同所有端；**对话界面和流式输出参考 [zafiro](https://github.com/niki914/zafiro) 的聊天页**（见下） | `NativeShell.kt` 里的 `Native*` 公共控件；对话的回合、步骤和流式组件参考 zafiro 的 `app/ui/chat/` | 玻璃 / 模糊只给固定栏和浮层，随列表滚动的卡片不模糊；Android 12 以下用实色 |
+| 安卓 | 整体同所有端；**对话界面和流式输出参考 [zafiro](https://github.com/niki914/zafiro) 的聊天页**（见下） | `NativeControls.kt`、`NativeFeedControls.kt`、`NativeSettingsPage.kt` 的 `Native*` 与设置公共控件；对话的回合、步骤和流式组件参考 zafiro 的 `app/ui/chat/` | 设置、系统状态及同类信息页分组不铺背景卡片；玻璃 / 模糊只给固定栏和浮层，Android 12 以下用实色 |
 | iPhone | `design/ios/` 本人已认可的原型和 `design/tokens/ios-prototype.json` | SwiftUI 系统控件 + `PhoneActionMenu`、`.phonePopover`、`.phoneSheet` | 系统材质与系统动画 |
 | Mac / 手表 | Mac 用桌面的信息结构、SwiftUI 控件；手表只做短交互（冻结中） | 同 iPhone 共用的 `apps/apple/UI/` | 系统材质 |
+
+安卓设置、系统状态和同类信息页用标题、间距和分隔线分组，标题与内容共用左边线；正文与说明分层，开关的说明放在下一行，错误与重试排在页面标题之后。公共按钮和输入框沿用小圆角令牌，不用大胶囊；公共操作触控范围从 48dp 起，文字随系统字号缩放，保留减少动态效果偏好。搜索、输入框、选择状态和浮层仍使用各自的功能性底色，不作为列表分组背景。
 
 **安卓对话界面参考 zafiro 的这几样**，配色、图标和其余页面照所有端统一的来：
 
@@ -74,7 +76,7 @@ zafiro 是 MIT 许可：复制过来的文件保留原版权头，`apps/android`
 
 1. **范围**：写清动哪几端。默认顺序 Windows → 安卓 → iPhone（D118）；只做一端的，写明其他端的去处。
 2. **先逻辑后界面**：新状态、请求和动作进共享逻辑层；手机网页副本用 `apps/mobile-ui` 的 `npm run build` 生成，不手抄。
-3. **只用令牌和图标**：缺值先改 `tokens.json` 再生成；缺图标按 `design/icons/README.md` 画（24 网格、线宽 1.75、只用 `currentColor`）再生成。新控件进各端的公共控件层（网页 `ui-core/controls.js`、安卓 `NativeShell.kt` 的 `Native*` 控件、苹果 `apps/apple/UI/`）。
+3. **只用令牌和图标**：缺值先改 `tokens.json` 再生成；缺图标按 `design/icons/README.md` 画（24 网格、线宽 1.75、只用 `currentColor`）再生成。新控件进各端的公共控件层（网页 `ui-core/controls.js`、安卓 `NativeControls.kt` / `NativeFeedControls.kt` / `NativeSettingsPage.kt`、苹果 `apps/apple/UI/`）。
 4. **每页五种状态**：正常、空、加载（骨架）、出错（人话加重试）、离线（电脑不在线或没网，D13）。外加浅色、深色、减少动态效果，窄屏和宽屏。
 5. **文案**：人话，不露内部编号和错误码。
 6. **证据**（`wfm prove`）：每个动到的端，真实程序的浅色和深色截图，加一条真实操作路径（点了什么、看到什么）。

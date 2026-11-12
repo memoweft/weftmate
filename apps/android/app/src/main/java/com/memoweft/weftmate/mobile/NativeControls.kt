@@ -81,17 +81,19 @@ internal val LocalCodeSize=staticCompositionLocalOf { DesignTokens.font13 }
 
 internal val nativeGap = DesignTokens.space8.dp
 internal val nativePad = DesignTokens.space16.dp
-internal val nativeTouch = DesignTokens.space44.dp
-internal val nativePill = RoundedCornerShape(DesignTokens.radius26.dp)
-internal val nativeCard = RoundedCornerShape(DesignTokens.radius16.dp)
-internal val nativeBubble = RoundedCornerShape(DesignTokens.radius26.dp)
+internal val nativeTouch = DesignTokens.space48.dp
+internal val nativeFieldShape = RoundedCornerShape(DesignTokens.radius8.dp)
+internal val nativePill = nativeFieldShape
+internal val nativeCard = nativeFieldShape
+internal val nativeBubble = RoundedCornerShape(DesignTokens.radius16.dp)
 
-@Composable internal fun NativeTheme(dark: Boolean, content: @Composable () -> Unit) {
-    val accent=Color(if(dark)DesignTokens.nativeDarkAccent else DesignTokens.nativeAccent)
+@Composable internal fun NativeTheme(dark: Boolean, palette:JSONObject=JSONObject(), content: @Composable () -> Unit) {
+    fun paletteColor(key:String,fallback:Int):Color {val value=palette.optString(key);return if(Regex("#[0-9a-fA-F]{6}").matches(value))Color(android.graphics.Color.parseColor(value)) else Color(fallback)}
+    val accent=paletteColor("accent",if(dark)DesignTokens.nativeDarkAccent else DesignTokens.nativeAccent)
     val surface=Color(if(dark)DesignTokens.nativeDarkSurface else DesignTokens.nativeSurface)
     val ink=Color(if(dark)DesignTokens.nativeDarkInk else DesignTokens.nativeInk)
     val soft=Color(if(dark)DesignTokens.nativeDarkSoft else DesignTokens.nativeSoft)
-    val accentSoft=Color(if(dark)DesignTokens.nativeDarkAccentSoft else DesignTokens.nativeAccentSoft)
+    val accentSoft=paletteColor("soft",if(dark)DesignTokens.nativeDarkAccentSoft else DesignTokens.nativeAccentSoft)
     val secondary=Color(if(dark)DesignTokens.nativeDarkSecondary else DesignTokens.nativeSecondary)
     val line=Color(if(dark)DesignTokens.nativeDarkLine else DesignTokens.nativeLine)
     val danger=Color(if(dark)DesignTokens.nativeDarkDanger else DesignTokens.nativeDanger)
@@ -139,10 +141,10 @@ internal val nativeBubble = RoundedCornerShape(DesignTokens.radius26.dp)
 
 @Composable internal fun nativeRadioColors()=RadioButtonDefaults.colors(selectedColor=MaterialTheme.colorScheme.primary,unselectedColor=Color(if(LocalNativeDark.current)DesignTokens.nativeDarkMuted else DesignTokens.nativeMuted))
 @Composable internal fun NativePrimary(onClick:()->Unit,modifier:Modifier=Modifier,enabled:Boolean=true,shape:androidx.compose.ui.graphics.Shape=nativePill,content:@Composable RowScope.()->Unit) {
-    Button(onClick,modifier.height(nativeTouch).alpha(if(enabled)1f else .45f),enabled=enabled,shape=shape,colors=ButtonDefaults.buttonColors(disabledContainerColor=MaterialTheme.colorScheme.primary,disabledContentColor=MaterialTheme.colorScheme.onPrimary),contentPadding=PaddingValues(horizontal=DesignTokens.space18.dp),content=content)
+    Button(onClick,modifier.heightIn(min=nativeTouch).alpha(if(enabled)1f else .45f),enabled=enabled,shape=shape,colors=ButtonDefaults.buttonColors(disabledContainerColor=MaterialTheme.colorScheme.primary,disabledContentColor=MaterialTheme.colorScheme.onPrimary),contentPadding=PaddingValues(horizontal=DesignTokens.space18.dp),content=content)
 }
 @Composable internal fun NativeSecondary(onClick:()->Unit,modifier:Modifier=Modifier,enabled:Boolean=true,shape:androidx.compose.ui.graphics.Shape=nativePill,content:@Composable RowScope.()->Unit) {
-    OutlinedButton(onClick,modifier.height(nativeTouch).alpha(if(enabled)1f else .45f),enabled=enabled,shape=shape,colors=ButtonDefaults.outlinedButtonColors(containerColor=MaterialTheme.colorScheme.surface,contentColor=MaterialTheme.colorScheme.onSurfaceVariant,disabledContainerColor=MaterialTheme.colorScheme.surface,disabledContentColor=MaterialTheme.colorScheme.onSurfaceVariant),contentPadding=PaddingValues(horizontal=DesignTokens.space18.dp),content=content)
+    OutlinedButton(onClick,modifier.heightIn(min=nativeTouch).alpha(if(enabled)1f else .45f),enabled=enabled,shape=shape,colors=ButtonDefaults.outlinedButtonColors(containerColor=MaterialTheme.colorScheme.surface,contentColor=MaterialTheme.colorScheme.onSurfaceVariant,disabledContainerColor=MaterialTheme.colorScheme.surface,disabledContentColor=MaterialTheme.colorScheme.onSurfaceVariant),contentPadding=PaddingValues(horizontal=DesignTokens.space18.dp),content=content)
 }
 @Composable internal fun NativeMenu(expanded:Boolean,onDismissRequest:()->Unit,keepEditorFocus:Boolean=false,content:@Composable ColumnScope.()->Unit) {
     DropdownMenu(expanded,onDismissRequest,properties=PopupProperties(focusable=!keepEditorFocus),modifier=Modifier.nativeFrost(RoundedCornerShape(DesignTokens.radius12.dp),floating=true),containerColor=Color.Transparent,tonalElevation=0.dp,shape=RoundedCornerShape(DesignTokens.radius12.dp),content=content)

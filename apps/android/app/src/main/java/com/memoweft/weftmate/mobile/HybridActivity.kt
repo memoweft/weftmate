@@ -391,7 +391,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 intent.getStringExtra("openOriginalTextFile")?.let { value ->
                     nativeFileLoad(JSONObject(value)) { result ->
                         result.onSuccess { file ->
-                            if(nativeFileCurrent(file) && useOriginalFileViewer(file.kind) && file.file!=null) {
+                            if(nativeFileCurrent(file) && file.kind in setOf(NativeFileKind.MARKDOWN,NativeFileKind.CODE) && file.file!=null) {
                                 val data=JSONObject().put("kind",if(file.kind==NativeFileKind.MARKDOWN)"markdown" else "code")
                                     .put("text",file.file.readText(Charsets.UTF_8)).put("contentType",file.mime)
                                 val name=JSONObject.quote(file.name)
@@ -1942,7 +1942,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                     .put("width",image.width).put("height",image.height).put("pageCount",count)
             }finally{image.recycle()}
         }
-        "native.library.close" -> { webPdfFile=null;runOnUiThread { if(this is NativeActivity)closeOriginalLibrary() else if(intent.getBooleanExtra("openLibraryPage",false))finish() };JSONObject() }
+        "native.library.close" -> { webPdfFile=null;runOnUiThread { if(this is NativeActivity)model.tab="library" else if(intent.getBooleanExtra("openLibraryPage",false))finish() };JSONObject() }
         "host.status" -> { val host = requireHost(); if (host.phoneOnly) throw ApiFailure(503, "HOST_UNAVAILABLE"); api.status(host) }
         "host.business" -> {
             if (params.getString("path").substringBefore('?').endsWith("/resources"))

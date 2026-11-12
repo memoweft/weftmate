@@ -3,7 +3,11 @@ globalThis.WeftUiCore.factories.usage = (core, effects) => {
     let generation = 0, lastBudgetRead = 0, warned = '';
     const current = token => { const now = core.accountToken(); return ['generation', 'ownerId', 'deviceId', 'csrf'].every(key => now[key] === token[key]); };
     const money = globalThis.WeftHumanFormat.formatMoney;
-    const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timeZone = () => {
+        const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        // Android can report its UTC default as an offset; the shared API accepts named zones.
+        return /^[+-]00:00$/.test(zone) ? 'UTC' : zone;
+    };
     async function loadUsageStrip() {
         core.syncMobileIdentity?.();
         const token = core.accountToken();

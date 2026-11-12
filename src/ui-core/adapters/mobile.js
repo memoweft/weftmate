@@ -491,7 +491,7 @@ async function loadMemoryItems(target,token,after,append){if(!memoryCurrent(toke
   }catch(error){if(!memoryCurrent(token))return;memoryFail(token,error,target)}}
 
 function loadMemoryMore(target){const memory=state.memory;if(!memory.hasMore||!memory.nextCursor||memory.loading||!memoryListAllowed(memory))return;
-  memory.flow++;const token=memoryToken();void loadMemoryItems(target,token,memory.nextCursor,true)}
+  memory.flow++;const token=memoryToken();return loadMemoryItems(target,token,memory.nextCursor,true)}
 
 function memoryPathIdSupported(id){return typeof id==='string'&&id!=='.'&&id!=='..'&&/^[A-Za-z0-9._:-]{1,512}$/.test(id)}
 

@@ -25,12 +25,12 @@ import java.time.LocalDate
 
 private val goalFilters=listOf("all" to "全部","tasks" to "进行中","schedules" to "定时","goals" to "长期")
 private val goalShape=RoundedCornerShape(DesignTokens.radius12.dp)
-private val goalPill=RoundedCornerShape(DesignTokens.radius999.dp)
+private val goalPill=RoundedCornerShape(DesignTokens.radius8.dp)
 private val gap=DesignTokens.space8.dp
 @Composable internal fun GoalsFilter(value:String,choose:(String)->Unit) { NativeFilterRow("筛选目标",goalFilters,value,choose=choose) }
 @Composable internal fun NativeGoalsToolbar(model:NativeGoalsModel,onDrawer:()->Unit,onSettings:()->Unit) {
     val sub=model.detail!=null||model.draft!=null||model.webPayload!=null
-    Row(Modifier.fillMaxWidth().height(DesignTokens.space80.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically){
+    Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space56.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically){
         FeedControlIconButton(if(sub)R.drawable.wm_back else R.drawable.wm_panel,if(sub)"返回目标" else "打开侧栏",floating=true){if(model.webPayload!=null)model.closeWeb() else if(sub)model.closeDetail() else onDrawer()}
         Text(if(model.webPayload!=null)"目标" else model.draft?.let{if(it.kind=="schedule")if(it.original==null)"新建定时任务" else "编辑定时任务" else "新建长期目标"} ?: if(model.detail!=null)if(model.showRecords)"执行记录" else "目标详情" else "目标",Modifier.weight(1f),textAlign=androidx.compose.ui.text.style.TextAlign.Center,fontSize=DesignTokens.font18.sp,fontWeight=FontWeight.SemiBold)
         if(sub)Spacer(Modifier.size(DesignTokens.space44.dp)) else FeedControlIconButton(R.drawable.wm_user,"打开个人设置",floating=true,action=onSettings)
@@ -85,7 +85,7 @@ private val gap=DesignTokens.space8.dp
 @Composable private fun GoalRow(model:NativeGoalsModel,kind:String,row:JSONObject,confirm:(String)->Unit) {
     val title=row.stringOrEmpty(if(kind=="schedule")"text" else "title");var menu by remember(goalRowKey(row)){mutableStateOf(false)}
     val host=model.computers.firstOrNull{it.stringOrEmpty("hostId")==row.stringOrEmpty("hostId")};val enabled=!model.busy&&host?.optBoolean("online",true)!=false&&!row.optBoolean("computerOffline")
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(DesignTokens.radius26.dp)).background(MaterialTheme.colorScheme.surfaceVariant).clickable{model.open(kind,row)}.padding(DesignTokens.space12.dp),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)){
+    Row(Modifier.fillMaxWidth().clickable{model.open(kind,row)}.padding(vertical=DesignTokens.space12.dp),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)){
         Column(Modifier.weight(1f).padding(vertical=DesignTokens.space8.dp).semantics{contentDescription="打开目标 $title"},verticalArrangement=Arrangement.spacedBy(DesignTokens.space6.dp)){
             Text(title,fontSize=DesignTokens.font15.sp,fontWeight=FontWeight.SemiBold,lineHeight=DesignTokens.font24.sp,maxLines=3,overflow=TextOverflow.Ellipsis)
             if(kind=="schedule"){GoalCaption(listOf(goalFrequency(row),goalState(row),row.stringOrEmpty("nextRunAt").takeIf{it.isNotEmpty()&&row.stringOrEmpty("state")=="scheduled"}?.let{"下次 ${goalTime(it,row.stringOrEmpty("timeZone"))}"}).filterNotNull().joinToString(" · "));GoalCaption(goalResult(row))}

@@ -25,12 +25,11 @@ class NativeActivity : HybridActivity() {
     internal val core by lazy { NativeCore(this) }
     internal lateinit var settings: NativeSettingsModel
     internal lateinit var health: NativeHealthModel
-    internal var embeddedFeedLoaded: (() -> Unit)? = null
+    internal lateinit var pages: NativePageModel
+    internal var nativeFile by mutableStateOf<JSONObject?>(null)
+    private val qrPicker by lazy { NativeQrPicker(this) }
     internal var embeddedWebIdentity by mutableStateOf<WebView?>(null)
         private set
-    internal var displayedFeedWeb: WebView? = null
-    private var webRoute: String? = null
-    private var webEmbedded=false
     private var timelineMapperInstalled=false
     internal suspend fun timelinePresentation(events: List<JSONObject>, approvals: List<JSONObject>, questions: List<JSONObject>): List<JSONObject> {
         // A shell upgrade may reopen the previous downloaded UI bundle. Load
@@ -61,7 +60,7 @@ class NativeActivity : HybridActivity() {
         embeddedWeb.evaluateJavascript("""
           (()=>{window.weftPhoneResults??={};const result=window.weftPhoneResults;result[$key]=null;
           Promise.resolve(globalThis.WeftPhone?.presentation(${JSONObject.quote(action)},$params) || {ready:false})
-            .then(value=>{Object.assign(value,{fontSize:typeof mobileAppearanceStore==='undefined'?${DesignTokens.font15}:mobileAppearanceStore.value.fontSize,codeFontSize:typeof mobileAppearanceStore==='undefined'?${DesignTokens.font13}:mobileAppearanceStore.value.codeFontSize,reducedMotion:globalThis.WeftReplyMotion?.reduced===true});if(Object.hasOwn(result,$key))result[$key]={value}}).catch(()=>{if(Object.hasOwn(result,$key))result[$key]={error:true}});})()
+            .then(value=>{const style=getComputedStyle(document.documentElement),custom=document.documentElement.dataset.accent!=='neutral';Object.assign(value,{palette:custom?{accent:style.getPropertyValue('--accent').trim(),soft:style.getPropertyValue('--accent-soft').trim()}:{},fontSize:typeof mobileAppearanceStore==='undefined'?${DesignTokens.font15}:mobileAppearanceStore.value.fontSize,codeFontSize:typeof mobileAppearanceStore==='undefined'?${DesignTokens.font13}:mobileAppearanceStore.value.codeFontSize,reducedMotion:globalThis.WeftReplyMotion?.reduced===true});if(Object.hasOwn(result,$key))result[$key]={value}}).catch(()=>{if(Object.hasOwn(result,$key))result[$key]={error:true}});})()
         """.trimIndent(), null)
         try { return withTimeout(15000) {
             while (true) {
@@ -94,7 +93,10 @@ class NativeActivity : HybridActivity() {
         goals = NativeGoalsModel(model, this)
         settings = NativeSettingsModel(model, this)
         health = NativeHealthModel(model)
-        nativeObserver = { type, data -> model.event(type, data); feed.event(type, data); goals.event(type, data); health.event(type) }
+        pages = NativePageModel(this,model)
+        nativeObserver = { type, data -> model.event(type, data); feed.event(type, data); goals.event(type, data); health.event(type)
+            if(type=="profile.photo") {settings.refresh();if(pages.page=="profile")pages.refresh()}
+        }
         // Compose owns system/IME insets; the embedded page receives a zero local safe area.
         presentationContainer.setPadding(0, 0, 0, 0)
         ViewCompat.setOnApplyWindowInsetsListener(presentationContainer) { _, insets -> insets }
@@ -105,27 +107,13 @@ class NativeActivity : HybridActivity() {
         }, ViewGroup.LayoutParams(-1, -1))
         model.start()
     }
-    internal fun webPage(name: String, embedded: Boolean = true): WebView {
-        webRoute=name;webEmbedded=embedded
-        coveredHostHistory = name != "chat" && name != "home"
-        val web = embeddedWeb
-        (web.parent as? ViewGroup)?.removeView(web)
-        web.visibility = android.view.View.VISIBLE
-        web.evaluateJavascript("window.weftNativeChatActive=false;if(typeof uiCore!=='undefined')uiCore.connectionVisibility(document.visibilityState==='hidden')", null)
-        applyWebFrame()
-        return web
-    }
     override fun embeddedPageFinished() {
         timelineMapperInstalled = false
         embeddedWebIdentity = embeddedWeb
-        applyWebFrame()
-        if (::model.isInitialized && (webRoute == null || model.loggedIn && model.tab == "chat")) parkWeb()
-        embeddedFeedLoaded?.invoke()
+        parkWeb()
     }
     internal fun parkWeb() {
-        if (!::model.isInitialized || model.tab !in listOf("chat", "activity", "goals", "health", "settings", "models", "library")) return
         coveredHostHistory = true
-        webRoute = null
         val web = embeddedWeb
         (web.parent as? ViewGroup)?.removeView(web)
         // Keep the shared phone engine attached, but stop painting the covered web UI.
@@ -134,44 +122,32 @@ class NativeActivity : HybridActivity() {
         web.evaluateJavascript("window.weftNativeRoute=null;window.weftNativeChatActive=true;if(typeof stopSharedPoll==='function')stopSharedPoll();if(typeof uiCore!=='undefined')uiCore.connectionVisibility(true)", null)
         presentationContainer.addView(web, 0, ViewGroup.LayoutParams(-1, -1))
     }
-    private fun applyWebFrame() {
-        val web=embeddedWeb
-        val name=webRoute ?: return
-        val embedded=webEmbedded
-        val entry = JSONObject().put("name", name).put("embedded", embedded)
-            .put("phone", ::model.isInitialized && model.phone)
-            .put("kind", if (::model.isInitialized && !model.phone) model.chatKind else "")
-            .put("phoneId", if (::model.isInitialized && model.phone) model.chatId.takeUnless { it == "phone-new" } ?: JSONObject.NULL else JSONObject.NULL)
-            .put("sessionId", if (::model.isInitialized && !model.phone) model.sessionId else "")
-            .put("chatId", if (::model.isInitialized && !model.phone) model.chatId else "")
-        val route = assets.open("native-chat-route.js").bufferedReader().use { it.readText() }
-        web.evaluateJavascript("$route\nvoid WeftNativeChatRoute($entry);", null)
-    }
     internal fun showLogin() { if (::model.isInitialized) model.loggedIn = false }
     internal fun hideKeyboard() { (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(presentationContainer.windowToken, 0) }
-    internal fun fallback() {
-        getSharedPreferences("native-ui", MODE_PRIVATE).edit().putBoolean("enabled", false).commit()
-        startActivity(Intent(this, HybridActivity::class.java)); finish()
+    internal suspend fun scanPairing() = qrPicker.pick()
+    @Suppress("DEPRECATION") override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
+        super.onActivityResult(requestCode,resultCode,data)
+        qrPicker.result(requestCode,resultCode,data)
     }
-    private var originalLibraryFileId=""
-    internal fun originalLibrary(fileId:String?=null) {
-        originalLibraryFileId=fileId.orEmpty()
-        model.tab="library-web"
-    }
-    internal fun originalLibraryPage():WebView {
-        val web=webPage("library")
-        web.evaluateJavascript("""openNativeLibraryFile(${JSONObject.quote(originalLibraryFileId)}).catch(()=>toast('文件暂时没能打开，请在成果库重新点开。',true))""",null)
-        return web
-    }
-    internal fun closeOriginalLibrary() {
-        embeddedWeb.evaluateJavascript("window.weftNativeLibraryEntry=false;closeResourcePage({restoreFocus:false})",null)
-        model.tab="library"
-    }
-    internal fun originalFile(row:JSONObject) {
-        if(row.optString("libraryId").isNotBlank())originalLibrary(row.getString("libraryId"))
-        else startActivity(Intent(this,HybridActivity::class.java)
-            .putExtra("openOriginalTextFile",row.toString())
-            .putExtra("lg1bHostOrigin",intent.getStringExtra("lg1bHostOrigin")))
+    internal fun openNativeFile(file:JSONObject) { nativeFile=file }
+    internal suspend fun openNativeSource(source:JSONObject) {
+        if(source.stringOrEmpty("phoneId").isNotBlank()) {
+            model.refreshChats()
+            model.chats.find{it.optString("chatId",it.optString("id"))==source.getString("phoneId")}?.let{model.select(it)} ?: throw IllegalStateException("原话对话暂时找不到，请在全部对话中查看。")
+            model.tab="chat";return
+        }
+        val host=source.stringOrEmpty("hostId")
+        if(host.isNotBlank()) {
+            core.call("await uiCore.selectExecutionComputer(${JSONObject.quote(host)});return {};")
+            model.bootstrap()
+        }
+        var id=source.stringOrEmpty("chatId")
+        if(id.isBlank()&&source.stringOrEmpty("sessionId").isNotBlank())id=model.business("/sessions/${source.getString("sessionId")}/chat").stringOrEmpty("chatId")
+        if(id.isBlank()) {model.returnToChat();return}
+        val row=model.business("/chats/$id").getJSONObject("chat")
+        model.select(row)
+        if(source.has("seq")||source.stringOrEmpty("eventId").isNotBlank())model.locateActivityTarget(source)
+        model.tab="chat"
     }
     override fun onResume() { super.onResume(); nativeForeground = true }
     override fun onPause() { nativeForeground = false; if (::model.isInitialized) model.saveDraft(); super.onPause() }
@@ -186,18 +162,15 @@ class NativeActivity : HybridActivity() {
             feedDetail = { feed.detail != null },
         )
         when (nativeBack(model.tab, state)) {
-            BackAction.CloseLibraryWeb -> closeOriginalLibrary()
+            BackAction.Page -> pages.back()
             BackAction.Settings -> settings.back()
-            BackAction.CloseHealthWeb -> health.closeWeb()
             BackAction.CloseHealthCalendar -> health.calendarOpen = false
             BackAction.HealthHome -> health.home()
-            BackAction.CloseGoalsWeb -> goals.closeWeb()
             BackAction.CloseGoalsDetail -> goals.closeDetail()
-            BackAction.CloseFeedWeb -> feed.closeWeb()
             BackAction.CloseFeedDetail -> feed.closeDetail()
             BackAction.ToChat -> model.returnToChat()
             BackAction.Leave -> moveTaskToBack(true)
         }
     }
-    override fun onDestroy() { if (::settings.isInitialized) settings.close(); if (::health.isInitialized) health.close(); if (::goals.isInitialized) goals.close(); if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
+    override fun onDestroy() { if (::pages.isInitialized) pages.reset(); if (::settings.isInitialized) settings.close(); if (::health.isInitialized) health.close(); if (::goals.isInitialized) goals.close(); if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
 }
