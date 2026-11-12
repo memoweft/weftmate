@@ -11,7 +11,7 @@ const {PNG}=createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
 import {readMuMuInfo,adbExecutable} from '../../scripts/nightly/mumu.mjs';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export async function captureHealth6Phone(fixture,out,report){
-  const cloud=!!process.env.WEFTMATE_HEALTH3_ANDROID_SERIAL,lock=cloud?resolve('.local/health6-phone.lock'):'D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg=process.env.WEFTMATE_HEALTH3_ANDROID_PACKAGE??'com.memoweft.weftmate.mobile.health6qa',activity=process.env.WEFTMATE_HEALTH3_ANDROID_ACTIVITY??'com.memoweft.weftmate.mobile.St2PhoneBrowserActivity',adb=process.env.WEFTMATE_HEALTH3_ADB??adbExecutable;
+  const cloud=!!process.env.WEFTMATE_HEALTH3_ANDROID_SERIAL,lock=cloud?resolve('.local/health6-phone.lock'):'Y:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg=process.env.WEFTMATE_HEALTH3_ANDROID_PACKAGE??'com.memoweft.weftmate.mobile.health6qa',activity=process.env.WEFTMATE_HEALTH3_ANDROID_ACTIVITY??'com.memoweft.weftmate.mobile.St2PhoneBrowserActivity',adb=process.env.WEFTMATE_HEALTH3_ADB??adbExecutable;
   if(cloud)await mkdir('.local',{recursive:true});
   const lease=await open(lock,'wx');await lease.writeFile(`HEALTH-6 ${new Date().toISOString()} synthetic remote webpage`);await lease.close();
   let serial,proxy,browser,forward,port,installed=false,size,density,night;

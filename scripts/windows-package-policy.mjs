@@ -45,7 +45,7 @@ export function forbiddenArchiveEntry(entry) {
 
 export function containsDevelopmentPath(text) {
   const value = normalizePackagedText(text)
-  return /D:[\\/]AIProjects[\\/](?:WeftMate[\\/]Repository|Shared[\\/]Dependencies)/i.test(value)
+  return /[A-Za-z]:[\\/]AIProjects[\\/](?:WeftMate[\\/]Repository|Shared[\\/]Dependencies)/i.test(value)
     || /[A-Za-z]:[\\/]+Users[\\/]+(?:<user>|[^\\/\r\n"\x27<>]+)(?:[\\/]|$)/i.test(value)
 }
 
@@ -71,7 +71,7 @@ export function buildMachineIdentity() {
 export function containsBuildMachineIdentity(text, identity = buildMachineIdentity()) {
   const value = normalizePackagedText(text)
   // Preserve the pre-existing source-checkout rule across every dependency.
-  if (/D:[\/]AIProjects[\/](?:WeftMate[\/]Repository|Shared[\/]Dependencies)/i.test(value)) return true
+  if (/[A-Za-z]:[\/]AIProjects[\/](?:WeftMate[\/]Repository|Shared[\/]Dependencies)/i.test(value)) return true
   for (const path of [identity.home, ...(identity.roots ?? [])].filter(Boolean)) {
     if (value.includes(normalizePackagedText(path))) return true
   }

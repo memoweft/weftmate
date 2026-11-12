@@ -7,7 +7,7 @@ const root=resolve(import.meta.dirname,'../..'),phase=process.argv[2];
 const commands={electron:['tests/integration/st-7b-electron.mjs'],required:['.github/scripts/ci-unit-tests.mjs','required'],vendor:['.github/scripts/ci-unit-tests.mjs','vendor'],mobile:['--test','tests/personal-cloud-web.test.ts','apps/mobile-ui/tests/cloud-login.test.mjs','apps/mobile-ui/tests/chat-interactions.test.mjs','apps/mobile-ui/tests/visual-interactions.test.mjs','apps/mobile-ui/tests/approval-interactions.test.mjs'],package:['scripts/nightly/installed-smoke.mjs','--out','.local/package-smoke']};
 commands.visual=commands.electron;
 if(!commands[phase])throw Error('Unknown ST-7b heavy phase');
-const directory='D:/AIProjects/WeftMate/Runtime/Orchestrator';let lock,identity;
+const directory='Y:/AIProjects/WeftMate/Runtime/Orchestrator';let lock,identity;
 while(!lock){for(const n of [1,2,3]){const file=join(directory,`heavy-${n}.lock`);let handle;try{handle=await open(file,'wx');identity=`ST-7b ${new Date().toISOString()} ${phase}`;await handle.writeFile(identity);await handle.close();lock=file;console.log(`ST-7b acquired heavy-${n} for ${phase}`);break;}catch(e){await handle?.close();if(e.code!=='EEXIST')throw e;}}if(!lock){console.log(`ST-7b waiting for heavy slot: ${phase}`);await delay(120000);}}
 let child,logWrites=Promise.resolve();
 try{

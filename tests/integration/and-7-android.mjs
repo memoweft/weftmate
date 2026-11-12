@@ -6,7 +6,7 @@ import {open,readFile,writeFile,mkdir,unlink} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {startAnd7Fixture} from './and-7-fixture.mjs';
 const exec=promisify(execFile),sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const root=resolve('.'),orchestrator='D:/AIProjects/WeftMate/Runtime/Orchestrator';
+const root=resolve('.'),orchestrator='Y:/AIProjects/WeftMate/Runtime/Orchestrator';
 const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',manager='D:/Software/MuMuPlayer/nx_main/MuMuManager.exe';
 const pkg='com.memoweft.weftmate.mobile.and7qa';
 const variants=process.argv.includes('--pair')?[[390,'light']]:process.argv.includes('--single')?[[360,'light']]:[[360,'light'],[360,'dark'],[390,'light'],[390,'dark']];

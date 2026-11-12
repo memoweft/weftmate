@@ -43,7 +43,7 @@ describe('Windows candidate package policy', () => {
       assert.equal(packagedTextViolation(upstream, file, identity), 'development-path', file);
     }
     assert.equal(packagedTextViolation('unrelated Synthetic BuilderExtended word', thirdParty, identity), null);
-    assert.equal(packagedTextViolation('D:/AIProjects/Shared/Dependencies/source.js', thirdParty, identity), 'build-machine-identity');
+    assert.equal(packagedTextViolation('Y:/AIProjects/Shared/Dependencies/source.js', thirdParty, identity), 'build-machine-identity');
   });
   it('redacts runtime-read identities before serializing smoke diagnostics', () => {
     assert.equal(redactBuildMachineIdentity(identity.home + '/private on ' + identity.hostname, identity), 'C:/Users/<user>/private on <host>');
@@ -63,7 +63,7 @@ describe('Windows candidate package policy', () => {
   });
 
   it('allows external isolated output and only dist below the repository', () => {
-    const repo = resolve('D:/AIProjects/WeftMate/Repository');
+    const repo = resolve('Y:/AIProjects/WeftMate/Repository');
     assert.equal(assertIsolatedOutput(repo, resolve('D:/isolated-weftmate-builds/a')), resolve('D:/isolated-weftmate-builds/a'));
     assert.equal(assertIsolatedOutput(repo, resolve(repo, 'dist/candidate-a')), resolve(repo, 'dist/candidate-a'));
     assert.throws(() => assertIsolatedOutput(repo, resolve(repo, 'src/build-output')), /below dist/);
@@ -77,7 +77,7 @@ describe('Windows candidate package policy', () => {
   });
 
   it('detects development-machine paths and bounds updater errors', () => {
-    assert.equal(containsDevelopmentPath('D:\\AIProjects\\WeftMate\\Repository\\src'), true);
+    assert.equal(containsDevelopmentPath('Y:\\AIProjects\\WeftMate\\Repository\\src'), true);
     assert.equal(containsDevelopmentPath('C:/Users/<user>/private'), true);
     assert.equal(containsDevelopmentPath('resources/dsh-runtime'), false);
     const failure = sanitizeUpdateFailure(new Error('ENOENT C:\\Users\\<user>\\private\\latest.yml token=secret'));

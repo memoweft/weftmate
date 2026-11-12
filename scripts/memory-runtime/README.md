@@ -6,7 +6,7 @@
 [#332 的总经理转达](https://github.com/memoweft/weftmate/issues/332#issuecomment-6209119265)。
 
 `lock.json` 固定官方 Python 3.13.16 嵌入 ZIP、Core 已合入的
-`c79d573b51b7668551a172e6c5b28c19a2402aa9` 提交及官方源归档 URL、大小与
+`99f622db19a80ca147d1e1b7294d1dd6d9dadbfa` 提交及官方源归档 URL、大小与
 散列、Core `uv.lock` 散列、Windows CPython 3.13 对应 wheel、传递依赖、许可、模型
 修订及文件散列。基础层是 Python/Core 和 7 个基础依赖；完整层在同一
 基础上加入 17 个语义依赖、固定模型/分词器、微软两个必需运行库和许可。
@@ -17,6 +17,8 @@
 同时包含 [MemoWeft #145](https://github.com/memoweft/memoweft/pull/145)：当前记忆导出按修订链排除已被取代的偏好和关系，手机下次同步可移除旧状态；历史记录和原话仍保留。
 
 同时包含 [MemoWeft #146](https://github.com/memoweft/memoweft/pull/146)：形成已判定没有可记内容的话（本次任务指令、没有可记事实、判定不属于记忆、没有世界变化）不再列为没形成的记忆请求，状态与召回共用这一份规则；想记住却没记上的照样列出。
+
+同时包含 [MemoWeft #147](https://github.com/memoweft/memoweft/pull/147)：任务列表可按状态、边界、原话或会话筛选，并可只取去重后的原话、原话所在会话或边界；宿主只读每处要用的任务。整份任务历史每轮都在长，几千个任务后会超过 8 MiB 的 RPC 帧。
 
 此版本包含 [MemoWeft #140](https://github.com/memoweft/memoweft/pull/140)：形成记忆时区分管理记忆的请求与事实否定，避免把遗忘指令仅处理成旧事实失效；保留同条原话里独立支持的事实。该修复只处理形成子因，不代替真实删除回执；M7 的宿主授权分类修复另见 [WeftMate #602](https://github.com/memoweft/weftmate/pull/602)，最终组合安装场景仍须复验。
 

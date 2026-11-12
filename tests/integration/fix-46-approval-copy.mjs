@@ -12,8 +12,8 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { readMuMuInfo, adbExecutable } from '../../scripts/nightly/mumu.mjs';
 
 const repo = resolve(import.meta.dirname, '../..');
-const out = resolve(process.env.FIX46_EVIDENCE || 'D:/AIProjects/WeftMate/Runtime/Orchestrator/evidence/FIX-46');
-const locks = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/locks';
+const out = resolve(process.env.FIX46_EVIDENCE || 'Y:/AIProjects/WeftMate/Runtime/Orchestrator/evidence/FIX-46');
+const locks = 'Y:/AIProjects/WeftMate/Runtime/Orchestrator/locks';
 mkdirSync(out, { recursive: true });
 const android = process.argv.includes('--android'), pkg = 'com.memoweft.weftmate.mobile.debug';
 const theme = process.env.FIX46_THEME || 'light';

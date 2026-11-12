@@ -69,7 +69,7 @@ async function drainMemory(maxMs = 90000) {
 }
 try {
   // Atomic global heavy slot; caller can retry without occupying an idle slot.
-  for (let slot = 1; slot <= 3; slot++) { const path = `D:/AIProjects/WeftMate/Runtime/Orchestrator/heavy-${slot}.lock`; try { const fd = openSync(path, 'wx'); writeFileSync(fd, `SEC-2 ${new Date().toISOString()} batch ${batch} real host`); closeSync(fd); ownedLock = path; break; } catch (e) { if (e.code !== 'EEXIST') throw e; } }
+  for (let slot = 1; slot <= 3; slot++) { const path = `Y:/AIProjects/WeftMate/Runtime/Orchestrator/heavy-${slot}.lock`; try { const fd = openSync(path, 'wx'); writeFileSync(fd, `SEC-2 ${new Date().toISOString()} batch ${batch} real host`); closeSync(fd); ownedLock = path; break; } catch (e) { if (e.code !== 'EEXIST') throw e; } }
   assert.ok(ownedLock, 'HEAVY_SLOTS_OCCUPIED: retry after two minutes');
   stage = 'fixture-services';
   pageServer = await listen((req, res) => {

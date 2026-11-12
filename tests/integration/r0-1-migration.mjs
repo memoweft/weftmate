@@ -78,8 +78,8 @@ try {
       const file = join(current, item.name); if (item.isDirectory()) await rebase(file);
       else if (/\.(json|jsonl|yml|yaml)$/.test(item.name) && (await lstat(file)).size < 10_000_000) {
         const text = await readFile(file, 'utf8');
-        const patched = text.replaceAll('D:\\\\AIProjects\\\\WeftMate\\\\Runtime\\\\UnifiedAssistant\\\\personal-account-20260926', profile.replaceAll('\\','\\\\'))
-          .replaceAll('D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/personal-account-20260926', profile.replaceAll('\\','/'));
+        const patched = text.replaceAll('Y:\\\\AIProjects\\\\WeftMate\\\\Runtime\\\\UnifiedAssistant\\\\personal-account-20260926', profile.replaceAll('\\','\\\\'))
+          .replaceAll('Y:/AIProjects/WeftMate/Runtime/UnifiedAssistant/personal-account-20260926', profile.replaceAll('\\','/'));
         if (patched !== text) await writeFile(file, patched);
       }
     }

@@ -24,7 +24,7 @@ await import(${JSON.stringify(new URL('../../scripts/review-gallery/electron.mjs
 let app,fixture,lock;
 const failures=[];
 async function check(name,run){try{await run();console.log('PASS '+name)}catch(error){failures.push(name+': '+error.message);console.log('FAIL '+name+': '+error.message)}}
-for(let n=1;n<=3;n++){const path=`D:/AIProjects/WeftMate/Runtime/Orchestrator/locks/heavy-${n}.lock`;try{const handle=await open(path,'wx');await handle.writeFile('FE-CHAT '+new Date().toISOString());await handle.close();lock=path;break}catch(error){if(error.code!=='EEXIST')throw error}}
+for(let n=1;n<=3;n++){const path=`Y:/AIProjects/WeftMate/Runtime/Orchestrator/locks/heavy-${n}.lock`;try{const handle=await open(path,'wx');await handle.writeFile('FE-CHAT '+new Date().toISOString());await handle.close();lock=path;break}catch(error){if(error.code!=='EEXIST')throw error}}
 assert.ok(lock,'No heavy slot available');
 const kill=()=>{const p=app?.process();if(p?.exitCode===null)spawnSync('taskkill.exe',['/PID',String(p.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'})};
 const deadline=setTimeout(()=>{kill();process.exitCode=1},150000);

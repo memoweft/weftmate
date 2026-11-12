@@ -67,7 +67,7 @@ try{
   }
   const probeDir=join(temp,'probe');mkdirSync(probeDir);writeFileSync(join(probeDir,'UxP3NotificationProbeTest.kt'),probe);
   const init=join(temp,'probe.gradle');writeFileSync(init,`gradle.projectsEvaluated { rootProject.project(':app').android.sourceSets.androidTest.java.srcDir('${probeDir.replaceAll('\\','/')}') }\n`);
-  const build=join(temp,'build.ps1');writeFileSync(build,`. D:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1\ngradle --offline -I '${init}' '-PweftmateApplicationId=${pkg}' :app:assembleDebug :app:assembleDebugAndroidTest --console=plain --no-daemon\nexit $LASTEXITCODE\n`);
+  const build=join(temp,'build.ps1');writeFileSync(build,`. Y:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1\ngradle --offline -I '${init}' '-PweftmateApplicationId=${pkg}' :app:assembleDebug :app:assembleDebugAndroidTest --console=plain --no-daemon\nexit $LASTEXITCODE\n`);
   await command('pwsh',['-NoProfile','-File',build],{cwd:join(root,'apps/android')});
   report.checks.push('isolated-native-apk-and-instrumentation-built-without-version-change');
   const beforeLaunch=JSON.parse(run(cli,['info','--vmindex','0']));

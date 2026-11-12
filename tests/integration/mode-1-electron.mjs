@@ -77,7 +77,7 @@ async function capture(page, kind, state, open = null) {
   else await page.setViewportSize({ width: 390, height: 844 });
 }
 try {
-  for (const id of [1, 2, 3]) { const lock = `D:/AIProjects/WeftMate/Runtime/Orchestrator/heavy-${id}.lock`;
+  for (const id of [1, 2, 3]) { const lock = `Y:/AIProjects/WeftMate/Runtime/Orchestrator/heavy-${id}.lock`;
     try { const handle = await open(lock, 'wx'); heavyLease=`MODE-1 ${new Date().toISOString()} real Electron and phone`;await handle.writeFile(heavyLease); await handle.close(); heavyLock = lock; break; }
     catch (error) { if (error.code !== 'EEXIST') throw error; } }
   if (!heavyLock) throw Error('All heavy slots occupied; retry after independent work');

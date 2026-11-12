@@ -36,7 +36,7 @@ assert.equal((await fetch(prepared.origin+'/personal/v1/auth/setup',{method:'POS
 const env={...process.env};for(const name of Object.keys(env))if(name.startsWith('WEFTMATE_')||name.startsWith('MEMOWEFT_')||['ELECTRON_RUN_AS_NODE','MIMO_API_KEY','MODEL_SWITCH_UNIFIED_KEY'].includes(name))delete env[name];
 env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.FACT1_PHASE=phase;env.WEFTMATE_BASELINE_TRACE=join(root,'requests.jsonl');
-const lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';let ownsLock=false,bridge,app,page;
+const lock='Y:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';let ownsLock=false,bridge,app,page;
 const results=[],startedAt=new Date().toISOString();
 const persist=()=>writeFileSync(join(evidence,'results.json'),redact(JSON.stringify({phase,model,baselineCommit:fixture.baselineCommit,startedAt,root,results},null,2)));
 async function api(path,body,method=body?'POST':'GET') {return page.evaluate(async({path,body,method})=>{const me=await(await fetch('/personal/v1/auth/me')).json();const r=await fetch('/personal/v1'+path,{method,headers:{'content-type':'application/json','x-weftmate-csrf':me.csrfToken},body:body?JSON.stringify(body):undefined});return {status:r.status,body:await r.json()};},{path,body,method});}

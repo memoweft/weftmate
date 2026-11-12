@@ -16,7 +16,7 @@ import { boundaryForCompletedTurn } from '../../src/plugins/weftmate-personal-me
 if (process.platform !== 'win32' || process.env.WEFTMATE_STAGE15_MEMORY_UI_SERVE !== '1') {
   throw new Error('Set WEFTMATE_STAGE15_MEMORY_UI_SERVE=1 to start the bounded isolated UI fixture.');
 }
-const evidenceRoot = 'D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/Memory';
+const evidenceRoot = 'Y:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/Memory';
 const privateFixture = join(evidenceRoot, 'private-stage15-memory-ui-fixture.json');
 const publicEvidence = join(evidenceRoot, 'stage15-memory-ui-serve.json');
 const python = requireMemoWeftPath('python');

@@ -12,7 +12,7 @@ import { ensurePrivateDirectory, ensurePrivateFile } from '../../src/private-hos
 import { activateMobileUiRelease, publishMobileUi } from '../../src/personal-access/mobile-ui-release.mjs';
 
 const repository = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
-const defaultProfile = 'D:\\AIProjects\\WeftMate\\Runtime\\UnifiedAssistant\\personal-app-fixture-20260927';
+const defaultProfile = 'Y:\\AIProjects\\WeftMate\\Runtime\\UnifiedAssistant\\personal-app-fixture-20260927';
 const marker = 'weftmate-personal-app-fixture-v1';
 const args = new Map();
 for (const arg of process.argv.slice(2)) {

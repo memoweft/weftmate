@@ -19,6 +19,8 @@ const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'i
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup'];
 const MAX_ACTIVE_OWNERS = 4;
+// Settled jobs grow with every turn; only these states stay few enough to list.
+const UNFINISHED_JOB_STATES = ['pending', 'processing', 'retry'];
 
 async function recalledInteractionDependencies(rpc, interaction, modelTier) {
   if (!Array.isArray(interaction.items)) return { complete: false, ids: [] };
@@ -415,7 +417,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         const poll = withOwner(ownerId, async entry => {
           pollingEntry = entry; entry.recoveryFlight = poll;
           if (!entry.capabilities?.methods?.includes('query_jobs')) return;
-          const result = await entry.rpc.request('query_jobs', { operation: 'list' });
+          const result = await entry.rpc.request('query_jobs', { operation: 'list', states: UNFINISHED_JOB_STATES });
           if (!runtimeCurrent(ownerId, generation)) return;
           // A settled job is never replayed here; the owner retries it from the memory warning.
           const pending = (result.jobs ?? []).some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
@@ -820,9 +822,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       } finally {erasingOwners.delete(ownerId);}
     },
     flushPending,
-    async acceptedBoundaryIds(ownerId) {
+    async acceptedBoundaryIds(ownerId, boundaryIds) {
       return withOwner(ownerId, async entry => entry.capabilities?.methods?.includes('query_jobs')
-        ? (await entry.rpc.request('query_jobs', { operation: 'list' })).jobs?.map(job => job.acceptance?.boundary_event_id).filter(Boolean) ?? [] : []);
+        ? (await entry.rpc.request('query_jobs', { operation: 'list', boundary_event_ids: boundaryIds,
+          projection: 'boundary_event_ids' })).boundary_event_ids ?? [] : []);
     },
     async discardPendingSources(ownerId, { sessionId = null, sourceTexts = [] } = {}) {
       await actions.redact(ownerId, { sessionId, sourceTexts });
@@ -874,7 +877,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           const revision = revisionResult?.world_revision ?? revisionResult?.revision;
           entry.routeReady = health?.runtime?.route_ready === true;
           const jobResult = entry.capabilities?.methods?.includes('query_jobs')
-            ? await entry.rpc.request('query_jobs', { operation: 'list' }) : {};
+            ? await entry.rpc.request('query_jobs', { operation: 'list', states: [...UNFINISHED_JOB_STATES, 'dead'] }) : {};
           const jobs = jobResult.jobs ?? [];
           const formationIssues = (jobResult.formation_requests ?? []).filter(item => ['no_change', 'dead'].includes(item.state)).map(item => ({ jobId: item.job_id, evidenceId: item.evidence_id, sessionId: item.session_id, text: item.text, intent: item.intent, createdAt: item.created_at }));
           const failedCorrectionCount = formationIssues.filter(item => item.intent === 'correction').length;
@@ -963,7 +966,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           let acceptedJobs;
           while (Date.now() < deadline) {
             let result;
-            try { result = await entry.rpc.request('query_jobs', { operation: 'list' },
+            try { result = await entry.rpc.request('query_jobs', { operation: 'list', states: UNFINISHED_JOB_STATES },
               Math.max(100, Math.min(15_000, deadline - Date.now()))); }
             catch (cause) { if (cause?.code === 'MEMORY_TIMEOUT') break; throw cause; }
             acceptedJobs ??= new Set((result.jobs ?? []).map(job => job.job_id));
@@ -1182,13 +1185,15 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           // acceptance links evidence IDs to sessions even without corrections;
           // never infer ownership from another command targeting the same item.
           const jobs = await withOwner(ownerId, entry => entry.capabilities?.methods?.includes('query_jobs')
-            ? entry.rpc.request('query_jobs', { operation: 'list' }) : {});
+            ? entry.rpc.request('query_jobs', { operation: 'list',
+              evidence_ids: [...new Set(sources.map(source => source?.evidence_id).filter(id => typeof id === 'string' && id))],
+              projection: 'evidence_sessions' }) : {});
           cleanup = { deleteConversationSnippets: proposal.deleteConversationSnippets === true,
             sourceTexts: [...new Set(sources.map(source => source?.raw_content).filter(text => typeof text === 'string' && text.length > 0))],
             sourceRefs: sources.filter(source => typeof source?.raw_content === 'string' && source.raw_content).map(source => ({
               textHash: createHash('sha256').update(source.raw_content).digest('hex'), evidenceId: source.evidence_id ?? null,
-              sessionIds: [...new Set((jobs.jobs ?? []).filter(job => source.evidence_id && job.acceptance?.evidence_ids?.includes(source.evidence_id))
-                .flatMap(job => [job.acceptance.parent_session_id, job.acceptance.result_session_id]).filter(id => typeof id === 'string' && id))],
+              sessionIds: [...new Set((jobs.evidence_sessions ?? []).filter(row => source.evidence_id && row.evidence_id === source.evidence_id)
+                .flatMap(row => [row.parent_session_id, row.result_session_id]).filter(id => typeof id === 'string' && id))],
             })) };
           if (cleanup.deleteConversationSnippets) Object.assign(cleanup, await prepareConversationCleanup(ownerId, { cleanup }));
         }
