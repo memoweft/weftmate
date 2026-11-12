@@ -11,3 +11,5 @@ apps/android/app/src/main/res/values-night/design_colors.xml text eol=lf
 apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTokens.kt text eol=lf
 design/tokens/generated/apple/* text eol=lf
 apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/OperationNames.swift text eol=lf
+# Old profile patch templates are recognised by the SHA-256 of their exact LF text.
+tests/fixtures/profile-patch/*.yml text eol=lf
