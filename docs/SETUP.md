@@ -119,7 +119,7 @@ Linux/macOS 测试目录使用规范化的 `RUNNER_TEMP`；Windows 在系统盘 
 
 ## 本机数据
 
-账户、会话、模型配置、凭据和运行日志都在仓库外的 `D:\AIProjects\WeftMate\Runtime`（或启动参数指定的数据目录），不进 Git。测试使用隔离的数据目录和测试账号，不碰日用数据。
+账户、会话、模型配置、凭据和运行日志都在仓库外的 `Y:\AIProjects\WeftMate\Runtime`（或启动参数指定的数据目录），不进 Git。测试使用隔离的数据目录和测试账号，不碰日用数据。
 
 ## 本地模型
 
@@ -130,9 +130,9 @@ Linux/macOS 测试目录使用规范化的 `RUNNER_TEMP`；Windows 在系统盘 
 宿主用 `--local-model-config` 接入状态与重启：
 
 ```powershell
-node scripts/run-personal-host.mjs --user-data-dir <隔离宿主目录> --access-port 0 --local-model-config D:/AIProjects/WeftMate/Runtime/LocalModel/config.json
+node scripts/run-personal-host.mjs --user-data-dir <隔离宿主目录> --access-port 0 --local-model-config Y:/AIProjects/WeftMate/Runtime/LocalModel/config.json
 # 桌面应用可使用同一配置
-npm start -- --local-model-config=D:/AIProjects/WeftMate/Runtime/LocalModel/config.json
+npm start -- --local-model-config=Y:/AIProjects/WeftMate/Runtime/LocalModel/config.json
 ```
 
 系统状态读取受鉴权的 `GET /switch/status`（当前模型与最近切换）和 `GET /props`（真实 `n_ctx` 与 `total_slots`）；读取失败显示「不可用」，未指定配置或文件不存在显示「尚未配置」。重启调用 `POST /switch/restart`：代理等待现有请求租约结束，再用当前模型在 D:\AI\Config 中的配置调用现有控制脚本，不修改参数、不重启代理。此入口负责选择当前模型的 `launcher_profile`，WeftMate 无需另配脚本路径。完成后宿主重建容量缓存并重新读取 `/props`。实测模型重启约两分钟；系统重启请求使用 6 分钟维护等待窗口，普通请求仍用原有短超时。手机需使用包含此原生网络修正的 APK（安卓安装包）。

@@ -30,7 +30,7 @@ async function settled() {
 try {
   while (!lease) {
     for (const id of [1, 2, 3]) {
-      const file = `D:/AIProjects/WeftMate/Runtime/Orchestrator/locks/heavy-${id}.lock`;
+      const file = `Y:/AIProjects/WeftMate/Runtime/Orchestrator/locks/heavy-${id}.lock`;
       try { const handle = await open(file, 'wx'); await handle.writeFile(`FIX-50 ${new Date().toISOString()} isolated Electron MiMo/Core`); await handle.close(); lease = file; break; }
       catch (error) { if (error.code !== 'EEXIST') throw error; }
     }

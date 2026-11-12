@@ -17,7 +17,7 @@ const processEvidence=createProcessEvidence({outputDir:join(repository,'.local/r
 const report={passed:false,synthetic:true,componentAdapters:'actual random-port HTTP probes; signed synthetic X.509 certificate',realModelRequests:0,checks:[],mobileEvidence:'browser viewport only; native system bars pending',screenshots:[]};
 if(mobileOnly)report.screenshots=JSON.parse(readFileSync(join(output,'acceptance.json'))).screenshots.filter(name=>name.startsWith('electron-'));
 let application,browser,page,heavyLock,cleanupCount=0;
-const slots=process.env.R02_HEAVY_DIR||'D:/AIProjects/WeftMate/Runtime/Orchestrator';
+const slots=process.env.R02_HEAVY_DIR||'Y:/AIProjects/WeftMate/Runtime/Orchestrator';
 for(let slot=1;slot<=3;slot++){const file=join(slots,`heavy-${slot}.lock`);try{const fd=openSync(file,'wx');writeFileSync(fd,`R0-2 ${new Date().toISOString()} Electron acceptance\n`);closeSync(fd);heavyLock=file;break;}catch(error){if(error.code!=='EEXIST')throw error;}}
 if(!heavyLock){rmSync(root,{recursive:true,force:true});throw Error('All heavy slots occupied; retry this runner after a slot is released');}
 console.log('R0-2 acceptance owns '+heavyLock.split(/[\\/]/).at(-1));

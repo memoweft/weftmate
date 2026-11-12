@@ -11,7 +11,7 @@ for (const mode of modes) {
   if (!['required', 'vendor'].includes(mode)) throw Error('Use required or vendor');
   let lock;
   while (!lock) {
-    for (let slot = 1; slot <= 3; slot++) { const path = `D:/AIProjects/WeftMate/Runtime/Orchestrator/heavy-${slot}.lock`; try { const fd = openSync(path, 'wx'); writeFileSync(fd, `SEC-2 ${new Date().toISOString()} ${mode} gate`); closeSync(fd); lock = path; break; } catch (e) { if (e.code !== 'EEXIST') throw e; } }
+    for (let slot = 1; slot <= 3; slot++) { const path = `Y:/AIProjects/WeftMate/Runtime/Orchestrator/heavy-${slot}.lock`; try { const fd = openSync(path, 'wx'); writeFileSync(fd, `SEC-2 ${new Date().toISOString()} ${mode} gate`); closeSync(fd); lock = path; break; } catch (e) { if (e.code !== 'EEXIST') throw e; } }
     if (!lock) { console.log(`SEC-2 ${mode}: all heavy slots occupied; retry in two minutes`); await new Promise(r => setTimeout(r, 120000)); }
   }
   try {

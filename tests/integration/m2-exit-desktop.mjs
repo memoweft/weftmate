@@ -45,7 +45,7 @@ assert.ok(provider === null || ['mimo', 'lan'].includes(provider), '--model mimo
 const coreSource = resolve((option('--memory-core-source') ?? requireMemoWeftPath('source')));
 const python = (option('--python') ?? requireMemoWeftPath('python'));
 const evidence = resolve(option('--out', evidencePath('m2-exit')));
-const lockPath = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';
+const lockPath = 'Y:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';
 const lockToken = `${option('--lock-owner', 'EX-2')} ${randomUUID()}`;
 let bridge, lockTimer, ownsLock = false;
 const roots = [], reports = [];

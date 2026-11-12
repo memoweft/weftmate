@@ -39,7 +39,7 @@ assert.ok(key && base);
 const secrets = [key, ...(model === 'lan' ? [base, new URL(base).host] : [])];
 const safe = text => secrets.reduce((s, secret) => s.replaceAll(secret, '[private]'), String(text));
 const save = (name, value) => writeFileSync(join(destination, name), safe(JSON.stringify(value, null, 2)) + '\n');
-const lock = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock', lockToken = `MF-2 ${randomUUID()}`;
+const lock = 'Y:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock', lockToken = `MF-2 ${randomUUID()}`;
 let bridge, timer, owned = false;
 const reports = [], roots = [];
 process.env.TEMP = process.env.TMP = 'C:/Temp';

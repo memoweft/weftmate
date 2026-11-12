@@ -20,7 +20,7 @@ if (process.platform !== 'win32' || process.env.WEFTMATE_REAL_PRIVATE_CLOUD_MEMO
 const python = requireMemoWeftPath('python');
 const pythonPath = requireMemoWeftPath('source');
 if (!existsSync(python)) throw new Error('MemoWeft Core Python runtime is unavailable');
-const evidenceRoot = 'D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/Memory';
+const evidenceRoot = 'Y:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/Memory';
 mkdirSync(evidenceRoot, { recursive: true });
 const root = mkdtempSync(join(tmpdir(), 'weftmate-private-cloud-memory-'));
 assert.ok(realpathSync(root).startsWith(realpathSync(tmpdir()) + sep));

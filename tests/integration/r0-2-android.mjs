@@ -14,7 +14,7 @@ import { systemBarDifference } from '../../scripts/nightly/system-bars.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 const repository=resolve(import.meta.dirname,'../..'),out=evidencePath('r0-2');mkdirSync(out,{recursive:true});
 const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',manager='D:/Software/MuMuPlayer/nx_main/MuMuManager.exe';
-const pkg='com.memoweft.weftmate.mobile.r02',locks='D:/AIProjects/WeftMate/Runtime/Orchestrator';
+const pkg='com.memoweft.weftmate.mobile.r02',locks='Y:/AIProjects/WeftMate/Runtime/Orchestrator';
 const root=managedMkdtempSync(join(managedTempRoot(),'weftmate-r0-2-android-'));
 const pause=ms=>new Promise(done=>setTimeout(done,ms));
 const run=(file,args,options={})=>execFileSync(file,args,{encoding:'utf8',windowsHide:true,timeout:20000,maxBuffer:16*1024*1024,...options});
@@ -105,7 +105,7 @@ try{
   }
   const source=join(root,'probe');mkdirSync(source);writeFileSync(join(source,'R02NativeProbeTest.kt'),probe);
   const init=join(root,'probe.gradle');writeFileSync(init,`gradle.projectsEvaluated { rootProject.project(':app').android.sourceSets.androidTest.java.srcDir('${source.replaceAll('\\','/')}') }\n`);
-  const build=join(root,'build.ps1');writeFileSync(build,`. D:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1\ngradle --offline -I '${init}' '-PweftmateApplicationId=${pkg}' :app:assembleDebug :app:assembleDebugAndroidTest --console=plain --no-daemon\nexit $LASTEXITCODE\n`);
+  const build=join(root,'build.ps1');writeFileSync(build,`. Y:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1\ngradle --offline -I '${init}' '-PweftmateApplicationId=${pkg}' :app:assembleDebug :app:assembleDebugAndroidTest --console=plain --no-daemon\nexit $LASTEXITCODE\n`);
   await command('pwsh',['-NoProfile','-File',build],{cwd:join(repository,'apps/android')});
   const metadata=JSON.parse(readFileSync(join(repository,'apps/android/app/build/outputs/apk/debug/output-metadata.json'),'utf8'));
   assert.equal(metadata.applicationId,pkg);report.nativeVersion=metadata.elements[0].versionName;report.nativeVersionCode=metadata.elements[0].versionCode;

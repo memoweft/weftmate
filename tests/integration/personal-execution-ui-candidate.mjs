@@ -24,7 +24,7 @@ if (process.env.WEFTMATE_PERSONAL_EXECUTION_UI_CANDIDATE !== '1') {
 
 const repository = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const candidateRoot = resolve(process.env.WEFTMATE_PERSONAL_EXECUTION_UI_CANDIDATE_ROOT ??
-  'D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Task15Frontend-20261006/Candidate');
+  'Y:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Task15Frontend-20261006/Candidate');
 const runId = randomUUID().replaceAll('-', '');
 const runtimeRoot = join(candidateRoot, `isolated-store-${runId}`);
 const evidenceRoot = join(candidateRoot, `run-${runId}`);

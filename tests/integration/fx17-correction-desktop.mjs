@@ -30,7 +30,7 @@ const key = real ? execFileSync('powershell.exe',['-NoProfile','-NonInteractive'
 const report = {revision:execFileSync('git',['rev-parse','HEAD'],{cwd:repository,encoding:'utf8'}).trim(),model:real?'mimo':'synthetic',startedAt:new Date().toISOString(),turns:[],requests:[],snapshots:[]};
 const secrets=[key];const safe = text => secrets.reduce((text,secret)=>secret?text.replaceAll(secret,'[private]'):text,String(text));
 let rejectCorrection=process.argv.includes('--reject'),lan,lockTimer,ownsLock=false;
-const lockPath='D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock',lockToken=`FX-17 flower ${randomUUID()}`;
+const lockPath='Y:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock',lockToken=`FX-17 flower ${randomUUID()}`;
 const save = () => writeFileSync(join(out,'results.json'),safe(JSON.stringify(report,null,2))+'\n');
 writeFileSync(join(out,'run-root.txt'),root+'\n');
 const pause = ms => new Promise(r=>setTimeout(r,ms));

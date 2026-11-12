@@ -8,7 +8,7 @@ import { redactEvidenceText } from '../helpers/process-evidence.mjs';
 import { managedTempRoot } from '../helpers/managed-temp.mjs';
 
 const out = process.env.WEFTMATE_FIX45_EVIDENCE;
-assert.ok(out && resolve(out).startsWith('D:\\AIProjects\\WeftMate\\Runtime\\Orchestrator\\evidence\\FIX-45'));
+assert.ok(out && resolve(out).startsWith('Y:\\AIProjects\\WeftMate\\Runtime\\Orchestrator\\evidence\\FIX-45'));
 await mkdir(out, { recursive: true });
 const baseline = process.env.WEFTMATE_FIX45_BASELINE === '1';
 const report = { baseline, realElectron: true, realDsh: true, realCore: true, model: 'mimo-v2.6-flash', modes: [] };
@@ -27,7 +27,7 @@ async function removeFixture(root) {
 const clean = value => redactEvidenceText(value, h ? [h.base] : []);
 try {
   for (const id of [1, 2, 3]) {
-    const path = `D:/AIProjects/WeftMate/Runtime/Orchestrator/locks/heavy-${id}.lock`;
+    const path = `Y:/AIProjects/WeftMate/Runtime/Orchestrator/locks/heavy-${id}.lock`;
     try { const file = await open(path, 'wx'); await file.writeFile(`FIX-45 ${new Date().toISOString()} isolated Electron MiMo/Core`); await file.close(); lease = path; break; }
     catch (error) { if (error.code !== 'EEXIST') throw error; }
   }

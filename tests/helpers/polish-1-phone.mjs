@@ -11,7 +11,7 @@ const {PNG}=createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
 import {readMuMuInfo,adbExecutable} from '../../scripts/nightly/mumu.mjs';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export async function capturePolishPhone(fixture,out,report,phase,weekly){
-  const cloud=!!process.env.WEFTMATE_POLISH1_ANDROID_SERIAL,lock=cloud?resolve('.local/polish1-phone.lock'):'D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg=process.env.WEFTMATE_POLISH1_ANDROID_PACKAGE??'com.memoweft.weftmate.mobile.polish1qa',activity=process.env.WEFTMATE_POLISH1_ANDROID_ACTIVITY??'com.memoweft.weftmate.mobile.St2PhoneBrowserActivity',adb=process.env.WEFTMATE_POLISH1_ADB??adbExecutable;
+  const cloud=!!process.env.WEFTMATE_POLISH1_ANDROID_SERIAL,lock=cloud?resolve('.local/polish1-phone.lock'):'Y:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg=process.env.WEFTMATE_POLISH1_ANDROID_PACKAGE??'com.memoweft.weftmate.mobile.polish1qa',activity=process.env.WEFTMATE_POLISH1_ANDROID_ACTIVITY??'com.memoweft.weftmate.mobile.St2PhoneBrowserActivity',adb=process.env.WEFTMATE_POLISH1_ADB??adbExecutable;
   if(cloud)await mkdir('.local',{recursive:true});
   const lease=await open(lock,'wx');await lease.writeFile(`POLISH-1 ${new Date().toISOString()} synthetic remote webpage`);await lease.close();
   let serial,proxy,browser,forward,port,installed=false,size,density,night;

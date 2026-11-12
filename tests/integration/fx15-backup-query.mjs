@@ -35,8 +35,8 @@ try {
       if (item.isDirectory()) await rebase(file);
       else if (/\.(json|jsonl|ya?ml)$/.test(item.name)) {
         const text = await readFile(file, 'utf8');
-        const replaced = text.replaceAll('D:\\\\AIProjects\\\\WeftMate\\\\Runtime\\\\UnifiedAssistant\\\\personal-account-20260926', profile.replaceAll('\\', '\\\\'))
-          .replaceAll('D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/personal-account-20260926', profile.replaceAll('\\', '/'));
+        const replaced = text.replaceAll('Y:\\\\AIProjects\\\\WeftMate\\\\Runtime\\\\UnifiedAssistant\\\\personal-account-20260926', profile.replaceAll('\\', '\\\\'))
+          .replaceAll('Y:/AIProjects/WeftMate/Runtime/UnifiedAssistant/personal-account-20260926', profile.replaceAll('\\', '/'));
         if (replaced !== text) await writeFile(file, replaced);
       }
     }

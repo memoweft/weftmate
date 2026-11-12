@@ -66,7 +66,7 @@ try {
     const keysDir = join(root, 'keys'); await mkdir(keysDir); await writeFile(join(keysDir, 'update-trusted-keys.json'), JSON.stringify(trustedKeys));
     const initFile = join(root, 'isolate.gradle');
     await writeFile(initFile, `allprojects { afterEvaluate { project -> if (project.name == 'app') { project.android.sourceSets.main.assets.setSrcDirs([project.file('../../mobile-ui/www'), project.file('${keysDir.replaceAll('\\', '/')}')]) } } }\n`);
-    const buildScript = `. D:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1\ngradle -I '${initFile.replaceAll('\\', '/')}' '-PweftmateApplicationId=${packageId}' :app:assembleDebug :app:assembleDebugAndroidTest --console=plain\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }`;
+    const buildScript = `. Y:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1\ngradle -I '${initFile.replaceAll('\\', '/')}' '-PweftmateApplicationId=${packageId}' :app:assembleDebug :app:assembleDebugAndroidTest --console=plain\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }`;
     await run('powershell.exe', ['-NoProfile', '-Command', buildScript], { cwd: join(repository, 'apps/android'), windowsHide: true, timeout: 240000, maxBuffer: 1024 * 1024 });
     await run(adb, ['install', '-r', join(repository, 'apps/android/app/build/outputs/apk/debug/app-debug.apk')]); nativeInstalled = true;
     await run(adb, ['install', '-r', join(repository, 'apps/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk')]);

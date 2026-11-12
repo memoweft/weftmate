@@ -9,7 +9,7 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../../src/private-host-storage.mjs';
 
-const DEFAULT_ROOT = 'D:\\AIProjects\\WeftMate\\Runtime\\UnifiedAssistant\\android-sync-fixture-20260926';
+const DEFAULT_ROOT = 'Y:\\AIProjects\\WeftMate\\Runtime\\UnifiedAssistant\\android-sync-fixture-20260926';
 const MARKER = 'weftmate-android-sync-fixture-v1';
 const USERNAME = 'android-acceptance';
 const PASSWORD = 'synthetic android password 123';

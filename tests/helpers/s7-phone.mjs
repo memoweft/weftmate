@@ -9,7 +9,7 @@ const {PNG}=createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
 import {readMuMuInfo,adbExecutable} from '../../scripts/nightly/mumu.mjs';
 const pause=ms=>new Promise(done=>setTimeout(done,ms));
 export async function s7Phone(origin,issuer,out,report,theme){
-  const lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock';
+  const lock='Y:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock';
   for(;;){try{const handle=await open(lock,'wx');await handle.writeFile(`S7 ${new Date().toISOString()} Android system bars`);await handle.close();break;}catch(e){if(e.code!=='EEXIST')throw e;console.log('S7: waiting for simulator lock');await pause(120000);}}
   const pkg='com.memoweft.weftmate.mobile.st4qa',activity='com.memoweft.weftmate.mobile.St4RemoteBrowserActivity';
   let serial,installed=false,size,density,night,cdp,forward,page;

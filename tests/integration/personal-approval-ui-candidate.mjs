@@ -23,7 +23,7 @@ if (textDeliveryOnly && (!textDeliverySourcePath || !isAbsolute(textDeliverySour
 const textDeliverySource = textDeliveryOnly ? textDeliveryInput(JSON.parse(readFileSync(textDeliverySourcePath, 'utf8'))) : null;
 const repository = dirname(fileURLToPath(new URL('../../package.json', import.meta.url)));
 const candidateRoot = resolve(process.env.WEFTMATE_APPROVAL_UI_CANDIDATE_ROOT ??
-  'D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Task15ApprovalClients-20261006-01a1112e/Candidate');
+  'Y:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Task15ApprovalClients-20261006-01a1112e/Candidate');
 const root = join(candidateRoot, 'live-' + randomUUID().replaceAll('-', ''));
 const fixtureRoot = mkdtempSync(join(tmpdir(), 'weftmate-synthetic-stop-approval-'));
 const profile = join(fixtureRoot, 'profile'), workspace = join(profile, 'workspace'), assets = join(root, 'assets');
@@ -34,7 +34,7 @@ const reportPath = join(root, 'candidate.json'), loginFile = join(profile, 'priv
 const now = () => new Date().toISOString();
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const freezePath = resolve(process.env.WEFTMATE_APPROVAL_RUNTIME_MANIFEST ??
-  'D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/QuestionBridge-20261006-667eaa64-36c3-4583-a1f8-6508c6fb3781/Evidence/Merge-5b32e264-6d27-4490-930e-aabd17f61bfb/current-manifest.json');
+  'Y:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/QuestionBridge-20261006-667eaa64-36c3-4583-a1f8-6508c6fb3781/Evidence/Merge-5b32e264-6d27-4490-930e-aabd17f61bfb/current-manifest.json');
 const freeze = JSON.parse(readFileSync(freezePath, 'utf8'));
 const expectedRuntimeHashes = freeze.currentFiles ? Object.fromEntries(freeze.currentFiles.map((item) => [item.path, item.currentSha256])) : freeze.files;
 const runtimeHashes = Object.fromEntries(Object.keys(expectedRuntimeHashes).map((path) => [path, sha(readFileSync(join(repository, path)))]));
@@ -48,7 +48,7 @@ const clientPaths = ['src/personal-access-ui/app.js', 'src/personal-access-ui/st
   'tests/integration/personal-text-delivery-fixture.mjs'];
 const clientHashes = Object.fromEntries(clientPaths.map((path) => [path, sha(readFileSync(join(repository, path)))]));
 const mobileFreezePath = includeQuestions ? resolve(process.env.WEFTMATE_APPROVAL_MOBILE_MANIFEST ??
-  'D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Task15ApprovalClients-20261006-01a1112e/mobile/combined-information/implementation.json') : null;
+  'Y:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Task15ApprovalClients-20261006-01a1112e/mobile/combined-information/implementation.json') : null;
 const mobileFreeze = mobileFreezePath ? JSON.parse(readFileSync(mobileFreezePath, 'utf8')) : null;
 if (mobileFreeze) {
   for (const item of mobileFreeze.files) assert.equal(sha(readFileSync(join(repository, item.path))), item.sha256,
