@@ -150,7 +150,7 @@ async function scene(name, ready, capture = name) {
 try {
   await mkdir(out, { recursive: true });
   if (local) {
-    const orchestrator = 'D:/AIProjects/WeftMate/Runtime/Orchestrator';
+    const orchestrator = 'Y:/AIProjects/WeftMate/Runtime/Orchestrator';
     while (!heavy) {
       for (let slot = 1; slot <= 3; slot++) { try { heavy = await takeLock(join(orchestrator, `heavy-${slot}.lock`), 'native acceptance'); break; } catch (error) { if (error.code !== 'EEXIST') throw error; } }
       if (!heavy) { console.log('AND-3 waiting for a heavy slot'); await pause(120000); }

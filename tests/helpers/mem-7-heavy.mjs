@@ -10,7 +10,7 @@ commands.resume=[...commands.electron,'--resume'];
 commands.phone=['tests/integration/mem-7-system-bars.mjs'];
 commands.visual=['tests/integration/mem-7-final-ui.mjs'];
 if(!commands[phase])throw Error('Unknown MEM-7 heavy phase');
-const directory='D:/AIProjects/WeftMate/Runtime/Orchestrator';let lock,identity;
+const directory='Y:/AIProjects/WeftMate/Runtime/Orchestrator';let lock,identity;
 while(!lock){for(const n of [1,2,3]){const file=join(directory,`heavy-${n}.lock`);let handle;try{handle=await open(file,'wx');identity=`MEM-7 ${new Date().toISOString()} ${phase}`;await handle.writeFile(identity);await handle.close();lock=file;console.log(`MEM-7 acquired heavy-${n} for ${phase}`);break;}catch(e){await handle?.close();if(e.code!=='EEXIST')throw e;}}if(!lock){console.log(`MEM-7 waiting for a heavy slot: ${phase}`);await delay(120000);}}
 let output='',child,logWrites=Promise.resolve();
 try{

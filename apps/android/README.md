@@ -76,10 +76,10 @@ UI-2a 当前壳为 **0.8.3 / code16**：内置手机审批模式界面，新增�
 
 ## 构建
 
-在本机开发环境使用 `D:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1` 进程局部激活已安装的 JDK 17、Gradle 8.9 和 SDK 35，然后在本目录执行：
+在本机开发环境使用 `Y:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1` 进程局部激活已安装的 JDK 17、Gradle 8.9 和 SDK 35，然后在本目录执行：
 
 ```powershell
-. D:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1
+. Y:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1
 gradle --offline :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest --console=plain
 ```
 
@@ -165,7 +165,7 @@ MEM-2壳 **0.8.13 / code26** 增加临时对话业务路由 `/sessions/temporary
 在仓库根目录先构建独立 APK，再运行可重复的完整驱动：
 
 ```powershell
-. D:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1
+. Y:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1
 npm ci --prefix services/cloud --ignore-scripts --no-audit --no-fund
 gradle -p apps/android --offline '-PweftmateApplicationId=com.memoweft.weftmate.mobile.lg1bqa' :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest --console=plain
 node tests/integration/and-2-android.mjs

@@ -25,7 +25,7 @@ UI-2a：0.8.3 页面新增输入区五种审批模式、全部允许风险确认
 ## 开发与打包
 
 ```powershell
-cd D:/AIProjects/WeftMate/Repository/apps/mobile-ui
+cd Y:/AIProjects/WeftMate/Repository/apps/mobile-ui
 npm ci
 npm run build
 npm run check

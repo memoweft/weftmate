@@ -23,7 +23,7 @@ npm run dist:win
 
 # 可辨识 Windows 候选；输出与暂存都使用明确隔离目录
 $candidateVersion = '0.1.0-preview.1'
-$candidateRoot = Join-Path 'D:\AIProjects\WeftMate\Runtime\Candidates' $candidateVersion
+$candidateRoot = Join-Path 'Y:\AIProjects\WeftMate\Runtime\Candidates' $candidateVersion
 npm run dist:win:candidate -- `
   --version $candidateVersion `
   --output-dir (Join-Path $candidateRoot 'build') `
@@ -65,7 +65,7 @@ Windows 新检出应在 checkout（源码检出）前关闭 `core.autocrlf`，�
 
 脚本在独立 clone 中设置 `core.autocrlf=false`；补丁若被 Windows 检出为 CRLF（双字符换行），仅将送入 `git apply` 与哈希计算的内容转成 LF，不修改仓库补丁文件。`VENDOR-MANIFEST.json.runtimeIdentity` 记录固定提交、版本、排序后的全部补丁文件名与各自 SHA-256（内容哈希），并以文件名和规范化为 LF 后的完整字节计算总补丁哈希；不同工作树的换行配置不会导致重复编译。校验发现缺身份或与当前 pin / 补丁不一致，明确报「运行时过期」，本机 `vendor` 测试失败并提示 `npm run vendor:dsh`；夜间先运行该命令重建。
 
-Windows 缓存默认位于 `D:\AIProjects\WeftMate\Worktrees\_shared\dsh-runtime-<commit12>-<patchhash16>`；可用 `WEFTMATE_DSH_CACHE_ROOT` 指定共享父目录，其它环境默认使用仓库 `.local/dsh-cache`。相同提交与补丁只编译一次，完成装配后才发布缓存，各工作树通过联接复用。构建中的同一身份由相邻 `.lock` 文件互斥；异常中断留下的锁须确认该构建进程已退出后才删除并重跑。正常失败会清理独立构建目录和锁。旧的 `…-p3` 缓存缺少可验证的完整补丁身份，不能凭名字自动认定有效或补签；保留旧目录，运行上述命令生成新缓存并接管工作树 vendor 联接。
+Windows 缓存默认位于 `Y:\AIProjects\WeftMate\Worktrees\_shared\dsh-runtime-<commit12>-<patchhash16>`；可用 `WEFTMATE_DSH_CACHE_ROOT` 指定共享父目录，其它环境默认使用仓库 `.local/dsh-cache`。相同提交与补丁只编译一次，完成装配后才发布缓存，各工作树通过联接复用。构建中的同一身份由相邻 `.lock` 文件互斥；异常中断留下的锁须确认该构建进程已退出后才删除并重跑。正常失败会清理独立构建目录和锁。旧的 `…-p3` 缓存缺少可验证的完整补丁身份，不能凭名字自动认定有效或补签；保留旧目录，运行上述命令生成新缓存并接管工作树 vendor 联接。
 
 ## 包内容中的构建身份
 

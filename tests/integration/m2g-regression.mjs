@@ -11,7 +11,7 @@ const option = (name, fallback) => process.argv.includes(name) ? process.argv[pr
 const out = resolve(option('--out', evidencePath('m2g/regression')));
 const core = resolve((option('--memory-core-source') ?? requireMemoWeftPath('source')));
 const repository = resolve(import.meta.dirname, '../..');
-const lock = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock', token = `M2g regression ${randomUUID()}`;
+const lock = 'Y:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock', token = `M2g regression ${randomUUID()}`;
 const pause = ms => new Promise(r => setTimeout(r, ms)), exec = promisify(execFile);
 mkdirSync(out, { recursive: true });
 const privateValues = [];

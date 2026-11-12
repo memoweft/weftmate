@@ -1,7 +1,7 @@
 param([ValidateSet('gradle','required','vendor','mobile')][string]$Mode='gradle')
 $ErrorActionPreference='Stop'
 $repo=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$orchestrator='D:\AIProjects\WeftMate\Runtime\Orchestrator'
+$orchestrator='Y:\AIProjects\WeftMate\Runtime\Orchestrator'
 $owned=$null
 while(-not $owned) {
     $busy=Get-ChildItem -LiteralPath $orchestrator -Filter 'heavy-*.lock' | Where-Object { (Get-Content -LiteralPath $_.FullName -Raw -ErrorAction SilentlyContinue) -like 'AND-7*' }
@@ -20,7 +20,7 @@ try {
     }
     $log=Join-Path $repo ".local/and-7/$Mode.txt"
     if($Mode -eq 'gradle') {
-        . 'D:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1'
+        . 'Y:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1'
         # Windows PowerShell treats harmless native stderr as NativeCommandError.
         # The process exit code, rather than an SDK metadata warning, decides success.
         $ErrorActionPreference='Continue'

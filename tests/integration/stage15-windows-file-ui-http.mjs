@@ -7,7 +7,7 @@ if (process.env.WEFTMATE_STAGE15_WINDOWS_FILE_HTTP !== '1') {
   throw new Error('Explicit isolated Windows file HTTP verification only.');
 }
 
-const evidenceRoot = 'D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/Attachments';
+const evidenceRoot = 'Y:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/Attachments';
 const fixture = JSON.parse(readFileSync(`${evidenceRoot}/private-stage15-windows-file-ui.json`, 'utf8'));
 const origin = new URL(fixture.origin).origin;
 const login = await fetch(`${origin}/personal/v1/auth/login`, { method: 'POST', headers: {

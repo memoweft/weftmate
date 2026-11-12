@@ -11,7 +11,7 @@ import { join, sep } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 
 if (process.env.WEFTMATE_STAGE15_FILE_UI_SERVE !== '1') throw new Error('Explicit file UI fixture only.');
-const evidenceRoot = 'D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/Attachments';
+const evidenceRoot = 'Y:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005/Attachments';
 const candidate = join(evidenceRoot, 'DesktopUiCandidate');
 const candidateAssets = ['index.html', 'app.js', 'styles.css', 'file-sha256.js',
   'vendor/noble-hashes-2.3.0/sha2.js', 'vendor/noble-hashes-2.3.0/_md.js',

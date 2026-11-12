@@ -24,7 +24,7 @@ M1-3 长任务单独运行 `node tests/integration/personal-long-task.mjs --lan`
 
 **runner 必须与宿主在同一台机器运行**，因为测试文件由 runner 写进这台机器的系统临时目录，检查也读取这些临时文件。`--host` 是宿主的 origin，不带 `/personal/v1`。跨端场景需要真人拿手机验收，自动运行只列为「需人工」。
 
-在仓库根目录打开 PowerShell。选择全新的隔离数据目录，绝不用 `D:\AIProjects\WeftMate\Runtime`，也不复用日用账号、模型密钥文件、记忆服务数据或联系人。宿主启动脚本需要的 DSH vendor 由 Windows 正常开发环境提供；本评测不生成 vendor。
+在仓库根目录打开 PowerShell。选择全新的隔离数据目录，绝不用 `Y:\AIProjects\WeftMate\Runtime`，也不复用日用账号、模型密钥文件、记忆服务数据或联系人。宿主启动脚本需要的 DSH vendor 由 Windows 正常开发环境提供；本评测不生成 vendor。
 
 ```powershell
 $evalRoot = Join-Path $env:TEMP ("weftmate-eval-host-" + [guid]::NewGuid())

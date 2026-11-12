@@ -11,7 +11,7 @@ import {readMuMuInfo,adbExecutable} from '../../scripts/nightly/mumu.mjs';
 import {startProgressFixture} from '../fixtures/fix-36/fixture.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 const execute=promisify(execFile),repo=resolve(import.meta.dirname,'../..'),out=evidencePath('fix-36');
-const locks='D:/AIProjects/WeftMate/Runtime/Orchestrator',pkg='com.memoweft.weftmate.mobile.fix36qa';
+const locks='Y:/AIProjects/WeftMate/Runtime/Orchestrator',pkg='com.memoweft.weftmate.mobile.fix36qa';
 const desktopOnly=process.argv.includes('--desktop-only');
 let heavy,mumu,serial,fixture,port,installed=false,app,profile;
 const report={synthetic:true,package:pkg,modelRequests:0,checks:[],cleanup:[]};

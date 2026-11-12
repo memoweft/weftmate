@@ -31,7 +31,7 @@ const owner = `owner-${randomUUID()}`, start = performance.now(), events = [], r
 const save = () => writeFileSync(join(out,'timeline.json'),safe(JSON.stringify({model,single,root,core,startedAt:Date.now()-Math.round(performance.now()-start),events,requests},null,2))+'\n');
 const stamp = (phase,data={}) => {const row={ms:Math.round(performance.now()-start),phase,...data};events.push(row);save();return row;};
 const pause = ms=>new Promise(resolve=>setTimeout(resolve,ms));
-const lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock', lockToken=`MF-1 timeline ${randomUUID()}`;
+const lock='Y:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock', lockToken=`MF-1 timeline ${randomUUID()}`;
 let lockTimer, locked=false, manager, scheduler, interrupted=false, chatComplete;
 if(model==='lan') {const fd=openSync(lock,'wx');try{writeFileSync(fd,lockToken+' '+new Date().toISOString());}finally{closeSync(fd);}locked=true;lockTimer=setInterval(()=>{if(readFileSync(lock,'utf8').startsWith(lockToken))utimesSync(lock,new Date(),new Date());},60000);}
 const server = createServer(async(req,res)=>{

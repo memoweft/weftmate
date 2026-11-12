@@ -8,7 +8,7 @@ import { readMuMuInfo, adbExecutable } from '../../scripts/nightly/mumu.mjs';
 const { startComposerFixture }=await import('../fixtures/and-12/fixture.mjs');
 const execute=promisify(execFile),repo=resolve(import.meta.dirname,'../..');
 const out=evidencePath('and-12');
-const locks='D:/AIProjects/WeftMate/Runtime/Orchestrator';
+const locks='Y:/AIProjects/WeftMate/Runtime/Orchestrator';
 const pkg='com.memoweft.weftmate.mobile.and12qa';
 const testIme=process.argv.includes('--test-ime');
 let heavy,mumu,serial,fixture,port,installed=false,imeBefore;

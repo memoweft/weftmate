@@ -12,7 +12,7 @@ import { randomUUID } from 'node:crypto';
 const option = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : fallback;
 const out = resolve(option('--out', evidencePath('pf-1b/memory-performance')));
 const core = resolve((option('--memory-core-source') ?? requireMemoWeftPath('source')));
-const lock = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';
+const lock = 'Y:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';
 const token = `PF-1b memory/performance ${randomUUID()}`;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const exec = promisify(execFile);

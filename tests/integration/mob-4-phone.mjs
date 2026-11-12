@@ -21,7 +21,7 @@ const cleanups = []; let cloud, gate, browser, page, host, serial, probe, forwar
 const pause = ms => new Promise(done => setTimeout(done, ms));
 async function until(fn, label, timeout = 45000) { const end = Math.min(Date.now() + timeout, ownershipStarted ? ownershipStarted + 19*60000 : Infinity); while (Date.now() < end) { try { const value = await fn(); if (value) return value; } catch {} await pause(200); } throw Error(label); }
 const run = (...args) => execute(adb, [...adbServer,'-s', serial, ...args]);
-async function acquireLock(name,label){const path='D:/AIProjects/WeftMate/Runtime/Orchestrator/'+name;try{const fd=openSync(path,'wx');writeFileSync(fd,`AND-4 integrate ${new Date().toISOString()} ${label}`);closeSync(fd);return path;}catch(e){if(e.code==='EEXIST')return null;throw e;}}
+async function acquireLock(name,label){const path='Y:/AIProjects/WeftMate/Runtime/Orchestrator/'+name;try{const fd=openSync(path,'wx');writeFileSync(fd,`AND-4 integrate ${new Date().toISOString()} ${label}`);closeSync(fd);return path;}catch(e){if(e.code==='EEXIST')return null;throw e;}}
 async function ui(action,p={}){
   const id=crypto.randomUUID(),data=JSON.stringify({id,action,...p});
   execFileSync(adb,[...adbServer,'-s',serial,'shell','run-as',pkg,'sh','-c',"'cat > files/mob4-command.json'"],{input:data,windowsHide:true,timeout:10000});

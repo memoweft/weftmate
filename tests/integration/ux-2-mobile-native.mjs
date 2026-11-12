@@ -32,7 +32,7 @@ const temp = managedMkdtempSync(join(managedTempRoot(), 'weftmate-ux-2-mobile-')
 const report = { realAndroid: true, syntheticAccount: true, syntheticHost: 'synthetic-host', modelRequests: 0, packageName: pkg,
   initialEmulatorRunning: true, emulatorCreatedByThisPackage: false, records: [], checks: [], cleanup: {} };
 report.alternateEmulatorAvailability = [
-  { kind: 'portable-sdk', emulator: 'D:/AIProjects/AIGame/Repository/runtime/toolchains/android-sdk/emulator/emulator.exe', avds: 'D:/AIProjects/AIGame/Repository/runtime/toolchains/android-user-home/avd' },
+  { kind: 'portable-sdk', emulator: 'Y:/AIProjects/AIGame/Repository/runtime/toolchains/android-sdk/emulator/emulator.exe', avds: 'Y:/AIProjects/AIGame/Repository/runtime/toolchains/android-user-home/avd' },
   { kind: 'standard-local-sdk', emulator: join(process.env.LOCALAPPDATA || '', 'Android/Sdk/emulator/emulator.exe'), avds: join(process.env.USERPROFILE || '', '.android/avd') },
 ].map(({ kind, emulator, avds }) => ({ kind, emulatorInstalled: existsSync(emulator), avdDirectoryExists: existsSync(avds),
   avdIniCount: existsSync(avds) ? readdirSync(avds).filter(name => name.endsWith('.ini')).length : 0 }));
@@ -89,7 +89,7 @@ async function build() {
   const init = join(temp, 'probe.gradle'), buildDir = join(temp, 'build').replaceAll('\\', '/');
   writeFileSync(init, `gradle.beforeProject { app -> if(app.path==':app') { app.buildDir=file('${buildDir}');app.afterEvaluate { app.android.sourceSets.androidTest.java.setSrcDirs(['${source.replaceAll('\\', '/')}']) } } }\n`);
   const script = join(temp, 'build.ps1');
-  writeFileSync(script, `. D:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1\ngradle --offline --project-cache-dir '${join(temp, 'gradle-cache')}' -I '${init}' '-PweftmateApplicationId=${pkg}' :app:assembleDebug :app:assembleDebugAndroidTest --console=plain --no-daemon\nexit $LASTEXITCODE\n`);
+  writeFileSync(script, `. Y:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1\ngradle --offline --project-cache-dir '${join(temp, 'gradle-cache')}' -I '${init}' '-PweftmateApplicationId=${pkg}' :app:assembleDebug :app:assembleDebugAndroidTest --console=plain --no-daemon\nexit $LASTEXITCODE\n`);
   const child = spawn('pwsh', ['-NoProfile', '-File', script], { cwd: join(root, 'apps/android'), windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   let output = ''; child.stdout.on('data', value => { output += value; }); child.stderr.on('data', value => { output += value; });
   const code = await new Promise(done => child.on('exit', done));

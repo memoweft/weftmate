@@ -13,7 +13,7 @@ let lock, fixture, profile, app;
 const checks = [], errors = [];
 try {
   for (let index = 1; index <= 3; index++) {
-    const path = `D:/AIProjects/WeftMate/Runtime/Orchestrator/heavy-${index}.lock`;
+    const path = `Y:/AIProjects/WeftMate/Runtime/Orchestrator/heavy-${index}.lock`;
     try { const file = await open(path, 'wx'); await file.writeFile(`UX-2 ${new Date().toISOString()} dialog Electron`); await file.close(); lock = path; break; } catch (error) { if (error.code !== 'EEXIST') throw error; }
   }
   if (!lock) throw Error('No heavy slot available; retry later');
