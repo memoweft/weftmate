@@ -227,6 +227,7 @@
             signal:record.signal ?? step.signal, exitCode:record.exitCode ?? step.exitCode } : step;
     }
     function interruptionFromDetail(text, step) {
+        if (step && executionState(step) === 'completed' && step.toolName && !['pwsh','bash','shell','run_code'].includes(step.toolName)) return false;
         return executionResultState(text) === 'cancelled';
     }
     function turnOutcome(events, taskId, stopView) {
