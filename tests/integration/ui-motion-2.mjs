@@ -161,13 +161,18 @@ try{
       await page.waitForFunction(()=>!testCore.library.loading&&testCore.library.time==='7');
       check(`${theme}: library time filter committed`,await page.locator('select[aria-label="按时间筛选"]').inputValue()==='7');
       await page.evaluate(()=>{
-        globalThis.motion2LibraryApi=testCore.accessApi;globalThis.motion2LibraryReads=[];
-        testCore.accessApi=path=>path.startsWith('/library?')?new Promise(resolve=>motion2LibraryReads.push({path,resolve})):motion2LibraryApi(path);
+        globalThis.motion2LibraryApi=testCore.accessApi;globalThis.motion2LibraryReads={};
+        testCore.accessApi=path=>{
+          const type=path.startsWith('/library?')?new URLSearchParams(path.split('?')[1]).get('type'):null;
+          if(type!=='code'&&type!=='image')return motion2LibraryApi(path);
+          if(!motion2LibraryReads[type]){const read={};read.promise=new Promise(resolve=>{read.resolve=resolve;});motion2LibraryReads[type]=read;}
+          return motion2LibraryReads[type].promise;
+        };
       });
       await page.locator('.library-type[data-type="code"]').click();await page.locator('.library-type[data-type="image"]').click();
-      await page.waitForFunction(()=>motion2LibraryReads.length===2);
-      await page.evaluate(()=>motion2LibraryReads[1].resolve({items:[],projects:[],total:0,nextCursor:null}));await page.waitForFunction(()=>!testCore.library.loading);
-      await page.evaluate(()=>motion2LibraryReads[0].resolve({items:[],projects:[],total:99,nextCursor:null}));await page.waitForTimeout(40);
+      await page.waitForFunction(()=>motion2LibraryReads.code&&motion2LibraryReads.image);
+      await page.evaluate(()=>motion2LibraryReads.image.resolve({items:[],projects:[],total:0,nextCursor:null}));await page.waitForFunction(()=>!testCore.library.loading);
+      await page.evaluate(()=>motion2LibraryReads.code.resolve({items:[],projects:[],total:99,nextCursor:null}));await page.waitForTimeout(40);
       check(`${theme}: late filter response stays with its original request`,await page.evaluate(()=>testCore.library.type==='image'&&testCore.library.total===0));
       await page.evaluate(()=>{testCore.accessApi=motion2LibraryApi;});
       await page.locator('.health-entry').click();await page.locator('.health-surface').waitFor({state:'visible'});
