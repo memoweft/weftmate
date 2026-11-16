@@ -91,7 +91,7 @@ export function createCommandOperations(context) {
       try {
         if (pending.payload.projectId) {
           const project = context.accountState(ownerId).projects[pending.payload.projectId];
-          const inspected = await inspectProjectRoot(project.rootPath);
+          const inspected = await (context.projectRootInspector ?? inspectProjectRoot)(project.rootPath);
           if (inspected.rootIdentity !== project.rootIdentity || inspected.rootFinalPath !== project.rootFinalPath)
             throw failure('PROJECT_ROOT_CHANGED', 409);
         }
