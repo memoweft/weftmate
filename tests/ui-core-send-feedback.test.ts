@@ -21,7 +21,7 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
   const environment = { fetch: async (path: string, options: any = {}) => { requests.push({ path, options }); return read(path, options) }, storage,
     crypto: { randomUUID: () => `00000000-0000-4000-8000-${String(++counter).padStart(12, '0')}` } }
   const context = { AbortController, AbortSignal, URL, URLSearchParams, TextEncoder, Blob, DOMException, Intl, setTimeout, clearTimeout, setInterval, clearInterval }
-  runInNewContext(source, context)
+  runInNewContext(source + '\n;' + readFileSync(new URL('../src/ui-core/adapters/mobile.js', import.meta.url), 'utf8'), context)
   const api = (context as any).WeftUiCore, core = api.create({ effects, ...environment })
   Object.assign(core.state, { csrfToken: 'synthetic-csrf', account: { ownerId: 'owner-test', username: 'Synthetic' }, ownerId: 'owner-test', device: { id: 'device-test' }, hostId: 'host-test', online: true,
     currentView: 'assistant', selectedSessionId: 'session-test', models: [{ id: 'local', name: '合成模型', configured: true }], modelProfileId: 'local', sessions: [{ sessionId: 'session-test', running: false, sendAvailable: true }], capabilities: { chat: { available: true } } })
@@ -143,7 +143,7 @@ test('a busy conversation accepts only its first click and sends the captured te
    core.state[flag]={};const first=await core.sendDraft('先发这条');
    assert.equal(first.waiting,true,flag);assert.equal(core.composerState('下一条草稿').sendDisabled,true);
    await core.sendDraft('下一条草稿');assert.equal(sent.length,0);
-   core.state[flag]=null;core.composerState('下一条草稿');core.composerState('下一条草稿');
+   core.state[flag]=null;core.refreshHeld();core.refreshHeld();
    await new Promise(done=>setImmediate(done));
    assert.deepEqual(sent.map(r=>[r.fields.text,r.session,r.id]),[['先发这条','session-test',first.requestId]],flag);
  }
@@ -159,7 +159,7 @@ test('a delayed model save that fails, or a changed account, device, session or 
    if(change==='host')c.state.hostId='other-host';
    if(change==='session'){c.state.selectedSessionId='other-session';c.state.sessions=[];}
    if(change==='offline')c.state.online=false;
-   c.composerState('');finish(change==='save failed'?response({},500):response({enabled:true}));await save;
+   c.refreshHeld();finish(change==='save failed'?response({},500):response({enabled:true}));await save;
    let slot=c.heldDraft();if(change==='owner'){assert.equal(slot,undefined);c.state.ownerId='owner-test';slot=c.heldDraft();}
    assert.equal(slot.waiting,false,change);assert.equal(slot.text,'可取回');
    assert.equal(f.requests.some(r=>r.options.method==='POST'),false);
@@ -181,9 +181,9 @@ test('two open conversations keep separate slots and release only to their origi
  const sent:any[]=[];c.submitCommand=async(_kind,fields,_session,id)=>{sent.push([fields.sessionId,fields.text,id]);};
  c.state.submitting=true;const a=await c.sendDraft('第一段');c.state.selectedSessionId='second';
  assert.equal(c.heldDraft(),undefined);const b=await c.sendDraft('第二段');
- c.state.submitting=false;c.composerState('');await new Promise(done=>setImmediate(done));
+ c.state.submitting=false;c.refreshHeld();await new Promise(done=>setImmediate(done));
  assert.deepEqual(sent,[['second','第二段',b.requestId]]);
- c.state.selectedSessionId='session-test';c.composerState('');await new Promise(done=>setImmediate(done));
+ c.state.selectedSessionId='session-test';c.refreshHeld();await new Promise(done=>setImmediate(done));
  assert.deepEqual(sent,[['second','第二段',b.requestId],['session-test','第一段',a.requestId]]);
 });
 
@@ -198,4 +198,59 @@ test('a click during selection keeps the visible draft with the conversation it 
  finish();await changing;c.composerState('');await new Promise(done=>setImmediate(done));assert.equal(sent.length,0);
  await c.selectSession('session-test');c.composerState('');await new Promise(done=>setImmediate(done));
  assert.deepEqual(sent,[['session-test','先前对话输入的文字',first.requestId]]);
+});
+
+
+test('composer reads never release or invalidate held drafts; explicit actions do', async () => {
+  const {core:c,paints}=fixture(), sent:any[]=[];
+  c.submitCommand=async(...args)=>{sent.push(args);};
+  c.state.submitting=true;await c.sendDraft('纯读取草稿');
+  c.state.submitting=false;
+  const before=JSON.stringify(c.state), painted=paints.length;
+  for(let i=0;i<3;i++){assert.equal(c.heldDraft().waiting,true);c.composerState('');}
+  await new Promise(done=>setImmediate(done));
+  assert.equal(JSON.stringify(c.state),before);assert.equal(paints.length,painted);assert.equal(sent.length,0);
+  c.refreshHeld();c.refreshHeld();await new Promise(done=>setImmediate(done));assert.equal(sent.length,1);
+
+  const f=fixture();f.core.state.submitting=true;await f.core.sendDraft('离线保留');
+  f.core.state.online=false;
+  f.core.composerState('');assert.equal(f.core.heldDraft().waiting,true);
+  f.core.setOnline(false);assert.equal(f.core.heldDraft().waiting,false);
+});
+
+test('mobile adapter wraps the shared blocker and preserves gateway messages', async () => {
+  const f=fixture(),state:any={loggedIn:true};
+  f.api.factories.mobile(f.core,f.effects,{...f.environment,mobileState:state});
+  for(const [flag,reason] of [
+    ['transitionPending','正在恢复账号与对话，消息仍在草稿里。'],
+    ['restorePending','正在恢复账号与对话，消息仍在草稿里。'],
+    ['modelSwitching','正在切换模型，消息仍在草稿里。'],
+    ['sharedOutboxLoading','手机的原请求仍在核对，消息仍在草稿里。'],
+    ['sharedPending','手机的原请求仍在核对，消息仍在草稿里。'],
+    ['linkedPending','手机的原请求仍在核对，消息仍在草稿里。']]){
+    state[flag]=true;assert.equal(f.core.sendBlocker('草稿'),reason);
+    assert.equal(f.core.composerState('草稿').sendDisabled,true);
+    assert.equal((await f.core.sendDraft('草稿')).reason,reason);state[flag]=false;
+  }
+  state.loggedIn=false;assert.equal(f.core.sendBlocker('草稿'),'请先登录，再发送消息。');
+  state.loggedIn=true;assert.equal(f.core.sendBlocker('草稿'),'');
+  assert.equal(f.requests.length,0);
+  const native=fixture();native.api.factories.mobile(native.core,native.effects,{...native.environment,mobileState:{loggedIn:true,transitionPending:true},nativeMobile:true});
+  assert.equal(native.core.sendBlocker('草稿'),'');
+});
+
+
+test('scoped approval and upload locks only hold their own conversation', async () => {
+  for(const [flag,scope] of [
+    ['approvalModeSaving',{sessionId:'other'}],
+    ['approvalModeSaving',{chatId:'other'}],
+    ['approvalModeSaving',{draftId:'other'}],
+    ['attachmentUpload',{key:'other'}]
+  ] as const){
+    const {core:c}=fixture();c.state[flag]=scope;
+    assert.equal(c.composerState('draft').mayHold,false);
+    c.state[flag]=flag==='attachmentUpload'?{key:c.attachmentDraftKey()}:{sessionId:c.state.selectedSessionId};
+    assert.equal(c.composerState('draft').mayHold,true);
+    c.state[flag]={};assert.equal(c.composerState('draft').mayHold,true);
+  }
 });

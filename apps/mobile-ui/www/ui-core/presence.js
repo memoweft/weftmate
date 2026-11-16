@@ -55,7 +55,7 @@
             else if (['host_offline','network_unavailable'].includes(view.kind) || view.kind === 'connecting' && view.failures > 0) needsRecovery = true;
             core.state.connection = view; core.state.online = view.kind === 'online';
             if (environment.mobileState) environment.mobileState.sharedHostAvailable = core.state.online;
-            effects.paintPresence?.(view); effects.paintConnection?.(core.state.online); effects.updateAvailability?.();
+            effects.paintPresence?.(view); effects.paintConnection?.(core.state.online); core.refreshHeld?.(); effects.updateAvailability?.();
             for (const listener of listeners) listener(view);
         } });
         core.state.connection = model.view();
