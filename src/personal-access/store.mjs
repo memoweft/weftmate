@@ -8,7 +8,7 @@ import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { executionProject } from './work-and-chat.mjs';
 import { randomUUID } from 'node:crypto';
 import { open, rm } from 'node:fs/promises';
-import { ensurePrivateFile, forgetPrivateFile, openPrivateFile, renamePrivateFile } from '../private-host-storage.mjs';
+import { forgetPrivateFile, openPrivateFile, renamePrivateFile } from '../private-host-storage.mjs';
 import { canonicalAccountBaseUrl, digest, failure, plainObject, validId, validProjectName, validTime } from './common.mjs';
 import path from 'node:path';
 import { erasurePhase } from '../personal-data/diagnostics.mjs';
@@ -66,7 +66,6 @@ async function durableWriteImpl(file, state, shouldCommit) {
     await handle.sync();
     await handle.close();
     handle = undefined;
-    await ensurePrivateFile(tmp);
     for (let attempt = 0; ; attempt++) {
       if (!shouldCommit()) throw failure('SERVICE_CLOSING', 503);
       try { await renamePrivateFile(tmp, file); break; }
@@ -75,7 +74,6 @@ async function durableWriteImpl(file, state, shouldCommit) {
         await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
       }
     }
-    await ensurePrivateFile(file);
     // Directory fsync is not supported by all Windows filesystems. The file itself
     // is flushed before the atomic replacement; unsupported directory sync is benign.
     if (process.platform !== 'win32') {

@@ -281,6 +281,8 @@ test('store write failure refuses acceptance before backend side effects', async
       { requestId: 'write-fail', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'local' })
     assert.equal(response.status, 503)
     assert.equal(f.calls.create, 0)
+    assert.equal((await request(origin, token, 'GET', '/personal/v1/commands/by-request/write-fail')).status, 404)
+    assert.deepEqual((await request(origin, token, 'GET', '/personal/v1/sessions')).body.sessions, [])
     const status = await request(origin, token, 'GET', '/personal/v1/status')
     assert.equal(status.body.state, 'storage_fault')
     assert.equal(status.body.errorCode, 'STORAGE_UNAVAILABLE')
