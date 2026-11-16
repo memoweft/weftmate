@@ -795,13 +795,16 @@ test('UI-3 stale cancellation cannot populate another account or conversation', 
   assert.equal(await pending, false); assert.equal(f.core.taskQueue()[0].state, 'queued')
 })
 
-test('UI-3 stop targets the current root and leaves the later queue untouched', async () => {
-  const f = fixture(() => response({ task: {} }, 202))
+test('UI-3 stop uses session.cancel and leaves the later queue untouched', async () => {
+  const f = fixture(() => response({ command: {kind:'session.cancel',state:'accepted_by_dsh',sessionId:'session-test'} }, 202))
+  f.core.lookupRequest = async () => {}; f.core.refreshTasks = async () => {}
   f.core.state.sessions[0].running = true
   f.core.state.historyEvents.set(1, { seq: 1, type: 'task.started', data: { taskId: 'current-root' } })
   f.core.state.historyEvents.set(2, { seq: 2, type: 'task.queued', data: { taskId: 'next-root', text: '下一件事' } })
   await f.core.stopCurrentTurn()
-  assert.ok(f.requests[0].path.endsWith('/tasks/current-root/stop'))
+  assert.ok(f.requests[0].path.endsWith('/commands'))
+  assert.equal(JSON.parse(f.requests[0].options.body).kind, 'session.cancel')
+  assert.equal(JSON.parse(f.requests[0].options.body).sessionId, 'session-test')
   assert.equal(f.core.taskQueue()[1].state, 'queued')
 })
 
@@ -1105,6 +1108,7 @@ test('FIX-8 new desktop drafts clear phone selection, pagination and late handof
 test('FIX-8 stop notices count only the current conversation queued messages and confirm fallback receipts', async () => {
   for(const count of [0,2]){
     const f=fixture();f.core.state.sessions[0].running=true;
+    f.core.submitCommand=async(kind,fields,session)=>{assert.equal(kind,'session.cancel');assert.deepEqual(plain(fields),{sessionId:'session-test'});assert.equal(session,'session-test');return {state:'accepted_by_dsh'};};
     f.core.state.historyEvents.set(1,{seq:1,type:'task.started',data:{taskId:'current-root'}});
     for(let n=0;n<count;n++)f.core.state.historyEvents.set(n+2,{seq:n+2,type:'task.queued',data:{taskId:`queue-${n}`}});
     f.core.state.historyEvents.set(9,{seq:9,type:'task.queued',data:{taskId:'cancelled-root'}});
@@ -1215,3 +1219,24 @@ test('execution states and details recognize timeouts, signals and failed exits'
   assert.equal(api.interruptionFromDetail('\u547d\u4ee4\u6267\u884c\u8d85\u65f6', { state: 'completed' }), true)
   assert.equal(api.interruptionFromDetail('normal output', { state: 'failed' }), false)
 })
+
+for (const mode of ['streaming', 'logical', 'legacy']) test('conversation facts task polling: ' + mode, async () => {
+  const f=fixture(path=>response(path.includes('/commands')?{commands:[{kind:'session.message',commandId:'root-test',sessionId:'session-test'}],hasMore:false,nextBefore:null}:{}));
+  f.core.state.personalCapabilities={replyStreaming:mode==='streaming'?1:0};
+  f.core.inLogicalTimeline=()=>mode==='logical';
+  f.core.state.tasks=[{kind:'session.message',commandId:'root-test',sessionId:'session-test'}];
+  f.core.refreshConversationApprovals=async()=>{};f.core.refreshConversationQuestions=async()=>{};
+  let usage=0;f.core.refreshUsageBudget=async()=>{usage++};
+  await f.core.refreshConversationFacts();
+  await f.core.refreshConversationTasks();
+  assert.equal(f.requests.some(r=>r.path.includes('/commands')),mode==='legacy');
+  assert.equal(f.requests.some(r=>r.path.endsWith('/tasks/root-test')),mode==='legacy');
+  assert.equal(usage,1);
+});
+
+test('submitCommand defaults session.message intent to queue', async () => {
+  const f=fixture(()=>response({command:{kind:'session.message',state:'accepted_by_dsh',sessionId:'session-test'}}));
+  f.core.lookupRequest=async()=>{};f.core.refreshTasks=async()=>{};
+  await f.core.submitCommand('session.message',{sessionId:'session-test',text:'queued'},'session-test');
+  assert.equal(JSON.parse(f.requests[0].options.body).intent,'queue');
+});

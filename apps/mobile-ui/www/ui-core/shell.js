@@ -105,8 +105,10 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         factsScope = scope; factsSignature = signature;
         const owned={scope};
         owned.promise = (async () => {
-            await core.refreshTasks(false, false);
-            if (core.conversationTaskCurrent(context)) await core.refreshConversationTasks();
+            if (!(core.state.personalCapabilities?.replyStreaming === 1 || core.inLogicalTimeline?.())) {
+                await core.refreshTasks(false, false);
+                if (core.conversationTaskCurrent(context)) await core.refreshConversationTasks();
+            }
             if (core.conversationTaskCurrent(context) && core.state.turnStatus !== 'running') void core.refreshUsageBudget?.();
         })().catch(() => { if (factsScope === scope) factsSignature = null; }).finally(() => { if(factsRead===owned)factsRead = null; });
         factsRead=owned;return owned.promise;

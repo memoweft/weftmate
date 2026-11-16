@@ -189,13 +189,14 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
         const key = JSON.stringify(context);
         if (core.conversationTasks.inFlight?.key === key)
             return core.conversationTasks.inFlight.promise;
-        const roots = core.state.tasks.filter((row) => row?.kind === 'session.message' && !row.rootTaskId &&
+        const streaming = core.state.personalCapabilities?.replyStreaming === 1 || core.inLogicalTimeline?.();
+        const roots = streaming ? [] : core.state.tasks.filter((row) => row?.kind === 'session.message' && !row.rootTaskId &&
             row.sessionId === context.sessionId && core.sessionIdPattern.test(row.commandId || '') &&
             (!row.conversationId || row.conversationId === context.conversationId)).slice(0, 8);
         const run = async () => {
             await Promise.all([core.refreshConversationApprovals({ ...context, deviceId: core.state.device?.id }),
                 core.refreshConversationQuestions({ ...context, deviceId: core.state.device?.id })]);
-            if (!core.conversationTaskCurrent(context))
+            if (!core.conversationTaskCurrent(context) || streaming)
                 return;
             const receipts = new Set(core.timelineEventsForContext(context).filter(event => event.type === 'user.message').map(event => event.data?.receiptId).filter(Boolean));
             for (const entry of core.conversationApprovals.entries.values())
