@@ -22,17 +22,17 @@ class NativeRouteTest {
         flags += setOf("calendar", "away", "goal", "feed")
         assertEquals(BackAction.ToChat, nativeBack("chats", state))
         assertEquals(BackAction.Settings, nativeBack("models", state))
-        assertEquals(BackAction.CloseFeedWeb, nativeBack("activity-web", state))
+        assertEquals(BackAction.Page, nativeBack("native", state))
         assertEquals(BackAction.Leave, nativeBack("chat", state))
         assertEquals(BackAction.ToChat, nativeBack("help", state))
     }
 
-    @Test fun subPagesLightTheirParentTabAndUnknownPagesStayEmbedded() {
+    @Test fun unknownRoutesCannotEscapeToAVisibleWebPage() {
         assertEquals("chat", nativeRoute("chats").tab)
-        assertEquals("activity", nativeRoute("activity-web").tab)
-        assertEquals(null, nativeRoute("help").tab)
+        assertEquals(RouteBar.Page, nativeRoute("native").bar)
+        assertEquals(false, nativeRoute("native").bottomBar)
         val unknown = nativeRoute("backup")
-        assertEquals("backup", unknown.web)
+        assertEquals("chat", unknown.id)
         assertEquals(RouteBar.Main, unknown.bar)
     }
 }

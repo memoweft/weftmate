@@ -216,6 +216,17 @@
       launcher.addEventListener('click', open);
       core.openOfflineMode = open;
       core.offlineWorkReady = () => engine?.view().taskReady === true;
+      core.nativeOffline = {
+        view: () => ({...engine?.view(), hostId:identity?.hostId, conversationId:selected}),
+        refresh: tick,
+        async submit(text, hostId, conversationId) {
+          if(!engine?.view().taskReady)throw Error('请先在线连接电脑一次，再留下离线任务。');
+          if(!text?.trim()||text.length>8192)throw Error('请填写 1–8,192 字的任务。');
+          await engine.submitTask(text,conversationId||null,hostId||identity.hostId);
+        },
+        retry: id => engine?.retryTask(id),
+        cancel: id => goalsCore.cancelOfflineTask(id),
+      };
       core.openOfflineWorkMode = text => { if (!core.offlineWorkReady()) return;taskMode=true;input.value=text;open();paint(); };
       core.offlineConnectionRestored = tick;
       const unsubscribe = core.observeConnection?.(value => {if(value.kind==='online'&&offline)showHistory=false;paint();if(value.kind==='online')void tick().catch(()=>{});});

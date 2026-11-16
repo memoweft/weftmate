@@ -19,13 +19,20 @@ class And4QaReceiver : BroadcastReceiver() {
         }
         if(intent.getStringExtra("command")=="draft" && activity!=null)activity.model.edit("重开保留的草稿")
         if(intent.getStringExtra("command")=="theme" && activity!=null)activity.model.dark=intent.getBooleanExtra("dark",false)
-        if(intent.getStringExtra("command")=="legacy" && activity!=null)activity.fallback()
+        if(intent.getStringExtra("command")=="page" && activity!=null)activity.pages.open(intent.getStringExtra("page") ?: "help",JSONObject(intent.getStringExtra("params") ?: "{}"))
+        if(intent.getStringExtra("command")=="settings" && activity!=null)activity.settings.open(intent.getStringExtra("page") ?: "")
+        if(intent.getStringExtra("command")=="tab" && activity!=null)activity.model.tab=intent.getStringExtra("tab") ?: "chat"
+        if(intent.getStringExtra("command")=="field" && activity!=null)activity.pages.values[intent.getStringExtra("key") ?: ""]=intent.getStringExtra("value") ?: ""
+        if(intent.getStringExtra("command")=="pageAction" && activity!=null)activity.pages.data.optJSONArray("sections")?.objects().orEmpty().flatMap{it.optJSONArray("rows")?.objects().orEmpty()}.firstOrNull{it.optString("label")==intent.getStringExtra("label")}?.let{activity.pages.act(it)}
         val model=activity?.model
         val insets=activity?.presentationContainer?.let{androidx.core.view.ViewCompat.getRootWindowInsets(it)}
         val state=JSONObject().put("pid",android.os.Process.myPid())
             .put("ready",model!=null&&!model.loading&&model.chatId.isNotBlank())
             .put("rows",model?.rows?.size ?: 0).put("error",model?.error ?: "").put("dark",model?.dark==true)
             .put("loggedIn",model?.loggedIn==true).put("loading",model?.loading==true)
+            .put("tab",model?.tab).put("page",activity?.pages?.page).put("pageLoading",activity?.pages?.loading).put("pageError",activity?.pages?.error)
+            .put("pageRows",activity?.pages?.data?.optJSONArray("sections")?.objects().orEmpty().sumOf{it.optJSONArray("rows")?.length() ?: 0})
+            .put("engineVisible",activity?.embeddedWeb?.visibility==android.view.View.VISIBLE)
             .put("restoredDraft",model?.draft=="重开保留的草稿")
             .put("statusHeight",insets?.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())?.top ?: -1)
             .put("navigationBottom",insets?.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())?.bottom ?: -1)

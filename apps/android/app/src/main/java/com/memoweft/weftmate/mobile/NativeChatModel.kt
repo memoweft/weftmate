@@ -114,6 +114,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     var textSize by mutableFloatStateOf(DesignTokens.font15)
     var codeSize by mutableFloatStateOf(DesignTokens.font13)
     var reducedMotion by mutableStateOf(false)
+    var palette by mutableStateOf(JSONObject())
     var olderCursor by mutableStateOf("")
     var hasOlder by mutableStateOf(false)
     var sendAvailable by mutableStateOf(true)
@@ -227,7 +228,8 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
         sendAvailable = modelId.isNotBlank() && !phoneModelSwitching
     }
     private fun phoneParams() = JSONObject().put("owner", phoneOwner).put("conversationId", chatId.takeUnless { it == "phone-new" })
-    private fun readingPreferences(view:JSONObject) { textSize=view.optDouble("fontSize",DesignTokens.font15.toDouble()).toFloat();codeSize=view.optDouble("codeFontSize",DesignTokens.font13.toDouble()).toFloat();reducedMotion=view.optBoolean("reducedMotion") }
+    private fun readingPreferences(view:JSONObject) { textSize=view.optDouble("fontSize",DesignTokens.font15.toDouble()).toFloat();codeSize=view.optDouble("codeFontSize",DesignTokens.font13.toDouble()).toFloat();reducedMotion=view.optBoolean("reducedMotion");palette=view.optJSONObject("palette") ?: JSONObject() }
+    suspend fun readPresentationPreferences(){readingPreferences(environment.phone("view"))}
     private fun refreshPhone(view: JSONObject) {
         readingPreferences(view)
         if (!view.optBoolean("ready") || view.optString("owner") != phoneOwner) return
@@ -799,8 +801,7 @@ internal class NativeChatModel(private val environment: NativeChatEnvironment, v
     }
     fun openOfflineWork(row: JSONObject? = null) = launch {
         val text = if(row==null)draft else nativeWorkSwitchText(row, rows, draft)
-        environment.presentation("const core=globalThis.WeftMobileCloud?.core;if(!core?.offlineWorkReady?.())throw {code:'COMPUTER_OFFLINE'};core.openOfflineWorkMode(${JSONObject.quote(text)});return {};")
-        tab="web-chat"
+        environment.openPage("offlineWork",JSONObject().put("text",text))
     }
     fun answer(row: JSONObject, answers: JSONArray) = launch {
         val id = row.getString("questionRpcId"); val key = "question:$owner:$sessionId:$id"

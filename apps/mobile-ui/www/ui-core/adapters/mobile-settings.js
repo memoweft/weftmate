@@ -147,57 +147,44 @@ async function publishSavedPhoneModel(item){const owner=state.owner,epoch=state.
   }catch(error){if(current())effects.toast(error?.message==='TIMEOUT'
     ? '上传结果待核对；原请求编号已保留，不会换模型':effects.safeError(error),true)}}
 
-async function transferAccountModel(item,replaceExistingKey=false){const owner=state.owner,epoch=state.authEpoch,
-  generation=state.generation,current=()=>modelPageCurrent(owner,epoch,generation),
-  id=`${item.accountModelId}:${item.revision}`;
-  let marker=replaceExistingKey?null:savedAccountModelIntent('transfer',id);
-  if(marker&&(marker.accountModelId!==item.accountModelId||marker.expectedRevision!==item.revision)){
-    effects.toast('原下载请求仍待核对，请保持原配置修订',true);return}
-  marker ||= {owner,requestId:environment.crypto.randomUUID(),accountModelId:item.accountModelId,
-    expectedRevision:item.revision};
-  try{environment.storage.setItem(accountModelIntentKey('transfer',id),JSON.stringify(marker))}
-  catch{effects.toast('无法保存取回编号，本次没有提交',true);return}
-  try{const result=await core.android.call('models.account.transfer',{accountModelId:item.accountModelId,
-    expectedRevision:item.revision,requestId:marker.requestId,replaceExistingKey});if(!current())return;
-    if(result?.requestId!==marker.requestId){effects.toast('暂时无法确认取回是否完成，请稍后核对；操作编号已保留',true);return}
+function modelNotice(message,error=false){effects.toast(message,error);return {message,error};}
+async function transferAccountModel(item,replaceExistingKey=false){
+  const owner=state.owner,epoch=state.authEpoch,generation=state.generation,current=()=>modelPageCurrent(owner,epoch,generation),id=`${item.accountModelId}:${item.revision}`;
+  let marker=savedAccountModelIntent('transfer',id);
+  if(marker&&(marker.accountModelId!==item.accountModelId||marker.expectedRevision!==item.revision||(marker.replaceExistingKey===true)!==replaceExistingKey))return modelNotice('原下载请求仍待核对，请保持原配置修订和密钥选择',true);
+  marker||={owner,requestId:environment.crypto.randomUUID(),accountModelId:item.accountModelId,expectedRevision:item.revision,replaceExistingKey};
+  try{environment.storage.setItem(accountModelIntentKey('transfer',id),JSON.stringify(marker))}catch{return modelNotice('无法保存取回编号，本次没有提交',true)}
+  try{
+    const result=await core.android.call('models.account.transfer',{accountModelId:item.accountModelId,expectedRevision:item.revision,requestId:marker.requestId,replaceExistingKey});if(!current())return;
+    if(result?.requestId!==marker.requestId)return modelNotice('暂时无法确认取回是否完成，请稍后核对；操作编号已保留',true);
     if(result.status==='credential_conflict'){
-      clearAccountModelIntent('transfer',id,marker.requestId);
-      state.accountModelCredentialConflict={owner,id,item};
-      effects.toast('手机同一地址已有不同密钥，原配置与当前模型未改变',true);effects.page('models');return}
+      clearAccountModelIntent('transfer',id,marker.requestId);state.accountModelCredentialConflict={owner,id,item};
+      const notice=modelNotice('手机同一地址已有不同密钥，原配置与当前模型未改变',true);effects.page('models');return {...notice,conflict:true};
+    }
     if(result.status==='saved'){
-      clearAccountModelIntent('transfer',id,marker.requestId);
-      state.accountModelCredentialConflict=null;
-      effects.toast('已加密存到手机。要改为手机直连，请在本机模型列表明确选择');effects.page('models')
-    }else effects.toast('取回结果待核对，原手机配置保持不变',true)
-  }catch(error){if(current())effects.toast(effects.safeError(error),true)}}
-
-async function testAccountModel(item){const owner=state.owner,epoch=state.authEpoch,
-  generation=state.generation,current=()=>modelPageCurrent(owner,epoch,generation),
-  id=`${item.accountModelId}:${item.revision}`;
-  let marker=savedAccountModelIntent('test',id);
-  marker ||= {owner,requestId:environment.crypto.randomUUID(),accountModelId:item.accountModelId,
-    expectedRevision:item.revision};
-  try{environment.storage.setItem(accountModelIntentKey('test',id),JSON.stringify(marker))}
-  catch{effects.toast('无法保存测试编号，本次没有提交',true);return}
-  try{let result;try{result=await core.android.call('models.account.byRequest',{requestId:marker.requestId})}
-    catch(error){if(error?.message!=='NOT_FOUND')throw error}
+      clearAccountModelIntent('transfer',id,marker.requestId);state.accountModelCredentialConflict=null;
+      const notice=modelNotice('已加密存到手机。要改为手机直连，请在本机模型列表明确选择');effects.page('models');return notice;
+    }
+    return modelNotice('取回结果待核对，原手机配置保持不变',true);
+  }catch(error){if(current())return modelNotice(effects.safeError(error),true)}
+}
+async function testAccountModel(item){
+  const owner=state.owner,epoch=state.authEpoch,generation=state.generation,current=()=>modelPageCurrent(owner,epoch,generation),id=`${item.accountModelId}:${item.revision}`;
+  let marker=savedAccountModelIntent('test',id);marker||={owner,requestId:environment.crypto.randomUUID(),accountModelId:item.accountModelId,expectedRevision:item.revision};
+  try{environment.storage.setItem(accountModelIntentKey('test',id),JSON.stringify(marker))}catch{return modelNotice('无法保存测试编号，本次没有提交',true)}
+  try{
+    let result;try{result=await core.android.call('models.account.byRequest',{requestId:marker.requestId})}catch(error){if(error?.message!=='NOT_FOUND')throw error}
     if(!current())return;
-    result ||= await core.android.call('models.account.test',{accountModelId:item.accountModelId,
-      expectedRevision:item.revision,requestId:marker.requestId});
-    if(!current())return;
-    if(result?.operation?.requestId!==marker.requestId||result.operation.kind!=='test')
-      throw new Error('MODEL_RECEIPT_INVALID');
+    result||=await core.android.call('models.account.test',{accountModelId:item.accountModelId,expectedRevision:item.revision,requestId:marker.requestId});if(!current())return;
+    if(result?.operation?.requestId!==marker.requestId||result.operation.kind!=='test')throw Error('MODEL_RECEIPT_INVALID');
     if(result.operation.status==='succeeded'){
-      clearAccountModelIntent('test',id,marker.requestId);
-      const checked=result.operation.testResult;
-      const passed=checked?.configured===true&&checked.reachable===true&&checked.modelListed===true;
-      effects.toast(passed?'目录与鉴权已核对；尚未发送推理消息':
-        '连接检查已完成，但目录、鉴权或模型列表未通过；尚未发送推理消息',!passed)
-    }else if(result.operation.status==='failed'){
-      clearAccountModelIntent('test',id,marker.requestId);
-      effects.toast(effects.safeError({message:result.operation.errorCode||result.operation.reasonCode||'OPERATION_FAILED'}),true)
-    }else effects.toast('连接检查仍在处理，原测试编号已保留',true)
-  }catch(error){if(current())effects.toast(effects.safeError(error),true)}}
+      clearAccountModelIntent('test',id,marker.requestId);const checked=result.operation.testResult,passed=checked?.configured===true&&checked.reachable===true&&checked.modelListed===true;
+      return modelNotice(passed?'目录与鉴权已核对；尚未发送推理消息':'连接检查已完成，但目录、鉴权或模型列表未通过；尚未发送推理消息',!passed);
+    }
+    if(result.operation.status==='failed'){clearAccountModelIntent('test',id,marker.requestId);return modelNotice(effects.safeError({message:result.operation.errorCode||result.operation.reasonCode||'OPERATION_FAILED'}),true)}
+    return modelNotice('连接检查仍在处理，原测试编号已保留',true);
+  }catch(error){if(current())return modelNotice(effects.safeError(error),true)}
+}
  return {mobileSettings:{projectIntentKey, savedProjectIntent, projectIntentCurrent, browserIntentKey, savedBrowserIntent, resolveBrowserIntent, resolveProjectSessionIntent, accountModelIntentKey, savedAccountModelIntent, clearAccountModelIntent, modelPageCurrent, publishSavedPhoneModel, transferAccountModel, testAccountModel},
    readMobileSystem:()=>{core.syncMobileIdentity();return core.accessApi('/system')},
    readMobileModelSettings:()=>{core.syncMobileIdentity();return core.accessApi('/settings/models')},

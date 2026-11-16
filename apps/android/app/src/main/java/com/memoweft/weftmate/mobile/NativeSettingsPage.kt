@@ -21,23 +21,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.selection.toggleable
 import org.json.JSONArray
 import org.json.JSONObject
 
 private val settingsGap=DesignTokens.space8.dp
-private val settingsShape=RoundedCornerShape(DesignTokens.radius26.dp)
+private val settingsShape=RoundedCornerShape(DesignTokens.radius8.dp)
 @Composable private fun settingsCardColor()=Color(if(LocalNativeDark.current)DesignTokens.nativeDarkSurface else DesignTokens.nativeSoft)
 @Composable private fun SettingsAvatar(name:String,size:Int=DesignTokens.space48) {
-    Box(Modifier.size(size.dp).background(Color(if(LocalNativeDark.current)DesignTokens.nativeDarkSoftOpaque else DesignTokens.nativeAccentSoft),RoundedCornerShape(DesignTokens.radius999.dp)),contentAlignment=Alignment.Center){Text(name.take(1).ifEmpty{"我"},fontSize=(if(size==DesignTokens.space32)DesignTokens.font14 else DesignTokens.font18).sp)}
+    Box(Modifier.size(size.dp).background(Color(if(LocalNativeDark.current)DesignTokens.nativeDarkSoftOpaque else DesignTokens.nativeAccentSoft),nativeFieldShape),contentAlignment=Alignment.Center){Text(name.take(1).ifEmpty{"我"},fontSize=(if(size==DesignTokens.space32)DesignTokens.font14 else DesignTokens.font18).sp)}
 }
 private fun settingsName(s:NativeSettingsModel)=s.home.optJSONObject("profile")?.optString("displayName").orEmpty().takeUnless{it.isBlank()||it=="local-owner"} ?: "我的账户"
 
 @Composable internal fun NativeSettingsToolbar(s:NativeSettingsModel) {
-    Row(Modifier.fillMaxWidth().height(DesignTokens.space80.dp).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
-        FeedControlIconButton(R.drawable.wm_back,"返回",modifier=Modifier.background(settingsCardColor(),RoundedCornerShape(DesignTokens.radius999.dp)),action=s::back)
+    Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space56.dp).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
+        FeedControlIconButton(R.drawable.wm_back,"返回",modifier=Modifier.background(settingsCardColor(),nativeFieldShape),action=s::back)
         Text(s.title,Modifier.weight(1f),textAlign=TextAlign.Center,fontSize=DesignTokens.font17.sp,fontWeight=FontWeight.SemiBold)
-        Box(Modifier.size(DesignTokens.space44.dp).clip(RoundedCornerShape(DesignTokens.radius999.dp)).clickable(role=Role.Button){s.open("account")}.semantics{contentDescription="账户资料"},contentAlignment=Alignment.Center){SettingsAvatar(settingsName(s),DesignTokens.space32)}
+        Box(Modifier.size(DesignTokens.space48.dp).clip(nativeFieldShape).clickable(role=Role.Button){s.open("account")}.semantics{contentDescription="账户资料"},contentAlignment=Alignment.Center){SettingsAvatar(settingsName(s),DesignTokens.space32)}
     }
 }
 @Composable private fun SettingsModelMore(s:NativeSettingsModel) {
@@ -45,27 +45,24 @@ private fun settingsName(s:NativeSettingsModel)=s.home.optJSONObject("profile")?
     Box {
         FeedControlIconButton(R.drawable.wm_more,"更多"){more=true}
         NativeFileMenu(more,{more=false}) {
-            FeedControlMenuItem("账户云模型",icon=R.drawable.wm_model){more=false;s.original("models");s.run{s.bridge.call("cloudModels")}}
+            FeedControlMenuItem("账户云模型",icon=R.drawable.wm_model){more=false;s.original("cloudModels")}
             FeedControlMenuItem("刷新",icon=R.drawable.wm_sync){more=false;s.refresh()}
         }
     }
 }
 @Composable internal fun NativeSettingsPage(s:NativeSettingsModel,modifier:Modifier=Modifier) {
     LaunchedEffect(s.chat.owner,s.chat.loggedIn) {s.refresh()}
-    if(s.webPage.isNotEmpty()) {
-        key(s.webPage,s.activity.embeddedWebIdentity) {AndroidView(factory={s.activity.webPage(s.webPage)},onRelease={s.activity.parkWeb()},modifier=modifier.fillMaxWidth())}
-        return
-    }
     val route="${s.page}:${s.adding}:${s.editingService?.optString("serviceId")}:${s.device?.optString("id")}:${s.accountFlow}"
     val scroll=remember(route){ScrollState(s.scrollPositions[route] ?: 0)}
     DisposableEffect(route){onDispose{s.scrollPositions[route]=scroll.value}}
-    Column(modifier.fillMaxWidth().verticalScroll(scroll).padding(start=DesignTokens.space20.dp,end=(DesignTokens.space20+DesignTokens.space6+DesignTokens.space1).dp,top=DesignTokens.space24.dp,bottom=DesignTokens.space24.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space24.dp)) {
-        if(s.error.isNotEmpty())SettingsGroup("暂时没能完成") {Text(s.error,color=MaterialTheme.colorScheme.error);FeedControlButton("重试",secondary=true){s.refresh()}}
-        if(s.loading && s.home.length()==0) {repeat(3){Box(Modifier.fillMaxWidth().height(DesignTokens.space80.dp).background(MaterialTheme.colorScheme.surfaceVariant,settingsShape).semantics{contentDescription="正在读取设置"})};return@Column}
+    Column(modifier.fillMaxWidth().verticalScroll(scroll).padding(start=DesignTokens.space20.dp,end=DesignTokens.space20.dp,top=DesignTokens.space24.dp,bottom=DesignTokens.space24.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space24.dp)) {
+
+        if(s.loading && s.home.length()==0) {NativeLoadingState("正在读取设置…",Modifier.fillMaxWidth().heightIn(min=DesignTokens.space150.dp));return@Column}
         if(s.page.isNotEmpty())Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
-            Text(if(s.page=="models")if(s.adding||s.editingService!=null)s.title else "模型服务" else if(s.page=="account"&&s.accountFlow.isEmpty())"我的资料" else s.title,Modifier.weight(1f),fontSize=(if(s.page=="models")DesignTokens.font24 else DesignTokens.font28).sp,fontWeight=FontWeight.Bold,lineHeight=((if(s.page=="models")DesignTokens.font24 else DesignTokens.font28)*1.9f).sp)
+            Text(if(s.page=="models")if(s.adding||s.editingService!=null)s.title else "模型服务" else if(s.page=="account"&&s.accountFlow.isEmpty())"我的资料" else s.title,Modifier.weight(1f),fontSize=DesignTokens.font24.sp,fontWeight=FontWeight.Bold,lineHeight=DesignTokens.space32.sp)
             if(s.page=="models")SettingsModelMore(s)
         }
+        if(s.error.isNotEmpty())NativePageError(s.error){s.refresh()}
         when(s.page) {
             "" -> SettingsHome(s)
             "general" -> SettingsGeneral(s)
@@ -82,14 +79,14 @@ private fun settingsName(s:NativeSettingsModel)=s.home.optJSONObject("profile")?
 @Composable private fun SettingsHome(s:NativeSettingsModel) {
     val query=s.search
     Column {
-    Row(Modifier.fillMaxWidth().clip(settingsShape).background(settingsCardColor()).clickable(role=Role.Button){s.open("account")}.padding(DesignTokens.space20.dp).semantics{contentDescription="账户资料"},verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space16.dp)) {
+    Row(Modifier.fillMaxWidth().clickable(role=Role.Button){s.open("account")}.padding(vertical=DesignTokens.space12.dp).semantics{contentDescription="账户资料"},verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space16.dp)) {
         SettingsAvatar(settingsName(s));Column(Modifier.weight(1f)){Text(settingsName(s),fontSize=DesignTokens.font15.sp,fontWeight=FontWeight.Bold,lineHeight=(DesignTokens.font15*1.9f).sp);Spacer(Modifier.height(DesignTokens.space4.dp));Text(s.home.optString("accountLabel",s.home.optString("email")),fontSize=DesignTokens.font13.sp,lineHeight=(DesignTokens.font13*1.9f).sp,color=MaterialTheme.colorScheme.onSurfaceVariant)};Icon(painterResource(R.drawable.wm_right),null,Modifier.size(DesignTokens.space20.dp))
     }
     Spacer(Modifier.height(DesignTokens.space12.dp))
-    Text(s.home.optString("usage","正在读取本月用量…"),Modifier.fillMaxWidth().heightIn(min=DesignTokens.space44.dp).clip(settingsShape).clickable(role=Role.Button){s.original("usage")}.padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).semantics{contentDescription="用量详情"},fontSize=DesignTokens.font15.sp,lineHeight=(DesignTokens.font15*1.9f).sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(s.home.optString("usage","正在读取本月用量…"),Modifier.fillMaxWidth().heightIn(min=DesignTokens.space48.dp).clip(settingsShape).clickable(role=Role.Button){s.original("usage")}.padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).semantics{contentDescription="用量详情"},fontSize=DesignTokens.font15.sp,lineHeight=(DesignTokens.font15*1.9f).sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(DesignTokens.space16.dp))
     SettingsSearch("搜索设置",query){s.search=it}
-    Spacer(Modifier.height(DesignTokens.space52.dp))
+    Spacer(Modifier.height(DesignTokens.space24.dp))
     val rows=s.home.optJSONArray("categories")?.objects().orEmpty().filter{(it.optString("name")+it.optString("group")).contains(query,true)}
     if(rows.isEmpty())SettingsEmpty("没有匹配的设置","试试“外观”或“模型”。")
     rows.groupBy{it.optString("group")}.forEach{(name,categories)->SettingsGroup(name,rows=true){categories.forEach{row->val id=row.optString("id");SettingsRow(row.getString("name"),icon=settingsIcon(row.optString("icon")),current=when(id){"models"->s.chat.modelLabel;"appearance"->themeLabel(s.home.optJSONObject("appearance")?.optString("theme").orEmpty());"account"->s.home.optString("accountLabel");"about"->s.home.optString("uiVersion");else->""}){if(id in listOf("general","models","account","devices","appearance","about"))s.open(id) else s.original(id)}}};Spacer(Modifier.height(DesignTokens.space24.dp))}
@@ -111,7 +108,6 @@ private fun settingsIcon(id:String)=when(id){"account"->R.drawable.wm_user;"desk
         SettingsRow("离线与同步","当前账户的记录与状态"){s.original("sync")}
         if(!s.home.optBoolean("cloudActive"))SettingsRow("电脑账户与连接",s.home.optString("connectionLabel","连接自己的电脑")){s.original("connect")}
         SettingsRow("检查更新",s.home.optString("uiVersion",BuildConfig.VERSION_NAME)){s.original("updates")}
-        SettingsRow("打开备用界面","页面无法正常显示时使用"){s.run{s.chat.call("compat.openNative")}}
     }
     SettingsGroup("本机运行记录") {
         SettingsNote("本机运行记录可在系统状态中查看与分享。")
@@ -132,26 +128,15 @@ private fun settingsIcon(id:String)=when(id){"account"->R.drawable.wm_user;"desk
 }
 @Composable private fun SettingsTheme(s:NativeSettingsModel) {
     val selected=s.home.optJSONObject("appearance")?.optString("theme","system") ?: "system"
-    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp)) {
+    Column(Modifier.fillMaxWidth()) {
         listOf("light" to "浅色","dark" to "深色","system" to "跟随系统").forEach{(id,label)->
-            Column(Modifier.weight(1f).heightIn(min=(DesignTokens.space150-DesignTokens.space8).dp).clip(RoundedCornerShape(DesignTokens.radius16.dp)).background(if(selected==id)Color(if(LocalNativeDark.current)DesignTokens.nativeDarkAccentSoft else DesignTokens.nativeAccentSoft) else MaterialTheme.colorScheme.surface).border(DesignTokens.space1.dp,if(selected==id)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,RoundedCornerShape(DesignTokens.radius16.dp)).clickable(enabled=!s.busy,role=Role.RadioButton){saveAppearance(s,JSONObject().put("theme",id))}.semantics{contentDescription="颜色模式：$label";this.selected=selected==id}.padding(horizontal=DesignTokens.space6.dp,vertical=DesignTokens.space8.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp)) {
-                Row(Modifier.fillMaxWidth().height((DesignTokens.space64+DesignTokens.space8).dp).clip(RoundedCornerShape(DesignTokens.radius6.dp))) {
-                    val dark=id=="dark"
-                    val canvas=Color(if(dark)DesignTokens.nativeDarkSurface else DesignTokens.nativeSurface)
-                    val soft=Color(if(dark)DesignTokens.nativeDarkSoftOpaque else DesignTokens.nativeSoft)
-                    val ink=Color(if(dark)DesignTokens.nativeDarkMuted else DesignTokens.nativeMuted)
-                    Column(Modifier.fillMaxHeight().weight(1f).background(soft).padding(horizontal=DesignTokens.space4.dp,vertical=DesignTokens.space8.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space6.dp)){repeat(3){Box(Modifier.fillMaxWidth().height(DesignTokens.space4.dp).background(ink,RoundedCornerShape(DesignTokens.radius4.dp)))}}
-                    Column(Modifier.fillMaxHeight().weight(3f).background(if(id=="system")Brush.horizontalGradient(0f to Color(DesignTokens.nativeSurface),.5f to Color(DesignTokens.nativeSurface),.5f to Color(DesignTokens.nativeDarkSurface),1f to Color(DesignTokens.nativeDarkSurface)) else SolidColor(canvas)).padding(DesignTokens.space8.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space6.dp)) {
-                        Box(Modifier.fillMaxWidth(.5f).height(DesignTokens.space12.dp).align(Alignment.End).background(soft,RoundedCornerShape(DesignTokens.radius4.dp)))
-                        Box(Modifier.fillMaxWidth(.8f).height(DesignTokens.space4.dp).background(ink));Box(Modifier.fillMaxWidth(.55f).height(DesignTokens.space4.dp).background(ink));Spacer(Modifier.weight(1f));Box(Modifier.fillMaxWidth().height(DesignTokens.space12.dp).border(DesignTokens.space1.dp,ink,RoundedCornerShape(DesignTokens.radius4.dp)))
-                    }
-                }
-                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text(label,Modifier.weight(1f),fontSize=DesignTokens.font15.sp,lineHeight=(DesignTokens.font15*1.9f).sp);if(selected==id)Icon(painterResource(R.drawable.wm_check),null,Modifier.size(DesignTokens.space16.dp))}
+            Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space48.dp).clickable(role=Role.RadioButton){saveAppearance(s,JSONObject().put("theme",id))},verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space12.dp)) {
+                RadioButton(selected==id,null,colors=nativeRadioColors());Text(label,fontSize=DesignTokens.font15.sp)
             }
         }
     }
 }
-private fun saveAppearance(s:NativeSettingsModel,p:JSONObject)=s.run("已保存") {val result=s.bridge.call("appearance",p);s.home=JSONObject(s.home.toString()).put("appearance",result.getJSONObject("appearance"));val a=s.chat.call("settings.appearance");s.chat.dark=resolvedAppearanceDark(a.optString("value"),a.optBoolean("systemDark"));s.chat.textSize=result.getJSONObject("appearance").optString("fontSize","15").toFloat();s.chat.codeSize=result.getJSONObject("appearance").optString("codeFontSize","13").toFloat()}
+private fun saveAppearance(s:NativeSettingsModel,p:JSONObject)=s.run("已保存") {val result=s.bridge.call("appearance",p);s.home=JSONObject(s.home.toString()).put("appearance",result.getJSONObject("appearance"));val a=s.chat.call("settings.appearance");s.chat.dark=resolvedAppearanceDark(a.optString("value"),a.optBoolean("systemDark"));s.chat.textSize=result.getJSONObject("appearance").optString("fontSize","15").toFloat();s.chat.codeSize=result.getJSONObject("appearance").optString("codeFontSize","13").toFloat();s.chat.readPresentationPreferences()}
 @Composable private fun SettingsAccount(s:NativeSettingsModel) {
     if(s.chat.localOnly) {
         SettingsGroup("本机使用") {SettingsNote("对话和模型设置保存在这台手机上。登录后可以连接其他设备，云账号的资料与本机资料分别保留。");FeedControlButton("登录以使用云端功能",primary=true){s.original("account")}}
@@ -161,7 +146,7 @@ private fun saveAppearance(s:NativeSettingsModel,p:JSONObject)=s.run("已保存"
     var name by remember(s.chat.owner){mutableStateOf(s.home.optJSONObject("profile")?.optString("displayName").orEmpty())}
     if(s.accountFlow.isEmpty()) {
         Box(Modifier.padding(top=DesignTokens.space4.dp,bottom=DesignTokens.space18.dp).size(DesignTokens.space64.dp).background(Color(if(LocalNativeDark.current)DesignTokens.nativeDarkAccentSoft else DesignTokens.nativeAccentSoft),RoundedCornerShape(DesignTokens.radius16.dp)),contentAlignment=Alignment.Center){Text(settingsName(s).take(1),fontSize=DesignTokens.font24.sp)}
-        SettingsGroup("账户资料") {if(cloud||s.chat.standalone)SettingsNote(s.home.optString("email"));if(!cloud&&!s.chat.standalone){SettingsFormInput("昵称",name,!s.busy){name=it};SettingsNote("账户：${s.home.optString("accountLabel",s.home.optString("email"))}");Row(horizontalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp)){FeedControlButton("保存昵称",primary=true,enabled=!s.busy&&name.isNotBlank()){s.run("已保存"){s.bridge.call("profile",JSONObject().put("name",name));s.refresh()}};FeedControlButton("更换头像",secondary=true){s.original("account")}}}}
+        SettingsGroup("账户资料") {if(cloud||s.chat.standalone)SettingsNote(s.home.optString("email"));if(!cloud&&!s.chat.standalone){SettingsFormInput("昵称",name,!s.busy){name=it};SettingsNote("账户：${s.home.optString("accountLabel",s.home.optString("email"))}");Row(horizontalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp)){FeedControlButton("保存昵称",primary=true,enabled=!s.busy&&name.isNotBlank()){s.run("已保存"){s.bridge.call("profile",JSONObject().put("name",name));s.refresh()}};FeedControlButton("更换头像",secondary=true){s.original("profile")}}}}
         SettingsGroup("账户保护",rows=true) {if(cloud)SettingsRow("换绑邮箱","新邮箱会收到验证码"){s.accountFlow="email"};SettingsRow("修改密码","修改后其他设备需要重新登录"){s.accountFlow="password"};if(cloud)SettingsRow("退出所有其他设备","当前设备继续可用"){s.accountFlow="logoutOthers"};if(cloud)SettingsRow("注销账号","查看云端与本机数据范围"){s.original("data")};SettingsRow("完整账户功能","账户保护与其他操作"){s.original("account")}}
     } else if(s.accountFlow=="logoutOthers") {SettingsConfirm(s,"退出所有其他设备？","其他设备需要重新登录，当前设备继续可用。","确认退出",{s.accountFlow=""}){s.run("其他设备已退出"){s.bridge.call("logoutOthers");s.accountFlow=""}}}
     else {
@@ -203,20 +188,20 @@ private fun saveAppearance(s:NativeSettingsModel,p:JSONObject)=s.run("已保存"
 }
 @Composable private fun SettingsAbout(s:NativeSettingsModel) {
     var version by remember{mutableStateOf(JSONObject())};LaunchedEffect(Unit){runCatching{s.chat.call("updates.status")}.onSuccess{version=it}}
-    SettingsGroup("WeftMate",rows=true) {SettingsRow("界面版本",version.optString("activeVersion","内置页面")){s.original("updates")};SettingsRow("更新内容","看看有什么新东西"){s.original("releases")};SettingsRow("帮助与小技巧","找到一个技巧，马上试试"){s.original("help")};SettingsRow("服务条款","在应用内阅读"){s.original("about");s.run{s.bridge.call("legal",JSONObject().put("kind","terms"))}};SettingsRow("隐私政策","在应用内阅读"){s.original("about");s.run{s.bridge.call("legal",JSONObject().put("kind","privacy"))}}}
+    SettingsGroup("WeftMate",rows=true) {SettingsRow("界面版本",version.optString("activeVersion","内置页面")){s.original("updates")};SettingsRow("更新内容","看看有什么新东西"){s.original("releases")};SettingsRow("帮助与小技巧","找到一个技巧，马上试试"){s.original("help")};SettingsRow("服务条款","在应用内阅读"){s.activity.pages.open("legal",JSONObject().put("kind","terms"),from="settings")};SettingsRow("隐私政策","在应用内阅读"){s.activity.pages.open("legal",JSONObject().put("kind","privacy"),from="settings")}}
 }
 @Composable private fun SettingsServices(s:NativeSettingsModel) {
-    Text(if(s.chat.standalone)"密钥安全保存在这台手机上。填一次密钥，就能选择这个服务的所有聊天模型。" else "密钥安全保存在电脑上，手机上不保存副本。填一次密钥，就能选择这个服务的所有聊天模型。",fontSize=DesignTokens.font15.sp,lineHeight=(DesignTokens.font15*1.9f).sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(if(s.phoneServices)"密钥安全保存在这台手机上。填一次密钥，就能选择这个服务的所有聊天模型。" else "密钥安全保存在电脑上，手机上不保存副本。填一次密钥，就能选择这个服务的所有聊天模型。",fontSize=DesignTokens.font15.sp,lineHeight=(DesignTokens.font15*1.9f).sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
     if(s.legacy){SettingsGroup("模型"){SettingsNote("这台电脑使用原有模型设置。");SettingsRow("管理模型","打开电脑已有的模型设置"){s.original("models")}};return}
-    if(s.loading&&s.services.isEmpty())Box(Modifier.fillMaxWidth().height(DesignTokens.space80.dp).background(MaterialTheme.colorScheme.surfaceVariant,settingsShape))
+    if(s.loading&&s.services.isEmpty())Box(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space56.dp).background(MaterialTheme.colorScheme.surfaceVariant,settingsShape))
     else if(s.services.isEmpty())SettingsGroup(""){SettingsEmpty("还没有模型服务","选一个服务并填写密钥，就能开始聊天。")}
-    Text(if(s.chat.standalone)"手机的模型服务" else "电脑的模型服务",Modifier.padding(horizontal=DesignTokens.space18.dp),fontSize=DesignTokens.font12.sp,lineHeight=DesignTokens.font18.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(if(s.phoneServices)"手机的模型服务" else "电脑的模型服务",Modifier.padding(horizontal=DesignTokens.space18.dp),fontSize=DesignTokens.font12.sp,lineHeight=DesignTokens.font18.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
     s.services.forEach{service->Row(Modifier.fillMaxWidth().clip(settingsShape).background(settingsCardColor()).clickable(role=Role.Button){s.editingService=service}.padding(DesignTokens.space16.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space12.dp)){
         Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp)){Text(service.optString("name"),fontSize=DesignTokens.font16.sp,lineHeight=(DesignTokens.font16*1.5f).sp,fontWeight=FontWeight.Bold);Text("${service.optString("baseUrl")} · ${service.optJSONArray("models")?.length() ?: 0} 个模型",fontSize=DesignTokens.font12.sp,lineHeight=DesignTokens.font18.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);Text(if(service.optJSONObject("catalog")?.optString("status")=="available")"已读取模型清单。" else serviceCatalogMessage(service.optJSONObject("catalog")?.optString("status").orEmpty()),fontSize=DesignTokens.font12.sp,lineHeight=DesignTokens.font18.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)}
         FeedControlIconButton(R.drawable.wm_more,"${service.optString("name")}的更多操作"){s.editingService=service}
     }}
     FeedControlButton("添加模型服务…",primary=true,icon=R.drawable.wm_plus,enabled=!s.busy){s.adding=true}
-    if(!s.chat.standalone)SettingsRow("这台手机的模型服务","手机单独聊天时使用"){s.original("phoneModels")}
+    if(!s.phoneServices)SettingsRow("这台手机的模型服务","手机单独聊天时使用"){s.original("phoneModels")}
 }
 @Composable private fun SettingsServiceEditor(s:NativeSettingsModel) {
     val initial=s.editingService
@@ -249,21 +234,25 @@ private fun saveAppearance(s:NativeSettingsModel,p:JSONObject)=s.run("已保存"
     }
 }
 @Composable internal fun SettingsGroup(title:String,rows:Boolean=false,padding:Int=DesignTokens.space16,content:@Composable ColumnScope.()->Unit) {
-    Column(verticalArrangement=Arrangement.spacedBy(settingsGap)) {
-        if(title.isNotEmpty())Text(title,Modifier.padding(horizontal=(DesignTokens.space16+DesignTokens.space12).dp,vertical=DesignTokens.space6.dp),fontSize=DesignTokens.font13.sp,lineHeight=(DesignTokens.font13*1.9f).sp,fontWeight=FontWeight.Medium,color=MaterialTheme.colorScheme.onSurfaceVariant)
-        Column(Modifier.fillMaxWidth().clip(settingsShape).background(settingsCardColor()).then(if(rows)Modifier.padding(horizontal=DesignTokens.space16.dp) else Modifier.padding(padding.dp)),verticalArrangement=if(rows)Arrangement.Top else Arrangement.spacedBy(settingsGap),content=content)
+    Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp)) {
+        if(title.isNotBlank())Text(title,Modifier.padding(top=DesignTokens.space8.dp,bottom=DesignTokens.space4.dp).semantics{heading()},fontSize=DesignTokens.font13.sp,fontWeight=FontWeight.SemiBold,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
+        Column(Modifier.fillMaxWidth(),verticalArrangement=if(rows)Arrangement.Top else Arrangement.spacedBy(DesignTokens.space12.dp),content=content)
     }
 }
-@Composable private fun SettingsRow(label:String,note:String="",icon:Int?=null,current:String="",action:()->Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space64.dp).clip(RoundedCornerShape(DesignTokens.radius16.dp)).clickable(role=Role.Button,onClick=action).padding(DesignTokens.space16.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space12.dp)) {
-        if(icon!=null)Icon(painterResource(icon),null,Modifier.size(DesignTokens.space20.dp),tint=MaterialTheme.colorScheme.onSurface)
-        Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(DesignTokens.space2.dp)) {Text(label,fontSize=DesignTokens.font16.sp,lineHeight=(DesignTokens.font16*1.9f).sp,fontWeight=FontWeight.Medium);if(note.isNotEmpty())Text(note,fontSize=DesignTokens.font13.sp,lineHeight=(DesignTokens.font13*1.9f).sp,color=MaterialTheme.colorScheme.onSurfaceVariant)}
-        if(current.isNotEmpty())Text(current,Modifier.widthIn(max=DesignTokens.space150.dp),maxLines=1,overflow=TextOverflow.Ellipsis,fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
-        Icon(painterResource(R.drawable.wm_right),null,Modifier.size(DesignTokens.space12.dp),tint=Color(if(LocalNativeDark.current)DesignTokens.nativeDarkMuted else DesignTokens.nativeMuted))
+@Composable internal fun SettingsRow(label:String,note:String="",icon:Int?=null,current:String="",action:()->Unit) {
+    Column(Modifier.fillMaxWidth().clickable(role=Role.Button,onClick=action).padding(vertical=DesignTokens.space12.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)) {
+        Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space32.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space12.dp)) {
+            if(icon!=null)Icon(painterResource(icon),null,Modifier.size(DesignTokens.space20.dp),tint=MaterialTheme.colorScheme.onSurface)
+            Text(label,Modifier.weight(1f),fontSize=DesignTokens.font16.sp,lineHeight=DesignTokens.space24.sp,fontWeight=FontWeight.Medium)
+            Icon(painterResource(R.drawable.wm_right),null,Modifier.size(DesignTokens.space16.dp),tint=MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if(note.isNotBlank())SettingsNote(note)
+        if(current.isNotBlank())SettingsNote(current)
     }
 }
 @Composable private fun SettingsSearch(label:String,value:String,change:(String)->Unit) {
-    BasicTextField(value,change,singleLine=true,textStyle=androidx.compose.ui.text.TextStyle(color=MaterialTheme.colorScheme.onSurface,fontSize=DesignTokens.font15.sp,lineHeight=(DesignTokens.font15*1.9f).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),modifier=Modifier.fillMaxWidth().heightIn(min=DesignTokens.space56.dp).clip(RoundedCornerShape(DesignTokens.radius999.dp)).background(settingsCardColor()).padding(horizontal=DesignTokens.space16.dp,vertical=DesignTokens.space12.dp).semantics{contentDescription=label},decorationBox={inner->Box{if(value.isEmpty())Text(label,fontSize=DesignTokens.font15.sp,lineHeight=(DesignTokens.font15*1.9f).sp,color=MaterialTheme.colorScheme.onSurfaceVariant);inner()}})
+    BasicTextField(value,change,singleLine=true,textStyle=androidx.compose.ui.text.TextStyle(color=MaterialTheme.colorScheme.onSurface,fontSize=DesignTokens.font15.sp,lineHeight=(DesignTokens.font15*1.9f).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),modifier=Modifier.fillMaxWidth().heightIn(min=DesignTokens.space56.dp).clip(nativeFieldShape).background(settingsCardColor()).padding(horizontal=DesignTokens.space16.dp,vertical=DesignTokens.space12.dp).semantics{contentDescription=label},decorationBox={inner->Box{if(value.isEmpty())Text(label,fontSize=DesignTokens.font15.sp,lineHeight=(DesignTokens.font15*1.9f).sp,color=MaterialTheme.colorScheme.onSurfaceVariant);inner()}})
 }
 @Composable internal fun SettingsNote(text:String){if(text.isNotEmpty())Text(text,fontSize=DesignTokens.font13.sp,lineHeight=DesignTokens.font18.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)}
 @Composable private fun SettingsEmpty(title:String,note:String){Column(Modifier.padding(vertical=DesignTokens.space16.dp),verticalArrangement=Arrangement.spacedBy(settingsGap)){Icon(painterResource(R.drawable.wm_settings),null,Modifier.size(DesignTokens.space24.dp),tint=MaterialTheme.colorScheme.onSurfaceVariant);Text(title,fontSize=DesignTokens.font15.sp);SettingsNote(note)}}
@@ -274,7 +263,15 @@ private fun saveAppearance(s:NativeSettingsModel,p:JSONObject)=s.run("已保存"
     }
 }
 @Composable internal fun SettingsInput(label:String,value:String,enabled:Boolean=true,secret:Boolean=false,change:(String)->Unit){Column(verticalArrangement=Arrangement.spacedBy(settingsGap)){SettingsNote(label);OutlinedTextField(value,change,enabled=enabled,singleLine=true,modifier=Modifier.fillMaxWidth().semantics{contentDescription=label},shape=RoundedCornerShape(DesignTokens.radius12.dp),textStyle=androidx.compose.ui.text.TextStyle(fontSize=DesignTokens.font15.sp),visualTransformation=if(secret)PasswordVisualTransformation() else VisualTransformation.None,keyboardOptions=KeyboardOptions(keyboardType=if(secret)KeyboardType.Password else KeyboardType.Text),colors=OutlinedTextFieldDefaults.colors(focusedBorderColor=MaterialTheme.colorScheme.primary,unfocusedBorderColor=MaterialTheme.colorScheme.outline,focusedContainerColor=MaterialTheme.colorScheme.surface,unfocusedContainerColor=MaterialTheme.colorScheme.surface))}}
-@Composable internal fun SettingsToggle(label:String,note:String,checked:Boolean,enabled:Boolean=true,change:(Boolean)->Unit){Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space44.dp).clip(settingsShape).clickable(enabled=enabled,role=Role.Switch){change(!checked)}.semantics{contentDescription=label;stateDescription=if(checked)"已开启" else "已关闭";toggleableState=if(checked)androidx.compose.ui.state.ToggleableState.On else androidx.compose.ui.state.ToggleableState.Off},verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(settingsGap)){Column(Modifier.weight(1f)){Text(label,fontSize=DesignTokens.font15.sp);SettingsNote(note)};Box(Modifier.width(DesignTokens.space40.dp).height(DesignTokens.space24.dp).background(if(checked)MaterialTheme.colorScheme.primary else Color(if(LocalNativeDark.current)DesignTokens.nativeDarkMuted else DesignTokens.nativeMuted),RoundedCornerShape(DesignTokens.radius999.dp)).padding(DesignTokens.space3.dp)){Box(Modifier.size(DesignTokens.space18.dp).align(if(checked)Alignment.CenterEnd else Alignment.CenterStart).background(if(checked)MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surface,RoundedCornerShape(DesignTokens.radius999.dp)))}}}
+@Composable internal fun SettingsToggle(label:String,note:String,checked:Boolean,enabled:Boolean=true,change:(Boolean)->Unit) {
+    Column(Modifier.fillMaxWidth().toggleable(value=checked,enabled=enabled,role=Role.Switch,onValueChange=change).padding(vertical=DesignTokens.space8.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)) {
+        Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space48.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space12.dp)) {
+            Text(label,Modifier.weight(1f),fontSize=DesignTokens.font15.sp,lineHeight=DesignTokens.space24.sp)
+            Switch(checked=checked,onCheckedChange=null,enabled=enabled)
+        }
+        SettingsNote(note)
+    }
+}
 @Composable private fun SettingsConfirm(s:NativeSettingsModel,title:String,message:String,label:String,dismiss:()->Unit,action:()->Unit) {
     val close by rememberUpdatedState(dismiss)
     val confirm by rememberUpdatedState(action)

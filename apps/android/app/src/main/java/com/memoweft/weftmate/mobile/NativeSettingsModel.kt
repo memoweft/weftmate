@@ -32,7 +32,8 @@ internal class SettingsConfirmation(val title:String,val message:String,val labe
 @Stable internal class NativeSettingsModel(val chat:NativeChatModel,val activity:NativeActivity) {
     val bridge=NativeSettingsBridge(activity)
     var page by mutableStateOf("")
-    var webPage by mutableStateOf("")
+    var localServices by mutableStateOf(false)
+    val phoneServices get()=localServices||chat.standalone
     var loading by mutableStateOf(false)
     var menuLoading by mutableStateOf(false)
     var busy by mutableStateOf(false)
@@ -56,11 +57,11 @@ internal class SettingsConfirmation(val title:String,val message:String,val labe
     private var read:Job?=null
     private var mutation:Job?=null
     private var menuRead:Job?=null
-    val title get()=if(webPage.isNotEmpty())home.optJSONArray("categories")?.objects()?.find{it.optString("id")==webPage}?.optString("name") ?: "设置" else if(page=="models")if(adding)"添加模型服务" else if(editingService!=null)"修改模型服务" else "模型" else home.optJSONArray("categories")?.objects()?.find{it.optString("id")==page}?.optString("name") ?: "设置"
-    fun reset() { read?.cancel();mutation?.cancel();menuRead?.cancel();scrollPositions.clear();search="";identity=chat.owner;page="";webPage="";home=JSONObject();directory=JSONObject();services=emptyList();selected=JSONObject();device=null;editingService=null;adding=false;accountFlow="";busy=false;error="";menuVisible=false;menuLoading=false;confirmation=null }
-    fun open(id:String="",add:Boolean=false) { if(identity!=chat.owner)reset();page=id;webPage="";editingService=null;device=null;accountFlow="";adding=add;chat.tab="settings";refresh() }
-    fun back() { if(webPage.isNotEmpty()){webPage="";return};if(adding||editingService!=null){adding=false;editingService=null;return};if(device!=null){device=null;return};if(accountFlow.isNotEmpty()){accountFlow="";return};if(page.isNotEmpty()){page="";refresh()}else chat.returnToChat() }
-    fun original(id:String) { webPage=id;chat.tab="settings" }
+    val title get()=if(page=="models")if(adding)"添加模型服务" else if(editingService!=null)"修改模型服务" else "模型" else home.optJSONArray("categories")?.objects()?.find{it.optString("id")==page}?.optString("name") ?: "设置"
+    fun reset() { read?.cancel();mutation?.cancel();menuRead?.cancel();scrollPositions.clear();search="";identity=chat.owner;page="";localServices=false;home=JSONObject();directory=JSONObject();services=emptyList();selected=JSONObject();device=null;editingService=null;adding=false;accountFlow="";busy=false;error="";menuVisible=false;menuLoading=false;confirmation=null }
+    fun open(id:String="",add:Boolean=false) { if(identity!=chat.owner)reset();page=id;localServices=false;editingService=null;device=null;accountFlow="";adding=add;chat.tab="settings";refresh() }
+    fun back() { if(adding||editingService!=null){adding=false;editingService=null;return};if(device!=null){device=null;return};if(accountFlow.isNotEmpty()){accountFlow="";return};if(page.isNotEmpty()){page="";refresh()}else chat.returnToChat() }
+    fun original(id:String) { if(id=="phoneModels"){open("models");localServices=true;refresh()} else activity.pages.open(if(id=="account"&&chat.localOnly)"login" else id,from="settings") }
     fun toast(text:String) { Toast.makeText(activity,text,Toast.LENGTH_SHORT).show() }
     fun run(success:String="",action:suspend ()->Unit) {
         if(busy)return
@@ -75,11 +76,11 @@ internal class SettingsConfirmation(val title:String,val message:String,val labe
     } }
     suspend fun loadServices(force:Boolean=false) {
         val owner=chat.owner
-        val result=try { if(chat.standalone)bridge.call("phoneService",JSONObject().put("action",if(force)"refresh" else "list").put("body",JSONObject().put("force",force))) else chat.business("/model-services") }
-        catch(e:ApiFailure) { if(!chat.standalone && e.status in listOf(404,405,426,501)){legacy=true;services=emptyList();selected=JSONObject();return};throw e }
+        val result=try { if(phoneServices)bridge.call("phoneService",JSONObject().put("action",if(force)"refresh" else "list").put("body",JSONObject().put("force",force))) else chat.business("/model-services") }
+        catch(e:ApiFailure) { if(!phoneServices && e.status in listOf(404,405,426,501)){legacy=true;services=emptyList();selected=JSONObject();return};throw e }
         if(owner!=chat.owner)return
         legacy=false;services=result.optJSONArray("services")?.objects().orEmpty();selected=result.optJSONObject("selected") ?: result.optJSONObject("model") ?: JSONObject()
-        if(!chat.standalone) {
+        if(!phoneServices) {
             val session=if(chat.sessionId.isNotBlank())runCatching{chat.business("/chats/${chat.chatId}")}.getOrNull() else null
             val id=session?.optJSONObject("chat")?.stringOrEmpty("selectedModelProfileId").orEmpty().ifEmpty{session?.optJSONObject("chat")?.stringOrEmpty("modelProfileId").orEmpty()}.ifEmpty{chat.modelId}
             services.forEach{service->service.optJSONArray("models")?.objects()?.find{serviceModelMatches(it,id)}?.let{selected=JSONObject(it.toString()).put("serviceId",service.getString("serviceId"))}}
@@ -88,10 +89,10 @@ internal class SettingsConfirmation(val title:String,val message:String,val labe
         selected.optString("name").takeIf{it.isNotBlank()}?.let{chat.modelLabel=it}
     }
     fun menuOpened() { val owner=chat.owner;error="";menuLoading=services.isEmpty();menuRead?.cancel();menuRead=chat.scope.launch { try {loadServices();if(owner!=chat.owner)return@launch
-        if(!legacy) { thinking=if(chat.standalone)currentModel()?.optJSONObject("deepThinking")?.optBoolean("enabled")==true else runCatching{chat.business("/sessions/${chat.sessionId}/thinking").optBoolean("enabled")}.getOrDefault(false)
+        if(!legacy) { thinking=if(phoneServices)currentModel()?.optJSONObject("deepThinking")?.optBoolean("enabled")==true else runCatching{chat.business("/sessions/${chat.sessionId}/thinking").optBoolean("enabled")}.getOrDefault(false)
             // Only stale catalogs refresh; keep the menu and cached rows usable while querying.
             val stale=services.filter{System.currentTimeMillis()-(goalInstant(it.optJSONObject("catalog")?.opt("checkedAt"))?.toEpochMilli() ?: 0L)>=3600000L};stale.forEach{service->
-                runCatching{if(chat.standalone)bridge.call("phoneService",JSONObject().put("action","refresh").put("body",JSONObject().put("serviceId",service.getString("serviceId")))) else chat.business("/model-services/${service.getString("serviceId")}/refresh","POST",JSONObject())}
+                runCatching{if(phoneServices)bridge.call("phoneService",JSONObject().put("action","refresh").put("body",JSONObject().put("serviceId",service.getString("serviceId")))) else chat.business("/model-services/${service.getString("serviceId")}/refresh","POST",JSONObject())}
             }
             if(owner==chat.owner&&stale.isNotEmpty())loadServices()
         }
@@ -99,13 +100,14 @@ internal class SettingsConfirmation(val title:String,val message:String,val labe
     fun currentModel()=services.find{it.optString("serviceId")==selected.optString("serviceId")}?.optJSONArray("models")?.objects()?.find{it.optString("modelId")==selected.optString("modelId")}
     fun select(service:JSONObject,model:JSONObject,done:()->Unit) = run {chooseModel(service,model);done()}
     suspend fun chooseModel(service:JSONObject,model:JSONObject) {
+        if(localServices&&!chat.standalone){selected=bridge.call("phoneService",JSONObject().put("action","select").put("body",JSONObject().put("serviceId",service.getString("serviceId")).put("modelId",model.getString("modelId"))));return}
         chooseNativeServiceModel(chat,service,model) { p ->
             bridge.call("phoneService",JSONObject().put("action","select").put("body",p))
         }?.let{selected=it}
     }
-    fun toggleThinking(enabled:Boolean)=run { if(chat.standalone)bridge.call("phoneService",JSONObject().put("action","update").put("body",JSONObject().put("serviceId",selected.getString("serviceId")).put("modelId",selected.getString("modelId")).put("deepThinkingEnabled",enabled))) else chat.business("/sessions/${chat.sessionId}/thinking","PATCH",JSONObject().put("enabled",enabled));thinking=enabled }
+    fun toggleThinking(enabled:Boolean)=run { if(phoneServices)bridge.call("phoneService",JSONObject().put("action","update").put("body",JSONObject().put("serviceId",selected.getString("serviceId")).put("modelId",selected.getString("modelId")).put("deepThinkingEnabled",enabled))) else chat.business("/sessions/${chat.sessionId}/thinking","PATCH",JSONObject().put("enabled",enabled));thinking=enabled }
     suspend fun writeService(action:String,service:JSONObject?,body:JSONObject=JSONObject()):JSONObject {
-        if(chat.standalone)return bridge.call("phoneService",JSONObject().put("action",action).put("body",body.apply{service?.let{put("serviceId",it.getString("serviceId"))}}))
+        if(phoneServices)return bridge.call("phoneService",JSONObject().put("action",action).put("body",body.apply{service?.let{put("serviceId",it.getString("serviceId"))}}))
         val id=service?.getString("serviceId");body.put("requestId",java.util.UUID.randomUUID().toString());service?.let{if(action!="refresh")body.put("expectedRevision",it.getLong("revision"))}
         if(body.has("endpoint")){body.put("baseUrl",body.getString("endpoint"));body.remove("endpoint")}
         if(body.has("enabledModelIds")){val enabled=body.getJSONArray("enabledModelIds");body.put("models",org.json.JSONArray(service?.optJSONArray("models")?.objects().orEmpty().map{JSONObject().put("modelId",it.getString("modelId")).put("enabled",(0 until enabled.length()).any{i->enabled.optString(i)==it.getString("modelId")})}));body.remove("enabledModelIds")}

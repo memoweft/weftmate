@@ -49,10 +49,10 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import java.util.function.Consumer
 
-private val controlHeight = DesignTokens.space44.dp
+private val controlHeight = DesignTokens.space48.dp
 private val controlIcon = ((DesignTokens.space20 + DesignTokens.space24) / 2).dp
 private val controlLabel = ((DesignTokens.font14 + DesignTokens.font16) / 2).sp
-private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
+private val controlShape = RoundedCornerShape(DesignTokens.radius8.dp)
 
 /** Quiet or secondary action: shared touch size, feedback and keyboard focus. */
 @Composable internal fun FeedControlButton(
@@ -72,17 +72,17 @@ private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
     action: () -> Unit
 ) {
     val semantics = if (contentDescription == null) Modifier else Modifier.semantics { this.contentDescription = contentDescription }
-    FeedControlSurface(enabled, modifier.then(semantics).height(controlHeight), controlShape,
+    FeedControlSurface(enabled, modifier.then(semantics).heightIn(min=controlHeight), controlShape,
         if (danger) MaterialTheme.colorScheme.errorContainer else if (primary) MaterialTheme.colorScheme.primary else if (secondary) MaterialTheme.colorScheme.surface else Color.Transparent,
         softColor, MaterialTheme.colorScheme.primary, action,
         borderColor = if (secondary && !primary && !danger) MaterialTheme.colorScheme.outline else null) { active ->
-        Row((if(choice) Modifier.fillMaxWidth() else Modifier).padding(horizontal = ((DesignTokens.space16 + DesignTokens.space20) / 2).dp),
+        Row((if(choice) Modifier.fillMaxWidth() else Modifier).padding(horizontal = ((DesignTokens.space16 + DesignTokens.space20) / 2).dp,vertical=DesignTokens.space12.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DesignTokens.space8.dp)) {
             val ink = if (danger) MaterialTheme.colorScheme.error else if (primary && !active) MaterialTheme.colorScheme.onPrimary else if (active || secondary) MaterialTheme.colorScheme.onSurface else inkSecondary
             if (loading) androidx.compose.material3.CircularProgressIndicator(Modifier.size(controlIcon), color = ink, strokeWidth = DesignTokens.space2.dp)
             if (icon != null) Icon(painterResource(icon), null, Modifier.size(controlIcon), tint = ink)
             Text(label, modifier=if(choice)Modifier.weight(1f) else Modifier, fontSize = controlLabel, lineHeight = DesignTokens.space20.sp, fontWeight = FontWeight.Medium,
-                color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                color = ink, maxLines = 3, overflow = TextOverflow.Ellipsis)
             if (trailingIcon != null) Icon(painterResource(trailingIcon), null, Modifier.size(controlIcon), tint = ink)
         }
     }

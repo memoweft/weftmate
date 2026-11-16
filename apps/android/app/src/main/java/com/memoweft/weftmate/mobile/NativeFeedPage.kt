@@ -30,14 +30,14 @@ import java.util.Locale
 
 private val feedGap = DesignTokens.space8.dp
 private val feedTouch = DesignTokens.space44.dp
-private val feedPill = RoundedCornerShape(DesignTokens.radius999.dp)
+private val feedPill = RoundedCornerShape(DesignTokens.radius8.dp)
 private val feedBodyLeading = (DesignTokens.font16 * 1.9f).sp
 private val feedFilters = listOf("all" to "全部", "actionable" to "待处理", "task" to "任务", "reminder" to "提醒", "memory" to "记忆")
 private data class FeedEntry(val key: String, val day: String, val row: JSONObject? = null)
 
 @Composable internal fun NativeFeedToolbar(feed: NativeFeedModel, back: () -> Unit, onDrawer: () -> Unit = {}, onSettings: () -> Unit = {}) {
     val detail = feed.detail != null || feed.webDetail != null
-    Row(Modifier.fillMaxWidth().background(Color(if(feed.dark)DesignTokens.nativeDarkCanvas else DesignTokens.nativeSurface)).heightIn(min = (DesignTokens.space64 + DesignTokens.space16).dp).padding(DesignTokens.space12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().background(Color(if(feed.dark)DesignTokens.nativeDarkCanvas else DesignTokens.nativeSurface)).heightIn(min = DesignTokens.space56.dp).padding(DesignTokens.space12.dp), verticalAlignment = Alignment.CenterVertically) {
         if (detail) FeedControlIconButton(R.drawable.wm_back, "返回动态", floating = true, action = back)
         else FeedControlIconButton(R.drawable.wm_panel, "打开侧栏", floating = true, action = onDrawer)
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -146,10 +146,10 @@ private fun feedReportDate(value: String, zone: String, subtractDay: Boolean = f
     val actions = row.optJSONArray("actions")?.objects().orEmpty()
     val canOpen = unread || actions.any { it.optString("kind") in listOf("open_chat", "answer_question", "view_memory", "view_settings", "view_library") }
     val report = row.optJSONObject("weeklyInsight")
-    Column(Modifier.fillMaxWidth().padding(vertical = DesignTokens.space12.dp).clip(RoundedCornerShape(DesignTokens.radius26.dp)).background(feedSoft(feed.dark))
+    Column(Modifier.fillMaxWidth().padding(vertical = DesignTokens.space12.dp)
         .clickable(enabled = !feed.busy && canOpen) { feed.open(row) }.semantics { contentDescription = "打开动态 ${row.optString("title")}" }.padding(vertical = feedGap)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(feedGap)) {
-            Column(Modifier.weight(1f).padding(horizontal = feedGap, vertical = DesignTokens.space12.dp)) {
+            Column(Modifier.weight(1f).padding(vertical = DesignTokens.space12.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(feedGap), verticalAlignment = Alignment.Top) {
                     if (unread) Box(Modifier.size(DesignTokens.space6.dp).align(Alignment.CenterVertically).background(MaterialTheme.colorScheme.primary, CircleShape).semantics { contentDescription = "未读" })
                     Text(row.optString("title"), Modifier.weight(1f).alignByBaseline(), fontSize = DesignTokens.font16.sp, fontWeight = FontWeight.SemiBold)
