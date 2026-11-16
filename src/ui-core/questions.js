@@ -135,6 +135,9 @@ globalThis.WeftUiCore.factories.questions = (core, effects, environment) => {
                         entry.notice = '这批问题暂时无法核对，已填写内容保留。请重新核对。';
                     }
                 for (const [id, row] of rows) {
+                    await core.readApprovalTask(row, context);
+                    if (!core.approvalContextCurrent(context) || core.conversationQuestions.reads.get(key)?.generation !== generation)
+                        return false;
                     const entry = core.mergeQuestion(core.conversationQuestions.entries.get(id), row);
                     core.conversationQuestions.entries.set(id, entry);
                     if (entry.authoritative && row.status !== 'pending')

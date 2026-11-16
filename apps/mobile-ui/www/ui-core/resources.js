@@ -199,7 +199,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
     async function submitCommand(kind, fields = {}, sessionId = null, fixedRequestId = null) {
         if (kind === 'session.message') {
             const { mode, ...rest } = fields;
-            fields = { ...rest, intent: fields.intent || mode || 'steer' };
+            fields = { ...rest, intent: fields.intent || mode || 'queue' };
         }
         if (!core.state.online || !core.state.hostId) {
             core.setOnline(false);

@@ -341,7 +341,6 @@ async function send(options={}){if(state.chatSource==='host')return sendShared(o
 
 async function stop(){if(state.chatSource==='host'||selectedBinding()){
     core.syncMobileIdentity();
-    if(core.taskQueue().some(row=>row.state==='running'&&!row.taskId.startsWith('turn-')))return core.stopCurrentTurn();
     if(state.sharedStopping||!selectedSharedSession()?.sendAvailable)return;
     const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration,sessionId=state.sharedSessionId,
       requestId=newSharedRequestId();state.sharedStopping=true;effects.status('正在请求电脑停止…');

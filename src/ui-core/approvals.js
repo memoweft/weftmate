@@ -239,6 +239,19 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             command.receiptId === row.sourceReceiptId && (command.commandId === row.taskId && !command.rootTaskId ||
             command.rootTaskId === row.taskId) && (!Number.isSafeInteger(command.dshTurn) || command.dshTurn === row.turn)) || null;
     }
+    async function readApprovalTask(row, context) {
+        if (!(core.state.personalCapabilities?.replyStreaming === 1 || core.inLogicalTimeline?.())) return;
+        if (!['pending', 'answered'].includes(row.status) || core.conversationTasks.entries.has(row.taskId)) return;
+        const payload = await core.accessApi('/tasks/' + encodeURIComponent(row.taskId));
+        if (!core.approvalContextCurrent(context)) return;
+        if (payload?.taskId !== row.taskId || payload.sessionId !== context.sessionId ||
+            payload.source?.commandId !== row.taskId || payload.source.kind !== 'session.message' || payload.source.rootTaskId ||
+            payload.source.sessionId !== context.sessionId || !Array.isArray(payload.artifacts) ||
+            payload.conversationId && payload.conversationId !== context.conversationId)
+            throw { code: 'REQUEST_FAILED' };
+        core.conversationTasks.entries.set(row.taskId, { taskId: row.taskId, sessionId: context.sessionId,
+            conversationId: payload.conversationId, receiptId: payload.source.receiptId, payload, notice: '' });
+    }
     function mergeApproval(entry, row) {
         if (entry && !core.sameApproval(entry.row, row))
             return { ...entry, authoritative: false,
@@ -287,6 +300,9 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
                         entry.notice = '这条审批暂时无法核对，请重新核对原对话。';
                     }
                 for (const [id, row] of rows) {
+                    await core.readApprovalTask(row, context);
+                    if (!core.approvalContextCurrent(context) || core.conversationApprovals.reads.get(key)?.generation !== generation)
+                        return false;
                     const entry = core.mergeApproval(core.conversationApprovals.entries.get(id), row);
                     core.conversationApprovals.entries.set(id, entry);
                     if (entry.authoritative && row.status !== 'pending')
@@ -407,5 +423,5 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
                 effects.defaultApprovalNotice('无法读取默认模式，请刷新设置。');
         }
     }
-    return { approvalReview, refreshNewConversationApprovalMode, approvalPresentation, readApprovalPresentation, refreshApprovalMode, saveApprovalMode, selectSession, selectNativeSession, resetConversationApprovals, approvalContext, approvalContextCurrent, approvalIdentity, sameApproval, validApproval, approvalMarkerKey, approvalMarkers, approvalMarker, saveApprovalMarker, clearApprovalMarker, approvalSource, mergeApproval, refreshConversationApprovals, approvalStatusText, submitApproval, refreshApprovalSettings };
+    return { approvalReview, refreshNewConversationApprovalMode, approvalPresentation, readApprovalPresentation, refreshApprovalMode, saveApprovalMode, selectSession, selectNativeSession, resetConversationApprovals, approvalContext, approvalContextCurrent, approvalIdentity, sameApproval, validApproval, approvalMarkerKey, approvalMarkers, approvalMarker, saveApprovalMarker, clearApprovalMarker, approvalSource, readApprovalTask, mergeApproval, refreshConversationApprovals, approvalStatusText, submitApproval, refreshApprovalSettings };
 };

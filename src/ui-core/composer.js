@@ -628,33 +628,15 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     async function stopCurrentTurn() {
         const session = core.state.activeChatSource === 'phone' ? core.phoneBinding()?.sessionId : core.state.selectedSessionId;
         const context = core.conversationTaskContext();
-        const current = core.taskQueue().filter(row => row.state === 'running').at(-1);
         if (session && conversationRunning(session) && !core.state.cancelSubmitting) {
             const stoppedNotice = () => {
                 if (!core.conversationTaskCurrent(context)) return;
                 const queued = core.taskQueue().filter(row => row.state === 'queued').length;
                 effects.toast(queued ? `已停止当前回复，还有 ${queued} 条排队消息会继续` : '已停止');
             };
-            if (!current?.taskId || current.taskId.startsWith('turn-')) {
-                const result = await core.submitCommand('session.cancel', { sessionId: session }, session);
-                if (result?.state === 'accepted_by_dsh') stoppedNotice();
-                return result;
-            }
-            core.state.cancelSubmitting = true;
-            effects.updateAvailability();
-            try {
-                const key = `${context.ownerId}/${context.identity}/${session}/${current.taskId}`;
-                if (core.stopAttempt?.key !== key)
-                    core.stopAttempt = { key, requestId: environment.crypto.randomUUID() };
-                await core.accessApi(`/tasks/${encodeURIComponent(current.taskId)}/stop`, {
-                    method: 'POST', protectedWrite: true, body: { requestId: core.stopAttempt.requestId } });
-                stoppedNotice();
-            } catch (error) {
-                if (core.conversationTaskCurrent(context)) effects.toast(core.taskControlError(error));
-            } finally {
-                core.state.cancelSubmitting = false;
-                effects.updateAvailability();
-            }
+            const result = await core.submitCommand('session.cancel', { sessionId: session }, session);
+            if (result?.state === 'accepted_by_dsh') stoppedNotice();
+            return result;
         }
     }
     function composerState(text, legacy = false) {
