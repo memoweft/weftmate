@@ -1,3 +1,4 @@
+import { isRemoteSession } from './backend-boundary.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
 import {
   canonicalUserQuestionAnswer,
@@ -130,7 +131,7 @@ export function createUserQuestionOperations(context) {
     const described = await context.callBackend(() => context.backend.describeSession(input.sessionId, ownerId));
     requireQuestionPending(input);
     const session = context.accountState(ownerId).sessions[input.sessionId];
-    if (described?.sessionId !== input.sessionId || described.agentPreset !== 'personal-remote' || described.running !== true ||
+    if (described?.sessionId !== input.sessionId || !isRemoteSession(described) || described.running !== true ||
         session.modelProfileId !== undefined && described.modelProfileId !== session.modelProfileId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
     const native = await nativeUserQuestionSnapshot(ownerId, input);
     if (digest(JSON.stringify(canonicalUserQuestions(native.questions))) !== questionsHash) throw failure('REQUEST_CONFLICT', 409);
@@ -212,7 +213,7 @@ export function createUserQuestionOperations(context) {
       const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
       context.requireToolRuntime(page.runtimeId);
       const session = context.accountState(ownerId).sessions[sessionId];
-      if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote' || described.running !== true) modelReason = 'TOOL_SOURCE_UNAVAILABLE';
+      if (described?.sessionId !== sessionId || !isRemoteSession(described) || described.running !== true) modelReason = 'TOOL_SOURCE_UNAVAILABLE';
       else if (session.modelProfileId !== undefined && described.modelProfileId !== session.modelProfileId) modelReason = 'MODEL_UNAVAILABLE';
       if (modelReason) {
         const activeRows = userQuestions(context.accountState(ownerId)).filter(row => row.sessionId === sessionId && ['pending', 'answered'].includes(row.status));

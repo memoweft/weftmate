@@ -1,3 +1,4 @@
+import { isRemoteSession, isSharedSession } from './backend-boundary.mjs';
 import { memorySettings, hasPrivateContent } from './temporary-chats.mjs';
 import { modeProjection } from './work-and-chat.mjs';
 import { randomUUID } from 'node:crypto';
@@ -84,11 +85,11 @@ export function createChatOperations(context) {
       projectId: session.projectId ?? null, attention: null, lastOutcome: null, ...summary, running: false, sendAvailable: false, taskAvailable: false, unavailable: true }; }
     const project = account.projects?.[session.projectId];
     const canSend = !session.deleting && !session.archived && context.messageModelUsable(ownerId, session) &&
-      (session.origin === 'personal-remote' && described.agentPreset === 'personal-remote' &&
+      (session.origin === 'personal-remote' && isRemoteSession(described) &&
         (!session.projectId || project?.revoked === false && project.revision === session.projectRevision &&
           described.modelProfileId === session.modelProfileId) &&
         (!session.workspaceKind || context.browserReader?.status()?.available === true && described.modelProfileId === session.modelProfileId) ||
-       session.origin === 'shared-chat' && described.agentPreset === 'personal-shared-chat');
+       session.origin === 'shared-chat' && isSharedSession(described));
     return { ...base, ...summary, unread: chat.kind === 'main' ? chat.unread === true || summary.unread : summary.unread,
       title: chat.kind === 'main' ? 'WeftMate' : summary.title ?? bounded(described.title, 256) ?? '',
       pinned: chat.kind === 'main' || summary.pinned, archived: session.archived === true,

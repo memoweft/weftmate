@@ -4,14 +4,16 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
+import { createCommandOperations } from '../src/personal-access/commands.mjs'
+import { inspectProjectRoot } from '../src/personal-projects/index.mjs'
 import { canonicalCommand } from '../src/personal-access/command-policy.mjs'
 import { stopExactTask, createTaskStopHandler } from '../src/plugins/weftmate-personal-task-control.mjs'
 import { indexInboxTimeline, turnReceiptAt } from '../src/runtime/dsh-adapter/inbox-timeline.mjs'
 import { projectHistoryEvent } from '../src/runtime/dsh-adapter/sessions.mjs'
 
-test('send intent defaults to steer, accepts legacy mode, and rejects ambiguous intent', () => {
+test('send intent defaults to queue, accepts legacy mode, and rejects ambiguous intent', () => {
   const body = { requestId: 'send', kind: 'session.message', targetDeviceId: 'host-a', sessionId: 'session-a', text: 'goal' }
-  assert.equal(canonicalCommand(body, 'host-a').mode, 'steer')
+  assert.equal(canonicalCommand(body, 'host-a').mode, 'queue')
   assert.equal(canonicalCommand({ ...body, intent: 'queue' }, 'host-a').mode, 'queue')
   assert.equal(canonicalCommand({ ...body, mode: 'queue' }, 'host-a').mode, 'queue')
   assert.throws(() => canonicalCommand({ ...body, mode: 'queue', intent: 'steer' }, 'host-a'))
@@ -132,13 +134,14 @@ test('two authenticated clients serialize sends, steer belongs to active root, c
       assert.equal(response.status, 202, JSON.stringify(response.body)); return response.body.command
     }
     const active = await send(one, 'active'); await settle(one, active.commandId)
-    const [adjust, queued] = await Promise.all([send(one, 'adjust'), send(two, 'queued', 'queue')])
+    const [adjust, queued] = await Promise.all([send(one, 'adjust', 'steer'), send(two, 'queued')])
     const amendment = await settle(one, adjust.commandId), next = await settle(two, queued.commandId)
     assert.equal(amendment.intent, 'steer'); assert.equal(amendment.rootTaskId, active.commandId)
     assert.equal(next.rootTaskId, undefined); assert.equal(next.intent, 'queue')
     assert.equal(sends[0].text, 'active')
+    assert.equal(sends[0].mode, 'queue')
     assert.deepEqual(new Set(sends.slice(1).map(send => send.text)), new Set(['adjust', 'queued']))
-    const retry = await send(one, 'adjust'); assert.equal(retry.commandId, adjust.commandId)
+    const retry = await send(one, 'adjust', 'steer'); assert.equal(retry.commandId, adjust.commandId)
     const canceled = await api(two, `/tasks/${next.commandId}/cancel`, { requestId: 'cancel-next' })
     assert.equal(canceled.status, 202, JSON.stringify(canceled.body)); assert.equal(canceled.body.task.control.stopStatus, 'stopped')
     assert.equal((await api(one, `/tasks/${active.commandId}/cancel`, { requestId: 'race' })).status, 409)
@@ -146,7 +149,7 @@ test('two authenticated clients serialize sends, steer belongs to active root, c
     await service.close(); service = await createPersonalAccessService({ root, port: 0, backend }); origin = (await service.start()).origin
     assert.equal((await api(two, `/tasks/${next.commandId}/cancel`, { requestId: 'cancel-next' })).status, 202)
     assert.deepEqual(removed, [next.receiptId])
-    const late = await send(two, 'late'); await lateEntered
+    const late = await send(two, 'late', 'steer'); await lateEntered
     const stop = await api(one, `/tasks/${active.commandId}/stop`, { requestId: 'stop-active' })
     releaseLate()
     const lateCommand = await settle(two, late.commandId)
@@ -155,4 +158,46 @@ test('two authenticated clients serialize sends, steer belongs to active root, c
     assert.ok(removed.includes(lateCommand.receiptId), 'pre-stop native steer is included after its receipt binds')
     assert.equal(stop.status, 202); assert.ok(removed.includes(amendment.receiptId))
   } finally { await service.close(); rmSync(root, { recursive: true, force: true }) }
+})
+
+test('dispatch shares one description across bindings and rechecks store state inside serial', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-dispatch-gates-'))
+  try {
+    for (const binding of ['conversation', 'project', 'conversation-project', 'browser']) await t.test(binding, async () => {
+      const inspected = binding.includes('project') ? await inspectProjectRoot(root) : {}
+      for (const revoke of [false, true]) {
+        let descriptions = 0, sends = 0, serials = 0
+        const payload: any = { mode: 'queue', text: 'goal' }
+        if (binding.includes('conversation')) payload.conversationId = 'conversation-a'
+        if (binding.includes('project')) Object.assign(payload, { projectId: 'project-a', projectRevision: 1 })
+        if (binding === 'browser') payload.workspaceKind = 'browser'
+        const command: any = { commandId: 'command-a', kind: 'session.message', state: 'pending',
+          sessionId: 'session-a', sourceDeviceId: 'device-a', payload }
+        const account: any = { ownerId: 'owner-a', commands: { 'command-a': command }, devices: {},
+          sessions: { 'session-a': { ownerId: 'owner-a', modelProfileId: 'local' } },
+          projects: { 'project-a': { ...inspected, rootPath: root, revision: 1, revoked: false } },
+          conversationBindings: { 'conversation-a': { modelProfileId: 'local', status: 'active' } } }
+        const context: any = {
+          accountState: () => account, timestamp: Date.now, requireOpen() {},
+          modelVisible: () => true, messageModelUsable: () => true,
+          browserReader: { status: () => ({ available: true }) },
+          callBackend: (work: any) => work(),
+          serial: async (work: any) => {
+            if (++serials === 1 && revoke) account.sessions['session-a'] = { ...account.sessions['session-a'], archived: true }
+            return work()
+          },
+          mutate: async (_owner: string, work: any) => work(account),
+          backend: {
+            describeSession: async () => { descriptions++; return { sessionId: 'session-a', agentPreset: 'personal-remote', modelProfileId: 'local' } },
+            sendMessage: async () => { sends++; return { accepted: true, receiptId: 'receipt-a' } },
+          },
+        }
+        await createCommandOperations(context).dispatch('owner-a', 'command-a')
+        assert.equal(descriptions, 1, binding)
+        assert.equal(sends, revoke ? 0 : 1, binding)
+        assert.equal(command.state, revoke ? 'rejected' : 'accepted_by_dsh', binding)
+        if (revoke) assert.equal(command.errorCode, 'SESSION_ARCHIVED')
+      }
+    })
+  } finally { rmSync(root, { recursive: true, force: true }) }
 })

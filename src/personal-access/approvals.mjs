@@ -1,3 +1,4 @@
+import { isRemoteSession } from './backend-boundary.mjs';
 import { PERMISSION_TYPES, riskPermissionType } from '../plugins/personal-permission-rules.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { isWorkSwitch } from './work-and-chat.mjs';
@@ -129,7 +130,7 @@ export function createApprovalOperations(context) {
     if (rows.some(row => !approvalUnavailableReason(account, row))) {
       try {
         described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
-        if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote' || described.running !== true) {
+        if (described?.sessionId !== sessionId || !isRemoteSession(described) || described.running !== true) {
           unavailable = 'source_unavailable';
         } else {
           const sources = new Map(rows.filter(row => !approvalUnavailableReason(account, row))
@@ -334,7 +335,7 @@ export function createApprovalOperations(context) {
       const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
       requireToolRuntime(runtimeId);
       const session = context.accountState(ownerId).sessions[sessionId];
-      if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote' || described.running !== true ||
+      if (described?.sessionId !== sessionId || !isRemoteSession(described) || described.running !== true ||
           session.modelProfileId !== undefined && described.modelProfileId !== session.modelProfileId) {
         throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       }

@@ -1,3 +1,4 @@
+import { isRemoteSession } from './backend-boundary.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { executionProject } from './work-and-chat.mjs';
 import { digest, failure, id, publicProject, publicSource, validId, withDeadline } from './common.mjs';
@@ -73,7 +74,7 @@ export function createWorkspaceOperations(context) {
     const account = context.accountState(ownerId);
     const { session, project } = projectGrant(account, sessionId);
     const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
-    if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote' ||
+    if (described?.sessionId !== sessionId || !isRemoteSession(described) ||
         described.modelProfileId !== session.modelProfileId) throw failure('PROJECT_MODEL_CHANGED', 409);
     return { session, project };
   }
@@ -87,7 +88,7 @@ export function createWorkspaceOperations(context) {
         ? 'BROWSER_CLEANUP_FAILED' : 'BROWSER_UNAVAILABLE', 409);
     }
     const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
-    if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote' ||
+    if (described?.sessionId !== sessionId || !isRemoteSession(described) ||
         described.modelProfileId !== session.modelProfileId) throw failure('PROJECT_MODEL_CHANGED', 409);
     return session;
   }

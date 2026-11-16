@@ -1,3 +1,5 @@
+import { requireSendRequestId, requireSendProject, requireSendSession, requireSendSync, requireSendAttachments } from './send-gates.mjs';
+import { isRemoteSession, isSharedSession } from './backend-boundary.mjs';
 import { dailyDigestState } from './daily-digest.mjs';
 import { SLASH_COMMAND_TIMEOUT_MS } from '../runtime/dsh-adapter/commands.mjs';
 import { connectorSettings } from '../personal-connectors/access.mjs';
@@ -1507,7 +1509,7 @@ export function createHttpHandler(context) {
                 modelProfileId: state.sessions[sessionId].modelProfileId } : {}),
               deepThinking: (chatForSession(state,sessionId)?.deepThinking ?? state.sessions[sessionId].deepThinking) === true,
               sendAvailable: state.sessions[sessionId].deleting !== true && state.sessions[sessionId].archived !== true && ((state.sessions[sessionId].origin === 'personal-remote' &&
-                described.agentPreset === 'personal-remote' &&
+                isRemoteSession(described) &&
                 (!state.sessions[sessionId].projectId ||
                   (state.projects?.[state.sessions[sessionId].projectId]?.revoked === false &&
                     state.projects[state.sessions[sessionId].projectId].revision === state.sessions[sessionId].projectRevision &&
@@ -1516,7 +1518,7 @@ export function createHttpHandler(context) {
                   (context.browserReader?.status()?.available === true &&
                     described.modelProfileId === state.sessions[sessionId].modelProfileId))) ||
                 (state.sessions[sessionId].origin === 'shared-chat' &&
-                described.agentPreset === 'personal-shared-chat' &&
+                isSharedSession(described) &&
                 context.modelVisible(ownerId, state.sessions[sessionId].modelProfileId))),
             });
           } catch { const live = context.accountState(ownerId).sessions[sessionId]; sessions.push({ sessionId, title: '', attention: null, lastOutcome: null,
@@ -2056,14 +2058,7 @@ export function createHttpHandler(context) {
           throw failure('MODEL_UNAVAILABLE', 422);
         }
         const payloadHash = digest(JSON.stringify(payload));
-        if (context.interactionRequestIdUsed(state, payload.requestId)) throw failure('REQUEST_CONFLICT', 409);
-        if (state.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
-        if (state.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
-        if (state.chatOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
-        if (Object.values(state.commands).some((command) =>
-          command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
-          throw failure('REQUEST_CONFLICT', 409);
-        }
+        requireSendRequestId(context, state, payload);
         if (prior) {
           if (prior.payloadHash !== payloadHash) throw failure('REQUEST_CONFLICT', 409);
           return context.json(response, 202, taskAction
@@ -2072,10 +2067,7 @@ export function createHttpHandler(context) {
               : { command: await creationReceipt(publicCommand(prior)) });
         }
         if (payload.kind === 'session.message' && !taskAction) protectMainSession(state, payload.sessionId, 'MAIN_CHAT_ROUTE_REQUIRED');
-        if (payload.projectId && (state.projects?.[payload.projectId]?.revoked ||
-            state.projects?.[payload.projectId]?.revision !== payload.projectRevision)) {
-          throw failure('PROJECT_REVOKED', 409);
-        }
+        requireSendProject(state, payload);
         if (taskAction === 'supplement' &&
             (rootSource.taskControl?.state === 'stop_requested' || context.taskHasUnknownEffects(state, rootTaskId))) {
           throw failure('TASK_NOT_READY', 409);
@@ -2085,40 +2077,14 @@ export function createHttpHandler(context) {
         if (taskAction === 'resume' && !resumeReady) throw failure('TASK_NOT_READY', 409);
         // A session must be bound to this owner before even the read-only
         // backend preflight can inspect its model or history.
-        if (payload.sessionId && (!Object.hasOwn(state.sessions, payload.sessionId) ||
-            state.sessions[payload.sessionId].ownerId !== state.ownerId)) {
-          throw failure('SESSION_UNAVAILABLE', 404);
-        }
-        if (payload.kind === 'session.message' && state.sessions[payload.sessionId].deleting === true) throw failure('SESSION_UNAVAILABLE', 404);
-        if (payload.kind === 'session.message' && state.sessions[payload.sessionId].archived === true) throw failure('SESSION_ARCHIVED', 409);
-        if (payload.kind === 'session.message' &&
-            !['personal-remote', 'shared-chat'].includes(state.sessions[payload.sessionId].origin)) {
-          throw failure('SESSION_READ_ONLY', 409);
-        }
-        if (payload.kind === 'session.message' &&
-            !context.messageModelUsable(ownerId, state.sessions[payload.sessionId])) {
-          throw failure('MODEL_UNAVAILABLE', 422);
-        }
+        requireSendSession(context, ownerId, state, payload);
         if (payload.kind === 'session.message') {
           const catalog = await context.backend.listModels({ ownerId });
           const model = catalog.find(row => row.id === state.sessions[payload.sessionId].modelProfileId);
           if (model) context.usage.assertAllowed(ownerId, model);
         }
-        if (payload.kind === 'session.message' && payload.sourceSyncEventId &&
-            (!payload.conversationId || !context.verifiedSyncUserEvent(ownerId, payload.conversationId,
-              payload.sourceSyncEventId, payload.text, deviceId) ||
-              Object.values(state.commands).some((item) =>
-                item.payload.sourceSyncEventId === payload.sourceSyncEventId))) {
-          throw failure('REQUEST_CONFLICT', 409);
-        }
-        if (payload.kind === 'session.message' && payload.attachments) {
-          await context.sharedAttachmentStores.get(ownerId).resolve({ sessionId: payload.sessionId,
-            requestId: payload.requestId, attachments: payload.attachments });
-        }
-        if (payload.kind === 'session.message' && payload.originalAttachments) {
-          await context.requireOriginalAttachments(ownerId, payload.sessionId, payload.attachmentMessageId,
-            payload.originalAttachments);
-        }
+        requireSendSync(context, ownerId, deviceId, state, payload);
+        await requireSendAttachments(context, ownerId, payload);
         const preflightKey = `${ownerId}|${payload.requestId}`;
         const preflightHash = payload.sideChat?.requestHash ?? payloadHash;
         const pendingPreflight = context.pendingPreflights.get(preflightKey);
@@ -2143,14 +2109,7 @@ export function createHttpHandler(context) {
           const current = context.authenticate(request, 'commands:write');
           if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
           const latest = context.accountState(ownerId);
-          if (context.interactionRequestIdUsed(latest, payload.requestId)) throw failure('REQUEST_CONFLICT', 409);
-          if (latest.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
-          if (latest.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
-          if (latest.chatOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
-          if (Object.values(latest.commands).some((command) =>
-            command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
-            throw failure('REQUEST_CONFLICT', 409);
-          }
+          requireSendRequestId(context, latest, payload);
           const existing = Object.values(latest.commands).find((command) =>
             command.ownerId === ownerId && command.requestId === payload.requestId);
           if (existing) {
@@ -2178,10 +2137,7 @@ export function createHttpHandler(context) {
               throw failure('CONVERSATION_SYNC_CHANGED', 409);
             }
           }
-          if (payload.projectId && (latest.projects?.[payload.projectId]?.revoked ||
-              latest.projects?.[payload.projectId]?.revision !== payload.projectRevision)) {
-            throw failure('PROJECT_REVOKED', 409);
-          }
+          requireSendProject(latest, payload);
           if (taskAction) {
             const source = context.taskSource(latest, rootTaskId);
             if (source.sessionId !== payload.sessionId ||
@@ -2196,33 +2152,9 @@ export function createHttpHandler(context) {
           }
           if (!Object.hasOwn(latest.devices, deviceId) || latest.devices[deviceId].revoked ||
               !latest.devices[deviceId].scopes.includes('commands:write')) throw failure('UNAUTHORIZED', 401);
-          if (payload.sessionId && (!Object.hasOwn(latest.sessions, payload.sessionId) ||
-              latest.sessions[payload.sessionId].ownerId !== ownerId)) throw failure('SESSION_UNAVAILABLE', 404);
-          if (payload.kind === 'session.message' && latest.sessions[payload.sessionId].deleting === true) throw failure('SESSION_UNAVAILABLE', 404);
-          if (payload.kind === 'session.message' && latest.sessions[payload.sessionId].archived === true) throw failure('SESSION_ARCHIVED', 409);
-          if (payload.kind === 'session.message' &&
-              !['personal-remote', 'shared-chat'].includes(latest.sessions[payload.sessionId].origin)) {
-            throw failure('SESSION_READ_ONLY', 409);
-          }
-          if (payload.kind === 'session.message' &&
-              !context.messageModelUsable(ownerId, latest.sessions[payload.sessionId])) {
-            throw failure('MODEL_UNAVAILABLE', 422);
-          }
-          if (payload.kind === 'session.message' && payload.sourceSyncEventId &&
-              (!context.verifiedSyncUserEvent(ownerId, payload.conversationId,
-                payload.sourceSyncEventId, payload.text, deviceId) ||
-                Object.values(latest.commands).some((item) =>
-                  item.payload.sourceSyncEventId === payload.sourceSyncEventId))) {
-            throw failure('REQUEST_CONFLICT', 409);
-          }
-          if (payload.kind === 'session.message' && payload.attachments) {
-            await context.sharedAttachmentStores.get(ownerId).resolve({ sessionId: payload.sessionId,
-              requestId: payload.requestId, attachments: payload.attachments });
-          }
-          if (payload.kind === 'session.message' && payload.originalAttachments) {
-            await context.requireOriginalAttachments(ownerId, payload.sessionId, payload.attachmentMessageId,
-              payload.originalAttachments);
-          }
+          requireSendSession(context, ownerId, latest, payload);
+          requireSendSync(context, ownerId, deviceId, latest, payload);
+          await requireSendAttachments(context, ownerId, payload);
           const recorded = Object.values(latest.commands);
           if (recorded.length >= MAX_COMMANDS ||
               recorded.reduce((bytes, command) => bytes +
