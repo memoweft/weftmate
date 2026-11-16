@@ -1,3 +1,4 @@
+import { isSharedSession } from './backend-boundary.mjs';
 import { recentDigestContext } from './daily-digest.mjs';
 import { digest, failure, id, plainObject, validId } from './common.mjs';
 import { CONVERSATION_ID, IMAGE_CONTENT_TYPES } from './constants.mjs';
@@ -430,7 +431,7 @@ export function createSessionOperations(context) {
         throw failure('SESSION_UNAVAILABLE', 404);
       }
       const described = await context.callBackend(() => context.backend.describeSession(sessionId, context.rootState.legacyOwnerId));
-      if (described?.sessionId !== sessionId || described.agentPreset === 'personal-shared-chat') {
+      if (described?.sessionId !== sessionId || isSharedSession(described)) {
         throw failure('SESSION_UNAVAILABLE', 404);
       }
       await context.serial(() => context.mutate(context.rootState.legacyOwnerId, (next) => {

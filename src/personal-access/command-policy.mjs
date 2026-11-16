@@ -188,7 +188,7 @@ export function canonicalCommand(value, hostId, internal = false) {
     'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls',
     'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash', 'sideChat', 'nativeFile']
     .filter((key) => Object.hasOwn(value, key) || (key === 'mode' && value.kind === 'session.message'))
-    .map((key) => [key, key === 'mode' ? (value.intent ?? value.mode ?? 'steer')
+    .map((key) => [key, key === 'mode' ? (value.intent ?? value.mode ?? 'queue')
       : key === 'attachments' ? value.attachments.map(canonicalSharedAttachment)
         : key === 'originalAttachments' ? value.originalAttachments.map(canonicalAttachmentMetadata)
         : key === 'initialUrls' ? [...value.initialUrls] : value[key]]));

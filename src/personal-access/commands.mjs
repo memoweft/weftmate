@@ -1,6 +1,7 @@
+import { dispatchSendRejection, dispatchDeviceRejection } from './send-gates.mjs';
+import { isRemoteSession } from './backend-boundary.mjs';
 import { initialMemorySettings } from './temporary-chats.mjs';
 import { chatForSession } from './chat-identity.mjs';
-import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { digest, failure, id, modelTextWithAttachments, safeCode, withDeadline } from './common.mjs';
 import { TEXT_ATTACHMENT_TYPES } from '../personal-sync/attachments.mjs';
 import { DISPATCH_TIMEOUT_MS, ID, IMAGE_REASONS, MAX_COMMANDS } from './constants.mjs';
@@ -18,17 +19,6 @@ export function createCommandOperations(context) {
         command.taskControl?.stopRequests.some(entry => entry.requestId === requestId) ||
         command.toolApprovals?.some(row => row.decisionRequestId === requestId) ||
         command.userQuestions?.some(row => row.answerRequestId === requestId));
-  }
-
-  /** The real reason a queued message can no longer go to its session, or null. */
-  function sessionMessageRejection(ownerId, session, admitted) {
-    if (!session || session.ownerId !== ownerId || !admitted || session.deleting === true ||
-        session.expiresAt && Date.parse(session.expiresAt) <= context.timestamp() ||
-        session.conversationId !== admitted.conversationId) return 'SESSION_UNAVAILABLE';
-    if (session.archived === true) return 'SESSION_ARCHIVED';
-    if (session.modelProfileId !== admitted.modelProfileId) return 'SESSION_MODEL_CHANGED';
-    if (!context.messageModelUsable(ownerId, session)) return 'MODEL_UNAVAILABLE';
-    return null;
   }
 
   async function dispatch(ownerId, commandId) {
@@ -50,12 +40,15 @@ export function createCommandOperations(context) {
       }
       const pendingSession = pending.kind === 'session.message'
         ? context.accountState(ownerId).sessions[pending.sessionId] : null;
+      let description;
+      const describePending = () => description ??= context.callBackend(() => context.backend.describeSession(pending.sessionId, ownerId));
       if (pending.toolSource) {
         let safePreset = false;
         try {
-          const described = await context.callBackend(() => context.backend.describeSession(pending.toolSource.sessionId));
+          const described = await (pending.toolSource.sessionId === pending.sessionId ? describePending()
+            : context.callBackend(() => context.backend.describeSession(pending.toolSource.sessionId)));
           safePreset = described?.sessionId === pending.toolSource.sessionId &&
-            described.agentPreset === 'personal-remote';
+            isRemoteSession(described);
         } catch { /* A tool task must not dispatch without live preset evidence. */ }
         if (!safePreset) {
           await context.serial(() => context.mutate(ownerId, (next) => {
@@ -75,100 +68,22 @@ export function createCommandOperations(context) {
         }));
         return;
       }
-      const sessionRejection = pending.kind === 'session.message' ? sessionMessageRejection(ownerId, pendingSession, pendingSession) : null;
+      const sessionRejection = await dispatchSendRejection(context, ownerId, context.accountState(ownerId), pending, pendingSession, describePending);
       if (sessionRejection) {
-        await context.serial(() => context.mutate(ownerId, (next) => {
+        await context.serial(() => context.mutate(ownerId, next => {
           if (next.commands[commandId]?.state !== 'pending') return;
           next.commands[commandId].state = 'rejected';
           next.commands[commandId].errorCode = sessionRejection;
-          next.commands[commandId].updatedAt = new Date().toISOString();
+          next.commands[commandId].updatedAt = new Date(context.timestamp()).toISOString();
         }));
         return;
       }
-      if (pending.payload.conversationId) {
-        const bound = context.accountState(ownerId).conversationBindings?.[pending.payload.conversationId];
-        const selected = pending.kind === 'session.message'
-          ? context.accountState(ownerId).sessions[pending.sessionId] : null;
-        let modelMatches = context.modelVisible(ownerId, bound?.modelProfileId);
-        if (modelMatches && selected) {
-          try {
-            const described = await context.callBackend(() => context.backend.describeSession(pending.sessionId, ownerId));
-            modelMatches = described?.sessionId === pending.sessionId &&
-              ['personal-remote', 'personal-shared-chat'].includes(described.agentPreset) &&
-              described.modelProfileId === bound.modelProfileId &&
-              selected.modelProfileId === bound.modelProfileId;
-          } catch { modelMatches = false; }
-        }
-        if (!bound || !modelMatches || (selected && bound.status !== 'active')) {
-          await context.serial(() => context.mutate(ownerId, (next) => {
-            if (next.commands[commandId]?.state !== 'pending') return;
-            next.commands[commandId].state = 'rejected';
-            next.commands[commandId].errorCode = 'MODEL_UNAVAILABLE';
-            next.commands[commandId].updatedAt = new Date().toISOString();
-          }));
-          return;
-        }
-      }
-      if (pending.payload.projectId) {
-        const project = context.accountState(ownerId).projects?.[pending.payload.projectId];
-        const session = pending.kind === 'session.message'
-          ? context.accountState(ownerId).sessions[pending.sessionId] : null;
-        let modelMatches = true;
-        if (session) {
-          try {
-            const described = await context.callBackend(() => context.backend.describeSession(pending.sessionId, ownerId));
-            modelMatches = described?.sessionId === pending.sessionId &&
-              described.agentPreset === 'personal-remote' &&
-              described.modelProfileId === session.modelProfileId;
-          } catch { modelMatches = false; }
-        }
-        if (!project || project.revoked || project.revision !== pending.payload.projectRevision ||
-            !modelMatches) {
-          await context.serial(() => context.mutate(ownerId, (next) => {
-            if (next.commands[commandId]?.state !== 'pending') return;
-            next.commands[commandId].state = 'rejected';
-            next.commands[commandId].errorCode = !modelMatches ? 'PROJECT_MODEL_CHANGED' : 'PROJECT_REVOKED';
-            next.commands[commandId].updatedAt = new Date(context.timestamp()).toISOString();
-          }));
-          return;
-        }
-      }
-      if (pending.payload.workspaceKind === 'browser') {
-        const session = pending.kind === 'session.message'
-          ? context.accountState(ownerId).sessions[pending.sessionId] : null;
-        let modelMatches = context.browserReader?.status()?.available === true;
-        if (modelMatches && session) {
-          try {
-            const described = await context.callBackend(() => context.backend.describeSession(pending.sessionId, ownerId));
-            modelMatches = described?.sessionId === pending.sessionId &&
-              described.agentPreset === 'personal-remote' &&
-              described.modelProfileId === session.modelProfileId;
-          } catch { modelMatches = false; }
-        }
-        if (!modelMatches) {
-          await context.serial(() => context.mutate(ownerId, (next) => {
-            if (next.commands[commandId]?.state !== 'pending') return;
-            next.commands[commandId].state = 'rejected';
-            next.commands[commandId].errorCode = 'BROWSER_UNAVAILABLE';
-            next.commands[commandId].updatedAt = new Date(context.timestamp()).toISOString();
-          }));
-          return;
-        }
-      }
-      if ((context.accountState(ownerId).devices[pending.sourceDeviceId]?.authKind === 'cloud' &&
-          context.cloudIdentity?.validSession(ownerId, pending.sourceDeviceId) !== true) ||
-          context.accountState(ownerId).devices[pending.sourceDeviceId]?.revoked ||
-          (pending.sourceAuthEpoch !== undefined &&
-            context.accountState(ownerId).devices[pending.sourceDeviceId]?.authEpoch !== pending.sourceAuthEpoch) ||
-          (['password', 'cloud', 'desktop'].includes(context.accountState(ownerId).devices[pending.sourceDeviceId]?.authKind) &&
-            !scheduledCommandSource(context.accountState(ownerId), pending) && !offlineCommandSource(context,ownerId,pending) && Date.parse(context.accountState(ownerId).devices[pending.sourceDeviceId].expiresAt) <= context.timestamp())) {
+      const priorRejection = dispatchDeviceRejection(context, ownerId, context.accountState(ownerId), pending);
+      if (priorRejection) {
         await context.serial(() => context.mutate(ownerId, (next) => {
           if (next.commands[commandId]?.state !== 'pending') return;
           next.commands[commandId].state = 'rejected';
-          next.commands[commandId].errorCode = next.devices[pending.sourceDeviceId]?.revoked
-            ? 'DEVICE_REVOKED' : pending.sourceAuthEpoch !== undefined &&
-              next.devices[pending.sourceDeviceId]?.authEpoch !== pending.sourceAuthEpoch
-              ? 'SESSION_REPLACED' : 'SESSION_EXPIRED';
+          next.commands[commandId].errorCode = dispatchDeviceRejection(context, ownerId, next, pending) ?? priorRejection;
           next.commands[commandId].updatedAt = new Date().toISOString();
         }));
         return;
@@ -176,7 +91,7 @@ export function createCommandOperations(context) {
       try {
         if (pending.payload.projectId) {
           const project = context.accountState(ownerId).projects[pending.payload.projectId];
-          const inspected = await inspectProjectRoot(project.rootPath);
+          const inspected = await (context.projectRootInspector ?? inspectProjectRoot)(project.rootPath);
           if (inspected.rootIdentity !== project.rootIdentity || inspected.rootFinalPath !== project.rootFinalPath)
             throw failure('PROJECT_ROOT_CHANGED', 409);
         }
@@ -203,19 +118,11 @@ export function createCommandOperations(context) {
         if(command.offlineSource&&!offlineCommandSource(context,ownerId,command)){
           await context.mutate(ownerId,next=>{next.commands[commandId].state='rejected';next.commands[commandId].errorCode='DEVICE_REVOKED';});return;
         }
-        if (command.payload.projectId && (context.accountState(ownerId).projects?.[command.payload.projectId]?.revoked ||
-            context.accountState(ownerId).projects?.[command.payload.projectId]?.revision !== command.payload.projectRevision)) {
-          await context.mutate(ownerId, (next) => {
+        const sendRejection = await dispatchSendRejection(context, ownerId, context.accountState(ownerId), command, pendingSession, describePending, true);
+        if (sendRejection) {
+          await context.mutate(ownerId, next => {
             next.commands[commandId].state = 'rejected';
-            next.commands[commandId].errorCode = 'PROJECT_REVOKED';
-            next.commands[commandId].updatedAt = new Date(context.timestamp()).toISOString();
-          });
-          return;
-        }
-        if (command.payload.workspaceKind === 'browser' && context.browserReader?.status()?.available !== true) {
-          await context.mutate(ownerId, (next) => {
-            next.commands[commandId].state = 'rejected';
-            next.commands[commandId].errorCode = 'BROWSER_UNAVAILABLE';
+            next.commands[commandId].errorCode = sendRejection;
             next.commands[commandId].updatedAt = new Date(context.timestamp()).toISOString();
           });
           return;
@@ -233,41 +140,6 @@ export function createCommandOperations(context) {
           try { context.sideChats.validatePrepared(ownerId, command.payload.sideChat); }
           catch {
             await context.mutate(ownerId, next => { next.commands[commandId].state = 'rejected'; next.commands[commandId].errorCode = 'SESSION_UNAVAILABLE'; });
-            return;
-          }
-        }
-        if (command.kind === 'session.message') {
-          const errorCode = sessionMessageRejection(ownerId, context.accountState(ownerId).sessions[command.sessionId], pendingSession);
-          if (errorCode) {
-            await context.mutate(ownerId, (next) => {
-              next.commands[commandId].state = 'rejected';
-              next.commands[commandId].errorCode = errorCode;
-              next.commands[commandId].updatedAt = new Date(context.timestamp()).toISOString();
-            });
-            return;
-          }
-        }
-        if (command.payload.conversationId) {
-          const bound = context.accountState(ownerId).conversationBindings?.[command.payload.conversationId];
-          const session = command.kind === 'session.message'
-            ? context.accountState(ownerId).sessions[command.sessionId] : null;
-          let actualMatches = true;
-          if (session) {
-            try {
-              const described = await context.callBackend(() => context.backend.describeSession(command.sessionId, ownerId));
-              actualMatches = described?.sessionId === command.sessionId &&
-                ['personal-remote', 'personal-shared-chat'].includes(described.agentPreset) &&
-                described.modelProfileId === bound?.modelProfileId;
-            } catch { actualMatches = false; }
-          }
-          if (!bound || !context.modelVisible(ownerId, bound.modelProfileId) ||
-              (session && (bound.status !== 'active' ||
-                session.modelProfileId !== bound.modelProfileId || !actualMatches))) {
-            await context.mutate(ownerId, (next) => {
-              next.commands[commandId].state = 'rejected';
-              next.commands[commandId].errorCode = 'MODEL_UNAVAILABLE';
-              next.commands[commandId].updatedAt = new Date().toISOString();
-            });
             return;
           }
         }
@@ -294,19 +166,11 @@ export function createCommandOperations(context) {
           });
           return;
         }
-        if ((context.accountState(ownerId).devices[command.sourceDeviceId]?.authKind === 'cloud' &&
-            context.cloudIdentity?.validSession(ownerId, command.sourceDeviceId) !== true) ||
-            context.accountState(ownerId).devices[command.sourceDeviceId]?.revoked ||
-            (command.sourceAuthEpoch !== undefined &&
-              context.accountState(ownerId).devices[command.sourceDeviceId]?.authEpoch !== command.sourceAuthEpoch) ||
-            (['password', 'cloud', 'desktop'].includes(context.accountState(ownerId).devices[command.sourceDeviceId]?.authKind) &&
-              !scheduledCommandSource(context.accountState(ownerId), command) && !offlineCommandSource(context,ownerId,command) && Date.parse(context.accountState(ownerId).devices[command.sourceDeviceId].expiresAt) <= context.timestamp())) {
+        const priorRejection = dispatchDeviceRejection(context, ownerId, context.accountState(ownerId), command);
+        if (priorRejection) {
           await context.mutate(ownerId, (next) => {
             next.commands[commandId].state = 'rejected';
-            next.commands[commandId].errorCode = next.devices[command.sourceDeviceId]?.revoked
-              ? 'DEVICE_REVOKED' : command.sourceAuthEpoch !== undefined &&
-                next.devices[command.sourceDeviceId]?.authEpoch !== command.sourceAuthEpoch
-                ? 'SESSION_REPLACED' : 'SESSION_EXPIRED';
+            next.commands[commandId].errorCode = dispatchDeviceRejection(context, ownerId, next, command) ?? priorRejection;
             next.commands[commandId].updatedAt = new Date().toISOString();
           });
           return;
@@ -504,7 +368,7 @@ export function createCommandOperations(context) {
         throw failure('SESSION_READ_ONLY', 409);
       }
       const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
-      if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote') {
+      if (described?.sessionId !== sessionId || !isRemoteSession(described)) {
         throw failure('SESSION_READ_ONLY', 409);
       }
       const requestId = `tool-${digest(`${state.ownerId}|${sessionId}|${turn}|${callId}`).slice(0, 48)}`;

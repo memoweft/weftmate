@@ -1,6 +1,6 @@
+import { isRemoteSession, readTaskStopEvidence } from './backend-boundary.mjs';
 import { redactProjectPath } from '../personal-projects/projects.mjs';
 import { executionProject } from './work-and-chat.mjs';
-import { readSourceEvents } from './source-history.mjs';
 import {
   digest,
   exactKeys,
@@ -12,7 +12,7 @@ import {
   validTime,
   withDeadline
 } from './common.mjs';
-import { GENERAL_TOOL_NAME, ID, INTERNAL_ARTIFACT_KIND, JOB_STATES, REQUEST_ID, TOOL_RUNTIME_ID } from './constants.mjs';
+import { GENERAL_TOOL_NAME, INTERNAL_ARTIFACT_KIND, JOB_STATES, REQUEST_ID, TOOL_RUNTIME_ID } from './constants.mjs';
 import { publicCommand } from './command-policy.mjs';
 
 export function createTaskOperations(context) {
@@ -80,79 +80,9 @@ export function createTaskOperations(context) {
     const legacy = !stop.targets;
     const targets = stop.targets ?? stopTargets(account, taskId).filter((target) =>
       Date.parse(account.commands[target.commandId].createdAt) <= Date.parse(stop.at));
-    const native = new Map();
-    if (typeof context.backend.getTaskStopState === 'function') {
-      await Promise.all(targets.filter(target => target.receiptId && target.ack !== 'queue_removed' &&
-        account.commands[target.commandId]?.state === 'accepted_by_dsh').map(async target => {
-        try {
-          const result = await observe(() => context.backend.getTaskStopState({ sessionId: source.sessionId,
-            receiptId: target.receiptId, turn: account.commands[target.commandId]?.dshTurn,
-            stopRequestedAt: stop.at, ownerId: account.ownerId }));
-          if (['ended', 'cancelled', 'not_running'].includes(result?.status) && validTime(result.observedAt)) {
-            native.set(target.receiptId, result);
-          }
-        } catch { /* Unavailable native state cannot confirm a stop. */ }
-      }));
-    }
-    const needsHistory = targets.some((target) => target.receiptId && target.ack !== 'queue_removed' && !native.has(target.receiptId));
-    const turns = new Map();
-    const receiptTurns = new Map();
-    let historyComplete = !needsHistory;
-    let invalidHistory = false;
-    if (needsHistory) {
-    let described;
-    try { described = await observe(() => context.backend.describeSession(source.sessionId, account.ownerId)); }
-    catch { return { ready: false, status: 'unconfirmed', pendingCount: targets.length }; }
-    if (described?.sessionId !== source.sessionId || described.agentPreset !== 'personal-remote') {
-      return { ready: false, status: 'unconfirmed', pendingCount: targets.length };
-    }
-    let openTurn = null;
-    try {
-      const scoped = await Promise.all(targets.filter(target => target.receiptId && target.ack !== 'queue_removed')
-        .map(target => readSourceEvents(context, { sessionId: source.sessionId, ownerId: account.ownerId,
-          receiptId: target.receiptId, turn: account.commands[target.commandId]?.dshTurn }, observe)));
-      const bySeq = new Map();
-      for (const range of scoped) for (const event of range.events) bySeq.set(event.seq, event);
-      const events = [...bySeq.values()].sort((a, b) => a.seq - b.seq);
-        for (const event of events) {
-          if (event.type === 'turn.started') {
-            const turn = event.data?.turn;
-            if (!Number.isSafeInteger(turn) || turn < 0 || openTurn !== null || turns.has(turn)) {
-              invalidHistory = true; break;
-            }
-            openTurn = turn;
-            turns.set(turn, { receipts: new Set(), users: new Set(), unknownUser: false, startedAt: event.at, ended: false });
-          } else if (['user.message', 'input.claimed', 'task.started'].includes(event.type)) {
-            if (openTurn === null) { invalidHistory = true; break; }
-            if (event.type === 'task.started' && event.data?.turn !== openTurn) { invalidHistory = true; break; }
-            const record = turns.get(openTurn);
-            const receipts = event.type === 'input.claimed' ? event.data?.receipts ?? [null] : [event.data?.receiptId];
-            for (const receiptId of receipts) {
-              // Older lifecycle projections omit receipts; they add no binding evidence.
-              if (event.type === 'task.started' && receiptId === undefined) continue;
-              if (typeof receiptId !== 'string' || !ID.test(receiptId)) {
-                record.unknownUser = true; continue;
-              }
-              record.receipts.add(receiptId);
-              const duplicateUser = event.type === 'user.message' && record.users.has(receiptId);
-              if (duplicateUser || receiptTurns.has(receiptId) && receiptTurns.get(receiptId) !== openTurn) receiptTurns.set(receiptId, null);
-              else receiptTurns.set(receiptId, openTurn);
-              if (event.type === 'user.message') record.users.add(receiptId);
-            }
-          } else if (event.type === 'turn.ended') {
-            const turn = event.data?.turn;
-            if (openTurn !== null && turn === openTurn) {
-              const record = turns.get(turn);
-              record.ended = true;
-              record.reason = event.data?.reason;
-              record.endedAt = event.at;
-              openTurn = null;
-            }
-          }
-        }
-      historyComplete = true;
-    } catch { /* Incomplete history is not proof of a closed turn. */ }
-    }
+    const evidence = await readTaskStopEvidence(context, account, source, stop, targets, observe);
+    if (evidence.unavailable) return { ready: false, status: 'unconfirmed', pendingCount: targets.length };
+    const { native, turns, receiptTurns, historyComplete, invalidHistory } = evidence;
     let pendingCount = 0;
     let aborted = false;
     let removed = false;
@@ -358,7 +288,7 @@ export function createTaskOperations(context) {
       for (const receipt of receipts) retry.attempts.set(receipt, context.timestamp());
       const described = await withDeadline(() => context.backend.describeSession(source.sessionId, ownerId), 2_500)
         .catch(() => null);
-      if (described?.sessionId !== source.sessionId || described.agentPreset !== 'personal-remote') return;
+      if (described?.sessionId !== source.sessionId || !isRemoteSession(described)) return;
       let result;
       try {
         result = await withDeadline(() => context.backend.stopTask({ sessionId: source.sessionId,
@@ -446,7 +376,7 @@ export function createTaskOperations(context) {
       const executionId = `exec-${digest(`${ownerId}|${sessionId}|${callId}`).slice(0, 48)}`;
       if (action === 'authorize_execution') {
         const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
-        if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
+        if (described?.sessionId !== sessionId || !isRemoteSession(described)) throw failure('SESSION_READ_ONLY', 409);
         // Native execution may begin before the send callback has durably recorded its receipt.
         for (let attempt = 0; attempt < 20 && Object.values(context.accountState(ownerId).commands).some(command =>
           command.kind === 'session.message' && command.sessionId === sessionId && command.state === 'dispatching'); attempt++) {
