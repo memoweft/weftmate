@@ -155,11 +155,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const revisionFor = ownerId => accountRevisions.get(ownerId) ?? 0;
   const changeDigest = (ownerId, field, value) => createHmac('sha256', changeKey)
     .update(JSON.stringify([ownerId, field, value])).digest('hex');
-  function publishAccountChange(previousRoot) {
+  function publishAccountChange(previousRoot, changedOwners) {
     accountRevision++;
     const sharedChanged = !isDeepStrictEqual(previousRoot.sharedModelProfiles, rootState.sharedModelProfiles) ||
       (previousRoot.executionOwnerId ?? previousRoot.legacyOwnerId) !== (rootState.executionOwnerId ?? rootState.legacyOwnerId);
-    const changedOwners = new Set([...Object.keys(previousRoot.accounts), ...Object.keys(rootState.accounts)]
+    changedOwners ??= new Set([...Object.keys(previousRoot.accounts), ...Object.keys(rootState.accounts)]
       .filter(ownerId => sharedChanged || !isDeepStrictEqual(previousRoot.accounts[ownerId], rootState.accounts[ownerId])));
     for (const ownerId of changedOwners) {
       accountRevisions.set(ownerId, revisionFor(ownerId) + 1);
@@ -710,16 +710,21 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     return result;
   }
 
-  async function mutateRoot(change, assertCurrent = () => {}, { recoverableMigration = false } = {}) {
+  async function mutateRoot(change, assertCurrent = () => {}, { recoverableMigration = false } = {}, ownerId) {
     requireOpen();
     assertCurrent();
     if (storageFault) throw failure('STORAGE_UNAVAILABLE', 503);
     const beforeDataAccounts = rootState.accounts;
-    const next = structuredClone(rootState);
+    // Account transactions own their entire account draft; other accounts stay
+    // shared and must not be reconciled or modified before the durable commit.
+    const next = ownerId === undefined ? structuredClone(rootState) : {
+      ...rootState, accounts: { ...rootState.accounts, [ownerId]: structuredClone(rootState.accounts[ownerId]) },
+    };
     const value = await change(next);
     requireOpen();
     assertCurrent();
     for (const [accountOwnerId, account] of Object.entries(next.accounts)) {
+      if (ownerId !== undefined && accountOwnerId !== ownerId) continue;
       reconcileChatIdentity(account, next.hostId, new Date(timestamp()).toISOString());
       for (const device of Object.values(account.devices)) if (device.revoked) delete device.push;
       reconcileActivity(account);
@@ -734,8 +739,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
     }
+    if (isDeepStrictEqual(ownerId === undefined ? next : next.accounts[ownerId],
+      ownerId === undefined ? rootState : rootState.accounts[ownerId])) return value;
     validateStore(next);
-    if (isDeepStrictEqual(next, rootState)) return value;
     try { await durableWrite(storeFile, next, () => {
       if (closing) return false;
       assertCurrent();
@@ -747,7 +753,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     }
     const previousRoot = rootState;
     rootState = next;
-    publishAccountChange(previousRoot);
+    publishAccountChange(previousRoot, ownerId === undefined ? undefined : new Set([ownerId]));
     for (const ownerId of Object.keys(rootState.accounts)) {
       const previous = beforeDataAccounts?.[ownerId];
       if (['sessions','commands','projects','personalization','defaultApprovalMode','permissionRules','notificationSettings','account'].some(key=>!isDeepStrictEqual(previous?.[key],rootState.accounts[ownerId][key]))) dataControls?.invalidate(ownerId);
@@ -767,7 +773,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const { version: _version, hostId: _hostId, ownerId: _ownerId, ...updated } = next;
       nextRoot.accounts[ownerId] = updated;
       return value;
-    }, assertCurrent, options);
+    }, assertCurrent, options, ownerId);
   }
 
   const scheduleOperations = createScheduleOperations(context);
