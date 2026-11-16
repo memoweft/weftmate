@@ -410,6 +410,23 @@ test('tool lifecycle derives a nested call from the real root event and records 
     const bridge = { request: async (frame: any, signal?: AbortSignal) => {
       frames.push({ frame, signal }); return { executionId: 'exec-' + 'a'.repeat(48), state: frame.state ?? 'running' }
     } }
+    for (const [value, expected] of [
+    [{ timedOut: true }, 'cancelled'], [{ timed_out: true }, 'cancelled'],
+    [{ killed: true }, 'cancelled'], [{ signal: 'SIGKILL' }, 'cancelled'],
+    [{ exitCode: 130 }, 'cancelled'], [{ exit_code: 143 }, 'cancelled'],
+    [{ exitCode: 1 }, 'failed'], [{ exit_code: '2' }, 'failed'],
+    [{ stderr: 'Command timed out after 10 seconds' }, 'cancelled'],
+    [{ output: 'Process terminated by signal SIGTERM' }, 'cancelled'],
+    [{ output: 'Process exited with exit code 7' }, 'failed'],
+    [{ exitCode: 0, timedOut: false, killed: false, signal: null }, 'completed']
+  ]) {
+      for (const result of [value, { isError: false, value }, { isError: false, payload: { result: value } }]) {
+        frames.length = 0
+        assert.equal(await trackPersonalExecution(bridge, exec, async () => result), result)
+        assert.equal(frames[1].frame.state, expected)
+      }
+    }
+    frames.length = 0
     await trackPersonalExecution(bridge, exec, async () => { controller.abort(); return { isError: true } })
     assert.equal(frames[1].frame.state, 'cancelled')
     assert.equal(frames[1].signal, undefined, 'cancellation still records its final receipt')

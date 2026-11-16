@@ -291,6 +291,24 @@ function rememberPermission(exec, value) {
   rows.set(exec.callId, value);
 }
 
+function executionResultState(value) {
+  if (typeof value === 'string') {
+    try { return executionResultState(JSON.parse(value)); } catch { /* Native text output. */ }
+    if (/\btimed?\s*out\b|\btimeout\b|\u8d85\u65f6|(?:signal|\u4fe1\u53f7)\s*[:=]?\s*SIG[A-Z0-9]+\b|(?:command|process|job|execution|operation|\u7528\u6237|\u4f7f\u7528\u8005|\u547d\u4ee4|\u8fdb\u7a0b).{0,60}(?:interrupt(?:ed)?\b|cancel(?:led|ed)\b|terminated\b|killed\b|\u4e2d\u65ad|\u7ec8\u6b62|\u5df2\u505c\u6b62)/i.test(value)) return 'cancelled';
+    const code = /\bexit(?:[ _-]?code| status)?\s*[:=]?\s*(-?\d+)\b/i.exec(value);
+    return code && Number(code[1]) !== 0 ? [130,143].includes(Number(code[1])) ? 'cancelled' : 'failed' : null;
+  }
+  if (!value || typeof value !== 'object') return null;
+  const code = value.exitCode ?? value.exit_code;
+  if (value.timedOut === true || value.timed_out === true || value.killed === true ||
+      typeof value.signal === 'string' && value.signal.length > 0 ||
+      [130,143].includes(Number(code)) || ['killed','cancelled','canceled','interrupted','terminated','timed_out','timeout'].includes(value.status)) return 'cancelled';
+  const states = (Array.isArray(value) ? value :
+    [value.text,value.content,value.output,value.result,value.value,value.payload,value.error,value.message,value.stdout,value.stderr]).map(executionResultState);
+  if (states.includes('cancelled')) return 'cancelled';
+  return value.isError === true || code != null && code !== '' && Number.isFinite(Number(code)) && Number(code) !== 0 || states.includes('failed') ? 'failed' : null;
+}
+
 export async function trackPersonalExecution(bridge, exec, next, background = null, approvals = null) {
   // DSH owns delegated execution. The portal receipt authorizes the parent subagent call;
   // the child's native prompt is not another personal/v1 command or account boundary.
@@ -356,7 +374,8 @@ export async function trackPersonalExecution(bridge, exec, next, background = nu
       }
     }
   }
-  const state = exec.signal?.aborted ? 'cancelled' : error || result?.isError ? 'failed' : 'completed';
+  const resultState = executionResultState(result);
+  const state = exec.signal?.aborted || resultState === 'cancelled' ? 'cancelled' : error || resultState === 'failed' ? 'failed' : 'completed';
   // Cancellation must still finish its receipt; it never closes an already opened application.
   try {
     await bridge.request({ ...payload, action: 'finish_execution', executionId: grant.executionId, state,

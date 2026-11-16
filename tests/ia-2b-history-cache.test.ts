@@ -68,3 +68,24 @@ test('public cache honors the native delayed step-end watermark and publishes it
     assert.ok(closed.events.some(row => row.seq === 3)); assert.equal(closed.nextSeq, 4);
   } finally { await cache.close(); await rm(root, { recursive: true, force: true }); }
 });
+
+test('history tool results preserve timeouts, signals and failed exits', async () => {
+  const { projectHistoryEvent } = await import('../src/runtime/dsh-adapter/sessions.mjs')
+  for (const [value, expected] of [
+    [{ timedOut: true }, 'cancelled'], [{ timed_out: true }, 'cancelled'],
+    [{ killed: true }, 'cancelled'], [{ signal: 'SIGKILL' }, 'cancelled'],
+    [{ exitCode: 130 }, 'cancelled'], [{ exit_code: 143 }, 'cancelled'],
+    [{ exitCode: 1 }, 'failed'], [{ exit_code: '2' }, 'failed'],
+    [{ stderr: 'Command timed out after 10 seconds' }, 'cancelled'],
+    [{ output: 'Process terminated by signal SIGTERM' }, 'cancelled'],
+    [{ output: 'Process exited with exit code 7' }, 'failed'],
+    [{ exitCode: 0, timedOut: false, killed: false, signal: null }, 'completed']
+  ]) {
+    for (const part of [{ value }, { text: JSON.stringify({ value }) }, { content: [{ type: 'text', text: JSON.stringify({ value }) }] }]) {
+      const event = projectHistoryEvent({ seq: 1, type: 'tool/result', data: { name: 'pwsh', callId: 'call', message: { content: [{ type: 'tool-result', isError: false, ...part }] } } })
+      assert.equal(event.data.state, expected)
+    }
+  }
+  const blocked = projectHistoryEvent({ seq: 2, type: 'turn/end', data: { turn: 1, reason: { kind: 'blocked' } } })
+  assert.equal(blocked.data.reason, 'blocked')
+})

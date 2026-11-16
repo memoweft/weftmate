@@ -275,7 +275,7 @@ export async function normalizeDshEvent(raw, state = createEventState()) {
   const turn = turnOf(event)
   if (event.type === 'turn/end') {
     // Exactly one terminal fact per turn: aborted -> turn.stopped(cancelled),
-    // error/max-tokens -> non-success error; preserve the legacy completed/blocked mapping.
+    // error/max-tokens/blocked -> non-success error; preserve the legacy completed mapping.
     const key = `${sessionId}:${turn ?? 'unknown'}`
     if (state.stoppedTurns.has(key)) return null
     state.stoppedTurns.add(key)
@@ -285,13 +285,14 @@ export async function normalizeDshEvent(raw, state = createEventState()) {
     if (event.data?.reason?.kind === 'error') {
       return safeError(event, sessionId, 'dsh-turn-error', 'DSH turn failed')
     }
-    if (event.data?.reason?.kind === 'max-tokens') {
-      const limited = await safeError(event, sessionId, 'dsh-turn-max-tokens',
-        'DSH turn ended at its output-token limit')
+    if (['max-tokens', 'blocked'].includes(event.data?.reason?.kind)) {
+      const kind = event.data.reason.kind
+      const limited = await safeError(event, sessionId, `dsh-turn-${kind}`,
+        kind === 'blocked' ? 'DSH turn blocked' : 'DSH turn ended at its output-token limit')
       return { ...limited, data: { ...limited.data,
-        details: { ...limited.data.details, endReasonKind: 'max-tokens' } } }
+        details: { ...limited.data.details, endReasonKind: kind } } }
     }
-    if (!['completed', 'blocked'].includes(event.data?.reason?.kind)) {
+    if (event.data?.reason?.kind !== 'completed') {
       return unknown(event, sessionId)
     }
     return base('turn.stopped', sessionId, event, { reason: 'completed' })
