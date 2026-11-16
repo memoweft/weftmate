@@ -129,6 +129,24 @@ function messageImages(message) {
       ...(typeof part.attachment.name === 'string' ? { name: safeHistoryText(part.attachment.name.slice(0, 120)).text } : {}) }))
 }
 
+function executionResultState(value) {
+  if (typeof value === 'string') {
+    try { return executionResultState(JSON.parse(value)); } catch { /* Native text output. */ }
+    if (/\btimed?\s*out\b|\btimeout\b|\u8d85\u65f6|(?:signal|\u4fe1\u53f7)\s*[:=]?\s*SIG[A-Z0-9]+\b|(?:command|process|job|execution|operation|\u7528\u6237|\u4f7f\u7528\u8005|\u547d\u4ee4|\u8fdb\u7a0b).{0,60}(?:interrupt(?:ed)?\b|cancel(?:led|ed)\b|terminated\b|killed\b|\u4e2d\u65ad|\u7ec8\u6b62|\u5df2\u505c\u6b62)/i.test(value)) return 'cancelled';
+    const code = /\bexit(?:[ _-]?code| status)?\s*[:=]?\s*(-?\d+)\b/i.exec(value);
+    return code && Number(code[1]) !== 0 ? [130,143].includes(Number(code[1])) ? 'cancelled' : 'failed' : null;
+  }
+  if (!value || typeof value !== 'object') return null;
+  const code = value.exitCode ?? value.exit_code;
+  if (value.timedOut === true || value.timed_out === true || value.killed === true ||
+      typeof value.signal === 'string' && value.signal.length > 0 ||
+      [130,143].includes(Number(code)) || ['killed','cancelled','canceled','interrupted','terminated','timed_out','timeout'].includes(value.status)) return 'cancelled';
+  const states = (Array.isArray(value) ? value :
+    [value.text,value.content,value.output,value.result,value.value,value.payload,value.error,value.message,value.stdout,value.stderr]).map(executionResultState);
+  if (states.includes('cancelled')) return 'cancelled';
+  return value.isError === true || code != null && code !== '' && Number.isFinite(Number(code)) && Number(code) !== 0 || states.includes('failed') ? 'failed' : null;
+}
+
 /** Stable public timeline; private reasoning and injected messages stay private. */
 export function projectHistoryEvent(raw, call = null, contextTurn = null, closingTurn = null, inbox = null, includeThinking = false) {
   const event = raw?.event ?? raw
@@ -209,7 +227,7 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
         ...(subtask ? { subtask: { name: safeHistoryText(String(args.description ?? args.command ?? '子任务').slice(0, 180)).text,
           ...(background ? { id: background[1], background: true } : child ? { id: child[1], background: true } : {}) } } : {}),
         ...(Number.isSafeInteger(data.turn) ? { turn: data.turn } : {}),
-        ...(type === 'tool/result' ? { state: data.error || part?.isError ? 'failed' : 'completed' } : { state: 'running' }),
+        ...(type === 'tool/result' ? { state: executionResultState([data.result, data.value, part]) ?? (data.error ? 'failed' : 'completed') } : { state: 'running' }),
         ...(type === 'tool/result' && !data.error && /^(edit|write)$/.test(toolName) ? {fileChanges: appliedFileChanges({isError:part?.isError,meta:data.meta},args)} : {}),
         ...(asked && type === 'tool/call' ? { questions: boundedTimelineValue(toolArguments(data.arguments).questions ?? []) } : {}),
       } }

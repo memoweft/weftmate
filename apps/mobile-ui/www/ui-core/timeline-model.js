@@ -189,6 +189,24 @@
             hasArguments: Object.keys(args).length > 0 };
     }
 
+    function executionResultState(value) {
+      if (typeof value === 'string') {
+        try { return executionResultState(JSON.parse(value)); } catch { /* Native text output. */ }
+        if (/\btimed?\s*out\b|\btimeout\b|\u8d85\u65f6|(?:signal|\u4fe1\u53f7)\s*[:=]?\s*SIG[A-Z0-9]+\b|(?:command|process|job|execution|operation|\u7528\u6237|\u4f7f\u7528\u8005|\u547d\u4ee4|\u8fdb\u7a0b).{0,60}(?:interrupt(?:ed)?\b|cancel(?:led|ed)\b|terminated\b|killed\b|\u4e2d\u65ad|\u7ec8\u6b62|\u5df2\u505c\u6b62)/i.test(value)) return 'cancelled';
+        const code = /\bexit(?:[ _-]?code| status)?\s*[:=]?\s*(-?\d+)\b/i.exec(value);
+        return code && Number(code[1]) !== 0 ? [130,143].includes(Number(code[1])) ? 'cancelled' : 'failed' : null;
+      }
+      if (!value || typeof value !== 'object') return null;
+      const code = value.exitCode ?? value.exit_code;
+      if (value.timedOut === true || value.timed_out === true || value.killed === true ||
+          typeof value.signal === 'string' && value.signal.length > 0 ||
+          [130,143].includes(Number(code)) || ['killed','cancelled','canceled','interrupted','terminated','timed_out','timeout'].includes(value.status)) return 'cancelled';
+      const states = (Array.isArray(value) ? value :
+        [value.text,value.content,value.output,value.result,value.value,value.payload,value.error,value.message,value.stdout,value.stderr]).map(executionResultState);
+      if (states.includes('cancelled')) return 'cancelled';
+      return value.isError === true || code != null && code !== '' && Number.isFinite(Number(code)) && Number(code) !== 0 || states.includes('failed') ? 'failed' : null;
+    }
+
     // Presentation only: native task, step and job records remain untouched.
     function executionState(step) {
         const reason = step.stopReason || step.endReasonKind || step.reason?.kind || step.reason || '';
@@ -196,6 +214,8 @@
             ['killed','cancelled','stopped'].includes(step.jobState) ||
             /^(aborted|cancelled|canceled|interrupted|terminated|stopped|replaced|superseded)$/.test(reason) ||
             step.interrupted === true || step.signal === 'SIGINT' || step.signal === 'SIGTERM' || [130,143].includes(step.exitCode)) return 'cancelled';
+        const resultState = executionResultState(step);
+        if (resultState) return resultState;
         if (step.state === 'failed' || step.jobState === 'failed') return 'failed';
         return ['running', 'stopping'].includes(step.jobState) ? 'running' : step.state;
     }
@@ -207,21 +227,7 @@
             signal:record.signal ?? step.signal, exitCode:record.exitCode ?? step.exitCode } : step;
     }
     function interruptionFromDetail(text, step) {
-        if (step && executionState(step) !== 'failed') return false;
-        try {
-            const data = JSON.parse(text);
-            const interrupted = value => {
-                if (typeof value === 'string') {
-                    try { const parsed=JSON.parse(value); if(parsed!==value && interrupted(parsed)) return true; } catch { /* Native text output. */ }
-                    return /(?:signal|信号)\s*[:=]?\s*SIG(?:INT|TERM)\b|(?:command|process|job|execution|operation|用户|使用者|命令|进程).{0,60}(?:interrupt(?:ed)?\b|cancel(?:led|ed)\b|terminated\b|killed\b|中断|终止|已停止)/i.test(value);
-                }
-                if (Array.isArray(value)) return value.some(interrupted);
-                if (!value || typeof value !== 'object') return false;
-                if (['SIGINT','SIGTERM'].includes(value.signal) || [130,143].includes(value.exitCode ?? value.exit_code) || ['killed','cancelled','canceled','interrupted','terminated'].includes(value.status)) return true;
-                return [value.text,value.content,value.output,value.result,value.value,value.error,value.message,value.stderr].some(interrupted);
-            };
-            return interrupted(data.output ?? data.result);
-        } catch { return false; }
+        return executionResultState(text) === 'cancelled';
     }
     function turnOutcome(events, taskId, stopView) {
         const matches = event => event.data?.taskId === taskId ||

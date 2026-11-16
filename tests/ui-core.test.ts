@@ -1195,3 +1195,23 @@ test('STREAM-1b a new logical work-history user message enables live reads until
  f.core.state.chatWindow.events.set('end',{eventId:'end',orderKey:'2',type:'turn.ended',data:{reason:'aborted'}});
  assert.equal(f.core.mainReplyActive(),false,'aborted replies return to idle reads');
 });
+
+test('execution states and details recognize timeouts, signals and failed exits', () => {
+  const { api } = fixture()
+  for (const [value, expected] of [
+    [{ timedOut: true }, 'cancelled'], [{ timed_out: true }, 'cancelled'],
+    [{ killed: true }, 'cancelled'], [{ signal: 'SIGKILL' }, 'cancelled'],
+    [{ exitCode: 130 }, 'cancelled'], [{ exit_code: 143 }, 'cancelled'],
+    [{ exitCode: 1 }, 'failed'], [{ exit_code: '2' }, 'failed'],
+    [{ stderr: 'Command timed out after 10 seconds' }, 'cancelled'],
+    [{ output: 'Process terminated by signal SIGTERM' }, 'cancelled'],
+    [{ output: 'Process exited with exit code 7' }, 'failed'],
+    [{ exitCode: 0, timedOut: false, killed: false, signal: null }, 'completed']
+  ]) {
+    assert.equal(api.executionState({ state: 'completed', ...value }), expected)
+    assert.equal(api.executionState({ state: 'completed', result: { value } }), expected)
+    assert.equal(api.interruptionFromDetail(JSON.stringify({ output: { value } }), { state: 'failed' }), expected === 'cancelled')
+  }
+  assert.equal(api.interruptionFromDetail('\u547d\u4ee4\u6267\u884c\u8d85\u65f6', { state: 'completed' }), true)
+  assert.equal(api.interruptionFromDetail('normal output', { state: 'failed' }), false)
+})

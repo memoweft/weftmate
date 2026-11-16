@@ -168,3 +168,15 @@ describe('P1-03 · DSH session / agent adapter', () => {
     assert.deepEqual(result.events.map((event) => [event.sessionId, event.data.text]), [['s-a', 'A'], ['s-b', 'B']])
   })
 })
+
+it('blocked turns emit a safe failure and seal late output', async () => {
+  const state = createEventState()
+  const frame = { sessionId: 's-blocked', event: { type: 'turn/end', seq: 1, data: { turn: 1, reason: { kind: 'blocked', message: 'sk-private-secret' } } } }
+  const event = await normalizeDshEvent(frame, state)
+  assert.equal(event?.type, 'error')
+  assert.equal(event?.data.code, 'dsh-turn-blocked')
+  assert.equal(event?.data.details.endReasonKind, 'blocked')
+  assert.equal(JSON.stringify(event).includes('sk-private-secret'), false)
+  assert.equal(await normalizeDshEvent(frame, state), null)
+  assert.equal(await normalizeDshEvent({ sessionId: 's-blocked', event: { type: 'assistant/chunk', seq: 2, data: { turn: 1, chunk: { type: 'text-delta', text: 'late' } } } }, state), null)
+})
