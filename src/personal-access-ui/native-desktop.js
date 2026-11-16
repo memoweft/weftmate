@@ -95,8 +95,10 @@ function blendDesktopColor(base, scrim) {
           catch { error('文件未添加，请登录这台电脑后重试发送。'); }
           finally { taking = false; }
         };
-        native.onSendTo(() => { clearTimeout(debounce); debounce = setTimeout(take, 350); });
-        setInterval(take, 1500);
+        if (native.onSendTo) native.onSendTo(() => { clearTimeout(debounce); debounce = setTimeout(take, 350); });
+        else setInterval(take, 1500);
+        window.addEventListener('focus', take);
+        void take();
       }
       const modelLabel = document.getElementById('model-label');
       const updateModel = () => { void native.setModelName(modelLabel.textContent).catch(() => {}); };

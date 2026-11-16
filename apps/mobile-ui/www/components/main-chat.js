@@ -245,17 +245,45 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     }
     function paintLiveChatMessages() {
         if(!logical()||core.state.chatWindow.search.query.trim())return false;
-        if(globalThis.WeftTimeline?.prepare && core.mainChatDays().some(day=>day.events.some(event=>event.data?.live && event.data?.modelThinking)))return false;
         const live=core.mainChatDays().flatMap(group=>group.events).filter(event=>event.data?.live);
         const keys=new Set(live.map(event=>event.presentationKey||event.eventId));
         if(rows.some(spec=>spec.event?.data?.live&&!keys.has(spec.key)))return false;
         for(const event of live){
             const key=event.presentationKey||event.eventId,spec=rows.find(spec=>spec.key===key);
+            if(globalThis.WeftTimeline?.prepare){
+                const stepId=`thinking-${event.data.streamSeq ?? event.seq}`;
+                const progress=rows.find(item=>item.kind==='progress' && item.events.some(thought=>
+                    thought.data?.stepId===stepId && thought.sourceRef?.sessionId===event.sourceRef?.sessionId));
+                const visible=!!event.data.modelThinking && core.state.personalization?.thinkingDisplay!=='hidden';
+                if(visible!==!!progress)return false;
+                if(progress){
+                    const thought=progress.events.find(item=>item.data?.stepId===stepId && item.sourceRef?.sessionId===event.sourceRef?.sessionId);
+                    const progressRow=mounted.get(progress.key);
+                    const detail=progressRow && [...progressRow.querySelectorAll('.model-thinking')].find(node=>node.dataset.step===stepId);
+                    if(progressRow && !detail)return false;
+                    const active=event.data.thinkingActive===true;
+                    const changed=thought.data.thinkingActive!==active;
+                    thought.type=active?'step.started':'step.completed';
+                    Object.assign(thought.data,{modelThinking:event.data.modelThinking,thinkingActive:active,
+                        thinkingMs:event.data.thinkingMs,state:active?'running':'completed'});
+                    if(detail){
+                        // Reuse the progress renderer for state/title/expansion transitions;
+                        // ordinary thinking fragments only replace the existing text.
+                        if(changed)updateRow(progressRow,progress);
+                        else {
+                            const text=detail.querySelector('p');
+                            if(text.textContent!==event.data.modelThinking)text.textContent=event.data.modelThinking;
+                            detail.dataset.active=String(active);
+                        }
+                    }
+                    if(!spec && !event.data.text && !event.data.images?.length)continue;
+                }
+            }
             if(!spec)return false;
             spec.event=event;const row=mounted.get(key);
             if(row){
-                if (event.data.text && !row.querySelector('.message-text,.markdown')) return false;
                 const body = row.querySelector('.message-text,.markdown');
+                if (!!event.data.text !== !!body) return false;
                 if (body) WeftContent.update(body,event.data.text,{streaming:event.data.streaming===true});
                 (globalThis.WeftTimeline?.thinking || globalThis.WeftModelThinking)?.(core,row,event);
                 row.dataset.chatSignature=JSON.stringify([event,spec.collapsed,core.state.chatWindow.search.query,null]);

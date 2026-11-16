@@ -1,5 +1,4 @@
 import { resolve } from 'node:path';
-import { createHash } from 'node:crypto';
 import { createHistoryCache } from './history-cache.mjs';
 
 /** Read the native immutable log without cloning it or activating an agent.
@@ -105,9 +104,16 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     async source(id) {
       const live = ctx.get('sessions')?.get(id);
       const artifact = live ? {meta:live.header,events:live.events} : await persistence.inspect(id);
-      // Native inspection owns decoding/recovery. Hash this one immutable source
-      // instead of listing/stat-ing every stored session for each history page.
-      const revision=createHash('sha256').update(JSON.stringify(artifact)).digest('hex');
+      // Native logs are immutable and append-only; fingerprint a bounded suffix
+      // so reading a page never serializes the entire conversation.
+      const {meta = {}, events} = artifact;
+      const fingerprint = entry => {
+        const event = entry?.event ?? entry, data = event?.data;
+        return [event?.seq,event?.at,event?.time,event?.type,data?.id,data?.text?.length,data?.modelThinking?.length,
+          Array.isArray(data?.content) ? data.content.map(part => [part.type,part.text?.length]) : data?.content?.length];
+      };
+      const revision=JSON.stringify([meta.id,meta.version,meta.revision,meta.createdAt,meta.updatedAt,meta.agentPreset,meta.cwd,
+        meta.origin,meta.parentSession,events.length,fingerprint(events[0]),events.slice(-4).map(fingerprint)]);
       return {revision,events:artifact.events};
     } });
   read.historyPage = (id, options, project) => history.read(id, options, project);
