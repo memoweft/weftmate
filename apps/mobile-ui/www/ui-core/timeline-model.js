@@ -276,7 +276,9 @@
         }
         if (progress.state === 'stopped') return { text: english ? 'Interrupted' : '已中断', running: false };
         if (failed && !progress.terminal) return { text: english ? `Step ${failed.ordinal || steps.indexOf(failed) + 1} encountered an issue; continuing` : `第 ${failed.ordinal || steps.indexOf(failed) + 1} 步遇到问题，正在继续`, running: true };
-        if (!progress.terminal && steps.some(step => executionState(step) === 'cancelled') &&
+        if (!progress.terminal && outcome?.terminal !== false &&
+            steps.some(step => executionState(step) === 'cancelled') &&
+            steps.findLastIndex(step => executionState(step) === 'completed') < steps.findLastIndex(step => executionState(step) === 'cancelled') &&
             !steps.some(step => ['running','pending'].includes(executionState(step)))) return { text: english ? 'Interrupted' : '已中断', running: false };
         const current = steps.filter(step => ['running','pending'].includes(executionState(step)) &&
             (!progress.terminal || step.approvalStatus === 'pending' || ['running','stopping'].includes(step.jobState))).at(-1);

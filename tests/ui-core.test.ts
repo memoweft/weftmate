@@ -251,6 +251,34 @@ test('FX-19 definite HTTP or terminal creation rejection clears only its own sen
 });
 
 // 保护：结束回合不得把仍在运行的调用计入成功结果。
+test('historical cancelled steps do not interrupt an ongoing turn or later completed work', () => {
+  const { api } = fixture();
+  for (const language of ['zh','en']) {
+    const cancelled = {state:'cancelled',language};
+    const completed = {state:'completed',toolName:'read',language};
+    for (const steps of [[cancelled],[completed,cancelled],[cancelled,completed]]) {
+      assert.doesNotMatch(api.progressText(steps,{terminal:false,language}).text,/已中断|Interrupted/);
+    }
+    assert.doesNotMatch(api.progressText([cancelled,completed]).text,/已中断|Interrupted/);
+    assert.equal(api.progressText([completed,cancelled]).text,language === 'en' ? 'Interrupted' : '已中断');
+    assert.equal(api.progressText([cancelled,completed],{terminal:true,reason:'cancelled',language}).text,language === 'en' ? 'Interrupted' : '已中断');
+  }
+});
+
+test('temporary runtime unavailability does not report a configured model as missing', () => {
+  for (const runtime of ['unavailable','restarting']) {
+    const { core } = fixture();
+    core.state.connection = {host:{runtime}};
+    core.state.capabilities.chat.available = false;
+    const view = core.composerState('草稿');
+    assert.doesNotMatch(view.hint,/电脑尚无可用模型/);
+    assert.equal(view.hint,'等待重新连接电脑。');
+    assert.equal(view.sendDisabled,true);
+    core.state.models = [];
+    assert.match(core.composerState('草稿').hint,/电脑尚无可用模型/);
+  }
+});
+
 test('D35 progress uses real kinds/objects and prioritizes failure and stopped states', () => {
   const { api } = fixture();
   const steps = [

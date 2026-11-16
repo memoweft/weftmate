@@ -850,7 +850,7 @@ export function createHttpHandler(context) {
       if (request.method === 'GET' && pathname === '/personal/v1/status') {
         if (url.search) throw failure('INVALID_REQUEST');
         // Runtime/model diagnostics failing must not hide a reachable authenticated host.
-        const backendStatus = statusProjection(await withDeadline(() => context.callBackend(() => context.backend.getStatus({ ownerId })), 1500)
+        const backendStatus = statusProjection(await withDeadline(() => context.callBackend(() => context.backend.getStatus({ ownerId })), 5000)
           .catch(() => ({ runtime:'unavailable', capabilities:{chat:{available:false,reasonCode:'RUNTIME_UNAVAILABLE'}} })));
         const memoryStatus = context.memoryManager ? await withDeadline(() => context.memoryManager.status(ownerId),1500)
           .catch(()=>({state:context.memoryManager.peek(ownerId)})) : { state: 'disabled' };
