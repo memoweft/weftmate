@@ -280,12 +280,23 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
                     const page = await core.readChatChanges(chatId, sideWaitCursor, 200,
                         {ms:core.replyWaitMilliseconds(), liveRevision:sideWaitRevision, signal:controller.signal});
                     if (token !== scope() || controller.signal.aborted) return core.historyReadResult('cancelled');
+                    const liveChanged = page.liveRevision !== sideWaitRevision;
                     sideWaitCursor = page.nextCursor; sideWaitRevision = page.liveRevision;
                     core.acceptAccountChanges?.(page.accountChanges);
-                    const history = await legacy.refreshHistory(false, true);
-                    if (['failed','reset','cancelled'].includes(history?.kind)) return history;
+                    const upserts = page.upserts || [];
+                    let changed = false;
+                    if (page.removals?.length || upserts.some(event => !event.data?.live || /^turn\./.test(event.type))) {
+                        const history = await legacy.refreshHistory(false, true);
+                        if (['failed','reset','cancelled'].includes(history?.kind)) return history;
+                        changed = history?.kind === 'changed' || !!(upserts.length || page.removals?.length);
+                    } else if (upserts.length || liveChanged && page.liveEvents !== undefined) {
+                        const live = (page.liveEvents ?? upserts).filter(event =>
+                            (event.sourceRef?.sessionId ?? event.sessionId ?? core.state.selectedSessionId) === core.state.selectedSessionId)
+                            .map(event => ({...event, seq:event.sourceRef?.seq ?? event.seq}));
+                        changed = core.appendHistory([], live);
+                    }
                     resetAttempted = false;
-                    return core.historyReadResult(page.upserts?.length || page.removals?.length ? 'changed' : 'unchanged',
+                    return core.historyReadResult(changed ? 'changed' : 'unchanged',
                         {immediateRenew:['timeout','changed'].includes(page.waitOutcome)});
                 })().catch(error => failedRead(error, token)).finally(() => {
                     if (core.historyWaitAbort === controller) core.historyWaitAbort = null;
