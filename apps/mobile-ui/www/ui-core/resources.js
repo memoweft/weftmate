@@ -217,7 +217,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             core.state.submitting = true;
             core.state.lastSubmissionMs = Date.now();
         }
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
         try {
             const requestId = fixedRequestId || environment.crypto.randomUUID();
             const failureKey=`${core.state.ownerId}:${requestId}`;submissionFailures.delete(failureKey);
@@ -261,7 +261,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
                 core.state.cancelSubmitting = false;
             else
                 core.state.submitting = false;
-            effects.updateAvailability();
+            core.refreshHeld?.(); effects.updateAvailability();
         }
     }
     return { capturedSourceText, capturedSourceForUrl, deduplicateOutputs, timelineEventsForContext, loadConversationResources, refreshTasks, updateFromCommand, lookupRequest, restoreRequests, submitCommand,

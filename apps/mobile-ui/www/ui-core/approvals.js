@@ -61,12 +61,12 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }
         if ((!sessionId && !chatId) || core.state.approvalModeLoading || core.state.activeChatSource !== 'desktop')
             return;
-        const saving = {};
+        const saving = { sessionId, chatId, draftId: core.state.newConversationId };
         core.state.approvalModeSaving = saving;
         core.state.approvalModeOperation = saving;
         core.state.approvalModeLoading = true;
         effects.setApprovalModeBusy(true);
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
         try {
             const value = sessionId ? await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/approval-mode`, { method: 'PATCH', protectedWrite: true, body: { mode } })
                 : {mode:(await core.accessApi(`/chats/${encodeURIComponent(chatId)}`, {method:'PATCH',protectedWrite:true,body:{approvalMode:mode}})).chat.approvalMode};
@@ -83,12 +83,12 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }
         finally {
             if (core.state.approvalModeSaving === saving) core.state.approvalModeSaving = null;
-            effects.updateAvailability();
+            core.refreshHeld?.(); effects.updateAvailability();
             if (core.state.approvalModeOperation === saving) {
                 core.state.approvalModeOperation = null;
                 core.state.approvalModeLoading = false;
                 effects.setApprovalModeBusy(false);
-                effects.updateAvailability();
+                core.refreshHeld?.(); effects.updateAvailability();
             }
         }
     }
@@ -160,7 +160,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }
         effects.followConversationBottom?.();
         void core.refreshConversationTasks();
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
     }
     function resetConversationApprovals() {
         core.conversationApprovals.scope = null;

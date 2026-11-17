@@ -258,7 +258,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         core.state.online = online;
         effects.paintConnection(online);
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
     }
     function updateRequestState(locked, requestId, reviewable) {
         if (requestId) {
@@ -287,7 +287,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             if (core.state.unresolvedSubmission) effects.paintOperation(operationNotice);
             else { operationNotice = null; effects.clearOperation(); }
         }
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
     }
     function operation(message, locked = false, requestId = null, reviewable = locked) {
         updateRequestState(locked, requestId, reviewable);
@@ -296,7 +296,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
                 : '仍有请求正在处理；会继续核对原请求。' : message;
         operationNotice = visibleMessage || null;
         effects.paintOperation(visibleMessage);
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
     }
     async function refreshStatus() {
         const statusIdentity = core.state.identityGeneration, statusOwner = core.state.ownerId;
@@ -337,7 +337,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         effects.paintMemoryAvailability?.(payload.memory ?? { state: payload.backend?.modules?.memory });
         if (!core.state.syncAvailable && core.state.phonePane)
             effects.showConversation();
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
     }
     async function refreshModels() {
         const identity = core.state.identityGeneration;
@@ -360,7 +360,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.modelProfileId = core.state.models.some(item => item.id === core.state.modelProfileId) ? core.state.modelProfileId : modelSettings.defaultModelProfileId ?? core.state.models[0]?.id ?? null;
         effects.paintModels();
         effects.renderAccountModels?.();
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
         if (core.state.currentView === 'account' && core.state.browserAvailable)
             effects.renderBrowserModels();
     }

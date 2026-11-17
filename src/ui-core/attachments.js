@@ -73,7 +73,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         if (announce && core.attachmentScopeCurrent(upload.scope))
             core.setAttachmentStatus('已取消上传，所选文件仍保留，可重新发送。');
         effects.renderAttachmentDrafts();
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
     }
     async function attachmentHasher() {
         if (!core.state.attachmentHasher)
@@ -159,7 +159,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
         core.state.attachmentUpload = upload;
         core.setAttachmentStatus('正在核对文件并保存原件…');
         effects.renderAttachmentDrafts();
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
         try {
             const hashBlob = await core.attachmentHasher();
             const originals = [];
@@ -214,7 +214,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
                 throw new DOMException('Upload cancelled', 'AbortError');
             core.state.attachmentUpload = null;
             core.setAttachmentStatus('原件已保存，正在发送消息…');
-            effects.updateAvailability();
+            core.refreshHeld?.(); effects.updateAvailability();
             if (held) held.posted=true;
             return await core.submitCommand('session.message', { sessionId, text, mode: mode || core.composerInputMode(sessionId),
                 ...(staged.length ? { attachments: staged } : {}), attachmentMessageId: messageId,
@@ -238,7 +238,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
                 core.state.attachmentUpload = null;
             if (core.attachmentScopeCurrent(scope)) {
                 effects.renderAttachmentDrafts();
-                effects.updateAvailability();
+                core.refreshHeld?.(); effects.updateAvailability();
             }
         }
     }
@@ -412,7 +412,7 @@ globalThis.WeftUiCore.factories.attachments = (core, effects, environment) => {
                     effects.clearMessageDraft();
                 core.state.attachmentStatus = '';
                 effects.renderAttachmentDrafts();
-                effects.updateAvailability();
+                core.refreshHeld?.(); effects.updateAvailability();
             }
             break;
         }

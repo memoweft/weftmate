@@ -15,7 +15,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
 
     const inLogicalTimeline = () => inHome() || !!core.state.workTimeline && core.state.selectedChatId === core.state.workTimeline.chatId && core.state.activeChatSource === 'desktop';
     const scope = () => `${core.state.identityGeneration}:${core.state.ownerId}:${core.state.historyGeneration}:${core.state.selectedChatId}`;
-    const notify = () => { effects.renderMainChat?.(); effects.renderOlderControl(); effects.updateAvailability(); };
+    const notify = () => { effects.renderMainChat?.(); effects.renderOlderControl(); core.refreshHeld?.(); effects.updateAvailability(); };
     function rememberConversationDraft() {
         if (!core.state.sessionSelecting && !core.state.sideCreating)
             drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
@@ -119,7 +119,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         core.state.sessionListQuery = query.trim();
         await pageSessions(false);
     }
-    function cancelSessionSelection() { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;effects.updateAvailability(); }
+    function cancelSessionSelection() { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;core.refreshHeld?.(); effects.updateAvailability(); }
     async function selectMainChat(anchor, { restore = false } = {}) {
         if (!supports('chats') || !core.state.mainChat) return;
         if (!anchor && core.state.activeChatSource === 'desktop' && core.state.selectedChatId === core.state.mainChat.chatId && !core.state.newConversation) {

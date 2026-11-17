@@ -476,6 +476,7 @@ globalThis.WeftUiCore.factories.phone = (core, effects, environment) => {
         core.state.turnStatus = null;
         core.state.turnEndReasonKind = null;
         core.state.selectedPhoneConversationId = conversationId;
+        core.refreshHeld?.();
         core.state.phoneSendNotice = '';
         const pending = core.readPhoneOutbox();
         const recovery = !pending ? core.readPhoneRecovery() : null;

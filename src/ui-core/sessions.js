@@ -68,7 +68,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         }
         if (core.state.turnStatus === 'running')
             effects.renderTurnStatus();
-        effects.updateAvailability();
+        core.refreshHeld?.(); effects.updateAvailability();
     }
     function sessionList(archived = false) { return core.state.sessions.filter(item => (item.kind !== 'main' || core.supportsWorkModes?.()) && (item.archived === true) === archived).sort((a,b) => Number(b.pinned) - Number(a.pinned)); }
     async function refreshSessionProjects() {
@@ -180,10 +180,10 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         operation.sessionId===core.state.selectedSessionId && operation.draftId===core.state.newConversationId && operation.chatId===core.state.selectedChatId;
     function folderMutationPending() {return !!(folderMutationCurrent(core.state.folderChanging)||folderMutationCurrent(core.state.folderRegistering));}
     async function registerFolderChoice(create, fields) {
-        const operation=folderMutationScope();core.state.folderRegistering=operation;effects.updateAvailability();
+        const operation=folderMutationScope();core.state.folderRegistering=operation;core.refreshHeld?.(); effects.updateAvailability();
         try {const result=await create(fields);if(!folderMutationCurrent(operation))return null;
             await core.refreshSessionProjects();return folderMutationCurrent(operation)?result:null;
-        } catch(error) {operation.failed=true;throw error;} finally {if(core.state.folderRegistering===operation)core.state.folderRegistering=null;if(operation.identity===core.state.identityGeneration)effects.updateAvailability();}
+        } catch(error) {operation.failed=true;throw error;} finally {if(core.state.folderRegistering===operation)core.state.folderRegistering=null;if(operation.identity===core.state.identityGeneration){ core.refreshHeld?.(); effects.updateAvailability(); }}
     }
     function folderChoiceBusy() {
         return !!(core.state.submitting || core.state.unresolvedSubmission || core.state.sessionSelecting || core.state.attachmentUpload || core.state.sideCreating || folderMutationPending() || core.state.turnStatus === 'running' || core.state.sessions.find(row=>row.sessionId===core.state.selectedSessionId)?.running);
@@ -191,7 +191,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
     async function chooseFolderProject(project) {
         if (folderChoiceBusy()) throw {code:'SESSION_BUSY'};
         const identity = core.state.identityGeneration;
-        const operation=folderMutationScope();core.state.folderChanging=operation;effects.updateAvailability();
+        const operation=folderMutationScope();core.state.folderChanging=operation;core.refreshHeld?.(); effects.updateAvailability();
         try {
             if (core.state.newConversation) {
                 core.state.newConversationProjectId = project?.projectId || null;
@@ -201,7 +201,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             }
             if (identity !== core.state.identityGeneration) return;
             rememberFolder(project?.projectId || null);
-        } catch(error) {operation.failed=true;throw error;} finally {if(core.state.folderChanging===operation)core.state.folderChanging=null;if(identity===core.state.identityGeneration)effects.updateAvailability();}
+        } catch(error) {operation.failed=true;throw error;} finally {if(core.state.folderChanging===operation)core.state.folderChanging=null;if(identity===core.state.identityGeneration){ core.refreshHeld?.(); effects.updateAvailability(); }}
     }
     let visibleRead;
     async function markVisibleSessionRead(isVisible) {

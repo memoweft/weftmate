@@ -618,7 +618,7 @@ test('shared send/stop actions choose steer or queue and block unresolved submis
   await f.core.stopCurrentTurn(); assert.equal(commands.at(-1)[0], 'session.cancel')
   const view = f.core.composerState('未发送的草稿')
   assert.equal(view.running, true); assert.equal(view.sendDisabled, true)
-  f.core.state.unresolvedSubmission = false; f.core.composerState('草稿'); await new Promise(done=>setImmediate(done)); assert.equal(f.core.composerState('草稿').sendDisabled, false)
+  f.core.state.unresolvedSubmission = false; f.core.refreshHeld(); await new Promise(done=>setImmediate(done)); assert.equal(f.core.composerState('草稿').sendDisabled, false)
   f.core.state.online = false; assert.equal(f.core.composerState('草稿').sendDisabled, true)
 })
 
@@ -863,7 +863,7 @@ test('UI-3 attachment shortcuts respect unresolved submissions and restore the s
   f.core.currentAttachmentDrafts = () => [{ attachmentId: 'fixture', file: {name:'fixture.txt',size:1,lastModified:1}, contentType:'text/plain' }]
   f.core.sendDesktopMessageWithAttachments = async (_text,_id,intent) => { intents.push(intent); return {} }
   f.core.state.unresolvedSubmission = true; await f.core.sendDraft('带附件排队', 'queue'); assert.equal(intents.length, 0)
-  f.core.state.unresolvedSubmission = false; f.core.composerState(''); await new Promise(done=>setImmediate(done))
+  f.core.state.unresolvedSubmission = false; f.core.refreshHeld(); await new Promise(done=>setImmediate(done))
   assert.deepEqual(intents, ['queue']); assert.equal(f.core.composerInputMode('session-test'), 'queue')
 })
 

@@ -2,6 +2,16 @@
 globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
   if (!environment.mobileState) return {};
   const state = environment.mobileState;
+  const sharedSendBlocker = core.sendBlocker;
+  core.sendBlocker = (text, files, checkSlot) => {
+    if (!core.state.account || !core.state.ownerId || !state.loggedIn) return '请先登录，再发送消息。';
+    if (!environment.nativeMobile) {
+      if (state.transitionPending || state.restorePending) return '正在恢复账号与对话，消息仍在草稿里。';
+      if (state.modelSwitching) return '正在切换模型，消息仍在草稿里。';
+      if (state.sharedOutboxLoading || state.sharedPending || state.linkedPending) return '手机的原请求仍在核对，消息仍在草稿里。';
+    }
+    return sharedSendBlocker(text, files, checkSlot);
+  };
   const MEMORY_KINDS = {all:'全部',cognition:'理解',entity:'人物与对象',relationship:'关系',event:'共同经历'};
   let requestSequence = 0;
   function sendBlocker(text) {
