@@ -1,15 +1,11 @@
 // An isolated carrier for the complete official DSH page. It is deliberately
 // not a replacement chat renderer or an assertion that the V2 layout exists.
+import { parseOfficialDshLoopbackUrl } from './dsh-settings-migration.ts'
 import { EventEmitter } from 'node:events'
 import { fileURLToPath } from 'node:url'
 
 export function carrierOrigin(value) {
-  const url = new URL(value)
-  if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || !url.port
-    || url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
-    throw new Error('A credential-free loopback runtime origin is required')
-  }
-  return url.origin
+  return parseOfficialDshLoopbackUrl(value).origin
 }
 
 export class DshViewCarrier extends EventEmitter {
@@ -18,6 +14,7 @@ export class DshViewCarrier extends EventEmitter {
     this.parent = parent
     this.ipcMain = ipcMain
     this.origin = null
+    this.token = null
     this.disposed = false
     this.sequence = 0
     this.pending = new Map()
@@ -56,7 +53,11 @@ export class DshViewCarrier extends EventEmitter {
   }
 
   allowedUrl(value) {
-    try { const url = new URL(value); return this.origin !== null && url.origin === this.origin && url.pathname === '/' && !url.username && !url.password } catch { return false }
+    try {
+      const parsed = parseOfficialDshLoopbackUrl(value.split('#', 1)[0])
+      return this.origin !== null && parsed.origin === this.origin
+        && (parsed.token === null || parsed.token === this.token)
+    } catch { return false }
   }
 
   authorized(event) {
@@ -66,18 +67,20 @@ export class DshViewCarrier extends EventEmitter {
   }
 
   bind(value) {
-    const origin = carrierOrigin(value)
+    const { origin, token, url } = parseOfficialDshLoopbackUrl(value)
     const operation = async () => {
       if (this.disposed) throw new Error('Carrier is closed')
       this.origin = null
+      this.token = null
       this.state = null
       this.rejectPending('Runtime binding changed')
       await this.view.webContents.loadURL('about:blank')
       if (this.disposed) throw new Error('Carrier is closed')
       this.origin = origin
-      try { await this.view.webContents.loadURL(origin) }
-      catch (error) { this.origin = null; throw error }
-      if (!this.allowedUrl(this.view.webContents.getURL())) { this.origin = null; throw new Error('Unexpected runtime navigation') }
+      this.token = token
+      try { await this.view.webContents.loadURL(url) }
+      catch (error) { this.origin = null; this.token = null; throw error }
+      if (!this.allowedUrl(this.view.webContents.getURL())) { this.origin = null; this.token = null; throw new Error('Unexpected runtime navigation') }
     }
     const result = this.navigation.then(operation)
     this.navigation = result.catch(() => {})
@@ -110,6 +113,7 @@ export class DshViewCarrier extends EventEmitter {
     if (this.disposed) return
     this.disposed = true
     this.origin = null
+    this.token = null
     this.state = null
     this.rejectPending('Carrier is closed')
     this.ipcMain.removeListener('wm:chat-carrier:report', this.receive)

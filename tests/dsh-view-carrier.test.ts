@@ -93,3 +93,30 @@ test('carrier hide keeps contents; close disposes listeners, pending replies and
   assert.equal(ipc.listenerCount('wm:chat-carrier:report'), 0)
   carrier.dispose()
 })
+
+
+test('carrier binds the launch token and admits only its root redirect or matching token', async () => {
+  const { carrier, wc } = fixture()
+  const origin = 'http://127.0.0.1:8000'
+  const url = origin + '/?token=a%2Bb'
+  try {
+    assert.equal(carrierOrigin(url), origin)
+    await carrier.bind(url)
+    assert.equal(carrier.origin, origin)
+    assert.equal(carrier.token, 'a+b')
+    assert.deepEqual(wc.loaded, ['about:blank', url])
+    for (const target of [origin, origin + '/', url, origin + '/#x', origin + '/#/mods', url + '#/mods']) assert.equal(carrier.allowedUrl(target), true)
+    for (const suffix of ['?token=other', '?token=', '?token=a%2Bb&x=y', '?token=a%2Bb&token=a%2Bb', '?x=y', 'path']) {
+      assert.equal(carrier.allowedUrl(origin + '/' + suffix), false)
+      let prevented = false
+      wc.emit('will-redirect', { preventDefault() { prevented = true } }, origin + '/' + suffix)
+      assert.equal(prevented, true)
+    }
+    assert.equal(carrier.allowedUrl('http://127.0.0.1:8001/'), false)
+    await carrier.bind(origin)
+    assert.equal(carrier.token, null)
+    assert.equal(carrier.allowedUrl(url), false)
+    for (const value of [origin + '/?token=', origin + '/?token=x&extra=y', 'http://127.0.0.1:0', 'http://127.0.0.1:65536']) assert.throws(() => carrierOrigin(value))
+  } finally { carrier.dispose() }
+  assert.equal(carrier.token, null)
+})

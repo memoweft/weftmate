@@ -15,6 +15,7 @@ type FetchLike = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
 export interface OfficialDshClientOptions {
   origin: string;
+  token?: string;
   fetchImpl?: FetchLike;
   timeoutMs?: number;
   rpcIdFactory?: () => string;
@@ -112,23 +113,32 @@ function copyRecord(value: unknown): Record<string, unknown> {
 
 /** Only DSH's loopback HTTP carrier is trusted for this privileged main seam. */
 export function assertOfficialDshLoopbackOrigin(origin: string): string {
-  let parsed: URL;
-  try { parsed = new URL(origin); } catch { throw new TypeError('official DSH origin must be a URL'); }
-  const port = Number(parsed.port);
-  if (
-    parsed.protocol !== 'http:'
-    || parsed.hostname !== '127.0.0.1'
-    || !Number.isInteger(port)
-    || port < 1
-    || port > 65535
-    || parsed.pathname !== '/'
-    || parsed.search !== ''
-    || parsed.hash !== ''
-  ) {
-    throw new TypeError('official DSH origin must be exactly http://127.0.0.1:<port>');
-  }
-  return `http://127.0.0.1:${port}`;
+  return parseOfficialDshLoopbackUrl(origin).origin;
 }
+
+export function parseOfficialDshLoopbackUrl(value: string): { origin: string; token: string | null; url: string } {
+  const match = typeof value === 'string' && /^http:\/\/127\.0\.0\.1:([0-9]+)\/?(?:\?token=([^&#\s]+))?$/.exec(value);
+  if (!match || Number(match[1]) < 1 || Number(match[1]) > 65535) {
+    throw new TypeError('official DSH origin must be exactly http://127.0.0.1:<port> with an optional token');
+  }
+  let token: string | null = null;
+  if (match[2] !== undefined) {
+    try { token = decodeURIComponent(match[2].replace(/\+/g, ' ')); }
+    catch { throw new TypeError('official DSH token is invalid'); }
+    assertOfficialDshToken(token);
+  }
+  const origin = `http://127.0.0.1:${Number(match[1])}`;
+  return { origin, token, url: token === null ? origin : value };
+}
+
+function assertOfficialDshToken(token: string): void {
+  if (typeof token !== 'string' || !token || /[\s\x00-\x1f\x7f]/.test(token)) {
+    throw new TypeError('official DSH token must be a non-empty string without whitespace or controls');
+  }
+  try { encodeURIComponent(token); } catch { throw new TypeError('official DSH token is invalid'); }
+}
+
+const connectionCookies = new WeakMap<FetchLike, Map<string, Promise<string>>>();
 
 /** The official Models UI derives this credential reference from the route. */
 export function officialCredentialRef(route: string): string {
@@ -228,11 +238,39 @@ export interface OfficialDshSettingsClient {
  * three formal APIs the migration needs and validates every carrier envelope.
  */
 export function createOfficialDshSettingsClient(options: OfficialDshClientOptions): OfficialDshSettingsClient {
-  const origin = assertOfficialDshLoopbackOrigin(options.origin);
+  const parsed = parseOfficialDshLoopbackUrl(options.origin);
+  const origin = parsed.origin;
+  if (options.token !== undefined) assertOfficialDshToken(options.token);
+  if (parsed.token !== null && options.token !== undefined && parsed.token !== options.token) {
+    throw new TypeError('official DSH tokens must match');
+  }
+  const token = options.token ?? parsed.token;
   const fetchImpl = options.fetchImpl ?? fetch;
   const timeoutMs = options.timeoutMs ?? 5_000;
   const rpcIdFactory = options.rpcIdFactory ?? randomUUID;
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1) throw new TypeError('timeoutMs must be a positive integer');
+
+  let cookies = connectionCookies.get(fetchImpl);
+  if (!cookies) { cookies = new Map(); connectionCookies.set(fetchImpl, cookies); }
+  const cache = cookies;
+  const cacheKey = JSON.stringify([origin, token]);
+  function connect(signal: AbortSignal): Promise<string> {
+    let pending = cache.get(cacheKey);
+    if (!pending) {
+      pending = (async () => {
+        const response = await fetchImpl(`${origin}/connect?token=${encodeURIComponent(token!)}`, {
+          method: 'GET', redirect: 'manual', signal,
+        });
+        if (response.status !== 302) throw new OfficialDshRpcError('official DSH connection failed');
+        const cookie = response.headers.getSetCookie().map(value => value.split(';', 1)[0].trim()).filter(Boolean).join('; ');
+        if (!cookie) throw new OfficialDshRpcError('official DSH connection returned no cookie');
+        return cookie;
+      })();
+      cache.set(cacheKey, pending);
+      void pending.catch(() => { if (cache.get(cacheKey) === pending) cache.delete(cacheKey); });
+    }
+    return pending;
+  }
 
   async function unary(method: 'settings.describe' | 'settings.mutate' | 'credentials.describe', payload: JsonRecord): Promise<unknown> {
     const rpcId = rpcIdFactory();
@@ -240,12 +278,20 @@ export function createOfficialDshSettingsClient(options: OfficialDshClientOption
     const abort = new AbortController();
     const timer = setTimeout(() => abort.abort(), timeoutMs);
     try {
-      const response = await fetchImpl(new URL(`/api/${method}`, origin), {
+      let cookie = token === null ? null : await connect(abort.signal);
+      const post = () => fetchImpl(new URL(`/api/${method}`, origin), {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', ...(cookie === null ? {} : { cookie }) },
         body: JSON.stringify({ type: 'client-request', rpcId, method, payload }),
         signal: abort.signal,
       });
+      let response = await post();
+      if (response.status === 401 && token !== null) {
+        if (await cache.get(cacheKey) === cookie) cache.delete(cacheKey);
+        cookie = await connect(abort.signal);
+        response = await post();
+        if (response.status === 401 && await cache.get(cacheKey) === cookie) cache.delete(cacheKey);
+      }
       if (!response.ok) throw new OfficialDshRpcError(`official DSH ${method} carrier failed`);
       let body: unknown;
       try { body = await response.json(); } catch { throw new OfficialDshRpcError(`official DSH ${method} returned invalid JSON`); }
