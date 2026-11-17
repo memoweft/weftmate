@@ -10,6 +10,11 @@
 
 ## 来源
 
+升级前只读预检：`node scripts/dsh-upgrade-probe.mjs --checkout <DSH目录> --json`；省略 `--json` 输出分节报告。
+检查 Git ref：`node scripts/dsh-upgrade-probe.mjs --target <ref> --repo <DSH仓库>`（`--repo` 可由 `WEFTMATE_DSH_CHECKOUT` 提供）；仅在系统临时目录创建 clone，成功或失败均清理。
+闭包基准依次使用 `--baseline-manifest <文件>`、默认 vendor manifest、`--baseline-checkout <目录>`、pin.commit、LEGACY_SUBSET；报告标明来源、缺包和回退原因。pin 未记录的工具链字段标为 `unrecorded`。
+补丁按文件名逐个只读试打，互不叠加；前端接缝按源码局部类名与 data 属性探测，无需构建产物。报告供升级评估，兼容性差异不改变退出码，执行失败返回非零。
+
 - DSH 版本由 `tests/contract/dsh-pin.json` 固定；
 - 开发环境可以使用指定的 DSH checkout；
 - 发布包使用 `vendor/dsh-runtime/` 生成运行时；
