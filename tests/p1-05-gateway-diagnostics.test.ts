@@ -98,5 +98,30 @@ describe('P1-05 · Gateway diagnostics', () => {
 
   it('缺受支持接缝时 fail loud', () => {
     assert.throws(() => createDiagnostics({} as never), TypeError)
+    for (const client of [null, undefined, {}]) assert.throws(() => createDiagnostics(deps({ client })), TypeError)
+  })
+
+  it('无 host.describe 时使用 session 探针；无备选探针时保持 degraded', async () => {
+    const client = { sessions: { list: async () => ({ result: { ok: true, value: { items: [] } } }) } }
+    const snapshot = await createDiagnostics(deps({ client })).snapshot()
+    assert.equal(snapshot.runtime.state, 'running')
+    assert.equal(snapshot.host, null); assert.equal(snapshot.dsh.pinned, false)
+    assert.equal((await createDiagnostics(deps({ client: { sessions: {} } })).snapshot()).runtime.state, 'degraded')
+    assert.equal((await createDiagnostics(deps({ client: { sessions: { list: async () => { throw new Error('dead') } } } })).snapshot()).runtime.state, 'stopped')
+  })
+
+  it('host.describe 明确不支持时降级，普通失败仍为 stopped', async () => {
+    for (const throws of [false, true]) {
+      const client = { sessions: { list: async () => ({ result: { ok: true, value: { items: [] } } }) },
+        host: { describe: async () => {
+          const error = { code: 'gateway/method-unavailable' }
+          if (throws) throw error
+          return { result: { ok: false, error } }
+        } } }
+      const diag = createDiagnostics(deps({ client }))
+      assert.equal((await diag.snapshot()).runtime.state, 'running')
+      diag.recordError('session-not-found', 'digest')
+      assert.equal((await diag.snapshot()).runtime.state, 'degraded')
+    }
   })
 })
