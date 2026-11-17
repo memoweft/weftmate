@@ -10,6 +10,31 @@ import { stagePersonalPlugins } from './support/personal-plugins.ts'
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', 'node_modules',
   '@deepseek-ai', name, 'lib', 'index.js')).href
 
+for (const modern of [false, true]) test(`personal subagent browser restriction supports ${modern ? '0.2.2 tools.restrict' : '0.1.0 without tools.restrict'}`, () => {
+  const source = readFileSync(new URL('../src/plugins/weftmate-personal-desktop.mjs', import.meta.url), 'utf8')
+  const start = source.indexOf("  ctx.on('agent/created', ({ agent }) => {")
+  const end = source.indexOf('  const disposeProof', start)
+  assert.ok(start >= 0 && end > start)
+  let handler: any
+  const restrictions: any[] = [], selections: any[] = []
+  const ctx = { on(event: string, callback: any) { assert.equal(event, 'agent/created'); handler = callback }, get() {} }
+  new Function('ctx', 'initializeFilePolicy', 'installModelSelection', `
+    const webExecution = { getStore() {} }, delegatedExecutions = new WeakMap();
+    const inheritProjectContext = () => {}, refused = message => new Error(message);
+    ${source.slice(start, end)}
+  `)(ctx, () => {}, (_ctx: any, selection: any) => selections.push(selection))
+  for (const preset of ['personal-remote', 'personal-shared-chat', 'standard']) {
+    for (const origin of ['user', 'subagent']) {
+      const agent = { session: { header: { origin, agentPreset: preset },
+        requestHeader: () => ({ config: { provider: 'local', model: 'fixture' } }) },
+      ctx: { tools: modern ? { restrict: (value: any) => restrictions.push({ preset, origin, value }) } : {} } }
+      handler({ agent })
+    }
+  }
+  assert.deepEqual(restrictions, modern ? [{ preset: 'personal-remote', origin: 'subagent', value: { deny: ['browser'] } }] : [])
+  assert.equal(selections.length, 1)
+})
+
 async function assertInitialFilePolicy() {
   const root = mkdtempSync(join(tmpdir(), 'personal-policy-'))
   try {

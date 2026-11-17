@@ -13,7 +13,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { registerHooks } from 'node:module'
+import { createRequire, registerHooks } from 'node:module'
 import { after, before, describe, test } from 'node:test'
 import {
   DEFAULT_PROFILE_BUNDLES,
@@ -92,6 +92,121 @@ test('minimal preset keeps its pinned tools and gets one isolated compactor with
   assert.equal(await readFile(join(shipped, 'minimal', 'agent.cordis.yml'), 'utf8'), original)
 })
 
+test('0.2.2 patch presets retain their plugins and replace minimal compaction with the full scoped group', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-patch-presets-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const shipped = join(root, 'shipped'), target = join(root, 'generated')
+  await mkdir(shipped)
+  const minimal = `- insert:
+    - id: preset-minimal
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: minimal
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: Keep this persona.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+          - id: platform-tool
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+`
+  const standard = minimal.replace('preset-minimal', 'preset-standard').replace('id: minimal', 'id: standard')
+    .replace('              compaction: true', '              compaction: true\n              toolResultPruner: true')
+    .replace('          - id: platform-tool', "              - id: tool-result-pruner\n                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'\n          - id: platform-tool")
+  await writeFile(join(shipped, 'minimal.patch.yml'), minimal)
+  await writeFile(join(shipped, 'standard.patch.yml'), standard)
+  await writeContextAwareMinimalPreset(shipped, target)
+  const result = await readFile(join(target, 'minimal', 'agent.cordis.yml'), 'utf8')
+  assert.match(result, /prefix: Keep this persona\./)
+  assert.match(result, /disabled: !!js process.platform !== 'win32'/)
+  assert.match(result, /compaction: true\s+toolResultPruner: true/)
+  assert.equal(result.match(/id: compaction-basic/g)?.length, 1)
+  assert.equal(result.match(/id: tool-result-pruner/g)?.length, 1)
+  await writeContextAwareMinimalPreset(shipped, target)
+  assert.equal(await readFile(join(target, 'minimal', 'agent.cordis.yml'), 'utf8'), result)
+  assert.equal(await readFile(join(shipped, 'minimal.patch.yml'), 'utf8'), minimal)
+  assert.equal(await readFile(join(shipped, 'standard.patch.yml'), 'utf8'), standard)
+})
+
+test('snapshot configEditor restores settings, serializes edits, and never consults profile patches', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-config-editor-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const profileDir = join(root, 'profiles', 'weftmate')
+  await mkdir(profileDir, { recursive: true })
+  const settingsPath = join(root, 'settings.yaml'), patchPath = join(profileDir, 'cordis.patch.yml')
+  await writeFile(settingsPath, 'model:\n  nested:\n    user: true\n  list: [user]\nunknown:\n  keep: true\n')
+  await writeFile(patchPath, 'invalid: [this must never be parsed')
+  const names = ['DSH_HOME', 'WEFTMATE_SECURE_BOOTSTRAP_PROFILE_DIR', 'WEFTMATE_SECURE_BOOTSTRAP_PACKAGE_ANCHOR']
+  const previous = names.map(name => process.env[name])
+  const anchor = join(root, 'package.json')
+  names.forEach((name, i) => { process.env[name] = [root, profileDir, anchor][i] })
+  t.after(() => names.forEach((name, i) => { if (previous[i] === undefined) delete process.env[name]; else process.env[name] = previous[i] }))
+  const serviceUrl = 'data:text/javascript,' + encodeURIComponent(`
+    export class Service { static init = Symbol.for('test.configEditor.init'); constructor(ctx, name) { this.ctx = ctx; ctx[name] = this; } }
+  `)
+  const hooks = registerHooks({ resolve(specifier, context, next) {
+    return specifier === '@deepseek-ai/cordis' ? { shortCircuit: true, url: serviceUrl } : next(specifier, context)
+  } })
+  let Editor: any
+  try { Editor = (await import('../src/plugins/weftmate-config-editor.mjs')).default }
+  finally { hooks.deregister() }
+  assert.deepEqual(Editor.inject, ['loader'])
+  const inherited = { nested: { base: true }, list: ['base'] }
+  const parent = { tree: { ctx: { fiber: { entry: { id: 'include' } } } } }
+  const updates: any[] = [], events: string[] = []
+  const entry = { options: { id: 'model', config: structuredClone(inherited) }, parent,
+    fiber: { resolveConfig(next: any) { if (next.invalid) throw new Error('invalid config') } },
+    async update({ config }: any) { await Promise.resolve(); this.options.config = config; updates.push(config) } }
+  let settle!: () => void
+  const settled = new Promise<void>(resolve => { settle = resolve })
+  const ctx: any = { provide(name: string, value: any) { this[name] = value },
+    loader: { entries: () => [entry, { ...entry, options: { id: 'duplicate' } }, { ...entry, options: { id: 'duplicate' } },
+      { ...entry, options: { id: 'nested' }, parent: {} }], await: () => settled },
+    emit: (event: string) => events.push(event), logger: { error: assert.fail } }
+  ctx.root = ctx
+  const editor = new Editor(ctx)
+  await editor[Symbol.for('test.configEditor.init')]()
+  assert.deepEqual(ctx.profileContext, { name: 'weftmate', dir: profileDir, patchPath: settingsPath,
+    installAnchor: anchor, startedBundles: [], cwd: process.cwd(), home: join(profileDir, '.weftmate-settings-home'), overlays: [], telemetryDisabledEnv: '1' })
+  assert.equal(existsSync(join(ctx.profileContext.home, 'settings.yaml')), false)
+  assert.deepEqual(editor.entries(), [entry])
+  settle(); await editor.ready
+  assert.deepEqual(entry.options.config, { nested: { base: true, user: true }, list: ['user'] })
+  const detached = editor.configuration()[0]
+  detached.inherited.nested.base = false; detached.override.nested.user = false
+  assert.deepEqual(editor.configuration()[0].inherited, inherited)
+  assert.equal(editor.configuration()[0].override.nested.user, true)
+  await assert.rejects(editor.edit(entry, () => ({ invalid: true })), /invalid config/)
+  await Promise.all([editor.edit(entry, (current: any, base: any) => {
+    assert.deepEqual(base, inherited); current.first = true; return current
+  }), editor.edit(entry, (current: any) => {
+    assert.equal(current.first, true); current.second = true; return current
+  })])
+  assert.equal(updates.length, 3)
+  assert.deepEqual(events, ['app-boot/config-reload', 'app-boot/config-reload'])
+  const yaml = createRequire(import.meta.url)('js-yaml')
+  const saved = yaml.load(await readFile(settingsPath, 'utf8'))
+  assert.deepEqual(saved, { model: { ...entry.options.config }, unknown: { keep: true } })
+  assert.deepEqual(editor.configuration()[0].inherited, inherited)
+  assert.equal(await readFile(patchPath, 'utf8'), 'invalid: [this must never be parsed')
+  assert.equal(existsSync(settingsPath + '.imported'), false)
+  entry.options.config = structuredClone(inherited)
+  const restarted = new Editor(ctx)
+  await restarted[Symbol.for('test.configEditor.init')]()
+  await restarted.ready
+  assert.deepEqual(entry.options.config, saved.model)
+  assert.deepEqual(restarted.configuration()[0].inherited, inherited)
+})
+
 before(async () => {
   dir = await mkdtemp(join(tmpdir(), 'weftmate-dsh-web-profile-'))
 })
@@ -122,6 +237,8 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'node_modules', '@weftmate', 'client', 'index.js')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'node_modules', '@weftmate', 'client', 'client.js')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-host.mjs')))
+    assert.equal(await readFile(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-config-editor.mjs'), 'utf8'),
+      await readFile(new URL('../src/plugins/weftmate-config-editor.mjs', import.meta.url), 'utf8'))
     assert.ok(patch.includes('id: weftmate-personal-memory'))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-personal-memory.mjs')))
     // P1-02：Gateway 运行时同形落位（宿主插件以相对路径 import）；schemas/ 等 TS 契约不进 profile。

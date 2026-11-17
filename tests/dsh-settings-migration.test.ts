@@ -90,7 +90,7 @@ describe('official DSH legacy route migration helper', () => {
     assert.equal(Object.hasOwn(observed[0].body.payload, 'schema'), false);
   });
 
-  it('re-describes and retries a settings-conflict no more than three times', async () => {
+  for (const code of ['settings-conflict', 'settings/conflict']) it(`re-describes and retries ${code} no more than three times`, async () => {
     let describes = 0; let mutates = 0;
     await withFixture(({ path, body }) => {
       if (path === '/api/settings.describe') {
@@ -99,7 +99,7 @@ describe('official DSH legacy route migration helper', () => {
       }
       if (path === '/api/settings.mutate') {
         mutates += 1;
-        if (mutates === 1) return { body: { type: 'server-response', rpcId: body.rpcId, result: { ok: false, error: { code: 'settings-conflict' } } } };
+        if (mutates === 1) return { body: { type: 'server-response', rpcId: body.rpcId, result: { ok: false, error: { code } } } };
         return { body: successEnvelope(body, {}) };
       }
       return { status: 404 };
@@ -109,6 +109,64 @@ describe('official DSH legacy route migration helper', () => {
       assert.equal(result.mutated, true);
     });
     assert.equal(describes, 2); assert.equal(mutates, 2);
+  });
+
+  it('switches once on 404 to Typert paths and args, including direct credential rows', async () => {
+    const observed: any[] = [];
+    const ref = officialCredentialRef(route.route);
+    const rows = { [ref]: { configured: true, writable: true, source: 'weftmate' } };
+    await withFixture(({ path, body }) => {
+      observed.push({ path, body });
+      if (path === '/api/settings.describe') return { status: 404 };
+      assert.equal(body.method, path.slice('/api/'.length));
+      if (path === '/api/settings/describe') return { body: successEnvelope(body, settingsValue(7)) };
+      if (path === '/api/credentials/describe') {
+        assert.deepEqual(body.payload, { args: { refs: [ref] } });
+        return { body: successEnvelope(body, rows) };
+      }
+      assert.equal(path, '/api/settings/mutate');
+      assert.equal(body.payload.args.expectedRevision, 7);
+      return { body: successEnvelope(body, {}) };
+    }, async origin => {
+      const client = createOfficialDshSettingsClient({ origin, rpcIdFactory: () => 'modern-rpc' });
+      await migrateLegacyRoutes(client, [route]);
+      assert.deepEqual(await client.describeCredentials([ref]), rows);
+      await client.describeSettings();
+      // Protocol selection belongs to this client, not a process-wide cache.
+      await createOfficialDshSettingsClient({ origin }).describeSettings();
+    });
+    assert.deepEqual(observed.map(row => row.path), ['/api/settings.describe', '/api/settings/describe',
+      '/api/settings/mutate', '/api/credentials/describe', '/api/settings/describe',
+      '/api/settings.describe', '/api/settings/describe']);
+    assert.deepEqual(observed[1].body, { type: 'client-request', rpcId: 'modern-rpc', method: 'settings/describe', payload: { args: {} } });
+  });
+
+  for (const code of ['settings-conflict', 'settings/conflict']) it(`local limit repair retries ${code} and respects its retry budget`, async () => {
+    let describes = 0, mutates = 0;
+    const client = {
+      origin: 'http://127.0.0.1:8123',
+      async describeSettings() {
+        describes++;
+        return { writable: true, applies: 'live' as const, revision: describes, baseProviders: {},
+          userProviders: { [route.route]: { ...projectOfficialProviderConfig(route), models: [{ ...route.models[0], maxTokens: 100 }] } } };
+      },
+      async mutateSettings(_ops: unknown, revision: number) {
+        assert.equal(revision, describes);
+        mutates++;
+        if (mutates !== 2) throw new OfficialDshRpcError('conflict', code);
+      },
+      async readLocalePreference() { return 'zh' as const; },
+      async describeCredentials() { return {}; },
+    };
+    assert.equal(await repairOfficialLocalRouteLimits(client, route), true);
+    assert.equal(mutates, 2);
+    await assert.rejects(repairOfficialLocalRouteLimits(client, route), error => error instanceof OfficialDshRpcError && error.code === code);
+    assert.equal(mutates, 5);
+    assert.equal(describes, 5);
+    await assert.rejects(migrateLegacyRoutes({ ...client, async describeSettings() {
+      return { writable: true, applies: 'live' as const, revision: describes, baseProviders: {}, userProviders: {} };
+    } }, [route]), error => error instanceof OfficialDshRpcError && error.code === code);
+    assert.equal(mutates, 8);
   });
 
   it('fails closed when the user layer already differs from the desired route', async () => {

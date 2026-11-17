@@ -36,14 +36,26 @@ export const DEFAULT_PROFILE_BUNDLES: readonly string[] = [
  * assets live under this app's profile; vendor and user-authored presets stay
  * owned by their respective sources. */
 export async function writeContextAwareMinimalPreset(shippedRoot: string, targetRoot: string): Promise<void> {
-  const source = await readFile(join(shippedRoot, 'minimal', 'agent.cordis.yml'), 'utf8')
-  const standard = await readFile(join(shippedRoot, 'standard', 'agent.cordis.yml'), 'utf8')
+  const patchPresets = !existsSync(join(shippedRoot, 'minimal', 'agent.cordis.yml')) && existsSync(join(shippedRoot, 'minimal.patch.yml'))
+  const readPreset = async (id: string): Promise<string> => {
+    if (!patchPresets) return readFile(join(shippedRoot, id, 'agent.cordis.yml'), 'utf8')
+    const patch = await readFile(join(shippedRoot, `${id}.patch.yml`), 'utf8')
+    const plugins = patch.match(/^        plugins:\r?\n((?: {10}.*(?:\r?\n|$)|\r?\n)*)/m)?.[1]
+    if (!plugins) throw new Error(`Pinned DSH ${id} preset has no plugins composition`)
+    return plugins.replace(/^ {10}/gm, '')
+  }
+  const source = await readPreset('minimal')
+  const standard = await readPreset('standard')
   const compaction = standard.match(/^(- id: compaction\r?\n[\s\S]*?)(?=^# ──|^- id:|(?![\s\S]))/m)?.[1]
   if (!compaction?.includes("name: '@deepseek-ai/dsh-compaction-basic'")
     || !compaction.includes('compaction: true')) {
     throw new Error('Pinned DSH standard preset has no scoped context compaction composition')
   }
-  const composition = source.includes("name: '@deepseek-ai/dsh-compaction-basic'")
+  const composition = patchPresets
+    ? (source.includes('- id: compaction\n') || source.includes('- id: compaction\r\n')
+      ? source.replace(/^(- id: compaction\r?\n[\s\S]*?)(?=^# ──|^- id:|(?![\s\S]))/m, compaction)
+      : `${source}\n${compaction}`)
+    : source.includes("name: '@deepseek-ai/dsh-compaction-basic'")
     ? source : `${source.replace('Context compaction is absent.', 'WeftMate adds scoped context compaction below.')}\n${compaction}`
   const destination = join(targetRoot, 'minimal')
   await mkdir(destination, { recursive: true })
@@ -337,6 +349,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(here, 'personal-access', 'schedules-calendar.mjs'), join(dir, 'personal-access', 'schedules-calendar.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-shared-chat-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-shared-chat-preset.mjs')],
     [CREDENTIALS_PLUGIN_SRC, credentialsDest],
+    [join(PLUGINS_DIR, 'weftmate-config-editor.mjs'), join(dir, 'plugins', 'weftmate-config-editor.mjs')],
     [SECURE_SNAPSHOT_BOOTSTRAP_SRC, secureBootstrapDest],
     [join(here, 'process-output.mjs'), join(dir, 'process-output.mjs')],
     [join(here, 'host-log.mjs'), join(dir, 'host-log.mjs')],
@@ -965,7 +978,7 @@ function assertSecureCredentialComposition(entries: unknown, safeProviderId: str
     // A user patch must not turn the official HMR entry back on: it would make
     // the running tree observe mutable profile/home files after this snapshot
     // has been verified and booted.
-    if (active && id === 'hmr') rejected = true
+    if (active && ['hmr', 'plugin-manager', 'tool-plugin-manager'].includes(id)) rejected = true
     for (const child of Object.values(row)) visit(child)
   }
   visit(entries)
@@ -1230,6 +1243,15 @@ export class DshWebRuntime {
       // the native adapter's merged provider/settings configuration.
       if (this.opts.profilePolicy === 'weftmate' && row.id === 'llm-pi-ai') row.name = './plugins/weftmate-model-budget.mjs'
       if (this.opts.profilePolicy === 'weftmate' && row.id === 'session-title-llm') row.name = './plugins/weftmate-background-title.mjs'
+      const expressionDisabled = row.disabled !== null && typeof row.disabled === 'object' && Object.hasOwn(row.disabled, '__jsExpr')
+      if (['hmr', 'plugin-manager', 'tool-plugin-manager'].includes(String(row.id)) && expressionDisabled) row.disabled = true
+      if (this.opts.profilePolicy === 'weftmate') {
+        if (row.id === 'config-editor') {
+          row.name = './plugins/weftmate-config-editor.mjs'
+          delete row.disabled
+        }
+        if (row.id === 'settings' && expressionDisabled) delete row.disabled
+      }
       if (row.id === 'agent-presets') {
         const config = row.config !== null && typeof row.config === 'object' && !Array.isArray(row.config)
           ? row.config as Record<string, unknown> : {}
@@ -1241,6 +1263,38 @@ export class DshWebRuntime {
       for (const child of Object.values(row)) visit(child)
     }
     visit(finalized)
+    if (this.opts.profilePolicy === 'weftmate' && finalized.some(row => row !== null && typeof row === 'object'
+      && (row as Record<string, unknown>).id === 'agent-preset-registry')) {
+      const runtimeRequire = createRequire(this.runtimePackageAnchor())
+      const yaml = runtimeRequire('js-yaml') as {
+        Type: new (tag: string, options: Record<string, unknown>) => unknown
+        JSON_SCHEMA: { extend: (...types: unknown[]) => unknown }
+        load: (source: string, options: { schema: unknown }) => unknown
+      }
+      const schema = yaml.JSON_SCHEMA.extend(new yaml.Type('tag:yaml.org,2002:js', {
+        kind: 'scalar', resolve: (data: unknown) => typeof data === 'string',
+        construct: (data: unknown) => ({ __jsExpr: data }),
+      }))
+      const adapt = (value: unknown): void => {
+        if (value === null || typeof value !== 'object') return
+        if (Array.isArray(value)) { for (const child of value) adapt(child); return }
+        const row = value as Record<string, unknown>
+        const prefix = `../../profiles/${this.opts.profileName}/plugins/`
+        if (typeof row.name === 'string' && row.name.startsWith(prefix)) row.name = `./plugins/${row.name.slice(prefix.length)}`
+        if (row.config !== null && typeof row.config === 'object' && !Array.isArray(row.config)) {
+          const config = row.config as Record<string, unknown>
+          if (row.id === 'persona' && Object.hasOwn(config, 'text')) { config.prefix = config.text; delete config.text }
+          if (row.name === '@deepseek-ai/dsh-tool-subagent') { delete config.backgroundMode; delete config.toolFilter }
+        }
+        for (const child of Object.values(row)) adapt(child)
+      }
+      for (const [id, order] of [[PERSONAL_REMOTE_PRESET_ID, 91], [PERSONAL_SHARED_CHAT_PRESET_ID, 92]] as const) {
+        const plugins = yaml.load(await readFile(join(userPresetRoot, id, 'agent.cordis.yml'), 'utf8'), { schema })
+        if (!Array.isArray(plugins)) throw new Error('Invalid personal preset composition')
+        adapt(plugins)
+        finalized.push({ id: `preset-${id}`, name: '@deepseek-ai/dsh-agent-preset', config: { id, order, plugins } })
+      }
+    }
     assertSecureCredentialComposition(finalized, 'weftmate-safe-credentials', './plugins/weftmate-credentials.mjs')
     if (this.opts.personalHostApiProxy) {
       assertPersonalApiProxyComposition(finalized,

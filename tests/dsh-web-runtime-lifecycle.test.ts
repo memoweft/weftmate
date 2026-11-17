@@ -11,6 +11,61 @@ import { DshWebRuntime } from '../src/dsh-web-runtime.ts'
 let root: string
 const runtimes = new Set<DshWebRuntime>()
 
+for (const modern of [false, true]) test(`secure composition supports ${modern ? '0.2.2 registry presets and configEditor' : '0.1.0 preset roots'}`, async t => {
+  const homeDir = await mkdtemp(join(tmpdir(), 'weftmate-secure-composition-'))
+  t.after(() => rm(homeDir, { recursive: true, force: true }))
+  const runtimePath = join(process.cwd(), 'vendor', 'dsh-runtime')
+  const web = new DshWebRuntime({ homeDir, workspaceDir: homeDir, runtimePath })
+  const entries: any[] = [
+    { id: 'weftmate-safe-credentials', name: './plugins/weftmate-credentials.mjs' },
+    { id: 'ui-settings-models', name: '@deepseek-ai/dsh-client-ui-settings-models' },
+    { id: modern ? 'agent-preset-registry' : 'agent-presets', config: { includeUserRoot: false } },
+    ...['hmr', 'plugin-manager', 'tool-plugin-manager'].map(id => ({ id, disabled: modern ? { __jsExpr: "!ctx.get('profileContext')" } : true })),
+    ...(modern ? [{ id: 'config-editor', name: '@deepseek-ai/dsh-config-editor', disabled: { __jsExpr: "!ctx.get('profileContext')" } },
+      { id: 'settings', disabled: { __jsExpr: "!ctx.get('profileContext')" } }] : []),
+  ]
+  const original = structuredClone(entries)
+  const result = await (web as any).finalizeSecureComposition(entries)
+  assert.deepEqual(entries, original)
+  for (const id of ['hmr', 'plugin-manager', 'tool-plugin-manager']) {
+    assert.equal(result.entries.find((row: any) => row.id === id).disabled, true)
+    await assert.rejects((web as any).finalizeSecureComposition(entries.map(row => row.id === id ? { ...row, disabled: false } : row)), /凭据/)
+  }
+  const presets = result.entries.filter((row: any) => row.name === '@deepseek-ai/dsh-agent-preset')
+  if (!modern) {
+    assert.deepEqual(presets, [])
+    assert.deepEqual(result.entries.find((row: any) => row.id === 'agent-presets').config, {
+      includeUserRoot: false, roots: [{ path: join(runtimePath, 'node_modules', '@deepseek-ai', 'dsh', 'config', 'agent-presets'), trust: 'system' }],
+    })
+  } else {
+    assert.equal(result.entries.find((row: any) => row.id === 'config-editor').name, './plugins/weftmate-config-editor.mjs')
+    for (const id of ['settings', 'config-editor']) assert.equal(Object.hasOwn(result.entries.find((row: any) => row.id === id), 'disabled'), false)
+    assert.deepEqual(presets.map((row: any) => [row.id, row.config.id, row.config.order]), [
+      ['preset-personal-remote', 'personal-remote', 91], ['preset-personal-shared-chat', 'personal-shared-chat', 92],
+    ])
+    for (const preset of presets) {
+      const persona = preset.config.plugins.find((row: any) => row.id === 'persona')
+      assert.equal(typeof persona.config.prefix, 'string'); assert.equal(Object.hasOwn(persona.config, 'text'), false)
+      assert.ok(preset.config.plugins.some((row: any) => row.name?.startsWith('./plugins/')))
+      const visit = (rows: any[]) => rows.forEach(row => {
+        assert.equal(row.name?.startsWith('../../profiles/'), false)
+        if (row.name === '@deepseek-ai/dsh-tool-subagent') {
+          assert.equal(Object.hasOwn(row.config, 'backgroundMode'), false)
+          assert.equal(Object.hasOwn(row.config, 'toolFilter'), false)
+        }
+        if (Array.isArray(row.config)) visit(row.config)
+      })
+      visit(preset.config.plugins)
+    }
+    assert.deepEqual(presets[0].config.plugins.find((row: any) => row.name === '@deepseek-ai/dsh-tool-pwsh').disabled,
+      { __jsExpr: "process.platform !== 'win32'" })
+    const upstream = new DshWebRuntime({ homeDir, workspaceDir: homeDir, runtimePath, profilePolicy: 'upstream' })
+    const upstreamResult = await (upstream as any).finalizeSecureComposition(entries)
+    assert.equal(upstreamResult.entries.some((row: any) => row.name === '@deepseek-ai/dsh-agent-preset'), false)
+    assert.deepEqual(upstreamResult.entries.find((row: any) => row.id === 'config-editor'), original.find(row => row.id === 'config-editor'))
+  }
+})
+
 before(async () => {
   root = await mkdtemp(join(tmpdir(), 'weftmate-dsh-runtime-lifecycle-'))
 })

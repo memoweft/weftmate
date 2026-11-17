@@ -207,12 +207,13 @@ function extractNamespace(value: unknown): NamespaceSnapshot {
 }
 
 function extractCredentialRows(value: unknown, refs: readonly string[]): Record<string, CredentialRow> {
-  if (!isRecord(value) || !isRecord(value.credentials)) {
+  if (!isRecord(value)) {
     throw new OfficialDshRpcError('official DSH credentials.describe returned an invalid result');
   }
+  const credentials = isRecord(value.credentials) ? value.credentials : value;
   const result: Record<string, CredentialRow> = {};
   for (const ref of refs) {
-    const row = value.credentials[ref];
+    const row = credentials[ref];
     if (!isRecord(row) || typeof row.configured !== 'boolean' || typeof row.writable !== 'boolean') {
       throw new OfficialDshRpcError('official DSH credentials.describe returned an invalid credential row');
     }
@@ -272,6 +273,7 @@ export function createOfficialDshSettingsClient(options: OfficialDshClientOption
     return pending;
   }
 
+  let typertWire = false;
   async function unary(method: 'settings.describe' | 'settings.mutate' | 'credentials.describe', payload: JsonRecord): Promise<unknown> {
     const rpcId = rpcIdFactory();
     requireString(rpcId, 'rpcId');
@@ -279,17 +281,25 @@ export function createOfficialDshSettingsClient(options: OfficialDshClientOption
     const timer = setTimeout(() => abort.abort(), timeoutMs);
     try {
       let cookie = token === null ? null : await connect(abort.signal);
-      const post = () => fetchImpl(new URL(`/api/${method}`, origin), {
+      const post = () => fetchImpl(new URL(`/api/${typertWire ? method.replace('.', '/') : method}`, origin), {
         method: 'POST',
         headers: { 'content-type': 'application/json', ...(cookie === null ? {} : { cookie }) },
-        body: JSON.stringify({ type: 'client-request', rpcId, method, payload }),
+        body: JSON.stringify({ type: 'client-request', rpcId,
+          method: typertWire ? method.replace('.', '/') : method, payload: typertWire ? { args: payload } : payload }),
         signal: abort.signal,
       });
-      let response = await post();
+      const postCompatible = async () => {
+        const legacyWire = !typertWire;
+        const response = await post();
+        if (response.status !== 404 || !legacyWire) return response;
+        typertWire = true;
+        return post();
+      };
+      let response = await postCompatible();
       if (response.status === 401 && token !== null) {
         if (await cache.get(cacheKey) === cookie) cache.delete(cacheKey);
         cookie = await connect(abort.signal);
-        response = await post();
+        response = await postCompatible();
         if (response.status === 401 && await cache.get(cacheKey) === cookie) cache.delete(cacheKey);
       }
       if (!response.ok) throw new OfficialDshRpcError(`official DSH ${method} carrier failed`);
@@ -372,7 +382,7 @@ export async function migrateLegacyRoutes(
       await client.mutateSettings(plan.operations, snapshot.revision);
       return { ...plan, attempts, mutated: true, snapshot };
     } catch (error) {
-      if (!(error instanceof OfficialDshRpcError) || error.code !== 'settings-conflict' || attempts === maxAttempts) throw error;
+      if (!(error instanceof OfficialDshRpcError) || !['settings-conflict', 'settings/conflict'].includes(error.code ?? '') || attempts === maxAttempts) throw error;
     }
   }
   throw new OfficialDshRpcError('legacy route migration exhausted its retry budget');
@@ -415,7 +425,7 @@ export async function repairOfficialLocalRouteLimits(
       await client.mutateSettings([{ op: 'set', path: ['providers', route.route], value: desired }], snapshot.revision);
       return true;
     } catch (error) {
-      if (!(error instanceof OfficialDshRpcError) || error.code !== 'settings-conflict' || attempt === maxAttempts) throw error;
+      if (!(error instanceof OfficialDshRpcError) || !['settings-conflict', 'settings/conflict'].includes(error.code ?? '') || attempt === maxAttempts) throw error;
     }
   }
   throw new OfficialDshRpcError('official local route repair exhausted its retry budget');

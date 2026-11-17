@@ -826,6 +826,7 @@ export function apply(ctx) {
     // D2: computer file access is unrestricted; approval is a separate native policy.
     initializeFilePolicy(agent);
     if (agent?.session?.header?.origin !== 'subagent' || agent.session.header.agentPreset !== 'personal-remote') return;
+    agent.ctx?.tools?.restrict?.({ deny: ['browser'] });
     const dispatch = webExecution.getStore();
     if (dispatch) {
       delegatedExecutions.set(agent, delegatedExecutions.get(dispatch.agent) ?? dispatch);
