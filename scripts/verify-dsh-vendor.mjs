@@ -40,7 +40,7 @@ function fail(message) {
   process.exit(1)
 }
 
-async function walkForSources(dir, pkgName) {
+async function walkForSources(dir, pkgName, declaresSrc = false) {
   const bad = []
   const utilWithSrc = []
   const entries = await readdir(dir, { withFileTypes: true })
@@ -52,19 +52,24 @@ async function walkForSources(dir, pkgName) {
       if (entry.name === 'node_modules') continue
       // 顶层目录名即包名（node_modules/@deepseek-ai/<pkg>）；子目录沿用所属包名。
       const childPkg = pkgName === '' ? entry.name : pkgName
+      let childDeclaresSrc = declaresSrc
+      if (pkgName === '' && childPkg.startsWith('dsh-')) {
+        const pkg = JSON.parse(await readFile(join(path, 'package.json'), 'utf8'))
+        childDeclaresSrc = Array.isArray(pkg.files) && pkg.files.includes('src')
+      }
       if (entry.name === 'src') {
         // M5-01（hoisted 布局）：src 禁入只针对 harness 自身包（dsh-*）——cordis 工具族
         // （cordis/cosmokit/schemastery/node-addon-landlock-run）上游 npm 发布自带 src，
         // 任何 npm 安装都含这些文件，属上游发布选择；记入审计信息，不挡校验。
-        if (childPkg.startsWith('dsh-')) bad.push(path)
+        if (childPkg.startsWith('dsh-') && !childDeclaresSrc) bad.push(path)
         else utilWithSrc.push(path)
         continue
       }
-      const sub = await walkForSources(path, childPkg)
+      const sub = await walkForSources(path, childPkg, childDeclaresSrc)
       bad.push(...sub.bad)
       utilWithSrc.push(...sub.utilWithSrc)
     } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')) {
-      if (pkgName.startsWith('dsh-')) bad.push(path)
+      if (pkgName.startsWith('dsh-') && !declaresSrc) bad.push(path)
       else utilWithSrc.push(path)
     }
   }
@@ -214,13 +219,13 @@ async function main() {
   console.log('[vendor-verify] 包 main / exports 默认入口检查通过')
   console.log(`[vendor-verify] @deepseek-ai 单实例检查通过（${copies.length} 个包，无嵌套重复副本）`)
 
-  // 4. 编译产物纯净（无源码树）：dsh-* 自身包禁 src/ 与 .ts；cordis 工具族上游发布自带 src，
+  // 4. dsh-* 仅允许自身 files 显式声明 src；cordis 工具族上游发布自带 src，
   //    只记审计信息不挡校验（M5-01 hoisted 布局后可见，junction 布局时这些文件同样在闭包内）。
   const dshNodeModules = join(RUNTIME_DIR, 'node_modules', '@deepseek-ai')
   const { bad, utilWithSrc } = await walkForSources(dshNodeModules, '')
   if (bad.length > 0) fail(`发现源码残留（红线：只发货编译产物）：\n  ${bad.slice(0, 10).join('\n  ')}`)
   const utilNames = [...new Set(utilWithSrc.map((p) => /@deepseek-ai[\\/]([^\\/]+)/.exec(p)?.[1] ?? ''))].filter(Boolean)
-  console.log(`[vendor-verify] 闭包无 dsh-* 源码（编译产物纯净）；上游自带 src 的工具族（审计）：${utilNames.join(', ') || '(无)'}`)
+  console.log(`[vendor-verify] 闭包无未声明的 dsh-* 源码；上游自带 src 的包（审计）：${utilNames.join(', ') || '(无)'}`)
 
   // 5. carriedButNotMounted 已记录
   if (!Array.isArray(manifest.carriedButNotMounted)) fail('manifest 缺 carriedButNotMounted')

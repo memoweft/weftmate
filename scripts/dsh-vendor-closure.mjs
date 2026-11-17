@@ -69,6 +69,23 @@ export function internalDependencies(pkg) {
   return dependencies
 }
 
+/** 新版 checkout 中已消失的旧审计行，只按明确的替代或退役标记处理。 */
+export function resolveVendorSubset(entries, index, packageVersion) {
+  const subset = new Map()
+  for (const entry of entries) {
+    let resolved = entry
+    if (!/^0\.1\./.test(packageVersion) && !index.has(entry.name)) {
+      if (entry.replacedBy) {
+        if (index.has(entry.replacedBy)) resolved = { ...entry, name: entry.replacedBy }
+      } else if (entry.retiredSince) {
+        continue
+      }
+    }
+    if (!subset.has(resolved.name)) subset.set(resolved.name, resolved)
+  }
+  return [...subset.values()]
+}
+
 /**
  * 直接行到全部内部依赖的传递闭包。
  *

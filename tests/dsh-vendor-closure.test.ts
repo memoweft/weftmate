@@ -14,6 +14,7 @@ import {
   isSkippedPlatformOptional,
   loadWorkspaceIndex,
   manifestClosureEntries,
+  resolveVendorSubset,
   runtimeDependencySections,
 } from '../scripts/dsh-vendor-closure.mjs'
 
@@ -51,6 +52,52 @@ after(async () => {
 })
 
 describe('DSH vendor workspace closure', () => {
+  test('新版缺失审计行使用已有替代并去重，退役行移除，现存行保留', () => {
+    const entries = [
+      { name: '@deepseek-ai/old', why: 'old', replacedBy: '@deepseek-ai/new' },
+      { name: '@deepseek-ai/new', why: 'new' },
+      { name: '@deepseek-ai/retired', why: 'retired', retiredSince: '0.2.0' },
+      { name: '@deepseek-ai/present', why: 'present', retiredSince: '0.2.0' },
+    ]
+    const index = new Map(['new', 'present'].map(name => [`@deepseek-ai/${name}`, {}]))
+    assert.deepEqual(resolveVendorSubset(entries, index, '0.2.2-rc.3').map(entry => entry.name), [
+      '@deepseek-ai/new', '@deepseek-ai/present',
+    ])
+    assert.deepEqual(resolveVendorSubset(entries, index, '0.1.0-rc.5'), entries)
+    index.set('@deepseek-ai/old', {})
+    assert.equal(resolveVendorSubset(entries, index, '0.2.2-rc.3')[0].name, '@deepseek-ai/old')
+  })
+
+  test('旧版本或新版无可用替代时保留缺失包，由闭包报错', () => {
+    const entries = [{ name: '@deepseek-ai/old', why: 'old', replacedBy: '@deepseek-ai/missing' }]
+    for (const version of ['0.1.0-rc.5', '0.2.2-rc.3']) {
+      const index = new Map()
+      const subset = resolveVendorSubset(entries, index, version)
+      assert.deepEqual(subset, entries)
+      assert.throws(() => computeClosure(index, subset.map(entry => entry.name)), /拒绝回退 registry/)
+    }
+    const unknown = [{ name: '@deepseek-ai/unknown', why: 'unknown' }]
+    assert.deepEqual(resolveVendorSubset(unknown, new Map(), '0.2.2-rc.3'), unknown)
+  })
+
+  test('索引 native/system 根包及平台子包并计算 optional 闭包', async () => {
+    await writePackage('native/system', {
+      name: '@deepseek-ai/native-system', version: '0.2.2-rc.3',
+      optionalDependencies: { '@deepseek-ai/native-system-linux-x64': 'workspace:*' },
+    })
+    await writePackage('native/system/packages/linux-x64', {
+      name: '@deepseek-ai/native-system-linux-x64', version: '0.2.2-rc.3', os: ['linux'], cpu: ['x64'],
+    })
+    const index = await loadWorkspaceIndex(fixture)
+    const closure = computeClosure(index, ['@deepseek-ai/native-system'])
+    assert.equal(closure.size, 2)
+    const packed = [...closure].map(([name]) => ({ name, tarball: `${name.slice(14)}.tgz` }))
+    const sections = runtimeDependencySections(packed, closure)
+    assert.ok(sections.dependencies['@deepseek-ai/native-system'])
+    assert.ok(sections.optionalDependencies['@deepseek-ai/native-system-linux-x64'])
+    assert.equal(sections.dependencies['@deepseek-ai/native-system-linux-x64'], undefined)
+  })
+
   test('索引 native/landlock-run/packages，并把 Linux 包留在 optionalDependencies', async () => {
     const index = await loadWorkspaceIndex(fixture)
     assert.ok(index.has('@deepseek-ai/node-addon-landlock-run'))
