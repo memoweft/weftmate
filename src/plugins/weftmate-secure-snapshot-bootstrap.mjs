@@ -13,7 +13,7 @@ import { setProcessWarningLog } from '../process-output.mjs'
 import { createHash, randomBytes } from 'node:crypto'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { createRequire as createNodeRequire } from 'node:module'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const PROTOCOL = 'weftmate.secure-snapshot.v1'
@@ -114,10 +114,22 @@ const bootSnapshot = async (entries) => {
   process.once('SIGINT', () => { void requestShutdown(130) })
   process.once('disconnect', () => { void requestShutdown(0) })
   installFailLoud('dsh', process, async () => { await requestShutdown(1) })
-  if (typeof appBoot.healProfilesModuleFallback !== 'function') throw new Error('legacy resolver unavailable')
-  appBoot.healProfilesModuleFallback(runtimePackageAnchor)
-  const ctx = await boot('dsh', rootConfig, [{ insert: entries }], (hostCtx) => {
+  let resolution
+  if (typeof appBoot.healProfilesModuleFallback === 'function') {
+    appBoot.healProfilesModuleFallback(runtimePackageAnchor)
+  } else if (typeof appBoot.createRuntimeResolution === 'function' && appBoot.PluginPackages) {
+    let profile
+    try {
+      profile = typeof appBoot.loadProfileDirectory === 'function'
+        ? appBoot.loadProfileDirectory('dsh', profileDir, runtimePackageAnchor, { userLayer: false }) : undefined
+    } catch {
+      profile = { name: 'weftmate', dir: profileDir, layers: [], patchPath: join(profileDir, 'cordis.patch.yml'), patches: [], skippedBundles: [] }
+    }
+    resolution = await appBoot.createRuntimeResolution({ installAnchor: runtimePackageAnchor, profile, home: dirname(dirname(profileDir)) })
+  } else throw new Error('legacy resolver unavailable')
+  const ctx = await boot('dsh', rootConfig, [{ insert: entries }], async (hostCtx) => {
     app.current = hostCtx
+    if (resolution !== undefined) await hostCtx.plugin(appBoot.PluginPackages, { resolution })
     hostCtx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, environment)
     provideCmdline(hostCtx, { args: ['--port', port], exit: (code) => void requestShutdown(code) })
   })

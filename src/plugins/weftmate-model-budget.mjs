@@ -9,7 +9,8 @@ import { meteredNativeStream, usageSessionId } from '../personal-access/usage-na
 // Keep every native field/validation. Leave this one default to the host's
 // projection, otherwise native schema resolution inserts 300000 before get().
 export const Config = new Schema(JSON.parse(JSON.stringify(NativeConfig)));
-delete Config.dict.providers.inner.dict.streamIdleTimeoutMs.meta.default;
+const providerSchema = Config.dict.providers.inner;
+delete (providerSchema.dict ? providerSchema : providerSchema.inner).dict.streamIdleTimeoutMs.meta.default;
 export const name = 'llm-pi-ai';
 export const inject = ['llm', 'tokenMeter'];
 
@@ -41,13 +42,14 @@ export function apply(ctx, config) {
     })());
     return probes.get(key);
   }
+  const providersOf = raw => typeof raw?.providers?.get === 'function' ? raw.providers.get() : raw?.providers;
   async function refresh() {
-    await Promise.all(Object.entries(rawSource().providers ?? {}).flatMap(([provider, row]) =>
+    await Promise.all(Object.entries(providersOf(rawSource()) ?? {}).flatMap(([provider, row]) =>
       compatible(row) ? (row.models ?? []).map(model => capacity(provider, row, model)) : []));
   }
-  ctx.on('credentials/updated', async ref => {
+  const credentialsUpdated = async ref => {
     const pending = [];
-    for (const [provider, row] of Object.entries(rawSource().providers ?? {})) {
+    for (const [provider, row] of Object.entries(providersOf(rawSource()) ?? {})) {
       if (!compatible(row) || row.apiKeyEnv !== ref) continue;
       for (const model of row.models ?? []) {
         const key = identity(provider, row, model);
@@ -56,12 +58,15 @@ export function apply(ctx, config) {
       }
     }
     await Promise.all(pending);
-  });
+  };
+  ctx.on('credentials/updated', credentialsUpdated);
+  ctx.on('credentials/reference-updated', credentialsUpdated);
+  ctx.on('loader/volatile-update', () => { probes.clear(); capacities.clear(); version++; return refresh(); });
   function source() {
     const raw = rawSource();
     if (raw === lastRaw && lastVersion === version) return projected;
     lastRaw = raw; lastVersion = version;
-    projected = { ...raw, providers: Object.fromEntries(Object.entries(raw.providers ?? {}).map(([provider, row]) => {
+    const providers = Object.fromEntries(Object.entries(providersOf(raw) ?? {}).map(([provider, row]) => {
       const streamIdleTimeoutMs = row.streamIdleTimeoutMs ?? Number(process.env.WEFTMATE_STREAM_IDLE_TIMEOUT_MS || DEFAULT_STREAM_IDLE_TIMEOUT_MS);
       if (!compatible(row) || !row.models) return [provider, { ...row, streamIdleTimeoutMs }];
       return [provider, { ...row, streamIdleTimeoutMs, models: row.models.map(model => {
@@ -69,7 +74,9 @@ export function apply(ctx, config) {
           baseUrl: row.baseURL, modelId: model.id, contextWindow: model.contextWindow, maxTokens: model.maxTokens });
         return { ...model, contextWindow: value.contextWindow, maxTokens: value.maxTokens };
       }) }];
-    })) };
+    }));
+    projected = { ...raw, providers: typeof raw?.providers?.get === 'function'
+      ? Object.assign({}, providers, { get: () => providers }) : providers };
     return projected;
   }
   // The native settings consumer reads a projected scope. Stored configuration
@@ -90,17 +97,8 @@ export function apply(ctx, config) {
   } });
   const llm = new Proxy(ctx.llm, { get(service, method) {
     if (method === 'registerAdapter') return (providers, adapter) => {
-      const wrapped = new Proxy(adapter, { get(target, operation) {
-        if (operation === 'resolveModel') return async (provider, model, signal) => {
-          const row = rawSource().providers?.[provider];
-          const entry = row?.models?.find(item => item.id === model);
-          if (compatible(row) && entry) await capacity(provider, row, entry);
-          const info = await target.resolveModel(provider, model, signal);
-          // Output capability must not become a fixed request default.
-          if (compatible(row)) { const { defaultMaxTokens, ...rest } = info; return rest; }
-          return info;
-        };
-        if (operation === 'stream') return async function* (options) {
+      const stream = async function* (options, prepared) {
+          const originalProvider = options.provider, originalModel = options.model;
           const background = isBackgroundPurpose(options.purpose);
           const scheduler = process.env.WEFTMATE_MODEL_SCHEDULER_URL;
           const billingSessionId = usageSessionId(options.sessionId, ctx.get('sessions'));
@@ -118,11 +116,17 @@ export function apply(ctx, config) {
             await fetch(`${scheduler}/progress`, { method: 'POST', headers: { 'content-type': 'application/json' },
               body: JSON.stringify({ sessionId: options.sessionId, phase: 'retrying' }), signal: AbortSignal.timeout(1000) }).catch(() => {});
           }
-          const modelInfo = await target.resolveModel(options.provider, options.model, options.signal);
+          if (prepared && (options.provider !== originalProvider || options.model !== originalModel)) {
+            const row = providersOf(rawSource())?.[options.provider];
+            const entry = row?.models?.find(item => item.id === options.model);
+            if (compatible(row) && entry) await capacity(options.provider, row, entry);
+            prepared = await adapter.prepareCall(options.provider, options.model, options.signal);
+          }
+          const modelInfo = prepared ? prepared.model : await adapter.resolveModel(options.provider, options.model, options.signal);
           options = { ...options, messages: messagesForModelInput(options.messages, modelInfo.inputModalities) };
-          const row = rawSource().providers?.[options.provider];
+          const row = providersOf(rawSource())?.[options.provider];
           const entry = row?.models?.find(item => item.id === options.model);
-          if (!compatible(row) || !entry) { yield* meteredNativeStream(options, value => target.stream(value), scheduler, billingSessionId); return; }
+          if (!compatible(row) || !entry) { yield* meteredNativeStream(options, value => prepared ? prepared.stream(value) : adapter.stream(value), scheduler, billingSessionId); return; }
           const limits = await capacity(options.provider, row, entry);
           let inputTokens = options.messages.reduce((sum, message) => sum + ctx.tokenMeter.estimateMessage(message), 0) +
             (options.system ? Math.ceil(options.system.length / 4) + 4 : 0) +
@@ -141,7 +145,7 @@ export function apply(ctx, config) {
           // budget authoritative and leave framing + a useful output reserve.
           if (inputTokens + Math.max(4096, Math.ceil(limits.contextWindow * 0.02)) +
               Math.min(4096, limits.maxTokens) > limits.contextWindow) {
-            const memoryMessages = options.messages.filter(message => message.source?.plugin === 'weftmate-personal-memory');
+            const memoryMessages = options.messages.filter(message => (message.source?.plugin === 'weftmate-personal-memory' || message.source?.kind === 'weftmate-personal-memory'));
             if (memoryMessages.length) {
               options = { ...options, messages: options.messages.filter(message => !memoryMessages.includes(message)) };
               inputTokens -= memoryMessages.reduce((sum, message) => sum + ctx.tokenMeter.estimateMessage(message), 0);
@@ -156,9 +160,29 @@ export function apply(ctx, config) {
             throw new LlmError('Context has no useful output reserve; compact before continuing',
               CONTEXT_WINDOW_EXCEEDED_CODE);
           }
-          yield* meteredNativeStream({ ...options, maxTokens }, value => target.stream(value), scheduler, billingSessionId);
+          yield* meteredNativeStream({ ...options, maxTokens }, value => prepared ? prepared.stream(value) : adapter.stream(value), scheduler, billingSessionId);
           } finally { await release(); }
         };
+      const wrapped = new Proxy(adapter, { get(target, operation) {
+        if (operation === 'resolveModel') return async (provider, model, signal) => {
+          const row = providersOf(rawSource())?.[provider];
+          const entry = row?.models?.find(item => item.id === model);
+          if (compatible(row) && entry) await capacity(provider, row, entry);
+          const info = await target.resolveModel(provider, model, signal);
+          // Output capability must not become a fixed request default.
+          if (compatible(row)) { const { defaultMaxTokens, ...rest } = info; return rest; }
+          return info;
+        };
+        if (operation === 'prepareCall' && typeof target.prepareCall === 'function') return async (provider, model, signal) => {
+          const row = providersOf(rawSource())?.[provider];
+          const entry = row?.models?.find(item => item.id === model);
+          if (compatible(row) && entry) await capacity(provider, row, entry);
+          const prepared = await target.prepareCall(provider, model, signal);
+          const { defaultMaxTokens, ...info } = prepared.model;
+          return { ...prepared, model: compatible(row) ? info : prepared.model,
+            stream: options => stream(options, prepared) };
+        };
+        if (operation === 'stream') return options => stream(options);
         const value = Reflect.get(target, operation);
         return typeof value === 'function' ? value.bind(target) : value;
       } });
@@ -173,7 +197,10 @@ export function apply(ctx, config) {
       sctx => callback(names.includes('settings') ? settingsContext(sctx) : sctx));
     return Reflect.get(target, prop);
   } });
-  applyPiAi(nativeContext, config);
+  applyPiAi(nativeContext, typeof config.providers?.get === 'function'
+    ? new Proxy(config, { get(target, prop) {
+      return prop === 'providers' ? source().providers : Reflect.get(target, prop);
+    } }) : config);
   ctx.on('session/event', (session, event) => {
     if (event.type === 'turn/end') { slowRetries.delete(session.id); return; }
     if (event.type !== 'llm/retry' || event.data?.failure?.code !== 'TIMEOUT') return;
