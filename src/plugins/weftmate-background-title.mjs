@@ -24,7 +24,7 @@ export function titleLanguageInstruction(messages) {
 }
 export function apply(ctx, config) {
   const title = new Proxy(ctx.sessionTitle, { get(target, method) {
-    if (method === 'register' || method === 'registerProvider') return provider => target[method]({ ...provider,
+    if ((method === 'register' || method === 'registerProvider') && typeof target[method] === 'function') return provider => target[method]({ ...provider,
       generate: async request => {
         const scheduler = process.env.WEFTMATE_MODEL_SCHEDULER_URL;
         if (scheduler && request.route) {
@@ -42,6 +42,11 @@ export function apply(ctx, config) {
     return typeof value === 'function' ? value.bind(target) : value;
   } });
   const llm = new Proxy(ctx.llm, { get(target, method) {
+    if (method === 'prepareCall' && typeof target.prepareCall === 'function') return async (callConfig, signal, configure) => {
+      const call = await target.prepareCall(callConfig, signal, configure);
+      return { ...call, stream: options => call.stream(options.purpose === 'session-title'
+        ? { ...options, system: `${options.system}\n${titleLanguageInstruction(options.messages)}` } : options) };
+    };
     if (method === 'stream') return options => target.stream(options.purpose === 'session-title'
       ? { ...options, system: `${options.system}\n${titleLanguageInstruction(options.messages)}` } : options);
     const value = Reflect.get(target, method);

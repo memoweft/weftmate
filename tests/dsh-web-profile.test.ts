@@ -13,6 +13,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { registerHooks } from 'node:module'
 import { after, before, describe, test } from 'node:test'
 import {
   DEFAULT_PROFILE_BUNDLES,
@@ -309,3 +310,100 @@ test('安全快照启动器只接收一次父进程快照，不观察 profile/ho
   assert.match(bootstrap, /scrubCredentialEnvironment\(\)/)
   assert.match(runtime, /Object\.hasOwn\(config, 'includeUserRoot'\)/)
 })
+
+for (const resolver of ['legacy', 'profile', 'fallback', 'absent-profile', 'unavailable']) {
+  test(`secure snapshot bootstrap installs the ${resolver} resolver before boot entries`, async () => {
+    const source = await readFile(new URL('../src/plugins/weftmate-secure-snapshot-bootstrap.mjs', import.meta.url), 'utf8')
+    const body = source.slice(source.indexOf('const bootSnapshot ='), source.indexOf("process.on('message'"))
+    const calls: string[] = []
+    const profileDir = join('home', 'profiles', 'weftmate'), runtimePackageAnchor = join('runtime', 'package.json')
+    const profile = { dir: profileDir }, resolution = { packages: ['fixture'] }, PluginPackages = {}
+    const host: any = { provide() {}, async plugin(plugin: any, options: any) {
+      assert.equal(plugin, PluginPackages); assert.equal(options.resolution, resolution)
+      await Promise.resolve(); calls.push('plugin')
+    } }
+    const appBoot: any = {
+      loadLayeredEnv: () => ({ get() {}, getFrom() {} }), installFailLoud() {}, PluginPackages,
+      async createRuntimeResolution(options: any) {
+        assert.equal(options.installAnchor, runtimePackageAnchor); assert.equal(options.home, 'home')
+        assert.deepEqual(options.profile, resolver === 'profile' ? profile : resolver === 'absent-profile' ? undefined : {
+          name: 'weftmate', dir: profileDir, layers: [], patchPath: join(profileDir, 'cordis.patch.yml'), patches: [], skippedBundles: [],
+        })
+        calls.push('resolution'); return resolution
+      },
+      loadProfileDirectory(...args: any[]) {
+        assert.deepEqual(args, ['dsh', profileDir, runtimePackageAnchor, { userLayer: false }])
+        if (resolver === 'fallback') throw new Error('missing profile')
+        return profile
+      },
+      async boot(bin: string, root: string, patches: any[], setup: any) {
+        assert.equal(bin, 'dsh'); assert.ok(root.startsWith(profileDir)); assert.deepEqual(patches, [{ insert: ['entry'] }])
+        await setup(host); calls.push('boot'); return host
+      },
+    }
+    if (resolver === 'legacy') appBoot.healProfilesModuleFallback = (anchor: string) => {
+      assert.equal(anchor, runtimePackageAnchor); calls.push('legacy')
+    }
+    if (resolver === 'absent-profile') delete appBoot.loadProfileDirectory
+    if (resolver === 'unavailable') delete appBoot.PluginPackages
+    const run = new Function('appBoot', 'profileDir', 'runtimePackageAnchor', 'join', `
+      const dirname = value => value.slice(0, Math.max(value.lastIndexOf('/'), value.lastIndexOf('\\\\')));
+      const importRuntime = async name => name.endsWith('dsh-app-boot') ? appBoot
+        : name.endsWith('dsh-cmdline') ? { provideCmdline() {} } : { DSH_LAUNCH_ENVIRONMENT_KEY: 'env' };
+      const process = { cwd: () => '.', once() {} }, scrubCredentialEnvironment = () => {}, isCredentialName = () => false;
+      const randomBytes = () => ({ toString: () => 'fixture' }), mkdir = async () => {}, writeFile = async () => {}, removeRoot = async () => {};
+      const port = '0'; let rootConfig, shutdown;
+      ${body}
+      return bootSnapshot(['entry']);
+    `)
+    if (resolver === 'unavailable') await assert.rejects(run(appBoot, profileDir, runtimePackageAnchor, join), /legacy resolver unavailable/)
+    else {
+      await run(appBoot, profileDir, runtimePackageAnchor, join)
+      assert.deepEqual(calls, resolver === 'legacy' ? ['legacy', 'boot'] : ['resolution', 'plugin', 'boot'])
+    }
+  })
+}
+
+for (const modern of [false, true]) {
+  test(`personal tool loop handles ${modern ? 'source.kind and send wakeup' : 'source.plugin and wakeDriver'}`, async () => {
+    const hooks = registerHooks({ resolve(specifier, context, next) {
+      if (specifier === '@deepseek-ai/dsh-repeat-tool-reminder') return { shortCircuit: true, url: 'data:text/javascript,' + encodeURIComponent(`
+        export const apply = ctx => ctx.on('tools/post-execute', async (exec, result, next) => ({
+          ...await next(), additionalContexts: [exec.reminder],
+        }));
+      `) }
+      if (specifier === '@deepseek-ai/dsh-llm/message') return { shortCircuit: true, url: 'data:text/javascript,' + encodeURIComponent(`
+        export const createUserMessage = value => ({ role: 'user', ...value });
+        export const createAssistantMessage = value => ({ role: 'assistant', ...value });
+      `) }
+      return next(specifier, context)
+    } })
+    const handlers: Record<string, any> = {}
+    try {
+      const { apply } = await import('../src/plugins/weftmate-personal-tool-loop.mjs')
+      await apply({ on: (event: string, handler: any) => { handlers[event] = handler } })
+    } finally { hooks.deregister() }
+    const existing = { id: 'queued', source: { kind: 'user' } }
+    const users = [{ id: 'first', source: { kind: 'user' } }, { id: 'second', source: { kind: 'user' } }]
+    const queue: any[] = [existing], wakeups: any[] = [], sends: any[] = []
+    const inbox = { nextTurn: queue, get hasPending() { return queue.length > 0 },
+      prepend(target: string, message: any) { assert.equal(target, 'next-turn'); queue.unshift(message) },
+      splice(target: string, start: number, count: number, values: any[]) {
+        assert.equal(target, 'next-turn'); return queue.splice(start, count, ...values)
+      } }
+    const agent: any = { session: { header: { agentPreset: 'personal-remote' }, events: [{ type: 'turn/start', data: { turn: 1 } }] }, inbox,
+      send(message: any, target: string, wakeup: boolean) { sends.push([message, target, wakeup]); queue.push(message) } }
+    if (!modern) agent.wakeDriver = (value: boolean) => wakeups.push(value)
+    const decision = await handlers['tools/post-execute']({ agent, name: 'read', arguments: {}, reminder: {
+      id: 'reminder', source: { [modern ? 'kind' : 'plugin']: 'repeat-tool-reminder', summary: 'read × 8' },
+    } }, { value: 'unchanged' }, async () => ({}))
+    assert.match(decision.additionalContexts[0].content[0].text, /不要再调用工具/)
+    assert.equal(handlers['tools/pre-execute']({ agent }, () => ({ kind: 'allow' })).kind, 'deny')
+    const result = { id: 'result', source: { kind: 'tool' } }
+    const step = await handlers['agent/pre-step']({ agent, messages: [users[0], result, users[1]] }, () => assert.fail('steering input must be removed'))
+    assert.deepEqual(queue, [...users, existing])
+    assert.equal(step.kind, 'enter'); assert.equal(step.messages[0], result); assert.equal(step.messages.length, 2)
+    if (modern) assert.deepEqual(sends, [...users, existing].map(message => [message, 'next-turn', true]))
+    else { assert.deepEqual(wakeups, [true]); assert.deepEqual(sends, []) }
+  })
+}

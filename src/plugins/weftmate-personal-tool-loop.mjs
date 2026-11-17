@@ -35,7 +35,7 @@ export async function apply(ctx) {
       const decision = await listener({ ...exec, arguments: { input: exec.arguments, output: outcome } }, result,
         () => Promise.resolve(downstream));
       const additionalContexts = decision.additionalContexts?.map(message => {
-        if (previous.has(message.id) || message.source?.plugin !== 'repeat-tool-reminder') return message;
+        if (previous.has(message.id) || !(message.source?.plugin === 'repeat-tool-reminder' || message.source?.kind === 'repeat-tool-reminder')) return message;
         const limit = message.source.summary?.endsWith(` × ${REPEAT_TOOL_LIMIT}`);
         if (limit && !activeStop(exec.agent)) stopped.set(exec.agent, { turn: openTurn(exec.agent), delivered: false });
         return createUserMessage({ source: { ...message.source, plugin: name }, content: [{ type: 'text',
@@ -56,10 +56,14 @@ export async function apply(ctx) {
     if (!state) { stopped.delete(payload.agent); return next(); }
     // Claimed steering input belongs to a later turn, not the final summary.
     const users = payload.messages.filter(message => message.source?.kind === 'user');
-    for (const message of [...users].reverse()) {
-      payload.agent.inbox.prepend('next-turn', message);
+    if (typeof payload.agent.wakeDriver === 'function') {
+      for (const message of [...users].reverse()) payload.agent.inbox.prepend('next-turn', message);
+      if (payload.agent.inbox.hasPending) payload.agent.wakeDriver(true);
+    } else {
+      const existing = [...(payload.agent.inbox.nextTurn ?? [])];
+      payload.agent.inbox.splice('next-turn', 0, existing.length, []);
+      for (const message of [...users, ...existing]) payload.agent.send(message, 'next-turn', true);
     }
-    if (payload.agent.inbox.hasPending) payload.agent.wakeDriver(true);
     if (!state.delivered) {
       state.delivered = true;
       // One text-only model step sees the last committed result. Ignoring it
