@@ -50,6 +50,7 @@ import {
   loadWorkspaceIndex,
   manifestClosureEntries,
   platformConstraint,
+  resolveVendorSubset,
   runtimeDependencySections,
 } from './dsh-vendor-closure.mjs'
 
@@ -78,7 +79,7 @@ const LEGACY_SUBSET = [
   { name: '@deepseek-ai/dsh-llm-deepseek', why: 'DeepSeek 官方 llm 适配器' },
   { name: '@deepseek-ai/dsh-agent-default-model', why: '默认 provider/model 路由' },
   { name: '@deepseek-ai/dsh-credentials-local', why: '凭据提供者（env > $DSH_HOME/.credentials.yaml > .env 回退）' },
-  { name: '@deepseek-ai/dsh-settings-file', why: '设置落盘 + 热加载' },
+  { name: '@deepseek-ai/dsh-settings-file', why: '设置落盘 + 热加载', replacedBy: '@deepseek-ai/dsh-settings' },
   { name: '@deepseek-ai/dsh-subprocess-local', why: '工具子进程执行' },
   { name: '@deepseek-ai/dsh-sandbox-local', why: '本地沙箱' },
   { name: '@deepseek-ai/dsh-sandbox-policy', why: '沙箱策略' },
@@ -129,24 +130,22 @@ function tarballName(name, version) {
 /** 解析 pnpm 可执行（WEFTMATE_PNPM 覆盖，可含子命令如 'corepack pnpm' → PATH 上找 pnpm.cmd/.exe/pnpm → corepack.cmd pnpm 回退）。 */
 function resolvePnpm() {
   const findInPath = (name) => {
-    for (const dir of (process.env.PATH ?? '').split(delimiter)) {
+    for (const dir of (process.env.PATH ?? process.env.Path ?? '').split(delimiter)) {
       const path = join(dir || '.', name)
       if (existsSync(path)) return path
     }
     return null
   }
   const resolveCommand = (name) => {
-    const hasExecutableExtension = /\.(?:cmd|exe)$/i.test(name)
+    const hasExecutableExtension = /\.(?:cmd|bat|exe)$/i.test(name)
     // Windows 的 Node 安装目录会同时留下无扩展名 corepack 占位文件和真正可执行的
     // corepack.cmd；必须先选 .cmd/.exe，不能把前者交给 spawnSync。
     if (!hasExecutableExtension && process.platform === 'win32') {
-      const windowsShim = findInPath(`${name}.cmd`) ?? findInPath(`${name}.exe`)
+      const windowsShim = findInPath(`${name}.cmd`) ?? findInPath(`${name}.bat`) ?? findInPath(`${name}.exe`)
       if (windowsShim !== null) return windowsShim
     }
     if (existsSync(name)) return name
     return findInPath(name)
-      ?? (!hasExecutableExtension ? findInPath(`${name}.cmd`) : null)
-      ?? (!hasExecutableExtension ? findInPath(`${name}.exe`) : null)
       ?? name
   }
   const override = process.env.WEFTMATE_PNPM
@@ -156,7 +155,9 @@ function resolvePnpm() {
   }
   const corepack = findInPath(process.platform === 'win32' ? 'corepack.cmd' : 'corepack')
   if (corepack !== null) return [corepack, 'pnpm']
-  const direct = findInPath('pnpm.cmd') ?? findInPath('pnpm.exe') ?? findInPath('pnpm')
+  const direct = process.platform === 'win32'
+    ? findInPath('pnpm.cmd') ?? findInPath('pnpm.bat') ?? findInPath('pnpm.exe') ?? findInPath('pnpm')
+    : findInPath('pnpm')
   if (direct !== null) return [direct]
   return ['pnpm']
 }
@@ -168,12 +169,17 @@ function quoteCmd(arg) {
 function run(command, args, cwd, label, env = process.env, input) {
   // command 可为多段（如 'corepack pnpm'）；Windows 上 .cmd shim 需 shell 包装（args 已逐项引号）。
   const parts = Array.isArray(command) ? command : [command]
-  const useShell = /\.cmd$/i.test(parts[0] ?? '')
+  const useShell = process.platform === 'win32' && /\.(?:cmd|bat)$/i.test(parts[0] ?? '')
+  env = { ...env, COREPACK_ENABLE_DOWNLOAD_PROMPT: env.COREPACK_ENABLE_DOWNLOAD_PROMPT ?? '0' }
+  if (process.platform === 'win32') {
+    const path = env.PATH ?? env.Path ?? process.env.PATH ?? process.env.Path
+    if (path !== undefined) Object.assign(env, { PATH: path, Path: path })
+  }
   const result = useShell
     ? spawnSync([...parts, ...args].map(quoteCmd).join(' '), [], { cwd, env, input, encoding: 'utf8', shell: true, windowsHide: true, maxBuffer: 64 * 1024 * 1024 })
     : spawnSync(parts[0], [...parts.slice(1), ...args], { cwd, env, input, encoding: 'utf8', windowsHide: true, maxBuffer: 64 * 1024 * 1024 })
   if (result.status !== 0) {
-    const tail = (result.stderr ?? result.stdout ?? (result.error ? String(result.error) : '')).split('\n').slice(-15).join('\n')
+    const tail = (result.stderr || result.stdout || (result.error ? String(result.error) : '')).split('\n').slice(-15).join('\n')
     throw new Error(`${label} 失败（exit ${result.status}）：\n${tail}`)
   }
   return result
@@ -275,12 +281,13 @@ async function assertSingleInstance(nodeModulesDir) {
 
 async function assemble(checkout, pin, identity, scratch) {
   const dryRun = process.argv.includes('--dry-run')
-  const subset = LEGACY_SUBSET
+  const { version, engines } = JSON.parse(readFileSync(join(checkout, 'package.json'), 'utf8'))
   const packageManager = checkoutPackageManager(checkout)
-  console.log(`[vendor-dsh] checkout ${checkout} @ ${pin.commit}（${pin.packageVersion}）`)
+  console.log(`[vendor-dsh] checkout ${checkout} @ ${pin.commit}（${version}）`)
   console.log(`[vendor-dsh] Corepack packageManager：${packageManager}`)
 
   const index = await loadWorkspaceIndex(checkout)
+  const subset = resolveVendorSubset(LEGACY_SUBSET, index, version)
   const closure = computeClosure(index, subset.map((entry) => entry.name))
   const carriedButNotMounted = classifyCarried()
   console.log(`[vendor-dsh] 发货闭包：${closure.size} 个包（直接行 ${subset.length} + 传递 ${closure.size - subset.length}）`)
@@ -328,7 +335,7 @@ async function assemble(checkout, pin, identity, scratch) {
     private: true,
     packageManager,
     description: `WeftMate 内嵌 DSH 运行时闭包（pin ${pin.packageVersion} @ ${pin.commit.slice(0, 7)}；生成物，勿手改）`,
-    engines: { node: '^22.19.0 || >=24.0.0' },
+    engines,
     dependencies: runtimeSections.dependencies,
     // Linux-only Landlock launcher tarballs remain optional.  They are present for Linux
     // assemblies but must never become mandatory direct dependencies on Windows.
@@ -478,8 +485,14 @@ async function main() {
     await scratch.assertOwned(checkout)
     run(resolvePnpm(), ['install', '--frozen-lockfile', ...isolatedInstallArgs(checkout)], checkout, 'DSH frozen install')
     run(resolvePnpm(), ['run', 'build'], checkout, 'DSH patched build')
-    if (process.platform === 'linux') {
+    if (existsSync(join(checkout, 'native/system'))) {
+      if (process.platform === 'linux' || process.platform === 'darwin') {
+        run(resolvePnpm(), ['run', 'build:native'], join(checkout, 'native/system'), 'DSH native system build')
+      }
+    } else if (process.platform === 'linux' && existsSync(join(checkout, 'native/landlock-run'))) {
       run(resolvePnpm(), ['run', 'build:native'], join(checkout, 'native/landlock-run'), 'DSH Linux launcher build')
+    } else if (process.platform === 'linux' && !process.env.WEFTMATE_PNPM) {
+      throw new Error('DSH checkout 缺少 native/system 与 native/landlock-run，无法构建 Linux 原生产物')
     }
     await assemble(checkout, pin, identity, scratch)
     await assertRuntimeIdentity(scratch.runtime, repoRoot)
