@@ -113,7 +113,19 @@ export async function startTimelineCandidate(options = {}) {
       if(options.daily){const row=dailySessions.get(id);assert.ok(row);if(!queuedOnly&&row.running){for(const [type,data]of [['step/end',{turn:1,step:1}],['turn/end',{turn:1,reason:{kind:'aborted'}}]])row.events.push({seq:row.events.length,time:options.digest?options.clock()+row.events.length*500:baseTime+row.events.length*500,type,data});row.running=false;if(id===sessionId)running=false;}
         return {outcomes:receiptIds.map(receiptId=>({receiptId,status:queuedOnly?'queue_removed':'cancel_requested',backgroundJobs:[]}))};}
       if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false; } return { status: 'stopped', receiptIds, jobs: [], executionCancelled: true }; },
-    cancelSession: async () => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false } return { accepted: true } },
+    cancelSession: async ({ sessionId: id } = {}) => { operations.push({ kind: 'cancel' });
+      if (options.daily && id && dailySessions.has(id)) {
+        const row = dailySessions.get(id);
+        if (row.running) {
+          for (const [type, data] of [['step/end', { turn: 1, step: 1 }], ['turn/end', { turn: 1, reason: { kind: 'aborted' } }]])
+            row.events.push({ seq: row.events.length, time: options.digest ? options.clock() + row.events.length * 500 : baseTime + row.events.length * 500, type, data });
+          row.running = false;
+          if (id === sessionId) running = false;
+          for (const wake of eventWaiters) wake(id, row.events.at(-1).seq);
+        }
+        return { accepted: true };
+      }
+      if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false } return { accepted: true } },
     describeSession: async id => {
       const daily = options.daily ? dailySessions.get(id) : null;
       if (!daily && id !== sessionId) return null;
