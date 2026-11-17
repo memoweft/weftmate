@@ -3,8 +3,8 @@
  *
  * 生产 P1-01 冻结的 HealthPayload（schemas/health.ts 为编译期护栏；运行时在此
  * 按同形构造，不 import TS）。数据只来自受支持接缝：
- *  - `host.describe`（version/cwd/attachedSessions）—— 唯一的 DSH 健康探针；
- *    它被拒即 runtime.state = 'stopped'（kill/restart 的准确反映点）。
+ *  - `host.describe`（version/cwd/attachedSessions）；缺失或明确不支持时用
+ *    `sessions.list` 探活，无备选接缝则 degraded，普通探针失败仍为 stopped。
  *  - 组合注入的 pin 信息与路径 —— 不自行推断。
  * lastErrors 是环形缓冲：每项只有 { at, code, digest }，永不携带原始 payload。
  */
@@ -18,7 +18,7 @@ const DEGRADED_WINDOW_MS = 60_000
  *          degradedWindowMs?: number }} deps
  */
 export function createDiagnostics({ client, runtime, paths, pin = null, dshRuntimeVersion = null, degradedWindowMs = DEGRADED_WINDOW_MS }) {
-  if (!client?.host) throw new TypeError('supported DSH client is required')
+  if (!client || !['host', 'sessions', 'workspace', 'llm', 'settings'].some(key => client[key])) throw new TypeError('supported DSH client is required')
   const lastErrors = []
   let lastErrorAt = 0
 
@@ -44,13 +44,27 @@ export function createDiagnostics({ client, runtime, paths, pin = null, dshRunti
     async snapshot() {
       const startedAtIso = new Date(runtime.startedAt).toISOString()
       let describe = null
+      let unsupported = typeof client.host?.describe !== 'function'
       try {
-        const response = await client.host.describe({})
-        if (response?.result?.ok === true) describe = response.result.value
-      } catch {
+        if (!unsupported) {
+          const response = await client.host.describe({})
+          if (response?.result?.ok === true) describe = response.result.value
+          else unsupported = isUnsupported(response?.result?.error)
+        }
+      } catch (error) {
+        unsupported = isUnsupported(error)
         // 探针失败即 stopped；细节进 lastErrors 由调用侧（v1 catch）负责。
       }
-      const state = describe === null ? 'stopped' : healthState()
+      let state = describe === null ? 'stopped' : healthState()
+      if (unsupported) {
+        state = 'degraded'
+        if (typeof client.sessions?.list === 'function') {
+          try {
+            const probe = await client.sessions.list({})
+            state = probe?.result?.ok === true ? healthState() : 'stopped'
+          } catch { state = 'stopped' }
+        }
+      }
       // 身份确认 = 运行中的 DSH 自报版本与随包注入的 vendored 运行时版本一致。
       // 已知限制：pin 47f94385 的 host.describe.version 是硬编码占位符 '0.0.1'
       // （上游 TODO），因此该确认在当前 pin 上恒为 false；pin commit 只如实上报，
@@ -72,4 +86,10 @@ export function createDiagnostics({ client, runtime, paths, pin = null, dshRunti
       }
     },
   }
+}
+
+function isUnsupported(error) {
+  return ['unsupported', 'not-supported', 'method-not-found', 'gateway/method-unavailable',
+    'gateway-method-unavailable', 'gateway/lookup-not-found', 'gateway-lookup-not-found',
+    'gateway/service-unavailable', 'gateway-service-unavailable'].includes(error?.code)
 }

@@ -26,25 +26,31 @@ import {
   createGatewayV1,
   createPerceptionInjector,
 } from '../runtime/gateway/index.mjs'
-import { InProcessApiClient, toFetchHandler } from '@deepseek-ai/dsh-host-apiproxy'
+import { createTypertAdapterClient } from '../runtime/dsh-adapter/typert-client.mjs'
 import { nativeTimelineLog } from '../runtime/dsh-adapter/timeline.mjs'
 import { nativeSessionLifecycle } from '../runtime/dsh-adapter/session-lifecycle.mjs'
 import { createNativeCommands } from '../runtime/dsh-adapter/commands.mjs'
 
+const { InProcessApiClient, toFetchHandler } = await import('@deepseek-ai/dsh-host-apiproxy').catch(error => {
+  if (error.code !== 'ERR_MODULE_NOT_FOUND' || !error.message.includes("Cannot find package '@deepseek-ai/dsh-host-apiproxy'")) throw error
+  return {}
+})
+
 export const name = 'weftmate-host'
-// apiProxy is a hard composition dependency: Gateway v1 constructs its
-// supported in-process client during apply(), so Cordis must not schedule this
-// host before the official api-gateway service is ready.
+// Keep the legacy dependency list; the Typert distribution has no apiProxy package.
 export const inject = ['webServer', 'apiProxy', 'agents', 'sessions', 'sessionPersistence', 'agentPresets']
+if (!InProcessApiClient) inject.splice(1, 1, 'typertGateway')
 
 export function apply(ctx) {
   const apiProxy = ctx.get('apiProxy')
-  if (apiProxy === undefined) throw new Error('weftmate-host requires DSH apiProxy')
+  if (apiProxy == null && !ctx.get('typertGateway')) throw new Error('weftmate-host requires DSH apiProxy or typertGateway')
   // Required supported seam: same composed runtime only, never a second DSH client/runtime.
   const lifecycle = nativeSessionLifecycle(ctx)
   ctx.provide('weftmateSessionLifecycle', lifecycle)
   const readLog = nativeTimelineLog(ctx);
-  const client = new InProcessApiClient(toFetchHandler(apiProxy));
+  const client = apiProxy != null
+    ? new InProcessApiClient(toFetchHandler(apiProxy))
+    : createTypertAdapterClient(ctx);
   const gatewayV1 = createGatewayV1({
     client,
     nativeCommands:createNativeCommands({client,lifecycle,getAgent:id=>ctx.get('agents')?.get(id),getCommands:()=>ctx.get('commands'),getTools:async agent=>(await ctx.systemPrompt.assemble({scope:agent})).tools}),

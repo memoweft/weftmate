@@ -1,13 +1,39 @@
 /** Personal-host sole ApiProxy. Session model selection remains session-local. */
 import { Service } from '@deepseek-ai/cordis'
-import { ApiProxyService, createApiProxy } from '@deepseek-ai/dsh-host-apiproxy'
+import { AsyncLocalStorage } from 'node:async_hooks'
+
+const { ApiProxyService, createApiProxy } = await import('@deepseek-ai/dsh-host-apiproxy').catch(error => {
+  if (error.code !== 'ERR_MODULE_NOT_FOUND' || !error.message.includes("Cannot find package '@deepseek-ai/dsh-host-apiproxy'")) throw error
+  return {}
+})
+
+function apply(ctx) {
+  const selections = new AsyncLocalStorage()
+  const defaults = ctx.agentDefaultModel
+  const controller = ctx.sessionController
+  const save = defaults.saveSelection
+  const select = controller.selectModel
+  const saveSelection = function (...args) {
+    return selections.getStore() ? Promise.resolve() : save.apply(this, args)
+  }
+  const selectModel = function (request) {
+    return selections.run(true, () => select.call(this, request))
+  }
+  defaults.saveSelection = saveSelection
+  controller.selectModel = selectModel
+  ctx.effect(() => () => {
+    if (defaults.saveSelection === saveSelection) defaults.saveSelection = save
+    if (controller.selectModel === selectModel) controller.selectModel = select
+  }, 'weftmate session-local model selection')
+}
 
 export class PersonalApiProxyService extends Service {
-  static inject = ApiProxyService.inject
-  static Config = ApiProxyService.Config
+  static inject = ApiProxyService?.inject ?? ['agentDefaultModel', 'sessionController']
+  static Config = ApiProxyService?.Config
 
   constructor(ctx, config) {
-    super(ctx, 'apiProxy')
+    super(ctx, createApiProxy ? 'apiProxy' : 'weftmatePersonalApiProxy')
+    if (!createApiProxy) { apply(ctx); return }
     const api = createApiProxy(ctx, {
       defaultModelSelection: () => ctx.agentDefaultModel.currentSelection(),
       cwd: process.cwd(),

@@ -24,6 +24,7 @@ const SAFE_ERROR_CODES = new Set([
   'workspace-invalid-path',
   'workspace-name-conflict',
   'settings-rejected',
+  'settings-conflict',
   'approval-not-pending',
   'attachment-error',
 ])
