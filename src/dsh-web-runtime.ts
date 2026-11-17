@@ -15,6 +15,7 @@
  *
  * 不 import electron（可 headless 测试）；凭据绝不落盘、绝不 console.log。
  */
+import { parseOfficialDshLoopbackUrl } from './dsh-settings-migration.ts'
 import { execFile, spawn, type ChildProcess } from 'node:child_process'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
@@ -170,7 +171,7 @@ const PRESET_COMPACTION = `
 `
 
 /** 官方就绪信号行（web-app 行 printUrl: true）。新版 DSH 可能追加一次性 Web token。 */
-const WEB_URL_LINE = /^dsh web: (http:\/\/127\.0\.0\.1:\d+\/?(?:\?[^\s]+)?)/
+const WEB_URL_LINE = /^dsh web: (\S+)/
 
 /** URL token 仅可交给 BrowserWindow/fetch，绝不能写入运行日志或诊断 tail。 */
 export function redactWebToken(line: string): string {
@@ -184,7 +185,8 @@ export function redactWebToken(line: string): string {
  */
 export function parseWebUrlLine(line: string): string | null {
   const match = WEB_URL_LINE.exec(line.trim())
-  return match === null ? null : match[1]
+  if (match === null) return null
+  try { return parseOfficialDshLoopbackUrl(match[1]).url } catch { return null }
 }
 
 export type WriteProfileResult = 'created' | 'repaired' | 'unchanged'
@@ -1071,6 +1073,8 @@ export class DshWebRuntime {
 
   private child: ChildProcess | undefined
   private originValue: string | null = null
+  private tokenValue: string | null = null
+  private urlValue: string | null = null
   private closed = false
   private readonly preflightChildren = new Set<ChildProcess>()
   private prepared: Promise<SecureCompositionSnapshot | undefined> | undefined
@@ -1145,6 +1149,10 @@ export class DshWebRuntime {
   origin(): string | null {
     return this.originValue
   }
+
+  token(): string | null { return this.tokenValue }
+
+  url(): string | null { return this.urlValue }
 
   /** Parent-owned lifetime identity; no child/model field can choose this UUID. */
   currentPersonalRuntimeId(): string | null {
@@ -2469,7 +2477,10 @@ export class DshWebRuntime {
               return
             }
             state = 'ready'
-            this.originValue = origin
+            const parsed = parseOfficialDshLoopbackUrl(origin)
+            this.originValue = parsed.origin
+            this.tokenValue = parsed.token
+            this.urlValue = parsed.url
             this.respawnBackoffMs = 1000
             resolve(origin)
             return
@@ -2548,6 +2559,8 @@ export class DshWebRuntime {
         // 就绪后意外退出 → 后台退避重拉（端口会换 → onOrigin 通知换源）。
         this.lastUnexpectedExit = { reason: 'unexpected-exit', exitCode: code, signal: signal ?? null }
         this.originValue = null
+        this.tokenValue = null
+        this.urlValue = null
         this.onOrigin?.(null)
         this.scheduleRespawn()
       })
@@ -2624,7 +2637,7 @@ export class DshWebRuntime {
    */
   async start(): Promise<string> {
     this.ensureOpen()
-    if (this.originValue !== null && this.child !== undefined) return this.originValue
+    if (this.originValue !== null && this.child !== undefined) return this.urlValue!
     if (this.startInFlight !== undefined) return this.startInFlight
     const run = async (attempt: number): Promise<string> => {
       this.ensureOpen()
@@ -2661,6 +2674,8 @@ export class DshWebRuntime {
     }
     this.child = undefined
     this.originValue = null
+    this.tokenValue = null
+    this.urlValue = null
     // 同一 Promise 对并发 close 复用；快照在 closed fence 之后取得，之后不可能再登记新 child。
     this.prepared = undefined
     const registered = [...this.children, ...this.preflightChildren]

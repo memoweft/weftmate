@@ -1456,7 +1456,7 @@ async function bootstrap() {
         app: { name: 'WeftMate', version: appVersion },
         mode: personalHostMode ? 'personal-host' : 'desktop',
         tray: { resident: !headless },
-        runtime: hostRuntimeState(hostLifecycleState, runtimeOrigin),
+        runtime: hostRuntimeState(hostLifecycleState, runtimeOrigin?.split('?')[0] ?? null),
         referenceScan: {
           state: sessionReferenceScan.state,
           modelRouteChangesBlocked: sessionReferenceScan.state !== 'ready',
@@ -3131,7 +3131,7 @@ async function bootstrap() {
           // The ready/degraded announcement is also the diagnostic snapshot boundary.
           await writeHostState();
           if (sessionReferenceScan.state === 'failed') {
-            console.warn(`[weftmate] ⚠ personal-host degraded origin=${runtimeOrigin} referenceScan=failed modelRouteChangesBlocked=true`);
+            console.warn(`[weftmate] ⚠ personal-host degraded origin=${runtimeOrigin?.split('?')[0] ?? null} referenceScan=failed modelRouteChangesBlocked=true`);
           } else console.log(message);
         },
       });

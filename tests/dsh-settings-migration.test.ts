@@ -199,3 +199,99 @@ describe('official DSH legacy route migration helper', () => {
     assert.equal(officialCredentialRef('weftmate-a/b 7'), 'WEFTMATE_A_B_7_API_KEY');
   });
 });
+
+
+describe('token-authenticated official DSH client', () => {
+  it('validates URL and explicit tokens before issuing requests', () => {
+    const origin = 'http://127.0.0.1:8123';
+    assert.equal(assertOfficialDshLoopbackOrigin(origin + '/?token=a%2Bb'), origin);
+    assert.equal(assertOfficialDshLoopbackOrigin('http://127.0.0.1:80/'), 'http://127.0.0.1:80');
+    for (const suffix of ['?x=y', '?token=', '?token=a&token=b', '?token=a&x=y', '#x', '?token=%', '?token=%0A']) {
+      assert.throws(() => createOfficialDshSettingsClient({ origin: origin + '/' + suffix }));
+    }
+    for (const value of ['http://user:pass@127.0.0.1:8123', 'http://127.1:8123', 'http://127.0.0.1:0', 'http://127.0.0.1:65536']) {
+      assert.throws(() => assertOfficialDshLoopbackOrigin(value));
+    }
+    for (const token of ['', ' ', 'a\nb', null, 1, '\ud800']) {
+      assert.throws(() => createOfficialDshSettingsClient({ origin, token: token as any }));
+    }
+    assert.throws(() => createOfficialDshSettingsClient({ origin: origin + '/?token=a', token: 'b' }));
+  });
+
+  it('exchanges cookies once and isolates cache by fetch, origin and token', async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl = async (input: string | URL, init?: RequestInit) => {
+      const url = String(input); calls.push({ url, init });
+      if (init?.method === 'GET') {
+        assert.equal(init.redirect, 'manual');
+        return new Response(null, { status: 302, headers: [
+          ['set-cookie', 'session=fixture; HttpOnly; Path=/'], ['set-cookie', 'other=value; Path=/'],
+          ['location', './api/remote.mux'],
+        ] });
+      }
+      assert.equal(new Headers(init?.headers).get('cookie'), 'session=fixture; other=value');
+      const body = JSON.parse(String(init?.body));
+      return Response.json(successEnvelope(body, body.method === 'credentials.describe' ? { credentials: {} } : settingsValue(1)));
+    };
+    const origin = 'http://127.0.0.1:8123';
+    const a = createOfficialDshSettingsClient({ origin: origin + '/?token=a%2Bb', fetchImpl });
+    const b = createOfficialDshSettingsClient({ origin, token: 'a+b', fetchImpl });
+    assert.equal(a.origin, origin);
+    await Promise.all([a.describeSettings(), b.describeCredentials([])]);
+    await b.mutateSettings([], 1);
+    assert.equal(calls.filter(call => call.init?.method === 'GET').length, 1);
+    assert.equal(calls[0].url, origin + '/connect?token=a%2Bb');
+    await createOfficialDshSettingsClient({ origin, token: 'other', fetchImpl }).describeSettings();
+    await createOfficialDshSettingsClient({ origin: 'http://127.0.0.1:8124', token: 'a+b', fetchImpl }).describeSettings();
+    await createOfficialDshSettingsClient({ origin, token: 'a+b', fetchImpl: (input, init) => fetchImpl(input, init) }).describeSettings();
+    assert.equal(calls.filter(call => call.init?.method === 'GET').length, 4);
+    assert.equal(calls.filter(call => call.init?.method === 'POST').every(call => !call.url.includes('?')), true);
+  });
+
+  for (const persistent of [false, true]) it('refreshes a rejected cookie only once: ' + persistent, async () => {
+    let connects = 0; let posts = 0;
+    const fetchImpl = async (_input: string | URL, init?: RequestInit) => {
+      if (init?.method === 'GET') {
+        connects++;
+        return new Response(null, { status: 302, headers: { 'set-cookie': 'session=' + connects + '; HttpOnly' } });
+      }
+      posts++;
+      assert.equal(new Headers(init?.headers).get('cookie'), 'session=' + connects);
+      if (persistent || posts === 1) return new Response(null, { status: 401 });
+      return Response.json(successEnvelope(JSON.parse(String(init?.body)), settingsValue(1)));
+    };
+    const client = createOfficialDshSettingsClient({ origin: 'http://127.0.0.1:8123/?token=fixture', fetchImpl });
+    if (persistent) await assert.rejects(client.describeSettings(), /carrier failed/);
+    else await client.describeSettings();
+    assert.equal(connects, 2); assert.equal(posts, 2);
+    if (persistent) {
+      await assert.rejects(client.describeSettings(), /carrier failed/);
+      assert.equal(connects, 4);
+    } else {
+      await client.describeSettings(); assert.equal(connects, 2);
+    }
+  });
+
+  it('does not connect or retry 401 without a token', async () => {
+    let calls = 0;
+    const client = createOfficialDshSettingsClient({ origin: 'http://127.0.0.1:8123', fetchImpl: async (_input, init) => {
+      calls++;
+      assert.equal(init?.method, 'POST');
+      assert.equal(new Headers(init?.headers).has('cookie'), false);
+      return new Response(null, { status: 401 });
+    } });
+    await assert.rejects(client.describeSettings(), /carrier failed/);
+    assert.equal(calls, 1);
+  });
+
+  for (const status of [302, 401, 500]) it('clears failed connection cache without posting: ' + status, async () => {
+    let calls = 0;
+    const client = createOfficialDshSettingsClient({ origin: 'http://127.0.0.1:8123/?token=fixture', fetchImpl: async (_input, init) => {
+      calls++; assert.equal(init?.method, 'GET');
+      return new Response(null, { status });
+    } });
+    await assert.rejects(client.describeSettings(), /connection/);
+    await assert.rejects(client.describeSettings(), /connection/);
+    assert.equal(calls, 2);
+  });
+});

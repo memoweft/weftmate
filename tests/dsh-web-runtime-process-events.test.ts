@@ -127,3 +127,36 @@ test('rejected async diagnostic callbacks do not become unhandled rejections', a
   await flush()
   assert.deepEqual(events.map(event => event.action), ['respawn-scheduled', 'respawn-abandoned'])
 })
+
+
+for (const token of [null, 'test-launch-token']) test('runtime separates origin and launch URL: ' + token, async t => {
+  const { web, child, spawn } = fixture(t)
+  const origin = 'http://127.0.0.1:43123'
+  const url = token === null ? origin : origin + '/?token=' + token
+  const logs: string[] = []
+  t.mock.method((web as any).opts, 'log', (line: string) => logs.push(line))
+  const started = spawn()
+  child.stdout.write('dsh web: ' + origin + '/?token=x&extra=y\n')
+  assert.equal(web.origin(), null)
+  child.stdout.write('dsh web: ' + url + '\n')
+  assert.equal(await started, url)
+  assert.equal(await web.start(), url)
+  assert.equal(web.origin(), origin)
+  assert.equal(web.token(), token)
+  assert.equal(web.url(), url)
+  if (token) assert.equal(logs.join('').includes(token), false)
+  const origins: Array<string | null> = []
+  web.onOrigin = value => origins.push(value)
+  t.mock.method(web as any, 'preflightThenSpawn', () => {
+    const next = spawn(); child.stdout.write('dsh web: ' + url + '\n'); return next
+  })
+  child.emit('close', 1, null)
+  assert.equal(web.origin(), null)
+  assert.equal(web.token(), null)
+  assert.equal(web.url(), null)
+  t.mock.timers.tick(1000); await flush()
+  assert.deepEqual(origins, [null, url])
+  await web.close()
+  assert.equal(web.token(), null)
+  assert.equal(web.url(), null)
+})
