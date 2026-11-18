@@ -320,7 +320,8 @@ test('native job_output waits are never stopped by counts, including constant pr
   const ctx = new Context();
   t.after(async () => { await ctx.fiber.dispose(); assert.ok(resolve(root).startsWith(resolve(tmpdir()) + sep)); await removeLinks(root); await rm(root, { recursive: true, force: true }); });
   await ctx.plugin(prompt.default, { includeHarnessIdentity: false, includeRuntimeContext: false, persona: '' });
-  await ctx.plugin(sessions.default); await ctx.plugin(tools.default, { mode: 'native', maxParallelSubCalls: 1 });
+  await ctx.plugin(sessions.default); await ctx.plugin((await import(vendor('dsh-session-projection'))).default);
+  await ctx.plugin(tools.default); await ctx.plugin(await import(vendor('dsh-tool-executor-native')));
   // Exercise the current deployment's original reminder alongside its wrapper.
   await ctx.plugin(repeat, { thresholds: [3, 5, 8], include: [], exclude: [], argumentsPreviewChars: 500 });
   await ctx.plugin(loop.default);
@@ -336,8 +337,9 @@ test('native job_output waits are never stopped by counts, including constant pr
       execute: () => { count++; return { state: variant === 'complete-at-eight' && count >= 8 ? 'completed' : 'running',
         output: variant === 'changing' ? `进度 ${count}` : '同样的进度' }; } }));
     for (let i = 0; i < 12; i++) {
-      const result = await ctx.get('tools').execute({ name: 'job_output', arguments: { job_id: 'owned-job', wait: true }, agent,
-        callId: `${variant}-${i}`, signal: new AbortController().signal });
+      const batch = await ctx.get('tools').execute({ calls: [{ type: 'tool-call', name: 'job_output',
+        arguments: JSON.stringify({ job_id: 'owned-job', wait: true }), id: `${variant}-${i}` }], agent, signal: new AbortController().signal });
+      const result = batch.results[0].result;
       assert.equal(result.isError, false, `normal wait ${i + 1} must execute`);
       if (variant === 'complete-at-eight' && i >= 7) assert.equal(result.value.state, 'completed');
       if (variant === 'changing') assert.equal(result.value.output, `进度 ${i + 1}`);

@@ -231,7 +231,7 @@ export function userForPreStep(session, turn, claimedMessages) {
 }
 
 const sourceKind = s => s?.kind === 'plugin' ? s.plugin : s?.kind?.startsWith('plugin:') ? s.kind.slice(7) : s?.kind;
-const isPluginContext = message => Boolean(message?.source?.kind && !['user', 'tool', 'assistant'].includes(message.source.kind));
+const isPluginContext = message => Boolean(message?.source?.kind && !['user', 'tool', 'assistant', 'model'].includes(message.source.kind));
 
 export function stripPreviousPersonalMemoryMessages(messages) {
   return messages.filter((message) => sourceKind(message?.source) !== name);
@@ -401,7 +401,7 @@ export function apply(ctx) {
     const source = events.findLast(event => event.type === 'assistant/message')?.data?.message?.source;
     const step = (events.findLast(event => event.type === 'step/start')?.data.step ?? 0) + 1;
     agent.session.append('step/start', { turn, step });
-    agent.session.append('assistant/message', { turn, step,
+    agent.session.append('assistant/message', { turn, step, stream: [],
       message: createAssistantMessage({ source: { provider: source?.provider ?? 'weftmate', model: source?.model ?? 'memory' },
         content: [{ type: 'text', text: explicit?.turn === turn ? explicit.message : action.message }] }) }, { surfaceOp: 'append' });
     agent.session.append('step/end', { turn, step });

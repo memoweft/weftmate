@@ -5,6 +5,9 @@ import {mkdtemp,readFile,writeFile,readdir,lstat,unlink,rm} from 'node:fs/promis
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {randomUUID} from 'node:crypto';
+import {zstdCompressSync} from 'node:zlib';
+import {fetchRuntimeWithCookie} from '../src/host-mode.mjs';
+import {readNativeHeader} from '../src/personal-backup/native-header.mjs';
 import {phoneRuntime} from '../services/cloud/test/relay-phone-runtime.mjs';
 import {createPersonalAccessService} from './helpers/personal-access-test-service.mjs';
 import {createNativeGoalManager} from '../src/personal-access/goals-native.mjs';
@@ -17,11 +20,20 @@ test('cold cleanup and deletion work with an unloadable agent preset and without
   host=await createPersonalAccessService({root:join(root,'account'),port:0,backend:runtime.backend});runtime.setHost(host);
   const origin=await runtime.start();await host.start();
   const id='session-'+randomUUID();await runtime.backend.createSession({sessionId:id,modelProfileId:'synthetic',ownerId:host.ownerId});
-  const preset=join(root,'dsh-home/.agent-presets/personal-remote/agent.cordis.yml');
-  await writeFile(preset,'- name: missing-cleanup-test-module\n');
+  const modelsPath='/weftmate/api/v1/sessions/'+id+'/models';
+  assert.equal((await fetchRuntimeWithCookie(origin,modelsPath)).status,200);
+  const storage=await runtime.backend.sessionStorage({sessionId:id,ownerId:host.ownerId});
   // A session without schedules no longer loads for a schedule forget; the goal forget still unloads it.
   await runtime.backend.goals({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});
-  const failed=await fetch(new URL('/weftmate/api/v1/sessions/'+id+'/models',origin));assert.notEqual(failed.status,200);
+  // Presets are compiled at startup; model a stored session whose preset is no longer registered.
+  const files=(await readdir(storage.root)).filter(name=>/\.jsonl(?:\.zstd)?$/.test(name));
+  assert.equal(files.length,1);
+  const file=join(storage.root,files[0]),bytes=await readFile(file),{header,offset}=await readNativeHeader(file);
+  assert.equal(header.id,id);assert.equal(header.agentPreset,'personal-remote');
+  header.agentPreset='personal-missing-cold-cleanup';
+  const replacement=Buffer.from(JSON.stringify(header)+'\n');
+  await writeFile(file,Buffer.concat([file.endsWith('.zstd')?zstdCompressSync(replacement):replacement,bytes.subarray(offset)]));
+  const failed=await fetchRuntimeWithCookie(origin,modelsPath);assert.notEqual(failed.status,200);
   const calls=runtime.requests.length;
   await runtime.backend.schedules({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});
   await runtime.backend.goals({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});

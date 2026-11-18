@@ -75,12 +75,12 @@ function responseFor(scenario: Scenario, events: any[], body: any, options: Flow
     // It consumes transmitted SYSTEM policy and real native tool results only.
     const retained = options.computerPolicy === 'retain-human-control' || hasComputerBoundary(body);
     if (source.kind === 'user' && !retained) return { content: '已建立目标计划；结束人工回复，交给独立自动轮继续处理文件。' };
-    const failed = current.findLast(event => event.type === 'tool/result' && event.data.message.content.some((part: any) => part.isError));
+    const failed = current.findLast(event => event.type === 'tool/result' && (event.data.message?.isError || event.data.message.content.some((part: any) => part.isError)));
     if (failed) return { content: '本自动回合读取未完成，也未完成所要求的三轮；不能承诺后台文件操作。' };
     const completedCall = (name: string, path?: string) => calls.find(event => event.data.name === name &&
       (path === undefined || JSON.parse(event.data.arguments).file_path === path) && current.some(result =>
         result.type === 'tool/result' && result.data.message.source.callId === event.data.callId &&
-        result.data.message.content.every((part: any) => !part.isError)));
+        !result.data.message?.isError && result.data.message.content.every((part: any) => !part.isError)));
     const input = completedCall('read', 'input.txt');
     if (!input) return call('read', { file_path: 'input.txt' });
     const receipt = body.messages.findLast((message: any) => message.role === 'tool' && message.tool_call_id === input.data.callId);
@@ -94,7 +94,7 @@ function responseFor(scenario: Scenario, events: any[], body: any, options: Flow
     return call('update_goal', { goal_id: value.goal.id, revision: value.goal.revision, action: 'pause' });
   }
   if (source.kind === 'user' && scenario === 'three-rounds') return { content: 'Synthetic goal remains active; the native driver may admit continuation.' };
-  const failed = current.findLast(event => event.type === 'tool/result' && event.data.message.content.some((part: any) => part.isError));
+  const failed = current.findLast(event => event.type === 'tool/result' && (event.data.message?.isError || event.data.message.content.some((part: any) => part.isError)));
   if (failed) return { content: 'The synthetic action failed; its native error is retained by the local observer.' };
   if (source.kind === 'goal' && !current.some(event => event.type === 'todo/write')) {
     return call('todo_write', { todos: [{ content: recordForRound(source.round), status: 'completed' }] });
@@ -184,7 +184,8 @@ export function apply(ctx) {
   ctx.on('tools/execute', async (exec, next) => {
     try { return await next(); }
     catch (error) {
-      const events = exec.agent?.session?.events ?? [];
+      const s = exec.agent?.session;
+      const events = (typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : s?.events) ?? [];
       const start = events.findLastIndex(event => event.type === 'turn/start');
       appendFileSync(${JSON.stringify(outcomes)}, JSON.stringify({name: exec.name, arguments: exec.arguments,
         callId: exec.callId, turn: events[start]?.data.turn,
@@ -231,7 +232,7 @@ export function apply(ctx) {
     const terminalPhase = ['pause', 'computer-multi-round'].includes(scenario) ? 'paused' : 'complete';
     await until(async () => {
       const events = nativeEvents(observed, sessionId);
-      const failure = events.find(event => event.type === 'tool/result' && event.data.message.content.some((part: any) => part.isError));
+      const failure = events.find(event => event.type === 'tool/result' && (event.data.message?.isError || event.data.message.content.some((part: any) => part.isError)));
       if (failure && scenario === 'computer-multi-round') return true;
       if (failure) throw new Error('native goal contract tool failure: ' + JSON.stringify(failure)
         + '\nUntranslated local outcomes:\n' + readFileSync(outcomes, 'utf8'));
@@ -251,7 +252,7 @@ export function apply(ctx) {
     if (scenario !== 'computer-multi-round') assert.ok(events.filter(event => event.type === 'turn/end').every(event => event.data.reason.kind === 'completed'),
       'each real driver turn finishes normally');
     if (scenario !== 'computer-multi-round') assert.ok(events.filter(event => event.type === 'tool/result').every(event =>
-      event.data.message.content.every((part: any) => part.type !== 'tool-result' || !part.isError)),
+      !event.data.message?.isError && event.data.message.content.every((part: any) => part.type !== 'tool-result' || !part.isError)),
     'the scripted actions have successful native tool receipts');
     assert.ok(capturedRequest, 'an actual HTTP request with native goal tools was captured');
     const rawOutcomes = readFileSync(outcomes, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line));

@@ -228,8 +228,8 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
         ...(subtask ? { subtask: { name: safeHistoryText(String(args.description ?? args.command ?? '子任务').slice(0, 180)).text,
           ...(background ? { id: background[1], background: true } : child ? { id: child[1], background: true } : {}) } } : {}),
         ...(Number.isSafeInteger(data.turn) ? { turn: data.turn } : {}),
-        ...(type === 'tool/result' ? { state: executionResultState([data.result, data.value, part]) ?? (data.error ? 'failed' : 'completed') } : { state: 'running' }),
-        ...(type === 'tool/result' && !data.error && /^(edit|write)$/.test(toolName) ? {fileChanges: appliedFileChanges({isError:part?.isError,meta:data.meta},args)} : {}),
+        ...(type === 'tool/result' ? { state: executionResultState([data.result, data.value, data.message, part]) ?? (data.error ? 'failed' : 'completed') } : { state: 'running' }),
+        ...(type === 'tool/result' && !data.error && /^(edit|write)$/.test(toolName) ? {fileChanges: appliedFileChanges({isError:data.message?.isError || part?.isError,meta:data.meta},args)} : {}),
         ...(asked && type === 'tool/call' ? { questions: boundedTimelineValue(toolArguments(data.arguments).questions ?? []) } : {}),
       } }
     }
@@ -525,7 +525,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
           title: typeof item.title === 'string' ? item.title : '新对话',
           running: item.running === true,
           ...(contextUsage(item.projections?.values?.contextPressure) ? { contextUsage: contextUsage(item.projections.values.contextPressure) } : {}),
-          ...(typeof item.agentPreset === 'string' ? { agentPreset: item.agentPreset } : {}),
+          ...(typeof (item.agentPreset ?? item.projections?.values?.agentPreset) === 'string' ? { agentPreset: item.agentPreset ?? item.projections.values.agentPreset } : {}),
         }))
     },
     async create(options = {}) {

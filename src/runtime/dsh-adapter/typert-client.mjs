@@ -114,6 +114,7 @@ export function createTypertAdapterClient(ctx) {
     on(eventName, (request, next) => {
       const session = request.agent?.session
       if (!session || mux.size === 0 || request.signal?.aborted) return next()
+      if (kind === 'approval' && session.header?.agentPreset === 'personal-remote' && session.header?.origin !== 'subagent') return next()
       const rpcId = randomUUID(), sessionId = session.id
       const audit = kind === 'approval' ? [...(asked.get(sessionId)?.values() ?? [])].findLast(item =>
         item.toolName === request.toolName && item.callId === request.callId) : undefined
@@ -232,6 +233,7 @@ export function createTypertAdapterClient(ctx) {
     list: (request = {}) => response(async () => {
       const value = await invoke('session', 'list', { _request: request })
       return { ...value, items: value.items.map(item => ({ ...item,
+        agentPreset: item.agentPreset ?? item.projections?.values?.agentPreset,
         title: item.title ?? item.projections?.values?.title ?? '新对话' })) }
     }),
     history: request => response(() => history(request)),

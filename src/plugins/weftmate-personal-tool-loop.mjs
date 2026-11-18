@@ -50,7 +50,7 @@ export async function apply(ctx) {
     ? { kind: 'deny', reason: REPEAT_TOOL_MESSAGE } : next(), { prepend: true });
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
     const assembly = await next();
-    return activeStop(context.scope) ? { ...assembly, tools: [] } : assembly;
+    return activeStop(context.scope) ? { ...assembly, tools: [], [Symbol.for('weftmate.personalAssembledTools')]: [] } : assembly;
   }, { prepend: true });
   ctx.on('agent/pre-step', async (payload, next) => {
     const state = activeStop(payload.agent);
@@ -78,7 +78,7 @@ export async function apply(ctx) {
     stopped.delete(payload.agent);
     const source = sessionEvents(payload.agent.session).findLast(event => event.type === 'assistant/message').data.message.source;
     payload.agent.session.append('step/start', { turn: payload.turn, step: payload.step });
-    payload.agent.session.append('assistant/message', { turn: payload.turn, step: payload.step,
+    payload.agent.session.append('assistant/message', { turn: payload.turn, step: payload.step, stream: [],
       message: createAssistantMessage({ content: [{ type: 'text', text: REPEAT_TOOL_MESSAGE }],
         source: { provider: source.provider, model: source.model } }) }, { surfaceOp: 'append' });
     payload.agent.session.append('step/end', { turn: payload.turn, step: payload.step });

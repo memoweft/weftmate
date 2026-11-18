@@ -84,7 +84,7 @@ test('tool preparation correction preserves native request retries and terminal 
         handle.agent.followup(llm.createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: 'Synthetic first file request' }] }));
         await handle.agent.whenIdle();
         const events = handle.agent.session.snapshotEvents();
-        const chunks = events.filter((event: any) => event.type === 'assistant/chunk').map((event: any) => event.data.chunk);
+        const chunks = events.filter((event: any) => ['assistant/attempt', 'assistant/message'].includes(event.type)).flatMap((event: any) => llm.expandAssistantStream(event.data.stream).map((entry: any) => entry.chunk));
         const end = events.findLast((event: any) => event.type === 'turn/end').data.reason;
         assert.equal(JSON.stringify(chunks).includes('这次未能加载所需工具'), false, 'non-normal request outcomes must not become a successful fallback');
         if (scenario === 'MAX_TOKENS') {

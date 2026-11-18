@@ -228,7 +228,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
       request.signal?.removeEventListener('abort', onAbort);
       activeRequests.delete(controller);
     }
-  }));
+  }, { prepend: true }));
   disposers.push(ctx.on('session/event', (session, event) => {
     if (event?.type === 'approval/decided' && APPROVAL_OUTCOMES.has(event.data?.outcome)) {
       const key = keyOf(session?.id, event.data?.id), binding = bindings.get(key);

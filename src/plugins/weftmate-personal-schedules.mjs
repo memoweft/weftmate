@@ -24,6 +24,7 @@ export const name = 'weftmate-personal-schedules';
 export const inject = ['agents', 'sessions', 'tools', 'sessionPersistence', 'webServer', 'weftmateSessionLifecycle'];
 export const PROTOCOL = 'weftmate.personal-schedules.v1';
 const personal = agent => agent?.session?.header?.agentPreset === 'personal-remote' && agent.session.header.origin !== 'subagent';
+const storedPersonal = session => session?.header?.agentPreset?.startsWith('personal-') && session.header.origin !== 'subagent';
 
 export async function apply(ctx) {
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
@@ -126,7 +127,7 @@ export async function apply(ctx) {
       const id = match[1];
       if(input.action==='erase'&&!ctx.agents.get(id)) {
         const stored=await readSessionRaw(ctx.sessionPersistence, id);
-        if(!stored||!personal({session:{header:stored.meta}}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+        if(!stored||!storedPersonal({header:stored.meta}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
         const result=await manager.eraseStoredSession(id);res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
       }
       if (input.action==='forget'&&!manager.hasSession(id)) {
@@ -134,7 +135,7 @@ export async function apply(ctx) {
       }
       if (['erase','forget'].includes(input.action)) {
         const result=await lifecycle.withStoredSession(id,async(session,agent)=>{
-          const source=agent??{id,session};if(!personal(source))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+          const source=agent??{id,session};if(!(agent?personal(agent):storedPersonal(session)))throw Object.assign(new Error('NOT_FOUND'),{status:404});
           return manager.manage(source,input.action,input.id,input,{storageOnly:!agent});
         });
         res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
@@ -160,12 +161,12 @@ export async function apply(ctx) {
       const input = JSON.parse(body), id = match[1]; let agent = ctx.agents.get(id);
       if(input.action==='erase'&&!agent) {
         const stored=await readSessionRaw(ctx.sessionPersistence, id);
-        if(!stored||!personal({session:{header:stored.meta}}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+        if(!stored||!storedPersonal({header:stored.meta}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
         const result=await goalManager.eraseStoredSession(id);res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
       }
       if (['erase','forget'].includes(input.action)) {
         const result=await lifecycle.withStoredSession(id,async(session,live)=>{
-          const source=live??{id,session};if(!personal(source))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+          const source=live??{id,session};if(!(live?personal(live):storedPersonal(session)))throw Object.assign(new Error('NOT_FOUND'),{status:404});
           return goalManager.manage(source,input,{storageOnly:!live});
         });
         res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
