@@ -13,11 +13,15 @@ function textOf(message) {
   return parts.map((part) => part.text).join('\n');
 }
 
+const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : (s?.events ?? []);
+
+const sourceKind = (s) => s?.kind === 'plugin' ? s.plugin : s?.kind?.startsWith('plugin:') ? s.kind.slice(7) : s?.kind;
+
 function alreadyInjected(session, messages) {
   const source = (entry) => entry?.data?.source ?? entry?.data?.message?.source;
-  return messages.some((message) => message?.source?.kind === 'plugin' && message.source.plugin === name) ||
-    session.events?.some((entry) => entry.type === 'user/message' &&
-      source(entry)?.kind === 'plugin' && source(entry).plugin === name) === true;
+  return messages.some((message) => sourceKind(message?.source) === name) ||
+    sessionEvents(session).some((entry) => entry.type === 'user/message' &&
+      sourceKind(source(entry)) === name) === true;
 }
 
 class ContextBridge {
@@ -107,12 +111,12 @@ export function apply(ctx) {
     const migrated=alreadyInjected(session,decision.messages);
     const identity = contextIdentity(payload);
     if (!identity) throw new Error('CONVERSATION_CONTEXT_UNAVAILABLE');
-    let result;try{result=await bridge.request(identity,payload.signal);}catch(error){if(migrated||contextKinds.get(session)==='none')return {...decision,messages:decision.messages.filter(message=>message?.source?.plugin!=='weftmate-daily-digest')};throw error;}
+    let result;try{result=await bridge.request(identity,payload.signal);}catch(error){if(migrated||contextKinds.get(session)==='none')return {...decision,messages:decision.messages.filter(message=>sourceKind(message?.source)!=='weftmate-daily-digest')};throw error;}
     contextKinds.set(session,result?.state);
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
-    const messages=decision.messages.filter(message=>message?.source?.plugin!=='weftmate-daily-digest');
+    const messages=decision.messages.filter(message=>sourceKind(message?.source)!=='weftmate-daily-digest');
     if(typeof result?.recentContextText==='string'&&result.recentContextText.trim()&&result.recentContextText.length<=3600){
-      const background=createUserMessage({content:[{type:'text',text:result.recentContextText}],source:{kind:'plugin',plugin:'weftmate-daily-digest'}});
+      const background=createUserMessage({content:[{type:'text',text:result.recentContextText}],source:{kind:'weftmate-daily-digest'}});
       const userIndex=messages.findIndex(message=>message.source?.kind==='user'&&message.source.rpcId===identity.receiptId);messages.splice(userIndex<0?0:userIndex,0,background);
     }
     decision.messages=messages;
@@ -125,7 +129,7 @@ export function apply(ctx) {
       throw new Error('CONVERSATION_CONTEXT_UNAVAILABLE');
     const context = createUserMessage({
       content: [{ type: 'text', text: result.contextText }],
-      source: { kind: 'plugin', plugin: name },
+      source: { kind: name },
     });
     return { ...decision, messages: [...decision.messages, context] };
   }, { prepend: true });

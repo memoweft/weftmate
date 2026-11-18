@@ -54,7 +54,7 @@ async function preStep(id, agent = { session: session(id) }, priorMessages = nul
       { role: 'user', content: [{ type: 'text', text: 'STALE_A_CONTEXT' }],
         source: { kind: 'plugin', plugin: 'weftmate-personal-memory' } },
     ] }));
-  const injected = result.messages.filter((message) => message.source?.plugin === 'weftmate-personal-memory');
+  const injected = result.messages.filter((message) => message.source?.kind === 'weftmate-personal-memory' || message.source?.plugin === 'weftmate-personal-memory');
   return { text: injected.at(-1)?.content?.[0]?.text ?? null,
     stale: JSON.stringify(result.messages).includes('STALE_A_CONTEXT'),
     count: injected.length, messages: result.messages,
@@ -140,7 +140,7 @@ process.on('message', async (message) => {
       value.events.push({seq:2,type:'user/message',data:old}, {seq:3,type:'turn/start',data:{turn:3}},
         {seq:4,type:'user/message',data:current});
       const result = await preStep('session-private', {session:value}, value.deriveMessages(), [current]);
-      for (const item of result.messages.filter(row=>row.source?.plugin==='weftmate-personal-memory')) value.append('user/message',item);
+      for (const item of result.messages.filter(row=>row.source?.kind==='weftmate-personal-memory'||row.source?.plugin==='weftmate-personal-memory')) value.append('user/message',item);
       process.send({type:'result', preStep:result.messages, derived:value.deriveMessages()});
     } catch { process.send({type:'failed'}); }
     return;
@@ -150,14 +150,14 @@ process.on('message', async (message) => {
     const agentA = { session: session('session-a') };
     const a = await preStep('session-a', agentA);
     for (const message of a.messages) agentA.session.append('user/message', message);
-    const latestContextCount = agentA.session.deriveMessages().filter(message => message.source?.plugin === 'weftmate-personal-memory').length;
+    const latestContextCount = agentA.session.deriveMessages().filter(message => message.source?.kind === 'weftmate-personal-memory' || message.source?.plugin === 'weftmate-personal-memory').length;
     const captured = agentA.session.append('assistant/message', { turn: 1, message: { content: [{ type: 'text', text: '采用回复' }] } }).data;
     const adopted = captured.memoryUsed;
     agentA.session.events.push({ seq: 2, type: 'user/message', data: userClaim('session-a') });
     const laterClaim = [{ role: 'assistant', content: [{ type: 'text', text: 'tool continuation' }],
       source: { kind: 'plugin', plugin: 'other' } }];
     const aWithheld = await preStep('session-a', agentA, a.messages, laterClaim);
-    const withheldContextCount = agentA.session.deriveMessages().filter(message => message.source?.plugin === 'weftmate-personal-memory').length;
+    const withheldContextCount = agentA.session.deriveMessages().filter(message => message.source?.kind === 'weftmate-personal-memory' || message.source?.plugin === 'weftmate-personal-memory').length;
     const aUpdated = await preStep('session-a', agentA, aWithheld.messages, laterClaim);
     const empty = await preStep('session-empty');
     const b = await preStep('session-b');

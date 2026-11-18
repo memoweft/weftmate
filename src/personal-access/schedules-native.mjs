@@ -4,9 +4,11 @@ import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { scheduleContent, nextCalendarInput } from './schedules-calendar.mjs';
 
+const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : (s?.events ?? []);
+
 /** Latest claimed user intent, including a reminder requested by a live steer. */
 export function scheduleSourceReceipt(exec) {
-  const events = exec.agent.session.events;
+  const events = sessionEvents(exec.agent?.session);
   const call = events.findLastIndex(event => event.type === 'tool/call' && event.data.callId === (exec.rootCallId ?? exec.callId));
   const start = events.findLastIndex((event, index) => index < call && event.type === 'turn/start');
   const source = events.slice(start + 1, call).findLast(event => event.type === 'user/message' && event.data.source?.kind === 'user');
@@ -29,9 +31,9 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
   const bucket = sessionId => state.sessions[sessionId] ??= { items: {}, notifications: [] };
   const nativeTools = new WeakMap();
   function bindNativeTools(agent) {
-    nativeTools.set(agent, Object.fromEntries(['schedule_create','schedule_delete'].map(name=>[name,ctx.tools.get(name,agent).execute])));
+    nativeTools.set(agent, Object.fromEntries(['schedule_create','schedule_delete'].map(name=>[name,ctx.tools.get(name,agent)?.execute])));
   }
-  const folded = agent => native.foldScheduleEvents(agent.session.events, agent.session.header.seedLength ?? 0).active;
+  const folded = agent => typeof native.foldScheduleEvents === 'function' ? native.foldScheduleEvents(sessionEvents(agent.session), agent.session.header.seedLength ?? 0).active : [];
   const call = (agent, name, args) => {
     const tool = ctx.tools.get(name, agent);
     if (!tool) throw new Error('SCHEDULE_UNAVAILABLE');
@@ -55,7 +57,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
         createdAt: row.createdAt, revision: row.revision ?? 1, lastResult: row.lastResult ?? null,
         repeat: row.repeat ?? (row.record.kind === 'every' ? { kind: 'interval', seconds: row.record.everySeconds } : null),
         state: row.state === 'paused' ? 'paused' : current ? 'scheduled' : row.state,
-        nextRunAt: row.state === 'paused' ? null : current?.scheduledAt ?? null, lastRunAt: row.lastRunAt ?? null,
+        nextRunAt: row.state === 'paused' ? null : (typeof native.foldScheduleEvents === 'function' ? current?.scheduledAt : (row.state === 'scheduled' ? row.record?.scheduledAt : null)) ?? null, lastRunAt: row.lastRunAt ?? null,
         approvalMode: row.approvalMode };
     });
   }
@@ -99,10 +101,10 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
       const accepted = await request({ action: 'execute', sessionId: agent.id, text: `现在执行定时任务：${row.text}`, deliveryId, sourceReceiptId: row.sourceReceiptId });
       row.lastResult = { state: 'queued', commandId: accepted.commandId };
     } else row.lastResult = { state: 'delivered' };
-    const message = native.createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'plugin', plugin: 'weftmate-reminder' } });
+    const message = native.createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'weftmate-reminder' } });
     const delivered = agent.session.append('user/message', message, { surfaceOp: 'append' });
     await ctx.sessions.flush(agent.session);
-    const messageSeq = delivered?.seq ?? agent.session.events.findLast(event => event.type === 'user/message' && (event.data?.id ?? event.data?.message?.id) === message.id)?.seq;
+    const messageSeq = delivered?.seq ?? sessionEvents(agent.session).findLast(event => event.type === 'user/message' && (event.data?.id ?? event.data?.message?.id) === message.id)?.seq;
     bucket(agent.id).notifications.push({ id: notificationId, text, kind: row.kind, scheduledAt: occurrenceAt,
       scheduleId: row.id,
       createdAt: new Date(clock()).toISOString(), missed, messageId: message.id,
@@ -112,7 +114,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
   async function due(agent) {
     return serial(async () => {
       const rows = bucket(agent.id).items;
-      const events = agent.session.events;
+      const events = sessionEvents(agent.session);
       const active = folded(agent);
       for (const row of Object.values(rows).filter(row => row.state === 'scheduled')) {
         const dispatch = events.findLast(event => event.type === 'schedule/change' && event.data.operation === 'dispatch' && event.data.id === row.nativeId);
@@ -155,7 +157,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
         const prior=Object.values(b.items).find(row=>row.internal==='memory_digest');
         const repeat={kind:'weekly',weekday:input.weekday,time:`${input.time}:00`};
         const signature=JSON.stringify([input.enabled,repeat,policy.timeZone]);
-        if(prior?.signature===signature&&(!input.enabled||folded(agent).some(row=>row.id===prior.nativeId)||agent.session.events.some(event=>event.type==='schedule/change'&&event.data.operation==='dispatch'&&event.data.id===prior.nativeId&&event.seq>(prior.lastDispatchSeq??-1))))return {ok:true};
+        if(prior?.signature===signature&&(!input.enabled||folded(agent).some(row=>row.id===prior.nativeId)||sessionEvents(agent.session).some(event=>event.type==='schedule/change'&&event.data.operation==='dispatch'&&event.data.id===prior.nativeId&&event.seq>(prior.lastDispatchSeq??-1))))return {ok:true};
         if(prior&&folded(agent).some(row=>row.id===prior.nativeId))requireSuccess(await call(agent,'schedule_delete',{id:prior.nativeId}));
         if(!input.enabled){if(prior){prior.state='paused';prior.signature=signature;}return done({ok:true});}
         const prompt='WeftMate memory digest';
@@ -174,7 +176,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
             else requireSuccess(await call(agent, 'schedule_delete', { id: row.nativeId }));
           }
           removed.add(row.id); delete b.items[row.id];
-          for (const event of agent.session.events) if (event.type === 'schedule/change' && event.data.operation === 'create' && event.data.schedule?.prompt === row.prompt) nativeIds.add(event.data.schedule.id);
+          for (const event of sessionEvents(agent.session)) if (event.type === 'schedule/change' && event.data.operation === 'create' && event.data.schedule?.prompt === row.prompt) nativeIds.add(event.data.schedule.id);
           nativeIds.add(row.nativeId); nativeIds.add(row.record.id);
         }
         if (action === 'erase') delete state.sessions[agent.id];

@@ -22,10 +22,12 @@ export function createNativeFileProvenance(resolveIdentity) {
   };
 }
 
+const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : (s?.events ?? []);
+
 /** Creation provenance survives turns/restarts in the native artifact results. */
 export function conversationCreatedFiles(session) {
   const files = new Set();
-  for (const event of session.events ?? []) {
+  for (const event of sessionEvents(session)) {
     if (event.type !== 'tool/result') continue;
     for (const result of event.data?.message?.content ?? []) {
       if (result.type !== 'tool-result') continue;

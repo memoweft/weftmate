@@ -10,6 +10,7 @@ import path from 'node:path'
 import { mkdir, rm, cp, access } from 'node:fs/promises'
 import { sessionWorkspace } from './personal-access/session-workspace.mjs'
 import { removeAccountPath } from './personal-data/paths.mjs';
+import { fetchRuntimeWithCookie } from './host-mode.mjs';
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/
 const fail = (code) => { const error = new Error(code); error.code = code; throw error }
 
@@ -340,7 +341,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (['forget','erase'].includes(input.action)) {
         if (!await requireSessionRecord(sessionId, ownerId, true)) return {ok:true,removedNativeIds:[]};
       } else await requireSession(sessionId, ownerId)
-      const response = await fetch(new URL(`/weftmate/schedules/${encodeURIComponent(sessionId)}`, currentOrigin()), {
+      const response = await fetchRuntimeWithCookie(currentOrigin(), `/weftmate/schedules/${encodeURIComponent(sessionId)}`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) })
       const value = await response.json()
       if (!response.ok) throw Object.assign(new Error(value.error ?? 'BACKEND_UNAVAILABLE'), { code: value.error, status: response.status })
@@ -351,7 +352,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (['forget','erase'].includes(input.action)) {
         if (!await requireSessionRecord(sessionId, ownerId, true)) return {cleared:true,clearedGoalIds:[]};
       } else await requireSession(sessionId, ownerId);
-      const response = await fetch(new URL(`/weftmate/goals/${encodeURIComponent(sessionId)}`, currentOrigin()), {
+      const response = await fetchRuntimeWithCookie(currentOrigin(), `/weftmate/goals/${encodeURIComponent(sessionId)}`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) });
       const value = await response.json();
       if (!response.ok) throw Object.assign(new Error(value.error ?? 'BACKEND_UNAVAILABLE'), { code: value.error, status: response.status });
@@ -363,7 +364,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       // The private schedules endpoint accepts at most 32 KiB per request.
       for (let offset = 0; offset < sessionIds.length; offset += 128) {
         const batch = sessionIds.slice(offset, offset + 128)
-        const response = await fetch(new URL('/weftmate/schedules/notifications/sources', currentOrigin()), {
+        const response = await fetchRuntimeWithCookie(currentOrigin(), '/weftmate/schedules/notifications/sources', {
           method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionIds: batch })
         })
         if (!response.ok) fail('BACKEND_UNAVAILABLE')
@@ -376,7 +377,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     async restoreSchedules(sessionIds) {
       if (!sessionIds.length) return
       requireRuntime()
-      const response = await fetch(new URL('/weftmate/schedules/restore', currentOrigin()), {
+      const response = await fetchRuntimeWithCookie(currentOrigin(), '/weftmate/schedules/restore', {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionIds }) })
       if (!response.ok) fail('BACKEND_UNAVAILABLE')
     },

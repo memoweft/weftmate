@@ -11,10 +11,10 @@ import {eraseSessionMemoryArtifact,repairMemoryErasureArtifact,repriceMemoryToke
 const {Session,SESSION_FORMAT_VERSION}=native;
 async function fixture(){
  const root=await mkdtemp(join(tmpdir(),'memory-format-')),file=join(root,'session.jsonl');
- const header={type:'session',version:SESSION_FORMAT_VERSION,id:'session-format',createdAt:Date.now(),cwd:root,agentPreset:'personal-remote'};
- const result=text=>({turn:1,message:{id:'message-result',role:'user',source:{kind:'tool',callId:'read-1'},content:[{type:'tool-result',toolCallId:'read-1',isError:false,content:[{type:'text',text}]}]}});
+ const header={type:'session',version:SESSION_FORMAT_VERSION,id:'session-format',createdAt:Date.now(),cwd:root,agentPreset:'personal-remote',isSeeded:false};
+ const result=text=>({turn:1,message:{id:'message-result',role:'tool',toolCallId:'read-1',source:{kind:'tool',callId:'read-1'},content:[{type:'tool-result',toolCallId:'read-1',isError:false,content:[{type:'text',text}]}]}});
  const events=[{seq:0,time:Date.now(),type:'tool/result',data:result('first'),surfaceOp:'append'},
-  {seq:1,time:Date.now(),type:'tool/result',data:result('updated'),surfaceOp:{op:'replace',start:0,end:0},sourceEventSeqs:[0]}];
+  {seq:1,time:Date.now(),type:'tool/result',data:result('updated'),surfaceOp:{op:'replace',startSeq:0,endSeq:0},sourceEventSeqs:[0]}];
  await writeFile(file,[header,...events].map(JSON.stringify).join('\n')+'\n');
  const persistence={config:{root},locate:()=>({path:file}),readRaw:async()=>({meta:header,content:await readFile(file,'utf8')})};
  const restore=async()=>{const rows=(await readFile(file,'utf8')).trim().split('\n').map(JSON.parse);const meta=rows.shift();delete meta.type;return Session.fromRestore(meta.id,rows,meta);};
@@ -28,21 +28,21 @@ test('forgetting preserves the native tool-result replacement invariant',async()
 test('erased history reprices stale compaction claims without producing negative native usage',async()=>{
  const f=await fixture();try{
   f.events.push({seq:2,time:Date.now(),type:'compaction/prune',data:{shadowedRange:{start:1,end:1},shadowedSeqs:[1],shadowedTokenCount:1000}},
-    {seq:3,time:Date.now(),type:'user/message',data:{id:'erased-message',role:'user',source:{kind:'plugin',plugin:'weftmate-memory-erasure'},content:[{type:'text',text:'erased'}]},surfaceOp:{op:'replace',start:1,end:1},sourceEventSeqs:[1]});
+    {seq:3,time:Date.now(),type:'user/message',data:{id:'erased-message',role:'user',source:{kind:'weftmate-memory-erasure'},content:[{type:'text',text:'erased'}]},surfaceOp:{op:'replace',startSeq:1,endSeq:1},sourceEventSeqs:[1]});
   await writeFile(f.file,[f.header,...f.events].map(JSON.stringify).join('\n')+'\n');
   const reprice=rows=>repriceMemoryTokenClaims(rows,{...native,estimateMessage:message=>TokenMeter.prototype.estimateMessage(message)});
   assert.equal((await repairMemoryErasureArtifact(f.persistence,f.header.id,{reprice})).repriced,1);
-  const events=(await readFile(f.file,'utf8')).trim().split('\n').map(JSON.parse).slice(1).flatMap(native.decodeStorageRecord);
-  let state=breakdown.init();for(const event of events){state=breakdown.apply(state,event);assert.equal(breakdown.schema.safeParse(breakdown.view(state)).success,true);}
+  const events=(await readFile(f.file,'utf8')).trim().split('\n').map(JSON.parse).slice(1);
+  let state=breakdown.init();for(const event of events){state=breakdown.apply(state,event);assert.equal((breakdown.schema??breakdown.wire.viewSchema).safeParse((breakdown.view??breakdown.wire.view)(state)).success,true);}
   assert.deepEqual(await repairMemoryErasureArtifact(f.persistence,f.header.id,{reprice}),{repaired:0});
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
 test('known erasure corruption is repaired once without changing result content',async()=>{
  const f=await fixture();try{
-  Object.assign(f.events[1].data,{source:{kind:'plugin',plugin:'weftmate-memory-erasure'},content:[]});
+  Object.assign(f.events[1].data,{source:{kind:'weftmate-memory-erasure'},content:[]});
   await writeFile(f.file,[f.header,...f.events].map(JSON.stringify).join('\n')+'\n');
   assert.deepEqual(await repairMemoryErasureArtifact(f.persistence,f.header.id),{repaired:1});
-  assert.equal((await f.restore()).events[1].data.message.content[0].content[0].text,'updated');
+  assert.equal((await f.restore()).snapshotEvents()[1].data.message.content[0].content[0].text,'updated');
   assert.deepEqual(await repairMemoryErasureArtifact(f.persistence,f.header.id),{repaired:0});
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
@@ -54,7 +54,7 @@ test('source deletion keeps a valid title and repairs a previously blank erased 
   await eraseSessionMemoryArtifact(f.persistence,f.header.id,{snippetTargets,deleteConversationSnippets:true});
   let rows=(await readFile(f.file,'utf8')).trim().split('\n').map(JSON.parse);
   assert.equal(rows.at(-1).data.title,'[已遗忘的对话]');assert.ok(!(await readFile(f.file,'utf8')).includes('private title'));
-  rows.at(-1).data.title='';Object.assign(rows[2].data,{source:{kind:'plugin',plugin:'weftmate-memory-erasure'},content:[]});
+  rows.at(-1).data.title='';Object.assign(rows[2].data,{source:{kind:'weftmate-memory-erasure'},content:[]});
   await writeFile(f.file,rows.map(JSON.stringify).join('\n')+'\n');
   assert.equal((await repairMemoryErasureArtifact(f.persistence,f.header.id)).repaired,2);
   rows=(await readFile(f.file,'utf8')).trim().split('\n').map(JSON.parse);assert.ok(rows.at(-1).data.title.length>0);await f.restore();

@@ -5,10 +5,12 @@ export const inject = ['llm', 'sessions', 'tools'];
 const failureCodes = result => [...new Set(JSON.stringify([result.error, result.content]).match(/\b(?:MEMORY|TOOL|RECALL)_[A-Z0-9_]+\b/g) ?? [])].join(',') || 'TOOL_FAILED';
 const personal = session => ['personal-remote','personal-shared-chat'].includes(session?.header?.agentPreset);
 
+const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : (s?.events ?? []);
+
 // Native gate refusals have no dedicated error code and skip tools/execute.
 // Read the committed audit pair, never command text or a tool's error wording.
 function nativeApprovalOutcome(session, callId, turn) {
-  const events = session?.events ?? [];
+  const events = sessionEvents(session);
   const start = events.findLastIndex(event => event.type === 'turn/start');
   if (start < 0 || turn !== undefined && events[start].data.turn !== turn) return;
   const calls = new Set([callId]), asked = new Map();
@@ -18,7 +20,7 @@ function nativeApprovalOutcome(session, callId, turn) {
     if (type === 'turn/end') return;
     // Native Code Mode does not identify which child's error escaped. Keep a
     // child's refusal as context, never as the cause of every parent failure.
-    if (type === 'tool/code-dispatch-start' && calls.has(data.parentCallId)) calls.add(data.subCallId);
+    if ((type === 'tool/code-dispatch-start' || type === 'tool/ptc-dispatch-start') && calls.has(data.parentCallId)) calls.add(data.subCallId);
     if (type === 'approval/asked' && calls.has(data.callId)) asked.set(data.id, data.callId);
     if (type === 'approval/decided' && asked.has(data.id) && data.outcome === 'rejected') {
       if (asked.get(data.id) === callId) return 'rejected';
@@ -54,7 +56,7 @@ export async function apply(ctx) {
   }, { prepend:true });
   ctx.on('session/created', session => {
     if (!personal(session)) return;
-    const calls = new Map(session.events.filter(event => event.type === 'tool/call').map(event => [event.data.callId,event.data.name]));
+    const calls = new Map(sessionEvents(session).filter(event => event.type === 'tool/call').map(event => [event.data.callId,event.data.name]));
     const append = session.append.bind(session);
     session.append = (type, data, ...rest) => {
       if (type === 'tool/call') calls.set(data.callId,data.name);

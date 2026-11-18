@@ -110,8 +110,7 @@ test('forked plugin hook callbacks use owner-bound IPC and replace stale account
       assert.match(entry.last.id, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
       assert.equal(entry.last.role, 'user')
       assert.equal(entry.currentQuestionLast, true);
-      assert.equal(entry.last.source.kind, 'plugin');
-      assert.equal(entry.last.source.plugin, 'weftmate-personal-memory');
+      assert.equal(entry.last.source.kind, 'weftmate-personal-memory');
       assert.equal(entry.last.source.form, 'snapshot');
       assert.equal(entry.last.source.sections[0].name, 'weftmate-personal-memory')
       assert.equal(entry.last.frozen, true)

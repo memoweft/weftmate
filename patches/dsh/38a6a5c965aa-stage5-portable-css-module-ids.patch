@@ -1,0 +1,42 @@
+diff --git a/packages/client/tsdown.client.ts b/packages/client/tsdown.client.ts
+--- a/packages/client/tsdown.client.ts
++++ b/packages/client/tsdown.client.ts
+@@ -869,10 +869,10 @@
+         if (!source.endsWith('.module.css')) return null
+         const abs = importer !== undefined ? sourceAssetPath(source, importer) : source
+-        return CSS_VIRTUAL_PREFIX + abs + CSS_VIRTUAL_SUFFIX
++        return CSS_VIRTUAL_PREFIX + relative(REPOSITORY_ROOT, abs).split(sep).join('/') + CSS_VIRTUAL_SUFFIX
+       },
+       async load(virtualId: string) {
+         if (!virtualId.startsWith(CSS_VIRTUAL_PREFIX)) return null
+-        const fileId = virtualId.slice(CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
++        const fileId = resolvePath(REPOSITORY_ROOT, virtualId.slice(CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length))
+         // The virtual id otherwise hides the physical stylesheet from Rolldown's watch graph.
+         this.addWatchFile(fileId)
+         const source = await readFile(fileId)
+@@ -897,10 +897,10 @@
+         const stylesheet = source.slice(0, -INLINE_CSS_QUERY.length)
+         const abs = importer !== undefined ? sourceAssetPath(stylesheet, importer) : stylesheet
+-        return INLINE_CSS_VIRTUAL_PREFIX + abs + CSS_VIRTUAL_SUFFIX
++        return INLINE_CSS_VIRTUAL_PREFIX + relative(REPOSITORY_ROOT, abs).split(sep).join('/') + CSS_VIRTUAL_SUFFIX
+       },
+       async load(virtualId: string) {
+         if (!virtualId.startsWith(INLINE_CSS_VIRTUAL_PREFIX)) return null
+-        const fileId = virtualId.slice(INLINE_CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
++        const fileId = resolvePath(REPOSITORY_ROOT, virtualId.slice(INLINE_CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length))
+         this.addWatchFile(fileId)
+         const source = await readFile(fileId)
+         const stylesheetAssets = assets.urlRewrite(this, fileId)
+@@ -913,10 +913,10 @@
+         if (!source.endsWith('.css') || source.endsWith('.module.css')) return null
+         const abs = importer !== undefined ? sourceAssetPath(source, importer) : source
+-        return GLOBAL_CSS_VIRTUAL_PREFIX + abs + CSS_VIRTUAL_SUFFIX
++        return GLOBAL_CSS_VIRTUAL_PREFIX + relative(REPOSITORY_ROOT, abs).split(sep).join('/') + CSS_VIRTUAL_SUFFIX
+       },
+       async load(virtualId: string) {
+         if (!virtualId.startsWith(GLOBAL_CSS_VIRTUAL_PREFIX)) return null
+-        const fileId = virtualId.slice(GLOBAL_CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
++        const fileId = resolvePath(REPOSITORY_ROOT, virtualId.slice(GLOBAL_CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length))
+         this.addWatchFile(fileId)
+         const source = await readFile(fileId)
+         const stylesheetAssets = assets.urlRewrite(this, fileId)

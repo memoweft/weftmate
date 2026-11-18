@@ -8,13 +8,14 @@ const ID = /^reply-evidence-[0-9a-f-]{36}$/
 const SESSION = /^[A-Za-z0-9_-]{1,128}$/
 const RECEIPT = /^[A-Za-z0-9._:-]{1,160}$/
 const unknown = () => projectReplyEvidence('', { receiptId: 'unconfirmed' })
+const sessionEvents = (s) => (typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : s?.events)
 const SAVE_REPLY_HINT = '已实际保存并核验这份文件。请继续完成用户尚未完成的要求；如果已全部完成，请用一到两句简短确认成果与已读来源，然后结束本回合。不要重复保存同一文件。'
 
 export async function savedDocumentReplyHint(ctx, payload, decision, messageFactory = null) {
   if (decision?.kind !== 'enter' || payload?.step < 2 ||
       payload?.agent?.session?.header?.agentPreset !== 'personal-remote') return decision
   const session = payload.agent.session
-  const events = session.events
+  const events = sessionEvents(session)
   if (!Array.isArray(events) || typeof session.id !== 'string') return decision
   const start = events.findLastIndex((event) => event?.type === 'turn/start' &&
     event.data?.turn === payload.turn)
@@ -24,12 +25,13 @@ export async function savedDocumentReplyHint(ctx, payload, decision, messageFact
   if (users.length !== 1 || typeof users[0].data.source.rpcId !== 'string' ||
       !RECEIPT.test(users[0].data.source.rpcId) ||
       events.slice(start + 1).some((event) => event?.type === 'user/message' &&
-        event.data?.source?.kind === 'plugin' && event.data.source.plugin === name)) return decision
+        (event.data?.source?.kind === name || event.data?.source?.kind === `plugin:${name}` ||
+          event.data?.source?.kind === 'plugin' && event.data.source.plugin === name))) return decision
   let deadlineTimer
   let artifact
   try {
     const persistence = ctx.get?.('sessionPersistence') ?? ctx.sessionPersistence
-    if (typeof persistence?.readFrom !== 'function' || typeof persistence?.inspect !== 'function') return decision
+    if (typeof persistence?.open !== 'function' && (typeof persistence?.readFrom !== 'function' || typeof persistence?.inspect !== 'function')) return decision
     artifact = await Promise.race([
       durableSourceRange(persistence, session.id, { turn: payload.turn }, payload.signal).catch(() => null),
       new Promise((resolve) => { deadlineTimer = setTimeout(() => resolve(null), 1_500) }),
@@ -43,7 +45,7 @@ export async function savedDocumentReplyHint(ctx, payload, decision, messageFact
       evidence.status !== 'unconfirmed') return decision
   const factory = messageFactory ?? (await import('@deepseek-ai/dsh-llm/message')).createUserMessage
   const reminder = factory({ content: [{ type: 'text', text: SAVE_REPLY_HINT }],
-    source: { kind: 'plugin', plugin: name } })
+    source: { kind: name } })
   return { ...decision, messages: [...decision.messages, reminder] }
 }
 
@@ -59,7 +61,7 @@ export function apply(ctx) {
         typeof frame.receiptId !== 'string' || !RECEIPT.test(frame.receiptId)) return
     void Promise.resolve().then(async () => {
       const persistence = ctx.get?.('sessionPersistence') ?? ctx.sessionPersistence
-      if (typeof persistence?.readFrom !== 'function' || typeof persistence?.inspect !== 'function') return unknown()
+      if (typeof persistence?.open !== 'function' && (typeof persistence?.readFrom !== 'function' || typeof persistence?.inspect !== 'function')) return unknown()
       const artifact = await durableSourceRange(persistence, frame.sessionId,
         { receiptId: frame.receiptId, turn: frame.turn })
       if (artifact?.meta?.id !== frame.sessionId ||

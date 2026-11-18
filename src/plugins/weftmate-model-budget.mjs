@@ -25,6 +25,7 @@ export function apply(ctx, config) {
   let rawSource = () => config;
   let lastRaw, lastVersion, projected;
   let version = 0;
+  let registeredSettings = false;
   const identity = (provider, row, model) => JSON.stringify([provider, row.baseURL, row.apiKeyEnv, model]);
   const compatible = row => row?.baseURL && (!row.api || row.api === 'openai-completions');
 
@@ -88,6 +89,7 @@ export function apply(ctx, config) {
       return (...args) => {
         if (args[1] === NativeConfig) args[1] = Config;
         const scope = settings.register(...args);
+        registeredSettings = true;
         rawSource = () => scope.get();
         scope.watch(() => { probes.clear(); capacities.clear(); version++; return refresh(); });
         sctx.effect(async () => { await refresh(); });
@@ -201,6 +203,9 @@ export function apply(ctx, config) {
     ? new Proxy(config, { get(target, prop) {
       return prop === 'providers' ? source().providers : Reflect.get(target, prop);
     } }) : config);
+  ctx.effect(async () => {
+    if (!registeredSettings) await refresh();
+  });
   ctx.on('session/event', (session, event) => {
     if (event.type === 'turn/end') { slowRetries.delete(session.id); return; }
     if (event.type !== 'llm/retry' || event.data?.failure?.code !== 'TIMEOUT') return;

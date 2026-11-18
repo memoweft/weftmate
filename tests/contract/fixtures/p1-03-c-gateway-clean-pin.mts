@@ -38,7 +38,7 @@ const { installLlmReplay } = await import(toUrl(join(checkout, 'packages/test-su
 
 // ── 与 scaffold.ts 相同的组合事实 ───────────────────────────────────────────────
 const INSTALL_ANCHOR = join(checkout, 'apps/cli/package.json')
-const SHIPPED_PRESET_DIR = join(checkout, 'apps/cli/config/agent-presets')
+const SHIPPED_PRESET_DIR = join(checkout, 'packages/bundle/web-app/presets')
 const BASE_PATCH_PATH = join(checkout, 'packages/bundle/base/cordis.patch.yml')
 const WEB_PATCH_PATH = join(checkout, 'packages/bundle/web-app/cordis.patch.yml')
 const REPLAY_FIXTURE = join(here, 'web-chat-replay.jsonl')
@@ -169,7 +169,8 @@ try {
     ...basePatches,
     ...surfacePatches,
     { insert: [{ id: 'weftmate-host', name: './plugins/weftmate-host.mjs' }] },
-    { id: 'agent-presets', config: { default: 'standard', roots: [{ path: SHIPPED_PRESET_DIR, trust: 'system' }], includeUserRoot: false } },
+    ...['standard', 'ptc', 'minimal', 'cordis'].flatMap(id => loadOverlayPatches('weftmate contract presets', join(SHIPPED_PRESET_DIR, `${id}.patch.yml`))),
+    { id: 'agent-preset-registry', config: { default: 'standard' } },
     { id: 'session-persistence-jsonl', config: { root: persistenceRoot } },
     { id: 'storage-json', config: { root: join(workspaceCwd, '.dsh-storages') } },
     {

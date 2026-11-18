@@ -3,7 +3,9 @@ import { randomUUID } from 'node:crypto';
 import { zstdCompressSync } from 'node:zlib';
 import { relative, resolve, isAbsolute } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+import { readSessionRaw } from './persistence-compat.mjs';
 const erasedTitle='[已遗忘的对话]';
+const sourceKind = s => s?.kind === 'plugin' ? s.plugin : s?.kind?.startsWith('plugin:') ? s.kind.slice(7) : s?.kind;
 
 async function writeArtifact(persistence, artifact, content) {
   const location=persistence.locate(artifact.meta),inside=relative(resolve(persistence.config.root),resolve(location.path));
@@ -19,7 +21,8 @@ async function writeArtifact(persistence, artifact, content) {
 }
 
 export function repriceMemoryTokenClaims(rows, {decodeStorageRecord,foldSurface,deriveEventMessage,estimateMessage}) {
-  const events=rows.filter(row=>row && row.type!=='session').flatMap(decodeStorageRecord);
+  const decode = typeof decodeStorageRecord === 'function' ? decodeStorageRecord : row => [row];
+  const events=rows.filter(row=>row && row.type!=='session').flatMap(decode);
   foldSurface(events);
   const records=new Map(rows.filter(row=>Number.isSafeInteger(row?.seq)).map(row=>[row.seq,row]));
   const nodes=[],prices=new Map();let claim,repaired=0;
@@ -28,10 +31,10 @@ export function repriceMemoryTokenClaims(rows, {decodeStorageRecord,foldSurface,
     const op=event.surfaceOp;
     if(op==='append') {const message=deriveEventMessage(event);nodes.push(event.seq);prices.set(event.seq,message?estimateMessage(message):0);}
     else if(op?.op==='replace') {
-      const start=nodes.indexOf(op.start),end=nodes.indexOf(op.end);
+      const start=nodes.indexOf(op.startSeq??op.start),end=nodes.indexOf(op.endSeq??op.end);
       const prior=nodes.slice(start,end+1).reduce((sum,id)=>sum+(prices.get(id)||0),0);
       let price=prior;
-      if(claim && claim.data.shadowedRange.start===op.start && claim.data.shadowedRange.end===op.end) {
+      if(claim && claim.data.shadowedRange.start===(op.startSeq??op.start) && claim.data.shadowedRange.end===(op.endSeq??op.end)) {
         const row=records.get(claim.seq);
         if(row.data.shadowedTokenCount!==prior){row.data={...row.data,shadowedTokenCount:prior};repaired++;}
         const message=deriveEventMessage(event);price=message?estimateMessage(message):0;
@@ -44,7 +47,7 @@ export function repriceMemoryTokenClaims(rows, {decodeStorageRecord,foldSurface,
 }
 
 export async function repairMemoryErasureArtifact(persistence, sessionId, {reprice}={}) {
-  const artifact=await persistence.readRaw(sessionId);if(!artifact)return {repaired:0};
+  const artifact=await readSessionRaw(persistence, sessionId);if(!artifact)return {repaired:0};
   if(!artifact.content.includes('"weftmate-memory-erasure"'))return {repaired:0};
   let rows;try{rows=artifact.content.split('\n').map(line=>line?JSON.parse(line):null);}catch{return {repaired:0};}
   const bySeq=new Map(rows.filter(row=>Number.isSafeInteger(row?.seq)).map(row=>[row.seq,row]));
@@ -53,9 +56,9 @@ export async function repairMemoryErasureArtifact(persistence, sessionId, {repri
   for(let i=0;i<rows.length;i++) {
     const row=rows[i],op=row?.surfaceOp;
     if(row?.type==='session/title' && row.data?.title==='') {rows[i]={...row,data:{...row.data,title:erasedTitle}};repaired++;continue;}
-    if(row?.type!=='tool/result'||op?.op!=='replace'||op.start!==op.end||row.data?.source?.plugin!=='weftmate-memory-erasure'||
+    if(row?.type!=='tool/result'||op?.op!=='replace'||(op.startSeq??op.start)!==(op.endSeq??op.end)||sourceKind(row.data?.source)!=='weftmate-memory-erasure'||
       !Array.isArray(row.data.content)||row.data.content.length)continue;
-    const original=bySeq.get(op.start);if(original?.type!=='tool/result')continue;
+    const original=bySeq.get(op.startSeq??op.start);if(original?.type!=='tool/result')continue;
     const data={...row.data};delete data.source;delete data.content;
     const before=metadata(original.data),after=metadata(data);
     if(!before||!after||!isDeepStrictEqual(before,after))continue;
@@ -69,7 +72,8 @@ export async function repairMemoryErasureArtifact(persistence, sessionId, {repri
 /** Use the native surface replacement protocol: retained originals remain in
  * human history, but cannot enter future requests or native compaction. */
 export function shadowForgottenSurface(session, sourceTexts, createMessage, affectedIds = [], snippetTargets = []) {
-  const events = session.events, bySeq = new Map(events.map(event => [event.seq, event]));
+  const events = typeof session?.snapshotEvents === 'function' ? session.snapshotEvents() : session.events;
+  const bySeq = new Map(events.map(event => [event.seq, event]));
   const matches = value => typeof value === 'string' ? sourceTexts.some(text => text && value.includes(text))
     : Array.isArray(value) ? value.some(matches) : value && typeof value === 'object' && Object.values(value).some(matches);
   const affectedTurns = new Set(snippetTargets.map(target => target.turn).filter(Number.isSafeInteger)); const turns = new Map(); let turn = null;
@@ -85,7 +89,7 @@ export function shadowForgottenSurface(session, sourceTexts, createMessage, affe
   // spans. The native surface order, not numeric seq ranges, is authoritative.
   const nodes = [...session.surface.nodes]; const groups = []; let group = [];
   for (const seq of nodes) {
-    const event = bySeq.get(seq), plugin = event?.data?.source?.plugin;
+    const event = bySeq.get(seq), plugin = sourceKind(event?.data?.source);
     const affected = affectedTurns.has(turns.get(seq)) || matches(event?.data) ||
       plugin === 'weftmate-personal-memory' || plugin === 'weftmate-chat-handoff' ||
       event?.surfaceOp?.op === 'replace' && plugin !== 'weftmate-memory-erasure';
@@ -96,16 +100,16 @@ export function shadowForgottenSurface(session, sourceTexts, createMessage, affe
   for (const seqs of groups) {
     const start = seqs[0], end = seqs.at(-1);
     session.append('compaction/prune', { shadowedRange: { start, end }, shadowedSeqs: seqs, shadowedTokenCount: 0 });
-    session.append('user/message', createMessage({ source: { kind: 'plugin', plugin: 'weftmate-memory-erasure' },
+    session.append('user/message', createMessage({ source: { kind: 'weftmate-memory-erasure' },
       content: [{ type: 'text', text: '[已遗忘的上下文]' }] }),
-    { surfaceOp: { op: 'replace', start, end }, sourceEventSeqs: seqs });
+    { surfaceOp: { op: 'replace', startSeq: start, endSeq: end }, sourceEventSeqs: seqs });
   }
   return groups.flat();
 }
 
 /** Erase native injected context; original source text is an explicit opt-in. */
 export async function eraseSessionMemoryArtifact(persistence, sessionId, options = {}) {
-  const artifact = await persistence.readRaw(sessionId)
+  const artifact = await readSessionRaw(persistence, sessionId)
   if (!artifact) throw Object.assign(new Error('source unavailable'), { code: 'internal' })
   let changed = false
   const lines = artifact.content.split('\n').map(line => line ? JSON.parse(line) : null);
@@ -178,13 +182,13 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
       if (value.data?.summary?.length || value.data?.rawOutput?.length) changed = true;
       return { ...value, data: { ...value.data, summary: [], ...(value.data?.rawOutput ? { rawOutput: [] } : {}) } };
     }
-    if (value.type === 'user/message' && value.surfaceOp?.op === 'replace' && value.data?.source?.plugin !== 'weftmate-memory-erasure') {
+    if (value.type === 'user/message' && value.surfaceOp?.op === 'replace' && sourceKind(value.data?.source) !== 'weftmate-memory-erasure') {
       changed = true;
-      return { ...value, data: { ...value.data, content: [], source: { kind: 'plugin', plugin: 'weftmate-memory-erasure' } } };
+      return { ...value, data: { ...value.data, content: [], source: { kind: 'weftmate-memory-erasure' } } };
     }
-    if (value.source?.kind === 'plugin' && ['weftmate-personal-memory', 'weftmate-chat-handoff'].includes(value.source.plugin)) {
+    if (['weftmate-personal-memory', 'weftmate-chat-handoff'].includes(sourceKind(value.source))) {
       changed = true
-      return { ...value, content: [], source: { kind: 'plugin', plugin: 'weftmate-memory-erasure' } }
+      return { ...value, content: [], source: { kind: 'weftmate-memory-erasure' } }
     }
     return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, clean(child, redact, key)]))
   }
@@ -195,7 +199,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
   // Re-read the actual artifact, not the transformed in-memory snapshot. A
   // successful write/rename alone is not proof that the source was erased.
   if (options.deleteConversationSnippets) {
-    const verified = await persistence.readRaw(sessionId);
+    const verified = await readSessionRaw(persistence, sessionId);
     if (!verified) throw new Error('memory cleanup verification unavailable');
     const rows = verified.content.split('\n').map(line => line ? JSON.parse(line) : null);
     let verifiedTurn = null;

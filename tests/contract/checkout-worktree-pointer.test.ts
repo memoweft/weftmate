@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { after, describe, test } from 'node:test'
 import { readCheckoutHead } from './support/checkout.ts'
 
-const SHA = '47f943859bef60e4160492346772ded9b24f765a'
+const SHA = '38a6a5c965aa99ab525161efb7cc5cf1fe62fced'
 let root = ''
 
 after(async () => { if (root !== '') await rm(root, { recursive: true, force: true }) })

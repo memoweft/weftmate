@@ -28,7 +28,8 @@ const groups = { goal: ['create_goal', 'get_goal', 'update_goal'], jobs: ['job_l
 export const isHealthQuestion=question=>/电脑使用|电脑用了|屏幕时间|(?:昨晚|昨夜|深夜).*电脑|电脑.*(?:用了多久|几点|时长)|健康|压力|电能|体能年龄|身体年龄|睡眠|睡得|睡了|熬夜|恢复|训练负荷|运动负荷|运动记录|心率|血氧|手腕温度|步数|摄氧量|\b(?:sleep|recovery|stress|energy|fitness age|hrv|spo2)\b/i.test(question);
 /** Pure model projection; native execution, permission and registry contracts remain unchanged. */
 export function presentPersonalPrompt(assembly, selected = new Set()) {
-    assembly = { ...assembly, tools: assembly.tools.map(tool => {
+    const inputTools = Array.isArray(assembly.tools) ? assembly.tools : [];
+    assembly = { ...assembly, tools: inputTools.map(tool => {
       const description = descriptions[tool.name];
       if (!description) return tool;
       // Present one unambiguous absolute-time shape to the model. The native

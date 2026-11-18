@@ -78,18 +78,18 @@ test('upgrading the standard profile preserves an edited preset even if its meta
 test('minimal preset keeps its pinned tools and gets one isolated compactor without changing vendor', async t => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-context-preset-'))
   t.after(() => rm(root, { recursive: true, force: true }))
-  const shipped = fileURLToPath(new URL('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh/config/agent-presets/', import.meta.url))
-  const original = await readFile(join(shipped, 'minimal', 'agent.cordis.yml'), 'utf8')
+  const shipped = fileURLToPath(new URL('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-web-app/presets/', import.meta.url))
+  const original = await readFile(join(shipped, 'minimal.patch.yml'), 'utf8')
   await writeContextAwareMinimalPreset(shipped, root)
   const first = await readFile(join(root, 'minimal', 'agent.cordis.yml'), 'utf8')
-  for (const name of ['dsh-persona', 'dsh-tool-bash-persistent', 'dsh-tool-str-replace-editor', 'dsh-command-compact', 'dsh-compaction-tool-result-pruner']) {
+  for (const name of ['dsh-persona', 'dsh-tool-bash-persistent', 'dsh-tool-fs', 'dsh-command-compact', 'dsh-compaction-tool-result-pruner']) {
     assert.ok(first.includes(`@deepseek-ai/${name}`), name)
   }
   assert.equal(first.match(/name: '@deepseek-ai\/dsh-compaction-basic'/g)?.length, 1)
   assert.match(first, /isolate:\s+compaction: true\s+toolResultPruner: true/)
   await writeContextAwareMinimalPreset(shipped, root)
   assert.equal(await readFile(join(root, 'minimal', 'agent.cordis.yml'), 'utf8'), first)
-  assert.equal(await readFile(join(shipped, 'minimal', 'agent.cordis.yml'), 'utf8'), original)
+  assert.equal(await readFile(join(shipped, 'minimal.patch.yml'), 'utf8'), original)
 })
 
 test('0.2.2 patch presets retain their plugins and replace minimal compaction with the full scoped group', async t => {

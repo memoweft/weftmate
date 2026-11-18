@@ -47,7 +47,7 @@ export function createPerceptionInjector() {
           ...decision.messages,
           createUserMessage({
             content: [{ type: 'text', text }],
-            source: { kind: 'plugin', plugin: 'weftmate-perception', form: 'snapshot', sections: [{ name: 'weftmate-perception', text }] },
+            source: { kind: 'weftmate-perception', form: 'snapshot', sections: [{ name: 'weftmate-perception', text }] },
           }),
         ],
       }

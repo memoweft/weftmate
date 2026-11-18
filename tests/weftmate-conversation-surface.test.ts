@@ -16,19 +16,19 @@ describe('WeftMate conversation workspace surface', () => {
     }
     assert.match(source, /\[data-phase="hero"\] \[data-conversation-scroll\]/);
     assert.match(source, /data-weftmate-hero-composer/);
-    assert.match(source, /\[data-composer-card\]:has\(textarea\[aria-haspopup="menu"\]\)::after/);
+    assert.match(source, /\[data-composer-card\]:has\((?:\.uHH_lG_input|textarea)\[aria-haspopup="menu"\]\)::after/);
     assert.doesNotMatch(source, /ctx\.slots|fetch\(|useState|MutationObserver/);
     assert.doesNotMatch(source, /#[0-9a-f]{3,8}\b/i);
   });
 
   it('groups the official hero controls and official input in one vendor-owned layout seam', () => {
     const vendorConversation = readFileSync(new URL('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-client-ui-conversation/lib/client.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
-    const start = vendorConversation.indexOf('const composerBar =');
-    const end = vendorConversation.indexOf('const phase =', start);
+    const start = vendorConversation.indexOf('const composerBar');
+    const end = vendorConversation.indexOf('const composer=', start + 1);
     const source = vendorConversation.slice(start, end);
 
     assert.ok(start >= 0 && end > start, 'official conversation composer must stay auditable');
-    assert.match(source, /"data-weftmate-hero-composer": ""/);
+    assert.match(source, /"data-weftmate-hero-composer":\s*["`]{2}/);
     assert.match(source, /heroWorkspaceRow/);
     assert.match(source, /inputBar/);
     assert.doesNotMatch(source, /HeroShell/);

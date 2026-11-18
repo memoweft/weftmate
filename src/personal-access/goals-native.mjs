@@ -3,6 +3,8 @@ import { readFile, mkdir, writeFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 
+const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : (s?.events ?? []);
+
 export async function createNativeGoalManager({ ctx, foldGoal, file }) {
   let operations = {};
   try { operations = JSON.parse(await readFile(file, 'utf8')); } catch (error) { if (error.code !== 'ENOENT') throw error; }
@@ -10,7 +12,7 @@ export async function createNativeGoalManager({ ctx, foldGoal, file }) {
   const save = async () => { await mkdir(path.dirname(file), { recursive: true }); const temp = `${file}.${randomUUID()}.tmp`; await writeFile(temp, JSON.stringify(operations)); await rename(temp, file); };
   const service = agent => ctx.get('agentPresets')?.serviceFor(agent, 'goals') ?? ctx.get('goals');
   async function manage(agent, input, {storageOnly=false} = {}) {
-    if (input.action === 'list') { const value = foldGoal(agent.session.events); return { goal: value.goal ? { ...value.goal, roundsStarted: value.roundsStarted, createdAt: value.createdAt, updatedAt: value.updatedAt } : null }; }
+    if (input.action === 'list') { const value = foldGoal(sessionEvents(agent.session)); return { goal: value.goal ? { ...value.goal, roundsStarted: value.roundsStarted, createdAt: value.createdAt, updatedAt: value.updatedAt } : null }; }
     const work = queue.then(async () => {
       const key = `${agent.id}:${input.requestId}`, fingerprint = createHash('sha256').update(JSON.stringify(input)).digest('hex'), prior = operations[key];
       if (prior) { if (fingerprint !== prior.fingerprint) throw Object.assign(new Error('REQUEST_CONFLICT'), { status: 409 }); if (prior.result?.erased) throw Object.assign(new Error('SOURCE_UNAVAILABLE'), {status:404}); return prior.result; }
@@ -18,9 +20,10 @@ export async function createNativeGoalManager({ ctx, foldGoal, file }) {
       if(storageOnly && !['erase','forget'].includes(input.action)) throw new Error('CAPABILITY_UNAVAILABLE');
       let result;
       if (input.action === 'erase' || input.action === 'forget') {
-        const folded=storageOnly ? foldGoal(agent.session.events) : null;
+        const events = sessionEvents(agent.session);
+        const folded=storageOnly ? foldGoal(events) : null;
         const goal = storageOnly ? folded.goal : goals.get(agent), erased = new Set();
-        for (const event of agent.session.events) if (event.type === 'goal/change' && event.data?.goal) {
+        for (const event of events) if (event.type === 'goal/change' && event.data?.goal) {
           const past = event.data.goal, source = operations[`${agent.id}:source:${past.id}`];
           if (input.action === 'erase' || input.receiptIds?.includes(source?.receiptId) || input.sourceTexts?.some(text => text && past.objective.includes(text))) erased.add(past.id);
         }

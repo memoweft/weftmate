@@ -67,7 +67,10 @@ export async function runNativeStreamTimeout() {
   async function until(check:()=>Promise<any>){const deadline=Date.now()+12000;while(Date.now()<deadline){const value=await check();if(value)return value;await pause(30);}assert.fail('slow stream condition timed out: '+JSON.stringify({mode,attempts,cancellations,rows,phases,eventTypes:(await events()).map(event=>event.type)}));}
   try {
     const origin=await runtime.start();
-    const call=async(path:string,body?:object,method=body?'POST':'GET')=>{const response=await fetch(origin+'/weftmate/api/v1'+path,{method,headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const result:any=await response.json();assert.equal(response.ok,true,JSON.stringify(result));return result;};
+    const parsed=new URL(origin); let cookie:string|undefined;
+    if(parsed.searchParams.has('token')){const ex=await fetch(origin,{redirect:'manual'});const raw=ex.headers.get('set-cookie');if(raw)cookie=raw.split(';',1)[0];}
+    const baseOrigin=parsed.origin;
+    const call=async(path:string,body?:object,method=body?'POST':'GET')=>{const response=await fetch(baseOrigin+'/weftmate/api/v1'+path,{method,headers:{'content-type':'application/json',...(cookie?{cookie}:{})},body:body?JSON.stringify(body):undefined});const result:any=await response.json();assert.equal(response.ok,true,JSON.stringify(result));return result;};
     const session=await call('/sessions',{agentPreset:'minimal'}), id=session.sessionId;
     await call(`/sessions/${id}/models`,{provider:'slow-fixture',model:'slow'},'PUT');
     await call(`/sessions/${id}/messages`,{content:'Silent fixture',mode:'queue'});
@@ -90,7 +93,7 @@ export async function runNativeStreamTimeout() {
     await until(async()=> (await events()).filter(row=>row.type==='turn/end').length===4);
     assert.equal(attempts,6);assert.equal((await events()).filter(row=>row.type==='llm/retry').length,2);
     assert.ok(rows[4].closed-rows[4].started<650,'explicit provider timeout overrides the 700ms environment default');
-  } finally {if(previousTimeout===undefined) delete process.env.WEFTMATE_STREAM_IDLE_TIMEOUT_MS; else process.env.WEFTMATE_STREAM_IDLE_TIMEOUT_MS=previousTimeout;if(previousScheduler===undefined)delete process.env.WEFTMATE_MODEL_SCHEDULER_URL;else process.env.WEFTMATE_MODEL_SCHEDULER_URL=previousScheduler;await runtime.close();scheduler.closeAllConnections();await new Promise<void>(resolve=>scheduler.close(()=>resolve()));server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(root,{recursive:true,force:true});}
+  } finally {if(previousTimeout===undefined) delete process.env.WEFTMATE_STREAM_IDLE_TIMEOUT_MS; else process.env.WEFTMATE_STREAM_IDLE_TIMEOUT_MS=previousTimeout;if(previousScheduler===undefined)delete process.env.WEFTMATE_MODEL_SCHEDULER_URL;else process.env.WEFTMATE_MODEL_SCHEDULER_URL=previousScheduler;await runtime.close();scheduler.closeAllConnections();await new Promise<void>(resolve=>scheduler.close(()=>resolve()));server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(root,{recursive:true,force:true,maxRetries:5,retryDelay:200});}
 }
 
 if (process.argv[1]?.replaceAll('\\','/').endsWith('/integration/model-stream-timeout.ts'))

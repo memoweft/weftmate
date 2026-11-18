@@ -8,7 +8,7 @@ import { DshWebRuntime } from '../src/dsh-web-runtime.ts'
 test('the pinned primary SDK exposes live Agent[] status and Inbox.hasPending', () => {
   const agentTypes = readFileSync('vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/types/index.d.ts', 'utf8')
   const runtimeTypes = readFileSync('vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/types/runtime-types.d.ts', 'utf8')
-  const inboxTypes = readFileSync('vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/types/inbox.d.ts', 'utf8')
+  const inboxTypes = readFileSync('vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent-loop/lib/types/inbox.d.ts', 'utf8')
   const implementation = readFileSync('vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js', 'utf8')
   assert.match(agentTypes, /list\(\): Agent\[\]/)
   assert.match(runtimeTypes, /export type AgentStatus = 'idle' \| 'running'/)

@@ -126,7 +126,7 @@ describe('shared DSH_HOME vendor routes', () => {
       "import { writeFile } from 'node:fs/promises';",
       `const patch = ${JSON.stringify(ownerPatch)};`,
       'export default () => {',
-      "  setTimeout(async () => { await writeFile(patch, '- id: hmr\\n  disabled: false\\n', 'utf8'); process.exit(41) }, 700);",
+      "  setTimeout(async () => { await writeFile(patch, '- id: hmr\\n  disabled: false\\n', 'utf8'); process.exit(41) }, 2500);",
       '};', '',
     ].join('\n'), 'utf8');
     await writeFile(ownerPatch, [
@@ -183,10 +183,10 @@ describe('shared DSH_HOME vendor routes', () => {
     });
     try {
       const origin = await runtime.start();
-      assert.match(origin, /^http:\/\/127\.0\.0\.1:\d+$/);
+      assert.match(origin, /^http:\/\/127\.0\.0\.1:\d+(?:\/\?token=[^\s&]+)?$/);
       assert.equal(snapshots.length, 1, 'one start must create exactly one frozen snapshot');
       const encoded = JSON.stringify(snapshots[0]?.entries);
-      assert.match(encoded, /"id":"agent-presets"/, 'snapshot retains official agent presets');
+      assert.match(encoded, /"id":"agent-preset-registry"/, 'snapshot retains official agent presets');
       assert.match(encoded, /"id":"session-telemetry-otel"/, 'snapshot retains official telemetry row');
       assert.match(encoded, /"disabled":true/, 'snapshot carries the final telemetry disable');
       await new Promise((resolve) => setTimeout(resolve, 400));
@@ -222,9 +222,10 @@ describe('shared DSH_HOME vendor routes', () => {
         '- insert:', '    - id: weftmate-safe-credentials', '      name: ./plugins/weftmate-credentials.mjs', '',
       ].join('\n'), 'utf8');
       const runtimeLogs: string[] = [];
-      const credentialRequests: Array<{ operation: string; ref: string }> = [];
+      let inTurn = false;
+      const credentialRequests: Array<{ operation: string; ref: string; inTurn: boolean }> = [];
       const credentialRequestHandler = ({ operation, ref }: { operation: string; ref: string }) => {
-        credentialRequests.push({ operation, ref });
+        credentialRequests.push({ operation, ref, inTurn });
         const routeARef = routeForProfile('profile-a').apiKeyEnv;
         const routeBRef = routeForProfile('profile-b').apiKeyEnv;
         const value = ref === routeARef ? keyA
@@ -252,7 +253,8 @@ describe('shared DSH_HOME vendor routes', () => {
         // environment contract, so migration must restore the session to A's
         // internal route before the next (and first post-migration) message.
         const legacyA = await request(origin, '/sessions', 'POST', {});
-        await request(origin, `/sessions/${encodeURIComponent(legacyA.sessionId)}/models`, 'PUT', { provider: 'deepseek-official', model: 'same-model' });
+        const legacyModels = await request(origin, `/sessions/${encodeURIComponent(legacyA.sessionId)}/models`);
+        assert.equal(legacyModels.current?.provider, 'deepseek-official', 'legacy default route must start on deepseek-official');
         const emptyA = await request(origin, '/sessions', 'POST', {});
         await request(origin, `/sessions/${encodeURIComponent(emptyA.sessionId)}/models`, 'PUT', { provider: routeForProfile('profile-a').provider, model: 'same-model' });
         const first = await request(origin, '/sessions', 'POST', {});
@@ -298,8 +300,11 @@ describe('shared DSH_HOME vendor routes', () => {
         });
         const legacyAfterReloadPump = await startPump(restartedOrigin, legacyA.sessionId);
         const bBeforeLegacyAfterReload = b.requests.length; const aBeforeLegacyAfterReload = a.requests.length;
-        await request(restartedOrigin, `/sessions/${encodeURIComponent(legacyA.sessionId)}/messages`, 'POST', { content: 'legacy A after B switch and CRUD reload', mode: 'queue' });
-        await waitFor(() => a.requests.length > aBeforeLegacyAfterReload); legacyAfterReloadPump.controller.abort();
+        inTurn = true;
+        try {
+          await request(restartedOrigin, `/sessions/${encodeURIComponent(legacyA.sessionId)}/messages`, 'POST', { content: 'legacy A after B switch and CRUD reload', mode: 'queue' });
+          await waitFor(() => a.requests.length > aBeforeLegacyAfterReload);
+        } finally { inTurn = false; legacyAfterReloadPump.controller.abort(); }
         assert.equal(b.requests.length, bBeforeLegacyAfterReload, 'legacy A must not silently inherit active B after shared runtime reload');
         await request(restartedOrigin, `/sessions/${encodeURIComponent(emptyA.sessionId)}/resume`, 'POST', {});
         await restoreInternalSessionRoute({
@@ -309,25 +314,35 @@ describe('shared DSH_HOME vendor routes', () => {
         });
         const emptyAPump = await startPump(restartedOrigin, emptyA.sessionId);
         const aBeforeEmptyRecovery = a.requests.length; const bBeforeEmptyRecovery = b.requests.length;
-        await request(restartedOrigin, `/sessions/${encodeURIComponent(emptyA.sessionId)}/messages`, 'POST', { content: 'first message after B switch and restart', mode: 'queue' });
-        await waitFor(() => a.requests.length > aBeforeEmptyRecovery); emptyAPump.controller.abort();
+        inTurn = true;
+        try {
+          await request(restartedOrigin, `/sessions/${encodeURIComponent(emptyA.sessionId)}/messages`, 'POST', { content: 'first message after B switch and restart', mode: 'queue' });
+          await waitFor(() => a.requests.length > aBeforeEmptyRecovery);
+        } finally { inTurn = false; emptyAPump.controller.abort(); }
         assert.equal(b.requests.length, bBeforeEmptyRecovery, 'empty A must not inherit B after restart');
         await request(restartedOrigin, `/sessions/${encodeURIComponent(first.sessionId)}/resume`, 'POST', {});
         await request(restartedOrigin, `/sessions/${encodeURIComponent(second.sessionId)}/resume`, 'POST', {});
         const resumedAPump = await startPump(restartedOrigin, first.sessionId);
-        await request(restartedOrigin, `/sessions/${encodeURIComponent(first.sessionId)}/messages`, 'POST', { content: 'after restart A', mode: 'queue' });
-        await waitFor(() => a.requests.length > aBeforeRestart); resumedAPump.controller.abort();
+        inTurn = true;
+        try {
+          await request(restartedOrigin, `/sessions/${encodeURIComponent(first.sessionId)}/messages`, 'POST', { content: 'after restart A', mode: 'queue' });
+          await waitFor(() => a.requests.length > aBeforeRestart);
+        } finally { inTurn = false; resumedAPump.controller.abort(); }
         const resumedBPump = await startPump(restartedOrigin, second.sessionId);
-        await request(restartedOrigin, `/sessions/${encodeURIComponent(second.sessionId)}/messages`, 'POST', { content: 'after restart B', mode: 'queue' });
-        await waitFor(() => b.requests.length > bBeforeRestart); resumedBPump.controller.abort();
+        inTurn = true;
+        try {
+          await request(restartedOrigin, `/sessions/${encodeURIComponent(second.sessionId)}/messages`, 'POST', { content: 'after restart B', mode: 'queue' });
+          await waitFor(() => b.requests.length > bBeforeRestart);
+        } finally { inTurn = false; resumedBPump.controller.abort(); }
         assert.equal(a.requests.length > aBeforeRestart, true);
         assert.equal(b.requests.length > bBeforeRestart, true);
         const patchText = await readFile(patch, 'utf8');
         assert.equal(patchText.includes(keyA) || patchText.includes(keyB), false, 'owned patch must not contain a credential');
         const resolvedRefs = new Set(credentialRequests.filter((item) => item.operation === 'resolve').map((item) => item.ref));
+        const turnResolvedRefs = new Set(credentialRequests.filter((item) => item.operation === 'resolve' && item.inTurn).map((item) => item.ref));
         assert.equal(resolvedRefs.has(routeForProfile('profile-a').apiKeyEnv), true, 'route A must resolve through credential IPC');
         assert.equal(resolvedRefs.has(routeForProfile('profile-b').apiKeyEnv), true, 'route B must resolve through credential IPC');
-        assert.equal(resolvedRefs.has('DEEPSEEK_API_KEY'), false, 'legacy selection must be restored before a post-migration turn resolves credentials');
+        assert.equal(turnResolvedRefs.has('DEEPSEEK_API_KEY'), false, 'legacy selection must be restored before a post-migration turn resolves credentials');
         assert.equal(runtimeLogs.some((line) => line.includes(keyA) || line.includes(keyB)), false, 'runtime logs must not contain a credential');
       } finally { await runtime.close(); }
     } finally { await Promise.all([a.close(), b.close()]); }

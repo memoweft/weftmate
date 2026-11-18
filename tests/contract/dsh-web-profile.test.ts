@@ -6,9 +6,9 @@
  *   - 沙箱安全基线：sandbox-policy workspace-write 默认 + workspaceRoot = 子进程 cwd；
  *   - 审批基线：ask（danger-full-access → never）；
  *   - 权限预设三档（read-only / workspace-write / danger-full-access）；
- *   - web 宿主行（webserver / web-runtime / modules / connection / apiproxy 等）；
+ *   - web 宿主行（webserver / web-runtime / modules / connection / typertGateway 等）；
  *   - 官方客户端插件清单（32 个 dsh.client 行抽查）；
- *   - agent-presets 行（shipped standard preset 挂载面）。
+ *   - agent-preset-registry 行（shipped standard preset 挂载面）。
  *
  * 运行时来源：WEFTMATE_DSH_RUNTIME → vendored CLI；否则 checkout CLI（与契约测试同源纪律）。
  */
@@ -132,7 +132,7 @@ describe('weftmate web profile 组合基线（R2-02 安全基线 + G-01 官方�
       assert.match(stdout, /- id: ui-permission/)
 
       // 官方 web 宿主行。
-      for (const row of ['webserver', 'web-runtime', 'modules', 'connection', 'api-gateway', 'storage', 'storage-json', 'storage-domain', 'workspace', 'agent-presets']) {
+      for (const row of ['webserver', 'web-runtime', 'modules', 'connection', 'typert-gateway', 'storage', 'storage-json', 'storage-domain', 'workspace', 'agent-preset-registry']) {
         assert.ok(stdout.includes(`- id: ${row}`), `缺宿主行 ${row}`)
       }
       // 官方客户端插件清单抽查（32 个 dsh.client 行）。
@@ -150,10 +150,10 @@ describe('weftmate web profile 组合基线（R2-02 安全基线 + G-01 官方�
       // R3-03 扩展点：含 profile 补丁层的组合树挂 weftmate 自有行（宿主行 + 客户端 dsh.client 行）。
       const withLayer = await runDump(bin, home, false, 150_000)
       assert.equal(withLayer.code, 0, `dump（含补丁层）失败（exit ${withLayer.code}）：\n${withLayer.stderr.slice(-2000)}`)
-      assert.match(withLayer.stdout, /- id: weftmate-host\s*\n\s*name: \.\/plugins\/weftmate-host\.mjs/)
+      assert.match(withLayer.stdout, /- id: weftmate-host\s*\n\s*name: (?:>-\s*\n\s*)?(?:\.\/plugins\/weftmate-host\.mjs|file:\/\/\/[^\n]+\/plugins\/weftmate-host\.mjs)/)
       // R9 profile template does not own credentials. The final host-owned
       // --patch is tested below, so an owner patch cannot omit the safe bridge.
-      assert.doesNotMatch(withLayer.stdout, /name: \.\/plugins\/weftmate-credentials\.mjs/)
+      assert.doesNotMatch(withLayer.stdout, /\/plugins\/weftmate-credentials\.mjs/)
       assert.match(withLayer.stdout, /- id: '@weftmate\/client'\s*\n\s*name: '@weftmate\/client'/)
     } finally {
       await rm(home, { recursive: true, force: true })
@@ -181,8 +181,8 @@ describe('weftmate web profile 组合基线（R2-02 安全基线 + G-01 官方�
       const dumped = await runDump(bin, home, false, 150_000, [securityPatch])
       assert.equal(dumped.code, 0, `final security dump failed:\n${dumped.stderr.slice(-2000)}`)
       assert.match(dumped.stdout, /- id: credentials\s*\n\s*name: '@deepseek-ai\/dsh-credentials-local'\s*\n\s*disabled: true/)
-      assert.match(dumped.stdout, /- id: weftmate-safe-credentials\s*\n\s*name: \.\/plugins\/weftmate-credentials\.mjs/)
-      assert.equal((dumped.stdout.match(/name: \.\/plugins\/weftmate-credentials\.mjs/g) ?? []).length, 1)
+      assert.match(dumped.stdout, /- id: weftmate-safe-credentials\s*\n\s*name: (?:>-\s*\n\s*)?(?:\.\/plugins\/weftmate-credentials\.mjs|file:\/\/\/[^\n]+\/plugins\/weftmate-credentials\.mjs)/)
+      assert.equal((dumped.stdout.match(/\/plugins\/weftmate-credentials\.mjs/g) ?? []).length, 1)
       assert.match(dumped.stdout, /- id: ui-settings-models\s*\n\s*name: '@deepseek-ai\/dsh-client-ui-settings-models'/)
     } finally {
       await rm(home, { recursive: true, force: true })
@@ -274,7 +274,8 @@ describe('weftmate web profile 组合基线（R2-02 安全基线 + G-01 官方�
     // 宿主插件入口：webserver prefix 路由挂载（与官方 client-modules 同款注册面）；
     // P1-02 起路由表/白名单下沉 gateway/legacy（http + update）。
     const host = readFileSync(new URL('../../src/plugins/weftmate-host.mjs', import.meta.url), 'utf8').replace(/\r\n/g, '\n')
-    assert.match(host, /export const inject = \['webServer', 'apiProxy'\]/, 'P1-03 host must wait for the official apiProxy service')
+    assert.match(host, /inject\.splice\(1, 1, 'typertGateway'\)/, 'host must wait for the official Typert gateway')
+    assert.match(host, /createTypertAdapterClient\(ctx\)/)
     assert.match(host, /path: '\/weftmate', handler: serveWeftmate/)
     const gatewayRouter = readFileSync(new URL('../../src/runtime/gateway/legacy/http.mjs', import.meta.url), 'utf8').replace(/\r\n/g, '\n')
     assert.match(gatewayRouter, /\/weftmate\/status\.json/)

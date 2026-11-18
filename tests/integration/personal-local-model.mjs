@@ -109,25 +109,25 @@ try {
   // Reproduce the interrupted live create: product binding remains MiniPlus,
   // while the native empty session has not selected its model yet.
   const rpcId = randomUUID();
-  const resetSelection = await (await fetch(`${dshOrigin}/api/session.selectModel`, { method: 'POST',
+  const resetSelection = await (await fetch(`${dshOrigin}/api/session/selectModel`, { method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ type: 'client-request', rpcId, method: 'session.selectModel',
-      payload: { sessionId: command.sessionId, provider: 'deepseek-official', model: 'deepseek-v4-flash' } }),
+    body: JSON.stringify({ type: 'client-request', rpcId, method: 'session/selectModel',
+      payload: { args: { request: { sessionId: command.sessionId, provider: 'deepseek-official', model: 'deepseek-v4-flash' } } } }),
   })).json();
   assert.equal(resetSelection.rpcId, rpcId);
   assert.equal(resetSelection.result?.ok, true);
   const historyRpcId = randomUUID();
-  const emptyHistory = await (await fetch(`${dshOrigin}/api/session.history`, { method: 'POST',
+  const emptyHistory = await (await fetch(`${dshOrigin}/api/session/events`, { method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ type: 'client-request', rpcId: historyRpcId, method: 'session.history',
-      payload: { sessionId: command.sessionId, maxMessages: 20 } }),
+    body: JSON.stringify({ type: 'client-request', rpcId: historyRpcId, method: 'session/events',
+      payload: { args: { request: { address: { kind: 'session', sessionId: command.sessionId }, maxMessages: 20 } } } }),
   })).json();
   assert.equal(emptyHistory.rpcId, historyRpcId);
   assert.equal(emptyHistory.result?.ok, true);
   assert.equal(emptyHistory.result.value.hasMore, false);
-  assert.ok(emptyHistory.result.value.events.every(({ event }) =>
+  assert.ok(emptyHistory.result.value.records.every(({ event }) =>
     !['user/message', 'assistant/message', 'turn/start', 'turn/end'].includes(event.type)));
-  await new Promise((resolve) => setTimeout(resolve, 1_000)); // rc.5 persists an empty session asynchronously.
+  await new Promise((resolve) => setTimeout(resolve, 1_000)); // DSH persists an empty session asynchronously.
   await stopHost();
   output = '';
   child = startHost();

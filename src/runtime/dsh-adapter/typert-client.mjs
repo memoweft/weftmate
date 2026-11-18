@@ -36,10 +36,15 @@ function namespaceView(view) {
 
 /** Adapt the composed Typert runtime to the existing in-process client contract. */
 export function createTypertAdapterClient(ctx) {
+  const sessionsService = () => (typeof ctx.get === 'function' ? ctx.get('sessions') : ctx.sessions) ?? ctx.sessions
+  const agentsService = () => (typeof ctx.get === 'function' ? ctx.get('agents') : ctx.agents) ?? ctx.agents
+  const sessionControllerService = () => typeof ctx.get === 'function' ? ctx.get('sessionController') : ctx.sessionController
+  const workspaceRegistryService = () => typeof ctx.get === 'function' ? ctx.get('workspaceRegistry') : ctx.workspaceRegistry
   const gateway = ctx.typertGateway ?? ctx.get?.('typertGateway')
   if (typeof gateway?.invoke !== 'function') throw new TypeError('DSH typertGateway is required')
   const lifetime = new AbortController()
-  const peer = ctx.connection?.createPeer({ principal: { kind: 'owner' }, interactions: 'answer' })
+  const connection = typeof ctx.get === 'function' ? ctx.get('connection') : ctx.connection
+  const peer = connection?.createPeer({ principal: { kind: 'owner' }, interactions: 'answer' })
     ?? { id: randomUUID(), ctx, principal: { kind: 'owner' }, interactions: 'answer', signal: lifetime.signal }
   const invoke = (namespace, method, args = {}, signal) => gateway.invoke({ namespace, method, args, peer, signal })
   const call = (namespace, method, request = {}) => response(() => invoke(namespace, method, { request }))
@@ -170,8 +175,8 @@ export function createTypertAdapterClient(ctx) {
           for (const item of items) {
             const sessionId = item.sessionId
             if (subscribed.has(sessionId)) continue
-            const live = ctx.sessions?.get(sessionId)
-            const lastSeq = live ? live.events.at(-1)?.seq ?? -1 : (await history({ sessionId, maxMessages: 1 }, readSignal)).cursor
+            const live = sessionsService()?.get(sessionId)
+            const lastSeq = live ? (typeof live.snapshotEvents === 'function' ? live.snapshotEvents() : live.events).at(-1)?.seq ?? -1 : (await history({ sessionId, maxMessages: 1 }, readSignal)).cursor
             if (closed) return
             if (subscribed.has(sessionId)) continue
             subscribed.add(sessionId)
@@ -235,7 +240,8 @@ export function createTypertAdapterClient(ctx) {
       return { ...await call('session', 'prompt', { ...request, requestId }), rpcId: requestId }
     },
     attachment: ({ sessionId, attachmentId }) => response(async () => {
-      remember(sessionId, ctx.sessions?.get(sessionId)?.events ?? [])
+      const liveAttach = sessionsService()?.get(sessionId)
+      remember(sessionId, (typeof liveAttach?.snapshotEvents === 'function' ? liveAttach.snapshotEvents() : liveAttach?.events) ?? [])
       let beforeSeq
       while (!attachments.get(sessionId)?.has(attachmentId)) {
         const page = await history({ sessionId, beforeSeq })
@@ -250,9 +256,9 @@ export function createTypertAdapterClient(ctx) {
     }),
     models: ({ sessionId }) => response(async () => {
       const catalog = await invoke('session', 'modelCatalog')
-      const resolved = await ctx.sessionController?.resolveAgent(sessionId)
+      const resolved = await sessionControllerService()?.resolveAgent(sessionId)
       if (resolved?.error) throw resolved.error
-      const agent = resolved?.agent ?? resolved ?? ctx.agents?.get(sessionId)
+      const agent = resolved?.agent ?? resolved ?? agentsService()?.get(sessionId)
       const current = await agent?.model?.current() ?? catalog.default
       return { current, routable: catalog.groups.some(group => group.id === current?.provider && group.models.some(model => model.id === current.model)),
         groups: catalog.groups, failures: catalog.failures }
@@ -261,7 +267,7 @@ export function createTypertAdapterClient(ctx) {
   for (const method of ['create', 'rename', 'cancel', 'selectModel']) sessions[method] = request => call('session', method, request)
   const workspace = {
     list: () => response(async () => {
-      const registry = ctx.workspaceRegistry
+      const registry = workspaceRegistryService()
       let value
       if (registry) value = { items: await registry.list(), archivedSessionIds: registry.archivedSessionIds, pinnedSessionIds: registry.pinnedSessionIds }
       else {

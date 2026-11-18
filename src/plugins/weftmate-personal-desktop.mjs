@@ -14,7 +14,13 @@ import { shellWriteTargets } from './personal-write-targets.mjs';
 import { trackNativeFiles, appendNativeArtifacts, conversationCreatedFiles, createNativeFileProvenance } from './personal-native-files.mjs';
 import { personalWebFetchProvider, personalWebSearchProvider } from './personal-web-fetch.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
-import PlanModeController, { foldPlanMode } from '@deepseek-ai/dsh-plan-mode';
+import PlanModeController, { planProjectionDefinition } from '@deepseek-ai/dsh-plan-mode';
+
+function foldPlanMode(events = []) {
+  let state = planProjectionDefinition.init();
+  for (const event of events) state = planProjectionDefinition.apply(state, event);
+  return Boolean(state.active);
+}
 import { approvalRequired, approvalPrompt, classifyPersonalRisk, RISK_LABELS } from './personal-approval-policy.mjs';
 import { installCommandEncoding } from './personal-command-encoding.mjs';
 import { reviewSourceLocations } from './personal-review-sources.mjs';
@@ -61,25 +67,28 @@ function refused(code) {
   return error;
 }
 
+const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : s?.events;
+
 /** Nested script calls inherit only their real root tool call and original user receipt. */
 export function personalExecutionIdentity(exec) {
   const session = exec?.agent?.session;
+  const events = sessionEvents(session);
   const rootCallId = exec.rootCallId ?? exec.callId;
   if (session?.header?.agentPreset !== 'personal-remote' || typeof session.id !== 'string' ||
-      !Array.isArray(session.events) || ![exec.callId, rootCallId].every((id) => typeof id === 'string' && SAFE_ID.test(id))) {
+      !Array.isArray(events) || ![exec.callId, rootCallId].every((id) => typeof id === 'string' && SAFE_ID.test(id))) {
     throw refused('TOOL_SOURCE_UNAVAILABLE');
   }
-  const callIndex = session.events.findLastIndex((event) => event?.type === 'tool/call' && event.data?.callId === rootCallId);
-  const rootName = session.events[callIndex]?.data?.name;
-  const turn = session.events[callIndex]?.data?.turn;
-  const start = session.events.findLastIndex((event, index) => index < callIndex &&
+  const callIndex = events.findLastIndex((event) => event?.type === 'tool/call' && event.data?.callId === rootCallId);
+  const rootName = events[callIndex]?.data?.name;
+  const turn = events[callIndex]?.data?.turn;
+  const start = events.findLastIndex((event, index) => index < callIndex &&
     event?.type === 'turn/start' && event.data?.turn === turn);
-  const currentTurn = session.events.findLast(event => event?.type === 'turn/start' || event?.type === 'turn/end');
+  const currentTurn = events.findLast(event => event?.type === 'turn/start' || event?.type === 'turn/end');
   if (callIndex < 0 || !executionToolName(rootName) || rootCallId === exec.callId && rootName !== exec.name ||
       start < 0 || !Number.isSafeInteger(turn) || turn < 1 ||
       currentTurn?.type !== 'turn/start' || currentTurn.data?.turn !== turn ||
-      session.events.slice(start + 1, callIndex).some((event) => event?.type === 'turn/end')) throw refused('TOOL_SOURCE_UNAVAILABLE');
-  const users = session.events.slice(start + 1, callIndex).filter((event) =>
+      events.slice(start + 1, callIndex).some((event) => event?.type === 'turn/end')) throw refused('TOOL_SOURCE_UNAVAILABLE');
+  const users = events.slice(start + 1, callIndex).filter((event) =>
     event?.type === 'user/message' && event.data?.source?.kind === 'user');
   if (users.length !== 1 || typeof users[0].data?.source?.rpcId !== 'string' || !SAFE_ID.test(users[0].data.source.rpcId)) {
     throw refused('TOOL_SOURCE_UNAVAILABLE');
@@ -122,7 +131,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     ctx.get('agents')?.get(agent.session.id) === agent;
   const currentBinding = binding => {
     if (closed || !liveAgent(binding.agent)) return false;
-    const last = binding.agent.session.events.findLast(event => event?.type === 'turn/start' || event?.type === 'turn/end');
+    const last = sessionEvents(binding.agent.session).findLast(event => event?.type === 'turn/start' || event?.type === 'turn/end');
     if (last?.type !== 'turn/start' || last.data?.turn !== binding.payload.turn) return false;
     try {
       const current = personalExecutionIdentity({ agent: binding.agent, name: binding.payload.toolName,
@@ -175,7 +184,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     }
     const identity = callsByAgent.get(request.agent)?.get(request.callId);
     if (!identity || identity.toolName !== request.toolName) return 'unavailable';
-    const events = request.agent.session.events;
+    const events = sessionEvents(request.agent.session);
     const start = events.findLastIndex(event => event?.type === 'turn/start' || event?.type === 'turn/end');
     if (events[start]?.type !== 'turn/start' || events[start]?.data?.turn !== identity.turn) return 'unavailable';
     const asked = events.slice(start + 1).filter(event => event?.type === 'approval/asked' &&
@@ -579,7 +588,7 @@ function installProofBridge(ctx) {
     };
     void (async () => {
       const persistence = ctx.get?.('sessionPersistence');
-      if (typeof persistence?.readFrom !== 'function' || typeof persistence?.inspect !== 'function') return false;
+      if (typeof persistence?.open !== 'function' && (typeof persistence?.readFrom !== 'function' || typeof persistence?.inspect !== 'function')) return false;
       const deadline = Date.now() + 2_200;
       do {
         const artifact = await durableSourceRange(persistence, frame.sessionId, { turn: frame.turn });
@@ -681,20 +690,28 @@ export function registerPersonalBrowserTool(ctx, bridge) {
 export function initializePersonalFilePolicy(agent, sandboxPolicy) {
   if (agent?.session?.header?.agentPreset !== 'personal-remote') return;
   const session = agent.session;
+  const events = sessionEvents(session) ?? [];
   const mode = sandboxPolicy?.overrideOf(session);
-  const initial = session.events.findIndex(event => event.type === 'sandbox/mode');
-  const firstTurn = session.events.findIndex(event => event.type === 'turn/start');
+  const initial = events.findIndex(event => event.type === 'sandbox/mode');
+  const firstTurn = events.findIndex(event => event.type === 'turn/start');
   // DSH pins workspace-write during session creation, before the personal preset runs.
   // Upgrade that initial default, retaining later native permission switches.
   if (mode === undefined || mode === 'workspace-write' && initial >= 0 &&
       (firstTurn < 0 || initial < firstTurn) &&
-      session.events.filter(event => event.type === 'sandbox/mode').length === 1)
+      events.filter(event => event.type === 'sandbox/mode').length === 1)
     setSandboxMode(session, 'danger-full-access');
 }
 
 /** Unknown calls cannot execute, so they must fail before asking for consent. */
 export function personalToolAvailability(tools, exec) {
-  return tools.get(exec.name, exec.agent) ? null : { kind: 'deny',
+  if (tools.get(exec.name, exec.agent, exec.toolSet)) return null;
+  if (exec.name === 'run_code' && typeof tools.selectExecutor === 'function') {
+    try {
+      const desc = tools.selectExecutor(exec.agent)?.describe?.([]);
+      if (desc?.knownNames?.includes('run_code') || desc?.schemas?.some(item => item.name === 'run_code')) return null;
+    } catch { /* fall through to unknown tool denial */ }
+  }
+  return { kind: 'deny',
     reason: `Unknown tool "${exec.name}". Use a tool name from the available tool definitions.` };
 }
 
@@ -734,8 +751,8 @@ export function apply(ctx) {
       const decision = await next(), notice = projectContextNotice(step.agent.session);
       if (decision.kind !== 'enter' || !notice) return decision;
       const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
-      return { ...decision, messages: [...decision.messages.filter(message => message.source?.plugin !== 'weftmate-project'),
-        createUserMessage({ content: [{ type: 'text', text: notice }], source: { kind: 'plugin', plugin: 'weftmate-project' } })] };
+      return { ...decision, messages: [...decision.messages.filter(message => message.source?.plugin !== 'weftmate-project' && message.source?.kind !== 'weftmate-project'),
+        createUserMessage({ content: [{ type: 'text', text: notice }], source: { kind: 'weftmate-project' } })] };
     }
     const policy = await policyFor(step.agent);
     const projectNotice = await selectProjectContext(step.agent, policy);
@@ -743,29 +760,31 @@ export function apply(ctx) {
     const newUserMessage = step.messages?.some(message => message.source?.kind === 'user');
     if (policy.mode !== prior || policy.mode === 'plan' && newUserMessage) {
       // Native plan state survives resume. A later user switch explicitly rearms it.
-      if (newUserMessage || prior !== undefined || !step.agent.session.events.some(event => event.type === 'plan/mode'))
+      if (newUserMessage || prior !== undefined || !sessionEvents(step.agent.session).some(event => event.type === 'plan/mode'))
         ctx.get('planMode')?.set(step.agent, policy.mode === 'plan');
       selectedModes.set(step.agent, policy.mode);
     }
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
-    return { ...decision, messages: [...decision.messages.filter(message => !['weftmate-approval-mode', 'weftmate-project', 'weftmate-work-mode'].includes(message.source?.plugin)),
+    const ownSources = ['weftmate-approval-mode', 'weftmate-project', 'weftmate-work-mode'];
+    return { ...decision, messages: [...decision.messages.filter(message => !ownSources.includes(message.source?.plugin) && !ownSources.includes(message.source?.kind)),
       ...(policy.conversationMode ? [createUserMessage({ content: [{ type: 'text', text: chatModePrompt(policy.conversationMode) }],
-        source: { kind: 'plugin', plugin: 'weftmate-work-mode' } })] : []),
+        source: { kind: 'weftmate-work-mode' } })] : []),
       createUserMessage({ content: [{ type: 'text', text: approvalPrompt(policy.mode) }],
-        source: { kind: 'plugin', plugin: 'weftmate-approval-mode' } }),
+        source: { kind: 'weftmate-approval-mode' } }),
       ...(projectNotice ? [createUserMessage({ content: [{ type: 'text', text: projectNotice }],
-        source: { kind: 'plugin', plugin: 'weftmate-project' } })] : [])] };
+        source: { kind: 'weftmate-project' } })] : [])] };
   }, { prepend: true });
   // A work proposal is a completed chat reply. Never publish or execute the
   // computer call in chat, and never wait for a tool approval to end this turn.
   const proposeWork = async exec => {
     const session = exec.agent.session;
-    const start = session.events.findLastIndex(event => event.type === 'turn/start');
-    const turn = session.events[start]?.data.turn;
+    const events = sessionEvents(session);
+    const start = events.findLastIndex(event => event.type === 'turn/start');
+    const turn = events[start]?.data.turn;
     if (proposedWork.get(exec.agent)?.turn === turn) return proposedWork.get(exec.agent).promise;
-    const users = session.events.slice(start + 1).filter(event => event.type === 'user/message' && event.data.source?.kind === 'user');
+    const users = events.slice(start + 1).filter(event => event.type === 'user/message' && event.data.source?.kind === 'user');
     if (users.length !== 1) throw refused('TOOL_SOURCE_UNAVAILABLE');
     const user = users[0].data;
     const promise = bridge.request({ action: 'register_approval', sessionId: session.id, turn,
@@ -788,7 +807,7 @@ export function apply(ctx) {
     return (async function* () {
       const { isAgentLoopRequest } = await import('@deepseek-ai/dsh-llm');
       if (!isAgentLoopRequest(options)) { yield* next(); return; }
-      const turn = agent.session.events.findLast(event => event.type === 'turn/start')?.data.turn;
+      const turn = sessionEvents(agent.session).findLast(event => event.type === 'turn/start')?.data.turn;
       const policy = await policyFor(agent);
       if (policy.conversationMode !== 'chat' && (policy.conversationMode !== 'work' || policy.project)) { yield* next(); return; }
       let proposed = proposedWork.get(agent)?.turn === turn, held = null;
@@ -875,7 +894,7 @@ export function apply(ctx) {
       }
       return { kind: 'deny', reason: `WeftMate permission rule forbids ${selected.blocked.join(', ')}. This operation was not executed. Choose an alternative that does not perform the forbidden operation, or tell the user to change Settings > Permissions.` };
     }
-    if (policy.mode === 'plan' && foldPlanMode(owner.session.events))
+    if (policy.mode === 'plan' && foldPlanMode(sessionEvents(owner.session)))
       return { kind: 'deny', reason: 'Present the plan with exit_plan_mode and wait for approval before executing this operation.' };
     const required = permissionApprovalCategories(selected);
     if (!required.length) return decision;

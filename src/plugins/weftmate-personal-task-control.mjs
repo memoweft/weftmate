@@ -27,8 +27,10 @@ function receiptOf(message) {
     ? source.rpcId : null;
 }
 
+const sessionEvents = (s) => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : s?.events;
+
 function openTurnOf(agent) {
-  const events = agent?.session?.events;
+  const events = sessionEvents(agent?.session);
   if (!Array.isArray(events) || agent.phase?.kind !== 'running' ||
       agent.phase.abort?.signal?.aborted) return null;
   const last = events.findLast((event) => event?.type === 'turn/start' || event?.type === 'turn/end');
@@ -41,9 +43,10 @@ export function stopExactTask(agents, claimedBySession, input) {
   const unknown = () => ({ status: 'unconfirmed', outcomes: input.receiptIds.map((receiptId) =>
     ({ receiptId, status: 'unconfirmed' })) });
   const agent = agents.get(input.sessionId);
+  const events = sessionEvents(agent?.session);
   if (!agent || agent.session?.id !== input.sessionId ||
       agent.session?.header?.agentPreset !== 'personal-remote' ||
-      !Array.isArray(agent.session.events) || !agent.inbox) return unknown();
+      !Array.isArray(events) || !agent.inbox) return unknown();
   const wanted = new Set(input.receiptIds);
   const queued = new Map();
   for (const message of [...(agent.inbox.nextTurn ?? []), ...(agent.inbox.nextStep ?? [])]) {
@@ -57,9 +60,9 @@ export function stopExactTask(agents, claimedBySession, input) {
   const activeMessages = [];
   const persistedMessages = new Set();
   if (openTurn !== null) {
-    const startIndex = agent.session.events.findLastIndex((event) => event?.type === 'turn/start' &&
+    const startIndex = events.findLastIndex((event) => event?.type === 'turn/start' &&
       event.data?.turn === openTurn);
-    for (const event of agent.session.events.slice(startIndex + 1)) {
+    for (const event of events.slice(startIndex + 1)) {
       if (event?.type === 'user/message' && event.data?.source?.kind === 'user') {
         activeMessages.push(event.data);
         persistedMessages.add(event.data.id);

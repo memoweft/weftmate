@@ -43,21 +43,39 @@ test('exact queued removal preserves unrelated messages, including duplicate tex
 })
 
 test('pinned rc.5 inbox removal survives durable replay with unrelated queue intact', async () => {
-  const { Inbox } = await import(pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime',
-    'node_modules', '@deepseek-ai', 'dsh-agent', 'lib', 'types', 'inbox.js')).href)
-  const session = { header: { seedLength: 0 }, events: [] as any[], append(type: string, data: any) {
-    const event = { seq: this.events.length + 1, type, data: structuredClone(data) }
-    this.events.push(event)
-    return event
-  } }
-  const notifications = { inserted: () => {}, discarded: () => {}, claimed: () => {} }
-  const inbox = new Inbox(session, notifications)
-  inbox.append('next-turn', message('target', 'receipt-a'))
-  inbox.append('next-turn', message('other', 'receipt-b'))
-  assert.equal(inbox.remove('target'), true)
-  assert.equal(session.events.at(-1).data.outcome, 'canceled')
-  const replayed = new Inbox(session, notifications)
-  assert.deepEqual(replayed.nextTurn.map((item: any) => item.id), ['other'])
+  const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime',
+    'node_modules', '@deepseek-ai', name, 'lib', 'index.js')).href
+  const [{ Context }, llm, { default: Sessions }, { default: SessionProjections }, { default: SystemPrompt },
+    tools, nativeToolExecutor, { default: AgentRegistry }, { default: AgentLoop }] = await Promise.all([
+    import(vendor('cordis')), import(vendor('dsh-llm')), import(vendor('dsh-session')),
+    import(vendor('dsh-session-projection')), import(vendor('dsh-system-prompt')), import(vendor('dsh-tools')),
+    import(vendor('dsh-tool-executor-native')), import(vendor('dsh-agent')), import(vendor('dsh-agent-loop')),
+  ])
+  const ctx = new Context()
+  try {
+    await ctx.plugin(llm.default)
+    await ctx.plugin(Sessions)
+    await ctx.plugin(SessionProjections)
+    await ctx.plugin(SystemPrompt)
+    await ctx.plugin(tools.default)
+    await ctx.plugin(nativeToolExecutor)
+    await ctx.plugin(AgentRegistry)
+    await ctx.plugin(AgentLoop, { agents: [] })
+    const handle = await ctx.agentLoop.createAgent(ctx, { sessionId: 'inbox-replay-1',
+      setup: async () => {} })
+    let seed: any[] = []
+    try {
+      handle.agent.inbox.append('next-turn', message('target', 'receipt-a'))
+      handle.agent.inbox.append('next-turn', message('other', 'receipt-b'))
+      assert.equal(handle.agent.inbox.remove('target'), true)
+      seed = handle.agent.session.snapshotEvents()
+      assert.equal(seed.at(-1).data.outcome, 'canceled')
+    } finally { await handle.dispose() }
+    const replayed = await ctx.agentLoop.createAgent(ctx, { sessionId: 'inbox-replay-2', seed, setup: async () => {} })
+    try {
+      assert.deepEqual(replayed.agent.inbox.nextTurn.map((item: any) => item.id), ['other'])
+    } finally { await replayed.dispose() }
+  } finally { await ctx.fiber.dispose() }
 })
 
 test('claimed before user persistence and streaming turn cancel only exact active source', () => {

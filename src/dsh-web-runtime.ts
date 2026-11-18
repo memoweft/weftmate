@@ -21,7 +21,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { lstat, mkdir, readFile, readdir, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { dirname, join, isAbsolute } from 'node:path'
+import { dirname, join, isAbsolute, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { artifactContentType, validArtifactFileName } from './personal-artifacts/index.mjs'
 
@@ -1233,12 +1233,31 @@ export class DshWebRuntime {
       ? join(this.opts.runtimePath, 'node_modules', '@deepseek-ai', 'dsh', 'config', 'agent-presets')
       : join(this.opts.checkoutPath, 'apps', 'cli', 'config', 'agent-presets')
     const userPresetRoot = join(this.opts.homeDir, '.agent-presets')
+    const profileDir = resolve(this.opts.homeDir, 'profiles', this.opts.profileName)
+    const patchPluginRoots = [...new Set(
+      this.opts.patchFiles
+        .map((file) => resolve(dirname(resolve(file)), 'plugins'))
+        .filter((dir) => dir !== join(profileDir, 'plugins')),
+    )]
     await writePersonalRemotePreset(this.opts.homeDir, this.opts.profileName)
     await writePersonalSharedChatPreset(this.opts.homeDir, this.opts.profileName)
     const visit = (value: unknown): void => {
       if (value === null || typeof value !== 'object') return
       if (Array.isArray(value)) { for (const child of value) visit(child); return }
       const row = value as Record<string, unknown>
+      if (typeof row.name === 'string' && row.name.startsWith('file:')) {
+        try {
+          const resolved = resolve(fileURLToPath(row.name))
+          for (const patchPluginsDir of patchPluginRoots) {
+            const rel = relative(patchPluginsDir, resolved)
+            if (rel !== '' && !rel.startsWith('..') && !isAbsolute(rel)
+              && !existsSync(resolved) && existsSync(join(profileDir, 'plugins', rel))) {
+              row.name = `./plugins/${rel.replaceAll('\\', '/')}`
+              break
+            }
+          }
+        } catch { /* retain malformed URL for downstream validation */ }
+      }
       // The final owned snapshot selects the budget decorator while preserving
       // the native adapter's merged provider/settings configuration.
       if (this.opts.profilePolicy === 'weftmate' && row.id === 'llm-pi-ai') row.name = './plugins/weftmate-model-budget.mjs'
@@ -1295,7 +1314,12 @@ export class DshWebRuntime {
         finalized.push({ id: `preset-${id}`, name: '@deepseek-ai/dsh-agent-preset', config: { id, order, plugins } })
       }
     }
-    assertSecureCredentialComposition(finalized, 'weftmate-safe-credentials', './plugins/weftmate-credentials.mjs')
+    assertSecureCredentialComposition(
+      finalized,
+      'weftmate-safe-credentials',
+      './plugins/weftmate-credentials.mjs',
+      join(this.opts.homeDir, 'profiles', this.opts.profileName, 'plugins', 'weftmate-credentials.mjs'),
+    )
     if (this.opts.personalHostApiProxy) {
       assertPersonalApiProxyComposition(finalized,
         join(this.opts.homeDir, 'profiles', this.opts.profileName, 'plugins', 'weftmate-personal-api-proxy.mjs'))

@@ -21,7 +21,7 @@ test('abrupt host exit kills the native worker and its still-running server tree
   try {
     const ready=await new Promise<{workerPid:number}>((done,reject)=>{const timer=setTimeout(()=>reject(Error('Synthetic host startup timed out')),10000);parent.once('message',(message:any)=>{clearTimeout(timer);done(message);});parent.once('error',error=>{clearTimeout(timer);reject(error);});parent.once('exit',()=>{clearTimeout(timer);reject(Error('Synthetic host exited before ready'));});});
     const pids=(await readFile(join(root,'starts'),'utf8')).trim().split('\n').map(Number);
-    assert.equal(pids.length,2);assert.ok(pids.some(alive),'a native server is still handling its deliberately slow call');
+    assert.equal(pids.length,4);assert.ok(pids.some(alive),'a native server is still handling its deliberately slow call');
     assert.ok(ready.workerPid>0&&alive(ready.workerPid),'the SDK server belongs to a live native worker');pids.push(ready.workerPid);
     const exited=new Promise(resolve=>parent.once('exit',resolve));parent.kill('SIGKILL');await exited;
     const deadline=Date.now()+5000;while(pids.some(alive)&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,25));
@@ -32,8 +32,9 @@ test('connector schemas belong to the actual native agent scope and disappear on
   const {Context}=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/cordis/lib/index.js');
   const {SystemPrompt}=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js');
   const {ToolRuntime}=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-tools/lib/index.js');
+  const nativeExec=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-tool-executor-native/lib/index.js');
   const {createScope}=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-scope/lib/index.js');
-  const ctx=new Context();new SystemPrompt(ctx,{});new ToolRuntime(ctx,{mode:'native'});
+  const ctx=new Context();new SystemPrompt(ctx,{});new ToolRuntime(ctx);await ctx.plugin(nativeExec);
   const agent={session:{id:'synthetic',header:{agentPreset:'personal-remote'}},ctx:null as any},other={session:{id:'other'}};
   const scope=createScope(ctx,agent),otherScope=createScope(ctx,other);agent.ctx=scope.ctx;
   try {
@@ -74,7 +75,7 @@ test('native crash loops stop after two restarts; shutdown leaves zero owned ser
     manager.catalog('a');
     const deadline=Date.now()+8000;while(Date.now()<deadline&&manager.list('a')[0].status!=='failed')await new Promise(resolve=>setTimeout(resolve,100));
     assert.equal(manager.list('a')[0].status,'failed');assert.equal(manager.catalog('a').length,0);
-    const pids=(await readFile(starts,'utf8')).trim().split('\n').map(Number);assert.equal(pids.length,4,'one add test, one connection and exactly two native restarts');
+    const pids=(await readFile(starts,'utf8')).trim().split('\n').map(Number);assert.equal(pids.length,8,'one add test, one connection and exactly two native restarts (two spawns per auto-negotiated stdio connection)');
     await manager.close();assert.equal(pids.filter(alive).length,0);
   } finally {await manager.close();await rm(root,{recursive:true,force:true});}
 });

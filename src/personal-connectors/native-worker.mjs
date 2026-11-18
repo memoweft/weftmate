@@ -23,7 +23,9 @@ process.on('message', async message => {
           ['', ...(process.platform === 'win32' ? (process.env.PATHEXT ?? '.EXE;.CMD;.BAT').split(';') : [])].map(ext => join(dir, command + ext)));
         if (!paths.some(existsSync)) throw Object.assign(new Error('找不到启动命令，请确认程序已安装，并检查命令。'), { code: 'CONNECTOR_COMMAND_MISSING' });
       }
-      const { Client } = await import(pathToFileURL(join(message.runtime, 'node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js')).href);
+      const mcpClientPath = join(message.runtime, 'node_modules/@modelcontextprotocol/client/dist/index.mjs');
+      const legacySdkPath = join(message.runtime, 'node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js');
+      const { Client } = await import(pathToFileURL(existsSync(mcpClientPath) ? mcpClientPath : legacySdkPath).href);
       const originalRequest = Client.prototype.request;
       // Read-only observer; unchanged request, response and error. One SDK and
       // one connection per worker. Covered against the pinned native bridge.
@@ -32,6 +34,7 @@ process.on('message', async message => {
         if (request.method === 'tools/list') for (const tool of result.tools) metadata.set(tool.name, tool);
         return result;
       };
+      const { Context, Service } = await import(pathToFileURL(join(message.runtime, 'node_modules/@deepseek-ai/cordis/lib/index.js')).href);
       const native = await import(pathToFileURL(join(message.runtime, 'node_modules/@deepseek-ai/dsh-mcp-client/lib/index.js')).href);
       const nativeTools = await import(pathToFileURL(join(message.runtime, 'node_modules/@deepseek-ai/dsh-tools/lib/index.js')).href);
       validateOutput = nativeTools.validateJsonSchemaValue;
@@ -44,16 +47,23 @@ process.on('message', async message => {
         return { name: definition.name, rawName: raw?.name ?? definition.name, displayName: raw?.annotations?.title ?? raw?.title, description: definition.description.slice(0, 500),
           parameters: definition.parameters, category: classifyConnectorTool(raw ?? definition), network: raw?.annotations?.openWorldHint === true };
       }) });
-      const ctx = { root: {}, effect(fn) { disposers.push(fn()); }, tools: { register(definition) {
-        nativeTools.assertSupportedJsonSchema(definition.output.schema);
-        definitions.set(definition.name, definition); snapshot();
-        return () => { definitions.delete(definition.name); snapshot(); };
-      } }, logger: Object.fromEntries(['warn','error','info'].map(level => [level, text => {
+      const cordis = new Context();
+      Object.defineProperty(cordis, 'logger', { value: Object.fromEntries(['warn','error','info'].map(level => [level, text => {
+        const messageText = String(text ?? '');
         // Never forward arbitrary server errors, URLs, headers or child stderr.
-        const status = /giving up|reconnect stopped/i.test(text) ? 'failed' : /reconnected/i.test(text) ? 'ready' : /reconnect|retrying/i.test(text) ? 'recovering' : undefined;
-        if (status) send({ action: 'status', status, attempt: /attempt (\d+)/.exec(text)?.[1] });
-      }])) };
-      await native.apply(ctx, message.config);
+        const status = /giving up|reconnect stopped/i.test(messageText) ? 'failed' : /reconnected/i.test(messageText) ? 'ready' : /reconnect|retrying/i.test(messageText) ? 'recovering' : undefined;
+        if (status) send({ action: 'status', status, attempt: /attempt (\d+)/.exec(messageText)?.[1] });
+      }])), configurable: true });
+      await cordis.plugin(class extends Service {
+        constructor(ctx) { super(ctx, 'tools'); }
+        register(definition) {
+          nativeTools.assertSupportedJsonSchema(definition.output.schema);
+          definitions.set(definition.name, definition); snapshot();
+          return () => { definitions.delete(definition.name); snapshot(); };
+        }
+      });
+      await cordis.plugin(native, message.config);
+      disposers.push(() => cordis.fiber.dispose());
       snapshot(); send({ id: message.id, ok: true });
     } else if (message.action === 'call') {
       const definition = definitions.get(message.name);

@@ -155,7 +155,7 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
   if (!Number.isSafeInteger(seq) || seq < 0) return null
   const type = event?.type
   let projected = null
-  if (type === 'user/message' && event.data?.source?.plugin === 'weftmate-reminder') {
+  if (type === 'user/message' && (event.data?.source?.kind === 'weftmate-reminder' || event.data?.source?.kind === 'plugin:weftmate-reminder' || event.data?.source?.plugin === 'weftmate-reminder')) {
     const data = messageText(event.data);
     if (data) projected = { seq, type: 'assistant.message', data: { ...data, reminder: true } };
   } else if (type === 'user/message' && event.data?.source?.kind === 'user') {

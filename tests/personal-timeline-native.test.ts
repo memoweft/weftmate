@@ -29,17 +29,17 @@ test('timeline reads official live session events without adding unsupported dur
     session.append('turn/start', { turn: 1 })
     session.append('step/start', { turn: 1, step: 1 })
     session.append('tool/call', { turn: 1, step: 1, callId: 'save', name: 'write', arguments: '{"fileName":"报告.md"}' })
-    session.append('tool/result', { turn: 1, step: 1, message: { role: 'user', id: 'result-message', source: { kind: 'tool', callId: 'save' },
+    session.append('tool/result', { turn: 1, step: 1, message: { role: 'tool', id: 'result-message', source: { kind: 'tool', callId: 'save' },
       content: [{ type: 'tool-result', toolCallId: 'save', content: [{ type: 'text', text: '{"artifactId":"file-native","fileName":"报告.md","size":20}' }] }] } }, { surfaceOp: 'append' })
     session.append('step/end', { turn: 1, step: 1 })
     session.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
-    const original = session.events
+    const original = session.snapshotEvents()
     const adapter = createDshSessionAdapter({ sessions: { list: async () => ({ result: { ok: true, value: { items: [{ sessionId: session.id }] } } }) }, events: {} }, { readLog: nativeTimelineLog(ctx) })
     const page = await adapter.historyPage(session.id)
     assert.deepEqual(page.events.map((event: any) => event.type), ['turn.started','task.started','step.started','artifact.created','task.ended','turn.ended'])
     assert.equal(page.events[3].data.completedStep.stepId, 'save')
-    assert.ok(session.events.every((event: any) => KNOWN_SESSION_EVENT_TYPES.has(event.type)))
-    assert.equal(session.events, original); assert.deepEqual(seen, [0,1,2,3,4,5])
+    assert.ok(original.every((event: any) => KNOWN_SESSION_EVENT_TYPES.has(event.type)))
+    assert.deepEqual(session.snapshotEvents(), original); assert.deepEqual(seen, [0,1,2,3,4,5])
   } finally { await ctx.fiber.dispose() }
 })
 

@@ -105,7 +105,7 @@ import { parseWindowsSendTo, forwardWindowsSendTo } from './windows-system-integ
 import { memoryRecallDestination, memoryRecallModelTier, memorySessionPolicy } from './personal-memory/policy.mjs';
 import { handlePersonalMemoryTool } from './personal-access/memory-runtime.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
-import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
+import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, fetchRuntimeWithCookie, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
 // This Intel-only local trial follows the machine's GPU constraint on Finder launch too.
 if (process.platform === 'darwin' && packageInfo.macTrial) {
@@ -482,7 +482,7 @@ async function validateStageOneModel({ baseUrl, apiKey, model }) {
 
 async function stageOneGateway(path, init = {}) {
   if (!runtimeOrigin) throw new Error('runtime unavailable');
-  const response = await fetch(new URL(`/weftmate/api/v1${path}`, runtimeOrigin), { ...init, headers: { 'content-type': 'application/json', ...(init.headers ?? {}) } });
+  const response = await fetchRuntimeWithCookie(runtimeOrigin, `/weftmate/api/v1${path}`, { ...init, headers: { 'content-type': 'application/json', ...(init.headers ?? {}) } });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const nativeCode = typeof body.error?.code === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(body.error.code)
