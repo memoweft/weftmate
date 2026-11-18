@@ -32,5 +32,8 @@ export async function* meteredNativeStream(options, stream, scheduler = process.
       if (chunk?.type === 'usage') usage = chunk.usage;
       yield chunk;
     }
-  } finally { if (ticket.requestId) await post('finish', { ...ticket, usage, source: 'dsh' }); }
+  } finally {
+    await phaseReport;
+    if (ticket.requestId) await post('finish', { ...ticket, usage, source: 'dsh' });
+  }
 }

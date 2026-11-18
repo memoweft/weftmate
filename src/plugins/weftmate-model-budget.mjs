@@ -22,6 +22,7 @@ export function apply(ctx, config) {
   const probes = new Map();
   const capacities = new Map();
   const slowRetries = new Set();
+  const retryReports = new Map();
   let rawSource = () => config;
   let lastRaw, lastVersion, projected;
   let version = 0;
@@ -115,6 +116,7 @@ export function apply(ctx, config) {
             scheduler, { profileId: options.provider, ...(background ? {} : { sessionId: options.sessionId ?? '' }) });
           try {
           if (slowRetries.delete(options.sessionId) && scheduler && !background) {
+            await retryReports.get(options.sessionId);
             await fetch(`${scheduler}/progress`, { method: 'POST', headers: { 'content-type': 'application/json' },
               body: JSON.stringify({ sessionId: options.sessionId, phase: 'retrying' }), signal: AbortSignal.timeout(1000) }).catch(() => {});
           }
@@ -207,12 +209,13 @@ export function apply(ctx, config) {
     if (!registeredSettings) await refresh();
   });
   ctx.on('session/event', (session, event) => {
-    if (event.type === 'turn/end') { slowRetries.delete(session.id); return; }
+    if (event.type === 'turn/end') { slowRetries.delete(session.id); retryReports.delete(session.id); return; }
     if (event.type !== 'llm/retry' || event.data?.failure?.code !== 'TIMEOUT') return;
     slowRetries.add(session.id);
     const scheduler = process.env.WEFTMATE_MODEL_SCHEDULER_URL;
-    if (scheduler) void fetch(`${scheduler}/progress`, { method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sessionId: session.id, phase: 'retrying' }), signal: AbortSignal.timeout(1000) }).catch(() => {});
+    if (scheduler) retryReports.set(session.id, (retryReports.get(session.id) ?? Promise.resolve()).then(() =>
+      fetch(`${scheduler}/progress`, { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionId: session.id, phase: 'retrying' }), signal: AbortSignal.timeout(1000) })).catch(() => {}));
   });
 }
 

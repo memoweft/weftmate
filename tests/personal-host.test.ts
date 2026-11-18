@@ -124,6 +124,8 @@ test('direct Electron personal-host entry refuses an unmarked synthetic profile 
 test('host mode disables browser auto-open and writes stopped state without a stale origin', () => {
   const main = readFileSync(join(repository, 'src', 'main.mjs'), 'utf8')
   assert.match(main, /noOpen: personalHostMode/)
+  const bootstrap = readFileSync(join(repository, 'src', 'plugins', 'weftmate-secure-snapshot-bootstrap.mjs'), 'utf8')
+  assert.ok(bootstrap.includes("args: ['--port', port, ...(process.env?.WEFTMATE_SECURE_BOOTSTRAP_NO_OPEN === '1' ? ['--no-open'] : [])]"))
   assert.match(main, /hostLifecycleState = 'stopping'/)
   assert.match(main, /hostLifecycleState = 'stopped'/)
   assert.deepEqual(hostRuntimeState('starting', 'http://127.0.0.1:51234'), { state: 'listening', origin: 'http://127.0.0.1:51234' })

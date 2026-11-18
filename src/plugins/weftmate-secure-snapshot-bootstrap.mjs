@@ -145,7 +145,7 @@ const bootSnapshot = async (entries) => {
       }
     }
     hostCtx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, environment)
-    provideCmdline(hostCtx, { args: ['--port', port], exit: (code) => void requestShutdown(code) })
+    provideCmdline(hostCtx, { args: ['--port', port, ...(process.env?.WEFTMATE_SECURE_BOOTSTRAP_NO_OPEN === '1' ? ['--no-open'] : [])], exit: (code) => void requestShutdown(code) })
   })
   app.current = ctx
 
