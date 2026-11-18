@@ -69,7 +69,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
       // A recurring local time may disappear at spring DST. Skip that calendar
       // occurrence instead of letting one rejected native at end the series.
       while (true) {
-        try { native.createAtScheduleRecord(row.id, row.prompt, at, now); break; }
+        try { native.createAtScheduleRecord(row.id, row.prompt, at, now, 'WeftMate schedule'); break; }
         catch (error) {
           if (!['invalid_rule', 'not_future'].includes(error.code)) throw error;
           at = nextCalendarInput(row.repeat, row.timeZone, now, at.date);
@@ -203,7 +203,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
         const content = scheduleContent(input.prompt);
         const at = content.repeat?.kind === 'interval' ? null : input.at ?? nextCalendarInput(content.repeat, policy.timeZone, clock());
         // Decode before removing the previous occurrence. DSH remains the time/DST authority.
-        if (at) native.createAtScheduleRecord('validate', input.prompt, at, clock());
+        if (at) native.createAtScheduleRecord('validate', input.prompt, at, clock(), 'WeftMate schedule');
         const created = requireSuccess(await call(agent, 'schedule_create', { prompt: input.prompt, ...(at ? { at } : { every_seconds: content.repeat.seconds }) }));
         const current = prior && folded(agent).find(r => r.id === prior.nativeId);
         if (current) requireSuccess(await call(agent, 'schedule_delete', { id: prior.nativeId }));

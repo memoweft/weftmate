@@ -15,9 +15,12 @@ test('production hooks sanitize real DSH outcomes, preserve conflict retries and
     import(vendor('cordis')),import(vendor('dsh-system-prompt')),import(vendor('dsh-session')),import(vendor('dsh-tools')),
     import(vendor('dsh-llm')),import(vendor('dsh-scope')),import(pathToFileURL(staged.stageFile(resolve('src/plugins/weftmate-personal-reply-content.mjs'))).href)]);
   const ctx = new Context(), diagnostics: string[] = [];
-  Object.defineProperty(ctx,'logger',{value:{warn:(line:string)=>diagnostics.push(line)},configurable:true});
+  Object.defineProperty(ctx,'logger',{value:{warn:(line:string)=>diagnostics.push(line),error:(line:string)=>diagnostics.push(line),info(){},debug(){}},configurable:true});
   t.after(async()=>{await ctx.fiber.dispose();rmSync(root,{recursive:true,force:true});});
-  await ctx.plugin(SystemPrompt,{}); await ctx.plugin(Sessions); await ctx.plugin(Llm); await ctx.plugin(tools.default,{mode:'native'});
+  await ctx.plugin(SystemPrompt,{}); await ctx.plugin(Sessions); await ctx.plugin(Llm);
+  await ctx.plugin((await import(vendor('dsh-session-projection'))).default);
+  await ctx.plugin(tools.default);
+  await ctx.plugin(await import(vendor('dsh-tool-executor-native')));
   await ctx.plugin(plugin.default);
   const session=ctx.sessions.create('reply-content',{meta:{agentPreset:'personal-remote'}});
   const agent:any={id:session.id,session,options:{}};const scope=createScope(ctx,agent);agent.ctx=scope.ctx;
@@ -42,14 +45,14 @@ test('production hooks sanitize real DSH outcomes, preserve conflict retries and
   }
   for await(const chunk of cleanReplyStream(source(),{tools:[{name:'write'}]})) {
     if(chunk.type==='block-end'&&chunk.block.type==='tool-call') {
-      const result=await ctx.tools.execute({name:chunk.block.name,arguments:JSON.parse(chunk.block.arguments),callId:chunk.block.id,agent,signal:new AbortController().signal});
+      const result=(await ctx.tools.execute({calls:[{type:'tool-call',id:chunk.block.id,name:chunk.block.name,arguments:JSON.stringify(JSON.parse(chunk.block.arguments))}],agent,signal:new AbortController().signal})).results[0].result;
       assert.equal(result.isError,false);
     }
   }
   assert.equal(executions,0);assert.equal(existsSync(join(root,'actual.txt')),false,'body text never performs a file operation');
-  await ctx.tools.execute({name:'write',arguments:{content:'native'},callId:'native',agent,signal:new AbortController().signal});
+  await ctx.tools.execute({calls:[{type:'tool-call',id:'native',name:'write',arguments:JSON.stringify({content:'native'})}],agent,signal:new AbortController().signal});
   assert.equal(executions,1);assert.equal(readFileSync(join(root,'actual.txt'),'utf8'),'native');
-  const failure=await ctx.tools.execute({name:'memory_correct',arguments:{},callId:'failure',agent,signal:new AbortController().signal});
+  const failure=(await ctx.tools.execute({calls:[{type:'tool-call',id:'failure',name:'memory_correct',arguments:JSON.stringify({})}],agent,signal:new AbortController().signal})).results[0].result;
   assert.equal(failure.isError,true);assert.match(failure.content[0].text,/这次没记住，请稍后再试/);
   assert.doesNotMatch(JSON.stringify(failure.content),/memory_correct|MEMORY_UNAVAILABLE|cognition/);
   assert.doesNotMatch(failure.error.message,/MEMORY_UNAVAILABLE|memory_correct|cognition/);
@@ -58,7 +61,7 @@ test('production hooks sanitize real DSH outcomes, preserve conflict retries and
   ctx.tools.register(tools.defineTool({name:'memory_query',description:'fresh revision',parameters:{},
     output:{schema:{type:'json'},render:(_:any,value:any)=>[{type:'text',text:JSON.stringify(value)}]},
     execute:async()=>{queryCount++;return {state:'ready',worldRevision:7};}}));
-  const invoke=(name:string,args:object)=>ctx.tools.execute({name,arguments:args,callId:'retry-'+name,agent,signal:new AbortController().signal});
+  const invoke=(name:string,args:object)=>ctx.tools.execute({calls:[{type:'tool-call',id:'retry-'+name,name,arguments:JSON.stringify(args)}],agent,signal:new AbortController().signal}).then(batch=>batch.results[0].result);
   const conflict=await invoke('memory_correct',{expectedWorldRevision:6});
   assert.equal(conflict.value.receipt.state,'revision_conflict');
   assert.equal(conflict.value.receipt.worldRevision,7);
@@ -78,13 +81,13 @@ test('production hooks sanitize real DSH outcomes, preserve conflict retries and
   ctx.tools.register(tools.defineTool({name:'memory_forget',description:'rejected receipt',parameters:{},
     output:{schema:{type:'json'},render:(_:any,value:any)=>[{type:'text',text:JSON.stringify(value)}]},
     execute:async()=>({receipt:{state:'rejected',reasonCode:'MEMORY_UNAVAILABLE',kind:'cognition'}})}));
-  const rejected=await ctx.tools.execute({name:'memory_forget',arguments:{},callId:'receipt',agent,signal:new AbortController().signal});
+  const rejected=(await ctx.tools.execute({calls:[{type:'tool-call',id:'receipt',name:'memory_forget',arguments:JSON.stringify({})}],agent,signal:new AbortController().signal})).results[0].result;
   assert.equal(rejected.isError,false,'presentation does not change receipt dispatch semantics');
   assert.deepEqual(rejected.value,{message:'这次没忘掉，请稍后再试。',instruction:'请直接用上面这句话回复用户，不要解释处理过程。'});
   assert.doesNotMatch(JSON.stringify([rejected.value,rejected.content]),/MEMORY_UNAVAILABLE|memory_forget|cognition/);
   session.append('tool/call',{turn:1,step:1,callId:'validation',name:'memory_correct',arguments:'{}'});
-  session.append('tool/result',{turn:1,step:1,error:{code:'MEMORY_REQUEST_INVALID'},message:{source:{kind:'tool',callId:'validation'},content:[{type:'tool-result',toolCallId:'validation',isError:true,content:[{type:'text',text:'memory_correct MEMORY_REQUEST_INVALID cognition'}]}]}},{surfaceOp:'append',sourceEventSeqs:[session.events.at(-1).seq]});
-  const logged=session.events.at(-1);
+  session.append('tool/result',{turn:1,step:1,error:{code:'MEMORY_REQUEST_INVALID'},message:{isError:true,source:{kind:'tool',callId:'validation'},content:[{type:'tool-result',toolCallId:'validation',isError:true,content:[{type:'text',text:'memory_correct MEMORY_REQUEST_INVALID cognition'}]}]}},{surfaceOp:'append',sourceEventSeqs:[session.snapshotEvents().at(-1).seq]});
+  const logged=session.snapshotEvents().at(-1);
   assert.equal(logged.data.error.code,'MEMORY_REQUEST_INVALID');
   assert.doesNotMatch(JSON.stringify(logged.data.message.content),/memory_correct|MEMORY_REQUEST_INVALID|cognition/);
   assert.doesNotMatch(JSON.stringify(session.deriveMessages()),/memory_correct|MEMORY_REQUEST_INVALID|cognition/);

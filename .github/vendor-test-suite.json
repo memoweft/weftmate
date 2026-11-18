@@ -110,7 +110,7 @@
     },
     {
       "file": "tests/personal-model-api-proxy.test.ts",
-      "name": "personal host has one ApiProxy: selecting B leaves default A through failure and cold restore"
+      "name": "personal host keeps one Typert model selection path: selecting B leaves default A through failure and cold restore"
     },
     {
       "file": "tests/personal-model-idle.test.ts",
@@ -170,7 +170,7 @@
     },
     {
       "file": "tests/stage1-vendor-approval-carrier.test.ts",
-      "name": "rejected 和 allowed-once 均通过 DSH 的真实 /api/respond schema，并拒绝缺失 discriminant 的旧形状"
+      "name": "rejected 和 allowed-once 均通过 DSH 的真实 approval + Typert respond schema，并拒绝缺失 discriminant 的旧形状"
     },
     {
       "file": "tests/personal-memory-plugin-ipc.test.ts",

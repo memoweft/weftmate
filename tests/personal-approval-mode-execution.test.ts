@@ -102,7 +102,9 @@ async function fixture(t: any, { inheritedAllow = false, toolName = 'write' } = 
   })
   await ctx.plugin(SystemPrompt, { includeHarnessIdentity: false, includeRuntimeContext: false, persona: '' })
   await ctx.plugin(Sessions)
-  await ctx.plugin(tools.default, { mode: 'native' })
+  await ctx.plugin((await import(vendor('dsh-session-projection'))).default)
+  await ctx.plugin(tools.default)
+  await ctx.plugin(await import(vendor('dsh-tool-executor-native')))
   await ctx.plugin(Approval, { policy: 'ask' })
   await ctx.plugin(Web)
   await ctx.plugin(FixtureAgents)
@@ -128,7 +130,7 @@ async function fixture(t: any, { inheritedAllow = false, toolName = 'write' } = 
   const execute = (name: string) => {
     const args = { file_path: join(root, name), content: 'APPROVED ONLY', ...(toolName === 'shell' ? { command: 'node isolated-write' } : {}) }, callId = 'call-' + name
     session.append('tool/call', { turn: 1, step: 1, callId, name: toolName, arguments: JSON.stringify(args) })
-    pending = ctx.tools.execute({ name: toolName, arguments: args, agent, callId, signal: controller.signal })
+    pending = ctx.tools.execute({ calls: [{ type: 'tool-call', id: callId, name: toolName, arguments: JSON.stringify(args) }], agent, signal: controller.signal }).then(batch => batch.results[0].result)
     settled = undefined
     void pending.then(value => { settled = value })
     return pending
@@ -137,7 +139,7 @@ async function fixture(t: any, { inheritedAllow = false, toolName = 'write' } = 
     approval: async () => until(async () => {
       const response = await api(`/sessions/${session.id}/approvals`)
       const row = response.body.approvals?.find((row: any) => row.status === 'pending')
-      if (!row && settled) throw Error(JSON.stringify({ result: settled, fileExists: existsSync(join(root, 'first-message.txt')), response, events: session.events.slice(-4) }))
+      if (!row && settled) throw Error(JSON.stringify({ result: settled, fileExists: existsSync(join(root, 'first-message.txt')), response, events: session.snapshotEvents().slice(-4) }))
       return row
     }),
     close: async () => { controller.abort(); await pending; await ctx.fiber.dispose(); await closeService(); rmSync(root, { recursive: true, force: true }) } }

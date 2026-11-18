@@ -21,7 +21,7 @@ test('cold cleanup and deletion work with an unloadable agent preset and without
   await writeFile(preset,'- name: missing-cleanup-test-module\n');
   // A session without schedules no longer loads for a schedule forget; the goal forget still unloads it.
   await runtime.backend.goals({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});
-  const failed=await fetch(origin+'/weftmate/api/v1/sessions/'+id+'/models');assert.notEqual(failed.status,200);
+  const failed=await fetch(new URL('/weftmate/api/v1/sessions/'+id+'/models',origin));assert.notEqual(failed.status,200);
   const calls=runtime.requests.length;
   await runtime.backend.schedules({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});
   await runtime.backend.goals({sessionId:id,ownerId:host.ownerId,action:'forget',sourceTexts:['synthetic'],receiptIds:[]});
@@ -34,7 +34,15 @@ test('cold cleanup and deletion work with an unloadable agent preset and without
 test('storage-only cleanup writes valid native goal and schedule tombstones without agent services',async()=>{
  const root=await mkdtemp(join(tmpdir(),'cold-domain-cleanup-'));
  const goalNative=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-goal/lib/index.js');
- const scheduleNative=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-schedule/lib/index.js');
+ const scheduleModule=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-schedule/lib/index.js');
+ const scheduleNative={...scheduleModule,foldScheduleEvents:scheduleModule.foldScheduleEvents??((events:any[])=>{
+  const active=new Map();
+  for(const {type,data} of events)if(type==='schedule/change'){
+   if(data.operation==='create')active.set(data.schedule.id,data.schedule);
+   else if(data.operation==='delete')active.delete(data.id);
+  }
+  return {active:[...active.values()]};
+ })};
  const now=Date.parse('2026-10-31T00:00:00Z'),events:any[]=[];
  const session={header:{seedLength:0},events,append(type,data){events.push({seq:events.length,type,data,time:now});}};
  const agent={id:'session-cold',session};let modelAccess=0;
@@ -44,7 +52,7 @@ test('storage-only cleanup writes valid native goal and schedule tombstones with
   const goals=await createNativeGoalManager({ctx,foldGoal:goalNative.foldGoal,file:join(root,'goals.json')});
   await goals.manage(agent,{action:'forget',sourceTexts:['synthetic fact']},{storageOnly:true});
   assert.equal(goalNative.foldGoal(events).goal,undefined);
-  const record=scheduleNative.createAtScheduleRecord('schedule-synthetic','synthetic fact',{date:'2026-10-31',time:'00:01:00',time_zone:'UTC'},now);
+  const record=scheduleNative.createAtScheduleRecord('schedule-synthetic','synthetic fact',{date:'2026-10-31',time:'00:01:00',time_zone:'UTC'},now,'synthetic');
   session.append('schedule/change',{version:1,operation:'create',schedule:record});
   const schedules=await createNativeScheduleManager({ctx,native:scheduleNative,file:join(root,'schedules.json'),request:async()=>({timeZone:'UTC'})});
   await schedules.register(agent,record,'source');

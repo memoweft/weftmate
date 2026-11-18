@@ -20,7 +20,7 @@ async function fixture(t: any, stage: Stage = 'gate', outcome = 'rejected', tool
     import(pathToFileURL(staged.stageFile(resolve('src/plugins/weftmate-personal-reply-content.mjs'))).href),
   ]);
   const ctx = new Context();
-  Object.defineProperty(ctx, 'logger', { value: { warn() {}, error() {} }, configurable: true });
+  Object.defineProperty(ctx, 'logger', { value: { warn() {}, error() {}, info() {}, debug() {} }, configurable: true });
   t.after(async () => { await ctx.fiber.dispose(); rmSync(root, { recursive: true, force: true }); });
   await ctx.plugin(SystemPrompt, {});
   await ctx.plugin(Sessions);
