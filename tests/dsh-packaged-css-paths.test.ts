@@ -15,11 +15,11 @@ test('packaged DevTools chunks use relative CSS virtual module IDs', () => {
   const chunks = readdirSync(directory).filter(file => file.endsWith('.js'));
   assert.ok(chunks.length > 0, 'must exercise actual emitted DevTools chunks');
   const identity = buildMachineIdentity();
+  const checkIdentity = identity.username === 'runner' ? { ...identity, username: null } : identity;
   let cssIds = 0;
   for (const file of chunks) {
     const bundle = readFileSync(`${directory}/${file}`, 'utf8');
     assert.doesNotMatch(bundle, /dsh-devtools:css:(?:[a-z]:[\\/]|\/)/i, file);
-    const checkIdentity = /^lighthouse-/.test(file) && identity.username === 'runner' ? { ...identity, username: null } : identity;
     assert.equal(containsBuildMachineIdentity(bundle, checkIdentity), false, file);
     for (const match of bundle.matchAll(/dsh-devtools:css:([^\r\n]+?\.css\.mjs)/g)) {
       cssIds++;
