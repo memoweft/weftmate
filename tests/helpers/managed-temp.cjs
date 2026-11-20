@@ -52,9 +52,14 @@ function readOwner(directory) {
     return validOwner(owner) ? owner : null;
   } catch { return null; }
 }
+function spawnPowerShell(args, options) {
+  const result = spawnSync('pwsh', args, options);
+  if (result.error?.code === 'ENOENT') return spawnSync('powershell.exe', args, options);
+  return result;
+}
 function processTable() {
   const result = process.platform === 'win32'
-    ? spawnSync('pwsh', ['-NoProfile', '-Command', "$ErrorActionPreference='Stop'; ConvertTo-Json -InputObject @(Get-CimInstance Win32_Process -OperationTimeoutSec 10 -ErrorAction Stop | ForEach-Object { @{pid=[int]$_.ProcessId; startedAt=if ($_.CreationDate) {$_.CreationDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')} else {$null} } }) -Compress"], { encoding: 'utf8', windowsHide: true, timeout: 15000 })
+    ? spawnPowerShell(['-NoProfile', '-Command', "$ErrorActionPreference='Stop'; ConvertTo-Json -InputObject @(Get-CimInstance Win32_Process -OperationTimeoutSec 10 -ErrorAction Stop | ForEach-Object { @{pid=[int]$_.ProcessId; startedAt=if ($_.CreationDate) {$_.CreationDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')} else {$null} } }) -Compress"], { encoding: 'utf8', windowsHide: true, timeout: 15000 })
     : spawnSync('ps', ['-axo', 'pid=,lstart='], { encoding: 'utf8', timeout: 10000, env: { ...process.env, LC_ALL: 'C', TZ: 'UTC' } });
   if (result.error || result.status !== 0) throw Error('Managed temp process query failed; no directories deleted');
   let rows;
@@ -95,12 +100,14 @@ function pruneManagedTemps({ hours = 24, now = Date.now(), root = managedTempPar
   if (process.platform === 'win32') {
     const result = spawnSync('pwsh', ['-NoProfile', '-File', path.resolve(__dirname, '../../scripts/nightly/prune-temp.ps1'),
       '-Hours', String(hours), '-Roots', root, '-Apply'], { encoding: 'utf8', windowsHide: true, timeout: 30000 });
-    const lines = (result.stdout || '').trim().split(/\r?\n/).filter(Boolean);
-    for (const line of (result.status !== 0 || result.error ? lines : lines.slice(0, -1))) log(line);
-    if (result.status !== 0 || result.error) throw Error('Managed temp prune failed; ' + (result.stderr || result.error?.message || 'process query unavailable'));
-    const summary = JSON.parse(lines.at(-1));
-    if (summary.keptUnowned) log(JSON.stringify(summary));
-    return summary;
+    if (result.error?.code !== 'ENOENT') {
+      const lines = (result.stdout || '').trim().split(/\r?\n/).filter(Boolean);
+      for (const line of (result.status !== 0 || result.error ? lines : lines.slice(0, -1))) log(line);
+      if (result.status !== 0 || result.error) throw Error('Managed temp prune failed; ' + (result.stderr || result.error?.message || 'process query unavailable'));
+      const summary = JSON.parse(lines.at(-1));
+      if (summary.keptUnowned) log(JSON.stringify(summary));
+      return summary;
+    }
   }
   const rows = processTable(), cutoff = now - hours * 3600000;
   const result = { deleted: 0, failed: 0, keptInUse: 0, keptRecent: 0, keptUnowned: 0, unowned: [], entries: [] };
