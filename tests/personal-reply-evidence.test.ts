@@ -147,7 +147,7 @@ test('after a physically observed save, the next step gets one fixed plugin remi
   const factory = (value: object) => value
   const next = await savedDocumentReplyHint(ctx, payload, decision, factory)
   assert.equal(next.messages.length, 2)
-  assert.equal(next.messages[1].source.kind, 'plugin')
+  assert.equal(next.messages[1].source.kind, 'weftmate-personal-reply-evidence')
   assert.match(next.messages[1].content[0].text, /继续完成用户尚未完成的要求/)
   assert.equal(JSON.stringify(next).includes('synthetic-private-body'), false)
   session.events.push({ type: 'user/message', data: { source: next.messages[1].source } })
