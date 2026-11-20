@@ -1,9 +1,5 @@
 name: S1c Web and Android
 on:
-  pull_request:
-    paths-ignore: ['**/*.md', 'docs/**']
-  push:
-    branches: [main]
   workflow_dispatch:
 concurrency:
   group: s1c-${{ github.ref }}

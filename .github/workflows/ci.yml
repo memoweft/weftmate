@@ -1,7 +1,7 @@
 name: CI
 
-# Pull requests run the Linux shards and the small checks; the Windows shards
-# run after merge on main (and on demand), and a release is cut from green main.
+# Pull requests and pushes to main run only the fast hygiene + typecheck gate.
+# Full Linux/Windows unit shards, Electron E2E, and real Core bridge run on demand via workflow_dispatch.
 on:
   push:
     branches: [main]
@@ -14,9 +14,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  quick-check:
+    name: Quick hygiene and typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Public repository hygiene
+        run: |
+          node --test tests/public-hygiene.test.mjs tests/evidence-path.test.mjs
+          node .github/scripts/public-hygiene.mjs
+      - name: Typecheck
+        run: npm run typecheck
+
   ui-motion-2-windows:
     name: Windows motion and page states
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     timeout-minutes: 8
     env:
@@ -53,7 +73,7 @@ jobs:
 
   sidebar-phone-entry-windows:
     name: Windows phone sidebar entry
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     timeout-minutes: 8
     env:
@@ -99,7 +119,7 @@ jobs:
 
   chat-first-send-windows:
     name: Windows first conversation send
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     timeout-minutes: 8
     env:
@@ -170,6 +190,7 @@ jobs:
 
   test:
     name: test (${{ matrix.os }}, shard ${{ matrix.shard }}/${{ matrix.os == 'windows-latest' && 5 || 3 }})
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     env:
@@ -342,7 +363,7 @@ jobs:
   test-summary:
     name: Required unit tests (summary)
     needs: test
-    if: always()
+    if: always() && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -376,6 +397,7 @@ jobs:
 
   observed-core:
     name: Observed bridge (real MemoWeft Core)
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout WeftMate

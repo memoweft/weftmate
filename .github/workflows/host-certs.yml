@@ -1,9 +1,5 @@
 name: S2b Host certificates
 on:
-  pull_request:
-    paths-ignore: ['**/*.md', 'docs/**']
-  push:
-    branches: [main]
   workflow_dispatch:
 concurrency:
   group: host-certs-${{ github.ref }}

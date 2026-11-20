@@ -8,15 +8,6 @@ on:
         type: choice
         options: [all, watch-routing]
         default: all
-  pull_request:
-    paths:
-      - 'apps/apple/**'
-      - '.github/workflows/apple.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'apps/apple/**'
-      - '.github/workflows/apple.yml'
 
 permissions:
   contents: read
