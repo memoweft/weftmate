@@ -203,15 +203,36 @@ export class DesktopBrowser extends EventEmitter {
         tab.error = null; tab.blocked = false; tab.proxy.resetDocument();
         this.changed(tab);
         const wc = tab.view.webContents;
-        let timer, abort;
+        let timer, settleTimer, abort, onDomReady;
         try {
-          await Promise.race([wc.loadURL(tab.url, reload ? { extraHeaders: 'pragma: no-cache\n' } : {}),
-            new Promise((_, reject) => {
+          let domReadyReached = false;
+          await Promise.race([
+            wc.loadURL(tab.url, reload ? { extraHeaders: 'pragma: no-cache\n' } : {}).catch((err) => {
+              if (domReadyReached && (err?.code === 'ERR_ABORTED' || err?.errno === -3)) return;
+              throw err;
+            }),
+            new Promise((resolve, reject) => {
               abort = () => { wc.stop(); reject(fault('BROWSER_CANCELLED')); };
               signal?.addEventListener('abort', abort, { once: true });
-              timer = setTimeout(() => { wc.stop(); reject(fault('BROWSER_NETWORK_ERROR')); }, 15_000);
-            })]);
-        } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
+              onDomReady = () => {
+                domReadyReached = true;
+                clearTimeout(settleTimer);
+                settleTimer = setTimeout(() => { wc.stop(); resolve(); }, 2_500);
+              };
+              wc.once('dom-ready', onDomReady);
+              timer = setTimeout(() => {
+                wc.stop();
+                if (domReadyReached) resolve();
+                else reject(fault('BROWSER_NETWORK_ERROR'));
+              }, 18_000);
+            }),
+          ]);
+        } finally {
+          clearTimeout(timer);
+          clearTimeout(settleTimer);
+          if (onDomReady) wc.removeListener('dom-ready', onDomReady);
+          signal?.removeEventListener('abort', abort);
+        }
       } catch (error) {
         if (!tab.closed) { tab.error = error.code?.startsWith('BROWSER_') ? error.code : 'BROWSER_NETWORK_ERROR'; this.changed(tab); }
         throw error;
@@ -229,7 +250,7 @@ export class DesktopBrowser extends EventEmitter {
     const controller = new AbortController();
     const abort = () => { controller.abort(); if (tab.view && !tab.view.webContents.isDestroyed()) tab.view.webContents.stop(); };
     input.signal?.addEventListener('abort', abort, { once: true });
-    const timer = setTimeout(abort, 15_000);
+    const timer = setTimeout(abort, 22_000);
     const job = { ownerId: input.ownerId, taskId: input.taskId, abort }; this.jobs.add(job);
     try {
       if (input.signal?.aborted) throw fault('BROWSER_CANCELLED');

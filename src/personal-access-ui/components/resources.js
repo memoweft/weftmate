@@ -1,6 +1,12 @@
 /* Desktop resources component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.resources = (core, ui) => {
     globalThis.WeftOpenCapturedSource = async (url, trigger) => {
+        if (typeof globalThis.weftmateDesktop?.browser === 'function' &&
+            typeof globalThis.WeftPanels?.services?.openBrowserUrl === 'function' &&
+            /^https?:\/\//i.test(String(url || ''))) {
+            const opened = await globalThis.WeftPanels.services.openBrowserUrl(url, trigger);
+            if (opened) return true;
+        }
         const context = core.conversationTaskContext();
         if (trigger?.getAttribute('aria-busy') === 'true') return true;
         const label = trigger?.textContent;
