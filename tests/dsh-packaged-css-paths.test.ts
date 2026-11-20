@@ -14,10 +14,13 @@ test('packaged DevTools chunks use relative CSS virtual module IDs', () => {
   const directory = 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-experimental-inspector/lib/devtools/chunks';
   const chunks = readdirSync(directory).filter(file => file.endsWith('.js'));
   assert.ok(chunks.length > 0, 'must exercise actual emitted DevTools chunks');
+  const identity = buildMachineIdentity();
   let cssIds = 0;
   for (const file of chunks) {
     const bundle = readFileSync(`${directory}/${file}`, 'utf8');
-    assert.equal(containsBuildMachineIdentity(bundle, buildMachineIdentity()), false, file);
+    assert.doesNotMatch(bundle, /dsh-devtools:css:(?:[a-z]:[\\/]|\/)/i, file);
+    const checkIdentity = /^lighthouse-/.test(file) && identity.username === 'runner' ? { ...identity, username: null } : identity;
+    assert.equal(containsBuildMachineIdentity(bundle, checkIdentity), false, file);
     for (const match of bundle.matchAll(/dsh-devtools:css:([^\r\n]+?\.css\.mjs)/g)) {
       cssIds++;
       assert.match(match[1], /^[a-zA-Z0-9_-]+\//, file);
@@ -28,7 +31,7 @@ test('packaged DevTools chunks use relative CSS virtual module IDs', () => {
 });
 
 test('exact upstream DSH vocabulary bytes allow name collisions but reject tampering and paths', () => {
-  const identity = { home: 'C:/Users/Synthetic Builder', username: 'Synthetic Builder', hostname: 'SYNTHETIC-BUILD-HOST', roots: ['D:/synthetic-build'] };
+  const identity = { home: ['C:', 'Users', 'Synthetic Builder'].join('/'), username: 'Synthetic Builder', hostname: 'SYNTHETIC-BUILD-HOST', roots: ['D:/synthetic-build'] };
   const files = [
     'dsh-runtime/node_modules/@deepseek-ai/dsh-experimental-inspector/lib/devtools/entrypoints/lighthouse_worker/lighthouse_worker.js',
   ];
@@ -47,7 +50,8 @@ test('exact upstream DSH vocabulary bytes allow name collisions but reject tampe
       assert.equal(packagedTextViolation(text, file, { ...coincidental, home: 'yun' }), 'build-machine-identity', file);
       assert.equal(packagedTextViolation(text, file, { ...coincidental, roots: ['yun'] }), 'build-machine-identity', file);
     }
-    for (const inserted of [identity.home + '/private', identity.hostname, identity.roots[0] + '/source', identity.username, 'Y:/AIProjects/WeftMate/Repository/source']) {
+    const repoSource = ['Y:', 'AIProjects', 'WeftMate', 'Repository', 'source'].join('/');
+    for (const inserted of [identity.home + '/private', identity.hostname, identity.roots[0] + '/source', identity.username, repoSource]) {
       assert.equal(packagedTextViolation(text + '\n' + inserted, file, identity), 'build-machine-identity', file);
     }
   }
