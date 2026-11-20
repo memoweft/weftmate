@@ -58,12 +58,16 @@ export async function scanSharedSessionBindings<TProfile extends { id: string }>
   const recovered: Array<{ sessionId: string; profileId: string }> = [];
   for (const item of items) {
     const sessionId = (item as { sessionId?: unknown } | null)?.sessionId;
-    if (typeof sessionId !== 'string') throw new Error('session reference scan returned an invalid session');
-    const selected = await input.readSelectedModel(sessionId) as { current?: { provider?: unknown } };
-    const chosen = resolveSafeSessionBinding({ provider: selected?.current?.provider, profiles: input.profiles,
-      providerForProfile: input.providerForProfile, priorBinding: input.priorBinding(sessionId),
-      legacyCompatibilityProfileId: input.legacyCompatibilityProfileId });
-    recovered.push({ sessionId, profileId: chosen.profile.id });
+    if (typeof sessionId !== 'string') continue;
+    try {
+      const selected = await input.readSelectedModel(sessionId) as { current?: { provider?: unknown } };
+      const chosen = resolveSafeSessionBinding({ provider: selected?.current?.provider, profiles: input.profiles,
+        providerForProfile: input.providerForProfile, priorBinding: input.priorBinding(sessionId),
+        legacyCompatibilityProfileId: input.legacyCompatibilityProfileId });
+      recovered.push({ sessionId, profileId: chosen.profile.id });
+    } catch {
+      // Skip unreadable/corrupted sessions (e.g. after power loss) instead of locking the whole app.
+    }
   }
   // Avoid partially binding a root that contains one unknown session: a later retry starts from unchanged durable state.
   for (const value of recovered) input.bind(value.sessionId, value.profileId);

@@ -55,13 +55,13 @@
             popup.append(list);
             if (!all && rows.length > 12) {
                 const more = node('button', 'wm-model-item', `全部模型（${rows.length}）`); more.type = 'button'; more.setAttribute('role', 'menuitem');
-                more.addEventListener('click', () => { all = true; render(); popup.querySelector('input')?.focus(); }); popup.append(more);
+                more.addEventListener('click', (event) => { event.stopPropagation(); all = true; render(); popup.querySelector('input')?.focus(); }); popup.append(more);
             }
             const deep = thinking?.();
             if (deep?.supported === true) {
                 const toggle = node('button', 'wm-model-item wm-model-thinking'); toggle.type = 'button'; toggle.setAttribute('role', 'menuitemcheckbox'); toggle.setAttribute('aria-checked', String(deep.enabled === true)); toggle.disabled = busy || deep.busy;
                 toggle.append(node('span', '', '深度思考')); const sw = node('span', 'wm-model-switch'); sw.setAttribute('aria-hidden', 'true'); toggle.append(sw);
-                toggle.addEventListener('click', async () => { toggle.disabled = true; try { await toggleThinking(!deep.enabled); } catch { toast('深度思考暂时没保存，请重试。'); } if (!popup.hidden) render(); }); popup.append(toggle);
+                toggle.addEventListener('click', async (event) => { event.stopPropagation(); toggle.disabled = true; try { await toggleThinking(!deep.enabled); } catch { toast('深度思考暂时没保存，请重试。'); } if (!popup.hidden) render(); }); popup.append(toggle);
             }
             const footer = node('button', 'wm-model-item wm-model-add'); footer.type = 'button'; footer.setAttribute('role', 'menuitem'); footer.append(icon('plus'), node('span', '', '添加模型服务…'));
             footer.addEventListener('click', () => { close(); add(); }); popup.append(footer);
@@ -82,7 +82,10 @@
             event.preventDefault(); event.stopPropagation(); const index = items.indexOf(document.activeElement);
             items[event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
         });
-        const outside = event => { if (!popup.hidden && !popup.contains(event.target) && !trigger.contains(event.target)) close(); };
+        const outside = event => {
+            const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+            if (!popup.hidden && !path.includes(popup) && !popup.contains(event.target) && !path.includes(trigger) && !trigger.contains(event.target)) close();
+        };
         document.addEventListener('click', outside);
         return { open, close, render, dispose() { close(); document.removeEventListener('click', outside); }, update() { const state = view(); const current = (state.services || []).flatMap(s => (s.models || []).map(m => ({s,m}))).find(({s,m}) => s.serviceId === state.selected?.serviceId && m.modelId === state.selected?.modelId); trigger.setAttribute('aria-label', `模型：${current?.m.name || state.modelName || '尚未选择'}`); if (!popup.hidden) render(); } };
     }

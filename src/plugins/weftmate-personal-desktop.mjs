@@ -670,7 +670,7 @@ export class PersonalDesktopBridge {
 export function registerPersonalBrowserTool(ctx, bridge) {
   return ctx.tools.register(defineTool({
     name: 'browser',
-    description: 'Open a web page, read a captured segment, or follow a captured link.',
+    description: 'Open a human-readable web page in the visible browser pane shown to the user, read a captured segment, or follow a captured link. Use web_search/web_fetch instead for raw JSON or terminal ASCII endpoints.',
     parameters: {
       action: { type: 'string', required: true, enum: ['open', 'read', 'follow'] },
       url: { type: 'string', description: 'URL to open.' },
@@ -742,6 +742,8 @@ export function apply(ctx) {
   const disposeSearch = ctx.web.registerSearchProvider(personalWebSearchProvider(bridge, currentWebExecution, webIdentity));
   const disposeFetch = ctx.web.registerFetchProvider(personalWebFetchProvider(bridge, currentWebExecution,
     webIdentity, exec => policyFor(delegatedExecutions.get(exec.agent)?.agent ?? exec.agent)));
+  if (!ctx.web.searchProviderEnv) ctx.web.searchProviderEnv = 'weftmate-public-search';
+  if (!ctx.web.fetchProviderEnv) ctx.web.fetchProviderEnv = 'weftmate-public-page';
   const initializeFilePolicy = agent => initializePersonalFilePolicy(agent, ctx.get('sandboxPolicy'));
   // Presets can be selected after agent/created, before the first native step.
   ctx.on('agent/pre-step', async (step, next) => {

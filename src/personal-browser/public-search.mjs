@@ -33,9 +33,13 @@ export async function searchPublicWeb(query, fetchImpl = fetch) {
     for (const item of feed.items) {
       let url;
       try { url = canonicalPublicUrl(item.link); } catch { continue; }
-      if (!sources.has(url)) sources.set(url, { url, title: item.title?.slice(0, 300), snippet: item.description?.slice(0, 900) });
+      if (!sources.has(url)) sources.set(url, {
+        url,
+        ...(typeof item.title === 'string' && item.title ? { title: item.title.slice(0, 300) } : {}),
+        ...(typeof item.description === 'string' && item.description ? { snippet: item.description.slice(0, 900) } : {}),
+      });
     }
-    return { sources: [...sources.values()] };
+    return { sources: [...sources.values()], truncated: false };
   } catch {
     throw Object.assign(new Error('BROWSER_NETWORK_ERROR'), { code: 'BROWSER_NETWORK_ERROR' });
   }

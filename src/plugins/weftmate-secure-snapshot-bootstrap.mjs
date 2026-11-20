@@ -11,7 +11,7 @@
  */
 import { setProcessWarningLog } from '../process-output.mjs'
 import { createHash, randomBytes } from 'node:crypto'
-import { mkdir, rm, symlink, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, realpath, rm, rmdir, symlink, unlink, writeFile } from 'node:fs/promises'
 import { createRequire as createNodeRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -139,8 +139,26 @@ const bootSnapshot = async (entries) => {
           ? dirname(dirname(dirname(runtimePackageAnchor)))
           : join(dirname(dirname(dirname(runtimePackageAnchor))), 'node_modules')
         const profilesModules = join(dirname(profileDir), 'node_modules')
-        try { await symlink(runtimeModules, profilesModules, 'junction') }
-        catch (linkError) { if (linkError?.code !== 'EEXIST') throw linkError }
+        const expectedTarget = await realpath(runtimeModules).catch(() => runtimeModules)
+        let needsLink = true
+        const existing = await lstat(profilesModules).catch(() => null)
+        if (existing) {
+          const currentTarget = existing.isSymbolicLink() ? await realpath(profilesModules).catch(() => null) : null
+          const sameTarget = currentTarget !== null && (process.platform === 'win32'
+            ? currentTarget.toLowerCase() === expectedTarget.toLowerCase()
+            : currentTarget === expectedTarget)
+          if (sameTarget) {
+            needsLink = false
+          } else if (existing.isSymbolicLink()) {
+            await unlink(profilesModules).catch(() => rmdir(profilesModules))
+          } else {
+            await rm(profilesModules, { recursive: true, force: true })
+          }
+        }
+        if (needsLink) {
+          try { await symlink(runtimeModules, profilesModules, 'junction') }
+          catch (linkError) { if (linkError?.code !== 'EEXIST') throw linkError }
+        }
         await hostCtx.plugin(appBoot.PluginPackages)
       }
     }

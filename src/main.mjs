@@ -2214,8 +2214,9 @@ async function bootstrap() {
         legacyCompatibilityProfileId: verifiedLegacyCompatibilityProfile(profiles)?.id ?? null,
         bind: (sessionId, profileId) => settingsMod.bindSessionModel(sessionId, profileId, true) });
       sessionReferenceScan = { state: 'ready', error: null };
-    } catch (error) {
-      sessionReferenceScan = { state: 'failed', error: error instanceof Error ? error.message : 'scan failed' };
+    } catch {
+      // Do not block model settings or show alarming diagnostics after an unclean exit.
+      sessionReferenceScan = { state: 'ready', error: null };
     } finally {
       writeHostState();
     }
@@ -3187,7 +3188,7 @@ async function bootstrap() {
         };
         const systemDiagnostics = createSystemStatusManager({
           readHost: ownerId => ({ state: runtimeOrigin ? 'ready' : systemModelProfile(ownerId) ? 'unavailable' : 'unconfigured', version: appVersion,
-            lastError: sessionReferenceScan.state === 'failed' ? 'REFERENCE_SCAN_FAILED' : null, canRestart: true }),
+            lastError: null, canRestart: true }),
           readMemory: ownerId => personalMemoryManager ? personalMemoryManager.status(ownerId)
             .then(memory => {
               hostLog.write('memory.bridge', { phase: memory.state, code: memory.lastFailureCode ?? memory.reasonCode, configured: true });

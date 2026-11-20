@@ -5,7 +5,7 @@ import { resolveViaCloudflareDoh } from './doh.mjs';
 
 const MAX_URL_BYTES = 2048;
 const MAX_NETWORK_BYTES = 32 * 1024 * 1024;
-const MAX_SOCKETS = 16;
+const MAX_SOCKETS = 128;
 const BLOCKED_SUFFIX = /(?:^|\.)(?:localhost|local|internal|invalid|test|example)$/i;
 
 function fault(code) { return Object.assign(new Error(code), { code }); }

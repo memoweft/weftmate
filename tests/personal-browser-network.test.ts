@@ -79,7 +79,7 @@ test('closing during system Fake-IP resolution prevents starting the DoH fallbac
 test('idle proxy clients are bounded before they send a request', async () => {
   const proxy = createPinnedProxy()
   const { port } = await proxy.start()
-  const clients = Array.from({ length: 24 }, () => {
+  const clients = Array.from({ length: 140 }, () => {
     const socket = connectSocket({ host: '127.0.0.1', port })
     socket.on('error', () => {})
     return socket

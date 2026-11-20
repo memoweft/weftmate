@@ -201,6 +201,10 @@ export function createPersonalBrowserReader({ BrowserWindow, session, resolver, 
         let httpStatus = null;
         let blockedRequest = false;
         ses.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
+          if (details.resourceType !== 'mainFrame' && ['image', 'media', 'font'].includes(details.resourceType)) {
+            callback({ cancel: true });
+            return;
+          }
           try { canonicalPublicUrl(details.url, syntheticFixture); callback({ cancel: false }); }
           catch { blockedRequest = true; callback({ cancel: true }); }
         });
