@@ -124,6 +124,9 @@ export function packagedTextViolation(text, file, identity = buildMachineIdentit
   // a short builder name. Only these exact fixed publisher bytes have that
   // provenance. Changed bytes and all paths retain full identity checks.
   const publicNames = {
+    'dsh-runtime/node_modules/@deepseek-ai/libreoffice-kit-win32-x64/program/share/liblangtag/language-subtag-registry.xml': 'a1121125a791e2de02ca87b7e194f9f0a90f8afee0758d6f44ee453aaaf7854f',
+    'dsh-runtime/node_modules/@deepseek-ai/libreoffice-kit-win32-x64/program/share/liblangtag/common/bcp47/currency.xml': 'c47524585edb8c09d8c68278fe2b7610c2b01569dc4fa1af5c3f8e9ade3636fb',
+    'dsh-runtime/node_modules/@deepseek-ai/dsh-experimental-inspector/lib/devtools/entrypoints/lighthouse_worker/lighthouse_worker.js': '1d53ec759d85dae4f9ad78418cbed7612992fffbfb12cdb5b424dbb0013cc2f6',
     'node_modules/tlds/index.json': '39498bb22800167e8b6fa73740b2686decb4ffdbea3e8333f32020f5714938f2',
     'memory-runtime/models/tokenizer.json': '0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39',
     'memory-runtime/site-packages/sympy/polys/sqfreetools.py': 'a1116538b85c5f3e4e2a373d490b4eb8484cbda72f907c93484aa193a4a78756',
