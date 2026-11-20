@@ -12,24 +12,33 @@ type Stage = 'gate' | 'body';
 async function fixture(t: any, stage: Stage = 'gate', outcome = 'rejected', toolsMode: 'native' | 'both' = 'native', nativeFs = false) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-approval-rejection-'));
   const staged = stagePersonalPlugins(root);
-  const [{ Context }, { default: SystemPrompt }, { default: Sessions }, tools, llm,
+  const [{ Context }, { default: SystemPrompt }, { default: Sessions }, { default: SessionProjections }, tools, llm,
     { default: ApprovalService }, { createScope }, plugin] = await Promise.all([
     import(vendor('cordis')), import(vendor('dsh-system-prompt')), import(vendor('dsh-session')),
-    import(vendor('dsh-tools')), import(vendor('dsh-llm')), import(vendor('dsh-user-approval')),
-    import(vendor('dsh-scope')),
+    import(vendor('dsh-session-projection')), import(vendor('dsh-tools')), import(vendor('dsh-llm')),
+    import(vendor('dsh-user-approval')), import(vendor('dsh-scope')),
     import(pathToFileURL(staged.stageFile(resolve('src/plugins/weftmate-personal-reply-content.mjs'))).href),
   ]);
   const ctx = new Context();
-  Object.defineProperty(ctx, 'logger', { value: { warn() {} }, configurable: true });
+  Object.defineProperty(ctx, 'logger', { value: { warn() {}, error() {}, info() {}, debug() {} }, configurable: true });
   t.after(async () => { await ctx.fiber.dispose(); rmSync(root, { recursive: true, force: true }); });
   await ctx.plugin(SystemPrompt, {});
   await ctx.plugin(Sessions);
+  await ctx.plugin(SessionProjections);
   await ctx.plugin(llm.default);
-  if (toolsMode === 'both') await ctx.plugin((await import(vendor('dsh-code-runtime-worker-thread'))).default,
-    { computeMs: 5000, maxWallMs: 10000, maxOutputBytes: 1024 * 1024, maxOldGenerationSizeMb: 128 });
-  await ctx.plugin(tools.default, { mode: toolsMode });
+  await ctx.plugin(tools.default);
+  await ctx.plugin((await import(vendor('dsh-fs-local'))).default, { cwd: root });
+  await ctx.plugin((await import(vendor('dsh-working-directory'))).default, { defaultDirectory: root });
+  if (toolsMode === 'both') {
+    await ctx.plugin((await import(vendor('dsh-subprocess-local'))).default);
+    await ctx.plugin((await import(vendor('dsh-sandbox-local'))).default);
+    await ctx.plugin((await import(vendor('dsh-sandbox-policy'))).default, { workspaceRoot: root, mode: 'danger-full-access' });
+    await ctx.plugin((await import(vendor('dsh-ptc-runtime-node'))).default, { timeoutMs: 10000, maxTimeoutMs: 15000, maxOutputBytes: 1024 * 1024 });
+    await ctx.plugin(await import(vendor('dsh-tool-executor-ptc')));
+  } else {
+    await ctx.plugin(await import(vendor('dsh-tool-executor-native')));
+  }
   if (nativeFs) {
-    await ctx.plugin((await import(vendor('dsh-fs-local'))).default, { cwd: root });
     await ctx.plugin(await import(vendor('dsh-tool-fs')));
   }
   await ctx.plugin(ApprovalService, { policy: 'ask' });
@@ -67,23 +76,25 @@ async function fixture(t: any, stage: Stage = 'gate', outcome = 'rejected', tool
   session.append('turn/start', { turn }); session.append('step/start', { turn, step: 1 });
   async function invoke(name: string, callId: string, args: object = {}) {
     const call = session.append('tool/call', { turn, step: 1, name, callId, arguments: JSON.stringify(args) });
-    const result = await ctx.tools.execute({ name, callId, arguments: args, agent,
-      signal: AbortSignal.timeout(toolsMode === 'both' ? 12000 : 5000) });
+    const result = (await ctx.tools.execute({ calls: [{ id: callId, name, arguments: JSON.stringify(args) }], agent,
+      signal: AbortSignal.timeout(toolsMode === 'both' ? 12000 : 5000) })).results[0].result;
     // Match the native loop: persist the already-presented result, then derive the next model input.
     const logged = session.append('tool/result', { turn, step: 1,
       ...(result.error?.info ? { error: result.error.info } : result.isError ? { error: result.error } : {}),
       message: llm.createToolResultMessage({ callId, content: result.content, isError: result.isError }) },
     { surfaceOp: 'append', sourceEventSeqs: [call.seq] });
-    const derived = session.deriveMessages().filter((message: any) => message.source?.callId === callId ||
+    const derived = session.deriveMessages().filter((message: any) =>
+      (message.role === 'tool' && message.toolCallId === callId) ||
+      message.source?.callId === callId ||
       message.content?.some((part: any) => part.type === 'tool-result' && part.toolCallId === callId));
     assert.ok(derived.length > 0, 'the persisted result reaches the next model input');
     return { result, channels: { returned: JSON.stringify(result.content),
       appended: JSON.stringify(logged.data.message.content), derived: JSON.stringify(derived) } };
   }
   function assertAudit(callId: string, expected: string) {
-    const asked = session.events.filter((event: any) => event.type === 'approval/asked' && event.data.callId === callId);
+    const asked = session.snapshotEvents().filter((event: any) => event.type === 'approval/asked' && event.data.callId === callId);
     assert.equal(asked.length, 1, 'exactly one native approval request for this call');
-    const decided = session.events.filter((event: any) => event.type === 'approval/decided' && event.data.id === asked[0].data.id);
+    const decided = session.snapshotEvents().filter((event: any) => event.type === 'approval/decided' && event.data.id === asked[0].data.id);
     assert.equal(decided.length, 1); assert.equal(decided[0].data.outcome, expected);
   }
   function nextTurn() {
@@ -129,7 +140,7 @@ test('ordinary native file errors without approval do not claim user rejection',
   const { result, channels } = await f.invoke('fixture_read', 'ordinary-error');
   assert.equal(result.isError, true); assert.equal(existsSync(f.target), true);
   assert.equal(f.counts().requests, 0);
-  assert.equal(f.session.events.filter((event: any) => event.type.startsWith('approval/')).length, 0);
+  assert.equal(f.session.snapshotEvents().filter((event: any) => event.type.startsWith('approval/')).length, 0);
   for (const text of Object.values(channels)) assert.doesNotMatch(text, /你已拒绝|用户.*拒绝|不要.*(?:重试|再次申请)/);
 });
 
@@ -148,13 +159,13 @@ test('a rejected approval in a completed turn does not contaminate the next turn
 });
 
 function assertNestedRejection(f: Awaited<ReturnType<typeof fixture>>, rootCallId: string) {
-  const started = f.session.events.filter((event: any) => event.type === 'tool/code-dispatch-start');
+  const started = f.session.snapshotEvents().filter((event: any) => event.type === 'tool/ptc-dispatch-start');
   assert.equal(started.length, 1, 'one native Code Mode subcall was actually dispatched');
   const child = started[0].data;
   assert.equal(child.rootCallId, rootCallId); assert.equal(child.parentCallId, rootCallId);
   assert.equal(child.name, 'fixture_remove'); assert.notEqual(child.subCallId, rootCallId);
   f.assertAudit(child.subCallId, 'rejected');
-  const finished = f.session.events.filter((event: any) => event.type === 'tool/code-dispatch' && event.data.subCallId === child.subCallId);
+  const finished = f.session.snapshotEvents().filter((event: any) => event.type === 'tool/ptc-dispatch' && event.data.subCallId === child.subCallId);
   assert.equal(finished.length, 1); assert.equal(finished[0].data.isError, true);
   assert.equal(existsSync(f.target), true);
   assert.equal(readFileSync(f.target, 'utf8'), 'synthetic content to preserve on rejection');
@@ -194,8 +205,8 @@ test('a rejected approval does not contaminate a different call in the same turn
   const { result, channels } = await f.invoke('fixture_read', 'same-turn-read-error');
   assert.equal(result.isError, true); assert.equal(existsSync(f.target), true);
   assert.equal(f.counts().requests, 1);
-  assert.equal(f.session.events.filter((event: any) => event.type === 'turn/start').length, 1);
-  assert.equal(f.session.events.filter((event: any) => event.type === 'approval/asked').length, 1);
+  assert.equal(f.session.snapshotEvents().filter((event: any) => event.type === 'turn/start').length, 1);
+  assert.equal(f.session.snapshotEvents().filter((event: any) => event.type === 'approval/asked').length, 1);
   for (const [channel, text] of Object.entries(channels))
     assert.doesNotMatch(text, /你已拒绝|用户.*拒绝|不要.*(?:重试|再次申请)/, `${channel} keeps unrelated failures separate`);
 });
@@ -205,7 +216,7 @@ test('ordinary error wording about user rejection does not replace native approv
   const { result, channels } = await f.invoke('fixture_error', 'misleading-error');
   assert.equal(result.isError, true); assert.equal(existsSync(f.target), true);
   assert.equal(f.counts().requests, 0);
-  assert.equal(f.session.events.filter((event: any) => event.type.startsWith('approval/')).length, 0);
+  assert.equal(f.session.snapshotEvents().filter((event: any) => event.type.startsWith('approval/')).length, 0);
   for (const [channel, text] of Object.entries(channels))
     assert.doesNotMatch(text, /你已拒绝|用户.*拒绝|不要.*(?:重试|再次申请)|the user rejected tool/,
       `${channel} does not infer approval rejection from ordinary error text`);
@@ -218,16 +229,16 @@ test('native Code Mode caught rejection does not relabel a later unrelated read 
     code: 'try { await tools.fixture_remove({}); } catch {} return await tools.fixture_read({});',
     description: 'Keep the refused deletion skipped while attempting a separate read',
   });
-  const started = f.session.events.filter((event: any) => event.type === 'tool/code-dispatch-start');
+  const started = f.session.snapshotEvents().filter((event: any) => event.type === 'tool/ptc-dispatch-start');
   assert.deepEqual(started.map((event: any) => event.data.name), ['fixture_remove', 'fixture_read']);
   assert.notEqual(started[0].data.subCallId, started[1].data.subCallId);
   for (const event of started) {
     assert.equal(event.data.rootCallId, rootCallId); assert.equal(event.data.parentCallId, rootCallId);
   }
   f.assertAudit(started[0].data.subCallId, 'rejected');
-  assert.equal(f.session.events.filter((event: any) => event.type === 'approval/asked').length, 1,
+  assert.equal(f.session.snapshotEvents().filter((event: any) => event.type === 'approval/asked').length, 1,
     'the separate read never requested approval');
-  const finished = f.session.events.filter((event: any) => event.type === 'tool/code-dispatch');
+  const finished = f.session.snapshotEvents().filter((event: any) => event.type === 'tool/ptc-dispatch');
   assert.deepEqual(finished.map((event: any) => [event.data.subCallId, event.data.isError]),
     started.map((event: any) => [event.data.subCallId, true]));
   assert.equal(existsSync(f.target), true);
@@ -263,7 +274,7 @@ for (const kind of ['missing-path', 'line-range'] as const) {
       code: `try { await tools.fixture_remove({}); } catch {} return await tools.read(${JSON.stringify(args)});`,
       description: 'Keep the refused deletion skipped while reading an independent synthetic file',
     });
-    const started = f.session.events.filter((event: any) => event.type === 'tool/code-dispatch-start');
+    const started = f.session.snapshotEvents().filter((event: any) => event.type === 'tool/ptc-dispatch-start');
     assert.deepEqual(started.map((event: any) => event.data.name), ['fixture_remove', 'read']);
     for (const event of started) {
       assert.equal(event.data.rootCallId, rootCallId); assert.equal(event.data.parentCallId, rootCallId);
@@ -271,9 +282,9 @@ for (const kind of ['missing-path', 'line-range'] as const) {
     assert.notEqual(started[0].data.subCallId, started[1].data.subCallId);
     assert.deepEqual(started[1].data.arguments, args);
     f.assertAudit(started[0].data.subCallId, 'rejected');
-    assert.equal(f.session.events.filter((event: any) => event.type === 'approval/asked').length, 1,
+    assert.equal(f.session.snapshotEvents().filter((event: any) => event.type === 'approval/asked').length, 1,
       'only the deletion requests approval; the independent read is actually dispatched after catch');
-    const finished = f.session.events.filter((event: any) => event.type === 'tool/code-dispatch');
+    const finished = f.session.snapshotEvents().filter((event: any) => event.type === 'tool/ptc-dispatch');
     assert.deepEqual(finished.map((event: any) => [event.data.subCallId, event.data.isError]),
       started.map((event: any) => [event.data.subCallId, true]));
     assert.match(JSON.stringify(finished[0].data.content), /你已拒绝|用户.*拒绝/);

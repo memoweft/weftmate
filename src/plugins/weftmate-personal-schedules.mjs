@@ -10,6 +10,7 @@ import { foldGoal } from '@deepseek-ai/dsh-goal';
 import { createNativeGoalManager } from '../personal-access/goals-native.mjs';
 import { isHealthQuestion } from './personal-prompt.mjs';
 import { installAccountScheduleQuery, installAccountScheduleDelete } from './personal-schedule-query.mjs';
+import { inspectSessionLog, readSessionRaw } from '../runtime/dsh-adapter/persistence-compat.mjs';
 /** Goal-only model guidance; native transitions, round admission and budgets stay in DSH. */
 const guidance = 'Follow the objective\'s actual completion conditions. Native goal continuations support reasoning and session tools such as goal state and todo_write; they do not inherit a human turn\'s computer authorization. When the user requires multiple rounds that can be done with these supported capabilities, each requested round must be a distinct native <goal_round> continuation with its own recorded result. Multiple calculations, planned todos, or results narrated in the creating human turn cannot substitute for those rounds. For such a supported multi-round goal, create its plan, keep it active and end the human reply so the native driver can admit round 1; do not call complete in that setup turn. In each admitted goal round, do and record the next supported work. If supported rounds remain, keep the goal active and end this reply for the next continuation. Before completing, call get_goal and verify that its admitted rounds and actual records satisfy the user\'s requested rounds and every other condition. max_goal_rounds is only a continuation budget cap, never a required minimum: a single-step or already achieved objective may complete in the human turn or before the cap; do not pad rounds. Pause, cancellation, failure and unmet waiting conditions must use native controls, without forcing progress or claiming completion.'
   + '\n\nComputer-tool boundary: For objectives requiring computer tools (read/write files, commands or application actions), continue the current authorized human turn to perform the work currently possible under its existing project, permissions and approvals. Creating a goal must not force an early end before those actions. Native goal rounds cannot execute these computer actions without an authorized human continuation. If remaining independent rounds require computer actions, first do the currently authorized work, then pause the goal and explain that the remaining work needs human continuation. Do not promise automatic background computer actions or claim those rounds complete. Repeating actions in one human turn does not count as independent goal rounds. Never forge human provenance, bypass approval or retry rejected work.';
@@ -23,6 +24,7 @@ export const name = 'weftmate-personal-schedules';
 export const inject = ['agents', 'sessions', 'tools', 'sessionPersistence', 'webServer', 'weftmateSessionLifecycle'];
 export const PROTOCOL = 'weftmate.personal-schedules.v1';
 const personal = agent => agent?.session?.header?.agentPreset === 'personal-remote' && agent.session.header.origin !== 'subagent';
+const storedPersonal = session => session?.header?.agentPreset?.startsWith('personal-') && session.header.origin !== 'subagent';
 
 export async function apply(ctx) {
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
@@ -47,7 +49,7 @@ export async function apply(ctx) {
     file: path.join(process.env.DSH_HOME, 'personal-schedules.json') });
   const goalManager = await createNativeGoalManager({ ctx, foldGoal, file: path.join(process.env.DSH_HOME, 'personal-goal-requests.json') });
   // Use the official runtime, including its transaction and durability barriers.
-  schedule.apply(ctx);
+  if (typeof schedule.apply === 'function') schedule.apply(ctx);
   ctx.on('tools/pre-execute', async (exec, next) => {
     if (personal(exec.agent) && exec.name === 'schedule_create') {
       scheduleContent(exec.arguments.prompt); scheduleSourceReceipt(exec);
@@ -87,7 +89,7 @@ export async function apply(ctx) {
     if (!personal(payload.agent)) return next();
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
-    if (payload.messages?.some(m => m.source?.plugin === 'schedule')) {
+    if (payload.messages?.some(m => m.source?.plugin === 'schedule' || m.source?.kind === 'schedule')) {
       await manager.due(payload.agent);
       // Reminder text is appended without inference. Executable work is queued
       // through the owner's ordinary command path, so native approval applies.
@@ -98,7 +100,7 @@ export async function apply(ctx) {
     const healthGuidance=isHealthQuestion(question)?'\n本人正在查询自己的健康记录：必须先调用 load_tools 加载 health_query，再调用 health_query（metric=overview，默认最近7天）取得最新数据后回答。不要只根据背景摘要回答；stress.latest 是最近一次测量；stress.score 表示最近一次测量的分数，不是均值；stress.average 才是当日已有测量的平均值。metric=stress 时 items[].value 同样是当天最近一次测量的压力分数，不能说成当日均值。指标序列的 value 依指标含义，不能把最近一次测量说成均值；没有平均值时不自行补算。睡眠等时长换成几小时几分，例如 466 分钟说成 7 小时 46 分。工具返回还没接上／缺测就照实说。只比本人平时，不诊断、不提疾病名、不建议用药，使用与睡眠的同时变化不能说成因果。':'';
     const policy = await request({ action: 'context', sessionId: payload.agent.id });
     const guidance = `当前时间 ${new Date().toISOString()}；账号时区 ${policy.timeZone}；账号本地时间 ${new Date().toLocaleString('sv-SE', { timeZone: policy.timeZone })}。每天、每周、每月的安排优先用账号本地 at 指定下一次日期与时间，不用 after_seconds 计算时差（除非用户明确要求延迟后开始）。消息以“现在执行定时任务”开头时，这是已到点的任务，直接执行内容；只有用户明确指定时间或周期的提醒/定时执行才调用 schedule_create；“以后想组队时提醒我找某人”“以后喝这种茶时提醒加某物”属于情境记忆，由 MemoWeft 自动形成，不调用 load_tools、ask_user_question 或调度工具，也不追问时间频率；首次人物介绍的提醒提议与邀请确认按 shared-decisions 指引处理。用户交代有明确时间的提醒/定时执行时直接调用 schedule_create，WeftMate 的日历重复和定时执行适配已安装，不需要读源码或编写调度脚本。prompt 是完整 JSON 字符串，例如 {"weftmate":1,"kind":"reminder","text":"交报告"}；定时工作示例 {"weftmate":1,"kind":"task","text":"生成周报文件","repeat":{"kind":"weekly","time":"08:00:00","weekday":1}}。纯提醒 kind=reminder，届时执行 kind=task；daily 不填 weekday。首次时间由 at 或 after_seconds 指定，后续日历规则在 repeat 中，二者可以不同。at 的 time_zone 用账号时区。固定间隔用 every_seconds。一次性不填 repeat。成功后一句话复述本地时间、规则、内容；失败不能说已建立。取消/暂停/恢复先 schedule_manage list，再传所选条目的 sessionId 和 id；编号在不同对话中会重复，不能只传 id。`;
-    return { ...decision, messages: [...decision.messages, createUserMessage({ source: { kind: 'plugin', plugin: name }, content: [{ type: 'text', text: guidance+healthGuidance }] })] };
+    return { ...decision, messages: [...decision.messages, createUserMessage({ source: { kind: name }, content: [{ type: 'text', text: guidance+healthGuidance }] })] };
   }, { prepend: true });
   const lifecycle = ctx.get('weftmateSessionLifecycle');
   ctx.effect(() => ctx.webServer.register({ kind: 'prefix', path: '/weftmate/schedules', handler: async (req, res) => {
@@ -124,8 +126,8 @@ export async function apply(ctx) {
       if (!match || req.method !== 'POST') throw Object.assign(new Error('NOT_FOUND'), { status: 404 });
       const id = match[1];
       if(input.action==='erase'&&!ctx.agents.get(id)) {
-        const stored=await ctx.sessionPersistence.readRaw(id);
-        if(!stored||!personal({session:{header:stored.meta}}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+        const stored=await readSessionRaw(ctx.sessionPersistence, id);
+        if(!stored||!storedPersonal({header:stored.meta}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
         const result=await manager.eraseStoredSession(id);res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
       }
       if (input.action==='forget'&&!manager.hasSession(id)) {
@@ -133,7 +135,7 @@ export async function apply(ctx) {
       }
       if (['erase','forget'].includes(input.action)) {
         const result=await lifecycle.withStoredSession(id,async(session,agent)=>{
-          const source=agent??{id,session};if(!personal(source))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+          const source=agent??{id,session};if(!(agent?personal(agent):storedPersonal(session)))throw Object.assign(new Error('NOT_FOUND'),{status:404});
           return manager.manage(source,input.action,input.id,input,{storageOnly:!agent});
         });
         res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
@@ -143,7 +145,7 @@ export async function apply(ctx) {
       }
       let agent = ctx.agents.get(id);
       if (!agent && ['list', 'notifications'].includes(input.action)) {
-        const stored = await ctx.sessionPersistence.inspect(id);
+        const stored = await inspectSessionLog(ctx.sessionPersistence, id);
         agent = { id, session: { header: stored.meta, events: stored.events } };
       } else if (!agent) { await lifecycle.resume(id); agent = ctx.agents.get(id); }
       if (!personal(agent)) throw Object.assign(new Error('NOT_FOUND'), { status: 404 });
@@ -158,18 +160,18 @@ export async function apply(ctx) {
       let body = ''; for await (const part of req) { body += part; if (body.length > 32768) throw Object.assign(new Error('INVALID_REQUEST'), { status: 400 }); }
       const input = JSON.parse(body), id = match[1]; let agent = ctx.agents.get(id);
       if(input.action==='erase'&&!agent) {
-        const stored=await ctx.sessionPersistence.readRaw(id);
-        if(!stored||!personal({session:{header:stored.meta}}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+        const stored=await readSessionRaw(ctx.sessionPersistence, id);
+        if(!stored||!storedPersonal({header:stored.meta}))throw Object.assign(new Error('NOT_FOUND'),{status:404});
         const result=await goalManager.eraseStoredSession(id);res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
       }
       if (['erase','forget'].includes(input.action)) {
         const result=await lifecycle.withStoredSession(id,async(session,live)=>{
-          const source=live??{id,session};if(!personal(source))throw Object.assign(new Error('NOT_FOUND'),{status:404});
+          const source=live??{id,session};if(!(live?personal(live):storedPersonal(session)))throw Object.assign(new Error('NOT_FOUND'),{status:404});
           return goalManager.manage(source,input,{storageOnly:!live});
         });
         res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));return;
       }
-      if (!agent && input.action === 'list') { const stored = await ctx.sessionPersistence.inspect(id); agent = { id, session: { header: stored.meta, events: stored.events } }; }
+      if (!agent && input.action === 'list') { const stored = await inspectSessionLog(ctx.sessionPersistence, id); agent = { id, session: { header: stored.meta, events: stored.events } }; }
       else if (!agent) { await lifecycle.resume(id); agent = ctx.agents.get(id); }
       if (!personal(agent)) throw Object.assign(new Error('NOT_FOUND'), { status: 404 });
       const result = await goalManager.manage(agent, input);

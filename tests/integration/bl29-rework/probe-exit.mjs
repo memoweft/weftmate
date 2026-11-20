@@ -97,9 +97,9 @@ async function runCase(version,method){
   const closed=new Promise(r=>child.once('close',()=>{row.childCloseAt=Date.now();row.childCloseClock=performance.now();r();}));
   if(['runtime-first','access-first'].includes(method)){
    const origin=await app.evaluate(()=>globalThis.revRuntimeOrigin());if(!origin)throw Error('runtime origin unavailable');
-   const created=await fetch(origin+'/weftmate/api/v1/sessions',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sessionId:'rev-runtime',agentPreset:'personal-remote'})});row.gatewayCreated=created.status;const data=await created.json();const id=data.sessionId||'rev-runtime';
-   const snapshot=await(await fetch(origin+`/weftmate/api/v1/sessions/${id}/history?limit=1`)).json();row.waitSeq=snapshot.liveSeq??snapshot.nextSeq;
-   const waiting=fetch(origin+`/weftmate/api/v1/sessions/${id}/history?waitMs=30000&waitSeq=${row.waitSeq}&limit=1`).then(async r=>({status:r.status,body:await r.json()})).catch(e=>({error:e.message}));await pause(100);
+   const created=await fetch(new URL('/weftmate/api/v1/sessions',origin),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sessionId:'rev-runtime',agentPreset:'personal-remote'})});row.gatewayCreated=created.status;const data=await created.json();const id=data.sessionId||'rev-runtime';
+   const snapshot=await(await fetch(new URL(`/weftmate/api/v1/sessions/${id}/history?limit=1`,origin))).json();row.waitSeq=snapshot.liveSeq??snapshot.nextSeq;
+   const waiting=fetch(new URL(`/weftmate/api/v1/sessions/${id}/history?waitMs=30000&waitSeq=${row.waitSeq}&limit=1`,origin)).then(async r=>({status:r.status,body:await r.json()})).catch(e=>({error:e.message}));await pause(100);
    if(method==='access-first'){const at=Date.now();await app.evaluate(()=>globalThis.revAccessClose());row.accessCloseMs=Date.now()-at;}
    const at=Date.now();await app.evaluate(()=>globalThis.revRuntimeClose());row.runtimeCloseMs=Date.now()-at;row.gatewayWait=await waiting;
    if(method==='runtime-first'){const at=Date.now();await app.evaluate(()=>globalThis.revAccessClose());row.accessCloseMs=Date.now()-at;}

@@ -11,7 +11,7 @@
  */
 import { setProcessWarningLog } from '../process-output.mjs'
 import { createHash, randomBytes } from 'node:crypto'
-import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { mkdir, rm, symlink, writeFile } from 'node:fs/promises'
 import { createRequire as createNodeRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -129,9 +129,23 @@ const bootSnapshot = async (entries) => {
   } else throw new Error('legacy resolver unavailable')
   const ctx = await boot('dsh', rootConfig, [{ insert: entries }], async (hostCtx) => {
     app.current = hostCtx
-    if (resolution !== undefined) await hostCtx.plugin(appBoot.PluginPackages, { resolution })
+    if (resolution !== undefined) {
+      try {
+        await hostCtx.plugin(appBoot.PluginPackages, { resolution })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        if (!process.versions.electron || !message.includes('unsupported Electron runtime fingerprint')) throw error
+        const runtimeModules = runtimePackageAnchor.replaceAll('\\', '/').endsWith('/@deepseek-ai/dsh/package.json')
+          ? dirname(dirname(dirname(runtimePackageAnchor)))
+          : join(dirname(dirname(dirname(runtimePackageAnchor))), 'node_modules')
+        const profilesModules = join(dirname(profileDir), 'node_modules')
+        try { await symlink(runtimeModules, profilesModules, 'junction') }
+        catch (linkError) { if (linkError?.code !== 'EEXIST') throw linkError }
+        await hostCtx.plugin(appBoot.PluginPackages)
+      }
+    }
     hostCtx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, environment)
-    provideCmdline(hostCtx, { args: ['--port', port], exit: (code) => void requestShutdown(code) })
+    provideCmdline(hostCtx, { args: ['--port', port, ...(process.env?.WEFTMATE_SECURE_BOOTSTRAP_NO_OPEN === '1' ? ['--no-open'] : [])], exit: (code) => void requestShutdown(code) })
   })
   app.current = ctx
 

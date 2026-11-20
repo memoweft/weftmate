@@ -16,7 +16,7 @@ import {
 } from '../src/runtime/gateway/schemas/index.ts';
 
 const AT = '2026-08-20T10:00:00.000Z';
-const DSH_PIN = '47f943859bef60e4160492346772ded9b24f765a';
+const DSH_PIN = '38a6a5c965aa99ab525161efb7cc5cf1fe62fced';
 
 function env(type: string, data: unknown): Record<string, unknown> {
   return { v: 1, id: `evt-${type}`, type, at: AT, data };

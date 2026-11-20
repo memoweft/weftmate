@@ -12,6 +12,8 @@ import { syncBuiltinESMExports } from 'node:module'
 import { DshWebRuntime } from '../src/dsh-web-runtime.ts'
 
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai', name, 'lib/index.js')).href
+const execTool = async (toolsSvc: any, { name, arguments: args = {}, agent, callId, signal }: any) =>
+  (await toolsSvc.execute({ calls: [{ id: callId, name, arguments: JSON.stringify(args) }], agent, signal })).results[0].result
 const deferred = () => {
   let resolve!: (value?: any) => void
   const promise = new Promise<any>(done => { resolve = done })
@@ -31,10 +33,11 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   toolArguments = {}, toolsMode = 'native', workPolicy = null as any } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'personal-native-approval-'))
   const staged = stagePersonalPlugins(root).plugin
-  const [plugin, { Context, Service }, { default: SystemPrompt }, { default: Sessions }, tools,
+  const [plugin, { Context, Service }, { default: SystemPrompt }, { default: Sessions }, { default: SessionProjections }, tools,
     { default: ApprovalService }, { createScope }] = await Promise.all([
     import(staged), import(vendor('cordis')), import(vendor('dsh-system-prompt')),
-    import(vendor('dsh-session')), import(vendor('dsh-tools')), import(vendor('dsh-user-approval')), import(vendor('dsh-scope')),
+    import(vendor('dsh-session')), import(vendor('dsh-session-projection')), import(vendor('dsh-tools')),
+    import(vendor('dsh-user-approval')), import(vendor('dsh-scope')),
   ])
   const ctx = new Context(), frames: any[] = [], states = new Map<string, any>(), agents = new Map<string, any>()
   class FixtureAgents extends Service {
@@ -43,11 +46,22 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   }
   await ctx.plugin(SystemPrompt, { includeHarnessIdentity: false, includeRuntimeContext: false, persona: '' })
   await ctx.plugin(Sessions)
-  if(toolsMode!=='native')await ctx.plugin((await import(vendor('dsh-code-runtime-worker-thread'))).default,{computeMs:5000,maxWallMs:15000,maxOutputBytes:1024*1024,maxOldGenerationSizeMb:128})
-  await ctx.plugin(tools.default, { mode: toolsMode, maxParallelSubCalls: 4 })
+  await ctx.plugin(SessionProjections)
+  await ctx.plugin(tools.default)
+  await ctx.plugin((await import(vendor('dsh-fs-local'))).default, { cwd: root })
+  await ctx.plugin((await import(vendor('dsh-working-directory'))).default, { defaultDirectory: root })
+  if (toolsMode !== 'native') {
+    await ctx.plugin((await import(vendor('dsh-subprocess-local'))).default)
+    await ctx.plugin((await import(vendor('dsh-sandbox-local'))).default)
+    await ctx.plugin((await import(vendor('dsh-sandbox-policy'))).default, { workspaceRoot: root, mode: 'danger-full-access' })
+    await ctx.plugin((await import(vendor('dsh-ptc-runtime-node'))).default, { timeoutMs: 10000, maxTimeoutMs: 15000, maxOutputBytes: 1024 * 1024 })
+    await ctx.plugin(await import(vendor('dsh-tool-executor-ptc')))
+  } else {
+    await ctx.plugin(await import(vendor('dsh-tool-executor-native')))
+  }
   await ctx.plugin(ApprovalService, { policy })
   await ctx.plugin(FixtureAgents)
-  const session = ctx.sessions.create('approval-' + randomUUID().slice(0, 8), { meta: { agentPreset: 'personal-remote' } })
+  const session = ctx.sessions.create('approval-' + randomUUID().slice(0, 8), { cwd: root, meta: { agentPreset: 'personal-remote' } })
   const agent: any = { id: session.id, session, ctx: null, options: {}, status: 'running', inbox: {},
     cancel() {}, whenIdle: async () => {}, runMaintenance: async (work: any) => work(new AbortController().signal),
     send() {}, followup() {}, steer() {}, inject() {} }
@@ -66,7 +80,7 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
     }
     if (frame.action === 'read_approval') return { ...states.get(frame.approvalId) }
     if (frame.action === 'resolve_approval') {
-      assert.ok(session.events.some((event: any) => event.type === 'approval/decided' &&
+      assert.ok(session.snapshotEvents().some((event: any) => event.type === 'approval/decided' &&
         event.data.id === frame.approvalId && event.data.outcome === frame.outcome))
       if (holdResolution) await resolution.promise
       const state = { approvalId: frame.approvalId, status: frame.outcome === 'cancelled' ? cancelledStatus : 'resolved', outcome: frame.outcome }
@@ -110,7 +124,7 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   session.append('user/message', { id: 'source-message-1', source: { kind: 'user', rpcId: 'source-receipt-1' },
     content: [{ type: 'text', text: 'same fixture goal' }] }, { surfaceOp: 'append' })
   session.append('tool/call', { turn: 1, step: 1, callId: 'fixture-call', name: toolName, arguments: JSON.stringify(toolArguments) })
-  const execute = (callId = 'fixture-call') => ctx.get('tools').execute({ name: toolName, arguments: toolArguments, agent, callId, signal: controller.signal })
+  const execute = (callId = 'fixture-call') => execTool(ctx.get('tools'), { name: toolName, arguments: toolArguments, agent, callId, signal: controller.signal })
   return { root, ctx, plugin, agent, agents, session, frames, states, controller, transport, approvals, execute, resolution, dispatched,
     get effects() { return effects }, get committedCompletion() { return committedCompletion },
     close: async () => { approvals.close(); assert.equal(transport.listenerCount('disconnect'), 0);
@@ -122,7 +136,7 @@ test('MODE-1 a native run_code nested computer call ends with a proposal and no 
   const f=await nativeFixture({stage:'automatic',initialStatus:'pending',toolsMode:'both',workPolicy:policy});
   try{
     f.session.append('tool/call',{turn:1,step:2,callId:'mode-code',name:'run_code',arguments:JSON.stringify({code:"return await tools.fixture_action({command:'synthetic action'});",description:'合成嵌套工作'})});
-    const executing=f.ctx.get('tools').execute({name:'run_code',arguments:{code:"return await tools.fixture_action({command:'synthetic action'});",description:'合成嵌套工作'},agent:f.agent,callId:'mode-code',signal:f.controller.signal});
+    const executing=execTool(f.ctx.get('tools'),{name:'run_code',arguments:{code:"return await tools.fixture_action({command:'synthetic action'});",description:'合成嵌套工作'},agent:f.agent,callId:'mode-code',signal:f.controller.signal});
     await Promise.race([until(()=>f.frames.some(frame=>frame.action==='register_approval')),executing.then((result:any)=>{if(result.isError)throw Error(JSON.stringify(result.content));})]);
     const card=f.frames.find(frame=>frame.action==='register_approval');assert.match(card.reason,/work-switch/);assert.equal(card.toolName,'fixture_action');assert.equal(card.rootCallId,'mode-code');assert.equal(f.effects,0);
     assert.equal((await executing).isError,true);assert.equal(f.effects,0);assert.equal(f.frames.filter(frame=>frame.action==='register_approval').length,1);
@@ -136,7 +150,7 @@ test('MODE-1 chat risk review does not read a computer script before the user ch
   fs.readFileSync=((path:any,...args:any[])=>{if(String(path)===file)scriptReads++;return (read as any)(path,...args);}) as typeof fs.readFileSync;syncBuiltinESMExports();
   try{
     f.session.append('tool/call',{turn:1,step:2,callId:'mode-script',name:'pwsh',arguments:JSON.stringify({command:`pwsh -File '${file}'`})});
-    const executing=f.ctx.get('tools').execute({name:'pwsh',arguments:{command:`pwsh -File '${file}'`},agent:f.agent,callId:'mode-script',signal:f.controller.signal});
+    const executing=execTool(f.ctx.get('tools'),{name:'pwsh',arguments:{command:`pwsh -File '${file}'`},agent:f.agent,callId:'mode-script',signal:f.controller.signal});
     await until(()=>f.frames.some(frame=>frame.action==='register_approval'));assert.equal(scriptReads,0);assert.equal(f.effects,0);
     assert.equal((await executing).isError,true);assert.equal(scriptReads,0);assert.equal(f.effects,0);
   }finally{fs.readFileSync=read;syncBuiltinESMExports();await f.close();}
@@ -145,7 +159,7 @@ test('MODE-1 chat risk review does not read a computer script before the user ch
 async function checkUnknownNameBeforeApproval() {
   const f = await nativeFixture({ toolName: 'pwsh' })
   try {
-    const result = await f.ctx.get('tools').execute({ name: 'pweff', arguments: { command: 'Remove-Item fixture.txt' },
+    const result = await execTool(f.ctx.get('tools'), { name: 'pweff', arguments: { command: 'Remove-Item fixture.txt' },
       agent: f.agent, callId: 'bad-name', signal: f.controller.signal })
     assert.equal(result.isError, true)
     assert.match(JSON.stringify(result.content), /Unknown tool/)
@@ -185,7 +199,7 @@ test('fixed ApprovalService and ToolRuntime deliver approved/rejected native dec
       assert.equal(f.effects, decision === 'allowed-once' ? 1 : 0)
       assert.equal(result.isError, decision === 'rejected')
       assert.equal(f.frames.find(frame => frame.action === 'register_approval').receiptId, 'source-receipt-1')
-      assert.equal(f.session.events.find((event: any) => event.type === 'approval/decided').data.outcome, decision)
+      assert.equal(f.session.snapshotEvents().find((event: any) => event.type === 'approval/decided').data.outcome, decision)
       await until(() => f.frames.some(frame => frame.action === 'resolve_approval'))
       if (stage === 'body') {
         assert.ok(f.frames.findIndex(frame => frame.action === 'authorize_execution') < f.frames.findIndex(frame => frame.action === 'register_approval'))
@@ -205,20 +219,20 @@ test('fixed ApprovalService and ToolRuntime deliver approved/rejected native dec
     assert.equal(result.isError, false)
     assert.equal(all.effects, 1)
     assert.equal(all.frames.some(frame => frame.action === 'register_approval'), false)
-    assert.ok(all.session.events.some(event => event.type === 'approval/decided' && event.data.outcome === 'allowed-once'))
+    assert.ok(all.session.snapshotEvents().some(event => event.type === 'approval/decided' && event.data.outcome === 'allowed-once'))
   } finally { await all.close() }
   const expired = await nativeFixture({ initialStatus: 'unavailable' })
   try {
     const result = await expired.execute()
     assert.equal(result.isError, true)
     assert.equal(expired.effects, 0)
-    assert.ok(expired.session.events.some(event => event.type === 'approval/decided' && event.data.outcome === 'unavailable'))
+    assert.ok(expired.session.snapshotEvents().some(event => event.type === 'approval/decided' && event.data.outcome === 'unavailable'))
   } finally { await expired.close() }
   const never = await nativeFixture({ policy: 'never' })
   try {
     assert.equal((await never.execute()).isError, true); assert.equal(never.effects, 0)
     assert.equal(never.frames.some(frame => frame.action.includes('approval')), false)
-    assert.equal(never.session.events.find((event: any) => event.type === 'approval/decided').data.outcome, 'rejected')
+    assert.equal(never.session.snapshotEvents().find((event: any) => event.type === 'approval/decided').data.outcome, 'rejected')
   } finally { await never.close() }
 })
 
@@ -242,7 +256,7 @@ test('a tool-body ask waits for the native committed decision receipt before fin
     const execution = f.execute()
     await until(() => f.frames.some(frame => frame.action === 'resolve_approval'))
     assert.equal(f.states.values().next().value.status, 'answered')
-    assert.equal(f.session.events.find((event: any) => event.type === 'approval/decided').data.outcome, 'allowed-once')
+    assert.equal(f.session.snapshotEvents().find((event: any) => event.type === 'approval/decided').data.outcome, 'allowed-once')
     assert.equal(f.frames.some(frame => frame.action === 'finish_execution'), false)
     f.resolution.resolve()
     assert.equal((await execution).isError, false)
@@ -257,7 +271,7 @@ test('an approval request cannot stand in for a different executing tool', async
     try {
       assert.equal((await forged.execute()).isError, true); assert.equal(forged.effects, 0)
       assert.equal(forged.frames.some(frame => frame.action === 'register_approval'), false)
-      assert.equal(forged.session.events.find((event: any) => event.type === 'approval/decided').data.outcome, 'unavailable')
+      assert.equal(forged.session.snapshotEvents().find((event: any) => event.type === 'approval/decided').data.outcome, 'unavailable')
     } finally { await forged.close() }
   }
 })
@@ -267,18 +281,18 @@ test('a tool-body effect whose committed approval response is lost becomes uncer
   try {
     const result = await f.execute()
     assert.equal(result.isError, true); assert.equal(f.effects, 1)
-    assert.equal(f.session.events.find((event: any) => event.type === 'approval/decided').data.outcome, 'allowed-once')
+    assert.equal(f.session.snapshotEvents().find((event: any) => event.type === 'approval/decided').data.outcome, 'allowed-once')
     assert.ok(f.frames.some(frame => frame.action === 'authorize_execution'))
     assert.ok(f.frames.some(frame => frame.action === 'resolve_approval'))
     const observation = f.frames.find(frame => frame.action === 'finish_execution')
     assert.equal(observation.state, 'uncertain'); assert.equal('resultHash' in observation, false)
     assert.equal(f.states.values().next().value.status, 'resolved')
     const authorized = f.frames.filter(frame => frame.action === 'authorize_execution').length
-    assert.equal((await f.ctx.get('tools').execute({ name: 'fixture_action', arguments: {}, agent: f.agent,
-      callId: 'new-nested', rootCallId: 'fixture-call', signal: f.controller.signal })).isError, true)
+    assert.equal((await execTool(f.ctx.get('tools'), { name: 'fixture_action', arguments: {}, agent: f.agent,
+      callId: 'new-nested', signal: f.controller.signal })).isError, true)
     assert.equal(f.frames.filter(frame => frame.action === 'authorize_execution').length, authorized)
     f.session.append('tool/call', { turn: 1, step: 1, callId: 'new-root', name: 'fixture_action', arguments: '{}' })
-    assert.equal((await f.ctx.get('tools').execute({ name: 'fixture_action', arguments: {}, agent: f.agent,
+    assert.equal((await execTool(f.ctx.get('tools'), { name: 'fixture_action', arguments: {}, agent: f.agent,
       callId: 'new-root', signal: f.controller.signal })).isError, true)
     assert.equal(f.effects, 1)
   } finally { await f.close() }
@@ -286,8 +300,8 @@ test('a tool-body effect whose committed approval response is lost becomes uncer
   try {
     assert.equal((await unavailable.execute()).isError, true)
     const authorized = unavailable.frames.filter(frame => frame.action === 'authorize_execution').length
-    assert.equal((await unavailable.ctx.get('tools').execute({ name: 'fixture_action', arguments: {}, agent: unavailable.agent,
-      callId: 'new-nested', rootCallId: 'fixture-call', signal: unavailable.controller.signal })).isError, true)
+    assert.equal((await execTool(unavailable.ctx.get('tools'), { name: 'fixture_action', arguments: {}, agent: unavailable.agent,
+      callId: 'new-nested', signal: unavailable.controller.signal })).isError, true)
     assert.equal(unavailable.frames.filter(frame => frame.action === 'authorize_execution').length, authorized)
     assert.equal(unavailable.effects, 1)
   } finally { await unavailable.close() }
@@ -300,7 +314,7 @@ test('a native cancelled body approval keeps its known cancellation receipt sepa
       const execution = f.execute(); await until(() => f.frames.some(frame => frame.action === 'register_approval'))
       f.controller.abort(); assert.equal((await execution).isError, true); assert.equal(f.effects, 0)
       assert.equal(f.frames.find(frame => frame.action === 'finish_execution').state, 'cancelled')
-      assert.equal(f.session.events.find((event: any) => event.type === 'approval/decided').data.outcome, 'cancelled')
+      assert.equal(f.session.snapshotEvents().find((event: any) => event.type === 'approval/decided').data.outcome, 'cancelled')
     } finally { await f.close() }
   }
 })
@@ -311,8 +325,8 @@ test('a lost completed execution receipt closes the local root without downgradi
     assert.equal((await f.execute()).isError, true); assert.equal(f.effects, 1); assert.equal(f.committedCompletion, true)
     assert.deepEqual(f.frames.filter(frame => frame.action === 'finish_execution').map(frame => frame.state), ['completed', 'uncertain'])
     const authorized = f.frames.filter(frame => frame.action === 'authorize_execution').length
-    assert.equal((await f.ctx.get('tools').execute({ name: 'fixture_action', arguments: {}, agent: f.agent,
-      callId: 'new-nested', rootCallId: 'fixture-call', signal: f.controller.signal })).isError, true)
+    assert.equal((await execTool(f.ctx.get('tools'), { name: 'fixture_action', arguments: {}, agent: f.agent,
+      callId: 'new-nested', signal: f.controller.signal })).isError, true)
     assert.equal(f.frames.filter(frame => frame.action === 'authorize_execution').length, authorized)
     assert.equal(f.effects, 1); assert.equal(f.committedCompletion, true)
   } finally { await f.close() }
@@ -329,7 +343,7 @@ test('cancelled, replaced and historical approvals cannot consume a later allowe
       else f.transport.emit('disconnect')
       for (const state of f.states.values()) { state.status = 'answered'; state.decisionOutcome = 'allowed-once' }
       assert.equal((await execution).isError, true); assert.equal(f.effects, 0)
-      const outcome = f.session.events.find((event: any) => event.type === 'approval/decided').data.outcome
+      const outcome = f.session.snapshotEvents().find((event: any) => event.type === 'approval/decided').data.outcome
       assert.equal(outcome, interruption === 'cancel' ? 'cancelled' : 'unavailable')
       assert.equal(f.frames.some(frame => frame.action === 'authorize_execution'), false)
     } finally { await f.close() }
@@ -337,7 +351,7 @@ test('cancelled, replaced and historical approvals cannot consume a later allowe
   const historical = await nativeFixture({ initialStatus: 'resolved' })
   try {
     assert.equal((await historical.execute()).isError, true); assert.equal(historical.effects, 0)
-    assert.equal(historical.session.events.find((event: any) => event.type === 'approval/decided').data.outcome, 'unavailable')
+    assert.equal(historical.session.snapshotEvents().find((event: any) => event.type === 'approval/decided').data.outcome, 'unavailable')
   } finally { await historical.close() }
 })
 
@@ -348,7 +362,7 @@ test('a durable task-stop approval reports native cancellation before its abort 
     for (const state of f.states.values()) { state.status = 'unavailable'; state.outcome = 'cancelled' }
     assert.equal(f.controller.signal.aborted, false)
     assert.equal((await execution).isError, true); assert.equal(f.effects, 0)
-    assert.equal(f.session.events.find((event: any) => event.type === 'approval/decided').data.outcome, 'cancelled')
+    assert.equal(f.session.snapshotEvents().find((event: any) => event.type === 'approval/decided').data.outcome, 'cancelled')
     assert.equal(f.frames.some(frame => frame.action === 'authorize_execution'), false)
   } finally { await f.close() }
 })
@@ -360,7 +374,7 @@ test('durable stop cannot be consumed by a replaced or changed source and other 
       const execution = f.execute(); await until(() => f.frames.some(frame => frame.action === 'register_approval'))
       if (interruption === 'replace') f.agents.set(f.agent.id, { ...f.agent })
       if (interruption === 'turn-changed') {
-        f.session.append('turn/end', { turn: 1, reason: 'completed' })
+        f.session.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
         f.session.append('turn/start', { turn: 2 })
       }
       if (interruption === 'source-changed') {
@@ -373,7 +387,7 @@ test('durable stop cannot be consumed by a replaced or changed source and other 
         state.status = 'unavailable'; state.outcome = interruption === 'source-unavailable' ? 'unavailable' : 'cancelled'
       }
       assert.equal((await execution).isError, true); assert.equal(f.effects, 0)
-      assert.equal(f.session.events.find((event: any) => event.type === 'approval/decided').data.outcome, 'unavailable')
+      assert.equal(f.session.snapshotEvents().find((event: any) => event.type === 'approval/decided').data.outcome, 'unavailable')
       assert.equal(f.frames.some(frame => frame.action === 'authorize_execution'), false)
     } finally { await f.close() }
   }
@@ -383,7 +397,7 @@ test('the exact user receipt is preserved for equal text in a later turn and a s
   const f = await nativeFixture({ stage: 'automatic' })
   try {
     const before = f.plugin.personalExecutionIdentity({ agent: f.agent, name: 'fixture_action', callId: 'fixture-call' })
-    f.session.append('turn/end', { turn: 1, reason: 'completed' })
+    f.session.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
     f.session.append('turn/start', { turn: 2 })
     f.session.append('user/message', { id: 'source-message-2', source: { kind: 'user', rpcId: 'source-receipt-2' },
       content: [{ type: 'text', text: 'same fixture goal' }] }, { surfaceOp: 'append' })

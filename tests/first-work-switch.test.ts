@@ -37,7 +37,9 @@ test('tool preparation correction preserves native request retries and terminal 
         const staged = stagePersonalPlugins(root);
         const recovery = await import(pathToFileURL(staged.stageFile(resolve('src/plugins/personal-tool-loading.mjs'))).href);
         await ctx.plugin(llm.default); await ctx.plugin(Sessions); await ctx.plugin(SystemPrompt);
-        await ctx.plugin(tools.default); await ctx.plugin(AgentRegistry); await ctx.plugin(AgentLoop, { agents: [] });
+        await ctx.plugin((await import(vendor('dsh-session-projection'))).default);
+        await ctx.plugin(tools.default); await ctx.plugin(await import(vendor('dsh-tool-executor-native')));
+        await ctx.plugin(AgentRegistry); await ctx.plugin(AgentLoop, { agents: [] });
         ctx.on('agent/request-error', (payload: any, next: any) => { failures.push(payload.failure); return next(); });
         await ctx.plugin(Retry);
         ctx.tools.register(tools.defineTool({ name: 'load_tools', description: 'Synthetic catalog loader',
@@ -81,8 +83,8 @@ test('tool preparation correction preserves native request retries and terminal 
         });
         handle.agent.followup(llm.createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: 'Synthetic first file request' }] }));
         await handle.agent.whenIdle();
-        const events = handle.agent.session.events;
-        const chunks = events.filter((event: any) => event.type === 'assistant/chunk').map((event: any) => event.data.chunk);
+        const events = handle.agent.session.snapshotEvents();
+        const chunks = events.filter((event: any) => ['assistant/attempt', 'assistant/message'].includes(event.type)).flatMap((event: any) => llm.expandAssistantStream(event.data.stream).map((entry: any) => entry.chunk));
         const end = events.findLast((event: any) => event.type === 'turn/end').data.reason;
         assert.equal(JSON.stringify(chunks).includes('这次未能加载所需工具'), false, 'non-normal request outcomes must not become a successful fallback');
         if (scenario === 'MAX_TOKENS') {

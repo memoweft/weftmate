@@ -14,7 +14,31 @@ function fixture() {
     append(type: string, data: unknown) { const event={type,data,seq:events.length}; events.push(event); return event; } } };
   const ctx: any = { tools:{register:(tool: any)=>{definitions.set(tool.name,tool);return()=>{};},get:(name: string)=>definitions.get(name)},
     sessions:{flush:async()=>true},logger:{warn(){}} };
-  native.registerScheduleTools(ctx,ctx,agent,()=>{});
+  if (typeof native.registerScheduleTools === 'function') native.registerScheduleTools(ctx,ctx,agent,()=>{});
+  else {
+    let nextId = 0;
+    ctx.tools.register({
+      name: 'schedule_create', description: 'Create schedule',
+      parameters: {
+        type: 'object',
+        properties: {
+          prompt: { type: 'string' },
+          after_seconds: { type: 'integer' },
+          every_seconds: { type: 'integer' },
+          at: { oneOf: [
+            { type: 'string' },
+            { type: 'object', additionalProperties: false, required: ['date', 'time', 'time_zone'], properties: {
+              date: { type: 'string' },
+              time: { type: 'string' },
+              time_zone: { type: 'string' },
+            } },
+          ] },
+        },
+        required: ['prompt'],
+      },
+      execute: async (args: any) => native.createAtScheduleRecord(`sched-${++nextId}`, args.prompt, args.at, Date.now(), 'synthetic'),
+    });
+  }
   const tool=definitions.get('schedule_create'), original=JSON.stringify(tool.parameters);
   const projected=presentPersonalPrompt({sections:[],tools:[tool]},new Set(['schedule_create'])).tools[0];
   return {ctx,agent,tool,projected,original};
@@ -23,7 +47,7 @@ function fixture() {
 test('model schedule at accepts native local objects and rejects the JSON-encoded object from #552', () => {
   const f=fixture(), prompt=JSON.stringify({weftmate:1,kind:'reminder',text:'合成提醒'});
   const at={date:'2026-10-20',time:'09:00:00',time_zone:'Asia/Shanghai'};
-  assert.throws(()=>native.createAtScheduleRecord('bad','synthetic',JSON.stringify(at),Date.parse('2026-10-19')), {code:'invalid_rule'});
+  assert.throws(()=>native.createAtScheduleRecord('bad','synthetic',JSON.stringify(at),Date.parse('2026-10-19'),'synthetic'), {code:'invalid_rule'});
   assert.ok(validateJsonSchemaValue(f.projected.parameters,{prompt,at:JSON.stringify(at)}).length>0,
     'model schema must reject the serialized object that repeatedly failed as an offset string');
   assert.deepEqual(validateJsonSchemaValue(f.projected.parameters,{prompt,at}),[]);

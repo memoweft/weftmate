@@ -6,8 +6,9 @@ export const REPEAT_TOOL_MESSAGE = '这一步一直在重复，没能继续完�
 const personal = agent => ['personal-remote', 'personal-shared-chat'].includes(agent?.session?.header?.agentPreset);
 // Code Mode is a transport: its nested native calls carry the actual progress.
 const waiting = new Set(['job_output', 'wait', 'sleep', 'wait_agent', 'run_code']);
+const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : (s?.events ?? []);
 const openTurn = agent => {
-  const event = agent?.session?.events?.findLast(event => event.type === 'turn/start' || event.type === 'turn/end');
+  const event = sessionEvents(agent?.session).findLast(event => event.type === 'turn/start' || event.type === 'turn/end');
   return event?.type === 'turn/start' ? event.data.turn : null;
 };
 
@@ -38,7 +39,7 @@ export async function apply(ctx) {
         if (previous.has(message.id) || !(message.source?.plugin === 'repeat-tool-reminder' || message.source?.kind === 'repeat-tool-reminder')) return message;
         const limit = message.source.summary?.endsWith(` × ${REPEAT_TOOL_LIMIT}`);
         if (limit && !activeStop(exec.agent)) stopped.set(exec.agent, { turn: openTurn(exec.agent), delivered: false });
-        return createUserMessage({ source: { ...message.source, plugin: name }, content: [{ type: 'text',
+        return createUserMessage({ source: { ...message.source, kind: name }, content: [{ type: 'text',
           text: limit ? '同样的调用和同样的结果已反复出现。不要再调用工具；先处理最后一次返回的结果，用文字简短说明查到了什么、还有什么没完成，并说明已经停止重复。'
             : '这个调用和返回结果都没有变化。先阅读上次结果，再决定是否换一种办法或结束，不要继续重复。' }] });
       });
@@ -49,7 +50,7 @@ export async function apply(ctx) {
     ? { kind: 'deny', reason: REPEAT_TOOL_MESSAGE } : next(), { prepend: true });
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
     const assembly = await next();
-    return activeStop(context.scope) ? { ...assembly, tools: [] } : assembly;
+    return activeStop(context.scope) ? { ...assembly, tools: [], [Symbol.for('weftmate.personalAssembledTools')]: [] } : assembly;
   }, { prepend: true });
   ctx.on('agent/pre-step', async (payload, next) => {
     const state = activeStop(payload.agent);
@@ -71,13 +72,13 @@ export async function apply(ctx) {
       const decision = users.length ? { kind: 'enter', messages: payload.messages.filter(message => message.source?.kind !== 'user') }
         : await next();
       if (decision.kind !== 'enter') return decision;
-      return { ...decision, messages: [...decision.messages, createUserMessage({ source: { kind: 'plugin', plugin: name },
+      return { ...decision, messages: [...decision.messages, createUserMessage({ source: { kind: name },
         content: [{ type: 'text', text: '重复操作已经停止。请根据刚返回的最后一次工具结果，用文字说明结果和未完成的部分，不再调用工具。' }] })] };
     }
     stopped.delete(payload.agent);
-    const source = payload.agent.session.events.findLast(event => event.type === 'assistant/message').data.message.source;
+    const source = sessionEvents(payload.agent.session).findLast(event => event.type === 'assistant/message').data.message.source;
     payload.agent.session.append('step/start', { turn: payload.turn, step: payload.step });
-    payload.agent.session.append('assistant/message', { turn: payload.turn, step: payload.step,
+    payload.agent.session.append('assistant/message', { turn: payload.turn, step: payload.step, stream: [],
       message: createAssistantMessage({ content: [{ type: 'text', text: REPEAT_TOOL_MESSAGE }],
         source: { provider: source.provider, model: source.model } }) }, { surfaceOp: 'append' });
     payload.agent.session.append('step/end', { turn: payload.turn, step: payload.step });

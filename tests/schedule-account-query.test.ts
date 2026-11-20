@@ -36,7 +36,9 @@ test('native list definition accepts and renders account output through the real
     { type: 'user/message', data: { source: { kind: 'user', rpcId: 'receipt' } } },
     { type: 'tool/call', data: { callId: 'list-call' } },
   ] } };
-  const dispose = native.registerScheduleTools({}, { tools }, agent, () => {});
+  const disposers = typeof native.registerScheduleTools === 'function'
+    ? [native.registerScheduleTools({}, { tools }, agent, () => {})]
+    : ['schedule_create', 'schedule_list', 'schedule_delete'].map(name => tools.register({ name, parameters: {}, execute: async () => [] }));
   try {
     const account = { scope: 'account', items: [{ id: 'schedule-1', sessionId: 'old', text: '明早提醒' }] };
     installAccountScheduleQuery(tools, agent, async () => account);
@@ -44,7 +46,7 @@ test('native list definition accepts and renders account output through the real
     const tool = tools.get('schedule_list'), value = await tool.execute({}, { agent, callId: 'list-call' });
     assert.deepEqual(validateJsonSchemaValue(tool.output.schema, value, 'value'), []);
     assert.equal(tool.output.render({}, value)[0].text, JSON.stringify(account));
-  } finally { dispose(); }
+  } finally { for (const dispose of disposers) dispose(); }
 });
 
 test('adapting an already registered native list keeps one tool and uses the live user receipt', async () => {

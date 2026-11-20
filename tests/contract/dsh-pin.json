@@ -1,13 +1,12 @@
 {
   "repo": "https://github.com/deepseek-ai/deepseek-harness.git",
-  "packageVersion": "0.1.0-rc.5",
-  "commit": "47f943859bef60e4160492346772ded9b24f765a",
-  "commitSubject": "Merge pull request #2519 from deepseek-harness/feat/npm-public",
-  "recordedAt": "2026-08-14",
+  "packageVersion": "0.2.2-rc.3",
+  "commit": "38a6a5c965aa99ab525161efb7cc5cf1fe62fced",
+  "commitSubject": "Merge pull request #8397 from deepseek-harness/worktree-release-dsh-0.2.2-rc.3",
+  "recordedAt": "2026-11-17",
   "notes": [
-    "上游仓库没有 git tag（ls-remote 验证为 0 个 tag），pin 以 commit 为准；版本号取自 checkout 根 package.json（0.1.0-rc.5）。",
-    "2026-08-06 的内嵌可行性探针（weftmate-dsh-embed-probe-20260806-r1）运行于更早的 rc.5 checkout（该 commit 未记录，旧目录已随工作区清理删除）。本 pin 锚定的是契约测试实际验证通过的 checkout HEAD；版本号未变，未升级 DSH。",
+    "固定至 dsh-v0.2.2-rc.3；packageVersion 与 commit 已对照只读 checkout 核实。",
     "升级流程 = owner 触发：更新本文件的 commit/packageVersion → 重跑 npm run test:contract 全绿 → 再动 vendor（见 docs/VENDOR-PACKAGING.md §8）。",
-    "契约测试启动时会校验 checkout 与本文件一致，不一致即失败并给出指引——这是 R1（rc.5 API 会动）的第一道护栏。"
+    "契约测试启动时会校验 checkout 与本文件一致，不一致即失败并给出指引。"
   ]
 }

@@ -484,7 +484,8 @@ async function main() {
     console.log(`[vendor-dsh] 编译 ${identity.key}（隔离检出，主仓只读）`)
     await scratch.assertOwned(checkout)
     run(resolvePnpm(), ['install', '--frozen-lockfile', ...isolatedInstallArgs(checkout)], checkout, 'DSH frozen install')
-    run(resolvePnpm(), ['run', 'build'], checkout, 'DSH patched build')
+    const { scripts } = JSON.parse(readFileSync(join(checkout, 'package.json'), 'utf8'))
+    run(resolvePnpm(), ['run', scripts?.['build:artifacts'] ? 'build:artifacts' : 'build'], checkout, 'DSH patched build')
     if (existsSync(join(checkout, 'native/system'))) {
       if (process.platform === 'linux' || process.platform === 'darwin') {
         run(resolvePnpm(), ['run', 'build:native'], join(checkout, 'native/system'), 'DSH native system build')

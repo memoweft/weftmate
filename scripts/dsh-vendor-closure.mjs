@@ -15,7 +15,16 @@ const INTERNAL_SCOPE = '@deepseek-ai/'
 // it like any registry dependency; only actual workspace packages belong in
 // the locally packed closure.
 const RELEASED_EXTERNAL_PACKAGES = new Set(['@deepseek-ai/libreoffice-kit'])
+const RELEASED_EXTERNAL_PREFIXES = ['@deepseek-ai/libreoffice-kit-']
 const DEPENDENCY_FIELDS = ['dependencies', 'peerDependencies', 'optionalDependencies']
+
+export function isReleasedExternalPackage(name) {
+  return (
+    typeof name === 'string' &&
+    (RELEASED_EXTERNAL_PACKAGES.has(name) ||
+      RELEASED_EXTERNAL_PREFIXES.some((prefix) => name.startsWith(prefix)))
+  )
+}
 
 /** DSH pnpm workspace 的包根。native 路径是 2026-08 的 Landlock 子工作区。 */
 const WORKSPACE_PACKAGE_ROOTS = [
@@ -28,7 +37,7 @@ const WORKSPACE_PACKAGE_ROOTS = [
 ]
 
 function isInternal(name) {
-  return typeof name === 'string' && name.startsWith(INTERNAL_SCOPE) && !RELEASED_EXTERNAL_PACKAGES.has(name)
+  return typeof name === 'string' && name.startsWith(INTERNAL_SCOPE) && !isReleasedExternalPackage(name)
 }
 
 async function scanPackageLeaves(root, depth, loadPackage) {

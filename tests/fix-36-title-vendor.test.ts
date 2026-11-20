@@ -10,10 +10,11 @@ const {apply,titleLanguageInstruction,titleForConversation}=await import('../src
 hook.deregister();
 test('FIX-36 actual DSH title provider generates a Chinese title for Chinese conversation',async()=>{
   let provider:any,options:any;
-  const ctx:any={sessionTitle:{register:value=>{provider=value;}},sessions:{},llm:{async *stream(value){
+  const stream=async function* (value:any){
     options=value;const title=/Write the title in Chinese/.test(value.system)?'查看当前时间':'Brief current time query';
     yield {type:'text-delta',index:0,text:title};yield {type:'finish',reason:{kind:'stop'}};
-  }}};
+  };
+  const ctx:any={sessionTitle:{register:value=>{provider=value;}},sessions:{},llm:{stream,prepareCall:async()=>({config:{},stream})}};
   apply(ctx,{targetWords:6,targetCjkCharacters:12,maxInputBytes:4096,maxOutputTokens:64,timeoutMs:1000});
   const appended:any[]=[];
   const result=await provider.generate({session:{id:'synthetic-title',append:(...args)=>appended.push(args)},route:{provider:'synthetic',model:'fixture'},messages:[{seq:1,text:'现在几点？'}],signal:new AbortController().signal});
@@ -28,9 +29,10 @@ test('FIX-36 title language uses conversation text rather than English identifie
 });
 test('FIX-36 a model ignoring title language cannot save an English title for Chinese input',async()=>{
   let provider:any;
-  const ctx:any={sessionTitle:{register:value=>{provider=value;}},sessions:{},llm:{async *stream(){
+  const stream=async function* (){
     yield {type:'text-delta',index:0,text:'Brief current time query'};yield {type:'finish',reason:{kind:'stop'}};
-  }}};
+  };
+  const ctx:any={sessionTitle:{register:value=>{provider=value;}},sessions:{},llm:{stream,prepareCall:async()=>({config:{},stream})}};
   apply(ctx,{targetWords:6,targetCjkCharacters:12,maxInputBytes:4096,maxOutputTokens:64,timeoutMs:1000});
   const result=await provider.generate({session:{id:'synthetic-title',append:()=>{}},route:{provider:'synthetic',model:'fixture'},messages:[{seq:1,text:'现在几点？'}],signal:new AbortController().signal});
   assert.match(result.title,/现在几点/);assert.doesNotMatch(result.title,/Brief/);assert.deepEqual(result.messageSeqs,[1]);

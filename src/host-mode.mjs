@@ -100,9 +100,45 @@ export function assertLoopbackOrigin(origin) {
   return url.origin;
 }
 
+export function assertManagedDshUrl(value) {
+  let url;
+  try { url = new URL(value); } catch { throw new Error('managed DSH did not publish a valid origin'); }
+  if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || !url.port
+    || url.username || url.password || url.pathname !== '/' || url.hash
+    || (url.search && !/^\?token=[^&#\s]+$/.test(url.search))) {
+    throw new Error('managed DSH origin must be an exact loopback HTTP origin');
+  }
+  return url.origin;
+}
+
+const runtimeCookies = new Map();
+
+export async function fetchRuntimeWithCookie(launchUrl, path, init = {}) {
+  const parsed = new URL(launchUrl);
+  let cookie;
+  if (parsed.searchParams.has('token')) {
+    let pending = runtimeCookies.get(launchUrl);
+    if (!pending) {
+      pending = (async () => {
+        const ex = await fetch(launchUrl, { redirect: 'manual' });
+        const raw = ex.headers.get('set-cookie');
+        return raw ? raw.split(';', 1)[0] : '';
+      })().catch((error) => { runtimeCookies.delete(launchUrl); throw error; });
+      runtimeCookies.set(launchUrl, pending);
+    }
+    cookie = await pending;
+  }
+  return fetch(new URL(path, parsed.origin), {
+    ...init,
+    headers: { ...(init.headers ?? {}), ...(cookie ? { cookie } : {}) },
+  });
+}
+
 export async function startPersonalHost({ startRuntime, migrateRoutes, hydrateBindings, log }) {
-  let origin = assertLoopbackOrigin(await startRuntime());
-  origin = assertLoopbackOrigin(await migrateRoutes(origin));
+  let launchUrl = await startRuntime();
+  assertManagedDshUrl(launchUrl);
+  launchUrl = await migrateRoutes(launchUrl);
+  const origin = assertManagedDshUrl(launchUrl);
   await hydrateBindings();
   await log(`[weftmate] ✓ personal-host ready origin=${origin}`);
   return origin;

@@ -1,4 +1,5 @@
 import { claimedInputsAt } from './inbox-timeline.mjs'
+import { inspectSessionLog, readSessionFrom } from './persistence-compat.mjs'
 
 const raw = entry => entry?.event ?? entry
 const bindings = new WeakMap()
@@ -78,10 +79,10 @@ export function sourceRange(entries, { turn, observedSeq, receiptId } = {}) {
  * JSONL may still parse the physical file; that backend work is owned by DSH.
  */
 export async function durableSourceRange(persistence, sessionId, options, signal) {
-  const inspected = await persistence.inspect(sessionId, signal)
+  const inspected = await inspectSessionLog(persistence, sessionId, signal)
   const range = sourceRange(inspected.events, options)
   if (!range) return { meta: inspected.meta, events: [], current: false }
-  const stored = await persistence.readFrom(sessionId, raw(range.events[0]).seq, signal)
+  const stored = await readSessionFrom(persistence, sessionId, raw(range.events[0]).seq, signal)
   const nextSeq = raw(inspected.events[range.end])?.seq
   const events = []
   for (const entry of stored.events) {

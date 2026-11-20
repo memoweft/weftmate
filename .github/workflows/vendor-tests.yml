@@ -38,7 +38,7 @@ jobs:
           persist-credentials: false
       - uses: pnpm/action-setup@v4
         with:
-          version: 11.7.0
+          version: 11.28.5
       - name: Cache patched vendor runtime
         uses: actions/cache@v4
         with:
@@ -63,7 +63,7 @@ jobs:
   vendor:
     name: Pinned DSH vendor unit tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
@@ -111,7 +111,7 @@ jobs:
           persist-credentials: false
       - uses: pnpm/action-setup@v4
         with:
-          version: 11.7.0
+          version: 11.28.5
       # vendor:dsh builds the carried patches in an independent LF checkout.
       # Cache only completed runtimes with the commit + patch identity manifest.
       - name: Cache patched vendor runtime

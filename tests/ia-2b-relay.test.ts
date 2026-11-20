@@ -95,7 +95,7 @@ test('#431 stopped long reply, completed queued reply and compacted tail retain 
   const target: any = { status: 'idle', inbox: { hasPending: false }, session: { events: [], append(type, data) { this.events.push({ type, data }); } } };
   await installNativeHandoff(ctx, target, handoff, value => value);
   target.session.append('user/message', { source: { kind: 'user' }, content: [{ type: 'text', text: '请把选定文件夹中的文件按类型整理。' }] });
-  assert.equal(target.session.events[0].data.source.plugin, 'weftmate-chat-handoff');
+  assert.equal(target.session.events[0].data.source.kind, 'weftmate-chat-handoff');
   assert.equal(target.session.events.at(-1).data.content[0].text, '请把选定文件夹中的文件按类型整理。');
 });
 

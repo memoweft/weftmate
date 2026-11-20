@@ -1,7 +1,8 @@
 /** Recover one failed catalog load through the native agent step, with corrected model arguments. */
 const TOOL_LOADING_UNAVAILABLE = '这次未能加载所需工具，任务还没有完成。';
 const LOAD = 'load_tools';
-const openTurn = agent => agent.session.events.findLast(event => event.type === 'turn/start' || event.type === 'turn/end');
+const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : (s?.events ?? []);
+const openTurn = agent => sessionEvents(agent.session).findLast(event => event.type === 'turn/start' || event.type === 'turn/end');
 
 export function installToolLoadingRecovery(ctx) {
   const states = new WeakMap(), requests = new WeakMap();
@@ -24,7 +25,7 @@ export function installToolLoadingRecovery(ctx) {
     if (!state || state.failures !== 1 || decision.kind !== 'enter') return decision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
     return { ...decision, messages: [...decision.messages, createUserMessage({
-      source: { kind: 'plugin', plugin: 'weftmate-tool-loading' },
+      source: { kind: 'weftmate-tool-loading' },
       content: [{ type: 'text', text: '刚才准备工具失败，系统正在自动重试一次。请根据用户原请求，从当前工具目录选择准确名称，重新调用 load_tools，必须传非空 names 数组，例如 {"names":["write"]}。不要让用户自己切模式，也不要改用别的操作；加载成功后实际调用所需工具，系统会询问是否切换到工作。' }],
     })] };
   });
@@ -35,7 +36,11 @@ export function installToolLoadingRecovery(ctx) {
   });
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
     const assembly = await next();
-    return active(context.scope) ? { ...assembly, tools: assembly.tools.filter(tool => tool.name === LOAD) } : assembly;
+    if (!active(context.scope)) return assembly;
+    const base = Array.isArray(assembly.tools) ? assembly.tools : (assembly[Symbol.for('weftmate.personalAssembledTools')] ?? []);
+    const filtered = base.filter(tool => tool.name === LOAD);
+    return { ...assembly, ...(Array.isArray(assembly.tools) ? { tools: filtered } : {}),
+      [Symbol.for('weftmate.personalAssembledTools')]: filtered };
   }, { prepend: true });
   ctx.on('llm/stream', (options, next) => {
     const agent = options.signal && requests.get(options.signal), state = agent && active(agent);

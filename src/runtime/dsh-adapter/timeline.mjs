@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { createHistoryCache } from './history-cache.mjs';
+import { inspectSessionLog } from './persistence-compat.mjs';
 
 /** Read the native immutable log without cloning it or activating an agent.
  * session-query.readEvent currently clones the whole source before slicing;
@@ -32,12 +33,13 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     for (const id of index.keys()) rows.push(one(id));
     return {items:rows};
   };
+  const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : s?.events
   const read = async (sessionId) => {
     const live = ctx.get('sessions')?.get(sessionId)
-    if (live) return live.events
+    if (live) return sessionEvents(live)
     const persistence = ctx.get('sessionPersistence')
     if (!persistence) throw Object.assign(new Error('session not found'), { code: 'session-not-found' })
-    return (await persistence.inspect(sessionId)).events
+    return (await inspectSessionLog(persistence, sessionId)).events
   }
   read.waitForChange = (sessionId, seq, ms, signal, admission) => {
     // An already cancelled request never reads native storage or registers.
@@ -99,11 +101,11 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
   };
   read.removeSession=id=>{index.delete(id);changed.set(id,null);};
   const persistence = ctx.get('sessionPersistence');
-  if (!cache || !persistence?.config?.root || !persistence.listSnapshots) return read;
+  if (!cache || !persistence?.config?.root || !(persistence.listSnapshots || persistence.list)) return read;
   history = createHistoryCache({ file: resolve(persistence.config.root, '..', 'weftmate-history.sqlite'), readNative: read,
     async source(id) {
       const live = ctx.get('sessions')?.get(id);
-      const artifact = live ? {meta:live.header,events:live.events} : await persistence.inspect(id);
+      const artifact = live ? {meta:live.header,events:sessionEvents(live)} : await inspectSessionLog(persistence, id);
       // Native logs are immutable and append-only; fingerprint a bounded suffix
       // so reading a page never serializes the entire conversation.
       const {meta = {}, events} = artifact;

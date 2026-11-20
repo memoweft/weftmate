@@ -57,7 +57,7 @@ export function apply(ctx) {
     if (!payload.messages.some(message => message.content?.some(part => part.text === 'Budget memory exclusion'))) return decision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
     payload.agent.session[Symbol.for('weftmate.memoryRecall')] = { turn: payload.turn, memories: [{ id: 'budget-memory', summary: 'oversized' }] };
-    return { ...decision, messages: [...decision.messages, createUserMessage({ content: [{ type: 'text', text: 'OVERSIZED_MEMORY'.repeat(20000) }], source: { kind: 'plugin', plugin: 'weftmate-personal-memory' } })] };
+    return { ...decision, messages: [...decision.messages, createUserMessage({ content: [{ type: 'text', text: 'OVERSIZED_MEMORY'.repeat(20000) }], source: { kind: 'weftmate-personal-memory' } })] };
   });
   ctx.on('session/event', (session, event) => {
     if (event.type === 'request/context') writeFileSync(new URL('./capacity.json', import.meta.url), JSON.stringify(event.data));
@@ -89,9 +89,26 @@ export function apply(ctx) {
     credentialRequestHandler: async ({ operation }) => operation === 'resolve'
       ? { value: 'isolated-fixture-key' } : { configured: true, writable: true }, log: line => logs.push(line) });
   let pumpAbort: AbortController | undefined;
-  const call = async (origin: string, path: string, body?: unknown, method = body ? 'POST' : 'GET') => {
+  const authCookies = new Map<string, Promise<{ origin: string; cookie?: string }>>();
+  const authSession = (launchUrl: string) => {
+    let pending = authCookies.get(launchUrl);
+    if (!pending) {
+      pending = (async () => {
+        const parsed = new URL(launchUrl);
+        if (!parsed.searchParams.has('token')) return { origin: parsed.origin };
+        const res = await fetch(launchUrl, { redirect: 'manual' });
+        const raw = res.headers.get('set-cookie');
+        return { origin: parsed.origin, cookie: raw ? raw.split(';', 1)[0] : undefined };
+      })();
+      authCookies.set(launchUrl, pending);
+    }
+    return pending;
+  };
+  const call = async (launchUrl: string, path: string, body?: unknown, method = body ? 'POST' : 'GET') => {
+    const { origin, cookie } = await authSession(launchUrl);
     const response = await fetch(`${origin}/weftmate/api/v1${path}`, { method,
-      headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+      headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}) },
+      body: body ? JSON.stringify(body) : undefined });
     const value: any = await response.json(); assert.ok(response.ok, JSON.stringify(value)); return value;
   };
   try {
@@ -103,7 +120,9 @@ export function apply(ctx) {
     const session = await call(origin, '/sessions', { agentPreset: 'minimal' });
     await call(origin, `/sessions/${session.sessionId}/models`, { provider: 'budget-fixture', model: 'qwen' }, 'PUT');
     pumpAbort = new AbortController();
-    const response = await fetch(`${origin}/weftmate/api/v1/sessions/${session.sessionId}/events`, { signal: pumpAbort.signal });
+    const { origin: baseOrigin, cookie } = await authSession(origin);
+    const response = await fetch(`${baseOrigin}/weftmate/api/v1/sessions/${session.sessionId}/events`, {
+      headers: cookie ? { cookie } : undefined, signal: pumpAbort.signal });
     const events: any[] = [];
     const reader = response.body!.getReader();
     void (async () => {
@@ -156,17 +175,17 @@ export function apply(ctx) {
     await call(origin, `/sessions/${session.sessionId}/messages`, { content: 'Budget memory exclusion', mode: 'queue' });
     const memoryDeadline = Date.now() + 5000;
     while (requests.length < 13) {
-      if (Date.now() > memoryDeadline) assert.fail('memory budget request did not arrive');
+      if (Date.now() > memoryDeadline) assert.fail(`memory budget request did not arrive; events=${events.slice(-10).map(e => `${e.rawType ?? e.type}:${JSON.stringify(e.raw ?? e.data ?? e.error ?? '')}`).join(' | ')}; logs=${logs.slice(-10).join(' | ')}`);
       await new Promise(resolve => setTimeout(resolve, 20));
     }
     assert.equal(JSON.stringify(requests.at(-1).messages).includes('OVERSIZED_MEMORY'), false,
       'optional memory is removed from the actual wire request before it can overflow the service window');
     assert.ok(requests.at(-1).outputBudget > 0);
     const beforeCredentialRead = metadataReads;
-    const credential = await fetch(`${origin}/api/credentials.set`, { method: 'POST',
-      headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'client-request',
-        rpcId: 'budget-credential', method: 'credentials.set', payload: {
-          ref: 'FIXTURE_API_KEY', value: 'updated-isolated-fixture-key' } }) });
+    const credential = await fetch(`${baseOrigin}/api/credentials/set`, { method: 'POST',
+      headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}) }, body: JSON.stringify({ type: 'client-request',
+        rpcId: 'budget-credential', method: 'credentials/set', payload: { args: {
+          ref: 'FIXTURE_API_KEY', value: 'updated-isolated-fixture-key' } } }) });
     assert.equal((await credential.json() as any).result.ok, true);
     const credentialDeadline = Date.now() + 5000;
     while (metadataReads === beforeCredentialRead) {
@@ -176,7 +195,7 @@ export function apply(ctx) {
   } finally {
     pumpAbort?.abort(); await runtime.close();
     await new Promise<void>(resolve => server.close(() => resolve()));
-    await rm(root, { recursive: true, force: true });
+    await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
   // This existing release gate requires the pinned native vendor. Keep the
   // slow-stream fixture under that gate rather than adding a CI exception.

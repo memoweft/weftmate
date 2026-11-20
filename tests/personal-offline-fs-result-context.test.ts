@@ -11,21 +11,25 @@ const vendor = (name: string) => pathToFileURL(resolve('vendor/dsh-runtime/node_
 async function fixture(t: any, project = true) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-offline-fs-context-'));
   const staged = stagePersonalPlugins(root);
-  const [{ Context }, { default: SystemPrompt }, { default: Sessions }, tools, llm,
+  const [{ Context }, { default: SystemPrompt }, { default: Sessions }, { default: SessionProjections }, { default: WorkingDirectory }, tools, llm,
     { default: LocalFileSystem }, fsTools, { FsError }, { createScope }, plugin] = await Promise.all([
     import(vendor('cordis')), import(vendor('dsh-system-prompt')), import(vendor('dsh-session')),
+    import(vendor('dsh-session-projection')), import(vendor('dsh-working-directory')),
     import(vendor('dsh-tools')), import(vendor('dsh-llm')), import(vendor('dsh-fs-local')),
     import(vendor('dsh-tool-fs')), import(vendor('dsh-fs')), import(vendor('dsh-scope')),
     import(pathToFileURL(staged.stageFile(resolve('src/plugins/weftmate-personal-reply-content.mjs'))).href),
   ]);
   const ctx = new Context();
-  Object.defineProperty(ctx, 'logger', { value: { warn() {} }, configurable: true });
+  Object.defineProperty(ctx, 'logger', { value: { warn() {}, error() {} }, configurable: true });
   t.after(async () => { await ctx.fiber.dispose(); rmSync(root, { recursive: true, force: true }); });
   await ctx.plugin(SystemPrompt, {});
   await ctx.plugin(Sessions);
+  await ctx.plugin(SessionProjections);
   await ctx.plugin(llm.default);
-  await ctx.plugin(tools.default, { mode: 'native' });
+  await ctx.plugin(tools.default);
+  await ctx.plugin(await import(vendor('dsh-tool-executor-native')));
   await ctx.plugin(LocalFileSystem, { cwd: root });
+  await ctx.plugin(WorkingDirectory, { defaultDirectory: root });
   await ctx.plugin(fsTools);
   if (project) await ctx.plugin(plugin.default);
   const session = ctx.sessions.create('offline-fs-context', { cwd: root, meta: { agentPreset: 'personal-remote' } });
@@ -39,12 +43,13 @@ async function fixture(t: any, project = true) {
   session.append('step/start', { turn: 1, step: 1 });
   async function invoke(name: string, args: object, callId = 'fs-context-call') {
     const call = session.append('tool/call', { turn: 1, step: 1, name, callId, arguments: JSON.stringify(args) });
-    const result = await ctx.tools.execute({ name, callId, arguments: args, agent, signal: AbortSignal.timeout(5000) });
+    const result = (await ctx.tools.execute({ calls: [{ id: callId, name, arguments: JSON.stringify(args) }], agent, signal: AbortSignal.timeout(5000) })).results[0].result;
     const logged = session.append('tool/result', { turn: 1, step: 1, ...(result.error?.info ? { error: result.error.info } : {}),
       message: llm.createToolResultMessage({ callId, content: result.content, isError: result.isError }) },
     { surfaceOp: 'append', sourceEventSeqs: [call.seq] });
-    const derived = session.deriveMessages().filter((message: any) => message.content?.some(
-      (part: any) => part.type === 'tool-result' && part.toolCallId === callId));
+    const derived = session.deriveMessages().filter((message: any) =>
+      (message.role === 'tool' && message.toolCallId === callId) ||
+      message.content?.some((part: any) => part.type === 'tool-result' && part.toolCallId === callId));
     assert.ok(derived.length > 0, 'the actual native result reaches the next model input');
     assert.equal(executions, 1, 'presentation does not invoke another operation or retry');
     return { result, channels: {
@@ -75,7 +80,7 @@ test('offline task read result retains real path absence through production hook
   assert.equal(result.isError, true);
   assert.equal(result.error.info.code, 'FS_NOT_FOUND');
   assert.equal(existsSync(join(f.root, 'missing.txt')), false, 'presentation must never create the missing target');
-  assert.equal(f.session.events.filter((event: any) => event.type.startsWith('approval/')).length, 0);
+  assert.equal(f.session.snapshotEvents().filter((event: any) => event.type.startsWith('approval/')).length, 0);
   assert.deepEqual(Object.fromEntries(Object.entries(channels).map(([channel, text]) => [channel, /不存在|not found/i.test(text)])),
     { returned: true, persisted: true, derived: true }, 'all model-facing channels retain path absence instead of a generic failure');
   for (const [channel, text] of Object.entries(channels)) {

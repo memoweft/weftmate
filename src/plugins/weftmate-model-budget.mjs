@@ -22,9 +22,11 @@ export function apply(ctx, config) {
   const probes = new Map();
   const capacities = new Map();
   const slowRetries = new Set();
+  const retryReports = new Map();
   let rawSource = () => config;
   let lastRaw, lastVersion, projected;
   let version = 0;
+  let registeredSettings = false;
   const identity = (provider, row, model) => JSON.stringify([provider, row.baseURL, row.apiKeyEnv, model]);
   const compatible = row => row?.baseURL && (!row.api || row.api === 'openai-completions');
 
@@ -88,6 +90,7 @@ export function apply(ctx, config) {
       return (...args) => {
         if (args[1] === NativeConfig) args[1] = Config;
         const scope = settings.register(...args);
+        registeredSettings = true;
         rawSource = () => scope.get();
         scope.watch(() => { probes.clear(); capacities.clear(); version++; return refresh(); });
         sctx.effect(async () => { await refresh(); });
@@ -113,6 +116,7 @@ export function apply(ctx, config) {
             scheduler, { profileId: options.provider, ...(background ? {} : { sessionId: options.sessionId ?? '' }) });
           try {
           if (slowRetries.delete(options.sessionId) && scheduler && !background) {
+            await retryReports.get(options.sessionId);
             await fetch(`${scheduler}/progress`, { method: 'POST', headers: { 'content-type': 'application/json' },
               body: JSON.stringify({ sessionId: options.sessionId, phase: 'retrying' }), signal: AbortSignal.timeout(1000) }).catch(() => {});
           }
@@ -201,13 +205,17 @@ export function apply(ctx, config) {
     ? new Proxy(config, { get(target, prop) {
       return prop === 'providers' ? source().providers : Reflect.get(target, prop);
     } }) : config);
+  ctx.effect(async () => {
+    if (!registeredSettings) await refresh();
+  });
   ctx.on('session/event', (session, event) => {
-    if (event.type === 'turn/end') { slowRetries.delete(session.id); return; }
+    if (event.type === 'turn/end') { slowRetries.delete(session.id); retryReports.delete(session.id); return; }
     if (event.type !== 'llm/retry' || event.data?.failure?.code !== 'TIMEOUT') return;
     slowRetries.add(session.id);
     const scheduler = process.env.WEFTMATE_MODEL_SCHEDULER_URL;
-    if (scheduler) void fetch(`${scheduler}/progress`, { method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sessionId: session.id, phase: 'retrying' }), signal: AbortSignal.timeout(1000) }).catch(() => {});
+    if (scheduler) retryReports.set(session.id, (retryReports.get(session.id) ?? Promise.resolve()).then(() =>
+      fetch(`${scheduler}/progress`, { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionId: session.id, phase: 'retrying' }), signal: AbortSignal.timeout(1000) })).catch(() => {}));
   });
 }
 

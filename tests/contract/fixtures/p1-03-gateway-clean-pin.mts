@@ -39,7 +39,8 @@ try {
     ...loadOverlayPatches('P1-03 exact gateway', join(checkout, 'packages/bundle/web-app/cordis.patch.yml')),
     { insert: [{ id: 'weftmate-host', name: './plugins/weftmate-host.mjs' }] },
     { id: 'directory-picker', disabled: true }, { insert: [{ id: 'directory-picker-browse', name: '@deepseek-ai/dsh-host-directory-picker-browse' }, { id: 'ui-directory-picker-browse', name: '@deepseek-ai/dsh-client-ui-directory-picker-browse' }] },
-    { id: 'agent-presets', config: { default: 'standard', roots: [{ path: join(checkout, 'apps/cli/config/agent-presets'), trust: 'system' }], includeUserRoot: false } },
+    ...['standard', 'ptc', 'minimal', 'cordis'].flatMap(id => loadOverlayPatches('weftmate contract presets', join(join(checkout, 'packages/bundle/web-app/presets'), `${id}.patch.yml`))),
+    { id: 'agent-preset-registry', config: { default: 'standard' } },
     { id: 'session-persistence-jsonl', config: { root: join(workspace, '.sessions') } }, { id: 'storage-json', config: { root: join(workspace, '.storage') } },
     { id: 'skill-filesystem', config: { dshHome: home, agentsHome: join(workspace, '.agents'), bundledSkillDir: join(workspace, '.skills'), watch: false } },
     { id: 'agent-instructions', disabled: true }, { id: 'session-title-llm', disabled: true }, { id: 'session-telemetry-otel', disabled: true },
@@ -52,7 +53,7 @@ try {
   await checkpoint('loader-create'); await ctx.loader.create({ name: 'cordis:include', config: { path: pathToFileURL(join(profile, 'cordis.yml')).href, patches } })
   await checkpoint('loader-await'); await ctx.loader.await()
   await checkpoint('loader-assert'); assertEntriesLoaded(ctx, 'P1-03 exact gateway')
-  if (ctx.get('apiProxy') === undefined) throw new Error('checkpoint apiProxy missing'); await checkpoint('profile-loaded-api-present')
+  if (ctx.get('typertGateway') === undefined) throw new Error('checkpoint typertGateway missing'); await checkpoint('profile-loaded-api-present')
   // Temporary bounded diagnostic: records event type names only, never a raw
   // payload, to distinguish a DSH turn failure from Gateway stream loss.
   ctx.on('session/event', (_session: unknown, event: { type?: unknown }) => {

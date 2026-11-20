@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DshWebRuntime } from '../../../src/dsh-web-runtime.ts';
 import { createPersonalAccessBackend } from '../../../src/personal-access-backend.mjs';
+import { fetchRuntimeWithCookie } from '../../../src/host-mode.mjs';
 
 export function scenarioUserText(messages) {
   return messages.filter(m => m.role === 'user').map(m => typeof m.content === 'string' ? m.content
@@ -99,7 +100,7 @@ export async function phoneRuntime(root, logs, options = {}) {
   const bindings = new Map();
   const profile = { id: 'synthetic', name: '合成中继模型', model: options.modelId || 'synthetic', baseUrl: options.baseUrl || `http://127.0.0.1:${model.address().port}/v1`, provider: 'openai-compatible' };
   const gateway = async (path, options = {}) => {
-    const response = await fetch(origin + '/weftmate/api/v1' + path, { headers: { 'content-type': 'application/json' }, ...options });
+    const response = await fetchRuntimeWithCookie(origin, '/weftmate/api/v1' + path, { headers: { 'content-type': 'application/json' }, ...options });
     const data = await response.json();
     if (!response.ok) throw Object.assign(new Error(JSON.stringify(data)), { code: data.error?.code ?? data.error });
     return data;

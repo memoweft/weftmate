@@ -28,6 +28,7 @@ import {
   assertManifestClosureClosed,
   assertManifestScriptVersion,
   assertPackageEntrypoints,
+  isReleasedExternalPackage,
   isSkippedPlatformOptional,
 } from './dsh-vendor-closure.mjs'
 
@@ -208,7 +209,9 @@ async function main() {
     fail(`发现 @deepseek-ai 包多实例（依赖区间漂移出嵌套副本）：\n${listing}${more > 0 ? `\n  …及另外 ${more} 个包` : ''}`)
   }
   const actualNames = new Set(copies.map((copy) => `@deepseek-ai/${copy.name}`))
-  const unexpected = [...actualNames].filter((name) => !expectedNames.has(name))
+  const unexpected = [...actualNames].filter(
+    (name) => !expectedNames.has(name) && !isReleasedExternalPackage(name)
+  )
   const absent = [...expectedNames].filter((name) => !actualNames.has(name))
   if (unexpected.length > 0 || absent.length > 0) {
     fail(`node_modules 内部包集合与 manifest 闭包不一致：缺 ${absent.join(', ') || '(无)'}；多 ${unexpected.join(', ') || '(无)'}`)
@@ -255,40 +258,53 @@ const runtime = new DshWebRuntime({
 })
 let evidence
 try {
-  const origin = await runtime.start()
-  const index = await fetch(origin).then((r) => r.text())
-  const bootGraph = index.includes('window.__DSH_BOOT__')
+  const launchUrl = await runtime.start()
+  const parsedLaunch = new URL(launchUrl)
+  const origin = parsedLaunch.origin
+  let cookie = null
+  if (parsedLaunch.searchParams.has('token')) {
+    const exchange = await fetch(launchUrl, { redirect: 'manual' })
+    const setCookie = exchange.headers.get('set-cookie')
+    if (setCookie !== null) cookie = setCookie.split(';', 1)[0]
+  }
+  const authed = cookie ? { headers: { cookie } } : undefined
+  const index = await fetch(origin + '/', authed).then((r) => r.text())
+  const bootMarkers = ['globalThis["__DSH_BOOT__"] = ', 'window.__DSH_BOOT__ = ']
+  const bootMarker = bootMarkers.find((marker) => index.includes(marker)) ?? null
+  const bootGraph = bootMarker !== null
   const rootDiv = index.includes('id="root"')
   const profileDir = join(home, 'dsh-home', 'profiles', 'weftmate')
   const profileManifest = existsSync(join(profileDir, 'package.json'))
   const profilePatch = existsSync(join(profileDir, 'cordis.patch.yml'))
-  const pluginMatch = /\\/plugins\\/[^"?\\s\\\\]+\\/client\\.js\\?rev=[^"'\\\\s]+/.exec(index)
+  const pluginMatch = /(?:\\/|)(plugins\\/(?:\\?\\?[^"'\\s\\\\]+|[^"?\\s\\\\]+\\/client\\.js\\?rev=[^"'\\s\\\\]+))/.exec(index)
   let pluginUrl = null
   let pluginOk = false
   let pluginStatus = null
   if (pluginMatch !== null) {
-    pluginUrl = pluginMatch[0]
-    const res = await fetch(origin + pluginUrl)
+    pluginUrl = '/' + pluginMatch[1].replaceAll('&amp;', '&')
+    const res = await fetch(origin + pluginUrl, authed)
     pluginStatus = res.status
     pluginOk = res.status === 200 && (await res.text()).length > 0
   }
   // R3-03 种子契约：boot 图含 @weftmate/client 行 + 其 bundle 200（锁扩展点）。
-  const bootMarker = 'window.__DSH_BOOT__ = '
-  const bootStart = index.indexOf(bootMarker)
+  const bootStart = bootMarker === null ? -1 : index.indexOf(bootMarker)
   let weftmateRow = false
   let weftmateClientUrl = null
   let weftmateClientOk = false
   let weftmateClientStatus = null
-  if (bootStart !== -1) {
+  if (bootStart !== -1 && bootMarker !== null) {
     const jsonStart = bootStart + bootMarker.length
     const jsonEnd = index.indexOf('</script>', jsonStart)
     const graph = JSON.parse(index.slice(jsonStart, jsonEnd).trim())
     const row = (graph.entries ?? []).find((e) => e.id === '@weftmate/client')
     weftmateRow = row !== undefined
-    weftmateClientUrl = row?.url ?? '/plugins/@weftmate/client/client.js'
-    const res = await fetch(origin + '/plugins/@weftmate/client/client.js')
+    weftmateClientUrl = row?.url
+      ? '/' + String(row.url).replace(/^\\/+/, '')
+      : '/plugins/@weftmate/client/client.js'
+    const res = await fetch(origin + weftmateClientUrl, authed)
     weftmateClientStatus = res.status
-    weftmateClientOk = res.status === 200 && (await res.text()).length > 0
+    const body = await res.text()
+    weftmateClientOk = res.status === 200 && body.includes('@weftmate/client')
   }
   // R3-02：weftmate 宿主插件接缝路由（状态面；main 未起的冒烟形态走 env 回退组合）。
   let seamOk = false
@@ -296,7 +312,7 @@ try {
   let seamAppName = null
   let seamDshHome = null
   try {
-    const res = await fetch(origin + '/weftmate/status.json')
+    const res = await fetch(origin + '/weftmate/status.json', authed)
     seamStatus = res.status
     const seam = await res.json()
     seamAppName = seam?.app?.name ?? null

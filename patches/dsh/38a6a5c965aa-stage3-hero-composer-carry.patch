@@ -1,0 +1,18 @@
+diff --git a/packages/client/ui-conversation/src/client/skeleton/ConversationContent.tsx b/packages/client/ui-conversation/src/client/skeleton/ConversationContent.tsx
+--- a/packages/client/ui-conversation/src/client/skeleton/ConversationContent.tsx
++++ b/packages/client/ui-conversation/src/client/skeleton/ConversationContent.tsx
+@@ -4,5 +4,5 @@
+ import { workspaceDisplayTitle } from '@deepseek-ai/dsh-api-workspace-controller/default-workspace'
+ import type { ConversationContentProps, ConversationViewsProps, InputZone } from '../contract/slots.ts'
+-import { HeroShell, WorkspaceChip, workspaceLabel } from './EmptyHero.tsx'
++import { WorkspaceChip, workspaceLabel } from './EmptyHero.tsx'
+ import css from './ConversationRoot.module.css'
+ 
+@@ -164,6 +164,5 @@
+ 
+   const composerBar = (
+-    <div className={clsx(css.composerStack, hero && css.composerHero)}>
+-      {hero && <HeroShell t={t} renderSlot={renderSlot} />}
++    <div className={clsx(css.composerStack, hero && css.composerHero)} data-weftmate-hero-composer="">
+       {hero && heroWorkspaceRow}
+       {zone !== undefined && renderSlot('conversation.input.dock', zone)}

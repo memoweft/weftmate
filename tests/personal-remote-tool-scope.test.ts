@@ -9,6 +9,8 @@ import { stagePersonalPlugins } from './support/personal-plugins.ts'
 
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', 'node_modules',
   '@deepseek-ai', name, 'lib', 'index.js')).href
+const execTool = async (toolsSvc: any, { name, arguments: args = {}, agent, callId, signal }: any) =>
+  (await toolsSvc.execute({ calls: [{ id: callId, name, arguments: JSON.stringify(args) }], agent, signal })).results[0].result
 
 for (const modern of [false, true]) test(`personal subagent browser restriction supports ${modern ? '0.2.2 tools.restrict' : '0.1.0 without tools.restrict'}`, () => {
   const source = readFileSync(new URL('../src/plugins/weftmate-personal-desktop.mjs', import.meta.url), 'utf8')
@@ -39,7 +41,7 @@ async function assertInitialFilePolicy() {
   const root = mkdtempSync(join(tmpdir(), 'personal-policy-'))
   try {
     const { initializePersonalFilePolicy } = await import(stagePersonalPlugins(root).plugin)
-    const { effectiveSandboxMode } = await import(vendor('dsh-sandbox-policy'))
+    const effectiveSandboxMode = (events: any[]) => events.filter((event) => event.type === 'sandbox/mode').at(-1)?.data?.mode
     const policy = { overrideOf: (session: any) => effectiveSandboxMode(session.events) }
     const agent = (preset: string, origin?: string) => ({ session: {
       header: { agentPreset: preset, origin }, events: [] as any[],
@@ -97,7 +99,9 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     const ctx = new Context()
     await ctx.plugin(SystemPrompt.default, { includeHarnessIdentity: false, includeRuntimeContext: false, persona: '' })
     await ctx.plugin(Sessions.default)
-    await ctx.plugin(tools.default, { mode: 'native', maxParallelSubCalls: 1 })
+    await ctx.plugin((await import(vendor('dsh-session-projection'))).default)
+    await ctx.plugin(tools.default)
+    await ctx.plugin(await import(vendor('dsh-tool-executor-native')))
     await ctx.plugin((await import(vendor('dsh-user-approval'))).default, { policy: 'never' })
     await ctx.plugin((await import(vendor('dsh-web'))).default)
     let effects = 0
@@ -118,7 +122,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     await scoped.ctx.plugin(preset.default)
     const names = scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name)
     assert.deepEqual(names, ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
-      'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'exit_plan_mode', 'browser', 'load_tools'])
+      'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'browser', 'load_tools'])
     for (const name of ['personal_open_notepad', 'personal_save_document', 'personal_list_project_files',
       'personal_read_project_file', 'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
       assert.equal(names.includes(name), false)
@@ -129,7 +133,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     const deferred = await assemble()
     assert.equal(deferred.tools.some((tool: any) => tool.name === 'pwsh'), false, 'PF-1 defers unloaded tool schemas')
     // PF-1 added deferred presentation, not an execution permission bypass.
-    const loaded = await scoped.ctx.get('tools').execute({ name: 'load_tools', arguments: { names: ['pwsh'] },
+    const loaded = await execTool(scoped.ctx.get('tools'), { name: 'load_tools', arguments: { names: ['pwsh'] },
       agent, callId: 'load-pwsh', signal: new AbortController().signal })
     assert.equal(loaded.isError, false)
     assert.deepEqual(agent[Symbol.for('weftmate.loadedTools')], new Set(['pwsh']))
@@ -142,7 +146,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     }, async () => ({ kind: 'enter', messages: [] }))
     assert.equal(decision.kind, 'enter', 'native calls never trigger a personal turn quota')
     for (const name of ['pwsh', 'write', 'run_code']) {
-      const result = await ctx.get('tools').execute({ name, arguments: {}, agent,
+      const result = await execTool(ctx.get('tools'), { name, arguments: {}, agent,
         callId: `deny-${name.replace('_', '-')}`, signal: new AbortController().signal })
       assert.equal(result.isError, true, `${name} cannot execute with a forged or missing source in the remote scope`)
     }
@@ -172,7 +176,8 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
   const ctx = new Context()
   await ctx.plugin(SystemPrompt.default, { includeHarnessIdentity: false, includeRuntimeContext: false, persona: '' })
   await ctx.plugin(Sessions.default)
-  await ctx.plugin(tools.default, { mode: 'native', maxParallelSubCalls: 1 })
+  await ctx.plugin(tools.default)
+  await ctx.plugin(await import(vendor('dsh-tool-executor-native')))
   const fakeTool = (name: string) => tools.defineTool({ name, description: name,
     parameters: {}, output: { schema: { type: 'json' }, render: () => [{ type: 'text', text: '{}' }] },
     execute: async () => ({ ok: true }) })
@@ -194,7 +199,7 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
     'mod_sdk', 'personal_open_notepad', 'personal_save_document',
     'personal_list_project_files', 'personal_read_project_file',
     'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
-    const result = await ctx.get('tools').execute({ name, arguments: {}, agent,
+    const result = await execTool(ctx.get('tools'), { name, arguments: {}, agent,
       callId: `deny-${name.replaceAll('_', '-')}`, signal: new AbortController().signal })
     assert.equal(result.isError, true, `${name} must not execute in a shared-account chat`)
   }
@@ -202,7 +207,7 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
   for (const name of memoryTools) scoped.ctx.get('tools').register(fakeTool(name));
   assert.deepEqual(scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name).sort(), [...memoryTools].sort());
   for (const name of memoryTools) {
-    const result = await ctx.get('tools').execute({ name, arguments: {}, agent,
+    const result = await execTool(ctx.get('tools'), { name, arguments: {}, agent,
       callId: `own-${name}`, signal: new AbortController().signal });
     assert.equal(result.isError, false, `${name} is an agent-local account operation`);
   }

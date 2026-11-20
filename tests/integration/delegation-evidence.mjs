@@ -43,7 +43,7 @@ export function delegationEvidence(native, parentSessionIds) {
   const paths = [...new Set(writes.map(write => write.file))];
   const repeatedWrites = paths.map(file => ({ file, attempts: writes.filter(write => write.file === file) }))
     .filter(row => row.attempts.length > 1);
-  const notices = native.filter(event => parents.has(event.sessionId) && event.type === 'user/message' && event.data.source?.plugin === 'tool-jobs');
+  const notices = native.filter(event => parents.has(event.sessionId) && event.type === 'user/message' && (event.data.source?.kind === 'tool-jobs' || event.data.source?.plugin === 'tool-jobs'));
   return { delegations: jobs, parentJobOutputCalls: parentCalls.filter(event => event.data.name === 'job_output').length,
     nativeCompletionNotices: notices.length,
     reportWriteAttempts: writes, repeatedWrites,

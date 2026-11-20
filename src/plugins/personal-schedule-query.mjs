@@ -3,6 +3,7 @@ import { scheduleSourceReceipt } from '../personal-access/schedules-native.mjs';
 /** Adapt the native per-agent definition in place; a second registration conflicts. */
 export function installAccountScheduleQuery(tools, agent, request) {
   const tool = tools.get('schedule_list', agent);
+  if (!tool) return;
   Object.assign(tool, {
     description: 'List all reminders and scheduled tasks for this account across every conversation, including paused entries. This is the same list as the goals page.',
     // This is an existing normalized definition, so use JSON Schema, not defineTool's spec shorthand.
@@ -13,7 +14,9 @@ export function installAccountScheduleQuery(tools, agent, request) {
 }
 
 export function installAccountScheduleDelete(tools, agent, request) {
-  Object.assign(tools.get('schedule_delete',agent), {
+  const tool = tools.get('schedule_delete',agent);
+  if (!tool) return;
+  Object.assign(tool, {
     description:'Delete one reminder selected from schedule_list. Always pass both its sessionId and id; ids repeat across conversations.',
     parameters:{type:'object',properties:{sessionId:{type:'string'},id:{type:'string'}},required:['sessionId','id'],additionalProperties:false},
     output:{schema:{},render:(_args,value)=>[{type:'text',text:JSON.stringify(value)}]},

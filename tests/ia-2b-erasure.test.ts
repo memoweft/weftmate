@@ -44,7 +44,7 @@ test('native forgetting shadows matching turns and mixed summaries in surface or
   const appended: any[] = [], session = { events, surface: { nodes: [9, 1, 2, 4] }, append: (...args) => appended.push(args) };
   assert.deepEqual(shadowForgottenSurface(session, ['private-original'], value => value), [9, 1, 2]);
   assert.deepEqual(appended[0][1].shadowedSeqs, [9, 1, 2]);
-  assert.deepEqual(appended[1][2].surfaceOp, { op: 'replace', start: 9, end: 2 });
+  assert.deepEqual(appended[1][2].surfaceOp, { op: 'replace', startSeq: 9, endSeq: 2 });
   assert.match(JSON.stringify(events), /private-original/);
   assert.doesNotMatch(JSON.stringify(appended), /private-original|derived|mixed summary/);
 });
@@ -66,5 +66,5 @@ test('import recall answers are removed from future model context by memory iden
  {seq:4,type:'user/message',data:{content:[{text:'这是另一段无关对话。'}]}}];
  const appended=[],session={events,surface:{nodes:[1,2,4]},append:(...args)=>appended.push(args)};
  assert.deepEqual(shadowForgottenSurface(session,['[WeftMate 历史导入]原始记录不在本对话里',],v=>v,['entity:import-parrot']),[1,2]);
- assert.equal(events[2].data.content[0].text,'青瓷。');assert.doesNotMatch(JSON.stringify(appended),/青瓷/);assert.equal(appended[1][2].surfaceOp.end,2);
+ assert.equal(events[2].data.content[0].text,'青瓷。');assert.doesNotMatch(JSON.stringify(appended),/青瓷/);assert.equal(appended[1][2].surfaceOp.endSeq,2);
 });

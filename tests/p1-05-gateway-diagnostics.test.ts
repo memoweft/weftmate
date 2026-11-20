@@ -10,11 +10,11 @@ const okDescribe = (value: unknown) => ({ result: { ok: true as const, value } }
 
 function deps(overrides: Partial<Parameters<typeof createDiagnostics>[0]> = {}) {
   return {
-    client: { host: { describe: async () => okDescribe({ version: '0.1.0-rc.5', cwd: '/tmp/host-cwd', attachedSessions: 2, canOpenPath: true }) } },
+    client: { host: { describe: async () => okDescribe({ version: '0.2.2-rc.3', cwd: '/tmp/host-cwd', attachedSessions: 2, canOpenPath: true }) } },
     runtime: { version: '0.1.0-dev', startedAt: Date.now() },
     paths: { dshHome: '/tmp/dsh-home', statePath: '/tmp/state.json' },
-    pin: '47f943859bef60e4160492346772ded9b24f765a',
-    dshRuntimeVersion: '0.1.0-rc.5',
+    pin: '38a6a5c965aa99ab525161efb7cc5cf1fe62fced',
+    dshRuntimeVersion: '0.2.2-rc.3',
     ...overrides,
   }
 }

@@ -26,10 +26,16 @@ export function installPersonalization(ctx, policyFor) {
     if (settings.webSearch === false) for (const section of sections) if (section.name === 'weftmate:tools-catalog')
       section.text = section.text.split('\n').filter(line => ![...webTools].some(name => line.startsWith(name + ':'))).join('\n');
     const researching = sections.some(section => section.name === 'weftmate:research-guidance');
+    const PERSONAL_TOOLS = Symbol.for('weftmate.personalAssembledTools');
+    const baseTools = Array.isArray(assembly.tools) ? assembly.tools : assembly[PERSONAL_TOOLS];
+    const filteredTools = Array.isArray(baseTools)
+      ? (settings.webSearch === false ? baseTools.filter(tool => !webTools.has(tool.name)) : baseTools)
+      : baseTools;
     return { ...assembly, sections: [...sections.filter(section => section.name !== 'weftmate:grounded-writing'),
       ...(researching ? [{ name: 'weftmate:grounded-writing', text: groundedWritingGuidance + '\n' + researchSelfCheckGuidance(settings.researchSelfCheck !== false) }] : []),
       ...(text ? [{ name: 'weftmate:personalization', text }] : [])],
-      tools: settings.webSearch === false ? assembly.tools.filter(tool => !webTools.has(tool.name)) : assembly.tools };
+      ...(Array.isArray(assembly.tools) ? { tools: filteredTools } : {}),
+      ...(filteredTools !== undefined ? { [PERSONAL_TOOLS]: filteredTools } : {}) };
   }, { global: true, prepend: true });
   ctx.on('tools/pre-execute', async (exec, next) => {
     if (personal(exec.agent) && webTools.has(exec.name) && (await settingsFor(exec.agent)).webSearch === false)

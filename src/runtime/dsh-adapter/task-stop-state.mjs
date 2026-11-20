@@ -1,7 +1,9 @@
 import { sourceRange } from './source-range.mjs'
 import { claimedInputsAt } from './inbox-timeline.mjs'
+import { readSessionFrom } from './persistence-compat.mjs'
 
 const raw = entry => entry?.event ?? entry
+const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : s?.events
 
 /** Read native persistence and the current Agent registry; never resume or cancel. */
 export async function readNativeTaskStopState(ctx, runtimeStartedAt, { sessionId, receiptId, turn, stopRequestedAt }) {
@@ -12,8 +14,8 @@ export async function readNativeTaskStopState(ctx, runtimeStartedAt, { sessionId
     const live = ctx.sessions.get(sessionId)
     // inspect() may supply in-memory recovery closers for a cold log. Read the
     // physical native prefix so recovery is never misreported as cancellation.
-    artifact = live ? { meta: live.header, events: live.events }
-      : await ctx.get('sessionPersistence').readFrom(sessionId, 0)
+    artifact = live ? { meta: live.header, events: sessionEvents(live) }
+      : await readSessionFrom(ctx.get('sessionPersistence'), sessionId, 0)
   } catch (error) {
     // An unavailable/corrupt store is not absence. Only DSH's explicit absence
     // plus a newer runtime can establish that this old turn cannot be running.
@@ -30,7 +32,7 @@ export async function readNativeTaskStopState(ctx, runtimeStartedAt, { sessionId
   // must not be mistaken for a historical orphan.
   const agent = ctx.agents.get(sessionId)
   if (agent && (agent.session?.id !== sessionId || agent.session.header?.agentPreset !== 'personal-remote')) return unknown()
-  const events = agent?.session?.events ?? artifact.events
+  const events = sessionEvents(agent?.session) ?? artifact.events
   const range = sourceRange(events, { receiptId, turn })
   const bound = range?.events.some(entry => raw(entry).type === 'user/message' &&
     raw(entry).data?.source?.kind === 'user' && raw(entry).data.source.rpcId === receiptId)

@@ -43,8 +43,8 @@ test('V2 shell uses the frozen product dimensions and bounded responsive concess
   assert.doesNotMatch(client, /frame\.inert = nonChat/)
   assert.match(client, /@media\(max-width:1240px\)/)
   assert.match(client, /@media\(max-width:980px\)/)
-  assert.match(client, /\[data-weftmate-v2-frame\]:not\(\[data-details-collapsed\]\) \[data-shell-overlay\] \.weftmate-v2-work\{display:none\}/)
-  assert.doesNotMatch(client, /\[data-weftmate-v2-frame\]:not\(\[data-details-collapsed\]\)~\[data-shell-overlay\]/)
+  assert.match(client, /\[data-weftmate-v2-frame\]:not\(\[data-rightbar-collapsed\]\) \[data-shell-overlay\] \.weftmate-v2-work\{display:none\}/)
+  assert.doesNotMatch(client, /\[data-weftmate-v2-frame\]:not\(\[data-rightbar-collapsed\]\)~\[data-shell-overlay\]/)
   assert.match(main, /const TITLE_BAR_OVERLAY_HEIGHT = 44;/)
 })
 
@@ -63,7 +63,7 @@ test('compact workbench uses an explicit drawer state while wide layout keeps it
   const helpers = new Function('document', 'window', `${source}; return { v2WorkbenchVisible, toggleV2Workbench, closeV2WorkbenchDrawer }`)(
     { documentElement: compactRoot }, compactWindow,
   ) as { v2WorkbenchVisible: (root: any, frame: any, width: number) => boolean, toggleV2Workbench: () => void, closeV2WorkbenchDrawer: () => void }
-  const closedFrame = root(['data-details-collapsed'])
+  const closedFrame = root(['data-rightbar-collapsed'])
   assert.equal(helpers.v2WorkbenchVisible(compactRoot, closedFrame, 687), false)
   helpers.toggleV2Workbench()
   assert.equal(helpers.v2WorkbenchVisible(compactRoot, closedFrame, 687), true, '687px CSS viewport click opens the workbench drawer')
@@ -160,9 +160,9 @@ test('V2 shell column controls report the effective manual, responsive, and deta
   assert.match(client, /function useV2ColumnVisibility\(\)/)
   assert.match(client, /window\.innerWidth > 980/)
   assert.match(client, /if \(width <= 1240\) return root\.hasAttribute\('data-weftmate-v2-work-drawer-open'\)/)
-  assert.match(client, /!frame\.hasAttribute\('data-details-collapsed'\)/)
+  assert.match(client, /!frame\.hasAttribute\('data-rightbar-collapsed'\)/)
   assert.match(client, /var frame = document\.querySelector\('\[data-weftmate-v2-frame\]'\) \|\| overlay && overlay\.parentElement/)
-  assert.match(client, /attributeFilter: \['data-weftmate-v2-sessions-hidden', 'data-weftmate-v2-work-hidden', 'data-weftmate-v2-work-drawer-open', 'data-weftmate-v2-frame', 'data-details-collapsed'\]/)
+  assert.match(client, /attributeFilter: \['data-weftmate-v2-sessions-hidden', 'data-weftmate-v2-work-hidden', 'data-weftmate-v2-work-drawer-open', 'data-weftmate-v2-frame', 'data-rightbar-collapsed'\]/)
   assert.match(client, /'aria-pressed': String\(columnVisibility\.sessions\)/)
   assert.match(client, /'aria-expanded': String\(columnVisibility\.sessions\)/)
   assert.match(client, /'aria-pressed': String\(columnVisibility\.work\)/)
@@ -315,7 +315,7 @@ test('V2 settings rail adapter labels the real trigger through collapsed DOM rep
     setAttribute(name: string, value: string) { attributes.set(name, value) },
   }
   const seat = { querySelector(selector: string) { return selector === 'button' ? trigger : null } }
-  const sidebar = { querySelector(selector: string) { return selector === '.oC7kBG_settingsArea' ? seat : null } }
+  const sidebar = { querySelector(selector: string) { return selector === '._0yhV9W_settingsArea' ? seat : null } }
   let observer: { callback: () => void, disconnected: boolean } | undefined
   class FakeMutationObserver {
     callback: () => void
@@ -385,12 +385,12 @@ test('V2 chat head uses the real session title while the official header retains
   assert.equal(title({ title: '后备标题' }), '后备标题')
   const shell = client.slice(client.indexOf('function WeftMateV2Shell'), client.indexOf('\n    return {\n      name:'))
   assert.match(shell, /v2ChatTitle\(currentSession\)/)
-  assert.match(client, /\._0_p9YG_crumbs>\._0_p9YG_crumbCurrent:only-child,\[data-weftmate-v2-center\] \._0_p9YG_crumbSeg:has\(\._0_p9YG_crumb:disabled\)\{display:none\}/)
-  assert.match(client, /\[data-weftmate-v2-center\] \._0_p9YG_headerActions,\[data-weftmate-v2-center\] \._0_p9YG_tabs,\[data-weftmate-v2-center\] \._0_p9YG_headerUtilities/)
-  assert.match(client, /\._0_p9YG_headerActions,\[data-weftmate-v2-center\] \._0_p9YG_tabs/)
-  assert.match(client, /\._0_p9YG_titleRow,\[data-weftmate-v2-center\] \._0_p9YG_titleCluster\{display:contents\}/)
-  assert.match(client, /\[data-weftmate-v2-center\] \._0_p9YG_header\._0_p9YG_headerHidden/)
-  assert.match(client, /_0_p9YG_headerUtilities\{display:none!important\}/)
+  assert.match(client, /\._3rR9Dq_crumbs>\._3rR9Dq_crumbCurrent:only-child,\[data-weftmate-v2-center\] \._3rR9Dq_crumbSeg:has\(\._3rR9Dq_crumb:disabled\)\{display:none\}/)
+  assert.match(client, /\[data-weftmate-v2-center\] \._3rR9Dq_headerActions,\[data-weftmate-v2-center\] \._3rR9Dq_tabs,\[data-weftmate-v2-center\] \._3rR9Dq_headerUtilities/)
+  assert.match(client, /\._3rR9Dq_headerActions,\[data-weftmate-v2-center\] \._3rR9Dq_tabs/)
+  assert.match(client, /\._3rR9Dq_titleRow,\[data-weftmate-v2-center\] \._3rR9Dq_titleCluster\{display:contents\}/)
+  assert.match(client, /\[data-weftmate-v2-center\] \._3rR9Dq_header\._3rR9Dq_headerBlank/)
+  assert.match(client, /_3rR9Dq_headerUtilities\{display:none!important\}/)
 })
 
 test('V2 settings accepts only formal DSH envelopes and never fabricates a local revision', () => {

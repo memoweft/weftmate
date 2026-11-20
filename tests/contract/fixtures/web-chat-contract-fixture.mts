@@ -2,7 +2,7 @@
 //
 // 在 Node 测试进程里 in-process boot 官方 web 组合（dsh-base + dsh-web-app 两层
 // bundle patch，照 apps/web/tests/scaffold.ts 的 launchWebScaffold），用
-// InProcessApiClient + toFetchHandler(ctx.apiProxy) 驱动同一套 RPC 契约
+// createTypertAdapterClient(ctx) 驱动同一套 RPC 契约
 // （session.create / session.prompt / events.mux 订阅），以 dsh-llm-replay 注入
 // 无凭据 mock LLM（一回合 = 读工具调用 + 助手文本），随后断言事件形状、会话
 // session.jsonl.zstd 落盘、replay 全量消费与干净 dispose。
@@ -35,13 +35,11 @@ const { assertEntriesLoaded, healProfilesModuleFallback, loadOverlayPatches } = 
 const { dshHomePath } = await import(toUrl(join(checkout, 'packages/util/home-paths/src/index.ts')))
 const { provideCmdline } = await import(toUrl(join(checkout, 'packages/boot/cmdline/src/index.ts')))
 const { installLlmReplay } = await import(toUrl(join(checkout, 'packages/test-support/llm-replay/src/index.ts')))
-const { InProcessApiClient, toFetchHandler } = await import(
-  toUrl(join(checkout, 'packages/host/apiproxy/src/index.ts')),
-)
+const { createTypertAdapterClient } = await import('../../../src/runtime/dsh-adapter/typert-client.mjs')
 
 // ── 与 scaffold.ts 相同的组合事实 ───────────────────────────────────────────────
 const INSTALL_ANCHOR = join(checkout, 'apps/cli/package.json')
-const SHIPPED_PRESET_DIR = join(checkout, 'apps/cli/config/agent-presets')
+const SHIPPED_PRESET_DIR = join(checkout, 'packages/bundle/web-app/presets')
 const BASE_PATCH_PATH = join(checkout, 'packages/bundle/base/cordis.patch.yml')
 const WEB_PATCH_PATH = join(checkout, 'packages/bundle/web-app/cordis.patch.yml')
 const REPLAY_FIXTURE = join(here, 'web-chat-replay.jsonl')
@@ -152,7 +150,8 @@ try {
   const patches = [
     ...basePatches,
     ...surfacePatches,
-    { id: 'agent-presets', config: { default: 'standard', roots: [{ path: SHIPPED_PRESET_DIR, trust: 'system' }], includeUserRoot: false } },
+    ...['standard', 'ptc', 'minimal', 'cordis'].flatMap(id => loadOverlayPatches('weftmate contract presets', join(SHIPPED_PRESET_DIR, `${id}.patch.yml`))),
+    { id: 'agent-preset-registry', config: { default: 'standard' } },
     { id: 'session-persistence-jsonl', config: { root: persistenceRoot } },
     { id: 'storage-json', config: { root: join(workspaceCwd, '.dsh-storages') } },
     {
@@ -199,10 +198,7 @@ try {
 
   replayHandle = installLlmReplay(ctx, { file: REPLAY_FIXTURE, providers: REPLAY_PROVIDERS })
 
-  const apiProxy = ctx.get('apiProxy')
-  if (apiProxy === undefined) throw new Error('apiProxy 服务在 boot 后缺失')
-
-  const client = new InProcessApiClient(toFetchHandler(apiProxy))
+  const client = createTypertAdapterClient(ctx)
   const { sessionId, events } = await driveTurn(client, '读一下文件 weftmate-note.txt', 60_000)
 
   // 落盘：显式 flush 后递归找 session.jsonl.zstd。

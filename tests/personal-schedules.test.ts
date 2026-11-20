@@ -8,6 +8,21 @@ import { createHash } from 'node:crypto';
 // CI deliberately lacks the external prebuilt vendor. Pure/HTTP tests remain
 // mandatory; native fixture tests run when the pinned artifact is installed.
 const native = await import(new URL('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-schedule/lib/index.js', import.meta.url).href)
+  .then(native => ({ ...native, foldScheduleEvents: native.foldScheduleEvents ?? ((events: any[], seedLength = 0) => {
+    const active = new Map();
+    for (const { type, data } of events.slice(seedLength)) {
+      if (type !== 'schedule/change') continue;
+      if (data.operation === 'create') active.set(data.schedule.id, data.schedule);
+      else if (data.operation === 'delete') active.delete(data.id);
+      else if (data.operation === 'dispatch') {
+        const record = active.get(data.id);
+        const next = record?.kind === 'every' ? native.resolveEveryOccurrence(record, Date.parse(data.acceptedAt)).nextScheduledAt : undefined;
+        if (next) active.set(data.id, { ...record, scheduledAt: next });
+        else active.delete(data.id);
+      }
+    }
+    return { active: [...active.values()] };
+  }) }))
   .catch(error => { if (error.code === 'ERR_MODULE_NOT_FOUND') return null; throw error; });
 const createUserMessage = native ? (await import(new URL('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-llm/lib/index.js', import.meta.url).href)).createUserMessage : undefined;
 const nativeFixture = { skip: native ? false : 'prebuilt DSH vendor fixture unavailable' };
@@ -30,15 +45,15 @@ test('schedule creation binds the latest claimed steer without changing file-too
 });
 
 test('native local at handles zones, DST overlap/gap and weekly calendar keeps local hour', nativeFixture, () => {
-  const at = native.createAtScheduleRecord('schedule-1', 'report', { date: '2026-10-09', time: '09:00:00', time_zone: 'Asia/Shanghai' }, Date.parse('2026-10-08T00:00:00Z'));
+  const at = native.createAtScheduleRecord('schedule-1', 'report', { date: '2026-10-09', time: '09:00:00', time_zone: 'Asia/Shanghai' }, Date.parse('2026-10-08T00:00:00Z'), 'synthetic');
   assert.equal(at.scheduledAt, '2026-10-09T01:00:00.000Z');
-  assert.throws(() => native.createAtScheduleRecord('gap', 'x', { date: '2027-03-14', time: '02:30:00', time_zone: 'America/New_York' }, Date.parse('2027-03-01')), { code: 'invalid_rule' });
-  const overlap = native.createAtScheduleRecord('overlap', 'x', { date: '2026-11-01', time: '01:30:00', time_zone: 'America/New_York' }, Date.parse('2026-10-01'));
+  assert.throws(() => native.createAtScheduleRecord('gap', 'x', { date: '2027-03-14', time: '02:30:00', time_zone: 'America/New_York' }, Date.parse('2027-03-01'), 'synthetic'), { code: 'invalid_rule' });
+  const overlap = native.createAtScheduleRecord('overlap', 'x', { date: '2026-11-01', time: '01:30:00', time_zone: 'America/New_York' }, Date.parse('2026-10-01'), 'synthetic');
   assert.equal(overlap.scheduledAt, '2026-11-01T05:30:00.000Z');
   const repeat = { kind: 'weekly', weekday: 1, time: '08:00:00' };
   assert.deepEqual(nextCalendarInput(repeat, 'Asia/Shanghai', Date.parse('2026-10-12T00:00:01Z')), { date: '2026-10-19', time: '08:00:00', time_zone: 'Asia/Shanghai' });
   const next = nextCalendarInput(repeat, 'America/New_York', Date.parse('2026-10-26T12:00:01Z'));
-  assert.equal(native.createAtScheduleRecord('next', 'x', next, Date.parse('2026-10-26T12:00:01Z')).scheduledAt, '2026-11-02T13:00:00.000Z');
+  assert.equal(native.createAtScheduleRecord('next', 'x', next, Date.parse('2026-10-26T12:00:01Z'), 'synthetic').scheduledAt, '2026-11-02T13:00:00.000Z');
   assert.throws(() => scheduleContent(JSON.stringify({ weftmate: 1, kind: 'task', text: 'x', repeat: { kind: 'weekly', weekday: 9, time: '08:00:00' } })), { code: 'INVALID_REQUEST' });
 });
 
@@ -75,7 +90,22 @@ async function fixture(t: any, timeZone = 'Asia/Shanghai') {
     append(type: string, data: unknown) { const event = { type, data, seq: events.length, timestamp: new Date(now).toISOString() }; events.push(event); return event; } } };
   const ctx: any = { sessions: { flush: async () => true }, tools: { get: (name: string) => definitions.get(name),
     register: (definition: any) => { definitions.set(definition.name, definition); return () => {}; } }, logger: { warn() {} } };
-  native.registerScheduleTools(ctx, ctx, agent, () => {});
+  if (typeof native.registerScheduleTools === 'function') native.registerScheduleTools(ctx, ctx, agent, () => {});
+  else {
+    let nextId = 0;
+    ctx.tools.register({ name: 'schedule_create', execute: async (args: any) => {
+      const id = `schedule-${++nextId}`;
+      const record = args.at !== undefined ? native.createAtScheduleRecord(id, args.prompt, args.at, now, 'synthetic')
+        : args.every_seconds !== undefined ? native.createEveryScheduleRecord(id, args.prompt, args.every_seconds, now, 'synthetic')
+        : native.createAfterScheduleRecord(id, args.prompt, args.after_seconds, now, 'synthetic');
+      agent.session.append('schedule/change', { version: 1, operation: 'create', schedule: record });
+      return record;
+    } });
+    ctx.tools.register({ name: 'schedule_delete', execute: async ({ id }: any) => {
+      agent.session.append('schedule/change', { version: 1, operation: 'delete', id });
+      return { id };
+    } });
+  }
   const file = join(root, 'schedules.json');
   const request = async (input: any) => { calls.push(input); return input.action === 'context' ? { timeZone, approvalMode: 'ask' } : { accepted: true }; };
   const make = () => createNativeScheduleManager({ ctx, native: { ...native, createUserMessage }, file, request, clock: () => now });

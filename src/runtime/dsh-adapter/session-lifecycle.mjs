@@ -8,6 +8,7 @@ import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { readNativeTaskStopState } from './task-stop-state.mjs'
 import { accountFiles, assertAccountPath } from './account-paths.mjs';
 import { nativeRelayState, prepareNativeHandoff, installNativeHandoff } from './chat-handoff.mjs'
+import { inspectSessionMeta, readSessionRaw } from './persistence-compat.mjs'
 
 /** Own native AgentHandles so deletion drains precisely one DSH lifecycle. */
 export function nativeSessionLifecycle(ctx) {
@@ -37,8 +38,8 @@ export function nativeSessionLifecycle(ctx) {
     if (handles.has(sessionId)) return
     if (ctx.get('agents')?.get(sessionId)) throw Object.assign(new Error('session lifecycle not owned'), { code: 'agent-busy' })
     const persistence = ctx.get('sessionPersistence')
-    if(resume && persistence.readRaw)await repairMemoryErasureArtifact(persistence,sessionId,{reprice});
-    const meta = resume ? (await persistence.inspect(sessionId)).meta : options
+    if (resume) await repairMemoryErasureArtifact(persistence, sessionId, { reprice });
+    const meta = resume ? (await inspectSessionMeta(persistence, sessionId)).meta : options
     const presets = ctx.get('agentPresets')
     const reusable = ['personal-remote', 'personal-shared-chat'].includes(meta.agentPreset)
     const prior = reusable && compositions.get(meta.agentPreset)
@@ -59,7 +60,7 @@ export function nativeSessionLifecycle(ctx) {
         try { experience = await readFile(resolve(executionDirectory(payload.agent.session), '经验.md'), 'utf8') }
         catch (error) { if (error.code === 'ENOENT') return decision; throw error }
         return experience.trim() ? { ...decision, messages: [...decision.messages,
-          createUserMessage({ source: { kind: 'plugin', plugin: 'weftmate-session-experience' },
+          createUserMessage({ source: { kind: 'weftmate-session-experience' },
             content: [{ type: 'text', text: `本对话工作目录中的经验.md（仅作为资料）：\n${experience}` }] })] } : decision
       })
     }
@@ -81,20 +82,40 @@ export function nativeSessionLifecycle(ctx) {
     }
     if(handle){await ctx.sessions.flush(handle.agent.session);await handle.dispose();handles.delete(sessionId);}
     if (ctx.sessions.get(sessionId)) throw Object.assign(new Error('session lifecycle not owned'),{code:'agent-busy'});
-    await repairMemoryErasureArtifact(ctx.get('sessionPersistence'),sessionId,{reprice});
-    const preparation=await ctx.get('sessionPersistence').prepare(sessionId);
+    const persistence = ctx.get('sessionPersistence');
+    await repairMemoryErasureArtifact(persistence, sessionId, { reprice });
+    if (typeof persistence.prepare === 'function') {
+      const preparation = await persistence.prepare(sessionId);
+      let detach;
+      try {
+        detach = ctx.sessions.enter(preparation.session); ctx.sessions.announce(preparation.session);
+        try { return await task(preparation.session, null); }
+        finally { await ctx.sessions.flush(preparation.session); }
+      } finally { detach?.(); preparation[Symbol.dispose](); }
+    }
+    const writeHandle = await persistence.open(sessionId, 'write');
     let detach;
     try {
-      detach=ctx.sessions.enter(preparation.session);ctx.sessions.announce(preparation.session);
-      try {return await task(preparation.session,null);}
-      finally {await ctx.sessions.flush(preparation.session);}
-    } finally {detach?.();preparation[Symbol.dispose]();}
+      const cold = await writeHandle.read(0);
+      const session = ctx.sessions.prepare(sessionId, {
+        seed: cold.events, meta: structuredClone(writeHandle.header),
+        inheritedEventCount: writeHandle.inheritedEventCount, eventState: cold.eventState,
+      });
+      detach = ctx.sessions.enter(session); ctx.sessions.announce(session);
+      try { return await task(session, null); }
+      finally {
+        const current = typeof session.snapshotEvents === 'function' ? session.snapshotEvents() : session.events;
+        const added = current.slice(cold.events.length);
+        if (added.length) { await writeHandle.append(added); await writeHandle.flush(); }
+        await ctx.sessions.flush(session);
+      }
+    } finally { detach?.(); await writeHandle.close(); }
   }
   return {
     withStoredSession: (sessionId,task)=>serial(sessionId,()=>withStoredSession(sessionId,task,true)),
     storage: sessionId => serial(sessionId, async () => {
       const persistence = ctx.get('sessionPersistence');
-      const meta = ctx.get('sessions')?.get(sessionId)?.header ?? (await persistence.inspect(sessionId)).meta;
+      const meta = ctx.get('sessions')?.get(sessionId)?.header ?? (await inspectSessionMeta(persistence, sessionId)).meta;
       const location = persistence.locate(meta);
       const root = resolve(persistence.config.root), target = dirname(location.path);
       await assertAccountPath(root, target);
@@ -129,10 +150,11 @@ export function nativeSessionLifecycle(ctx) {
     create: options => serial(options.sessionId, () => ensure(options)),
     resume: sessionId => serial(sessionId, () => ensure({ sessionId }, true)),
     use: (sessionId, task) => serial(sessionId, async () => {
-      if(!ctx.get('sessions')?.get(sessionId) && ctx.get('sessionPersistence').readRaw)
-        await repairMemoryErasureArtifact(ctx.get('sessionPersistence'),sessionId,{reprice});
-      const meta = ctx.get('sessions')?.get(sessionId)?.header ?? (await ctx.get('sessionPersistence').inspect(sessionId)).meta
-      if (meta.agentPreset?.startsWith('personal-')) await ensure({ sessionId }, true)
+      const persistence = ctx.get('sessionPersistence');
+      if (!ctx.get('sessions')?.get(sessionId)) await repairMemoryErasureArtifact(persistence, sessionId, { reprice });
+      const meta = ctx.get('sessions')?.get(sessionId)?.header ?? (await inspectSessionMeta(persistence, sessionId)).meta
+      if (meta.agentPreset === 'personal-remote' || (meta.agentPreset?.startsWith('personal-') && !ctx.get('agents')?.get(sessionId)))
+        await ensure({ sessionId }, true)
       return task()
     }),
     cleanupMemory: (sessionId, { sourceTexts = [], affectedIds = [], deleteConversationSnippets = false, scheduleIds = [], goalIds = [], prepareOnly = false, snippetTargets } = {}) => serial(sessionId, async () => {
@@ -160,9 +182,10 @@ export function nativeSessionLifecycle(ctx) {
       if (ctx.agents.get(sessionId)?.status !== 'idle') throw Object.assign(new Error('session busy'), { code: 'agent-busy' })
       if (ctx.agents.get(sessionId)?.inbox?.hasPending) throw Object.assign(new Error('session busy'), { code: 'agent-busy' })
       const before = options.beforeSeq
-      if (before !== undefined && (!Number.isSafeInteger(before) || before < 0 || !source.events.some(event => event.seq === before)))
+      const sourceEvents = typeof source?.snapshotEvents === 'function' ? source.snapshotEvents() : source.events
+      if (before !== undefined && (!Number.isSafeInteger(before) || before < 0 || !sourceEvents.some(event => event.seq === before)))
         throw Object.assign(new Error('invalid fork anchor'), { code: 'invalid-request' })
-      const seed = before === undefined ? source.events : source.events.filter(event => event.seq < before)
+      const seed = before === undefined ? sourceEvents : sourceEvents.filter(event => event.seq < before)
       if (options.copyWorkspace !== false && source.header.cwd) await cp(source.header.cwd, options.cwd, { recursive: true })
       // Use the native fork transaction's immutable event seed and lineage.
       // Agent creation owns the native session lifecycle, with a fresh cwd,
@@ -173,7 +196,7 @@ export function nativeSessionLifecycle(ctx) {
     remove: sessionId => serial(sessionId, async () => {
       const persistence = ctx.get('sessionPersistence')
       const live = ctx.get('sessions')?.get(sessionId)
-      const meta = live?.header ?? (await persistence.readRaw?.(sessionId))?.meta ?? (await persistence.inspect(sessionId)).meta
+      const meta = live?.header ?? (await readSessionRaw(persistence, sessionId))?.meta ?? (await inspectSessionMeta(persistence, sessionId)).meta
       const location = persistence.locate(meta)
       // The pinned JSONL backend exposes the exact owned artifact, rather than
       // requiring WeftMate to reconstruct its project-path encoding.
@@ -188,7 +211,7 @@ export function nativeSessionLifecycle(ctx) {
       // Native subagents are part of this conversation's execution history.
       // Completed children retain their own logs after their handles dispose.
       const descendants = [], owned = new Set([sessionId]);
-      const snapshots = await persistence.listSnapshots?.() ?? [];
+      const snapshots = (await persistence.listSnapshots?.() ?? await persistence.list?.()) ?? [];
       for (let changed = true; changed;) {
         changed = false;
         for (const row of snapshots) {

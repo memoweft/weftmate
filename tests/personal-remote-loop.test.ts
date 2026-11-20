@@ -22,11 +22,11 @@ async function isolatedPreset(t: any, root: string) {
 }
 
 test('official rc.5 native loop completes after eight tool calls without a personal quota', { timeout: 10_000 }, async t => {
-  const [{ Context }, llm, { default: Sessions }, { default: SystemPrompt }, tools,
-    { default: AgentRegistry }, { default: AgentLoop }] = await Promise.all([
+  const [{ Context }, llm, { default: Sessions }, { default: SessionProjections }, { default: SystemPrompt }, tools,
+    nativeToolExecutor, { default: AgentRegistry }, { default: AgentLoop }] = await Promise.all([
     import(vendor('cordis')), import(vendor('dsh-llm')), import(vendor('dsh-session')),
-    import(vendor('dsh-system-prompt')), import(vendor('dsh-tools')),
-    import(vendor('dsh-agent')), import(vendor('dsh-agent-loop')),
+    import(vendor('dsh-session-projection')), import(vendor('dsh-system-prompt')), import(vendor('dsh-tools')),
+    import(vendor('dsh-tool-executor-native')), import(vendor('dsh-agent')), import(vendor('dsh-agent-loop')),
   ])
   const root = mkdtempSync(join(tmpdir(), 'personal-native-loop-'))
   const preset = await isolatedPreset(t, root)
@@ -35,8 +35,10 @@ test('official rc.5 native loop completes after eight tool calls without a perso
   try {
     await ctx.plugin(llm.default)
     await ctx.plugin(Sessions)
+    await ctx.plugin(SessionProjections)
     await ctx.plugin(SystemPrompt)
     await ctx.plugin(tools.default)
+    await ctx.plugin(nativeToolExecutor)
     await ctx.plugin(AgentRegistry)
     ctx.tools.register(tools.defineTool({ name: 'mod_sdk', description: 'Synthetic denied Mod tool',
       parameters: {}, output: { schema: { type: 'json' }, render: () => [] },
@@ -65,7 +67,7 @@ test('official rc.5 native loop completes after eight tool calls without a perso
       agent.followup(llm.createUserMessage({ content: [{ type: 'text', text: 'synthetic unrelated desktop goal' }],
         source: { kind: 'user' } }))
       await agent.whenIdle()
-      const events = agent.session.events
+      const events = agent.session.snapshotEvents()
       const ended = events.filter((event: any) => event.type === 'turn/end')
       assert.equal(ended.length, 1)
       assert.equal(ended[0].data.reason.kind, 'completed')
@@ -77,11 +79,11 @@ test('official rc.5 native loop completes after eight tool calls without a perso
 
 test('official rc.5 write loop reaches its final reply after two writes, including a failed first write',
   { timeout: 10_000 }, async t => {
-  const [{ Context }, llm, { default: Sessions }, { default: SystemPrompt }, tools,
-    { default: AgentRegistry }, { default: AgentLoop }] = await Promise.all([
+  const [{ Context }, llm, { default: Sessions }, { default: SessionProjections }, { default: SystemPrompt }, tools,
+    nativeToolExecutor, { default: AgentRegistry }, { default: AgentLoop }] = await Promise.all([
     import(vendor('cordis')), import(vendor('dsh-llm')), import(vendor('dsh-session')),
-    import(vendor('dsh-system-prompt')), import(vendor('dsh-tools')),
-    import(vendor('dsh-agent')), import(vendor('dsh-agent-loop')),
+    import(vendor('dsh-session-projection')), import(vendor('dsh-system-prompt')), import(vendor('dsh-tools')),
+    import(vendor('dsh-tool-executor-native')), import(vendor('dsh-agent')), import(vendor('dsh-agent-loop')),
   ])
   const root = mkdtempSync(join(tmpdir(), 'personal-write-loop-'))
   const preset = await isolatedPreset(t, root)
@@ -92,8 +94,10 @@ test('official rc.5 write loop reaches its final reply after two writes, includi
     try {
       await ctx.plugin(llm.default)
       await ctx.plugin(Sessions)
+      await ctx.plugin(SessionProjections)
       await ctx.plugin(SystemPrompt)
       await ctx.plugin(tools.default)
+      await ctx.plugin(nativeToolExecutor)
       await ctx.plugin(AgentRegistry)
       for (const name of ['mod_sdk']) {
         ctx.tools.register(tools.defineTool({ name, description: 'Synthetic denied tool',
@@ -135,7 +139,7 @@ test('official rc.5 write loop reaches its final reply after two writes, includi
         handle.agent.followup(llm.createUserMessage({ content: [{ type: 'text', text: 'Deliver two text files.' }],
           source: { kind: 'user' } }))
         await handle.agent.whenIdle()
-        const events = handle.agent.session.events
+        const events = handle.agent.session.snapshotEvents()
         const ended = events.filter((event: any) => event.type === 'turn/end')
         assert.equal(ended.length, 1)
         assert.equal(ended[0].data.reason.kind, 'completed')
@@ -143,8 +147,8 @@ test('official rc.5 write loop reaches its final reply after two writes, includi
         assert.equal(toolCalls, 2)
         const results = events.filter((event: any) => event.type === 'tool/result')
         assert.equal(results.length, 2)
-        assert.equal(results[0].data.message.content[0].isError, failFirst)
-        assert.equal(results[1].data.message.content[0].isError, false)
+        assert.equal(Boolean(results[0].data.message.isError ?? results[0].data.message.content[0]?.isError), failFirst)
+        assert.equal(Boolean(results[1].data.message.isError ?? results[1].data.message.content[0]?.isError), false)
         assert.ok(events.some((event: any) => event.type === 'assistant/message' &&
           event.data.message.content.some((block: any) => block.type === 'text' && block.text === finalText)))
       } finally { await handle.dispose() }

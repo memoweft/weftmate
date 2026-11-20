@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { createRequire } from 'node:module'
-import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -17,11 +17,11 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
   assert.ok(resolve(root).startsWith(resolve(tmpdir()) + sep))
   const [{ Context }, { default: Loader, Group }, { default: Include }, llmModule,
     { default: Sessions }, { default: TokenMeter }, { default: Commands },
-    { createScope }, presetModule, { agentEvents }] = await Promise.all([
+    { createScope }, presetModule, { default: Agents, agentEvents }, { default: SessionProjections }] = await Promise.all([
     import(packageUrl('cordis')), import(packageUrl('cordis-plugin-loader')), import(packageUrl('cordis-plugin-include')),
     import(packageUrl('dsh-llm')), import(packageUrl('dsh-session')), import(packageUrl('dsh-token-meter')),
-    import(packageUrl('dsh-commands')), import(packageUrl('dsh-scope')), import(packageUrl('dsh-agent-presets')),
-    import(packageUrl('dsh-agent')),
+    import(packageUrl('dsh-commands')), import(packageUrl('dsh-scope')), import(packageUrl('dsh-agent-preset-registry')),
+    import(packageUrl('dsh-agent')), import(packageUrl('dsh-session-projection')),
   ])
   const ctx = new Context()
   const scopes: any[] = []
@@ -38,18 +38,21 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
   await ctx.plugin(Sessions)
   await ctx.plugin(TokenMeter)
   await ctx.plugin(Commands)
+  await ctx.plugin(SessionProjections)
+  await ctx.plugin(Agents)
+  await ctx.plugin(presetModule.default, { default: 'minimal' })
 
   // The changed unit is the generated, scoped compaction group. Mount that
   // exact output through the real preset Loader while excluding unrelated
   // PTY/filesystem plugins: this test must never start shells or read user data.
-  const shippedRoot = join(vendor, 'node_modules', '@deepseek-ai', 'dsh', 'config', 'agent-presets')
+  const shippedRoot = join(vendor, 'node_modules', '@deepseek-ai', 'dsh-web-app', 'presets')
   const generatedRoot = join(root, 'generated')
   await writeContextAwareMinimalPreset(shippedRoot, generatedRoot)
-  const { parseDocument, stringify } = vendorRequire('yaml')
+  const { parseDocument } = vendorRequire('yaml')
   const generated = parseDocument(await readFile(join(generatedRoot, 'minimal', 'agent.cordis.yml'), 'utf8')).toJS()
   const compaction = generated.find((row: any) => row.id === 'compaction')
   assert.ok(compaction, 'minimal must contain its generated context lifecycle')
-  const contextWindow = 10_000
+  const contextWindow = 400_000
   const summaryCalls: any[] = []
   class FixtureAdapter extends llmModule.LlmAdapter {
     async resolveModel(provider: string, model: string) {
@@ -69,33 +72,26 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
   ctx.llm.registerAdapter(['compaction-fixture'], new FixtureAdapter())
 
   async function agentOn(name: string, mountCompactor: boolean) {
-    let parent: object | undefined
     if (mountCompactor) {
-      parent = { preset: name }
-      const standing = createScope(ctx, parent)
-      scopes.push(standing)
-      const directory = join(root, 'scoped', name)
-      await mkdir(directory, { recursive: true })
-      const path = join(directory, 'agent.cordis.yml')
-      await writeFile(path, stringify([compaction]), 'utf8')
-      await presetModule.mountPreset(standing.ctx, { id: name, name, path, trust: 'system' })
+      await ctx.agentPresets.register({ id: name, plugins: [compaction] })
     }
     const session = ctx.sessions.create(`fixture-${name}`)
     const agent: any = {
       id: session.id, session, options: { provider: 'compaction-fixture', model: 'fixture-model' }, status: 'running',
       runMaintenance: async (task: (signal: AbortSignal) => Promise<unknown>) => task(new AbortController().signal),
     }
-    const scope = createScope(ctx, agent, parent ? { parent } : {})
+    const scope = createScope(ctx, agent)
     agent.ctx = scope.ctx
     scopes.push(scope)
+    if (mountCompactor) await ctx.agentPresets.mount(agent.ctx, name)
     return agent
   }
   const minimal = await agentOn('minimal', true)
   const standard = await agentOn('standard', true)
   const rootAgent = await agentOn('root', false)
   const manualAgent = await agentOn('minimal-manual', true)
-  const minimalEngine = presetModule.serviceForAgent(ctx, minimal, 'compaction')
-  const standardEngine = presetModule.serviceForAgent(ctx, standard, 'compaction')
+  const minimalEngine = ctx.agentPresets.serviceFor(minimal, 'compaction')
+  const standardEngine = ctx.agentPresets.serviceFor(standard, 'compaction')
   assert.ok(minimalEngine && standardEngine)
   assert.notEqual(minimalEngine, standardEngine, 'the two presets own separate compaction services')
   assert.equal(ctx.get('compaction'), undefined, 'there is no process-global fallback compactor')
@@ -128,7 +124,7 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
   assert.equal(summaryCalls.length, 0, 'an ordinary small context must not be summarized')
   minimal.session.append('turn/end', { turn: 2, reason: { kind: 'completed' } })
 
-  const body = 'history detail '.repeat(800)
+  const body = 'history detail '.repeat(32_000)
   for (const agent of [minimal, standard, rootAgent]) {
     const start = agent === minimal ? 3 : 1
     for (let turn = start; turn < start + 3; turn++) closedTurn(agent, turn, body)
@@ -140,16 +136,16 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
   for (let turn = 1; turn <= 3; turn++) closedTurn(manualAgent, turn, manualBody)
   const beforeManual = ctx.tokenMeter.measure(manualAgent.session)
   assert.ok(beforeManual.totalTokens < contextWindow * 0.8)
-  const manual = await ctx.commands.execute(manualAgent, '/compact', new AbortController().signal)
+  const manual = await ctx.commands.execute(manualAgent, '/compact', [], new AbortController().signal)
   assert.equal(manual?.result.kind, 'success')
   assert.equal(summaryCalls.length, 1, 'manual /compact invokes the current session summary route once')
   assert.equal(summaryCalls[0].sessionId, manualAgent.id)
   assert.equal(summaryCalls[0].purpose, 'compaction')
   assert.ok(ctx.tokenMeter.measure(manualAgent.session).totalTokens < beforeManual.totalTokens)
-  assert.deepEqual(manualAgent.session.events.filter((event: any) => event.type === 'command/run' || event.type === 'command/done').map((event: any) => event.type), ['command/run', 'command/done'])
+  assert.deepEqual(manualAgent.session.snapshotEvents().filter((event: any) => event.type === 'command/run' || event.type === 'command/done').map((event: any) => event.type), ['command/run', 'command/done'])
   const beforeMinimal = ctx.tokenMeter.measure(minimal.session)
   assert.ok(beforeMinimal.totalTokens > contextWindow * 0.8)
-  const originalEvents = minimal.session.events.map((event: any) => structuredClone(event))
+  const originalEvents = minimal.session.snapshotEvents().map((event: any) => structuredClone(event))
   const originalSurface = [...minimal.session.surface.nodes]
   await preStep(minimal, 6)
   const afterMinimal = ctx.tokenMeter.measure(minimal.session)
@@ -157,12 +153,12 @@ test('generated minimal compactor automatically reduces pressure at pre-step, pr
   assert.equal(summaryCalls[1].sessionId, minimal.id)
   assert.ok(afterMinimal.totalTokens < contextWindow * 0.8, `pressure should fall below the default threshold: ${afterMinimal.totalTokens}`)
   assert.equal(minimal.session.surface.replaceGeneration, 1)
-  assert.deepEqual(minimal.session.events.slice(0, originalEvents.length), originalEvents, 'compaction retains every original durable event')
+  assert.deepEqual(minimal.session.snapshotEvents().slice(0, originalEvents.length), originalEvents, 'compaction retains every original durable event')
   assert.equal(originalSurface.some((seq: number) => !minimal.session.surface.nodes.includes(seq)), true, 'the active request surface actually replaces older nodes')
   const activeText = JSON.stringify(minimal.session.deriveMessages())
   assert.match(activeText, /CHECKPOINT fixture-minimal/)
   assert.doesNotMatch(activeText, /ORIGINAL USER 1 small initial context/)
-  assert.deepEqual(minimal.session.events.filter((event: any) => ['compaction/start', 'compaction/summary', 'compaction/end'].includes(event.type)).map((event: any) => event.type), ['compaction/start', 'compaction/summary', 'compaction/end'])
+  assert.deepEqual(minimal.session.snapshotEvents().filter((event: any) => ['compaction/start', 'compaction/summary', 'compaction/end'].includes(event.type)).map((event: any) => event.type), ['compaction/start', 'compaction/summary', 'compaction/end'])
 
   // The same pressure on an agent outside either preset has no listener.
   await preStep(rootAgent, 4)
