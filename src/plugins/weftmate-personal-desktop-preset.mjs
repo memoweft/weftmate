@@ -65,6 +65,7 @@ export function apply(ctx) {
         ...ctx.tools.schemas(context.scope, context.toolSet).filter(tool => names.has(tool.name))];
     }
     schemas.set(context.scope, tools);
+    context.scope[Symbol.for('weftmate.catalogTools')] = tools;
     const presented = presentPersonalPrompt({ ...assembly, tools }, loaded.get(context.scope));
     return { ...presented, [PERSONAL_TOOLS]: presented.tools };
   });

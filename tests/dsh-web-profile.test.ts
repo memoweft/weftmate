@@ -310,13 +310,21 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     const current = await readFile(composition, 'utf8')
     assert.match(current, /Write deliverables there/)
     assert.match(current, /includeRuntimeContext: true/)
-    for (const plugin of ['dsh-tool-pwsh', 'dsh-tool-bash', 'dsh-tool-fs', 'dsh-tool-fs-search', 'dsh-tool-jobs', 'dsh-tool-web', 'dsh-tool-todo', 'dsh-tool-subagent']) assert.ok(current.includes(plugin))
+    for (const plugin of ['dsh-tool-pwsh', 'dsh-tool-bash', 'dsh-tool-fs', 'dsh-tool-fs-search', 'dsh-tool-jobs', 'dsh-tool-web', 'dsh-tool-todo', 'dsh-tool-subagent', 'dsh-skill-filesystem', 'dsh-tool-skill', 'dsh-command-goal', 'dsh-tool-office']) assert.ok(current.includes(plugin))
     assert.equal(current.includes('explicitly asks to open Notepad'), false)
     assert.match(current, /For long tasks, use create_goal and todo_write/)
     assert.match(current, /weftmate-compaction\.mjs/)
     assert.match(current, /completionDelivery: wakeup/)
     assert.match(current, /backgroundMode: one-shot/)
-    const previousWeb = current.replace('    search: true', '    search: false')
+    const previousSearch = current.replace(
+      `- id: skill-filesystem\n  name: '@deepseek-ai/dsh-skill-filesystem'\n- id: tool-skill\n  name: '@deepseek-ai/dsh-tool-skill'\n- id: command-goal\n  name: '@deepseek-ai/dsh-command-goal'\n- id: tool-office\n  name: '@deepseek-ai/dsh-tool-office'\n`,
+      '',
+    )
+    assert.notEqual(previousSearch, current)
+    await writeFile(composition, previousSearch, 'utf8')
+    assert.equal(await writeWebProfile(root, 'weftmate'), 'repaired')
+    assert.equal(await readFile(composition, 'utf8'), current)
+    const previousWeb = previousSearch.replace('    search: true', '    search: false')
     await writeFile(composition, previousWeb, 'utf8')
     assert.equal(await writeWebProfile(root, 'weftmate'), 'repaired')
     assert.equal(await readFile(composition, 'utf8'), current)
