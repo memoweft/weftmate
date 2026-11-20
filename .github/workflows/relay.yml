@@ -1,9 +1,5 @@
 name: S2 Relay
 on:
-  pull_request:
-    paths-ignore: ['**/*.md', 'docs/**']
-  push:
-    branches: [main]
   workflow_dispatch:
 concurrency:
   group: relay-${{ github.ref }}

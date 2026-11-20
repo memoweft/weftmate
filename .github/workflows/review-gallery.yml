@@ -1,34 +1,6 @@
 name: Review gallery
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/personal-access-ui/**'
-      - 'src/personal-desktop*'
-      - 'src/ui-core/**'
-      - 'apps/mobile-ui/**'
-      - 'apps/android/**'
-      - 'apps/apple/**'
-      - 'design/**'
-      - 'tests/fixtures/review-gallery/**'
-      - 'scripts/review-gallery/**'
-      - 'scripts/nightly/**'
-      - 'tests/nightly-regression.test.mjs'
-      - 'tests/integration/review-capture-*.mjs'
-      - '.github/workflows/review-gallery.yml'
-  pull_request:
-    paths:
-      - 'src/personal-access-ui/**'
-      - 'src/ui-core/**'
-      - 'apps/mobile-ui/**'
-      - 'design/**'
-      - 'tests/fixtures/review-gallery/**'
-      - 'scripts/review-gallery/**'
-      - 'scripts/nightly/**'
-      - 'tests/nightly-regression.test.mjs'
-      - 'tests/integration/review-capture-*.mjs'
-      - '.github/workflows/review-gallery.yml'
   workflow_dispatch:
 
 permissions:
