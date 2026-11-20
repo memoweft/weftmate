@@ -17,5 +17,10 @@ $scope='${profile.replaceAll("'","''")}'
 $found=@(foreach($p in Get-Process){if($p.ProcessName -notmatch '^(node|electron|python|python3)$'){continue};try{if(!$p.Path){continue};$line=[ProfileProcessCommand]::Read($p.Handle);if($line -and $line.Contains($scope)){$p.Id}}catch{}})
 ConvertTo-Json -InputObject $found -Compress
 `;
-  return JSON.parse(execFileSync('pwsh',['-NoProfile','-Command',script],{encoding:'utf8',timeout:15000}).trim()||'[]');
+  try {
+    return JSON.parse(execFileSync('pwsh',['-NoProfile','-Command',script],{encoding:'utf8',timeout:15000}).trim()||'[]');
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+    return JSON.parse(execFileSync('powershell.exe',['-NoProfile','-Command',script],{encoding:'utf8',timeout:15000}).trim()||'[]');
+  }
 }
