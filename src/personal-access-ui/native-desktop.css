@@ -71,13 +71,14 @@
 .weftmate-desktop .assistant-active .page { height:100dvh; min-height:0; }
 .weftmate-desktop .assistant-active .desktop-titlebar { width:var(--wm-size-sidebar); padding:var(--wm-space-6) var(--wm-space-14); font-size:0; }
 .weftmate-desktop .assistant-active .desktop-titlebar > .wm-brand { display:none; }
-.weftmate-desktop .assistant-active.rail-collapsed .desktop-titlebar { width:var(--wm-space-52); background:var(--panel); }
-.weftmate-desktop .assistant-active .titlebar-rail-toggle { margin:0; }
+.weftmate-desktop .assistant-active.rail-collapsed .desktop-titlebar { width:var(--wm-space-52); background:var(--panel); -webkit-app-region:no-drag; }
+.weftmate-desktop .assistant-active .titlebar-rail-toggle { margin:0; -webkit-app-region:no-drag; }
 .weftmate-desktop .assistant-active .assistant-topbar { -webkit-app-region:drag; padding-right:var(--wm-size-160); }
 .weftmate-desktop .assistant-active.preview-open .assistant-topbar { padding-right:var(--wm-space-16); }
-.weftmate-desktop .assistant-active.rail-collapsed .assistant-topbar { padding-left:var(--wm-space-56); }
+.weftmate-desktop .assistant-active.rail-collapsed .assistant-topbar { position:relative; padding-left:var(--wm-space-56); }
+.weftmate-desktop .assistant-active.rail-collapsed .assistant-topbar::before { content:''; position:absolute; inset:0 auto 0 0; width:var(--wm-space-56); -webkit-app-region:no-drag; pointer-events:none; }
 .weftmate-desktop .assistant-active .preview-heading { -webkit-app-region:drag; padding-right:var(--wm-size-160); }
-.weftmate-desktop :is(.assistant-topbar,.preview-heading,.rail-brand-row) :is(button,input,a) { -webkit-app-region:no-drag; }
+.weftmate-desktop :is(.desktop-titlebar,.assistant-topbar,.preview-heading,.rail-brand-row) :is(button,input,a) { -webkit-app-region:no-drag; }
 .weftmate-desktop .rail-brand-row { -webkit-app-region:drag; }
 /* Fixed pages replace the workspace header, so their actions need its safe area. */
 .weftmate-desktop[data-native-platform="win32"] :is(.activity-page,.library-page,.goals-page,.health-page,.help-page) {

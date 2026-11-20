@@ -7,7 +7,7 @@ import { toolPairingBalancedBefore } from '@deepseek-ai/dsh-compaction';
 // capacity threshold. This is a latency policy, not a smaller model capacity.
 export function researchPressure(session, measurement) {
   return session.header?.agentPreset === 'personal-remote' &&
-    (measurement.totalTokens >= 14_000 || JSON.stringify(session.deriveMessages()).length >= 48_000);
+    (measurement.totalTokens >= 48_000 || JSON.stringify(session.deriveMessages()).length >= 160_000);
 }
 
 export function researchCompactRange(session, measurement) {

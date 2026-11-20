@@ -19,7 +19,7 @@
 #conversation-pane.chat-workspace .thinking-process .thinking-body { padding:0; }
 .execution-records > .execution-step-group + *, .execution-records > * + .execution-step-group { border-top:0; }
 #conversation-pane.chat-workspace .execution-records .execution-step-group > summary { width:fit-content; min-height:var(--wm-space-32); font-size:var(--wm-type-body); }
-#conversation-pane.chat-workspace .execution-group-records { max-block-size:min(55vh, 32rem); overflow:auto; overscroll-behavior:contain; }
+#conversation-pane.chat-workspace .execution-group-records { max-block-size:min(55vh, 32rem); overflow:auto; overscroll-behavior:auto; }
 .execution-block .execution-step > summary,
 #conversation-pane.chat-workspace .execution-records .execution-step > summary { min-height:var(--wm-space-32); padding:var(--wm-space-4) 0; gap:var(--wm-space-6); font-size:var(--wm-type-body); line-height:var(--wm-line-height-1_5); }
 #conversation-pane.chat-workspace .execution-step > summary { width:fit-content; max-width:100%; }
@@ -36,7 +36,7 @@
 #conversation-pane.chat-workspace .execution-note { padding:var(--wm-space-4) 0; margin:0; color:var(--ink); font-size:var(--text-size,var(--wm-type-body)); line-height:var(--wm-line-height-1_65); }
 .execution-note p,#conversation-pane.chat-workspace .execution-note p { margin:0; }
 .execution-note p + p,#conversation-pane.chat-workspace .execution-note p + p { margin-top:var(--wm-space-8); }
-.step-detail-content :is(.step-output,.timeline-raw), .step-command .render-code pre { max-height:220px; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.step-detail-content :is(.step-output,.timeline-raw), .step-command .render-code pre { max-height:220px; overflow:auto; overscroll-behavior:auto; scrollbar-gutter:stable; }
 .step-detail-content .step-output { white-space:pre; font-size:var(--wm-font-size-12); line-height:var(--wm-line-height-1_5); }
 #conversation-pane.chat-workspace .step-command .render-code { margin-block:var(--wm-space-6) var(--wm-space-4); border:1px solid var(--line); }
 .step-command .render-code > .step-output { margin:0; border:0; border-top:1px solid var(--line); border-radius:0; background:transparent; }
