@@ -249,13 +249,38 @@ export function createPersonalBrowserReader({ BrowserWindow, session, resolver, 
           () => reject(fault('BROWSER_RENDERER_FAILED'))));
         const abortPromise = new Promise((_, reject) => controller.signal.addEventListener('abort',
           () => reject(fault('BROWSER_CANCELLED')), { once: true }));
-        try { await Promise.race([window.loadURL(requestedUrl), rendererGone, abortPromise]); }
-        catch (error) { if (controller.signal.aborted) throw fault('BROWSER_CANCELLED');
+        let domReadyReached = false;
+        let settleTimer;
+        const domReadySettle = new Promise((resolve) => {
+          contents.once('dom-ready', () => {
+            domReadyReached = true;
+            settleTimer = setTimeout(() => {
+              if (!contents.isDestroyed()) contents.stop();
+              resolve();
+            }, 2_500);
+          });
+        });
+        try {
+          await Promise.race([
+            window.loadURL(requestedUrl).catch((err) => {
+              if (domReadyReached && (err?.code === 'ERR_ABORTED' || err?.errno === -3)) return;
+              throw err;
+            }),
+            domReadySettle,
+            rendererGone,
+            abortPromise,
+          ]);
+        } catch (error) {
+          clearTimeout(settleTimer);
+          if (controller.signal.aborted) throw fault('BROWSER_CANCELLED');
           if (proxy.violation) throw fault(proxy.violation, { selectedAddress: proxy.selectedAddress });
           throw error?.code === 'BROWSER_RENDERER_FAILED' ? error : fault('BROWSER_NETWORK_ERROR', {
             nativeCode: typeof error?.code === 'string' && /^[A-Z0-9_-]{2,48}$/.test(error.code)
               ? error.code : 'UNKNOWN', selectedAddress: proxy.selectedAddress,
-          }); }
+          });
+        } finally {
+          clearTimeout(settleTimer);
+        }
         await Promise.race([new Promise((resolve) => setTimeout(resolve, 700)), abortPromise]);
         if (proxy.violation || blockedRequest || downgradeBlocked) {
           throw fault(proxy.violation ?? (downgradeBlocked ? 'BROWSER_DOWNGRADE_BLOCKED' : 'BROWSER_TARGET_BLOCKED'));

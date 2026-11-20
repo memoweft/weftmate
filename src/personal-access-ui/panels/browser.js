@@ -134,6 +134,15 @@
     const resize = new ResizeObserver(layout); resize.observe(viewport);
     const visibility = () => layout(); document.addEventListener('visibilitychange', visibility);
     void connect();
+    let openUrlHandler = null;
+    const navigateTo = async (url) => {
+      if (disposed || !url) return;
+      address.value = url;
+      if (!current) await connect();
+      await command('navigate', { url });
+    };
+    openUrlHandler = navigateTo;
+    if (globalThis.WeftPanels?.services) globalThis.WeftPanels.services._activeBrowserNavigate = navigateTo;
     return { el,
       show() { if (disposed || shown) return; shown = true; render(); tick(); },
       hide() { shown = false; cancelAnimationFrame(frame); return sendLayout(current, false); },
@@ -141,6 +150,7 @@
       async dispose() {
         if (disposed) return;
         disposed = true; generation++; shown = false; cancelAnimationFrame(frame); resize.disconnect(); unsubscribe?.();
+        if (globalThis.WeftPanels?.services?._activeBrowserNavigate === openUrlHandler) delete globalThis.WeftPanels.services._activeBrowserNavigate;
         document.removeEventListener('visibilitychange', visibility);
         await layoutQueue;
         await Promise.all([...bindings.values()].map(async binding => {
@@ -152,4 +162,16 @@
     };
   } };
   WeftPanels.register('browser', definition);
+  if (WeftPanels.services) {
+    WeftPanels.services.openBrowserUrl = async (url, trigger) => {
+      if (!url || typeof globalThis.weftmateDesktop?.browser !== 'function') return false;
+      WeftPanels.open('browser', trigger);
+      await new Promise(resolve => setTimeout(resolve, 30));
+      if (typeof WeftPanels.services._activeBrowserNavigate === 'function') {
+        await WeftPanels.services._activeBrowserNavigate(url);
+        return true;
+      }
+      return false;
+    };
+  }
 })();
