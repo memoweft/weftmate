@@ -15,6 +15,26 @@ import { sanitizeUpdateFailure } from '../src/update-policy.ts';
 
 describe('Windows candidate package policy', () => {
   const identity = { home: ['C:', 'Users', 'Synthetic Builder'].join('/'), username: 'Synthetic Builder', hostname: 'SYNTHETIC-BUILD-HOST', roots: ['D:/synthetic-build'] };
+  it('rejects non-exact DSH vocabulary bytes and build-machine paths', () => {
+    const files = [
+      'dsh-runtime/node_modules/@deepseek-ai/libreoffice-kit-win32-x64/program/share/liblangtag/language-subtag-registry.xml',
+      'dsh-runtime/node_modules/@deepseek-ai/libreoffice-kit-win32-x64/program/share/liblangtag/common/bcp47/currency.xml',
+      'dsh-runtime/node_modules/@deepseek-ai/dsh-experimental-inspector/lib/devtools/entrypoints/lighthouse_worker/lighthouse_worker.js',
+    ];
+    for (const file of files) {
+      const text = 'synthetic vocabulary: yun';
+      for (const coincidental of [{ ...identity, username: 'yun' }, { ...identity, hostname: 'yun' }]) {
+        assert.equal(packagedTextViolation(text, file, coincidental), 'build-machine-identity', file);
+        assert.equal(packagedTextViolation(text + '\n', file, coincidental), 'build-machine-identity', file);
+        assert.equal(packagedTextViolation(text, file + '.copy', coincidental), 'build-machine-identity', file);
+        assert.equal(packagedTextViolation(text, file, { ...coincidental, home: 'yun' }), 'build-machine-identity', file);
+        assert.equal(packagedTextViolation(text, file, { ...coincidental, roots: ['yun'] }), 'build-machine-identity', file);
+      }
+      for (const inserted of [identity.home + '/private', identity.hostname, identity.roots[0] + '/source', identity.username, 'Y:/AIProjects/WeftMate/Repository/source']) {
+        assert.equal(packagedTextViolation(text + '\n' + inserted, file, identity), 'build-machine-identity', file);
+      }
+    }
+  });
   it('accepts exact public domain data even for a coincidentally named builder, but rejects inserted identity and copied data', () => {
     const text=readFileSync(resolve('node_modules/tlds/index.json'),'utf8'),file='node_modules/tlds/index.json';
     const coincidental={...identity,username:'com',hostname:'net'};
