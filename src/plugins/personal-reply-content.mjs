@@ -175,7 +175,6 @@ export function modelToolFailure(name, result, { approvalOutcome } = {}) {
   // Incorrect model arguments need correction even for memory tools. Backend
   // memory failures still use the existing privacy-preserving receipt wording.
   if (result.isError && (errorInfo?.code === 'INVALID_ARGS' || errorInfo?.name === 'ToolArgsError')) return [
-    {type:'text',text:'调用参数不符合工具要求，尚未执行。请按下面的字段说明纠正。'},
     {type:'text',text:JSON.stringify({toolFailure:toolFailureDetails(name,result)})}];
   if (!memory && result.isError && approvalOutcome === 'rejected') return [{type:'text',text:
     '你已拒绝这项操作。不要再次申请，也不要换工具或命令重试被拒绝的操作。请简短说明没有完成的部分，不要在回复里提工具名称、错误码或内部条目类型。'}];
@@ -191,8 +190,7 @@ export function modelToolFailure(name, result, { approvalOutcome } = {}) {
   const failedReceipt = receipt && (receipt.available === false ||
     ['rejected','failed','unavailable','withheld'].includes(receipt.state) || Boolean(receipt.error));
   if (!result.isError && !failedReceipt) return;
-  if (!memory) return [{type:'text',text:'这一步没能完成。请依据下面的诊断决定下一步；向用户用通俗语言说明，不要把内部诊断整段照抄。'},
-    {type:'text',text:JSON.stringify({toolFailure:toolFailureDetails(name,result)})}];
+  if (!memory) return [{type:'text',text:JSON.stringify({toolFailure:toolFailureDetails(name,result)})}];
   return [{type:'text',text:name === 'memory_forget' ? '这次没忘掉，请稍后再试。' : name === 'memory_query' ? '这次没能查到记忆，请稍后再试。' : '这次没记住，请稍后再试。'},
     {type:'text',text:'请直接用上面这句话回复用户，不要解释处理过程。'}];
 }
