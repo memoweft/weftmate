@@ -909,8 +909,19 @@ export function apply(ctx) {
     }
     return { kind: 'ask', reason };
   });
-  ctx.on('tools/execute', (exec, next) => webExecution.run(exec, () => trackNativeFiles(bridge, exec,
-    () => trackPersonalExecution(bridge, exec, next, background, approvals), fileProvenance.identity)));
+  ctx.on('tools/execute', (exec, next) => {
+    if (exec.name === 'web_search' && exec.arguments && typeof exec.arguments === 'object' && !Array.isArray(exec.arguments)) {
+      if (exec.arguments.queries === undefined && typeof exec.arguments.query === 'string' && exec.arguments.query.trim()) {
+        const nextArgs = { ...exec.arguments, queries: [exec.arguments.query.trim()] };
+        delete nextArgs.query;
+        exec.arguments = nextArgs;
+      } else if (typeof exec.arguments.queries === 'string' && exec.arguments.queries.trim()) {
+        exec.arguments = { ...exec.arguments, queries: [exec.arguments.queries.trim()] };
+      }
+    }
+    return webExecution.run(exec, () => trackNativeFiles(bridge, exec,
+      () => trackPersonalExecution(bridge, exec, next, background, approvals), fileProvenance.identity));
+  });
   ctx.on('tools/post-execute', appendNativeArtifacts);
   ctx.effect(() => () => { disposeProjectSandbox(); disposeSearch(); disposeFetch(); disposeProof(); approvals.close(); background.close(); bridge.close(); },
     'weftmate-personal-desktop: lifecycle');
