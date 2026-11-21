@@ -105,8 +105,11 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
 #settings-dialog .cloud-device-row { align-items:flex-start; }
 #settings-dialog .cloud-device-summary { align-items:flex-start; }
 #settings-dialog .cloud-device-summary .device-content { flex:1; min-width:0; }
-#settings-dialog #cloud-devices-panel > .group-heading { justify-content:flex-end; }
-#settings-dialog #cloud-directory { padding-inline:16px; border-radius:var(--wm-radius-12); background:var(--surface); }
+#settings-dialog #cloud-devices-panel > .group-heading { justify-content:flex-start; gap:10px; margin-bottom:12px; }
+#settings-dialog #cloud-directory-login { justify-content:flex-start; margin:0 0 16px; }
+#settings-dialog #cloud-directory-login:empty { display:none; }
+#settings-dialog #cloud-directory { padding:4px 18px; border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); }
+#settings-dialog #cloud-directory:empty { display:none; }
 #settings-dialog .cloud-device-summary > svg { flex:none; margin-top:2px; }
 #settings-dialog .cloud-device-actions { margin-top:0; }
 #settings-dialog .capabilities-toolbar .settings-select { min-width:8em; flex:none; }
@@ -186,7 +189,11 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog :is(.device-meta,.cloud-device-meta,.system-service-detail small) { font-size:12px; }
 .settings-dialog .device-title strong { font-size:var(--settings-body); }
 .settings-dialog .cloud-device-summary { padding:4px 0; gap:12px; }
-.settings-dialog .account-downloads { padding-top:20px; border-top:1px solid var(--line); }
+.settings-dialog .account-downloads { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:20px; padding-top:18px; border-top:1px solid var(--line); }
+.settings-dialog .archived-search-box { margin-bottom:16px; }
+.settings-dialog .archived-session-list:not(:empty) { border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); padding:4px 18px; }
+.settings-dialog .archived-empty { margin:0; padding:20px 4px; color:var(--ink-muted); }
+.settings-dialog .archived-empty:empty { display:none; }
 .settings-schedule-row { display:flex; align-items:center; flex-wrap:wrap; }
 .settings-schedule-row .system-service-detail { flex:1; min-width:0; }
 .settings-dialog .project-register { max-width:none; }
@@ -370,6 +377,15 @@ html[data-reduced-motion] :is(#settings-dialog,#cloud-login-dialog,.model-editor
 
 .settings-category[data-category=system] #system-heading { display:none; }
 .settings-category[data-category=system] .group-heading { justify-content:flex-end; border-bottom:0; padding-bottom:0; margin-bottom:0; }
+.settings-category[data-category=system] > section.card:first-of-type { background:transparent; border:0; padding:0; margin:0; }
+.settings-category[data-category=system] :is(.system-metrics,.system-diagnostic-export,.run-records) { border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); padding:16px 18px; margin:16px 0 0; }
+.settings-category[data-category=system] .system-diagnostic-export h3,.settings-category[data-category=system] .system-metrics h3 { margin:0 0 8px; }
+.settings-category[data-category=system] .system-diagnostic-export p { margin:0 0 12px; }
+.settings-category[data-category=system] .run-records p { margin:0 0 10px; }
+.settings-category[data-category=system] .run-records .actions { margin:14px 0 0; }
+.settings-category[data-category=system] .card.notice { padding:14px 18px; margin-top:16px; }
+.settings-category[data-category=system] .card.notice h2 { margin:0 0 4px; }
+.settings-category[data-category=system] .card.notice p { margin:0; color:var(--ink-secondary); }
 #system-notice:empty { display:none; }
 
 

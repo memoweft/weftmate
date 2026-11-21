@@ -27,7 +27,7 @@ html.weftmate-desktop:has(.assistant-active) { overflow:hidden; scrollbar-gutter
 .session-menu-item { min-height:var(--wm-size-workspace-row); padding:var(--wm-space-6) var(--wm-space-10); font-size:var(--wm-type-menu); }
 .project-batch-list { display:grid; gap:var(--wm-space-8); max-height:45dvh; overflow:auto; margin-block:var(--wm-space-16); }
 .project-batch-list label { display:flex; align-items:center; gap:var(--wm-space-8); overflow-wrap:anywhere; }
-.assistant-topbar { flex:none; min-height:var(--wm-size-workspace-header); gap:var(--wm-space-8); padding-inline:var(--wm-space-16); border-bottom:1px solid var(--line); }
+.assistant-topbar { flex:none; min-height:var(--wm-size-workspace-header); gap:var(--wm-space-8); padding-inline:var(--wm-space-16); border-bottom:0; }
 .assistant-topbar .assistant-heading { flex:1; min-width:0; flex-wrap:nowrap; }
 #assistant-title { min-width:0; font-size:var(--wm-type-body); }
 #workspace-panels { flex:none; }
