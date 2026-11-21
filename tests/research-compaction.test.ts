@@ -25,7 +25,7 @@ test('research pressure and timeout use durable native checkpoints below the cap
       import(moduleUrl('dsh-token-meter')),import(pathToFileURL(source).href)]);
   const ctx = new Context();
   t.after(async()=>{await ctx.fiber.dispose();await rm(root,{recursive:true,force:true});});
-  await ctx.plugin(Llm);await ctx.plugin(Sessions);await ctx.plugin(Meter);
+  await ctx.plugin(Llm);await ctx.plugin(Sessions);await ctx.plugin((await import(moduleUrl('dsh-session-projection'))).default);await ctx.plugin(Meter);
   const calls:any[]=[];
   let rejectSummary=false;
   class Adapter extends LlmAdapter {
@@ -44,9 +44,10 @@ test('research pressure and timeout use durable native checkpoints below the cap
   function agent(id:string,large:boolean=true){
     const session=ctx.sessions.create(id,{meta:{agentPreset:'personal-remote'}});
     session.append('request/header',{header:{config:{provider:'fixture',model:'model'}},reason:'initial'});
+    session.append('system/message',{turn:1,step:1,message:{role:'system',content:[{type:'text',text:'You are WeftMate.'}]}},{surfaceOp:'append'});
     for(let i=0;i<8;i++) {
       session.append('turn/start',{turn:i+1});
-      session.append('user/message',createUserMessage({source:{kind:'user'},content:[{type:'text',text:'Current objective: summarize official sources. '+(large?'Source fact. '.repeat(650):'Short source.')}]}),{surfaceOp:'append'});
+      session.append('user/message',createUserMessage({source:{kind:'user'},content:[{type:'text',text:'Current objective: summarize official sources. '+(large?'Source fact. '.repeat(2000):'Short source.')}]}),{surfaceOp:'append'});
       session.append('step/start',{turn:i+1,step:1});
       session.append('assistant/message',{turn:i+1,step:1,message:createAssistantMessage({source:{provider:'fixture',model:'model'},content:[{type:'text',text:'Verified source A; next write report.md.'}]})},{surfaceOp:'append'});
       session.append('step/end',{turn:i+1,step:1});
@@ -55,13 +56,18 @@ test('research pressure and timeout use durable native checkpoints below the cap
     session.append('turn/start',{turn:9});
     return {session,id,options:{provider:'fixture',model:'model'},status:'running'};
   }
+  const eventsOf=(s:any)=>typeof s?.snapshotEvents==='function'?s.snapshotEvents():s.events;
   const pressured=agent('research-pressure');
-  const originals=[...pressured.session.events];
+  const originals=[...eventsOf(pressured.session)];
   assert.ok(ctx.tokenMeter.measure(pressured.session).totalTokens<131072*0.85);
   await engine.compactIfNeeded(pressured,'pressure',new AbortController().signal);
   assert.equal(calls.length,1);
+  const summaryEvent=eventsOf(pressured.session).find((e:any)=>e.type==='compaction/summary');
+  const systemEvent=eventsOf(pressured.session).find((e:any)=>e.type==='system/message');
+  assert.ok(summaryEvent && systemEvent);
+  assert.equal(summaryEvent.data.shadowedSeqs.includes(systemEvent.seq),false,'compaction must never shadow surface node 0 system/message');
   assert.ok(JSON.stringify(pressured.session.deriveMessages()).length<48000);
-  assert.deepEqual(pressured.session.events.slice(0,originals.length),originals);
+  assert.deepEqual(eventsOf(pressured.session).slice(0,originals.length),originals);
   const timed=agent('research-timeout');
   const failedSize=JSON.stringify(timed.session.deriveMessages()).length;
   const decision=await ctx.waterfall('agent/request-error',{agent:timed,failure:{code:'TIMEOUT'},signal:new AbortController().signal},async()=>{assert.fail('large timed-out context must not reach ordinary unchanged retry');});
