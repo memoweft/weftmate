@@ -120,27 +120,23 @@ test('tool preparation correction preserves native request retries and terminal 
   }
 });
 
-test('cold chat first file request opens work card; failed preparation retries once or explains unavailability', { timeout: 90000 }, async () => {
+test('cold chat first file request directly sees write tool and opens work card without load_tools', { timeout: 90000 }, async () => {
   const root = await mkdtemp(join(tmpdir(), 'fix51-native-'));
   let host: any, runtime: any;
-  const seen = new Map<string, number>();
+  const seenTools: string[][] = [];
   try {
     runtime = await phoneRuntime(root, [], { respond(body: any) {
       const index = body.messages.findLastIndex((m: any) => m.role === 'user' && text(m).startsWith('FIX51_'));
       if (index < 0 || !body.tools?.length) return { content: '合成标题' };
-      const user = text(body.messages[index]);
+      const toolNames = body.tools.map((t: any) => t.function?.name).filter(Boolean);
+      seenTools.push(toolNames);
       const calls = body.messages.slice(index + 1).flatMap((m: any) => m.tool_calls ?? []);
-      const step = calls.length;
-      seen.set(user, step);
-      const loaded = body.tools.some((t: any) => t.function?.name === 'write');
-      if (step && !loaded && !body.messages.some((m: any) => text(m).includes('重新调用 load_tools'))) return { content: '这项操作需要进入工作模式。' };
-      if (loaded && calls.some((c: any) => c.function.name === 'write')) return { content: '已停止这件事。' };
-      if (user.includes('TEXT') && step) return { content: '请自己切换到工作模式。' };
-      const args = loaded ? { file_path: 'first.txt', content: 'FIRST_REQUEST' }
-        : user.includes('TWICE') || user.includes('RETRY') && step === 0 ? {}
-        : user.includes('UNKNOWN') && step === 0 ? { names: ['missing_computer_tool'] } : { names: ['write'] };
-      return { content: '', tool_calls: [{ id: `fix51-${step}`, type: 'function', function: {
-        name: loaded ? 'write' : 'load_tools', arguments: JSON.stringify(user.includes('TEXT') && !step ? {} : args),
+      if (calls.some((c: any) => c.function.name === 'write')) return { content: '已停止这件事。' };
+      assert.equal(toolNames.includes('write'), true, 'write tool must be available directly on turn 1 step 1');
+      assert.equal(toolNames.includes('pwsh'), true, 'pwsh tool must be available directly on turn 1 step 1');
+      assert.equal(toolNames.includes('load_tools'), false, 'load_tools indirection must be removed');
+      return { content: '', tool_calls: [{ id: `fix51-${calls.length}`, type: 'function', function: {
+        name: 'write', arguments: JSON.stringify({ file_path: 'first.txt', content: 'FIRST_REQUEST' }),
       } }] };
     } });
     host = await createPersonalAccessService({ root: join(root, 'account'), port: 0, backend: runtime.backend });
@@ -160,45 +156,21 @@ test('cold chat first file request opens work card; failed preparation retries o
       while (Date.now() < end) { const value = await read(); if (value) return value; await new Promise(r => setTimeout(r, 50)); }
       throw Error('first file request neither opened a card nor ended');
     }
-    for (const scenario of ['NORMAL', 'RETRY', 'UNKNOWN', 'TWICE', 'TEXT']) {
-      const id = await testScenario(scenario);
-      if (scenario === 'TWICE') {
-        await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'session.message', sessionId: id,
-          text: 'FIX51_NORMAL 再试一次，请创建 first.txt。', intent: 'queue' });
-        const card = await until(async () => (await api(`/sessions/${id}/approvals`)).approvals.find((a: any) => a.status === 'pending'));
-        assert.equal(card.intent, 'work-switch', 'failed preparation must not poison the next user turn');
-        await api(`/sessions/${id}/approvals/${card.approvalId}`, { requestId: randomUUID(), outcome: 'rejected' });
-        await until(async () => (await api(`/sessions/${id}/events?limit=100`)).events.filter((e: any) => e.type === 'turn.ended').length === 2);
-      }
-    }
-    async function testScenario(scenario: string) {
-      const creation = (await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'session.create', modelProfileId: 'synthetic' })).command;
-      const id = await until(async () => { const c = (await api('/commands/' + creation.commandId)).command; return c.state === 'accepted_by_dsh' && c.sessionId; });
-      assert.equal((await api('/sessions')).sessions.find((s: any) => s.sessionId === id).mode, 'chat');
-      const user = `FIX51_${scenario} 请在电脑上创建 first.txt，内容 FIRST_REQUEST。`;
-      await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'session.message', sessionId: id, text: user, intent: 'queue' });
-      const result = await until(async () => {
-        const approvals = (await api(`/sessions/${id}/approvals`)).approvals;
-        const events = (await api(`/sessions/${id}/events?limit=100`)).events;
-        return approvals.some((a: any) => a.status === 'pending') || events.some((e: any) => e.type === 'turn.ended') ? { approvals, events } : null;
-      });
-      if (['TWICE', 'TEXT'].includes(scenario)) {
-        assert.equal(result.approvals.length, 0);
-        assert.equal(result.events.filter((e: any) => e.type === 'step.completed' && e.data.toolName === 'load_tools' && e.data.state === 'failed').length,
-          scenario === 'TWICE' ? 2 : 1);
-        assert.match(result.events.filter((e: any) => e.type === 'assistant.message').at(-1)?.data.text ?? '', /这次未能加载所需工具，任务还没有完成/);
-        assert.equal(seen.get(user), 1, 'only one automatic retry');
-      } else {
-        const card = result.approvals.find((a: any) => a.status === 'pending');
-        assert.equal(card?.intent, 'work-switch', scenario + ': first user message must open switch card');
-        const loads = result.events.filter((e: any) => e.type === 'step.started' && e.data.toolName === 'load_tools');
-        assert.equal(loads.length, scenario === 'NORMAL' ? 1 : 2);
-        assert.equal(result.events.filter((e: any) => e.type === 'step.completed' && e.data.toolName === 'load_tools' && e.data.state === 'failed').length,
-          scenario === 'NORMAL' ? 0 : 1);
-        await api(`/sessions/${id}/approvals/${card.approvalId}`, { requestId: randomUUID(), outcome: 'rejected' });
-        await until(async () => (await api(`/sessions/${id}/events?limit=100`)).events.some((e: any) => e.type === 'turn.ended'));
-      }
-      return id;
-    }
+    const creation = (await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'session.create', modelProfileId: 'synthetic' })).command;
+    const id = await until(async () => { const c = (await api('/commands/' + creation.commandId)).command; return c.state === 'accepted_by_dsh' && c.sessionId; });
+    assert.equal((await api('/sessions')).sessions.find((s: any) => s.sessionId === id).mode, 'chat');
+    const user = 'FIX51_NORMAL 请在电脑上创建 first.txt，内容 FIRST_REQUEST。';
+    await api('/commands', { requestId: randomUUID(), targetDeviceId: hostId, kind: 'session.message', sessionId: id, text: user, intent: 'queue' });
+    const result = await until(async () => {
+      const approvals = (await api(`/sessions/${id}/approvals`)).approvals;
+      const events = (await api(`/sessions/${id}/events?limit=100`)).events;
+      return approvals.some((a: any) => a.status === 'pending') || events.some((e: any) => e.type === 'turn.ended') ? { approvals, events } : null;
+    });
+    const card = result.approvals.find((a: any) => a.status === 'pending');
+    assert.equal(card?.intent, 'work-switch', 'first user message must open switch card directly');
+    assert.equal(result.events.filter((e: any) => e.type === 'step.started' && e.data.toolName === 'load_tools').length, 0);
+    assert.ok(seenTools.length >= 1 && seenTools[0].includes('write') && seenTools[0].includes('pwsh'));
+    await api(`/sessions/${id}/approvals/${card.approvalId}`, { requestId: randomUUID(), outcome: 'rejected' });
+    await until(async () => (await api(`/sessions/${id}/events?limit=100`)).events.some((e: any) => e.type === 'turn.ended'));
   } finally { await runtime?.close(); await host?.close(); await removeLinks(root); await rm(root, { recursive: true, force: true }); }
 });
