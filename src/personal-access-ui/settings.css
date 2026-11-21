@@ -67,6 +67,8 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
 .settings-dialog .settings-row .muted { margin:3px 0 0; font-size:var(--settings-small); line-height:1.55; color:var(--ink-muted); }
 .settings-row .muted:empty,.settings-category :is(.form-error,.field-help,.profile-status,.muted):empty { display:none; }
 .settings-dialog .settings-row > :is(select,.settings-select) { flex:none; min-width:0; width:auto; max-width:44%; min-height:32px; margin:0; padding:5px 10px; font-size:var(--settings-small); }
+.settings-dialog .settings-row > :is(input:not([type=checkbox],[type=radio],[type=range],[type=color],[type=file]),textarea) { flex:none; min-width:0; width:auto; max-width:46%; margin:0; }
+.settings-dialog .settings-row > input[type=time], .settings-dialog .settings-row > input[type=number] { width:132px; }
 .settings-dialog .settings-row > .settings-switch { flex:none; }
 .settings-value { max-width:44%; text-align:right; font-size:var(--settings-small); color:var(--ink-secondary); overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 .settings-dialog .settings-category .group-heading { gap:12px; margin:0 0 10px; padding:0; border:0; align-items:center; }
@@ -125,7 +127,7 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog .personalization-field textarea { height:76px; }
 .settings-dialog .personalization-field :is(input,textarea) { width:100%; }
 .settings-dialog .personalization-field small { font-size:11px; margin-top:3px; }
-.settings-dialog .settings-editor { margin:0 0 var(--wm-space-16); padding-inline:var(--wm-space-16); border-bottom:1px solid var(--line); }
+.settings-dialog .settings-editor { margin:0 0 var(--wm-space-14,14px); padding-inline:18px; border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); }
 #settings-dialog .settings-editor > summary { display:grid; grid-template-columns:minmax(0,1fr) auto var(--wm-space-8); gap:var(--wm-space-16); min-height:var(--wm-space-52,52px); }
 #settings-dialog .settings-editor > summary::after { margin:0; justify-self:center; }
 .settings-dialog .settings-editor-label { min-width:0; overflow-wrap:anywhere; }
@@ -169,7 +171,8 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog #profile-form > :is(.form-error,.profile-status) { padding:0; }
 .settings-category[data-category=account] .group-heading { display:none; }
 .settings-dialog .settings-category[data-category=account] .card > .actions { padding:0; }
-.settings-dialog .cloud-settings { border:0; border-top:1px solid var(--line); padding:20px 0 0; border-radius:0; background:transparent; }
+.settings-dialog .settings-profile { padding:16px 18px 18px; }
+.settings-dialog .cloud-settings { border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); padding:16px 18px 18px; border-radius:var(--wm-radius-12); background:var(--surface); }
 .settings-dialog #cloud-account-panel { padding:0; }
 .settings-dialog #cloud-account-panel > h2 { display:block; margin:0 0 12px; font-size:var(--settings-body); }
 .settings-dialog .account-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 0; margin:0; font-size:var(--settings-small); border-bottom:1px solid var(--line); }
@@ -186,6 +189,7 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog :is(.system-service,.device-item,.settings-schedule-row):last-child { border-bottom:0; }
 .settings-dialog :is(.device-list,.settings-schedules-list,.system-services) { padding:0; margin:12px 0; list-style:none; border:0; border-radius:0; overflow:visible; }
 .settings-dialog #system-services { padding:4px 18px; margin:10px 0 20px; list-style:none; border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); overflow:visible; }
+.settings-dialog #system-services:empty { display:none; }
 .settings-dialog :is(.device-meta,.cloud-device-meta,.system-service-detail small) { font-size:12px; }
 .settings-dialog .device-title strong { font-size:var(--settings-body); }
 .settings-dialog .cloud-device-summary { padding:4px 0; gap:12px; }
@@ -207,6 +211,9 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog .permission-actions { display:flex; justify-content:flex-end; padding:10px 0 12px; }
 .settings-dialog .execution-records { border:0; border-radius:0; overflow:visible; margin:0; background:transparent; }
 .settings-dialog .execution-records > p.muted { margin:0 0 12px; }
+.settings-dialog .execution-records > [role=status]:not(:empty) { display:flex; align-items:center; gap:10px; padding:18px 4px; margin:0; }
+.settings-dialog .execution-records > [role=status] button { margin:0 0 0 auto; }
+.settings-dialog .record-empty-icon { display:inline-flex; margin-bottom:0; }
 .settings-dialog .record-row { padding:14px 4px; border-radius:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); }
 .settings-dialog .record-row:last-child { border-bottom:0; }
 .settings-dialog .record-list:empty { display:none; }
@@ -217,21 +224,31 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog .usage-total { font-size:22px; margin:20px 0 6px; }
 .settings-dialog .usage-tokens { font-size:12px; color:var(--ink-secondary); }
 .settings-dialog .usage-chart { height:112px; min-height:112px; margin:12px 0; }
-.settings-dialog .usage-form { display:block; margin:0 0 20px; }
-.settings-dialog .usage-form > label { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,46%); gap:20px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); }
+.settings-dialog .usage-form { display:block; margin:0 0 20px; padding:6px 18px 18px; }
+.settings-dialog .usage-form > label { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:20px; align-items:center; padding:12px 0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); }
+.settings-dialog .usage-form input[type=number] { width:140px; text-align:right; }
 .settings-dialog .usage-form > :is(p,button) { margin-top:12px; }
 .settings-dialog :is(.usage-ranking,.record-list) { margin-bottom:24px; }
 .settings-dialog .data-total { font-size:22px; font-weight:500; }
 .settings-dialog .data-category { margin:0; border-radius:0; }
+.settings-dialog :is(.data-actions,.data-danger) { margin:18px 0 0; padding:16px 18px 18px; border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); }
+.settings-dialog .data-actions { margin-bottom:16px; }
+.settings-dialog :is(.data-actions,.data-danger) > h2 { margin:0 0 6px; }
+.settings-dialog :is(.data-actions,.data-danger) > p { margin:0 0 12px; }
+.settings-dialog .data-danger > .button { margin:0 8px 0 0; }
+.settings-category[data-category=resources] > .card { padding:16px 18px 18px; }
+.settings-category[data-category=resources] > .card p { margin:4px 0 12px; }
 .settings-dialog #memory-view > .page-heading { display:none; }
 .settings-dialog .memory-panel { padding:0; border:0; border-radius:0; box-shadow:none; }
 .settings-dialog .memory-search-form { flex-wrap:wrap; }
 .settings-dialog .memory-search-form > div { min-width:0; }
 /* Local and cloud backups are two clearly named sections. */
+.settings-dialog .backup-settings { padding:16px 18px 18px; }
 .settings-dialog .backup-settings > h2 { display:none; }
 .settings-dialog .backup-settings form { display:block; }
-.settings-dialog .backup-settings form label { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:12px 0; margin:0; border-bottom:1px solid var(--line); font-size:var(--settings-body); font-weight:500; }
+.settings-dialog .backup-settings form label { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:12px 0; margin:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); font-size:var(--settings-body); font-weight:500; }
 .settings-dialog .backup-settings form label > :is(input,select) { max-width:46%; }
+.settings-dialog .backup-settings form label > input[type=number] { width:120px; text-align:right; }
 .settings-dialog .backup-settings form button { margin-top:12px; }
 .settings-dialog .backup-settings .field-help { margin:6px 0; }
 .settings-dialog .backup-description { margin-bottom:16px; }
