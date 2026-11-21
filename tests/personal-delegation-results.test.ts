@@ -108,9 +108,8 @@ test('personal preset preserves the native delegation schema and explains collec
   const native = { name: 'subagent', description: 'Native standalone task; returns job id. Collect with job_output.', parameters: { prompt: {} } }
   const scope = { session: { header: { agentPreset: 'personal-remote' } } }
   const assemble = () => handlers.get('system-prompt/assemble')({}, { scope }, async () => ({ sections: [], tools: [native] }))
-  await assemble() // Populate the real personal tool catalog before loading by name.
-  registered.get('load_tools').execute({ names: ['subagent'] }, { agent: scope })
   const assembly = await assemble()
+  assert.equal(registered.has('load_tools'), false)
   assert.equal(assembly.tools[0].name, native.name)
   assert.equal(assembly.tools[0].parameters, native.parameters)
   const guidance = assembly.sections.find((section: any) => section.name === 'weftmate:delegation-guidance').text

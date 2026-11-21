@@ -564,6 +564,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.historyHasMore = false;
         core.state.turnStatus = null;
         core.state.turnEndReasonKind = null;
+        core.state.turnEndError = null;
         core.state.seenSeq.clear();
         core.state.historyEvents.clear();
         effects.resetConversationControls();

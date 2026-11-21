@@ -180,7 +180,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
       const selected = connector ? connectorPermission(policy, connector) : decidePermission(policy, categories, risks);
       if (selected.decision === 'deny') return 'rejected';
       if (selected.decision === 'allow' && categories.some(type => (policy.projectPermissionRules?.[type] ?? policy.permissionRules?.[type]) === 'allow')) return 'allowed-once';
-      if (!connector && policy.mode === 'allow-all' && !policy.project && selected.decision === 'allow') return 'allowed-once';
+      if (!connector && policy.mode === 'allow-all' && policy.project?.permission !== 'read-only' && selected.decision === 'allow') return 'allowed-once';
     }
     const identity = callsByAgent.get(request.agent)?.get(request.callId);
     if (!identity || identity.toolName !== request.toolName) return 'unavailable';
@@ -865,7 +865,11 @@ export function apply(ctx) {
   const approvals = installPersonalApprovalBridge(ctx, bridge, { policyFor });
   ctx.on('tools/pre-execute', async (exec, next) => {
     routeProjectTool(exec);
-    return await projectToolDecision(exec) ?? next();
+    if (exec.agent?.session?.header?.agentPreset !== 'personal-remote') return await projectToolDecision(exec) ?? next();
+    const delegated = delegatedExecutions.get(exec.agent);
+    const owner = delegated?.agent ?? exec.agent;
+    const policy = await policyFor(owner);
+    return await projectToolDecision(exec, policy) ?? next();
   }, { prepend: true });
   ctx.on('tools/pre-execute', async (exec, next) => {
     if (exec.agent?.session?.header?.agentPreset !== 'personal-remote') return next();
@@ -909,8 +913,24 @@ export function apply(ctx) {
     }
     return { kind: 'ask', reason };
   });
-  ctx.on('tools/execute', (exec, next) => webExecution.run(exec, () => trackNativeFiles(bridge, exec,
-    () => trackPersonalExecution(bridge, exec, next, background, approvals), fileProvenance.identity)));
+  ctx.on('tools/execute', (exec, next) => {
+    if (exec.name === 'web_search' && exec.arguments && typeof exec.arguments === 'object' && !Array.isArray(exec.arguments)) {
+      if (exec.arguments.queries === undefined && typeof exec.arguments.query === 'string' && exec.arguments.query.trim()) {
+        const nextArgs = { ...exec.arguments, queries: [exec.arguments.query.trim()] };
+        delete nextArgs.query;
+        exec.arguments = nextArgs;
+      } else if (typeof exec.arguments.queries === 'string' && exec.arguments.queries.trim()) {
+        exec.arguments = { ...exec.arguments, queries: [exec.arguments.queries.trim()] };
+      }
+    }
+    if (exec.name === 'pwsh' && exec.arguments && typeof exec.arguments === 'object' && !Array.isArray(exec.arguments)) {
+      if (typeof exec.arguments.command === 'string' && exec.arguments.command.trim() && (typeof exec.arguments.description !== 'string' || !exec.arguments.description.trim())) {
+        exec.arguments = { ...exec.arguments, description: exec.arguments.command.trim().slice(0, 120) };
+      }
+    }
+    return webExecution.run(exec, () => trackNativeFiles(bridge, exec,
+      () => trackPersonalExecution(bridge, exec, next, background, approvals), fileProvenance.identity));
+  });
   ctx.on('tools/post-execute', appendNativeArtifacts);
   ctx.effect(() => () => { disposeProjectSandbox(); disposeSearch(); disposeFetch(); disposeProof(); approvals.close(); background.close(); bridge.close(); },
     'weftmate-personal-desktop: lifecycle');

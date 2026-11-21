@@ -16,7 +16,7 @@
                 phoneSending: false, phoneSendNotice: '', phoneDrafts: new Map(), desktopDraft: '',
                 refreshTimer: null, refreshing: false,
                 submitting: false, cancelSubmitting: false, lastSubmissionMs: 0,
-                historyEvents: new Map(), nextBeforeSeq: null, hasOlder: false, olderLoading: false, historyGeneration: 0, historyInFlight: null, historyHasMore: false, turnStatus: null, turnEndReasonKind: null,
+                historyEvents: new Map(), nextBeforeSeq: null, hasOlder: false, olderLoading: false, historyGeneration: 0, historyInFlight: null, historyHasMore: false, turnStatus: null, turnEndReasonKind: null, turnEndError: null,
                 identityGeneration: 0, accountViewGeneration: 0, currentView: null,
                 attachmentDrafts: new Map(), attachmentGroups: new Map(), attachmentAttempts: new Map(),
                 attachmentUpload: null, attachmentHasher: null, attachmentStatus: '',

@@ -237,7 +237,7 @@
         const end = events.filter(event => ['task.ended','turn.ended'].includes(event.type) && matches(event)).at(-1);
         if (stopView?.terminal && stopView.text === '已停止' && end?.data?.reason !== 'completed') return {terminal:true,reason:'aborted'};
         if (stopView?.terminal && !end) return {terminal:true,reason:stopView.text==='已结束'?'completed':'aborted'};
-        return end ? { terminal: true, reason: end.data?.reason, endReasonKind: end.data?.endReasonKind } : { terminal: false };
+        return end ? { terminal: true, reason: end.data?.reason, endReasonKind: end.data?.endReasonKind, errorDetail: end.data?.errorDetail } : { terminal: false };
     }
     function classifyProgress(steps, outcome = {}) {
         if (typeof outcome === 'boolean') outcome = { terminal: outcome };
@@ -276,9 +276,12 @@
         if (progress.state === 'failed') {
             const problem = failed?.summary || '这次回复';
             const limit = outcome.endReasonKind === 'max-tokens';
+            const detail = typeof outcome.errorDetail === 'string' && outcome.errorDetail.trim() ? outcome.errorDetail.trim() : '';
             if (english) return { text: limit ? 'Reply incomplete: the response length limit was reached. You can ask me to continue.'
+                : detail ? `Could not finish: ${detail}`
                 : `Could not finish: ${failed ? toolSummary(failed.toolName,failed.arguments,language) : 'this reply'} encountered an issue. You can ask me to retry.`, failed:true, running:false };
             return { text: limit ? '回复未完成：内容超出了本次可回复的长度，可以让我接着做。'
+                : detail ? `未能完成：${detail}`
                 : `未能完成：${problem}遇到问题，可以让我重试或补充说明。`, failed: true, running: false };
         }
         if (progress.state === 'stopped') return { text: english ? 'Interrupted' : '已中断', running: false };

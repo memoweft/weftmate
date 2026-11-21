@@ -325,7 +325,22 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             const panel = node('section', 'settings-category'); panel.dataset.category = id; panel.hidden = true; panels.set(id, panel); content.append(panel);
         }
         const move = (id, element) => { if (element) panels.get(id).append(element); };
-        move('approvals', ui.byId('approval-settings-heading').closest('section'));
+        const approvalSection = ui.byId('approval-settings-heading').closest('section');
+        const defaultApprovalSelect = ui.byId('default-approval-mode');
+        const approvalNotice = ui.byId('approval-settings-notice');
+        if (approvalSection && defaultApprovalSelect) {
+            const approvalRow = globalThis.WeftSettingsControls.row('新对话的默认模式', '决定新建对话在执行操作前的默认审批方式。', defaultApprovalSelect);
+            const approvalHeading = node('h2', 'settings-group-title', '默认审批');
+            const approvalCard = node('div', 'settings-group-card');
+            approvalCard.append(approvalRow);
+            const approvalGroup = node('section', 'settings-group');
+            approvalGroup.append(approvalHeading, approvalCard);
+            if (approvalNotice) approvalGroup.append(approvalNotice);
+            panels.get('approvals').append(approvalGroup);
+            approvalSection.remove();
+        } else {
+            move('approvals', approvalSection);
+        }
         move('appearance', ui.byId('appearance-heading').closest('section'));
 
         move('account', ui.byId('account-heading').closest('section'));

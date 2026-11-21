@@ -1,16 +1,17 @@
-/** DSH keeps execution/approval native; only model presentation is deferred. */
+/** DSH keeps execution/approval native; expose all native tools directly like official DSH. */
 import { PersonalDesktopBridge, registerPersonalBrowserTool, personalExecutionIdentity } from './weftmate-personal-desktop.mjs';
 import { syncConnectorTools } from './personal-connectors.mjs';
-import { presentPersonalPrompt } from './personal-prompt.mjs';
-import { installToolLoadingRecovery } from './personal-tool-loading.mjs';
-import { defineTool } from '@deepseek-ai/dsh-tools';
+import { presentPersonalPrompt, isHealthQuestion } from './personal-prompt.mjs';
 export const name = 'weftmate-personal-desktop-preset';
 export const inject = ['tools'];
-const LOAD = 'load_tools';
 const PERSONAL_TOOLS = Symbol.for('weftmate.personalAssembledTools');
 const assembledSys = new WeakMap();
+const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : (s?.events ?? []);
+const latestUserText = session => {
+  const user = sessionEvents(session).findLast(event => event?.type === 'user/message' && event.data?.source?.kind === 'user');
+  return (user?.data?.content ?? []).filter(part => part?.type === 'text').map(part => part.text).join('\n');
+};
 export function apply(ctx) {
-  installToolLoadingRecovery(ctx);
   const sys = ctx.get?.('systemPrompt');
   if (sys && typeof sys.assemble === 'function') {
     const entry = assembledSys.get(sys) ?? (() => {
@@ -32,24 +33,6 @@ export function apply(ctx) {
   }
   const bridge = new PersonalDesktopBridge();
   const disposeBrowser = registerPersonalBrowserTool(ctx, bridge);
-  const loaded = new WeakMap();
-  const schemas = new WeakMap();
-  ctx.tools.register(defineTool({ name: LOAD,
-    description: 'Load exact catalog names, e.g. {"names":["write"]}. Native permissions and approvals apply.',
-    parameters: { names: { type: 'array', items: { type: 'string' }, required: true } },
-    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-    execute: (args, exec) => {
-      const catalog = schemas.get(exec.agent) ?? [];
-      const selected = loaded.get(exec.agent) ?? new Set();
-      const missing = args.names.filter(name => !catalog.some(tool => tool.name === name));
-      if (missing.length || !args.names.length) throw new Error('Choose nonempty exact tool names from the current catalog.');
-      for (const name of args.names) selected.add(name);
-      loaded.set(exec.agent, selected);
-      exec.agent[Symbol.for('weftmate.loadedTools')] = selected;
-      return { loaded: args.names };
-    },
-    presentCall: () => ({ card: 'generic', title: '加载所需工具', kind: 'read' }),
-  }));
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
     let assembly = await next();
     if (!context.scope || !['personal-remote'].includes(context.scope.session?.header?.agentPreset)) return assembly;
@@ -60,12 +43,15 @@ export function apply(ctx) {
       syncConnectorTools(context.scope, policy, bridge, personalExecutionIdentity);
       const names = new Set((policy.connectorTools ?? []).map(tool => tool.name));
       // DSH collects tool providers before this waterfall. Refresh only our
-      // namespace, before the native loader captures its catalog and projects it.
+      // namespace, before passing all real tools directly to the model.
       tools = [...tools.filter(tool => !tool.name.startsWith('mcp__c_')),
         ...ctx.tools.schemas(context.scope, context.toolSet).filter(tool => names.has(tool.name))];
     }
-    schemas.set(context.scope, tools);
-    const presented = presentPersonalPrompt({ ...assembly, tools }, loaded.get(context.scope));
+    context.scope[Symbol.for('weftmate.catalogTools')] = tools;
+    const presented = presentPersonalPrompt({ ...assembly, tools }, new Set(tools.map(t => t.name)), {
+      directTools: true,
+      includeHealthGuidance: isHealthQuestion(latestUserText(context.scope.session)),
+    });
     return { ...presented, [PERSONAL_TOOLS]: presented.tools };
   });
   ctx.effect(() => () => { disposeBrowser(); bridge.close(); }, 'weftmate-personal-desktop-preset: native tools');

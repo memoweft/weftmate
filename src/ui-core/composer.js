@@ -280,7 +280,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         core.state.historyGeneration++;
         core.state.historyEvents.clear(); core.state.seenSeq.clear(); core.state.afterSeq = -1;
         core.state.nextBeforeSeq = null; core.state.hasOlder = false; core.state.olderLoading = false;
-        core.state.historyHasMore = false; core.state.turnEndReasonKind = null;
+        core.state.historyHasMore = false; core.state.turnEndReasonKind = null; core.state.turnEndError = null;
         core.state.turnStatus = null;
         core.resetConversationApprovals(); core.resetConversationQuestions();
         effects.renderConversationApprovals();effects.renderConversationQuestions();effects.renderConversationTasks();
@@ -558,7 +558,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     function submitRow(row) {
         messages.set(row.requestId, row);
         rememberTurnRequest(row).pending=row;
-        effects.renderOptimisticMessages?.(); effects.scrollToLatest();
+        effects.renderOptimisticMessages?.(); effects.renderTurnStatus?.(); effects.scrollToLatest();
         return deliverSafely(row);
     }
     function refreshHeld() {

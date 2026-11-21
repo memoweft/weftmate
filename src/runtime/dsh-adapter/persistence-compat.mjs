@@ -62,6 +62,18 @@ export async function inspectSessionMeta(persistence, sessionId, signal) {
   return inspectSessionLog(persistence, sessionId, signal);
 }
 
+function parseRawSessionEvents(raw, startSeq = 0) {
+  const events = [];
+  for (const line of raw.content.split('\n')) {
+    if (!line.trim()) continue;
+    let entry;
+    try { entry = JSON.parse(line); } catch { continue; }
+    if (!entry || entry.type === 'session') continue;
+    if (Number.isSafeInteger(entry.seq) && entry.seq >= startSeq) events.push(entry);
+  }
+  return { meta: raw.meta, events };
+}
+
 export async function inspectSessionLog(persistence, sessionId, signal) {
   if (typeof persistence.inspect === 'function') return persistence.inspect(sessionId, signal);
   let handle;
@@ -70,6 +82,10 @@ export async function inspectSessionLog(persistence, sessionId, signal) {
     const read = await handle.read(0, undefined, signal ? { signal } : undefined);
     return { meta: handle.header, events: read.events };
   } catch (error) {
+    if (error?.name === 'SessionPersistenceCorruptionError') {
+      const raw = await readSessionRaw(persistence, sessionId).catch(() => null);
+      if (raw) return parseRawSessionEvents(raw, 0);
+    }
     throw mapNotFound(error, sessionId);
   } finally {
     await handle?.close();
@@ -84,6 +100,10 @@ export async function readSessionFrom(persistence, sessionId, startSeq, signal) 
     const read = await handle.read(startSeq, undefined, signal ? { signal } : undefined);
     return { meta: handle.header, events: read.events };
   } catch (error) {
+    if (error?.name === 'SessionPersistenceCorruptionError') {
+      const raw = await readSessionRaw(persistence, sessionId).catch(() => null);
+      if (raw) return parseRawSessionEvents(raw, startSeq);
+    }
     throw mapNotFound(error, sessionId);
   } finally {
     await handle?.close();

@@ -12,9 +12,14 @@ const descriptions = {
   edit: 'Apply a targeted edit to a file you have read.',
   glob: 'Find files by path pattern.',
   grep: 'Search file contents.',
+  web_search: 'Search web with {"queries":["..."]}. Always pass queries as a non-empty string array, never singular query.',
   web_fetch: 'Fetch a bounded verbatim preview and outline; the captured source is saved locally for targeted read/grep. Before researching, state a brief outline in reply text and identify the specific questions needed for the requested deliverable. Fetch two independent official pages per tool-call batch (two concurrent page slots). Use observed official links rather than guessing announcement URLs. For a brief document, select the main supported changes from release summaries; do not expand into exhaustive changelogs, dependency audits, every minor release or unrequested migration/build recipes. State the comparison basis (for example initial major releases); qualify version-sensitive statements rather than chasing all later backports. Do not call a feature exclusive to one major without evidence. Read more only to answer a specific unresolved question needed by the outline; do not refetch or recheck an already supported fact. Omit peripheral unsupported claims, or explicitly label uncertainty in the document. Preserve every condition and exception in technical claims: deprecating args with shell:true does not deprecate all argument arrays; compiling the runtime is distinct from compiling extensions; a stable ABI may avoid recompilation. Do not infer precise ABI numbers, compatibility guarantees or support dates from memory. If the source summary is ambiguous, leave that peripheral detail out or label it uncertain; do not enlarge a brief document with peripheral research. Follow the configured grounded-writing self-check before saving. Once the outline is supported, draft, perform the configured key-claim self-check, then save and read back once for completeness. Confirm that the named file is saved and include source links.',
   browser: 'Open a human-readable public web page in the visible browser pane (shown directly to the user), or follow an observed link. Prefer web_search/web_fetch for background data lookups, plain-text/ASCII terminal endpoints (e.g. wttr.in), or raw JSON APIs instead of displaying them in the visible browser. To answer a specific missing question, read with snapshotId and query (space-separated relevant terms); it returns bounded verbatim matching paragraphs across the saved capture, without a new network fetch. Read with segmentIndex only when full neighboring context is needed. Do not reread navigation or already supported facts.',
   todo_write: 'Maintain the task plan and mark completed steps.',
+  skill: 'Load a listed skill by exact name before following its workflow instructions.',
+  office_render: 'Render pages or spreadsheet ranges of an Office document or PDF to images for visual inspection.',
+  office_convert: 'Convert an Office document (Word, Excel, PowerPoint) to PDF, DOCX, XLSX, PPTX, ODT, ODS, ODP, CSV, or TXT.',
+  office_recalculate: 'Recalculate formulas in an Excel or ODS spreadsheet workbook.',
   ask_user_question: 'Ask only when essential information is missing and cannot be inferred from the conversation, or at a checkpoint explicitly requested by the user. 目标明确就直接做；用户分享偏好或背景时简短回应，不要用本工具把闲聊变成阻塞回答的新任务选择；共同决定指引中的一次简短提议直接写在回复里。解释、建议和草稿先给答案，不为可选偏好停下来。 For a risky action with a known target, invoke its tool and let native approval obtain consent; do not substitute a clarification about whether to proceed. Send questions with stable ids.',
 };
 export { descriptions as personalToolDescriptions };
@@ -26,11 +31,15 @@ const LOAD = 'load_tools';
 const progressGuidance = 'During multi-step work, use brief reply text between tool batches to keep the user informed of your current action, meaningful findings and next step. Send these updates while work is ongoing, in the user\'s language. Keep them concise and factual; do not expose private reasoning or narrate every tool call. Use ordinary native assistant text, then continue the task.';
 const groups = { goal: ['create_goal', 'get_goal', 'update_goal'], jobs: ['job_list', 'job_output', 'job_kill'], subagent: ['subagent', 'send_message', 'interrupt_agent'] };
 export const isHealthQuestion=question=>/电脑使用|电脑用了|屏幕时间|(?:昨晚|昨夜|深夜).*电脑|电脑.*(?:用了多久|几点|时长)|健康|压力|电能|体能年龄|身体年龄|睡眠|睡得|睡了|熬夜|恢复|训练负荷|运动负荷|运动记录|心率|血氧|手腕温度|步数|摄氧量|\b(?:sleep|recovery|stress|energy|fitness age|hrv|spo2)\b/i.test(question);
+const directDescriptionOverrides = new Set([
+  'schedule_list', 'health_query', 'schedule_create', 'schedule_manage',
+  'pwsh', 'web_search', 'web_fetch', 'browser', 'ask_user_question',
+]);
 /** Pure model projection; native execution, permission and registry contracts remain unchanged. */
-export function presentPersonalPrompt(assembly, selected = new Set()) {
+export function presentPersonalPrompt(assembly, selected = new Set(), { directTools = false, includeHealthGuidance = true } = {}) {
     const inputTools = Array.isArray(assembly.tools) ? assembly.tools : [];
     assembly = { ...assembly, tools: inputTools.map(tool => {
-      const description = descriptions[tool.name];
+      const description = directTools && !directDescriptionOverrides.has(tool.name) ? undefined : descriptions[tool.name];
       if (!description) return tool;
       // Present one unambiguous absolute-time shape to the model. The native
       // registry still accepts both local objects and offset strings for other callers.
@@ -43,25 +52,27 @@ export function presentPersonalPrompt(assembly, selected = new Set()) {
           time_zone: { ...localAt.properties.time_zone, description: 'Account IANA time zone, for example Asia/Shanghai.' } } };
       return { ...tool, description, parameters: { ...tool.parameters, properties: { ...tool.parameters.properties, at } } };
     }) };
-    const toolNames = new Set([LOAD, ...selected]);
-    const catalog = assembly.tools.filter(tool => tool.name !== LOAD).map(tool =>
+    const toolNames = directTools
+      ? new Set(assembly.tools.filter(tool => tool.name !== LOAD).map(tool => tool.name))
+      : new Set([LOAD, ...selected]);
+    const catalog = directTools ? '' : assembly.tools.filter(tool => tool.name !== LOAD).map(tool =>
       `${tool.name}: ${tool.description.split(/[.\n]/)[0].slice(0, 24)}`).join('\n');
     const sections = assembly.sections.filter(section => {
       if (['weftmate:tools-catalog', 'weftmate:memory-guidance', 'weftmate:shared-decisions',
         'weftmate:approval-guidance', 'weftmate:health-guidance', 'weftmate:delegation-guidance', 'weftmate:research-guidance', 'weftmate:progress-guidance'].includes(section.name)) return false;
       if (['harness:source', 'app:web-surface'].includes(section.name)) return false;
-      if (!section.name.startsWith('tool:')) return true;
+      if (directTools || !section.name.startsWith('tool:')) return true;
       const name = section.name.slice(5);
       return toolNames.has(name) || groups[name]?.some(tool => toolNames.has(tool));
     });
     return { ...assembly, sections: [...sections,
-      { name: 'weftmate:tools-catalog', text: `For actions, load only needed exact catalog names via load_tools({"names":["catalog_name"]}), then call loaded tools. Ordinary replies need none.${assembly.tools.some(tool=>tool.name==='health_query')?' 健康提问必须先 load_tools 加载 health_query，查最新数据再回答；背景不能替代查询。':''}\n${catalog}` },
+      ...(directTools ? [] : [{ name: 'weftmate:tools-catalog', text: `For actions, load only needed exact catalog names via load_tools({"names":["catalog_name"]}), then call loaded tools. Ordinary replies need none.${assembly.tools.some(tool=>tool.name==='health_query')?' 健康提问必须先 load_tools 加载 health_query，查最新数据再回答；背景不能替代查询。':''}\n${catalog}` }]),
       { name: 'weftmate:memory-guidance', text: memoryGuidance },
       { name: 'weftmate:progress-guidance', text: progressGuidance },
       { name: 'weftmate:shared-decisions', text: personalMemoryGuidance + ' ' + personalMemoryToolsGuidance },
       { name: 'weftmate:approval-guidance', text: approvalGuidance + ' Work only on this conversation\'s computer. If a location could mean another computer, ask which one in the conversation. Never broadcast.' },
-      ...(toolNames.has('health_query')&&assembly.tools.some(tool=>tool.name==='health_query')?[{name:'weftmate:health-guidance',text:'本人问自己的睡眠、恢复、训练负荷、压力、电能、体能年龄、健康趋势、电脑使用时段或熬夜关联时，先直接调用 health_query 查询最新汇总数字，再据返回结果回答；背景摘要不能替代这次查询。普通健康数值提问用 metric=overview（默认最近7天），明确问某项就用该指标id。不必读文件、写脚本或追问授权。使用分钟优先看 source=computer 的本机观察，无电脑记录才看 source=chat 的估算；问昨晚几点仍在用电脑时优先原样引用 usage.lastUsedAtLocal 的钟点和 lastUsedAtSource；当地时刻由工具按账号时区换算，不再用模型或系统时区转换。usageConnected=true 即使没有身体测量仍可回答电脑使用。stress.latest 是最近一次测量；stress.score 表示最近一次测量的分数，不是均值；stress.average 才是当日已有测量的平均值。metric=stress 时 items[].value 同样是当天最近一次测量的压力分数，不能说成当日均值。指标序列的 value 依指标含义，不能把最近一次测量说成均值；没有平均值时不自行补算。睡眠等时长换成几小时几分，例如 466 分钟说成 7 小时 46 分。工具返回还没接上／缺测时照实说，不编造。只相对本人平时，不提疾病名、不作诊断、不建议用药；使用与睡眠同时变化只能说有关联，不能说导致。'}]:[]),
-      ...(['web_fetch', 'browser', 'web_search'].some(name => selected.has(name)) ? [{ name: 'weftmate:research-guidance', text: researchGuidance }] : []),
-      ...(groups.subagent.some(name => selected.has(name)) || groups.jobs.some(name => selected.has(name)) ? [{ name: 'weftmate:delegation-guidance', text: delegationGuidance }] : [])],
+      ...(includeHealthGuidance && toolNames.has('health_query')&&assembly.tools.some(tool=>tool.name==='health_query')?[{name:'weftmate:health-guidance',text:'本人问自己的睡眠、恢复、训练负荷、压力、电能、体能年龄、健康趋势、电脑使用时段或熬夜关联时，先直接调用 health_query 查询最新汇总数字，再据返回结果回答；背景摘要不能替代这次查询。普通健康数值提问用 metric=overview（默认最近7天），明确问某项就用该指标id。不必读文件、写脚本或追问授权。使用分钟优先看 source=computer 的本机观察，无电脑记录才看 source=chat 的估算；问昨晚几点仍在用电脑时优先原样引用 usage.lastUsedAtLocal 的钟点和 lastUsedAtSource；当地时刻由工具按账号时区换算，不再用模型或系统时区转换。usageConnected=true 即使没有身体测量仍可回答电脑使用。stress.latest 是最近一次测量；stress.score 表示最近一次测量的分数，不是均值；stress.average 才是当日已有测量的平均值。metric=stress 时 items[].value 同样是当天最近一次测量的压力分数，不能说成当日均值。指标序列的 value 依指标含义，不能把最近一次测量说成均值；没有平均值时不自行补算。睡眠等时长换成几小时几分，例如 466 分钟说成 7 小时 46 分。工具返回还没接上／缺测时照实说，不编造。只相对本人平时，不提疾病名、不作诊断、不建议用药；使用与睡眠同时变化只能说有关联，不能说导致。'}]:[]),
+      ...(['web_fetch', 'browser', 'web_search'].some(name => toolNames.has(name)) ? [{ name: 'weftmate:research-guidance', text: researchGuidance }] : []),
+      ...(groups.subagent.some(name => toolNames.has(name)) || groups.jobs.some(name => toolNames.has(name)) ? [{ name: 'weftmate:delegation-guidance', text: delegationGuidance }] : [])],
       tools: assembly.tools.filter(tool => toolNames.has(tool.name)) };
 }

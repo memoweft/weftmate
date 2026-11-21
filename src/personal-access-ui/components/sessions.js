@@ -683,8 +683,10 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         document.addEventListener('pointerdown',event=>{if(!group.contains(event.target))close()});
     }
     function showSettingsArchived(target) {
+        const searchBox=ui.element('div','settings-search-box archived-search-box');
         const search=ui.element('input','settings-search');search.type='search';search.setAttribute('aria-label','搜索已归档对话');search.placeholder='搜索已归档对话';
-        const list=ui.element('div','archived-session-list'),notice=ui.element('p','muted');notice.setAttribute('role','status');target.replaceChildren(search,list,notice);
+        searchBox.append(WeftIcons.create('search',16),search);
+        const list=ui.element('div','archived-session-list'),notice=ui.element('p','muted archived-empty');notice.setAttribute('role','status');target.replaceChildren(searchBox,list,notice);
         const draw=()=>{list.replaceChildren();for(const session of core.sessionList(true).filter(item=>(recentFilter==='all'||core.conversationMode(item)===recentFilter) && (item.title||'').toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase()))){
             const row=ui.element('div','archived-session-row');row.append(ui.element('span','',session.title||'新对话'));
             const restore=ui.element('button','button secondary','恢复');restore.type='button';restore.onclick=async()=>{restore.disabled=true;try{await core.archiveSession(session.sessionId,false);draw();}catch(error){notice.textContent=core.failureMessage(error);restore.disabled=false;}};

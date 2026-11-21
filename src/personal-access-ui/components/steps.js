@@ -7,6 +7,21 @@
             n.textContent = text;
         return n;
     };
+    function formatStepOutput(text) {
+        if (typeof text !== 'string') return '';
+        const cleaned = text
+            .replace(/^这一步没能完成。请依据下面的诊断决定下一步；向用户用通俗语言说明，不要把内部诊断整段照抄。\r?\n?/u, '')
+            .replace(/^调用参数不符合工具要求，尚未执行。请按下面的字段说明纠正。\r?\n?/u, '')
+            .trim();
+        if (cleaned.startsWith('{')) {
+            try {
+                const parsed = JSON.parse(cleaned);
+                if (typeof parsed?.toolFailure?.detail === 'string' && parsed.toolFailure.detail.trim())
+                    return parsed.toolFailure.detail.trim();
+            } catch {}
+        }
+        return cleaned || text;
+    }
     function stepCard(step, saved, running, options) {
         const english = step.language === 'en', progress = window.WeftTimeline;
         const detail = saved || node('details', 'execution-step');
@@ -43,13 +58,13 @@
                     header.replaceChildren(codeCopy,actions);
                     output.append(block);
                     const text=WeftUiCore.executionDetailText(raw,step.language),marker=english?'\n\nOutput\n':'\n\n输出\n',at=text.indexOf(marker);
-                    if(typeof result.output==='string')frame.append(node('pre','timeline-raw step-output',result.output));
-                    else if(at>=0)frame.append(node('pre','timeline-raw step-output',text.slice(at+marker.length)));
-                    else if(!data)frame.append(node('pre','timeline-raw step-output',raw));
+                    if(typeof result.output==='string')frame.append(node('pre','timeline-raw step-output',formatStepOutput(result.output)));
+                    else if(at>=0)frame.append(node('pre','timeline-raw step-output',formatStepOutput(text.slice(at+marker.length))));
+                    else if(!data)frame.append(node('pre','timeline-raw step-output',formatStepOutput(raw)));
                 } else if(typeof result.output==='string') {
                     if(Object.keys(args).length)output.append(node('pre','timeline-raw',JSON.stringify(english?args:WeftUiCore.readableParameters(args),null,2)));
-                    output.append(node('pre','timeline-raw step-output',result.output));
-                } else output.append(node('pre','timeline-raw',WeftUiCore.executionDetailText(raw,step.language)));
+                    output.append(node('pre','timeline-raw step-output',formatStepOutput(result.output)));
+                } else output.append(node('pre','timeline-raw',formatStepOutput(WeftUiCore.executionDetailText(raw,step.language))));
                 if(Number.isSafeInteger(result.nextOutputOffset) && options.readOutput) {
                     const more=node('button','button quiet small',english?'Read more output':'继续读取输出');more.type='button';output.append(more);
                     let offset=result.nextOutputOffset;
@@ -94,7 +109,6 @@
         }
         detail.querySelector('.step-resources').hidden=!options.openStep;
         const state=WeftUiCore.executionState(step);
-        if(state==='failed' && detail.dataset.state!=='failed')detail.open=true;
         detail.dataset.step=String(step.stepId);detail.dataset.state=state;detail.dataset.detailSeq=seq;detail.dataset.motion='unfold';
         const args={...WeftUiCore.toolArguments(step.arguments),...detail.detailMetadata},editor=step.toolName==='str_replace_editor',viewing=editor && args.command==='view';
         const command=/^(shell|bash|pwsh|powershell|exec_command|run_command)$/.test(step.toolName);

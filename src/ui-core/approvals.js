@@ -135,6 +135,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         void core.refreshApprovalMode(sessionId);
         core.state.turnStatus = null;
         core.state.turnEndReasonKind = null;
+        core.state.turnEndError = null;
         effects.historyNotice('');
         core.state.attachmentStatus = '';
         effects.renderAttachmentDrafts();

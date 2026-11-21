@@ -53,7 +53,7 @@ export function apply(ctx) {
     : createTypertAdapterClient(ctx);
   const gatewayV1 = createGatewayV1({
     client,
-    nativeCommands:createNativeCommands({client,lifecycle,getAgent:id=>ctx.get('agents')?.get(id),getCommands:()=>ctx.get('commands'),getTools:async agent=>(await ctx.get('systemPrompt')?.assemble({scope:agent}))?.tools ?? []}),
+    nativeCommands:createNativeCommands({client,lifecycle,getAgent:id=>ctx.get('agents')?.get(id),getCommands:()=>ctx.get('commands'),getTools:async agent=>{const assembled=await ctx.get('systemPrompt')?.assemble({scope:agent});const catalog=agent?.[Symbol.for('weftmate.catalogTools')];return Array.isArray(catalog)&&catalog.length?catalog.filter(tool=>tool.name!=='load_tools'):(assembled?.tools ?? []);}}),
     readLog,
     lifecycle,
     // P1-05 diagnostics deps：pin 由打包/启动方注入（env），不自行推断。
