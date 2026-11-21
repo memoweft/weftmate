@@ -558,7 +558,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     function submitRow(row) {
         messages.set(row.requestId, row);
         rememberTurnRequest(row).pending=row;
-        effects.renderOptimisticMessages?.(); effects.scrollToLatest();
+        effects.renderOptimisticMessages?.(); effects.renderTurnStatus?.(); effects.scrollToLatest();
         return deliverSafely(row);
     }
     function refreshHeld() {

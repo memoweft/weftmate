@@ -247,10 +247,15 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         if (stop && !core.state.historyHasMore) return { isRunning: false,
             message: '' };
         let message = '';
-        const isRunning = core.state.turnStatus === 'running' && core.conversationRunning(core.state.selectedSessionId);
+        const pendingSend = !!core.optimisticMessages?.().some(row => ['sending', 'confirming', 'accepted'].includes(row.status));
+        const runningSession = core.conversationRunning(core.state.selectedSessionId);
+        const isRunning = (core.state.turnStatus === 'running' && runningSession) || pendingSend;
         if (core.state.historyHasMore) {
             message = '正在补读会话历史，尚未核对到本轮结束。';
             return { isRunning, message };
+        }
+        if ((pendingSend || runningSession) && core.state.turnStatus !== 'running') {
+            return { isRunning: true, message: '' };
         }
         switch (core.state.turnStatus) {
             case 'running': {
