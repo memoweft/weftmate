@@ -6,7 +6,7 @@
   font:400 var(--ui-size,14px)/1.5 var(--wm-font-family-body);
   --settings-body:var(--ui-size,14px); --settings-small:calc(var(--settings-body) - 1px);
   --settings-control-width:46%; --settings-content-width:720px;
-  grid-template-columns:208px minmax(0,1fr);
+  grid-template-columns:216px minmax(0,1fr);
 }
 #settings-dialog[open] { display:grid; }
 #cloud-login-dialog { flex-direction:column; }
@@ -26,7 +26,7 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
   :is(#settings-dialog,#cloud-login-dialog)[open] { opacity:0; transform:translateY(10px) scale(.985); }
   :is(#settings-dialog,#cloud-login-dialog)[open]::backdrop { opacity:0; }
 }
-.settings-sidebar { min-height:0; padding:20px 10px 12px; display:flex; flex-direction:column; gap:12px; background:color-mix(in srgb,var(--ink) 2.5%,var(--canvas)); }
+.settings-sidebar { min-height:0; padding:18px 12px 14px; display:flex; flex-direction:column; gap:12px; background:color-mix(in srgb,var(--ink) 2.5%,var(--canvas)); border-right:1px solid var(--line); }
 .settings-sidebar-title { margin:0 10px; font-size:16px; font-weight:600; color:var(--ink); }
 .settings-search-box { position:relative; display:flex; align-items:center; margin-inline:2px; }
 .settings-search-box > svg { position:absolute; left:10px; color:var(--ink-muted); pointer-events:none; }
@@ -40,8 +40,8 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
 .settings-nav-item:hover { background:color-mix(in srgb,var(--ink) 4%,transparent); color:var(--ink); }
 .settings-nav-item.is-selected { background:color-mix(in srgb,var(--ink) 8%,transparent); color:var(--ink); font-weight:500; }
 .settings-main { min-width:0; min-height:0; display:flex; flex-direction:column; }
-.settings-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:22px 28px 14px; }
-.settings-head h1 { margin:0; font-size:22px; font-weight:600; letter-spacing:-.02em; }
+.settings-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 28px 14px; border-bottom:1px solid var(--line); }
+.settings-head h1 { margin:0; font-size:20px; font-weight:600; letter-spacing:-.02em; }
 #settings-dialog .settings-list-back { display:none; }
 .settings-head .icon-close { width:30px; height:30px; min-height:30px; padding:6px; border-radius:7px; }
 .settings-head .icon-close:hover { background:var(--surface-soft); }
@@ -51,16 +51,17 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
 #settings-dialog:not([open]) #account-view[hidden] { display:flex!important; }
 #cloud-login-dialog:not([open]) #login-view[hidden] { display:block!important; }
 .settings-content { flex:1; min-height:0; position:relative; overflow:hidden; display:grid; isolation:isolate; }
-.settings-category { grid-area:1/1; align-self:stretch; box-sizing:border-box; min-width:0; min-height:0; width:100%; margin:0; padding:4px 28px 28px; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; scroll-padding:12px; }
+.settings-category { grid-area:1/1; align-self:stretch; box-sizing:border-box; min-width:0; min-height:0; width:100%; margin:0; padding:18px 28px 32px; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; scroll-padding:16px; }
 .settings-category[inert] { pointer-events:none; }
 .settings-category > * { max-width:var(--settings-content-width); margin-inline:auto; }
 .settings-redundant-title,.settings-control-source { display:none; }
 #settings-dialog .settings-category :is(h2,h3) { font-size:var(--settings-body); font-weight:600; line-height:1.5; }
-.settings-dialog :is(.settings-section-title,.settings-group-title) { margin:0 0 8px; color:var(--ink); font-size:var(--settings-small); font-weight:600; }
-.settings-dialog :is(.settings-group,.settings-category > .card,.settings-category > section:not(.settings-group)) { margin:0 0 24px; }
-.settings-dialog :is(.settings-group-card,.settings-category > .card,.permission-rules,.usage-form,.data-categories,.record-list) { border:0; border-radius:var(--wm-radius-12); background:var(--surface); box-shadow:none; padding:0 16px; overflow:visible; }
+.settings-dialog :is(.settings-section-title,.settings-group-title) { margin:0 0 8px 2px; color:var(--ink-secondary); font-size:12px; font-weight:600; letter-spacing:.01em; }
+.settings-dialog :is(.settings-group,.settings-category > .card,.settings-category > section:not(.settings-group)) { margin:0 0 22px; }
+.settings-dialog :is(.settings-group-card,.settings-category > .card,.permission-rules,.usage-form,.data-categories,.record-list) { border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); box-shadow:none; padding:4px 18px; overflow:visible; }
+.settings-dialog :is(.settings-group-card,.settings-category > .card) > .settings-row:last-child { border-bottom:0; }
 .settings-dialog .settings-group-card > .settings-row + .settings-row { border-top:0; }
-.settings-dialog .settings-row { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:12px 0; min-height:52px; border:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 10%,transparent); font-size:var(--settings-body); }
+.settings-dialog .settings-row { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:12px 0; min-height:50px; border:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); font-size:var(--settings-body); }
 .settings-row > div:first-child { min-width:0; flex:1; }
 .settings-dialog .settings-row :is(label,.wm-row-title) { margin:0; font-size:var(--settings-body); font-weight:500; line-height:1.5; }
 .settings-dialog .settings-row .muted { margin:3px 0 0; font-size:var(--settings-small); line-height:1.55; color:var(--ink-muted); }
@@ -113,7 +114,8 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
 .remote-phone #settings-dialog .settings-group-card > .settings-row:last-child { border-bottom:0; }
 html:not([data-pointer-cursor]) :is(button,[role=button],[role=tab],summary,.settings-nav-item,.capability-open) { cursor:default; }
 html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-nav-item,.capability-open):not(:disabled) { cursor:pointer; }
-#settings-usage-strip { align-self:flex-end; max-width:100%; margin:0; padding:0 28px 8px; border:0; background:transparent; font-size:12px; color:var(--ink-muted); text-align:right; }
+#settings-usage-strip { align-self:flex-end; max-width:100%; margin:0; padding:8px 28px 0; border:0; background:transparent; font-size:12px; color:var(--ink-muted); text-align:right; }
+#settings-usage-strip:empty { display:none; }
 /* Personal writing and assistant defaults. */
 .settings-dialog .personalization-form { display:block; }
 .settings-dialog .personalization-field { width:var(--settings-control-width); flex:none; }
@@ -177,8 +179,10 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog .cloud-account-form { display:grid; gap:12px; }
 .settings-dialog .cloud-account-form > label { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,46%); align-items:center; gap:20px; }
 /* Lists, storage, permissions and computer tools use the same aligned rhythm. */
-.settings-dialog :is(.system-service,.device-item,.settings-schedule-row) { gap:12px; padding:12px 0; margin:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; }
-.settings-dialog :is(.device-list,.settings-schedules-list,#system-services,.system-services) { padding:0; margin:12px 0; list-style:none; border:0; border-radius:0; overflow:visible; }
+.settings-dialog :is(.system-service,.device-item,.settings-schedule-row) { gap:12px; padding:14px 0; margin:0; border:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); border-radius:0; background:transparent; }
+.settings-dialog :is(.system-service,.device-item,.settings-schedule-row):last-child { border-bottom:0; }
+.settings-dialog :is(.device-list,.settings-schedules-list,.system-services) { padding:0; margin:12px 0; list-style:none; border:0; border-radius:0; overflow:visible; }
+.settings-dialog #system-services { padding:4px 18px; margin:10px 0 20px; list-style:none; border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); overflow:visible; }
 .settings-dialog :is(.device-meta,.cloud-device-meta,.system-service-detail small) { font-size:12px; }
 .settings-dialog .device-title strong { font-size:var(--settings-body); }
 .settings-dialog .cloud-device-summary { padding:4px 0; gap:12px; }
@@ -190,9 +194,16 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog :is(.project-register,.browser-workspace-form) > :is(p,button) { grid-column:1 / -1; }
 .settings-dialog .project-row { padding:12px 0; gap:12px; border-bottom:1px solid var(--line); }
 .settings-dialog .permission-rules { gap:0; }
+.settings-dialog .permission-rules > p.muted { margin:0; padding:12px 0 10px; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); }
 .settings-dialog .permission-rules .settings-row + .settings-row { border-top:0; }
-.settings-dialog .record-row { padding:12px 0; border-radius:0; }
-.settings-dialog .record-filters { margin-top:0; }
+.settings-dialog .permission-rules .settings-row:has(+ .permission-actions) { border-bottom:0; }
+.settings-dialog .permission-actions { display:flex; justify-content:flex-end; padding:10px 0 12px; }
+.settings-dialog .execution-records { border:0; border-radius:0; overflow:visible; margin:0; background:transparent; }
+.settings-dialog .execution-records > p.muted { margin:0 0 12px; }
+.settings-dialog .record-row { padding:14px 4px; border-radius:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); }
+.settings-dialog .record-row:last-child { border-bottom:0; }
+.settings-dialog .record-list:empty { display:none; }
+.settings-dialog .record-filters { margin:0 0 14px; }
 .settings-dialog .usage-body { padding:0; }
 .settings-dialog .usage-toolbar { gap:8px; flex-wrap:wrap; }
 .settings-dialog .usage-toolbar h2 { display:none; }

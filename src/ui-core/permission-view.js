@@ -47,7 +47,9 @@
         decorateSelect(select,type.label);
       }
       if (!project) {
-        const reset=node('button','button secondary small','恢复默认');reset.type='button';reset.onclick=async()=>{reset.disabled=true;try{saved=await core.savePermissionRules(Object.fromEntries(Object.keys(rules).filter(type=>saved.types.some(row=>row.id===type)).map(type=>[type,null])));if(current()){draw();toast('已恢复默认');}}catch{if(current()){reset.disabled=false;toast('恢复未完成，请重试。');}}};body.append(reset);
+        const footer=node('div','permission-actions');
+        const reset=node('button','button secondary small','恢复默认');reset.type='button';reset.onclick=async()=>{reset.disabled=true;try{saved=await core.savePermissionRules(Object.fromEntries(Object.keys(rules).filter(type=>saved.types.some(row=>row.id===type)).map(type=>[type,null])));if(current()){draw();toast('已恢复默认');}}catch{if(current()){reset.disabled=false;toast('恢复未完成，请重试。');}}};
+        footer.append(reset);body.append(footer);
       }
     }
     void load();
@@ -80,7 +82,8 @@
         if(!append)list.replaceChildren();
         for(const row of page.items){const button=node('button','record-row');button.type='button';const icon=node('span','record-icon');icon.append(WeftIcons.create(row.result==='blocked'||row.result==='rejected'?'deny':'tool',20));
           const copy=node('span','record-copy'), head=node('strong','',row.types.map(id=>types.find(t=>t.id===id)?.label??id).join(' · ')||'电脑操作');
-          copy.append(head,node('span','record-summary',row.summary),node('small','muted',[row.conversationName,row.projectName,core.dateText(row.at)].filter(Boolean).join(' · ')));
+          const summaryText=(row.summary||'').replace(/\s*·\s*$/,'');
+          copy.append(head,node('span','record-summary',summaryText),node('small','muted',[row.conversationName,row.projectName,core.dateText(row.at)].filter(Boolean).join(' · ')));
           const status=node('span','record-result',results[row.result]??row.result);if(['blocked','rejected'].includes(row.result))status.classList.add('record-warning');
           if(row.executionState==='failed')status.append(node('small','',' · 执行失败'));
           button.append(icon,copy,status);button.onclick=()=>openConversation?.(row);list.append(button);

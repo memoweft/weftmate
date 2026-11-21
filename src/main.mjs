@@ -2082,12 +2082,19 @@ async function bootstrap() {
     if (typeof value !== 'string') return null;
     const color = value.trim();
     if (color.length < 4 || color.length > 32) return null;
-    if (/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(color)) return color;
+    if (/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(color)) {
+      return color.length === 4
+        ? `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`.toLowerCase()
+        : color.toLowerCase();
+    }
+    if (/^#(?:[0-9a-f]{4}|[0-9a-f]{8})$/i.test(color)) return color.toLowerCase();
     const match = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*(0|1|0\.\d{1,3}))?\s*\)$/i.exec(color);
     if (!match || (color.slice(0, 4).toLowerCase() === 'rgba' && match[4] === undefined)
       || (color.slice(0, 4).toLowerCase() === 'rgb(' && match[4] !== undefined)) return null;
-    if ([match[1], match[2], match[3]].some((part) => Number(part) > 255)) return null;
-    return color;
+    const rgb = [Number(match[1]), Number(match[2]), Number(match[3])];
+    if (rgb.some((part) => part > 255)) return null;
+    // Windows Electron setTitleBarOverlay requires #rrggbb hex; rgb(...) renders as solid black.
+    return `#${rgb.map((part) => part.toString(16).padStart(2, '0')).join('')}`;
   };
   const nativeWindowPalette = (resolvedTheme = dshResolvedTheme) => (resolvedTheme === 'dark'
     || (resolvedTheme !== 'light' && nativeTheme.shouldUseDarkColors))
