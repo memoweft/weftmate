@@ -92,6 +92,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         if (terminal) {
             core.state.turnStatus = terminal.type === 'turn.started' ? 'running' : ['completed', 'aborted', 'error', 'blocked'].includes(terminal.data?.reason) ? terminal.data.reason : 'unknown';
             core.state.turnEndReasonKind = core.state.turnStatus === 'error' && terminal.data?.endReasonKind === 'max-tokens' ? 'max-tokens' : null;
+            core.state.turnEndError = core.state.turnStatus === 'error' && typeof terminal.data?.errorDetail === 'string' && terminal.data.errorDetail.trim() ? terminal.data.errorDetail.trim() : null;
         }
         core.observeOptimistic?.(accepted);
         const removedLive=[...previousLive.keys()].some(seq=>!core.state.historyEvents.has(seq));
@@ -121,6 +122,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             core.state.olderLoading = false;
             core.state.turnStatus = null;
             core.state.turnEndReasonKind = null;
+            core.state.turnEndError = null;
             effects.clearHistoryView(true);
             effects.renderTurnStatus();
         }
@@ -278,7 +280,10 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                 break;
             case 'error':
                 message = core.state.turnEndReasonKind === 'max-tokens'
-                    ? '回复达到长度限制。发送“继续”接着处理。' : '这次处理未完成。请重试，或到设置检查模型。';
+                    ? '回复达到长度限制。发送“继续”接着处理。'
+                    : core.state.turnEndError
+                        ? `这次处理未完成：${core.state.turnEndError}`
+                        : '这次处理未完成。请重试，或到设置检查模型。';
                 break;
             case 'unknown':
                 message = '本轮结束状态尚不明确，请在电脑核对。';
