@@ -155,10 +155,13 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             const ended=entry.ended && (!latest || String(entry.ended.data?.turn)===String(turn)) ? entry.ended : null;
             const end=latest?.facts.findLast(event=>['turn.ended','task.ended'].includes(event.type)) || ended;
             const anchor=user || entry.queued;
+            const factAnchor=start?.seq ?? facts[0]?.seq ?? latest?.block.seq;
             // A first send owns the beginning of the session it just created.
             // Early reply events must not move its unconfirmed echo behind them.
-            const position=user?.seq ?? anchor?.seq ?? (local?.createdSession ? -1 : Math.max(-1,...events.map(event=>event.seq))+1+Math.max(0,pending.indexOf(local)));
-            const at=entry.at || user?.at || local?.at || start?.at;
+            // Paged historical turn tails and background-job continuation turns
+            // lack a user.message in the page; keep them at their own event seq.
+            const position=user?.seq ?? anchor?.seq ?? (local?.createdSession ? -1 : factAnchor ?? (Math.max(-1,...events.map(event=>event.seq))+1+Math.max(0,pending.indexOf(local))));
+            const at=entry.at || user?.at || local?.at || start?.at || facts[0]?.at;
             const first={...(start || {}),seq:(facts[0]?.seq ?? position)-0.1,at:start?.at || at,type:'turn.started',sourceRef:{...start?.sourceRef,sessionId:session},data:{turn,pendingRequestId:entry.requestId}};
             const last=end && {...end,seq:Math.max(first.seq,...facts.map(event=>event.seq))+0.1,type:'turn.ended',data:{...end.data,turn}};
             const unaccepted=!latest && !entry.turns.size && !entry.queued && !user && !['accepted_by_dsh','observed'].includes(local?.command?.state);

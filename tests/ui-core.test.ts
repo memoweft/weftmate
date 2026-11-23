@@ -897,6 +897,32 @@ test('an unconfirmed first message stays before early native replies in its newl
   assert.equal(f.core.messageProcesses(events, [pending]).find((row: any) => row.requestId === pending.requestId).position, process.position);
 });
 
+test('paged historical turn tails and background wakeup turns stay at their own seq instead of jumping below newer user turns', () => {
+  const f = fixture();
+  const ref = { sessionId: 'session-test' };
+  const events = [
+    // Turn 1 paged tail (no user.message or turn.started in this page)
+    { seq: 168, type: 'step.started', at: '2026-11-23T01:28:00Z', sourceRef: ref, data: { taskId: 'session-test:turn-1', stepId: 'c1', toolName: 'pwsh', state: 'running' } },
+    { seq: 171, type: 'step.completed', at: '2026-11-23T01:28:05Z', sourceRef: ref, data: { taskId: 'session-test:turn-1', stepId: 'c1', toolName: 'pwsh', state: 'completed' } },
+    { seq: 414, type: 'turn.ended', at: '2026-11-23T01:30:49Z', sourceRef: ref, data: { turn: 1, reason: 'completed' } },
+    // Turn 2 background-job wakeup turn (no user.message)
+    { seq: 417, type: 'turn.started', at: '2026-11-23T01:32:54Z', sourceRef: ref, data: { turn: 2 } },
+    { seq: 425, type: 'step.completed', at: '2026-11-23T01:33:00Z', sourceRef: ref, data: { taskId: 'session-test:turn-2', stepId: 'c2', toolName: 'job_output', state: 'completed' } },
+    { seq: 450, type: 'turn.ended', at: '2026-11-23T01:33:05Z', sourceRef: ref, data: { turn: 2, reason: 'completed' } },
+    // Turn 3 new user message currently running
+    { seq: 453, type: 'turn.started', at: '2026-11-23T03:52:00Z', sourceRef: ref, data: { turn: 3 } },
+    { seq: 456, type: 'user.message', at: '2026-11-23T03:52:01Z', sourceRef: ref, data: { receiptId: 'r-turn-3', text: '环境恢复了' } },
+    { seq: 493, type: 'step.started', at: '2026-11-23T03:53:00Z', sourceRef: ref, data: { taskId: 'session-test:turn-3', stepId: 'c3', toolName: 'pwsh', state: 'running' } },
+  ];
+  const processes = f.core.messageProcesses(events, []);
+  const byTurn = Object.fromEntries(processes.map((p: any) => [p.taskId, p]));
+  assert.equal(byTurn['session-test:turn-1'].position, 168);
+  assert.equal(byTurn['session-test:turn-2'].position, 417);
+  assert.equal(byTurn['session-test:turn-3'].position, 456);
+  assert.ok(byTurn['session-test:turn-1'].position < byTurn['session-test:turn-3'].position);
+  assert.ok(byTurn['session-test:turn-2'].position < byTurn['session-test:turn-3'].position);
+});
+
 test('D36 account preferences survive recreation, isolate accounts and preserve temporary send overrides', async () => {
   const f = fixture(); f.core.state.sessions[0].running = true;
   assert.equal(f.core.composerInputMode('session-test'), 'queue');
