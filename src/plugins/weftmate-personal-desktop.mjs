@@ -69,6 +69,11 @@ function refused(code) {
 
 const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : s?.events;
 
+const LIVE_TURN = Symbol('weftmate.liveTurn');
+const CONTINUATION_NOTICES = new Set(['tool-jobs', 'subagent-settled']);
+const isContinuationNotice = event => event?.type === 'user/message' && event.data?.source?.form === 'notice' &&
+  (CONTINUATION_NOTICES.has(event.data?.source?.kind) || CONTINUATION_NOTICES.has(event.data?.source?.plugin));
+
 /** Nested script calls inherit only their real root tool call and original user receipt. */
 export function personalExecutionIdentity(exec) {
   const session = exec?.agent?.session;
@@ -88,8 +93,23 @@ export function personalExecutionIdentity(exec) {
       start < 0 || !Number.isSafeInteger(turn) || turn < 1 ||
       currentTurn?.type !== 'turn/start' || currentTurn.data?.turn !== turn ||
       events.slice(start + 1, callIndex).some((event) => event?.type === 'turn/end')) throw refused('TOOL_SOURCE_UNAVAILABLE');
-  const users = events.slice(start + 1, callIndex).filter((event) =>
+  let users = events.slice(start + 1, callIndex).filter((event) =>
     event?.type === 'user/message' && event.data?.source?.kind === 'user');
+  let sourceTurn = turn;
+  if (users.length === 0 && events.slice(start + 1, callIndex).some(isContinuationNotice)) {
+    const priorUserIndex = events.findLastIndex((event, index) => index < start &&
+      event?.type === 'user/message' && event.data?.source?.kind === 'user');
+    if (priorUserIndex >= 0) {
+      const originStart = events.findLastIndex((event, index) => index < priorUserIndex && event?.type === 'turn/start');
+      const originEnd = events.findIndex((event, index) => index > originStart && event?.type === 'turn/end');
+      const originLimit = originEnd >= 0 ? originEnd : start;
+      if (originStart >= 0 && Number.isSafeInteger(events[originStart].data?.turn) && events[originStart].data.turn >= 1) {
+        users = events.slice(originStart + 1, originLimit).filter((event) =>
+          event?.type === 'user/message' && event.data?.source?.kind === 'user');
+        sourceTurn = events[originStart].data.turn;
+      }
+    }
+  }
   if (users.length !== 1 || typeof users[0].data?.source?.rpcId !== 'string' || !SAFE_ID.test(users[0].data.source.rpcId)) {
     throw refused('TOOL_SOURCE_UNAVAILABLE');
   }
@@ -99,8 +119,10 @@ export function personalExecutionIdentity(exec) {
   }
   const text = parts.filter((part) => part?.type === 'text').map((part) => part.text).join('');
   if (!text.trim()) throw refused('TOOL_SOURCE_UNAVAILABLE');
-  return { sessionId: session.id, turn, callId: exec.callId, rootCallId,
+  const identity = { sessionId: session.id, turn: sourceTurn, callId: exec.callId, rootCallId,
     receiptId: users[0].data.source.rpcId, messageHash: createHash('sha256').update(text).digest('hex') };
+  identity[LIVE_TURN] = turn;
+  return identity;
 }
 
 const executionHash = (value) => createHash('sha256').update(JSON.stringify(value) ?? 'null').digest('hex');
@@ -132,7 +154,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
   const currentBinding = binding => {
     if (closed || !liveAgent(binding.agent)) return false;
     const last = sessionEvents(binding.agent.session).findLast(event => event?.type === 'turn/start' || event?.type === 'turn/end');
-    if (last?.type !== 'turn/start' || last.data?.turn !== binding.payload.turn) return false;
+    if (last?.type !== 'turn/start' || last.data?.turn !== (binding.liveTurn ?? binding.payload.turn)) return false;
     try {
       const current = personalExecutionIdentity({ agent: binding.agent, name: binding.payload.toolName,
         callId: binding.payload.callId, rootCallId: binding.payload.rootCallId });
@@ -147,7 +169,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
         let calls = callsByAgent.get(exec.agent);
         if (!calls) { calls = new Map(); callsByAgent.set(exec.agent, calls); }
         const connector = connectorToolFor(exec.agent, exec.name);
-        const call = { ...identity, toolName: exec.name, argumentsHash: executionHash(exec.arguments), types: connector ? [connector.category, ...(connector.network ? ['network'] : [])] : permissionCategories(exec.name, exec.arguments) };
+        const call = { ...identity, liveTurn: identity[LIVE_TURN] ?? identity.turn, toolName: exec.name, argumentsHash: executionHash(exec.arguments), types: connector ? [connector.category, ...(connector.network ? ['network'] : [])] : permissionCategories(exec.name, exec.arguments) };
         calls.set(exec.callId, call);
         if ((await policyFor?.(exec.agent))?.conversationMode === 'chat') {
           call.reviewArguments = structuredClone(exec.arguments);call.reviewRisks=[];call.outsideProjectWrite=false;return;
@@ -186,7 +208,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     if (!identity || identity.toolName !== request.toolName) return 'unavailable';
     const events = sessionEvents(request.agent.session);
     const start = events.findLastIndex(event => event?.type === 'turn/start' || event?.type === 'turn/end');
-    if (events[start]?.type !== 'turn/start' || events[start]?.data?.turn !== identity.turn) return 'unavailable';
+    if (events[start]?.type !== 'turn/start' || events[start]?.data?.turn !== (identity.liveTurn ?? identity.turn)) return 'unavailable';
     const asked = events.slice(start + 1).filter(event => event?.type === 'approval/asked' &&
       event.data?.callId === request.callId && event.data?.toolName === request.toolName &&
       typeof event.data?.id === 'string' && APPROVAL_ID.test(event.data.id) &&
@@ -195,14 +217,14 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     const approvalId = asked[0].data.id;
     const key = keyOf(identity.sessionId, approvalId);
     if (bindings.has(key)) return 'unavailable';
-    const { types: _operationTypes, reviewArguments, reviewRisks, outsideProjectWrite, ...approvalIdentity } = identity;
+    const { types: _operationTypes, liveTurn, reviewArguments, reviewRisks, outsideProjectWrite, ...approvalIdentity } = identity;
     const payload = { ...approvalIdentity, approvalId };
     const controller = new AbortController();
     const onAbort = () => controller.abort();
     request.signal?.addEventListener('abort', onAbort, { once: true });
     if (request.signal?.aborted) controller.abort();
     activeRequests.add(controller);
-    const binding = { payload, agent: request.agent, controller, registration: null };
+    const binding = { payload, liveTurn: liveTurn ?? payload.turn, agent: request.agent, controller, registration: null };
     bindings.set(key, binding);
     try {
       binding.registration = bridge.request({ ...payload, action: 'register_approval',
@@ -249,11 +271,11 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     if (event?.type === 'turn/end') {
       const agent = ctx.get('agents')?.get(session?.id);
       if (agent?.session === session) { callsByAgent.delete(agent); uncertainRootsByAgent.delete(agent); }
-      for (const [key, binding] of bindings) if (binding.agent.session === session && binding.payload.turn === event.data?.turn) {
+      for (const [key, binding] of bindings) if (binding.agent.session === session && (binding.liveTurn ?? binding.payload.turn) === event.data?.turn) {
         binding.controller.abort(); bindings.delete(key);
       }
       for (const [key, resolution] of resolutions) if (resolution.binding.agent.session === session &&
-          resolution.binding.payload.turn === event.data?.turn) {
+          (resolution.binding.liveTurn ?? resolution.binding.payload.turn) === event.data?.turn) {
         resolution.work.finally(() => resolutions.delete(key)).catch(() => {});
       }
     }
@@ -337,7 +359,7 @@ export async function trackPersonalExecution(bridge, exec, next, background = nu
   };
   let result, error, capturedJobId;
   try {
-    if (background?.capture && exec.name === 'pwsh' && exec.arguments?.run_in_background === true) {
+    if (background?.capture && exec.name === 'pwsh') {
       const settled = await background.capture(exec, next);
       ({ result, error, jobId: capturedJobId } = settled);
     } else result = await next();
@@ -356,7 +378,7 @@ export async function trackPersonalExecution(bridge, exec, next, background = nu
   }
   // tools/execute receives the official ToolResult envelope, not the producer's raw value.
   const returnedJobId = !error && result?.isError === false && exec.name === 'pwsh' &&
-    exec.arguments?.run_in_background === true && result.value?.kind === 'background' &&
+    ['background', 'promoted'].includes(result.value?.kind) &&
     typeof result.value.jobId === 'string' && SAFE_ID.test(result.value.jobId) ? result.value.jobId : undefined;
   const jobId = capturedJobId ?? returnedJobId;
   let jobState, claimed = false;
@@ -402,6 +424,14 @@ export async function trackPersonalExecution(bridge, exec, next, background = nu
   return result;
 }
 
+function jobSnapshotOwner(snapshot) {
+  return snapshot?.owner ?? snapshot?.ownerSession;
+}
+
+function jobCaller(jobs, agent) {
+  return typeof jobs?.events?.subscribe === 'function' ? (agent?.id ?? agent?.session?.id) : agent;
+}
+
 /** Correlate native job registration while its real pwsh dispatch is still on the stack. */
 export function createPersonalBackgroundTracker(ctx, bridge) {
   const dispatch = new AsyncLocalStorage();
@@ -409,47 +439,90 @@ export function createPersonalBackgroundTracker(ctx, bridge) {
   const backgroundClaims = new Map();
   const disposeObservers = [];
   const ownedJob = (jobs, exec, jobId) => {
-    const snapshot = jobs?.get(jobId, exec.agent);
-    if (!snapshot || snapshot.kind !== 'pwsh' || snapshot.ownerSession !== exec.agent?.session?.id ||
-        exec.agent?.id !== snapshot.ownerSession) throw refused('TOOL_SOURCE_UNAVAILABLE');
+    const snapshot = jobs?.get(jobId, jobCaller(jobs, exec.agent));
+    const ownerId = jobSnapshotOwner(snapshot);
+    if (!snapshot || snapshot.kind !== 'pwsh' || ownerId !== exec.agent?.session?.id ||
+        exec.agent?.id !== ownerId) throw refused('TOOL_SOURCE_UNAVAILABLE');
     return snapshot;
   };
   const stopOwned = async (exec, jobId, reason) => {
     const jobs = ctx.get('jobs');
+    const caller = jobCaller(jobs, exec.agent);
     const initial = ownedJob(jobs, exec, jobId);
     if (['running', 'stopping'].includes(initial.status)) {
-      jobs.kill(jobId, exec.agent, reason);
-      await jobs.wait(jobId, 2_000, exec.agent);
+      jobs.kill(jobId, caller, reason);
+      await jobs.wait(jobId, 2_000, caller);
     }
     return ownedJob(jobs, exec, jobId).status;
   };
   ctx.inject(['jobs'], jobsCtx => {
-    disposeObservers.push(jobsCtx.jobs.onJobsChanged(owner => {
-      if (owner?.session?.header?.agentPreset !== 'personal-remote') return;
-      const snapshots = jobsCtx.jobs.list(owner).filter(snapshot => snapshot.ownerSession === owner.session.id);
-      const seen = seenByOwner.get(owner) ?? new Set();
-      const added = snapshots.filter(snapshot => !seen.has(snapshot.id));
-      seenByOwner.set(owner, new Set(snapshots.map(snapshot => snapshot.id)));
-      const active = dispatch.getStore();
-      if (active?.exec.agent !== owner) return;
-      for (const snapshot of added) {
-        if (snapshot.kind === 'pwsh' && typeof snapshot.id === 'string' && SAFE_ID.test(snapshot.id)) active.jobs.push(snapshot.id);
-      }
-    }));
-    disposeObservers.push(jobsCtx.jobs.onJobDone(async (snapshot, owner) => {
-      const claim = backgroundClaims.get(`${owner?.id}|${snapshot.id}`);
-      if (!claim || claim.owner !== owner) return;
-      await bridge.request({ ...claim.payload, action: 'observe_execution_job', jobState: snapshot.status });
-      backgroundClaims.delete(`${owner.id}|${snapshot.id}`);
-    }));
+    if (typeof jobsCtx.jobs.events?.subscribe === 'function') {
+      disposeObservers.push(jobsCtx.jobs.events.subscribe({ owners: 'all' }, (event) => {
+        const snapshot = event?.job;
+        const ownerId = jobSnapshotOwner(snapshot);
+        if (!snapshot || typeof ownerId !== 'string') return;
+        if (event.type === 'registered') {
+          const active = dispatch.getStore();
+          if (!active || active.exec.agent?.id !== ownerId || active.exec.agent?.session?.id !== ownerId) return;
+          if (snapshot.kind === 'pwsh' && typeof snapshot.id === 'string' && SAFE_ID.test(snapshot.id)) {
+            active.jobs.push(snapshot.id);
+          }
+          return;
+        }
+        if (event.type === 'removed') {
+          const active = dispatch.getStore();
+          if (!active || active.exec.agent?.id !== ownerId || active.exec.agent?.session?.id !== ownerId) return;
+          const idx = active.jobs.indexOf(snapshot.id);
+          if (idx >= 0) active.jobs.splice(idx, 1);
+          return;
+        }
+        if (event.type === 'settled') {
+          const claim = backgroundClaims.get(`${ownerId}|${snapshot.id}`);
+          if (!claim || claim.owner?.id !== ownerId) return;
+          void bridge.request({ ...claim.payload, action: 'observe_execution_job', jobState: snapshot.status })
+            .then(() => { backgroundClaims.delete(`${ownerId}|${snapshot.id}`); })
+            .catch(() => { /* Transient observe error must not crash the jobs event hub. */ });
+        }
+      }));
+      return;
+    }
+    if (typeof jobsCtx.jobs.onJobsChanged === 'function') {
+      disposeObservers.push(jobsCtx.jobs.onJobsChanged(owner => {
+        if (owner?.session?.header?.agentPreset !== 'personal-remote') return;
+        const snapshots = jobsCtx.jobs.list(jobCaller(jobsCtx.jobs, owner)).filter(snapshot => jobSnapshotOwner(snapshot) === owner.session.id);
+        const seen = seenByOwner.get(owner) ?? new Set();
+        const added = snapshots.filter(snapshot => !seen.has(snapshot.id));
+        seenByOwner.set(owner, new Set(snapshots.map(snapshot => snapshot.id)));
+        const active = dispatch.getStore();
+        if (active?.exec.agent !== owner) return;
+        for (const snapshot of added) {
+          if (snapshot.kind === 'pwsh' && typeof snapshot.id === 'string' && SAFE_ID.test(snapshot.id)) active.jobs.push(snapshot.id);
+        }
+      }));
+    }
+    if (typeof jobsCtx.jobs.onJobDone === 'function') {
+      disposeObservers.push(jobsCtx.jobs.onJobDone(async (snapshot, owner) => {
+        const claim = backgroundClaims.get(`${owner?.id}|${snapshot.id}`);
+        if (!claim || claim.owner !== owner) return;
+        await bridge.request({ ...claim.payload, action: 'observe_execution_job', jobState: snapshot.status });
+        backgroundClaims.delete(`${owner.id}|${snapshot.id}`);
+      }));
+    }
   });
   return {
     async capture(exec, next) {
       const jobs = ctx.get('jobs');
-      if (!jobs) throw refused('TOOL_SOURCE_UNAVAILABLE');
-      // Prime the observer with existing jobs so none can inherit a new user's receipt.
-      seenByOwner.set(exec.agent, new Set(jobs.list(exec.agent).filter(snapshot =>
-        snapshot.ownerSession === exec.agent.session.id).map(snapshot => snapshot.id)));
+      if (!jobs) {
+        if (exec.arguments?.run_in_background === true) throw refused('TOOL_SOURCE_UNAVAILABLE');
+        let result, error;
+        try { result = await next(); } catch (caught) { error = caught; }
+        return { result, error };
+      }
+      if (typeof jobs.events?.subscribe !== 'function') {
+        // Prime the legacy observer with existing jobs so none can inherit a new user's receipt.
+        seenByOwner.set(exec.agent, new Set(jobs.list(jobCaller(jobs, exec.agent)).filter(snapshot =>
+          jobSnapshotOwner(snapshot) === exec.agent.session.id).map(snapshot => snapshot.id)));
+      }
       const active = { exec, jobs: [] };
       let result, error;
       try { result = await dispatch.run(active, next); } catch (caught) { error = caught; }
