@@ -44,7 +44,7 @@
 
 /* Keep the existing header aligned while the shell supplies its new chrome. */
 @media (min-width:761px) {
- .assistant-topbar { min-height:var(--wm-space-56); padding-inline:var(--wm-space-page); gap:var(--wm-space-row); border-bottom:1px solid var(--panel-divider); }
+ .assistant-topbar { min-height:var(--wm-space-56); padding-inline:var(--wm-space-page); gap:var(--wm-space-row); border-bottom:0; }
  #assistant-title { font-size:var(--wm-type-heading); font-weight:550; line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
  .assistant-topbar .assistant-heading { flex-direction:row; align-items:baseline; flex-wrap:wrap; gap:4px 12px; }
  .assistant-topbar #assistant-connection { font-size:var(--wm-type-secondary); }

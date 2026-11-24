@@ -3,7 +3,9 @@ import { lstat, readdir, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { createReadStream } from 'node:fs';
 import { executionDirectory } from './personal-project-context.mjs';
-import { shellScriptInvocations, scriptWriteTargets } from './personal-write-targets.mjs';
+import { shellScriptInvocations, scriptWriteTargets, shellWriteTargets } from './personal-write-targets.mjs';
+const SKIP_SCAN_DIRS = new Set(['.weftmate-web-sources', '.git', 'node_modules', 'dist', 'build', 'target', '__pycache__', 'venv']);
+const SHELL_MAY_WRITE = /(?:>|Set-Content|Add-Content|Out-File|New-Item|Copy-Item|Move-Item|Rename-Item|Expand-Archive|Compress-Archive|ExtractToDirectory|WriteAll|writeFile|copyFile|tee\b|cp\b|mv\b|mkdir\b|touch\b|robocopy|xcopy|tar\b|unzip\b|7z\b|curl\b|wget\b|Invoke-WebRequest|Invoke-RestMethod|python|py\b|node\b|npm\b|npx\b|pnpm\b|pip\b|git\b|apktool|jadx|java\b|javac\b|adb\b|ffmpeg|soffice)/i;
 const additions = new WeakMap();
 const fileDigest = async file => { const hash=createHash('sha256'); for await(const chunk of createReadStream(file))hash.update(chunk); return hash.digest('hex'); };
 const fileKey = file => process.platform === 'win32' ? file.toLowerCase() : file;
@@ -58,7 +60,7 @@ export async function snapshotFiles(directory, issues = []) {
       // Browser captures are host-owned research inputs. Registering them as
       // user deliverables races concurrent reads and creates uncertain write
       // receipts that block the actual document tools (PF-2 LAN evidence).
-      if (entry.isDirectory() && !['.weftmate-web-sources','.git','node_modules'].includes(entry.name)) await visit(file);
+      if (entry.isDirectory() && !entry.name.startsWith('.') && !SKIP_SCAN_DIRS.has(entry.name)) await visit(file);
       else if (entry.isFile()) {
         try {
           const stat = await lstat(file);
@@ -101,9 +103,15 @@ export async function trackNativeFiles(bridge, exec, next, identity) {
   // Compare the same selected script outputs on both sides. A script can
   // change its own source; that must not turn an unobserved existing output
   // into a claimed creation after execution.
-  const scriptFiles = ['pwsh', 'bash', 'shell'].includes(exec.name)
-    ? shellScriptInvocations(exec.arguments?.command ?? '', path.resolve(cwd, exec.arguments?.workdir ?? '.'), exec.name !== 'bash')
+  const isShell = ['pwsh', 'bash', 'shell'].includes(exec.name);
+  const commandText = isShell ? String(exec.arguments?.command ?? '') : '';
+  const workdir = isShell ? path.resolve(cwd, exec.arguments?.workdir ?? '.') : cwd;
+  const scriptFiles = isShell
+    ? shellScriptInvocations(commandText, workdir, exec.name !== 'bash')
       .flatMap(scriptWriteTargets) : [];
+  if (isShell && !scriptFiles.length && !shellWriteTargets(commandText, workdir, exec.name !== 'bash').length && !SHELL_MAY_WRITE.test(commandText)) {
+    return next();
+  }
   const issues = [];
   const before = await snapshotFor(exec, scriptFiles, issues);
   const result = await next();
@@ -122,7 +130,7 @@ export async function trackNativeFiles(bridge, exec, next, identity) {
         ...(!before.has(key) && !issues.length ? { createdFilePath: file } : {}) } : { fileName: path.basename(file), ...registered });
     } catch (error) { issues.push(error.code ?? 'OBSERVATION_FAILED'); }
   }
-  if (issues.length) artifacts.push({artifactObservation:{state:'incomplete',instruction:'File observation or artifact registration was incomplete. The tool outcome is unchanged. Inspect actual files if needed; do_not_repeat an operation just to recreate its artifact card.'}});
+  if (issues.some(code => code !== 'OBSERVATION_LIMIT')) artifacts.push({artifactObservation:{state:'incomplete',instruction:'File observation or artifact registration was incomplete. The tool outcome is unchanged. Inspect actual files if needed; do_not_repeat an operation just to recreate its artifact card.'}});
   if (!artifacts.length) return result;
   additions.set(exec, artifacts.map(value => ({ type: 'text', text: JSON.stringify(value) })));
   return result;

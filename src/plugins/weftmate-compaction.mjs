@@ -12,10 +12,16 @@ export function researchPressure(session, measurement) {
 
 export function researchCompactRange(session, measurement) {
   const nodes = measurement.nodes;
+  if (!nodes.length) return null;
+  const headSeq = nodes[0].seq;
+  const head = typeof session.eventAt === 'function'
+    ? session.eventAt(headSeq)
+    : sessionEvents(session).find(event => event?.seq === headSeq);
+  const firstIdx = head?.type === 'system/message' ? 1 : 0;
   let index = nodes.length, tokens = 0;
-  while (index > 0 && tokens < 4000) tokens += nodes[--index].tokens;
-  while (index > 0 && !toolPairingBalancedBefore(session, nodes[index].seq)) index--;
-  return index > 0 ? { start: nodes[0].seq, end: nodes[index - 1].seq } : null;
+  while (index > firstIdx && tokens < 4000) tokens += nodes[--index].tokens;
+  while (index > firstIdx && !toolPairingBalancedBefore(session, nodes[index].seq)) index--;
+  return index > firstIdx ? { start: nodes[firstIdx].seq, end: nodes[index - 1].seq } : null;
 }
 
 const sessionEvents = s => typeof s?.snapshotEvents === 'function' ? s.snapshotEvents() : (s?.events ?? []);

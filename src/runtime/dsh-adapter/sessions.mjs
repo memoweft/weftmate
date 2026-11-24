@@ -184,10 +184,20 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
       ...(Number.isSafeInteger(event.data?.turn) && event.data.turn > 0 ? { turn: event.data.turn } : {}) } }
   } else if (type === 'turn/end') {
     const kind = event.data?.reason?.kind
+    const rawErr = kind === 'error' && typeof event.data?.reason?.error?.message === 'string'
+      ? event.data.reason.error.message.trim() : ''
+    const errorDetail = rawErr
+      ? rawErr
+          .replace(/\bBearer\s+[^\s"']+/gi, 'Bearer [redacted]')
+          .replace(/((?:api[_-]?key|access[_-]?token|authorization|password|secret)["']?\s*[=:]\s*["']?)[^\s,"'}]+/gi, '$1[redacted]')
+          .replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, '$1[redacted]@')
+          .slice(0, 240)
+      : ''
     projected = { seq, type: 'turn.ended', data: {
       reason: kind === 'max-tokens' ? 'error'
         : ['completed', 'aborted', 'error', 'blocked'].includes(kind) ? kind : 'unknown',
       ...(kind === 'max-tokens' ? { endReasonKind: 'max-tokens' } : {}),
+      ...(errorDetail ? { errorDetail } : {}),
       ...(Number.isSafeInteger(event.data?.turn) && event.data.turn > 0 ? { turn: event.data.turn } : {}) } }
   }
   if (type === 'user/message' && event.data?.source?.form === 'notice') {

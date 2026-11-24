@@ -27,7 +27,7 @@ export function mergePermissionRules(current = {}, patch) {
 }
 export function permissionCategories(name, args = {}, risks = []) {
   const types = new Set(risks.map(riskPermissionType));
-  if (/^(read|read_file|grep|glob|list_directory)$/.test(name)) types.add('read');
+  if (/^(read|read_file|grep|glob|list_directory|office_render)$/.test(name)) types.add('read');
   if (/^(write|edit|write_file|apply_patch)$/.test(name)) types.add('write');
   if (/^(pwsh|powershell|bash|shell|sh|exec_command)$/.test(name) || typeof args.command === 'string') types.add('command');
   const source = [name, args.command, args.code, args.script, args.action].filter(x => typeof x === 'string').join('\n');

@@ -6,7 +6,7 @@
   font:400 var(--ui-size,14px)/1.5 var(--wm-font-family-body);
   --settings-body:var(--ui-size,14px); --settings-small:calc(var(--settings-body) - 1px);
   --settings-control-width:46%; --settings-content-width:720px;
-  grid-template-columns:208px minmax(0,1fr);
+  grid-template-columns:216px minmax(0,1fr);
 }
 #settings-dialog[open] { display:grid; }
 #cloud-login-dialog { flex-direction:column; }
@@ -26,7 +26,7 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
   :is(#settings-dialog,#cloud-login-dialog)[open] { opacity:0; transform:translateY(10px) scale(.985); }
   :is(#settings-dialog,#cloud-login-dialog)[open]::backdrop { opacity:0; }
 }
-.settings-sidebar { min-height:0; padding:20px 10px 12px; display:flex; flex-direction:column; gap:12px; background:color-mix(in srgb,var(--ink) 2.5%,var(--canvas)); }
+.settings-sidebar { min-height:0; padding:18px 12px 14px; display:flex; flex-direction:column; gap:12px; background:color-mix(in srgb,var(--ink) 2.5%,var(--canvas)); border-right:1px solid var(--line); }
 .settings-sidebar-title { margin:0 10px; font-size:16px; font-weight:600; color:var(--ink); }
 .settings-search-box { position:relative; display:flex; align-items:center; margin-inline:2px; }
 .settings-search-box > svg { position:absolute; left:10px; color:var(--ink-muted); pointer-events:none; }
@@ -40,8 +40,8 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
 .settings-nav-item:hover { background:color-mix(in srgb,var(--ink) 4%,transparent); color:var(--ink); }
 .settings-nav-item.is-selected { background:color-mix(in srgb,var(--ink) 8%,transparent); color:var(--ink); font-weight:500; }
 .settings-main { min-width:0; min-height:0; display:flex; flex-direction:column; }
-.settings-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:22px 28px 14px; }
-.settings-head h1 { margin:0; font-size:22px; font-weight:600; letter-spacing:-.02em; }
+.settings-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 28px 14px; border-bottom:1px solid var(--line); }
+.settings-head h1 { margin:0; font-size:20px; font-weight:600; letter-spacing:-.02em; }
 #settings-dialog .settings-list-back { display:none; }
 .settings-head .icon-close { width:30px; height:30px; min-height:30px; padding:6px; border-radius:7px; }
 .settings-head .icon-close:hover { background:var(--surface-soft); }
@@ -51,21 +51,24 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
 #settings-dialog:not([open]) #account-view[hidden] { display:flex!important; }
 #cloud-login-dialog:not([open]) #login-view[hidden] { display:block!important; }
 .settings-content { flex:1; min-height:0; position:relative; overflow:hidden; display:grid; isolation:isolate; }
-.settings-category { grid-area:1/1; align-self:stretch; box-sizing:border-box; min-width:0; min-height:0; width:100%; margin:0; padding:4px 28px 28px; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; scroll-padding:12px; }
+.settings-category { grid-area:1/1; align-self:stretch; box-sizing:border-box; min-width:0; min-height:0; width:100%; margin:0; padding:18px 28px 32px; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; scroll-padding:16px; }
 .settings-category[inert] { pointer-events:none; }
 .settings-category > * { max-width:var(--settings-content-width); margin-inline:auto; }
 .settings-redundant-title,.settings-control-source { display:none; }
 #settings-dialog .settings-category :is(h2,h3) { font-size:var(--settings-body); font-weight:600; line-height:1.5; }
-.settings-dialog :is(.settings-section-title,.settings-group-title) { margin:0 0 8px; color:var(--ink); font-size:var(--settings-small); font-weight:600; }
-.settings-dialog :is(.settings-group,.settings-category > .card,.settings-category > section:not(.settings-group)) { margin:0 0 24px; }
-.settings-dialog :is(.settings-group-card,.settings-category > .card,.permission-rules,.usage-form,.data-categories,.record-list) { border:0; border-radius:var(--wm-radius-12); background:var(--surface); box-shadow:none; padding:0 16px; overflow:visible; }
+.settings-dialog :is(.settings-section-title,.settings-group-title) { margin:0 0 8px 2px; color:var(--ink-secondary); font-size:12px; font-weight:600; letter-spacing:.01em; }
+.settings-dialog :is(.settings-group,.settings-category > .card,.settings-category > section:not(.settings-group)) { margin:0 0 22px; }
+.settings-dialog :is(.settings-group-card,.settings-category > .card,.permission-rules,.usage-form,.data-categories,.record-list) { border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); box-shadow:none; padding:4px 18px; overflow:visible; }
+.settings-dialog :is(.settings-group-card,.settings-category > .card) > .settings-row:last-child { border-bottom:0; }
 .settings-dialog .settings-group-card > .settings-row + .settings-row { border-top:0; }
-.settings-dialog .settings-row { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:12px 0; min-height:52px; border:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 10%,transparent); font-size:var(--settings-body); }
+.settings-dialog .settings-row { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:12px 0; min-height:50px; border:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); font-size:var(--settings-body); }
 .settings-row > div:first-child { min-width:0; flex:1; }
 .settings-dialog .settings-row :is(label,.wm-row-title) { margin:0; font-size:var(--settings-body); font-weight:500; line-height:1.5; }
 .settings-dialog .settings-row .muted { margin:3px 0 0; font-size:var(--settings-small); line-height:1.55; color:var(--ink-muted); }
 .settings-row .muted:empty,.settings-category :is(.form-error,.field-help,.profile-status,.muted):empty { display:none; }
 .settings-dialog .settings-row > :is(select,.settings-select) { flex:none; min-width:0; width:auto; max-width:44%; min-height:32px; margin:0; padding:5px 10px; font-size:var(--settings-small); }
+.settings-dialog .settings-row > :is(input:not([type=checkbox],[type=radio],[type=range],[type=color],[type=file]),textarea) { flex:none; min-width:0; width:auto; max-width:46%; margin:0; }
+.settings-dialog .settings-row > input[type=time], .settings-dialog .settings-row > input[type=number] { width:132px; }
 .settings-dialog .settings-row > .settings-switch { flex:none; }
 .settings-value { max-width:44%; text-align:right; font-size:var(--settings-small); color:var(--ink-secondary); overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 .settings-dialog .settings-category .group-heading { gap:12px; margin:0 0 10px; padding:0; border:0; align-items:center; }
@@ -104,8 +107,11 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
 #settings-dialog .cloud-device-row { align-items:flex-start; }
 #settings-dialog .cloud-device-summary { align-items:flex-start; }
 #settings-dialog .cloud-device-summary .device-content { flex:1; min-width:0; }
-#settings-dialog #cloud-devices-panel > .group-heading { justify-content:flex-end; }
-#settings-dialog #cloud-directory { padding-inline:16px; border-radius:var(--wm-radius-12); background:var(--surface); }
+#settings-dialog #cloud-devices-panel > .group-heading { justify-content:flex-start; gap:10px; margin-bottom:12px; }
+#settings-dialog #cloud-directory-login { justify-content:flex-start; margin:0 0 16px; }
+#settings-dialog #cloud-directory-login:empty { display:none; }
+#settings-dialog #cloud-directory { padding:4px 18px; border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); }
+#settings-dialog #cloud-directory:empty { display:none; }
 #settings-dialog .cloud-device-summary > svg { flex:none; margin-top:2px; }
 #settings-dialog .cloud-device-actions { margin-top:0; }
 #settings-dialog .capabilities-toolbar .settings-select { min-width:8em; flex:none; }
@@ -113,14 +119,15 @@ body:has(#settings-dialog[open]) dialog.cloud-login-dialog::backdrop { backdrop-
 .remote-phone #settings-dialog .settings-group-card > .settings-row:last-child { border-bottom:0; }
 html:not([data-pointer-cursor]) :is(button,[role=button],[role=tab],summary,.settings-nav-item,.capability-open) { cursor:default; }
 html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-nav-item,.capability-open):not(:disabled) { cursor:pointer; }
-#settings-usage-strip { align-self:flex-end; max-width:100%; margin:0; padding:0 28px 8px; border:0; background:transparent; font-size:12px; color:var(--ink-muted); text-align:right; }
+#settings-usage-strip { align-self:flex-end; max-width:100%; margin:0; padding:8px 28px 0; border:0; background:transparent; font-size:12px; color:var(--ink-muted); text-align:right; }
+#settings-usage-strip:empty { display:none; }
 /* Personal writing and assistant defaults. */
 .settings-dialog .personalization-form { display:block; }
 .settings-dialog .personalization-field { width:var(--settings-control-width); flex:none; }
 .settings-dialog .personalization-field textarea { height:76px; }
 .settings-dialog .personalization-field :is(input,textarea) { width:100%; }
 .settings-dialog .personalization-field small { font-size:11px; margin-top:3px; }
-.settings-dialog .settings-editor { margin:0 0 var(--wm-space-16); padding-inline:var(--wm-space-16); border-bottom:1px solid var(--line); }
+.settings-dialog .settings-editor { margin:0 0 var(--wm-space-14,14px); padding-inline:18px; border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); }
 #settings-dialog .settings-editor > summary { display:grid; grid-template-columns:minmax(0,1fr) auto var(--wm-space-8); gap:var(--wm-space-16); min-height:var(--wm-space-52,52px); }
 #settings-dialog .settings-editor > summary::after { margin:0; justify-self:center; }
 .settings-dialog .settings-editor-label { min-width:0; overflow-wrap:anywhere; }
@@ -164,7 +171,8 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog #profile-form > :is(.form-error,.profile-status) { padding:0; }
 .settings-category[data-category=account] .group-heading { display:none; }
 .settings-dialog .settings-category[data-category=account] .card > .actions { padding:0; }
-.settings-dialog .cloud-settings { border:0; border-top:1px solid var(--line); padding:20px 0 0; border-radius:0; background:transparent; }
+.settings-dialog .settings-profile { padding:16px 18px 18px; }
+.settings-dialog .cloud-settings { border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); padding:16px 18px 18px; border-radius:var(--wm-radius-12); background:var(--surface); }
 .settings-dialog #cloud-account-panel { padding:0; }
 .settings-dialog #cloud-account-panel > h2 { display:block; margin:0 0 12px; font-size:var(--settings-body); }
 .settings-dialog .account-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 0; margin:0; font-size:var(--settings-small); border-bottom:1px solid var(--line); }
@@ -177,12 +185,19 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog .cloud-account-form { display:grid; gap:12px; }
 .settings-dialog .cloud-account-form > label { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,46%); align-items:center; gap:20px; }
 /* Lists, storage, permissions and computer tools use the same aligned rhythm. */
-.settings-dialog :is(.system-service,.device-item,.settings-schedule-row) { gap:12px; padding:12px 0; margin:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; }
-.settings-dialog :is(.device-list,.settings-schedules-list,#system-services,.system-services) { padding:0; margin:12px 0; list-style:none; border:0; border-radius:0; overflow:visible; }
+.settings-dialog :is(.system-service,.device-item,.settings-schedule-row) { gap:12px; padding:14px 0; margin:0; border:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); border-radius:0; background:transparent; }
+.settings-dialog :is(.system-service,.device-item,.settings-schedule-row):last-child { border-bottom:0; }
+.settings-dialog :is(.device-list,.settings-schedules-list,.system-services) { padding:0; margin:12px 0; list-style:none; border:0; border-radius:0; overflow:visible; }
+.settings-dialog #system-services { padding:4px 18px; margin:10px 0 20px; list-style:none; border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); overflow:visible; }
+.settings-dialog #system-services:empty { display:none; }
 .settings-dialog :is(.device-meta,.cloud-device-meta,.system-service-detail small) { font-size:12px; }
 .settings-dialog .device-title strong { font-size:var(--settings-body); }
 .settings-dialog .cloud-device-summary { padding:4px 0; gap:12px; }
-.settings-dialog .account-downloads { padding-top:20px; border-top:1px solid var(--line); }
+.settings-dialog .account-downloads { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:20px; padding-top:18px; border-top:1px solid var(--line); }
+.settings-dialog .archived-search-box { margin-bottom:16px; }
+.settings-dialog .archived-session-list:not(:empty) { border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); padding:4px 18px; }
+.settings-dialog .archived-empty { margin:0; padding:20px 4px; color:var(--ink-muted); }
+.settings-dialog .archived-empty:empty { display:none; }
 .settings-schedule-row { display:flex; align-items:center; flex-wrap:wrap; }
 .settings-schedule-row .system-service-detail { flex:1; min-width:0; }
 .settings-dialog .project-register { max-width:none; }
@@ -190,30 +205,50 @@ html[data-pointer-cursor] :is(button,[role=button],[role=tab],summary,.settings-
 .settings-dialog :is(.project-register,.browser-workspace-form) > :is(p,button) { grid-column:1 / -1; }
 .settings-dialog .project-row { padding:12px 0; gap:12px; border-bottom:1px solid var(--line); }
 .settings-dialog .permission-rules { gap:0; }
+.settings-dialog .permission-rules > p.muted { margin:0; padding:12px 0 10px; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); }
 .settings-dialog .permission-rules .settings-row + .settings-row { border-top:0; }
-.settings-dialog .record-row { padding:12px 0; border-radius:0; }
-.settings-dialog .record-filters { margin-top:0; }
+.settings-dialog .permission-rules .settings-row:has(+ .permission-actions) { border-bottom:0; }
+.settings-dialog .permission-actions { display:flex; justify-content:flex-end; padding:10px 0 12px; }
+.settings-dialog .execution-records { border:0; border-radius:0; overflow:visible; margin:0; background:transparent; }
+.settings-dialog .execution-records > p.muted { margin:0 0 12px; }
+.settings-dialog .execution-records > [role=status]:not(:empty) { display:flex; align-items:center; gap:10px; padding:18px 4px; margin:0; }
+.settings-dialog .execution-records > [role=status] button { margin:0 0 0 auto; }
+.settings-dialog .record-empty-icon { display:inline-flex; margin-bottom:0; }
+.settings-dialog .record-row { padding:14px 4px; border-radius:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); }
+.settings-dialog .record-row:last-child { border-bottom:0; }
+.settings-dialog .record-list:empty { display:none; }
+.settings-dialog .record-filters { margin:0 0 14px; }
 .settings-dialog .usage-body { padding:0; }
 .settings-dialog .usage-toolbar { gap:8px; flex-wrap:wrap; }
 .settings-dialog .usage-toolbar h2 { display:none; }
 .settings-dialog .usage-total { font-size:22px; margin:20px 0 6px; }
 .settings-dialog .usage-tokens { font-size:12px; color:var(--ink-secondary); }
 .settings-dialog .usage-chart { height:112px; min-height:112px; margin:12px 0; }
-.settings-dialog .usage-form { display:block; margin:0 0 20px; }
-.settings-dialog .usage-form > label { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,46%); gap:20px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); }
+.settings-dialog .usage-form { display:block; margin:0 0 20px; padding:6px 18px 18px; }
+.settings-dialog .usage-form > label { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:20px; align-items:center; padding:12px 0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); }
+.settings-dialog .usage-form input[type=number] { width:140px; text-align:right; }
 .settings-dialog .usage-form > :is(p,button) { margin-top:12px; }
 .settings-dialog :is(.usage-ranking,.record-list) { margin-bottom:24px; }
 .settings-dialog .data-total { font-size:22px; font-weight:500; }
 .settings-dialog .data-category { margin:0; border-radius:0; }
+.settings-dialog :is(.data-actions,.data-danger) { margin:18px 0 0; padding:16px 18px 18px; border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); }
+.settings-dialog .data-actions { margin-bottom:16px; }
+.settings-dialog :is(.data-actions,.data-danger) > h2 { margin:0 0 6px; }
+.settings-dialog :is(.data-actions,.data-danger) > p { margin:0 0 12px; }
+.settings-dialog .data-danger > .button { margin:0 8px 0 0; }
+.settings-category[data-category=resources] > .card { padding:16px 18px 18px; }
+.settings-category[data-category=resources] > .card p { margin:4px 0 12px; }
 .settings-dialog #memory-view > .page-heading { display:none; }
 .settings-dialog .memory-panel { padding:0; border:0; border-radius:0; box-shadow:none; }
 .settings-dialog .memory-search-form { flex-wrap:wrap; }
 .settings-dialog .memory-search-form > div { min-width:0; }
 /* Local and cloud backups are two clearly named sections. */
+.settings-dialog .backup-settings { padding:16px 18px 18px; }
 .settings-dialog .backup-settings > h2 { display:none; }
 .settings-dialog .backup-settings form { display:block; }
-.settings-dialog .backup-settings form label { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:12px 0; margin:0; border-bottom:1px solid var(--line); font-size:var(--settings-body); font-weight:500; }
+.settings-dialog .backup-settings form label { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:12px 0; margin:0; border-bottom:1px solid color-mix(in srgb,var(--ink) 9%,transparent); font-size:var(--settings-body); font-weight:500; }
 .settings-dialog .backup-settings form label > :is(input,select) { max-width:46%; }
+.settings-dialog .backup-settings form label > input[type=number] { width:120px; text-align:right; }
 .settings-dialog .backup-settings form button { margin-top:12px; }
 .settings-dialog .backup-settings .field-help { margin:6px 0; }
 .settings-dialog .backup-description { margin-bottom:16px; }
@@ -359,6 +394,15 @@ html[data-reduced-motion] :is(#settings-dialog,#cloud-login-dialog,.model-editor
 
 .settings-category[data-category=system] #system-heading { display:none; }
 .settings-category[data-category=system] .group-heading { justify-content:flex-end; border-bottom:0; padding-bottom:0; margin-bottom:0; }
+.settings-category[data-category=system] > section.card:first-of-type { background:transparent; border:0; padding:0; margin:0; }
+.settings-category[data-category=system] :is(.system-metrics,.system-diagnostic-export,.run-records) { border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:var(--wm-radius-12); background:var(--surface); padding:16px 18px; margin:16px 0 0; }
+.settings-category[data-category=system] .system-diagnostic-export h3,.settings-category[data-category=system] .system-metrics h3 { margin:0 0 8px; }
+.settings-category[data-category=system] .system-diagnostic-export p { margin:0 0 12px; }
+.settings-category[data-category=system] .run-records p { margin:0 0 10px; }
+.settings-category[data-category=system] .run-records .actions { margin:14px 0 0; }
+.settings-category[data-category=system] .card.notice { padding:14px 18px; margin-top:16px; }
+.settings-category[data-category=system] .card.notice h2 { margin:0 0 4px; }
+.settings-category[data-category=system] .card.notice p { margin:0; color:var(--ink-secondary); }
 #system-notice:empty { display:none; }
 
 

@@ -6,15 +6,15 @@ const contexts = new WeakMap();
 export const executionDirectory = session => contexts.get(session)?.cwd ?? session?.header?.cwd;
 export const sessionProject = session => contexts.get(session)?.project;
 export function projectContextNotice(session) {
-  const { project, cwd } = contexts.get(session) ?? {};
-  return project ? `项目：${project.name}。本回合默认工作目录：${cwd}。权限：${project.permission === 'write' ? '可写（仅项目文件夹内）' : '只读（禁止修改文件）'}。历史回合的文件仍留在当时的目录。\n项目固定说明：\n${project.instructions}` : null;
+  const { project, cwd, allowAll } = contexts.get(session) ?? {};
+  return project ? `项目：${project.name}。本回合默认工作目录：${cwd}。权限：${project.permission === 'write' ? (allowAll ? '可写（全部允许）' : '可写（仅项目文件夹内）') : '只读（禁止修改文件）'}。历史回合的文件仍留在当时的目录。\n项目固定说明：\n${project.instructions}` : null;
 }
 
 export async function selectProjectContext(agent, policy) {
   const project = policy.project;
   const cwd = project?.rootPath ?? (policy.projectNotice ? policy.conversationWorkspace : agent.session.header.cwd);
   if (!project && cwd) await mkdir(cwd, { recursive: true });
-  contexts.set(agent.session, { cwd, project });
+  contexts.set(agent.session, { cwd, project, allowAll: policy.mode === 'allow-all' });
   return projectContextNotice(agent.session) ?? policy.projectNotice;
 }
 
@@ -59,14 +59,17 @@ export function installProjectSandbox(service) {
     const policy = original.call(this, request), context = contexts.get(request.session);
     if (!context?.project) return context?.cwd ? { ...policy, workspaceRoot: context.cwd } : policy;
     return { ...policy, workspaceRoot: context.cwd,
-      mode: context.project.permission === 'read-only' ? 'read-only' : request.mode ?? 'workspace-write' };
+      mode: context.project.permission === 'read-only'
+        ? 'read-only'
+        : (policy.mode === 'danger-full-access' ? 'danger-full-access' : (request.mode ?? 'workspace-write')) };
   };
   return () => { service.resolve = original; };
 }
 
-export async function projectToolDecision(exec) {
+export async function projectToolDecision(exec, policy = null) {
   const project = sessionProject(exec.agent?.session);
   if (!project) return null;
+  if (project.permission !== 'read-only' && policy?.mode === 'allow-all') return null;
   if (['write', 'edit'].includes(exec.name)) {
     if (project.permission === 'read-only') return { kind: 'deny', reason: 'PROJECT_READ_ONLY: 此项目只读。请在项目设置改为可写后再修改文件。' };
     if (!exec.arguments?.sandbox_permissions && !await insideProject(project.rootPath, resolve(executionDirectory(exec.agent.session), exec.arguments.file_path ?? '')))

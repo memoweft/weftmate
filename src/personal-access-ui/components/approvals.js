@@ -1,7 +1,11 @@
 /* Desktop approvals component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
+    let priorNonPlanMode = 'auto';
     function setApprovalModeBusy(busy) {
-        ui.byId('approval-mode-trigger').disabled = busy;
+        const trigger = ui.byId('approval-mode-trigger');
+        if (trigger) trigger.disabled = busy;
+        const plan = ui.byId('plan-mode-toggle');
+        if (plan) plan.disabled = busy;
     }
     function focusApprovalMode() {
         ui.byId('approval-mode-trigger').focus();
@@ -17,9 +21,17 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         if (!menu || !trigger)
             return;
         const currentMode=core.state.newConversation?core.state.newConversationApprovalMode:core.currentApprovalMode;
+        if (currentMode && currentMode !== 'plan') priorNonPlanMode = currentMode;
         ui.byId('approval-mode-label').textContent = core.approvalModes.find(row => row[0] === currentMode)?.[1].replace('（推荐）', '') ?? '审批模式';
         trigger.title = core.approvalModes.find(row => row[0] === currentMode)?.[2] ?? '选择新对话的审批模式';
         trigger.classList.toggle('is-warning', currentMode === 'allow-all');
+        const plan = ui.byId('plan-mode-toggle');
+        if (plan) {
+            const active = currentMode === 'plan';
+            plan.classList.toggle('is-active', active);
+            plan.setAttribute('aria-pressed', String(active));
+            plan.title = active ? '当前为先出计划模式，点击退出并恢复原权限模式' : '开启先出计划模式：先给方案，你确认后再执行';
+        }
         const shield = trigger.querySelector('.approval-shield');
         if (shield) shield.toggleAttribute('hidden', currentMode !== 'allow-all' && !globalThis.matchMedia?.('(max-width:640px)').matches);
         menu.replaceChildren();
@@ -236,6 +248,11 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             ui.byId('approval-mode-trigger').setAttribute('aria-expanded', String(opening));
             if (opening)
                 menu.querySelector('[aria-checked="true"]')?.focus();
+        });
+        ui.byId('plan-mode-toggle')?.addEventListener('click', () => {
+            const currentMode = core.state.newConversation ? core.state.newConversationApprovalMode : core.currentApprovalMode;
+            const target = currentMode === 'plan' ? (priorNonPlanMode && priorNonPlanMode !== 'plan' ? priorNonPlanMode : 'auto') : 'plan';
+            void core.saveApprovalMode(target);
         });
         document.addEventListener('click', event => {
             if (!ui.byId('approval-picker')?.contains(event.target))

@@ -113,6 +113,14 @@ export function stopExactTask(agents, claimedBySession, input) {
     : outcomes.some((item) => item.status === 'cancel_requested') ? 'cancel_requested' : 'queue_removed', outcomes };
 }
 
+function jobSnapshotOwner(snapshot) {
+  return snapshot?.owner ?? snapshot?.ownerSession;
+}
+
+function jobCaller(jobs, owner) {
+  return typeof jobs?.events?.subscribe === 'function' ? (owner?.id ?? owner?.session?.id) : owner;
+}
+
 /** Cancel and await only native jobs claimed by this exact session and original receipt. */
 export async function stopReceiptBackgroundJobs(jobs, claims, input) {
   return Promise.all(input.receiptIds.map(async receiptId => {
@@ -120,13 +128,14 @@ export async function stopReceiptBackgroundJobs(jobs, claims, input) {
     const backgroundJobs = await Promise.all([...owned.entries()].map(async ([jobId, owner]) => {
       try {
         if (owner.session?.id !== input.sessionId) return { jobId, state: 'unconfirmed' };
-        const initial = jobs.get(jobId, owner);
-        if (initial.ownerSession !== input.sessionId || initial.kind !== 'pwsh') return { jobId, state: 'unconfirmed' };
+        const caller = jobCaller(jobs, owner);
+        const initial = jobs.get(jobId, caller);
+        if (jobSnapshotOwner(initial) !== input.sessionId || initial.kind !== 'pwsh') return { jobId, state: 'unconfirmed' };
         if (['running', 'stopping'].includes(initial.status)) {
-          jobs.kill(jobId, owner, 'personal task stop');
-          await jobs.wait(jobId, 2_000, owner);
+          jobs.kill(jobId, caller, 'personal task stop');
+          await jobs.wait(jobId, 2_000, caller);
         }
-        const state = jobs.get(jobId, owner).status;
+        const state = jobs.get(jobId, caller).status;
         return { jobId, state: ['running', 'stopping', 'completed', 'killed', 'failed'].includes(state) ? state : 'unconfirmed' };
       } catch { return { jobId, state: 'unconfirmed' }; }
     }));
@@ -142,8 +151,8 @@ export function claimReceiptBackgroundJob(agents, jobs, claims, stoppedReceipts,
       typeof claim.receiptId !== 'string' || !RECEIPT.test(claim.receiptId) ||
       typeof claim.jobId !== 'string' || !RECEIPT.test(claim.jobId) || !jobs) return false;
   let snapshot;
-  try { snapshot = jobs.get(claim.jobId, owner); } catch { return false; }
-  if (snapshot.ownerSession !== claim.sessionId || snapshot.kind !== 'pwsh') return false;
+  try { snapshot = jobs.get(claim.jobId, jobCaller(jobs, owner)); } catch { return false; }
+  if (jobSnapshotOwner(snapshot) !== claim.sessionId || snapshot.kind !== 'pwsh') return false;
   const key = `${claim.sessionId}\u0000${claim.receiptId}`;
   let table = claims.get(key);
   if (!table) {

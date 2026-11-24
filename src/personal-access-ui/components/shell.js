@@ -93,44 +93,270 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         const focusTarget = selected || list.children[0];
         focusTarget?.focus();
     }
-    function stopVoiceInput() {
-        if (ui.voiceInput) {
-            const input = ui.voiceInput;
-            ui.voiceInput = null;
-            input.abort();
+    function encodePcm16MonoWavBase64(chunks, inputSampleRate) {
+        let totalLength = 0;
+        for (const chunk of chunks) totalLength += chunk.length;
+        if (totalLength === 0) return null;
+        const merged = new Float32Array(totalLength);
+        let offset = 0;
+        for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.length; }
+        const targetRate = 16000;
+        const ratio = inputSampleRate / targetRate;
+        const targetLength = Math.max(1, Math.round(totalLength / ratio));
+        const pcm = new Int16Array(targetLength);
+        for (let i = 0; i < targetLength; i++) {
+            const pos = i * ratio;
+            const lo = Math.min(totalLength - 1, Math.floor(pos));
+            const hi = Math.min(totalLength - 1, lo + 1);
+            const frac = pos - lo;
+            const sample = merged[lo] * (1 - frac) + merged[hi] * frac;
+            const clamped = Math.max(-1, Math.min(1, sample));
+            pcm[i] = clamped < 0 ? Math.round(clamped * 0x8000) : Math.round(clamped * 0x7fff);
         }
-        ui.byId('voice-input').classList.remove('is-recording');
-        ui.byId('voice-input').setAttribute('aria-pressed', 'false');
-        ui.byId('voice-input').setAttribute('aria-label', '语音输入');
+        const dataBytes = pcm.byteLength;
+        const buffer = new ArrayBuffer(44 + dataBytes);
+        const view = new DataView(buffer);
+        const writeAscii = (at, str) => { for (let i = 0; i < str.length; i++) view.setUint8(at + i, str.charCodeAt(i)); };
+        writeAscii(0, 'RIFF');
+        view.setUint32(4, 36 + dataBytes, true);
+        writeAscii(8, 'WAVE');
+        writeAscii(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, targetRate, true);
+        view.setUint32(28, targetRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeAscii(36, 'data');
+        view.setUint32(40, dataBytes, true);
+        new Int16Array(buffer, 44).set(pcm);
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        }
+        return btoa(binary);
     }
-    function startVoiceInput() {
+    function describeSpeechPrep(status) {
+        const phase = status?.phase;
+        const pct = status?.progress?.percent;
+        if (phase === 'downloading') return pct != null ? `正在下载离线语音模型… ${pct}%` : '正在下载离线语音模型（SenseVoice，约 240 MB）…';
+        if (phase === 'verifying') return '正在校验离线语音模型…';
+        if (phase === 'loading' || phase === 'waking') return '正在加载本地语音引擎…';
+        return '正在准备本地语音模型…';
+    }
+    function resetVoiceButton() {
+        const btn = ui.byId('voice-input');
+        if (!btn) return;
+        btn.classList.remove('is-recording', 'is-preparing');
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', '语音输入');
+        btn.title = '语音输入';
+    }
+    function insertVoiceTranscript(text, scope) {
+        if (!text || scope.generation !== core.state.identityGeneration || scope.session !== core.state.selectedSessionId ||
+            scope.source !== core.state.activeChatSource || scope.conversation !== core.state.selectedPhoneConversationId) return;
+        const field = ui.byId('message-text');
+        const draft = field.value;
+        field.value = `${draft}${draft && !/\s$/.test(draft) ? ' ' : ''}${text}`;
+        ui.updateAvailability();
+        field.focus();
+    }
+    function stopVoiceInput(options = {}) {
+        const input = ui.voiceInput;
+        if (!input) { resetVoiceButton(); return; }
+        ui.voiceInput = null;
+        if (input.kind === 'sensevoice-preparing') {
+            clearInterval(input.timer);
+            resetVoiceButton();
+            if (options.cancelPreparation) {
+                void core.accessApi('/speech/prepare', { method: 'POST', protectedWrite: true, body: { action: 'cancel' } }).catch(() => {});
+                ui.toast('已取消离线语音模型下载');
+            }
+            return;
+        }
+        if (input.kind === 'sensevoice-recording') {
+            clearTimeout(input.maxTimer);
+            try { input.processor?.disconnect(); } catch { /* ignore */ }
+            try { input.sourceNode?.disconnect(); } catch { /* ignore */ }
+            try { input.sink?.disconnect(); } catch { /* ignore */ }
+            try { input.stream?.getTracks().forEach((track) => track.stop()); } catch { /* ignore */ }
+            try { void input.audioCtx?.close(); } catch { /* ignore */ }
+            resetVoiceButton();
+            if (options.transcribe) {
+                const audioBase64 = encodePcm16MonoWavBase64(input.chunks, input.sampleRate);
+                if (!audioBase64) { ui.toast('没有录到声音，请再试一次'); return; }
+                const transcribing = { kind: 'sensevoice-transcribing', aborted: false };
+                ui.voiceInput = transcribing;
+                const btn = ui.byId('voice-input');
+                btn.classList.add('is-preparing');
+                btn.setAttribute('aria-label', '正在识别语音');
+                btn.title = '正在本地识别语音…';
+                void core.accessApi('/speech/transcribe', {
+                    method: 'POST',
+                    protectedWrite: true,
+                    body: { audioBase64, language: 'auto' },
+                    timeoutMs: 130000,
+                }).then((result) => {
+                    if (ui.voiceInput === transcribing) { ui.voiceInput = null; resetVoiceButton(); }
+                    if (transcribing.aborted) return;
+                    const text = String(result?.text || '').trim();
+                    if (text) insertVoiceTranscript(text, input.scope);
+                    else ui.toast('没有识别到语音内容，请再试一次');
+                }).catch((error) => {
+                    if (ui.voiceInput === transcribing) { ui.voiceInput = null; resetVoiceButton(); }
+                    if (!transcribing.aborted) ui.toast(core.failureMessage?.(error) || '本地语音识别未完成，请重试');
+                });
+            }
+            return;
+        }
+        if (input.kind === 'sensevoice-transcribing') {
+            input.aborted = true;
+            resetVoiceButton();
+            return;
+        }
+        try { input.abort?.(); } catch { /* ignore */ }
+        resetVoiceButton();
+    }
+    function pollSpeechPreparation(initialStatus) {
+        const btn = ui.byId('voice-input');
+        const msg = describeSpeechPrep(initialStatus);
+        btn.classList.add('is-preparing');
+        btn.setAttribute('aria-pressed', 'true');
+        btn.setAttribute('aria-label', '取消语音模型准备');
+        btn.title = `${msg}（再次点击取消）`;
+        const state = { kind: 'sensevoice-preparing', timer: null };
+        ui.voiceInput = state;
+        ui.toast(msg);
+        state.timer = setInterval(async () => {
+            if (ui.voiceInput !== state) { clearInterval(state.timer); return; }
+            try {
+                const status = await core.accessApi('/speech/status');
+                if (ui.voiceInput !== state) return;
+                if (status.phase === 'ready' || status.phase === 'standby') {
+                    clearInterval(state.timer);
+                    ui.voiceInput = null;
+                    resetVoiceButton();
+                    ui.toast('离线语音模型已就绪，点击麦克风即可开始说话');
+                    return;
+                }
+                if (status.phase === 'failed' || status.phase === 'cancelled' || status.phase === 'unprepared') {
+                    clearInterval(state.timer);
+                    ui.voiceInput = null;
+                    resetVoiceButton();
+                    if (status.phase === 'failed') ui.toast(status.detail ? `语音模型准备失败：${status.detail}` : '语音模型准备失败，请检查网络后重试');
+                    return;
+                }
+                btn.title = `${describeSpeechPrep(status)}（再次点击取消）`;
+            } catch { /* transient poll failure */ }
+        }, 1200);
+    }
+    async function startLocalSenseVoiceRecording(scope, maxDurationSeconds) {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            ui.toast('当前环境无法访问麦克风');
+            return;
+        }
+        let stream;
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+        } catch (error) {
+            ui.toast(error?.name === 'NotAllowedError' ? '请允许应用使用麦克风后重试' : '无法打开麦克风，请检查系统录音设备');
+            return;
+        }
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) {
+            stream.getTracks().forEach((t) => t.stop());
+            ui.toast('当前环境不支持本地录音');
+            return;
+        }
+        const audioCtx = new AudioCtx();
+        const sourceNode = audioCtx.createMediaStreamSource(stream);
+        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        const sink = audioCtx.createGain();
+        sink.gain.value = 0;
+        const chunks = [];
+        processor.onaudioprocess = (event) => {
+            const channel = event.inputBuffer.getChannelData(0);
+            chunks.push(new Float32Array(channel));
+        };
+        sourceNode.connect(processor);
+        processor.connect(sink);
+        sink.connect(audioCtx.destination);
+        const limitSec = Math.max(10, Math.min(118, (maxDurationSeconds || 120) - 2));
+        const recording = {
+            kind: 'sensevoice-recording',
+            stream,
+            audioCtx,
+            sourceNode,
+            processor,
+            sink,
+            chunks,
+            sampleRate: audioCtx.sampleRate || 48000,
+            scope,
+            maxTimer: setTimeout(() => {
+                if (ui.voiceInput === recording) stopVoiceInput({ transcribe: true });
+            }, limitSec * 1000),
+        };
+        ui.voiceInput = recording;
+        const btn = ui.byId('voice-input');
+        btn.classList.add('is-recording');
+        btn.setAttribute('aria-pressed', 'true');
+        btn.setAttribute('aria-label', '停止语音输入');
+        btn.title = '正在本地录音，再次点击结束并识别';
+    }
+    async function startVoiceInput() {
         if (ui.voiceInput) {
+            if (ui.voiceInput.kind === 'sensevoice-recording') { stopVoiceInput({ transcribe: true }); return; }
+            if (ui.voiceInput.kind === 'sensevoice-preparing') { stopVoiceInput({ cancelPreparation: true }); return; }
+            if (ui.voiceInput.kind === 'sensevoice-transcribing') { ui.toast('正在本地识别语音，请稍候…'); return; }
             ui.stopVoiceInput();
             return;
         }
         if (ui.byId('message-text').disabled)
             return;
+        const scope = {
+            generation: core.state.identityGeneration,
+            session: core.state.selectedSessionId,
+            source: core.state.activeChatSource,
+            conversation: core.state.selectedPhoneConversationId,
+        };
+        if (core.state.activeChatSource !== 'phone') {
+            try {
+                const status = await core.accessApi('/speech/status');
+                if (scope.generation !== core.state.identityGeneration || scope.session !== core.state.selectedSessionId) return;
+                if (status?.available) {
+                    if (status.phase === 'ready' || status.phase === 'standby') {
+                        await startLocalSenseVoiceRecording(scope, status.maxDurationSeconds);
+                        return;
+                    }
+                    if (['checking', 'downloading', 'verifying', 'loading', 'waking'].includes(status.phase)) {
+                        pollSpeechPreparation(status);
+                        return;
+                    }
+                    const started = await core.accessApi('/speech/prepare', { method: 'POST', protectedWrite: true, body: { action: 'prepare' } });
+                    if (started.phase === 'ready' || started.phase === 'standby') {
+                        await startLocalSenseVoiceRecording(scope, started.maxDurationSeconds);
+                        return;
+                    }
+                    pollSpeechPreparation(started);
+                    return;
+                }
+            } catch { /* Fall back to browser SpeechRecognition if local SenseVoice endpoint is unavailable. */ }
+        }
         const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!Recognition) {
-            ui.toast('当前浏览器不支持语音输入');
+            ui.toast('当前环境暂不支持语音输入');
             return;
         }
-        const generation = core.state.identityGeneration, session = core.state.selectedSessionId;
-        const source = core.state.activeChatSource, conversation = core.state.selectedPhoneConversationId;
         const input = new Recognition();
         ui.voiceInput = input;
         input.lang = 'zh-CN';
         input.interimResults = false;
         input.onresult = (event) => {
-            if (ui.voiceInput !== input || generation !== core.state.identityGeneration || session !== core.state.selectedSessionId ||
-                source !== core.state.activeChatSource || conversation !== core.state.selectedPhoneConversationId)
-                return;
+            if (ui.voiceInput !== input) return;
             const text = [...event.results].map((result) => result[0]?.transcript || '').join('');
-            if (text) {
-                const draft = ui.byId('message-text').value;
-                ui.byId('message-text').value = `${draft}${draft && !/\s$/.test(draft) ? ' ' : ''}${text}`;
-                ui.updateAvailability();
-            }
+            if (text) insertVoiceTranscript(text, scope);
         };
         input.onerror = (event) => {
             if (ui.voiceInput === input && event.error !== 'aborted')

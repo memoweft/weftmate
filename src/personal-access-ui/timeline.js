@@ -367,7 +367,6 @@
             }
           });
         }
-        if(children.some(child=>child.dataset.state==='failed' && savedStepStates.get(child.dataset.step)!=='failed'))detail.open=true;
         const english = block.language==='en';
         const failed = children.some(child=>child.dataset.state==='failed');
         const groupView = WeftUiCore.progressText(groupTools,{terminal,reason:terminal?'ended':undefined,language:block.language});

@@ -19,11 +19,14 @@ test('incremental reads retain incomplete UTF-8 and GBK characters at raw byte o
 });
 test('shell adapter preserves truncation/spill facts and excludes protocol subprocesses',()=>{
  const make=()=>({chunks:[gbk],bytes:gbk.length,total:gbk.length+20,readFrom:()=>({text:gbk.toString('utf8'),nextOffset:gbk.length+20,lossy:true,spillPath:'synthetic.log'}),finalize:()=>({text:gbk.toString('utf8'),truncated:true,spillPath:'synthetic.log'}),seal(){}});
- const service:any={spawn:()=>({collected:{stdout:make(),stderr:make()}})}, original=service.spawn;
+ const spawned:string[][]=[];
+ const service:any={spawn:(spec:any)=>{spawned.push(spec.argv);return {collected:{stdout:make(),stderr:make()}};}} , original=service.spawn;
  const dispose=installCommandEncoding(service,{platform:'win32',codePage:936});
- const result=service.spawn({argv:['powershell.exe']}).collected.stdout;result.seal();
+ const result=service.spawn({argv:['powershell.exe','-NoProfile','-Command','rea --version']}).collected.stdout;result.seal();
+ assert.deepEqual(spawned[0],['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass','-Command','rea --version']);
  assert.deepEqual(result.readFrom(0),{text:'中文命令输出',nextOffset:gbk.length+20,lossy:true,spillPath:'synthetic.log'});
  assert.deepEqual(result.finalize(),{text:'中文命令输出',truncated:true,spillPath:'synthetic.log'});
  assert.equal(service.spawn({argv:['node','memory-bridge.js']}).collected.stdout.readFrom(0).text,gbk.toString('utf8'));
+ assert.deepEqual(spawned[1],['node','memory-bridge.js']);
  dispose();assert.equal(service.spawn,original);
 });

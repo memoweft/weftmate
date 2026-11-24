@@ -434,3 +434,119 @@ test('tool lifecycle derives a nested call from the real root event and records 
     assert.throws(() => personalExecutionIdentity({ ...exec, rootCallId: 'invented' }), { code: 'TOOL_SOURCE_UNAVAILABLE' })
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
+
+test('DSH 0.2.2 jobs API (events.subscribe, string caller, snapshot.owner) tracks background, promoted, and stopped pwsh jobs without JOB_FOREIGN_SESSION', async () => {
+  await withDesktopPlugin(async plugin => {
+    const frames: any[] = [], killed: string[] = [], listeners: any[] = []
+    const owner = {
+      id: 'session-dsh022',
+      session: {
+        id: 'session-dsh022',
+        header: { agentPreset: 'personal-remote' },
+        events: [
+          { type: 'turn/start', data: { turn: 1 } },
+          { type: 'user/message', data: { source: { kind: 'user', rpcId: 'receipt-dsh022' }, content: [{ type: 'text', text: 'run bg build' }] } },
+          { type: 'tool/call', data: { callId: 'call-bg', name: 'pwsh', turn: 1 } },
+          { type: 'tool/call', data: { callId: 'call-promoted', name: 'pwsh', turn: 1 } },
+          { type: 'tool/call', data: { callId: 'call-fg', name: 'pwsh', turn: 1 } },
+        ],
+      },
+    }
+    const snapshots = new Map<string, any>()
+    const expectCaller = (caller: unknown) => {
+      if (caller !== owner.id) throw Object.assign(new Error('belongs to another session'), { code: 'JOB_FOREIGN_SESSION' })
+    }
+    const emit = (event: any) => listeners.forEach(fn => fn(event))
+    const jobs = {
+      events: {
+        subscribe: (filter: any, listener: any) => {
+          assert.deepEqual(filter, { owners: 'all' })
+          listeners.push(listener)
+          return () => { const i = listeners.indexOf(listener); if (i >= 0) listeners.splice(i, 1) }
+        },
+      },
+      list: (caller: unknown) => { expectCaller(caller); return [...snapshots.values()].map(v => ({ ...v })) },
+      get: (id: string, caller: unknown) => { expectCaller(caller); assert.ok(snapshots.has(id)); return { ...snapshots.get(id) } },
+      kill: (id: string, caller: unknown) => {
+        expectCaller(caller); killed.push(id)
+        const s = snapshots.get(id); s.status = 'stopping'; emit({ type: 'stopping', job: { ...s } })
+      },
+      wait: async (id: string, ms: number, caller: unknown) => {
+        expectCaller(caller); assert.equal(ms, 2000)
+        const s = snapshots.get(id); s.status = 'killed'; emit({ type: 'settled', job: { ...s }, cause: 'kill', awaited: true })
+      },
+    }
+    const claims = new Map(), stopped = new Map()
+    const agents = { get: (id: string) => id === owner.id ? owner : undefined }
+    const bridge = {
+      request: async (frame: any) => {
+        frames.push(frame)
+        return { executionId: `exec-${frame.callId.padEnd(48, '0')}`, state: frame.state ?? 'running' }
+      },
+    }
+    const ctx = {
+      get: (name: string) => name === 'jobs' ? jobs : undefined,
+      inject: (_deps: string[], cb: any) => cb({ jobs }),
+      waterfall: async (_event: string, claim: any) => claimReceiptBackgroundJob(agents, jobs, claims, stopped, claim),
+    }
+    const background = plugin.createPersonalBackgroundTracker(ctx, bridge)
+    const startJob = (id: string) => {
+      const snap = { id, kind: 'pwsh', owner: owner.id, status: 'running' }
+      snapshots.set(id, snap)
+      emit({ type: 'registered', job: { ...snap } })
+    }
+    try {
+      // 1. Explicit run_in_background: true
+      await plugin.trackPersonalExecution(bridge, {
+        name: 'pwsh', arguments: { command: 'apktool b', run_in_background: true },
+        callId: 'call-bg', agent: owner,
+      }, async () => {
+        startJob('pwsh-bg001')
+        return { isError: false, value: { kind: 'background', jobId: 'pwsh-bg001' }, content: [{ type: 'text', text: 'started background job pwsh-bg001' }] }
+      }, background)
+      // 2. Foreground command promoted on timeout
+      await plugin.trackPersonalExecution(bridge, {
+        name: 'pwsh', arguments: { command: 'slow-cmd' },
+        callId: 'call-promoted', agent: owner,
+      }, async () => {
+        startJob('pwsh-prom002')
+        return { isError: false, value: { kind: 'promoted', jobId: 'pwsh-prom002', timeoutMs: 30000, output: '' }, content: [{ type: 'text', text: 'moved to background' }] }
+      }, background)
+      // 2b. Foreground command completes normally (DSH 0.2.2 registers then removes temporary job before returning)
+      await plugin.trackPersonalExecution(bridge, {
+        name: 'pwsh', arguments: { command: 'Get-Content built.txt' },
+        callId: 'call-fg', agent: owner,
+      }, async () => {
+        startJob('pwsh-fg003')
+        const fg = snapshots.get('pwsh-fg003'); fg.status = 'completed'
+        snapshots.delete('pwsh-fg003')
+        emit({ type: 'removed', job: { ...fg } })
+        return { isError: false, value: { kind: 'foreground', exitCode: 0, stdout: { text: 'APK_BUILT_OK' } }, content: [{ type: 'text', text: 'APK_BUILT_OK' }] }
+      }, background)
+
+      const finishes = frames.filter(f => f.action === 'finish_execution')
+      assert.deepEqual(finishes.map(f => [f.callId, f.state, f.jobId, f.jobState]), [
+        ['call-bg', 'completed', 'pwsh-bg001', 'running'],
+        ['call-promoted', 'completed', 'pwsh-prom002', 'running'],
+        ['call-fg', 'completed', undefined, undefined],
+      ])
+
+      // 3. Natural settlement delivers observe_execution_job
+      const bg = snapshots.get('pwsh-bg001'); bg.status = 'completed'
+      emit({ type: 'settled', job: { ...bg }, cause: 'producer', awaited: false })
+      await new Promise(resolve => setImmediate(resolve))
+      assert.equal(frames.some(f => f.action === 'observe_execution_job' && f.jobId === 'pwsh-bg001' && f.jobState === 'completed'), true)
+
+      // 4. Task stop kills remaining promoted job using string caller
+      const stoppedRes = await stopReceiptBackgroundJobs(jobs, claims, { sessionId: owner.id, receiptIds: ['receipt-dsh022'] })
+      assert.deepEqual(killed, ['pwsh-prom002'])
+      assert.deepEqual(stoppedRes[0].backgroundJobs, [
+        { jobId: 'pwsh-bg001', state: 'completed' },
+        { jobId: 'pwsh-prom002', state: 'killed' },
+      ])
+    } finally {
+      background.close()
+      assert.equal(listeners.length, 0)
+    }
+  })
+})

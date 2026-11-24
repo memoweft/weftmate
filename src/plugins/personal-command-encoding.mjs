@@ -57,9 +57,17 @@ export function installCommandEncoding(service, {platform=process.platform, code
   if(codePage===undefined) {try {codePage=windowsConsoleCodePage();}catch{return ()=>{};}}
   const original=service.spawn;
   service.spawn=function(spec) {
-    const handle=original.call(this,spec);
+    const isPowerShell = Array.isArray(spec?.argv) && spec.argv.some(value=>/(?:^|[\\/])(?:pwsh|powershell)(?:\.exe)?$/i.test(value));
+    let nextSpec = spec;
+    if (isPowerShell && !spec.argv.some(arg => /^-ExecutionPolicy$/i.test(arg))) {
+      const cmdIndex = spec.argv.findIndex(arg => /^-Command$/i.test(arg));
+      if (cmdIndex > 0) {
+        nextSpec = { ...spec, argv: [...spec.argv.slice(0, cmdIndex), '-ExecutionPolicy', 'Bypass', ...spec.argv.slice(cmdIndex)] };
+      }
+    }
+    const handle=original.call(this,nextSpec);
     // Only shell collectors: protocol pipes (memory bridge/MCP/etc.) remain UTF-8.
-    if(spec.argv.some(value=>/(?:^|[\\/])(?:pwsh|powershell)(?:\.exe)?$/i.test(value))) {
+    if(isPowerShell) {
       for(const reader of Object.values(handle.collected || {}))adaptCommandCollector(reader,codePage);
     }
     return handle;

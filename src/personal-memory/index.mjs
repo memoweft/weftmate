@@ -884,7 +884,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           const pendingFormationCount = jobs.filter(job => ['pending', 'processing', 'retry'].includes(job.worker?.state)).length;
           const recoveringFormationCount = jobs.filter(job => ['pending', 'processing', 'retry'].includes(job.worker?.state)
             && ['restart_recovered', 'shutdown_recovered'].includes(job.worker?.last_error_type)).length;
-          const failedFormationCount = jobs.filter(job => ['failed', 'blocked', 'uncertain', 'dead'].includes(job.worker?.state)).length;
+          const failedFormationCount = jobs.filter(job => ['failed', 'blocked', 'uncertain', 'dead'].includes(job.worker?.state)
+            && !(job.worker?.state === 'dead' && job.worker?.last_error_type === 'dispatch_outcome_unknown')).length;
           const routeState = processingHealth ? await processingHealth(ownerId).catch(() => 'unavailable') : 'ready';
           pendingCleanup = [...new Map([...pendingCleanup, ...[...activeCleanups.values()]
             .filter(cleanup => cleanup.ownerId === ownerId).map(cleanup => cleanup.row)]

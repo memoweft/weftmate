@@ -412,6 +412,27 @@ test('the exact user receipt is preserved for equal text in a later turn and a s
   } finally { await f.close() }
 })
 
+test('background job and subagent completion notices inherit the originating user turn receipt', async () => {
+  const f = await nativeFixture({ stage: 'automatic' })
+  try {
+    const turn1 = f.plugin.personalExecutionIdentity({ agent: f.agent, name: 'fixture_action', callId: 'fixture-call' })
+    f.session.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
+    f.session.append('turn/start', { turn: 2 })
+    f.session.append('tool/call', { turn: 2, step: 1, callId: 'untriggered-call', name: 'job_output', arguments: '{}' })
+    assert.throws(() => f.plugin.personalExecutionIdentity({ agent: f.agent, name: 'job_output', callId: 'untriggered-call' }),
+      { code: 'TOOL_SOURCE_UNAVAILABLE' })
+    f.session.append('user/message', { id: 'notice-job', source: { kind: 'tool-jobs', form: 'notice' },
+      content: [{ type: 'text', text: 'background job pwsh-1 finished [status: completed, exit code: 0].' }] }, { surfaceOp: 'append' })
+    f.session.append('tool/call', { turn: 2, step: 1, callId: 'job-read-call', name: 'job_output', arguments: '{}' })
+    const inherited = f.plugin.personalExecutionIdentity({ agent: f.agent, name: 'job_output', callId: 'job-read-call' })
+    assert.deepEqual(Object.keys(inherited).sort(), ['callId', 'messageHash', 'receiptId', 'rootCallId', 'sessionId', 'turn'])
+    assert.equal(inherited.turn, turn1.turn)
+    assert.equal(inherited.receiptId, turn1.receiptId)
+    assert.equal(inherited.messageHash, turn1.messageHash)
+    assert.equal(inherited.callId, 'job-read-call')
+  } finally { await f.close() }
+})
+
 function managedChild(sent: any[]) {
   return Object.assign(new EventEmitter(), { connected: true, send: (value: any) => sent.push(value) })
 }

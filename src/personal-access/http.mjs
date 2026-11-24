@@ -2,6 +2,7 @@ import { requireSendRequestId, requireSendProject, requireSendSession, requireSe
 import { isRemoteSession, isSharedSession } from './backend-boundary.mjs';
 import { dailyDigestState } from './daily-digest.mjs';
 import { SLASH_COMMAND_TIMEOUT_MS } from '../runtime/dsh-adapter/commands.mjs';
+import { SPEECH_TRANSCRIBE_TIMEOUT_MS, SPEECH_REQUEST_BODY_LIMIT } from '../runtime/dsh-adapter/speech.mjs';
 import { connectorSettings } from '../personal-connectors/access.mjs';
 import { PERMISSION_TYPES, validPermissionRules, mergePermissionRules, connectorToolKey } from '../plugins/personal-permission-rules.mjs';
 import { executionRecords } from './execution-records.mjs';
@@ -1577,6 +1578,44 @@ export function createHttpHandler(context) {
         const result = request.method === 'DELETE'
           ? await context.sessionOperations.deleteSession(ownerId, lifecycleMatch[1], body)
           : await context.sessionOperations.archiveSession(ownerId, lifecycleMatch[1], lifecycleMatch[2] === 'archive');
+        return context.json(response, 200, result);
+      }
+      if (pathname === '/personal/v1/speech/status' && request.method === 'GET') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, 'sessions:read');
+        if (typeof context.backend.speechStatus !== 'function') {
+          return context.json(response, 200, { available: false, phase: 'unavailable' });
+        }
+        const result = await context.callBackend(() => context.backend.speechStatus());
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        return context.json(response, 200, result);
+      }
+      if (pathname === '/personal/v1/speech/prepare' && request.method === 'POST') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, 'commands:write');
+        const body = await context.readJson(request);
+        exactKeys(body, ['action', 'providerId']);
+        if (body.action !== undefined && !['prepare', 'cancel'].includes(body.action)) throw failure('INVALID_REQUEST');
+        if (body.providerId !== undefined && (typeof body.providerId !== 'string' || !/^[A-Za-z0-9._-]{1,64}$/.test(body.providerId))) throw failure('INVALID_REQUEST');
+        if (typeof context.backend.speechPrepare !== 'function') throw failure('BACKEND_UNAVAILABLE', 503);
+        const result = await context.callBackend(() => context.backend.speechPrepare(body));
+        const current = context.authenticate(request, 'commands:write');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        return context.json(response, 200, result);
+      }
+      if (pathname === '/personal/v1/speech/transcribe' && request.method === 'POST') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, 'commands:write');
+        const body = await context.readJson(request, SPEECH_REQUEST_BODY_LIMIT);
+        exactKeys(body, ['audioBase64', 'language', 'providerId'], ['audioBase64']);
+        if (typeof body.audioBase64 !== 'string' || !body.audioBase64.length) throw failure('INVALID_REQUEST');
+        if (body.language !== undefined && (typeof body.language !== 'string' || !['auto', 'zh', 'en', 'yue', 'ja', 'ko'].includes(body.language))) throw failure('INVALID_REQUEST');
+        if (body.providerId !== undefined && (typeof body.providerId !== 'string' || !/^[A-Za-z0-9._-]{1,64}$/.test(body.providerId))) throw failure('INVALID_REQUEST');
+        if (typeof context.backend.speechTranscribe !== 'function') throw failure('BACKEND_UNAVAILABLE', 503);
+        const result = await context.callBackend(() => context.backend.speechTranscribe(body), SPEECH_TRANSCRIBE_TIMEOUT_MS);
+        const current = context.authenticate(request, 'commands:write');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
         return context.json(response, 200, result);
       }
       const slashMatch=/^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/slash-commands$/.exec(pathname);

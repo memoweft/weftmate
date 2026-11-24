@@ -122,22 +122,16 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     await scoped.ctx.plugin(preset.default)
     const names = scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name)
     assert.deepEqual(names, ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
-      'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'browser', 'load_tools'])
+      'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'browser'])
     for (const name of ['personal_open_notepad', 'personal_save_document', 'personal_list_project_files',
-      'personal_read_project_file', 'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
+      'personal_read_project_file', 'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment', 'load_tools']) {
       assert.equal(names.includes(name), false)
     }
     const rawSchema = ctx.get('tools').schemas(agent).find((item: any) => item.name === 'pwsh')
     const assemble = () => scoped.ctx.waterfall('system-prompt/assemble', { tools: [rawSchema] }, { scope: agent },
       async () => ({ sections: [], tools: [rawSchema] }))
-    const deferred = await assemble()
-    assert.equal(deferred.tools.some((tool: any) => tool.name === 'pwsh'), false, 'PF-1 defers unloaded tool schemas')
-    // PF-1 added deferred presentation, not an execution permission bypass.
-    const loaded = await execTool(scoped.ctx.get('tools'), { name: 'load_tools', arguments: { names: ['pwsh'] },
-      agent, callId: 'load-pwsh', signal: new AbortController().signal })
-    assert.equal(loaded.isError, false)
-    assert.deepEqual(agent[Symbol.for('weftmate.loadedTools')], new Set(['pwsh']))
     const assembled = await assemble()
+    assert.equal(assembled.tools.some((tool: any) => tool.name === 'pwsh'), true, 'native tools are exposed directly without load_tools')
     assert.equal(assembled.tools[0].description, 'Run a PowerShell command in this conversation or an explicit workdir. The terminal is non-interactive: it cannot answer Read-Host, key presses, or confirmation prompts. Use native approval for risky operations; after approval, execute that approved operation without a second terminal confirmation. Do not add interactive -Confirm; when a cmdlet otherwise prompts, use -Confirm:$false. Never use this to bypass native approval or retry a rejected action. For file organization, use Move-Item -LiteralPath with explicit destinations and skip existing destinations; do not use -Force to replace user files unless requested. Directory creation is ordinary; deleting or overwriting user files requires native approval.')
     assert.equal(rawSchema.description, 'pwsh', 'the native registry and other presets keep their descriptions')
     for (let i = 0; i < 150; i++) remoteSession.append('tool/call', { turn: 1, callId: `call-${i}`, name: 'read' })

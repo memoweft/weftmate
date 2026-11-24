@@ -504,11 +504,15 @@ async function writePersonalRemotePreset(homeDir: string, profileName: string): 
   const previousWebComposition = previousContextAwareComposition
     .replace('    completionDelivery: quiet', '    completionDelivery: wakeup')
     .replace('    backgroundMode: continuable', '    backgroundMode: one-shot')
-  const contextAwareComposition = previousWebComposition.replace('    search: false', '    search: true')
+  const previousSearchComposition = previousWebComposition.replace('    search: false', '    search: true')
+  const contextAwareComposition = previousSearchComposition.replace(
+    `- name: ../../profiles/${profileName}/plugins/weftmate-personal-desktop-preset.mjs`,
+    `- id: skill-filesystem\n  name: '@deepseek-ai/dsh-skill-filesystem'\n- id: tool-skill\n  name: '@deepseek-ai/dsh-tool-skill'\n- id: command-goal\n  name: '@deepseek-ai/dsh-command-goal'\n- id: tool-office\n  name: '@deepseek-ai/dsh-tool-office'\n- name: ../../profiles/${profileName}/plugins/weftmate-personal-desktop-preset.mjs`,
+  )
   await mkdir(presetDir, { recursive: true })
   const existingComposition = (await readFile(composition, 'utf8').catch(() => '')).replace(/\r\n/g, '\n')
   const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
-  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== previousWebComposition && existingComposition !== previousContextAwareComposition && existingComposition !== `${compositionText}${PRESET_COMPACTION}` && existingComposition !== compositionText &&
+  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== previousSearchComposition && existingComposition !== previousWebComposition && existingComposition !== previousContextAwareComposition && existingComposition !== `${compositionText}${PRESET_COMPACTION}` && existingComposition !== compositionText &&
       existingComposition !== previousM1Composition && existingComposition !== `${previousM1Composition}${PRESET_COMPACTION}` &&
       existingComposition !== previousNativeComposition && existingComposition !== `${previousNativeComposition}${PRESET_COMPACTION}` &&
       existingComposition !== boundedCompositionText &&

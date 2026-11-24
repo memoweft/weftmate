@@ -40,3 +40,9 @@
 
 #conversation-pane.chat-workspace .composer-send.is-stop { border-radius:10px; background:var(--surface-soft); color:var(--ink); }
 #conversation-pane.chat-workspace .composer-send:disabled { cursor:default; }
+.plan-mode-toggle { gap:var(--wm-space-4); }
+.plan-mode-toggle.is-active { color:var(--accent); background:color-mix(in srgb,var(--accent) 12%,transparent); }
+.plan-mode-toggle.is-active:hover:not(:disabled) { background:color-mix(in srgb,var(--accent) 18%,transparent); }
+.is-phone .plan-mode-toggle { display:none; }
+@keyframes wm-voice-pulse { 0%,100% { opacity:1; } 50% { opacity:.45; } }
+#voice-input.is-preparing { color:var(--accent); animation:wm-voice-pulse 1.2s ease-in-out infinite; }

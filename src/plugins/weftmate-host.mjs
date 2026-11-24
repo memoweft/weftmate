@@ -30,6 +30,7 @@ import { createTypertAdapterClient } from '../runtime/dsh-adapter/typert-client.
 import { nativeTimelineLog } from '../runtime/dsh-adapter/timeline.mjs'
 import { nativeSessionLifecycle } from '../runtime/dsh-adapter/session-lifecycle.mjs'
 import { createNativeCommands } from '../runtime/dsh-adapter/commands.mjs'
+import { mountNativeSpeech, createNativeSpeech } from '../runtime/dsh-adapter/speech.mjs'
 
 const { InProcessApiClient, toFetchHandler } = await import('@deepseek-ai/dsh-host-apiproxy').catch(error => {
   if (error.code !== 'ERR_MODULE_NOT_FOUND' || !error.message.includes("Cannot find package '@deepseek-ai/dsh-host-apiproxy'")) throw error
@@ -51,9 +52,11 @@ export function apply(ctx) {
   const client = apiProxy != null
     ? new InProcessApiClient(toFetchHandler(apiProxy))
     : createTypertAdapterClient(ctx);
+  mountNativeSpeech(ctx, { dshHome: process.env.DSH_HOME });
   const gatewayV1 = createGatewayV1({
     client,
-    nativeCommands:createNativeCommands({client,lifecycle,getAgent:id=>ctx.get('agents')?.get(id),getCommands:()=>ctx.get('commands'),getTools:async agent=>(await ctx.get('systemPrompt')?.assemble({scope:agent}))?.tools ?? []}),
+    nativeCommands:createNativeCommands({client,lifecycle,getAgent:id=>ctx.get('agents')?.get(id),getCommands:()=>ctx.get('commands'),getTools:async agent=>{const assembled=await ctx.get('systemPrompt')?.assemble({scope:agent});const catalog=agent?.[Symbol.for('weftmate.catalogTools')];return Array.isArray(catalog)&&catalog.length?catalog.filter(tool=>tool.name!=='load_tools'):(assembled?.tools ?? []);}}),
+    nativeSpeech: createNativeSpeech({ getSpeech: () => ctx.get('speechToText') }),
     readLog,
     lifecycle,
     // P1-05 diagnostics deps：pin 由打包/启动方注入（env），不自行推断。
