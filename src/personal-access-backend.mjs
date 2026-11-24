@@ -110,6 +110,18 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       requireRuntime();await requireSession(sessionId,ownerId);
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/slash-commands`,{method:'POST',body:JSON.stringify({line})});
     },
+    async speechStatus() {
+      requireRuntime();
+      return gateway('/speech/status');
+    },
+    async speechPrepare(payload = {}) {
+      requireRuntime();
+      return gateway('/speech/prepare', { method: 'POST', body: JSON.stringify(payload) });
+    },
+    async speechTranscribe(payload = {}) {
+      requireRuntime();
+      return gateway('/speech/transcribe', { method: 'POST', body: JSON.stringify(payload), timeoutMs: 130_000 });
+    },
     async getStatus() {
       const running = Boolean(currentOrigin())
       let chat = false

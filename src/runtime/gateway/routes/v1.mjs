@@ -3,6 +3,7 @@ import { createDshModelAdapter } from '../../dsh-adapter/models.mjs'
 import { createDshPermissionAdapter } from '../../dsh-adapter/permissions.mjs'
 import { createDshSessionAdapter, DshAdapterError } from '../../dsh-adapter/sessions.mjs'
 import { createDshWorkspaceAdapter } from '../../dsh-adapter/workspace.mjs'
+import { SPEECH_REQUEST_BODY_LIMIT } from '../../dsh-adapter/speech.mjs'
 import { createDiagnostics } from '../diagnostics.mjs'
 import { gatewayError, writeJson } from '../errors/gateway-error.mjs'
 import { beginSse, sseEvent } from '../event-stream/sse.mjs'
@@ -43,7 +44,7 @@ function promptContent(value) {
   return value
 }
 
-export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, diagnostics: diagnosticsDeps } = {}) {
+export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, nativeSpeech, diagnostics: diagnosticsDeps } = {}) {
   if (client === undefined) throw new TypeError('supported DSH client is required')
   const sessions = createDshSessionAdapter(client, { readLog, lifecycle })
   const agents = createDshAgentAdapter(sessions)
@@ -158,6 +159,26 @@ export function createGatewayV1({ client, readLog, lifecycle, nativeCommands, di
         await sessions.resume(sessionId);
         if(req.method==='GET') return writeJson(res,200,await nativeCommands.list(sessionId));
         if(req.method==='POST') return writeJson(res,200,await nativeCommands.execute(sessionId,(await readJson(req)).line));
+      }
+      if (pathname === `${BASE}/speech/status` && req.method === 'GET') {
+        return writeJson(res, 200, nativeSpeech ? nativeSpeech.status() : { available: false, phase: 'unavailable' })
+      }
+      if (pathname === `${BASE}/speech/prepare` && req.method === 'POST') {
+        if (!nativeSpeech) return writeJson(res, 503, { error: { code: 'speech-unavailable', message: 'Local speech service is unavailable' } })
+        const payload = await readJson(req)
+        return writeJson(res, 200, await nativeSpeech.prepare(payload))
+      }
+      if (pathname === `${BASE}/speech/transcribe` && req.method === 'POST') {
+        if (!nativeSpeech) return writeJson(res, 503, { error: { code: 'speech-unavailable', message: 'Local speech service is unavailable' } })
+        const payload = await readJson(req, SPEECH_REQUEST_BODY_LIMIT)
+        const controller = new AbortController()
+        const onClose = () => { if (!res.writableEnded) controller.abort() }
+        req.on('close', onClose)
+        try {
+          return writeJson(res, 200, await nativeSpeech.transcribe(payload, controller.signal))
+        } finally {
+          req.off('close', onClose)
+        }
       }
 
       if (pathname === `${BASE}/sessions` && req.method === 'POST') {
