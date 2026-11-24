@@ -29,10 +29,11 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     const approval = ui.byId('approval-picker');
     if (approval.parentElement !== ui.byId('model-picker').parentElement) ui.byId('model-picker').before(approval);
     const fresh = core.state.newConversation, selected = project(), id = (fresh ? core.state.workDraftHostId : null) || core.currentExecutionComputer?.() || core.state.hostId;
-    const showToolbar=enabled&&working&&core.state.activeChatSource!=='phone';
+    const choices = core.workComputers(), online = choices.filter(row => row.online);
+    const showComputer = fresh && choices.length > 1;
+    const showToolbar = enabled && working && core.state.activeChatSource !== 'phone' && (fresh || !selected || !online.length);
     if (showToolbar) {
-      const choices = core.workComputers(), online = choices.filter(row => row.online);
-      selectLabel(computer,computerName(id),'desktop');computer.hidden = false;
+      selectLabel(computer,computerName(id),'desktop');computer.hidden = !showComputer;
       computer.disabled = !fresh || !choices.length; computer.setAttribute('aria-label', `电脑：${computerName(id)}`);
       selectLabel(folder,selected?.name || '选择项目或文件夹','folder');
       folder.setAttribute('aria-label', selected ? `项目或文件夹：${selected.name}` : '选择项目或文件夹');

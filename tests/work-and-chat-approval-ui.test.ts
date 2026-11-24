@@ -33,3 +33,57 @@ test('MODE-1 pending work card remains actionable after visiting a conversation 
     assert.equal(await page.locator('.work-switch-card').count(),0);
   }finally{await browser.close();}
 });
+
+test('composer work toolbar hides redundant local computer selector and collapses once a project is selected in an active conversation',async()=>{
+  const browser=await chromium.launch({headless:true});
+  try{
+    const page=await browser.newPage();
+    await page.setContent(`
+      <aside id="session-rail"><div id="rail-brand-row"><div id="rail-brand-actions"></div></div><div class="rail-top"><button id="new-session"><span class="rail-new-label"></span></button><button class="search-entry"></button></div><a id="rail-memory"></a></aside>
+      <main><header><h2 id="assistant-title"></h2></header><section id="chat-intro"><h1></h1></section><form id="message-form"><textarea id="message-text"></textarea><div class="composer-actions"><div id="approval-picker"></div><div id="model-picker"></div></div></form></main>
+    `);
+    await page.evaluate(()=>{(globalThis as any).WeftUiComponents={factories:{}};});
+    for(const file of ['icons.js','components/work-and-chat.js'])await page.addScriptTag({path:new URL('../src/personal-access-ui/'+file,import.meta.url).pathname.replace(/^\/([A-Za-z]:)/,'$1')});
+    const inspect=async()=>page.evaluate(()=>{
+      const fold=document.querySelector('.work-mode-fold') as HTMLElement;
+      const buttons=[...document.querySelectorAll('.work-mode-toolbar button')] as HTMLButtonElement[];
+      return {
+        open:fold.classList.contains('is-open'),
+        inert:fold.inert,
+        computerHidden:buttons[0].hidden,
+        folderHidden:buttons[1].hidden,
+        folderLabel:buttons[1].dataset.label,
+        hint:(document.querySelector('.work-mode-toolbar .work-mode-hint') as HTMLElement)?.textContent,
+      };
+    });
+    await page.evaluate(()=>{
+      const g:any=globalThis;
+      const state:any={newConversation:false,hostId:'host-a',hostName:'DESKTOP-LOCAL',online:true,activeChatSource:'desktop',
+        computers:[{hostId:'host-a',displayName:'DESKTOP-LOCAL',online:true}],
+        project:{projectId:'p1',name:'红果',permission:'write',rootPath:'C:\\work\\hongguo'}};
+      const core:any={state,supportsWorkModes:()=>true,currentConversationMode:()=>'work',
+        currentFolderProject:()=>state.project,currentExecutionComputer:()=>state.hostId,
+        workComputers:()=>state.computers,workHandoffs:()=>[]};
+      const ui:any={byId:(id:string)=>document.getElementById(id),
+        bindWorkspaceInfo(){}, updateAvailability(){}, paintSelectedSession(){},
+        element:(tag:string,cls='',text='')=>{const n=document.createElement(tag);n.className=cls;n.textContent=text;return n;}};
+      Object.assign(ui,g.WeftUiComponents.factories.workAndChat(core,ui));
+      ui.mountWorkMode(); ui.paintWorkMode();
+      g._state=state; g._paint=()=>ui.paintWorkMode();
+    });
+    // 1. Existing conversation with selected project & online computer -> collapsed
+    assert.deepEqual(await inspect().then(r=>({open:r.open,inert:r.inert})),{open:false,inert:true});
+    // 2. New work draft with single computer -> open, computer hidden, folder visible
+    await page.evaluate(()=>{const g:any=globalThis;g._state.newConversation=true;g._state.project=null;g._paint();});
+    let r=await inspect();
+    assert.equal(r.open,true); assert.equal(r.inert,false); assert.equal(r.computerHidden,true); assert.equal(r.folderHidden,false); assert.equal(r.hint,'先选文件夹');
+    // 3. New work draft with multiple computers -> open, computer visible
+    await page.evaluate(()=>{const g:any=globalThis;g._state.computers.push({hostId:'host-b',displayName:'REMOTE-PC',online:true});g._paint();});
+    r=await inspect();
+    assert.equal(r.open,true); assert.equal(r.computerHidden,false); assert.equal(r.folderHidden,false);
+    // 4. Existing conversation when computer goes offline -> opens to surface offline status, computer button stays hidden
+    await page.evaluate(()=>{const g:any=globalThis;g._state.newConversation=false;g._state.project={projectId:'p1',name:'红果',permission:'write'};g._state.computers.forEach((c:any)=>c.online=false);g._paint();});
+    r=await inspect();
+    assert.equal(r.open,true); assert.equal(r.computerHidden,true); assert.equal(r.hint,'电脑不在线');
+  }finally{await browser.close();}
+});
